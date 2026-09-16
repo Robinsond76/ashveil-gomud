@@ -20,7 +20,7 @@ Do not add `ashveil*` package/type prefixes. Do not alter GoMud’s native `part
 
 The initial `Company` record is keyed by leader user ID and contains one `Companion` with its `MobTemplateID`. It must not persist a GoMud mob `InstanceId`, because instances are created at runtime and are invalid after restart.
 
-Module-owned durable data stores the company record separately from generic user fields. A runtime mapping connects leader user ID and saved template to the current live mob instance. The module writes immediately after summon and dismiss, loads before restoration, and serializes the live mapping through a copyover contributor. Copyover restoration reattaches the mapped companion; ordinary restart restoration occurs when the leader reconnects.
+Module-owned durable data stores the company record separately from generic user fields. A runtime mapping connects leader user ID and saved template to the current live mob instance. The module writes immediately after summon and dismiss, loads records through its plugin load callback, and restores a missing instance on GoMud’s `PlayerSpawn` event. That event occurs after normal login and after copyover connection restoration, so the same durable record rehydrates a fresh instance in both cases; no plugin-owned copyover contributor or runtime instance mapping is serialized.
 
 ## Commands and flow
 
