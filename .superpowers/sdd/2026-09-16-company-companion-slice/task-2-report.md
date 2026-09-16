@@ -21,7 +21,7 @@
 
 ## Commit
 
-`2621b743d980c58109ce28ce1628cad71bf2d51a`
+The initial implementation commit was `2621b743d980c58109ce28ce1628cad71bf2d51a`; the reviewed implementation including the report was `8be7c1f98f5e2bfdcb7d706f17ec2017728e2623`.
 
 ## Self-review
 
@@ -33,3 +33,13 @@
 ## Concerns
 
 No known concerns for Task 2. Player commands and allowlist consumption are intentionally deferred to Task 3.
+
+## Fix round
+
+- Root cause: `PlayerSpawn.RoomId` can be stale while the player is queued for entry; the handler was passing that event field directly to restoration.
+- Fix: resolve `users.GetByUserId(evt.UserId)`, safely continue when absent, and restore using `user.Character.RoomId`.
+- Regression test: `TestPlayerSpawnRestoresUsingCurrentUserRoom` uses event room 12 and live character room 44, asserting spawn room 44.
+- RED: `GOCACHE=/tmp/ashveil-go-cache go test ./modules/company -run TestPlayerSpawnRestoresUsingCurrentUserRoom -count=1` failed with expected 44 vs actual 12.
+- GREEN: `GOCACHE=/tmp/ashveil-go-cache go test ./modules/company -run 'Test(PlayerSpawnRestoresUsingCurrentUserRoom|RestoreForLeader|MobDeath)' -count=1` passed.
+- Package verification: `GOCACHE=/tmp/ashveil-go-cache go test ./modules/company -count=1` passed.
+- Fix commit: `7bfbf64944c075215e0c6966bddc976fbda52059`.
