@@ -125,3 +125,32 @@ func TestPlayerSpawnRestoresUsingCurrentUserRoom(t *testing.T) {
 	require.Equal(t, events.Continue, module.onPlayerSpawn(events.PlayerSpawn{UserId: 7, RoomId: 12}))
 	assert.Equal(t, 44, runtime.spawnedRoomID)
 }
+
+func TestCompanySummonPersistsAndAttachesAllowedTemplate(t *testing.T) {
+	module := newTestModule(*domain.NewRegistry(), &fakeRuntime{resolved: map[string]int{"training dummy": 58}, nextInstanceID: 101})
+	text, err := module.summon(7, 12, "training dummy")
+	require.NoError(t, err)
+	assert.Contains(t, text, "training dummy")
+	record, saved := module.registry.Get(7)
+	require.True(t, saved)
+	assert.Equal(t, 58, record.Companion.MobTemplateID)
+}
+
+func TestCompanyDismissClearsSavedAndLiveState(t *testing.T) {
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companion: domain.Companion{MobTemplateID: 58}},
+	}}, &fakeRuntime{})
+	module.liveByLeader[7] = 101
+	_, err := module.dismiss(7)
+	require.NoError(t, err)
+	_, saved := module.registry.Get(7)
+	assert.False(t, saved)
+	assert.NotContains(t, module.liveByLeader, 7)
+}
+
+func TestCompanyStatusReportsSavedCompanionAwaitingRestoration(t *testing.T) {
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companion: domain.Companion{MobTemplateID: 58}},
+	}}, &fakeRuntime{})
+	assert.Contains(t, module.status(7), "awaiting restoration")
+}
