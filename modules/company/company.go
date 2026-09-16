@@ -146,7 +146,9 @@ func (m *CompanyModule) status(leaderUserID int) string {
 
 func (m *CompanyModule) dismiss(leaderUserID int) (string, error) {
 	if instanceID, tracked := m.liveByLeader[leaderUserID]; tracked {
-		m.runtime.Detach(leaderUserID, instanceID)
+		if m.runtime.IsLive(instanceID) {
+			m.runtime.Detach(leaderUserID, instanceID)
+		}
 		delete(m.liveByLeader, leaderUserID)
 	}
 	m.registry.Dismiss(leaderUserID)

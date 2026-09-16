@@ -18,6 +18,7 @@ type fakeRuntime struct {
 	spawnErr          error
 	resolved          map[string]int
 	live              map[int]bool
+	detachCalls       int
 }
 
 func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
@@ -37,7 +38,7 @@ func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int) (int, error) {
 	return f.nextInstanceID, nil
 }
 func (f *fakeRuntime) IsLive(instanceID int) bool { return f.live[instanceID] }
-func (f *fakeRuntime) Detach(_ int, _ int)        {}
+func (f *fakeRuntime) Detach(_ int, _ int)        { f.detachCalls++ }
 
 type fakeStore struct {
 	saved            domain.Registry
@@ -153,4 +154,19 @@ func TestCompanyStatusReportsSavedCompanionAwaitingRestoration(t *testing.T) {
 		7: {LeaderUserID: 7, Companion: domain.Companion{MobTemplateID: 58}},
 	}}, &fakeRuntime{})
 	assert.Contains(t, module.status(7), "awaiting restoration")
+}
+
+func TestCompanyDismissSkipsStaleTrackedInstance(t *testing.T) {
+	runtime := &fakeRuntime{live: map[int]bool{101: false}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companion: domain.Companion{MobTemplateID: 58}},
+	}}, runtime)
+	module.liveByLeader[7] = 101
+
+	_, err := module.dismiss(7)
+	require.NoError(t, err)
+	_, saved := module.registry.Get(7)
+	assert.False(t, saved)
+	assert.NotContains(t, module.liveByLeader, 7)
+	assert.Equal(t, 0, runtime.detachCalls)
 }
