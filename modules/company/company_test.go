@@ -158,9 +158,11 @@ func TestCompanyStatusReportsSavedCompanionAwaitingRestoration(t *testing.T) {
 
 func TestCompanyDismissSkipsStaleTrackedInstance(t *testing.T) {
 	runtime := &fakeRuntime{live: map[int]bool{101: false}}
+	store := &fakeStore{}
 	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
 		7: {LeaderUserID: 7, Companion: domain.Companion{MobTemplateID: 58}},
 	}}, runtime)
+	module.store = store
 	module.liveByLeader[7] = 101
 
 	_, err := module.dismiss(7)
@@ -169,4 +171,6 @@ func TestCompanyDismissSkipsStaleTrackedInstance(t *testing.T) {
 	assert.False(t, saved)
 	assert.NotContains(t, module.liveByLeader, 7)
 	assert.Equal(t, 0, runtime.detachCalls)
+	_, saved = store.saved.Get(7)
+	assert.False(t, saved)
 }
