@@ -6,6 +6,7 @@ import (
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -13,6 +14,7 @@ import (
 type fakeRuntime struct {
 	nextInstanceID    int
 	spawnedTemplateID int
+	spawnedRoomID     int
 	spawnErr          error
 	resolved          map[string]int
 	live              map[int]bool
@@ -22,8 +24,9 @@ func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
 	id, ok := f.resolved[name]
 	return id, ok
 }
-func (f *fakeRuntime) Spawn(_ int, _ int, templateID int) (int, error) {
+func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int) (int, error) {
 	f.spawnedTemplateID = templateID
+	f.spawnedRoomID = roomID
 	if f.spawnErr != nil {
 		return 0, f.spawnErr
 	}
@@ -106,4 +109,19 @@ func TestMobDeathClearsMatchingInstanceButKeepsRecord(t *testing.T) {
 	_, exists := module.registry.Get(7)
 	assert.True(t, exists)
 	assert.NotContains(t, module.liveByLeader, 7)
+}
+
+func TestPlayerSpawnRestoresUsingCurrentUserRoom(t *testing.T) {
+	users.ResetActiveUsers()
+	defer users.ResetActiveUsers()
+	user := users.NewUserRecord(7, 1)
+	user.Character.RoomId = 44
+	users.SetTestUser(user)
+	runtime := &fakeRuntime{nextInstanceID: 101}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companion: domain.Companion{MobTemplateID: 58}},
+	}}, runtime)
+
+	require.Equal(t, events.Continue, module.onPlayerSpawn(events.PlayerSpawn{UserId: 7, RoomId: 12}))
+	assert.Equal(t, 44, runtime.spawnedRoomID)
 }

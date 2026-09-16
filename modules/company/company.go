@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 //go:embed files/*
@@ -107,7 +108,11 @@ func (m *CompanyModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if !ok {
 		return events.Cancel
 	}
-	if err := m.restoreForLeader(evt.UserId, evt.RoomId); err != nil {
+	user := users.GetByUserId(evt.UserId)
+	if user == nil {
+		return events.Continue
+	}
+	if err := m.restoreForLeader(evt.UserId, user.Character.RoomId); err != nil {
 		mudlog.Warn("company: restore", "error", err)
 	}
 	return events.Continue
