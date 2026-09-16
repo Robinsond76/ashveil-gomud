@@ -16,7 +16,9 @@ Do **not** begin by rewriting GoMud systems wholesale.
 
 The intended architecture is:
 
-> **GoMud provides the MUD engine and infrastructure. Ashveil provides the game rules, expedition layer, survival systems, mercenary management, tactical formation combat, world content, and game identity.**
+> **GoMud provides the engine foundation and infrastructure. This fork is becoming the Ashveil game: its game rules, expeditions, survival systems, mercenary companies, tactical formation combat, world content, and identity belong in its permanent codebase.**
+
+Use durable game-domain names such as `company`, `companion`, and `expedition`. Do not treat gameplay code as a temporary `ashveil*` layer or prefix packages/types with the project name merely to distinguish them from GoMud.
 
 The project should remain a **multiplayer MUD with a shared persistent world**.
 
@@ -1419,7 +1421,7 @@ GoMud engine
 └── base parties/mercs
         │
         ▼
-Ashveil gameplay layer
+Game-domain systems
 ├── expedition
 │   ├── travel
 │   ├── routes
@@ -1429,7 +1431,7 @@ Ashveil gameplay layer
 │   ├── hunger
 │   ├── thirst
 │   └── fatigue
-├── party
+├── company
 │   ├── merc extensions
 │   ├── formation
 │   └── cargo
@@ -1673,34 +1675,33 @@ The agent should cite exact source files/functions in this internal document.
 
 ---
 
-# 27. Phase 2 — Minimal Ashveil Party Slice
+# 27. Phase 2 — Minimal Company Slice
 
 Goal:
 
-- reuse existing GoMud party/mercenary mechanisms
-- enforce Ashveil party cap
-- persist the party
-- expose useful party status
+- reuse GoMud mob spawning, friendly/charm, and ordinary-exit following behavior
+- introduce a persistent `company` domain record rather than an `ashveil*` layer
+- prove a saved companion can be restored as a fresh live mob instance
+- expose useful company status
 
 Target:
 
 ```text
-1 player
-0–4 mercenaries
-max total = 5
+1 player leader
+1 companion in this proof slice
 ```
 
-Do not add formation combat yet.
+Do not add recruitment economics, formation combat, human-member support, or the eventual five-member limit yet.
 
 Acceptance tests:
 
-- player can hire/recruit a mercenary
-- merc joins party
-- party cannot exceed cap
-- merc follows leader through ordinary rooms
-- merc persists according to normal save behavior
-- dismiss works
-- no duplicate ownership/following framework was created unnecessarily
+- `company summon <template>` permits only an allow-listed companion template and refuses a second companion
+- `company status` reports the saved companion and live attachment state
+- `company dismiss` removes the saved record and its live instance
+- a companion follows its leader through ordinary rooms by reusing GoMud behavior
+- restart/reconnect restores the saved template as a fresh live mob instance; it does not persist an in-memory instance ID
+- a removed template produces a clear restore error and never substitutes another mob
+- no global game time advances and no duplicate movement/following framework is created
 
 ---
 

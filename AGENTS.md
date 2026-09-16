@@ -1,54 +1,35 @@
-# GoMud Agent Guide
+# Repository Guidelines
 
-## Purpose
+## Ashveil Context
 
-- Use this file for durable repo-wide working rules.
-- Keep it short and operational. Put detailed subsystem guidance in the nearest nested `AGENTS.md`.
-- Treat `Makefile`, code, and config files as the source of truth when docs drift.
+This fork is becoming the Ashveil game, with GoMud as its engine foundation. Use game-domain names such as `company`, `companion`, and `expedition`, not `ashveil*` prefixes. Persist multiplayer state across restart/copyover; never advance global game time for travel or rest. Before gameplay, consult `docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md` and the Phase 0–1 plan.
 
-## Repo Map
+## Project Structure & Module Organization
 
-- `internal/`: core engine, web, config, gameplay, and runtime packages.
-- `_datafiles/`: bundled world data, web assets, config, and scripts loaded by the server.
-- `modules/`: optional gameplay/web modules auto-wired through code generation.
-- `cmd/generate/`: code generation tooling; do not treat it like game logic.
-- `.github/`: CI, release, and automation workflows.
-- `scripts/`: helper scripts. Keep shell changes compatible with both `bash` and `zsh`.
-- If a task touches a subsystem with its own `AGENTS.md`, read that file before editing.
+- `internal/` contains the engine. Keep gameplay work in its owning package. Read its nested `AGENTS.md` before changing it.
+- `_datafiles/` holds worlds, configuration, scripts, and browser assets. Treat the default world as shipped content.
+- `modules/` contains optional auto-wired extensions. Register a module with its Go `init()` flow and refresh generated imports with `make generate`.
+- `cmd/` contains CLI tools; `scripts/` contains helpers; `docs/` holds Ashveil planning and verification notes.
+- `reference/ashveil-mud/` is the read-only Python prototype. Research only; do not edit, commit, or move.
 
-## Core Commands
+## Build, Test, and Development Commands
 
-- Prefer repo entrypoints over ad hoc command sequences.
-- Build: `make build`
-- Run locally: `make run`
-- Run in Docker: `make run-docker`
-- Validate Go formatting and vet: `make validate`
-- Full test pass: `make test`
-- JavaScript lint: `make js-lint`
-- Lua lint: `make lua-lint`
-- Local CI dry run: `make ci-local`
-- HTTPS helper: `make https-setup`
-- Reset admin password: `make reset-admin-pw`
+- `make build` formats/checks the project and builds `./go-mud-server`.
+- `make run` regenerates module wiring and starts the server locally. Use `make run-docker` for Docker Compose.
+- `make validate` runs `gofmt` checks and `go vet`; run it for Go changes.
+- `make test` runs generation, JavaScript/Lua linting, then `go test -race ./...`. Docker Desktop may be required for Lua linting.
+- `make js-lint`, `make lua-lint`, and `go test ./internal/rooms -run TestName` are focused checks. Run `make help` to list targets.
 
-## Working Rules
+## Coding Style & Naming Conventions
 
-- Keep PRs small and split non-essential changes instead of bundling unrelated cleanup.
-- Leave unrelated tracked or untracked files alone unless the task explicitly includes them.
-- When possible, trigger code generation through existing repo commands instead of custom `go generate` sequences.
-- Module config keys live under `Modules.<modulename>.*` in `_datafiles/config.yaml`; modules read them through `plug.Config.Get(...)`.
-- New modules are registered via Go `init()` functions; generation refreshes `cmd/generate/module-imports.go`.
-- Room tags on `rooms.Room` are the main extensibility hook for module behavior.
-- If you add durable guidance for a subsystem, update the nearest relevant `AGENTS.md`, not just this root file.
+Use idiomatic Go, `gofmt`, tabs, exported `PascalCase`, and unexported `camelCase`. Keep tests in `*_test.go`; prefer table-driven cases. JavaScript, CSS, HTML, YAML, and Markdown use two spaces per `.editorconfig`. Regenerate generated files through the Makefile.
 
-## Verification
+## Testing Guidelines
 
-- Run the relevant existing checks for the files you changed.
-- For Go changes, prefer `make validate` and targeted or full Go tests as appropriate.
-- For JavaScript or web asset changes, run `make js-lint` and any targeted validation that proves the behavior.
-- If a test fails, propose a solution to fix it.
-- Do not claim validation you did not run.
+Use Go's standard `testing` package. Name tests `TestBehavior` and benchmarks `BenchmarkBehavior`, beside covered code. Add a regression test for each bug fix. Start targeted, then run `make validate`; run `make test` before requesting review when practical. Do not claim checks not run.
 
-## Documentation
+## Commit & Pull Request Guidelines
 
-- Update docs when behavior, setup, operator steps, or developer workflows materially change.
-- Keep long architecture or onboarding prose in narrower subfolder `README.md` docs, not in this always-loaded file.
+Use concise imperative commits with an optional scope, such as `fix(telnet): stop input masking` or `docs: establish Ashveil baseline`. Keep commits narrow. Pull requests should state user effect, approach, verification, and linked issue; attach screenshots for web/admin UI changes.
+
+`origin` is the Ashveil fork. `upstream` is the read-only GoMud source: fetch from it if needed, but never push to it. Preserve the multiplayer invariant: travel and rest must not advance global game time.
