@@ -1,7 +1,7 @@
 # Ashveil on GoMud — AI Agent Handoff & Implementation Context
 
-**Status:** Architecture / migration planning  
-**Primary goal:** Rebuild Ashveil as a multiplayer MUD on top of GoMud while preserving Ashveil's distinctive expedition, survival, mercenary-party, camping, mount, and 3x3 tactical-formation systems.  
+**Status:** Architecture / migration planning
+**Primary goal:** Rebuild Ashveil as a multiplayer MUD on top of GoMud while preserving Ashveil's distinctive expedition, survival, mercenary-party, camping, mount, and 3x3 tactical-formation systems.
 **Intended reader:** An AI coding agent that will inspect the repositories, fork GoMud, produce an implementation plan, and begin the migration carefully.
 
 ---
