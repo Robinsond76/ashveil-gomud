@@ -7,6 +7,7 @@ package modules
 
 import (
 	_ "github.com/GoMudEngine/GoMud/modules/cleanup"
+	_ "github.com/GoMudEngine/GoMud/modules/company"
 	_ "github.com/GoMudEngine/GoMud/modules/follow"
 	_ "github.com/GoMudEngine/GoMud/modules/gmcp"
 	_ "github.com/GoMudEngine/GoMud/modules/webhelp"
