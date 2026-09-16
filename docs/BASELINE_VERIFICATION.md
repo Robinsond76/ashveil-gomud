@@ -26,5 +26,12 @@ This is the only non-documentation modification made before the Ashveil gameplay
 ## Scope not exercised
 
 - No admin password was reset and no account credential was changed.
-- A player login, room movement, combat, party creation, and hired-mercenary flow were not exercised interactively in this baseline pass. They remain source-audit targets for Phase 1 and can be exercised later using deliberately created local test credentials.
 - Startup produced normal generated runtime state in the default world; no authored world data or gameplay configuration was edited.
+
+| Capability | Interactive baseline status | Reason / source-audit evidence |
+|---|---|---|
+| Player login | Blocked by policy | No deliberately created local credential was used; `users.UserRecord.PasswordMatches` was inspected in `internal/users/userrecord.go`. |
+| Ordinary room movement | Not exercised | No login session; normal movement is source-audited at `internal/usercommands/go.go: Go` and `internal/rooms/roommanager.go: MoveToRoom`. |
+| Default combat | Not exercised | No login session; round combat is source-audited at `internal/hooks/NewRound_DoCombat.go` and `internal/combat/`. |
+| Player party creation | Not exercised | No login session; party command and in-memory party model are source-audited at `internal/usercommands/party.go` and `internal/parties/parties.go`. |
+| Hired mercenary lifecycle | Not exercised | No login session; hire/list path is source-audited at `internal/usercommands/buy.go`, `list.go`, and `internal/mobs/mobs.go`. Ownership/following/persistence remains a Phase 2 proof point. |

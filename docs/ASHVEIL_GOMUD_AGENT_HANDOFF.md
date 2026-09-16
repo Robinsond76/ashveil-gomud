@@ -2385,7 +2385,7 @@ origin   -> Robinsond76/ashveil-gomud
 upstream -> GoMudEngine/GoMud
 ```
 
-`upstream` is strictly read-only: it is retained only to fetch/compare upstream changes and to preserve future merge options. Never push, force-push, or open a write workflow against `GoMudEngine/GoMud`. All Ashveil commits and any future pushes go only to `origin`.
+`upstream` is strictly read-only: it is retained only to fetch/compare upstream changes and to preserve future merge options. Configure its push URL as `DISABLED` so a push fails locally. Never push, force-push, or open a write workflow against `GoMudEngine/GoMud`. All Ashveil commits and any future pushes go only to `origin`.
 
 ---
 

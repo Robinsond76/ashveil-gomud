@@ -132,7 +132,7 @@ Expected: verified facts are distinguished from future additions.
 
 - [x] **Step 4: Move project-local guidance into `docs/`, update the project layout policy, and commit the Phase 0–1 artifacts locally**
 
-Copy the canonical handoff into `docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md`, verify checksums match, then run `git diff --check`, commit only the three documentation files with message `docs: establish Ashveil GoMud integration baseline`, and leave the worktree clean. Do not push.
+Move the canonical handoff into `docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md`, update it and this plan for the project-contained reference layout, run `git diff --check`, commit the four documentation files with message `docs: establish Ashveil GoMud integration baseline`, and leave the worktree clean. Do not push.
 
 ## Plan Self-Review
 
