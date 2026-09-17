@@ -135,6 +135,44 @@ func TestRegistryLeaderFormationCreatesRecordWithoutCompanions(t *testing.T) {
 	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(1, 1))
 }
 
+func TestRegistryGetReturnsIndependentSnapshot(t *testing.T) {
+	registry := company.NewRegistry()
+	first, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	second, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+
+	before, ok := registry.Get(7)
+	require.True(t, ok)
+	require.Len(t, before.Companions, 2)
+
+	require.True(t, registry.Dismiss(7, first.ID))
+
+	assert.Equal(t, []company.Companion{first, second}, before.Companions, "a retained snapshot must not change")
+	after, _ := registry.Get(7)
+	require.Len(t, after.Companions, 1)
+	assert.Equal(t, second.ID, after.Companions[0].ID)
+}
+
+func TestRegistrySummonClampsCapToOne(t *testing.T) {
+	registry := company.NewRegistry()
+	_, err := registry.Summon(7, 58, allowed58(), 0)
+	require.NoError(t, err)
+	_, err = registry.Summon(7, 58, allowed58(), 0)
+	assert.ErrorIs(t, err, company.ErrCompanyFull)
+}
+
+func TestRegistryPutPrunesStaleFormationKeys(t *testing.T) {
+	registry := company.NewRegistry()
+	require.NoError(t, registry.PlaceMember(7, company.LeaderMemberKey, 0, 0))
+	record, _ := registry.Get(7)
+	record.Formation[1][1] = company.CompanionMemberKey(99)
+	registry.Put(record)
+	got, _ := registry.Get(7)
+	assert.Equal(t, company.MemberKey(""), got.Formation.At(1, 1), "Put prunes keys with no matching member")
+	assert.Equal(t, company.LeaderMemberKey, got.Formation.At(0, 0))
+}
+
 func TestRegistrySwapAndClearMembers(t *testing.T) {
 	registry := company.NewRegistry()
 	first, err := registry.Summon(7, 58, allowed58(), 4)

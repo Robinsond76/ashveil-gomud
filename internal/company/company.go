@@ -34,7 +34,11 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		return Record{}, false
 	}
 	record, ok := r.Companies[leaderUserID]
-	return record, ok
+	if !ok {
+		return Record{}, false
+	}
+	record.Companions = append([]Companion(nil), record.Companions...)
+	return record, true
 }
 
 // Put stores a record after pruning stale formation cells. A record with no
