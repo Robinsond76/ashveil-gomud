@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"gopkg.in/yaml.v2"
 )
 
 //go:embed files/*
@@ -25,6 +26,7 @@ type Runtime interface {
 	ResolveTemplate(string) (int, bool)
 	Spawn(leaderUserID, roomID, mobTemplateID int) (int, error)
 	IsLive(instanceID int) bool
+	IsAttached(leaderUserID, instanceID int) bool
 	Detach(leaderUserID, instanceID int)
 }
 
@@ -36,12 +38,17 @@ type Store interface {
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *domain.Registry) error {
-	err := s.plug.ReadIntoStruct("companies", registry)
+	// ReadIntoStruct currently discards YAML decoding errors. Decode here so
+	// unreadable company data cannot become an empty, writable registry.
+	data, err := s.plug.ReadBytes("companies")
 	if errors.Is(err, os.ErrNotExist) {
 		*registry = *domain.NewRegistry()
 		return nil
 	}
-	return err
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(data, registry)
 }
 func (s pluginStore) Save(registry domain.Registry) error {
 	return s.plug.WriteStruct("companies", registry)
@@ -53,6 +60,7 @@ type CompanyModule struct {
 	registry     domain.Registry
 	liveByLeader map[int]int
 	runtime      Runtime
+	loadErr      error
 }
 
 func init() {
@@ -64,7 +72,11 @@ func init() {
 	m.runtime = nativeRuntime{}
 	m.plug.AddUserCommand("company", m.userCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
-	m.plug.Callbacks.SetOnSave(m.save)
+	m.plug.Callbacks.SetOnSave(func() {
+		if err := m.save(); err != nil {
+			mudlog.Error("company: save", "error", err)
+		}
+	})
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.MobDeath{}, m.onMobDeath)
 }
@@ -97,6 +109,9 @@ func (m *CompanyModule) allowedTemplates() map[int]struct{} {
 }
 
 func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (string, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return "", err
+	}
 	selector = strings.TrimSpace(selector)
 	if selector == "" {
 		return companyUsage, fmt.Errorf("company: companion selector is required")
@@ -117,8 +132,12 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 		m.registry.Dismiss(leaderUserID)
 		return "", err
 	}
+	if err := m.save(); err != nil {
+		m.runtime.Detach(leaderUserID, instanceID)
+		m.registry.Dismiss(leaderUserID)
+		return "", err
+	}
 	m.liveByLeader[leaderUserID] = instanceID
-	m.save()
 	return fmt.Sprintf("Companion summoned: %s.", templateName(templateID, selector)), nil
 }
 
@@ -130,29 +149,45 @@ func templateName(templateID int, fallback string) string {
 }
 
 func (m *CompanyModule) status(leaderUserID int) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
 	record, ok := m.registry.Get(leaderUserID)
 	if !ok {
 		return "No companion."
 	}
 	name := templateName(record.Companion.MobTemplateID, strconv.Itoa(record.Companion.MobTemplateID))
 	if instanceID, tracked := m.liveByLeader[leaderUserID]; tracked {
-		if m.runtime.IsLive(instanceID) {
+		if m.runtime.IsAttached(leaderUserID, instanceID) {
 			return fmt.Sprintf("Companion: %s (present).", name)
 		}
-		delete(m.liveByLeader, leaderUserID)
+		if !m.runtime.IsLive(instanceID) {
+			delete(m.liveByLeader, leaderUserID)
+		}
 	}
 	return fmt.Sprintf("Companion: %s (awaiting restoration).", name)
 }
 
 func (m *CompanyModule) dismiss(leaderUserID int) (string, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return "", err
+	}
+	record, existed := m.registry.Get(leaderUserID)
+	m.registry.Dismiss(leaderUserID)
+	// Keep the live attachment until durable removal succeeds. A failed save
+	// restores ownership and leaves the same companion available for retry.
+	if err := m.save(); err != nil {
+		if existed {
+			m.registry.Companies[leaderUserID] = record
+		}
+		return "", err
+	}
 	if instanceID, tracked := m.liveByLeader[leaderUserID]; tracked {
 		if m.runtime.IsLive(instanceID) {
 			m.runtime.Detach(leaderUserID, instanceID)
 		}
 		delete(m.liveByLeader, leaderUserID)
 	}
-	m.registry.Dismiss(leaderUserID)
-	m.save()
 	return "Companion dismissed.", nil
 }
 
@@ -174,8 +209,7 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		}
 		text, err := m.summon(user.UserId, roomID, strings.Join(args[1:], " "))
 		if err != nil {
-			user.SendText(err.Error())
-			return true, nil
+			return true, err
 		}
 		user.SendText(text)
 	case "status":
@@ -193,13 +227,19 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 }
 
 func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
 	record, ok := m.registry.Get(leaderUserID)
 	if !ok {
 		return nil
 	}
 	if instanceID, tracked := m.liveByLeader[leaderUserID]; tracked {
-		if m.runtime.IsLive(instanceID) {
+		if m.runtime.IsAttached(leaderUserID, instanceID) {
 			return nil
+		}
+		if m.runtime.IsLive(instanceID) {
+			m.runtime.Detach(leaderUserID, instanceID)
 		}
 		delete(m.liveByLeader, leaderUserID)
 	}
@@ -212,24 +252,41 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 	return nil
 }
 
-func (m *CompanyModule) save() {
-	if m.store != nil {
-		if err := m.store.Save(m.registry); err != nil {
-			mudlog.Error("company: save", "error", err)
-		}
+func (m *CompanyModule) persistenceAvailable() error {
+	if m.loadErr != nil {
+		return fmt.Errorf("company: persistence unavailable until a successful reload: %w", m.loadErr)
 	}
+	if m.store == nil {
+		return fmt.Errorf("company: persistence unavailable")
+	}
+	return nil
+}
+
+func (m *CompanyModule) save() error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	if err := m.store.Save(m.registry); err != nil {
+		return fmt.Errorf("company: save failed; please retry: %w", err)
+	}
+	return nil
 }
 
 func (m *CompanyModule) load() {
 	if m.store == nil {
 		return
 	}
-	if err := m.store.Load(&m.registry); err != nil {
+	loaded := domain.NewRegistry()
+	if err := m.store.Load(loaded); err != nil {
+		m.loadErr = err
 		mudlog.Error("company: load", "error", err)
+		return
 	}
-	if m.registry.Companies == nil {
-		m.registry = *domain.NewRegistry()
+	if loaded.Companies == nil {
+		loaded = domain.NewRegistry()
 	}
+	m.registry = *loaded
+	m.loadErr = nil
 }
 
 func (m *CompanyModule) onPlayerSpawn(e events.Event) events.ListenerReturn {

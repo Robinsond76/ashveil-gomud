@@ -2,6 +2,8 @@ package company
 
 import (
 	"errors"
+	"maps"
+	"strings"
 	"testing"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
@@ -19,6 +21,7 @@ type fakeRuntime struct {
 	resolved          map[string]int
 	live              map[int]bool
 	detachCalls       int
+	spawnCalls        int
 }
 
 func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
@@ -26,6 +29,7 @@ func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
 	return id, ok
 }
 func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int) (int, error) {
+	f.spawnCalls++
 	f.spawnedTemplateID = templateID
 	f.spawnedRoomID = roomID
 	if f.spawnErr != nil {
@@ -37,16 +41,32 @@ func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int) (int, error) {
 	f.live[f.nextInstanceID] = true
 	return f.nextInstanceID, nil
 }
-func (f *fakeRuntime) IsLive(instanceID int) bool { return f.live[instanceID] }
-func (f *fakeRuntime) Detach(_ int, _ int)        { f.detachCalls++ }
-
-type fakeStore struct {
-	saved            domain.Registry
-	loadErr, saveErr error
+func (f *fakeRuntime) IsLive(instanceID int) bool            { return f.live[instanceID] }
+func (f *fakeRuntime) IsAttached(_ int, instanceID int) bool { return f.live[instanceID] }
+func (f *fakeRuntime) Detach(_ int, instanceID int) {
+	f.detachCalls++
+	delete(f.live, instanceID)
 }
 
-func (f *fakeStore) Load(*domain.Registry) error    { return f.loadErr }
-func (f *fakeStore) Save(reg domain.Registry) error { f.saved = reg; return f.saveErr }
+type fakeStore struct {
+	saved                domain.Registry
+	loadErr, saveErr     error
+	loadCalls, saveCalls int
+}
+
+func (f *fakeStore) Load(reg *domain.Registry) error {
+	f.loadCalls++
+	*reg = domain.Registry{Companies: maps.Clone(f.saved.Companies)}
+	return f.loadErr
+}
+func (f *fakeStore) Save(reg domain.Registry) error {
+	f.saveCalls++
+	if f.saveErr != nil {
+		return f.saveErr
+	}
+	f.saved = domain.Registry{Companies: maps.Clone(reg.Companies)}
+	return nil
+}
 
 func newTestModule(registry domain.Registry, runtime Runtime) *CompanyModule {
 	return &CompanyModule{registry: registry, liveByLeader: map[int]int{}, runtime: runtime, store: &fakeStore{}}
@@ -135,6 +155,9 @@ func TestCompanySummonPersistsAndAttachesAllowedTemplate(t *testing.T) {
 	record, saved := module.registry.Get(7)
 	require.True(t, saved)
 	assert.Equal(t, 58, record.Companion.MobTemplateID)
+	store := module.store.(*fakeStore)
+	assert.Equal(t, 1, store.saveCalls)
+	assert.Equal(t, record, store.saved.Companies[7])
 }
 
 func TestCompanyDismissClearsSavedAndLiveState(t *testing.T) {
@@ -173,4 +196,125 @@ func TestCompanyDismissSkipsStaleTrackedInstance(t *testing.T) {
 	assert.Equal(t, 0, runtime.detachCalls)
 	_, saved = store.saved.Get(7)
 	assert.False(t, saved)
+	assert.Equal(t, 1, store.saveCalls)
+}
+
+func captureCompanyMessages(t *testing.T) *[]string {
+	t.Helper()
+	events.ProcessEvents()
+	var messages []string
+	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+		messages = append(messages, e.(events.Message).Text)
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.Message{}, id) })
+	return &messages
+}
+
+func TestCompanyCommandSaveFailureRollsBackAndCanRetry(t *testing.T) {
+	for _, command := range []string{"summon 58", "dismiss"} {
+		t.Run(command, func(t *testing.T) {
+			messages := captureCompanyMessages(t)
+			runtime := &fakeRuntime{nextInstanceID: 101}
+			module := newTestModule(*domain.NewRegistry(), runtime)
+			store := module.store.(*fakeStore)
+			if command == "dismiss" {
+				_, err := module.summon(7, 12, "58")
+				require.NoError(t, err)
+			}
+			before := domain.Registry{Companies: maps.Clone(module.registry.Companies)}
+			beforeSaves := store.saveCalls
+			store.saveErr = errors.New("disk full")
+			user := users.NewUserRecord(7, 1)
+			user.Character.RoomId = 12
+			handled, err := module.userCommand(command, user, nil, 0)
+			assert.True(t, handled)
+			assert.ErrorIs(t, err, store.saveErr)
+			events.ProcessEvents()
+			assert.NotContains(t, strings.Join(*messages, ""), "Companion summoned:")
+			assert.NotContains(t, strings.Join(*messages, ""), "Companion dismissed.")
+			assert.Equal(t, before, module.registry)
+			assert.Equal(t, beforeSaves+1, store.saveCalls)
+			if command == "summon 58" {
+				assert.Empty(t, module.liveByLeader)
+				assert.False(t, runtime.IsLive(101))
+			} else {
+				assert.Equal(t, 101, module.liveByLeader[7])
+				assert.True(t, runtime.IsLive(101))
+				assert.Equal(t, before, store.saved, "failed dismissal must not mutate the saved snapshot")
+			}
+			store.saveErr = nil
+			handled, err = module.userCommand(command, user, nil, 0)
+			assert.True(t, handled)
+			require.NoError(t, err)
+			assert.Equal(t, beforeSaves+2, store.saveCalls)
+			assert.Equal(t, module.registry, store.saved)
+			events.ProcessEvents()
+			if command == "summon 58" {
+				assert.Contains(t, strings.Join(*messages, ""), "Companion summoned:")
+				assert.True(t, runtime.IsLive(module.liveByLeader[7]))
+			} else {
+				assert.Contains(t, strings.Join(*messages, ""), "Companion dismissed.")
+				assert.Empty(t, module.liveByLeader)
+				assert.False(t, runtime.IsLive(101))
+			}
+		})
+	}
+}
+
+func TestCompanyFailedLoadBlocksWritesUntilRecovery(t *testing.T) {
+	runtime := &fakeRuntime{nextInstanceID: 101}
+	module := newTestModule(*domain.NewRegistry(), runtime)
+	store := &fakeStore{loadErr: errors.New("cannot read companies"), saved: domain.Registry{Companies: map[int]domain.Record{
+		8: {LeaderUserID: 8, Companion: domain.Companion{MobTemplateID: 58}},
+	}}}
+	module.store = store
+	module.load()
+	assert.Empty(t, module.registry.Companies, "a failed/partial decode must not replace active state")
+	for _, command := range []string{"summon 58", "dismiss"} {
+		handled, err := module.userCommand(command, users.NewUserRecord(7, 1), nil, 0)
+		assert.True(t, handled)
+		assert.ErrorIs(t, err, store.loadErr)
+	}
+	module.save()
+	assert.Zero(t, store.saveCalls, "neither commands nor save callbacks may overwrite unread data")
+	assert.Zero(t, runtime.spawnCalls)
+	assert.ErrorIs(t, module.restoreForLeader(8, 12), store.loadErr)
+	assert.Contains(t, module.status(8), "unavailable")
+	assert.Contains(t, store.saved.Companies, 8)
+
+	store.loadErr = nil
+	module.load()
+	require.Equal(t, 2, store.loadCalls)
+	require.Contains(t, module.registry.Companies, 8)
+	_, err := module.summon(7, 12, "58")
+	require.NoError(t, err)
+	assert.Equal(t, 1, store.saveCalls)
+	assert.Contains(t, store.saved.Companies, 8, "recovery must preserve preexisting ownership")
+	assert.Contains(t, store.saved.Companies, 7)
+}
+
+func TestCompanyRejectedSummonDoesNotWriteOrReplaceCompanion(t *testing.T) {
+	for _, selector := range []string{"missing", "59", "0", "-1", "58"} {
+		t.Run(selector, func(t *testing.T) {
+			messages := captureCompanyMessages(t)
+			runtime := &fakeRuntime{nextInstanceID: 101}
+			module := newTestModule(*domain.NewRegistry(), runtime)
+			if selector == "58" {
+				_, err := module.summon(7, 12, "58")
+				require.NoError(t, err)
+			}
+			before := domain.Registry{Companies: maps.Clone(module.registry.Companies)}
+			store := module.store.(*fakeStore)
+			beforeSaves, beforeSpawns := store.saveCalls, runtime.spawnCalls
+			handled, err := module.userCommand("summon "+selector, users.NewUserRecord(7, 1), nil, 0)
+			assert.True(t, handled)
+			assert.Error(t, err)
+			events.ProcessEvents()
+			assert.NotContains(t, strings.Join(*messages, ""), "Companion summoned:")
+			assert.Equal(t, beforeSaves, store.saveCalls)
+			assert.Equal(t, beforeSpawns, runtime.spawnCalls)
+			assert.Equal(t, before, module.registry)
+		})
+	}
 }

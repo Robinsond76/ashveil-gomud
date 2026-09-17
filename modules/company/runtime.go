@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -36,6 +37,14 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int) (int, error)
 }
 
 func (nativeRuntime) IsLive(instanceID int) bool { return mobs.MobInstanceExists(instanceID) }
+
+func (nativeRuntime) IsAttached(leaderUserID, instanceID int) bool {
+	leader := users.GetByUserId(leaderUserID)
+	mob := mobs.GetInstance(instanceID)
+	return leader != nil && mob != nil && mob.Character.IsCharmed(leaderUserID) &&
+		mob.Character.Charmed.RoundsRemaining != 0 &&
+		slices.Contains(leader.Character.GetCharmIds(), instanceID)
+}
 
 func (nativeRuntime) Detach(leaderUserID, instanceID int) {
 	if leader := users.GetByUserId(leaderUserID); leader != nil {
