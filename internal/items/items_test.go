@@ -5,6 +5,8 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // makeItem builds a test Item with an inline Spec so no file loading is needed.
@@ -14,6 +16,27 @@ func makeItem(id int, name string) Item {
 		UUID:   uuid.New(UUIDItem),
 		Spec:   &ItemSpec{ItemId: id, Name: name, NameSimple: name},
 	}
+}
+
+func TestItemSpecParsesNutritionAndHydration(t *testing.T) {
+	var spec ItemSpec
+	require.NoError(t, yaml.Unmarshal([]byte("itemid: 30004\nname: cheese sandwich\ntype: food\nsubtype: edible\nnutrition: 35\nhydration: 5\n"), &spec))
+	assert.Equal(t, 35, spec.Nutrition)
+	assert.Equal(t, 5, spec.Hydration)
+}
+
+func TestItemSpecSurvivalMetadataDefaultsToZero(t *testing.T) {
+	var spec ItemSpec
+	require.NoError(t, yaml.Unmarshal([]byte("itemid: 1\nname: note\ntype: junk\nsubtype: mundane\n"), &spec))
+	assert.Zero(t, spec.Nutrition)
+	assert.Zero(t, spec.Hydration)
+}
+
+func TestItemSpecParsesHydrationOnlyDrink(t *testing.T) {
+	var spec ItemSpec
+	require.NoError(t, yaml.Unmarshal([]byte("itemid: 30015\nname: waterskin\ntype: drink\nsubtype: drinkable\nhydration: 40\n"), &spec))
+	assert.Equal(t, 40, spec.Hydration)
+	assert.Zero(t, spec.Nutrition)
 }
 
 func TestItem_NameMatch(t *testing.T) {
