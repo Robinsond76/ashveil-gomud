@@ -2,7 +2,11 @@
 
 ## Ashveil Context
 
-This fork is becoming the Ashveil game, with GoMud as its engine foundation. Use game-domain names such as `company`, `companion`, and `expedition`, not `ashveil*` prefixes. Persist multiplayer state across restart/copyover; never advance global game time for travel or rest. Before gameplay, consult `docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md` and the Phase 0–1 plan.
+This fork is becoming the Ashveil game, with GoMud as its engine foundation. Use game-domain names such as `company`, `companion`, and `expedition`, not `ashveil*` prefixes. Persist multiplayer state across restart/copyover; never advance global game time for travel or rest. Before gameplay, consult `docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md`, the Phase 0–1 plan, and `docs/PROJECT_STATUS.md`.
+
+## Project Status
+
+`docs/PROJECT_STATUS.md` is the living status log for the migration. Update it whenever a commit lands or a phase completes, recording what was done, why, and which step or phase completed. Keep it short and current, and link to detailed docs instead of duplicating them.
 
 ## Project Structure & Module Organization
 
