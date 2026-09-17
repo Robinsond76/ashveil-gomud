@@ -8,10 +8,41 @@ import (
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type fakeLifecycle struct {
+	ensured      [][2]int
+	removed      [][2]int
+	removedAll   []int
+	ensureErr    error
+	removeErr    error
+	removeAllErr error
+}
+
+func (f *fakeLifecycle) EnsureCompanyMember(leader, companion int) error {
+	f.ensured = append(f.ensured, [2]int{leader, companion})
+	return f.ensureErr
+}
+
+func (f *fakeLifecycle) RemoveCompanyMember(leader, companion int) error {
+	f.removed = append(f.removed, [2]int{leader, companion})
+	return f.removeErr
+}
+
+func (f *fakeLifecycle) RemoveAllCompanyMembers(leader int) error {
+	f.removedAll = append(f.removedAll, leader)
+	return f.removeAllErr
+}
+
+func useFakeLifecycle(t *testing.T, fake *fakeLifecycle) {
+	t.Helper()
+	survival.SetLifecycle(fake)
+	t.Cleanup(func() { survival.SetLifecycle(nil) })
+}
 
 type fakeRuntime struct {
 	nextInstanceID    int
@@ -486,4 +517,128 @@ func TestMaxCompanionsFromConfigClampsToDomainLimit(t *testing.T) {
 	assert.Equal(t, 2, maxCompanionsFromConfig(2))
 	assert.Equal(t, domain.MaxCompanions, maxCompanionsFromConfig(0))
 	assert.Equal(t, domain.MaxCompanions, maxCompanionsFromConfig("invalid"))
+}
+
+func TestCompanyRosterIncludesLeaderAndCompanions(t *testing.T) {
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	user := users.NewUserRecord(7, 1)
+	user.Character.Name = "Hero"
+	users.SetTestUser(user)
+
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}}},
+	}}, &fakeRuntime{})
+
+	roster := module.Roster(7)
+	require.Len(t, roster, 2)
+	assert.Equal(t, survival.LeaderMemberKey, roster[0].Key)
+	assert.Equal(t, "Hero", roster[0].Name)
+	assert.Equal(t, survival.CompanionMemberKey(1), roster[1].Key)
+	assert.NotEmpty(t, roster[1].Name)
+}
+
+func TestCompanySummonSynchronizesSurvivalState(t *testing.T) {
+	fake := &fakeLifecycle{}
+	useFakeLifecycle(t, fake)
+	module := newTestModule(*domain.NewRegistry(), &fakeRuntime{nextInstanceID: 101})
+
+	_, err := module.summon(7, 12, "58")
+	require.NoError(t, err)
+	assert.Equal(t, [][2]int{{7, 1}}, fake.ensured)
+	assert.Empty(t, fake.removed)
+}
+
+func TestCompanySummonRollsBackWhenSurvivalSyncFails(t *testing.T) {
+	fake := &fakeLifecycle{ensureErr: errors.New("survival disk full")}
+	useFakeLifecycle(t, fake)
+	runtime := &fakeRuntime{nextInstanceID: 101}
+	module := newTestModule(*domain.NewRegistry(), runtime)
+	before := cloneRegistry(module.registry)
+
+	_, err := module.summon(7, 12, "58")
+	require.ErrorIs(t, err, fake.ensureErr)
+	assert.Equal(t, before, module.registry)
+	assert.Zero(t, runtime.spawnCalls, "no native companion may spawn when survival sync fails")
+	assert.Empty(t, module.instances)
+}
+
+func TestCompanyDismissRemovesSurvivalState(t *testing.T) {
+	fake := &fakeLifecycle{}
+	useFakeLifecycle(t, fake)
+	runtime := &fakeRuntime{live: map[int]bool{101: true}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}}},
+	}}, runtime)
+	module.setInstance(7, 1, 101)
+
+	_, err := module.dismiss(7, "1")
+	require.NoError(t, err)
+	assert.Equal(t, [][2]int{{7, 1}}, fake.removed)
+	assert.Equal(t, 1, runtime.detachCalls)
+}
+
+func TestCompanyDismissRollsBackWhenSurvivalSyncFails(t *testing.T) {
+	fake := &fakeLifecycle{removeErr: errors.New("survival disk full")}
+	useFakeLifecycle(t, fake)
+	runtime := &fakeRuntime{live: map[int]bool{101: true}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}}},
+	}}, runtime)
+	module.setInstance(7, 1, 101)
+	before := cloneRegistry(module.registry)
+
+	_, err := module.dismiss(7, "1")
+	require.ErrorIs(t, err, fake.removeErr)
+	assert.Equal(t, before, module.registry)
+	assert.Zero(t, runtime.detachCalls, "no native companion may detach when survival sync fails")
+	instanceID, tracked := module.instance(7, 1)
+	assert.True(t, tracked)
+	assert.Equal(t, 101, instanceID)
+}
+
+func TestCompanyDismissAllRemovesSurvivalState(t *testing.T) {
+	fake := &fakeLifecycle{}
+	useFakeLifecycle(t, fake)
+	runtime := &fakeRuntime{live: map[int]bool{91: true, 92: true}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}},
+	}}, runtime)
+	module.setInstance(7, 1, 91)
+	module.setInstance(7, 2, 92)
+
+	_, err := module.dismiss(7, "all")
+	require.NoError(t, err)
+	assert.Equal(t, []int{7}, fake.removedAll)
+	assert.Equal(t, 2, runtime.detachCalls)
+}
+
+func TestCompanyDismissAllRollsBackWhenSurvivalSyncFails(t *testing.T) {
+	fake := &fakeLifecycle{removeAllErr: errors.New("survival disk full")}
+	useFakeLifecycle(t, fake)
+	runtime := &fakeRuntime{live: map[int]bool{91: true, 92: true}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}},
+	}}, runtime)
+	module.setInstance(7, 1, 91)
+	module.setInstance(7, 2, 92)
+	before := cloneRegistry(module.registry)
+
+	_, err := module.dismiss(7, "all")
+	require.ErrorIs(t, err, fake.removeAllErr)
+	assert.Equal(t, before, module.registry)
+	assert.Zero(t, runtime.detachCalls)
+}
+
+func TestCompanySaveFailureUndoesSurvivalEnsure(t *testing.T) {
+	fake := &fakeLifecycle{}
+	useFakeLifecycle(t, fake)
+	module := newTestModule(*domain.NewRegistry(), &fakeRuntime{nextInstanceID: 101})
+	store := module.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+
+	_, err := module.summon(7, 12, "58")
+	require.ErrorIs(t, err, store.saveErr)
+	assert.Equal(t, [][2]int{{7, 1}}, fake.ensured)
+	assert.Equal(t, [][2]int{{7, 1}}, fake.removed, "a failed company save must undo the survival record")
 }

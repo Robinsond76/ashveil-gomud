@@ -88,6 +88,11 @@ type SurvivalModule struct {
 	loadErr  error
 }
 
+var (
+	_ domain.Provisioner = (*SurvivalModule)(nil)
+	_ domain.Lifecycle   = (*SurvivalModule)(nil)
+)
+
 func init() {
 	m := &SurvivalModule{plug: plugins.New("survival", "1.0")}
 	if err := m.plug.AttachFileSystem(files); err != nil {
@@ -102,6 +107,7 @@ func init() {
 		}
 	})
 	domain.SetProvisioner(m)
+	domain.SetLifecycle(m)
 }
 
 func (m *SurvivalModule) persistenceAvailable() error {

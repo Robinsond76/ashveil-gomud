@@ -1,6 +1,7 @@
 package survival
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -337,4 +338,46 @@ func TestCurrentRosterForwardsToProvider(t *testing.T) {
 	roster := CurrentRoster(7)
 	require.Len(t, roster, 1)
 	assert.Equal(t, "Hero", roster[0].Name)
+}
+
+type recordingLifecycle struct {
+	ensured    [][2]int
+	removed    [][2]int
+	removedAll []int
+	err        error
+}
+
+func (r *recordingLifecycle) EnsureCompanyMember(leader, companion int) error {
+	r.ensured = append(r.ensured, [2]int{leader, companion})
+	return r.err
+}
+
+func (r *recordingLifecycle) RemoveCompanyMember(leader, companion int) error {
+	r.removed = append(r.removed, [2]int{leader, companion})
+	return r.err
+}
+
+func (r *recordingLifecycle) RemoveAllCompanyMembers(leader int) error {
+	r.removedAll = append(r.removedAll, leader)
+	return r.err
+}
+
+func TestLifecycleSeamNoOpsWithoutModuleAndForwardsOtherwise(t *testing.T) {
+	SetLifecycle(nil)
+	t.Cleanup(func() { SetLifecycle(nil) })
+	require.NoError(t, EnsureCompanyMember(7, 1))
+	require.NoError(t, RemoveCompanyMember(7, 1))
+	require.NoError(t, RemoveAllCompanyMembers(7))
+
+	rec := &recordingLifecycle{}
+	SetLifecycle(rec)
+	require.NoError(t, EnsureCompanyMember(7, 2))
+	require.NoError(t, RemoveCompanyMember(7, 3))
+	require.NoError(t, RemoveAllCompanyMembers(7))
+	assert.Equal(t, [][2]int{{7, 2}}, rec.ensured)
+	assert.Equal(t, [][2]int{{7, 3}}, rec.removed)
+	assert.Equal(t, []int{7}, rec.removedAll)
+
+	rec.err = errors.New("boom")
+	assert.ErrorIs(t, EnsureCompanyMember(7, 4), rec.err)
 }

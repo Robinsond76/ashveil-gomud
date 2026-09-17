@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
@@ -115,6 +116,32 @@ func init() {
 	})
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.MobDeath{}, m.onMobDeath)
+	survival.SetRosterProvider(m)
+}
+
+// Roster implements survival.RosterProvider so the survival module can resolve
+// companion names and render status without importing modules/company. The
+// leader is always present; companions include those awaiting restoration.
+func (m *CompanyModule) Roster(leaderUserID int) []survival.MemberRef {
+	refs := []survival.MemberRef{{Key: survival.LeaderMemberKey, Name: m.leaderDisplayName(leaderUserID)}}
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return refs
+	}
+	for _, companion := range record.Companions {
+		refs = append(refs, survival.MemberRef{
+			Key:  survival.CompanionMemberKey(companion.ID),
+			Name: templateName(companion.MobTemplateID, strconv.Itoa(companion.MobTemplateID)),
+		})
+	}
+	return refs
+}
+
+func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
+	if user := users.GetByUserId(leaderUserID); user != nil && user.Character != nil && user.Character.Name != "" {
+		return user.Character.Name
+	}
+	return "leader"
 }
 
 const companyUsage = "Usage: company summon <mob-id-or-name> | company status | company dismiss <member|all>"
@@ -235,13 +262,19 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	if err != nil {
 		return "", err
 	}
+	if err := survival.EnsureCompanyMember(leaderUserID, companion.ID); err != nil {
+		m.registry.Dismiss(leaderUserID, companion.ID)
+		return "", err
+	}
 	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, templateID)
 	if err != nil {
+		survival.RemoveCompanyMember(leaderUserID, companion.ID)
 		m.registry.Dismiss(leaderUserID, companion.ID)
 		return "", err
 	}
 	if err := m.save(); err != nil {
 		m.runtime.Detach(leaderUserID, instanceID)
+		survival.RemoveCompanyMember(leaderUserID, companion.ID)
 		m.registry.Dismiss(leaderUserID, companion.ID)
 		return "", err
 	}
@@ -308,7 +341,12 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 	if !m.registry.Dismiss(leaderUserID, companion.ID) {
 		return "", fmt.Errorf("company: companion #%d is no longer in the company", companion.ID)
 	}
+	if err := survival.RemoveCompanyMember(leaderUserID, companion.ID); err != nil {
+		m.registry.Put(record)
+		return "", err
+	}
 	if err := m.save(); err != nil {
+		survival.EnsureCompanyMember(leaderUserID, companion.ID)
 		m.registry.Put(record)
 		return "", err
 	}
@@ -327,7 +365,14 @@ func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
 		return "No companions.", nil
 	}
 	count := m.registry.DismissAll(leaderUserID)
+	if err := survival.RemoveAllCompanyMembers(leaderUserID); err != nil {
+		m.registry.Put(record)
+		return "", err
+	}
 	if err := m.save(); err != nil {
+		for _, companion := range record.Companions {
+			survival.EnsureCompanyMember(leaderUserID, companion.ID)
+		}
 		m.registry.Put(record)
 		return "", err
 	}

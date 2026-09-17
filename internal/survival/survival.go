@@ -469,6 +469,61 @@ func CurrentRoster(leaderUserID int) []MemberRef {
 	return p.Roster(leaderUserID)
 }
 
+// Lifecycle synchronizes durable company roster changes with survival state.
+// It is implemented by modules/survival and registered during module init.
+// modules/company calls these functions after a committed roster change so the
+// dependency stays one-way through this package.
+type Lifecycle interface {
+	EnsureCompanyMember(leaderUserID, companionID int) error
+	RemoveCompanyMember(leaderUserID, companionID int) error
+	RemoveAllCompanyMembers(leaderUserID int) error
+}
+
+var (
+	lifecycleMu sync.RWMutex
+	lifecycle   Lifecycle
+)
+
+// SetLifecycle registers the active lifecycle synchronizer. Passing nil clears it.
+func SetLifecycle(l Lifecycle) {
+	lifecycleMu.Lock()
+	defer lifecycleMu.Unlock()
+	lifecycle = l
+}
+
+func currentLifecycle() Lifecycle {
+	lifecycleMu.RLock()
+	defer lifecycleMu.RUnlock()
+	return lifecycle
+}
+
+// EnsureCompanyMember notifies the registered lifecycle that a companion was
+// summoned. It is a no-op when no module is registered.
+func EnsureCompanyMember(leaderUserID, companionID int) error {
+	if l := currentLifecycle(); l != nil {
+		return l.EnsureCompanyMember(leaderUserID, companionID)
+	}
+	return nil
+}
+
+// RemoveCompanyMember notifies the registered lifecycle that a companion was
+// dismissed. It is a no-op when no module is registered.
+func RemoveCompanyMember(leaderUserID, companionID int) error {
+	if l := currentLifecycle(); l != nil {
+		return l.RemoveCompanyMember(leaderUserID, companionID)
+	}
+	return nil
+}
+
+// RemoveAllCompanyMembers notifies the registered lifecycle that every
+// companion was dismissed. It is a no-op when no module is registered.
+func RemoveAllCompanyMembers(leaderUserID int) error {
+	if l := currentLifecycle(); l != nil {
+		return l.RemoveAllCompanyMembers(leaderUserID)
+	}
+	return nil
+}
+
 // Provisioner applies a Benefit to a selected company member. It is
 // implemented by modules/survival and registered during module init.
 type Provisioner interface {

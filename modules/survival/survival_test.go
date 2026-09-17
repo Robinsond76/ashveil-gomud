@@ -392,6 +392,21 @@ func TestStatusCreatesLeaderRecordInMemoryOnly(t *testing.T) {
 	assert.Zero(t, m.store.(*fakeStore).saveCalls)
 }
 
+func TestModuleSatisfiesLifecycleSeam(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	domain.SetLifecycle(m)
+	t.Cleanup(func() { domain.SetLifecycle(nil) })
+
+	require.NoError(t, domain.EnsureCompanyMember(7, 1))
+	needs, ok := m.registry.NeedsFor(7, domain.CompanionMemberKey(1))
+	require.True(t, ok)
+	assert.Equal(t, domain.FullNeeds(), needs)
+
+	require.NoError(t, domain.RemoveAllCompanyMembers(7))
+	_, ok = m.registry.NeedsFor(7, domain.CompanionMemberKey(1))
+	assert.False(t, ok)
+}
+
 func TestUserCommandRendersStatus(t *testing.T) {
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
