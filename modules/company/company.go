@@ -349,6 +349,10 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 	if !ok {
 		return "", fmt.Errorf("company: no companion matches %q", selector)
 	}
+	snapshot, err := survival.SnapshotCompanyMember(leaderUserID, companion.ID)
+	if err != nil {
+		return "", err
+	}
 	if !m.registry.Dismiss(leaderUserID, companion.ID) {
 		return "", fmt.Errorf("company: companion #%d is no longer in the company", companion.ID)
 	}
@@ -357,8 +361,11 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 		return "", err
 	}
 	if err := m.save(); err != nil {
-		survival.EnsureCompanyMember(leaderUserID, companion.ID)
+		restoreErr := survival.RestoreCompanyMember(leaderUserID, companion.ID, snapshot)
 		m.registry.Put(record)
+		if restoreErr != nil {
+			return "", errors.Join(err, restoreErr)
+		}
 		return "", err
 	}
 	if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
@@ -375,16 +382,30 @@ func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
 	if !ok || len(record.Companions) == 0 {
 		return "No companions.", nil
 	}
+	snapshots := make(map[int]survival.MemberSnapshot, len(record.Companions))
+	for _, companion := range record.Companions {
+		snapshot, err := survival.SnapshotCompanyMember(leaderUserID, companion.ID)
+		if err != nil {
+			return "", err
+		}
+		snapshots[companion.ID] = snapshot
+	}
 	count := m.registry.DismissAll(leaderUserID)
 	if err := survival.RemoveAllCompanyMembers(leaderUserID); err != nil {
 		m.registry.Put(record)
 		return "", err
 	}
 	if err := m.save(); err != nil {
+		var restoreErr error
 		for _, companion := range record.Companions {
-			survival.EnsureCompanyMember(leaderUserID, companion.ID)
+			if err := survival.RestoreCompanyMember(leaderUserID, companion.ID, snapshots[companion.ID]); err != nil {
+				restoreErr = errors.Join(restoreErr, err)
+			}
 		}
 		m.registry.Put(record)
+		if restoreErr != nil {
+			return "", errors.Join(err, restoreErr)
+		}
 		return "", err
 	}
 	for _, companion := range record.Companions {
@@ -533,6 +554,27 @@ func (m *CompanyModule) load() {
 	}
 	m.registry = *loaded
 	m.loadErr = nil
+
+	// Survival loads before company (the plugin loader runs callbacks in
+	// reverse registration order), so the authoritative company roster is
+	// installed here and reconciled into survival in a single write. A failure
+	// blocks company mutations rather than allowing divergent persistence.
+	if err := survival.ReconcileCompanyRosters(m.rosterRefs()); err != nil {
+		m.loadErr = err
+		mudlog.Error("company: reconcile survival", "error", err)
+		return
+	}
+}
+
+// rosterRefs maps every loaded company record to its authoritative member
+// refs, including leaders with no companions, so stale survival companions are
+// pruned and current ones initialized.
+func (m *CompanyModule) rosterRefs() map[int][]survival.MemberRef {
+	rosters := make(map[int][]survival.MemberRef, len(m.registry.Companies))
+	for leaderUserID := range m.registry.Companies {
+		rosters[leaderUserID] = m.Roster(leaderUserID)
+	}
+	return rosters
 }
 
 func (m *CompanyModule) onPlayerSpawn(e events.Event) events.ListenerReturn {

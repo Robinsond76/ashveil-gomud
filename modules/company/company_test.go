@@ -14,6 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type fakeRestore struct {
+	leader    int
+	companion int
+	snapshot  survival.MemberSnapshot
+}
+
 type fakeLifecycle struct {
 	ensured      [][2]int
 	removed      [][2]int
@@ -21,21 +27,81 @@ type fakeLifecycle struct {
 	ensureErr    error
 	removeErr    error
 	removeAllErr error
+
+	needs        map[[2]int]survival.Needs
+	snapshotErr  error
+	restoreErr   error
+	restored     []fakeRestore
+	reconcileErr error
+	reconciled   []map[int][]survival.MemberRef
 }
 
 func (f *fakeLifecycle) EnsureCompanyMember(leader, companion int) error {
 	f.ensured = append(f.ensured, [2]int{leader, companion})
-	return f.ensureErr
+	if f.ensureErr != nil {
+		return f.ensureErr
+	}
+	if f.needs == nil {
+		f.needs = map[[2]int]survival.Needs{}
+	}
+	if _, ok := f.needs[[2]int{leader, companion}]; !ok {
+		f.needs[[2]int{leader, companion}] = survival.FullNeeds()
+	}
+	return nil
 }
 
 func (f *fakeLifecycle) RemoveCompanyMember(leader, companion int) error {
 	f.removed = append(f.removed, [2]int{leader, companion})
-	return f.removeErr
+	if f.removeErr != nil {
+		return f.removeErr
+	}
+	delete(f.needs, [2]int{leader, companion})
+	return nil
 }
 
 func (f *fakeLifecycle) RemoveAllCompanyMembers(leader int) error {
 	f.removedAll = append(f.removedAll, leader)
-	return f.removeAllErr
+	if f.removeAllErr != nil {
+		return f.removeAllErr
+	}
+	for key := range f.needs {
+		if key[0] == leader {
+			delete(f.needs, key)
+		}
+	}
+	return nil
+}
+
+func (f *fakeLifecycle) SnapshotCompanyMember(leader, companion int) (survival.MemberSnapshot, error) {
+	if f.snapshotErr != nil {
+		return survival.MemberSnapshot{}, f.snapshotErr
+	}
+	needs, ok := f.needs[[2]int{leader, companion}]
+	if !ok {
+		return survival.MemberSnapshot{}, nil
+	}
+	return survival.MemberSnapshot{Exists: true, Needs: needs}, nil
+}
+
+func (f *fakeLifecycle) RestoreCompanyMember(leader, companion int, snapshot survival.MemberSnapshot) error {
+	f.restored = append(f.restored, fakeRestore{leader: leader, companion: companion, snapshot: snapshot})
+	if f.restoreErr != nil {
+		return f.restoreErr
+	}
+	if f.needs == nil {
+		f.needs = map[[2]int]survival.Needs{}
+	}
+	if snapshot.Exists {
+		f.needs[[2]int{leader, companion}] = snapshot.Needs
+	} else {
+		delete(f.needs, [2]int{leader, companion})
+	}
+	return nil
+}
+
+func (f *fakeLifecycle) ReconcileCompanyRosters(rosters map[int][]survival.MemberRef) error {
+	f.reconciled = append(f.reconciled, rosters)
+	return f.reconcileErr
 }
 
 func useFakeLifecycle(t *testing.T, fake *fakeLifecycle) {
@@ -645,4 +711,104 @@ func TestCompanySaveFailureUndoesSurvivalEnsure(t *testing.T) {
 	require.ErrorIs(t, err, store.saveErr)
 	assert.Equal(t, [][2]int{{7, 1}}, fake.ensured)
 	assert.Equal(t, [][2]int{{7, 1}}, fake.removed, "a failed company save must undo the survival record")
+}
+
+func TestDismissCompanySaveFailureRestoresExactSurvivalNeeds(t *testing.T) {
+	exact := survival.Needs{Hunger: 12, Thirst: 34, Fatigue: 56}
+	fake := &fakeLifecycle{needs: map[[2]int]survival.Needs{{7, 1}: exact}}
+	useFakeLifecycle(t, fake)
+	runtime := &fakeRuntime{live: map[int]bool{101: true}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}}, NextCompanionID: 2},
+	}}, runtime)
+	module.setInstance(7, 1, 101)
+	store := module.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+
+	_, err := module.dismiss(7, "#1")
+	require.ErrorIs(t, err, store.saveErr)
+	assert.Equal(t, exact, fake.needs[[2]int{7, 1}], "rollback must restore exact needs, not defaults")
+	assert.Equal(t, []fakeRestore{{leader: 7, companion: 1, snapshot: survival.MemberSnapshot{Exists: true, Needs: exact}}}, fake.restored)
+	assert.Equal(t, 0, runtime.detachCalls)
+	record, ok := module.registry.Get(7)
+	require.True(t, ok)
+	require.Len(t, record.Companions, 1)
+	assert.Equal(t, 1, record.Companions[0].ID)
+}
+
+func TestDismissAllCompanySaveFailureRestoresExactSurvivalNeeds(t *testing.T) {
+	first := survival.Needs{Hunger: 12, Thirst: 34, Fatigue: 56}
+	second := survival.Needs{Hunger: 65, Thirst: 43, Fatigue: 21}
+	fake := &fakeLifecycle{needs: map[[2]int]survival.Needs{{7, 1}: first, {7, 2}: second}}
+	useFakeLifecycle(t, fake)
+	runtime := &fakeRuntime{live: map[int]bool{91: true, 92: true}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}, NextCompanionID: 3},
+	}}, runtime)
+	module.setInstance(7, 1, 91)
+	module.setInstance(7, 2, 92)
+	store := module.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+
+	_, err := module.dismiss(7, "all")
+	require.ErrorIs(t, err, store.saveErr)
+	assert.Equal(t, first, fake.needs[[2]int{7, 1}])
+	assert.Equal(t, second, fake.needs[[2]int{7, 2}])
+	assert.Equal(t, 0, runtime.detachCalls)
+	record, ok := module.registry.Get(7)
+	require.True(t, ok)
+	assert.Len(t, record.Companions, 2)
+}
+
+func TestDismissReportsJoinedErrorWhenCompensationFails(t *testing.T) {
+	restoreErr := errors.New("survival restore failed")
+	fake := &fakeLifecycle{
+		needs:      map[[2]int]survival.Needs{{7, 1}: {Hunger: 12, Thirst: 34, Fatigue: 56}},
+		restoreErr: restoreErr,
+	}
+	useFakeLifecycle(t, fake)
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}}, NextCompanionID: 2},
+	}}, &fakeRuntime{})
+	store := module.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+
+	_, err := module.dismiss(7, "#1")
+	require.ErrorIs(t, err, store.saveErr)
+	assert.ErrorIs(t, err, restoreErr, "a failed compensation must surface alongside the save failure")
+}
+
+func TestLoadReconcilesSurvivalRosters(t *testing.T) {
+	fake := &fakeLifecycle{}
+	useFakeLifecycle(t, fake)
+	module := newTestModule(*domain.NewRegistry(), &fakeRuntime{})
+	store := module.store.(*fakeStore)
+	store.saved = domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 3, MobTemplateID: 58}}, NextCompanionID: 4},
+	}}
+
+	module.load()
+	require.NoError(t, module.loadErr)
+	require.Len(t, fake.reconciled, 1)
+	refs := fake.reconciled[0][7]
+	require.Len(t, refs, 2)
+	assert.Equal(t, survival.LeaderMemberKey, refs[0].Key)
+	assert.Equal(t, survival.CompanionMemberKey(3), refs[1].Key)
+}
+
+func TestLoadReconcileFailureBlocksMutations(t *testing.T) {
+	reconcileErr := errors.New("survival unavailable")
+	fake := &fakeLifecycle{reconcileErr: reconcileErr}
+	useFakeLifecycle(t, fake)
+	module := newTestModule(*domain.NewRegistry(), &fakeRuntime{})
+	store := module.store.(*fakeStore)
+	store.saved = domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}}, NextCompanionID: 2},
+	}}
+
+	module.load()
+	require.ErrorIs(t, module.loadErr, reconcileErr)
+
+	_, err := module.summon(7, 12, "58")
+	assert.ErrorIs(t, err, reconcileErr, "a failed reconciliation must block company mutations")
 }
