@@ -217,6 +217,48 @@ func TestProvisionRejectsUnknownAndAmbiguousCompanions(t *testing.T) {
 	assert.Equal(t, domain.CompanionMemberKey(1), result.Member, "an exact name wins over a substring match")
 }
 
+func TestNumericSelectorRequiresCurrentRosterMembership(t *testing.T) {
+	m := newTestModule(domain.Registry{Leaders: map[int]map[domain.MemberKey]domain.Needs{
+		7: {domain.CompanionMemberKey(2): {Hunger: 1, Thirst: 1, Fatigue: 1}},
+	}})
+	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{
+		7: {
+			{Key: domain.LeaderMemberKey, Name: "Hero"},
+			{Key: domain.CompanionMemberKey(3), Name: "Scout"},
+		},
+	}})
+
+	assert.False(t, m.IsMemberSelector(7, "#2"), "a stale numeric key is not a current selector")
+	_, err := m.Provision(7, "#2", domain.Benefit{Nutrition: 10})
+	assert.ErrorIs(t, err, domain.ErrUnknownMember)
+	assert.Equal(t, domain.Needs{Hunger: 1, Thirst: 1, Fatigue: 1}, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(2)), "a rejected stale key must not change state")
+
+	result, err := m.Provision(7, "#3", domain.Benefit{Nutrition: 10})
+	require.NoError(t, err)
+	assert.Equal(t, domain.CompanionMemberKey(3), result.Member)
+	assert.Equal(t, domain.FullNeeds(), result.Needs, "a current member with no stored state starts at full needs")
+	assert.Equal(t, domain.FullNeeds(), m.registry.MustNeedsFor(7, domain.CompanionMemberKey(3)))
+	assert.Equal(t, 1, m.store.(*fakeStore).saveCalls)
+}
+
+func TestProvisionInitializesMissingCurrentMemberState(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{
+		7: {
+			{Key: domain.LeaderMemberKey, Name: "Hero"},
+			{Key: domain.CompanionMemberKey(3), Name: "Scout"},
+		},
+	}})
+
+	result, err := m.Provision(7, "Scout", domain.Benefit{Nutrition: 40})
+	require.NoError(t, err)
+	assert.Equal(t, domain.CompanionMemberKey(3), result.Member)
+	assert.Equal(t, 100, result.Needs.Hunger, "a roster member without persisted state must still be targetable")
+	needs, ok := m.registry.NeedsFor(7, domain.CompanionMemberKey(3))
+	require.True(t, ok, "provisioning a current member must create default state")
+	assert.Equal(t, domain.FullNeeds(), needs)
+}
+
 func TestIsMemberSelectorMatchesOnlyCurrentMembers(t *testing.T) {
 	m := newTestModule(*domain.NewRegistry())
 	require.NoError(t, m.registry.Ensure(7, domain.CompanionMemberKey(2)))

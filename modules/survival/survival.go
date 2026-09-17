@@ -355,7 +355,10 @@ func (m *SurvivalModule) applyBenefit(leaderUserID int, key domain.MemberKey, na
 }
 
 // resolveMember maps a selector to a current member. The leader is always
-// valid; companions are valid only while the roster projection holds them.
+// valid; companions are valid only while the authoritative roster holds them.
+// Persisted survival state never authorizes a target, so a stale record cannot
+// name a dismissed companion and a current companion with no record can still
+// be targeted.
 func (m *SurvivalModule) resolveMember(leaderUserID int, selector string) (domain.MemberKey, string, error) {
 	if leaderUserID <= 0 {
 		return "", "", domain.ErrInvalidMember
@@ -366,19 +369,17 @@ func (m *SurvivalModule) resolveMember(leaderUserID int, selector string) (domai
 	}
 	if id, ok := parseCompanionSelector(s); ok {
 		key := domain.CompanionMemberKey(id)
-		if !m.hasMember(leaderUserID, key) {
+		ref, ok := currentRosterMember(leaderUserID, key)
+		if !ok {
 			return "", "", domain.ErrUnknownMember
 		}
-		return key, m.companionName(leaderUserID, id), nil
+		name := ref.Name
+		if name == "" {
+			name = m.companionName(leaderUserID, id)
+		}
+		return key, name, nil
 	}
-	key, name, err := matchCompanionName(domain.CurrentRoster(leaderUserID), s)
-	if err != nil {
-		return "", "", err
-	}
-	if !m.hasMember(leaderUserID, key) {
-		return "", "", domain.ErrUnknownMember
-	}
-	return key, name, nil
+	return matchCompanionName(domain.CurrentRoster(leaderUserID), s)
 }
 
 // IsMemberSelector reports whether selector names the leader or a current
@@ -396,13 +397,23 @@ func (m *SurvivalModule) IsMemberSelector(leaderUserID int, selector string) boo
 		return true
 	}
 	if id, ok := parseCompanionSelector(s); ok {
-		return m.hasMember(leaderUserID, domain.CompanionMemberKey(id))
+		_, ok := currentRosterMember(leaderUserID, domain.CompanionMemberKey(id))
+		return ok
 	}
-	key, _, err := matchCompanionName(domain.CurrentRoster(leaderUserID), s)
-	if err != nil {
-		return false
+	_, _, err := matchCompanionName(domain.CurrentRoster(leaderUserID), s)
+	return err == nil
+}
+
+// currentRosterMember resolves a member key against the authoritative company
+// roster. It is the single authorization source for companion selectors, so
+// persisted survival records can never authorize a dismissed companion.
+func currentRosterMember(leaderUserID int, key domain.MemberKey) (domain.MemberRef, bool) {
+	for _, ref := range domain.CurrentRoster(leaderUserID) {
+		if ref.Key == key {
+			return ref, true
+		}
 	}
-	return m.hasMember(leaderUserID, key)
+	return domain.MemberRef{}, false
 }
 
 func parseCompanionSelector(selector string) (int, bool) {
@@ -435,11 +446,6 @@ func matchCompanionName(roster []domain.MemberRef, selector string) (domain.Memb
 		return "", "", domain.ErrAmbiguousMember
 	}
 	return "", "", domain.ErrUnknownMember
-}
-
-func (m *SurvivalModule) hasMember(leaderUserID int, key domain.MemberKey) bool {
-	_, ok := m.registry.NeedsFor(leaderUserID, key)
-	return ok
 }
 
 func (m *SurvivalModule) leaderName(leaderUserID int) string {

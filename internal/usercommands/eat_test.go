@@ -226,6 +226,18 @@ func TestEatTreatsNonMemberSuffixAsLegacyItemName(t *testing.T) {
 	assert.Equal(t, 1, user.Character.Items[0].Uses)
 }
 
+func TestEatTreatsStaleNumericSuffixAsItemName(t *testing.T) {
+	fake := &fakeProvisioner{result: survival.ProvisionResult{Member: survival.LeaderMemberKey, Name: "Tester"}}
+	useFakeProvisioner(t, fake)
+	user := userWithItem(t, 17, edibleSpec("ration 2", 20, 0, 2))
+
+	_, err := Eat("ration 2", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 1, fake.calls)
+	assert.Equal(t, "", fake.lastSelector, "a stale numeric suffix must not be stripped as a target")
+	assert.Equal(t, 1, user.Character.Items[0].Uses)
+}
+
 func TestEatReportsMissingItemWhenSuffixIsNotAMember(t *testing.T) {
 	fake := &fakeProvisioner{selectors: memberSelectors("#2")}
 	useFakeProvisioner(t, fake)

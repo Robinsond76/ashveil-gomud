@@ -122,6 +122,18 @@ func TestDrinkKeepsNumberedItemMatchWithValidTarget(t *testing.T) {
 	assert.Equal(t, 4, user.Character.Items[1].Uses, "the numbered match must be consumed")
 }
 
+func TestDrinkTreatsStaleNumericSuffixAsItemName(t *testing.T) {
+	fake := &fakeProvisioner{result: survival.ProvisionResult{Member: survival.LeaderMemberKey, Name: "Tester"}}
+	useFakeProvisioner(t, fake)
+	user := userWithItem(t, 17, drinkableSpec("waterskin 2", 40, 5))
+
+	_, err := Drink("waterskin 2", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 1, fake.calls)
+	assert.Equal(t, "", fake.lastSelector, "a stale numeric suffix must not be stripped as a target")
+	assert.Equal(t, 4, user.Character.Items[0].Uses)
+}
+
 func TestDrinkRejectsNonDrinkableWithoutProvisioning(t *testing.T) {
 	fake := &fakeProvisioner{}
 	useFakeProvisioner(t, fake)
