@@ -32,7 +32,7 @@
 - Passive drain while idle or offline.
 - Timers, `NewTurn` listeners, global clock mutations, and countdown-specific travel logic.
 - Combat, health, action-point, room-movement, or travel-speed penalties.
-- Camp/rest commands, terrain, weather, injuries, mounts, cargo capacity, weight, and auto-provisioning.
+- Camp/rest commands, sleeping, terrain, weather, injuries, mounts, cargo capacity, weight, and auto-provisioning.
 - Companion inventories or a second inventory model.
 - New food/drink content beyond the metadata needed to prove the integration path.
 
@@ -137,6 +137,8 @@ The leader needs state even with no companions and no formation record. Its firs
 
 ## Future Cargo Integration
 
+Phase 7 will introduce camp, rest, and sleep commands. Those commands will use real elapsed server time and call `ApplyRestRecovery`; they must not instantly restore fatigue or advance the shared GoMud clock. Camp eligibility, safe locations, sleep duration, and interruptions are Phase 7 rules, not Phase 4 rules.
+
 Phase 9 will introduce the company-owned shared cargo inventory, item capacity/weight rules, and provisioning policy. It may select an eligible ration or water item automatically when a member enters a configured low band. It must announce consumption, respect an opt-in policy, and use the same `ConsumeFood` or `ConsumeWater` service operation. No Phase 4 type assumes a backpack location, so cargo can become an alternate item source without changing survival semantics.
 
 ## Acceptance Criteria
@@ -157,5 +159,5 @@ Phase 9 will introduce the company-owned shared cargo inventory, item capacity/w
 - Native `eat`/`drink` mutate item instances, buffs, and item-ownership events. The implementation must introduce a narrow, failure-aware survival adapter instead of reimplementing those command paths in a module.
 - Company and survival persistence are separate plugin writes. Phase 4 must define and test rollback behavior around summon/dismiss integration rather than claim cross-file atomicity that GoMud does not provide.
 - Phase 5 travel will be the first normal caller of `ApplyExertion`; it must accrue costs by real progress, not an upfront estimate or world-time mutation.
-- Phase 7 camping will call `ApplyRestRecovery`; it must use real elapsed time/server state, not local time skipping.
+- Phase 7 camping/rest/sleep will call `ApplyRestRecovery`; it must use real elapsed time/server state, not local time skipping or instant restoration.
 - Phase 9 cargo owns all automatic supply selection and policy. Phase 4 remains manual leader-backpack provisioning.
