@@ -80,7 +80,15 @@ func (m *CompanyModule) resolveMemberKey(leaderUserID int, selector string) (dom
 		if err != nil {
 			return "", fmt.Errorf("company: invalid companion id %q", selector)
 		}
-		return domain.CompanionMemberKey(id), nil
+		record, ok := m.registry.Get(leaderUserID)
+		if ok {
+			for _, companion := range record.Companions {
+				if companion.ID == id {
+					return domain.CompanionMemberKey(id), nil
+				}
+			}
+		}
+		return "", fmt.Errorf("company: no company member matches %q", selector)
 	}
 	record, ok := m.registry.Get(leaderUserID)
 	if !ok {
@@ -91,6 +99,18 @@ func (m *CompanyModule) resolveMemberKey(leaderUserID int, selector string) (dom
 		return "", fmt.Errorf("company: no company member matches %q", selector)
 	}
 	return domain.CompanionMemberKey(companion.ID), nil
+}
+
+func (m *CompanyModule) persistFormation(leaderUserID int, before domain.Record, existed bool) error {
+	if err := m.save(); err != nil {
+		if existed {
+			m.registry.Put(before)
+		} else {
+			m.registry.Put(domain.Record{LeaderUserID: leaderUserID})
+		}
+		return err
+	}
+	return nil
 }
 
 func parseSlot(raw string) (int, error) {
@@ -132,12 +152,7 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 		if err := m.registry.PlaceMember(user.UserId, key, row-1, col-1); err != nil {
 			return true, err
 		}
-		if err := m.save(); err != nil {
-			if existed {
-				m.registry.Put(before)
-			} else {
-				m.registry.Put(domain.Record{LeaderUserID: user.UserId})
-			}
+		if err := m.persistFormation(user.UserId, before, existed); err != nil {
 			return true, err
 		}
 		user.SendText(fmt.Sprintf("Placed %s at row %d, column %d.", m.memberName(user.UserId, key), row, col))
@@ -154,12 +169,11 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 		if err != nil {
 			return true, err
 		}
-		before, _ := m.registry.Get(user.UserId)
+		before, existed := m.registry.Get(user.UserId)
 		if err := m.registry.SwapMembers(user.UserId, a, b); err != nil {
 			return true, err
 		}
-		if err := m.save(); err != nil {
-			m.registry.Put(before)
+		if err := m.persistFormation(user.UserId, before, existed); err != nil {
 			return true, err
 		}
 		user.SendText("Formation positions swapped.")
@@ -172,12 +186,11 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 		if err != nil {
 			return true, err
 		}
-		before, _ := m.registry.Get(user.UserId)
+		before, existed := m.registry.Get(user.UserId)
 		if err := m.registry.ClearMember(user.UserId, key); err != nil {
 			return true, err
 		}
-		if err := m.save(); err != nil {
-			m.registry.Put(before)
+		if err := m.persistFormation(user.UserId, before, existed); err != nil {
 			return true, err
 		}
 		user.SendText(fmt.Sprintf("Removed %s from the formation.", m.memberName(user.UserId, key)))

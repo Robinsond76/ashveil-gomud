@@ -148,6 +148,40 @@ func TestFormationCommandSaveFailureRollsBackNewRecord(t *testing.T) {
 	assert.False(t, ok, "a failed first move must not leave a company record")
 }
 
+func TestFormationCommandSwapSaveFailureRollsBack(t *testing.T) {
+	module, store := formationModule(t)
+	user := users.NewUserRecord(7, 1)
+	require.NoError(t, module.registry.PlaceMember(7, domain.LeaderMemberKey, 0, 0))
+	require.NoError(t, module.registry.PlaceMember(7, domain.CompanionMemberKey(1), 2, 2))
+	before := cloneRegistry(module.registry)
+
+	store.saveErr = errors.New("disk full")
+	_, err := module.formationCommand("swap leader #1", user, nil, 0)
+	assert.ErrorIs(t, err, store.saveErr)
+	assert.Equal(t, before, module.registry, "failed swap must not persist")
+}
+
+func TestFormationCommandClearSaveFailureRollsBack(t *testing.T) {
+	module, store := formationModule(t)
+	user := users.NewUserRecord(7, 1)
+	require.NoError(t, module.registry.PlaceMember(7, domain.LeaderMemberKey, 0, 0))
+	before := cloneRegistry(module.registry)
+
+	store.saveErr = errors.New("disk full")
+	_, err := module.formationCommand("clear leader", user, nil, 0)
+	assert.ErrorIs(t, err, store.saveErr)
+	assert.Equal(t, before, module.registry, "failed clear must not persist")
+}
+
+func TestFormationCommandRejectsUnknownCompanionID(t *testing.T) {
+	module, store := formationModule(t)
+	user := users.NewUserRecord(7, 1)
+	_, err := module.formationCommand("move #9 2 2", user, nil, 0)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no company member matches")
+	assert.Equal(t, 0, store.saveCalls)
+}
+
 func TestFormationCommandRendersGridAndUnplaced(t *testing.T) {
 	module, _ := formationModule(t)
 	require.NoError(t, module.registry.PlaceMember(7, domain.LeaderMemberKey, 0, 0))
