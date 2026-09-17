@@ -37,6 +37,12 @@ instead of duplicating them.
 
 ## Recent work log
 
+### Phase 3 invariant corrections (2026-09-17)
+
+- **What:** Hard-capped companies at four companions plus their leader, and normalized duplicate persisted formation occupants by keeping the first row-major cell.
+- **Why:** Restores Phase 3’s five-character cap and one-cell-per-member invariants even when module configuration or stored YAML is invalid.
+- **Verification:** `make generate`, `make validate`, and `go test -race ./...` passed.
+
 ### Phase 3 — Company roster + 3×3 formation (complete, 2026-09-17)
 
 - **What:** Expanded the company from one companion to a leader plus up to four
