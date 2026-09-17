@@ -6,16 +6,16 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-17
-- **Branch:** `master`
-- **HEAD:** `54305926 docs(company): mark companion slice plan complete`
+- **Branch:** `feature/company-formation-slice` (off `main-deepseek`, off `master`)
+- **HEAD:** `39d993f2 docs(company): document roster and formation rules`
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is 14 commits ahead of `origin/master`; not pushed.
+- **Origin sync:** `master` is 14 commits ahead of `origin/master`; `main-deepseek` adds the project-status doc. Nothing pushed.
 
 ## Current position
 
-- **Completed:** Phase 0–1 (fork, baseline, integration map) and Phase 2 (company
-  companion slice).
-- **Next:** Phase 3 — persistent 3×3 formation state.
+- **Completed:** Phase 0–1 (fork, baseline, integration map), Phase 2 (company
+  companion slice), and Phase 3 (company roster + 3×3 formation).
+- **Next:** Phase 4 — survival state (hunger/thirst/fatigue).
 
 ## Phase progress
 
@@ -24,7 +24,7 @@ instead of duplicating them.
 | 0 | Fork and bootstrap GoMud baseline | Complete |
 | 1 | GoMud integration map and handoff docs | Complete |
 | 2 | Minimal company slice (one persistent companion) | Complete |
-| 3 | 3×3 formation state | Not started |
+| 3 | Company roster (cap 5) + 3×3 formation state | Complete |
 | 4 | Survival state (hunger/thirst/fatigue) | Not started |
 | 5 | Terrain and travel profiles | Not started |
 | 6 | Travel interruptions | Not started |
@@ -36,6 +36,29 @@ instead of duplicating them.
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 3 — Company roster + 3×3 formation (complete, 2026-09-17)
+
+- **What:** Expanded the company from one companion to a leader plus up to four
+  companions (five-member cap) with stable companion IDs, and added a persistent,
+  validated 3×3 tactical formation with `formation move|swap|clear` commands.
+  `internal/company` owns the pure roster/formation model; `modules/company` owns
+  multi-instance runtime tracking, legacy-record migration, persistence, and
+  commands.
+- **Why:** Formation is Ashveil's identity feature and needs a multi-member roster
+  to be meaningful. Reused GoMud charm/follow, mobs, events, users, and module
+  persistence; native `internal/parties` was left untouched.
+- **Step completed:** Handoff Phase 3 ("3×3 Formation State") plus the deferred
+  five-member company cap.
+- **Key commits:** `8bf9d2ab` (formation grid), `159ec87b`+`e462c258` (roster and
+  snapshot fix), `80cb28ba`+`3fb4eb43` (multi-instance runtime), `fc0e1987`+
+  `3c963a1d` (legacy migration), `ed60995d`+`8d52b0c9`+`795a9222` (formation
+  commands and rollback fixes), `39d993f2` (config + module docs).
+- **Verification:** `go test ./internal/company ./modules/company` (72 tests),
+  `make validate`, `make generate` (no wiring change), and `go test -race ./...`
+  (1429 tests / 65 packages) pass. Legacy single-`companion` records migrate to
+  `companions[0]` with ID 1; formation cells for dismissed companions are pruned.
+- **Config:** `MaxCompanions: 4` in `modules/company/files/data-overlays/config.yaml`.
 
 ### Phase 2 — Company companion slice (complete, 2026-09-17)
 
@@ -77,10 +100,13 @@ instead of duplicating them.
 - Plugin `WriteStruct`/`WriteBytes` persistence is a direct (non-atomic) file
   write. Command state rolls back on failure, but a partial low-level write
   cannot be recovered.
-- Live server acceptance has not been re-run on the final Phase 2 fix commit;
-  native integration tests cover the lifecycle instead.
-- Deferred by design: recruitment economics, five-member company cap, formation,
-  human company members, equipment, injuries, AI orders, death rules, and
+- Live server acceptance has not been run for Phase 3; unit/race tests cover the
+  roster, formation, migration, and command behavior.
+- Company/formation state is process-local with no mutex, matching the existing
+  event-loop dispatch assumption; revisit if command dispatch moves off the main
+  loop.
+- Deferred by design: recruitment economics, companion custom names, equipment,
+  injuries, AI orders, death/permadeath rules, formation combat effects, and
   travel/camp integration.
 
 ## Key documents
