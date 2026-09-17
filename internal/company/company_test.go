@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func allowed58() map[int]struct{} { return map[int]struct{}{58: {}} }
@@ -87,13 +88,72 @@ func TestRegistryDismissLastCompanionKeepsLeaderPlacement(t *testing.T) {
 	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(2, 1))
 }
 
-func TestRegistryDismissLastCompanionRemovesEmptyRecord(t *testing.T) {
+func TestRegistryDismissLastCompanionKeepsHighWaterMark(t *testing.T) {
 	registry := company.NewRegistry()
 	first, err := registry.Summon(7, 58, allowed58(), 4)
 	require.NoError(t, err)
 	require.True(t, registry.Dismiss(7, first.ID))
-	_, ok := registry.Get(7)
-	assert.False(t, ok)
+	record, ok := registry.Get(7)
+	require.True(t, ok, "an empty record must persist the companion-ID high-water mark")
+	assert.Empty(t, record.Companions)
+	assert.Equal(t, 2, record.NextCompanionID)
+}
+
+func TestRegistryNeverReusesDismissedHighestCompanionID(t *testing.T) {
+	r := company.NewRegistry()
+	_, err := r.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	second, err := r.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	require.True(t, r.Dismiss(7, second.ID))
+
+	replacement, err := r.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	assert.Equal(t, 3, replacement.ID)
+}
+
+func TestRegistryNeverReusesIDsAfterDismissAll(t *testing.T) {
+	r := company.NewRegistry()
+	_, err := r.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	_, err = r.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	assert.Equal(t, 2, r.DismissAll(7))
+
+	replacement, err := r.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	assert.Equal(t, 3, replacement.ID)
+}
+
+func TestRegistryHighWaterMarkSurvivesYAMLRoundTrip(t *testing.T) {
+	r := company.NewRegistry()
+	_, err := r.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	_, err = r.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	require.Equal(t, 2, r.DismissAll(7))
+
+	encoded, err := yaml.Marshal(r)
+	require.NoError(t, err)
+
+	var reloaded company.Registry
+	require.NoError(t, yaml.Unmarshal(encoded, &reloaded))
+	record, ok := reloaded.Get(7)
+	require.True(t, ok)
+	assert.Empty(t, record.Companions)
+	assert.Equal(t, 3, record.NextCompanionID)
+
+	replacement, err := reloaded.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	assert.Equal(t, 3, replacement.ID)
+}
+
+func TestRegistryPutPreservesExplicitHighWaterMark(t *testing.T) {
+	registry := company.NewRegistry()
+	registry.Put(company.Record{LeaderUserID: 7, NextCompanionID: 9})
+	record, ok := registry.Get(7)
+	require.True(t, ok)
+	assert.Equal(t, 9, record.NextCompanionID)
 }
 
 func TestRegistryDismissAllKeepsLeaderPlacement(t *testing.T) {

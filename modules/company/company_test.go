@@ -218,8 +218,10 @@ func TestCompanyDismissClearsSavedAndLiveState(t *testing.T) {
 	module.setInstance(7, 1, 101)
 	_, err := module.dismiss(7, "1")
 	require.NoError(t, err)
-	_, saved := module.registry.Get(7)
-	assert.False(t, saved)
+	record, saved := module.registry.Get(7)
+	require.True(t, saved, "the companion-ID high-water mark must persist")
+	assert.Empty(t, record.Companions)
+	assert.Equal(t, 2, record.NextCompanionID)
 	assert.Empty(t, module.instances)
 }
 
@@ -241,12 +243,14 @@ func TestCompanyDismissSkipsStaleTrackedInstance(t *testing.T) {
 
 	_, err := module.dismiss(7, "1")
 	require.NoError(t, err)
-	_, saved := module.registry.Get(7)
-	assert.False(t, saved)
+	record, saved := module.registry.Get(7)
+	require.True(t, saved, "the companion-ID high-water mark must persist")
+	assert.Empty(t, record.Companions)
 	assert.Empty(t, module.instances)
 	assert.Equal(t, 0, runtime.detachCalls)
-	_, saved = store.saved.Get(7)
-	assert.False(t, saved)
+	savedRecord, saved := store.saved.Get(7)
+	require.True(t, saved)
+	assert.Empty(t, savedRecord.Companions)
 	assert.Equal(t, 1, store.saveCalls)
 }
 
@@ -475,7 +479,7 @@ func TestDismissAllCompanionsDetachesEveryInstance(t *testing.T) {
 func TestDismissAllSaveFailureRollsBack(t *testing.T) {
 	runtime := &fakeRuntime{live: map[int]bool{91: true, 92: true}}
 	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
-		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}},
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}, NextCompanionID: 3},
 	}}, runtime)
 	module.setInstance(7, 1, 91)
 	module.setInstance(7, 2, 92)
@@ -583,7 +587,7 @@ func TestCompanyDismissRollsBackWhenSurvivalSyncFails(t *testing.T) {
 	useFakeLifecycle(t, fake)
 	runtime := &fakeRuntime{live: map[int]bool{101: true}}
 	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
-		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}}},
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}}, NextCompanionID: 2},
 	}}, runtime)
 	module.setInstance(7, 1, 101)
 	before := cloneRegistry(module.registry)
@@ -618,7 +622,7 @@ func TestCompanyDismissAllRollsBackWhenSurvivalSyncFails(t *testing.T) {
 	useFakeLifecycle(t, fake)
 	runtime := &fakeRuntime{live: map[int]bool{91: true, 92: true}}
 	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
-		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}},
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}, NextCompanionID: 3},
 	}}, runtime)
 	module.setInstance(7, 1, 91)
 	module.setInstance(7, 2, 92)

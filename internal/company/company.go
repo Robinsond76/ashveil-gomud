@@ -30,9 +30,10 @@ type Companion struct {
 }
 
 type Record struct {
-	LeaderUserID int         `yaml:"leader_user_id"`
-	Companions   []Companion `yaml:"companions"`
-	Formation    Formation   `yaml:"formation"`
+	LeaderUserID    int         `yaml:"leader_user_id"`
+	Companions      []Companion `yaml:"companions"`
+	Formation       Formation   `yaml:"formation"`
+	NextCompanionID int         `yaml:"next_companion_id,omitempty"`
 }
 
 type Registry struct {
@@ -55,14 +56,17 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	return record, true
 }
 
-// Put stores a record after pruning stale formation cells. A record with no
-// companions and an empty formation is removed entirely.
+// Put stores a record after pruning stale formation cells and normalizing the
+// next companion ID. A record with no companions and an empty formation is
+// removed entirely unless it carries a companion-ID high-water mark above 1,
+// which must survive dismissal so IDs are never reused.
 func (r *Registry) Put(record Record) {
 	if r.Companies == nil {
 		r.Companies = make(map[int]Record)
 	}
+	record.NextCompanionID = normalizeNextCompanionID(record)
 	record.Formation.Prune(validMemberKeys(record))
-	if len(record.Companions) == 0 && record.Formation.empty() {
+	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 {
 		delete(r.Companies, record.LeaderUserID)
 		return
 	}
@@ -86,7 +90,9 @@ func (r *Registry) Summon(leaderUserID, mobTemplateID int, allowed map[int]struc
 	if len(record.Companions) >= maxCompanions {
 		return Companion{}, ErrCompanyFull
 	}
-	companion := Companion{ID: nextCompanionID(record), MobTemplateID: mobTemplateID}
+	record.NextCompanionID = normalizeNextCompanionID(record)
+	companion := Companion{ID: record.NextCompanionID, MobTemplateID: mobTemplateID}
+	record.NextCompanionID++
 	record.Companions = append(record.Companions, companion)
 	r.Put(record)
 	return companion, nil
@@ -108,7 +114,13 @@ func (r *Registry) Dismiss(leaderUserID, companionID int) bool {
 	if idx < 0 {
 		return false
 	}
+	if companionID >= record.NextCompanionID {
+		record.NextCompanionID = companionID + 1
+	}
 	record.Companions = append(record.Companions[:idx], record.Companions[idx+1:]...)
+	if len(record.Companions) == 0 {
+		record.Companions = nil
+	}
 	record.Formation.Clear(CompanionMemberKey(companionID))
 	r.Put(record)
 	return true
@@ -123,6 +135,9 @@ func (r *Registry) DismissAll(leaderUserID int) int {
 	}
 	count := len(record.Companions)
 	for _, c := range record.Companions {
+		if c.ID >= record.NextCompanionID {
+			record.NextCompanionID = c.ID + 1
+		}
 		record.Formation.Clear(CompanionMemberKey(c.ID))
 	}
 	record.Companions = nil
@@ -181,14 +196,20 @@ func (r *Registry) ClearMember(leaderUserID int, key MemberKey) error {
 	return nil
 }
 
-func nextCompanionID(record Record) int {
-	maxID := 0
+// normalizeNextCompanionID returns the durable next companion ID: at least 1
+// and strictly greater than every companion currently in the record. The
+// stored high-water mark is never lowered.
+func normalizeNextCompanionID(record Record) int {
+	next := record.NextCompanionID
+	if next < 1 {
+		next = 1
+	}
 	for _, c := range record.Companions {
-		if c.ID > maxID {
-			maxID = c.ID
+		if c.ID >= next {
+			next = c.ID + 1
 		}
 	}
-	return maxID + 1
+	return next
 }
 
 func validMemberKeys(record Record) map[MemberKey]bool {

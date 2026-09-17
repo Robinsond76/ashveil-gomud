@@ -61,6 +61,37 @@ func TestDecodeCompaniesPreservesNonzeroLegacyID(t *testing.T) {
 	assert.Equal(t, 5, record.Companions[0].ID)
 }
 
+func TestDecodeCompaniesAssignsNextCompanionIDAfterLegacyLoad(t *testing.T) {
+	data := []byte("companies:\n  2:\n    leader_user_id: 2\n    companions:\n      - id: 3\n        mob_template_id: 58\n      - id: 7\n        mob_template_id: 58\n")
+	registry := domain.NewRegistry()
+	require.NoError(t, decodeCompanies(data, registry))
+
+	record, ok := registry.Get(2)
+	require.True(t, ok)
+	assert.Equal(t, 8, record.NextCompanionID, "legacy data without the field must resume above the highest ID")
+}
+
+func TestDecodeCompaniesReadsPersistedNextCompanionID(t *testing.T) {
+	data := []byte("companies:\n  2:\n    leader_user_id: 2\n    companions:\n      - id: 1\n        mob_template_id: 58\n    next_companion_id: 6\n")
+	registry := domain.NewRegistry()
+	require.NoError(t, decodeCompanies(data, registry))
+
+	record, ok := registry.Get(2)
+	require.True(t, ok)
+	assert.Equal(t, 6, record.NextCompanionID)
+}
+
+func TestDecodeCompaniesKeepsEmptyHighWaterMarkRecord(t *testing.T) {
+	data := []byte("companies:\n  2:\n    leader_user_id: 2\n    next_companion_id: 5\n")
+	registry := domain.NewRegistry()
+	require.NoError(t, decodeCompanies(data, registry))
+
+	record, ok := registry.Get(2)
+	require.True(t, ok)
+	assert.Empty(t, record.Companions)
+	assert.Equal(t, 5, record.NextCompanionID)
+}
+
 func TestDecodeCompaniesPrefersRosterOverLegacyCompanion(t *testing.T) {
 	data := []byte("companies:\n  2:\n    leader_user_id: 2\n    companions:\n      - id: 1\n        mob_template_id: 58\n      - id: 2\n        mob_template_id: 59\n    companion:\n      id: 9\n      mob_template_id: 99\n")
 	registry := domain.NewRegistry()

@@ -38,10 +38,11 @@ type Store interface {
 
 type wireRecord struct {
 	// LeaderUserID is decoded for shape compatibility; the companies map key is authoritative.
-	LeaderUserID int                `yaml:"leader_user_id"`
-	Companions   []domain.Companion `yaml:"companions"`
-	Companion    *domain.Companion  `yaml:"companion"`
-	Formation    domain.Formation   `yaml:"formation"`
+	LeaderUserID    int                `yaml:"leader_user_id"`
+	Companions      []domain.Companion `yaml:"companions"`
+	Companion       *domain.Companion  `yaml:"companion"`
+	Formation       domain.Formation   `yaml:"formation"`
+	NextCompanionID int                `yaml:"next_companion_id,omitempty"`
 }
 
 type wireRegistry struct {
@@ -57,7 +58,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	}
 	loaded := domain.NewRegistry()
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation}
+		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -258,24 +259,34 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	if err != nil {
 		return "", err
 	}
+	before, existed := m.registry.Get(leaderUserID)
 	companion, err := m.registry.Summon(leaderUserID, templateID, m.allowedTemplates(), m.maxCompanions())
 	if err != nil {
 		return "", err
 	}
+	// Restore the exact pre-summon record, including the companion-ID high-water
+	// mark, so a failed summon cannot strand a durable ID.
+	rollback := func() {
+		if existed {
+			m.registry.Put(before)
+		} else {
+			m.registry.Put(domain.Record{LeaderUserID: leaderUserID})
+		}
+	}
 	if err := survival.EnsureCompanyMember(leaderUserID, companion.ID); err != nil {
-		m.registry.Dismiss(leaderUserID, companion.ID)
+		rollback()
 		return "", err
 	}
 	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, templateID)
 	if err != nil {
 		survival.RemoveCompanyMember(leaderUserID, companion.ID)
-		m.registry.Dismiss(leaderUserID, companion.ID)
+		rollback()
 		return "", err
 	}
 	if err := m.save(); err != nil {
 		m.runtime.Detach(leaderUserID, instanceID)
 		survival.RemoveCompanyMember(leaderUserID, companion.ID)
-		m.registry.Dismiss(leaderUserID, companion.ID)
+		rollback()
 		return "", err
 	}
 	m.setInstance(leaderUserID, companion.ID, instanceID)
