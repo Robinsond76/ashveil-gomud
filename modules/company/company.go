@@ -259,6 +259,13 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	if err != nil {
 		return "", err
 	}
+	reservedNextID, err := survival.NextReservedCompanionID(leaderUserID)
+	if err != nil {
+		return "", err
+	}
+	if err := m.registry.ReserveNextCompanionID(leaderUserID, reservedNextID); err != nil {
+		return "", err
+	}
 	before, existed := m.registry.Get(leaderUserID)
 	companion, err := m.registry.Summon(leaderUserID, templateID, m.allowedTemplates(), m.maxCompanions())
 	if err != nil {

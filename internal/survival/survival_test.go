@@ -376,11 +376,19 @@ type recordingLifecycle struct {
 	restoreErr   error
 	reconciled   []map[int][]MemberRef
 	reconcileErr error
+	nextReserved int
 }
 
 func (r *recordingLifecycle) EnsureCompanyMember(leader, companion int) error {
 	r.ensured = append(r.ensured, [2]int{leader, companion})
 	return r.err
+}
+
+func (r *recordingLifecycle) NextReservedCompanionID(_ int) (int, error) {
+	if r.nextReserved < 1 {
+		return 1, nil
+	}
+	return r.nextReserved, r.err
 }
 
 func (r *recordingLifecycle) RemoveCompanyMember(leader, companion int) error {
@@ -458,6 +466,16 @@ func TestLifecycleSeamNoOpsWithoutModuleAndForwardsOtherwise(t *testing.T) {
 	assert.Equal(t, [][2]int{{7, 3}}, rec.removed)
 	assert.Equal(t, []int{7}, rec.removedAll)
 
+	next, err := NextReservedCompanionID(7)
+	require.NoError(t, err)
+	assert.Equal(t, 1, next)
+	rec.nextReserved = 4
+	next, err = NextReservedCompanionID(7)
+	require.NoError(t, err)
+	assert.Equal(t, 4, next)
+
 	rec.err = errors.New("boom")
 	assert.ErrorIs(t, EnsureCompanyMember(7, 4), rec.err)
+	_, err = NextReservedCompanionID(7)
+	assert.ErrorIs(t, err, rec.err)
 }

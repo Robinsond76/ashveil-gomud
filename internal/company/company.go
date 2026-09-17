@@ -20,6 +20,7 @@ func clampCompanionLimit(limit int) int {
 var (
 	ErrInvalidLeader      = errors.New("invalid leader user ID")
 	ErrInvalidTemplate    = errors.New("invalid mob template ID")
+	ErrInvalidCompanionID = errors.New("invalid companion ID")
 	ErrTemplateNotAllowed = errors.New("mob template is not allowed")
 	ErrCompanyFull        = errors.New("company is full")
 )
@@ -71,6 +72,24 @@ func (r *Registry) Put(record Record) {
 		return
 	}
 	r.Companies[record.LeaderUserID] = record
+}
+
+// ReserveNextCompanionID raises the durable companion-ID high-water mark for
+// a leader without creating a companion. It never lowers an existing mark.
+func (r *Registry) ReserveNextCompanionID(leaderUserID, nextID int) error {
+	if leaderUserID <= 0 {
+		return ErrInvalidLeader
+	}
+	if nextID < 1 {
+		return ErrInvalidCompanionID
+	}
+	record, _ := r.Get(leaderUserID)
+	record.LeaderUserID = leaderUserID
+	if record.NextCompanionID < nextID {
+		record.NextCompanionID = nextID
+	}
+	r.Put(record)
+	return nil
 }
 
 // Summon adds a companion and returns it with its assigned ID.

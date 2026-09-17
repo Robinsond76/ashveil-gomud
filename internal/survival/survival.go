@@ -209,18 +209,51 @@ func validateMember(leaderUserID int, key MemberKey) error {
 
 // Registry holds normalized needs keyed by leader user ID and stable member key.
 type Registry struct {
-	Leaders map[int]map[MemberKey]Needs `yaml:"leaders"`
+	Leaders                  map[int]map[MemberKey]Needs `yaml:"leaders"`
+	ReservedNextCompanionIDs map[int]int                 `yaml:"reserved_next_companion_ids,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
 func NewRegistry() *Registry {
-	return &Registry{Leaders: map[int]map[MemberKey]Needs{}}
+	return &Registry{
+		Leaders:                  map[int]map[MemberKey]Needs{},
+		ReservedNextCompanionIDs: map[int]int{},
+	}
 }
 
 func (r *Registry) ensureMaps() {
 	if r.Leaders == nil {
 		r.Leaders = map[int]map[MemberKey]Needs{}
 	}
+	if r.ReservedNextCompanionIDs == nil {
+		r.ReservedNextCompanionIDs = map[int]int{}
+	}
+}
+
+// ReserveNextCompanionID records a durable lower bound for a leader's next
+// company ID. Survival writes this with the companion state so a failed
+// company-file write cannot make an already-issued identity reusable.
+func (r *Registry) ReserveNextCompanionID(leaderUserID, nextID int) error {
+	if leaderUserID <= 0 || nextID < 1 {
+		return ErrInvalidMember
+	}
+	r.ensureMaps()
+	if r.ReservedNextCompanionIDs[leaderUserID] < nextID {
+		r.ReservedNextCompanionIDs[leaderUserID] = nextID
+	}
+	return nil
+}
+
+// NextReservedCompanionID returns the durable lower bound for a leader's next
+// companion ID, defaulting to one when no survival reservation exists.
+func (r *Registry) NextReservedCompanionID(leaderUserID int) (int, error) {
+	if leaderUserID <= 0 {
+		return 0, ErrInvalidMember
+	}
+	if r == nil || r.ReservedNextCompanionIDs == nil || r.ReservedNextCompanionIDs[leaderUserID] < 1 {
+		return 1, nil
+	}
+	return r.ReservedNextCompanionIDs[leaderUserID], nil
 }
 
 // Ensure creates a fully supplied default record for a member if absent.
@@ -330,13 +363,16 @@ func companionOrdinal(key MemberKey) int {
 
 // Clone returns a deep copy of the registry.
 func (r Registry) Clone() Registry {
-	out := Registry{Leaders: map[int]map[MemberKey]Needs{}}
+	out := Registry{Leaders: map[int]map[MemberKey]Needs{}, ReservedNextCompanionIDs: map[int]int{}}
 	for leaderUserID, byMember := range r.Leaders {
 		clone := make(map[MemberKey]Needs, len(byMember))
 		for key, needs := range byMember {
 			clone[key] = needs
 		}
 		out.Leaders[leaderUserID] = clone
+	}
+	for leaderUserID, nextID := range r.ReservedNextCompanionIDs {
+		out.ReservedNextCompanionIDs[leaderUserID] = nextID
 	}
 	return out
 }
@@ -484,6 +520,10 @@ func CurrentRoster(leaderUserID int) []MemberRef {
 // dependency stays one-way through this package.
 type Lifecycle interface {
 	EnsureCompanyMember(leaderUserID, companionID int) error
+	// NextReservedCompanionID returns survival's durable lower bound for a
+	// leader's next companion ID. Company uses it before assigning an ID so a
+	// failed company-file write cannot make an issued ID reusable after restart.
+	NextReservedCompanionID(leaderUserID int) (int, error)
 	RemoveCompanyMember(leaderUserID, companionID int) error
 	RemoveAllCompanyMembers(leaderUserID int) error
 	// SnapshotCompanyMember captures the exact state before a roster mutation
@@ -522,6 +562,19 @@ func EnsureCompanyMember(leaderUserID, companionID int) error {
 		return l.EnsureCompanyMember(leaderUserID, companionID)
 	}
 	return nil
+}
+
+// NextReservedCompanionID returns the survival-side durable lower bound for a
+// leader's next companion ID. Without a loaded survival module, it defaults to
+// one so company behavior remains unchanged.
+func NextReservedCompanionID(leaderUserID int) (int, error) {
+	if l := currentLifecycle(); l != nil {
+		return l.NextReservedCompanionID(leaderUserID)
+	}
+	if leaderUserID <= 0 {
+		return 0, ErrInvalidMember
+	}
+	return 1, nil
 }
 
 // RemoveCompanyMember notifies the registered lifecycle that a companion was
