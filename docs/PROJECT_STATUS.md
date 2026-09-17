@@ -6,10 +6,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-17
-- **Branch:** `main-deepseek` (Phase 3 feature merged; `master` unchanged)
-- **HEAD:** `309036d4` (Phase 3 invariant corrections)
+- **Branch:** `master` (Phase 3 merged; `main-deepseek` retained at the same commit)
+- **HEAD:** `3d6addd4` (Phase 3 invariant corrections)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is 14 commits ahead of `origin/master`; `main-deepseek` adds the project-status doc and Phase 3. Nothing pushed.
+- **Origin sync:** `master` is 34 commits ahead of `origin/master`; the project-status doc and Phase 3 are included. Nothing pushed.
 
 ## Current position
 
@@ -42,6 +42,7 @@ instead of duplicating them.
 - **What:** Hard-capped companies at four companions plus their leader, and normalized duplicate persisted formation occupants by keeping the first row-major cell.
 - **Why:** Restores Phase 3’s five-character cap and one-cell-per-member invariants even when module configuration or stored YAML is invalid.
 - **Verification:** `make generate`, `make validate`, and `go test -race ./...` passed.
+- **Merge:** `main-deepseek` fast-forwarded into `master` at `3d6addd4`; `go test -race ./...` re-run on `master` passed (1434 tests / 65 packages).
 
 ### Phase 3 — Company roster + 3×3 formation (complete, 2026-09-17)
 
