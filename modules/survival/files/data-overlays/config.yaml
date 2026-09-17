@@ -1,0 +1,4 @@
+# Phase 4 survival has no tunable configuration.
+#
+# Needs change only through explicit APIs; there is no idle/offline drain.
+# Camp/rest recovery is Phase 7 and automatic provisioning/cargo is Phase 9.
