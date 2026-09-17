@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,6 +48,7 @@ func TestDrinkForwardsCompanionSelector(t *testing.T) {
 		Name:   "Bear",
 		Needs:  survival.Needs{Hunger: 100, Thirst: 80, Fatigue: 100},
 	}}
+	fake.selectors = memberSelectors("#2")
 	useFakeProvisioner(t, fake)
 	user := userWithItem(t, 17, drinkableSpec("mug of ale", 20, 2))
 
@@ -59,7 +61,7 @@ func TestDrinkForwardsCompanionSelector(t *testing.T) {
 }
 
 func TestDrinkDoesNotConsumeWhenSurvivalProvisionFails(t *testing.T) {
-	fake := &fakeProvisioner{err: survival.ErrPersistenceUnavailable}
+	fake := &fakeProvisioner{err: survival.ErrPersistenceUnavailable, selectors: memberSelectors("#2")}
 	useFakeProvisioner(t, fake)
 	user := userWithItem(t, 17, drinkableSpec("waterskin", 40, 5))
 
@@ -79,6 +81,45 @@ func TestDrinkKeepsLegacyConsumptionForZeroMetadata(t *testing.T) {
 	assert.Zero(t, fake.calls)
 	require.Len(t, user.Character.Items, 1)
 	assert.Equal(t, 1, user.Character.Items[0].Uses)
+}
+
+func TestDrinkKeepsPartialItemMatchWithValidTarget(t *testing.T) {
+	fake := &fakeProvisioner{
+		result:    survival.ProvisionResult{Member: survival.CompanionMemberKey(2), Name: "Bear"},
+		selectors: memberSelectors("#2"),
+	}
+	useFakeProvisioner(t, fake)
+	user := userWithItem(t, 17, drinkableSpec("waterskin", 40, 5))
+
+	_, err := Drink("water #2", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 1, fake.calls)
+	assert.Equal(t, "#2", fake.lastSelector)
+	assert.Equal(t, 4, user.Character.Items[0].Uses)
+}
+
+func TestDrinkKeepsNumberedItemMatchWithValidTarget(t *testing.T) {
+	fake := &fakeProvisioner{
+		result:    survival.ProvisionResult{Member: survival.CompanionMemberKey(2), Name: "Bear"},
+		selectors: memberSelectors("#2"),
+	}
+	useFakeProvisioner(t, fake)
+	user := userWithItem(t, 17, drinkableSpec("waterskin", 40, 5))
+	spec := drinkableSpec("waterskin", 40, 5)
+	spec.ItemId = 9005
+	user.Character.Items = append(user.Character.Items, items.Item{
+		ItemId: spec.ItemId,
+		UUID:   uuid.New(items.UUIDItem),
+		Uses:   5,
+		Spec:   &spec,
+	})
+
+	_, err := Drink("waterskin#2 #2", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 1, fake.calls)
+	assert.Equal(t, "#2", fake.lastSelector)
+	assert.Equal(t, 5, user.Character.Items[0].Uses, "the first waterskin must be untouched")
+	assert.Equal(t, 4, user.Character.Items[1].Uses, "the numbered match must be consumed")
 }
 
 func TestDrinkRejectsNonDrinkableWithoutProvisioning(t *testing.T) {

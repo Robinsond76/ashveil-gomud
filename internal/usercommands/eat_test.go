@@ -25,6 +25,7 @@ type fakeProvisioner struct {
 	calls        int
 	lastSelector string
 	lastBenefit  survival.Benefit
+	selectors    map[string]bool
 }
 
 func (f *fakeProvisioner) Provision(_ int, selector string, benefit survival.Benefit) (survival.ProvisionResult, error) {
@@ -32,6 +33,18 @@ func (f *fakeProvisioner) Provision(_ int, selector string, benefit survival.Ben
 	f.lastSelector = selector
 	f.lastBenefit = benefit
 	return f.result, f.err
+}
+
+func (f *fakeProvisioner) IsMemberSelector(_ int, selector string) bool {
+	return f.selectors[selector]
+}
+
+func memberSelectors(selectors ...string) map[string]bool {
+	set := make(map[string]bool, len(selectors))
+	for _, selector := range selectors {
+		set[selector] = true
+	}
+	return set
 }
 
 func testRoom() *rooms.Room { return rooms.NewRoom("test") }
@@ -102,6 +115,7 @@ func TestEatForwardsCompanionSelectorForMultiWordItem(t *testing.T) {
 		Needs:  survival.Needs{Hunger: 60, Thirst: 100, Fatigue: 100},
 		Hunger: survival.Change{Before: survival.BandLow, After: survival.BandSteady},
 	}}
+	fake.selectors = memberSelectors("#2")
 	useFakeProvisioner(t, fake)
 	user := userWithItem(t, 17, edibleSpec("cheese sandwich", 35, 5, 3))
 
@@ -114,7 +128,7 @@ func TestEatForwardsCompanionSelectorForMultiWordItem(t *testing.T) {
 }
 
 func TestEatDoesNotConsumeWhenSurvivalProvisionFails(t *testing.T) {
-	fake := &fakeProvisioner{err: survival.ErrPersistenceUnavailable}
+	fake := &fakeProvisioner{err: survival.ErrPersistenceUnavailable, selectors: memberSelectors("#2")}
 	useFakeProvisioner(t, fake)
 	user := userWithItem(t, 17, edibleSpec("ration", 30, 0, 3))
 
@@ -180,4 +194,45 @@ func TestEatReportsMissingItem(t *testing.T) {
 	assert.True(t, handled)
 	assert.Zero(t, fake.calls)
 	require.Len(t, user.Character.Items, 1)
+}
+
+func TestEatKeepsPartialItemMatchWithValidTarget(t *testing.T) {
+	fake := &fakeProvisioner{
+		result:    survival.ProvisionResult{Member: survival.CompanionMemberKey(2), Name: "Bear"},
+		selectors: memberSelectors("#2"),
+	}
+	useFakeProvisioner(t, fake)
+	user := userWithItem(t, 17, edibleSpec("ration pack", 20, 0, 2))
+
+	_, err := Eat("rati #2", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 1, fake.calls)
+	assert.Equal(t, "#2", fake.lastSelector)
+	assert.Equal(t, 1, user.Character.Items[0].Uses)
+}
+
+func TestEatTreatsNonMemberSuffixAsLegacyItemName(t *testing.T) {
+	fake := &fakeProvisioner{
+		result:    survival.ProvisionResult{Member: survival.LeaderMemberKey, Name: "Tester"},
+		selectors: memberSelectors("#2"),
+	}
+	useFakeProvisioner(t, fake)
+	user := userWithItem(t, 17, edibleSpec("ration stranger", 20, 0, 2))
+
+	_, err := Eat("ration stranger", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.Equal(t, 1, fake.calls, "a non-member suffix must fall back to the full-input item match")
+	assert.Equal(t, "", fake.lastSelector)
+	assert.Equal(t, 1, user.Character.Items[0].Uses)
+}
+
+func TestEatReportsMissingItemWhenSuffixIsNotAMember(t *testing.T) {
+	fake := &fakeProvisioner{selectors: memberSelectors("#2")}
+	useFakeProvisioner(t, fake)
+	user := userWithItem(t, 17, edibleSpec("ration", 20, 0, 2))
+
+	_, err := Eat("ration stranger", user, testRoom(), 0)
+	require.NoError(t, err)
+	assert.Zero(t, fake.calls)
+	assert.Equal(t, 2, user.Character.Items[0].Uses)
 }

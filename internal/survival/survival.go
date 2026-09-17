@@ -574,6 +574,9 @@ func ReconcileCompanyRosters(rosters map[int][]MemberRef) error {
 // implemented by modules/survival and registered during module init.
 type Provisioner interface {
 	Provision(leaderUserID int, selector string, benefit Benefit) (ProvisionResult, error)
+	// IsMemberSelector reports whether selector names a current company member,
+	// letting command parsing distinguish a provision target from item text.
+	IsMemberSelector(leaderUserID int, selector string) bool
 }
 
 var (
@@ -598,4 +601,17 @@ func Provision(leaderUserID int, selector string, benefit Benefit) (ProvisionRes
 		return ProvisionResult{}, ErrProvisionUnavailable
 	}
 	return p.Provision(leaderUserID, selector, benefit)
+}
+
+// IsMemberSelector reports whether selector names a current company member
+// through the registered module. It returns false when no module is loaded, so
+// command parsing preserves legacy item matching.
+func IsMemberSelector(leaderUserID int, selector string) bool {
+	provisionerMu.RLock()
+	p := provisioner
+	provisionerMu.RUnlock()
+	if p == nil {
+		return false
+	}
+	return p.IsMemberSelector(leaderUserID, selector)
 }

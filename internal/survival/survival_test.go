@@ -278,12 +278,13 @@ func TestNeedLabelsFollowBands(t *testing.T) {
 }
 
 type recordingProvisioner struct {
-	calls       int
-	gotLeader   int
-	gotSelector string
-	gotBenefit  Benefit
-	result      ProvisionResult
-	err         error
+	calls           int
+	gotLeader       int
+	gotSelector     string
+	gotBenefit      Benefit
+	result          ProvisionResult
+	err             error
+	memberSelectors map[string]bool
 }
 
 func (r *recordingProvisioner) Provision(leaderUserID int, selector string, benefit Benefit) (ProvisionResult, error) {
@@ -292,6 +293,10 @@ func (r *recordingProvisioner) Provision(leaderUserID int, selector string, bene
 	r.gotSelector = selector
 	r.gotBenefit = benefit
 	return r.result, r.err
+}
+
+func (r *recordingProvisioner) IsMemberSelector(_ int, selector string) bool {
+	return r.memberSelectors[selector]
 }
 
 func TestProvisionIsUnavailableWithoutRegisteredModule(t *testing.T) {
@@ -314,6 +319,18 @@ func TestProvisionForwardsToRegisteredProvisioner(t *testing.T) {
 	assert.Equal(t, 7, fake.gotLeader)
 	assert.Equal(t, "#2", fake.gotSelector)
 	assert.Equal(t, Benefit{Nutrition: 30, Hydration: 10}, fake.gotBenefit)
+}
+
+func TestIsMemberSelectorIsFalseWithoutModuleAndForwardsOtherwise(t *testing.T) {
+	SetProvisioner(nil)
+	t.Cleanup(func() { SetProvisioner(nil) })
+	assert.False(t, IsMemberSelector(7, "#2"))
+
+	fake := &recordingProvisioner{memberSelectors: map[string]bool{"#2": true}}
+	SetProvisioner(fake)
+	t.Cleanup(func() { SetProvisioner(nil) })
+	assert.True(t, IsMemberSelector(7, "#2"))
+	assert.False(t, IsMemberSelector(7, "#3"))
 }
 
 func TestProvisionResultReportsCrossing(t *testing.T) {

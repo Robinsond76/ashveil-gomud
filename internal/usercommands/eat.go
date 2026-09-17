@@ -13,15 +13,19 @@ import (
 )
 
 // findConsumable resolves an optional trailing member selector without breaking
-// multi-word item names. It first treats the final token as a member selector
-// and requires the remaining words to fully match an item; when that fails it
-// falls back to the whole input as the legacy item name.
+// native item matching. The final token is treated as a member only when the
+// survival module confirms it names a current member; the preceding words are
+// then resolved through the backpack, which preserves partial and numbered
+// matches. Otherwise the whole input is matched as the legacy item name.
 func findConsumable(rest string, user *users.UserRecord) (items.Item, string, bool) {
 	tokens := util.SplitButRespectQuotes(rest)
 	if len(tokens) >= 2 {
-		itemName := strings.Join(tokens[:len(tokens)-1], " ")
-		if _, full := items.FindMatchIn(itemName, user.Character.Items...); full.ItemId != 0 {
-			return full, tokens[len(tokens)-1], true
+		candidate := tokens[len(tokens)-1]
+		if survival.IsMemberSelector(user.UserId, candidate) {
+			itemName := strings.Join(tokens[:len(tokens)-1], " ")
+			if matchItem, found := user.Character.FindInBackpack(itemName); found {
+				return matchItem, candidate, true
+			}
 		}
 	}
 	if matchItem, found := user.Character.FindInBackpack(rest); found {

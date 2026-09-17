@@ -381,6 +381,30 @@ func (m *SurvivalModule) resolveMember(leaderUserID int, selector string) (domai
 	return key, name, nil
 }
 
+// IsMemberSelector reports whether selector names the leader or a current
+// companion, using the same rules as Provision so command parsing never
+// forwards a token that provisioning would reject.
+func (m *SurvivalModule) IsMemberSelector(leaderUserID int, selector string) bool {
+	if leaderUserID <= 0 {
+		return false
+	}
+	s := strings.ToLower(strings.TrimSpace(selector))
+	if s == "" {
+		return false
+	}
+	if s == "leader" || s == "me" || s == "self" {
+		return true
+	}
+	if id, ok := parseCompanionSelector(s); ok {
+		return m.hasMember(leaderUserID, domain.CompanionMemberKey(id))
+	}
+	key, _, err := matchCompanionName(domain.CurrentRoster(leaderUserID), s)
+	if err != nil {
+		return false
+	}
+	return m.hasMember(leaderUserID, key)
+}
+
 func parseCompanionSelector(selector string) (int, bool) {
 	id, err := strconv.Atoi(strings.TrimPrefix(selector, "#"))
 	if err != nil || id <= 0 {

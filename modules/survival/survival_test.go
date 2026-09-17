@@ -217,6 +217,25 @@ func TestProvisionRejectsUnknownAndAmbiguousCompanions(t *testing.T) {
 	assert.Equal(t, domain.CompanionMemberKey(1), result.Member, "an exact name wins over a substring match")
 }
 
+func TestIsMemberSelectorMatchesOnlyCurrentMembers(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.Ensure(7, domain.CompanionMemberKey(2)))
+	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{
+		7: {
+			{Key: domain.LeaderMemberKey, Name: "Hero"},
+			{Key: domain.CompanionMemberKey(2), Name: "Bear"},
+		},
+	}})
+
+	for _, selector := range []string{"leader", "me", "self", "#2", "2", "Bear", "bea"} {
+		assert.True(t, m.IsMemberSelector(7, selector), selector)
+	}
+	for _, selector := range []string{"", "#9", "stranger"} {
+		assert.False(t, m.IsMemberSelector(7, selector), selector)
+	}
+	assert.False(t, m.IsMemberSelector(0, "#2"))
+}
+
 func TestProvisionRejectsNonPositiveBenefit(t *testing.T) {
 	m := newTestModule(*domain.NewRegistry())
 	require.NoError(t, m.registry.Ensure(7, domain.LeaderMemberKey))
