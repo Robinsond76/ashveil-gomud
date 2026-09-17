@@ -203,6 +203,101 @@ func (m *SurvivalModule) RemoveAllCompanyMembers(leaderUserID int) error {
 	return nil
 }
 
+// SnapshotCompanyMember returns the exact stored state for a companion without
+// mutating the registry. A companion with no record reports Exists false.
+func (m *SurvivalModule) SnapshotCompanyMember(leaderUserID, companionID int) (domain.MemberSnapshot, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return domain.MemberSnapshot{}, err
+	}
+	if leaderUserID <= 0 || companionID <= 0 {
+		return domain.MemberSnapshot{}, domain.ErrInvalidMember
+	}
+	needs, ok := m.registry.NeedsFor(leaderUserID, domain.CompanionMemberKey(companionID))
+	if !ok {
+		return domain.MemberSnapshot{}, nil
+	}
+	return domain.MemberSnapshot{Exists: true, Needs: needs}, nil
+}
+
+// RestoreCompanyMember writes a captured snapshot back and persists it. When
+// the snapshot recorded no stored state, the key is removed instead.
+func (m *SurvivalModule) RestoreCompanyMember(leaderUserID, companionID int, snapshot domain.MemberSnapshot) error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	if leaderUserID <= 0 || companionID <= 0 {
+		return domain.ErrInvalidMember
+	}
+	key := domain.CompanionMemberKey(companionID)
+	before := m.registry.Clone()
+	if snapshot.Exists {
+		if err := m.registry.PutNeeds(leaderUserID, key, snapshot.Needs); err != nil {
+			return err
+		}
+	} else {
+		m.registry.Remove(leaderUserID, key)
+	}
+	if err := m.save(); err != nil {
+		m.registry = before
+		return err
+	}
+	return nil
+}
+
+// ReconcileCompanyRosters aligns the persisted registry with the loaded
+// company rosters in at most one write: companion keys absent from a roster
+// are pruned and current companions without a record start at FullNeeds. The
+// leader key is always preserved.
+func (m *SurvivalModule) ReconcileCompanyRosters(rosters map[int][]domain.MemberRef) error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	leaders := map[int]struct{}{}
+	for leaderUserID := range rosters {
+		if leaderUserID > 0 {
+			leaders[leaderUserID] = struct{}{}
+		}
+	}
+	for leaderUserID := range m.registry.Leaders {
+		if leaderUserID > 0 {
+			leaders[leaderUserID] = struct{}{}
+		}
+	}
+
+	before := m.registry.Clone()
+	changed := false
+	for leaderUserID := range leaders {
+		valid := map[domain.MemberKey]bool{domain.LeaderMemberKey: true}
+		for _, ref := range rosters[leaderUserID] {
+			if ref.Key == domain.LeaderMemberKey || !domain.ValidMemberKey(ref.Key) {
+				continue
+			}
+			valid[ref.Key] = true
+			if _, ok := m.registry.NeedsFor(leaderUserID, ref.Key); !ok {
+				if err := m.registry.Ensure(leaderUserID, ref.Key); err != nil {
+					m.registry = before
+					return err
+				}
+				changed = true
+			}
+		}
+		for _, key := range m.registry.Members(leaderUserID) {
+			if !valid[key] {
+				m.registry.Remove(leaderUserID, key)
+				changed = true
+			}
+		}
+	}
+	if !changed {
+		return nil
+	}
+	if err := m.save(); err != nil {
+		m.registry = before
+		return err
+	}
+	return nil
+}
+
 // Provision implements domain.Provisioner. It resolves the target member,
 // applies the benefit, and persists before reporting success.
 func (m *SurvivalModule) Provision(leaderUserID int, selector string, benefit domain.Benefit) (domain.ProvisionResult, error) {

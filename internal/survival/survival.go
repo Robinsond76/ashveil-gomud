@@ -436,6 +436,15 @@ type MemberRef struct {
 	Name string
 }
 
+// MemberSnapshot is the exact durable survival state for one companion at a
+// point in time. Exists is false when the companion had no stored record, so a
+// rollback can distinguish "remove the key" from "restore these needs" without
+// manufacturing defaults.
+type MemberSnapshot struct {
+	Exists bool  `yaml:"exists"`
+	Needs  Needs `yaml:"needs"`
+}
+
 // RosterProvider exposes the authoritative company roster to survival
 // consumers for name resolution and status rendering. modules/company
 // registers it during init so modules/survival never imports modules/company.
@@ -477,6 +486,15 @@ type Lifecycle interface {
 	EnsureCompanyMember(leaderUserID, companionID int) error
 	RemoveCompanyMember(leaderUserID, companionID int) error
 	RemoveAllCompanyMembers(leaderUserID int) error
+	// SnapshotCompanyMember captures the exact state before a roster mutation
+	// so a failed downstream write can restore it verbatim.
+	SnapshotCompanyMember(leaderUserID, companionID int) (MemberSnapshot, error)
+	// RestoreCompanyMember writes a captured snapshot back, removing the key
+	// when the snapshot recorded no stored state.
+	RestoreCompanyMember(leaderUserID, companionID int, snapshot MemberSnapshot) error
+	// ReconcileCompanyRosters aligns persisted companion keys with the loaded
+	// company rosters, pruning orphans and initializing missing members.
+	ReconcileCompanyRosters(rosters map[int][]MemberRef) error
 }
 
 var (
@@ -520,6 +538,34 @@ func RemoveCompanyMember(leaderUserID, companionID int) error {
 func RemoveAllCompanyMembers(leaderUserID int) error {
 	if l := currentLifecycle(); l != nil {
 		return l.RemoveAllCompanyMembers(leaderUserID)
+	}
+	return nil
+}
+
+// SnapshotCompanyMember captures exact state through the registered lifecycle.
+// Without a module it returns an empty snapshot, matching the no-op removal.
+func SnapshotCompanyMember(leaderUserID, companionID int) (MemberSnapshot, error) {
+	if l := currentLifecycle(); l != nil {
+		return l.SnapshotCompanyMember(leaderUserID, companionID)
+	}
+	return MemberSnapshot{}, nil
+}
+
+// RestoreCompanyMember restores a captured snapshot through the registered
+// lifecycle. It is a no-op when no module is registered.
+func RestoreCompanyMember(leaderUserID, companionID int, snapshot MemberSnapshot) error {
+	if l := currentLifecycle(); l != nil {
+		return l.RestoreCompanyMember(leaderUserID, companionID, snapshot)
+	}
+	return nil
+}
+
+// ReconcileCompanyRosters aligns persisted survival state with the loaded
+// company rosters through the registered lifecycle. It is a no-op when no
+// module is registered.
+func ReconcileCompanyRosters(rosters map[int][]MemberRef) error {
+	if l := currentLifecycle(); l != nil {
+		return l.ReconcileCompanyRosters(rosters)
 	}
 	return nil
 }

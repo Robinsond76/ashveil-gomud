@@ -328,6 +328,125 @@ func TestLifecycleSaveFailureRestoresSnapshot(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestSnapshotCompanyMemberReturnsExactStateWithoutMutation(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.Ensure(7, domain.CompanionMemberKey(1)))
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(1), domain.Needs{Hunger: 12, Thirst: 34, Fatigue: 56}))
+	before := m.registry.Clone()
+
+	snap, err := m.SnapshotCompanyMember(7, 1)
+	require.NoError(t, err)
+	assert.True(t, snap.Exists)
+	assert.Equal(t, domain.Needs{Hunger: 12, Thirst: 34, Fatigue: 56}, snap.Needs)
+	assert.Equal(t, before, m.registry, "snapshotting must not mutate state")
+	assert.Zero(t, m.store.(*fakeStore).saveCalls, "snapshotting must not write")
+
+	missing, err := m.SnapshotCompanyMember(7, 2)
+	require.NoError(t, err)
+	assert.False(t, missing.Exists)
+}
+
+func TestRestoreCompanyMemberWritesExactSnapshotAndPersists(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.Ensure(7, domain.CompanionMemberKey(1)))
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(1), domain.FullNeeds()))
+	require.NoError(t, m.RemoveCompanyMember(7, 1))
+	_, ok := m.registry.NeedsFor(7, domain.CompanionMemberKey(1))
+	require.False(t, ok)
+
+	require.NoError(t, m.RestoreCompanyMember(7, 1, domain.MemberSnapshot{
+		Exists: true,
+		Needs:  domain.Needs{Hunger: 12, Thirst: 34, Fatigue: 56},
+	}))
+	assert.Equal(t, domain.Needs{Hunger: 12, Thirst: 34, Fatigue: 56}, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(1)))
+	assert.Equal(t, m.registry, m.store.(*fakeStore).saved)
+
+	require.NoError(t, m.RestoreCompanyMember(7, 1, domain.MemberSnapshot{}))
+	_, ok = m.registry.NeedsFor(7, domain.CompanionMemberKey(1))
+	assert.False(t, ok, "an absent snapshot restores by removing the key")
+}
+
+func TestRestoreCompanyMemberRollsBackOnSaveFailure(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.Ensure(7, domain.CompanionMemberKey(1)))
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(1), domain.Needs{Hunger: 12, Thirst: 34, Fatigue: 56}))
+	before := m.registry.Clone()
+	store := m.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+
+	err := m.RestoreCompanyMember(7, 1, domain.MemberSnapshot{Exists: true, Needs: domain.Needs{Hunger: 1, Thirst: 1, Fatigue: 1}})
+	require.ErrorIs(t, err, store.saveErr)
+	assert.Equal(t, before, m.registry)
+}
+
+func TestReconcileCompanyRostersPrunesOrphansAndInitializesCurrentMembers(t *testing.T) {
+	m := newTestModule(domain.Registry{Leaders: map[int]map[domain.MemberKey]domain.Needs{
+		7: {
+			domain.CompanionMemberKey(2): {Hunger: 1, Thirst: 2, Fatigue: 3},
+		},
+	}})
+	err := m.ReconcileCompanyRosters(map[int][]domain.MemberRef{7: {
+		{Key: domain.LeaderMemberKey, Name: "Hero"},
+		{Key: domain.CompanionMemberKey(3), Name: "Scout"},
+	}})
+	require.NoError(t, err)
+	_, stale := m.registry.NeedsFor(7, domain.CompanionMemberKey(2))
+	assert.False(t, stale, "an orphaned companion must be pruned")
+	assert.Equal(t, domain.FullNeeds(), m.registry.MustNeedsFor(7, domain.CompanionMemberKey(3)))
+	assert.Equal(t, 1, m.store.(*fakeStore).saveCalls, "reconciliation must persist once")
+	assert.Equal(t, m.registry, m.store.(*fakeStore).saved)
+}
+
+func TestReconcileCompanyRostersIsNoOpWhenAligned(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.Ensure(7, domain.LeaderMemberKey))
+	require.NoError(t, m.registry.Ensure(7, domain.CompanionMemberKey(1)))
+	store := m.store.(*fakeStore)
+
+	require.NoError(t, m.ReconcileCompanyRosters(map[int][]domain.MemberRef{7: {
+		{Key: domain.LeaderMemberKey, Name: "Hero"},
+		{Key: domain.CompanionMemberKey(1), Name: "Bear"},
+	}}))
+	assert.Zero(t, store.saveCalls, "an already-aligned registry must not be rewritten")
+}
+
+func TestReconcileCompanyRostersPrunesCompanionsForAbsentLeader(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.Ensure(8, domain.LeaderMemberKey))
+	require.NoError(t, m.registry.Ensure(8, domain.CompanionMemberKey(1)))
+
+	require.NoError(t, m.ReconcileCompanyRosters(map[int][]domain.MemberRef{}))
+	_, ok := m.registry.NeedsFor(8, domain.CompanionMemberKey(1))
+	assert.False(t, ok, "a leader with no company roster keeps no companions")
+	_, ok = m.registry.NeedsFor(8, domain.LeaderMemberKey)
+	assert.True(t, ok, "the leader record must be preserved")
+}
+
+func TestReconcileCompanyRostersReturnsPersistenceErrorWithoutMutation(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	store := &fakeStore{loadErr: errors.New("cannot read survival")}
+	m.store = store
+	m.load()
+	before := m.registry.Clone()
+
+	err := m.ReconcileCompanyRosters(map[int][]domain.MemberRef{7: {{Key: domain.LeaderMemberKey}}})
+	require.ErrorIs(t, err, store.loadErr)
+	assert.Equal(t, before, m.registry)
+}
+
+func TestReconcileCompanyRostersRollsBackOnSaveFailure(t *testing.T) {
+	m := newTestModule(domain.Registry{Leaders: map[int]map[domain.MemberKey]domain.Needs{
+		7: {domain.CompanionMemberKey(2): {Hunger: 1, Thirst: 2, Fatigue: 3}},
+	}})
+	before := m.registry.Clone()
+	store := m.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+
+	err := m.ReconcileCompanyRosters(map[int][]domain.MemberRef{7: {{Key: domain.CompanionMemberKey(3)}}})
+	require.ErrorIs(t, err, store.saveErr)
+	assert.Equal(t, before, m.registry)
+}
+
 func TestStatusRendersLeaderAndCompanionsWithLabels(t *testing.T) {
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
@@ -424,6 +543,17 @@ func TestModuleSatisfiesLifecycleSeam(t *testing.T) {
 	assert.Equal(t, domain.FullNeeds(), needs)
 
 	require.NoError(t, domain.RemoveAllCompanyMembers(7))
+	_, ok = m.registry.NeedsFor(7, domain.CompanionMemberKey(1))
+	assert.False(t, ok)
+
+	snap, err := domain.SnapshotCompanyMember(7, 1)
+	require.NoError(t, err)
+	assert.False(t, snap.Exists)
+
+	require.NoError(t, domain.RestoreCompanyMember(7, 1, domain.MemberSnapshot{Exists: true, Needs: domain.Needs{Hunger: 12, Thirst: 34, Fatigue: 56}}))
+	assert.Equal(t, domain.Needs{Hunger: 12, Thirst: 34, Fatigue: 56}, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(1)))
+
+	require.NoError(t, domain.ReconcileCompanyRosters(map[int][]domain.MemberRef{7: {{Key: domain.LeaderMemberKey}}}))
 	_, ok = m.registry.NeedsFor(7, domain.CompanionMemberKey(1))
 	assert.False(t, ok)
 }

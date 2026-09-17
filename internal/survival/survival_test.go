@@ -340,11 +340,25 @@ func TestCurrentRosterForwardsToProvider(t *testing.T) {
 	assert.Equal(t, "Hero", roster[0].Name)
 }
 
+type restoreCall struct {
+	leader    int
+	companion int
+	snapshot  MemberSnapshot
+}
+
 type recordingLifecycle struct {
 	ensured    [][2]int
 	removed    [][2]int
 	removedAll []int
 	err        error
+
+	snapshot     MemberSnapshot
+	snapshotErr  error
+	snapshots    [][2]int
+	restored     []restoreCall
+	restoreErr   error
+	reconciled   []map[int][]MemberRef
+	reconcileErr error
 }
 
 func (r *recordingLifecycle) EnsureCompanyMember(leader, companion int) error {
@@ -360,6 +374,55 @@ func (r *recordingLifecycle) RemoveCompanyMember(leader, companion int) error {
 func (r *recordingLifecycle) RemoveAllCompanyMembers(leader int) error {
 	r.removedAll = append(r.removedAll, leader)
 	return r.err
+}
+
+func (r *recordingLifecycle) SnapshotCompanyMember(leader, companion int) (MemberSnapshot, error) {
+	r.snapshots = append(r.snapshots, [2]int{leader, companion})
+	return r.snapshot, r.snapshotErr
+}
+
+func (r *recordingLifecycle) RestoreCompanyMember(leader, companion int, snapshot MemberSnapshot) error {
+	r.restored = append(r.restored, restoreCall{leader: leader, companion: companion, snapshot: snapshot})
+	return r.restoreErr
+}
+
+func (r *recordingLifecycle) ReconcileCompanyRosters(rosters map[int][]MemberRef) error {
+	r.reconciled = append(r.reconciled, rosters)
+	return r.reconcileErr
+}
+
+func TestSnapshotRestoreAndReconcileSeamForwarding(t *testing.T) {
+	SetLifecycle(nil)
+	t.Cleanup(func() { SetLifecycle(nil) })
+
+	snap, err := SnapshotCompanyMember(7, 1)
+	require.NoError(t, err)
+	assert.Equal(t, MemberSnapshot{}, snap)
+	require.NoError(t, RestoreCompanyMember(7, 1, MemberSnapshot{Exists: true, Needs: FullNeeds()}))
+	require.NoError(t, ReconcileCompanyRosters(map[int][]MemberRef{7: {{Key: LeaderMemberKey}}}))
+
+	exact := MemberSnapshot{Exists: true, Needs: Needs{Hunger: 12, Thirst: 34, Fatigue: 56}}
+	rec := &recordingLifecycle{snapshot: exact}
+	SetLifecycle(rec)
+
+	got, err := SnapshotCompanyMember(7, 2)
+	require.NoError(t, err)
+	assert.Equal(t, exact, got)
+	require.NoError(t, RestoreCompanyMember(7, 3, got))
+	require.NoError(t, ReconcileCompanyRosters(map[int][]MemberRef{7: {{Key: LeaderMemberKey, Name: "Hero"}}}))
+
+	assert.Equal(t, [][2]int{{7, 2}}, rec.snapshots)
+	assert.Equal(t, []restoreCall{{leader: 7, companion: 3, snapshot: exact}}, rec.restored)
+	require.Len(t, rec.reconciled, 1)
+	assert.Equal(t, "Hero", rec.reconciled[0][7][0].Name)
+
+	rec.snapshotErr = errors.New("boom")
+	_, err = SnapshotCompanyMember(7, 4)
+	assert.ErrorIs(t, err, rec.snapshotErr)
+	rec.restoreErr = errors.New("boom")
+	assert.ErrorIs(t, RestoreCompanyMember(7, 4, MemberSnapshot{}), rec.restoreErr)
+	rec.reconcileErr = errors.New("boom")
+	assert.ErrorIs(t, ReconcileCompanyRosters(nil), rec.reconcileErr)
 }
 
 func TestLifecycleSeamNoOpsWithoutModuleAndForwardsOtherwise(t *testing.T) {
