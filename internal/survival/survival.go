@@ -59,6 +59,9 @@ type Change struct {
 	After  Band `yaml:"after"`
 }
 
+// Crossed reports whether the need changed band.
+func (c Change) Crossed() bool { return c.Before != c.After }
+
 // Exertion is an explicit cost applied by later travel and effort systems.
 type Exertion struct {
 	Hunger  int
@@ -85,10 +88,8 @@ type ProvisionResult struct {
 
 // Crossed reports whether any need changed band.
 func (r ProvisionResult) Crossed() bool {
-	return crossed(r.Hunger) || crossed(r.Thirst) || crossed(r.Fatigue)
+	return r.Hunger.Crossed() || r.Thirst.Crossed() || r.Fatigue.Crossed()
 }
-
-func crossed(c Change) bool { return c.Before != c.After }
 
 // Errors returned by the survival domain and provider seam.
 var (
