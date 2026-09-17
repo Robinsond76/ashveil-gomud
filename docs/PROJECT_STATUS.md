@@ -7,9 +7,9 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-17
 - **Branch:** `master` (Phase 3 merged; `main-deepseek` retained at the same commit)
-- **HEAD:** `8f72807b` (Phase 4 survival state; this status record is the next commit)
+- **HEAD:** `470a2415` (Phase 4 survival corrections; this status record is the next commit)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is 46 commits ahead of `origin/master`; the project-status doc and Phase 3–4 are included. Nothing pushed.
+- **Origin sync:** `master` is 53 commits ahead of `origin/master`; the project-status doc and Phase 3–4 (including corrections) are included. Nothing pushed.
 
 ## Current position
 
@@ -54,19 +54,40 @@ instead of duplicating them.
   Phase 7 camp/rest recovery; it must persist across login/logout/copyover and
   never advance global game time.
 - **Step completed:** Handoff Phase 4 ("Survival State").
+- **Corrections (2026-09-17):** A review of `e5625faa..5f07d4f0` found state
+  loss and inheritance bugs. Companions now carry a persisted
+  `next_companion_id` high-water mark, so a dismissed ID is never reassigned
+  across dismiss, dismiss all, or save/load, and failed summons restore the
+  exact prior record. The lifecycle seam captures exact `MemberSnapshot`s, so a
+  failed company save restores the dismissed companion's real needs instead of
+  a fresh default and joins compensation errors. `modules/company` reconciles
+  every loaded roster into survival once after its registry loads, pruning
+  orphaned companions and initializing current ones; a reconcile failure blocks
+  company mutations. Consumable parsing again uses native backpack matching
+  (partial and `name#n` numbered) and treats a trailing token as a target only
+  when the survival module confirms it names a current member. Item specs reject
+  negative `nutrition`/`hydration` while zero stays valid for legacy items.
 - **Key commits:** `5872dadd` (domain), `1271e45d` (item metadata), `1cc7caeb`
   + `2a62de1b` (module persistence and roster seam), `609d0e4f` (eat/drink),
-  `9055034d` (company lifecycle sync), `8f72807b` (roster-default status).
+  `9055034d` (company lifecycle sync), `8f72807b` (roster-default status);
+  corrections `08d33467` (non-reusable companion IDs), `7ed9c926` (exact
+  snapshots and roster reconciliation), `a758a0c0` (rollback compensation),
+  `470a2415` (consumable matching), and the metadata validation in this
+  record's commit.
 - **Behavior:** Needs change only through explicit APIs (`ConsumeFood`,
   `ConsumeWater`, `ApplyRestRecovery`, `ApplyExertion`). `eat <item> [member]`
   and `drink <item> [member]` accept `leader`/`me`/`self`, `#<id>`/`<id>`, or an
   unambiguous companion name; items are consumed only after survival mutation
   and persistence succeed. Successful summon creates default companion state;
   single/all dismissal prunes exactly the removed companions.
-- **Verification:** `go test -race ./...` (1509 tests / 67 packages),
-  `make validate`, `make generate` (adds `modules/survival`), and `make build`
-  pass. Focused race suites cover `internal/survival`, `internal/items`,
+- **Verification:** `go test -race ./...` (1538 tests / 67 packages),
+  `make generate`, `make validate`, and `make build` pass. Focused race suites
+  cover `internal/company`, `internal/survival`, `internal/items`,
   `internal/usercommands`, `modules/survival`, and `modules/company`.
+- **Known limitation:** Company and survival persist to separate plugin files,
+  so summon/dismiss is not cross-file atomic. Rollback compensates with exact
+  snapshots and surfaces joined errors, but a crash between the two writes can
+  still leave the files divergent.
 - **Deferred:** Camp/rest/sleep recovery is Phase 7; cargo, capacity, and
   automatic provisioning are Phase 9. No idle/offline drain and no health,
   combat, movement, or travel penalties in Phase 4.
@@ -148,9 +169,10 @@ instead of duplicating them.
   provisioning, and command behavior.
 - Company and survival use separate plugin writes, so summon/dismiss is not
   cross-file atomic. A failed survival write rolls the company registry back;
-  if the company write fails after survival succeeded, survival is restored
-  best-effort (a dismissed companion's record is recreated at full default
-  needs). Tested but not transactionally recoverable.
+  if the company write fails after survival succeeded, the dismissed
+  companion's exact needs are restored from a captured snapshot (and any
+  compensation failure is reported alongside the save error). Tested but not
+  transactionally recoverable across a crash.
 - Company/formation/survival state is process-local with no mutex, matching the
   existing event-loop dispatch assumption; revisit if command dispatch moves off
   the main loop.

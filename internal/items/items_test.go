@@ -39,6 +39,21 @@ func TestItemSpecParsesHydrationOnlyDrink(t *testing.T) {
 	assert.Zero(t, spec.Nutrition)
 }
 
+func TestItemSpecRejectsNegativeSurvivalMetadata(t *testing.T) {
+	for _, spec := range []ItemSpec{
+		{Name: "bad food", Nutrition: -1},
+		{Name: "bad drink", Hydration: -1},
+		{Name: "legacy item", Nutrition: 0, Hydration: 0},
+	} {
+		err := spec.Validate()
+		if spec.Name == "legacy item" {
+			assert.NoError(t, err, spec.Name)
+		} else {
+			assert.Error(t, err, spec.Name)
+		}
+	}
+}
+
 func TestItem_NameMatch(t *testing.T) {
 	itm := makeItem(1, "Golden Sword")
 

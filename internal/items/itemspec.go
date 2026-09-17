@@ -475,6 +475,14 @@ func (i *ItemSpec) Validate() error {
 		return fmt.Errorf("item has no name")
 	}
 
+	if i.Nutrition < 0 {
+		return fmt.Errorf("item nutrition cannot be negative")
+	}
+
+	if i.Hydration < 0 {
+		return fmt.Errorf("item hydration cannot be negative")
+	}
+
 	if i.Type == Weapon {
 		if i.Hands == 0 {
 			i.Hands = 1
