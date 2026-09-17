@@ -55,16 +55,16 @@ func (s pluginStore) Save(registry domain.Registry) error {
 }
 
 type CompanyModule struct {
-	plug         *plugins.Plugin
-	store        Store
-	registry     domain.Registry
-	liveByLeader map[int]int
-	runtime      Runtime
-	loadErr      error
+	plug      *plugins.Plugin
+	store     Store
+	registry  domain.Registry
+	instances map[int]map[int]int
+	runtime   Runtime
+	loadErr   error
 }
 
 func init() {
-	m := &CompanyModule{plug: plugins.New("company", "1.0"), liveByLeader: map[int]int{}}
+	m := &CompanyModule{plug: plugins.New("company", "1.0"), instances: map[int]map[int]int{}}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
 	}
@@ -81,7 +81,7 @@ func init() {
 	events.RegisterListener(events.MobDeath{}, m.onMobDeath)
 }
 
-const companyUsage = "Usage: company summon <mob-id-or-name> | company status | company dismiss"
+const companyUsage = "Usage: company summon <mob-id-or-name> | company status | company dismiss <member|all>"
 
 // allowedTemplateIDs normalizes values returned by YAML/config decoding.
 func allowedTemplateIDs(raw any) map[int]struct{} {
@@ -108,6 +108,72 @@ func (m *CompanyModule) allowedTemplates() map[int]struct{} {
 	return map[int]struct{}{58: {}}
 }
 
+func (m *CompanyModule) maxCompanions() int {
+	if m.plug != nil {
+		if n, ok := configInt(m.plug.Config.Get("MaxCompanions")); ok && n > 0 {
+			return n
+		}
+	}
+	return 4
+}
+
+func configInt(raw any) (int, bool) {
+	switch v := raw.(type) {
+	case int:
+		return v, true
+	case int64:
+		return int(v), true
+	case float64:
+		return int(v), true
+	case string:
+		n, err := strconv.Atoi(strings.TrimSpace(v))
+		if err != nil {
+			return 0, false
+		}
+		return n, true
+	}
+	return 0, false
+}
+
+func (m *CompanyModule) instance(leaderUserID, companionID int) (int, bool) {
+	if m.instances == nil {
+		return 0, false
+	}
+	instanceID, ok := m.instances[leaderUserID][companionID]
+	return instanceID, ok
+}
+
+func (m *CompanyModule) setInstance(leaderUserID, companionID, instanceID int) {
+	if m.instances == nil {
+		m.instances = map[int]map[int]int{}
+	}
+	if m.instances[leaderUserID] == nil {
+		m.instances[leaderUserID] = map[int]int{}
+	}
+	m.instances[leaderUserID][companionID] = instanceID
+}
+
+func (m *CompanyModule) clearInstance(leaderUserID, companionID int) {
+	if m.instances == nil {
+		return
+	}
+	delete(m.instances[leaderUserID], companionID)
+	if len(m.instances[leaderUserID]) == 0 {
+		delete(m.instances, leaderUserID)
+	}
+}
+
+func (m *CompanyModule) companionForInstance(instanceID int) (int, int, bool) {
+	for leaderUserID, byCompanion := range m.instances {
+		for companionID, tracked := range byCompanion {
+			if tracked == instanceID {
+				return leaderUserID, companionID, true
+			}
+		}
+	}
+	return 0, 0, false
+}
+
 func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (string, error) {
 	if err := m.persistenceAvailable(); err != nil {
 		return "", err
@@ -116,29 +182,36 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	if selector == "" {
 		return companyUsage, fmt.Errorf("company: companion selector is required")
 	}
-	templateID, err := strconv.Atoi(selector)
+	templateID, err := m.resolveTemplateID(selector)
 	if err != nil {
-		var ok bool
-		templateID, ok = m.runtime.ResolveTemplate(strings.ToLower(selector))
-		if !ok {
-			return "", fmt.Errorf("company: unknown mob template %q", selector)
-		}
+		return "", err
 	}
-	if err := m.registry.Summon(leaderUserID, templateID, m.allowedTemplates()); err != nil {
+	companion, err := m.registry.Summon(leaderUserID, templateID, m.allowedTemplates(), m.maxCompanions())
+	if err != nil {
 		return "", err
 	}
 	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, templateID)
 	if err != nil {
-		m.registry.Dismiss(leaderUserID)
+		m.registry.Dismiss(leaderUserID, companion.ID)
 		return "", err
 	}
 	if err := m.save(); err != nil {
 		m.runtime.Detach(leaderUserID, instanceID)
-		m.registry.Dismiss(leaderUserID)
+		m.registry.Dismiss(leaderUserID, companion.ID)
 		return "", err
 	}
-	m.liveByLeader[leaderUserID] = instanceID
-	return fmt.Sprintf("Companion summoned: %s.", templateName(templateID, selector)), nil
+	m.setInstance(leaderUserID, companion.ID, instanceID)
+	return fmt.Sprintf("Companion summoned: %s (#%d).", templateName(templateID, selector), companion.ID), nil
+}
+
+func (m *CompanyModule) resolveTemplateID(selector string) (int, error) {
+	if id, err := strconv.Atoi(selector); err == nil {
+		return id, nil
+	}
+	if id, ok := m.runtime.ResolveTemplate(strings.ToLower(selector)); ok {
+		return id, nil
+	}
+	return 0, fmt.Errorf("company: unknown mob template %q", selector)
 }
 
 func templateName(templateID int, fallback string) string {
@@ -153,42 +226,103 @@ func (m *CompanyModule) status(leaderUserID int) string {
 		return err.Error()
 	}
 	record, ok := m.registry.Get(leaderUserID)
-	if !ok {
-		return "No companion."
+	if !ok || len(record.Companions) == 0 {
+		return "No companions."
 	}
-	name := templateName(record.Companion.MobTemplateID, strconv.Itoa(record.Companion.MobTemplateID))
-	if instanceID, tracked := m.liveByLeader[leaderUserID]; tracked {
-		if m.runtime.IsAttached(leaderUserID, instanceID) {
-			return fmt.Sprintf("Companion: %s (present).", name)
+	lines := []string{fmt.Sprintf("Company companions (%d/%d):", len(record.Companions), m.maxCompanions())}
+	for _, c := range record.Companions {
+		state := "awaiting restoration"
+		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked {
+			if m.runtime.IsAttached(leaderUserID, instanceID) {
+				state = "present"
+			} else if !m.runtime.IsLive(instanceID) {
+				m.clearInstance(leaderUserID, c.ID)
+			}
 		}
-		if !m.runtime.IsLive(instanceID) {
-			delete(m.liveByLeader, leaderUserID)
-		}
+		lines = append(lines, fmt.Sprintf("  #%d %s (%s)", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)), state))
 	}
-	return fmt.Sprintf("Companion: %s (awaiting restoration).", name)
+	return strings.Join(lines, "\n")
 }
 
-func (m *CompanyModule) dismiss(leaderUserID int) (string, error) {
+func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, error) {
 	if err := m.persistenceAvailable(); err != nil {
 		return "", err
 	}
-	record, existed := m.registry.Get(leaderUserID)
-	m.registry.Dismiss(leaderUserID)
-	// Keep the live attachment until durable removal succeeds. A failed save
-	// restores ownership and leaves the same companion available for retry.
+	selector = strings.TrimSpace(strings.ToLower(selector))
+	if selector == "all" {
+		return m.dismissAll(leaderUserID)
+	}
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return "No companions.", nil
+	}
+	companion, ok := resolveCompanion(record, selector)
+	if !ok {
+		return "", fmt.Errorf("company: no companion matches %q", selector)
+	}
+	if !m.registry.Dismiss(leaderUserID, companion.ID) {
+		return "", fmt.Errorf("company: companion #%d is no longer in the company", companion.ID)
+	}
 	if err := m.save(); err != nil {
-		if existed {
-			m.registry.Companies[leaderUserID] = record
-		}
+		m.registry.Put(record)
 		return "", err
 	}
-	if instanceID, tracked := m.liveByLeader[leaderUserID]; tracked {
+	if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
 		if m.runtime.IsLive(instanceID) {
 			m.runtime.Detach(leaderUserID, instanceID)
 		}
-		delete(m.liveByLeader, leaderUserID)
+		m.clearInstance(leaderUserID, companion.ID)
 	}
-	return "Companion dismissed.", nil
+	return fmt.Sprintf("Companion dismissed: %s (#%d).", templateName(companion.MobTemplateID, strconv.Itoa(companion.MobTemplateID)), companion.ID), nil
+}
+
+func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok || len(record.Companions) == 0 {
+		return "No companions.", nil
+	}
+	count := m.registry.DismissAll(leaderUserID)
+	if err := m.save(); err != nil {
+		m.registry.Put(record)
+		return "", err
+	}
+	for _, companion := range record.Companions {
+		if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
+			if m.runtime.IsLive(instanceID) {
+				m.runtime.Detach(leaderUserID, instanceID)
+			}
+			m.clearInstance(leaderUserID, companion.ID)
+		}
+	}
+	return fmt.Sprintf("Dismissed %d companion(s).", count), nil
+}
+
+// resolveCompanion matches a companion by #id or numeric id, then exact name, then substring.
+func resolveCompanion(record domain.Record, selector string) (domain.Companion, bool) {
+	if id, err := strconv.Atoi(strings.TrimPrefix(selector, "#")); err == nil {
+		for _, c := range record.Companions {
+			if c.ID == id {
+				return c, true
+			}
+		}
+		return domain.Companion{}, false
+	}
+	var exact, partial []domain.Companion
+	for _, c := range record.Companions {
+		name := strings.ToLower(templateName(c.MobTemplateID, ""))
+		if name == selector {
+			exact = append(exact, c)
+		} else if strings.Contains(name, selector) {
+			partial = append(partial, c)
+		}
+	}
+	if len(exact) == 1 {
+		return exact[0], true
+	}
+	if len(exact) == 0 && len(partial) == 1 {
+		return partial[0], true
+	}
+	return domain.Companion{}, false
 }
 
 func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
@@ -215,7 +349,11 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 	case "status":
 		user.SendText(m.status(user.UserId))
 	case "dismiss":
-		text, err := m.dismiss(user.UserId)
+		if len(args) < 2 {
+			user.SendText(companyUsage)
+			return true, nil
+		}
+		text, err := m.dismiss(user.UserId, strings.Join(args[1:], " "))
 		if err != nil {
 			return true, err
 		}
@@ -234,22 +372,28 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 	if !ok {
 		return nil
 	}
-	if instanceID, tracked := m.liveByLeader[leaderUserID]; tracked {
-		if m.runtime.IsAttached(leaderUserID, instanceID) {
-			return nil
+	var firstErr error
+	for _, companion := range record.Companions {
+		if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
+			if m.runtime.IsAttached(leaderUserID, instanceID) {
+				continue
+			}
+			if m.runtime.IsLive(instanceID) {
+				m.runtime.Detach(leaderUserID, instanceID)
+			}
+			m.clearInstance(leaderUserID, companion.ID)
 		}
-		if m.runtime.IsLive(instanceID) {
-			m.runtime.Detach(leaderUserID, instanceID)
+		instanceID, err := m.runtime.Spawn(leaderUserID, roomID, companion.MobTemplateID)
+		if err != nil {
+			m.clearInstance(leaderUserID, companion.ID)
+			if firstErr == nil {
+				firstErr = fmt.Errorf("company: restore leader %d companion %d: %w", leaderUserID, companion.ID, err)
+			}
+			continue
 		}
-		delete(m.liveByLeader, leaderUserID)
+		m.setInstance(leaderUserID, companion.ID, instanceID)
 	}
-	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, record.Companion.MobTemplateID)
-	if err != nil {
-		delete(m.liveByLeader, leaderUserID)
-		return fmt.Errorf("company: restore leader %d: %w", leaderUserID, err)
-	}
-	m.liveByLeader[leaderUserID] = instanceID
-	return nil
+	return firstErr
 }
 
 func (m *CompanyModule) persistenceAvailable() error {
@@ -309,11 +453,8 @@ func (m *CompanyModule) onMobDeath(e events.Event) events.ListenerReturn {
 	if !ok {
 		return events.Cancel
 	}
-	for leader, instanceID := range m.liveByLeader {
-		if instanceID == evt.InstanceId {
-			delete(m.liveByLeader, leader)
-			break
-		}
+	if leaderUserID, companionID, found := m.companionForInstance(evt.InstanceId); found {
+		m.clearInstance(leaderUserID, companionID)
 	}
 	return events.Continue
 }

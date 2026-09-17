@@ -91,7 +91,7 @@ func TestCompanyNormalLogoutLoginRestoresNativeFollowing(t *testing.T) {
 			module := newTestModule(*domain.NewRegistry(), nativeRuntime{})
 			_, err = module.summon(7, origin.RoomId, "58")
 			require.NoError(t, err)
-			oldInstance := module.liveByLeader[7]
+			oldInstance, _ := module.instance(7, 1)
 			t.Cleanup(func() {
 				for _, instance := range mobs.GetAllMobInstanceIds() {
 					nativeRuntime{}.Detach(7, instance)
@@ -117,7 +117,7 @@ func TestCompanyNormalLogoutLoginRestoresNativeFollowing(t *testing.T) {
 			require.NoError(t, err)
 			origin.AddPlayer(7)
 			require.Equal(t, events.Continue, module.onPlayerSpawn(events.PlayerSpawn{UserId: 7}))
-			instance := module.liveByLeader[7]
+			instance, _ := module.instance(7, 1)
 			mob := mobs.GetInstance(instance)
 			require.NotNil(t, mob)
 			assert.Contains(t, user.Character.GetCharmIds(), instance)
