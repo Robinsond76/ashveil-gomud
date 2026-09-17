@@ -52,7 +52,7 @@
 - Produces `Normalize(Needs) Needs`, `BandFor(value int) Band`, and a registry/service with `ApplyExertion`, `ApplyRestRecovery`, `ConsumeFood`, `ConsumeWater`, and `NeedsFor`.
 - Produces a GoMud-free `Provisioner` interface for `usercommands`: `Provision(leaderUserID int, selector string, benefit Benefit) (ProvisionResult, error)`.
 
-- [ ] **Step 1: Write failing domain tests**
+- [x] **Step 1: Write failing domain tests**
 
 Create tests for all five bands, default needs, decode normalization of negative and oversized values, food/water caps, fatigue-only rest recovery, exertion costs, zero/negative rejection, and exact boundary changes such as `26 -> 25`.
 
@@ -70,13 +70,13 @@ func TestConsumeFoodCapsNeedAndReportsCrossing(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the focused tests and verify failure**
+- [x] **Step 2: Run the focused tests and verify failure**
 
 Run: `go test ./internal/survival -count=1`
 
 Expected: FAIL because the package does not exist.
 
-- [ ] **Step 3: Implement the model with no engine imports**
+- [x] **Step 3: Implement the model with no engine imports**
 
 Use integer arithmetic only. Define the bands exactly as the spec: `0`, `1..25`, `26..50`, `51..75`, `76..100`. Make a leader-ID plus member-key registry map; `Ensure` initializes `{100,100,100}`; every public mutation validates IDs/keys and rejects non-positive costs/benefits. Return a `Change` for each potentially changed need.
 
@@ -101,13 +101,13 @@ func BandFor(value int) Band {
 
 Keep provider registration a tiny synchronized package-level adapter (`SetProvisioner`, `Provision`) that returns a typed unavailable error before the survival module is loaded. Do not put user, item, room, clock, or plugin types in this package.
 
-- [ ] **Step 4: Run focused race tests**
+- [x] **Step 4: Run focused race tests**
 
 Run: `go test -race ./internal/survival -count=1`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit the domain seam**
+- [x] **Step 5: Commit the domain seam**
 
 ```bash
 git add internal/survival/survival.go internal/survival/survival_test.go
@@ -125,17 +125,17 @@ git commit -m "feat(survival): add durable needs domain"
 - Produces `ItemSpec.Nutrition int` (`yaml:"nutrition,omitempty"`) and `ItemSpec.Hydration int` (`yaml:"hydration,omitempty"`).
 - Existing zero-valued item specs retain ordinary use/buff behavior.
 
-- [ ] **Step 1: Add failing metadata/default tests**
+- [x] **Step 1: Add failing metadata/default tests**
 
 Test a YAML item spec with both fields, an ordinary legacy edible spec without fields, and a drink spec with hydration. Assert parsed values and zero defaults.
 
-- [ ] **Step 2: Run targeted item tests and verify failure**
+- [x] **Step 2: Run targeted item tests and verify failure**
 
 Run: `go test ./internal/items -run 'Test.*(Nutrition|Hydration)' -count=1`
 
 Expected: FAIL because `ItemSpec` has no fields.
 
-- [ ] **Step 3: Extend the spec and update two safe sample items**
+- [x] **Step 3: Extend the spec and update two safe sample items**
 
 Add only these fields beside the other item behavior metadata:
 
@@ -146,7 +146,7 @@ Hydration int `yaml:"hydration,omitempty"`
 
 Select existing default-world edible and drinkable data files rather than inventing a second item catalog. Give the edible positive `nutrition` and the drink positive `hydration`; do not change type, subtype, uses, buffs, name, or ordinary gameplay data.
 
-- [ ] **Step 4: Verify data and package behavior**
+- [x] **Step 4: Verify data and package behavior**
 
 Run:
 
@@ -157,7 +157,7 @@ make validate
 
 Expected: both commands exit 0.
 
-- [ ] **Step 5: Commit item metadata**
+- [x] **Step 5: Commit item metadata**
 
 ```bash
 git add internal/items/itemspec.go internal/items/items_test.go _datafiles/items
@@ -177,7 +177,7 @@ git commit -m "feat(items): add survival consumable metadata"
 - Registers `survival` as a player command.
 - Persists `map[int]map[survival.MemberKey]survival.Needs` under the module, never under a mob instance.
 
-- [ ] **Step 1: Write failing module tests**
+- [x] **Step 1: Write failing module tests**
 
 Cover: absent file creates an empty registry; malformed bytes make mutations unavailable and do not overwrite data; YAML values normalize; provisioning accepts `leader`, `me`, `self`, `#2`, and an unambiguous current companion; it rejects unknown/ambiguous/dismissed companions; and status shows leader plus current roster with correct labels.
 
@@ -191,25 +191,25 @@ func TestProvisionRejectsDismissedCompanionWithoutChangingState(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run focused module tests and verify failure**
+- [x] **Step 2: Run focused module tests and verify failure**
 
 Run: `go test ./modules/survival -count=1`
 
 Expected: FAIL because the module does not exist.
 
-- [ ] **Step 3: Implement the plugin with failure-aware persistence**
+- [x] **Step 3: Implement the plugin with failure-aware persistence**
 
 Follow `modules/company`'s `Store`, `ReadBytes`, `WriteStruct`, load-error, and test-double patterns. Keep one module instance owning the registry. Persist before reporting a successful provisioning result; restore the in-memory snapshot if write fails. The leader is always valid; companions are valid only when supplied by the company lifecycle projection. `survival` status must be read-only and may defensively prune stale entries before rendering.
 
 Render one line per member with name/selector, numeric values, and labels. Preserve a companion's durable needs through native re-spawn; remove its state only after successful company dismissal notification.
 
-- [ ] **Step 4: Run focused module race tests**
+- [x] **Step 4: Run focused module race tests**
 
 Run: `go test -race ./modules/survival -count=1`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit the survival module**
+- [x] **Step 5: Commit the survival module**
 
 ```bash
 git add modules/survival
@@ -228,7 +228,7 @@ git commit -m "feat(survival): persist company survival state"
 - `drink <item> [member]` forwards `Hydration` as water benefit.
 - A provisioning failure leaves the item, uses, ownership events, and buffs unchanged.
 
-- [ ] **Step 1: Add failing command tests**
+- [x] **Step 1: Add failing command tests**
 
 Use a test provisioner registered through the internal seam. Cover self-targeting, forwarding `#2`, unqualified zero-metadata items retaining legacy consumption, provider errors preserving the item, and success applying provider output before the existing use/buff path.
 
@@ -244,19 +244,19 @@ func TestEatDoesNotConsumeWhenSurvivalProvisionFails(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the new tests and verify failure**
+- [x] **Step 2: Run the new tests and verify failure**
 
 Run: `go test ./internal/usercommands -run 'Test(Eat|Drink).*Survival' -count=1`
 
 Expected: FAIL because the commands ignore survival metadata and selectors.
 
-- [ ] **Step 3: Parse an optional final member selector without breaking item matching**
+- [x] **Step 3: Parse an optional final member selector without breaking item matching**
 
 Do not use a naïve `strings.Fields` split because existing item names may contain spaces. Reuse `util.SplitButRespectQuotes`; resolve the longest item-name portion through `FindInBackpack`, then treat only a remaining final token as a member selector. If no matching item is found with a selector, retry the whole input as the legacy item name before producing the existing missing-item message.
 
 For qualifying metadata, call `survival.Provision` after item/subtype validation and before `UseItem`, ownership events, or buffs. For zero metadata, keep the legacy path exactly. On provider success, append target and band-crossing text to the existing personal message; room message remains ordinary consumption text.
 
-- [ ] **Step 4: Run command and regression tests**
+- [x] **Step 4: Run command and regression tests**
 
 Run:
 
@@ -267,7 +267,7 @@ go test -race ./internal/items ./internal/survival ./internal/usercommands -coun
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit command integration**
+- [x] **Step 5: Commit command integration**
 
 ```bash
 git add internal/usercommands/eat.go internal/usercommands/drink.go internal/usercommands/*_test.go
@@ -286,29 +286,29 @@ git commit -m "feat(survival): provision company members with supplies"
 - Successful single/all dismissal removes state for exactly the removed companion IDs.
 - A survival persistence failure causes the company command to return an error and restores the company registry to its pre-command snapshot; no native runtime companion is attached/detached as a successful command effect.
 
-- [ ] **Step 1: Add lifecycle failure-order tests**
+- [x] **Step 1: Add lifecycle failure-order tests**
 
 Test successful summon/dismiss synchronization and injected survival write failures. Assert that the company record and survival registry both retain their prior states on a failed cross-module update, and that a later newly assigned companion cannot display removed state.
 
-- [ ] **Step 2: Run the new lifecycle tests and verify failure**
+- [x] **Step 2: Run the new lifecycle tests and verify failure**
 
 Run: `go test ./modules/company ./modules/survival -run 'Test.*Survival' -count=1`
 
 Expected: FAIL because company currently does not notify survival.
 
-- [ ] **Step 3: Add narrow lifecycle calls at the durable command boundaries**
+- [x] **Step 3: Add narrow lifecycle calls at the durable command boundaries**
 
 Place the survival call after the company registry mutation has passed its own save precondition but before native spawn/detach side effects and success messaging. Retain existing company rollback behavior on either company or survival persistence error. For `dismiss all`, remove each actual companion ID captured from the pre-mutation record; never infer IDs from runtime instances.
 
 Do not add a global event type, make `modules/survival` import `modules/company`, or persist state to a mob. Keep the dependency one-way through the `internal/survival` interface.
 
-- [ ] **Step 4: Run focused cross-module race tests**
+- [x] **Step 4: Run focused cross-module race tests**
 
 Run: `go test -race ./modules/company ./modules/survival -count=1`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit lifecycle consistency**
+- [x] **Step 5: Commit lifecycle consistency**
 
 ```bash
 git add modules/company/company.go modules/company/company_test.go modules/survival/survival_test.go
@@ -326,13 +326,13 @@ git commit -m "feat(company): synchronize companion survival state"
 - The generated module import list includes `modules/survival`.
 - Project status marks Phase 4 complete only after all verification succeeds.
 
-- [ ] **Step 1: Generate module wiring**
+- [x] **Step 1: Generate module wiring**
 
 Run: `make generate`
 
 Expected: `modules/all-modules.go` gains the sorted blank import for `modules/survival`; no hand edit.
 
-- [ ] **Step 2: Run full validation**
+- [x] **Step 2: Run full validation**
 
 Run:
 
@@ -347,7 +347,11 @@ Expected: both commands exit 0. If `make test` is attempted and its documented J
 
 Start the server using the documented local procedure. As a player with one companion and test consumables: run `survival`; use `eat <item> #1`; use `drink <item> #1`; verify labels change; log out/in and verify durability; dismiss the companion and verify it disappears from `survival`. Stop the server cleanly. If prerequisites are unavailable, record that fact rather than claiming live validation.
 
-- [ ] **Step 4: Update status and commit the final integration**
+> Not executed: no interactive Telnet prerequisites were available in this
+> session. `make build` and the full `go test -race ./...` suite pass; live
+> acceptance remains outstanding and is recorded in `docs/PROJECT_STATUS.md`.
+
+- [x] **Step 4: Update status and commit the final integration**
 
 Update `docs/PROJECT_STATUS.md` with the completed Phase 4 scope, persistence/command behavior, explicit deferrals (rest/sleep Phase 7; cargo Phase 9), commits, and actual verification results.
 

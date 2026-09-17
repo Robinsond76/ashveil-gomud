@@ -7,15 +7,16 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-17
 - **Branch:** `master` (Phase 3 merged; `main-deepseek` retained at the same commit)
-- **HEAD:** `3d6addd4` (Phase 3 invariant corrections)
+- **HEAD:** `8f72807b` (Phase 4 survival state; this status record is the next commit)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is 34 commits ahead of `origin/master`; the project-status doc and Phase 3 are included. Nothing pushed.
+- **Origin sync:** `master` is 46 commits ahead of `origin/master`; the project-status doc and Phase 3–4 are included. Nothing pushed.
 
 ## Current position
 
 - **Completed:** Phase 0–1 (fork, baseline, integration map), Phase 2 (company
-  companion slice), and Phase 3 (company roster + 3×3 formation).
-- **Next:** Phase 4 — survival state (hunger/thirst/fatigue).
+  companion slice), Phase 3 (company roster + 3×3 formation), and Phase 4
+  (survival state).
+- **Next:** Phase 5 — terrain and travel profiles.
 
 ## Phase progress
 
@@ -25,7 +26,7 @@ instead of duplicating them.
 | 1 | GoMud integration map and handoff docs | Complete |
 | 2 | Minimal company slice (one persistent companion) | Complete |
 | 3 | Company roster (cap 5) + 3×3 formation state | Complete |
-| 4 | Survival state (hunger/thirst/fatigue) | Not started |
+| 4 | Survival state (hunger/thirst/fatigue) | Complete |
 | 5 | Terrain and travel profiles | Not started |
 | 6 | Travel interruptions | Not started |
 | 7 | Camping | Not started |
@@ -36,6 +37,41 @@ instead of duplicating them.
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 4 — Survival state (complete, 2026-09-17)
+
+- **What:** Added durable, per-company-member hunger, thirst, and fatigue in
+  `0..100`, with five threshold bands, a pure `internal/survival` domain, and a
+  `modules/survival` plugin that persists state under the module, projects the
+  company roster, resolves leader/companion provisioning selectors, and renders
+  a read-only `survival` command. `items.ItemSpec` gained optional `nutrition`
+  and `hydration` metadata; native `eat`/`drink` accept an optional trailing
+  member selector and provision the target from the leader's backpack before
+  consuming the item. `modules/company` synchronizes summon/dismiss through a
+  one-way `internal/survival` lifecycle seam and supplies companion names
+  through a roster seam.
+- **Why:** Survival state is the prerequisite for Phase 5 travel exertion and
+  Phase 7 camp/rest recovery; it must persist across login/logout/copyover and
+  never advance global game time.
+- **Step completed:** Handoff Phase 4 ("Survival State").
+- **Key commits:** `5872dadd` (domain), `1271e45d` (item metadata), `1cc7caeb`
+  + `2a62de1b` (module persistence and roster seam), `609d0e4f` (eat/drink),
+  `9055034d` (company lifecycle sync), `8f72807b` (roster-default status).
+- **Behavior:** Needs change only through explicit APIs (`ConsumeFood`,
+  `ConsumeWater`, `ApplyRestRecovery`, `ApplyExertion`). `eat <item> [member]`
+  and `drink <item> [member]` accept `leader`/`me`/`self`, `#<id>`/`<id>`, or an
+  unambiguous companion name; items are consumed only after survival mutation
+  and persistence succeed. Successful summon creates default companion state;
+  single/all dismissal prunes exactly the removed companions.
+- **Verification:** `go test -race ./...` (1509 tests / 67 packages),
+  `make validate`, `make generate` (adds `modules/survival`), and `make build`
+  pass. Focused race suites cover `internal/survival`, `internal/items`,
+  `internal/usercommands`, `modules/survival`, and `modules/company`.
+- **Deferred:** Camp/rest/sleep recovery is Phase 7; cargo, capacity, and
+  automatic provisioning are Phase 9. No idle/offline drain and no health,
+  combat, movement, or travel penalties in Phase 4.
+- **Live acceptance:** Not run (no interactive Telnet prerequisites); unit,
+  module, command, and race coverage only.
 
 ### Phase 3 invariant corrections (2026-09-17)
 
@@ -107,11 +143,17 @@ instead of duplicating them.
 - Plugin `WriteStruct`/`WriteBytes` persistence is a direct (non-atomic) file
   write. Command state rolls back on failure, but a partial low-level write
   cannot be recovered.
-- Live server acceptance has not been run for Phase 3; unit/race tests cover the
-  roster, formation, migration, and command behavior.
-- Company/formation state is process-local with no mutex, matching the existing
-  event-loop dispatch assumption; revisit if command dispatch moves off the main
-  loop.
+- Live server acceptance has not been run for Phase 3 or Phase 4; unit/race
+  tests cover the roster, formation, migration, survival persistence,
+  provisioning, and command behavior.
+- Company and survival use separate plugin writes, so summon/dismiss is not
+  cross-file atomic. A failed survival write rolls the company registry back;
+  if the company write fails after survival succeeded, survival is restored
+  best-effort (a dismissed companion's record is recreated at full default
+  needs). Tested but not transactionally recoverable.
+- Company/formation/survival state is process-local with no mutex, matching the
+  existing event-loop dispatch assumption; revisit if command dispatch moves off
+  the main loop.
 - Deferred by design: recruitment economics, companion custom names, equipment,
   injuries, AI orders, death/permadeath rules, formation combat effects, and
   travel/camp integration.
