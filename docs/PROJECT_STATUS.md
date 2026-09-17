@@ -7,9 +7,9 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-17
 - **Branch:** `master` (Phase 3 merged; `main-deepseek` retained at the same commit)
-- **HEAD:** `470a2415` (Phase 4 survival corrections; this status record is the next commit)
+- **HEAD:** `ac32c100` (Phase 4 final corrections; this status record is the next commit)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is 53 commits ahead of `origin/master`; the project-status doc and Phase 3–4 (including corrections) are included. Nothing pushed.
+- **Origin sync:** `master` is 57 commits ahead of `origin/master`; the project-status doc and Phase 3–4 (including final corrections) are included. Nothing pushed.
 
 ## Current position
 
@@ -57,10 +57,11 @@ instead of duplicating them.
 - **Corrections (2026-09-17):** A review of `e5625faa..5f07d4f0` found state
   loss and inheritance bugs. Companions now carry a persisted
   `next_companion_id` high-water mark, so a dismissed ID is never reassigned
-  across dismiss, dismiss all, or save/load, and failed summons restore the
-  exact prior record. The lifecycle seam captures exact `MemberSnapshot`s, so a
-  failed company save restores the dismissed companion's real needs instead of
-  a fresh default and joins compensation errors. `modules/company` reconciles
+  across dismiss, dismiss all, or save/load, and a failed summon that has not
+  yet committed survival state restores the exact prior record. The lifecycle
+  seam captures exact `MemberSnapshot`s, so a failed company save restores the
+  dismissed companion's real needs instead of a fresh default and joins
+  compensation errors. `modules/company` reconciles
   every loaded roster into survival once after its registry loads, pruning
   orphaned companions and initializing current ones; a reconcile failure blocks
   company mutations. Consumable parsing again uses native backpack matching
@@ -93,6 +94,27 @@ instead of duplicating them.
   combat, movement, or travel penalties in Phase 4.
 - **Live acceptance:** Not run (no interactive Telnet prerequisites); unit,
   module, command, and race coverage only.
+
+### Phase 4 final corrections (2026-09-17)
+
+- **What:** Failed summon cleanup now treats a companion ID as spent once
+  survival has durably recorded it. The transient companion is removed but the
+  advanced `next_companion_id` high-water mark is retained and persisted, and
+  the primary failure, any failed survival removal, and any failed high-water
+  write are returned together. Provisioning selectors are now authorized only
+  through the authoritative company roster: a stale survival record can no
+  longer target a dismissed companion, and a current companion with no stored
+  record is initialized to full needs when provisioned.
+- **Why:** A review of `5f07d4f0..8eeaf973` found that failed summon cleanup
+  could restore a spent ID and let a retry inherit stale survival state, and
+  that numeric selectors trusted persisted survival state for authorization.
+- **Key commits:** `65c6460b` (retain spent IDs after failed summon cleanup),
+  `ac32c100` (authorize numeric targets from roster).
+- **Verification:** `make generate`, `make validate`, and
+  `go test -race ./...` (1544 tests / 67 packages) pass.
+- **Known limitation:** Unchanged; company and survival remain separate plugin
+  writes, so summon/dismiss is not cross-file atomic. Cleanup errors are joined
+  and surfaced, and a spent companion ID is never silently reused.
 
 ### Phase 3 invariant corrections (2026-09-17)
 

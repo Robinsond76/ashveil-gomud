@@ -43,7 +43,7 @@
 - `rollbackSummon` removes the transient companion but retains that advanced high-water mark, then persists the company registry before returning a cleanup error.
 - Failed spawn and failed company-save paths return `errors.Join(primaryErr, cleanupErr)` when `RemoveCompanyMember` or high-water persistence fails.
 
-- [ ] **Step 1: Add failing failed-summon regressions**
+- [x] **Step 1: Add failing failed-summon regressions**
 
 Use a real survival lifecycle with an injectable survival store. Force native `Spawn` to fail after `EnsureCompanyMember` persists `companion:1`, then force `RemoveCompanyMember` to fail. Assert the failed command returns both errors, the company registry retains `NextCompanionID == 2` with no companion, and a retry assigns `#2` rather than inheriting `#1` state. Repeat for a company-save failure after native spawn succeeds.
 
@@ -66,25 +66,25 @@ func TestSummonCleanupFailureRetainsSpentID(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the focused tests and verify failure**
+- [x] **Step 2: Run the focused tests and verify failure**
 
 Run: `go test ./modules/company -run 'TestSummon.*(CleanupFailure|SpentID)' -count=1`
 
 Expected: FAIL because the current rollback restores the prior record and discards `RemoveCompanyMember` errors.
 
-- [ ] **Step 3: Implement a durable high-water rollback path**
+- [x] **Step 3: Implement a durable high-water rollback path**
 
 Replace the closure that restores the entire pre-summon record with a helper that removes only the transient companion from the post-summon record and preserves its already incremented `NextCompanionID`. Call `m.save()` on that high-water-only record before returning from a failed spawn or failed company save. Collect the primary failure, failed survival removal, and failed high-water persistence with `errors.Join`.
 
 If survival initialization itself fails before it has persisted anything, restore the exact pre-summon company record as today. If cleanup succeeds, still retain the spent ID because survival initialization had already committed a durable identity. Do not call `Registry.Dismiss` followed by the old pre-summon restore, because that reopens ID reuse.
 
-- [ ] **Step 4: Run focused cross-module race tests**
+- [x] **Step 4: Run focused cross-module race tests**
 
 Run: `go test -race ./modules/company ./modules/survival -count=1`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit failed-summon identity safety**
+- [x] **Step 5: Commit failed-summon identity safety**
 
 ```bash
 git add modules/company/company.go modules/company/company_test.go
@@ -105,7 +105,7 @@ git commit -m "fix(company): retain spent ids after failed summon cleanup"
 - `IsMemberSelector` uses the same helper.
 - After roster authorization, `Provision` calls `registry.Ensure` so a current companion with no stored state receives `FullNeeds()`.
 
-- [ ] **Step 1: Add failing roster-authorization tests**
+- [x] **Step 1: Add failing roster-authorization tests**
 
 Seed stale `companion:2` survival needs but provide a roster containing only the leader and `companion:3`. Assert both `Provision(7, "#2", ...)` and `IsMemberSelector(7, "#2")` reject it. Assert `Provision(7, "#3", ...)` succeeds without a pre-existing survival entry and persists default state plus the applied benefit.
 
@@ -124,19 +124,19 @@ func TestNumericSelectorRequiresCurrentRosterMembership(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run focused module tests and verify failure**
+- [x] **Step 2: Run focused module tests and verify failure**
 
 Run: `go test ./modules/survival -run 'Test.*(NumericSelector|MissingState)' -count=1`
 
 Expected: FAIL because current code trusts the existence of persisted needs for numeric selectors.
 
-- [ ] **Step 3: Implement one shared authorization helper**
+- [x] **Step 3: Implement one shared authorization helper**
 
 Implement `currentRosterMember` by scanning `domain.CurrentRoster(leaderUserID)` for an exact `MemberKey`. For a parsed numeric selector, call it in both `resolveMember` and `IsMemberSelector`; do not use `hasMember` as authorization. For named selectors, retain `matchCompanionName` over the same roster. In `Provision`, retain the existing `registry.Ensure` after resolution, which makes an authorized current companion with a missing record start at full needs.
 
 Keep `hasMember` only where the implementation needs to inspect persisted state, not to decide who may be targeted. Add a command-level fake-provisioner test showing a stale `#2` is not stripped as a target suffix, so ordinary `FindInBackpack` receives the full input.
 
-- [ ] **Step 4: Run module and command race tests**
+- [x] **Step 4: Run module and command race tests**
 
 Run:
 
@@ -146,7 +146,7 @@ go test -race ./modules/survival ./internal/usercommands -count=1
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit roster-authorized selectors**
+- [x] **Step 5: Commit roster-authorized selectors**
 
 ```bash
 git add modules/survival/survival.go modules/survival/survival_test.go internal/usercommands/eat_test.go internal/usercommands/drink_test.go
@@ -162,7 +162,7 @@ git commit -m "fix(survival): authorize numeric targets from roster"
 **Interfaces:**
 - Project status lists the new correction commits and actual verification results.
 
-- [ ] **Step 1: Generate and run full verification**
+- [x] **Step 1: Generate and run full verification**
 
 Run:
 
@@ -174,11 +174,11 @@ go test -race ./...
 
 Expected: each command exits 0. If `make validate` cannot access the Go cache in the sandbox, re-run it with the approved project validation permission and record that the command itself succeeded.
 
-- [ ] **Step 2: Update the status log**
+- [x] **Step 2: Update the status log**
 
 Add a concise Phase 4 final-corrections entry documenting that failed summon cleanup now retains spent IDs and that provisioning selectors are roster-authorized. Retain the non-atomic plugin-write caveat, but remove any statement that failed cleanup can silently leave a reusable identity.
 
-- [ ] **Step 3: Commit verification documentation**
+- [x] **Step 3: Commit verification documentation**
 
 ```bash
 git add docs/PROJECT_STATUS.md docs/superpowers/plans/2026-09-17-phase-4-survival-final-corrections.md
