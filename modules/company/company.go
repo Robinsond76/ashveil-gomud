@@ -106,6 +106,7 @@ func init() {
 	m.store = pluginStore{plug: m.plug}
 	m.runtime = nativeRuntime{}
 	m.plug.AddUserCommand("company", m.userCommand, false, false)
+	m.plug.AddUserCommand("formation", m.formationCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
