@@ -479,3 +479,11 @@ func TestConfigIntAcceptsYAMLAndStringValues(t *testing.T) {
 	_, ok := configInt("not-a-number")
 	assert.False(t, ok)
 }
+
+func TestMaxCompanionsFromConfigClampsToDomainLimit(t *testing.T) {
+	assert.Equal(t, domain.MaxCompanions, maxCompanionsFromConfig(domain.MaxCompanions+1))
+	assert.Equal(t, domain.MaxCompanions, maxCompanionsFromConfig("999"))
+	assert.Equal(t, 2, maxCompanionsFromConfig(2))
+	assert.Equal(t, domain.MaxCompanions, maxCompanionsFromConfig(0))
+	assert.Equal(t, domain.MaxCompanions, maxCompanionsFromConfig("invalid"))
+}

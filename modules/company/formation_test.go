@@ -201,3 +201,14 @@ func TestParseSlotRejectsOutOfRange(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 2, n)
 }
+
+func TestDecodeCompaniesKeepsFirstDuplicateFormationOccupant(t *testing.T) {
+	data := []byte("companies:\n  2:\n    formation:\n      - [\"leader\", \"leader\", \"\"]\n      - [\"\", \"\", \"\"]\n      - [\"\", \"\", \"\"]\n")
+	registry := domain.NewRegistry()
+	require.NoError(t, decodeCompanies(data, registry))
+
+	record, ok := registry.Get(2)
+	require.True(t, ok)
+	assert.Equal(t, domain.LeaderMemberKey, record.Formation.At(0, 0))
+	assert.Equal(t, domain.MemberKey(""), record.Formation.At(0, 1))
+}

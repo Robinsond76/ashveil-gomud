@@ -144,13 +144,22 @@ func (m *CompanyModule) allowedTemplates() map[int]struct{} {
 	return map[int]struct{}{58: {}}
 }
 
+func maxCompanionsFromConfig(raw any) int {
+	n, ok := configInt(raw)
+	if !ok || n < 1 {
+		return domain.MaxCompanions
+	}
+	if n > domain.MaxCompanions {
+		return domain.MaxCompanions
+	}
+	return n
+}
+
 func (m *CompanyModule) maxCompanions() int {
 	if m.plug != nil {
-		if n, ok := configInt(m.plug.Config.Get("MaxCompanions")); ok && n > 0 {
-			return n
-		}
+		return maxCompanionsFromConfig(m.plug.Config.Get("MaxCompanions"))
 	}
-	return 4
+	return domain.MaxCompanions
 }
 
 func configInt(raw any) (int, bool) {
