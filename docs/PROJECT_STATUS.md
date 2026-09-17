@@ -6,10 +6,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-17
-- **Branch:** `master` (Phase 3 merged; `main-deepseek` retained at the same commit)
-- **HEAD:** `ac32c100` (Phase 4 final corrections; this status record is the next commit)
+- **Branch:** `master`
+- **HEAD:** `e9432182` (merged durable Phase 4 companion-ID reservation; this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is 57 commits ahead of `origin/master`; the project-status doc and Phase 3–4 (including final corrections) are included. Nothing pushed.
+- **Origin sync:** `master` is 62 commits ahead of `origin/master`; Phase 3–4 and the durable-reservation correction are local only. Nothing pushed.
 
 ## Current position
 
@@ -116,6 +116,28 @@ instead of duplicating them.
   writes, so summon/dismiss is not cross-file atomic. Cleanup errors are joined
   and surfaced, and a spent companion ID is never silently reused.
 
+### Phase 4 durable identity reservation (merged, 2026-09-17)
+
+- **What:** Survival persistence now stores a per-leader
+  `reserved_next_companion_ids` lower bound alongside companion needs.
+  `EnsureCompanyMember` advances that reservation before persisting the new
+  companion state. Before every summon, the company registry adopts the
+  reservation as its minimum next ID.
+- **Why:** This closes the final restart-safety hole: if survival records a
+  companion but spawning fails, survival cleanup fails, and the company
+  rollback write also fails, a fresh company registry still starts at `#2`
+  rather than reusing `#1` and inheriting stale survival state.
+- **Key commits:** `1d465b8f` (durable survival reservation and regression
+  coverage), merged to `master` by `e9432182`.
+- **Verification:** `make validate` and `go test -race ./...` pass after the
+  composed serialized failure/restart regression was added. An independent
+  review found no critical or important issues.
+- **Known limitation:** The company and survival files remain separate direct
+  writes, so they are not a transaction and a partial low-level write is still
+  unrecoverable. The durable survival reservation prevents reuse of any ID
+  whose survival initialization was successfully persisted; load reconciliation
+  continues to repair ordinary roster/needs divergence.
+
 ### Phase 3 invariant corrections (2026-09-17)
 
 - **What:** Hard-capped companies at four companions plus their leader, and normalized duplicate persisted formation occupants by keeping the first row-major cell.
@@ -190,11 +212,10 @@ instead of duplicating them.
   tests cover the roster, formation, migration, survival persistence,
   provisioning, and command behavior.
 - Company and survival use separate plugin writes, so summon/dismiss is not
-  cross-file atomic. A failed survival write rolls the company registry back;
-  if the company write fails after survival succeeded, the dismissed
-  companion's exact needs are restored from a captured snapshot (and any
-  compensation failure is reported alongside the save error). Tested but not
-  transactionally recoverable across a crash.
+  cross-file atomic. Compensation failures are surfaced alongside the primary
+  error, and the survival-side durable reservation prevents reuse of an ID once
+  its survival initialization has persisted. A partial low-level file write is
+  still not transactionally recoverable.
 - Company/formation/survival state is process-local with no mutex, matching the
   existing event-loop dispatch assumption; revisit if command dispatch moves off
   the main loop.

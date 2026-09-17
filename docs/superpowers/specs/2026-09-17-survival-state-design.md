@@ -1,6 +1,6 @@
 # Phase 4 Survival State Design
 
-**Status:** Approved for implementation planning
+**Status:** Implemented and corrected through the durable identity reservation
 
 **Goal:** Add durable, individual hunger, thirst, and long-term fatigue for every company leader and current companion, with manual food/water provisioning and no background time drain or gameplay penalties.
 
@@ -131,7 +131,15 @@ If applying survival state or persisting it fails, the item remains unconsumed a
 
 The survival module persists a map keyed by leader user ID and stable member key. It loads through the plugin's byte/struct persistence path, preserves a read failure as unavailable state, and refuses mutations while persistence is unavailable. On decode, it normalizes values and discards malformed/unknown entries. It never writes live mob IDs.
 
-The current company roster is authoritative. On a successful summon, default survival state is created for the new companion. On dismiss or dismiss-all, state for the removed companion(s) is pruned atomically with the company action's successful persistence contract. Roster projection also prunes orphan state defensively on load and status/read paths. Since company IDs monotonically advance within a surviving roster, a replacement companion cannot reuse a removed companion's state.
+The current company roster is authoritative. On a successful summon, default
+survival state is created for the new companion and survival persists a
+per-leader lower bound for the next companion ID in the same save. Before
+assigning an ID, company adopts that lower bound. On dismiss or dismiss-all,
+state for removed companion(s) is pruned while the reservation is retained.
+Therefore, even if the separate company write or cleanup fails and the process
+restarts, a survival-persisted companion identity is never reassigned. Roster
+projection also prunes ordinary orphan state defensively on load and
+status/read paths.
 
 The leader needs state even with no companions and no formation record. Its first status or provisioning operation creates the default record. Normal login, logout, copyover, and companion re-spawn preserve the same durable state.
 
@@ -157,7 +165,11 @@ Phase 9 will introduce the company-owned shared cargo inventory, item capacity/w
 ## Risks and Follow-up Boundaries
 
 - Native `eat`/`drink` mutate item instances, buffs, and item-ownership events. The implementation must introduce a narrow, failure-aware survival adapter instead of reimplementing those command paths in a module.
-- Company and survival persistence are separate plugin writes. Phase 4 must define and test rollback behavior around summon/dismiss integration rather than claim cross-file atomicity that GoMud does not provide.
+- Company and survival persistence are separate direct plugin writes, not a
+  cross-file transaction. Phase 4 compensates failed summon/dismiss operations
+  and uses a survival-side durable companion-ID reservation to prevent identity
+  reuse after the company write fails. A partial low-level file write remains
+  unrecoverable.
 - Phase 5 travel will be the first normal caller of `ApplyExertion`; it must accrue costs by real progress, not an upfront estimate or world-time mutation.
 - Phase 7 camping/rest/sleep will call `ApplyRestRecovery`; it must use real elapsed time/server state, not local time skipping or instant restoration.
 - Phase 9 cargo owns all automatic supply selection and policy. Phase 4 remains manual leader-backpack provisioning.
