@@ -128,12 +128,16 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 		if err != nil {
 			return true, err
 		}
-		before, _ := m.registry.Get(user.UserId)
+		before, existed := m.registry.Get(user.UserId)
 		if err := m.registry.PlaceMember(user.UserId, key, row-1, col-1); err != nil {
 			return true, err
 		}
 		if err := m.save(); err != nil {
-			m.registry.Put(before)
+			if existed {
+				m.registry.Put(before)
+			} else {
+				m.registry.Put(domain.Record{LeaderUserID: user.UserId})
+			}
 			return true, err
 		}
 		user.SendText(fmt.Sprintf("Placed %s at row %d, column %d.", m.memberName(user.UserId, key), row, col))

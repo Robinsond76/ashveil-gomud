@@ -136,6 +136,18 @@ func TestFormationCommandSaveFailureRollsBack(t *testing.T) {
 	assert.Equal(t, domain.MemberKey(""), record.Formation.At(0, 0), "failed save must not keep the move")
 }
 
+func TestFormationCommandSaveFailureRollsBackNewRecord(t *testing.T) {
+	module := newTestModule(*domain.NewRegistry(), &fakeRuntime{})
+	user := users.NewUserRecord(7, 1)
+	store := module.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+
+	_, err := module.formationCommand("move leader 1 1", user, nil, 0)
+	assert.ErrorIs(t, err, store.saveErr)
+	_, ok := module.registry.Get(7)
+	assert.False(t, ok, "a failed first move must not leave a company record")
+}
+
 func TestFormationCommandRendersGridAndUnplaced(t *testing.T) {
 	module, _ := formationModule(t)
 	require.NoError(t, module.registry.PlaceMember(7, domain.LeaderMemberKey, 0, 0))
