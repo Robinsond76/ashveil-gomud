@@ -35,6 +35,40 @@ type Store interface {
 	Save(domain.Registry) error
 }
 
+type wireRecord struct {
+	LeaderUserID int                `yaml:"leader_user_id"`
+	Companions   []domain.Companion `yaml:"companions"`
+	Companion    *domain.Companion  `yaml:"companion"`
+	Formation    domain.Formation   `yaml:"formation"`
+}
+
+type wireRegistry struct {
+	Companies map[int]wireRecord `yaml:"companies"`
+}
+
+// decodeCompanies parses stored bytes, converting a legacy single-companion
+// record into a roster entry with ID 1.
+func decodeCompanies(data []byte, registry *domain.Registry) error {
+	var wire wireRegistry
+	if err := yaml.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	loaded := domain.NewRegistry()
+	for leaderID, wr := range wire.Companies {
+		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation}
+		if len(record.Companions) == 0 && wr.Companion != nil {
+			legacy := *wr.Companion
+			if legacy.ID == 0 {
+				legacy.ID = 1
+			}
+			record.Companions = []domain.Companion{legacy}
+		}
+		loaded.Put(record)
+	}
+	*registry = *loaded
+	return nil
+}
+
 type pluginStore struct{ plug *plugins.Plugin }
 
 func (s pluginStore) Load(registry *domain.Registry) error {
@@ -48,7 +82,7 @@ func (s pluginStore) Load(registry *domain.Registry) error {
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(data, registry)
+	return decodeCompanies(data, registry)
 }
 func (s pluginStore) Save(registry domain.Registry) error {
 	return s.plug.WriteStruct("companies", registry)
