@@ -6,10 +6,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-17
-- **Branch:** `feature/company-formation-slice` (off `main-deepseek`, off `master`)
-- **HEAD:** `39d993f2 docs(company): document roster and formation rules`
+- **Branch:** `main-deepseek` (Phase 3 feature merged; `master` unchanged)
+- **HEAD:** `6e09c61a docs: record phase 3 completion`
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is 14 commits ahead of `origin/master`; `main-deepseek` adds the project-status doc. Nothing pushed.
+- **Origin sync:** `master` is 14 commits ahead of `origin/master`; `main-deepseek` adds the project-status doc and Phase 3. Nothing pushed.
 
 ## Current position
 
