@@ -94,6 +94,7 @@ func crossed(c Change) bool { return c.Before != c.After }
 var (
 	ErrInvalidMember          = errors.New("survival: invalid company member")
 	ErrUnknownMember          = errors.New("survival: unknown company member")
+	ErrAmbiguousMember        = errors.New("survival: ambiguous company member")
 	ErrInvalidAmount          = errors.New("survival: amount must be positive")
 	ErrPersistenceUnavailable = errors.New("survival: persistence unavailable")
 	ErrProvisionUnavailable   = errors.New("survival: provisioning unavailable")
@@ -426,6 +427,45 @@ func (r *Registry) ApplyExertion(leaderUserID int, key MemberKey, cost Exertion)
 
 func changeFor(before, after int) Change {
 	return Change{Before: BandFor(before), After: BandFor(after)}
+}
+
+// MemberRef is a current company member and its display name.
+type MemberRef struct {
+	Key  MemberKey
+	Name string
+}
+
+// RosterProvider exposes the authoritative company roster to survival
+// consumers for name resolution and status rendering. modules/company
+// registers it during init so modules/survival never imports modules/company.
+type RosterProvider interface {
+	// Roster returns the current members for a leader, leader first. It
+	// includes companions whose native mob is temporarily unavailable.
+	Roster(leaderUserID int) []MemberRef
+}
+
+var (
+	rosterMu       sync.RWMutex
+	rosterProvider RosterProvider
+)
+
+// SetRosterProvider registers the active roster provider. Passing nil clears it.
+func SetRosterProvider(p RosterProvider) {
+	rosterMu.Lock()
+	defer rosterMu.Unlock()
+	rosterProvider = p
+}
+
+// CurrentRoster returns the authoritative roster when a provider is
+// registered, otherwise nil.
+func CurrentRoster(leaderUserID int) []MemberRef {
+	rosterMu.RLock()
+	p := rosterProvider
+	rosterMu.RUnlock()
+	if p == nil {
+		return nil
+	}
+	return p.Roster(leaderUserID)
 }
 
 // Provisioner applies a Benefit to a selected company member. It is

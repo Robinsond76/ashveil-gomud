@@ -319,3 +319,22 @@ func TestProvisionResultReportsCrossing(t *testing.T) {
 	assert.True(t, ProvisionResult{Hunger: Change{Before: BandLow, After: BandSteady}}.Crossed())
 	assert.False(t, ProvisionResult{Hunger: Change{Before: BandLow, After: BandLow}}.Crossed())
 }
+
+type staticRoster struct{ members []MemberRef }
+
+func (s staticRoster) Roster(int) []MemberRef { return s.members }
+
+func TestCurrentRosterIsEmptyWithoutProvider(t *testing.T) {
+	SetRosterProvider(nil)
+	t.Cleanup(func() { SetRosterProvider(nil) })
+	assert.Nil(t, CurrentRoster(7))
+}
+
+func TestCurrentRosterForwardsToProvider(t *testing.T) {
+	SetRosterProvider(staticRoster{members: []MemberRef{{Key: LeaderMemberKey, Name: "Hero"}}})
+	t.Cleanup(func() { SetRosterProvider(nil) })
+
+	roster := CurrentRoster(7)
+	require.Len(t, roster, 1)
+	assert.Equal(t, "Hero", roster[0].Name)
+}
