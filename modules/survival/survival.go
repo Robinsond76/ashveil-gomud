@@ -76,6 +76,14 @@ func decodeRegistry(data []byte, registry *domain.Registry) error {
 			}
 		}
 	}
+	for leaderUserID, nextID := range wire.ReservedNextCompanionIDs {
+		if leaderUserID <= 0 || nextID < 1 {
+			continue
+		}
+		if err := loaded.ReserveNextCompanionID(leaderUserID, nextID); err != nil {
+			continue
+		}
+	}
 	*registry = *loaded
 	return nil
 }
@@ -154,6 +162,9 @@ func (m *SurvivalModule) EnsureCompanyMember(leaderUserID, companionID int) erro
 		return domain.ErrInvalidMember
 	}
 	snapshot := m.registry.Clone()
+	if err := m.registry.ReserveNextCompanionID(leaderUserID, companionID+1); err != nil {
+		return err
+	}
 	if err := m.registry.Ensure(leaderUserID, domain.CompanionMemberKey(companionID)); err != nil {
 		return err
 	}
@@ -162,6 +173,15 @@ func (m *SurvivalModule) EnsureCompanyMember(leaderUserID, companionID int) erro
 		return err
 	}
 	return nil
+}
+
+// NextReservedCompanionID returns the survival-side durable reservation used
+// by company before assigning a new companion ID.
+func (m *SurvivalModule) NextReservedCompanionID(leaderUserID int) (int, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return 0, err
+	}
+	return m.registry.NextReservedCompanionID(leaderUserID)
 }
 
 // RemoveCompanyMember prunes one dismissed companion and persists the change.

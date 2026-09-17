@@ -75,6 +75,23 @@ func TestLoadAbsentFileCreatesEmptyRegistry(t *testing.T) {
 	assert.Equal(t, 1, m.store.(*fakeStore).loadCalls)
 }
 
+func TestEnsureCompanyMemberPersistsNextReservedCompanionID(t *testing.T) {
+	store := &fakeStore{}
+	m := newTestModule(*domain.NewRegistry())
+	m.store = store
+
+	require.NoError(t, m.EnsureCompanyMember(7, 1))
+
+	reloaded := newTestModule(*domain.NewRegistry())
+	reloaded.store = store
+	reloaded.load()
+	require.NoError(t, reloaded.loadErr)
+
+	next, err := reloaded.NextReservedCompanionID(7)
+	require.NoError(t, err)
+	assert.Equal(t, 2, next)
+}
+
 func TestPluginStoreAbsentFileLoadsEmptyRegistry(t *testing.T) {
 	t.Chdir(t.TempDir())
 	plug := plugins.New("survival_absent_regression", "1.0")
@@ -127,6 +144,9 @@ func TestDecodeNormalizesValuesAndDropsMalformedEntries(t *testing.T) {
 	_, ok := registry.NeedsFor(7, domain.MemberKey("bogus"))
 	assert.False(t, ok)
 	assert.NotContains(t, registry.Leaders, 0)
+	next, err := registry.NextReservedCompanionID(7)
+	require.NoError(t, err)
+	assert.Equal(t, 1, next, "legacy YAML without reservations must default to one")
 }
 
 func TestMalformedBytesBlockMutationsAndWrites(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 type fakeRestore struct {
@@ -34,6 +35,69 @@ type fakeLifecycle struct {
 	restored     []fakeRestore
 	reconcileErr error
 	reconciled   []map[int][]survival.MemberRef
+	nextReserved int
+}
+
+// serializedLifecycle exercises the same persisted survival identity boundary
+// as the production module while letting this package induce the companion
+// module's independent persistence failures.
+type serializedLifecycle struct {
+	fakeLifecycle
+	saved []byte
+}
+
+func (f *serializedLifecycle) registry() (*survival.Registry, error) {
+	registry := survival.NewRegistry()
+	if len(f.saved) == 0 {
+		return registry, nil
+	}
+	if err := yaml.Unmarshal(f.saved, registry); err != nil {
+		return nil, err
+	}
+	return registry, nil
+}
+
+func (f *serializedLifecycle) saveRegistry(registry *survival.Registry) error {
+	data, err := yaml.Marshal(registry)
+	if err != nil {
+		return err
+	}
+	f.saved = data
+	return nil
+}
+
+func (f *serializedLifecycle) EnsureCompanyMember(leader, companion int) error {
+	registry, err := f.registry()
+	if err != nil {
+		return err
+	}
+	if err := registry.ReserveNextCompanionID(leader, companion+1); err != nil {
+		return err
+	}
+	if err := registry.Ensure(leader, survival.CompanionMemberKey(companion)); err != nil {
+		return err
+	}
+	return f.saveRegistry(registry)
+}
+
+func (f *serializedLifecycle) NextReservedCompanionID(leader int) (int, error) {
+	registry, err := f.registry()
+	if err != nil {
+		return 0, err
+	}
+	return registry.NextReservedCompanionID(leader)
+}
+
+func (f *serializedLifecycle) RemoveCompanyMember(leader, companion int) error {
+	if f.removeErr != nil {
+		return f.removeErr
+	}
+	registry, err := f.registry()
+	if err != nil {
+		return err
+	}
+	registry.Remove(leader, survival.CompanionMemberKey(companion))
+	return f.saveRegistry(registry)
 }
 
 func (f *fakeLifecycle) EnsureCompanyMember(leader, companion int) error {
@@ -102,6 +166,13 @@ func (f *fakeLifecycle) RestoreCompanyMember(leader, companion int, snapshot sur
 func (f *fakeLifecycle) ReconcileCompanyRosters(rosters map[int][]survival.MemberRef) error {
 	f.reconciled = append(f.reconciled, rosters)
 	return f.reconcileErr
+}
+
+func (f *fakeLifecycle) NextReservedCompanionID(_ int) (int, error) {
+	if f.nextReserved < 1 {
+		return 1, nil
+	}
+	return f.nextReserved, nil
 }
 
 func useFakeLifecycle(t *testing.T, fake *fakeLifecycle) {
@@ -762,6 +833,54 @@ func TestSummonCleanupFailureRetainsSpentID(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, message, "#2", "a retry must not reuse the spent ID")
 	assert.Equal(t, [][2]int{{7, 1}, {7, 2}}, fake.ensured)
+}
+
+func TestSummonHonorsDurableSurvivalReservationAfterRestart(t *testing.T) {
+	fake := &fakeLifecycle{nextReserved: 2}
+	useFakeLifecycle(t, fake)
+	module := newTestModule(*domain.NewRegistry(), &fakeRuntime{nextInstanceID: 101})
+
+	message, err := module.summon(7, 100, "58")
+	require.NoError(t, err)
+	assert.Contains(t, message, "#2")
+	record, ok := module.registry.Get(7)
+	require.True(t, ok)
+	assert.Equal(t, 3, record.NextCompanionID)
+}
+
+func TestSummonFailureRestartUsesSerializedSurvivalReservation(t *testing.T) {
+	cleanupErr := errors.New("survival cleanup disk full")
+	lifecycle := &serializedLifecycle{fakeLifecycle: fakeLifecycle{removeErr: cleanupErr}}
+	survival.SetLifecycle(lifecycle)
+	t.Cleanup(func() { survival.SetLifecycle(nil) })
+
+	companyStore := &fakeStore{saveErr: errors.New("company rollback disk full")}
+	failed := newTestModule(*domain.NewRegistry(), &fakeRuntime{nextInstanceID: 101, spawnErr: errors.New("native spawn failed")})
+	failed.store = companyStore
+	_, err := failed.summon(7, 100, "58")
+	require.ErrorIs(t, err, cleanupErr)
+	require.ErrorIs(t, err, companyStore.saveErr)
+
+	beforeRestart, err := lifecycle.registry()
+	require.NoError(t, err)
+	assert.Equal(t, survival.FullNeeds(), beforeRestart.MustNeedsFor(7, survival.CompanionMemberKey(1)))
+	next, err := beforeRestart.NextReservedCompanionID(7)
+	require.NoError(t, err)
+	assert.Equal(t, 2, next)
+
+	// The company write never succeeded, so restart from an empty company
+	// registry but preserve the serialized survival reservation.
+	restartedLifecycle := &serializedLifecycle{saved: append([]byte(nil), lifecycle.saved...)}
+	survival.SetLifecycle(restartedLifecycle)
+	restarted := newTestModule(*domain.NewRegistry(), &fakeRuntime{nextInstanceID: 102})
+	message, err := restarted.summon(7, 100, "58")
+	require.NoError(t, err)
+	assert.Contains(t, message, "#2")
+
+	afterRestart, err := restartedLifecycle.registry()
+	require.NoError(t, err)
+	assert.Equal(t, survival.FullNeeds(), afterRestart.MustNeedsFor(7, survival.CompanionMemberKey(1)))
+	assert.Equal(t, survival.FullNeeds(), afterRestart.MustNeedsFor(7, survival.CompanionMemberKey(2)))
 }
 
 func TestSummonSaveFailureRetainsSpentID(t *testing.T) {
