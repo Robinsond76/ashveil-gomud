@@ -1,6 +1,6 @@
 # Company Companion Slice Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Add a persistent, one-companion `company` command slice that spawns an allow-listed mob, follows its leader through ordinary exits, and restores after login or copyover.
 
@@ -46,7 +46,7 @@
 - Produces `type Registry struct { Companies map[int]Record \`yaml:"companies"\` }`, `NewRegistry()`, `Get(leaderUserID int) (Record, bool)`, `Summon(leaderUserID, mobTemplateID int, allowed map[int]struct{}) error`, and `Dismiss(leaderUserID int) bool`.
 - Produces sentinel errors `ErrInvalidLeader`, `ErrInvalidTemplate`, `ErrTemplateNotAllowed`, and `ErrCompanionAlreadyPresent`.
 
-- [ ] **Step 1: Write the failing domain tests**
+- [x] **Step 1: Write the failing domain tests**
 
 ```go
 func TestRegistrySummonStoresAllowedTemplate(t *testing.T) {
@@ -65,13 +65,13 @@ func TestRegistrySummonRejectsSecondCompanion(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the focused test to verify it fails**
+- [x] **Step 2: Run the focused test to verify it fails**
 
 Run: `go test ./internal/company -run 'TestRegistry(Summon|Dismiss)' -count=1`
 
 Expected: FAIL because `internal/company` and its registry API do not exist.
 
-- [ ] **Step 3: Implement only the pure model and validation**
+- [x] **Step 3: Implement only the pure model and validation**
 
 ```go
 func (r *Registry) Summon(leaderUserID, mobTemplateID int, allowed map[int]struct{}) error {
@@ -86,13 +86,13 @@ func (r *Registry) Summon(leaderUserID, mobTemplateID int, allowed map[int]struc
 
 Initialize a nil `Companies` map before writing it. `Dismiss` deletes one leader’s record and returns whether it existed. Do not import `mobs`, `rooms`, `users`, or `plugins` into this package.
 
-- [ ] **Step 4: Expand and pass the focused tests**
+- [x] **Step 4: Expand and pass the focused tests**
 
 Add table cases for zero IDs, a disallowed template, a second summon preserving the original record, unknown/missing records, and idempotent dismissal. Run: `go test ./internal/company -count=1`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit the domain deliverable**
+- [x] **Step 5: Commit the domain deliverable**
 
 ```bash
 git add internal/company/company.go internal/company/company_test.go
@@ -116,7 +116,7 @@ git commit -m "feat(company): add persistent companion model"
 - Defines `CompanyModule` fields `plug *plugins.Plugin`, `store Store`, `registry company.Registry`, `liveByLeader map[int]int`, and `runtime Runtime`.
 - Produces `restoreForLeader(leaderUserID, roomID int) error`, `save()`, and `load()`.
 
-- [ ] **Step 1: Write failing lifecycle tests with a fake runtime and store**
+- [x] **Step 1: Write failing lifecycle tests with a fake runtime and store**
 
 ```go
 func TestRestoreForLeaderSpawnsFreshInstanceFromSavedTemplate(t *testing.T) {
@@ -143,13 +143,13 @@ func TestRestoreForLeaderKeepsRecordWhenTemplateCannotSpawn(t *testing.T) {
 
 In the same test file, define `fakeRuntime` with `nextInstanceID`, `spawnedTemplateID`, `spawnErr`, `resolved map[string]int`, and `live map[int]bool`; its `Spawn` records the requested template and returns `nextInstanceID`. Define `fakeStore` with `saved company.Registry` and optional `loadErr`/`saveErr`. Define `newTestModule(registry company.Registry, runtime Runtime) *CompanyModule` to initialize the registry, `liveByLeader`, fake runtime, and fake store.
 
-- [ ] **Step 2: Run the focused lifecycle tests to verify they fail**
+- [x] **Step 2: Run the focused lifecycle tests to verify they fail**
 
 Run: `go test ./modules/company -run 'TestRestoreForLeader' -count=1`
 
 Expected: FAIL because the module, runtime interface, and restoration path do not exist.
 
-- [ ] **Step 3: Implement the module and native runtime adapter**
+- [x] **Step 3: Implement the module and native runtime adapter**
 
 Register `plugins.New("company", "1.0")`, attach the embedded filesystem, set `Callbacks.SetOnLoad(load)` and `Callbacks.SetOnSave(save)`, and listen for `events.PlayerSpawn` and `events.MobDeath`.
 
@@ -179,7 +179,7 @@ AllowedCompanionMobIDs:
 
 Add `modules/company/AGENTS.md` stating that `MobTemplateID` is durable, `InstanceId` is runtime-only, `PlayerSpawn` handles normal login and copyover, and normal GoMud charm movement remains the only follower mechanism.
 
-- [ ] **Step 4: Pass lifecycle tests and generate module wiring**
+- [x] **Step 4: Pass lifecycle tests and generate module wiring**
 
 Add test cases for no saved record, no duplicate spawn when the tracked instance is live, stale-instance replacement, and mob death retaining the record. Run:
 
@@ -191,7 +191,7 @@ go test ./modules/company -count=1
 
 Expected: PASS, and generated `modules/all-modules.go` contains `_ "github.com/GoMudEngine/GoMud/modules/company"`.
 
-- [ ] **Step 5: Commit the lifecycle deliverable**
+- [x] **Step 5: Commit the lifecycle deliverable**
 
 ```bash
 git add internal/company modules/company modules/all-modules.go
@@ -210,7 +210,7 @@ git commit -m "feat(company): restore persistent companions"
 - Registers `company` as a non-admin user command through `plug.AddUserCommand("company", module.userCommand, false, false)`.
 - Produces `summon(leaderUserID, roomID int, selector string) (string, error)`, `status(leaderUserID int) string`, `dismiss(leaderUserID int) (string, error)`, and the `company summon <mob-id-or-name>`, `company status`, and `company dismiss` command interface.
 
-- [ ] **Step 1: Write failing command tests**
+- [x] **Step 1: Write failing command tests**
 
 ```go
 func TestCompanySummonPersistsAndAttachesAllowedTemplate(t *testing.T) {
@@ -236,13 +236,13 @@ func TestCompanyDismissClearsSavedAndLiveState(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run command tests to verify they fail**
+- [x] **Step 2: Run command tests to verify they fail**
 
 Run: `go test ./modules/company -run 'TestCompany(Summon|Status|Dismiss)' -count=1`
 
 Expected: FAIL because the command service methods and parser do not exist.
 
-- [ ] **Step 3: Implement command parsing, persistence, and clear output**
+- [x] **Step 3: Implement command parsing, persistence, and clear output**
 
 Parse with `util.SplitButRespectQuotes`. Resolve either a numeric template ID or a name through `Runtime.ResolveTemplate`; construct the allow-list with `allowedTemplateIDs(raw any) map[int]struct{}` that accepts both `[]int` and `[]interface{}` values from module configuration. Refuse unknown subcommands and missing arguments with usage text:
 
@@ -269,7 +269,7 @@ On successful summon: validate through `registry.Summon`, spawn through `Runtime
 
 The concrete `Detach` implementation must remove charm tracking from the leader, remove the instance from its current room, and call `mobs.DestroyInstance`; it must not call a player movement command or alter clock state.
 
-- [ ] **Step 4: Pass command and module tests**
+- [x] **Step 4: Pass command and module tests**
 
 Add table cases for numeric/name resolution, unknown and disallowed templates, duplicate summon, status with stale state, and idempotent dismiss. Run:
 
@@ -280,7 +280,7 @@ make validate
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit the command deliverable**
+- [x] **Step 5: Commit the command deliverable**
 
 ```bash
 git add modules/company
@@ -297,7 +297,7 @@ git commit -m "feat(company): add companion commands"
 - Consumes all preceding tasks and existing GoMud server commands.
 - Produces evidence that the persisted template rehydrates as a fresh instance and native following occurs without time manipulation.
 
-- [ ] **Step 1: Run the complete automated suite**
+- [x] **Step 1: Run the complete automated suite**
 
 Run:
 
@@ -309,7 +309,7 @@ make test
 
 Expected: PASS. If Docker Desktop is unavailable for Lua linting, record that exact blocker and still run `go test -race ./...`.
 
-- [ ] **Step 2: Perform the local server acceptance sequence**
+- [x] **Step 2: Perform the local server acceptance sequence**
 
 Run `make run`, log in with a disposable local user, and execute:
 
@@ -324,6 +324,6 @@ company status
 
 Expected: the training dummy appears, reaches the destination through the ordinary exit, disappears after dismiss, and status shows no companion. Restart or copyover with a saved companion and verify `company status` reports a new live instance for the same template. Confirm no command changes the displayed world time.
 
-- [ ] **Step 3: Record verification outcome and commit only needed documentation corrections**
+- [x] **Step 3: Record verification outcome and commit only needed documentation corrections**
 
 If behavior matches the spec, do not make a documentation-only churn commit. If operator steps or lifecycle behavior differ, update the closest relevant guide with the observed behavior, run `git diff --check`, and commit with `docs(company): clarify companion operation`.
