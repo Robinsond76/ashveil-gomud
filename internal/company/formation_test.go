@@ -71,3 +71,14 @@ func TestFormationClearAndPrune(t *testing.T) {
 	f.Prune(map[company.MemberKey]bool{company.LeaderMemberKey: true})
 	assert.Equal(t, company.MemberKey(""), f.At(1, 1))
 }
+
+func TestFormationPruneKeepsFirstDuplicateValidMember(t *testing.T) {
+	var f company.Formation
+	f[0][2] = company.LeaderMemberKey
+	f[2][0] = company.LeaderMemberKey
+
+	f.Prune(map[company.MemberKey]bool{company.LeaderMemberKey: true})
+
+	assert.Equal(t, company.LeaderMemberKey, f.At(0, 2))
+	assert.Equal(t, company.MemberKey(""), f.At(2, 0))
+}

@@ -190,3 +190,26 @@ func TestRegistrySwapAndClearMembers(t *testing.T) {
 	assert.Equal(t, company.MemberKey(""), record.Formation.At(0, 0))
 	assert.ErrorIs(t, registry.ClearMember(7, company.CompanionMemberKey(first.ID)), company.ErrUnknownMember)
 }
+
+func TestRegistrySummonClampsCapToPartyMaximum(t *testing.T) {
+	registry := company.NewRegistry()
+	for i := 0; i < company.MaxCompanions; i++ {
+		_, err := registry.Summon(7, 58, allowed58(), company.MaxCompanions+10)
+		require.NoError(t, err)
+	}
+	_, err := registry.Summon(7, 58, allowed58(), company.MaxCompanions+10)
+	assert.ErrorIs(t, err, company.ErrCompanyFull)
+}
+
+func TestRegistryPutKeepsFirstDuplicateFormationOccupant(t *testing.T) {
+	registry := company.NewRegistry()
+	record := company.Record{LeaderUserID: 7}
+	record.Formation[0][0] = company.LeaderMemberKey
+	record.Formation[1][1] = company.LeaderMemberKey
+	registry.Put(record)
+
+	got, ok := registry.Get(7)
+	require.True(t, ok)
+	assert.Equal(t, company.LeaderMemberKey, got.Formation.At(0, 0))
+	assert.Equal(t, company.MemberKey(""), got.Formation.At(1, 1))
+}

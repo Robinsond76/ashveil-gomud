@@ -100,13 +100,21 @@ func (f *Formation) Clear(key MemberKey) {
 	}
 }
 
-// Prune removes every member not present in valid.
+// Prune removes unknown members and duplicate valid members. When a persisted
+// formation repeats a member, the earliest row-major placement is retained.
 func (f *Formation) Prune(valid map[MemberKey]bool) {
+	seen := make(map[MemberKey]bool)
 	for r := 0; r < FormationRows; r++ {
 		for c := 0; c < FormationCols; c++ {
-			if f[r][c] != "" && !valid[f[r][c]] {
-				f[r][c] = ""
+			key := f[r][c]
+			if key == "" {
+				continue
 			}
+			if !valid[key] || seen[key] {
+				f[r][c] = ""
+				continue
+			}
+			seen[key] = true
 		}
 	}
 }

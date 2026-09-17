@@ -3,6 +3,20 @@ package company
 
 import "errors"
 
+// MaxCompanions is the hard upper bound on companions for one company: a
+// leader plus this many companions, for a five-character maximum.
+const MaxCompanions = 4
+
+func clampCompanionLimit(limit int) int {
+	if limit < 1 {
+		return 1
+	}
+	if limit > MaxCompanions {
+		return MaxCompanions
+	}
+	return limit
+}
+
 var (
 	ErrInvalidLeader      = errors.New("invalid leader user ID")
 	ErrInvalidTemplate    = errors.New("invalid mob template ID")
@@ -66,9 +80,7 @@ func (r *Registry) Summon(leaderUserID, mobTemplateID int, allowed map[int]struc
 	if _, ok := allowed[mobTemplateID]; !ok {
 		return Companion{}, ErrTemplateNotAllowed
 	}
-	if maxCompanions < 1 {
-		maxCompanions = 1
-	}
+	maxCompanions = clampCompanionLimit(maxCompanions)
 	record, _ := r.Get(leaderUserID)
 	record.LeaderUserID = leaderUserID
 	if len(record.Companions) >= maxCompanions {
