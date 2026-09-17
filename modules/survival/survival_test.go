@@ -376,6 +376,27 @@ func TestStatusPrunesStaleCompanionRecords(t *testing.T) {
 	assert.Zero(t, m.store.(*fakeStore).saveCalls, "status must not write to the store")
 }
 
+func TestStatusShowsRosterMemberWithoutStoredRecordAtDefaults(t *testing.T) {
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	user := users.NewUserRecord(7, 1)
+	user.Character.Name = "Hero"
+	users.SetTestUser(user)
+
+	m := newTestModule(*domain.NewRegistry())
+	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{
+		7: {
+			{Key: domain.LeaderMemberKey, Name: "Hero"},
+			{Key: domain.CompanionMemberKey(3), Name: "Scout"},
+		},
+	}})
+
+	text := m.status(7)
+	assert.Contains(t, text, "Scout")
+	assert.Contains(t, text, "Hunger 100 (Well fed)")
+	assert.Zero(t, m.store.(*fakeStore).saveCalls)
+}
+
 func TestStatusCreatesLeaderRecordInMemoryOnly(t *testing.T) {
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)

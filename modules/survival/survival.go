@@ -353,7 +353,10 @@ func (m *SurvivalModule) status(leaderUserID int) string {
 	refs := m.memberRefs(leaderUserID)
 	lines := []string{"Company survival:"}
 	for _, ref := range refs {
-		needs, _ := m.registry.NeedsFor(leaderUserID, ref.Key)
+		needs, ok := m.registry.NeedsFor(leaderUserID, ref.Key)
+		if !ok {
+			needs = domain.FullNeeds()
+		}
 		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
 			ref.Name,
 			needs.Hunger, domain.HungerLabel(needs.Hunger),
@@ -363,19 +366,29 @@ func (m *SurvivalModule) status(leaderUserID int) string {
 	return strings.Join(lines, "\n")
 }
 
+// memberRefs lists the authoritative roster when a provider is registered,
+// falling back to the registry projection otherwise. Roster members without a
+// stored record still render at full default needs.
 func (m *SurvivalModule) memberRefs(leaderUserID int) []domain.MemberRef {
-	names := map[domain.MemberKey]string{domain.LeaderMemberKey: m.leaderName(leaderUserID)}
-	for _, ref := range domain.CurrentRoster(leaderUserID) {
-		if ref.Name != "" {
+	keys := []domain.MemberKey{}
+	names := map[domain.MemberKey]string{}
+	if roster := domain.CurrentRoster(leaderUserID); len(roster) > 0 {
+		for _, ref := range roster {
+			keys = append(keys, ref.Key)
 			names[ref.Key] = ref.Name
 		}
+	} else {
+		keys = m.registry.Members(leaderUserID)
 	}
-	keys := m.registry.Members(leaderUserID)
 	refs := make([]domain.MemberRef, 0, len(keys))
 	for _, key := range keys {
 		name := names[key]
 		if name == "" {
-			name = m.displayName(key)
+			if key == domain.LeaderMemberKey {
+				name = m.leaderName(leaderUserID)
+			} else {
+				name = m.displayName(key)
+			}
 		}
 		refs = append(refs, domain.MemberRef{Key: key, Name: name})
 	}
