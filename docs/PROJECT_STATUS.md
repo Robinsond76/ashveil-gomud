@@ -7,7 +7,7 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-17
 - **Branch:** `main-deepseek` (Phase 3 feature merged; `master` unchanged)
-- **HEAD:** `6e09c61a docs: record phase 3 completion`
+- **HEAD:** `e674323a` (Phase 3 merged into `main-deepseek`)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is 14 commits ahead of `origin/master`; `main-deepseek` adds the project-status doc and Phase 3. Nothing pushed.
 
