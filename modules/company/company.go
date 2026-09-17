@@ -297,8 +297,9 @@ func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
 	return fmt.Sprintf("Dismissed %d companion(s).", count), nil
 }
 
-// resolveCompanion matches a companion by #id or numeric id, then exact name, then substring.
+// resolveCompanion matches a companion by #id, bare numeric ID, exact name, or name substring.
 func resolveCompanion(record domain.Record, selector string) (domain.Companion, bool) {
+	selector = strings.ToLower(strings.TrimSpace(selector))
 	if id, err := strconv.Atoi(strings.TrimPrefix(selector, "#")); err == nil {
 		for _, c := range record.Companions {
 			if c.ID == id {

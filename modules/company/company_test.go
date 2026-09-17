@@ -22,6 +22,7 @@ type fakeRuntime struct {
 	live              map[int]bool
 	detachCalls       int
 	spawnCalls        int
+	failSpawnOnCall   int // 1-based; when >0, the Nth Spawn call returns an error
 }
 
 func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
@@ -30,6 +31,9 @@ func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
 }
 func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int) (int, error) {
 	f.spawnCalls++
+	if f.failSpawnOnCall > 0 && f.spawnCalls == f.failSpawnOnCall {
+		return 0, errors.New("spawn failed")
+	}
 	f.spawnedTemplateID = templateID
 	f.spawnedRoomID = roomID
 	if f.spawnErr != nil {
@@ -367,6 +371,28 @@ func TestRestoreForLeaderSpawnsEveryCompanion(t *testing.T) {
 	assert.True(t, ok)
 }
 
+func TestRestoreForLeaderContinuesAfterOneSpawnFails(t *testing.T) {
+	runtime := &fakeRuntime{nextInstanceID: 200, failSpawnOnCall: 2}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}, {ID: 3, MobTemplateID: 58}}},
+	}}, runtime)
+
+	err := module.restoreForLeader(7, 12)
+	require.Error(t, err)
+	assert.Equal(t, 3, runtime.spawnCalls, "restoration must continue past a failed spawn")
+
+	_, ok := module.instance(7, 1)
+	assert.True(t, ok, "the first companion must remain tracked")
+	_, ok = module.instance(7, 2)
+	assert.False(t, ok, "the failed companion must not be tracked")
+	_, ok = module.instance(7, 3)
+	assert.True(t, ok, "a later companion must still be restored")
+
+	record, exists := module.registry.Get(7)
+	require.True(t, exists)
+	assert.Len(t, record.Companions, 3, "a spawn failure must not remove durable ownership")
+}
+
 func TestMobDeathClearsOnlyMatchingCompanionInstance(t *testing.T) {
 	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
 		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}},
@@ -410,6 +436,35 @@ func TestDismissAllCompanionsDetachesEveryInstance(t *testing.T) {
 	module.setInstance(7, 1, 91)
 	module.setInstance(7, 2, 92)
 	_, err := module.dismiss(7, "all")
+	require.NoError(t, err)
+	assert.Equal(t, 2, runtime.detachCalls)
+	assert.Empty(t, module.instances)
+}
+
+func TestDismissAllSaveFailureRollsBack(t *testing.T) {
+	runtime := &fakeRuntime{live: map[int]bool{91: true, 92: true}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}},
+	}}, runtime)
+	module.setInstance(7, 1, 91)
+	module.setInstance(7, 2, 92)
+	store := module.store.(*fakeStore)
+	before := cloneRegistry(module.registry)
+	beforeSaves := store.saveCalls
+	store.saveErr = errors.New("disk full")
+
+	_, err := module.dismiss(7, "all")
+	assert.ErrorIs(t, err, store.saveErr)
+	assert.Equal(t, before, module.registry, "failed bulk dismissal must restore the roster")
+	assert.Equal(t, 0, runtime.detachCalls, "failed bulk dismissal must not detach live companions")
+	_, ok := module.instance(7, 1)
+	assert.True(t, ok)
+	_, ok = module.instance(7, 2)
+	assert.True(t, ok)
+	assert.Equal(t, beforeSaves+1, store.saveCalls)
+
+	store.saveErr = nil
+	_, err = module.dismiss(7, "all")
 	require.NoError(t, err)
 	assert.Equal(t, 2, runtime.detachCalls)
 	assert.Empty(t, module.instances)
