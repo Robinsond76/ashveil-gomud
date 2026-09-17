@@ -264,33 +264,54 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	if err != nil {
 		return "", err
 	}
-	// Restore the exact pre-summon record, including the companion-ID high-water
-	// mark, so a failed summon cannot strand a durable ID.
-	rollback := func() {
+	if err := survival.EnsureCompanyMember(leaderUserID, companion.ID); err != nil {
+		// Survival did not durably record the companion, so no identity was
+		// spent: restore the exact pre-summon record and allow ID reuse.
 		if existed {
 			m.registry.Put(before)
 		} else {
 			m.registry.Put(domain.Record{LeaderUserID: leaderUserID})
 		}
-	}
-	if err := survival.EnsureCompanyMember(leaderUserID, companion.ID); err != nil {
-		rollback()
 		return "", err
 	}
+	// Survival has now committed a durable identity for this companion ID, so
+	// the ID is spent even if the summon cannot complete. Cleanup removes the
+	// transient companion but retains the advanced high-water mark.
 	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, templateID)
 	if err != nil {
-		survival.RemoveCompanyMember(leaderUserID, companion.ID)
-		rollback()
-		return "", err
+		removeErr := survival.RemoveCompanyMember(leaderUserID, companion.ID)
+		persistErr := m.rollbackSummon(leaderUserID, companion.ID)
+		return "", errors.Join(err, removeErr, persistErr)
 	}
 	if err := m.save(); err != nil {
 		m.runtime.Detach(leaderUserID, instanceID)
-		survival.RemoveCompanyMember(leaderUserID, companion.ID)
-		rollback()
-		return "", err
+		removeErr := survival.RemoveCompanyMember(leaderUserID, companion.ID)
+		persistErr := m.rollbackSummon(leaderUserID, companion.ID)
+		return "", errors.Join(err, removeErr, persistErr)
 	}
 	m.setInstance(leaderUserID, companion.ID, instanceID)
 	return fmt.Sprintf("Companion summoned: %s (#%d).", templateName(templateID, selector), companion.ID), nil
+}
+
+// rollbackSummon removes the transient companion from the post-summon record
+// while preserving its already advanced NextCompanionID, then persists the
+// company registry. It runs only after survival has durably recorded the
+// companion's identity, so retaining the high-water mark guarantees a later
+// summon cannot reuse the spent ID and inherit stale survival state.
+func (m *CompanyModule) rollbackSummon(leaderUserID, companionID int) error {
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return nil
+	}
+	companions := make([]domain.Companion, 0, len(record.Companions))
+	for _, companion := range record.Companions {
+		if companion.ID != companionID {
+			companions = append(companions, companion)
+		}
+	}
+	record.Companions = companions
+	m.registry.Put(record)
+	return m.save()
 }
 
 func (m *CompanyModule) resolveTemplateID(selector string) (int, error) {

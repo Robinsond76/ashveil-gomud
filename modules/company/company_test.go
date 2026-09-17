@@ -333,58 +333,80 @@ func captureCompanyMessages(t *testing.T) *[]string {
 }
 
 func TestCompanyCommandSaveFailureRollsBackAndCanRetry(t *testing.T) {
-	for _, command := range []string{"summon 58", "dismiss 1"} {
-		t.Run(command, func(t *testing.T) {
-			messages := captureCompanyMessages(t)
-			runtime := &fakeRuntime{nextInstanceID: 101}
-			module := newTestModule(*domain.NewRegistry(), runtime)
-			store := module.store.(*fakeStore)
-			if command == "dismiss 1" {
-				_, err := module.summon(7, 12, "58")
-				require.NoError(t, err)
-			}
-			before := domain.Registry{Companies: maps.Clone(module.registry.Companies)}
-			beforeSaves := store.saveCalls
-			store.saveErr = errors.New("disk full")
-			user := users.NewUserRecord(7, 1)
-			user.Character.RoomId = 12
-			handled, err := module.userCommand(command, user, nil, 0)
-			assert.True(t, handled)
-			assert.ErrorIs(t, err, store.saveErr)
-			events.ProcessEvents()
-			assert.NotContains(t, strings.Join(*messages, ""), "Companion summoned:")
-			assert.NotContains(t, strings.Join(*messages, ""), "Companion dismissed:")
-			assert.Equal(t, before, module.registry)
-			assert.Equal(t, beforeSaves+1, store.saveCalls)
-			if command == "summon 58" {
-				assert.Empty(t, module.instances)
-				assert.False(t, runtime.IsLive(101))
-			} else {
-				instanceID, tracked := module.instance(7, 1)
-				assert.True(t, tracked)
-				assert.Equal(t, 101, instanceID)
-				assert.True(t, runtime.IsLive(101))
-				assert.Equal(t, before, store.saved, "failed dismissal must not mutate the saved snapshot")
-			}
-			store.saveErr = nil
-			handled, err = module.userCommand(command, user, nil, 0)
-			assert.True(t, handled)
-			require.NoError(t, err)
-			assert.Equal(t, beforeSaves+2, store.saveCalls)
-			assert.Equal(t, module.registry, store.saved)
-			events.ProcessEvents()
-			if command == "summon 58" {
-				assert.Contains(t, strings.Join(*messages, ""), "Companion summoned:")
-				instanceID, tracked := module.instance(7, 1)
-				assert.True(t, tracked)
-				assert.True(t, runtime.IsLive(instanceID))
-			} else {
-				assert.Contains(t, strings.Join(*messages, ""), "Companion dismissed:")
-				assert.Empty(t, module.instances)
-				assert.False(t, runtime.IsLive(101))
-			}
-		})
-	}
+	t.Run("summon retains a spent id and retries with a fresh one", func(t *testing.T) {
+		messages := captureCompanyMessages(t)
+		runtime := &fakeRuntime{nextInstanceID: 101}
+		module := newTestModule(*domain.NewRegistry(), runtime)
+		store := module.store.(*fakeStore)
+		store.saveErr = errors.New("disk full")
+		user := users.NewUserRecord(7, 1)
+		user.Character.RoomId = 12
+
+		handled, err := module.userCommand("summon 58", user, nil, 0)
+		assert.True(t, handled)
+		assert.ErrorIs(t, err, store.saveErr)
+		events.ProcessEvents()
+		assert.NotContains(t, strings.Join(*messages, ""), "Companion summoned:")
+		// Survival durably recorded companion #1 before the company save failed,
+		// so the ID is spent: no companion remains but the high-water mark does.
+		record, saved := module.registry.Get(7)
+		require.True(t, saved, "the companion-ID high-water mark must persist")
+		assert.Empty(t, record.Companions)
+		assert.Equal(t, 2, record.NextCompanionID)
+		assert.Equal(t, 2, store.saveCalls)
+		assert.Empty(t, module.instances)
+		assert.False(t, runtime.IsLive(101))
+
+		store.saveErr = nil
+		handled, err = module.userCommand("summon 58", user, nil, 0)
+		assert.True(t, handled)
+		require.NoError(t, err)
+		assert.Equal(t, 3, store.saveCalls)
+		assert.Equal(t, module.registry, store.saved)
+		events.ProcessEvents()
+		assert.Contains(t, strings.Join(*messages, ""), "Companion summoned:")
+		instanceID, tracked := module.instance(7, 2)
+		assert.True(t, tracked, "the retry must use a fresh companion ID")
+		assert.True(t, runtime.IsLive(instanceID))
+	})
+
+	t.Run("dismiss restores the exact record and retries", func(t *testing.T) {
+		messages := captureCompanyMessages(t)
+		runtime := &fakeRuntime{nextInstanceID: 101}
+		module := newTestModule(*domain.NewRegistry(), runtime)
+		store := module.store.(*fakeStore)
+		_, err := module.summon(7, 12, "58")
+		require.NoError(t, err)
+		before := cloneRegistry(module.registry)
+		beforeSaves := store.saveCalls
+		store.saveErr = errors.New("disk full")
+		user := users.NewUserRecord(7, 1)
+		user.Character.RoomId = 12
+
+		handled, err := module.userCommand("dismiss 1", user, nil, 0)
+		assert.True(t, handled)
+		assert.ErrorIs(t, err, store.saveErr)
+		events.ProcessEvents()
+		assert.NotContains(t, strings.Join(*messages, ""), "Companion dismissed:")
+		assert.Equal(t, before, module.registry)
+		assert.Equal(t, beforeSaves+1, store.saveCalls)
+		instanceID, tracked := module.instance(7, 1)
+		assert.True(t, tracked)
+		assert.Equal(t, 101, instanceID)
+		assert.True(t, runtime.IsLive(101))
+		assert.Equal(t, before, store.saved, "failed dismissal must not mutate the saved snapshot")
+
+		store.saveErr = nil
+		handled, err = module.userCommand("dismiss 1", user, nil, 0)
+		assert.True(t, handled)
+		require.NoError(t, err)
+		assert.Equal(t, beforeSaves+2, store.saveCalls)
+		assert.Equal(t, module.registry, store.saved)
+		events.ProcessEvents()
+		assert.Contains(t, strings.Join(*messages, ""), "Companion dismissed:")
+		assert.Empty(t, module.instances)
+		assert.False(t, runtime.IsLive(101))
+	})
 }
 
 func TestCompanyFailedLoadBlocksWritesUntilRecovery(t *testing.T) {
@@ -711,6 +733,60 @@ func TestCompanySaveFailureUndoesSurvivalEnsure(t *testing.T) {
 	require.ErrorIs(t, err, store.saveErr)
 	assert.Equal(t, [][2]int{{7, 1}}, fake.ensured)
 	assert.Equal(t, [][2]int{{7, 1}}, fake.removed, "a failed company save must undo the survival record")
+}
+
+func TestSummonCleanupFailureRetainsSpentID(t *testing.T) {
+	cleanupErr := errors.New("survival cleanup disk full")
+	fake := &fakeLifecycle{removeErr: cleanupErr}
+	useFakeLifecycle(t, fake)
+	spawnErr := errors.New("native spawn failed")
+	runtime := &fakeRuntime{nextInstanceID: 101, spawnErr: spawnErr}
+	module := newTestModule(*domain.NewRegistry(), runtime)
+
+	_, err := module.summon(7, 100, "58")
+	require.ErrorIs(t, err, spawnErr, "the primary spawn failure must surface")
+	require.ErrorIs(t, err, cleanupErr, "the failed survival cleanup must surface")
+	assert.Equal(t, [][2]int{{7, 1}}, fake.ensured)
+	assert.Equal(t, [][2]int{{7, 1}}, fake.removed)
+	assert.Equal(t, survival.FullNeeds(), fake.needs[[2]int{7, 1}], "failed cleanup leaves stale survival state")
+
+	record, saved := module.registry.Get(7)
+	require.True(t, saved, "the spent ID high-water mark must survive failed cleanup")
+	assert.Empty(t, record.Companions)
+	assert.Equal(t, 2, record.NextCompanionID)
+	assert.Empty(t, module.instances)
+
+	fake.removeErr = nil
+	runtime.spawnErr = nil
+	message, err := module.summon(7, 100, "58")
+	require.NoError(t, err)
+	assert.Contains(t, message, "#2", "a retry must not reuse the spent ID")
+	assert.Equal(t, [][2]int{{7, 1}, {7, 2}}, fake.ensured)
+}
+
+func TestSummonSaveFailureRetainsSpentID(t *testing.T) {
+	fake := &fakeLifecycle{}
+	useFakeLifecycle(t, fake)
+	runtime := &fakeRuntime{nextInstanceID: 101}
+	module := newTestModule(*domain.NewRegistry(), runtime)
+	store := module.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+
+	_, err := module.summon(7, 100, "58")
+	require.ErrorIs(t, err, store.saveErr)
+	assert.Equal(t, [][2]int{{7, 1}}, fake.ensured)
+	assert.Equal(t, [][2]int{{7, 1}}, fake.removed)
+	record, saved := module.registry.Get(7)
+	require.True(t, saved, "the spent ID high-water mark must survive a failed company save")
+	assert.Empty(t, record.Companions)
+	assert.Equal(t, 2, record.NextCompanionID)
+	assert.Empty(t, module.instances)
+	assert.False(t, runtime.IsLive(101))
+
+	store.saveErr = nil
+	message, err := module.summon(7, 100, "58")
+	require.NoError(t, err)
+	assert.Contains(t, message, "#2", "a retry must not reuse the spent ID")
 }
 
 func TestDismissCompanySaveFailureRestoresExactSurvivalNeeds(t *testing.T) {
