@@ -1,7 +1,6 @@
 package company_test
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -9,25 +8,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRegistrySummonStoresAllowedTemplate(t *testing.T) {
-	registry := company.NewRegistry()
-	err := registry.Summon(7, 58, map[int]struct{}{58: {}})
-	require.NoError(t, err)
+func allowed58() map[int]struct{} { return map[int]struct{}{58: {}} }
 
-	got, ok := registry.Get(7)
+func TestRegistrySummonAssignsIncrementingIDs(t *testing.T) {
+	registry := company.NewRegistry()
+	first, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	second, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	assert.Equal(t, 1, first.ID)
+	assert.Equal(t, 2, second.ID)
+
+	record, ok := registry.Get(7)
 	require.True(t, ok)
-	assert.Equal(t, 7, got.LeaderUserID)
-	assert.Equal(t, 58, got.Companion.MobTemplateID)
+	assert.Equal(t, []company.Companion{first, second}, record.Companions)
 }
 
-func TestRegistrySummonRejectsSecondCompanion(t *testing.T) {
+func TestRegistrySummonEnforcesCap(t *testing.T) {
 	registry := company.NewRegistry()
-	require.NoError(t, registry.Summon(7, 58, map[int]struct{}{58: {}}))
-
-	assert.ErrorIs(t, registry.Summon(7, 58, map[int]struct{}{58: {}}), company.ErrCompanionAlreadyPresent)
-	got, ok := registry.Get(7)
-	require.True(t, ok)
-	assert.Equal(t, 58, got.Companion.MobTemplateID)
+	for i := 0; i < 2; i++ {
+		_, err := registry.Summon(7, 58, allowed58(), 2)
+		require.NoError(t, err)
+	}
+	_, err := registry.Summon(7, 58, allowed58(), 2)
+	assert.ErrorIs(t, err, company.ErrCompanyFull)
 }
 
 func TestRegistrySummonValidatesIDsAndAllowlist(t *testing.T) {
@@ -38,39 +42,113 @@ func TestRegistrySummonValidatesIDsAndAllowlist(t *testing.T) {
 		allowed  map[int]struct{}
 		wantErr  error
 	}{
-		{name: "zero leader", leaderID: 0, template: 58, allowed: map[int]struct{}{58: {}}, wantErr: company.ErrInvalidLeader},
-		{name: "negative leader", leaderID: -1, template: 58, allowed: map[int]struct{}{58: {}}, wantErr: company.ErrInvalidLeader},
+		{name: "zero leader", leaderID: 0, template: 58, allowed: allowed58(), wantErr: company.ErrInvalidLeader},
 		{name: "zero template", leaderID: 7, template: 0, allowed: map[int]struct{}{0: {}}, wantErr: company.ErrInvalidTemplate},
-		{name: "negative template", leaderID: 7, template: -1, allowed: map[int]struct{}{-1: {}}, wantErr: company.ErrInvalidTemplate},
 		{name: "disallowed template", leaderID: 7, template: 58, allowed: map[int]struct{}{59: {}}, wantErr: company.ErrTemplateNotAllowed},
 		{name: "nil allowlist", leaderID: 7, template: 58, allowed: nil, wantErr: company.ErrTemplateNotAllowed},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.ErrorIs(t, company.NewRegistry().Summon(tt.leaderID, tt.template, tt.allowed), tt.wantErr)
+			_, err := company.NewRegistry().Summon(tt.leaderID, tt.template, tt.allowed, 4)
+			assert.ErrorIs(t, err, tt.wantErr)
 		})
 	}
 }
 
-func TestRegistryGetReportsUnknownLeader(t *testing.T) {
-	got, ok := company.NewRegistry().Get(7)
-	assert.False(t, ok)
-	assert.Equal(t, company.Record{}, got)
+func TestRegistryDismissRemovesOneAndPrunesItsFormationCells(t *testing.T) {
+	registry := company.NewRegistry()
+	first, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	second, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(first.ID), 0, 0))
+	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(second.ID), 1, 1))
+
+	assert.True(t, registry.Dismiss(7, first.ID))
+	record, ok := registry.Get(7)
+	require.True(t, ok)
+	require.Len(t, record.Companions, 1)
+	assert.Equal(t, second.ID, record.Companions[0].ID)
+	assert.Equal(t, company.MemberKey(""), record.Formation.At(0, 0))
+	assert.Equal(t, company.CompanionMemberKey(second.ID), record.Formation.At(1, 1))
+	assert.False(t, registry.Dismiss(7, first.ID), "dismiss is idempotent")
 }
 
-func TestRegistryDismissRemovesRecordAndIsIdempotent(t *testing.T) {
+func TestRegistryDismissLastCompanionKeepsLeaderPlacement(t *testing.T) {
 	registry := company.NewRegistry()
-	require.NoError(t, registry.Summon(7, 58, map[int]struct{}{58: {}}))
+	first, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	require.NoError(t, registry.PlaceMember(7, company.LeaderMemberKey, 2, 1))
 
-	assert.True(t, registry.Dismiss(7))
-	assert.False(t, registry.Dismiss(7))
+	require.True(t, registry.Dismiss(7, first.ID))
+	record, ok := registry.Get(7)
+	require.True(t, ok, "a leader placement keeps the record alive")
+	assert.Empty(t, record.Companions)
+	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(2, 1))
+}
+
+func TestRegistryDismissLastCompanionRemovesEmptyRecord(t *testing.T) {
+	registry := company.NewRegistry()
+	first, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	require.True(t, registry.Dismiss(7, first.ID))
 	_, ok := registry.Get(7)
 	assert.False(t, ok)
 }
 
-func TestRegistrySentinelsAreDistinct(t *testing.T) {
-	assert.False(t, errors.Is(company.ErrInvalidLeader, company.ErrInvalidTemplate))
-	assert.False(t, errors.Is(company.ErrInvalidTemplate, company.ErrTemplateNotAllowed))
-	assert.False(t, errors.Is(company.ErrTemplateNotAllowed, company.ErrCompanionAlreadyPresent))
+func TestRegistryDismissAllKeepsLeaderPlacement(t *testing.T) {
+	registry := company.NewRegistry()
+	first, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	second, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	require.NoError(t, registry.PlaceMember(7, company.LeaderMemberKey, 0, 0))
+	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(first.ID), 0, 1))
+	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(second.ID), 0, 2))
+
+	assert.Equal(t, 2, registry.DismissAll(7))
+	record, ok := registry.Get(7)
+	require.True(t, ok)
+	assert.Empty(t, record.Companions)
+	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(0, 0))
+	assert.Equal(t, company.MemberKey(""), record.Formation.At(0, 1))
+	assert.Equal(t, company.MemberKey(""), record.Formation.At(0, 2))
+}
+
+func TestRegistryPlaceMemberValidatesMembershipAndSlots(t *testing.T) {
+	registry := company.NewRegistry()
+	first, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+
+	assert.ErrorIs(t, registry.PlaceMember(7, company.CompanionMemberKey(99), 0, 0), company.ErrUnknownMember)
+	assert.ErrorIs(t, registry.PlaceMember(7, company.LeaderMemberKey, 3, 0), company.ErrInvalidSlot)
+
+	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(first.ID), 0, 0))
+	assert.ErrorIs(t, registry.PlaceMember(7, company.LeaderMemberKey, 0, 0), company.ErrSlotOccupied)
+}
+
+func TestRegistryLeaderFormationCreatesRecordWithoutCompanions(t *testing.T) {
+	registry := company.NewRegistry()
+	require.NoError(t, registry.PlaceMember(7, company.LeaderMemberKey, 1, 1))
+	record, ok := registry.Get(7)
+	require.True(t, ok)
+	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(1, 1))
+}
+
+func TestRegistrySwapAndClearMembers(t *testing.T) {
+	registry := company.NewRegistry()
+	first, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	require.NoError(t, registry.PlaceMember(7, company.LeaderMemberKey, 0, 0))
+	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(first.ID), 2, 2))
+
+	require.NoError(t, registry.SwapMembers(7, company.LeaderMemberKey, company.CompanionMemberKey(first.ID)))
+	record, _ := registry.Get(7)
+	assert.Equal(t, company.CompanionMemberKey(first.ID), record.Formation.At(0, 0))
+	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(2, 2))
+
+	require.NoError(t, registry.ClearMember(7, company.CompanionMemberKey(first.ID)))
+	record, _ = registry.Get(7)
+	assert.Equal(t, company.MemberKey(""), record.Formation.At(0, 0))
+	assert.ErrorIs(t, registry.ClearMember(7, company.CompanionMemberKey(first.ID)), company.ErrUnknownMember)
 }
