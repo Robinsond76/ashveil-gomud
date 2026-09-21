@@ -261,6 +261,10 @@ instead of duplicating them.
 
 ## Known issues / deferred items
 
+- Phase 5 was implemented and committed directly on `master`. Going forward,
+  plan and phase work must run on an isolated worktree/feature branch and merge
+  back only after verification; see the root `AGENTS.md` ("Branching &
+  Worktrees") and `docs/superpowers/plans/README.md`.
 - `make test` stalls in the `js-lint` stage because it shells out to `npx
   jshint`; the documented fallback `go test -race ./...` passes. Environmental,
   not a code failure.

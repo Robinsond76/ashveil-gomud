@@ -2366,6 +2366,7 @@ The AI coding agent should follow these rules.
     - Elevate the implementation work to high reasoning, or assign it to Terra, when it involves concurrency, timers, persistent state recovery, disconnect/reconnect behavior, or other multiplayer invariants.
 20. Do not dispatch an implementation task until the current phase design has explicit owner approval.
 21. Keep the Python prototype read-only. Its local reference copy lives at `reference/ashveil-mud/`, is excluded through `.git/info/exclude`, and is a mechanics/design archive rather than a source tree to modify.
+22. Isolate every plan, phase, or feature on its own git worktree and feature branch. Never implement or commit plan work directly on `master`; `master` is an integration branch and must stay clean. Create the workspace with `git worktree add .worktrees/<branch-name> -b <branch-name>` (`.worktrees/` is gitignored and is the project convention), run the baseline checks there, commit the plan tasks on that branch, and merge locally or open a PR against `origin` only after the phase's checks pass. Remove the worktree when the branch is finished. If a worktree is unavailable, create and check out a feature branch before making any commit.
 
 ## Repository Layout and Remote Policy
 

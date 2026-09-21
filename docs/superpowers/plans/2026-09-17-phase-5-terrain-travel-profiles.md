@@ -1,6 +1,11 @@
 # Phase 5 Terrain and Travel Profiles Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Workspace:** Implement this plan on an isolated worktree and feature branch
+> (for example `git worktree add .worktrees/phase-5-travel -b phase-5-travel`),
+> never directly on `master`. See `docs/superpowers/plans/README.md` and the root
+> `AGENTS.md` ("Branching & Worktrees").
 
 **Goal:** Deliver data-driven profiles that turn selected exits into durable real-time company travel while retaining instant normal movement and the global-clock invariant.
 

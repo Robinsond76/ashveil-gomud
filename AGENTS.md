@@ -36,4 +36,21 @@ Use Go's standard `testing` package. Name tests `TestBehavior` and benchmarks `B
 
 Use concise imperative commits with an optional scope, such as `fix(telnet): stop input masking` or `docs: establish Ashveil baseline`. Keep commits narrow. Pull requests should state user effect, approach, verification, and linked issue; attach screenshots for web/admin UI changes.
 
+### Branching & Worktrees
+
+Never implement a plan, phase, or feature directly on `master`; `master` is an
+integration branch and must stay clean. Before starting plan work, create an
+isolated git worktree with a dedicated feature branch:
+
+```bash
+git worktree add .worktrees/<branch-name> -b <branch-name>
+```
+
+`.worktrees/` is gitignored and is the project convention (for example
+`.worktrees/phase-5-travel`). Run the baseline checks in the worktree, make all
+plan commits on the feature branch, and only then integrate back to `master`
+(merge locally or open a PR against `origin`). Remove the worktree when the
+branch is finished. If a worktree is unavailable, create and check out a feature
+branch before making any commit.
+
 `origin` is the Ashveil fork. `upstream` is the read-only GoMud source: fetch from it if needed, but never push to it. Preserve the multiplayer invariant: travel and rest must not advance global game time.
