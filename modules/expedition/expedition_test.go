@@ -85,10 +85,11 @@ func (f *fakeMover) MoveToRoom(userID, roomID int) error {
 	if f.err != nil {
 		return f.err
 	}
-	f.moves = append(f.moves, roomID)
-	if f.user != nil {
-		f.user.Character.RoomId = roomID
+	if f.user == nil {
+		return assert.AnError
 	}
+	f.moves = append(f.moves, roomID)
+	f.user.Character.RoomId = roomID
 	return nil
 }
 
@@ -292,4 +293,206 @@ func TestRenderTravelViewOnlyForActiveSession(t *testing.T) {
 	handled, err = module.RenderTravelView(7)
 	require.NoError(t, err)
 	assert.True(t, handled)
+}
+
+func travelUser(t *testing.T, userId, roomId int) *users.UserRecord {
+	t.Helper()
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	user := users.NewUserRecord(userId, 1)
+	user.Character.RoomId = roomId
+	users.SetTestUser(user)
+	return user
+}
+
+func savedSession(state expedition.SessionState, startedAt time.Time) Registry {
+	return Registry{Sessions: map[int]expedition.TravelSession{
+		7: {
+			LeaderUserID:      7,
+			OriginRoomID:      100,
+			DestinationRoomID: 200,
+			ExitName:          "north",
+			ProfileName:       "oak-road",
+			StartedAtUTC:      startedAt,
+			State:             state,
+		},
+	}}
+}
+
+func TestLoadReschedulesRemainingSession(t *testing.T) {
+	store := &fakeStore{saved: savedSession(expedition.Traveling, baseTime())}
+	scheduler := &fakeScheduler{}
+	now := baseTime().Add(3 * time.Second)
+	module := newTestModule(store, scheduler, &fakeMover{}, &fakeSurvival{}, func() time.Time { return now }, testProfiles())
+
+	module.load()
+	require.NoError(t, module.loadErr)
+	require.Len(t, scheduler.delays, 1)
+	assert.Equal(t, 7*time.Second, scheduler.delays[0])
+	assert.Contains(t, module.sessions, 7)
+}
+
+func TestLoadCompletesOverdueSession(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	store := &fakeStore{saved: savedSession(expedition.Traveling, baseTime())}
+	mover := &fakeMover{user: user}
+	surv := &fakeSurvival{}
+	now := baseTime().Add(11 * time.Second)
+	module := newTestModule(store, &fakeScheduler{}, mover, surv, func() time.Time { return now }, testProfiles())
+
+	module.load()
+	require.NoError(t, module.loadErr)
+	assert.Equal(t, []int{200}, mover.moves)
+	assert.Equal(t, 200, user.Character.RoomId)
+	assert.NotContains(t, module.sessions, 7)
+	require.Len(t, surv.applied, 1)
+	assert.Equal(t, survival.Exertion{Hunger: 10, Thirst: 10, Fatigue: 10}, surv.applied[0])
+}
+
+func TestTimerCompletionIsExactlyOnce(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	mover := &fakeMover{user: user}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, &fakeSurvival{}, func() time.Time { return now }, testProfiles())
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	now = baseTime().Add(10 * time.Second)
+	scheduler.fire(0)
+	scheduler.fire(0) // stale duplicate callback
+
+	assert.Equal(t, []int{200}, mover.moves, "a duplicate timer must not move twice")
+	assert.NotContains(t, module.sessions, 7)
+}
+
+func TestCompletionRetainsSessionWhenMoveFails(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	mover := &fakeMover{user: user, err: assert.AnError}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, &fakeSurvival{}, func() time.Time { return now }, testProfiles())
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(10 * time.Second)
+	scheduler.fire(0)
+
+	require.Contains(t, module.sessions, 7)
+	assert.Equal(t, expedition.Completed, module.sessions[7].State)
+	assert.Empty(t, mover.moves)
+	assert.Equal(t, 100, user.Character.RoomId)
+
+	mover.err = nil
+	module.mu.Lock()
+	module.recoverLocked()
+	module.mu.Unlock()
+	assert.Equal(t, []int{200}, mover.moves)
+	assert.NotContains(t, module.sessions, 7)
+}
+
+func TestRecoveryAtDestinationCleansUpWithoutMoving(t *testing.T) {
+	user := travelUser(t, 7, 200)
+	store := &fakeStore{saved: savedSession(expedition.Completed, baseTime())}
+	mover := &fakeMover{user: user}
+	module := newTestModule(store, &fakeScheduler{}, mover, &fakeSurvival{}, baseTime, testProfiles())
+
+	module.load()
+	require.NoError(t, module.loadErr)
+	assert.Empty(t, mover.moves)
+	assert.NotContains(t, module.sessions, 7)
+}
+
+func TestRecoveryAtUnexpectedRoomRetainsSession(t *testing.T) {
+	user := travelUser(t, 7, 999)
+	store := &fakeStore{saved: savedSession(expedition.Completed, baseTime())}
+	mover := &fakeMover{user: user}
+	module := newTestModule(store, &fakeScheduler{}, mover, &fakeSurvival{}, baseTime, testProfiles())
+
+	module.load()
+	require.NoError(t, module.loadErr)
+	assert.Empty(t, mover.moves)
+	assert.Contains(t, module.sessions, 7)
+}
+
+func TestCompletionWithoutUserRetainsSession(t *testing.T) {
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	mover := &fakeMover{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, &fakeSurvival{}, func() time.Time { return now }, testProfiles())
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(10 * time.Second)
+	scheduler.fire(0)
+
+	assert.Contains(t, module.sessions, 7)
+	assert.Equal(t, expedition.Completed, module.sessions[7].State)
+	assert.Empty(t, mover.moves)
+}
+
+func TestCheckpointWriteFailureBlocksCompletion(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	mover := &fakeMover{user: user}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, &fakeSurvival{}, func() time.Time { return now }, testProfiles())
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	store.saveErr = assert.AnError
+	now = baseTime().Add(10 * time.Second)
+	scheduler.fire(0)
+
+	assert.Empty(t, mover.moves)
+	assert.Contains(t, module.sessions, 7)
+	assert.Equal(t, expedition.Traveling, module.sessions[7].State)
+	assert.Equal(t, uint8(10), module.sessions[7].LastExertionCheckpoint)
+}
+
+func TestSurvivalFailureBlocksCompletion(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	mover := &fakeMover{user: user}
+	surv := &fakeSurvival{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, testProfiles())
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	surv.applyErr = survival.ErrPersistenceUnavailable
+	now = baseTime().Add(10 * time.Second)
+	scheduler.fire(0)
+
+	assert.Empty(t, mover.moves)
+	assert.Contains(t, module.sessions, 7)
+	assert.Equal(t, expedition.Traveling, module.sessions[7].State)
+}
+
+func TestCopyoverRestorationReschedulesFromDurableRecord(t *testing.T) {
+	store := &fakeStore{}
+	now := baseTime()
+	parent := newTestModule(store, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, func() time.Time { return now }, testProfiles())
+	_, err := parent.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	childScheduler := &fakeScheduler{}
+	childNow := baseTime().Add(4 * time.Second)
+	child := newTestModule(store, childScheduler, &fakeMover{}, &fakeSurvival{}, func() time.Time { return childNow }, testProfiles())
+	child.load()
+
+	require.NoError(t, child.loadErr)
+	require.Len(t, childScheduler.delays, 1)
+	assert.Equal(t, 6*time.Second, childScheduler.delays[0])
+	assert.Equal(t, expedition.Traveling, child.sessions[7].State)
 }

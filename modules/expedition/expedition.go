@@ -250,7 +250,9 @@ func (m *ExpeditionModule) load() {
 	}
 	m.timers = map[int]Timer{}
 	m.loadErr = nil
-	m.profiles = m.loadProfiles()
+	if m.plug != nil {
+		m.profiles = m.loadProfiles()
+	}
 	m.recoverLocked()
 }
 
