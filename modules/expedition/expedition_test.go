@@ -542,3 +542,20 @@ func TestDunmarOakRoute(t *testing.T) {
 	assert.Greater(t, full.Thirst-profile.Exertion.Thirst, 25, "thirst must stay above critical")
 	assert.Greater(t, full.Fatigue-profile.Exertion.Fatigue, 25, "fatigue must stay above critical")
 }
+
+func TestMovementBlockedWhileTravelling(t *testing.T) {
+	now := baseTime()
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, func() time.Time { return now }, testProfiles())
+
+	blocked, _ := module.MovementBlocked(7)
+	assert.False(t, blocked)
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(4 * time.Second)
+
+	blocked, message := module.MovementBlocked(7)
+	assert.True(t, blocked)
+	assert.Contains(t, message, "40%")
+	assert.Contains(t, message, "travelling")
+}

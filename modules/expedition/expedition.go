@@ -174,8 +174,9 @@ type ExpeditionModule struct {
 }
 
 var (
-	_ expedition.StartProvider = (*ExpeditionModule)(nil)
-	_ expedition.ViewProvider  = (*ExpeditionModule)(nil)
+	_ expedition.StartProvider    = (*ExpeditionModule)(nil)
+	_ expedition.ViewProvider     = (*ExpeditionModule)(nil)
+	_ expedition.MovementProvider = (*ExpeditionModule)(nil)
 )
 
 func init() {
@@ -202,6 +203,7 @@ func init() {
 	})
 	expedition.SetStartProvider(m)
 	expedition.SetViewProvider(m)
+	expedition.SetMovementProvider(m)
 }
 
 func (m *ExpeditionModule) persistenceAvailable() error {
@@ -439,6 +441,32 @@ func (m *ExpeditionModule) RenderTravelView(leaderUserID int) (bool, error) {
 	}
 	m.sendToLeader(leaderUserID, m.statusTextLocked(leaderUserID))
 	return true, nil
+}
+
+// MovementBlocked implements expedition.MovementProvider. While a session is
+// active the leader cannot use ordinary exits; the refusal reports progress.
+func (m *ExpeditionModule) MovementBlocked(leaderUserID int) (bool, string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	session, ok := m.sessions[leaderUserID]
+	if !ok {
+		return false, ""
+	}
+	return true, m.refusalTextLocked(session)
+}
+
+func (m *ExpeditionModule) refusalTextLocked(session expedition.TravelSession) string {
+	profile, ok := m.profile(session.ProfileName)
+	if !ok {
+		return "You are already travelling."
+	}
+	now := m.clock().UTC()
+	progress := session.ProgressAt(now, profile.Duration)
+	remaining := profile.Duration - now.Sub(session.StartedAtUTC)
+	if remaining < 0 {
+		remaining = 0
+	}
+	return fmt.Sprintf("You are already travelling (%d%% complete, %s remaining).", int(progress*100), remaining.Round(time.Second))
 }
 
 // Sync applies any earned survival checkpoint for a leader and persists it.

@@ -30,6 +30,12 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		return true, nil
 	}
 
+	// An active journey refuses ordinary movement and reports progress.
+	if blocked, message := expedition.MovementBlocked(user.UserId); blocked {
+		user.SendText(message)
+		return true, nil
+	}
+
 	c := configs.GetTextFormatsConfig()
 
 	isSneaking := user.Character.HasBuffFlag("hidden")

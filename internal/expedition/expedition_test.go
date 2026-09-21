@@ -223,12 +223,27 @@ func (f *fakeViewer) RenderTravelView(leaderUserID int) (bool, error) {
 	return f.handled, f.err
 }
 
+type fakeMovementProvider struct {
+	blocked bool
+	message string
+	last    int
+	calls   int
+}
+
+func (f *fakeMovementProvider) MovementBlocked(leaderUserID int) (bool, string) {
+	f.calls++
+	f.last = leaderUserID
+	return f.blocked, f.message
+}
+
 func TestNilProvidersAreInert(t *testing.T) {
 	SetStartProvider(nil)
 	SetViewProvider(nil)
+	SetMovementProvider(nil)
 	t.Cleanup(func() {
 		SetStartProvider(nil)
 		SetViewProvider(nil)
+		SetMovementProvider(nil)
 	})
 
 	handled, err := Start(StartRequest{LeaderUserID: 7, ProfileName: "oak-road"})
@@ -238,16 +253,23 @@ func TestNilProvidersAreInert(t *testing.T) {
 	viewHandled, err := TravelView(7)
 	require.NoError(t, err)
 	assert.False(t, viewHandled)
+
+	blocked, message := MovementBlocked(7)
+	assert.False(t, blocked)
+	assert.Empty(t, message)
 }
 
 func TestProvidersAreConsultedAndCleared(t *testing.T) {
 	starter := &fakeStarter{handled: true}
 	viewer := &fakeViewer{handled: true, err: errors.New("view failed")}
+	mover := &fakeMovementProvider{blocked: true, message: "already travelling"}
 	SetStartProvider(starter)
 	SetViewProvider(viewer)
+	SetMovementProvider(mover)
 	t.Cleanup(func() {
 		SetStartProvider(nil)
 		SetViewProvider(nil)
+		SetMovementProvider(nil)
 	})
 
 	req := StartRequest{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road"}
@@ -262,9 +284,16 @@ func TestProvidersAreConsultedAndCleared(t *testing.T) {
 	assert.True(t, viewHandled)
 	assert.Equal(t, 7, viewer.last)
 
+	blocked, message := MovementBlocked(7)
+	assert.True(t, blocked)
+	assert.Equal(t, "already travelling", message)
+
 	SetStartProvider(nil)
+	SetMovementProvider(nil)
 	handled, err = Start(req)
 	require.NoError(t, err)
 	assert.False(t, handled)
 	assert.Equal(t, 1, starter.calls, "cleared provider must not be called again")
+	blocked, _ = MovementBlocked(7)
+	assert.False(t, blocked)
 }

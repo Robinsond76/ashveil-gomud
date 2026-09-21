@@ -41,6 +41,17 @@ func (f *fakeViewer) RenderTravelView(leaderUserID int) (bool, error) {
 	return f.handled, f.err
 }
 
+type fakeMovementProvider struct {
+	blocked bool
+	message string
+	calls   int
+}
+
+func (f *fakeMovementProvider) MovementBlocked(int) (bool, string) {
+	f.calls++
+	return f.blocked, f.message
+}
+
 func str(n int) string { return strconv.Itoa(n) }
 
 func roomYAML(roomId int, zone, title, exits string) string {
@@ -171,5 +182,22 @@ func TestGoTravelInterception(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, handled)
 		assert.Equal(t, 920032, user.Character.RoomId, "without a provider a marked exit stays instant")
+	})
+
+	t.Run("refuses ordinary movement while travelling", func(t *testing.T) {
+		origin := rooms.LoadRoom(920011)
+		require.NotNil(t, origin)
+		user := travelTestUser(t, 11, origin.RoomId)
+
+		blocker := &fakeMovementProvider{blocked: true, message: "You are already travelling."}
+		expedition.SetMovementProvider(blocker)
+		t.Cleanup(func() { expedition.SetMovementProvider(nil) })
+
+		handled, err := Go("north", user, origin, 0)
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, 1, blocker.calls)
+		assert.Equal(t, 920011, user.Character.RoomId, "ordinary movement must be refused during travel")
+		assert.Equal(t, 100, user.Character.ActionPoints)
 	})
 }
