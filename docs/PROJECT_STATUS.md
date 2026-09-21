@@ -5,18 +5,18 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-17
+- **Last updated:** 2026-09-21
 - **Branch:** `master`
-- **HEAD:** `e9432182` (merged durable Phase 4 companion-ID reservation; this status record follows)
+- **HEAD:** `cceb47e5` (Phase 5 terrain and travel profiles plus the movement-refusal correction; this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is 62 commits ahead of `origin/master`; Phase 3–4 and the durable-reservation correction are local only. Nothing pushed.
+- **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
 
 ## Current position
 
 - **Completed:** Phase 0–1 (fork, baseline, integration map), Phase 2 (company
-  companion slice), Phase 3 (company roster + 3×3 formation), and Phase 4
-  (survival state).
-- **Next:** Phase 5 — terrain and travel profiles.
+  companion slice), Phase 3 (company roster + 3×3 formation), Phase 4
+  (survival state), and Phase 5 (terrain and travel profiles).
+- **Next:** Phase 6 — travel interruptions.
 
 ## Phase progress
 
@@ -27,7 +27,7 @@ instead of duplicating them.
 | 2 | Minimal company slice (one persistent companion) | Complete |
 | 3 | Company roster (cap 5) + 3×3 formation state | Complete |
 | 4 | Survival state (hunger/thirst/fatigue) | Complete |
-| 5 | Terrain and travel profiles | Not started |
+| 5 | Terrain and travel profiles | Complete |
 | 6 | Travel interruptions | Not started |
 | 7 | Camping | Not started |
 | 8 | Weather | Not started |
@@ -37,6 +37,65 @@ instead of duplicating them.
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 5 — Terrain and travel profiles (complete, 2026-09-21)
+
+- **What:** Added an optional `travel_profile` field to `exit.RoomExit` and a
+  data-driven expedition system. `internal/expedition` owns the GoMud-free
+  travel domain: validated `TravelProfile`s, the `Traveling`/`Interrupted`/
+  `Completed`/`Cancelled` session state machine, clamped real-UTC progress,
+  ten-checkpoint proportional exertion math, and mutex-protected start/view/
+  movement provider seams. `modules/expedition` owns configured profile loading, durable
+  leader-keyed sessions (YAML `ReadBytes`/`WriteStruct` like `modules/survival`),
+  real-time `time.AfterFunc` completion timers, load/copyover recovery,
+  destination move, exactly-once arrival, and the `travel status` command.
+  Native `go` runs the same lock/exit-message/destination/script admission and
+  then starts travel before action-point deduction for marked exits; native
+  `look` renders the travel view at entry. `internal/survival` gained a
+  `CompanyService` seam (`ApplyCompanyExertion`, `CompanyNeeds`) implemented by
+  `modules/survival`, so travel accrues hunger/thirst/fatigue per company member
+  without importing another module. Added the Dunmar proving route (room 2001
+  Dunmar West Gate to 2002 Fork at the Black Oak) with the `oak-road` profile.
+- **Why:** Travel is Ashveil's core expedition mechanic; it must be durable
+  across disconnect/restart/copyover, exactly-once on arrival, and must never
+  advance GoMud's global clock or round count.
+- **Step completed:** Handoff Phase 5 ("Terrain and Travel Profiles").
+- **Key commits:** `af6aa611` (domain), `7d11113c` (exit field + go/look
+  adapters), `a14b086c` (durable module, profiles, survival seam, views),
+  `1ac90a93` (timers, checkpoint sync, recovery), `983d04bd` (oak-road route),
+  `cceb47e5` (refuse ordinary movement while travelling).
+- **Behavior:** An unmarked exit stays instant. A marked exit starts a durable
+  session; the leader and company stay at the origin. While travelling, ordinary
+  movement is refused with progress/remaining time, `look` shows
+  origin/destination/profile/progress/remaining time/company needs, and
+  `travel status` shows the same and syncs any earned checkpoint. Exertion is
+  charged only at the ten durable progress checkpoints and telescopes to exactly
+  the profile total at completion. On completion the module applies the final
+  checkpoint, persists `Completed`, moves the leader once via `rooms.MoveToRoom`,
+  commands native charmed companions to follow, announces arrival once, and
+  removes the record after verifying the destination. Recovery at the
+  destination cleans up, at the origin retries the move, and anywhere else is
+  retained for operator repair.
+- **Verification:** `go test -race ./...` (1603 tests / 69 packages),
+  `make generate`, `make validate`, and `go build ./...` pass. Focused race
+  suites cover `internal/expedition`, `internal/exit`, `internal/usercommands`,
+  `internal/survival`, `modules/survival`, and `modules/expedition`.
+- **Copyover note (deviation from plan):** The plan asked for a registered
+  `copyover.Contributor`, but `internal/copyover/AGENTS.md` forbids plugins from
+  implementing it. Continuity instead relies on the plugin `SetOnSave`/
+  `SetOnLoad` path (which runs immediately before/after a copyover): `onLoad`
+  re-derives progress from the durable UTC start, reschedules a remaining
+  session, or completes an overdue one. No copyover contributor is registered.
+- **Known limitation:** Survival state and the expedition checkpoint are two
+  separate plugin writes, so a crash between them is not atomic (same shape as
+  the company/survival limitation). The expedition checkpoint is authoritative
+  for its own progress; a failed checkpoint write blocks completion rather than
+  double-charging in-process.
+- **Deferred:** Phase 6 owns interruption/pause/resume; Phase 7 camping/rest;
+  Phase 8 weather; Phase 9 cargo; Phase 10 mounts. Needs remain informational in
+  Phase 5 and never change duration, arrival, movement, combat, or health.
+- **Live acceptance:** Not run (no interactive Telnet prerequisites); unit,
+  module, command, persistence, timer, recovery, and race coverage only.
 
 ### Phase 4 — Survival state (complete, 2026-09-17)
 
@@ -208,20 +267,29 @@ instead of duplicating them.
 - Plugin `WriteStruct`/`WriteBytes` persistence is a direct (non-atomic) file
   write. Command state rolls back on failure, but a partial low-level write
   cannot be recovered.
-- Live server acceptance has not been run for Phase 3 or Phase 4; unit/race
-  tests cover the roster, formation, migration, survival persistence,
-  provisioning, and command behavior.
+- Live server acceptance has not been run for Phase 3, Phase 4, or Phase 5;
+  unit/race tests cover the roster, formation, migration, survival persistence,
+  provisioning, travel start/view/completion/recovery, and command behavior.
 - Company and survival use separate plugin writes, so summon/dismiss is not
   cross-file atomic. Compensation failures are surfaced alongside the primary
   error, and the survival-side durable reservation prevents reuse of an ID once
   its survival initialization has persisted. A partial low-level file write is
   still not transactionally recoverable.
+- Expedition survival exertion and its own checkpoint are also separate plugin
+  writes, so a crash between them is not atomic. A failed checkpoint write blocks
+  travel completion until recovery can synchronize; the checkpoint never
+  advances without a corresponding survival write in the same process.
+- Phase 5 copyover continuity relies on plugin `SetOnSave`/`SetOnLoad` rather
+  than a `copyover.Contributor`, because modules are forbidden from registering
+  copyover contributors. `onLoad` runs after `copyover.Restore` and reschedules
+  or completes sessions from the durable record.
 - Company/formation/survival state is process-local with no mutex, matching the
   existing event-loop dispatch assumption; revisit if command dispatch moves off
   the main loop.
 - Deferred by design: recruitment economics, companion custom names, equipment,
-  injuries, AI orders, death/permadeath rules, formation combat effects, and
-  travel/camp integration.
+  injuries, AI orders, death/permadeath rules, formation combat effects, travel
+  interruptions (Phase 6), and camp/weather/cargo/mount integration (Phases
+  7–10).
 
 ## Key documents
 
