@@ -1,0 +1,21 @@
+roomid: 2001
+zone: Dunmar
+title: Dunmar West Gate
+description: The western gate of Dunmar opens onto the Old King's Road, a rutted
+  track of packed earth that disappears into the treeline a bowshot away. Weathered
+  stone pillars flank the gate, their carvings worn smooth by generations of travelers,
+  and a faded banner snaps in the wind overhead. Wagons have cut deep grooves into
+  the mud here, and the smell of pine and woodsmoke drifts in from the forest. Beyond
+  the last cobblestone, the road narrows and the trees close in, and somewhere past
+  the first bend the way forks at an old black oak split by lightning.
+biome: city
+exits:
+  north:
+    roomid: 2002
+    travel_profile: oak-road
+    exitmessage: You shoulder your pack, gather your company, and step onto the Old
+      King's Road.
+mapx: 0
+mapy: 0
+mapz: 0
+hascoordinates: true

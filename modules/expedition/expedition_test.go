@@ -2,15 +2,20 @@ package expedition
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestMain(m *testing.M) {
@@ -495,4 +500,45 @@ func TestCopyoverRestorationReschedulesFromDurableRecord(t *testing.T) {
 	require.Len(t, childScheduler.delays, 1)
 	assert.Equal(t, 6*time.Second, childScheduler.delays[0])
 	assert.Equal(t, expedition.Traveling, child.sessions[7].State)
+}
+
+func TestDunmarOakRoute(t *testing.T) {
+	// Load the shipped default world so the proving route is validated exactly
+	// as it ships.
+	dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
+	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
+	rooms.LoadDataFiles()
+	rooms.LoadBiomeDataFiles()
+	keywords.LoadAliases()
+
+	origin := rooms.LoadRoom(2001)
+	require.NotNil(t, origin, "Dunmar West Gate must exist")
+	assert.Equal(t, "Dunmar West Gate", origin.Title)
+	destination := rooms.LoadRoom(2002)
+	require.NotNil(t, destination, "Fork at the Black Oak must exist")
+	assert.Equal(t, "Fork at the Black Oak", destination.Title)
+
+	exitName, destinationId := origin.FindExitByName("north")
+	require.NotEmpty(t, exitName, "the west gate must have a north route")
+	assert.Equal(t, 2002, destinationId)
+	exitInfo, ok := origin.GetExitInfo(exitName)
+	require.True(t, ok)
+	assert.Equal(t, "oak-road", exitInfo.TravelProfile)
+
+	// The configured profile is valid, positive, and safe for full needs.
+	data, err := files.ReadFile("files/data-overlays/config.yaml")
+	require.NoError(t, err)
+	var cfg struct {
+		Profiles []any `yaml:"Profiles"`
+	}
+	require.NoError(t, yaml.Unmarshal(data, &cfg))
+	profiles := parseProfiles(cfg.Profiles)
+	profile, ok := profiles["oak-road"]
+	require.True(t, ok, "oak-road must be configured")
+	require.Greater(t, profile.Duration, time.Duration(0))
+
+	full := survival.FullNeeds()
+	assert.Greater(t, full.Hunger-profile.Exertion.Hunger, 25, "hunger must stay above critical")
+	assert.Greater(t, full.Thirst-profile.Exertion.Thirst, 25, "thirst must stay above critical")
+	assert.Greater(t, full.Fatigue-profile.Exertion.Fatigue, 25, "fatigue must stay above critical")
 }

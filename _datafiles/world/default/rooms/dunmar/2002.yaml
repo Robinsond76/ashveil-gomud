@@ -1,0 +1,18 @@
+roomid: 2002
+zone: Dunmar
+title: Fork at the Black Oak
+description: An enormous black oak dominates the fork where the Old King's Road
+  splits and vanishes into the deep forest. The tree was split by lightning long ago;
+  its scorched trunk gapes open, and the two halves still reach skyward, black against
+  the green. Pines crowd close on every side, their needles carpeting the ground in
+  rust-brown drifts, and the air is cool and still beneath the canopy. A mossy waystone
+  leans at the base of the oak, its lettering long since weathered away, marking where
+  travelers once chose between the eastern track and the overgrown western path.
+biome: forest
+exits:
+  south:
+    roomid: 2001
+mapx: 0
+mapy: -1
+mapz: 0
+hascoordinates: true
