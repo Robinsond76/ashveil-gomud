@@ -122,6 +122,7 @@ var (
 	ErrPersistenceUnavailable = errors.New("survival: persistence unavailable")
 	ErrProvisionUnavailable   = errors.New("survival: provisioning unavailable")
 	ErrExertionUnavailable    = errors.New("survival: exertion unavailable")
+	ErrExertionConflict       = errors.New("survival: exertion operation conflicts with prior cost")
 )
 
 func clamp(value int) int {
@@ -234,6 +235,7 @@ func validateMember(leaderUserID int, key MemberKey) error {
 type Registry struct {
 	Leaders                  map[int]map[MemberKey]Needs `yaml:"leaders"`
 	ReservedNextCompanionIDs map[int]int                 `yaml:"reserved_next_companion_ids,omitempty"`
+	AppliedExertion          map[int]map[string]Exertion `yaml:"applied_exertion,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -241,6 +243,7 @@ func NewRegistry() *Registry {
 	return &Registry{
 		Leaders:                  map[int]map[MemberKey]Needs{},
 		ReservedNextCompanionIDs: map[int]int{},
+		AppliedExertion:          map[int]map[string]Exertion{},
 	}
 }
 
@@ -250,6 +253,9 @@ func (r *Registry) ensureMaps() {
 	}
 	if r.ReservedNextCompanionIDs == nil {
 		r.ReservedNextCompanionIDs = map[int]int{}
+	}
+	if r.AppliedExertion == nil {
+		r.AppliedExertion = map[int]map[string]Exertion{}
 	}
 }
 
@@ -386,7 +392,7 @@ func companionOrdinal(key MemberKey) int {
 
 // Clone returns a deep copy of the registry.
 func (r Registry) Clone() Registry {
-	out := Registry{Leaders: map[int]map[MemberKey]Needs{}, ReservedNextCompanionIDs: map[int]int{}}
+	out := Registry{Leaders: map[int]map[MemberKey]Needs{}, ReservedNextCompanionIDs: map[int]int{}, AppliedExertion: map[int]map[string]Exertion{}}
 	for leaderUserID, byMember := range r.Leaders {
 		clone := make(map[MemberKey]Needs, len(byMember))
 		for key, needs := range byMember {
@@ -396,6 +402,12 @@ func (r Registry) Clone() Registry {
 	}
 	for leaderUserID, nextID := range r.ReservedNextCompanionIDs {
 		out.ReservedNextCompanionIDs[leaderUserID] = nextID
+	}
+	for id, operations := range r.AppliedExertion {
+		out.AppliedExertion[id] = map[string]Exertion{}
+		for key, cost := range operations {
+			out.AppliedExertion[id][key] = cost
+		}
 	}
 	return out
 }
@@ -699,7 +711,7 @@ func IsMemberSelector(leaderUserID int, selector string) bool {
 type CompanyService interface {
 	// ApplyCompanyExertion applies cost to every current company member in one
 	// durable write. Costs are non-negative and at least one must be positive.
-	ApplyCompanyExertion(leaderUserID int, cost Exertion) ([]ExertionResult, error)
+	ApplyCompanyExertion(leaderUserID int, operationID string, cost Exertion) ([]ExertionResult, error)
 	// CompanyNeeds returns the leader plus current companions with their
 	// stored needs. It never writes.
 	CompanyNeeds(leaderUserID int) []MemberNeeds
@@ -729,14 +741,14 @@ func CompanyServiceAvailable() bool {
 // ApplyCompanyExertion applies an exertion cost through the registered module.
 // It returns ErrExertionUnavailable until modules/survival has loaded, which
 // prevents a travel route from advancing without its due cost.
-func ApplyCompanyExertion(leaderUserID int, cost Exertion) ([]ExertionResult, error) {
+func ApplyCompanyExertion(leaderUserID int, operationID string, cost Exertion) ([]ExertionResult, error) {
 	companyServiceMu.RLock()
 	s := companyService
 	companyServiceMu.RUnlock()
 	if s == nil {
 		return nil, ErrExertionUnavailable
 	}
-	return s.ApplyCompanyExertion(leaderUserID, cost)
+	return s.ApplyCompanyExertion(leaderUserID, operationID, cost)
 }
 
 // CompanyNeeds returns the roster needs through the registered module, or nil

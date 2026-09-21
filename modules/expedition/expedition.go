@@ -134,15 +134,15 @@ func (nativeMover) MoveToRoom(userID, roomID int) error {
 
 // Survival is the Phase 4 company service needed by travel.
 type Survival interface {
-	ApplyCompanyExertion(leaderUserID int, cost survival.Exertion) ([]survival.ExertionResult, error)
+	ApplyCompanyExertion(leaderUserID int, operationID string, cost survival.Exertion) ([]survival.ExertionResult, error)
 	CompanyNeeds(leaderUserID int) []survival.MemberNeeds
 	Available() error
 }
 
 type nativeSurvival struct{}
 
-func (nativeSurvival) ApplyCompanyExertion(leaderUserID int, cost survival.Exertion) ([]survival.ExertionResult, error) {
-	return survival.ApplyCompanyExertion(leaderUserID, cost)
+func (nativeSurvival) ApplyCompanyExertion(leaderUserID int, operationID string, cost survival.Exertion) ([]survival.ExertionResult, error) {
+	return survival.ApplyCompanyExertion(leaderUserID, operationID, cost)
 }
 
 func (nativeSurvival) CompanyNeeds(leaderUserID int) []survival.MemberNeeds {
@@ -196,6 +196,7 @@ func init() {
 	m.store = pluginStore{plug: m.plug}
 	m.plug.AddUserCommand("travel", m.userCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
+	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
 			mudlog.Error("expedition: save", "error", err)
@@ -306,6 +307,37 @@ func parseProfiles(raw any) map[string]expedition.TravelProfile {
 		profiles[profile.Name] = profile
 	}
 	return profiles
+}
+
+func (m *ExpeditionModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.PlayerSpawn)
+	if !ok {
+		return events.Continue
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	session, ok := m.sessions[evt.UserId]
+	if !ok {
+		return events.Continue
+	}
+	profile, ok := m.profile(session.ProfileName)
+	if !ok {
+		return events.Continue
+	}
+	if session.State == expedition.Traveling {
+		if err := m.syncLocked(evt.UserId); err != nil {
+			return events.Continue
+		}
+		session = m.sessions[evt.UserId]
+		if !m.clock().UTC().Before(session.StartedAtUTC.Add(profile.Duration)) {
+			m.completeLocked(session)
+		} else {
+			m.scheduleLocked(session)
+		}
+	} else if session.State == expedition.Completed {
+		m.recoverCompletedLocked(session, profile)
+	}
+	return events.Continue
 }
 
 // stringMap normalizes the map types produced by YAML decoding and lowercases
@@ -436,7 +468,7 @@ func (m *ExpeditionModule) RenderTravelView(leaderUserID int) (bool, error) {
 	if _, ok := m.sessions[leaderUserID]; !ok {
 		return false, nil
 	}
-	if err := m.syncLocked(leaderUserID); err != nil {
+	if err := m.syncAndCompleteLocked(leaderUserID); err != nil {
 		mudlog.Warn("expedition: view sync", "leader", leaderUserID, "error", err)
 	}
 	m.sendToLeader(leaderUserID, m.statusTextLocked(leaderUserID))
@@ -449,7 +481,7 @@ func (m *ExpeditionModule) MovementBlocked(leaderUserID int) (bool, string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	session, ok := m.sessions[leaderUserID]
-	if !ok {
+	if !ok || session.State != expedition.Traveling {
 		return false, ""
 	}
 	return true, m.refusalTextLocked(session)
@@ -473,7 +505,19 @@ func (m *ExpeditionModule) refusalTextLocked(session expedition.TravelSession) s
 func (m *ExpeditionModule) Sync(leaderUserID int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.syncLocked(leaderUserID)
+	return m.syncAndCompleteLocked(leaderUserID)
+}
+
+func (m *ExpeditionModule) syncAndCompleteLocked(leaderUserID int) error {
+	if err := m.syncLocked(leaderUserID); err != nil {
+		return err
+	}
+	if session, ok := m.sessions[leaderUserID]; ok && session.State == expedition.Traveling {
+		if profile, ok := m.profile(session.ProfileName); ok && !m.clock().UTC().Before(session.StartedAtUTC.Add(profile.Duration)) {
+			m.completeLocked(session)
+		}
+	}
+	return nil
 }
 
 // syncLocked applies the incremental exertion owed since the last persisted
@@ -489,24 +533,33 @@ func (m *ExpeditionModule) syncLocked(leaderUserID int) error {
 		return fmt.Errorf("expedition: unknown travel profile %q", session.ProfileName)
 	}
 	now := m.clock().UTC()
-	due := session.ExertionDue(now, profile)
-	if exertionZero(due) {
+	pending, due, err := session.PrepareExertion(now, profile)
+	if err != nil {
+		return err
+	}
+	if !due {
 		return nil
 	}
 	if err := m.survival.Available(); err != nil {
 		return err
 	}
-	if _, err := m.survival.ApplyCompanyExertion(leaderUserID, due); err != nil {
+	session.PendingExertion = &pending
+	m.sessions[leaderUserID] = session
+	if err := m.saveLocked(); err != nil {
 		return err
 	}
-	session.LastExertionCheckpoint = session.CheckpointAt(now, profile.Duration)
+	if _, err := m.survival.ApplyCompanyExertion(leaderUserID, pending.OperationID, pending.Cost); err != nil {
+		return err
+	}
+	session.LastExertionCheckpoint = pending.Checkpoint
+	session.PendingExertion = nil
 	m.sessions[leaderUserID] = session
 	if err := m.saveLocked(); err != nil {
 		// Keep the advanced in-memory checkpoint so a same-process retry does
 		// not charge the same checkpoint twice.
 		return err
 	}
-	return nil
+	return m.syncLocked(leaderUserID)
 }
 
 func (m *ExpeditionModule) scheduleLocked(session expedition.TravelSession) {
@@ -737,7 +790,7 @@ func (m *ExpeditionModule) status(leaderUserID int) string {
 	if _, ok := m.sessions[leaderUserID]; !ok {
 		return "You are not travelling."
 	}
-	if err := m.syncLocked(leaderUserID); err != nil {
+	if err := m.syncAndCompleteLocked(leaderUserID); err != nil {
 		mudlog.Warn("expedition: status sync", "leader", leaderUserID, "error", err)
 	}
 	return m.statusTextLocked(leaderUserID)

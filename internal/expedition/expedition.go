@@ -10,6 +10,7 @@ package expedition
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -101,14 +102,22 @@ func (s SessionState) CanTransitionTo(to SessionState) bool {
 // never stores sockets or live mob instances; progress is always derived from
 // StartedAtUTC against the current clock.
 type TravelSession struct {
-	LeaderUserID           int          `yaml:"leader_user_id"`
-	OriginRoomID           int          `yaml:"origin_room_id"`
-	DestinationRoomID      int          `yaml:"destination_room_id"`
-	ExitName               string       `yaml:"exit_name"`
-	ProfileName            string       `yaml:"profile_name"`
-	StartedAtUTC           time.Time    `yaml:"started_at_utc"`
-	LastExertionCheckpoint uint8        `yaml:"last_exertion_checkpoint"`
-	State                  SessionState `yaml:"state"`
+	LeaderUserID           int              `yaml:"leader_user_id"`
+	OriginRoomID           int              `yaml:"origin_room_id"`
+	DestinationRoomID      int              `yaml:"destination_room_id"`
+	ExitName               string           `yaml:"exit_name"`
+	ProfileName            string           `yaml:"profile_name"`
+	StartedAtUTC           time.Time        `yaml:"started_at_utc"`
+	LastExertionCheckpoint uint8            `yaml:"last_exertion_checkpoint"`
+	PendingExertion        *PendingExertion `yaml:"pending_exertion,omitempty"`
+	State                  SessionState     `yaml:"state"`
+}
+
+// PendingExertion is the durable two-phase record of a survival charge.
+type PendingExertion struct {
+	OperationID string            `yaml:"operation_id"`
+	Checkpoint  uint8             `yaml:"checkpoint"`
+	Cost        survival.Exertion `yaml:"cost"`
 }
 
 // Validate reports whether the session carries stable, complete identity.
@@ -128,10 +137,37 @@ func (s TravelSession) Validate() error {
 	if s.LastExertionCheckpoint > CheckpointCount {
 		return ErrInvalidSession
 	}
+	if p := s.PendingExertion; p != nil && (p.OperationID == "" || p.Checkpoint == 0 || p.Checkpoint > CheckpointCount || p.Cost.Hunger < 0 || p.Cost.Thirst < 0 || p.Cost.Fatigue < 0) {
+		return ErrInvalidSession
+	}
 	if !s.State.Valid() {
 		return ErrInvalidSession
 	}
 	return nil
+}
+
+// PrepareExertion returns the persisted operation required for the next earned
+// checkpoint. Repeating it is safe: its ID derives only from session identity.
+func (s TravelSession) PrepareExertion(now time.Time, profile TravelProfile) (PendingExertion, bool, error) {
+	if err := profile.Validate(); err != nil {
+		return PendingExertion{}, false, err
+	}
+	if s.PendingExertion != nil {
+		return *s.PendingExertion, true, nil
+	}
+	checkpoint := s.CheckpointAt(now, profile.Duration)
+	if checkpoint <= s.LastExertionCheckpoint {
+		return PendingExertion{}, false, nil
+	}
+	cost := s.ExertionDue(now, profile)
+	if cost.Hunger == 0 && cost.Thirst == 0 && cost.Fatigue == 0 {
+		return PendingExertion{}, false, nil
+	}
+	return PendingExertion{
+		OperationID: fmt.Sprintf("expedition/%d/%d/%d/%s/%d/%d", s.LeaderUserID, s.OriginRoomID, s.DestinationRoomID, s.ProfileName, s.StartedAtUTC.UTC().UnixNano(), checkpoint),
+		Checkpoint:  checkpoint,
+		Cost:        cost,
+	}, true, nil
 }
 
 // ProgressAt returns the clamped fraction of the route completed, in 0..1.

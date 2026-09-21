@@ -107,7 +107,7 @@ type fakeSurvival struct {
 
 func (f *fakeSurvival) Available() error { return f.availableErr }
 
-func (f *fakeSurvival) ApplyCompanyExertion(_ int, cost survival.Exertion) ([]survival.ExertionResult, error) {
+func (f *fakeSurvival) ApplyCompanyExertion(_ int, _ string, cost survival.Exertion) ([]survival.ExertionResult, error) {
 	if f.applyErr != nil {
 		return nil, f.applyErr
 	}
@@ -460,7 +460,8 @@ func TestCheckpointWriteFailureBlocksCompletion(t *testing.T) {
 	assert.Empty(t, mover.moves)
 	assert.Contains(t, module.sessions, 7)
 	assert.Equal(t, expedition.Traveling, module.sessions[7].State)
-	assert.Equal(t, uint8(10), module.sessions[7].LastExertionCheckpoint)
+	assert.Equal(t, uint8(0), module.sessions[7].LastExertionCheckpoint)
+	require.NotNil(t, module.sessions[7].PendingExertion)
 }
 
 func TestSurvivalFailureBlocksCompletion(t *testing.T) {

@@ -197,6 +197,24 @@ func TestSessionStateStrings(t *testing.T) {
 	assert.Equal(t, "unknown", SessionState(99).String())
 }
 
+func TestPrepareExertionUsesStablePendingOperation(t *testing.T) {
+	session := validSession()
+	profile := TravelProfile{Name: "oak-road", Duration: 10 * time.Second, Exertion: survival.Exertion{Hunger: 10}}
+	now := session.StartedAtUTC.Add(7 * time.Second)
+
+	pending, ok, err := session.PrepareExertion(now, profile)
+	require.NoError(t, err)
+	require.True(t, ok)
+	assert.Equal(t, uint8(7), pending.Checkpoint)
+	assert.Equal(t, survival.Exertion{Hunger: 7}, pending.Cost)
+	assert.NotEmpty(t, pending.OperationID)
+
+	repeated, ok, err := session.PrepareExertion(now, profile)
+	require.NoError(t, err)
+	require.True(t, ok)
+	assert.Equal(t, pending, repeated)
+}
+
 type fakeStarter struct {
 	handled bool
 	err     error
