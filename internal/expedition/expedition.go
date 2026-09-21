@@ -27,16 +27,63 @@ var (
 	ErrInvalidProfileName     = errors.New("expedition: profile name is required")
 	ErrInvalidProfileDuration = errors.New("expedition: profile duration must be positive")
 	ErrInvalidProfileExertion = errors.New("expedition: profile exertion must be non-negative")
+	ErrInvalidInterruption    = errors.New("expedition: invalid travel interruption")
 	ErrInvalidSession         = errors.New("expedition: invalid travel session")
 	ErrInvalidTransition      = errors.New("expedition: invalid session transition")
 )
 
+// InterruptionKind names a scripted, durable event that halts a route until the
+// leader chooses to resume or turn back.
+type InterruptionKind string
+
+// FallenTree is the only interruption kind the domain ships today. Adding a
+// kind means extending Valid; persisted payloads of unknown kinds are corrupt.
+const FallenTree InterruptionKind = "fallen-tree"
+
+// Valid reports whether the kind is a known interruption.
+func (k InterruptionKind) Valid() bool {
+	return k == FallenTree
+}
+
+// InterruptionProfile configures the checkpoint on a route where an
+// interruption fires. Checkpoint is 1..CheckpointCount-1: the route end is not
+// a legal interruption point, because a route that is already over cannot be
+// interrupted.
+type InterruptionProfile struct {
+	Kind       InterruptionKind `yaml:"kind"`
+	Checkpoint uint8            `yaml:"checkpoint"`
+}
+
+// Validate rejects an unusable interruption configuration.
+func (i InterruptionProfile) Validate() error {
+	if !i.Kind.Valid() {
+		return ErrInvalidInterruption
+	}
+	if i.Checkpoint == 0 || i.Checkpoint >= CheckpointCount {
+		return ErrInvalidInterruption
+	}
+	return nil
+}
+
+// TravelInterruption is the immutable payload a session records when it
+// interrupts, so a restart or copyover can render the same choice.
+type TravelInterruption struct {
+	Kind       InterruptionKind `yaml:"kind"`
+	Checkpoint uint8            `yaml:"checkpoint"`
+}
+
+// Validate rejects a payload that could not have come from Interrupt.
+func (i TravelInterruption) Validate() error {
+	return InterruptionProfile(i).Validate()
+}
+
 // TravelProfile is a data-driven terrain route definition. Duration is real
 // UTC time; Exertion is the total cost charged proportionally over the route.
 type TravelProfile struct {
-	Name     string
-	Duration time.Duration
-	Exertion survival.Exertion
+	Name         string
+	Duration     time.Duration
+	Exertion     survival.Exertion
+	Interruption *InterruptionProfile `yaml:"interruption,omitempty"`
 }
 
 // Validate rejects a malformed profile rather than applying a guess.
@@ -49,6 +96,11 @@ func (p TravelProfile) Validate() error {
 	}
 	if p.Exertion.Hunger < 0 || p.Exertion.Thirst < 0 || p.Exertion.Fatigue < 0 {
 		return ErrInvalidProfileExertion
+	}
+	if p.Interruption != nil {
+		if err := p.Interruption.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -102,15 +154,19 @@ func (s SessionState) CanTransitionTo(to SessionState) bool {
 // never stores sockets or live mob instances; progress is always derived from
 // StartedAtUTC against the current clock.
 type TravelSession struct {
-	LeaderUserID           int              `yaml:"leader_user_id"`
-	OriginRoomID           int              `yaml:"origin_room_id"`
-	DestinationRoomID      int              `yaml:"destination_room_id"`
-	ExitName               string           `yaml:"exit_name"`
-	ProfileName            string           `yaml:"profile_name"`
-	StartedAtUTC           time.Time        `yaml:"started_at_utc"`
-	LastExertionCheckpoint uint8            `yaml:"last_exertion_checkpoint"`
-	PendingExertion        *PendingExertion `yaml:"pending_exertion,omitempty"`
-	State                  SessionState     `yaml:"state"`
+	LeaderUserID           int                 `yaml:"leader_user_id"`
+	OriginRoomID           int                 `yaml:"origin_room_id"`
+	DestinationRoomID      int                 `yaml:"destination_room_id"`
+	ExitName               string              `yaml:"exit_name"`
+	ProfileName            string              `yaml:"profile_name"`
+	StartedAtUTC           time.Time           `yaml:"started_at_utc"`
+	PausedAtUTC            time.Time           `yaml:"paused_at_utc,omitempty"`
+	PausedDuration         time.Duration       `yaml:"paused_duration,omitempty"`
+	LastExertionCheckpoint uint8               `yaml:"last_exertion_checkpoint"`
+	PendingExertion        *PendingExertion    `yaml:"pending_exertion,omitempty"`
+	Interruption           *TravelInterruption `yaml:"interruption,omitempty"`
+	InterruptionTriggered  bool                `yaml:"interruption_triggered,omitempty"`
+	State                  SessionState        `yaml:"state"`
 }
 
 // PendingExertion is the durable two-phase record of a survival charge.
@@ -141,6 +197,27 @@ func (s TravelSession) Validate() error {
 		return ErrInvalidSession
 	}
 	if !s.State.Valid() {
+		return ErrInvalidSession
+	}
+	if s.PausedDuration < 0 {
+		return ErrInvalidSession
+	}
+	if i := s.Interruption; i != nil {
+		if err := i.Validate(); err != nil {
+			return ErrInvalidSession
+		}
+	}
+	if s.State == Interrupted {
+		// A halted route must know the immutable event and the instant it
+		// halted at, or restart/copyover cannot charge active time correctly.
+		if s.Interruption == nil || s.PausedAtUTC.IsZero() {
+			return ErrInvalidSession
+		}
+		return nil
+	}
+	// Any other state is not paused: a payload or pause instant is corrupt data
+	// (Resume clears both and leaves InterruptionTriggered set).
+	if s.Interruption != nil || !s.PausedAtUTC.IsZero() {
 		return ErrInvalidSession
 	}
 	return nil
@@ -175,14 +252,36 @@ func (s TravelSession) ProgressAt(now time.Time, duration time.Duration) float64
 	if duration <= 0 {
 		return 1
 	}
-	elapsed := now.Sub(s.StartedAtUTC)
-	if elapsed < 0 {
-		elapsed = 0
+	return float64(s.ActiveElapsedAt(now, duration)) / float64(duration)
+}
+
+// ActiveElapsedAt returns the clamped active travel time at now, in
+// 0..duration. Active time is wall time since StartedAtUTC minus every paused
+// stretch: durable PausedDuration for completed pauses, plus the open pause
+// when the session is currently Interrupted. Interrupting a route therefore
+// freezes progress until the leader resumes it, and wall-clock time spent
+// paused is never charged against the route.
+func (s TravelSession) ActiveElapsedAt(now time.Time, duration time.Duration) time.Duration {
+	elapsed := now.Sub(s.StartedAtUTC) - s.PausedDuration
+	if s.State == Interrupted && !s.PausedAtUTC.IsZero() {
+		elapsed -= now.Sub(s.PausedAtUTC)
+	}
+	if elapsed < 0 || duration <= 0 {
+		return 0
 	}
 	if elapsed > duration {
-		elapsed = duration
+		return duration
 	}
-	return float64(elapsed) / float64(duration)
+	return elapsed
+}
+
+// RemainingAt returns the clamped active travel time still owed at now, in
+// 0..duration.
+func (s TravelSession) RemainingAt(now time.Time, duration time.Duration) time.Duration {
+	if duration <= 0 {
+		return 0
+	}
+	return duration - s.ActiveElapsedAt(now, duration)
 }
 
 // CheckpointAt returns the durable checkpoint attained at now, in 0..10.
@@ -190,7 +289,7 @@ func (s TravelSession) CheckpointAt(now time.Time, duration time.Duration) uint8
 	if duration <= 0 {
 		return CheckpointCount
 	}
-	elapsed := now.Sub(s.StartedAtUTC)
+	elapsed := s.ActiveElapsedAt(now, duration)
 	if elapsed <= 0 {
 		return 0
 	}
@@ -239,6 +338,72 @@ func scaledCost(total int, checkpoint uint8) int {
 		return 0
 	}
 	return (total*int(checkpoint) + CheckpointCount/2) / CheckpointCount
+}
+
+// InterruptionDue reports whether the profile's configured interruption has
+// come due and has not fired on this session yet. It is derived state: nothing
+// is persisted until Interrupt succeeds.
+func (s TravelSession) InterruptionDue(now time.Time, p TravelProfile) bool {
+	return s.State == Traveling &&
+		!s.InterruptionTriggered &&
+		p.Interruption != nil &&
+		s.CheckpointAt(now, p.Duration) >= p.Interruption.Checkpoint
+}
+
+// Interrupt halts a route whose configured interruption has come due, returning
+// the interrupted copy. It records the immutable payload and the pause instant,
+// and marks the interruption triggered so it fires at most once per session.
+// The interruption itself changes no exertion state.
+func (s TravelSession) Interrupt(now time.Time, p TravelProfile) (TravelSession, error) {
+	if err := p.Validate(); err != nil {
+		return s, err
+	}
+	if !s.InterruptionDue(now, p) {
+		return s, ErrInvalidInterruption
+	}
+	s.State = Interrupted
+	s.PausedAtUTC = now
+	s.Interruption = &TravelInterruption{Kind: p.Interruption.Kind, Checkpoint: p.Interruption.Checkpoint}
+	s.InterruptionTriggered = true
+	return s, nil
+}
+
+// Resume returns an interrupted session to travel, banking the open pause into
+// PausedDuration and clearing only the active payload and pause instant. The
+// one-shot trigger stays set, so the same interruption never fires again.
+func (s TravelSession) Resume(now time.Time) (TravelSession, error) {
+	if s.State != Interrupted {
+		return s, ErrInvalidTransition
+	}
+	if err := s.Validate(); err != nil {
+		return s, err
+	}
+	pause := now.Sub(s.PausedAtUTC)
+	if pause > 0 {
+		s.PausedDuration += pause
+	}
+	s.State = Traveling
+	s.PausedAtUTC = time.Time{}
+	s.Interruption = nil
+	return s, nil
+}
+
+// Return abandons an interrupted route. Only a halted journey can be given up:
+// a route that is still running must be cancelled through the ordinary
+// transition, and a finished one is already over. It has no clock, so the open
+// pause is dropped rather than banked: the record is terminal, and its active
+// time no longer drives progress. The one-shot trigger is retained.
+func (s TravelSession) Return() (TravelSession, error) {
+	if s.State != Interrupted {
+		return s, ErrInvalidTransition
+	}
+	if err := s.Validate(); err != nil {
+		return s, err
+	}
+	s.State = Cancelled
+	s.PausedAtUTC = time.Time{}
+	s.Interruption = nil
+	return s, nil
 }
 
 // Transition returns the session in a new state, or ErrInvalidTransition.
