@@ -7,7 +7,7 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-21
 - **Branch:** `master`
-- **HEAD:** `cceb47e5` (Phase 5 terrain and travel profiles plus the movement-refusal correction; this status record follows)
+- **HEAD:** `10a53ace` (Phase 5 durability corrections merged; this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
 
@@ -63,7 +63,9 @@ instead of duplicating them.
 - **Key commits:** `af6aa611` (domain), `7d11113c` (exit field + go/look
   adapters), `a14b086c` (durable module, profiles, survival seam, views),
   `1ac90a93` (timers, checkpoint sync, recovery), `983d04bd` (oak-road route),
-  `cceb47e5` (refuse ordinary movement while travelling).
+  `cceb47e5` (refuse ordinary movement while travelling), and `af34e504`
+  (merged durability corrections: pending operation IDs, survival replay ledger,
+  checkpoint recovery, and player-spawn reconciliation).
 - **Behavior:** An unmarked exit stays instant. A marked exit starts a durable
   session; the leader and company stay at the origin. While travelling, ordinary
   movement is refused with progress/remaining time, `look` shows
@@ -75,7 +77,12 @@ instead of duplicating them.
   commands native charmed companions to follow, announces arrival once, and
   removes the record after verifying the destination. Recovery at the
   destination cleans up, at the origin retries the move, and anywhere else is
-  retained for operator repair.
+  retained for operator repair. Checkpoint costs are prepared as durable,
+  deterministic operations before survival changes; the survival ledger makes a
+  restart replay idempotent, then expedition finalizes the checkpoint. A
+  returning leader synchronizes and reconciles travel from `PlayerSpawn`, and
+  `look`/`travel status` retry an overdue completion after a transient timer
+  failure.
 - **Verification:** `go test -race ./...` (1603 tests / 69 packages),
   `make generate`, `make validate`, and `go build ./...` pass. Focused race
   suites cover `internal/expedition`, `internal/exit`, `internal/usercommands`,
@@ -86,11 +93,10 @@ instead of duplicating them.
   `SetOnLoad` path (which runs immediately before/after a copyover): `onLoad`
   re-derives progress from the durable UTC start, reschedules a remaining
   session, or completes an overdue one. No copyover contributor is registered.
-- **Known limitation:** Survival state and the expedition checkpoint are two
-  separate plugin writes, so a crash between them is not atomic (same shape as
-  the company/survival limitation). The expedition checkpoint is authoritative
-  for its own progress; a failed checkpoint write blocks completion rather than
-  double-charging in-process.
+- **Durability correction:** Survival and expedition remain separate plugin
+  writes, but the persisted pending-operation protocol makes their recovery
+  idempotent: a crash between writes retries the same operation ID without a
+  second survival cost.
 - **Deferred:** Phase 6 owns interruption/pause/resume; Phase 7 camping/rest;
   Phase 8 weather; Phase 9 cargo; Phase 10 mounts. Needs remain informational in
   Phase 5 and never change duration, arrival, movement, combat, or health.
@@ -279,10 +285,10 @@ instead of duplicating them.
   error, and the survival-side durable reservation prevents reuse of an ID once
   its survival initialization has persisted. A partial low-level file write is
   still not transactionally recoverable.
-- Expedition survival exertion and its own checkpoint are also separate plugin
-  writes, so a crash between them is not atomic. A failed checkpoint write blocks
-  travel completion until recovery can synchronize; the checkpoint never
-  advances without a corresponding survival write in the same process.
+- Expedition survival exertion and its own checkpoint remain separate plugin
+  writes, but Phase 5 now persists a deterministic pending operation before
+  charging survival. The survival ledger deduplicates recovery, so a crash or
+  failed checkpoint write cannot double-charge the company.
 - Phase 5 copyover continuity relies on plugin `SetOnSave`/`SetOnLoad` rather
   than a `copyover.Contributor`, because modules are forbidden from registering
   copyover contributors. `onLoad` runs after `copyover.Restore` and reschedules
