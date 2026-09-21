@@ -97,8 +97,9 @@ type SurvivalModule struct {
 }
 
 var (
-	_ domain.Provisioner = (*SurvivalModule)(nil)
-	_ domain.Lifecycle   = (*SurvivalModule)(nil)
+	_ domain.Provisioner    = (*SurvivalModule)(nil)
+	_ domain.Lifecycle      = (*SurvivalModule)(nil)
+	_ domain.CompanyService = (*SurvivalModule)(nil)
 )
 
 func init() {
@@ -116,6 +117,7 @@ func init() {
 	})
 	domain.SetProvisioner(m)
 	domain.SetLifecycle(m)
+	domain.SetCompanyService(m)
 }
 
 func (m *SurvivalModule) persistenceAvailable() error {
@@ -262,6 +264,73 @@ func (m *SurvivalModule) RestoreCompanyMember(leaderUserID, companionID int, sna
 		return err
 	}
 	return nil
+}
+
+// ApplyCompanyExertion applies cost to every current company member in one
+// durable write. It rolls the in-memory registry back when the write fails, so
+// travel never advances without its due exertion.
+func (m *SurvivalModule) ApplyCompanyExertion(leaderUserID int, cost domain.Exertion) ([]domain.ExertionResult, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return nil, err
+	}
+	if leaderUserID <= 0 {
+		return nil, domain.ErrInvalidMember
+	}
+	if cost.Hunger < 0 || cost.Thirst < 0 || cost.Fatigue < 0 ||
+		(cost.Hunger == 0 && cost.Thirst == 0 && cost.Fatigue == 0) {
+		return nil, domain.ErrInvalidAmount
+	}
+	refs := m.memberRefs(leaderUserID)
+	if len(refs) == 0 {
+		refs = []domain.MemberRef{{Key: domain.LeaderMemberKey, Name: m.leaderName(leaderUserID)}}
+	}
+	snapshot := m.registry.Clone()
+	results := make([]domain.ExertionResult, 0, len(refs))
+	for _, ref := range refs {
+		if err := m.registry.Ensure(leaderUserID, ref.Key); err != nil {
+			m.registry = snapshot
+			return nil, err
+		}
+		hunger, thirst, fatigue, err := m.registry.ApplyExertion(leaderUserID, ref.Key, cost)
+		if err != nil {
+			m.registry = snapshot
+			return nil, err
+		}
+		results = append(results, domain.ExertionResult{
+			Member:  ref.Key,
+			Name:    ref.Name,
+			Needs:   m.registry.MustNeedsFor(leaderUserID, ref.Key),
+			Hunger:  hunger,
+			Thirst:  thirst,
+			Fatigue: fatigue,
+		})
+	}
+	if err := m.save(); err != nil {
+		m.registry = snapshot
+		return nil, err
+	}
+	return results, nil
+}
+
+// CompanyNeeds returns the leader plus current companions with their stored
+// needs. It is read-only: it may initialize a default leader record and prune
+// stale companions in memory, but never writes to the durable store.
+func (m *SurvivalModule) CompanyNeeds(leaderUserID int) []domain.MemberNeeds {
+	if err := m.persistenceAvailable(); err != nil {
+		return nil
+	}
+	_ = m.registry.Ensure(leaderUserID, domain.LeaderMemberKey)
+	m.pruneStale(leaderUserID)
+	refs := m.memberRefs(leaderUserID)
+	needs := make([]domain.MemberNeeds, 0, len(refs))
+	for _, ref := range refs {
+		stored, ok := m.registry.NeedsFor(leaderUserID, ref.Key)
+		if !ok {
+			stored = domain.FullNeeds()
+		}
+		needs = append(needs, domain.MemberNeeds{Key: ref.Key, Name: ref.Name, Needs: stored})
+	}
+	return needs
 }
 
 // ReconcileCompanyRosters aligns the persisted registry with the loaded

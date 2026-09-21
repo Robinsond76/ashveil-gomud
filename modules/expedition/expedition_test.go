@@ -1,0 +1,295 @@
+package expedition
+
+import (
+	"os"
+	"testing"
+	"time"
+
+	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestMain(m *testing.M) {
+	mudlog.SetupLogger(nil, "low", "", false)
+	os.Exit(m.Run())
+}
+
+type fakeStore struct {
+	saved     Registry
+	loadErr   error
+	saveErr   error
+	loadCalls int
+	saveCalls int
+	log       *orderLog
+}
+
+func (f *fakeStore) Load(registry *Registry) error {
+	f.loadCalls++
+	if f.loadErr != nil {
+		return f.loadErr
+	}
+	*registry = f.saved.Clone()
+	return nil
+}
+
+func (f *fakeStore) Save(registry Registry) error {
+	f.saveCalls++
+	if f.log != nil {
+		f.log.entries = append(f.log.entries, "save")
+	}
+	if f.saveErr != nil {
+		return f.saveErr
+	}
+	f.saved = registry.Clone()
+	return nil
+}
+
+type orderLog struct{ entries []string }
+
+type fakeTimer struct{}
+
+func (fakeTimer) Stop() bool { return true }
+
+type fakeScheduler struct {
+	log       *orderLog
+	callbacks []func()
+	delays    []time.Duration
+}
+
+func (f *fakeScheduler) AfterFunc(d time.Duration, cb func()) Timer {
+	if f.log != nil {
+		f.log.entries = append(f.log.entries, "schedule")
+	}
+	f.delays = append(f.delays, d)
+	f.callbacks = append(f.callbacks, cb)
+	return fakeTimer{}
+}
+
+func (f *fakeScheduler) fire(index int) {
+	if index < len(f.callbacks) {
+		f.callbacks[index]()
+	}
+}
+
+type fakeMover struct {
+	user  *users.UserRecord
+	moves []int
+	err   error
+}
+
+func (f *fakeMover) MoveToRoom(userID, roomID int) error {
+	if f.err != nil {
+		return f.err
+	}
+	f.moves = append(f.moves, roomID)
+	if f.user != nil {
+		f.user.Character.RoomId = roomID
+	}
+	return nil
+}
+
+type fakeSurvival struct {
+	availableErr error
+	applyErr     error
+	applied      []survival.Exertion
+	needs        []survival.MemberNeeds
+}
+
+func (f *fakeSurvival) Available() error { return f.availableErr }
+
+func (f *fakeSurvival) ApplyCompanyExertion(_ int, cost survival.Exertion) ([]survival.ExertionResult, error) {
+	if f.applyErr != nil {
+		return nil, f.applyErr
+	}
+	f.applied = append(f.applied, cost)
+	return nil, nil
+}
+
+func (f *fakeSurvival) CompanyNeeds(_ int) []survival.MemberNeeds { return f.needs }
+
+func baseTime() time.Time {
+	return time.Date(2026, time.September, 17, 12, 0, 0, 0, time.UTC)
+}
+
+func testProfiles() map[string]expedition.TravelProfile {
+	return map[string]expedition.TravelProfile{
+		"oak-road": {
+			Name:     "oak-road",
+			Duration: 10 * time.Second,
+			Exertion: survival.Exertion{Hunger: 10, Thirst: 10, Fatigue: 10},
+		},
+	}
+}
+
+func newTestModule(store Store, scheduler Scheduler, mover Mover, surv Survival, clock func() time.Time, profiles map[string]expedition.TravelProfile) *ExpeditionModule {
+	return &ExpeditionModule{
+		store:     store,
+		scheduler: scheduler,
+		mover:     mover,
+		survival:  surv,
+		clock:     clock,
+		profiles:  profiles,
+		sessions:  map[int]expedition.TravelSession{},
+		timers:    map[int]Timer{},
+	}
+}
+
+func startRequest() expedition.StartRequest {
+	return expedition.StartRequest{
+		LeaderUserID:      7,
+		OriginRoomID:      100,
+		DestinationRoomID: 200,
+		ExitName:          "north",
+		ProfileName:       "oak-road",
+	}
+}
+
+func TestParseProfilesRejectsMalformedAndDuplicates(t *testing.T) {
+	raw := []any{
+		map[string]any{"Name": "oak-road", "Duration": "30s", "Exertion": map[string]any{"Hunger": 4, "Thirst": 4, "Fatigue": 6}},
+		map[string]any{"Name": "oak-road", "Duration": "60s"},
+		map[string]any{"Name": "zero", "Duration": 0},
+		map[string]any{"Name": "negative", "Duration": "10s", "Exertion": map[string]any{"Hunger": -1}},
+		map[string]any{"Name": "seconds-int", "Duration": 45},
+	}
+	profiles := parseProfiles(raw)
+
+	require.Contains(t, profiles, "oak-road")
+	assert.Equal(t, 30*time.Second, profiles["oak-road"].Duration)
+	assert.Equal(t, survival.Exertion{Hunger: 4, Thirst: 4, Fatigue: 6}, profiles["oak-road"].Exertion)
+	assert.NotContains(t, profiles, "zero")
+	assert.NotContains(t, profiles, "negative")
+	require.Contains(t, profiles, "seconds-int")
+	assert.Equal(t, 45*time.Second, profiles["seconds-int"].Duration)
+}
+
+func TestStartTravelPersistsBeforeScheduling(t *testing.T) {
+	log := &orderLog{}
+	store := &fakeStore{log: log}
+	scheduler := &fakeScheduler{log: log}
+	module := newTestModule(store, scheduler, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+
+	handled, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, []string{"save", "schedule"}, log.entries)
+	require.Len(t, store.saved.Sessions, 1)
+	assert.Equal(t, expedition.Traveling, store.saved.Sessions[7].State)
+	assert.Equal(t, baseTime(), store.saved.Sessions[7].StartedAtUTC)
+}
+
+func TestStartTravelRefusesDuplicateWithoutReplacing(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	module := newTestModule(store, scheduler, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	original := store.saved.Sessions[7]
+
+	handled, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	assert.True(t, handled)
+	assert.Equal(t, 1, len(scheduler.callbacks), "duplicate start must not schedule a second timer")
+	assert.Equal(t, original, store.saved.Sessions[7])
+}
+
+func TestStartTravelFailsWithoutProfile(t *testing.T) {
+	store := &fakeStore{}
+	module := newTestModule(store, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+
+	req := startRequest()
+	req.ProfileName = "missing"
+	handled, err := module.StartTravel(req)
+	require.Error(t, err)
+	assert.True(t, handled)
+	assert.Empty(t, store.saved.Sessions)
+	assert.Zero(t, store.saveCalls)
+}
+
+func TestStartTravelFailsWithoutStore(t *testing.T) {
+	store := &fakeStore{saveErr: assert.AnError}
+	module := newTestModule(store, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+
+	handled, err := module.StartTravel(startRequest())
+	require.Error(t, err)
+	assert.True(t, handled)
+	assert.Empty(t, module.sessions, "a failed save must leave no session")
+	assert.Empty(t, store.saved.Sessions)
+}
+
+func TestStartTravelFailsWithoutSurvival(t *testing.T) {
+	store := &fakeStore{}
+	module := newTestModule(store, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{availableErr: survival.ErrExertionUnavailable}, baseTime, testProfiles())
+
+	handled, err := module.StartTravel(startRequest())
+	require.ErrorIs(t, err, survival.ErrExertionUnavailable)
+	assert.True(t, handled)
+	assert.Empty(t, module.sessions)
+	assert.Zero(t, store.saveCalls)
+}
+
+func TestSyncAppliesSevenOfTenCheckpoint(t *testing.T) {
+	store := &fakeStore{}
+	surv := &fakeSurvival{}
+	now := baseTime()
+	module := newTestModule(store, &fakeScheduler{}, &fakeMover{}, surv, func() time.Time { return now }, testProfiles())
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	now = baseTime().Add(7 * time.Second)
+	require.NoError(t, module.Sync(7))
+
+	require.Len(t, surv.applied, 1)
+	assert.Equal(t, survival.Exertion{Hunger: 7, Thirst: 7, Fatigue: 7}, surv.applied[0])
+	assert.Equal(t, uint8(7), module.sessions[7].LastExertionCheckpoint)
+	assert.Equal(t, uint8(7), store.saved.Sessions[7].LastExertionCheckpoint)
+}
+
+func TestStatusRendersProgressAndNeeds(t *testing.T) {
+	store := &fakeStore{}
+	surv := &fakeSurvival{needs: []survival.MemberNeeds{
+		{Key: survival.LeaderMemberKey, Name: "Tester", Needs: survival.Needs{Hunger: 90, Thirst: 80, Fatigue: 70}},
+	}}
+	now := baseTime()
+	module := newTestModule(store, &fakeScheduler{}, &fakeMover{}, surv, func() time.Time { return now }, map[string]expedition.TravelProfile{
+		"oak-road": {Name: "oak-road", Duration: 60 * time.Second, Exertion: survival.Exertion{Hunger: 10, Thirst: 10, Fatigue: 10}},
+	})
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	now = baseTime().Add(30 * time.Second)
+	text := module.status(7)
+	assert.Contains(t, text, "oak-road")
+	assert.Contains(t, text, "room #100")
+	assert.Contains(t, text, "room #200")
+	assert.Contains(t, text, "Progress: 50%")
+	assert.Contains(t, text, "Tester")
+	assert.Contains(t, text, "Hunger 90")
+}
+
+func TestStatusWithoutSession(t *testing.T) {
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+	assert.Equal(t, "You are not travelling.", module.status(7))
+}
+
+func TestRenderTravelViewOnlyForActiveSession(t *testing.T) {
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+
+	handled, err := module.RenderTravelView(7)
+	require.NoError(t, err)
+	assert.False(t, handled)
+
+	_, err = module.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	handled, err = module.RenderTravelView(7)
+	require.NoError(t, err)
+	assert.True(t, handled)
+}

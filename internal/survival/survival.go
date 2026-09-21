@@ -91,6 +91,28 @@ func (r ProvisionResult) Crossed() bool {
 	return r.Hunger.Crossed() || r.Thirst.Crossed() || r.Fatigue.Crossed()
 }
 
+// ExertionResult describes one company member's response to an exertion cost.
+type ExertionResult struct {
+	Member  MemberKey
+	Name    string
+	Needs   Needs
+	Hunger  Change
+	Thirst  Change
+	Fatigue Change
+}
+
+// Crossed reports whether any need changed band.
+func (r ExertionResult) Crossed() bool {
+	return r.Hunger.Crossed() || r.Thirst.Crossed() || r.Fatigue.Crossed()
+}
+
+// MemberNeeds is a member's current survival values for read-only rendering.
+type MemberNeeds struct {
+	Key   MemberKey
+	Name  string
+	Needs Needs
+}
+
 // Errors returned by the survival domain and provider seam.
 var (
 	ErrInvalidMember          = errors.New("survival: invalid company member")
@@ -99,6 +121,7 @@ var (
 	ErrInvalidAmount          = errors.New("survival: amount must be positive")
 	ErrPersistenceUnavailable = errors.New("survival: persistence unavailable")
 	ErrProvisionUnavailable   = errors.New("survival: provisioning unavailable")
+	ErrExertionUnavailable    = errors.New("survival: exertion unavailable")
 )
 
 func clamp(value int) int {
@@ -667,4 +690,63 @@ func IsMemberSelector(leaderUserID int, selector string) bool {
 		return false
 	}
 	return p.IsMemberSelector(leaderUserID, selector)
+}
+
+// CompanyService is implemented by modules/survival. It applies exertion to the
+// authoritative company roster and exposes read-only needs for rendering.
+// modules/expedition depends on this seam so travel never imports another
+// module directly.
+type CompanyService interface {
+	// ApplyCompanyExertion applies cost to every current company member in one
+	// durable write. Costs are non-negative and at least one must be positive.
+	ApplyCompanyExertion(leaderUserID int, cost Exertion) ([]ExertionResult, error)
+	// CompanyNeeds returns the leader plus current companions with their
+	// stored needs. It never writes.
+	CompanyNeeds(leaderUserID int) []MemberNeeds
+}
+
+var (
+	companyServiceMu sync.RWMutex
+	companyService   CompanyService
+)
+
+// SetCompanyService registers the active company service. Passing nil clears it.
+func SetCompanyService(s CompanyService) {
+	companyServiceMu.Lock()
+	defer companyServiceMu.Unlock()
+	companyService = s
+}
+
+// CompanyServiceAvailable reports whether a company service is registered.
+// Travel checks it before starting so a route cannot begin without a way to
+// accrue survival cost.
+func CompanyServiceAvailable() bool {
+	companyServiceMu.RLock()
+	defer companyServiceMu.RUnlock()
+	return companyService != nil
+}
+
+// ApplyCompanyExertion applies an exertion cost through the registered module.
+// It returns ErrExertionUnavailable until modules/survival has loaded, which
+// prevents a travel route from advancing without its due cost.
+func ApplyCompanyExertion(leaderUserID int, cost Exertion) ([]ExertionResult, error) {
+	companyServiceMu.RLock()
+	s := companyService
+	companyServiceMu.RUnlock()
+	if s == nil {
+		return nil, ErrExertionUnavailable
+	}
+	return s.ApplyCompanyExertion(leaderUserID, cost)
+}
+
+// CompanyNeeds returns the roster needs through the registered module, or nil
+// when no module is loaded.
+func CompanyNeeds(leaderUserID int) []MemberNeeds {
+	companyServiceMu.RLock()
+	s := companyService
+	companyServiceMu.RUnlock()
+	if s == nil {
+		return nil
+	}
+	return s.CompanyNeeds(leaderUserID)
 }

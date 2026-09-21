@@ -655,3 +655,57 @@ func TestUserCommandRendersStatus(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, handled)
 }
+
+func TestApplyCompanyExertionChargesRosterInOneWrite(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.PutNeeds(7, domain.LeaderMemberKey, domain.Needs{Hunger: 50, Thirst: 60, Fatigue: 70}))
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(1), domain.Needs{Hunger: 80, Thirst: 80, Fatigue: 80}))
+	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{
+		7: {
+			{Key: domain.LeaderMemberKey, Name: "Hero"},
+			{Key: domain.CompanionMemberKey(1), Name: "Bear"},
+		},
+	}})
+
+	results, err := m.ApplyCompanyExertion(7, domain.Exertion{Hunger: 10, Thirst: 5})
+	require.NoError(t, err)
+	require.Len(t, results, 2)
+	assert.Equal(t, 1, m.store.(*fakeStore).saveCalls, "the whole company must charge in one durable write")
+	assert.Equal(t, domain.Needs{Hunger: 40, Thirst: 55, Fatigue: 70}, m.registry.MustNeedsFor(7, domain.LeaderMemberKey))
+	assert.Equal(t, domain.Needs{Hunger: 70, Thirst: 75, Fatigue: 80}, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(1)))
+}
+
+func TestApplyCompanyExertionRollsBackOnSaveFailure(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.Ensure(7, domain.LeaderMemberKey))
+	m.store = &fakeStore{saveErr: errors.New("boom")}
+	before := m.registry.Clone()
+
+	_, err := m.ApplyCompanyExertion(7, domain.Exertion{Hunger: 10})
+	require.Error(t, err)
+	assert.Equal(t, before, m.registry)
+}
+
+func TestApplyCompanyExertionRejectsZeroCost(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	_, err := m.ApplyCompanyExertion(7, domain.Exertion{})
+	require.ErrorIs(t, err, domain.ErrInvalidAmount)
+}
+
+func TestCompanyNeedsReturnsRosterDefaultsWithoutWriting(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{
+		7: {
+			{Key: domain.LeaderMemberKey, Name: "Hero"},
+			{Key: domain.CompanionMemberKey(2), Name: "Scout"},
+		},
+	}})
+
+	needs := m.CompanyNeeds(7)
+	require.Len(t, needs, 2)
+	assert.Equal(t, "Hero", needs[0].Name)
+	assert.Equal(t, domain.FullNeeds(), needs[0].Needs)
+	assert.Equal(t, "Scout", needs[1].Name)
+	assert.Equal(t, domain.FullNeeds(), needs[1].Needs)
+	assert.Zero(t, m.store.(*fakeStore).saveCalls, "CompanyNeeds must not write")
+}

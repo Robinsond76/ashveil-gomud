@@ -1,0 +1,17 @@
+# Phase 5 expedition travel profiles.
+#
+# Each profile is a data-driven terrain route: a unique name, a real UTC
+# duration, and a non-negative survival exertion total charged proportionally
+# across ten durable checkpoints. Profiles are rejected rather than guessed if
+# malformed. Room exits opt in with `travel_profile: <name>`.
+#
+# Needs are informational in Phase 5 and never change duration or arrival. The
+# proving oak-road route is calibrated so a fully supplied company stays above
+# critical needs.
+Profiles:
+  - Name: oak-road
+    Duration: 30s
+    Exertion:
+      Hunger: 4
+      Thirst: 4
+      Fatigue: 6
