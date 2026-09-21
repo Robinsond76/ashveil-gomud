@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
@@ -19,6 +20,11 @@ import (
 )
 
 func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+
+	// An active journey replaces ordinary room rendering with the travel view.
+	if handled, err := expedition.TravelView(user.UserId); handled || err != nil {
+		return true, err
+	}
 
 	secretLook := flags.Has(events.CmdSecretly)
 

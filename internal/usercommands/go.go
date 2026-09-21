@@ -5,6 +5,8 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -43,6 +45,17 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			return true, nil
 		}
 
+		exitInfo, _ := room.GetExitInfo(exitName)
+
+		// Travel-enabled exits run the same admission checks as an instant move,
+		// then start a durable journey before any action points are spent.
+		if exitInfo.TravelProfile != `` {
+			started, err := startProfiledTravel(rest, exitName, goRoomId, exitInfo, user, room, flags)
+			if started || err != nil {
+				return true, err
+			}
+		}
+
 		actionCost := 10
 		encumbered := false
 		if len(user.Character.Items) > user.Character.CarryCapacity() {
@@ -64,90 +77,8 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 		originRoomId := user.Character.RoomId
 
-		exitInfo, _ := room.GetExitInfo(exitName)
-
-		if exitInfo.Lock.IsLocked() {
-
-			lockId := fmt.Sprintf(`%d-%s`, room.RoomId, exitName)
-
-			hasKey, hasSequence := user.Character.HasKey(lockId, int(room.Exits[exitName].Lock.Difficulty))
-
-			lockpickItm := items.Item{}
-			// Only look for a lockpick kit if they know the sequence
-			if hasSequence {
-				for _, itm := range user.Character.GetAllBackpackItems() {
-					if itm.GetSpec().Type == items.Lockpicks {
-						lockpickItm = itm
-						break
-					}
-				}
-			}
-
-			if lockpickItm.ItemId > 0 && hasSequence {
-
-				user.SendText(`You know this lock well, you quickly pick it.`)
-				room.SendText(
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> quickly picks the lock on the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, exitName),
-					user.UserId)
-
-				room.PlaySound(`change`, `other`)
-
-				exitInfo.Lock.SetUnlocked()
-				room.SetExitLock(exitName, false)
-
-			} else if hasKey {
-				user.SendText(fmt.Sprintf(`You use the key on your key ring to unlock the <ansi fg="exit">%s</ansi> exit.`, exitName))
-				room.SendText(
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, exitName),
-					user.UserId)
-
-				room.PlaySound(`change`, `other`)
-
-				exitInfo.Lock.SetUnlocked()
-				room.SetExitLock(exitName, false)
-
-			} else {
-
-				// check for a key item on their person
-				if backpackKeyItm, hasBackpackKey := user.Character.FindKeyInBackpack(lockId); hasBackpackKey {
-
-					itmSpec := backpackKeyItm.GetSpec()
-
-					room.PlaySound(`change`, `other`)
-
-					user.SendText(fmt.Sprintf(`You use your <ansi fg="item">%s</ansi> to unlock the <ansi fg="exit">%s</ansi> exit, and add it to your key ring for the future.`, itmSpec.Name, exitName))
-					room.SendText(
-						fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, exitName),
-						user.UserId)
-
-					// Key entries look like:
-					// "key-<roomid>-<exitname>": "<itemid>"
-					user.Character.SetKey(`key-`+lockId, fmt.Sprintf(`%d`, backpackKeyItm.ItemId))
-					user.Character.RemoveItem(backpackKeyItm)
-
-					events.AddToQueue(events.ItemOwnership{
-						UserId: user.UserId,
-						Item:   backpackKeyItm,
-						Gained: false,
-					})
-
-					exitInfo.Lock.SetUnlocked()
-					room.SetExitLock(exitName, false)
-				}
-
-				if exitInfo.Lock.IsLocked() {
-					user.SendText(`There's a lock preventing you from going that way. You'll need a <ansi fg="item">Key</ansi> or to <ansi fg="command">pick</ansi> the lock with <ansi fg="item">lockpicks</ansi>.`)
-					// Send GMCP message
-					if f, ok := GetExportedFunction(`SendGMCPEvent`); ok {
-						if gmcpSendFunc, ok := f.(func(int, string, any)); ok { // make sure the func definition is `func(int, string, any)`
-							gmcpSendFunc(user.UserId, `Room.WrongDir`, fmt.Sprintf(`"%s"`, exitName))
-						}
-					}
-
-					return true, nil
-				}
-			}
-
+		if handleExitLock(user, room, exitName, exitInfo) {
+			return true, nil
 		}
 
 		if exitInfo.ExitMessage != `` && !flags.Has(events.CmdIsRequeue) {
@@ -391,4 +322,133 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 	}
 
 	return handled, nil
+}
+
+// handleExitLock attempts to open a locked exit. It reports whether the exit is
+// still locked, in which case the caller must stop.
+func handleExitLock(user *users.UserRecord, room *rooms.Room, exitName string, exitInfo exit.RoomExit) bool {
+
+	if !exitInfo.Lock.IsLocked() {
+		return false
+	}
+
+	lockId := fmt.Sprintf(`%d-%s`, room.RoomId, exitName)
+
+	hasKey, hasSequence := user.Character.HasKey(lockId, int(room.Exits[exitName].Lock.Difficulty))
+
+	lockpickItm := items.Item{}
+	// Only look for a lockpick kit if they know the sequence
+	if hasSequence {
+		for _, itm := range user.Character.GetAllBackpackItems() {
+			if itm.GetSpec().Type == items.Lockpicks {
+				lockpickItm = itm
+				break
+			}
+		}
+	}
+
+	if lockpickItm.ItemId > 0 && hasSequence {
+
+		user.SendText(`You know this lock well, you quickly pick it.`)
+		room.SendText(
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> quickly picks the lock on the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, exitName),
+			user.UserId)
+
+		room.PlaySound(`change`, `other`)
+
+		exitInfo.Lock.SetUnlocked()
+		room.SetExitLock(exitName, false)
+
+	} else if hasKey {
+		user.SendText(fmt.Sprintf(`You use the key on your key ring to unlock the <ansi fg="exit">%s</ansi> exit.`, exitName))
+		room.SendText(
+			fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, exitName),
+			user.UserId)
+
+		room.PlaySound(`change`, `other`)
+
+		exitInfo.Lock.SetUnlocked()
+		room.SetExitLock(exitName, false)
+
+	} else {
+
+		// check for a key item on their person
+		if backpackKeyItm, hasBackpackKey := user.Character.FindKeyInBackpack(lockId); hasBackpackKey {
+
+			itmSpec := backpackKeyItm.GetSpec()
+
+			room.PlaySound(`change`, `other`)
+
+			user.SendText(fmt.Sprintf(`You use your <ansi fg="item">%s</ansi> to unlock the <ansi fg="exit">%s</ansi> exit, and add it to your key ring for the future.`, itmSpec.Name, exitName))
+			room.SendText(
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> uses a key to unlock the <ansi fg="exit">%s</ansi> exit.`, user.Character.Name, exitName),
+				user.UserId)
+
+			// Key entries look like:
+			// "key-<roomid>-<exitname>": "<itemid>"
+			user.Character.SetKey(`key-`+lockId, fmt.Sprintf(`%d`, backpackKeyItm.ItemId))
+			user.Character.RemoveItem(backpackKeyItm)
+
+			events.AddToQueue(events.ItemOwnership{
+				UserId: user.UserId,
+				Item:   backpackKeyItm,
+				Gained: false,
+			})
+
+			exitInfo.Lock.SetUnlocked()
+			room.SetExitLock(exitName, false)
+		}
+
+		if exitInfo.Lock.IsLocked() {
+			user.SendText(`There's a lock preventing you from going that way. You'll need a <ansi fg="item">Key</ansi> or to <ansi fg="command">pick</ansi> the lock with <ansi fg="item">lockpicks</ansi>.`)
+			// Send GMCP message
+			if f, ok := GetExportedFunction(`SendGMCPEvent`); ok {
+				if gmcpSendFunc, ok := f.(func(int, string, any)); ok { // make sure the func definition is `func(int, string, any)`
+					gmcpSendFunc(user.UserId, `Room.WrongDir`, fmt.Sprintf(`"%s"`, exitName))
+				}
+			}
+
+			return true
+		}
+	}
+
+	return false
+}
+
+// startProfiledTravel runs the same admission checks as instant movement and
+// then asks the expedition provider to start a durable journey. It reports
+// handled=false only when no provider is registered, so ordinary movement
+// remains the fallback.
+func startProfiledTravel(rest, exitName string, goRoomId int, exitInfo exit.RoomExit, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+
+	if handleExitLock(user, room, exitName, exitInfo) {
+		return true, nil
+	}
+
+	if exitInfo.ExitMessage != `` && !flags.Has(events.CmdIsRequeue) {
+		user.SendText(exitInfo.ExitMessage)
+		user.CommandFlagged(rest, flags|events.CmdIsRequeue|events.CmdBlockInputUntilComplete, 1)
+		return true, nil
+	}
+
+	destRoom := rooms.LoadRoom(goRoomId)
+	if destRoom == nil {
+		return false, fmt.Errorf(`room %d not found`, goRoomId)
+	}
+
+	if blocked, err := scripting.TryRoomTryExitEvent(exitName, user.UserId, room.RoomId); err == nil && blocked {
+		return true, nil
+	}
+
+	if blocked, err := scripting.TryRoomTryEnterEvent(user.UserId, destRoom.RoomId); err == nil && blocked {
+		return true, nil
+	}
+
+	return expedition.Start(expedition.StartRequest{
+		LeaderUserID:      user.UserId,
+		OriginRoomID:      room.RoomId,
+		DestinationRoomID: goRoomId,
+		ExitName:          exitName,
+		ProfileName:       exitInfo.TravelProfile,
+	})
 }

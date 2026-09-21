@@ -13,11 +13,12 @@ type TemporaryRoomExit struct {
 }
 
 type RoomExit struct {
-	RoomId       int
-	Secret       bool          `yaml:"secret,omitempty"`
-	MapDirection string        `yaml:"mapdirection,omitempty"` // Optionaly indicate the direction of this exit for mapping purposes
-	ExitMessage  string        `yaml:"exitmessage,omitempty"`  // If set, this message is sent to the user, followed by a delay, before they actually go through the exit.
-	Lock         gamelock.Lock `yaml:"lock,omitempty"`         // 0 - no lock. greater than zero = difficulty to unlock.
+	RoomId        int
+	Secret        bool          `yaml:"secret,omitempty"`
+	MapDirection  string        `yaml:"mapdirection,omitempty"`   // Optionaly indicate the direction of this exit for mapping purposes
+	ExitMessage   string        `yaml:"exitmessage,omitempty"`    // If set, this message is sent to the user, followed by a delay, before they actually go through the exit.
+	Lock          gamelock.Lock `yaml:"lock,omitempty"`           // 0 - no lock. greater than zero = difficulty to unlock.
+	TravelProfile string        `yaml:"travel_profile,omitempty"` // Optional expedition travel profile name. Empty preserves instant movement.
 }
 
 func (re RoomExit) HasLock() bool {
