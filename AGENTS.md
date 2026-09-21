@@ -8,6 +8,29 @@ This fork is becoming the Ashveil game, with GoMud as its engine foundation. Use
 
 `docs/PROJECT_STATUS.md` is the living status log for the migration. Update it whenever a commit lands or a phase completes, recording what was done, why, and which step or phase completed. Keep it short and current, and link to detailed docs instead of duplicating them.
 
+## Terra + DeepSeek Implementation Workflow
+
+Terra is the lead engineer for Ashveil: it owns architecture, task scoping,
+code review, verification, follow-up work, and commits. For a scoped
+implementation task, Terra may delegate the first implementation pass to the
+local DeepSeek Flash Codex profile. Read
+`docs/DEEPSEEK_IMPLEMENTER_WORKFLOW.md` before doing so.
+
+Delegate only after the change is understood and the appropriate feature
+worktree is active. Launch the implementer from that worktree with a narrow,
+self-contained prompt:
+
+```bash
+codex exec --profile deepseek --full-auto "Implement <scoped task>. Do not commit, push, create a worktree, or change unrelated files. Run the relevant focused checks and summarize the changes."
+```
+
+Do not edit the same worktree while the implementer is running. Treat its
+output as an untrusted implementation proposal: after it exits, Terra must
+inspect the complete diff, verify the phase invariants and nested `AGENTS.md`
+instructions, run proportionate tests itself, and either request a focused
+fix round or make the final corrections. Only Terra may update project status,
+commit, merge, push, or claim verification passed.
+
 ## Project Structure & Module Organization
 
 - `internal/` contains the engine. Keep gameplay work in its owning package. Read its nested `AGENTS.md` before changing it.
