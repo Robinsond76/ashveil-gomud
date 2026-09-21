@@ -134,15 +134,15 @@ func (nativeMover) MoveToRoom(userID, roomID int) error {
 
 // Survival is the Phase 4 company service needed by travel.
 type Survival interface {
-	ApplyCompanyExertion(leaderUserID int, cost survival.Exertion) ([]survival.ExertionResult, error)
+	ApplyCompanyExertion(leaderUserID int, operationID string, cost survival.Exertion) ([]survival.ExertionResult, error)
 	CompanyNeeds(leaderUserID int) []survival.MemberNeeds
 	Available() error
 }
 
 type nativeSurvival struct{}
 
-func (nativeSurvival) ApplyCompanyExertion(leaderUserID int, cost survival.Exertion) ([]survival.ExertionResult, error) {
-	return survival.ApplyCompanyExertion(leaderUserID, cost)
+func (nativeSurvival) ApplyCompanyExertion(leaderUserID int, operationID string, cost survival.Exertion) ([]survival.ExertionResult, error) {
+	return survival.ApplyCompanyExertion(leaderUserID, operationID, cost)
 }
 
 func (nativeSurvival) CompanyNeeds(leaderUserID int) []survival.MemberNeeds {
@@ -489,17 +489,26 @@ func (m *ExpeditionModule) syncLocked(leaderUserID int) error {
 		return fmt.Errorf("expedition: unknown travel profile %q", session.ProfileName)
 	}
 	now := m.clock().UTC()
-	due := session.ExertionDue(now, profile)
-	if exertionZero(due) {
+	pending, due, err := session.PrepareExertion(now, profile)
+	if err != nil {
+		return err
+	}
+	if !due {
 		return nil
 	}
 	if err := m.survival.Available(); err != nil {
 		return err
 	}
-	if _, err := m.survival.ApplyCompanyExertion(leaderUserID, due); err != nil {
+	session.PendingExertion = &pending
+	m.sessions[leaderUserID] = session
+	if err := m.saveLocked(); err != nil {
 		return err
 	}
-	session.LastExertionCheckpoint = session.CheckpointAt(now, profile.Duration)
+	if _, err := m.survival.ApplyCompanyExertion(leaderUserID, pending.OperationID, pending.Cost); err != nil {
+		return err
+	}
+	session.LastExertionCheckpoint = pending.Checkpoint
+	session.PendingExertion = nil
 	m.sessions[leaderUserID] = session
 	if err := m.saveLocked(); err != nil {
 		// Keep the advanced in-memory checkpoint so a same-process retry does

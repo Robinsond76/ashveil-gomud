@@ -269,16 +269,25 @@ func (m *SurvivalModule) RestoreCompanyMember(leaderUserID, companionID int, sna
 // ApplyCompanyExertion applies cost to every current company member in one
 // durable write. It rolls the in-memory registry back when the write fails, so
 // travel never advances without its due exertion.
-func (m *SurvivalModule) ApplyCompanyExertion(leaderUserID int, cost domain.Exertion) ([]domain.ExertionResult, error) {
+func (m *SurvivalModule) ApplyCompanyExertion(leaderUserID int, operationID string, cost domain.Exertion) ([]domain.ExertionResult, error) {
 	if err := m.persistenceAvailable(); err != nil {
 		return nil, err
 	}
 	if leaderUserID <= 0 {
 		return nil, domain.ErrInvalidMember
 	}
+	if strings.TrimSpace(operationID) == "" {
+		return nil, domain.ErrInvalidAmount
+	}
 	if cost.Hunger < 0 || cost.Thirst < 0 || cost.Fatigue < 0 ||
 		(cost.Hunger == 0 && cost.Thirst == 0 && cost.Fatigue == 0) {
 		return nil, domain.ErrInvalidAmount
+	}
+	if prior, ok := m.registry.AppliedExertion[leaderUserID][operationID]; ok {
+		if prior != cost {
+			return nil, domain.ErrExertionConflict
+		}
+		return m.companyExertionResults(leaderUserID), nil
 	}
 	refs := m.memberRefs(leaderUserID)
 	if len(refs) == 0 {
@@ -305,11 +314,28 @@ func (m *SurvivalModule) ApplyCompanyExertion(leaderUserID int, cost domain.Exer
 			Fatigue: fatigue,
 		})
 	}
+	if m.registry.AppliedExertion[leaderUserID] == nil {
+		m.registry.AppliedExertion[leaderUserID] = map[string]domain.Exertion{}
+	}
+	m.registry.AppliedExertion[leaderUserID][operationID] = cost
 	if err := m.save(); err != nil {
 		m.registry = snapshot
 		return nil, err
 	}
 	return results, nil
+}
+
+func (m *SurvivalModule) companyExertionResults(leaderUserID int) []domain.ExertionResult {
+	refs := m.memberRefs(leaderUserID)
+	if len(refs) == 0 {
+		refs = []domain.MemberRef{{Key: domain.LeaderMemberKey, Name: m.leaderName(leaderUserID)}}
+	}
+	out := make([]domain.ExertionResult, 0, len(refs))
+	for _, ref := range refs {
+		_ = m.registry.Ensure(leaderUserID, ref.Key)
+		out = append(out, domain.ExertionResult{Member: ref.Key, Name: ref.Name, Needs: m.registry.MustNeedsFor(leaderUserID, ref.Key)})
+	}
+	return out
 }
 
 // CompanyNeeds returns the leader plus current companions with their stored

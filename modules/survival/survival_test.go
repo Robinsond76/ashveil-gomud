@@ -667,7 +667,7 @@ func TestApplyCompanyExertionChargesRosterInOneWrite(t *testing.T) {
 		},
 	}})
 
-	results, err := m.ApplyCompanyExertion(7, domain.Exertion{Hunger: 10, Thirst: 5})
+	results, err := m.ApplyCompanyExertion(7, "test-charge-1", domain.Exertion{Hunger: 10, Thirst: 5})
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 	assert.Equal(t, 1, m.store.(*fakeStore).saveCalls, "the whole company must charge in one durable write")
@@ -681,14 +681,14 @@ func TestApplyCompanyExertionRollsBackOnSaveFailure(t *testing.T) {
 	m.store = &fakeStore{saveErr: errors.New("boom")}
 	before := m.registry.Clone()
 
-	_, err := m.ApplyCompanyExertion(7, domain.Exertion{Hunger: 10})
+	_, err := m.ApplyCompanyExertion(7, "test-charge-2", domain.Exertion{Hunger: 10})
 	require.Error(t, err)
 	assert.Equal(t, before, m.registry)
 }
 
 func TestApplyCompanyExertionRejectsZeroCost(t *testing.T) {
 	m := newTestModule(*domain.NewRegistry())
-	_, err := m.ApplyCompanyExertion(7, domain.Exertion{})
+	_, err := m.ApplyCompanyExertion(7, "test-charge-3", domain.Exertion{})
 	require.ErrorIs(t, err, domain.ErrInvalidAmount)
 }
 
