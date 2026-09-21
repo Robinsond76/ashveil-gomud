@@ -325,6 +325,10 @@ func (m *ExpeditionModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 	if session.State == expedition.Traveling {
+		if err := m.syncLocked(evt.UserId); err != nil {
+			return events.Continue
+		}
+		session = m.sessions[evt.UserId]
 		if !m.clock().UTC().Before(session.StartedAtUTC.Add(profile.Duration)) {
 			m.completeLocked(session)
 		} else {
@@ -501,7 +505,15 @@ func (m *ExpeditionModule) refusalTextLocked(session expedition.TravelSession) s
 func (m *ExpeditionModule) Sync(leaderUserID int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.syncLocked(leaderUserID)
+	if err := m.syncLocked(leaderUserID); err != nil {
+		return err
+	}
+	if session, ok := m.sessions[leaderUserID]; ok && session.State == expedition.Traveling {
+		if profile, ok := m.profile(session.ProfileName); ok && !m.clock().UTC().Before(session.StartedAtUTC.Add(profile.Duration)) {
+			m.completeLocked(session)
+		}
+	}
+	return nil
 }
 
 // syncLocked applies the incremental exertion owed since the last persisted
@@ -543,7 +555,7 @@ func (m *ExpeditionModule) syncLocked(leaderUserID int) error {
 		// not charge the same checkpoint twice.
 		return err
 	}
-	return nil
+	return m.syncLocked(leaderUserID)
 }
 
 func (m *ExpeditionModule) scheduleLocked(session expedition.TravelSession) {

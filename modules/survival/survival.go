@@ -84,6 +84,20 @@ func decodeRegistry(data []byte, registry *domain.Registry) error {
 			continue
 		}
 	}
+	for leaderUserID, operations := range wire.AppliedExertion {
+		if leaderUserID <= 0 {
+			continue
+		}
+		for operationID, cost := range operations {
+			if strings.TrimSpace(operationID) == "" || cost.Hunger < 0 || cost.Thirst < 0 || cost.Fatigue < 0 {
+				continue
+			}
+			if loaded.AppliedExertion[leaderUserID] == nil {
+				loaded.AppliedExertion[leaderUserID] = map[string]domain.Exertion{}
+			}
+			loaded.AppliedExertion[leaderUserID][operationID] = cost
+		}
+	}
 	*registry = *loaded
 	return nil
 }
