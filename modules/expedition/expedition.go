@@ -196,6 +196,7 @@ func init() {
 	m.store = pluginStore{plug: m.plug}
 	m.plug.AddUserCommand("travel", m.userCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
+	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
 			mudlog.Error("expedition: save", "error", err)
@@ -306,6 +307,33 @@ func parseProfiles(raw any) map[string]expedition.TravelProfile {
 		profiles[profile.Name] = profile
 	}
 	return profiles
+}
+
+func (m *ExpeditionModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.PlayerSpawn)
+	if !ok {
+		return events.Continue
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	session, ok := m.sessions[evt.UserId]
+	if !ok {
+		return events.Continue
+	}
+	profile, ok := m.profile(session.ProfileName)
+	if !ok {
+		return events.Continue
+	}
+	if session.State == expedition.Traveling {
+		if !m.clock().UTC().Before(session.StartedAtUTC.Add(profile.Duration)) {
+			m.completeLocked(session)
+		} else {
+			m.scheduleLocked(session)
+		}
+	} else if session.State == expedition.Completed {
+		m.recoverCompletedLocked(session, profile)
+	}
+	return events.Continue
 }
 
 // stringMap normalizes the map types produced by YAML decoding and lowercases
@@ -449,7 +477,7 @@ func (m *ExpeditionModule) MovementBlocked(leaderUserID int) (bool, string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	session, ok := m.sessions[leaderUserID]
-	if !ok {
+	if !ok || session.State != expedition.Traveling {
 		return false, ""
 	}
 	return true, m.refusalTextLocked(session)
