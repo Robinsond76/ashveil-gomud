@@ -468,7 +468,7 @@ func (m *ExpeditionModule) RenderTravelView(leaderUserID int) (bool, error) {
 	if _, ok := m.sessions[leaderUserID]; !ok {
 		return false, nil
 	}
-	if err := m.syncLocked(leaderUserID); err != nil {
+	if err := m.syncAndCompleteLocked(leaderUserID); err != nil {
 		mudlog.Warn("expedition: view sync", "leader", leaderUserID, "error", err)
 	}
 	m.sendToLeader(leaderUserID, m.statusTextLocked(leaderUserID))
@@ -505,6 +505,10 @@ func (m *ExpeditionModule) refusalTextLocked(session expedition.TravelSession) s
 func (m *ExpeditionModule) Sync(leaderUserID int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	return m.syncAndCompleteLocked(leaderUserID)
+}
+
+func (m *ExpeditionModule) syncAndCompleteLocked(leaderUserID int) error {
 	if err := m.syncLocked(leaderUserID); err != nil {
 		return err
 	}
@@ -786,7 +790,7 @@ func (m *ExpeditionModule) status(leaderUserID int) string {
 	if _, ok := m.sessions[leaderUserID]; !ok {
 		return "You are not travelling."
 	}
-	if err := m.syncLocked(leaderUserID); err != nil {
+	if err := m.syncAndCompleteLocked(leaderUserID); err != nil {
 		mudlog.Warn("expedition: status sync", "leader", leaderUserID, "error", err)
 	}
 	return m.statusTextLocked(leaderUserID)
