@@ -1,12 +1,18 @@
 package hooks
 
 import (
+	"fmt"
+
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -125,6 +131,165 @@ func aliveMapForParty(p mobparty.Party) map[company.MemberKey]bool {
 		alive[mobparty.MemberKeyFor(id)] = mob != nil && mob.Character.Health > 0
 	}
 	return alive
+}
+
+// gateMobVsPlayerAttack decides whether mob's attack on defUser should be
+// redirected to an intercepting companion (11c front-row interception) or
+// skipped this round (11c legality), before the caller resolves the
+// attack. Unlike gateFormationAttack (player-vs-mob), a redirect here
+// means an entirely different combat.Attack* function — AttackMobVsMob
+// against the interceptor, not AttackMobVsPlayer against defUser — so this
+// function resolves the intercepted attack itself. handled=true tells the
+// caller to skip its own attack resolution and continue the round.
+// handled=false, ok=true means proceed exactly as before (attack defUser
+// directly — no company, or no interception applies). ok=false means skip
+// the round entirely; mob.Character.Aggro is left untouched in every case,
+// so the engagement resumes automatically once whatever blocks it changes.
+func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, defRoom *rooms.Room) (handled bool, ok bool) {
+	f, formationOk := company.FormationFor(defUser.UserId)
+	if !formationOk {
+		return false, true
+	}
+
+	attackerCol, attackerOk := resolveHostileAttackerColumn(mobRoom, mob.InstanceId)
+	if !attackerOk {
+		return false, true
+	}
+
+	alive := aliveMapForCompany(defUser, f)
+	reach := combat.ResolveReach(&mob.Character, mob.Reach)
+
+	finalKey, legalOk := resolveAttackTarget(attackerCol, f, company.LeaderMemberKey, alive, reach)
+	if !legalOk {
+		return false, false
+	}
+	if finalKey == company.LeaderMemberKey {
+		return false, true
+	}
+
+	companionID, companionOk := company.CompanionIDFromMemberKey(finalKey)
+	if !companionOk {
+		return false, true
+	}
+	instanceId, instanceOk := company.InstanceFor(defUser.UserId, companionID)
+	if !instanceOk {
+		return false, true
+	}
+	interceptor := mobs.GetInstance(instanceId)
+	if interceptor == nil {
+		return false, true
+	}
+
+	resolveInterceptedMobAttack(mob, interceptor, mobRoom, defRoom, defUser.UserId)
+	return true, true
+}
+
+// resolveHostileAttackerColumn returns a hostile mob's own column within
+// its assembled enemy party (mirrors resolveEnemyParty, applied to the
+// attacker instead of a target).
+func resolveHostileAttackerColumn(room *rooms.Room, attackerInstanceId int) (int, bool) {
+	party, ok := resolveEnemyParty(room, attackerInstanceId)
+	if !ok {
+		return 0, false
+	}
+	_, col, found := party.Formation.Find(mobparty.MemberKeyFor(attackerInstanceId))
+	if !found {
+		return 0, false
+	}
+	return col, true
+}
+
+// aliveMapForCompany reports, for the leader and every formation-placed
+// companion, whether they're currently alive (the leader) or currently
+// spawned, attached, and alive (a companion).
+func aliveMapForCompany(leader *users.UserRecord, f company.Formation) map[company.MemberKey]bool {
+	alive := map[company.MemberKey]bool{
+		company.LeaderMemberKey: leader.Character.Health > 0,
+	}
+	for row := 0; row < company.FormationRows; row++ {
+		for col := 0; col < company.FormationCols; col++ {
+			key := f.At(row, col)
+			if key == "" || key == company.LeaderMemberKey {
+				continue
+			}
+			companionID, ok := company.CompanionIDFromMemberKey(key)
+			if !ok {
+				continue
+			}
+			instanceId, ok := company.InstanceFor(leader.UserId, companionID)
+			if !ok {
+				alive[key] = false
+				continue
+			}
+			mob := mobs.GetInstance(instanceId)
+			alive[key] = mob != nil && mob.Character.Health > 0
+		}
+	}
+	return alive
+}
+
+// resolveInterceptedMobAttack resolves one round of an attack 11c's
+// front-row interception redirected from the leader to interceptor. It
+// deliberately never touches mob.Character.Aggro: interception is
+// recomputed fresh every round, not a persistent retarget, so the same
+// engagement resumes automatically against the leader once no living
+// front-row companion remains to intercept. It mirrors
+// NewRound_DoCombat.go's existing mob-vs-mob attack resolution
+// (AttackMobVsMob, room-broadcast messages, onHurt scripting, offhand
+// equipment-break) and its existing "leader is attacked" idle-companion
+// retaliation loop, so an intercepted round behaves identically to a
+// direct hit in every way except who takes the damage.
+func resolveInterceptedMobAttack(mob, interceptor *mobs.Mob, mobRoom, defRoom *rooms.Room, defenderUserId int) {
+	roundResult := combat.AttackMobVsMob(mob, interceptor)
+
+	for _, instanceId := range mobRoom.GetMobs(rooms.FindCharmed) {
+		if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
+			if charmedMob.Character.IsCharmed(defenderUserId) && charmedMob.Character.Aggro == nil {
+				charmedMob.Character.Aggro = &characters.Aggro{Type: characters.DefaultAttack}
+				charmedMob.Command(fmt.Sprintf("attack #%d", mob.InstanceId))
+			}
+		}
+	}
+
+	for _, buffId := range roundResult.BuffSource {
+		mob.AddBuff(buffId, `combat`)
+	}
+	for _, buffId := range roundResult.BuffTarget {
+		interceptor.AddBuff(buffId, `combat`)
+	}
+	for _, msg := range roundResult.MessagesToSourceRoom {
+		mobRoom.SendText(msg)
+	}
+	for _, msg := range roundResult.MessagesToTargetRoom {
+		defRoom.SendText(msg)
+	}
+
+	if !roundResult.Hit {
+		return
+	}
+
+	scripting.TryMobScriptEvent(`onHurt`, interceptor.InstanceId, mob.InstanceId, `mob`, map[string]any{`damage`: roundResult.DamageToTarget, `crit`: roundResult.Crit})
+
+	if interceptor.Character.Equipment.Offhand.ItemId == 0 {
+		return
+	}
+
+	modifier := 0
+	if roundResult.Crit {
+		modifier = int(interceptor.Character.Equipment.Offhand.GetSpec().BreakChance)
+	}
+	if !interceptor.Character.Equipment.Offhand.BreakTest(modifier) {
+		return
+	}
+
+	defRoom.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="mobname">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, interceptor.Character.Equipment.Offhand.NameSimple(), interceptor.Character.Name))
+	events.AddToQueue(events.ItemOwnership{MobInstanceId: interceptor.InstanceId, Item: interceptor.Character.Equipment.Offhand, Gained: false})
+	interceptor.Character.RemoveFromBody(interceptor.Character.Equipment.Offhand)
+	itm := items.New(20)
+	if !interceptor.Character.StoreItem(itm) {
+		defRoom.AddItem(itm, false)
+		events.AddToQueue(events.ItemOwnership{MobInstanceId: interceptor.InstanceId, Item: itm, Gained: true})
+	}
 }
 
 // effectiveHP mirrors combat.RankMobs' own EHP formula
