@@ -3,10 +3,12 @@ package expedition
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -31,6 +33,7 @@ type fakeStore struct {
 	failOnSaveCall int
 	loadCalls      int
 	saveCalls      int
+	savedHistory   []Registry
 	log            *orderLog
 }
 
@@ -59,6 +62,7 @@ func (f *fakeStore) Save(registry Registry) error {
 		return f.saveErr
 	}
 	f.saved = registry.Clone()
+	f.savedHistory = append(f.savedHistory, registry.Clone())
 	return nil
 }
 
@@ -334,6 +338,152 @@ func TestResumeInterruptedTravelPersistsAndSchedulesActiveRemainder(t *testing.T
 	assert.Equal(t, 5*time.Second, scheduler.delays[len(scheduler.delays)-1])
 }
 
+func TestResumeAndReturnRefuseNonInterruptedTravelClearly(t *testing.T) {
+	now := baseTime()
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, func() time.Time { return now }, testProfiles())
+	module.sessions[7] = expedition.TravelSession{
+		LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north",
+		ProfileName: "oak-road", StartedAtUTC: now, State: expedition.Traveling,
+	}
+
+	resume := module.resume(7)
+	assert.Contains(t, strings.ToLower(resume), "interrupted")
+	assert.NotContains(t, strings.ToLower(resume), "invalid")
+	assert.Equal(t, expedition.Traveling, module.sessions[7].State)
+
+	returnText := module.returnToOrigin(7)
+	assert.Contains(t, strings.ToLower(returnText), "interrupted")
+	assert.NotContains(t, strings.ToLower(returnText), "invalid")
+	assert.Equal(t, expedition.Traveling, module.sessions[7].State)
+}
+
+func TestPausedTravelAccruesNoSurvivalUntilResume(t *testing.T) {
+	now := baseTime().Add(time.Hour)
+	surv := &fakeSurvival{}
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{}, surv, func() time.Time { return now }, interruptionProfiles())
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, LastExertionCheckpoint: 5, State: expedition.Interrupted}
+
+	require.NoError(t, module.Sync(7))
+	assert.Empty(t, surv.applied)
+
+	text := module.resume(7)
+	assert.Contains(t, text, "resume")
+	now = now.Add(5 * time.Second)
+	require.NoError(t, module.Sync(7))
+	assert.Equal(t, []survival.Exertion{{Hunger: 5, Thirst: 5, Fatigue: 5}}, surv.applied)
+}
+
+func TestResumeThenFinalBoundaryMovesOnceAndChargesTotalExertion(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	mover := &fakeMover{user: user}
+	surv := &fakeSurvival{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, interruptionProfiles())
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+	require.Equal(t, expedition.Interrupted, module.sessions[7].State)
+
+	now = baseTime().Add(time.Hour)
+	module.resume(7)
+	require.Equal(t, []time.Duration{5 * time.Second, 5 * time.Second}, scheduler.delays)
+	now = baseTime().Add(time.Hour + 5*time.Second)
+	scheduler.fire(1)
+
+	assert.Equal(t, []int{200}, mover.moves)
+	assert.Equal(t, []survival.Exertion{{Hunger: 5, Thirst: 5, Fatigue: 5}, {Hunger: 5, Thirst: 5, Fatigue: 5}}, surv.applied)
+	assert.NotContains(t, module.sessions, 7)
+}
+
+func TestReturnPersistsCancelledBeforeCleanupAndNeverMoves(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	store := &fakeStore{}
+	log := &orderLog{}
+	store.log = log
+	mover := &fakeMover{user: user}
+	module := newTestModule(store, &fakeScheduler{}, mover, &fakeSurvival{}, baseTime, interruptionProfiles())
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
+
+	text := module.returnToOrigin(7)
+	assert.Contains(t, text, "return")
+	assert.Equal(t, 100, user.Character.RoomId)
+	assert.Empty(t, mover.moves)
+	assert.Equal(t, []string{"save", "save"}, log.entries)
+	assert.NotContains(t, module.sessions, 7)
+	require.Len(t, store.savedHistory, 2)
+	assert.Equal(t, expedition.Cancelled, store.savedHistory[0].Sessions[7].State)
+	assert.Empty(t, store.savedHistory[1].Sessions)
+	blocked, _ := module.MovementBlocked(7)
+	assert.False(t, blocked)
+}
+
+func TestReturnCleanupFailureRetainsCancelledForRecoveryWithoutMovement(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	store := &fakeStore{failOnSaveCall: 2}
+	mover := &fakeMover{user: user}
+	module := newTestModule(store, &fakeScheduler{}, mover, &fakeSurvival{}, baseTime, interruptionProfiles())
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
+
+	module.returnToOrigin(7)
+	assert.Equal(t, expedition.Cancelled, module.sessions[7].State)
+	assert.Equal(t, expedition.Cancelled, store.saved.Sessions[7].State)
+	assert.Empty(t, mover.moves)
+
+	module.load()
+	assert.Empty(t, mover.moves)
+	assert.NotContains(t, module.sessions, 7)
+}
+
+func TestRecoveryInterruptedAndMalformedRecordsDoNotScheduleOrExert(t *testing.T) {
+	valid := expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, LastExertionCheckpoint: 5, State: expedition.Interrupted}
+	malformed := valid
+	malformed.LeaderUserID = 8
+	malformed.Interruption = nil
+	store := &fakeStore{saved: Registry{Sessions: map[int]expedition.TravelSession{7: valid, 8: malformed}}}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	module := newTestModule(store, scheduler, &fakeMover{}, surv, func() time.Time { return baseTime().Add(time.Hour) }, interruptionProfiles())
+
+	module.load()
+	assert.Empty(t, scheduler.delays)
+	assert.Empty(t, surv.applied)
+	assert.Contains(t, module.sessions, 7)
+	assert.Contains(t, module.sessions, 8)
+}
+
+func TestTravelUserCommandUsageRefusalAndResolutionMessages(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{user: user}, &fakeSurvival{}, baseTime, interruptionProfiles())
+	messages := []string{}
+	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+		messages = append(messages, e.(events.Message).Text)
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.Message{}, id) })
+
+	_, err := module.userCommand("", user, nil, 0)
+	require.NoError(t, err)
+	_, err = module.userCommand("wat", user, nil, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.Join(messages, ""), travelUsage)
+
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), State: expedition.Traveling}
+	_, err = module.userCommand("resume", user, nil, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.ToLower(strings.Join(messages, "")), "interrupted")
+
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime(), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
+	_, err = module.userCommand("return", user, nil, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.ToLower(strings.Join(messages, "")), "return")
+}
+
 func TestPausedStatusAndMovementNameObstructionWithoutLiveCountdown(t *testing.T) {
 	now := baseTime().Add(time.Hour)
 	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, func() time.Time { return now }, interruptionProfiles())
@@ -344,6 +494,26 @@ func TestPausedStatusAndMovementNameObstructionWithoutLiveCountdown(t *testing.T
 	status := module.statusTextLocked(7)
 	assert.Contains(t, status, "fallen tree")
 	assert.NotContains(t, status, "remaining 0s")
+}
+
+func TestRenderTravelViewPausedShowsObstructionWithoutLiveCountdown(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{user: user}, &fakeSurvival{}, func() time.Time { return baseTime().Add(time.Hour) }, interruptionProfiles())
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
+	messages := []string{}
+	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+		messages = append(messages, e.(events.Message).Text)
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.Message{}, id) })
+
+	handled, err := module.RenderTravelView(7)
+	require.NoError(t, err)
+	assert.True(t, handled)
+	events.ProcessEvents()
+	view := strings.Join(messages, "")
+	assert.Contains(t, strings.ToLower(view), "fallen tree")
+	assert.NotContains(t, view, "remaining 0s")
 }
 
 func TestRenderTravelViewOnlyForActiveSession(t *testing.T) {

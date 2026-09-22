@@ -32,7 +32,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const travelUsage = "Usage: travel status"
+const travelUsage = "Usage: travel status | travel resume | travel return"
 
 // Registry is the durable, leader-keyed set of active travel sessions.
 type Registry struct {
@@ -916,6 +916,12 @@ func (m *ExpeditionModule) resume(leaderUserID int) string {
 	if !ok {
 		return "Unable to resume travel: route profile is unavailable."
 	}
+	if session.State != expedition.Interrupted {
+		if err := session.ValidateForProfile(profile); err != nil {
+			return "Unable to resume travel: the paused journey record is invalid."
+		}
+		return "Unable to resume travel: travel is not currently interrupted."
+	}
 	resumed, err := session.ResumeForProfile(m.clock().UTC(), profile)
 	if err != nil {
 		return "Unable to resume travel: the paused journey record is invalid."
@@ -945,6 +951,12 @@ func (m *ExpeditionModule) returnToOrigin(leaderUserID int) string {
 	profile, ok := m.profile(session.ProfileName)
 	if !ok {
 		return "Unable to return: route profile is unavailable."
+	}
+	if session.State != expedition.Interrupted {
+		if err := session.ValidateForProfile(profile); err != nil {
+			return "Unable to return: the paused journey record is invalid."
+		}
+		return "Unable to return: travel is not currently interrupted."
 	}
 	cancelled, err := session.ReturnForProfile(profile)
 	if err != nil {
