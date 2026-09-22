@@ -1,6 +1,6 @@
 # Phase 11a Enemy Parties Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Status: fully implemented and committed on `phase-11a-enemy-parties` — every step below is checked off.**
 
 **Goal:** Give mobs a first-class "party" concept — mobs sharing a `Groups`
 tag in a room assemble into a stable-for-this-listing group with an
@@ -91,7 +91,7 @@ unplanned; do not resolve this here).
   - `func Assemble(mobs []MobSummary) []Party`
   - `const MaxPartySize = company.MaxCompanions + 1` (= 5)
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `internal/mobparty/party_test.go`:
 
@@ -186,13 +186,13 @@ func memberKeyFor(instanceId int) string {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `go test ./internal/mobparty/... -run TestAssemble -v`
 Expected: FAIL — `package internal/mobparty is not a package` / no such file
 (the package doesn't exist yet).
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `internal/mobparty/party.go`:
 
@@ -349,18 +349,18 @@ func memberKey(instanceId int) company.MemberKey {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/mobparty/... -v`
 Expected: PASS, all four tests.
 
-- [ ] **Step 5: Run `go vet` and `gofmt` on the new package**
+- [x] **Step 5: Run `go vet` and `gofmt` on the new package**
 
 Run: `gofmt -l internal/mobparty && go vet ./internal/mobparty/...`
 Expected: `gofmt -l` prints nothing (no formatting issues); `go vet` prints
 nothing.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/mobparty/party.go internal/mobparty/party_test.go
@@ -383,7 +383,7 @@ git commit -m "feat(mobparty): add Phase 11a enemy party assembly"
   `roomdetails.go`'s loop calls to build the grouped `details.VisibleMobs`
   slice for hostile mobs.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `internal/rooms/mobparty_display_test.go`:
 
@@ -440,12 +440,12 @@ func TestPluralize(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `go test ./internal/rooms/... -run 'TestGroupedMobDisplay|TestPluralize' -v`
 Expected: FAIL — `undefined: hostileMobDisplay` / `undefined: groupedMobDisplay` / `undefined: pluralize`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `internal/rooms/mobparty_display.go`:
 
@@ -595,13 +595,13 @@ pruning side effect on `r.mobs`) — the only change is that hostile mobs go
 into `hostileMobs` first and get grouped before landing in
 `details.VisibleMobs`, instead of being appended directly.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/rooms/... -v`
 Expected: PASS, including the new `TestGroupedMobDisplay*`/`TestPluralize`
 tests and every pre-existing `internal/rooms` test (no regressions).
 
-- [ ] **Step 5: Run `go vet` and `gofmt`, then the full test suite**
+- [x] **Step 5: Run `go vet` and `gofmt`, then the full test suite**
 
 Run: `gofmt -l internal/rooms internal/mobparty && go vet ./internal/rooms/... ./internal/mobparty/...`
 Expected: no output from either command.
@@ -613,7 +613,7 @@ package broke from the `RoomTemplateDetails`-adjacent change).
 Run: `go test -race ./...`
 Expected: PASS, full suite, no regressions anywhere in the repo.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/rooms/roomdetails.go internal/rooms/mobparty_display.go internal/rooms/mobparty_display_test.go
@@ -625,7 +625,7 @@ git commit -m "feat(rooms): group hostile mob room listings into parties"
 **Files:**
 - Modify: `docs/PROJECT_STATUS.md`
 
-- [ ] **Step 1: Run full verification**
+- [x] **Step 1: Run full verification**
 
 ```bash
 make generate
@@ -637,7 +637,7 @@ Expected: all three succeed (record the actual test/package counts from the
 `go test -race ./...` output in the status update below — don't guess a
 number).
 
-- [ ] **Step 2: Update `docs/PROJECT_STATUS.md`**
+- [x] **Step 2: Update `docs/PROJECT_STATUS.md`**
 
 Add a "Phase 11a — Enemy Parties (complete, <today's date>)" work-log entry
 following the existing format used by Phase 8/9/10's entries (What/Why/Step
@@ -655,7 +655,7 @@ where it gets computed from), and GMCP's parallel mob-list building
 (`modules/gmcp/gmcp.Room.go`, ~line 366-384) which still lists mobs
 individually and was not touched this phase.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/PROJECT_STATUS.md

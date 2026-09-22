@@ -6,12 +6,14 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-11-formation-combat`
-- **HEAD:** Phase 11 formation combat design decomposed into 11a-11c; no
-  implementation yet, awaiting owner review of the written specs
+- **Branch:** `phase-11a-enemy-parties`
+- **HEAD:** Phase 11a (Enemy Parties) implemented: mobs sharing a `Groups`
+  tag in a room now assemble into a `mobparty.Party` with an auto-assigned
+  `company.Formation`, and hostile room listings render one aggregate line
+  per party instead of one line per mob
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through Phase 10 (mounts); Phase 11's
-  design docs are on this branch only until reviewed and merged.
+- **Origin sync:** `master` is pushed through the Phase 11 design docs
+  (11a-11c); this branch's Phase 11a implementation is not yet merged.
 
 ## Current position
 
@@ -23,12 +25,15 @@ instead of duplicating them.
   (encumbrance and cargo engine and commands; multiplier wiring into
   travel/rest deferred, same Option A shape), and Phase 10 (mounts, with a
   real wired cargo-capacity bonus; travel-speed wiring deferred, same
-  Option A shape).
-- **Next:** Phase 11 — formation combat, now designed as three sequential
-  sub-phases (11a Enemy Parties → 11b Unit-vs-Unit Engagement → 11c
-  Formation Tactics; see the specs linked in the Phase 11 work-log entry
-  below). Design is written and self-reviewed; awaiting owner review
-  before implementation plans are written.
+  Option A shape), and Phase 11a (enemy parties: mobs sharing a `Groups` tag
+  assemble into a party with an auto-assigned formation, shown to players
+  as one grouped room listing).
+- **Next:** Phase 11b — Unit-vs-Unit Engagement (a fight becomes company vs.
+  party with real coordinated target assignment), then Phase 11c —
+  Formation Tactics (interception, reach, adjacency). Neither is planned
+  yet; see `docs/superpowers/specs/2026-09-22-phase-11b-unit-engagement-design.md`
+  and `docs/superpowers/specs/2026-09-22-phase-11c-formation-tactics-design.md`
+  for their design docs.
 
 ## Phase progress
 
@@ -45,13 +50,79 @@ instead of duplicating them.
 | 8 | Weather | Complete |
 | 9 | Encumbrance and cargo | Complete |
 | 10 | Mounts | Complete |
-| 11a | Enemy parties | Designed, not implemented |
+| 11a | Enemy parties | Complete |
 | 11b | Unit-vs-unit engagement | Designed, not implemented |
 | 11c | Formation tactics | Designed, not implemented |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 11a — Enemy Parties (complete, 2026-09-22)
+
+- **What:** Delivered a `Party` concept for mobs, mirroring the player
+  company. `internal/mobparty` is a GoMud-free domain package (matching
+  `internal/expedition`/`internal/camping`/`internal/weather`'s split): a
+  `MobSummary{InstanceId, Groups, EHP, DPS}` input and a pure
+  `Assemble(mobs []MobSummary) []Party` that groups mobs by their first
+  `Groups` tag (an untagged mob is always its own solo party — never merged
+  with another untagged mob), splits any group over 5 members into
+  multiple parties in input order, and auto-fills each party's
+  `company.Formation` (the existing 3×3 grid type, reused directly, not
+  reimplemented) front-to-back by descending `EHP`; a solo party occupies
+  the front-row center cell. `internal/rooms/roomdetails.go`'s existing
+  per-mob room-listing loop now buckets hostile mobs (friendly/charmed mobs
+  are untouched) into `hostileMobDisplay` values and renders them through a
+  new `internal/rooms/mobparty_display.go`: a party of one keeps its own
+  line, a multi-member party collapses into one aggregate line (e.g. "a
+  pack of 3 goblins"), and members with differing base names collapse to
+  "a pack of N creatures".
+- **Why:** The Phase 11 design session found the original single-doc scope
+  (front-row interception, reach, adjacency) had a hidden prerequisite:
+  none of it means anything against a mob, because mobs had no formation
+  concept at all. 11a is the foundation sub-phase — it exists so 11b (real
+  company-vs-party target assignment) and 11c (formation tactics) have
+  something to act on.
+- **A `Party` is never persisted**, matching `characters.Aggro`'s own
+  non-persistence (see the shared prior-art check in the Phase 11 overview
+  design doc) — it is assembled fresh, on demand, every time a room's mob
+  listing is built, since there is no state to keep in sync and recomputing
+  it is cheap.
+- **Deliberate scope note (EHP/DPS left at zero in the room-display path):**
+  `internal/combat` (the source of real `EHP`/`DPS` via `MobRank`) already
+  imports `internal/rooms`, so `internal/rooms` cannot import
+  `internal/combat` back without an import cycle. The room-display
+  integration therefore calls `mobparty.Assemble` with `MobSummary.EHP`/
+  `DPS` at their zero value — display grouping only needs *which* mobs
+  share a party, never the front/mid/back `Formation` ordering, so this
+  doesn't weaken the shipped feature. Wiring real `EHP`/`DPS` into a
+  `Formation` that something actually reads for combat purposes is 11b's
+  concern, from whatever integration point 11b turns out to need.
+- **Step completed:** Full implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-11a-enemy-parties.md`), both
+  tasks (domain package, room-display integration), plus this status
+  update.
+- **Key commits:** `9a2c1da2` (plan), `04c571f3` (`internal/mobparty`
+  domain package and tests), `0b6e274d` (`internal/rooms` party-grouped
+  display and tests), landing on `phase-11a-enemy-parties`.
+- **Verification:** `go test -race ./...` (1725 tests / 78 packages),
+  `make generate` (no wiring change — no new module, no new config), and
+  `make validate` pass. Focused tests cover: single-mob (solo) parties,
+  multi-mob grouping by shared `Groups` tag, the EHP-descending formation
+  ordering, the 5-member cap/split, and the room-display grouping/mixed-
+  name/pluralization behavior.
+- **Live acceptance:** Not run: this host has no interactive Telnet client.
+  The deterministic domain and room-display unit tests cover the grouping
+  and rendering behavior described above.
+- **Deferred:** Phase 11b (unit-vs-unit engagement — nothing yet reads a
+  party's `Formation` for combat targeting), Phase 11c (formation tactics),
+  Phase 11d (guard reactions, crit effects, wounds, AI personality, all
+  unscheduled), real `EHP`/`DPS` wiring into a combat-facing `Formation`
+  (see the scope note above), and `modules/gmcp/gmcp.Room.go`'s parallel
+  GMCP mob-list builder (~line 366-384), which still lists mobs
+  individually and was not touched this phase — a GMCP-aware client will
+  not see grouped party listings yet, only the plain-text room description
+  does.
 
 ### Phase 11 — Formation Combat design (decomposed, not yet implemented, 2026-09-22)
 
@@ -661,6 +732,14 @@ instead of duplicating them.
   fatigue/health/feed, terrain suitability, per-member assignment, and an
   acquisition economy are all deferred to a later pass, per handoff §35's
   own "Later" list.
+- Live server acceptance has not been run for Phase 11a; unit coverage
+  spans the `mobparty` domain package and the `internal/rooms` grouped-
+  display rendering. `internal/rooms` cannot import `internal/combat`
+  (would cycle), so the room-display integration passes zero-value
+  `EHP`/`DPS` into `mobparty.Assemble` — display grouping doesn't need real
+  values, but nothing has wired real `EHP`/`DPS` into a `Formation` that
+  combat code actually reads yet; that's 11b's job. `modules/gmcp`'s mob
+  list is still per-mob, not party-grouped.
 
 ## Key documents
 
