@@ -221,6 +221,7 @@ type ItemSpec struct {
 	Nutrition       int               `yaml:"nutrition,omitempty"`   // Survival hunger benefit when eaten; zero keeps ordinary food behavior
 	Hydration       int               `yaml:"hydration,omitempty"`   // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
 	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
+	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
 }
 
 // AllEquipSlots returns every equipment slot ItemType in canonical display order.

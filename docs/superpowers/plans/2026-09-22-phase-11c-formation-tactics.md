@@ -538,46 +538,39 @@ func TestResolveReachInnateReachWithNoWeaponIsExtended(t *testing.T) {
 }
 
 func TestResolveReachShootingWeaponIsAny(t *testing.T) {
-	spec := items.ItemSpec{ItemId: 9001, Subtype: items.Shooting}
-	items.SetItemSpec(spec)
-	defer items.RemoveItemSpec(spec.ItemId)
+	spec := &items.ItemSpec{ItemId: 9001, Subtype: items.Shooting}
 
 	var c characters.Character
-	c.Equipment.Weapon = items.Item{ItemId: spec.ItemId}
+	c.Equipment.Weapon = items.Item{ItemId: spec.ItemId, Spec: spec}
 
 	assert.Equal(t, formationcombat.ReachAny, combat.ResolveReach(&c, false))
 }
 
 func TestResolveReachPolearmWeaponIsExtended(t *testing.T) {
-	spec := items.ItemSpec{ItemId: 9002, Subtype: items.Stabbing, Reach: true}
-	items.SetItemSpec(spec)
-	defer items.RemoveItemSpec(spec.ItemId)
+	spec := &items.ItemSpec{ItemId: 9002, Subtype: items.Stabbing, Reach: true}
 
 	var c characters.Character
-	c.Equipment.Weapon = items.Item{ItemId: spec.ItemId}
+	c.Equipment.Weapon = items.Item{ItemId: spec.ItemId, Spec: spec}
 
 	assert.Equal(t, formationcombat.ReachExtended, combat.ResolveReach(&c, false))
 }
 
 func TestResolveReachOrdinaryWeaponIsNone(t *testing.T) {
-	spec := items.ItemSpec{ItemId: 9003, Subtype: items.Slashing}
-	items.SetItemSpec(spec)
-	defer items.RemoveItemSpec(spec.ItemId)
+	spec := &items.ItemSpec{ItemId: 9003, Subtype: items.Slashing}
 
 	var c characters.Character
-	c.Equipment.Weapon = items.Item{ItemId: spec.ItemId}
+	c.Equipment.Weapon = items.Item{ItemId: spec.ItemId, Spec: spec}
 
 	assert.Equal(t, formationcombat.ReachNone, combat.ResolveReach(&c, false))
 }
 ```
 
-Note: verify the exact exported names for registering/removing a test
-item spec (`items.SetItemSpec`/`items.RemoveItemSpec`, or whatever this
-codebase's existing item tests actually use — check
-`internal/combat/mob_rank_test.go` or any existing `internal/items` test
-for the real helper name before running this step, and use that instead if
-it differs; the behavior needed is just "make `GetItemSpec(9001)` resolve
-to this spec for the duration of the test, then clean up").
+Note: `items.Item` carries an optional per-instance `Spec *ItemSpec`
+override field (`internal/items/items.go:43`) that `Item.GetSpec()`
+(`internal/items/items.go:253-260`) prefers over the global registry when
+set — exactly what these tests need, with no global-registry
+setup/teardown (no `LoadDataFiles`, no on-disk writes, no naming collision
+with real item IDs) required at all.
 
 - [ ] **Step 4: Run the test to verify it fails**
 
@@ -604,13 +597,12 @@ import (
 // reflects the currently equipped weapon with no second source of truth.
 func ResolveReach(c *characters.Character, innateReach bool) formationcombat.Reach {
 	if c != nil && c.Equipment.Weapon.ItemId > 0 {
-		if spec := c.Equipment.Weapon.GetSpec(); spec != nil {
-			if spec.Subtype == items.Shooting {
-				return formationcombat.ReachAny
-			}
-			if spec.Reach {
-				return formationcombat.ReachExtended
-			}
+		spec := c.Equipment.Weapon.GetSpec() // ItemSpec by value; zero value if unresolvable
+		if spec.Subtype == items.Shooting {
+			return formationcombat.ReachAny
+		}
+		if spec.Reach {
+			return formationcombat.ReachExtended
 		}
 	}
 

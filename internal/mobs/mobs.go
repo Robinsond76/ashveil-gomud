@@ -48,6 +48,7 @@ type Mob struct {
 	InstanceId      int      `yaml:"-"`
 	HomeRoomId      int      `yaml:"-"`
 	Hostile         bool     `yaml:"hostile,omitempty"`        // whether they attack on sight
+	Reach           bool     `yaml:"reach,omitempty"`          // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
 	LastIdleCommand uint8    `yaml:"-"`                        // Track what hte last used idlecommand was
 	BoredomCounter  uint8    `yaml:"-"`                        // how many rounds have passed since this mob has seen a player
 	Groups          []string `yaml:"groups,omitempty"`         // What group do they identify with? Helps with teamwork
