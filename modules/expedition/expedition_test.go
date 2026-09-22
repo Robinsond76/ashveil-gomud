@@ -316,6 +316,36 @@ func TestStatusWithoutSession(t *testing.T) {
 	assert.Equal(t, "You are not travelling.", module.status(7))
 }
 
+func TestResumeInterruptedTravelPersistsAndSchedulesActiveRemainder(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	now := baseTime().Add(time.Hour)
+	module := newTestModule(store, scheduler, &fakeMover{}, &fakeSurvival{}, func() time.Time { return now }, interruptionProfiles())
+	paused := expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), PausedDuration: 0, InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
+	module.sessions[7] = paused
+	store.saved.Sessions = map[int]expedition.TravelSession{7: paused}
+
+	text := module.resume(7)
+	assert.Contains(t, text, "resume")
+	assert.Equal(t, expedition.Traveling, module.sessions[7].State)
+	assert.Equal(t, 59*time.Minute+55*time.Second, module.sessions[7].PausedDuration)
+	assert.Nil(t, module.sessions[7].Interruption)
+	assert.True(t, module.sessions[7].PausedAtUTC.IsZero())
+	assert.Equal(t, 5*time.Second, scheduler.delays[len(scheduler.delays)-1])
+}
+
+func TestPausedStatusAndMovementNameObstructionWithoutLiveCountdown(t *testing.T) {
+	now := baseTime().Add(time.Hour)
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, func() time.Time { return now }, interruptionProfiles())
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
+	blocked, refusal := module.MovementBlocked(7)
+	assert.True(t, blocked)
+	assert.Contains(t, refusal, "fallen tree")
+	status := module.statusTextLocked(7)
+	assert.Contains(t, status, "fallen tree")
+	assert.NotContains(t, status, "remaining 0s")
+}
+
 func TestRenderTravelViewOnlyForActiveSession(t *testing.T) {
 	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
 

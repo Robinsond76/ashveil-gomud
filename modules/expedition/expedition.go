@@ -510,7 +510,7 @@ func (m *ExpeditionModule) MovementBlocked(leaderUserID int) (bool, string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	session, ok := m.sessions[leaderUserID]
-	if !ok || session.State != expedition.Traveling {
+	if !ok || (session.State != expedition.Traveling && session.State != expedition.Interrupted) {
 		return false, ""
 	}
 	return true, m.refusalTextLocked(session)
@@ -523,9 +523,9 @@ func (m *ExpeditionModule) refusalTextLocked(session expedition.TravelSession) s
 	}
 	now := m.clock().UTC()
 	progress := session.ProgressAt(now, profile.Duration)
-	remaining := profile.Duration - now.Sub(session.StartedAtUTC)
-	if remaining < 0 {
-		remaining = 0
+	remaining := session.RemainingAt(now, profile.Duration)
+	if session.State == expedition.Interrupted {
+		return fmt.Sprintf("A fallen tree blocks the %s route (%d%% complete, %s remaining). Use \"travel resume\" to continue or \"travel return\" to head back.", session.ProfileName, int(progress*100), remaining.Round(time.Second))
 	}
 	return fmt.Sprintf("You are already travelling (%d%% complete, %s remaining).", int(progress*100), remaining.Round(time.Second))
 }
@@ -538,6 +538,12 @@ func (m *ExpeditionModule) Sync(leaderUserID int) error {
 }
 
 func (m *ExpeditionModule) syncAndCompleteLocked(leaderUserID int) error {
+	if session, ok := m.sessions[leaderUserID]; ok && session.State == expedition.Interrupted {
+		// Paused travel has no active elapsed time and must never charge survival
+		// exertion merely because a view, spawn, or stale timer is processed.
+		m.stopTimerLocked(leaderUserID)
+		return nil
+	}
 	if err := m.syncLocked(leaderUserID); err != nil {
 		return err
 	}
@@ -741,6 +747,10 @@ func (m *ExpeditionModule) recoverLocked() {
 			mudlog.Warn("expedition: recovery unknown profile", "leader", leaderUserID, "profile", session.ProfileName)
 			continue
 		}
+		if err := session.ValidateForProfile(profile); err != nil {
+			mudlog.Warn("expedition: recovery invalid session", "leader", leaderUserID, "error", err)
+			continue
+		}
 		switch session.State {
 		case expedition.Traveling:
 			if err := m.syncAndCompleteLocked(leaderUserID); err != nil {
@@ -750,8 +760,16 @@ func (m *ExpeditionModule) recoverLocked() {
 			m.recoverCompletedLocked(session, profile)
 		case expedition.Interrupted:
 			m.stopTimerLocked(leaderUserID)
+		case expedition.Cancelled:
+			m.stopTimerLocked(leaderUserID)
+			delete(m.sessions, leaderUserID)
+			if err := m.saveLocked(); err != nil {
+				// The durable Cancelled record remains for a later cleanup retry.
+				m.sessions[leaderUserID] = session
+				mudlog.Warn("expedition: persist cancelled cleanup", "leader", leaderUserID, "error", err)
+			}
 		default:
-			// Interrupted and Cancelled are retained for forward compatibility.
+			mudlog.Warn("expedition: recovery unknown state", "leader", leaderUserID, "state", session.State)
 		}
 	}
 }
@@ -834,15 +852,16 @@ func (m *ExpeditionModule) statusTextLocked(leaderUserID int) string {
 	}
 	now := m.clock().UTC()
 	progress := session.ProgressAt(now, profile.Duration)
-	remaining := profile.Duration - now.Sub(session.StartedAtUTC)
-	if remaining < 0 {
-		remaining = 0
+	remaining := session.RemainingAt(now, profile.Duration)
+	lines := []string{fmt.Sprintf("Travelling from %s to %s via the %s route.", roomTitle(session.OriginRoomID), roomTitle(session.DestinationRoomID), profile.Name)}
+	if session.State == expedition.Interrupted {
+		lines = append(lines,
+			fmt.Sprintf("Paused at the fallen tree obstruction: %d%% complete (%s active travel remaining).", int(progress*100), remaining.Round(time.Second)),
+			"Use \"travel resume\" to continue or \"travel return\" to head back.")
+	} else {
+		lines = append(lines, fmt.Sprintf("Progress: %d%% (remaining %s)", int(progress*100), remaining.Round(time.Second)))
 	}
-	lines := []string{
-		fmt.Sprintf("Travelling from %s to %s via the %s route.", roomTitle(session.OriginRoomID), roomTitle(session.DestinationRoomID), profile.Name),
-		fmt.Sprintf("Progress: %d%% (remaining %s)", int(progress*100), remaining.Round(time.Second)),
-		"Company:",
-	}
+	lines = append(lines, "Company:")
 	for _, member := range m.companyNeeds(leaderUserID) {
 		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
 			member.Name,
@@ -882,12 +901,84 @@ func (m *ExpeditionModule) status(leaderUserID int) string {
 	return m.statusTextLocked(leaderUserID)
 }
 
+// resume resolves a valid interrupted session and restarts its active timer.
+func (m *ExpeditionModule) resume(leaderUserID int) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	session, ok := m.sessions[leaderUserID]
+	if !ok {
+		return "You are not travelling."
+	}
+	profile, ok := m.profile(session.ProfileName)
+	if !ok {
+		return "Unable to resume travel: route profile is unavailable."
+	}
+	resumed, err := session.ResumeForProfile(m.clock().UTC(), profile)
+	if err != nil {
+		return "Unable to resume travel: the paused journey record is invalid."
+	}
+	m.sessions[leaderUserID] = resumed
+	if err := m.saveLocked(); err != nil {
+		m.sessions[leaderUserID] = session
+		return err.Error()
+	}
+	m.scheduleLocked(resumed)
+	return fmt.Sprintf("You resume travel along the %s route.", profile.Name)
+}
+
+// returnToOrigin resolves an interrupted session as Cancelled and removes it
+// only after the cleanup write succeeds. The terminal record is retained when
+// cleanup persistence fails so recovery can retry without moving the leader.
+func (m *ExpeditionModule) returnToOrigin(leaderUserID int) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	session, ok := m.sessions[leaderUserID]
+	if !ok {
+		return "You are not travelling."
+	}
+	profile, ok := m.profile(session.ProfileName)
+	if !ok {
+		return "Unable to return: route profile is unavailable."
+	}
+	cancelled, err := session.ReturnForProfile(profile)
+	if err != nil {
+		return "Unable to return: the paused journey record is invalid."
+	}
+	m.sessions[leaderUserID] = cancelled
+	if err := m.saveLocked(); err != nil {
+		m.sessions[leaderUserID] = session
+		return err.Error()
+	}
+	m.stopTimerLocked(leaderUserID)
+	delete(m.sessions, leaderUserID)
+	if err := m.saveLocked(); err != nil {
+		m.sessions[leaderUserID] = cancelled
+		mudlog.Warn("expedition: persist return cleanup", "leader", leaderUserID, "error", err)
+	}
+	return fmt.Sprintf("You return to %s; the journey is cancelled.", roomTitle(cancelled.OriginRoomID))
+}
+
 func (m *ExpeditionModule) userCommand(rest string, user *users.UserRecord, _ *rooms.Room, _ events.EventFlag) (bool, error) {
 	args := strings.Fields(strings.ToLower(strings.TrimSpace(rest)))
-	if len(args) == 0 || args[0] != "status" {
+	if len(args) == 0 {
 		user.SendText(travelUsage)
 		return true, nil
 	}
-	user.SendText(m.status(user.UserId))
+	switch args[0] {
+	case "status":
+		user.SendText(m.status(user.UserId))
+	case "resume":
+		user.SendText(m.resume(user.UserId))
+	case "return":
+		user.SendText(m.returnToOrigin(user.UserId))
+	default:
+		user.SendText(travelUsage)
+	}
 	return true, nil
 }
