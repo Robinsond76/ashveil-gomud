@@ -6,10 +6,12 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-10-mounts`
-- **HEAD:** Phase 10 mounts complete (this status record follows)
+- **Branch:** `phase-11-formation-combat`
+- **HEAD:** Phase 11 formation combat design decomposed into 11a-11c; no
+  implementation yet, awaiting owner review of the written specs
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` was pushed through Phase 9 (encumbrance and cargo) before Phase 10 started; Phase 10 lands here.
+- **Origin sync:** `master` is pushed through Phase 10 (mounts); Phase 11's
+  design docs are on this branch only until reviewed and merged.
 
 ## Current position
 
@@ -22,7 +24,11 @@ instead of duplicating them.
   travel/rest deferred, same Option A shape), and Phase 10 (mounts, with a
   real wired cargo-capacity bonus; travel-speed wiring deferred, same
   Option A shape).
-- **Next:** Phase 11 — formation combat.
+- **Next:** Phase 11 — formation combat, now designed as three sequential
+  sub-phases (11a Enemy Parties → 11b Unit-vs-Unit Engagement → 11c
+  Formation Tactics; see the specs linked in the Phase 11 work-log entry
+  below). Design is written and self-reviewed; awaiting owner review
+  before implementation plans are written.
 
 ## Phase progress
 
@@ -39,10 +45,65 @@ instead of duplicating them.
 | 8 | Weather | Complete |
 | 9 | Encumbrance and cargo | Complete |
 | 10 | Mounts | Complete |
-| 11 | Formation combat | Not started |
+| 11a | Enemy parties | Designed, not implemented |
+| 11b | Unit-vs-unit engagement | Designed, not implemented |
+| 11c | Formation tactics | Designed, not implemented |
+| 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 11 — Formation Combat design (decomposed, not yet implemented, 2026-09-22)
+
+- **What:** A collaborative design session found the original single-doc
+  Phase 11 scope (handoff §36: front-row interception, melee reach,
+  polearm reach, ranged rear-line benefit, adjacency queries) had a hidden
+  prerequisite — none of it can mean anything against a mob, because
+  today's combat has no enemy formation, no coordinated company-vs-mob
+  targeting, and single-target `Aggro` with zero positional awareness.
+  The session decomposed Phase 11 into three sequential sub-phases:
+  **11a Enemy Parties** (mobs get the same `company.Formation` 3×3 grid,
+  auto-assigned via an `EHP`/`DPS` role heuristic from
+  `internal/combat.MobRank`), **11b Unit-vs-Unit Engagement** (a fight
+  becomes company-vs-party with real coordinated target assignment via a
+  minimal weakest/strongest/random preference, not one ad hoc `Aggro`),
+  and **11c Formation Tactics** (the original scope, with the reach model
+  resolved through several rounds of back-and-forth to column-occupancy —
+  a plain melee attack can only land on a column's current frontmost
+  occupant; polearm/innate Reach extends to frontmost-or-one-behind;
+  ranged ignores column depth — rather than a flat row-distance check,
+  since formation is locked during combat and only enemy attrition
+  changes what's reachable). A fourth bucket, **11d**, stays deferred and
+  unscheduled: guard reactions, weapon-flavored crit effects, wounds, and
+  full AI targeting personality (handoff items 6-9).
+- **Why:** Building formation tactics directly on today's combat model
+  would have produced inert code with nothing to act on — no enemy ever
+  has a "row," so "front-row protection" and "reach" have no defenders to
+  apply to. The sub-phases are ordered so each depends only on the
+  previous one existing (11a before 11b before 11c).
+- **Key decisions also locked in:** the v2 continuous
+  Readiness/Wind-up/Cast/Recovery timing model stays parked — everything
+  in 11a-11d is a "who is grouped with whom, who is a legal target"
+  problem solvable within the existing round-based model, not a timing
+  question. `internal/parties` (the separate native multiplayer grouping
+  system) stays dormant and untouched; "Unit" is scoped to one player's
+  own company for now, with a forward-looking note captured for later
+  (a joining player's character becomes a formation member of the host's
+  company, not a merge of two grids). PvP formation interaction stays out
+  of scope per the handoff's own "future feature" framing.
+- **Step completed:** Design only.
+  `docs/superpowers/specs/2026-09-22-phase-11-formation-combat-design.md`
+  (overview, shared prior-art, and locked decisions) plus
+  `2026-09-22-phase-11a-enemy-parties-design.md`,
+  `2026-09-22-phase-11b-unit-engagement-design.md`, and
+  `2026-09-22-phase-11c-formation-tactics-design.md` are written,
+  self-reviewed, and committed on `phase-11-formation-combat`, awaiting
+  owner review before implementation plans are written.
+- **Verification:** None yet — no code has been written. Design-only
+  commit; `go test -race ./...` unaffected.
+- **Deferred:** Implementation of 11a/11b/11c themselves (next), 11d
+  (unscheduled), v2 timing model, multiplayer-party/company reconciliation,
+  and PvP formation interaction.
 
 ### Phase 10 — Mounts (complete, 2026-09-22)
 
