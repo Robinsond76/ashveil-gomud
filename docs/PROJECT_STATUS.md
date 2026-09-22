@@ -6,16 +6,20 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-11-reassignment`
-- **HEAD:** Phase 11's foundational combat wiring is now fully complete.
-  All three player/mob attack directions are formation-gated (previous
-  three passes), and 11b's last unwired acceptance criterion —
-  reassignment-on-death — now lands too: when a company member's mob
-  target dies or vanishes, they pick a new legal target within the same
-  hostile party via `engagement.AssignTarget` instead of just giving up.
+- **Branch:** `phase-11-docs-correction`
+- **HEAD:** Docs correction: the "engagement trigger" was never actually
+  missing. `internal/usercommands/attack.go` already makes every idle
+  charmed mob owned by the attacking player join combat the instant that
+  player attacks (`room.GetMobs(rooms.FindCharmed)` + `Aggro == nil` +
+  `IsCharmed(user.UserId)` → `m.Command("attack ...")`), and company
+  companions are implemented as permanently-charmed mobs
+  (`modules/company/runtime.go`'s `Spawn` calls `mob.Character.Charm(...)`),
+  so this path already covers them. The "deferred" claim in the last four
+  work-log entries and the Known-issues section was incorrect; corrected
+  below.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through the mob-vs-mob combat
-  wiring; this branch's reassignment-on-death wiring is not yet merged.
+- **Origin sync:** `master` is pushed through 11b's reassignment-on-death
+  wiring (`710b208e`); this docs-only correction is not yet merged.
 
 ## Current position
 
@@ -43,18 +47,19 @@ instead of duplicating them.
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
 - **Next:** Phase 11's foundational combat wiring (11a-11c plus the
-  combat-loop join between them) is now fully done. Further formation
-  combat work is genuinely new scope: Phase 11d (guard reactions,
-  weapon-flavored crit effects, wounds, full AI targeting personality —
-  designed as a deferred bucket from the start, see the Phase 11 overview
-  design doc), the "engagement trigger" half of 11b (an idle companion
-  proactively joining a fight it hasn't personally been hit in — today
-  only the reactive "companion retaliates once hit" loops exist), and the
-  leader-as-interceptor gap the mob-vs-mob pass left named. None of these
-  are follow-ups to 11a-11c in the sense the last four passes were —
-  they're the next real design/implementation work. See the four
-  combat-wiring plan docs' "Design decisions" sections for the full
-  reasoning on every scope choice made along the way.
+  combat-loop join between them) is now fully done, and so is the
+  proactive engagement trigger — it turned out to already exist
+  pre-Ashveil in `attack.go`'s charmed-mob-assist loop, which company
+  companions get for free since they're permanently-charmed mobs (see
+  Known issues). Further formation combat work is genuinely new scope:
+  Phase 11d (guard reactions, weapon-flavored crit effects, wounds, full
+  AI targeting personality — designed as a deferred bucket from the
+  start, see the Phase 11 overview design doc) and the leader-as-
+  interceptor gap the mob-vs-mob pass left named. Neither is a follow-up
+  to 11a-11c in the sense the last four passes were — they're the next
+  real design/implementation work. See the four combat-wiring plan docs'
+  "Design decisions" sections for the full reasoning on every scope
+  choice made along the way.
 
 ## Phase progress
 
@@ -72,12 +77,47 @@ instead of duplicating them.
 | 9 | Encumbrance and cargo | Complete |
 | 10 | Mounts | Complete |
 | 11a | Enemy parties | Complete |
-| 11b | Unit-vs-unit engagement | Complete: target assignment and reassignment-on-death both wired; proactive engagement-trigger deferred |
+| 11b | Unit-vs-unit engagement | Complete: target assignment, reassignment-on-death, and the proactive engagement trigger (pre-existing in `attack.go`, verified) all wired |
 | 11c | Formation tactics | Complete: domain layer, schema, read-only query, and all three player/mob attack directions wired |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Docs correction: proactive engagement trigger already existed (2026-09-22)
+
+- **What:** The last four combat-wiring work-log entries and the phase
+  table listed 11b's "proactive engagement trigger" (an idle company
+  companion joining a fight because their leader started one, without
+  being personally hit first) as deferred/unbuilt. It was not. Before
+  scoping new work here, `internal/usercommands/attack.go`'s existing
+  mob-target and player-target attack branches were re-read: right after
+  `SetAggro`, both loop `room.GetMobs(rooms.FindCharmed)` and, for every
+  idle (`Aggro == nil`) mob charmed by the attacking player, issue
+  `m.Command("attack #<id>")` / `m.Command("attack @<id>")` — a
+  same-round proactive join, not the reactive retaliate-once-hit pattern
+  in `NewRound_DoCombat.go`. Company companions are spawned as
+  permanently-charmed mobs (`modules/company/runtime.go`'s `Spawn`:
+  `mob.Character.Charm(leaderUserID, -2, characters.CharmExpiredRevert)`),
+  so `IsCharmed(leaderUserID)` is true for them and this pre-existing
+  loop already covers them with no gap.
+- **Why:** Formation legality still applies downstream regardless of how
+  `Aggro` got set — a proactively-joining companion's subsequent attack
+  still runs through `NewRound_DoCombat.go`'s normal per-round dispatch,
+  so it hits `gateCompanionAttacksEnemy` exactly like a reactive one
+  would. There was nothing left to wire; only the status doc was wrong.
+- **Scope:** Documentation only. No production code changed. Verified by
+  reading `attack.go` and `modules/company/runtime.go`, not by adding a
+  new test — `attack.go` has no existing test file and is the same kind
+  of engine-entangled adapter code this session has consistently left
+  untested at that layer (see every prior combat-wiring pass's
+  "Verification" note).
+- **Step completed:** This status-doc correction, on its own worktree
+  and branch per repo convention (docs-only changes still need one).
+- **Key commit:** landing on `phase-11-docs-correction`.
+- **Verification:** No code changed; `go test -race ./...` still passes
+  at the same 1774 tests / 80 packages as the prior entry (re-run to
+  confirm nothing regressed while investigating).
 
 ### Formation combat-loop wiring: 11b reassignment-on-death (complete — Phase 11's foundational combat wiring is now fully done, 2026-09-22)
 
@@ -138,17 +178,17 @@ instead of duplicating them.
 - **Live acceptance:** Not run: this host has no interactive Telnet
   client, and `internal/hooks` has no integration-test harness (same
   limitation as all three prior combat-wiring passes).
-- **Deferred:** the "engagement trigger" half of 11b (a company member
-  proactively joining a fight because their leader started one, without
-  personally having been hit yet — today's reactive
-  "companion-retaliates-once-hit" loops, which the interception passes
-  replicated faithfully, remain the only trigger; a genuinely proactive
-  trigger is unbuilt), the leader-as-interceptor gap the mob-vs-mob pass
-  named, Phase 11d (guard reactions, crit effects, wounds, full AI
-  targeting personality — unscheduled from the start), and everything
-  already deferred by 11a-11c themselves (guard-stance/chance-based
-  interception, row/column AoE, formation buffs, flanking/exposure,
-  movement-in-combat, `internal/parties`/PvP interaction).
+- **Deferred:** the leader-as-interceptor gap the mob-vs-mob pass named,
+  Phase 11d (guard reactions, crit effects, wounds, full AI targeting
+  personality — unscheduled from the start), and everything already
+  deferred by 11a-11c themselves (guard-stance/chance-based interception,
+  row/column AoE, formation buffs, flanking/exposure, movement-in-combat,
+  `internal/parties`/PvP interaction). The "engagement trigger" item
+  listed here in earlier work-log entries was a documentation error —
+  see the docs-correction work-log entry above: `attack.go`'s existing
+  charmed-mob-assist loop already makes idle company companions join the
+  instant their leader attacks, since companions are permanently-charmed
+  mobs. No code change was needed.
 
 ### Formation combat-loop wiring: mob-vs-mob (complete; formation combat's attack directions now fully wired, 2026-09-22)
 
@@ -1298,10 +1338,15 @@ instead of duplicating them.
 - 11b's reassignment-on-death now ships too (see the "reassignment-on-death"
   work-log entry): the item named in every bullet above is resolved. This
   closes out Phase 11's foundational combat wiring entirely — what's left
-  (11d, the proactive engagement-trigger, the leader-as-interceptor gap)
-  is genuinely new work, not follow-up wiring for 11a-11c. Same
-  test-coverage caveat as every prior combat-wiring pass: no
-  `internal/hooks` integration harness, only pure/seam-level unit tests.
+  (11d, the leader-as-interceptor gap) is genuinely new work, not
+  follow-up wiring for 11a-11c. Same test-coverage caveat as every prior
+  combat-wiring pass: no `internal/hooks` integration harness, only
+  pure/seam-level unit tests.
+- Docs correction (see that work-log entry): the "proactive
+  engagement-trigger" item named above as unbuilt was a documentation
+  error. It already existed pre-Ashveil in `attack.go`'s charmed-mob-
+  assist loop, and company companions get it for free as permanently-
+  charmed mobs. No code changed; only the status doc was wrong.
 
 ## Key documents
 
