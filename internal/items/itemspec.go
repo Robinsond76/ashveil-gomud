@@ -220,6 +220,7 @@ type ItemSpec struct {
 	KeyLockId       string            `yaml:"keylockid,omitempty"`   // Example: `778-north` - If it's a key, what lock does it open? roomid-exitname etc.
 	Nutrition       int               `yaml:"nutrition,omitempty"`   // Survival hunger benefit when eaten; zero keeps ordinary food behavior
 	Hydration       int               `yaml:"hydration,omitempty"`   // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
+	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
 }
 
 // AllEquipSlots returns every equipment slot ItemType in canonical display order.
