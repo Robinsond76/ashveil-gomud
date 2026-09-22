@@ -1,0 +1,12 @@
+# Phase 10 mount type table.
+#
+# CargoCapacityBonusGrams is wired: modules/encumbrance adds it to a
+# leader's computed capacity. TravelDurationPct is computed data only this
+# phase (100 = unchanged, lower = faster) — not yet wired into
+# modules/expedition, same deferred shape as weather's/encumbrance's
+# multipliers (design doc's scope decision).
+Mounts:
+  - Type: pack-horse
+    Description: "A sturdy pack horse, laden with saddlebags."
+    CargoCapacityBonusKg: 100
+    TravelDurationPct: 90

@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
@@ -217,4 +218,32 @@ func TestParseConfigHandlesMissingBands(t *testing.T) {
 	capacityGrams, bands := parseConfig(150.0, nil)
 	assert.Equal(t, 150000, capacityGrams)
 	assert.Empty(t, bands)
+}
+
+type fakeMountProvider struct{ bonusGrams int }
+
+func (f fakeMountProvider) CapacityBonusGrams(_ int) int { return f.bonusGrams }
+
+func TestCurrentLoadAddsMountCapacityBonus(t *testing.T) {
+	user := testUser(t, 7)
+	module := newTestModule(&fakeStore{}, user)
+	module.capacityGrams = 10000
+
+	mount.SetProvider(fakeMountProvider{bonusGrams: 50000})
+	t.Cleanup(func() { mount.SetProvider(nil) })
+
+	load, ok := module.CurrentLoad(7)
+	require.True(t, ok)
+	assert.Equal(t, 60000, load.CapacityGrams, "the mount's bonus must add to the configured base capacity")
+}
+
+func TestCurrentLoadWithoutMountProviderIsUnaffected(t *testing.T) {
+	user := testUser(t, 7)
+	module := newTestModule(&fakeStore{}, user)
+	module.capacityGrams = 10000
+	mount.SetProvider(nil)
+
+	load, ok := module.CurrentLoad(7)
+	require.True(t, ok)
+	assert.Equal(t, 10000, load.CapacityGrams)
 }

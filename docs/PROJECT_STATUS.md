@@ -6,10 +6,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-9-encumbrance`
-- **HEAD:** Phase 9 encumbrance and cargo complete (this status record follows)
+- **Branch:** `phase-10-mounts`
+- **HEAD:** Phase 10 mounts complete (this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` was pushed through Phase 8 (weather) before Phase 9 started; Phase 9 lands here.
+- **Origin sync:** `master` was pushed through Phase 9 (encumbrance and cargo) before Phase 10 started; Phase 10 lands here.
 
 ## Current position
 
@@ -17,10 +17,12 @@ instead of duplicating them.
   companion slice), Phase 3 (company roster + 3×3 formation), Phase 4
   (survival state), Phase 5 (terrain and travel profiles), Phase 6 (travel
   interruptions), Phase 7 (camping), Phase 8 (weather engine and
-  descriptions; multiplier wiring deferred as documented Option A), and
-  Phase 9 (encumbrance and cargo engine and commands; multiplier wiring
-  into travel/rest deferred, same Option A shape).
-- **Next:** Phase 10 — mounts.
+  descriptions; multiplier wiring deferred as documented Option A), Phase 9
+  (encumbrance and cargo engine and commands; multiplier wiring into
+  travel/rest deferred, same Option A shape), and Phase 10 (mounts, with a
+  real wired cargo-capacity bonus; travel-speed wiring deferred, same
+  Option A shape).
+- **Next:** Phase 11 — formation combat.
 
 ## Phase progress
 
@@ -36,11 +38,60 @@ instead of duplicating them.
 | 7 | Camping | Complete |
 | 8 | Weather | Complete |
 | 9 | Encumbrance and cargo | Complete |
-| 10 | Mounts | Not started |
+| 10 | Mounts | Complete |
 | 11 | Formation combat | Not started |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 10 — Mounts (complete, 2026-09-22)
+
+- **What:** Delivered a minimal, durable, leader-owned mount with one real,
+  wired gameplay effect. `internal/mount` is a GoMud-free domain (matching
+  `internal/expedition`/`internal/camping`/`internal/weather`/
+  `internal/encumbrance`) — the simplest of the five: a `Mount{LeaderUserID,
+  Type}` with no decaying state at all (no fatigue/health/feed; handoff §35
+  defers those to "Later"). A `MountSpec` carries a wired
+  `CargoCapacityBonusGrams` and a computed-but-unwired `TravelDurationPct`.
+  `modules/mount` owns an embedded/overlaid mount-type table (one proving
+  type, `pack-horse`), a durable leader-keyed YAML registry, `mount` /
+  `mount stable <type>` / `mount release` commands, and registers itself as
+  `internal/mount`'s `Provider`. The one integration change this phase:
+  `modules/encumbrance`'s `CurrentLoad` now adds
+  `mount.CapacityBonus(leaderUserID)` to its computed (never persisted)
+  capacity — a real, observable increase in cargo capacity for a leader
+  with a mount, touching no persisted schema on the already-shipped Phase 9
+  module.
+- **Why:** The handoff (§35) requires travel and load systems (Phases 5-9)
+  before mounts, and states "MVP mount effects: increases travel speed
+  and/or increases cargo capacity" — unlike weather/encumbrance, a
+  display-only mount would have no value, so this phase wires one real
+  effect. Cargo capacity was chosen over travel speed because it needed no
+  schema change to an already-shipped phase (`modules/encumbrance`'s
+  capacity is computed, not persisted), while travel speed still needs the
+  same `TravelSession` schema risk flagged twice already in Phases 8 and 9.
+- **Step completed:** Design doc
+  (`docs/superpowers/specs/2026-09-22-phase-10-mounts-design.md`),
+  confirmed and implemented directly per the owner's standing "continue
+  with whatever you recommend" instruction.
+- **Key commits:** design doc, plus `internal/mount`, `modules/mount`, and
+  the `modules/encumbrance` capacity-bonus wiring landing on
+  `phase-10-mounts`.
+- **Verification:** `go test -race ./...` (1716 tests / 77 packages),
+  `make generate`, and `make validate` pass. Focused tests cover mount
+  spec/assignment validation, stable/release (including persistence-failure
+  rollback for both), the capacity-bonus provider (including an unknown
+  mount type contributing 0), the `mount` command, malformed mount-type
+  config rejection, and — in `modules/encumbrance` — that a leader's
+  computed capacity correctly includes the mount bonus, and is correctly
+  unaffected without one.
+- **Live acceptance:** Not run: this host has no interactive Telnet client.
+  The deterministic fake-store/injected-spec harness and domain/module/
+  command test suites cover the engine behavior.
+- **Deferred:** Mount fatigue/health/feed, terrain suitability, individual
+  (per-member) assignment, an acquisition/cost economy, and — per the
+  design doc's scope decision — actually wiring `TravelDurationPct` into
+  `modules/expedition`.
 
 ### Phase 9 — Encumbrance and Cargo (complete, 2026-09-22)
 
@@ -538,6 +589,17 @@ instead of duplicating them.
   follow-up data pass. Encumbrance is a party/expedition-level weight
   system, kept deliberately separate from GoMud's native, unrelated,
   count-based `Character.CarryCapacity()` per-move throttle.
+- Live server acceptance has not been run for Phase 10; unit/race coverage
+  spans the mount domain, stable/release persistence-failure rollback, the
+  capacity-bonus provider, the `mount` command, and the
+  `modules/encumbrance` capacity-bonus integration.
+- Phase 10 mounts wires only the cargo-capacity effect this phase;
+  `TravelDurationPct` is computed and validated on `MountSpec` but nothing
+  yet applies it to `modules/expedition`'s `TravelSession`, same Option A
+  shape as weather's/encumbrance's own deferred multipliers. Mount
+  fatigue/health/feed, terrain suitability, per-member assignment, and an
+  acquisition economy are all deferred to a later pass, per handoff §35's
+  own "Later" list.
 
 ## Key documents
 
