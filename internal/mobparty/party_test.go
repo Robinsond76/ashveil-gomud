@@ -86,3 +86,18 @@ func TestAssembleCapsAtFiveAndSplits(t *testing.T) {
 func memberKeyFor(instanceId int) string {
 	return fmt.Sprintf("mob:%d", instanceId)
 }
+
+func TestMemberKeyForAndInstanceIdFromMemberKeyRoundTrip(t *testing.T) {
+	key := mobparty.MemberKeyFor(42)
+	id, ok := mobparty.InstanceIdFromMemberKey(key)
+	require.True(t, ok)
+	assert.Equal(t, 42, id)
+}
+
+func TestInstanceIdFromMemberKeyRejectsNonMobKeys(t *testing.T) {
+	_, ok := mobparty.InstanceIdFromMemberKey(company.LeaderMemberKey)
+	assert.False(t, ok)
+
+	_, ok = mobparty.InstanceIdFromMemberKey(company.CompanionMemberKey(3))
+	assert.False(t, ok)
+}

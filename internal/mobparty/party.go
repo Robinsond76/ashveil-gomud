@@ -10,6 +10,8 @@ package mobparty
 import (
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/company"
 )
@@ -128,9 +130,9 @@ func buildParty(id string, members []MobSummary) Party {
 		row, col := slotFor(i, len(ranked))
 		// Every (row, col) here is in-bounds by construction (MaxPartySize
 		// caps len(ranked) at 5, and slotFor never exceeds the 3x3 grid for
-		// i < 5), and each memberKey is unique and unplaced, so Place
-		// cannot fail; the error is intentionally discarded.
-		_ = f.Place(memberKey(m.InstanceId), row, col)
+		// i < 5), and each MemberKeyFor result is unique and unplaced, so
+		// Place cannot fail; the error is intentionally discarded.
+		_ = f.Place(MemberKeyFor(m.InstanceId), row, col)
 	}
 
 	return Party{ID: id, Members: memberIds, Formation: f}
@@ -145,6 +147,26 @@ func slotFor(i, size int) (row, col int) {
 	return i / company.FormationCols, i % company.FormationCols
 }
 
-func memberKey(instanceId int) company.MemberKey {
+// MemberKeyFor returns the formation MemberKey a mob instance is placed
+// under within an assembled Party's Formation.
+func MemberKeyFor(instanceId int) company.MemberKey {
 	return company.MemberKey(fmt.Sprintf("mob:%d", instanceId))
+}
+
+// InstanceIdFromMemberKey parses a mob's formation MemberKey (as produced
+// by MemberKeyFor) back into its instance ID. ok is false for any key not
+// in that format, such as a company.LeaderMemberKey or CompanionMemberKey
+// (a caller resolving formation membership must not assume every key is a
+// mob key just because it's non-empty).
+func InstanceIdFromMemberKey(key company.MemberKey) (int, bool) {
+	const prefix = "mob:"
+	s := string(key)
+	if !strings.HasPrefix(s, prefix) {
+		return 0, false
+	}
+	id, err := strconv.Atoi(strings.TrimPrefix(s, prefix))
+	if err != nil {
+		return 0, false
+	}
+	return id, true
 }
