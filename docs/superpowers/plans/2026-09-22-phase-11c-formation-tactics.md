@@ -1,6 +1,6 @@
 # Phase 11c Formation Tactics Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Status: fully implemented and committed on `phase-11c-formation-tactics` — every step below is checked off.**
 
 **Goal:** Implement the column-occupancy reach model (plain melee = column
 frontmost only, polearm/innate Reach = frontmost-or-one-behind, ranged =
@@ -117,7 +117,7 @@ domain layer and deferring hook wiring for a documented reason.
   - `func InterceptFrontRow(f company.Formation, targetKey company.MemberKey, alive map[company.MemberKey]bool) (interceptor company.MemberKey, ok bool)`
   - `func LegalTargets(attackerCol int, f company.Formation, alive map[company.MemberKey]bool, reach Reach) []company.MemberKey`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `internal/formationcombat/formationcombat_test.go`:
 
@@ -307,12 +307,12 @@ func TestLegalTargetsListsExactlyTheLegalMembers(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `go test ./internal/formationcombat/... -v`
 Expected: FAIL — the package doesn't exist yet.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `internal/formationcombat/formationcombat.go`:
 
@@ -453,12 +453,12 @@ func LegalTargets(attackerCol int, f company.Formation, alive map[company.Member
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/formationcombat/... -v`
 Expected: PASS, all fourteen tests.
 
-- [ ] **Step 5: `go vet`/`gofmt`, full build, full race suite**
+- [x] **Step 5: `go vet`/`gofmt`, full build, full race suite**
 
 ```bash
 gofmt -l internal/formationcombat && go vet ./internal/formationcombat/...
@@ -468,7 +468,7 @@ go test -race ./...
 Expected: no `gofmt`/`vet` output, clean build, full suite green with no
 regressions (this package has zero engine dependencies).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/formationcombat/formationcombat.go internal/formationcombat/formationcombat_test.go
@@ -493,7 +493,7 @@ git commit -m "feat(formationcombat): add Phase 11c column-occupancy reach/legal
   per round, passing `mob.Reach` for a mob attacker or `false` for a
   player attacker (players have no innate reach, only weapon-granted).
 
-- [ ] **Step 1: Add the `Reach` field to `ItemSpec`**
+- [x] **Step 1: Add the `Reach` field to `ItemSpec`**
 
 In `internal/items/itemspec.go`, add to the `ItemSpec` struct (after the
 existing `Weight` field, matching its comment style):
@@ -502,7 +502,7 @@ existing `Weight` field, matching its comment style):
 	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
 ```
 
-- [ ] **Step 2: Add the `Reach` field to `Mob`**
+- [x] **Step 2: Add the `Reach` field to `Mob`**
 
 In `internal/mobs/mobs.go`, add to the `Mob` struct next to `Hostile`:
 
@@ -510,7 +510,7 @@ In `internal/mobs/mobs.go`, add to the `Mob` struct next to `Hostile`:
 	Reach           bool     `yaml:"reach,omitempty"`          // Innate reach (e.g. a large/long-limbed monster), independent of any weapon
 ```
 
-- [ ] **Step 3: Write the failing test for `ResolveReach`**
+- [x] **Step 3: Write the failing test for `ResolveReach`**
 
 Create `internal/combat/reach_test.go`:
 
@@ -572,12 +572,12 @@ set — exactly what these tests need, with no global-registry
 setup/teardown (no `LoadDataFiles`, no on-disk writes, no naming collision
 with real item IDs) required at all.
 
-- [ ] **Step 4: Run the test to verify it fails**
+- [x] **Step 4: Run the test to verify it fails**
 
 Run: `go test ./internal/combat/... -run TestResolveReach -v`
 Expected: FAIL — `undefined: combat.ResolveReach`.
 
-- [ ] **Step 5: Write the implementation**
+- [x] **Step 5: Write the implementation**
 
 Create `internal/combat/reach.go`:
 
@@ -614,12 +614,12 @@ func ResolveReach(c *characters.Character, innateReach bool) formationcombat.Rea
 }
 ```
 
-- [ ] **Step 6: Run tests to verify they pass**
+- [x] **Step 6: Run tests to verify they pass**
 
 Run: `go test ./internal/combat/... -run TestResolveReach -v`
 Expected: PASS, all five tests.
 
-- [ ] **Step 7: `go vet`/`gofmt`, full build, full race suite**
+- [x] **Step 7: `go vet`/`gofmt`, full build, full race suite**
 
 ```bash
 gofmt -l internal/items internal/mobs internal/combat internal/formationcombat
@@ -631,7 +631,7 @@ Expected: no output from `gofmt`/`vet`, clean build, full suite green — the
 two new struct fields are `omitempty`/zero-value-default, so no existing
 YAML data or test fixture is affected.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add internal/items/itemspec.go internal/mobs/mobs.go internal/combat/reach.go internal/combat/reach_test.go
@@ -651,7 +651,7 @@ git commit -m "feat(combat): add Reach trait schema and ResolveReach adapter"
 - Produces: a `formation reach <member>` subcommand, purely additive to the
   existing `formationCommand` dispatcher.
 
-- [ ] **Step 1: Add the subcommand**
+- [x] **Step 1: Add the subcommand**
 
 In `modules/company/formation.go`, inside `formationCommand`'s `switch
 args[0]` (alongside the existing `move`/`swap`/`clear` cases), add:
@@ -712,7 +712,7 @@ wire combat at all per the Task 3/scope-decision note above). Add
 to this file's imports if not already present (`fmt` is already imported,
 confirm before adding it again).
 
-- [ ] **Step 2: Update the usage string**
+- [x] **Step 2: Update the usage string**
 
 Update `formationUsage` (near the top of the file) to include the new
 subcommand:
@@ -721,7 +721,7 @@ subcommand:
 const formationUsage = "Usage: formation | formation move <member> <row> <col> | formation swap <member-a> <member-b> | formation clear <member> | formation reach <member>"
 ```
 
-- [ ] **Step 3: Build and run existing module tests**
+- [x] **Step 3: Build and run existing module tests**
 
 Run: `go build ./... && go test ./modules/company/... -v`
 Expected: clean build, all existing `modules/company` tests still pass (no
@@ -733,7 +733,7 @@ not new coverage. If `modules/company` has no test file that exercises
 "don't invent test infrastructure a phase doesn't need" principle; Task 1
 already gives this command's actual logic full coverage).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add modules/company/formation.go
@@ -745,7 +745,7 @@ git commit -m "feat(company): add read-only formation reach query command"
 **Files:**
 - Modify: `docs/PROJECT_STATUS.md`
 
-- [ ] **Step 1: Run full verification**
+- [x] **Step 1: Run full verification**
 
 ```bash
 make generate
@@ -755,7 +755,7 @@ go test -race ./...
 Expected: all three succeed (record the actual test/package counts in the
 status update — don't guess).
 
-- [ ] **Step 2: Update `docs/PROJECT_STATUS.md`**
+- [x] **Step 2: Update `docs/PROJECT_STATUS.md`**
 
 Add a "Phase 11c — Formation Tactics (domain layer, schema, and read-only
 query complete; combat-loop wiring deferred, <today's date>)" work-log
@@ -777,7 +777,7 @@ AoE, formation buffs, flanking/exposure, and movement-in-combat. Update:
   wants one opened.
 - The file header's `**HEAD:**` line.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/PROJECT_STATUS.md

@@ -6,16 +6,19 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-11b-unit-engagement`
-- **HEAD:** Phase 11b (Unit-vs-Unit Engagement) domain layer implemented:
-  `internal/engagement.AssignTarget` picks a weakest/strongest/random
-  target from a party, filtered by an injected legality predicate. The
-  `NewRound_DoCombat.go` hooks integration is deliberately deferred (see
-  the Phase 11b work-log entry) until Phase 11c's real legality predicate
-  exists to inject in place of a test stub.
+- **Branch:** `phase-11c-formation-tactics`
+- **HEAD:** Phase 11c (Formation Tactics) domain layer, `Reach` trait
+  schema, and a read-only `formation reach` query command implemented:
+  `internal/formationcombat.Legal`/`InterceptFrontRow` implement the
+  column-occupancy reach model, lateral range, and front-row interception
+  over `company.Formation`. The `NewRound_DoCombat.go` combat-loop wiring
+  (which would also finally wire Phase 11b's `AssignTarget` for real) is
+  deliberately deferred — see the Phase 11c work-log entry for the full
+  reasoning: it needs a new cross-module company-formation-by-mob-instance
+  query seam that doesn't exist yet.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through Phase 11a (enemy parties);
-  this branch's Phase 11b domain layer is not yet merged.
+- **Origin sync:** `master` is pushed through Phase 11b's domain layer;
+  this branch's Phase 11c work is not yet merged.
 
 ## Current position
 
@@ -29,16 +32,30 @@ instead of duplicating them.
   real wired cargo-capacity bonus; travel-speed wiring deferred, same
   Option A shape), Phase 11a (enemy parties: mobs sharing a `Groups` tag
   assemble into a party with an auto-assigned formation, shown to players
-  as one grouped room listing), and Phase 11b's domain layer
+  as one grouped room listing), Phase 11b's domain layer
   (`internal/engagement.AssignTarget`: weakest/strongest/random target
-  selection filtered by an injected legality predicate; not yet wired into
-  combat — see the Phase 11b work-log entry for why).
-- **Next:** Phase 11c — Formation Tactics (interception, reach, adjacency;
-  its legality predicate is what Phase 11b's `AssignTarget` is waiting on).
-  Once 11c exists, a follow-up task wires `internal/engagement` into
-  `internal/hooks/NewRound_DoCombat.go` for real — that wiring is not part
-  of either 11b or 11c's own scope, it's the join between them. See
-  `docs/superpowers/specs/2026-09-22-phase-11c-formation-tactics-design.md`.
+  selection filtered by an injected legality predicate), and Phase 11c's
+  domain layer (`internal/formationcombat`: column-occupancy reach,
+  lateral range, front-row interception; a `Reach` trait on items/mobs; a
+  read-only `formation reach <member>` query command). All three of 11a-11c
+  are now domain-complete; none of 11b or 11c is wired into the actual
+  combat loop yet.
+- **Next:** the `internal/hooks/NewRound_DoCombat.go` combat-loop
+  integration — this is the join between 11b and 11c, not a scope item of
+  either: it needs a new cross-module query seam (given a live mob
+  instance ID, which leader's company and `MemberKey` does it belong to;
+  today that mapping only exists as an *unexported* method on
+  `modules/company.CompanyModule`), plus the equivalent fresh-per-round
+  `mobparty.Assemble` lookup for the enemy side, threaded through all four
+  attack-direction call sites (player-vs-mob, mob-vs-player, mob-vs-mob,
+  player-vs-player) in `NewRound_DoCombat.go`. This is real,
+  player-visible combat-behavior change touching a shared multiplayer
+  invariant — see the Phase 11c work-log entry and
+  `docs/superpowers/plans/2026-09-22-phase-11c-formation-tactics.md`'s
+  scope-decision section for the full reasoning on why it's its own
+  follow-up rather than bundled into 11b or 11c. No phase number is
+  assigned to it yet; open one (11e, or fold it into a wiring-focused pass)
+  when picking it up.
 
 ## Phase progress
 
@@ -57,11 +74,106 @@ instead of duplicating them.
 | 10 | Mounts | Complete |
 | 11a | Enemy parties | Complete |
 | 11b | Unit-vs-unit engagement | Domain layer complete; hooks integration awaits 11c |
-| 11c | Formation tactics | Designed, not implemented |
+| 11c | Formation tactics | Domain layer, schema, and read-only query complete; combat-loop wiring deferred |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 11c — Formation Tactics domain layer, schema, and read-only query (complete; combat-loop wiring deferred, 2026-09-22)
+
+- **What:** Delivered the column-occupancy reach model as pure, tested
+  logic, plus the `Reach` trait it needs and a first real (if narrow)
+  player-facing use of it. `internal/formationcombat` (GoMud-free, matching
+  11a/11b's split) implements: `FrontmostOccupant` (the nearest-to-front
+  living occupant of a formation column), `InLateralRange` (±1 column),
+  `InReachDepth`/`Reach{None,Extended,Any}` (plain melee = column
+  frontmost only; polearm/innate Reach = frontmost-or-one-behind; ranged =
+  any depth), `Legal` (combining all of the above into the single
+  predicate Phase 11b's `AssignTarget` is designed to consume as its
+  injected `legal` parameter), `InterceptFrontRow` (redirect a non-front-row
+  attack to a living same-column front-row member, or leave the original
+  target standing if none survive), and `LegalTargets` (the read-only
+  adjacency-query list the design's acceptance criteria call for). Every
+  function takes a `company.Formation` plus a caller-supplied `alive
+  map[MemberKey]bool` — nothing here ever mutates a `Formation` or clears a
+  target, so the design's "self-healing without clearing Aggro" behavior
+  falls directly out of `Legal` simply being recomputed fresh from current
+  `alive` state each time it's called. `items.ItemSpec` and `mobs.Mob` each
+  gained one new `Reach bool` field (default `false`, zero-value-safe for
+  every existing YAML file, following the exact `Weight`/`Hostile`
+  precedent), and `internal/combat.ResolveReach(c *characters.Character,
+  innateReach bool) formationcombat.Reach` adapts a live combatant's
+  equipped weapon (or, for mobs, their innate flag) into the `Reach` value
+  those pure functions need. `modules/company/formation.go` gained a
+  `formation reach <member>` read-only subcommand — a real, always-available
+  demo of `Legal`/`LegalTargets` against the company's own formation
+  (there's no live enemy party to query outside combat, and this phase
+  doesn't touch combat at all), listing which of a member's own
+  companions/leader they could plain-melee-reach right now.
+- **Why:** The Phase 11 design session's original five first-tactical-rules
+  (handoff §36/§15 — interception, melee reach, polearm reach, ranged
+  rear-line access, adjacency) needed a precisely-specified reach model
+  before any of it could be implemented; the design session spent several
+  rounds settling on column-occupancy (not row-distance) as the only model
+  consistent with "formation is locked during combat, only enemy attrition
+  changes what's reachable." This phase turns that resolved design directly
+  into tested code, and — as importantly — unblocks Phase 11b, whose
+  `AssignTarget` has been shipping since 11b's own phase entry with a test
+  stub in place of a real `legal` predicate.
+- **Deliberate scope boundary — `NewRound_DoCombat.go` wiring is NOT done
+  this phase:** wiring `Legal`/`InterceptFrontRow` into the real per-round
+  attack loop (and, with it, finally supplying 11b's `AssignTarget` a real
+  `legal` function instead of a test stub) needs a lookup this codebase
+  doesn't have: given a live mob instance ID, which leader's company does
+  it belong to and what's its `MemberKey`. That mapping exists today only
+  as `modules/company.CompanyModule`'s **unexported** `companionForInstance`
+  method, and `internal/hooks` (home of `NewRound_DoCombat.go`) doesn't and
+  structurally shouldn't import `modules/company` — the established pattern
+  for this kind of cross-boundary query in this codebase is a query-seam
+  interface defined in `internal/`, implemented by the module (Phase 5's
+  `survival.CompanyService`, Phase 8's `weather.Provider`). Building that
+  seam, plus threading it and a fresh-per-round `mobparty.Assemble` lookup
+  for the enemy side through all four attack-direction call sites of a
+  1150-line hot combat-loop file, is a materially different, higher-risk
+  kind of change than the pure functions this phase delivers — a real,
+  player-visible combat-behavior change touching a shared multiplayer
+  invariant, exactly what `internal/combat/AGENTS.md` and
+  `docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md` §50 flag for escalated care.
+  Shipping it in the same pass would make both harder to review and roll
+  back independently, so it's tracked as an explicit follow-up (see
+  "Next" above), not silently dropped. This mirrors 11b's own precedent of
+  shipping a tested domain layer and naming exactly what blocks the wiring.
+- **Step completed:** Full implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-11c-formation-tactics.md`),
+  Tasks 1-3 (domain package, `Reach` schema + adapter, read-only query
+  command), plus this status update. There is no task covering
+  `NewRound_DoCombat.go` wiring in this plan — see the scope-boundary note
+  above.
+- **Key commits:** `765278dd` (plan), `541b85b1` (`internal/formationcombat`
+  domain package and tests), `1eed92f6` (`Reach` schema fields and
+  `ResolveReach` adapter), `4d3197c8` (`formation reach` command), landing
+  on `phase-11c-formation-tactics`.
+- **Verification:** `go test -race ./...` (1755 tests / 80 packages),
+  `make generate` (no wiring change), and `make validate` pass. Focused
+  tests cover: the spec's own worked example (A/B/C) before and after A
+  dies, reach-extended hitting the middle but not the back slot, ranged
+  ignoring column depth entirely, interception redirect (and "no living
+  front row, original stands"), all nine lateral-range column
+  combinations, dead/missing-target rejection, `LegalTargets`'
+  adjacency-query correctness, and `ResolveReach`'s four weapon/innate
+  cases. `modules/company`'s existing 70 tests all still pass unchanged.
+- **Live acceptance:** Not run: this host has no interactive Telnet client.
+  The `formation reach` command is exercised only by the deterministic
+  `modules/company` unit suite and the underlying `formationcombat`/
+  `combat` domain tests, not a live session.
+- **Deferred:** the `NewRound_DoCombat.go` combat-loop wiring itself (see
+  above — this is the big one), the equivalent wiring of 11b's
+  `AssignTarget` (lands together with the above), Phase 11d (guard
+  reactions, crit effects, wounds, full AI personality, unscheduled),
+  guard-stance/chance-based interception, row/column AoE, formation buffs,
+  flanking/exposure, movement-in-combat, and any interaction with
+  `internal/parties` or PvP.
 
 ### Phase 11b — Unit-vs-Unit Engagement domain layer (complete; hooks integration deferred, 2026-09-22)
 
@@ -823,6 +935,19 @@ instead of duplicating them.
   the Phase 11b work-log entry). Live server acceptance has not been run
   for Phase 11b; unit coverage spans `internal/engagement`'s selection,
   filtering, and engagement-end logic.
+- Phase 11c ships `internal/formationcombat`, the `Reach` schema fields,
+  and one read-only `formation reach` command; nothing in
+  `internal/hooks/NewRound_DoCombat.go` was touched, so combat behavior is
+  unchanged from pre-11c — no interception, no reach gating, no
+  coordinated targeting actually happen in a fight yet. The
+  `formation reach` command only queries a company's own formation (there
+  is no live enemy party/formation to query outside combat), and only at
+  `ReachNone` (plain melee) — it's a correctness demo of the predicate, not
+  a combat feature. Both `internal/formationcombat` and 11b's
+  `internal/engagement` are now fully tested and ready to be wired
+  together; that wiring (and the new company-formation-by-mob-instance
+  query seam it needs) is the next real piece of work — see the Phase 11c
+  work-log entry and the "Next" line above for the full reasoning.
 
 ## Key documents
 
