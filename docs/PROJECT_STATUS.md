@@ -7,7 +7,7 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-22
 - **Branch:** `phase-6-interruptions`
-- **HEAD:** `92edb585` (Phase 6 code and coverage; this status record follows)
+- **HEAD:** `56dc9ff6` (Phase 6 durability correction; this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
 
@@ -57,11 +57,13 @@ instead of duplicating them.
   game time or round count.
 - **Step completed:** Handoff Phase 6 ("Travel Interruptions").
 - **Key commits:** `e25d2ec6`, `2a45f473`, `17091a31`, `a8255e51`, `646d00ab`,
-  `a9c2c018`, and lifecycle/acceptance coverage through `92edb585`.
-- **Verification:** `go test -race ./...`, `make generate`, `make validate`,
-  plus focused domain/module and cross-package race suites pass. Task-scoped
+  `a9c2c018`, lifecycle/acceptance coverage through `92edb585`, and `56dc9ff6`
+  (terminal, malformed-record, and stale-timer durability correction).
+- **Verification:** `go test -race ./...`, `make generate`, and `make validate`
+  pass after the final durability correction; focused domain/module and
+  cross-package race suites also pass. Task-scoped and final whole-branch
   reviews covered malformed-record retention, parser/configuration, timer and
-  checkpoint ordering, and command/recovery lifecycle behavior.
+  checkpoint ordering, terminal recovery, and command/recovery lifecycle behavior.
 - **Live acceptance:** Not run: this host has no interactive Telnet client.
   The deterministic fake scheduler, injected clock, persistence, recovery,
   command, view, and race suites cover the proving route behavior.
