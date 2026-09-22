@@ -1911,6 +1911,31 @@ Do not replace all GoMud combat unless unavoidable.
 
 Prefer adding a tactical targeting/reach layer around the existing combat lifecycle.
 
+Also in scope, pulled from the external combat design reference
+(`docs/superpowers/specs/2026-09-22-combat-design-reference-external.md`) as
+low-risk additions that layer onto the existing round-based
+`internal/combat` resolution loop:
+
+6. Guard Reactions — a limited per-combatant intercept/block resource
+   (e.g. a shield-warrior role) that refreshes after the defender completes
+   its next normal action, rather than being unlimited.
+7. Weapon-flavored critical-hit secondary effects (e.g. sword crit →
+   bleed, mace crit → stagger, hammer crit → knockdown) layered onto the
+   existing crit branch in `internal/combat/calculations.go`.
+8. Wounds — a status effect that temporarily lowers a combatant's
+   recoverable max HP, independent of the timing model.
+9. AI target-selection personality — priority tendencies per class/monster
+   (favor wounded targets, favor threats to allies, etc.) rather than
+   always picking the mathematically optimal target.
+
+**Deliberately out of scope for Phase 11:** the reference doc's continuous
+Readiness/Wind-up/Cast/Recovery timeline model. That replaces GoMud's
+round-based combat resolution loop rather than layering on it, crosses this
+project's concurrency/timer-rewrite escalation threshold, and needs its own
+future design doc and owner decision before any implementation. Revisit it
+as a later phase, after Phase 11 ships — see the reference doc's intake note
+for detail.
+
 ---
 
 # 37. Phase 12 — Rich Expedition Encounters
