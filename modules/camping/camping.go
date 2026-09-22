@@ -1,0 +1,685 @@
+// Package camping owns durable leader-keyed campsites, real-time rest
+// timers, room-tag eligibility, load/copyover recovery, the player-facing
+// camp commands and views, and the survival rest-recovery seam.
+//
+// It is the only component that schedules a rest completion timer or calls
+// the survival company rest service. Rest uses real UTC time and never
+// mutates GoMud's global game time or round count.
+package camping
+
+import (
+	"embed"
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/users"
+	"gopkg.in/yaml.v2"
+)
+
+//go:embed files/*
+var files embed.FS
+
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp break"
+const defaultRoomTag = "camping"
+
+// Registry is the durable, leader-keyed set of active camps plus which
+// completed rests have already had their survival recovery applied.
+type Registry struct {
+	Camps           map[int]camping.Camp `yaml:"camps"`
+	RecoveryApplied map[int]bool         `yaml:"recovery_applied,omitempty"`
+}
+
+// NewRegistry returns an empty registry.
+func NewRegistry() *Registry {
+	return &Registry{Camps: map[int]camping.Camp{}, RecoveryApplied: map[int]bool{}}
+}
+
+// Clone returns a deep copy of the registry.
+func (r Registry) Clone() Registry {
+	out := Registry{
+		Camps:           make(map[int]camping.Camp, len(r.Camps)),
+		RecoveryApplied: make(map[int]bool, len(r.RecoveryApplied)),
+	}
+	for leaderUserID, camp := range r.Camps {
+		out.Camps[leaderUserID] = camp
+	}
+	for leaderUserID, applied := range r.RecoveryApplied {
+		out.RecoveryApplied[leaderUserID] = applied
+	}
+	return out
+}
+
+// Store abstracts durable registry persistence so tests can inject failures.
+type Store interface {
+	Load(*Registry) error
+	Save(Registry) error
+}
+
+type pluginStore struct{ plug *plugins.Plugin }
+
+func (s pluginStore) Load(registry *Registry) error {
+	// ReadBytes discards YAML decode errors, so decode here to prevent
+	// unreadable data from becoming an empty, writable registry.
+	data, err := s.plug.ReadBytes("camping")
+	if errors.Is(err, os.ErrNotExist) {
+		*registry = *NewRegistry()
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return decodeRegistry(data, registry)
+}
+
+func (s pluginStore) Save(registry Registry) error {
+	return s.plug.WriteStruct("camping", registry)
+}
+
+// decodeRegistry parses stored bytes, dropping only entries keyed by an
+// invalid leader ID. Invalid camp content is retained for operator repair by
+// the module's recovery pass rather than dropped here.
+func decodeRegistry(data []byte, registry *Registry) error {
+	var wire Registry
+	if err := yaml.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	loaded := NewRegistry()
+	for leaderUserID, camp := range wire.Camps {
+		if leaderUserID <= 0 {
+			continue
+		}
+		camp.LeaderUserID = leaderUserID
+		loaded.Camps[leaderUserID] = camp
+	}
+	for leaderUserID, applied := range wire.RecoveryApplied {
+		if leaderUserID <= 0 {
+			continue
+		}
+		loaded.RecoveryApplied[leaderUserID] = applied
+	}
+	*registry = *loaded
+	return nil
+}
+
+// Timer is a cancellable scheduled callback.
+type Timer interface {
+	Stop() bool
+}
+
+// Scheduler schedules a one-shot callback after a delay. Tests inject a
+// deterministic implementation.
+type Scheduler interface {
+	AfterFunc(d time.Duration, f func()) Timer
+}
+
+type realScheduler struct{}
+
+func (realScheduler) AfterFunc(d time.Duration, f func()) Timer {
+	if d < 0 {
+		d = 0
+	}
+	return realTimer{timer: time.AfterFunc(d, f)}
+}
+
+type realTimer struct{ timer *time.Timer }
+
+func (r realTimer) Stop() bool { return r.timer.Stop() }
+
+// Survival is the Phase 4/7 company rest-recovery seam needed by camping.
+type Survival interface {
+	ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]survival.ExertionResult, error)
+	CompanyNeeds(leaderUserID int) []survival.MemberNeeds
+	Available() error
+}
+
+type nativeSurvival struct{}
+
+func (nativeSurvival) ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]survival.ExertionResult, error) {
+	return survival.ApplyCompanyRestRecovery(leaderUserID, operationID, fatigue)
+}
+
+func (nativeSurvival) CompanyNeeds(leaderUserID int) []survival.MemberNeeds {
+	return survival.CompanyNeeds(leaderUserID)
+}
+
+func (nativeSurvival) Available() error {
+	if !survival.CompanyServiceAvailable() {
+		return survival.ErrRestUnavailable
+	}
+	return nil
+}
+
+// CampingModule owns durable leader-keyed camps for one plugin.
+type CampingModule struct {
+	plug      *plugins.Plugin
+	store     Store
+	clock     func() time.Time
+	scheduler Scheduler
+	survival  Survival
+
+	camps           map[int]camping.Camp
+	recoveryApplied map[int]bool
+	timers          map[int]Timer
+	timerGeneration map[int]uint64
+	loadErr         error
+
+	mu sync.Mutex
+}
+
+var (
+	_ camping.ViewProvider     = (*CampingModule)(nil)
+	_ camping.MovementProvider = (*CampingModule)(nil)
+)
+
+func init() {
+	m := &CampingModule{
+		plug:            plugins.New("camping", "1.0"),
+		clock:           time.Now,
+		scheduler:       realScheduler{},
+		survival:        nativeSurvival{},
+		camps:           map[int]camping.Camp{},
+		recoveryApplied: map[int]bool{},
+		timers:          map[int]Timer{},
+		timerGeneration: map[int]uint64{},
+	}
+	if err := m.plug.AttachFileSystem(files); err != nil {
+		panic(err)
+	}
+	m.store = pluginStore{plug: m.plug}
+	m.plug.AddUserCommand("camp", m.userCommand, false, false)
+	m.plug.Callbacks.SetOnLoad(m.load)
+	m.plug.Callbacks.SetOnSave(func() {
+		if err := m.save(); err != nil {
+			mudlog.Error("camping: save", "error", err)
+		}
+	})
+	camping.SetViewProvider(m)
+	camping.SetMovementProvider(m)
+}
+
+func (m *CampingModule) persistenceAvailable() error {
+	if m.loadErr != nil {
+		return fmt.Errorf("camping: persistence unavailable until a successful reload: %w", m.loadErr)
+	}
+	if m.store == nil {
+		return fmt.Errorf("camping: persistence unavailable")
+	}
+	return nil
+}
+
+// save acquires the module lock and persists the current registry.
+func (m *CampingModule) save() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.saveLocked()
+}
+
+func (m *CampingModule) saveLocked() error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	registry := Registry{Camps: m.camps, RecoveryApplied: m.recoveryApplied}
+	if err := m.store.Save(registry); err != nil {
+		return fmt.Errorf("camping: save failed; please retry: %w", err)
+	}
+	return nil
+}
+
+func (m *CampingModule) load() {
+	if m.store == nil {
+		return
+	}
+	loaded := NewRegistry()
+	if err := m.store.Load(loaded); err != nil {
+		m.loadErr = err
+		mudlog.Error("camping: load", "error", err)
+		return
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.camps = loaded.Camps
+	if m.camps == nil {
+		m.camps = map[int]camping.Camp{}
+	}
+	m.recoveryApplied = loaded.RecoveryApplied
+	if m.recoveryApplied == nil {
+		m.recoveryApplied = map[int]bool{}
+	}
+	m.timers = map[int]Timer{}
+	m.timerGeneration = map[int]uint64{}
+	m.loadErr = nil
+	m.recoverLocked()
+}
+
+// roomTag returns the configured eligibility tag, defaulting when unset or
+// malformed rather than guessing an alternate value.
+func (m *CampingModule) roomTag() string {
+	if m.plug == nil {
+		return defaultRoomTag
+	}
+	tag := strings.TrimSpace(configString(m.plug.Config.Get("RoomTag")))
+	if tag == "" {
+		return defaultRoomTag
+	}
+	return tag
+}
+
+func configString(raw any) string {
+	value, _ := raw.(string)
+	return value
+}
+
+func roomEligible(room *rooms.Room, tag string) bool {
+	if room == nil {
+		return false
+	}
+	for _, t := range room.Tags {
+		if t == tag {
+			return true
+		}
+	}
+	return false
+}
+
+// restOperationID derives a deterministic rest-recovery operation ID from
+// stable leader/room/start identity, so recovery replay after a crash or
+// restart cannot restore fatigue twice.
+func restOperationID(camp camping.Camp) string {
+	return fmt.Sprintf("camp-rest-%d-%d-%d", camp.LeaderUserID, camp.RoomID, camp.Rest.StartedAtUTC.UnixNano())
+}
+
+// establish creates a durable camp in an eligible room, refusing an
+// ineligible room or a duplicate camp without any persistence change.
+func (m *CampingModule) establish(user *users.UserRecord, room *rooms.Room) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if !roomEligible(room, m.roomTag()) {
+		return "There is nowhere here to make camp."
+	}
+	if _, exists := m.camps[user.UserId]; exists {
+		return "You already have a camp. Use \"camp status\" to check it."
+	}
+	camp, err := camping.Established(user.UserId, room.RoomId)
+	if err != nil {
+		return "You can't make camp here."
+	}
+	m.camps[user.UserId] = camp
+	if err := m.saveLocked(); err != nil {
+		delete(m.camps, user.UserId)
+		return err.Error()
+	}
+	return "You make camp here."
+}
+
+// lightFire lights the leader's camp fire. The leader must be at the camp.
+func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[user.UserId]
+	if !ok {
+		return "You have no camp here. Use \"camp\" to make one."
+	}
+	if camp.RoomID != room.RoomId {
+		return "Your camp is not here."
+	}
+	lit, err := camp.LightFire()
+	if err != nil {
+		if errors.Is(err, camping.ErrFireAlreadyLit) {
+			return "Your campfire is already lit."
+		}
+		return "You can't light a fire here."
+	}
+	m.camps[user.UserId] = lit
+	if err := m.saveLocked(); err != nil {
+		m.camps[user.UserId] = camp
+		return err.Error()
+	}
+	return "You light a crackling campfire."
+}
+
+// startRest begins the one configured real-time rest session. The leader
+// must be at a lit camp, and survival must be available before any change is
+// made.
+func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
+	if err := m.survival.Available(); err != nil {
+		return err.Error()
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[user.UserId]
+	if !ok {
+		return "You have no camp here. Use \"camp\" to make one."
+	}
+	if camp.RoomID != room.RoomId {
+		return "Your camp is not here."
+	}
+	resting, err := camp.StartRest(m.clock().UTC())
+	if err != nil {
+		switch {
+		case errors.Is(err, camping.ErrFireNotLit):
+			return "You need a lit campfire to rest. Use \"camp fire\" first."
+		case errors.Is(err, camping.ErrRestAlreadyStarted):
+			return "You are already resting."
+		case errors.Is(err, camping.ErrRestAlreadyCompleted):
+			return "Your company has already rested at this camp."
+		}
+		return "You can't rest here."
+	}
+	m.camps[user.UserId] = resting
+	if err := m.saveLocked(); err != nil {
+		m.camps[user.UserId] = camp
+		return err.Error()
+	}
+	m.scheduleLocked(resting)
+	return fmt.Sprintf("You settle in by the fire to rest. (%s)", camping.RestDuration)
+}
+
+// breakCamp removes an idle camp. A resting camp cannot be broken.
+func (m *CampingModule) breakCamp(user *users.UserRecord, room *rooms.Room) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[user.UserId]
+	if !ok {
+		return "You have no camp to break."
+	}
+	if camp.RoomID != room.RoomId {
+		return "Your camp is not here."
+	}
+	if err := m.syncLocked(user.UserId); err != nil {
+		mudlog.Warn("camping: break sync", "leader", user.UserId, "error", err)
+	}
+	camp = m.camps[user.UserId]
+	if _, err := camp.Break(); err != nil {
+		if errors.Is(err, camping.ErrRestInProgress) {
+			return "You can't break camp while resting."
+		}
+		return "You can't break camp."
+	}
+	m.stopTimerLocked(user.UserId)
+	delete(m.camps, user.UserId)
+	delete(m.recoveryApplied, user.UserId)
+	if err := m.saveLocked(); err != nil {
+		m.camps[user.UserId] = camp
+		return err.Error()
+	}
+	return "You break camp."
+}
+
+// status renders the current camp/fire/rest state, syncing an overdue rest
+// completion first.
+func (m *CampingModule) status(leaderUserID int) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, ok := m.camps[leaderUserID]; !ok {
+		return "You have no camp."
+	}
+	if err := m.syncLocked(leaderUserID); err != nil {
+		mudlog.Warn("camping: status sync", "leader", leaderUserID, "error", err)
+	}
+	return m.statusTextLocked(leaderUserID)
+}
+
+// RenderCampView implements camping.ViewProvider. It replaces ordinary room
+// rendering only while the leader is actively resting.
+func (m *CampingModule) RenderCampView(leaderUserID int) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[leaderUserID]
+	if !ok || camp.Rest == nil || camp.Rest.State != camping.Resting {
+		return false, nil
+	}
+	if err := m.syncLocked(leaderUserID); err != nil {
+		mudlog.Warn("camping: view sync", "leader", leaderUserID, "error", err)
+	}
+	m.sendToLeader(leaderUserID, m.statusTextLocked(leaderUserID))
+	return true, nil
+}
+
+// MovementBlocked implements camping.MovementProvider. Only an active rest
+// blocks ordinary movement; an idle or broken camp never does.
+func (m *CampingModule) MovementBlocked(leaderUserID int) (bool, string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[leaderUserID]
+	if !ok || camp.Rest == nil || camp.Rest.State != camping.Resting {
+		return false, ""
+	}
+	remaining := m.remainingLocked(camp)
+	return true, fmt.Sprintf("You are resting at camp (%s remaining). Wait for your company to recover, or it will be interrupted.", remaining.Round(time.Second))
+}
+
+func (m *CampingModule) remainingLocked(camp camping.Camp) time.Duration {
+	if camp.Rest == nil {
+		return 0
+	}
+	remaining := camping.RestDuration - m.clock().UTC().Sub(camp.Rest.StartedAtUTC)
+	if remaining < 0 {
+		remaining = 0
+	}
+	return remaining
+}
+
+// syncLocked completes a due rest and applies its survival recovery, or
+// retries only the recovery call for a completed rest whose recovery has not
+// yet been durably marked applied. Both paths are idempotent: a crash between
+// persisting Completed and applying recovery retries recovery alone on the
+// next call, and a crash after recovery succeeds but before the applied
+// marker saves retries the (deduplicated) survival call harmlessly.
+func (m *CampingModule) syncLocked(leaderUserID int) error {
+	camp, ok := m.camps[leaderUserID]
+	if !ok || camp.Rest == nil {
+		return nil
+	}
+	if camp.Rest.State != camping.Completed {
+		now := m.clock().UTC()
+		if !camp.RestDue(now) {
+			return nil
+		}
+		completed, err := camp.CompleteRest(now)
+		if err != nil {
+			return err
+		}
+		original := camp
+		m.camps[leaderUserID] = completed
+		if err := m.saveLocked(); err != nil {
+			m.camps[leaderUserID] = original
+			return err
+		}
+		m.stopTimerLocked(leaderUserID)
+		return m.applyRestRecoveryLocked(leaderUserID, completed, true)
+	}
+	if m.recoveryApplied[leaderUserID] {
+		return nil
+	}
+	return m.applyRestRecoveryLocked(leaderUserID, camp, false)
+}
+
+func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.Camp, announce bool) error {
+	operationID := restOperationID(camp)
+	if _, err := m.survival.ApplyCompanyRestRecovery(leaderUserID, operationID, camping.FatigueRecovery); err != nil {
+		return err
+	}
+	m.recoveryApplied[leaderUserID] = true
+	if err := m.saveLocked(); err != nil {
+		// The in-memory applied marker is kept so a same-process retry cannot
+		// call survival a second time; persistence retries on the next save.
+		return err
+	}
+	if announce {
+		m.sendToLeader(leaderUserID, "Your company feels rested.")
+	}
+	return nil
+}
+
+func (m *CampingModule) scheduleLocked(camp camping.Camp) {
+	leaderUserID := camp.LeaderUserID
+	if camp.Rest == nil || camp.Rest.State != camping.Resting {
+		m.stopTimerLocked(leaderUserID)
+		return
+	}
+	remaining := m.remainingLocked(camp)
+	if m.timerGeneration == nil {
+		m.timerGeneration = map[int]uint64{}
+	}
+	m.timerGeneration[leaderUserID]++
+	generation := m.timerGeneration[leaderUserID]
+	m.stopTimerLocked(leaderUserID)
+	m.timers[leaderUserID] = m.scheduler.AfterFunc(remaining, func() {
+		m.onTimer(leaderUserID, generation)
+	})
+}
+
+func (m *CampingModule) stopTimerLocked(leaderUserID int) {
+	if timer, ok := m.timers[leaderUserID]; ok {
+		timer.Stop()
+		delete(m.timers, leaderUserID)
+	}
+}
+
+func (m *CampingModule) onTimer(leaderUserID int, generation uint64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.timerGeneration[leaderUserID] != generation {
+		return
+	}
+	if _, ok := m.timers[leaderUserID]; !ok {
+		return
+	}
+	delete(m.timers, leaderUserID)
+	camp, ok := m.camps[leaderUserID]
+	if !ok || camp.Rest == nil || camp.Rest.State != camping.Resting {
+		return
+	}
+	if err := m.syncLocked(leaderUserID); err != nil {
+		mudlog.Warn("camping: timer sync", "leader", leaderUserID, "error", err)
+	}
+}
+
+// recoverLocked reconciles persisted camps with the current clock on module
+// load, which also runs after a copyover restore. An active rest reschedules
+// its remaining duration or completes once if overdue; a completed rest
+// retries only its idempotent recovery. Invalid camps are retained untouched
+// for operator repair.
+func (m *CampingModule) recoverLocked() {
+	for leaderUserID, camp := range m.camps {
+		if err := camp.Validate(); err != nil {
+			mudlog.Warn("camping: recovery invalid camp", "leader", leaderUserID, "error", err)
+			continue
+		}
+		if camp.Rest == nil {
+			continue
+		}
+		switch camp.Rest.State {
+		case camping.Resting:
+			if err := m.syncLocked(leaderUserID); err != nil {
+				mudlog.Warn("camping: recovery sync", "leader", leaderUserID, "error", err)
+				continue
+			}
+			if refreshed, ok := m.camps[leaderUserID]; ok && refreshed.Rest != nil && refreshed.Rest.State == camping.Resting {
+				m.scheduleLocked(refreshed)
+			}
+		case camping.Completed:
+			if err := m.syncLocked(leaderUserID); err != nil {
+				mudlog.Warn("camping: recovery completion retry", "leader", leaderUserID, "error", err)
+			}
+		default:
+			mudlog.Warn("camping: recovery unknown rest state", "leader", leaderUserID, "state", camp.Rest.State)
+		}
+	}
+}
+
+func (m *CampingModule) sendToLeader(leaderUserID int, text string) {
+	if text == "" {
+		return
+	}
+	if user := users.GetByUserId(leaderUserID); user != nil {
+		user.SendText(text)
+	}
+}
+
+// statusTextLocked renders the current camp, fire, rest state, and company
+// needs. The module lock must be held.
+func (m *CampingModule) statusTextLocked(leaderUserID int) string {
+	camp, ok := m.camps[leaderUserID]
+	if !ok {
+		return "You have no camp."
+	}
+	lines := []string{fmt.Sprintf("Camp at %s.", roomTitle(camp.RoomID))}
+	if camp.FireLit {
+		lines = append(lines, "The campfire is lit.")
+	} else {
+		lines = append(lines, "There is no fire lit.")
+	}
+	if camp.Rest != nil {
+		switch camp.Rest.State {
+		case camping.Resting:
+			progress := camp.ProgressAt(m.clock().UTC())
+			remaining := m.remainingLocked(camp)
+			lines = append(lines, fmt.Sprintf("Resting: %d%% complete (%s remaining).", int(progress*100), remaining.Round(time.Second)))
+		case camping.Completed:
+			lines = append(lines, "Your company has rested here.")
+		}
+	}
+	lines = append(lines, "Company:")
+	for _, member := range m.survival.CompanyNeeds(leaderUserID) {
+		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
+			member.Name,
+			member.Needs.Hunger, survival.HungerLabel(member.Needs.Hunger),
+			member.Needs.Thirst, survival.ThirstLabel(member.Needs.Thirst),
+			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue)))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func roomTitle(roomID int) string {
+	if room := rooms.LoadRoom(roomID); room != nil && room.Title != "" {
+		return room.Title
+	}
+	return fmt.Sprintf("room #%d", roomID)
+}
+
+func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
+	args := strings.Fields(strings.ToLower(strings.TrimSpace(rest)))
+	if len(args) == 0 {
+		user.SendText(m.establish(user, room))
+		return true, nil
+	}
+	switch args[0] {
+	case "status":
+		user.SendText(m.status(user.UserId))
+	case "fire":
+		user.SendText(m.lightFire(user, room))
+	case "rest":
+		user.SendText(m.startRest(user, room))
+	case "break":
+		user.SendText(m.breakCamp(user, room))
+	default:
+		user.SendText(campUsage)
+	}
+	return true, nil
+}
