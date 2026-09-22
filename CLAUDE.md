@@ -4,11 +4,24 @@
 
 The "Terra + Luna Implementation Workflow" above, and `docs/LUNA_IMPLEMENTER_WORKFLOW.md`,
 are written for ChatGPT/Codex, which delegates to a native Codex subagent running
-`gpt-5.6-luna`. This project is also worked on with Claude Code, where the driving
-methodology is the **Superpowers** plugin (`obra/superpowers`, enabled for this repo via
-`.claude/settings.json` → `enabledPlugins["superpowers@claude-plugins-official"]`). On
-first opening this project in Claude Code, approve the one-time plugin-trust prompt if
-one appears.
+`gpt-5.6-luna`. This project is also worked on with Claude Code, where the intended
+driving methodology is the **Superpowers** plugin (`obra/superpowers`, nominally enabled
+for this repo via `.claude/settings.json` → `enabledPlugins["superpowers@claude-plugins-official"]`).
+
+**Known gap, verify before relying on this (checked 2026-09-22):** that `settings.json`
+flag does not by itself install the plugin. On at least one Claude Code host working this
+project, `superpowers@claude-plugins-official` was never actually installed — only the
+marketplace was registered — so none of its skills (`using-superpowers`, `brainstorming`,
+`writing-plans`, `executing-plans`, `subagent-driven-development`,
+`test-driven-development`, `requesting-code-review`, `finishing-a-development-branch`)
+were available, and Phases 8-10 were built without them, using the manual fallback below
+instead. Before trusting the "supersedes the manual worktree/plan steps" claim in the next
+paragraph, confirm the skills actually appear in this session's available-skills listing;
+if they don't, the plugin isn't installed here. A person can install it from an
+interactive `claude` terminal with `/plugin install superpowers@claude-plugins-official`
+(Claude Code agents cannot run that themselves — it's a terminal-dialog command). Once
+genuinely installed and confirmed available, the paragraph below is accurate and takes
+over.
 
 Superpowers' `using-superpowers` skill is mandatory-invocation: before any response or
 action, check whether a Superpowers skill applies and use it if so. In practice that
@@ -19,6 +32,21 @@ worktree/plan steps this file used to spell out, and **is** what
 `docs/superpowers/plans/README.md` and the phase plans in `docs/superpowers/plans/`
 already assume; those references now resolve correctly under Claude Code, exactly as
 they do under Codex.
+
+**Manual fallback (use whenever the skills above are unavailable):** the same shape,
+by hand. Before implementing a phase: (1) write a design doc under
+`docs/superpowers/specs/<date>-phase-N-<name>-design.md` covering prior-art check, scope,
+durable model, module, integration/open decisions, constraints/deferrals, and acceptance
+criteria — mirroring the existing spec files; (2) get the open decisions confirmed (ask
+the user, or apply their standing "proceed with your recommendation" instruction if one is
+in force, and record which happened in the doc); (3) write a companion plan doc under
+`docs/superpowers/plans/<date>-phase-N-<name>.md`, task-by-task with checkboxes, each task
+naming its files and its tests-first step, mirroring `docs/superpowers/plans/2026-09-22-phase-7-camping.md`'s
+format; (4) create the worktree/branch per "Branching & Worktrees" below and execute the
+plan task-by-task, checking boxes off as they land; (5) verify
+(`go test -race ./...`, `make generate`, `make validate`) and record the result in
+`docs/PROJECT_STATUS.md`; (6) merge and push. Do not implement first and backfill the plan
+doc after — write it before code, the same as the plugin would.
 
 Superpowers' `subagent-driven-development` skill dispatches implementer/reviewer
 subagents itself (via the `Agent` tool) and asks the driving session to pick a model per
