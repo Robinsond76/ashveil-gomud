@@ -355,14 +355,8 @@ func (m *ExpeditionModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 	if session.State == expedition.Traveling {
-		if err := m.syncLocked(evt.UserId); err != nil {
+		if err := m.syncAndCompleteLocked(evt.UserId); err != nil {
 			return events.Continue
-		}
-		session = m.sessions[evt.UserId]
-		if !m.clock().UTC().Before(session.StartedAtUTC.Add(profile.Duration)) {
-			m.completeLocked(session)
-		} else {
-			m.scheduleLocked(session)
 		}
 	} else if session.State == expedition.Completed {
 		m.recoverCompletedLocked(session, profile)
@@ -547,10 +541,28 @@ func (m *ExpeditionModule) syncAndCompleteLocked(leaderUserID int) error {
 	if err := m.syncLocked(leaderUserID); err != nil {
 		return err
 	}
-	if session, ok := m.sessions[leaderUserID]; ok && session.State == expedition.Traveling {
-		if profile, ok := m.profile(session.ProfileName); ok && !m.clock().UTC().Before(session.StartedAtUTC.Add(profile.Duration)) {
-			m.completeLocked(session)
+	session, ok := m.sessions[leaderUserID]
+	if !ok {
+		return nil
+	}
+	if session.State == expedition.Traveling {
+		if profile, ok := m.profile(session.ProfileName); ok && session.InterruptionDue(m.clock().UTC(), profile) {
+			if err := m.interruptLocked(session); err != nil {
+				return err
+			}
+			session = m.sessions[leaderUserID]
 		}
+	}
+	if session.State == expedition.Traveling {
+		if profile, ok := m.profile(session.ProfileName); ok {
+			if session.ActiveElapsedAt(m.clock().UTC(), profile.Duration) >= profile.Duration {
+				m.completeLocked(session)
+			} else {
+				m.scheduleLocked(session)
+			}
+		}
+	} else if session.State == expedition.Interrupted {
+		m.stopTimerLocked(leaderUserID)
 	}
 	return nil
 }
@@ -597,15 +609,28 @@ func (m *ExpeditionModule) syncLocked(leaderUserID int) error {
 	return m.syncLocked(leaderUserID)
 }
 
+func (m *ExpeditionModule) nextBoundaryDelayLocked(session expedition.TravelSession, profile expedition.TravelProfile) time.Duration {
+	target := profile.Duration
+	if !session.InterruptionTriggered && profile.Interruption != nil {
+		target = profile.Duration * time.Duration(profile.Interruption.Checkpoint) / expedition.CheckpointCount
+	}
+	delay := target - session.ActiveElapsedAt(m.clock().UTC(), profile.Duration)
+	if delay < 0 {
+		return 0
+	}
+	return delay
+}
+
 func (m *ExpeditionModule) scheduleLocked(session expedition.TravelSession) {
 	profile, ok := m.profile(session.ProfileName)
 	if !ok {
 		return
 	}
-	remaining := session.StartedAtUTC.Add(profile.Duration).Sub(m.clock().UTC())
-	if remaining < 0 {
-		remaining = 0
+	if session.State != expedition.Traveling {
+		m.stopTimerLocked(session.LeaderUserID)
+		return
 	}
+	remaining := m.nextBoundaryDelayLocked(session, profile)
 	leaderUserID := session.LeaderUserID
 	m.stopTimerLocked(leaderUserID)
 	m.timers[leaderUserID] = m.scheduler.AfterFunc(remaining, func() {
@@ -628,7 +653,34 @@ func (m *ExpeditionModule) onTimer(leaderUserID int) {
 	if !ok || session.State != expedition.Traveling {
 		return
 	}
-	m.completeLocked(session)
+	if err := m.syncAndCompleteLocked(leaderUserID); err != nil {
+		mudlog.Warn("expedition: timer sync", "leader", leaderUserID, "error", err)
+	}
+}
+
+func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) error {
+	profile, ok := m.profile(session.ProfileName)
+	if !ok {
+		return fmt.Errorf("expedition: unknown travel profile %q", session.ProfileName)
+	}
+	now := m.clock().UTC()
+	candidate, err := session.Interrupt(now, profile)
+	if err != nil {
+		return err
+	}
+	original := session
+	m.sessions[session.LeaderUserID] = candidate
+	if err := m.saveLocked(); err != nil {
+		m.sessions[session.LeaderUserID] = original
+		return err
+	}
+	m.stopTimerLocked(session.LeaderUserID)
+	m.sendToLeader(session.LeaderUserID, m.interruptionTextLocked(candidate))
+	return nil
+}
+
+func (m *ExpeditionModule) interruptionTextLocked(session expedition.TravelSession) string {
+	return fmt.Sprintf("A fallen tree blocks the %s route. Your company pauses before the obstruction.\nUse \"travel resume\" when you are ready to continue, or \"travel return\" to head back.", session.ProfileName)
 }
 
 // completeLocked applies the final earned checkpoint, persists Completed, then
@@ -683,7 +735,6 @@ func (m *ExpeditionModule) moveAndFinishLocked(session expedition.TravelSession,
 // recoverLocked reconciles persisted sessions with the current clock on module
 // load, which also runs after a copyover restore.
 func (m *ExpeditionModule) recoverLocked() {
-	now := m.clock().UTC()
 	for leaderUserID, session := range m.sessions {
 		profile, ok := m.profile(session.ProfileName)
 		if !ok {
@@ -692,13 +743,13 @@ func (m *ExpeditionModule) recoverLocked() {
 		}
 		switch session.State {
 		case expedition.Traveling:
-			if !now.Before(session.StartedAtUTC.Add(profile.Duration)) {
-				m.completeLocked(session)
-			} else {
-				m.scheduleLocked(session)
+			if err := m.syncAndCompleteLocked(leaderUserID); err != nil {
+				mudlog.Warn("expedition: recovery sync", "leader", leaderUserID, "error", err)
 			}
 		case expedition.Completed:
 			m.recoverCompletedLocked(session, profile)
+		case expedition.Interrupted:
+			m.stopTimerLocked(leaderUserID)
 		default:
 			// Interrupted and Cancelled are retained for forward compatibility.
 		}

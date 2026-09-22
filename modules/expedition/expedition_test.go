@@ -24,12 +24,14 @@ func TestMain(m *testing.M) {
 }
 
 type fakeStore struct {
-	saved     Registry
-	loadErr   error
-	saveErr   error
-	loadCalls int
-	saveCalls int
-	log       *orderLog
+	saved          Registry
+	loadErr        error
+	saveErr        error
+	failNextSave   bool
+	failOnSaveCall int
+	loadCalls      int
+	saveCalls      int
+	log            *orderLog
 }
 
 func (f *fakeStore) Load(registry *Registry) error {
@@ -45,6 +47,13 @@ func (f *fakeStore) Save(registry Registry) error {
 	f.saveCalls++
 	if f.log != nil {
 		f.log.entries = append(f.log.entries, "save")
+	}
+	if f.failNextSave {
+		f.failNextSave = false
+		return assert.AnError
+	}
+	if f.failOnSaveCall > 0 && f.saveCalls == f.failOnSaveCall {
+		return assert.AnError
 	}
 	if f.saveErr != nil {
 		return f.saveErr
@@ -129,6 +138,14 @@ func testProfiles() map[string]expedition.TravelProfile {
 			Exertion: survival.Exertion{Hunger: 10, Thirst: 10, Fatigue: 10},
 		},
 	}
+}
+
+func interruptionProfiles() map[string]expedition.TravelProfile {
+	profiles := testProfiles()
+	p := profiles["oak-road"]
+	p.Interruption = &expedition.InterruptionProfile{Kind: expedition.FallenTree, Checkpoint: 5}
+	profiles["oak-road"] = p
+	return profiles
 }
 
 func newTestModule(store Store, scheduler Scheduler, mover Mover, surv Survival, clock func() time.Time, profiles map[string]expedition.TravelProfile) *ExpeditionModule {
@@ -349,6 +366,66 @@ func TestLoadReschedulesRemainingSession(t *testing.T) {
 	require.Len(t, scheduler.delays, 1)
 	assert.Equal(t, 7*time.Second, scheduler.delays[0])
 	assert.Contains(t, module.sessions, 7)
+}
+
+func TestInterruptionSchedulesAtNextBoundaryAndStopsExactlyOnce(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	mover := &fakeMover{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, interruptionProfiles())
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	require.Len(t, scheduler.delays, 1)
+	assert.Equal(t, 5*time.Second, scheduler.delays[0])
+
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+	session, ok := module.sessions[7]
+	require.True(t, ok)
+	assert.Equal(t, expedition.Interrupted, session.State)
+	assert.Equal(t, uint8(5), session.LastExertionCheckpoint)
+	assert.Equal(t, []survival.Exertion{{Hunger: 5, Thirst: 5, Fatigue: 5}}, surv.applied)
+	assert.Empty(t, mover.moves)
+	assert.Contains(t, store.saved.Sessions, 7)
+	assert.Equal(t, expedition.Interrupted, store.saved.Sessions[7].State)
+	assert.Empty(t, module.timers)
+
+	saves := store.saveCalls
+	scheduler.fire(0)
+	assert.Equal(t, saves, store.saveCalls)
+	assert.Len(t, surv.applied, 1)
+	assert.Empty(t, mover.moves)
+}
+
+func TestInterruptionSaveFailureRestoresTravelingCheckpoint(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, &fakeMover{}, surv, func() time.Time { return now }, interruptionProfiles())
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(5 * time.Second)
+	store.failOnSaveCall = 4 // start, pending exertion, finalized checkpoint, interruption candidate
+	scheduler.fire(0)
+
+	session := module.sessions[7]
+	assert.Equal(t, expedition.Traveling, session.State)
+	assert.Equal(t, uint8(5), session.LastExertionCheckpoint)
+	assert.Nil(t, session.Interruption)
+	assert.False(t, session.InterruptionTriggered)
+	assert.Equal(t, expedition.Traveling, store.saved.Sessions[7].State)
+	assert.Empty(t, module.timers)
+	assert.Len(t, surv.applied, 1)
+
+	require.NoError(t, module.Sync(7))
+	assert.Equal(t, expedition.Interrupted, module.sessions[7].State)
+	assert.Equal(t, expedition.Interrupted, store.saved.Sessions[7].State)
+	assert.Len(t, surv.applied, 1)
 }
 
 func TestLoadCompletesOverdueSession(t *testing.T) {
