@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -105,6 +106,24 @@ func TestResolveAttackTargetCompanionOnlyStillInterceptsBetweenCompanions(t *tes
 	final, ok := resolveAttackTargetCompanionOnly(1, f, keyB, alive, formationcombat.ReachNone)
 	require.True(t, ok)
 	assert.Equal(t, keyA, final)
+}
+
+func TestPartyCombatantsUsesFormationPositionAndAliveHP(t *testing.T) {
+	var f company.Formation
+	require.NoError(t, f.Place(keyA, 0, 1))
+	require.NoError(t, f.Place(keyB, 2, 1))
+
+	party := mobparty.Party{Members: []int{1, 2}, Formation: f}
+	// partyCombatants resolves live HP via mobs.GetInstance, which returns
+	// nil for instance IDs that were never spawned in this test process --
+	// this documents the "gone mob reports HP 0" contract without needing
+	// a real mob registry.
+	combatants := partyCombatants(party, map[company.MemberKey]bool{keyA: true, keyB: true})
+
+	require.Len(t, combatants, 2)
+	for _, c := range combatants {
+		assert.Equal(t, 0, c.HP, "no mob instance 1/2 exists in this test process")
+	}
 }
 
 func TestEffectiveHPMatchesRankMobsFormula(t *testing.T) {

@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -412,4 +413,103 @@ func effectiveHP(hp, defense int) float64 {
 		defFrac = 0
 	}
 	return float64(hp) / (1.0 - defFrac)
+}
+
+// firstHostilePartyInRoom returns the first assembled hostile party
+// currently in room, if any. mobparty.Assemble is never cached (11a's own
+// design), so this is always a fresh snapshot.
+func firstHostilePartyInRoom(room *rooms.Room) (mobparty.Party, bool) {
+	parties := mobparty.Assemble(hostileMobSummaries(room))
+	if len(parties) == 0 {
+		return mobparty.Party{}, false
+	}
+	return parties[0], true
+}
+
+// partyCombatants adapts an assembled party's members into
+// engagement.Combatant values (live HP, formation row/col) for
+// engagement.AssignTarget. A member with no live mob instance reports
+// HP 0, which AssignTarget already treats as ineligible.
+func partyCombatants(party mobparty.Party, alive map[company.MemberKey]bool) []engagement.Combatant {
+	combatants := make([]engagement.Combatant, 0, len(party.Members))
+	for _, id := range party.Members {
+		hp := 0
+		if mob := mobs.GetInstance(id); mob != nil {
+			hp = mob.Character.Health
+		}
+		row, col, _ := party.Formation.Find(mobparty.MemberKeyFor(id))
+		combatants = append(combatants, engagement.Combatant{ID: id, HP: hp, Row: row, Col: col})
+	}
+	return combatants
+}
+
+// reassignEnemyTarget picks a new legal target (11b's weakest-HP
+// preference) for an attacker in attackerCol, from whichever hostile
+// party is currently in room. ok=false means no hostile party is present,
+// or none of its members are both alive and legal — the caller must fall
+// back to its existing "target lost, give up" behavior unchanged.
+func reassignEnemyTarget(attackerCol int, reach formationcombat.Reach, room *rooms.Room) (int, bool) {
+	party, ok := firstHostilePartyInRoom(room)
+	if !ok {
+		return 0, false
+	}
+
+	alive := aliveMapForParty(party)
+	candidates := partyCombatants(party, alive)
+
+	legal := func(attacker, defender engagement.Combatant) bool {
+		return formationcombat.Legal(attackerCol, party.Formation, mobparty.MemberKeyFor(defender.ID), alive, reach)
+	}
+
+	attacker := engagement.Combatant{Col: attackerCol}
+	return engagement.AssignTarget(attacker, candidates, engagement.Weakest, legal)
+}
+
+// reassignPlayerTarget attempts 11b's reassignment-on-target-loss for a
+// player whose current mob target just became invalid. On success it sets
+// a new Aggro target and returns true — the caller skips its own "target
+// lost" message/clear, and combat resumes normally next round against the
+// new target. false means unchanged pre-existing behavior: no company
+// formation, or no living legal replacement in any hostile party
+// currently in the room.
+func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
+	col, ok := resolvePlayerColumn(user.UserId)
+	if !ok {
+		return false
+	}
+	reach := combat.ResolveReach(user.Character, false)
+	newTargetId, ok := reassignEnemyTarget(col, reach, room)
+	if !ok {
+		return false
+	}
+	user.Character.SetAggro(0, newTargetId, characters.DefaultAttack)
+	events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+	return true
+}
+
+// reassignCompanionTarget is reassignPlayerTarget's companion-mob
+// counterpart. It only applies when mob is a currently-attached company
+// member (hostile mobs whose own target died are not reassigned — that's
+// enemy AI, out of scope; see this plan's Design Decision 1).
+func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
+	leaderUserID, key, isCompanion := company.LeaderAndKeyForInstance(mob.InstanceId)
+	if !isCompanion {
+		return false
+	}
+	f, ok := company.FormationFor(leaderUserID)
+	if !ok {
+		return false
+	}
+	_, col, found := f.Find(key)
+	if !found {
+		return false
+	}
+	reach := combat.ResolveReach(&mob.Character, mob.Reach)
+	newTargetId, ok := reassignEnemyTarget(col, reach, room)
+	if !ok {
+		return false
+	}
+	mob.Character.SetAggro(0, newTargetId, characters.DefaultAttack)
+	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+	return true
 }
