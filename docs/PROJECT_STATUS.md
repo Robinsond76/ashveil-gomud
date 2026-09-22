@@ -7,7 +7,7 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-22
 - **Branch:** `phase-7-camping`
-- **HEAD:** `955fc718` (Phase 7 Task 2 idempotent rest recovery; this status record follows)
+- **HEAD:** module/recovery integration commits following Task 2 (this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
 
@@ -15,10 +15,9 @@ instead of duplicating them.
 
 - **Completed:** Phase 0–1 (fork, baseline, integration map), Phase 2 (company
   companion slice), Phase 3 (company roster + 3×3 formation), Phase 4
-  (survival state), Phase 5 (terrain and travel profiles), and Phase 6 (travel
-  interruptions).
-- **Paused:** Phase 7 — camping. The user-requested five-hour usage boundary was
-  reached with 5% remaining after Tasks 1–2; Tasks 3–4 have not begun.
+  (survival state), Phase 5 (terrain and travel profiles), Phase 6 (travel
+  interruptions), and Phase 7 (camping).
+- **Next:** Phase 8 — weather.
 
 ## Phase progress
 
@@ -31,7 +30,7 @@ instead of duplicating them.
 | 4 | Survival state (hunger/thirst/fatigue) | Complete |
 | 5 | Terrain and travel profiles | Complete |
 | 6 | Travel interruptions | Complete |
-| 7 | Camping | Paused — Tasks 1–2 complete; module/recovery integration pending |
+| 7 | Camping | Complete |
 | 8 | Weather | Not started |
 | 9 | Encumbrance and cargo | Not started |
 | 10 | Mounts | Not started |
@@ -40,25 +39,54 @@ instead of duplicating them.
 
 ## Recent work log
 
-### Phase 7 — Camping (in progress, 2026-09-22)
+### Phase 7 — Camping (complete, 2026-09-22)
 
-- **What:** Committed the Phase 7 design and implementation plan for a small,
-  durable campsite loop: eligible-room camp establishment, fire state, one
-  60-second real-time rest, fatigue-only company recovery, and camp break.
-- **Why:** Camping is the next expedition recovery vertical slice and must never
-  advance the shared world clock. Weather, supplies, encounters, temporary
-  rooms, and multiplayer camp discovery remain deferred.
-- **Commits:** `904176f1` (design), `1675db0c` (plan), `472a7985` (validated
-  `internal/camping` domain model), `955fc718` (idempotent company rest
-  recovery).
-- **Verification:** Task 1's `go test -race ./internal/camping -count=1` and
-  `go test ./... -count=1` passed. Task 2's
-  `go test -race ./internal/survival ./modules/survival -count=1` passed.
-- **Pause point:** The five-hour window reached 95% used / 5% remaining, so work
-  stopped as requested. The branch is clean. Task 3 (durable camping module,
-  commands, and eligibility) and Task 4 (rest timer completion/recovery,
-  views, and movement integration) remain unstarted; resume with Task 3 after
-  the usage window resets.
+- **What:** Delivered a durable, real-time, fatigue-only campsite and rest
+  loop. `internal/camping` is a GoMud-free domain: a leader/room-keyed `Camp`
+  with `FireLit` and an optional `RestSession{StartedAtUTC,State}`; progress
+  and due-ness derive from real UTC elapsed time. `internal/survival` gained
+  an `ApplyCompanyRestRecovery(leaderUserID, operationID, fatigue)` seam with
+  its own applied-operation ledger, so replay after a crash or restart cannot
+  restore fatigue twice. `modules/camping` owns a leader-keyed YAML registry,
+  `camp`/`camp status`/`camp fire`/`camp rest`/`camp break` commands, room-tag
+  (`camping`) eligibility, a single 60-second completion timer per leader with
+  generation-guarded stale-callback protection, and a persist-Completed-
+  before-calling-survival protocol: a crash between finalizing the rest and
+  applying recovery retries recovery alone (idempotently and silently) on the
+  next status/look/load call, tracked by a durable per-leader
+  `RecoveryApplied` marker in the same registry. Load/copyover recovery
+  reschedules an active rest's remaining duration, completes an overdue rest
+  once, retries pending recovery for an already-completed rest, and retains
+  an invalid camp untouched for operator repair. `internal/camping` also
+  exposes a `ViewProvider`/`MovementProvider` seam, mirroring
+  `modules/expedition`'s pattern: native `go` refuses ordinary movement with
+  remaining-rest progress while resting, and `look` renders the camp/rest
+  view in place of the room only while resting (an idle or broken camp never
+  blocks movement or replaces room rendering). Dunmar 2002 (Fork at the Black
+  Oak) is tagged `camping` as the proving room.
+- **Why:** Camping is the next expedition recovery vertical slice and must
+  never advance the shared world clock or round count. Weather, supplies,
+  encounters, temporary rooms, and multiplayer camp discovery remain
+  deferred.
+- **Step completed:** Handoff-style Phase 7 plan
+  (`docs/superpowers/plans/2026-09-22-phase-7-camping.md`), all five tasks.
+- **Key commits:** `904176f1` (design), `1675db0c` (plan), `472a7985`
+  (validated `internal/camping` domain model), `955fc718` (idempotent company
+  rest recovery), and the module/wiring commits establishing durable camps,
+  completing real-time rest, and wiring movement/look/the proving room.
+- **Verification:** `go test -race ./...` (1670 tests / 71 packages),
+  `make generate`, and `make validate` pass. Focused race suites cover
+  `internal/camping`, `internal/survival`, `modules/survival`, and
+  `modules/camping`, including stale-timer, failed-recovery-retry, failed-
+  finalization-save-retry, restart/copyover reschedule and overdue
+  completion, invalid-record retention, and idle-camp-never-blocks-movement
+  cases.
+- **Live acceptance:** Not run: this host has no interactive Telnet client.
+  The deterministic fake store/scheduler/survival, injected clock, and
+  command/view/movement/race suites cover the proving room behavior.
+- **Deferred:** Weather, shelter, fire fuel/items, cooking, watches, camp
+  encounters, temporary/discoverable camp rooms, multi-player camps, and
+  sleep-until-dawn remain outside Phase 7.
 
 ### Phase 6 — Travel interruptions (complete, 2026-09-22)
 
@@ -350,10 +378,19 @@ instead of duplicating them.
 - Company/formation/survival state is process-local with no mutex, matching the
   existing event-loop dispatch assumption; revisit if command dispatch moves off
   the main loop.
+- Camping and survival rest recovery are separate plugin writes, like
+  expedition/survival exertion. `modules/camping` persists `Completed` before
+  calling survival, and a durable per-leader `RecoveryApplied` marker (plus
+  survival's own applied-operation ledger) makes a crash between the two
+  writes retry recovery alone rather than double-apply or silently drop it.
+- Live server acceptance has not been run for Phase 7; unit/race coverage
+  spans the camp/rest domain, module commands, eligibility, timers, recovery,
+  and movement/view integration.
 - Deferred by design: recruitment economics, companion custom names, equipment,
-  injuries, AI orders, death/permadeath rules, formation combat effects, travel
-  interruptions (Phase 6), and camp/weather/cargo/mount integration (Phases
-  7–10).
+  injuries, AI orders, death/permadeath rules, formation combat effects, and
+  weather/cargo/mount integration (Phases 8–10). Camping itself excludes
+  weather, shelter, fire fuel/items, cooking, watches, encounters,
+  temporary/discoverable camp rooms, multi-player camps, and sleep-until-dawn.
 
 ## Key documents
 
