@@ -291,10 +291,15 @@ func parseProfiles(raw any) map[string]expedition.TravelProfile {
 		if !ok {
 			continue
 		}
+		interruption, ok := parseInterruption(fields["interruption"])
+		if !ok {
+			continue
+		}
 		profile := expedition.TravelProfile{
-			Name:     name,
-			Duration: duration,
-			Exertion: parseExertion(fields["exertion"]),
+			Name:         name,
+			Duration:     duration,
+			Exertion:     parseExertion(fields["exertion"]),
+			Interruption: interruption,
 		}
 		if err := profile.Validate(); err != nil {
 			mudlog.Warn("expedition: invalid travel profile", "name", name, "error", err)
@@ -307,6 +312,31 @@ func parseProfiles(raw any) map[string]expedition.TravelProfile {
 		profiles[profile.Name] = profile
 	}
 	return profiles
+}
+
+// parseInterruption parses the optional, documented interruption shape.
+// Absent interruptions are valid; present malformed interruptions invalidate
+// the containing profile instead of being silently discarded.
+func parseInterruption(raw any) (*expedition.InterruptionProfile, bool) {
+	if raw == nil {
+		return nil, true
+	}
+	fields := stringMap(raw)
+	if fields == nil {
+		return nil, false
+	}
+	checkpoint := configInt(fields["checkpoint"])
+	if checkpoint < 1 || checkpoint >= expedition.CheckpointCount {
+		return nil, false
+	}
+	interruption := &expedition.InterruptionProfile{
+		Kind:       expedition.InterruptionKind(configString(fields["kind"])),
+		Checkpoint: uint8(checkpoint),
+	}
+	if err := interruption.Validate(); err != nil {
+		return nil, false
+	}
+	return interruption, true
 }
 
 func (m *ExpeditionModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
@@ -410,6 +440,11 @@ func configInt(raw any) int {
 		}
 	}
 	return 0
+}
+
+func configString(raw any) string {
+	value, _ := raw.(string)
+	return value
 }
 
 func exertionZero(cost survival.Exertion) bool {

@@ -156,21 +156,35 @@ func startRequest() expedition.StartRequest {
 
 func TestParseProfilesRejectsMalformedAndDuplicates(t *testing.T) {
 	raw := []any{
-		map[string]any{"Name": "oak-road", "Duration": "30s", "Exertion": map[string]any{"Hunger": 4, "Thirst": 4, "Fatigue": 6}},
+		map[string]any{"Name": "oak-road", "Duration": "30s", "Exertion": map[string]any{"Hunger": 4, "Thirst": 4, "Fatigue": 6}, "Interruption": map[string]any{"Kind": "fallen-tree", "Checkpoint": 5}},
 		map[string]any{"Name": "oak-road", "Duration": "60s"},
 		map[string]any{"Name": "zero", "Duration": 0},
 		map[string]any{"Name": "negative", "Duration": "10s", "Exertion": map[string]any{"Hunger": -1}},
 		map[string]any{"Name": "seconds-int", "Duration": 45},
+		map[string]any{"Name": "unknown-kind", "Duration": "30s", "Interruption": map[string]any{"Kind": "rock-slide", "Checkpoint": 5}},
+		map[string]any{"Name": "non-map", "Duration": "30s", "Interruption": "fallen-tree"},
+		map[string]any{"Name": "checkpoint-zero", "Duration": "30s", "Interruption": map[string]any{"Kind": "fallen-tree", "Checkpoint": 0}},
+		map[string]any{"Name": "checkpoint-ten", "Duration": "30s", "Interruption": map[string]any{"Kind": "fallen-tree", "Checkpoint": 10}},
+		map[string]any{"Name": "malformed-interruption", "Duration": "30s", "Interruption": map[string]any{"Kind": "fallen-tree", "Checkpoint": 0}},
 	}
 	profiles := parseProfiles(raw)
 
 	require.Contains(t, profiles, "oak-road")
 	assert.Equal(t, 30*time.Second, profiles["oak-road"].Duration)
 	assert.Equal(t, survival.Exertion{Hunger: 4, Thirst: 4, Fatigue: 6}, profiles["oak-road"].Exertion)
+	require.NotNil(t, profiles["oak-road"].Interruption)
+	assert.Equal(t, expedition.FallenTree, profiles["oak-road"].Interruption.Kind)
+	assert.Equal(t, uint8(5), profiles["oak-road"].Interruption.Checkpoint)
 	assert.NotContains(t, profiles, "zero")
 	assert.NotContains(t, profiles, "negative")
 	require.Contains(t, profiles, "seconds-int")
 	assert.Equal(t, 45*time.Second, profiles["seconds-int"].Duration)
+	assert.Nil(t, profiles["seconds-int"].Interruption)
+	assert.NotContains(t, profiles, "unknown-kind")
+	assert.NotContains(t, profiles, "non-map")
+	assert.NotContains(t, profiles, "checkpoint-zero")
+	assert.NotContains(t, profiles, "checkpoint-ten")
+	assert.NotContains(t, profiles, "malformed-interruption")
 }
 
 func TestStartTravelPersistsBeforeScheduling(t *testing.T) {
@@ -537,6 +551,9 @@ func TestDunmarOakRoute(t *testing.T) {
 	profile, ok := profiles["oak-road"]
 	require.True(t, ok, "oak-road must be configured")
 	require.Greater(t, profile.Duration, time.Duration(0))
+	require.NotNil(t, profile.Interruption)
+	assert.Equal(t, expedition.FallenTree, profile.Interruption.Kind)
+	assert.Equal(t, uint8(5), profile.Interruption.Checkpoint)
 
 	full := survival.FullNeeds()
 	assert.Greater(t, full.Hunger-profile.Exertion.Hunger, 25, "hunger must stay above critical")
