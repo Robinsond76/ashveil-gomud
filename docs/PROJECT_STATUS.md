@@ -16,7 +16,7 @@ instead of duplicating them.
 - **Completed:** Phase 0–1 (fork, baseline, integration map), Phase 2 (company
   companion slice), Phase 3 (company roster + 3×3 formation), Phase 4
   (survival state), and Phase 5 (terrain and travel profiles).
-- **In progress:** Phase 6 — travel interruptions (paused after Task 1).
+- **In progress:** Phase 6 — travel interruptions (paused at Task 1's scoped re-review).
 
 ## Phase progress
 
@@ -28,7 +28,7 @@ instead of duplicating them.
 | 3 | Company roster (cap 5) + 3×3 formation state | Complete |
 | 4 | Survival state (hunger/thirst/fatigue) | Complete |
 | 5 | Terrain and travel profiles | Complete |
-| 6 | Travel interruptions | In progress — paused after Task 1 |
+| 6 | Travel interruptions | In progress — Task 1 re-review pending |
 | 7 | Camping | Not started |
 | 8 | Weather | Not started |
 | 9 | Encumbrance and cargo | Not started |
@@ -40,12 +40,12 @@ instead of duplicating them.
 
 ### Phase 6 — Travel interruptions (in progress, paused 2026-09-21)
 
-- **Completed scope:** Task 1 from [the Phase 6 plan](superpowers/plans/2026-09-21-phase-6-travel-interruptions.md): `internal/expedition` now owns a typed, optional `fallen-tree` interruption profile with checkpoints strictly in `1..9`, durable interruption/pause values, active-UTC-time progress/checkpoint/exertion math, and pure `Interrupt`, `Resume`, and `Return` transitions. A resumed session retains its one-shot marker; generic transitions cannot manufacture or erase interruption state.
+- **Implemented scope:** Task 1 from [the Phase 6 plan](superpowers/plans/2026-09-21-phase-6-travel-interruptions.md): `internal/expedition` now owns a typed, optional `fallen-tree` interruption profile with checkpoints strictly in `1..9`, durable interruption/pause values, active-UTC-time progress/checkpoint/exertion math, and pure `Interrupt`, `Resume`, and `Return` transitions. A resumed session retains its one-shot marker; generic transitions cannot manufacture or erase interruption state.
 - **Why:** This establishes the durable, GoMud-free state machine that the later parser, timer/persistence, command/recovery, and acceptance tasks consume. Paused wall-clock time never advances route progress or survival exertion, and no global game time or round count changes.
-- **Review/corrections:** Task review identified and corrected two invariant gaps before continuing: malformed interrupted records without `InterruptionTriggered` are rejected, and generic transitions into or out of `Interrupted` are refused in favor of the dedicated state operations.
+- **Review/corrections:** Task review identified two invariant gaps and their fixes are committed: malformed interrupted records without `InterruptionTriggered` are rejected, and generic transitions into or out of `Interrupted` are refused in favor of the dedicated state operations. The scoped re-review of those fixes is still pending.
 - **Commits:** `e25d2ec6` (domain model), `2a45f473` (interruption transition invariants).
 - **Verification:** Independent `go test -race ./internal/expedition -count=1` passed after the correction. The initial clean baseline `go test ./...` passed in the Phase 6 worktree. No Phase 6 module, generated-file, broad race-suite, or live acceptance verification has been run after Task 1.
-- **Paused at:** Task 2 — parse and ship the Oak Road interruption. Tasks 2–5 remain unstarted; do not mark Phase 6 complete.
+- **Paused at:** the Task 1 scoped re-review. Task 2 — parse and ship the Oak Road interruption — and Tasks 3–5 remain unstarted; do not mark Phase 6 complete.
 
 ### Phase 5 — Terrain and travel profiles (complete, 2026-09-21)
 
