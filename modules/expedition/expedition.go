@@ -165,10 +165,11 @@ type ExpeditionModule struct {
 	mover     Mover
 	survival  Survival
 
-	profiles map[string]expedition.TravelProfile
-	sessions map[int]expedition.TravelSession
-	timers   map[int]Timer
-	loadErr  error
+	profiles        map[string]expedition.TravelProfile
+	sessions        map[int]expedition.TravelSession
+	timers          map[int]Timer
+	timerGeneration map[int]uint64
+	loadErr         error
 
 	mu sync.Mutex
 }
@@ -181,14 +182,15 @@ var (
 
 func init() {
 	m := &ExpeditionModule{
-		plug:      plugins.New("expedition", "1.0"),
-		clock:     time.Now,
-		scheduler: realScheduler{},
-		mover:     nativeMover{},
-		survival:  nativeSurvival{},
-		profiles:  map[string]expedition.TravelProfile{},
-		sessions:  map[int]expedition.TravelSession{},
-		timers:    map[int]Timer{},
+		plug:            plugins.New("expedition", "1.0"),
+		clock:           time.Now,
+		scheduler:       realScheduler{},
+		mover:           nativeMover{},
+		survival:        nativeSurvival{},
+		profiles:        map[string]expedition.TravelProfile{},
+		sessions:        map[int]expedition.TravelSession{},
+		timers:          map[int]Timer{},
+		timerGeneration: map[int]uint64{},
 	}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
@@ -252,6 +254,7 @@ func (m *ExpeditionModule) load() {
 		m.sessions = map[int]expedition.TravelSession{}
 	}
 	m.timers = map[int]Timer{}
+	m.timerGeneration = map[int]uint64{}
 	m.loadErr = nil
 	if m.plug != nil {
 		m.profiles = m.loadProfiles()
@@ -352,6 +355,10 @@ func (m *ExpeditionModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	}
 	profile, ok := m.profile(session.ProfileName)
 	if !ok {
+		return events.Continue
+	}
+	if err := session.ValidateForProfile(profile); err != nil {
+		mudlog.Warn("expedition: spawn invalid session", "leader", evt.UserId, "error", err)
 		return events.Continue
 	}
 	if session.State == expedition.Traveling {
@@ -538,7 +545,21 @@ func (m *ExpeditionModule) Sync(leaderUserID int) error {
 }
 
 func (m *ExpeditionModule) syncAndCompleteLocked(leaderUserID int) error {
-	if session, ok := m.sessions[leaderUserID]; ok && session.State == expedition.Interrupted {
+	session, ok := m.sessions[leaderUserID]
+	if !ok {
+		return nil
+	}
+	profile, ok := m.profile(session.ProfileName)
+	if !ok {
+		return fmt.Errorf("expedition: unknown travel profile %q", session.ProfileName)
+	}
+	if err := session.ValidateForProfile(profile); err != nil {
+		return err
+	}
+	if session.State == expedition.Cancelled || session.State == expedition.Completed {
+		return nil
+	}
+	if session.State == expedition.Interrupted {
 		// Paused travel has no active elapsed time and must never charge survival
 		// exertion merely because a view, spawn, or stale timer is processed.
 		m.stopTimerLocked(leaderUserID)
@@ -547,12 +568,9 @@ func (m *ExpeditionModule) syncAndCompleteLocked(leaderUserID int) error {
 	if err := m.syncLocked(leaderUserID); err != nil {
 		return err
 	}
-	session, ok := m.sessions[leaderUserID]
-	if !ok {
-		return nil
-	}
+	session = m.sessions[leaderUserID]
 	if session.State == expedition.Traveling {
-		if profile, ok := m.profile(session.ProfileName); ok && session.InterruptionDue(m.clock().UTC(), profile) {
+		if session.InterruptionDue(m.clock().UTC(), profile) {
 			if err := m.interruptLocked(session); err != nil {
 				return err
 			}
@@ -560,12 +578,10 @@ func (m *ExpeditionModule) syncAndCompleteLocked(leaderUserID int) error {
 		}
 	}
 	if session.State == expedition.Traveling {
-		if profile, ok := m.profile(session.ProfileName); ok {
-			if session.ActiveElapsedAt(m.clock().UTC(), profile.Duration) >= profile.Duration {
-				m.completeLocked(session)
-			} else {
-				m.scheduleLocked(session)
-			}
+		if session.ActiveElapsedAt(m.clock().UTC(), profile.Duration) >= profile.Duration {
+			m.completeLocked(session)
+		} else {
+			m.scheduleLocked(session)
 		}
 	} else if session.State == expedition.Interrupted {
 		m.stopTimerLocked(leaderUserID)
@@ -638,9 +654,14 @@ func (m *ExpeditionModule) scheduleLocked(session expedition.TravelSession) {
 	}
 	remaining := m.nextBoundaryDelayLocked(session, profile)
 	leaderUserID := session.LeaderUserID
+	if m.timerGeneration == nil {
+		m.timerGeneration = map[int]uint64{}
+	}
+	m.timerGeneration[leaderUserID]++
+	generation := m.timerGeneration[leaderUserID]
 	m.stopTimerLocked(leaderUserID)
 	m.timers[leaderUserID] = m.scheduler.AfterFunc(remaining, func() {
-		m.onTimer(leaderUserID)
+		m.onTimer(leaderUserID, generation)
 	})
 }
 
@@ -651,9 +672,15 @@ func (m *ExpeditionModule) stopTimerLocked(leaderUserID int) {
 	}
 }
 
-func (m *ExpeditionModule) onTimer(leaderUserID int) {
+func (m *ExpeditionModule) onTimer(leaderUserID int, generation uint64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if m.timerGeneration[leaderUserID] != generation {
+		return
+	}
+	if _, ok := m.timers[leaderUserID]; !ok {
+		return
+	}
 	delete(m.timers, leaderUserID)
 	session, ok := m.sessions[leaderUserID]
 	if !ok || session.State != expedition.Traveling {
@@ -844,6 +871,9 @@ func (m *ExpeditionModule) arrivalTextLocked(session expedition.TravelSession) s
 func (m *ExpeditionModule) statusTextLocked(leaderUserID int) string {
 	session, ok := m.sessions[leaderUserID]
 	if !ok {
+		return "You are not travelling."
+	}
+	if session.State == expedition.Cancelled || session.State == expedition.Completed {
 		return "You are not travelling."
 	}
 	profile, ok := m.profile(session.ProfileName)

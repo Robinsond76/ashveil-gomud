@@ -453,6 +453,56 @@ func TestReturnCleanupFailureRetainsCancelledForRecoveryWithoutMovement(t *testi
 	assert.NotContains(t, module.sessions, 7)
 }
 
+func TestCancelledCleanupRecordCannotProgressThroughStatusOrSpawn(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	store := &fakeStore{failOnSaveCall: 2}
+	mover := &fakeMover{user: user}
+	surv := &fakeSurvival{}
+	module := newTestModule(store, &fakeScheduler{}, mover, surv, func() time.Time { return baseTime().Add(time.Hour) }, interruptionProfiles())
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
+
+	module.returnToOrigin(7)
+	require.Equal(t, expedition.Cancelled, module.sessions[7].State)
+	assert.NoError(t, module.Sync(7))
+	assert.NotEmpty(t, module.status(7))
+	module.onPlayerSpawn(events.PlayerSpawn{UserId: 7})
+	assert.Empty(t, surv.applied)
+	assert.Empty(t, mover.moves)
+	assert.Equal(t, expedition.Cancelled, module.sessions[7].State)
+}
+
+func TestMalformedTravelingRecordCannotProgressThroughStatusOrSpawn(t *testing.T) {
+	user := travelUser(t, 7, 100)
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	mover := &fakeMover{user: user}
+	module := newTestModule(&fakeStore{}, scheduler, mover, surv, func() time.Time { return baseTime().Add(time.Hour) }, interruptionProfiles())
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, InterruptionTriggered: true, State: expedition.Traveling}
+
+	assert.Error(t, module.Sync(7))
+	assert.NotEmpty(t, module.status(7))
+	module.onPlayerSpawn(events.PlayerSpawn{UserId: 7})
+	assert.Empty(t, surv.applied)
+	assert.Empty(t, mover.moves)
+	assert.Empty(t, scheduler.callbacks)
+	assert.Contains(t, module.sessions, 7)
+}
+
+func TestStaleTimerCallbackCannotDeleteReplacementTimer(t *testing.T) {
+	scheduler := &fakeScheduler{}
+	module := newTestModule(&fakeStore{}, scheduler, &fakeMover{}, &fakeSurvival{}, baseTime, interruptionProfiles())
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now := baseTime().Add(5 * time.Second)
+	module.clock = func() time.Time { return now }
+	assert.Contains(t, module.status(7), "Paused")
+	assert.Contains(t, module.resume(7), "resume")
+	require.Len(t, module.timers, 1)
+	// Callback 0 is the old handle; callback 1 is the replacement handle.
+	scheduler.fire(0)
+	assert.Len(t, module.timers, 1)
+}
+
 func TestRecoveryInterruptedAndMalformedRecordsDoNotScheduleOrExert(t *testing.T) {
 	valid := expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, LastExertionCheckpoint: 5, State: expedition.Interrupted}
 	malformed := valid
