@@ -270,6 +270,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	}
 
 	visibleFriendlyMobs := []string{}
+	hostileMobs := []hostileMobDisplay{}
 
 	for idx, mobInstanceId := range r.mobs {
 		if mob := mobs.GetInstance(mobInstanceId); mob != nil {
@@ -294,12 +295,19 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 			if mob.Character.IsCharmed() {
 				visibleFriendlyMobs = append(visibleFriendlyMobs, mobName.String())
 			} else {
-				details.VisibleMobs = append(details.VisibleMobs, mobName.String())
+				hostileMobs = append(hostileMobs, hostileMobDisplay{
+					instanceId: mobInstanceId,
+					groups:     mob.Groups,
+					rawName:    mob.Character.Name,
+					display:    mobName.String(),
+				})
 			}
 		} else {
 			r.mobs = append(r.mobs[:idx], r.mobs[idx+1:]...)
 		}
 	}
+
+	details.VisibleMobs = groupedMobDisplay(hostileMobs)
 
 	// Add the friendly mobs to the end
 	details.VisibleMobs = append(details.VisibleMobs, visibleFriendlyMobs...)
