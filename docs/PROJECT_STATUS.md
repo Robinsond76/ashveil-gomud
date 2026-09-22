@@ -6,8 +6,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `master`
-- **HEAD:** `91700414` (Phase 6 merged locally; this status record follows)
+- **Branch:** `phase-7-camping`
+- **HEAD:** `1675db0c` (Phase 7 design and implementation plan; this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
 
@@ -17,7 +17,7 @@ instead of duplicating them.
   companion slice), Phase 3 (company roster + 3×3 formation), Phase 4
   (survival state), Phase 5 (terrain and travel profiles), and Phase 6 (travel
   interruptions).
-- **Next:** Phase 7 — camping.
+- **In progress:** Phase 7 — camping (design and implementation plan complete; code not started).
 
 ## Phase progress
 
@@ -30,7 +30,7 @@ instead of duplicating them.
 | 4 | Survival state (hunger/thirst/fatigue) | Complete |
 | 5 | Terrain and travel profiles | Complete |
 | 6 | Travel interruptions | Complete |
-| 7 | Camping | Not started |
+| 7 | Camping | In progress — planned |
 | 8 | Weather | Not started |
 | 9 | Encumbrance and cargo | Not started |
 | 10 | Mounts | Not started |
@@ -38,6 +38,18 @@ instead of duplicating them.
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 7 — Camping (in progress, 2026-09-22)
+
+- **What:** Committed the Phase 7 design and implementation plan for a small,
+  durable campsite loop: eligible-room camp establishment, fire state, one
+  60-second real-time rest, fatigue-only company recovery, and camp break.
+- **Why:** Camping is the next expedition recovery vertical slice and must never
+  advance the shared world clock. Weather, supplies, encounters, temporary
+  rooms, and multiplayer camp discovery remain deferred.
+- **Commits:** `904176f1` (design), `1675db0c` (plan).
+- **Next:** Implement plan Task 1 (`internal/camping` domain model), then the
+  idempotent survival recovery seam and camping module.
 
 ### Phase 6 — Travel interruptions (complete, 2026-09-22)
 
