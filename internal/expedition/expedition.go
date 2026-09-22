@@ -137,14 +137,14 @@ func (s SessionState) Valid() bool {
 	return s <= Cancelled
 }
 
-// CanTransitionTo reports whether a state change is legal. Completed and
-// Cancelled are terminal.
+// CanTransitionTo reports whether the generic transition is legal. Completed
+// and Cancelled are terminal, and Interrupted is not reachable through it:
+// entering or leaving Interrupted must go through Interrupt, Resume, or Return,
+// which maintain the payload, pause-instant, and one-shot-marker invariants.
 func (s SessionState) CanTransitionTo(to SessionState) bool {
 	switch s {
 	case Traveling:
-		return to == Interrupted || to == Completed || to == Cancelled
-	case Interrupted:
-		return to == Traveling || to == Completed || to == Cancelled
+		return to == Completed || to == Cancelled
 	default:
 		return false
 	}
@@ -209,8 +209,10 @@ func (s TravelSession) Validate() error {
 	}
 	if s.State == Interrupted {
 		// A halted route must know the immutable event and the instant it
-		// halted at, or restart/copyover cannot charge active time correctly.
-		if s.Interruption == nil || s.PausedAtUTC.IsZero() {
+		// halted at, or restart/copyover cannot charge active time correctly. It
+		// must also carry the one-shot marker: Interrupt is the only writer of
+		// this state and always sets it, so a false marker is corrupt data.
+		if s.Interruption == nil || s.PausedAtUTC.IsZero() || !s.InterruptionTriggered {
 			return ErrInvalidSession
 		}
 		return nil

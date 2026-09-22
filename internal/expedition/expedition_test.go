@@ -159,6 +159,15 @@ func TestTravelSessionValidate(t *testing.T) {
 	bad.Interruption = &TravelInterruption{Checkpoint: 5}
 	require.ErrorIs(t, bad.Validate(), ErrInvalidSession)
 
+	// An Interrupted record whose one-shot marker is false is malformed: the
+	// only writer of that state is Interrupt, which always sets the marker, so a
+	// false marker means the persisted record was hand-edited or truncated.
+	bad = validSession()
+	bad.State = Interrupted
+	bad.PausedAtUTC = baseTime().Add(15 * time.Second)
+	bad.Interruption = &TravelInterruption{Kind: FallenTree, Checkpoint: 5}
+	require.ErrorIs(t, bad.Validate(), ErrInvalidSession)
+
 	// A completed route may still carry the history of its pause.
 	done := validSession()
 	done.State = Completed
@@ -260,13 +269,14 @@ func TestSessionTransitions(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, Completed, completed.State)
 
-	interrupted, err := validSession().Transition(Interrupted)
-	require.NoError(t, err)
-	assert.Equal(t, Interrupted, interrupted.State)
-
 	cancelled, err := validSession().Transition(Cancelled)
 	require.NoError(t, err)
 	assert.Equal(t, Cancelled, cancelled.State)
+
+	// Interrupted is owned by Interrupt, Resume, and Return: the generic
+	// transition must not fabricate or repair an interruption record.
+	_, err = validSession().Transition(Interrupted)
+	require.ErrorIs(t, err, ErrInvalidTransition)
 
 	terminal := validSession()
 	terminal.State = Completed
@@ -276,6 +286,35 @@ func TestSessionTransitions(t *testing.T) {
 	terminal.State = Cancelled
 	_, err = terminal.Transition(Completed)
 	require.ErrorIs(t, err, ErrInvalidTransition)
+}
+
+func TestGenericTransitionCannotEnterOrLeaveInterruption(t *testing.T) {
+	profile := validFallenTreeProfile()
+	interrupted, err := validSession().Interrupt(baseTime().Add(15*time.Second), profile)
+	require.NoError(t, err)
+
+	// Traveling -> Interrupted belongs to Interrupt, which validates the due
+	// profile and records the immutable payload plus the pause instant.
+	_, err = validSession().Transition(Interrupted)
+	require.ErrorIs(t, err, ErrInvalidTransition)
+
+	// Interrupted -> Traveling/Completed/Cancelled belongs to Resume and Return,
+	// which bank the open pause and clear the active payload.
+	_, err = interrupted.Transition(Traveling)
+	require.ErrorIs(t, err, ErrInvalidTransition)
+	_, err = interrupted.Transition(Completed)
+	require.ErrorIs(t, err, ErrInvalidTransition)
+	_, err = interrupted.Transition(Cancelled)
+	require.ErrorIs(t, err, ErrInvalidTransition)
+
+	// The generic rejection must not shadow the dedicated methods.
+	resumed, err := interrupted.Resume(baseTime().Add(time.Hour))
+	require.NoError(t, err)
+	assert.Equal(t, Traveling, resumed.State)
+
+	returned, err := interrupted.Return()
+	require.NoError(t, err)
+	assert.Equal(t, Cancelled, returned.State)
 }
 
 func TestSessionStateStrings(t *testing.T) {
@@ -433,6 +472,29 @@ func TestResumePreservesOneShotInterruptionAndActiveProgress(t *testing.T) {
 	assert.True(t, resumed.InterruptionTriggered)
 	assert.False(t, resumed.InterruptionDue(baseTime().Add(time.Hour), profile))
 	assert.Equal(t, 15*time.Second, resumed.RemainingAt(baseTime().Add(time.Hour), profile.Duration))
+}
+
+func TestResumeDoesNotAllowInterruptionReplay(t *testing.T) {
+	profile := validFallenTreeProfile()
+	interrupted, err := validSession().Interrupt(baseTime().Add(15*time.Second), profile)
+	require.NoError(t, err)
+	resumed, err := interrupted.Resume(baseTime().Add(time.Hour))
+	require.NoError(t, err)
+	require.NoError(t, resumed.Validate())
+
+	// The one-shot marker survives the resume, so the same fallen tree can never
+	// fire a second time on this route.
+	assert.True(t, resumed.InterruptionTriggered)
+	assert.False(t, resumed.InterruptionDue(baseTime().Add(time.Hour+time.Second), profile))
+	_, err = resumed.Interrupt(baseTime().Add(time.Hour+time.Second), profile)
+	require.ErrorIs(t, err, ErrInvalidInterruption)
+
+	// The resumed record is a plain Traveling session: it carries no lingering
+	// payload or pause instant, and its active time keeps accruing.
+	assert.Equal(t, Traveling, resumed.State)
+	assert.True(t, resumed.PausedAtUTC.IsZero())
+	assert.Nil(t, resumed.Interruption)
+	assert.Equal(t, 16*time.Second, resumed.ActiveElapsedAt(baseTime().Add(time.Hour+time.Second), profile.Duration))
 }
 
 func TestResumeRequiresInterruptedSession(t *testing.T) {
