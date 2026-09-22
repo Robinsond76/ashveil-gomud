@@ -553,6 +553,13 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				continue
 			}
 
+			if gated, gateOk := gateFormationAttack(user, defMob, uRoom); !gateOk {
+				user.SendText("You can't reach that target from here.")
+				continue
+			} else {
+				defMob = gated
+			}
+
 			affectedPlayerIds = append(affectedPlayerIds, user.Character.Aggro.UserId)
 
 			var roundResult combat.AttackResult
