@@ -1,6 +1,6 @@
 # Phase 11 Combat-Loop Wiring Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Status: fully implemented and committed on `phase-11-combat-wiring` — every step below is checked off.**
 
 **Goal:** Connect the three already-shipped, fully-tested pure domain
 packages (11a `internal/mobparty`, 11b `internal/engagement`, 11c
@@ -149,7 +149,7 @@ integration tests against.
 - Produces: `company.FormationProvider`, `company.SetFormationProvider(p FormationProvider)`,
   `company.FormationFor(leaderUserID int) (Formation, bool)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `internal/company/provider_test.go`:
 
@@ -193,12 +193,12 @@ func TestFormationForCallsThroughToRegisteredProvider(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `go test ./internal/company/... -run TestFormationFor -v`
 Expected: FAIL — `undefined: company.SetFormationProvider`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `internal/company/provider.go`:
 
@@ -269,13 +269,13 @@ And in `init()`, add one line next to the existing `survival.SetRosterProvider(m
 	domain.SetFormationProvider(m)
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/company/... ./modules/company/... -v`
 Expected: PASS, the two new tests plus every pre-existing test in both
 packages (no regressions).
 
-- [ ] **Step 5: `go vet`/`gofmt`, full build**
+- [x] **Step 5: `go vet`/`gofmt`, full build**
 
 ```bash
 gofmt -l internal/company modules/company
@@ -284,7 +284,7 @@ go build ./...
 ```
 Expected: no output, clean build.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/company/provider.go internal/company/provider_test.go modules/company/company.go
@@ -301,7 +301,7 @@ git commit -m "feat(company): add FormationProvider query seam"
 - Produces: `func MemberKeyFor(instanceId int) company.MemberKey` (renamed
   from the existing unexported `memberKey`), `func InstanceIdFromMemberKey(key company.MemberKey) (int, bool)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `internal/mobparty/party_test.go` (new test, existing tests
 untouched — the existing `memberKeyFor` test helper stays as-is, it just
@@ -325,12 +325,12 @@ func TestInstanceIdFromMemberKeyRejectsNonMobKeys(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `go test ./internal/mobparty/... -run 'TestMemberKeyFor|TestInstanceIdFromMemberKey' -v`
 Expected: FAIL — `undefined: mobparty.MemberKeyFor`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 In `internal/mobparty/party.go`, rename the existing unexported `memberKey`
 function to `MemberKeyFor` (update its one call site inside `buildParty`
@@ -364,19 +364,19 @@ func InstanceIdFromMemberKey(key company.MemberKey) (int, bool) {
 
 Add `"strconv"` and `"strings"` to the file's imports.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/mobparty/... -v`
 Expected: PASS, all existing tests plus the two new ones.
 
-- [ ] **Step 5: `go vet`/`gofmt`, full build**
+- [x] **Step 5: `go vet`/`gofmt`, full build**
 
 ```bash
 gofmt -l internal/mobparty && go vet ./internal/mobparty/... && go build ./...
 ```
 Expected: no output, clean build.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/mobparty/party.go internal/mobparty/party_test.go
@@ -398,7 +398,7 @@ git commit -m "feat(mobparty): export member-key helpers for combat wiring"
   (pure), `func gateFormationAttack(user *users.UserRecord, defMob *mobs.Mob, room *rooms.Room) (*mobs.Mob, bool)`
   (adapter, called from `NewRound_DoCombat.go` in Task 4).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `internal/hooks/combat_formation_test.go`:
 
@@ -493,12 +493,12 @@ func TestEffectiveHPMatchesRankMobsFormula(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `go test ./internal/hooks/... -run 'TestResolveAttackTarget|TestEffectiveHP' -v`
 Expected: FAIL — `undefined: resolveAttackTarget` / `undefined: effectiveHP`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `internal/hooks/combat_formation.go`:
 
@@ -648,12 +648,12 @@ func effectiveHP(hp, defense int) float64 {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/hooks/... -run 'TestResolveAttackTarget|TestEffectiveHP' -v`
 Expected: PASS, all six tests.
 
-- [ ] **Step 5: `go vet`/`gofmt`, full build**
+- [x] **Step 5: `go vet`/`gofmt`, full build**
 
 ```bash
 gofmt -l internal/hooks && go vet ./internal/hooks/... && go build ./...
@@ -664,7 +664,7 @@ already imports `internal/combat`/`internal/mobs`/`internal/rooms`/
 `internal/mobparty`/`internal/formationcombat`, have no reverse dependency
 on `internal/hooks`).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/hooks/combat_formation.go internal/hooks/combat_formation_test.go
@@ -676,7 +676,7 @@ git commit -m "feat(hooks): add formation-aware attack target resolution"
 **Files:**
 - Modify: `internal/hooks/NewRound_DoCombat.go`
 
-- [ ] **Step 1: Insert the gate call**
+- [x] **Step 1: Insert the gate call**
 
 In `internal/hooks/NewRound_DoCombat.go`, immediately after the existing
 "can't see them, can't fight them" hidden-buff check and before
@@ -705,7 +705,7 @@ buff/message dispatch, hostility/aggro-acquisition logic — automatically
 uses the (possibly redirected) final target, with zero further edits
 needed below this point.
 
-- [ ] **Step 2: Build and run the full test suite**
+- [x] **Step 2: Build and run the full test suite**
 
 ```bash
 go build ./...
@@ -714,7 +714,7 @@ go test -race ./...
 Expected: clean build, full suite green (record the actual test/package
 counts — don't guess).
 
-- [ ] **Step 3: `make generate`/`make validate`**
+- [x] **Step 3: `make generate`/`make validate`**
 
 ```bash
 make generate
@@ -723,7 +723,7 @@ make validate
 Expected: both succeed, `make generate` produces no diff (no new module,
 no new command, no config change).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add internal/hooks/NewRound_DoCombat.go
@@ -735,7 +735,7 @@ git commit -m "feat(hooks): gate player-vs-mob attacks on formation legality"
 **Files:**
 - Modify: `docs/PROJECT_STATUS.md`
 
-- [ ] **Step 1: Final full verification**
+- [x] **Step 1: Final full verification**
 
 ```bash
 go test -race ./...
@@ -743,7 +743,7 @@ make generate
 make validate
 ```
 
-- [ ] **Step 2: Update `docs/PROJECT_STATUS.md`**
+- [x] **Step 2: Update `docs/PROJECT_STATUS.md`**
 
 Add a work-log entry ("Formation combat-loop wiring: player-vs-mob
 (complete; three directions still deferred, <date>)") following the
@@ -755,7 +755,7 @@ dispatch, mob-vs-mob needing charmed/hostile disambiguation, and 11b's
 block modified) as the next concrete follow-up items — no phase number
 assigned yet, same as before this pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/PROJECT_STATUS.md

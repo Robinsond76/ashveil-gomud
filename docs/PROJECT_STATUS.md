@@ -6,19 +6,16 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-11c-formation-tactics`
-- **HEAD:** Phase 11c (Formation Tactics) domain layer, `Reach` trait
-  schema, and a read-only `formation reach` query command implemented:
-  `internal/formationcombat.Legal`/`InterceptFrontRow` implement the
-  column-occupancy reach model, lateral range, and front-row interception
-  over `company.Formation`. The `NewRound_DoCombat.go` combat-loop wiring
-  (which would also finally wire Phase 11b's `AssignTarget` for real) is
-  deliberately deferred — see the Phase 11c work-log entry for the full
-  reasoning: it needs a new cross-module company-formation-by-mob-instance
-  query seam that doesn't exist yet.
+- **Branch:** `phase-11-combat-wiring`
+- **HEAD:** Formation combat is now live for the player-vs-mob direction:
+  attacking a member of an assembled enemy party (11a) is now gated by
+  11c's column-occupancy/lateral-range legality and front-row interception,
+  via a new `company.FormationProvider` seam. Three directions remain
+  deliberately unwired (mob-vs-player, mob-vs-mob, and 11b's
+  reassignment-on-death) — see the work-log entry below for exactly why.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through Phase 11b's domain layer;
-  this branch's Phase 11c work is not yet merged.
+- **Origin sync:** `master` is pushed through Phase 11c's domain layer;
+  this branch's combat-loop wiring is not yet merged.
 
 ## Current position
 
@@ -37,25 +34,27 @@ instead of duplicating them.
   selection filtered by an injected legality predicate), and Phase 11c's
   domain layer (`internal/formationcombat`: column-occupancy reach,
   lateral range, front-row interception; a `Reach` trait on items/mobs; a
-  read-only `formation reach <member>` query command). All three of 11a-11c
-  are now domain-complete; none of 11b or 11c is wired into the actual
-  combat loop yet.
-- **Next:** the `internal/hooks/NewRound_DoCombat.go` combat-loop
-  integration — this is the join between 11b and 11c, not a scope item of
-  either: it needs a new cross-module query seam (given a live mob
-  instance ID, which leader's company and `MemberKey` does it belong to;
-  today that mapping only exists as an *unexported* method on
-  `modules/company.CompanyModule`), plus the equivalent fresh-per-round
-  `mobparty.Assemble` lookup for the enemy side, threaded through all four
-  attack-direction call sites (player-vs-mob, mob-vs-player, mob-vs-mob,
-  player-vs-player) in `NewRound_DoCombat.go`. This is real,
-  player-visible combat-behavior change touching a shared multiplayer
-  invariant — see the Phase 11c work-log entry and
-  `docs/superpowers/plans/2026-09-22-phase-11c-formation-tactics.md`'s
-  scope-decision section for the full reasoning on why it's its own
-  follow-up rather than bundled into 11b or 11c. No phase number is
-  assigned to it yet; open one (11e, or fold it into a wiring-focused pass)
-  when picking it up.
+  read-only `formation reach <member>` query command), and the combat-loop
+  wiring for player-vs-mob (a new `company.FormationProvider` seam;
+  `internal/hooks/combat_formation.go` gates every player-vs-mob attack
+  through 11c's `Legal`/`InterceptFrontRow`, resolving the live enemy party
+  fresh each round via 11a's `mobparty.Assemble`).
+- **Next:** the three attack directions still unwired: mob-vs-player
+  interception (needs to redirect a leader-aimed attack into
+  `combat.AttackMobVsMob` against an intercepting companion instead of
+  `combat.AttackMobVsPlayer` — a different `Attack*` function, not just a
+  different target), mob-vs-mob (needs to disambiguate charmed/companion
+  vs. hostile mobs on both sides of every call — covers both "my companion
+  attacks the enemy" and "the enemy attacks my companion"), and 11b's
+  `engagement.AssignTarget` reassignment-on-death (needs modifying the
+  existing, working target-validation block in
+  `internal/hooks/NewRound_DoCombat.go:486-526`, which today clears `Aggro`
+  and skips the round *before* any reassignment attempt could run — a
+  materially more invasive change than the purely additive pre-attack gate
+  this pass added). See the work-log entry below and
+  `docs/superpowers/plans/2026-09-22-phase-11-combat-wiring.md`'s "Design
+  decisions" section for the full reasoning on why each was scoped out of
+  this pass. No phase number is assigned to any of them yet.
 
 ## Phase progress
 
@@ -73,12 +72,106 @@ instead of duplicating them.
 | 9 | Encumbrance and cargo | Complete |
 | 10 | Mounts | Complete |
 | 11a | Enemy parties | Complete |
-| 11b | Unit-vs-unit engagement | Domain layer complete; hooks integration awaits 11c |
-| 11c | Formation tactics | Domain layer, schema, and read-only query complete; combat-loop wiring deferred |
+| 11b | Unit-vs-unit engagement | Domain layer complete; reassignment-on-death still unwired |
+| 11c | Formation tactics | Domain layer, schema, and read-only query complete; player-vs-mob wired, mob-vs-player/mob-vs-mob still unwired |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Formation combat-loop wiring: player-vs-mob (complete; three directions still deferred, 2026-09-22)
+
+- **What:** Connected 11a/11b/11c into real combat for the single most
+  central interaction: a player fighting a hostile enemy party. A new
+  `company.FormationProvider` query seam (`internal/company/provider.go`,
+  the same `Set<X>`/`<X>For` shape as `survival.CompanyService` and
+  `weather.Provider`, registered from `modules/company`'s existing
+  `init()`) lets `internal/hooks` read a leader's current `Formation`
+  without importing `modules/company` (which it structurally can't —
+  modules depend on `internal/`, never the reverse). `internal/hooks/combat_formation.go`
+  adds `resolveAttackTarget` (pure: given a `Formation`, an `alive` map, an
+  attacker's column, the original target key, and a `Reach`, decide the
+  final legal target or that the attack should be skipped — fully unit
+  tested with hand-built data, no engine state involved) and
+  `gateFormationAttack` (the thin adapter: resolves the enemy party fresh
+  each round via 11a's `mobparty.Assemble` over the room's hostile mobs,
+  computes each one's `EHP` directly from its live `HealthMax`/`Defense`
+  rather than calling `combat.RankMobs()` — which ranks every mob spec in
+  the game and would be far too expensive to call every combat round —
+  and calls `combat.ResolveReach` for the player's equipped weapon).
+  `internal/hooks/NewRound_DoCombat.go` gets exactly one new gate call, at
+  the existing player-vs-mob attack site (`:556`, right after the existing
+  "can't see a hidden target" check and before the attack itself), which
+  reassigns the local `defMob` variable to the actual (possibly
+  intercepted) target or `continue`s the round if the attack is currently
+  illegal — every later reference in that branch (the attack call itself,
+  buff/message dispatch, hostility/aggro-acquisition logic) automatically
+  picks up the final target with no further edits. `mobparty`'s previously
+  internal `memberKey` helper is now exported as `MemberKeyFor`, plus a new
+  `InstanceIdFromMemberKey` for the reverse direction, so `internal/hooks`
+  can translate between a live mob instance ID and its formation key.
+- **Why:** 11a, 11b, and 11c each shipped a fully tested pure domain layer
+  with nothing actually reading it in a real fight. This is the join
+  between them — not a numbered phase of its own, since it invents no new
+  gameplay rules, only wires already-designed ones together.
+- **Fails open by design:** if a player has no company record at all (a
+  solo player, or one who's never summoned a companion),
+  `company.FormationFor` returns `ok=false` and `gateFormationAttack`
+  returns the original target unchanged — combat resolves exactly as it
+  did before this change. This is deliberate: the feature is "company vs.
+  party" tactics, and it should be zero-behavior-impact for every player
+  who has never touched the company system, which is the overwhelming
+  majority of existing playtesting to date.
+- **Deliberately NOT done this pass (see
+  `docs/superpowers/plans/2026-09-22-phase-11-combat-wiring.md`'s "Design
+  decisions" section for the full reasoning on each):**
+  - **Mob-vs-player interception** — redirecting an attack aimed at the
+    leader to an intercepting companion means switching from
+    `combat.AttackMobVsPlayer` to `combat.AttackMobVsMob`, a different
+    `Attack*` function entirely, not just a different target. That's a
+    materially different (and equally real) piece of work from anything in
+    this pass, where every redirect has stayed mob-to-mob.
+  - **Mob-vs-mob** (both "my companion attacks the enemy" and "the enemy
+    attacks my companion") — needs to disambiguate charmed/companion vs.
+    hostile mobs on both sides of the same call site, for every mob in the
+    room, every round.
+  - **11b's `engagement.AssignTarget` reassignment-on-death** — the
+    existing target-validation block
+    (`internal/hooks/NewRound_DoCombat.go:486-526`) already clears `Aggro`
+    and `continue`s the round the instant a target is found dead or gone,
+    *before* any reassignment attempt could run. Making reassignment work
+    means modifying that existing, working, unmodified-since-launch logic
+    — genuinely riskier than the purely additive pre-attack gate this pass
+    added, which never touches Aggro-clearing at all.
+- **Step completed:** Full implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-11-combat-wiring.md`), all four
+  code tasks (`FormationProvider` seam, exported `mobparty` key helpers,
+  the pure/adapter gate, the one-line `NewRound_DoCombat.go` wiring), plus
+  this status update.
+- **Key commits:** `d4b9a4cd` (plan), `3632b4f7` (`FormationProvider`
+  seam), `1b0054ce` (exported `mobparty` key helpers), `fa9c6931`
+  (`internal/hooks/combat_formation.go` and its tests), `0504672d` (the
+  `NewRound_DoCombat.go` gate call), landing on `phase-11-combat-wiring`.
+- **Verification:** `go test -race ./...` (1765 tests / 80 packages),
+  `make generate` (no wiring change), and `make validate` pass. Focused
+  tests cover: `FormationProvider`'s call-through and no-provider-registered
+  cases, the `mobparty` key-helper round trip and rejection of non-mob
+  keys, and `resolveAttackTarget`'s direct-hit/interception-redirect/
+  blocked-with-no-rescue/missing-target/out-of-lateral-range cases plus
+  `effectiveHP`'s formula (matching `combat.RankMobs`' own EHP math,
+  including the 95%-mitigation clamp).
+- **Live acceptance:** Not run: this host has no interactive Telnet
+  client, and `internal/hooks` has no pre-existing integration-test harness
+  to build on (confirmed zero test files in that package before this
+  change) — `gateFormationAttack`'s engine-facing lookups
+  (`mobs.GetInstance`, `rooms.LoadRoom`-backed `Room.GetMobs`,
+  `company.FormationFor`) are exercised only indirectly, through the pure
+  `resolveAttackTarget` core and the seam's own unit tests, not a live
+  combat round.
+- **Deferred:** the three directions above, Phase 11d (unscheduled),
+  guard-stance/chance-based interception, row/column AoE, formation buffs,
+  flanking/exposure, movement-in-combat, and any interaction with
+  `internal/parties` or PvP (all already deferred by 11a-11c themselves).
 
 ### Phase 11c — Formation Tactics domain layer, schema, and read-only query (complete; combat-loop wiring deferred, 2026-09-22)
 
@@ -948,6 +1041,14 @@ instead of duplicating them.
   together; that wiring (and the new company-formation-by-mob-instance
   query seam it needs) is the next real piece of work — see the Phase 11c
   work-log entry and the "Next" line above for the full reasoning.
+- The player-vs-mob combat-loop wiring above ships only that one
+  direction. Mob-vs-player, mob-vs-mob, and 11b's `AssignTarget`
+  reassignment-on-death remain exactly as described in the two bullets
+  above (still unwired) — see the "Formation combat-loop wiring" work-log
+  entry for why each is its own separable follow-up. `internal/hooks` has
+  no live-server/integration test coverage for the new gate; only the pure
+  `resolveAttackTarget` core and the `FormationProvider`/`mobparty`
+  seam-level unit tests exercise it.
 
 ## Key documents
 
