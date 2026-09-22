@@ -225,6 +225,27 @@ func (s TravelSession) Validate() error {
 	return nil
 }
 
+// ValidateForProfile validates a persisted session and, when it is paused,
+// verifies that its durable interruption is the one configured for the route.
+// A well-formed payload from a different profile is still unusable recovery
+// data: accepting it could present or resolve the wrong obstruction.
+func (s TravelSession) ValidateForProfile(profile TravelProfile) error {
+	if err := s.Validate(); err != nil {
+		return err
+	}
+	if err := profile.Validate(); err != nil {
+		return err
+	}
+	if s.State == Interrupted {
+		if profile.Interruption == nil ||
+			s.Interruption.Kind != profile.Interruption.Kind ||
+			s.Interruption.Checkpoint != profile.Interruption.Checkpoint {
+			return ErrInvalidSession
+		}
+	}
+	return nil
+}
+
 // PrepareExertion returns the persisted operation required for the next earned
 // checkpoint. Repeating it is safe: its ID derives only from session identity.
 func (s TravelSession) PrepareExertion(now time.Time, profile TravelProfile) (PendingExertion, bool, error) {
@@ -357,6 +378,9 @@ func (s TravelSession) InterruptionDue(now time.Time, p TravelProfile) bool {
 // and marks the interruption triggered so it fires at most once per session.
 // The interruption itself changes no exertion state.
 func (s TravelSession) Interrupt(now time.Time, p TravelProfile) (TravelSession, error) {
+	if err := s.Validate(); err != nil {
+		return s, err
+	}
 	if err := p.Validate(); err != nil {
 		return s, err
 	}
@@ -390,6 +414,18 @@ func (s TravelSession) Resume(now time.Time) (TravelSession, error) {
 	return s, nil
 }
 
+// ResumeForProfile is the profile-aware recovery/resolution form of Resume.
+// It rejects a paused record whose interruption does not belong to profile.
+func (s TravelSession) ResumeForProfile(now time.Time, profile TravelProfile) (TravelSession, error) {
+	if s.State != Interrupted {
+		return s, ErrInvalidTransition
+	}
+	if err := s.ValidateForProfile(profile); err != nil {
+		return s, err
+	}
+	return s.Resume(now)
+}
+
 // Return abandons an interrupted route. Only a halted journey can be given up:
 // a route that is still running must be cancelled through the ordinary
 // transition, and a finished one is already over. It has no clock, so the open
@@ -406,6 +442,17 @@ func (s TravelSession) Return() (TravelSession, error) {
 	s.PausedAtUTC = time.Time{}
 	s.Interruption = nil
 	return s, nil
+}
+
+// ReturnForProfile is the profile-aware recovery/resolution form of Return.
+func (s TravelSession) ReturnForProfile(profile TravelProfile) (TravelSession, error) {
+	if s.State != Interrupted {
+		return s, ErrInvalidTransition
+	}
+	if err := s.ValidateForProfile(profile); err != nil {
+		return s, err
+	}
+	return s.Return()
 }
 
 // Transition returns the session in a new state, or ErrInvalidTransition.

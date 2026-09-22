@@ -430,6 +430,27 @@ func TestInterruptRecordsDurablePayloadAndPauseInstant(t *testing.T) {
 	assert.Nil(t, session.Interruption)
 }
 
+func TestInterruptRejectsMalformedSessionBeforeTransition(t *testing.T) {
+	profile := validFallenTreeProfile()
+	pause := baseTime().Add(15 * time.Second)
+
+	for _, name := range []string{"payload", "pause instant"} {
+		t.Run(name, func(t *testing.T) {
+			session := validSession()
+			if name == "payload" {
+				session.Interruption = &TravelInterruption{Kind: FallenTree, Checkpoint: 5}
+			} else {
+				session.PausedAtUTC = pause
+			}
+			before := session
+
+			got, err := session.Interrupt(pause, profile)
+			require.ErrorIs(t, err, ErrInvalidSession)
+			assert.Equal(t, before, got)
+		})
+	}
+}
+
 func TestInterruptedRoutePausesProgressAndResumesActiveTime(t *testing.T) {
 	profile := validFallenTreeProfile()
 	session := validSession()
@@ -495,6 +516,21 @@ func TestResumeDoesNotAllowInterruptionReplay(t *testing.T) {
 	assert.True(t, resumed.PausedAtUTC.IsZero())
 	assert.Nil(t, resumed.Interruption)
 	assert.Equal(t, 16*time.Second, resumed.ActiveElapsedAt(baseTime().Add(time.Hour+time.Second), profile.Duration))
+}
+
+func TestProfileAwareResolutionRejectsMismatchedInterruption(t *testing.T) {
+	configured := validFallenTreeProfile()
+	interrupted, err := validSession().Interrupt(baseTime().Add(15*time.Second), configured)
+	require.NoError(t, err)
+
+	mismatched := configured
+	mismatched.Interruption = &InterruptionProfile{Kind: FallenTree, Checkpoint: 4}
+	require.ErrorIs(t, interrupted.ValidateForProfile(mismatched), ErrInvalidSession)
+
+	_, err = interrupted.ResumeForProfile(baseTime().Add(time.Hour), mismatched)
+	require.ErrorIs(t, err, ErrInvalidSession)
+	_, err = interrupted.ReturnForProfile(mismatched)
+	require.ErrorIs(t, err, ErrInvalidSession)
 }
 
 func TestResumeRequiresInterruptedSession(t *testing.T) {
