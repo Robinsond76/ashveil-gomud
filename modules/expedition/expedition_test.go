@@ -336,6 +336,10 @@ func TestResumeInterruptedTravelPersistsAndSchedulesActiveRemainder(t *testing.T
 	assert.Nil(t, module.sessions[7].Interruption)
 	assert.True(t, module.sessions[7].PausedAtUTC.IsZero())
 	assert.Equal(t, 5*time.Second, scheduler.delays[len(scheduler.delays)-1])
+
+	status := module.status(7)
+	assert.Contains(t, status, "Progress: 50% (remaining 5s)")
+	assert.NotContains(t, status, "remaining 59m55s")
 }
 
 func TestResumeAndReturnRefuseNonInterruptedTravelClearly(t *testing.T) {
@@ -381,6 +385,15 @@ func TestResumeThenFinalBoundaryMovesOnceAndChargesTotalExertion(t *testing.T) {
 	surv := &fakeSurvival{}
 	now := baseTime()
 	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, interruptionProfiles())
+	arrivalMessages := []string{}
+	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+		message := e.(events.Message).Text
+		if strings.Contains(message, "You have reached") {
+			arrivalMessages = append(arrivalMessages, message)
+		}
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.Message{}, id) })
 	_, err := module.StartTravel(startRequest())
 	require.NoError(t, err)
 	now = baseTime().Add(5 * time.Second)
@@ -392,8 +405,11 @@ func TestResumeThenFinalBoundaryMovesOnceAndChargesTotalExertion(t *testing.T) {
 	require.Equal(t, []time.Duration{5 * time.Second, 5 * time.Second}, scheduler.delays)
 	now = baseTime().Add(time.Hour + 5*time.Second)
 	scheduler.fire(1)
+	scheduler.fire(0) // stale callback from the pre-interruption timer
+	events.ProcessEvents()
 
 	assert.Equal(t, []int{200}, mover.moves)
+	assert.Len(t, arrivalMessages, 1)
 	assert.Equal(t, []survival.Exertion{{Hunger: 5, Thirst: 5, Fatigue: 5}, {Hunger: 5, Thirst: 5, Fatigue: 5}}, surv.applied)
 	assert.NotContains(t, module.sessions, 7)
 }
@@ -476,6 +492,14 @@ func TestTravelUserCommandUsageRefusalAndResolutionMessages(t *testing.T) {
 	require.NoError(t, err)
 	events.ProcessEvents()
 	assert.Contains(t, strings.ToLower(strings.Join(messages, "")), "interrupted")
+
+	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime(), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
+	resumeMessageStart := len(messages)
+	_, err = module.userCommand("resume", user, nil, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.ToLower(strings.Join(messages[resumeMessageStart:], "")), "resume travel")
+	assert.Equal(t, expedition.Traveling, module.sessions[7].State)
 
 	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime(), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
 	_, err = module.userCommand("return", user, nil, 0)
