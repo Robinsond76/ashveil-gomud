@@ -509,6 +509,9 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			}
 
 			if !targetFound {
+				if reassignPlayerTarget(user, uRoom) {
+					continue
+				}
 				user.SendText("Your target can't be found.")
 				user.Character.Aggro = nil
 				continue
@@ -519,6 +522,9 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			defMob.Character.CancelBuffsWithFlag("cancel-on-combat")
 
 			if defMob.Character.Health < 1 {
+				if reassignPlayerTarget(user, uRoom) {
+					continue
+				}
 				user.SendText("Your rage subsides.")
 				user.Character.Aggro = nil
 				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
@@ -983,6 +989,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			defMob := mobs.GetInstance(mob.Character.Aggro.MobInstanceId)
 
 			if defMob == nil || mob.Character.RoomId != defMob.Character.RoomId {
+				if reassignCompanionTarget(mob, mobRoom) {
+					continue
+				}
 				mob.Character.Aggro = nil
 				events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 				continue
@@ -993,6 +1002,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			defMob.Character.CancelBuffsWithFlag("cancel-on-combat")
 
 			if defMob.Character.Health < 1 {
+				if reassignCompanionTarget(mob, mobRoom) {
+					continue
+				}
 				mob.Character.Aggro = nil
 				events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 				continue
