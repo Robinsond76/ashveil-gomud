@@ -36,40 +36,146 @@ func resolveAttackTarget(attackerCol int, f company.Formation, originalTarget co
 }
 
 // gateFormationAttack is the engine-facing adapter around
-// resolveAttackTarget for a player attacking a mob. It fails open (returns
-// defMob, true — unchanged pre-existing behavior) whenever the player has
-// no company formation to apply, or the target mob can't be resolved into
-// an assembled enemy party at all: the feature is "company vs. party"
-// tactics, and a player/target with no formation concept combats exactly
-// as it did before this change.
+// resolveAttackTarget for a player attacking a mob. See resolveEnemyAttack
+// for the fail-open contract shared with gateCompanionAttacksEnemy.
 func gateFormationAttack(user *users.UserRecord, defMob *mobs.Mob, room *rooms.Room) (*mobs.Mob, bool) {
 	attackerCol, ok := resolvePlayerColumn(user.UserId)
 	if !ok {
 		return defMob, true
 	}
+	reach := combat.ResolveReach(user.Character, false)
+	return resolveEnemyAttack(attackerCol, defMob.InstanceId, room, reach)
+}
 
-	party, ok := resolveEnemyParty(room, defMob.InstanceId)
+// resolveEnemyAttack applies 11c legality/interception when a combatant in
+// attackerCol attacks defenderInstanceId's assembled enemy party within
+// room. It fails open (returns the original defender, true) whenever the
+// defender can't be resolved into an assembled enemy party at all: the
+// feature is "company vs. party" tactics, and a target with no formation
+// concept combats exactly as it did before this change.
+func resolveEnemyAttack(attackerCol int, defenderInstanceId int, room *rooms.Room, reach formationcombat.Reach) (*mobs.Mob, bool) {
+	original := mobs.GetInstance(defenderInstanceId)
+
+	party, ok := resolveEnemyParty(room, defenderInstanceId)
 	if !ok {
-		return defMob, true
+		return original, true
 	}
 
 	alive := aliveMapForParty(party)
-	reach := combat.ResolveReach(user.Character, false)
-	targetKey := mobparty.MemberKeyFor(defMob.InstanceId)
+	targetKey := mobparty.MemberKeyFor(defenderInstanceId)
 
 	finalKey, ok := resolveAttackTarget(attackerCol, party.Formation, targetKey, alive, reach)
 	if !ok {
 		return nil, false
 	}
 	if finalKey == targetKey {
-		return defMob, true
+		return original, true
 	}
 
 	finalInstanceId, ok := mobparty.InstanceIdFromMemberKey(finalKey)
 	if !ok {
-		return defMob, true
+		return original, true
 	}
 	finalMob := mobs.GetInstance(finalInstanceId)
+	if finalMob == nil {
+		return original, true
+	}
+	return finalMob, true
+}
+
+// resolveAttackTargetCompanionOnly is resolveAttackTarget's counterpart
+// for an attack aimed at a company (not enemy-party) member: it applies
+// front-row interception exactly the same way, EXCEPT it never redirects
+// to company.LeaderMemberKey — a leader-as-interceptor would need to
+// switch combat.Attack* functions mid-resolution (AttackMobVsMob to
+// AttackMobVsPlayer), which this codebase's mob-vs-mob wiring doesn't
+// implement. When the would-be interceptor is the leader, it falls back
+// to checking legality against the original target directly, as if no
+// interceptor existed — never breaking anything, just not claiming that
+// one specific (and unusual: leader posted in front of their own
+// companions) interception opportunity.
+func resolveAttackTargetCompanionOnly(attackerCol int, f company.Formation, originalTarget company.MemberKey, alive map[company.MemberKey]bool, reach formationcombat.Reach) (finalTarget company.MemberKey, ok bool) {
+	target := originalTarget
+	if interceptor, intercepted := formationcombat.InterceptFrontRow(f, originalTarget, alive); intercepted && interceptor != company.LeaderMemberKey {
+		target = interceptor
+	}
+	if !formationcombat.Legal(attackerCol, f, target, alive, reach) {
+		return "", false
+	}
+	return target, true
+}
+
+// gateMobVsMobAttack classifies both sides of a mob-vs-mob attack as a
+// company member or not, and dispatches to the matching gate. Two hostile
+// mobs, or two companions, fighting each other is left untouched — no
+// formation concept applies to either.
+func gateMobVsMobAttack(mob, defMob *mobs.Mob, mobRoom *rooms.Room) (*mobs.Mob, bool) {
+	attackerLeaderId, attackerKey, attackerIsCompanion := company.LeaderAndKeyForInstance(mob.InstanceId)
+	defenderLeaderId, defenderKey, defenderIsCompanion := company.LeaderAndKeyForInstance(defMob.InstanceId)
+
+	switch {
+	case attackerIsCompanion && !defenderIsCompanion:
+		return gateCompanionAttacksEnemy(mob, attackerLeaderId, attackerKey, defMob, mobRoom)
+	case !attackerIsCompanion && defenderIsCompanion:
+		return gateEnemyAttacksCompanion(mob, defMob, mobRoom, defenderLeaderId, defenderKey)
+	default:
+		return defMob, true
+	}
+}
+
+// gateCompanionAttacksEnemy gates "my companion attacks the enemy party" —
+// the mob-vs-mob analog of gateFormationAttack, sharing its core via
+// resolveEnemyAttack.
+func gateCompanionAttacksEnemy(mob *mobs.Mob, leaderUserID int, attackerKey company.MemberKey, defMob *mobs.Mob, mobRoom *rooms.Room) (*mobs.Mob, bool) {
+	f, ok := company.FormationFor(leaderUserID)
+	if !ok {
+		return defMob, true
+	}
+	_, col, found := f.Find(attackerKey)
+	if !found {
+		return defMob, true
+	}
+	reach := combat.ResolveReach(&mob.Character, mob.Reach)
+	return resolveEnemyAttack(col, defMob.InstanceId, mobRoom, reach)
+}
+
+// gateEnemyAttacksCompanion gates "the enemy attacks my companion" — the
+// mob-vs-mob analog of gateMobVsPlayerAttack's legality/interception half,
+// generalized to any company member (not just the leader) and restricted
+// to companion-to-companion interception (see resolveAttackTargetCompanionOnly).
+func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leaderUserID int, defenderKey company.MemberKey) (*mobs.Mob, bool) {
+	f, ok := company.FormationFor(leaderUserID)
+	if !ok {
+		return defMob, true
+	}
+	attackerCol, ok := resolveHostileAttackerColumn(mobRoom, mob.InstanceId)
+	if !ok {
+		return defMob, true
+	}
+	leader := users.GetByUserId(leaderUserID)
+	if leader == nil {
+		return defMob, true
+	}
+	alive := aliveMapForCompany(leader, f)
+	reach := combat.ResolveReach(&mob.Character, mob.Reach)
+
+	finalKey, ok := resolveAttackTargetCompanionOnly(attackerCol, f, defenderKey, alive, reach)
+	if !ok {
+		return nil, false
+	}
+	if finalKey == defenderKey {
+		return defMob, true
+	}
+
+	companionID, ok := company.CompanionIDFromMemberKey(finalKey)
+	if !ok {
+		return defMob, true
+	}
+	instanceId, ok := company.InstanceFor(leaderUserID, companionID)
+	if !ok {
+		return defMob, true
+	}
+	finalMob := mobs.GetInstance(instanceId)
 	if finalMob == nil {
 		return defMob, true
 	}

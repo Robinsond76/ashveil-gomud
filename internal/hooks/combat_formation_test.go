@@ -78,6 +78,35 @@ func TestResolveAttackTargetOutOfLateralRangeSkipsEvenWithInterception(t *testin
 	assert.False(t, ok, "column 2 attacker is out of lateral range of column 0, even with ReachAny")
 }
 
+func TestResolveAttackTargetCompanionOnlySkipsRedirectToLeader(t *testing.T) {
+	// Leader posted front-row, a companion behind them in the same column.
+	var f company.Formation
+	require.NoError(t, f.Place(company.LeaderMemberKey, 0, 0))
+	require.NoError(t, f.Place(keyD, 2, 0)) // "companion", back row
+	alive := map[company.MemberKey]bool{company.LeaderMemberKey: true, keyD: true}
+
+	// An attacker targeting the companion directly would normally be
+	// intercepted by the leader (front row, same column) -- but this
+	// variant must NOT redirect to the leader, only check legality
+	// against the original target.
+	_, ok := resolveAttackTargetCompanionOnly(0, f, keyD, alive, formationcombat.ReachNone)
+	assert.False(t, ok, "blocked by a living leader in front, and no companion-side interception exists to rescue it")
+}
+
+func TestResolveAttackTargetCompanionOnlyStillInterceptsBetweenCompanions(t *testing.T) {
+	// Two companions in the same column, leader elsewhere: companion-to-
+	// companion interception still works normally.
+	var f company.Formation
+	require.NoError(t, f.Place(company.LeaderMemberKey, 0, 1))
+	require.NoError(t, f.Place(keyA, 0, 0)) // front companion
+	require.NoError(t, f.Place(keyB, 2, 0)) // back companion
+	alive := map[company.MemberKey]bool{company.LeaderMemberKey: true, keyA: true, keyB: true}
+
+	final, ok := resolveAttackTargetCompanionOnly(1, f, keyB, alive, formationcombat.ReachNone)
+	require.True(t, ok)
+	assert.Equal(t, keyA, final)
+}
+
 func TestEffectiveHPMatchesRankMobsFormula(t *testing.T) {
 	// 200 HP, 0 defense: no mitigation, EHP == HP.
 	assert.InDelta(t, 200.0, effectiveHP(200, 0), 0.001)
