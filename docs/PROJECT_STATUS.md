@@ -6,20 +6,16 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-11-docs-correction`
-- **HEAD:** Docs correction: the "engagement trigger" was never actually
-  missing. `internal/usercommands/attack.go` already makes every idle
-  charmed mob owned by the attacking player join combat the instant that
-  player attacks (`room.GetMobs(rooms.FindCharmed)` + `Aggro == nil` +
-  `IsCharmed(user.UserId)` → `m.Command("attack ...")`), and company
-  companions are implemented as permanently-charmed mobs
-  (`modules/company/runtime.go`'s `Spawn` calls `mob.Character.Charm(...)`),
-  so this path already covers them. The "deferred" claim in the last four
-  work-log entries and the Known-issues section was incorrect; corrected
-  below.
+- **Branch:** `phase-11-leader-interceptor`
+- **HEAD:** Closed the leader-as-interceptor gap: a company leader posted
+  in their own formation's front row now intercepts an attack aimed at a
+  companion behind them, exactly like a front-row companion already did.
+  This resolves the last item Phase 11's combat-wiring passes had left
+  deliberately unbuilt.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through 11b's reassignment-on-death
-  wiring (`710b208e`); this docs-only correction is not yet merged.
+- **Origin sync:** `master` is pushed through the engagement-trigger docs
+  correction (`28093162`); this branch's leader-interceptor fix is not
+  yet merged.
 
 ## Current position
 
@@ -46,20 +42,16 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 11's foundational combat wiring (11a-11c plus the
-  combat-loop join between them) is now fully done, and so is the
-  proactive engagement trigger — it turned out to already exist
-  pre-Ashveil in `attack.go`'s charmed-mob-assist loop, which company
-  companions get for free since they're permanently-charmed mobs (see
-  Known issues). Further formation combat work is genuinely new scope:
-  Phase 11d (guard reactions, weapon-flavored crit effects, wounds, full
-  AI targeting personality — designed as a deferred bucket from the
-  start, see the Phase 11 overview design doc) and the leader-as-
-  interceptor gap the mob-vs-mob pass left named. Neither is a follow-up
-  to 11a-11c in the sense the last four passes were — they're the next
-  real design/implementation work. See the four combat-wiring plan docs'
-  "Design decisions" sections for the full reasoning on every scope
-  choice made along the way.
+- **Next:** Phase 11's formation combat wiring — 11a-11c, the combat-loop
+  join between them, the proactive engagement trigger, and now the
+  leader-as-interceptor gap — is entirely done. What's left is genuinely
+  new scope, not follow-up wiring: Phase 11d (guard reactions,
+  weapon-flavored crit effects, wounds, full AI targeting personality —
+  designed as a deferred bucket from the start, see the Phase 11 overview
+  design doc) or Phase 12 (rich expedition encounters, the next phase in
+  the roadmap). See the combat-wiring plan docs' "Design decisions"
+  sections for the full reasoning on every scope choice made along the
+  way.
 
 ## Phase progress
 
@@ -78,11 +70,68 @@ instead of duplicating them.
 | 10 | Mounts | Complete |
 | 11a | Enemy parties | Complete |
 | 11b | Unit-vs-unit engagement | Complete: target assignment, reassignment-on-death, and the proactive engagement trigger (pre-existing in `attack.go`, verified) all wired |
-| 11c | Formation tactics | Complete: domain layer, schema, read-only query, and all three player/mob attack directions wired |
+| 11c | Formation tactics | Complete: domain layer, schema, read-only query, all three player/mob attack directions wired, and the leader-as-interceptor gap closed |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Formation combat-loop wiring: leader-as-interceptor (complete — Phase 11's formation combat wiring is now entirely done, 2026-09-22)
+
+- **What:** Closed the one deliberate gap the mob-vs-mob pass left named:
+  when a hostile mob attacks a company member and 11c's front-row
+  interception would redirect that attack to the company's own leader
+  (posted in the front row, same column), the redirect now actually
+  happens. Previously `resolveAttackTargetCompanionOnly` refused this one
+  specific redirect, because it crosses `combat.Attack*` functions
+  mid-resolution (`AttackMobVsMob` to `AttackMobVsPlayer`) and only the
+  opposite crossing existed (`gateMobVsPlayerAttack`/
+  `resolveInterceptedMobAttack`, from the mob-vs-player pass). This pass
+  builds the missing symmetric case: a new `resolveInterceptedAttackOnLeader`
+  resolves the attack itself via `AttackMobVsPlayer` (mirroring
+  `NewRound_DoCombat.go`'s existing mob-vs-player resolution block: buffs,
+  messages, the charmed-mob-assist loop, offhand equipment-break, plus a
+  `CharacterVitalsChanged` event so the leader's own client health bar
+  updates). `gateMobVsMobAttack` and `gateEnemyAttacksCompanion` now
+  return a three-state `(target, handled, ok)` contract mirroring
+  `gateMobVsPlayerAttack`'s; `handled=true` tells the caller to skip its
+  own `AttackMobVsMob` call and `continue` the round.
+  `resolveAttackTargetCompanionOnly` is deleted — `gateEnemyAttacksCompanion`
+  now reuses the same `resolveAttackTarget` every other direction already
+  uses, checking after the fact whether the resolved key is
+  `company.LeaderMemberKey`.
+- **Why:** This was the one Phase 11 combat direction where formation
+  tactics behaved asymmetrically: a front-row companion could already
+  intercept for the leader, but a front-row leader couldn't return the
+  favor for a companion. Closing it makes "post your leader (or your
+  tankiest companion) in front" a formation choice that pays off
+  consistently regardless of which side started the attack.
+- **Scope:** Only `gateEnemyAttacksCompanion`'s redirect target changes.
+  Every other direction (player-vs-mob, companion-vs-enemy,
+  mob-vs-player, companion-vs-companion interception) is untouched;
+  `mob.Character.Aggro` is still never touched by the redirect, matching
+  `resolveInterceptedMobAttack`'s existing invariant — the interception
+  is recomputed fresh every round.
+- **Fails closed to today's exact behavior:** no company formation, no
+  resolvable attacker column, or a legality check that already fails all
+  fall through unchanged; only the new "interceptor resolves to the
+  leader" branch produces new behavior.
+- **Step completed:** Full implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-11-leader-interceptor.md`),
+  the gate/resolver rewrite, and this status update.
+- **Key commits:** `eae9ac5f` (plan), `12c8a73d` (implementation), landing
+  on `phase-11-leader-interceptor`.
+- **Verification:** `go test -race ./...` (1773 tests / 80 packages — net
+  -1 from the prior count: two obsolete
+  `resolveAttackTargetCompanionOnly` tests removed, one new
+  `resolveAttackTarget`-reaches-the-leader test added), `make generate`
+  (no wiring change), and `make validate` pass. Focused test coverage:
+  the pure `resolveAttackTarget` redirect-to-leader case; the two engine
+  adapters (`gateEnemyAttacksCompanion`, `resolveInterceptedAttackOnLeader`)
+  stay untested at that layer, same precedent as every prior
+  combat-wiring pass.
+- **Live acceptance:** Not run — same `internal/hooks` integration-harness
+  limitation as every prior combat-wiring pass.
 
 ### Docs correction: proactive engagement trigger already existed (2026-09-22)
 
@@ -178,7 +227,8 @@ instead of duplicating them.
 - **Live acceptance:** Not run: this host has no interactive Telnet
   client, and `internal/hooks` has no integration-test harness (same
   limitation as all three prior combat-wiring passes).
-- **Deferred:** the leader-as-interceptor gap the mob-vs-mob pass named,
+- **Deferred:** the leader-as-interceptor gap named here is now closed —
+  see the "leader-as-interceptor" work-log entry above. What remains is
   Phase 11d (guard reactions, crit effects, wounds, full AI targeting
   personality — unscheduled from the start), and everything already
   deferred by 11a-11c themselves (guard-stance/chance-based interception,
