@@ -1,6 +1,6 @@
 # Phase 11 Mob-vs-Player Interception Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Status: fully implemented and committed on `phase-11-mob-vs-player-interception` — every step below is checked off.**
 
 **Goal:** Complete the second of the three combat directions deferred by
 the player-vs-mob wiring pass: when a hostile mob attacks a player leader,
@@ -123,7 +123,7 @@ site) — this pass is the first to actually read it, via
   `func InstanceFor(leaderUserID, companionID int) (int, bool)` (package-level
   call-through), `func (m *CompanyModule) InstanceFor(leaderUserID, companionID int) (int, bool)`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add to `internal/company/formation_test.go`:
 
@@ -184,13 +184,13 @@ func (f fakeFormationProvider) InstanceFor(leaderUserID, companionID int) (int, 
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `go test ./internal/company/... -run 'TestCompanionIDFromMemberKey|TestInstanceFor' -v`
 Expected: FAIL — `undefined: company.CompanionIDFromMemberKey` /
 `undefined: company.InstanceFor` / `fakeFormationProvider does not implement FormationProvider`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 In `internal/company/formation.go`, add `"strconv"` and `"strings"` to the
 imports, and add near `CompanionMemberKey`:
@@ -254,13 +254,13 @@ func (m *CompanyModule) InstanceFor(leaderUserID, companionID int) (int, bool) {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/company/... ./modules/company/... -v`
 Expected: PASS, all new tests plus every pre-existing test in both
 packages.
 
-- [ ] **Step 5: `go vet`/`gofmt`, full build**
+- [x] **Step 5: `go vet`/`gofmt`, full build**
 
 ```bash
 gofmt -l internal/company modules/company
@@ -268,7 +268,7 @@ go vet ./internal/company/... ./modules/company/...
 go build ./...
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/company/formation.go internal/company/formation_test.go internal/company/provider.go internal/company/provider_test.go modules/company/company.go
@@ -288,7 +288,7 @@ git commit -m "feat(company): add InstanceFor seam and CompanionIDFromMemberKey"
 - Produces: `func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, defRoom *rooms.Room) (handled bool, ok bool)`,
   called from `NewRound_DoCombat.go` in Task 3.
 
-- [ ] **Step 1: Write the implementation**
+- [x] **Step 1: Write the implementation**
 
 This task adds only adapter code with real engine dependencies
 (`mobs.GetInstance`, `rooms`, the `company`/`combat` seams) — it has no new
@@ -468,18 +468,18 @@ Add `"github.com/GoMudEngine/GoMud/internal/characters"`,
 file's imports (all already used elsewhere in `internal/hooks`, so no new
 dependency risk).
 
-- [ ] **Step 2: Build**
+- [x] **Step 2: Build**
 
 Run: `go build ./...`
 Expected: clean build (confirms every symbol resolves and there's no
 import cycle).
 
-- [ ] **Step 3: `go vet`/`gofmt`**
+- [x] **Step 3: `go vet`/`gofmt`**
 
 Run: `gofmt -l internal/hooks && go vet ./internal/hooks/...`
 Expected: no output.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add internal/hooks/combat_formation.go
@@ -491,7 +491,7 @@ git commit -m "feat(hooks): add mob-vs-player interception resolution"
 **Files:**
 - Modify: `internal/hooks/NewRound_DoCombat.go`
 
-- [ ] **Step 1: Insert the gate call**
+- [x] **Step 1: Insert the gate call**
 
 In the mob-vs-player block, immediately after the `RoundsWaiting` branch's
 `continue` and before the existing `var roundResult combat.AttackResult` /
@@ -520,7 +520,7 @@ Every other line in this block — the weapon-pickup heuristic, the
 `RoundsWaiting` branch, and everything from `combat.AttackMobVsPlayer`
 onward — is untouched.
 
-- [ ] **Step 2: Build and run the full test suite**
+- [x] **Step 2: Build and run the full test suite**
 
 ```bash
 go build ./...
@@ -528,14 +528,14 @@ go test -race ./...
 ```
 Expected: clean build, full suite green (record actual counts).
 
-- [ ] **Step 3: `make generate`/`make validate`**
+- [x] **Step 3: `make generate`/`make validate`**
 
 ```bash
 make generate
 make validate
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add internal/hooks/NewRound_DoCombat.go
@@ -547,7 +547,7 @@ git commit -m "feat(hooks): gate mob-vs-player attacks on formation interception
 **Files:**
 - Modify: `docs/PROJECT_STATUS.md`
 
-- [ ] **Step 1: Final full verification**
+- [x] **Step 1: Final full verification**
 
 ```bash
 go test -race ./...
@@ -555,7 +555,7 @@ make generate
 make validate
 ```
 
-- [ ] **Step 2: Update `docs/PROJECT_STATUS.md`**
+- [x] **Step 2: Update `docs/PROJECT_STATUS.md`**
 
 Add a work-log entry ("Formation combat-loop wiring: mob-vs-player
 interception (complete; two directions still deferred, <date>)") following
@@ -563,7 +563,7 @@ the established format. Update `## Current position`/`**HEAD:**`/"Next" to
 reflect that two directions remain (mob-vs-mob, 11b's reassignment-on-death)
 and that mob-vs-player is now live.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/PROJECT_STATUS.md
