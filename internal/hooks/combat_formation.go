@@ -84,43 +84,26 @@ func resolveEnemyAttack(attackerCol int, defenderInstanceId int, room *rooms.Roo
 	return finalMob, true
 }
 
-// resolveAttackTargetCompanionOnly is resolveAttackTarget's counterpart
-// for an attack aimed at a company (not enemy-party) member: it applies
-// front-row interception exactly the same way, EXCEPT it never redirects
-// to company.LeaderMemberKey — a leader-as-interceptor would need to
-// switch combat.Attack* functions mid-resolution (AttackMobVsMob to
-// AttackMobVsPlayer), which this codebase's mob-vs-mob wiring doesn't
-// implement. When the would-be interceptor is the leader, it falls back
-// to checking legality against the original target directly, as if no
-// interceptor existed — never breaking anything, just not claiming that
-// one specific (and unusual: leader posted in front of their own
-// companions) interception opportunity.
-func resolveAttackTargetCompanionOnly(attackerCol int, f company.Formation, originalTarget company.MemberKey, alive map[company.MemberKey]bool, reach formationcombat.Reach) (finalTarget company.MemberKey, ok bool) {
-	target := originalTarget
-	if interceptor, intercepted := formationcombat.InterceptFrontRow(f, originalTarget, alive); intercepted && interceptor != company.LeaderMemberKey {
-		target = interceptor
-	}
-	if !formationcombat.Legal(attackerCol, f, target, alive, reach) {
-		return "", false
-	}
-	return target, true
-}
-
 // gateMobVsMobAttack classifies both sides of a mob-vs-mob attack as a
 // company member or not, and dispatches to the matching gate. Two hostile
 // mobs, or two companions, fighting each other is left untouched — no
-// formation concept applies to either.
-func gateMobVsMobAttack(mob, defMob *mobs.Mob, mobRoom *rooms.Room) (*mobs.Mob, bool) {
+// formation concept applies to either. handled=true (only ever produced by
+// gateEnemyAttacksCompanion, when interception redirects to the leader)
+// means the caller already resolved the attack itself via
+// resolveInterceptedAttackOnLeader (AttackMobVsPlayer, not AttackMobVsMob)
+// and the caller should skip its own attack call and continue the round.
+func gateMobVsMobAttack(mob, defMob *mobs.Mob, mobRoom *rooms.Room) (target *mobs.Mob, handled bool, ok bool) {
 	attackerLeaderId, attackerKey, attackerIsCompanion := company.LeaderAndKeyForInstance(mob.InstanceId)
 	defenderLeaderId, defenderKey, defenderIsCompanion := company.LeaderAndKeyForInstance(defMob.InstanceId)
 
 	switch {
 	case attackerIsCompanion && !defenderIsCompanion:
-		return gateCompanionAttacksEnemy(mob, attackerLeaderId, attackerKey, defMob, mobRoom)
+		target, ok := gateCompanionAttacksEnemy(mob, attackerLeaderId, attackerKey, defMob, mobRoom)
+		return target, false, ok
 	case !attackerIsCompanion && defenderIsCompanion:
 		return gateEnemyAttacksCompanion(mob, defMob, mobRoom, defenderLeaderId, defenderKey)
 	default:
-		return defMob, true
+		return defMob, false, true
 	}
 }
 
@@ -142,45 +125,53 @@ func gateCompanionAttacksEnemy(mob *mobs.Mob, leaderUserID int, attackerKey comp
 
 // gateEnemyAttacksCompanion gates "the enemy attacks my companion" — the
 // mob-vs-mob analog of gateMobVsPlayerAttack's legality/interception half,
-// generalized to any company member (not just the leader) and restricted
-// to companion-to-companion interception (see resolveAttackTargetCompanionOnly).
-func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leaderUserID int, defenderKey company.MemberKey) (*mobs.Mob, bool) {
-	f, ok := company.FormationFor(leaderUserID)
-	if !ok {
-		return defMob, true
+// generalized to any company member. When interception redirects to the
+// leader, this crosses combat.Attack* functions (AttackMobVsMob to
+// AttackMobVsPlayer) the same way gateMobVsPlayerAttack's redirect does in
+// the opposite direction: it resolves the attack itself via
+// resolveInterceptedAttackOnLeader and reports handled=true.
+func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leaderUserID int, defenderKey company.MemberKey) (target *mobs.Mob, handled bool, ok bool) {
+	f, formationOk := company.FormationFor(leaderUserID)
+	if !formationOk {
+		return defMob, false, true
 	}
-	attackerCol, ok := resolveHostileAttackerColumn(mobRoom, mob.InstanceId)
-	if !ok {
-		return defMob, true
+	attackerCol, colOk := resolveHostileAttackerColumn(mobRoom, mob.InstanceId)
+	if !colOk {
+		return defMob, false, true
 	}
 	leader := users.GetByUserId(leaderUserID)
 	if leader == nil {
-		return defMob, true
+		return defMob, false, true
 	}
 	alive := aliveMapForCompany(leader, f)
 	reach := combat.ResolveReach(&mob.Character, mob.Reach)
 
-	finalKey, ok := resolveAttackTargetCompanionOnly(attackerCol, f, defenderKey, alive, reach)
-	if !ok {
-		return nil, false
+	finalKey, legalOk := resolveAttackTarget(attackerCol, f, defenderKey, alive, reach)
+	if !legalOk {
+		return nil, false, false
 	}
 	if finalKey == defenderKey {
-		return defMob, true
+		return defMob, false, true
+	}
+	if finalKey == company.LeaderMemberKey {
+		defRoom := rooms.LoadRoom(leader.Character.RoomId)
+		resolveInterceptedAttackOnLeader(mob, leader, mobRoom, defRoom)
+		return nil, true, true
 	}
 
-	companionID, ok := company.CompanionIDFromMemberKey(finalKey)
-	if !ok {
-		return defMob, true
+	companionID, companionOk := company.CompanionIDFromMemberKey(finalKey)
+	if !companionOk {
+		return defMob, false, true
 	}
-	instanceId, ok := company.InstanceFor(leaderUserID, companionID)
-	if !ok {
-		return defMob, true
+	instanceId, instanceOk := company.InstanceFor(leaderUserID, companionID)
+	if !instanceOk {
+		return defMob, false, true
 	}
 	finalMob := mobs.GetInstance(instanceId)
 	if finalMob == nil {
-		return defMob, true
+		return defMob, false, true
 	}
-	return finalMob, true
+	return finalMob, false, true
 }
 
 // resolvePlayerColumn returns the column of leaderUserID's own
@@ -396,6 +387,78 @@ func resolveInterceptedMobAttack(mob, interceptor *mobs.Mob, mobRoom, defRoom *r
 	if !interceptor.Character.StoreItem(itm) {
 		defRoom.AddItem(itm, false)
 		events.AddToQueue(events.ItemOwnership{MobInstanceId: interceptor.InstanceId, Item: itm, Gained: true})
+	}
+}
+
+// resolveInterceptedAttackOnLeader resolves one round of an attack 11c's
+// front-row interception redirected from a companion to their leader — the
+// leader-as-interceptor case, symmetric with resolveInterceptedMobAttack
+// but crossing combat.Attack* functions in the opposite direction
+// (AttackMobVsMob to AttackMobVsPlayer). It deliberately never touches
+// mob.Character.Aggro (left pointed at the companion's instance id):
+// interception is recomputed fresh every round, so the same engagement
+// resumes automatically against the companion once the leader no longer
+// blocks. Mirrors NewRound_DoCombat.go's existing mob-vs-player attack
+// resolution (AttackMobVsPlayer, the charmed-mob-assist loop, buffs and
+// messages, offhand equipment-break) plus a CharacterVitalsChanged event so
+// the leader's own client health bar updates — resolveInterceptedMobAttack
+// has no equivalent event because a mob defender's health isn't pushed to
+// any client the same way a player's is.
+func resolveInterceptedAttackOnLeader(mob *mobs.Mob, leader *users.UserRecord, mobRoom, defRoom *rooms.Room) {
+	roundResult := combat.AttackMobVsPlayer(mob, leader)
+
+	for _, instanceId := range mobRoom.GetMobs(rooms.FindCharmed) {
+		if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
+			if charmedMob.Character.IsCharmed(leader.UserId) && charmedMob.Character.Aggro == nil {
+				charmedMob.Character.Aggro = &characters.Aggro{Type: characters.DefaultAttack}
+				charmedMob.Command(fmt.Sprintf("attack #%d", mob.InstanceId))
+			}
+		}
+	}
+
+	for _, buffId := range roundResult.BuffSource {
+		mob.AddBuff(buffId, `combat`)
+	}
+	for _, buffId := range roundResult.BuffTarget {
+		leader.AddBuff(buffId, `combat`)
+	}
+	for _, msg := range roundResult.MessagesToTarget {
+		leader.SendText(msg)
+	}
+	for _, msg := range roundResult.MessagesToSourceRoom {
+		mobRoom.SendText(msg, leader.UserId)
+	}
+	for _, msg := range roundResult.MessagesToTargetRoom {
+		defRoom.SendText(msg, leader.UserId)
+	}
+
+	if roundResult.DamageToTarget != 0 {
+		events.AddToQueue(events.CharacterVitalsChanged{UserId: leader.UserId})
+	}
+
+	if !roundResult.Hit || leader.Character.Equipment.Offhand.ItemId == 0 {
+		return
+	}
+
+	modifier := 0
+	if roundResult.Crit {
+		modifier = int(leader.Character.Equipment.Offhand.GetSpec().BreakChance)
+	}
+	if !leader.Character.Equipment.Offhand.BreakTest(modifier) {
+		return
+	}
+
+	leader.SendText(`<ansi fg="202">***</ansi>`)
+	leader.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> Your <ansi fg="item">%s</ansi> breaks! <ansi fg="202">***</ansi></ansi>`, leader.Character.Equipment.Offhand.NameSimple()))
+	leader.SendText(`<ansi fg="202">***</ansi>`)
+	defRoom.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="username">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, leader.Character.Equipment.Offhand.NameSimple(), leader.Character.Name), leader.UserId)
+
+	events.AddToQueue(events.ItemOwnership{UserId: leader.UserId, Item: leader.Character.Equipment.Offhand, Gained: false})
+	leader.Character.RemoveFromBody(leader.Character.Equipment.Offhand)
+	itm := items.New(20)
+	if !leader.Character.StoreItem(itm) {
+		defRoom.AddItem(itm, false)
+		events.AddToQueue(events.ItemOwnership{UserId: leader.UserId, Item: itm, Gained: true})
 	}
 }
 
