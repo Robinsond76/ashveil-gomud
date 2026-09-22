@@ -365,7 +365,7 @@ func (e Engagement) String() string {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/engagement/... -v`
-Expected: PASS, all eleven tests.
+Expected: PASS, all ten tests.
 
 - [ ] **Step 5: Run `go vet` and `gofmt` on the new package**
 
