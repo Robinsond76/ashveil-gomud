@@ -1021,6 +1021,12 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				continue
 			}
 
+			if gated, gateOk := gateMobVsMobAttack(mob, defMob, mobRoom); !gateOk {
+				continue
+			} else {
+				defMob = gated
+			}
+
 			var roundResult combat.AttackResult
 
 			roundResult = combat.AttackMobVsMob(mob, defMob)
