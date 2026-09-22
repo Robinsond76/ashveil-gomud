@@ -7,12 +7,13 @@ import (
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-const formationUsage = "Usage: formation | formation move <member> <row> <col> | formation swap <member-a> <member-b> | formation clear <member>"
+const formationUsage = "Usage: formation | formation move <member> <row> <col> | formation swap <member-a> <member-b> | formation clear <member> | formation reach <member>"
 
 var rowLabels = [domain.FormationRows]string{"front", "mid  ", "back "}
 
@@ -194,6 +195,44 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 			return true, err
 		}
 		user.SendText(fmt.Sprintf("Removed %s from the formation.", m.memberName(user.UserId, key)))
+	case "reach":
+		if len(args) != 2 {
+			user.SendText(formationUsage)
+			return true, nil
+		}
+		key, err := m.resolveMemberKey(user.UserId, args[1])
+		if err != nil {
+			return true, err
+		}
+		record, _ := m.registry.Get(user.UserId)
+		_, col, placed := record.Formation.Find(key)
+		if !placed {
+			user.SendText(fmt.Sprintf("%s isn't placed in the formation.", m.memberName(user.UserId, key)))
+			return true, nil
+		}
+
+		// A read-only demo of the Phase 11c legality predicate against the
+		// company's own formation (its members are the only formation
+		// live outside of combat) — plain melee (ReachNone), the
+		// strictest case. There is no formation-wide "dead" tracking
+		// outside combat, so every placed member counts as alive here.
+		alive := map[domain.MemberKey]bool{domain.LeaderMemberKey: true}
+		for _, companion := range record.Companions {
+			alive[domain.CompanionMemberKey(companion.ID)] = true
+		}
+
+		names := []string{}
+		for _, target := range formationcombat.LegalTargets(col, record.Formation, alive, formationcombat.ReachNone) {
+			if target == key {
+				continue
+			}
+			names = append(names, m.memberName(user.UserId, target))
+		}
+		if len(names) == 0 {
+			user.SendText(fmt.Sprintf("%s has no legal plain-melee targets within the company right now.", m.memberName(user.UserId, key)))
+			return true, nil
+		}
+		user.SendText(fmt.Sprintf("%s could plain-melee-reach: %s", m.memberName(user.UserId, key), strings.Join(names, ", ")))
 	default:
 		user.SendText(formationUsage)
 	}
