@@ -9,6 +9,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/camping"
 	_ "github.com/GoMudEngine/GoMud/modules/cleanup"
 	_ "github.com/GoMudEngine/GoMud/modules/company"
+	_ "github.com/GoMudEngine/GoMud/modules/encumbrance"
 	_ "github.com/GoMudEngine/GoMud/modules/expedition"
 	_ "github.com/GoMudEngine/GoMud/modules/follow"
 	_ "github.com/GoMudEngine/GoMud/modules/gmcp"

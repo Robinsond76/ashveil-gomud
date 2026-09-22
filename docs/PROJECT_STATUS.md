@@ -6,19 +6,21 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-8-weather`
-- **HEAD:** Phase 8 weather engine complete (this status record follows)
+- **Branch:** `phase-9-encumbrance`
+- **HEAD:** Phase 9 encumbrance and cargo complete (this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
+- **Origin sync:** `master` was pushed through Phase 8 (weather) before Phase 9 started; Phase 9 lands here.
 
 ## Current position
 
 - **Completed:** Phase 0–1 (fork, baseline, integration map), Phase 2 (company
   companion slice), Phase 3 (company roster + 3×3 formation), Phase 4
   (survival state), Phase 5 (terrain and travel profiles), Phase 6 (travel
-  interruptions), Phase 7 (camping), and Phase 8 (weather engine and
-  descriptions; multiplier wiring deferred as documented Option A).
-- **Next:** Phase 9 — encumbrance and cargo.
+  interruptions), Phase 7 (camping), Phase 8 (weather engine and
+  descriptions; multiplier wiring deferred as documented Option A), and
+  Phase 9 (encumbrance and cargo engine and commands; multiplier wiring
+  into travel/rest deferred, same Option A shape).
+- **Next:** Phase 10 — mounts.
 
 ## Phase progress
 
@@ -33,12 +35,74 @@ instead of duplicating them.
 | 6 | Travel interruptions | Complete |
 | 7 | Camping | Complete |
 | 8 | Weather | Complete |
-| 9 | Encumbrance and cargo | Not started |
+| 9 | Encumbrance and cargo | Complete |
 | 10 | Mounts | Not started |
 | 11 | Formation combat | Not started |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 9 — Encumbrance and Cargo (complete, 2026-09-22)
+
+- **What:** Delivered a party/expedition-level, weight-based encumbrance
+  engine, deliberately separate from GoMud's native, unrelated, count-based
+  `Character.CarryCapacity()` throttle (`internal/characters/character.go`),
+  which this phase never touches. `items.ItemSpec` gained a `Weight int`
+  field (grams; zero-value default, same soft-migration shape as Phase 4's
+  `Nutrition`/`Hydration`). `internal/encumbrance` is a GoMud-free domain
+  (matching `internal/expedition`/`internal/camping`/`internal/weather`): a
+  durable `Cargo` container with pure, validated, copy-returning
+  `Deposit`/`Withdraw`, and a computed (never persisted) `Load` with
+  `Ratio()` and a `LoadBand` threshold table resolved by `ResolveBand`.
+  `modules/encumbrance` owns a leader-keyed YAML cargo registry, a flat
+  config-driven `CapacityKg` and `LoadBands` table (embedded default +
+  on-disk overlay, malformed bands rejected and logged rather than
+  guessed), a read-only `encumbrance.Provider` query seam
+  (`CurrentLoad(leaderUserID)`), and a `cargo` / `cargo put <item>` /
+  `cargo take <item>` command reusing `Character.FindInBackpack` and
+  `items.FindMatchIn`'s established name-matching. Personal weight sums
+  each carried/worn item's own resolved spec (`Item.GetSpec().Weight`,
+  honoring any per-instance override); cargo weight sums each stack's
+  configured item spec by ID.
+- **Why:** Phase 9 is the prerequisite the handoff (§34, §18) requires
+  before mounts (Phase 10: "Do not implement mounts before normal travel,
+  encumbrance, and fatigue work"). The owner confirmed, per their standing
+  "continue with whatever you recommend" instruction: Option A (engine +
+  display only, no `TravelSession`/camp-rest schema change this phase —
+  same fork Phase 8's weather design hit, same precedent applied), full
+  `cargo put`/`cargo take` commands now (a container nobody can use is a
+  hollow slice), a flat config-driven capacity (no per-company Strength
+  aggregation), and zero-weight items with balance data authoring deferred.
+  A design-time review found the "refuse cargo put/take that would exceed
+  capacity" idea from the initial design doc was actually vacuous — moving
+  an item between backpack and cargo never changes total party weight — so
+  it was dropped rather than implemented as dead code; see the design doc's
+  implementation-correction note.
+- **Step completed:** Design doc
+  (`docs/superpowers/specs/2026-09-22-phase-9-encumbrance-cargo-design.md`),
+  confirmed and implemented directly.
+- **Key commits:** design doc, plus the `items.ItemSpec.Weight` field,
+  `internal/encumbrance` domain, and `modules/encumbrance` module landing on
+  `phase-9-encumbrance`.
+- **Verification:** `go test -race ./...` (1702 tests / 75 packages),
+  `make generate`, and `make validate` pass. Focused domain/module tests
+  cover cargo deposit/withdraw (including the merge-into-existing-stack and
+  remove-when-empty cases), load-ratio/band resolution, personal-plus-cargo
+  weight computation, put/take's weight-invariance under transfer,
+  persistence-failure rollback for both put and take, the `cargo` status
+  render, and malformed load-band config rejection.
+- **Live acceptance:** Not run: this host has no interactive Telnet client.
+  The deterministic fake-store/injected-item-spec/injected-user harness and
+  domain/module/command test suites cover the engine behavior.
+- **Deferred:** Mount cargo capacity (Phase 10), stealth/noise load effects,
+  per-companion carried gear (companions are native mobs with no modeled
+  inventory in this codebase), cargo loss/theft/raiding, a `company
+  status`-embedded load line (the standalone `cargo` command already shows
+  it), and — per the Option A recommendation — actually wiring
+  `TravelDurationPct`/`FatiguePct` into `modules/expedition`/
+  `modules/camping`. Weight data for existing/Dunmar items was not authored
+  this phase; every current item defaults to 0 (unweighted) until a
+  follow-up data pass.
 
 ### Phase 8 — Weather (complete, 2026-09-22)
 
@@ -462,6 +526,18 @@ instead of duplicating them.
   Weather itself excludes storms as hazard encounters, weather-driven
   room/exit changes, forecasts, seasons/climate modeling, and non-forest
   biome tables.
+- Live server acceptance has not been run for Phase 9; unit/race coverage
+  spans the encumbrance domain, cargo deposit/withdraw, module load
+  computation, the `cargo` command, and config parsing.
+- Phase 9 encumbrance is read-only this phase (design doc Option A, same
+  shape as Phase 8): `TravelDurationPct`/`FatiguePct` are computed and
+  validated but nothing yet applies them to `modules/expedition` or
+  `modules/camping`. Every current item defaults to `Weight: 0`
+  (unweighted); no item in the shipped data was authored with a real
+  weight this phase, so the engine has nothing to compute against until a
+  follow-up data pass. Encumbrance is a party/expedition-level weight
+  system, kept deliberately separate from GoMud's native, unrelated,
+  count-based `Character.CarryCapacity()` per-move throttle.
 
 ## Key documents
 

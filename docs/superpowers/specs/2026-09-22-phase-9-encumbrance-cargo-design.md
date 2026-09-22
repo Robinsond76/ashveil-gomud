@@ -11,6 +11,17 @@ Strength aggregation across companions, matching weather's config-table
 simplicity); (4) ship at the zero-weight default, defer balance data
 authoring for Dunmar's existing items to a follow-up.
 
+**Implementation correction to the Scope section's "refusing what would
+exceed capacity":** moving an item between the leader's backpack and the
+company cargo never changes total party weight (`TotalGrams = PersonalGrams
++ CargoGrams` is invariant under that transfer), so a capacity check on
+`cargo put`/`cargo take` would be a no-op by construction. Only obtaining
+more items (looting, buying, provisioning) increases total weight, and
+that happens through native GoMud flows this phase never touches. The
+shipped `cargo put`/`cargo take` therefore refuse only "you don't have
+that" / "the cargo doesn't have that," not a capacity check — see the code
+comment on `modules/encumbrance.(*EncumbranceModule).put`.
+
 ## Goal
 
 Add party-level, weight-based encumbrance: personal equipment/inventory

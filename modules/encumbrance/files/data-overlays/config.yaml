@@ -1,0 +1,20 @@
+# Phase 9 encumbrance capacity and load-modifier bands.
+#
+# CapacityKg is a flat, config-driven party capacity (no per-company
+# Strength aggregation this phase). LoadBands maps load ratio thresholds to
+# travel-duration/fatigue percentage modifiers; the implicit band below the
+# lowest MinRatio is always 100%/100% (unchanged). This phase computes and
+# displays these modifiers but does not yet apply them to travel duration or
+# survival exertion/rest recovery — that wiring is a reviewed follow-up
+# (design doc Option A).
+CapacityKg: 200
+LoadBands:
+  - MinRatio: 0.75
+    TravelDurationPct: 110
+    FatiguePct: 108
+  - MinRatio: 0.9
+    TravelDurationPct: 125
+    FatiguePct: 115
+  - MinRatio: 1.0
+    TravelDurationPct: 150
+    FatiguePct: 130
