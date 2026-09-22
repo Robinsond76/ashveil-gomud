@@ -7,7 +7,7 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-22
 - **Branch:** `phase-7-camping`
-- **HEAD:** `1675db0c` (Phase 7 design and implementation plan; this status record follows)
+- **HEAD:** `472a7985` (Phase 7 Task 1 camping domain; this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
 
@@ -47,9 +47,12 @@ instead of duplicating them.
 - **Why:** Camping is the next expedition recovery vertical slice and must never
   advance the shared world clock. Weather, supplies, encounters, temporary
   rooms, and multiplayer camp discovery remain deferred.
-- **Commits:** `904176f1` (design), `1675db0c` (plan).
-- **Next:** Implement plan Task 1 (`internal/camping` domain model), then the
-  idempotent survival recovery seam and camping module.
+- **Commits:** `904176f1` (design), `1675db0c` (plan), `472a7985` (validated
+  `internal/camping` domain model).
+- **Verification:** `go test -race ./internal/camping -count=1` and
+  `go test ./... -count=1` passed for Task 1.
+- **Next:** Implement plan Task 2, the idempotent survival recovery seam, then
+  the camping module.
 
 ### Phase 6 — Travel interruptions (complete, 2026-09-22)
 
