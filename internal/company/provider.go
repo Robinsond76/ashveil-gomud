@@ -19,6 +19,13 @@ type FormationProvider interface {
 	// and attached. ok is false otherwise (dismissed, never summoned, or
 	// pending restoration).
 	InstanceFor(leaderUserID, companionID int) (instanceId int, ok bool)
+
+	// LeaderAndKeyForInstance returns the leader and formation MemberKey a
+	// live mob instance is currently attached to as a companion. found is
+	// false for anything that isn't a currently-attached companion of any
+	// tracked company — a hostile mob, a detached/dismissed instance, or a
+	// mob charmed outside the company system entirely.
+	LeaderAndKeyForInstance(instanceId int) (leaderUserID int, key MemberKey, found bool)
 }
 
 var (
@@ -57,4 +64,17 @@ func InstanceFor(leaderUserID, companionID int) (int, bool) {
 		return 0, false
 	}
 	return p.InstanceFor(leaderUserID, companionID)
+}
+
+// LeaderAndKeyForInstance calls through to the registered
+// FormationProvider. See FormationFor for the no-provider-registered
+// contract.
+func LeaderAndKeyForInstance(instanceId int) (int, MemberKey, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	if p == nil {
+		return 0, "", false
+	}
+	return p.LeaderAndKeyForInstance(instanceId)
 }

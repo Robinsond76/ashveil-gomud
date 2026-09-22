@@ -156,6 +156,17 @@ func (m *CompanyModule) InstanceFor(leaderUserID, companionID int) (int, bool) {
 	return m.instance(leaderUserID, companionID)
 }
 
+// LeaderAndKeyForInstance implements company.FormationProvider's third
+// query, delegating to the existing private reverse lookup this module
+// already maintains for onMobDeath.
+func (m *CompanyModule) LeaderAndKeyForInstance(instanceId int) (int, domain.MemberKey, bool) {
+	leaderUserID, companionID, ok := m.companionForInstance(instanceId)
+	if !ok {
+		return 0, "", false
+	}
+	return leaderUserID, domain.CompanionMemberKey(companionID), true
+}
+
 func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	if user := users.GetByUserId(leaderUserID); user != nil && user.Character != nil && user.Character.Name != "" {
 		return user.Character.Name
