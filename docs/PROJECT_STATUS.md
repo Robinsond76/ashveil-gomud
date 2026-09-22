@@ -17,7 +17,8 @@ instead of duplicating them.
   companion slice), Phase 3 (company roster + 3×3 formation), Phase 4
   (survival state), Phase 5 (terrain and travel profiles), and Phase 6 (travel
   interruptions).
-- **In progress:** Phase 7 — camping (design and implementation plan complete; code not started).
+- **Paused:** Phase 7 — camping. The user-requested five-hour usage boundary was
+  reached with 5% remaining after Tasks 1–2; Tasks 3–4 have not begun.
 
 ## Phase progress
 
@@ -30,7 +31,7 @@ instead of duplicating them.
 | 4 | Survival state (hunger/thirst/fatigue) | Complete |
 | 5 | Terrain and travel profiles | Complete |
 | 6 | Travel interruptions | Complete |
-| 7 | Camping | In progress — planned |
+| 7 | Camping | Paused — Tasks 1–2 complete; module/recovery integration pending |
 | 8 | Weather | Not started |
 | 9 | Encumbrance and cargo | Not started |
 | 10 | Mounts | Not started |
@@ -53,8 +54,11 @@ instead of duplicating them.
 - **Verification:** Task 1's `go test -race ./internal/camping -count=1` and
   `go test ./... -count=1` passed. Task 2's
   `go test -race ./internal/survival ./modules/survival -count=1` passed.
-- **Next:** Implement the durable camping module (plan Tasks 3–4) when the
-  current five-hour usage window permits a full implementation/review cycle.
+- **Pause point:** The five-hour window reached 95% used / 5% remaining, so work
+  stopped as requested. The branch is clean. Task 3 (durable camping module,
+  commands, and eligibility) and Task 4 (rest timer completion/recovery,
+  views, and movement integration) remain unstarted; resume with Task 3 after
+  the usage window resets.
 
 ### Phase 6 — Travel interruptions (complete, 2026-09-22)
 
