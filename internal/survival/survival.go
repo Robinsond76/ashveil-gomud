@@ -123,6 +123,8 @@ var (
 	ErrProvisionUnavailable   = errors.New("survival: provisioning unavailable")
 	ErrExertionUnavailable    = errors.New("survival: exertion unavailable")
 	ErrExertionConflict       = errors.New("survival: exertion operation conflicts with prior cost")
+	ErrRestUnavailable        = errors.New("survival: rest recovery unavailable")
+	ErrRestConflict           = errors.New("survival: rest operation conflicts with prior amount")
 )
 
 func clamp(value int) int {
@@ -236,6 +238,7 @@ type Registry struct {
 	Leaders                  map[int]map[MemberKey]Needs `yaml:"leaders"`
 	ReservedNextCompanionIDs map[int]int                 `yaml:"reserved_next_companion_ids,omitempty"`
 	AppliedExertion          map[int]map[string]Exertion `yaml:"applied_exertion,omitempty"`
+	AppliedRestOperation     map[int]map[string]int      `yaml:"applied_rest_operation,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -244,6 +247,7 @@ func NewRegistry() *Registry {
 		Leaders:                  map[int]map[MemberKey]Needs{},
 		ReservedNextCompanionIDs: map[int]int{},
 		AppliedExertion:          map[int]map[string]Exertion{},
+		AppliedRestOperation:     map[int]map[string]int{},
 	}
 }
 
@@ -256,6 +260,9 @@ func (r *Registry) ensureMaps() {
 	}
 	if r.AppliedExertion == nil {
 		r.AppliedExertion = map[int]map[string]Exertion{}
+	}
+	if r.AppliedRestOperation == nil {
+		r.AppliedRestOperation = map[int]map[string]int{}
 	}
 }
 
@@ -392,7 +399,7 @@ func companionOrdinal(key MemberKey) int {
 
 // Clone returns a deep copy of the registry.
 func (r Registry) Clone() Registry {
-	out := Registry{Leaders: map[int]map[MemberKey]Needs{}, ReservedNextCompanionIDs: map[int]int{}, AppliedExertion: map[int]map[string]Exertion{}}
+	out := Registry{Leaders: map[int]map[MemberKey]Needs{}, ReservedNextCompanionIDs: map[int]int{}, AppliedExertion: map[int]map[string]Exertion{}, AppliedRestOperation: map[int]map[string]int{}}
 	for leaderUserID, byMember := range r.Leaders {
 		clone := make(map[MemberKey]Needs, len(byMember))
 		for key, needs := range byMember {
@@ -407,6 +414,12 @@ func (r Registry) Clone() Registry {
 		out.AppliedExertion[id] = map[string]Exertion{}
 		for key, cost := range operations {
 			out.AppliedExertion[id][key] = cost
+		}
+	}
+	for id, operations := range r.AppliedRestOperation {
+		out.AppliedRestOperation[id] = map[string]int{}
+		for key, fatigue := range operations {
+			out.AppliedRestOperation[id][key] = fatigue
 		}
 	}
 	return out
@@ -712,6 +725,8 @@ type CompanyService interface {
 	// ApplyCompanyExertion applies cost to every current company member in one
 	// durable write. Costs are non-negative and at least one must be positive.
 	ApplyCompanyExertion(leaderUserID int, operationID string, cost Exertion) ([]ExertionResult, error)
+	// ApplyCompanyRestRecovery restores fatigue for every current company member in one durable write.
+	ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]ExertionResult, error)
 	// CompanyNeeds returns the leader plus current companions with their
 	// stored needs. It never writes.
 	CompanyNeeds(leaderUserID int) []MemberNeeds
@@ -749,6 +764,17 @@ func ApplyCompanyExertion(leaderUserID int, operationID string, cost Exertion) (
 		return nil, ErrExertionUnavailable
 	}
 	return s.ApplyCompanyExertion(leaderUserID, operationID, cost)
+}
+
+// ApplyCompanyRestRecovery restores fatigue through the registered module.
+func ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]ExertionResult, error) {
+	companyServiceMu.RLock()
+	s := companyService
+	companyServiceMu.RUnlock()
+	if s == nil {
+		return nil, ErrRestUnavailable
+	}
+	return s.ApplyCompanyRestRecovery(leaderUserID, operationID, fatigue)
 }
 
 // CompanyNeeds returns the roster needs through the registered module, or nil

@@ -357,6 +357,39 @@ func TestCurrentRosterForwardsToProvider(t *testing.T) {
 	assert.Equal(t, "Hero", roster[0].Name)
 }
 
+type recordingCompanyService struct {
+	leader    int
+	operation string
+	fatigue   int
+	result    []ExertionResult
+	err       error
+}
+
+func (s *recordingCompanyService) ApplyCompanyExertion(int, string, Exertion) ([]ExertionResult, error) {
+	panic("unexpected exertion call")
+}
+func (s *recordingCompanyService) ApplyCompanyRestRecovery(leader int, operation string, fatigue int) ([]ExertionResult, error) {
+	s.leader, s.operation, s.fatigue = leader, operation, fatigue
+	return s.result, s.err
+}
+func (s *recordingCompanyService) CompanyNeeds(int) []MemberNeeds { return nil }
+
+func TestApplyCompanyRestRecoveryForwardsToRegisteredService(t *testing.T) {
+	SetCompanyService(nil)
+	t.Cleanup(func() { SetCompanyService(nil) })
+	_, err := ApplyCompanyRestRecovery(7, "rest-1", 20)
+	assert.ErrorIs(t, err, ErrRestUnavailable)
+
+	service := &recordingCompanyService{result: []ExertionResult{{Member: LeaderMemberKey}}}
+	SetCompanyService(service)
+	got, err := ApplyCompanyRestRecovery(7, "rest-1", 20)
+	require.NoError(t, err)
+	assert.Equal(t, service.result, got)
+	assert.Equal(t, 7, service.leader)
+	assert.Equal(t, "rest-1", service.operation)
+	assert.Equal(t, 20, service.fatigue)
+}
+
 type restoreCall struct {
 	leader    int
 	companion int
