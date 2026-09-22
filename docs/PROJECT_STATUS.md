@@ -6,17 +6,17 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-11-mob-vs-player-interception`
-- **HEAD:** Formation combat now covers both directions between a player
-  and a hostile mob: player-vs-mob (legality + interception, previous
-  pass) and mob-vs-player (an attack aimed at the leader now redirects to
-  an intercepting companion via `combat.AttackMobVsMob`, gated by the same
-  `Legal`/`InterceptFrontRow` predicate). Two directions remain
-  deliberately unwired (mob-vs-mob, and 11b's reassignment-on-death) — see
-  the work-log entry below for exactly why.
+- **Branch:** `phase-11-mob-vs-mob`
+- **HEAD:** Formation combat now covers all three directions between a
+  player's company and a hostile party: player-vs-mob, mob-vs-player
+  (previous passes), and mob-vs-mob (a companion attacking the enemy, or
+  the enemy attacking a companion, is now gated by the same
+  `Legal`/`InterceptFrontRow` predicate; two hostile mobs or two companions
+  fighting stays untouched). Only 11b's reassignment-on-death remains
+  deliberately unwired — see the work-log entry below for exactly why.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through the player-vs-mob combat
-  wiring; this branch's mob-vs-player interception is not yet merged.
+- **Origin sync:** `master` is pushed through the mob-vs-player
+  interception wiring; this branch's mob-vs-mob wiring is not yet merged.
 
 ## Current position
 
@@ -36,24 +36,23 @@ instead of duplicating them.
   domain layer (`internal/formationcombat`: column-occupancy reach,
   lateral range, front-row interception; a `Reach` trait on items/mobs; a
   read-only `formation reach <member>` query command), and the combat-loop
-  wiring for both player-vs-mob and mob-vs-player (a `company.FormationProvider`
-  seam, extended this pass with `InstanceFor`; `internal/hooks/combat_formation.go`
-  gates both attack directions through 11c's `Legal`/`InterceptFrontRow`,
+  wiring for all three player/mob attack directions (a
+  `company.FormationProvider` seam, extended across the three passes with
+  `InstanceFor` and `LeaderAndKeyForInstance`; `internal/hooks/combat_formation.go`
+  gates every direction through 11c's `Legal`/`InterceptFrontRow`,
   resolving the live enemy party fresh each round via 11a's
   `mobparty.Assemble`).
-- **Next:** two attack directions still unwired: mob-vs-mob (needs to
-  disambiguate charmed/companion vs. hostile mobs on both sides of every
-  call — covers both "my companion attacks the enemy" and "the enemy
-  attacks my companion"), and 11b's `engagement.AssignTarget`
-  reassignment-on-death (needs modifying the existing, working
-  target-validation block in `internal/hooks/NewRound_DoCombat.go:486-526`,
-  which today clears `Aggro` and skips the round *before* any reassignment
-  attempt could run — a materially more invasive change than either
-  interception pass made). See the work-log entries below and
-  `docs/superpowers/plans/2026-09-22-phase-11-combat-wiring.md`/
-  `docs/superpowers/plans/2026-09-22-phase-11-mob-vs-player-interception.md`'s
-  "Design decisions" sections for the full reasoning on why each was scoped
-  out. No phase number is assigned to either yet.
+- **Next:** 11b's `engagement.AssignTarget` reassignment-on-death is the
+  one attack-direction-adjacent item still unwired — it needs modifying
+  the existing, working target-validation block in
+  `internal/hooks/NewRound_DoCombat.go:486-526`, which today clears
+  `Aggro` and skips the round *before* any reassignment attempt could run
+  — a materially more invasive change than any of the three interception
+  passes made. Beyond that, formation combat's foundational wiring is
+  done; further work is genuinely new phases (11d and later) rather than
+  follow-ups to 11a-11c. See the three combat-wiring plan docs'
+  "Design decisions" sections for the full reasoning on scope choices made
+  along the way.
 
 ## Phase progress
 
@@ -72,11 +71,87 @@ instead of duplicating them.
 | 10 | Mounts | Complete |
 | 11a | Enemy parties | Complete |
 | 11b | Unit-vs-unit engagement | Domain layer complete; reassignment-on-death still unwired |
-| 11c | Formation tactics | Domain layer, schema, read-only query, player-vs-mob and mob-vs-player wired; mob-vs-mob still unwired |
+| 11c | Formation tactics | Complete: domain layer, schema, read-only query, and all three player/mob attack directions wired |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Formation combat-loop wiring: mob-vs-mob (complete; formation combat's attack directions now fully wired, 2026-09-22)
+
+- **What:** Completed the third of the three combat directions deferred by
+  the original combat-wiring pass. When a companion and a hostile mob
+  fight — either direction — 11c's legality/interception now gates and
+  redirects the attack exactly as it already does for player-vs-mob and
+  mob-vs-player. `gateMobVsMobAttack` first classifies both sides of the
+  fight via a new seam query, `company.LeaderAndKeyForInstance(instanceId)
+  (leaderUserID, key, found)` (wraps `modules/company`'s existing private
+  `companionForInstance` reverse lookup, already used internally for
+  `onMobDeath`, now exposed for combat), then dispatches: "my companion
+  attacks the enemy" reuses `gateFormationAttack`'s exact core logic
+  (extracted into a new shared `resolveEnemyAttack` — pure refactor, no
+  behavior change, confirmed by the full existing test suite passing
+  unchanged); "the enemy attacks my companion" generalizes
+  `gateMobVsPlayerAttack`'s legality/interception half to any company
+  member, not just the leader, via a new
+  `resolveAttackTargetCompanionOnly` variant. Two hostile mobs, or two
+  companions, fighting each other is left completely untouched — neither
+  side has a formation concept to apply. Unlike the mob-vs-player pass,
+  neither new gate needed a cross-`Attack*`-type redirect: a companion
+  attacking a *different* enemy, or an enemy attacking a *different*
+  companion, both stay `combat.AttackMobVsMob` throughout, so both gates
+  reuse the simpler "substitute defender, or skip" shape instead of
+  `gateMobVsPlayerAttack`'s "resolve the attack myself" shape.
+- **Why:** Same reasoning as the previous two passes: connect
+  already-shipped, already-tested pure domain packages into real combat,
+  one well-scoped direction at a time.
+- **One explicit, documented gap: a leader posted in front of their own
+  companions can't intercept for them via this pass.** A company's
+  `Formation` can place the leader anywhere, including the front row, so
+  an attack aimed at a companion could in principle intercept to the
+  leader specifically — which would need the exact same
+  `AttackMobVsMob`-to-`AttackMobVsPlayer` cross-type redirect the
+  mob-vs-player pass solved for a different direction, a third time.
+  `resolveAttackTargetCompanionOnly` deliberately skips that one specific
+  redirect (falling back to checking legality against the original
+  companion target directly, exactly as if no interceptor existed — never
+  breaking anything, just not claiming that one interception opportunity).
+  This is a narrow, named boundary for an unusual formation arrangement,
+  not a silently dropped case.
+- **Fails open**, same contract as the previous two passes: no company
+  record, attacker/defender not resolvable into a company or enemy party,
+  or the leader-as-interceptor case above, all mean
+  `combat.AttackMobVsMob(mob, defMob)` runs exactly as it did before this
+  change.
+- **Step completed:** Full implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-11-mob-vs-mob.md`), all three
+  code tasks (`LeaderAndKeyForInstance` seam, the two new gates plus the
+  `gateFormationAttack` refactor, the one-line `NewRound_DoCombat.go`
+  wiring), plus this status update.
+- **Key commits:** `ca7d44f9` (plan), `27d43e30` (`LeaderAndKeyForInstance`
+  seam), `67118692` (mob-vs-mob gates and refactor), `ac997bad` (the
+  `NewRound_DoCombat.go` gate call), landing on `phase-11-mob-vs-mob`.
+- **Verification:** `go test -race ./...` (1773 tests / 80 packages),
+  `make generate` (no wiring change), and `make validate` pass. Focused
+  tests cover the seam's call-through/no-provider case for
+  `LeaderAndKeyForInstance` (mirroring the existing `FormationFor`/
+  `InstanceFor` tests) and `resolveAttackTargetCompanionOnly`'s two cases
+  (skips redirecting to the leader; still intercepts normally between two
+  companions). The `gateFormationAttack` refactor is verified by the full
+  existing `internal/hooks` suite passing unchanged — it has no direct
+  unit test of its own, same precedent as the previous two passes' engine
+  adapters.
+- **Live acceptance:** Not run: this host has no interactive Telnet
+  client, and `internal/hooks` has no integration-test harness (same
+  limitation as the previous two passes).
+- **Deferred:** 11b's `engagement.AssignTarget` reassignment-on-death
+  (needs modifying the existing target-validation block, a materially more
+  invasive change than any interception pass made), the
+  leader-as-interceptor edge case above, Phase 11d (unscheduled), and
+  everything already deferred by 11a-11c themselves (guard-stance/
+  chance-based interception, row/column AoE, formation buffs,
+  flanking/exposure, movement-in-combat, `internal/parties`/PvP
+  interaction).
 
 ### Formation combat-loop wiring: mob-vs-player interception (complete; two directions still deferred, 2026-09-22)
 
@@ -1139,6 +1214,14 @@ instead of duplicating them.
   unwired for the same reasons stated there. Same test-coverage caveat as
   the player-vs-mob pass: no `internal/hooks` integration harness, only
   pure/seam-level unit tests.
+- Mob-vs-mob now ships too (see the "mob-vs-mob" work-log entry): all
+  three bullets above's non-11b items are resolved. Only 11b's
+  reassignment-on-death remains unwired for the reasons stated there, plus
+  the newly-introduced leader-as-interceptor edge case (a leader placed in
+  the front row of their own formation can't intercept for a companion —
+  see that work-log entry). Same test-coverage caveat as the previous two
+  passes: no `internal/hooks` integration harness, only pure/seam-level
+  unit tests.
 
 ## Key documents
 
