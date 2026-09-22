@@ -6,14 +6,16 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-11a-enemy-parties`
-- **HEAD:** Phase 11a (Enemy Parties) implemented: mobs sharing a `Groups`
-  tag in a room now assemble into a `mobparty.Party` with an auto-assigned
-  `company.Formation`, and hostile room listings render one aggregate line
-  per party instead of one line per mob
+- **Branch:** `phase-11b-unit-engagement`
+- **HEAD:** Phase 11b (Unit-vs-Unit Engagement) domain layer implemented:
+  `internal/engagement.AssignTarget` picks a weakest/strongest/random
+  target from a party, filtered by an injected legality predicate. The
+  `NewRound_DoCombat.go` hooks integration is deliberately deferred (see
+  the Phase 11b work-log entry) until Phase 11c's real legality predicate
+  exists to inject in place of a test stub.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through the Phase 11 design docs
-  (11a-11c); this branch's Phase 11a implementation is not yet merged.
+- **Origin sync:** `master` is pushed through Phase 11a (enemy parties);
+  this branch's Phase 11b domain layer is not yet merged.
 
 ## Current position
 
@@ -25,15 +27,18 @@ instead of duplicating them.
   (encumbrance and cargo engine and commands; multiplier wiring into
   travel/rest deferred, same Option A shape), and Phase 10 (mounts, with a
   real wired cargo-capacity bonus; travel-speed wiring deferred, same
-  Option A shape), and Phase 11a (enemy parties: mobs sharing a `Groups` tag
+  Option A shape), Phase 11a (enemy parties: mobs sharing a `Groups` tag
   assemble into a party with an auto-assigned formation, shown to players
-  as one grouped room listing).
-- **Next:** Phase 11b — Unit-vs-Unit Engagement (a fight becomes company vs.
-  party with real coordinated target assignment), then Phase 11c —
-  Formation Tactics (interception, reach, adjacency). Neither is planned
-  yet; see `docs/superpowers/specs/2026-09-22-phase-11b-unit-engagement-design.md`
-  and `docs/superpowers/specs/2026-09-22-phase-11c-formation-tactics-design.md`
-  for their design docs.
+  as one grouped room listing), and Phase 11b's domain layer
+  (`internal/engagement.AssignTarget`: weakest/strongest/random target
+  selection filtered by an injected legality predicate; not yet wired into
+  combat — see the Phase 11b work-log entry for why).
+- **Next:** Phase 11c — Formation Tactics (interception, reach, adjacency;
+  its legality predicate is what Phase 11b's `AssignTarget` is waiting on).
+  Once 11c exists, a follow-up task wires `internal/engagement` into
+  `internal/hooks/NewRound_DoCombat.go` for real — that wiring is not part
+  of either 11b or 11c's own scope, it's the join between them. See
+  `docs/superpowers/specs/2026-09-22-phase-11c-formation-tactics-design.md`.
 
 ## Phase progress
 
@@ -51,12 +56,81 @@ instead of duplicating them.
 | 9 | Encumbrance and cargo | Complete |
 | 10 | Mounts | Complete |
 | 11a | Enemy parties | Complete |
-| 11b | Unit-vs-unit engagement | Designed, not implemented |
+| 11b | Unit-vs-unit engagement | Domain layer complete; hooks integration awaits 11c |
 | 11c | Formation tactics | Designed, not implemented |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 11b — Unit-vs-Unit Engagement domain layer (complete; hooks integration deferred, 2026-09-22)
+
+- **What:** Delivered the target-assignment building block for
+  company-vs-party combat. `internal/engagement` is a GoMud-free domain
+  package (matching `internal/mobparty`'s split): `Combatant{ID, HP, Row,
+  Col}` is the minimal per-participant view, `Preference` (`Weakest`,
+  `Strongest`, `Random`) selects among candidates, and
+  `AssignTarget(attacker, candidates, pref, legal) (targetID int, ok bool)`
+  filters candidates to those alive (`HP > 0`) and legal (per an injected
+  `LegalFunc`), then applies the preference. `AssignTarget` is stateless —
+  the same call that assigns an initial target also handles reassignment
+  after a target's death, since a dead candidate is simply filtered out of
+  the next call's `candidates` slice; no separate "reassign" path exists or
+  is needed. `PartyAlive(candidates) bool` is the companion check for
+  engagement-end: once every candidate's `HP <= 0`, the (future) hooks
+  integration stops calling `AssignTarget` for that party. `Engagement{
+  LeaderUserID, PartyID}` is a thin, unpersisted marker type — per the
+  shared Phase 11 prior-art finding that `characters.Aggro` itself is not
+  persisted and is not being rearchitected into a list; this phase adds a
+  coordinated *initiation/reassignment* routine on top of individual
+  `Aggro`, it doesn't replace it.
+- **Why:** The Phase 11 design session identified that a companion today
+  only retaliates reactively if it personally gets attacked, with no
+  coordinated company-wide targeting. 11b's domain layer is the reusable
+  "who should X attack" decision function that a future combat-loop
+  integration calls once per under-targeted company member per round.
+- **Deliberate scope boundary — hooks integration NOT done this phase:**
+  the spec (`docs/superpowers/specs/2026-09-22-phase-11b-unit-engagement-design.md`,
+  "Constraints and Deferrals") states explicitly that `AssignTarget`'s
+  `legal` parameter must be satisfiable by Phase 11c's real
+  lateral-range/reach predicate before the `internal/hooks/NewRound_DoCombat.go`
+  wiring "can land for real," and that this wiring is "the last task, done
+  together with or after 11c lands." 11c is designed but not yet planned or
+  implemented. Wiring real combat behavior against a throwaway `legal` stub
+  now would produce something that has to be rewired the moment 11c ships —
+  worse than leaving it unwired. This phase therefore ships the tested,
+  reusable `AssignTarget`/`PartyAlive` building block only; nothing in
+  `internal/hooks` was touched, and no player-visible combat behavior
+  changed. The follow-up wiring task is tracked here, not forgotten.
+- **Spec deviation, deliberate:** the design doc's illustrative signature
+  passes a `mobparty.Party` into `AssignTarget`; `Party` (11a) has no HP
+  field, so weakest/strongest selection needs the caller to already have
+  adapted each member's live HP into a `Combatant` first. `AssignTarget`
+  therefore takes `[]Combatant` instead — `internal/engagement` doesn't
+  import `internal/mobparty` at all. The eventual hooks integration is
+  where `Party.Members` (instance IDs) plus live HP/formation position get
+  adapted into `Combatant` values.
+- **Step completed:** Full implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-11b-unit-engagement.md`), Task
+  1 (domain package and tests), plus this status update. There is no Task
+  covering hooks wiring in this plan — see the scope-boundary note above.
+- **Key commits:** `c7ede915` (plan), `746f28ef` (`internal/engagement`
+  domain package and tests), landing on `phase-11b-unit-engagement`.
+- **Verification:** `go test -race ./...` (1735 tests / 79 packages),
+  `make generate` (no wiring change), and `make validate` pass. Focused
+  tests cover: weakest/strongest/random selection, filtering by the
+  injected legality predicate, skipping dead candidates (the reassignment
+  case), no-legal-target and empty-candidate handling (returns `ok=false`,
+  never panics), and `PartyAlive`'s true/false/empty cases.
+- **Live acceptance:** Not run: this is a pure domain package with no
+  engine wiring yet — there is no player-visible behavior to exercise.
+- **Deferred:** the `internal/hooks/NewRound_DoCombat.go` integration
+  itself (blocked on 11c's legality predicate, per the spec's own
+  sequencing — see above), Phase 11c (formation tactics), Phase 11d (guard
+  reactions, crit effects, wounds, full AI personality, all unscheduled),
+  real per-member preference configuration (this phase ships one
+  project-wide default rule, not player-configurable UI, matching the
+  spec's own scoping), and any interaction with `internal/parties` or PvP.
 
 ### Phase 11a — Enemy Parties (complete, 2026-09-22)
 
@@ -740,6 +814,15 @@ instead of duplicating them.
   values, but nothing has wired real `EHP`/`DPS` into a `Formation` that
   combat code actually reads yet; that's 11b's job. `modules/gmcp`'s mob
   list is still per-mob, not party-grouped.
+- Phase 11b ships only the `internal/engagement` domain layer; nothing in
+  `internal/hooks/NewRound_DoCombat.go` was touched. No player-visible
+  combat behavior changed this phase — company members still only retaliate
+  reactively (today's pre-11b behavior), because the coordinated-engagement
+  wiring is intentionally deferred until Phase 11c's legality predicate
+  exists to inject into `AssignTarget`'s `legal` parameter for real (see
+  the Phase 11b work-log entry). Live server acceptance has not been run
+  for Phase 11b; unit coverage spans `internal/engagement`'s selection,
+  filtering, and engagement-end logic.
 
 ## Key documents
 

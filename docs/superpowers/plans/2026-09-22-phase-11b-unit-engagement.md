@@ -1,6 +1,6 @@
 # Phase 11b Unit-vs-Unit Engagement Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Status: fully implemented and committed on `phase-11b-unit-engagement` — every step below is checked off.**
 
 **Goal:** Give company-vs-party combat a coordinated target-assignment rule
 — when a company member has no current legal target, pick one from the
@@ -100,7 +100,7 @@ alongside 11c.
   - `type Engagement struct { LeaderUserID int; PartyID string }`
   - `func PartyAlive(candidates []Combatant) bool`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `internal/engagement/engagement_test.go`:
 
@@ -241,13 +241,13 @@ func TestPartyAliveFalseWhenNoMembers(t *testing.T) {
 }
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `go test ./internal/engagement/... -v`
 Expected: FAIL — `package internal/engagement is not a package` (the
 package doesn't exist yet).
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Create `internal/engagement/engagement.go`:
 
@@ -362,17 +362,17 @@ func (e Engagement) String() string {
 }
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/engagement/... -v`
 Expected: PASS, all ten tests.
 
-- [ ] **Step 5: Run `go vet` and `gofmt` on the new package**
+- [x] **Step 5: Run `go vet` and `gofmt` on the new package**
 
 Run: `gofmt -l internal/engagement && go vet ./internal/engagement/...`
 Expected: both commands print nothing.
 
-- [ ] **Step 6: Run the full build and race suite**
+- [x] **Step 6: Run the full build and race suite**
 
 Run: `go build ./...`
 Expected: builds cleanly.
@@ -381,7 +381,7 @@ Run: `go test -race ./...`
 Expected: PASS, full suite, no regressions anywhere in the repo (the new
 package has zero engine dependencies, so nothing else should be affected).
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add internal/engagement/engagement.go internal/engagement/engagement_test.go
@@ -393,7 +393,7 @@ git commit -m "feat(engagement): add Phase 11b target-assignment domain logic"
 **Files:**
 - Modify: `docs/PROJECT_STATUS.md`
 
-- [ ] **Step 1: Run full verification**
+- [x] **Step 1: Run full verification**
 
 ```bash
 make generate
@@ -405,7 +405,7 @@ Expected: all three succeed (record the actual test/package counts from the
 `go test -race ./...` output in the status update below — don't guess a
 number).
 
-- [ ] **Step 2: Update `docs/PROJECT_STATUS.md`**
+- [x] **Step 2: Update `docs/PROJECT_STATUS.md`**
 
 Add a "Phase 11b — Unit-vs-Unit Engagement (domain layer complete, hooks
 integration deferred, <today's date>)" work-log entry following the
@@ -421,7 +421,7 @@ configuration (still a single project-wide default), and PvP/
 - The `## Current position` "Completed"/"Next" summary.
 - The file header's `**HEAD:**` line.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/PROJECT_STATUS.md
