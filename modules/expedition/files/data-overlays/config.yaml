@@ -15,3 +15,6 @@ Profiles:
       Hunger: 4
       Thirst: 4
       Fatigue: 6
+    Interruption:
+      Kind: fallen-tree
+      Checkpoint: 5

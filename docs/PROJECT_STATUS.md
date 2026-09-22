@@ -5,9 +5,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-21
-- **Branch:** `master`
-- **HEAD:** `10a53ace` (Phase 5 durability corrections merged; this status record follows)
+- **Last updated:** 2026-09-22
+- **Branch:** `phase-6-interruptions`
+- **HEAD:** `56dc9ff6` (Phase 6 durability correction; this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
 
@@ -15,8 +15,9 @@ instead of duplicating them.
 
 - **Completed:** Phase 0–1 (fork, baseline, integration map), Phase 2 (company
   companion slice), Phase 3 (company roster + 3×3 formation), Phase 4
-  (survival state), and Phase 5 (terrain and travel profiles).
-- **Next:** Phase 6 — travel interruptions.
+  (survival state), Phase 5 (terrain and travel profiles), and Phase 6 (travel
+  interruptions).
+- **Next:** Phase 7 — camping.
 
 ## Phase progress
 
@@ -28,7 +29,7 @@ instead of duplicating them.
 | 3 | Company roster (cap 5) + 3×3 formation state | Complete |
 | 4 | Survival state (hunger/thirst/fatigue) | Complete |
 | 5 | Terrain and travel profiles | Complete |
-| 6 | Travel interruptions | Not started |
+| 6 | Travel interruptions | Complete |
 | 7 | Camping | Not started |
 | 8 | Weather | Not started |
 | 9 | Encumbrance and cargo | Not started |
@@ -37,6 +38,38 @@ instead of duplicating them.
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 6 — Travel interruptions (complete, 2026-09-22)
+
+- **What:** Added one durable, configured `fallen-tree` interruption to the
+  expedition domain and module. A profile can interrupt once at checkpoint 1–9;
+  the Oak Road proves it at checkpoint 5. Active-time arithmetic freezes route
+  progress, remaining duration, and exertion while paused. The module schedules
+  the next route boundary, finalizes Phase 5 checkpoint exertion before
+  persisting an interruption, and retains malformed records for operator repair.
+  `travel status`, `look`, and movement refusal identify a paused obstruction;
+  `travel resume` banks paused UTC time and resumes exactly the remaining active
+  duration, while `travel return` durably records `Cancelled` before cleanup
+  without moving or refunding the company.
+- **Why:** This is the first safe, deterministic interruption point for real-time
+  multiplayer travel. It remains durable across restart/copyover, preserves the
+  Phase 5 operation-ID exactly-once survival protocol, and never advances global
+  game time or round count.
+- **Step completed:** Handoff Phase 6 ("Travel Interruptions").
+- **Key commits:** `e25d2ec6`, `2a45f473`, `17091a31`, `a8255e51`, `646d00ab`,
+  `a9c2c018`, lifecycle/acceptance coverage through `92edb585`, and `56dc9ff6`
+  (terminal, malformed-record, and stale-timer durability correction).
+- **Verification:** `go test -race ./...`, `make generate`, and `make validate`
+  pass after the final durability correction; focused domain/module and
+  cross-package race suites also pass. Task-scoped and final whole-branch
+  reviews covered malformed-record retention, parser/configuration, timer and
+  checkpoint ordering, terminal recovery, and command/recovery lifecycle behavior.
+- **Live acceptance:** Not run: this host has no interactive Telnet client.
+  The deterministic fake scheduler, injected clock, persistence, recovery,
+  command, view, and race suites cover the proving route behavior.
+- **Deferred:** Combat interruptions, random event tables, rewards, en-route
+  rooms, camping, weather, cargo, mounts, and formation effects remain outside
+  Phase 6.
 
 ### Phase 5 — Terrain and travel profiles (complete, 2026-09-21)
 
