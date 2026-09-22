@@ -21,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -215,6 +216,9 @@ func (m *EncumbranceModule) CurrentLoad(leaderUserID int) (encumbrance.Load, boo
 	if capacityGrams <= 0 {
 		return encumbrance.Load{}, false
 	}
+	// A mount's cargo-capacity bonus (if any) adds to the configured base
+	// capacity; without a tracked mount, mount.CapacityBonus is 0.
+	capacityGrams += mount.CapacityBonus(leaderUserID)
 	cargoGrams := 0
 	if tracked {
 		cargoGrams = m.cargoGramsOf(cargo)
