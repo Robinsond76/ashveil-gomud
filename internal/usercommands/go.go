@@ -3,6 +3,7 @@ package usercommands
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
@@ -32,6 +33,12 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 	// An active journey refuses ordinary movement and reports progress.
 	if blocked, message := expedition.MovementBlocked(user.UserId); blocked {
+		user.SendText(message)
+		return true, nil
+	}
+
+	// An active camp rest refuses ordinary movement and reports progress.
+	if blocked, message := camping.MovementBlocked(user.UserId); blocked {
 		user.SendText(message)
 		return true, nil
 	}

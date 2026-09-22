@@ -98,6 +98,20 @@ func decodeRegistry(data []byte, registry *domain.Registry) error {
 			loaded.AppliedExertion[leaderUserID][operationID] = cost
 		}
 	}
+	for leaderUserID, operations := range wire.AppliedRestOperation {
+		if leaderUserID <= 0 {
+			continue
+		}
+		for operationID, fatigue := range operations {
+			if strings.TrimSpace(operationID) == "" || fatigue <= 0 {
+				continue
+			}
+			if loaded.AppliedRestOperation[leaderUserID] == nil {
+				loaded.AppliedRestOperation[leaderUserID] = map[string]int{}
+			}
+			loaded.AppliedRestOperation[leaderUserID][operationID] = fatigue
+		}
+	}
 	*registry = *loaded
 	return nil
 }
@@ -337,6 +351,70 @@ func (m *SurvivalModule) ApplyCompanyExertion(leaderUserID int, operationID stri
 		return nil, err
 	}
 	return results, nil
+}
+
+// ApplyCompanyRestRecovery restores fatigue to every current company member
+// in one durable write. A leader-scoped operation ledger makes completion
+// retries idempotent across restarts and copyover.
+func (m *SurvivalModule) ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]domain.ExertionResult, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return nil, err
+	}
+	if leaderUserID <= 0 {
+		return nil, domain.ErrInvalidMember
+	}
+	if strings.TrimSpace(operationID) == "" || fatigue <= 0 {
+		return nil, domain.ErrInvalidAmount
+	}
+	if prior, ok := m.registry.AppliedRestOperation[leaderUserID][operationID]; ok {
+		if prior != fatigue {
+			return nil, domain.ErrRestConflict
+		}
+		return m.companyRestResults(leaderUserID)
+	}
+	refs := m.memberRefs(leaderUserID)
+	if len(refs) == 0 {
+		refs = []domain.MemberRef{{Key: domain.LeaderMemberKey, Name: m.leaderName(leaderUserID)}}
+	}
+	snapshot := m.registry.Clone()
+	results := make([]domain.ExertionResult, 0, len(refs))
+	for _, ref := range refs {
+		if err := m.registry.Ensure(leaderUserID, ref.Key); err != nil {
+			m.registry = snapshot
+			return nil, err
+		}
+		change, err := m.registry.ApplyRestRecovery(leaderUserID, ref.Key, fatigue)
+		if err != nil {
+			m.registry = snapshot
+			return nil, err
+		}
+		results = append(results, domain.ExertionResult{Member: ref.Key, Name: ref.Name, Needs: m.registry.MustNeedsFor(leaderUserID, ref.Key), Fatigue: change})
+	}
+	if m.registry.AppliedRestOperation[leaderUserID] == nil {
+		m.registry.AppliedRestOperation[leaderUserID] = map[string]int{}
+	}
+	m.registry.AppliedRestOperation[leaderUserID][operationID] = fatigue
+	if err := m.save(); err != nil {
+		m.registry = snapshot
+		return nil, err
+	}
+	return results, nil
+}
+
+func (m *SurvivalModule) companyRestResults(leaderUserID int) ([]domain.ExertionResult, error) {
+	refs := m.memberRefs(leaderUserID)
+	if len(refs) == 0 {
+		refs = []domain.MemberRef{{Key: domain.LeaderMemberKey, Name: m.leaderName(leaderUserID)}}
+	}
+	out := make([]domain.ExertionResult, 0, len(refs))
+	for _, ref := range refs {
+		needs, ok := m.registry.NeedsFor(leaderUserID, ref.Key)
+		if !ok {
+			needs = domain.FullNeeds()
+		}
+		out = append(out, domain.ExertionResult{Member: ref.Key, Name: ref.Name, Needs: needs})
+	}
+	return out, nil
 }
 
 func (m *SurvivalModule) companyExertionResults(leaderUserID int) []domain.ExertionResult {

@@ -692,6 +692,46 @@ func TestApplyCompanyExertionRejectsZeroCost(t *testing.T) {
 	require.ErrorIs(t, err, domain.ErrInvalidAmount)
 }
 
+func TestApplyCompanyRestRecoveryAppliesOnceToCurrentRoster(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.PutNeeds(7, domain.LeaderMemberKey, domain.Needs{Hunger: 50, Thirst: 60, Fatigue: 10}))
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(1), domain.Needs{Hunger: 80, Thirst: 80, Fatigue: 20}))
+	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{7: {
+		{Key: domain.LeaderMemberKey, Name: "Hero"},
+		{Key: domain.CompanionMemberKey(1), Name: "Bear"},
+	}}})
+
+	results, err := m.ApplyCompanyRestRecovery(7, "rest-1", 20)
+	require.NoError(t, err)
+	require.Len(t, results, 2)
+	assert.Equal(t, domain.Needs{Hunger: 50, Thirst: 60, Fatigue: 30}, m.registry.MustNeedsFor(7, domain.LeaderMemberKey))
+	assert.Equal(t, domain.Needs{Hunger: 80, Thirst: 80, Fatigue: 40}, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(1)))
+	assert.Equal(t, 1, m.store.(*fakeStore).saveCalls)
+
+	replay, err := m.ApplyCompanyRestRecovery(7, "rest-1", 20)
+	require.NoError(t, err)
+	assert.Equal(t, 1, m.store.(*fakeStore).saveCalls)
+	assert.Equal(t, results[0].Needs, replay[0].Needs)
+}
+
+func TestApplyCompanyRestRecoveryRejectsConflictingOperation(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	_, err := m.ApplyCompanyRestRecovery(7, "rest-1", 20)
+	require.NoError(t, err)
+	_, err = m.ApplyCompanyRestRecovery(7, "rest-1", 30)
+	assert.ErrorIs(t, err, domain.ErrRestConflict)
+}
+
+func TestApplyCompanyRestRecoveryRollsBackOnSaveFailure(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.Ensure(7, domain.LeaderMemberKey))
+	before := m.registry.Clone()
+	m.store = &fakeStore{saveErr: errors.New("boom")}
+	_, err := m.ApplyCompanyRestRecovery(7, "rest-1", 20)
+	assert.Error(t, err)
+	assert.Equal(t, before, m.registry)
+}
+
 func TestCompanyNeedsReturnsRosterDefaultsWithoutWriting(t *testing.T) {
 	m := newTestModule(*domain.NewRegistry())
 	useRoster(t, fakeRoster{members: map[int][]domain.MemberRef{

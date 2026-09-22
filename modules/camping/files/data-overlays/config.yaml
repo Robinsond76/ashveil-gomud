@@ -1,0 +1,5 @@
+# Phase 7 camping eligibility.
+#
+# RoomTag is the room `tags` entry that admits `camp` in that room. The
+# proving room (Dunmar 2002, Fork at the Black Oak) carries this tag.
+RoomTag: camping

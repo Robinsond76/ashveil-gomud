@@ -9,6 +9,8 @@ description: An enormous black oak dominates the fork where the Old King's Road
   leans at the base of the oak, its lettering long since weathered away, marking where
   travelers once chose between the eastern track and the overgrown western path.
 biome: forest
+tags:
+  - camping
 exits:
   south:
     roomid: 2001

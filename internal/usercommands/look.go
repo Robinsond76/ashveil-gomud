@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
@@ -23,6 +24,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// An active journey replaces ordinary room rendering with the travel view.
 	if handled, err := expedition.TravelView(user.UserId); handled || err != nil {
+		return true, err
+	}
+
+	// An active camp rest replaces ordinary room rendering with the camp view.
+	if handled, err := camping.CampView(user.UserId); handled || err != nil {
 		return true, err
 	}
 
