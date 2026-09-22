@@ -6,8 +6,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-7-camping`
-- **HEAD:** module/recovery integration commits following Task 2 (this status record follows)
+- **Branch:** `phase-8-weather`
+- **HEAD:** Phase 8 weather engine complete (this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
 
@@ -16,8 +16,9 @@ instead of duplicating them.
 - **Completed:** Phase 0–1 (fork, baseline, integration map), Phase 2 (company
   companion slice), Phase 3 (company roster + 3×3 formation), Phase 4
   (survival state), Phase 5 (terrain and travel profiles), Phase 6 (travel
-  interruptions), and Phase 7 (camping).
-- **Next:** Phase 8 — weather.
+  interruptions), Phase 7 (camping), and Phase 8 (weather engine and
+  descriptions; multiplier wiring deferred as documented Option A).
+- **Next:** Phase 9 — encumbrance and cargo.
 
 ## Phase progress
 
@@ -31,13 +32,72 @@ instead of duplicating them.
 | 5 | Terrain and travel profiles | Complete |
 | 6 | Travel interruptions | Complete |
 | 7 | Camping | Complete |
-| 8 | Weather | Not started |
+| 8 | Weather | Complete |
 | 9 | Encumbrance and cargo | Not started |
 | 10 | Mounts | Not started |
 | 11 | Formation combat | Not started |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Phase 8 — Weather (complete, 2026-09-22)
+
+- **What:** Delivered a durable, round-driven, zone-scoped weather engine.
+  `internal/weather` is a GoMud-free domain (matching `internal/expedition`
+  and `internal/camping`'s split): a `Condition` (name, description, and
+  informational `TravelDurationPct`/`ExertionPct`/`RestRecoveryPct`
+  multipliers clamped to 25–300 at validation) and a `ZoneWeather` record
+  whose `Due`/`Advance`/`Established` are pure, round-number-only, and
+  copy-returning — the one durable-timing package in the codebase that is
+  intentionally *not* real-UTC-based, since weather must track the shared
+  round clock (handoff §33). `modules/weather` owns an embedded/overlaid
+  biome condition-table config (forest only, four weighted conditions,
+  40–120 round change interval), a durable zone-keyed YAML registry, a
+  single `events.NewRound` listener that advances every already-tracked
+  zone whose weather is due, and load/copyover recovery that establishes
+  any newly trackable zone (biome now has a configured table) and rolls an
+  overdue zone forward exactly once to the current round — never guessing a
+  default and never replaying multiple missed transitions, since weather
+  has no side effect to double-apply (simpler than expedition/camping
+  recovery). A read-only `weather.Provider` query seam
+  (`CurrentCondition(zone)`, `RenderLine(zone)`) mirrors
+  `survival.CompanyService`/`camping.ViewProvider`. The `weather` command
+  and `look` (purely additive — a line appended after the room description
+  panel, never replacing it, unlike travel/camp views) consult it for a
+  tracked zone; an untracked zone or one with no configured biome table
+  shows neither.
+- **Why:** Weather is the next expedition-adjacent atmosphere system and
+  must never advance `gametime`, the round counter, or move any player. The
+  design doc's Option A (read-only engine + descriptions only) was
+  confirmed by the owner over Option B, so `modules/expedition`'s
+  `TravelSession` and `modules/camping`'s rest recovery are untouched this
+  phase; actual travel-duration/exertion/rest-recovery multiplier wiring is
+  a deferred follow-up once the engine is proven, per the design doc's own
+  recommendation.
+- **Step completed:** Design doc
+  (`docs/superpowers/specs/2026-09-22-phase-8-weather-design.md`) confirmed
+  by the owner (Option A, forest-only table, 40–120 round cadence), then
+  implemented directly given the timer/recovery/concurrency escalation rule.
+- **Key commits:** `5d4d114c` (design), plus the `internal/weather` domain,
+  `modules/weather` module, and `look` integration landing on
+  `phase-8-weather`.
+- **Verification:** `go test -race ./...` (1685 tests / 73 packages),
+  `make generate`, and `make validate` pass. Focused domain/module tests
+  cover condition/zone-weather validation, weighted rolls, load/copyover
+  establishment and overdue-advance-exactly-once recovery, invalid-record
+  and unknown-condition retention for operator repair, per-round due/not-due
+  advancement, the provider seam, the `weather` command, and malformed
+  biome-table config rejection.
+- **Live acceptance:** Not run: this host has no interactive Telnet client.
+  The deterministic injected round-number/RNG harness and domain/module/
+  command test suites cover the engine behavior.
+- **Deferred:** Storms as discrete hazard encounters, weather-driven
+  room/exit changes, player-visible forecasts, seasons/climate modeling,
+  mount/encumbrance interaction (Phases 9–10), indoor/outdoor room-level
+  overrides beyond "zone has a tracked biome", and (per the design doc's
+  Option A recommendation) actually wiring the `TravelDurationPct`/
+  `ExertionPct`/`RestRecoveryPct` multipliers into `modules/expedition` and
+  `modules/camping` all remain outside Phase 8.
 
 ### Phase 7 — Camping (complete, 2026-09-22)
 
@@ -386,11 +446,22 @@ instead of duplicating them.
 - Live server acceptance has not been run for Phase 7; unit/race coverage
   spans the camp/rest domain, module commands, eligibility, timers, recovery,
   and movement/view integration.
+- Live server acceptance has not been run for Phase 8; unit/race coverage
+  spans the weather domain, module recovery/round-advance/command behavior,
+  and the `look` line integration.
+- Phase 8 weather is read-only this phase (design doc Option A): its
+  `TravelDurationPct`/`ExertionPct`/`RestRecoveryPct` multipliers are
+  computed and validated but nothing yet applies them to
+  `modules/expedition`'s `TravelSession` or `modules/camping`'s rest
+  recovery. That wiring is an explicit deferred follow-up, not an oversight.
 - Deferred by design: recruitment economics, companion custom names, equipment,
   injuries, AI orders, death/permadeath rules, formation combat effects, and
-  weather/cargo/mount integration (Phases 8–10). Camping itself excludes
-  weather, shelter, fire fuel/items, cooking, watches, encounters,
+  cargo/mount integration (Phases 9–10). Camping itself excludes weather
+  effects, shelter, fire fuel/items, cooking, watches, encounters,
   temporary/discoverable camp rooms, multi-player camps, and sleep-until-dawn.
+  Weather itself excludes storms as hazard encounters, weather-driven
+  room/exit changes, forecasts, seasons/climate modeling, and non-forest
+  biome tables.
 
 ## Key documents
 

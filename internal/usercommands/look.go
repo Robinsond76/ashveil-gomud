@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/weather"
 )
 
 func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -561,6 +562,12 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	user.SendText(textOut)
 
 	user.SendText(buildRoomDescPanel(details))
+
+	// Purely additive: a tracked zone's current weather description, never
+	// replacing the room rendering above.
+	if line := weather.RenderLine(room.Zone); line != "" {
+		user.SendText(line)
+	}
 
 	signCt := 0
 	privateSigns := room.GetPrivateSigns()

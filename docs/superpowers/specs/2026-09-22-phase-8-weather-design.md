@@ -1,6 +1,10 @@
 # Phase 8 Weather Design
 
-**Status:** Draft — pending owner review before a plan is written.
+**Status:** Confirmed and implemented, 2026-09-22. Owner confirmed Option A
+(read-only engine + descriptions only, no `TravelSession`/camp schema
+changes this phase), the forest-only biome table, and the 40–120 round
+change-interval default. See `docs/PROJECT_STATUS.md` for the completed
+implementation record.
 
 ## Goal
 
