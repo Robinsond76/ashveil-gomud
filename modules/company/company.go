@@ -118,6 +118,7 @@ func init() {
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.MobDeath{}, m.onMobDeath)
 	survival.SetRosterProvider(m)
+	domain.SetFormationProvider(m)
 }
 
 // Roster implements survival.RosterProvider so the survival module can resolve
@@ -136,6 +137,16 @@ func (m *CompanyModule) Roster(leaderUserID int) []survival.MemberRef {
 		})
 	}
 	return refs
+}
+
+// FormationFor implements company.FormationProvider so internal/hooks can
+// read a leader's current formation without importing modules/company.
+func (m *CompanyModule) FormationFor(leaderUserID int) (domain.Formation, bool) {
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return domain.Formation{}, false
+	}
+	return record.Formation, true
 }
 
 func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
