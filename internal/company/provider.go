@@ -13,6 +13,12 @@ type FormationProvider interface {
 	// or one who has never summoned a companion) — callers should treat
 	// that as "no formation concept applies," not as an error.
 	FormationFor(leaderUserID int) (Formation, bool)
+
+	// InstanceFor returns the live mob instance ID currently attached to
+	// leaderUserID's companionID, if the companion is currently spawned
+	// and attached. ok is false otherwise (dismissed, never summoned, or
+	// pending restoration).
+	InstanceFor(leaderUserID, companionID int) (instanceId int, ok bool)
 }
 
 var (
@@ -39,4 +45,16 @@ func FormationFor(leaderUserID int) (Formation, bool) {
 		return Formation{}, false
 	}
 	return p.FormationFor(leaderUserID)
+}
+
+// InstanceFor calls through to the registered FormationProvider. See
+// FormationFor for the no-provider-registered contract.
+func InstanceFor(leaderUserID, companionID int) (int, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	if p == nil {
+		return 0, false
+	}
+	return p.InstanceFor(leaderUserID, companionID)
 }

@@ -149,6 +149,13 @@ func (m *CompanyModule) FormationFor(leaderUserID int) (domain.Formation, bool) 
 	return record.Formation, true
 }
 
+// InstanceFor implements company.FormationProvider's second query: the
+// live mob instance ID currently attached to a companion, delegating to
+// the existing private lookup this module already maintains.
+func (m *CompanyModule) InstanceFor(leaderUserID, companionID int) (int, bool) {
+	return m.instance(leaderUserID, companionID)
+}
+
 func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	if user := users.GetByUserId(leaderUserID); user != nil && user.Character != nil && user.Character.Name != "" {
 		return user.Character.Name

@@ -82,3 +82,17 @@ func TestFormationPruneKeepsFirstDuplicateValidMember(t *testing.T) {
 	assert.Equal(t, company.LeaderMemberKey, f.At(0, 2))
 	assert.Equal(t, company.MemberKey(""), f.At(2, 0))
 }
+
+func TestCompanionIDFromMemberKeyRoundTrip(t *testing.T) {
+	id, ok := company.CompanionIDFromMemberKey(company.CompanionMemberKey(7))
+	require.True(t, ok)
+	assert.Equal(t, 7, id)
+}
+
+func TestCompanionIDFromMemberKeyRejectsNonCompanionKeys(t *testing.T) {
+	_, ok := company.CompanionIDFromMemberKey(company.LeaderMemberKey)
+	assert.False(t, ok)
+
+	_, ok = company.CompanionIDFromMemberKey(company.MemberKey("mob:9"))
+	assert.False(t, ok)
+}

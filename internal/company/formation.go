@@ -3,6 +3,8 @@ package company
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -19,6 +21,24 @@ const LeaderMemberKey MemberKey = "leader"
 // CompanionMemberKey returns the formation key for a companion ID.
 func CompanionMemberKey(id int) MemberKey {
 	return MemberKey(fmt.Sprintf("companion:%d", id))
+}
+
+// CompanionIDFromMemberKey parses a companion's MemberKey (as produced by
+// CompanionMemberKey) back into its companion ID. ok is false for any key
+// not in that format, such as LeaderMemberKey or a mobparty mob key
+// ("mob:<id>") — a caller resolving formation membership must not assume
+// every non-leader key is a companion key.
+func CompanionIDFromMemberKey(key MemberKey) (int, bool) {
+	const prefix = "companion:"
+	s := string(key)
+	if !strings.HasPrefix(s, prefix) {
+		return 0, false
+	}
+	id, err := strconv.Atoi(strings.TrimPrefix(s, prefix))
+	if err != nil {
+		return 0, false
+	}
+	return id, true
 }
 
 // Formation is a 3x3 grid of member keys. The empty key means unoccupied.

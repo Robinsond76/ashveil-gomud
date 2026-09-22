@@ -17,6 +17,20 @@ func (f fakeFormationProvider) FormationFor(leaderUserID int) (company.Formation
 	return f.formation, f.ok
 }
 
+func (f fakeFormationProvider) InstanceFor(leaderUserID, companionID int) (int, bool) {
+	return 0, false
+}
+
+type fakeInstanceLookup struct {
+	fakeFormationProvider
+	instanceId int
+	ok         bool
+}
+
+func (f fakeInstanceLookup) InstanceFor(leaderUserID, companionID int) (int, bool) {
+	return f.instanceId, f.ok
+}
+
 func TestFormationForReturnsFalseWithNoProviderRegistered(t *testing.T) {
 	company.SetFormationProvider(nil)
 
@@ -34,4 +48,20 @@ func TestFormationForCallsThroughToRegisteredProvider(t *testing.T) {
 	got, ok := company.FormationFor(42)
 	require.True(t, ok)
 	assert.Equal(t, company.LeaderMemberKey, got.At(0, 1))
+}
+
+func TestInstanceForReturnsFalseWithNoProviderRegistered(t *testing.T) {
+	company.SetFormationProvider(nil)
+
+	_, ok := company.InstanceFor(1, 2)
+	assert.False(t, ok)
+}
+
+func TestInstanceForCallsThroughToRegisteredProvider(t *testing.T) {
+	company.SetFormationProvider(fakeInstanceLookup{instanceId: 55, ok: true})
+	defer company.SetFormationProvider(nil)
+
+	got, ok := company.InstanceFor(1, 2)
+	require.True(t, ok)
+	assert.Equal(t, 55, got)
 }
