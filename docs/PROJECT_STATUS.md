@@ -6,8 +6,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-6-interruptions`
-- **HEAD:** `56dc9ff6` (Phase 6 durability correction; this status record follows)
+- **Branch:** `master`
+- **HEAD:** `91700414` (Phase 6 merged locally; this status record follows)
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is 68 commits ahead of `origin/master`; Phase 3–5 and the durable-reservation correction are local only. Nothing pushed.
 
