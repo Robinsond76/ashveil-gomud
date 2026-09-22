@@ -57,8 +57,12 @@ Use concise imperative commits with an optional scope, such as `fix(telnet): sto
 
 ### Branching & Worktrees
 
-Never implement a plan, phase, or feature directly on `master`; `master` is an
-integration branch and must stay clean. Before starting plan work, create an
+Never commit directly to `master`; `master` is an integration branch and must
+stay clean. This applies to **every** commit, not only code — a design doc, a
+`docs/PROJECT_STATUS.md` update, or any other docs-only change gets its own
+worktree and branch too. `master` only ever receives a merge (or an
+`origin` PR) from a finished branch; it is never a workspace itself. Before
+starting *any* work, including drafting a phase design doc, create an
 isolated git worktree with a dedicated feature branch:
 
 ```bash
@@ -66,10 +70,12 @@ git worktree add .worktrees/<branch-name> -b <branch-name>
 ```
 
 `.worktrees/` is gitignored and is the project convention (for example
-`.worktrees/phase-5-travel`). Run the baseline checks in the worktree, make all
-plan commits on the feature branch, and only then integrate back to `master`
-(merge locally or open a PR against `origin`). Remove the worktree when the
-branch is finished. If a worktree is unavailable, create and check out a feature
-branch before making any commit.
+`.worktrees/phase-5-travel`). Run the baseline checks in the worktree, make
+every commit for that unit of work — design doc included — on the feature
+branch, and only then integrate back to `master` (merge locally or open a PR
+against `origin`). Remove the worktree when the branch is finished. If a
+worktree is unavailable, create and check out a feature branch before making
+any commit; working directly on `master`'s checkout is never acceptable, even
+for a single-file change.
 
 `origin` is the Ashveil fork. `upstream` is the read-only GoMud source: fetch from it if needed, but never push to it. Preserve the multiplayer invariant: travel and rest must not advance global game time.

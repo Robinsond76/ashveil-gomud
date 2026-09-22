@@ -70,14 +70,17 @@ clock/round count. Every migrated system must survive restart/copyover.
    `modules/<pkg>/AGENTS.md`, etc. — nearly every package has one).
 
 **Status snapshot (2026-09-22, verify against `docs/PROJECT_STATUS.md` before relying on
-it):** Phases 0–6 complete (fork/baseline, company companion, 3×3 formation, survival
-state, terrain/travel profiles, travel interruptions). Phase 7 (camping) is next.
-`master` is ahead of `origin/master` and unpushed — check `git status`/`git log` rather
-than trusting this snapshot once it ages.
+it):** Phases 0–9 complete (fork/baseline, company companion, 3×3 formation, survival
+state, terrain/travel profiles, travel interruptions, camping, weather, encumbrance and
+cargo). Phase 10 (mounts) is next. `master` is pushed through Phase 9 — check
+`git status`/`git log` rather than trusting this snapshot once it ages.
 
-**Branching:** never commit directly to `master`. Create
-`git worktree add .worktrees/<branch-name> -b <branch-name>`, do all phase work there,
-verify, then merge locally or PR back to `origin`, and remove the worktree when done.
+**Branching:** never commit directly to `master`, for any change — code, a design doc, or
+a `docs/PROJECT_STATUS.md` update alike. Create
+`git worktree add .worktrees/<branch-name> -b <branch-name>` before the *first* commit of
+any unit of work, do all of it there (design doc included), verify, then merge locally or
+PR back to `origin`, and remove the worktree when done. `master`'s own checkout is never a
+workspace — not even for a single docs file.
 
 **Verification:** `go test -race ./...`, `make generate`, and `make validate` before
 calling anything done. `make test`'s `js-lint` stage can stall on this host (it shells
