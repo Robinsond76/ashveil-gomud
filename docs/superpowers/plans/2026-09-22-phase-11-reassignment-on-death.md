@@ -1,6 +1,6 @@
 # Phase 11 Reassignment-on-Death Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. **Status: fully implemented and committed on `phase-11-reassignment` — every step below is checked off.**
 
 **Goal:** Complete 11b's last unwired acceptance criterion: when a company
 member's mob target dies (or otherwise becomes permanently invalid), they
@@ -112,7 +112,7 @@ called from `NewRound_DoCombat.go`.
   `func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool`
   (both called from `NewRound_DoCombat.go` in Task 2).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Add to `internal/hooks/combat_formation_test.go`. This test can't build a
 real `*rooms.Room` cheaply, so it exercises `reassignEnemyTarget`'s
@@ -148,12 +148,12 @@ Note: `keyA`/`keyB` here reuse the same package-level test constants
 already declared in this file from the previous passes
 (`company.MemberKey("a")`/`("b")`) — do not redeclare them.
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run: `go test ./internal/hooks/... -run TestPartyCombatants -v`
 Expected: FAIL — `undefined: partyCombatants`.
 
-- [ ] **Step 3: Write the implementation**
+- [x] **Step 3: Write the implementation**
 
 Add to `internal/hooks/combat_formation.go`:
 
@@ -261,19 +261,19 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 Add `"github.com/GoMudEngine/GoMud/internal/engagement"` to this file's
 imports.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `go test ./internal/hooks/... -v`
 Expected: PASS, all existing tests plus the new `TestPartyCombatants*`
 test.
 
-- [ ] **Step 5: `go vet`/`gofmt`, full build**
+- [x] **Step 5: `go vet`/`gofmt`, full build**
 
 ```bash
 gofmt -l internal/hooks && go vet ./internal/hooks/... && go build ./...
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add internal/hooks/combat_formation.go internal/hooks/combat_formation_test.go
@@ -285,7 +285,7 @@ git commit -m "feat(hooks): add 11b reassignment-on-death helpers"
 **Files:**
 - Modify: `internal/hooks/NewRound_DoCombat.go`
 
-- [ ] **Step 1: Wire the player-vs-mob dead-target checks**
+- [x] **Step 1: Wire the player-vs-mob dead-target checks**
 
 Replace the player-vs-mob branch's two existing clear-Aggro spots:
 
@@ -335,7 +335,7 @@ becomes:
 			}
 ```
 
-- [ ] **Step 2: Wire the mob-vs-mob dead-target checks**
+- [x] **Step 2: Wire the mob-vs-mob dead-target checks**
 
 Replace the mob-vs-mob branch's two existing clear-Aggro spots:
 
@@ -391,7 +391,7 @@ company member targeting an enemy party (Design Decision 1); player-vs-
 player is explicit PvP (always out of scope), and mob-vs-player's target
 is the leader, not an enemy mob, so there is nothing to reassign among.
 
-- [ ] **Step 3: Build and run the full test suite**
+- [x] **Step 3: Build and run the full test suite**
 
 ```bash
 go build ./...
@@ -399,14 +399,14 @@ go test -race ./...
 ```
 Expected: clean build, full suite green (record actual counts).
 
-- [ ] **Step 4: `make generate`/`make validate`**
+- [x] **Step 4: `make generate`/`make validate`**
 
 ```bash
 make generate
 make validate
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add internal/hooks/NewRound_DoCombat.go
@@ -418,7 +418,7 @@ git commit -m "feat(hooks): wire 11b reassignment-on-death into combat loop"
 **Files:**
 - Modify: `docs/PROJECT_STATUS.md`
 
-- [ ] **Step 1: Final full verification**
+- [x] **Step 1: Final full verification**
 
 ```bash
 go test -race ./...
@@ -426,7 +426,7 @@ make generate
 make validate
 ```
 
-- [ ] **Step 2: Update `docs/PROJECT_STATUS.md`**
+- [x] **Step 2: Update `docs/PROJECT_STATUS.md`**
 
 Add a work-log entry ("Formation combat-loop wiring: 11b reassignment-on-death
 (complete — Phase 11's foundational combat wiring is now fully done,
@@ -442,7 +442,7 @@ the leader-as-interceptor gap from the mob-vs-mob pass, and everything
 11a-11c themselves already deferred (11d, guard-stance interception, AoE,
 formation buffs, flanking, movement-in-combat, PvP/`internal/parties`).
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add docs/PROJECT_STATUS.md

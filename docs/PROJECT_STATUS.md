@@ -6,17 +6,16 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-11-mob-vs-mob`
-- **HEAD:** Formation combat now covers all three directions between a
-  player's company and a hostile party: player-vs-mob, mob-vs-player
-  (previous passes), and mob-vs-mob (a companion attacking the enemy, or
-  the enemy attacking a companion, is now gated by the same
-  `Legal`/`InterceptFrontRow` predicate; two hostile mobs or two companions
-  fighting stays untouched). Only 11b's reassignment-on-death remains
-  deliberately unwired — see the work-log entry below for exactly why.
+- **Branch:** `phase-11-reassignment`
+- **HEAD:** Phase 11's foundational combat wiring is now fully complete.
+  All three player/mob attack directions are formation-gated (previous
+  three passes), and 11b's last unwired acceptance criterion —
+  reassignment-on-death — now lands too: when a company member's mob
+  target dies or vanishes, they pick a new legal target within the same
+  hostile party via `engagement.AssignTarget` instead of just giving up.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through the mob-vs-player
-  interception wiring; this branch's mob-vs-mob wiring is not yet merged.
+- **Origin sync:** `master` is pushed through the mob-vs-mob combat
+  wiring; this branch's reassignment-on-death wiring is not yet merged.
 
 ## Current position
 
@@ -36,23 +35,26 @@ instead of duplicating them.
   domain layer (`internal/formationcombat`: column-occupancy reach,
   lateral range, front-row interception; a `Reach` trait on items/mobs; a
   read-only `formation reach <member>` query command), and the combat-loop
-  wiring for all three player/mob attack directions (a
-  `company.FormationProvider` seam, extended across the three passes with
-  `InstanceFor` and `LeaderAndKeyForInstance`; `internal/hooks/combat_formation.go`
-  gates every direction through 11c's `Legal`/`InterceptFrontRow`,
-  resolving the live enemy party fresh each round via 11a's
-  `mobparty.Assemble`).
-- **Next:** 11b's `engagement.AssignTarget` reassignment-on-death is the
-  one attack-direction-adjacent item still unwired — it needs modifying
-  the existing, working target-validation block in
-  `internal/hooks/NewRound_DoCombat.go:486-526`, which today clears
-  `Aggro` and skips the round *before* any reassignment attempt could run
-  — a materially more invasive change than any of the three interception
-  passes made. Beyond that, formation combat's foundational wiring is
-  done; further work is genuinely new phases (11d and later) rather than
-  follow-ups to 11a-11c. See the three combat-wiring plan docs'
-  "Design decisions" sections for the full reasoning on scope choices made
-  along the way.
+  wiring for all three player/mob attack directions plus 11b's
+  reassignment-on-death (a `company.FormationProvider` seam, extended
+  across four passes with `InstanceFor` and `LeaderAndKeyForInstance`;
+  `internal/hooks/combat_formation.go` gates every direction through 11c's
+  `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
+  round via 11a's `mobparty.Assemble`, and now also reassigns a company
+  member's target via 11b's `engagement.AssignTarget` when it's lost).
+- **Next:** Phase 11's foundational combat wiring (11a-11c plus the
+  combat-loop join between them) is now fully done. Further formation
+  combat work is genuinely new scope: Phase 11d (guard reactions,
+  weapon-flavored crit effects, wounds, full AI targeting personality —
+  designed as a deferred bucket from the start, see the Phase 11 overview
+  design doc), the "engagement trigger" half of 11b (an idle companion
+  proactively joining a fight it hasn't personally been hit in — today
+  only the reactive "companion retaliates once hit" loops exist), and the
+  leader-as-interceptor gap the mob-vs-mob pass left named. None of these
+  are follow-ups to 11a-11c in the sense the last four passes were —
+  they're the next real design/implementation work. See the four
+  combat-wiring plan docs' "Design decisions" sections for the full
+  reasoning on every scope choice made along the way.
 
 ## Phase progress
 
@@ -70,12 +72,83 @@ instead of duplicating them.
 | 9 | Encumbrance and cargo | Complete |
 | 10 | Mounts | Complete |
 | 11a | Enemy parties | Complete |
-| 11b | Unit-vs-unit engagement | Domain layer complete; reassignment-on-death still unwired |
+| 11b | Unit-vs-unit engagement | Complete: target assignment and reassignment-on-death both wired; proactive engagement-trigger deferred |
 | 11c | Formation tactics | Complete: domain layer, schema, read-only query, and all three player/mob attack directions wired |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12 | Rich expedition encounters | Not started |
 
 ## Recent work log
+
+### Formation combat-loop wiring: 11b reassignment-on-death (complete — Phase 11's foundational combat wiring is now fully done, 2026-09-22)
+
+- **What:** Wired 11b's last unwired acceptance criterion. When a company
+  member's mob target dies (or otherwise becomes permanently invalid),
+  they now pick a new legal target within the same hostile party via
+  `engagement.AssignTarget`'s weakest-HP preference, instead of simply
+  clearing `Aggro` and giving up. `reassignEnemyTarget` (new, in
+  `internal/hooks/combat_formation.go`) reassembles whichever hostile
+  party is currently in the room fresh (`mobparty.Assemble` is never
+  cached, matching 11a's own design — once a target mob is gone there's
+  no way to ask "which party was it in," so this reassembles from scratch
+  and picks the first resulting party), builds `engagement.Combatant`
+  candidates from its live members (`partyCombatants`, new), and applies
+  11c's `Legal` predicate as the injected legality filter — the very
+  `legal` parameter 11b's spec described as coming from 11c, now finally
+  wired end to end. Two thin engine wrappers, `reassignPlayerTarget` and
+  `reassignCompanionTarget` (the latter only firing when the attacker is a
+  currently-attached company member — a hostile mob's own dead target is
+  enemy AI, out of scope), are called from the four existing dead-target
+  checks in `NewRound_DoCombat.go` (two in the player-vs-mob branch, two
+  in the mob-vs-mob branch) right before each one's pre-existing "give up"
+  path. On success, `Aggro` points at the new target and the round
+  `continue`s — combat resumes normally next round, already gated by the
+  three interception passes like any other round.
+- **Why:** This is the piece all three interception passes explicitly
+  deferred: it required modifying the existing target-validation block
+  that clears `Aggro` and skips the round *before* any reassignment could
+  run, a materially different (and until now, deliberately postponed)
+  kind of change from adding a new gate purely before an attack call.
+- **Scope: only the two "a company member attacks an enemy" directions.**
+  11b's spec frames reassignment as a company member's own engagement, not
+  sharpening enemy AI — so player-vs-player (explicit PvP, always out of
+  scope) and mob-vs-player (the target there is the leader, not an enemy;
+  nothing to reassign among) are untouched. This mirrors exactly how the
+  three interception passes scoped themselves.
+- **Fails closed to today's exact behavior:** no company formation, no
+  hostile party currently in the room, or no living legal candidate within
+  it, all mean the existing "target lost"/"rage subsides" message plus
+  `Aggro = nil` plus `continue` runs completely unchanged — nothing about
+  this pass can make a previously-working "give up" path behave
+  differently when reassignment genuinely isn't possible.
+- **Step completed:** Full implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-11-reassignment-on-death.md`),
+  both code tasks (the reassignment helpers, the four-site
+  `NewRound_DoCombat.go` wiring), plus this status update.
+- **Key commits:** `bb58571f` (plan), `83433972` (reassignment helpers and
+  tests), `20d6893c` (the four `NewRound_DoCombat.go` call sites), landing
+  on `phase-11-reassignment`.
+- **Verification:** `go test -race ./...` (1774 tests / 80 packages),
+  `make generate` (no wiring change), and `make validate` pass. Focused
+  test coverage: `partyCombatants`' formation-position/alive-HP contract
+  (the one genuinely pure sub-piece — `reassignEnemyTarget` itself and the
+  two engine wrappers are untested directly, same precedent every prior
+  combat-wiring pass set for engine-entangled adapter glue, since
+  `engagement.AssignTarget`'s own decision logic is already fully covered
+  by its own package's tests from Phase 11b).
+- **Live acceptance:** Not run: this host has no interactive Telnet
+  client, and `internal/hooks` has no integration-test harness (same
+  limitation as all three prior combat-wiring passes).
+- **Deferred:** the "engagement trigger" half of 11b (a company member
+  proactively joining a fight because their leader started one, without
+  personally having been hit yet — today's reactive
+  "companion-retaliates-once-hit" loops, which the interception passes
+  replicated faithfully, remain the only trigger; a genuinely proactive
+  trigger is unbuilt), the leader-as-interceptor gap the mob-vs-mob pass
+  named, Phase 11d (guard reactions, crit effects, wounds, full AI
+  targeting personality — unscheduled from the start), and everything
+  already deferred by 11a-11c themselves (guard-stance/chance-based
+  interception, row/column AoE, formation buffs, flanking/exposure,
+  movement-in-combat, `internal/parties`/PvP interaction).
 
 ### Formation combat-loop wiring: mob-vs-mob (complete; formation combat's attack directions now fully wired, 2026-09-22)
 
@@ -1222,6 +1295,13 @@ instead of duplicating them.
   see that work-log entry). Same test-coverage caveat as the previous two
   passes: no `internal/hooks` integration harness, only pure/seam-level
   unit tests.
+- 11b's reassignment-on-death now ships too (see the "reassignment-on-death"
+  work-log entry): the item named in every bullet above is resolved. This
+  closes out Phase 11's foundational combat wiring entirely — what's left
+  (11d, the proactive engagement-trigger, the leader-as-interceptor gap)
+  is genuinely new work, not follow-up wiring for 11a-11c. Same
+  test-coverage caveat as every prior combat-wiring pass: no
+  `internal/hooks` integration harness, only pure/seam-level unit tests.
 
 ## Key documents
 
