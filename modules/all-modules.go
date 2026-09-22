@@ -13,5 +13,6 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/follow"
 	_ "github.com/GoMudEngine/GoMud/modules/gmcp"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
+	_ "github.com/GoMudEngine/GoMud/modules/weather"
 	_ "github.com/GoMudEngine/GoMud/modules/webhelp"
 )

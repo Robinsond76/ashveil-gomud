@@ -1,0 +1,40 @@
+# Phase 8 weather biome tables.
+#
+# Each entry is a biome-tabled, weighted-random condition set on a
+# round-scheduled change interval. A zone whose biome has no entry here is
+# untracked: no weather line, no multiplier. Percentages are informational
+# in this phase (Option A): nothing yet multiplies travel duration,
+# exertion, or camp rest recovery by them; that wiring is a reviewed
+# follow-up once the engine itself is proven.
+#
+# forest is the only biome currently in use, at Dunmar 2001/2002.
+Biomes:
+  - Biome: forest
+    ChangeIntervalRounds:
+      Min: 40
+      Max: 120
+    Conditions:
+      - Name: clear
+        Description: "The sky above the forest canopy is clear."
+        Weight: 5
+        TravelDurationPct: 100
+        ExertionPct: 100
+        RestRecoveryPct: 100
+      - Name: overcast
+        Description: "Grey clouds hang low over the treetops."
+        Weight: 4
+        TravelDurationPct: 100
+        ExertionPct: 105
+        RestRecoveryPct: 100
+      - Name: rain
+        Description: "A steady rain patters through the leaves."
+        Weight: 3
+        TravelDurationPct: 115
+        ExertionPct: 115
+        RestRecoveryPct: 90
+      - Name: storm
+        Description: "Wind and rain lash the forest in a storm."
+        Weight: 1
+        TravelDurationPct: 140
+        ExertionPct: 130
+        RestRecoveryPct: 75
