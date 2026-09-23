@@ -273,3 +273,37 @@ func TestRegistryPutKeepsFirstDuplicateFormationOccupant(t *testing.T) {
 	assert.Equal(t, company.LeaderMemberKey, got.Formation.At(0, 0))
 	assert.Equal(t, company.MemberKey(""), got.Formation.At(1, 1))
 }
+
+func TestRegistrySetCompanionArchetypeOnce(t *testing.T) {
+	registry := company.NewRegistry()
+	c, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+
+	require.NoError(t, registry.SetCompanionArchetype(7, c.ID, "Warrior"))
+	record, _ := registry.Get(7)
+	assert.Equal(t, "warrior", record.Companions[0].Archetype)
+
+	assert.ErrorIs(t, registry.SetCompanionArchetype(7, c.ID, "rogue"), company.ErrArchetypeAlreadySet)
+	assert.ErrorIs(t, registry.SetCompanionArchetype(7, 99, "rogue"), company.ErrUnknownMember)
+	assert.ErrorIs(t, registry.SetCompanionArchetype(8, c.ID, "rogue"), company.ErrUnknownMember)
+	assert.ErrorIs(t, registry.SetCompanionArchetype(7, c.ID, " "), company.ErrInvalidArchetype)
+}
+
+func TestRegistryCompanionArchetypeRoundTripsAndLegacyIsEmpty(t *testing.T) {
+	registry := company.NewRegistry()
+	c, err := registry.Summon(7, 58, allowed58(), 4)
+	require.NoError(t, err)
+	require.NoError(t, registry.SetCompanionArchetype(7, c.ID, "rogue"))
+
+	data, err := yaml.Marshal(registry)
+	require.NoError(t, err)
+	var loaded company.Registry
+	require.NoError(t, yaml.Unmarshal(data, &loaded))
+	record, _ := loaded.Get(7)
+	assert.Equal(t, "rogue", record.Companions[0].Archetype)
+
+	var legacy company.Registry
+	require.NoError(t, yaml.Unmarshal([]byte("companies:\n  7:\n    leader_user_id: 7\n    companions:\n      - id: 1\n        mob_template_id: 58\n"), &legacy))
+	record, _ = legacy.Get(7)
+	assert.Empty(t, record.Companions[0].Archetype, "legacy companions have no archetype")
+}

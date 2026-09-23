@@ -8,8 +8,9 @@ such as cooking stay open to all. Source request: "Archetype utility skills
 (wizard light, rogue locks/traps, cook, ...), auto-triggered when needed
 and usable manually."
 
-**Status:** design written 2026-09-23, not implemented. The open decisions
-at the end carry recommendations that still need the user's confirmation.
+**Status:** design written 2026-09-23. On 2026-09-23 the user said "Please
+implement", which confirms open decisions 1–8 as recommended. Where the
+build differs from this text, see "Implementation notes" at the end.
 
 ## Prior-art check
 
@@ -349,3 +350,38 @@ module is absent:
 - **Review gate:** an independent reviewer subagent over the phase diff,
   with every finding verified and recorded.
 - `go test -race ./...`, `make generate`, and `make validate` pass.
+
+## Implementation notes
+
+Deviations from the text above, recorded as they landed.
+
+- **The archetype table is module config, not engine datafiles.** It
+  lives in `modules/archetype/files/data-overlays/config.yaml`, not in
+  `_datafiles/world/default/archetypes/`. Plugins load after every engine
+  datafile (`main.go`: `loadAllDataFiles`, then `plugins.Load`), so the
+  module still cross-checks skills and spells at load. This follows the
+  Ashveil rule that balance lives in module config, and needs no new
+  engine loader.
+- **Companion archetypes live on the company record.** They are stored as
+  `company.Companion.Archetype`, not as a `Companions` map in the
+  archetype registry, so they are persisted and pruned with the roster
+  automatically.
+  - The module reads them through a new optional
+    `company.ArchetypeProvider` seam.
+  - `CompanionArchetypes` in the company config maps template 58 to
+    warrior. A configured archetype the archetype module doesn't know is
+    skipped and logged, never guessed.
+- **Admin reset** is a separate admin-only command,
+  `archetypereset <character>`, and only works on online characters.
+- **Spell-learning gate:**
+  - it applies to players only; mobs are never gated
+  - it is skipped for a spell the character already knows, which is
+    grandfathered
+  - `admin spell` calls `Character.LearnSpell` directly, so it bypasses
+    the gate
+- **The typo fix changes existing content.** With the `illlusion` →
+  `illusion` fix, Elara's party-wide `illum` lesson now teaches only
+  wizards (and unchosen characters are refused). This is the intended
+  gating.
+- **Look display:** `look <player>` and `look <companion>` show an
+  "Archetype:" line when one is set.

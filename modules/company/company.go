@@ -174,7 +174,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company summon <mob-id-or-name> | company status | company dismiss <member|all>"
+const companyUsage = "Usage: company summon <mob-id-or-name> | company status | company dismiss <member|all> | company archetype <member> <archetype>"
 
 // allowedTemplateIDs normalizes values returned by YAML/config decoding.
 func allowedTemplateIDs(raw any) map[int]struct{} {
@@ -300,6 +300,7 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	if err != nil {
 		return "", err
 	}
+	m.assignConfiguredArchetype(leaderUserID, companion)
 	if err := survival.EnsureCompanyMember(leaderUserID, companion.ID); err != nil {
 		// Survival did not durably record the companion, so no identity was
 		// spent: restore the exact pre-summon record and allow ID reuse.
@@ -385,7 +386,7 @@ func (m *CompanyModule) status(leaderUserID int) string {
 				m.clearInstance(leaderUserID, c.ID)
 			}
 		}
-		lines = append(lines, fmt.Sprintf("  #%d %s (%s)", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)), state))
+		lines = append(lines, fmt.Sprintf("  #%d %s, %s (%s)", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)), archetypeLabel(c.Archetype), state))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -528,6 +529,12 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(text)
 	case "status":
 		user.SendText(m.status(user.UserId))
+	case "archetype":
+		if len(args) < 3 {
+			user.SendText(companyUsage)
+			return true, nil
+		}
+		user.SendText(m.setArchetype(user.UserId, args[1], strings.Join(args[2:], " ")))
 	case "dismiss":
 		if len(args) < 2 {
 			user.SendText(companyUsage)

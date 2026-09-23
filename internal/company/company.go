@@ -1,7 +1,10 @@
 // Package company contains the durable company and companion domain model.
 package company
 
-import "errors"
+import (
+	"errors"
+	"strings"
+)
 
 // MaxCompanions is the hard upper bound on companions for one company: a
 // leader plus this many companions, for a five-character maximum.
@@ -23,11 +26,19 @@ var (
 	ErrInvalidCompanionID = errors.New("invalid companion ID")
 	ErrTemplateNotAllowed = errors.New("mob template is not allowed")
 	ErrCompanyFull        = errors.New("company is full")
+	// ErrArchetypeAlreadySet is returned when a companion's archetype is
+	// already chosen; the choice is permanent (Phase 17).
+	ErrArchetypeAlreadySet = errors.New("companion archetype is already set")
+	ErrInvalidArchetype    = errors.New("invalid archetype")
 )
 
 type Companion struct {
 	ID            int `yaml:"id"`
 	MobTemplateID int `yaml:"mob_template_id"`
+	// Archetype is the companion's Phase 17 archetype id. Empty for
+	// companions recruited before archetypes existed, until the leader sets
+	// one. It is set at most once.
+	Archetype string `yaml:"archetype,omitempty"`
 }
 
 type Record struct {
@@ -115,6 +126,32 @@ func (r *Registry) Summon(leaderUserID, mobTemplateID int, allowed map[int]struc
 	record.Companions = append(record.Companions, companion)
 	r.Put(record)
 	return companion, nil
+}
+
+// SetCompanionArchetype records a companion's archetype. It is set at most
+// once: a companion that already has one returns ErrArchetypeAlreadySet.
+// Whether the archetype exists is the caller's concern.
+func (r *Registry) SetCompanionArchetype(leaderUserID, companionID int, archetype string) error {
+	archetype = strings.ToLower(strings.TrimSpace(archetype))
+	if archetype == "" {
+		return ErrInvalidArchetype
+	}
+	record, ok := r.Get(leaderUserID)
+	if !ok {
+		return ErrUnknownMember
+	}
+	for i, c := range record.Companions {
+		if c.ID != companionID {
+			continue
+		}
+		if c.Archetype != "" {
+			return ErrArchetypeAlreadySet
+		}
+		record.Companions[i].Archetype = archetype
+		r.Put(record)
+		return nil
+	}
+	return ErrUnknownMember
 }
 
 // Dismiss removes one companion and its formation cells. It is idempotent.

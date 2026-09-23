@@ -1,0 +1,81 @@
+# Phase 17 archetypes (user decision 3: archetypes are exclusive).
+#
+# Each archetype claims skills and spell schools. Only archetypes that list
+# a skill may train it (several may share one, like cast); only archetypes
+# that list a spell school may learn its spells. Skills and schools no
+# archetype claims are open to everyone ("trade skills").
+#
+# GrantSkills/GrantSpells are applied once when a player chooses the
+# archetype (never lowering a higher level). CompanionLevels are the
+# character levels at which a companion of this archetype reaches utility
+# skill levels 1..4. Utility names the utility actions it performs.
+# (Lists, not maps: module config maps are flattened by the loader.)
+Archetypes:
+  - ArchetypeId: warrior
+    Name: Warrior
+    Description: Frontline fighters who trust steel and grit.
+    Skills: [brawling, dual-wield]
+    GrantSkills:
+      - { Skill: brawling, Level: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+  - ArchetypeId: rogue
+    Name: Rogue
+    Description: Quiet hands that find traps and open locks.
+    Skills: [skulduggery, peep]
+    GrantSkills:
+      - { Skill: skulduggery, Level: 1 }
+    Utility: [traps]
+    CompanionLevels: [1, 10, 20, 30]
+  - ArchetypeId: wizard
+    Name: Wizard
+    Description: Scholars of the arcane who light the dark and bend illusion.
+    Skills: [cast, enchant, portal]
+    Schools: [illusion, conjuration]
+    GrantSkills:
+      - { Skill: cast, Level: 1 }
+    GrantSpells: [floatinglight]
+    Utility: [light]
+    CompanionLevels: [1, 10, 20, 30]
+  - ArchetypeId: cleric
+    Name: Cleric
+    Description: Healers and protectors sworn to keep the company standing.
+    Skills: [cast, protection]
+    Schools: [restoration]
+    GrantSkills:
+      - { Skill: cast, Level: 1 }
+      - { Skill: protection, Level: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+  - ArchetypeId: ranger
+    Name: Ranger
+    Description: Trackers and beast-tamers at home in the wild.
+    Skills: [track, tame]
+    GrantSkills:
+      - { Skill: track, Level: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+
+# Phase 17b utility skills. A player's utility level is their level in the
+# mapped skill (only if their archetype performs the utility); a
+# companion's comes from its archetype's CompanionLevels.
+Utilities:
+  - { Utility: light, Skill: cast }
+  - { Utility: traps, Skill: skulduggery }
+
+# Trap sense: best member's level * SensePerLevel + perception/4 must beat
+# lock difficulty * SenseDifficultyFactor (a d100-style roll is added).
+SensePerLevel: 20
+SenseDifficultyFactor: 5
+SenseCooldownRounds: 2
+AutoSensePenalty: 20
+# Trap disarm: same shape; failing by more than DisarmBackfireMargin
+# springs the trap. A disarmed trap stays safe for DisarmRounds rounds.
+DisarmPerLevel: 20
+DisarmDifficultyFactor: 5
+DisarmBackfireMargin: 25
+DisarmRounds: 900
+# Wizard auto-light: when a walking step leaves the walker's visibility
+# below AutoLightBelow (1 = only in darkness) and no party light is up.
+AutoLightSpell: floatinglight
+AutoLightBelow: 1
+AutoLightCooldown: 10
+CompanionLightBuffID: 1000
+CompanionLightManaCost: 10

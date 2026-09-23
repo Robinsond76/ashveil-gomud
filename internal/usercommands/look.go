@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
@@ -114,6 +116,9 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 
 			user.SendText(buildDescriptionPanel(u.Character))
+			if line := archetypeLookLine(u.UserId, 0); line != `` {
+				user.SendText(line)
+			}
 
 			itemNames := []string{}
 			for _, item := range u.Character.Items {
@@ -138,6 +143,9 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 
 			user.SendText(buildDescriptionPanel(&m.Character))
+			if line := archetypeLookLine(0, mobId); line != `` {
+				user.SendText(line)
+			}
 
 			itemNames := []string{}
 			for _, item := range m.Character.Items {
@@ -648,4 +656,28 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	textOut, _ = templates.Process("descriptions/exits", details, user.UserId)
 	user.SendText(textOut)
 
+}
+
+// archetypeLookLine is the Phase 17 archetype line shown when looking at a
+// player who has chosen one, or at a company companion that has one. It is
+// "" otherwise (including when the archetype module isn't loaded).
+func archetypeLookLine(userId, mobInstanceId int) string {
+	id, ok := "", false
+	if userId > 0 {
+		id, ok = archetypes.PlayerArchetype(userId)
+	} else if mobInstanceId > 0 {
+		if leaderId, key, found := company.LeaderAndKeyForInstance(mobInstanceId); found {
+			if companionId, isCompanion := company.CompanionIDFromMemberKey(key); isCompanion {
+				id, ok = company.CompanionArchetype(leaderId, companionId)
+			}
+		}
+	}
+	if !ok {
+		return ``
+	}
+	name, known := archetypes.Name(id)
+	if !known {
+		name = id
+	}
+	return fmt.Sprintf(`  Archetype: <ansi fg="yellow">%s</ansi>`, name)
 }

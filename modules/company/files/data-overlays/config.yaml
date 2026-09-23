@@ -1,3 +1,9 @@
 AllowedCompanionMobIDs:
   - 58
 MaxCompanions: 4
+# Phase 17: the archetype a newly summoned companion of each mob template
+# takes. It must name an archetype configured in modules/archetype; an
+# unknown one is skipped and logged. A companion without an archetype can
+# be given one, once, with "company archetype <member> <archetype>".
+CompanionArchetypes:
+  - { MobTemplateId: 58, Archetype: warrior }

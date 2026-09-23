@@ -3,6 +3,7 @@ package scripting
 import (
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -597,7 +598,18 @@ func (a ScriptActor) HasSpell(spellId string) bool {
 	return a.characterRecord.HasSpell(spellId)
 }
 
+// LearnSpell teaches a spell. For players it first consults the archetype
+// gate (Phase 17): a spell from a school their archetype doesn't claim is
+// refused with an explanation, and false is returned. Mobs are not gated.
 func (a ScriptActor) LearnSpell(spellId string) bool {
+	if a.userId > 0 && !a.characterRecord.HasSpell(spellId) {
+		if allowed, reason := archetypes.CanLearnSpell(a.userId, spellId); !allowed {
+			if a.userRecord != nil && reason != `` {
+				a.userRecord.SendText(reason)
+			}
+			return false
+		}
+	}
 	return a.characterRecord.LearnSpell(spellId)
 }
 

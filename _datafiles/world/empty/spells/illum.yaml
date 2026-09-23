@@ -3,7 +3,7 @@ spellid: illum
 name: Illuminate
 description: Grants a light aura
 type: helpsingle
-school: illlusion
+school: illusion
 cost: 5
 waitrounds: 3
 difficulty: 0

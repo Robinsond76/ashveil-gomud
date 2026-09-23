@@ -78,3 +78,24 @@ func LeaderAndKeyForInstance(instanceId int) (int, MemberKey, bool) {
 	}
 	return p.LeaderAndKeyForInstance(instanceId)
 }
+
+// ArchetypeProvider is optionally implemented by the registered
+// FormationProvider (Phase 17): a read-only view of a companion's durable
+// archetype.
+type ArchetypeProvider interface {
+	CompanionArchetype(leaderUserID, companionID int) (archetype string, ok bool)
+}
+
+// CompanionArchetype returns a companion's archetype id. ok is false when
+// no provider is registered, the provider doesn't track archetypes, the
+// companion is unknown, or it has none yet.
+func CompanionArchetype(leaderUserID, companionID int) (string, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	ap, ok := p.(ArchetypeProvider)
+	if !ok {
+		return "", false
+	}
+	return ap.CompanionArchetype(leaderUserID, companionID)
+}

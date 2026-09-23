@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -63,6 +64,11 @@ func Train(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		} else if currentLevel < trainingRange.Min-1 {
 			opt.CurrentStatus = fmt.Sprintf("Level %d", currentLevel)
 			opt.Message = fmt.Sprintf("You aren't ready yet. See me for level %d.", trainingRange.Min)
+			opt.Cost = 0
+		} else if allowed, _ := archetypes.CanTrain(user.UserId, skillName); !allowed {
+			// Archetype-claimed skill this character may not train (Phase 17).
+			opt.CurrentStatus = fmt.Sprintf("Level %d", currentLevel)
+			opt.Message = archetypeOnlyLabel(skillName)
 			opt.Cost = 0
 		} else if currentLevel >= trainingRange.Min-1 && currentLevel < trainingRange.Max {
 			opt.Cost = user.Character.GetSkillLevelCost(currentLevel + 1)
@@ -135,6 +141,8 @@ func Train(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			room.SendText(
 				fmt.Sprintf(`The trainer chuckles and says something you can't quite make out to <ansi fg="username">%s</ansi>`, user.Character.Name),
 				user.UserId)
+		} else if allowed, reason := archetypes.CanTrain(user.UserId, match); !allowed { // Archetype-claimed skill (Phase 17)
+			user.SendText(fmt.Sprintf(`The trainer shakes his head. "%s"`, reason))
 		} else if currentLevel < trainingRange.Min-1 { // Not high enough level
 			user.SendText(`The trainer shakes his head, "You aren't ready to train here."`)
 		} else {
@@ -184,4 +192,14 @@ func Train(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	return true, nil
+}
+
+// archetypeOnlyLabel names the archetypes that may train a skill, for the
+// train panel ("Cleric or Wizard only.").
+func archetypeOnlyLabel(skillName string) string {
+	names := archetypes.ClaimantNames(skillName)
+	if names == "" {
+		return "Not for your archetype."
+	}
+	return names + " only."
 }
