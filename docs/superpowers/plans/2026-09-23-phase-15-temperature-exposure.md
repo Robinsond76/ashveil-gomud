@@ -7,17 +7,17 @@ persisted state.
 
 ## Tasks
 
-- [ ] **`internal/climate` (pure).** Tests first: `TestAirTemperature`
+- [x] **`internal/climate` (pure).** Tests first: `TestAirTemperature`
       (table), `TestWarmth`, `TestComfortAndStress` (worked examples),
       `TestExposureStep` (growth, ceiling, recovery, sign switch, lethal only
       at stress ≥ 25), `TestBandFor`, `TestHeatSourceRegistry`.
-- [ ] **`internal/items`: `Warmth`.** Test that it loads from YAML.
-- [ ] **`internal/weather` + `modules/weather`: `TemperatureMod`.** Tests:
+- [x] **`internal/items`: `Warmth`.** Test that it loads from YAML.
+- [x] **`internal/weather` + `modules/weather`: `TemperatureMod`.** Tests:
       validation range, parsing.
-- [ ] **`internal/survival` + `modules/survival`: `MemberDrainService`.**
+- [x] **`internal/survival` + `modules/survival`: `MemberDrainService`.**
       Tests: drain applies to one member, is persisted, and a failed save
       rolls back.
-- [ ] **`modules/exposure`.** Tests first:
+- [x] **`modules/exposure`.** Tests first:
   - config parsing and defaults
   - a tick grows exposure and applies the band buff
   - band change swaps buffs
@@ -28,12 +28,12 @@ persisted state.
   - the `temperature` command report
 
   Then implement, and ship the buffs.
-- [ ] **Wiring.** Camping registers its heat source; the `weather` command
+- [x] **Wiring.** Camping registers its heat source; the `weather` command
       shows the temperature through the climate seam. Wiring tests with a
       real room, user, and equipment through the tick.
-- [ ] **Data:** forest `TemperatureMod`s; `warmth` on cloaks, robes, and
+- [x] **Data:** forest `TemperatureMod`s; `warmth` on cloaks, robes, and
       fur items.
-- [ ] `gofmt`, `go vet`, `go build ./...`, `go test -race ./...`,
+- [x] `gofmt`, `go vet`, `go build ./...`, `go test -race ./...`,
       `make generate`, `make validate`.
 - [ ] **Review gate:** an independent reviewer subagent over the phase diff;
       verify findings, fix with regression tests.
