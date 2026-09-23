@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/walking"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -184,6 +185,39 @@ func TestGoTravelInterception(t *testing.T) {
 		assert.Equal(t, 920032, user.Character.RoomId, "without a provider a marked exit stays instant")
 	})
 
+	// The walking seam hears about an instant move, and never about a route
+	// start or a refused move.
+	t.Run("reports only successful ordinary steps to walking", func(t *testing.T) {
+		stepper := &recordingStepper{}
+		walking.SetStepProvider(stepper)
+		t.Cleanup(func() { walking.SetStepProvider(nil) })
+
+		origin := rooms.LoadRoom(920011)
+		require.NotNil(t, origin)
+		user := travelTestUser(t, 12, origin.RoomId)
+		_, err := Go("north", user, origin, 0)
+		require.NoError(t, err)
+		assert.Equal(t, [][3]int{{12, 920011, 920012}}, stepper.calls)
+
+		blocker := &fakeMovementProvider{blocked: true, message: "no"}
+		expedition.SetMovementProvider(blocker)
+		_, err = Go("south", user, rooms.LoadRoom(920012), 0)
+		require.NoError(t, err)
+		expedition.SetMovementProvider(nil)
+		assert.Len(t, stepper.calls, 1, "a refused move reports nothing")
+
+		starter := &fakeStarter{handled: true}
+		expedition.SetStartProvider(starter)
+		t.Cleanup(func() { expedition.SetStartProvider(nil) })
+		routeOrigin := rooms.LoadRoom(920001)
+		require.NotNil(t, routeOrigin)
+		user = travelTestUser(t, 13, routeOrigin.RoomId)
+		_, err = Go("north", user, routeOrigin, 0)
+		require.NoError(t, err)
+		assert.Equal(t, 1, starter.calls)
+		assert.Len(t, stepper.calls, 1, "a route start reports nothing")
+	})
+
 	t.Run("refuses ordinary movement while travelling", func(t *testing.T) {
 		origin := rooms.LoadRoom(920011)
 		require.NotNil(t, origin)
@@ -200,4 +234,10 @@ func TestGoTravelInterception(t *testing.T) {
 		assert.Equal(t, 920011, user.Character.RoomId, "ordinary movement must be refused during travel")
 		assert.Equal(t, 100, user.Character.ActionPoints)
 	})
+}
+
+type recordingStepper struct{ calls [][3]int }
+
+func (r *recordingStepper) Stepped(userID, from, to int) {
+	r.calls = append(r.calls, [3]int{userID, from, to})
 }

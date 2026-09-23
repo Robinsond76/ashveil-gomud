@@ -17,6 +17,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/light"
 	_ "github.com/GoMudEngine/GoMud/modules/mount"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
+	_ "github.com/GoMudEngine/GoMud/modules/walking"
 	_ "github.com/GoMudEngine/GoMud/modules/weather"
 	_ "github.com/GoMudEngine/GoMud/modules/webhelp"
 )

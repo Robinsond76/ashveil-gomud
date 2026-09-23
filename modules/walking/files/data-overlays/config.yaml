@@ -1,0 +1,38 @@
+# Phase 16 walking fatigue. Every ordinary step (the `go` command, not a
+# route journey) costs each company member walking with the leader
+# "strain" for the room walked into; 100 strain is 1 fatigue point, and
+# the remainder carries over between steps.
+#
+# Terrain: settlements (Settlements biomes, any lit biome, any room tagged
+# `indoor`) cost 0. Otherwise a biome's Strain, or DefaultStrain. A room
+# tag `strain:<n>` overrides everything.
+#
+# Multipliers (clamped to 25%..400% combined): the company load band's
+# FatiguePct, outdoor weather ExertionPct, the member's cold exposure band
+# (ChilledPct, FrostbittenPct, HypothermicPct), the mount's FatiguePct for
+# its riders, and WellRestedPct while the member has the well-rested flag.
+#
+# Every TickRounds rounds, members at fatigue 1..25 get the Exhausted buff
+# (1031) and members at 0 the Collapsed buff (1032). A Collapsed company
+# can't set out on a route; ordinary movement is never refused.
+TickRounds: 5
+DefaultStrain: 40
+Settlements: [city, slums, house, fort]
+Biomes:
+  - {Biome: road, Strain: 25}
+  - {Biome: land, Strain: 35}
+  - {Biome: farmland, Strain: 35}
+  - {Biome: shore, Strain: 35}
+  - {Biome: forest, Strain: 50}
+  - {Biome: cave, Strain: 50}
+  - {Biome: dungeon, Strain: 50}
+  - {Biome: water, Strain: 60}
+  - {Biome: swamp, Strain: 80}
+  - {Biome: desert, Strain: 80}
+  - {Biome: snow, Strain: 90}
+  - {Biome: mountains, Strain: 100}
+  - {Biome: cliffs, Strain: 100}
+ChilledPct: 125
+FrostbittenPct: 150
+HypothermicPct: 200
+WellRestedPct: 50
