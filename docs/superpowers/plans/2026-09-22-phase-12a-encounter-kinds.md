@@ -10,7 +10,7 @@ needed for a narrow, backward-compatible enum widening.
 
 ## Tasks
 
-- [ ] **`internal/expedition`: widen `InterruptionKind` and add
+- [x] **`internal/expedition`: widen `InterruptionKind` and add
       `InterruptionText`.**
   - Tests first, in `internal/expedition/expedition_test.go`:
     - `TestInterruptionKindValidAcceptsAllThreeKinds` (table over
@@ -24,7 +24,7 @@ needed for a narrow, backward-compatible enum widening.
       still returns a non-empty generic string, never panics/empty).
   - Then implement: add `Discovery`, `Tracks` constants, extend `Valid()`,
     add `InterruptionText(kind InterruptionKind, profileName string) string`.
-- [ ] **`modules/expedition`: replace the hardcoded interruption sentence.**
+- [x] **`modules/expedition`: replace the hardcoded interruption sentence.**
   - Check whether the module's existing test harness can assert on
     `sendToLeader`'s captured text for an interrupted session (grep
     existing interrupt-flow tests for a fake/spy sender). If so, add
@@ -37,11 +37,11 @@ needed for a narrow, backward-compatible enum widening.
   - Implement: `interruptionTextLocked` becomes
     `expedition.InterruptionText(candidate.Interruption.Kind, candidate.ProfileName)`;
     delete the old hardcoded sentence.
-- [ ] `gofmt -l`, `go vet ./internal/expedition/... ./modules/expedition/...`,
+- [x] `gofmt -l`, `go vet ./internal/expedition/... ./modules/expedition/...`,
       `go build ./...`, `go test -race ./...` after each of the two tasks
       above.
-- [ ] `make generate`, `make validate`.
-- [ ] Update `docs/PROJECT_STATUS.md`: header, Current position/Next, phase
+- [x] `make generate`, `make validate`.
+- [x] Update `docs/PROJECT_STATUS.md`: header, Current position/Next, phase
       table row 12 (from "Not started" to "In progress: 12a encounter-kind
       abstraction shipped; weighted tables and subsystem-backed kinds
       (combat/merchant/social/etc.) still ahead"), new work-log entry,

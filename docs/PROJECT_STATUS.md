@@ -6,16 +6,17 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-11-leader-interceptor`
-- **HEAD:** Closed the leader-as-interceptor gap: a company leader posted
-  in their own formation's front row now intercepts an attack aimed at a
-  companion behind them, exactly like a front-row companion already did.
-  This resolves the last item Phase 11's combat-wiring passes had left
-  deliberately unbuilt.
+- **Branch:** `phase-12a-encounter-kinds`
+- **HEAD:** Phase 12 begins. First slice: `internal/expedition.InterruptionKind`
+  widens from the single hardcoded `fallen-tree` to also include
+  `discovery` and `tracks`, each with its own player-facing text via a new
+  `InterruptionText(kind, profileName)` lookup — proving travel
+  interruptions can carry real, varied content before any new subsystem
+  (weighted tables, combat/merchant/social encounters) gets built on top.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through the engagement-trigger docs
-  correction (`28093162`); this branch's leader-interceptor fix is not
-  yet merged.
+- **Origin sync:** `master` is pushed through the leader-as-interceptor
+  combat wiring (`e47553b7`); this branch's Phase 12a work is not yet
+  merged.
 
 ## Current position
 
@@ -42,16 +43,18 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 11's formation combat wiring — 11a-11c, the combat-loop
-  join between them, the proactive engagement trigger, and now the
-  leader-as-interceptor gap — is entirely done. What's left is genuinely
-  new scope, not follow-up wiring: Phase 11d (guard reactions,
-  weapon-flavored crit effects, wounds, full AI targeting personality —
-  designed as a deferred bucket from the start, see the Phase 11 overview
-  design doc) or Phase 12 (rich expedition encounters, the next phase in
-  the roadmap). See the combat-wiring plan docs' "Design decisions"
-  sections for the full reasoning on every scope choice made along the
-  way.
+- **Next:** Phase 11's formation combat wiring (11a-11c, the combat-loop
+  join, the engagement trigger, the leader-as-interceptor gap) is entirely
+  done; Phase 11d (guard reactions, crit effects, wounds, AI personality)
+  remains an unscheduled bucket. Phase 12 is now underway: 12a shipped the
+  encounter-kind abstraction (see above). Still ahead, each its own
+  scoped pass per the Phase 12a design doc: weighted/random encounter
+  tables (rolling among several kinds instead of one fixed kind per
+  profile), and the subsystem-backed encounter types the Phase 12
+  overview names — combat, merchants, injured NPCs, route choices, camp
+  opportunities, ruined sites, resources, social encounters — each
+  needing its own subsystem (mob spawning + Phase 11 combat, a shop flow,
+  dialogue, branching choice UX, or `internal/camping` integration).
 
 ## Phase progress
 
@@ -72,9 +75,68 @@ instead of duplicating them.
 | 11b | Unit-vs-unit engagement | Complete: target assignment, reassignment-on-death, and the proactive engagement trigger (pre-existing in `attack.go`, verified) all wired |
 | 11c | Formation tactics | Complete: domain layer, schema, read-only query, all three player/mob attack directions wired, and the leader-as-interceptor gap closed |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
-| 12 | Rich expedition encounters | Not started |
+| 12a | Encounter-kind abstraction | Complete: `InterruptionKind` widened to `fallen-tree`/`discovery`/`tracks`, data-driven text lookup |
+| 12b+ | Weighted encounter tables; combat/merchant/social/etc. encounter subsystems | Not started |
 
 ## Recent work log
+
+### Phase 12a: encounter-kind abstraction (2026-09-22)
+
+- **What:** Phase 12 ("Rich Expedition Encounters") begins. The handoff
+  doc scopes it only as a bullet list of example encounter types and "This
+  becomes a content system rather than engine plumbing" — genuinely
+  underspecified, spanning several different subsystems (combat,
+  merchants, dialogue, branching choices, camping). Rather than scope all
+  of it at once (Phase 11's five-branch combat-wiring arc showed what
+  happens when a phase isn't sliced narrowly), 12a takes the first,
+  narrowest step: reusing Phase 6's existing travel-interruption
+  mechanism (`internal/expedition.InterruptionKind`/`InterruptionProfile`,
+  fire-once-at-a-checkpoint, resolved via `travel resume`/`travel
+  return`) but widening its single hardcoded kind (`fallen-tree`) into a
+  small, real set (`fallen-tree`, `discovery`, `tracks`), each with its
+  own player-facing text via a new `InterruptionText(kind, profileName)`
+  lookup in `internal/expedition` (moved out of
+  `modules/expedition`'s single hardcoded sentence). No new session
+  states, commands, or persistence shape — `InterruptionProfile` still
+  configures exactly one `Kind` per route, unchanged.
+- **Why:** Proves the "kind" is real, extensible content — not just an
+  enum with one member wearing an interruption-shaped mechanism — before
+  building anything that needs a new subsystem. `oak-road`'s shipped
+  config is left on `fallen-tree`; adding new route content is better
+  sequenced after 12b's weighted-table work so a route can be authored
+  once against the final shape.
+- **Scope:** Only `internal/expedition.InterruptionKind`/`Valid`/the new
+  `InterruptionText`, and `modules/expedition`'s
+  `interruptionTextLocked` (now a one-line call-through). Fully backward
+  compatible: existing persisted `fallen-tree` sessions and the
+  `oak-road` config decode identically.
+- **Deferred (see the design doc's "Scope" section for full reasoning):**
+  weighted/random encounter tables (a route rolling among several kinds
+  instead of naming exactly one at config time — 12b); combat, merchant,
+  injured-NPC, route-choice, camp-opportunity, ruined-site, resource, and
+  social encounters (each needs its own subsystem: mob spawning + Phase
+  11 combat, a shop flow, dialogue, branching choice UX, or
+  `internal/camping` integration); non-travel (room/camp-based)
+  encounters.
+- **Step completed:** Full design doc
+  (`docs/superpowers/specs/2026-09-22-phase-12a-encounter-kinds-design.md`),
+  implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-12a-encounter-kinds.md`), both
+  code tasks, and this status update.
+- **Key commits:** `697dee6e` (design + plan), `a77180e4`
+  (implementation), landing on `phase-12a-encounter-kinds`.
+- **Verification:** `go test -race ./...` (1777 tests / 80 packages, up
+  from 1773 — 4 new tests: `Valid()` accepts all three kinds, `Valid()`
+  still rejects unknown kinds, `InterruptionText` returns distinct
+  non-empty text per kind, `InterruptionText` falls back safely for an
+  unknown kind), `make generate` (no wiring change), `make validate`
+  pass. `modules/expedition`'s `interruptionTextLocked` has no dedicated
+  test: it has no `sendToLeader`-capturing test harness (grepped and
+  confirmed none exists), so `internal/expedition`'s own
+  `InterruptionText` tests are the binding coverage, per the plan's
+  documented contingency.
+- **Live acceptance:** Not run: this host has no interactive Telnet
+  client.
 
 ### Formation combat-loop wiring: leader-as-interceptor (complete — Phase 11's formation combat wiring is now entirely done, 2026-09-22)
 
