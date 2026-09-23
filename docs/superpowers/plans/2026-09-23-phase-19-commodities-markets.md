@@ -8,39 +8,48 @@ production/consumption sim) confirmed by the user via `AskUserQuestion`
 on 2026-09-23, recommended option. **One decision is explicitly deferred
 to this plan's first tasks, not pre-decided in the design doc:** whether
 live buy/sell integrates with vendor `Shop` pricing this phase, or ships
-read-only with trading following in Phase 20/21 — resolve it once
-`shop.go` and `ZoneConfig` are actually read (task 1 below), and record
-the outcome at the top of the design doc's "Scope" section before writing
-any trading-integration code.
+read-only with market-backed trading planned before Phase 20 rumours —
+resolve it after tracing every price and transaction path (task 1 below),
+and record the outcome at the top of the design doc's "Scope" section
+before writing any trading-integration code.
 
 ## Tasks
 
-- [ ] **Reconnaissance (no code yet): read `internal/characters/shop.go`
-      in full and `internal/rooms/roommanager.go`'s `ZoneConfig` in
-      full.** Decide and record (amend the design doc's Scope section):
-  1. Where market config (tracked goods, base/min/max price, max stock)
-     lives — a new field on `ZoneConfig`, or a separate market datafile
-     keyed by zone name. Pick whichever needs the least new loader
+- [ ] **Reconnaissance (no code yet):** read
+      `internal/characters/shop.go`, `internal/rooms/roommanager.go`'s
+      `ZoneConfig`, `internal/usercommands/{buy,sell,offer}.go`, and
+      `internal/mobs.Mob.GetSellPrice` in full. Decide and record in the
+      design doc's Scope section:
+  1. Where market config (tracked item IDs, price bounds, `MaxStock`,
+     `TargetStock`, `StartStock`, `DriftStep`) lives — a `ZoneConfig`
+     field or a separate zone-keyed datafile. Use the loader with less
      plumbing.
-  2. Whether `buy`/`sell` integration is in-scope this phase (only if
-     `ShopItem.Price` can cleanly defer to `market.Good.PriceForStock`
-     without restructuring `shop.go`) or deferred, per the design doc's
-     explicit fallback.
+  2. Whether market-backed vendor trading is feasible this phase without
+     widening the confirmed narrow scope. Trace quote and transaction
+     prices, inventory changes, and stock availability; `ShopItem.Price`
+     alone is not the whole transaction. If deferred, put trading in
+     Phase 20's prerequisites or a separate intervening slice before
+     rumours depend on it.
 - [ ] **`internal/market` (new pure package): `Good`, `Validate`,
       `PriceForStock`, `DriftStock`.**
   - Tests first, `internal/market/market_test.go`:
     - `TestGoodValidateRejectsNonPositivePrices`
-    - `TestGoodValidateRejectsMaxStockZero`
+    - `TestGoodValidateRejectsInvalidBounds` (price ordering, target
+      strictly between 0 and `MaxStock`, start stock range, drift step
+      range, and non-positive item ID)
     - `TestPriceForStockAtZeroReturnsMaxPrice`
+    - `TestPriceForStockAtTargetReturnsBasePrice`
     - `TestPriceForStockAtOrAboveMaxStockReturnsMinPrice`
-    - `TestPriceForStockMonotonicallyDecreasing` (property test: sample
-      many stock levels 0..MaxStock*2, assert non-increasing price)
-    - `TestDriftStockNeverNegative` (property test: many iterations from
-      varied starting stocks and rolls, assert stock stays >= 0)
-    - `TestDriftStockNeverExceedsConfiguredCeiling` (same shape, upper
-      bound)
+    - `TestPriceForStockMonotonicallyDecreasing` (sample both
+      interpolation segments and out-of-range stock)
+    - `TestPriceForStockAvoidsOverflow` (extreme valid integers)
+    - `TestDriftStockStaysWithinBoundsAndConverges` (many iterations
+      from varied starts, including out-of-range values)
     - `TestDriftStockIsDeterministicForFixedRoll`
-  - Then implement.
+  - Config-loader tests: reject a zone with duplicate item IDs and
+    warn/omit goods whose item spec does not exist.
+  - Then implement the two-segment interpolation and target-seeking
+    bounded drift specified in the design doc.
 - [ ] **`modules/market` (new module): `Registry`, `ZoneMarket`,
       `GoodStock`, `Store` interface + file-backed implementation +
       test fake.**
@@ -48,10 +57,10 @@ any trading-integration code.
     (`modules/weather/weather.go`) as closely as the actual code allows;
     read it in full before implementing, don't design from the design
     doc's sketch alone.
-  - Tests first: load with an empty store seeds every configured market
-    zone at `Good.StartStock`; load with an existing store round-trips
-    unchanged; a `Store.Load` failure fails open (no market anywhere,
-    documented in a comment, no panic).
+  - Tests first: a missing store seeds every configured market zone at
+    `Good.StartStock`; an existing store round-trips unchanged; a
+    corrupt/unreadable store disables market effects without a panic.
+    Distinguish a missing first-boot file from a load failure.
   - Then implement.
 - [ ] **`modules/market`: `events.NewRound` listener drifting stock.**
   - Test first: a fixed `rollUint64`-style seam (mirror
@@ -74,20 +83,26 @@ any trading-integration code.
     stock descriptor; a player in an unconfigured zone sees "no market
     here."
   - Then implement.
-- [ ] **If task 1 decided buy/sell integrates this phase:** wire
-      `ShopItem.Price` (or the sell-price path) for market-zone vendor
-      mobs to consult `market.Good.PriceForStock`, with its own
-      wiring test through the real `buy`/`sell` commands. **If deferred:**
-      skip this task; the design doc's Scope section already documents
-      the fallback, and the work-log entry below should say so
-      explicitly.
+- [ ] **If task 1 includes market-backed trading:** route vendor
+      `buy`, `sell`, and `offer` through a shared market-price lookup
+      for tracked goods in market zones. Define when a completed buy
+      decrements zone stock and a completed sell increments it, how
+      vendor `Shop` quantity and zone stock stay consistent, and what
+      happens at zero/full stock. Test the real commands for quote/
+      transaction agreement, gold and item transfer, ledger changes,
+      persistence, and unchanged prices outside configured markets.
+      **If deferred:** record that Phase 20 (or an intervening trade
+      slice) must add this before actionable trade rumours; skip this
+      task and state the decision in the work log.
 - [ ] **Content:** configure 2-3 existing zones as markets (reuse zones
       that already exist rather than authoring new ones — check
       Waymark Inn's zone and Dunmar West Gate's zone as candidates), each
       with a small tracked-goods list including at least one Phase 18
       `Commodity` item (only after Phase 18a has landed; if this phase
       starts before 18a merges, use an existing item type instead and
-      note the follow-up).
+      note the follow-up). Choose at least one `StartStock` away from
+      `TargetStock`, with enough price spread for the round-listener
+      wiring test to observe both stock and price drift.
 - [ ] `gofmt -l`, `go vet ./internal/market/... ./modules/market/...`,
       `go build ./...`, `go test -race ./...` after each task.
 - [ ] `make generate` (registers the new `modules/market` plugin),

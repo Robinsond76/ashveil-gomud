@@ -37,8 +37,8 @@
   Phase 19's market registry follows the same shape: `Registry{Zones
   map[string]ZoneMarket}`, a `Store` interface for injectable
   load/save (weather's own `Store` abstraction, same reason: testable
-  persistence failure paths), and a `NewRound` listener that nudges price
-  toward a baseline.
+  persistence failure paths), and a `NewRound` listener that nudges stock
+  toward a configured target; price is always derived from current stock.
 - **Restock's game-time period** (`shop.go`'s `RestockRate`) is a
   precedent for "periodic economic change keyed off elapsed game time,"
   but this phase's price drift is simpler: round-driven, not time-period
@@ -74,24 +74,24 @@
   is untouched, so this never silently turns every zone in the game into a
   shop.
 - A market's tracked goods are data-driven per zone: which `ItemId`s it
-  trades, each with a baseline price and a stock band (min/max), loaded
-  from the zone's own config or a new market datafile — whichever the
+  trades, each with minimum/base/maximum prices, a stock ceiling,
+  starting and target stock, and a per-round drift step, loaded from
+  the zone's own config or a new market datafile — whichever the
   existing `ZoneConfig` loader can absorb with the least new plumbing
   (again, a plan-task decision after reading the real loader).
 - `market` command: shows the current zone's tracked goods, their price,
   and a coarse stock descriptor (e.g. "plentiful"/"scarce"), read-only.
-- Buying/selling *through* a market in this phase reuses the existing
-  `buy`/`sell`/vendor-mob flow if a vendor mob's `Shop` is configured to
-  reference the zone's market stock for pricing — **or**, if that
-  integration proves non-trivial once the real `buy`/`sell` code is read,
-  defer live trading to Phase 20/21 and ship Phase 19 as read-only
-  (`market` command + the registry + price drift), which still fully
-  satisfies the roadmap's "stock-driven prices, round-driven drift,
-  `market` command" phase description on its own. **This is an explicit
-  plan-time decision point, not pre-decided here** — the design doc
-  intentionally leaves it open because it depends on how entangled
-  `shop.go`'s pricing is with `ShopItem.Price` once actually read for the
-  plan.
+- Buying/selling *through* a market is a plan-time decision. The
+  existing price paths include `internal/usercommands/buy.go`,
+  `sell.go`, `offer.go`, `internal/mobs.Mob.GetSellPrice`, and
+  `ShopItem.Price`; changing that field alone cannot guarantee a
+  consistent quote or transaction. Integrate this phase only if those
+  paths can share a market price source and each completed trade can
+  update the zone ledger and vendor stock coherently. Otherwise ship
+  the confirmed narrow read-only Phase 19 and make market-backed trading
+  a prerequisite in Phase 20 (or an explicit intervening trade slice)
+  before trade rumours depend on actionable prices. Record the choice
+  in this section after the plan's first reconnaissance task.
 - Content: 2-3 zones tagged as markets (reusing zones that already exist,
   e.g. wherever the Waymark Inn or Dunmar West Gate sit), each with a
   small tracked-goods list including at least one Phase 18 `Commodity`
@@ -118,26 +118,39 @@
 // Good is one tracked commodity in a settlement's market.
 type Good struct {
     ItemID       int `yaml:"itemid"`
-    BasePrice    int `yaml:"baseprice"`    // price at MidStock
-    MinPrice     int `yaml:"minprice"`     // floor, reached at MaxStock
-    MaxPrice     int `yaml:"maxprice"`     // ceiling, reached at MinStock (0)
-    MaxStock     int `yaml:"maxstock"`     // stock level at which price bottoms out
-    StartStock   int `yaml:"startstock"`   // initial stock on first load
+    BasePrice    int `yaml:"baseprice"`   // price at TargetStock
+    MinPrice     int `yaml:"minprice"`    // floor, reached at MaxStock
+    MaxPrice     int `yaml:"maxprice"`    // ceiling, reached at stock 0
+    MaxStock     int `yaml:"maxstock"`    // stock ceiling
+    TargetStock  int `yaml:"targetstock"` // baseline stock, strictly inside (0, MaxStock)
+    StartStock   int `yaml:"startstock"`  // initial stock on first load
+    DriftStep    int `yaml:"driftstep"`   // maximum stock movement per NewRound
 }
 
 func (g Good) Validate() error
 
-// PriceForStock is pure: linearly (or step-banded — pick the simpler one
-// in the plan) interpolates between MaxPrice (at stock=0) and MinPrice
-// (at stock>=MaxStock).
+// PriceForStock clamps stock to [0, MaxStock] and uses two monotone
+// linear segments: (0, MaxPrice) -> (TargetStock, BasePrice), then
+// (TargetStock, BasePrice) -> (MaxStock, MinPrice). Subtract the
+// floor of each segment's proportional price decrease; endpoints are
+// exact. Avoid overflow when multiplying price difference by stock.
 func (g Good) PriceForStock(stock int) int
 
-// DriftStock nudges stock one round-tick toward a config-driven target,
-// bounded so it can never runaway or go negative — same "clamped step,
-// never advances anything but its own local counter" shape Phase 8's
-// weather transitions and Phase 16's walking multipliers already use.
+// DriftStock clamps currentStock to [0, MaxStock], then moves toward
+// TargetStock by min(distance, 1 + roll % uint64(DriftStep)). At target it
+// stays put. It changes only this good's stock, never the world clock.
 func (g Good) DriftStock(currentStock int, roll uint64) int
 ```
+
+`Good.Validate` requires `ItemID > 0`,
+`0 < MinPrice <= BasePrice <= MaxPrice`,
+`0 < TargetStock < MaxStock`,
+`0 <= StartStock <= MaxStock`, and `1 <= DriftStep <= MaxStock`.
+The config loader additionally verifies each item ID has a loaded item
+spec. It rejects a zone containing duplicate item IDs so no ambiguous
+stock record is created. Invalid goods are warned about and omitted; a
+zone with no valid goods has no market.
+Interpolation must remain safe for the largest validated integer values.
 
 ```go
 // modules/market/market.go (new module, mirrors modules/weather's shape)
@@ -162,7 +175,8 @@ type Store interface {
 ```
 
 Config (which zones are markets, and each market's `Good` list with
-`BasePrice`/`MinPrice`/`MaxPrice`/`MaxStock`) is data, loaded at boot —
+`BasePrice`/`MinPrice`/`MaxPrice`/`MaxStock`/`TargetStock`/
+`StartStock`/`DriftStep`) is data, loaded at boot —
 exact file location decided in the plan after reading how `ZoneConfig`
 already loads its own data, to avoid inventing a second zone-config
 loading path if one already fits.
@@ -201,24 +215,31 @@ loading path if one already fits.
   reactive `events.NewRound` listener, same invariant `modules/weather`
   already documents and tests for itself.
 - Must survive restart/copyover: `Registry` is durable, `Store`-backed,
-  loaded at boot; a missing/corrupt store fails open to "no market
-  effects this zone" rather than panicking (mirror whatever
-  `modules/weather`'s own load-failure handling already does).
+  loaded at boot. A missing store file is normal first boot and seeds
+  configured markets at `StartStock`; a corrupt or unreadable store
+  disables market effects rather than panicking (compare
+  `modules/weather`'s load-failure handling).
 - Data-driven balance: `BasePrice`/`MinPrice`/`MaxPrice`/`MaxStock`/drift
-  step size all live in config, no hardcoded numbers in Go.
+  step size, target stock, and starting stock all live in config, no
+  hardcoded balance numbers in Go.
 - Bounded drift only: `DriftStock` must be provably incapable of pushing
-  stock negative or past a configured ceiling, however many rounds run —
-  a property test (fixed seed, many iterations) enforces this rather than
-  trusting the formula by inspection.
+  stock negative or past `MaxStock`, however many rounds run. It converges
+  to `TargetStock`; with no trading or production simulation, it then
+  stays there. A fixed-seed property test enforces the bounds and
+  convergence. Use `StartStock != TargetStock` in proving content so
+  round ticks visibly change stock and price; choose a price spread
+  large enough for an integer price change during the proving slice.
 
 ## Acceptance criteria
 
 - `internal/market.Good.PriceForStock` returns `MaxPrice` at stock 0,
-  `MinPrice` at or above `MaxStock`, and a monotonically-decreasing value
-  in between (property-tested, not just point-tested).
-- `internal/market.Good.DriftStock` never returns a negative stock or a
-  stock exceeding a sane configured bound, across many iterations from
-  varied starting stocks (property test).
+  `BasePrice` at `TargetStock`, `MinPrice` at or above `MaxStock`,
+  and a monotonically non-increasing value in between (including extreme
+  valid integers without overflow). `Good.Validate` and config loading
+  reject invalid bounds, missing item specs, and duplicate zone goods.
+- `internal/market.Good.DriftStock` never returns stock outside
+  `[0, MaxStock]`, moves toward `TargetStock` for any off-target
+  starting value, and stays there after convergence (property tests).
 - A configured market zone's stock and derived price actually move over
   successive `events.NewRound` events, through the real module listener
   (wiring test, not just the pure package), and persist across a

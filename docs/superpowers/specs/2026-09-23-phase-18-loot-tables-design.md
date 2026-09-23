@@ -70,16 +70,18 @@
   each a `[]WeightedLootEntry{ItemID int, Weight uint, MinCount, MaxCount int}`.
 - Wiring: `internal/mobcommands/suicide.go`'s death-drop block gains one more
   roll, after the existing worn-item loop, that (if `mob.LootCategory != ""`
-  and a table for it is loaded) resolves one table entry via a module-owned
-  RNG seam and adds `MinCount..MaxCount` of that item to the same
-  `corpseItems`/floor-drop branch the existing code already uses (so corpse
-  vs. floor-drop config, and the existing `MobItemDrop` event, are reused
-  unchanged).
+  and a table for it is loaded) resolves one table entry using rolls supplied
+  at the death-handling call site and adds `MinCount..MaxCount` of that item to the same
+  `corpseItems`/floor-drop branch the existing code already uses. Preserve
+  the existing event semantics: `MobItemDrop` fires for floor drops, not
+  for items placed in a corpse.
 - Content: tag a handful of existing shipped mobs with a category
   (at least one humanoid and one beast, e.g. whatever bandit/wolf-shaped
   mob already exists in the default world) and author their category
   tables with a small number of entries, enough to prove the mechanism
-  end-to-end — not a full loot pass over every mob.
+  end-to-end — not a full loot pass over every mob. Include an edible raw
+  ingredient (for example meat) and a herb alongside beast trade goods so
+  18b's food recipes can use items actually shipped in 18a.
 
 **In scope (18b — cooking):**
 - A `cooking` skill (`internal/skills`) and a `cooking` profession entry.
@@ -87,16 +89,16 @@
   `Food` item) consumed through the existing room-container crafting
   mechanism in `internal/rooms/container.go` — reusing whatever recipe
   schema that mechanism already defines, not inventing a parallel one.
-  If that mechanism's recipe schema can't express "requires the `cooking`
-  skill at level N," add the smallest possible gate rather than widen the
-  container system.
-- A `cook` command (or reuse of whatever room-container crafting verb
-  already exists, if the mechanism is already command-driven) usable at a
-  cooking-tagged container (hearth/campfire/kitchen).
+  Keep the existing `Recipes map[int][]int` input/output schema. Add an
+  optional per-output skill requirement map to `Container`, keyed by recipe
+  output item ID, so cooking recipes can require `cooking` at level N while
+  every existing ungated recipe remains usable. The real `use` command checks
+  the requirement before consuming ingredients.
+- Reuse the existing `use <container>` command at a container with cooking
+  recipes (hearth/campfire/kitchen); no second crafting command is needed.
 - Content: a couple of recipes using new `Commodity`/`Botanical` loot
-  ingredients from 18a (meat/fur/herb → a cooked food item), so the two
-  slices connect exactly as the roadmap intends ("beast parts as goods"
-  feeding cooking).
+  ingredients from 18a (for example meat and herbs → a cooked food item).
+  Beast hides and fur remain trade goods; edible drops feed cooking.
 
 **Explicitly deferred:**
 - Rarity tiers, level-scaled loot, unique/named drops.
@@ -146,8 +148,11 @@ Loading: `internal/loot` also owns `LoadLootDataFiles()` /
 `internal/skills/profession.go` already uses (`allProfessions` →
 `allLootTables`), keyed by `Category`. Cross-checking that every
 `ItemID` referenced actually exists is a boot-time warning, not a load
-failure — same policy `LoadProfessionDataFiles` already uses for unknown
-skill refs (`profession.go:86-93`).
+failure. Omit invalid entries from the loaded table; if none remain, omit
+that category. Also guard the item spec at the death-drop call site so a
+later reload cannot create a zero item. The warning policy mirrors
+`LoadProfessionDataFiles`'s unknown-skill references
+(`profession.go:86-93`).
 
 `Mob` gains:
 
@@ -162,11 +167,13 @@ means "no category table roll" — pure additive change, no migration.
 
 No new module/plugin — `internal/loot` is a pure package like
 `internal/expedition`'s domain layer, loaded at boot the same way
-professions/skills are (`internal/skills` already has a
-`LoadProfessionDataFiles()` boot call to mirror).
+professions/skills are. Wire `loot.LoadLootDataFiles()` into the
+`main.go` reload/startup sequence after `items.LoadDataFiles()` and before
+`mobs.LoadDataFiles()`; reload must refresh tables as well as first boot.
 
-The RNG seam lives where `mobcommands.suicide.go`'s death handling already
-runs (engine code, not pure) — it already calls `util.Rand(100)` directly
+The random rolls are supplied where `mobcommands.suicide.go`'s death
+handling already runs (engine code, not pure) — it already calls
+`util.Rand(100)` directly
 for the `ItemDropChance` roll (`suicide.go:359`), so the new category roll
 reuses `util.Rand`/a `uint64` variant at the same call site, no new module
 seam needed (unlike Phase 12b, which needed a seam because
@@ -182,11 +189,13 @@ respects the same corpse/no-corpse config):
 if mob.LootCategory != "" {
     if table, ok := loot.GetTable(mob.LootCategory); ok {
         if entry, ok := table.Resolve(util.Rand64()); ok {
-            count := entry.RollCount(util.Rand64())
-            for i := 0; i < count; i++ {
-                item := items.New(entry.ItemID)
-                // same corpseItems-vs-floor-drop branch as the worn-item
-                // loop above, same MobItemDrop event
+            if items.GetItemSpec(entry.ItemID) != nil {
+                count := entry.RollCount(util.Rand64())
+                for i := 0; i < count; i++ {
+                    item := items.New(entry.ItemID)
+                    // same corpseItems-vs-floor-drop branch as worn items;
+                    // emit MobItemDrop only when the item lands on the floor
+                }
             }
         }
     }
@@ -206,13 +215,20 @@ skill/profession datafile shape exactly (`internal/skills/AGENTS.md`:
 skills keyed by lowercase id, filename is `SkillId + ".yaml"`; professions
 use `ConvertForFilename`).
 
-Recipes hang off whatever `internal/rooms/container.go`'s existing crafting
-mechanism already defines — **read that mechanism's actual schema before
-writing the plan's task list**; this design doc does not assume its shape
-sight-unseen. If it already supports "produces item X from inputs Y, Z"
-with no skill gate, the smallest addition is a skill-level check at the
-crafting command's entry point, not a new field threaded through the
-container system.
+`internal/rooms/container.go` currently stores recipes as
+`Recipes map[int][]int` (output item ID to input item IDs).
+`internal/usercommands/use.go` calls `RecipeReady()`, then consumes the
+chosen recipe's inputs. Add an optional `RecipeRequirements` map keyed by
+output item ID, whose values contain `SkillID string` and `MinLevel int`
+(with YAML tags matching existing container fields). Reject malformed
+requirements during datafile loading. Sort ready output IDs
+ascending before choosing a recipe; choose the first ready recipe whose
+requirement the actor meets. If recipes are ready but all are gated,
+report a clear skill requirement in the command's existing message style
+without consuming items.
+Recipes absent from `RecipeRequirements` stay ungated. Confirm the exact
+skill-level API before coding; the requirement is checked through the real
+`use` command, before ingredient removal.
 
 ## Constraints and deferrals
 
@@ -239,16 +255,20 @@ container system.
   for an empty table.
 - `internal/loot.Table.Validate` rejects a zero-weight entry, an entry with
   `MaxCount < MinCount`, and an empty entry list.
+- Boot and reload load loot tables after item specs and before mob specs;
+  a startup wiring test proves a configured category is available.
 - A mob with `LootCategory` set to a loaded category rolls an additional
   drop through the real `suicide.go` death path (wiring test through the
   actual command, not just the pure resolver), landing in the same
-  corpse-vs-floor branch the existing worn-item drops use.
+  corpse-vs-floor branch the existing worn-item drops use. An invalid
+  `ItemID` warns and produces no zero item; `MobItemDrop` fires only for
+  floor drops, matching existing behavior.
 - A mob with no `LootCategory` (i.e. every existing shipped mob) drops
   exactly as before — a regression test pinning today's exact behavior
   unchanged.
-- 18b: a `cooking`-gated recipe run through the real container-crafting
-  command produces the expected `Food` item and consumes its ingredients;
-  running it below the required skill level is refused with the mechanism's
-  existing failure message shape (no new UX invented if the container
-  system already has one).
+- 18b: a `cooking`-gated recipe run through `use <container>` produces
+  the expected `Food` item and consumes its ingredients. Below the
+  required level it refuses without consuming ingredients; existing
+  ungated recipes remain usable. Multiple ready recipes select the
+  lowest eligible output ID deterministically.
 - `go test -race ./...`, `make generate`, `make validate` all pass.

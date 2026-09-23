@@ -109,6 +109,18 @@ instead of duplicating them.
 
 ## Recent work log
 
+### Phase 18–19 planning review (2026-09-23)
+
+- **What:** Tightened the Phase 18 and 19 design specs and implementation
+  plans after a read-only review of the relevant engine paths. The plans
+  now cover loot-table boot/reload wiring, invalid item IDs, corpse/floor
+  event semantics, deterministic skill-gated cooking recipes, complete
+  vendor-price reconnaissance, and a defined market price/drift model.
+- **Why:** These gaps could otherwise produce silent no-op loot, broken
+  items, inconsistent trade quotes, or ambiguous market behavior.
+- **Next:** Phase 18a remains the next implementation step. Phase 19's
+  vendor trading decision remains at its first reconnaissance task.
+
 ### Phase 17: archetypes and utility skills (2026-09-23)
 
 - **What:**
