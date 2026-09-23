@@ -71,24 +71,74 @@ func InterruptionText(kind InterruptionKind, profileName string) string {
 	}
 }
 
+// WeightedInterruptionKind is one entry in a weighted interruption roll:
+// Kind fires with probability proportional to Weight among its table.
+type WeightedInterruptionKind struct {
+	Kind   InterruptionKind `yaml:"kind"`
+	Weight uint             `yaml:"weight"`
+}
+
 // InterruptionProfile configures the checkpoint on a route where an
-// interruption fires. Checkpoint is 1..CheckpointCount-1: the route end is not
-// a legal interruption point, because a route that is already over cannot be
-// interrupted.
+// interruption fires, and which kind fires there: either a single Kind
+// (today's form) or a weighted Kinds table (12b) rolled once at fire time.
+// Exactly one of Kind or Kinds must be set. Checkpoint is 1..CheckpointCount-1:
+// the route end is not a legal interruption point, because a route that is
+// already over cannot be interrupted.
 type InterruptionProfile struct {
-	Kind       InterruptionKind `yaml:"kind"`
-	Checkpoint uint8            `yaml:"checkpoint"`
+	Kind       InterruptionKind           `yaml:"kind,omitempty"`
+	Kinds      []WeightedInterruptionKind `yaml:"kinds,omitempty"`
+	Checkpoint uint8                      `yaml:"checkpoint"`
 }
 
 // Validate rejects an unusable interruption configuration.
 func (i InterruptionProfile) Validate() error {
-	if !i.Kind.Valid() {
+	switch {
+	case i.Kind != "" && len(i.Kinds) > 0:
 		return ErrInvalidInterruption
+	case len(i.Kinds) > 0:
+		for _, wk := range i.Kinds {
+			if !wk.Kind.Valid() || wk.Weight == 0 {
+				return ErrInvalidInterruption
+			}
+		}
+	default:
+		if !i.Kind.Valid() {
+			return ErrInvalidInterruption
+		}
 	}
 	if i.Checkpoint == 0 || i.Checkpoint >= CheckpointCount {
 		return ErrInvalidInterruption
 	}
 	return nil
+}
+
+// ResolveKind picks which kind fires for this interruption. A singular-Kind
+// profile returns Kind unchanged and ignores roll entirely — today's exact,
+// deterministic behavior. A Kinds table selects proportionally to Weight:
+// roll is reduced modulo the total weight, so any caller-supplied uint64
+// source works; ResolveKind itself stays pure and never generates randomness.
+// The profile must already be Validate-clean, or ResolveKind returns the
+// same error Validate would.
+func (i InterruptionProfile) ResolveKind(roll uint64) (InterruptionKind, error) {
+	if err := i.Validate(); err != nil {
+		return "", err
+	}
+	if len(i.Kinds) == 0 {
+		return i.Kind, nil
+	}
+	var totalWeight uint64
+	for _, wk := range i.Kinds {
+		totalWeight += uint64(wk.Weight)
+	}
+	target := roll % totalWeight
+	var cumulative uint64
+	for _, wk := range i.Kinds {
+		cumulative += uint64(wk.Weight)
+		if target < cumulative {
+			return wk.Kind, nil
+		}
+	}
+	return i.Kinds[len(i.Kinds)-1].Kind, nil
 }
 
 // TravelInterruption is the immutable payload a session records when it
@@ -98,9 +148,18 @@ type TravelInterruption struct {
 	Checkpoint uint8            `yaml:"checkpoint"`
 }
 
-// Validate rejects a payload that could not have come from Interrupt.
+// Validate rejects a payload that could not have come from Interrupt. Unlike
+// InterruptionProfile, a fired TravelInterruption always carries the single
+// already-resolved Kind (never a weighted Kinds table — ResolveKind runs
+// before Interrupt persists this payload).
 func (i TravelInterruption) Validate() error {
-	return InterruptionProfile(i).Validate()
+	if !i.Kind.Valid() {
+		return ErrInvalidInterruption
+	}
+	if i.Checkpoint == 0 || i.Checkpoint >= CheckpointCount {
+		return ErrInvalidInterruption
+	}
+	return nil
 }
 
 // TravelProfile is a data-driven terrain route definition. Duration is real

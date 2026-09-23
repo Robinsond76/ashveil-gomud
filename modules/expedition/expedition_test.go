@@ -152,6 +152,20 @@ func interruptionProfiles() map[string]expedition.TravelProfile {
 	return profiles
 }
 
+func weightedInterruptionProfiles() map[string]expedition.TravelProfile {
+	profiles := testProfiles()
+	p := profiles["oak-road"]
+	p.Interruption = &expedition.InterruptionProfile{
+		Kinds: []expedition.WeightedInterruptionKind{
+			{Kind: expedition.FallenTree, Weight: 1},
+			{Kind: expedition.Discovery, Weight: 1},
+		},
+		Checkpoint: 5,
+	}
+	profiles["oak-road"] = p
+	return profiles
+}
+
 func newTestModule(store Store, scheduler Scheduler, mover Mover, surv Survival, clock func() time.Time, profiles map[string]expedition.TravelProfile) *ExpeditionModule {
 	return &ExpeditionModule{
 		store:     store,
@@ -672,6 +686,27 @@ func TestInterruptionSchedulesAtNextBoundaryAndStopsExactlyOnce(t *testing.T) {
 	assert.Equal(t, saves, store.saveCalls)
 	assert.Len(t, surv.applied, 1)
 	assert.Empty(t, mover.moves)
+}
+
+func TestInterruptionResolvesWeightedKindsTableBeforeFiring(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	mover := &fakeMover{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, weightedInterruptionProfiles())
+	module.rollUint64 = func() uint64 { return 1 } // second entry: Discovery
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+
+	session, ok := module.sessions[7]
+	require.True(t, ok)
+	require.NotNil(t, session.Interruption)
+	assert.Equal(t, expedition.Discovery, session.Interruption.Kind)
 }
 
 func TestInterruptionSaveFailureRestoresTravelingCheckpoint(t *testing.T) {

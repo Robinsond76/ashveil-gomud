@@ -70,6 +70,87 @@ func TestInterruptionTextFallsBackForUnknownKind(t *testing.T) {
 	assert.NotEmpty(t, text)
 }
 
+func TestInterruptionProfileValidateAcceptsWeightedKindsTable(t *testing.T) {
+	profile := InterruptionProfile{
+		Kinds: []WeightedInterruptionKind{
+			{Kind: FallenTree, Weight: 3},
+			{Kind: Discovery, Weight: 1},
+		},
+		Checkpoint: 5,
+	}
+	assert.NoError(t, profile.Validate())
+}
+
+func TestInterruptionProfileValidateRejectsBothKindAndKinds(t *testing.T) {
+	profile := InterruptionProfile{
+		Kind:       FallenTree,
+		Kinds:      []WeightedInterruptionKind{{Kind: Discovery, Weight: 1}},
+		Checkpoint: 5,
+	}
+	assert.ErrorIs(t, profile.Validate(), ErrInvalidInterruption)
+}
+
+func TestInterruptionProfileValidateRejectsEmptyKindsTable(t *testing.T) {
+	profile := InterruptionProfile{Kinds: []WeightedInterruptionKind{}, Checkpoint: 5}
+	assert.ErrorIs(t, profile.Validate(), ErrInvalidInterruption)
+}
+
+func TestInterruptionProfileValidateRejectsZeroWeightEntry(t *testing.T) {
+	profile := InterruptionProfile{
+		Kinds:      []WeightedInterruptionKind{{Kind: FallenTree, Weight: 0}},
+		Checkpoint: 5,
+	}
+	assert.ErrorIs(t, profile.Validate(), ErrInvalidInterruption)
+}
+
+func TestInterruptionProfileValidateRejectsInvalidKindInsideTable(t *testing.T) {
+	profile := InterruptionProfile{
+		Kinds:      []WeightedInterruptionKind{{Kind: InterruptionKind("rock_slide"), Weight: 1}},
+		Checkpoint: 5,
+	}
+	assert.ErrorIs(t, profile.Validate(), ErrInvalidInterruption)
+}
+
+func TestResolveKindSingularFormIgnoresRoll(t *testing.T) {
+	profile := InterruptionProfile{Kind: FallenTree, Checkpoint: 5}
+	for _, roll := range []uint64{0, 1, 999, 1 << 40} {
+		kind, err := profile.ResolveKind(roll)
+		require.NoError(t, err)
+		assert.Equal(t, FallenTree, kind)
+	}
+}
+
+func TestResolveKindWeightedTableSelectsProportionally(t *testing.T) {
+	profile := InterruptionProfile{
+		Kinds: []WeightedInterruptionKind{
+			{Kind: FallenTree, Weight: 3}, // covers rolls 0,1,2 (mod 4)
+			{Kind: Discovery, Weight: 1},  // covers roll 3 (mod 4)
+		},
+		Checkpoint: 5,
+	}
+	cases := []struct {
+		roll uint64
+		want InterruptionKind
+	}{
+		{0, FallenTree},
+		{1, FallenTree},
+		{2, FallenTree},
+		{3, Discovery},
+		{4, FallenTree}, // wraps via modulo back to roll 0's band
+	}
+	for _, tc := range cases {
+		kind, err := profile.ResolveKind(tc.roll)
+		require.NoError(t, err)
+		assert.Equal(t, tc.want, kind, "roll %d", tc.roll)
+	}
+}
+
+func TestResolveKindRejectsInvalidProfile(t *testing.T) {
+	profile := InterruptionProfile{Checkpoint: 5} // neither Kind nor Kinds set
+	_, err := profile.ResolveKind(0)
+	assert.ErrorIs(t, err, ErrInvalidInterruption)
+}
+
 func TestTravelProfileValidate(t *testing.T) {
 	cases := []struct {
 		name    string

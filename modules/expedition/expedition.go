@@ -12,6 +12,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -158,12 +159,13 @@ func (nativeSurvival) Available() error {
 
 // ExpeditionModule owns profiles and durable travel sessions for one plugin.
 type ExpeditionModule struct {
-	plug      *plugins.Plugin
-	store     Store
-	clock     func() time.Time
-	scheduler Scheduler
-	mover     Mover
-	survival  Survival
+	plug       *plugins.Plugin
+	store      Store
+	clock      func() time.Time
+	scheduler  Scheduler
+	mover      Mover
+	survival   Survival
+	rollUint64 func() uint64
 
 	profiles        map[string]expedition.TravelProfile
 	sessions        map[int]expedition.TravelSession
@@ -187,6 +189,7 @@ func init() {
 		scheduler:       realScheduler{},
 		mover:           nativeMover{},
 		survival:        nativeSurvival{},
+		rollUint64:      rand.Uint64,
 		profiles:        map[string]expedition.TravelProfile{},
 		sessions:        map[int]expedition.TravelSession{},
 		timers:          map[int]Timer{},
@@ -695,6 +698,16 @@ func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) err
 	profile, ok := m.profile(session.ProfileName)
 	if !ok {
 		return fmt.Errorf("expedition: unknown travel profile %q", session.ProfileName)
+	}
+	if profile.Interruption != nil && len(profile.Interruption.Kinds) > 0 {
+		resolvedKind, err := profile.Interruption.ResolveKind(m.rollUint64())
+		if err != nil {
+			return err
+		}
+		resolved := *profile.Interruption
+		resolved.Kind = resolvedKind
+		resolved.Kinds = nil
+		profile.Interruption = &resolved
 	}
 	now := m.clock().UTC()
 	candidate, err := session.Interrupt(now, profile)
