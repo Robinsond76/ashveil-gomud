@@ -58,6 +58,33 @@
 
 ## Scope
 
+**Reconnaissance outcome (plan task 1, 2026-09-23; applied under the
+user's "begin next phase" instruction, recommended options):**
+
+1. **Config location: the module's own config overlay**
+   (`modules/market/files/data-overlays/config.yaml`, read as
+   `Modules.market.Markets` via `plug.Config.Get`), a list of
+   `{Zone, Goods: [...]}` entries. This is exactly how `modules/weather`
+   ships its biome tables. A `ZoneConfig` field would need new
+   `internal/rooms` plumbing, zone-config save round-trips, and admin
+   editor support for no gain; the overlay needs none. Item specs load
+   (`main.go` `loadAllDataFiles`) before `plugins.Load`, so the module
+   can verify item IDs at load.
+2. **Vendor trading: deferred to a dedicated slice, Phase 19b
+   (market-backed trading), which must land before Phase 20 rumours.**
+   Price reaches a transaction through at least five independent paths:
+   `buy.go`'s `tryPurchase` (its own item/merc/buff/pet price maps and
+   `Shop.Destock`), `list.go` (a separate price display), `sell.go` and
+   `offer.go` via `mobs.Mob.GetSellPrice` (which scales a sell quote by
+   the vendor's current `Quantity/20` and prices never-stocked items by
+   type/subtype heuristics), player-owned shops (`shopUser`), and
+   `shophooks.go` script hooks. `Shop.StockItem` also creates temporary
+   vendor entries on every sale, and `Shop.Restock` refills vendor
+   quantity on a game-time period independent of any zone ledger.
+   Making quote, transaction, vendor quantity, and zone stock agree
+   means changing all of these together, which is a phase of its own,
+   not the confirmed narrow slice. Phase 19 ships read-only.
+
 **In scope:**
 - A new pure package, `internal/market` (mirrors `internal/climate`,
   `internal/loot`): the price-drift math and stock-band pricing formula,

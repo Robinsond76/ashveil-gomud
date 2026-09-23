@@ -15,7 +15,10 @@ before writing any trading-integration code.
 
 ## Tasks
 
-- [ ] **Reconnaissance (no code yet):** read
+- [x] **Reconnaissance (no code yet):** *(done 2026-09-23: config lives
+      in the module's config overlay, `Modules.market.Markets`; vendor
+      trading deferred to Phase 19b, before Phase 20. See the design
+      doc's "Reconnaissance outcome".)* read
       `internal/characters/shop.go`, `internal/rooms/roommanager.go`'s
       `ZoneConfig`, `internal/usercommands/{buy,sell,offer}.go`, and
       `internal/mobs.Mob.GetSellPrice` in full. Decide and record in the
@@ -83,7 +86,8 @@ before writing any trading-integration code.
     stock descriptor; a player in an unconfigured zone sees "no market
     here."
   - Then implement.
-- [ ] **If task 1 includes market-backed trading:** route vendor
+- [x] **Skipped per task 1 (trading deferred to Phase 19b).**
+      **If task 1 includes market-backed trading:** route vendor
       `buy`, `sell`, and `offer` through a shared market-price lookup
       for tracked goods in market zones. Define when a completed buy
       decrements zone stock and a completed sell increments it, how
