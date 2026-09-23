@@ -4,10 +4,12 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
@@ -369,4 +371,114 @@ func TestShippedTrappedTollBox(t *testing.T) {
 	locks := trappedLocks(&room)
 	require.Len(t, locks, 1)
 	assert.Equal(t, "2001-toll box", locks[0].ID)
+}
+
+// Review 17b finding 1: step reactions print after the move and the room
+// view, not before them.
+func TestWiringAutoSenseFollowsMoveText(t *testing.T) {
+	testBiomes(t)
+	m := wired(t, 100)
+	from, _ := walkRooms(t, 97500, "testhall", trappedChest)
+	u := walker(t, 110, 97500)
+	m.choose(u, "rogue", true)
+	text := captureText(t, func() {
+		_, err := usercommands.Go("north", u, from, 0)
+		require.NoError(t, err)
+	})
+	head := strings.Index(text, "You head towards")
+	prickle := strings.Index(text, "Your instincts prickle")
+	require.GreaterOrEqual(t, head, 0)
+	require.GreaterOrEqual(t, prickle, 0)
+	assert.Less(t, head, prickle)
+}
+
+// Review 17b coverage gap: the best rogue is a companion still in the
+// origin room as the leader steps.
+func TestWiringAutoSenseByFollowingCompanion(t *testing.T) {
+	testBiomes(t)
+	m := wired(t, 100)
+	from, _ := walkRooms(t, 97510, "testhall", trappedChest)
+	u := walker(t, 111, 97510)
+	m.choose(u, "warrior", true)
+	withCompanion(t, 111, 97911, 97510, 12, "rogue")
+	text := captureText(t, func() {
+		_, err := usercommands.Go("north", u, from, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, text, "Bran stops you: there is a trap on")
+}
+
+// Review 17b findings 2 and 6: a companion that can't conjure (downed, or
+// fighting) neither lights nor masks a player wizard who can.
+func TestWiringAutoLightSkipsUnableCompanions(t *testing.T) {
+	testBiomes(t)
+
+	t.Run("downed companion", func(t *testing.T) {
+		m := wired(t, 50)
+		from, _ := walkRooms(t, 97520, "testcave", nil)
+		u := walker(t, 112, 97520)
+		m.choose(u, "warrior", true)
+		bran := withCompanion(t, 112, 97912, 97520, 1, "wizard")
+		bran.Character.Mana = 30
+		bran.Character.Health = 0
+		_, err := usercommands.Go("north", u, from, 0)
+		require.NoError(t, err)
+		assert.Equal(t, 30, bran.Character.Mana)
+	})
+
+	t.Run("fighting companion yields to the player wizard", func(t *testing.T) {
+		m := wired(t, 50)
+		from, _ := walkRooms(t, 97530, "testcave", nil)
+		u := walker(t, 113, 97530)
+		m.choose(u, "wizard", true)
+		u.Character.Mana = 50
+		bran := withCompanion(t, 113, 97913, 97530, 30, "wizard") // level 4, outranks the player
+		bran.Character.Mana = 30
+		bran.Character.Aggro = &characters.Aggro{UserId: 999}
+		_, err := usercommands.Go("north", u, from, 0)
+		require.NoError(t, err)
+		assert.Equal(t, 30, bran.Character.Mana, "the fighting companion doesn't cast")
+		require.NotNil(t, u.Character.Aggro, "the player wizard casts instead")
+		assert.Equal(t, "floatinglight", u.Character.Aggro.SpellInfo.SpellId)
+	})
+}
+
+// Review 17b finding 9: the free pre-pick sense isn't used up while nobody
+// could sense the trap.
+func TestWiringPreventedPickSenseIsNotSpent(t *testing.T) {
+	m := wired(t, 100)
+	room := trapRoom(t, 97540)
+	u := lockpickUser(t, m, 114, 97540, "warrior")
+	_, err := usercommands.Picklock("chest", u, room, 0)
+	require.NoError(t, err)
+	u.ClearPrompt()
+
+	withCompanion(t, 114, 97914, 97540, 12, "rogue")
+	text := captureText(t, func() {
+		_, err := usercommands.Picklock("chest", u, room, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, text, "Your instincts prickle")
+}
+
+// Review 17b coverage gap: the shipped toll box end to end: disarm it with
+// the trap command, then a broken pick stays quiet.
+func TestWiringShippedTollBoxDisarmThenPick(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default", "rooms", "dunmar", "2001.yaml"))
+	require.NoError(t, err)
+	room := &rooms.Room{}
+	require.NoError(t, yaml.Unmarshal(data, room))
+	room.Exits = nil // keep the test room self-contained
+	rooms.SetTestRoom(room)
+	t.Cleanup(func() { rooms.RemoveTestRoom(2001) })
+
+	m := wired(t, 100)
+	u := lockpickUser(t, m, 115, 2001, "rogue")
+	_, err = m.trapCommand("disarm toll box", u, room, 0)
+	require.NoError(t, err)
+	assert.False(t, archetypes.TrapArmed("2001-toll box"))
+
+	quiet := captureBuffs(t, func() { pickOnce(t, u, room, "toll box", "2001-toll box", 4) })
+	assert.Zero(t, trapBuffs(quiet))
 }

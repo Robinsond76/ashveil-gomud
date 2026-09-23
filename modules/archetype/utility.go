@@ -204,8 +204,8 @@ func companyMembers(user *users.UserRecord, roomIDs ...int) []member {
 			continue
 		}
 		mob := mobs.GetInstance(instanceID)
-		if mob == nil || !inRooms(mob.Character.RoomId) {
-			continue
+		if mob == nil || !inRooms(mob.Character.RoomId) || mob.Character.IsDisabled() {
+			continue // a downed companion can't sense, disarm, or conjure
 		}
 		archetype, _ := company.CompanionArchetype(user.UserId, companionID)
 		out = append(out, member{
@@ -219,32 +219,53 @@ func companyMembers(user *users.UserRecord, roomIDs ...int) []member {
 	return out
 }
 
-// levelsLocked fills in each member's utility level. Caller holds m.mu.
-func (m *ArchetypeModule) levelsLocked(members []member, utility string) {
+// levels fills in each member's utility level. Engine reads (skill and
+// character levels) happen before the module lock is taken.
+func (m *ArchetypeModule) levels(members []member, utility string) {
+	m.mu.Lock()
+	skill := m.config.UtilitySkills[utility]
+	m.mu.Unlock()
+	skillLevels := make([]int, len(members))
+	charLevels := make([]int, len(members))
+	for i, mb := range members {
+		if mb.user != nil {
+			skillLevels[i] = mb.user.Character.GetSkillLevel(skill)
+		} else {
+			charLevels[i] = mb.mob.Character.Level
+		}
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	for i := range members {
 		mb := &members[i]
 		if mb.user != nil {
 			id, chosen := m.registry.Players[mb.user.UserId]
 			a, known := m.table.Get(id)
-			skill := m.config.UtilitySkills[utility]
-			mb.Level = archetypes.PlayerUtilityLevel(a, chosen && known, utility, mb.user.Character.GetSkillLevel(skill))
+			mb.Level = archetypes.PlayerUtilityLevel(a, chosen && known, utility, skillLevels[i])
 			continue
 		}
 		a, known := m.table.Get(mb.archetype)
-		mb.Level = archetypes.CompanionUtilityLevel(a, known && mb.archetype != "", utility, mb.mob.Character.Level)
+		mb.Level = archetypes.CompanionUtilityLevel(a, known && mb.archetype != "", utility, charLevels[i])
 	}
 }
 
 // bestMember picks the company member best at a utility among those in
 // roomIDs.
 func (m *ArchetypeModule) bestMember(user *users.UserRecord, utility string, roomIDs ...int) (member, bool) {
+	return m.bestMemberWhere(user, utility, nil, roomIDs...)
+}
+
+// bestMemberWhere is bestMember restricted to members eligible says can act
+// right now (nil: everyone), so an unable member never masks an able one.
+func (m *ArchetypeModule) bestMemberWhere(user *users.UserRecord, utility string, eligible func(member) bool, roomIDs ...int) (member, bool) {
 	members := companyMembers(user, roomIDs...)
-	m.mu.Lock()
-	m.levelsLocked(members, utility)
-	m.mu.Unlock()
+	m.levels(members, utility)
 	plain := make([]archetypes.UtilityMember, len(members))
 	for i, mb := range members {
 		plain[i] = mb.UtilityMember
+		if eligible != nil && !eligible(mb) {
+			plain[i].Level = 0
+		}
 	}
 	best, ok := archetypes.BestMember(plain)
 	if !ok {
@@ -448,12 +469,6 @@ func (m *ArchetypeModule) sense(user *users.UserRecord, room *rooms.Room, target
 	if !ok {
 		return "Nobody in your company knows how to find traps."
 	}
-	m.mu.Lock()
-	cooldown := m.config.SenseCooldownRounds
-	m.mu.Unlock()
-	if !user.Character.TryCooldown("trapsense", fmt.Sprintf("%d rounds", cooldown)) {
-		return fmt.Sprintf("You need to wait %d more rounds to search for traps again.", user.Character.GetCooldown("trapsense"))
-	}
 	locks := trappedLocks(room)
 	if target = strings.TrimSpace(target); target != "" {
 		_, exists, lock, trapped := findLock(room, target)
@@ -464,6 +479,12 @@ func (m *ArchetypeModule) sense(user *users.UserRecord, room *rooms.Room, target
 		if trapped {
 			locks = []trappedLock{lock}
 		}
+	}
+	m.mu.Lock()
+	cooldown := m.config.SenseCooldownRounds
+	m.mu.Unlock()
+	if !user.Character.TryCooldown("trapsense", fmt.Sprintf("%d rounds", cooldown)) {
+		return fmt.Sprintf("You need to wait %d more rounds to search for traps again.", user.Character.GetCooldown("trapsense"))
 	}
 	var found []string
 	for _, l := range m.armedLocks(locks) {
@@ -537,7 +558,7 @@ func (m *ArchetypeModule) disarm(user *users.UserRecord, room *rooms.Room, targe
 			}
 		}
 		room.SendText(fmt.Sprintf(`<ansi fg="alert-3">%s triggered a trap!</ansi>`, best.Name), user.UserId)
-		return fmt.Sprintf(`<ansi fg="alert-5">%s spring the trap on %s!</ansi>`, springSubject(best), lock.describe())
+		return fmt.Sprintf(`<ansi fg="alert-5">%s the trap on %s!</ansi>`, springSubject(best), lock.describe())
 	default:
 		verb := "fails"
 		if best.user != nil {
@@ -549,9 +570,9 @@ func (m *ArchetypeModule) disarm(user *users.UserRecord, room *rooms.Room, targe
 
 func springSubject(mb member) string {
 	if mb.user != nil {
-		return "You"
+		return "You spring"
 	}
-	return mb.Name + " fumbles and"
+	return mb.Name + " fumbles and springs"
 }
 
 func (m *ArchetypeModule) trapCommand(rest string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
@@ -586,11 +607,7 @@ func (m *ArchetypeModule) SenseBeforePick(userID, roomID int, lock string) {
 	}
 	key := fmt.Sprintf("%d|%s", userID, lock)
 	m.mu.Lock()
-	if m.pickSensed == nil {
-		m.pickSensed = map[string]struct{}{}
-	}
 	_, done := m.pickSensed[key]
-	m.pickSensed[key] = struct{}{}
 	m.mu.Unlock()
 	if done {
 		return
@@ -606,7 +623,16 @@ func (m *ArchetypeModule) SenseBeforePick(userID, roomID int, lock string) {
 		return
 	}
 	best, ok := m.bestMember(user, utilityTraps, roomID)
-	if !ok || !m.senseSucceeds(best, *target, 0) {
+	if !ok {
+		return // nobody could have sensed it; don't spend the free look
+	}
+	m.mu.Lock()
+	if m.pickSensed == nil {
+		m.pickSensed = map[string]struct{}{}
+	}
+	m.pickSensed[key] = struct{}{}
+	m.mu.Unlock()
+	if !m.senseSucceeds(best, *target, 0) {
 		return
 	}
 	user.SendText(fmt.Sprintf(`<ansi fg="yellow-bold">Your instincts prickle: %s is trapped.</ansi>`, target.describe()))
@@ -681,26 +707,26 @@ func (m *ArchetypeModule) autoLight(user *users.UserRecord, room *rooms.Room, fr
 			return // a following companion already carries a party light
 		}
 	}
-	best, ok := m.bestMember(user, utilityLight, room.RoomId, fromRoomID)
+	// Only members able to conjure right now are considered, so a companion
+	// that is fighting or out of mana never masks a wizard who could cast.
+	spell := spells.GetSpell(cfg.AutoLightSpell)
+	able := func(mb member) bool {
+		if mb.user != nil {
+			return spell != nil && mb.user.Character.HasSpell(cfg.AutoLightSpell) && mb.user.Character.Mana >= spell.Cost
+		}
+		return mb.mob.Character.Aggro == nil && mb.mob.Character.Mana >= cfg.CompanionLightManaCost
+	}
+	best, ok := m.bestMemberWhere(user, utilityLight, able, room.RoomId, fromRoomID)
 	if !ok {
 		return
 	}
+	// The cooldown starts only once an able member makes the attempt.
+	if !user.Character.TryCooldown("autolight", fmt.Sprintf("%d rounds", cfg.AutoLightCooldown)) {
+		return
+	}
 	if best.user != nil {
-		spell := spells.GetSpell(cfg.AutoLightSpell)
-		if spell == nil || !user.Character.HasSpell(cfg.AutoLightSpell) || user.Character.Mana < spell.Cost {
-			return
-		}
-		if !user.Character.TryCooldown("autolight", fmt.Sprintf("%d rounds", cfg.AutoLightCooldown)) {
-			return
-		}
 		user.SendText("Darkness closes in. You begin conjuring a floating light.")
 		m.cast(user, room, cfg.AutoLightSpell)
-		return
-	}
-	if best.mob.Character.Mana < cfg.CompanionLightManaCost {
-		return
-	}
-	if !user.Character.TryCooldown("autolight", fmt.Sprintf("%d rounds", cfg.AutoLightCooldown)) {
 		return
 	}
 	best.mob.Character.Mana -= cfg.CompanionLightManaCost

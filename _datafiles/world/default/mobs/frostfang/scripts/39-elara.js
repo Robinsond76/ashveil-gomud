@@ -14,6 +14,13 @@ function onAsk(mob, room, eventDetails) {
     }
 
     if ( user.HasQuest("6-end") ) {
+        // Illuminate is a wizard spell (Ashveil Phase 17): someone who
+        // finished the quest before becoming a wizard can ask again.
+        if ( !user.HasSpell("illum") && user.LearnSpell("illum") ) {
+            mob.Command("say Ah, you've taken up the arcane since we last spoke. Let me show you <ansi fg=\"spell-helpful\">Illuminate</ansi> after all.");
+            mob.Command("emote Shows you some useful gestures.");
+            return true;
+        }
         mob.Command("say Oh, it's nothing.");
         return true;
     }

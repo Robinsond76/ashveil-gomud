@@ -267,9 +267,11 @@ func TestCompanionBackfireHitsCompanion(t *testing.T) {
 	room := trapRoom(t, 97090)
 	u := newUser(80)
 	withCompanion(t, 80, 97901, 97090, 1, "rogue")
-	buffs := captureBuffs(t, func() { m.disarm(u, room, "chest") })
+	var text string
+	buffs := captureBuffs(t, func() { text = m.disarm(u, room, "chest") })
 	require.Len(t, buffs, 1)
 	assert.Equal(t, 97901, buffs[0].MobInstanceId)
+	assert.Contains(t, text, "Bran fumbles and springs the trap", "review 17b finding 4: verb agreement")
 }
 
 func TestTrapSeamUsesModule(t *testing.T) {
@@ -290,4 +292,40 @@ func TestTrappedLocksListsOnlyLockedTrappedOnes(t *testing.T) {
 	}
 	sort.Strings(ids)
 	assert.Equal(t, []string{"97110-chest", "97110-north"}, ids)
+}
+
+// Review 17b finding 5: a mistyped target doesn't spend the sense cooldown;
+// disarm keeps its own cooldown.
+func TestTrapCooldowns(t *testing.T) {
+	m, _, _ := utilModule(t, 1)
+	room := trapRoom(t, 97120)
+	u := newRogue(t, m, 82)
+	assert.Contains(t, m.sense(u, room, "altar"), "no such")
+	assert.Contains(t, m.sense(u, room, ""), "You find no traps.", "the typo cost no cooldown")
+	assert.Contains(t, m.sense(u, room, ""), "wait")
+
+	m.roll = func() int { return 40 } // a plain miss
+	assert.Contains(t, m.disarm(u, room, "chest"), "fail to disarm")
+	assert.Contains(t, m.disarm(u, room, "chest"), "wait", "disarm has its own cooldown")
+}
+
+// Review 17b finding 2: a downed companion can't act.
+func TestDownedCompanionIsNotAMember(t *testing.T) {
+	m, _, _ := utilModule(t, 100)
+	room := trapRoom(t, 97130)
+	u := newUser(83)
+	bran := withCompanion(t, 83, 97930, 97130, 12, "rogue")
+	bran.Character.Health = 0
+	assert.Contains(t, m.sense(u, room, ""), "Nobody in your company")
+	assert.Contains(t, m.disarm(u, room, "chest"), "Nobody in your company")
+}
+
+// Review 17b finding 10: permadeath clears the autoskill toggles too.
+func TestPermadeathClearsToggles(t *testing.T) {
+	m, store, _ := utilModule(t, 50)
+	m.setAutoskill(84, "light", false)
+	m.onPlayerDeath(events.PlayerDeath{UserId: 84, Permanent: true})
+	assert.True(t, m.autoskillOn(84, "light"))
+	_, persisted := store.saved.Autoskill[84]
+	assert.False(t, persisted)
 }

@@ -6,14 +6,16 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-23
-- **Branch:** `claude/phase-16-implementation-ken03h`
-- **HEAD:** Phase 16 (walking fatigue, inns, travel/rest multipliers) is
-  complete, reviewed, and merged to `master`.
-  Walking in the wilderness costs fatigue, with Exhausted and Collapsed
-  penalties. Inns sell a paid rest that grants Well Rested. Weather, load,
-  and mount now change route travel and camp rest.
+- **Branch:** `claude/next-phase-spec-plan-19rraa`
+- **HEAD:** Phase 17 (archetypes and utility skills) is complete and
+  reviewed on the branch. It is not yet merged to `master`.
+  - Players choose one of five exclusive archetypes, and skill training
+    and spell learning respect it.
+  - Rogues sense and disarm traps.
+  - Wizards conjure a floating light automatically in the dark.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through Phase 16.
+- **Origin sync:** `master` is pushed through Phase 16. The branch
+  `claude/next-phase-spec-plan-19rraa` carries Phase 17 and is pushed.
 
 ## Current position
 
@@ -40,13 +42,9 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 17 (archetypes and utility skills). The design and plan
-  are written
-  ([spec](superpowers/specs/2026-09-23-phase-17-archetypes-utility-skills-design.md),
-  [plan](superpowers/plans/2026-09-23-phase-17-archetypes-utility-skills.md)).
-  It ships in two slices: 17a (archetypes and gating) and 17b (utility
-  skills). Implementation waits for the user to confirm the spec's open
-  decisions 1–8.
+- **Next:** merge Phase 17 to `master`, then Phase 18 (loot tables). Phase
+  18b adds cooking, the first trade skill; it was deferred from Phase 17
+  because it needs loot ingredients.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
@@ -88,26 +86,131 @@ instead of duplicating them.
 | 14 | Visibility and light | Complete: ambient vs per-viewer light, personal/fixture/party light, darkness hit penalty, `light` command, `floatinglight` spell |
 | 15 | Temperature, clothing, exposure | Complete: `internal/climate`, `modules/exposure`, item `warmth`, weather `TemperatureMod`, survival member drain + mutex, `temperature` command |
 | 16 | Walking fatigue, inns, travel/rest multipliers | Complete: `internal/walking`, `modules/walking`, inn stays in `modules/camping`, multipliers locked at departure/rest start, Waymark Inn, Old Kings Road zone |
-| 17 | Archetypes (17a) and utility skills (17b) | Designed and planned; awaiting decision confirmation. Cooking deferred to after Phase 18 |
+| 17 | Archetypes (17a) and utility skills (17b) | Complete and reviewed, not yet merged: `internal/archetypes`, `modules/archetype`, training and spell gating, companion archetypes, `autoskill`, `trap`, auto-light. Cooking deferred to Phase 18b |
 | 18–21 | Loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
 
-### Phase 17 design and plan (2026-09-23)
+### Phase 17: archetypes and utility skills (2026-09-23)
 
-- **What:** Wrote the Phase 17 design doc and task plan. No code changed.
-  - **17a:** five data-driven, exclusive archetypes, chosen once by players
-    and set for companions from config. Gating applies to skill training
-    and spell learning. Existing skills and spells are grandfathered.
-  - **17b:** utility levels with company best-member resolution,
-    `autoskill`, wizard auto floating light, and a rogue `trap sense` /
-    `trap disarm` command wired into `picklock`, with one trapped-chest
-    proving room.
-- **Why:** This is the next roadmap phase, and it implements user
-  decision 3.
-- **Pending:** the user needs to confirm the spec's open decisions 1–8.
-  Cooking is recommended to wait for Phase 18's ingredients.
+- **What:**
+  - **17a:**
+    - `internal/archetypes` (pure): the claim table, gating decisions,
+      and a seam that allows everything without a provider.
+    - `modules/archetype`:
+      - the archetype table (config): warrior, rogue, wizard, cleric, and
+        ranger
+      - a one-time `archetype choose <name> confirm` that is persisted and
+        applies grants (re-applied on login)
+      - admin `archetypereset`
+    - **Claimed skills and spell schools are gated** at every place they
+      are handed out:
+      - `train`
+      - script `TrainSkill`
+      - script and party `LearnSpell`
+      - quest skill rewards
+
+      Existing skills and spells are grandfathered.
+    - **Companions** get an archetype on the company record: set from
+      config at summon (template 58 is a warrior), or once with
+      `company archetype`.
+    - `look` shows archetypes.
+    - The `illlusion` spell-school typo is fixed.
+  - **17b:**
+    - Utility levels, with company best-member resolution.
+    - `autoskill` toggles.
+    - `trap sense` / `trap disarm`. A disarm is persisted by round, and
+      `picklock` respects it.
+    - A free sense before picking a lock.
+    - Auto-sense on entering a room.
+    - Wizard auto floating light, through the real cast path for players
+      and a direct buff for companions.
+    - These use a new `walking.AddStepListener` seam.
+    - Content: a trapped toll box at Dunmar West Gate (2001).
+- **Why:** This is the roadmap phase for user decision 3 (exclusive
+  archetypes and utility skills). The user confirmed decisions 1–8 as
+  recommended. Deviations are recorded in the spec's "Implementation
+  notes" ([spec](superpowers/specs/2026-09-23-phase-17-archetypes-utility-skills-design.md),
+  [plan](superpowers/plans/2026-09-23-phase-17-archetypes-utility-skills.md)).
+- **Durable / clock-safe:**
+  - Archetype choices, autoskill toggles, and disarm expiries (as round
+    numbers) persist in the archetype plugin store. Companion archetypes
+    persist on the company record.
+  - Legacy records load neutral.
+  - There are no timers, and nothing advances the clock.
+  - The module lock is a leaf lock, and engine reads happen outside it.
+- **Review:** each slice had an independent reviewer subagent (the most
+  capable model tier).
+  - **17a:** 3 medium-high, 3 medium, and 4 low findings, plus coverage
+    gaps.
+    - *Fixed, each with a regression test:*
+      - Script `TrainSkill` (the obelisk teaching `portal`) and quest
+        `SkillInfo` rewards bypassed the gate.
+      - A spell-school typo on either side went unreported; it is now
+        warned about at load.
+      - Permadeath kept the old character's archetype; it is now cleared.
+      - A removed archetype stranded its players; they can choose again.
+      - A failed registry load misreported everyone as unchosen; claimed
+        skills now fail closed with an explicit reason.
+      - `loadErr` was read without the lock.
+    - *Fixed without an automated test:* Elara's `illum` lesson locked out
+      anyone who finished the quest before becoming a wizard. She now
+      re-teaches it from both `onGive` and `onAsk`. The script is
+      syntax-checked; there is no mob-script test harness.
+    - *Accepted and documented:*
+      - Grandfathered claimed skills can't be trained higher without the
+        archetype.
+      - Login re-grants undo an admin's removal of a granted skill.
+      - `archetypereset` only works on online characters.
+    - *Coverage added:*
+      - the real plugin-config path, for archetype and for company
+      - the `company archetype` command
+      - spawn and permadeath through the event queue
+  - **17b:** no critical findings; 3 medium and 8 low, plus coverage
+    gaps.
+    - *Fixed, each with a regression test:*
+      - Step reactions printed before the move text; the hook now runs
+        last in `go`.
+      - A downed or fighting companion could act or mask an able player
+        wizard.
+      - The auto-light cooldown was spent before checking anyone could
+        cast.
+      - Companion backfire grammar.
+      - A mistyped `trap sense` target spent the cooldown.
+      - The free pre-pick sense was used up when nobody could sense.
+      - Engine reads happened under the module lock.
+      - Permadeath kept the autoskill toggles.
+    - *Accepted and documented:*
+      - Disarms last a fixed 900 rounds rather than the lock's relock
+        interval.
+      - An exit disarm covers only that room's side of the door.
+      - A permadeath clear isn't retried if the registry is down.
+    - *Coverage added:*
+      - a following companion rogue
+      - unable companions
+      - both cooldowns
+      - the shipped toll box end to end
+- **Process note:** the pure `internal/archetypes` tests and the 17b
+  module code were written in the same pass as, or just before, their
+  implementation, not strictly tests-first. The wiring tests for the
+  train, `LearnSpell`, look, and quest gates, and every review regression,
+  were seen failing first. The picklock and quest-reward wiring tests were
+  also checked by putting the bug back and watching them fail.
+- **Verification:**
+  - `go test -race ./...` passes (65 packages).
+  - The archetype, archetypes, and walking packages pass
+    `-race -count=20`.
+  - `go vet ./...` and `make validate` pass.
+  - `make generate` adds `modules/archetype`.
+  - The server boots with 25 plugins and no archetype or school-mismatch
+    warnings. The only warnings are pre-existing content and config ones.
+  - Live telnet acceptance was not run.
+- **Known limitations:**
+  - Cooking is deferred to Phase 18b. Room containers already support
+    crafting `recipes` to build on.
+  - No new trainers: grants give level 1.
+  - Upstream trapped locks exist nowhere else in the content.
 
 ### Phase 16: walking fatigue, inns, and travel/rest multipliers (2026-09-23)
 

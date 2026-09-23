@@ -138,11 +138,6 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 			scripting.TryRoomScriptEvent(`onExit`, user.UserId, originRoomId)
 
-			// Charge the mover's company its walking strain for this step.
-			// Route journeys never reach here (they start above and arrive
-			// through the expedition module), so travel is never charged twice.
-			walking.Stepped(user.UserId, originRoomId, destRoom.RoomId)
-
 			// Tell the player they are moving
 			if isSneaking {
 				user.SendText(
@@ -310,6 +305,15 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 			room.PlaySound(`room-exit`, `movement`, user.UserId)
 			destRoom.PlaySound(`room-enter`, `movement`, user.UserId)
+
+			// Charge the mover's company its walking strain for this step,
+			// then let step listeners (archetype auto-skills) react. It runs
+			// last so their messages follow the move and the room view.
+			// Route journeys never reach here (they start above and arrive
+			// through the expedition module), so travel is never charged twice.
+			// Followers are commanded above but move later, so companions are
+			// still in the origin room here.
+			walking.Stepped(user.UserId, originRoomId, destRoom.RoomId)
 
 		}
 

@@ -250,6 +250,11 @@ func (m *ArchetypeModule) load() {
 		}
 	}
 
+	var now uint64
+	if m.now != nil {
+		now = m.now()
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.table = table
@@ -260,7 +265,7 @@ func (m *ArchetypeModule) load() {
 	}
 	m.registry = loaded
 	if m.now != nil {
-		m.pruneDisarmedLocked(m.now())
+		m.pruneDisarmedLocked(now)
 	}
 	for userID, id := range m.registry.Players {
 		if _, ok := m.table.Get(id); !ok {
@@ -505,10 +510,37 @@ func (m *ArchetypeModule) onPlayerDeath(e events.Event) events.ListenerReturn {
 	if !ok || !evt.Permanent {
 		return events.Continue
 	}
-	if _, err := m.reset(evt.UserId); err != nil {
+	if err := m.clearCharacter(evt.UserId); err != nil {
 		mudlog.Error("archetype: clear on permadeath", "user", evt.UserId, "error", err)
 	}
 	return events.Continue
+}
+
+// clearCharacter drops everything this module keeps per character (the
+// archetype and the autoskill toggles), persisting it with rollback.
+func (m *ArchetypeModule) clearCharacter(userID int) error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	archetype, hadArchetype := m.registry.Players[userID]
+	toggles, hadToggles := m.registry.Autoskill[userID]
+	if !hadArchetype && !hadToggles {
+		return nil
+	}
+	delete(m.registry.Players, userID)
+	delete(m.registry.Autoskill, userID)
+	if err := m.saveLocked(); err != nil {
+		if hadArchetype {
+			m.registry.Players[userID] = archetype
+		}
+		if hadToggles {
+			m.registry.Autoskill[userID] = toggles
+		}
+		return err
+	}
+	return nil
 }
 
 func (m *ArchetypeModule) onPlayerSpawn(e events.Event) events.ListenerReturn {

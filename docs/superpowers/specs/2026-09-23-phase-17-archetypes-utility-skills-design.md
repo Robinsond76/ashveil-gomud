@@ -442,3 +442,40 @@ Deviations from the text above, recorded as they landed.
   - Grants re-apply on login, so an admin who removes a granted skill sees
     it come back. Grants are a floor.
   - `archetypereset` only works on online characters.
+
+### Changes from the 17b independent review
+
+- **Step reactions print after the move.** The step hook (`walking.Stepped`)
+  now runs at the end of a successful `go`, after the exit text, the room
+  look, and the sounds. Auto-sense and auto-light messages follow the move
+  instead of coming before it.
+  - The strain charge doesn't depend on the order.
+  - Followers are only commanded at that point, so companions are still
+    in the origin room.
+- **Companions who can't act are skipped.** A downed companion is never a
+  utility member. For auto-light, only members who can conjure right now
+  are considered: a player needs the spell and the mana; a companion must
+  not be fighting and needs the mana. So an unable companion never masks a
+  player wizard who can cast, and the `autolight` cooldown only starts
+  when an able member actually makes the attempt.
+- **Smaller fixes:**
+  - The companion backfire message now agrees ("Bran fumbles and springs
+    the trap").
+  - A mistyped `trap sense` target no longer spends the cooldown.
+  - The free pre-picklock sense is only used up once someone could
+    actually sense the trap.
+  - Skill and character levels, and the round count at load, are read
+    before the module lock is taken.
+  - A permanent death clears the autoskill toggles as well as the
+    archetype.
+- **Elara also re-teaches `illum` from `onAsk`,** not only when the book is
+  given again. This script change is syntax-checked (`node --check`) but
+  has no automated test: the repo has no harness for running mob scripts.
+- **Accepted and documented:**
+  - Disarms last a fixed `DisarmRounds` (900 rounds, config), not the
+    lock's relock interval as §6 said.
+  - Lock ids are per room and direction, so disarming a trapped exit
+    covers only that side of the door. The shipped proving lock is a
+    container, so it isn't affected.
+  - If the registry fails to load at the moment of a permadeath, the clear
+    is logged but not retried.
