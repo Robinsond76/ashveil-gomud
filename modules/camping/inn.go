@@ -246,15 +246,19 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 	if err := m.survival.Available(); err != nil {
 		return err.Error()
 	}
-	settings := m.innSettings()
-	if room == nil || !room.HasTag(settings.RoomTag) {
-		return "There is no inn here."
-	}
+	// The travel check runs before taking m.mu (camping never holds its lock
+	// while calling another module). Both it and a route start run on the
+	// game loop, so nothing can slip in between.
 	if m.isTravelling(user.UserId) {
 		return "You can't take a room while travelling."
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	// Config is written by load() under m.mu, so read it under m.mu too.
+	settings := m.innSettings()
+	if room == nil || !room.HasTag(settings.RoomTag) {
+		return "There is no inn here."
+	}
 	if camp, ok := m.camps[user.UserId]; ok && camp.Rest != nil && camp.Rest.State == camping.Resting {
 		return "You are already resting at camp."
 	}

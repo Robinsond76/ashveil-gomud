@@ -6,13 +6,12 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-23
-- **Branch:** `claude/gracious-ride-swn7b7`
-- **HEAD:** Phase 15 (temperature, clothing, and exposure) is complete,
-  reviewed, and merged. Temperature follows biome, night, weather, shelter,
-  and campfires. Worn clothing gives warmth. A signed exposure meter
-  escalates through four penalty bands and can kill only under extreme
-  stress. Heat drains thirst and cold drains fatigue. The new `temperature`
-  command reports it all.
+- **Branch:** `claude/phase-16-implementation-ken03h`
+- **HEAD:** Phase 16 (walking fatigue, inns, travel/rest multipliers) is
+  complete and reviewed on its branch, pushed, not yet merged to `master`.
+  Walking in the wilderness costs fatigue, with Exhausted and Collapsed
+  penalties. Inns sell a paid rest that grants Well Rested. Weather, load,
+  and mount now change route travel and camp rest.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is pushed through Phase 12b's weighted
   encounter tables (`e42efd88`); this branch's Phase 12c work is not yet
@@ -43,16 +42,9 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 16 (walking fatigue and inns, plus switching on Phase 8's
-  deferred travel/rest weather multipliers) per the 2026-09-23 roadmap.
-  The design and plan are written
-  (`docs/superpowers/specs/2026-09-23-phase-16-walking-fatigue-inns-design.md`,
-  `docs/superpowers/plans/2026-09-23-phase-16-walking-fatigue-inns.md`).
-  The user confirmed all seven decisions on 2026-09-23. Decision 3 changed:
-  mount fatigue relief covers at most two riders and applies to walking
-  only. No code has landed; implementation waits for the user's go-ahead. The design found that the Dunmar zone (default biome `city`)
-  has no weather, so today the proving route can't show any weather effect
-  (decision 6).
+- **Next:** merge Phase 16 to `master` (it is waiting for the user's
+  go-ahead), then Phase 17 (archetypes) per the 2026-09-23 roadmap. Phase
+  17 has no design yet.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
@@ -93,10 +85,73 @@ instead of duplicating them.
 | 13 | Sky and environment | Complete: moon phases, cloud cover, fog, indoor biomes/tags, indoor glimpse, richer `weather`; display-only |
 | 14 | Visibility and light | Complete: ambient vs per-viewer light, personal/fixture/party light, darkness hit penalty, `light` command, `floatinglight` spell |
 | 15 | Temperature, clothing, exposure | Complete: `internal/climate`, `modules/exposure`, item `warmth`, weather `TemperatureMod`, survival member drain + mutex, `temperature` command |
-| 16–21 | Walking fatigue/inns, archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
+| 16 | Walking fatigue, inns, travel/rest multipliers | Complete on branch (not yet merged): `internal/walking`, `modules/walking`, inn stays in `modules/camping`, multipliers locked at departure/rest start, Waymark Inn, Old Kings Road zone |
+| 17–21 | Archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 16: walking fatigue, inns, and travel/rest multipliers (2026-09-23)
+
+- **What:**
+  - **`internal/walking`** (pure): terrain cost (settlements free, a biome
+    table, a `strain:<n>` room tag), a clamped multiplier product, a
+    centi-fatigue carry, and the cold multiplier.
+  - **`modules/walking`:** `usercommands.Go` reports each successful
+    ordinary step. The module charges the leader and the spawned
+    companions walking with them, using load, outdoor weather, cold
+    exposure, Well Rested, and mount relief (the leader and the lowest
+    companion ids, at most `Riders`). The carry flushes on save.
+    Exhausted (1031) and Collapsed (1032) band buffs, the `strain`
+    command, and the Well Rested buff (1030) with its `well-rested` flag.
+  - **Travel:** `TravelSession` locks `DurationPct`, `ExertionPct`, and
+    `FatiguePct` at departure (0 = neutral, so legacy sessions are
+    unchanged). A company with a member at fatigue 0 can't set out.
+    Ordinary movement is never refused.
+  - **Camping:** camp rest locks the weather-scaled recovery. Inns add the
+    `inn` tag and command and a durable `InnStay`. Gold is refunded if the
+    save fails. A stay blocks movement. Well Rested is granted on the
+    round tick, never from the timer.
+  - **Seams:** `encumbrance.CurrentBand`, `mount.Relief` and
+    `mount.TravelDurationPct`, and `climate.ExposureOf`.
+  - **Content:** the Waymark Inn (Dunmar 2003), the `inn` tag on the
+    Frostfire (61), and Fork at the Black Oak (2002) moved into a new
+    forest zone, Old Kings Road, so the proving route and camp see weather.
+- **Why:** the 2026-09-23 roadmap. It also switches on the travel/rest
+  multipliers deferred as Option A in Phases 8–10. The user confirmed
+  decisions 1–7 (decision 3 changed to two riders). Deviations from the
+  design are recorded in its "Implementation notes".
+- **Verification:** `go test -race ./...` passes, as do `make generate`
+  (adds `modules/walking`) and `make validate`. Real-entry-point wiring
+  tests go through `usercommands.Go` (forest/city/route), `Go` into a real
+  `StartTravel`, the camp and inn user commands (real room 2003, through
+  to Well Rested), and the real exposure→walking chain. The `-race` tests
+  cover cross-module steps, ticks, and timers, and camping's real timers
+  against the game loop (`-count=20`). The server boots with +3 buffs, +1
+  flag, +1 plugin, +1 zone, and +1 room, and no new warnings or errors
+  compared with the pre-phase boot.
+- **Review:** an independent reviewer (Sonnet subagent) found no bugs
+  against the invariants (clock, durability, lock order, idempotency,
+  refunds). It raised three low-severity concerns:
+  - Config read outside the lock. Camping's `innRest` read inn config
+    before taking the lock that `load()` writes it under. **Fixed:** it
+    now reads under the lock. The walking half was **rejected:** `load()`
+    runs once at boot before the game loop, the same pattern accepted for
+    Phase 15's exposure module.
+  - The Well Rested buff id is read at grant time instead of being locked
+    onto the stay. **Rejected:** it is static deploy config, not a
+    per-booking value.
+  - The travel check runs before the camping lock. **Rejected:** `inn rest`
+    and `go` both run on the single game loop, and an active stay already
+    blocks route starts.
+
+  Test gaps it noted and left open: no concurrent-reload test, and no
+  real-timer race test for expedition (a pre-existing gap, not introduced
+  by this phase).
+- **Known limitations:** mount relief doesn't apply to route travel yet.
+  Upstream buff 16 is also named "Well Rested" (from the Frostfire room
+  rental, left unchanged). Inn price and power are placeholders pending the
+  economy pass.
 
 ### Phase 15: temperature, clothing, and exposure (2026-09-23)
 
