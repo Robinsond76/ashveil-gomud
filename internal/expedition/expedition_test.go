@@ -41,6 +41,35 @@ func validFallenTreeProfile() TravelProfile {
 	return profile
 }
 
+func TestInterruptionKindValidAcceptsAllThreeKinds(t *testing.T) {
+	for _, kind := range []InterruptionKind{FallenTree, Discovery, Tracks} {
+		assert.True(t, kind.Valid(), "expected %q to be a valid interruption kind", kind)
+	}
+}
+
+func TestInterruptionKindValidRejectsUnknown(t *testing.T) {
+	assert.False(t, InterruptionKind("rock_slide").Valid())
+	assert.False(t, InterruptionKind("").Valid())
+}
+
+func TestInterruptionTextReturnsDistinctNonEmptyTextPerKind(t *testing.T) {
+	texts := map[InterruptionKind]string{}
+	for _, kind := range []InterruptionKind{FallenTree, Discovery, Tracks} {
+		text := InterruptionText(kind, "oak-road")
+		require.NotEmpty(t, text, "expected non-empty text for kind %q", kind)
+		assert.Contains(t, text, "oak-road")
+		texts[kind] = text
+	}
+	assert.NotEqual(t, texts[FallenTree], texts[Discovery])
+	assert.NotEqual(t, texts[FallenTree], texts[Tracks])
+	assert.NotEqual(t, texts[Discovery], texts[Tracks])
+}
+
+func TestInterruptionTextFallsBackForUnknownKind(t *testing.T) {
+	text := InterruptionText(InterruptionKind("rock_slide"), "oak-road")
+	assert.NotEmpty(t, text)
+}
+
 func TestTravelProfileValidate(t *testing.T) {
 	cases := []struct {
 		name    string

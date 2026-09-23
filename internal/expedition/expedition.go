@@ -36,13 +36,39 @@ var (
 // leader chooses to resume or turn back.
 type InterruptionKind string
 
-// FallenTree is the only interruption kind the domain ships today. Adding a
-// kind means extending Valid; persisted payloads of unknown kinds are corrupt.
-const FallenTree InterruptionKind = "fallen-tree"
+// Interruption kinds the domain ships. Adding a kind means extending Valid
+// and InterruptionText; persisted payloads of unknown kinds are corrupt.
+const (
+	FallenTree InterruptionKind = "fallen-tree"
+	Discovery  InterruptionKind = "discovery"
+	Tracks     InterruptionKind = "tracks"
+)
 
 // Valid reports whether the kind is a known interruption.
 func (k InterruptionKind) Valid() bool {
-	return k == FallenTree
+	switch k {
+	case FallenTree, Discovery, Tracks:
+		return true
+	default:
+		return false
+	}
+}
+
+// InterruptionText returns the player-facing description for a fired
+// interruption's kind, naming the route it fired on. Every valid kind has an
+// entry; an unknown kind (already rejected everywhere a session is
+// constructed) falls back to a generic message rather than an empty string.
+func InterruptionText(kind InterruptionKind, profileName string) string {
+	switch kind {
+	case FallenTree:
+		return fmt.Sprintf("A fallen tree blocks the %s route. Your company pauses before the obstruction.\nUse \"travel resume\" when you are ready to continue, or \"travel return\" to head back.", profileName)
+	case Discovery:
+		return fmt.Sprintf("Something catches your eye off the %s route. Your company pauses to take a closer look.\nUse \"travel resume\" when you are ready to continue, or \"travel return\" to head back.", profileName)
+	case Tracks:
+		return fmt.Sprintf("Fresh tracks cross the %s route ahead. Your company pauses to consider them.\nUse \"travel resume\" when you are ready to continue, or \"travel return\" to head back.", profileName)
+	default:
+		return fmt.Sprintf("Something gives your company pause on the %s route.\nUse \"travel resume\" when you are ready to continue, or \"travel return\" to head back.", profileName)
+	}
 }
 
 // InterruptionProfile configures the checkpoint on a route where an

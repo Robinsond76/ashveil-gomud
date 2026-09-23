@@ -713,7 +713,10 @@ func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) err
 }
 
 func (m *ExpeditionModule) interruptionTextLocked(session expedition.TravelSession) string {
-	return fmt.Sprintf("A fallen tree blocks the %s route. Your company pauses before the obstruction.\nUse \"travel resume\" when you are ready to continue, or \"travel return\" to head back.", session.ProfileName)
+	if session.Interruption == nil {
+		return ""
+	}
+	return expedition.InterruptionText(session.Interruption.Kind, session.ProfileName)
 }
 
 // completeLocked applies the final earned checkpoint, persists Completed, then
