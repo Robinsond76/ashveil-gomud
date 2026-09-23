@@ -6,11 +6,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-23
-- **Branch:** `codex/phase-18a-loot` (to merge into `master`)
 - **HEAD:** Phase 18a (category loot tables) is complete and reviewed.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** Phase 18a is ready for integration; `origin/master` is
-  currently pushed through Phase 17.
 
 ## Current position
 
@@ -36,7 +33,8 @@ instead of duplicating them.
   `internal/hooks/combat_formation.go` gates every direction through 11c's
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
-  member's target via 11b's `engagement.AssignTarget` when it's lost).
+  member's target via 11b's `engagement.AssignTarget` when it's lost),
+  and Phase 18a (category loot tables and a small shipped loot slice).
 - **Next:** Phase 18b (cooking), left for the next phase at the user's
   direction. Phase 19 (commodities and markets) follows. Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
