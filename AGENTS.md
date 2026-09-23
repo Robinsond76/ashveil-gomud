@@ -51,6 +51,8 @@ Use idiomatic Go, `gofmt`, tabs, exported `PascalCase`, and unexported `camelCas
 
 Use Go's standard `testing` package. Name tests `TestBehavior` and benchmarks `BenchmarkBehavior`, beside covered code. Add a regression test for each bug fix. Start targeted, then run `make validate`; run `make test` before requesting review when practical. Do not claim checks not run.
 
+Every phase also passes a testing and review gate before merging to `master`: tests cover each integration point the phase wires (not only pure helpers), and an independent reviewer subagent checks the full phase diff for bugs, design gaps, and missing coverage. The lead verifies each finding, fixes real ones with regression tests, and records the review outcome in `docs/PROJECT_STATUS.md`. See `CLAUDE.md` ("Testing and review gate") for the details.
+
 ## Commit & Pull Request Guidelines
 
 Use concise imperative commits with an optional scope, such as `fix(telnet): stop input masking` or `docs: establish Ashveil baseline`. Keep commits narrow. Pull requests should state user effect, approach, verification, and linked issue; attach screenshots for web/admin UI changes.

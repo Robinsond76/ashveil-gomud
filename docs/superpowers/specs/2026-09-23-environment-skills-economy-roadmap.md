@@ -80,3 +80,7 @@ before any code, per `CLAUDE.md`.
 - All new durable state (markets, exposure, alignment drift bookkeeping,
   archetype choice) must survive restart/copyover.
 - Data-driven balance: new numbers live in module config overlays.
+- Every phase passes the testing and review gate before merging (`CLAUDE.md`,
+  "Testing and review gate"): wiring tests for each integration point, plus an
+  independent reviewer subagent over the full phase diff. Phases 13 and 14 were
+  merged before this gate existed and get a retroactive review.

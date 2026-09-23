@@ -44,7 +44,9 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 15 (temperature and clothing) per the 2026-09-23 roadmap.
+- **Next:** Retroactive testing and review gate for Phases 13–14 (they merged
+  before the gate was adopted on 2026-09-23), then Phase 15 (temperature and
+  clothing) per the 2026-09-23 roadmap.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's

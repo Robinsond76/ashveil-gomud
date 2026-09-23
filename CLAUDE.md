@@ -44,9 +44,29 @@ in force, and record which happened in the doc); (3) write a companion plan doc 
 naming its files and its tests-first step, mirroring `docs/superpowers/plans/2026-09-22-phase-7-camping.md`'s
 format; (4) create the worktree/branch per "Branching & Worktrees" below and execute the
 plan task-by-task, checking boxes off as they land; (5) verify
-(`go test -race ./...`, `make generate`, `make validate`) and record the result in
-`docs/PROJECT_STATUS.md`; (6) merge and push. Do not implement first and backfill the plan
-doc after — write it before code, the same as the plugin would.
+(`go test -race ./...`, `make generate`, `make validate`); (6) **independent review**
+(below); (7) record the verification and review results in `docs/PROJECT_STATUS.md`;
+(8) merge and push. Do not implement first and backfill the plan doc after — write it
+before code, the same as the plugin would.
+
+**Testing and review gate (every phase, adopted 2026-09-23 at the user's request):**
+
+- **Tests first, including wiring.** Pure/domain logic gets unit tests, and every
+  integration point a phase touches (combat, `look`, module commands, other modules'
+  providers) gets at least one test that goes through the real entry point, not just the
+  helper underneath it. A plan's task list must name these wiring tests explicitly.
+- **Independent review before merge.** After the phase verifies green and before merging
+  to `master`, dispatch a reviewer subagent (`Agent`, `general-purpose`, the most capable
+  model tier) over the full phase diff (`git diff <base>..HEAD`). Brief it with the
+  phase's design doc, the non-negotiable invariants (never advance the world clock,
+  survive restart/copyover, concurrency and lock ordering), and ask it to report bugs,
+  design gaps, and missing test coverage — findings only, no edits, no commits.
+- **Verify every finding yourself.** Treat the review like any subagent output: an
+  untrusted proposal. Reproduce each finding; fix the real ones with a regression test;
+  note the rejected ones and why. Re-run the full verification after fixes.
+- **Record it.** Each phase's `docs/PROJECT_STATUS.md` work-log entry gets a
+  **Review:** line (what the reviewer found, what was fixed, what was rejected). A phase
+  isn't done, and isn't merged, until that line exists.
 
 Superpowers' `subagent-driven-development` skill dispatches implementer/reviewer
 subagents itself (via the `Agent` tool) and asks the driving session to pick a model per
