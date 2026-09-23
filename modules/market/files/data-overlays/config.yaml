@@ -1,0 +1,66 @@
+# Phase 19 settlement markets.
+#
+# A settlement is a zone. Only zones listed here have a market; every
+# other zone reports "There's no market here." Each good is tracked by
+# item ID with its own stock ledger. Price is always derived from current
+# stock: MaxPrice at stock 0, BasePrice at TargetStock, MinPrice at
+# MaxStock, linear in between. Each round, stock drifts one bounded step
+# (1..DriftStep) toward TargetStock and then stays there. StartStock is
+# only used the first time a good is seen; after that the persisted stock
+# is kept across restart/copyover.
+#
+# Rules (a good breaking one is skipped with a warning):
+#   0 < MinPrice <= BasePrice <= MaxPrice
+#   0 < TargetStock < MaxStock
+#   0 <= StartStock <= MaxStock
+#   1 <= DriftStep <= MaxStock
+#   the item ID must exist; a zone listing an item twice gets no market.
+#
+# Vendor buy/sell does not use these prices yet (Phase 19b). The proving
+# content starts Dunmar short of hides and meat and the Fork glutted with
+# hides, so both markets visibly drift after boot.
+Markets:
+  - Zone: Dunmar
+    Goods:
+      - ItemId: 28 # wolf hide
+        BasePrice: 14
+        MinPrice: 8
+        MaxPrice: 30
+        MaxStock: 40
+        TargetStock: 20
+        StartStock: 4
+        DriftStep: 2
+      - ItemId: 29 # raw game meat
+        BasePrice: 5
+        MinPrice: 2
+        MaxPrice: 12
+        MaxStock: 60
+        TargetStock: 30
+        StartStock: 10
+        DriftStep: 3
+      - ItemId: 30018 # wild thyme
+        BasePrice: 4
+        MinPrice: 2
+        MaxPrice: 9
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 15
+        DriftStep: 1
+  - Zone: Old Kings Road
+    Goods:
+      - ItemId: 28 # wolf hide
+        BasePrice: 9
+        MinPrice: 4
+        MaxPrice: 20
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 28
+        DriftStep: 2
+      - ItemId: 29 # raw game meat
+        BasePrice: 3
+        MinPrice: 1
+        MaxPrice: 8
+        MaxStock: 40
+        TargetStock: 20
+        StartStock: 20
+        DriftStep: 2
