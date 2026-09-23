@@ -5,3 +5,4 @@ description: An elegant fur cape.
 type: neck
 subtype: wearable
 damagereduction: 2
+warmth: 10

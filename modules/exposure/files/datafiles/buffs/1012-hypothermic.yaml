@@ -1,0 +1,14 @@
+# Phase 15 exposure band (cold). Applied and removed by modules/exposure;
+# the module owns its lifetime, so it is added as a permanent buff.
+buffid: 1012
+name: Hypothermic
+description: You are dangerously cold and shivering uncontrollably.
+secret: false
+triggerrate: 1 real minute
+triggercount: 1
+statmods:
+  strength: -30
+  speed: -30
+  smarts: -30
+  vitality: -30
+  perception: -30

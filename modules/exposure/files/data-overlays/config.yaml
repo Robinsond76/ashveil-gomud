@@ -1,0 +1,50 @@
+# Phase 15 temperature and exposure balance. All temperatures are °C.
+#
+# Air temperature outdoors = biome Base - NightDrop (at night) + weather
+# TemperatureMod; furnished interiors are IndoorTemperature; caves and
+# dungeons keep their Base. A lit campfire adds FireWarmth.
+#
+# A character is comfortable between ComfortLow - warmth and
+# ComfortHigh - warmth * HeatFactor. Exposure moves toward
+# stress * CeilingPerStress each TickRounds rounds, so only stress >= 25
+# (with the default 4) can ever become lethal.
+TickRounds: 5
+IndoorTemperature: 18
+FireWarmth: 10
+ComfortLow: 16
+ComfortHigh: 30
+HeatFactor: 0.5
+CeilingPerStress: 4
+Recovery: 5
+ShelterRecovery: 12
+WarmedBonus: 20
+SevereDamagePct: 2
+CriticalDamagePct: 10
+# Per tick: cold at the moderate band or worse costs fatigue |stress| / N;
+# any heat costs thirst stress / N (at least 1).
+ColdFatigueDivisor: 5
+HeatThirstDivisor: 4
+# Biomes not listed use DefaultBase / DefaultNightDrop. (Lists, not maps:
+# module config maps are flattened by the loader.)
+DefaultBase: 15
+DefaultNightDrop: 6
+Biomes:
+  - { Biome: forest, Base: 12, NightDrop: 8 }
+  - { Biome: snow, Base: -12, NightDrop: 10 }
+  - { Biome: mountains, Base: -2, NightDrop: 10 }
+  - { Biome: cliffs, Base: 6, NightDrop: 8 }
+  - { Biome: desert, Base: 36, NightDrop: 22 }
+  - { Biome: swamp, Base: 22, NightDrop: 6 }
+  - { Biome: shore, Base: 14, NightDrop: 6 }
+  - { Biome: water, Base: 12, NightDrop: 6 }
+  - { Biome: cave, Base: 10, NightDrop: 0 }
+  - { Biome: dungeon, Base: 12, NightDrop: 0 }
+  - { Biome: spiderweb, Base: 14, NightDrop: 0 }
+# Warmth of a worn item in each slot when the item sets no explicit warmth.
+SlotWarmth:
+  - { Slot: body, Warmth: 5 }
+  - { Slot: legs, Warmth: 3 }
+  - { Slot: feet, Warmth: 2 }
+  - { Slot: head, Warmth: 2 }
+  - { Slot: gloves, Warmth: 2 }
+  - { Slot: neck, Warmth: 1 }

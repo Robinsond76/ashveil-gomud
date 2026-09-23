@@ -1,0 +1,11 @@
+# Phase 15 exposure band (heat). Applied and removed by modules/exposure;
+# the module owns its lifetime, so it is added as a permanent buff.
+buffid: 1020
+name: Overheated
+description: You are overheated and sweating heavily.
+secret: false
+triggerrate: 1 real minute
+triggercount: 1
+statmods:
+  speed: -5
+  perception: -5

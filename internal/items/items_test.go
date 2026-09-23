@@ -224,3 +224,13 @@ func TestItem_TempData(t *testing.T) {
 	itm.SetTempData("key", nil)
 	assert.Nil(t, itm.GetTempData("key"))
 }
+
+func TestItemSpecWarmthLoadsFromYAML(t *testing.T) {
+	var spec ItemSpec
+	if err := yaml.Unmarshal([]byte("itemid: 1\nname: fur cloak\nwarmth: 12\n"), &spec); err != nil {
+		t.Fatal(err)
+	}
+	if spec.Warmth != 12 {
+		t.Fatalf("warmth: got %d want 12", spec.Warmth)
+	}
+}

@@ -222,6 +222,7 @@ type ItemSpec struct {
 	Hydration       int               `yaml:"hydration,omitempty"`   // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
 	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
 	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
+	Warmth          int               `yaml:"warmth,omitempty"`      // Insulation when worn (Phase 15); 0 uses the exposure module's per-slot default, negative means none
 }
 
 // AllEquipSlots returns every equipment slot ItemType in canonical display order.

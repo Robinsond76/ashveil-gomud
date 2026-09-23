@@ -749,3 +749,41 @@ func TestCompanyNeedsReturnsRosterDefaultsWithoutWriting(t *testing.T) {
 	assert.Equal(t, domain.FullNeeds(), needs[1].Needs)
 	assert.Zero(t, m.store.(*fakeStore).saveCalls, "CompanyNeeds must not write")
 }
+
+func TestApplyMemberDrainChargesOneMemberWithoutLedger(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.PutNeeds(7, domain.LeaderMemberKey, domain.Needs{Hunger: 50, Thirst: 60, Fatigue: 70}))
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(1), domain.Needs{Hunger: 80, Thirst: 80, Fatigue: 80}))
+
+	result, err := m.ApplyMemberDrain(7, domain.CompanionMemberKey(1), domain.Exertion{Thirst: 4})
+	require.NoError(t, err)
+	assert.Equal(t, domain.Needs{Hunger: 80, Thirst: 76, Fatigue: 80}, result.Needs)
+	assert.Equal(t, domain.Needs{Hunger: 50, Thirst: 60, Fatigue: 70}, m.registry.MustNeedsFor(7, domain.LeaderMemberKey), "only the named member is drained")
+	assert.Empty(t, m.registry.AppliedExertion[7], "ambient drains keep no per-operation ledger")
+	assert.Equal(t, 1, m.store.(*fakeStore).saveCalls)
+
+	_, err = m.ApplyMemberDrain(7, domain.CompanionMemberKey(1), domain.Exertion{Thirst: 4})
+	require.NoError(t, err)
+	assert.Equal(t, 72, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(1)).Thirst, "each tick drains again")
+}
+
+func TestApplyMemberDrainRollsBackOnSaveFailure(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.Ensure(7, domain.LeaderMemberKey))
+	m.store = &fakeStore{saveErr: errors.New("boom")}
+	before := m.registry.Clone()
+
+	_, err := m.ApplyMemberDrain(7, domain.LeaderMemberKey, domain.Exertion{Fatigue: 3})
+	require.Error(t, err)
+	assert.Equal(t, before, m.registry)
+}
+
+func TestApplyMemberDrainRejectsInvalidInput(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	_, err := m.ApplyMemberDrain(7, domain.LeaderMemberKey, domain.Exertion{})
+	require.ErrorIs(t, err, domain.ErrInvalidAmount)
+	_, err = m.ApplyMemberDrain(7, domain.LeaderMemberKey, domain.Exertion{Thirst: -1})
+	require.ErrorIs(t, err, domain.ErrInvalidAmount)
+	_, err = m.ApplyMemberDrain(0, domain.LeaderMemberKey, domain.Exertion{Thirst: 1})
+	require.ErrorIs(t, err, domain.ErrInvalidMember)
+}

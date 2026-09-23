@@ -1,0 +1,11 @@
+# Phase 15 exposure band (cold). Applied and removed by modules/exposure;
+# the module owns its lifetime, so it is added as a permanent buff.
+buffid: 1010
+name: Chilled
+description: You are chilled to the bone.
+secret: false
+triggerrate: 1 real minute
+triggercount: 1
+statmods:
+  speed: -5
+  perception: -5

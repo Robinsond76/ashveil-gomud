@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -407,6 +408,9 @@ func (m *WeatherModule) userCommand(_ string, user *users.UserRecord, room *room
 	view := m.skyView(room)
 	condition, tracked := m.CurrentCondition(view.WeatherZone)
 	lines := []string{fmt.Sprintf("It is %s.", m.timeOfDay())}
+	if temp, ok := climate.AirTemperatureIn(room.RoomId); ok {
+		lines = append(lines, fmt.Sprintf("Temperature: %d°C (%s).", temp, climate.TemperatureName(temp)))
+	}
 	lines = append(lines, weather.RenderSky(view, condition, tracked, true)...)
 	user.SendText(strings.Join(lines, "\n"))
 	return true, nil
@@ -465,6 +469,7 @@ func parseBiomeTables(raw any) map[string]biomeTable {
 				RestRecoveryPct:   configInt(condFields["restrecoverypct"]),
 				CloudCover:        configInt(condFields["cloudcover"]),
 				VisibilityMod:     configInt(condFields["visibilitymod"]),
+				TemperatureMod:    configInt(condFields["temperaturemod"]),
 			}
 			weight := configInt(condFields["weight"])
 			if err := condition.Validate(); err != nil {

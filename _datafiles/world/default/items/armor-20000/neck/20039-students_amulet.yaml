@@ -7,3 +7,4 @@ subtype: wearable
 damagereduction: 0
 statmods:
   perception: 1
+warmth: -1

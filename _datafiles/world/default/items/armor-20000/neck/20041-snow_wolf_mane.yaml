@@ -13,3 +13,4 @@ statmods:
   perception: 7
 wornbuffids:
   - 3 # Cold Tolerant
+warmth: 12

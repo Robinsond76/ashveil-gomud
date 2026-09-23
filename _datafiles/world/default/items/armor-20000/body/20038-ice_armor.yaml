@@ -8,3 +8,4 @@ damagereduction: 20
 statmods:
   strength: 11
   speed: -2
+warmth: 2

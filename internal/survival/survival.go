@@ -788,3 +788,36 @@ func CompanyNeeds(leaderUserID int) []MemberNeeds {
 	}
 	return s.CompanyNeeds(leaderUserID)
 }
+
+// MemberDrainService is implemented by modules/survival. It applies an
+// ambient, per-tick drain (e.g. Phase 15 exposure: thirst in heat, fatigue
+// in cold) to one company member. Unlike ApplyCompanyExertion it keeps no
+// per-operation ledger, because ticks are frequent and a lost tick after a
+// crash is harmless.
+type MemberDrainService interface {
+	ApplyMemberDrain(leaderUserID int, key MemberKey, cost Exertion) (ExertionResult, error)
+}
+
+var (
+	memberDrainMu      sync.RWMutex
+	memberDrainService MemberDrainService
+)
+
+// SetMemberDrainService registers the active drain service. nil clears it.
+func SetMemberDrainService(s MemberDrainService) {
+	memberDrainMu.Lock()
+	defer memberDrainMu.Unlock()
+	memberDrainService = s
+}
+
+// ApplyMemberDrain consults the registered drain service. It returns
+// ErrExertionUnavailable until modules/survival has loaded.
+func ApplyMemberDrain(leaderUserID int, key MemberKey, cost Exertion) (ExertionResult, error) {
+	memberDrainMu.RLock()
+	s := memberDrainService
+	memberDrainMu.RUnlock()
+	if s == nil {
+		return ExertionResult{}, ErrExertionUnavailable
+	}
+	return s.ApplyMemberDrain(leaderUserID, key, cost)
+}

@@ -146,6 +146,7 @@ func init() {
 	domain.SetProvisioner(m)
 	domain.SetLifecycle(m)
 	domain.SetCompanyService(m)
+	domain.SetMemberDrainService(m)
 }
 
 func (m *SurvivalModule) persistenceAvailable() error {
@@ -351,6 +352,43 @@ func (m *SurvivalModule) ApplyCompanyExertion(leaderUserID int, operationID stri
 		return nil, err
 	}
 	return results, nil
+}
+
+// ApplyMemberDrain applies an ambient drain to one member in one durable
+// write, rolling back on a failed save. It keeps no operation ledger: it is
+// for frequent ticks (Phase 15 exposure) where replay safety isn't needed.
+func (m *SurvivalModule) ApplyMemberDrain(leaderUserID int, key domain.MemberKey, cost domain.Exertion) (domain.ExertionResult, error) {
+	if err := m.persistenceAvailable(); err != nil {
+		return domain.ExertionResult{}, err
+	}
+	if leaderUserID <= 0 || !domain.ValidMemberKey(key) {
+		return domain.ExertionResult{}, domain.ErrInvalidMember
+	}
+	if cost.Hunger < 0 || cost.Thirst < 0 || cost.Fatigue < 0 ||
+		(cost.Hunger == 0 && cost.Thirst == 0 && cost.Fatigue == 0) {
+		return domain.ExertionResult{}, domain.ErrInvalidAmount
+	}
+	snapshot := m.registry.Clone()
+	if err := m.registry.Ensure(leaderUserID, key); err != nil {
+		m.registry = snapshot
+		return domain.ExertionResult{}, err
+	}
+	hunger, thirst, fatigue, err := m.registry.ApplyExertion(leaderUserID, key, cost)
+	if err != nil {
+		m.registry = snapshot
+		return domain.ExertionResult{}, err
+	}
+	if err := m.save(); err != nil {
+		m.registry = snapshot
+		return domain.ExertionResult{}, err
+	}
+	return domain.ExertionResult{
+		Member:  key,
+		Needs:   m.registry.MustNeedsFor(leaderUserID, key),
+		Hunger:  hunger,
+		Thirst:  thirst,
+		Fatigue: fatigue,
+	}, nil
 }
 
 // ApplyCompanyRestRecovery restores fatigue to every current company member

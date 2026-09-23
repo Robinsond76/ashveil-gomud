@@ -23,6 +23,8 @@ func TestConditionValidate(t *testing.T) {
 		{Name: "storm", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100, CloudCover: 4},
 		{Name: "fog", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100, VisibilityMod: 1},
 		{Name: "fog", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100, VisibilityMod: -3},
+		{Name: "blizzard", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100, TemperatureMod: -31},
+		{Name: "heatwave", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100, TemperatureMod: 31},
 	}
 	for i, c := range cases {
 		if err := c.Validate(); !errors.Is(err, ErrInvalidCondition) {

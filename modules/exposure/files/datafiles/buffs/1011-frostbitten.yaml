@@ -1,0 +1,12 @@
+# Phase 15 exposure band (cold). Applied and removed by modules/exposure;
+# the module owns its lifetime, so it is added as a permanent buff.
+buffid: 1011
+name: Frostbitten
+description: The cold has bitten deep; your fingers are numb.
+secret: false
+triggerrate: 1 real minute
+triggercount: 1
+statmods:
+  speed: -15
+  strength: -15
+  perception: -15

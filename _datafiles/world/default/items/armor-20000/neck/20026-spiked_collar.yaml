@@ -8,3 +8,4 @@ damagereduction: 3
 statmods:
   strength: 3
   perception: 10
+warmth: -1

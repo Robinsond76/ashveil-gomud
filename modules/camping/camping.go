@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -211,6 +212,8 @@ func init() {
 	camping.SetViewProvider(m)
 	camping.SetMovementProvider(m)
 	rooms.RegisterLightFixture(m.RoomHasLitFire)
+	// A lit campfire also warms its room (Phase 15).
+	climate.RegisterHeatSource(m.RoomHasLitFire)
 }
 
 // RoomHasLitFire reports whether a lit campfire burns in roomID, which

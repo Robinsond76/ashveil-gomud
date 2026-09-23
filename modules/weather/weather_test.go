@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -283,7 +284,7 @@ func TestParseBiomeTablesReadsCloudCoverAndFog(t *testing.T) {
 			"biome":                "forest",
 			"changeintervalrounds": map[string]any{"min": 40, "max": 120},
 			"conditions": []any{
-				map[string]any{"name": "fog", "description": "Fog.", "weight": 2, "traveldurationpct": 110, "exertionpct": 100, "restrecoverypct": 100, "cloudcover": 2, "visibilitymod": -1},
+				map[string]any{"name": "fog", "description": "Fog.", "weight": 2, "traveldurationpct": 110, "exertionpct": 100, "restrecoverypct": 100, "cloudcover": 2, "visibilitymod": -1, "temperaturemod": -2},
 				map[string]any{"name": "bad-cloud", "description": "Bad.", "weight": 1, "traveldurationpct": 100, "exertionpct": 100, "restrecoverypct": 100, "cloudcover": 5},
 				map[string]any{"name": "bad-fog", "description": "Bad.", "weight": 1, "traveldurationpct": 100, "exertionpct": 100, "restrecoverypct": 100, "visibilitymod": -3},
 			},
@@ -297,6 +298,7 @@ func TestParseBiomeTablesReadsCloudCoverAndFog(t *testing.T) {
 	fog := tables["forest"].Conditions[0]
 	assert.Equal(t, 2, fog.CloudCover)
 	assert.Equal(t, -1, fog.VisibilityMod)
+	assert.Equal(t, -2, fog.TemperatureMod)
 }
 
 func TestParseMoonCycleDays(t *testing.T) {
@@ -333,4 +335,29 @@ func TestUserCommandReportsTimeMoonAndGlimpse(t *testing.T) {
 	out := joinMessages(*messages)
 	assert.Contains(t, out, "It is 9:00PM")
 	assert.Contains(t, out, "Through the north exit: Clear skies.")
+}
+
+type fakeClimate struct{ temps map[int]int }
+
+func (f fakeClimate) AirTemperatureIn(roomId int) (int, bool) {
+	t, ok := f.temps[roomId]
+	return t, ok
+}
+
+func TestUserCommandShowsAirTemperature(t *testing.T) {
+	module := newTestModule(&fakeStore{}, func() uint64 { return 0 }, zeroRNG)
+	climate.SetProvider(fakeClimate{temps: map[int]int{2001: -8}})
+	t.Cleanup(func() { climate.SetProvider(nil) })
+	user := weatherUser(t, 7)
+	messages := captureMessages(t)
+
+	module.userCommand("", user, weatherRoom("dunmar"), 0)
+	events.ProcessEvents()
+	assert.Contains(t, joinMessages(*messages), "Temperature: -8°C (freezing).")
+
+	climate.SetProvider(nil)
+	*messages = nil
+	module.userCommand("", user, weatherRoom("dunmar"), 0)
+	events.ProcessEvents()
+	assert.NotContains(t, joinMessages(*messages), "Temperature:", "no provider, no temperature line")
 }

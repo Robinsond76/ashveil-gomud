@@ -8,3 +8,4 @@ subtype: wearable
 damagereduction: 5
 wornbuffids:
   - 3 # Cold Tolerant
+warmth: 4

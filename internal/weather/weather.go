@@ -18,6 +18,9 @@ const (
 
 	// VisibilityModMin is the strongest fog penalty a condition may carry.
 	VisibilityModMin = -2
+
+	// TemperatureModLimit bounds a condition's temperature shift in °C.
+	TemperatureModLimit = 30
 )
 
 var (
@@ -38,6 +41,8 @@ type Condition struct {
 	CloudCover int
 	// VisibilityMod is 0 or a fog penalty down to VisibilityModMin.
 	VisibilityMod int
+	// TemperatureMod shifts outdoor air temperature in °C (Phase 15).
+	TemperatureMod int
 }
 
 // Validate rejects a malformed condition rather than letting it be guessed
@@ -53,6 +58,9 @@ func (c Condition) Validate() error {
 		return ErrInvalidCondition
 	}
 	if c.VisibilityMod < VisibilityModMin || c.VisibilityMod > 0 {
+		return ErrInvalidCondition
+	}
+	if c.TemperatureMod < -TemperatureModLimit || c.TemperatureMod > TemperatureModLimit {
 		return ErrInvalidCondition
 	}
 	return nil

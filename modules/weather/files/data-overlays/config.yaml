@@ -13,6 +13,8 @@
 # VisibilityMod is 0 or a fog penalty down to -2. Both are display-only in
 # this phase; Phase 14 wires them into visibility.
 #
+# Phase 15: TemperatureMod shifts outdoor air temperature in °C (-30..30).
+#
 # MoonCycleDays is the length of the lunar cycle in game days (8 phases).
 MoonCycleDays: 8
 Biomes:
@@ -28,6 +30,7 @@ Biomes:
         ExertionPct: 100
         RestRecoveryPct: 100
         CloudCover: 0
+        TemperatureMod: 0
       - Name: overcast
         Description: "Grey clouds hang low over the treetops."
         Weight: 4
@@ -35,6 +38,7 @@ Biomes:
         ExertionPct: 105
         RestRecoveryPct: 100
         CloudCover: 3
+        TemperatureMod: -1
       - Name: rain
         Description: "A steady rain patters through the leaves."
         Weight: 3
@@ -42,6 +46,7 @@ Biomes:
         ExertionPct: 115
         RestRecoveryPct: 90
         CloudCover: 3
+        TemperatureMod: -3
       - Name: storm
         Description: "Wind and rain lash the forest in a storm."
         Weight: 1
@@ -49,6 +54,7 @@ Biomes:
         ExertionPct: 130
         RestRecoveryPct: 75
         CloudCover: 3
+        TemperatureMod: -6
       - Name: fog
         Description: "Fog drifts between the trees, softening every shape."
         Weight: 2
@@ -56,6 +62,7 @@ Biomes:
         ExertionPct: 100
         RestRecoveryPct: 95
         CloudCover: 2
+        TemperatureMod: -2
         VisibilityMod: -1
       - Name: thick-fog
         Description: "A thick fog has swallowed the forest; the nearest trunks are grey ghosts."
@@ -64,4 +71,5 @@ Biomes:
         ExertionPct: 105
         RestRecoveryPct: 90
         CloudCover: 3
+        TemperatureMod: -3
         VisibilityMod: -2

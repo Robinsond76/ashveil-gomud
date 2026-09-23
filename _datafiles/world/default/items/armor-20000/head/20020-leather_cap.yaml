@@ -4,3 +4,4 @@ description: A leather cap that provides minimal protection.
 type: head
 subtype: wearable
 damagereduction: 3
+warmth: 3
