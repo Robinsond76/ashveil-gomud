@@ -1,0 +1,9 @@
+itemid: 30021
+name: seared game meat
+namesimple: slab
+description: A slab of game meat seared over an open fire. Plain, but filling.
+type: food
+subtype: edible
+uses: 1
+value: 8
+nutrition: 40

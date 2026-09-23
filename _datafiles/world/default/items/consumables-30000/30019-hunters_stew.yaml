@@ -1,0 +1,9 @@
+itemid: 30019
+name: hunter's stew
+namesimple: stew
+description: A thick stew of game meat simmered with wild thyme. It will feed a traveler more than once.
+type: food
+subtype: edible
+uses: 3
+value: 30
+nutrition: 50

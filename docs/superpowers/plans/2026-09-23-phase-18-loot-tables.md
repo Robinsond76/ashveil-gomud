@@ -103,12 +103,12 @@ passes.
 
 ## Slice 18b: cooking
 
-- [ ] **Recheck container crafting before coding.** Current
+- [x] **Recheck container crafting before coding.** Current
       `Container.Recipes` is `map[int][]int` (output to inputs);
       `RecipeReady()` iterates that map, and `use <container>` consumes
       the selected inputs. Confirm these entry points and the existing
       skill-level API have not changed since this plan was written.
-- [ ] **`internal/skills`: `cooking` skill + `cook`/`chef`-style
+- [x] **`internal/skills`: `cooking` skill + `cook`/`chef`-style
       profession datafile.**
   - Follow `internal/skills/AGENTS.md`'s exact datafile conventions
     (skill filename = `SkillId + ".yaml"`, profession filename via
@@ -116,7 +116,7 @@ passes.
   - Test: `SkillExists("cooking")` after `LoadDataFiles` against the real
     shipped datafile (mirror however existing skill-load tests check a
     shipped skill).
-- [ ] **Recipe requirements and deterministic selection.** Add an optional
+- [x] **Recipe requirements and deterministic selection.** Add an optional
       per-output `RecipeRequirements` map to `rooms.Container` with skill
       ID and minimum level; leave `Recipes map[int][]int` intact.
       Reject malformed requirements when loading room datafiles. Make
@@ -128,16 +128,21 @@ passes.
     ingredients and produces the expected `Food` item; insufficient
     skill consumes nothing; an existing ungated recipe still works;
     multiple ready recipes choose the lowest eligible output ID.
-- [ ] **Recipes: 2-3 data-driven recipes using Phase 18a loot ingredients
+- [x] **Recipes: 2-3 data-driven recipes using Phase 18a loot ingredients
       producing `Food` items.** Author the recipes and their per-output
       `cooking` requirements in container datafiles, checking every
       ingredient ID against shipped Phase 18a items.
-- [ ] **Content:** tag at least one existing hearth/campfire-capable room
+- [x] **Content:** tag at least one existing hearth/campfire-capable room
       container as cooking-capable (or confirm campfires already qualify
       per Phase 15's campfire-as-fixture work), and ship the 2-3 recipes.
-- [ ] `gofmt -l`, `go vet ./internal/skills/... ./internal/rooms/...`,
+  - Done: the Waymark Inn (room 2003) got a `hearth` container with three
+    cooking recipes and trains `cooking` 1-4. Camp campfires are
+    `modules/camping` light fixtures, not room containers, so they do not
+    qualify; camp cooking is deferred. Richer recipes use lower output IDs
+    so the lowest-eligible rule prefers the best meal the cook can make.
+- [x] `gofmt -l`, `go vet ./internal/skills/... ./internal/rooms/...`,
       `go build ./...`, `go test -race ./...` after each task.
-- [ ] `make generate`, `make validate`.
+- [x] `make generate`, `make validate`.
 - [ ] **Testing and review gate (18b):** independent reviewer subagent
       over the full 18b diff, same invariants briefing as 18a. Verify
       findings, fix real ones with regression tests, record rejections.

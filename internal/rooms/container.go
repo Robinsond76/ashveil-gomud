@@ -1,6 +1,10 @@
 package rooms
 
 import (
+	"fmt"
+	"sort"
+	"strings"
+
 	"github.com/GoMudEngine/GoMud/internal/gamelock"
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
@@ -11,6 +15,14 @@ type Container struct {
 	Gold         int           `yaml:"gold,omitempty"`         // Save contents now, since players can put new items in there
 	DespawnRound uint64        `yaml:"despawnround,omitempty"` // If this is set, it's a chest that will disappear with time.
 	Recipes      map[int][]int `yaml:"recipes,omitempty,flow"` // Item Id's (key) that are created when the recipe is present in the container (values) and it is "used"
+	// Optional skill gates, keyed by recipe output item id. Recipes without an entry are ungated.
+	RecipeRequirements map[int]RecipeRequirement `yaml:"reciperequirements,omitempty"`
+}
+
+// RecipeRequirement is the minimum skill level needed to make one recipe.
+type RecipeRequirement struct {
+	SkillId  string `yaml:"skillid"`
+	MinLevel int    `yaml:"minlevel"`
 }
 
 func (c Container) HasLock() bool {
@@ -58,39 +70,96 @@ func (c *Container) FindItemById(itemId int) (items.Item, bool) {
 	return items.Item{}, false
 }
 
-// Returns an itemId if it can produce one based on contents + recipe
+// Returns the lowest output itemId whose recipe is satisfied by the contents, or 0.
+// Ignores skill requirements; use SelectRecipe to honor them.
 func (c *Container) RecipeReady() int {
-
-	if len(c.Recipes) == 0 {
-		return 0
+	if ready := c.ReadyRecipes(); len(ready) > 0 {
+		return ready[0]
 	}
+	return 0
+}
+
+// ReadyRecipes returns every output itemId whose inputs are all present, ascending.
+func (c *Container) ReadyRecipes() []int {
+
+	ready := []int{}
 
 	for finalItemId, recipeList := range c.Recipes {
 
-		totalNeeded := 0
 		neededItems := map[int]int{}
-
 		for _, inputItemId := range recipeList {
 			neededItems[inputItemId] += 1
-			totalNeeded++
 		}
 
-		for _, containsItem := range c.Items {
-			if neededItems[containsItem.ItemId] > 0 {
-				neededItems[containsItem.ItemId] -= 1
-				totalNeeded--
-			}
-			if totalNeeded == 0 {
+		satisfied := true
+		for inputItemId, qty := range neededItems {
+			if c.Count(inputItemId) < qty {
+				satisfied = false
 				break
 			}
 		}
 
-		if totalNeeded < 1 {
-			return finalItemId
+		if satisfied {
+			ready = append(ready, finalItemId)
 		}
 	}
 
-	return 0
+	sort.Ints(ready)
+	return ready
+}
+
+// SelectRecipe picks the lowest ready output itemId whose requirement the actor meets,
+// given a skill-level lookup. When recipes are ready but all are gated, it returns 0 and
+// the easiest unmet requirement (lowest level, then lowest output id).
+func (c *Container) SelectRecipe(skillLevel func(skillId string) int) (int, RecipeRequirement) {
+
+	var blocked RecipeRequirement
+
+	for _, finalItemId := range c.ReadyRecipes() {
+		req, gated := c.RecipeRequirements[finalItemId]
+		if !gated || skillLevel(req.SkillId) >= req.MinLevel {
+			return finalItemId, RecipeRequirement{}
+		}
+		if blocked.MinLevel == 0 || req.MinLevel < blocked.MinLevel {
+			blocked = req
+		}
+	}
+
+	return 0, blocked
+}
+
+// ValidateRecipes rejects malformed recipes and requirements, normalizing skill ids.
+func (c *Container) ValidateRecipes() error {
+
+	for finalItemId, recipeList := range c.Recipes {
+		if finalItemId < 1 {
+			return fmt.Errorf("recipe output item id %d must be positive", finalItemId)
+		}
+		if len(recipeList) == 0 {
+			return fmt.Errorf("recipe for item %d has no inputs", finalItemId)
+		}
+		for _, inputItemId := range recipeList {
+			if inputItemId < 1 {
+				return fmt.Errorf("recipe for item %d has invalid input item id %d", finalItemId, inputItemId)
+			}
+		}
+	}
+
+	for finalItemId, req := range c.RecipeRequirements {
+		if _, ok := c.Recipes[finalItemId]; !ok {
+			return fmt.Errorf("recipe requirement for item %d has no matching recipe", finalItemId)
+		}
+		req.SkillId = strings.ToLower(strings.TrimSpace(req.SkillId))
+		if req.SkillId == `` {
+			return fmt.Errorf("recipe requirement for item %d has no skillid", finalItemId)
+		}
+		if req.MinLevel < 1 {
+			return fmt.Errorf("recipe requirement for item %d needs minlevel of at least 1", finalItemId)
+		}
+		c.RecipeRequirements[finalItemId] = req
+	}
+
+	return nil
 }
 
 func (c *Container) Count(itemId int) int {

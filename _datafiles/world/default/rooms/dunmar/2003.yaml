@@ -11,6 +11,26 @@ biome: city
 tags:
   - inn
   - indoor
+containers:
+  hearth:
+    recipes:
+      30019: [29, 29, 30018]
+      30020: [29, 30018]
+      30021: [29]
+    reciperequirements:
+      30019:
+        skillid: cooking
+        minlevel: 3
+      30020:
+        skillid: cooking
+        minlevel: 2
+      30021:
+        skillid: cooking
+        minlevel: 1
+skilltraining:
+  cooking:
+    min: 1
+    max: 4
 exits:
   east:
     roomid: 2001

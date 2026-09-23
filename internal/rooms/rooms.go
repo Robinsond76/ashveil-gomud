@@ -2256,6 +2256,9 @@ func (r *Room) Validate() error {
 	}
 
 	for cName, c := range r.Containers {
+		if err := c.ValidateRecipes(); err != nil {
+			return fmt.Errorf("container %q: %w", cName, err)
+		}
 		for i := range c.Items {
 			c.Items[i].Validate()
 		}

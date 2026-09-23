@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -197,7 +198,14 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			user.SendText(``)
 			user.SendText(fmt.Sprintf(`You can <ansi fg="command">use</ansi> the <ansi fg="container">%s</ansi> if you put the following objects inside:`, containerName))
 
-			for finalItemId, recipeList := range container.Recipes {
+			recipeIds := make([]int, 0, len(container.Recipes))
+			for finalItemId := range container.Recipes {
+				recipeIds = append(recipeIds, finalItemId)
+			}
+			sort.Ints(recipeIds)
+
+			for _, finalItemId := range recipeIds {
+				recipeList := container.Recipes[finalItemId]
 
 				neededItems := map[int]int{}
 
@@ -208,7 +216,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 				user.SendText(``)
 
 				finalItem := items.New(finalItemId)
-				user.SendText(fmt.Sprintf(`    <ansi fg="230">To receive 1 <ansi fg="itemname">%s</ansi>:</ansi> `, finalItem.DisplayName()))
+				requirementText := ``
+				if req, gated := container.RecipeRequirements[finalItemId]; gated {
+					requirementText = fmt.Sprintf(` <ansi fg="8">(requires <ansi fg="skill">%s</ansi> %d)</ansi>`, recipeSkillName(req.SkillId), req.MinLevel)
+				}
+				user.SendText(fmt.Sprintf(`    <ansi fg="230">To receive 1 <ansi fg="itemname">%s</ansi>:</ansi>%s `, finalItem.DisplayName(), requirementText))
 
 				for inputItemId, qtyNeeded := range neededItems {
 					tmpItem := items.New(inputItemId)

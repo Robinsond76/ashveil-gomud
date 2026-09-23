@@ -1,0 +1,9 @@
+itemid: 30020
+name: thyme-roasted game
+namesimple: roast
+description: Game meat roasted over the coals with a crust of wild thyme.
+type: food
+subtype: edible
+uses: 2
+value: 16
+nutrition: 45

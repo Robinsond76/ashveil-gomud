@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -25,7 +26,14 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				return true, nil
 			}
 
-			recipeReadyItemId := container.RecipeReady()
+			recipeReadyItemId, blocked := container.SelectRecipe(user.Character.GetSkillLevel)
+
+			if recipeReadyItemId == 0 && blocked.MinLevel > 0 {
+				user.SendText("")
+				user.SendText(fmt.Sprintf(`You need at least level %d in <ansi fg="skill">%s</ansi> to make anything with the <ansi fg="container">%s</ansi>.`, blocked.MinLevel, recipeSkillName(blocked.SkillId), containerName))
+				user.SendText("")
+				return true, nil
+			}
 
 			if recipeReadyItemId == 0 {
 				user.SendText("")
@@ -96,4 +104,12 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	return true, nil
+}
+
+// recipeSkillName returns a skill's display name, falling back to its id.
+func recipeSkillName(skillId string) string {
+	if s := skills.GetSkill(skillId); s != nil && s.Name != `` {
+		return s.Name
+	}
+	return skillId
 }
