@@ -1,0 +1,22 @@
+roomid: 2003
+zone: Dunmar
+title: The Waymark Inn
+description: A low timbered common room crouches just inside the west gate, its
+  rafters hung with drying herbs and travelers' cloaks. A broad hearth throws warm
+  light across scarred tables where carters and road-worn companies trade news of
+  the forest track. The innkeeper keeps a slate by the door chalked with the price
+  of a bed, and a narrow stair climbs to rooms where a company can sleep off the
+  road before setting out again.
+biome: city
+tags:
+  - inn
+  - indoor
+exits:
+  east:
+    roomid: 2001
+mapsymbol: I
+maplegend: Inn
+mapx: -1
+mapy: 0
+mapz: 0
+hascoordinates: true

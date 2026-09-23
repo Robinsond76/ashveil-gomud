@@ -2,6 +2,7 @@ package camping
 
 import (
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/weather"
 	"github.com/stretchr/testify/assert"
@@ -356,4 +358,79 @@ func TestParseInnSettings(t *testing.T) {
 		return map[string]any{"PricePerMember": -3, "InnRestDuration": "soon", "InnFatigueRecovery": 0}[name]
 	})
 	assert.Equal(t, defaultInnSettings(), bad)
+}
+
+// realScheduler-backed race: the inn and camp timers fire on their own
+// goroutines while the game loop checks movement, renders status, and runs
+// the round handler that grants Well Rested. Run under -race.
+func TestInnAndCampTimersRaceTheGameLoop(t *testing.T) {
+	for round := 0; round < 5; round++ {
+		now := baseTime()
+		var clockMu sync.Mutex
+		clock := func() time.Time {
+			clockMu.Lock()
+			defer clockMu.Unlock()
+			return now
+		}
+		surv := &lockedSurvival{inner: &fakeSurvival{}}
+		module := newTestModule(&fakeStore{}, realScheduler{}, surv, clock)
+		module.companySize = func(int) int { return 1 }
+		module.spawnedCompanions = func(int) []*characters.Character { return nil }
+		var grants int
+		module.grantBuff = func(*characters.Character, int) error { grants++; return nil }
+		innUser := campUser(t, 7, 2003)
+		innUser.Character.Gold = 100
+		campUser8 := users.NewUserRecord(8, 1)
+		campUser8.Character.RoomId = 100
+		users.SetTestUser(campUser8)
+
+		module.innRest(innUser, innRoom())
+		module.establish(campUser8, eligibleRoom())
+		module.lightFire(campUser8, eligibleRoom())
+		module.startRest(campUser8, eligibleRoom())
+		// Both rests are now overdue: reschedule so the real timers fire at once.
+		clockMu.Lock()
+		now = now.Add(2 * time.Minute)
+		clockMu.Unlock()
+		module.mu.Lock()
+		module.scheduleStayLocked(module.stays[7])
+		module.scheduleLocked(module.camps[8])
+		module.mu.Unlock()
+
+		deadline := time.Now().Add(5 * time.Second)
+		for time.Now().Before(deadline) {
+			module.MovementBlocked(7)
+			module.MovementBlocked(8)
+			module.innStatus(innUser, innRoom())
+			module.onNewRound(events.NewRound{RoundNumber: 1})
+			module.mu.Lock()
+			_, stay := module.stays[7]
+			campDone := module.recoveryApplied[8]
+			module.mu.Unlock()
+			if !stay && campDone {
+				break
+			}
+			time.Sleep(time.Millisecond)
+		}
+		assert.Equal(t, 1, grants, "Well Rested granted exactly once, on the loop")
+		assert.Equal(t, 2, surv.calls(), "one inn and one camp recovery")
+	}
+}
+
+type lockedSurvival struct {
+	mu    sync.Mutex
+	inner *fakeSurvival
+}
+
+func (l *lockedSurvival) Available() error { return nil }
+func (l *lockedSurvival) ApplyCompanyRestRecovery(leader int, op string, fatigue int) ([]survival.ExertionResult, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.inner.ApplyCompanyRestRecovery(leader, op, fatigue)
+}
+func (l *lockedSurvival) CompanyNeeds(int) []survival.MemberNeeds { return nil }
+func (l *lockedSurvival) calls() int {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return len(l.inner.amounts)
 }

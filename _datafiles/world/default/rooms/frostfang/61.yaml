@@ -13,6 +13,8 @@ description: The Frostfire Inn stands as a beacon of warmth and respite amidst F
   beloved haven for both locals and wanderers alike.
 mapsymbol: I
 maplegend: Inn
+tags:
+- inn
 exits:
   north:
     roomid: 57
