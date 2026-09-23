@@ -18,9 +18,11 @@ import (
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/sky"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/weather"
@@ -130,6 +132,10 @@ type WeatherModule struct {
 	roundFn   func() uint64
 	zoneNames func() []string
 	zoneBiome func(zone string) string
+	// skyView and timeOfDay read the room's sky and the shared clock for
+	// the weather command; tests override them.
+	skyView   func(*rooms.Room) weather.SkyView
+	timeOfDay func() string
 
 	biomes  map[string]biomeTable
 	zones   map[string]weather.ZoneWeather
@@ -147,6 +153,8 @@ func init() {
 		roundFn:   util.GetRoundCount,
 		zoneNames: rooms.GetAllZoneNames,
 		zoneBiome: rooms.GetZoneBiome,
+		skyView:   (*rooms.Room).SkyView,
+		timeOfDay: func() string { return gametime.GetDate().String() },
 		biomes:    map[string]biomeTable{},
 		zones:     map[string]weather.ZoneWeather{},
 	}
@@ -213,6 +221,7 @@ func (m *WeatherModule) load() {
 	m.loadErr = nil
 	if m.plug != nil {
 		m.biomes = parseBiomeTables(m.plug.Config.Get("Biomes"))
+		sky.SetCycleDays(parseMoonCycleDays(m.plug.Config.Get("MoonCycleDays")))
 	}
 	m.recoverLocked()
 }
@@ -395,13 +404,22 @@ func (m *WeatherModule) CurrentCondition(zone string) (weather.Condition, bool) 
 }
 
 func (m *WeatherModule) userCommand(_ string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
-	condition, ok := m.CurrentCondition(room.Zone)
-	if !ok {
-		user.SendText("You can't tell what the weather is like here.")
-		return true, nil
-	}
-	user.SendText(condition.Description)
+	view := m.skyView(room)
+	condition, tracked := m.CurrentCondition(view.WeatherZone)
+	lines := []string{fmt.Sprintf("It is %s.", m.timeOfDay())}
+	lines = append(lines, weather.RenderSky(view, condition, tracked, true)...)
+	user.SendText(strings.Join(lines, "\n"))
 	return true, nil
+}
+
+// parseMoonCycleDays reads the configured lunar cycle length, falling back
+// to sky.DefaultCycleDays when it is missing or non-positive.
+func parseMoonCycleDays(raw any) int {
+	days := configInt(raw)
+	if days < 1 {
+		return sky.DefaultCycleDays
+	}
+	return days
 }
 
 // parseBiomeTables normalizes the configured biome table list, rejecting a
@@ -445,6 +463,8 @@ func parseBiomeTables(raw any) map[string]biomeTable {
 				TravelDurationPct: configInt(condFields["traveldurationpct"]),
 				ExertionPct:       configInt(condFields["exertionpct"]),
 				RestRecoveryPct:   configInt(condFields["restrecoverypct"]),
+				CloudCover:        configInt(condFields["cloudcover"]),
+				VisibilityMod:     configInt(condFields["visibilitymod"]),
 			}
 			weight := configInt(condFields["weight"])
 			if err := condition.Validate(); err != nil {

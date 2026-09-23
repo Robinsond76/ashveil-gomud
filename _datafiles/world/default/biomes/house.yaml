@@ -7,6 +7,7 @@ color:
 description: Standard domiciles and other dwellings.
 darkarea: false
 litarea: true
+indoor: true
 requireditemid: 0
 usesitem: false
 burns: true

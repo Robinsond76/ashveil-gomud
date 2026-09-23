@@ -23,6 +23,7 @@ type BiomeInfo struct {
 	Description    string      `yaml:"description"`
 	DarkArea       bool        `yaml:"darkarea"`
 	LitArea        bool        `yaml:"litarea"`
+	Indoor         bool        `yaml:"indoor,omitempty"` // Under a roof: the sky and weather can't be seen
 	RequiredItemId int         `yaml:"requireditemid"`
 	UsesItem       bool        `yaml:"usesitem"`
 	Burns          bool        `yaml:"burns"`

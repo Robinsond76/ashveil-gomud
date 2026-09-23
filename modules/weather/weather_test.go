@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/sky"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/weather"
 	"github.com/stretchr/testify/assert"
@@ -69,8 +70,12 @@ func newTestModule(store Store, roundFn func() uint64, rng func(int) int) *Weath
 			}
 			return ""
 		},
-		biomes: map[string]biomeTable{"forest": forestTable()},
-		zones:  map[string]weather.ZoneWeather{},
+		biomes:  map[string]biomeTable{"forest": forestTable()},
+		zones:   map[string]weather.ZoneWeather{},
+		skyView: func(r *rooms.Room) weather.SkyView { return weather.SkyView{WeatherZone: r.Zone} },
+		timeOfDay: func() string {
+			return "9:00PM"
+		},
 	}
 }
 
@@ -270,4 +275,62 @@ func TestParseBiomeTablesRejectsMalformedEntries(t *testing.T) {
 	require.Contains(t, tables, "forest")
 	assert.Len(t, tables["forest"].Conditions, 1, "the out-of-range condition is rejected, not the whole table")
 	assert.NotContains(t, tables, "swamp", "an empty condition list invalidates the table")
+}
+
+func TestParseBiomeTablesReadsCloudCoverAndFog(t *testing.T) {
+	raw := []any{
+		map[string]any{
+			"biome":                "forest",
+			"changeintervalrounds": map[string]any{"min": 40, "max": 120},
+			"conditions": []any{
+				map[string]any{"name": "fog", "description": "Fog.", "weight": 2, "traveldurationpct": 110, "exertionpct": 100, "restrecoverypct": 100, "cloudcover": 2, "visibilitymod": -1},
+				map[string]any{"name": "bad-cloud", "description": "Bad.", "weight": 1, "traveldurationpct": 100, "exertionpct": 100, "restrecoverypct": 100, "cloudcover": 5},
+				map[string]any{"name": "bad-fog", "description": "Bad.", "weight": 1, "traveldurationpct": 100, "exertionpct": 100, "restrecoverypct": 100, "visibilitymod": -3},
+			},
+		},
+	}
+
+	tables := parseBiomeTables(raw)
+
+	require.Contains(t, tables, "forest")
+	require.Len(t, tables["forest"].Conditions, 1, "out-of-range cloud cover and fog are rejected")
+	fog := tables["forest"].Conditions[0]
+	assert.Equal(t, 2, fog.CloudCover)
+	assert.Equal(t, -1, fog.VisibilityMod)
+}
+
+func TestParseMoonCycleDays(t *testing.T) {
+	assert.Equal(t, 28, parseMoonCycleDays(28))
+	assert.Equal(t, sky.DefaultCycleDays, parseMoonCycleDays(nil), "missing config uses the default")
+	assert.Equal(t, sky.DefaultCycleDays, parseMoonCycleDays(-4), "a non-positive cycle uses the default")
+}
+
+func TestUserCommandIndoorWithoutGlimpseHidesWeather(t *testing.T) {
+	module := newTestModule(&fakeStore{}, func() uint64 { return 0 }, zeroRNG)
+	module.zones["dunmar"] = weather.ZoneWeather{Zone: "dunmar", Current: "storm", NextChangeRound: 40}
+	module.skyView = func(*rooms.Room) weather.SkyView { return weather.SkyView{Indoor: true} }
+	user := weatherUser(t, 7)
+	messages := captureMessages(t)
+
+	module.userCommand("", user, weatherRoom("dunmar"), 0)
+	events.ProcessEvents()
+	out := joinMessages(*messages)
+	assert.Contains(t, out, "can't see the sky")
+	assert.NotContains(t, out, "storm rolls in")
+}
+
+func TestUserCommandReportsTimeMoonAndGlimpse(t *testing.T) {
+	module := newTestModule(&fakeStore{}, func() uint64 { return 0 }, zeroRNG)
+	module.zones["dunmar"] = weather.ZoneWeather{Zone: "dunmar", Current: "clear", NextChangeRound: 40}
+	module.skyView = func(*rooms.Room) weather.SkyView {
+		return weather.SkyView{Indoor: true, GlimpseExit: "north", WeatherZone: "dunmar", Night: true, HasMoon: true, Moon: sky.Full}
+	}
+	user := weatherUser(t, 7)
+	messages := captureMessages(t)
+
+	module.userCommand("", user, weatherRoom("inn"), 0)
+	events.ProcessEvents()
+	out := joinMessages(*messages)
+	assert.Contains(t, out, "It is 9:00PM")
+	assert.Contains(t, out, "Through the north exit: Clear skies.")
 }

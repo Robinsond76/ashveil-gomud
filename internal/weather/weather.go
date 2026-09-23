@@ -4,13 +4,20 @@
 // world round clock, never a per-player or wall-clock timer.
 package weather
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/GoMudEngine/GoMud/internal/sky"
+)
 
 // PctMin and PctMax bound a Condition's multiplier fields. 100 means
 // unchanged; the range is intentionally generous but still sane.
 const (
 	PctMin = 25
 	PctMax = 300
+
+	// VisibilityModMin is the strongest fog penalty a condition may carry.
+	VisibilityModMin = -2
 )
 
 var (
@@ -26,6 +33,11 @@ type Condition struct {
 	TravelDurationPct int
 	ExertionPct       int
 	RestRecoveryPct   int
+	// CloudCover is 0 (clear) to sky.MaxCloudCover (overcast); overcast
+	// hides the moon.
+	CloudCover int
+	// VisibilityMod is 0 or a fog penalty down to VisibilityModMin.
+	VisibilityMod int
 }
 
 // Validate rejects a malformed condition rather than letting it be guessed
@@ -35,6 +47,12 @@ func (c Condition) Validate() error {
 		return ErrInvalidCondition
 	}
 	if !pctValid(c.TravelDurationPct) || !pctValid(c.ExertionPct) || !pctValid(c.RestRecoveryPct) {
+		return ErrInvalidCondition
+	}
+	if c.CloudCover < 0 || c.CloudCover > sky.MaxCloudCover {
+		return ErrInvalidCondition
+	}
+	if c.VisibilityMod < VisibilityModMin || c.VisibilityMod > 0 {
 		return ErrInvalidCondition
 	}
 	return nil

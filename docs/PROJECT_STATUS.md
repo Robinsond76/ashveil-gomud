@@ -5,16 +5,16 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-22
-- **Branch:** `phase-12c-combat-encounters`
-- **HEAD:** Travel can now spawn a fight. A new `Combat` interruption kind
-  spawns its route's configured mob into the party's origin room and
-  commands it to attack the leader the instant it fires; `travel resume`/
-  `travel return` both refuse while that mob is still alive and present.
-  Per this session's explicit direction, this is the *only* Phase 12
-  encounter subsystem being built right now — merchants, injured NPCs,
-  route choices, camp opportunities, ruined sites, resources, and social
-  encounters stay named future ideas, not planned work.
+- **Last updated:** 2026-09-23
+- **Branch:** `claude/gracious-ride-swn7b7`
+- **HEAD:** Phase 13 (sky and environment). A new roadmap
+  (`docs/superpowers/specs/2026-09-23-environment-skills-economy-roadmap.md`)
+  records the user's next feature set as Phases 13–21: sky, visibility and
+  light, temperature and clothing, walking fatigue and inns, archetypes and
+  utility skills, loot tables, commodities and markets, trade rumours, and
+  alignment, plus the user's four design decisions. Phase 13 adds moon
+  phases, cloud cover, fog, indoor rooms, and the indoor glimpse through an
+  outdoor exit. It is display-only.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is pushed through Phase 12b's weighted
   encounter tables (`e42efd88`); this branch's Phase 12c work is not yet
@@ -45,7 +45,8 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 11's formation combat wiring is entirely done; Phase 11d
+- **Next:** Phase 14 (visibility and light) per the 2026-09-23 roadmap.
+  Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
   encounter-kind abstraction, 12b's weighted tables, and 12c's combat
@@ -82,9 +83,41 @@ instead of duplicating them.
 | 12a | Encounter-kind abstraction | Complete: `InterruptionKind` widened to `fallen-tree`/`discovery`/`tracks`, data-driven text lookup |
 | 12b | Weighted encounter tables | Complete: `InterruptionProfile.Kinds` weighted-roll form, resolved once at fire time; no shipped route uses it yet |
 | 12c | Combat encounters | Complete: `Combat` interruption kind spawns its route's `CombatMobID` into the origin room and commands it to attack; resume/return gated on the mob still being alive and present |
+| 13 | Sky and environment | Complete: moon phases, cloud cover, fog, indoor biomes/tags, indoor glimpse, richer `weather`; display-only |
+| 14–21 | Visibility/light, temperature, walking fatigue/inns, archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 13: sky and environment (2026-09-23)
+
+- **What:** New pure package `internal/sky` derives an 8-phase moon from
+  the shared round counter (`AbsoluteDay` → `PhaseForDay`, cycle length
+  `MoonCycleDays` in weather config, default 8). It also computes
+  `Moonlight` (0–2, dimmed by broken cloud, hidden by overcast), which
+  Phase 14 will use. `weather.Condition` gains validated `CloudCover` (0–3)
+  and `VisibilityMod` (−2..0). The forest table gains `fog`/`thick-fog`,
+  and its existing conditions get cloud cover values. `BiomeInfo.Indoor`
+  marks cave/dungeon/house as indoors, and an `indoor`/`outdoor` room tag
+  overrides it. `Room.SkyView()` gathers what a room can see: an indoor room
+  sees the weather only through its first non-secret exit (in sorted order)
+  to an outdoor room. `weather.RenderSky`/`SkyLines` render it purely.
+  `look` shows weather or a glimpse, plus the moon at night. `weather` now
+  reports time, cloud cover, weather, fog, and moon, or "You can't see the
+  sky from in here."
+- **Why:** The first slice of the user's environment request. It is
+  display-only by design; mechanical effects belong to Phase 14
+  (visibility) and Phase 15 (temperature).
+- **Durable / clock-safe:** Nothing new is persisted. The moon is a pure
+  function of the round count, and cloud/fog are config on the
+  already-persisted condition name. Restart and copyover reproduce the same
+  sky, and nothing advances the world clock.
+- **Step completed:** Roadmap, Phase 13 design and plan, and all plan tasks.
+- **Verification:** `go test -race ./...` passes (1824 passing test results
+  across 81 packages, up from 1798 before Phase 13, a figure that may count
+  differently). `make generate` and `make validate` pass. The server boots
+  with the new biome and weather data without errors. Live telnet
+  acceptance was not run.
 
 ### Phase 12c: combat encounters during travel (2026-09-22)
 

@@ -19,11 +19,24 @@ func TestConditionValidate(t *testing.T) {
 		{Name: "storm", TravelDurationPct: PctMin - 1, ExertionPct: 100, RestRecoveryPct: 100},
 		{Name: "storm", TravelDurationPct: 100, ExertionPct: PctMax + 1, RestRecoveryPct: 100},
 		{Name: "storm", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 0},
+		{Name: "storm", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100, CloudCover: -1},
+		{Name: "storm", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100, CloudCover: 4},
+		{Name: "fog", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100, VisibilityMod: 1},
+		{Name: "fog", TravelDurationPct: 100, ExertionPct: 100, RestRecoveryPct: 100, VisibilityMod: -3},
 	}
 	for i, c := range cases {
 		if err := c.Validate(); !errors.Is(err, ErrInvalidCondition) {
 			t.Errorf("case %d: expected ErrInvalidCondition, got %v", i, err)
 		}
+	}
+}
+
+func TestConditionValidateAcceptsCloudAndFog(t *testing.T) {
+	c := clear()
+	c.CloudCover = 3
+	c.VisibilityMod = -2
+	if err := c.Validate(); err != nil {
+		t.Fatalf("expected overcast thick fog to be valid, got %v", err)
 	}
 }
 

@@ -563,9 +563,10 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 
 	user.SendText(buildRoomDescPanel(details))
 
-	// Purely additive: a tracked zone's current weather description, never
-	// replacing the room rendering above.
-	if line := weather.RenderLine(room.Zone); line != "" {
+	// Purely additive: the sky as seen from this room (weather, or a glimpse
+	// through an exit when indoors, plus the moon at night), never replacing
+	// the room rendering above.
+	for _, line := range weather.SkyLines(room.SkyView(), true) {
 		user.SendText(line)
 	}
 

@@ -8,6 +8,13 @@
 # follow-up once the engine itself is proven.
 #
 # forest is the only biome currently in use, at Dunmar 2001/2002.
+#
+# Phase 13: CloudCover is 0 (clear) to 3 (overcast; hides the moon).
+# VisibilityMod is 0 or a fog penalty down to -2. Both are display-only in
+# this phase; Phase 14 wires them into visibility.
+#
+# MoonCycleDays is the length of the lunar cycle in game days (8 phases).
+MoonCycleDays: 8
 Biomes:
   - Biome: forest
     ChangeIntervalRounds:
@@ -20,21 +27,41 @@ Biomes:
         TravelDurationPct: 100
         ExertionPct: 100
         RestRecoveryPct: 100
+        CloudCover: 0
       - Name: overcast
         Description: "Grey clouds hang low over the treetops."
         Weight: 4
         TravelDurationPct: 100
         ExertionPct: 105
         RestRecoveryPct: 100
+        CloudCover: 3
       - Name: rain
         Description: "A steady rain patters through the leaves."
         Weight: 3
         TravelDurationPct: 115
         ExertionPct: 115
         RestRecoveryPct: 90
+        CloudCover: 3
       - Name: storm
         Description: "Wind and rain lash the forest in a storm."
         Weight: 1
         TravelDurationPct: 140
         ExertionPct: 130
         RestRecoveryPct: 75
+        CloudCover: 3
+      - Name: fog
+        Description: "Fog drifts between the trees, softening every shape."
+        Weight: 2
+        TravelDurationPct: 110
+        ExertionPct: 100
+        RestRecoveryPct: 95
+        CloudCover: 2
+        VisibilityMod: -1
+      - Name: thick-fog
+        Description: "A thick fog has swallowed the forest; the nearest trunks are grey ghosts."
+        Weight: 1
+        TravelDurationPct: 125
+        ExertionPct: 105
+        RestRecoveryPct: 90
+        CloudCover: 3
+        VisibilityMod: -2
