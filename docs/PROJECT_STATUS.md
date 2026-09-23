@@ -48,8 +48,9 @@ instead of duplicating them.
   The design and plan are written
   (`docs/superpowers/specs/2026-09-23-phase-16-walking-fatigue-inns-design.md`,
   `docs/superpowers/plans/2026-09-23-phase-16-walking-fatigue-inns.md`).
-  Its seven open decisions are awaiting user confirmation, and no code has
-  landed yet. The design found that the Dunmar zone (default biome `city`)
+  The user confirmed all seven decisions on 2026-09-23. Decision 3 changed:
+  mount fatigue relief covers at most two riders and applies to walking
+  only. No code has landed; implementation waits for the user's go-ahead. The design found that the Dunmar zone (default biome `city`)
   has no weather, so today the proving route can't show any weather effect
   (decision 6).
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d

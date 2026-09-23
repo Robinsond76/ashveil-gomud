@@ -6,9 +6,10 @@ Part of the roadmap in
 Phase 15 moved the deferred switch-on of Phase 8's weather multipliers here
 because it is the same wiring job as walking fatigue.
 
-**Status:** design written 2026-09-23. The open decisions below have
-recommendations and are **awaiting the user's confirmation**. Record here
-which way each one went before any code lands.
+**Status:** design written 2026-09-23. The user confirmed the decisions the
+same day: 1, 2, 4, 5, 6, and 7 as recommended, and 3 changed so mount relief
+covers at most two characters (see "Decisions"). Economy tuning (inn price)
+will be revisited later. Implementation has not started.
 
 ## Prior-art check
 
@@ -120,8 +121,13 @@ rounds half up.
   - Frostbitten 150
   - Hypothermic / Freezing 200
 - **Mount:** a new `MountSpec.FatiguePct` field, where 0 means 100. The
-  pack-horse is 75. It applies to the whole company, since the horse carries
-  the packs. (Decision 3.)
+  pack-horse is 75. It applies to **at most `Riders` company members** (a
+  new `MountSpec.Riders` field; 0 means 2, and the pack-horse is 2).
+  - Riders are chosen deterministically, from the durable roster with no
+    new state: the leader first, then companions by ascending companion ID.
+  - Only members who are present count, so a companion that isn't spawned
+    never uses up a seat.
+  - Everyone else walks at 100. (Decision 3.)
 - **Well Rested:** 50.
 - **Accrual.** Each member has a durable **carry** in centi-fatigue. A step
   adds `stepCost` to the carry. Every whole 100 is drained through
@@ -136,7 +142,8 @@ Worked examples (fatigue points lost per 10 steps):
 | Forest, clear, unladen | 50 | 5 |
 | Forest in rain (Exertion 115), 90 % loaded (Fatigue 115) | 66 | ~7 |
 | Snowfield, Frostbitten, fully loaded (130) | 176 | ~18 |
-| Same, with pack-horse and Well Rested | 66 | ~7 |
+| Same, riding the pack-horse, Well Rested | 66 | ~7 |
+| Same, Well Rested, a third member walking beside the horse | 88 | ~9 |
 
 Starting from full (100), an unladen company reaches Exhausted (25) after
 about 150 forest steps, and after about 43 in the snow example. Roads and
@@ -213,7 +220,14 @@ refusal could strand a Collapsed company in the wilderness.
   - `DurationPct` = weather.TravelDurationPct × load.TravelDurationPct ×
     mount.TravelDurationPct, clamped to [25, 400]
   - `ExertionPct` = weather.ExertionPct
-  - `FatiguePct` = load.FatiguePct × mount.FatiguePct, clamped
+  - `FatiguePct` = load.FatiguePct, clamped
+
+  The mount's **fatigue** relief does not apply to route travel this phase.
+  Travel charges one cost to the whole company through
+  `ApplyCompanyExertion`, so relief for only two riders would need a
+  per-member charge through the ledger. That change touches the Phase 5
+  durability code, so it is deferred. On a route, the mount still speeds up
+  the journey (`TravelDurationPct`), which shortens it for everyone.
 
   Weather is read from the origin room's zone.
   A new pure `TravelSession.EffectiveProfile(profile)` scales `Duration` and
@@ -236,8 +250,9 @@ These are all read-only, and each returns a neutral value when no provider
 is registered:
 
 - `encumbrance.CurrentBand(leader) (LoadBand, bool)`
-- `mount.FatiguePct(leader)` and `mount.TravelDurationPct(leader)`, 100
-  without a mount
+- `mount.Relief(leader) (fatiguePct, riders int)` and
+  `mount.TravelDurationPct(leader)`. Without a mount these return (100, 0)
+  and 100.
 - `climate.ExposureOf(leader, key) (int, bool)`, implemented by
   `modules/exposure`
 - `walking.Stepped(userID, fromRoomID, toRoomID)`, the provider called from
@@ -308,7 +323,7 @@ is registered:
 - Data: Dunmar room 2003 and its exit, the `inn` tag on room 61, pack-horse
   `FatiguePct`, and config comments that no longer say "informational".
 
-## Open decisions (recommendations; awaiting user confirmation)
+## Decisions (confirmed by the user, 2026-09-23)
 
 1. **Settlements cost nothing.** Walking is free in city/slums/house/fort,
    lit biomes, and `indoor` rooms, and cheap on roads. *Recommended*, per
@@ -319,15 +334,19 @@ is registered:
      *Recommended.*
    - Alternative: no penalties this phase. That makes walking fatigue purely
      cosmetic until a later phase.
-3. **The mount's fatigue relief** applies to the whole company
-   (`FatiguePct` 75 on the pack-horse). *Recommended.* Alternative: the
-   leader only.
+3. **The mount's fatigue relief** covers **at most two characters**. The
+   user changed this from the recommendation (the whole company).
+   - It is `MountSpec.Riders` (default 2): the leader first, then
+     companions by ascending ID, counting only present members.
+   - It applies to walking only. Route-travel relief for riders is deferred
+     (see §4).
 4. **Well Rested** is a new module buff (1030) that halves walking strain
    for about 30 minutes, for the leader and spawned companions.
    *Recommended* over reusing upstream buff 16, which is 5 minutes and tied
    to the rental script.
 5. **Inn price and power:** 5 gold per member, 60 s, +60 fatigue, and
-   stays can be repeated. *Recommended.* All of it is config.
+   stays can be repeated. *Recommended.* All of it is config. The user will
+   revisit economy tuning later.
 6. **The proving zone has no weather** (Dunmar's default biome is `city`).
    - Recommended: move Fork at the Black Oak (2002) into a new zone, *Old
      King's Road* (`defaultbiome: forest`), so the proving route and camp
@@ -349,6 +368,9 @@ is registered:
 - **Deferred:**
   - fatigue affecting travel speed (handoff "slower travel")
   - mount fatigue, health, and feed
+  - mount fatigue relief on route travel (needs a per-member charge through
+    the ledger)
+  - choosing which members ride (e.g. a `mount ride <member>` command)
   - injury modifiers
   - passive fatigue recovery in settlements
   - inn food and drink bundles
@@ -372,7 +394,7 @@ is registered:
   - `InnStay` transitions
 - **Module tests:**
   - walking: step drains per member with the carry persisted and reloaded;
-    Well Rested halves it; cold band raises it; roster pruning; band buffs
+    Well Rested halves it; cold band raises it; mount relief reaches only the first two present riders (the leader, then the lowest companion IDs), with a third member paying full cost; roster pruning; band buffs
     applied and swapped; `strain` output
   - expedition: multipliers locked at start and survive reload; a legacy
     session reloads unchanged; Collapsed refusal

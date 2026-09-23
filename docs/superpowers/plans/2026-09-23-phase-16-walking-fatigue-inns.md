@@ -1,8 +1,10 @@
 # Phase 16: Walking Fatigue, Inns, and Travel/Rest Multipliers — implementation plan
 
 See `docs/superpowers/specs/2026-09-23-phase-16-walking-fatigue-inns-design.md`.
-The open decisions (1–7) are **awaiting user confirmation**. Before Task 1,
-record the outcome in the design doc's "Open decisions" section.
+The user confirmed the decisions on 2026-09-23 and they are recorded in the
+design doc. Decision 3 changed: mount fatigue relief covers at most two
+riders and applies to walking only. Implementation has not started; wait for
+the user's go-ahead.
 
 Implement directly, without delegating to Haiku. Almost every task touches
 timers, persisted-state recovery, or lock ordering (the `CLAUDE.md`
@@ -21,7 +23,7 @@ Invariants for every task:
 ## Tasks
 
 - [ ] **0. Baseline.**
-  - Confirm the decisions and record them in the design doc.
+  - The decisions are confirmed and recorded (done while planning).
   - `go test -race ./...` is green on the branch head.
   - Check whether Dunmar is weather-tracked (decision 6 assumes it isn't).
 - [ ] **1. `internal/walking` (pure).** Files: `internal/walking/walking.go`,
@@ -46,13 +48,13 @@ Invariants for every task:
   - Tests first:
     - `encumbrance.CurrentBand` resolves the configured band for a real
       load, and is neutral without a provider
-    - `MountSpec.FatiguePct` validation (0 means 100, range 25–300) and
-      config parsing
-    - `mount.FatiguePct` / `TravelDurationPct` are 100 without a mount and
-      the spec's value with one
+    - `MountSpec.FatiguePct` validation (0 means 100, range 25–300),
+      `MountSpec.Riders` (0 means 2, negative rejected), and config parsing
+    - `mount.Relief` returns (100, 0) without a mount and (spec pct, riders)
+      with one; `mount.TravelDurationPct` is 100 without a mount
     - `climate.ExposureOf` reads the exposure registry under its lock, and
       is absent without a provider
-  - Data: pack-horse `FatiguePct: 75`; config comments no longer say
+  - Data: pack-horse `FatiguePct: 75`, `Riders: 2`; config comments no longer say
     "informational".
 - [ ] **3. Travel multipliers (`internal/expedition` + `modules/expedition`).**
   - Tests first, domain:
@@ -62,7 +64,7 @@ Invariants for every task:
     - `TestInterruptionCheckpointScales`
   - Tests first, module:
     - multipliers locked at `StartTravel` from a fake weather, load, and
-      mount
+      mount; the mount changes duration only, never `FatiguePct`
     - they persist and reload; a weather change mid-journey doesn't change
       the session
     - **a legacy session YAML without the fields reloads and completes on
@@ -108,6 +110,9 @@ Invariants for every task:
       keeps the carries
     - the carry is persisted by the save callback and reloaded
     - Well Rested (the `well-rested` flag) halves it
+    - mount relief goes to the leader and the lowest companion ID only; a
+      third member pays full cost; an unspawned companion doesn't take a
+      seat
     - a cold exposure band raises it
     - a settlement step costs nothing and touches no survival state
     - pruning drops members who have left the roster
