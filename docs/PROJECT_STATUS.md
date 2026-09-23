@@ -45,7 +45,13 @@ instead of duplicating them.
   member's target via 11b's `engagement.AssignTarget` when it's lost).
 - **Next:** Phase 16 (walking fatigue and inns, plus switching on Phase 8's
   deferred travel/rest weather multipliers) per the 2026-09-23 roadmap.
-  Stopped here at the user's request after Phase 15.
+  The design and plan are written
+  (`docs/superpowers/specs/2026-09-23-phase-16-walking-fatigue-inns-design.md`,
+  `docs/superpowers/plans/2026-09-23-phase-16-walking-fatigue-inns.md`).
+  Its seven open decisions are awaiting user confirmation, and no code has
+  landed yet. The design found that the Dunmar zone (default biome `city`)
+  has no weather, so today the proving route can't show any weather effect
+  (decision 6).
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
