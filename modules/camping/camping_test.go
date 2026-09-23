@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/weather"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -98,24 +99,34 @@ type fakeSurvival struct {
 	applyErr     error
 	applyCalls   int
 	appliedFor   []int
+	amounts      []int
+	seen         map[string]bool
 	needs        []survival.MemberNeeds
 }
 
 func (f *fakeSurvival) Available() error { return f.availableErr }
 
-func (f *fakeSurvival) ApplyCompanyRestRecovery(leaderUserID int, _ string, _ int) ([]survival.ExertionResult, error) {
+func (f *fakeSurvival) ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]survival.ExertionResult, error) {
 	f.applyCalls++
 	if f.applyErr != nil {
 		return nil, f.applyErr
 	}
+	if f.seen == nil {
+		f.seen = map[string]bool{}
+	}
+	if f.seen[operationID] {
+		return nil, nil // ledgered: a replay changes nothing
+	}
+	f.seen[operationID] = true
 	f.appliedFor = append(f.appliedFor, leaderUserID)
+	f.amounts = append(f.amounts, fatigue)
 	return nil, nil
 }
 
 func (f *fakeSurvival) CompanyNeeds(_ int) []survival.MemberNeeds { return f.needs }
 
 func newTestModule(store Store, scheduler Scheduler, surv Survival, clock func() time.Time) *CampingModule {
-	return &CampingModule{
+	m := &CampingModule{
 		store:           store,
 		scheduler:       scheduler,
 		survival:        surv,
@@ -124,7 +135,11 @@ func newTestModule(store Store, scheduler Scheduler, surv Survival, clock func()
 		recoveryApplied: map[int]bool{},
 		timers:          map[int]Timer{},
 		timerGeneration: map[int]uint64{},
+		weatherIn:       func(string) (weather.Condition, bool) { return weather.Condition{}, false },
+		travelling:      func(int) bool { return false },
 	}
+	m.resetInnState()
+	return m
 }
 
 func eligibleRoom() *rooms.Room {
