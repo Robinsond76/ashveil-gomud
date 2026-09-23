@@ -47,6 +47,10 @@ func TestInterruptionKindValidAcceptsAllThreeKinds(t *testing.T) {
 	}
 }
 
+func TestInterruptionKindValidAcceptsCombat(t *testing.T) {
+	assert.True(t, Combat.Valid())
+}
+
 func TestInterruptionKindValidRejectsUnknown(t *testing.T) {
 	assert.False(t, InterruptionKind("rock_slide").Valid())
 	assert.False(t, InterruptionKind("").Valid())
@@ -68,6 +72,47 @@ func TestInterruptionTextReturnsDistinctNonEmptyTextPerKind(t *testing.T) {
 func TestInterruptionTextFallsBackForUnknownKind(t *testing.T) {
 	text := InterruptionText(InterruptionKind("rock_slide"), "oak-road")
 	assert.NotEmpty(t, text)
+}
+
+func TestInterruptionTextCombatIsDistinctFromOtherKinds(t *testing.T) {
+	combatText := InterruptionText(Combat, "oak-road")
+	require.NotEmpty(t, combatText)
+	assert.Contains(t, combatText, "oak-road")
+	for _, kind := range []InterruptionKind{FallenTree, Discovery, Tracks} {
+		assert.NotEqual(t, combatText, InterruptionText(kind, "oak-road"))
+	}
+}
+
+func TestInterruptionProfileValidateRejectsCombatKindWithoutMobID(t *testing.T) {
+	profile := InterruptionProfile{Kind: Combat, Checkpoint: 5}
+	assert.ErrorIs(t, profile.Validate(), ErrInvalidInterruption)
+}
+
+func TestInterruptionProfileValidateRejectsCombatInKindsTableWithoutMobID(t *testing.T) {
+	profile := InterruptionProfile{
+		Kinds:      []WeightedInterruptionKind{{Kind: Combat, Weight: 1}, {Kind: FallenTree, Weight: 1}},
+		Checkpoint: 5,
+	}
+	assert.ErrorIs(t, profile.Validate(), ErrInvalidInterruption)
+}
+
+func TestInterruptionProfileValidateAcceptsCombatKindWithMobID(t *testing.T) {
+	profile := InterruptionProfile{Kind: Combat, CombatMobID: 42, Checkpoint: 5}
+	assert.NoError(t, profile.Validate())
+}
+
+func TestInterruptionProfileValidateAcceptsCombatInKindsTableWithMobID(t *testing.T) {
+	profile := InterruptionProfile{
+		Kinds:       []WeightedInterruptionKind{{Kind: Combat, Weight: 1}, {Kind: FallenTree, Weight: 1}},
+		CombatMobID: 42,
+		Checkpoint:  5,
+	}
+	assert.NoError(t, profile.Validate())
+}
+
+func TestInterruptionProfileValidateAllowsZeroMobIDForNonCombatKind(t *testing.T) {
+	profile := InterruptionProfile{Kind: FallenTree, Checkpoint: 5}
+	assert.NoError(t, profile.Validate())
 }
 
 func TestInterruptionProfileValidateAcceptsWeightedKindsTable(t *testing.T) {

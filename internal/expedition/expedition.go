@@ -42,12 +42,15 @@ const (
 	FallenTree InterruptionKind = "fallen-tree"
 	Discovery  InterruptionKind = "discovery"
 	Tracks     InterruptionKind = "tracks"
+	// Combat spawns a hostile mob (InterruptionProfile.CombatMobID) into the
+	// travel session's origin room when it fires; see modules/expedition.
+	Combat InterruptionKind = "combat"
 )
 
 // Valid reports whether the kind is a known interruption.
 func (k InterruptionKind) Valid() bool {
 	switch k {
-	case FallenTree, Discovery, Tracks:
+	case FallenTree, Discovery, Tracks, Combat:
 		return true
 	default:
 		return false
@@ -66,6 +69,8 @@ func InterruptionText(kind InterruptionKind, profileName string) string {
 		return fmt.Sprintf("Something catches your eye off the %s route. Your company pauses to take a closer look.\nUse \"travel resume\" when you are ready to continue, or \"travel return\" to head back.", profileName)
 	case Tracks:
 		return fmt.Sprintf("Fresh tracks cross the %s route ahead. Your company pauses to consider them.\nUse \"travel resume\" when you are ready to continue, or \"travel return\" to head back.", profileName)
+	case Combat:
+		return fmt.Sprintf("Your company is ambushed on the %s route!\nUse \"travel resume\" once the fight is over, or \"travel return\" to head back.", profileName)
 	default:
 		return fmt.Sprintf("Something gives your company pause on the %s route.\nUse \"travel resume\" when you are ready to continue, or \"travel return\" to head back.", profileName)
 	}
@@ -83,15 +88,19 @@ type WeightedInterruptionKind struct {
 // (today's form) or a weighted Kinds table (12b) rolled once at fire time.
 // Exactly one of Kind or Kinds must be set. Checkpoint is 1..CheckpointCount-1:
 // the route end is not a legal interruption point, because a route that is
-// already over cannot be interrupted.
+// already over cannot be interrupted. CombatMobID is the mob template a
+// Combat kind spawns; required whenever Combat is reachable for this
+// profile (as Kind or inside Kinds), unused otherwise.
 type InterruptionProfile struct {
-	Kind       InterruptionKind           `yaml:"kind,omitempty"`
-	Kinds      []WeightedInterruptionKind `yaml:"kinds,omitempty"`
-	Checkpoint uint8                      `yaml:"checkpoint"`
+	Kind        InterruptionKind           `yaml:"kind,omitempty"`
+	Kinds       []WeightedInterruptionKind `yaml:"kinds,omitempty"`
+	Checkpoint  uint8                      `yaml:"checkpoint"`
+	CombatMobID int                        `yaml:"combat_mob_id,omitempty"`
 }
 
 // Validate rejects an unusable interruption configuration.
 func (i InterruptionProfile) Validate() error {
+	reachesCombat := i.Kind == Combat
 	switch {
 	case i.Kind != "" && len(i.Kinds) > 0:
 		return ErrInvalidInterruption
@@ -100,11 +109,17 @@ func (i InterruptionProfile) Validate() error {
 			if !wk.Kind.Valid() || wk.Weight == 0 {
 				return ErrInvalidInterruption
 			}
+			if wk.Kind == Combat {
+				reachesCombat = true
+			}
 		}
 	default:
 		if !i.Kind.Valid() {
 			return ErrInvalidInterruption
 		}
+	}
+	if reachesCombat && i.CombatMobID <= 0 {
+		return ErrInvalidInterruption
 	}
 	if i.Checkpoint == 0 || i.Checkpoint >= CheckpointCount {
 		return ErrInvalidInterruption
@@ -143,9 +158,13 @@ func (i InterruptionProfile) ResolveKind(roll uint64) (InterruptionKind, error) 
 
 // TravelInterruption is the immutable payload a session records when it
 // interrupts, so a restart or copyover can render the same choice.
+// CombatMobInstanceId is engine-set (never by Interrupt, which knows
+// nothing about mob spawning) after a Combat kind successfully spawns its
+// encounter mob; it stays 0 for every other kind and for a failed spawn.
 type TravelInterruption struct {
-	Kind       InterruptionKind `yaml:"kind"`
-	Checkpoint uint8            `yaml:"checkpoint"`
+	Kind                InterruptionKind `yaml:"kind"`
+	Checkpoint          uint8            `yaml:"checkpoint"`
+	CombatMobInstanceId int              `yaml:"combat_mob_instance_id,omitempty"`
 }
 
 // Validate rejects a payload that could not have come from Interrupt. Unlike
