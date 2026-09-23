@@ -40,8 +40,13 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 17 (archetypes) per the 2026-09-23 roadmap. Phase 17
-  has no design yet.
+- **Next:** Phase 17 (archetypes and utility skills). The design and plan
+  are written
+  ([spec](superpowers/specs/2026-09-23-phase-17-archetypes-utility-skills-design.md),
+  [plan](superpowers/plans/2026-09-23-phase-17-archetypes-utility-skills.md)).
+  It ships in two slices: 17a (archetypes and gating) and 17b (utility
+  skills). Implementation waits for the user to confirm the spec's open
+  decisions 1–8.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
@@ -83,10 +88,26 @@ instead of duplicating them.
 | 14 | Visibility and light | Complete: ambient vs per-viewer light, personal/fixture/party light, darkness hit penalty, `light` command, `floatinglight` spell |
 | 15 | Temperature, clothing, exposure | Complete: `internal/climate`, `modules/exposure`, item `warmth`, weather `TemperatureMod`, survival member drain + mutex, `temperature` command |
 | 16 | Walking fatigue, inns, travel/rest multipliers | Complete: `internal/walking`, `modules/walking`, inn stays in `modules/camping`, multipliers locked at departure/rest start, Waymark Inn, Old Kings Road zone |
-| 17–21 | Archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
+| 17 | Archetypes (17a) and utility skills (17b) | Designed and planned; awaiting decision confirmation. Cooking deferred to after Phase 18 |
+| 18–21 | Loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 17 design and plan (2026-09-23)
+
+- **What:** Wrote the Phase 17 design doc and task plan. No code changed.
+  - **17a:** five data-driven, exclusive archetypes, chosen once by players
+    and set for companions from config. Gating applies to skill training
+    and spell learning. Existing skills and spells are grandfathered.
+  - **17b:** utility levels with company best-member resolution,
+    `autoskill`, wizard auto floating light, and a rogue `trap sense` /
+    `trap disarm` command wired into `picklock`, with one trapped-chest
+    proving room.
+- **Why:** This is the next roadmap phase, and it implements user
+  decision 3.
+- **Pending:** the user needs to confirm the spec's open decisions 1–8.
+  Cooking is recommended to wait for Phase 18's ingredients.
 
 ### Phase 16: walking fatigue, inns, and travel/rest multipliers (2026-09-23)
 
