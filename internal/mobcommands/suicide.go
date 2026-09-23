@@ -3,11 +3,13 @@ package mobcommands
 import (
 	"fmt"
 	"math"
+	"math/rand"
 
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -376,6 +378,26 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					ItemId: item.ItemId,
 				})
 				room.AddItem(item, false)
+			}
+		}
+
+		if mob.LootCategory != "" {
+			if table, found := loot.GetTable(mob.LootCategory); found {
+				roll := rand.Uint64()
+				if entry, ok := table.Resolve(roll); ok && items.GetItemSpec(entry.ItemID) != nil {
+					count := entry.RollCount(rand.Uint64())
+					mudlog.Debug("Category Loot Roll", "category", mob.LootCategory, "roll", roll, "itemID", entry.ItemID, "count", count)
+					for i := 0; i < count; i++ {
+						item := items.New(entry.ItemID)
+						if config.Death.CorpseItems && config.Death.CorpsesEnabled {
+							corpseItems = append(corpseItems, item)
+						} else {
+							room.SendText(fmt.Sprintf(`<ansi fg="item">%s</ansi> drops to the ground.`, item.DisplayName()))
+							events.AddToQueue(events.MobItemDrop{MobId: int(mob.MobId), RoomId: room.RoomId, Zone: mob.Character.Zone, ItemId: item.ItemId})
+							room.AddItem(item, false)
+						}
+					}
+				}
 			}
 		}
 

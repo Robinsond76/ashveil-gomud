@@ -1,6 +1,7 @@
 mobid:  56
 zone: Dark Forest
 itemdropchance: 1
+lootcategory: beast
 hostile: false
 maxwander: 5
 activitylevel: 10

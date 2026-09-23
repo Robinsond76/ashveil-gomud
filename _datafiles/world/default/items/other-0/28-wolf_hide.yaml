@@ -1,0 +1,8 @@
+itemid: 28
+name: wolf hide
+namesimple: hide
+description: A rough hide from a timber wolf, useful to a leatherworker.
+type: commodity
+subtype: mundane
+value: 12
+weight: 700

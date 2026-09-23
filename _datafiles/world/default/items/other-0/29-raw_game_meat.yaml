@@ -1,0 +1,8 @@
+itemid: 29
+name: raw game meat
+namesimple: meat
+description: Fresh game meat that needs a hearth before it can be eaten.
+type: commodity
+subtype: mundane
+value: 4
+weight: 300

@@ -31,6 +31,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/language"
+	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/migration"
 	"github.com/GoMudEngine/GoMud/internal/modmanager"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
@@ -1730,6 +1731,7 @@ func loadAllDataFiles(isReload bool) {
 	buffs.LoadFlagDataFiles() // Load buff flags before buffs so buff validation can check flags
 	buffs.LoadDataFiles()     // Load buffs before items for cost calculation reasons
 	items.LoadDataFiles()
+	loot.LoadLootDataFiles() // category tables reference item specs
 	races.LoadDataFiles()
 	skills.LoadDataFiles()           // skills before professions for cross-ref warnings
 	skills.LoadProfessionDataFiles() // professions reference skills

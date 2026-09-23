@@ -1,0 +1,10 @@
+category: beast
+entries:
+  - itemid: 28
+    weight: 3
+  - itemid: 29
+    weight: 4
+    mincount: 1
+    maxcount: 2
+  - itemid: 30018
+    weight: 1

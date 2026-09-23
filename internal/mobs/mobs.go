@@ -44,6 +44,7 @@ type Mob struct {
 	MobId           MobId
 	Zone            string   `yaml:"zone,omitempty"`
 	ItemDropChance  int      `yaml:"itemdropchance,omitempty"` // chance in 100
+	LootCategory    string   `yaml:"lootcategory,omitempty"`   // optional shared weighted loot table
 	ActivityLevel   int      `yaml:"activitylevel,omitempty"`  // 1-100%
 	InstanceId      int      `yaml:"-"`
 	HomeRoomId      int      `yaml:"-"`

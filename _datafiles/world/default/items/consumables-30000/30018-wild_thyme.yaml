@@ -1,0 +1,8 @@
+itemid: 30018
+name: wild thyme
+namesimple: thyme
+description: A fragrant herb gathered on the forest edge.
+type: botanical
+subtype: mundane
+value: 3
+weight: 20

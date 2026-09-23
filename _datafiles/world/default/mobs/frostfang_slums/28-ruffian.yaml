@@ -1,6 +1,7 @@
 mobid:  28
 zone: Frostfang Slums
 itemdropchance: 2
+lootcategory: humanoid
 hostile: true
 maxwander: 3
 groups: 
