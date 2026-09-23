@@ -7,15 +7,14 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-23
 - **Branch:** `claude/next-phase-spec-plan-19rraa`
-- **HEAD:** Phase 17 (archetypes and utility skills) is complete and
-  reviewed on the branch. It is not yet merged to `master`.
+- **HEAD:** Phase 17 (archetypes and utility skills) is complete,
+  reviewed, and merged to `master`.
   - Players choose one of five exclusive archetypes, and skill training
     and spell learning respect it.
   - Rogues sense and disarm traps.
   - Wizards conjure a floating light automatically in the dark.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through Phase 16. The branch
-  `claude/next-phase-spec-plan-19rraa` carries Phase 17 and is pushed.
+- **Origin sync:** `master` is pushed through Phase 17.
 
 ## Current position
 
@@ -42,7 +41,7 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** merge Phase 17 to `master`, then Phase 18 (loot tables). Phase
+- **Next:** Phase 18 (loot tables). Phase
   18b adds cooking, the first trade skill; it was deferred from Phase 17
   because it needs loot ingredients.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
@@ -86,7 +85,7 @@ instead of duplicating them.
 | 14 | Visibility and light | Complete: ambient vs per-viewer light, personal/fixture/party light, darkness hit penalty, `light` command, `floatinglight` spell |
 | 15 | Temperature, clothing, exposure | Complete: `internal/climate`, `modules/exposure`, item `warmth`, weather `TemperatureMod`, survival member drain + mutex, `temperature` command |
 | 16 | Walking fatigue, inns, travel/rest multipliers | Complete: `internal/walking`, `modules/walking`, inn stays in `modules/camping`, multipliers locked at departure/rest start, Waymark Inn, Old Kings Road zone |
-| 17 | Archetypes (17a) and utility skills (17b) | Complete and reviewed, not yet merged: `internal/archetypes`, `modules/archetype`, training and spell gating, companion archetypes, `autoskill`, `trap`, auto-light. Cooking deferred to Phase 18b |
+| 17 | Archetypes (17a) and utility skills (17b) | Complete: `internal/archetypes`, `modules/archetype`, training and spell gating, companion archetypes, `autoskill`, `trap`, auto-light. Cooking deferred to Phase 18b |
 | 18–21 | Loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
