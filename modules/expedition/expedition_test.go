@@ -166,6 +166,40 @@ func weightedInterruptionProfiles() map[string]expedition.TravelProfile {
 	return profiles
 }
 
+func combatInterruptionProfiles() map[string]expedition.TravelProfile {
+	profiles := testProfiles()
+	p := profiles["oak-road"]
+	p.Interruption = &expedition.InterruptionProfile{Kind: expedition.Combat, CombatMobID: 99, Checkpoint: 5}
+	profiles["oak-road"] = p
+	return profiles
+}
+
+type fakeSpawnCall struct {
+	roomID, mobTemplateID, leaderUserID int
+}
+
+type fakeMobSpawner struct {
+	spawnCalls  []fakeSpawnCall
+	spawnErr    error
+	nextID      int
+	activeIDs   map[int]bool
+	activeCalls []int
+}
+
+func (f *fakeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUserID int) (int, error) {
+	f.spawnCalls = append(f.spawnCalls, fakeSpawnCall{roomID, mobTemplateID, leaderUserID})
+	if f.spawnErr != nil {
+		return 0, f.spawnErr
+	}
+	f.nextID++
+	return f.nextID, nil
+}
+
+func (f *fakeMobSpawner) EncounterActive(instanceID, roomID int) bool {
+	f.activeCalls = append(f.activeCalls, instanceID)
+	return f.activeIDs[instanceID]
+}
+
 func newTestModule(store Store, scheduler Scheduler, mover Mover, surv Survival, clock func() time.Time, profiles map[string]expedition.TravelProfile) *ExpeditionModule {
 	return &ExpeditionModule{
 		store:     store,
@@ -707,6 +741,120 @@ func TestInterruptionResolvesWeightedKindsTableBeforeFiring(t *testing.T) {
 	require.True(t, ok)
 	require.NotNil(t, session.Interruption)
 	assert.Equal(t, expedition.Discovery, session.Interruption.Kind)
+}
+
+func TestInterruptionCombatKindSpawnsHostileMobAndPersistsInstanceId(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	mover := &fakeMover{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, combatInterruptionProfiles())
+	spawner := &fakeMobSpawner{}
+	module.mobSpawner = spawner
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+
+	require.Len(t, spawner.spawnCalls, 1)
+	assert.Equal(t, fakeSpawnCall{roomID: 100, mobTemplateID: 99, leaderUserID: 7}, spawner.spawnCalls[0])
+
+	session, ok := module.sessions[7]
+	require.True(t, ok)
+	require.NotNil(t, session.Interruption)
+	assert.Equal(t, expedition.Combat, session.Interruption.Kind)
+	assert.Equal(t, 1, session.Interruption.CombatMobInstanceId)
+}
+
+func TestInterruptionCombatSpawnFailureStillFiresPlainPause(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	mover := &fakeMover{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, combatInterruptionProfiles())
+	module.mobSpawner = &fakeMobSpawner{spawnErr: assert.AnError}
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+
+	session, ok := module.sessions[7]
+	require.True(t, ok)
+	assert.Equal(t, expedition.Interrupted, session.State)
+	require.NotNil(t, session.Interruption)
+	assert.Equal(t, 0, session.Interruption.CombatMobInstanceId)
+}
+
+func TestResumeRefusedWhileCombatEncounterStillActive(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	mover := &fakeMover{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, combatInterruptionProfiles())
+	spawner := &fakeMobSpawner{activeIDs: map[int]bool{1: true}}
+	module.mobSpawner = spawner
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+
+	msg := module.resume(7)
+	assert.Equal(t, "You can't do that while you're still fighting!", msg)
+	session, ok := module.sessions[7]
+	require.True(t, ok)
+	assert.Equal(t, expedition.Interrupted, session.State)
+}
+
+func TestResumeAllowedOnceCombatEncounterResolved(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	mover := &fakeMover{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, combatInterruptionProfiles())
+	spawner := &fakeMobSpawner{activeIDs: map[int]bool{}} // mob is dead/gone
+	module.mobSpawner = spawner
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+
+	msg := module.resume(7)
+	assert.Equal(t, "You resume travel along the oak-road route.", msg)
+	session, ok := module.sessions[7]
+	require.True(t, ok)
+	assert.Equal(t, expedition.Traveling, session.State)
+}
+
+func TestReturnRefusedWhileCombatEncounterStillActive(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	mover := &fakeMover{}
+	now := baseTime()
+	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, combatInterruptionProfiles())
+	spawner := &fakeMobSpawner{activeIDs: map[int]bool{1: true}}
+	module.mobSpawner = spawner
+
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+
+	msg := module.returnToOrigin(7)
+	assert.Equal(t, "You can't do that while you're still fighting!", msg)
+	session, ok := module.sessions[7]
+	require.True(t, ok)
+	assert.Equal(t, expedition.Interrupted, session.State)
 }
 
 func TestInterruptionSaveFailureRestoresTravelingCheckpoint(t *testing.T) {

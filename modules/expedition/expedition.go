@@ -133,6 +133,40 @@ func (nativeMover) MoveToRoom(userID, roomID int) error {
 	return rooms.MoveToRoom(userID, roomID)
 }
 
+// MobSpawner spawns and tracks a Combat interruption's encounter mob.
+type MobSpawner interface {
+	// SpawnHostileEncounter creates mobTemplateID in roomID, immediately
+	// commands it to attack leaderUserID, and returns its instance id.
+	SpawnHostileEncounter(roomID, mobTemplateID, leaderUserID int) (int, error)
+	// EncounterActive reports whether instanceID is still alive and still in
+	// roomID. False (including "no such instance," e.g. after a restart
+	// that didn't persist it) means the encounter is resolved.
+	EncounterActive(instanceID, roomID int) bool
+}
+
+type nativeMobSpawner struct{}
+
+func (nativeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUserID int) (int, error) {
+	room := rooms.LoadRoom(roomID)
+	if room == nil {
+		return 0, fmt.Errorf("expedition: room %d is unavailable", roomID)
+	}
+	mob := mobs.NewMobById(mobs.MobId(mobTemplateID), roomID)
+	if mob == nil {
+		return 0, fmt.Errorf("expedition: combat encounter mob template %d is unavailable", mobTemplateID)
+	}
+	mob.Hostile = true
+	mob.MaxWander = 0
+	room.AddMob(mob.InstanceId)
+	mob.Command(fmt.Sprintf("attack @%d", leaderUserID))
+	return mob.InstanceId, nil
+}
+
+func (nativeMobSpawner) EncounterActive(instanceID, roomID int) bool {
+	mob := mobs.GetInstance(instanceID)
+	return mob != nil && mob.Character.Health > 0 && mob.Character.RoomId == roomID
+}
+
 // Survival is the Phase 4 company service needed by travel.
 type Survival interface {
 	ApplyCompanyExertion(leaderUserID int, operationID string, cost survival.Exertion) ([]survival.ExertionResult, error)
@@ -166,6 +200,7 @@ type ExpeditionModule struct {
 	mover      Mover
 	survival   Survival
 	rollUint64 func() uint64
+	mobSpawner MobSpawner
 
 	profiles        map[string]expedition.TravelProfile
 	sessions        map[int]expedition.TravelSession
@@ -190,6 +225,7 @@ func init() {
 		mover:           nativeMover{},
 		survival:        nativeSurvival{},
 		rollUint64:      rand.Uint64,
+		mobSpawner:      nativeMobSpawner{},
 		profiles:        map[string]expedition.TravelProfile{},
 		sessions:        map[int]expedition.TravelSession{},
 		timers:          map[int]Timer{},
@@ -714,6 +750,14 @@ func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) err
 	if err != nil {
 		return err
 	}
+	if candidate.Interruption != nil && candidate.Interruption.Kind == expedition.Combat {
+		instanceID, spawnErr := m.mobSpawner.SpawnHostileEncounter(candidate.OriginRoomID, profile.Interruption.CombatMobID, candidate.LeaderUserID)
+		if spawnErr != nil {
+			mudlog.Warn("expedition: combat encounter spawn failed", "leader", candidate.LeaderUserID, "error", spawnErr)
+		} else {
+			candidate.Interruption.CombatMobInstanceId = instanceID
+		}
+	}
 	original := session
 	m.sessions[session.LeaderUserID] = candidate
 	if err := m.saveLocked(); err != nil {
@@ -730,6 +774,20 @@ func (m *ExpeditionModule) interruptionTextLocked(session expedition.TravelSessi
 		return ""
 	}
 	return expedition.InterruptionText(session.Interruption.Kind, session.ProfileName)
+}
+
+// combatEncounterActiveLocked reports whether an Interrupted session's
+// Combat encounter mob is still alive and present, blocking resume/return.
+// Every other interruption kind, or a Combat firing whose spawn failed
+// (CombatMobInstanceId stays 0), reports false.
+func (m *ExpeditionModule) combatEncounterActiveLocked(session expedition.TravelSession) bool {
+	if session.Interruption == nil || session.Interruption.Kind != expedition.Combat {
+		return false
+	}
+	if session.Interruption.CombatMobInstanceId == 0 {
+		return false
+	}
+	return m.mobSpawner.EncounterActive(session.Interruption.CombatMobInstanceId, session.OriginRoomID)
 }
 
 // completeLocked applies the final earned checkpoint, persists Completed, then
@@ -968,6 +1026,9 @@ func (m *ExpeditionModule) resume(leaderUserID int) string {
 		}
 		return "Unable to resume travel: travel is not currently interrupted."
 	}
+	if m.combatEncounterActiveLocked(session) {
+		return "You can't do that while you're still fighting!"
+	}
 	resumed, err := session.ResumeForProfile(m.clock().UTC(), profile)
 	if err != nil {
 		return "Unable to resume travel: the paused journey record is invalid."
@@ -1003,6 +1064,9 @@ func (m *ExpeditionModule) returnToOrigin(leaderUserID int) string {
 			return "Unable to return: the paused journey record is invalid."
 		}
 		return "Unable to return: travel is not currently interrupted."
+	}
+	if m.combatEncounterActiveLocked(session) {
+		return "You can't do that while you're still fighting!"
 	}
 	cancelled, err := session.ReturnForProfile(profile)
 	if err != nil {
