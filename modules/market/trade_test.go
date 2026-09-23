@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/market"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,7 +70,7 @@ func TestMarketBuyPaysAskTakesStockAndPersists(t *testing.T) {
 
 	out := w.run(t, "buy hide")
 
-	assert.Contains(t, out, "You buy a wolf hide at the market for 27 gold.")
+	assert.Contains(t, out, "You buy the wolf hide at the market for 27 gold.")
 	assert.Equal(t, 73, w.user.Character.Gold)
 	assert.Equal(t, 1, countItem(w.user.Character.Items, 28))
 	assert.Equal(t, 3, stockOf(t, w.store.saved, "Dunmar", 28), "one unit leaves the ledger")
@@ -83,7 +84,7 @@ func TestMarketSellPaysBidAddsStockAndPersists(t *testing.T) {
 
 	out := w.run(t, "sell wolf hide")
 
-	assert.Contains(t, out, "You sell a wolf hide at the market for 22 gold.")
+	assert.Contains(t, out, "You sell the wolf hide at the market for 22 gold.")
 	assert.Equal(t, 22, w.user.Character.Gold)
 	assert.Zero(t, countItem(w.user.Character.Items, 28))
 	assert.Equal(t, 5, stockOf(t, w.store.saved, "Dunmar", 28))
@@ -189,4 +190,101 @@ func TestMarketTradeSaveFailureKeepsTheTrade(t *testing.T) {
 	w.store.saveErr = nil
 	require.NoError(t, w.module.save())
 	assert.Equal(t, 3, stockOf(t, w.store.saved, "Dunmar", 28))
+}
+
+func TestMarketBuyAmbiguousNameAsksWhich(t *testing.T) {
+	w := newTradeWorld(t, 100)
+	w.module.markets["Dunmar"] = append(w.module.markets["Dunmar"], func() market.Good {
+		g := hide()
+		g.ItemID = 30
+		return g
+	}())
+	w.module.load()
+
+	out := w.run(t, "buy w") // prefix of both "wolf hide" and "wild thyme"
+
+	assert.Contains(t, out, "Which do you mean: wolf hide, wild thyme?")
+	w.assertUnchanged(t, 100, map[int]int{28: 0, 30: 0}, map[int]int{28: 4})
+	w.run(t, "buy wolf")
+	assert.Equal(t, 1, countItem(w.user.Character.Items, 28), "a unique prefix still buys")
+}
+
+func TestMarketBuyMissingItemSpecCostsNothing(t *testing.T) {
+	w := newTradeWorld(t, 100)
+	items.RemoveTestItemSpec(28) // e.g. an item-spec reload dropped it after boot
+
+	w.run(t, "buy hide")
+
+	w.assertUnchanged(t, 100, map[int]int{28: 0}, map[int]int{28: 4})
+}
+
+func TestMarketSellPrefersATradeableItem(t *testing.T) {
+	w := newTradeWorld(t, 0)
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: 31, Name: "hide armor", NameSimple: "armor", Type: items.Body})
+	t.Cleanup(func() { items.RemoveTestItemSpec(31) })
+	special := items.New(28)
+	special.Blob = "stitched with a name"
+	w.user.Character.StoreItem(items.New(31))
+	w.user.Character.StoreItem(special)
+	plain := items.New(28)
+	w.user.Character.StoreItem(plain)
+
+	out := w.run(t, "sell hide")
+
+	assert.Contains(t, out, "You sell the wolf hide at the market for 22 gold.")
+	assert.Equal(t, 1, countItem(w.user.Character.Items, 31), "the armor is kept")
+	require.Equal(t, 1, countItem(w.user.Character.Items, 28))
+	for _, it := range w.user.Character.Items {
+		if it.ItemId == 28 {
+			assert.True(t, it.Equals(special), "the plain hide was sold, the special one kept")
+		}
+	}
+}
+
+func TestMarketSellRefusesSpecialItem(t *testing.T) {
+	w := newTradeWorld(t, 0)
+	special := items.New(28)
+	special.Blob = "stitched with a name"
+	w.user.Character.StoreItem(special)
+
+	assert.Contains(t, w.run(t, "sell hide"), "not the ordinary article")
+	w.assertUnchanged(t, 0, map[int]int{28: 1}, map[int]int{28: 4})
+}
+
+func TestMarketTradesQueueOwnershipGoldAndPurchaseEvents(t *testing.T) {
+	w := newTradeWorld(t, 100)
+	type seen struct {
+		gold      []int
+		gained    []bool
+		purchases []events.Purchase
+	}
+	got := &seen{}
+	ids := []events.ListenerId{
+		events.RegisterListener(events.EquipmentChange{}, func(e events.Event) events.ListenerReturn {
+			got.gold = append(got.gold, e.(events.EquipmentChange).GoldChange)
+			return events.Continue
+		}),
+		events.RegisterListener(events.ItemOwnership{}, func(e events.Event) events.ListenerReturn {
+			got.gained = append(got.gained, e.(events.ItemOwnership).Gained)
+			return events.Continue
+		}),
+		events.RegisterListener(events.Purchase{}, func(e events.Event) events.ListenerReturn {
+			got.purchases = append(got.purchases, e.(events.Purchase))
+			return events.Continue
+		}),
+	}
+	t.Cleanup(func() {
+		events.UnregisterListener(events.EquipmentChange{}, ids[0])
+		events.UnregisterListener(events.ItemOwnership{}, ids[1])
+		events.UnregisterListener(events.Purchase{}, ids[2])
+	})
+
+	out := w.run(t, "buy hide")
+	w.run(t, "sell hide")
+
+	assert.Equal(t, []int{-27, 23}, got.gold, "sold back at stock 3: 28 less 20% is 23, still below the 27 paid")
+	assert.Equal(t, []bool{true, false}, got.gained)
+	require.Len(t, got.purchases, 1, "only buys are purchases")
+	assert.Equal(t, events.Purchase{UserId: w.user.UserId, RoomId: 2004, Cost: 27, ItemId: 28}, got.purchases[0])
+	assert.Contains(t, out, "buys the wolf hide at the market.", "the room hears the trade")
 }

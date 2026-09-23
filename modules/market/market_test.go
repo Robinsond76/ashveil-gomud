@@ -417,7 +417,7 @@ func TestParseRoomTagAndSpreadPct(t *testing.T) {
 	assert.Equal(t, "bazaar", parseRoomTag(" bazaar "))
 	assert.Equal(t, 20, parseSpreadPct(nil))
 	assert.Equal(t, 35, parseSpreadPct(35))
-	assert.Equal(t, 20, parseSpreadPct(0), "zero spread would allow free round trips at the cap")
+	assert.Equal(t, 20, parseSpreadPct(0), "configured spreads must be 1..90")
 	assert.Equal(t, 20, parseSpreadPct(95))
 	assert.Equal(t, 20, parseSpreadPct(12.5))
 }

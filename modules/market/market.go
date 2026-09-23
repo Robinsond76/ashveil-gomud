@@ -173,6 +173,8 @@ type MarketModule struct {
 
 	roomTag   string
 	spreadPct int
+	// roomTitles caches marketRooms per zone; load clears it.
+	roomTitles map[string][]string
 
 	// markets is the configured tracked-goods list per market zone, in
 	// config order.
@@ -311,6 +313,7 @@ func (m *MarketModule) load() {
 		m.markets = markets
 	}
 	m.roomTag, m.spreadPct = roomTag, spreadPct
+	m.roomTitles = nil
 	if err != nil {
 		m.loadErr = err
 		mudlog.Error("market: load", "error", err)
@@ -452,10 +455,8 @@ func (m *MarketModule) userCommand(rest string, user *users.UserRecord, room *ro
 	tag := m.tag()
 	if !room.HasTag(tag) {
 		msg := "There's no market here."
-		if m.marketRooms != nil {
-			if titles := m.marketRooms(room.Zone, tag); len(titles) > 0 {
-				msg += fmt.Sprintf(` The market in %s is at <ansi fg="room-title">%s</ansi>.`, room.Zone, strings.Join(titles, ", "))
-			}
+		if titles := m.marketRoomTitles(room.Zone, tag); len(titles) > 0 {
+			msg += fmt.Sprintf(` The market in %s is at <ansi fg="room-title">%s</ansi>.`, room.Zone, strings.Join(titles, ", "))
 		}
 		user.SendText(msg)
 		return true, nil
@@ -474,6 +475,26 @@ func (m *MarketModule) userCommand(rest string, user *users.UserRecord, room *ro
 		user.SendText("Usage: market, market buy <good>, or market sell <good>.")
 	}
 	return true, nil
+}
+
+// marketRoomTitles returns the zone's market room titles, looking them up
+// once per zone (the lookup loads every room in the zone) outside the
+// module lock.
+func (m *MarketModule) marketRoomTitles(zone, tag string) []string {
+	m.mu.Lock()
+	titles, ok := m.roomTitles[zone]
+	m.mu.Unlock()
+	if ok || m.marketRooms == nil {
+		return titles
+	}
+	titles = m.marketRooms(zone, tag)
+	m.mu.Lock()
+	if m.roomTitles == nil {
+		m.roomTitles = map[string][]string{}
+	}
+	m.roomTitles[zone] = titles
+	m.mu.Unlock()
+	return titles
 }
 
 func (m *MarketModule) sendListing(user *users.UserRecord, room *rooms.Room, quotes []Quote) {

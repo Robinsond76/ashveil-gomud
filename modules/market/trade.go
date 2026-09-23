@@ -21,6 +21,12 @@ var (
 	errUnavailable = errors.New("ledgers unavailable")
 )
 
+// errAmbiguous reports a name matching more than one good; names lists
+// the display names of the candidates.
+type errAmbiguous struct{ names []string }
+
+func (e errAmbiguous) Error() string { return "ambiguous: " + strings.Join(e.names, ", ") }
+
 // goodsFor returns a copy of the zone's configured goods.
 func (m *MarketModule) goodsFor(zone string) []market.Good {
 	m.mu.Lock()
@@ -29,26 +35,40 @@ func (m *MarketModule) goodsFor(zone string) []market.Good {
 }
 
 // matchGood finds the tracked good a player named: an exact name first,
-// then a name prefix, then a substring, case-insensitively.
-func (m *MarketModule) matchGood(goods []market.Good, query string) (market.Good, bool) {
+// then a name prefix, then a substring, case-insensitively. A stage that
+// matches more than one good is ambiguous rather than a guess.
+func (m *MarketModule) matchGood(goods []market.Good, query string) (market.Good, error) {
 	query = strings.ToLower(strings.TrimSpace(query))
 	if query == "" {
-		return market.Good{}, false
+		return market.Good{}, errNotTracked
 	}
 	for _, test := range []func(name string) bool{
 		func(name string) bool { return name == query },
 		func(name string) bool { return strings.HasPrefix(name, query) },
 		func(name string) bool { return strings.Contains(name, query) },
 	} {
+		matched := []market.Good{}
 		for _, g := range goods {
 			for _, name := range m.itemNames(g.ItemID) {
 				if test(strings.ToLower(name)) {
-					return g, true
+					matched = append(matched, g)
+					break
 				}
 			}
 		}
+		switch len(matched) {
+		case 0:
+			continue
+		case 1:
+			return matched[0], nil
+		}
+		names := make([]string, len(matched))
+		for i, g := range matched {
+			names[i] = m.itemNames(g.ItemID)[0]
+		}
+		return market.Good{}, errAmbiguous{names: names}
 	}
-	return market.Good{}, false
+	return market.Good{}, errNotTracked
 }
 
 // commitBuy prices and removes one unit from the zone's stock in a single
@@ -127,26 +147,38 @@ func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string
 		user.SendText("Buy what? Try: market buy <good>.")
 		return
 	}
-	good, ok := m.matchGood(m.goodsFor(room.Zone), what)
-	if !ok {
+	good, err := m.matchGood(m.goodsFor(room.Zone), what)
+	var ambiguous errAmbiguous
+	if errors.As(err, &ambiguous) {
+		user.SendText(fmt.Sprintf(`Which do you mean: %s?`, strings.Join(ambiguous.names, ", ")))
+		return
+	}
+	if err != nil {
 		user.SendText(fmt.Sprintf(`The market here doesn't trade in "%s".`, what))
 		return
 	}
 	name := m.itemNames(good.ItemID)[0]
+	// Make the item before touching the ledger, so a missing item spec can
+	// never cost stock or gold.
+	newItem := items.New(good.ItemID)
+	if newItem.ItemId == 0 {
+		mudlog.Error("market: tracked good has no item spec", "zone", room.Zone, "itemid", good.ItemID)
+		user.SendText(fmt.Sprintf(`No one at the market has any <ansi fg="itemname">%s</ansi> to sell right now.`, name))
+		return
+	}
 	price, err := m.commitBuy(room.Zone, good.ItemID, user.Character.Gold)
 	switch {
 	case errors.Is(err, errSoldOut):
 		user.SendText(fmt.Sprintf(`No one at the market has any <ansi fg="itemname">%s</ansi> to sell right now.`, name))
 		return
 	case errors.Is(err, errNotAfford):
-		user.SendText(fmt.Sprintf(`A <ansi fg="itemname">%s</ansi> costs <ansi fg="gold">%d gold</ansi> here, and you don't have enough.`, name, price))
+		user.SendText(fmt.Sprintf(`The <ansi fg="itemname">%s</ansi> costs <ansi fg="gold">%d gold</ansi> here, and you don't have enough.`, name, price))
 		return
 	case err != nil:
 		user.SendText("The market ledgers are unavailable right now.")
 		return
 	}
 
-	newItem := items.New(good.ItemID)
 	user.Character.Gold -= price
 	user.Character.StoreItem(newItem)
 	user.Character.CancelBuffsWithFlag("hidden")
@@ -154,10 +186,11 @@ func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string
 
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -price})
 	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
+	events.AddToQueue(events.Purchase{UserId: user.UserId, RoomId: room.RoomId, Cost: price, ItemId: good.ItemID})
 
-	user.EventLog.Add(`shop`, fmt.Sprintf(`Bought a <ansi fg="itemname">%s</ansi> at the %s market for <ansi fg="gold">%d gold</ansi>`, newItem.DisplayName(), room.Zone, price))
-	user.SendText(fmt.Sprintf(`You buy a <ansi fg="itemname">%s</ansi> at the market for <ansi fg="gold">%d gold</ansi>.`, newItem.DisplayName(), price))
-	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> buys a <ansi fg="itemname">%s</ansi> at the market.`, user.Character.Name, newItem.DisplayName()), user.UserId)
+	user.EventLog.Add(`shop`, fmt.Sprintf(`Bought the <ansi fg="itemname">%s</ansi> at the %s market for <ansi fg="gold">%d gold</ansi>`, newItem.DisplayName(), room.Zone, price))
+	user.SendText(fmt.Sprintf(`You buy the <ansi fg="itemname">%s</ansi> at the market for <ansi fg="gold">%d gold</ansi>.`, newItem.DisplayName(), price))
+	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> buys the <ansi fg="itemname">%s</ansi> at the market.`, user.Character.Name, newItem.DisplayName()), user.UserId)
 }
 
 func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what string) {
@@ -165,28 +198,9 @@ func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what strin
 		user.SendText("Sell what? Try: market sell <good>.")
 		return
 	}
-	item, found := user.Character.FindInBackpack(what)
+	item, found, refusal := m.pickSaleItem(user, room.Zone, what)
 	if !found {
-		user.SendText("You don't have that item.")
-		return
-	}
-	tracked := false
-	for _, g := range m.goodsFor(room.Zone) {
-		if g.ItemID == item.ItemId {
-			tracked = true
-			break
-		}
-	}
-	if !tracked {
-		user.SendText(fmt.Sprintf(`The market here doesn't trade in <ansi fg="itemname">%s</ansi>.`, item.DisplayName()))
-		return
-	}
-	if item.GetSpec().QuestToken != `` {
-		user.SendText("Quest items cannot be sold!")
-		return
-	}
-	if item.IsSpecial() {
-		user.SendText(fmt.Sprintf(`The traders won't take that <ansi fg="itemname">%s</ansi>; it's not the ordinary article.`, item.DisplayName()))
+		user.SendText(refusal)
 		return
 	}
 
@@ -208,6 +222,41 @@ func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what strin
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: price})
 
 	user.EventLog.Add(`shop`, fmt.Sprintf(`Sold your <ansi fg="itemname">%s</ansi> at the %s market for <ansi fg="gold">%d gold</ansi>`, item.DisplayName(), room.Zone, price))
-	user.SendText(fmt.Sprintf(`You sell a <ansi fg="itemname">%s</ansi> at the market for <ansi fg="gold">%d gold</ansi>.`, item.DisplayName(), price))
-	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> sells a <ansi fg="itemname">%s</ansi> at the market.`, user.Character.Name, item.DisplayName()), user.UserId)
+	user.SendText(fmt.Sprintf(`You sell the <ansi fg="itemname">%s</ansi> at the market for <ansi fg="gold">%d gold</ansi>.`, item.DisplayName(), price))
+	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> sells the <ansi fg="itemname">%s</ansi> at the market.`, user.Character.Name, item.DisplayName()), user.UserId)
+}
+
+// pickSaleItem chooses which carried item a sale refers to. It prefers an
+// ordinary item of a good this market trades, so "hide" sells a plain wolf
+// hide even when hide armor or a special wolf hide is also carried. When
+// none qualifies it explains why, judged on the engine's own best match.
+func (m *MarketModule) pickSaleItem(user *users.UserRecord, zone, what string) (items.Item, bool, string) {
+	tracked := map[int]bool{}
+	for _, g := range m.goodsFor(zone) {
+		tracked[g.ItemID] = true
+	}
+	candidates := []items.Item{}
+	for _, it := range user.Character.Items {
+		if tracked[it.ItemId] && it.GetSpec().QuestToken == `` && !it.IsSpecial() {
+			candidates = append(candidates, it)
+		}
+	}
+	partial, full := items.FindMatchIn(what, candidates...)
+	if full.ItemId != 0 {
+		return full, true, ""
+	}
+	if partial.ItemId != 0 {
+		return partial, true, ""
+	}
+
+	item, found := user.Character.FindInBackpack(what)
+	switch {
+	case !found:
+		return items.Item{}, false, "You don't have that item."
+	case !tracked[item.ItemId]:
+		return items.Item{}, false, fmt.Sprintf(`The market here doesn't trade in <ansi fg="itemname">%s</ansi>.`, item.DisplayName())
+	case item.GetSpec().QuestToken != ``:
+		return items.Item{}, false, "Quest items cannot be sold!"
+	}
+	return items.Item{}, false, fmt.Sprintf(`The traders won't take that <ansi fg="itemname">%s</ansi>; it's not the ordinary article.`, item.DisplayName())
 }

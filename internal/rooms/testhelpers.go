@@ -32,3 +32,31 @@ func SetTestBiome(b *BiomeInfo) {
 func RemoveTestBiome(biomeId string) {
 	delete(biomes, biomeId)
 }
+
+// SetTestZoneRoom stores a room like SetTestRoom and also indexes it under
+// its zone, so GetAllZoneNames and GetAllZoneRoomsIds report it. For
+// testing only.
+func SetTestZoneRoom(r *Room) {
+	SetTestRoom(r)
+	zc, ok := roomManager.zones[r.Zone]
+	if !ok {
+		zc = &ZoneConfig{Name: r.Zone}
+		roomManager.zones[r.Zone] = zc
+	}
+	if zc.RoomIds == nil {
+		zc.RoomIds = map[int]struct{}{}
+	}
+	zc.RoomIds[r.RoomId] = struct{}{}
+}
+
+// RemoveTestZoneRoom undoes SetTestZoneRoom, dropping the zone once it has
+// no rooms left. For testing only.
+func RemoveTestZoneRoom(r *Room) {
+	RemoveTestRoom(r.RoomId)
+	if zc, ok := roomManager.zones[r.Zone]; ok {
+		delete(zc.RoomIds, r.RoomId)
+		if len(zc.RoomIds) == 0 {
+			delete(roomManager.zones, r.Zone)
+		}
+	}
+}

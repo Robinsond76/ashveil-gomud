@@ -56,8 +56,8 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 		require.NoError(t, yaml.Unmarshal(data, room))
 		require.Equal(t, id, room.RoomId)
 		shippedRooms[id] = room
-		rooms.SetTestRoom(room)
-		t.Cleanup(func() { rooms.RemoveTestRoom(id) })
+		rooms.SetTestZoneRoom(room)
+		t.Cleanup(func() { rooms.RemoveTestZoneRoom(room) })
 	}
 	assert.Contains(t, shippedRooms[2001].Exits, "east", "the West Gate leads to the square")
 	assert.Equal(t, 2004, shippedRooms[2001].Exits["east"].RoomId)
@@ -66,18 +66,11 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	require.NotNil(t, module, "init registered the module")
 	rolls := uint64(0)
 	module.roll = func() uint64 { return rolls }
-	module.zoneExists = func(zone string) bool { return shippedZones[zone] }
-	// rooms.SetTestRoom doesn't index rooms by zone, so resolve the market
-	// room names from the shipped rooms registered above.
-	module.marketRooms = func(zone, tag string) []string {
-		titles := []string{}
-		for _, r := range shippedRooms {
-			if r.Zone == zone && r.HasTag(tag) {
-				titles = append(titles, r.Title)
-			}
-		}
-		return titles
+	for _, zone := range []string{"Dunmar", "Old Kings Road"} {
+		require.True(t, shippedZones[zone], "%s is a shipped zone", zone)
 	}
+	// The real zoneExists and marketRooms run against the zone-indexed
+	// shipped rooms registered above.
 	plugins.Load(t.TempDir())
 
 	require.NoError(t, module.loadErr)
@@ -130,7 +123,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	user.Character.Gold = 100
 	assert.Contains(t, run(2001, "buy", "hide"), "There's no market here.", "no trading at the gate")
 	assert.Equal(t, 100, user.Character.Gold)
-	assert.Contains(t, run(2004, "buy", "wolf hide"), "You buy a wolf hide at the market for 26 gold.")
+	assert.Contains(t, run(2004, "buy", "wolf hide"), "You buy the wolf hide at the market for 26 gold.")
 	assert.Equal(t, 74, user.Character.Gold)
 	_, carried := user.Character.FindInBackpack("wolf hide")
 	assert.True(t, carried)
@@ -139,7 +132,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	boughtStock, _ := reloaded.Zones["Dunmar"].Stock(28)
 	assert.Equal(t, 4, boughtStock, "the purchase persisted to the real store")
 
-	assert.Contains(t, run(2004, "sell", "hide"), "You sell a wolf hide at the market for 22 gold.")
+	assert.Contains(t, run(2004, "sell", "hide"), "You sell the wolf hide at the market for 22 gold.")
 	assert.Equal(t, 96, user.Character.Gold)
 	_, carried = user.Character.FindInBackpack("wolf hide")
 	assert.False(t, carried)
@@ -147,6 +140,29 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	require.NoError(t, pluginStore{plug: module.plug}.Load(reloaded))
 	soldStock, _ := reloaded.Zones["Dunmar"].Stock(28)
 	assert.Equal(t, 5, soldStock, "the sale persisted to the real store")
+
+	// The Trappers' Post trades against its own ledger.
+	okrBefore, _ := module.zones["Old Kings Road"].Stock(28)
+	dunmarBefore, _ := module.zones["Dunmar"].Stock(28)
+	gold := user.Character.Gold
+	assert.Contains(t, run(2005, "buy", "hide"), "You buy the wolf hide at the market")
+	okrAfter, _ := module.zones["Old Kings Road"].Stock(28)
+	dunmarAfter, _ := module.zones["Dunmar"].Stock(28)
+	assert.Equal(t, okrBefore-1, okrAfter)
+	assert.Equal(t, dunmarBefore, dunmarAfter, "Dunmar's ledger is untouched")
+	assert.Less(t, user.Character.Gold, gold)
+	assert.Contains(t, run(2005, "sell", "hide"), "You sell the wolf hide at the market")
+	okrAfter, _ = module.zones["Old Kings Road"].Stock(28)
+	assert.Equal(t, okrBefore, okrAfter)
+
+	// A downed player can't trade.
+	user.Character.Health = 0
+	gold = user.Character.Gold
+	run(2004, "buy", "hide")
+	assert.Equal(t, gold, user.Character.Gold)
+	downedStock, _ := module.zones["Dunmar"].Stock(28)
+	assert.Equal(t, dunmarBefore, downedStock)
+	user.Character.Health = 10
 
 	// A restart restores the persisted stock instead of re-seeding.
 	restarted := &MarketModule{

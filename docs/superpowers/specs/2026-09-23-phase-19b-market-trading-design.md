@@ -71,6 +71,40 @@ Implementation defaults chosen under the owner's "carry on":
   their descriptions. The West Gate description gains a line pointing
   east.
 
+**Implementation review additions (2026-09-23):**
+
+- A name matching more than one good at the same stage (for example
+  `market buy w` in Dunmar) asks which good is meant instead of guessing.
+- The bought item is made before the ledger is touched, so a missing item
+  spec refuses the trade without costing stock or gold.
+- `market sell <name>` prefers an ordinary carried item of a traded good,
+  so "hide" sells a plain wolf hide even when hide armor or a special wolf
+  hide is also carried.
+- Buys queue `events.Purchase` like shopkeeper purchases (no seller ids).
+  They don't run item `onPurchase` scripts; none of the traded goods has
+  one.
+- Market room titles are looked up once per zone and cached until reload.
+
+**Known limitations:**
+
+- Trades save the market ledger at once, but the character's gold and
+  items save on the user autosave or logout, the same as shopkeeper
+  trades. After a hard crash (not copyover) the ledger can keep a trade
+  the character lost. The player never gains from this.
+- Like `sell`, the special-item check (`Item.IsSpecial`) ignores
+  enchantments, adjectives, and uncursing; an enchanted wolf hide sells
+  as a plain one. Only the seller loses value.
+
+**Open owner decision: trade between markets.** Within one market no
+round trip profits. Between markets it can: at their target stocks the
+Trappers' Post asks 9 for a hide and Dunmar bids 12, so carrying one to
+three hides per trip earns about 3-6 gold, and drift restores both
+markets to target, so the route pays forever. The shipped starting
+stocks (Post glutted, Dunmar short) also give the first trader after a
+deploy a one-time profit of about 150 gold on roughly ten hides. It is
+left as shipped pending the owner's choice between a small standing
+trade-route profit and break-even target prices.
+
 **Explicitly deferred:** shopkeeper trading at market prices (not wanted);
 bulk quantities; per-good spreads; admin ledger reset; market-room
 fixtures or NPC traders.
