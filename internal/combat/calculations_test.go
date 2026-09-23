@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/races"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
 func TestAlignmentChange(t *testing.T) {
@@ -432,5 +433,13 @@ func TestChanceToTame(t *testing.T) {
 				tt.proficiency, tt.levelDiff, tt.currentHP, tt.maxHP, tt.tamerSize, tt.targetIsAggro,
 				got, tt.wantMin, tt.wantMax)
 		}
+	}
+}
+
+func TestDarknessPenaltyNilRoom(t *testing.T) {
+	called := false
+	got := darknessPenalty(nil, &characters.Character{}, func(*rooms.Room) int { called = true; return 0 })
+	if got != 0 || called {
+		t.Fatalf("an unknown room applies no penalty and computes no visibility, got %d", got)
 	}
 }

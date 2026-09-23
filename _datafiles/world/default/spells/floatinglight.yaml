@@ -1,0 +1,9 @@
+# Ashveil Phase 14: a party light. Gating it to wizards is Phase 17.
+spellid: floatinglight
+name: Floating Light
+description: Conjures a light that floats above you and lights the way for your whole company
+type: helpsingle
+school: illusion
+cost: 10
+waitrounds: 3
+difficulty: 0

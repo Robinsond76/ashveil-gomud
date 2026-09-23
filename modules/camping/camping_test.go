@@ -530,3 +530,19 @@ func mustResting(t *testing.T, leaderUserID, roomID int, startedAt time.Time) ca
 	require.NoError(t, err)
 	return camp
 }
+
+func TestLitCampfireIsLightFixture(t *testing.T) {
+	module := newTestModule(&fakeStore{}, nil, nil, time.Now)
+	module.camps[7] = camping.Camp{LeaderUserID: 7, RoomID: 100}
+	module.camps[8] = camping.Camp{LeaderUserID: 8, RoomID: 200, FireLit: true}
+
+	if module.RoomHasLitFire(100) {
+		t.Fatal("an unlit camp is not a light fixture")
+	}
+	if !module.RoomHasLitFire(200) {
+		t.Fatal("a lit campfire lights its room")
+	}
+	if module.RoomHasLitFire(300) {
+		t.Fatal("a room with no camp has no campfire")
+	}
+}

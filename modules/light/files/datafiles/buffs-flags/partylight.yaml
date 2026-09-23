@@ -1,0 +1,4 @@
+flag: partylight
+name: "Party Light"
+description: "Lights the way for the bearer and every ally in the same room: their company and party."
+locked: true

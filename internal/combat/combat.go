@@ -27,7 +27,8 @@ const (
 // Performs a combat round from a player to a mob
 func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 
-	attackResult := calculateCombat(*user.Character, mob.Character, User, Mob)
+	penalty := darknessPenalty(rooms.LoadRoom(user.Character.RoomId), &mob.Character, func(r *rooms.Room) int { return r.VisibilityForUser(user) })
+	attackResult := calculateCombat(*user.Character, mob.Character, User, Mob, penalty)
 
 	if attackResult.DamageToSource != 0 {
 		user.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -51,7 +52,8 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 // Performs a combat round from a player to a player
 func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) AttackResult {
 
-	attackResult := calculateCombat(*userAtk.Character, *userDef.Character, User, User)
+	penalty := darknessPenalty(rooms.LoadRoom(userAtk.Character.RoomId), userDef.Character, func(r *rooms.Room) int { return r.VisibilityForUser(userAtk) })
+	attackResult := calculateCombat(*userAtk.Character, *userDef.Character, User, User, penalty)
 
 	if attackResult.DamageToSource != 0 {
 		userAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -76,7 +78,8 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) 
 // Performs a combat round from a mob to a player
 func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 
-	attackResult := calculateCombat(mob.Character, *user.Character, Mob, User)
+	penalty := darknessPenalty(rooms.LoadRoom(mob.Character.RoomId), user.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mob) })
+	attackResult := calculateCombat(mob.Character, *user.Character, Mob, User, penalty)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
 
@@ -95,7 +98,8 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 // Performs a combat round from a mob to a mob
 func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 
-	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, Mob)
+	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
+	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, Mob, penalty)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
 	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
@@ -236,7 +240,9 @@ func buildCombatMessages(
 	return toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg
 }
 
-func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget) AttackResult {
+// calculateCombat resolves one attack round. darkPenalty is the attacker's
+// to-hit penalty for poor visibility (see darknessPenalty).
+func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int) AttackResult {
 
 	attackResult := AttackResult{}
 
@@ -277,9 +283,9 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 		for wIdx, weapon := range attackWeapons {
 
 			// Only the offhand weapon (index > 0) incurs a hit penalty for dual-wielding.
-			penalty := 0
+			penalty := darkPenalty
 			if wIdx > 0 {
-				penalty = dualWieldHitPenalty(dualWieldLevel)
+				penalty += dualWieldHitPenalty(dualWieldLevel)
 			}
 
 			// Set the default weapon info
@@ -453,4 +459,20 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 	return attackResult
 
+}
+
+// targetCarriesLight reports whether the target bears its own or a party
+// light, which makes it visible to an attacker even in darkness.
+func targetCarriesLight(target *characters.Character) bool {
+	return target.HasBuffFlag(rooms.FlagLightSource) || target.HasBuffFlag(rooms.FlagPartyLight)
+}
+
+// darknessPenalty is the attacker's to-hit penalty in room, where
+// visibilityOf reports what the attacker can see there. An unknown room
+// applies no penalty.
+func darknessPenalty(room *rooms.Room, target *characters.Character, visibilityOf func(*rooms.Room) int) int {
+	if room == nil {
+		return 0
+	}
+	return rooms.HitPenaltyForVisibility(visibilityOf(room), targetCarriesLight(target))
 }

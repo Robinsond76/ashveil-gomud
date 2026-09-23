@@ -205,6 +205,21 @@ func init() {
 	})
 	camping.SetViewProvider(m)
 	camping.SetMovementProvider(m)
+	rooms.RegisterLightFixture(m.RoomHasLitFire)
+}
+
+// RoomHasLitFire reports whether a lit campfire burns in roomID, which
+// lights that room for everyone (Phase 14). It only reads camp state and is
+// never called while this module holds its own lock.
+func (m *CampingModule) RoomHasLitFire(roomID int) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, camp := range m.camps {
+		if camp.FireLit && camp.RoomID == roomID {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *CampingModule) persistenceAvailable() error {

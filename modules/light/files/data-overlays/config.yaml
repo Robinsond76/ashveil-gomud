@@ -1,0 +1,7 @@
+# Phase 14 light and visibility.
+#
+# To-hit penalties for an attacker who can't see well. Visibility 0 is
+# darkness; 1 is dim (this room only). A target carrying its own light is
+# always at least dimly visible.
+DarkHitPenalty: 40
+DimHitPenalty: 10

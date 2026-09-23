@@ -1,0 +1,8 @@
+buffid: 1000
+name: Floating Light
+description: A conjured light floats above you, lighting the way for your allies.
+secret: false
+triggerrate: 10 real minutes
+triggercount: 1
+flags:
+  - partylight

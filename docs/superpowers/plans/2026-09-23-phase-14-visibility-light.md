@@ -6,7 +6,7 @@ next phase").
 
 ## Tasks
 
-- [ ] **`internal/rooms/light.go`: ambient and per-viewer visibility.**
+- [x] **`internal/rooms/light.go`: ambient and per-viewer visibility.**
   - Tests first (`internal/rooms/light_test.go`): table test of
     `ambientLevel(LightConditions)`; `TestLightFixtureRegistry`;
     `TestViewerLevel` (personal light, party light, nightvision);
@@ -15,19 +15,19 @@ next phase").
     `Room.LightConditions()`, `Room.GetVisibility()` (now ambient),
     `VisibilityForUser`, `VisibilityForMob`, ally resolution, fixture
     registry, and the penalty settings.
-- [ ] **`internal/combat`: darkness hit penalty.**
+- [x] **`internal/combat`: darkness hit penalty.**
   - Test first: `TestCalculateCombatAppliesDarknessPenalty` style check via
     a pure helper.
   - Then pass the attacker's penalty into `calculateCombat` from the four
     `Attack*` entry points (simulation passes 0).
-- [ ] **`internal/usercommands/look.go`:** use `VisibilityForUser`.
-- [ ] **`modules/camping`:** register a fixture provider for rooms with a
+- [x] **`internal/usercommands/look.go`:** use `VisibilityForUser`.
+- [x] **`modules/camping`:** register a fixture provider for rooms with a
       lit campfire. Test: `TestLitCampfireIsLightFixture`.
-- [ ] **`modules/light` (new):** `light` command, config
+- [x] **`modules/light` (new):** `light` command, config
       (`DarkHitPenalty`, `DimHitPenalty`), shipped `partylight` flag and
       Floating Light buff. Tests for config parsing and the command report.
       Run `make generate`.
-- [ ] **Data:** `floatinglight` spell (default world).
-- [ ] `gofmt`, `go vet`, `go build ./...`, `go test -race ./...`,
+- [x] **Data:** `floatinglight` spell (default world).
+- [x] `gofmt`, `go vet`, `go build ./...`, `go test -race ./...`,
       `make generate`, `make validate`.
-- [ ] Update `docs/PROJECT_STATUS.md`.
+- [x] Update `docs/PROJECT_STATUS.md`.

@@ -35,7 +35,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	secretLook := flags.Has(events.CmdSecretly)
 
-	visibility := room.GetVisibility()
+	// Per viewer: carried light helps only its bearer, party light its allies.
+	visibility := room.VisibilityForUser(user)
 
 	if visibility < 1 {
 		if !user.Character.HasBuffFlag("nightvision") {

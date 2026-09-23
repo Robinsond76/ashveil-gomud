@@ -7,14 +7,13 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-23
 - **Branch:** `claude/gracious-ride-swn7b7`
-- **HEAD:** Phase 13 (sky and environment). A new roadmap
-  (`docs/superpowers/specs/2026-09-23-environment-skills-economy-roadmap.md`)
-  records the user's next feature set as Phases 13–21: sky, visibility and
-  light, temperature and clothing, walking fatigue and inns, archetypes and
-  utility skills, loot tables, commodities and markets, trade rumours, and
-  alignment, plus the user's four design decisions. Phase 13 adds moon
-  phases, cloud cover, fog, indoor rooms, and the indoor glimpse through an
-  outdoor exit. It is display-only.
+- **HEAD:** Phase 14 (visibility and light). Light is now per viewer: a
+  room's ambient light counts only the sky (sun, moon, cloud cover), fog,
+  biome, mutators, and fixtures (a `lit` room tag or a lit campfire). A
+  carried torch or lantern lights only its bearer. The new Floating Light
+  (`partylight`) lights the caster's whole company or party. Darkness now
+  gives a to-hit penalty in combat, and a new `light` command explains it
+  all. Phase 13 (sky and environment) is merged to `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is pushed through Phase 12b's weighted
   encounter tables (`e42efd88`); this branch's Phase 12c work is not yet
@@ -45,7 +44,7 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 14 (visibility and light) per the 2026-09-23 roadmap.
+- **Next:** Phase 15 (temperature and clothing) per the 2026-09-23 roadmap.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
@@ -84,10 +83,46 @@ instead of duplicating them.
 | 12b | Weighted encounter tables | Complete: `InterruptionProfile.Kinds` weighted-roll form, resolved once at fire time; no shipped route uses it yet |
 | 12c | Combat encounters | Complete: `Combat` interruption kind spawns its route's `CombatMobID` into the origin room and commands it to attack; resume/return gated on the mob still being alive and present |
 | 13 | Sky and environment | Complete: moon phases, cloud cover, fog, indoor biomes/tags, indoor glimpse, richer `weather`; display-only |
-| 14–21 | Visibility/light, temperature, walking fatigue/inns, archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
+| 14 | Visibility and light | Complete: ambient vs per-viewer light, personal/fixture/party light, darkness hit penalty, `light` command, `floatinglight` spell |
+| 15–21 | Temperature, walking fatigue/inns, archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 14: visibility and light (2026-09-23)
+
+- **What:** `internal/rooms/light.go` replaces upstream's room-wide
+  `GetVisibility()` with an ambient model (`LightConditions` →
+  `ambientLevel`):
+  - by day: bright; fog dims but never blinds
+  - at night: dim under any visible moon, pitch black when moonless or
+    overcast; lit biomes +1; fog applies
+  - indoors: lit biome = bright, otherwise dark
+  - dark biome: dark
+  - then mutators, then a fixture (+1)
+
+  `VisibilityForUser`/`VisibilityForMob` add the viewer's own
+  `lightsource`, or an ally's `partylight`, and treat `nightvision` as
+  bright. Allies are the same leader (a user and their charmed companions)
+  or the same GoMud party. `internal/combat` passes the attacker's
+  `HitPenaltyForVisibility` into `calculateCombat` (default −40 dark,
+  −10 dim; a lit target is at least dim). `look` uses per-viewer
+  visibility. `modules/camping` registers lit campfires as light fixtures.
+  The new `modules/light` owns the penalty config and the `light` command,
+  and ships the `partylight` flag and the Floating Light buff (id 1000).
+  A `floatinglight` spell (default world) casts it.
+- **Why:** User decision 1 in the roadmap: carried light is personal, room
+  fixtures light everyone, and a mage's light covers the party. The
+  combat penalty makes darkness matter.
+- **Durable / clock-safe:** No new persisted state. Ambient light is
+  derived from the clock, persisted weather, data, and persisted camp
+  records. No timers.
+- **Deferred:** Wizard-only gating of `floatinglight` (Phase 17); race
+  darkvision; stealth in darkness.
+- **Verification:** `go test -race ./...` passes (1836 passing test
+  results). `make generate` (adds `modules/light`) and `make validate`
+  pass. Server boot loads the new flag, buff, and spell (24/44/10) without
+  errors. Live telnet acceptance was not run.
 
 ### Phase 13: sky and environment (2026-09-23)
 
