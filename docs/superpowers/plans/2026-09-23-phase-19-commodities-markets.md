@@ -33,7 +33,7 @@ before writing any trading-integration code.
      alone is not the whole transaction. If deferred, put trading in
      Phase 20's prerequisites or a separate intervening slice before
      rumours depend on it.
-- [ ] **`internal/market` (new pure package): `Good`, `Validate`,
+- [x] **`internal/market` (new pure package): `Good`, `Validate`,
       `PriceForStock`, `DriftStock`.**
   - Tests first, `internal/market/market_test.go`:
     - `TestGoodValidateRejectsNonPositivePrices`
@@ -53,7 +53,7 @@ before writing any trading-integration code.
     warn/omit goods whose item spec does not exist.
   - Then implement the two-segment interpolation and target-seeking
     bounded drift specified in the design doc.
-- [ ] **`modules/market` (new module): `Registry`, `ZoneMarket`,
+- [x] **`modules/market` (new module): `Registry`, `ZoneMarket`,
       `GoodStock`, `Store` interface + file-backed implementation +
       test fake.**
   - Mirror `modules/weather`'s `Registry`/`Store`/load-at-boot shape
@@ -65,7 +65,7 @@ before writing any trading-integration code.
     corrupt/unreadable store disables market effects without a panic.
     Distinguish a missing first-boot file from a load failure.
   - Then implement.
-- [ ] **`modules/market`: `events.NewRound` listener drifting stock.**
+- [x] **`modules/market`: `events.NewRound` listener drifting stock.**
   - Test first: a fixed `rollUint64`-style seam (mirror
     `modules/expedition`'s Phase 12b seam) drives a deterministic
     `DriftStock` call across configured zones on a real
@@ -76,7 +76,7 @@ before writing any trading-integration code.
     never reads or advances the round counter itself (grep
     `modules/weather` for its own equivalent assertion/comment and match
     it).
-- [ ] **`market` command (read-only).**
+- [x] **`market` command (read-only).**
   - Check `modules/light`'s `light` command and/or `modules/exposure`'s
     `temperature` command for the current module-owned-command
     registration convention before writing a new one from scratch.
@@ -98,7 +98,7 @@ before writing any trading-integration code.
       **If deferred:** record that Phase 20 (or an intervening trade
       slice) must add this before actionable trade rumours; skip this
       task and state the decision in the work log.
-- [ ] **Content:** configure 2-3 existing zones as markets (reuse zones
+- [x] **Content:** configure 2-3 existing zones as markets (reuse zones
       that already exist rather than authoring new ones — check
       Waymark Inn's zone and Dunmar West Gate's zone as candidates), each
       with a small tracked-goods list including at least one Phase 18
@@ -107,9 +107,9 @@ before writing any trading-integration code.
       note the follow-up). Choose at least one `StartStock` away from
       `TargetStock`, with enough price spread for the round-listener
       wiring test to observe both stock and price drift.
-- [ ] `gofmt -l`, `go vet ./internal/market/... ./modules/market/...`,
+- [x] `gofmt -l`, `go vet ./internal/market/... ./modules/market/...`,
       `go build ./...`, `go test -race ./...` after each task.
-- [ ] `make generate` (registers the new `modules/market` plugin),
+- [x] `make generate` (registers the new `modules/market` plugin),
       `make validate`.
 - [ ] **Testing and review gate:** independent reviewer subagent (most
       capable model tier) over the full phase diff, briefed with the
