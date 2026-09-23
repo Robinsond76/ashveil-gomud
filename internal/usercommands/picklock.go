@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -147,6 +148,11 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	cmdPrompt, isNew := user.StartPrompt(`picklock`, rest)
 
 	if isNew {
+		// Phase 17b: a trap-savvy company gets one free look for a trap
+		// before the first pin.
+		if len(lockTrap) > 0 && archetypes.TrapArmed(lockId) {
+			archetypes.SenseBeforePick(user.UserId, room.RoomId, lockId)
+		}
 		user.SendText(GetLockRender(sequence, keyring_sequence, user.UserId))
 	}
 
@@ -198,7 +204,8 @@ func Picklock(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 			room.SendText(fmt.Sprintf(`<ansi fg="alert-2"><ansi fg="username">%s</ansi> broke their lockpicks trying to pick a lock!</ansi>`, user.Character.Name), user.UserId)
 
-			if len(lockTrap) > 0 {
+			// A trap disarmed through "trap disarm" stays safe (Phase 17b).
+			if len(lockTrap) > 0 && archetypes.TrapArmed(lockId) {
 
 				user.SendText(`<ansi fg="yellow-bold">***</ansi> <ansi fg="alert-5">A trap was triggered!</ansi> <ansi fg="yellow-bold">***</ansi>`)
 				user.SendText(``)

@@ -12,7 +12,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -76,6 +78,7 @@ func loadRealData(t *testing.T) {
 		require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
 		skills.LoadDataFiles()
 		spells.LoadSpellFiles()
+		keywords.LoadAliases()
 	})
 }
 
@@ -302,4 +305,164 @@ func TestDecodeRegistryDropsBadKeys(t *testing.T) {
 	assert.Equal(t, []int{5}, keys)
 	assert.Equal(t, "rogue", r.Players[5])
 	assert.Equal(t, map[string]uint64{"1-chest": 99}, r.Disarmed)
+}
+
+// Review 17a finding 3: a school typo on either side is reported at load.
+func TestSchoolWarnings(t *testing.T) {
+	table, errs := archetypes.NewTable([]archetypes.Archetype{
+		{ID: "wizard", Name: "Wizard", Skills: []string{"cast"}, Schools: []string{"illusion", "ilusion"}, CompanionLevels: []int{1, 2, 3, 4}},
+	})
+	require.Empty(t, errs)
+	warnings := schoolWarnings(table, map[string]string{
+		"floatinglight": "illusion",
+		"illum":         "illlusion",
+		"aidskill":      "",
+	})
+	assert.Equal(t, []string{
+		`archetype school "ilusion" matches no loaded spell`,
+		`spell "illum" has school "illlusion", which no archetype claims`,
+	}, warnings)
+}
+
+func TestShippedDataHasNoSchoolWarnings(t *testing.T) {
+	m, _ := testModule(t)
+	assert.Empty(t, schoolWarnings(m.table, nativeSpellSchools()))
+}
+
+// Review 17a finding 4: the archetype belongs to the character; a
+// permanent death (which swaps in a new character) clears it.
+func TestPermadeathClearsChoice(t *testing.T) {
+	m, store := testModule(t)
+	m.choose(newUser(110), "wizard", true)
+	m.choose(newUser(111), "rogue", true)
+
+	m.onPlayerDeath(events.PlayerDeath{UserId: 110, Permanent: false})
+	_, kept := m.PlayerArchetype(110)
+	assert.True(t, kept, "an ordinary death keeps the archetype")
+
+	m.onPlayerDeath(events.PlayerDeath{UserId: 110, Permanent: true})
+	_, kept = m.PlayerArchetype(110)
+	assert.False(t, kept)
+	_, persisted := store.saved.Players[110]
+	assert.False(t, persisted)
+	_, other := m.PlayerArchetype(111)
+	assert.True(t, other)
+}
+
+func TestPermadeathThroughEventQueue(t *testing.T) {
+	m, _ := testModule(t)
+	m.choose(newUser(112), "wizard", true)
+	id := events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
+	t.Cleanup(func() { events.UnregisterListener(events.PlayerDeath{}, id) })
+	events.AddToQueue(events.PlayerDeath{UserId: 112, Permanent: true})
+	events.ProcessEvents()
+	_, kept := m.PlayerArchetype(112)
+	assert.False(t, kept)
+}
+
+// Review 17a finding 5: a stored archetype that is no longer configured
+// doesn't strand the player.
+func TestUnknownStoredArchetypeCanChooseAgain(t *testing.T) {
+	m, store := testModule(t)
+	m.registry.Players[113] = "bard"
+	u := newUser(113)
+	assert.Contains(t, m.choose(u, "wizard", true), "You are now a Wizard")
+	assert.Equal(t, "wizard", store.saved.Players[113])
+	assert.Contains(t, m.choose(u, "rogue", true), "permanent", "a known choice is still permanent")
+}
+
+// Review 17a finding 6: while the registry failed to load, claimed skills
+// and schools are refused with an explicit reason; trade skills stay open.
+func TestLoadFailureFailsClosedWithReason(t *testing.T) {
+	m, _ := testModule(t)
+	m.loadErr = errors.New("corrupt")
+	ok, reason := m.CanTrain(114, "cast")
+	assert.False(t, ok)
+	assert.Contains(t, reason, "unavailable")
+	ok, _ = m.CanTrain(114, "search")
+	assert.True(t, ok)
+	ok, reason = m.CanLearnSpell(114, "heal")
+	assert.False(t, ok)
+	assert.Contains(t, reason, "unavailable")
+	ok, _ = m.CanLearnSpell(114, "aidskill")
+	assert.True(t, ok)
+}
+
+// Review 17a coverage gap: the real config path. Plugins merge their
+// data-overlays/config.yaml into the global config as Modules.<name>.*
+// (plugins.Load) and read it back flattened (PluginConfig.Get); this test
+// replays that path and loads the module from it.
+func TestLoadThroughRealPluginConfigPath(t *testing.T) {
+	loadRealData(t)
+	data, err := files.ReadFile("files/data-overlays/config.yaml")
+	require.NoError(t, err)
+	var dataMap map[string]any
+	require.NoError(t, yaml.Unmarshal(data, &dataMap))
+	overlay := map[string]any{}
+	for k, v := range dataMap {
+		overlay["Modules.archetype."+k] = v
+	}
+	require.NoError(t, configs.AddOverlayOverrides(overlay))
+
+	m := newModule()
+	m.plug = plugins.New("archetype", "1.0")
+	require.NotNil(t, m.plug, "plugin registration is open in tests")
+	m.store = &fakeStore{}
+	m.load()
+
+	assert.Equal(t, 5, m.table.Len())
+	wiz, ok := m.table.Get("wizard")
+	require.True(t, ok)
+	assert.Equal(t, map[string]int{"cast": 1}, wiz.GrantSkills)
+	assert.Equal(t, []int{1, 10, 20, 30}, wiz.CompanionLevels)
+	assert.Equal(t, "skulduggery", m.config.UtilitySkills["traps"])
+	assert.Equal(t, 900, m.config.DisarmRounds)
+}
+
+// Review 17a coverage gap: the spawn re-grant through the event queue.
+func TestSpawnRegrantThroughEventQueue(t *testing.T) {
+	m, _ := testModule(t)
+	u := newUser(115)
+	users.SetTestUser(u)
+	t.Cleanup(func() { users.RemoveTestUser(115) })
+	m.choose(u, "wizard", true)
+	u.Character.UnLearnSpell("floatinglight")
+
+	id := events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	t.Cleanup(func() { events.UnregisterListener(events.PlayerSpawn{}, id) })
+	events.AddToQueue(events.PlayerSpawn{UserId: 115})
+	events.ProcessEvents()
+	assert.True(t, u.Character.HasSpell("floatinglight"))
+}
+
+// The module lock guards the registry against concurrent callers (the
+// plugin save callback runs off the command path). Run under -race.
+func TestConcurrentRegistryAccess(t *testing.T) {
+	m, _, _ := utilModule(t, 50)
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		i := i
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			u := newUser(200 + i)
+			for j := 0; j < 20; j++ {
+				m.choose(u, "rogue", true)
+				m.setAutoskill(u.UserId, "light", j%2 == 0)
+				m.CanTrain(u.UserId, "cast")
+				m.CanLearnSpell(u.UserId, "heal")
+				m.TrapArmed("1-chest")
+				m.autoskillOn(u.UserId, "traps")
+				_, _ = m.PlayerArchetype(u.UserId)
+				_ = m.save()
+				m.list(u.UserId)
+			}
+		}()
+	}
+	wg.Wait()
+	for i := 0; i < 8; i++ {
+		id, ok := m.PlayerArchetype(200 + i)
+		assert.True(t, ok)
+		assert.Equal(t, "rogue", id)
+	}
 }

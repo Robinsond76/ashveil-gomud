@@ -385,3 +385,60 @@ Deviations from the text above, recorded as they landed.
   gating.
 - **Look display:** `look <player>` and `look <companion>` show an
   "Archetype:" line when one is set.
+- **17b step hook.** Auto-sense and auto-light listen to Phase 16's walking
+  step seam. `internal/walking` gained `AddStepListener`: listeners run
+  after the step provider, on the game loop, and only for ordinary `go`
+  steps. Teleports, recall, and route arrivals don't trigger them.
+  - Companions still standing in the origin room count as present,
+    because they follow the leader after the hook fires.
+- **17b checks.** A sense or disarm check is
+  `score + d100 − (difficulty × factor + 50)`, where
+  `score = level × perLevel + perception / 4`, and it succeeds at ≥ 0.
+  - Disarm has a 2-round cooldown, like sense.
+  - `trap sense` / `trap disarm` also accept `trap search` / `trap find`.
+- **The pre-picklock sense** is once per (player, lock) per server
+  session. It is runtime-only UX state and deliberately not persisted. It
+  runs when a new picklock prompt starts.
+- **The auto-light cooldown** is the leader's character cooldown
+  `autolight`, which is persisted with the character.
+  - A player wizard casts through `usercommands.Cast`. That spends mana and
+    starts the spell's wait rounds, and since the wait counts as combat,
+    the player can't walk until it finishes, exactly as for a typed cast.
+  - A companion wizard gets buff 1000 straight away, and its mana is
+    spent.
+- **No new trainers.** The archetype grants give the utility skills at
+  level 1, so no rogue or wizard trainer was added. The existing Frostfang
+  trainers still train higher levels.
+- **The proving lock** is a trapped toll box (difficulty 4, buff 13
+  Poisoned, 25 gold) at Dunmar West Gate (2001).
+- **Cooking prior art (for the deferred trade skill):** room containers
+  already support crafting `recipes` (for example the tattertail loom in
+  Frostfang 611). Phase 18b cooking should build on that.
+
+### Changes from the 17a independent review
+
+- **Script and quest skill grants are now gated.**
+  `ScriptActor.TrainSkill` (used by the Whispering Wastes obelisk to teach
+  `portal`) and quest `SkillInfo` rewards bypassed the gate. They now
+  consult `archetypes.CanTrain`. The prior-art claim that skills are
+  trained "only in `usercommands.Train`" was wrong.
+- **Elara re-teaches `illum`.** Her script now re-offers the spell to a
+  returning `6-end` player who lacks it, so finishing the quest before
+  becoming a wizard no longer locks the spell out forever.
+- **School mismatches are warned about at load,** in both directions: an
+  archetype school that no spell uses, and a spell school that no
+  archetype claims.
+- **A permanent death clears the archetype.** It belongs to the
+  character, not the account; the engine replaces the character on
+  permadeath.
+- **A stored archetype that is no longer configured** no longer strands
+  the player: they may choose again.
+- **A failed registry load fails closed with a clear reason.** Claimed
+  skills and schools are refused with "Archetype records are unavailable"
+  until a reload succeeds. Trade skills stay open.
+- **Accepted as designed:**
+  - Grandfathered claimed skills can't be trained higher unless you have
+    the archetype, which follows decision 2.
+  - Grants re-apply on login, so an admin who removes a granted skill sees
+    it come back. Grants are a floor.
+  - `archetypereset` only works on online characters.

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -136,7 +137,16 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 				skillLevel, _ := strconv.Atoi(details[1])
 				currentLevel := questUser.Character.GetSkillLevel(skillName)
 
+				allowed, reason := true, ``
 				if skills.SkillExists(skillName) && currentLevel < skillLevel {
+					// Archetype-claimed skills need the right archetype (Phase 17).
+					allowed, reason = archetypes.CanTrain(questUser.UserId, skillName)
+					if !allowed && reason != `` {
+						questUser.SendText(reason)
+					}
+				}
+
+				if skills.SkillExists(skillName) && currentLevel < skillLevel && allowed {
 					newLevel := questUser.Character.TrainSkill(skillName, skillLevel)
 
 					skillData := struct {

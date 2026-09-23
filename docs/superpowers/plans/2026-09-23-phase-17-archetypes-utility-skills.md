@@ -1,9 +1,10 @@
 # Phase 17: Archetypes and Utility Skills — implementation plan
 
 See `docs/superpowers/specs/2026-09-23-phase-17-archetypes-utility-skills-design.md`.
-**Not started.** The spec's open decisions 1–8 must be confirmed, or
-covered by the user's standing "proceed with your recommendation", and
-recorded in the spec before Task 1.
+**Implemented 2026-09-23.** The user's "Please implement" confirmed
+decisions 1–8 as recommended, and that is recorded in the spec. Tasks 1–12
+are done. The spec's "Implementation notes" record the deviations and the
+review outcomes.
 
 It ships in two slices. **17a (Tasks 1–6)** is archetypes and gating.
 **17b (Tasks 7–12)** is utility skills. Each slice is verified and
@@ -31,12 +32,12 @@ Invariants for every task:
 
 ## 17a: Archetypes
 
-- [ ] **0. Baseline.** On a fresh branch or worktree from `master`:
+- [x] **0. Baseline.** On a fresh branch or worktree from `master`:
   - run `go test -race ./...`, `make generate`, and `make validate`
   - record decisions 1–8 in the spec
   - fix the `illlusion` school typo, and confirm by grep that no code
     depends on the misspelling
-- [ ] **1. `internal/archetypes` (pure, delegable).** Files:
+- [x] **1. `internal/archetypes` (pure, delegable).** Files:
       `internal/archetypes/archetypes.go`, `archetypes_test.go`,
       `provider.go`.
   - Tests first:
@@ -53,11 +54,11 @@ Invariants for every task:
     skills-style cross-reference warnings, `SetTestData`, the claim index,
     and the `Provider` seam (`ArchetypeOf(userID)`) with `CanTrain`,
     `CanLearnSpell`, and `SetProvider`.
-- [ ] **2. Data.** Add `_datafiles/world/default/archetypes/` with
+- [x] **2. Data.** Add `_datafiles/world/default/archetypes/` with
       warrior, rogue, wizard, cleric, and ranger, per the spec table.
   - Test: `TestShippedArchetypesLoad` loads the real skill, spell, and
     archetype files, with no warnings and every claim resolved.
-- [ ] **3. `modules/archetype`: registry, choice, and grants.** Files:
+- [x] **3. `modules/archetype`: registry, choice, and grants.** Files:
       `modules/archetype/archetype.go`, `archetype_test.go`,
       `files/data-overlays/config.yaml`.
   - Tests first, with a fake store and a fake user:
@@ -73,7 +74,7 @@ Invariants for every task:
     - toggles persist
   - Then implement, and register the provider. Run `make generate` and
     check that `modules/archetype` is the only addition.
-- [ ] **4. Companion archetypes.** Files: `modules/archetype`,
+- [x] **4. Companion archetypes.** Files: `modules/archetype`,
       `modules/company` (the recruit hook and `company archetype`), and
       the company config.
   - Tests first:
@@ -84,7 +85,7 @@ Invariants for every task:
     - legacy companions have none
   - Then implement, reusing the survival/exposure/walking reconciliation
     pattern.
-- [ ] **5. Engine gating seams.** Files: `internal/usercommands/train.go`,
+- [x] **5. Engine gating seams.** Files: `internal/usercommands/train.go`,
       `internal/scripting/actor_func.go`,
       `internal/scripting/party_func.go`.
   - Tests first, as wiring tests through real entry points:
@@ -100,7 +101,7 @@ Invariants for every task:
     - party `LearnSpell` gates per member
     - `admin spell` bypasses the gate
   - Then add the seam calls.
-- [ ] **6. Display, verify, and review 17a.**
+- [x] **6. Display, verify, and review 17a.**
   - Show the archetype in `company` status and on inspecting a player or
     companion, with a wiring test.
   - Run `go test -race ./...`, `make generate`, and `make validate`, and
@@ -111,7 +112,7 @@ Invariants for every task:
 
 ## 17b: Utility skills
 
-- [ ] **7. Utility math (pure, delegable).** Add to `internal/archetypes`:
+- [x] **7. Utility math (pure, delegable).** Add to `internal/archetypes`:
       `utility.go` and `utility_test.go`.
   - Tests first:
     - `TestEffectiveLevel`: a player with the skill and the utility; a
@@ -123,7 +124,7 @@ Invariants for every task:
       backfire margin
     - `TestDisarmExpiry`
   - Then implement.
-- [ ] **8. `autoskill` and the `trap` command.** Files:
+- [x] **8. `autoskill` and the `trap` command.** Files:
       `modules/archetype/utility.go`, `utility_test.go`, and the module
       config (`SensePerLevel`, `SenseDifficultyFactor`, `SenseCooldown`,
       `DisarmPerLevel`, `DisarmDifficultyFactor`,
@@ -139,7 +140,7 @@ Invariants for every task:
     - reload keeps an unexpired disarm
   - Then implement, including `archetypes.TrapArmed(lockId)` on the
     provider.
-- [ ] **9. Picklock integration and auto-sense on entry.** Files:
+- [x] **9. Picklock integration and auto-sense on entry.** Files:
       `internal/usercommands/picklock.go` and a `RoomChange` listener in
       `modules/archetype`.
   - Tests first, as wiring tests:
@@ -153,7 +154,7 @@ Invariants for every task:
   - Then implement. Decide during the task whether to share Phase 16's
     walking step seam or filter `RoomChange` by origin exit, and record
     the choice in the spec's implementation notes.
-- [ ] **10. Wizard auto-light.** Files: `modules/archetype/light.go` and
+- [x] **10. Wizard auto-light.** Files: `modules/archetype/light.go` and
       `light_test.go`, reading Phase 14's light seam.
   - Tests first, as wiring tests with real rooms at night or in a dark
     biome:
@@ -165,14 +166,14 @@ Invariants for every task:
       without enough mana
     - there is at most one attempt per step
   - Then implement.
-- [ ] **11. Content.**
+- [x] **11. Content.**
   - A trapped, locked chest in a Dunmar room (a new container with
     `difficulty` and `trapbuffids` of an existing mild debuff).
   - A rogue trainer range for `skulduggery`, and a wizard source for
     `cast` reachable in the Ashveil start area, if none is reachable
     today. Check first; add only what is missing.
   - Test: the shipped room loads with the trapped lock.
-- [ ] **12. Concurrency, verify, review 17b, and record.**
+- [x] **12. Concurrency, verify, review 17b, and record.**
   - A `-race` test (`-count=20`) running `archetype choose`,
     `trap disarm`, auto-sense and auto-light listeners, and a registry
     save at the same time.

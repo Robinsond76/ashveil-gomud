@@ -8,7 +8,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
@@ -215,4 +217,52 @@ func TestWiringLookShowsArchetypes(t *testing.T) {
 		require.NoError(t, err)
 	})
 	assert.NotContains(t, text, "Archetype:", "an unchosen player shows nothing")
+}
+
+// Review 17a finding 1: scripts (e.g. the Whispering Wastes obelisk) train
+// skills through ScriptActor.TrainSkill, which must respect claims too.
+func TestWiringScriptTrainSkillIsGated(t *testing.T) {
+	m := registered(t)
+	u := trainee(t, 46, 96006)
+	m.choose(u, "warrior", true)
+	actor := scripting.GetActor(46, 0)
+	require.NotNil(t, actor)
+
+	var ok bool
+	text := captureText(t, func() { ok = actor.TrainSkill("portal", 1) })
+	assert.False(t, ok, "portal is a wizard skill")
+	assert.Zero(t, u.Character.GetSkillLevel("portal"))
+	assert.Contains(t, text, "Wizard")
+
+	assert.True(t, actor.TrainSkill("map", 1), "trade skills stay open")
+	assert.Equal(t, 1, u.Character.GetSkillLevel("map"))
+
+	wiz := trainee(t, 47, 96006)
+	m.choose(wiz, "wizard", true)
+	assert.True(t, scripting.GetActor(47, 0).TrainSkill("portal", 1))
+	assert.Equal(t, 1, wiz.Character.GetSkillLevel("portal"))
+}
+
+// Review 17a finding 1: quest skill rewards respect claims.
+func TestWiringQuestSkillRewardIsGated(t *testing.T) {
+	m := registered(t)
+	quests.SetTestQuest(&quests.Quest{QuestId: 9601, Name: "Obelisk Lore",
+		Steps:   []quests.QuestStep{{Id: "start"}, {Id: "end"}},
+		Rewards: quests.QuestReward{SkillInfo: "portal:1"}})
+	t.Cleanup(func() { quests.RemoveTestQuest(9601) })
+
+	warrior := trainee(t, 48, 96007)
+	m.choose(warrior, "warrior", true)
+	hooks.HandleQuestUpdate(events.Quest{UserId: 48, QuestToken: "9601-start"})
+	text := captureText(t, func() {
+		hooks.HandleQuestUpdate(events.Quest{UserId: 48, QuestToken: "9601-end"})
+	})
+	assert.Zero(t, warrior.Character.GetSkillLevel("portal"))
+	assert.Contains(t, text, "Wizard")
+
+	wizard := trainee(t, 49, 96007)
+	m.choose(wizard, "wizard", true)
+	hooks.HandleQuestUpdate(events.Quest{UserId: 49, QuestToken: "9601-start"})
+	hooks.HandleQuestUpdate(events.Quest{UserId: 49, QuestToken: "9601-end"})
+	assert.Equal(t, 1, wizard.Character.GetSkillLevel("portal"))
 }

@@ -348,6 +348,16 @@ func (a ScriptActor) TrainSkill(skillName string, skillLevel int) bool {
 
 	currentLevel := a.characterRecord.GetSkillLevel(skillName)
 
+	// Archetype-claimed skills need the right archetype (Phase 17).
+	if currentLevel < skillLevel {
+		if allowed, reason := archetypes.CanTrain(a.userId, skillName); !allowed {
+			if reason != `` {
+				a.userRecord.SendText(reason)
+			}
+			return false
+		}
+	}
+
 	if currentLevel < skillLevel {
 		newLevel := a.characterRecord.TrainSkill(skillName, skillLevel)
 

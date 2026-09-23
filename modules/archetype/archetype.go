@@ -130,8 +130,17 @@ type ArchetypeModule struct {
 	store Store
 
 	// Dependency seams (native defaults; tests replace them).
-	schoolOf    func(spellID string) (string, bool)
-	skillExists func(skillID string) bool
+	schoolOf func(spellID string) (string, bool)
+	// spellSchools lists every loaded spell's school, for load-time checks.
+	spellSchools func() map[string]string
+	skillExists  func(skillID string) bool
+	roll         func() int    // 1..100
+	now          func() uint64 // current round
+	cast         func(user *users.UserRecord, room *rooms.Room, spellID string)
+
+	// pickSensed records (user, lock) pairs that already had their free
+	// pre-picklock sense this session. Runtime-only UX state.
+	pickSensed map[string]struct{}
 
 	table    archetypes.Table
 	registry *Registry
@@ -153,10 +162,14 @@ func nativeSchoolOf(spellID string) (string, bool) {
 
 func newModule() *ArchetypeModule {
 	return &ArchetypeModule{
-		schoolOf:    nativeSchoolOf,
-		skillExists: skills.SkillExists,
-		registry:    NewRegistry(),
-		config:      defaultUtilityConfig(),
+		schoolOf:     nativeSchoolOf,
+		spellSchools: nativeSpellSchools,
+		skillExists:  skills.SkillExists,
+		roll:         nativeRoll,
+		now:          nativeNow,
+		cast:         nativeCast,
+		registry:     NewRegistry(),
+		config:       defaultUtilityConfig(),
 	}
 }
 
@@ -177,10 +190,17 @@ func init() {
 		}
 	})
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
 	archetypes.SetProvider(m)
 }
 
 func (m *ArchetypeModule) persistenceAvailable() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.persistenceAvailableLocked()
+}
+
+func (m *ArchetypeModule) persistenceAvailableLocked() error {
 	if m.loadErr != nil {
 		return fmt.Errorf("archetype: persistence unavailable until a successful reload: %w", m.loadErr)
 	}
@@ -197,7 +217,7 @@ func (m *ArchetypeModule) save() error {
 }
 
 func (m *ArchetypeModule) saveLocked() error {
-	if err := m.persistenceAvailable(); err != nil {
+	if err := m.persistenceAvailableLocked(); err != nil {
 		return err
 	}
 	if err := m.store.Save(m.registry.Clone()); err != nil {
@@ -239,6 +259,9 @@ func (m *ArchetypeModule) load() {
 		return
 	}
 	m.registry = loaded
+	if m.now != nil {
+		m.pruneDisarmedLocked(m.now())
+	}
 	for userID, id := range m.registry.Players {
 		if _, ok := m.table.Get(id); !ok {
 			mudlog.Warn("archetype: recovery unknown archetype", "user", userID, "archetype", id)
@@ -277,15 +300,68 @@ func (m *ArchetypeModule) buildTable(list []archetypes.Archetype) archetypes.Tab
 	for _, err := range errs {
 		mudlog.Warn("archetype: invalid archetype", "error", err)
 	}
+	if m.spellSchools != nil {
+		for _, w := range schoolWarnings(table, m.spellSchools()) {
+			mudlog.Warn("archetype: school mismatch", "detail", w)
+		}
+	}
 	return table
+}
+
+func nativeSpellSchools() map[string]string {
+	out := map[string]string{}
+	for id, s := range spells.GetAllSpells() {
+		out[id] = string(s.School)
+	}
+	return out
+}
+
+// schoolWarnings reports spell-school mismatches in either direction: an
+// archetype school no loaded spell uses (a typo there claims nothing), and
+// a spell school no archetype claims (a typo there leaves the spell open to
+// everyone). Both are warnings, not errors: the data still loads.
+func schoolWarnings(table archetypes.Table, spellSchools map[string]string) []string {
+	used := map[string]bool{}
+	for _, school := range spellSchools {
+		used[strings.ToLower(strings.TrimSpace(school))] = true
+	}
+	var out []string
+	for _, a := range table.List() {
+		for _, school := range a.Schools {
+			if !used[school] {
+				out = append(out, fmt.Sprintf(`archetype school %q matches no loaded spell`, school))
+			}
+		}
+	}
+	ids := make([]string, 0, len(spellSchools))
+	for id := range spellSchools {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		school := strings.ToLower(strings.TrimSpace(spellSchools[id]))
+		if school != "" && len(table.SchoolClaimants(school)) == 0 {
+			out = append(out, fmt.Sprintf(`spell %q has school %q, which no archetype claims`, id, school))
+		}
+	}
+	return out
 }
 
 // --- archetypes.Provider --------------------------------------------------
 
+// unavailableReason is the refusal while the registry failed to load:
+// every player reads as unchosen, so claimed skills and schools are paused
+// rather than misreported.
+const unavailableReason = "Archetype records are unavailable right now, so archetype skills and spells can't be learned. Please try again later."
+
 func (m *ArchetypeModule) CanTrain(userID int, skillID string) (bool, string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.table.CanTrain(m.registry.Players[userID], skillID)
+	ok, reason := m.table.CanTrain(m.registry.Players[userID], skillID)
+	if !ok && m.loadErr != nil {
+		return false, unavailableReason
+	}
+	return ok, reason
 }
 
 func (m *ArchetypeModule) CanLearnSpell(userID int, spellID string) (bool, string) {
@@ -300,7 +376,11 @@ func (m *ArchetypeModule) CanLearnSpell(userID int, spellID string) (bool, strin
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.table.CanLearnSchool(m.registry.Players[userID], school)
+	ok, reason := m.table.CanLearnSchool(m.registry.Players[userID], school)
+	if !ok && m.loadErr != nil {
+		return false, unavailableReason
+	}
+	return ok, reason
 }
 
 // SkillClaimantNames implements archetypes.ClaimantNamer.
@@ -371,13 +451,12 @@ func (m *ArchetypeModule) choose(user *users.UserRecord, name string, confirm bo
 		m.mu.Unlock()
 		return fmt.Sprintf(`There is no archetype called "%s". Type "archetype" to see them.`, name)
 	}
-	if current, chosen := m.registry.Players[user.UserId]; chosen {
+	// A stored archetype that is no longer configured doesn't count: the
+	// player may choose again rather than being stranded.
+	current, chosen := m.registry.Players[user.UserId]
+	if c, known := m.table.Get(current); chosen && known {
 		m.mu.Unlock()
-		currentName := current
-		if c, known := m.table.Get(current); known {
-			currentName = c.Name
-		}
-		return fmt.Sprintf("You are already a %s. The choice is permanent.", currentName)
+		return fmt.Sprintf("You are already a %s. The choice is permanent.", c.Name)
 	}
 	if !confirm {
 		m.mu.Unlock()
@@ -385,7 +464,11 @@ func (m *ArchetypeModule) choose(user *users.UserRecord, name string, confirm bo
 	}
 	m.registry.Players[user.UserId] = a.ID
 	if err := m.saveLocked(); err != nil {
-		delete(m.registry.Players, user.UserId)
+		if chosen {
+			m.registry.Players[user.UserId] = current
+		} else {
+			delete(m.registry.Players, user.UserId)
+		}
 		m.mu.Unlock()
 		return err.Error()
 	}
@@ -412,6 +495,20 @@ func (m *ArchetypeModule) reset(userID int) (string, error) {
 		return "", err
 	}
 	return "Archetype cleared.", nil
+}
+
+// onPlayerDeath clears the archetype on a permanent death: the engine
+// replaces the character, and the archetype belongs to the character, not
+// the account.
+func (m *ArchetypeModule) onPlayerDeath(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.PlayerDeath)
+	if !ok || !evt.Permanent {
+		return events.Continue
+	}
+	if _, err := m.reset(evt.UserId); err != nil {
+		mudlog.Error("archetype: clear on permadeath", "user", evt.UserId, "error", err)
+	}
+	return events.Continue
 }
 
 func (m *ArchetypeModule) onPlayerSpawn(e events.Event) events.ListenerReturn {

@@ -109,3 +109,16 @@ func ClaimantNames(skillID string) string {
 	}
 	return ""
 }
+
+// TrapSenser is optionally implemented by the provider (Phase 17b): a free
+// trap sense when a player starts picking a trapped lock.
+type TrapSenser interface {
+	SenseBeforePick(userID, roomID int, lockID string)
+}
+
+// SenseBeforePick does nothing without a provider that senses traps.
+func SenseBeforePick(userID, roomID int, lockID string) {
+	if ts, ok := current().(TrapSenser); ok {
+		ts.SenseBeforePick(userID, roomID, lockID)
+	}
+}

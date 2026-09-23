@@ -147,3 +147,31 @@ func TestSteppedProvider(t *testing.T) {
 	Stepped(7, 2001, 2003)
 	assert.Equal(t, [][3]int{{7, 2001, 2003}}, rec.calls)
 }
+
+func TestStepListenersRunAfterProviderAndUnregister(t *testing.T) {
+	var order []string
+	rec := &recordingStepper{}
+	SetStepProvider(rec)
+	t.Cleanup(func() { SetStepProvider(nil) })
+
+	remove := AddStepListener(func(userID, from, to int) {
+		order = append(order, "listener")
+		assert.Len(t, rec.calls, 1, "the provider charges first")
+		assert.Equal(t, [3]int{7, 1, 2}, [3]int{userID, from, to})
+	})
+	Stepped(7, 1, 2)
+	assert.Equal(t, []string{"listener"}, order)
+
+	remove()
+	Stepped(7, 2, 3)
+	assert.Equal(t, []string{"listener"}, order, "removed listeners stop hearing steps")
+}
+
+func TestStepListenersWithoutProvider(t *testing.T) {
+	SetStepProvider(nil)
+	heard := 0
+	remove := AddStepListener(func(int, int, int) { heard++ })
+	t.Cleanup(remove)
+	Stepped(1, 2, 3)
+	assert.Equal(t, 1, heard)
+}

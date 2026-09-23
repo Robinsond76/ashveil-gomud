@@ -6,8 +6,12 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // archetypeStub is a minimal archetypes.Provider knowing warrior and rogue.
@@ -111,4 +115,40 @@ func TestCompanionArchetypesConfigParsing(t *testing.T) {
 		map[any]any{"MobTemplateId": 61, "Archetype": ""},
 	}
 	assert.Equal(t, map[int]string{58: "warrior", 60: "rogue"}, parseCompanionArchetypes(raw))
+}
+
+// The real config path: the shipped overlay merged as Modules.company.*
+// and read back flattened, as PluginConfig.Get does.
+func TestCompanionArchetypesThroughRealConfigPath(t *testing.T) {
+	data, err := files.ReadFile("files/data-overlays/config.yaml")
+	require.NoError(t, err)
+	var dataMap map[string]any
+	require.NoError(t, yaml.Unmarshal(data, &dataMap))
+	overlay := map[string]any{}
+	for k, v := range dataMap {
+		overlay["Modules.company."+k] = v
+	}
+	require.NoError(t, configs.AddOverlayOverrides(overlay))
+	raw := configs.Flatten(configs.GetModulesConfig())["company.CompanionArchetypes"]
+	assert.Equal(t, map[int]string{58: "warrior"}, parseCompanionArchetypes(raw))
+}
+
+func TestCompanyArchetypeUserCommand(t *testing.T) {
+	useArchetypes(t)
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}}},
+	}}, &fakeRuntime{})
+	user := users.NewUserRecord(7, 7)
+	messages := captureCompanyMessages(t)
+	_, err := module.userCommand("archetype 1 Rogue", user, nil, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	record, _ := module.registry.Get(7)
+	assert.Equal(t, "rogue", record.Companions[0].Archetype)
+	assert.NotEmpty(t, *messages)
+
+	_, err = module.userCommand("archetype 1", user, nil, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, (*messages)[len(*messages)-1], "company archetype")
 }
