@@ -111,7 +111,7 @@ before writing any trading-integration code.
       `go build ./...`, `go test -race ./...` after each task.
 - [x] `make generate` (registers the new `modules/market` plugin),
       `make validate`.
-- [ ] **Testing and review gate:** independent reviewer subagent (most
+- [x] **Testing and review gate:** independent reviewer subagent (most
       capable model tier) over the full phase diff, briefed with the
       design doc, the non-negotiable invariants (never advance the world
       clock, survive restart/copyover, lock ordering — `modules/market`
@@ -120,7 +120,7 @@ before writing any trading-integration code.
       Phase 16's camping-lock fix already set), and asked for bugs,
       design gaps, and missing coverage. Verify each finding, fix real
       ones with a regression test, record rejected ones and why.
-- [ ] Update `docs/PROJECT_STATUS.md`: header, Current position/Next,
+- [x] Update `docs/PROJECT_STATUS.md`: header, Current position/Next,
       phase table row 19, new work-log entry with a **Review:** line and
       an explicit note of the buy/sell-integration decision made in
       task 1.
