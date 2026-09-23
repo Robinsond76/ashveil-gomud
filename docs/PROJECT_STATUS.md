@@ -6,16 +6,16 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-12a-encounter-kinds`
-- **HEAD:** Phase 12 begins. First slice: `internal/expedition.InterruptionKind`
-  widens from the single hardcoded `fallen-tree` to also include
-  `discovery` and `tracks`, each with its own player-facing text via a new
-  `InterruptionText(kind, profileName)` lookup — proving travel
-  interruptions can carry real, varied content before any new subsystem
-  (weighted tables, combat/merchant/social encounters) gets built on top.
+- **Branch:** `phase-12b-weighted-encounters`
+- **HEAD:** A `TravelProfile`'s interruption can now roll among several
+  kinds instead of naming exactly one: `InterruptionProfile` gains an
+  alternate `Kinds []WeightedInterruptionKind` form, resolved once (at
+  fire time, via a new `rollUint64` seam in `modules/expedition`) into
+  the same singular-`Kind` shape the existing, unchanged
+  `TravelSession.Interrupt` always read.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through the leader-as-interceptor
-  combat wiring (`e47553b7`); this branch's Phase 12a work is not yet
+- **Origin sync:** `master` is pushed through Phase 12a's encounter-kind
+  abstraction (`5d4fa70c`); this branch's Phase 12b work is not yet
   merged.
 
 ## Current position
@@ -43,18 +43,18 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 11's formation combat wiring (11a-11c, the combat-loop
-  join, the engagement trigger, the leader-as-interceptor gap) is entirely
-  done; Phase 11d (guard reactions, crit effects, wounds, AI personality)
-  remains an unscheduled bucket. Phase 12 is now underway: 12a shipped the
-  encounter-kind abstraction (see above). Still ahead, each its own
-  scoped pass per the Phase 12a design doc: weighted/random encounter
-  tables (rolling among several kinds instead of one fixed kind per
-  profile), and the subsystem-backed encounter types the Phase 12
-  overview names — combat, merchants, injured NPCs, route choices, camp
-  opportunities, ruined sites, resources, social encounters — each
-  needing its own subsystem (mob spawning + Phase 11 combat, a shop flow,
-  dialogue, branching choice UX, or `internal/camping` integration).
+- **Next:** Phase 11's formation combat wiring is entirely done; Phase 11d
+  (guard reactions, crit effects, wounds, AI personality) remains an
+  unscheduled bucket. Phase 12 is underway: 12a shipped the encounter-kind
+  abstraction, 12b shipped weighted encounter tables (see above) — no
+  route in shipped config actually uses a `Kinds` table yet (`oak-road`
+  is still plain `fallen-tree`); that's deferred until there's a reason
+  to author new route content. Still ahead: the subsystem-backed
+  encounter types the Phase 12 overview names — combat, merchants,
+  injured NPCs, route choices, camp opportunities, ruined sites,
+  resources, social encounters — each needing its own subsystem (mob
+  spawning + Phase 11 combat, a shop flow, dialogue, branching choice
+  UX, or `internal/camping` integration).
 
 ## Phase progress
 
@@ -76,9 +76,67 @@ instead of duplicating them.
 | 11c | Formation tactics | Complete: domain layer, schema, read-only query, all three player/mob attack directions wired, and the leader-as-interceptor gap closed |
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12a | Encounter-kind abstraction | Complete: `InterruptionKind` widened to `fallen-tree`/`discovery`/`tracks`, data-driven text lookup |
-| 12b+ | Weighted encounter tables; combat/merchant/social/etc. encounter subsystems | Not started |
+| 12b | Weighted encounter tables | Complete: `InterruptionProfile.Kinds` weighted-roll form, resolved once at fire time; no shipped route uses it yet |
+| 12c+ | Combat/merchant/social/etc. encounter subsystems | Not started |
 
 ## Recent work log
+
+### Phase 12b: weighted encounter tables (2026-09-22)
+
+- **What:** A `TravelProfile`'s interruption can now be configured as a
+  weighted table instead of exactly one kind. `InterruptionProfile` gains
+  an alternate `Kinds []WeightedInterruptionKind{Kind, Weight}` form
+  (`Kind` and `Kinds` are mutually exclusive — `Validate` rejects both set
+  or both empty). A new pure `ResolveKind(roll uint64)` selects
+  proportionally to weight (`roll % totalWeight`, cumulative-band lookup),
+  or returns the plain `Kind` unchanged (ignoring `roll` entirely) for a
+  singular-form profile — today's exact behavior, unchanged. The existing
+  `TravelSession.Interrupt(now, p)` state-transition function is
+  untouched: it still reads `p.Interruption.Kind` directly, so all 14 of
+  its existing tests kept passing unmodified. Instead,
+  `modules/expedition.interruptLocked` resolves the roll *before* calling
+  `Interrupt` — when `profile.Interruption.Kinds` is set, it calls
+  `ResolveKind(m.rollUint64())` and builds a resolved, singular-form
+  copy of the profile to hand to the unchanged `Interrupt`. `rollUint64`
+  is a new seam on `ExpeditionModule` (`func() uint64`, mirroring the
+  existing `clock func() time.Time` seam), defaulting to `rand.Uint64` and
+  overridable in tests.
+- **Why:** 12a's design doc named this as its own next slice, deferred
+  because it needed a random source and weight schema 12a didn't need to
+  decide yet. Keeping the roll at the engine edge (same place `clock()`
+  already lives) rather than threading it through `Interrupt` avoided
+  rewriting 15 existing call sites (14 tests plus the one production call)
+  for a change only weighted-table profiles need.
+- **Scope:** Only `internal/expedition`'s `InterruptionProfile`/
+  `TravelInterruption` (`TravelInterruption.Validate` could no longer
+  delegate via a struct conversion to `InterruptionProfile` once the
+  latter gained a third field, so it now checks `Kind`/`Checkpoint`
+  directly — a fired interruption always carries the one already-resolved
+  `Kind`, never a `Kinds` table) and `modules/expedition`'s
+  `interruptLocked`. No shipped config changes: `oak-road` stays on plain
+  `Kind: fallen-tree`. Adding real route content that uses a weighted
+  table is deferred until there's a reason to author a new route (new
+  zone/exit work) — proving the mechanism through tests is enough for now.
+- **Fails closed / stays durable:** the roll happens exactly once, at fire
+  time; only the resolved singular `Kind` is ever persisted into
+  `TravelInterruption`, so a restart or copyover mid-interruption
+  re-renders the same already-resolved choice exactly as before — it
+  never re-rolls.
+- **Step completed:** Full design doc
+  (`docs/superpowers/specs/2026-09-22-phase-12b-weighted-encounters-design.md`),
+  implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-12b-weighted-encounters.md`),
+  both code tasks, and this status update.
+- **Key commits:** `32ec8367` (design + plan), `3f5b624d`
+  (implementation), landing on `phase-12b-weighted-encounters`.
+- **Verification:** `go test -race ./...` (1786 tests / 80 packages, up
+  from 1777 — 8 new `internal/expedition` tests covering `Validate`'s new
+  branches and `ResolveKind`'s singular/weighted/invalid-profile cases,
+  plus 1 new `modules/expedition` test proving `interruptLocked` fires
+  the `rollUint64`-resolved kind), `make generate` (no wiring change),
+  `make validate` pass.
+- **Live acceptance:** Not run: this host has no interactive Telnet
+  client.
 
 ### Phase 12a: encounter-kind abstraction (2026-09-22)
 
