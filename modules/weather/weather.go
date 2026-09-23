@@ -409,7 +409,7 @@ func (m *WeatherModule) userCommand(_ string, user *users.UserRecord, room *room
 	condition, tracked := m.CurrentCondition(view.WeatherZone)
 	lines := []string{fmt.Sprintf("It is %s.", m.timeOfDay())}
 	if temp, ok := climate.AirTemperatureIn(room.RoomId); ok {
-		lines = append(lines, fmt.Sprintf("Temperature: %d°C (%s).", temp, climate.TemperatureName(temp)))
+		lines = append(lines, fmt.Sprintf("Temperature here: %d°C (%s).", temp, climate.TemperatureName(temp)))
 	}
 	lines = append(lines, weather.RenderSky(view, condition, tracked, true)...)
 	user.SendText(strings.Join(lines, "\n"))

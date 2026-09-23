@@ -35,7 +35,7 @@ persisted state.
       fur items.
 - [x] `gofmt`, `go vet`, `go build ./...`, `go test -race ./...`,
       `make generate`, `make validate`.
-- [ ] **Review gate:** an independent reviewer subagent over the phase diff;
+- [x] **Review gate:** an independent reviewer subagent over the phase diff;
       verify findings, fix with regression tests.
-- [ ] Update `docs/PROJECT_STATUS.md` (including the **Review:** line),
+- [x] Update `docs/PROJECT_STATUS.md` (including the **Review:** line),
       then merge and push.

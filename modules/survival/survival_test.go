@@ -3,6 +3,7 @@ package survival
 import (
 	"errors"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -760,22 +761,46 @@ func TestApplyMemberDrainChargesOneMemberWithoutLedger(t *testing.T) {
 	assert.Equal(t, domain.Needs{Hunger: 80, Thirst: 76, Fatigue: 80}, result.Needs)
 	assert.Equal(t, domain.Needs{Hunger: 50, Thirst: 60, Fatigue: 70}, m.registry.MustNeedsFor(7, domain.LeaderMemberKey), "only the named member is drained")
 	assert.Empty(t, m.registry.AppliedExertion[7], "ambient drains keep no per-operation ledger")
-	assert.Equal(t, 1, m.store.(*fakeStore).saveCalls)
+	assert.Equal(t, 0, m.store.(*fakeStore).saveCalls, "drains don't write to disk each tick")
+	assert.True(t, m.dirty)
 
 	_, err = m.ApplyMemberDrain(7, domain.CompanionMemberKey(1), domain.Exertion{Thirst: 4})
 	require.NoError(t, err)
 	assert.Equal(t, 72, m.registry.MustNeedsFor(7, domain.CompanionMemberKey(1)).Thirst, "each tick drains again")
 }
 
-func TestApplyMemberDrainRollsBackOnSaveFailure(t *testing.T) {
+func TestApplyMemberDrainIsPersistedByTheNextSave(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	require.NoError(t, m.registry.PutNeeds(7, domain.LeaderMemberKey, domain.Needs{Hunger: 50, Thirst: 60, Fatigue: 70}))
+	_, err := m.ApplyMemberDrain(7, domain.LeaderMemberKey, domain.Exertion{Fatigue: 3})
+	require.NoError(t, err)
+
+	require.NoError(t, m.flush()) // the periodic plugin save
+	store := m.store.(*fakeStore)
+	assert.Equal(t, 1, store.saveCalls)
+	assert.False(t, m.dirty)
+	saved := store.saved.MustNeedsFor(7, domain.LeaderMemberKey)
+	assert.Equal(t, 67, saved.Fatigue)
+}
+
+// TestSurvivalIsSafeForConcurrentCallers covers the timer goroutines (travel
+// and camp rest) calling survival while the game loop applies exposure
+// drains. Run under -race.
+func TestSurvivalIsSafeForConcurrentCallers(t *testing.T) {
 	m := newTestModule(*domain.NewRegistry())
 	require.NoError(t, m.registry.Ensure(7, domain.LeaderMemberKey))
-	m.store = &fakeStore{saveErr: errors.New("boom")}
-	before := m.registry.Clone()
-
-	_, err := m.ApplyMemberDrain(7, domain.LeaderMemberKey, domain.Exertion{Fatigue: 3})
-	require.Error(t, err)
-	assert.Equal(t, before, m.registry)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 200; i++ {
+			_, _ = m.ApplyCompanyExertion(7, "concurrent-"+strconv.Itoa(i), domain.Exertion{Hunger: 1})
+		}
+	}()
+	for i := 0; i < 200; i++ {
+		_, _ = m.ApplyMemberDrain(7, domain.LeaderMemberKey, domain.Exertion{Thirst: 1})
+		_ = m.CompanyNeeds(7)
+	}
+	<-done
 }
 
 func TestApplyMemberDrainRejectsInvalidInput(t *testing.T) {

@@ -14,6 +14,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -122,6 +123,15 @@ type SurvivalModule struct {
 	store    Store
 	registry domain.Registry
 	loadErr  error
+
+	// mu guards registry and dirty. Survival is called from the game loop
+	// and from travel/camping timer goroutines, so every exported entry
+	// point takes it. It is a leaf lock: nothing called while holding it
+	// calls back into survival.
+	mu sync.Mutex
+	// dirty marks unsaved ambient drains (ApplyMemberDrain), flushed by the
+	// next save of any kind, including the periodic plugin save.
+	dirty bool
 }
 
 var (
@@ -139,7 +149,7 @@ func init() {
 	m.plug.AddUserCommand("survival", m.userCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
-		if err := m.save(); err != nil {
+		if err := m.flush(); err != nil {
 			mudlog.Error("survival: save", "error", err)
 		}
 	})
@@ -166,10 +176,20 @@ func (m *SurvivalModule) save() error {
 	if err := m.store.Save(m.registry); err != nil {
 		return fmt.Errorf("survival: save failed; please retry: %w", err)
 	}
+	m.dirty = false
 	return nil
 }
 
+// flush takes the lock and persists the registry (the periodic plugin save).
+func (m *SurvivalModule) flush() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.save()
+}
+
 func (m *SurvivalModule) load() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if m.store == nil {
 		return
 	}
@@ -186,6 +206,8 @@ func (m *SurvivalModule) load() {
 // EnsureCompanyMember creates default state for a newly summoned companion and
 // persists it. It rolls the in-memory registry back when the write fails.
 func (m *SurvivalModule) EnsureCompanyMember(leaderUserID, companionID int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
@@ -209,6 +231,8 @@ func (m *SurvivalModule) EnsureCompanyMember(leaderUserID, companionID int) erro
 // NextReservedCompanionID returns the survival-side durable reservation used
 // by company before assigning a new companion ID.
 func (m *SurvivalModule) NextReservedCompanionID(leaderUserID int) (int, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return 0, err
 	}
@@ -217,6 +241,8 @@ func (m *SurvivalModule) NextReservedCompanionID(leaderUserID int) (int, error) 
 
 // RemoveCompanyMember prunes one dismissed companion and persists the change.
 func (m *SurvivalModule) RemoveCompanyMember(leaderUserID, companionID int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
@@ -234,6 +260,8 @@ func (m *SurvivalModule) RemoveCompanyMember(leaderUserID, companionID int) erro
 
 // RemoveAllCompanyMembers prunes every companion while preserving leader state.
 func (m *SurvivalModule) RemoveAllCompanyMembers(leaderUserID int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
@@ -257,6 +285,8 @@ func (m *SurvivalModule) RemoveAllCompanyMembers(leaderUserID int) error {
 // SnapshotCompanyMember returns the exact stored state for a companion without
 // mutating the registry. A companion with no record reports Exists false.
 func (m *SurvivalModule) SnapshotCompanyMember(leaderUserID, companionID int) (domain.MemberSnapshot, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return domain.MemberSnapshot{}, err
 	}
@@ -273,6 +303,8 @@ func (m *SurvivalModule) SnapshotCompanyMember(leaderUserID, companionID int) (d
 // RestoreCompanyMember writes a captured snapshot back and persists it. When
 // the snapshot recorded no stored state, the key is removed instead.
 func (m *SurvivalModule) RestoreCompanyMember(leaderUserID, companionID int, snapshot domain.MemberSnapshot) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
@@ -299,6 +331,8 @@ func (m *SurvivalModule) RestoreCompanyMember(leaderUserID, companionID int, sna
 // durable write. It rolls the in-memory registry back when the write fails, so
 // travel never advances without its due exertion.
 func (m *SurvivalModule) ApplyCompanyExertion(leaderUserID int, operationID string, cost domain.Exertion) ([]domain.ExertionResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return nil, err
 	}
@@ -354,10 +388,15 @@ func (m *SurvivalModule) ApplyCompanyExertion(leaderUserID int, operationID stri
 	return results, nil
 }
 
-// ApplyMemberDrain applies an ambient drain to one member in one durable
-// write, rolling back on a failed save. It keeps no operation ledger: it is
-// for frequent ticks (Phase 15 exposure) where replay safety isn't needed.
+// ApplyMemberDrain applies an ambient drain to one member. It keeps no
+// operation ledger and does not write to disk itself: it marks the registry
+// dirty, and the next save of any kind (including the periodic plugin save)
+// persists it. Frequent ticks (Phase 15 exposure) would otherwise rewrite
+// the whole registry many times a minute; losing the drains since the last
+// save in a crash is harmless.
 func (m *SurvivalModule) ApplyMemberDrain(leaderUserID int, key domain.MemberKey, cost domain.Exertion) (domain.ExertionResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return domain.ExertionResult{}, err
 	}
@@ -378,10 +417,7 @@ func (m *SurvivalModule) ApplyMemberDrain(leaderUserID int, key domain.MemberKey
 		m.registry = snapshot
 		return domain.ExertionResult{}, err
 	}
-	if err := m.save(); err != nil {
-		m.registry = snapshot
-		return domain.ExertionResult{}, err
-	}
+	m.dirty = true
 	return domain.ExertionResult{
 		Member:  key,
 		Needs:   m.registry.MustNeedsFor(leaderUserID, key),
@@ -395,6 +431,8 @@ func (m *SurvivalModule) ApplyMemberDrain(leaderUserID int, key domain.MemberKey
 // in one durable write. A leader-scoped operation ledger makes completion
 // retries idempotent across restarts and copyover.
 func (m *SurvivalModule) ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]domain.ExertionResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return nil, err
 	}
@@ -472,6 +510,8 @@ func (m *SurvivalModule) companyExertionResults(leaderUserID int) []domain.Exert
 // needs. It is read-only: it may initialize a default leader record and prune
 // stale companions in memory, but never writes to the durable store.
 func (m *SurvivalModule) CompanyNeeds(leaderUserID int) []domain.MemberNeeds {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return nil
 	}
@@ -494,6 +534,8 @@ func (m *SurvivalModule) CompanyNeeds(leaderUserID int) []domain.MemberNeeds {
 // are pruned and current companions without a record start at FullNeeds. The
 // leader key is always preserved.
 func (m *SurvivalModule) ReconcileCompanyRosters(rosters map[int][]domain.MemberRef) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
@@ -546,6 +588,8 @@ func (m *SurvivalModule) ReconcileCompanyRosters(rosters map[int][]domain.Member
 // Provision implements domain.Provisioner. It resolves the target member,
 // applies the benefit, and persists before reporting success.
 func (m *SurvivalModule) Provision(leaderUserID int, selector string, benefit domain.Benefit) (domain.ProvisionResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if err := m.persistenceAvailable(); err != nil {
 		return domain.ProvisionResult{}, err
 	}
@@ -631,6 +675,8 @@ func (m *SurvivalModule) resolveMember(leaderUserID int, selector string) (domai
 // companion, using the same rules as Provision so command parsing never
 // forwards a token that provisioning would reject.
 func (m *SurvivalModule) IsMemberSelector(leaderUserID int, selector string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	if leaderUserID <= 0 {
 		return false
 	}
@@ -797,6 +843,8 @@ func (m *SurvivalModule) pruneStale(leaderUserID int) {
 }
 
 func (m *SurvivalModule) userCommand(rest string, user *users.UserRecord, _ *rooms.Room, _ events.EventFlag) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	rest = strings.ToLower(strings.TrimSpace(rest))
 	if rest != "" && rest != "status" {
 		user.SendText(survivalUsage)

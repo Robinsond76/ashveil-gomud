@@ -36,7 +36,8 @@ All numbers are module config (`modules/exposure`), shown here as defaults.
    - Outdoors: biome base, minus the biome's night drop at night, plus the
      zone weather's `TemperatureMod` (new `weather.Condition` field,
      −30..30).
-   - Furnished indoors (lit or `indoor`-tagged): `IndoorTemperature` (18).
+   - Furnished indoors (a lit biome, or a room tagged `indoor` or `lit`):
+     `IndoorTemperature` (18).
    - Unlit indoors (cave/dungeon): biome base, with no night or weather.
    - A **heat source** in the room (a lit campfire) adds `FireWarmth` (+10).
    - Defaults: forest 12/−8, snow −12/−10, mountains −2/−10,
@@ -70,17 +71,29 @@ All numbers are module config (`modules/exposure`), shown here as defaults.
    | 0–24 | — | — | none |
    | 25–49 | Chilled | Overheated | −5 speed/perception |
    | 50–74 | Frostbitten | Heatstricken | −15 speed/strength/perception |
-   | 75–99 | Hypothermic | Heat Exhausted | −30 all stats; 2% max HP damage per tick |
-   | 100 | Freezing to Death | Heatstroke | −30 all stats; 10% max HP damage per tick |
+   | 75–99 | Hypothermic | Heat Exhausted | −30 strength/speed/smarts/perception; 2% max HP per tick, never below 1 HP |
+   | 100 | Freezing to Death | Heatstroke | as above; 10% max HP per tick plus the player's regen over the tick |
+
+   Penalty buffs never touch vitality, which would shrink max HP. They are
+   short-lived, non-permanent buffs that each tick refreshes, so the engine's
+   permabuff reconciliation (on equip, remove, and login) can't strip them.
+   Only the critical band can down anyone. A death clears the player's own
+   exposure.
 
    Survival drains per tick: cold stress at moderate or worse costs fatigue
    `stress / 5`. Any heat stress costs thirst `stress / 4` (min 1). This
-   uses a new non-ledgered survival call.
+   uses a new non-ledgered survival call. The call marks survival dirty
+   rather than writing to disk; the next save, including the periodic
+   autosave, persists it. Survival gained a mutex, because travel and camping
+   timers call it off the game loop.
 
    Timeline, naked on a snowfield at night: lethal band in about 2 minutes, downed
    about 3 minutes later, then the normal bleed-out. A player can escape by
    going indoors, reaching a fire, or dressing.
 6. **Who is affected.** Online players and their live company companions.
+   A roster companion that isn't spawned right now (e.g. mid-restore after a
+   restart) keeps its stored exposure; only members that leave the roster
+   are forgotten.
    Offline characters don't tick; that matches the handoff doc's open
    question, recommended "no". Other mobs are unaffected.
 

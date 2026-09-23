@@ -228,7 +228,8 @@ func decodeRegistry(data []byte, registry *Registry) error {
 	return nil
 }
 
-// member is one company member present in the world this tick.
+// member is one company member. Character is nil when the member isn't
+// spawned right now.
 type member struct {
 	Key       survival.MemberKey
 	Name      string
@@ -246,10 +247,13 @@ type ExposureModule struct {
 
 	// Seams; tests override them.
 	onlineUsers func() []*users.UserRecord
-	companions  func(leaderUserID int) []member
-	loadRoom    func(roomId int) *rooms.Room
-	isNight     func() bool
-	drain       func(leaderUserID int, key survival.MemberKey, cost survival.Exertion) error
+	// companions lists the leader's roster companions; Character is nil for
+	// one not currently spawned. known is false when no roster is available,
+	// in which case stored companion exposure is left alone.
+	companions func(leaderUserID int) (roster []member, known bool)
+	loadRoom   func(roomId int) *rooms.Room
+	isNight    func() bool
+	drain      func(leaderUserID int, key survival.MemberKey, cost survival.Exertion) error
 
 	mu sync.Mutex
 }
@@ -271,6 +275,7 @@ func init() {
 		}
 	})
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
+	events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
 	climate.SetProvider(m)
 }
 
@@ -279,7 +284,7 @@ func newModule() *ExposureModule {
 		settings:    DefaultSettings(),
 		registry:    newRegistry(),
 		onlineUsers: users.GetAllActiveUsers,
-		companions:  liveCompanions,
+		companions:  companionRoster,
 		loadRoom:    rooms.LoadRoom,
 		isNight:     func() bool { return gametime.GetDate().Night },
 		drain: func(leaderUserID int, key survival.MemberKey, cost survival.Exertion) error {
@@ -289,25 +294,29 @@ func newModule() *ExposureModule {
 	}
 }
 
-// liveCompanions lists a leader's currently spawned company companions.
-func liveCompanions(leaderUserID int) []member {
+// companionRoster lists a leader's company companions, with the live
+// character for those currently spawned.
+func companionRoster(leaderUserID int) ([]member, bool) {
+	roster := survival.CurrentRoster(leaderUserID)
+	if roster == nil {
+		return nil, false
+	}
 	var out []member
-	for _, ref := range survival.CurrentRoster(leaderUserID) {
+	for _, ref := range roster {
 		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
 		if !ok {
 			continue
 		}
-		instanceId, ok := company.InstanceFor(leaderUserID, companionID)
-		if !ok {
-			continue
+		mb := member{Key: ref.Key, Name: ref.Name}
+		if instanceId, ok := company.InstanceFor(leaderUserID, companionID); ok {
+			if mob := mobs.GetInstance(instanceId); mob != nil {
+				mb.Character = &mob.Character
+				mb.RoomId = mob.Character.RoomId
+			}
 		}
-		mob := mobs.GetInstance(instanceId)
-		if mob == nil {
-			continue
-		}
-		out = append(out, member{Key: ref.Key, Name: ref.Name, Character: &mob.Character, RoomId: mob.Character.RoomId})
+		out = append(out, mb)
 	}
-	return out
+	return out, true
 }
 
 func (m *ExposureModule) load() {
@@ -355,7 +364,9 @@ func (m *ExposureModule) temperatureInputs(room *rooms.Room) climate.Temperature
 		}
 	}
 	in.Indoor = room.IsIndoor()
-	in.Furnished = in.Indoor && biome != nil && !biome.IsDark()
+	// Furnished: a lit interior, or one tagged indoor or lit (an inn room,
+	// or a hearth-warmed chamber cut into a cave).
+	in.Furnished = in.Indoor && ((biome != nil && biome.IsLit()) || room.HasTag(rooms.TagIndoor) || room.HasTag(rooms.TagLit))
 	in.Night = m.isNight()
 	if condition, ok := weather.CurrentCondition(room.Zone); ok {
 		in.WeatherMod = condition.TemperatureMod
@@ -399,6 +410,31 @@ func (m *ExposureModule) onNewRound(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
+// onPlayerDeath clears a dead player's own exposure, so they don't respawn
+// still freezing.
+func (m *ExposureModule) onPlayerDeath(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.PlayerDeath)
+	if !ok {
+		return events.Continue
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if _, tracked := m.registry.Exposure[evt.UserId][string(survival.LeaderMemberKey)]; !tracked {
+		return events.Continue
+	}
+	delete(m.registry.Exposure[evt.UserId], string(survival.LeaderMemberKey))
+	if len(m.registry.Exposure[evt.UserId]) == 0 {
+		delete(m.registry.Exposure, evt.UserId)
+	}
+	if user := users.GetByUserId(evt.UserId); user != nil && user.Character != nil {
+		syncBandBuff(user.Character, 0, 0)
+	}
+	if err := m.saveLocked(); err != nil {
+		mudlog.Error("exposure: death save", "error", err)
+	}
+	return events.Continue
+}
+
 // tick advances exposure for every online leader and their live companions.
 func (m *ExposureModule) tick() {
 	m.mu.Lock()
@@ -412,16 +448,23 @@ func (m *ExposureModule) tick() {
 			continue
 		}
 		leader := member{Key: survival.LeaderMemberKey, Name: user.Character.Name, Character: user.Character, RoomId: user.Character.RoomId}
-		present := map[string]bool{string(leader.Key): true}
 		m.tickMemberLocked(user, leader)
-		for _, companion := range m.companions(user.UserId) {
-			present[string(companion.Key)] = true
-			m.tickMemberLocked(user, companion)
+		roster, known := m.companions(user.UserId)
+		onRoster := map[string]bool{string(leader.Key): true}
+		for _, companion := range roster {
+			onRoster[string(companion.Key)] = true
+			// A companion that isn't spawned right now (e.g. still being
+			// restored after a restart) keeps its stored exposure untouched.
+			if companion.Character != nil {
+				m.tickMemberLocked(user, companion)
+			}
 		}
-		// Forget members no longer in the company.
-		for key := range m.registry.Exposure[user.UserId] {
-			if !present[key] {
-				delete(m.registry.Exposure[user.UserId], key)
+		// Forget members no longer in the company at all.
+		if known {
+			for key := range m.registry.Exposure[user.UserId] {
+				if !onRoster[key] {
+					delete(m.registry.Exposure[user.UserId], key)
+				}
 			}
 		}
 		if len(m.registry.Exposure[user.UserId]) == 0 {
@@ -475,7 +518,7 @@ func (m *ExposureModule) tickMemberLocked(leader *users.UserRecord, mb member) {
 		m.registry.Exposure[leader.UserId][string(mb.Key)] = next
 	}
 
-	syncBandBuff(mb.Character, next)
+	syncBandBuff(mb.Character, next, 2*m.settings.TickRounds+1)
 	if msg := bandChangeMessage(prev, next, mb.Key == survival.LeaderMemberKey, mb.Name); msg != "" {
 		leader.SendText(msg)
 	}
@@ -488,12 +531,8 @@ func (m *ExposureModule) tickMemberLocked(leader *users.UserRecord, mb member) {
 	case climate.BandCritical:
 		pct = m.settings.CriticalDamagePct
 	}
-	// A downed character already bleeds out through the normal death path.
-	if pct > 0 && mb.Character.Health > 0 {
-		damage := mb.Character.HealthMax.Value * pct / 100
-		if damage < 1 {
-			damage = 1
-		}
+	damage := exposureDamage(band, mb.Character.Health, mb.Character.HealthMax.Value, pct, m.regenPerTick(mb))
+	if damage > 0 {
 		mb.Character.ApplyHealthChange(-damage)
 		if next < 0 {
 			leader.SendText(fmt.Sprintf(`<ansi fg="51">The cold bites %s for <ansi fg="damage">%d damage</ansi>!</ansi>`, who(mb, "you"), damage))
@@ -516,6 +555,40 @@ func (m *ExposureModule) tickMemberLocked(leader *users.UserRecord, mb member) {
 	}
 }
 
+// regenPerTick is the health a player regenerates between ticks, which
+// lethal exposure must outpace. Companions don't regenerate out of combat.
+func (m *ExposureModule) regenPerTick(mb member) int {
+	if mb.Key != survival.LeaderMemberKey {
+		return 0
+	}
+	return mb.Character.HealthPerRound() * m.settings.TickRounds
+}
+
+// exposureDamage is one tick's exposure damage. The severe band wears a
+// character down but never below 1 HP, so only the critical band (reachable
+// only under extreme stress) can down anyone; critical damage adds the
+// regen it must outpace. A downed character (health < 1) takes none: the
+// normal bleed-out handles them.
+func exposureDamage(band climate.Band, health, healthMax, pct, regen int) int {
+	if health < 1 || pct <= 0 {
+		return 0
+	}
+	damage := healthMax * pct / 100
+	if damage < 1 {
+		damage = 1
+	}
+	switch band {
+	case climate.BandSevere:
+		if damage > health-1 {
+			damage = health - 1
+		}
+		return damage
+	case climate.BandCritical:
+		return damage + regen
+	}
+	return 0
+}
+
 func who(mb member, self string) string {
 	if mb.Key == survival.LeaderMemberKey {
 		return self
@@ -529,8 +602,11 @@ func hasActiveBuff(c *characters.Character, buffId int) bool {
 	return len(c.Buffs.GetBuffs(buffId)) > 0
 }
 
-// syncBandBuff keeps exactly the buff for exposure's band active on c.
-func syncBandBuff(c *characters.Character, exposure int) {
+// syncBandBuff keeps exactly the buff for exposure's band active on c. The
+// band buff is non-permanent (so the engine's permabuff reconciliation on
+// equip and login never strips it) and is refreshed every tick to last
+// refreshRounds rounds, comfortably past the next tick.
+func syncBandBuff(c *characters.Character, exposure int, refreshRounds int) {
 	want := 0
 	if band := climate.BandFor(exposure); band != climate.BandNone {
 		if exposure < 0 {
@@ -546,9 +622,10 @@ func syncBandBuff(c *characters.Character, exposure int) {
 			}
 		}
 	}
-	// AddBuff revives an expired-but-unpruned entry as well as adding a new one.
-	if want != 0 && !hasActiveBuff(c, want) {
-		if err := c.AddBuff(want, true); err != nil {
+	// AddBuff adds the buff, revives an expired-but-unpruned entry, or resets
+	// an active one's remaining triggers.
+	if want != 0 {
+		if err := c.AddBuff(want, false, refreshRounds); err != nil {
 			mudlog.Warn("exposure: add band buff", "buff", want, "error", err)
 		}
 	}
@@ -658,7 +735,7 @@ func (m *ExposureModule) reportLocked(user *users.UserRecord, room *rooms.Room) 
 	lines = append(lines, fmt.Sprintf("Your clothing gives %d warmth: you are comfortable from %d°C to %d°C.", warmth, low, high))
 	lines = append(lines, memberStatus("You", m.exposureFor(user.UserId, survival.LeaderMemberKey)))
 
-	companions := m.companions(user.UserId)
+	companions, _ := m.companions(user.UserId)
 	sort.Slice(companions, func(i, j int) bool { return companions[i].Name < companions[j].Name })
 	for _, c := range companions {
 		lines = append(lines, memberStatus(c.Name, m.exposureFor(user.UserId, c.Key)))

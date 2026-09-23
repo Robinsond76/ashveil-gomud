@@ -2,13 +2,17 @@ package exposure
 
 import (
 	"errors"
+	"io/fs"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/climate"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -20,6 +24,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/weather"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestMain(m *testing.M) {
@@ -64,6 +69,9 @@ type env struct {
 	drains   []drainCall
 	night    bool
 	messages *[]string
+	// rosterAlwaysKnown reports an (empty) known roster for leaders with no
+	// entry in comps, so off-roster companions get pruned.
+	rosterAlwaysKnown bool
 }
 
 // setup registers test biomes, buffs, and items, and a module whose seams
@@ -115,7 +123,10 @@ func setup(t *testing.T) *env {
 	m.store = e.store
 	m.settings = parseSettings(func(name string) any { return testConfig[name] })
 	m.onlineUsers = func() []*users.UserRecord { return e.users }
-	m.companions = func(leader int) []member { return e.comps[leader] }
+	m.companions = func(leader int) ([]member, bool) {
+		roster, known := e.comps[leader]
+		return roster, known || e.rosterAlwaysKnown
+	}
 	m.loadRoom = func(id int) *rooms.Room { return e.rooms[id] }
 	m.isNight = func() bool { return e.night }
 	m.drain = func(leader int, key survival.MemberKey, cost survival.Exertion) error {
@@ -316,15 +327,16 @@ func TestCompanionExposureUsesItsOwnClothingAndTellsLeader(t *testing.T) {
 func TestBandBuffRevivedWhenBandReturnsBeforePrune(t *testing.T) {
 	e := setup(t)
 	u := e.addUser(t, 7, 4)
-	syncBandBuff(u.Character, -30)
-	syncBandBuff(u.Character, 0)
+	syncBandBuff(u.Character, -30, 11)
+	syncBandBuff(u.Character, 0, 11)
 	require.False(t, hasActiveBuff(u.Character, coldBuffs[climate.BandMild]))
-	syncBandBuff(u.Character, -30)
+	syncBandBuff(u.Character, -30, 11)
 	assert.True(t, hasActiveBuff(u.Character, coldBuffs[climate.BandMild]))
 }
 
 func TestDismissedCompanionIsForgotten(t *testing.T) {
 	e := setup(t)
+	e.rosterAlwaysKnown = true
 	e.addUser(t, 7, 4)
 	e.m.registry.Exposure[7] = map[string]int{string(survival.CompanionMemberKey(3)): -40}
 	e.m.tick()
@@ -446,4 +458,122 @@ func TestTickWiringWithRealRoomClockAndWeather(t *testing.T) {
 
 	e.m.tick() // warmth 5: comfortable down to 11°C, stress -31: grows 15
 	assert.Equal(t, -15, e.m.exposureFor(7, survival.LeaderMemberKey))
+}
+
+func TestUnspawnedCompanionKeepsStoredExposure(t *testing.T) {
+	e := setup(t)
+	e.addUser(t, 7, 4)
+	key := string(survival.CompanionMemberKey(1))
+	e.m.registry.Exposure[7] = map[string]int{key: -60}
+	// On the roster but not spawned yet (e.g. mid-restore after a restart).
+	e.comps[7] = []member{{Key: survival.CompanionMemberKey(1), Name: "Bran"}}
+	e.m.tick()
+	assert.Equal(t, -60, e.m.registry.Exposure[7][key], "untouched until the companion is back")
+
+	// With no roster provider at all, stored companion exposure is kept too.
+	delete(e.comps, 7)
+	e.m.tick()
+	assert.Equal(t, -60, e.m.registry.Exposure[7][key])
+}
+
+func TestExposureDamage(t *testing.T) {
+	cases := []struct {
+		name                            string
+		band                            climate.Band
+		health, max, pct, regen, expect int
+	}{
+		{"no damage below severe", climate.BandModerate, 50, 50, 2, 0, 0},
+		{"severe wears down", climate.BandSevere, 50, 100, 2, 0, 2},
+		{"severe never downs", climate.BandSevere, 2, 100, 2, 0, 1},
+		{"severe at 1 HP deals nothing", climate.BandSevere, 1, 100, 2, 0, 0},
+		{"critical outpaces regen", climate.BandCritical, 50, 50, 10, 5, 10},
+		{"critical at least 1 plus regen", climate.BandCritical, 5, 5, 10, 3, 4},
+		{"downed takes none", climate.BandCritical, 0, 50, 10, 5, 0},
+	}
+	for _, c := range cases {
+		if got := exposureDamage(c.band, c.health, c.max, c.pct, c.regen); got != c.expect {
+			t.Errorf("%s: got %d want %d", c.name, got, c.expect)
+		}
+	}
+}
+
+func TestSevereColdNeverDownsAPlayer(t *testing.T) {
+	e := setup(t)
+	u := e.addUser(t, 7, 1)
+	u.Character.Equipment.Body = items.New(testTunic) // by day -12°C, warmth 5: stress -23, settles at -92 (severe)
+	for i := 0; i < 200; i++ {
+		e.m.tick()
+	}
+	assert.Equal(t, -92, e.m.exposureFor(7, survival.LeaderMemberKey))
+	assert.GreaterOrEqual(t, u.Character.Health, 1, "only the critical band can down anyone")
+}
+
+func TestPlayerDeathClearsExposure(t *testing.T) {
+	e := setup(t)
+	u := e.addUser(t, 7, 1)
+	e.m.registry.Exposure[7] = map[string]int{string(survival.LeaderMemberKey): -100, string(survival.CompanionMemberKey(1)): -40}
+	syncBandBuff(u.Character, -100, 11)
+
+	e.m.onPlayerDeath(events.PlayerDeath{UserId: 7})
+	assert.Equal(t, 0, e.m.exposureFor(7, survival.LeaderMemberKey))
+	assert.Equal(t, -40, e.m.exposureFor(7, survival.CompanionMemberKey(1)), "companions keep theirs")
+	assert.False(t, hasActiveBuff(u.Character, coldBuffs[climate.BandCritical]))
+	assert.Equal(t, 1, e.store.saveCalls)
+}
+
+func TestIndoorTaggedCaveChamberIsFurnished(t *testing.T) {
+	e := setup(t)
+	e.rooms[6] = &rooms.Room{RoomId: 6, Zone: "Deep", Biome: "cave", Tags: []string{rooms.TagIndoor}}
+	temp, ok := e.m.AirTemperatureIn(6)
+	require.True(t, ok)
+	assert.Equal(t, 18, temp, "a tagged, furnished chamber in a cave is kept at indoor temperature")
+}
+
+// TestShippedBandBuffsPenaliseWithoutShrinkingMaxHealth loads the module's
+// real band-buff files and the real game config. Regression: the severe and
+// critical buffs once cut vitality by 30, which with HPPerVitality 4 wiped
+// out max HP and made a penalty band lethal.
+func TestShippedBandBuffsPenaliseWithoutShrinkingMaxHealth(t *testing.T) {
+	e := setup(t)
+	_, thisFile, _, _ := runtime.Caller(0)
+	t.Chdir(filepath.Join(filepath.Dir(thisFile), "..", ".."))
+	require.NoError(t, configs.ReloadConfig())
+
+	paths, err := fs.Glob(files, "files/datafiles/buffs/*.yaml")
+	require.NoError(t, err)
+	require.Len(t, paths, 8)
+	for _, path := range paths {
+		data, err := files.ReadFile(path)
+		require.NoError(t, err)
+		var spec buffs.BuffSpec
+		require.NoError(t, yaml.Unmarshal(data, &spec))
+		require.NoError(t, spec.Validate(), path)
+		require.True(t, strings.HasSuffix(path, spec.Filepath()), "plugin loader requires the id-name filename: %s", path)
+		buffs.SetTestBuffSpec(&spec)
+	}
+
+	u := e.addUser(t, 7, 1)
+	u.Character.Level = 5
+	u.Character.Stats.Vitality.Base = 10
+	u.Character.Validate()
+	baseMax := u.Character.HealthMax.Value
+	require.Greater(t, baseMax, 1)
+
+	for _, exposure := range []int{-30, -60, -80, -100, 30, 60, 80, 100} {
+		syncBandBuff(u.Character, exposure, 11)
+		assert.Equal(t, baseMax, u.Character.HealthMax.Value, "band at exposure %d must not shrink max HP", exposure)
+		assert.Less(t, u.Character.StatMod("speed"), 0, "band at exposure %d penalises speed", exposure)
+	}
+}
+
+// TestBandBuffSurvivesPermabuffReconciliation is a regression test: a
+// permanent buff with no item/race/pet source is stripped whenever the
+// engine reconciles permabuffs (equip, remove, login). Band buffs must not
+// be.
+func TestBandBuffSurvivesPermabuffReconciliation(t *testing.T) {
+	e := setup(t)
+	u := e.addUser(t, 7, 1)
+	syncBandBuff(u.Character, -60, 11)
+	u.Character.Validate(true) // the login path reconciles permabuffs
+	assert.True(t, hasActiveBuff(u.Character, coldBuffs[climate.BandModerate]))
 }

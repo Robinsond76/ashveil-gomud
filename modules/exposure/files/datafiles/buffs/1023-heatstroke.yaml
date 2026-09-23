@@ -1,14 +1,15 @@
 # Phase 15 exposure band (heat). Applied and removed by modules/exposure;
-# the module owns its lifetime, so it is added as a permanent buff.
+# the module refreshes it every tick (a short-lived, non-permanent buff, so
+# the engine's permabuff reconciliation never strips it). No vitality
+# penalty: that would shrink max HP and turn a penalty band lethal.
 buffid: 1023
 name: Heatstroke
 description: You are suffering heatstroke!
 secret: false
-triggerrate: 1 real minute
-triggercount: 1
+triggerrate: 1 round
+triggercount: 11
 statmods:
   strength: -30
   speed: -30
   smarts: -30
-  vitality: -30
   perception: -30

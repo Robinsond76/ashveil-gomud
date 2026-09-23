@@ -7,12 +7,12 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-23
 - **Branch:** `claude/gracious-ride-swn7b7`
-- **HEAD:** Retroactive testing and review gate for Phases 13–14. It found and
-  fixed a critical bug: the darkness "penalty" was actually a +40 to-hit bonus.
-  It also fixed four smaller issues and added wiring tests for combat, look,
-  party light, and campfire light. The gate (wiring tests plus an independent
-  reviewer subagent before every merge) is now the standing workflow; see
-  `CLAUDE.md`.
+- **HEAD:** Phase 15 (temperature, clothing, and exposure) is complete,
+  reviewed, and merged. Temperature follows biome, night, weather, shelter,
+  and campfires. Worn clothing gives warmth. A signed exposure meter
+  escalates through four penalty bands and can kill only under extreme
+  stress. Heat drains thirst and cold drains fatigue. The new `temperature`
+  command reports it all.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is pushed through Phase 12b's weighted
   encounter tables (`e42efd88`); this branch's Phase 12c work is not yet
@@ -43,7 +43,9 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 15 (temperature and clothing) per the 2026-09-23 roadmap.
+- **Next:** Phase 16 (walking fatigue and inns, plus switching on Phase 8's
+  deferred travel/rest weather multipliers) per the 2026-09-23 roadmap.
+  Stopped here at the user's request after Phase 15.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
@@ -83,10 +85,80 @@ instead of duplicating them.
 | 12c | Combat encounters | Complete: `Combat` interruption kind spawns its route's `CombatMobID` into the origin room and commands it to attack; resume/return gated on the mob still being alive and present |
 | 13 | Sky and environment | Complete: moon phases, cloud cover, fog, indoor biomes/tags, indoor glimpse, richer `weather`; display-only |
 | 14 | Visibility and light | Complete: ambient vs per-viewer light, personal/fixture/party light, darkness hit penalty, `light` command, `floatinglight` spell |
-| 15–21 | Temperature, walking fatigue/inns, archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
+| 15 | Temperature, clothing, exposure | Complete: `internal/climate`, `modules/exposure`, item `warmth`, weather `TemperatureMod`, survival member drain + mutex, `temperature` command |
+| 16–21 | Walking fatigue/inns, archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 15: temperature, clothing, and exposure (2026-09-23)
+
+- **What:**
+  - **`internal/climate`** (pure): air temperature, clothing warmth
+    (per-slot defaults, explicit `warmth`, negative = none, `warmed` +20),
+    the comfort band and stress, a signed exposure step toward
+    `stress × 4`, bands, and heat-source and temperature-provider seams.
+  - **`modules/exposure`:** every 5 rounds it moves exposure for online
+    leaders and their spawned companions. It keeps the band buff refreshed
+    (cold 1010–1013, heat 1020–1023), deals damage only in the severe band
+    (never below 1 HP) and the critical band (outpacing regen), and drains
+    fatigue in cold and thirst in heat. It persists exposure, clears it on
+    player death, and adds the `temperature` command.
+  - **Items** gain `warmth`; 30 existing clothes have values.
+  - **Weather** conditions gain `TemperatureMod`, and the `weather` command
+    shows the temperature.
+  - **Campfires** warm their room.
+  - **Survival** gains a non-ledgered `ApplyMemberDrain` that marks the
+    registry dirty and flushes on the next save, and a module mutex.
+- **Why:** User decision 4. Exposure kills only at extremes, after
+  escalating penalties; mild mismatch only penalises. A tested invariant
+  ensures only stress ≥ 25 can reach the lethal band.
+- **Durable / clock-safe:** exposure is persisted per leader and member.
+  Ticks are `NewRound` listeners that only read the clock. Offline
+  characters don't tick.
+- **Review (independent reviewer subagent over `f1386664..25e3ac15`):**
+  1. *Critical, fixed:* the severe and critical buffs cut vitality by 30,
+     which with `HPPerVitality` 4 collapsed max HP, so a supposedly
+     survivable band killed players. Vitality was removed. A test now loads
+     the shipped buff files with real config and checks that max HP
+     survives; it fails if vitality is put back.
+  2. *High, fixed:* survival had no mutex, and travel and camping timer
+     goroutines write to it while exposure drains from the game loop, which
+     risked concurrent map writes. Survival now takes a leaf mutex on every
+     exported entry point, with a concurrent test under `-race`.
+  3. *High, fixed:* damage didn't account for regen, so low-level players
+     were immune and severe damage could down them. Severe now never goes
+     below 1 HP, and critical adds the player's regen per tick.
+  4. *Medium, fixed:* drains rewrote the whole survival file per member per
+     tick. They now mark it dirty and flush on the next save.
+  5. *Medium, fixed:* permanent band buffs were stripped by the engine's
+     permabuff reconciliation on equip, remove, and login. They are now
+     short non-permanent buffs refreshed each tick, with a regression test.
+  6. *Medium, fixed:* companions that weren't spawned yet (after a restart)
+     lost their stored exposure. Pruning now uses the roster, and unspawned
+     companions are left untouched.
+  7. *Low, fixed:* death now clears the player's exposure. "Furnished" now
+     matches the design (lit biome, or an `indoor`/`lit` tag). The weather
+     command's line reads "Temperature here".
+  8. *Low, deferred:*
+     - Upstream Freezing Snow (buff 31) still stacks with exposure in snow
+       rooms; it is content for a builder to retire.
+     - Admins and players in combat are not exempt.
+     - Companions don't regenerate out of combat, so severe cold wears them
+       down to 1 HP.
+     - Drain errors can repeat in the log while survival persistence is
+       down.
+- **Process note:** for `modules/exposure` the implementation was written
+  just before its tests, contrary to the tests-first plan. The tests then
+  caught two bugs: buff revival after removal, and a wrong expectation.
+- **Known pre-existing risk (not this phase):** camping and expedition
+  timer callbacks run off the game loop and also read company state, which
+  has no lock. Survival is now safe; company isn't audited.
+- **Verification:** `go test -race ./...` passes (1886 passing test
+  results). `make generate` adds `modules/exposure`. `make validate`
+  passes. The server boots with 52 buffs (8 new) and no new errors. The
+  regression tests for findings 1 and 5 were checked by putting each bug
+  back and watching them fail. Live telnet acceptance was not run.
 
 ### Review gate: Phases 13–14, retroactive (2026-09-23)
 

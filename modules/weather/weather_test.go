@@ -353,11 +353,11 @@ func TestUserCommandShowsAirTemperature(t *testing.T) {
 
 	module.userCommand("", user, weatherRoom("dunmar"), 0)
 	events.ProcessEvents()
-	assert.Contains(t, joinMessages(*messages), "Temperature: -8°C (freezing).")
+	assert.Contains(t, joinMessages(*messages), "Temperature here: -8°C (freezing).")
 
 	climate.SetProvider(nil)
 	*messages = nil
 	module.userCommand("", user, weatherRoom("dunmar"), 0)
 	events.ProcessEvents()
-	assert.NotContains(t, joinMessages(*messages), "Temperature:", "no provider, no temperature line")
+	assert.NotContains(t, joinMessages(*messages), "Temperature here:", "no provider, no temperature line")
 }
