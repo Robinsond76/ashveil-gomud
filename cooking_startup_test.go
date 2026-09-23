@@ -28,7 +28,7 @@ func TestShippedCookingContent(t *testing.T) {
 	if !skills.SkillExists("cooking") {
 		t.Fatal("cooking skill not loaded")
 	}
-	if p := skills.GetProfessionSpec("cook"); p == nil || len(p.Skills) != 1 || p.Skills[0] != "cooking" {
+	if p := skills.GetProfessionSpec("cook"); p == nil || len(p.Skills) == 0 || p.Skills[0] != "cooking" {
 		t.Fatalf("cook profession = %+v", p)
 	}
 

@@ -114,8 +114,13 @@ func LoadRoomInstance(roomId int) *Room {
 	filepath := util.FilePath(configs.GetFilePathsConfig().DataFiles.String(), `/rooms.instances/`, filename)
 
 	if bytes, err := util.ReadFile(filepath); err == nil {
+		templateContainers := make(map[string]Container, len(room.Containers))
+		for name, c := range room.Containers {
+			templateContainers[name] = c
+		}
 		// Unmarshal onto the default template data, overwriting any set fields in the instance save file
 		yaml.Unmarshal(bytes, room)
+		ApplyTemplateRecipes(templateContainers, room.Containers)
 	}
 
 	return room

@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-23
-- **HEAD:** Phase 18a (category loot tables) is complete and reviewed.
+- **HEAD:** Phase 18b (cooking) is complete and reviewed; Phase 18 is done.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -34,9 +34,10 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost),
-  and Phase 18a (category loot tables and a small shipped loot slice).
-- **Next:** Phase 18b (cooking), left for the next phase at the user's
-  direction. Phase 19 (commodities and markets) follows. Phase 18 and 19 have design docs
+  Phase 18a (category loot tables and a small shipped loot slice), and
+  Phase 18b (skill-gated container recipes; Waymark Inn hearth cooking).
+- **Next:** Phase 19 (commodities and markets). Its first task decides
+  whether markets feed the existing vendor buy/sell flow. Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
   recommended options): 18a layers a new category-shared weighted loot
   table on top of the existing `ItemDropChance` roll (mirrors Phase 12b's
@@ -50,7 +51,7 @@ instead of duplicating them.
   [18 plan](superpowers/plans/2026-09-23-phase-18-loot-tables.md) and
   [19 spec](superpowers/specs/2026-09-23-phase-19-commodities-markets-design.md) /
   [19 plan](superpowers/plans/2026-09-23-phase-19-commodities-markets.md).
-  Phase 18a is complete; 18b and 19 have not been implemented.
+  Phase 18 is complete; 19 has not been implemented.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
@@ -94,12 +95,43 @@ instead of duplicating them.
 | 16 | Walking fatigue, inns, travel/rest multipliers | Complete: `internal/walking`, `modules/walking`, inn stays in `modules/camping`, multipliers locked at departure/rest start, Waymark Inn, Old Kings Road zone |
 | 17 | Archetypes (17a) and utility skills (17b) | Complete: `internal/archetypes`, `modules/archetype`, training and spell gating, companion archetypes, `autoskill`, `trap`, auto-light. Cooking deferred to Phase 18b |
 | 18a | Loot tables | Complete: category tables, boot/reload loading, corpse/floor drops, proving content |
-| 18b | Cooking | Design + plan written (2026-09-23), not implemented |
+| 18b | Cooking | Complete: `cooking` skill + `cook` profession, per-recipe skill requirements on room containers, deterministic recipe choice, Waymark Inn hearth with three meals |
 | 19 | Commodities and markets | Design + plan written (2026-09-23), not implemented |
 | 20–21 | Trade rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 18b: cooking (2026-09-23)
+
+- **What:** Room containers gained optional `reciperequirements` (skill
+  and minimum level per recipe output). `use <container>` now picks the
+  lowest ready recipe the player can make and refuses, consuming nothing,
+  when only gated recipes are ready; `look` lists recipes in order with
+  their requirement. Shipped a `cooking` skill, a `cook` profession, three
+  meals from 18a meat and thyme, and a Waymark Inn hearth that trains
+  cooking 1-4. Camp campfires are light fixtures, not containers, so camp
+  cooking is deferred.
+- **Why:** Close Phase 18 with the minimal cooking slice the spec
+  confirmed, reusing the existing container crafting path.
+- **Step completed:** Phase 18b (Phase 18 complete). Phase 19 is next.
+- **Verification:** `go test -race ./...`, focused `go vet`, `go build ./...`,
+  `make generate`, and `make validate` passed. Wiring tests drive the real
+  `use` and `look` commands and a shipped-content test cooks at the real
+  Waymark Inn hearth.
+- **Review:** Independent reviewer found three important issues, all
+  fixed with regression tests: the in-game room editor could save a
+  requirement for a deleted recipe that would stop the next boot (now
+  pruned before save); the web admin room PATCH dropped every requirement
+  (now carried over for surviving recipes); and instance saves froze a
+  container's recipes, hiding later template edits (recipes are now
+  re-applied from the template on load; the test fails without the fix).
+  Also fixed: missing output assertions for the refusal message and `look`
+  listing, and the one-skill `cook` profession (now cooking, track,
+  search). Deferred: load-time warnings for unknown requirement skills or
+  over-max levels, since rooms load before skills; the shipped hearth is
+  covered by the startup content test. The web PATCH fix is tested at the
+  helper level, not through the HTTP handler.
 
 ### Company life and onboarding specifications (2026-09-23)
 

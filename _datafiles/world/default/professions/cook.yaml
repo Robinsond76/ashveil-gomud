@@ -1,4 +1,4 @@
 professionid: cook
 name: Cook
-description: Hearth-keepers who feed a company on the road.
-skills: [cooking]
+description: Hearth-keepers who hunt, forage, and feed a company on the road.
+skills: [cooking, track, search]

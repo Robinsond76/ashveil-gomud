@@ -1,8 +1,12 @@
 package rooms
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -147,4 +151,102 @@ func TestRoomValidateRejectsMalformedRecipeRequirement(t *testing.T) {
 	err := r.Validate()
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "hearth")
+}
+
+func TestPruneRecipeRequirements(t *testing.T) {
+	c := Container{
+		Recipes: map[int][]int{5: {1}},
+		RecipeRequirements: map[int]RecipeRequirement{
+			5: {SkillId: "cooking", MinLevel: 1},
+			6: {SkillId: "cooking", MinLevel: 2},
+		},
+	}
+	c.PruneRecipeRequirements()
+	assert.Equal(t, map[int]RecipeRequirement{5: {SkillId: "cooking", MinLevel: 1}}, c.RecipeRequirements)
+	require.NoError(t, c.ValidateRecipes())
+
+	// Clearing recipes, as the in-game editor does, must leave nothing that fails validation.
+	clear(c.Recipes)
+	c.PruneRecipeRequirements()
+	assert.Nil(t, c.RecipeRequirements)
+	require.NoError(t, c.ValidateRecipes())
+}
+
+func TestCarryRecipeRequirements(t *testing.T) {
+	previous := map[string]Container{
+		"hearth": {Recipes: map[int][]int{5: {1}, 6: {2}}, RecipeRequirements: map[int]RecipeRequirement{
+			5: {SkillId: "cooking", MinLevel: 1},
+			6: {SkillId: "cooking", MinLevel: 2},
+		}},
+		"oven": {Recipes: map[int][]int{7: {1}}, RecipeRequirements: map[int]RecipeRequirement{
+			7: {SkillId: "cooking", MinLevel: 3},
+		}},
+	}
+	updated := map[string]Container{
+		// Editor dropped recipe 6 and sent no requirements.
+		"hearth": {Recipes: map[int][]int{5: {1}}},
+		// Editor sent its own requirements; they win.
+		"oven": {Recipes: map[int][]int{7: {1}}, RecipeRequirements: map[int]RecipeRequirement{
+			7: {SkillId: "cooking", MinLevel: 4},
+		}},
+		"new": {Recipes: map[int][]int{8: {1}}},
+	}
+
+	CarryRecipeRequirements(previous, updated)
+
+	assert.Equal(t, map[int]RecipeRequirement{5: {SkillId: "cooking", MinLevel: 1}}, updated["hearth"].RecipeRequirements)
+	assert.Equal(t, 4, updated["oven"].RecipeRequirements[7].MinLevel)
+	assert.Nil(t, updated["new"].RecipeRequirements)
+	assert.Len(t, previous["hearth"].RecipeRequirements, 2, "previous room data is not mutated")
+}
+
+// TestInstanceSaveKeepsTemplateRecipeRequirements saves a room instance whose hearth holds
+// items, edits the template's requirement, and reloads through LoadRoomInstance: the
+// runtime items come from the instance, the recipe gate from the template.
+func TestInstanceSaveKeepsTemplateRecipeRequirements(t *testing.T) {
+	dataDir := t.TempDir()
+	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
+	require.Equal(t, dataDir, configs.GetFilePathsConfig().DataFiles.String(), "DataFiles overlay already set elsewhere in this test binary")
+
+	const roomId = 9001
+	tplDir := filepath.Join(dataDir, "rooms", "recipetest")
+	require.NoError(t, os.MkdirAll(tplDir, 0755))
+	require.NoError(t, os.MkdirAll(filepath.Join(dataDir, "rooms.instances", "recipetest"), 0755))
+
+	writeTemplate := func(minLevel int) {
+		yml := fmt.Sprintf(`roomid: %d
+zone: recipetest
+title: Kitchen
+description: A kitchen.
+containers:
+  hearth:
+    recipes:
+      5: [1]
+    reciperequirements:
+      5:
+        skillid: cooking
+        minlevel: %d
+`, roomId, minLevel)
+		require.NoError(t, os.WriteFile(filepath.Join(tplDir, fmt.Sprintf("%d.yaml", roomId)), []byte(yml), 0600))
+	}
+
+	writeTemplate(1)
+	roomManager.roomIdToFileCache[roomId] = "recipetest/9001.yaml"
+	t.Cleanup(func() { delete(roomManager.roomIdToFileCache, roomId) })
+
+	room := LoadRoomInstance(roomId)
+	require.NotNil(t, room)
+	hearth := room.Containers["hearth"]
+	hearth.AddItem(items.Item{ItemId: 1})
+	room.Containers["hearth"] = hearth
+	require.NoError(t, SaveRoomInstance(*room))
+
+	writeTemplate(3)
+
+	reloaded := LoadRoomInstance(roomId)
+	require.NotNil(t, reloaded)
+	got := reloaded.Containers["hearth"]
+	assert.Equal(t, 3, got.RecipeRequirements[5].MinLevel, "template edit applies despite instance save")
+	require.Len(t, got.Items, 1, "instance items survive")
+	assert.Equal(t, 1, got.Items[0].ItemId)
 }

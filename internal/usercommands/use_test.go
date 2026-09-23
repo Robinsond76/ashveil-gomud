@@ -1,8 +1,10 @@
 package usercommands
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
@@ -117,4 +119,52 @@ func TestUseContainerCookingRecipeGating(t *testing.T) {
 			assert.ElementsMatch(t, []int{useTestHerb, useTestRoast}, containerIds(room))
 		}
 	})
+}
+
+func captureUserText(t *testing.T, fn func()) string {
+	t.Helper()
+	events.ProcessEvents()
+	var messages []string
+	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+		messages = append(messages, e.(events.Message).Text)
+		return events.Continue
+	})
+	defer events.UnregisterListener(events.Message{}, id)
+	fn()
+	events.ProcessEvents()
+	return strings.Join(messages, "")
+}
+
+func TestUseContainerRefusalNamesRequirement(t *testing.T) {
+	setupUseTest(t)
+	room := useTestRoom(
+		map[int][]int{useTestStew: {useTestMeat}},
+		map[int]rooms.RecipeRequirement{useTestStew: {SkillId: "cooking", MinLevel: 3}},
+		useTestMeat,
+	)
+	out := captureUserText(t, func() {
+		_, err := Use("hearth", cook(1), room, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "level 3")
+	assert.Contains(t, out, "Cooking")
+}
+
+func TestLookContainerListsRecipesInOrderWithRequirement(t *testing.T) {
+	setupUseTest(t)
+	room := useTestRoom(
+		map[int][]int{useTestUngate: {useTestHerb}, useTestStew: {useTestMeat}},
+		map[int]rooms.RecipeRequirement{useTestStew: {SkillId: "cooking", MinLevel: 3}},
+	)
+	room.Tags = []string{"lit"} // other tests in this package can leave the world dark
+	out := captureUserText(t, func() {
+		_, err := Look("hearth", cook(0), room, 0)
+		require.NoError(t, err)
+	})
+	stewAt := strings.Index(out, "stew")
+	teaAt := strings.Index(out, "tea")
+	require.True(t, stewAt >= 0 && teaAt >= 0, out)
+	assert.Less(t, stewAt, teaAt, "lower output id listed first")
+	assert.Contains(t, out, "requires")
+	assert.Equal(t, 1, strings.Count(out, "requires"), "only the gated recipe shows a requirement")
 }

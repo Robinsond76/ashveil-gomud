@@ -143,9 +143,9 @@ passes.
 - [x] `gofmt -l`, `go vet ./internal/skills/... ./internal/rooms/...`,
       `go build ./...`, `go test -race ./...` after each task.
 - [x] `make generate`, `make validate`.
-- [ ] **Testing and review gate (18b):** independent reviewer subagent
+- [x] **Testing and review gate (18b):** independent reviewer subagent
       over the full 18b diff, same invariants briefing as 18a. Verify
       findings, fix real ones with regression tests, record rejections.
-- [ ] Update `docs/PROJECT_STATUS.md`: header, Current position/Next,
+- [x] Update `docs/PROJECT_STATUS.md`: header, Current position/Next,
       phase table row 18b (Phase 18 now fully complete), new work-log
       entry with a **Review:** line.

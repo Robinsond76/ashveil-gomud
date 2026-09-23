@@ -171,3 +171,49 @@ func (c *Container) Count(itemId int) int {
 	}
 	return total
 }
+
+// PruneRecipeRequirements drops requirements whose recipe no longer exists, so an edited
+// container never saves a requirement that ValidateRecipes would reject at the next boot.
+func (c *Container) PruneRecipeRequirements() {
+	for finalItemId := range c.RecipeRequirements {
+		if _, ok := c.Recipes[finalItemId]; !ok {
+			delete(c.RecipeRequirements, finalItemId)
+		}
+	}
+	if len(c.RecipeRequirements) == 0 {
+		c.RecipeRequirements = nil
+	}
+}
+
+// CarryRecipeRequirements keeps each previous container's requirements on the same-named
+// updated container when the update did not send any (editors that don't know about
+// requirements), then prunes them to the recipes that survived the edit.
+func CarryRecipeRequirements(previous, updated map[string]Container) {
+	for name, c := range updated {
+		if c.RecipeRequirements == nil {
+			if prev, ok := previous[name]; ok && len(prev.RecipeRequirements) > 0 {
+				c.RecipeRequirements = make(map[int]RecipeRequirement, len(prev.RecipeRequirements))
+				for finalItemId, req := range prev.RecipeRequirements {
+					c.RecipeRequirements[finalItemId] = req
+				}
+			}
+		}
+		c.PruneRecipeRequirements()
+		updated[name] = c
+	}
+}
+
+// ApplyTemplateRecipes restores template-owned recipe data onto containers overlaid from an
+// instance save. Recipes and requirements are authored content; instance saves only carry
+// runtime container state (items, gold, lock), so template edits always take effect.
+func ApplyTemplateRecipes(template, instance map[string]Container) {
+	for name, c := range instance {
+		tpl, ok := template[name]
+		if !ok {
+			continue
+		}
+		c.Recipes = tpl.Recipes
+		c.RecipeRequirements = tpl.RecipeRequirements
+		instance[name] = c
+	}
+}

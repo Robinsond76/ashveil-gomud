@@ -1115,6 +1115,7 @@ func room_Edit_Containers(rest string, user *users.UserRecord, room *rooms.Room,
 		room.Containers = map[string]rooms.Container{}
 	}
 
+	currentlyEditing.Container.PruneRecipeRequirements()
 	room.Containers[currentlyEditing.NameNew] = currentlyEditing.Container
 	rooms.SaveRoomTemplate(*room)
 

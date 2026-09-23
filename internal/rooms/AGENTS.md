@@ -53,6 +53,7 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Item management**: Adding, removing, and searching container contents
 - **Lock system**: Difficulty-based locks requiring skills to open
 - **Recipe system**: Crafting recipes that trigger when ingredients are present
+- **Recipe requirements** (Phase 18b): optional `reciperequirements` keyed by output item id (`skillid`, `minlevel`). `SelectRecipe` picks the lowest ready output id the actor can make. `Room.Validate` rejects malformed recipes/requirements, so editors must call `PruneRecipeRequirements`/`CarryRecipeRequirements` before saving. Recipes and requirements are template-owned: `LoadRoomInstance` re-applies them from the template after the instance overlay (`ApplyTemplateRecipes`).
 - **Temporary containers**: Time-limited containers that despawn automatically
 
 ### Ephemeral Rooms (`ephemeral.go`)

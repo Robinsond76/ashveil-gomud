@@ -250,6 +250,8 @@ func apiV1PatchRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updated.RoomId = roomId
+	// The admin page does not edit recipe requirements; keep them for surviving recipes.
+	rooms.CarryRecipeRequirements(existing.Containers, updated.Containers)
 
 	if updated.Title == "" {
 		writeAPIError(w, http.StatusBadRequest, "title cannot be empty")
