@@ -16,6 +16,7 @@ func TestLoadTablesOmitsUnknownItemsAndRefreshes(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "beast.yaml")
 	data := []byte("category: beast\nentries:\n  - itemid: 987654\n    weight: 2\n  - itemid: 987655\n    weight: 1\n")
+	data = append(data, []byte("  - itemid: 0\n    weight: 1\n  - itemid: -1\n    weight: 1\n")...)
 	if err := os.WriteFile(path, data, 0600); err != nil {
 		t.Fatal(err)
 	}
@@ -26,7 +27,7 @@ func TestLoadTablesOmitsUnknownItemsAndRefreshes(t *testing.T) {
 	if !ok || len(table.Entries) != 1 || table.Entries[0].ItemID != 987654 {
 		t.Fatalf("table = %+v, %v", table, ok)
 	}
-	if err := os.WriteFile(path, []byte("category: beast\nentries:\n  - itemid: 987655\n    weight: 1\n"), 0600); err != nil {
+	if err := os.WriteFile(path, []byte("category: beast\nentries:\n  - itemid: 0\n    weight: 1\n  - itemid: -1\n    weight: 1\n"), 0600); err != nil {
 		t.Fatal(err)
 	}
 	if err := loadLootDataFiles(dir); err != nil {
@@ -34,5 +35,14 @@ func TestLoadTablesOmitsUnknownItemsAndRefreshes(t *testing.T) {
 	}
 	if _, ok := GetTable("beast"); ok {
 		t.Fatal("table with no valid entries retained")
+	}
+	if err := os.RemoveAll(dir); err != nil {
+		t.Fatal(err)
+	}
+	if err := loadLootDataFiles(dir); err != nil {
+		t.Fatalf("optional loot directory: %v", err)
+	}
+	if _, ok := GetTable("beast"); ok {
+		t.Fatal("removed loot directory retained a category")
 	}
 }

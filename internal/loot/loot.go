@@ -31,8 +31,8 @@ func (t Table) Validate() error {
 	}
 	var total uint64
 	for _, e := range t.Entries {
-		if e.ItemID <= 0 || e.Weight == 0 {
-			return fmt.Errorf("loot category %q has an invalid item or weight", t.Category)
+		if e.Weight == 0 {
+			return fmt.Errorf("loot category %q has a zero weight", t.Category)
 		}
 		min, max := e.countBounds()
 		if e.MinCount < 0 || e.MaxCount < 0 || max < min {

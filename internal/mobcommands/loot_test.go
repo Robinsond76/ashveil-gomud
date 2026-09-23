@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -14,11 +15,13 @@ import (
 
 func TestSuicideCategoryLootUsesCorpseOrFloor(t *testing.T) {
 	mudlog.SetupLogger(nil, "low", "", false)
-	items.SetTestItemSpec(&items.ItemSpec{ItemId: 987654, Name: "test meat"})
-	items.SetTestItemSpec(&items.ItemSpec{ItemId: 987653, Name: "old gear"})
+	for _, id := range []int{987654, 987653, 987652} {
+		items.SetTestItemSpec(&items.ItemSpec{ItemId: id, Name: "test item"})
+	}
 	t.Cleanup(func() {
-		items.RemoveTestItemSpec(987654)
-		items.RemoveTestItemSpec(987653)
+		for _, id := range []int{987654, 987653, 987652} {
+			items.RemoveTestItemSpec(id)
+		}
 		loot.RemoveTestTable("test-beast")
 	})
 	loot.SetTestTable(loot.Table{Category: "test-beast", Entries: []loot.WeightedLootEntry{{ItemID: 987654, Weight: 1, MinCount: 2}}})
@@ -27,12 +30,17 @@ func TestSuicideCategoryLootUsesCorpseOrFloor(t *testing.T) {
 		corpse      bool
 		category    string
 		missingItem bool
+		wornChance  int
+		locked      bool
+		wantWorn    bool
 		wantExtra   int
 	}{
-		{"floor", false, "test-beast", false, 2},
-		{"uncategorized", false, "", false, 0},
-		{"corpse", true, "test-beast", false, 2},
-		{"item spec removed after load", false, "test-beast", true, 0},
+		{"floor with worn gear", false, "test-beast", false, 100, false, true, 2},
+		{"uncategorized keeps worn roll", false, "", false, 100, false, true, 0},
+		{"zero worn chance keeps category drop", false, "test-beast", false, 0, false, false, 2},
+		{"locked worn gear stays put", false, "test-beast", false, 100, true, false, 2},
+		{"corpse", true, "test-beast", false, 100, false, true, 2},
+		{"item spec removed after load", false, "test-beast", true, 100, false, true, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			gameplay := configs.GetGamePlayConfig()
@@ -40,33 +48,58 @@ func TestSuicideCategoryLootUsesCorpseOrFloor(t *testing.T) {
 			gameplay.Death.CorpseItems = configs.ConfigBool(tc.corpse)
 			t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 			room := rooms.NewEmptyRoom()
-			mob := &mobs.Mob{MobId: 999, LootCategory: tc.category}
+			mob := &mobs.Mob{MobId: 999, LootCategory: tc.category, ItemDropChance: tc.wornChance}
 			mob.Character.Name = "test beast"
 			mob.Character.Items = []items.Item{items.New(987653)}
+			worn := items.New(987652)
+			worn.CanNeverBeRemoved = tc.locked
+			mob.Character.Equipment.Head = worn
 			mob.Character.Gold = 7
 			if tc.missingItem {
 				items.RemoveTestItemSpec(987654)
 			}
-			drops := 0
-			listener := events.RegisterListener(events.MobItemDrop{}, func(event events.Event) events.ListenerReturn { drops++; return events.Continue })
+			drops := map[int]int{}
+			listener := events.RegisterListener(events.MobItemDrop{}, func(event events.Event) events.ListenerReturn {
+				drops[event.(events.MobItemDrop).ItemId]++
+				return events.Continue
+			})
 			ok, err := Suicide("", mob, room)
 			if err != nil || !ok {
 				t.Fatalf("suicide: %v, %v", ok, err)
 			}
 			events.ProcessEvents()
 			events.UnregisterListener(events.MobItemDrop{}, listener)
-			if drops != 1+tc.wantExtra && !tc.corpse {
-				t.Fatalf("drop events = %d; want %d", drops, 1+tc.wantExtra)
+			wantIDs := map[int]int{987653: 1}
+			if tc.wantWorn {
+				wantIDs[987652] = 1
 			}
-			if tc.corpse && drops != 0 {
-				t.Fatalf("corpse emitted %d item drop events", drops)
+			if tc.wantExtra > 0 {
+				wantIDs[987654] = tc.wantExtra
 			}
+			actualIDs := map[int]int{}
 			if tc.corpse {
-				if len(room.Corpses) != 1 || len(room.Corpses[0].Items) != 1+tc.wantExtra || room.Corpses[0].Gold != 7 {
+				if len(room.Corpses) != 1 || room.Corpses[0].Gold != 7 {
 					t.Fatalf("corpse = %+v", room.Corpses)
 				}
-			} else if len(room.Items) != 1+tc.wantExtra || room.Gold != 7 {
-				t.Fatalf("floor items = %+v; gold = %d", room.Items, room.Gold)
+				for _, item := range room.Corpses[0].Items {
+					actualIDs[item.ItemId]++
+				}
+				if len(drops) != 0 {
+					t.Fatalf("corpse emitted drop events: %v", drops)
+				}
+			} else {
+				for _, item := range room.Items {
+					actualIDs[item.ItemId]++
+				}
+				if room.Gold != 7 {
+					t.Fatalf("floor gold = %d", room.Gold)
+				}
+				if !reflect.DeepEqual(drops, wantIDs) {
+					t.Fatalf("drop events = %v; want %v", drops, wantIDs)
+				}
+			}
+			if !reflect.DeepEqual(actualIDs, wantIDs) {
+				t.Fatalf("item IDs = %v; want %v", actualIDs, wantIDs)
 			}
 		})
 	}

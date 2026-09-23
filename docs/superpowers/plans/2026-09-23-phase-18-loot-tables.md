@@ -13,11 +13,11 @@ passes.
 
 ## Slice 18a: loot tables
 
-- [ ] **Read `internal/util` first** for any existing `uint64` random
+- [x] **Read `internal/util` first** for any existing `uint64` random
       helper before assuming `util.Rand64()` needs adding; confirm the
       exact roll-logging convention (`util.LogRoll`) used at
       `suicide.go:361` so the new roll logs consistently.
-- [ ] **`internal/loot` (new pure package): `WeightedLootEntry`, `Table`,
+- [x] **`internal/loot` (new pure package): `WeightedLootEntry`, `Table`,
       `Validate`, `Resolve`, `RollCount`.**
   - Tests first, `internal/loot/loot_test.go`:
     - `TestTableValidateRejectsZeroWeightEntry`
@@ -32,7 +32,7 @@ passes.
     - `TestRollCountRespectsBounds` (many rolls stay within
       `[MinCount, MaxCount]`)
   - Then implement.
-- [ ] **`internal/loot`: data-file loading.**
+- [x] **`internal/loot`: data-file loading.**
   - Mirror `internal/skills/profession.go`'s
     `LoadProfessionDataFiles`/`GetProfessionSpec`/`GetAllProfessions`
     shape exactly: `LoadLootDataFiles()`, `GetTable(category string)
@@ -43,23 +43,23 @@ passes.
     tables keyed by `Category`. An unknown `ItemID` warns and is omitted;
     if no valid entries remain, the category is unavailable. Follow an
     existing test-log-capture pattern if one exists.
-- [ ] **Startup/reload wiring in `main.go`.** Call
+- [x] **Startup/reload wiring in `main.go`.** Call
       `loot.LoadLootDataFiles()` after `items.LoadDataFiles()` and before
       `mobs.LoadDataFiles()`. Test the real startup/reload path (or its
       loader sequence) to prove a shipped category is available after boot
       and refreshed on reload.
-- [ ] **`internal/mobs`: `Mob.LootCategory string` field.**
+- [x] **`internal/mobs`: `Mob.LootCategory string` field.**
   - Zero value (`""`) on every existing mob spec — no migration, no
     behavior change. Add the yaml tag, update any mob-spec doc comment
     block near `ItemDropChance`/`Groups` for consistency.
-- [ ] **`internal/items`: `Commodity` `ItemType`.**
+- [x] **`internal/items`: `Commodity` `ItemType`.**
   - Add to the `ItemType` const block (`itemspec.go:97-125`) alongside
     `Botanical`/`Junk`/etc. Check `internal/items`' own type-list/display
     helpers (anything that enumerates `ItemType` for admin UI or
     `AllEquipSlots`-style completeness) for a spot that needs the new
     value added, so it doesn't silently break an existing exhaustive
     switch — grep for `case Botanical` / `Botanical:` first.
-- [ ] **Wiring: `internal/mobcommands/suicide.go`'s death-drop block.**
+- [x] **Wiring: `internal/mobcommands/suicide.go`'s death-drop block.**
   - Test first (real command path, not just the pure package): a mob
     instance with `LootCategory` set to a loaded test category and killed
     via the real death/suicide code path drops the resolved item into the
@@ -77,7 +77,7 @@ passes.
     items, then append `count` copies to the same
     `corpseItems`/floor-drop path. Emit `MobItemDrop` for each floor
     drop only; corpse placement keeps today's event semantics.
-- [ ] **Content: category tag + tables for a proving slice.**
+- [x] **Content: category tag + tables for a proving slice.**
   - Pick at least one existing shipped humanoid-ish mob and one
     beast-ish mob (grep `_datafiles/world/*/mobs/` for a bandit/wolf-
     shaped candidate) and set their `lootcategory`.
@@ -88,17 +88,17 @@ passes.
     herb that 18b can use, and an existing type for the humanoid table
     (e.g. a `Junk`/`Object` trinket). Validate the recipe ingredient
     item IDs against this shipped content.
-- [ ] `gofmt -l`, `go vet ./internal/loot/... ./internal/mobs/...
+- [x] `gofmt -l`, `go vet ./internal/loot/... ./internal/mobs/...
       ./internal/items/... ./internal/mobcommands/...`, `go build ./...`,
-      `go test -race ./...` after each task.
-- [ ] `make generate`, `make validate`.
-- [ ] **Testing and review gate (18a):** independent reviewer subagent
+      `go test -race ./...` after implementation and review fixes.
+- [x] `make generate`, `make validate`.
+- [x] **Testing and review gate (18a):** independent reviewer subagent
       (most capable model tier) over the full 18a diff, briefed with this
       design doc, the non-negotiable invariants (clock, restart/copyover,
       lock order), and asked for bugs/design gaps/missing coverage.
       Verify each finding, fix real ones with a regression test, record
       rejected ones and why.
-- [ ] Update `docs/PROJECT_STATUS.md`: header, Current position/Next,
+- [x] Update `docs/PROJECT_STATUS.md`: header, Current position/Next,
       phase table row 18a, new work-log entry with a **Review:** line.
 
 ## Slice 18b: cooking

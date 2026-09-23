@@ -1,6 +1,7 @@
 package loot
 
 import (
+	"os"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -21,6 +22,12 @@ func LoadLootDataFiles() {
 }
 
 func loadLootDataFiles(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		allLootTables = map[string]Table{}
+		return nil
+	} else if err != nil {
+		return err
+	}
 	loaded, err := fileloader.LoadAllFlatFiles[string, *Table](path)
 	if err != nil {
 		return err
