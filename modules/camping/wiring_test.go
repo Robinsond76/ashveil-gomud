@@ -74,7 +74,7 @@ func (r rosterStub) Roster(int) []survival.MemberRef { return r.refs }
 type formationStub struct{ instance int }
 
 func (f formationStub) FormationFor(int) (company.Formation, bool) { return company.Formation{}, false }
-func (f formationStub) InstanceFor(int, int) (int, bool)          { return f.instance, true }
+func (f formationStub) InstanceFor(int, int) (int, bool)           { return f.instance, true }
 func (f formationStub) LeaderAndKeyForInstance(int) (int, company.MemberKey, bool) {
 	return 0, "", false
 }
