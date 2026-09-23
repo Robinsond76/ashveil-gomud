@@ -5,7 +5,8 @@
 // The MVP mount carries no decaying state at all (no fatigue, health, or
 // feed) — handoff §35 explicitly defers those to "Later." A mount is just a
 // stable type assignment whose configured spec contributes a cargo-capacity
-// bonus; travel-duration is computed data, not yet wired into travel.
+// bonus. Phase 16 wires TravelDurationPct into route travel and adds a
+// walking fatigue relief (FatiguePct) for at most Riders company members.
 package mount
 
 import "errors"
@@ -29,6 +30,38 @@ type MountSpec struct {
 	Description             string
 	CargoCapacityBonusGrams int
 	TravelDurationPct       int
+	// FatiguePct is the walking strain multiplier for the members who ride
+	// (0 means 100). Riders is how many ride (0 means DefaultRiders).
+	FatiguePct int
+	Riders     int
+}
+
+// DefaultRiders is how many company members a mount carries when its spec
+// leaves Riders unset.
+const DefaultRiders = 2
+
+// EffectiveFatiguePct is FatiguePct with 0 read as 100.
+func (s MountSpec) EffectiveFatiguePct() int {
+	if s.FatiguePct == 0 {
+		return 100
+	}
+	return s.FatiguePct
+}
+
+// EffectiveRiders is Riders with 0 read as DefaultRiders.
+func (s MountSpec) EffectiveRiders() int {
+	if s.Riders == 0 {
+		return DefaultRiders
+	}
+	return s.Riders
+}
+
+// EffectiveTravelDurationPct is TravelDurationPct with 0 read as 100.
+func (s MountSpec) EffectiveTravelDurationPct() int {
+	if s.TravelDurationPct == 0 {
+		return 100
+	}
+	return s.TravelDurationPct
 }
 
 // Validate rejects a malformed spec rather than letting it be guessed at,
@@ -41,6 +74,12 @@ func (s MountSpec) Validate() error {
 		return ErrInvalidSpec
 	}
 	if s.TravelDurationPct != 0 && (s.TravelDurationPct < PctMin || s.TravelDurationPct > PctMax) {
+		return ErrInvalidSpec
+	}
+	if s.FatiguePct != 0 && (s.FatiguePct < PctMin || s.FatiguePct > PctMax) {
+		return ErrInvalidSpec
+	}
+	if s.Riders < 0 {
 		return ErrInvalidSpec
 	}
 	return nil

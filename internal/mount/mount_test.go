@@ -19,6 +19,9 @@ func TestMountSpecValidate(t *testing.T) {
 		{Type: "mule", CargoCapacityBonusGrams: -1},
 		{Type: "mule", CargoCapacityBonusGrams: 0, TravelDurationPct: PctMin - 1},
 		{Type: "mule", CargoCapacityBonusGrams: 0, TravelDurationPct: PctMax + 1},
+		{Type: "mule", FatiguePct: PctMin - 1},
+		{Type: "mule", FatiguePct: PctMax + 1},
+		{Type: "mule", Riders: -1},
 	}
 	for i, c := range cases {
 		if err := c.Validate(); !errors.Is(err, ErrInvalidSpec) {
@@ -48,5 +51,35 @@ func TestEstablished(t *testing.T) {
 	}
 	if _, err := Established(7, ""); !errors.Is(err, ErrInvalidMount) {
 		t.Errorf("expected ErrInvalidMount for empty type, got %v", err)
+	}
+}
+
+func TestMountSpecFatigueReliefDefaults(t *testing.T) {
+	unset := MountSpec{Type: "mule"}
+	if err := unset.Validate(); err != nil {
+		t.Fatalf("unset FatiguePct/Riders must be valid, got %v", err)
+	}
+	if got := unset.EffectiveFatiguePct(); got != 100 {
+		t.Errorf("FatiguePct 0 means 100, got %d", got)
+	}
+	if got := unset.EffectiveRiders(); got != DefaultRiders || DefaultRiders != 2 {
+		t.Errorf("Riders 0 means 2, got %d", got)
+	}
+	if got := unset.EffectiveTravelDurationPct(); got != 100 {
+		t.Errorf("TravelDurationPct 0 means 100, got %d", got)
+	}
+	set := MountSpec{Type: "horse", FatiguePct: 75, Riders: 1, TravelDurationPct: 90}
+	if set.EffectiveFatiguePct() != 75 || set.EffectiveRiders() != 1 || set.EffectiveTravelDurationPct() != 90 {
+		t.Errorf("configured values must pass through: %+v", set)
+	}
+}
+
+func TestReliefNeutralWithoutProvider(t *testing.T) {
+	SetProvider(nil)
+	if pct, riders := Relief(7); pct != 100 || riders != 0 {
+		t.Errorf("expected (100, 0), got (%d, %d)", pct, riders)
+	}
+	if got := TravelDurationPct(7); got != 100 {
+		t.Errorf("expected 100, got %d", got)
 	}
 }

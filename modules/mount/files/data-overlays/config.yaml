@@ -1,12 +1,20 @@
 # Phase 10 mount type table.
 #
-# CargoCapacityBonusGrams is wired: modules/encumbrance adds it to a
-# leader's computed capacity. TravelDurationPct is computed data only this
-# phase (100 = unchanged, lower = faster) — not yet wired into
-# modules/expedition, same deferred shape as weather's/encumbrance's
-# multipliers (design doc's scope decision).
+# CargoCapacityBonusKg is added to a leader's computed cargo capacity by
+# modules/encumbrance.
+#
+# Phase 16 wires the rest:
+# - TravelDurationPct (100 = unchanged, lower = faster) is locked onto a
+#   route journey at departure and shortens it for the whole company.
+# - FatiguePct (100 = unchanged) scales walking strain for the members who
+#   ride. Riders is how many (default 2): the leader first, then companions
+#   by ascending companion id, counting only members walking with the
+#   leader. Everyone else walks at full cost. Route travel does not use
+#   FatiguePct yet.
 Mounts:
   - Type: pack-horse
     Description: "A sturdy pack horse, laden with saddlebags."
     CargoCapacityBonusKg: 100
     TravelDurationPct: 90
+    FatiguePct: 75
+    Riders: 2

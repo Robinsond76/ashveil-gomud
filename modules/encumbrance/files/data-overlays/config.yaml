@@ -3,10 +3,9 @@
 # CapacityKg is a flat, config-driven party capacity (no per-company
 # Strength aggregation this phase). LoadBands maps load ratio thresholds to
 # travel-duration/fatigue percentage modifiers; the implicit band below the
-# lowest MinRatio is always 100%/100% (unchanged). This phase computes and
-# displays these modifiers but does not yet apply them to travel duration or
-# survival exertion/rest recovery — that wiring is a reviewed follow-up
-# (design doc Option A).
+# lowest MinRatio is always 100%/100% (unchanged). Phase 16 applies them:
+# TravelDurationPct and FatiguePct are locked onto a route journey at
+# departure, and FatiguePct scales every walking step's strain.
 CapacityKg: 200
 LoadBands:
   - MinRatio: 0.75
