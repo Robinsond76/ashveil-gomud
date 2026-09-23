@@ -8,14 +8,12 @@ instead of duplicating them.
 - **Last updated:** 2026-09-23
 - **Branch:** `claude/phase-16-implementation-ken03h`
 - **HEAD:** Phase 16 (walking fatigue, inns, travel/rest multipliers) is
-  complete and reviewed on its branch, pushed, not yet merged to `master`.
+  complete, reviewed, and merged to `master`.
   Walking in the wilderness costs fatigue, with Exhausted and Collapsed
   penalties. Inns sell a paid rest that grants Well Rested. Weather, load,
   and mount now change route travel and camp rest.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through Phase 12b's weighted
-  encounter tables (`e42efd88`); this branch's Phase 12c work is not yet
-  merged.
+- **Origin sync:** `master` is pushed through Phase 16.
 
 ## Current position
 
@@ -42,9 +40,8 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** merge Phase 16 to `master` (it is waiting for the user's
-  go-ahead), then Phase 17 (archetypes) per the 2026-09-23 roadmap. Phase
-  17 has no design yet.
+- **Next:** Phase 17 (archetypes) per the 2026-09-23 roadmap. Phase 17
+  has no design yet.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
@@ -85,7 +82,7 @@ instead of duplicating them.
 | 13 | Sky and environment | Complete: moon phases, cloud cover, fog, indoor biomes/tags, indoor glimpse, richer `weather`; display-only |
 | 14 | Visibility and light | Complete: ambient vs per-viewer light, personal/fixture/party light, darkness hit penalty, `light` command, `floatinglight` spell |
 | 15 | Temperature, clothing, exposure | Complete: `internal/climate`, `modules/exposure`, item `warmth`, weather `TemperatureMod`, survival member drain + mutex, `temperature` command |
-| 16 | Walking fatigue, inns, travel/rest multipliers | Complete on branch (not yet merged): `internal/walking`, `modules/walking`, inn stays in `modules/camping`, multipliers locked at departure/rest start, Waymark Inn, Old Kings Road zone |
+| 16 | Walking fatigue, inns, travel/rest multipliers | Complete: `internal/walking`, `modules/walking`, inn stays in `modules/camping`, multipliers locked at departure/rest start, Waymark Inn, Old Kings Road zone |
 | 17–21 | Archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
