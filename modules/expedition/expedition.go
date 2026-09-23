@@ -19,14 +19,17 @@ import (
 	"sync"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/weather"
 	"gopkg.in/yaml.v2"
 )
 
@@ -202,6 +205,12 @@ type ExpeditionModule struct {
 	rollUint64 func() uint64
 	mobSpawner MobSpawner
 
+	// Phase 16 departure multiplier seams; nil uses the native providers.
+	weatherIn        func(zone string) (weather.Condition, bool)
+	loadBand         func(leaderUserID int) (encumbrance.LoadBand, bool)
+	mountDurationPct func(leaderUserID int) int
+	roomZone         func(roomID int) string
+
 	profiles        map[string]expedition.TravelProfile
 	sessions        map[int]expedition.TravelSession
 	timers          map[int]Timer
@@ -314,6 +323,17 @@ func (m *ExpeditionModule) profile(name string) (expedition.TravelProfile, bool)
 	return profile, ok
 }
 
+// sessionProfile is the session's route profile scaled by the multipliers
+// locked onto it at departure (Phase 16). Every read of a session's
+// Duration or Exertion goes through here.
+func (m *ExpeditionModule) sessionProfile(session expedition.TravelSession) (expedition.TravelProfile, bool) {
+	profile, ok := m.profiles[session.ProfileName]
+	if !ok {
+		return profile, false
+	}
+	return session.EffectiveProfile(profile), true
+}
+
 // parseProfiles normalizes the configured profile list, rejecting malformed
 // profiles and duplicate names rather than applying a guess.
 func parseProfiles(raw any) map[string]expedition.TravelProfile {
@@ -392,7 +412,7 @@ func (m *ExpeditionModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if !ok {
 		return events.Continue
 	}
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return events.Continue
 	}
@@ -512,7 +532,16 @@ func (m *ExpeditionModule) StartTravel(req expedition.StartRequest) (bool, error
 		m.sendToLeader(req.LeaderUserID, "You are already travelling.")
 		return true, nil
 	}
+	// A company with a Collapsed member (fatigue 0) can't set out on a route.
+	// Ordinary movement is never refused, so nobody is stranded.
+	for _, member := range m.companyNeeds(req.LeaderUserID) {
+		if member.Needs.Fatigue <= 0 {
+			m.sendToLeader(req.LeaderUserID, "Your company is too exhausted to set out. Rest first.")
+			return true, nil
+		}
+	}
 
+	factors := m.departureFactorsLocked(req)
 	session := expedition.TravelSession{
 		LeaderUserID:      req.LeaderUserID,
 		OriginRoomID:      req.OriginRoomID,
@@ -521,6 +550,9 @@ func (m *ExpeditionModule) StartTravel(req expedition.StartRequest) (bool, error
 		ProfileName:       req.ProfileName,
 		StartedAtUTC:      m.clock().UTC(),
 		State:             expedition.Traveling,
+		DurationPct:       factors.durationPct,
+		ExertionPct:       factors.exertionPct,
+		FatiguePct:        factors.fatiguePct,
 	}
 	if err := session.Validate(); err != nil {
 		return true, err
@@ -533,7 +565,122 @@ func (m *ExpeditionModule) StartTravel(req expedition.StartRequest) (bool, error
 	}
 	m.scheduleLocked(session)
 	m.sendToLeader(session.LeaderUserID, m.departureTextLocked(session))
+	if line := factors.line(); line != "" {
+		m.sendToLeader(session.LeaderUserID, line)
+	}
 	return true, nil
+}
+
+// departureFactors are the Phase 16 multipliers locked onto a journey at
+// departure, plus what produced them for the departure line.
+type departureFactors struct {
+	durationPct, exertionPct, fatiguePct int
+	weatherName                          string
+	weatherSlows, weatherTires           bool
+	loadSlows                            bool
+	mountSpeeds                          bool
+}
+
+// neutralPct stores 100 as 0 so a neutral session saves exactly like a
+// pre-Phase 16 one.
+func neutralPct(pct int) int {
+	pct = expedition.ClampPct(pct)
+	if pct == 100 {
+		return 0
+	}
+	return pct
+}
+
+// departureFactorsLocked reads weather (the origin zone, or the destination
+// zone when the origin is untracked), the company load band, and the mount.
+// Lock order: expedition -> {encumbrance, mount, weather}; none call back.
+func (m *ExpeditionModule) departureFactorsLocked(req expedition.StartRequest) departureFactors {
+	weatherIn := m.weatherIn
+	if weatherIn == nil {
+		weatherIn = weather.CurrentCondition
+	}
+	loadBand := m.loadBand
+	if loadBand == nil {
+		loadBand = encumbrance.CurrentBand
+	}
+	mountDuration := m.mountDurationPct
+	if mountDuration == nil {
+		mountDuration = mount.TravelDurationPct
+	}
+	roomZone := m.roomZone
+	if roomZone == nil {
+		roomZone = func(roomID int) string {
+			if room := rooms.LoadRoom(roomID); room != nil {
+				return room.Zone
+			}
+			return ""
+		}
+	}
+
+	f := departureFactors{}
+	weatherDuration, weatherExertion := 100, 100
+	condition, ok := weatherIn(roomZone(req.OriginRoomID))
+	if !ok {
+		condition, ok = weatherIn(roomZone(req.DestinationRoomID))
+	}
+	if ok {
+		weatherDuration = orNeutral(condition.TravelDurationPct)
+		weatherExertion = orNeutral(condition.ExertionPct)
+		f.weatherName = condition.Name
+		f.weatherSlows = weatherDuration > 100
+		f.weatherTires = weatherExertion > 100
+	}
+	loadDuration, loadFatigue := 100, 100
+	if band, ok := loadBand(req.LeaderUserID); ok {
+		loadDuration = orNeutral(band.TravelDurationPct)
+		loadFatigue = orNeutral(band.FatiguePct)
+		f.loadSlows = loadDuration > 100 || loadFatigue > 100
+	}
+	mountPct := orNeutral(mountDuration(req.LeaderUserID))
+	f.mountSpeeds = mountPct < 100
+
+	product := int64(weatherDuration) * int64(loadDuration) * int64(mountPct)
+	f.durationPct = neutralPct(int((product + 5000) / 10000))
+	f.exertionPct = neutralPct(weatherExertion)
+	f.fatiguePct = neutralPct(loadFatigue)
+	return f
+}
+
+func orNeutral(pct int) int {
+	if pct <= 0 {
+		return 100
+	}
+	return pct
+}
+
+// line names the factors that changed the journey, or "".
+func (f departureFactors) line() string {
+	var slowers []string
+	if f.weatherSlows || f.weatherTires {
+		name := f.weatherName
+		if name == "" {
+			name = "the weather"
+		}
+		slowers = append(slowers, strings.ToUpper(name[:1])+name[1:])
+	}
+	if f.loadSlows {
+		if len(slowers) == 0 {
+			slowers = append(slowers, "A heavy load")
+		} else {
+			slowers = append(slowers, "a heavy load")
+		}
+	}
+	var parts []string
+	switch len(slowers) {
+	case 1:
+		parts = append(parts, slowers[0]+" slows your pace.")
+	case 2:
+		parts = append(parts, slowers[0]+" and "+slowers[1]+" slow your pace.")
+	}
+	if f.mountSpeeds {
+		parts = append(parts, "Your mount quickens the journey.")
+	}
+	return strings.Join(parts, " ")
 }
 
 // RenderTravelView implements expedition.ViewProvider.
@@ -563,7 +710,7 @@ func (m *ExpeditionModule) MovementBlocked(leaderUserID int) (bool, string) {
 }
 
 func (m *ExpeditionModule) refusalTextLocked(session expedition.TravelSession) string {
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return "You are already travelling."
 	}
@@ -588,7 +735,7 @@ func (m *ExpeditionModule) syncAndCompleteLocked(leaderUserID int) error {
 	if !ok {
 		return nil
 	}
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return fmt.Errorf("expedition: unknown travel profile %q", session.ProfileName)
 	}
@@ -636,7 +783,7 @@ func (m *ExpeditionModule) syncLocked(leaderUserID int) error {
 	if !ok {
 		return nil
 	}
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return fmt.Errorf("expedition: unknown travel profile %q", session.ProfileName)
 	}
@@ -683,7 +830,7 @@ func (m *ExpeditionModule) nextBoundaryDelayLocked(session expedition.TravelSess
 }
 
 func (m *ExpeditionModule) scheduleLocked(session expedition.TravelSession) {
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return
 	}
@@ -731,7 +878,7 @@ func (m *ExpeditionModule) onTimer(leaderUserID int, generation uint64) {
 }
 
 func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) error {
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return fmt.Errorf("expedition: unknown travel profile %q", session.ProfileName)
 	}
@@ -793,7 +940,7 @@ func (m *ExpeditionModule) combatEncounterActiveLocked(session expedition.Travel
 // completeLocked applies the final earned checkpoint, persists Completed, then
 // moves the leader exactly once and cleans up after verifying the destination.
 func (m *ExpeditionModule) completeLocked(session expedition.TravelSession) {
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		mudlog.Error("expedition: complete with unknown profile", "leader", session.LeaderUserID, "profile", session.ProfileName)
 		return
@@ -843,7 +990,7 @@ func (m *ExpeditionModule) moveAndFinishLocked(session expedition.TravelSession,
 // load, which also runs after a copyover restore.
 func (m *ExpeditionModule) recoverLocked() {
 	for leaderUserID, session := range m.sessions {
-		profile, ok := m.profile(session.ProfileName)
+		profile, ok := m.sessionProfile(session)
 		if !ok {
 			mudlog.Warn("expedition: recovery unknown profile", "leader", leaderUserID, "profile", session.ProfileName)
 			continue
@@ -928,7 +1075,7 @@ func (m *ExpeditionModule) sendToLeader(leaderUserID int, text string) {
 }
 
 func (m *ExpeditionModule) departureTextLocked(session expedition.TravelSession) string {
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return ""
 	}
@@ -950,7 +1097,7 @@ func (m *ExpeditionModule) statusTextLocked(leaderUserID int) string {
 	if session.State == expedition.Cancelled || session.State == expedition.Completed {
 		return "You are not travelling."
 	}
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return fmt.Sprintf("You are travelling via an unknown route (%s).", session.ProfileName)
 	}
@@ -1016,7 +1163,7 @@ func (m *ExpeditionModule) resume(leaderUserID int) string {
 	if !ok {
 		return "You are not travelling."
 	}
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return "Unable to resume travel: route profile is unavailable."
 	}
@@ -1055,7 +1202,7 @@ func (m *ExpeditionModule) returnToOrigin(leaderUserID int) string {
 	if !ok {
 		return "You are not travelling."
 	}
-	profile, ok := m.profile(session.ProfileName)
+	profile, ok := m.sessionProfile(session)
 	if !ok {
 		return "Unable to return: route profile is unavailable."
 	}

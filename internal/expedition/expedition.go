@@ -271,6 +271,62 @@ type TravelSession struct {
 	Interruption           *TravelInterruption `yaml:"interruption,omitempty"`
 	InterruptionTriggered  bool                `yaml:"interruption_triggered,omitempty"`
 	State                  SessionState        `yaml:"state"`
+	// Phase 16 multipliers, locked at departure. 0 means 100 (neutral), so a
+	// session saved before Phase 16 reloads and runs exactly as before.
+	// DurationPct scales the route duration; ExertionPct scales every need's
+	// cost; FatiguePct scales fatigue on top of ExertionPct.
+	DurationPct int `yaml:"duration_pct,omitempty"`
+	ExertionPct int `yaml:"exertion_pct,omitempty"`
+	FatiguePct  int `yaml:"fatigue_pct,omitempty"`
+}
+
+// PctMin and PctMax bound a session's locked multipliers. 100 is neutral.
+const (
+	PctMin = 25
+	PctMax = 400
+)
+
+// ClampPct bounds a multiplier to [PctMin, PctMax], reading 0 as 100.
+func ClampPct(pct int) int {
+	switch {
+	case pct == 0:
+		return 100
+	case pct < PctMin:
+		return PctMin
+	case pct > PctMax:
+		return PctMax
+	}
+	return pct
+}
+
+func pctOrNeutral(pct int) int64 {
+	if pct == 0 {
+		return 100
+	}
+	return int64(pct)
+}
+
+func validLockedPct(pct int) bool {
+	return pct == 0 || (pct >= PctMin && pct <= PctMax)
+}
+
+// EffectiveProfile scales a route's base profile by the session's locked
+// multipliers: Duration by DurationPct, every need by ExertionPct, and
+// fatigue additionally by FatiguePct, each rounded half up. Interruption
+// checkpoints are fractions of the duration, so they scale with it. With
+// every pct neutral the profile is returned unchanged.
+func (s TravelSession) EffectiveProfile(p TravelProfile) TravelProfile {
+	duration, exertion, fatigue := pctOrNeutral(s.DurationPct), pctOrNeutral(s.ExertionPct), pctOrNeutral(s.FatiguePct)
+	if duration == 100 && exertion == 100 && fatigue == 100 {
+		return p
+	}
+	p.Duration = time.Duration((int64(p.Duration)*duration + 50) / 100)
+	p.Exertion = survival.Exertion{
+		Hunger:  int((int64(p.Exertion.Hunger)*exertion + 50) / 100),
+		Thirst:  int((int64(p.Exertion.Thirst)*exertion + 50) / 100),
+		Fatigue: int((int64(p.Exertion.Fatigue)*exertion*fatigue + 5000) / 10000),
+	}
+	return p
 }
 
 // PendingExertion is the durable two-phase record of a survival charge.
@@ -304,6 +360,9 @@ func (s TravelSession) Validate() error {
 		return ErrInvalidSession
 	}
 	if s.PausedDuration < 0 {
+		return ErrInvalidSession
+	}
+	if !validLockedPct(s.DurationPct) || !validLockedPct(s.ExertionPct) || !validLockedPct(s.FatiguePct) {
 		return ErrInvalidSession
 	}
 	if i := s.Interruption; i != nil {
