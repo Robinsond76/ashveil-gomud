@@ -1,0 +1,16 @@
+# Phase 16 Well Rested, granted by modules/camping when a company wakes
+# from an inn stay: the leader and every spawned companion. Its
+# well-rested flag halves walking strain (modules/walking). About 30
+# minutes (450 rounds). Distinct from upstream buff 16, also named Well
+# Rested, which the Frostfire Inn's room rental grants.
+buffid: 1030
+name: Well Rested
+description: A proper bed has left you refreshed; the road feels lighter.
+secret: false
+triggerrate: 1 round
+triggercount: 450
+flags:
+  - well-rested
+statmods:
+  perception: 2
+  speed: 2

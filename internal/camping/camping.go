@@ -39,13 +39,59 @@ func (s RestState) Valid() bool { return s == Resting || s == Completed }
 type RestSession struct {
 	StartedAtUTC time.Time `yaml:"started_at_utc"`
 	State        RestState `yaml:"state"`
+	// Recovery is the fatigue this rest restores, locked when it starts
+	// (Phase 16: a camp rest scaled by the weather, or an inn stay's
+	// amount). 0 means FatigueRecovery, so a pre-Phase 16 rest is unchanged.
+	Recovery int `yaml:"recovery,omitempty"`
 }
 
 func (s RestSession) Validate() error {
-	if s.StartedAtUTC.IsZero() || !s.State.Valid() {
+	if s.StartedAtUTC.IsZero() || !s.State.Valid() || s.Recovery < 0 {
 		return ErrInvalidCamp
 	}
 	return nil
+}
+
+// RecoveryAmount is the fatigue this rest restores.
+func (s RestSession) RecoveryAmount() int {
+	if s.Recovery == 0 {
+		return FatigueRecovery
+	}
+	return s.Recovery
+}
+
+// ProgressFor returns progress over a rest of the given duration, clamped
+// to [0,1]. A completed rest is 1.
+func (s RestSession) ProgressFor(now time.Time, duration time.Duration) float64 {
+	if s.State == Completed {
+		return 1
+	}
+	if duration <= 0 {
+		return 1
+	}
+	elapsed := now.UTC().Sub(s.StartedAtUTC)
+	if elapsed <= 0 {
+		return 0
+	}
+	if elapsed >= duration {
+		return 1
+	}
+	return float64(elapsed) / float64(duration)
+}
+
+// RemainingFor returns the time left on a rest of the given duration.
+func (s RestSession) RemainingFor(now time.Time, duration time.Duration) time.Duration {
+	if s.State == Completed {
+		return 0
+	}
+	remaining := duration - now.UTC().Sub(s.StartedAtUTC)
+	if remaining < 0 {
+		return 0
+	}
+	if remaining > duration {
+		return duration
+	}
+	return remaining
 }
 
 // Camp is the durable leader-owned campsite record.
@@ -116,17 +162,7 @@ func (c Camp) ProgressAt(now time.Time) float64 {
 	if c.Rest == nil {
 		return 0
 	}
-	if c.Rest.State == Completed {
-		return 1
-	}
-	elapsed := now.UTC().Sub(c.Rest.StartedAtUTC)
-	if elapsed <= 0 {
-		return 0
-	}
-	if elapsed >= RestDuration {
-		return 1
-	}
-	return float64(elapsed) / float64(RestDuration)
+	return c.Rest.ProgressFor(now, RestDuration)
 }
 
 func (c Camp) RestDue(now time.Time) bool {

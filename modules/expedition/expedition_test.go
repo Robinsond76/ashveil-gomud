@@ -1067,6 +1067,26 @@ func TestDunmarOakRoute(t *testing.T) {
 	require.NotNil(t, destination, "Fork at the Black Oak must exist")
 	assert.Equal(t, "Fork at the Black Oak", destination.Title)
 
+	// Phase 16: the fork sits in its own forest zone so the route and camp
+	// see weather; Dunmar itself is a city with an inn off the west gate.
+	assert.Equal(t, "Dunmar", origin.Zone)
+	assert.Equal(t, "Old Kings Road", destination.Zone)
+	assert.Equal(t, "forest", rooms.GetZoneBiome("Old Kings Road"))
+	assert.Equal(t, "city", rooms.GetZoneBiome("Dunmar"))
+	assert.True(t, destination.HasTag("camping"), "the fork keeps its camp")
+	inn := rooms.LoadRoom(2003)
+	require.NotNil(t, inn, "the Waymark Inn must exist")
+	assert.Equal(t, "The Waymark Inn", inn.Title)
+	assert.True(t, inn.HasTag("inn"))
+	assert.True(t, inn.IsIndoor())
+	_, west := origin.FindExitByName("west")
+	assert.Equal(t, 2003, west)
+	_, east := inn.FindExitByName("east")
+	assert.Equal(t, 2001, east)
+	frostfire := rooms.LoadRoom(61)
+	require.NotNil(t, frostfire)
+	assert.True(t, frostfire.HasTag("inn"), "the Frostfire Inn is an inn")
+
 	exitName, destinationId := origin.FindExitByName("north")
 	require.NotEmpty(t, exitName, "the west gate must have a north route")
 	assert.Equal(t, 2002, destinationId)

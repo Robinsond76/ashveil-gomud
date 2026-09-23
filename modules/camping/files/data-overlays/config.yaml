@@ -1,5 +1,19 @@
 # Phase 7 camping eligibility.
 #
 # RoomTag is the room `tags` entry that admits `camp` in that room. The
-# proving room (Dunmar 2002, Fork at the Black Oak) carries this tag.
+# proving room (2002, Fork at the Black Oak) carries this tag.
+#
+# Phase 16: a camp rest restores 20 fatigue scaled by the camp zone's
+# weather RestRecoveryPct, locked when the rest starts.
 RoomTag: camping
+
+# Phase 16 inns. A room tagged InnRoomTag admits `inn rest`: the company
+# pays PricePerMember gold per member and rests for InnRestDuration (real
+# time), recovering InnFatigueRecovery fatigue. On waking, the leader and
+# every spawned companion gain buff WellRestedBuffId (Well Rested, which
+# halves walking strain). Weather never touches an inn rest.
+InnRoomTag: inn
+PricePerMember: 5
+InnRestDuration: 60s
+InnFatigueRecovery: 60
+WellRestedBuffId: 1030

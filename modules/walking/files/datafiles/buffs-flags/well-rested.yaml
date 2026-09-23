@@ -1,0 +1,4 @@
+flag: well-rested
+name: "Well Rested"
+description: "Halves walking fatigue (Phase 16, modules/walking)."
+locked: true

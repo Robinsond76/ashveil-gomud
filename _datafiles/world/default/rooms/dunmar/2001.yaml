@@ -15,6 +15,8 @@ exits:
     travel_profile: oak-road
     exitmessage: You shoulder your pack, gather your company, and step onto the Old
       King's Road.
+  west:
+    roomid: 2003
 mapx: 0
 mapy: 0
 mapz: 0

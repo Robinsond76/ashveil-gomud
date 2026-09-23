@@ -577,3 +577,21 @@ func TestBandBuffSurvivesPermabuffReconciliation(t *testing.T) {
 	u.Character.Validate(true) // the login path reconciles permabuffs
 	assert.True(t, hasActiveBuff(u.Character, coldBuffs[climate.BandModerate]))
 }
+
+// TestExposureOfThroughClimateSeam reads a member's exposure through the
+// registered climate seam, as modules/walking does.
+func TestExposureOfThroughClimateSeam(t *testing.T) {
+	e := setup(t)
+	climate.SetProvider(nil)
+	_, ok := climate.ExposureOf(7, string(survival.LeaderMemberKey))
+	assert.False(t, ok, "absent without a provider")
+
+	climate.SetProvider(e.m)
+	t.Cleanup(func() { climate.SetProvider(nil) })
+	e.m.registry.Exposure[7] = map[string]int{string(survival.CompanionMemberKey(2)): -55}
+	value, ok := climate.ExposureOf(7, string(survival.CompanionMemberKey(2)))
+	require.True(t, ok)
+	assert.Equal(t, -55, value)
+	_, ok = climate.ExposureOf(7, string(survival.LeaderMemberKey))
+	assert.False(t, ok, "a comfortable member has no stored exposure")
+}

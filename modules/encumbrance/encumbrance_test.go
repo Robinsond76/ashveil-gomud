@@ -247,3 +247,40 @@ func TestCurrentLoadWithoutMountProviderIsUnaffected(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, 10000, load.CapacityGrams)
 }
+
+// TestCurrentBandResolvesConfiguredBandForRealLoad goes through the
+// registered internal/encumbrance seam, as walking and travel do.
+func TestCurrentBandResolvesConfiguredBandForRealLoad(t *testing.T) {
+	user := testUser(t, 7)
+	module := newTestModule(&fakeStore{}, user)
+	module.capacityGrams = 1000
+	module.bands = []encumbrance.LoadBand{
+		{MinRatio: 0.75, TravelDurationPct: 110, FatiguePct: 108},
+		{MinRatio: 0.9, TravelDurationPct: 125, FatiguePct: 115},
+	}
+	encumbrance.SetProvider(module)
+	t.Cleanup(func() { encumbrance.SetProvider(nil) })
+
+	band, ok := encumbrance.CurrentBand(7)
+	require.True(t, ok)
+	assert.Equal(t, encumbrance.LoadBand{TravelDurationPct: 100, FatiguePct: 100}, band, "an empty pack is unladen")
+
+	module.cargo[7] = encumbrance.Cargo{LeaderUserID: 7, Stacks: []encumbrance.CargoStack{{ItemId: rockId, Count: 1}}}
+	user.Character.Items = []items.Item{testItem(rockId)} // 1000g of 1000g
+	band, ok = encumbrance.CurrentBand(7)
+	require.True(t, ok)
+	assert.Equal(t, 115, band.FatiguePct)
+	assert.Equal(t, 125, band.TravelDurationPct)
+
+	module.capacityGrams = 0
+	band, ok = encumbrance.CurrentBand(7)
+	assert.False(t, ok, "an untracked load is neutral")
+	assert.Equal(t, 100, band.FatiguePct)
+}
+
+func TestCurrentBandNeutralWithoutProvider(t *testing.T) {
+	encumbrance.SetProvider(nil)
+	band, ok := encumbrance.CurrentBand(7)
+	assert.False(t, ok)
+	assert.Equal(t, encumbrance.LoadBand{TravelDurationPct: 100, FatiguePct: 100}, band)
+}

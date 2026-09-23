@@ -1,0 +1,13 @@
+# Phase 16 fatigue band (0). Applied, refreshed every tick, and removed by
+# modules/walking. A Collapsed company can't set out on a route. No
+# vitality penalty.
+buffid: 1032
+name: Collapsed
+description: You have nothing left; you can barely keep your feet.
+secret: false
+triggerrate: 1 round
+triggercount: 11
+statmods:
+  speed: -25
+  strength: -25
+  smarts: -25

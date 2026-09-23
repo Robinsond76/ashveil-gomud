@@ -1,0 +1,12 @@
+# Phase 16 fatigue band (1..25). Applied, refreshed every tick, and removed
+# by modules/walking: short-lived and non-permanent, so the engine's
+# permabuff reconciliation never strips it. No vitality penalty.
+buffid: 1031
+name: Exhausted
+description: You are bone-tired and every step drags.
+secret: false
+triggerrate: 1 round
+triggercount: 11
+statmods:
+  speed: -10
+  strength: -10

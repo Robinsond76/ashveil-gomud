@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/walking"
 )
 
 func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
@@ -136,6 +137,11 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 		} else {
 
 			scripting.TryRoomScriptEvent(`onExit`, user.UserId, originRoomId)
+
+			// Charge the mover's company its walking strain for this step.
+			// Route journeys never reach here (they start above and arrive
+			// through the expedition module), so travel is never charged twice.
+			walking.Stepped(user.UserId, originRoomId, destRoom.RoomId)
 
 			// Tell the player they are moving
 			if isSneaking {

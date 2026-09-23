@@ -2,9 +2,11 @@ package weather
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/climate"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -13,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/weather"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestMain(m *testing.M) {
@@ -360,4 +363,29 @@ func TestUserCommandShowsAirTemperature(t *testing.T) {
 	module.userCommand("", user, weatherRoom("dunmar"), 0)
 	events.ProcessEvents()
 	assert.NotContains(t, joinMessages(*messages), "Temperature here:", "no provider, no temperature line")
+}
+
+// TestShippedWorldTracksOldKingsRoadNotDunmar loads the shipped world and
+// the shipped biome tables (Phase 16 decision 6): the fork's forest zone
+// gets weather, Dunmar (a city) does not.
+func TestShippedWorldTracksOldKingsRoadNotDunmar(t *testing.T) {
+	dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
+	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
+	rooms.LoadDataFiles()
+
+	data, err := files.ReadFile("files/data-overlays/config.yaml")
+	require.NoError(t, err)
+	var cfg map[string]any
+	require.NoError(t, yaml.Unmarshal(data, &cfg))
+
+	module := newTestModule(&fakeStore{}, func() uint64 { return 1000 }, zeroRNG)
+	module.zoneNames = rooms.GetAllZoneNames
+	module.zoneBiome = rooms.GetZoneBiome
+	module.biomes = parseBiomeTables(cfg["Biomes"])
+	module.load()
+
+	_, tracked := module.CurrentCondition("Old Kings Road")
+	assert.True(t, tracked, "the proving route's forest zone has weather")
+	_, tracked = module.CurrentCondition("Dunmar")
+	assert.False(t, tracked, "Dunmar is a city: no weather")
 }

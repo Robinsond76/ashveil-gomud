@@ -2,12 +2,14 @@
 #
 # Each entry is a biome-tabled, weighted-random condition set on a
 # round-scheduled change interval. A zone whose biome has no entry here is
-# untracked: no weather line, no multiplier. Percentages are informational
-# in this phase (Option A): nothing yet multiplies travel duration,
-# exertion, or camp rest recovery by them; that wiring is a reviewed
-# follow-up once the engine itself is proven.
+# untracked: no weather line, no multiplier. Phase 16 applies the
+# percentages: TravelDurationPct and ExertionPct are locked onto a route
+# journey at departure (weather from the origin zone, or the destination
+# zone when the origin is untracked), ExertionPct scales outdoor walking
+# strain, and RestRecoveryPct is locked onto a camp rest when it starts.
 #
-# forest is the only biome currently in use, at Dunmar 2001/2002.
+# forest is the only biome currently in use, in the Old Kings Road zone
+# (Fork at the Black Oak, room 2002). Dunmar itself is a city: no weather.
 #
 # Phase 13: CloudCover is 0 (clear) to 3 (overcast; hides the moon).
 # VisibilityMod is 0 or a fog penalty down to -2. Both are display-only in

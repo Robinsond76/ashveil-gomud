@@ -292,3 +292,23 @@ func AirTemperatureIn(roomId int) (int, bool) {
 	}
 	return p.AirTemperatureIn(roomId)
 }
+
+// ExposureProvider is optionally implemented by the registered Provider
+// (Phase 16): a company member's current signed exposure. memberKey is a
+// survival member key ("leader", "companion:<id>").
+type ExposureProvider interface {
+	ExposureOf(leaderUserID int, memberKey string) (int, bool)
+}
+
+// ExposureOf asks the registered provider for a member's exposure. Without
+// one, ok is false.
+func ExposureOf(leaderUserID int, memberKey string) (int, bool) {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	ep, ok := p.(ExposureProvider)
+	if !ok {
+		return 0, false
+	}
+	return ep.ExposureOf(leaderUserID, memberKey)
+}

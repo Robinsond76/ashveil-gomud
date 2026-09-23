@@ -208,3 +208,45 @@ func TestParseMountSpecsRejectsMalformedEntries(t *testing.T) {
 	assert.NotContains(t, specs, "")
 	assert.NotContains(t, specs, "broken-mule")
 }
+
+func TestParseMountSpecsReadsFatigueRelief(t *testing.T) {
+	specs := parseMountSpecs([]any{
+		map[any]any{"Type": "pack-horse", "CargoCapacityBonusKg": 100, "TravelDurationPct": 90, "FatiguePct": 75, "Riders": 2},
+		map[any]any{"Type": "donkey", "CargoCapacityBonusKg": 40},
+		map[any]any{"Type": "bad-fatigue", "FatiguePct": 500},
+		map[any]any{"Type": "bad-riders", "Riders": -1},
+	})
+	require.Contains(t, specs, "pack-horse")
+	assert.Equal(t, 75, specs["pack-horse"].FatiguePct)
+	assert.Equal(t, 2, specs["pack-horse"].Riders)
+	require.Contains(t, specs, "donkey")
+	assert.Equal(t, 100, specs["donkey"].EffectiveFatiguePct())
+	assert.Equal(t, 2, specs["donkey"].EffectiveRiders())
+	assert.NotContains(t, specs, "bad-fatigue")
+	assert.NotContains(t, specs, "bad-riders")
+}
+
+// TestReliefThroughRegisteredSeam reads relief the way modules/walking and
+// modules/expedition do: through internal/mount's package functions.
+func TestReliefThroughRegisteredSeam(t *testing.T) {
+	module := newTestModule(&fakeStore{})
+	module.specs["pack-horse"] = mount.MountSpec{Type: "pack-horse", TravelDurationPct: 90, FatiguePct: 75, Riders: 2}
+	mount.SetProvider(module)
+	t.Cleanup(func() { mount.SetProvider(nil) })
+
+	pct, riders := mount.Relief(7)
+	assert.Equal(t, 100, pct, "no mount: no relief")
+	assert.Equal(t, 0, riders)
+	assert.Equal(t, 100, mount.TravelDurationPct(7))
+
+	module.mounts[7] = mount.Mount{LeaderUserID: 7, Type: "pack-horse"}
+	pct, riders = mount.Relief(7)
+	assert.Equal(t, 75, pct)
+	assert.Equal(t, 2, riders)
+	assert.Equal(t, 90, mount.TravelDurationPct(7))
+
+	module.mounts[7] = mount.Mount{LeaderUserID: 7, Type: "dragon"}
+	pct, riders = mount.Relief(7)
+	assert.Equal(t, 100, pct, "an unrecognised mount type gives no relief")
+	assert.Equal(t, 0, riders)
+}

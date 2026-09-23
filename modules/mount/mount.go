@@ -102,7 +102,10 @@ type MountModule struct {
 	mu sync.Mutex
 }
 
-var _ mount.Provider = (*MountModule)(nil)
+var (
+	_ mount.Provider       = (*MountModule)(nil)
+	_ mount.ReliefProvider = (*MountModule)(nil)
+)
 
 func init() {
 	m := &MountModule{
@@ -201,6 +204,40 @@ func (m *MountModule) CapacityBonusGrams(leaderUserID int) int {
 		return 0
 	}
 	return spec.CargoCapacityBonusGrams
+}
+
+// currentSpecLocked is the configured spec of the leader's mount.
+func (m *MountModule) currentSpecLocked(leaderUserID int) (mount.MountSpec, bool) {
+	rec, ok := m.mounts[leaderUserID]
+	if !ok {
+		return mount.MountSpec{}, false
+	}
+	spec, known := m.specs[rec.Type]
+	return spec, known
+}
+
+// Relief implements mount.ReliefProvider: (100, 0) without a recognised
+// mount.
+func (m *MountModule) Relief(leaderUserID int) (fatiguePct, riders int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	spec, ok := m.currentSpecLocked(leaderUserID)
+	if !ok {
+		return 100, 0
+	}
+	return spec.EffectiveFatiguePct(), spec.EffectiveRiders()
+}
+
+// TravelDurationPct implements mount.ReliefProvider: 100 without a
+// recognised mount.
+func (m *MountModule) TravelDurationPct(leaderUserID int) int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	spec, ok := m.currentSpecLocked(leaderUserID)
+	if !ok {
+		return 100
+	}
+	return spec.EffectiveTravelDurationPct()
 }
 
 // stable assigns a configured mount type to the leader, replacing any
@@ -308,6 +345,8 @@ func parseMountSpecs(raw any) map[string]mount.MountSpec {
 			Description:             configString(fields["description"]),
 			CargoCapacityBonusGrams: int(configFloat(fields["cargocapacitybonuskg"]) * 1000),
 			TravelDurationPct:       configInt(fields["traveldurationpct"]),
+			FatiguePct:              configInt(fields["fatiguepct"]),
+			Riders:                  configInt(fields["riders"]),
 		}
 		if err := spec.Validate(); err != nil {
 			mudlog.Warn("mount: invalid mount spec", "type", spec.Type, "error", err)

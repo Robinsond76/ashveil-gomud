@@ -116,7 +116,10 @@ type EncumbranceModule struct {
 	mu sync.Mutex
 }
 
-var _ encumbrance.Provider = (*EncumbranceModule)(nil)
+var (
+	_ encumbrance.Provider     = (*EncumbranceModule)(nil)
+	_ encumbrance.BandProvider = (*EncumbranceModule)(nil)
+)
 
 func init() {
 	m := &EncumbranceModule{
@@ -228,6 +231,16 @@ func (m *EncumbranceModule) CurrentLoad(leaderUserID int) (encumbrance.Load, boo
 		CargoGrams:    cargoGrams,
 		CapacityGrams: capacityGrams,
 	}, true
+}
+
+// CurrentBand implements encumbrance.BandProvider: the configured load band
+// for the leader's current load.
+func (m *EncumbranceModule) CurrentBand(leaderUserID int) (encumbrance.LoadBand, bool) {
+	load, ok := m.CurrentLoad(leaderUserID)
+	if !ok {
+		return encumbrance.LoadBand{}, false
+	}
+	return encumbrance.ResolveBand(load.Ratio(), m.bandsSnapshot()), true
 }
 
 func (m *EncumbranceModule) personalGrams(leaderUserID int) int {

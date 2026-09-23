@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -24,6 +25,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/weather"
 	"gopkg.in/yaml.v2"
 )
 
@@ -38,24 +40,47 @@ const defaultRoomTag = "camping"
 type Registry struct {
 	Camps           map[int]camping.Camp `yaml:"camps"`
 	RecoveryApplied map[int]bool         `yaml:"recovery_applied,omitempty"`
+	// Phase 16 inn stays: the stay itself, whether its survival recovery has
+	// been applied, and whether its Well Rested buff is still owed (granted
+	// on the game loop, never from a timer).
+	Stays              map[int]camping.InnStay `yaml:"stays,omitempty"`
+	InnRecoveryApplied map[int]bool            `yaml:"inn_recovery_applied,omitempty"`
+	WellRestedPending  map[int]bool            `yaml:"well_rested_pending,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
 func NewRegistry() *Registry {
-	return &Registry{Camps: map[int]camping.Camp{}, RecoveryApplied: map[int]bool{}}
+	return &Registry{
+		Camps:              map[int]camping.Camp{},
+		RecoveryApplied:    map[int]bool{},
+		Stays:              map[int]camping.InnStay{},
+		InnRecoveryApplied: map[int]bool{},
+		WellRestedPending:  map[int]bool{},
+	}
+}
+
+func cloneBools(in map[int]bool) map[int]bool {
+	out := make(map[int]bool, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
 }
 
 // Clone returns a deep copy of the registry.
 func (r Registry) Clone() Registry {
 	out := Registry{
-		Camps:           make(map[int]camping.Camp, len(r.Camps)),
-		RecoveryApplied: make(map[int]bool, len(r.RecoveryApplied)),
+		Camps:              make(map[int]camping.Camp, len(r.Camps)),
+		RecoveryApplied:    cloneBools(r.RecoveryApplied),
+		Stays:              make(map[int]camping.InnStay, len(r.Stays)),
+		InnRecoveryApplied: cloneBools(r.InnRecoveryApplied),
+		WellRestedPending:  cloneBools(r.WellRestedPending),
 	}
 	for leaderUserID, camp := range r.Camps {
 		out.Camps[leaderUserID] = camp
 	}
-	for leaderUserID, applied := range r.RecoveryApplied {
-		out.RecoveryApplied[leaderUserID] = applied
+	for leaderUserID, stay := range r.Stays {
+		out.Stays[leaderUserID] = stay
 	}
 	return out
 }
@@ -107,6 +132,23 @@ func decodeRegistry(data []byte, registry *Registry) error {
 			continue
 		}
 		loaded.RecoveryApplied[leaderUserID] = applied
+	}
+	for leaderUserID, stay := range wire.Stays {
+		if leaderUserID <= 0 {
+			continue
+		}
+		stay.LeaderUserID = leaderUserID
+		loaded.Stays[leaderUserID] = stay
+	}
+	for leaderUserID, applied := range wire.InnRecoveryApplied {
+		if leaderUserID > 0 && applied {
+			loaded.InnRecoveryApplied[leaderUserID] = true
+		}
+	}
+	for leaderUserID, pending := range wire.WellRestedPending {
+		if leaderUserID > 0 && pending {
+			loaded.WellRestedPending[leaderUserID] = true
+		}
 	}
 	*registry = *loaded
 	return nil
@@ -174,6 +216,24 @@ type CampingModule struct {
 	timerGeneration map[int]uint64
 	loadErr         error
 
+	// Phase 16 inn stays, with their own timers so breaking an idle camp
+	// elsewhere never stops a stay's timer.
+	stays              map[int]camping.InnStay
+	innRecoveryApplied map[int]bool
+	wellRestedPending  map[int]bool
+	innTimers          map[int]Timer
+	innTimerGeneration map[int]uint64
+	innCfg             innSettings
+	innCfgLoaded       bool
+
+	// Seams; nil uses the native implementation.
+	weatherIn         func(zone string) (weather.Condition, bool)
+	lookupUser        func(userID int) *users.UserRecord
+	companySize       func(leaderUserID int) int
+	spawnedCompanions func(leaderUserID int) []*characters.Character
+	grantBuff         func(c *characters.Character, buffID int) error
+	travelling        func(leaderUserID int) bool
+
 	mu sync.Mutex
 
 	// litRooms is a snapshot of rooms with a lit campfire, read by the
@@ -198,11 +258,14 @@ func init() {
 		timers:          map[int]Timer{},
 		timerGeneration: map[int]uint64{},
 	}
+	m.resetInnState()
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
 	}
 	m.store = pluginStore{plug: m.plug}
 	m.plug.AddUserCommand("camp", m.userCommand, false, false)
+	m.plug.AddUserCommand("inn", m.innCommand, false, false)
+	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
@@ -263,7 +326,13 @@ func (m *CampingModule) saveLocked() error {
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
-	registry := Registry{Camps: m.camps, RecoveryApplied: m.recoveryApplied}
+	registry := Registry{
+		Camps:              m.camps,
+		RecoveryApplied:    m.recoveryApplied,
+		Stays:              m.stays,
+		InnRecoveryApplied: m.innRecoveryApplied,
+		WellRestedPending:  m.wellRestedPending,
+	}
 	if err := m.store.Save(registry); err != nil {
 		return fmt.Errorf("camping: save failed; please retry: %w", err)
 	}
@@ -293,8 +362,23 @@ func (m *CampingModule) load() {
 	}
 	m.timers = map[int]Timer{}
 	m.timerGeneration = map[int]uint64{}
+	m.resetInnState()
+	if loaded.Stays != nil {
+		m.stays = loaded.Stays
+	}
+	if loaded.InnRecoveryApplied != nil {
+		m.innRecoveryApplied = loaded.InnRecoveryApplied
+	}
+	if loaded.WellRestedPending != nil {
+		m.wellRestedPending = loaded.WellRestedPending
+	}
+	if m.plug != nil {
+		m.innCfg = parseInnSettings(m.plug.Config.Get)
+		m.innCfgLoaded = true
+	}
 	m.loadErr = nil
 	m.recoverLocked()
+	m.recoverStaysLocked()
 }
 
 // roomTag returns the configured eligibility tag, defaulting when unset or
@@ -411,6 +495,9 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	if camp.RoomID != room.RoomId {
 		return "Your camp is not here."
 	}
+	if stay, ok := m.stays[user.UserId]; ok && stay.Resting() {
+		return "You are already resting at the inn."
+	}
 	resting, err := camp.StartRest(m.clock().UTC())
 	if err != nil {
 		switch {
@@ -423,13 +510,22 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 		}
 		return "You can't rest here."
 	}
+	// Phase 16: the weather at the camp scales its recovery, locked now.
+	recovery, condition, scaled := m.campRecovery(room)
+	rest := *resting.Rest
+	rest.Recovery = recovery
+	resting.Rest = &rest
 	m.camps[user.UserId] = resting
 	if err := m.saveLocked(); err != nil {
 		m.camps[user.UserId] = camp
 		return err.Error()
 	}
 	m.scheduleLocked(resting)
-	return fmt.Sprintf("You settle in by the fire to rest. (%s)", camping.RestDuration)
+	text := fmt.Sprintf("You settle in by the fire to rest. (%s)", camping.RestDuration)
+	if scaled {
+		text += fmt.Sprintf("\nThe %s makes for a poorer rest.", condition.Name)
+	}
+	return text
 }
 
 // breakCamp removes an idle camp. A resting camp cannot be broken.
@@ -491,6 +587,13 @@ func (m *CampingModule) RenderCampView(leaderUserID int) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
+	if stay, ok := m.stays[leaderUserID]; ok && stay.Resting() {
+		if err := m.syncStayLocked(leaderUserID); err != nil {
+			mudlog.Warn("camping: inn view sync", "leader", leaderUserID, "error", err)
+		}
+		m.sendToLeader(leaderUserID, m.innStatusTextLocked(leaderUserID))
+		return true, nil
+	}
 	camp, ok := m.camps[leaderUserID]
 	if !ok || camp.Rest == nil || camp.Rest.State != camping.Resting {
 		return false, nil
@@ -508,6 +611,9 @@ func (m *CampingModule) MovementBlocked(leaderUserID int) (bool, string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
+	if stay, ok := m.stays[leaderUserID]; ok && stay.Resting() {
+		return true, fmt.Sprintf("You are resting at the inn (%s remaining). Wait for your company to recover.", stay.RemainingAt(m.clock().UTC()).Round(time.Second))
+	}
 	camp, ok := m.camps[leaderUserID]
 	if !ok || camp.Rest == nil || camp.Rest.State != camping.Resting {
 		return false, ""
@@ -564,7 +670,7 @@ func (m *CampingModule) syncLocked(leaderUserID int) error {
 
 func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.Camp, announce bool) error {
 	operationID := restOperationID(camp)
-	if _, err := m.survival.ApplyCompanyRestRecovery(leaderUserID, operationID, camping.FatigueRecovery); err != nil {
+	if _, err := m.survival.ApplyCompanyRestRecovery(leaderUserID, operationID, camp.Rest.RecoveryAmount()); err != nil {
 		return err
 	}
 	m.recoveryApplied[leaderUserID] = true

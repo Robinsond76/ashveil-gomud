@@ -34,3 +34,41 @@ func CapacityBonus(leaderUserID int) int {
 	}
 	return p.CapacityBonusGrams(leaderUserID)
 }
+
+// ReliefProvider is optionally implemented by the registered Provider
+// (Phase 16): a leader's mount fatigue relief and travel-duration
+// multiplier.
+type ReliefProvider interface {
+	// Relief is the walking fatigue multiplier and how many company members
+	// ride. Without a mount it is (100, 0).
+	Relief(leaderUserID int) (fatiguePct, riders int)
+	// TravelDurationPct is the route travel-duration multiplier; 100 without
+	// a mount.
+	TravelDurationPct(leaderUserID int) int
+}
+
+func reliefProvider() (ReliefProvider, bool) {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	rp, ok := p.(ReliefProvider)
+	return rp, ok
+}
+
+// Relief consults the registered provider. Without one it is (100, 0).
+func Relief(leaderUserID int) (fatiguePct, riders int) {
+	rp, ok := reliefProvider()
+	if !ok {
+		return 100, 0
+	}
+	return rp.Relief(leaderUserID)
+}
+
+// TravelDurationPct consults the registered provider. Without one it is 100.
+func TravelDurationPct(leaderUserID int) int {
+	rp, ok := reliefProvider()
+	if !ok {
+		return 100
+	}
+	return rp.TravelDurationPct(leaderUserID)
+}

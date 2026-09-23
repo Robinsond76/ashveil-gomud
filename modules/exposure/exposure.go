@@ -258,7 +258,10 @@ type ExposureModule struct {
 	mu sync.Mutex
 }
 
-var _ climate.Provider = (*ExposureModule)(nil)
+var (
+	_ climate.Provider         = (*ExposureModule)(nil)
+	_ climate.ExposureProvider = (*ExposureModule)(nil)
+)
 
 func init() {
 	m := newModule()
@@ -386,6 +389,16 @@ func (m *ExposureModule) AirTemperatureIn(roomId int) (int, bool) {
 		return 0, false
 	}
 	return m.airTemperature(room), true
+}
+
+// ExposureOf implements climate.ExposureProvider: a member's stored signed
+// exposure, read under the module lock. ok is false for a member with no
+// exposure on record (i.e. comfortable, 0).
+func (m *ExposureModule) ExposureOf(leaderUserID int, memberKey string) (int, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	value, ok := m.registry.Exposure[leaderUserID][memberKey]
+	return value, ok
 }
 
 // warmthOf is the insulation a character is wearing.
