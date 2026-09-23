@@ -6,16 +6,18 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-22
-- **Branch:** `phase-12b-weighted-encounters`
-- **HEAD:** A `TravelProfile`'s interruption can now roll among several
-  kinds instead of naming exactly one: `InterruptionProfile` gains an
-  alternate `Kinds []WeightedInterruptionKind` form, resolved once (at
-  fire time, via a new `rollUint64` seam in `modules/expedition`) into
-  the same singular-`Kind` shape the existing, unchanged
-  `TravelSession.Interrupt` always read.
+- **Branch:** `phase-12c-combat-encounters`
+- **HEAD:** Travel can now spawn a fight. A new `Combat` interruption kind
+  spawns its route's configured mob into the party's origin room and
+  commands it to attack the leader the instant it fires; `travel resume`/
+  `travel return` both refuse while that mob is still alive and present.
+  Per this session's explicit direction, this is the *only* Phase 12
+  encounter subsystem being built right now — merchants, injured NPCs,
+  route choices, camp opportunities, ruined sites, resources, and social
+  encounters stay named future ideas, not planned work.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
-- **Origin sync:** `master` is pushed through Phase 12a's encounter-kind
-  abstraction (`5d4fa70c`); this branch's Phase 12b work is not yet
+- **Origin sync:** `master` is pushed through Phase 12b's weighted
+  encounter tables (`e42efd88`); this branch's Phase 12c work is not yet
   merged.
 
 ## Current position
@@ -45,16 +47,18 @@ instead of duplicating them.
   member's target via 11b's `engagement.AssignTarget` when it's lost).
 - **Next:** Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
-  unscheduled bucket. Phase 12 is underway: 12a shipped the encounter-kind
-  abstraction, 12b shipped weighted encounter tables (see above) — no
-  route in shipped config actually uses a `Kinds` table yet (`oak-road`
-  is still plain `fallen-tree`); that's deferred until there's a reason
-  to author new route content. Still ahead: the subsystem-backed
-  encounter types the Phase 12 overview names — combat, merchants,
-  injured NPCs, route choices, camp opportunities, ruined sites,
-  resources, social encounters — each needing its own subsystem (mob
-  spawning + Phase 11 combat, a shop flow, dialogue, branching choice
-  UX, or `internal/camping` integration).
+  unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
+  encounter-kind abstraction, 12b's weighted tables, and 12c's combat
+  encounters (see above) all ship. No shipped route uses any of it yet
+  (`oak-road` stays plain `fallen-tree`) — deferred until there's a real
+  reason to author new route content, same deferral every 12-series pass
+  has made. Per explicit direction this session, combat is the only
+  Phase 12 *encounter subsystem* being built; the rest of the overview
+  doc's list — merchants, injured NPCs, route choices, camp
+  opportunities, ruined sites, resources, social encounters — are kept
+  as named future ideas (each needing its own subsystem: a shop flow,
+  dialogue, branching choice UX, or `internal/camping` integration), not
+  committed work.
 
 ## Phase progress
 
@@ -77,9 +81,82 @@ instead of duplicating them.
 | 11d | Guard reactions, crit effects, wounds, AI personality | Deferred, not scheduled |
 | 12a | Encounter-kind abstraction | Complete: `InterruptionKind` widened to `fallen-tree`/`discovery`/`tracks`, data-driven text lookup |
 | 12b | Weighted encounter tables | Complete: `InterruptionProfile.Kinds` weighted-roll form, resolved once at fire time; no shipped route uses it yet |
-| 12c+ | Combat/merchant/social/etc. encounter subsystems | Not started |
+| 12c | Combat encounters | Complete: `Combat` interruption kind spawns its route's `CombatMobID` into the origin room and commands it to attack; resume/return gated on the mob still being alive and present |
+| 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 12c: combat encounters during travel (2026-09-22)
+
+- **What:** A `TravelProfile`'s interruption can now be a real fight, not
+  just flavor text. A new `Combat` `InterruptionKind` joins
+  `fallen-tree`/`discovery`/`tracks`, usable as a profile's singular
+  `Kind` or as one entry in a 12b weighted `Kinds` table. A new
+  `InterruptionProfile.CombatMobID` names the mob template to spawn,
+  required whenever `Combat` is reachable for that profile (`Validate`
+  enforces it). On firing, `modules/expedition.interruptLocked` spawns
+  that template into the travel session's origin room via a new
+  `MobSpawner` seam (mirroring the existing `Mover`/`Survival`/
+  `Scheduler` pattern; `nativeMobSpawner` uses `mobs.NewMobById` +
+  `room.AddMob`, the same primitives `modules/company/runtime.go`'s
+  `Spawn` already uses for a different purpose) and immediately commands
+  it to attack the leader (`mob.Command("attack @<leader>")`, the same
+  dispatch pattern the existing charmed-mob-assist loops already use) —
+  deterministic, not dependent on any idle-tick AI timing. The spawned
+  instance id is persisted onto `TravelInterruption.CombatMobInstanceId`.
+  `travel resume` and `travel return` both now refuse
+  ("You can't do that while you're still fighting!") while
+  `MobSpawner.EncounterActive` reports that instance alive and still in
+  the origin room, and both work normally once it's dead, gone, or was
+  never tracked.
+- **Why:** Two facts checked against the actual engine before designing
+  this made it far simpler than it could have been: (1) a traveling
+  company never physically leaves its origin room until arrival
+  (`mover.MoveToRoom` is only called from `completeLocked`), so a combat
+  encounter needs no new "encounter room" concept — the mob spawns where
+  the party already is; (2) once `Aggro` is set on the spawned mob, the
+  entire existing round-based combat loop — including every bit of Phase
+  11's formation-combat gating, if the leader has a company — runs
+  completely unchanged. No new combat logic was written; this pass is
+  purely "spawn the right mob in the right place at the right time and
+  gate two commands on whether it's still alive."
+- **Scope, per this session's explicit direction ("just do combat
+  encounters... keep the other ideas as future potential
+  suggestions/improvements"):** only combat. Every other Phase 12
+  overview encounter type (merchants, injured NPCs, route choices, camp
+  opportunities, ruined sites, resources, social encounters) is
+  recorded as a future idea in "Next" above, not planned work. Within
+  combat itself: one mob, not a formation-shaped ambush party (11a's
+  `mobparty.Groups` tag is a natural follow-up, not needed to satisfy
+  the ask); no shipped route uses `Combat` yet (`oak-road` stays plain
+  `fallen-tree`), matching 12a/12b's own deferral of new route content
+  until there's a real reason to author it.
+- **Fails open / stays durable:** a spawn failure (bad template id, room
+  unavailable) still fires the interruption as a plain pause rather than
+  aborting it — `CombatMobInstanceId` just stays `0`, and resume/return
+  work immediately since nothing is tracked as blocking. Dynamically
+  spawned mob instances (no `SpawnInfo` entry) do not themselves survive
+  a server restart in this engine, so after a restart
+  `EncounterActive` correctly reports false and a player is never stuck
+  waiting on a fight that no longer exists.
+- **Step completed:** Full design doc
+  (`docs/superpowers/specs/2026-09-22-phase-12c-combat-encounters-design.md`),
+  implementation plan
+  (`docs/superpowers/plans/2026-09-22-phase-12c-combat-encounters.md`),
+  both code tasks, and this status update.
+- **Key commits:** `4fd57422` (design + plan), `79b9231c` (domain: kind,
+  `CombatMobID`/`CombatMobInstanceId`), `c43f8df0` (module: `MobSpawner`
+  seam, spawn-on-fire, resume/return gate), landing on
+  `phase-12c-combat-encounters`.
+- **Verification:** `go test -race ./...` (1798 tests / 80 packages, up
+  from 1786 — 7 new `internal/expedition` tests covering `Combat`
+  validity/text/`CombatMobID` validation, plus 5 new `modules/expedition`
+  tests covering spawn-on-fire, spawn-failure fail-open, and the
+  resume/return gate in both active and resolved states, via a new
+  `fakeMobSpawner` test double mirroring the module's existing fake-seam
+  style), `make generate` (no wiring change), `make validate` pass.
+- **Live acceptance:** Not run: this host has no interactive Telnet
+  client.
 
 ### Phase 12b: weighted encounter tables (2026-09-22)
 

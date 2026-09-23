@@ -10,7 +10,7 @@ direction was "just do combat encounters, keep the rest as future ideas."
 
 ## Tasks
 
-- [ ] **`internal/expedition`: `Combat` kind, `CombatMobID`,
+- [x] **`internal/expedition`: `Combat` kind, `CombatMobID`,
       `CombatMobInstanceId`.**
   - Tests first, in `internal/expedition/expedition_test.go`:
     - `TestInterruptionKindValidAcceptsCombat`
@@ -24,7 +24,7 @@ direction was "just do combat encounters, keep the rest as future ideas."
       needs no `CombatMobID`)
   - Then implement: add the constant, extend `Valid()`/`InterruptionText`,
     add the `CombatMobID`/`CombatMobInstanceId` fields, extend `Validate()`.
-- [ ] **`modules/expedition`: `MobSpawner` seam + spawn-on-fire +
+- [x] **`modules/expedition`: `MobSpawner` seam + spawn-on-fire +
       gate-on-active.**
   - Tests first, in `modules/expedition/expedition_test.go` (new
     `fakeMobSpawner` implementing `MobSpawner`, tracking calls and
@@ -43,10 +43,10 @@ direction was "just do combat encounters, keep the rest as future ideas."
     `mobSpawner` field + `init()` default, the spawn-on-fire block in
     `interruptLocked`, and the active-encounter gate in `resume` and
     `returnToOrigin`.
-- [ ] `gofmt -l`, `go vet ./internal/expedition/... ./modules/expedition/...`,
+- [x] `gofmt -l`, `go vet ./internal/expedition/... ./modules/expedition/...`,
       `go build ./...`, `go test -race ./...` after each task.
-- [ ] `make generate`, `make validate`.
-- [ ] Update `docs/PROJECT_STATUS.md`: header, Current position/Next
+- [x] `make generate`, `make validate`.
+- [x] Update `docs/PROJECT_STATUS.md`: header, Current position/Next
       (record that combat encounters are the only Phase 12 encounter
       subsystem being built now; the rest are future ideas, not planned
       work), phase table row 12c, new work-log entry.
