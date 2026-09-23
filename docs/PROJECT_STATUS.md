@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-23
-- **Branch:** `claude/next-phase-spec-plan-19rraa`
+- **Branch:** `claude/gracious-ride-swn7b7`
 - **HEAD:** Phase 15 (temperature, clothing, and exposure) is complete,
   reviewed, and merged. Temperature follows biome, night, weather, shelter,
   and campfires. Worn clothing gives warmth. A signed exposure meter
@@ -43,13 +43,9 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Phase 16 (walking fatigue and inns, plus switching on the
-  deferred weather/load/mount travel and rest multipliers). The design and
-  plan are written
-  ([spec](superpowers/specs/2026-09-23-phase-16-walking-fatigue-inns-design.md),
-  [plan](superpowers/plans/2026-09-23-phase-16-walking-fatigue-inns.md)).
-  Implementation hasn't started and waits for the user to confirm the
-  spec's open decisions 1–8.
+- **Next:** Phase 16 (walking fatigue and inns, plus switching on Phase 8's
+  deferred travel/rest weather multipliers) per the 2026-09-23 roadmap.
+  Stopped here at the user's request after Phase 15.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
@@ -90,29 +86,10 @@ instead of duplicating them.
 | 13 | Sky and environment | Complete: moon phases, cloud cover, fog, indoor biomes/tags, indoor glimpse, richer `weather`; display-only |
 | 14 | Visibility and light | Complete: ambient vs per-viewer light, personal/fixture/party light, darkness hit penalty, `light` command, `floatinglight` spell |
 | 15 | Temperature, clothing, exposure | Complete: `internal/climate`, `modules/exposure`, item `warmth`, weather `TemperatureMod`, survival member drain + mutex, `temperature` command |
-| 16 | Walking fatigue, inns, travel/rest modifiers | Designed and planned; awaiting decision confirmation |
-| 17–21 | Archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
+| 16–21 | Walking fatigue/inns, archetypes, loot, markets, rumours, alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
-
-### Phase 16 design and plan (2026-09-23)
-
-- **What:** Wrote the Phase 16 design doc and task plan. No code changed.
-  Scope:
-  - Weather, load, and mount travel modifiers are fixed at departure and
-    persisted on `TravelSession`; camp rest recovery is scaled by weather
-    and fixed at rest start.
-  - Each ordinary `go` step costs the company fatigue. Towns and indoors
-    are free.
-  - Penalty buffs for low fatigue: Weary, Exhausted, Spent.
-  - Paid inn stays in `modules/camping`: `inn rest`, 10 gold, +50 fatigue,
-    and a *Well Rested* buff granted on the game loop.
-- **Why:** This is the next roadmap phase. Phases 8–10 and 15 each deferred
-  multiplier wiring here.
-- **Pending:** the user needs to confirm the spec's open decisions 1–8.
-  The upstream room rental (item 102 → room 432 → buffs 15/16) stays as
-  content that overlaps the new inn.
 
 ### Phase 15: temperature, clothing, and exposure (2026-09-23)
 
