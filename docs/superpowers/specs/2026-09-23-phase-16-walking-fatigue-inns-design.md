@@ -9,7 +9,8 @@ because it is the same wiring job as walking fatigue.
 **Status:** design written 2026-09-23. The user confirmed the decisions the
 same day: 1, 2, 4, 5, 6, and 7 as recommended, and 3 changed so mount relief
 covers at most two characters (see "Decisions"). Economy tuning (inn price)
-will be revisited later. Implementation has not started.
+will be revisited later. Implemented 2026-09-23; see "Implementation notes"
+at the end for where the build differs from this text.
 
 ## Prior-art check
 
@@ -416,3 +417,36 @@ is registered:
   **Review:** line.
 - `go test -race ./...`, `make generate` (adds `modules/walking`),
   `make validate`, and the server boots with the new buffs and room.
+
+## Implementation notes (2026-09-23)
+
+Where the implementation departs from, or pins down, the text above:
+
+- **Zone name.** The new zone is **Old Kings Road** (no apostrophe):
+  `rooms.ValidateZoneName` allows only letters, digits, spaces, and
+  underscores. Folder `rooms/old_kings_road/`.
+- **Route weather source.** Weather is read from the origin room's zone,
+  **falling back to the destination zone** when the origin is untracked.
+  Without the fallback the proving route (Dunmar 2001, a city, to Old Kings
+  Road 2002) would never see weather even after decision 6.
+- **Who walking charges.** Only members walking with the leader: the leader,
+  plus spawned companions standing in the origin or destination room. An
+  unspawned or stray companion is neither charged nor seated on the mount.
+- **Lit biomes.** The engine's `default` biome is `litarea: true`, so rooms
+  with no biome count as settled ground (cost 0). The table's `default 40`
+  applies to unknown non-lit biomes (e.g. `spiderweb`).
+- **Travel multiplier product.** `DurationPct` is the rounded product of the
+  three percentages, clamped to [25, 400]. A neutral multiplier is stored as
+  0, so a neutral new session saves byte-for-byte like a legacy one.
+- **`InnStay.Duration`.** A stay also stores the rest duration locked at its
+  start, so a config change mid-stay can't move its end.
+- **Inn timers.** Inn stays have their own timer map and generations,
+  separate from camp rests, so breaking an idle camp never stops a stay's
+  timer.
+- **Completed stay.** Until its Well Rested is granted (the next round with
+  the leader online), a completed stay refuses a new `inn rest` ("only just
+  woken"). If the leader is offline, the buff stays owed until they return.
+- **`inn rest` while travelling** is refused (checked through the
+  expedition movement seam before taking the camping lock).
+- **Buffs 1030–1032 and the `well-rested` flag** ship from `modules/walking`.
+  `modules/camping` grants 1030 by configured id.
