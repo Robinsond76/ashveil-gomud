@@ -9,7 +9,7 @@ description: The western gate of Dunmar opens onto the Old King's Road, a rutted
   the last cobblestone, the road narrows and the trees close in, and somewhere past
   the first bend the way forks at an old black oak split by lightning. An iron-banded
   toll box is bolted to the foot of the left pillar, its lid scored by many failed
-  pry bars.
+  pry bars. To the east, the din of the market square spills out of a short lane.
 biome: city
 containers:
   toll box:
@@ -25,6 +25,8 @@ exits:
       King's Road.
   west:
     roomid: 2003
+  east:
+    roomid: 2004
 mapx: 0
 mapy: 0
 mapz: 0

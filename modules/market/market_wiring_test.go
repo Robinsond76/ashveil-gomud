@@ -25,14 +25,16 @@ import (
 // its real entry points: plugins.Load registers the market command, merges
 // the shipped config overlay, and runs OnLoad against a temp plugin-data
 // dir (seeding the shipped markets); the command runs through
-// usercommands.TryCommand in shipped rooms; a real NewRound event is
-// dispatched through events.ProcessEvents; and a fresh store reload proves
-// the drifted stock persisted.
+// usercommands.TryCommand in the shipped rooms (listing and trading only in
+// the tagged market rooms); a real NewRound event is dispatched through
+// events.ProcessEvents; and fresh store reloads prove drift and trades
+// persisted.
 func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
-	// Point at the shipped world for item specs and keyword aliases. Rooms
-	// are registered in memory (loading the world's rooms would persist a
-	// NextRoomId config override into the data dir); market zone names are
-	// checked against the shipped zone-config files instead.
+	// Point at the shipped world for item specs and keyword aliases. The
+	// shipped room files are decoded and registered in memory (loading the
+	// world's rooms would persist a NextRoomId config override into the
+	// data dir); market zone names are checked against the shipped rooms'
+	// zone fields instead.
 	_, thisFile, _, _ := runtime.Caller(0)
 	dataDir := filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default")
 	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
@@ -40,15 +42,42 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	items.LoadDataFiles()
 	shippedZones := shippedZoneNames(t, dataDir)
 	require.Contains(t, shippedZones, "Dunmar")
-	for id, zone := range map[int]string{2001: "Dunmar", 2002: "Old Kings Road", 1: "Frostfang"} {
-		rooms.SetTestRoom(&rooms.Room{RoomId: id, Zone: zone, Title: zone})
+	shippedRooms := map[int]*rooms.Room{}
+	for id, path := range map[int]string{
+		2001: "rooms/dunmar/2001.yaml",
+		2004: "rooms/dunmar/2004.yaml",
+		2002: "rooms/old_kings_road/2002.yaml",
+		2005: "rooms/old_kings_road/2005.yaml",
+		1:    "rooms/frostfang/1.yaml",
+	} {
+		data, err := os.ReadFile(filepath.Join(dataDir, path))
+		require.NoError(t, err)
+		room := &rooms.Room{}
+		require.NoError(t, yaml.Unmarshal(data, room))
+		require.Equal(t, id, room.RoomId)
+		shippedRooms[id] = room
+		rooms.SetTestRoom(room)
 		t.Cleanup(func() { rooms.RemoveTestRoom(id) })
 	}
+	assert.Contains(t, shippedRooms[2001].Exits, "east", "the West Gate leads to the square")
+	assert.Equal(t, 2004, shippedRooms[2001].Exits["east"].RoomId)
+	assert.Equal(t, 2005, shippedRooms[2002].Exits["east"].RoomId)
 
 	require.NotNil(t, module, "init registered the module")
 	rolls := uint64(0)
 	module.roll = func() uint64 { return rolls }
 	module.zoneExists = func(zone string) bool { return shippedZones[zone] }
+	// rooms.SetTestRoom doesn't index rooms by zone, so resolve the market
+	// room names from the shipped rooms registered above.
+	module.marketRooms = func(zone, tag string) []string {
+		titles := []string{}
+		for _, r := range shippedRooms {
+			if r.Zone == zone && r.HasTag(tag) {
+				titles = append(titles, r.Title)
+			}
+		}
+		return titles
+	}
 	plugins.Load(t.TempDir())
 
 	require.NoError(t, module.loadErr)
@@ -62,11 +91,11 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	users.SetTestUser(user)
 	messages := captureMessages(t)
 
-	run := func(roomId int) string {
+	run := func(roomId int, rest ...string) string {
 		t.Helper()
 		user.Character.RoomId = roomId
 		*messages = nil
-		handled, err := usercommands.TryCommand("market", "", user.UserId, events.CmdSkipScripts)
+		handled, err := usercommands.TryCommand("market", strings.Join(rest, " "), user.UserId, events.CmdSkipScripts)
 		require.NoError(t, err)
 		require.True(t, handled)
 		events.ProcessEvents()
@@ -74,11 +103,13 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	}
 
 	hide := goodFor(t, "Dunmar", 28)
-	out := run(2001)
+	out := run(2004)
 	assert.Contains(t, out, "Market prices in Dunmar:")
-	assert.Regexp(t, `wolf hide\s+27 gold\s+\(scarce\)`, out, "shipped StartStock 4")
+	assert.Regexp(t, `wolf hide\s+27 gold\s+22 gold\s+scarce`, out, "shipped StartStock 4, 20% spread")
 	assert.Equal(t, 27, hide.PriceForStock(4))
-	assert.Contains(t, run(2002), "Market prices in Old Kings Road:")
+	assert.Contains(t, run(2001), "There's no market here. The market in Dunmar is at Dunmar Market Square.")
+	assert.Contains(t, run(2005), "Market prices in Old Kings Road:")
+	assert.Contains(t, run(2002), "The market in Old Kings Road is at Trappers' Post.")
 	assert.Contains(t, run(1), "There's no market here.", "Frostfang is not a market")
 
 	events.AddToQueue(events.NewRound{RoundNumber: 1})
@@ -87,8 +118,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	stock, ok := module.zones["Dunmar"].Stock(28)
 	require.True(t, ok)
 	assert.Equal(t, 5, stock, "one bounded step toward target 20")
-	assert.Regexp(t, `wolf hide\s+26 gold\s+\(scarce\)`, run(2001), "price follows stock")
-	assert.Equal(t, 26, hide.PriceForStock(5))
+	assert.Regexp(t, `wolf hide\s+26 gold\s+21 gold\s+scarce`, run(2004), "prices follow stock")
 	okrHide, _ := module.zones["Old Kings Road"].Stock(28)
 	assert.Equal(t, 29, okrHide, "a glutted market drifts down")
 
@@ -96,13 +126,35 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	require.NoError(t, pluginStore{plug: module.plug}.Load(reloaded))
 	assert.Equal(t, Registry{Zones: module.zones}, *reloaded, "the round's drift was persisted")
 
+	// Trading through the real command in the shipped square.
+	user.Character.Gold = 100
+	assert.Contains(t, run(2001, "buy", "hide"), "There's no market here.", "no trading at the gate")
+	assert.Equal(t, 100, user.Character.Gold)
+	assert.Contains(t, run(2004, "buy", "wolf hide"), "You buy a wolf hide at the market for 26 gold.")
+	assert.Equal(t, 74, user.Character.Gold)
+	_, carried := user.Character.FindInBackpack("wolf hide")
+	assert.True(t, carried)
+	reloaded = NewRegistry()
+	require.NoError(t, pluginStore{plug: module.plug}.Load(reloaded))
+	boughtStock, _ := reloaded.Zones["Dunmar"].Stock(28)
+	assert.Equal(t, 4, boughtStock, "the purchase persisted to the real store")
+
+	assert.Contains(t, run(2004, "sell", "hide"), "You sell a wolf hide at the market for 22 gold.")
+	assert.Equal(t, 96, user.Character.Gold)
+	_, carried = user.Character.FindInBackpack("wolf hide")
+	assert.False(t, carried)
+	reloaded = NewRegistry()
+	require.NoError(t, pluginStore{plug: module.plug}.Load(reloaded))
+	soldStock, _ := reloaded.Zones["Dunmar"].Stock(28)
+	assert.Equal(t, 5, soldStock, "the sale persisted to the real store")
+
 	// A restart restores the persisted stock instead of re-seeding.
 	restarted := &MarketModule{
 		plug:       module.plug,
 		store:      pluginStore{plug: module.plug},
 		roll:       func() uint64 { return 0 },
 		itemExists: module.itemExists,
-		itemName:   module.itemName,
+		itemNames:  module.itemNames,
 		zoneExists: module.zoneExists,
 		markets:    map[string][]market.Good{},
 		zones:      map[string]ZoneMarket{},
@@ -130,7 +182,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 			store:      pluginStore{plug: module.plug},
 			roll:       func() uint64 { return 0 },
 			itemExists: module.itemExists,
-			itemName:   module.itemName,
+			itemNames:  module.itemNames,
 			zoneExists: module.zoneExists,
 			markets:    map[string][]market.Good{},
 			zones:      map[string]ZoneMarket{},

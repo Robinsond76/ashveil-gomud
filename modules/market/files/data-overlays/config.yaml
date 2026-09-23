@@ -16,9 +16,22 @@
 #   1 <= DriftStep <= MaxStock
 #   the item ID must exist; a zone listing an item twice gets no market.
 #
-# Vendor buy/sell does not use these prices yet (Phase 19b). The proving
-# content starts Dunmar short of hides and meat and the Fork glutted with
-# hides, so both markets visibly drift after boot.
+# Phase 19b: the market itself lives in any room of a market zone tagged
+# with RoomTag (Dunmar Market Square, 2004; Trappers' Post, 2005). Only
+# there can players list prices (market) and trade one unit at a time
+# (market buy <good>, market sell <good>). The market is its own trader;
+# shopkeepers keep their own prices. "You buy" is the stock price above;
+# "You sell" is that price less SpreadPct percent, and never reaches the
+# next unit's buy price, so buying and selling straight back always loses
+# money. Buying takes one unit from stock (the price rises); selling adds
+# one (the price falls). The market sells nothing at stock 0 and buys
+# nothing at MaxStock.
+#
+# The proving content starts Dunmar short of hides and meat and the
+# Trappers' Post glutted with hides, so both markets visibly drift after
+# boot, and hides are cheaper at the post than in town.
+RoomTag: market
+SpreadPct: 20 # 1..90
 Markets:
   - Zone: Dunmar
     Goods:

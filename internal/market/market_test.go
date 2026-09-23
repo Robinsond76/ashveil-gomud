@@ -203,3 +203,87 @@ func abs(n int) int {
 	}
 	return n
 }
+
+func TestAskForStockClosedWhenEmpty(t *testing.T) {
+	g := validGood()
+	_, ok := g.AskForStock(0)
+	assert.False(t, ok, "nothing to sell at stock 0")
+	_, ok = g.AskForStock(-3)
+	assert.False(t, ok)
+	ask, ok := g.AskForStock(4)
+	require.True(t, ok)
+	assert.Equal(t, g.PriceForStock(4), ask)
+}
+
+func TestBidForStockClosedWhenFull(t *testing.T) {
+	g := validGood()
+	_, ok := g.BidForStock(40, 20)
+	assert.False(t, ok, "the market buys nothing at its stock ceiling")
+	_, ok = g.BidForStock(99, 20)
+	assert.False(t, ok)
+}
+
+func TestBidForStockAppliesSpread(t *testing.T) {
+	g := validGood()
+	// Price 12 at target 20; 20% spread: 12 - floor(12*20/100) = 10, and
+	// the next unit's ask (stock 21) is 12, so the cap of 11 doesn't bind.
+	bid, ok := g.BidForStock(20, 20)
+	require.True(t, ok)
+	assert.Equal(t, 10, bid)
+}
+
+func TestBidForStockCappedBelowNextAsk(t *testing.T) {
+	// A steep curve: one unit of stock moves the price a lot, so the
+	// spread alone would let a sell-then-buy round trip profit.
+	g := Good{ItemID: 1, MinPrice: 1, BasePrice: 50, MaxPrice: 100, MaxStock: 4, TargetStock: 2, DriftStep: 1}
+	require.NoError(t, g.Validate())
+	bid, ok := g.BidForStock(0, 10)
+	require.True(t, ok)
+	nextAsk, _ := g.AskForStock(1)
+	assert.Equal(t, nextAsk-1, bid)
+}
+
+func TestBidClosedWhenItWouldBeBelowOne(t *testing.T) {
+	g := Good{ItemID: 1, MinPrice: 1, BasePrice: 1, MaxPrice: 1, MaxStock: 2, TargetStock: 1, DriftStep: 1}
+	_, ok := g.BidForStock(0, 20)
+	assert.False(t, ok, "a bid of 0 means the market isn't buying")
+}
+
+func TestNoProfitableRoundTrip(t *testing.T) {
+	goods := []Good{
+		validGood(),
+		{ItemID: 1, MinPrice: 1, BasePrice: 50, MaxPrice: 100, MaxStock: 4, TargetStock: 2, DriftStep: 1},
+		{ItemID: 1, MinPrice: 5, BasePrice: 5, MaxPrice: 5, MaxStock: 10, TargetStock: 5, DriftStep: 1},
+		{ItemID: 1, MinPrice: 2, BasePrice: 1000, MaxPrice: 100000, MaxStock: 7, TargetStock: 3, DriftStep: 1},
+	}
+	for _, g := range goods {
+		require.NoError(t, g.Validate())
+		for _, spread := range []int{1, 20, 90} {
+			for s := 0; s <= g.MaxStock; s++ {
+				if ask, ok := g.AskForStock(s); ok {
+					bid, ok := g.BidForStock(s, spread)
+					if ok {
+						assert.Less(t, bid, ask, "bid below ask at stock %d", s)
+					}
+					if back, ok := g.BidForStock(s-1, spread); ok {
+						assert.Less(t, back, ask, "buy at %d then sell back loses", s)
+					}
+				}
+				if bid, ok := g.BidForStock(s, spread); ok {
+					assert.Positive(t, bid)
+					back, ok := g.AskForStock(s + 1)
+					require.True(t, ok)
+					assert.Greater(t, back, bid, "sell at %d then buy back loses", s)
+				}
+			}
+		}
+	}
+}
+
+func TestBidForStockAvoidsOverflow(t *testing.T) {
+	g := Good{ItemID: 1, MinPrice: 1, BasePrice: math.MaxInt / 2, MaxPrice: math.MaxInt, MaxStock: math.MaxInt, TargetStock: math.MaxInt - 1, DriftStep: 1}
+	bid, ok := g.BidForStock(0, 90)
+	require.True(t, ok)
+	assert.Positive(t, bid)
+	assert.Less(t, bid, math.MaxInt)
+}

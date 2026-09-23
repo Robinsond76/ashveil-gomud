@@ -8,12 +8,16 @@ description: An enormous black oak dominates the fork where the Old King's Road
   rust-brown drifts, and the air is cool and still beneath the canopy. A mossy waystone
   leans at the base of the oak, its lettering long since weathered away, marking where
   travelers once chose between the eastern track and the overgrown western path.
+  Woodsmoke and the smell of curing hides drift from a trappers' clearing just
+  to the east.
 biome: forest
 tags:
   - camping
 exits:
   south:
     roomid: 2001
+  east:
+    roomid: 2005
 mapx: 0
 mapy: -1
 mapz: 0

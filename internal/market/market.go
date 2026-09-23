@@ -119,3 +119,33 @@ func (g Good) StockLevel(stock int) string {
 	}
 	return "plentiful"
 }
+
+// AskForStock is the price a buyer pays the market for one unit at the
+// given stock: the stock price, unavailable when stock is empty.
+func (g Good) AskForStock(stock int) (int, bool) {
+	stock = g.ClampStock(stock)
+	if stock <= 0 {
+		return 0, false
+	}
+	return g.PriceForStock(stock), true
+}
+
+// BidForStock is what the market pays a seller for one unit at the given
+// stock: the stock price less spreadPct percent, capped one below the ask
+// for the next unit so no buy-then-sell or sell-then-buy round trip can
+// profit. It is unavailable at MaxStock, or when the bid would fall below
+// 1. spreadPct is clamped to [0, 99].
+func (g Good) BidForStock(stock, spreadPct int) (int, bool) {
+	stock = g.ClampStock(stock)
+	if stock >= g.MaxStock {
+		return 0, false
+	}
+	spreadPct = min(max(spreadPct, 0), 99)
+	price := g.PriceForStock(stock)
+	bid := price - scaledDrop(price, spreadPct, 100)
+	bid = min(bid, g.PriceForStock(stock+1)-1)
+	if bid < 1 {
+		return 0, false
+	}
+	return bid, true
+}

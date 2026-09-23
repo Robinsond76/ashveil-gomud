@@ -60,12 +60,20 @@ func newTestModule(store Store) *MarketModule {
 		store:      store,
 		roll:       func() uint64 { return 0 },
 		itemExists: func(id int) bool { return id == 28 || id == 29 || id == 30 },
-		itemName: func(id int) string {
-			return map[int]string{28: "wolf hide", 29: "raw game meat", 30: "wild thyme"}[id]
+		itemNames: func(id int) []string {
+			return map[int][]string{28: {"wolf hide", "hide"}, 29: {"raw game meat", "meat"}, 30: {"wild thyme", "thyme"}}[id]
 		},
 		zoneExists: func(zone string) bool { return zone == "Dunmar" || zone == "Old Kings Road" },
-		markets:    map[string][]market.Good{"Dunmar": {hide(), meat()}},
-		zones:      map[string]ZoneMarket{},
+		marketRooms: func(zone, tag string) []string {
+			if zone == "Dunmar" && tag == "market" {
+				return []string{"Dunmar Market Square"}
+			}
+			return nil
+		},
+		roomTag:   "market",
+		spreadPct: 20,
+		markets:   map[string][]market.Good{"Dunmar": {hide(), meat()}},
+		zones:     map[string]ZoneMarket{},
 	}
 }
 
@@ -129,7 +137,7 @@ func TestLoadFailureDisablesMarketsWithoutPanic(t *testing.T) {
 
 	user := marketUser(t)
 	messages := captureMessages(t)
-	module.userCommand("", user, &rooms.Room{RoomId: 2001, Zone: "Dunmar"}, 0)
+	module.userCommand("", user, marketRoom(), 0)
 	events.ProcessEvents()
 	assert.Contains(t, strings.Join(*messages, "\n"), "market ledgers are unavailable")
 }
@@ -235,21 +243,58 @@ func captureMessages(t *testing.T) *[]string {
 	return &messages
 }
 
-func TestUserCommandShowsPricesAndStockLevels(t *testing.T) {
+func marketRoom() *rooms.Room {
+	return &rooms.Room{RoomId: 2004, Zone: "Dunmar", Title: "Dunmar Market Square", Tags: []string{"market"}}
+}
+
+func TestUserCommandShowsBuyAndSellPrices(t *testing.T) {
 	store := &fakeStore{}
 	module := newTestModule(store)
 	module.load()
 	user := marketUser(t)
 	messages := captureMessages(t)
 
-	module.userCommand("", user, &rooms.Room{RoomId: 2001, Zone: "Dunmar"}, 0)
+	module.userCommand("", user, marketRoom(), 0)
 	events.ProcessEvents()
 
 	out := stripTags(strings.Join(*messages, "\n"))
 	assert.Contains(t, out, "Market prices in Dunmar:")
-	assert.Regexp(t, `wolf hide\s+27 gold\s+\(scarce\)`, out, "stock 4 prices at PriceForStock(4)")
-	assert.Regexp(t, `raw game meat\s+5 gold\s+\(steady\)`, out)
-	assert.Equal(t, 27, hide().PriceForStock(4))
+	assert.Regexp(t, `Good\s+You buy\s+You sell\s+Stock`, out)
+	// Stock 4: ask PriceForStock(4) = 27; bid 27 - floor(27*20/100) = 22.
+	assert.Regexp(t, `wolf hide\s+27 gold\s+22 gold\s+scarce`, out)
+	assert.Regexp(t, `raw game meat\s+5 gold\s+4 gold\s+steady`, out)
+}
+
+func TestUserCommandMarksClosedSides(t *testing.T) {
+	store := &fakeStore{saved: Registry{Zones: map[string]ZoneMarket{
+		"Dunmar": {Goods: []GoodStock{{ItemID: 28, Stock: 0}, {ItemID: 29, Stock: 60}}},
+	}}}
+	module := newTestModule(store)
+	module.load()
+	user := marketUser(t)
+	messages := captureMessages(t)
+
+	module.userCommand("", user, marketRoom(), 0)
+	events.ProcessEvents()
+
+	out := stripTags(strings.Join(*messages, "\n"))
+	assert.Regexp(t, `wolf hide\s+-\s+\d+ gold\s+none`, out, "nothing to buy at stock 0")
+	assert.Regexp(t, `raw game meat\s+2 gold\s+-\s+glutted`, out, "the market won't buy at its ceiling")
+}
+
+func TestUserCommandOutsideMarketRoomNamesTheMarket(t *testing.T) {
+	module := newTestModule(&fakeStore{})
+	module.load()
+	user := marketUser(t)
+	messages := captureMessages(t)
+
+	module.userCommand("buy hide", user, &rooms.Room{RoomId: 2001, Zone: "Dunmar", Title: "Dunmar West Gate"}, 0)
+	events.ProcessEvents()
+
+	out := stripTags(strings.Join(*messages, "\n"))
+	assert.Contains(t, out, "There's no market here. The market in Dunmar is at Dunmar Market Square.")
+	stock, _ := module.zones["Dunmar"].Stock(28)
+	assert.Equal(t, 4, stock, "no trade outside the market room")
 }
 
 func TestUserCommandReportsNoMarketInUnconfiguredZone(t *testing.T) {
@@ -329,7 +374,10 @@ func TestQuotesClampOutOfRangeStockBeforeAnyRound(t *testing.T) {
 	quotes, ok, err := module.Quotes("Dunmar")
 	require.NoError(t, err)
 	require.True(t, ok)
-	assert.Equal(t, []Quote{{ItemID: 28, Price: 6, Level: "glutted"}, {ItemID: 29, Price: 12, Level: "none"}}, quotes)
+	assert.Equal(t, []Quote{
+		{ItemID: 28, Buy: 6, BuyOK: true, Level: "glutted"},
+		{ItemID: 29, Sell: 10, SellOK: true, Level: "none"},
+	}, quotes, "500 clamps to the ceiling (market not buying); -7 to empty (nothing for sale)")
 }
 
 func TestParseMarketsRejectsEveryEntryOfARepeatedZone(t *testing.T) {
@@ -361,4 +409,15 @@ func TestParseMarketsIgnoresMissingIdsForDuplicateCheck(t *testing.T) {
 	require.Contains(t, markets, "Dunmar", "two id-less goods are invalid goods, not a duplicate")
 	require.Len(t, markets["Dunmar"], 1, "a fractional item id is rejected, not truncated")
 	assert.Equal(t, 28, markets["Dunmar"][0].ItemID)
+}
+
+func TestParseRoomTagAndSpreadPct(t *testing.T) {
+	assert.Equal(t, "market", parseRoomTag(nil))
+	assert.Equal(t, "market", parseRoomTag("  "))
+	assert.Equal(t, "bazaar", parseRoomTag(" bazaar "))
+	assert.Equal(t, 20, parseSpreadPct(nil))
+	assert.Equal(t, 35, parseSpreadPct(35))
+	assert.Equal(t, 20, parseSpreadPct(0), "zero spread would allow free round trips at the cap")
+	assert.Equal(t, 20, parseSpreadPct(95))
+	assert.Equal(t, 20, parseSpreadPct(12.5))
 }

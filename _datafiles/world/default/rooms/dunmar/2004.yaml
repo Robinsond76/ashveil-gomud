@@ -1,0 +1,20 @@
+roomid: 2004
+zone: Dunmar
+title: Dunmar Market Square
+description: A cobbled square opens east of the west gate, hemmed in by tall timber
+  houses whose upper storeys lean out over the stalls below. Trestle tables and
+  canvas awnings crowd every foot of it. A tanner's stall is hung with stiff wolf
+  hides, a butcher's block is loud with flies and cleavers, and an old woman sells
+  bundled herbs from a barrow. Criers shout the day's prices over the din, and a
+  chalked board by the well tracks what the town is short of and what it has too
+  much of.
+biome: city
+tags:
+  - market
+exits:
+  west:
+    roomid: 2001
+mapx: 1
+mapy: 0
+mapz: 0
+hascoordinates: true

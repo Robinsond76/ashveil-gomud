@@ -1,0 +1,19 @@
+roomid: 2005
+zone: Old Kings Road
+title: Trappers' Post
+description: A few paces off the fork, a rough clearing has been trampled flat around
+  a lean-to of split logs and bark. Trappers and drovers meet here to trade what
+  the forest gives up. Hides are pegged out to dry on frames of green wood, and
+  haunches of game hang from a crossbeam, out of reach of the foxes. A scarred
+  stump serves as the counting table, and a notched stick nailed to the lean-to
+  records who owes what.
+biome: forest
+tags:
+  - market
+exits:
+  west:
+    roomid: 2002
+mapx: 1
+mapy: -1
+mapz: 0
+hascoordinates: true

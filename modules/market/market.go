@@ -5,13 +5,13 @@
 // internal/market.
 //
 // A settlement is a zone. Only zones configured under Markets in this
-// module's config get a ledger; every other zone has no market.
+// module's config get a ledger; every other zone has no market. Within a
+// market zone, the market itself is any room carrying the market room tag
+// (RoomTag, default "market"): prices are listed and goods traded only
+// there. The market is its own counterparty; shopkeepers are untouched.
 //
 // Like modules/weather, markets react to events.NewRound and never read,
 // drive, or advance the shared round counter or world clock.
-//
-// Vendor buy/sell does not consult market prices yet; market-backed
-// trading is deferred to Phase 19b (see the Phase 19 design doc).
 package market
 
 import (
@@ -22,6 +22,7 @@ import (
 	"math"
 	"math/rand/v2"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -163,8 +164,15 @@ type MarketModule struct {
 	store      Store
 	roll       func() uint64
 	itemExists func(itemID int) bool
-	itemName   func(itemID int) string
+	// itemNames returns an item's display name first, then any other
+	// names a player may type for it.
+	itemNames  func(itemID int) []string
 	zoneExists func(zone string) bool
+	// marketRooms returns the titles of a zone's rooms carrying tag.
+	marketRooms func(zone, tag string) []string
+
+	roomTag   string
+	spreadPct int
 
 	// markets is the configured tracked-goods list per market zone, in
 	// config order.
@@ -186,25 +194,23 @@ var module *MarketModule
 
 func init() {
 	m := &MarketModule{
-		plug:       plugins.New("market", "1.0"),
-		roll:       rand.Uint64,
-		itemExists: func(itemID int) bool { return items.GetItemSpec(itemID) != nil },
-		itemName: func(itemID int) string {
-			if spec := items.GetItemSpec(itemID); spec != nil {
-				return spec.Name
-			}
-			return fmt.Sprintf("item #%d", itemID)
-		},
-		zoneExists: zoneExists,
-		markets:    map[string][]market.Good{},
-		zones:      map[string]ZoneMarket{},
-		loadErr:    errNotLoaded,
+		plug:        plugins.New("market", "1.0"),
+		roll:        rand.Uint64,
+		itemExists:  func(itemID int) bool { return items.GetItemSpec(itemID) != nil },
+		itemNames:   itemNames,
+		zoneExists:  zoneExists,
+		marketRooms: marketRooms,
+		roomTag:     defaultRoomTag,
+		spreadPct:   defaultSpreadPct,
+		markets:     map[string][]market.Good{},
+		zones:       map[string]ZoneMarket{},
+		loadErr:     errNotLoaded,
 	}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
 	}
 	m.store = pluginStore{plug: m.plug}
-	m.plug.AddUserCommand("market", m.userCommand, true, false)
+	m.plug.AddUserCommand("market", m.userCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
@@ -213,6 +219,34 @@ func init() {
 	})
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	module = m
+}
+
+const (
+	defaultRoomTag   = "market"
+	defaultSpreadPct = 20
+)
+
+func itemNames(itemID int) []string {
+	spec := items.GetItemSpec(itemID)
+	if spec == nil {
+		return []string{fmt.Sprintf("item #%d", itemID)}
+	}
+	names := []string{spec.Name}
+	if spec.NameSimple != "" && spec.NameSimple != spec.Name {
+		names = append(names, spec.NameSimple)
+	}
+	return names
+}
+
+func marketRooms(zone, tag string) []string {
+	titles := []string{}
+	for _, roomID := range rooms.GetAllZoneRoomsIds(zone) {
+		if room := rooms.LoadRoom(roomID); room != nil && room.HasTag(tag) {
+			titles = append(titles, room.Title)
+		}
+	}
+	sort.Strings(titles)
+	return titles
 }
 
 func zoneExists(zone string) bool {
@@ -262,8 +296,11 @@ func (m *MarketModule) load() {
 		return
 	}
 	var markets map[string][]market.Good
+	roomTag, spreadPct := m.roomTag, m.spreadPct
 	if m.plug != nil {
 		markets = parseMarkets(m.plug.Config.Get("Markets"), m.itemExists, m.zoneExists)
+		roomTag = parseRoomTag(m.plug.Config.Get("RoomTag"))
+		spreadPct = parseSpreadPct(m.plug.Config.Get("SpreadPct"))
 	}
 	loaded := NewRegistry()
 	err := m.store.Load(loaded)
@@ -273,6 +310,7 @@ func (m *MarketModule) load() {
 	if markets != nil {
 		m.markets = markets
 	}
+	m.roomTag, m.spreadPct = roomTag, spreadPct
 	if err != nil {
 		m.loadErr = err
 		mudlog.Error("market: load", "error", err)
@@ -348,11 +386,23 @@ func (m *MarketModule) onNewRound(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
-// Quote is one tracked good's current market listing.
+// Quote is one tracked good's current market listing. Buy is what a
+// player pays the market; Sell is what the market pays a player. A false
+// BuyOK or SellOK means that side is closed (sold out, or full).
 type Quote struct {
 	ItemID int
-	Price  int
+	Buy    int
+	BuyOK  bool
+	Sell   int
+	SellOK bool
 	Level  string
+}
+
+func (m *MarketModule) quoteLocked(g market.Good, stock int) Quote {
+	q := Quote{ItemID: g.ItemID, Level: g.StockLevel(stock)}
+	q.Buy, q.BuyOK = g.AskForStock(stock)
+	q.Sell, q.SellOK = g.BidForStock(stock, m.spreadPct)
+	return q
 }
 
 // Quotes returns the zone's current listings in config order, and whether
@@ -375,12 +425,18 @@ func (m *MarketModule) Quotes(zone string) ([]Quote, bool, error) {
 		if !ok {
 			continue
 		}
-		quotes = append(quotes, Quote{ItemID: g.ItemID, Price: g.PriceForStock(stock), Level: g.StockLevel(stock)})
+		quotes = append(quotes, m.quoteLocked(g, stock))
 	}
 	return quotes, true, nil
 }
 
-func (m *MarketModule) userCommand(_ string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
+func (m *MarketModule) tag() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.roomTag
+}
+
+func (m *MarketModule) userCommand(rest string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
 	if room == nil {
 		return true, nil
 	}
@@ -393,18 +449,55 @@ func (m *MarketModule) userCommand(_ string, user *users.UserRecord, room *rooms
 		user.SendText("There's no market here.")
 		return true, nil
 	}
+	tag := m.tag()
+	if !room.HasTag(tag) {
+		msg := "There's no market here."
+		if m.marketRooms != nil {
+			if titles := m.marketRooms(room.Zone, tag); len(titles) > 0 {
+				msg += fmt.Sprintf(` The market in %s is at <ansi fg="room-title">%s</ansi>.`, room.Zone, strings.Join(titles, ", "))
+			}
+		}
+		user.SendText(msg)
+		return true, nil
+	}
+
+	verb, what, _ := strings.Cut(strings.TrimSpace(rest), " ")
+	what = strings.TrimSpace(what)
+	switch strings.ToLower(verb) {
+	case "":
+		m.sendListing(user, room, quotes)
+	case "buy":
+		m.buy(user, room, what)
+	case "sell":
+		m.sell(user, room, what)
+	default:
+		user.SendText("Usage: market, market buy <good>, or market sell <good>.")
+	}
+	return true, nil
+}
+
+func (m *MarketModule) sendListing(user *users.UserRecord, room *rooms.Room, quotes []Quote) {
 	names := make([]string, len(quotes))
-	width := 0
+	width := len("Good")
 	for i, q := range quotes {
-		names[i] = m.itemName(q.ItemID)
+		names[i] = m.itemNames(q.ItemID)[0]
 		width = max(width, len(names[i]))
 	}
-	lines := []string{fmt.Sprintf(`Market prices in <ansi fg="zone">%s</ansi>:`, room.Zone)}
-	for i, q := range quotes {
-		lines = append(lines, fmt.Sprintf(`  <ansi fg="itemname">%-*s</ansi>  <ansi fg="gold">%d gold</ansi>  (%s)`, width, names[i], q.Price, q.Level))
+	side := func(price int, ok bool) string {
+		if !ok {
+			return fmt.Sprintf("%9s", "-")
+		}
+		return fmt.Sprintf(`<ansi fg="gold">%9s</ansi>`, fmt.Sprintf("%d gold", price))
 	}
+	lines := []string{
+		fmt.Sprintf(`Market prices in <ansi fg="zone">%s</ansi>:`, room.Zone),
+		fmt.Sprintf("  %-*s  %9s  %9s  %s", width, "Good", "You buy", "You sell", "Stock"),
+	}
+	for i, q := range quotes {
+		lines = append(lines, fmt.Sprintf(`  <ansi fg="itemname">%-*s</ansi>  %s  %s  %s`, width, names[i], side(q.Buy, q.BuyOK), side(q.Sell, q.SellOK), q.Level))
+	}
+	lines = append(lines, "Trade with: market buy <good>, market sell <good>.")
 	user.SendText(strings.Join(lines, "\n"))
-	return true, nil
 }
 
 // parseMarkets normalizes the configured market list. An invalid good or
@@ -498,6 +591,30 @@ func parseGoods(zone string, raw any, itemExists func(int) bool) ([]market.Good,
 		return nil, false
 	}
 	return goods, true
+}
+
+// parseRoomTag reads the market room tag, defaulting when blank.
+func parseRoomTag(raw any) string {
+	tag, _ := raw.(string)
+	tag = strings.TrimSpace(tag)
+	if tag == "" {
+		return defaultRoomTag
+	}
+	return tag
+}
+
+// parseSpreadPct reads the buy/sell spread percentage, falling back to the
+// default when missing or outside 1..90.
+func parseSpreadPct(raw any) int {
+	if raw == nil {
+		return defaultSpreadPct
+	}
+	pct := configInt(raw)
+	if pct < 1 || pct > 90 {
+		mudlog.Warn("market: SpreadPct must be 1..90; using default", "value", raw, "default", defaultSpreadPct)
+		return defaultSpreadPct
+	}
+	return pct
 }
 
 func stringMap(raw any) map[string]any {
