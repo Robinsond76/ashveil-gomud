@@ -7,13 +7,12 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-23
 - **Branch:** `claude/gracious-ride-swn7b7`
-- **HEAD:** Phase 14 (visibility and light). Light is now per viewer: a
-  room's ambient light counts only the sky (sun, moon, cloud cover), fog,
-  biome, mutators, and fixtures (a `lit` room tag or a lit campfire). A
-  carried torch or lantern lights only its bearer. The new Floating Light
-  (`partylight`) lights the caster's whole company or party. Darkness now
-  gives a to-hit penalty in combat, and a new `light` command explains it
-  all. Phase 13 (sky and environment) is merged to `master`.
+- **HEAD:** Retroactive testing and review gate for Phases 13–14. It found and
+  fixed a critical bug: the darkness "penalty" was actually a +40 to-hit bonus.
+  It also fixed four smaller issues and added wiring tests for combat, look,
+  party light, and campfire light. The gate (wiring tests plus an independent
+  reviewer subagent before every merge) is now the standing workflow; see
+  `CLAUDE.md`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 - **Origin sync:** `master` is pushed through Phase 12b's weighted
   encounter tables (`e42efd88`); this branch's Phase 12c work is not yet
@@ -44,9 +43,7 @@ instead of duplicating them.
   `Legal`/`InterceptFrontRow`, resolving the live enemy party fresh each
   round via 11a's `mobparty.Assemble`, and now also reassigns a company
   member's target via 11b's `engagement.AssignTarget` when it's lost).
-- **Next:** Retroactive testing and review gate for Phases 13–14 (they merged
-  before the gate was adopted on 2026-09-23), then Phase 15 (temperature and
-  clothing) per the 2026-09-23 roadmap.
+- **Next:** Phase 15 (temperature and clothing) per the 2026-09-23 roadmap.
   Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
   (guard reactions, crit effects, wounds, AI personality) remains an
   unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
@@ -90,6 +87,52 @@ instead of duplicating them.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Review gate: Phases 13–14, retroactive (2026-09-23)
+
+- **What:** The user asked whether features were tested and independently
+  reviewed. They were unit-tested, but not reviewed, and wiring was
+  under-tested. The workflow now has a testing and review gate (`CLAUDE.md`,
+  `AGENTS.md`, plans README). Phases 13–14 went through it after the fact.
+- **Wiring tests added:**
+  - `AttackPlayerVsMob` in a dark versus a lit room, statistically
+  - `look` per-viewer visibility, and `look <exit>` in daytime fog
+  - personal, party, and companion light with real users, mobs, and
+    parties
+  - `LightConditions` on real rooms
+  - the campfire fixture through the real `camp` flow, including a failed
+    save
+  - gametime `DayNumber` rollover
+- **Review (independent reviewer subagent over `42bdcc4..0ac4b69a`):**
+  1. *Critical, fixed:* `Hits` adds its modifier, and the darkness penalty
+     was passed as a positive number, so darkness gave +40 to hit. The new
+     combat wiring test caught it at the same time as the reviewer. It is now
+     negated, like `dualWieldHitPenalty`.
+  2. *Medium, fixed:* an `indoor`-tagged room in an outdoor biome (an inn in
+     the woods) was pitch black at noon. It now counts as a lit interior
+     unless its biome is dark.
+  3. *Medium, fixed (docs):* `ScriptRoom.GetVisibility()` now means ambient
+     light. The admin scripting docs and type description say so.
+  4. *Low, fixed:* `look <exit>` let any lit biome see through exits even in
+     fog. That bypass is removed, since per-viewer visibility already counts
+     lit biomes.
+  5. *Low, fixed:* the moon changed phase at midnight, mid-night. Gametime
+     now exposes `DayNumber` (including the admin time offset), and
+     `sky.NightOfDay` rolls the phase over at noon.
+  6. *Low, partly fixed:* the campfire fixture query no longer takes the
+     camping mutex. It reads a snapshot under its own RWMutex, refreshed
+     after every camping lock section, so look and combat never wait on a
+     camp save. *Deferred:* fires never burn out; fuel belongs with
+     camping/inn work.
+  7. *Low, deferred:* the cost of computing light per attack. It is fine at
+     current scale; caching per room per round is a follow-up if fights grow.
+
+  Also: `floatinglight` now ships in the empty world too, and the reserved
+  room tags `indoor`/`outdoor`/`lit` are documented in
+  `internal/rooms/AGENTS.md`.
+- **Verification:** `go test -race ./...` passes (1846 passing test
+  results). `make generate` and `make validate` pass. The server boots
+  cleanly.
 
 ### Phase 14: visibility and light (2026-09-23)
 

@@ -174,6 +174,11 @@ type CampingModule struct {
 	loadErr         error
 
 	mu sync.Mutex
+
+	// litRooms is a snapshot of rooms with a lit campfire, read by the
+	// rooms light-fixture query under litMu only (lock order: mu, then litMu).
+	litMu    sync.RWMutex
+	litRooms map[int]bool
 }
 
 var (
@@ -209,17 +214,28 @@ func init() {
 }
 
 // RoomHasLitFire reports whether a lit campfire burns in roomID, which
-// lights that room for everyone (Phase 14). It only reads camp state and is
-// never called while this module holds its own lock.
+// lights that room for everyone (Phase 14). It reads a snapshot guarded by
+// its own RWMutex, never m.mu, so look and combat never wait on a camping
+// save or timer that holds m.mu.
 func (m *CampingModule) RoomHasLitFire(roomID int) bool {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.litMu.RLock()
+	defer m.litMu.RUnlock()
+	return m.litRooms[roomID]
+}
+
+// refreshLitRoomsLocked rebuilds the lit-campfire snapshot from m.camps.
+// Callers hold m.mu; it is deferred after every m.mu section so the snapshot
+// always matches the final (possibly reverted) camp state.
+func (m *CampingModule) refreshLitRoomsLocked() {
+	lit := map[int]bool{}
 	for _, camp := range m.camps {
-		if camp.FireLit && camp.RoomID == roomID {
-			return true
+		if camp.FireLit {
+			lit[camp.RoomID] = true
 		}
 	}
-	return false
+	m.litMu.Lock()
+	m.litRooms = lit
+	m.litMu.Unlock()
 }
 
 func (m *CampingModule) persistenceAvailable() error {
@@ -236,6 +252,7 @@ func (m *CampingModule) persistenceAvailable() error {
 func (m *CampingModule) save() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	return m.saveLocked()
 }
 
@@ -262,6 +279,7 @@ func (m *CampingModule) load() {
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	m.camps = loaded.Camps
 	if m.camps == nil {
 		m.camps = map[int]camping.Camp{}
@@ -321,6 +339,7 @@ func (m *CampingModule) establish(user *users.UserRecord, room *rooms.Room) stri
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	if !roomEligible(room, m.roomTag()) {
 		return "There is nowhere here to make camp."
 	}
@@ -346,6 +365,7 @@ func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) stri
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	camp, ok := m.camps[user.UserId]
 	if !ok {
 		return "You have no camp here. Use \"camp\" to make one."
@@ -380,6 +400,7 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	camp, ok := m.camps[user.UserId]
 	if !ok {
 		return "You have no camp here. Use \"camp\" to make one."
@@ -415,6 +436,7 @@ func (m *CampingModule) breakCamp(user *users.UserRecord, room *rooms.Room) stri
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	camp, ok := m.camps[user.UserId]
 	if !ok {
 		return "You have no camp to break."
@@ -450,6 +472,7 @@ func (m *CampingModule) status(leaderUserID int) string {
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	if _, ok := m.camps[leaderUserID]; !ok {
 		return "You have no camp."
 	}
@@ -464,6 +487,7 @@ func (m *CampingModule) status(leaderUserID int) string {
 func (m *CampingModule) RenderCampView(leaderUserID int) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	camp, ok := m.camps[leaderUserID]
 	if !ok || camp.Rest == nil || camp.Rest.State != camping.Resting {
 		return false, nil
@@ -480,6 +504,7 @@ func (m *CampingModule) RenderCampView(leaderUserID int) (bool, error) {
 func (m *CampingModule) MovementBlocked(leaderUserID int) (bool, string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	camp, ok := m.camps[leaderUserID]
 	if !ok || camp.Rest == nil || camp.Rest.State != camping.Resting {
 		return false, ""
@@ -579,6 +604,7 @@ func (m *CampingModule) stopTimerLocked(leaderUserID int) {
 func (m *CampingModule) onTimer(leaderUserID int, generation uint64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
 	if m.timerGeneration[leaderUserID] != generation {
 		return
 	}

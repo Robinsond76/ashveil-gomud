@@ -42,7 +42,7 @@ func TestIsIndoorTagOverrides(t *testing.T) {
 func TestSkyViewOutdoorUsesOwnZone(t *testing.T) {
 	withTestBiomes(t)
 	r := &Room{RoomId: 1, Zone: `Dunmar`, Biome: `forest`}
-	gd := gametime.GameDate{RoundNumber: 400, RoundsPerDay: 100, Night: true, MoonCount: 1}
+	gd := gametime.GameDate{RoundNumber: 400, RoundsPerDay: 100, DayNumber: 4, Hour24: 20, Night: true, MoonCount: 1}
 	v := r.skyView(func(int) *Room { return nil }, gd, 8)
 	if v.Indoor || v.WeatherZone != `Dunmar` || !v.Night || !v.HasMoon || v.Moon != sky.Full {
 		t.Fatalf("unexpected outdoor sky view: %+v", v)

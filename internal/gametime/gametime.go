@@ -75,6 +75,10 @@ type GameDate struct {
 	AmPm        string
 	Night       bool
 
+	// DayNumber counts whole game days elapsed, rolling over at the same
+	// midnight as Day/Hour (it includes the admin time-of-day offset).
+	DayNumber uint64
+
 	DayStart   int
 	NightStart int
 	DuskHours  int
@@ -270,6 +274,7 @@ func (g *GameDate) ReCalculate() {
 		month = float64(numMonths)
 	}
 
+	g.DayNumber = currentRoundAdjusted / uint64(g.RoundsPerDay)
 	g.Day = int(day)
 	g.Year = int(year)
 	g.Month = int(month)

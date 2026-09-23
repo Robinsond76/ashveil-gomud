@@ -241,7 +241,8 @@ func buildCombatMessages(
 }
 
 // calculateCombat resolves one attack round. darkPenalty is the attacker's
-// to-hit penalty for poor visibility (see darknessPenalty).
+// to-hit penalty for poor visibility (see darknessPenalty), as a positive
+// magnitude that is subtracted from the hit chance.
 func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int) AttackResult {
 
 	attackResult := AttackResult{}
@@ -283,7 +284,9 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 		for wIdx, weapon := range attackWeapons {
 
 			// Only the offhand weapon (index > 0) incurs a hit penalty for dual-wielding.
-			penalty := darkPenalty
+			// Hits adds its modifier, so a penalty is passed as a negative
+			// value (the same convention as dualWieldHitPenalty).
+			penalty := -darkPenalty
 			if wIdx > 0 {
 				penalty += dualWieldHitPenalty(dualWieldLevel)
 			}

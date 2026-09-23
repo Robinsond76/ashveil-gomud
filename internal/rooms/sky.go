@@ -42,7 +42,7 @@ func (r *Room) skyView(load func(int) *Room, gd gametime.GameDate, cycleDays int
 		WeatherZone: r.Zone,
 		Night:       gd.Night,
 		HasMoon:     gd.MoonCount > 0,
-		Moon:        sky.PhaseForDay(sky.AbsoluteDay(gd.RoundNumber, gd.RoundsPerDay), cycleDays),
+		Moon:        moonPhase(gd, cycleDays),
 	}
 	if !r.IsIndoor() {
 		return v
@@ -74,4 +74,9 @@ func (r *Room) outdoorExit(load func(int) *Room) (string, *Room) {
 		return strings.TrimSpace(name), other
 	}
 	return ``, nil
+}
+
+// moonPhase is the moon's phase on the night gd belongs to.
+func moonPhase(gd gametime.GameDate, cycleDays int) sky.MoonPhase {
+	return sky.PhaseForDay(sky.NightOfDay(gd.DayNumber, gd.Hour24), cycleDays)
 }

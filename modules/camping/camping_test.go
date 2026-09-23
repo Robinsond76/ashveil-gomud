@@ -1,6 +1,7 @@
 package camping
 
 import (
+	"errors"
 	"os"
 	"strings"
 	"testing"
@@ -532,17 +533,29 @@ func mustResting(t *testing.T, leaderUserID, roomID int, startedAt time.Time) ca
 }
 
 func TestLitCampfireIsLightFixture(t *testing.T) {
-	module := newTestModule(&fakeStore{}, nil, nil, time.Now)
-	module.camps[7] = camping.Camp{LeaderUserID: 7, RoomID: 100}
-	module.camps[8] = camping.Camp{LeaderUserID: 8, RoomID: 200, FireLit: true}
+	store := &fakeStore{}
+	module := newTestModule(store, &fakeScheduler{}, &fakeSurvival{}, baseTime)
+	user := campUser(t, 7, 100)
 
-	if module.RoomHasLitFire(100) {
-		t.Fatal("an unlit camp is not a light fixture")
-	}
-	if !module.RoomHasLitFire(200) {
-		t.Fatal("a lit campfire lights its room")
-	}
-	if module.RoomHasLitFire(300) {
-		t.Fatal("a room with no camp has no campfire")
-	}
+	module.establish(user, eligibleRoom())
+	assert.False(t, module.RoomHasLitFire(100), "an unlit camp is not a light fixture")
+
+	module.lightFire(user, eligibleRoom())
+	assert.True(t, module.RoomHasLitFire(100), "a lit campfire lights its room")
+	assert.False(t, module.RoomHasLitFire(300), "a room with no camp has no campfire")
+
+	module.breakCamp(user, eligibleRoom())
+	assert.False(t, module.RoomHasLitFire(100), "breaking camp puts the fire out")
+}
+
+func TestLitCampfireSnapshotFollowsFailedSaveRevert(t *testing.T) {
+	store := &fakeStore{}
+	module := newTestModule(store, &fakeScheduler{}, &fakeSurvival{}, baseTime)
+	user := campUser(t, 7, 100)
+	module.establish(user, eligibleRoom())
+
+	store.saveErr = errors.New("disk full")
+	module.lightFire(user, eligibleRoom())
+	assert.False(t, module.camps[7].FireLit, "a failed save reverts the fire")
+	assert.False(t, module.RoomHasLitFire(100), "the light snapshot follows the reverted state")
 }

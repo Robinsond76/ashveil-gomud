@@ -506,3 +506,20 @@ func Benchmark_GetDate_Cached(b *testing.B) {
 		GetDate()
 	}
 }
+
+// TestDayNumberRollsOverAtMidnight checks the Ashveil DayNumber field
+// advances exactly when the displayed hour wraps past midnight.
+func TestDayNumberRollsOverAtMidnight(t *testing.T) {
+	prev := getDate(0)
+	for round := uint64(1); round < uint64(prev.RoundsPerDay)*3; round++ {
+		gd := getDate(round)
+		wrapped := gd.Hour24 < prev.Hour24
+		switch {
+		case wrapped && gd.DayNumber != prev.DayNumber+1:
+			t.Fatalf("round %d: hour wrapped but DayNumber went %d -> %d", round, prev.DayNumber, gd.DayNumber)
+		case !wrapped && gd.DayNumber != prev.DayNumber:
+			t.Fatalf("round %d: DayNumber changed %d -> %d mid-day", round, prev.DayNumber, gd.DayNumber)
+		}
+		prev = gd
+	}
+}

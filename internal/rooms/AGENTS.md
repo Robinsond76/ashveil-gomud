@@ -12,6 +12,11 @@ The `internal/rooms` package is the core world management system for GoMud, hand
 - **Dynamic state**: Player/mob tracking, visitor history, temporary data storage
 - **Room features**: Containers, signs, skill training areas, spawn points
 - **Tags**: General-purpose string tags (`Tags []string`) for use by modules, scripts, and other systems. Managed at runtime via the `room tag` admin command or the `ScriptRoom.SetTag`/`UnsetTag`/`HasTag` scripting functions.
+- **Reserved Ashveil tags** (Phases 13–14):
+  - `indoor`/`outdoor` override the biome's `indoor` flag. An `indoor`-tagged room in a non-dark biome counts as a lit interior.
+  - `lit` marks a permanent light fixture that lights the room for everyone.
+  - See `sky.go` and `light.go`.
+- **Ashveil light model** (`light.go`): `GetVisibility()` is the room's ambient light only. What a given player or mob sees comes from `VisibilityForUser`/`VisibilityForMob`, which add their own carried light (`lightsource`), an ally's `partylight`, and `nightvision`. Modules can register light fixtures with `RegisterLightFixture`; `modules/camping` registers lit campfires.
 
 ### Room Management System (`roommanager.go`)
 - **RoomManager**: Singleton manager for all room operations and caching

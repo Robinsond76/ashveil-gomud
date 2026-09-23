@@ -55,12 +55,16 @@ func TestMoonVisible(t *testing.T) {
 	}
 }
 
-func TestAbsoluteDay(t *testing.T) {
-	if got := AbsoluteDay(250, 100); got != 2 {
-		t.Fatalf("got %d want 2", got)
+func TestNightOfDayRollsOverAtNoon(t *testing.T) {
+	// Evening of day 5 and the small hours of day 6 are the same night.
+	if NightOfDay(5, 22) != NightOfDay(6, 3) {
+		t.Fatal("one night must keep one moon phase across midnight")
 	}
-	if got := AbsoluteDay(250, 0); got != 0 {
-		t.Fatalf("zero rounds-per-day should report day 0, got %d", got)
+	if NightOfDay(6, 11) != 5 || NightOfDay(6, 12) != 6 {
+		t.Fatal("the phase day rolls over at noon")
+	}
+	if NightOfDay(0, 3) != 0 {
+		t.Fatal("day 0 must not underflow")
 	}
 }
 

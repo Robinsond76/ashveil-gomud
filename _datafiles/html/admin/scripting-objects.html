@@ -1682,7 +1682,7 @@ c:AddItem(CreateItem(501))</code></pre></div>
         <!-- New methods: Visibility -->
         <details class="fn-card" data-search="GetVisibility visibility int room light dark dim">
             <summary><span class="fn-name-sig"><span class="fn-n">RoomObject.GetVisibility</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
-            <div class="fn-body"><p class="fn-desc">Returns the room's current visibility level: <code>0</code> = dark (blind), <code>1</code> = dim (see room, not exits), <code>2</code> = lit (full visibility). Accounts for biome, time of day, mutators, and light sources.</p></div>
+            <div class="fn-body"><p class="fn-desc">Returns the room's current visibility level: <code>0</code> = dark (blind), <code>1</code> = dim (see room, not exits), <code>2</code> = lit (full visibility). Ashveil: this is the room's <em>ambient</em> light (biome, indoors, sun and moon, cloud cover, fog, mutators, and fixtures such as a <code>lit</code> room tag or a lit campfire). A carried torch or lantern lights only its bearer and a floating light only its bearer's allies, so what a particular player sees can be higher than this value.</p></div>
         </details>
 
         <!-- New methods: Nouns -->

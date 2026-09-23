@@ -82,12 +82,14 @@ func (p MoonPhase) Name() string {
 // String implements fmt.Stringer.
 func (p MoonPhase) String() string { return p.Name() }
 
-// AbsoluteDay is the number of whole game days elapsed at round.
-func AbsoluteDay(round uint64, roundsPerDay int) uint64 {
-	if roundsPerDay < 1 {
-		return 0
+// NightOfDay is the day number a moment's night belongs to, so the moon
+// never changes phase mid-night: the phase day rolls over at noon. dayNumber
+// is the calendar day (gametime.GameDate.DayNumber) and hour24 its hour.
+func NightOfDay(dayNumber uint64, hour24 int) uint64 {
+	if hour24 < 12 && dayNumber > 0 {
+		return dayNumber - 1
 	}
-	return round / uint64(roundsPerDay)
+	return dayNumber
 }
 
 // PhaseForDay returns the moon phase on an absolute game day for a cycle of

@@ -242,16 +242,11 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	if exitName != `` {
 
+		// visibility is per viewer and already counts a lit biome, fog,
+		// night vision, and the viewer's own or party light (Phase 14).
 		if visibility < 2 {
-
-			if !user.Character.HasBuffFlag("nightvision") {
-				biome := room.GetBiome()
-				if !biome.IsLit() {
-					user.SendText(`It's too dark to see anything in that direction.`)
-					return true, nil
-				}
-			}
-
+			user.SendText(`It's too dark to see anything in that direction.`)
+			return true, nil
 		}
 
 		exitInfo, _ := room.GetExitInfo(exitName)

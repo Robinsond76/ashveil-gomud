@@ -138,6 +138,11 @@ func (r *Room) LightConditions() LightConditions {
 		c.DarkBiome = biome.IsDark()
 		c.LitBiome = biome.IsLit()
 	}
+	// A room tagged indoor inside an outdoor biome (an inn in the woods) is a
+	// furnished interior: lit like a house, unless its biome is dark.
+	if c.Indoor && !c.DarkBiome && r.HasTag(TagIndoor) {
+		c.LitBiome = true
+	}
 	gd := gametime.GetDate()
 	c.Night = gd.Night
 
@@ -150,7 +155,7 @@ func (r *Room) LightConditions() LightConditions {
 		}
 	}
 	if gd.MoonCount > 0 {
-		phase := sky.PhaseForDay(sky.AbsoluteDay(gd.RoundNumber, gd.RoundsPerDay), sky.CycleDays())
+		phase := moonPhase(gd, sky.CycleDays())
 		c.Moonlight = sky.Moonlight(phase, cloudCover)
 	}
 	for mut := range r.ActiveMutators {

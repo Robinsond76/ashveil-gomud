@@ -246,7 +246,7 @@ func roomObjectType() ObjectTypeDef {
 			m("AddSign", "boolean", "Adds a sign to the room.", p("text", "string"), p("userId", "number"), p("days", "number")),
 			m("MobCount", "number", "Returns the number of mobs in the room."),
 			m("PlayerCount", "number", "Returns the number of players in the room."),
-			m("GetVisibility", "number", "Returns the room's visibility level."),
+			m("GetVisibility", "number", "Returns the room's ambient visibility level (0-2); carried and party light are per viewer and not included."),
 			m("IsCalm", "boolean", "Returns true if combat is not allowed."),
 			m("IsPvp", "boolean", "Returns true if the room is PvP."),
 			m("IsBank", "boolean", "Returns true if the room is a bank."),
