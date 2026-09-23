@@ -101,6 +101,17 @@ instead of duplicating them.
 
 ## Recent work log
 
+### Company life and onboarding specifications (2026-09-23)
+
+- **What:** Wrote a six-spec planning packet for recruitment/creation,
+  camp Rested and company-wide whetstones, chemistry, player death and
+  companion resurrection, command/browser surfaces, and the Ashveil
+  tutorial. See the [roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
+- **Why:** Record the owner's approved gameplay rules and the durable
+  companion/settlement prerequisites before implementation planning.
+- **Step:** Design documents drafted for owner review; no gameplay phase
+  completed and Phase 18b remains next.
+
 ### Phase 18a: loot tables (2026-09-23)
 
 - **What:** Added weighted category loot tables, boot/reload loading, a
