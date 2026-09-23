@@ -54,7 +54,7 @@ Markets:
         MaxPrice: 20
         MaxStock: 30
         TargetStock: 15
-        StartStock: 28
+        StartStock: 30
         DriftStep: 2
       - ItemId: 29 # raw game meat
         BasePrice: 3

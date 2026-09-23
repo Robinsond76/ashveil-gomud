@@ -15,9 +15,11 @@
 package market
 
 import (
+	"bytes"
 	"embed"
 	"errors"
 	"fmt"
+	"math"
 	"math/rand/v2"
 	"os"
 	"strconv"
@@ -103,12 +105,31 @@ func (s pluginStore) Save(registry Registry) error {
 	return s.plug.WriteStruct("market", registry)
 }
 
-// decodeRegistry parses stored bytes, dropping entries keyed by an empty
-// zone name, goods with a non-positive item ID, and repeated records for
-// the same good (the first wins). Out-of-range stock is retained and
-// clamped when it is next used.
+// ErrCorruptStore reports stored ledger data that is present but unusable.
+var ErrCorruptStore = errors.New("market: corrupt store")
+
+// wireRegistry mirrors Registry with a pointer stock so a record missing
+// its stock (a truncated file) is detectable rather than read as zero.
+type wireRegistry struct {
+	Zones map[string]struct {
+		Goods []struct {
+			ItemID int  `yaml:"itemid"`
+			Stock  *int `yaml:"stock"`
+		} `yaml:"goods"`
+	} `yaml:"zones"`
+}
+
+// decodeRegistry parses stored bytes. An existing but empty file, or a
+// record missing its stock, is corrupt (a truncated write), never an empty
+// ledger to re-seed. It drops entries keyed by an empty zone name, goods
+// with a non-positive item ID, and repeated records for the same good (the
+// first wins). Out-of-range stock is retained and clamped when it is next
+// used.
 func decodeRegistry(data []byte, registry *Registry) error {
-	var wire Registry
+	if len(bytes.TrimSpace(data)) == 0 {
+		return fmt.Errorf("%w: empty file", ErrCorruptStore)
+	}
+	var wire wireRegistry
 	if err := yaml.Unmarshal(data, &wire); err != nil {
 		return err
 	}
@@ -120,12 +141,15 @@ func decodeRegistry(data []byte, registry *Registry) error {
 		seen := map[int]bool{}
 		goods := []GoodStock{}
 		for _, g := range zm.Goods {
+			if g.Stock == nil {
+				return fmt.Errorf("%w: zone %q item %d has no stock", ErrCorruptStore, zone, g.ItemID)
+			}
 			if g.ItemID <= 0 || seen[g.ItemID] {
 				mudlog.Warn("market: dropping stored stock record", "zone", zone, "itemid", g.ItemID)
 				continue
 			}
 			seen[g.ItemID] = true
-			goods = append(goods, g)
+			goods = append(goods, GoodStock{ItemID: g.ItemID, Stock: *g.Stock})
 		}
 		loaded.Zones[zone] = ZoneMarket{Goods: goods}
 	}
@@ -153,6 +177,10 @@ type MarketModule struct {
 	mu sync.Mutex
 }
 
+// errNotLoaded keeps persistence off until the first successful load, so a
+// save can never overwrite the durable ledger with an empty registry.
+var errNotLoaded = errors.New("not loaded yet")
+
 // module is the registered instance; the end-to-end test drives it.
 var module *MarketModule
 
@@ -170,6 +198,7 @@ func init() {
 		zoneExists: zoneExists,
 		markets:    map[string][]market.Good{},
 		zones:      map[string]ZoneMarket{},
+		loadErr:    errNotLoaded,
 	}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
@@ -379,80 +408,96 @@ func (m *MarketModule) userCommand(_ string, user *users.UserRecord, room *rooms
 }
 
 // parseMarkets normalizes the configured market list. An invalid good or
-// one naming a missing item spec is warned about and omitted; a zone that
-// lists the same item twice, repeats an earlier zone entry, names an
+// one naming a missing item spec is warned about and omitted. A zone that
+// lists the same item twice, appears in more than one entry, names an
 // unknown zone, or has no valid goods gets no market.
 func parseMarkets(raw any, itemExists func(int) bool, zoneExists func(string) bool) map[string][]market.Good {
 	markets := map[string][]market.Good{}
-	list, ok := raw.([]any)
-	if !ok {
+	if raw == nil {
 		return markets
 	}
-	seenZones := map[string]bool{}
+	list, ok := raw.([]any)
+	if !ok {
+		mudlog.Warn("market: Markets config is not a list")
+		return markets
+	}
+	entries := []map[string]any{}
+	zoneCount := map[string]int{}
 	for _, entry := range list {
 		fields := stringMap(entry)
 		if fields == nil {
+			mudlog.Warn("market: skipping market entry that is not a map")
 			continue
 		}
-		zone := strings.TrimSpace(configString(fields["zone"]))
+		zone, _ := fields["zone"].(string)
+		zone = strings.TrimSpace(zone)
 		if zone == "" {
-			mudlog.Warn("market: market entry missing zone")
+			mudlog.Warn("market: market entry missing a zone name")
 			continue
 		}
-		if seenZones[zone] {
-			mudlog.Warn("market: duplicate market zone", "zone", zone)
+		fields["zone"] = zone
+		zoneCount[zone]++
+		entries = append(entries, fields)
+	}
+	for _, fields := range entries {
+		zone := fields["zone"].(string)
+		if zoneCount[zone] > 1 {
+			mudlog.Warn("market: zone listed in more than one market entry; no market", "zone", zone)
 			continue
 		}
-		seenZones[zone] = true
 		if zoneExists != nil && !zoneExists(zone) {
 			mudlog.Warn("market: unknown market zone", "zone", zone)
 			continue
 		}
-		goodList, _ := fields["goods"].([]any)
-		goods := []market.Good{}
-		seenItems := map[int]bool{}
-		duplicate := false
-		for _, goodRaw := range goodList {
-			gf := stringMap(goodRaw)
-			if gf == nil {
-				continue
-			}
-			g := market.Good{
-				ItemID:      configInt(gf["itemid"]),
-				BasePrice:   configInt(gf["baseprice"]),
-				MinPrice:    configInt(gf["minprice"]),
-				MaxPrice:    configInt(gf["maxprice"]),
-				MaxStock:    configInt(gf["maxstock"]),
-				TargetStock: configInt(gf["targetstock"]),
-				StartStock:  configInt(gf["startstock"]),
-				DriftStep:   configInt(gf["driftstep"]),
-			}
-			if seenItems[g.ItemID] {
-				duplicate = true
-				break
-			}
-			seenItems[g.ItemID] = true
-			if err := g.Validate(); err != nil {
-				mudlog.Warn("market: invalid good", "zone", zone, "itemid", g.ItemID, "error", err)
-				continue
-			}
-			if itemExists != nil && !itemExists(g.ItemID) {
-				mudlog.Warn("market: good has no item spec", "zone", zone, "itemid", g.ItemID)
-				continue
-			}
-			goods = append(goods, g)
+		if goods, ok := parseGoods(zone, fields["goods"], itemExists); ok {
+			markets[zone] = goods
 		}
-		if duplicate {
-			mudlog.Warn("market: zone lists an item twice; no market", "zone", zone)
-			continue
-		}
-		if len(goods) == 0 {
-			mudlog.Warn("market: zone has no valid goods; no market", "zone", zone)
-			continue
-		}
-		markets[zone] = goods
 	}
 	return markets
+}
+
+// parseGoods parses one zone's goods, reporting false when the zone gets
+// no market.
+func parseGoods(zone string, raw any, itemExists func(int) bool) ([]market.Good, bool) {
+	goodList, _ := raw.([]any)
+	goods := []market.Good{}
+	seenItems := map[int]bool{}
+	for _, goodRaw := range goodList {
+		gf := stringMap(goodRaw)
+		if gf == nil {
+			mudlog.Warn("market: skipping good that is not a map", "zone", zone)
+			continue
+		}
+		g := market.Good{
+			ItemID:      configInt(gf["itemid"]),
+			BasePrice:   configInt(gf["baseprice"]),
+			MinPrice:    configInt(gf["minprice"]),
+			MaxPrice:    configInt(gf["maxprice"]),
+			MaxStock:    configInt(gf["maxstock"]),
+			TargetStock: configInt(gf["targetstock"]),
+			StartStock:  configInt(gf["startstock"]),
+			DriftStep:   configInt(gf["driftstep"]),
+		}
+		if err := g.Validate(); err != nil {
+			mudlog.Warn("market: invalid good", "zone", zone, "itemid", g.ItemID, "error", err)
+			continue
+		}
+		if seenItems[g.ItemID] {
+			mudlog.Warn("market: zone lists an item twice; no market", "zone", zone, "itemid", g.ItemID)
+			return nil, false
+		}
+		seenItems[g.ItemID] = true
+		if itemExists != nil && !itemExists(g.ItemID) {
+			mudlog.Warn("market: good has no item spec", "zone", zone, "itemid", g.ItemID)
+			continue
+		}
+		goods = append(goods, g)
+	}
+	if len(goods) == 0 {
+		mudlog.Warn("market: zone has no valid goods; no market", "zone", zone)
+		return nil, false
+	}
+	return goods, true
 }
 
 func stringMap(raw any) map[string]any {
@@ -482,7 +527,9 @@ func configInt(raw any) int {
 	case int64:
 		return int(value)
 	case float64:
-		return int(value)
+		if value == math.Trunc(value) && math.Abs(value) <= math.MaxInt32 {
+			return int(value)
+		}
 	case string:
 		n, err := strconv.Atoi(strings.TrimSpace(value))
 		if err == nil {
@@ -490,9 +537,4 @@ func configInt(raw any) int {
 		}
 	}
 	return 0
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
 }

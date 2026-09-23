@@ -175,7 +175,8 @@ func (g Good) DriftStock(currentStock int, roll uint64) int
 `0 <= StartStock <= MaxStock`, and `1 <= DriftStep <= MaxStock`.
 The config loader additionally verifies each item ID has a loaded item
 spec. It rejects a zone containing duplicate item IDs so no ambiguous
-stock record is created. Invalid goods are warned about and omitted; a
+stock record is created, and likewise gives no market to a zone named by
+more than one config entry (implementation review, 2026-09-23). Invalid goods are warned about and omitted; a
 zone with no valid goods has no market.
 Interpolation must remain safe for the largest validated integer values.
 
@@ -256,6 +257,14 @@ loading path if one already fits.
   convergence. Use `StartStock != TargetStock` in proving content so
   round ticks visibly change stock and price; choose a price spread
   large enough for an integer price change during the proving slice.
+
+- **Known limitation (implementation review, 2026-09-23):** stored
+  stock records are never pruned. A good or zone removed from config
+  keeps its record untouched, and a good re-added later resumes at its
+  old stock rather than `StartStock`. There is no admin reset yet; an
+  operator edits `market.plugin.dat` directly. Plugin data writes are
+  atomic (temp file plus rename), and an empty or truncated ledger is
+  treated as corrupt, never re-seeded over.
 
 ## Acceptance criteria
 

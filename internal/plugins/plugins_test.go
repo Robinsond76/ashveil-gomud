@@ -312,6 +312,28 @@ func TestPlugin_WriteBytesReadBytes_RoundTrip(t *testing.T) {
 	assert.Equal(t, payload, got)
 }
 
+// WriteBytes replaces existing data through a temp file and rename, so an
+// overwrite leaves only the new content and no temp file behind.
+func TestPlugin_WriteBytes_OverwritesAtomically(t *testing.T) {
+	p := &Plugin{name: "atomic", version: "0.1"}
+	p.files.filePaths = map[string]string{}
+
+	origWriteFolder := writeFolderPath
+	writeFolderPath = t.TempDir()
+	t.Cleanup(func() { writeFolderPath = origWriteFolder })
+
+	require.NoError(t, p.WriteBytes("ledger", []byte("a much longer first payload")))
+	require.NoError(t, p.WriteBytes("ledger", []byte("short")))
+
+	got, err := p.ReadBytes("ledger")
+	require.NoError(t, err)
+	assert.Equal(t, []byte("short"), got)
+
+	leftovers, err := filepath.Glob(filepath.Join(writeFolderPath, "*", "*.new"))
+	require.NoError(t, err)
+	assert.Empty(t, leftovers, "the temp file is renamed over the target")
+}
+
 func TestPlugin_ReadBytes_NotExist(t *testing.T) {
 	p := &Plugin{name: "readmissing", version: "0.1"}
 

@@ -276,7 +276,6 @@ func TestParseMarketsValidatesEntries(t *testing.T) {
 			map[any]any{"ItemId": 30, "BasePrice": 3, "MinPrice": 1, "MaxPrice": 9, "MaxStock": 10, "TargetStock": 5, "StartStock": 5, "DriftStep": 1},
 		}},
 		map[string]any{"zone": "Old Kings Road", "goods": []any{good(28, 4), good(28, 8)}}, // duplicate item: whole zone rejected
-		map[string]any{"zone": "Dunmar", "goods": []any{good(29, 4)}},                      // duplicate zone: rejected
 		map[string]any{"zone": "Nowhere", "goods": []any{good(28, 4)}},                     // unknown zone: rejected
 		map[string]any{"zone": "", "goods": []any{good(28, 4)}},
 		map[string]any{"zone": "Old Kings Road", "goods": []any{good(404, 4)}}, // no valid goods: no market
@@ -290,4 +289,76 @@ func TestParseMarketsValidatesEntries(t *testing.T) {
 	assert.Equal(t, 28, markets["Dunmar"][0].ItemID)
 	assert.Equal(t, market.Good{ItemID: 30, BasePrice: 3, MinPrice: 1, MaxPrice: 9, MaxStock: 10, TargetStock: 5, StartStock: 5, DriftStep: 1}, markets["Dunmar"][1], "mixed-case keys parse")
 	assert.Len(t, markets, 1)
+}
+
+func TestDecodeRegistryRejectsEmptyAndTruncatedData(t *testing.T) {
+	for name, data := range map[string]string{
+		"empty":      "",
+		"whitespace": "  \n\t\n",
+		"truncated":  "zones:\n  Dunmar:\n    goods:\n    - itemid: 28\n      stock: 9\n    - itemid: 29\n",
+	} {
+		t.Run(name, func(t *testing.T) {
+			err := decodeRegistry([]byte(data), &Registry{})
+			assert.True(t, errors.Is(err, ErrCorruptStore), "a truncated write is corrupt, never an empty ledger: %v", err)
+		})
+	}
+}
+
+func TestSaveBeforeLoadNeverWritesTheStore(t *testing.T) {
+	store := &fakeStore{saved: Registry{Zones: map[string]ZoneMarket{
+		"Dunmar": {Goods: []GoodStock{{ItemID: 28, Stock: 17}}},
+	}}}
+	module := newTestModule(store)
+	module.loadErr = errNotLoaded // as init leaves it
+
+	require.Error(t, module.save())
+	module.onNewRound(events.NewRound{RoundNumber: 1})
+	assert.Zero(t, store.saveCalls, "nothing persists before the first successful load")
+
+	module.load()
+	assert.Equal(t, 17, stockOf(t, store.saved, "Dunmar", 28))
+}
+
+func TestQuotesClampOutOfRangeStockBeforeAnyRound(t *testing.T) {
+	store := &fakeStore{saved: Registry{Zones: map[string]ZoneMarket{
+		"Dunmar": {Goods: []GoodStock{{ItemID: 28, Stock: 500}, {ItemID: 29, Stock: -7}}},
+	}}}
+	module := newTestModule(store)
+	module.load()
+
+	quotes, ok, err := module.Quotes("Dunmar")
+	require.NoError(t, err)
+	require.True(t, ok)
+	assert.Equal(t, []Quote{{ItemID: 28, Price: 6, Level: "glutted"}, {ItemID: 29, Price: 12, Level: "none"}}, quotes)
+}
+
+func TestParseMarketsRejectsEveryEntryOfARepeatedZone(t *testing.T) {
+	good := map[string]any{"itemid": 28, "baseprice": 12, "minprice": 6, "maxprice": 30, "maxstock": 40, "targetstock": 20, "startstock": 4, "driftstep": 2}
+	raw := []any{
+		map[any]any{"Zone": "Dunmar", "Goods": []any{map[string]any{"itemid": 404}}}, // broken first entry
+		map[any]any{"Zone": "Dunmar", "Goods": []any{good}},                          // corrected duplicate
+		map[any]any{"Zone": "Old Kings Road", "Goods": []any{good}},                  // mixed-case top-level keys
+	}
+	module := newTestModule(&fakeStore{})
+
+	markets := parseMarkets(raw, module.itemExists, module.zoneExists)
+
+	assert.NotContains(t, markets, "Dunmar", "a zone listed twice is ambiguous: no market")
+	assert.Contains(t, markets, "Old Kings Road")
+}
+
+func TestParseMarketsIgnoresMissingIdsForDuplicateCheck(t *testing.T) {
+	good := func(id any) map[string]any {
+		return map[string]any{"itemid": id, "baseprice": 12, "minprice": 6, "maxprice": 30, "maxstock": 40, "targetstock": 20, "startstock": 4, "driftstep": 2}
+	}
+	noID := good(28)
+	delete(noID, "itemid")
+	raw := []any{map[string]any{"zone": "Dunmar", "goods": []any{noID, noID, good(28.5), good(28)}}}
+	module := newTestModule(&fakeStore{})
+
+	markets := parseMarkets(raw, module.itemExists, module.zoneExists)
+
+	require.Contains(t, markets, "Dunmar", "two id-less goods are invalid goods, not a duplicate")
+	require.Len(t, markets["Dunmar"], 1, "a fractional item id is rejected, not truncated")
+	assert.Equal(t, 28, markets["Dunmar"][0].ItemID)
 }

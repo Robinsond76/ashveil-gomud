@@ -90,7 +90,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	assert.Regexp(t, `wolf hide\s+26 gold\s+\(scarce\)`, run(2001), "price follows stock")
 	assert.Equal(t, 26, hide.PriceForStock(5))
 	okrHide, _ := module.zones["Old Kings Road"].Stock(28)
-	assert.Equal(t, 27, okrHide, "a glutted market drifts down")
+	assert.Equal(t, 29, okrHide, "a glutted market drifts down")
 
 	reloaded := NewRegistry()
 	require.NoError(t, pluginStore{plug: module.plug}.Load(reloaded))
@@ -110,20 +110,61 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	restarted.load()
 	restartedStock, _ := restarted.zones["Dunmar"].Stock(28)
 	assert.Equal(t, 5, restartedStock)
+
+	// The OnSave callback persists through plugins.Save().
+	module.mu.Lock()
+	module.zones["Dunmar"].Goods[0].Stock = 11
+	module.mu.Unlock()
+	plugins.Save()
+	saved := NewRegistry()
+	require.NoError(t, pluginStore{plug: module.plug}.Load(saved))
+	savedStock, _ := saved.Zones["Dunmar"].Stock(28)
+	assert.Equal(t, 11, savedStock)
+
+	// A corrupt or truncated real store file disables markets and is left
+	// untouched for repair rather than re-seeded over.
+	for _, corrupt := range []string{"", "zones: [not, a, map", "zones:\n  Dunmar:\n    goods:\n    - itemid: 28\n"} {
+		require.NoError(t, module.plug.WriteBytes("market", []byte(corrupt)))
+		broken := &MarketModule{
+			plug:       module.plug,
+			store:      pluginStore{plug: module.plug},
+			roll:       func() uint64 { return 0 },
+			itemExists: module.itemExists,
+			itemName:   module.itemName,
+			zoneExists: module.zoneExists,
+			markets:    map[string][]market.Good{},
+			zones:      map[string]ZoneMarket{},
+		}
+		broken.load()
+		assert.Error(t, broken.loadErr, "corrupt store %q", corrupt)
+		broken.onNewRound(events.NewRound{RoundNumber: 2})
+		require.Error(t, broken.save())
+		after, err := module.plug.ReadBytes("market")
+		require.NoError(t, err)
+		assert.Equal(t, corrupt, string(after), "the corrupt file is left for repair")
+	}
 }
 
-// shippedZoneNames reads every zone name from the shipped zone-config files.
+// shippedZoneNames reads every room's zone field from the shipped world:
+// the same key rooms.GetAllZoneNames reports at boot.
 func shippedZoneNames(t *testing.T, dataDir string) map[string]bool {
 	t.Helper()
-	paths, err := filepath.Glob(filepath.Join(dataDir, "rooms", "*", "zone-config.yaml"))
+	paths, err := filepath.Glob(filepath.Join(dataDir, "rooms", "*", "*.yaml"))
 	require.NoError(t, err)
 	names := map[string]bool{}
 	for _, path := range paths {
+		if filepath.Base(path) == "zone-config.yaml" {
+			continue
+		}
 		data, err := os.ReadFile(path)
 		require.NoError(t, err)
-		var cfg rooms.ZoneConfig
-		require.NoError(t, yaml.Unmarshal(data, &cfg))
-		names[cfg.Name] = true
+		var room struct {
+			Zone string `yaml:"zone"`
+		}
+		require.NoError(t, yaml.Unmarshal(data, &room))
+		if room.Zone != "" {
+			names[room.Zone] = true
+		}
 	}
 	return names
 }

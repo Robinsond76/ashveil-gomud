@@ -405,7 +405,9 @@ func (p *Plugin) WriteBytes(identifier string, bytes []byte) error {
 		}
 	}
 
-	if err := util.WriteFile(fullPath, bytes, 0777); err != nil {
+	// Write to a temp file and rename over the target so an interrupted
+	// write can never leave a truncated file for the next load to misread.
+	if err := util.SafeSave(fullPath, bytes); err != nil {
 		mudlog.Error(`plugin.WriteBytes`, `name`, p.name, `path`, fullPath, `error`, err)
 		return err
 	}
