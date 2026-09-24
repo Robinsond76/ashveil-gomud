@@ -30,6 +30,21 @@ benefit and prepare the entire company's blades with one whetstone.
 
 ## Whetstone behavior
 
+**Owner amendment (2026-09-24), superseding the bullets below where they
+conflict:**
+
+- A whetstone can be used **on demand at any time**, not only during a
+  camp rest.
+- A whetstone has **10 uses**. Each company member whose blade(s) it
+  sharpens spends **one** use, so a company of four spends 4 of a new
+  stone's 10, and a leader with no companions can sharpen up to 10 times.
+  (Phase 23b's design decides the details: a member with two blades
+  still spends one use; members with no eligible or no unsharpened blade
+  spend none; what happens when a stone runs out partway through a
+  company.)
+- The camp-rest auto setting may remain as a convenience, but it follows
+  the same per-member use rule.
+
 - Shipped settlement shops sell a consumable whetstone with one use. It is
   carried by the leader; company cargo counts only if the item is available
   at the camp through the existing cargo rules.
