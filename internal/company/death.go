@@ -19,6 +19,9 @@ var (
 	// ErrCompanionLost is returned when a dead companion's allowance has run
 	// out; it is lost for good.
 	ErrCompanionLost = errors.New("companion is lost")
+	// ErrAmbiguousMember is returned when a name matches more than one
+	// companion; the caller should ask for the number.
+	ErrAmbiguousMember = errors.New("more than one companion matches")
 	// ErrNoResurrection is returned when no provider can resurrect.
 	ErrNoResurrection = errors.New("resurrection is unavailable")
 )

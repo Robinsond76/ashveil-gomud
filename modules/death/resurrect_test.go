@@ -118,10 +118,11 @@ func TestResurrectAtChurchAndShaman(t *testing.T) {
 func TestResurrectErrors(t *testing.T) {
 	w := newRiteWorld(t)
 	for err, want := range map[error]string{
-		company.ErrUnknownMember: `None of your company answers to "bran".`,
-		company.ErrNotDead:       "bran is not dead.",
-		company.ErrCompanionLost: "It is too late",
-		errors.New("disk full"):  "The rite falters",
+		company.ErrUnknownMember:   `None of your company answers to "bran".`,
+		company.ErrNotDead:         "bran is not dead.",
+		company.ErrAmbiguousMember: "More than one of your company answers",
+		company.ErrCompanionLost:   "It is too late",
+		errors.New("disk full"):    "The rite falters",
 	} {
 		w.raiseFn = func(string, int) (company.ResurrectionResult, error) { return company.ResurrectionResult{}, err }
 		assert.Contains(t, w.rite(t, 2007, "bran"), want)

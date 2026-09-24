@@ -66,7 +66,9 @@ recommendations, as in Phases 19b–25a, under the owner's "implement phase
    record keeps only the kept worn items (by slot), the kept carried items,
    and the kept gold; everything that dropped is in the corpse or room, and
    is never restored. Recruit templates use `itemdropchance: 0`, so their
-   worn gear survives death and returns with them.
+   worn gear survives death and returns with them. Remove-locked (cursed)
+   worn items never drop, so they are kept too (they used to be destroyed
+   with the mob).
 3. **Marking the death.** `onMobDeath` for a tracked companion: untrack,
    set the kept gear and the event's level, clear its formation cell
    (remembered in the death), snapshot the allowance
@@ -130,7 +132,9 @@ recommendations, as in Phases 19b–25a, under the owner's "implement phase
    (mob 66: non-hostile, no gear, no gold, no drops). The death config lists
    Fernhollow as a village with keeper 66, and adds keepers to the two
    cities (4 at the Sanctuary, 65 at the chapel). Fernhollow never becomes a
-   checkpoint.
+   checkpoint. The Sanctuary's priest no longer wanders (`maxwander: 0`), so
+   the rite there doesn't depend on where he happens to be. Keepers are
+   non-hostile but, like any mob, can be killed; they respawn in minutes.
 10. **No new locks.** Everything runs on the game loop; the company module
     has no mutex and the death module's `mu` stays a leaf.
 

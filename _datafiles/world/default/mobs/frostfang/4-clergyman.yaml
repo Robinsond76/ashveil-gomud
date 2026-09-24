@@ -2,7 +2,7 @@ mobid:  4
 zone: Frostfang
 itemdropchance: 2
 hostile: false
-maxwander: 1
+maxwander: 0
 groups: 
   - clergy
 idlecommands:

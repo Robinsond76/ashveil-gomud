@@ -300,12 +300,14 @@ func (m *CompanyModule) deathOnSpawn(leaderUserID int) {
 }
 
 // deathOnDespawn charges a leaving leader up to now and drops the anchor.
-// It reports whether anything changed that needs saving.
+// It reports whether the leader's clock was running, so the logout saves
+// the remaining time even when under a second was left to charge (review
+// finding 3).
 func (m *CompanyModule) deathOnDespawn(leaderUserID int) bool {
 	if _, anchored := m.anchors[leaderUserID]; !anchored {
 		return false
 	}
-	charged := m.chargeLeader(leaderUserID)
+	m.chargeLeader(leaderUserID)
 	delete(m.anchors, leaderUserID)
-	return charged
+	return true
 }

@@ -75,3 +75,17 @@ func TestStatusMarksDead(t *testing.T) {
 	assert.Contains(t, text, "Wolf: fallen")
 	assert.Contains(t, text, "Bear: Hunger 50")
 }
+
+// TestCompanyNeedsSkipsDead (review finding 1): a dead companion's frozen
+// fatigue can't hold the company back from travel, which gates on
+// CompanyNeeds, and isn't shown as if alive.
+func TestCompanyNeedsSkipsDead(t *testing.T) {
+	m := newTestModule(*domain.NewRegistry())
+	deadRoster(t, m)
+	require.NoError(t, m.registry.PutNeeds(7, domain.CompanionMemberKey(2), domain.Needs{Fatigue: 0}))
+	needs := m.CompanyNeeds(7)
+	require.Len(t, needs, 2)
+	for _, n := range needs {
+		assert.NotEqual(t, domain.CompanionMemberKey(2), n.Key)
+	}
+}

@@ -364,3 +364,31 @@ func TestAllowanceDays(t *testing.T) {
 	assert.Equal(t, defaultAllowanceDays, allowanceDays(nil))
 	assert.Equal(t, 3*900*4, (&CompanyModule{}).allowanceSeconds(), "three hours under the default calendar")
 }
+
+// TestDeathQueuedBehindLogoutIsRecorded (review finding 6): when the leader
+// leaves in the same event batch as their companion's death, the queued
+// MobDeath still finds the companion and records the death.
+func TestDeathQueuedBehindLogoutIsRecorded(t *testing.T) {
+	module, _, runtime, _ := newDeathModule(t)
+	delete(runtime.live, 101) // died; its MobDeath is still queued
+	module.onPlayerDespawn(events.PlayerDespawn{UserId: 7})
+	killOne(module)
+	assert.True(t, companion(t, module, 1).Dead())
+	require.NoError(t, module.restoreForLeader(7, 12))
+	_, tracked := module.instance(7, 1)
+	assert.False(t, tracked, "not restored")
+}
+
+// TestLogoutSavesRemainingUnderASecond (review finding 3): the logout saves
+// the remaining time even with under a second left to charge.
+func TestLogoutSavesRemainingUnderASecond(t *testing.T) {
+	module, _, _, clock := newDeathModule(t)
+	killOne(module)
+	clock.advance(8 * time.Second)
+	module.chargeAllowances()
+	clock.advance(500 * time.Millisecond)
+	saves := module.store.(*fakeStore).saveCalls
+	module.onPlayerDespawn(events.PlayerDespawn{UserId: 7})
+	assert.Greater(t, module.store.(*fakeStore).saveCalls, saves)
+	assert.Equal(t, 3592, module.store.(*fakeStore).saved.Companies[7].Companions[0].Death.Remaining)
+}

@@ -126,4 +126,14 @@ func TestShippedShaman(t *testing.T) {
 	sanctuary := shippedRoom(t, "frostfang/18.yaml")
 	require.NotEmpty(t, sanctuary.SpawnInfo)
 	assert.Equal(t, 4, sanctuary.SpawnInfo[0].MobId, "the Sanctuary's priest is its keeper")
+
+	// Every keeper stays in its room, so the rite doesn't depend on where
+	// it wandered (review finding 2).
+	for _, path := range []string{"frostfang/4-clergyman.yaml", "dunmar/65-sister_maren.yaml", "fernhollow/66-old_wenna.yaml"} {
+		data, err := os.ReadFile(filepath.Join(shippedWorld(), "mobs", path))
+		require.NoError(t, err)
+		mob := mobs.Mob{}
+		require.NoError(t, yaml.Unmarshal(data, &mob))
+		assert.Zero(t, mob.MaxWander, path)
+	}
 }

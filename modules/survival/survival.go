@@ -508,7 +508,9 @@ func (m *SurvivalModule) companyExertionResults(leaderUserID int) []domain.Exert
 
 // CompanyNeeds returns the leader plus current companions with their stored
 // needs. It is read-only: it may initialize a default leader record and prune
-// stale companions in memory, but never writes to the durable store.
+// stale companions in memory, but never writes to the durable store. Dead
+// companions (Phase 25b) are left out: their needs are frozen and must not
+// hold the living back (the travel exhaustion gate) or show as if alive.
 func (m *SurvivalModule) CompanyNeeds(leaderUserID int) []domain.MemberNeeds {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -517,7 +519,7 @@ func (m *SurvivalModule) CompanyNeeds(leaderUserID int) []domain.MemberNeeds {
 	}
 	_ = m.registry.Ensure(leaderUserID, domain.LeaderMemberKey)
 	m.pruneStale(leaderUserID)
-	refs := m.memberRefs(leaderUserID)
+	refs := m.livingRefs(leaderUserID)
 	needs := make([]domain.MemberNeeds, 0, len(refs))
 	for _, ref := range refs {
 		stored, ok := m.registry.NeedsFor(leaderUserID, ref.Key)

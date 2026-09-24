@@ -204,6 +204,21 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 	c, _ := findCompanion(func() domain.Record { r, _ := module.registry.Get(7); return r }(), 1)
 	assert.Equal(t, 10796, c.Death.Remaining, "only online time is spent")
 
+	// The autosave records the charged time; a restart reloads it, and the
+	// hour the server was down isn't charged: the first round only starts
+	// a new anchor.
+	plugins.Save()
+	assert.Equal(t, 10796, stored().Companions[0].Death.Remaining)
+	module.anchors = nil
+	module.load()
+	require.NoError(t, module.loadErr)
+	clock.advance(time.Hour)
+	newRound()
+	clock.advance(4 * time.Second)
+	newRound()
+	c, _ = findCompanion(func() domain.Record { r, _ := module.registry.Get(7); return r }(), 1)
+	assert.Equal(t, 10792, c.Death.Remaining, "downtime isn't spent")
+
 	// The market square is no place for the rite.
 	assert.Contains(t, run("resurrect", "dummy"), "There is no one here who can call back the dead.")
 	assert.Contains(t, run("resurrect", ""), "#1 training dummy, level 3: 2h 59m")
@@ -228,9 +243,10 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 	assert.False(t, stored().Companions[0].Dead(), "saved alive")
 	assert.Contains(t, run("resurrect", "#1"), "is not dead", "raised once")
 
-	// #2 dies. The village of Fernhollow, west of the Black Oak: Old Wenna
-	// raises it, and the village never becomes the checkpoint.
+	// #2 and #3 die. The village of Fernhollow, west of the Black Oak: Old
+	// Wenna raises #2, and the village never becomes the checkpoint.
 	kill(2)
+	kill(3)
 	heard()
 	require.NoError(t, rooms.MoveToRoom(user.UserId, 2002))
 	checkpointBefore := user.Character.GetMiscData(death.CheckpointKey)
@@ -239,16 +255,15 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 	require.Equal(t, 2009, user.Character.RoomId)
 	assert.Equal(t, checkpointBefore, user.Character.GetMiscData(death.CheckpointKey), "a village is never a checkpoint")
 	rooms.LoadRoom(2009).Prepare(false)
+	assert.Contains(t, run("resurrect", "dummy"), `More than one of your company answers to "dummy". Use their number`, "two dead dummies")
 	out = run("resurrect", "#2")
 	assert.Contains(t, out, "Old Wenna kneels and calls training dummy back from death.")
 	instanceID, tracked = module.instance(7, 2)
 	require.True(t, tracked)
 	assert.Equal(t, 2009, mobs.GetInstance(instanceID).Character.RoomId)
 
-	// #3 dies and its time runs out: lost, archived, its slot freed and its
-	// ID never reused.
-	kill(3)
-	heard()
+	// #3's time runs out: lost, archived, its slot freed and its ID never
+	// reused.
 	record, _ = module.registry.Get(7)
 	record.Companions[2].Death.Remaining = 3
 	module.registry.Put(record)
@@ -262,6 +277,7 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, lifecycle.removed, [2]int{7, 3})
 	assert.Contains(t, run("company", "status"), "Lost: #3 training dummy (level 3)")
 	assert.Contains(t, run("resurrect", "#3"), "It is too late")
+	assert.Contains(t, run("resurrect", "dummy"), "More than one of your company answers", "two living dummies share the lost one's name")
 	assert.Contains(t, run("company", "summon training dummy"), "Companion summoned: training dummy (#4).")
 
 	assert.Equal(t, turn, util.GetTurnCount(), "never advances the clock")

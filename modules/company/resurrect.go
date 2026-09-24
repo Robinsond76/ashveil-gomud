@@ -36,6 +36,22 @@ func (m *CompanyModule) DeadCompanions(leaderUserID int) []domain.DeadCompanionV
 	return out
 }
 
+// nameMatches counts the companions a name selector could mean, as
+// resolveCompanion reads it; 0 for a number.
+func nameMatches(record domain.Record, selector string) int {
+	selector = strings.ToLower(strings.TrimSpace(selector))
+	if _, err := strconv.Atoi(strings.TrimPrefix(selector, "#")); err == nil || selector == "" {
+		return 0
+	}
+	n := 0
+	for _, c := range record.Companions {
+		if strings.Contains(strings.ToLower(templateName(c.MobTemplateID, "")), selector) {
+			n++
+		}
+	}
+	return n
+}
+
 // lostMatch reports whether selector names one of the record's lost
 // companions.
 func lostMatch(record domain.Record, selector string) bool {
@@ -76,10 +92,16 @@ func (m *CompanyModule) ResurrectCompanion(leaderUserID int, selector string, ro
 		}
 	}
 	c, ok := resolveCompanion(dead, selector)
+	if !ok && nameMatches(dead, selector) > 1 {
+		return domain.ResurrectionResult{}, domain.ErrAmbiguousMember
+	}
 	if !ok {
 		c, ok = resolveCompanion(record, selector)
 	}
 	if !ok {
+		if nameMatches(record, selector) > 1 {
+			return domain.ResurrectionResult{}, domain.ErrAmbiguousMember
+		}
 		if lostMatch(record, selector) {
 			return domain.ResurrectionResult{}, domain.ErrCompanionLost
 		}

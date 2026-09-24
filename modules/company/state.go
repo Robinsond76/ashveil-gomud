@@ -134,9 +134,13 @@ func (m *CompanyModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 		if !tracked {
 			continue
 		}
-		if m.runtime.IsLive(instanceID) {
-			m.runtime.Detach(evt.UserId, instanceID)
+		if !m.runtime.IsLive(instanceID) {
+			// Phase 25b review finding 6: a mob that died this batch has
+			// its MobDeath still queued. Keep it tracked so the death is
+			// recorded; restoreForLeader clears a stale entry at login.
+			continue
 		}
+		m.runtime.Detach(evt.UserId, instanceID)
 		m.clearInstance(evt.UserId, companionID)
 	}
 	return events.Continue

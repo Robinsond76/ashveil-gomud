@@ -90,6 +90,9 @@ func (m *DeathModule) resurrectCommand(rest string, user *users.UserRecord, room
 	case errors.Is(err, company.ErrUnknownMember):
 		user.SendText(fmt.Sprintf(`None of your company answers to "%s".`, selector))
 		return true, nil
+	case errors.Is(err, company.ErrAmbiguousMember):
+		user.SendText(fmt.Sprintf(`More than one of your company answers to "%s". Use their number: <ansi fg="command">resurrect</ansi> lists them.`, selector))
+		return true, nil
 	case errors.Is(err, company.ErrNotDead):
 		name := result.Name
 		if name == "" {

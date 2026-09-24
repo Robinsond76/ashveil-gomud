@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 25a (player death and the church return) is complete and reviewed on `claude/next-phase-rmt21r`, awaiting merge to `master`. Phase 24 is on `master`.
+- **HEAD:** Phase 25b (companion death and resurrection) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`, built on Phase 25a (complete and reviewed on `claude/next-phase-rmt21r`); both await merge to `master`. Phase 24 is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -54,11 +54,11 @@ instead of duplicating them.
   and Phase 23b (whetstones: `sharpen`, durable weapon edges, combat use),
   and Phase 24 (company chemistry: band-wide service, diluted by recruits, +2/+4/+6 hit),
   and Phase 25a (player death: one level, wake at the last city's church with
-  the living company).
-- **Next:** merge Phase 25a to `master`, then Phase 25b (companion death, the
-  online-time rescue allowance, `resurrect` at a church or village shaman),
-  the rest of [death and resurrection](superpowers/specs/2026-09-23-death-resurrection-design.md),
-  fourth on the [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
+  the living company), and Phase 25b (companion death: dead on the roster for
+  three game days of the leader's online time, `resurrect` at a church or
+  village shaman for a level, then lost).
+- **Next:** merge Phase 25a and 25b to `master`; then the next spec on the
+  [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
   The Phase 19b inter-market profit question is resolved: the small
   standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
@@ -131,10 +131,83 @@ instead of duplicating them.
 | 23b | Whetstones | Complete: 10-use whetstone (item 30) in both markets, `sharpen`/`camp sharpen` any time but not mid-fight, one use per member sharpened, durable per-weapon edge (+1 for 20 strikes) spent in combat, auto at camp rest end |
 | 24 | Company chemistry | Complete: company-wide. Each member's durable service with the band; a band's tier from the average saved service of the members together (each capped at Sworn), so recruits dilute it; Familiar/Trusted/Sworn (900/2700/6300 rounds) give everyone in the band +2/+4/+6 hit in all four combat directions; `company chemistry`, `status bonuses` |
 | 25a | Player death and church return | Complete (awaiting merge): one level lost (no protection levels; peak level stops re-granted points), a durable pending mark so a death is charged once, wake at the last city's church (Dunmar's new Chapel of the Wayfarer, Frostfang's Sanctuary as fallback) with the living company; travel, camp, and inn stay abandoned first |
-| 25b | Companion death and resurrection | Next |
+| 25b | Companion death and resurrection | Complete (awaiting merge): a dead companion stays on the roster, keeping the gear its body kept; a 3-game-day rescue allowance spent only in the leader's online time; `resurrect` at a church or village shaman with its keeper costs a level; at zero it is lost and archived; Fernhollow village and Old Wenna |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 25b: companion death and resurrection (2026-09-24)
+
+- **What:** A companion who dies stays dead on its record (`Companion.Death`:
+  operation ID, allowance, seconds left, its old formation cell) instead of
+  respawning at login. Its record keeps its level and only what its body
+  kept: `events.MobDeath` now reports the worn items that didn't drop (the
+  engine's `mobcommands.Suicide` rolls worn drops before the event and drops
+  exactly those), so recruits (`itemdropchance: 0`) come back with their
+  worn gear. The dead are left out of everything: survival exertion, rest,
+  provisioning, and `CompanyNeeds` (via a new `survival.MemberRef.Dead`),
+  walking and exposure drains, camp tiers, the inn price, alignment drift,
+  desertion, and the company average, and the formation; they keep their
+  roster slot. The rescue allowance (`ResurrectionAllowanceDays`, 3 game days
+  = 3 hours) is charged once a round only while the leader is online, from an
+  in-memory anchor (60 s cap per step); offline time and downtime are never
+  spent, and a crash only refunds time. At zero the companion is lost:
+  dismissed with rollback and archived in `Record.Lost` in one save, its ID
+  never reused. `resurrect` (modules/death) lists the dead; `resurrect
+  <member>` at a registered church or shaman lodge with its keeper
+  (`ServiceMobId`) present and not mid-fight calls
+  `company.ResurrectCompanion`: charge, one level (floor 1), revive into its
+  old cell if free, save, then spawn. Content: Fernhollow village (2008,
+  2009 with the `shaman` tag, west of the Fork at the Black Oak) and Old
+  Wenna (mob 66); keepers 4, 65, 66 in the death config; the Sanctuary's
+  priest no longer wanders. Design and plan:
+  [25b spec](superpowers/specs/2026-09-24-phase-25b-companion-death-design.md) /
+  [25b plan](superpowers/plans/2026-09-24-phase-25b-companion-death.md).
+- **Why:** Roadmap spec 4, second half (25a was player death). Decisions
+  were applied under the owner's "implement phase 25b" and are recorded in
+  the spec. This replaces 25a's interim "a dead companion respawns at the
+  next login".
+- **Verification:** `go test -race ./...` (74 packages), `make generate` (no
+  changes), `make validate`. The wiring test goes through `plugins.Load`
+  with the company and death modules and the shipped chapel, Fernhollow, and
+  keepers: companions die through the real mob `suicide`, logout and login
+  go through `PlayerDespawn`/`PlayerSpawn` (no restore, five offline hours
+  not spent), the real `NewRound` listener charges time, an autosave and
+  reload keep it and don't charge the downtime, the market square refuses
+  the rite, Sister Maren raises the dead dummy that shares its name with two
+  living ones (a level lower, its kept broadsword back), Old Wenna raises
+  another (the village never becomes the checkpoint), a third expires into
+  the lost roll and its ID isn't reused, and the clock never moves.
+- **Review:** The independent reviewer found no clock, lock, or
+  exactly-once violations. Its findings:
+  1. *Medium, fixed:* `CompanyNeeds` still listed the dead, so a companion
+     that died at fatigue 0 blocked every journey ("too exhausted"), possibly
+     keeping the company from the church. The dead are now left out
+     (`TestCompanyNeedsSkipsDead`).
+  2. *Low, fixed:* the Sanctuary's priest (mob 4) wandered, so the rite
+     there often found no keeper; `maxwander: 0`, pinned for all three
+     keepers in `TestShippedShaman`. Recorded: keepers can be killed and
+     respawn in minutes.
+  3. *Low, fixed:* a logout with under a second to charge skipped the save;
+     it now always saves when the clock ran (`TestLogoutSavesRemainingUnderASecond`).
+  4. *Low, fixed:* an ambiguous name said "no one answers" or "too late";
+     `resurrect` now asks for the number (`ErrAmbiguousMember`, covered in
+     the wiring test for two dead and for two living plus a lost one).
+  5. *Recorded:* a link-dead leader is charged until despawn (at most
+     `LinkDeadSeconds`).
+  6. *Fixed (pre-existing race, now worse):* a `MobDeath` queued behind the
+     leader's `PlayerDespawn` found the companion untracked, so the death was
+     skipped. Logout now keeps a dead mob tracked for its queued death
+     (`TestDeathQueuedBehindLogoutIsRecorded`).
+  7. *Recorded:* expiry saves from `NewRound`, like desertion (AGENTS note).
+  8. *Recorded:* remove-locked worn items are now kept on the body (spec).
+  9. *Rejected:* a journey can't start from a service room (none has a
+     travel-profile exit), so a companion can't be raised into a room its
+     company is leaving.
+  Coverage added: restart mid-allowance (autosave, reload, fresh anchor) in
+  the wiring test. Survival consumers other than the company module stay
+  covered with stub rosters.
+- **Step completed:** Phase 25b.
 
 ### Phase 25a: player death and the church return (2026-09-24)
 
