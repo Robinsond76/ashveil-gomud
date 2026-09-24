@@ -143,15 +143,17 @@ type Creator interface {
 }
 
 // CreationChoices is the archetypes to offer a character during creation.
-// It is nil without a provider that creates, or once the user already has
-// an archetype, so creation skips the step.
+// It is nil without a provider that creates, or once the user has a
+// configured archetype, so creation skips the step. A stored archetype
+// that is no longer configured doesn't count, matching the module's
+// choose rule.
 func CreationChoices(userID int) []Choice {
 	p := current()
 	c, ok := p.(Creator)
 	if !ok {
 		return nil
 	}
-	if _, chosen := p.PlayerArchetype(userID); chosen {
+	if id, chosen := p.PlayerArchetype(userID); chosen && p.Exists(id) {
 		return nil
 	}
 	return c.CreationChoices()

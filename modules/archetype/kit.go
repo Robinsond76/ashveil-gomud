@@ -14,8 +14,10 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -87,9 +89,12 @@ func (m *ArchetypeModule) kitLine(a archetypes.Archetype) string {
 }
 
 // grantKit gives the user their owed starter kit unless they already
-// received one, then saves the user. It returns player-facing text, or ""
-// when nothing was granted. It runs on the game loop and never holds the
-// module lock while touching the user.
+// received one, then saves the user. It is all or nothing: if any kit item
+// can't be created the kit stays owed and nothing is given. Kit gear goes
+// into empty equipment slots (a new character would otherwise start over
+// its carry capacity); the rest goes into the backpack. It returns
+// player-facing text, or "" when nothing was granted. It runs on the game
+// loop and never holds the module lock while touching the user.
 func (m *ArchetypeModule) grantKit(user *users.UserRecord) string {
 	if user == nil {
 		return ""
@@ -104,13 +109,26 @@ func (m *ArchetypeModule) grantKit(user *users.UserRecord) string {
 	if user.Character.GetMiscData(kitMarkerKey) != nil {
 		return ""
 	}
+	kit := make([]items.Item, 0, len(a.Kit))
 	for _, id := range a.Kit {
 		itm := items.New(id)
 		if itm.ItemId < 1 {
-			mudlog.Warn("archetype: kit item unavailable", "archetype", a.ID, "item", id)
+			mudlog.Error("archetype: kit item unavailable; kit left owed", "archetype", a.ID, "item", id, "user", user.UserId)
+			return ""
+		}
+		kit = append(kit, itm)
+	}
+	var worn, packed []string
+	for _, itm := range kit {
+		if equipKitItem(user.Character, itm) {
+			worn = append(worn, itm.DisplayName())
 			continue
 		}
 		user.Character.StoreItem(itm)
+		packed = append(packed, itm.DisplayName())
+	}
+	if len(worn) > 0 {
+		user.Character.Validate(true)
 	}
 	user.Character.SetMiscData(kitMarkerKey, a.ID)
 	if m.saveUser != nil {
@@ -120,7 +138,51 @@ func (m *ArchetypeModule) grantKit(user *users.UserRecord) string {
 			mudlog.Error("archetype: save after kit", "user", user.UserId, "error", err)
 		}
 	}
-	return fmt.Sprintf(`You receive the %s starter kit: %s. Use "equip <item>" to ready it.`, a.Name, strings.Join(m.kitNames(a), ", "))
+	text := fmt.Sprintf("You receive the %s starter kit.", a.Name)
+	if len(worn) > 0 {
+		text += " You are now using: " + strings.Join(worn, ", ") + "."
+	}
+	if len(packed) > 0 {
+		text += " In your backpack: " + strings.Join(packed, ", ") + "."
+	}
+	return text
+}
+
+// equipKitItem wears a kit item only into an empty slot, so a character's
+// existing gear is never displaced. It reports whether the item was worn.
+func equipKitItem(c *characters.Character, itm items.Item) bool {
+	// Hand rules depend on the race's size; without a known race, pack it.
+	if races.GetRace(c.GetRaceId()) == nil {
+		return false
+	}
+	spec := itm.GetSpec()
+	switch {
+	case spec.Type == items.Weapon:
+		if c.Equipment.Weapon.ItemId != 0 {
+			return false
+		}
+		if c.HandsRequired(itm) > 1 && c.Equipment.Offhand.ItemId != 0 {
+			return false
+		}
+	case spec.Subtype == items.Wearable:
+		slot := c.Equipment.Get(spec.Type)
+		if slot == nil || slot.ItemId != 0 {
+			return false
+		}
+		if spec.Type == items.Offhand && c.Equipment.Weapon.ItemId != 0 && c.HandsRequired(c.Equipment.Weapon) > 1 {
+			return false
+		}
+	default:
+		return false
+	}
+	returned, ok, _ := c.Wear(itm)
+	for _, r := range returned {
+		// Defensive: nothing should be displaced from an empty slot.
+		if r.ItemId != 0 {
+			c.StoreItem(r)
+		}
+	}
+	return ok
 }
 
 // --- archetypes.Creator -------------------------------------------------------
@@ -128,8 +190,14 @@ func (m *ArchetypeModule) grantKit(user *users.UserRecord) string {
 var _ archetypes.Creator = (*ArchetypeModule)(nil)
 
 // CreationChoices lists every configured archetype with its kit preview.
+// It is empty while persistence is unavailable, so creation skips a choice
+// that couldn't be saved.
 func (m *ArchetypeModule) CreationChoices() []archetypes.Choice {
 	m.mu.Lock()
+	if m.persistenceAvailableLocked() != nil {
+		m.mu.Unlock()
+		return nil
+	}
 	list := m.table.List()
 	m.mu.Unlock()
 	out := make([]archetypes.Choice, 0, len(list))

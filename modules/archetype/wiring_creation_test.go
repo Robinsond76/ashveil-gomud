@@ -26,6 +26,7 @@ func creating(t *testing.T, id int) *users.UserRecord {
 	u.Username = "acct" + u.Character.Name
 	u.Character.Name = "Aria"
 	u.Character.RaceId = 1
+	u.Character.Validate() // as start does after the race step: opens the slots
 	u.Character.RoomId = -1
 	users.SetTestUser(u)
 	t.Cleanup(func() { users.RemoveTestUser(id) })
@@ -86,7 +87,9 @@ func TestWiringStartArchetypeStepGrantsEachKit(t *testing.T) {
 			id, chosen := archetypes.PlayerArchetype(u.UserId)
 			assert.True(t, chosen)
 			assert.Equal(t, choice.ID, id)
-			assert.Equal(t, kitOf(t, m, choice.ID), backpackIDs(u))
+			assert.ElementsMatch(t, kitOf(t, m, choice.ID), ownedIDs(u))
+			assert.NotZero(t, u.Character.Equipment.Weapon.ItemId, "the kit weapon is in hand")
+			assert.LessOrEqual(t, len(u.Character.Items), u.Character.CarryCapacity(), "not encumbered")
 			assert.Equal(t, tutorialQuestion, pending(u), "creation carries on to the tutorial")
 		})
 	}
@@ -108,14 +111,14 @@ func TestWiringStartReconnectResumes(t *testing.T) {
 	answer(t, u, "warrior")
 	answer(t, u, "yes")
 	kit := kitOf(t, m, "warrior")
-	assert.Equal(t, kit, backpackIDs(u))
+	assert.ElementsMatch(t, kit, ownedIDs(u))
 
 	// Disconnect after choosing: creation resumes at the tutorial question.
 	u.ClearPrompt()
 	text := start(t, u)
 	assert.NotContains(t, text, "Starter kit:")
 	assert.Equal(t, tutorialQuestion, pending(u))
-	assert.Equal(t, kit, backpackIDs(u), "no second kit")
+	assert.ElementsMatch(t, kit, ownedIDs(u), "no second kit")
 }
 
 func TestWiringStartConfirmNoAsksAgain(t *testing.T) {
@@ -195,9 +198,74 @@ func TestWiringPlayerSpawnRecoversKit(t *testing.T) {
 	})
 	assert.Contains(t, text, "Ranger starter kit")
 	kit := kitOf(t, m, "ranger")
-	assert.Equal(t, kit, backpackIDs(u))
+	assert.ElementsMatch(t, kit, ownedIDs(u))
 
 	events.AddToQueue(events.PlayerSpawn{UserId: 3017})
 	events.ProcessEvents()
-	assert.Equal(t, kit, backpackIDs(u), "exactly once")
+	assert.ElementsMatch(t, kit, ownedIDs(u), "exactly once")
+}
+
+func TestWiringStartEmptyConfirmationAsksAgain(t *testing.T) {
+	m := registered(t)
+	u := creating(t, 3018)
+	start(t, u)
+	answer(t, u, "ranger")
+	answer(t, u, "") // the default is no
+	assert.Equal(t, `Which archetype will you follow?`, pending(u))
+	_, chosen := m.PlayerArchetype(3018)
+	assert.False(t, chosen)
+}
+
+// Review finding 4: the prompt caches questions by text, so an admin reset
+// mid-creation must not replay the cached answers into a silent re-commit.
+func TestWiringStartResetMidCreationDoesNotReplay(t *testing.T) {
+	m := registered(t)
+	u := creating(t, 3019)
+	start(t, u)
+	answer(t, u, "warrior")
+	answer(t, u, "yes")
+	_, err := m.reset(3019)
+	require.NoError(t, err)
+
+	start(t, u) // re-entry on the same prompt, as answering the tutorial does
+	_, chosen := m.PlayerArchetype(3019)
+	assert.False(t, chosen, "no silent re-commit")
+	assert.Equal(t, tutorialQuestion, pending(u))
+}
+
+// Review finding 2: a module that failed to load offers no choice it
+// couldn't save.
+func TestWiringStartSkipsWhenPersistenceUnavailable(t *testing.T) {
+	m := registered(t)
+	m.loadErr = errors.New("corrupt registry")
+	u := creating(t, 3020)
+	text := start(t, u)
+	assert.NotContains(t, text, "Starter kit:")
+	assert.Equal(t, tutorialQuestion, pending(u))
+}
+
+// Review finding 6: a stored archetype that is no longer configured
+// doesn't hide the step, matching "archetype choose".
+func TestWiringStartOffersStepForUnconfiguredArchetype(t *testing.T) {
+	m := registered(t)
+	m.registry.Players[3021] = "bard"
+	u := creating(t, 3021)
+	start(t, u)
+	assert.Equal(t, `Which archetype will you follow?`, pending(u))
+}
+
+// Review finding 5 (coverage): a real permanent PlayerDeath clears the
+// owed kit with the choice.
+func TestWiringPermadeathEventClearsOwedKit(t *testing.T) {
+	m, store := testModule(t)
+	id := events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
+	t.Cleanup(func() { events.UnregisterListener(events.PlayerDeath{}, id) })
+	m.choose(newUser(3022), "warrior", true)
+
+	events.AddToQueue(events.PlayerDeath{UserId: 3022, Permanent: true})
+	events.ProcessEvents()
+	_, owed := store.saved.Kits[3022]
+	assert.False(t, owed)
+	_, chosen := store.saved.Players[3022]
+	assert.False(t, chosen)
 }

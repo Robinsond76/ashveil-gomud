@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -85,6 +86,7 @@ func loadRealData(t *testing.T) {
 		buffs.LoadFlagDataFiles()
 		buffs.LoadDataFiles()
 		items.LoadDataFiles()
+		races.LoadDataFiles() // kit gear is equipped by race hand rules
 		keywords.LoadAliases()
 	})
 }

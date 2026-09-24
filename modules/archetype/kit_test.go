@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +20,17 @@ func backpackIDs(u *users.UserRecord) []int {
 	out := []int{}
 	for _, itm := range u.Character.Items {
 		out = append(out, itm.ItemId)
+	}
+	return out
+}
+
+// ownedIDs lists the item ids a user carries or wears.
+func ownedIDs(u *users.UserRecord) []int {
+	out := backpackIDs(u)
+	for _, slot := range characters.AllSlots() {
+		if itm := u.Character.Equipment.Get(slot); itm != nil && itm.ItemId > 0 {
+			out = append(out, itm.ItemId)
+		}
 	}
 	return out
 }
@@ -281,4 +294,55 @@ func TestCreationChoicesAndChooseAtCreation(t *testing.T) {
 
 func eventsPlayerSpawn(userID int) events.PlayerSpawn {
 	return events.PlayerSpawn{UserId: userID}
+}
+
+// Review finding 1: a new character of any selectable race must not start
+// over its carry capacity; kit gear is worn into empty slots.
+func TestShippedKitsLeaveNewCharactersUnencumbered(t *testing.T) {
+	m, _ := testModule(t)
+	for _, race := range races.GetRaces() {
+		if !race.Selectable {
+			continue
+		}
+		for i, a := range m.table.List() {
+			u := newUser(400 + i)
+			u.Character.RaceId = race.Id()
+			u.Character.Validate()
+			m.registry.Kits[u.UserId] = a.ID
+			require.NotEmpty(t, m.grantKit(u), "%s %s", race.Name, a.ID)
+			assert.ElementsMatch(t, a.Kit, ownedIDs(u), "%s %s: nothing lost", race.Name, a.ID)
+			assert.LessOrEqual(t, len(u.Character.Items), u.Character.CarryCapacity(), "%s %s", race.Name, a.ID)
+			delete(m.registry.Kits, u.UserId)
+		}
+	}
+}
+
+func TestGrantKitNeverDisplacesWornGear(t *testing.T) {
+	m, _ := testModule(t)
+	u := newUser(410)
+	u.Character.RaceId = 1
+	u.Character.Validate()
+	own := items.New(10004) // a dagger already in hand
+	_, ok, _ := u.Character.Wear(own)
+	require.True(t, ok)
+	m.registry.Kits[410] = "warrior"
+	text := m.grantKit(u)
+	assert.Equal(t, 10004, u.Character.Equipment.Weapon.ItemId, "the character's own weapon stays")
+	assert.Contains(t, backpackIDs(u), 10002, "the kit sword is packed instead")
+	assert.Contains(t, text, "In your backpack")
+}
+
+// Review finding 3: an unavailable kit item grants nothing and leaves the
+// kit owed, rather than setting the marker on a partial kit.
+func TestGrantKitAllOrNothing(t *testing.T) {
+	m, _ := testModule(t)
+	a, _ := m.table.Get("warrior")
+	a.Kit = append(append([]int(nil), a.Kit...), 99999999)
+	table, _ := archetypes.NewTable([]archetypes.Archetype{a})
+	m.table = table
+	u := newUser(411)
+	m.registry.Kits[411] = "warrior"
+	assert.Empty(t, m.grantKit(u))
+	assert.Empty(t, ownedIDs(u))
+	assert.Nil(t, u.Character.GetMiscData(kitMarkerKey), "still owed")
 }

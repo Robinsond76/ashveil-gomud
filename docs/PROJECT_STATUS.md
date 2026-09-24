@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 21 (21a company alignment, 21b settlement standing) is complete, reviewed, and merged to `master`. The environment/economy/alignment roadmap (Phases 13–21) is done.
+- **HEAD:** Phase 22a (archetype step in character creation, exactly-once starter kits) is complete and reviewed on branch `claude/next-phase-6xfq3l`, pending merge to `master`. Phase 21 and the environment/economy/alignment roadmap (Phases 13–21) are merged.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -44,11 +44,14 @@ instead of duplicating them.
   Phase 21a (company alignment: companion alignment on a 1–100 display,
   drift toward the rest of the company, loyalty and desertion, and a
   recruit gate), and Phase 21b (settlement standing: market and inn
-  markups or refusal by alignment gap, black markets for outlaws).
-- **Next:** the 2026-09-23 environment/economy/alignment roadmap is
-  complete. Candidates from the other roadmaps: recruitment and
-  character creation, the Ashveil tutorial (its alignment lesson can now
-  ship), and the player-information surfaces (alignment in `status`).
+  markups or refusal by alignment gap, black markets for outlaws), and
+  Phase 22a (an archetype step in `start` and one starter kit per
+  archetype, granted exactly once).
+- **Next:** Phase 22b, durable companion level, progression, and
+  equipment on the company record. Then 22c, settlement recruiters and
+  `company recruit`. Both come from the recruitment and creation spec,
+  which is first on the
+  [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
   The Phase 19b inter-market profit question is resolved: the small
   standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
@@ -114,9 +117,95 @@ instead of duplicating them.
 | 20 | Trade rumours | Complete: `rumors` at inns, fuzzy hints from a persisted market news snapshot refreshed every 150 rounds |
 | 21a | Company alignment | Complete: durable companion alignment and loyalty, 1–100 display, drift toward the rest of the company, desertion, recruit gate, `company inspect`/`alignment` |
 | 21b | Settlement standing | Complete: `internal/standing`, `modules/standing`, `standing` command, market/inn markups and refusals, black markets, Tanner's Back Alley |
+| 22a | Creation step and starter kits | Complete (pending merge): archetype step in `start`, per-archetype kits, owed-kit record and character claim marker, ash quarterstaff |
+| 22b | Durable companion level and gear | Next |
+| 22c | Recruiters and `company recruit` | Planned |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 22a: creation step and starter kits (2026-09-24)
+
+- **What:**
+  - `start` now asks "Which archetype will you follow?" between the name
+    step and `CharacterCreated`. It lists each archetype's description,
+    skills, and starter kit, and takes a number or name, then a yes/no
+    confirmation. It goes through a new `internal/archetypes.Creator`
+    seam, so the engine still never imports the module.
+  - Each archetype has a `Kit` of item ids in `modules/archetype` config.
+    Shipped kits total 246–266 in value; a new ash quarterstaff (10021)
+    gives the wizard a staff.
+  - A committed choice records the kit it owes (`Registry.Kits`) in the
+    same save. The grant wears kit gear into empty slots, packs the rest,
+    sets the character's `MiscData["archetype-kit"]` marker, and saves
+    the user. Items and marker live in the same user file.
+  - The grant runs after a choice and again on every `PlayerSpawn`, and
+    gives only when a kit is owed and the marker is absent. That makes it
+    exactly once through reconnect, restart, copyover, and
+    reset-and-rechoose.
+  - Characters that chose before this phase keep their gear and get no
+    kit.
+  - `archetype` and the `choose` preview show kits.
+  - Design and plan:
+    [22a spec](superpowers/specs/2026-09-24-phase-22a-creation-starter-kits-design.md) /
+    [22a plan](superpowers/plans/2026-09-24-phase-22a-creation-starter-kits.md).
+- **Why:** The recruitment and creation spec is first on the onboarding
+  roadmap. It is split like 19/19b and 21a/21b: 22a covers creation and
+  kits, 22b durable companion gear, and 22c recruiters. Defaults were
+  applied under the session's "Begin next phase" instruction and are
+  recorded in the spec.
+- **Step completed:** Phase 22a.
+- **Verification:** `go test -race ./...`, `make generate` (no diff), and
+  `make validate` passed. `modules/archetype` also passes with `-count=2`
+  and `-shuffle=on`.
+  - The wiring tests drive the real `start` command through its prompt,
+    with the real module as provider. They cover every shipped archetype
+    (kit owned, weapon in hand, not encumbered, tutorial question reached)
+    and:
+    - reconnect before and after choosing;
+    - a "no" or empty confirmation;
+    - an unknown answer;
+    - a failed commit;
+    - persistence unavailable;
+    - no provider;
+    - an admin reset mid-creation;
+    - a stored but unconfigured archetype.
+  - `PlayerSpawn` and a permanent `PlayerDeath` go through
+    `events.ProcessEvents`.
+  - The shipped-data tests pin kit ids and value balance (within 1.25×,
+    with buffs loaded as on the server). They also check that no
+    selectable race starts over its carry capacity.
+- **Review:** Independent reviewer found no way to duplicate a kit through
+  the new code. It confirmed:
+  - lock discipline (no engine call under `m.mu`);
+  - no clock access, and no engine import of the module;
+  - `PlayerSpawn` fires on login, link-dead reconnect, and copyover;
+  - the marker survives the YAML user save.
+
+  Fixed with regression tests:
+  - Major: four of five kits left a new character over its carry
+    capacity (5 at creation), so every step cost 5× action points. Kit
+    gear is now worn into empty slots only (never displacing gear), and
+    the rest is packed.
+  - A module that failed to load still offered the step, then leaked an
+    internal error. The step is now skipped.
+  - A kit item missing after a data reload set the marker on a partial
+    kit. The grant is now all or nothing and leaves the kit owed.
+  - An admin reset mid-creation replayed the prompt's cached answers into
+    a silent re-commit. The step now runs once per prompt.
+  - A stored but unconfigured archetype hid the step, although `archetype
+    choose` allows re-choosing. The two now agree.
+  - Added a real `PlayerDeath` event test and an empty-confirmation test.
+  - Also found while fixing: the engine's `HandsRequired` panics without a
+    known race, so kit gear is packed rather than worn in that case.
+
+  Documented, not changed:
+  - the upstream give-then-crash duplicate window after a failed user
+    save;
+  - the Phase 17 permadeath-clear save failure, which carries the old
+    choice (and now its kit) over;
+  - the upstream tutorial's extra newbie kit;
+  - that `help` isn't supported at the archetype question.
 
 ### Phase 21b: settlement standing (2026-09-24)
 

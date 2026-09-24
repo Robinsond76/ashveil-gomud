@@ -21,9 +21,10 @@ const (
 
 // startArchetypeStep runs the archetype step inside the start prompt.
 // done is true when Start should return now (waiting on an answer); restart
-// additionally asks Start to clear the prompt and begin again. It does nothing without a provider that creates,
-// when no archetypes are configured, once the character has an archetype,
-// or after a failed commit (the player is told to choose later).
+// additionally asks Start to clear the prompt and begin again. It does
+// nothing without a provider that creates, when no archetypes are
+// configured, once the character has an archetype, or once it has run in
+// this prompt (after a commit or a failed one).
 func startArchetypeStep(cmdPrompt *prompt.Prompt, user *users.UserRecord) (restart, done bool) {
 	if _, skipped := cmdPrompt.Recall(archetypeSkippedKey); skipped {
 		return false, false
@@ -63,8 +64,10 @@ func startArchetypeStep(cmdPrompt *prompt.Prompt, user *users.UserRecord) (resta
 	}
 	if !committed {
 		user.SendText(`You can choose later with "archetype choose <name>".`)
-		cmdPrompt.Store(archetypeSkippedKey, true)
 	}
+	// Either way the step is over for this prompt. The questions above are
+	// cached by text, so re-running it would replay the old answers.
+	cmdPrompt.Store(archetypeSkippedKey, true)
 	user.SendText(``)
 	return false, false
 }

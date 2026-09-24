@@ -29,11 +29,14 @@
   steps are skipped because their result is already on the character, so a
   reconnect resumes at the first unanswered step.
 - **Upstream newbie kit** (item 100) is a scripted consumable that grants a
-  fixed item list when used. It isn't archetype-aware and nothing hands it
-  out at creation. It stays as it is.
+  fixed item list when used. It isn't archetype-aware. The upstream
+  tutorial (`rooms/tutorial/903.js`) hands it out, so tutorial takers end
+  up with more gear than players who skip it. It stays as it is until the
+  Ashveil tutorial replaces the upstream one.
 - **Items:** no staff exists. The sling (10014) is a two-handed `shooting`
   weapon, and the engine has no ammunition, so no ammo check is needed.
-  Item values are auto-calculated at load when not set.
+  Item values are auto-calculated at load when not set. The new quarterstaff
+  sets an explicit `value: 65`, which the balance test depends on.
 
 ## Decisions
 
@@ -85,9 +88,29 @@ here.
    - Permadeath clears the owed record along with the choice. The engine
      replaces the character, so the new character has no marker and gets
      its own kit.
-4. **Kit goes to the backpack; nothing is auto-equipped.** The message
-   names every item and suggests `equip`. Auto-equipping would have to deal
-   with race slot and hand rules, and gains little.
+   - **All or nothing:** if any kit item can't be created (for example, an
+     item spec removed by a data reload), nothing is given and the kit
+     stays owed. This stops the marker being set on a partial kit.
+   - **Known limits** (same class as upstream, not fixed here):
+     - If the post-grant user save fails, the player hands the kit to
+       someone who is then saved, and the server crashes before the first
+       player is saved, the kit is granted again. This is the engine's
+       ordinary give-then-crash duplicate.
+     - If the permadeath clear's save fails, the old choice (and now its
+       kit) carries to the replacement character. That behaviour predates
+       this phase (Phase 17).
+4. **Kit gear is worn into empty slots, the rest goes to the backpack.**
+   The first draft put everything in the backpack. The review showed that
+   leaves four of five archetypes over a new character's carry capacity
+   (`5 + Str/3`, so 5 at creation), and every step costs 5× action points
+   while over it.
+   - Each weapon or wearable is equipped only into an empty slot, so an
+     existing character's gear is never displaced.
+   - Hand rules come from the engine's `HandsRequired`: a two-handed weapon
+     needs a free offhand, and a shield needs a one-handed weapon.
+   - Without a known race, everything is packed.
+   - A shipped-data test pins that no selectable race starts encumbered.
+   - The message lists what is being used and what is in the backpack.
 5. **Creation step.** A new optional `archetypes.Creator` interface is
    implemented by the module and exposed through package functions. `Start`
    uses only `internal/archetypes`, never a module. Flow:
@@ -97,7 +120,11 @@ here.
    - The player answers by number or name, then confirms (`yes`/`no`).
      `no` asks again.
    - The step is skipped when there is no provider, when no archetypes are
-     configured, or when the character already has one. Because of the last
+     configured, when the character already has a configured archetype, or
+     while the module's persistence is unavailable. A stored archetype that
+     is no longer configured doesn't count, matching `archetype choose`.
+     The step runs at most once per prompt, because the prompt caches
+     answers by question text. Because of the last
      case, a reconnect after choosing resumes at the tutorial question, and
      a reconnect before choosing asks again.
    - If committing fails (for example, persistence is unavailable), the
@@ -128,8 +155,8 @@ here.
 - `modules/archetype`:
   - config parsing for `Kit`, and kit resolution in `buildTable` through an
     `itemName` seam;
-  - `commit` (shared by `choose` and `ChooseAtCreation`) writes the choice
-    and the owed kit in one save, with rollback;
+  - `chooseResult` (shared by `choose` and `ChooseAtCreation`) writes the
+    choice and the owed kit in one save, with rollback;
   - `grantKit(user)`, called after a commit and from `onPlayerSpawn`, with a
     `saveUser` seam so tests never write the shipped data dir;
   - kit previews in `list` and `choose`.
@@ -149,7 +176,7 @@ here.
 
 - Tests cover both config parsing and resolution: unknown items dropped,
   duplicates kept.
-- `commit` writes the choice and the owed kit together. A failed save rolls
+- `chooseResult` writes the choice and the owed kit together. A failed save rolls
   both back and grants nothing.
 - The grant gives the kit exactly once, covering each of these:
   - a repeated grant;
