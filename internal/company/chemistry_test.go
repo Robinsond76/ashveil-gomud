@@ -102,7 +102,7 @@ func TestBandAverageDilutesAndUsesSavedRounds(t *testing.T) {
 	}
 	// A fresh recruit (no entry) dilutes 4 veterans to about Trusted.
 	withRecruit := append(append([]MemberKey(nil), veterans...), c4)
-	if avg, _ := r.BandAverage(withRecruit, true); avg != (7000*3+6300)/5 {
+	if avg, _ := r.BandAverage(withRecruit, true, 0); avg != (7000*3+6300)/5 {
 		t.Fatalf("average %d", avg)
 	}
 	if tier := r.BandTier(withRecruit, rules); tier != TierTrusted {
@@ -113,7 +113,7 @@ func TestBandAverageDilutesAndUsesSavedRounds(t *testing.T) {
 	if tier := fresh.BandTier([]MemberKey{LeaderMemberKey, c1}, rules); tier != TierNone {
 		t.Fatalf("unsaved rounds gave tier %d", tier)
 	}
-	if avg, _ := fresh.BandAverage([]MemberKey{LeaderMemberKey, c1}, false); avg != 900 {
+	if avg, _ := fresh.BandAverage([]MemberKey{LeaderMemberKey, c1}, false, 0); avg != 900 {
 		t.Fatalf("current average %d", avg)
 	}
 	fresh.MarkServiceSaved()
@@ -121,7 +121,7 @@ func TestBandAverageDilutesAndUsesSavedRounds(t *testing.T) {
 		t.Fatalf("saved rounds tier %d", tier)
 	}
 	// A lone member is no band.
-	if _, ok := r.BandAverage([]MemberKey{LeaderMemberKey}, true); ok {
+	if _, ok := r.BandAverage([]MemberKey{LeaderMemberKey}, true, 0); ok {
 		t.Fatal("a lone member is no band")
 	}
 	if r.BandTier([]MemberKey{LeaderMemberKey}, rules) != TierNone {
@@ -210,5 +210,22 @@ func TestServiceYAMLRoundTrip(t *testing.T) {
 	}
 	if s.Saved != 0 {
 		t.Fatal("Saved is in-memory only; the loader marks loaded service saved")
+	}
+}
+
+// Review finding (band rework) 1: long service can't hide a new recruit.
+func TestBandTierCapsEachMembersService(t *testing.T) {
+	rules := DefaultChemistryRules()
+	c1 := CompanionMemberKey(1)
+	r := Record{Service: []Service{{Member: LeaderMemberKey, Rounds: 27000, Saved: 27000}}}
+	pair := []MemberKey{LeaderMemberKey, c1}
+	if avg, _ := r.BandAverage(pair, true, 0); avg != 13500 {
+		t.Fatalf("uncapped average %d", avg)
+	}
+	if avg, _ := r.BandAverage(pair, true, 6300); avg != 3150 {
+		t.Fatalf("capped average %d", avg)
+	}
+	if tier := r.BandTier(pair, rules); tier != TierTrusted {
+		t.Fatalf("a 30-day veteran and a recruit: tier %d, want Trusted", tier)
 	}
 }

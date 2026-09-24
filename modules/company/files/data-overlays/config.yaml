@@ -70,8 +70,10 @@ Recruiters:
 # (1..1000000, strictly increasing; 900 rounds is one game day) gives
 # everyone in the band the matching bonus (0..10, never decreasing) in
 # percentage points of hit chance. A new recruit counts as 0 service, so it
-# pulls the average down until it settles in. A set out of order falls back
-# to all the defaults.
+# pulls the average down until it settles in, and in the average no member
+# counts for more than ChemistrySwornRounds. A tier-up takes effect at the
+# next company save (at most about five minutes). A set out of order falls
+# back to all the defaults.
 ChemistryFamiliarRounds: 900
 ChemistryTrustedRounds: 2700
 ChemistrySwornRounds: 6300

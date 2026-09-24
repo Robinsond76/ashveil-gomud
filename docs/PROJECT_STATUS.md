@@ -52,7 +52,7 @@ instead of duplicating them.
   `company recruit`), and Phase 23a (rest tiers: a camp rest grants
   Rested, an inn stay Well Rested, exclusive, and durable for companions),
   and Phase 23b (whetstones: `sharpen`, durable weapon edges, combat use),
-  and Phase 24 (company chemistry: durable pair bonds, +2/+4/+6 hit).
+  and Phase 24 (company chemistry: band-wide service, diluted by recruits, +2/+4/+6 hit).
 - **Next:** merge Phase 24 to `master`, then
   [death and resurrection](superpowers/specs/2026-09-23-death-resurrection-design.md),
   fourth on the [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
@@ -126,71 +126,83 @@ instead of duplicating them.
 | 22c | Recruiters and `company recruit` | Complete: recruiter rooms in config, free-once tutorial and paid candidates, claims on the company record, Waymark Inn and Trappers' Post, mobs 61–64 |
 | 23a | Rest tiers | Complete: camp Rested (buff 1033, strain 75%), exclusive with inn Well Rested, durable companion grants, buff 16 renamed Refreshed |
 | 23b | Whetstones | Complete: 10-use whetstone (item 30) in both markets, `sharpen`/`camp sharpen` any time but not mid-fight, one use per member sharpened, durable per-weapon edge (+1 for 20 strikes) spent in combat, auto at camp rest end |
-| 24 | Company chemistry | Complete (awaiting merge): a durable bond per member pair from rounds alive and together while the leader is signed in; Familiar/Trusted/Sworn (900/2700/6300 rounds) give +2/+4/+6 hit with a bonded partner beside you, never stacking, in all four combat directions; `company chemistry`, `status bonuses` |
+| 24 | Company chemistry | Complete (awaiting merge): company-wide. Each member's durable service with the band; a band's tier from the average saved service of the members together (each capped at Sworn), so recruits dilute it; Familiar/Trusted/Sworn (900/2700/6300 rounds) give everyone in the band +2/+4/+6 hit in all four combat directions; `company chemistry`, `status bonuses` |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
 
 ### Phase 24: company chemistry (2026-09-24)
 
-- **What:** Every pair of company members (the leader and each companion,
-  and companion pairs) builds a durable **bond** on the company record:
-  the rounds they have spent alive and together in one room while the
-  leader is signed in. Offline time, absence, death, and separation pause
-  it; dismissal and desertion end that companion's bonds in the same save;
-  a companion killed and respawned (same ID) resumes them. Each `NewRound`
-  charges an eligible bond once (`last_round`), so a round replayed after
-  a restart isn't recounted, and a clock jump awards nothing. Tiers
-  **Familiar**, **Trusted**, **Sworn** at 900, 2700, and 6300 rounds (1,
-  3, 7 game days) give +2, +4, +6 points of hit chance while that partner
-  is beside the member; only the strongest such bond counts. Combat adds
-  it to the hit modifier in all four `Attack*` functions (a companion's
-  auto-assigned target too), after legality and targeting; when only the
-  bonus made a strike land, the attacker sees one line that round. A new
-  tier is saved at once and announced after the save; if the save fails,
-  the bond is held one round short, so no tier is used or shown before
-  it's on disk. `company chemistry` shows each member's tier, partner,
-  whether the partner is at their side, and progress as a percentage;
-  `status bonuses` has a Company Chemistry box. Knobs are company config.
-  The browser Company panel is deferred to the information-surfaces phase.
-  Design and plan:
+- **What:** Chemistry is company-wide (owner amendment, "dilute"). Each
+  member keeps durable **service** on the company record: rounds it has
+  spent alive and in one room with at least one other member while the
+  leader is signed in (companions together count while the leader is
+  elsewhere). Offline time, absence, death, and being alone pause it;
+  dismissal and desertion end that companion's service in the same save;
+  a companion killed and respawned (same ID) resumes it. Each `NewRound`
+  charges a member once (`last_round`), so a replayed round isn't
+  recounted and a clock jump awards nothing. A **band** is the members
+  together in a room; its tier comes from their **average** service, each
+  member capped at Sworn's threshold, so a recruit (0 service) pulls it
+  down but fights with the band. **Familiar**, **Trusted**, **Sworn** at
+  900, 2700, and 6300 rounds (1, 3, 7 game days) give everyone in the band
+  +2, +4, +6 points of hit chance; nothing stacks. Combat adds it to the hit
+  modifier in all four `Attack*` functions (a companion's auto-assigned
+  target too), after legality and targeting; when only the bonus made a
+  strike land, the attacker sees one line that round. Tiers use only
+  service already saved (`Saved`, set by every successful company save and
+  on load), and chemistry adds no save of its own: a tier-up takes effect,
+  and is announced once, at the next autosave, drift tick, logout, or
+  command save (within about five minutes). `company chemistry` shows the
+  band with the leader (size, tier, bonus, progress), bands apart, and each
+  member's service in game days; `status bonuses` has a Company Chemistry
+  box. Knobs are company config. The browser Company panel is deferred to
+  the information-surfaces phase. Design and plan:
   [24 spec](superpowers/specs/2026-09-24-phase-24-company-chemistry-design.md) /
   [24 plan](superpowers/plans/2026-09-24-phase-24-company-chemistry.md).
-- **Why:** Roadmap spec 3. The parent spec's direction was approved
-  2026-09-23; the details were applied as recommended under "Continue
-  next phase" and are recorded in the spec.
+- **Why:** Roadmap spec 3. A first pass built pair bonds, as the parent
+  spec described; the owner asked for chemistry across the whole band,
+  chose dilution for new recruits, and the pair model was replaced on the
+  same branch before merge. The parent spec records the amendment.
 - **Verification:** `go test -race ./...`, `make generate` (no diff),
   `make validate`. The wiring test goes through `plugins.Load`, `company
   summon`/`chemistry` and `status bonuses` via `usercommands.TryCommand`,
-  real `NewRound` events (the clock never advances), the real store,
-  `plugins.Save`, a logout, a reload, a respawn, and a real
-  `AttackPlayerVsMob` through the registered provider. The combat tests
-  drive all four `Attack*` functions.
-- **Review:** The independent reviewer found no invariant problems (clock,
-  durability, locks, and unchanged odds without a bonus all checked).
-  Fixed:
-  1. Config was parsed on every strike (`plug.Config.Get` flattens the
-     whole modules config): the rules are now cached on load and once a
-     round, and presence is checked only for a member with a tier
-     (`TestChemistryRulesCachedAndRefreshedEachRound`).
-  2. A bad config set warned on every call: now once.
-  3. Displays credited the bonus to the strongest bond even when its
-     partner was away; they now name the bond giving it, and say "your
-     side" to the leader (`TestChemistryDisplayCreditsActivePartner`).
-  4. The combat line said "trusted" at every tier, and a +0 tier was
-     announced as "+0%" (`TestChemistryCompanionPairCrossingAnnounced`).
-  5. Stored bonds weren't normalized: `Put` now orders keys, merges
-     duplicates, and clamps rounds (`TestPutNormalizesBonds`).
-  6. Missing coverage: `AttackMobVsPlayer` and `AttackPlayerVsPlayer`,
-     companion-pair announcements, and a failed drift save in the same
-     round as a charge (`TestChemistryChargeKeptWhenDriftSaveFails`).
-
-  Rejected: a new bond can't be charged on round 0 (the live counter
-  starts at 1314000); a seeded test proving `hitRoll` matches the old
-  `Hits` stream (Go 1.24's global `rand.Seed` is a no-op; the code makes
-  the same single `Rand(100)` call with the same clamp). Recorded: while
-  the store keeps failing, a held-short bond retries its save each
-  eligible round.
+  real `NewRound` events (the clock never advances), `plugins.Save`, the
+  real store, a logout, a reload, a respawn, a real `AttackPlayerVsMob`
+  through the registered provider, and a second recruit diluting the band.
+  The combat tests drive all four `Attack*` functions.
+- **Review:** Two independent reviews, neither finding a problem with the
+  clock, durability of saved tiers, or locks.
+  - *Pair model, fixed then carried over:* config parsed per strike (now
+    cached on load and once a round, warned once when out of order);
+    tier-neutral combat text; no "+0%"; stored entries normalized on `Put`;
+    coverage of `AttackMobVsPlayer` and `AttackPlayerVsPlayer` and of a
+    failed drift save in the same round as a charge.
+  - *Band model, fixed:* (1) service was uncapped, so a veteran leader
+    and a fresh recruit were Sworn at once, defeating dilution; each
+    member now counts for at most Sworn's threshold
+    (`TestBandTierCapsEachMembersService`,
+    `TestChemistryVeteranCannotHideARecruit`). (2) The immediate tier-up
+    save was a new automatic write of the whole company file, which also
+    carries gear snapshots that must reach disk only on the existing seams;
+    chemistry now adds no save, and tier-ups take effect at the next one.
+    (3) A tier made durable by another save went unannounced; tier-ups are
+    now announced after any successful save, once
+    (`TestChemistryTierUpTakesEffectAtNextSave`,
+    `TestChemistryTierUpDroppedWhenBandShrinks`). (4) A failing save was
+    retried every round; gone with (2). (5) Bands listed `#10` before
+    `#2` (`TestBandsOrderMembersNumerically`). (6) Coverage: a failed
+    dismissal restores saved service
+    (`TestChemistryDismissRollbackKeepsSavedService`).
+  - *Rejected or recorded:* re-reading config once a round (six small
+    map flattens every 4 seconds) is kept, so config changes apply
+    promptly; the linear companion scan behind `LeaderAndKeyForInstance`
+    predates this phase and covers a few tracked companions; a new entry
+    can't be charged on round 0 (the live counter starts at 1314000); a
+    seeded `hitRoll`/`Hits` equivalence test isn't possible (Go 1.24's
+    global `rand.Seed` is a no-op; both make the same single `Rand(100)`
+    call and clamp); `status bonuses` with a present companion is covered
+    by the wiring test.
 - **Step completed:** Phase 24.
 
 ### Phase 23b: whetstones and Sharpened weapons (2026-09-24)

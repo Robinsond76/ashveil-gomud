@@ -146,27 +146,35 @@ func (r *Record) MarkServiceSaved() {
 
 // BandAverage is the average service of members together, from saved
 // rounds (durable is true) or current ones; a member with no entry counts
-// as 0. ok is false for fewer than two members: a lone member is no band.
-func (r Record) BandAverage(members []MemberKey, durable bool) (average int, ok bool) {
+// as 0. Each member counts for at most cap rounds (none when cap < 1), so
+// long service can't hide a new recruit. ok is false for fewer than two
+// members: a lone member is no band.
+func (r Record) BandAverage(members []MemberKey, durable bool, cap int) (average int, ok bool) {
 	if len(members) < 2 {
 		return 0, false
 	}
 	total := 0
 	for _, member := range members {
-		if s, found := r.FindService(member); found {
-			if durable {
-				total += s.Saved
-			} else {
-				total += s.Rounds
-			}
+		s, found := r.FindService(member)
+		if !found {
+			continue
 		}
+		rounds := s.Rounds
+		if durable {
+			rounds = s.Saved
+		}
+		if cap > 0 {
+			rounds = min(rounds, cap)
+		}
+		total += rounds
 	}
 	return total / len(members), true
 }
 
-// BandTier is the tier of members together, from saved rounds.
+// BandTier is the tier of members together, from saved rounds, each member
+// counting for at most the top tier's threshold.
 func (r Record) BandTier(members []MemberKey, rules ChemistryRules) int {
-	average, ok := r.BandAverage(members, true)
+	average, ok := r.BandAverage(members, true, rules.TierRounds[len(rules.TierRounds)-1])
 	if !ok {
 		return TierNone
 	}

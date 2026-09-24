@@ -116,6 +116,8 @@ type CompanyModule struct {
 	// while they are out of order and have been warned about.
 	chemRules        *domain.ChemistryRules
 	chemConfigWarned bool
+	// pendingTierUps are bands whose tier rises at the next save.
+	pendingTierUps map[string]bandCrossing
 	// chemRulesForTest overrides the configured chemistry rules in tests.
 	chemRulesForTest *domain.ChemistryRules
 	// rulesForTest overrides the configured alignment rules in tests.
@@ -751,6 +753,7 @@ func (m *CompanyModule) save() error {
 	}
 	// Phase 24: what was just written is durable, so tiers may use it.
 	m.markServiceSaved()
+	m.announceTierUps()
 	return nil
 }
 

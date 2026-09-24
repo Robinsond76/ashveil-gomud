@@ -134,10 +134,14 @@ func TestChemistryThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, run("company", "chemistry"), "With you: 2 together, Strangers; 0% of the way to Familiar.")
 	assert.Contains(t, run("status", "bonuses"), "Strangers band, 2 together: no bonus yet")
 
-	assert.Empty(t, rounds(2))
-	told := rounds(1)
+	assert.Empty(t, rounds(3))
+	assert.Zero(t, domain.ChemistryBonusForUser(7), "not on disk yet")
+	*messages = nil
+	plugins.Save() // the autosave makes the tier durable
+	events.ProcessEvents()
+	told := companyTagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
 	assert.Contains(t, told, "Your band grows closer: Familiar (+2% to hit fighting together).")
-	assert.Equal(t, 3, stored().Rounds, "the new tier is on disk at once")
+	assert.Equal(t, 3, stored().Rounds)
 
 	out := run("company", "chemistry")
 	assert.Contains(t, out, "With you: 2 together, Familiar (+2% to hit); 0% of the way to Trusted.")
@@ -187,7 +191,11 @@ func TestChemistryThroughPluginsLoad(t *testing.T) {
 
 	events.AddToQueue(events.PlayerSpawn{UserId: 7, RoomId: camp.RoomId})
 	events.ProcessEvents()
-	told = rounds(2)
+	rounds(2)
+	*messages = nil
+	plugins.Save()
+	events.ProcessEvents()
+	told = companyTagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
 	assert.Contains(t, told, "grows closer: Trusted", "the restored companion resumes its service")
 	assert.Equal(t, 6, stored().Rounds)
 	assert.Equal(t, 4, domain.ChemistryBonusForUser(7))

@@ -136,7 +136,18 @@ func (m *CompanyModule) presentMembers(leaderUserID int, record domain.Record) (
 	return present, true
 }
 
-// band is the members present in one room, sorted.
+// memberOrder sorts the leader first, then companions by number.
+func memberOrder(a, b domain.MemberKey) int {
+	rank := func(k domain.MemberKey) int {
+		if id, ok := domain.CompanionIDFromMemberKey(k); ok {
+			return id
+		}
+		return 0
+	}
+	return rank(a) - rank(b)
+}
+
+// band is the members present in one room, leader first.
 func band(present map[domain.MemberKey]int, room int) []domain.MemberKey {
 	var members []domain.MemberKey
 	for key, r := range present {
@@ -144,7 +155,7 @@ func band(present map[domain.MemberKey]int, room int) []domain.MemberKey {
 			members = append(members, key)
 		}
 	}
-	slices.Sort(members)
+	slices.SortFunc(members, memberOrder)
 	return members
 }
 
@@ -160,7 +171,7 @@ func bands(present map[domain.MemberKey]int) [][]domain.MemberKey {
 			out = append(out, members)
 		}
 	}
-	slices.SortFunc(out, func(a, b []domain.MemberKey) int { return strings.Compare(string(a[0]), string(b[0])) })
+	slices.SortFunc(out, func(a, b []domain.MemberKey) int { return memberOrder(a[0], b[0]) })
 	return out
 }
 
@@ -171,13 +182,15 @@ type bandCrossing struct {
 }
 
 // accrueChemistry charges round to every member who is present with at
-// least one other. Tiers come from saved service only; when this round's
-// service would lift a band's tier, the company is saved at once, and the
-// leader is told only once it is. A failed save leaves the tier where it
-// was and is retried the next round. It never writes the round counter.
+// least one other. Tiers come from saved service only, so a band whose
+// current service would lift its tier is only noted: the tier takes effect,
+// and the leader is told, at the next successful company save (autosave,
+// drift tick, logout, a command). Chemistry adds no save of its own, so the
+// company file still changes only on the existing save seams. It never
+// writes the round counter.
 func (m *CompanyModule) accrueChemistry(round uint64) {
 	rules := m.chemistryRules()
-	var crossings []bandCrossing
+	top := rules.TierRounds[len(rules.TierRounds)-1]
 	for leaderUserID := range m.instances {
 		record, ok := m.registry.Companies[leaderUserID]
 		if !ok {
@@ -191,24 +204,53 @@ func (m *CompanyModule) accrueChemistry(round uint64) {
 					changed = true
 				}
 			}
-			current, _ := record.BandAverage(members, false)
+			current, _ := record.BandAverage(members, false, top)
 			if tier := rules.Tier(current); tier > record.BandTier(members, rules) {
-				crossings = append(crossings, bandCrossing{leaderUserID, members, tier})
+				m.notePendingTierUp(bandCrossing{leaderUserID, members, tier})
 			}
 		}
 		if changed {
 			m.registry.Companies[leaderUserID] = record
 		}
 	}
-	if len(crossings) == 0 {
+}
+
+// notePendingTierUp remembers a band due to rise a tier at the next save.
+func (m *CompanyModule) notePendingTierUp(c bandCrossing) {
+	if m.pendingTierUps == nil {
+		m.pendingTierUps = map[string]bandCrossing{}
+	}
+	key := fmt.Sprint(c.leaderUserID, c.members)
+	if prev, ok := m.pendingTierUps[key]; !ok || c.tier > prev.tier {
+		m.pendingTierUps[key] = c
+	}
+}
+
+// announceTierUps tells leaders of bands whose saved tier has now risen. It
+// runs after each successful save; a band that no longer reaches the tier
+// (a member dismissed meanwhile) is dropped silently.
+func (m *CompanyModule) announceTierUps() {
+	if len(m.pendingTierUps) == 0 {
 		return
 	}
-	if err := m.save(); err != nil {
-		mudlog.Error("company: save chemistry tier", "error", err)
-		return
+	rules := m.chemistryRules()
+	pending := m.pendingTierUps
+	m.pendingTierUps = nil
+	keys := make([]string, 0, len(pending))
+	for key := range pending {
+		keys = append(keys, key)
 	}
-	for _, c := range crossings {
-		m.chemistryWorld().Tell(c.leaderUserID, m.crossingText(c, rules))
+	slices.Sort(keys)
+	for _, key := range keys {
+		c := pending[key]
+		record, ok := m.registry.Companies[c.leaderUserID]
+		if !ok {
+			continue
+		}
+		if tier := record.BandTier(c.members, rules); tier >= c.tier {
+			c.tier = tier
+			m.chemistryWorld().Tell(c.leaderUserID, m.crossingText(c, rules))
+		}
 	}
 }
 
@@ -318,7 +360,7 @@ func daysServed(rounds int) string {
 
 // bandLine describes one band: its size, tier, bonus, and progress.
 func bandLine(record domain.Record, members []domain.MemberKey, rules domain.ChemistryRules) string {
-	average, _ := record.BandAverage(members, true)
+	average, _ := record.BandAverage(members, true, rules.TierRounds[len(rules.TierRounds)-1])
 	tier := rules.Tier(average)
 	text := fmt.Sprintf("%d together, %s", len(members), domain.TierName(tier))
 	if bonus := rules.Bonus(tier); bonus > 0 {

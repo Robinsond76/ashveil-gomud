@@ -184,15 +184,16 @@ func TestChemistryResumesAfterRespawn(t *testing.T) {
 	assert.Equal(t, 3, served(module, c1Key))
 }
 
-func TestChemistryTierCrossingSavesAndAnnounces(t *testing.T) {
+func TestChemistryTierUpTakesEffectAtNextSave(t *testing.T) {
 	module, world, _ := newChemistryModule(t)
 	store := module.store.(*fakeStore)
 	round := uint64(1000)
-	roundFrom(module, &round, 2)
-	assert.Zero(t, store.saveCalls)
-	assert.Zero(t, module.ChemistryHitBonus(7, domain.LeaderMemberKey))
-	roundFrom(module, &round, 1)
-	assert.Equal(t, 1, store.saveCalls, "a new tier is saved at once")
+	roundFrom(module, &round, 3)
+	assert.Zero(t, store.saveCalls, "chemistry adds no save of its own")
+	assert.Zero(t, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "not on disk yet")
+	assert.Empty(t, world.told[7])
+
+	require.NoError(t, module.save()) // the autosave, a drift tick, a logout, a command
 	s, ok := store.saved.Companies[7].FindService(c1Key)
 	require.True(t, ok)
 	assert.Equal(t, 3, s.Rounds)
@@ -200,14 +201,18 @@ func TestChemistryTierCrossingSavesAndAnnounces(t *testing.T) {
 	assert.Equal(t, 2, module.ChemistryHitBonus(7, c2Key), "everyone in the band")
 	require.Len(t, world.told[7], 1)
 	assert.Equal(t, "Your band grows closer: Familiar (+2% to hit fighting together).", world.told[7][0])
+
+	require.NoError(t, module.save())
+	assert.Len(t, world.told[7], 1, "announced once")
 }
 
 func TestChemistryFailedSaveKeepsTierUntilSaved(t *testing.T) {
 	module, world, _ := newChemistryModule(t)
 	store := module.store.(*fakeStore)
-	store.saveErr = errors.New("disk full")
 	round := uint64(1000)
 	roundFrom(module, &round, 7)
+	store.saveErr = errors.New("disk full")
+	require.Error(t, module.save())
 	assert.Equal(t, 7, served(module, c1Key), "service keeps counting")
 	assert.Zero(t, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "no tier before it's on disk")
 	standing, _ := module.ChemistryStanding(7, domain.LeaderMemberKey)
@@ -215,10 +220,53 @@ func TestChemistryFailedSaveKeepsTierUntilSaved(t *testing.T) {
 	assert.Empty(t, world.told[7], "nothing announced")
 
 	store.saveErr = nil
-	roundFrom(module, &round, 1)
-	assert.Equal(t, 4, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "8 rounds saved: Trusted")
-	require.Len(t, world.told[7], 1)
+	require.NoError(t, module.save())
+	assert.Equal(t, 4, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "7 rounds saved: Trusted")
+	require.Len(t, world.told[7], 1, "one announcement, at the highest tier reached")
 	assert.Contains(t, world.told[7][0], "Trusted")
+}
+
+// Review finding (band rework) 3: a tier made durable by any save is
+// announced; one the band no longer reaches is dropped.
+func TestChemistryTierUpDroppedWhenBandShrinks(t *testing.T) {
+	useFakeLifecycle(t, &fakeLifecycle{})
+	module, world, _ := newChemistryModule(t)
+	round := uint64(1000)
+	world.mobAt[102] = 6
+	roundFrom(module, &round, 3)      // the leader and #1 due Familiar
+	_, err := module.dismiss(7, "#1") // the dismissal's own save
+	require.NoError(t, err)
+	assert.Empty(t, world.told[7], "the band that earned it is gone")
+}
+
+// A failed dismissal save restores the companion with its saved service.
+func TestChemistryDismissRollbackKeepsSavedService(t *testing.T) {
+	useFakeLifecycle(t, &fakeLifecycle{})
+	module, _, _ := newChemistryModule(t)
+	round := uint64(1000)
+	roundFrom(module, &round, 4)
+	require.NoError(t, module.save())
+	store := module.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+	_, err := module.dismiss(7, "#1")
+	require.Error(t, err)
+	record, _ := module.registry.Get(7)
+	s, ok := record.FindService(c1Key)
+	require.True(t, ok)
+	assert.Equal(t, domain.Service{Member: c1Key, Rounds: 4, LastRound: 1004, Saved: 4}, s)
+	assert.Equal(t, 2, module.ChemistryHitBonus(7, domain.LeaderMemberKey))
+}
+
+func TestChemistryVeteranCannotHideARecruit(t *testing.T) {
+	module, world, _ := newChemistryModule(t)
+	module.registry.Put(domain.Record{
+		LeaderUserID: 7,
+		Companions:   []domain.Companion{{ID: 1, MobTemplateID: chemTemplate}, {ID: 2, MobTemplateID: chemTemplate}},
+		Service:      []domain.Service{{Member: domain.LeaderMemberKey, Rounds: 100, Saved: 100}},
+	})
+	world.mobAt[102] = 6
+	// Capped at Sworn's 9: (9 + 0) / 2 = 4, Familiar, not Sworn.
+	assert.Equal(t, 2, module.ChemistryHitBonus(7, domain.LeaderMemberKey))
 }
 
 func TestChemistryRecruitDilutesTheBand(t *testing.T) {
@@ -249,14 +297,23 @@ func TestChemistryCompanionBandAnnounced(t *testing.T) {
 	world.leaderAt[7] = 9 // the leader is elsewhere but signed in
 	round := uint64(1000)
 	roundFrom(module, &round, 3)
+	require.NoError(t, module.save())
 	require.Len(t, world.told[7], 1)
 	assert.Equal(t, "Your companions A companion (#1) and A companion (#2) grow closer: Familiar (+2% to hit fighting together).", world.told[7][0])
 
 	// A tier worth nothing is announced without a "+0%".
 	module.chemRulesForTest = &domain.ChemistryRules{TierRounds: [3]int{3, 4, 9}, TierBonus: [3]int{0, 0, 6}}
 	roundFrom(module, &round, 1)
+	require.NoError(t, module.save())
 	require.Len(t, world.told[7], 2)
 	assert.Equal(t, "Your companions A companion (#1) and A companion (#2) grow closer: Trusted.", world.told[7][1])
+}
+
+func TestBandsOrderMembersNumerically(t *testing.T) {
+	present := map[domain.MemberKey]int{
+		domain.CompanionMemberKey(10): 5, domain.CompanionMemberKey(2): 5, domain.LeaderMemberKey: 5,
+	}
+	assert.Equal(t, []domain.MemberKey{domain.LeaderMemberKey, domain.CompanionMemberKey(2), domain.CompanionMemberKey(10)}, band(present, 5))
 }
 
 // The ordering onNewRound relies on: a drift tick whose save fails in the
@@ -362,6 +419,7 @@ func TestChemistryBonusForInstance(t *testing.T) {
 	t.Cleanup(func() { domain.SetFormationProvider(registered) })
 	round := uint64(1000)
 	roundFrom(module, &round, 6)
+	require.NoError(t, module.save())
 	assert.Equal(t, 4, domain.ChemistryBonusForInstance(102))
 	assert.Equal(t, 4, domain.ChemistryBonusForUser(7))
 	assert.Zero(t, domain.ChemistryBonusForInstance(999))
