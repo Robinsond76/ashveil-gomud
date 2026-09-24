@@ -125,17 +125,20 @@ phase" instruction (2026-09-24).
 7. **Close journeys first.** Before moving the player, `Respawn` asks two
    new seams to abandon the leader's sessions through their own durable
    lifecycle:
-   - `expedition.AbandonForDeath` cancels any session (Traveling via
-     `Cancelled`, Interrupted via `ReturnForProfile`, a Completed or
-     Cancelled record that is only waiting for cleanup) and stops its
-     timer. It doesn't move anyone, and a travel encounter mob stays where
-     it was.
+   - `expedition.AbandonForDeath` removes the leader's session, whatever
+     its state (Traveling, Interrupted, or a Completed or Cancelled record
+     that is only waiting for cleanup), and stops its timer. It doesn't
+     move anyone, and a travel encounter mob stays where it was. Without
+     this, a completed record would move the leader from the church to
+     the destination.
    - `camping.AbandonForDeath` removes the leader's camp, resting or not,
-     and any inn stay in progress. It stops their timers, grants no
-     recovery or tier, and refunds nothing.
+     and any inn stay. A rest still running grants no recovery and no tier,
+     and an inn stay refunds nothing. A rest that has already finished keeps
+     its recovery: it is synced first, as `camp status` would.
 
-   Both are saved at once. If a save fails, the session is restored, the
-   death stays pending (decision 6), and it is retried.
+   Each removal is a single save, done at once. If a save fails, the
+   session and its timer are kept, the death stays pending (decision 6),
+   and it is retried.
 8. **Arrival.** `Respawn` then clears the player's aggro and moves them to
    the destination (`rooms.MoveToRoom`, the player's normal room-change
    path, so the church is recorded as visited). It sets health and mana to

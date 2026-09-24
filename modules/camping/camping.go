@@ -303,6 +303,7 @@ type CampingModule struct {
 var (
 	_ camping.ViewProvider     = (*CampingModule)(nil)
 	_ camping.MovementProvider = (*CampingModule)(nil)
+	_ camping.AbandonProvider  = (*CampingModule)(nil)
 )
 
 func init() {
@@ -334,6 +335,7 @@ func init() {
 	})
 	camping.SetViewProvider(m)
 	camping.SetMovementProvider(m)
+	camping.SetAbandonProvider(m)
 	rooms.RegisterLightFixture(m.RoomHasLitFire)
 	// A lit campfire also warms its room (Phase 15).
 	climate.RegisterHeatSource(m.RoomHasLitFire)
@@ -633,6 +635,58 @@ func (m *CampingModule) breakCamp(user *users.UserRecord, room *rooms.Room) stri
 		return err.Error()
 	}
 	return "You break camp."
+}
+
+// AbandonForDeath implements camping.AbandonProvider (Phase 25a). The leader
+// died, so their camp (resting or not) and any inn stay are left behind: a
+// rest still running grants nothing and an inn stay refunds nothing. A rest
+// that had already finished keeps its recovery, applied here first if it
+// hadn't been. Everything is removed in one save; a failed save keeps it all,
+// timers included.
+func (m *CampingModule) AbandonForDeath(leaderUserID int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	defer m.refreshLitRoomsLocked()
+	_, hasCamp := m.camps[leaderUserID]
+	_, hasStay := m.stays[leaderUserID]
+	if !hasCamp && !hasStay {
+		return nil
+	}
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	if err := m.syncLocked(leaderUserID); err != nil {
+		mudlog.Warn("camping: abandon sync", "leader", leaderUserID, "error", err)
+	}
+	if err := m.syncStayLocked(leaderUserID); err != nil {
+		mudlog.Warn("camping: abandon inn sync", "leader", leaderUserID, "error", err)
+	}
+	camp, hasCamp := m.camps[leaderUserID]
+	applied, hasApplied := m.recoveryApplied[leaderUserID]
+	stay, hasStay := m.stays[leaderUserID]
+	innApplied, hasInnApplied := m.innRecoveryApplied[leaderUserID]
+	delete(m.camps, leaderUserID)
+	delete(m.recoveryApplied, leaderUserID)
+	delete(m.stays, leaderUserID)
+	delete(m.innRecoveryApplied, leaderUserID)
+	if err := m.saveLocked(); err != nil {
+		if hasCamp {
+			m.camps[leaderUserID] = camp
+		}
+		if hasApplied {
+			m.recoveryApplied[leaderUserID] = applied
+		}
+		if hasStay {
+			m.stays[leaderUserID] = stay
+		}
+		if hasInnApplied {
+			m.innRecoveryApplied[leaderUserID] = innApplied
+		}
+		return err
+	}
+	m.stopTimerLocked(leaderUserID)
+	m.stopInnTimerLocked(leaderUserID)
+	return nil
 }
 
 // status renders the current camp/fire/rest state, syncing an overdue rest

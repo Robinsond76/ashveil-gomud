@@ -224,6 +224,7 @@ var (
 	_ expedition.StartProvider    = (*ExpeditionModule)(nil)
 	_ expedition.ViewProvider     = (*ExpeditionModule)(nil)
 	_ expedition.MovementProvider = (*ExpeditionModule)(nil)
+	_ expedition.AbandonProvider  = (*ExpeditionModule)(nil)
 )
 
 func init() {
@@ -255,6 +256,7 @@ func init() {
 	expedition.SetStartProvider(m)
 	expedition.SetViewProvider(m)
 	expedition.SetMovementProvider(m)
+	expedition.SetAbandonProvider(m)
 }
 
 func (m *ExpeditionModule) persistenceAvailable() error {
@@ -1231,6 +1233,27 @@ func (m *ExpeditionModule) returnToOrigin(leaderUserID int) string {
 		mudlog.Warn("expedition: persist return cleanup", "leader", leaderUserID, "error", err)
 	}
 	return fmt.Sprintf("You return to %s; the journey is cancelled.", roomTitle(cancelled.OriginRoomID))
+}
+
+// AbandonForDeath implements expedition.AbandonProvider (Phase 25a). The
+// leader died, so their journey ends, in any state, in one save and without
+// moving anyone: a completed record would otherwise move them from the church
+// to the destination. A travel encounter's mob stays where it is. A failed
+// save keeps the session and its timer.
+func (m *ExpeditionModule) AbandonForDeath(leaderUserID int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	session, ok := m.sessions[leaderUserID]
+	if !ok {
+		return nil
+	}
+	delete(m.sessions, leaderUserID)
+	if err := m.saveLocked(); err != nil {
+		m.sessions[leaderUserID] = session
+		return err
+	}
+	m.stopTimerLocked(leaderUserID)
+	return nil
 }
 
 func (m *ExpeditionModule) userCommand(rest string, user *users.UserRecord, _ *rooms.Room, _ events.EventFlag) (bool, error) {

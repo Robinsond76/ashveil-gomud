@@ -853,3 +853,24 @@ func TestProvidersAreConsultedAndCleared(t *testing.T) {
 	blocked, _ = MovementBlocked(7)
 	assert.False(t, blocked)
 }
+
+type fakeAbandoner struct {
+	leaders []int
+	err     error
+}
+
+func (f *fakeAbandoner) AbandonForDeath(leaderUserID int) error {
+	f.leaders = append(f.leaders, leaderUserID)
+	return f.err
+}
+
+func TestAbandonForDeathNoProvider(t *testing.T) {
+	SetAbandonProvider(nil)
+	assert.NoError(t, AbandonForDeath(7))
+
+	f := &fakeAbandoner{err: assert.AnError}
+	SetAbandonProvider(f)
+	t.Cleanup(func() { SetAbandonProvider(nil) })
+	assert.ErrorIs(t, AbandonForDeath(7), assert.AnError)
+	assert.Equal(t, []int{7}, f.leaders)
+}

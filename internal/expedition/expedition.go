@@ -722,3 +722,33 @@ func MovementBlocked(leaderUserID int) (bool, string) {
 	}
 	return p.MovementBlocked(leaderUserID)
 }
+
+// AbandonProvider is implemented by modules/expedition (Phase 25a).
+// AbandonForDeath ends a dead leader's journey, whatever its state, without
+// moving anyone, and saves that at once. An error means the session is
+// still there.
+type AbandonProvider interface {
+	AbandonForDeath(leaderUserID int) error
+}
+
+var abandonProvider AbandonProvider
+
+// SetAbandonProvider registers the active abandon provider. Passing nil
+// clears it.
+func SetAbandonProvider(p AbandonProvider) {
+	providerMu.Lock()
+	defer providerMu.Unlock()
+	abandonProvider = p
+}
+
+// AbandonForDeath ends a dead leader's journey. Without a provider there is
+// no journey to end.
+func AbandonForDeath(leaderUserID int) error {
+	providerMu.RLock()
+	p := abandonProvider
+	providerMu.RUnlock()
+	if p == nil {
+		return nil
+	}
+	return p.AbandonForDeath(leaderUserID)
+}

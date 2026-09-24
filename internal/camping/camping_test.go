@@ -102,3 +102,23 @@ func TestRestTimingIsFixedAtSixtySeconds(t *testing.T) {
 		t.Fatal("rest due at duration")
 	}
 }
+
+type fakeCampAbandoner struct{ leaders []int }
+
+func (f *fakeCampAbandoner) AbandonForDeath(leaderUserID int) error {
+	f.leaders = append(f.leaders, leaderUserID)
+	return nil
+}
+
+func TestAbandonForDeathNoProvider(t *testing.T) {
+	SetAbandonProvider(nil)
+	if err := AbandonForDeath(7); err != nil {
+		t.Fatalf("no provider: %v", err)
+	}
+	f := &fakeCampAbandoner{}
+	SetAbandonProvider(f)
+	t.Cleanup(func() { SetAbandonProvider(nil) })
+	if err := AbandonForDeath(7); err != nil || len(f.leaders) != 1 || f.leaders[0] != 7 {
+		t.Fatalf("provider not called: %v %v", err, f.leaders)
+	}
+}
