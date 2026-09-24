@@ -121,7 +121,7 @@ func TestCompanyAlignmentThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, out, "#1 training dummy: 40 (misguided), loyalty 70, content", "gap 60 to the leader")
 	out = run("status")
 	assert.Contains(t, out, "Company alignment: 55 (neutral)")
-	assert.Contains(t, out, "training dummy, no archetype, alignment 40 (misguided), loyalty 70 (present)")
+	assert.Contains(t, out, "training dummy, level 1, no archetype, alignment 40 (misguided), loyalty 70 (present)")
 
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
 	for i := 0; i < defaultDriftEveryRounds; i++ {

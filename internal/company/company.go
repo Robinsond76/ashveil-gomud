@@ -42,6 +42,10 @@ type Companion struct {
 	// Disposition is the companion's Phase 21a alignment and loyalty. Nil
 	// for a companion saved before Phase 21a, until the module seeds it.
 	Disposition *Disposition `yaml:"disposition,omitempty"`
+	// State is the companion's Phase 22b level and gear. Nil for a
+	// companion saved before Phase 22b, until the module initializes it
+	// from the mob template.
+	State *MemberState `yaml:"state,omitempty"`
 }
 
 type Record struct {
@@ -75,6 +79,10 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		if c.Disposition != nil {
 			d := *c.Disposition
 			record.Companions[i].Disposition = &d
+		}
+		if c.State != nil {
+			s := c.State.Clone()
+			record.Companions[i].State = &s
 		}
 	}
 	return record, true

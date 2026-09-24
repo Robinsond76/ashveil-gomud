@@ -191,14 +191,26 @@ type fakeRuntime struct {
 	detachCalls       int
 	spawnCalls        int
 	failSpawnOnCall   int // 1-based; when >0, the Nth Spawn call returns an error
+	// Phase 22b: the state each spawn received, the live state Snapshot
+	// serves per instance, and the template state (nil means level 1, no gear).
+	spawnedStates   []*domain.MemberState
+	liveState       map[int]domain.MemberState
+	templateState   *domain.MemberState
+	noTemplateState bool
 }
 
 func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
 	id, ok := f.resolved[name]
 	return id, ok
 }
-func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int) (int, error) {
+func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int, state *domain.MemberState) (int, error) {
 	f.spawnCalls++
+	if state != nil {
+		s := state.Clone()
+		f.spawnedStates = append(f.spawnedStates, &s)
+	} else {
+		f.spawnedStates = append(f.spawnedStates, nil)
+	}
 	if f.failSpawnOnCall > 0 && f.spawnCalls == f.failSpawnOnCall {
 		return 0, errors.New("spawn failed")
 	}
@@ -211,7 +223,31 @@ func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int) (int, error) {
 		f.live = map[int]bool{}
 	}
 	f.live[f.nextInstanceID] = true
+	if f.liveState == nil {
+		f.liveState = map[int]domain.MemberState{}
+	}
+	if state != nil {
+		f.liveState[f.nextInstanceID] = state.Clone()
+	} else if tpl, ok := f.TemplateState(templateID); ok {
+		f.liveState[f.nextInstanceID] = tpl
+	}
 	return f.nextInstanceID, nil
+}
+func (f *fakeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
+	s, ok := f.liveState[instanceID]
+	if !ok || !f.live[instanceID] {
+		return domain.MemberState{}, false
+	}
+	return s.Clone(), true
+}
+func (f *fakeRuntime) TemplateState(int) (domain.MemberState, bool) {
+	if f.noTemplateState {
+		return domain.MemberState{}, false
+	}
+	if f.templateState != nil {
+		return f.templateState.Clone(), true
+	}
+	return domain.MemberState{Level: 1}, true
 }
 func (f *fakeRuntime) IsLive(instanceID int) bool            { return f.live[instanceID] }
 func (f *fakeRuntime) IsAttached(_ int, instanceID int) bool { return f.live[instanceID] }

@@ -25,7 +25,13 @@ var files embed.FS
 
 type Runtime interface {
 	ResolveTemplate(string) (int, bool)
-	Spawn(leaderUserID, roomID, mobTemplateID int) (int, error)
+	// Spawn creates a companion's live mob, from its saved state when it
+	// has one (Phase 22b).
+	Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState) (int, error)
+	// Snapshot reads a live mob's level and gear.
+	Snapshot(instanceID int) (domain.MemberState, bool)
+	// TemplateState is the state a template starts with, without spawning.
+	TemplateState(mobTemplateID int) (domain.MemberState, bool)
 	IsLive(instanceID int) bool
 	IsAttached(leaderUserID, instanceID int) bool
 	Detach(leaderUserID, instanceID int)
@@ -119,12 +125,16 @@ func init() {
 	m.plug.AddUserCommand("formation", m.formationCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
+		// Phase 22b: record live companions' gear before writing.
+		m.refreshAll()
 		if err := m.save(); err != nil {
 			mudlog.Error("company: save", "error", err)
 		}
 	})
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.MobDeath{}, m.onMobDeath)
+	events.RegisterListener(events.ItemOwnership{}, m.onItemOwnership)
+	events.RegisterListener(events.PlayerDespawn{}, m.onPlayerDespawn)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	module = m
 	survival.SetRosterProvider(m)
@@ -184,7 +194,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
+const companyUsage = "Usage: company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company gear <member> | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -340,11 +350,16 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	// Survival has now committed a durable identity for this companion ID, so
 	// the ID is spent even if the summon cannot complete. Cleanup removes the
 	// transient companion but retains the advanced high-water mark.
-	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, templateID)
+	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, templateID, nil)
 	if err != nil {
 		removeErr := survival.RemoveCompanyMember(leaderUserID, companion.ID)
 		persistErr := m.rollbackSummon(leaderUserID, companion.ID)
 		return "", errors.Join(err, removeErr, persistErr)
+	}
+	// Phase 22b: the template gear minted by this spawn becomes the
+	// companion's durable gear in the summon's own save.
+	if state, ok := m.runtime.Snapshot(instanceID); ok {
+		_ = m.registry.SetState(leaderUserID, companion.ID, state)
 	}
 	if err := m.save(); err != nil {
 		m.runtime.Detach(leaderUserID, instanceID)
@@ -420,7 +435,7 @@ func (m *CompanyModule) status(leaderUserID int) string {
 		if c.Disposition != nil {
 			loyalty = c.Disposition.Loyalty
 		}
-		lines = append(lines, fmt.Sprintf("  #%d %s, %s, alignment %s, loyalty %d (%s)", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)), archetypeLabel(c.Archetype), alignmentLabel(m.companionAlignment(c)), loyalty, state))
+		lines = append(lines, fmt.Sprintf("  #%d %s, %s, %s, alignment %s, loyalty %d (%s)", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)), companionLevel(c), archetypeLabel(c.Archetype), alignmentLabel(m.companionAlignment(c)), loyalty, state))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -575,6 +590,12 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.status(user.UserId))
 	case "alignment":
 		user.SendText(m.alignmentView(user.UserId))
+	case "gear":
+		if len(args) < 2 {
+			user.SendText(companyUsage)
+			return true, nil
+		}
+		user.SendText(m.gearView(user.UserId, strings.Join(args[1:], " ")))
 	case "inspect":
 		if len(args) < 2 {
 			user.SendText(companyUsage)
@@ -622,7 +643,16 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 			}
 			m.clearInstance(leaderUserID, companion.ID)
 		}
-		instanceID, err := m.runtime.Spawn(leaderUserID, roomID, companion.MobTemplateID)
+		state, err := m.ensureState(leaderUserID, companion)
+		if err != nil {
+			// The legacy upgrade couldn't be saved: leave this companion
+			// awaiting restoration and retry on the next spawn.
+			if firstErr == nil {
+				firstErr = fmt.Errorf("company: restore leader %d companion %d: %w", leaderUserID, companion.ID, err)
+			}
+			continue
+		}
+		instanceID, err := m.runtime.Spawn(leaderUserID, roomID, companion.MobTemplateID, state)
 		if err != nil {
 			m.clearInstance(leaderUserID, companion.ID)
 			if firstErr == nil {
@@ -724,6 +754,7 @@ func (m *CompanyModule) onMobDeath(e events.Event) events.ListenerReturn {
 	}
 	if leaderUserID, companionID, found := m.companionForInstance(evt.InstanceId); found {
 		m.clearInstance(leaderUserID, companionID)
+		m.recordCompanionDeath(leaderUserID, companionID, evt.Level)
 	}
 	return events.Continue
 }

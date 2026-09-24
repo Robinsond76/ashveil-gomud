@@ -5,17 +5,17 @@ See the design doc
 
 ## Tasks
 
-- [ ] **`internal/company`: `MemberState`, `Companion.State`, deep copies,
+- [x] **`internal/company`: `MemberState`, `Companion.State`, deep copies,
       `SetState`** (`state.go`, `company.go`).
   - Tests first (`state_test.go`): `TestMemberStateCloneIsDeep`,
     `TestRegistryGetDeepCopiesState`, `TestRegistryCloneDeepCopiesState`,
     `TestSetState`, `TestStateYAMLRoundTrip`.
   - Then implement.
-- [ ] **`modules/company`: runtime seam** (`runtime.go`).
+- [x] **`modules/company`: runtime seam** (`runtime.go`).
   - `Spawn` takes a `*MemberState`; add `Snapshot` and `TemplateState`.
     Update the test fake (records the state it was spawned with and serves
     snapshots).
-- [ ] **`modules/company`: initialize, restore, snapshot seams**
+- [x] **`modules/company`: initialize, restore, snapshot seams**
       (`state.go`, `company.go`).
   - Tests first (`state_test.go`): `TestSummonRecordsTemplateState`,
     `TestSummonSaveFailureLeavesNoState`, `TestRestoreSpawnsWithSavedState`,
@@ -26,10 +26,10 @@ See the design doc
     `TestCompanionDeathClearsGearKeepsLevel`, `TestDismissDropsState`,
     `TestStatusShowsLevelAndGearView`.
   - Then implement and register the listeners in `init`.
-- [ ] **Wiring test** (`modules/company/wiring_state_test.go`): see the
+- [x] **Wiring test** (`modules/company/wiring_state_test.go`): see the
       design's acceptance criteria.
-- [ ] `modules/company/AGENTS.md` note.
-- [ ] `go test -race ./...`, `make generate`, `make validate`.
+- [x] `modules/company/AGENTS.md` note.
+- [x] `go test -race ./...`, `make generate`, `make validate`.
 - [ ] **Testing and review gate:** independent reviewer; verify, fix,
       record.
 - [ ] `docs/PROJECT_STATUS.md` Phase 22b entry with **Review:** line.
