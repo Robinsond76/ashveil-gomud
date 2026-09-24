@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 24 (company chemistry) is complete and reviewed on `claude/next-phase-leh8um`, awaiting merge to `master`. Phase 23b is on `master`.
+- **HEAD:** Phase 25a (player death and the church return) is complete and reviewed on `claude/next-phase-rmt21r`, awaiting merge to `master`. Phase 24 is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -52,9 +52,12 @@ instead of duplicating them.
   `company recruit`), and Phase 23a (rest tiers: a camp rest grants
   Rested, an inn stay Well Rested, exclusive, and durable for companions),
   and Phase 23b (whetstones: `sharpen`, durable weapon edges, combat use),
-  and Phase 24 (company chemistry: band-wide service, diluted by recruits, +2/+4/+6 hit).
-- **Next:** merge Phase 24 to `master`, then
-  [death and resurrection](superpowers/specs/2026-09-23-death-resurrection-design.md),
+  and Phase 24 (company chemistry: band-wide service, diluted by recruits, +2/+4/+6 hit),
+  and Phase 25a (player death: one level, wake at the last city's church with
+  the living company).
+- **Next:** merge Phase 25a to `master`, then Phase 25b (companion death, the
+  online-time rescue allowance, `resurrect` at a church or village shaman),
+  the rest of [death and resurrection](superpowers/specs/2026-09-23-death-resurrection-design.md),
   fourth on the [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
   The Phase 19b inter-market profit question is resolved: the small
   standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
@@ -126,10 +129,82 @@ instead of duplicating them.
 | 22c | Recruiters and `company recruit` | Complete: recruiter rooms in config, free-once tutorial and paid candidates, claims on the company record, Waymark Inn and Trappers' Post, mobs 61–64 |
 | 23a | Rest tiers | Complete: camp Rested (buff 1033, strain 75%), exclusive with inn Well Rested, durable companion grants, buff 16 renamed Refreshed |
 | 23b | Whetstones | Complete: 10-use whetstone (item 30) in both markets, `sharpen`/`camp sharpen` any time but not mid-fight, one use per member sharpened, durable per-weapon edge (+1 for 20 strikes) spent in combat, auto at camp rest end |
-| 24 | Company chemistry | Complete (awaiting merge): company-wide. Each member's durable service with the band; a band's tier from the average saved service of the members together (each capped at Sworn), so recruits dilute it; Familiar/Trusted/Sworn (900/2700/6300 rounds) give everyone in the band +2/+4/+6 hit in all four combat directions; `company chemistry`, `status bonuses` |
+| 24 | Company chemistry | Complete: company-wide. Each member's durable service with the band; a band's tier from the average saved service of the members together (each capped at Sworn), so recruits dilute it; Familiar/Trusted/Sworn (900/2700/6300 rounds) give everyone in the band +2/+4/+6 hit in all four combat directions; `company chemistry`, `status bonuses` |
+| 25a | Player death and church return | Complete (awaiting merge): one level lost (no protection levels; peak level stops re-granted points), a durable pending mark so a death is charged once, wake at the last city's church (Dunmar's new Chapel of the Wayfarer, Frostfang's Sanctuary as fallback) with the living company; travel, camp, and inn stay abandoned first |
+| 25b | Companion death and resurrection | Next |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 25a: player death and the church return (2026-09-24)
+
+- **What:** An Ashveil death (the engine's `suicide` command, through a new
+  `internal/death` provider seam) costs one level: `Character.LoseLevel`
+  drops to the floor of the level below (level 1 keeps level 1 with no
+  progress), whatever the protection levels. A new durable `PeakLevel`
+  stops a re-earned level granting training and stat points twice. The
+  engine's XP penalty and permadeath don't apply; its drops and corpses do.
+  The player wakes at the church of the last city they visited
+  (`MiscData["death-checkpoint"]`, set on entering any room of a registered
+  city, never by a village, and announced when it changes), or Frostfang's
+  Sanctuary (18) without one, at 50% health and mana. Before the move the
+  leader's journey (`expedition.AbandonForDeath`) and camp and inn stay
+  (`camping.AbandonForDeath`) are removed in one save each, so a finished
+  journey can't teleport them from the church; a rest cut short grants
+  nothing, a finished one keeps its recovery. Living companions come too
+  (`company.RelocateCompany`, live mobs only). The level and a pending mark
+  (`MiscData["death-pending"]`) are set together; if no church loads or an
+  abandon or move fails, the player stays down, out of any fight, and the
+  engine's own AutoHeal and combat triggers retry, never taking a second
+  level. Content: the Chapel of the Wayfarer (room 2007, east of Dunmar
+  Market Square) with Sister Maren (mob 65, no drops); room 18 tagged
+  `church`. `modules/death` owns the settlement registry config and
+  reserves the `church` and `shaman` tags. Also fixed an upstream crash:
+  `CreateEphemeralRoomIds` panicked when no room template loaded. Design and
+  plan: [25a spec](superpowers/specs/2026-09-24-phase-25a-player-death-design.md) /
+  [25a plan](superpowers/plans/2026-09-24-phase-25a-player-death.md).
+- **Why:** Roadmap spec 4, split like 21a/21b: player death is 25a;
+  companion death, the online-time allowance, and resurrection are 25b.
+  Decisions were applied under the owner's "work on the next phase" and are
+  recorded in the spec. Until 25b, a dead companion respawns with the
+  leader at the next login, as before.
+- **Verification:** `go test -race ./...`, `make generate` (the new module's
+  import), `make validate`. The wiring test goes through `plugins.Load` with
+  the shipped config and rooms: the real `go` command into Dunmar, `company
+  summon`, the real `go` onto the Old King's Road (a live journey),
+  `suicide` via `usercommands.TryCommand` with the companion mid-fight, then
+  the chapel, the level, the companion there and out of the fight, `travel
+  status`, a same-round second `suicide` ignored, `users.SaveUser` and a
+  reload of the file, and a player with no checkpoint waking at room 18.
+  The clock never moves. `modules/expedition` tests fail under
+  `-shuffle=on` on the base branch too (order-dependent, not this phase).
+- **Review:** The independent reviewer found:
+  1. *High, fixed:* the combat loop and AutoHeal can both queue `suicide`
+     for one death in a round; the first returned the player and cleared
+     the mark, so the second was a whole new death at the church (a second
+     level, drop, and corpse). The engine had been protected by the Shadow
+     Realm check. `suicide` now tells `Respawn` a new death from a retry,
+     and ignores a living player returned this round or the last
+     (`TestDoubleQueuedSuicideIsOneDeath`, `TestSuicideJustReturnedIsIgnored`,
+     and the wiring test's second `suicide`).
+  2. *Medium, fixed:* a pending player healed back up kept the mark, making
+     `suicide` a free teleport and the next death free. The retry now
+     applies only while the player is down; a healed player's death is a
+     new one (`TestHealedPendingPlayerDiesAgain`,
+     `TestSuicidePendingButHealedIsANewDeath`).
+  3. *Low, fixed:* travel or camp data that failed to load made the abandon
+     a no-op, and a repaired file could later move the player; now it keeps
+     the death pending.
+  4. *Low, fixed:* a retry left stale killer fields and the damage record.
+  5. *Low, fixed:* `hold` now clears the player's aggro, so AutoHeal
+     retries even after a typed death mid-fight (`TestHoldClearsAggro`).
+  6. *Recorded:* a travel ambush's hostile mob stays on the road after a
+     death, as if the company had fled.
+  7. *Coverage added:* a pending death across a YAML reload
+     (`TestPendingSurvivesReload`), a fighting companion's relocation in
+     the wiring test. Camp abandon stays covered by the module tests, not
+     the wiring test.
+- **Step completed:** Phase 25a.
 
 ### Phase 24: company chemistry (2026-09-24)
 

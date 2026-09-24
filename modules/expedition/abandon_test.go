@@ -104,7 +104,8 @@ func TestAbandonForDeathNoSession(t *testing.T) {
 	assert.Zero(t, store.saveCalls, "nothing to save")
 
 	module.loadErr = assert.AnError
-	assert.NoError(t, module.AbandonForDeath(7), "unreadable travel data holds no journey to end")
+	assert.Error(t, module.AbandonForDeath(7), "unreadable travel data may hold a journey")
+	assert.Zero(t, store.saveCalls)
 }
 
 func TestAbandonForDeathUnavailablePersistence(t *testing.T) {

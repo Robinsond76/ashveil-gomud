@@ -6,12 +6,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestMain(m *testing.M) {
@@ -211,7 +215,7 @@ func TestRespawnAtCheckpoint(t *testing.T) {
 	w.companion = 2
 	w.text()
 
-	w.module.Respawn(w.user.UserId)
+	w.module.Respawn(w.user.UserId, true)
 
 	c := w.user.Character
 	assert.Equal(t, []string{"travel", "camp", "move", "company"}, *w.calls, "journeys end before the move; the company follows it")
@@ -232,7 +236,7 @@ func TestRespawnAloneSaysNothingOfTheCompany(t *testing.T) {
 	w := newTestWorld(t)
 	w.enter(2001)
 
-	w.module.Respawn(w.user.UserId)
+	w.module.Respawn(w.user.UserId, true)
 
 	assert.NotContains(t, w.text(), "Your company")
 }
@@ -242,13 +246,13 @@ func TestRespawnInvalidCheckpointUsesFallback(t *testing.T) {
 	w.enter(2001)
 	w.rooms[2007].Tags = nil // the chapel lost its church
 
-	w.module.Respawn(w.user.UserId)
+	w.module.Respawn(w.user.UserId, true)
 
 	assert.Equal(t, 18, w.user.Character.RoomId)
 	assert.False(t, w.module.Pending(w.user.UserId))
 
 	w2 := newTestWorld(t)
-	w2.module.Respawn(w2.user.UserId)
+	w2.module.Respawn(w2.user.UserId, true)
 	assert.Equal(t, 18, w2.user.Character.RoomId, "no checkpoint at all")
 }
 
@@ -260,7 +264,7 @@ func TestRespawnNoChurchStaysPending(t *testing.T) {
 	delete(w.rooms, 18)
 	w.text()
 
-	w.module.Respawn(w.user.UserId)
+	w.module.Respawn(w.user.UserId, true)
 
 	c := w.user.Character
 	assert.True(t, w.module.Pending(w.user.UserId))
@@ -271,12 +275,12 @@ func TestRespawnNoChurchStaysPending(t *testing.T) {
 	assert.Empty(t, *w.calls, "no journey is ended for nothing")
 	assert.Contains(t, w.text(), "The way back is closed to you.")
 
-	w.module.Respawn(w.user.UserId)
+	w.module.Respawn(w.user.UserId, false)
 	assert.Equal(t, 5, c.Level, "a retry takes no second level")
 	assert.Empty(t, w.text(), "and says nothing new")
 
 	w.rooms[18] = fallback // repaired
-	w.module.Respawn(w.user.UserId)
+	w.module.Respawn(w.user.UserId, false)
 	assert.Equal(t, 5, c.Level)
 	assert.Equal(t, 18, c.RoomId)
 	assert.False(t, w.module.Pending(w.user.UserId))
@@ -297,7 +301,7 @@ func TestRespawnAbandonFailureStaysPending(t *testing.T) {
 			w.user.Character.RoomId = 2002
 			fail(w)
 
-			w.module.Respawn(w.user.UserId)
+			w.module.Respawn(w.user.UserId, true)
 
 			assert.True(t, w.module.Pending(w.user.UserId))
 			assert.Equal(t, 2002, w.user.Character.RoomId)
@@ -305,7 +309,7 @@ func TestRespawnAbandonFailureStaysPending(t *testing.T) {
 			assert.NotContains(t, *w.calls, "company", "the company waits with the leader")
 
 			w.travelErr, w.campErr, w.moveErr = nil, nil, nil
-			w.module.Respawn(w.user.UserId)
+			w.module.Respawn(w.user.UserId, false)
 			assert.False(t, w.module.Pending(w.user.UserId))
 			assert.Equal(t, 5, w.user.Character.Level, "one level for the one death")
 			assert.Equal(t, 2007, w.user.Character.RoomId)
@@ -319,7 +323,7 @@ func TestRespawnLevelOne(t *testing.T) {
 	w.user.Character.Experience = 300
 	w.user.Character.Validate()
 
-	w.module.Respawn(w.user.UserId)
+	w.module.Respawn(w.user.UserId, true)
 
 	assert.Equal(t, 1, w.user.Character.Level)
 	assert.Equal(t, 1, w.user.Character.Experience)
@@ -328,7 +332,136 @@ func TestRespawnLevelOne(t *testing.T) {
 
 func TestRespawnUnknownUser(t *testing.T) {
 	w := newTestWorld(t)
-	w.module.Respawn(99)
+	w.module.Respawn(99, true)
 	assert.False(t, w.module.Pending(99))
 	assert.Empty(t, *w.calls)
+}
+
+// useAsProvider registers the test world's module as the death provider,
+// so the real suicide command reaches it.
+func (w *testWorld) useAsProvider(t *testing.T) {
+	t.Helper()
+	previous, _ := domain.Active()
+	domain.SetProvider(w.module)
+	t.Cleanup(func() { domain.SetProvider(previous) })
+}
+
+// deaths counts the PlayerDeath events announced from now on.
+func deaths(t *testing.T) *int {
+	t.Helper()
+	count := 0
+	id := events.RegisterListener(events.PlayerDeath{}, func(events.Event) events.ListenerReturn {
+		count++
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.PlayerDeath{}, id) })
+	return &count
+}
+
+// suicide runs the real suicide command where the player stands.
+func (w *testWorld) suicide(t *testing.T) {
+	t.Helper()
+	handled, err := usercommands.Suicide("", w.user, w.rooms[w.user.Character.RoomId], 0)
+	assert.NoError(t, err)
+	assert.True(t, handled)
+	events.ProcessEvents()
+}
+
+// TestDoubleQueuedSuicideIsOneDeath: the combat loop and AutoHeal can both
+// queue a suicide for one death in the same round. The second finds the
+// player already back at the church and is ignored.
+func TestDoubleQueuedSuicideIsOneDeath(t *testing.T) {
+	w := newTestWorld(t)
+	w.useAsProvider(t)
+	w.enter(2001)
+	died := deaths(t)
+
+	w.suicide(t)
+	require.Equal(t, 2007, w.user.Character.RoomId)
+	w.suicide(t)
+
+	assert.Equal(t, 5, w.user.Character.Level, "one level for one death")
+	assert.Equal(t, 1, *died, "one death announced")
+
+	// Two rounds later, a suicide is a new, deliberate death.
+	w.module.round = func() uint64 { return 1400002 }
+	w.suicide(t)
+	assert.Equal(t, 4, w.user.Character.Level)
+}
+
+// TestHealedPendingPlayerDiesAgain: a pending player healed back up and
+// killed again has died twice, and pays twice.
+func TestHealedPendingPlayerDiesAgain(t *testing.T) {
+	w := newTestWorld(t)
+	w.useAsProvider(t)
+	w.enter(2001)
+	w.rooms[2007].Tags = nil
+	fallback := w.rooms[18]
+	delete(w.rooms, 18)
+	died := deaths(t)
+
+	w.suicide(t)
+	require.True(t, w.module.Pending(w.user.UserId))
+	require.Equal(t, 5, w.user.Character.Level)
+
+	w.user.Character.Health = 30 // someone gave aid
+	w.suicide(t)
+	assert.Equal(t, 4, w.user.Character.Level, "a second death")
+	assert.Equal(t, 2, *died)
+	assert.True(t, w.module.Pending(w.user.UserId))
+
+	// While down, a retry costs nothing and leaves no corpse.
+	w.user.Character.KillerMobName = "wolf"
+	w.user.Character.KillerMobInstanceId = 12
+	w.rooms[18] = fallback
+	w.suicide(t)
+	assert.Equal(t, 4, w.user.Character.Level)
+	assert.Equal(t, 18, w.user.Character.RoomId)
+	assert.Equal(t, 2, *died, "a retry announces nothing")
+	assert.Empty(t, w.user.Character.KillerMobName, "a retry clears the stale killer")
+	assert.Zero(t, w.user.Character.KillerMobInstanceId)
+}
+
+// TestPendingSurvivesReload: the mark is a string in MiscData, so a pending
+// death saved and loaded again is still pending and costs no second level.
+func TestPendingSurvivesReload(t *testing.T) {
+	w := newTestWorld(t)
+	w.enter(2001)
+	w.rooms[2007].Tags = nil
+	fallback := w.rooms[18]
+	delete(w.rooms, 18)
+	w.module.Respawn(w.user.UserId, true)
+	require.Equal(t, 5, w.user.Character.Level)
+
+	data, err := yaml.Marshal(w.user)
+	require.NoError(t, err)
+	reloaded := &users.UserRecord{}
+	require.NoError(t, yaml.Unmarshal(data, reloaded))
+	reloaded.UserId = w.user.UserId
+	w.user = reloaded
+	assert.True(t, w.module.Pending(w.user.UserId))
+	assert.Equal(t, 2007, checkpoint(w.user.Character))
+
+	w.rooms[18] = fallback
+	w.module.Respawn(w.user.UserId, false)
+	assert.Equal(t, 5, w.user.Character.Level)
+	assert.Equal(t, 18, w.user.Character.RoomId)
+	assert.False(t, w.module.Pending(w.user.UserId))
+}
+
+func TestRetryWithNothingOwedDoesNothing(t *testing.T) {
+	w := newTestWorld(t)
+	w.module.Respawn(w.user.UserId, false)
+	assert.Equal(t, 6, w.user.Character.Level)
+	assert.Empty(t, *w.calls)
+}
+
+func TestHoldClearsAggro(t *testing.T) {
+	w := newTestWorld(t)
+	w.moveErr = errors.New("room gone")
+	w.user.Character.Aggro = &characters.Aggro{MobInstanceId: 4}
+
+	w.module.Respawn(w.user.UserId, true)
+
+	assert.Nil(t, w.user.Character.Aggro, "so AutoHeal retries")
 }

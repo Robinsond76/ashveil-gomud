@@ -14,13 +14,17 @@ import (
 )
 
 type fakeDeathProvider struct {
-	pending  bool
-	respawns []int
+	pending      bool
+	justReturned bool
+	respawns     []int
+	newDeaths    []bool
 }
 
-func (f *fakeDeathProvider) Pending(int) bool { return f.pending }
-func (f *fakeDeathProvider) Respawn(userID int) {
+func (f *fakeDeathProvider) Pending(int) bool      { return f.pending }
+func (f *fakeDeathProvider) JustReturned(int) bool { return f.justReturned }
+func (f *fakeDeathProvider) Respawn(userID int, newDeath bool) {
 	f.respawns = append(f.respawns, userID)
+	f.newDeaths = append(f.newDeaths, newDeath)
 }
 
 // deathConfig overrides the death config in memory for one test: the
@@ -120,6 +124,7 @@ func TestSuicideWithProviderRespawnsOnce(t *testing.T) {
 	w.die(t)
 
 	assert.Equal(t, []int{w.user.UserId}, provider.respawns)
+	assert.Equal(t, []bool{true}, provider.newDeaths)
 	assert.Equal(t, "Doomed", w.user.Character.Name, "no permadeath")
 	assert.Equal(t, 10, w.user.Character.Level, "the provider takes the level")
 	assert.Equal(t, experience, w.user.Character.Experience, "no engine XP penalty")
@@ -145,13 +150,43 @@ func TestSuicidePendingGoesStraightToRespawn(t *testing.T) {
 	})
 	t.Cleanup(func() { events.UnregisterListener(events.Broadcast{}, id) })
 
+	w.user.Character.KillerMobName = "wolf"
 	w.die(t)
 
 	assert.Equal(t, []int{w.user.UserId}, provider.respawns)
+	assert.Equal(t, []bool{false}, provider.newDeaths, "a retry")
+	assert.Empty(t, w.user.Character.KillerMobName, "stale killer cleared")
 	assert.Empty(t, *w.deaths, "no second death event")
 	assert.Empty(t, *messages, "no second announcement")
 	assert.Zero(t, broadcasts, "no second broadcast")
 	assert.Equal(t, 40, w.user.Character.Gold, "no second drop")
 	assert.Zero(t, w.room.Gold)
 	assert.Empty(t, w.room.Corpses, "no second corpse")
+}
+
+func TestSuicideJustReturnedIsIgnored(t *testing.T) {
+	provider := &fakeDeathProvider{justReturned: true}
+	death.SetProvider(provider)
+	t.Cleanup(func() { death.SetProvider(nil) })
+	w := newSuicideWorld(t)
+	w.user.Character.Health = 20
+
+	w.die(t)
+
+	assert.Empty(t, provider.respawns)
+	assert.Empty(t, *w.deaths)
+	assert.Equal(t, 40, w.user.Character.Gold)
+}
+
+func TestSuicidePendingButHealedIsANewDeath(t *testing.T) {
+	provider := &fakeDeathProvider{pending: true}
+	death.SetProvider(provider)
+	t.Cleanup(func() { death.SetProvider(nil) })
+	w := newSuicideWorld(t)
+	w.user.Character.Health = 20
+
+	w.die(t)
+
+	assert.Equal(t, []bool{true}, provider.newDeaths, "a full death, not a retry")
+	assert.Len(t, *w.deaths, 1)
 }

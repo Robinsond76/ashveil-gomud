@@ -28,13 +28,25 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	currentRound := util.GetRoundCount()
 
 	// Ashveil Phase 25a: with a death provider, a death costs one level and
-	// the player wakes at a church (modules/death). A death that has already
-	// taken its level only retries the return: no second announcement,
-	// corpse, drop, or level.
+	// the player wakes at a church (modules/death). While a death that has
+	// taken its level still has the player down, this only retries the
+	// return: no second announcement, corpse, drop, or level. A second
+	// suicide queued for the same death (the combat loop and AutoHeal can
+	// both queue one in a round) finds the player already back, and is
+	// ignored.
 	ashveil, ashveilDeath := death.Active()
-	if ashveilDeath && ashveil.Pending(user.UserId) {
-		ashveil.Respawn(user.UserId)
-		return true, nil
+	if ashveilDeath {
+		if ashveil.Pending(user.UserId) && user.Character.Health < 1 {
+			user.Character.KillerMobInstanceId = 0
+			user.Character.KillerMobIsElite = false
+			user.Character.KillerMobName = ``
+			clear(user.Character.PlayerDamage)
+			ashveil.Respawn(user.UserId, false)
+			return true, nil
+		}
+		if ashveil.JustReturned(user.UserId) {
+			return true, nil
+		}
 	}
 
 	if user.Character.Zone == `Shadow Realm` {
@@ -288,7 +300,7 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	clear(user.Character.PlayerDamage)
 
 	if ashveilDeath {
-		ashveil.Respawn(user.UserId)
+		ashveil.Respawn(user.UserId, true)
 		return true, nil
 	}
 

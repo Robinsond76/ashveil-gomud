@@ -59,9 +59,12 @@ type DeathModule struct {
 	relocate      func(leaderUserID, roomID int) int
 	round         func() uint64
 
-	// mu guards cfg, written at load. It is a leaf lock.
+	// mu guards cfg, written at load, and returned. It is a leaf lock.
 	mu  sync.Mutex
 	cfg settings
+	// returned is the round each user was last returned to a church, in
+	// memory only: it only has to outlast one round's queued commands.
+	returned map[int]uint64
 }
 
 // module is the registered instance, for wiring tests.
@@ -97,6 +100,7 @@ func newModule() *DeathModule {
 		relocate:      company.RelocateCompany,
 		round:         util.GetRoundCount,
 		cfg:           defaultSettings(),
+		returned:      map[int]uint64{},
 	}
 }
 
@@ -279,20 +283,35 @@ func (m *DeathModule) Pending(userID int) bool {
 	return user != nil && user.Character != nil && pendingOp(user.Character) != ""
 }
 
+// JustReturned implements domain.Provider.
+func (m *DeathModule) JustReturned(userID int) bool {
+	user := m.lookupUser(userID)
+	if user == nil || user.Character == nil || user.Character.Health < 1 {
+		return false
+	}
+	m.mu.Lock()
+	round, ok := m.returned[userID]
+	m.mu.Unlock()
+	return ok && m.round() <= round+1
+}
+
 // Respawn implements domain.Provider. It runs on the game loop, from the
-// suicide command. The first call for a death takes the level and marks the
-// death pending, in the character (and so in the same user file). Then, and
-// on every retry while pending, it closes the leader's journeys, moves them
-// to the church with their living companions, and clears the mark. When
-// that can't happen the player stays where they fell, at -10 health, so the
-// engine's own death triggers retry it.
-func (m *DeathModule) Respawn(userID int) {
+// suicide command. A new death takes the level and marks the death pending,
+// in the character (and so in the same user file); a retry never takes a
+// level. Then it closes the leader's journeys, moves them to the church with
+// their living companions, and clears the mark. When that can't happen the
+// player stays where they fell, at -10 health, so the engine's own death
+// triggers retry it.
+func (m *DeathModule) Respawn(userID int, newDeath bool) {
 	user := m.lookupUser(userID)
 	if user == nil || user.Character == nil {
 		return
 	}
 	c := user.Character
-	firstAttempt := pendingOp(c) == ""
+	if !newDeath && pendingOp(c) == "" {
+		return // nothing owed
+	}
+	firstAttempt := newDeath
 	if firstAttempt {
 		from, to := c.LoseLevel()
 		op := fmt.Sprintf("death-%d-%d", userID, m.round())
@@ -328,6 +347,9 @@ func (m *DeathModule) Respawn(userID int) {
 	moved := m.relocate(userID, dest)
 	op := pendingOp(c)
 	c.SetMiscData(domain.PendingKey, nil)
+	m.mu.Lock()
+	m.returned[userID] = m.round()
+	m.mu.Unlock()
 	mudlog.Info("death: returned", "user", userID, "op", op, "room", dest, "companions", moved)
 
 	church := m.loadRoom(dest)
@@ -347,6 +369,8 @@ func (m *DeathModule) Respawn(userID int) {
 // retries it, and tells the player once.
 func (m *DeathModule) hold(user *users.UserRecord, firstAttempt bool, reason string, err error) {
 	user.Character.Health = -10
+	// Out of any fight, so AutoHeal (which skips fighters) retries too.
+	user.Character.Aggro = nil
 	events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
 	if firstAttempt {
 		mudlog.Error("death: return to a church is waiting for repair", "user", user.UserId, "reason", reason, "error", err)

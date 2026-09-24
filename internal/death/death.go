@@ -145,9 +145,14 @@ type Provider interface {
 	// Pending reports whether a user's death has taken its level but not yet
 	// returned them to a church.
 	Pending(userID int) bool
-	// Respawn applies the death: one level, then the return to a church with
-	// the company. Called again while pending, it only retries the return.
-	Respawn(userID int)
+	// JustReturned reports whether a living user was returned to a church
+	// this round or the last. A death queued twice in one round (the combat
+	// loop and AutoHeal both queue one) is then the same death, not a new
+	// one.
+	JustReturned(userID int) bool
+	// Respawn returns a dead user to a church with their company. For a new
+	// death it first takes one level; a retry (newDeath false) never does.
+	Respawn(userID int, newDeath bool)
 }
 
 var (

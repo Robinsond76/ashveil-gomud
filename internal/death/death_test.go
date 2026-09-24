@@ -88,8 +88,9 @@ func TestDestinationNone(t *testing.T) {
 
 type fakeProvider struct{}
 
-func (fakeProvider) Pending(int) bool { return false }
-func (fakeProvider) Respawn(int)      {}
+func (fakeProvider) Pending(int) bool      { return false }
+func (fakeProvider) JustReturned(int) bool { return false }
+func (fakeProvider) Respawn(int, bool)     {}
 
 func TestProviderNoneRegistered(t *testing.T) {
 	SetProvider(nil)

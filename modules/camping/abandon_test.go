@@ -109,8 +109,10 @@ func TestAbandonForDeathCampSaveFailureRestores(t *testing.T) {
 func TestAbandonForDeathNothing(t *testing.T) {
 	store := &fakeStore{}
 	module := newTestModule(store, &fakeScheduler{}, &fakeSurvival{}, baseTime)
-	module.loadErr = assert.AnError
-
 	assert.NoError(t, module.AbandonForDeath(7))
+	assert.Zero(t, store.saveCalls)
+
+	module.loadErr = assert.AnError
+	assert.Error(t, module.AbandonForDeath(7), "unreadable camp data may hold a camp")
 	assert.Zero(t, store.saveCalls)
 }

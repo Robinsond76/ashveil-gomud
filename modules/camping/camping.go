@@ -642,18 +642,19 @@ func (m *CampingModule) breakCamp(user *users.UserRecord, room *rooms.Room) stri
 // rest still running grants nothing and an inn stay refunds nothing. A rest
 // that had already finished keeps its recovery, applied here first if it
 // hadn't been. Everything is removed in one save; a failed save keeps it all,
-// timers included.
+// timers included. Camp data that couldn't be read may hold a camp this
+// module doesn't know about, so that is an error too.
 func (m *CampingModule) AbandonForDeath(leaderUserID int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
 	_, hasCamp := m.camps[leaderUserID]
 	_, hasStay := m.stays[leaderUserID]
 	if !hasCamp && !hasStay {
 		return nil
-	}
-	if err := m.persistenceAvailable(); err != nil {
-		return err
 	}
 	if err := m.syncLocked(leaderUserID); err != nil {
 		mudlog.Warn("camping: abandon sync", "leader", leaderUserID, "error", err)

@@ -11,12 +11,15 @@ the last city they visited, with their living companions. Design:
   kill stats, `PlayerDeath` (never `Permanent`), drops, and corpse stay, the
   engine's XP penalty and permadeath don't run, and the player is handed to
   `Respawn` instead of the Shadow Realm.
-- **Exactly once.** `Respawn` takes the level (`Character.LoseLevel`) only
-  when `MiscData["death-pending"]` is empty, and sets it to an operation ID in
-  the same step, so the level and the mark are saved together in the user
-  file. `suicide` checks `Pending` before anything else: a pending death only
-  retries the return (no announcement, corpse, drop, or second level). Clear
-  the mark only once the player is at the church.
+- **Exactly once.** `Respawn(userID, newDeath)`: a new death takes the level
+  (`Character.LoseLevel`) and sets `MiscData["death-pending"]` to an operation
+  ID in the same step, so both are saved together in the user file; a retry
+  never takes a level. `suicide` decides which: a player still down (health
+  below 1) with the mark is a retry (no announcement, corpse, drop, or level);
+  a living player returned this round or the last (`JustReturned`, in memory)
+  is ignored, because the combat loop and AutoHeal can both queue a `suicide`
+  for one death; anything else is a new death. Clear the mark only once the
+  player is at the church.
 - **Retry by staying dead.** When no church loads, or ending the journey or
   camp fails, or the move fails, `hold` leaves the player where they fell at
   −10 health. The engine's own AutoHeal (every 3 rounds out of combat) and

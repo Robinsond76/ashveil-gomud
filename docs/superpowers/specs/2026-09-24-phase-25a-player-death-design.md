@@ -92,17 +92,26 @@ phase" instruction (2026-09-24).
    level. `LevelUp` grants training and stat points only for a level above
    the peak, so re-earning a lost level grants nothing a second time.
    `LoseLevel` raises the peak to the level being lost before dropping it.
-4. **A durable pending death.** `Respawn` first checks the character's
-   `MiscData["death-pending"]`. If the marker is missing, it applies
-   `LoseLevel` and sets the marker to an operation ID
+4. **A durable pending death, charged once.** `suicide` hands the provider
+   either a **new death** or a **retry**. A new death applies `LoseLevel`
+   and sets `MiscData["death-pending"]` to an operation ID
    (`death-<userId>-<round>`, which reads the round counter and never writes
    it). The level and the marker live in the same user file, so they are
    saved together, by the engine's usual user saves. Once the player is at
-   the church, the marker is cleared. While it is set, a second death
-   (another queued `suicide`, a typed one, or one after a restart) goes
-   straight to `Respawn`, with no second announcement, corpse, drop, or
-   level loss. A crash before the user file is saved loses the whole death,
-   which is the engine's existing behaviour for deaths, drops, and corpses.
+   the church, the marker is cleared. `suicide` checks, before anything else:
+   - a player still **down** (health below 1) with the marker set is a
+     **retry**: only the return is attempted, with no announcement, corpse,
+     drop, or level, and the stale killer fields and damage record are
+     cleared;
+   - a **living** player returned to a church this round or the last
+     (`JustReturned`, in memory) is ignored. The combat loop and AutoHeal can
+     both queue a `suicide` for the same death in one round; without this,
+     the second would be a whole new death at the church (review finding);
+   - anything else is a new death, including a pending player who was healed
+     and then killed again: two deaths, two levels.
+
+   A crash before the user file is saved loses the whole death, which is the
+   engine's existing behaviour for deaths, drops, and corpses.
 5. **Checkpoint.** A settlement registry in the death module's config lists
    each settlement's zone, kind (`city` or `village`), and service room.
    A **valid church** is a `city` entry whose service room loads and
@@ -116,6 +125,7 @@ phase" instruction (2026-09-24).
    valid church. Otherwise it is the configured `FallbackRoomId` (18,
    Frostfang's Sanctuary), if that room loads. If neither will do, the
    death stays pending: the player stays where they fell at −10 health,
+   out of any fight,
    told once that *"The way back is closed to you. The gods have been
    told."* An error is logged. The engine's own triggers retry `suicide`
    every few rounds (AutoHeal every 3 rounds out of combat; the combat
@@ -138,7 +148,11 @@ phase" instruction (2026-09-24).
 
    Each removal is a single save, done at once. If a save fails, the
    session and its timer are kept, the death stays pending (decision 6),
-   and it is retried.
+   and it is retried. If the module's data couldn't be read at load, the
+   abandon fails too: the unread file may hold a journey that would move
+   the player once repaired (review finding).
+   A travel ambush's hostile mob is left on the road, as it would be if the
+   company had fled.
 8. **Arrival.** `Respawn` then clears the player's aggro and moves them to
    the destination (`rooms.MoveToRoom`, the player's normal room-change
    path, so the church is recorded as visited). It sets health and mana to

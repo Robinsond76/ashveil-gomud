@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	domain "github.com/GoMudEngine/GoMud/internal/death"
@@ -201,7 +202,10 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 	blocked, _ := expedition.MovementBlocked(user.UserId)
 	require.True(t, blocked, "travelling")
 
-	// Die.
+	// Die, with the companion mid-fight.
+	fighting := mobs.GetInstance(companion)
+	require.NotNil(t, fighting)
+	fighting.Character.Aggro = &characters.Aggro{MobInstanceId: 999}
 	out = run("suicide", "")
 	assert.Contains(t, out, "You lose a level (now level 4).")
 	assert.Contains(t, out, "You wake before the altar of The Chapel of the Wayfarer.")
@@ -216,6 +220,7 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 	mob := mobs.GetInstance(companion)
 	require.NotNil(t, mob, "the companion lives")
 	assert.Equal(t, 2007, mob.Character.RoomId, "and came along")
+	assert.Nil(t, mob.Character.Aggro, "out of the fight")
 	assert.Contains(t, rooms.LoadRoom(2007).GetMobs(rooms.FindCharmed), companion)
 	assert.NotContains(t, rooms.LoadRoom(2001).GetMobs(rooms.FindCharmed), companion)
 	blocked, _ = expedition.MovementBlocked(user.UserId)
@@ -224,10 +229,11 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 
 	assert.Contains(t, run("company", "status"), "(present)", "still attached")
 
-	// A later death costs exactly one more level, and the chapel is still
-	// the checkpoint.
+	// A second suicide in the same round (the combat loop and AutoHeal can
+	// both queue one for a death) finds the player already back: ignored.
 	run("suicide", "")
-	assert.Equal(t, 3, c.Level)
+	assert.Equal(t, 4, c.Level, "one level for one death")
+	assert.Equal(t, 2007, c.RoomId)
 
 	// The level, peak, and checkpoint are in the user file.
 	require.NoError(t, users.SaveUser(*user))
@@ -235,7 +241,7 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 	require.NoError(t, err)
 	reloaded := users.UserRecord{}
 	require.NoError(t, yaml.Unmarshal(data, &reloaded))
-	assert.Equal(t, 3, reloaded.Character.Level)
+	assert.Equal(t, 4, reloaded.Character.Level)
 	assert.Equal(t, 5, reloaded.Character.PeakLevel)
 	assert.Equal(t, 2007, checkpoint(reloaded.Character))
 	assert.Nil(t, reloaded.Character.GetMiscData(domain.PendingKey))

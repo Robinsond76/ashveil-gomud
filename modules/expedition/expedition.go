@@ -1239,10 +1239,15 @@ func (m *ExpeditionModule) returnToOrigin(leaderUserID int) string {
 // leader died, so their journey ends, in any state, in one save and without
 // moving anyone: a completed record would otherwise move them from the church
 // to the destination. A travel encounter's mob stays where it is. A failed
-// save keeps the session and its timer.
+// save keeps the session and its timer. Travel data that couldn't be read
+// may hold a journey this module doesn't know about, which would move the
+// leader once repaired, so that is an error too.
 func (m *ExpeditionModule) AbandonForDeath(leaderUserID int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
 	session, ok := m.sessions[leaderUserID]
 	if !ok {
 		return nil
