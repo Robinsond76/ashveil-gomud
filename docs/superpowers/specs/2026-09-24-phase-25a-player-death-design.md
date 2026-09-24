@@ -37,7 +37,7 @@ phase" instruction (2026-09-24).
   eventually leads back to the start room.
 - **Levels** (`internal/characters`): reaching level `L+1` takes
   `XPTL(L)` experience; the floor of level `L` is `XPTL(L-1)` (0 at level
-  1). `LevelUp` grants `TrainingPoints`/`StatPoints` on every level gained,
+  1; `Validate` raises experience below 1 to 1). `LevelUp` grants `TrainingPoints`/`StatPoints` on every level gained,
   so a level lost to death and then earned again would grant the points a
   second time. `Validate` recalculates stats and clamps health.
 - **Durable per-character markers:** Phase 22a keeps its kit marker in
@@ -82,8 +82,9 @@ phase" instruction (2026-09-24).
      Realm, `Suicide` hands the player to the provider's `Respawn`.
 2. **One level, always.** `Character.LoseLevel()` drops one level (none at
    level 1) and sets experience to the floor of the resulting level, so at
-   level 1 the player keeps level 1 with 0 experience. It then calls
-   `Validate`, which recalculates stats and clamps health and mana.
+   level 1 the player keeps level 1 with no progress. It then calls
+   `Validate`, which recalculates stats and clamps health (and keeps
+   experience at 1 or more, so the level-1 floor is 1). Mana is clamped too.
    Training and stat points, whether spent or unspent, are untouched.
    Protection levels don't apply.
 3. **No re-granted points.** A new durable `Character.PeakLevel` records the

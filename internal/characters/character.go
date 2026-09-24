@@ -58,6 +58,7 @@ type Character struct {
 	Experience          int                            `yaml:"experience,omitempty"`     // The experience of the character
 	TrainingPoints      int                            `yaml:"trainingpoints,omitempty"` // The number of training points the character has
 	StatPoints          int                            `yaml:"statpoints,omitempty"`     // The number of skill points the character has
+	PeakLevel           int                            `yaml:"peaklevel,omitempty"`      // Ashveil Phase 25a: highest level ever reached; 0 means the current level
 	Health              int                            `yaml:"health,omitempty"`         // The health of the character
 	Mana                int                            `yaml:"mana,omitempty"`           // The mana of the character
 	ActionPoints        int                            `yaml:"actionpoints,omitempty"`   // The resevoir of action points the character has to spend on movement etc.
@@ -1395,15 +1396,21 @@ func (c *Character) LevelUp() (bool, stats.Statistics) {
 
 	var statsBefore stats.Statistics = c.Stats
 
+	peak := max(c.PeakLevel, c.Level)
 	c.Level++
 
-	cfgProg := configs.GetProgressionConfig()
-	if int(cfgProg.TrainingPointsEveryNLevels) <= 1 || c.Level%int(cfgProg.TrainingPointsEveryNLevels) == 0 {
-		c.TrainingPoints += int(cfgProg.TrainingPointsPerLevel)
+	// Ashveil Phase 25a: a level lost to death and earned again grants no
+	// points a second time.
+	if c.Level > peak {
+		cfgProg := configs.GetProgressionConfig()
+		if int(cfgProg.TrainingPointsEveryNLevels) <= 1 || c.Level%int(cfgProg.TrainingPointsEveryNLevels) == 0 {
+			c.TrainingPoints += int(cfgProg.TrainingPointsPerLevel)
+		}
+		if int(cfgProg.StatPointsEveryNLevels) <= 1 || c.Level%int(cfgProg.StatPointsEveryNLevels) == 0 {
+			c.StatPoints += int(cfgProg.StatPointsPerLevel)
+		}
 	}
-	if int(cfgProg.StatPointsEveryNLevels) <= 1 || c.Level%int(cfgProg.StatPointsEveryNLevels) == 0 {
-		c.StatPoints += int(cfgProg.StatPointsPerLevel)
-	}
+	c.PeakLevel = max(peak, c.Level)
 
 	c.Validate()
 
@@ -1420,6 +1427,27 @@ func (c *Character) LevelUp() (bool, stats.Statistics) {
 	c.Mana = c.ManaMax.Value
 
 	return true, statsDelta
+}
+
+// LoseLevel is Ashveil's death penalty (Phase 25a): the character drops one
+// level, none below 1, and its experience goes to the floor of the level it
+// ends on, so at level 1 it keeps level 1 with no progress (Validate keeps
+// experience at 1 or more). The peak level is
+// kept, stats are recalculated, and health and mana are clamped. Training and
+// stat points are untouched. It returns the levels before and after.
+func (c *Character) LoseLevel() (from, to int) {
+	from = max(c.Level, 1)
+	c.PeakLevel = max(c.PeakLevel, from)
+	c.Level = max(from-1, 1)
+	c.Experience = 0
+	if c.Level > 1 {
+		c.Experience = c.XPTL(c.Level - 1)
+	}
+	c.Validate()
+	if c.Mana > c.ManaMax.Value {
+		c.Mana = c.ManaMax.Value
+	}
+	return from, c.Level
 }
 
 func (c *Character) Heal(hp int, mana int) (int, int) {

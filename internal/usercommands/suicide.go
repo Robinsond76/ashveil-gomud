@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -25,6 +26,16 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	config := configs.GetGamePlayConfig()
 	currentRound := util.GetRoundCount()
+
+	// Ashveil Phase 25a: with a death provider, a death costs one level and
+	// the player wakes at a church (modules/death). A death that has already
+	// taken its level only retries the return: no second announcement,
+	// corpse, drop, or level.
+	ashveil, ashveilDeath := death.Active()
+	if ashveilDeath && ashveil.Pending(user.UserId) {
+		ashveil.Respawn(user.UserId)
+		return true, nil
+	}
 
 	if user.Character.Zone == `Shadow Realm` {
 		user.SendText(`You're already dead!`)
@@ -106,13 +117,14 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		RoomId:        user.Character.RoomId,
 		Username:      user.Username,
 		CharacterName: user.Character.Name,
-		Permanent:     allowPenalties && bool(config.Death.PermaDeath) && user.Character.ExtraLives == 0,
+		Permanent:     !ashveilDeath && allowPenalties && bool(config.Death.PermaDeath) && user.Character.ExtraLives == 0,
 		KilledByUsers: killedByUserIds,
 		KillerMobId:   killerMobId,
 	})
 
-	// If permadeath is enabled, do some extra bookkeeping
-	if allowPenalties && bool(config.Death.PermaDeath) {
+	// If permadeath is enabled, do some extra bookkeeping. An Ashveil death
+	// is never permanent.
+	if !ashveilDeath && allowPenalties && bool(config.Death.PermaDeath) {
 
 		if user.Character.ExtraLives > 0 {
 
@@ -212,7 +224,8 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 			}
 		}
 
-		if user.Character.Level > 1 {
+		// An Ashveil death takes a level instead (death.Provider.Respawn).
+		if user.Character.Level > 1 && !ashveilDeath {
 
 			if config.Death.XPPenalty != `none` {
 
@@ -272,12 +285,16 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	}
 
 	user.Character.CancelBuffsWithFlag(buffs.All)
+	clear(user.Character.PlayerDamage)
+
+	if ashveilDeath {
+		ashveil.Respawn(user.UserId)
+		return true, nil
+	}
 
 	user.Character.Health = -10
 	user.Character.Mana = 0
 	events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
-
-	clear(user.Character.PlayerDamage)
 
 	rooms.MoveToRoom(user.UserId, int(configs.GetSpecialRoomsConfig().DeathRecoveryRoom))
 

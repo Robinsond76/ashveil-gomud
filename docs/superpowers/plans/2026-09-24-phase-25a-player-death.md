@@ -5,8 +5,8 @@ Each task is tests first.
 
 - [ ] **Task 1: level loss** (`internal/characters/character.go`,
   `character_death_test.go`). Tests first: `TestLoseLevelDropsOneLevelToFloor`
-  (level 10 → 9, experience `XPTL(8)`), `TestLoseLevelAtLevelTwo` (→ 1, 0
-  experience), `TestLoseLevelAtLevelOneResetsProgress`,
+  (level 10 → 9, experience `XPTL(8)`), `TestLoseLevelAtLevelTwo` (→ 1, experience 1,
+  the engine's minimum), `TestLoseLevelAtLevelOneResetsProgress`,
   `TestLoseLevelRecalculatesAndClamps`, `TestLevelUpGrantsPointsOnlyAbovePeak`,
   `TestLevelUpLegacyPeakZero`. Then `PeakLevel`, `LoseLevel`, and the
   `LevelUp` rule.

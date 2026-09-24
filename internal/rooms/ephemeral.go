@@ -180,6 +180,12 @@ func CreateEphemeralRoomIds(roomIds ...int) (map[int]int, error) {
 
 	}
 
+	// No template loaded (the rooms exist only in memory): nothing was
+	// copied, so the chunk stays free.
+	if len(ephemeralRoomIds) == 0 {
+		return map[int]int{}, errNoRoomIdsProvided
+	}
+
 	ephemeralRoomChunks[chunkId] = ephemeralRoomIds
 
 	mudlog.Info("CreateEphemeral...()",
