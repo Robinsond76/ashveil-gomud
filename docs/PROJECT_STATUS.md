@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 20 (trade rumours) is complete and reviewed; Phase 19b is done.
+- **HEAD:** Phase 21a (company alignment) is complete and reviewed; Phase 21b (settlement standing) is next.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -40,8 +40,12 @@ instead of duplicating them.
   and a `market` command; Dunmar and Old Kings Road markets), and Phase
   19b (trading in tagged market rooms with separate buy and sell
   prices; Dunmar Market Square, Trappers' Post), and Phase 20 (trade
-  rumours at inns from a stale, persisted market news snapshot).
-- **Next:** Phase 21 (alignment). One Phase 19b decision is open
+  rumours at inns from a stale, persisted market news snapshot), and
+  Phase 21a (company alignment: companion alignment on a 1–100 display,
+  drift toward the rest of the company, loyalty and desertion, and a
+  recruit gate).
+- **Next:** Phase 21b (settlement standing: prices, inn access, black
+  market). One Phase 19b decision is open
   with the owner: whether trading between markets should keep a small
   standing profit at equilibrium (see the 19b spec). Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
@@ -105,10 +109,76 @@ instead of duplicating them.
 | 19 | Commodities and markets | Complete: `internal/market`, `modules/market`, `market` command, Dunmar and Old Kings Road markets |
 | 19b | Market trading | Complete: `market buy`/`market sell` in tagged market rooms, buy/sell spread, Dunmar Market Square, Trappers' Post; inter-market profit policy open with the owner |
 | 20 | Trade rumours | Complete: `rumors` at inns, fuzzy hints from a persisted market news snapshot refreshed every 150 rounds |
-| 21 | Alignment | Planned (roadmap 2026-09-23) |
+| 21a | Company alignment | Complete: durable companion alignment and loyalty, 1–100 display, drift toward the rest of the company, desertion, recruit gate, `company inspect`/`alignment` |
+| 21b | Settlement standing | Next: prices, inn access, black market |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 21a: company alignment (2026-09-24)
+
+- **What:** Each companion now has a durable `disposition`: an alignment
+  on the engine's −100..100 scale and a loyalty from 0 to 100. A new
+  recruit takes its mob template's alignment (or the race default) and
+  `StartLoyalty` 70. Companions saved before this phase are seeded the
+  same way on load, at full loyalty. Players see alignment as 1–100 in
+  `company status`, `company alignment`, and `company inspect <mob>`.
+  Every `DriftEveryRounds` (75) rounds, each online leader's companions
+  move up to `DriftStep` (2) toward the rest of the company (at most half
+  the gap). A companion more than `LoyaltyToleranceGap` (60) from the
+  rest loses 5 loyalty; otherwise it gains 2. The leader is warned below
+  25, and at 0 the companion deserts through the dismissal path, but
+  never while the leader or that companion is fighting. The leader never
+  drifts. `company summon` refuses a candidate more than `RecruitMaxGap`
+  (60) from the company average. The live mob's alignment follows the
+  record. The drift countdown is saved with the company store. Pure rules
+  are in `internal/company/alignment.go`; the seeding, drift listener, and
+  commands are in `modules/company`. Design and plan:
+  [21a spec](superpowers/specs/2026-09-24-phase-21a-company-alignment-design.md) /
+  [21a plan](superpowers/plans/2026-09-24-phase-21a-company-alignment.md).
+- **Why:** Roadmap decision 2 (loyalty/desertion and recruit gates) and
+  Phase 21's companion alignment, 1–100 display, and drift. Phase 21 was
+  split like 19/19b: settlement standing crosses into the market and inn
+  modules and is Phase 21b. Defaults (scale, leader not drifting, knob
+  values) were applied under the session's "Implement next phase"
+  instruction and are recorded in the spec.
+- **Step completed:** Phase 21a. Phase 21b is next.
+- **Verification:** `go test -race ./...`, `make generate` (no diff),
+  and `make validate` passed; `modules/company` also passes with
+  `-count=2` and `-shuffle=on`. The wiring test runs `plugins.Load` in a
+  disposable world, then `company inspect`/`summon`/`alignment`/`status`
+  through `usercommands.TryCommand` with real mob specs and live mobs. It
+  covers a refusal and the exact gap limit, and 75 real `NewRound`
+  events through `events.ProcessEvents` drift the live mob's
+  `Character.Alignment` and write the real store. The round and turn
+  counts are unchanged.
+- **Review:** Independent reviewer found no critical bugs. It confirmed
+  there's no clock access, the countdown and dispositions persist (legacy
+  wire decoder included), copies are deep, a failed drift save rolls
+  back, and desertion reuses dismissal's rollback. Fixed with regression
+  tests:
+  - `plugins.Load` in the wiring test closed plugin registration for the
+    test binary, so `-count`/`-shuffle` runs failed. A new
+    `plugins.SnapshotLoadStateForTest` restores it.
+  - The recruit gap (80) was looser than the loyalty tolerance (60), so
+    accepted recruits started out losing loyalty. It now defaults to 60,
+    and `inspect` warns when a looser config would admit an uneasy
+    recruit.
+  - A full company was refused for alignment instead of capacity.
+  - `inspect` judged against an unloaded company.
+  - Desertion only waited for the leader's fight, not the companion's.
+  - Symmetric pairs swapped values every tick. Moves are now capped at
+    half the gap.
+  - A content companion at 0 loyalty with `LoyaltyGain` 0 would desert.
+    Only uneasy ticks desert now.
+  - Nested parentheses in the refusal message.
+
+  Clarified rather than changed: a desertion postponed by combat is
+  re-evaluated on the next tick, so a companion that has become content
+  stays. Config combinations (`StartLoyalty` below `LoyaltyWarnBelow`)
+  are documented in the overlay, not enforced. Also fixed:
+  `lifecycle_test`'s data-dir override couldn't be restored, because
+  `AddOverlayOverrides` never overwrites a set key.
 
 ### Phase 20: trade rumours (2026-09-24)
 

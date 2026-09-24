@@ -101,6 +101,8 @@ type CompanyModule struct {
 	runtime   Runtime
 	loadErr   error
 	world     alignmentWorld // nil means the native world
+	// rulesForTest overrides the configured alignment rules in tests.
+	rulesForTest *domain.AlignmentRules
 }
 
 // module is the registered instance, for wiring tests.
@@ -302,6 +304,10 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	}
 	// The allow list answers first, so the gate never reveals the alignment
 	// of a mob that can't be recruited anyway.
+	// A full company is refused for capacity, not alignment.
+	if record, ok := m.registry.Get(leaderUserID); ok && len(record.Companions) >= m.maxCompanions() {
+		return "", domain.ErrCompanyFull
+	}
 	if _, allowed := m.allowedTemplates()[templateID]; allowed {
 		if refusal := m.recruitRefusal(leaderUserID, templateID, templateName(templateID, selector)); refusal != "" {
 			return refusal, nil

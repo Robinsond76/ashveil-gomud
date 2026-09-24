@@ -29,10 +29,6 @@ var companyTagPattern = regexp.MustCompile(`<[^>]*>`)
 // usercommands.TryCommand with real mob specs and live mobs; a real
 // NewRound through events.ProcessEvents drifts a live companion and writes
 // the real store.
-//
-// plugins.Load closes plugin registration for the whole test binary, so
-// this file is named to sort (and run) after every test that calls
-// plugins.New.
 func TestCompanyAlignmentThroughPluginsLoad(t *testing.T) {
 	dataDir := t.TempDir()
 	useDataDir(t, dataDir)
@@ -59,6 +55,7 @@ func TestCompanyAlignmentThroughPluginsLoad(t *testing.T) {
 
 	useFakeLifecycle(t, &fakeLifecycle{})
 	require.NotNil(t, module, "init registered the module")
+	t.Cleanup(plugins.SnapshotLoadStateForTest())
 	plugins.Load(dataDir)
 	require.NoError(t, module.loadErr)
 	// The shipped overlay is merged (allow list [58], the design defaults).
@@ -101,13 +98,13 @@ func TestCompanyAlignmentThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, out, "They won't join")
 	assert.Contains(t, run("inspect paladin"), "paladin isn't available to recruit.", "not on the shipped allow list")
 	out = run("summon training dummy")
-	assert.Contains(t, out, "training dummy (alignment 40 (misguided)) won't join a company of alignment 100 (holy).", "gap 120")
+	assert.Contains(t, out, "training dummy (alignment 40, misguided) won't join a company of alignment 100, holy.", "gap 120")
 	_, exists := module.registry.Get(7)
 	assert.False(t, exists, "the refused recruit isn't recruited")
 
-	user.Character.Alignment = 60
+	user.Character.Alignment = 40
 	assert.Contains(t, run("inspect training dummy"), "They would join.")
-	assert.Contains(t, run("summon training dummy"), "Companion summoned: training dummy (#1).", "gap 80 is exactly the limit")
+	assert.Contains(t, run("summon training dummy"), "Companion summoned: training dummy (#1).", "gap 60 is exactly the limit")
 	record, _ := module.registry.Get(7)
 	require.Len(t, record.Companions, 1)
 	assert.Equal(t, domain.Disposition{Alignment: -20, Loyalty: 70}, *record.Companions[0].Disposition, "seeded from the real template")
@@ -119,11 +116,11 @@ func TestCompanyAlignmentThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, int8(-20), dummy.Character.Alignment)
 
 	out = run("alignment")
-	assert.Contains(t, out, "Company alignment: 60 (lawful)", "avg(60, -20) = 20")
-	assert.Contains(t, out, "You: 80 (good)")
-	assert.Contains(t, out, "#1 training dummy: 40 (misguided), loyalty 70, uneasy", "gap 80 to the leader")
+	assert.Contains(t, out, "Company alignment: 55 (neutral)", "avg(40, -20) = 10")
+	assert.Contains(t, out, "You: 70 (virtuous)")
+	assert.Contains(t, out, "#1 training dummy: 40 (misguided), loyalty 70, content", "gap 60 to the leader")
 	out = run("status")
-	assert.Contains(t, out, "Company alignment: 60 (lawful)")
+	assert.Contains(t, out, "Company alignment: 55 (neutral)")
 	assert.Contains(t, out, "training dummy, no archetype, alignment 40 (misguided), loyalty 70 (present)")
 
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
@@ -134,7 +131,7 @@ func TestCompanyAlignmentThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, turn, util.GetTurnCount(), "never advances the clock")
 	assert.Equal(t, round, util.GetRoundCount())
 	record, _ = module.registry.Get(7)
-	assert.Equal(t, domain.Disposition{Alignment: -18, Loyalty: 65}, *record.Companions[0].Disposition)
+	assert.Equal(t, domain.Disposition{Alignment: -18, Loyalty: 72}, *record.Companions[0].Disposition)
 	assert.Equal(t, int8(-18), dummy.Character.Alignment, "the live mob drifted")
 
 	stored := domain.NewRegistry()

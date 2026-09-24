@@ -71,7 +71,8 @@ or a small follow-up if the owner wants it changed.
    warns the leader. At 0 the companion **deserts**: it leaves exactly as
    `company dismiss` would (survival state removed, formation cleared,
    live mob detached), and the leader is told. Desertion waits while the
-   leader is in combat and happens on the first tick after.
+   leader or the companion is in combat and is re-evaluated on the next
+   tick.
 5. **Recruit gate.** `company summon` refuses a candidate whose alignment
    is more than `RecruitMaxGap` from the company average (the leader and
    every current companion). The refusal names both values.
@@ -84,8 +85,20 @@ or a small follow-up if the owner wants it changed.
    4-second rounds; valid 1..100000), `DriftStep` 2 (1..50),
    `LoyaltyToleranceGap` 60 (0..200), `LoyaltyLoss` 5 (0..100),
    `LoyaltyGain` 2 (0..100), `StartLoyalty` 70 (1..100),
-   `LoyaltyWarnBelow` 25 (0..100), `RecruitMaxGap` 80 (0..200). Out of range
+   `LoyaltyWarnBelow` 25 (0..100), `RecruitMaxGap` 60 (0..200). Out of range
    or unparsable values fall back to the default.
+
+**Implementation review additions (2026-09-24):** `RecruitMaxGap`
+defaults to the loyalty tolerance (60, not the drafted 80), so an accepted
+recruit starts content; `inspect` says when a looser config would admit an
+uneasy recruit. A companion moves at most half its gap per tick, so
+members pulling on each other meet instead of swapping values every tick.
+A companion deserts only when an uneasy tick leaves it at 0 loyalty.
+Desertion also waits while the companion's own live mob is fighting, and
+a postponed desertion is re-evaluated on the next tick (a companion that
+has become content by then stays). A full company is refused for capacity
+before the alignment gate runs, and `inspect` is refused while company
+data is unavailable.
 
 With these defaults a companion 60 points (30 displayed) from the rest of
 its company is content; one at 90 loses 5 loyalty every 5 minutes while

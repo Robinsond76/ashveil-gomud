@@ -47,7 +47,7 @@ func DefaultAlignmentRules() AlignmentRules {
 		LoyaltyGain:         2,
 		StartLoyalty:        70,
 		LoyaltyWarnBelow:    25,
-		RecruitMaxGap:       80,
+		RecruitMaxGap:       60,
 	}
 }
 
@@ -143,30 +143,35 @@ func RestAverage(leader int, members []MemberAlignment, self int) int {
 	return AverageAlignment(values)
 }
 
-// TickAlignment runs one drift tick: every companion moves DriftStep toward
-// the average of the rest of the company, and gains or loses loyalty by
-// whether its gap to that average (before the drift) is within
-// LoyaltyToleranceGap. All targets come from the pre-tick values. The
-// leader's alignment is an input only.
+// TickAlignment runs one drift tick: every companion moves DriftStep (at
+// most half its gap) toward the average of the rest of the company, and
+// gains or loses loyalty by whether its gap to that average (before the
+// drift) is within LoyaltyToleranceGap. A companion deserts when an uneasy
+// tick leaves it at 0 loyalty. All targets come from the pre-tick values.
+// The leader's alignment is an input only.
 func TickAlignment(leader int, members []MemberAlignment, rules AlignmentRules) TickResult {
 	result := TickResult{Members: make([]MemberAlignment, len(members))}
 	for i, m := range members {
 		target := RestAverage(leader, members, i)
 		before := clampInt(m.Loyalty, MinLoyalty, MaxLoyalty)
 		loyalty := before
-		if absInt(ClampAlignment(m.Alignment)-target) > rules.LoyaltyToleranceGap {
+		gap := absInt(ClampAlignment(m.Alignment) - target)
+		uneasy := gap > rules.LoyaltyToleranceGap
+		if uneasy {
 			loyalty -= rules.LoyaltyLoss
 		} else {
 			loyalty += rules.LoyaltyGain
 		}
 		loyalty = clampInt(loyalty, MinLoyalty, MaxLoyalty)
+		// Move at most half the gap, so members pulling on each other meet
+		// instead of swapping places every tick.
 		result.Members[i] = MemberAlignment{
 			ID:        m.ID,
-			Alignment: DriftToward(m.Alignment, target, rules.DriftStep),
+			Alignment: DriftToward(m.Alignment, target, min(rules.DriftStep, gap/2)),
 			Loyalty:   loyalty,
 		}
 		switch {
-		case loyalty <= MinLoyalty:
+		case uneasy && loyalty <= MinLoyalty:
 			result.Deserters = append(result.Deserters, m.ID)
 		case before >= rules.LoyaltyWarnBelow && loyalty < rules.LoyaltyWarnBelow:
 			result.Warned = append(result.Warned, m.ID)

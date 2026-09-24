@@ -102,9 +102,10 @@ func TestTickAlignmentWarnsOnceAndDeserts(t *testing.T) {
 
 func TestCanRecruitBoundary(t *testing.T) {
 	rules := company.DefaultAlignmentRules()
-	assert.True(t, company.CanRecruit(80, 0, rules))
-	assert.True(t, company.CanRecruit(-80, 0, rules))
-	assert.False(t, company.CanRecruit(81, 0, rules))
+	assert.Equal(t, rules.LoyaltyToleranceGap, rules.RecruitMaxGap, "an accepted recruit starts content")
+	assert.True(t, company.CanRecruit(60, 0, rules))
+	assert.True(t, company.CanRecruit(-60, 0, rules))
+	assert.False(t, company.CanRecruit(61, 0, rules))
 	assert.False(t, company.CanRecruit(90, -40, rules), "a holy recruit won't join a corrupt company")
 }
 
@@ -146,4 +147,28 @@ func TestRegistryCloneIsDeep(t *testing.T) {
 	assert.Equal(t, 12, clone.DriftIn)
 	require.Len(t, clone.Companies[7].Companions, 1)
 	assert.Equal(t, 10, clone.Companies[7].Companions[0].Disposition.Alignment)
+}
+
+func TestTickAlignmentPairsConverge(t *testing.T) {
+	rules := company.DefaultAlignmentRules()
+	// Leader 0, companions at +1 and -1: each one's target is the other's
+	// value. Moving the full step would swap them forever.
+	result := company.TickAlignment(0, []company.MemberAlignment{{ID: 1, Alignment: 1, Loyalty: 50}, {ID: 2, Alignment: -1, Loyalty: 50}}, rules)
+	assert.Equal(t, 0, result.Members[0].Alignment, "they meet instead of swapping")
+	assert.Equal(t, 0, result.Members[1].Alignment)
+	result = company.TickAlignment(0, result.Members, rules)
+	assert.Equal(t, 0, result.Members[0].Alignment, "and stay put")
+	rules.DriftStep = 50
+	result = company.TickAlignment(0, []company.MemberAlignment{{ID: 1, Alignment: 40, Loyalty: 50}, {ID: 2, Alignment: -40, Loyalty: 50}}, rules)
+	// Targets are -20 and 20; half of each 60-point gap is 30.
+	assert.Equal(t, 10, result.Members[0].Alignment, "a big step stops at half the gap, so they don't cross")
+	assert.Equal(t, -10, result.Members[1].Alignment)
+}
+
+func TestTickAlignmentContentMemberAtZeroDoesNotDesert(t *testing.T) {
+	rules := company.DefaultAlignmentRules()
+	rules.LoyaltyGain = 0
+	result := company.TickAlignment(0, []company.MemberAlignment{{ID: 1, Alignment: 0, Loyalty: 0}}, rules)
+	assert.Equal(t, 0, result.Members[0].Loyalty)
+	assert.Empty(t, result.Deserters, "only an uneasy tick deserts")
 }

@@ -11,20 +11,22 @@ import (
 )
 
 type fakeWorld struct {
-	templates     map[int]int  // template alignment
-	leaders       map[int]int  // online leaders' alignment
-	inCombat      map[int]bool // leaders in combat
-	instanceAlign map[int]int
-	told          map[int][]string
+	templates        map[int]int  // template alignment
+	leaders          map[int]int  // online leaders' alignment
+	inCombat         map[int]bool // leaders in combat
+	instanceFighting map[int]bool
+	instanceAlign    map[int]int
+	told             map[int][]string
 }
 
 func newFakeWorld() *fakeWorld {
 	return &fakeWorld{
-		templates:     map[int]int{},
-		leaders:       map[int]int{},
-		inCombat:      map[int]bool{},
-		instanceAlign: map[int]int{},
-		told:          map[int][]string{},
+		templates:        map[int]int{},
+		leaders:          map[int]int{},
+		inCombat:         map[int]bool{},
+		instanceFighting: map[int]bool{},
+		instanceAlign:    map[int]int{},
+		told:             map[int][]string{},
 	}
 }
 
@@ -34,6 +36,9 @@ func (w *fakeWorld) LeaderAlignment(leaderUserID int) (int, bool) {
 	return a, ok
 }
 func (w *fakeWorld) LeaderInCombat(leaderUserID int) bool { return w.inCombat[leaderUserID] }
+func (w *fakeWorld) InstanceInCombat(instanceID int) bool {
+	return w.instanceFighting[instanceID]
+}
 func (w *fakeWorld) SetInstanceAlignment(instanceID, alignment int) {
 	w.instanceAlign[instanceID] = alignment
 }
@@ -91,8 +96,7 @@ func TestSummonRefusesFarCandidateWithoutWriting(t *testing.T) {
 	text, err := module.summon(7, 12, "paladin")
 	require.NoError(t, err, "a refusal is a message, not an error")
 	assert.Contains(t, text, "won't join")
-	assert.Contains(t, text, "95 (holy)")
-	assert.Contains(t, text, "30 (corrupt)")
+	assert.Contains(t, text, "paladin (alignment 95, holy) won't join a company of alignment 30, corrupt.")
 	_, exists := module.registry.Get(7)
 	assert.False(t, exists)
 	assert.Zero(t, module.store.(*fakeStore).saveCalls)
@@ -101,14 +105,14 @@ func TestSummonRefusesFarCandidateWithoutWriting(t *testing.T) {
 	// The average counts current companions too: a neutral companion pulls
 	// a good leader's company average down to within reach.
 	world.leaders[8] = 20
-	module.registry.Put(domain.Record{LeaderUserID: 8, Companions: []domain.Companion{withDisposition(domain.Companion{ID: 1, MobTemplateID: 58}, -60, 70)}})
+	module.registry.Put(domain.Record{LeaderUserID: 8, Companions: []domain.Companion{withDisposition(domain.Companion{ID: 1, MobTemplateID: 58}, -40, 70)}})
 	text, err = module.summon(8, 12, "paladin")
 	require.NoError(t, err)
-	assert.Contains(t, text, "won't join", "average -20 is 110 from 90")
+	assert.Contains(t, text, "won't join", "average -10 is 100 from 90")
 	world.leaders[8] = 100
 	text, err = module.summon(8, 12, "paladin")
 	require.NoError(t, err)
-	assert.Contains(t, text, "Companion summoned", "average 20 is 70 from 90")
+	assert.Contains(t, text, "Companion summoned", "average 30 is 60 from 90")
 }
 
 func TestSummonGateSkipsDisallowedTemplate(t *testing.T) {
@@ -354,6 +358,13 @@ func TestCompanyInspectShowsCandidate(t *testing.T) {
 	assert.Contains(t, out, "would join")
 	world.leaders[7] = -60
 	assert.Contains(t, module.inspect(7, "paladin"), "won't join")
+	world.leaders[7] = 30
+	rulesTolerance := domain.DefaultAlignmentRules().LoyaltyToleranceGap
+	require.Equal(t, 60, rulesTolerance)
+	assert.Contains(t, module.inspect(7, "paladin"), "They would join.", "gap 60 is content")
+	module.loadErr = errors.New("cannot read companies")
+	assert.Contains(t, module.inspect(7, "paladin"), "unavailable", "never judged against an unloaded company")
+	module.loadErr = nil
 	assert.Contains(t, module.inspect(7, "nobody"), "no one")
 	defaultAllowedTemplates = map[int]struct{}{58: {}}
 	assert.Contains(t, module.inspect(7, "paladin"), "isn't available to recruit")
@@ -414,4 +425,49 @@ func TestParseAlignmentConfig(t *testing.T) {
 	}))
 	assert.Equal(t, defaultDriftEveryRounds, every)
 	assert.Equal(t, domain.DefaultAlignmentRules(), rules, "out of range falls back")
+}
+
+func TestInspectWarnsWhenRecruitWouldBeUneasy(t *testing.T) {
+	allowAlso59(t)
+	world := newFakeWorld()
+	world.templates[59] = 90
+	world.leaders[7] = 0
+	module, _ := newAlignmentModule(*domain.NewRegistry(), world)
+	module.plug = nil
+	// A config with RecruitMaxGap above the tolerance lets an uneasy recruit in.
+	module.rulesForTest = &domain.AlignmentRules{DriftStep: 2, LoyaltyToleranceGap: 60, LoyaltyLoss: 5, LoyaltyGain: 2, StartLoyalty: 70, LoyaltyWarnBelow: 25, RecruitMaxGap: 100}
+	assert.Contains(t, module.inspect(7, "paladin"), "would join, but uneasily")
+}
+
+func TestSummonFullCompanyRefusedForCapacityNotAlignment(t *testing.T) {
+	allowAlso59(t)
+	world := newFakeWorld()
+	world.templates[59] = 90
+	world.leaders[7] = -100
+	companions := []domain.Companion{}
+	for id := 1; id <= domain.MaxCompanions; id++ {
+		companions = append(companions, withDisposition(domain.Companion{ID: id, MobTemplateID: 58}, -100, 70))
+	}
+	module, _ := newAlignmentModule(domain.Registry{Companies: map[int]domain.Record{7: {LeaderUserID: 7, Companions: companions}}}, world)
+	_, err := module.summon(7, 12, "paladin")
+	assert.ErrorIs(t, err, domain.ErrCompanyFull)
+}
+
+func TestDesertionWaitsForCompanionCombat(t *testing.T) {
+	world := newFakeWorld()
+	world.leaders[7] = 100
+	useFakeLifecycle(t, &fakeLifecycle{})
+	module, runtime := newAlignmentModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{withDisposition(domain.Companion{ID: 1, MobTemplateID: 58}, -100, 3)}},
+	}}, world)
+	module.setInstance(7, 1, 99)
+	runtime.live = map[int]bool{99: true}
+	world.instanceFighting[99] = true
+	runRounds(module, defaultDriftEveryRounds)
+	record, _ := module.registry.Get(7)
+	require.Len(t, record.Companions, 1, "a fighting companion doesn't walk off mid-fight")
+	world.instanceFighting[99] = false
+	runRounds(module, defaultDriftEveryRounds)
+	record, _ = module.registry.Get(7)
+	assert.Empty(t, record.Companions)
 }

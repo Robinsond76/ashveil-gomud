@@ -38,7 +38,7 @@ and recorded there.
       `TestCompanyStatusShowsAlignmentAndLoyalty`,
       `TestParseAlignmentRules`. Then implement.
 - [x] **Config overlay:** the eight knobs, documented in engine points.
-- [x] **Wiring test** (`modules/company/wiring_test.go`, named to run after tests that call `plugins.New`):
+- [x] **Wiring test** (`modules/company/wiring_test.go`):
       `plugins.Load` with a disposable world, `company summon`/`inspect`/
       `alignment`/`status` through `usercommands.TryCommand`, a real
       `NewRound` through `events.ProcessEvents` drifts the real live mob
@@ -46,7 +46,7 @@ and recorded there.
 - [x] Update `modules/company/AGENTS.md` for the new state and commands.
 - [x] `gofmt -l`, `go vet`, `go build ./...`, `go test -race ./...`,
       `make generate`, `make validate`.
-- [ ] **Testing and review gate:** independent reviewer over the phase
+- [x] **Testing and review gate:** independent reviewer over the phase
       diff; verify findings, fix with regression tests, record.
 - [ ] Update `docs/PROJECT_STATUS.md` (Phase 21a entry with **Review:**
       line).

@@ -26,6 +26,7 @@ type alignmentWorld interface {
 	// LeaderAlignment is an online leader's alignment; false when offline.
 	LeaderAlignment(leaderUserID int) (int, bool)
 	LeaderInCombat(leaderUserID int) bool
+	InstanceInCombat(instanceID int) bool
 	SetInstanceAlignment(instanceID, alignment int)
 	Tell(leaderUserID int, text string)
 }
@@ -57,6 +58,11 @@ func (nativeAlignmentWorld) LeaderAlignment(leaderUserID int) (int, bool) {
 func (nativeAlignmentWorld) LeaderInCombat(leaderUserID int) bool {
 	user := users.GetByUserId(leaderUserID)
 	return user != nil && user.Character != nil && user.Character.Aggro != nil
+}
+
+func (nativeAlignmentWorld) InstanceInCombat(instanceID int) bool {
+	mob := mobs.GetInstance(instanceID)
+	return mob != nil && mob.Character.Aggro != nil
 }
 
 func (nativeAlignmentWorld) SetInstanceAlignment(instanceID, alignment int) {
@@ -100,6 +106,9 @@ func parseAlignmentConfig(get func(string) any) (domain.AlignmentRules, int) {
 }
 
 func (m *CompanyModule) alignmentConfig() (domain.AlignmentRules, int) {
+	if m.rulesForTest != nil {
+		return *m.rulesForTest, defaultDriftEveryRounds
+	}
 	if m.plug != nil {
 		return parseAlignmentConfig(m.plug.Config.Get)
 	}
@@ -150,7 +159,8 @@ func (m *CompanyModule) recruitRefusal(leaderUserID, templateID int, name string
 	if domain.CanRecruit(candidate, average, rules) {
 		return ""
 	}
-	return fmt.Sprintf("%s (alignment %s) won't join a company of alignment %s.", name, alignmentLabel(candidate), alignmentLabel(average))
+	return fmt.Sprintf("%s (alignment %d, %s) won't join a company of alignment %d, %s.", name,
+		domain.DisplayAlignment(candidate), domain.AlignmentBand(candidate), domain.DisplayAlignment(average), domain.AlignmentBand(average))
 }
 
 // seedDisposition records a new recruit's starting alignment and loyalty.
@@ -275,8 +285,8 @@ func (m *CompanyModule) driftTick() {
 		world.Tell(w.leaderUserID, fmt.Sprintf("%s grows uneasy with the company's ways.", m.companionLabel(w.leaderUserID, w.companionID)))
 	}
 	for _, d := range deserters {
-		if world.LeaderInCombat(d.leaderUserID) {
-			continue // deserts on the first tick after the fight
+		if m.inCombat(d.leaderUserID, d.companionID) {
+			continue // re-evaluated on the next tick
 		}
 		label := m.companionLabel(d.leaderUserID, d.companionID)
 		record, ok := m.registry.Get(d.leaderUserID)
@@ -293,6 +303,17 @@ func (m *CompanyModule) driftTick() {
 		}
 		world.Tell(d.leaderUserID, fmt.Sprintf("%s has lost faith in your company and deserts.", label))
 	}
+}
+
+// inCombat reports whether the leader or the companion's live mob is
+// fighting; desertion never happens mid-fight.
+func (m *CompanyModule) inCombat(leaderUserID, companionID int) bool {
+	world := m.alignmentWorld()
+	if world.LeaderInCombat(leaderUserID) {
+		return true
+	}
+	instanceID, tracked := m.instance(leaderUserID, companionID)
+	return tracked && m.runtime.IsLive(instanceID) && world.InstanceInCombat(instanceID)
 }
 
 func findCompanion(record domain.Record, companionID int) (domain.Companion, bool) {
@@ -317,6 +338,9 @@ func (m *CompanyModule) companionLabel(leaderUserID, companionID int) string {
 
 // inspect shows a recruit candidate's alignment against the company's.
 func (m *CompanyModule) inspect(leaderUserID int, selector string) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
 	selector = strings.TrimSpace(selector)
 	templateID, err := m.resolveTemplateID(selector)
 	if err != nil {
@@ -334,7 +358,16 @@ func (m *CompanyModule) inspect(leaderUserID int, selector string) string {
 	}
 	lines = append(lines, fmt.Sprintf("Your company: %s.", alignmentLabel(average)))
 	if m.recruitRefusal(leaderUserID, templateID, name) == "" {
-		lines = append(lines, "They would join.")
+		rules, _ := m.alignmentConfig()
+		gap := candidate - average
+		if gap < 0 {
+			gap = -gap
+		}
+		if gap > rules.LoyaltyToleranceGap {
+			lines = append(lines, "They would join, but uneasily: far from the company's ways, they would lose loyalty.")
+		} else {
+			lines = append(lines, "They would join.")
+		}
 	} else {
 		lines = append(lines, "They won't join a company so far from their ways.")
 	}

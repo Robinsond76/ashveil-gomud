@@ -29,5 +29,8 @@ LoyaltyWarnBelow: 25
 # A new recruit's loyalty (1..100).
 StartLoyalty: 70
 # "company summon" refuses a candidate further than RecruitMaxGap (0..200)
-# from the company average (the leader and every companion).
-RecruitMaxGap: 80
+# from the company average (the leader and every companion). Keep it at or
+# below LoyaltyToleranceGap, or accepted recruits start out uneasy and
+# losing loyalty. Keep StartLoyalty above LoyaltyWarnBelow, or new recruits
+# start below the warning line and are never warned.
+RecruitMaxGap: 60
