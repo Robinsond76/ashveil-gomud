@@ -10,8 +10,10 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -75,9 +77,14 @@ func loadRealData(t *testing.T) {
 	dataOnce.Do(func() {
 		_, thisFile, _, _ := runtime.Caller(0)
 		dataDir := filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default")
-		require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
+		require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir, "Network.LogoutRounds": 3}))
 		skills.LoadDataFiles()
 		spells.LoadSpellFiles()
+		// Buffs before items, as the server loads them: item values count
+		// their buffs (the Phase 22a kit balance test relies on it).
+		buffs.LoadFlagDataFiles()
+		buffs.LoadDataFiles()
+		items.LoadDataFiles()
 		keywords.LoadAliases()
 	})
 }
@@ -91,6 +98,8 @@ func testModule(t *testing.T) (*ArchetypeModule, *fakeStore) {
 	m := newModule()
 	store := &fakeStore{}
 	m.store = store
+	// Never write user files into the shipped data dir.
+	m.saveUser = func(*users.UserRecord) error { return nil }
 	m.table = m.buildTable(parseArchetypes(raw["Archetypes"]))
 	cfg := parseUtilityConfig(func(k string) any { return raw[k] })
 	cfg.UtilitySkills = parseUtilitySkills(raw["Utilities"], cfg.UtilitySkills)

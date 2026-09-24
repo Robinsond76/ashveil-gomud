@@ -45,15 +45,16 @@ here.
    list in `modules/archetype`'s config overlay (repeat an id to give two).
    At load, an item id that doesn't resolve is dropped from that kit with a
    warning. The archetype still loads.
-2. **Shipped kits** (auto-calculated values; spread within 13%):
+2. **Shipped kits.** Values are the engine's auto-calculated item values with
+   buffs loaded, as on the server. The spread is within 9%:
 
    | Archetype | Kit | Value |
    |---|---|---|
-   | Warrior | guardsman's broadsword, wooden shield, leather cap, cheese sandwich, waterskin | 241 |
-   | Rogue | dagger, lockpick kit, leather pants, worn boots, rope, cheese sandwich, waterskin | 231 |
-   | Wizard | ash quarterstaff (new item 10021), leather cap, cotton shirt, student's amulet, cheese sandwich, waterskin, 2× small blue potion | 214 |
-   | Cleric | crude cudgel, wooden shield, cotton shirt, cheese sandwich, waterskin, 2× small red potion | 217 |
-   | Ranger | sling, leather cap, fur cape, worn boots, hunter's stew, waterskin, rope | 221 |
+   | Warrior | guardsman's broadsword, wooden shield, leather cap, cheese sandwich, waterskin | 266 |
+   | Rogue | dagger, lockpick kit, leather pants, worn boots, rope, cheese sandwich, waterskin | 256 |
+   | Wizard | ash quarterstaff (new item 10021), leather cap, cotton shirt, student's amulet, cheese sandwich, waterskin, 2× small blue potion | 257 |
+   | Cleric | crude cudgel, wooden shield, cotton shirt, cheese sandwich, waterskin, 2× small red potion | 260 |
+   | Ranger | sling, leather cap, fur cape, worn boots, hunter's stew, waterskin, rope | 246 |
 
    A shipped-data test pins every id and the balance (the largest kit
    total is at most 1.25× the smallest). Spell prerequisites are already

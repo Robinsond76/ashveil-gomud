@@ -66,3 +66,38 @@ func TestTrapArmedWithoutTrapProvider(t *testing.T) {
 	t.Cleanup(func() { SetProvider(nil) })
 	assert.True(t, TrapArmed("1-chest"))
 }
+
+type creatorProvider struct {
+	fakeProvider
+	chose []string
+}
+
+func (c *creatorProvider) CreationChoices() []Choice {
+	return []Choice{{ID: "wizard", Name: "Wizard", Kit: []string{"staff"}}}
+}
+
+func (c *creatorProvider) ChooseAtCreation(userID int, id string) (string, bool) {
+	c.chose = append(c.chose, id)
+	return "You are now a Wizard.", true
+}
+
+func TestCreatorSeam(t *testing.T) {
+	SetProvider(nil)
+	assert.Nil(t, CreationChoices(2), "no provider, no step")
+	_, ok := ChooseAtCreation(2, "wizard")
+	assert.False(t, ok)
+
+	SetProvider(fakeProvider{})
+	t.Cleanup(func() { SetProvider(nil) })
+	assert.Nil(t, CreationChoices(2), "a provider that isn't a Creator has no step")
+
+	c := &creatorProvider{}
+	SetProvider(c)
+	assert.Nil(t, CreationChoices(1), "user 1 already has an archetype")
+	got := CreationChoices(2)
+	assert.Equal(t, []Choice{{ID: "wizard", Name: "Wizard", Kit: []string{"staff"}}}, got)
+	text, ok := ChooseAtCreation(2, "wizard")
+	assert.True(t, ok)
+	assert.Equal(t, "You are now a Wizard.", text)
+	assert.Equal(t, []string{"wizard"}, c.chose)
+}

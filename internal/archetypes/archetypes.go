@@ -44,6 +44,9 @@ type Archetype struct {
 	// CompanionLevels are the character levels at which a companion of this
 	// archetype reaches utility skill levels 1..4.
 	CompanionLevels []int
+	// Kit is the item ids granted once, as a starter kit, to a player who
+	// chooses this archetype (Phase 22a). Repeat an id to grant it twice.
+	Kit []int
 }
 
 func normalizeList(in []string) []string {
@@ -102,6 +105,13 @@ func (a *Archetype) Validate() error {
 		grants[skill] = level
 	}
 	a.GrantSkills = grants
+	kit := make([]int, 0, len(a.Kit))
+	for _, id := range a.Kit {
+		if id > 0 {
+			kit = append(kit, id)
+		}
+	}
+	a.Kit = kit
 	if len(a.CompanionLevels) != SkillLevels {
 		return fmt.Errorf("%w: %q needs %d companion levels", ErrInvalidArchetype, a.ID, SkillLevels)
 	}

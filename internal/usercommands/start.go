@@ -173,6 +173,15 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		user.SendText(fmt.Sprintf(`You will be known as <ansi fg="yellow-bold">%s</ansi>!%s`, user.Character.Name, term.CRLFStr))
 	}
 
+	// Ashveil Phase 22a: choose an archetype (and receive its starter kit).
+	if restart, done := startArchetypeStep(cmdPrompt, user); done {
+		if restart {
+			user.ClearPrompt()
+			return Start(rest, user, room, flags)
+		}
+		return true, nil
+	}
+
 	user.Character.ExtraLives = int(configs.GetGamePlayConfig().LivesStart)
 
 	user.EventLog.Add(`char`, fmt.Sprintf(`Created a new character: <ansi fg="username">%s</ansi>`, user.Character.Name))

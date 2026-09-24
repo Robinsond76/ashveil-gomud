@@ -9,6 +9,10 @@
 # archetype (never lowering a higher level). CompanionLevels are the
 # character levels at which a companion of this archetype reaches utility
 # skill levels 1..4. Utility names the utility actions it performs.
+# Kit (Phase 22a) is the starter kit's item ids, granted once into the
+# backpack of a player who chooses the archetype; repeat an id to give two.
+# Unknown ids are dropped at load with a warning. Keep kit values balanced
+# (the shipped-data test allows the largest total 1.25x the smallest).
 # (Lists, not maps: module config maps are flattened by the loader.)
 Archetypes:
   - ArchetypeId: warrior
@@ -18,6 +22,7 @@ Archetypes:
     GrantSkills:
       - { Skill: brawling, Level: 1 }
     CompanionLevels: [1, 10, 20, 30]
+    Kit: [10002, 20004, 20020, 30004, 30015]
   - ArchetypeId: rogue
     Name: Rogue
     Description: Quiet hands that find traps and open locks.
@@ -26,6 +31,7 @@ Archetypes:
       - { Skill: skulduggery, Level: 1 }
     Utility: [traps]
     CompanionLevels: [1, 10, 20, 30]
+    Kit: [10004, 8, 20029, 20003, 23, 30004, 30015]
   - ArchetypeId: wizard
     Name: Wizard
     Description: Scholars of the arcane who light the dark and bend illusion.
@@ -36,6 +42,7 @@ Archetypes:
     GrantSpells: [floatinglight]
     Utility: [light]
     CompanionLevels: [1, 10, 20, 30]
+    Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014]
   - ArchetypeId: cleric
     Name: Cleric
     Description: Healers and protectors sworn to keep the company standing.
@@ -45,6 +52,7 @@ Archetypes:
       - { Skill: cast, Level: 1 }
       - { Skill: protection, Level: 1 }
     CompanionLevels: [1, 10, 20, 30]
+    Kit: [10015, 20004, 20008, 30004, 30015, 30001, 30001]
   - ArchetypeId: ranger
     Name: Ranger
     Description: Trackers and beast-tamers at home in the wild.
@@ -52,6 +60,7 @@ Archetypes:
     GrantSkills:
       - { Skill: track, Level: 1 }
     CompanionLevels: [1, 10, 20, 30]
+    Kit: [10014, 20020, 20024, 20003, 30019, 30015, 23]
 
 # Phase 17b utility skills. A player's utility level is their level in the
 # mapped skill (only if their archetype performs the utility); a

@@ -43,11 +43,15 @@ type Registry struct {
 	Autoskill map[int]map[string]bool `yaml:"autoskill,omitempty"`
 	// Disarmed maps a lock id to the round its trap re-arms at (Phase 17b).
 	Disarmed map[string]uint64 `yaml:"disarmed,omitempty"`
+	// Kits maps a user id to the archetype whose starter kit that choice
+	// owes (Phase 22a). It is written in the same save as the choice; only
+	// choices made from Phase 22a on owe a kit.
+	Kits map[int]string `yaml:"kits,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
 func NewRegistry() *Registry {
-	return &Registry{Players: map[int]string{}, Autoskill: map[int]map[string]bool{}, Disarmed: map[string]uint64{}}
+	return &Registry{Players: map[int]string{}, Autoskill: map[int]map[string]bool{}, Disarmed: map[string]uint64{}, Kits: map[int]string{}}
 }
 
 // Clone returns a deep copy.
@@ -65,6 +69,9 @@ func (r Registry) Clone() Registry {
 	}
 	for lock, round := range r.Disarmed {
 		out.Disarmed[lock] = round
+	}
+	for id, a := range r.Kits {
+		out.Kits[id] = a
 	}
 	return out
 }
@@ -120,6 +127,12 @@ func decodeRegistry(data []byte, registry *Registry) error {
 		}
 		loaded.Disarmed[lock] = round
 	}
+	for id, a := range wire.Kits {
+		if id <= 0 || strings.TrimSpace(a) == "" {
+			continue
+		}
+		loaded.Kits[id] = strings.ToLower(strings.TrimSpace(a))
+	}
 	*registry = *loaded
 	return nil
 }
@@ -137,6 +150,8 @@ type ArchetypeModule struct {
 	roll         func() int    // 1..100
 	now          func() uint64 // current round
 	cast         func(user *users.UserRecord, room *rooms.Room, spellID string)
+	itemName     func(itemID int) (string, bool)
+	saveUser     func(user *users.UserRecord) error
 
 	// pickSensed records (user, lock) pairs that already had their free
 	// pre-picklock sense this session. Runtime-only UX state.
@@ -168,6 +183,8 @@ func newModule() *ArchetypeModule {
 		roll:         nativeRoll,
 		now:          nativeNow,
 		cast:         nativeCast,
+		itemName:     nativeItemName,
+		saveUser:     nativeSaveUser,
 		registry:     NewRegistry(),
 		config:       defaultUtilityConfig(),
 	}
@@ -299,6 +316,7 @@ func (m *ArchetypeModule) buildTable(list []archetypes.Archetype) archetypes.Tab
 				continue
 			}
 		}
+		a.Kit = m.resolveKit(a)
 		valid = append(valid, a)
 	}
 	table, errs := archetypes.NewTable(valid)
@@ -443,43 +461,66 @@ func applyGrants(user *users.UserRecord, a archetypes.Archetype) {
 
 // choose records a first archetype choice. Without confirm it only previews.
 func (m *ArchetypeModule) choose(user *users.UserRecord, name string, confirm bool) string {
+	text, _ := m.chooseResult(user, name, confirm)
+	return text
+}
+
+// chooseResult is choose, also reporting whether a choice was committed.
+// A committed choice records the kit it owes in the same save, then the
+// grants and the kit are applied outside the lock.
+func (m *ArchetypeModule) chooseResult(user *users.UserRecord, name string, confirm bool) (string, bool) {
 	if err := m.persistenceAvailable(); err != nil {
-		return err.Error()
+		return err.Error(), false
 	}
 	name = strings.ToLower(strings.TrimSpace(name))
 	if name == "" {
-		return archetypeUsage
+		return archetypeUsage, false
 	}
 	m.mu.Lock()
 	a, ok := m.table.Get(name)
 	if !ok {
 		m.mu.Unlock()
-		return fmt.Sprintf(`There is no archetype called "%s". Type "archetype" to see them.`, name)
+		return fmt.Sprintf(`There is no archetype called "%s". Type "archetype" to see them.`, name), false
 	}
 	// A stored archetype that is no longer configured doesn't count: the
 	// player may choose again rather than being stranded.
 	current, chosen := m.registry.Players[user.UserId]
 	if c, known := m.table.Get(current); chosen && known {
 		m.mu.Unlock()
-		return fmt.Sprintf("You are already a %s. The choice is permanent.", c.Name)
+		return fmt.Sprintf("You are already a %s. The choice is permanent.", c.Name), false
 	}
 	if !confirm {
 		m.mu.Unlock()
-		return fmt.Sprintf("%s: %s\nThis choice is permanent. Type \"archetype choose %s confirm\" to become a %s.", a.Name, a.Description, a.ID, a.Name)
+		preview := fmt.Sprintf("%s: %s", a.Name, a.Description)
+		if line := m.kitLine(a); line != "" {
+			preview += "\n" + line
+		}
+		return preview + fmt.Sprintf("\nThis choice is permanent. Type \"archetype choose %s confirm\" to become a %s.", a.ID, a.Name), false
 	}
+	owed, wasOwed := m.registry.Kits[user.UserId]
 	m.registry.Players[user.UserId] = a.ID
+	m.registry.Kits[user.UserId] = a.ID
 	if err := m.saveLocked(); err != nil {
 		if chosen {
 			m.registry.Players[user.UserId] = current
 		} else {
 			delete(m.registry.Players, user.UserId)
 		}
+		if wasOwed {
+			m.registry.Kits[user.UserId] = owed
+		} else {
+			delete(m.registry.Kits, user.UserId)
+		}
 		m.mu.Unlock()
-		return err.Error()
+		return err.Error(), false
 	}
 	m.mu.Unlock()
 	applyGrants(user, a)
-	return fmt.Sprintf("You are now a %s.", a.Name)
+	text := fmt.Sprintf("You are now a %s.", a.Name)
+	if kit := m.grantKit(user); kit != "" {
+		text += "\n" + kit
+	}
+	return text, true
 }
 
 // reset clears a player's choice (admin only). Granted skills and spells
@@ -494,9 +535,14 @@ func (m *ArchetypeModule) reset(userID int) (string, error) {
 	if !ok {
 		return "That character has no archetype.", nil
 	}
+	owed, wasOwed := m.registry.Kits[userID]
 	delete(m.registry.Players, userID)
+	delete(m.registry.Kits, userID)
 	if err := m.saveLocked(); err != nil {
 		m.registry.Players[userID] = original
+		if wasOwed {
+			m.registry.Kits[userID] = owed
+		}
 		return "", err
 	}
 	return "Archetype cleared.", nil
@@ -526,17 +572,22 @@ func (m *ArchetypeModule) clearCharacter(userID int) error {
 	defer m.mu.Unlock()
 	archetype, hadArchetype := m.registry.Players[userID]
 	toggles, hadToggles := m.registry.Autoskill[userID]
-	if !hadArchetype && !hadToggles {
+	kit, hadKit := m.registry.Kits[userID]
+	if !hadArchetype && !hadToggles && !hadKit {
 		return nil
 	}
 	delete(m.registry.Players, userID)
 	delete(m.registry.Autoskill, userID)
+	delete(m.registry.Kits, userID)
 	if err := m.saveLocked(); err != nil {
 		if hadArchetype {
 			m.registry.Players[userID] = archetype
 		}
 		if hadToggles {
 			m.registry.Autoskill[userID] = toggles
+		}
+		if hadKit {
+			m.registry.Kits[userID] = kit
 		}
 		return err
 	}
@@ -553,34 +604,46 @@ func (m *ArchetypeModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	a, known := m.table.Get(id)
 	m.mu.Unlock()
 	if chosen && known {
-		applyGrants(users.GetByUserId(evt.UserId), a)
+		user := users.GetByUserId(evt.UserId)
+		applyGrants(user, a)
+		// Recovery: a kit owed but lost before any user save is granted
+		// now, exactly once.
+		if text := m.grantKit(user); text != "" {
+			user.SendText(text)
+		}
 	}
 	return events.Continue
 }
 
-// list renders the archetype table and the user's current choice.
+// list renders the archetype table and the user's current choice. Kit
+// names are resolved after the lock is released.
 func (m *ArchetypeModule) list(userID int) string {
 	m.mu.Lock()
-	defer m.mu.Unlock()
+	id, chosen := m.registry.Players[userID]
+	table := m.table
+	m.mu.Unlock()
 	lines := []string{}
-	if id, ok := m.registry.Players[userID]; ok {
+	if chosen {
 		name := id
-		if a, known := m.table.Get(id); known {
+		if a, known := table.Get(id); known {
 			name = a.Name
 		}
 		lines = append(lines, fmt.Sprintf("You are a %s.", name))
 	} else {
 		lines = append(lines, `You have not chosen an archetype. Use "archetype choose <name>".`)
 	}
-	if m.table.Len() == 0 {
+	if table.Len() == 0 {
 		lines = append(lines, "No archetypes are configured.")
 		return strings.Join(lines, "\n")
 	}
 	lines = append(lines, "Archetypes:")
-	for _, a := range m.table.List() {
+	for _, a := range table.List() {
 		line := fmt.Sprintf("  %-8s %s Skills: %s.", a.Name, a.Description, strings.Join(a.Skills, ", "))
 		if len(a.Schools) > 0 {
 			line += " Spell schools: " + strings.Join(a.Schools, ", ") + "."
+		}
+		if kit := m.kitLine(a); kit != "" {
+			line += " " + kit
 		}
 		lines = append(lines, line)
 	}
@@ -652,6 +715,7 @@ func parseArchetypes(raw any) []archetypes.Archetype {
 			GrantSpells:     stringList(fields["grantspells"]),
 			Utility:         stringList(fields["utility"]),
 			CompanionLevels: intList(fields["companionlevels"]),
+			Kit:             intList(fields["kit"]),
 			GrantSkills:     map[string]int{},
 		}
 		if grants, ok := fields["grantskills"].([]any); ok {

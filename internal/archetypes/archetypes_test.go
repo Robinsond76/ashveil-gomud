@@ -193,3 +193,9 @@ func TestHasUtilityAndSkill(t *testing.T) {
 	assert.True(t, a.ListsSkill("CAST"))
 	assert.False(t, a.ListsSkill("peep"))
 }
+
+func TestValidateDropsNonPositiveKitIDs(t *testing.T) {
+	a := Archetype{ID: "warrior", Name: "Warrior", Skills: []string{"brawling"}, CompanionLevels: []int{1, 2, 3, 4}, Kit: []int{10002, 0, -3, 30001, 30001}}
+	assert.NoError(t, a.Validate())
+	assert.Equal(t, []int{10002, 30001, 30001}, a.Kit, "invalid ids dropped, repeats kept")
+}

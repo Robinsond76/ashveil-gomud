@@ -122,3 +122,46 @@ func SenseBeforePick(userID, roomID int, lockID string) {
 		ts.SenseBeforePick(userID, roomID, lockID)
 	}
 }
+
+// Choice is one archetype as offered during character creation (Phase 22a).
+type Choice struct {
+	ID          string
+	Name        string
+	Description string
+	Skills      []string
+	// Kit is the display names of the starter kit's items.
+	Kit []string
+}
+
+// Creator is optionally implemented by the provider (Phase 22a): the
+// archetype step of character creation. ChooseAtCreation commits the
+// choice and grants its kit on the game loop; text is player-facing either
+// way.
+type Creator interface {
+	CreationChoices() []Choice
+	ChooseAtCreation(userID int, archetypeID string) (text string, ok bool)
+}
+
+// CreationChoices is the archetypes to offer a character during creation.
+// It is nil without a provider that creates, or once the user already has
+// an archetype, so creation skips the step.
+func CreationChoices(userID int) []Choice {
+	p := current()
+	c, ok := p.(Creator)
+	if !ok {
+		return nil
+	}
+	if _, chosen := p.PlayerArchetype(userID); chosen {
+		return nil
+	}
+	return c.CreationChoices()
+}
+
+// ChooseAtCreation commits a creation-time choice; ok is false without a
+// provider that creates.
+func ChooseAtCreation(userID int, archetypeID string) (string, bool) {
+	if c, ok := current().(Creator); ok {
+		return c.ChooseAtCreation(userID, archetypeID)
+	}
+	return "", false
+}
