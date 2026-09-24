@@ -2,17 +2,13 @@ package camping
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
-	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/standing"
@@ -30,6 +26,11 @@ type innSettings struct {
 	RestDuration     time.Duration
 	FatigueRecovery  int
 	WellRestedBuffId int
+	// Phase 23a rest tiers: the camp tier's buff, and each tier's real-time
+	// duration (converted to rounds when granted).
+	RestedBuffId       int
+	RestedDuration     time.Duration
+	WellRestedDuration time.Duration
 }
 
 func defaultInnSettings() innSettings {
@@ -39,6 +40,10 @@ func defaultInnSettings() innSettings {
 		RestDuration:     60 * time.Second,
 		FatigueRecovery:  60,
 		WellRestedBuffId: 1030,
+
+		RestedBuffId:       1033,
+		RestedDuration:     15 * time.Minute,
+		WellRestedDuration: 30 * time.Minute,
 	}
 }
 
@@ -60,6 +65,15 @@ func parseInnSettings(get func(string) any) innSettings {
 	}
 	if n, ok := configInt(get("WellRestedBuffId")); ok && n > 0 {
 		s.WellRestedBuffId = n
+	}
+	if n, ok := configInt(get("RestedBuffId")); ok && n > 0 {
+		s.RestedBuffId = n
+	}
+	if d, ok := configSeconds(get("RestedDuration")); ok && d > 0 {
+		s.RestedDuration = d
+	}
+	if d, ok := configSeconds(get("WellRestedDuration")); ok && d > 0 {
+		s.WellRestedDuration = d
 	}
 	return s
 }
@@ -104,6 +118,8 @@ func (m *CampingModule) resetInnState() {
 	m.stays = map[int]camping.InnStay{}
 	m.innRecoveryApplied = map[int]bool{}
 	m.wellRestedPending = map[int]bool{}
+	m.restedPending = map[int]bool{}
+	m.owed = map[int]map[int]camping.OwedGrant{}
 	m.innTimers = map[int]Timer{}
 	m.innTimerGeneration = map[int]uint64{}
 }
@@ -125,34 +141,6 @@ func (m *CampingModule) companyMembers(leaderUserID int) int {
 		return len(roster)
 	}
 	return 1
-}
-
-func (m *CampingModule) liveCompanions(leaderUserID int) []*characters.Character {
-	if m.spawnedCompanions != nil {
-		return m.spawnedCompanions(leaderUserID)
-	}
-	var out []*characters.Character
-	for _, ref := range survival.CurrentRoster(leaderUserID) {
-		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
-		if !ok {
-			continue
-		}
-		instanceID, ok := company.InstanceFor(leaderUserID, companionID)
-		if !ok {
-			continue
-		}
-		if mob := mobs.GetInstance(instanceID); mob != nil {
-			out = append(out, &mob.Character)
-		}
-	}
-	return out
-}
-
-func (m *CampingModule) applyBuff(c *characters.Character, buffID int) error {
-	if m.grantBuff != nil {
-		return m.grantBuff(c, buffID)
-	}
-	return c.AddBuff(buffID, false)
 }
 
 func (m *CampingModule) isTravelling(leaderUserID int) bool {
@@ -461,69 +449,4 @@ func (m *CampingModule) innStatusTextLocked(leaderUserID int) string {
 			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue)))
 	}
 	return strings.Join(lines, "\n")
-}
-
-// onNewRound grants owed Well Rested buffs on the game loop: to the leader
-// and every spawned companion, once the leader is online. A companion not
-// spawned at that moment misses out. The completed stay is then removed.
-func (m *CampingModule) onNewRound(e events.Event) events.ListenerReturn {
-	if _, ok := e.(events.NewRound); !ok {
-		return events.Continue
-	}
-	m.grantPendingWellRested()
-	return events.Continue
-}
-
-func (m *CampingModule) grantPendingWellRested() {
-	m.mu.Lock()
-	leaders := make([]int, 0, len(m.wellRestedPending))
-	for leaderUserID, pending := range m.wellRestedPending {
-		if pending {
-			leaders = append(leaders, leaderUserID)
-		}
-	}
-	buffID := m.innSettings().WellRestedBuffId
-	m.mu.Unlock()
-	sort.Ints(leaders)
-
-	for _, leaderUserID := range leaders {
-		user := m.userByID(leaderUserID)
-		if user == nil || user.Character == nil {
-			continue // owed until the leader is back online
-		}
-		// Buffs are granted outside m.mu: character state belongs to the
-		// game loop, and nothing below calls back into camping.
-		targets := append([]*characters.Character{user.Character}, m.liveCompanions(leaderUserID)...)
-		for _, c := range targets {
-			if err := m.applyBuff(c, buffID); err != nil {
-				mudlog.Warn("camping: grant well rested", "leader", leaderUserID, "error", err)
-			}
-		}
-		m.finishStay(leaderUserID)
-		user.SendText("Your company feels well rested.")
-	}
-}
-
-// finishStay clears the owed buff and removes the finished stay.
-func (m *CampingModule) finishStay(leaderUserID int) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	if !m.wellRestedPending[leaderUserID] {
-		return
-	}
-	snapshotStay, hadStay := m.stays[leaderUserID]
-	delete(m.wellRestedPending, leaderUserID)
-	if hadStay && !snapshotStay.Resting() {
-		delete(m.stays, leaderUserID)
-		delete(m.innRecoveryApplied, leaderUserID)
-	}
-	if err := m.saveLocked(); err != nil {
-		// Retry next round; granting again only refreshes the buff.
-		m.wellRestedPending[leaderUserID] = true
-		if hadStay {
-			m.stays[leaderUserID] = snapshotStay
-			m.innRecoveryApplied[leaderUserID] = true
-		}
-		mudlog.Warn("camping: finish inn stay", "leader", leaderUserID, "error", err)
-	}
 }

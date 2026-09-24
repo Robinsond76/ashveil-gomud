@@ -138,3 +138,141 @@ func TestInnRestInWaymarkInnThroughToWellRested(t *testing.T) {
 	assert.Contains(t, joined, "You pay 10 gold")
 	assert.Contains(t, joined, "well rested")
 }
+
+type formationMap map[int]int
+
+func (f formationMap) FormationFor(int) (company.Formation, bool) { return company.Formation{}, false }
+func (f formationMap) InstanceFor(_ int, companionID int) (int, bool) {
+	id, ok := f[companionID]
+	return id, ok
+}
+func (f formationMap) LeaderAndKeyForInstance(int) (int, company.MemberKey, bool) {
+	return 0, "", false
+}
+
+func restedSpecs(t *testing.T) {
+	t.Helper()
+	buffs.SetTestFlag("rested")
+	buffs.SetTestFlag("well-rested")
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 1033, Name: "Rested", TriggerCount: 225, Flags: []string{"rested"}})
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 1030, Name: "Well Rested", TriggerCount: 450, Flags: []string{"well-rested"}})
+	t.Cleanup(func() {
+		buffs.RemoveTestBuffSpec(1033)
+		buffs.RemoveTestBuffSpec(1030)
+	})
+}
+
+func testMob(t *testing.T, instanceID int, name string, roomID int) *mobs.Mob {
+	t.Helper()
+	mob := &mobs.Mob{InstanceId: instanceID, Character: *characters.New()}
+	mob.Character.Name = name
+	mob.Character.RoomId = roomID
+	mobs.SetTestInstance(mob)
+	t.Cleanup(func() { mobs.RemoveTestInstance(instanceID) })
+	return mob
+}
+
+// TestCampRestCommandThroughToRested (Phase 23a): the camp user commands
+// in the real Fork at the Black Oak, the rest timer, and the round handler
+// with the native buff, roster, and formation seams. Bran is present and
+// gets Rested; Cara has no mob yet, is owed it, and gets it for the time
+// left once her mob spawns.
+func TestCampRestCommandThroughToRested(t *testing.T) {
+	loadShippedWorld(t)
+	restedSpecs(t)
+	fork := rooms.LoadRoom(2002)
+	require.NotNil(t, fork)
+
+	bran := testMob(t, 97011, "Bran", 2002)
+	survival.SetRosterProvider(rosterStub{refs: []survival.MemberRef{
+		{Key: survival.LeaderMemberKey, Name: "Hero"},
+		{Key: survival.CompanionMemberKey(1), Name: "Bran"},
+		{Key: survival.CompanionMemberKey(2), Name: "Cara"},
+	}})
+	formation := formationMap{1: 97011}
+	company.SetFormationProvider(formation)
+	t.Cleanup(func() {
+		survival.SetRosterProvider(nil)
+		company.SetFormationProvider(nil)
+	})
+
+	now := baseTime()
+	scheduler := &fakeScheduler{}
+	store := &fakeStore{}
+	module := newTestModule(store, scheduler, &fakeSurvival{}, func() time.Time { return now })
+	user := campUser(t, 7, 2002)
+	for _, cmd := range []string{"", "fire", "rest"} {
+		_, err := module.userCommand(cmd, user, fork, 0)
+		require.NoError(t, err)
+	}
+	now = now.Add(camping.RestDuration)
+	scheduler.fireLatest()
+	assert.False(t, user.Character.HasBuffFlag("rested"), "not granted off the loop")
+
+	module.onNewRound(events.NewRound{RoundNumber: 1})
+	require.True(t, user.Character.HasBuffFlag("rested"))
+	assert.Equal(t, 225, user.Character.GetBuffs(1033)[0].TriggersLeft, "15 minutes at the engine's 4-second rounds")
+	assert.True(t, bran.Character.HasBuffFlag("rested"))
+	require.Contains(t, store.saved.Owed[7], 2)
+
+	now = now.Add(5 * time.Minute)
+	cara := testMob(t, 97012, "Cara", 2002)
+	formation[2] = 97012
+	module.onNewRound(events.NewRound{RoundNumber: 2})
+	require.True(t, cara.Character.HasBuffFlag("rested"))
+	assert.Equal(t, 150, cara.Character.GetBuffs(1033)[0].TriggersLeft)
+	assert.Empty(t, store.saved.Owed)
+}
+
+// TestInnAfterCampReplacesRestedWithWellRested: real buffs, so a Rested
+// leader ends up holding Well Rested alone.
+func TestInnAfterCampReplacesRestedWithWellRested(t *testing.T) {
+	loadShippedWorld(t)
+	restedSpecs(t)
+	inn := rooms.LoadRoom(2003)
+	require.NotNil(t, inn)
+	survival.SetRosterProvider(rosterStub{refs: []survival.MemberRef{{Key: survival.LeaderMemberKey, Name: "Hero"}}})
+	t.Cleanup(func() { survival.SetRosterProvider(nil) })
+
+	now := baseTime()
+	scheduler := &fakeScheduler{}
+	module := newTestModule(&fakeStore{}, scheduler, &fakeSurvival{}, func() time.Time { return now })
+	user := campUser(t, 7, 2003)
+	user.Character.Gold = 30
+	require.NoError(t, user.Character.AddBuff(1033, false))
+
+	_, err := module.innCommand("rest", user, inn, 0)
+	require.NoError(t, err)
+	now = now.Add(60 * time.Second)
+	scheduler.fireLatest()
+	module.onNewRound(events.NewRound{RoundNumber: 1})
+	assert.True(t, user.Character.HasBuffFlag("well-rested"))
+	assert.Zero(t, user.Character.Buffs.TriggersLeft(1033), "Rested removed")
+	assert.False(t, user.Character.HasBuffFlag("rested"))
+}
+
+// TestPlayerSpawnEventNormalizesSavedTiers: a PlayerSpawn through the real
+// event queue reaches the registered module, which leaves one tier.
+func TestPlayerSpawnEventNormalizesSavedTiers(t *testing.T) {
+	restedSpecs(t)
+	user := campUser(t, 7, 1)
+	require.NoError(t, user.Character.AddBuff(1030, false))
+	require.NoError(t, user.Character.AddBuff(1033, false))
+	events.AddToQueue(events.PlayerSpawn{UserId: 7})
+	events.ProcessEvents()
+	assert.Positive(t, user.Character.Buffs.TriggersLeft(1030))
+	assert.Zero(t, user.Character.Buffs.TriggersLeft(1033))
+}
+
+// TestExpiredWellRestedDoesNotBlockRested: a Well Rested that ran out but
+// isn't pruned yet no longer counts as held.
+func TestExpiredWellRestedDoesNotBlockRested(t *testing.T) {
+	restedSpecs(t)
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeSurvival{}, baseTime)
+	user := campUser(t, 7, 1)
+	require.NoError(t, user.Character.AddBuff(1030, false))
+	user.Character.RemoveBuff(1030) // expired, awaiting the prune
+	require.True(t, user.Character.HasBuff(1030))
+	assert.True(t, module.applyTier(user.Character, camping.TierRested, 225, module.innSettings()))
+	assert.True(t, user.Character.HasBuffFlag("rested"))
+}

@@ -46,6 +46,11 @@ type Registry struct {
 	Stays              map[int]camping.InnStay `yaml:"stays,omitempty"`
 	InnRecoveryApplied map[int]bool            `yaml:"inn_recovery_applied,omitempty"`
 	WellRestedPending  map[int]bool            `yaml:"well_rested_pending,omitempty"`
+	// Phase 23a: a completed camp rest whose Rested tier is still owed, and
+	// tiers owed to companions that had no live mob at the grant, by
+	// leader, then companion ID.
+	RestedPending map[int]bool                      `yaml:"rested_pending,omitempty"`
+	Owed          map[int]map[int]camping.OwedGrant `yaml:"owed,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -56,7 +61,21 @@ func NewRegistry() *Registry {
 		Stays:              map[int]camping.InnStay{},
 		InnRecoveryApplied: map[int]bool{},
 		WellRestedPending:  map[int]bool{},
+		RestedPending:      map[int]bool{},
+		Owed:               map[int]map[int]camping.OwedGrant{},
 	}
+}
+
+func cloneOwed(in map[int]map[int]camping.OwedGrant) map[int]map[int]camping.OwedGrant {
+	out := make(map[int]map[int]camping.OwedGrant, len(in))
+	for leaderUserID, byCompanion := range in {
+		inner := make(map[int]camping.OwedGrant, len(byCompanion))
+		for companionID, grant := range byCompanion {
+			inner[companionID] = grant
+		}
+		out[leaderUserID] = inner
+	}
+	return out
 }
 
 func cloneBools(in map[int]bool) map[int]bool {
@@ -75,6 +94,8 @@ func (r Registry) Clone() Registry {
 		Stays:              make(map[int]camping.InnStay, len(r.Stays)),
 		InnRecoveryApplied: cloneBools(r.InnRecoveryApplied),
 		WellRestedPending:  cloneBools(r.WellRestedPending),
+		RestedPending:      cloneBools(r.RestedPending),
+		Owed:               cloneOwed(r.Owed),
 	}
 	for leaderUserID, camp := range r.Camps {
 		out.Camps[leaderUserID] = camp
@@ -150,6 +171,25 @@ func decodeRegistry(data []byte, registry *Registry) error {
 			loaded.WellRestedPending[leaderUserID] = true
 		}
 	}
+	for leaderUserID, pending := range wire.RestedPending {
+		if leaderUserID > 0 && pending {
+			loaded.RestedPending[leaderUserID] = true
+		}
+	}
+	for leaderUserID, byCompanion := range wire.Owed {
+		if leaderUserID <= 0 {
+			continue
+		}
+		for companionID, grant := range byCompanion {
+			if companionID <= 0 || !grant.Valid() {
+				continue
+			}
+			if loaded.Owed[leaderUserID] == nil {
+				loaded.Owed[leaderUserID] = map[int]camping.OwedGrant{}
+			}
+			loaded.Owed[leaderUserID][companionID] = grant
+		}
+	}
 	*registry = *loaded
 	return nil
 }
@@ -221,18 +261,25 @@ type CampingModule struct {
 	stays              map[int]camping.InnStay
 	innRecoveryApplied map[int]bool
 	wellRestedPending  map[int]bool
+	restedPending      map[int]bool
+	owed               map[int]map[int]camping.OwedGrant
 	innTimers          map[int]Timer
 	innTimerGeneration map[int]uint64
 	innCfg             innSettings
 	innCfgLoaded       bool
 
 	// Seams; nil uses the native implementation.
-	weatherIn         func(zone string) (weather.Condition, bool)
-	lookupUser        func(userID int) *users.UserRecord
-	companySize       func(leaderUserID int) int
-	spawnedCompanions func(leaderUserID int) []*characters.Character
-	grantBuff         func(c *characters.Character, buffID int) error
-	travelling        func(leaderUserID int) bool
+	weatherIn   func(zone string) (weather.Condition, bool)
+	lookupUser  func(userID int) *users.UserRecord
+	companySize func(leaderUserID int) int
+	// companionsOf returns the leader's live companion characters by
+	// companion ID, and every rostered companion ID.
+	companionsOf func(leaderUserID int) (map[int]*characters.Character, []int)
+	grantBuff    func(c *characters.Character, buffID, rounds int) error
+	removeBuff   func(c *characters.Character, buffID int)
+	hasBuff      func(c *characters.Character, buffID int) bool
+	roundSeconds func() int
+	travelling   func(leaderUserID int) bool
 
 	mu sync.Mutex
 
@@ -266,6 +313,7 @@ func init() {
 	m.plug.AddUserCommand("camp", m.userCommand, false, false)
 	m.plug.AddUserCommand("inn", m.innCommand, false, false)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
+	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
@@ -332,6 +380,8 @@ func (m *CampingModule) saveLocked() error {
 		Stays:              m.stays,
 		InnRecoveryApplied: m.innRecoveryApplied,
 		WellRestedPending:  m.wellRestedPending,
+		RestedPending:      m.restedPending,
+		Owed:               m.owed,
 	}
 	if err := m.store.Save(registry); err != nil {
 		return fmt.Errorf("camping: save failed; please retry: %w", err)
@@ -371,6 +421,12 @@ func (m *CampingModule) load() {
 	}
 	if loaded.WellRestedPending != nil {
 		m.wellRestedPending = loaded.WellRestedPending
+	}
+	if loaded.RestedPending != nil {
+		m.restedPending = loaded.RestedPending
+	}
+	if loaded.Owed != nil {
+		m.owed = loaded.Owed
 	}
 	if m.plug != nil {
 		m.innCfg = parseInnSettings(m.plug.Config.Get)
@@ -674,6 +730,9 @@ func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.C
 		return err
 	}
 	m.recoveryApplied[leaderUserID] = true
+	// Phase 23a: the Rested tier is owed in the same save, and granted on
+	// the game loop (this can run on a timer goroutine).
+	m.restedPending[leaderUserID] = true
 	if err := m.saveLocked(); err != nil {
 		// The in-memory applied marker is kept so a same-process retry cannot
 		// call survival a second time; persistence retries on the next save.

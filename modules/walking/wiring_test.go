@@ -201,3 +201,26 @@ func TestRouteStartAndArrivalChargeNoWalkingStrain(t *testing.T) {
 	assert.Empty(t, w.drains.calls)
 	assert.Empty(t, w.module.registry.Carry)
 }
+
+// TestGoWhileRestedChargesThreeQuarters: the Phase 23a camp tier through
+// the real go command. Four forest steps: 38 × 4 = 152 strain for the
+// Rested leader (1 point, 52 carried), 50 × 4 = 200 for Bran (2 points).
+func TestGoWhileRestedChargesThreeQuarters(t *testing.T) {
+	w := setupWiring(t)
+	w.place(95001)
+	require.NoError(t, w.user.Character.AddBuff(RestedBuffId, false))
+	for i := 0; i < 4; i++ {
+		from, dir := 95001, "north"
+		if i%2 == 1 {
+			from, dir = 95002, "south"
+		}
+		_, err := usercommands.Go(dir, w.user, rooms.LoadRoom(from), 0)
+		require.NoError(t, err)
+		w.user.Character.ActionPoints = 100
+	}
+	assert.Equal(t, map[survival.MemberKey]int{
+		survival.LeaderMemberKey:       1,
+		survival.CompanionMemberKey(1): 2,
+	}, w.drains.total())
+	assert.Equal(t, 52, w.module.registry.Carry[7][string(survival.LeaderMemberKey)])
+}

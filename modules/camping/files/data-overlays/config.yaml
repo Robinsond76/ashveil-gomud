@@ -17,3 +17,16 @@ PricePerMember: 5
 InnRestDuration: 60s
 InnFatigueRecovery: 60
 WellRestedBuffId: 1030
+# Phase 23a rest tiers. A finished camp rest gives the leader and every
+# live companion RestedBuffId (Rested: walking strain cut to RestedPct in
+# modules/walking) for RestedDuration; an inn stay gives Well Rested for
+# WellRestedDuration. Durations are real time (e.g. 15m, or seconds),
+# converted to rounds when granted; like every buff they only count down
+# while the holder is in the world. Well Rested replaces Rested, and a
+# camp rest never downgrades Well Rested (it still restores fatigue). A
+# rostered companion with no live mob at the grant is owed the tier and
+# gets it when its mob spawns, for the time left, until the tier would
+# have run out. Each rest grants once.
+RestedBuffId: 1033
+RestedDuration: 15m
+WellRestedDuration: 30m

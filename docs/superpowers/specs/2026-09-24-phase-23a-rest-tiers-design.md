@@ -125,7 +125,7 @@ owed:
   rostered companion IDs, and rounds per duration.
 - `modules/walking`: buff 1033 and flag `rested`, `RestedPct`, precedence,
   and a "rested 75%" note in the walking view.
-- `_datafiles/world/default/buffs/16-well_rested.yaml`: renamed.
+- `_datafiles/world/default/buffs/16-well_rested.{yaml,js}`: renamed to `16-refreshed` (the buff loader keys files by id and name).
 
 ## Constraints
 

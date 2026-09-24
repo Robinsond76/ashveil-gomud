@@ -71,11 +71,16 @@ type env struct {
 func setup(t *testing.T) *env {
 	t.Helper()
 	buffs.SetTestFlag(WellRestedFlag)
-	for _, id := range []int{WellRestedBuffId, ExhaustedBuffId, CollapsedBuffId} {
+	buffs.SetTestFlag(RestedFlag)
+	for _, id := range []int{WellRestedBuffId, ExhaustedBuffId, CollapsedBuffId, RestedBuffId} {
 		spec := &buffs.BuffSpec{BuffId: id, Name: "band", TriggerCount: 1}
 		if id == WellRestedBuffId {
 			spec.Flags = []string{WellRestedFlag}
 			spec.TriggerCount = 450
+		}
+		if id == RestedBuffId {
+			spec.Flags = []string{RestedFlag}
+			spec.TriggerCount = 225
 		}
 		buffs.SetTestBuffSpec(spec)
 	}
@@ -88,7 +93,7 @@ func setup(t *testing.T) *env {
 	}
 	users.ResetActiveUsers()
 	t.Cleanup(func() {
-		for _, id := range []int{WellRestedBuffId, ExhaustedBuffId, CollapsedBuffId} {
+		for _, id := range []int{WellRestedBuffId, ExhaustedBuffId, CollapsedBuffId, RestedBuffId} {
 			buffs.RemoveTestBuffSpec(id)
 		}
 		for _, id := range []string{"forest", "city", "snow"} {
@@ -228,6 +233,7 @@ func TestParseSettingsReadsConfigAndKeepsDefaults(t *testing.T) {
 			"Biomes":        []any{map[any]any{"Biome": "Forest", "Strain": 60}, map[any]any{"Biome": "bog", "Strain": -1}},
 			"ChilledPct":    110,
 			"WellRestedPct": 40,
+			"RestedPct":     80,
 		}[name]
 	})
 	assert.Equal(t, 3, s.TickRounds)
@@ -237,6 +243,7 @@ func TestParseSettingsReadsConfigAndKeepsDefaults(t *testing.T) {
 	assert.Equal(t, 110, s.Cold.ChilledPct)
 	assert.Equal(t, 150, s.Cold.FrostbittenPct, "unset keeps the default")
 	assert.Equal(t, 40, s.WellRestedPct)
+	assert.Equal(t, 80, s.RestedPct)
 
 	d := parseSettings(func(string) any { return nil })
 	assert.Equal(t, DefaultSettings(), d)
@@ -293,6 +300,41 @@ func TestWellRestedHalvesStrain(t *testing.T) {
 	e.steps(7, 1, 2, 4) // forest 50 × 50% = 25
 	assert.Equal(t, 1, e.fatigueDrained()[survival.LeaderMemberKey])
 	assert.Zero(t, e.m.registry.Carry[7][string(survival.LeaderMemberKey)])
+}
+
+// TestRestedCutsStrainByAQuarter: the camp tier (Phase 23a).
+func TestRestedCutsStrainByAQuarter(t *testing.T) {
+	e := setup(t)
+	u := e.addUser(t, 7, 1)
+	require.NoError(t, u.Character.AddBuff(RestedBuffId, false))
+	e.steps(7, 1, 2, 4) // forest 50 × 75% = 38 (37.5 rounds half up) × 4 = 152
+	assert.Equal(t, 1, e.fatigueDrained()[survival.LeaderMemberKey])
+	assert.Equal(t, 52, e.m.registry.Carry[7][string(survival.LeaderMemberKey)])
+}
+
+// TestWellRestedWinsOverRested: a member somehow holding both tiers walks
+// at the better one, never both.
+func TestWellRestedWinsOverRested(t *testing.T) {
+	e := setup(t)
+	u := e.addUser(t, 7, 1)
+	require.NoError(t, u.Character.AddBuff(RestedBuffId, false))
+	require.NoError(t, u.Character.AddBuff(WellRestedBuffId, false))
+	e.steps(7, 1, 2, 4) // forest 50 × 50% = 25, not 50 × 50% × 75%
+	assert.Equal(t, 1, e.fatigueDrained()[survival.LeaderMemberKey])
+	assert.Zero(t, e.m.registry.Carry[7][string(survival.LeaderMemberKey)])
+
+	lines := strings.Join(e.m.report(u, e.rooms[1]), "\n")
+	assert.Contains(t, lines, "well rested 50%")
+	assert.NotContains(t, lines, "rested 75%")
+}
+
+func TestStrainViewNamesRestedTier(t *testing.T) {
+	e := setup(t)
+	u := e.addUser(t, 7, 1)
+	require.NoError(t, u.Character.AddBuff(RestedBuffId, false))
+	lines := strings.Join(e.m.report(u, e.rooms[1]), "\n")
+	assert.Contains(t, lines, "You: 38 strain per step")
+	assert.Contains(t, lines, "— rested 75%")
 }
 
 func TestColdExposureRaisesStrain(t *testing.T) {
@@ -433,17 +475,22 @@ func TestShippedBuffsLoadAndNeverTouchVitality(t *testing.T) {
 	t.Chdir(filepath.Join(filepath.Dir(thisFile), "..", ".."))
 	require.NoError(t, configs.ReloadConfig())
 
-	flagData, err := files.ReadFile("files/datafiles/buffs-flags/well-rested.yaml")
-	require.NoError(t, err)
-	var flag buffs.FlagSpec
-	require.NoError(t, yaml.Unmarshal(flagData, &flag))
-	require.NoError(t, flag.Validate())
-	assert.Equal(t, WellRestedFlag, flag.Flag)
-	assert.True(t, strings.HasSuffix("files/datafiles/buffs-flags/well-rested.yaml", flag.Filepath()))
+	for path, want := range map[string]string{
+		"files/datafiles/buffs-flags/well-rested.yaml": WellRestedFlag,
+		"files/datafiles/buffs-flags/rested.yaml":      RestedFlag,
+	} {
+		flagData, err := files.ReadFile(path)
+		require.NoError(t, err)
+		var flag buffs.FlagSpec
+		require.NoError(t, yaml.Unmarshal(flagData, &flag))
+		require.NoError(t, flag.Validate())
+		assert.Equal(t, want, flag.Flag)
+		assert.True(t, strings.HasSuffix(path, flag.Filepath()))
+	}
 
 	paths, err := fs.Glob(files, "files/datafiles/buffs/*.yaml")
 	require.NoError(t, err)
-	require.Len(t, paths, 3)
+	require.Len(t, paths, 4)
 	for _, path := range paths {
 		data, err := files.ReadFile(path)
 		require.NoError(t, err)
@@ -470,6 +517,10 @@ func TestShippedBuffsLoadAndNeverTouchVitality(t *testing.T) {
 	require.NoError(t, u.Character.AddBuff(WellRestedBuffId, false))
 	assert.True(t, u.Character.HasBuffFlag(WellRestedFlag))
 	assert.Equal(t, 450, u.Character.GetBuffs(WellRestedBuffId)[0].TriggersLeft)
+	require.NoError(t, u.Character.AddBuff(RestedBuffId, false))
+	assert.True(t, u.Character.HasBuffFlag(RestedFlag))
+	assert.Equal(t, "Rested", u.Character.GetBuffs(RestedBuffId)[0].Name())
+	assert.Equal(t, 225, u.Character.GetBuffs(RestedBuffId)[0].TriggersLeft, "15 minutes at 4-second rounds")
 }
 
 func TestStrainCommandListsCostAndFactors(t *testing.T) {

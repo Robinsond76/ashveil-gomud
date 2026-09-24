@@ -113,6 +113,11 @@ type innEnv struct {
 	now       *time.Time
 	buffs     *[]buffCall
 	companion *characters.Character
+	ledger    *buffLedger
+	// absent lists rostered companion IDs with no live mob.
+	absent []int
+	// returned holds absent companions whose mobs have since spawned.
+	returned map[int]*characters.Character
 }
 
 func newInnEnv(t *testing.T) *innEnv {
@@ -122,11 +127,19 @@ func newInnEnv(t *testing.T) *innEnv {
 	e.module = newTestModule(e.store, e.scheduler, e.surv, func() time.Time { return *e.now })
 	e.companion = &characters.Character{Name: "Bran"}
 	e.module.companySize = func(int) int { return 2 }
-	e.module.spawnedCompanions = func(int) []*characters.Character { return []*characters.Character{e.companion} }
-	e.module.grantBuff = func(c *characters.Character, id int) error {
-		*e.buffs = append(*e.buffs, buffCall{c.Name, id})
-		return nil
+	e.module.companionsOf = func(int) (map[int]*characters.Character, []int) {
+		live := map[int]*characters.Character{}
+		roster := append([]int(nil), e.absent...)
+		for id, c := range e.returned {
+			live[id] = c
+		}
+		if e.companion != nil {
+			live[1] = e.companion
+			roster = append(roster, 1)
+		}
+		return live, roster
 	}
+	e.ledger = installLedger(e.module, e.buffs)
 	return e
 }
 
@@ -351,11 +364,19 @@ func TestParseInnSettings(t *testing.T) {
 	s := parseInnSettings(func(name string) any {
 		return map[string]any{"InnRoomTag": "tavern", "PricePerMember": 0, "InnRestDuration": "90s", "InnFatigueRecovery": 45, "WellRestedBuffId": 2000}[name]
 	})
-	assert.Equal(t, innSettings{RoomTag: "tavern", PricePerMember: 0, RestDuration: 90 * time.Second, FatigueRecovery: 45, WellRestedBuffId: 2000}, s)
+	want := defaultInnSettings()
+	want.RoomTag, want.PricePerMember, want.RestDuration, want.FatigueRecovery, want.WellRestedBuffId = "tavern", 0, 90*time.Second, 45, 2000
+	assert.Equal(t, want, s)
+	tiers := parseInnSettings(func(name string) any {
+		return map[string]any{"RestedBuffId": 2001, "RestedDuration": "10m", "WellRestedDuration": 1200}[name]
+	})
+	assert.Equal(t, 2001, tiers.RestedBuffId)
+	assert.Equal(t, 10*time.Minute, tiers.RestedDuration)
+	assert.Equal(t, 20*time.Minute, tiers.WellRestedDuration, "a bare number is seconds")
 	d := parseInnSettings(func(string) any { return nil })
 	assert.Equal(t, defaultInnSettings(), d)
 	bad := parseInnSettings(func(name string) any {
-		return map[string]any{"PricePerMember": -3, "InnRestDuration": "soon", "InnFatigueRecovery": 0}[name]
+		return map[string]any{"PricePerMember": -3, "InnRestDuration": "soon", "InnFatigueRecovery": 0, "RestedBuffId": -1, "RestedDuration": "0s", "WellRestedDuration": "later"}[name]
 	})
 	assert.Equal(t, defaultInnSettings(), bad)
 }
@@ -375,9 +396,10 @@ func TestInnAndCampTimersRaceTheGameLoop(t *testing.T) {
 		surv := &lockedSurvival{inner: &fakeSurvival{}}
 		module := newTestModule(&fakeStore{}, realScheduler{}, surv, clock)
 		module.companySize = func(int) int { return 1 }
-		module.spawnedCompanions = func(int) []*characters.Character { return nil }
-		var grants int
-		module.grantBuff = func(*characters.Character, int) error { grants++; return nil }
+		module.companionsOf = func(int) (map[int]*characters.Character, []int) { return nil, nil }
+		grants := map[int]int{}
+		module.grantBuff = func(_ *characters.Character, id, _ int) error { grants[id]++; return nil }
+		module.hasBuff = func(*characters.Character, int) bool { return false }
 		innUser := campUser(t, 7, 2003)
 		innUser.Character.Gold = 100
 		campUser8 := users.NewUserRecord(8, 1)
@@ -405,14 +427,14 @@ func TestInnAndCampTimersRaceTheGameLoop(t *testing.T) {
 			module.onNewRound(events.NewRound{RoundNumber: 1})
 			module.mu.Lock()
 			_, stay := module.stays[7]
-			campDone := module.recoveryApplied[8]
+			campDone := module.recoveryApplied[8] && !module.restedPending[8]
 			module.mu.Unlock()
 			if !stay && campDone {
 				break
 			}
 			time.Sleep(time.Millisecond)
 		}
-		assert.Equal(t, 1, grants, "Well Rested granted exactly once, on the loop")
+		assert.Equal(t, map[int]int{1030: 1, 1033: 1}, grants, "Well Rested and Rested each granted exactly once, on the loop")
 		assert.Equal(t, 2, surv.calls(), "one inn and one camp recovery")
 	}
 }

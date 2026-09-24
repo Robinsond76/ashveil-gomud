@@ -1,0 +1,14 @@
+# Phase 23a Rested, granted by modules/camping when a company finishes a
+# camp rest: the leader and every live companion (an absent companion on
+# restoration, while it would still be active). Its rested flag cuts
+# walking strain to RestedPct (modules/walking). modules/camping overrides
+# the count with its RestedDuration (15 minutes); 225 rounds is the same
+# at 4-second rounds. Never granted over Well Rested, and removed by it.
+buffid: 1033
+name: Rested
+description: A night by the fire has taken the edge off your weariness.
+secret: false
+triggerrate: 1 round
+triggercount: 225
+flags:
+  - rested

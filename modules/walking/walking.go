@@ -46,9 +46,13 @@ const (
 	WellRestedBuffId = 1030
 	ExhaustedBuffId  = 1031
 	CollapsedBuffId  = 1032
+	// RestedBuffId is the Phase 23a camp tier, granted by modules/camping.
+	RestedBuffId = 1033
 
 	// WellRestedFlag is the buff flag that halves walking strain.
 	WellRestedFlag = "well-rested"
+	// RestedFlag is the buff flag of the weaker camp tier (Phase 23a).
+	RestedFlag = "rested"
 
 	// ExhaustedMax is the highest fatigue that counts as Exhausted; 0 is
 	// Collapsed. It matches survival's critical band (1..25).
@@ -61,6 +65,7 @@ type Settings struct {
 	Terrain       walking.TerrainTable
 	Cold          walking.ColdSettings
 	WellRestedPct int
+	RestedPct     int
 }
 
 // DefaultSettings mirrors files/data-overlays/config.yaml.
@@ -70,6 +75,7 @@ func DefaultSettings() Settings {
 		Terrain:       walking.DefaultTerrain(),
 		Cold:          walking.DefaultColdSettings(),
 		WellRestedPct: 50,
+		RestedPct:     75,
 	}
 }
 
@@ -93,6 +99,7 @@ func parseSettings(get func(string) any) Settings {
 	positive("FrostbittenPct", &s.Cold.FrostbittenPct)
 	positive("HypothermicPct", &s.Cold.HypothermicPct)
 	positive("WellRestedPct", &s.WellRestedPct)
+	positive("RestedPct", &s.RestedPct)
 
 	if list, ok := get("Settlements").([]any); ok {
 		settlements := map[string]bool{}
@@ -342,7 +349,7 @@ type stepMember struct {
 	factors walking.Factors
 	riding  bool
 	cold    bool
-	rested  bool
+	rested  string // the rest tier's view note, "" for none
 	cost    int
 }
 
@@ -414,9 +421,15 @@ func (m *WalkingModule) planStep(leader *users.UserRecord, dest *rooms.Room, fro
 			sm.factors.ColdPct = walking.ColdPct(exposure, m.settings.Cold)
 			sm.cold = sm.factors.ColdPct > 100
 		}
-		if mb.Character != nil && mb.Character.HasBuffFlag(WellRestedFlag) {
-			sm.rested = true
+		// The better rest tier wins; the two never stack.
+		switch {
+		case mb.Character == nil:
+		case mb.Character.HasBuffFlag(WellRestedFlag):
+			sm.rested = "well rested"
 			sm.factors.WellRestedPct = m.settings.WellRestedPct
+		case mb.Character.HasBuffFlag(RestedFlag):
+			sm.rested = "rested"
+			sm.factors.WellRestedPct = m.settings.RestedPct
 		}
 		sm.cost = walking.StepCost(p.terrain, sm.factors)
 		p.members = append(p.members, sm)
@@ -638,8 +651,8 @@ func (m *WalkingModule) report(user *users.UserRecord, room *rooms.Room) []strin
 		if sm.cold {
 			notes = append(notes, fmt.Sprintf("cold %d%%", sm.factors.ColdPct))
 		}
-		if sm.rested {
-			notes = append(notes, fmt.Sprintf("well rested %d%%", sm.factors.WellRestedPct))
+		if sm.rested != "" {
+			notes = append(notes, fmt.Sprintf("%s %d%%", sm.rested, sm.factors.WellRestedPct))
 		}
 		line := fmt.Sprintf("  %s: %d strain per step (about %d fatigue per 10 steps)", who, sm.cost, (sm.cost*10+50)/walking.CentiPerPoint)
 		if len(notes) > 0 {

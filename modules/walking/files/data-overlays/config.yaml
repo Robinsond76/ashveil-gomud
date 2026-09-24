@@ -10,7 +10,9 @@
 # Multipliers (clamped to 25%..400% combined): the company load band's
 # FatiguePct, outdoor weather ExertionPct, the member's cold exposure band
 # (ChilledPct, FrostbittenPct, HypothermicPct), the mount's FatiguePct for
-# its riders, and WellRestedPct while the member has the well-rested flag.
+# its riders, and WellRestedPct while the member has the well-rested flag
+# or RestedPct while it has the weaker camp rested flag (Phase 23a; the
+# better tier wins, they never stack).
 #
 # Every TickRounds rounds, members at fatigue 1..25 get the Exhausted buff
 # (1031) and members at 0 the Collapsed buff (1032). A Collapsed company
@@ -36,3 +38,4 @@ ChilledPct: 125
 FrostbittenPct: 150
 HypothermicPct: 200
 WellRestedPct: 50
+RestedPct: 75

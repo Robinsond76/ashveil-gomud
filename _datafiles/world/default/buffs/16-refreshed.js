@@ -6,8 +6,8 @@
  * @returns {void}
  */
 function onStart(actor, triggersLeft) {
-    SendUserMessage(actor.UserId(),     'You feel very well rested.');
-    SendRoomMessage(actor.GetRoomId(),  actor.GetCharacterName(true)+' looks very well rested.', actor.UserId());
+    SendUserMessage(actor.UserId(),     'You feel refreshed.');
+    SendRoomMessage(actor.GetRoomId(),  actor.GetCharacterName(true)+' looks refreshed.', actor.UserId());
 }
 
 /**

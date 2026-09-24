@@ -29,7 +29,7 @@ Each task is tests first.
   `TestOwedTierExpires`, `TestOwedSurvivesReload`,
   `TestCampOwedNeverDowngradesOwedWellRested`.
 - [ ] **Task 6: spawn normalization and buff 16** (`modules/camping`,
-  `_datafiles/world/default/buffs/16-well_rested.yaml`). Tests first:
+  `_datafiles/world/default/buffs/16-well_rested.*` → `16-refreshed.*`). Tests first:
   `TestPlayerSpawnDropsRestedUnderWellRested` (through the `PlayerSpawn`
   listener), `TestOnlyOneShippedBuffIsNamedWellRested` (reads the shipped
   default world and module buff files).

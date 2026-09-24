@@ -1,0 +1,4 @@
+flag: rested
+name: "Rested"
+description: "Cuts walking fatigue by a quarter (Phase 23a camp rest tier, modules/walking)."
+locked: true

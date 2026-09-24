@@ -99,10 +99,12 @@ func TerrainCost(in Terrain, table TerrainTable) int {
 // Factors are the percentage multipliers on one member's step. 0 means 100
 // (neutral), so a zero value is always safe.
 type Factors struct {
-	LoadPct       int
-	WeatherPct    int
-	ColdPct       int
-	MountPct      int
+	LoadPct    int
+	WeatherPct int
+	ColdPct    int
+	MountPct   int
+	// WellRestedPct is the member's rest tier: Well Rested or, since
+	// Phase 23a, the weaker camp Rested. Only one tier ever applies.
 	WellRestedPct int
 }
 
