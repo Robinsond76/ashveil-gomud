@@ -35,6 +35,10 @@ func (w *fakeChemWorld) Tell(leaderUserID int, text string) {
 	w.told[leaderUserID] = append(w.told[leaderUserID], text)
 }
 
+// chemTemplate is a mob template no fixture world defines, so companion
+// names stay the fallback "A companion" whatever specs other tests load.
+const chemTemplate = 990058
+
 var (
 	c1Key = domain.CompanionMemberKey(1)
 	c2Key = domain.CompanionMemberKey(2)
@@ -47,7 +51,7 @@ func newChemistryModule(t *testing.T) (*CompanyModule, *fakeChemWorld, *fakeRunt
 	t.Helper()
 	runtime := &fakeRuntime{live: map[int]bool{101: true, 102: true}}
 	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
-		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}},
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: chemTemplate}, {ID: 2, MobTemplateID: chemTemplate}}},
 	}}, runtime)
 	module.world = newFakeWorld()
 	world := newFakeChemWorld()
@@ -221,7 +225,7 @@ func TestChemistryRecruitDilutesTheBand(t *testing.T) {
 	module, world, _ := newChemistryModule(t)
 	module.registry.Put(domain.Record{
 		LeaderUserID: 7,
-		Companions:   []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}},
+		Companions:   []domain.Companion{{ID: 1, MobTemplateID: chemTemplate}, {ID: 2, MobTemplateID: chemTemplate}},
 		Service: []domain.Service{
 			{Member: domain.LeaderMemberKey, Rounds: 9, Saved: 9},
 			{Member: c1Key, Rounds: 9, Saved: 9},
