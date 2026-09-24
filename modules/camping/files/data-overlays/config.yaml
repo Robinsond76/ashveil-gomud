@@ -23,10 +23,11 @@ WellRestedBuffId: 1030
 # WellRestedDuration. Durations are real time (e.g. 15m, or seconds),
 # converted to rounds when granted; like every buff they only count down
 # while the holder is in the world. Well Rested replaces Rested, and a
-# camp rest never downgrades Well Rested (it still restores fatigue). A
-# rostered companion with no live mob at the grant is owed the tier and
-# gets it when its mob spawns, for the time left, until the tier would
-# have run out. Each rest grants once.
+# camp rest never downgrades Well Rested (it still restores fatigue).
+# Companion mobs lose their buffs when they despawn, so each companion's
+# grant is kept until it would have run out: one absent at the grant, or
+# respawned after a relog, restart, or copyover, gets the tier for the
+# time left. Each rest grants once and is never extended.
 RestedBuffId: 1033
 RestedDuration: 15m
 WellRestedDuration: 30m

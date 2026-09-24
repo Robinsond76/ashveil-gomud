@@ -1,10 +1,11 @@
 buffid: 16
 # Phase 23a: renamed from "Well Rested" so that name belongs only to the
-# Ashveil inn tier (buff 1030). A nap (buff 15, Sleeping) ends with this.
+# Ashveil inn tier (buff 1030). A nap (buff 15, Sleeping) ends with this,
+# and the phoenix elixir grants it.
 # It is not a rest tier and does nothing to walking. The id and effects
 # are unchanged, so saved copies load as before.
 name: Refreshed
-description: A short sleep has left you refreshed.
+description: You feel refreshed.
 triggerrate: 1 round
 triggercount: 75 # lasts 5 minutes?
 statmods:

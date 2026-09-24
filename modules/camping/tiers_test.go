@@ -177,13 +177,19 @@ func TestTierGrantSaveFailureRetries(t *testing.T) {
 	e, user := heroEnv(t)
 	e.absent = []int{2}
 	e.completeCamp(t, user)
+	events.ProcessEvents() // drain earlier tests' messages
+	messages := captureMessages(t)
 	e.store.failNextSave = true
 	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	events.ProcessEvents()
+	assert.NotContains(t, strings.Join(*messages, "\n"), "Rested", "no announcement until the grant is saved")
 	assert.True(t, e.module.restedPending[7], "restored for a retry")
 	assert.Empty(t, e.module.owed, "the owed entry isn't kept without its save")
 	assert.True(t, e.store.saved.RestedPending[7])
 
 	e.module.onNewRound(events.NewRound{RoundNumber: 2})
+	events.ProcessEvents()
+	assert.Contains(t, strings.Join(*messages, "\n"), "Your company is Rested")
 	assert.Len(t, *e.buffs, 4, "the retry only refreshes")
 	assert.False(t, e.store.saved.RestedPending[7])
 	assert.Contains(t, e.store.saved.Owed[7], 2)
@@ -236,11 +242,32 @@ func TestAbsentCompanionGetsOwedTierOnRestoration(t *testing.T) {
 	e.module.onNewRound(events.NewRound{RoundNumber: 3})
 	assert.Equal(t, buffCall{"Cara", 1033}, (*e.buffs)[2])
 	assert.Equal(t, 150, e.ledger.rounds[buffCall{"Cara", 1033}], "the 10 minutes left")
-	assert.Empty(t, e.store.saved.Owed, "granted once, then cleared")
-
-	delete(e.ledger.held, cara) // the mob despawns and respawns
 	e.module.onNewRound(events.NewRound{RoundNumber: 4})
-	assert.Len(t, *e.buffs, 3, "each rest grants once")
+	assert.Len(t, *e.buffs, 3, "not granted again while she holds it")
+	assert.Contains(t, e.store.saved.Owed[7], 2, "kept until it would have expired")
+}
+
+// TestPresentCompanionRegrantedAfterRespawn: a companion mob's buffs die
+// with it (a relog, restart, or copyover), so a companion granted at the
+// rest gets the tier back for the time left, never longer.
+func TestPresentCompanionRegrantedAfterRespawn(t *testing.T) {
+	e, user := heroEnv(t)
+	e.completeCamp(t, user)
+	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	require.Equal(t, []buffCall{{"Hero", 1033}, {"Bran", 1033}}, *e.buffs)
+
+	*e.now = e.now.Add(6 * time.Minute)
+	e.companion = &characters.Character{Name: "Bran"} // respawned, no buffs
+	e.module.onNewRound(events.NewRound{RoundNumber: 2})
+	assert.Equal(t, buffCall{"Bran", 1033}, (*e.buffs)[2])
+	assert.Equal(t, 135, e.ledger.rounds[buffCall{"Bran", 1033}], "the 9 minutes left, not a fresh 15")
+	assert.Len(t, *e.buffs, 3, "the leader's own buff is saved with them")
+
+	*e.now = e.now.Add(9 * time.Minute)
+	e.companion = &characters.Character{Name: "Bran"}
+	e.module.onNewRound(events.NewRound{RoundNumber: 3})
+	assert.Len(t, *e.buffs, 3, "nothing once it would have run out")
+	assert.Empty(t, e.store.saved.Owed)
 }
 
 func TestOwedTierExpires(t *testing.T) {
@@ -282,13 +309,89 @@ func TestOwedSurvivesReload(t *testing.T) {
 	calls := []buffCall{}
 	ledger := installLedger(child, &calls)
 	cara := &characters.Character{Name: "Cara"}
+	bran := &characters.Character{Name: "Bran"} // respawned by the restart
 	child.companionsOf = func(int) (map[int]*characters.Character, []int) {
-		return map[int]*characters.Character{2: cara}, []int{2}
+		return map[int]*characters.Character{1: bran, 2: cara}, []int{1, 2}
 	}
 	child.onNewRound(events.NewRound{RoundNumber: 1})
-	assert.Equal(t, []buffCall{{"Cara", 1033}}, calls)
+	assert.Equal(t, []buffCall{{"Bran", 1033}, {"Cara", 1033}}, calls)
 	assert.Equal(t, 180, ledger.rounds[buffCall{"Cara", 1033}], "12 minutes left after the restart")
-	assert.Empty(t, e.store.saved.Owed)
+	assert.Equal(t, 180, ledger.rounds[buffCall{"Bran", 1033}])
+	assert.Contains(t, e.store.saved.Owed[7], 2)
+}
+
+// TestRestedPendingSurvivesReloadAndGrantsOnce: a completed camp whose
+// grant is still owed when the server restarts.
+func TestRestedPendingSurvivesReloadAndGrantsOnce(t *testing.T) {
+	e, user := heroEnv(t)
+	e.completeCamp(t, user)
+	require.True(t, e.store.saved.RestedPending[7])
+
+	child := newTestModule(e.store, &fakeScheduler{}, &fakeSurvival{}, func() time.Time { return *e.now })
+	child.load()
+	require.NoError(t, child.loadErr)
+	calls := []buffCall{}
+	installLedger(child, &calls)
+	child.companionsOf = e.module.companionsOf
+	child.onNewRound(events.NewRound{RoundNumber: 1})
+	child.onNewRound(events.NewRound{RoundNumber: 2})
+	assert.Equal(t, []buffCall{{"Hero", 1033}, {"Bran", 1033}}, calls)
+	assert.False(t, e.store.saved.RestedPending[7])
+}
+
+// TestOverdueCampAtLoadGrantsRestedOnce: a camp rest that finished while
+// the server was down completes on load and is granted on the loop.
+func TestOverdueCampAtLoadGrantsRestedOnce(t *testing.T) {
+	e, user := heroEnv(t)
+	room := eligibleRoom()
+	e.module.establish(user, room)
+	e.module.lightFire(user, room)
+	e.module.startRest(user, room)
+
+	surv := &fakeSurvival{}
+	child := newTestModule(e.store, &fakeScheduler{}, surv, func() time.Time { return baseTime().Add(time.Hour) })
+	child.load()
+	require.NoError(t, child.loadErr)
+	assert.Equal(t, []int{camping.FatigueRecovery}, surv.amounts)
+	assert.True(t, e.store.saved.RestedPending[7])
+	calls := []buffCall{}
+	installLedger(child, &calls)
+	child.companionsOf = e.module.companionsOf
+	child.onNewRound(events.NewRound{RoundNumber: 1})
+	child.onNewRound(events.NewRound{RoundNumber: 2})
+	assert.Equal(t, []buffCall{{"Hero", 1033}, {"Bran", 1033}}, calls)
+
+	grandchild := newTestModule(e.store, &fakeScheduler{}, surv, func() time.Time { return baseTime().Add(2 * time.Hour) })
+	grandchild.load()
+	assert.Len(t, surv.amounts, 1, "a copyover replays nothing")
+	assert.False(t, grandchild.restedPending[7])
+}
+
+// TestNoRestedMessageWhenNothingGranted: a leader alone, already Well
+// Rested, hears nothing about Rested.
+func TestNoRestedMessageWhenNothingGranted(t *testing.T) {
+	e, user := heroEnv(t)
+	e.companion = nil
+	e.ledger.hold(user.Character, 1030)
+	events.ProcessEvents() // drain earlier tests' messages
+	messages := captureMessages(t)
+	e.completeCamp(t, user)
+	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	events.ProcessEvents()
+	assert.Empty(t, *e.buffs)
+	assert.NotContains(t, strings.Join(*messages, "\n"), "Your company is Rested")
+	assert.False(t, e.store.saved.RestedPending[7], "the grant is still settled")
+}
+
+// TestWellRestedRemovesEveryLowerTierHeld: a member holding both tiers
+// (a script or admin grant) keeps only Well Rested.
+func TestWellRestedRemovesEveryLowerTierHeld(t *testing.T) {
+	e, user := heroEnv(t)
+	e.ledger.hold(user.Character, 1030)
+	e.ledger.hold(user.Character, 1033)
+	assert.True(t, e.module.applyTier(user.Character, camping.TierWellRested, 450, e.module.innSettings()))
+	assert.Equal(t, []buffCall{{"Hero", 1033}}, e.ledger.removed)
+	assert.True(t, e.ledger.held[user.Character][1030])
 }
 
 func TestCampOwedNeverDowngradesOwedWellRested(t *testing.T) {

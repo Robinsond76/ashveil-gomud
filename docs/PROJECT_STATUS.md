@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 22c (settlement recruiters and `company recruit`) is complete and reviewed on branch `claude/phase-22c-continuation-fka8b6`, awaiting merge to `master`. That finishes the recruitment and creation spec (Phases 22a–22c).
+- **HEAD:** Phase 23a (rest tiers: camp Rested, inn Well Rested, exclusive and durable) is complete and reviewed, merged to `master`. Phase 23b (whetstones and Sharpened weapons, with the owner's 2026-09-24 amendment) is next.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -49,10 +49,13 @@ instead of duplicating them.
   archetype, granted exactly once), and Phase 22b (durable companion
   level, gear, and gold on the company record), and Phase 22c
   (settlement recruiters: free-once tutorial and paid candidates through
-  `company recruit`).
-- **Next:** the recruitment and creation spec, first on the
-  [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md),
-  is done. Pick the roadmap's next spec.
+  `company recruit`), and Phase 23a (rest tiers: a camp rest grants
+  Rested, an inn stay Well Rested, exclusive, and durable for companions).
+- **Next:** Phase 23b, the whetstone half of the
+  [rest and weapon preparation spec](superpowers/specs/2026-09-23-rest-weapon-preparation-design.md)
+  (second on the [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md)).
+  The owner amended it on 2026-09-24: a whetstone is usable on demand at
+  any time, has 10 uses, and spends one use per member sharpened.
   The Phase 19b inter-market profit question is resolved: the small
   standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
@@ -121,9 +124,62 @@ instead of duplicating them.
 | 22a | Creation step and starter kits | Complete: archetype step in `start`, per-archetype kits, owed-kit record and character claim marker, ash quarterstaff |
 | 22b | Durable companion level and gear | Complete: `MemberState` on each companion (level, experience, worn and carried items, gold), restore from the record, snapshot seams, `company gear` |
 | 22c | Recruiters and `company recruit` | Complete: recruiter rooms in config, free-once tutorial and paid candidates, claims on the company record, Waymark Inn and Trappers' Post, mobs 61–64 |
+| 23a | Rest tiers | Complete: camp Rested (buff 1033, strain 75%), exclusive with inn Well Rested, durable companion grants, buff 16 renamed Refreshed |
+| 23b | Whetstones | Next: 10-use whetstone, one use per member sharpened, usable any time; Sharpened weapons |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 23a: rest tiers (2026-09-24)
+
+- **What:** A completed camp rest now grants **Rested** (buff 1033,
+  flag `rested`, 15 real minutes, walking strain 75%) to the leader and
+  every live companion. An inn stay's **Well Rested** (1030, 30 minutes)
+  replaces it, and a camp rest never downgrades Well Rested (it still
+  restores fatigue). Grants happen on the game loop: the camp timer only
+  marks `rested_pending` in the same save as its recovery. Every
+  rostered companion's grant is kept durably (`owed`, real UTC expiry),
+  so a companion absent at the grant, or respawned after a relog,
+  restart, or copyover, gets the tier for the time left, never longer.
+  Durations are camping config (`RestedDuration`, `WellRestedDuration`,
+  `RestedBuffId`); `RestedPct` is walking config. Upstream buff 16 (a
+  nap's reward, also named Well Rested) is renamed **Refreshed**, so the
+  name means one tier. A `PlayerSpawn` listener removes Rested from a
+  player also holding Well Rested. Pure rules are in
+  `internal/camping/tiers.go`; grants are in `modules/camping/tiers.go`.
+  Design and plan: [23a spec](superpowers/specs/2026-09-24-phase-23a-rest-tiers-design.md) /
+  [23a plan](superpowers/plans/2026-09-24-phase-23a-rest-tiers.md).
+  The owner amended the whetstone rules for 23b during this phase; the
+  amendment is recorded in the parent spec.
+- **Why:** Roadmap spec 2 (rest and weapon preparation), split like
+  21a/21b: the rest tiers are 23a, whetstones 23b. Decisions were applied
+  under the owner's "merge and begin the next phase" and are recorded in
+  the spec.
+- **Verification:** `go test -race ./...`, `make generate`,
+  `make validate`. The wiring tests use the real `camp`/`inn` commands,
+  timers, the `NewRound` listener, a `PlayerSpawn` through the event
+  queue, and walking's `go` command.
+- **Review:** The independent reviewer found:
+  1. A mid-pass race: an inn timer's Well Rested marker could be cleared
+     by a Rested grant. I had also found it, and it was fixed with
+     `TestWellRestedMarkedMidPassIsNotLost`.
+  2. Companion tiers were lost on relog, restart, or copyover. Fixed:
+     durable grants for every companion, re-granted for the time left
+     (`TestPresentCompanionRegrantedAfterRespawn`; reload and wiring
+     tests extended).
+  3. A failed save re-announced the grant every round. Fixed: a grant is
+     announced only once saved.
+  4. The grant was announced when nothing was granted. Fixed.
+  5. A member holding both tiers kept Rested under Well Rested. Fixed:
+     every lower tier held is removed.
+  6. Restart tests were missing. Added for pending across a reload and
+     for an overdue camp at load.
+  7. Buff text nits. Fixed.
+
+  Accepted and recorded in the spec: "present" means a live companion
+  mob, and a persistently failing save re-grants the full duration until
+  it succeeds.
+- **Step completed:** Phase 23a. Phase 23b is next.
 
 ### Alignment display scale: −100..100 (2026-09-24)
 

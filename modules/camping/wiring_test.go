@@ -221,7 +221,16 @@ func TestCampRestCommandThroughToRested(t *testing.T) {
 	module.onNewRound(events.NewRound{RoundNumber: 2})
 	require.True(t, cara.Character.HasBuffFlag("rested"))
 	assert.Equal(t, 150, cara.Character.GetBuffs(1033)[0].TriggersLeft)
-	assert.Empty(t, store.saved.Owed)
+
+	// A relog or copyover respawns Bran without his buffs: he gets the
+	// time left back from the durable grant.
+	now = now.Add(5 * time.Minute)
+	respawned := testMob(t, 97013, "Bran", 2002)
+	formation[1] = 97013
+	module.onNewRound(events.NewRound{RoundNumber: 3})
+	require.True(t, respawned.Character.HasBuffFlag("rested"))
+	assert.Equal(t, 75, respawned.Character.GetBuffs(1033)[0].TriggersLeft, "5 minutes left")
+	assert.Contains(t, store.saved.Owed[7], 1)
 }
 
 // TestInnAfterCampReplacesRestedWithWellRested: real buffs, so a Rested

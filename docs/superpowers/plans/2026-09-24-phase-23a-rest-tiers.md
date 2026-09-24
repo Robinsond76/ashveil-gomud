@@ -40,6 +40,6 @@ Each task is tests first.
   `rested`, configured rounds) on the leader and a live companion mob, and
   an absent companion restored later. Walking wiring: a step with the
   Rested buff costs 75%.
-- [ ] **Task 8: docs and verification.** Config comments, module
+- [x] **Task 8: docs and verification.** Config comments, module
   `AGENTS.md` files, `go test -race ./...`, `make generate`,
   `make validate`, independent review, `docs/PROJECT_STATUS.md`.

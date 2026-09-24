@@ -17,8 +17,10 @@ import (
 // Phase 23a rest tiers. A completed camp rest owes the company Rested, a
 // completed inn stay Well Rested. Both are granted here, on the game loop
 // (NewRound), never from a rest timer. Tier exclusivity is
-// camping.Decide; a companion without a live mob at the grant is owed the
-// tier until it would have expired.
+// camping.Decide. Every rostered companion's grant is also kept durably
+// until it would have expired: a companion mob's buffs die with the mob,
+// so one absent at the grant, or respawned after a relog, restart, or
+// copyover, is given the tier for the time left.
 
 // --- native seams ---
 
@@ -106,12 +108,16 @@ func (m *CampingModule) heldTier(c *characters.Character, s innSettings) camping
 // applyTier gives one member a tier for rounds, removing any lower tier
 // and never downgrading a higher one. It reports whether it granted.
 func (m *CampingModule) applyTier(c *characters.Character, tier camping.Tier, rounds int, s innSettings) bool {
-	grant, remove := camping.Decide(m.heldTier(c, s), tier)
-	for _, lower := range remove {
-		m.dropBuff(c, s.tierBuff(lower))
-	}
+	grant, _ := camping.Decide(m.heldTier(c, s), tier)
 	if !grant {
 		return false
+	}
+	// Remove every lower tier held, not only the best one: a script or
+	// admin grant can leave a member holding two.
+	for lower := camping.TierRested; lower < tier; lower++ {
+		if m.holdsBuff(c, s.tierBuff(lower)) {
+			m.dropBuff(c, s.tierBuff(lower))
+		}
 	}
 	if err := m.addBuff(c, s.tierBuff(tier), rounds); err != nil {
 		mudlog.Warn("camping: grant rest tier", "tier", tier.String(), "error", err)
@@ -167,18 +173,22 @@ func (m *CampingModule) grantPendingTiers() {
 		rounds := camping.RoundsFor(duration, m.roundLength())
 		// Buffs are granted outside m.mu: character state belongs to the
 		// game loop, and nothing below calls back into camping.
-		m.applyTier(user.Character, tier, rounds, settings)
+		granted := m.applyTier(user.Character, tier, rounds, settings)
 		live, roster := m.companions(leaderUserID)
 		for _, companionID := range sortedIDs(live) {
-			m.applyTier(live[companionID], tier, rounds, settings)
+			if m.applyTier(live[companionID], tier, rounds, settings) {
+				granted = true
+			}
 		}
 		owed := map[int]camping.OwedGrant{}
 		for _, companionID := range roster {
-			if _, present := live[companionID]; !present {
-				owed[companionID] = camping.OwedGrant{BuffID: settings.tierBuff(tier), Tier: tier, ExpiresAtUTC: now.Add(duration)}
-			}
+			owed[companionID] = camping.OwedGrant{BuffID: settings.tierBuff(tier), Tier: tier, ExpiresAtUTC: now.Add(duration)}
 		}
-		m.finishGrant(leaderUserID, tier, owed, now)
+		// A failed save retries next round, so only announce a saved grant,
+		// and only one that gave anybody anything.
+		if !m.finishGrant(leaderUserID, tier, owed, now) || !granted {
+			continue
+		}
 		if tier == camping.TierWellRested {
 			user.SendText("Your company feels well rested.")
 		} else {
@@ -202,13 +212,13 @@ func sortedIDs(live map[int]*characters.Character) []int {
 // finished inn stay, and merges the new owed entries, in one save. A
 // failed save restores everything, so the next round grants again (which
 // only refreshes).
-func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed map[int]camping.OwedGrant, now time.Time) {
+func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed map[int]camping.OwedGrant, now time.Time) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	wellPending := granted == camping.TierWellRested && m.wellRestedPending[leaderUserID]
 	restedPending := m.restedPending[leaderUserID]
 	if !wellPending && !restedPending {
-		return
+		return false
 	}
 	stay, hadStay := m.stays[leaderUserID]
 	innApplied, hadInnApplied := m.innRecoveryApplied[leaderUserID]
@@ -256,14 +266,17 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 			delete(m.owed, leaderUserID)
 		}
 		mudlog.Warn("camping: finish rest tier grant", "leader", leaderUserID, "error", err)
+		return false
 	}
+	return true
 }
 
 // --- owed grants ---
 
-// restoreOwedTiers gives each owed companion that now has a live mob its
-// tier for the time remaining, and drops expired entries. Each entry is
-// granted once.
+// restoreOwedTiers gives each companion with a durable grant, whose live
+// mob holds less than that tier (it was absent at the grant, or has
+// respawned since), the tier for the time remaining; it never extends the
+// grant. Entries are dropped once expired.
 func (m *CampingModule) restoreOwedTiers() {
 	m.mu.Lock()
 	if len(m.owed) == 0 {
@@ -295,11 +308,10 @@ func (m *CampingModule) restoreOwedTiers() {
 				live, _ = m.companions(leaderUserID)
 			}
 			c, ok := live[companionID]
-			if !ok {
+			if !ok || m.heldTier(c, settings) >= grant.Tier {
 				continue
 			}
 			m.applyTier(c, grant.Tier, rounds, settings)
-			done[companionID] = grant
 		}
 		if len(done) > 0 {
 			m.clearOwed(leaderUserID, done)
@@ -316,7 +328,7 @@ func sortedOwedIDs(entries map[int]camping.OwedGrant) []int {
 	return ids
 }
 
-// clearOwed removes settled entries still unchanged since the snapshot and
+// clearOwed removes expired entries still unchanged since the snapshot and
 // saves; a failed save puts them back so the next round retries.
 func (m *CampingModule) clearOwed(leaderUserID int, done map[int]camping.OwedGrant) {
 	m.mu.Lock()

@@ -6,7 +6,7 @@
 # at 4-second rounds. Never granted over Well Rested, and removed by it.
 buffid: 1033
 name: Rested
-description: A night by the fire has taken the edge off your weariness.
+description: A rest by the fire has taken the edge off your weariness.
 secret: false
 triggerrate: 1 round
 triggercount: 225

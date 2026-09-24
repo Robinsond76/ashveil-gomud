@@ -73,7 +73,8 @@ using this design's recommendations, as in 22a–22c. Each is recorded here.
    is online and clears it. The camp itself stays until broken, as now.
    If both kinds are pending at once, Well Rested is granted and both
    are cleared.
-5. **Owed grants.** At grant time, every rostered companion without a
+5. **Owed grants.** *(Revised after review; see the end of this item.)*
+   At grant time, every rostered companion without a
    live mob is owed the tier: `Owed[leader][companionID] = {BuffID, Tier,
    ExpiresAtUTC}` where the expiry is the grant time plus the tier's
    duration. Each round, for leaders with owed entries, an entry is
@@ -89,6 +90,15 @@ using this design's recommendations, as in 22a–22c. Each is recorded here.
    tick. The leader's own buff, like every player buff, pauses while
    they're offline. Companions only spawn with an online leader, so this
    difference is small, and it is documented.
+
+   **Revised after the independent review:** a companion mob's buffs die
+   with the mob, so "not granted again when it later respawns" lost a
+   present companion's tier on a relog, restart, or copyover while the
+   leader's (saved with the user) survived. Now every rostered companion,
+   present or not, gets a durable entry, kept until it expires. Each round
+   a live companion whose mob holds less than its entry's tier gets the
+   tier for the time left. That still grants each rest once and never
+   extends it; it only restores what the mob lost.
 6. **Upstream buff 16 is renamed *Refreshed*** (same id, same effects,
    new description), so *Well Rested* names only the Ashveil inn tier.
    Buff 16 was never a rest tier (it's the end of a nap and does nothing
@@ -99,6 +109,16 @@ using this design's recommendations, as in 22a–22c. Each is recorded here.
    from a player who also holds Well Rested, so a saved character carries
    at most one tier. No other combination can be saved: buff 16 is no
    longer a tier.
+
+8. **"Present" means a live companion mob** (recorded after review). The
+   parent spec says every *present* living member; 23a grants to every
+   companion with a live mob, wherever it stands. The company has no
+   death state yet, and a companion's mob only exists while it follows its
+   leader, so this is the practical reading.
+9. **A grant is announced only once it is saved and only when it gave
+   somebody something.** If saves keep failing, each round re-grants the
+   full duration until one succeeds. That is accepted: persistence is
+   already failing, and the extension lasts only as long as the failure.
 
 ## Durable model
 
