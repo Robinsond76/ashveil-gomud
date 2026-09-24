@@ -46,6 +46,8 @@ type Companion struct {
 	// companion saved before Phase 22b, until the module initializes it
 	// from the mob template.
 	State *MemberState `yaml:"state,omitempty"`
+	// Death is set while the companion is dead (Phase 25b).
+	Death *CompanionDeath `yaml:"death,omitempty"`
 }
 
 type Record struct {
@@ -59,6 +61,8 @@ type Record struct {
 	Claimed []int `yaml:"claimed,omitempty"`
 	// Service is each member's Phase 24 time with the band (chemistry).
 	Service []Service `yaml:"service,omitempty"`
+	// Lost are the companions whose rescue allowance ran out (Phase 25b).
+	Lost []LostCompanion `yaml:"lost,omitempty"`
 }
 
 // HasClaimed reports whether the tutorial recruit of this template has
@@ -98,6 +102,9 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	if record.Service != nil {
 		record.Service = append([]Service(nil), record.Service...)
 	}
+	if record.Lost != nil {
+		record.Lost = append([]LostCompanion(nil), record.Lost...)
+	}
 	for i, c := range record.Companions {
 		if c.Disposition != nil {
 			d := *c.Disposition
@@ -107,6 +114,10 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 			s := c.State.Clone()
 			record.Companions[i].State = &s
 		}
+		if c.Death != nil {
+			d := *c.Death
+			record.Companions[i].Death = &d
+		}
 	}
 	return record, true
 }
@@ -114,7 +125,8 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 // Put stores a record after pruning stale formation cells and normalizing the
 // next companion ID. A record with no companions and an empty formation is
 // removed entirely unless it carries a companion-ID high-water mark above 1,
-// which must survive dismissal so IDs are never reused, or a tutorial claim.
+// which must survive dismissal so IDs are never reused, a tutorial claim, or
+// a lost companion.
 func (r *Registry) Put(record Record) {
 	if r.Companies == nil {
 		r.Companies = make(map[int]Record)
@@ -123,7 +135,7 @@ func (r *Registry) Put(record Record) {
 	valid := validMemberKeys(record)
 	record.Formation.Prune(valid)
 	record.Service = pruneService(record.Service, valid)
-	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 {
+	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 && len(record.Lost) == 0 {
 		delete(r.Companies, record.LeaderUserID)
 		return
 	}
@@ -276,6 +288,9 @@ func (r *Registry) PlaceMember(leaderUserID int, key MemberKey, row, col int) er
 	if !validMemberKeys(record)[key] {
 		return ErrUnknownMember
 	}
+	if record.isDead(key) {
+		return ErrMemberDead
+	}
 	if err := record.Formation.Place(key, row, col); err != nil {
 		return err
 	}
@@ -292,6 +307,9 @@ func (r *Registry) SwapMembers(leaderUserID int, a, b MemberKey) error {
 	valid := validMemberKeys(record)
 	if !valid[a] || !valid[b] {
 		return ErrUnknownMember
+	}
+	if record.isDead(a) || record.isDead(b) {
+		return ErrMemberDead
 	}
 	if err := record.Formation.Swap(a, b); err != nil {
 		return err

@@ -209,3 +209,62 @@ func RelocateCompany(leaderUserID, roomID int) int {
 	}
 	return rp.RelocateCompany(leaderUserID, roomID)
 }
+
+// DeadCompanionView is a dead companion for display (Phase 25b).
+type DeadCompanionView struct {
+	ID    int
+	Name  string
+	Level int
+	// Remaining is the rescue allowance left, in seconds of the leader's
+	// online time.
+	Remaining int
+}
+
+// ResurrectionResult describes a resurrected companion.
+type ResurrectionResult struct {
+	ID    int
+	Name  string
+	Level int
+	// Spawned is false when the companion lives again but its mob couldn't
+	// be spawned; it rejoins with the leader at their next login.
+	Spawned bool
+}
+
+// ResurrectionProvider is optionally implemented by the registered
+// FormationProvider (Phase 25b). modules/company runs on the game loop, so
+// call these from the game loop only.
+type ResurrectionProvider interface {
+	// DeadCompanions lists the leader's dead companions, by ID.
+	DeadCompanions(leaderUserID int) []DeadCompanionView
+	// ResurrectCompanion raises the dead companion matching selector into
+	// roomID at the cost of one level. It returns ErrUnknownMember,
+	// ErrNotDead, or ErrCompanionLost when it can't.
+	ResurrectCompanion(leaderUserID int, selector string, roomID int) (ResurrectionResult, error)
+}
+
+func resurrectionProvider() (ResurrectionProvider, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	rp, ok := p.(ResurrectionProvider)
+	return rp, ok
+}
+
+// DeadCompanions lists a leader's dead companions; nil without a provider.
+func DeadCompanions(leaderUserID int) []DeadCompanionView {
+	rp, ok := resurrectionProvider()
+	if !ok {
+		return nil
+	}
+	return rp.DeadCompanions(leaderUserID)
+}
+
+// ResurrectCompanion raises a leader's dead companion. It returns
+// ErrNoResurrection without a provider.
+func ResurrectCompanion(leaderUserID int, selector string, roomID int) (ResurrectionResult, error) {
+	rp, ok := resurrectionProvider()
+	if !ok {
+		return ResurrectionResult{}, ErrNoResurrection
+	}
+	return rp.ResurrectCompanion(leaderUserID, selector, roomID)
+}
