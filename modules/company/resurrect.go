@@ -86,7 +86,7 @@ func (m *CompanyModule) ResurrectCompanion(leaderUserID int, selector string, ro
 		return domain.ResurrectionResult{}, domain.ErrUnknownMember
 	}
 	if !c.Dead() {
-		return domain.ResurrectionResult{}, domain.ErrNotDead
+		return domain.ResurrectionResult{ID: c.ID, Name: companionName(c), Level: companionLevelNumber(c)}, domain.ErrNotDead
 	}
 	if c.Death.Remaining <= 0 {
 		if err := m.expire(leaderUserID, c.ID); err != nil {
@@ -123,4 +123,11 @@ func (m *CompanyModule) ResurrectCompanion(leaderUserID int, selector string, ro
 	m.applyInstanceAlignment(leaderUserID, c.ID, instanceID)
 	result.Spawned = true
 	return result, nil
+}
+
+func companionLevelNumber(c domain.Companion) int {
+	if c.State == nil {
+		return 0
+	}
+	return c.State.Level
 }

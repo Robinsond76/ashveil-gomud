@@ -103,3 +103,25 @@ func TestProviderNoneRegistered(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotNil(t, p)
 }
+
+// TestServiceAt (Phase 25b): the settlement whose service room this is, a
+// city's church or a village's shaman, with its keeper.
+func TestServiceAt(t *testing.T) {
+	r, errs := NewRegistry([]Settlement{
+		{Zone: "Dunmar", Kind: City, ServiceRoomID: 2007, ServiceMobID: 65},
+		{Zone: "Fernhollow", Kind: Village, ServiceRoomID: 2009, ServiceMobID: 66},
+		{Zone: "Bleakmoor", Kind: City, ServiceRoomID: 3002, ServiceMobID: -1},
+	})
+	assert.Len(t, errs, 1, "a keeper below 0 is rejected")
+	s, ok := r.ServiceAt(2009)
+	assert.True(t, ok)
+	assert.Equal(t, Village, s.Kind)
+	assert.Equal(t, 66, s.ServiceMobID)
+	s, ok = r.ServiceAt(2007)
+	assert.True(t, ok)
+	assert.Equal(t, 65, s.ServiceMobID)
+	_, ok = r.ServiceAt(2004)
+	assert.False(t, ok)
+	_, ok = r.ServiceAt(0)
+	assert.False(t, ok)
+}

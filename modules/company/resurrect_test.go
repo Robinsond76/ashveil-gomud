@@ -110,8 +110,9 @@ func TestResurrectExpiredIsLost(t *testing.T) {
 // TestResurrectRefusesLivingAndUnknown.
 func TestResurrectRefusesLivingAndUnknown(t *testing.T) {
 	module, _, _, _ := newDeathModule(t)
-	_, err := module.ResurrectCompanion(7, "#2", 2007)
+	living, err := module.ResurrectCompanion(7, "#2", 2007)
 	assert.ErrorIs(t, err, domain.ErrNotDead)
+	assert.Equal(t, 2, living.ID, "named for the refusal")
 	_, err = module.ResurrectCompanion(7, "#9", 2007)
 	assert.ErrorIs(t, err, domain.ErrUnknownMember)
 	_, err = module.ResurrectCompanion(8, "#1", 2007)

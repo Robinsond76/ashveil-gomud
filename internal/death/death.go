@@ -48,6 +48,9 @@ type Settlement struct {
 	Zone          string
 	Kind          Kind
 	ServiceRoomID int
+	// ServiceMobID is the mob template of the priest or shaman who performs
+	// resurrections there (Phase 25b); 0 means no one does.
+	ServiceMobID int
 }
 
 // ServiceTag is the room tag the settlement's service room must carry.
@@ -59,7 +62,7 @@ func (s Settlement) ServiceTag() string {
 }
 
 func (s Settlement) validate() error {
-	if strings.TrimSpace(s.Zone) == "" || s.ServiceRoomID <= 0 || (s.Kind != City && s.Kind != Village) {
+	if strings.TrimSpace(s.Zone) == "" || s.ServiceRoomID <= 0 || s.ServiceMobID < 0 || (s.Kind != City && s.Kind != Village) {
 		return fmt.Errorf("%w: %+v", ErrInvalidSettlement, s)
 	}
 	return nil
@@ -124,6 +127,20 @@ func (r Registry) IsChurch(roomID int) bool {
 		}
 	}
 	return false
+}
+
+// ServiceAt returns the settlement whose service room roomID is: a city's
+// church or a village's shaman (Phase 25b).
+func (r Registry) ServiceAt(roomID int) (Settlement, bool) {
+	if roomID <= 0 {
+		return Settlement{}, false
+	}
+	for _, zone := range r.order {
+		if s := r.byZone[zone]; s.ServiceRoomID == roomID {
+			return s, true
+		}
+	}
+	return Settlement{}, false
 }
 
 // Destination picks where a dead player wakes: the checkpoint while it is

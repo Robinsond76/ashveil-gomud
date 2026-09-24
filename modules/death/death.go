@@ -58,6 +58,10 @@ type DeathModule struct {
 	abandonCamp   func(leaderUserID int) error
 	relocate      func(leaderUserID, roomID int) int
 	round         func() uint64
+	// Phase 25b resurrection seams.
+	keeper         func(room *rooms.Room, mobID int) (name string, ok bool)
+	deadCompanions func(leaderUserID int) []company.DeadCompanionView
+	raise          func(leaderUserID int, selector string, roomID int) (company.ResurrectionResult, error)
 
 	// mu guards cfg, written at load, and returned. It is a leaf lock.
 	mu  sync.Mutex
@@ -80,6 +84,7 @@ func init() {
 	}
 	m.plug.ReserveTags(domain.ChurchTag, domain.ShamanTag)
 	m.plug.Callbacks.SetOnLoad(m.load)
+	m.plug.AddUserCommand("resurrect", m.resurrectCommand, false, false)
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	domain.SetProvider(m)
@@ -95,12 +100,15 @@ func newModule() *DeathModule {
 		moveToRoom: func(userID, roomID int) error {
 			return rooms.MoveToRoom(userID, roomID)
 		},
-		abandonTravel: expedition.AbandonForDeath,
-		abandonCamp:   camping.AbandonForDeath,
-		relocate:      company.RelocateCompany,
-		round:         util.GetRoundCount,
-		cfg:           defaultSettings(),
-		returned:      map[int]uint64{},
+		abandonTravel:  expedition.AbandonForDeath,
+		abandonCamp:    camping.AbandonForDeath,
+		relocate:       company.RelocateCompany,
+		round:          util.GetRoundCount,
+		keeper:         keeperInRoom,
+		deadCompanions: company.DeadCompanions,
+		raise:          company.ResurrectCompanion,
+		cfg:            defaultSettings(),
+		returned:       map[int]uint64{},
 	}
 }
 
@@ -169,7 +177,8 @@ func parseSettings(get func(string) any) settings {
 		zone, _ := fields["zone"].(string)
 		kind, _ := fields["kind"].(string)
 		roomID, _ := configInt(fields["serviceroomid"])
-		entries = append(entries, domain.Settlement{Zone: zone, Kind: domain.Kind(kind), ServiceRoomID: roomID})
+		mobID, _ := configInt(fields["servicemobid"])
+		entries = append(entries, domain.Settlement{Zone: zone, Kind: domain.Kind(kind), ServiceRoomID: roomID, ServiceMobID: mobID})
 	}
 	registry, errs := domain.NewRegistry(entries)
 	for _, err := range errs {
@@ -188,6 +197,9 @@ func (m *DeathModule) load() {
 		room := m.loadRoom(s.ServiceRoomID)
 		if room == nil || !room.HasTag(s.ServiceTag()) || room.Zone != s.Zone {
 			mudlog.Warn("death: settlement service room is not usable", "zone", s.Zone, "room", s.ServiceRoomID, "tag", s.ServiceTag())
+		}
+		if s.ServiceMobID == 0 {
+			mudlog.Warn("death: settlement has no ServiceMobId; no one there can resurrect", "zone", s.Zone)
 		}
 	}
 	if m.loadRoom(cfg.fallbackID) == nil {

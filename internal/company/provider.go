@@ -238,7 +238,8 @@ type ResurrectionProvider interface {
 	DeadCompanions(leaderUserID int) []DeadCompanionView
 	// ResurrectCompanion raises the dead companion matching selector into
 	// roomID at the cost of one level. It returns ErrUnknownMember,
-	// ErrNotDead, or ErrCompanionLost when it can't.
+	// ErrNotDead (with the living companion's ID and name), or
+	// ErrCompanionLost when it can't.
 	ResurrectCompanion(leaderUserID int, selector string, roomID int) (ResurrectionResult, error)
 }
 
