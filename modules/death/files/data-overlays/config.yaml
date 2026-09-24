@@ -1,0 +1,22 @@
+# Phase 25a: player death and the church return.
+#
+# A player who dies loses one level (never below 1; the engine's protection
+# levels don't apply) and wakes at the church of the last city they visited,
+# with every living companion. The engine's XP penalty and permadeath don't
+# apply to an Ashveil death; its item-drop and corpse rules still do.
+#
+# Settlements: each has a Zone, a Kind (city or village), and a
+# ServiceRoomId. A city's service room is its church and must carry the
+# "church" room tag; a village's is its shaman's and must carry "shaman".
+# Entering any room of a city whose church is usable makes that church the
+# player's checkpoint. Villages never do. An entry with no zone, an unknown
+# kind, or no room, or a zone listed twice, is skipped with a warning.
+Settlements:
+  - { Zone: Frostfang, Kind: city, ServiceRoomId: 18 }
+  - { Zone: Dunmar, Kind: city, ServiceRoomId: 2007 }
+# Where a player wakes when their checkpoint is missing or no longer a usable
+# church. If this room doesn't load either, the death waits (the level is
+# already taken, and never taken twice) until an operator repairs it.
+FallbackRoomId: 18
+# Health and mana on waking, as a percentage (1..100) of the new maximums.
+RespawnVitalsPct: 50
