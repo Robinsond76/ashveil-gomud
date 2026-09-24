@@ -4,7 +4,7 @@
 
 The company roster is one leader plus up to `MaxCompanions` (default 4) companions, for a five-member cap. Durable records are written immediately when commands change company state.
 
-Player-facing management: `company summon <mob-id-or-name>`, `company status`, `company dismiss <member|all>`, and `formation` / `formation move <member> <row> <col>` / `formation swap <a> <b>` / `formation clear <member>`. Formation rows and columns are 1-based to players; row 1 is the front row.
+Player-facing management: `company recruit [candidate]` (Phase 22c), `company summon <mob-id-or-name>`, `company status`, `company dismiss <member|all>`, and `formation` / `formation move <member> <row> <col>` / `formation swap <a> <b>` / `formation clear <member>`. Formation rows and columns are 1-based to players; row 1 is the front row.
 
 Legacy single-`companion` records migrate to `companions[0]` with ID 1 on load. Formation cells for dismissed companions are pruned automatically. Travel, rest, and formation must never change global game time.
 
@@ -27,3 +27,12 @@ Phase 22b durable level and gear (`state.go`):
 - Dismissal and desertion drop the state; the companion leaves with its gear. Don't add a path that drops a companion's gear into the world on dismissal, since summon-and-dismiss would then farm template gear.
 - `company gear <member>` shows the recorded gear, refreshed from the live mob when it is out.
 - `wiring_state_test.go` also calls `plugins.Load`, with the same `SnapshotLoadStateForTest` guard.
+
+Phase 22c recruiters (`recruit.go`):
+
+- A recruiter is a room in the `Recruiters` config (`RoomId`, `Name`, `Candidates: [{Id, MobTemplateId, Price, Tutorial}]`). `company recruit` there lists the candidates (archetype, level, alignment, gear, price); `company recruit <candidate>` takes one on. Shipped: the Waymark Inn (2003) and Trappers' Post (2005), templates 61–64.
+- Recruiting goes through `enlist`, the same path as `company summon` (survival identity, archetype, disposition, template gear, one company save, full rollback). The candidate list is its own allow list: never add a candidate template to `AllowedCompanionMobIDs`, or `summon` would skip the price and the claim (`TestShippedRecruitersResolve` pins this).
+- A `Tutorial` candidate is free and claimable once per character. The claim is the template id in `Record.Claimed`, written in the same save as the recruit and rolled back with it; it outlives dismissal (`Put` keeps a claims-only record).
+- Gold is checked first and taken only after the company save succeeds, then the user is saved at once (`saveUser`). A failed user save leaves the deduction in memory for the next autosave.
+- Candidate templates wear their gear, carry nothing, have no gold, and use `itemdropchance: 0`, so no recruit can be farmed for items or gold. Keep new candidates to that shape.
+- `wiring_recruit_test.go` also calls `plugins.Load`, with the same `SnapshotLoadStateForTest` guard. Unit tests use template ids no fixture world defines, because the wiring tests load mob and item specs globally.

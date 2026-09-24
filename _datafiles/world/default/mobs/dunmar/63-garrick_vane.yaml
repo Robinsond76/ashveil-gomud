@@ -1,0 +1,24 @@
+mobid: 63
+zone: Dunmar
+# Phase 22c recruit candidate (Waymark Inn, 120 gold). See 61.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Garrick Vane
+  description: 'A scarred sellsword with a broken nose and an easy grin, Garrick
+    keeps his broadsword oiled and his prices high. He has fought for three lords
+    and outlived two of them, and he is happy to tell you which.'
+  raceid: 1
+  level: 3
+  alignment: -10
+  equipment:
+    weapon:
+      itemid: 10002
+    head:
+      itemid: 20020
+    legs:
+      itemid: 20029
+    feet:
+      itemid: 20003

@@ -1,0 +1,23 @@
+mobid: 61
+zone: Dunmar
+# Phase 22c recruit candidate (Waymark Inn, free once). Candidates wear
+# their gear, carry nothing, and have no gold, and itemdropchance 0 keeps a
+# death from dropping anything, so a recruit can't be farmed for gear.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Tamsin Reed
+  description: 'A broad-shouldered young woman in a travel-stained tabard, Tamsin
+    has guarded carters on the forest road since she was old enough to lift a
+    shield. Her last caravan sold up in Dunmar and left her behind, and she means
+    to walk back out through the west gate with whoever will have her.'
+  raceid: 1
+  level: 1
+  alignment: 30
+  equipment:
+    weapon:
+      itemid: 10015
+    offhand:
+      itemid: 20004

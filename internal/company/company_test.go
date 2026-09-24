@@ -307,3 +307,63 @@ func TestRegistryCompanionArchetypeRoundTripsAndLegacyIsEmpty(t *testing.T) {
 	record, _ = legacy.Get(7)
 	assert.Empty(t, record.Companions[0].Archetype, "legacy companions have no archetype")
 }
+
+// Phase 22c: tutorial recruit claims.
+
+func TestClaimRecordsTemplateOnce(t *testing.T) {
+	registry := company.NewRegistry()
+	assert.ErrorIs(t, registry.Claim(0, 61), company.ErrInvalidLeader)
+	assert.ErrorIs(t, registry.Claim(7, 0), company.ErrInvalidTemplate)
+	require.NoError(t, registry.Claim(7, 61))
+	require.NoError(t, registry.Claim(7, 61))
+	require.NoError(t, registry.Claim(7, 62))
+	record, ok := registry.Get(7)
+	require.True(t, ok)
+	assert.Equal(t, []int{61, 62}, record.Claimed)
+	assert.True(t, record.HasClaimed(61))
+	assert.False(t, record.HasClaimed(63))
+}
+
+func TestGetDeepCopiesClaims(t *testing.T) {
+	registry := company.NewRegistry()
+	require.NoError(t, registry.Claim(7, 61))
+	record, _ := registry.Get(7)
+	record.Claimed[0] = 99
+	again, _ := registry.Get(7)
+	assert.Equal(t, []int{61}, again.Claimed)
+	clone := registry.Clone()
+	cloned := clone.Companies[7]
+	cloned.Claimed[0] = 98
+	again, _ = registry.Get(7)
+	assert.Equal(t, []int{61}, again.Claimed)
+}
+
+func TestPutKeepsClaimsOnlyRecord(t *testing.T) {
+	registry := company.NewRegistry()
+	c, err := registry.Summon(7, 61, map[int]struct{}{61: {}}, 4)
+	require.NoError(t, err)
+	require.NoError(t, registry.Claim(7, 61))
+	assert.Equal(t, 1, registry.DismissAll(7))
+	record, ok := registry.Get(7)
+	require.True(t, ok, "a claim outlives the last companion")
+	assert.True(t, record.HasClaimed(61))
+
+	// Even with no ID high-water mark, a claims-only record is kept.
+	registry.Put(company.Record{LeaderUserID: 8, Claimed: []int{62}})
+	_, ok = registry.Get(8)
+	assert.True(t, ok)
+	assert.False(t, registry.Dismiss(7, c.ID), "already dismissed")
+}
+
+func TestClaimsYAMLRoundTrip(t *testing.T) {
+	registry := company.NewRegistry()
+	require.NoError(t, registry.Claim(7, 61))
+	data, err := yaml.Marshal(registry)
+	require.NoError(t, err)
+	assert.Contains(t, string(data), "claimed:")
+	loaded := company.NewRegistry()
+	require.NoError(t, yaml.Unmarshal(data, loaded))
+	record, ok := loaded.Get(7)
+	require.True(t, ok)
+	assert.Equal(t, []int{61}, record.Claimed)
+}

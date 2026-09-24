@@ -53,6 +53,21 @@ type Record struct {
 	Companions      []Companion `yaml:"companions"`
 	Formation       Formation   `yaml:"formation"`
 	NextCompanionID int         `yaml:"next_companion_id,omitempty"`
+	// Claimed lists the mob template IDs of free tutorial recruits this
+	// leader has claimed (Phase 22c). A claim is permanent: it outlives
+	// dismissal, desertion, and death.
+	Claimed []int `yaml:"claimed,omitempty"`
+}
+
+// HasClaimed reports whether the tutorial recruit of this template has
+// been claimed.
+func (r Record) HasClaimed(mobTemplateID int) bool {
+	for _, id := range r.Claimed {
+		if id == mobTemplateID {
+			return true
+		}
+	}
+	return false
 }
 
 type Registry struct {
@@ -75,6 +90,9 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		return Record{}, false
 	}
 	record.Companions = append([]Companion(nil), record.Companions...)
+	if record.Claimed != nil {
+		record.Claimed = append([]int(nil), record.Claimed...)
+	}
 	for i, c := range record.Companions {
 		if c.Disposition != nil {
 			d := *c.Disposition
@@ -91,14 +109,14 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 // Put stores a record after pruning stale formation cells and normalizing the
 // next companion ID. A record with no companions and an empty formation is
 // removed entirely unless it carries a companion-ID high-water mark above 1,
-// which must survive dismissal so IDs are never reused.
+// which must survive dismissal so IDs are never reused, or a tutorial claim.
 func (r *Registry) Put(record Record) {
 	if r.Companies == nil {
 		r.Companies = make(map[int]Record)
 	}
 	record.NextCompanionID = normalizeNextCompanionID(record)
 	record.Formation.Prune(validMemberKeys(record))
-	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 {
+	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 {
 		delete(r.Companies, record.LeaderUserID)
 		return
 	}
@@ -118,6 +136,23 @@ func (r *Registry) ReserveNextCompanionID(leaderUserID, nextID int) error {
 	record.LeaderUserID = leaderUserID
 	if record.NextCompanionID < nextID {
 		record.NextCompanionID = nextID
+	}
+	r.Put(record)
+	return nil
+}
+
+// Claim records a claimed tutorial recruit. It is idempotent.
+func (r *Registry) Claim(leaderUserID, mobTemplateID int) error {
+	if leaderUserID <= 0 {
+		return ErrInvalidLeader
+	}
+	if mobTemplateID <= 0 {
+		return ErrInvalidTemplate
+	}
+	record, _ := r.Get(leaderUserID)
+	record.LeaderUserID = leaderUserID
+	if !record.HasClaimed(mobTemplateID) {
+		record.Claimed = append(record.Claimed, mobTemplateID)
 	}
 	r.Put(record)
 	return nil

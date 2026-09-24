@@ -51,6 +51,7 @@ type wireRecord struct {
 	Companion       *domain.Companion  `yaml:"companion"`
 	Formation       domain.Formation   `yaml:"formation"`
 	NextCompanionID int                `yaml:"next_companion_id,omitempty"`
+	Claimed         []int              `yaml:"claimed,omitempty"`
 }
 
 type wireRegistry struct {
@@ -68,7 +69,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID}
+		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -111,6 +112,10 @@ type CompanyModule struct {
 	world     alignmentWorld // nil means the native world
 	// rulesForTest overrides the configured alignment rules in tests.
 	rulesForTest *domain.AlignmentRules
+	// recruitersForTest overrides the configured recruiters in tests.
+	recruitersForTest map[int]recruiter
+	// saveUser writes a user after a paid recruit (Phase 22c); nil skips.
+	saveUser func(*users.UserRecord) error
 }
 
 // module is the registered instance, for wiring tests.
@@ -123,6 +128,7 @@ func init() {
 	}
 	m.store = pluginStore{plug: m.plug}
 	m.runtime = nativeRuntime{}
+	m.saveUser = nativeSaveUser
 	m.plug.AddUserCommand("company", m.userCommand, false, false)
 	m.plug.AddUserCommand("formation", m.formationCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
@@ -196,7 +202,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company gear <member> | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company gear <member> | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -325,20 +331,40 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 			return refusal, nil
 		}
 	}
+	companion, err := m.enlist(leaderUserID, roomID, templateID, m.allowedTemplates(), false)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("Companion summoned: %s (#%d).", templateName(templateID, selector), companion.ID), nil
+}
+
+// enlist adds a companion of templateID to the company and spawns it: the
+// survival identity, the record with its archetype, disposition, and
+// template gear (Phase 22b), and, with claim, the tutorial claim (Phase
+// 22c), all in one company save. Every failure after the survival identity
+// is spent rolls the record back, claim included, and destroys the mob.
+// Callers run their own capacity and alignment checks first.
+func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map[int]struct{}, claim bool) (domain.Companion, error) {
 	reservedNextID, err := survival.NextReservedCompanionID(leaderUserID)
 	if err != nil {
-		return "", err
+		return domain.Companion{}, err
 	}
 	if err := m.registry.ReserveNextCompanionID(leaderUserID, reservedNextID); err != nil {
-		return "", err
+		return domain.Companion{}, err
 	}
 	before, existed := m.registry.Get(leaderUserID)
-	companion, err := m.registry.Summon(leaderUserID, templateID, m.allowedTemplates(), m.maxCompanions())
+	companion, err := m.registry.Summon(leaderUserID, templateID, allowed, m.maxCompanions())
 	if err != nil {
-		return "", err
+		return domain.Companion{}, err
 	}
 	m.assignConfiguredArchetype(leaderUserID, companion)
 	m.seedDisposition(leaderUserID, companion)
+	if claim {
+		if err := m.registry.Claim(leaderUserID, templateID); err != nil {
+			m.registry.Put(before)
+			return domain.Companion{}, err
+		}
+	}
 	if err := survival.EnsureCompanyMember(leaderUserID, companion.ID); err != nil {
 		// Survival did not durably record the companion, so no identity was
 		// spent: restore the exact pre-summon record and allow ID reuse.
@@ -347,7 +373,7 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 		} else {
 			m.registry.Put(domain.Record{LeaderUserID: leaderUserID})
 		}
-		return "", err
+		return domain.Companion{}, err
 	}
 	// Survival has now committed a durable identity for this companion ID, so
 	// the ID is spent even if the summon cannot complete. Cleanup removes the
@@ -355,8 +381,8 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, templateID, nil)
 	if err != nil {
 		removeErr := survival.RemoveCompanyMember(leaderUserID, companion.ID)
-		persistErr := m.rollbackSummon(leaderUserID, companion.ID)
-		return "", errors.Join(err, removeErr, persistErr)
+		persistErr := m.rollbackSummon(leaderUserID, companion.ID, before.Claimed)
+		return domain.Companion{}, errors.Join(err, removeErr, persistErr)
 	}
 	// Phase 22b: the template gear minted by this spawn becomes the
 	// companion's durable gear in the summon's own save.
@@ -366,20 +392,21 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	if err := m.save(); err != nil {
 		m.runtime.Detach(leaderUserID, instanceID)
 		removeErr := survival.RemoveCompanyMember(leaderUserID, companion.ID)
-		persistErr := m.rollbackSummon(leaderUserID, companion.ID)
-		return "", errors.Join(err, removeErr, persistErr)
+		persistErr := m.rollbackSummon(leaderUserID, companion.ID, before.Claimed)
+		return domain.Companion{}, errors.Join(err, removeErr, persistErr)
 	}
 	m.setInstance(leaderUserID, companion.ID, instanceID)
 	m.applyInstanceAlignment(leaderUserID, companion.ID, instanceID)
-	return fmt.Sprintf("Companion summoned: %s (#%d).", templateName(templateID, selector), companion.ID), nil
+	return companion, nil
 }
 
 // rollbackSummon removes the transient companion from the post-summon record
 // while preserving its already advanced NextCompanionID, then persists the
 // company registry. It runs only after survival has durably recorded the
 // companion's identity, so retaining the high-water mark guarantees a later
-// summon cannot reuse the spent ID and inherit stale survival state.
-func (m *CompanyModule) rollbackSummon(leaderUserID, companionID int) error {
+// summon cannot reuse the spent ID and inherit stale survival state. The
+// tutorial claims are restored to their pre-summon list (Phase 22c).
+func (m *CompanyModule) rollbackSummon(leaderUserID, companionID int, claimed []int) error {
 	record, ok := m.registry.Get(leaderUserID)
 	if !ok {
 		return nil
@@ -391,6 +418,7 @@ func (m *CompanyModule) rollbackSummon(leaderUserID, companionID int) error {
 		}
 	}
 	record.Companions = companions
+	record.Claimed = append([]int(nil), claimed...)
 	m.registry.Put(record)
 	return m.save()
 }
@@ -584,6 +612,16 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 			roomID = room.RoomId
 		}
 		text, err := m.summon(user.UserId, roomID, strings.Join(args[1:], " "))
+		if err != nil {
+			return true, err
+		}
+		user.SendText(text)
+	case "recruit":
+		roomID := user.Character.RoomId
+		if room != nil {
+			roomID = room.RoomId
+		}
+		text, err := m.recruit(user, roomID, strings.Join(args[1:], " "))
 		if err != nil {
 			return true, err
 		}

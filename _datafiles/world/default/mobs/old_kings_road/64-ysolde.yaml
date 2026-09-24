@@ -1,0 +1,23 @@
+mobid: 64
+zone: Old Kings Road
+# Phase 22c recruit candidate (Trappers' Post, 80 gold). See 61.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Ysolde
+  description: 'A lean, weathered trapper in a fur cape, with a sling looped at
+    her belt and a pouch of smooth river stones. Ysolde knows every deer track
+    between the fork and the far ridges, and she will guide a company through them
+    for a fair price.'
+  raceid: 1
+  level: 2
+  alignment: 10
+  equipment:
+    weapon:
+      itemid: 10014
+    neck:
+      itemid: 20024
+    feet:
+      itemid: 20003

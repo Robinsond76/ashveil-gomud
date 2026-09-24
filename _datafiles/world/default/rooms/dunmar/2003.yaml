@@ -6,7 +6,9 @@ description: A low timbered common room crouches just inside the west gate, its
   light across scarred tables where carters and road-worn companies trade news of
   the forest track. The innkeeper keeps a slate by the door chalked with the price
   of a bed, and a narrow stair climbs to rooms where a company can sleep off the
-  road before setting out again.
+  road before setting out again. Beside the hearth hangs a hiring slate, where
+  guards, sellswords, and wandering clerics chalk their names for any company
+  that will take them on.
 biome: city
 tags:
   - inn
