@@ -75,7 +75,9 @@ your recommendation" instruction, as in 22a–23a.
    qualify.
 6. **Present** means the leader, and each companion with a live mob in the
    leader's room. A companion elsewhere (or not spawned) is not sharpened,
-   costs nothing, and is named as not here. A whetstone is used by hand.
+   costs nothing, and is named as not here. A whetstone is used by hand. (Review fix: a rostered
+   companion with no live mob was first dropped silently; it is now named
+   from the survival roster.)
 7. **The edge is two durable fields on the item instance:**
    `sharpbonus` and `sharpstrikes` (`items.Item`, `omitempty`). The bonus
    is copied from config when sharpened, so combat needs no module config
@@ -99,7 +101,13 @@ your recommendation" instruction, as in 22a–23a.
    state rides on the user file and the company record, which the engine
    writes together at autosave, copyover, shutdown, and logout (the model
    22b adopted for every companion gear change). A crash between two
-   saves loses both the edge and the use together. A retry is also
+   saves usually loses both the edge and the use together. *(Corrected
+   after review: not strictly together.* The company file is also written
+   by company commands, a companion's death, and legacy upgrades, after
+   `company gear` or an item event has refreshed the snapshot in memory.
+   A crash in that window can keep a companion's edge and refund the
+   stone use. That needs a server crash and is 22b's accepted window for
+   every companion gear change.) A retry is also
    harmless by construction: sharpened blades cost nothing (decision 2),
    so a repeated pass can neither sharpen a blade twice nor spend a
    second use on it.
@@ -123,7 +131,10 @@ your recommendation" instruction, as in 22a–23a.
 13. **Markets sell it**: Dunmar and Old Kings Road list the whetstone as
     a market good. So a stone can't be bought, mostly used, and sold back
     for full price, a market only buys a stone with all its uses (a used
-    one is "not the ordinary article").
+    one is "not the ordinary article"). The engine's `IsSpecial` already
+    counts an item with uses spent as special, and markets never buy
+    special items, so this needs no new code (the review found the first
+    draft's extra check redundant).
 14. **Display.** Inventory (worn and carried), `look`/`inspect` of the
     item, and `company gear` show `(sharp: N)`; the item's description
     adds "Its edge is honed: +B damage for its next N strikes."

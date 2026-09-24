@@ -228,15 +228,9 @@ func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what strin
 	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> sells the <ansi fg="itemname">%s</ansi> at the market.`, user.Character.Name, item.DisplayName()), user.UserId)
 }
 
-// partlyUsed reports whether an item with uses (a whetstone) has spent
-// any: the market only buys the ordinary article, at full uses, so a
-// stone can't be bought, mostly worn down, and sold back at full price.
-func partlyUsed(it items.Item) bool {
-	spec := it.GetSpec()
-	return spec.Uses > 0 && it.Uses < spec.Uses
-}
-
-// pickSaleItem chooses which carried item a sale refers to. It prefers an
+// pickSaleItem chooses which carried item a sale refers to. IsSpecial
+// also covers an item with uses spent (a worn whetstone), so a stone
+// can't be bought, mostly used, and sold back at full price. It prefers an
 // ordinary item of a good this market trades, so "hide" sells a plain wolf
 // hide even when hide armor or a special wolf hide is also carried. When
 // none qualifies it explains why, judged on the engine's own best match.
@@ -247,7 +241,7 @@ func (m *MarketModule) pickSaleItem(user *users.UserRecord, zone, what string) (
 	}
 	candidates := []items.Item{}
 	for _, it := range user.Character.Items {
-		if tracked[it.ItemId] && it.GetSpec().QuestToken == `` && !it.IsSpecial() && !partlyUsed(it) {
+		if tracked[it.ItemId] && it.GetSpec().QuestToken == `` && !it.IsSpecial() {
 			candidates = append(candidates, it)
 		}
 	}

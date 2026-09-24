@@ -162,7 +162,10 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	require.NotNil(t, stoneSpec)
 	assert.Equal(t, "whetstone", stoneSpec.Name)
 	assert.Equal(t, 10, stoneSpec.Uses)
+	goodFor(t, "Dunmar", 30)
 	goodFor(t, "Old Kings Road", 30)
+	assert.Regexp(t, `whetstone\s+\d+ gold`, run(2004), "listed in the Dunmar square")
+	assert.Regexp(t, `whetstone\s+\d+ gold`, run(2005), "and at the Trappers' Post")
 	user.Character.Gold = 200
 	assert.Contains(t, run(2004, "buy", "whetstone"), "You buy the whetstone at the market")
 	stone, carried := user.Character.FindInBackpack("whetstone")

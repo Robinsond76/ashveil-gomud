@@ -52,6 +52,6 @@ Each task is tests first.
   partly spent edge on the live companion's weapon shows in `company
   gear`, is written by `plugins.Save`, and is back on the mob restored
   after logout and restart).
-- [ ] **Task 9: docs and verification.** Config comments, module
+- [x] **Task 9: docs and verification.** Config comments, module
   `AGENTS.md` notes, `go test -race ./...`, `make generate`,
   `make validate`, independent review, `docs/PROJECT_STATUS.md`.

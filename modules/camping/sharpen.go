@@ -7,9 +7,11 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -122,14 +124,14 @@ func memberFor(id int, c *characters.Character, present bool) sharpenTarget {
 	return sharpenTarget{member: member, char: c}
 }
 
-// sharpenTargets lists the leader and every live companion (present when
-// in the leader's room), and whether any of them is fighting. A companion
-// with no live mob has its gear on the company record, not at hand, and
-// is left alone.
+// sharpenTargets lists the leader and every rostered companion, and
+// whether any of them is fighting. A live companion is present when in
+// the leader's room. A companion with no live mob has its gear on the
+// company record, not at hand: it is listed as not here and left alone.
 func (m *CampingModule) sharpenTargets(user *users.UserRecord) ([]sharpenTarget, bool) {
 	targets := []sharpenTarget{memberFor(camping.LeaderID, user.Character, true)}
 	fighting := user.Character.Aggro != nil
-	live, _ := m.companions(user.UserId)
+	live, roster := m.companions(user.UserId)
 	for _, companionID := range sortedIDs(live) {
 		c := live[companionID]
 		if c.Aggro != nil {
@@ -137,7 +139,32 @@ func (m *CampingModule) sharpenTargets(user *users.UserRecord) ([]sharpenTarget,
 		}
 		targets = append(targets, memberFor(companionID, c, c.RoomId == user.Character.RoomId))
 	}
+	var names map[int]string
+	for _, companionID := range roster {
+		if _, ok := live[companionID]; ok {
+			continue
+		}
+		if names == nil {
+			names = rosterNames(user.UserId)
+		}
+		name := names[companionID]
+		if name == "" {
+			name = fmt.Sprintf("companion #%d", companionID)
+		}
+		targets = append(targets, sharpenTarget{member: camping.SharpenMember{ID: companionID, Name: name}})
+	}
 	return targets, fighting
+}
+
+// rosterNames maps companion IDs to their roster names.
+func rosterNames(leaderUserID int) map[int]string {
+	names := map[int]string{}
+	for _, ref := range survival.CurrentRoster(leaderUserID) {
+		if id, ok := company.CompanionIDFromMemberKey(ref.Key); ok {
+			names[id] = ref.Name
+		}
+	}
+	return names
 }
 
 func (m *CampingModule) sharpenSettings() innSettings {
@@ -288,7 +315,7 @@ func (m *CampingModule) sharpenPreview(user *users.UserRecord) string {
 
 	lines := []string{fmt.Sprintf("Whetstones: %d (%s left). %s", len(stones), plural(uses, "use"), autoText(m.autoSharpenOn(user.UserId)))}
 	for _, e := range plan.Entries {
-		lines = append(lines, fmt.Sprintf("  %s: %s", e.Member.Name, previewLine(e, byID[e.Member.ID].char)))
+		lines = append(lines, fmt.Sprintf("  %s: %s", e.Member.Name, previewLine(e, byID[e.Member.ID].char, fighting)))
 	}
 	switch {
 	case fighting:
@@ -303,7 +330,10 @@ func (m *CampingModule) sharpenPreview(user *users.UserRecord) string {
 	return strings.Join(lines, "\n")
 }
 
-func previewLine(e camping.SharpenEntry, c *characters.Character) string {
+func previewLine(e camping.SharpenEntry, c *characters.Character, fighting bool) string {
+	if e.Outcome == camping.NotHere || c == nil {
+		return "not here"
+	}
 	names := []string{}
 	for _, blade := range blades(c) {
 		name := blade.DisplayName()
@@ -315,11 +345,12 @@ func previewLine(e camping.SharpenEntry, c *characters.Character) string {
 	gear := strings.Join(names, ", ")
 	switch e.Outcome {
 	case camping.Sharpened:
+		if fighting {
+			return gear + " (dull)"
+		}
 		return gear + " (would be sharpened)"
 	case camping.AlreadySharp:
 		return gear + " (already sharp)"
-	case camping.NotHere:
-		return "not here"
 	case camping.LeftOut:
 		return gear + " (no whetstone use left for it)"
 	}

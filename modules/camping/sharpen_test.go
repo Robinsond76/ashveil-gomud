@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -235,7 +236,10 @@ func TestSharpenRefusedInCombat(t *testing.T) {
 	assert.Equal(t, []int{10}, stoneUses(user.Character))
 	assert.False(t, user.Character.Equipment.Weapon.Sharpened())
 	assert.False(t, bran.Equipment.Weapon.Sharpened())
-	assert.Contains(t, run(t, module, user, "status"), "Not while your company is fighting.")
+	status := run(t, module, user, "status")
+	assert.Contains(t, status, "Not while your company is fighting.")
+	assert.Contains(t, status, "(dull)")
+	assert.NotContains(t, status, "would be sharpened", "review fix: no contradiction mid-fight")
 }
 
 func TestSharpenAbsentCompanionNotHere(t *testing.T) {
@@ -331,4 +335,55 @@ func TestShippedWhetstoneMatchesConfig(t *testing.T) {
 	assert.Equal(t, 10, spec.Uses)
 	assert.Equal(t, items.Object, spec.Type)
 	assert.Equal(t, items.Mundane, spec.Subtype, "not usable: `use` would spend it for nothing")
+}
+
+// Review fix: a rostered companion with no live mob is named, not dropped.
+func TestSharpenUnspawnedCompanionNamedNotHere(t *testing.T) {
+	sharpenSpecs(t)
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeSurvival{}, baseTime)
+	module.companionsOf = func(int) (map[int]*characters.Character, []int) { return nil, []int{2} }
+	survival.SetRosterProvider(rosterStub{refs: []survival.MemberRef{
+		{Key: survival.LeaderMemberKey, Name: "Hero"},
+		{Key: survival.CompanionMemberKey(2), Name: "Cara"},
+	}})
+	t.Cleanup(func() { survival.SetRosterProvider(nil) })
+	user := campUser(t, 7, 100)
+	user.Character.Name = "Hero"
+	armed(user.Character, testSwordID, 0)
+	user.Character.StoreItem(stone(10))
+
+	assert.Contains(t, run(t, module, user, "status"), "Cara: not here")
+	text := run(t, module, user, "")
+	assert.Contains(t, text, "Sharpened: Hero.")
+	assert.Contains(t, text, "Not here: Cara.")
+	assert.Equal(t, []int{9}, stoneUses(user.Character))
+}
+
+// Review fix: a camp rest whose marker is set after the grant pass took
+// its snapshot (an inn stay's Well Rested was pending alone) still
+// auto-sharpens, because the clear itself reports it.
+func TestAutoSharpenWhenCampRestFinishesAfterSnapshot(t *testing.T) {
+	sharpenSpecs(t)
+	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeSurvival{}, baseTime)
+	module.companionsOf = func(int) (map[int]*characters.Character, []int) { return nil, nil }
+	module.grantBuff = func(*characters.Character, int, int) error { return nil }
+	module.hasBuff = func(*characters.Character, int) bool { return false }
+	user := campUser(t, 7, 100)
+	user.Character.Name = "Hero"
+	armed(user.Character, testSwordID, 0)
+	user.Character.StoreItem(stone(10))
+	module.wellRestedPending[7] = true
+	module.autoSharpen[7] = true
+	module.lookupUser = func(id int) *users.UserRecord {
+		// The camp rest timer lands between the snapshot and the clear.
+		module.mu.Lock()
+		module.restedPending[7] = true
+		module.mu.Unlock()
+		return users.GetByUserId(id)
+	}
+
+	module.onNewRound(events.NewRound{RoundNumber: 1})
+	assert.True(t, user.Character.Equipment.Weapon.Sharpened())
+	assert.Equal(t, []int{9}, stoneUses(user.Character))
+	assert.False(t, module.restedPending[7])
 }

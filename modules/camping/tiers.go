@@ -144,13 +144,9 @@ func (m *CampingModule) onNewRound(e events.Event) events.ListenerReturn {
 func (m *CampingModule) grantPendingTiers() {
 	m.mu.Lock()
 	pending := map[int]camping.Tier{}
-	// Phase 23b: a camp rest's end also sharpens the company for leaders
-	// with auto-sharpen on.
-	autoSharpen := map[int]bool{}
 	for leaderUserID, owed := range m.restedPending {
 		if owed {
 			pending[leaderUserID] = camping.TierRested
-			autoSharpen[leaderUserID] = m.autoSharpen[leaderUserID]
 		}
 	}
 	for leaderUserID, owed := range m.wellRestedPending {
@@ -190,7 +186,8 @@ func (m *CampingModule) grantPendingTiers() {
 		}
 		// A failed save retries next round, so only announce a saved grant,
 		// and only one that gave anybody anything.
-		if !m.finishGrant(leaderUserID, tier, owed, now) {
+		saved, campRest := m.finishGrant(leaderUserID, tier, owed, now)
+		if !saved {
 			continue
 		}
 		if granted && tier == camping.TierWellRested {
@@ -198,9 +195,13 @@ func (m *CampingModule) grantPendingTiers() {
 		} else if granted {
 			user.SendText("Your company is Rested: the road will feel a little lighter for a while.")
 		}
-		// Once per camp rest: the marker it rode on is cleared and saved.
-		// A pass is idempotent anyway, since sharp blades cost nothing.
-		if autoSharpen[leaderUserID] {
+		// Phase 23b: a camp rest's end also sharpens the company for a
+		// leader with auto-sharpen on. campRest is whether this save
+		// cleared a camp rest's marker, read under the lock at the clear,
+		// so a camp rest that finished after the snapshot still counts.
+		// Once per camp rest; a pass is idempotent anyway, since sharp
+		// blades cost nothing.
+		if campRest && m.autoSharpenOn(leaderUserID) {
 			if text := m.sharpen(user, true); text != "" {
 				user.SendText(text)
 			}
@@ -222,14 +223,15 @@ func sortedIDs(live map[int]*characters.Character) []int {
 // marked after the snapshot is still granted next round), removes a
 // finished inn stay, and merges the new owed entries, in one save. A
 // failed save restores everything, so the next round grants again (which
-// only refreshes).
-func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed map[int]camping.OwedGrant, now time.Time) bool {
+// only refreshes). It also reports whether it cleared a camp rest's
+// marker (Phase 23b auto-sharpen).
+func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed map[int]camping.OwedGrant, now time.Time) (bool, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	wellPending := granted == camping.TierWellRested && m.wellRestedPending[leaderUserID]
 	restedPending := m.restedPending[leaderUserID]
 	if !wellPending && !restedPending {
-		return false
+		return false, false
 	}
 	stay, hadStay := m.stays[leaderUserID]
 	innApplied, hadInnApplied := m.innRecoveryApplied[leaderUserID]
@@ -277,9 +279,9 @@ func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed
 			delete(m.owed, leaderUserID)
 		}
 		mudlog.Warn("camping: finish rest tier grant", "leader", leaderUserID, "error", err)
-		return false
+		return false, false
 	}
-	return true
+	return true, restedPending
 }
 
 // --- owed grants ---

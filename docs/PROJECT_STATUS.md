@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 23a (rest tiers: camp Rested, inn Well Rested, exclusive and durable) is complete and reviewed, merged to `master`. Phase 23b (whetstones and Sharpened weapons, with the owner's 2026-09-24 amendment) is next.
+- **HEAD:** Phase 23b (whetstones and Sharpened weapons) is complete and reviewed on `claude/phase-23b-whetstones-plof2q`, awaiting merge to `master`. Phase 23a is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -50,12 +50,11 @@ instead of duplicating them.
   level, gear, and gold on the company record), and Phase 22c
   (settlement recruiters: free-once tutorial and paid candidates through
   `company recruit`), and Phase 23a (rest tiers: a camp rest grants
-  Rested, an inn stay Well Rested, exclusive, and durable for companions).
-- **Next:** Phase 23b, the whetstone half of the
-  [rest and weapon preparation spec](superpowers/specs/2026-09-23-rest-weapon-preparation-design.md)
-  (second on the [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md)).
-  The owner amended it on 2026-09-24: a whetstone is usable on demand at
-  any time, has 10 uses, and spends one use per member sharpened.
+  Rested, an inn stay Well Rested, exclusive, and durable for companions),
+  and Phase 23b (whetstones: `sharpen`, durable weapon edges, combat use).
+- **Next:** merge Phase 23b to `master`, then
+  [company chemistry](superpowers/specs/2026-09-23-company-chemistry-design.md),
+  third on the [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
   The Phase 19b inter-market profit question is resolved: the small
   standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
@@ -125,10 +124,66 @@ instead of duplicating them.
 | 22b | Durable companion level and gear | Complete: `MemberState` on each companion (level, experience, worn and carried items, gold), restore from the record, snapshot seams, `company gear` |
 | 22c | Recruiters and `company recruit` | Complete: recruiter rooms in config, free-once tutorial and paid candidates, claims on the company record, Waymark Inn and Trappers' Post, mobs 61–64 |
 | 23a | Rest tiers | Complete: camp Rested (buff 1033, strain 75%), exclusive with inn Well Rested, durable companion grants, buff 16 renamed Refreshed |
-| 23b | Whetstones | Next: 10-use whetstone, one use per member sharpened, usable any time; Sharpened weapons |
+| 23b | Whetstones | Complete (awaiting merge): 10-use whetstone (item 30) in both markets, `sharpen`/`camp sharpen` any time but not mid-fight, one use per member sharpened, durable per-weapon edge (+1 for 20 strikes) spent in combat, auto at camp rest end |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 23b: whetstones and Sharpened weapons (2026-09-24)
+
+- **What:** A **whetstone** (item 30, 10 uses, sold in the Dunmar and
+  Old Kings Road markets) in the leader's pack sharpens the company's
+  equipped blades (slashing, cleaving, or stabbing weapons, in either hand) with
+  `sharpen` or `camp sharpen`, at any time but never while the leader or
+  a companion is fighting. The owner's four details: two blades on one
+  member cost one use; a member already sharp or with no blade costs
+  nothing; the leader goes first, then companions by number, and the
+  reply names anyone left out when the stones run dry; combat refuses.
+  Recommendations on top: the pass carries onto a second stone (most
+  used first); a companion must be in the leader's room ("not here"
+  otherwise). The edge is two durable fields on the item instance
+  (`sharpbonus`, `sharpstrikes`; +1 for 20 successful strikes, camping
+  config), so it persists in user files and company records and moves
+  with the weapon. Combat adds it to each strike that hits and isn't dodged, and spends it per
+  equipment slot through all four `Attack*` functions, for players and
+  companion mobs alike. `sharpen status` previews; `sharpen auto on|off`
+  (durable, off by default) sharpens when a camp rest's Rested grant is
+  made. The edge shows in the inventory, `look`, `company gear`, and
+  `conditions`; the inventory shows a stone's uses. Markets buy a
+  stone back only unused. Design and plan:
+  [23b spec](superpowers/specs/2026-09-24-phase-23b-whetstones-design.md) /
+  [23b plan](superpowers/plans/2026-09-24-phase-23b-whetstones.md).
+- **Why:** Roadmap spec 2, second half, with the owner's 2026-09-24
+  amendment (on demand, 10 uses, one use per member) and the owner's
+  answers to the four open details.
+- **Verification:** `go test -race ./...`, `make generate` (no diff),
+  `make validate`. The wiring tests use the real `sharpen`/`camp`
+  commands, the camp timer and `NewRound` listener with the native
+  roster and formation seams, all four combat `Attack*` functions
+  (main hand, offhand, PvP, companion mob), `look` and `conditions`,
+  `company gear` with `plugins.Save`, logout, restart, and respawn, and
+  `market buy`/`market sell` through `plugins.Load` and `TryCommand`.
+- **Review:** The independent reviewer found no high-severity bugs. Fixed:
+  1. A rostered companion with no live mob was silently left out, not
+     named as not here (`TestSharpenUnspawnedCompanionNamedNotHere`).
+  2. A camp rest that finished between the grant pass's snapshot and its
+     save (with an inn stay pending) skipped auto-sharpen; the save now
+     reports whether it cleared a camp rest
+     (`TestAutoSharpenWhenCampRestFinishesAfterSnapshot`).
+  3. `sharpen status` said "would be sharpened" mid-fight; now "(dull)".
+  4. Missing entry-point coverage: an offhand edge through
+     `AttackPlayerVsMob`, PvP, `look`, the `conditions` command, and both
+     markets listing the stone.
+  5. The market's new used-stone check was redundant (`IsSpecial`
+     already covers it); removed, and the end-to-end test still proves
+     the rule.
+
+  Recorded, not changed: a crash after a company save that isn't the autosave can keep a
+  companion's edge and refund the stone use (22b's accepted window; the
+  spec's "together" claim is corrected); selling a sharpened blade to a
+  merchant loses its edge (no duplication); the combat simulator does not
+  spend edges, by design.
+- **Step completed:** Phase 23b.
 
 ### Phase 23a: rest tiers (2026-09-24)
 
@@ -179,7 +234,7 @@ instead of duplicating them.
   Accepted and recorded in the spec: "present" means a live companion
   mob, and a persistently failing save re-grants the full duration until
   it succeeds.
-- **Step completed:** Phase 23a. Phase 23b is next.
+- **Step completed:** Phase 23a.
 
 ### Alignment display scale: −100..100 (2026-09-24)
 

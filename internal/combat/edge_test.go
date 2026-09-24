@@ -186,3 +186,52 @@ func TestAttackMobVsMobSpendsCompanionEdge(t *testing.T) {
 	assert.Equal(t, 20-struck, attacker.Character.Equipment.Weapon.SharpStrikes)
 	assert.Equal(t, 20, player.Character.Equipment.Weapon.SharpStrikes)
 }
+
+// TestAttackPlayerVsMobChargesOffhandEdge: through the real entry point,
+// a sharpened offhand dagger is spent and the dull main hand is untouched.
+func TestAttackPlayerVsMobChargesOffhandEdge(t *testing.T) {
+	edgeSpecs(t)
+	user := users.NewUserRecord(4235, 4235)
+	user.Character.RoomId = 90231
+	user.Character.RaceId = 1
+	user.Character.Skills = map[string]int{"dual-wield": 4} // both weapons swing
+	user.Character.Equipment.Weapon = items.New(edgeSwordID)
+	user.Character.Equipment.Offhand = sharpenedItem(edgeDaggerID, 1, 20)
+	user.Character.SetAggro(0, 4335, characters.DefaultAttack)
+	users.SetTestUser(user)
+	t.Cleanup(func() { users.RemoveTestUser(4235) })
+
+	for i := 0; i < 40; i++ {
+		AttackPlayerVsMob(user, &mobs.Mob{InstanceId: 4335, Character: *edgeFighter(90231)})
+	}
+	assert.Less(t, user.Character.Equipment.Offhand.SharpStrikes, 20, "the offhand's edge was spent")
+	assert.False(t, user.Character.Equipment.Weapon.Sharpened())
+	assert.Zero(t, user.Character.Equipment.Weapon.SharpStrikes)
+}
+
+// TestAttackPlayerVsPlayerSpendsOnlyAttackerEdge: in PvP the attacker's
+// edge is spent and the defender's is untouched.
+func TestAttackPlayerVsPlayerSpendsOnlyAttackerEdge(t *testing.T) {
+	edgeSpecs(t)
+	mk := func(id int) *users.UserRecord {
+		u := users.NewUserRecord(id, uint64(id))
+		u.Character.RoomId = 90231
+		u.Character.RaceId = 1
+		u.Character.Health, u.Character.HealthMax.Value = 1000000, 1000000
+		u.Character.Equipment.Weapon = sharpenedItem(edgeSwordID, 1, 20)
+		users.SetTestUser(u)
+		t.Cleanup(func() { users.RemoveTestUser(id) })
+		return u
+	}
+	atk, def := mk(4236), mk(4237)
+	atk.Character.SetAggro(4237, 0, characters.DefaultAttack)
+	hits := 0
+	for i := 0; i < 10; i++ {
+		if AttackPlayerVsPlayer(atk, def).Hit {
+			hits++
+		}
+	}
+	require.Positive(t, hits)
+	assert.Equal(t, 20-hits, atk.Character.Equipment.Weapon.SharpStrikes)
+	assert.Equal(t, 20, def.Character.Equipment.Weapon.SharpStrikes)
+}
