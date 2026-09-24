@@ -107,6 +107,8 @@ func TestShippedRecruitersResolve(t *testing.T) {
 			assert.Equal(t, c.MobTemplateID, int(mob.MobId))
 			assert.Equal(t, mob.Filepath(), filepath.ToSlash(path[len(filepath.Join(world, "mobs"))+1:]), "the loader's path rule")
 			assert.Zero(t, mob.ItemDropChance, "%s: a death drops nothing", c.ID)
+			assert.Empty(t, mob.LootCategory, "%s: a loot table would drop items on death whatever the drop chance", c.ID)
+			assert.Empty(t, mob.ScriptTag, "%s: no script that could hand out items", c.ID)
 			assert.Empty(t, mob.Character.Items, "%s: carries nothing", c.ID)
 			assert.Zero(t, mob.Character.Gold, "%s: has no gold", c.ID)
 			assert.False(t, mob.Hostile, c.ID)

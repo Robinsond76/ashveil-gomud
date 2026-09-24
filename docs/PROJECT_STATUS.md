@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 22b (durable companion level and equipment) is complete, reviewed, and merged to `master`, after Phase 22a (archetype creation step and starter kits). Phase 22c (recruiters) is next.
+- **HEAD:** Phase 22c (settlement recruiters and `company recruit`) is complete and reviewed on branch `claude/phase-22c-continuation-fka8b6`, awaiting merge to `master`. That finishes the recruitment and creation spec (Phases 22a–22c).
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -47,10 +47,12 @@ instead of duplicating them.
   markups or refusal by alignment gap, black markets for outlaws), and
   Phase 22a (an archetype step in `start` and one starter kit per
   archetype, granted exactly once), and Phase 22b (durable companion
-  level, gear, and gold on the company record).
-- **Next:** Phase 22c, settlement recruiters and `company recruit`, the
-  last part of the recruitment and creation spec, which is first on the
-  [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
+  level, gear, and gold on the company record), and Phase 22c
+  (settlement recruiters: free-once tutorial and paid candidates through
+  `company recruit`).
+- **Next:** the recruitment and creation spec, first on the
+  [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md),
+  is done. Pick the roadmap's next spec.
   The Phase 19b inter-market profit question is resolved: the small
   standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
@@ -118,10 +120,73 @@ instead of duplicating them.
 | 21b | Settlement standing | Complete: `internal/standing`, `modules/standing`, `standing` command, market/inn markups and refusals, black markets, Tanner's Back Alley |
 | 22a | Creation step and starter kits | Complete: archetype step in `start`, per-archetype kits, owed-kit record and character claim marker, ash quarterstaff |
 | 22b | Durable companion level and gear | Complete: `MemberState` on each companion (level, experience, worn and carried items, gold), restore from the record, snapshot seams, `company gear` |
-| 22c | Recruiters and `company recruit` | Next |
+| 22c | Recruiters and `company recruit` | Complete: recruiter rooms in config, free-once tutorial and paid candidates, claims on the company record, Waymark Inn and Trappers' Post, mobs 61–64 |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 22c: settlement recruiters and `company recruit` (2026-09-24)
+
+- **What:**
+  - A recruiter is a room in the company module's `Recruiters` config.
+    There, `company recruit` lists each candidate's archetype, level,
+    alignment, gear, and price. `company recruit <candidate>` (id or name)
+    takes one on.
+  - Recruiting goes through `enlist`, the path `company summon` now also
+    uses (survival identity, archetype, disposition, 22b template gear,
+    one company save, full rollback).
+  - Tutorial candidates are free and claimable once per account. The
+    claim is the template id in `Record.Claimed`, saved with the recruit
+    and rolled back with it. It outlives dismissal.
+  - Paid candidates: gold is checked first and taken only after the
+    company save, then the user is saved at once.
+  - Content: the Waymark Inn (Tamsin Reed and Brother Oswin, free once;
+    Garrick Vane, 120 gold) and Trappers' Post (Ysolde, 80 gold). These
+    are new mobs 61–64, which wear their gear, carry nothing, and never
+    drop anything.
+  - Design and plan:
+    [22c spec](superpowers/specs/2026-09-24-phase-22c-recruiters-design.md) /
+    [22c plan](superpowers/plans/2026-09-24-phase-22c-recruiters.md).
+- **Why:** This is the last part of the recruitment and creation spec.
+  Players had no way to gain a companion other than the test-only
+  `company summon`. Defaults were applied under the owner's "Continue
+  with phase 22c" instruction and are recorded in the spec.
+- **Step completed:** Phase 22c.
+- **Verification:** `go test -race ./...`, `make generate` (no diff), and
+  `make validate` passed. `modules/company` also passes with `-count=2`
+  and `-shuffle=on`.
+  - The wiring test uses `plugins.Load` with the shipped config, the real
+    plugin store, and the shipped candidate mob files. Through
+    `usercommands.TryCommand` it covers the listing, a name match, an
+    ambiguous name, `company summon` refused for a candidate, a free and
+    a paid recruit (the saved user file has the new gold), too little
+    gold, `formation move`, `company status`, a real `plugins.Save()` and
+    reload, dismissal, and a second claim refused. The clock is unchanged.
+  - A shipped-data test pins the recruiter rooms, the templates and their
+    items, archetypes, at least two tutorial candidates, and that no
+    candidate can be summoned or farmed.
+- **Review:** The independent reviewer found no blocking bugs and
+  confirmed each invariant: no clock access, the claim and the recruit in
+  one save, every rollback keeps claims, no summon bypass, and nothing to
+  farm. Fixed:
+  - Latent: a failed `Claim` in `enlist` restored the wrong record for a
+    brand-new leader. It now uses the same restore as the survival
+    failure. It can't be reached today, since `Claim` only fails on ids
+    `Summon` has already accepted.
+  - Name matching had no test coverage; the wiring test now recruits by
+    name and refuses an ambiguous one.
+  - Spawn or survival failure during a tutorial recruit had no test
+    coverage; a new test checks that the claim is rolled back and
+    persisted, and that no gold is taken.
+  - The shipped test now also pins no loot category and no mob script,
+    since a loot category drops items whatever the drop chance.
+  - `company summon` of a candidate is now also refused through
+    `usercommands.TryCommand` with the shipped config.
+
+  Kept and documented: claims are per account, not per character, since
+  alts share the leader's user id. That is stricter than the spec's
+  wording. The accepted crash window between the company and user saves
+  favours the player and can't repeat for a free candidate.
 
 ### Phase 22b: durable companion level and equipment (2026-09-24)
 

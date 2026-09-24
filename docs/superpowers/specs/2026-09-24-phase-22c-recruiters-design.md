@@ -41,7 +41,8 @@ here.
    `Recruiters`, each with a `RoomId`, a display `Name` (the hiring board
    or person), and its `Candidates`. A candidate has an `Id` (the word a
    player types), a `MobTemplateId`, a `Price` in gold (0 = free), and
-   `Tutorial` (free, claimable once per character). A tutorial candidate
+   `Tutorial` (free, claimable once per account; see the constraints).
+   A tutorial candidate
    always costs nothing, whatever `Price` says. Entries with no room, a
    blank or repeated id, a non-positive template, or a negative price are
    skipped with a warning. Templates are checked when used, not at load,
@@ -132,8 +133,12 @@ advances rounds.
 - An authored Ashveil tutorial that walks a new player to the recruiter.
   The two free candidates are ready for it; the tutorial is later content.
 - Recruiter NPCs with dialogue; the recruiter is a room fixture.
-- Permadeath does not clear company records (true before this phase), so
-  a replacement character on the same account keeps the old claims.
+- Claims are per account, not per character. A company record is keyed by
+  the leader's user id, and alts (and a permadeath replacement) swap the
+  character under the same user id, so they share the claims (and, as
+  before this phase, the company). That is stricter than "once per
+  character", so it can't be farmed; only a new account gets a fresh claim.
+  Found in review and kept.
 
 ## Acceptance criteria
 

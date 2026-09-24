@@ -47,9 +47,9 @@ func TestParseRecruiters(t *testing.T) {
 		map[any]any{"RoomId": 2003, "Name": "the hiring slate", "Candidates": []any{
 			map[any]any{"Id": " Tamsin ", "MobTemplateId": 961, "Tutorial": true},
 			map[any]any{"Id": "garrick", "MobTemplateId": 963, "Price": 120},
-			map[any]any{"Id": "tamsin", "MobTemplateId": 62},    // repeated id
-			map[any]any{"Id": "", "MobTemplateId": 62},          // blank id
-			map[any]any{"Id": "nobody", "MobTemplateId": 0},     // no template
+			map[any]any{"Id": "tamsin", "MobTemplateId": 62}, // repeated id
+			map[any]any{"Id": "", "MobTemplateId": 62},       // blank id
+			map[any]any{"Id": "nobody", "MobTemplateId": 0},  // no template
 			map[any]any{"Id": "greedy", "MobTemplateId": 64, "Price": -5},
 			"not a map",
 		}},
@@ -233,4 +233,34 @@ func TestSummonRefusesRecruiterTemplate(t *testing.T) {
 	_, err := m.summon(7, 12, "961")
 	assert.ErrorIs(t, err, domain.ErrTemplateNotAllowed, "a recruiter's candidate can't be summoned for free")
 	assert.Zero(t, runtime.spawnCalls)
+}
+
+func TestRecruitSpawnOrSurvivalFailureRollsBackClaim(t *testing.T) {
+	t.Run("spawn fails", func(t *testing.T) {
+		m, runtime, user, saves := newRecruitModule(t, 150)
+		runtime.failSpawnOnCall = 1
+		_, err := m.recruit(user, hiringRoom, "tamsin")
+		require.Error(t, err)
+		assert.Equal(t, 150, user.Character.Gold)
+		assert.Zero(t, saves.calls)
+		record, _ := m.registry.Get(7)
+		assert.Empty(t, record.Companions)
+		assert.False(t, record.HasClaimed(961))
+		saved, _ := m.store.(*fakeStore).saved.Get(7)
+		assert.False(t, saved.HasClaimed(961), "the rollback is persisted")
+		text, err := m.recruit(user, hiringRoom, "tamsin")
+		require.NoError(t, err)
+		assert.Contains(t, text, "joins your company")
+	})
+	t.Run("survival fails", func(t *testing.T) {
+		m, runtime, user, _ := newRecruitModule(t, 150)
+		useFakeLifecycle(t, &fakeLifecycle{ensureErr: errors.New("survival down")})
+		_, err := m.recruit(user, hiringRoom, "tamsin")
+		require.Error(t, err)
+		assert.Zero(t, runtime.spawnCalls)
+		record, _ := m.registry.Get(7)
+		assert.Empty(t, record.Companions)
+		assert.False(t, record.HasClaimed(961))
+		assert.Equal(t, 150, user.Character.Gold)
+	})
 }

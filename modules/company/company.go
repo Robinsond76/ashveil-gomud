@@ -357,22 +357,25 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 	if err != nil {
 		return domain.Companion{}, err
 	}
-	m.assignConfiguredArchetype(leaderUserID, companion)
-	m.seedDisposition(leaderUserID, companion)
-	if claim {
-		if err := m.registry.Claim(leaderUserID, templateID); err != nil {
-			m.registry.Put(before)
-			return domain.Companion{}, err
-		}
-	}
-	if err := survival.EnsureCompanyMember(leaderUserID, companion.ID); err != nil {
-		// Survival did not durably record the companion, so no identity was
-		// spent: restore the exact pre-summon record and allow ID reuse.
+	// Before survival records the companion no identity is spent: restore
+	// the exact pre-summon record and allow ID reuse.
+	restoreBefore := func() {
 		if existed {
 			m.registry.Put(before)
 		} else {
 			m.registry.Put(domain.Record{LeaderUserID: leaderUserID})
 		}
+	}
+	m.assignConfiguredArchetype(leaderUserID, companion)
+	m.seedDisposition(leaderUserID, companion)
+	if claim {
+		if err := m.registry.Claim(leaderUserID, templateID); err != nil {
+			restoreBefore()
+			return domain.Companion{}, err
+		}
+	}
+	if err := survival.EnsureCompanyMember(leaderUserID, companion.ID); err != nil {
+		restoreBefore()
 		return domain.Companion{}, err
 	}
 	// Survival has now committed a durable identity for this companion ID, so

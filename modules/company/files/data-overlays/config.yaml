@@ -42,12 +42,13 @@ RecruitMaxGap: 60
 # recruit" there lists its candidates, and "company recruit <candidate>"
 # takes one on. A candidate's Id is the word players type. Price is in
 # gold. A Tutorial candidate is free (its Price is ignored) and can be
-# claimed once per character, ever: the claim outlives dismissal, and it is
-# keyed by MobTemplateId, so offering the same template at two recruiters
-# is still one claim. Don't also list a candidate template in
-# AllowedCompanionMobIDs, or "company summon" would skip the price and the
-# claim. Candidate templates should wear their gear, carry nothing, have no
-# gold, and use itemdropchance 0, so a recruit can't be farmed for items.
+# claimed once per account (alts share it), ever: the claim outlives
+# dismissal, and it is keyed by MobTemplateId, so offering the same
+# template at two recruiters is still one claim. Don't also list a
+# candidate template in AllowedCompanionMobIDs, or "company summon" would
+# skip the price and the claim. Candidate templates should wear their gear,
+# carry nothing, have no gold, and use itemdropchance 0 and no loot
+# category, so a recruit can't be farmed for items.
 # Entries with no room, a blank or repeated Id, no template, or a negative
 # price are skipped with a warning.
 Recruiters:

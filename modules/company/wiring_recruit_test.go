@@ -122,9 +122,24 @@ func TestRecruitThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, list, "Price: 120 gold")
 	assert.Contains(t, list, "Price: free, once only")
 
+	// Names work as well as ids; an ambiguous one is refused.
+	assert.Contains(t, run("company", "recruit r"), `No one called "r" is hiring here.`)
+	assert.Equal(t, 150, user.Character.Gold)
+
+	// "company summon" can't bypass the price or the claim.
+	handled, err := usercommands.TryCommand("company", "summon 61", user.UserId, events.CmdSkipScripts)
+	assert.True(t, handled)
+	assert.ErrorIs(t, err, domain.ErrTemplateNotAllowed)
+	handled, err = usercommands.TryCommand("company", "summon tamsin reed", user.UserId, events.CmdSkipScripts)
+	assert.True(t, handled)
+	assert.ErrorIs(t, err, domain.ErrTemplateNotAllowed)
+	events.ProcessEvents()
+	_, hasRecord := module.registry.Get(7)
+	assert.False(t, hasRecord, "nothing recorded")
+
 	// The free tutorial candidate joins with its template gear, claimed in
 	// the same real save.
-	assert.Contains(t, run("company", "recruit tamsin"), "Tamsin Reed joins your company (#1).")
+	assert.Contains(t, run("company", "recruit reed"), "Tamsin Reed joins your company (#1).")
 	assert.Equal(t, 150, user.Character.Gold)
 	record := stored()
 	assert.True(t, record.HasClaimed(61))

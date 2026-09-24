@@ -31,6 +31,6 @@ See the design doc
       acceptance criteria.
 - [x] `modules/company/AGENTS.md` note.
 - [x] `go test -race ./...`, `make generate`, `make validate`.
-- [ ] **Testing and review gate:** independent reviewer; verify, fix,
+- [x] **Testing and review gate:** independent reviewer; verify, fix,
       record.
-- [ ] `docs/PROJECT_STATUS.md` Phase 22c entry with **Review:** line.
+- [x] `docs/PROJECT_STATUS.md` Phase 22c entry with **Review:** line.
