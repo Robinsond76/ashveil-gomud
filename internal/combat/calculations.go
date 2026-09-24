@@ -66,17 +66,40 @@ func statDeltaProportional(atkStat, defStat int) float64 {
 // applying the same selection logic used by calculateCombat.
 // It does not trim for dual-wield skill - callers handle that themselves.
 func resolveAttackWeapons(char characters.Character) []items.Item {
+	attackWeapons, _ := resolveAttackWeaponSlots(char)
+	return attackWeapons
+}
+
+// resolveAttackWeaponSlots is resolveAttackWeapons plus, for each weapon,
+// the equipment slot it came from (items.Weapon, items.Offhand, or ""
+// for the unarmed placeholder), so a Phase 23b edge spent in a round can
+// be charged to the right real weapon afterwards.
+func resolveAttackWeaponSlots(char characters.Character) ([]items.Item, []items.ItemType) {
 	attackWeapons := []items.Item{}
+	slots := []items.ItemType{}
 	if char.Equipment.Weapon.ItemId > 0 {
 		attackWeapons = append(attackWeapons, char.Equipment.Weapon)
+		slots = append(slots, items.Weapon)
 	}
 	if char.Equipment.Offhand.ItemId > 0 && char.Equipment.Offhand.GetSpec().Type == items.Weapon {
 		attackWeapons = append(attackWeapons, char.Equipment.Offhand)
+		slots = append(slots, items.Offhand)
 	}
 	if len(attackWeapons) == 0 {
 		attackWeapons = append(attackWeapons, items.Item{ItemId: 0})
+		slots = append(slots, ``)
 	}
-	return attackWeapons
+	return attackWeapons, slots
+}
+
+// spendEdges charges the strikes an attack round spent to the attacker's
+// real weapons (calculateCombat works on a copy of the character).
+func spendEdges(char *characters.Character, spent map[items.ItemType]int) {
+	for slot, n := range spent {
+		if itm := char.Equipment.Get(slot); itm != nil {
+			itm.SpendEdge(n)
+		}
+	}
 }
 
 // damageBonus returns the flat bonus damage an attacker earns over a defender

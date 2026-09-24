@@ -26,6 +26,7 @@ Phase 22b durable level and gear (`state.go`):
 - Companions spawn with `mobs.NewMobByIdNoElite`, so they never roll elite.
 - Dismissal and desertion drop the state; the companion leaves with its gear. Don't add a path that drops a companion's gear into the world on dismissal, since summon-and-dismiss would then farm template gear.
 - `company gear <member>` shows the recorded gear, refreshed from the live mob when it is out.
+- Phase 23b whetstone edges (`sharpbonus`/`sharpstrikes` on `items.Item`) live on the weapon instance, so they ride on these same snapshots with no extra code. `modules/camping` sharpens the live mob's weapons and combat spends them on the live mob; both are captured at the next snapshot seam, like any other gear change.
 - `wiring_state_test.go` also calls `plugins.Load`, with the same `SnapshotLoadStateForTest` guard.
 
 Phase 22c recruiters (`recruit.go`):

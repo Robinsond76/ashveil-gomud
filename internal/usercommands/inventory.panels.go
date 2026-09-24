@@ -55,10 +55,11 @@ func buildInventoryPanel(user *users.UserRecord, itemList []items.Item, searchin
 		for i, item := range itemList {
 			name := formatInventoryItemName(item)
 			plainLen := len(item.Name())
-			if iSpec := item.GetSpec(); iSpec.Uses > 0 &&
-				(iSpec.Subtype == items.Drinkable || iSpec.Subtype == items.Edible ||
-					iSpec.Subtype == items.Usable || iSpec.Type == items.Lockpicks) {
+			if showsUses(item.GetSpec()) {
 				plainLen += 2 + len(fmt.Sprintf(`%d`, item.Uses)) + 1 // " (N)"
+			}
+			if item.Sharpened() {
+				plainLen += len(fmt.Sprintf(` (sharp: %d)`, item.SharpStrikes))
 			}
 			proposed := lineLen + plainLen + 2 // +2 for ", "
 			if lineLen > 0 && proposed > 68 {
@@ -96,14 +97,23 @@ func buildInventoryPanel(user *users.UserRecord, itemList []items.Item, searchin
 }
 
 // formatInventoryItemName returns the display string for one carried item,
-// including a uses count for consumables and lockpicks.
+// including a uses count for consumables, lockpicks, and objects with uses
+// (a whetstone), and a sharpened weapon's edge (Phase 23b).
 func formatInventoryItemName(item items.Item) string {
-	iSpec := item.GetSpec()
 	name := fmt.Sprintf(`<ansi fg="itemname">%s</ansi>`, item.DisplayName())
-	if iSpec.Uses > 0 &&
-		(iSpec.Subtype == items.Drinkable || iSpec.Subtype == items.Edible ||
-			iSpec.Subtype == items.Usable || iSpec.Type == items.Lockpicks) {
+	if showsUses(item.GetSpec()) {
 		name = fmt.Sprintf(`%s <ansi fg="uses-left">(%d)</ansi>`, name, item.Uses)
 	}
+	if edge := item.EdgeLabel(); edge != `` {
+		name = fmt.Sprintf(`%s %s`, name, edge)
+	}
 	return name
+}
+
+// showsUses reports whether an item's uses left are shown in the pack.
+func showsUses(iSpec items.ItemSpec) bool {
+	return iSpec.Uses > 0 &&
+		(iSpec.Subtype == items.Drinkable || iSpec.Subtype == items.Edible ||
+			iSpec.Subtype == items.Usable || iSpec.Type == items.Lockpicks ||
+			iSpec.Type == items.Object)
 }

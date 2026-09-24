@@ -31,3 +31,16 @@ WellRestedBuffId: 1030
 RestedBuffId: 1033
 RestedDuration: 15m
 WellRestedDuration: 30m
+# Phase 23b whetstones. `sharpen` (or `camp sharpen`), at any time but
+# never mid-fight, spends one use of the leader's whetstone (item
+# WhetstoneItemId, 10 uses) per company member whose dull blades it
+# sharpens: two blades on one member cost one use, and members already
+# sharp or with no blade cost nothing. Members are sharpened leader first,
+# then companions by number, until the stones run out. A bladed weapon is
+# a slashing, cleaving, or stabbing one in either hand, and a companion
+# must be in the leader's room. Each sharpened blade gains SharpenedBonus
+# damage on its next SharpenedStrikes successful strikes; an edge never
+# stacks or resets. `sharpen auto on` also sharpens when a camp rest ends.
+WhetstoneItemId: 30
+SharpenedBonus: 1
+SharpenedStrikes: 20

@@ -175,6 +175,16 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	assert.Contains(t, gear, "dagger")
 	assert.Contains(t, gear, "broadsword")
 
+	// Phase 23b: a whetstone edge on the companion's broadsword, partly
+	// spent in a fight, is on the live mob; the save records it, the gear
+	// view shows it, and restoration below brings it back.
+	require.True(t, live().Character.Equipment.Weapon.Sharpen(1, 20))
+	live().Character.Equipment.Weapon.SpendEdge(3)
+	assert.Contains(t, run("company", "gear dummy"), "(sharp: 17)")
+	plugins.Save()
+	assert.Equal(t, 17, stored().Equipment.Weapon.SharpStrikes)
+	assert.Equal(t, 1, stored().Equipment.Weapon.SharpBonus)
+
 	// Leader logs out: recorded, and the mob leaves the world with it.
 	instanceID := live().InstanceId
 	events.AddToQueue(events.PlayerDespawn{UserId: 7})
@@ -197,6 +207,7 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	assert.Equal(t, round, util.GetRoundCount())
 	restored := live()
 	assert.Equal(t, []int{10002, 10004, 30004}, mobItemIDs(restored), "exactly the recorded gear")
+	assert.Equal(t, 17, restored.Character.Equipment.Weapon.SharpStrikes, "the edge survives logout and restart")
 	assert.Equal(t, 2, restored.Character.Level)
 	assert.Equal(t, 1, len(mobs.GetAllMobInstanceIds()))
 

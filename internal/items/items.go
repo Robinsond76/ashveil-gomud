@@ -35,18 +35,24 @@ const (
 
 // Instance properties that may change
 type Item struct {
-	ItemId            int            `yaml:"itemid,omitempty"`
-	UUID              uuid.UUID      `yaml:"-"`                       // `yaml:"uuid,omitempty"`
-	Blob              string         `yaml:"blob,omitempty"`          // Does this item have a blob? Should be base64 encoded.
-	Uses              int            `yaml:"uses,omitempty"`          // How many uses it has left
-	LastUsedRound     uint64         `yaml:"lastusedround,omitempty"` // Last round this item was used
-	Spec              *ItemSpec      `yaml:"overrides,omitempty"`
-	Uncursed          bool           `yaml:"uncursed,omitempty"`          // Is this item uncursed?
-	Enchantments      uint8          `yaml:"enchantments,omitempty"`      // Is this item enchanted?
-	Adjectives        []string       `yaml:"adjectives,omitempty"`        // Decorative text for the name of the item (e.g. "exploding")
-	StashedBy         int            `yaml:"stashedby,omitempty"`         // userid of whoever stashed this item
-	CanNeverBeRemoved bool           `yaml:"canneverberemoved,omitempty"` // If true, this item can never be unequipped once worn
-	tempDataStore     map[string]any // Temporary data store for this item. Not saved to disk.
+	ItemId            int       `yaml:"itemid,omitempty"`
+	UUID              uuid.UUID `yaml:"-"`                       // `yaml:"uuid,omitempty"`
+	Blob              string    `yaml:"blob,omitempty"`          // Does this item have a blob? Should be base64 encoded.
+	Uses              int       `yaml:"uses,omitempty"`          // How many uses it has left
+	LastUsedRound     uint64    `yaml:"lastusedround,omitempty"` // Last round this item was used
+	Spec              *ItemSpec `yaml:"overrides,omitempty"`
+	Uncursed          bool      `yaml:"uncursed,omitempty"`          // Is this item uncursed?
+	Enchantments      uint8     `yaml:"enchantments,omitempty"`      // Is this item enchanted?
+	Adjectives        []string  `yaml:"adjectives,omitempty"`        // Decorative text for the name of the item (e.g. "exploding")
+	StashedBy         int       `yaml:"stashedby,omitempty"`         // userid of whoever stashed this item
+	CanNeverBeRemoved bool      `yaml:"canneverberemoved,omitempty"` // If true, this item can never be unequipped once worn
+	// Phase 23b: a whetstone's edge. SharpBonus is added to each successful
+	// strike until SharpStrikes run out. Plain values, never a pointer:
+	// items are copied by value, and a shared pointer would alias one edge
+	// across copies.
+	SharpBonus    int            `yaml:"sharpbonus,omitempty"`
+	SharpStrikes  int            `yaml:"sharpstrikes,omitempty"`
+	tempDataStore map[string]any // Temporary data store for this item. Not saved to disk.
 }
 
 func New(itemId int) Item {
@@ -231,6 +237,13 @@ func (i *Item) GetLongDescription() string {
 
 		}
 
+		if i.Sharpened() {
+
+			longDesc.WriteString("\n")
+			longDesc.WriteString(fmt.Sprintf(`- Its edge is honed: +%d damage for its next %d strikes.`, i.SharpBonus, i.SharpStrikes))
+
+		}
+
 	} else if iSpec.Subtype == Usable {
 
 		longDesc.WriteString("\n")
@@ -239,6 +252,43 @@ func (i *Item) GetLongDescription() string {
 	}
 
 	return longDesc.String()
+}
+
+// Sharpened reports whether the item has an edge left.
+func (i *Item) Sharpened() bool {
+	return i.SharpStrikes > 0 && i.SharpBonus > 0
+}
+
+// Sharpen gives the item an edge of bonus damage for strikes successful
+// strikes. An existing edge is never stacked or reset. It reports whether
+// the item was sharpened.
+func (i *Item) Sharpen(bonus, strikes int) bool {
+	if i.Sharpened() || bonus <= 0 || strikes <= 0 {
+		return false
+	}
+	i.SharpBonus = bonus
+	i.SharpStrikes = strikes
+	return true
+}
+
+// SpendEdge spends n strikes of the edge; the edge ends at zero.
+func (i *Item) SpendEdge(n int) {
+	if n <= 0 {
+		return
+	}
+	i.SharpStrikes -= n
+	if i.SharpStrikes <= 0 {
+		i.SharpStrikes = 0
+		i.SharpBonus = 0
+	}
+}
+
+// EdgeLabel is the edge suffix shown in inventories, or "" without one.
+func (i *Item) EdgeLabel() string {
+	if !i.Sharpened() {
+		return ``
+	}
+	return fmt.Sprintf(`<ansi fg="item-bonus-damage">(sharp: %d)</ansi>`, i.SharpStrikes)
 }
 
 func (i *Item) IsBetterThan(otherItm Item) bool {
@@ -517,6 +567,9 @@ func (i *Item) NameComplex() string {
 
 	if i.GetSpec().Damage.BonusDamage > 0 {
 		nm = fmt.Sprintf(`%s <ansi fg="item-bonus-damage">+%d</ansi>`, nm, i.GetSpec().Damage.BonusDamage)
+	}
+	if edge := i.EdgeLabel(); edge != `` {
+		nm = fmt.Sprintf(`%s %s`, nm, edge)
 	}
 	flagsStr := i.AttrString()
 	if flagsStr != `` {

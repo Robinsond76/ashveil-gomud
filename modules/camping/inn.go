@@ -31,6 +31,11 @@ type innSettings struct {
 	RestedBuffId       int
 	RestedDuration     time.Duration
 	WellRestedDuration time.Duration
+	// Phase 23b whetstones: the stone's item ID, and the edge one use
+	// gives each dull blade (bonus damage for that many strikes).
+	WhetstoneItemId  int
+	SharpenedBonus   int
+	SharpenedStrikes int
 }
 
 func defaultInnSettings() innSettings {
@@ -44,6 +49,10 @@ func defaultInnSettings() innSettings {
 		RestedBuffId:       1033,
 		RestedDuration:     15 * time.Minute,
 		WellRestedDuration: 30 * time.Minute,
+
+		WhetstoneItemId:  30,
+		SharpenedBonus:   1,
+		SharpenedStrikes: 20,
 	}
 }
 
@@ -74,6 +83,15 @@ func parseInnSettings(get func(string) any) innSettings {
 	}
 	if d, ok := configSeconds(get("WellRestedDuration")); ok && d > 0 {
 		s.WellRestedDuration = d
+	}
+	if n, ok := configInt(get("WhetstoneItemId")); ok && n > 0 {
+		s.WhetstoneItemId = n
+	}
+	if n, ok := configInt(get("SharpenedBonus")); ok && n > 0 {
+		s.SharpenedBonus = n
+	}
+	if n, ok := configInt(get("SharpenedStrikes")); ok && n > 0 {
+		s.SharpenedStrikes = n
 	}
 	return s
 }
@@ -120,6 +138,7 @@ func (m *CampingModule) resetInnState() {
 	m.wellRestedPending = map[int]bool{}
 	m.restedPending = map[int]bool{}
 	m.owed = map[int]map[int]camping.OwedGrant{}
+	m.autoSharpen = map[int]bool{}
 	m.innTimers = map[int]Timer{}
 	m.innTimerGeneration = map[int]uint64{}
 }

@@ -2,9 +2,11 @@ package usercommands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -19,7 +21,8 @@ func buildConditionsPanel(user *users.UserRecord) string {
 	}
 
 	charBuffs := user.Character.GetBuffs()
-	if len(charBuffs) == 0 {
+	edges := sharpenedSummary(user)
+	if len(charBuffs) == 0 && edges == `` {
 		layout.Panel("conditions").Add(``, ``, `<ansi fg="black-bold">None</ansi>`)
 		return layout.Render() + term.CRLFStr
 	}
@@ -31,9 +34,17 @@ func buildConditionsPanel(user *users.UserRecord) string {
 		permaBuff   bool
 		roundsLeft  int
 	}
-	rows := make([]condRow, 0, len(charBuffs))
+	rows := make([]condRow, 0, len(charBuffs)+1)
 	maxNameWidth := 0
 	roundSecs := int(configs.GetTimingConfig().RoundSeconds)
+
+	// Phase 23b: a whetstone's edge is on the weapon, not a buff, but it
+	// is still the wielder's condition. It counts strikes, not time, so it
+	// is shown like a permanent row.
+	if edges != `` {
+		rows = append(rows, condRow{name: `Sharpened`, description: edges, permaBuff: true})
+		maxNameWidth = len(`Sharpened`)
+	}
 
 	for _, buff := range charBuffs {
 		spec := buffs.GetBuffSpec(buff.BuffId)
@@ -67,4 +78,16 @@ func buildConditionsPanel(user *users.UserRecord) string {
 	}
 
 	return layout.Render() + term.CRLFStr
+}
+
+// sharpenedSummary describes the edges on the character's equipped
+// weapons, or "" when none has one.
+func sharpenedSummary(user *users.UserRecord) string {
+	parts := []string{}
+	for _, itm := range []items.Item{user.Character.Equipment.Weapon, user.Character.Equipment.Offhand} {
+		if itm.ItemId > 0 && itm.Sharpened() {
+			parts = append(parts, fmt.Sprintf(`%s: +%d damage for %d more strikes`, itm.Name(), itm.SharpBonus, itm.SharpStrikes))
+		}
+	}
+	return strings.Join(parts, `; `)
 }

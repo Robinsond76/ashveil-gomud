@@ -32,7 +32,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp break"
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp break | camp sharpen [status | auto on|off]"
 const defaultRoomTag = "camping"
 
 // Registry is the durable, leader-keyed set of active camps plus which
@@ -51,6 +51,9 @@ type Registry struct {
 	// leader, then companion ID.
 	RestedPending map[int]bool                      `yaml:"rested_pending,omitempty"`
 	Owed          map[int]map[int]camping.OwedGrant `yaml:"owed,omitempty"`
+	// Phase 23b: leaders whose company sharpens its blades when a camp
+	// rest's Rested grant is made.
+	AutoSharpen map[int]bool `yaml:"auto_sharpen,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -63,6 +66,7 @@ func NewRegistry() *Registry {
 		WellRestedPending:  map[int]bool{},
 		RestedPending:      map[int]bool{},
 		Owed:               map[int]map[int]camping.OwedGrant{},
+		AutoSharpen:        map[int]bool{},
 	}
 }
 
@@ -96,6 +100,7 @@ func (r Registry) Clone() Registry {
 		WellRestedPending:  cloneBools(r.WellRestedPending),
 		RestedPending:      cloneBools(r.RestedPending),
 		Owed:               cloneOwed(r.Owed),
+		AutoSharpen:        cloneBools(r.AutoSharpen),
 	}
 	for leaderUserID, camp := range r.Camps {
 		out.Camps[leaderUserID] = camp
@@ -174,6 +179,11 @@ func decodeRegistry(data []byte, registry *Registry) error {
 	for leaderUserID, pending := range wire.RestedPending {
 		if leaderUserID > 0 && pending {
 			loaded.RestedPending[leaderUserID] = true
+		}
+	}
+	for leaderUserID, on := range wire.AutoSharpen {
+		if leaderUserID > 0 && on {
+			loaded.AutoSharpen[leaderUserID] = true
 		}
 	}
 	for leaderUserID, byCompanion := range wire.Owed {
@@ -263,6 +273,7 @@ type CampingModule struct {
 	wellRestedPending  map[int]bool
 	restedPending      map[int]bool
 	owed               map[int]map[int]camping.OwedGrant
+	autoSharpen        map[int]bool
 	innTimers          map[int]Timer
 	innTimerGeneration map[int]uint64
 	innCfg             innSettings
@@ -312,6 +323,7 @@ func init() {
 	m.store = pluginStore{plug: m.plug}
 	m.plug.AddUserCommand("camp", m.userCommand, false, false)
 	m.plug.AddUserCommand("inn", m.innCommand, false, false)
+	m.plug.AddUserCommand("sharpen", m.sharpenCommand, false, false)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	m.plug.Callbacks.SetOnLoad(m.load)
@@ -382,6 +394,7 @@ func (m *CampingModule) saveLocked() error {
 		WellRestedPending:  m.wellRestedPending,
 		RestedPending:      m.restedPending,
 		Owed:               m.owed,
+		AutoSharpen:        m.autoSharpen,
 	}
 	if err := m.store.Save(registry); err != nil {
 		return fmt.Errorf("camping: save failed; please retry: %w", err)
@@ -427,6 +440,9 @@ func (m *CampingModule) load() {
 	}
 	if loaded.Owed != nil {
 		m.owed = loaded.Owed
+	}
+	if loaded.AutoSharpen != nil {
+		m.autoSharpen = loaded.AutoSharpen
 	}
 	if m.plug != nil {
 		m.innCfg = parseInnSettings(m.plug.Config.Get)
@@ -880,7 +896,13 @@ func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *r
 	}
 	switch args[0] {
 	case "status":
-		user.SendText(m.status(user.UserId))
+		text := m.status(user.UserId)
+		if m.hasCamp(user.UserId) {
+			text += "\n" + m.sharpenPreview(user)
+		}
+		user.SendText(text)
+	case "sharpen":
+		user.SendText(m.sharpenArgs(user, args[1:]))
 	case "fire":
 		user.SendText(m.lightFire(user, room))
 	case "rest":
