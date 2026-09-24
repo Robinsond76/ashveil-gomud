@@ -178,7 +178,7 @@ func (m *CampingModule) grantPendingTiers() {
 				owed[companionID] = camping.OwedGrant{BuffID: settings.tierBuff(tier), Tier: tier, ExpiresAtUTC: now.Add(duration)}
 			}
 		}
-		m.finishGrant(leaderUserID, owed, now)
+		m.finishGrant(leaderUserID, tier, owed, now)
 		if tier == camping.TierWellRested {
 			user.SendText("Your company feels well rested.")
 		} else {
@@ -196,13 +196,17 @@ func sortedIDs(live map[int]*characters.Character) []int {
 	return ids
 }
 
-// finishGrant clears both pending markers, removes a finished inn stay,
-// and merges the new owed entries, in one save. A failed save restores
-// everything, so the next round grants again (which only refreshes).
-func (m *CampingModule) finishGrant(leaderUserID int, owed map[int]camping.OwedGrant, now time.Time) {
+// finishGrant clears the pending markers the granted tier covers (Well
+// Rested covers both; Rested only its own, so a Well Rested an inn timer
+// marked after the snapshot is still granted next round), removes a
+// finished inn stay, and merges the new owed entries, in one save. A
+// failed save restores everything, so the next round grants again (which
+// only refreshes).
+func (m *CampingModule) finishGrant(leaderUserID int, granted camping.Tier, owed map[int]camping.OwedGrant, now time.Time) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	wellPending, restedPending := m.wellRestedPending[leaderUserID], m.restedPending[leaderUserID]
+	wellPending := granted == camping.TierWellRested && m.wellRestedPending[leaderUserID]
+	restedPending := m.restedPending[leaderUserID]
 	if !wellPending && !restedPending {
 		return
 	}
@@ -214,7 +218,9 @@ func (m *CampingModule) finishGrant(leaderUserID int, owed map[int]camping.OwedG
 		snapshot[id] = g
 	}
 
-	delete(m.wellRestedPending, leaderUserID)
+	if wellPending {
+		delete(m.wellRestedPending, leaderUserID)
+	}
 	delete(m.restedPending, leaderUserID)
 	if wellPending && hadStay && !stay.Resting() {
 		delete(m.stays, leaderUserID)

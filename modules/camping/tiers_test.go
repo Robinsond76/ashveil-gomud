@@ -141,6 +141,38 @@ func TestBothPendingGrantsWellRested(t *testing.T) {
 	assert.False(t, e.module.wellRestedPending[7])
 }
 
+// TestWellRestedMarkedMidPassIsNotLost: an inn timer that marks Well
+// Rested after the round's snapshot (while it grants Rested) must not have
+// its marker or stay cleared by that Rested grant.
+func TestWellRestedMarkedMidPassIsNotLost(t *testing.T) {
+	e, user := heroEnv(t)
+	e.completeCamp(t, user)
+	user.Character.Gold = 100
+	require.Contains(t, e.module.innRest(user, innRoom()), "You pay")
+	*e.now = e.now.Add(60 * time.Second)
+	// The inn timer fires while the round pass grants the camp's Rested.
+	fired := false
+	e.module.grantBuff = func(c *characters.Character, id, rounds int) error {
+		if !fired {
+			fired = true
+			e.scheduler.fireLatest()
+		}
+		*e.buffs = append(*e.buffs, buffCall{c.Name, id})
+		e.ledger.hold(c, id)
+		return nil
+	}
+	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	require.True(t, fired)
+	assert.Equal(t, []buffCall{{"Hero", 1033}, {"Bran", 1033}}, *e.buffs)
+	assert.True(t, e.store.saved.WellRestedPending[7], "still owed")
+	assert.Contains(t, e.store.saved.Stays, 7)
+
+	e.module.onNewRound(events.NewRound{RoundNumber: 2})
+	assert.Equal(t, []buffCall{{"Hero", 1033}, {"Bran", 1033}, {"Hero", 1030}, {"Bran", 1030}}, *e.buffs)
+	assert.False(t, e.store.saved.WellRestedPending[7])
+	assert.Empty(t, e.store.saved.Stays)
+}
+
 func TestTierGrantSaveFailureRetries(t *testing.T) {
 	e, user := heroEnv(t)
 	e.absent = []int{2}
