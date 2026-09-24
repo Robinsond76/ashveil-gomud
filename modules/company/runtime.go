@@ -73,6 +73,26 @@ func (nativeRuntime) Detach(leaderUserID, instanceID int) {
 	mobs.DestroyInstance(instanceID)
 }
 
+func (nativeRuntime) Relocate(instanceID, roomID int) bool {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil || mob.Character.Health < 1 {
+		return false
+	}
+	to := rooms.LoadRoom(roomID)
+	if to == nil {
+		return false
+	}
+	mob.Character.Aggro = nil
+	if mob.Character.RoomId == roomID {
+		return true
+	}
+	if from := rooms.LoadRoom(mob.Character.RoomId); from != nil {
+		from.RemoveMob(instanceID)
+	}
+	to.AddMob(instanceID)
+	return true
+}
+
 // applyState puts a saved state on a freshly spawned mob: its level,
 // experience, gold, and copies of its gear in place of the template's.
 func applyState(mob *mobs.Mob, state domain.MemberState) {

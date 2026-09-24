@@ -37,6 +37,10 @@ type Runtime interface {
 	IsLive(instanceID int) bool
 	IsAttached(leaderUserID, instanceID int) bool
 	Detach(leaderUserID, instanceID int)
+	// Relocate moves a live, living mob into roomID and out of any fight
+	// (Phase 25a). It reports false when the mob is gone or dead, or the
+	// room doesn't load.
+	Relocate(instanceID, roomID int) bool
 }
 
 type Store interface {

@@ -186,3 +186,26 @@ func ChemistryStanding(leaderUserID int, key MemberKey) (ChemistryStandingView, 
 	}
 	return cp.ChemistryStanding(leaderUserID, key)
 }
+
+// RelocationProvider is optionally implemented by the registered
+// FormationProvider (Phase 25a). modules/company runs on the game loop, so
+// call it from the game loop only.
+type RelocationProvider interface {
+	// RelocateCompany moves every companion of the leader whose mob is live,
+	// attached, and alive into roomID, out of any fight, and reports how many
+	// moved. Records, formation, and gear are unchanged.
+	RelocateCompany(leaderUserID, roomID int) int
+}
+
+// RelocateCompany moves a leader's living companions into roomID. It moves
+// none without a provider.
+func RelocateCompany(leaderUserID, roomID int) int {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	rp, ok := p.(RelocationProvider)
+	if !ok {
+		return 0
+	}
+	return rp.RelocateCompany(leaderUserID, roomID)
+}

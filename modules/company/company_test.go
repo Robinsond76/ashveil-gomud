@@ -199,6 +199,10 @@ type fakeRuntime struct {
 	noTemplateState bool
 	// stolen marks live instances now charmed by another player.
 	stolen map[int]bool
+	// Phase 25a: dying marks live instances at 0 health; relocated records
+	// each instance moved and where.
+	dying     map[int]bool
+	relocated map[int]int
 }
 
 func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
@@ -261,6 +265,16 @@ func (f *fakeRuntime) IsAttached(_ int, instanceID int) bool {
 func (f *fakeRuntime) Detach(_ int, instanceID int) {
 	f.detachCalls++
 	delete(f.live, instanceID)
+}
+func (f *fakeRuntime) Relocate(instanceID, roomID int) bool {
+	if !f.live[instanceID] || f.dying[instanceID] {
+		return false
+	}
+	if f.relocated == nil {
+		f.relocated = map[int]int{}
+	}
+	f.relocated[instanceID] = roomID
+	return true
 }
 
 type fakeStore struct {

@@ -172,3 +172,30 @@ func TestChemistryProviderRoutesUserAndInstance(t *testing.T) {
 		t.Fatalf("an untracked mob gets nothing, got %d", got)
 	}
 }
+
+type fakeRelocation struct {
+	fakeFormationProvider
+	moves map[int]int
+}
+
+func (f fakeRelocation) RelocateCompany(leaderUserID, roomID int) int {
+	f.moves[leaderUserID] = roomID
+	return 2
+}
+
+func TestRelocateCompanyNoProvider(t *testing.T) {
+	company.SetFormationProvider(nil)
+	if company.RelocateCompany(7, 18) != 0 {
+		t.Fatal("no provider must move nobody")
+	}
+	company.SetFormationProvider(fakeFormationProvider{})
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+	if company.RelocateCompany(7, 18) != 0 {
+		t.Fatal("a provider without relocation must move nobody")
+	}
+	moves := map[int]int{}
+	company.SetFormationProvider(fakeRelocation{moves: moves})
+	if got := company.RelocateCompany(7, 18); got != 2 || moves[7] != 18 {
+		t.Fatalf("relocation not delegated: %d %v", got, moves)
+	}
+}
