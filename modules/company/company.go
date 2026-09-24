@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -57,6 +58,7 @@ type wireRecord struct {
 	NextCompanionID int                `yaml:"next_companion_id,omitempty"`
 	Claimed         []int              `yaml:"claimed,omitempty"`
 	Service         []domain.Service   `yaml:"service,omitempty"`
+	Lost            []domain.LostCompanion `yaml:"lost,omitempty"`
 }
 
 type wireRegistry struct {
@@ -74,7 +76,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service}
+		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -130,6 +132,12 @@ type CompanyModule struct {
 	recruitersForTest map[int]recruiter
 	// saveUser writes a user after a paid recruit (Phase 22c); nil skips.
 	saveUser func(*users.UserRecord) error
+	// Phase 25b: anchors is when each online leader with a dead companion
+	// was last charged, in memory only, so offline time is never charged;
+	// clock is nil for time.Now; allowanceForTest overrides the allowance.
+	anchors          map[int]time.Time
+	clock            func() time.Time
+	allowanceForTest int
 }
 
 // module is the registered instance, for wiring tests.
@@ -165,7 +173,8 @@ func init() {
 
 // Roster implements survival.RosterProvider so the survival module can resolve
 // companion names and render status without importing modules/company. The
-// leader is always present; companions include those awaiting restoration.
+// leader is always present; companions include those awaiting restoration
+// and, marked Dead, the dead (Phase 25b).
 func (m *CompanyModule) Roster(leaderUserID int) []survival.MemberRef {
 	refs := []survival.MemberRef{{Key: survival.LeaderMemberKey, Name: m.leaderDisplayName(leaderUserID)}}
 	record, ok := m.registry.Get(leaderUserID)
@@ -176,6 +185,7 @@ func (m *CompanyModule) Roster(leaderUserID int) []survival.MemberRef {
 		refs = append(refs, survival.MemberRef{
 			Key:  survival.CompanionMemberKey(companion.ID),
 			Name: templateName(companion.MobTemplateID, strconv.Itoa(companion.MobTemplateID)),
+			Dead: companion.Dead(),
 		})
 	}
 	return refs
@@ -463,6 +473,9 @@ func (m *CompanyModule) status(leaderUserID int) string {
 	}
 	record, ok := m.registry.Get(leaderUserID)
 	if !ok || len(record.Companions) == 0 {
+		if lost := lostLine(record); lost != "" {
+			return "No companions.\n" + lost
+		}
 		return "No companions."
 	}
 	lines := []string{fmt.Sprintf("Company companions (%d/%d):", len(record.Companions), m.maxCompanions())}
@@ -471,7 +484,9 @@ func (m *CompanyModule) status(leaderUserID int) string {
 	}
 	for _, c := range record.Companions {
 		state := "awaiting restoration"
-		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked {
+		if c.Dead() {
+			state = deadStatus(c)
+		} else if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked {
 			if m.runtime.IsAttached(leaderUserID, instanceID) {
 				state = "present"
 			} else if !m.runtime.IsLive(instanceID) {
@@ -483,6 +498,9 @@ func (m *CompanyModule) status(leaderUserID int) string {
 			loyalty = c.Disposition.Loyalty
 		}
 		lines = append(lines, fmt.Sprintf("  #%d %s, %s, %s, alignment %s, loyalty %d (%s)", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)), companionLevel(c), archetypeLabel(c.Archetype), alignmentLabel(m.companionAlignment(c)), loyalty, state))
+	}
+	if lost := lostLine(record); lost != "" {
+		lines = append(lines, lost)
 	}
 	return strings.Join(lines, "\n")
 }
@@ -513,11 +531,23 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 // Phase 21a desertion): survival state, the record, and the live mob. A
 // failed save restores record, the pre-removal record, and survival state.
 func (m *CompanyModule) removeCompanion(leaderUserID int, record domain.Record, companion domain.Companion) error {
+	return m.dropCompanion(leaderUserID, record, companion, nil)
+}
+
+// dropCompanion is removeCompanion; with lost (Phase 25b expiry), the
+// companion is also remembered among the lost in the same save.
+func (m *CompanyModule) dropCompanion(leaderUserID int, record domain.Record, companion domain.Companion, lost *domain.LostCompanion) error {
 	snapshot, err := survival.SnapshotCompanyMember(leaderUserID, companion.ID)
 	if err != nil {
 		return err
 	}
-	if !m.registry.Dismiss(leaderUserID, companion.ID) {
+	removed := false
+	if lost != nil {
+		removed = m.registry.Lose(leaderUserID, companion.ID, *lost)
+	} else {
+		removed = m.registry.Dismiss(leaderUserID, companion.ID)
+	}
+	if !removed {
 		return fmt.Errorf("company: companion #%d is no longer in the company", companion.ID)
 	}
 	if err := survival.RemoveCompanyMember(leaderUserID, companion.ID); err != nil {
@@ -693,6 +723,9 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 	}
 	var firstErr error
 	for _, companion := range record.Companions {
+		if companion.Dead() {
+			continue // Phase 25b: the dead wait for resurrection
+		}
 		if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
 			if m.runtime.IsAttached(leaderUserID, instanceID) {
 				continue
@@ -821,6 +854,9 @@ func (m *CompanyModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if err := m.restoreForLeader(evt.UserId, user.Character.RoomId); err != nil {
 		mudlog.Warn("company: restore", "error", err)
 	}
+	if m.persistenceAvailable() == nil {
+		m.deathOnSpawn(evt.UserId)
+	}
 	return events.Continue
 }
 
@@ -831,7 +867,7 @@ func (m *CompanyModule) onMobDeath(e events.Event) events.ListenerReturn {
 	}
 	if leaderUserID, companionID, found := m.companionForInstance(evt.InstanceId); found {
 		m.clearInstance(leaderUserID, companionID)
-		m.recordCompanionDeath(leaderUserID, companionID, evt.Level)
+		m.recordCompanionDeath(leaderUserID, companionID, evt)
 	}
 	return events.Continue
 }

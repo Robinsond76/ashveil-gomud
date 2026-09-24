@@ -138,7 +138,9 @@ func (m *CompanyModule) companyAverage(leaderUserID int) (int, bool) {
 	}
 	if record, ok := m.registry.Get(leaderUserID); ok {
 		for _, c := range record.Companions {
-			values = append(values, m.companionAlignment(c))
+			if !c.Dead() { // Phase 25b: the dead don't sway the company
+				values = append(values, m.companionAlignment(c))
+			}
 		}
 	}
 	if len(values) == 0 {
@@ -219,6 +221,8 @@ func (m *CompanyModule) onNewRound(e events.Event) events.ListenerReturn {
 	// so a drift tick's rollback snapshot includes it.
 	m.refreshChemistryRules()
 	m.accrueChemistry(evt.RoundNumber)
+	// Phase 25b: the dead are charged the leader's online time.
+	m.chargeAllowances()
 	_, every := m.alignmentConfig()
 	if m.registry.DriftIn <= 0 || m.registry.DriftIn > every {
 		m.registry.DriftIn = every
@@ -246,16 +250,23 @@ func (m *CompanyModule) driftTick() {
 	var deserters []deserter
 	for leaderUserID, record := range before.Companies {
 		leader, online := world.LeaderAlignment(leaderUserID)
-		if !online || len(record.Companions) == 0 {
+		if !online {
 			continue
 		}
-		members := make([]domain.MemberAlignment, len(record.Companions))
-		for i, c := range record.Companions {
+		// Phase 25b: the dead neither drift, sway the others, nor desert.
+		var members []domain.MemberAlignment
+		for _, c := range record.Companions {
+			if c.Dead() {
+				continue
+			}
 			loyalty := domain.MaxLoyalty
 			if c.Disposition != nil {
 				loyalty = c.Disposition.Loyalty
 			}
-			members[i] = domain.MemberAlignment{ID: c.ID, Alignment: m.companionAlignment(c), Loyalty: loyalty}
+			members = append(members, domain.MemberAlignment{ID: c.ID, Alignment: m.companionAlignment(c), Loyalty: loyalty})
+		}
+		if len(members) == 0 {
+			continue
 		}
 		result := domain.TickAlignment(leader, members, rules)
 		for _, member := range result.Members {
@@ -396,11 +407,20 @@ func (m *CompanyModule) alignmentView(leaderUserID int) string {
 	if online {
 		lines = append(lines, fmt.Sprintf("  You: %s", alignmentLabel(leader)))
 	}
-	members := make([]domain.MemberAlignment, len(record.Companions))
-	for i, c := range record.Companions {
-		members[i] = domain.MemberAlignment{ID: c.ID, Alignment: m.companionAlignment(c)}
+	// Phase 25b: the dead are listed but sway no one.
+	var members []domain.MemberAlignment
+	for _, c := range record.Companions {
+		if !c.Dead() {
+			members = append(members, domain.MemberAlignment{ID: c.ID, Alignment: m.companionAlignment(c)})
+		}
 	}
-	for i, c := range record.Companions {
+	i := -1
+	for _, c := range record.Companions {
+		if c.Dead() {
+			lines = append(lines, fmt.Sprintf("  #%d %s: fallen", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID))))
+			continue
+		}
+		i++
 		loyalty := domain.MaxLoyalty
 		if c.Disposition != nil {
 			loyalty = c.Disposition.Loyalty

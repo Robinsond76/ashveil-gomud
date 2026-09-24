@@ -213,8 +213,9 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 
 	assert.False(t, restored.IsElite)
 
-	// Companion death through the real suicide path: its gear dropped or
-	// was lost, so it isn't restored.
+	// Companion death through the real suicide path: this template drops
+	// all its gear (itemdropchance 100), so none is kept on the record, and
+	// the companion stays dead (Phase 25b) instead of respawning at login.
 	_, err = mobcommands.Suicide("", restored, camp)
 	require.NoError(t, err)
 	events.ProcessEvents()
@@ -223,5 +224,7 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	assert.Equal(t, 2, stored().Level)
 	events.AddToQueue(events.PlayerSpawn{UserId: 7, RoomId: camp.RoomId})
 	events.ProcessEvents()
-	assert.Empty(t, mobItemIDs(live()), "no gear comes back from the dead")
+	_, tracked = module.instance(7, 1)
+	assert.False(t, tracked, "the dead aren't restored")
+	assert.Contains(t, run("company", "status"), "fallen")
 }

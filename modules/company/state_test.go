@@ -234,21 +234,31 @@ func TestLeaderDespawnSaveFailureStillRemoves(t *testing.T) {
 	assert.Equal(t, geared(3, 10002, 30015), *companionState(t, m, 7, 1), "kept in memory for the next autosave")
 }
 
-func TestCompanionDeathClearsGearKeepsLevel(t *testing.T) {
+// TestCompanionDeathKeepsOnlyWhatTheBodyKept: a companion's death keeps its
+// level and only the gear the engine's drop rules left on the body (Phase
+// 25b); it is dead, so the next restore doesn't spawn it.
+func TestCompanionDeathKeepsOnlyWhatTheBodyKept(t *testing.T) {
 	m, runtime, store := liveModule(t)
 	m.onMobDeath(events.MobDeath{InstanceId: 101, Level: 4})
 	_, tracked := m.instance(7, 1)
 	assert.False(t, tracked)
 	saved, _ := store.saved.Get(7)
+	require.True(t, saved.Companions[0].Dead())
 	state := saved.Companions[0].State
 	require.NotNil(t, state)
 	assert.Equal(t, 4, state.Level)
 	assert.Zero(t, state.Equipment.Weapon.ItemId, "gear dropped with the body isn't restored")
 	assert.Empty(t, state.Items)
 
-	runtime.nextInstanceID = 102
+	spawns := runtime.spawnCalls
 	require.NoError(t, m.restoreForLeader(7, 12))
-	assert.Zero(t, runtime.spawnedStates[len(runtime.spawnedStates)-1].Equipment.Weapon.ItemId)
+	assert.Equal(t, spawns, runtime.spawnCalls, "the dead aren't restored")
+
+	// A body that kept its sword keeps it on the record.
+	m2, _, store2 := liveModule(t)
+	m2.onMobDeath(events.MobDeath{InstanceId: 101, Level: 3, KeptWorn: map[items.ItemType]items.Item{items.Weapon: {ItemId: 10002}}})
+	saved, _ = store2.saved.Get(7)
+	assert.Equal(t, 10002, saved.Companions[0].State.Equipment.Weapon.ItemId)
 }
 
 func TestDismissDropsState(t *testing.T) {

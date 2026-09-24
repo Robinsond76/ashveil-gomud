@@ -101,14 +101,21 @@ func (m *CompanyModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 	if !ok || m.persistenceAvailable() != nil {
 		return events.Continue
 	}
+	// Phase 25b: the dead are charged up to the logout, and saved with it.
+	charged := m.deathOnDespawn(evt.UserId)
 	if len(m.instances[evt.UserId]) == 0 {
+		if charged {
+			if err := m.save(); err != nil {
+				mudlog.Error("company: save on leader leave", "leader", evt.UserId, "error", err)
+			}
+		}
 		return events.Continue
 	}
 	companionIDs := make([]int, 0, len(m.instances[evt.UserId]))
 	for companionID := range m.instances[evt.UserId] {
 		companionIDs = append(companionIDs, companionID)
 	}
-	changed := false
+	changed := charged
 	for _, companionID := range companionIDs {
 		if m.refreshSnapshot(evt.UserId, companionID) {
 			changed = true
@@ -133,20 +140,6 @@ func (m *CompanyModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 		m.clearInstance(evt.UserId, companionID)
 	}
 	return events.Continue
-}
-
-// recordCompanionDeath clears a dead companion's gear (it dropped into the
-// corpse or was lost with the body) and keeps its level, so the next
-// restore can't bring the gear back.
-func (m *CompanyModule) recordCompanionDeath(leaderUserID, companionID, level int) {
-	if m.persistenceAvailable() != nil {
-		return
-	}
-	if m.clearRecordedGear(leaderUserID, companionID, level) {
-		if err := m.save(); err != nil {
-			mudlog.Error("company: save companion death", "leader", leaderUserID, "companion", companionID, "error", err)
-		}
-	}
 }
 
 // clearRecordedGear clears a companion's recorded gear and gold in memory,

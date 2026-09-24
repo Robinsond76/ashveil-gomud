@@ -176,7 +176,9 @@ func TestChemistryResumesAfterRespawn(t *testing.T) {
 	roundFrom(module, &round, 1)
 	assert.Equal(t, 2, served(module, c1Key))
 
-	// Restored with the same companion ID: its service resumes.
+	// Resurrected (Phase 25b) and restored with the same companion ID: its
+	// service resumes.
+	require.NoError(t, module.registry.Revive(7, 1))
 	runtime.nextInstanceID = 201
 	require.NoError(t, module.restoreForLeader(7, 5))
 	world.mobAt[201] = 5
