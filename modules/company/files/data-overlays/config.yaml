@@ -11,9 +11,9 @@ CompanionArchetypes:
   - { MobTemplateId: 62, Archetype: cleric }
   - { MobTemplateId: 63, Archetype: warrior }
   - { MobTemplateId: 64, Archetype: ranger }
-# Phase 21a: company alignment. Values are engine alignment points
-# (-100..100); players see alignment as 1-100, so one displayed point is
-# two engine points. Out-of-range values fall back to the default.
+# Phase 21a: company alignment. Values are alignment points on the
+# -100..100 scale players see. Out-of-range values fall back to the
+# default.
 #
 # Every DriftEveryRounds rounds (1..100000), each companion of an online
 # leader moves DriftStep (1..50) toward the average alignment of the rest

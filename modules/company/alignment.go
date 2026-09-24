@@ -386,7 +386,7 @@ func (m *CompanyModule) alignmentView(leaderUserID int) string {
 		return "No companions."
 	}
 	average, _ := m.companyAverage(leaderUserID)
-	lines := []string{fmt.Sprintf("Company alignment: %s (1 is most evil, 100 most good)", alignmentLabel(average))}
+	lines := []string{fmt.Sprintf("Company alignment: %s (-100 is most evil, 100 most good)", alignmentLabel(average))}
 	if online {
 		lines = append(lines, fmt.Sprintf("  You: %s", alignmentLabel(leader)))
 	}

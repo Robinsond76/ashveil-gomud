@@ -129,7 +129,7 @@ func runStanding(t *testing.T, m *StandingModule, zone string) string {
 func TestStandingCommandInSettlement(t *testing.T) {
 	m := newTestModule(map[string]int{"Dunmar": 40, "Frostfang": 30, "Old Kings Road": 0}, map[int]int{7: -60})
 	out := runStanding(t, m, "Dunmar")
-	assert.Contains(t, out, "Dunmar (alignment 70, virtuous) regards your company (alignment 20, evil) as distrusted.")
+	assert.Contains(t, out, "Dunmar (alignment 40, virtuous) regards your company (alignment -60, evil) as distrusted.")
 	assert.Contains(t, out, "20% more")
 	assert.Contains(t, out, "50% more")
 	assert.Contains(t, out, "Any black market here will deal with you.")

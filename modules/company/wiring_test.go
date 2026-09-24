@@ -93,12 +93,12 @@ func TestCompanyAlignmentThroughPluginsLoad(t *testing.T) {
 
 	user.Character.Alignment = 100
 	out := run("inspect training dummy")
-	assert.Contains(t, out, "training dummy: alignment 40 (misguided).")
+	assert.Contains(t, out, "training dummy: alignment -20 (misguided).")
 	assert.Contains(t, out, "Your company: 100 (holy).")
 	assert.Contains(t, out, "They won't join")
 	assert.Contains(t, run("inspect paladin"), "paladin isn't available to recruit.", "not on the shipped allow list")
 	out = run("summon training dummy")
-	assert.Contains(t, out, "training dummy (alignment 40, misguided) won't join a company of alignment 100, holy.", "gap 120")
+	assert.Contains(t, out, "training dummy (alignment -20, misguided) won't join a company of alignment 100, holy.", "gap 120")
 	_, exists := module.registry.Get(7)
 	assert.False(t, exists, "the refused recruit isn't recruited")
 
@@ -116,12 +116,12 @@ func TestCompanyAlignmentThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, int8(-20), dummy.Character.Alignment)
 
 	out = run("alignment")
-	assert.Contains(t, out, "Company alignment: 55 (neutral)", "avg(40, -20) = 10")
-	assert.Contains(t, out, "You: 70 (virtuous)")
-	assert.Contains(t, out, "#1 training dummy: 40 (misguided), loyalty 70, content", "gap 60 to the leader")
+	assert.Contains(t, out, "Company alignment: 10 (neutral)", "avg(40, -20) = 10")
+	assert.Contains(t, out, "You: 40 (virtuous)")
+	assert.Contains(t, out, "#1 training dummy: -20 (misguided), loyalty 70, content", "gap 60 to the leader")
 	out = run("status")
-	assert.Contains(t, out, "Company alignment: 55 (neutral)")
-	assert.Contains(t, out, "training dummy, level 1, no archetype, alignment 40 (misguided), loyalty 70 (present)")
+	assert.Contains(t, out, "Company alignment: 10 (neutral)")
+	assert.Contains(t, out, "training dummy, level 1, no archetype, alignment -20 (misguided), loyalty 70 (present)")
 
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
 	for i := 0; i < defaultDriftEveryRounds; i++ {

@@ -97,7 +97,7 @@ func TestStandingThroughPluginsLoad(t *testing.T) {
 	// Distrusted: gap 100 from Dunmar.
 	user.Character.Alignment = -60
 	out := run(2004, "standing", "")
-	assert.Contains(t, out, "Dunmar (alignment 70, virtuous) regards your company (alignment 20, evil) as distrusted.")
+	assert.Contains(t, out, "Dunmar (alignment 40, virtuous) regards your company (alignment -60, evil) as distrusted.")
 	assert.Contains(t, out, "Old Kings Road: tolerated")
 	assert.Contains(t, out, "Frostfang: distrusted")
 	out = run(2004, "market", "")

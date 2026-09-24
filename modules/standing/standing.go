@@ -107,7 +107,7 @@ func (m *StandingModule) For(leaderUserID int, zone string) (domain.Standing, bo
 	return s, true
 }
 
-// display renders an engine alignment on the 1-100 scale with its band.
+// display renders an alignment as players see it, with its band.
 func display(alignment int) string {
 	return fmt.Sprintf("alignment %d, %s", company.DisplayAlignment(alignment), company.AlignmentBand(alignment))
 }

@@ -41,7 +41,7 @@ instead of duplicating them.
   19b (trading in tagged market rooms with separate buy and sell
   prices; Dunmar Market Square, Trappers' Post), and Phase 20 (trade
   rumours at inns from a stale, persisted market news snapshot), and
-  Phase 21a (company alignment: companion alignment on a 1–100 display,
+  Phase 21a (company alignment: companion alignment on a −100..100 display,
   drift toward the rest of the company, loyalty and desertion, and a
   recruit gate), and Phase 21b (settlement standing: market and inn
   markups or refusal by alignment gap, black markets for outlaws), and
@@ -116,7 +116,7 @@ instead of duplicating them.
 | 19 | Commodities and markets | Complete: `internal/market`, `modules/market`, `market` command, Dunmar and Old Kings Road markets |
 | 19b | Market trading | Complete: `market buy`/`market sell` in tagged market rooms, buy/sell spread, Dunmar Market Square, Trappers' Post; inter-market profit kept (resolved 2026-09-24) |
 | 20 | Trade rumours | Complete: `rumors` at inns, fuzzy hints from a persisted market news snapshot refreshed every 150 rounds |
-| 21a | Company alignment | Complete: durable companion alignment and loyalty, 1–100 display, drift toward the rest of the company, desertion, recruit gate, `company inspect`/`alignment` |
+| 21a | Company alignment | Complete: durable companion alignment and loyalty, −100..100 display, drift toward the rest of the company, desertion, recruit gate, `company inspect`/`alignment` |
 | 21b | Settlement standing | Complete: `internal/standing`, `modules/standing`, `standing` command, market/inn markups and refusals, black markets, Tanner's Back Alley |
 | 22a | Creation step and starter kits | Complete: archetype step in `start`, per-archetype kits, owed-kit record and character claim marker, ash quarterstaff |
 | 22b | Durable companion level and gear | Complete: `MemberState` on each companion (level, experience, worn and carried items, gold), restore from the record, snapshot seams, `company gear` |
@@ -124,6 +124,22 @@ instead of duplicating them.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Alignment display scale: −100..100 (2026-09-24)
+
+- **What:** Players now see alignment on the engine's −100..100 scale
+  (−100 most evil, 0 neutral, 100 most good) instead of 1–100, in
+  `company status`, `company alignment`, `company inspect`, the
+  `company summon` refusal, the `company recruit` list, and `standing`.
+  `company.DisplayAlignment` now only clamps. Stored values, knobs, and
+  behaviour are unchanged; knob points and displayed points are now the
+  same, and the config comments say so. Tests updated to the new numbers,
+  plus a check on the `company alignment` scale hint.
+- **Why:** Owner preference. It also matches `help alignment`, which
+  already listed the bands on −100..100. The 21a spec records the
+  amendment.
+- **Verification:** `go test -race ./...`, `make generate`,
+  `make validate`.
 
 ### Phase 22c: settlement recruiters and `company recruit` (2026-09-24)
 

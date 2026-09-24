@@ -96,7 +96,7 @@ func TestSummonRefusesFarCandidateWithoutWriting(t *testing.T) {
 	text, err := module.summon(7, 12, "paladin")
 	require.NoError(t, err, "a refusal is a message, not an error")
 	assert.Contains(t, text, "won't join")
-	assert.Contains(t, text, "paladin (alignment 95, holy) won't join a company of alignment 30, corrupt.")
+	assert.Contains(t, text, "paladin (alignment 90, holy) won't join a company of alignment -40, corrupt.")
 	_, exists := module.registry.Get(7)
 	assert.False(t, exists)
 	assert.Zero(t, module.store.(*fakeStore).saveCalls)
@@ -353,8 +353,8 @@ func TestCompanyInspectShowsCandidate(t *testing.T) {
 	world.leaders[7] = 60
 	module, _ := newAlignmentModule(*domain.NewRegistry(), world)
 	out := module.inspect(7, "paladin")
-	assert.Contains(t, out, "alignment 95 (holy)")
-	assert.Contains(t, out, "Your company: 80 (good)")
+	assert.Contains(t, out, "alignment 90 (holy)")
+	assert.Contains(t, out, "Your company: 60 (good)")
 	assert.Contains(t, out, "would join")
 	world.leaders[7] = -60
 	assert.Contains(t, module.inspect(7, "paladin"), "won't join")
@@ -380,13 +380,14 @@ func TestCompanyAlignmentView(t *testing.T) {
 		}},
 	}}, world)
 	out := module.alignmentView(7)
-	assert.Contains(t, out, "Company alignment: 56 (neutral)", "avg(60, 40, -60) = 13")
-	assert.Contains(t, out, "You: 80 (good)")
-	assert.Regexp(t, `#1 [^\n]+: 70 \(virtuous\), loyalty 70, content`, out)
-	assert.Regexp(t, `#2 [^\n]+: 20 \(evil\), loyalty 20, uneasy`, out)
+	assert.Contains(t, out, "Company alignment: 13 (neutral)", "avg(60, 40, -60) = 13")
+	assert.Contains(t, out, "(-100 is most evil, 100 most good)")
+	assert.Contains(t, out, "You: 60 (good)")
+	assert.Regexp(t, `#1 [^\n]+: 40 \(virtuous\), loyalty 70, content`, out)
+	assert.Regexp(t, `#2 [^\n]+: -60 \(evil\), loyalty 20, uneasy`, out)
 
 	world.leaders[8] = -20
-	assert.Contains(t, module.alignmentView(8), "Company alignment: 40 (misguided)", "a leader alone still sees their own")
+	assert.Contains(t, module.alignmentView(8), "Company alignment: -20 (misguided)", "a leader alone still sees their own")
 	world.leaders = map[int]int{}
 	assert.Contains(t, module.alignmentView(9), "No companions.")
 }
@@ -398,8 +399,8 @@ func TestCompanyStatusShowsAlignmentAndLoyalty(t *testing.T) {
 		7: {LeaderUserID: 7, Companions: []domain.Companion{withDisposition(domain.Companion{ID: 1, MobTemplateID: 58}, 40, 70)}},
 	}}, world)
 	out := module.status(7)
-	assert.Contains(t, out, "Company alignment: 75 (virtuous)")
-	assert.Contains(t, out, "alignment 70 (virtuous), loyalty 70")
+	assert.Contains(t, out, "Company alignment: 50 (virtuous)")
+	assert.Contains(t, out, "alignment 40 (virtuous), loyalty 70")
 }
 
 func TestParseAlignmentConfig(t *testing.T) {

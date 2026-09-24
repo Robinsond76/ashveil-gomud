@@ -10,9 +10,9 @@ import (
 
 func TestDisplayAlignmentMapsEngineScale(t *testing.T) {
 	for _, tc := range []struct{ engine, display int }{
-		{-100, 1}, {-101, 1}, {-1000, 1},
-		{0, 50}, {-1, 50}, {1, 50}, {2, 51}, {-2, 49},
-		{100, 100}, {101, 100}, {60, 80},
+		{-100, -100}, {-101, -100}, {-1000, -100},
+		{0, 0}, {-1, -1}, {1, 1}, {2, 2}, {-2, -2},
+		{100, 100}, {101, 100}, {1000, 100}, {60, 60},
 	} {
 		assert.Equal(t, tc.display, company.DisplayAlignment(tc.engine), "engine %d", tc.engine)
 	}

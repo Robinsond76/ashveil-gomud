@@ -74,7 +74,7 @@ func TestRecruitListShowsCandidates(t *testing.T) {
 	text, err := m.recruit(user, hiringRoom, "")
 	require.NoError(t, err)
 	assert.Contains(t, text, "The hiring slate lists:")
-	assert.Contains(t, text, "tamsin (company recruit tamsin): no archetype, level 1, alignment 65 (")
+	assert.Contains(t, text, "tamsin (company recruit tamsin): no archetype, level 1, alignment 30 (")
 	assert.Contains(t, text, "Gear: item 919002")
 	assert.Contains(t, text, "Price: free, once only", "a tutorial candidate is free whatever its price")
 	assert.Contains(t, text, "Price: 120 gold")

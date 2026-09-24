@@ -1,7 +1,7 @@
 # Phase 21b settlement standing.
 #
-# A settlement is a zone with an alignment (engine scale -100..100; players
-# see 1-100, so one displayed point is two engine points). A company's
+# A settlement is a zone with an alignment (-100..100, the scale players
+# see). A company's
 # standing there is set by the gap between the company's average alignment
 # (the leader and every companion) and the settlement's. Standing is
 # derived every time, never stored.

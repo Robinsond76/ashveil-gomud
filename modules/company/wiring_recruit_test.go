@@ -115,7 +115,7 @@ func TestRecruitThroughPluginsLoad(t *testing.T) {
 	list := run("company", "recruit")
 	assert.Contains(t, list, "The hiring slate by the hearth lists:")
 	assert.Contains(t, list, "Tamsin Reed (company recruit tamsin):")
-	assert.Contains(t, list, "level 1, alignment 65")
+	assert.Contains(t, list, "level 1, alignment 30")
 	assert.Contains(t, list, "Gear: crude cudgel, wooden shield")
 	assert.Contains(t, list, "Garrick Vane (company recruit garrick):")
 	assert.Contains(t, list, "level 3")

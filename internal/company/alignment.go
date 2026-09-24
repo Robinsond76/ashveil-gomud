@@ -5,8 +5,8 @@ import (
 )
 
 // Alignment and loyalty bounds. Alignment uses the engine's −100..100
-// scale (characters.AlignmentMinimum..AlignmentMaximum); players see it as
-// 1–100 through DisplayAlignment.
+// scale (characters.AlignmentMinimum..AlignmentMaximum), which is also the
+// scale players see through DisplayAlignment.
 const (
 	MinAlignment = int(characters.AlignmentMinimum)
 	MaxAlignment = int(characters.AlignmentMaximum)
@@ -26,8 +26,8 @@ func (d Disposition) clamped() Disposition {
 	return Disposition{Alignment: ClampAlignment(d.Alignment), Loyalty: clampInt(d.Loyalty, MinLoyalty, MaxLoyalty)}
 }
 
-// AlignmentRules are the Phase 21a balance knobs, in engine alignment
-// points (twice the displayed 1–100 points).
+// AlignmentRules are the Phase 21a balance knobs, in alignment points
+// (engine and displayed points are the same).
 type AlignmentRules struct {
 	DriftStep           int // points a companion moves toward the rest of the company per tick
 	LoyaltyToleranceGap int // a larger gap to the rest of the company costs loyalty
@@ -66,10 +66,10 @@ func ClampAlignment(alignment int) int {
 	return clampInt(alignment, MinAlignment, MaxAlignment)
 }
 
-// DisplayAlignment maps an engine alignment (−100..100) to the 1–100 scale
-// players see: 1 is most evil, 50 neutral, 100 most good.
+// DisplayAlignment is an engine alignment as players see it: −100 is most
+// evil, 0 neutral, 100 most good.
 func DisplayAlignment(alignment int) int {
-	return (ClampAlignment(alignment)-MinAlignment)*99/(MaxAlignment-MinAlignment) + 1
+	return ClampAlignment(alignment)
 }
 
 // AlignmentBand is the engine's name for an alignment (neutral, good, ...).

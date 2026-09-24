@@ -50,6 +50,11 @@ or a small follow-up if the owner wants it changed.
    `display = (alignment + 100) * 99 / 200 + 1`, with the engine's band
    name beside it. Config knobs are in engine points (twice the display
    points), documented as such.
+
+   **Amended 2026-09-24 (owner request):** players now see the engine's
+   own −100..100 scale (−100 most evil, 0 neutral, 100 most good), the
+   same scale `help alignment` documents. `DisplayAlignment` just clamps,
+   and a config knob's points are displayed points.
 2. **Companion alignment is durable.** Each companion record gains a
    `disposition` (alignment and loyalty). A new recruit starts at its
    template's alignment (the race default when the template's is 0) and
