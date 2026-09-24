@@ -3,6 +3,8 @@
 Phase 25a: a player's death costs one level, and they wake at the church of
 the last city they visited, with their living companions. Design:
 `docs/superpowers/specs/2026-09-24-phase-25a-player-death-design.md`.
+Phase 25b adds the `resurrect` command for dead companions (below); design:
+`docs/superpowers/specs/2026-09-24-phase-25b-companion-death-design.md`.
 
 - **The seam.** `internal/death` holds the settlement registry, the
   `Destination` rule, and the provider seam. `internal/usercommands/suicide.go`
@@ -36,15 +38,21 @@ the last city they visited, with their living companions. Design:
   with). Villages never set it. Read it with `configInt`: YAML may bring it
   back as another integer type.
 - **Config** (`files/data-overlays/config.yaml`): `Settlements` (zone, kind,
-  service room), `FallbackRoomId` (18), `RespawnVitalsPct` (50). The module
+  service room, and since 25b the keeper's mob `ServiceMobId`), `FallbackRoomId` (18), `RespawnVitalsPct` (50). The module
   reserves the `church` and `shaman` room tags.
 - **Level loss.** `Character.LoseLevel` keeps `PeakLevel`; `LevelUp` grants
   training and stat points only above it, so dying and re-levelling can't
   farm points. Any new code that lowers a level should raise `PeakLevel`
   first, the same way.
-- **Phase 25b** (companion death, the online-time allowance, `resurrect`,
-  village shamans) builds on this registry: a village's service room carries
-  the `shaman` tag.
+- **Phase 25b: `resurrect`** (`resurrect.go`). `resurrect` lists the dead
+  companions and their time; `resurrect <member>` works only in a
+  registered settlement's service room (a city's church or a village's
+  shaman lodge, with its tag and in its zone), with the settlement's keeper
+  (`ServiceMobId`) alive in the room, and not mid-fight. What it does to the
+  companion is `company.ResurrectCompanion` (modules/company). Shipped
+  keepers: the Sanctuary's priest (4), Sister Maren (65), and Fernhollow's
+  Old Wenna (66, room 2009, the first village). A settlement without a
+  keeper is warned at load and can't resurrect.
 - `wiring_test.go` calls `plugins.Load` with the same
   `SnapshotLoadStateForTest` guard as the company tests, and drives travel
   through the real `go` command (the exit message requeues the command with
