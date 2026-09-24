@@ -46,14 +46,17 @@ func TestStatusBonusesShowsChemistry(t *testing.T) {
 	company.SetFormationProvider(nil)
 	text := statusBonusesText(t, user)
 	assert.Contains(t, text, `Company Chemistry`)
-	assert.Contains(t, text, `No bond yet`)
+	assert.Contains(t, text, `No band beside you`)
 
-	company.SetFormationProvider(fakeChemistryStanding{ok: true, view: company.ChemistryStandingView{Tier: company.TierTrusted, Partner: `Tamsin (#1)`, Bonus: 4}})
+	company.SetFormationProvider(fakeChemistryStanding{ok: true, view: company.ChemistryStandingView{Together: 3, Tier: company.TierTrusted, Bonus: 4}})
 	text = statusBonusesText(t, user)
 	assert.Contains(t, text, `Trusted`)
-	assert.Contains(t, text, `Tamsin (#1)`)
+	assert.Contains(t, text, `band, 3 together`)
 	assert.Contains(t, text, `+4%`)
 
-	company.SetFormationProvider(fakeChemistryStanding{ok: true, view: company.ChemistryStandingView{Tier: company.TierSworn, Partner: `Tamsin (#1)`}})
-	assert.Contains(t, statusBonusesText(t, user), `not at your side`)
+	company.SetFormationProvider(fakeChemistryStanding{ok: true, view: company.ChemistryStandingView{Together: 2}})
+	assert.Contains(t, statusBonusesText(t, user), `no bonus yet`)
+
+	company.SetFormationProvider(fakeChemistryStanding{ok: true, view: company.ChemistryStandingView{Together: 1}})
+	assert.Contains(t, statusBonusesText(t, user), `No band beside you`)
 }

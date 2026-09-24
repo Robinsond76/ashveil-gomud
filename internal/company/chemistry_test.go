@@ -42,76 +42,6 @@ func TestRulesValid(t *testing.T) {
 	}
 }
 
-func TestBondPairSorted(t *testing.T) {
-	a, b := BondPair(CompanionMemberKey(2), LeaderMemberKey)
-	c, d := BondPair(LeaderMemberKey, CompanionMemberKey(2))
-	if a != c || b != d || a > b {
-		t.Fatalf("pair not canonical: %s %s / %s %s", a, b, c, d)
-	}
-}
-
-func TestChargeOncePerRound(t *testing.T) {
-	var r Record
-	c1 := CompanionMemberKey(1)
-	if before, after, ok := r.ChargeBond(LeaderMemberKey, c1, 10); !ok || before != 0 || after != 1 {
-		t.Fatalf("first charge: %d %d %v", before, after, ok)
-	}
-	if _, _, ok := r.ChargeBond(c1, LeaderMemberKey, 10); ok {
-		t.Fatal("same round charged twice")
-	}
-	if _, _, ok := r.ChargeBond(LeaderMemberKey, c1, 9); ok {
-		t.Fatal("a replayed earlier round was charged")
-	}
-	if _, after, ok := r.ChargeBond(LeaderMemberKey, c1, 11); !ok || after != 2 {
-		t.Fatalf("next round: %d %v", after, ok)
-	}
-	if _, _, ok := r.ChargeBond(c1, c1, 12); ok || len(r.Bonds) != 1 {
-		t.Fatal("a member can't bond with itself")
-	}
-	bond, ok := r.FindBond(c1, LeaderMemberKey)
-	if !ok || bond.Rounds != 2 || bond.LastRound != 11 {
-		t.Fatalf("bond %+v", bond)
-	}
-}
-
-func TestChargeResumesAfterCounterReset(t *testing.T) {
-	r := Record{Bonds: []Bond{{A: CompanionMemberKey(1), B: LeaderMemberKey, Rounds: 50, LastRound: 1_400_000}}}
-	// A few rounds behind (a crash between counter saves): wait.
-	if _, _, ok := r.ChargeBond(LeaderMemberKey, CompanionMemberKey(1), 1_399_990); ok {
-		t.Fatal("a slightly earlier round was charged")
-	}
-	// Far behind (a reset counter file): resume.
-	if _, after, ok := r.ChargeBond(LeaderMemberKey, CompanionMemberKey(1), 1_314_000); !ok || after != 51 {
-		t.Fatalf("after a reset: %d %v", after, ok)
-	}
-}
-
-func TestBestBondHighestPresentOnly(t *testing.T) {
-	rules := DefaultChemistryRules()
-	c1, c2, c3 := CompanionMemberKey(1), CompanionMemberKey(2), CompanionMemberKey(3)
-	bonds := []Bond{
-		{A: c1, B: LeaderMemberKey, Rounds: 1000},
-		{A: c2, B: LeaderMemberKey, Rounds: 7000},
-		{A: c3, B: LeaderMemberKey, Rounds: 3000},
-		{A: c1, B: c2, Rounds: 9000},
-	}
-	best, tier, ok := BestBond(bonds, LeaderMemberKey, nil, rules)
-	if !ok || tier != TierSworn || best.A != c2 {
-		t.Fatalf("best %+v tier %d", best, tier)
-	}
-	notC2 := func(k MemberKey) bool { return k != c2 }
-	best, tier, ok = BestBond(bonds, LeaderMemberKey, notC2, rules)
-	if !ok || tier != TierTrusted || best.A != c3 {
-		t.Fatalf("without c2: %+v tier %d", best, tier)
-	}
-	if _, _, ok := BestBond(bonds, LeaderMemberKey, func(MemberKey) bool { return false }, rules); ok {
-		t.Fatal("no present partner must mean no bond")
-	}
-	if _, _, ok := BestBond(bonds, CompanionMemberKey(9), nil, rules); ok {
-		t.Fatal("an unbonded member has no bond")
-	}
-}
-
 func TestProgressPercent(t *testing.T) {
 	rules := DefaultChemistryRules()
 	cases := []struct{ rounds, next, pct int }{
@@ -126,54 +56,146 @@ func TestProgressPercent(t *testing.T) {
 	}
 }
 
-func TestGetCopiesBonds(t *testing.T) {
-	r := NewRegistry()
-	r.Put(Record{LeaderUserID: 1, Companions: []Companion{{ID: 1, MobTemplateID: 5}}, Bonds: []Bond{{A: CompanionMemberKey(1), B: LeaderMemberKey, Rounds: 3}}})
-	got, _ := r.Get(1)
-	got.Bonds[0].Rounds = 99
-	again, _ := r.Get(1)
-	if again.Bonds[0].Rounds != 3 {
-		t.Fatal("Get must copy bonds")
+func TestChargeOncePerRound(t *testing.T) {
+	var r Record
+	c1 := CompanionMemberKey(1)
+	if !r.ChargeService(c1, 10) {
+		t.Fatal("first charge")
 	}
-	clone := r.Clone()
-	clone.Companies[1].Bonds[0].Rounds = 77
-	if again, _ := r.Get(1); again.Bonds[0].Rounds != 3 {
-		t.Fatal("Clone must copy bonds")
+	if r.ChargeService(c1, 10) {
+		t.Fatal("same round charged twice")
+	}
+	if r.ChargeService(c1, 9) {
+		t.Fatal("a replayed earlier round was charged")
+	}
+	if !r.ChargeService(c1, 11) || !r.ChargeService(LeaderMemberKey, 11) {
+		t.Fatal("next round")
+	}
+	s, ok := r.FindService(c1)
+	if !ok || s.Rounds != 2 || s.LastRound != 11 || s.Saved != 0 {
+		t.Fatalf("service %+v", s)
 	}
 }
 
-func TestPutPrunesBondsOfRemovedMembers(t *testing.T) {
+func TestChargeResumesAfterCounterReset(t *testing.T) {
+	r := Record{Service: []Service{{Member: LeaderMemberKey, Rounds: 50, LastRound: 1_400_000}}}
+	if r.ChargeService(LeaderMemberKey, 1_399_990) {
+		t.Fatal("a slightly earlier round was charged")
+	}
+	if !r.ChargeService(LeaderMemberKey, 1_314_000) {
+		t.Fatal("after a reset the counter should resume")
+	}
+}
+
+func TestBandAverageDilutesAndUsesSavedRounds(t *testing.T) {
+	rules := DefaultChemistryRules()
+	c1, c2, c3, c4 := CompanionMemberKey(1), CompanionMemberKey(2), CompanionMemberKey(3), CompanionMemberKey(4)
+	r := Record{Service: []Service{
+		{Member: LeaderMemberKey, Rounds: 7000, Saved: 7000},
+		{Member: c1, Rounds: 7000, Saved: 7000},
+		{Member: c2, Rounds: 7000, Saved: 7000},
+		{Member: c3, Rounds: 7000, Saved: 6300},
+	}}
+	veterans := []MemberKey{LeaderMemberKey, c1, c2, c3}
+	if tier := r.BandTier(veterans, rules); tier != TierSworn {
+		t.Fatalf("four veterans: %d", tier)
+	}
+	// A fresh recruit (no entry) dilutes 4 veterans to about Trusted.
+	withRecruit := append(append([]MemberKey(nil), veterans...), c4)
+	if avg, _ := r.BandAverage(withRecruit, true); avg != (7000*3+6300)/5 {
+		t.Fatalf("average %d", avg)
+	}
+	if tier := r.BandTier(withRecruit, rules); tier != TierTrusted {
+		t.Fatalf("with a recruit: %d", tier)
+	}
+	// Only saved rounds count toward a tier.
+	fresh := Record{Service: []Service{{Member: LeaderMemberKey, Rounds: 900}, {Member: c1, Rounds: 900}}}
+	if tier := fresh.BandTier([]MemberKey{LeaderMemberKey, c1}, rules); tier != TierNone {
+		t.Fatalf("unsaved rounds gave tier %d", tier)
+	}
+	if avg, _ := fresh.BandAverage([]MemberKey{LeaderMemberKey, c1}, false); avg != 900 {
+		t.Fatalf("current average %d", avg)
+	}
+	fresh.MarkServiceSaved()
+	if tier := fresh.BandTier([]MemberKey{LeaderMemberKey, c1}, rules); tier != TierFamiliar {
+		t.Fatalf("saved rounds tier %d", tier)
+	}
+	// A lone member is no band.
+	if _, ok := r.BandAverage([]MemberKey{LeaderMemberKey}, true); ok {
+		t.Fatal("a lone member is no band")
+	}
+	if r.BandTier([]MemberKey{LeaderMemberKey}, rules) != TierNone {
+		t.Fatal("a lone member gets no tier")
+	}
+}
+
+func TestGetCopiesService(t *testing.T) {
+	r := NewRegistry()
+	r.Put(Record{LeaderUserID: 1, Companions: []Companion{{ID: 1, MobTemplateID: 5}}, Service: []Service{{Member: CompanionMemberKey(1), Rounds: 3, Saved: 3}}})
+	got, _ := r.Get(1)
+	got.Service[0].Rounds = 99
+	again, _ := r.Get(1)
+	if again.Service[0].Rounds != 3 || again.Service[0].Saved != 3 {
+		t.Fatalf("Get must copy service: %+v", again.Service)
+	}
+	clone := r.Clone()
+	clone.Companies[1].Service[0].Rounds = 77
+	if again, _ := r.Get(1); again.Service[0].Rounds != 3 {
+		t.Fatal("Clone must copy service")
+	}
+}
+
+func TestPutPrunesServiceOfRemovedMembers(t *testing.T) {
 	r := NewRegistry()
 	c1, c2 := CompanionMemberKey(1), CompanionMemberKey(2)
 	r.Put(Record{
 		LeaderUserID: 1,
 		Companions:   []Companion{{ID: 1, MobTemplateID: 5}, {ID: 2, MobTemplateID: 5}},
-		Bonds: []Bond{
-			{A: c1, B: LeaderMemberKey, Rounds: 10},
-			{A: c2, B: LeaderMemberKey, Rounds: 20},
-			{A: c1, B: c2, Rounds: 30},
-			{A: CompanionMemberKey(7), B: LeaderMemberKey, Rounds: 40},
+		Service: []Service{
+			{Member: LeaderMemberKey, Rounds: 10},
+			{Member: c1, Rounds: 20},
+			{Member: c2, Rounds: 30},
+			{Member: CompanionMemberKey(7), Rounds: 40},
 		},
 	})
 	record, _ := r.Get(1)
-	if len(record.Bonds) != 3 {
-		t.Fatalf("a bond with an unknown member should be pruned: %+v", record.Bonds)
+	if len(record.Service) != 3 {
+		t.Fatalf("an unknown member's service should be pruned: %+v", record.Service)
 	}
 	r.Dismiss(1, 1)
 	record, _ = r.Get(1)
-	if len(record.Bonds) != 1 || record.Bonds[0].A != c2 || record.Bonds[0].Rounds != 20 {
-		t.Fatalf("dismissal must end exactly companion 1's bonds: %+v", record.Bonds)
+	if _, ok := record.FindService(c1); ok || len(record.Service) != 2 {
+		t.Fatalf("dismissal must end exactly companion 1's service: %+v", record.Service)
 	}
 	r.DismissAll(1)
 	record, _ = r.Get(1)
-	if len(record.Bonds) != 0 {
-		t.Fatalf("dismiss all ends every bond: %+v", record.Bonds)
+	if _, ok := record.FindService(LeaderMemberKey); !ok || len(record.Service) != 1 {
+		t.Fatalf("dismiss all keeps only the leader's own service: %+v", record.Service)
 	}
 }
 
-func TestBondsYAMLRoundTrip(t *testing.T) {
+func TestPutNormalizesService(t *testing.T) {
 	r := NewRegistry()
-	r.Put(Record{LeaderUserID: 1, Companions: []Companion{{ID: 1, MobTemplateID: 5}}, Bonds: []Bond{{A: CompanionMemberKey(1), B: LeaderMemberKey, Rounds: 901, LastRound: 1314123}}})
+	c1 := CompanionMemberKey(1)
+	r.Put(Record{
+		LeaderUserID: 1,
+		Companions:   []Companion{{ID: 1, MobTemplateID: 5}},
+		Service: []Service{
+			{Member: c1, Rounds: 40, LastRound: 9, Saved: 40},
+			{Member: c1, Rounds: 30, LastRound: 12, Saved: 30}, // a duplicate
+			{Member: LeaderMemberKey, Rounds: -5, Saved: 7},
+		},
+	})
+	record, _ := r.Get(1)
+	want := []Service{{Member: c1, Rounds: 40, LastRound: 12, Saved: 40}, {Member: LeaderMemberKey}}
+	if len(record.Service) != 2 || record.Service[0] != want[0] || record.Service[1] != want[1] {
+		t.Fatalf("service %+v, want %+v", record.Service, want)
+	}
+}
+
+func TestServiceYAMLRoundTrip(t *testing.T) {
+	r := NewRegistry()
+	r.Put(Record{LeaderUserID: 1, Companions: []Companion{{ID: 1, MobTemplateID: 5}}, Service: []Service{{Member: CompanionMemberKey(1), Rounds: 901, LastRound: 1314123, Saved: 901}}})
 	data, err := yaml.Marshal(r)
 	if err != nil {
 		t.Fatal(err)
@@ -182,35 +204,11 @@ func TestBondsYAMLRoundTrip(t *testing.T) {
 	if err := yaml.Unmarshal(data, &back); err != nil {
 		t.Fatal(err)
 	}
-	bond, ok := back.Companies[1].FindBond(LeaderMemberKey, CompanionMemberKey(1))
-	if !ok || bond.Rounds != 901 || bond.LastRound != 1314123 {
-		t.Fatalf("round trip lost the bond: %+v\n%s", bond, data)
+	s, ok := back.Companies[1].FindService(CompanionMemberKey(1))
+	if !ok || s.Rounds != 901 || s.LastRound != 1314123 {
+		t.Fatalf("round trip lost the service: %+v\n%s", s, data)
 	}
-}
-
-// Review finding 5: stored bonds are normalized on Put.
-func TestPutNormalizesBonds(t *testing.T) {
-	r := NewRegistry()
-	c1 := CompanionMemberKey(1)
-	r.Put(Record{
-		LeaderUserID: 1,
-		Companions:   []Companion{{ID: 1, MobTemplateID: 5}},
-		Bonds: []Bond{
-			{A: LeaderMemberKey, B: c1, Rounds: 40, LastRound: 9},  // out of order
-			{A: c1, B: LeaderMemberKey, Rounds: 30, LastRound: 12}, // a duplicate
-		},
-	})
-	record, _ := r.Get(1)
-	require := []Bond{{A: c1, B: LeaderMemberKey, Rounds: 40, LastRound: 12}}
-	if len(record.Bonds) != 1 || record.Bonds[0] != require[0] {
-		t.Fatalf("bonds %+v, want %+v", record.Bonds, require)
-	}
-	if _, after, ok := record.ChargeBond(c1, LeaderMemberKey, 13); !ok || after != 41 {
-		t.Fatalf("the merged bond should charge: %d %v", after, ok)
-	}
-	r.Put(Record{LeaderUserID: 1, Companions: []Companion{{ID: 1, MobTemplateID: 5}}, Bonds: []Bond{{A: c1, B: LeaderMemberKey, Rounds: -5}}})
-	record, _ = r.Get(1)
-	if record.Bonds[0].Rounds != 0 {
-		t.Fatalf("negative rounds clamp to 0: %+v", record.Bonds)
+	if s.Saved != 0 {
+		t.Fatal("Saved is in-memory only; the loader marks loaded service saved")
 	}
 }

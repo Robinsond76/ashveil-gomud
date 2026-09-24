@@ -70,77 +70,84 @@ func roundFrom(m *CompanyModule, next *uint64, n int) {
 	}
 }
 
-func bondRounds(m *CompanyModule, a, b domain.MemberKey) int {
+func served(m *CompanyModule, key domain.MemberKey) int {
 	record, _ := m.registry.Get(7)
-	bond, _ := record.FindBond(a, b)
-	return bond.Rounds
+	s, _ := record.FindService(key)
+	return s.Rounds
 }
 
-func TestChemistryIndependentBonds(t *testing.T) {
+func TestChemistryServiceAccrues(t *testing.T) {
 	module, world, _ := newChemistryModule(t)
 	round := uint64(1000)
 	roundFrom(module, &round, 2)
-	assert.Equal(t, 2, bondRounds(module, domain.LeaderMemberKey, c1Key))
-	assert.Equal(t, 2, bondRounds(module, domain.LeaderMemberKey, c2Key))
-	assert.Equal(t, 2, bondRounds(module, c1Key, c2Key))
+	assert.Equal(t, 2, served(module, domain.LeaderMemberKey))
+	assert.Equal(t, 2, served(module, c1Key))
+	assert.Equal(t, 2, served(module, c2Key))
 
-	// #2 wanders off: only the leader and #1 keep sharing rounds.
+	// #2 wanders off alone: the leader and #1 keep serving together.
 	world.mobAt[102] = 6
 	roundFrom(module, &round, 1)
-	assert.Equal(t, 3, bondRounds(module, domain.LeaderMemberKey, c1Key))
-	assert.Equal(t, 2, bondRounds(module, domain.LeaderMemberKey, c2Key))
-	assert.Equal(t, 2, bondRounds(module, c1Key, c2Key))
+	assert.Equal(t, 3, served(module, domain.LeaderMemberKey))
+	assert.Equal(t, 3, served(module, c1Key))
+	assert.Equal(t, 2, served(module, c2Key))
 
 	// A round seen twice counts once.
 	module.onNewRound(events.NewRound{RoundNumber: round})
-	assert.Equal(t, 3, bondRounds(module, domain.LeaderMemberKey, c1Key))
+	assert.Equal(t, 3, served(module, c1Key))
 }
 
 func TestChemistryPausesWhenNotEligible(t *testing.T) {
 	module, world, runtime := newChemistryModule(t)
 	round := uint64(1000)
 
-	// The leader is dead: the leader's bonds pause, the companions' don't.
+	// The leader is dead: the companions still serve together.
 	delete(world.leaderAt, 7)
 	roundFrom(module, &round, 1)
-	assert.Equal(t, 0, bondRounds(module, domain.LeaderMemberKey, c1Key))
-	assert.Equal(t, 1, bondRounds(module, c1Key, c2Key))
+	assert.Equal(t, 0, served(module, domain.LeaderMemberKey))
+	assert.Equal(t, 1, served(module, c1Key))
+	assert.Equal(t, 1, served(module, c2Key))
 	world.leaderAt[7] = 5
 
-	// #1 is dead (its mob at 0 health).
+	// #1 is dead.
 	delete(world.mobAt, 101)
 	roundFrom(module, &round, 1)
-	assert.Equal(t, 0, bondRounds(module, domain.LeaderMemberKey, c1Key))
-	assert.Equal(t, 1, bondRounds(module, c1Key, c2Key))
-	assert.Equal(t, 1, bondRounds(module, domain.LeaderMemberKey, c2Key))
+	assert.Equal(t, 1, served(module, domain.LeaderMemberKey))
+	assert.Equal(t, 1, served(module, c1Key))
+	assert.Equal(t, 2, served(module, c2Key))
 	world.mobAt[101] = 5
 
 	// #2 no longer serves the leader.
 	runtime.stolen = map[int]bool{102: true}
 	roundFrom(module, &round, 1)
-	assert.Equal(t, 1, bondRounds(module, domain.LeaderMemberKey, c1Key))
-	assert.Equal(t, 1, bondRounds(module, domain.LeaderMemberKey, c2Key))
-	assert.Equal(t, 1, bondRounds(module, c1Key, c2Key))
+	assert.Equal(t, 2, served(module, domain.LeaderMemberKey))
+	assert.Equal(t, 2, served(module, c1Key))
+	assert.Equal(t, 2, served(module, c2Key))
 	runtime.stolen = nil
 
-	// The leader signs off: nothing accrues, even for companions together.
+	// Everyone apart: no one serves "together".
+	world.mobAt[101], world.mobAt[102] = 6, 8
+	roundFrom(module, &round, 1)
+	assert.Equal(t, 2, served(module, domain.LeaderMemberKey))
+	world.mobAt[101], world.mobAt[102] = 5, 5
+
+	// The leader signs off: nothing accrues.
 	world.online[7] = false
 	roundFrom(module, &round, 3)
-	assert.Equal(t, 1, bondRounds(module, domain.LeaderMemberKey, c1Key))
-	assert.Equal(t, 1, bondRounds(module, c1Key, c2Key))
+	assert.Equal(t, 2, served(module, c1Key))
+	assert.Equal(t, 2, served(module, c2Key))
 	assert.Zero(t, module.store.(*fakeStore).saveCalls, "no tier crossed, nothing written")
 }
 
-func TestChemistryCompanionPairWhileLeaderElsewhere(t *testing.T) {
+func TestChemistryCompanionsServeWhileLeaderElsewhere(t *testing.T) {
 	module, world, _ := newChemistryModule(t)
 	world.leaderAt[7] = 9
 	round := uint64(1000)
 	roundFrom(module, &round, 2)
-	assert.Equal(t, 0, bondRounds(module, domain.LeaderMemberKey, c1Key))
-	assert.Equal(t, 2, bondRounds(module, c1Key, c2Key), "companions together while the leader is signed in")
+	assert.Equal(t, 0, served(module, domain.LeaderMemberKey))
+	assert.Equal(t, 2, served(module, c1Key), "companions together while the leader is signed in")
 }
 
-func TestChemistryDismissEndsBonds(t *testing.T) {
+func TestChemistryDismissEndsService(t *testing.T) {
 	useFakeLifecycle(t, &fakeLifecycle{})
 	module, _, _ := newChemistryModule(t)
 	round := uint64(1000)
@@ -148,10 +155,10 @@ func TestChemistryDismissEndsBonds(t *testing.T) {
 	_, err := module.dismiss(7, "#1")
 	require.NoError(t, err)
 	record, _ := module.registry.Get(7)
-	require.Len(t, record.Bonds, 1)
-	assert.Equal(t, 2, bondRounds(module, domain.LeaderMemberKey, c2Key))
-	saved := module.store.(*fakeStore).saved.Companies[7]
-	assert.Len(t, saved.Bonds, 1, "the ended bonds are gone from disk too")
+	_, found := record.FindService(c1Key)
+	assert.False(t, found)
+	assert.Equal(t, 2, served(module, c2Key))
+	assert.Len(t, module.store.(*fakeStore).saved.Companies[7].Service, 2, "gone from disk too")
 }
 
 func TestChemistryResumesAfterRespawn(t *testing.T) {
@@ -159,53 +166,109 @@ func TestChemistryResumesAfterRespawn(t *testing.T) {
 	round := uint64(1000)
 	roundFrom(module, &round, 2)
 
-	// #1 dies: its mob is untracked and its bonds pause.
+	// #1 dies: its mob is untracked and its service pauses.
 	module.onMobDeath(events.MobDeath{InstanceId: 101})
 	delete(runtime.live, 101)
 	roundFrom(module, &round, 1)
-	assert.Equal(t, 2, bondRounds(module, domain.LeaderMemberKey, c1Key))
+	assert.Equal(t, 2, served(module, c1Key))
 
-	// Restored with the same companion ID: the same bond resumes.
+	// Restored with the same companion ID: its service resumes.
 	runtime.nextInstanceID = 201
 	require.NoError(t, module.restoreForLeader(7, 5))
 	world.mobAt[201] = 5
 	roundFrom(module, &round, 1)
-	assert.Equal(t, 3, bondRounds(module, domain.LeaderMemberKey, c1Key))
+	assert.Equal(t, 3, served(module, c1Key))
 }
 
 func TestChemistryTierCrossingSavesAndAnnounces(t *testing.T) {
 	module, world, _ := newChemistryModule(t)
-	world.mobAt[102] = 6 // only the leader and #1 together
 	store := module.store.(*fakeStore)
 	round := uint64(1000)
 	roundFrom(module, &round, 2)
 	assert.Zero(t, store.saveCalls)
+	assert.Zero(t, module.ChemistryHitBonus(7, domain.LeaderMemberKey))
 	roundFrom(module, &round, 1)
 	assert.Equal(t, 1, store.saveCalls, "a new tier is saved at once")
-	bond, ok := store.saved.Companies[7].FindBond(domain.LeaderMemberKey, c1Key)
+	s, ok := store.saved.Companies[7].FindService(c1Key)
 	require.True(t, ok)
-	assert.Equal(t, 3, bond.Rounds)
+	assert.Equal(t, 3, s.Rounds)
+	assert.Equal(t, 2, module.ChemistryHitBonus(7, domain.LeaderMemberKey))
+	assert.Equal(t, 2, module.ChemistryHitBonus(7, c2Key), "everyone in the band")
 	require.Len(t, world.told[7], 1)
-	assert.Contains(t, world.told[7][0], "Familiar")
-	assert.Contains(t, world.told[7][0], "#1")
+	assert.Equal(t, "Your band grows closer: Familiar (+2% to hit fighting together).", world.told[7][0])
 }
 
-func TestChemistryFailedCrossingSaveHoldsShort(t *testing.T) {
+func TestChemistryFailedSaveKeepsTierUntilSaved(t *testing.T) {
 	module, world, _ := newChemistryModule(t)
-	world.mobAt[102] = 6
 	store := module.store.(*fakeStore)
 	store.saveErr = errors.New("disk full")
 	round := uint64(1000)
-	roundFrom(module, &round, 5)
-	assert.Equal(t, 2, bondRounds(module, domain.LeaderMemberKey, c1Key), "held one round short of Familiar")
-	assert.Zero(t, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "no tier used before it's on disk")
+	roundFrom(module, &round, 7)
+	assert.Equal(t, 7, served(module, c1Key), "service keeps counting")
+	assert.Zero(t, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "no tier before it's on disk")
+	standing, _ := module.ChemistryStanding(7, domain.LeaderMemberKey)
+	assert.Equal(t, domain.TierNone, standing.Tier)
 	assert.Empty(t, world.told[7], "nothing announced")
 
 	store.saveErr = nil
 	roundFrom(module, &round, 1)
-	assert.Equal(t, 3, bondRounds(module, domain.LeaderMemberKey, c1Key))
-	assert.Equal(t, 2, module.ChemistryHitBonus(7, domain.LeaderMemberKey))
+	assert.Equal(t, 4, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "8 rounds saved: Trusted")
 	require.Len(t, world.told[7], 1)
+	assert.Contains(t, world.told[7][0], "Trusted")
+}
+
+func TestChemistryRecruitDilutesTheBand(t *testing.T) {
+	module, world, _ := newChemistryModule(t)
+	module.registry.Put(domain.Record{
+		LeaderUserID: 7,
+		Companions:   []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}},
+		Service: []domain.Service{
+			{Member: domain.LeaderMemberKey, Rounds: 9, Saved: 9},
+			{Member: c1Key, Rounds: 9, Saved: 9},
+		},
+	})
+	// Veterans plus a fresh #2: average 6, Trusted, for all three.
+	assert.Equal(t, 4, module.ChemistryHitBonus(7, domain.LeaderMemberKey))
+	assert.Equal(t, 4, module.ChemistryHitBonus(7, c2Key), "the recruit fights with the band")
+	// #2 steps away: the veterans are Sworn.
+	world.mobAt[102] = 6
+	assert.Equal(t, 6, module.ChemistryHitBonus(7, c1Key))
+	assert.Zero(t, module.ChemistryHitBonus(7, c2Key), "alone, no band")
+	// The leader alone: nothing.
+	world.mobAt[101] = 6
+	assert.Zero(t, module.ChemistryHitBonus(7, domain.LeaderMemberKey))
+	assert.Zero(t, module.ChemistryHitBonus(8, domain.LeaderMemberKey), "no company")
+}
+
+func TestChemistryCompanionBandAnnounced(t *testing.T) {
+	module, world, _ := newChemistryModule(t)
+	world.leaderAt[7] = 9 // the leader is elsewhere but signed in
+	round := uint64(1000)
+	roundFrom(module, &round, 3)
+	require.Len(t, world.told[7], 1)
+	assert.Equal(t, "Your companions A companion (#1) and A companion (#2) grow closer: Familiar (+2% to hit fighting together).", world.told[7][0])
+
+	// A tier worth nothing is announced without a "+0%".
+	module.chemRulesForTest = &domain.ChemistryRules{TierRounds: [3]int{3, 4, 9}, TierBonus: [3]int{0, 0, 6}}
+	roundFrom(module, &round, 1)
+	require.Len(t, world.told[7], 2)
+	assert.Equal(t, "Your companions A companion (#1) and A companion (#2) grow closer: Trusted.", world.told[7][1])
+}
+
+// The ordering onNewRound relies on: a drift tick whose save fails in the
+// same round as a charge keeps the charge.
+func TestChemistryChargeKeptWhenDriftSaveFails(t *testing.T) {
+	module, _, _ := newChemistryModule(t)
+	module.world.(*fakeWorld).leaders[7] = 100
+	round := uint64(1000)
+	roundFrom(module, &round, 1)
+	module.registry.DriftIn = 1 // the next round is a drift tick
+	store := module.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+	roundFrom(module, &round, 1)
+	assert.Equal(t, 2, served(module, c1Key))
+	record, _ := module.registry.Get(7)
+	assert.Nil(t, record.Companions[0].Disposition, "the drift itself rolled back")
 }
 
 func TestChemistrySurvivesReload(t *testing.T) {
@@ -216,7 +279,14 @@ func TestChemistrySurvivesReload(t *testing.T) {
 
 	useFakeLifecycle(t, &fakeLifecycle{})
 	restarted := newTestModule(*domain.NewRegistry(), runtime)
-	restarted.store = module.store
+	restarted.store = &fakeStore{saved: module.store.(*fakeStore).saved}
+	// A real store doesn't keep in-memory Saved values.
+	for id, record := range restarted.store.(*fakeStore).saved.Companies {
+		for i := range record.Service {
+			record.Service[i].Saved = 0
+		}
+		restarted.store.(*fakeStore).saved.Companies[id] = record
+	}
 	restarted.world = module.world
 	restarted.chem = world
 	restarted.chemRulesForTest = module.chemRulesForTest
@@ -224,30 +294,31 @@ func TestChemistrySurvivesReload(t *testing.T) {
 	require.NoError(t, restarted.loadErr)
 	restarted.setInstance(7, 1, 101)
 	restarted.setInstance(7, 2, 102)
-	assert.Equal(t, 4, bondRounds(restarted, domain.LeaderMemberKey, c1Key))
+	assert.Equal(t, 4, served(restarted, c1Key))
+	assert.Equal(t, 2, restarted.ChemistryHitBonus(7, domain.LeaderMemberKey), "loaded service counts as saved")
 
 	// The counter came back a round behind: that round isn't counted again.
 	restarted.onNewRound(events.NewRound{RoundNumber: round - 1})
-	assert.Equal(t, 4, bondRounds(restarted, domain.LeaderMemberKey, c1Key))
+	assert.Equal(t, 4, served(restarted, c1Key))
 	restarted.onNewRound(events.NewRound{RoundNumber: round + 1})
-	assert.Equal(t, 5, bondRounds(restarted, domain.LeaderMemberKey, c1Key))
+	assert.Equal(t, 5, served(restarted, c1Key))
 }
 
-func TestDecodeCompaniesReadsBonds(t *testing.T) {
+func TestDecodeCompaniesReadsService(t *testing.T) {
 	registry := domain.NewRegistry()
 	data := []byte(`companies:
   7:
     leader_user_id: 7
     companions:
       - {id: 1, mob_template_id: 58}
-    bonds:
-      - {a: "companion:1", b: leader, rounds: 950, last_round: 1314500}
+    service:
+      - {member: "companion:1", rounds: 950, last_round: 1314500}
 `)
 	require.NoError(t, decodeCompanies(data, registry))
-	bond, ok := registry.Companies[7].FindBond(domain.LeaderMemberKey, c1Key)
+	s, ok := registry.Companies[7].FindService(c1Key)
 	require.True(t, ok)
-	assert.Equal(t, 950, bond.Rounds)
-	assert.Equal(t, uint64(1314500), bond.LastRound)
+	assert.Equal(t, 950, s.Rounds)
+	assert.Equal(t, uint64(1314500), s.LastRound)
 }
 
 func TestParseChemistryConfig(t *testing.T) {
@@ -279,41 +350,6 @@ func TestParseChemistryConfig(t *testing.T) {
 	assert.Equal(t, domain.DefaultChemistryRules(), rules)
 }
 
-func TestChemistryBonusLeaderAloneNone(t *testing.T) {
-	module, world, _ := newChemistryModule(t)
-	round := uint64(1000)
-	roundFrom(module, &round, 9) // every pair Sworn
-	delete(world.mobAt, 101)
-	delete(world.mobAt, 102)
-	assert.Zero(t, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "no partner at the leader's side")
-	assert.Zero(t, module.ChemistryHitBonus(8, domain.LeaderMemberKey), "no company")
-}
-
-func TestChemistryBonusCapNeverStacks(t *testing.T) {
-	module, _, _ := newChemistryModule(t)
-	round := uint64(1000)
-	roundFrom(module, &round, 20)
-	assert.Equal(t, 6, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "two Sworn partners still give the top bonus once")
-	assert.Equal(t, 6, module.ChemistryHitBonus(7, c1Key))
-}
-
-func TestChemistryBonusAbsentPartnerNone(t *testing.T) {
-	module, world, _ := newChemistryModule(t)
-	round := uint64(1000)
-	world.mobAt[102] = 6
-	roundFrom(module, &round, 9) // leader and #1 Sworn; #2 a stranger
-	world.mobAt[102] = 5
-	world.mobAt[101] = 6
-	assert.Zero(t, module.ChemistryHitBonus(7, domain.LeaderMemberKey), "#1 is elsewhere; #2 is no bond")
-	world.mobAt[101] = 5
-	assert.Equal(t, 6, module.ChemistryHitBonus(7, domain.LeaderMemberKey))
-	assert.Equal(t, 6, module.ChemistryHitBonus(7, c1Key))
-	assert.Zero(t, module.ChemistryHitBonus(7, c2Key))
-}
-
-// modulePackageInstance is the module init registered.
-func modulePackageInstance() *CompanyModule { return module }
-
 func TestChemistryBonusForInstance(t *testing.T) {
 	module, _, _ := newChemistryModule(t)
 	domain.SetFormationProvider(module)
@@ -327,32 +363,37 @@ func TestChemistryBonusForInstance(t *testing.T) {
 	assert.Zero(t, domain.ChemistryBonusForInstance(999))
 }
 
-func TestChemistryViewShowsTierPartnerProgress(t *testing.T) {
+// modulePackageInstance is the module init registered.
+func modulePackageInstance() *CompanyModule { return module }
+
+func TestChemistryViewShowsBandAndService(t *testing.T) {
 	module, world, _ := newChemistryModule(t)
 	round := uint64(1000)
 	world.mobAt[102] = 6
-	roundFrom(module, &round, 4) // leader and #1 Familiar (4 of 3..6)
+	roundFrom(module, &round, 4) // leader and #1: 4 rounds each, saved at 3
+	require.NoError(t, module.save())
 	view := module.chemistryView(7)
 	lines := strings.Split(view, "\n")
-	require.GreaterOrEqual(t, len(lines), 4, view)
-	assert.Contains(t, lines[1], "You: Familiar with")
-	assert.Contains(t, lines[1], "#1")
-	assert.Contains(t, lines[1], "+2% to hit now")
-	assert.Contains(t, lines[1], "33% of the way to Trusted")
-	assert.Contains(t, lines[2], "Familiar with you")
-	assert.Contains(t, lines[3], "#2")
-	assert.Contains(t, lines[3], "no shared service yet")
+	require.GreaterOrEqual(t, len(lines), 6, view)
+	assert.Equal(t, "  With you: 2 together, Familiar (+2% to hit); 33% of the way to Trusted.", lines[1])
+	assert.Equal(t, "Service with the band:", lines[2])
+	assert.Contains(t, lines[3], "You: ")
+	assert.Contains(t, lines[5], "A companion (#2): 0.0 days")
 
-	world.mobAt[101] = 6
-	view = module.chemistryView(7)
-	assert.Contains(t, strings.Split(view, "\n")[1], "not at your side")
-	assert.Equal(t, "No companions.", module.chemistryView(8))
-
+	// #2 joins: the band is diluted.
+	world.mobAt[102] = 5
+	lines = strings.Split(module.chemistryView(7), "\n")
+	assert.Equal(t, "  With you: 3 together, Strangers; 66% of the way to Familiar.", lines[1])
 	standing, ok := module.ChemistryStanding(7, domain.LeaderMemberKey)
 	require.True(t, ok)
-	assert.Equal(t, domain.TierFamiliar, standing.Tier)
-	assert.Contains(t, standing.Partner, "#1")
-	assert.Zero(t, standing.Bonus, "#1 is elsewhere")
+	assert.Equal(t, domain.ChemistryStandingView{Together: 3}, standing)
+
+	// The companions apart from the leader.
+	world.leaderAt[7] = 9
+	lines = strings.Split(module.chemistryView(7), "\n")
+	assert.Equal(t, "  With you: no one from the band.", lines[1])
+	assert.Equal(t, "  Apart: A companion (#1) and A companion (#2), 2 together, Strangers; 66% of the way to Familiar.", lines[2])
+	assert.Equal(t, "No companions.", module.chemistryView(8))
 }
 
 func TestChemistryUnavailableWhileCompanyDataFailed(t *testing.T) {
@@ -364,63 +405,6 @@ func TestChemistryUnavailableWhileCompanyDataFailed(t *testing.T) {
 	_, ok := module.ChemistryStanding(7, domain.LeaderMemberKey)
 	assert.False(t, ok)
 	assert.Contains(t, module.chemistryView(7), "unavailable")
-}
-
-// Review finding 3: the bonus is credited to the bond that gives it.
-func TestChemistryDisplayCreditsActivePartner(t *testing.T) {
-	module, world, _ := newChemistryModule(t)
-	module.registry.Put(domain.Record{
-		LeaderUserID: 7,
-		Companions:   []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}},
-		Bonds: []domain.Bond{
-			{A: c1Key, B: domain.LeaderMemberKey, Rounds: 3},  // Familiar, present
-			{A: c2Key, B: domain.LeaderMemberKey, Rounds: 20}, // Sworn, away
-		},
-	})
-	world.mobAt[102] = 6
-	standing, ok := module.ChemistryStanding(7, domain.LeaderMemberKey)
-	require.True(t, ok)
-	assert.Equal(t, domain.ChemistryStandingView{Tier: domain.TierFamiliar, Partner: "A companion (#1)", Bonus: 2}, standing)
-	line := strings.Split(module.chemistryView(7), "\n")[1]
-	assert.Contains(t, line, "You: Sworn with A companion (#2) (+2% to hit now, from Familiar with A companion (#1))")
-
-	// Nobody beside the leader: the strongest bond, no bonus, "your side".
-	world.mobAt[101] = 6
-	standing, _ = module.ChemistryStanding(7, domain.LeaderMemberKey)
-	assert.Equal(t, domain.ChemistryStandingView{Tier: domain.TierSworn, Partner: "A companion (#2)"}, standing)
-	assert.Contains(t, strings.Split(module.chemistryView(7), "\n")[1], "(not at your side)")
-	assert.Contains(t, strings.Split(module.chemistryView(7), "\n")[3], "(not at their side)")
-}
-
-func TestChemistryCompanionPairCrossingAnnounced(t *testing.T) {
-	module, world, _ := newChemistryModule(t)
-	world.leaderAt[7] = 9 // the leader is elsewhere but signed in
-	round := uint64(1000)
-	roundFrom(module, &round, 3)
-	require.Len(t, world.told[7], 1)
-	assert.Equal(t, "A companion (#1) and A companion (#2) have grown Familiar (+2% to hit fighting side by side).", world.told[7][0])
-
-	// A tier worth nothing is announced without a "+0%".
-	module.chemRulesForTest = &domain.ChemistryRules{TierRounds: [3]int{3, 4, 9}, TierBonus: [3]int{0, 0, 6}}
-	roundFrom(module, &round, 1)
-	require.Len(t, world.told[7], 2)
-	assert.Equal(t, "A companion (#1) and A companion (#2) have grown Trusted.", world.told[7][1])
-}
-
-// The ordering onNewRound relies on: a drift tick whose save fails in the
-// same round as a charge keeps the charge.
-func TestChemistryChargeKeptWhenDriftSaveFails(t *testing.T) {
-	module, _, _ := newChemistryModule(t)
-	module.world.(*fakeWorld).leaders[7] = 100
-	round := uint64(1000)
-	roundFrom(module, &round, 1)
-	module.registry.DriftIn = 1 // the next round is a drift tick
-	store := module.store.(*fakeStore)
-	store.saveErr = errors.New("disk full")
-	roundFrom(module, &round, 1)
-	assert.Equal(t, 2, bondRounds(module, domain.LeaderMemberKey, c1Key))
-	record, _ := module.registry.Get(7)
-	assert.Nil(t, record.Companions[0].Disposition, "the drift itself rolled back")
 }
 
 func TestChemistryRulesCachedAndRefreshedEachRound(t *testing.T) {

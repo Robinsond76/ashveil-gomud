@@ -62,14 +62,16 @@ Recruiters:
     Name: the notched stick by the lean-to
     Candidates:
       - { Id: ysolde, MobTemplateId: 64, Price: 80 }
-# Phase 24: company chemistry. Each pair of members builds a bond from the
-# rounds they spend alive and together in one room while the leader is
-# signed in. A bond reaching ChemistryFamiliarRounds, ChemistryTrustedRounds,
-# or ChemistrySwornRounds (1..1000000, strictly increasing; 900 rounds is one
-# game day) gives each of the pair the matching bonus (0..10, never
-# decreasing) in percentage points of hit chance while the other is at their
-# side. Only a member's strongest such bond counts; bonds never stack. A set
-# out of order falls back to all the defaults.
+# Phase 24: company chemistry. Each member serves the band for every round
+# it is alive and in one room with at least one other member while the
+# leader is signed in. A band (the members together in a room) takes its
+# tier from the average service of its members: reaching
+# ChemistryFamiliarRounds, ChemistryTrustedRounds, or ChemistrySwornRounds
+# (1..1000000, strictly increasing; 900 rounds is one game day) gives
+# everyone in the band the matching bonus (0..10, never decreasing) in
+# percentage points of hit chance. A new recruit counts as 0 service, so it
+# pulls the average down until it settles in. A set out of order falls back
+# to all the defaults.
 ChemistryFamiliarRounds: 900
 ChemistryTrustedRounds: 2700
 ChemistrySwornRounds: 6300

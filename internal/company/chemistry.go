@@ -1,17 +1,21 @@
 package company
 
-// Phase 24: company chemistry. Members who serve together long enough fight
-// better together. A bond is kept per unordered pair of member keys and
-// counts the rounds the pair spent eligible together.
+// Phase 24: company chemistry. The longer a band stays together, the better
+// it fights. Each member keeps a durable count of the rounds it has served
+// with the band; a band's tier comes from the average service of the
+// members together, so a new recruit dilutes it until they settle in.
 
-// Bond is one pair's accumulated shared service. A is the lesser key.
-type Bond struct {
-	A      MemberKey `yaml:"a"`
-	B      MemberKey `yaml:"b"`
+// Service is one member's accumulated time with the band.
+type Service struct {
+	Member MemberKey `yaml:"member"`
 	Rounds int       `yaml:"rounds"`
-	// LastRound is the last global round charged to this bond, so a round
+	// LastRound is the last global round charged to this member, so a round
 	// is counted once however many times it is seen.
 	LastRound uint64 `yaml:"last_round"`
+	// Saved is Rounds as of the last successful company save (or load).
+	// Tiers are worked out from it only, so no tier is used or shown before
+	// it is on disk.
+	Saved int `yaml:"-"`
 }
 
 // Tier numbers: 0 is no tier.
@@ -23,11 +27,11 @@ const (
 )
 
 // counterResetRounds is how far the round counter must go back before a
-// bond stops waiting for it to catch up (a reset counter file).
+// member stops waiting for it to catch up (a reset counter file).
 const counterResetRounds = 900
 
-// ChemistryRules are the tier thresholds (in shared rounds) and hit bonuses
-// (in percentage points), Familiar, Trusted, Sworn.
+// ChemistryRules are the tier thresholds (in average rounds served) and hit
+// bonuses (in percentage points), Familiar, Trusted, Sworn.
 type ChemistryRules struct {
 	TierRounds [3]int
 	TierBonus  [3]int
@@ -52,7 +56,7 @@ func (r ChemistryRules) Valid() bool {
 	return true
 }
 
-// Tier is the tier reached after rounds of shared service.
+// Tier is the tier reached at rounds of (average) service.
 func (r ChemistryRules) Tier(rounds int) int {
 	tier := TierNone
 	for i, threshold := range r.TierRounds {
@@ -99,106 +103,96 @@ func TierName(tier int) string {
 	return "Strangers"
 }
 
-// BondPair orders two keys the way a Bond stores them.
-func BondPair(a, b MemberKey) (MemberKey, MemberKey) {
-	if b < a {
-		return b, a
-	}
-	return a, b
-}
-
-// Partner is the other member of a bond involving key.
-func (b Bond) Partner(key MemberKey) (MemberKey, bool) {
-	switch key {
-	case b.A:
-		return b.B, true
-	case b.B:
-		return b.A, true
-	}
-	return "", false
-}
-
 // chargeable reports whether round has not yet been charged.
-func (b Bond) chargeable(round uint64) bool {
-	return round > b.LastRound || b.LastRound-round > counterResetRounds
+func (s Service) chargeable(round uint64) bool {
+	return round > s.LastRound || s.LastRound-round > counterResetRounds
 }
 
-// ChargeBond adds one shared round for the pair, creating its bond at 0 if
-// it has none. It returns the rounds before and after; charged is false when
-// round was already charged.
-func (r *Record) ChargeBond(a, b MemberKey, round uint64) (before, after int, charged bool) {
-	a, b = BondPair(a, b)
-	if a == b {
-		return 0, 0, false
-	}
-	for i := range r.Bonds {
-		bond := &r.Bonds[i]
-		if bond.A != a || bond.B != b {
+// ChargeService adds one round of service for member, creating its entry at
+// 0 if it has none. charged is false when round was already charged.
+func (r *Record) ChargeService(member MemberKey, round uint64) (charged bool) {
+	for i := range r.Service {
+		s := &r.Service[i]
+		if s.Member != member {
 			continue
 		}
-		if !bond.chargeable(round) {
-			return bond.Rounds, bond.Rounds, false
+		if !s.chargeable(round) {
+			return false
 		}
-		before = bond.Rounds
-		bond.Rounds++
-		bond.LastRound = round
-		return before, bond.Rounds, true
+		s.Rounds++
+		s.LastRound = round
+		return true
 	}
-	r.Bonds = append(r.Bonds, Bond{A: a, B: b, Rounds: 1, LastRound: round})
-	return 0, 1, true
+	r.Service = append(r.Service, Service{Member: member, Rounds: 1, LastRound: round})
+	return true
 }
 
-// FindBond returns the pair's bond.
-func (r Record) FindBond(a, b MemberKey) (Bond, bool) {
-	a, b = BondPair(a, b)
-	for _, bond := range r.Bonds {
-		if bond.A == a && bond.B == b {
-			return bond, true
+// FindService returns member's service entry.
+func (r Record) FindService(member MemberKey) (Service, bool) {
+	for _, s := range r.Service {
+		if s.Member == member {
+			return s, true
 		}
 	}
-	return Bond{}, false
+	return Service{}, false
 }
 
-// BestBond is key's highest-tier bond whose partner passes present (all
-// partners when present is nil). Ties go to the most rounds. ok is false
-// when key has no such bond.
-func BestBond(bonds []Bond, key MemberKey, present func(MemberKey) bool, rules ChemistryRules) (best Bond, tier int, ok bool) {
-	for _, bond := range bonds {
-		partner, involved := bond.Partner(key)
-		if !involved || (present != nil && !present(partner)) {
-			continue
-		}
-		t := rules.Tier(bond.Rounds)
-		if !ok || t > tier || (t == tier && bond.Rounds > best.Rounds) {
-			best, tier, ok = bond, t, true
+// MarkServiceSaved records that every member's rounds are on disk.
+func (r *Record) MarkServiceSaved() {
+	for i := range r.Service {
+		r.Service[i].Saved = r.Service[i].Rounds
+	}
+}
+
+// BandAverage is the average service of members together, from saved
+// rounds (durable is true) or current ones; a member with no entry counts
+// as 0. ok is false for fewer than two members: a lone member is no band.
+func (r Record) BandAverage(members []MemberKey, durable bool) (average int, ok bool) {
+	if len(members) < 2 {
+		return 0, false
+	}
+	total := 0
+	for _, member := range members {
+		if s, found := r.FindService(member); found {
+			if durable {
+				total += s.Saved
+			} else {
+				total += s.Rounds
+			}
 		}
 	}
-	return best, tier, ok
+	return total / len(members), true
 }
 
-// pruneBonds drops bonds whose members are not both valid, and normalizes
-// the rest as they would be stored: keys in order, rounds at least 0, and
-// one bond per pair (a duplicate merges into the first, keeping the most
-// rounds and the latest round charged).
-func pruneBonds(bonds []Bond, valid map[MemberKey]bool) []Bond {
-	var kept []Bond
-	index := map[[2]MemberKey]int{}
-	for _, bond := range bonds {
-		bond.A, bond.B = BondPair(bond.A, bond.B)
-		if !valid[bond.A] || !valid[bond.B] || bond.A == bond.B {
+// BandTier is the tier of members together, from saved rounds.
+func (r Record) BandTier(members []MemberKey, rules ChemistryRules) int {
+	average, ok := r.BandAverage(members, true)
+	if !ok {
+		return TierNone
+	}
+	return rules.Tier(average)
+}
+
+// pruneService drops entries for members no longer in the record and
+// normalizes the rest: rounds at least 0, one entry per member (a duplicate
+// merges into the first, keeping the most rounds and the latest round).
+func pruneService(service []Service, valid map[MemberKey]bool) []Service {
+	var kept []Service
+	index := map[MemberKey]int{}
+	for _, s := range service {
+		if !valid[s.Member] {
 			continue
 		}
-		if bond.Rounds < 0 {
-			bond.Rounds = 0
-		}
-		pair := [2]MemberKey{bond.A, bond.B}
-		if i, dup := index[pair]; dup {
-			kept[i].Rounds = max(kept[i].Rounds, bond.Rounds)
-			kept[i].LastRound = max(kept[i].LastRound, bond.LastRound)
+		s.Rounds = max(s.Rounds, 0)
+		s.Saved = min(max(s.Saved, 0), s.Rounds)
+		if i, dup := index[s.Member]; dup {
+			kept[i].Rounds = max(kept[i].Rounds, s.Rounds)
+			kept[i].Saved = max(kept[i].Saved, s.Saved)
+			kept[i].LastRound = max(kept[i].LastRound, s.LastRound)
 			continue
 		}
-		index[pair] = len(kept)
-		kept = append(kept, bond)
+		index[s.Member] = len(kept)
+		kept = append(kept, s)
 	}
 	return kept
 }

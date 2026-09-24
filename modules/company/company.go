@@ -52,7 +52,7 @@ type wireRecord struct {
 	Formation       domain.Formation   `yaml:"formation"`
 	NextCompanionID int                `yaml:"next_companion_id,omitempty"`
 	Claimed         []int              `yaml:"claimed,omitempty"`
-	Bonds           []domain.Bond      `yaml:"bonds,omitempty"`
+	Service         []domain.Service   `yaml:"service,omitempty"`
 }
 
 type wireRegistry struct {
@@ -70,7 +70,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Bonds: wr.Bonds}
+		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -749,6 +749,8 @@ func (m *CompanyModule) save() error {
 	if err := m.store.Save(m.registry); err != nil {
 		return fmt.Errorf("company: save failed; please retry: %w", err)
 	}
+	// Phase 24: what was just written is durable, so tiers may use it.
+	m.markServiceSaved()
 	return nil
 }
 
@@ -767,6 +769,7 @@ func (m *CompanyModule) load() {
 	}
 	m.registry = *loaded
 	m.loadErr = nil
+	m.markServiceSaved() // loaded service is on disk
 	m.refreshChemistryRules()
 
 	// Survival loads before company (the plugin loader runs callbacks in

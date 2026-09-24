@@ -3,6 +3,21 @@
 Design: [24 spec](../specs/2026-09-24-phase-24-company-chemistry-design.md).
 Each task is tests first.
 
+**Rework (2026-09-24, owner amendment):** Tasks 1–4, 6, and 7 were redone
+for the company-wide, dilute model on the same branch; the pair-bond test
+names below were replaced by `TestBandAverageDilutesAndUsesSavedRounds`,
+`TestGetCopiesService`, `TestPutPrunesServiceOfRemovedMembers`,
+`TestPutNormalizesService`, `TestServiceYAMLRoundTrip`,
+`TestChemistryServiceAccrues`, `TestChemistryPausesWhenNotEligible`,
+`TestChemistryCompanionsServeWhileLeaderElsewhere`,
+`TestChemistryDismissEndsService`, `TestChemistryResumesAfterRespawn`,
+`TestChemistryTierCrossingSavesAndAnnounces`,
+`TestChemistryFailedSaveKeepsTierUntilSaved`,
+`TestChemistryRecruitDilutesTheBand`, `TestChemistryCompanionBandAnnounced`,
+`TestChemistryChargeKeptWhenDriftSaveFails`, `TestChemistrySurvivesReload`,
+`TestDecodeCompaniesReadsService`, `TestChemistryViewShowsBandAndService`,
+and the wiring test's dilution step. Task 5 (combat) was unchanged.
+
 - [x] **Task 1: pure bonds** (`internal/company/chemistry.go`,
   `chemistry_test.go`). Tests first: `TestTierBoundaries`,
   `TestRulesValid`, `TestBondPairSorted`, `TestChargeOncePerRound`,

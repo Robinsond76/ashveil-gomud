@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -135,47 +136,64 @@ func (m *CompanyModule) presentMembers(leaderUserID int, record domain.Record) (
 	return present, true
 }
 
-type bondCrossing struct {
+// band is the members present in one room, sorted.
+func band(present map[domain.MemberKey]int, room int) []domain.MemberKey {
+	var members []domain.MemberKey
+	for key, r := range present {
+		if r == room {
+			members = append(members, key)
+		}
+	}
+	slices.Sort(members)
+	return members
+}
+
+// bands groups the present members by room; every band has two or more.
+func bands(present map[domain.MemberKey]int) [][]domain.MemberKey {
+	rooms := map[int]bool{}
+	for _, room := range present {
+		rooms[room] = true
+	}
+	var out [][]domain.MemberKey
+	for room := range rooms {
+		if members := band(present, room); len(members) >= 2 {
+			out = append(out, members)
+		}
+	}
+	slices.SortFunc(out, func(a, b []domain.MemberKey) int { return strings.Compare(string(a[0]), string(b[0])) })
+	return out
+}
+
+type bandCrossing struct {
 	leaderUserID int
-	a, b         domain.MemberKey
+	members      []domain.MemberKey
 	tier         int
 }
 
-// accrueChemistry charges round to every pair of present members sharing a
-// room. A bond that reaches a new tier is saved at once; if the save fails
-// it is held one round short of the tier, so no tier is used or shown before
-// it is on disk. It never writes the round counter.
+// accrueChemistry charges round to every member who is present with at
+// least one other. Tiers come from saved service only; when this round's
+// service would lift a band's tier, the company is saved at once, and the
+// leader is told only once it is. A failed save leaves the tier where it
+// was and is retried the next round. It never writes the round counter.
 func (m *CompanyModule) accrueChemistry(round uint64) {
 	rules := m.chemistryRules()
-	var crossings []bondCrossing
+	var crossings []bandCrossing
 	for leaderUserID := range m.instances {
 		record, ok := m.registry.Companies[leaderUserID]
 		if !ok {
 			continue
 		}
 		present, _ := m.presentMembers(leaderUserID, record)
-		if len(present) < 2 {
-			continue
-		}
-		keys := make([]domain.MemberKey, 0, len(present))
-		for key := range present {
-			keys = append(keys, key)
-		}
-		slices.Sort(keys)
 		changed := false
-		for i, a := range keys {
-			for _, b := range keys[i+1:] {
-				if present[a] != present[b] {
-					continue
+		for _, members := range bands(present) {
+			for _, member := range members {
+				if record.ChargeService(member, round) {
+					changed = true
 				}
-				before, after, charged := record.ChargeBond(a, b, round)
-				if !charged {
-					continue
-				}
-				changed = true
-				if tier := rules.Tier(after); tier > rules.Tier(before) {
-					crossings = append(crossings, bondCrossing{leaderUserID, a, b, tier})
-				}
+			}
+			current, _ := record.BandAverage(members, false)
+			if tier := rules.Tier(current); tier > record.BandTier(members, rules) {
+				crossings = append(crossings, bandCrossing{leaderUserID, members, tier})
 			}
 		}
 		if changed {
@@ -187,9 +205,6 @@ func (m *CompanyModule) accrueChemistry(round uint64) {
 	}
 	if err := m.save(); err != nil {
 		mudlog.Error("company: save chemistry tier", "error", err)
-		for _, c := range crossings {
-			m.holdBondShort(c, rules)
-		}
 		return
 	}
 	for _, c := range crossings {
@@ -197,36 +212,41 @@ func (m *CompanyModule) accrueChemistry(round uint64) {
 	}
 }
 
-// holdBondShort sets a bond one round short of the tier it just reached.
-func (m *CompanyModule) holdBondShort(c bondCrossing, rules domain.ChemistryRules) {
-	record := m.registry.Companies[c.leaderUserID]
-	a, b := domain.BondPair(c.a, c.b)
-	for i := range record.Bonds {
-		if record.Bonds[i].A == a && record.Bonds[i].B == b {
-			record.Bonds[i].Rounds = rules.TierRounds[c.tier-1] - 1
+// markServiceSaved records that every member's service is on disk.
+func (m *CompanyModule) markServiceSaved() {
+	for leaderUserID, record := range m.registry.Companies {
+		if len(record.Service) > 0 {
+			record.MarkServiceSaved()
+			m.registry.Companies[leaderUserID] = record
 		}
 	}
-	m.registry.Companies[c.leaderUserID] = record
 }
 
-func (m *CompanyModule) crossingText(c bondCrossing, rules domain.ChemistryRules) string {
-	name := domain.TierName(c.tier)
+func (m *CompanyModule) crossingText(c bandCrossing, rules domain.ChemistryRules) string {
 	effect := ""
 	if bonus := rules.Bonus(c.tier); bonus > 0 {
-		effect = fmt.Sprintf(" (+%d%% to hit fighting side by side)", bonus)
+		effect = fmt.Sprintf(" (+%d%% to hit fighting together)", bonus)
 	}
-	if c.a == domain.LeaderMemberKey || c.b == domain.LeaderMemberKey {
-		other := c.a
-		if other == domain.LeaderMemberKey {
-			other = c.b
-		}
-		return fmt.Sprintf("Your bond with %s deepens: %s%s.", m.bondName(c.leaderUserID, other), name, effect)
+	if slices.Contains(c.members, domain.LeaderMemberKey) {
+		return fmt.Sprintf("Your band grows closer: %s%s.", domain.TierName(c.tier), effect)
 	}
-	return fmt.Sprintf("%s and %s have grown %s%s.", m.bondName(c.leaderUserID, c.a), m.bondName(c.leaderUserID, c.b), name, effect)
+	return fmt.Sprintf("Your companions %s grow closer: %s%s.", m.bandNames(c.leaderUserID, c.members), domain.TierName(c.tier), effect)
 }
 
-// bondName is "you" for the leader and "<name> (#id)" for a companion.
-func (m *CompanyModule) bondName(leaderUserID int, key domain.MemberKey) string {
+// bandNames lists members by name: "you", "<name> (#id)".
+func (m *CompanyModule) bandNames(leaderUserID int, members []domain.MemberKey) string {
+	names := make([]string, len(members))
+	for i, member := range members {
+		names[i] = m.bandMemberName(leaderUserID, member)
+	}
+	if len(names) <= 2 {
+		return strings.Join(names, " and ")
+	}
+	return strings.Join(names[:len(names)-1], ", ") + ", and " + names[len(names)-1]
+}
+
+// bandMemberName is "you" for the leader and "<name> (#id)" for a companion.
+func (m *CompanyModule) bandMemberName(leaderUserID int, key domain.MemberKey) string {
 	if id, ok := domain.CompanionIDFromMemberKey(key); ok {
 		return m.companionLabel(leaderUserID, id)
 	}
@@ -235,43 +255,41 @@ func (m *CompanyModule) bondName(leaderUserID int, key domain.MemberKey) string 
 
 var _ domain.ChemistryProvider = (*CompanyModule)(nil)
 
-// ChemistryHitBonus implements domain.ChemistryProvider: the member's
-// highest bond tier's bonus among partners alive and in its room now. It
-// reads the registry in place, without copying, and checks presence only
-// for a member with a tier at all, since combat calls it for every strike.
+// ChemistryHitBonus implements domain.ChemistryProvider: the bonus of the
+// band together in the member's room now. It reads the registry in place,
+// without copying, and looks for the band only when some member's saved
+// service could reach a tier, since combat calls it for every strike.
 func (m *CompanyModule) ChemistryHitBonus(leaderUserID int, key domain.MemberKey) int {
 	if m.persistenceAvailable() != nil {
 		return 0
 	}
 	record, ok := m.registry.Companies[leaderUserID]
-	if !ok || len(record.Bonds) == 0 {
+	if !ok {
 		return 0
 	}
 	rules := m.chemistryRules()
-	if _, tier, ok := domain.BestBond(record.Bonds, key, nil, rules); !ok || tier == domain.TierNone {
-		return 0
+	longest := 0
+	for _, s := range record.Service {
+		longest = max(longest, s.Saved)
 	}
-	_, tier := m.activeBond(leaderUserID, record, key, rules)
-	return rules.Bonus(tier)
+	if rules.Tier(longest) == domain.TierNone {
+		return 0 // an average never exceeds its largest member
+	}
+	return rules.Bonus(record.BandTier(m.bandOf(leaderUserID, record, key), rules))
 }
 
-// activeBond is key's highest-tier bond with a partner beside it now, and
-// that tier; TierNone when there is none or key isn't present.
-func (m *CompanyModule) activeBond(leaderUserID int, record domain.Record, key domain.MemberKey, rules domain.ChemistryRules) (domain.Bond, int) {
+// bandOf is the members present in key's room, key included; nil when key
+// isn't present.
+func (m *CompanyModule) bandOf(leaderUserID int, record domain.Record, key domain.MemberKey) []domain.MemberKey {
 	present, _ := m.presentMembers(leaderUserID, record)
 	room, here := present[key]
 	if !here {
-		return domain.Bond{}, domain.TierNone
+		return nil
 	}
-	bond, tier, _ := domain.BestBond(record.Bonds, key, func(partner domain.MemberKey) bool {
-		r, ok := present[partner]
-		return ok && r == room
-	}, rules)
-	return bond, tier
+	return band(present, room)
 }
 
-// ChemistryStanding implements domain.ChemistryProvider for displays: the
-// bond giving the member its bonus now or, when none does, its strongest.
+// ChemistryStanding implements domain.ChemistryProvider for displays.
 func (m *CompanyModule) ChemistryStanding(leaderUserID int, key domain.MemberKey) (domain.ChemistryStandingView, bool) {
 	if m.persistenceAvailable() != nil {
 		return domain.ChemistryStandingView{}, false
@@ -280,22 +298,40 @@ func (m *CompanyModule) ChemistryStanding(leaderUserID int, key domain.MemberKey
 	if !ok {
 		return domain.ChemistryStandingView{}, false
 	}
-	rules := m.chemistryRules()
-	best, tier, ok := domain.BestBond(record.Bonds, key, nil, rules)
-	if !ok {
+	members := m.bandOf(leaderUserID, record, key)
+	if members == nil {
 		return domain.ChemistryStandingView{}, false
 	}
-	view := domain.ChemistryStandingView{Tier: tier}
-	if active, activeTier := m.activeBond(leaderUserID, record, key, rules); activeTier > domain.TierNone && rules.Bonus(activeTier) > 0 {
-		best, view.Tier, view.Bonus = active, activeTier, rules.Bonus(activeTier)
-	}
-	partner, _ := best.Partner(key)
-	view.Partner = m.bondName(leaderUserID, partner)
-	return view, true
+	rules := m.chemistryRules()
+	tier := record.BandTier(members, rules)
+	return domain.ChemistryStandingView{Together: len(members), Tier: tier, Bonus: rules.Bonus(tier)}, true
 }
 
-// chemistryView is "company chemistry": each member's strongest bond, what
-// it gives now, and progress to its next tier.
+// daysServed renders saved rounds as game days.
+func daysServed(rounds int) string {
+	perDay := gametime.GetDate().RoundsPerDay
+	if perDay <= 0 {
+		perDay = 900
+	}
+	return fmt.Sprintf("%.1f days", float64(rounds)/float64(perDay))
+}
+
+// bandLine describes one band: its size, tier, bonus, and progress.
+func bandLine(record domain.Record, members []domain.MemberKey, rules domain.ChemistryRules) string {
+	average, _ := record.BandAverage(members, true)
+	tier := rules.Tier(average)
+	text := fmt.Sprintf("%d together, %s", len(members), domain.TierName(tier))
+	if bonus := rules.Bonus(tier); bonus > 0 {
+		text += fmt.Sprintf(" (+%d%% to hit)", bonus)
+	}
+	if next, pct := rules.Progress(average); next != domain.TierNone {
+		text += fmt.Sprintf("; %d%% of the way to %s", pct, domain.TierName(next))
+	}
+	return text
+}
+
+// chemistryView is "company chemistry": the band with the leader, any
+// other band apart from them, and each member's saved service.
 func (m *CompanyModule) chemistryView(leaderUserID int) string {
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
@@ -306,8 +342,23 @@ func (m *CompanyModule) chemistryView(leaderUserID int) string {
 	}
 	rules := m.chemistryRules()
 	present, _ := m.presentMembers(leaderUserID, record)
-	lines := []string{fmt.Sprintf("Company chemistry (Familiar +%d%%, Trusted +%d%%, Sworn +%d%% to hit):",
+	lines := []string{fmt.Sprintf("Company chemistry (Familiar +%d%%, Trusted +%d%%, Sworn +%d%% to hit for everyone in the band):",
 		rules.TierBonus[0], rules.TierBonus[1], rules.TierBonus[2])}
+	withLeader := "  With you: no one from the band."
+	if _, here := present[domain.LeaderMemberKey]; !here {
+		withLeader = "  With you: you are not with the band."
+	}
+	var apart []string
+	for _, members := range bands(present) {
+		if slices.Contains(members, domain.LeaderMemberKey) {
+			withLeader = "  With you: " + bandLine(record, members, rules) + "."
+			continue
+		}
+		apart = append(apart, fmt.Sprintf("  Apart: %s, %s.", m.bandNames(leaderUserID, members), bandLine(record, members, rules)))
+	}
+	lines = append(lines, withLeader)
+	lines = append(lines, apart...)
+	lines = append(lines, "Service with the band:")
 	keys := []domain.MemberKey{domain.LeaderMemberKey}
 	for _, c := range record.Companions {
 		keys = append(keys, domain.CompanionMemberKey(c.ID))
@@ -315,38 +366,18 @@ func (m *CompanyModule) chemistryView(leaderUserID int) string {
 	for _, key := range keys {
 		label := "You"
 		if key != domain.LeaderMemberKey {
-			label = m.bondName(leaderUserID, key)
+			label = m.bandMemberName(leaderUserID, key)
 		}
-		best, tier, ok := domain.BestBond(record.Bonds, key, nil, rules)
-		if !ok {
-			lines = append(lines, fmt.Sprintf("  %s: no shared service yet.", label))
-			continue
+		served := 0
+		if s, found := record.FindService(key); found {
+			served = s.Saved
 		}
-		partner, _ := best.Partner(key)
-		next, pct := rules.Progress(best.Rounds)
-		progress := "the strongest bond there is"
-		if next != domain.TierNone {
-			progress = fmt.Sprintf("%d%% of the way to %s", pct, domain.TierName(next))
-		}
-		if tier == domain.TierNone {
-			lines = append(lines, fmt.Sprintf("  %s: no bond yet; closest with %s, %s.", label, m.bondName(leaderUserID, partner), progress))
-			continue
-		}
-		now := "not at their side"
-		if key == domain.LeaderMemberKey {
-			now = "not at your side"
-		}
-		if active, activeTier := m.activeBond(leaderUserID, record, key, rules); rules.Bonus(activeTier) > 0 {
-			now = fmt.Sprintf("+%d%% to hit now", rules.Bonus(activeTier))
-			if activePartner, _ := active.Partner(key); activePartner != partner {
-				now += fmt.Sprintf(", from %s with %s", domain.TierName(activeTier), m.bondName(leaderUserID, activePartner))
-			}
-		}
+		line := fmt.Sprintf("  %s: %s", label, daysServed(served))
 		if _, here := present[key]; !here {
-			now = "not here"
+			line += " (not here)"
 		}
-		lines = append(lines, fmt.Sprintf("  %s: %s with %s (%s); %s.", label, domain.TierName(tier), m.bondName(leaderUserID, partner), now, progress))
+		lines = append(lines, line)
 	}
-	lines = append(lines, "Bonds grow while members are together and alive and you are signed in. Only the strongest bond with someone beside you counts.")
+	lines = append(lines, "Service grows while members are alive and together and you are signed in. A band's tier comes from the average service of those together, so new members pull it down until they settle in.")
 	return strings.Join(lines, "\n")
 }

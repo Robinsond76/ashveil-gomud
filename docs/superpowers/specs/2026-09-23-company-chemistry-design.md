@@ -3,6 +3,16 @@
 **Status:** Design direction approved 2026-09-23; written spec awaiting owner
 review. Part of the [roadmap](2026-09-23-company-life-onboarding-roadmap.md).
 
+**Owner amendment (2026-09-24): company-wide chemistry, dilute.** The
+bond model below (one bond per pair, a member's highest bond counts) is
+superseded. Chemistry is company-wide: each member keeps durable rounds of
+service with the band (alive, present, and with at least one other member
+while the leader is signed in); a band's tier comes from the **average**
+service of the members together, and everyone in it gets that tier's bonus,
+so a new recruit fights with the band but dilutes it until they settle in.
+Thresholds, bonuses, the combat effect, and durability rules are unchanged.
+See the [Phase 24 design](2026-09-24-phase-24-company-chemistry-design.md).
+
 ## Goal and existing seams
 
 Long-serving members should fight better together. The company registry has

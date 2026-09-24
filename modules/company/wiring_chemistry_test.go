@@ -109,11 +109,11 @@ func TestChemistryThroughPluginsLoad(t *testing.T) {
 		events.ProcessEvents()
 		return companyTagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
 	}
-	stored := func() domain.Bond {
+	stored := func() domain.Service {
 		registry := domain.NewRegistry()
 		require.NoError(t, pluginStore{plug: module.plug}.Load(registry))
-		bond, _ := registry.Companies[7].FindBond(domain.LeaderMemberKey, domain.CompanionMemberKey(1))
-		return bond
+		s, _ := registry.Companies[7].FindService(domain.CompanionMemberKey(1))
+		return s
 	}
 	next := util.GetRoundCount() + 100
 	rounds := func(n int) string {
@@ -131,20 +131,20 @@ func TestChemistryThroughPluginsLoad(t *testing.T) {
 	}
 
 	assert.Contains(t, run("company", "summon training dummy"), "Companion summoned: training dummy (#1).")
-	assert.Contains(t, run("company", "chemistry"), "You: no shared service yet.")
-	assert.Contains(t, run("status", "bonuses"), "No bond yet")
+	assert.Contains(t, run("company", "chemistry"), "With you: 2 together, Strangers; 0% of the way to Familiar.")
+	assert.Contains(t, run("status", "bonuses"), "Strangers band, 2 together: no bonus yet")
 
 	assert.Empty(t, rounds(2))
 	told := rounds(1)
-	assert.Contains(t, told, "Your bond with training dummy (#1) deepens: Familiar (+2% to hit fighting side by side).")
+	assert.Contains(t, told, "Your band grows closer: Familiar (+2% to hit fighting together).")
 	assert.Equal(t, 3, stored().Rounds, "the new tier is on disk at once")
 
 	out := run("company", "chemistry")
-	assert.Contains(t, out, "You: Familiar with training dummy (#1) (+2% to hit now); 0% of the way to Trusted.")
-	assert.Contains(t, out, "training dummy (#1): Familiar with you (+2% to hit now)")
+	assert.Contains(t, out, "With you: 2 together, Familiar (+2% to hit); 0% of the way to Trusted.")
+	assert.Contains(t, out, "training dummy (#1): ")
 	bonuses := run("status", "bonuses")
 	assert.Contains(t, bonuses, "Company Chemistry")
-	assert.Contains(t, bonuses, "Familiar with training dummy (#1): +2% to hit")
+	assert.Contains(t, bonuses, "Familiar band, 2 together: +2% to hit")
 
 	// The registered provider, as combat calls it, and combat itself.
 	instanceID, ok := module.instance(7, 1)
@@ -181,14 +181,22 @@ func TestChemistryThroughPluginsLoad(t *testing.T) {
 	module.load()
 	require.NoError(t, module.loadErr)
 	record, _ := module.registry.Get(7)
-	bond, ok := record.FindBond(domain.LeaderMemberKey, domain.CompanionMemberKey(1))
+	service, ok := record.FindService(domain.CompanionMemberKey(1))
 	require.True(t, ok)
-	assert.Equal(t, 4, bond.Rounds, "the bond survives restart")
+	assert.Equal(t, 4, service.Rounds, "service survives restart")
 
 	events.AddToQueue(events.PlayerSpawn{UserId: 7, RoomId: camp.RoomId})
 	events.ProcessEvents()
 	told = rounds(2)
-	assert.Contains(t, told, "deepens: Trusted", "the same bond resumes with the restored companion")
+	assert.Contains(t, told, "grows closer: Trusted", "the restored companion resumes its service")
 	assert.Equal(t, 6, stored().Rounds)
 	assert.Equal(t, 4, domain.ChemistryBonusForUser(7))
+
+	// A new recruit dilutes the band: (6 + 6 + 0) / 3 = 4, Familiar.
+	assert.Contains(t, run("company", "summon training dummy"), "Companion summoned: training dummy (#2).")
+	recruit, ok := module.instance(7, 2)
+	require.True(t, ok)
+	assert.Equal(t, 2, domain.ChemistryBonusForUser(7))
+	assert.Equal(t, 2, domain.ChemistryBonusForInstance(recruit), "the recruit fights with the band")
+	assert.Contains(t, run("company", "chemistry"), "With you: 3 together, Familiar (+2% to hit)")
 }

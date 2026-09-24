@@ -311,15 +311,16 @@ func formatStatMods(mods map[string]int) string {
 	return strings.Join(parts, `  `)
 }
 
-// chemistryBonusLine is the player's company chemistry for status bonuses.
+// chemistryBonusLine is the player's company chemistry for status bonuses:
+// the band together with them now.
 func chemistryBonusLine(userID int) string {
 	standing, ok := company.ChemistryStanding(userID, company.LeaderMemberKey)
-	if !ok || standing.Tier == company.TierNone {
-		return `<ansi fg="black-bold">No bond yet</ansi>`
+	if !ok || standing.Together < 2 {
+		return `<ansi fg="black-bold">No band beside you</ansi>`
 	}
-	now := `<ansi fg="black-bold">(not at your side)</ansi>`
+	now := `<ansi fg="black-bold">no bonus yet</ansi>`
 	if standing.Bonus > 0 {
 		now = fmt.Sprintf(`<ansi fg="green">+%d%%</ansi> to hit`, standing.Bonus)
 	}
-	return fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> with %s: %s`, company.TierName(standing.Tier), standing.Partner, now)
+	return fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> band, %d together: %s`, company.TierName(standing.Tier), standing.Together, now)
 }

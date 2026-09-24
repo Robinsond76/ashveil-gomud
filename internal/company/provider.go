@@ -125,13 +125,12 @@ func CompanyAlignment(leaderUserID int) (int, bool) {
 
 // ChemistryStandingView is one member's Phase 24 chemistry for display.
 type ChemistryStandingView struct {
-	// Tier is the member's highest bond tier with any partner; Partner
-	// names that partner.
-	Tier    int
-	Partner string
-	// Bonus is the hit bonus the member has right now, from its highest
-	// bond with a partner at its side; 0 when none is.
-	Bonus int
+	// Together is how many members of the band are alive and in the
+	// member's room, the member included; Tier and Bonus are what that band
+	// gives now (TierNone and 0 for a lone member).
+	Together int
+	Tier     int
+	Bonus    int
 }
 
 // ChemistryProvider is optionally implemented by the registered
@@ -139,10 +138,10 @@ type ChemistryStandingView struct {
 // call these from the game loop only.
 type ChemistryProvider interface {
 	// ChemistryHitBonus is a member's hit bonus in percentage points right
-	// now: its highest bond tier with a partner present beside it.
+	// now: the tier of the band together in its room.
 	ChemistryHitBonus(leaderUserID int, key MemberKey) int
 	// ChemistryStanding is a member's chemistry for display; ok is false
-	// when it has no bond at all.
+	// when the leader has no company or the member isn't present.
 	ChemistryStanding(leaderUserID int, key MemberKey) (ChemistryStandingView, bool)
 }
 
@@ -179,7 +178,7 @@ func ChemistryBonusForInstance(instanceID int) int {
 }
 
 // ChemistryStanding is a member's chemistry for display. ok is false without
-// a provider or when the member has no bond.
+// a provider, a company, or the member present.
 func ChemistryStanding(leaderUserID int, key MemberKey) (ChemistryStandingView, bool) {
 	cp, ok := chemistryProvider()
 	if !ok {
