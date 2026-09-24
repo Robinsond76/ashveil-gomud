@@ -4,4 +4,6 @@ Phase 21b settlement standing. A settlement is a configured zone with an alignme
 
 Pure rules and the provider seam live in `internal/standing`; `modules/market` (prices, refusals, black-market rooms tagged `BlackMarketRoomTag`) and `modules/camping` (inn price and refusal) call `standing.For` and never import this module. Effects are penalties only, so Phase 19b's no-profitable-round-trip invariant holds without re-capping prices. `standing.For` reads `modules/company` state, which lives on the game loop: call it from commands and event listeners only, and never while holding another module's lock (camping reads it before taking its own).
 
+Standing fails open: with no company alignment (company data unavailable) there are no effects, and black markets serve no one.
+
 Config (`files/data-overlays/config.yaml`): `Settlements`, the three gaps (ordered, or all default), the two markups, and `BlackMarketRoomTag`. The `standing` command shows the current settlement and every other one.

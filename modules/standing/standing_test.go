@@ -132,13 +132,13 @@ func TestStandingCommandInSettlement(t *testing.T) {
 	assert.Contains(t, out, "Dunmar (alignment 70, virtuous) regards your company (alignment 20, evil) as distrusted.")
 	assert.Contains(t, out, "20% more")
 	assert.Contains(t, out, "50% more")
-	assert.Contains(t, out, "black market")
+	assert.Contains(t, out, "Any black market here will deal with you.")
 	assert.Contains(t, out, "Frostfang: distrusted")
 	assert.Contains(t, out, "Old Kings Road: tolerated")
 	assert.NotContains(t, out, "Dunmar: ", "the current settlement isn't repeated")
 
 	m = newTestModule(map[string]int{"Dunmar": 40}, map[int]int{7: -100})
-	assert.Contains(t, runStanding(t, m, "Dunmar"), "turn you away")
+	assert.Contains(t, runStanding(t, m, "Dunmar"), "turns you away")
 	m = newTestModule(map[string]int{"Dunmar": 40}, map[int]int{7: 40})
 	assert.Contains(t, runStanding(t, m, "Dunmar"), "as welcome")
 }

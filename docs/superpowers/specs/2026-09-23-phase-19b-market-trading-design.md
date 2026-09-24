@@ -105,6 +105,15 @@ deploy a one-time profit of about 150 gold on roughly ten hides. It is
 left as shipped pending the owner's choice between a small standing
 trade-route profit and break-even target prices.
 
+**Resolved (2026-09-24, under the owner's "resolve any questions with
+your recommendation"):** keep the small standing trade-route profit and
+the shipped starting stocks. Carrying goods between settlements for a
+margin is the Bannerlord-style loop the roadmap asked for, and Phase 20's
+rumours point players at it. The margin is small, bounded by drift, and
+Phase 21b's standing markup (20% each way when distrusted) wipes it out
+for companies a settlement distrusts. The one-time first-trader profit
+is a harmless deploy bonus.
+
 **Explicitly deferred:** shopkeeper trading at market prices (not wanted);
 bulk quantities; per-good spreads; admin ledger reset; market-room
 fixtures or NPC traders.

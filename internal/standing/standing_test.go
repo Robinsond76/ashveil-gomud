@@ -49,9 +49,20 @@ func TestPricesRoundAgainstPlayer(t *testing.T) {
 }
 
 func TestNoProfitableRoundTripUnderAnyTier(t *testing.T) {
-	good := market.Good{ItemID: 1, BasePrice: 14, MinPrice: 1, MaxPrice: 30, MaxStock: 40, TargetStock: 20, StartStock: 4, DriftStep: 2}
+	for _, good := range []market.Good{
+		{ItemID: 1, BasePrice: 14, MinPrice: 1, MaxPrice: 30, MaxStock: 40, TargetStock: 20, StartStock: 4, DriftStep: 2},
+		{ItemID: 2, BasePrice: 5, MinPrice: 2, MaxPrice: 12, MaxStock: 30, TargetStock: 15, StartStock: 15, DriftStep: 1},
+		{ItemID: 3, BasePrice: 2, MinPrice: 1, MaxPrice: 3, MaxStock: 10, TargetStock: 5, StartStock: 5, DriftStep: 1}, // sells at the floor of 1
+	} {
+		assertNoProfitableRoundTrip(t, good)
+	}
+}
+
+func assertNoProfitableRoundTrip(t *testing.T, good market.Good) {
+	t.Helper()
 	require.NoError(t, good.Validate())
 	rules := standing.DefaultRules()
+	rules.DistrustedMarkupPct = 90 // the configurable maximum
 	for _, company := range []int{40, -40, -60, -100} {
 		s := standing.Assess(company, 40, rules)
 		for stock := 1; stock <= good.MaxStock; stock++ {

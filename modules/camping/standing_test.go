@@ -28,7 +28,7 @@ func TestInnStatusShowsDistrustedPrice(t *testing.T) {
 	user := campUser(t, 7, 2003)
 	user.Character.Gold = 42
 	text := e.module.innStatus(user, innRoom())
-	assert.Contains(t, text, "15 gold (5 per member)", "10 gold, 50% more")
+	assert.Contains(t, text, "15 gold (5 per member, +50%)", "10 gold, 50% more")
 	assert.Contains(t, text, "Your company is distrusted here, so the room costs 50% more.")
 }
 

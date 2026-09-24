@@ -89,6 +89,27 @@ reputation earned by deeds (standing is alignment only); guards or
 encounters reacting to standing; shopkeeper prices; black-market-only
 goods.
 
+**Implementation review additions (2026-09-24):** a room tagged both
+`market` and the black-market tag is a black market for companies it
+serves and an ordinary market for everyone else (so a `BlackMarketRoomTag`
+equal to the market tag degrades gracefully instead of refusing welcome
+companies everywhere). The `standing` text is worded conditionally ("any
+market here", "a black market, if there is one"), since not every
+settlement has a market, inn, or black market. The inn shows its markup
+beside the per-member price.
+
+**Known limitations (accepted):**
+
+- Standing fails open: if company data is unavailable (a failed load),
+  there is no standing and markets and inns behave as before, while
+  black markets serve no one. This matches "no provider, no effects".
+- The gap is symmetric, so a saintly company is distrusted at a
+  low-alignment settlement just as an evil one is at a virtuous town.
+  With the shipped alignments only Dunmar can shun anyone (below 5 on the
+  1–100 display); Frostfang and Old Kings Road can only distrust.
+- An empty or non-string `BlackMarketRoomTag` falls back to
+  `blackmarket`; black markets are turned off by not tagging any room.
+
 ## Constraints
 
 - Never reads or advances the world clock; no periodic work.

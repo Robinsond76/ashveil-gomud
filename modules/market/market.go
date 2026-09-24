@@ -538,7 +538,8 @@ func (m *MarketModule) userCommand(rest string, user *users.UserRecord, room *ro
 	tag := m.tag()
 	blackTag := standing.BlackMarketTag()
 	black := blackTag != "" && room.HasTag(blackTag)
-	if !black && !room.HasTag(tag) {
+	ordinary := room.HasTag(tag)
+	if !black && !ordinary {
 		msg := "There's no market here."
 		if titles := m.marketRoomTitles(room.Zone, tag); len(titles) > 0 {
 			msg += fmt.Sprintf(` The market in %s is at <ansi fg="room-title">%s</ansi>.`, room.Zone, strings.Join(titles, ", "))
@@ -551,6 +552,11 @@ func (m *MarketModule) userCommand(rest string, user *users.UserRecord, room *ro
 	// refuses it. A black market serves only companies the settlement
 	// distrusts or shuns, at normal prices.
 	pricing, hasStanding := standing.For(user.UserId, room.Zone)
+	if black && ordinary && !(hasStanding && pricing.BlackMarketServes()) {
+		// A room that is both: the black market only serves outlaws;
+		// everyone else trades at the ordinary market.
+		black = false
+	}
 	switch {
 	case black:
 		if !hasStanding || !pricing.BlackMarketServes() {

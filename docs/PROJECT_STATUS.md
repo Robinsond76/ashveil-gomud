@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 21a (company alignment) is complete and reviewed; Phase 21b (settlement standing) is next.
+- **HEAD:** Phase 21 (21a company alignment, 21b settlement standing) is complete, reviewed, and merged to `master`. The environment/economy/alignment roadmap (Phases 13–21) is done.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -43,11 +43,14 @@ instead of duplicating them.
   rumours at inns from a stale, persisted market news snapshot), and
   Phase 21a (company alignment: companion alignment on a 1–100 display,
   drift toward the rest of the company, loyalty and desertion, and a
-  recruit gate).
-- **Next:** Phase 21b (settlement standing: prices, inn access, black
-  market). One Phase 19b decision is open
-  with the owner: whether trading between markets should keep a small
-  standing profit at equilibrium (see the 19b spec). Phase 18 and 19 have design docs
+  recruit gate), and Phase 21b (settlement standing: market and inn
+  markups or refusal by alignment gap, black markets for outlaws).
+- **Next:** the 2026-09-23 environment/economy/alignment roadmap is
+  complete. Candidates from the other roadmaps: recruitment and
+  character creation, the Ashveil tutorial (its alignment lesson can now
+  ship), and the player-information surfaces (alignment in `status`).
+  The Phase 19b inter-market profit question is resolved: the small
+  standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
   recommended options): 18a layers a new category-shared weighted loot
   table on top of the existing `ItemDropChance` roll (mirrors Phase 12b's
@@ -107,13 +110,84 @@ instead of duplicating them.
 | 18a | Loot tables | Complete: category tables, boot/reload loading, corpse/floor drops, proving content |
 | 18b | Cooking | Complete: `cooking` skill + `cook` profession, per-recipe skill requirements on room containers, deterministic recipe choice, Waymark Inn hearth with three meals |
 | 19 | Commodities and markets | Complete: `internal/market`, `modules/market`, `market` command, Dunmar and Old Kings Road markets |
-| 19b | Market trading | Complete: `market buy`/`market sell` in tagged market rooms, buy/sell spread, Dunmar Market Square, Trappers' Post; inter-market profit policy open with the owner |
+| 19b | Market trading | Complete: `market buy`/`market sell` in tagged market rooms, buy/sell spread, Dunmar Market Square, Trappers' Post; inter-market profit kept (resolved 2026-09-24) |
 | 20 | Trade rumours | Complete: `rumors` at inns, fuzzy hints from a persisted market news snapshot refreshed every 150 rounds |
 | 21a | Company alignment | Complete: durable companion alignment and loyalty, 1–100 display, drift toward the rest of the company, desertion, recruit gate, `company inspect`/`alignment` |
-| 21b | Settlement standing | Next: prices, inn access, black market |
+| 21b | Settlement standing | Complete: `internal/standing`, `modules/standing`, `standing` command, market/inn markups and refusals, black markets, Tanner's Back Alley |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 21b: settlement standing (2026-09-24)
+
+- **What:** A settlement is a configured zone with an alignment (Dunmar
+  40, Old Kings Road 0, Frostfang 30). A company's standing there comes
+  from the gap between its Phase 21a average and the settlement's:
+  welcome (≤ 40), tolerated (≤ 80), distrusted (≤ 130), or shunned.
+  Distrusted companies pay 20% more and are paid 20% less at the market
+  and pay 50% more for an inn room. Shunned companies are refused by
+  both. Rooms tagged `blackmarket` trade the zone ledger at normal prices
+  with distrusted and shunned companies only; Tanner's Back Alley (2006),
+  south of Dunmar Market Square, is the first. `standing` shows the
+  current settlement's view of your company and your standing elsewhere.
+  Standing is derived every time and never stored. Pure rules and the
+  seam are in `internal/standing`, config and the command in
+  `modules/standing`, and `internal/company` gained an
+  `AlignmentProvider` seam served by `modules/company`. Design and plan:
+  [21b spec](superpowers/specs/2026-09-24-phase-21b-settlement-standing-design.md) /
+  [21b plan](superpowers/plans/2026-09-24-phase-21b-settlement-standing.md).
+- **Why:** Roadmap decision 2(4), settlement standing (prices, inn
+  access, black-market access), split out of Phase 21. Defaults were
+  applied under the owner's go-ahead and are recorded in the spec.
+  Effects are penalties only, so Phase 19b's no-profitable-round-trip
+  invariant holds with no re-capping.
+- **Also resolved:** the Phase 19b inter-market profit question, on the
+  owner's instruction to settle open questions with the recommendation.
+  The small standing trade-route profit and starting stocks stay.
+- **Step completed:** Phase 21b, and with it Phase 21 and the
+  2026-09-23 roadmap.
+- **Verification:** `go test -race ./...`, `make generate` (adds
+  `modules/standing` to `all-modules.go`), and `make validate` passed.
+  The standing, market, and camping packages also pass with `-count=2`
+  and `-shuffle=on`. The wiring test in `modules/standing` loads the real
+  company, market, camping, survival, and standing modules through
+  `plugins.Load` with the shipped world's items and Dunmar rooms. It runs
+  `standing`, `market`, and `inn` through `usercommands.TryCommand` and
+  checks four cases:
+  - a distrusted company's marked-up listing and purchase;
+  - that company served at the alley;
+  - a shunned company refused at the square and the inn;
+  - a welcome company turned away from the alley.
+
+  It also checks the shipped room's tag and exits.
+- **Review:** Independent reviewer found no critical or major bugs. It
+  confirmed:
+  - no clock access and no new durable state;
+  - `standing.For` is only called on the game loop, outside the market
+    and camping locks, and never from camping's timers;
+  - the no-profit invariant holds under every tier, the sell floor, and
+    the black market;
+  - every refusal path moves no gold, items, or stock.
+
+  Fixed with regression tests:
+  - A room with both the market and black-market tags refused welcome
+    companies. It is now an ordinary market for anyone the black market
+    doesn't serve.
+  - The `standing` text promised a market, inn, or black market that a
+    settlement may not have. It is now worded conditionally.
+  - The inn's per-member figure didn't match the marked-up total. It now
+    shows "+50%".
+  - A duplicated settlement warned once per entry instead of once per
+    zone.
+  - Added tests for a black market outside any settlement and for a sell
+    floor of 1 at the maximum markup.
+
+  Documented, not changed:
+  - Standing fails open when company data is unavailable.
+  - The gap is symmetric, so a saintly company is distrusted at the
+    neutral Trappers' Post. Only Dunmar can shun anyone with the shipped
+    alignments.
+  - An empty `BlackMarketRoomTag` falls back to `blackmarket`.
 
 ### Phase 21a: company alignment (2026-09-24)
 

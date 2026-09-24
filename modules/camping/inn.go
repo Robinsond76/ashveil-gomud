@@ -257,8 +257,12 @@ func (m *CampingModule) innStatus(user *users.UserRecord, room *rooms.Room) stri
 		return innRefusal(room)
 	}
 	price, members := m.innPrice(user.UserId, pricing)
-	text := fmt.Sprintf("%s offers your company of %d a room for the night: %d gold (%d per member). You have %d gold.\nUse \"inn rest\" to pay and rest (%s).",
-		roomTitle(room.RoomId), members, price, m.innSettings().PricePerMember, user.Character.Gold, m.innSettings().RestDuration)
+	perMember := fmt.Sprintf("%d per member", m.innSettings().PricePerMember)
+	if pricing.InnMarkupPct > 0 {
+		perMember += fmt.Sprintf(", +%d%%", pricing.InnMarkupPct)
+	}
+	text := fmt.Sprintf("%s offers your company of %d a room for the night: %d gold (%s). You have %d gold.\nUse \"inn rest\" to pay and rest (%s).",
+		roomTitle(room.RoomId), members, price, perMember, user.Character.Gold, m.innSettings().RestDuration)
 	if pricing.InnMarkupPct > 0 {
 		text += fmt.Sprintf("\nYour company is %s here, so the room costs %d%% more.", pricing.Tier, pricing.InnMarkupPct)
 	}

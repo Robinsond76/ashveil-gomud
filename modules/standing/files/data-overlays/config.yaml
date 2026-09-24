@@ -20,6 +20,9 @@
 #
 # Rooms in a market zone tagged BlackMarketRoomTag trade the zone's market
 # ledger at normal prices, but only with distrusted or shunned companies.
+# A room carrying both this tag and the market's RoomTag is a black market
+# for those companies and an ordinary market for everyone else. An empty
+# tag falls back to "blackmarket"; to have no black markets, tag no rooms.
 #
 # A settlement naming an unknown zone, listed twice, or with an alignment
 # outside -100..100 is skipped with a warning.

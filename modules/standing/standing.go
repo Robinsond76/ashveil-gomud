@@ -115,12 +115,12 @@ func display(alignment int) string {
 func effects(s domain.Standing) string {
 	switch s.Tier {
 	case domain.Distrusted:
-		return fmt.Sprintf("The market charges your company %d%% more and pays %d%% less, and a room at the inn costs %d%% more. The black market will deal with you.",
+		return fmt.Sprintf("Any market here charges your company %d%% more and pays %d%% less, and any inn charges %d%% more for a room. Any black market here will deal with you.",
 			s.MarkupPct, s.MarkupPct, s.InnMarkupPct)
 	case domain.Shunned:
-		return "The market and the inn turn you away. Only the black market will deal with you."
+		return "Any market or inn here turns you away. Only a black market, if there is one, will deal with you."
 	}
-	return "The market and the inn serve your company at normal prices."
+	return "Any market or inn here serves your company at normal prices."
 }
 
 func (m *StandingModule) userCommand(_ string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
@@ -221,9 +221,11 @@ func parseConfig(get func(string) any, zoneExists func(string) bool) config {
 		seen[zone]++
 		entries = append(entries, entry{zone, alignment})
 	}
+	warned := map[string]bool{}
 	for _, e := range entries {
 		if seen[e.zone] > 1 {
-			if _, warned := cfg.settlements[e.zone]; !warned {
+			if !warned[e.zone] {
+				warned[e.zone] = true
 				mudlog.Warn("standing: settlement listed more than once; skipped", "zone", e.zone)
 			}
 			continue

@@ -133,3 +133,35 @@ func TestMarketHintSkipsBlackMarket(t *testing.T) {
 	assert.Contains(t, out, "The market in Dunmar is at Dunmar Market Square.")
 	assert.Equal(t, []string{"market"}, asked, "only ordinary market rooms are named")
 }
+
+func TestRoomWithBothTags(t *testing.T) {
+	both := &rooms.Room{RoomId: 2004, Zone: "Dunmar", Title: "Dunmar Market Square", Tags: []string{"market", "blackmarket"}}
+	t.Run("welcome trade at the ordinary market", func(t *testing.T) {
+		useStanding(t, 40)
+		w := newTradeWorld(t, 100)
+		out := w.runIn(t, both, "")
+		assert.Contains(t, out, "Market prices in Dunmar:")
+		assert.Regexp(t, `wolf hide\s+27 gold`, out)
+	})
+	t.Run("outlaws get the black market", func(t *testing.T) {
+		useStanding(t, -60)
+		w := newTradeWorld(t, 100)
+		out := w.runIn(t, both, "")
+		assert.Contains(t, out, "Black market prices in Dunmar:")
+		assert.Regexp(t, `wolf hide\s+27 gold`, out, "no markup")
+	})
+}
+
+// noSettlements names a black-market tag but knows no settlements.
+type noSettlements struct{}
+
+func (noSettlements) For(int, string) (standing.Standing, bool) { return standing.Standing{}, false }
+func (noSettlements) BlackMarketTag() string                    { return "blackmarket" }
+
+func TestBlackMarketOutsideSettlementServesNoOne(t *testing.T) {
+	standing.SetProvider(noSettlements{})
+	t.Cleanup(func() { standing.SetProvider(nil) })
+	w := newTradeWorld(t, 100)
+	assert.Contains(t, w.runIn(t, blackMarketRoom(), "buy hide"), "No one here will deal with your company.")
+	w.assertUnchanged(t, 100, map[int]int{28: 0}, map[int]int{28: 4})
+}
