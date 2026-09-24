@@ -352,7 +352,7 @@ func (m *SurvivalModule) ApplyCompanyExertion(leaderUserID int, operationID stri
 		}
 		return m.companyExertionResults(leaderUserID), nil
 	}
-	refs := m.memberRefs(leaderUserID)
+	refs := m.livingRefs(leaderUserID)
 	if len(refs) == 0 {
 		refs = []domain.MemberRef{{Key: domain.LeaderMemberKey, Name: m.leaderName(leaderUserID)}}
 	}
@@ -448,7 +448,7 @@ func (m *SurvivalModule) ApplyCompanyRestRecovery(leaderUserID int, operationID 
 		}
 		return m.companyRestResults(leaderUserID)
 	}
-	refs := m.memberRefs(leaderUserID)
+	refs := m.livingRefs(leaderUserID)
 	if len(refs) == 0 {
 		refs = []domain.MemberRef{{Key: domain.LeaderMemberKey, Name: m.leaderName(leaderUserID)}}
 	}
@@ -478,7 +478,7 @@ func (m *SurvivalModule) ApplyCompanyRestRecovery(leaderUserID int, operationID 
 }
 
 func (m *SurvivalModule) companyRestResults(leaderUserID int) ([]domain.ExertionResult, error) {
-	refs := m.memberRefs(leaderUserID)
+	refs := m.livingRefs(leaderUserID)
 	if len(refs) == 0 {
 		refs = []domain.MemberRef{{Key: domain.LeaderMemberKey, Name: m.leaderName(leaderUserID)}}
 	}
@@ -494,7 +494,7 @@ func (m *SurvivalModule) companyRestResults(leaderUserID int) ([]domain.Exertion
 }
 
 func (m *SurvivalModule) companyExertionResults(leaderUserID int) []domain.ExertionResult {
-	refs := m.memberRefs(leaderUserID)
+	refs := m.livingRefs(leaderUserID)
 	if len(refs) == 0 {
 		refs = []domain.MemberRef{{Key: domain.LeaderMemberKey, Name: m.leaderName(leaderUserID)}}
 	}
@@ -600,6 +600,9 @@ func (m *SurvivalModule) Provision(leaderUserID int, selector string, benefit do
 	key, name, err := m.resolveMember(leaderUserID, selector)
 	if err != nil {
 		return domain.ProvisionResult{}, err
+	}
+	if ref, ok := currentRosterMember(leaderUserID, key); ok && ref.Dead {
+		return domain.ProvisionResult{}, domain.ErrDeadMember
 	}
 	snapshot := m.registry.Clone()
 	if err := m.registry.Ensure(leaderUserID, key); err != nil {
@@ -769,6 +772,10 @@ func (m *SurvivalModule) status(leaderUserID int) string {
 	refs := m.memberRefs(leaderUserID)
 	lines := []string{"Company survival:"}
 	for _, ref := range refs {
+		if ref.Dead {
+			lines = append(lines, fmt.Sprintf("  %s: fallen", ref.Name))
+			continue
+		}
 		needs, ok := m.registry.NeedsFor(leaderUserID, ref.Key)
 		if !ok {
 			needs = domain.FullNeeds()
@@ -788,10 +795,12 @@ func (m *SurvivalModule) status(leaderUserID int) string {
 func (m *SurvivalModule) memberRefs(leaderUserID int) []domain.MemberRef {
 	keys := []domain.MemberKey{}
 	names := map[domain.MemberKey]string{}
+	dead := map[domain.MemberKey]bool{}
 	if roster := domain.CurrentRoster(leaderUserID); len(roster) > 0 {
 		for _, ref := range roster {
 			keys = append(keys, ref.Key)
 			names[ref.Key] = ref.Name
+			dead[ref.Key] = ref.Dead
 		}
 	} else {
 		keys = m.registry.Members(leaderUserID)
@@ -806,9 +815,21 @@ func (m *SurvivalModule) memberRefs(leaderUserID int) []domain.MemberRef {
 				name = m.displayName(key)
 			}
 		}
-		refs = append(refs, domain.MemberRef{Key: key, Name: name})
+		refs = append(refs, domain.MemberRef{Key: key, Name: name, Dead: dead[key]})
 	}
 	return refs
+}
+
+// livingRefs is memberRefs without the dead (Phase 25b): they spend and
+// recover nothing.
+func (m *SurvivalModule) livingRefs(leaderUserID int) []domain.MemberRef {
+	var out []domain.MemberRef
+	for _, ref := range m.memberRefs(leaderUserID) {
+		if !ref.Dead {
+			out = append(out, ref)
+		}
+	}
+	return out
 }
 
 func (m *SurvivalModule) displayName(key domain.MemberKey) string {

@@ -286,8 +286,8 @@ func companionRoster(leaderUserID int) ([]member, bool) {
 	var out []member
 	for _, ref := range roster {
 		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
-		if !ok {
-			continue
+		if !ok || ref.Dead {
+			continue // a dead companion (Phase 25b) is drained of nothing
 		}
 		mb := member{Key: ref.Key, CompanionID: companionID, Name: ref.Name}
 		if instanceId, ok := company.InstanceFor(leaderUserID, companionID); ok {

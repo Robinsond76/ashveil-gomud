@@ -156,10 +156,13 @@ func (m *CampingModule) companyMembers(leaderUserID int) int {
 	if m.companySize != nil {
 		return m.companySize(leaderUserID)
 	}
-	if roster := survival.CurrentRoster(leaderUserID); len(roster) > 0 {
-		return len(roster)
+	living := 0
+	for _, ref := range survival.CurrentRoster(leaderUserID) {
+		if !ref.Dead { // the dead (Phase 25b) take no bed
+			living++
+		}
 	}
-	return 1
+	return max(living, 1)
 }
 
 func (m *CampingModule) isTravelling(leaderUserID int) bool {

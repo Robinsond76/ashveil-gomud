@@ -118,6 +118,7 @@ var (
 	ErrInvalidMember          = errors.New("survival: invalid company member")
 	ErrUnknownMember          = errors.New("survival: unknown company member")
 	ErrAmbiguousMember        = errors.New("survival: ambiguous company member")
+	ErrDeadMember             = errors.New("survival: that companion is dead")
 	ErrInvalidAmount          = errors.New("survival: amount must be positive")
 	ErrPersistenceUnavailable = errors.New("survival: persistence unavailable")
 	ErrProvisionUnavailable   = errors.New("survival: provisioning unavailable")
@@ -518,6 +519,9 @@ func changeFor(before, after int) Change {
 type MemberRef struct {
 	Key  MemberKey
 	Name string
+	// Dead marks a dead companion awaiting resurrection (Phase 25b). It
+	// stays on the roster, but spends and recovers nothing.
+	Dead bool
 }
 
 // MemberSnapshot is the exact durable survival state for one companion at a
