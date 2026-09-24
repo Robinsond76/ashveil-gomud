@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 23b (whetstones and Sharpened weapons) is complete and reviewed on `claude/phase-23b-whetstones-plof2q`, awaiting merge to `master`. Phase 23a is on `master`.
+- **HEAD:** Phase 24 (company chemistry) is complete and reviewed on `claude/next-phase-leh8um`, awaiting merge to `master`. Phase 23b is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -51,10 +51,11 @@ instead of duplicating them.
   (settlement recruiters: free-once tutorial and paid candidates through
   `company recruit`), and Phase 23a (rest tiers: a camp rest grants
   Rested, an inn stay Well Rested, exclusive, and durable for companions),
-  and Phase 23b (whetstones: `sharpen`, durable weapon edges, combat use).
-- **Next:** merge Phase 23b to `master`, then
-  [company chemistry](superpowers/specs/2026-09-23-company-chemistry-design.md),
-  third on the [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
+  and Phase 23b (whetstones: `sharpen`, durable weapon edges, combat use),
+  and Phase 24 (company chemistry: durable pair bonds, +2/+4/+6 hit).
+- **Next:** merge Phase 24 to `master`, then
+  [death and resurrection](superpowers/specs/2026-09-23-death-resurrection-design.md),
+  fourth on the [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
   The Phase 19b inter-market profit question is resolved: the small
   standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
@@ -124,10 +125,73 @@ instead of duplicating them.
 | 22b | Durable companion level and gear | Complete: `MemberState` on each companion (level, experience, worn and carried items, gold), restore from the record, snapshot seams, `company gear` |
 | 22c | Recruiters and `company recruit` | Complete: recruiter rooms in config, free-once tutorial and paid candidates, claims on the company record, Waymark Inn and Trappers' Post, mobs 61–64 |
 | 23a | Rest tiers | Complete: camp Rested (buff 1033, strain 75%), exclusive with inn Well Rested, durable companion grants, buff 16 renamed Refreshed |
-| 23b | Whetstones | Complete (awaiting merge): 10-use whetstone (item 30) in both markets, `sharpen`/`camp sharpen` any time but not mid-fight, one use per member sharpened, durable per-weapon edge (+1 for 20 strikes) spent in combat, auto at camp rest end |
+| 23b | Whetstones | Complete: 10-use whetstone (item 30) in both markets, `sharpen`/`camp sharpen` any time but not mid-fight, one use per member sharpened, durable per-weapon edge (+1 for 20 strikes) spent in combat, auto at camp rest end |
+| 24 | Company chemistry | Complete (awaiting merge): a durable bond per member pair from rounds alive and together while the leader is signed in; Familiar/Trusted/Sworn (900/2700/6300 rounds) give +2/+4/+6 hit with a bonded partner beside you, never stacking, in all four combat directions; `company chemistry`, `status bonuses` |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 24: company chemistry (2026-09-24)
+
+- **What:** Every pair of company members (the leader and each companion,
+  and companion pairs) builds a durable **bond** on the company record:
+  the rounds they have spent alive and together in one room while the
+  leader is signed in. Offline time, absence, death, and separation pause
+  it; dismissal and desertion end that companion's bonds in the same save;
+  a companion killed and respawned (same ID) resumes them. Each `NewRound`
+  charges an eligible bond once (`last_round`), so a round replayed after
+  a restart isn't recounted, and a clock jump awards nothing. Tiers
+  **Familiar**, **Trusted**, **Sworn** at 900, 2700, and 6300 rounds (1,
+  3, 7 game days) give +2, +4, +6 points of hit chance while that partner
+  is beside the member; only the strongest such bond counts. Combat adds
+  it to the hit modifier in all four `Attack*` functions (a companion's
+  auto-assigned target too), after legality and targeting; when only the
+  bonus made a strike land, the attacker sees one line that round. A new
+  tier is saved at once and announced after the save; if the save fails,
+  the bond is held one round short, so no tier is used or shown before
+  it's on disk. `company chemistry` shows each member's tier, partner,
+  whether the partner is at their side, and progress as a percentage;
+  `status bonuses` has a Company Chemistry box. Knobs are company config.
+  The browser Company panel is deferred to the information-surfaces phase.
+  Design and plan:
+  [24 spec](superpowers/specs/2026-09-24-phase-24-company-chemistry-design.md) /
+  [24 plan](superpowers/plans/2026-09-24-phase-24-company-chemistry.md).
+- **Why:** Roadmap spec 3. The parent spec's direction was approved
+  2026-09-23; the details were applied as recommended under "Continue
+  next phase" and are recorded in the spec.
+- **Verification:** `go test -race ./...`, `make generate` (no diff),
+  `make validate`. The wiring test goes through `plugins.Load`, `company
+  summon`/`chemistry` and `status bonuses` via `usercommands.TryCommand`,
+  real `NewRound` events (the clock never advances), the real store,
+  `plugins.Save`, a logout, a reload, a respawn, and a real
+  `AttackPlayerVsMob` through the registered provider. The combat tests
+  drive all four `Attack*` functions.
+- **Review:** The independent reviewer found no invariant problems (clock,
+  durability, locks, and unchanged odds without a bonus all checked).
+  Fixed:
+  1. Config was parsed on every strike (`plug.Config.Get` flattens the
+     whole modules config): the rules are now cached on load and once a
+     round, and presence is checked only for a member with a tier
+     (`TestChemistryRulesCachedAndRefreshedEachRound`).
+  2. A bad config set warned on every call: now once.
+  3. Displays credited the bonus to the strongest bond even when its
+     partner was away; they now name the bond giving it, and say "your
+     side" to the leader (`TestChemistryDisplayCreditsActivePartner`).
+  4. The combat line said "trusted" at every tier, and a +0 tier was
+     announced as "+0%" (`TestChemistryCompanionPairCrossingAnnounced`).
+  5. Stored bonds weren't normalized: `Put` now orders keys, merges
+     duplicates, and clamps rounds (`TestPutNormalizesBonds`).
+  6. Missing coverage: `AttackMobVsPlayer` and `AttackPlayerVsPlayer`,
+     companion-pair announcements, and a failed drift save in the same
+     round as a charge (`TestChemistryChargeKeptWhenDriftSaveFails`).
+
+  Rejected: a new bond can't be charged on round 0 (the live counter
+  starts at 1314000); a seeded test proving `hitRoll` matches the old
+  `Hits` stream (Go 1.24's global `rand.Seed` is a no-op; the code makes
+  the same single `Rand(100)` call with the same clamp). Recorded: while
+  the store keeps failing, a held-short bond retries its save each
+  eligible round.
+- **Step completed:** Phase 24.
 
 ### Phase 23b: whetstones and Sharpened weapons (2026-09-24)
 

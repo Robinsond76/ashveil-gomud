@@ -255,22 +255,28 @@ func TestParseChemistryConfig(t *testing.T) {
 		"ChemistryFamiliarRounds": 10, "ChemistryTrustedRounds": "20", "ChemistrySwornRounds": 30,
 		"ChemistryFamiliarBonus": 1, "ChemistryTrustedBonus": 3, "ChemistrySwornBonus": 5,
 	}
-	rules := parseChemistryConfig(func(k string) any { return cfg[k] })
+	rules, ok := parseChemistryConfig(func(k string) any { return cfg[k] })
+	assert.True(t, ok)
 	assert.Equal(t, domain.ChemistryRules{TierRounds: [3]int{10, 20, 30}, TierBonus: [3]int{1, 3, 5}}, rules)
 
 	// Out of order: all defaults.
 	cfg["ChemistryTrustedRounds"] = 5
-	assert.Equal(t, domain.DefaultChemistryRules(), parseChemistryConfig(func(k string) any { return cfg[k] }))
+	rules, ok = parseChemistryConfig(func(k string) any { return cfg[k] })
+	assert.False(t, ok)
+	assert.Equal(t, domain.DefaultChemistryRules(), rules)
 
-	// Out of range: that knob's default, and the set still has to be in order.
-	rules = parseChemistryConfig(func(k string) any {
+	// Out of range: that knob's default.
+	rules, ok = parseChemistryConfig(func(k string) any {
 		if k == "ChemistrySwornBonus" {
 			return 50
 		}
 		return nil
 	})
+	assert.True(t, ok)
 	assert.Equal(t, domain.DefaultChemistryRules(), rules)
-	assert.Equal(t, domain.DefaultChemistryRules(), parseChemistryConfig(func(string) any { return nil }))
+	rules, ok = parseChemistryConfig(func(string) any { return nil })
+	assert.True(t, ok)
+	assert.Equal(t, domain.DefaultChemistryRules(), rules)
 }
 
 func TestChemistryBonusLeaderAloneNone(t *testing.T) {
@@ -339,7 +345,7 @@ func TestChemistryViewShowsTierPartnerProgress(t *testing.T) {
 
 	world.mobAt[101] = 6
 	view = module.chemistryView(7)
-	assert.Contains(t, strings.Split(view, "\n")[1], "not at their side")
+	assert.Contains(t, strings.Split(view, "\n")[1], "not at your side")
 	assert.Equal(t, "No companions.", module.chemistryView(8))
 
 	standing, ok := module.ChemistryStanding(7, domain.LeaderMemberKey)
@@ -358,4 +364,71 @@ func TestChemistryUnavailableWhileCompanyDataFailed(t *testing.T) {
 	_, ok := module.ChemistryStanding(7, domain.LeaderMemberKey)
 	assert.False(t, ok)
 	assert.Contains(t, module.chemistryView(7), "unavailable")
+}
+
+// Review finding 3: the bonus is credited to the bond that gives it.
+func TestChemistryDisplayCreditsActivePartner(t *testing.T) {
+	module, world, _ := newChemistryModule(t)
+	module.registry.Put(domain.Record{
+		LeaderUserID: 7,
+		Companions:   []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}},
+		Bonds: []domain.Bond{
+			{A: c1Key, B: domain.LeaderMemberKey, Rounds: 3},  // Familiar, present
+			{A: c2Key, B: domain.LeaderMemberKey, Rounds: 20}, // Sworn, away
+		},
+	})
+	world.mobAt[102] = 6
+	standing, ok := module.ChemistryStanding(7, domain.LeaderMemberKey)
+	require.True(t, ok)
+	assert.Equal(t, domain.ChemistryStandingView{Tier: domain.TierFamiliar, Partner: "A companion (#1)", Bonus: 2}, standing)
+	line := strings.Split(module.chemistryView(7), "\n")[1]
+	assert.Contains(t, line, "You: Sworn with A companion (#2) (+2% to hit now, from Familiar with A companion (#1))")
+
+	// Nobody beside the leader: the strongest bond, no bonus, "your side".
+	world.mobAt[101] = 6
+	standing, _ = module.ChemistryStanding(7, domain.LeaderMemberKey)
+	assert.Equal(t, domain.ChemistryStandingView{Tier: domain.TierSworn, Partner: "A companion (#2)"}, standing)
+	assert.Contains(t, strings.Split(module.chemistryView(7), "\n")[1], "(not at your side)")
+	assert.Contains(t, strings.Split(module.chemistryView(7), "\n")[3], "(not at their side)")
+}
+
+func TestChemistryCompanionPairCrossingAnnounced(t *testing.T) {
+	module, world, _ := newChemistryModule(t)
+	world.leaderAt[7] = 9 // the leader is elsewhere but signed in
+	round := uint64(1000)
+	roundFrom(module, &round, 3)
+	require.Len(t, world.told[7], 1)
+	assert.Equal(t, "A companion (#1) and A companion (#2) have grown Familiar (+2% to hit fighting side by side).", world.told[7][0])
+
+	// A tier worth nothing is announced without a "+0%".
+	module.chemRulesForTest = &domain.ChemistryRules{TierRounds: [3]int{3, 4, 9}, TierBonus: [3]int{0, 0, 6}}
+	roundFrom(module, &round, 1)
+	require.Len(t, world.told[7], 2)
+	assert.Equal(t, "A companion (#1) and A companion (#2) have grown Trusted.", world.told[7][1])
+}
+
+// The ordering onNewRound relies on: a drift tick whose save fails in the
+// same round as a charge keeps the charge.
+func TestChemistryChargeKeptWhenDriftSaveFails(t *testing.T) {
+	module, _, _ := newChemistryModule(t)
+	module.world.(*fakeWorld).leaders[7] = 100
+	round := uint64(1000)
+	roundFrom(module, &round, 1)
+	module.registry.DriftIn = 1 // the next round is a drift tick
+	store := module.store.(*fakeStore)
+	store.saveErr = errors.New("disk full")
+	roundFrom(module, &round, 1)
+	assert.Equal(t, 2, bondRounds(module, domain.LeaderMemberKey, c1Key))
+	record, _ := module.registry.Get(7)
+	assert.Nil(t, record.Companions[0].Disposition, "the drift itself rolled back")
+}
+
+func TestChemistryRulesCachedAndRefreshedEachRound(t *testing.T) {
+	module, _, _ := newChemistryModule(t)
+	module.chemRulesForTest = nil
+	cached := domain.ChemistryRules{TierRounds: [3]int{1, 2, 3}, TierBonus: [3]int{1, 1, 1}}
+	module.chemRules = &cached
+	assert.Equal(t, cached, module.chemistryRules(), "combat reads the cache, not the config")
+	module.refreshChemistryRules() // no plugin: the cache stays
+	assert.Equal(t, cached, module.chemistryRules())
 }

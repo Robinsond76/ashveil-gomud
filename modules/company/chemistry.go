@@ -61,9 +61,9 @@ func (m *CompanyModule) chemistryWorld() chemistryWorld {
 
 // parseChemistryConfig reads the Phase 24 knobs. Values out of range, or a
 // set whose thresholds don't strictly increase or whose bonuses decrease,
-// fall back to the defaults.
-func parseChemistryConfig(get func(string) any) domain.ChemistryRules {
-	rules := domain.DefaultChemistryRules()
+// fall back to the defaults; ok is false for such a set.
+func parseChemistryConfig(get func(string) any) (rules domain.ChemistryRules, ok bool) {
+	rules = domain.DefaultChemistryRules()
 	read := func(key string, into *int, lo, hi int) {
 		if v, ok := configInt(get(key)); ok && v >= lo && v <= hi {
 			*into = v
@@ -76,18 +76,36 @@ func parseChemistryConfig(get func(string) any) domain.ChemistryRules {
 	read("ChemistryTrustedBonus", &rules.TierBonus[1], 0, 10)
 	read("ChemistrySwornBonus", &rules.TierBonus[2], 0, 10)
 	if !rules.Valid() {
-		mudlog.Warn("company: chemistry config out of order; using defaults", "rules", rules)
-		return domain.DefaultChemistryRules()
+		return domain.DefaultChemistryRules(), false
 	}
-	return rules
+	return rules, true
 }
 
+// refreshChemistryRules parses the knobs into the cache. It runs on load and
+// once a round, not per strike: reading plugin config flattens the whole
+// modules config. A bad set is warned about once, until it is fixed.
+func (m *CompanyModule) refreshChemistryRules() {
+	if m.plug == nil {
+		return
+	}
+	rules, ok := parseChemistryConfig(m.plug.Config.Get)
+	if !ok && !m.chemConfigWarned {
+		mudlog.Warn("company: chemistry config out of order; using defaults")
+	}
+	m.chemConfigWarned = !ok
+	m.chemRules = &rules
+}
+
+// chemistryRules are the cached rules (see refreshChemistryRules).
 func (m *CompanyModule) chemistryRules() domain.ChemistryRules {
 	if m.chemRulesForTest != nil {
 		return *m.chemRulesForTest
 	}
-	if m.plug != nil {
-		return parseChemistryConfig(m.plug.Config.Get)
+	if m.chemRules == nil {
+		m.refreshChemistryRules()
+	}
+	if m.chemRules != nil {
+		return *m.chemRules
 	}
 	return domain.DefaultChemistryRules()
 }
@@ -192,16 +210,19 @@ func (m *CompanyModule) holdBondShort(c bondCrossing, rules domain.ChemistryRule
 }
 
 func (m *CompanyModule) crossingText(c bondCrossing, rules domain.ChemistryRules) string {
-	bonus := rules.Bonus(c.tier)
 	name := domain.TierName(c.tier)
+	effect := ""
+	if bonus := rules.Bonus(c.tier); bonus > 0 {
+		effect = fmt.Sprintf(" (+%d%% to hit fighting side by side)", bonus)
+	}
 	if c.a == domain.LeaderMemberKey || c.b == domain.LeaderMemberKey {
 		other := c.a
 		if other == domain.LeaderMemberKey {
 			other = c.b
 		}
-		return fmt.Sprintf("Your bond with %s deepens: %s (+%d%% to hit fighting side by side).", m.bondName(c.leaderUserID, other), name, bonus)
+		return fmt.Sprintf("Your bond with %s deepens: %s%s.", m.bondName(c.leaderUserID, other), name, effect)
 	}
-	return fmt.Sprintf("%s and %s have grown %s (+%d%% to hit fighting side by side).", m.bondName(c.leaderUserID, c.a), m.bondName(c.leaderUserID, c.b), name, bonus)
+	return fmt.Sprintf("%s and %s have grown %s%s.", m.bondName(c.leaderUserID, c.a), m.bondName(c.leaderUserID, c.b), name, effect)
 }
 
 // bondName is "you" for the leader and "<name> (#id)" for a companion.
@@ -216,8 +237,8 @@ var _ domain.ChemistryProvider = (*CompanyModule)(nil)
 
 // ChemistryHitBonus implements domain.ChemistryProvider: the member's
 // highest bond tier's bonus among partners alive and in its room now. It
-// reads the registry in place, without copying, since combat calls it for
-// every strike.
+// reads the registry in place, without copying, and checks presence only
+// for a member with a tier at all, since combat calls it for every strike.
 func (m *CompanyModule) ChemistryHitBonus(leaderUserID int, key domain.MemberKey) int {
 	if m.persistenceAvailable() != nil {
 		return 0
@@ -227,25 +248,30 @@ func (m *CompanyModule) ChemistryHitBonus(leaderUserID int, key domain.MemberKey
 		return 0
 	}
 	rules := m.chemistryRules()
-	return rules.Bonus(m.activeTier(leaderUserID, record, key, rules))
+	if _, tier, ok := domain.BestBond(record.Bonds, key, nil, rules); !ok || tier == domain.TierNone {
+		return 0
+	}
+	_, tier := m.activeBond(leaderUserID, record, key, rules)
+	return rules.Bonus(tier)
 }
 
-// activeTier is key's highest bond tier with a partner beside it now.
-func (m *CompanyModule) activeTier(leaderUserID int, record domain.Record, key domain.MemberKey, rules domain.ChemistryRules) int {
+// activeBond is key's highest-tier bond with a partner beside it now, and
+// that tier; TierNone when there is none or key isn't present.
+func (m *CompanyModule) activeBond(leaderUserID int, record domain.Record, key domain.MemberKey, rules domain.ChemistryRules) (domain.Bond, int) {
 	present, _ := m.presentMembers(leaderUserID, record)
 	room, here := present[key]
 	if !here {
-		return domain.TierNone
+		return domain.Bond{}, domain.TierNone
 	}
-	_, tier, _ := domain.BestBond(record.Bonds, key, func(partner domain.MemberKey) bool {
+	bond, tier, _ := domain.BestBond(record.Bonds, key, func(partner domain.MemberKey) bool {
 		r, ok := present[partner]
 		return ok && r == room
 	}, rules)
-	return tier
+	return bond, tier
 }
 
 // ChemistryStanding implements domain.ChemistryProvider for displays: the
-// member's strongest bond and its bonus right now.
+// bond giving the member its bonus now or, when none does, its strongest.
 func (m *CompanyModule) ChemistryStanding(leaderUserID int, key domain.MemberKey) (domain.ChemistryStandingView, bool) {
 	if m.persistenceAvailable() != nil {
 		return domain.ChemistryStandingView{}, false
@@ -259,12 +285,13 @@ func (m *CompanyModule) ChemistryStanding(leaderUserID int, key domain.MemberKey
 	if !ok {
 		return domain.ChemistryStandingView{}, false
 	}
+	view := domain.ChemistryStandingView{Tier: tier}
+	if active, activeTier := m.activeBond(leaderUserID, record, key, rules); activeTier > domain.TierNone && rules.Bonus(activeTier) > 0 {
+		best, view.Tier, view.Bonus = active, activeTier, rules.Bonus(activeTier)
+	}
 	partner, _ := best.Partner(key)
-	return domain.ChemistryStandingView{
-		Tier:    tier,
-		Partner: m.bondName(leaderUserID, partner),
-		Bonus:   rules.Bonus(m.activeTier(leaderUserID, record, key, rules)),
-	}, true
+	view.Partner = m.bondName(leaderUserID, partner)
+	return view, true
 }
 
 // chemistryView is "company chemistry": each member's strongest bond, what
@@ -306,8 +333,14 @@ func (m *CompanyModule) chemistryView(leaderUserID int) string {
 			continue
 		}
 		now := "not at their side"
-		if bonus := rules.Bonus(m.activeTier(leaderUserID, record, key, rules)); bonus > 0 {
-			now = fmt.Sprintf("+%d%% to hit now", bonus)
+		if key == domain.LeaderMemberKey {
+			now = "not at your side"
+		}
+		if active, activeTier := m.activeBond(leaderUserID, record, key, rules); rules.Bonus(activeTier) > 0 {
+			now = fmt.Sprintf("+%d%% to hit now", rules.Bonus(activeTier))
+			if activePartner, _ := active.Partner(key); activePartner != partner {
+				now += fmt.Sprintf(", from %s with %s", domain.TierName(activeTier), m.bondName(leaderUserID, activePartner))
+			}
 		}
 		if _, here := present[key]; !here {
 			now = "not here"

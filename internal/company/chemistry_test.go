@@ -187,3 +187,30 @@ func TestBondsYAMLRoundTrip(t *testing.T) {
 		t.Fatalf("round trip lost the bond: %+v\n%s", bond, data)
 	}
 }
+
+// Review finding 5: stored bonds are normalized on Put.
+func TestPutNormalizesBonds(t *testing.T) {
+	r := NewRegistry()
+	c1 := CompanionMemberKey(1)
+	r.Put(Record{
+		LeaderUserID: 1,
+		Companions:   []Companion{{ID: 1, MobTemplateID: 5}},
+		Bonds: []Bond{
+			{A: LeaderMemberKey, B: c1, Rounds: 40, LastRound: 9},  // out of order
+			{A: c1, B: LeaderMemberKey, Rounds: 30, LastRound: 12}, // a duplicate
+		},
+	})
+	record, _ := r.Get(1)
+	require := []Bond{{A: c1, B: LeaderMemberKey, Rounds: 40, LastRound: 12}}
+	if len(record.Bonds) != 1 || record.Bonds[0] != require[0] {
+		t.Fatalf("bonds %+v, want %+v", record.Bonds, require)
+	}
+	if _, after, ok := record.ChargeBond(c1, LeaderMemberKey, 13); !ok || after != 41 {
+		t.Fatalf("the merged bond should charge: %d %v", after, ok)
+	}
+	r.Put(Record{LeaderUserID: 1, Companions: []Companion{{ID: 1, MobTemplateID: 5}}, Bonds: []Bond{{A: c1, B: LeaderMemberKey, Rounds: -5}}})
+	record, _ = r.Get(1)
+	if record.Bonds[0].Rounds != 0 {
+		t.Fatalf("negative rounds clamp to 0: %+v", record.Bonds)
+	}
+}

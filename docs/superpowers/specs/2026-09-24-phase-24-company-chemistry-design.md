@@ -96,8 +96,8 @@ round, as Phases 19b–23b did. Each is a config knob or a small follow-up.
    map lookup and at most four bonds; no copying.
 7. **Identifying chemistry in combat.** When a strike hits only because of
    the bonus (its roll fell between the chance without it and with it),
-   the attacker sees one line per round: *"Fighting beside a trusted
-   companion, you find an opening."* That's the only combat text; there's
+   the attacker sees one line per round: *"Fighting beside a companion
+   you know well, you find an opening."* That's the only combat text; there's
    no per-strike tag.
 8. **Surfaces.** `company chemistry` lists each present-or-not member:
    tier name, bonus, strongest partner, and whether that partner is at
@@ -108,6 +108,17 @@ round, as Phases 19b–23b did. Each is a config knob or a small follow-up.
    (`company.ChemistryStanding`) it will use.
 9. **No new locks.** The module and combat both run on the game loop; the
    provider reads the registry map directly, read-only.
+
+**Implementation review amendments (2026-09-24):** the knobs are parsed
+once on load and once a round and cached, not per strike (reading plugin
+config flattens the whole modules config), and a bad set is warned about
+once. `ChemistryHitBonus` checks presence only for a member with a tier.
+Displays credit the bonus to the bond that gives it: when the strongest
+bond's partner is away but a lesser one's is present, `company chemistry`
+says "+2% to hit now, from Familiar with …" and `status bonuses` names the
+present partner. The combat line is tier-neutral ("a companion you know
+well"), and a tier worth +0 is announced without a bonus. Stored bonds are
+normalized on `Put` (key order, one per pair, rounds at least 0).
 
 ## Scope
 

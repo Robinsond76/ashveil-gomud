@@ -112,6 +112,10 @@ type CompanyModule struct {
 	loadErr   error
 	world     alignmentWorld // nil means the native world
 	chem      chemistryWorld // nil means the native world
+	// chemRules caches the parsed chemistry knobs; chemConfigWarned is set
+	// while they are out of order and have been warned about.
+	chemRules        *domain.ChemistryRules
+	chemConfigWarned bool
 	// chemRulesForTest overrides the configured chemistry rules in tests.
 	chemRulesForTest *domain.ChemistryRules
 	// rulesForTest overrides the configured alignment rules in tests.
@@ -763,6 +767,7 @@ func (m *CompanyModule) load() {
 	}
 	m.registry = *loaded
 	m.loadErr = nil
+	m.refreshChemistryRules()
 
 	// Survival loads before company (the plugin loader runs callbacks in
 	// reverse registration order), so the authoritative company roster is

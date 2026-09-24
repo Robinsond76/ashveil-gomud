@@ -148,3 +148,71 @@ func TestAttackMobVsMobChemistryRaisesHits(t *testing.T) {
 		t.Fatalf("a companion's chemistry should raise hits: plain=%d bonded=%d lines=%d", plain, bonded, bondedLines)
 	}
 }
+
+// fastDefender is a user no attacker hits above the 25% floor without
+// chemistry.
+func fastDefender(t *testing.T, userID int) *users.UserRecord {
+	t.Helper()
+	def := users.NewUserRecord(userID, uint64(userID))
+	def.Character.RoomId = 90241
+	def.Character.RaceId = 1
+	def.Character.Health, def.Character.HealthMax.Value = 1000000, 1000000
+	def.Character.Stats.Speed.ValueAdj = 100000
+	users.SetTestUser(def)
+	t.Cleanup(func() { users.RemoveTestUser(userID) })
+	return def
+}
+
+// userFight counts rounds that hit and chemistry lines, against a user.
+func userFight(t *testing.T, rounds int, attack func() AttackResult) (hits, lines int) {
+	t.Helper()
+	for i := 0; i < rounds; i++ {
+		res := attack()
+		if res.Hit {
+			hits++
+		}
+		for _, msg := range res.MessagesToSource {
+			if msg == chemistryHitText {
+				lines++
+			}
+		}
+	}
+	return hits, lines
+}
+
+func TestAttackMobVsPlayerChemistryRaisesHits(t *testing.T) {
+	chemistryRoom(t)
+	def := fastDefender(t, 4250)
+	companion := &mobs.Mob{InstanceId: 4344, Character: *characters.New()}
+	companion.Character.RoomId = 90241
+	companion.Character.RaceId = 1
+	companion.Character.SetAggro(4250, 0, characters.DefaultAttack)
+	stranger := &mobs.Mob{InstanceId: 4345, Character: companion.Character}
+
+	withChemistry(t, 1000)
+	plain, plainLines := userFight(t, 400, func() AttackResult { return AttackMobVsPlayer(stranger, def) })
+	bonded, bondedLines := userFight(t, 400, func() AttackResult { return AttackMobVsPlayer(companion, def) })
+	if plainLines != 0 || bonded < plain*2 || bondedLines == 0 {
+		t.Fatalf("a companion's chemistry should raise hits on a player: plain=%d/%d bonded=%d/%d", plain, plainLines, bonded, bondedLines)
+	}
+}
+
+func TestAttackPlayerVsPlayerChemistryRaisesHits(t *testing.T) {
+	chemistryRoom(t)
+	def := fastDefender(t, 4251)
+	leader := users.NewUserRecord(4242, 4242)
+	leader.Character.RoomId = 90241
+	leader.Character.RaceId = 1
+	leader.Character.SetAggro(4251, 0, characters.DefaultAttack)
+	users.SetTestUser(leader)
+	t.Cleanup(func() { users.RemoveTestUser(4242) })
+	attack := func() AttackResult { return AttackPlayerVsPlayer(leader, def) }
+
+	withChemistry(t, 0)
+	plain, plainLines := userFight(t, 400, attack)
+	withChemistry(t, 1000)
+	bonded, bondedLines := userFight(t, 400, attack)
+	if plainLines != 0 || bonded < plain*2 || bondedLines == 0 {
+		t.Fatalf("the leader's chemistry should raise hits on a player: plain=%d/%d bonded=%d/%d", plain, plainLines, bonded, bondedLines)
+	}
+}

@@ -20,7 +20,8 @@ Each task is tests first.
   `TestChemistryDismissEndsBonds`, `TestChemistryResumesAfterRespawn`,
   `TestChemistryTierCrossingSavesAndAnnounces`,
   `TestChemistryFailedCrossingSaveHoldsShort`,
-  `TestChemistrySurvivesReload`, `TestParseChemistryConfig`.
+  `TestChemistrySurvivesReload`, `TestParseChemistryConfig`. (Also
+  `TestDecodeCompaniesReadsBonds`, `TestChemistryUnavailableWhileCompanyDataFailed`.)
 - [x] **Task 4: provider and bonus** (`modules/company/chemistry.go`).
   Tests first: `TestChemistryBonusLeaderAloneNone`,
   `TestChemistryBonusCapNeverStacks`, `TestChemistryBonusAbsentPartnerNone`,
@@ -29,7 +30,9 @@ Each task is tests first.
   `TestHitRollBonusDecides`, `TestHitRollNoBonusMatchesHits`,
   `TestAttackPlayerVsMobChemistryRaisesHits` and
   `TestAttackMobVsMobChemistryRaisesHits` (a fake provider, real
-  `Attack*` functions), `TestChemistryLineOncePerRound`.
+  `Attack*` functions), `TestChemistryLineOncePerRound`. (Landed as
+  `TestHitRollNoBonusNeverByBonus`; the once-a-round check is inside both
+  `Attack*` tests.)
 - [x] **Task 6: surfaces** (`company chemistry`,
   `internal/usercommands/status.panels.go`). Tests first:
   `TestChemistryViewShowsTierPartnerProgress`,
@@ -39,6 +42,6 @@ Each task is tests first.
   events via `events.ProcessEvents`: accrual, a tier crossing, `company
   chemistry`, `status bonuses`, `plugins.Save` and reload, and the
   registered provider's bonus at the real combat entry point.
-- [ ] **Task 8: docs and verification.** Config comments, module
+- [x] **Task 8: docs and verification.** Config comments, module
   `AGENTS.md`, `go test -race ./...`, `make generate`, `make validate`,
   independent review, `docs/PROJECT_STATUS.md`.

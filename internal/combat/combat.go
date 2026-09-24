@@ -246,7 +246,7 @@ func buildCombatMessages(
 }
 
 // chemistryHitText tells the attacker that company chemistry made a hit.
-const chemistryHitText = `<ansi fg="cyan">Fighting beside a trusted companion, you find an opening.</ansi>`
+const chemistryHitText = `<ansi fg="cyan">Fighting beside a companion you know well, you find an opening.</ansi>`
 
 // calculateCombat resolves one attack round. darkPenalty is the attacker's
 // to-hit penalty for poor visibility (see darknessPenalty), as a positive

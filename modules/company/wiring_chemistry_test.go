@@ -160,7 +160,7 @@ func TestChemistryThroughPluginsLoad(t *testing.T) {
 		def.Character.Stats.Speed.ValueAdj = 100000 // the 25% floor without chemistry
 		user.Character.SetAggro(0, def.InstanceId, characters.DefaultAttack)
 		for _, msg := range combat.AttackPlayerVsMob(user, def).MessagesToSource {
-			if strings.Contains(msg, "Fighting beside a trusted companion") {
+			if strings.Contains(msg, "Fighting beside a companion you know well") {
 				lines++
 			}
 		}

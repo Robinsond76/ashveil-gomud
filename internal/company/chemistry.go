@@ -176,13 +176,29 @@ func BestBond(bonds []Bond, key MemberKey, present func(MemberKey) bool, rules C
 	return best, tier, ok
 }
 
-// pruneBonds drops bonds whose members are not both valid.
+// pruneBonds drops bonds whose members are not both valid, and normalizes
+// the rest as they would be stored: keys in order, rounds at least 0, and
+// one bond per pair (a duplicate merges into the first, keeping the most
+// rounds and the latest round charged).
 func pruneBonds(bonds []Bond, valid map[MemberKey]bool) []Bond {
 	var kept []Bond
+	index := map[[2]MemberKey]int{}
 	for _, bond := range bonds {
-		if valid[bond.A] && valid[bond.B] && bond.A != bond.B {
-			kept = append(kept, bond)
+		bond.A, bond.B = BondPair(bond.A, bond.B)
+		if !valid[bond.A] || !valid[bond.B] || bond.A == bond.B {
+			continue
 		}
+		if bond.Rounds < 0 {
+			bond.Rounds = 0
+		}
+		pair := [2]MemberKey{bond.A, bond.B}
+		if i, dup := index[pair]; dup {
+			kept[i].Rounds = max(kept[i].Rounds, bond.Rounds)
+			kept[i].LastRound = max(kept[i].LastRound, bond.LastRound)
+			continue
+		}
+		index[pair] = len(kept)
+		kept = append(kept, bond)
 	}
 	return kept
 }
