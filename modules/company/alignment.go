@@ -414,3 +414,15 @@ func (m *CompanyModule) alignmentView(leaderUserID int) string {
 	lines = append(lines, "Companions drift toward the rest of the company. One far from it loses loyalty, and at none, deserts.")
 	return strings.Join(lines, "\n")
 }
+
+var _ domain.AlignmentProvider = (*CompanyModule)(nil)
+
+// CompanyAlignment implements domain.AlignmentProvider (Phase 21b): the
+// company average the recruit gate uses. Unavailable while company data
+// failed to load, so nothing is judged against a partial company.
+func (m *CompanyModule) CompanyAlignment(leaderUserID int) (int, bool) {
+	if m.persistenceAvailable() != nil {
+		return 0, false
+	}
+	return m.companyAverage(leaderUserID)
+}

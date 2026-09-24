@@ -99,3 +99,26 @@ func CompanionArchetype(leaderUserID, companionID int) (string, bool) {
 	}
 	return ap.CompanionArchetype(leaderUserID, companionID)
 }
+
+// AlignmentProvider is optionally implemented by the registered
+// FormationProvider (Phase 21b): the company's average alignment (the
+// online leader and every companion, engine scale −100..100), as Phase 21a
+// computes it for the recruit gate. modules/company runs on the game loop,
+// so call this from the game loop only.
+type AlignmentProvider interface {
+	CompanyAlignment(leaderUserID int) (alignment int, ok bool)
+}
+
+// CompanyAlignment returns a leader's company alignment. ok is false when
+// no provider is registered, it doesn't track alignment, or there is no one
+// to average (an offline leader with no companions).
+func CompanyAlignment(leaderUserID int) (int, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	ap, ok := p.(AlignmentProvider)
+	if !ok {
+		return 0, false
+	}
+	return ap.CompanyAlignment(leaderUserID)
+}

@@ -471,3 +471,19 @@ func TestDesertionWaitsForCompanionCombat(t *testing.T) {
 	record, _ = module.registry.Get(7)
 	assert.Empty(t, record.Companions)
 }
+
+func TestCompanyAlignmentProviderUsesCompanyAverage(t *testing.T) {
+	world := newFakeWorld()
+	world.leaders[7] = 60
+	module, _ := newAlignmentModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{withDisposition(domain.Companion{ID: 1, MobTemplateID: 58}, -20, 70)}},
+	}}, world)
+	got, ok := module.CompanyAlignment(7)
+	assert.True(t, ok)
+	assert.Equal(t, 20, got)
+	_, ok = module.CompanyAlignment(8)
+	assert.False(t, ok, "offline leader without companions")
+	module.loadErr = errors.New("cannot read companies")
+	_, ok = module.CompanyAlignment(7)
+	assert.False(t, ok, "never judged against an unloaded company")
+}

@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/standing"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/weather"
@@ -194,12 +195,30 @@ func innOperationID(stay camping.InnStay) string {
 	return fmt.Sprintf("inn-rest-%d-%d-%d", stay.LeaderUserID, stay.RoomID, stay.Rest.StartedAtUTC.UnixNano())
 }
 
-func (m *CampingModule) innPrice(leaderUserID int) (price, members int) {
+func (m *CampingModule) innPrice(leaderUserID int, pricing standing.Standing) (price, members int) {
 	members = m.companyMembers(leaderUserID)
 	if members < 1 {
 		members = 1
 	}
-	return m.innSettings().PricePerMember * members, members
+	return pricing.InnPrice(m.innSettings().PricePerMember * members), members
+}
+
+// innStanding is the company's Phase 21b standing in the room's settlement
+// (the zero Standing, normal prices, when there is none). It calls into
+// other modules, so it is read before taking m.mu.
+func innStanding(leaderUserID int, room *rooms.Room) standing.Standing {
+	if room == nil {
+		return standing.Standing{}
+	}
+	s, ok := standing.For(leaderUserID, room.Zone)
+	if !ok {
+		return standing.Standing{}
+	}
+	return s
+}
+
+func innRefusal(room *rooms.Room) string {
+	return fmt.Sprintf("%s won't give your company a room.", roomTitle(room.RoomId))
 }
 
 func (m *CampingModule) innCommand(rest string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
@@ -220,6 +239,7 @@ func (m *CampingModule) innStatus(user *users.UserRecord, room *rooms.Room) stri
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
+	pricing := innStanding(user.UserId, room)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if _, ok := m.stays[user.UserId]; ok {
@@ -233,9 +253,16 @@ func (m *CampingModule) innStatus(user *users.UserRecord, room *rooms.Room) stri
 	if room == nil || !room.HasTag(m.innSettings().RoomTag) {
 		return "There is no inn here."
 	}
-	price, members := m.innPrice(user.UserId)
-	return fmt.Sprintf("%s offers your company of %d a room for the night: %d gold (%d per member). You have %d gold.\nUse \"inn rest\" to pay and rest (%s).",
+	if pricing.InnRefused() {
+		return innRefusal(room)
+	}
+	price, members := m.innPrice(user.UserId, pricing)
+	text := fmt.Sprintf("%s offers your company of %d a room for the night: %d gold (%d per member). You have %d gold.\nUse \"inn rest\" to pay and rest (%s).",
 		roomTitle(room.RoomId), members, price, m.innSettings().PricePerMember, user.Character.Gold, m.innSettings().RestDuration)
+	if pricing.InnMarkupPct > 0 {
+		text += fmt.Sprintf("\nYour company is %s here, so the room costs %d%% more.", pricing.Tier, pricing.InnMarkupPct)
+	}
+	return text
 }
 
 // innRest takes the company's gold and starts a durable real-time stay.
@@ -252,6 +279,7 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 	if m.isTravelling(user.UserId) {
 		return "You can't take a room while travelling."
 	}
+	pricing := innStanding(user.UserId, room)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	// Config is written by load() under m.mu, so read it under m.mu too.
@@ -273,7 +301,10 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 			return "Your company has only just woken. Give it a moment."
 		}
 	}
-	price, _ := m.innPrice(user.UserId)
+	if pricing.InnRefused() {
+		return innRefusal(room)
+	}
+	price, _ := m.innPrice(user.UserId, pricing)
 	if user.Character.Gold < price {
 		return fmt.Sprintf("A room for your company costs %d gold, and you have only %d.", price, user.Character.Gold)
 	}

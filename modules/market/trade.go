@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/market"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/standing"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -73,8 +74,8 @@ func (m *MarketModule) matchGood(goods []market.Good, query string) (market.Good
 
 // commitBuy prices and removes one unit from the zone's stock in a single
 // critical section, refusing when sold out or when the price exceeds gold.
-// It returns the price paid.
-func (m *MarketModule) commitBuy(zone string, itemID, gold int) (int, error) {
+// It returns the price paid, after the company's settlement standing.
+func (m *MarketModule) commitBuy(zone string, itemID, gold int, pricing standing.Standing) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.commitLocked(zone, itemID, func(g market.Good, stock int) (int, int, error) {
@@ -82,6 +83,7 @@ func (m *MarketModule) commitBuy(zone string, itemID, gold int) (int, error) {
 		if !ok {
 			return 0, 0, errSoldOut
 		}
+		price = pricing.BuyPrice(price)
 		if price > gold {
 			return price, 0, errNotAfford
 		}
@@ -91,8 +93,8 @@ func (m *MarketModule) commitBuy(zone string, itemID, gold int) (int, error) {
 
 // commitSell prices and adds one unit to the zone's stock in a single
 // critical section, refusing when the market is full. It returns the
-// price paid to the seller.
-func (m *MarketModule) commitSell(zone string, itemID int) (int, error) {
+// price paid to the seller, after the company's settlement standing.
+func (m *MarketModule) commitSell(zone string, itemID int, pricing standing.Standing) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.commitLocked(zone, itemID, func(g market.Good, stock int) (int, int, error) {
@@ -100,7 +102,7 @@ func (m *MarketModule) commitSell(zone string, itemID int) (int, error) {
 		if !ok {
 			return 0, 0, errMarketFull
 		}
-		return price, 1, nil
+		return pricing.SellPrice(price), 1, nil
 	})
 }
 
@@ -142,7 +144,7 @@ func (m *MarketModule) commitLocked(zone string, itemID int, decide func(market.
 	return 0, errNotTracked
 }
 
-func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string) {
+func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string, pricing standing.Standing) {
 	if what == "" {
 		user.SendText("Buy what? Try: market buy <good>.")
 		return
@@ -166,7 +168,7 @@ func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string
 		user.SendText(fmt.Sprintf(`No one at the market has any <ansi fg="itemname">%s</ansi> to sell right now.`, name))
 		return
 	}
-	price, err := m.commitBuy(room.Zone, good.ItemID, user.Character.Gold)
+	price, err := m.commitBuy(room.Zone, good.ItemID, user.Character.Gold, pricing)
 	switch {
 	case errors.Is(err, errSoldOut):
 		user.SendText(fmt.Sprintf(`No one at the market has any <ansi fg="itemname">%s</ansi> to sell right now.`, name))
@@ -193,7 +195,7 @@ func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string
 	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> buys the <ansi fg="itemname">%s</ansi> at the market.`, user.Character.Name, newItem.DisplayName()), user.UserId)
 }
 
-func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what string) {
+func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what string, pricing standing.Standing) {
 	if what == "" {
 		user.SendText("Sell what? Try: market sell <good>.")
 		return
@@ -204,7 +206,7 @@ func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what strin
 		return
 	}
 
-	price, err := m.commitSell(room.Zone, item.ItemId)
+	price, err := m.commitSell(room.Zone, item.ItemId, pricing)
 	switch {
 	case errors.Is(err, errMarketFull):
 		user.SendText(fmt.Sprintf(`The market is glutted with <ansi fg="itemname">%s</ansi>; no one will buy more right now.`, item.DisplayName()))

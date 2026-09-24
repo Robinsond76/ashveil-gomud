@@ -1,0 +1,19 @@
+roomid: 2006
+zone: Dunmar
+title: Tanner's Back Alley
+description: Behind the tanner's stall a narrow alley runs between the leaning
+  houses, reeking of lye and old blood. Hides hang drying from lines strung wall
+  to wall, and beneath them a few hard-faced traders keep their own counts on
+  scraps of slate. They buy what the square won't, and they sell to people the
+  square won't serve, at the square's own prices and no questions asked. The
+  cobbles lead back north to the market.
+biome: city
+tags:
+  - blackmarket
+exits:
+  north:
+    roomid: 2004
+mapx: 1
+mapy: 1
+mapz: 0
+hascoordinates: true

@@ -39,6 +39,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/standing"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"gopkg.in/yaml.v2"
 )
@@ -535,7 +536,9 @@ func (m *MarketModule) userCommand(rest string, user *users.UserRecord, room *ro
 		return true, nil
 	}
 	tag := m.tag()
-	if !room.HasTag(tag) {
+	blackTag := standing.BlackMarketTag()
+	black := blackTag != "" && room.HasTag(blackTag)
+	if !black && !room.HasTag(tag) {
 		msg := "There's no market here."
 		if titles := m.marketRoomTitles(room.Zone, tag); len(titles) > 0 {
 			msg += fmt.Sprintf(` The market in %s is at <ansi fg="room-title">%s</ansi>.`, room.Zone, strings.Join(titles, ", "))
@@ -544,15 +547,33 @@ func (m *MarketModule) userCommand(rest string, user *users.UserRecord, room *ro
 		return true, nil
 	}
 
+	// Phase 21b: the company's settlement standing prices the trade, or
+	// refuses it. A black market serves only companies the settlement
+	// distrusts or shuns, at normal prices.
+	pricing, hasStanding := standing.For(user.UserId, room.Zone)
+	switch {
+	case black:
+		if !hasStanding || !pricing.BlackMarketServes() {
+			user.SendText("No one here will deal with your company.")
+			return true, nil
+		}
+		pricing = standing.Standing{}
+	case hasStanding && pricing.MarketRefused():
+		user.SendText(fmt.Sprintf(`The traders of <ansi fg="zone">%s</ansi> won't deal with your company.`, room.Zone))
+		return true, nil
+	case !hasStanding:
+		pricing = standing.Standing{}
+	}
+
 	verb, what, _ := strings.Cut(strings.TrimSpace(rest), " ")
 	what = strings.TrimSpace(what)
 	switch strings.ToLower(verb) {
 	case "":
-		m.sendListing(user, room, quotes)
+		m.sendListing(user, room, quotes, pricing, black)
 	case "buy":
-		m.buy(user, room, what)
+		m.buy(user, room, what, pricing)
 	case "sell":
-		m.sell(user, room, what)
+		m.sell(user, room, what, pricing)
 	default:
 		user.SendText("Usage: market, market buy <good>, or market sell <good>.")
 	}
@@ -579,7 +600,11 @@ func (m *MarketModule) marketRoomTitles(zone, tag string) []string {
 	return titles
 }
 
-func (m *MarketModule) sendListing(user *users.UserRecord, room *rooms.Room, quotes []Quote) {
+func (m *MarketModule) sendListing(user *users.UserRecord, room *rooms.Room, quotes []Quote, pricing standing.Standing, black bool) {
+	for i := range quotes {
+		quotes[i].Buy = pricing.BuyPrice(quotes[i].Buy)
+		quotes[i].Sell = pricing.SellPrice(quotes[i].Sell)
+	}
 	names := make([]string, len(quotes))
 	width := len("Good")
 	for i, q := range quotes {
@@ -592,12 +617,19 @@ func (m *MarketModule) sendListing(user *users.UserRecord, room *rooms.Room, quo
 		}
 		return fmt.Sprintf(`<ansi fg="gold">%9s</ansi>`, fmt.Sprintf("%d gold", price))
 	}
+	heading := fmt.Sprintf(`Market prices in <ansi fg="zone">%s</ansi>:`, room.Zone)
+	if black {
+		heading = fmt.Sprintf(`Black market prices in <ansi fg="zone">%s</ansi>:`, room.Zone)
+	}
 	lines := []string{
-		fmt.Sprintf(`Market prices in <ansi fg="zone">%s</ansi>:`, room.Zone),
+		heading,
 		fmt.Sprintf("  %-*s  %9s  %9s  %s", width, "Good", "You buy", "You sell", "Stock"),
 	}
 	for i, q := range quotes {
 		lines = append(lines, fmt.Sprintf(`  <ansi fg="itemname">%-*s</ansi>  %s  %s  %s`, width, names[i], side(q.Buy, q.BuyOK), side(q.Sell, q.SellOK), q.Level))
+	}
+	if pricing.MarkupPct > 0 {
+		lines = append(lines, fmt.Sprintf("Your company is %s here: you pay %d%% more and are paid %d%% less.", pricing.Tier, pricing.MarkupPct, pricing.MarkupPct))
 	}
 	lines = append(lines, "Trade with: market buy <good>, market sell <good>.")
 	user.SendText(strings.Join(lines, "\n"))

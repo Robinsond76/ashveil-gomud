@@ -97,3 +97,32 @@ func TestLeaderAndKeyForInstanceCallsThroughToRegisteredProvider(t *testing.T) {
 	assert.Equal(t, 7, leaderUserID)
 	assert.Equal(t, company.CompanionMemberKey(3), key)
 }
+
+type alignmentStub struct {
+	fakeFormationProviderForAlignment
+}
+
+type fakeFormationProviderForAlignment struct{}
+
+func (fakeFormationProviderForAlignment) FormationFor(int) (company.Formation, bool) {
+	return company.Formation{}, false
+}
+func (fakeFormationProviderForAlignment) InstanceFor(int, int) (int, bool) { return 0, false }
+func (fakeFormationProviderForAlignment) LeaderAndKeyForInstance(int) (int, company.MemberKey, bool) {
+	return 0, "", false
+}
+func (alignmentStub) CompanyAlignment(leader int) (int, bool) { return leader * 10, leader > 0 }
+
+func TestCompanyAlignmentSeam(t *testing.T) {
+	company.SetFormationProvider(nil)
+	_, ok := company.CompanyAlignment(3)
+	assert.False(t, ok, "no provider")
+	company.SetFormationProvider(fakeFormationProviderForAlignment{})
+	_, ok = company.CompanyAlignment(3)
+	assert.False(t, ok, "provider without alignment")
+	company.SetFormationProvider(alignmentStub{})
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+	got, ok := company.CompanyAlignment(3)
+	assert.True(t, ok)
+	assert.Equal(t, 30, got)
+}

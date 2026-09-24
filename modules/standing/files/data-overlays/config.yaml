@@ -1,0 +1,38 @@
+# Phase 21b settlement standing.
+#
+# A settlement is a zone with an alignment (engine scale -100..100; players
+# see 1-100, so one displayed point is two engine points). A company's
+# standing there is set by the gap between the company's average alignment
+# (the leader and every companion) and the settlement's. Standing is
+# derived every time, never stored.
+#
+#   gap <= WelcomeGap     welcome     normal prices
+#   gap <= ToleratedGap   tolerated   normal prices
+#   gap <= DistrustedGap  distrusted  market buys cost DistrustedMarkupPct
+#                                     more and sales pay that much less; an
+#                                     inn room costs DistrustedInnMarkupPct
+#                                     more
+#   beyond                shunned     the market and the inn refuse
+#
+# Gaps must satisfy 0 <= WelcomeGap <= ToleratedGap <= DistrustedGap <= 200,
+# or all three fall back to their defaults. DistrustedMarkupPct is 0..90;
+# DistrustedInnMarkupPct is 0..500.
+#
+# Rooms in a market zone tagged BlackMarketRoomTag trade the zone's market
+# ledger at normal prices, but only with distrusted or shunned companies.
+#
+# A settlement naming an unknown zone, listed twice, or with an alignment
+# outside -100..100 is skipped with a warning.
+WelcomeGap: 40
+ToleratedGap: 80
+DistrustedGap: 130
+DistrustedMarkupPct: 20
+DistrustedInnMarkupPct: 50
+BlackMarketRoomTag: blackmarket
+Settlements:
+  - Zone: Dunmar
+    Alignment: 40 # virtuous: a walled market town
+  - Zone: Old Kings Road
+    Alignment: 0 # neutral: trappers ask few questions
+  - Zone: Frostfang
+    Alignment: 30 # lawful: a king's city
