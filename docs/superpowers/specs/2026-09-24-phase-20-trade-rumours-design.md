@@ -54,7 +54,8 @@ changed.
    must walk to), falling back to the zone name.
 6. **Free.** No gold or drink purchase; that can come later with inn
    content.
-7. **`rumors` and `rumours`** are both registered commands.
+7. **`rumors`, `rumours`, `rumor`, and `rumour`** are all registered
+   commands.
 
 **Open owner decision carried from 19b (unchanged):** whether trading
 between markets keeps a small standing profit at equilibrium. The
@@ -72,9 +73,11 @@ makes it easier to find but does not change its size.
 - `modules/market`:
   - `Registry.News` (`news` in the store): a snapshot of stock per zone
     in the same shape as `Zones`. Decoded with the same corruption rules.
-  - On load, if the stored news is empty (a store from before this
-    phase, or a first boot), the news is taken from current stock and
-    saved. The refresh countdown starts at `RumorRefreshRounds`.
+  - On load, any configured market missing from the stored news (a
+    first boot, a store from before this phase, or a newly added
+    market) is snapshotted from current stock and saved. The refresh
+    countdown resumes from the stored value, clamped to
+    `RumorRefreshRounds`.
   - `onNewRound` counts down and, at zero, snapshots every configured
     market's stock into `News` and saves (together with drift, one save
     per tick).
@@ -85,9 +88,12 @@ makes it easier to find but does not change its size.
 
 **Known limitations:**
 
-- The refresh countdown is in memory. A restart or copyover restores the
-  persisted news but restarts the countdown, so news can be up to one
-  extra interval stale after a restart. It never refreshes early.
+- The refresh countdown is saved with every ledger save (drift, trades,
+  and the autosave/copyover/shutdown `plugins.Save`), not every round.
+  A restart resumes from the last saved value, so after a hard crash the
+  news can be up to one autosave period staler than the interval. It
+  never refreshes early, except that lowering `RumorRefreshRounds`
+  clamps a longer stored countdown at once.
 - Goods sold in only one market get only scarce/glut rumours.
 
 **Explicitly deferred:** paying the innkeeper or buying a drink for
@@ -96,11 +102,19 @@ rumours; wrong or invented rumours; rumours about non-market topics
 
 ## Durable model
 
-`Registry` gains `News map[string]ZoneMarket` (`yaml:"news,omitempty"`).
-It is written in the same atomic plugin file as the ledger. A store
-without `news` loads as empty news and is re-snapshotted, so old stores
-upgrade in place. A news record missing its stock is corrupt, as in
-`Zones`.
+`Registry` gains `News map[string]ZoneMarket` (`yaml:"news,omitempty"`)
+and `NewsIn int` (`yaml:"newsin,omitempty"`, rounds until the next
+snapshot; 0 or out of range means a full interval). Both are written in
+the same atomic plugin file as the ledger. A store without `news` loads
+as empty news and is re-snapshotted, so old stores upgrade in place. A
+news record missing its stock is corrupt, as in `Zones`. With no markets
+configured nothing is snapshotted or saved.
+
+**Implementation review additions (2026-09-24):** the countdown is
+persisted (it was in memory, so restarts more often than the interval
+stopped the news ever refreshing); a newly configured market joins the
+news at load instead of waiting for a refresh; with no markets, loads and
+refreshes no longer rewrite the store; singular `rumor`/`rumour` aliases.
 
 ## Constraints
 

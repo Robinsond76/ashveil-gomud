@@ -67,8 +67,10 @@ func TestLoadKeepsStoredNews(t *testing.T) {
 			"Old Kings Road": {Goods: []GoodStock{{ItemID: 28, Stock: 15}}},
 		},
 		News: map[string]ZoneMarket{
-			"Dunmar": {Goods: []GoodStock{{ItemID: 28, Stock: 2}}},
+			"Dunmar":         {Goods: []GoodStock{{ItemID: 28, Stock: 2}}},
+			"Old Kings Road": {Goods: []GoodStock{{ItemID: 28, Stock: 30}}},
 		},
+		NewsIn: 2,
 	}
 	store := &fakeStore{saved: saved.Clone()}
 	module := newRumorModule(store)
@@ -77,7 +79,7 @@ func TestLoadKeepsStoredNews(t *testing.T) {
 
 	assert.Zero(t, store.saveCalls, "stored news is kept, nothing to save")
 	assert.Equal(t, 2, module.newsStock(t, "Dunmar", 28), "news is the stored snapshot, not live stock")
-	assert.Equal(t, 3, module.newsIn, "the refresh countdown starts over")
+	assert.Equal(t, 2, module.newsIn, "the refresh countdown resumes")
 }
 
 func TestNewsRefreshesAfterConfiguredRounds(t *testing.T) {
@@ -262,4 +264,71 @@ func TestRumorsCommandPersistenceUnavailable(t *testing.T) {
 	w := &tradeWorld{module: module, store: store, user: marketUser(t), messages: captureMessages(t)}
 
 	assert.Contains(t, w.rumors(t, innRoom()), "Nobody here has any news of the markets right now.")
+}
+
+func TestNewsCountdownSurvivesReload(t *testing.T) {
+	store := &fakeStore{}
+	module := newRumorModule(store)
+	module.rumorRefresh = 5
+	module.load()
+	require.Equal(t, 5, module.newsIn)
+
+	// Restart every two rounds: the countdown must keep going, so the news
+	// still refreshes on the fifth round received overall.
+	rounds := 0
+	for boot := 0; boot < 3 && rounds < 5; boot++ {
+		for i := 0; i < 2 && rounds < 5; i++ {
+			module.onNewRound(events.NewRound{RoundNumber: uint64(rounds + 1)})
+			rounds++
+		}
+		require.NoError(t, module.save())
+		module = newRumorModule(store)
+		module.rumorRefresh = 5
+		module.load()
+	}
+	live, _ := module.zones["Dunmar"].Stock(28)
+	assert.Equal(t, 9, live, "five rounds of drift from 4")
+	assert.Equal(t, live, module.newsStock(t, "Dunmar", 28), "news refreshed despite restarts")
+	assert.Equal(t, 5, store.saved.NewsIn, "countdown restarted after the refresh and persisted")
+}
+
+func TestNewsCountdownClampedToConfiguredInterval(t *testing.T) {
+	store := &fakeStore{saved: Registry{
+		Zones:  map[string]ZoneMarket{"Dunmar": {Goods: []GoodStock{{ItemID: 28, Stock: 20}, {ItemID: 29, Stock: 30}}}},
+		News:   map[string]ZoneMarket{"Dunmar": {Goods: []GoodStock{{ItemID: 28, Stock: 20}, {ItemID: 29, Stock: 30}}}},
+		NewsIn: 500,
+	}}
+	module := newRumorModule(store)
+	module.markets = map[string][]market.Good{"Dunmar": {hide(), meat()}}
+	module.load()
+	assert.Equal(t, 3, module.newsIn, "a lowered interval takes effect at once")
+}
+
+func TestLoadAddsNewsForNewlyConfiguredMarket(t *testing.T) {
+	store := &fakeStore{saved: Registry{
+		Zones: map[string]ZoneMarket{"Dunmar": {Goods: []GoodStock{{ItemID: 28, Stock: 20}, {ItemID: 29, Stock: 30}}}},
+		News:  map[string]ZoneMarket{"Dunmar": {Goods: []GoodStock{{ItemID: 28, Stock: 2}}}},
+	}}
+	module := newRumorModule(store) // also configures Old Kings Road
+
+	module.load()
+
+	assert.Equal(t, 2, module.newsStock(t, "Dunmar", 28), "existing news kept")
+	assert.Equal(t, 30, module.newsStock(t, "Old Kings Road", 28), "the new market is in the news at once")
+	stock, ok := store.saved.News["Old Kings Road"].Stock(28)
+	require.True(t, ok, "persisted")
+	assert.Equal(t, 30, stock)
+}
+
+func TestNoMarketsNeverSaves(t *testing.T) {
+	store := &fakeStore{saved: Registry{Zones: map[string]ZoneMarket{}}}
+	module := newTestModule(store)
+	module.markets = map[string][]market.Good{}
+	module.rumorRefresh = 1
+
+	module.load()
+	module.onNewRound(events.NewRound{RoundNumber: 1})
+	module.load()
+
+	assert.Zero(t, store.saveCalls, "nothing to seed, snapshot, or refresh")
 }

@@ -36,7 +36,7 @@ instruction and recorded there.
       assertion includes news.
 - [x] `gofmt -l`, `go vet`, `go build ./...`, `go test -race ./...`,
       `make generate`, `make validate`.
-- [ ] **Testing and review gate:** independent reviewer over the phase
+- [x] **Testing and review gate:** independent reviewer over the phase
       diff; verify findings, fix with regression tests, record.
-- [ ] Update `docs/PROJECT_STATUS.md` (Phase 20 entry with **Review:**
+- [x] Update `docs/PROJECT_STATUS.md` (Phase 20 entry with **Review:**
       line).

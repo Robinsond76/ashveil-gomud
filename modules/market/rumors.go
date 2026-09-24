@@ -42,23 +42,47 @@ var rumorPhrases = map[market.RumorKind][2]string{
 }
 
 // snapshotNewsLocked replaces the news with every configured market's
-// current stock, clamped to each good's bounds.
+// current stock.
 func (m *MarketModule) snapshotNewsLocked() {
 	news := make(map[string]ZoneMarket, len(m.markets))
-	for zone, goods := range m.markets {
-		zm, ok := m.zones[zone]
-		if !ok {
-			continue
+	for zone := range m.markets {
+		if snap, ok := m.zoneSnapshotLocked(zone); ok {
+			news[zone] = snap
 		}
-		snap := ZoneMarket{Goods: []GoodStock{}}
-		for _, g := range goods {
-			if stock, ok := zm.Stock(g.ItemID); ok {
-				snap.Goods = append(snap.Goods, GoodStock{ItemID: g.ItemID, Stock: g.ClampStock(stock)})
-			}
-		}
-		news[zone] = snap
 	}
 	m.news = news
+}
+
+// addMissingNewsLocked snapshots each configured market that has no news
+// yet, reporting whether any was added.
+func (m *MarketModule) addMissingNewsLocked() bool {
+	added := false
+	for zone := range m.markets {
+		if _, ok := m.news[zone]; ok {
+			continue
+		}
+		if snap, ok := m.zoneSnapshotLocked(zone); ok {
+			m.news[zone] = snap
+			added = true
+		}
+	}
+	return added
+}
+
+// zoneSnapshotLocked copies a configured market's current stock, clamped
+// to each good's bounds.
+func (m *MarketModule) zoneSnapshotLocked(zone string) (ZoneMarket, bool) {
+	zm, ok := m.zones[zone]
+	if !ok {
+		return ZoneMarket{}, false
+	}
+	snap := ZoneMarket{Goods: []GoodStock{}}
+	for _, g := range m.markets[zone] {
+		if stock, ok := zm.Stock(g.ItemID); ok {
+			snap.Goods = append(snap.Goods, GoodStock{ItemID: g.ItemID, Stock: g.ClampStock(stock)})
+		}
+	}
+	return snap, true
 }
 
 // newsSightings returns the news as sightings placed by zone name, in zone

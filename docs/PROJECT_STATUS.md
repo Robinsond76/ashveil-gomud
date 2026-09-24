@@ -5,8 +5,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-23
-- **HEAD:** Phase 19b (market trading) is complete and reviewed; Phase 19 is done.
+- **Last updated:** 2026-09-24
+- **HEAD:** Phase 20 (trade rumours) is complete and reviewed; Phase 19b is done.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -39,8 +39,9 @@ instead of duplicating them.
   and Phase 19 (zone stock ledgers with bounded round-driven price drift
   and a `market` command; Dunmar and Old Kings Road markets), and Phase
   19b (trading in tagged market rooms with separate buy and sell
-  prices; Dunmar Market Square, Trappers' Post).
-- **Next:** Phase 20 (trade rumours). One Phase 19b decision is open
+  prices; Dunmar Market Square, Trappers' Post), and Phase 20 (trade
+  rumours at inns from a stale, persisted market news snapshot).
+- **Next:** Phase 21 (alignment). One Phase 19b decision is open
   with the owner: whether trading between markets should keep a small
   standing profit at equilibrium (see the 19b spec). Phase 18 and 19 have design docs
   and implementation plans, confirmed with the user 2026-09-23 (all
@@ -103,10 +104,55 @@ instead of duplicating them.
 | 18b | Cooking | Complete: `cooking` skill + `cook` profession, per-recipe skill requirements on room containers, deterministic recipe choice, Waymark Inn hearth with three meals |
 | 19 | Commodities and markets | Complete: `internal/market`, `modules/market`, `market` command, Dunmar and Old Kings Road markets |
 | 19b | Market trading | Complete: `market buy`/`market sell` in tagged market rooms, buy/sell spread, Dunmar Market Square, Trappers' Post; inter-market profit policy open with the owner |
-| 20–21 | Trade rumours, alignment | Planned (roadmap 2026-09-23) |
+| 20 | Trade rumours | Complete: `rumors` at inns, fuzzy hints from a persisted market news snapshot refreshed every 150 rounds |
+| 21 | Alignment | Planned (roadmap 2026-09-23) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 20: trade rumours (2026-09-24)
+
+- **What:** In any room tagged `inn` (`RumorRoomTag`), `rumors` (also
+  `rumours`, `rumor`, `rumour`) gives up to `RumorsPerAsk` (3) hints
+  drawn at random from the market news: which market is short of or
+  drowning in a good, and, for goods sold in two or more markets, where
+  it comes cheapest and who pays best. No prices are quoted, and places
+  are named by their market room. The news is a snapshot of every
+  market's stock, refreshed every `RumorRefreshRounds` (150) rounds and
+  saved with the ledger, so it is stale by design. Pure rules in
+  `internal/market/rumor.go`; the snapshot, countdown, and command in
+  `modules/market`. Design and plan:
+  [20 spec](superpowers/specs/2026-09-24-phase-20-trade-rumours-design.md) /
+  [20 plan](superpowers/plans/2026-09-24-phase-20-trade-rumours.md).
+- **Why:** The roadmap's "trade rumours hint at where goods are cheap or
+  wanted". Defaults (module owner, inn tag, snapshot staleness, four
+  rumour kinds, free to ask) were applied under the session's "continue
+  with next phase" instruction and are recorded in the spec.
+- **Step completed:** Phase 20. Phase 21 (alignment) is next.
+- **Verification:** `go test -race ./...`, `make generate` (no diff),
+  and `make validate` passed. The wiring test runs all four command
+  names through `usercommands.TryCommand` in the shipped Waymark Inn,
+  checks refusals at the West Gate and Market Square, refreshes the news
+  with a real `NewRound` and proves it moved from the stale start stock
+  to live stock in the real store, and loads a truncated `news` section
+  from the real file (left untouched, markets disabled).
+- **Review:** Independent reviewer found no correctness bugs and
+  confirmed the invariants (no clock access, leaf lock, atomic
+  persistence, clean upgrade of pre-Phase-20 stores). Fixed with
+  regression tests: the refresh countdown lived only in memory, so
+  restarts more often than the interval meant the news never refreshed
+  (now saved with the ledger and resumed, clamped to the interval); a
+  newly configured market stayed out of the news until a refresh (now
+  added at load); with no markets, every load and refresh rewrote the
+  store (no longer); added the singular `rumor`/`rumour`; wiring test
+  now covers a truncated `news` section through the real file and
+  asserts live stock had moved before the refresh. Not changed: a
+  non-string `RumorRoomTag` falls back to `inn` silently (same as
+  `RoomTag`); a market can be both "drowning in" and "best buyer" for a
+  good when zones use different curves (accurate under the design); the
+  only open market counts as cheapest when the other is sold out (by
+  design). The 19b inter-market profit decision is still open; the
+  cheapest/best-buyer rumours point players at that route.
 
 ### Phase 19b: market trading (2026-09-23)
 

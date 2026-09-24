@@ -118,7 +118,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 
 	reloaded := NewRegistry()
 	require.NoError(t, pluginStore{plug: module.plug}.Load(reloaded))
-	assert.Equal(t, Registry{Zones: module.zones, News: module.news}, *reloaded, "the round's drift was persisted")
+	assert.Equal(t, Registry{Zones: module.zones, News: module.news, NewsIn: module.newsIn}, *reloaded, "the round's drift was persisted")
 
 	// Trading through the real command in the shipped square.
 	user.Character.Gold = 100
@@ -205,7 +205,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 		events.ProcessEvents()
 		return stripTags(strings.Join(*messages, "\n"))
 	}
-	for _, command := range []string{"rumors", "rumours"} {
+	for _, command := range []string{"rumors", "rumours", "rumor", "rumour"} {
 		out := rumors(command, 2003)
 		assert.Contains(t, out, "You listen to the talk of the markets", command)
 		assert.Len(t, strings.Split(strings.TrimSpace(out), "\n"), 4, "%s: a header and three rumours", command)
@@ -218,8 +218,10 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	// A real NewRound on the last round of the interval refreshes the news
 	// from live stock and persists it to the real store.
 	module.mu.Lock()
+	staleHide, _ := module.news["Dunmar"].Stock(28)
 	module.newsIn = 1
 	module.mu.Unlock()
+	assert.Equal(t, 4, staleHide, "news still holds the shipped start stock")
 	events.AddToQueue(events.NewRound{RoundNumber: 3})
 	events.ProcessEvents()
 	liveHide, _ := module.zones["Dunmar"].Stock(28)
@@ -227,6 +229,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	newsHide, _ := module.news["Dunmar"].Stock(28)
 	newsIn := module.newsIn
 	module.mu.Unlock()
+	assert.NotEqual(t, staleHide, liveHide, "trading and drift moved live stock")
 	assert.Equal(t, liveHide, newsHide, "news refreshed from live stock")
 	assert.Equal(t, 150, newsIn, "countdown restarted")
 	reloaded = NewRegistry()
@@ -236,7 +239,12 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 
 	// A corrupt or truncated real store file disables markets and is left
 	// untouched for repair rather than re-seeded over.
-	for _, corrupt := range []string{"", "zones: [not, a, map", "zones:\n  Dunmar:\n    goods:\n    - itemid: 28\n"} {
+	for _, corrupt := range []string{
+		"",
+		"zones: [not, a, map",
+		"zones:\n  Dunmar:\n    goods:\n    - itemid: 28\n",
+		"zones:\n  Dunmar:\n    goods:\n    - itemid: 28\n      stock: 9\nnews:\n  Dunmar:\n    goods:\n    - itemid: 28\n",
+	} {
 		require.NoError(t, module.plug.WriteBytes("market", []byte(corrupt)))
 		broken := &MarketModule{
 			plug:       module.plug,
