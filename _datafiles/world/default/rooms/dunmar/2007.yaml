@@ -1,0 +1,27 @@
+roomid: 2007
+zone: Dunmar
+title: The Chapel of the Wayfarer
+description: A small stone chapel stands at the east end of the market square,
+  its door never barred. Inside, the din of the market fades to a murmur. Rows of
+  plain wooden benches face a low altar draped in blue cloth, where candles burn
+  in clay dishes left by travelers who asked for a safe road. Along the walls hang
+  wooden tokens carved with the names of those who didn't come back, and before
+  the altar lies a worn straw pallet where the fallen are laid to wake. The square
+  lies back to the west.
+biome: city
+tags:
+  - church
+  - indoor
+exits:
+  west:
+    roomid: 2004
+spawninfo:
+- mobid: 65
+  message: Sister Maren steps out from behind the altar.
+  respawnrate: 5 real minutes
+mapsymbol: +
+maplegend: Chapel
+mapx: 2
+mapy: 0
+mapz: 0
+hascoordinates: true

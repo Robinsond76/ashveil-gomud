@@ -1,0 +1,24 @@
+mobid: 65
+zone: Dunmar
+# Phase 25a: keeper of the Chapel of the Wayfarer (room 2007), Dunmar's
+# church. Players who fall with Dunmar as their last city wake before her
+# altar. She carries nothing, has no gold, and drops nothing.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 5
+idlecommands:
+  - 'emote trims the wick of a votive candle.'
+  - 'say The road takes more than it gives. Rest here a while.'
+  - ''
+character:
+  name: Sister Maren
+  description: 'A tall, grey-haired woman in a faded blue habit, its hem stained
+    with road dust. Sister Maren has tended the Chapel of the Wayfarer for longer
+    than most of Dunmar can remember, and she has washed the wounds of more
+    fallen travelers than she cares to count. Her hands are steady and her eyes
+    are kind, but tired.'
+  raceid: 1
+  level: 20
+  alignment: 80
+  items: []

@@ -7,7 +7,8 @@ description: A cobbled square opens east of the west gate, hemmed in by tall tim
   hides, a butcher's block is loud with flies and cleavers, and an old woman sells
   bundled herbs from a barrow. Criers shout the day's prices over the din, and a
   chalked board by the well tracks what the town is short of and what it has too
-  much of. A reeking alley runs south behind the tanner's stall.
+  much of. A reeking alley runs south behind the tanner's stall, and a small
+  stone chapel stands at the square's east end.
 biome: city
 tags:
   - market
@@ -16,6 +17,8 @@ exits:
     roomid: 2001
   south:
     roomid: 2006
+  east:
+    roomid: 2007
 mapx: 1
 mapy: 0
 mapz: 0

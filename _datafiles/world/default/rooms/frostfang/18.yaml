@@ -11,6 +11,8 @@ description: Inside the Sanctuary of the Benevolent Heart, a serene ambiance env
   upwards in delicate tendrils, creating an atmosphere of peace and reflection.
 mapsymbol: +
 maplegend: Temple
+tags:
+  - church
 exits:
   west:
     roomid: 17
