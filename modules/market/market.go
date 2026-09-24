@@ -10,6 +10,12 @@
 // (RoomTag, default "market"): prices are listed and goods traded only
 // there. The market is its own counterparty; shopkeepers are untouched.
 //
+// Phase 20 trade rumours: every RumorRefreshRounds rounds the module
+// snapshots every market's stock as the news, persisted with the ledger.
+// In rooms carrying the rumour room tag (RumorRoomTag, default "inn") the
+// rumors command turns that stale news into fuzzy hints about where goods
+// are short, overstocked, cheapest, or best paid for.
+//
 // Like modules/weather, markets react to events.NewRound and never read,
 // drive, or advance the shared round counter or world clock.
 package market
@@ -61,9 +67,11 @@ func (z ZoneMarket) Stock(itemID int) (int, bool) {
 	return 0, false
 }
 
-// Registry is the durable, zone-keyed set of market stock ledgers.
+// Registry is the durable, zone-keyed set of market stock ledgers, plus
+// the news: the stock as last snapshotted for trade rumours.
 type Registry struct {
 	Zones map[string]ZoneMarket `yaml:"zones"`
+	News  map[string]ZoneMarket `yaml:"news,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -73,9 +81,17 @@ func NewRegistry() *Registry {
 
 // Clone returns a deep copy of the registry.
 func (r Registry) Clone() Registry {
-	out := Registry{Zones: make(map[string]ZoneMarket, len(r.Zones))}
-	for zone, zm := range r.Zones {
-		out.Zones[zone] = ZoneMarket{Goods: append([]GoodStock(nil), zm.Goods...)}
+	out := Registry{Zones: cloneZones(r.Zones)}
+	if r.News != nil {
+		out.News = cloneZones(r.News)
+	}
+	return out
+}
+
+func cloneZones(zones map[string]ZoneMarket) map[string]ZoneMarket {
+	out := make(map[string]ZoneMarket, len(zones))
+	for zone, zm := range zones {
+		out[zone] = ZoneMarket{Goods: append([]GoodStock(nil), zm.Goods...)}
 	}
 	return out
 }
@@ -112,12 +128,15 @@ var ErrCorruptStore = errors.New("market: corrupt store")
 // wireRegistry mirrors Registry with a pointer stock so a record missing
 // its stock (a truncated file) is detectable rather than read as zero.
 type wireRegistry struct {
-	Zones map[string]struct {
-		Goods []struct {
-			ItemID int  `yaml:"itemid"`
-			Stock  *int `yaml:"stock"`
-		} `yaml:"goods"`
-	} `yaml:"zones"`
+	Zones wireZones `yaml:"zones"`
+	News  wireZones `yaml:"news"`
+}
+
+type wireZones map[string]struct {
+	Goods []struct {
+		ItemID int  `yaml:"itemid"`
+		Stock  *int `yaml:"stock"`
+	} `yaml:"goods"`
 }
 
 // decodeRegistry parses stored bytes. An existing but empty file, or a
@@ -125,7 +144,8 @@ type wireRegistry struct {
 // ledger to re-seed. It drops entries keyed by an empty zone name, goods
 // with a non-positive item ID, and repeated records for the same good (the
 // first wins). Out-of-range stock is retained and clamped when it is next
-// used.
+// used. The news follows the same rules; a store without news (from
+// before Phase 20) decodes with empty news.
 func decodeRegistry(data []byte, registry *Registry) error {
 	if len(bytes.TrimSpace(data)) == 0 {
 		return fmt.Errorf("%w: empty file", ErrCorruptStore)
@@ -135,7 +155,20 @@ func decodeRegistry(data []byte, registry *Registry) error {
 		return err
 	}
 	loaded := NewRegistry()
-	for zone, zm := range wire.Zones {
+	var err error
+	if loaded.Zones, err = decodeZones("zones", wire.Zones); err != nil {
+		return err
+	}
+	if loaded.News, err = decodeZones("news", wire.News); err != nil {
+		return err
+	}
+	*registry = *loaded
+	return nil
+}
+
+func decodeZones(section string, wire wireZones) (map[string]ZoneMarket, error) {
+	out := map[string]ZoneMarket{}
+	for zone, zm := range wire {
 		if zone == "" {
 			continue
 		}
@@ -143,19 +176,18 @@ func decodeRegistry(data []byte, registry *Registry) error {
 		goods := []GoodStock{}
 		for _, g := range zm.Goods {
 			if g.Stock == nil {
-				return fmt.Errorf("%w: zone %q item %d has no stock", ErrCorruptStore, zone, g.ItemID)
+				return nil, fmt.Errorf("%w: %s zone %q item %d has no stock", ErrCorruptStore, section, zone, g.ItemID)
 			}
 			if g.ItemID <= 0 || seen[g.ItemID] {
-				mudlog.Warn("market: dropping stored stock record", "zone", zone, "itemid", g.ItemID)
+				mudlog.Warn("market: dropping stored stock record", "section", section, "zone", zone, "itemid", g.ItemID)
 				continue
 			}
 			seen[g.ItemID] = true
 			goods = append(goods, GoodStock{ItemID: g.ItemID, Stock: *g.Stock})
 		}
-		loaded.Zones[zone] = ZoneMarket{Goods: goods}
+		out[zone] = ZoneMarket{Goods: goods}
 	}
-	*registry = *loaded
-	return nil
+	return out, nil
 }
 
 // MarketModule owns the durable market ledgers for one plugin.
@@ -176,10 +208,21 @@ type MarketModule struct {
 	// roomTitles caches marketRooms per zone; load clears it.
 	roomTitles map[string][]string
 
+	// Phase 20 trade rumours: the rumour room tag, the news refresh
+	// interval in rounds, and how many rumours one ask shows.
+	rumorTag     string
+	rumorRefresh int
+	rumorsPerAsk int
+
 	// markets is the configured tracked-goods list per market zone, in
 	// config order.
 	markets map[string][]market.Good
 	zones   map[string]ZoneMarket
+	// news is the durable stock snapshot rumours are drawn from; newsIn
+	// counts the rounds until the next snapshot (in memory only: a restart
+	// restarts the countdown).
+	news    map[string]ZoneMarket
+	newsIn  int
 	loadErr error
 
 	// mu is a leaf lock: nothing that takes another package's lock is
@@ -196,23 +239,29 @@ var module *MarketModule
 
 func init() {
 	m := &MarketModule{
-		plug:        plugins.New("market", "1.0"),
-		roll:        rand.Uint64,
-		itemExists:  func(itemID int) bool { return items.GetItemSpec(itemID) != nil },
-		itemNames:   itemNames,
-		zoneExists:  zoneExists,
-		marketRooms: marketRooms,
-		roomTag:     defaultRoomTag,
-		spreadPct:   defaultSpreadPct,
-		markets:     map[string][]market.Good{},
-		zones:       map[string]ZoneMarket{},
-		loadErr:     errNotLoaded,
+		plug:         plugins.New("market", "1.0"),
+		roll:         rand.Uint64,
+		itemExists:   func(itemID int) bool { return items.GetItemSpec(itemID) != nil },
+		itemNames:    itemNames,
+		zoneExists:   zoneExists,
+		marketRooms:  marketRooms,
+		roomTag:      defaultRoomTag,
+		spreadPct:    defaultSpreadPct,
+		rumorTag:     defaultRumorTag,
+		rumorRefresh: defaultRumorRefresh,
+		rumorsPerAsk: defaultRumorsPerAsk,
+		markets:      map[string][]market.Good{},
+		zones:        map[string]ZoneMarket{},
+		news:         map[string]ZoneMarket{},
+		loadErr:      errNotLoaded,
 	}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
 	}
 	m.store = pluginStore{plug: m.plug}
 	m.plug.AddUserCommand("market", m.userCommand, false, false)
+	m.plug.AddUserCommand("rumors", m.rumorsCommand, false, false)
+	m.plug.AddUserCommand("rumours", m.rumorsCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
@@ -280,7 +329,7 @@ func (m *MarketModule) saveLocked() error {
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
-	if err := m.store.Save(Registry{Zones: m.zones}); err != nil {
+	if err := m.store.Save(Registry{Zones: m.zones, News: m.news}); err != nil {
 		return fmt.Errorf("market: save failed; please retry: %w", err)
 	}
 	return nil
@@ -290,19 +339,24 @@ func (m *MarketModule) saveLocked() error {
 // any configured good that has no stock record yet at its StartStock (a
 // first boot or a newly added market). Existing stock, including records
 // for goods or zones no longer configured, is kept as-is, so a restart or
-// copyover restores exactly the persisted stock. A load failure disables
-// market effects until a successful reload rather than overwriting the
-// store.
+// copyover restores exactly the persisted stock. Stored news is kept too;
+// a store with none (a first boot, or one from before Phase 20) takes its
+// news from the current stock. A load failure disables market effects
+// until a successful reload rather than overwriting the store.
 func (m *MarketModule) load() {
 	if m.store == nil {
 		return
 	}
 	var markets map[string][]market.Good
 	roomTag, spreadPct := m.roomTag, m.spreadPct
+	rumorTag, rumorRefresh, rumorsPerAsk := m.rumorTag, m.rumorRefresh, m.rumorsPerAsk
 	if m.plug != nil {
 		markets = parseMarkets(m.plug.Config.Get("Markets"), m.itemExists, m.zoneExists)
 		roomTag = parseRoomTag(m.plug.Config.Get("RoomTag"))
 		spreadPct = parseSpreadPct(m.plug.Config.Get("SpreadPct"))
+		rumorTag = parseRumorTag(m.plug.Config.Get("RumorRoomTag"))
+		rumorRefresh = parseRumorRefresh(m.plug.Config.Get("RumorRefreshRounds"))
+		rumorsPerAsk = parseRumorsPerAsk(m.plug.Config.Get("RumorsPerAsk"))
 	}
 	loaded := NewRegistry()
 	err := m.store.Load(loaded)
@@ -313,6 +367,8 @@ func (m *MarketModule) load() {
 		m.markets = markets
 	}
 	m.roomTag, m.spreadPct = roomTag, spreadPct
+	m.rumorTag, m.rumorRefresh, m.rumorsPerAsk = rumorTag, rumorRefresh, rumorsPerAsk
+	m.newsIn = m.rumorRefresh
 	m.roomTitles = nil
 	if err != nil {
 		m.loadErr = err
@@ -323,8 +379,14 @@ func (m *MarketModule) load() {
 	if m.zones == nil {
 		m.zones = map[string]ZoneMarket{}
 	}
+	m.news = loaded.News
 	m.loadErr = nil
-	if m.seedLocked() {
+	seeded := m.seedLocked()
+	if len(m.news) == 0 {
+		m.snapshotNewsLocked()
+		seeded = true
+	}
+	if seeded {
 		if err := m.saveLocked(); err != nil {
 			mudlog.Error("market: seed save", "error", err)
 		}
@@ -350,7 +412,8 @@ func (m *MarketModule) seedLocked() bool {
 }
 
 // onNewRound drifts every configured good's stock one bounded step toward
-// its target and saves once if anything moved. It only reacts to the
+// its target, refreshes the rumour news every rumorRefresh rounds it
+// receives, and saves once if anything changed. It only reacts to the
 // event; it never reads or advances the round counter.
 func (m *MarketModule) onNewRound(e events.Event) events.ListenerReturn {
 	if _, ok := e.(events.NewRound); !ok {
@@ -380,6 +443,12 @@ func (m *MarketModule) onNewRound(e events.Event) events.ListenerReturn {
 				break
 			}
 		}
+	}
+	m.newsIn--
+	if m.newsIn <= 0 {
+		m.snapshotNewsLocked()
+		m.newsIn = m.rumorRefresh
+		changed = true
 	}
 	if changed {
 		if err := m.saveLocked(); err != nil {

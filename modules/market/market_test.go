@@ -70,10 +70,13 @@ func newTestModule(store Store) *MarketModule {
 			}
 			return nil
 		},
-		roomTag:   "market",
-		spreadPct: 20,
-		markets:   map[string][]market.Good{"Dunmar": {hide(), meat()}},
-		zones:     map[string]ZoneMarket{},
+		roomTag:      "market",
+		spreadPct:    20,
+		rumorTag:     "inn",
+		rumorRefresh: 150,
+		rumorsPerAsk: 3,
+		markets:      map[string][]market.Good{"Dunmar": {hide(), meat()}},
+		zones:        map[string]ZoneMarket{},
 	}
 }
 
@@ -111,17 +114,20 @@ func TestLoadSeedsOnlyGoodsMissingFromExistingStore(t *testing.T) {
 }
 
 func TestLoadRoundTripsExistingStoreUnchanged(t *testing.T) {
-	saved := Registry{Zones: map[string]ZoneMarket{
-		"Dunmar":  {Goods: []GoodStock{{ItemID: 28, Stock: 11}, {ItemID: 29, Stock: 45}}},
-		"Retired": {Goods: []GoodStock{{ItemID: 30, Stock: 3}}},
-	}}
+	saved := Registry{
+		Zones: map[string]ZoneMarket{
+			"Dunmar":  {Goods: []GoodStock{{ItemID: 28, Stock: 11}, {ItemID: 29, Stock: 45}}},
+			"Retired": {Goods: []GoodStock{{ItemID: 30, Stock: 3}}},
+		},
+		News: map[string]ZoneMarket{"Dunmar": {Goods: []GoodStock{{ItemID: 28, Stock: 2}}}},
+	}
 	store := &fakeStore{saved: saved.Clone()}
 	module := newTestModule(store)
 
 	module.load()
 
 	assert.Zero(t, store.saveCalls, "nothing to seed, nothing to save")
-	assert.Equal(t, saved, Registry{Zones: module.zones}, "stock and unconfigured records survive untouched")
+	assert.Equal(t, saved, Registry{Zones: module.zones, News: module.news}, "stock, news, and unconfigured records survive untouched")
 }
 
 func TestLoadFailureDisablesMarketsWithoutPanic(t *testing.T) {

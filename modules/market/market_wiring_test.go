@@ -45,6 +45,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	shippedRooms := map[int]*rooms.Room{}
 	for id, path := range map[int]string{
 		2001: "rooms/dunmar/2001.yaml",
+		2003: "rooms/dunmar/2003.yaml",
 		2004: "rooms/dunmar/2004.yaml",
 		2002: "rooms/old_kings_road/2002.yaml",
 		2005: "rooms/old_kings_road/2005.yaml",
@@ -117,7 +118,7 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 
 	reloaded := NewRegistry()
 	require.NoError(t, pluginStore{plug: module.plug}.Load(reloaded))
-	assert.Equal(t, Registry{Zones: module.zones}, *reloaded, "the round's drift was persisted")
+	assert.Equal(t, Registry{Zones: module.zones, News: module.news}, *reloaded, "the round's drift was persisted")
 
 	// Trading through the real command in the shipped square.
 	user.Character.Gold = 100
@@ -188,6 +189,50 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	require.NoError(t, pluginStore{plug: module.plug}.Load(saved))
 	savedStock, _ := saved.Zones["Dunmar"].Stock(28)
 	assert.Equal(t, 11, savedStock)
+
+	// Phase 20 trade rumours through the real commands in the shipped inn.
+	// The news was taken from the shipped start stocks at load.
+	assert.True(t, shippedRooms[2003].HasTag("inn"))
+	require.Equal(t, 150, module.rumorRefresh, "shipped RumorRefreshRounds")
+	require.Equal(t, 3, module.rumorsPerAsk, "shipped RumorsPerAsk")
+	rumors := func(command string, roomId int) string {
+		t.Helper()
+		user.Character.RoomId = roomId
+		*messages = nil
+		handled, err := usercommands.TryCommand(command, "", user.UserId, events.CmdSkipScripts)
+		require.NoError(t, err)
+		require.True(t, handled)
+		events.ProcessEvents()
+		return stripTags(strings.Join(*messages, "\n"))
+	}
+	for _, command := range []string{"rumors", "rumours"} {
+		out := rumors(command, 2003)
+		assert.Contains(t, out, "You listen to the talk of the markets", command)
+		assert.Len(t, strings.Split(strings.TrimSpace(out), "\n"), 4, "%s: a header and three rumours", command)
+		assert.Regexp(t, `Dunmar Market Square|Trappers' Post`, out, "rumours name the shipped market rooms")
+		assert.NotContains(t, out, "gold")
+	}
+	assert.Contains(t, rumors("rumors", 2001), "Try an inn.", "no rumours at the gate")
+	assert.Contains(t, rumors("rumors", 2004), "Try an inn.", "no rumours in the market square")
+
+	// A real NewRound on the last round of the interval refreshes the news
+	// from live stock and persists it to the real store.
+	module.mu.Lock()
+	module.newsIn = 1
+	module.mu.Unlock()
+	events.AddToQueue(events.NewRound{RoundNumber: 3})
+	events.ProcessEvents()
+	liveHide, _ := module.zones["Dunmar"].Stock(28)
+	module.mu.Lock()
+	newsHide, _ := module.news["Dunmar"].Stock(28)
+	newsIn := module.newsIn
+	module.mu.Unlock()
+	assert.Equal(t, liveHide, newsHide, "news refreshed from live stock")
+	assert.Equal(t, 150, newsIn, "countdown restarted")
+	reloaded = NewRegistry()
+	require.NoError(t, pluginStore{plug: module.plug}.Load(reloaded))
+	storedNews, _ := reloaded.News["Dunmar"].Stock(28)
+	assert.Equal(t, liveHide, storedNews, "refreshed news persisted to the real store")
 
 	// A corrupt or truncated real store file disables markets and is left
 	// untouched for repair rather than re-seeded over.

@@ -30,8 +30,19 @@
 # The proving content starts Dunmar short of hides and meat and the
 # Trappers' Post glutted with hides, so both markets visibly drift after
 # boot, and hides are cheaper at the post than in town.
+#
+# Phase 20 trade rumours: every RumorRefreshRounds rounds the markets'
+# stock is written down as the news (persisted with the ledger). In any
+# room tagged RumorRoomTag (inns, in any zone) players can ask "rumors" (or
+# "rumours") and hear up to RumorsPerAsk hints drawn from that news: which
+# market is short of or drowning in a good, and, for goods traded in two
+# or more markets, where it comes cheapest and who pays best. Rumours
+# never quote prices, and they are only as fresh as the last snapshot.
 RoomTag: market
 SpreadPct: 20 # 1..90
+RumorRoomTag: inn
+RumorRefreshRounds: 150 # 1..100000; 150 rounds is 10 minutes at 4-second rounds
+RumorsPerAsk: 3 # 1..10
 Markets:
   - Zone: Dunmar
     Goods:

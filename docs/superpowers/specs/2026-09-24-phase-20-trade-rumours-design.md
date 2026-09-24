@@ -44,9 +44,10 @@ changed.
    - **scarce**: the market is short (stock level `none` or `scarce`);
    - **glut**: the market is overstocked (`plentiful` or `glutted`);
    - **cheapest**: among two or more markets trading the good, this one
-     had the unique lowest open buy price;
+     had the unique lowest open buy price (a sold-out market isn't
+     selling, so it doesn't compete);
    - **best buyer**: among two or more markets, this one had the unique
-     highest open sell price.
+     highest open sell price (a full market isn't buying).
    Each ask shows at most `RumorsPerAsk` (default 3, valid 1..10) of the
    current rumours, picked at random, each in one of two phrasings.
 5. **Places** are named by the market's room title (the room a player
@@ -111,7 +112,7 @@ upgrade in place. A news record missing its stock is corrupt, as in
 ## Acceptance criteria
 
 - Pure tests: each rumour kind's thresholds; cheapest/best buyer need two
-  or more markets and a unique extreme, and skip closed sides; output is
+  or more markets and a unique extreme, and closed sides don't compete; output is
   deterministic; `PickRumors` returns distinct rumours, at most n, all
   when n exceeds the count.
 - Module tests: news seeded on load from current stock when missing and
