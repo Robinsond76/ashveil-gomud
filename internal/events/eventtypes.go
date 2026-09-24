@@ -328,6 +328,13 @@ type MobDeath struct {
 	Level         int
 	PlayerDamage  map[int]int
 	KilledByUsers []int // user IDs of players who contributed damage; empty if killed by non-players
+	// KeptWorn, KeptItems, and KeptGold are what the death's drop rules
+	// left on the body (Phase 25b): the worn items, by slot, that didn't
+	// drop, and, for a perma-gear mob, its carried items and gold. They are
+	// destroyed with the mob; a company companion's record keeps them.
+	KeptWorn  map[items.ItemType]items.Item
+	KeptItems []items.Item
+	KeptGold  int
 }
 
 func (l MobDeath) Type() string { return `MobDeath` }

@@ -81,6 +81,11 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	mobXP := mob.Character.XPTL(mob.Character.Level - 1)
 
+	// Phase 25b: the worn-item drops are rolled here, before the death is
+	// announced, so the event can say what stays on the body.
+	permaGear := mob.Character.HasBuffFlag("perma-gear")
+	body := bodyKeeps(mob, permaGear)
+
 	killedByUsers := make([]int, 0, len(mob.Character.PlayerDamage))
 	for uId := range mob.Character.PlayerDamage {
 		killedByUsers = append(killedByUsers, uId)
@@ -94,6 +99,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		Level:         mob.Character.Level,
 		PlayerDamage:  mob.Character.PlayerDamage,
 		KilledByUsers: killedByUsers,
+		KeptWorn:      body.keptWorn,
+		KeptItems:     body.keptItems,
+		KeptGold:      body.keptGold,
 	})
 
 	xpVal := mobXP / 90
@@ -328,7 +336,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	}
 
-	if !mob.Character.HasBuffFlag("perma-gear") {
+	if !permaGear {
 
 		corpseItems := []items.Item{}
 		corpseGold := 0
@@ -350,21 +358,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			}
 		}
 
-		allWornItems := mob.Character.Equipment.GetAllItems()
-
-		for _, item := range allWornItems {
-
-			if item.IsRemoveLocked() {
-				continue
-			}
-
-			roll := util.Rand(100)
-
-			util.LogRoll(`Drop Item`, roll, mob.ItemDropChance)
-
-			if roll >= mob.ItemDropChance {
-				continue
-			}
+		for _, item := range body.dropWorn {
 
 			if config.Death.CorpseItems && config.Death.CorpsesEnabled {
 				corpseItems = append(corpseItems, item)
@@ -458,4 +452,44 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// deathBody is what a dying mob's drop rules leave on its body and what they
+// drop from its worn gear.
+type deathBody struct {
+	dropWorn  []items.Item
+	keptWorn  map[items.ItemType]items.Item
+	keptItems []items.Item
+	keptGold  int
+}
+
+// bodyKeeps rolls a dying mob's worn-item drops: each worn item that isn't
+// remove-locked drops with ItemDropChance percent. A perma-gear mob drops
+// nothing, keeping its carried items and gold too; any other mob always
+// drops those.
+func bodyKeeps(mob *mobs.Mob, permaGear bool) deathBody {
+	body := deathBody{}
+	for _, slot := range items.AllEquipSlots() {
+		item := mob.Character.Equipment.Get(slot)
+		if item == nil || item.ItemId <= 0 {
+			continue
+		}
+		if !permaGear && !item.IsRemoveLocked() {
+			roll := util.Rand(100)
+			util.LogRoll(`Drop Item`, roll, mob.ItemDropChance)
+			if roll < mob.ItemDropChance {
+				body.dropWorn = append(body.dropWorn, *item)
+				continue
+			}
+		}
+		if body.keptWorn == nil {
+			body.keptWorn = map[items.ItemType]items.Item{}
+		}
+		body.keptWorn[slot] = *item
+	}
+	if permaGear {
+		body.keptItems = append([]items.Item(nil), mob.Character.Items...)
+		body.keptGold = mob.Character.Gold
+	}
+	return body
 }
