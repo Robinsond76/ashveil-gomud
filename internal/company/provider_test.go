@@ -126,3 +126,49 @@ func TestCompanyAlignmentSeam(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, 30, got)
 }
+
+func TestChemistryProviderNoneRegistered(t *testing.T) {
+	company.SetFormationProvider(nil)
+	if company.ChemistryBonusForUser(1) != 0 || company.ChemistryBonusForInstance(1) != 0 {
+		t.Fatal("no provider must mean no bonus")
+	}
+	if _, ok := company.ChemistryStanding(1, company.LeaderMemberKey); ok {
+		t.Fatal("no provider must mean no standing")
+	}
+}
+
+type fakeChemistry struct {
+	fakeFormationProvider
+	bonus map[company.MemberKey]int
+}
+
+func (f fakeChemistry) LeaderAndKeyForInstance(instanceId int) (int, company.MemberKey, bool) {
+	if instanceId == 55 {
+		return 7, company.CompanionMemberKey(2), true
+	}
+	return 0, "", false
+}
+
+func (f fakeChemistry) ChemistryHitBonus(leaderUserID int, key company.MemberKey) int {
+	return f.bonus[key]
+}
+
+func (f fakeChemistry) ChemistryStanding(int, company.MemberKey) (company.ChemistryStandingView, bool) {
+	return company.ChemistryStandingView{}, false
+}
+
+func TestChemistryProviderRoutesUserAndInstance(t *testing.T) {
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+	company.SetFormationProvider(fakeChemistry{
+		bonus: map[company.MemberKey]int{company.LeaderMemberKey: 4, company.CompanionMemberKey(2): 6},
+	})
+	if got := company.ChemistryBonusForUser(7); got != 4 {
+		t.Fatalf("user bonus %d", got)
+	}
+	if got := company.ChemistryBonusForInstance(55); got != 6 {
+		t.Fatalf("companion bonus %d", got)
+	}
+	if got := company.ChemistryBonusForInstance(56); got != 0 {
+		t.Fatalf("an untracked mob gets nothing, got %d", got)
+	}
+}

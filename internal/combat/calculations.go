@@ -133,9 +133,12 @@ func hitChance(atkSpd, defSpd int) int {
 // Hits returns whether an attack connects, incorporating an optional modifier.
 // equal stats will result in 0% of max
 func Hits(atkSpd, defSpd, hitModifier int) bool {
-	toHit := hitChance(atkSpd, defSpd)
-	toHit += hitModifier
+	hit, _ := hitRoll(atkSpd, defSpd, hitModifier, 0)
+	return hit
+}
 
+// clampToHit bounds a hit chance to [ToHitMin, ToHitMax].
+func clampToHit(toHit int) int {
 	cfg := configs.GetCombatConfig()
 	minHit := int(cfg.ToHitMin)
 	maxHit := int(cfg.ToHitMax)
@@ -145,10 +148,22 @@ func Hits(atkSpd, defSpd, hitModifier int) bool {
 	if toHit > maxHit {
 		toHit = maxHit
 	}
+	return toHit
+}
 
-	hitRoll := util.Rand(100)
-	util.LogRoll(`Hits`, hitRoll, toHit)
-	return hitRoll < toHit
+// hitRoll is Hits with a separate bonus (Phase 24 company chemistry) added
+// to the modifier before the chance is bounded. byBonus reports a hit that
+// only the bonus made: the roll fell between the chance without it and the
+// chance with it. It rolls once, as Hits always has.
+func hitRoll(atkSpd, defSpd, hitModifier, bonus int) (hit, byBonus bool) {
+	base := hitChance(atkSpd, defSpd) + hitModifier
+	without := clampToHit(base)
+	toHit := clampToHit(base + bonus)
+
+	roll := util.Rand(100)
+	util.LogRoll(`Hits`, roll, toHit)
+	hit = roll < toHit
+	return hit, hit && roll >= without
 }
 
 // extraAttackCount returns the number of bonus attacks for weaponless/claws

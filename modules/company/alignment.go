@@ -205,14 +205,19 @@ func (m *CompanyModule) applyInstanceAlignment(leaderUserID, companionID, instan
 }
 
 // onNewRound counts the persisted drift countdown down and runs a drift
-// tick when it reaches zero. It never reads the round number.
+// tick when it reaches zero. The drift never reads the round number;
+// chemistry reads it only to count each round once.
 func (m *CompanyModule) onNewRound(e events.Event) events.ListenerReturn {
-	if _, ok := e.(events.NewRound); !ok {
+	evt, ok := e.(events.NewRound)
+	if !ok {
 		return events.Continue
 	}
 	if m.persistenceAvailable() != nil {
 		return events.Continue
 	}
+	// Phase 24: charge this round to every eligible chemistry bond first,
+	// so a drift tick's rollback snapshot includes it.
+	m.accrueChemistry(evt.RoundNumber)
 	_, every := m.alignmentConfig()
 	if m.registry.DriftIn <= 0 || m.registry.DriftIn > every {
 		m.registry.DriftIn = every

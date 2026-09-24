@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -28,7 +29,7 @@ const (
 func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(user.Character.RoomId), &mob.Character, func(r *rooms.Room) int { return r.VisibilityForUser(user) })
-	attackResult := calculateCombat(*user.Character, mob.Character, User, Mob, penalty)
+	attackResult := calculateCombat(*user.Character, mob.Character, User, Mob, penalty, company.ChemistryBonusForUser(user.UserId))
 	spendEdges(user.Character, attackResult.EdgeSpent)
 
 	if attackResult.DamageToSource != 0 {
@@ -54,7 +55,7 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(userAtk.Character.RoomId), userDef.Character, func(r *rooms.Room) int { return r.VisibilityForUser(userAtk) })
-	attackResult := calculateCombat(*userAtk.Character, *userDef.Character, User, User, penalty)
+	attackResult := calculateCombat(*userAtk.Character, *userDef.Character, User, User, penalty, company.ChemistryBonusForUser(userAtk.UserId))
 	spendEdges(userAtk.Character, attackResult.EdgeSpent)
 
 	if attackResult.DamageToSource != 0 {
@@ -81,7 +82,7 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) 
 func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mob.Character.RoomId), user.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mob) })
-	attackResult := calculateCombat(mob.Character, *user.Character, Mob, User, penalty)
+	attackResult := calculateCombat(mob.Character, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId))
 	spendEdges(&mob.Character, attackResult.EdgeSpent)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -102,7 +103,7 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
-	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, Mob, penalty)
+	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId))
 	spendEdges(&mobAtk.Character, attackResult.EdgeSpent)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -244,12 +245,18 @@ func buildCombatMessages(
 	return toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg
 }
 
+// chemistryHitText tells the attacker that company chemistry made a hit.
+const chemistryHitText = `<ansi fg="cyan">Fighting beside a trusted companion, you find an opening.</ansi>`
+
 // calculateCombat resolves one attack round. darkPenalty is the attacker's
 // to-hit penalty for poor visibility (see darknessPenalty), as a positive
-// magnitude that is subtracted from the hit chance.
-func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int) AttackResult {
+// magnitude that is subtracted from the hit chance. chemistryBonus is the
+// attacker's Phase 24 company chemistry, in points added to the hit chance
+// of its weapon strikes (not its pet's).
+func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int, chemistryBonus int) AttackResult {
 
 	attackResult := AttackResult{}
+	chemistryShown := false
 
 	atkCount := combatAttackCount(sourceChar, targetChar)
 
@@ -336,12 +343,19 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				edgeBonus := 0
 				isCrit := false
 
-				if Hits(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, penalty) {
+				hit, byChemistry := hitRoll(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, penalty, chemistryBonus)
+				if hit {
 					// Check dodge before applying damage.
 					if Dodges(targetChar.Stats.Perception.ValueAdj, sourceChar.Stats.Perception.ValueAdj) {
 						attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s dodges your attack!</ansi>`, targetChar.Name))
 						attackResult.SendToTarget(`<ansi fg="cyan">You dodge the attack!</ansi>`)
 						continue
+					}
+					// Phase 24: say so, once a round, when only company
+					// chemistry made the strike land.
+					if byChemistry && !chemistryShown {
+						chemistryShown = true
+						attackResult.SendToSource(chemistryHitText)
 					}
 					attackResult.Hit = true
 					attackTargetDamage = util.RollDice(dCount, dSides) + dBonus

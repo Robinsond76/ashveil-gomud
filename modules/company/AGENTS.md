@@ -37,3 +37,12 @@ Phase 22c recruiters (`recruit.go`):
 - Gold is checked first and taken only after the company save succeeds, then the user is saved at once (`saveUser`). A failed user save leaves the deduction in memory for the next autosave.
 - Candidate templates wear their gear, carry nothing, have no gold, and use `itemdropchance: 0`, so no recruit can be farmed for items or gold. Keep new candidates to that shape.
 - `wiring_recruit_test.go` also calls `plugins.Load`, with the same `SnapshotLoadStateForTest` guard. Unit tests use template ids no fixture world defines, because the wiring tests load mob and item specs globally.
+
+Phase 24 company chemistry (`chemistry.go`):
+
+- Each record has `Bonds`, one per unordered pair of member keys (`a` < `b`), with the shared `rounds` and the `last_round` charged. `Registry.Put` prunes bonds of members no longer in the record, so dismissal and desertion end them in the same save; a companion's death only pauses its bonds, and the respawned companion (same ID) resumes them.
+- `onNewRound` calls `accrueChemistry(evt.RoundNumber)` before the drift countdown, so a drift rollback snapshot includes it. A pair accrues when the leader is signed in and both members are alive (`Health >= 1`) and present (the leader online; a companion's tracked, live, attached mob) in the same room. A round is charged once (`last_round`); a counter more than 900 rounds behind a bond's last round counts as a reset. It only reads the round number.
+- Bonds ride on every company save. A bond reaching a new tier saves at once; a failed save holds it one round short of the tier, so no tier is used or shown before it's on disk. The leader is told only after the save.
+- The module implements `company.ChemistryProvider`; `internal/combat` adds `ChemistryBonusForUser`/`ChemistryBonusForInstance` to the hit modifier in all four `Attack*` functions. `ChemistryHitBonus` reads the registry map in place (no copying), since combat calls it on every strike. `company chemistry` and `status bonuses` show it; the browser Company panel is the information-surfaces phase's.
+- The chemistry world seam (`chemistryWorld`) is separate from the alignment one, so the alignment test fakes don't change. Knobs are in the config overlay.
+- `wiring_chemistry_test.go` also calls `plugins.Load`, with the same `SnapshotLoadStateForTest` guard.

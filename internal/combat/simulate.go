@@ -128,7 +128,7 @@ func SimulateCombat(mobIdA, mobIdB mobs.MobId, levelA, levelB int, maxRounds int
 		roundDmgA, roundDmgB := 0, 0
 
 		// A attacks B
-		atkResult := calculateCombat(*charA, *charB, Mob, Mob, 0)
+		atkResult := calculateCombat(*charA, *charB, Mob, Mob, 0, 0)
 		charB.ApplyHealthChange(atkResult.DamageToTarget * -1)
 		charA.ApplyHealthChange(atkResult.DamageToSource * -1)
 		result.DamageByA += atkResult.DamageToTarget
@@ -149,7 +149,7 @@ func SimulateCombat(mobIdA, mobIdB mobs.MobId, levelA, levelB int, maxRounds int
 		}
 
 		// B attacks A
-		defResult := calculateCombat(*charB, *charA, Mob, Mob, 0)
+		defResult := calculateCombat(*charB, *charA, Mob, Mob, 0, 0)
 		charA.ApplyHealthChange(defResult.DamageToTarget * -1)
 		charB.ApplyHealthChange(defResult.DamageToSource * -1)
 		result.DamageByB += defResult.DamageToTarget

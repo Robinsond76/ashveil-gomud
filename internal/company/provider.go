@@ -122,3 +122,68 @@ func CompanyAlignment(leaderUserID int) (int, bool) {
 	}
 	return ap.CompanyAlignment(leaderUserID)
 }
+
+// ChemistryStandingView is one member's Phase 24 chemistry for display.
+type ChemistryStandingView struct {
+	// Tier is the member's highest bond tier with any partner; Partner
+	// names that partner.
+	Tier    int
+	Partner string
+	// Bonus is the hit bonus the member has right now, from its highest
+	// bond with a partner at its side; 0 when none is.
+	Bonus int
+}
+
+// ChemistryProvider is optionally implemented by the registered
+// FormationProvider (Phase 24). modules/company runs on the game loop, so
+// call these from the game loop only.
+type ChemistryProvider interface {
+	// ChemistryHitBonus is a member's hit bonus in percentage points right
+	// now: its highest bond tier with a partner present beside it.
+	ChemistryHitBonus(leaderUserID int, key MemberKey) int
+	// ChemistryStanding is a member's chemistry for display; ok is false
+	// when it has no bond at all.
+	ChemistryStanding(leaderUserID int, key MemberKey) (ChemistryStandingView, bool)
+}
+
+func chemistryProvider() (ChemistryProvider, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	cp, ok := p.(ChemistryProvider)
+	return cp, ok
+}
+
+// ChemistryBonusForUser is a player's chemistry hit bonus as the leader of
+// their own company; 0 without a provider.
+func ChemistryBonusForUser(userID int) int {
+	cp, ok := chemistryProvider()
+	if !ok || userID <= 0 {
+		return 0
+	}
+	return cp.ChemistryHitBonus(userID, LeaderMemberKey)
+}
+
+// ChemistryBonusForInstance is a live mob's chemistry hit bonus when it is
+// an attached company companion; 0 otherwise.
+func ChemistryBonusForInstance(instanceID int) int {
+	cp, ok := chemistryProvider()
+	if !ok || instanceID <= 0 {
+		return 0
+	}
+	leaderUserID, key, found := LeaderAndKeyForInstance(instanceID)
+	if !found {
+		return 0
+	}
+	return cp.ChemistryHitBonus(leaderUserID, key)
+}
+
+// ChemistryStanding is a member's chemistry for display. ok is false without
+// a provider or when the member has no bond.
+func ChemistryStanding(leaderUserID int, key MemberKey) (ChemistryStandingView, bool) {
+	cp, ok := chemistryProvider()
+	if !ok {
+		return ChemistryStandingView{}, false
+	}
+	return cp.ChemistryStanding(leaderUserID, key)
+}

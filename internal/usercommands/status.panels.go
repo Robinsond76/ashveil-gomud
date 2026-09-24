@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -214,6 +215,14 @@ func statusBonuses(user *users.UserRecord) (bool, error) {
 	sb.WriteString(term.CRLFStr)
 	sb.WriteString(` └────────────────────────────────────────────────────────────────────────────┘`)
 
+	// Phase 24: company chemistry is a hit bonus, not a buff or stat mod.
+	sb.WriteString(term.CRLFStr)
+	sb.WriteString(` ┌─ <ansi fg="black-bold">.:</ansi><ansi fg="20">Company Chemistry</ansi> ──────────────────────────────────────────────────────┐`)
+	sb.WriteString(term.CRLFStr)
+	sb.WriteString(`   ` + chemistryBonusLine(user.UserId))
+	sb.WriteString(term.CRLFStr)
+	sb.WriteString(` └────────────────────────────────────────────────────────────────────────────┘`)
+
 	sb.WriteString(term.CRLFStr)
 	sb.WriteString(term.CRLFStr)
 	sb.WriteString(` <ansi fg="yellow">Total Stat Modifiers:</ansi>`)
@@ -300,4 +309,17 @@ func formatStatMods(mods map[string]int) string {
 	}
 
 	return strings.Join(parts, `  `)
+}
+
+// chemistryBonusLine is the player's company chemistry for status bonuses.
+func chemistryBonusLine(userID int) string {
+	standing, ok := company.ChemistryStanding(userID, company.LeaderMemberKey)
+	if !ok || standing.Tier == company.TierNone {
+		return `<ansi fg="black-bold">No bond yet</ansi>`
+	}
+	now := `<ansi fg="black-bold">(not at your side)</ansi>`
+	if standing.Bonus > 0 {
+		now = fmt.Sprintf(`<ansi fg="green">+%d%%</ansi> to hit`, standing.Bonus)
+	}
+	return fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> with %s: %s`, company.TierName(standing.Tier), standing.Partner, now)
 }

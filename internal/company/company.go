@@ -57,6 +57,8 @@ type Record struct {
 	// leader has claimed (Phase 22c). A claim is permanent: it outlives
 	// dismissal, desertion, and death.
 	Claimed []int `yaml:"claimed,omitempty"`
+	// Bonds are the Phase 24 chemistry bonds, one per pair of members.
+	Bonds []Bond `yaml:"bonds,omitempty"`
 }
 
 // HasClaimed reports whether the tutorial recruit of this template has
@@ -93,6 +95,9 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	if record.Claimed != nil {
 		record.Claimed = append([]int(nil), record.Claimed...)
 	}
+	if record.Bonds != nil {
+		record.Bonds = append([]Bond(nil), record.Bonds...)
+	}
 	for i, c := range record.Companions {
 		if c.Disposition != nil {
 			d := *c.Disposition
@@ -115,7 +120,9 @@ func (r *Registry) Put(record Record) {
 		r.Companies = make(map[int]Record)
 	}
 	record.NextCompanionID = normalizeNextCompanionID(record)
-	record.Formation.Prune(validMemberKeys(record))
+	valid := validMemberKeys(record)
+	record.Formation.Prune(valid)
+	record.Bonds = pruneBonds(record.Bonds, valid)
 	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 {
 		delete(r.Companies, record.LeaderUserID)
 		return

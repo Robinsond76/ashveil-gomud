@@ -62,7 +62,7 @@ func TestEdgeAddsBonusAndSpendsOnHit(t *testing.T) {
 	for i := 0; i < 300; i++ {
 		src := edgeFighter(90231)
 		src.Equipment.Weapon = items.New(edgeSwordID)
-		res := calculateCombat(*src, *target, User, Mob, 0)
+		res := calculateCombat(*src, *target, User, Mob, 0, 0)
 		assert.Empty(t, res.EdgeSpent, "a dull weapon spends no edge")
 		if res.Hit && !res.Crit {
 			dullDamage[res.DamageToTarget+res.DamageToTargetReduction] = true
@@ -73,7 +73,7 @@ func TestEdgeAddsBonusAndSpendsOnHit(t *testing.T) {
 	for i := 0; i < 300; i++ {
 		src := edgeFighter(90231)
 		src.Equipment.Weapon = sharpenedItem(edgeSwordID, 3, 20)
-		res := calculateCombat(*src, *target, User, Mob, 0)
+		res := calculateCombat(*src, *target, User, Mob, 0, 0)
 		if !res.Hit {
 			assert.Zero(t, res.EdgeSpent[items.Weapon], "a miss or dodge spends nothing")
 			continue
@@ -95,7 +95,7 @@ func TestEdgeStopsWhenStrikesRunOut(t *testing.T) {
 	src.Equipment.Weapon = sharpenedItem(edgeSwordID, 1, 1)
 	src.Equipment.Weapon.SpendEdge(1)
 	for i := 0; i < 50; i++ {
-		res := calculateCombat(*src, *target, User, Mob, 0)
+		res := calculateCombat(*src, *target, User, Mob, 0, 0)
 		assert.Empty(t, res.EdgeSpent)
 	}
 }
@@ -110,7 +110,7 @@ func TestOffhandEdgeTrackedBySlot(t *testing.T) {
 		src := edgeFighter(90231)
 		src.Equipment.Weapon = items.New(edgeSwordID)
 		src.Equipment.Offhand = sharpenedItem(edgeDaggerID, 1, 20)
-		res := calculateCombat(*src, *target, User, Mob, 0)
+		res := calculateCombat(*src, *target, User, Mob, 0, 0)
 		assert.Zero(t, res.EdgeSpent[items.Weapon])
 		spentOffhand += res.EdgeSpent[items.Offhand]
 	}

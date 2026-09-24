@@ -52,6 +52,7 @@ type wireRecord struct {
 	Formation       domain.Formation   `yaml:"formation"`
 	NextCompanionID int                `yaml:"next_companion_id,omitempty"`
 	Claimed         []int              `yaml:"claimed,omitempty"`
+	Bonds           []domain.Bond      `yaml:"bonds,omitempty"`
 }
 
 type wireRegistry struct {
@@ -69,7 +70,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed}
+		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Bonds: wr.Bonds}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -110,6 +111,9 @@ type CompanyModule struct {
 	runtime   Runtime
 	loadErr   error
 	world     alignmentWorld // nil means the native world
+	chem      chemistryWorld // nil means the native world
+	// chemRulesForTest overrides the configured chemistry rules in tests.
+	chemRulesForTest *domain.ChemistryRules
 	// rulesForTest overrides the configured alignment rules in tests.
 	rulesForTest *domain.AlignmentRules
 	// recruitersForTest overrides the configured recruiters in tests.
@@ -202,7 +206,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company gear <member> | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company chemistry | company gear <member> | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -633,6 +637,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.status(user.UserId))
 	case "alignment":
 		user.SendText(m.alignmentView(user.UserId))
+	case "chemistry":
+		user.SendText(m.chemistryView(user.UserId))
 	case "gear":
 		if len(args) < 2 {
 			user.SendText(companyUsage)
