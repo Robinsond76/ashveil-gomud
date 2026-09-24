@@ -21,7 +21,7 @@ See the design doc
     `TestSummonSaveFailureLeavesNoState`, `TestRestoreSpawnsWithSavedState`,
     `TestLegacyCompanionUpgradedBeforeSpawn`,
     `TestLegacyUpgradeSaveFailureDoesNotSpawn`,
-    `TestItemOwnershipRefreshesAndSaves`, `TestOnSaveRefreshesLiveCompanions`,
+    `TestItemOwnershipRefreshesInMemoryOnly`, `TestOnSaveRefreshesLiveCompanions`,
     `TestLeaderDespawnSnapshotsAndRemovesCompanions`,
     `TestCompanionDeathClearsGearKeepsLevel`, `TestDismissDropsState`,
     `TestStatusShowsLevelAndGearView`.
@@ -30,6 +30,6 @@ See the design doc
       design's acceptance criteria.
 - [x] `modules/company/AGENTS.md` note.
 - [x] `go test -race ./...`, `make generate`, `make validate`.
-- [ ] **Testing and review gate:** independent reviewer; verify, fix,
+- [x] **Testing and review gate:** independent reviewer; verify, fix,
       record.
-- [ ] `docs/PROJECT_STATUS.md` Phase 22b entry with **Review:** line.
+- [x] `docs/PROJECT_STATUS.md` Phase 22b entry with **Review:** line.

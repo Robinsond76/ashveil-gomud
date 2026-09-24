@@ -32,12 +32,13 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 	if room == nil {
 		return 0, fmt.Errorf("company: room %d is unavailable", roomID)
 	}
-	var mob *mobs.Mob
-	if state != nil && state.Level > 0 {
-		mob = mobs.NewMobById(mobs.MobId(mobTemplateID), roomID, state.Level)
-	} else {
-		mob = mobs.NewMobById(mobs.MobId(mobTemplateID), roomID)
+	// Companions never roll elite: their level comes from the record (or
+	// the template, for a new recruit), not from chance.
+	level := 0
+	if state != nil {
+		level = state.Level
 	}
+	mob := mobs.NewMobByIdNoElite(mobs.MobId(mobTemplateID), roomID, level)
 	if mob == nil {
 		return 0, fmt.Errorf("company: mob template %d is unavailable", mobTemplateID)
 	}
@@ -72,9 +73,8 @@ func (nativeRuntime) Detach(leaderUserID, instanceID int) {
 	mobs.DestroyInstance(instanceID)
 }
 
-// applyState puts a saved state on a freshly spawned mob: its level (an
-// elite roll can't change it), experience, and copies of its gear in place
-// of the template's.
+// applyState puts a saved state on a freshly spawned mob: its level,
+// experience, gold, and copies of its gear in place of the template's.
 func applyState(mob *mobs.Mob, state domain.MemberState) {
 	saved := state.Clone()
 	if saved.Level > 0 {
@@ -83,6 +83,7 @@ func applyState(mob *mobs.Mob, state domain.MemberState) {
 	if saved.Experience > 0 {
 		mob.Character.Experience = saved.Experience
 	}
+	mob.Character.Gold = saved.Gold
 	mob.Character.Equipment = saved.Equipment
 	mob.Character.Items = saved.Items
 	if mob.Character.Items == nil {
@@ -104,8 +105,17 @@ func (nativeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 		Experience: mob.Character.Experience,
 		Equipment:  mob.Character.Equipment,
 		Items:      mob.Character.Items,
+		Gold:       mob.Character.Gold,
 	}
 	return state.Clone(), true
+}
+
+// CharmedByOther reports whether a live mob is now charmed by someone other
+// than the leader (befriended away). An uncharmed companion, such as one
+// whose charm expired when its leader left, is still the company's.
+func (nativeRuntime) CharmedByOther(leaderUserID, instanceID int) bool {
+	mob := mobs.GetInstance(instanceID)
+	return mob != nil && mob.Character.IsCharmed() && !mob.Character.IsCharmed(leaderUserID)
 }
 
 // TemplateState is the state a companion of this template starts with,
@@ -120,6 +130,7 @@ func (nativeRuntime) TemplateState(mobTemplateID int) (domain.MemberState, bool)
 		Level:     spec.Character.Level,
 		Equipment: spec.Character.Equipment,
 		Items:     spec.Character.Items,
+		Gold:      spec.Character.Gold,
 	}.Clone()
 	if state.Level < 1 {
 		state.Level = 1

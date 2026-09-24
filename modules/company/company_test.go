@@ -197,6 +197,8 @@ type fakeRuntime struct {
 	liveState       map[int]domain.MemberState
 	templateState   *domain.MemberState
 	noTemplateState bool
+	// stolen marks live instances now charmed by another player.
+	stolen map[int]bool
 }
 
 func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
@@ -240,6 +242,9 @@ func (f *fakeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 	}
 	return s.Clone(), true
 }
+func (f *fakeRuntime) CharmedByOther(_ int, instanceID int) bool {
+	return f.live[instanceID] && f.stolen[instanceID]
+}
 func (f *fakeRuntime) TemplateState(int) (domain.MemberState, bool) {
 	if f.noTemplateState {
 		return domain.MemberState{}, false
@@ -249,8 +254,10 @@ func (f *fakeRuntime) TemplateState(int) (domain.MemberState, bool) {
 	}
 	return domain.MemberState{Level: 1}, true
 }
-func (f *fakeRuntime) IsLive(instanceID int) bool            { return f.live[instanceID] }
-func (f *fakeRuntime) IsAttached(_ int, instanceID int) bool { return f.live[instanceID] }
+func (f *fakeRuntime) IsLive(instanceID int) bool { return f.live[instanceID] }
+func (f *fakeRuntime) IsAttached(_ int, instanceID int) bool {
+	return f.live[instanceID] && !f.stolen[instanceID]
+}
 func (f *fakeRuntime) Detach(_ int, instanceID int) {
 	f.detachCalls++
 	delete(f.live, instanceID)

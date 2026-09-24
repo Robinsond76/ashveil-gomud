@@ -12,6 +12,8 @@
 - If a change affects charmed mobs, pets, or scripted mobs, inspect the connected package behavior rather than patching only one call site.
 - Avoid folding AI policy into this package when it belongs in mob commands, hooks, or modules.
 
+- Ashveil (Phase 22b): `NewMobById` gives each instance its own copy of the template's `Items` slice. Keep it that way: the struct copy of the template otherwise shares the backing array, and removing an item from a live mob would rewrite the template. `NewMobByIdNoElite` spawns without the elite roll, for company companions whose level is durable.
+
 ## Verification
 
 - Run targeted mob-package tests when changing lifecycle or lookup behavior.

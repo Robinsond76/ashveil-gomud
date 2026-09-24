@@ -140,18 +140,59 @@ func liveModule(t *testing.T) (*CompanyModule, *fakeRuntime, *fakeStore) {
 	return m, runtime, m.store.(*fakeStore)
 }
 
-func TestItemOwnershipRefreshesAndSaves(t *testing.T) {
+// Review finding 1: a gear change is recorded in memory only. The store is
+// written by the same saves that write user and room files, so a crash
+// can't leave an item in both the company file and a player's file.
+func TestItemOwnershipRefreshesInMemoryOnly(t *testing.T) {
 	m, runtime, store := liveModule(t)
 	runtime.liveState[101] = geared(3, 10002, 30004)
+	before := store.saveCalls
 
 	m.onItemOwnership(events.ItemOwnership{MobInstanceId: 101, Item: items.Item{ItemId: 30004}, Gained: true})
-	saved, _ := store.saved.Get(7)
-	assert.Equal(t, geared(3, 10002, 30004), *saved.Companions[0].State)
+	assert.Equal(t, before, store.saveCalls, "no store write on a gear change")
+	assert.Equal(t, geared(3, 10002, 30004), *companionState(t, m, 7, 1))
 
-	before := store.saveCalls
+	runtime.liveState[101] = geared(3)
 	m.onItemOwnership(events.ItemOwnership{MobInstanceId: 999, Gained: true})
 	m.onItemOwnership(events.ItemOwnership{UserId: 7, Gained: true})
-	assert.Equal(t, before, store.saveCalls, "other mobs and players are ignored")
+	assert.Equal(t, geared(3, 10002, 30004), *companionState(t, m, 7, 1), "other mobs and players are ignored")
+}
+
+// Review finding 6: a companion befriended away by another player keeps
+// its gear and isn't destroyed; the record's gear is cleared.
+func TestCompanionCharmedByOtherIsLost(t *testing.T) {
+	m, runtime, store := liveModule(t)
+	runtime.stolen = map[int]bool{101: true}
+
+	m.onPlayerDespawn(events.PlayerDespawn{UserId: 7})
+	assert.True(t, runtime.live[101], "another player's mob is never destroyed")
+	_, tracked := m.instance(7, 1)
+	assert.False(t, tracked)
+	saved, _ := store.saved.Get(7)
+	state := saved.Companions[0].State
+	assert.Zero(t, state.Equipment.Weapon.ItemId, "the gear went with the mob")
+	assert.Equal(t, 3, state.Level)
+}
+
+func TestRestoreKeepsCompanionCharmedByOther(t *testing.T) {
+	m, runtime, _ := liveModule(t)
+	runtime.stolen = map[int]bool{101: true}
+	runtime.nextInstanceID = 102
+	require.NoError(t, m.restoreForLeader(7, 12))
+	assert.True(t, runtime.live[101], "the other player's mob stays")
+	last := runtime.spawnedStates[len(runtime.spawnedStates)-1]
+	assert.Zero(t, last.Equipment.Weapon.ItemId, "the replacement doesn't duplicate its gear")
+}
+
+func TestGoldIsDurableAndClearedOnDeath(t *testing.T) {
+	m, runtime, _ := liveModule(t)
+	s := geared(3, 10002)
+	s.Gold = 50
+	runtime.liveState[101] = s
+	m.refreshAll()
+	assert.Equal(t, 50, companionState(t, m, 7, 1).Gold)
+	m.onMobDeath(events.MobDeath{InstanceId: 101, Level: 3})
+	assert.Zero(t, companionState(t, m, 7, 1).Gold, "gold drops with the body")
 }
 
 func TestOnSaveRefreshesLiveCompanions(t *testing.T) {

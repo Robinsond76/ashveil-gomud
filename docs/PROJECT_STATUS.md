@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 22a (archetype step in character creation, exactly-once starter kits) is complete and reviewed on branch `claude/next-phase-6xfq3l`, pending merge to `master`. Phase 21 and the environment/economy/alignment roadmap (Phases 13–21) are merged.
+- **HEAD:** Phase 22b (durable companion level and equipment) is complete, reviewed, and merged to `master`, after Phase 22a (archetype creation step and starter kits). Phase 22c (recruiters) is next.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -46,11 +46,10 @@ instead of duplicating them.
   recruit gate), and Phase 21b (settlement standing: market and inn
   markups or refusal by alignment gap, black markets for outlaws), and
   Phase 22a (an archetype step in `start` and one starter kit per
-  archetype, granted exactly once).
-- **Next:** Phase 22b, durable companion level, progression, and
-  equipment on the company record. Then 22c, settlement recruiters and
-  `company recruit`. Both come from the recruitment and creation spec,
-  which is first on the
+  archetype, granted exactly once), and Phase 22b (durable companion
+  level, gear, and gold on the company record).
+- **Next:** Phase 22c, settlement recruiters and `company recruit`, the
+  last part of the recruitment and creation spec, which is first on the
   [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
   The Phase 19b inter-market profit question is resolved: the small
   standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
@@ -117,12 +116,100 @@ instead of duplicating them.
 | 20 | Trade rumours | Complete: `rumors` at inns, fuzzy hints from a persisted market news snapshot refreshed every 150 rounds |
 | 21a | Company alignment | Complete: durable companion alignment and loyalty, 1–100 display, drift toward the rest of the company, desertion, recruit gate, `company inspect`/`alignment` |
 | 21b | Settlement standing | Complete: `internal/standing`, `modules/standing`, `standing` command, market/inn markups and refusals, black markets, Tanner's Back Alley |
-| 22a | Creation step and starter kits | Complete (pending merge): archetype step in `start`, per-archetype kits, owed-kit record and character claim marker, ash quarterstaff |
-| 22b | Durable companion level and gear | Next |
-| 22c | Recruiters and `company recruit` | Planned |
+| 22a | Creation step and starter kits | Complete: archetype step in `start`, per-archetype kits, owed-kit record and character claim marker, ash quarterstaff |
+| 22b | Durable companion level and gear | Complete: `MemberState` on each companion (level, experience, worn and carried items, gold), restore from the record, snapshot seams, `company gear` |
+| 22c | Recruiters and `company recruit` | Next |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 22b: durable companion level and equipment (2026-09-24)
+
+- **What:**
+  - Each companion record now carries a `state`: level, experience, worn
+    equipment (by slot), carried items, and gold. Restoration rebuilds the
+    live mob from it: the mob is spawned at the saved level, and the
+    template's minted gear and gold are replaced with copies of the saved
+    ones. Gear given to a companion now survives logout, restart, and
+    copyover, and template gear is minted only once.
+  - `company summon` records the new recruit's template gear in the
+    summon's own save. A companion saved before this phase has its state
+    derived from the template and saved before it is spawned. If that save
+    fails, it waits and is retried on the next spawn.
+  - **Snapshot seams:**
+    - a companion's `ItemOwnership` (in memory);
+    - plugin `OnSave` (autosave, shutdown, copyover);
+    - the leader's `PlayerDespawn`: the companion is recorded, then removed
+      from the world so it can't linger to be looted;
+    - the companion's `MobDeath`: gear and gold are cleared, the level is
+      kept.
+  - A companion befriended away by another player is lost: it keeps its
+    gear and its record's gear is cleared.
+  - Companions never roll elite.
+  - `company status` shows levels; `company gear <member>` lists gear.
+  - Design and plan:
+    [22b spec](superpowers/specs/2026-09-24-phase-22b-durable-companion-state-design.md) /
+    [22b plan](superpowers/plans/2026-09-24-phase-22b-durable-companion-state.md).
+- **Why:** This is the durable model from the recruitment and creation
+  spec, which 22c recruiters, sharpening, and resurrection build on.
+  Before this phase every login re-minted template gear and dropped
+  anything given to a companion. Defaults were applied under the owner's
+  "Merge, then start Phase 22b" instruction and are recorded in the spec.
+- **Step completed:** Phase 22b. Phase 22a was merged to `master` at the
+  start of this step.
+- **Verification:** `go test -race ./...`, `make generate` (no diff), and
+  `make validate` passed. `modules/company` also passes with `-count=2`
+  and `-shuffle=on`.
+  - The wiring test uses `plugins.Load`, the real plugin store, and a
+    fixture world with template gear and a 100% elite chance. It covers:
+    - `company summon` and `give` through `usercommands.TryCommand`;
+    - a real `plugins.Save()`;
+    - `PlayerDespawn` (the mob is gone);
+    - a simulated restart (reload from the real store, instances cleared)
+      and `PlayerSpawn`, which restores exactly the recorded gear at the
+      saved level, not elite;
+    - a death through the real `mobcommands.Suicide`, after which the
+      companion comes back without gear.
+
+    The clock is unchanged throughout.
+  - Engine regression tests in `internal/mobs` cover the template-items
+    copy (the test fails without the fix) and the no-elite spawn.
+- **Review:** Independent reviewer found no duplication in the normal
+  logout, restart, copyover, death, and dismiss flows. It confirmed:
+  - listener order (company before `HandleLeave`);
+  - that link-dead leaders fire no `PlayerDespawn` until expiry;
+  - `vanish`/`despawn` keep the record's gear with no duplicate;
+  - the summon and legacy-upgrade rollbacks;
+  - deep copies, and that there is no clock access.
+
+  Fixed with regression tests:
+  - Major: saving the company file on every gear change put it out of
+    step with the user and room files, so a crash after a give duplicated
+    the item. Gear changes are now recorded in memory and written by the
+    same saves as the user and room files.
+  - Shutdown's final plugin save and the SIGUSR1 copyover ran off the game
+    loop while `OnSave` now writes game state. Both now hold
+    `util.LockMud()`.
+  - Elite rolls on restore inflated stats and changed a durable level. New
+    `mobs.NewMobByIdNoElite`.
+  - Gold wasn't durable: given gold was lost at logout, and template gold
+    was re-minted and could be farmed through deaths. Added to the state
+    and cleared on death.
+  - Engine bug, pre-existing: `NewMobById` shared the template's `Items`
+    array, so removing an item from a live mob rewrote the template.
+    Instances now copy it. This also gives each spawn fresh item UUIDs.
+  - A companion befriended by another player was snapshotted into the
+    leader's record and then destroyed at logout. It is now treated as
+    lost.
+  - Item spec overrides were shared between the record and the mob; they
+    are now copied.
+  - The wiring test now uses the real `Suicide` death path and a real
+    `plugins.Save()`.
+
+  Documented, not changed:
+  - item UUIDs aren't durable (engine `yaml:"-"`);
+  - the window before `MobDeath` is processed is within one locked turn;
+  - `company gear` refreshes the in-memory record from the live mob.
 
 ### Phase 22a: creation step and starter kits (2026-09-24)
 

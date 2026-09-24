@@ -30,6 +30,8 @@ type Runtime interface {
 	Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState) (int, error)
 	// Snapshot reads a live mob's level and gear.
 	Snapshot(instanceID int) (domain.MemberState, bool)
+	// CharmedByOther reports whether a live mob now serves someone else.
+	CharmedByOther(leaderUserID, instanceID int) bool
 	// TemplateState is the state a template starts with, without spawning.
 	TemplateState(mobTemplateID int) (domain.MemberState, bool)
 	IsLive(instanceID int) bool
@@ -638,10 +640,23 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 			if m.runtime.IsAttached(leaderUserID, instanceID) {
 				continue
 			}
-			if m.runtime.IsLive(instanceID) {
-				m.runtime.Detach(leaderUserID, instanceID)
+			// Phase 22b: record the stale mob first. One its leader no
+			// longer owns is untracked and kept (it leaves with its gear);
+			// the company's own is removed before the replacement spawns.
+			m.refreshSnapshot(leaderUserID, companion.ID)
+			if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
+				if m.runtime.IsLive(instanceID) {
+					m.runtime.Detach(leaderUserID, instanceID)
+				}
+				m.clearInstance(leaderUserID, companion.ID)
 			}
-			m.clearInstance(leaderUserID, companion.ID)
+			if current, ok := m.registry.Get(leaderUserID); ok {
+				for _, c := range current.Companions {
+					if c.ID == companion.ID {
+						companion = c
+					}
+				}
+			}
 		}
 		state, err := m.ensureState(leaderUserID, companion)
 		if err != nil {

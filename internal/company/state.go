@@ -14,11 +14,16 @@ type MemberState struct {
 	Experience int             `yaml:"experience,omitempty"`
 	Equipment  characters.Worn `yaml:"equipment,omitempty"`
 	Items      []items.Item    `yaml:"items,omitempty"`
+	Gold       int             `yaml:"gold,omitempty"`
 }
 
 func cloneItem(i items.Item) items.Item {
 	if i.Adjectives != nil {
 		i.Adjectives = append([]string(nil), i.Adjectives...)
+	}
+	if i.Spec != nil {
+		spec := *i.Spec
+		i.Spec = &spec
 	}
 	return i
 }
@@ -40,10 +45,12 @@ func (s MemberState) Clone() MemberState {
 	return out
 }
 
-// ClearGear drops every worn and carried item, keeping progression.
+// ClearGear drops every worn and carried item and the gold, keeping
+// progression.
 func (s *MemberState) ClearGear() {
 	s.Equipment = characters.Worn{}
 	s.Items = nil
+	s.Gold = 0
 }
 
 // SetState records a companion's state. It returns ErrUnknownMember for a

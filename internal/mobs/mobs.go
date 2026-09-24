@@ -144,12 +144,29 @@ func MobIdByName(mobName string) MobId {
 }
 
 func NewMobById(mobId MobId, homeRoomId int, forceLevel ...int) *Mob {
+	return newMobById(mobId, homeRoomId, true, forceLevel...)
+}
+
+// NewMobByIdNoElite spawns a mob that never rolls elite, at level (or the
+// template's level when level < 1). Ashveil company companions use it: their
+// level and gear come from a durable record, so a random elite roll must not
+// change them (Phase 22b).
+func NewMobByIdNoElite(mobId MobId, homeRoomId int, level int) *Mob {
+	return newMobById(mobId, homeRoomId, false, level)
+}
+
+func newMobById(mobId MobId, homeRoomId int, allowElite bool, forceLevel ...int) *Mob {
 
 	if m, ok := mobs[int(mobId)]; ok {
 
 		instanceCounter++
 
 		mob := *m // Make a copy of the mob
+
+		// The struct copy shares the template's Items backing array; give
+		// the instance its own so removing an item from a live mob can't
+		// rewrite the template (Ashveil Phase 22b).
+		mob.Character.Items = append([]items.Item(nil), m.Character.Items...)
 
 		mob.HomeRoomId = homeRoomId
 		mob.Character.RoomId = homeRoomId
@@ -162,7 +179,7 @@ func NewMobById(mobId MobId, homeRoomId int, forceLevel ...int) *Mob {
 		}
 
 		// Elite spawn check
-		if mob.EliteChance > 0 && util.Rand(100) < mob.EliteChance {
+		if allowElite && mob.EliteChance > 0 && util.Rand(100) < mob.EliteChance {
 			mob.IsElite = true
 			cfg := configs.GetGamePlayConfig()
 			bonusPct := int(cfg.EliteLevelBonus)

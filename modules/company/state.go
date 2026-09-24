@@ -41,12 +41,19 @@ func (m *CompanyModule) ensureState(leaderUserID int, companion domain.Companion
 	return &state, nil
 }
 
-// refreshSnapshot copies a tracked companion's live mob into its record.
-// It reports whether anything was recorded; the caller saves.
+// refreshSnapshot copies a tracked companion's live mob into its record, in
+// memory only. It reports whether the record changed; the caller decides
+// whether to save. A live mob now charmed by someone else (befriended away)
+// is lost: it is untracked, never destroyed, and its gear stays with it, so
+// the record's gear is cleared. An uncharmed one is still the company's.
 func (m *CompanyModule) refreshSnapshot(leaderUserID, companionID int) bool {
 	instanceID, tracked := m.instance(leaderUserID, companionID)
 	if !tracked || !m.runtime.IsLive(instanceID) {
 		return false
+	}
+	if m.runtime.CharmedByOther(leaderUserID, instanceID) {
+		m.clearInstance(leaderUserID, companionID)
+		return m.clearRecordedGear(leaderUserID, companionID, 0)
 	}
 	state, ok := m.runtime.Snapshot(instanceID)
 	if !ok {
@@ -68,7 +75,11 @@ func (m *CompanyModule) refreshAll() {
 	}
 }
 
-// onItemOwnership records a companion's gear right after it changes.
+// onItemOwnership records a companion's gear right after it changes, in
+// memory only. The store is written with the next autosave, copyover,
+// shutdown, or the leader's logout, the same saves that write the user and
+// room files, so a crash can't leave an item both in the company file and
+// in a player's or room's file.
 func (m *CompanyModule) onItemOwnership(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.ItemOwnership)
 	if !ok || evt.MobInstanceId <= 0 || m.persistenceAvailable() != nil {
@@ -78,11 +89,7 @@ func (m *CompanyModule) onItemOwnership(e events.Event) events.ListenerReturn {
 	if !found {
 		return events.Continue
 	}
-	if m.refreshSnapshot(leaderUserID, companionID) {
-		if err := m.save(); err != nil {
-			mudlog.Error("company: save companion gear", "leader", leaderUserID, "companion", companionID, "error", err)
-		}
-	}
+	m.refreshSnapshot(leaderUserID, companionID)
 	return events.Continue
 }
 
@@ -94,12 +101,15 @@ func (m *CompanyModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 	if !ok || m.persistenceAvailable() != nil {
 		return events.Continue
 	}
-	byCompanion := m.instances[evt.UserId]
-	if len(byCompanion) == 0 {
+	if len(m.instances[evt.UserId]) == 0 {
 		return events.Continue
 	}
+	companionIDs := make([]int, 0, len(m.instances[evt.UserId]))
+	for companionID := range m.instances[evt.UserId] {
+		companionIDs = append(companionIDs, companionID)
+	}
 	changed := false
-	for companionID := range byCompanion {
+	for _, companionID := range companionIDs {
 		if m.refreshSnapshot(evt.UserId, companionID) {
 			changed = true
 		}
@@ -110,7 +120,13 @@ func (m *CompanyModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 			mudlog.Error("company: save on leader leave", "leader", evt.UserId, "error", err)
 		}
 	}
-	for companionID, instanceID := range byCompanion {
+	// Lost companions were untracked above; only the company's own are
+	// removed.
+	for _, companionID := range companionIDs {
+		instanceID, tracked := m.instance(evt.UserId, companionID)
+		if !tracked {
+			continue
+		}
 		if m.runtime.IsLive(instanceID) {
 			m.runtime.Detach(evt.UserId, instanceID)
 		}
@@ -126,9 +142,20 @@ func (m *CompanyModule) recordCompanionDeath(leaderUserID, companionID, level in
 	if m.persistenceAvailable() != nil {
 		return
 	}
+	if m.clearRecordedGear(leaderUserID, companionID, level) {
+		if err := m.save(); err != nil {
+			mudlog.Error("company: save companion death", "leader", leaderUserID, "companion", companionID, "error", err)
+		}
+	}
+}
+
+// clearRecordedGear clears a companion's recorded gear and gold in memory,
+// keeping its level (or setting it, when level > 0). It reports whether the
+// record changed.
+func (m *CompanyModule) clearRecordedGear(leaderUserID, companionID, level int) bool {
 	record, ok := m.registry.Get(leaderUserID)
 	if !ok {
-		return
+		return false
 	}
 	for _, c := range record.Companions {
 		if c.ID != companionID || c.State == nil {
@@ -139,14 +166,9 @@ func (m *CompanyModule) recordCompanionDeath(leaderUserID, companionID, level in
 		if level > 0 {
 			state.Level = level
 		}
-		if err := m.registry.SetState(leaderUserID, companionID, state); err != nil {
-			return
-		}
-		if err := m.save(); err != nil {
-			mudlog.Error("company: save companion death", "leader", leaderUserID, "companion", companionID, "error", err)
-		}
-		return
+		return m.registry.SetState(leaderUserID, companionID, state) == nil
 	}
+	return false
 }
 
 func companionLevel(c domain.Companion) string {

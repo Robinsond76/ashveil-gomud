@@ -93,3 +93,15 @@ func TestStateYAMLRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, string(data), "state")
 }
+
+// Review finding 11: an item's spec override is copied, not shared with
+// the live mob.
+func TestMemberStateCloneCopiesSpecOverride(t *testing.T) {
+	s := MemberState{Items: []items.Item{{ItemId: 10002, Spec: &items.ItemSpec{Name: "named blade"}}}, Gold: 7}
+	c := s.Clone()
+	c.Items[0].Spec.Name = "renamed"
+	assert.Equal(t, "named blade", s.Items[0].Spec.Name)
+	assert.Equal(t, 7, c.Gold)
+	c.ClearGear()
+	assert.Zero(t, c.Gold)
+}

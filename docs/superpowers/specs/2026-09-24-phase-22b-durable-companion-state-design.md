@@ -43,9 +43,11 @@ using this design's recommendations. Each one is recorded here.
 
 1. **Durable state on the companion record.**
    - `Companion.State *MemberState` holds `Level`, `Experience`,
-     `Equipment` (`characters.Worn`), and `Items` (`[]items.Item`). The
-     engine's own types keep each item's UUID, uses, enchantments, and
-     adjectives, and the equipment slot it was in.
+     `Equipment` (`characters.Worn`), `Items` (`[]items.Item`), and `Gold`.
+     The engine's own types keep each item's uses, enchantments,
+     adjectives, spec overrides, and the equipment slot it was in.
+   - Item UUIDs are not durable (`yaml:"-"` in the engine), and are
+     re-minted on load for players' items too.
    - `nil` means a companion saved before this phase.
    - `Registry.Get` and `Clone` deep-copy it.
    - `internal/company` gains imports of `internal/characters` and
@@ -62,15 +64,23 @@ using this design's recommendations. Each one is recorded here.
      retries. No template gear leaves the template until a record of it
      is durable.
 3. **Restoration applies the state.**
-   - The mob is spawned from its template at the saved level. The
-     template's minted items and equipment are then replaced with copies
-     of the saved ones.
+   - The mob is spawned from its template at the saved level, using the
+     new engine call `mobs.NewMobByIdNoElite`. Companions never roll
+     elite, whether new or restored, so chance can't change a durable
+     level or inflate its stats.
+   - The template's minted items and equipment are then replaced with
+     copies of the saved ones, and so is its gold.
    - Experience is restored, stats are recalculated, and the mob starts at
      full health and mana.
-   - If an elite roll changed the level, the saved level is put back.
 4. **Snapshot seams** (live mob to record, then save):
-   - **`ItemOwnership`** on a tracked companion instance: after a give,
-     get, drop, and so on.
+   - **`ItemOwnership`** on a tracked companion instance, after a give,
+     get, drop, and so on: refreshed **in memory only**.
+     - The first draft saved at once. The review showed that puts the
+       company file out of step with the user and room files, which the
+       engine only writes at autosave, copyover, shutdown, and logout.
+     - Out of step, a crash after a give would restore the item both to
+       the leader and to the companion.
+     - Now the company file is written only by those same saves.
    - **Plugin `OnSave`** (autosave, shutdown, copyover): every live
      tracked companion is refreshed before the store is written. This also
      catches changes that queue no event: the mob's own `gearup`, a broken
@@ -79,11 +89,17 @@ using this design's recommendations. Each one is recorded here.
      snapshotted and saved, then its live mob is removed from the world.
      A reverted, lingering companion could otherwise be killed for gear
      that its record would restore again, which would duplicate it.
-   - **Companion `MobDeath`:** gear is cleared from the state (it dropped
-     into the corpse or was lost with the body) and the level is kept.
-     This stops restoration from bringing back gear that is now on the
-     ground. The death penalty and resurrection come in the
+   - **Companion `MobDeath`:** gear and gold are cleared from the state
+     (they dropped into the corpse or were lost with the body) and the
+     level is kept. This stops restoration from bringing back gear that is
+     now on the ground. The death penalty and resurrection come in the
      death/resurrection phase.
+   - **Lost companions:** a tracked mob now charmed by another player
+     (befriended away) is untracked, never destroyed, and keeps its gear.
+     Its record's gear is cleared, and the next restore spawns a
+     replacement without it. An uncharmed companion (for example, one
+     whose charm expired when its leader left) is still the company's: it
+     is recorded, then removed before the replacement spawns.
 5. **Dismissal and desertion** remove the record and its state. The
    companion leaves with its gear, as it does today. Dropping the gear
    would let a player summon, dismiss, and repeat to farm template gear.
@@ -104,8 +120,9 @@ using this design's recommendations. Each one is recorded here.
 state:
   level: 3
   experience: 1200
-  equipment: { weapon: {itemid: 10002, uuid: ...}, ... }
+  equipment: { weapon: {itemid: 10002}, ... }
   items: [ {itemid: 30004, ...} ]
+  gold: 12
 ```
 
 It is decoded by the existing registry decoder (legacy records have no
@@ -124,16 +141,28 @@ It is decoded by the existing registry decoder (legacy records have no
     listeners;
   - `OnSave` refresh;
   - the `company gear` view.
-- The company module stays on the game loop and has no lock, as today.
-  Nothing new crosses module locks.
+- **Engine changes:**
+  - `mobs.NewMobById` now gives each instance its own copy of the
+    template's `Items` slice. The shallow struct copy used to share the
+    backing array, so removing an item from a live mob rewrote the
+    template.
+  - New `mobs.NewMobByIdNoElite`.
+  - Shutdown's final `plugins.Save()` and the SIGUSR1 copyover now hold
+    `util.LockMud()`. Plugin `OnSave` now writes game state (the refresh),
+    and both paths ran off the game loop. The admin copyover command
+    already ran under the lock.
+- The company module stays on the game loop and has no lock of its own.
 
 ## Constraints and deferrals
 
-- **Crash window:** a gear change is durable at the next seam. A crash
-  between a give (not followed by a save) and the next autosave restores
-  the last saved state. That is the same class as the engine's
-  give-then-crash window; a give triggers an immediate save, which keeps
-  the window small.
+- **Crash window:** a gear change is durable at the next autosave,
+  copyover, shutdown, or logout. Those saves also write the user and room
+  files, so a crash rolls every side of a give back together.
+- **The window before `MobDeath` is processed:** the death path drops the
+  gear, destroys the instance, and only then queues `MobDeath`, so the
+  record still holds the gear until the listener runs. That is within the
+  same turn, under the world lock that every save now holds, so no save
+  can land in between. It is accepted.
 - **Mob gear placement:** the mob's own `gearup` after a give is caught
   at the next `OnSave` or logout. Until then a restore puts the item in the
   backpack rather than on the body. Nothing is lost or duplicated.

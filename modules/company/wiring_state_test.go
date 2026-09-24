@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/races"
@@ -74,7 +75,7 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 		"items/weapons-10000/10002-guardsmans_broadsword.yaml": "itemid: 10002\nname: guardsman's broadsword\nnamesimple: broadsword\ntype: weapon\nhands: 1\nsubtype: slashing\ndamage:\n  diceroll: 1d6\n",
 		"items/weapons-10000/10004-dagger.yaml":                "itemid: 10004\nname: dagger\nnamesimple: dagger\ntype: weapon\nhands: 1\nsubtype: stabbing\ndamage:\n  diceroll: 1d4\n",
 		"items/consumables-30000/30004-cheese_sandwich.yaml":   "itemid: 30004\nname: cheese sandwich\nnamesimple: sandwich\ntype: food\nsubtype: edible\nvalue: 20\n",
-		"mobs/geartest/58-training_dummy.yaml": "mobid: 58\nzone: geartest\nitemdropchance: 100\ncharacter:\n  name: training dummy\n  raceid: 1\n  level: 2\n  alignment: 40\n" +
+		"mobs/geartest/58-training_dummy.yaml": "mobid: 58\nzone: geartest\nitemdropchance: 100\nelitechance: 100\ncharacter:\n  name: training dummy\n  raceid: 1\n  level: 2\n  alignment: 40\n" +
 			"  equipment:\n    weapon:\n      itemid: 10002\n  items:\n    - itemid: 30004\n",
 	}
 	for path, data := range fixtures {
@@ -157,10 +158,18 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	assert.Equal(t, 2, stored().Level)
 	assert.Contains(t, run("company", "status"), "level 2")
 
-	// Give the companion a dagger: the gear change is saved at once.
+	assert.False(t, live().IsElite, "companions never roll elite (the template always would)")
+
+	// Give the companion a dagger: recorded in memory at once, and written
+	// by the real plugin save (autosave, copyover, shutdown) together with
+	// the user and room files, never on its own.
 	run("give", "dagger dummy")
 	assert.Empty(t, user.Character.Items, "the dagger left the leader")
 	assert.Equal(t, []int{10002, 10004, 30004}, mobItemIDs(live()))
+	record, _ := module.registry.Get(7)
+	assert.Equal(t, []int{10002, 10004, 30004}, stateItemIDs(record.Companions[0].State))
+	assert.Equal(t, []int{10002, 30004}, stateItemIDs(stored()), "not written on the gear change")
+	plugins.Save()
 	assert.Equal(t, []int{10002, 10004, 30004}, stateItemIDs(stored()))
 	gear := run("company", "gear dummy")
 	assert.Contains(t, gear, "dagger")
@@ -191,11 +200,14 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	assert.Equal(t, 2, restored.Character.Level)
 	assert.Equal(t, 1, len(mobs.GetAllMobInstanceIds()))
 
-	// Companion death: its gear dropped or was lost, so it isn't restored.
-	deadID := restored.InstanceId
-	nativeRuntime{}.Detach(7, deadID)
-	events.AddToQueue(events.MobDeath{MobId: 58, InstanceId: deadID, RoomId: camp.RoomId, Level: 2})
+	assert.False(t, restored.IsElite)
+
+	// Companion death through the real suicide path: its gear dropped or
+	// was lost, so it isn't restored.
+	_, err = mobcommands.Suicide("", restored, camp)
+	require.NoError(t, err)
 	events.ProcessEvents()
+	assert.False(t, mobs.MobInstanceExists(restored.InstanceId))
 	assert.Empty(t, stateItemIDs(stored()))
 	assert.Equal(t, 2, stored().Level)
 	events.AddToQueue(events.PlayerSpawn{UserId: 7, RoomId: camp.RoomId})

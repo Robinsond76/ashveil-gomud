@@ -435,8 +435,12 @@ func main() {
 
 	web.Shutdown()
 
-	// Final plugin save before shutting down
+	// Final plugin save before shutting down. The workers are still running,
+	// so hold the world lock: plugin OnSave callbacks may read and write game
+	// state (Ashveil Phase 22b: company refreshes live companions).
+	util.LockMud()
 	plugins.Save()
+	util.UnlockMud()
 
 	// Just a goroutine that spins its wheels until the program shuts down")
 	go func() {

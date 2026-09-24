@@ -17,11 +17,13 @@ Phase 22b durable level and gear (`state.go`):
 - Each companion record has a `State` (level, experience, `characters.Worn`, carried items). It is the source of truth. `Runtime.Spawn` rebuilds the live mob from it at the saved level, replacing the template's minted gear with copies of the saved gear.
 - **New recruits:** `company summon` snapshots the freshly spawned mob into the record before the summon's save.
 - **Legacy companions** (`State == nil`): `ensureState` derives the state from the template spec and saves it before spawning. A failed save leaves the companion awaiting restoration and retries on the next spawn.
-- **Snapshot seams**, all on the game loop:
-  - `ItemOwnership` on a companion instance: refresh and save;
+- **Snapshot seams**, all under the world lock (shutdown's final save and the SIGUSR1 copyover now take `util.LockMud()`):
+  - `ItemOwnership` on a companion instance: refresh **in memory only**. Don't add a save here: the company file must change only with the user and room files (autosave, copyover, shutdown, logout), or a crash duplicates items;
   - plugin `OnSave` (autosave, shutdown, copyover): refresh every live companion;
   - the leader's `PlayerDespawn`: refresh, save, then remove the live mobs so a reverted companion can't be looted for gear its record would restore;
-  - the companion's `MobDeath`: gear cleared, level kept.
+  - the companion's `MobDeath`: gear and gold cleared, level kept.
+- A tracked mob now charmed by another player (`CharmedByOther`) is lost: it is untracked and never destroyed, and its record's gear is cleared. An uncharmed one is still the company's.
+- Companions spawn with `mobs.NewMobByIdNoElite`, so they never roll elite.
 - Dismissal and desertion drop the state; the companion leaves with its gear. Don't add a path that drops a companion's gear into the world on dismissal, since summon-and-dismiss would then farm template gear.
 - `company gear <member>` shows the recorded gear, refreshed from the live mob when it is out.
 - `wiring_state_test.go` also calls `plugins.Load`, with the same `SnapshotLoadStateForTest` guard.
