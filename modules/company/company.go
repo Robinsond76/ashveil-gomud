@@ -51,13 +51,13 @@ type Store interface {
 
 type wireRecord struct {
 	// LeaderUserID is decoded for shape compatibility; the companies map key is authoritative.
-	LeaderUserID    int                `yaml:"leader_user_id"`
-	Companions      []domain.Companion `yaml:"companions"`
-	Companion       *domain.Companion  `yaml:"companion"`
-	Formation       domain.Formation   `yaml:"formation"`
-	NextCompanionID int                `yaml:"next_companion_id,omitempty"`
-	Claimed         []int              `yaml:"claimed,omitempty"`
-	Service         []domain.Service   `yaml:"service,omitempty"`
+	LeaderUserID    int                    `yaml:"leader_user_id"`
+	Companions      []domain.Companion     `yaml:"companions"`
+	Companion       *domain.Companion      `yaml:"companion"`
+	Formation       domain.Formation       `yaml:"formation"`
+	NextCompanionID int                    `yaml:"next_companion_id,omitempty"`
+	Claimed         []int                  `yaml:"claimed,omitempty"`
+	Service         []domain.Service       `yaml:"service,omitempty"`
 	Lost            []domain.LostCompanion `yaml:"lost,omitempty"`
 }
 

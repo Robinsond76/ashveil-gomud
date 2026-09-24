@@ -20,7 +20,7 @@ const deathTemplate = 990065
 
 type testClock struct{ now time.Time }
 
-func (c *testClock) Now() time.Time           { return c.now }
+func (c *testClock) Now() time.Time          { return c.now }
 func (c *testClock) advance(d time.Duration) { c.now = c.now.Add(d) }
 
 // newDeathModule has leader 7 online with companions #1 (instance 101,
