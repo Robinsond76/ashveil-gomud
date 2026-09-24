@@ -125,4 +125,3 @@ func TestDeadCompanionsListing(t *testing.T) {
 	assert.Equal(t, []domain.DeadCompanionView{{ID: 1, Name: "#1", Level: 5, Remaining: 3600}}, module.DeadCompanions(7))
 	assert.Empty(t, module.DeadCompanions(8))
 }
-
