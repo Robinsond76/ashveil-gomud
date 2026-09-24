@@ -3,6 +3,11 @@
 **Status:** Design direction approved 2026-09-23; written spec awaiting owner
 review. Part of the [roadmap](2026-09-23-company-life-onboarding-roadmap.md).
 
+**Implementation split (2026-09-24):** player death and the church return
+are Phase 25a ([design](2026-09-24-phase-25a-player-death-design.md)).
+Companion death, the online-time allowance, resurrection, and expiry are
+Phase 25b.
+
 ## Existing behavior and intended rules
 
 GoMud currently moves a dead player to a generic death recovery room. Its
