@@ -47,11 +47,7 @@ func TestCompanyNormalLogoutLoginRestoresNativeFollowing(t *testing.T) {
 	// Exercise the real logout hook and charm cleanup, with all disk writes
 	// confined to a disposable two-room world.
 	dataDir := t.TempDir()
-	previousDataDir := configs.GetFilePathsConfig().DataFiles.String()
-	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
-	t.Cleanup(func() {
-		require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": previousDataDir}))
-	})
+	useDataDir(t, dataDir)
 	fixtures := map[string]string{
 		"biomes/default.yaml":                     "biomeid: default\nname: Test\nsymbol: '.'\ndarkarea: true\n",
 		"keywords.yaml":                           "direction-aliases: {}\n",
@@ -152,4 +148,23 @@ func TestCompanyNormalLogoutLoginRestoresNativeFollowing(t *testing.T) {
 			assert.Equal(t, round, util.GetRoundCount())
 		})
 	}
+}
+
+// useDataDir points FilePaths.DataFiles at dir for one test and restores
+// the previous value after. AddOverlayOverrides can't do this: it never
+// overwrites a key that is already set, so a second test (or a cleanup)
+// using it is silently ignored.
+func useDataDir(t *testing.T, dir string) {
+	t.Helper()
+	previous := configs.GetFilePathsConfig().DataFiles.String()
+	set := func(value string) error {
+		flat := map[string]any{}
+		for k, v := range configs.Flatten(configs.GetOverrides()) {
+			flat[k] = v
+		}
+		flat["FilePaths.DataFiles"] = value
+		return configs.RestoreOverrides(flat)
+	}
+	require.NoError(t, set(dir))
+	t.Cleanup(func() { require.NoError(t, set(previous)) })
 }

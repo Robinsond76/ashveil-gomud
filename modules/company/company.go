@@ -47,6 +47,7 @@ type wireRecord struct {
 
 type wireRegistry struct {
 	Companies map[int]wireRecord `yaml:"companies"`
+	DriftIn   int                `yaml:"drift_in,omitempty"`
 }
 
 // decodeCompanies parses stored bytes, converting a legacy single-companion
@@ -57,6 +58,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 		return err
 	}
 	loaded := domain.NewRegistry()
+	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
 		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID}
 		if len(record.Companions) == 0 && wr.Companion != nil {
@@ -98,7 +100,11 @@ type CompanyModule struct {
 	instances map[int]map[int]int
 	runtime   Runtime
 	loadErr   error
+	world     alignmentWorld // nil means the native world
 }
+
+// module is the registered instance, for wiring tests.
+var module *CompanyModule
 
 func init() {
 	m := &CompanyModule{plug: plugins.New("company", "1.0"), instances: map[int]map[int]int{}}
@@ -117,6 +123,8 @@ func init() {
 	})
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.MobDeath{}, m.onMobDeath)
+	events.RegisterListener(events.NewRound{}, m.onNewRound)
+	module = m
 	survival.SetRosterProvider(m)
 	domain.SetFormationProvider(m)
 }
@@ -174,7 +182,11 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company summon <mob-id-or-name> | company status | company dismiss <member|all> | company archetype <member> <archetype>"
+const companyUsage = "Usage: company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
+
+// defaultAllowedTemplates is the summon allow list when the module has no
+// plugin config (tests).
+var defaultAllowedTemplates = map[int]struct{}{58: {}}
 
 // allowedTemplateIDs normalizes values returned by YAML/config decoding.
 func allowedTemplateIDs(raw any) map[int]struct{} {
@@ -198,7 +210,7 @@ func (m *CompanyModule) allowedTemplates() map[int]struct{} {
 	if m.plug != nil {
 		return allowedTemplateIDs(m.plug.Config.Get("AllowedCompanionMobIDs"))
 	}
-	return map[int]struct{}{58: {}}
+	return defaultAllowedTemplates
 }
 
 func maxCompanionsFromConfig(raw any) int {
@@ -288,6 +300,13 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	if err != nil {
 		return "", err
 	}
+	// The allow list answers first, so the gate never reveals the alignment
+	// of a mob that can't be recruited anyway.
+	if _, allowed := m.allowedTemplates()[templateID]; allowed {
+		if refusal := m.recruitRefusal(leaderUserID, templateID, templateName(templateID, selector)); refusal != "" {
+			return refusal, nil
+		}
+	}
 	reservedNextID, err := survival.NextReservedCompanionID(leaderUserID)
 	if err != nil {
 		return "", err
@@ -301,6 +320,7 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 		return "", err
 	}
 	m.assignConfiguredArchetype(leaderUserID, companion)
+	m.seedDisposition(leaderUserID, companion)
 	if err := survival.EnsureCompanyMember(leaderUserID, companion.ID); err != nil {
 		// Survival did not durably record the companion, so no identity was
 		// spent: restore the exact pre-summon record and allow ID reuse.
@@ -327,6 +347,7 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 		return "", errors.Join(err, removeErr, persistErr)
 	}
 	m.setInstance(leaderUserID, companion.ID, instanceID)
+	m.applyInstanceAlignment(leaderUserID, companion.ID, instanceID)
 	return fmt.Sprintf("Companion summoned: %s (#%d).", templateName(templateID, selector), companion.ID), nil
 }
 
@@ -377,6 +398,9 @@ func (m *CompanyModule) status(leaderUserID int) string {
 		return "No companions."
 	}
 	lines := []string{fmt.Sprintf("Company companions (%d/%d):", len(record.Companions), m.maxCompanions())}
+	if average, ok := m.companyAverage(leaderUserID); ok {
+		lines = append(lines, fmt.Sprintf("Company alignment: %s", alignmentLabel(average)))
+	}
 	for _, c := range record.Companions {
 		state := "awaiting restoration"
 		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked {
@@ -386,7 +410,11 @@ func (m *CompanyModule) status(leaderUserID int) string {
 				m.clearInstance(leaderUserID, c.ID)
 			}
 		}
-		lines = append(lines, fmt.Sprintf("  #%d %s, %s (%s)", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)), archetypeLabel(c.Archetype), state))
+		loyalty := domain.MaxLoyalty
+		if c.Disposition != nil {
+			loyalty = c.Disposition.Loyalty
+		}
+		lines = append(lines, fmt.Sprintf("  #%d %s, %s, alignment %s, loyalty %d (%s)", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)), archetypeLabel(c.Archetype), alignmentLabel(m.companionAlignment(c)), loyalty, state))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -407,24 +435,34 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 	if !ok {
 		return "", fmt.Errorf("company: no companion matches %q", selector)
 	}
-	snapshot, err := survival.SnapshotCompanyMember(leaderUserID, companion.ID)
-	if err != nil {
+	if err := m.removeCompanion(leaderUserID, record, companion); err != nil {
 		return "", err
 	}
+	return fmt.Sprintf("Companion dismissed: %s (#%d).", templateName(companion.MobTemplateID, strconv.Itoa(companion.MobTemplateID)), companion.ID), nil
+}
+
+// removeCompanion takes one companion out of the company (dismissal and
+// Phase 21a desertion): survival state, the record, and the live mob. A
+// failed save restores record, the pre-removal record, and survival state.
+func (m *CompanyModule) removeCompanion(leaderUserID int, record domain.Record, companion domain.Companion) error {
+	snapshot, err := survival.SnapshotCompanyMember(leaderUserID, companion.ID)
+	if err != nil {
+		return err
+	}
 	if !m.registry.Dismiss(leaderUserID, companion.ID) {
-		return "", fmt.Errorf("company: companion #%d is no longer in the company", companion.ID)
+		return fmt.Errorf("company: companion #%d is no longer in the company", companion.ID)
 	}
 	if err := survival.RemoveCompanyMember(leaderUserID, companion.ID); err != nil {
 		m.registry.Put(record)
-		return "", err
+		return err
 	}
 	if err := m.save(); err != nil {
 		restoreErr := survival.RestoreCompanyMember(leaderUserID, companion.ID, snapshot)
 		m.registry.Put(record)
 		if restoreErr != nil {
-			return "", errors.Join(err, restoreErr)
+			return errors.Join(err, restoreErr)
 		}
-		return "", err
+		return err
 	}
 	if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
 		if m.runtime.IsLive(instanceID) {
@@ -432,7 +470,7 @@ func (m *CompanyModule) dismiss(leaderUserID int, selector string) (string, erro
 		}
 		m.clearInstance(leaderUserID, companion.ID)
 	}
-	return fmt.Sprintf("Companion dismissed: %s (#%d).", templateName(companion.MobTemplateID, strconv.Itoa(companion.MobTemplateID)), companion.ID), nil
+	return nil
 }
 
 func (m *CompanyModule) dismissAll(leaderUserID int) (string, error) {
@@ -529,6 +567,14 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(text)
 	case "status":
 		user.SendText(m.status(user.UserId))
+	case "alignment":
+		user.SendText(m.alignmentView(user.UserId))
+	case "inspect":
+		if len(args) < 2 {
+			user.SendText(companyUsage)
+			return true, nil
+		}
+		user.SendText(m.inspect(user.UserId, strings.Join(args[1:], " ")))
 	case "archetype":
 		if len(args) < 3 {
 			user.SendText(companyUsage)
@@ -579,6 +625,7 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 			continue
 		}
 		m.setInstance(leaderUserID, companion.ID, instanceID)
+		m.applyInstanceAlignment(leaderUserID, companion.ID, instanceID)
 	}
 	return firstErr
 }
@@ -627,6 +674,14 @@ func (m *CompanyModule) load() {
 		m.loadErr = err
 		mudlog.Error("company: reconcile survival", "error", err)
 		return
+	}
+
+	// Phase 21a: companions saved before alignment existed are seeded from
+	// their template and the upgrade is saved at once.
+	if m.seedLegacyDispositions() {
+		if err := m.save(); err != nil {
+			mudlog.Error("company: save seeded dispositions", "error", err)
+		}
 	}
 }
 

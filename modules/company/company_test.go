@@ -224,16 +224,11 @@ type fakeStore struct {
 	saved                domain.Registry
 	loadErr, saveErr     error
 	loadCalls, saveCalls int
+	failSaveOnCall       int // 1-based; when >0, the Nth Save call fails
 }
 
 func cloneRegistry(in domain.Registry) domain.Registry {
-	out := domain.Registry{Companies: map[int]domain.Record{}}
-	for leader, record := range in.Companies {
-		clone := record
-		clone.Companions = append([]domain.Companion(nil), record.Companions...)
-		out.Companies[leader] = clone
-	}
-	return out
+	return in.Clone()
 }
 
 func (f *fakeStore) Load(reg *domain.Registry) error {
@@ -245,6 +240,9 @@ func (f *fakeStore) Save(reg domain.Registry) error {
 	f.saveCalls++
 	if f.saveErr != nil {
 		return f.saveErr
+	}
+	if f.failSaveOnCall > 0 && f.saveCalls == f.failSaveOnCall {
+		return errors.New("save failed")
 	}
 	f.saved = cloneRegistry(reg)
 	return nil
@@ -505,9 +503,10 @@ func TestCompanyFailedLoadBlocksWritesUntilRecovery(t *testing.T) {
 	module.load()
 	require.Equal(t, 2, store.loadCalls)
 	require.Contains(t, module.registry.Companies, 8)
+	assert.Equal(t, 1, store.saveCalls, "the recovered load saves the Phase 21a disposition upgrade")
 	_, err := module.summon(7, 12, "58")
 	require.NoError(t, err)
-	assert.Equal(t, 1, store.saveCalls)
+	assert.Equal(t, 2, store.saveCalls)
 	assert.Contains(t, store.saved.Companies, 8, "recovery must preserve preexisting ownership")
 	assert.Contains(t, store.saved.Companies, 7)
 }

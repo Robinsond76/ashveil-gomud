@@ -39,6 +39,9 @@ type Companion struct {
 	// companions recruited before archetypes existed, until the leader sets
 	// one. It is set at most once.
 	Archetype string `yaml:"archetype,omitempty"`
+	// Disposition is the companion's Phase 21a alignment and loyalty. Nil
+	// for a companion saved before Phase 21a, until the module seeds it.
+	Disposition *Disposition `yaml:"disposition,omitempty"`
 }
 
 type Record struct {
@@ -50,6 +53,9 @@ type Record struct {
 
 type Registry struct {
 	Companies map[int]Record `yaml:"companies"`
+	// DriftIn is the number of rounds until the next alignment drift tick
+	// (Phase 21a). 0 or out of range means a full interval.
+	DriftIn int `yaml:"drift_in,omitempty"`
 }
 
 func NewRegistry() *Registry {
@@ -65,6 +71,12 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		return Record{}, false
 	}
 	record.Companions = append([]Companion(nil), record.Companions...)
+	for i, c := range record.Companions {
+		if c.Disposition != nil {
+			d := *c.Disposition
+			record.Companions[i].Disposition = &d
+		}
+	}
 	return record, true
 }
 
@@ -274,4 +286,14 @@ func validMemberKeys(record Record) map[MemberKey]bool {
 		valid[CompanionMemberKey(c.ID)] = true
 	}
 	return valid
+}
+
+// Clone returns a deep copy of the registry.
+func (r *Registry) Clone() Registry {
+	out := Registry{Companies: make(map[int]Record, len(r.Companies)), DriftIn: r.DriftIn}
+	for leaderUserID := range r.Companies {
+		record, _ := r.Get(leaderUserID) // Formation is an array, copied by value
+		out.Companies[leaderUserID] = record
+	}
+	return out
 }

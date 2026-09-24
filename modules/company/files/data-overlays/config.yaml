@@ -7,3 +7,27 @@ MaxCompanions: 4
 # be given one, once, with "company archetype <member> <archetype>".
 CompanionArchetypes:
   - { MobTemplateId: 58, Archetype: warrior }
+# Phase 21a: company alignment. Values are engine alignment points
+# (-100..100); players see alignment as 1-100, so one displayed point is
+# two engine points. Out-of-range values fall back to the default.
+#
+# Every DriftEveryRounds rounds (1..100000), each companion of an online
+# leader moves DriftStep (1..50) toward the average alignment of the rest
+# of the company (the leader and the other companions). The leader doesn't
+# drift.
+DriftEveryRounds: 75
+DriftStep: 2
+# On each drift tick a companion further than LoyaltyToleranceGap (0..200)
+# from the rest of the company loses LoyaltyLoss (0..100) loyalty;
+# otherwise it gains LoyaltyGain (0..100), up to 100. Falling below
+# LoyaltyWarnBelow (0..100) warns the leader; at 0 the companion deserts
+# (after any fight the leader is in).
+LoyaltyToleranceGap: 60
+LoyaltyLoss: 5
+LoyaltyGain: 2
+LoyaltyWarnBelow: 25
+# A new recruit's loyalty (1..100).
+StartLoyalty: 70
+# "company summon" refuses a candidate further than RecruitMaxGap (0..200)
+# from the company average (the leader and every companion).
+RecruitMaxGap: 80
