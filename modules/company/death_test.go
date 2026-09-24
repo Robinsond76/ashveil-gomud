@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // deathTemplate is a mob template no fixture world defines, so companion
@@ -348,4 +349,18 @@ func TestAlignmentViewShowsFallen(t *testing.T) {
 	text := module.alignmentView(7)
 	assert.Contains(t, text, "#1 990065: fallen")
 	assert.Contains(t, text, "#2 ")
+}
+
+// TestAllowanceDays: the shipped overlay asks for three game days; a bad
+// value uses the default.
+func TestAllowanceDays(t *testing.T) {
+	data, err := files.ReadFile("files/data-overlays/config.yaml")
+	require.NoError(t, err)
+	values := map[string]any{}
+	require.NoError(t, yaml.Unmarshal(data, &values))
+	assert.Equal(t, 3, allowanceDays(values["ResurrectionAllowanceDays"]))
+	assert.Equal(t, 5, allowanceDays(5))
+	assert.Equal(t, defaultAllowanceDays, allowanceDays(0))
+	assert.Equal(t, defaultAllowanceDays, allowanceDays(nil))
+	assert.Equal(t, 3*900*4, (&CompanyModule{}).allowanceSeconds(), "three hours under the default calendar")
 }

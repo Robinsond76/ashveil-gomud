@@ -52,15 +52,25 @@ func (m *CompanyModule) allowanceSeconds() int {
 	}
 	days := defaultAllowanceDays
 	if m.plug != nil {
-		if n, ok := configInt(m.plug.Config.Get("ResurrectionAllowanceDays")); ok && n >= 1 {
-			days = n
-		}
+		days = allowanceDays(m.plug.Config.Get("ResurrectionAllowanceDays"))
 	}
 	perDay := gametime.GetDate().RoundsPerDay
 	if perDay < 1 {
 		perDay = 900
 	}
 	return days * perDay * int(configs.GetTimingConfig().RoundSeconds)
+}
+
+// allowanceDays reads ResurrectionAllowanceDays: a whole number of days,
+// at least 1, or the default.
+func allowanceDays(raw any) int {
+	if n, ok := configInt(raw); ok && n >= 1 {
+		return n
+	}
+	if raw != nil {
+		mudlog.Warn("company: ResurrectionAllowanceDays must be at least 1; using the default", "value", raw)
+	}
+	return defaultAllowanceDays
 }
 
 // formatAllowance renders seconds as "2h 41m" (or "45s" under a minute).

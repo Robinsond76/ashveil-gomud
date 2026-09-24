@@ -1,0 +1,22 @@
+roomid: 2008
+zone: Fernhollow
+title: Fernhollow Green
+description: A handful of turf-roofed cottages huddle around a green worn bare by
+  geese and children, in a hollow where bracken grows shoulder-high. Smoke seeps
+  from the thatch rather than rising from any chimney, and a rain barrel stands at
+  every door. A stone trough fed by a spring marks the middle of the green. To the
+  west, at the edge of the trees, stands a round lodge hung with antlers and bundles
+  of drying herbs, where the hamlet's shaman keeps her fire. The track back to the
+  Black Oak runs east.
+biome: forest
+exits:
+  east:
+    roomid: 2002
+  west:
+    roomid: 2009
+mapsymbol: v
+maplegend: Village
+mapx: -1
+mapy: -1
+mapz: 0
+hascoordinates: true

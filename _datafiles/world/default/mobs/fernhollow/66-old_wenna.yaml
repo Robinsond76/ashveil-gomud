@@ -1,0 +1,24 @@
+mobid: 66
+zone: Fernhollow
+# Phase 25b: Fernhollow's shaman (room 2009). A leader who brings their
+# company here in time can ask her to call a dead companion back
+# (resurrect). She carries nothing, has no gold, and drops nothing.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 5
+idlecommands:
+  - 'emote feeds a pinch of dried sage to the fire and watches the smoke.'
+  - 'say The dead linger a while, if someone calls. Not forever.'
+  - ''
+character:
+  name: Old Wenna
+  description: 'A small, stooped woman wrapped in a patched green shawl, her grey
+    hair braided with sprigs of rowan. Old Wenna has been the hollow''s shaman since
+    before the oldest cottage was roofed, and her eyes, pale as river ice, seem to
+    look a little past whoever she is speaking to. Her fingers are stained dark with
+    walnut and woad.'
+  raceid: 1
+  level: 20
+  alignment: 60
+  items: []

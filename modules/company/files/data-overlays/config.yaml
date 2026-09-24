@@ -80,3 +80,11 @@ ChemistrySwornRounds: 6300
 ChemistryFamiliarBonus: 2
 ChemistryTrustedBonus: 4
 ChemistrySwornBonus: 6
+# Phase 25b: a companion who dies stays dead on the roster. Its leader has
+# this many game days (RoundsPerDay x RoundSeconds of real time each; 3 days
+# is 3 hours under the default calendar) of their own online time to bring
+# the company to a city church or village shaman and resurrect it. Offline
+# time and server downtime are never counted. When it runs out, the
+# companion is lost and its roster slot freed. Changing this affects only
+# later deaths.
+ResurrectionAllowanceDays: 3

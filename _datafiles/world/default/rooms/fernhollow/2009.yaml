@@ -1,0 +1,27 @@
+roomid: 2009
+zone: Fernhollow
+title: The Shaman's Lodge
+description: The round lodge is dim and close, its walls of woven hazel daubed with
+  clay and hung with antlers, feathers, and bundles of sage and yarrow drying in the
+  smoke. A peat fire smoulders in a ring of hearthstones at the centre, and the
+  smoke finds its own way out through a gap in the thatch. Bones and river stones
+  lie arranged on a hide beside the fire, and a low bed of fresh rushes waits along
+  the far wall for whoever the shaman is called to mend. The door of the lodge opens
+  east onto the green.
+biome: forest
+tags:
+  - shaman
+  - indoor
+exits:
+  east:
+    roomid: 2008
+spawninfo:
+- mobid: 66
+  message: Old Wenna ducks in through the low door, shaking rain from her shawl.
+  respawnrate: 5 real minutes
+mapsymbol: +
+maplegend: Shaman
+mapx: -2
+mapy: -1
+mapz: 0
+hascoordinates: true

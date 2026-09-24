@@ -78,7 +78,52 @@ func TestShippedChurches(t *testing.T) {
 	assert.Equal(t, 2007, church)
 	assert.Equal(t, 18, s.fallbackID)
 	assert.Equal(t, 50, s.vitalsPct)
-	for _, settlement := range s.registry.Settlements() {
-		assert.Equal(t, domain.City, settlement.Kind, "25a ships no village")
+}
+
+// TestShippedShaman pins the Phase 25b content: Fernhollow is a village
+// west of the Fork at the Black Oak, its lodge carries the shaman tag and
+// Old Wenna, who can't be farmed; the shipped config names every
+// settlement's keeper, and the village is never a checkpoint.
+func TestShippedShaman(t *testing.T) {
+	fork := shippedRoom(t, "old_kings_road/2002.yaml")
+	green := shippedRoom(t, "fernhollow/2008.yaml")
+	lodge := shippedRoom(t, "fernhollow/2009.yaml")
+	assert.Equal(t, 2008, fork.Exits["west"].RoomId)
+	assert.Equal(t, 2002, green.Exits["east"].RoomId)
+	assert.Equal(t, 2009, green.Exits["west"].RoomId)
+	assert.Equal(t, 2008, lodge.Exits["east"].RoomId)
+	for _, room := range []*rooms.Room{green, lodge} {
+		assert.Equal(t, "Fernhollow", room.Zone)
 	}
+	assert.True(t, lodge.HasTag(domain.ShamanTag))
+	assert.False(t, lodge.HasTag(domain.ChurchTag))
+	require.Len(t, lodge.SpawnInfo, 1)
+	assert.Equal(t, 66, lodge.SpawnInfo[0].MobId)
+
+	data, err := os.ReadFile(filepath.Join(shippedWorld(), "mobs", "fernhollow", "66-old_wenna.yaml"))
+	require.NoError(t, err)
+	keeper := mobs.Mob{}
+	require.NoError(t, yaml.Unmarshal(data, &keeper))
+	assert.Equal(t, mobs.MobId(66), keeper.MobId)
+	assert.Equal(t, "Old Wenna", keeper.Character.Name)
+	assert.False(t, keeper.Hostile)
+	assert.Zero(t, keeper.ItemDropChance)
+	assert.Empty(t, keeper.Character.Items)
+	assert.Zero(t, keeper.Character.Gold)
+	assert.Zero(t, keeper.Character.Equipment.Weapon.ItemId)
+
+	s := shippedSettings(t)
+	village, ok := s.registry.ServiceAt(2009)
+	require.True(t, ok)
+	assert.Equal(t, domain.Settlement{Zone: "Fernhollow", Kind: domain.Village, ServiceRoomID: 2009, ServiceMobID: 66}, village)
+	_, ok = s.registry.ChurchFor("Fernhollow")
+	assert.False(t, ok, "a village is never a checkpoint")
+	for room, keeper := range map[int]int{18: 4, 2007: 65} {
+		church, ok := s.registry.ServiceAt(room)
+		require.True(t, ok)
+		assert.Equal(t, keeper, church.ServiceMobID, room)
+	}
+	sanctuary := shippedRoom(t, "frostfang/18.yaml")
+	require.NotEmpty(t, sanctuary.SpawnInfo)
+	assert.Equal(t, 4, sanctuary.SpawnInfo[0].MobId, "the Sanctuary's priest is its keeper")
 }
