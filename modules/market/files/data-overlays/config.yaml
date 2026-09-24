@@ -70,6 +70,14 @@ Markets:
         TargetStock: 15
         StartStock: 15
         DriftStep: 1
+      - ItemId: 30 # whetstone (Phase 23b); only bought back unused
+        BasePrice: 20
+        MinPrice: 12
+        MaxPrice: 40
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 8
+        DriftStep: 1
   - Zone: Old Kings Road
     Goods:
       - ItemId: 28 # wolf hide
@@ -88,3 +96,11 @@ Markets:
         TargetStock: 20
         StartStock: 20
         DriftStep: 2
+      - ItemId: 30 # whetstone: a little dearer out on the road
+        BasePrice: 24
+        MinPrice: 14
+        MaxPrice: 45
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 3
+        DriftStep: 1

@@ -144,9 +144,13 @@ func (m *CampingModule) onNewRound(e events.Event) events.ListenerReturn {
 func (m *CampingModule) grantPendingTiers() {
 	m.mu.Lock()
 	pending := map[int]camping.Tier{}
+	// Phase 23b: a camp rest's end also sharpens the company for leaders
+	// with auto-sharpen on.
+	autoSharpen := map[int]bool{}
 	for leaderUserID, owed := range m.restedPending {
 		if owed {
 			pending[leaderUserID] = camping.TierRested
+			autoSharpen[leaderUserID] = m.autoSharpen[leaderUserID]
 		}
 	}
 	for leaderUserID, owed := range m.wellRestedPending {
@@ -186,13 +190,20 @@ func (m *CampingModule) grantPendingTiers() {
 		}
 		// A failed save retries next round, so only announce a saved grant,
 		// and only one that gave anybody anything.
-		if !m.finishGrant(leaderUserID, tier, owed, now) || !granted {
+		if !m.finishGrant(leaderUserID, tier, owed, now) {
 			continue
 		}
-		if tier == camping.TierWellRested {
+		if granted && tier == camping.TierWellRested {
 			user.SendText("Your company feels well rested.")
-		} else {
+		} else if granted {
 			user.SendText("Your company is Rested: the road will feel a little lighter for a while.")
+		}
+		// Once per camp rest: the marker it rode on is cleared and saved.
+		// A pass is idempotent anyway, since sharp blades cost nothing.
+		if autoSharpen[leaderUserID] {
+			if text := m.sharpen(user, true); text != "" {
+				user.SendText(text)
+			}
 		}
 	}
 }

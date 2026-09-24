@@ -1,5 +1,7 @@
 package combat
 
+import "github.com/GoMudEngine/GoMud/internal/items"
+
 type AttackResult struct {
 	Hit                     bool  // defaults false
 	Crit                    bool  // defaults false
@@ -14,6 +16,9 @@ type AttackResult struct {
 	MessagesToSourceRoom    []string
 	MessagesToTargetRoom    []string
 	MessagesToRoomOld       []string
+	// EdgeSpent is how many strikes of each attacking weapon's Phase 23b
+	// edge the round spent, by equipment slot.
+	EdgeSpent map[items.ItemType]int
 }
 
 func (a *AttackResult) SendToSource(msg string) {

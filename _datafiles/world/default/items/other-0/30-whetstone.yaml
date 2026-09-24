@@ -1,0 +1,11 @@
+itemid: 30
+name: whetstone
+namesimple: whetstone
+description: A flat grey stone, worn smooth on one face, for honing an edge.
+  Carried by a company's leader, it sharpens every blade in the company with
+  a few strokes each (sharpen).
+type: object
+subtype: mundane
+uses: 10
+value: 20
+weight: 300

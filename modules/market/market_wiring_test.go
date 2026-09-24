@@ -156,6 +156,32 @@ func TestMarketEndToEndThroughPluginsLoad(t *testing.T) {
 	okrAfter, _ = module.zones["Old Kings Road"].Stock(28)
 	assert.Equal(t, okrBefore, okrAfter)
 
+	// Phase 23b: the square sells the shipped whetstone with its 10 uses,
+	// and only buys one back unused.
+	stoneSpec := items.GetItemSpec(30)
+	require.NotNil(t, stoneSpec)
+	assert.Equal(t, "whetstone", stoneSpec.Name)
+	assert.Equal(t, 10, stoneSpec.Uses)
+	goodFor(t, "Old Kings Road", 30)
+	user.Character.Gold = 200
+	assert.Contains(t, run(2004, "buy", "whetstone"), "You buy the whetstone at the market")
+	stone, carried := user.Character.FindInBackpack("whetstone")
+	require.True(t, carried)
+	assert.Equal(t, 10, stone.Uses)
+	for i := range user.Character.Items {
+		if user.Character.Items[i].ItemId == 30 {
+			user.Character.Items[i].Uses = 9
+		}
+	}
+	gold = user.Character.Gold
+	assert.Contains(t, run(2004, "sell", "whetstone"), "not the ordinary article")
+	assert.Equal(t, gold, user.Character.Gold)
+	assert.Contains(t, run(2004, "buy", "whetstone"), "You buy the whetstone at the market")
+	assert.Contains(t, run(2004, "sell", "whetstone"), "You sell the whetstone at the market", "the unused one sells")
+	left, carried := user.Character.FindInBackpack("whetstone")
+	require.True(t, carried)
+	assert.Equal(t, 9, left.Uses, "the used one is kept")
+
 	// A downed player can't trade.
 	user.Character.Health = 0
 	gold = user.Character.Gold

@@ -229,6 +229,9 @@ func (m *CompanyModule) gearView(leaderUserID int, selector string) string {
 
 func itemName(itm items.Item) string {
 	if spec := items.GetItemSpec(itm.ItemId); spec != nil {
+		if edge := itm.EdgeLabel(); edge != "" {
+			return itm.DisplayName() + " " + edge
+		}
 		return itm.DisplayName()
 	}
 	return fmt.Sprintf("item %d", itm.ItemId)

@@ -29,6 +29,7 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(user.Character.RoomId), &mob.Character, func(r *rooms.Room) int { return r.VisibilityForUser(user) })
 	attackResult := calculateCombat(*user.Character, mob.Character, User, Mob, penalty)
+	spendEdges(user.Character, attackResult.EdgeSpent)
 
 	if attackResult.DamageToSource != 0 {
 		user.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -54,6 +55,7 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) 
 
 	penalty := darknessPenalty(rooms.LoadRoom(userAtk.Character.RoomId), userDef.Character, func(r *rooms.Room) int { return r.VisibilityForUser(userAtk) })
 	attackResult := calculateCombat(*userAtk.Character, *userDef.Character, User, User, penalty)
+	spendEdges(userAtk.Character, attackResult.EdgeSpent)
 
 	if attackResult.DamageToSource != 0 {
 		userAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -80,6 +82,7 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mob.Character.RoomId), user.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mob) })
 	attackResult := calculateCombat(mob.Character, *user.Character, Mob, User, penalty)
+	spendEdges(&mob.Character, attackResult.EdgeSpent)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
 
@@ -100,6 +103,7 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
 	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, Mob, penalty)
+	spendEdges(&mobAtk.Character, attackResult.EdgeSpent)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
 	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
@@ -256,7 +260,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 		mudlog.Debug(`calculateCombat`, `Atk`, fmt.Sprintf(`%d/%d`, i+1, atkCount), `Source`, fmt.Sprintf(`%s (%s)`, sourceChar.Name, sourceType), `Target`, fmt.Sprintf(`%s (%s)`, targetChar.Name, targetType))
 
-		attackWeapons := resolveAttackWeapons(sourceChar)
+		attackWeapons, weaponSlots := resolveAttackWeaponSlots(sourceChar)
 
 		dualWieldLevel := sourceChar.GetSkillLevel(`dual-wield`)
 
@@ -269,6 +273,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 			for len(attackWeapons) > maxWeapons {
 				rnd := util.Rand(len(attackWeapons))
 				attackWeapons = append(attackWeapons[:rnd], attackWeapons[rnd+1:]...)
+				weaponSlots = append(weaponSlots[:rnd], weaponSlots[rnd+1:]...)
 			}
 		}
 
@@ -328,6 +333,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 				attackTargetDamage := 0
 				attackTargetReduction := 0
+				edgeBonus := 0
 				isCrit := false
 
 				if Hits(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, penalty) {
@@ -339,6 +345,17 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					}
 					attackResult.Hit = true
 					attackTargetDamage = util.RollDice(dCount, dSides) + dBonus
+
+					// Phase 23b: a sharpened weapon adds its edge to each
+					// successful strike until its strikes are spent.
+					if slot := weaponSlots[wIdx]; slot != `` && weapon.SharpStrikes-attackResult.EdgeSpent[slot] > 0 && weapon.SharpBonus > 0 {
+						edgeBonus = weapon.SharpBonus
+						attackTargetDamage += edgeBonus
+						if attackResult.EdgeSpent == nil {
+							attackResult.EdgeSpent = map[items.ItemType]int{}
+						}
+						attackResult.EdgeSpent[slot]++
+					}
 
 					// Backstab sets attackResult.Crit for the first hit only; subsequent
 					// hits use a fresh per-attack roll so crits don't cascade.
@@ -354,7 +371,9 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
 
-				pct := damagePercentOfMax(attackTargetDamage, dCount, dSides, dBonus)
+				// An edge raises the strike's ceiling too, so a sharpened
+				// top roll isn't described as a critical.
+				pct := damagePercentOfMax(attackTargetDamage, dCount, dSides, dBonus+edgeBonus)
 				msgs := items.GetAttackMessage(weaponSubType, pct)
 
 				toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg := buildCombatMessages(
