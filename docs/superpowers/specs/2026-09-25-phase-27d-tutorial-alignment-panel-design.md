@@ -133,12 +133,38 @@ the owner's "carry on to 27d" instruction (2026-09-25).
   late. `internal/tutorial.OnChanged`, fired by the module whenever a
   player's place in the course changes (placement, a pass or waiver, a
   skip, leaving), makes the feed resend at once.
-- **A course missing rooms is closed.** A deployment whose `TutorialRooms`
-  lacks a stage's room can't run the course: `start` sends new characters
-  to the start room, and a player mid-course is let out as skipped.
+- **A course missing rooms is closed** (amended by the review, below).
 - **Readable muted text.** The panel's secondary text uses the theme's
   secondary text colour; the "dim" one was too faint on the dark
   background.
 - **A steadier fight check.** 27c's wiring test matched "You hit straw
   footman", but attack messages vary ("You punch", "Your fists connect");
   it now matches any line of the player's own naming the foe.
+
+## Review amendments (2026-09-25)
+
+- **A closed course is recoverable.** A course is closed when a stage's
+  room isn't listed in `TutorialRooms` or doesn't load. `start` sends new
+  characters to the start room. A player mid-course keeps their place (no
+  gates run, the panel shows nothing) and resumes once it's fixed, and
+  `tutorial skip yes` still lets them go. Config drift no longer skips
+  anyone for good.
+- **`company inspect` resolves in order:**
+  1. a candidate's exact id or name, at any recruiter;
+  2. a candidate's template number;
+  3. a summonable template;
+  4. a unique partial candidate name.
+
+  A name that fits two templates gets "Which one: ...". For a recruiter's
+  candidate the verdict is about alignment only ("close enough to your
+  company's"), and it says when a free recruit is already claimed; price
+  and place are the recruiter's to say.
+- **The panel's status line.** The rebuilt panel isn't a live region. A
+  hidden status line announces only a new stage ("Stage N of M: Title",
+  also the heading) and a newly done item. `{}` at login announces
+  nothing. Hints are a plain list.
+- **Readable checklist label:** "company inspect corvin".
+- **A failed start reports its reset,** so the panel clears; a successful
+  placement reports once.
+- **Kept as designed:** the window is docked for everyone by default, so a
+  new player sees it. Veterans can close it, and the layout remembers.

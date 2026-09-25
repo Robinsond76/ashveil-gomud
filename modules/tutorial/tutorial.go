@@ -253,7 +253,6 @@ func (m *TutorialModule) load() {
 // place makes fresh room copies for a player in the course, opens the way
 // up to their current stage's room, and moves them there.
 func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
-	defer domain.Changed(user.UserId) // 27d: the panel resends at once
 	ids := m.roomIDs()
 	at := stageIndex(p.Stage)
 	if at < 0 || !m.available() {
@@ -287,33 +286,33 @@ func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
 	}
 	m.sendStage(user, at)
 	m.enterStage(user, p)
+	domain.Changed(user.UserId) // 27d: the panel resends at once
 	return true
 }
 
-// available reports whether every stage has its room: a deployment whose
-// TutorialRooms lacks one can't run the course (27d review).
+// available reports whether every stage has its room, listed in
+// TutorialRooms and loadable: without one the course can't run (27d).
 func (m *TutorialModule) available() bool {
 	ids := m.roomIDs()
 	for _, s := range stages {
-		if s.Room < 0 || s.Room >= len(ids) {
+		if s.Room < 0 || s.Room >= len(ids) || m.loadRoom(ids[s.Room]) == nil {
 			return false
 		}
 	}
 	return true
 }
 
-// closeCourse lets a player in the course out when it can't run: skipped,
-// with no reward, wherever the engine put them.
-func (m *TutorialModule) closeCourse(user *users.UserRecord, p progress) {
-	defer domain.Changed(user.UserId) // 27d: the panel resends at once
-	p.State = stateSkipped
-	p.save(user.Character)
+// closedCourse tells a player in the course that it can't run right now.
+// Their place is kept, so fixing the rooms resumes it at their next login;
+// meanwhile they stay where the engine put them and "tutorial skip yes"
+// still lets them go. A course camp or squad in the lost copies goes.
+func (m *TutorialModule) closedCourse(user *users.UserRecord) {
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
 	m.strikeCamp(user)
 	m.clearSquad(user.UserId)
 	mudlog.Error("tutorial: course unavailable", "user", user.UserId, "rooms", len(m.roomIDs()), "stages", len(stages))
-	user.SendText(`The training grounds are closed, so your training ends here. Your journey begins.`)
+	user.SendText(`The training grounds are closed right now. Your place in them is kept for when they reopen; <ansi fg="command">tutorial skip yes</ansi> leaves the course for good.`)
 }
 
 // travel moves a player (and their living companions, which only follow
@@ -384,7 +383,7 @@ func (m *TutorialModule) Begin(userID int) bool {
 	switch prior := progressOf(user.Character); prior.State {
 	case stateActive:
 		if !m.available() {
-			m.closeCourse(user, prior)
+			m.closedCourse(user)
 			return false
 		}
 		// Already in the course (e.g. "start" typed in the Void before
@@ -402,6 +401,7 @@ func (m *TutorialModule) Begin(userID int) bool {
 	p.save(user.Character)
 	if !m.place(user, p) {
 		progress{}.save(user.Character)
+		domain.Changed(user.UserId) // the panel clears
 		return false
 	}
 	return true
@@ -678,6 +678,9 @@ func (m *TutorialModule) check(user *users.UserRecord) {
 		return
 	}
 	m.retryStrike(user)
+	if !m.available() {
+		return // closed: no gates, nothing opens
+	}
 	p := progressOf(user.Character)
 	// A foe gone without being beaten (despawned, torn down) is made good
 	// while the player is in the yard.
@@ -821,7 +824,7 @@ func (m *TutorialModule) resume(userID int) {
 		p.save(user.Character)
 	}
 	if !m.available() {
-		m.closeCourse(user, p)
+		m.closedCourse(user)
 		return
 	}
 	user.SendText(`<ansi fg="magenta">You find yourself back where your training left off.</ansi>`)
@@ -844,6 +847,8 @@ func (m *TutorialModule) command(rest string, user *users.UserRecord, _ *rooms.R
 		user.SendText("You left the tutorial. See <ansi fg=\"command\">help</ansi> for any command.")
 	case p.State != stateActive:
 		user.SendText("You aren't in the tutorial.")
+	case sub != "skip" && !m.available():
+		user.SendText(`The training grounds are closed right now. Your place is kept; <ansi fg="command">tutorial skip yes</ansi> leaves the course for good.`)
 	case sub == "skip":
 		m.skip(user, p, len(args) > 1 && args[1] == "yes")
 	case sub == "next":
@@ -909,7 +914,11 @@ func (m *TutorialModule) checklist(user *users.UserRecord, p progress, s Stage) 
 		check(false, "go through the gate")
 	}
 	for _, key := range required(s, m.registered) {
-		check(p.Seen[key], key)
+		label := key
+		if l, ok := s.Labels[key]; ok {
+			label = l
+		}
+		check(p.Seen[key], label)
 	}
 	return out
 }
@@ -932,7 +941,7 @@ func (m *TutorialModule) TutorialView(userID int) (domain.View, bool) {
 	}
 	p := progressOf(user.Character)
 	at := stageIndex(p.Stage)
-	if p.State != stateActive || at < 0 {
+	if p.State != stateActive || at < 0 || !m.available() {
 		return domain.View{}, false
 	}
 	s := stages[at]

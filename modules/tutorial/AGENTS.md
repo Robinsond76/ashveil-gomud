@@ -39,7 +39,9 @@ new character walks through in their own ephemeral copies. See the
   the gmcp module sends it as the `Tutorial` package. Fire
   `domain.Changed` whenever a player's place in the course changes, so the
   panel resends at once. A course whose `TutorialRooms` lacks a stage's
-  room is closed (`available`, `closeCourse`).
+  room, listed or loadable, is closed (`available`, `closedCourse`): no gates
+  run, the player's place is kept for when it's fixed, and `tutorial skip
+  yes` still lets them go.
 - **Death in the course** is an ordinary death that ends the course as a
   skip (27c decision): nothing in the course can kill quickly.
 - **Supplies (27b):** reaching Survival (walking in, or being placed there)

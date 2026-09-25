@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -359,12 +360,12 @@ func (m *CompanyModule) inspect(leaderUserID int, selector string) string {
 		return err.Error()
 	}
 	selector = strings.TrimSpace(selector)
-	templateID, isCandidate := m.candidateTemplate(selector)
-	if !isCandidate {
-		var err error
-		if templateID, err = m.resolveTemplateID(selector); err != nil {
-			return fmt.Sprintf("There's no one called %q to recruit.", selector)
-		}
+	templateID, isCandidate, which := m.inspectTarget(selector)
+	if which != "" {
+		return which
+	}
+	if templateID == 0 {
+		return fmt.Sprintf("There's no one called %q to recruit.", selector)
 	}
 	name := templateName(templateID, selector)
 	if _, ok := m.allowedTemplates()[templateID]; !ok && !isCandidate {
@@ -377,40 +378,126 @@ func (m *CompanyModule) inspect(leaderUserID int, selector string) string {
 		return lines[0]
 	}
 	lines = append(lines, fmt.Sprintf("Your company: %s.", alignmentLabel(average)))
-	if m.recruitRefusal(leaderUserID, templateID, name) == "" {
-		rules, _ := m.alignmentConfig()
-		gap := candidate - average
-		if gap < 0 {
-			gap = -gap
-		}
-		if gap > rules.LoyaltyToleranceGap {
-			lines = append(lines, "They would join, but uneasily: far from the company's ways, they would lose loyalty.")
-		} else {
-			lines = append(lines, "They would join.")
-		}
-	} else {
+	switch {
+	case m.recruitRefusal(leaderUserID, templateID, name) != "":
 		lines = append(lines, "They won't join a company so far from their ways.")
+	case isCandidate:
+		// A recruiter's candidate: whether they are here, what they ask, and
+		// a free recruit's one claim are for "company recruit" to say.
+		verdict := "Their ways are close enough to your company's."
+		if m.uneasy(candidate, average) {
+			verdict = "Their ways are close enough to your company's, but far enough that they would lose loyalty."
+		}
+		lines = append(lines, verdict)
+		if m.claimedCandidate(leaderUserID, templateID) {
+			lines = append(lines, "You've already claimed them: a free recruit joins once.")
+		}
+	case m.uneasy(candidate, average):
+		lines = append(lines, "They would join, but uneasily: far from the company's ways, they would lose loyalty.")
+	default:
+		lines = append(lines, "They would join.")
 	}
 	return strings.Join(lines, "\n")
 }
 
-// candidateTemplate finds a recruiter's candidate by id or name, at any
-// recruiter (Phase 27d: the tutorial's Oath Stone weighs one it can't
-// take). ok is false unless exactly one template matches.
-func (m *CompanyModule) candidateTemplate(selector string) (int, bool) {
-	found := map[int]bool{}
+// uneasy: a recruit this far from the company would lose loyalty.
+func (m *CompanyModule) uneasy(candidate, average int) bool {
+	rules, _ := m.alignmentConfig()
+	gap := candidate - average
+	if gap < 0 {
+		gap = -gap
+	}
+	return gap > rules.LoyaltyToleranceGap
+}
+
+// claimedCandidate: a free (tutorial) candidate of this template the
+// leader has already claimed.
+func (m *CompanyModule) claimedCandidate(leaderUserID, templateID int) bool {
 	for _, rec := range m.recruiters() {
-		if c, ok := matchCandidate(rec, selector); ok {
-			found[c.MobTemplateID] = true
+		for _, c := range rec.Candidates {
+			if c.MobTemplateID == templateID && c.Tutorial {
+				return m.HasClaimed(leaderUserID, templateID)
+			}
 		}
 	}
-	if len(found) != 1 {
-		return 0, false
+	return false
+}
+
+// inspectTarget finds who "company inspect" weighs (Phase 27d), in order:
+// a recruiter's candidate by exact id or name, anywhere; a candidate's
+// template number; a summonable template (21a); a recruiter's candidate by
+// a unique partial name. A name that fits candidates of more than one
+// template gets a question back (which), never a guess.
+func (m *CompanyModule) inspectTarget(selector string) (templateID int, isCandidate bool, which string) {
+	sel := strings.ToLower(selector)
+	if sel == "" {
+		return 0, false, ""
 	}
-	for id := range found {
-		return id, true
+	type match struct {
+		id   int
+		name string
 	}
-	return 0, false
+	collect := func(fits func(c candidate) bool) []match {
+		seen := map[int]bool{}
+		var out []match
+		for _, roomID := range sortedRecruiterRooms(m.recruiters()) {
+			for _, c := range m.recruiters()[roomID].Candidates {
+				if fits(c) && !seen[c.MobTemplateID] {
+					seen[c.MobTemplateID] = true
+					out = append(out, match{c.MobTemplateID, templateName(c.MobTemplateID, c.ID)})
+				}
+			}
+		}
+		return out
+	}
+	pick := func(found []match) (int, bool, string) {
+		if len(found) == 1 {
+			return found[0].id, true, ""
+		}
+		names := make([]string, 0, len(found))
+		for _, f := range found {
+			names = append(names, fmt.Sprintf("%s (#%d)", f.name, f.id))
+		}
+		return 0, false, fmt.Sprintf("Which one: %s? Inspect by number.", strings.Join(names, ", "))
+	}
+	if found := collect(func(c candidate) bool {
+		return c.ID == sel || strings.ToLower(templateName(c.MobTemplateID, "")) == sel
+	}); len(found) > 0 {
+		return pick(found)
+	}
+	if n, err := strconv.Atoi(sel); err == nil {
+		if found := collect(func(c candidate) bool { return c.MobTemplateID == n }); len(found) > 0 {
+			return n, true, ""
+		}
+	}
+	if id, err := m.resolveTemplateID(selector); err == nil {
+		if _, ok := m.allowedTemplates()[id]; ok {
+			return id, false, ""
+		}
+		if found := collect(func(c candidate) bool {
+			return strings.Contains(strings.ToLower(templateName(c.MobTemplateID, "")), sel)
+		}); len(found) > 0 {
+			return pick(found)
+		}
+		return id, false, ""
+	}
+	if found := collect(func(c candidate) bool {
+		return strings.Contains(strings.ToLower(templateName(c.MobTemplateID, "")), sel)
+	}); len(found) > 0 {
+		return pick(found)
+	}
+	return 0, false, ""
+}
+
+// sortedRecruiterRooms lists recruiter rooms in order, so a "which one"
+// reads the same every time.
+func sortedRecruiterRooms(recs map[int]recruiter) []int {
+	rooms := make([]int, 0, len(recs))
+	for id := range recs {
+		rooms = append(rooms, id)
+	}
+	sort.Ints(rooms)
+	return rooms
 }
 
 // alignmentView shows the leader, every companion, and the company average.

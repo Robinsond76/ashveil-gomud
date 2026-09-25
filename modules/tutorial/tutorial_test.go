@@ -76,6 +76,9 @@ func newCourse(t *testing.T) *course {
 		}
 		return out, nil
 	}
+	for id := 900; id <= 907; id++ {
+		c.rooms[id] = &rooms.Room{RoomId: id, Title: "template"}
+	}
 	m.loadRoom = func(id int) *rooms.Room { return c.rooms[id] }
 	m.originalRoom = func(id int) int {
 		if o, ok := c.original[id]; ok {
@@ -777,20 +780,70 @@ func TestLostFoeRaisesTheSquadAgain(t *testing.T) {
 	assert.Len(t, c.foes, 4)
 }
 
-// A deployment whose TutorialRooms lacks a stage's room can't run the
-// course: nobody starts it, and anyone mid-course is let out as skipped.
-func TestCourseUnavailableWithoutEveryRoom(t *testing.T) {
+// A deployment whose TutorialRooms lacks a stage's room (listed or
+// loadable) can't run the course: nobody starts it, and a player mid-course
+// keeps their place until it's fixed, free to skip meanwhile.
+func TestCourseClosedWithoutEveryRoom(t *testing.T) {
 	c := newCourse(t)
 	c.m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905} }
 	assert.False(t, c.m.Begin(7), "not started")
 	assert.Equal(t, stateNone, progressOf(c.user.Character).State)
+	assert.Empty(t, c.looked, "not placed anywhere")
 
 	progress{State: stateActive, Stage: StageSurvival}.save(c.user.Character)
 	c.user.Character.RoomId = 1
 	c.m.resume(7)
-	assert.Equal(t, stateSkipped, progressOf(c.user.Character).State, "let out, without the reward")
-	assert.Empty(t, c.given)
+	assert.Equal(t, stateActive, progressOf(c.user.Character).State, "the place is kept")
+	assert.Equal(t, StageSurvival, c.stage())
+	assert.Equal(t, 1, c.user.Character.RoomId, "not moved")
 	assert.Contains(t, c.text(), "training grounds are closed")
+	assert.False(t, c.m.Begin(7), "start again: still closed")
+	assert.Equal(t, stateActive, progressOf(c.user.Character).State)
+	_, ok := c.m.TutorialView(7)
+	assert.False(t, ok, "the panel shows no lesson")
+	_, _ = c.m.command("", c.user, nil, 0)
+	assert.Contains(t, c.text(), "tutorial skip yes")
+	c.m.onPracticeBeaten(mobcommands.PracticeBeaten{})
+	c.m.check(c.user)
+	assert.Equal(t, StageSurvival, c.stage(), "no gates run while closed")
+
+	// Fixed: the next login resumes.
+	c.m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905, 906, 907} }
+	c.m.resume(7)
+	assert.Equal(t, 1904, c.user.Character.RoomId, "back at the Weather Yard")
+
+	// A listed room that doesn't load closes it too.
+	delete(c.rooms, 907)
+	assert.False(t, c.m.available())
+}
+
+func TestFailedBeginReportsTheReset(t *testing.T) {
+	c := newCourse(t)
+	c.m.copyRooms = func(...int) (map[int]int, error) { return nil, assert.AnError }
+	changedFor = nil
+	assert.False(t, c.m.Begin(7))
+	assert.Equal(t, stateNone, progressOf(c.user.Character).State)
+	require.NotEmpty(t, changedFor, "the reset is reported, so the panel clears")
+	_, ok := c.m.TutorialView(7)
+	assert.False(t, ok)
+}
+
+func TestCombatWaivedWhenItsCopyIsMissing(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.at(StageCombat)
+	delete(c.m.copies[7], 906)
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageAlignment, c.stage(), "no Practice Yard copy: waived")
+}
+
+func TestInspectLabelIsReadable(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.at(StageAlignment)
+	v, _ := c.m.TutorialView(7)
+	assert.Contains(t, checklist(v), "company inspect corvin")
+	assert.NotContains(t, checklist(v), "company inspect")
 }
 
 func TestSubcommandInspections(t *testing.T) {
@@ -858,7 +911,7 @@ func TestTutorialViewPerStage(t *testing.T) {
 	c.m.onCommandDone(usercommands.CommandDone{UserId: 7, Command: "company", Rest: "alignment"})
 	v, _ = c.m.TutorialView(7)
 	assert.Equal(t, 7, v.Stage)
-	assert.Equal(t, map[string]bool{"company alignment": true, "company inspect": false, "standing": false}, checklist(v))
+	assert.Equal(t, map[string]bool{"company alignment": true, "company inspect corvin": false, "standing": false}, checklist(v))
 
 	c.at(StageDeparture)
 	v, _ = c.m.TutorialView(7)

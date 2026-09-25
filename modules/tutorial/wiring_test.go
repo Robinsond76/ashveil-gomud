@@ -486,17 +486,33 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	require.NotNil(t, aria.Character.Aggro)
 	require.Equal(t, archer, aria.Character.Aggro.MobInstanceId)
 	var r uint64
-	// Attack messages vary ("You hit", "You punch", ...); a line of Aria's
-	// own naming a foe is her blow.
-	footmanBlow := regexp.MustCompile(`(?m)^Your? [^\n]*straw footman`)
-	archerBlow := regexp.MustCompile(`(?m)^Your? [^\n]*straw archer`)
+	// Attack messages vary ("You hit", "Your fists connect", ...). A line
+	// of Aria's own naming a foe, and not a miss, is a blow that landed; any
+	// line of hers naming the archer means it was struck at.
+	ownLine := regexp.MustCompile(`(?m)^Your? [^\n]*`)
+	landed := func(seen, foe string) bool {
+		for _, line := range ownLine.FindAllString(seen, -1) {
+			if strings.Contains(line, foe) && !strings.Contains(strings.ToLower(line), "miss") {
+				return true
+			}
+		}
+		return false
+	}
+	aimedAt := func(seen, foe string) bool {
+		for _, line := range ownLine.FindAllString(seen, -1) {
+			if strings.Contains(line, foe) {
+				return true
+			}
+		}
+		return false
+	}
 	seen := ""
-	for r = 1; r < 200 && !footmanBlow.MatchString(seen); r++ {
+	for r = 1; r < 200 && !landed(seen, "straw footman"); r++ {
 		fightRound(r)
 		seen += text(aria)
 	}
-	require.Regexp(t, footmanBlow, seen, "a blow landed")
-	assert.NotRegexp(t, archerBlow, seen, "the archer is shielded")
+	require.True(t, landed(seen, "straw footman"), "a blow landed on a footman: %s", seen)
+	assert.False(t, aimedAt(seen, "straw archer"), "the archer is shielded")
 	assert.Equal(t, "straw footman", squad[aria.Character.Aggro.MobInstanceId], "her aim moves to the footman who caught it")
 
 	// Re-targeting (11b): a foe Aria is aiming at falls to another blow

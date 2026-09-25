@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-25
-- **HEAD:** Phase 27c (tutorial practice fight) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27b is on `master`.
+- **HEAD:** Phase 27d (tutorial Alignment lesson and browser panel) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27c is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -60,10 +60,11 @@ instead of duplicating them.
   summary in text and in the browser), and Phase 27a (the tutorial framework:
   durable progress, resume, skip, and the Character, Company, Formation, and
   Departure lessons), and Phase 27b (the tutorial's Survival and Camp
-  lessons), and Phase 27c (the tutorial's practice fight).
-- **Next:** Phase 27d (the tutorial's Alignment lesson and browser tutorial
-  panel), per the
-  [Ashveil tutorial](superpowers/specs/2026-09-23-ashveil-tutorial-design.md).
+  lessons), and Phase 27c (the tutorial's practice fight), and Phase 27d
+  (the tutorial's Alignment lesson and browser panel). The onboarding
+  roadmap's tutorial is complete.
+- **Next:** the owner's choice. The onboarding roadmap is done; the
+  handoff doc's later phases and the "Future ideas" row remain.
 
 ## Phase progress
 
@@ -112,10 +113,121 @@ instead of duplicating them.
 | 27a | Tutorial framework and first lessons | Complete: `modules/tutorial` runs the course in per-player copies of rooms 900–903 (Waking Hall, Muster Yard, Drill Ground, Gate); progress in MiscData, resumed on login; gates check results; `tutorial`, `tutorial next`, `tutorial skip`; graduation cap once; old JS rooms removed |
 | 27b | Tutorial: Survival and Camp lessons | Complete: Weather Yard (904) and Campground (905) before the Gate; Survival passes on a real meal and drink (`survival.OnProvision`) plus `weather`/`temperature`/`strain`/`cargo`, with food and water given once for what the pack lacks; Camp passes on Rested from a real camp rest; course camps struck (`camping.AbandonCamp`) on pass, skip, leave, logout, and placement |
 | 27c | Tutorial: practice fight | Complete: Practice Yard (906) before the Gate; a squad of harmless straw soldiers (three footmen in front, an archer behind) per player; `practice` mobs beaten with no XP, drops, gold, kills, or `MobDeath` (`mobcommands.OnPracticeBeaten`); the gate is the squad beaten; death in the course decided (an ordinary death, ending the course as a skip) |
-| 27d | Tutorial: Alignment lesson, browser panel | Planned |
+| 27d | Tutorial: Alignment lesson, browser panel | Complete: the Oath Stone (907) before the Gate; `company alignment`, `company inspect corvin` (an outlaw a new company is refused), and `standing`; `company inspect` weighs any recruiter's candidate; a `Tutorial` GMCP package and web client window from the same checklist as the terminal; a course missing rooms is closed but kept |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 27d: tutorial Alignment lesson and browser panel (2026-09-25)
+
+- **What:** The tutorial's last lesson and a browser panel.
+  - **Alignment**, at the Oath Stone (room 907), before the Gate. It is
+    passed by `company alignment`, `company inspect corvin`, and
+    `standing`. Inspections can name a subcommand, so `company status`
+    doesn't count.
+    - Corvin Blackthorn (mob 69, alignment −80, 150 gold) is offered
+      there, and a new company is refused him by the real gate. Nothing
+      in the lesson changes alignment, loyalty, or standing.
+    - The hints cover drift, loyalty, desertion, the recruit gate, and
+      settlement standing.
+  - **`company inspect`** now weighs any recruiter's candidate, anywhere,
+    in a set order. It asks "which one" rather than guessing, and says
+    when a free recruit is already claimed.
+  - **The panel:** a tutorial view (`internal/tutorial.View`,
+    `Viewer`, `ViewOf`) built from the same checklist as the terminal
+    `tutorial` output. Company and Formation gained checklist lines.
+    - A `Tutorial` GMCP package is sent on change, only to the player,
+      and at once when the course moves (`internal/tutorial.OnChanged`).
+      It is `{}` outside the course; `help gmcp-tutorial`.
+    - A web client Tutorial window (`window-tutorial.js`), docked on the
+      right, with every string through `textContent`. Checklist state is in
+      words, and a hidden status line announces only a new stage or a
+      newly done item.
+  - **A course missing a stage's room** (unlisted or not loadable) is
+    closed. New characters go to the start room; a player mid-course keeps
+    their place until it's fixed, and can skip.
+
+  Design and plan:
+  [27d spec](superpowers/specs/2026-09-25-phase-27d-tutorial-alignment-panel-design.md) /
+  [27d plan](superpowers/plans/2026-09-25-phase-27d-tutorial-alignment-panel.md).
+- **Why:** The tutorial spec's stage 7, and its requirement that Telnet and
+  the browser show the same stage, goal, and success feedback.
+- **Verification:** `go test -race ./...` (78 packages), `make generate`,
+  `make validate`, `make js-lint`.
+  - **Wiring test**, through `plugins.Load` with the gmcp and standing
+    modules added:
+    - the Alignment lesson with the real commands, and the real `company
+      recruit corvin` refused;
+    - real `GMCPOut` `Tutorial` events that follow the course at once
+      (stage 1, then Company with its checklist);
+    - nothing resent without a change;
+    - `{}` after a skip;
+    - 25 of 25 runs pass in fresh processes.
+  - **Browser check** (`scripts/browser/tutorial-panel-check.mjs`,
+    Chromium), 25 checks:
+    - stage, goal, checklist, and hints;
+    - done and to-do in words;
+    - markup shown as text;
+    - announcements only for a new stage or a newly done item, none for
+      `{}`;
+    - a reopened window current;
+    - 360px;
+    - the accessibility tree.
+
+    Desktop and 360px screenshots were inspected; muted text now uses the
+    theme's secondary colour.
+  - **Unit tests:** subcommand inspections; the view per stage; the GMCP
+    feed (shape, change-only, `{}` once, forget, request, telnet); the
+    closed course and its recovery; `company inspect` order, ambiguity,
+    template numbers, and claims.
+- **Review:** The independent reviewer confirmed every invariant:
+  - no clock use;
+  - GMCP state dropped on spawn;
+  - no recursive hook locking;
+  - payloads only to their player and never to a connection that hasn't
+    accepted GMCP;
+  - no markup interpreted.
+
+  It ran mutation checks, and removing the `OnChanged` wiring fails the
+  wiring test. Its findings:
+  1. *Low, fixed:* `company inspect` missed candidates by template number,
+     misreported names shared across recruiters, and let a partial
+     candidate name beat an exact summonable one. There is now a set order
+     with "Which one"
+     (`TestInspectWeighsARecruiterCandidate`, `TestInspectResolutionOrder`).
+  2. *Low, fixed:* "They would join." promised what the recruiter may
+     refuse (a claimed free recruit, price, place). For candidates the
+     verdict now speaks of alignment only and notes a claim.
+  3. *Low, fixed:* a failed start briefly sent stage 1 to the panel. Now
+     only a real placement reports, and a failed start reports its reset
+     (`TestFailedBeginReportsTheReset`).
+  4. *Medium, fixed:* a closed course marked players skipped for good on
+     mere config drift, and only counted rooms. Now it keeps their place,
+     runs no gates, and checks rooms load (`TestCourseClosedWithoutEveryRoom`).
+  5. *Low, fixed:* the checklist showed the raw key "company inspect"; it
+     now reads "company inspect corvin". Any `company inspect` still
+     counts, so no one is trapped.
+  6. *Low, fixed:* the whole panel was a live region, re-read on every
+     tick and at every login; there is now a status line.
+  7. *Low, not changed:* the window is docked for everyone. That's by
+     design so new players see it; it can be closed and the layout
+     remembers.
+  8. *Nit, fixed:* the heading reads "Stage N of M: Title"; there are no
+     bullet characters in the list.
+  9. *Coverage, fixed:* the Combat waiver for a missing copy has a test
+     again (`TestCombatWaivedWhenItsCopyIsMissing`).
+  10. *Coverage, fixed:* closure through `Begin` on an active course, and
+      the reset report.
+  11. *Coverage, fixed:* `company inspect` edge cases (1, 2).
+  12. *Low, fixed:* the fight check counted a miss ("Your swing ...
+      misses") as a blow. It now requires a non-miss line.
+  13. *Noted:* the browser check drives the real window through a stub of
+      the client's window and GMCP plumbing, which mirrors
+      `webclient-core.js`, in a host at most 420px wide. The client never
+      sends `!!GMCP(Tutorial)`; the server supports it.
+  14. *Noted:* `TestShippedOathStone` averages the two course recruits
+      without the leader. The margin (−80 against 40, or 0 alone) is wide.
+- **Step completed:** Phase 27d. The tutorial spec is complete.
 
 ### Phase 27c: tutorial practice fight (2026-09-25)
 

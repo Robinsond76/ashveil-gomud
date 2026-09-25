@@ -45,6 +45,9 @@ type Stage struct {
 	Hints       []string
 	Done        string
 	Inspections []string
+	// Labels shows an inspection's checklist line in words other than its
+	// key (27d review: "company inspect" is done by inspecting Corvin).
+	Labels map[string]string
 }
 
 var stages []Stage
@@ -141,6 +144,7 @@ func init() {
 			},
 			Done:        "You know where your company stands.",
 			Inspections: []string{"company alignment", "company inspect", "standing"},
+			Labels:      map[string]string{"company inspect": "company inspect corvin"},
 		},
 		{
 			ID: StageDeparture, Room: 3, Title: "Departure",

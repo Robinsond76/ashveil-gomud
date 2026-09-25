@@ -5,7 +5,12 @@
 //
 // It checks the stage, goal, checklist, and hints; done and to-do in
 // words; markup in a string rendered as text; the empty state; a reopened
-// window being current; a 360px-wide layout; and the accessibility tree.
+// window being current; a 360px-wide layout; the accessibility tree; and
+// that only a new stage or a newly done item is announced.
+//
+// The harness stubs the client's window and GMCP plumbing (mirroring
+// webclient-core.js) rather than loading the whole client, and measures the
+// panel in a host at most 420px wide.
 // With an outdir it saves desktop and narrow screenshots there. Exits
 // non-zero on any failure.
 import { createRequire } from 'node:module';
@@ -42,14 +47,17 @@ page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.mess
 await page.goto('file://' + path.join(here, 'tutorial-panel-harness.html'));
 await page.waitForTimeout(20);
 
-const text = () => page.evaluate(() => document.getElementById('tutorial-panel').textContent);
+const text = () => page.evaluate(() => document.querySelector('#tutorial-panel .tutorial-content').textContent);
+const status = () => page.evaluate(() => document.querySelector('#tutorial-panel .tutorial-status').textContent);
+const clearStatus = () => page.evaluate(() => { document.querySelector('#tutorial-panel .tutorial-status').textContent = ''; });
 
 check((await text()).includes('Not in the tutorial.'), 'empty state before any payload');
 check(JSON.stringify(await page.evaluate(() => window.requests)) === '[]', 'the panel sends no request of its own');
 
 await page.evaluate(v => window.gmcp('Tutorial', v), view);
 const t1 = await text();
-check(t1.includes('Formation') && t1.includes('Stage 3 of 8'), 'title and stage');
+check(t1.includes('Stage 3 of 8: Formation'), 'title and stage');
+check(await status() === 'Stage 3 of 8: Formation', 'a new stage is announced');
 check(t1.includes('Goal: Put one companion in the front row and another behind it.'), 'goal');
 check(await page.locator('.tutorial-check').count() === 2, 'two checklist items');
 check(t1.includes('a companion in the front row(done)') && t1.includes('another behind it(to do)'), 'done and to do in words');
@@ -61,7 +69,16 @@ if (outdir) { await page.locator('#tutorial-panel').screenshot({ path: path.join
 // Accessibility tree: a region with a heading and the two lists; the
 // [x] marks are hidden, the words spoken.
 const aria = await page.locator('#tutorial-panel').ariaSnapshot();
-check(/heading "Formation"/.test(aria), 'heading in the accessibility tree');
+check(/heading "Stage 3 of 8: Formation"/.test(aria), 'heading in the accessibility tree');
+check(!/bullet|\u2022/.test(aria), 'hints are list items without bullet characters');
+check(await page.evaluate(() => document.getElementById('tutorial-panel').getAttribute('aria-live')) === null, 'the rebuilt panel is not itself a live region');
+
+// Announcements: a newly done item, and nothing for an unchanged payload.
+await clearStatus();
+await page.evaluate(v => window.gmcp('Tutorial', v), view);
+check(await status() === '', 'an unchanged payload announces nothing');
+await page.evaluate(v => window.gmcp('Tutorial', v), { ...view, checklist: [{ label: 'a companion in the front row', done: true }, { label: 'another behind it', done: true }] });
+check(await status() === 'Done: another behind it', 'a newly done item is announced');
 check(/list "Checklist"/.test(aria) && /list "Hints"/.test(aria), 'checklist and hints lists');
 check(/another behind it/.test(aria) && /\(to do\)/.test(aria) && !/\[x\]/.test(aria), 'state spoken in words, marks hidden');
 check(await page.getByRole('region', { name: 'Tutorial' }).count() === 1, 'a named region');
@@ -88,8 +105,10 @@ await page.evaluate(v => window.gmcp('Tutorial', v), view);
 if (outdir) { await page.locator('#tutorial-panel').screenshot({ path: path.join(outdir, 'tutorial-narrow.png') }); }
 
 // Left the course: {} clears it; a malformed payload doesn't throw.
+await clearStatus();
 await page.evaluate(() => window.gmcp('Tutorial', {}));
 check((await text()).includes('Not in the tutorial.'), '{} shows the empty state');
+check(await status() === '', 'and announces nothing (every login gets one)');
 await page.evaluate(() => window.gmcp('Tutorial', { active: true, title: 5, checklist: 'nope', hints: null }));
 check((await text()).includes('Goal:'), 'a malformed payload renders what it can');
 

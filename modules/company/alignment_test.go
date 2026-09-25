@@ -490,18 +490,58 @@ func TestCompanyAlignmentProviderUsesCompanyAverage(t *testing.T) {
 }
 
 // Phase 27d: a recruiter's candidate (not summonable) can be weighed with
-// "company inspect", by its candidate id, anywhere.
+// "company inspect", by its candidate id, name, or template number,
+// anywhere. The verdict speaks of alignment only: price, place, and a
+// free recruit's one claim are the recruiter's to say.
 func TestInspectWeighsARecruiterCandidate(t *testing.T) {
+	onlyAllow58(t)
 	world := newFakeWorld()
 	world.templates[59] = -80
 	world.leaders[7] = 30
 	module, _ := newAlignmentModule(*domain.NewRegistry(), world)
 	module.recruitersForTest = map[int]recruiter{907: {RoomID: 907, Name: "the notices", Candidates: []candidate{{ID: "corvin", MobTemplateID: 59, Price: 150}}}}
-	defaultAllowedTemplates = map[int]struct{}{58: {}}
-	out := module.inspect(7, "corvin")
-	assert.NotContains(t, out, "isn't available")
-	assert.Contains(t, out, "alignment -80")
-	assert.Contains(t, out, "won't join")
+	for _, sel := range []string{"corvin", "59"} {
+		out := module.inspect(7, sel)
+		assert.NotContains(t, out, "isn't available", sel)
+		assert.Contains(t, out, "alignment -80", sel)
+		assert.Contains(t, out, "won't join", sel)
+	}
 	world.leaders[7] = -40
-	assert.Contains(t, module.inspect(7, "corvin"), "would join")
+	out := module.inspect(7, "corvin")
+	assert.Contains(t, out, "close enough to your company's")
+	assert.NotContains(t, out, "They would join.", "not a promise the recruiter may not keep")
+}
+
+func onlyAllow58(t *testing.T) {
+	t.Helper()
+	previous := defaultAllowedTemplates
+	defaultAllowedTemplates = map[int]struct{}{58: {}}
+	t.Cleanup(func() { defaultAllowedTemplates = previous })
+}
+
+// Exact matches come first, anywhere; a name two recruiters' candidates
+// share is asked about, not guessed; a partial candidate name never beats
+// an exact summonable name; a claimed free recruit says so.
+func TestInspectResolutionOrder(t *testing.T) {
+	allowAlso59(t)
+	world := newFakeWorld()
+	world.templates[58], world.templates[59], world.templates[60], world.templates[61] = 0, 90, 10, 20
+	world.leaders[7] = 30
+	module, _ := newAlignmentModule(*domain.NewRegistry(), world)
+	module.recruitersForTest = map[int]recruiter{
+		2003: {RoomID: 2003, Name: "the slate", Candidates: []candidate{{ID: "tamsin", MobTemplateID: 61, Tutorial: true}, {ID: "sam", MobTemplateID: 60, Price: 10}}},
+		2005: {RoomID: 2005, Name: "the stick", Candidates: []candidate{{ID: "sam", MobTemplateID: 58, Price: 10}}},
+	}
+	out := module.inspect(7, "sam")
+	assert.Contains(t, out, "Which one", "an id two recruiters use")
+	assert.NotContains(t, out, "isn't available")
+	assert.Contains(t, module.inspect(7, "paladin"), "alignment 90", "a summonable name, as before")
+	assert.Contains(t, module.inspect(7, "tamsin"), "alignment 20")
+	assert.NotContains(t, module.inspect(7, "tamsin"), "claimed")
+	module.registry = registryWithClaim(7, 61)
+	assert.Contains(t, module.inspect(7, "tamsin"), "already claimed", "a free recruit joins once")
+}
+
+func registryWithClaim(leaderUserID, templateID int) domain.Registry {
+	return domain.Registry{Companies: map[int]domain.Record{leaderUserID: {LeaderUserID: leaderUserID, Claimed: []int{templateID}}}}
 }

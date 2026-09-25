@@ -8,7 +8,9 @@
  *
  * Every string is set with textContent, never innerHTML. Checklist items
  * say "done" or "to do" in words, so the state never rests on the mark or
- * its colour alone.
+ * its colour alone. The panel itself isn't a live region (it's rebuilt on
+ * every payload); a visually hidden status line announces only a new stage
+ * and a newly done item.
  *
  * Responds to GMCP namespaces:
  *   Tutorial - the whole view ({} when not in the course)
@@ -24,6 +26,7 @@
 
     injectStyles(`
         #tutorial-panel {
+            position: relative;
             height: 100%;
             overflow-y: auto;
             padding: 6px 8px;
@@ -39,12 +42,6 @@
             margin: 0 0 4px 0;
             font-size: 1em;
             color: var(--t-accent);
-        }
-
-        #tutorial-panel .tutorial-progress {
-            font-size: 0.85em;
-            color: var(--t-text-secondary);
-            margin-bottom: 4px;
         }
 
         #tutorial-panel .tutorial-goal {
@@ -88,10 +85,22 @@
             color: var(--t-text-secondary);
         }
 
+        #tutorial-panel ul.tutorial-hints {
+            list-style: disc;
+            padding-left: 16px;
+        }
+
         #tutorial-panel .tutorial-hints li {
             margin: 2px 0;
-            padding-left: 10px;
-            text-indent: -10px;
+        }
+
+        #tutorial-panel .tutorial-status {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
         }
 
         #tutorial-panel .tutorial-empty {
@@ -112,32 +121,69 @@
         root.id = 'tutorial-panel';
         root.setAttribute('role', 'region');
         root.setAttribute('aria-label', 'Tutorial');
-        root.setAttribute('aria-live', 'polite');
+        const status = el('div', 'tutorial-status');
+        status.setAttribute('role', 'status');
+        status.setAttribute('aria-live', 'polite');
+        root.appendChild(status);
+        root.appendChild(el('div', 'tutorial-content'));
         return root;
+    }
+
+    // What was last shown, so only a new stage or a newly done item is
+    // announced.
+    let lastStage = null;
+    let lastDone  = {};
+
+    function announce(root, data, checks) {
+        const status = root.querySelector('.tutorial-status');
+        if (!status) { return; }
+        if (!data || data.active !== true) {
+            lastStage = null;
+            lastDone = {};
+            return;
+        }
+        const stageKey = String(data.id) + ':' + String(data.stage);
+        const done = {};
+        checks.forEach(c => { if (c && c.done === true) { done[asString(c.label)] = true; } });
+        let message = '';
+        if (stageKey !== lastStage) {
+            message = heading(data);
+        } else {
+            const newly = Object.keys(done).filter(label => !lastDone[label]);
+            if (newly.length) { message = 'Done: ' + newly.join(', '); }
+        }
+        lastStage = stageKey;
+        lastDone = done;
+        if (message) { status.textContent = message; }
+    }
+
+    function heading(data) {
+        const stage  = Number.isFinite(data.stage) ? data.stage : 0;
+        const stages = Number.isFinite(data.stages) ? data.stages : 0;
+        const title  = asString(data.title);
+        return stage && stages ? 'Stage ' + stage + ' of ' + stages + ': ' + title : title;
     }
 
     function asString(v) { return typeof v === 'string' ? v : ''; }
 
-    function render(panel, data) {
+    function render(root, data) {
+        const panel = root.querySelector('.tutorial-content');
+        if (!panel) { return; }
         panel.textContent = '';
+        const checks = data && Array.isArray(data.checklist) ? data.checklist : [];
+        announce(root, data, checks);
         if (!data || data.active !== true) {
             panel.appendChild(el('div', 'tutorial-empty', 'Not in the tutorial.'));
             return;
         }
-        const stage  = Number.isFinite(data.stage) ? data.stage : 0;
-        const stages = Number.isFinite(data.stages) ? data.stages : 0;
 
-        panel.appendChild(el('h3', 'tutorial-heading', asString(data.title)));
-        if (stage && stages) {
-            panel.appendChild(el('div', 'tutorial-progress', 'Stage ' + stage + ' of ' + stages));
-        }
+        panel.appendChild(el('h3', 'tutorial-heading', heading(data)));
 
         const goal = el('p', 'tutorial-goal');
         goal.appendChild(el('span', 'tutorial-goal-label', 'Goal: '));
         goal.appendChild(document.createTextNode(asString(data.goal)));
         panel.appendChild(goal);
 
-        const checks = Array.isArray(data.checklist) ? data.checklist : [];
         if (checks.length) {
             panel.appendChild(el('h4', 'tutorial-subheading', 'Checklist'));
             const list = el('ul', 'tutorial-checklist');
@@ -161,7 +207,7 @@
             panel.appendChild(el('h4', 'tutorial-subheading', 'Hints'));
             const list = el('ul', 'tutorial-hints');
             list.setAttribute('aria-label', 'Hints');
-            hints.forEach(h => { list.appendChild(el('li', null, '• ' + asString(h))); });
+            hints.forEach(h => { list.appendChild(el('li', null, asString(h))); });
             panel.appendChild(list);
         }
     }
