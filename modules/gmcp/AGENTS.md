@@ -22,3 +22,9 @@
 ## Documentation
 
 - Keep this file about protocol compatibility and integration guardrails.
+
+## Ashveil Company (Phase 26b)
+
+- `gmcp.Company.go` builds `Company` (snapshot) and `Company.Vitals` from the `internal/companyview` summary, on `companyview.OnRefresh` (every round and after every command, on the game loop), and sends only on change: structure changed → `Company`, only health/needs → `Company.Vitals`. `PlayerSpawn` and a `!!GMCP(Company)` request resend the snapshot; `PlayerDespawn` forgets the user.
+- Members are keyed by member key, never by name. Unknown values are `null`. Send a user only their own company.
+- The web client's Party window (`window-party.js`) renders Company and Players as separate sections, with `textContent` only. `scripts/browser/company-panel-check.mjs` checks it in Chromium: `NODE_PATH=$(npm root -g) node scripts/browser/company-panel-check.mjs`.

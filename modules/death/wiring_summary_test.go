@@ -177,7 +177,7 @@ func TestCompanySummaryThroughPluginsLoad(t *testing.T) {
 	require.NoError(t, rooms.MoveToRoom(user.UserId, 2004))
 	run("east", "")
 	require.Equal(t, 2007, user.Character.RoomId)
-	rooms.LoadRoom(2007).Prepare(false)
+	spawnKeeper(t, 2007)
 	assert.Contains(t, run("resurrect", "#1"), "draws breath again")
 	status = run("status", "")
 	assert.Contains(t, status, "3 alive")

@@ -274,3 +274,18 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, 1, stranger.Character.Level)
 	assert.Equal(t, 18, checkpoint(stranger.Character))
 }
+
+// spawnKeeper spawns a room's keeper now, whatever an earlier test left in
+// its spawn record (a destroyed keeper would otherwise wait out its
+// respawn time).
+func spawnKeeper(t *testing.T, roomID int) {
+	t.Helper()
+	room := rooms.LoadRoom(roomID)
+	require.NotNil(t, room)
+	for i := range room.SpawnInfo {
+		room.SpawnInfo[i].InstanceId = 0
+		room.SpawnInfo[i].DespawnedRound = 0
+	}
+	room.Prepare(false)
+	require.NotEmpty(t, room.GetMobs(), "the keeper is in room %d", roomID)
+}

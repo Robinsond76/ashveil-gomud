@@ -227,8 +227,7 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 	// shared with two living dummies; the dead one answers.
 	run("east", "")
 	require.Equal(t, 2007, user.Character.RoomId)
-	chapel := rooms.LoadRoom(2007)
-	chapel.Prepare(false)
+	spawnKeeper(t, 2007)
 	out = run("resurrect", "dummy")
 	assert.Contains(t, out, "Sister Maren kneels and calls training dummy back from death.")
 	assert.Contains(t, out, "now level 2")
@@ -254,7 +253,7 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 	run("west", "")
 	require.Equal(t, 2009, user.Character.RoomId)
 	assert.Equal(t, checkpointBefore, user.Character.GetMiscData(death.CheckpointKey), "a village is never a checkpoint")
-	rooms.LoadRoom(2009).Prepare(false)
+	spawnKeeper(t, 2009)
 	assert.Contains(t, run("resurrect", "dummy"), `More than one of your company answers to "dummy". Use their number`, "two dead dummies")
 	out = run("resurrect", "#2")
 	assert.Contains(t, out, "Old Wenna kneels and calls training dummy back from death.")
@@ -282,4 +281,18 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 
 	assert.Equal(t, turn, util.GetTurnCount(), "never advances the clock")
 	assert.Equal(t, round, util.GetRoundCount())
+}
+
+// spawnKeeper spawns a room's keeper now, whatever an earlier test left in
+// its spawn record.
+func spawnKeeper(t *testing.T, roomID int) {
+	t.Helper()
+	room := rooms.LoadRoom(roomID)
+	require.NotNil(t, room)
+	for i := range room.SpawnInfo {
+		room.SpawnInfo[i].InstanceId = 0
+		room.SpawnInfo[i].DespawnedRound = 0
+	}
+	room.Prepare(false)
+	require.NotEmpty(t, room.GetMobs(), "the keeper is in room %d", roomID)
 }
