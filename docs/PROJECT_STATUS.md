@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 26a (company summary and text surfaces) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`, awaiting merge to `master`. Phase 25b is on `master`.
+- **HEAD:** Phase 26a (company summary and text surfaces) is complete, reviewed, and on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -57,7 +57,7 @@ instead of duplicating them.
   the living company), and Phase 25b (companion death: dead on the roster for
   three game days of the leader's online time, `resurrect` at a church or
   village shaman for a level, then lost).
-- **Next:** merge Phase 26a to `master`; then Phase 26b, the browser Company
+- **Next:** Phase 26b, the browser Company
   panel (a `Company` GMCP payload read from the same `internal/companyview`
   summary), from the [player information surfaces spec](superpowers/specs/2026-09-23-player-information-surfaces-design.md).
 
@@ -103,7 +103,7 @@ instead of duplicating them.
 | 24 | Company chemistry | Complete: company-wide. Each member's durable service with the band; a band's tier from the average saved service of the members together (each capped at Sworn), so recruits dilute it; Familiar/Trusted/Sworn (900/2700/6300 rounds) give everyone in the band +2/+4/+6 hit in all four combat directions; `company chemistry`, `status bonuses` |
 | 25a | Player death and church return | Complete: one level lost (no protection levels; peak level stops re-granted points), a durable pending mark so a death is charged once, wake at the last city's church (Dunmar's new Chapel of the Wayfarer, Frostfang's Sanctuary as fallback) with the living company; travel, camp, and inn stay abandoned first |
 | 25b | Companion death and resurrection | Complete: a dead companion stays on the roster, keeping the gear its body kept; a 3-game-day rescue allowance spent only in the leader's online time; `resurrect` at a church or village shaman with its keeper costs a level; at zero it is lost and archived; Fernhollow village and Old Wenna |
-| 26a | Company summary and text surfaces | Complete (awaiting merge): `internal/companyview` read model; prompt tokens from a game-loop cache and a default prompt that warns only when needed; `status` as the Ashveil character sheet, grouped `conditions`, company load in `inventory`, last level lost in `experience` |
+| 26a | Company summary and text surfaces | Complete: `internal/companyview` read model; prompt tokens from a game-loop cache and a default prompt that warns only when needed; `status` as the Ashveil character sheet, grouped `conditions`, company load in `inventory`, last level lost in `experience` |
 | 26b | Browser Company panel (GMCP) | Planned |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
