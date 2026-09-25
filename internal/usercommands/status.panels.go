@@ -48,14 +48,37 @@ func buildStatusPanel(user *users.UserRecord) string {
 		return tplTxt
 	}
 
+	// Ashveil (Phase 26a): a layout with a "vitals" panel gets the Ashveil
+	// sheet (status.ashveil.go); health, mana, and armor move there.
+	ashveil := layout.HasPanel("vitals")
+	summary := summaryFor(user)
+	vitals := layout.Panel("info")
+	if ashveil {
+		vitals = layout.Panel("vitals")
+	}
+
 	layout.Panel("info").
 		Add(`<ansi fg="yellow">Area:   </ansi>`, `<ansi fg="yellow">Loc:</ansi>`, c.Zone).
-		Add(`<ansi fg="yellow">Race:   </ansi>`, `<ansi fg="yellow">Rce:</ansi>`, fmt.Sprintf(`%s (%s)`, c.Race(), c.RaceSize())).
+		Add(`<ansi fg="yellow">Race:   </ansi>`, `<ansi fg="yellow">Rce:</ansi>`, fmt.Sprintf(`%s (%s)`, c.Race(), c.RaceSize()))
+	if ashveil {
+		addAshveilIdentity(layout.Panel("info"), summary)
+	}
+	layout.Panel("info").
 		Add(`<ansi fg="yellow">Level:  </ansi>`, `<ansi fg="yellow">Lvl:</ansi>`, fmt.Sprintf(`%d`, c.Level)).
-		Add(`<ansi fg="yellow">Exp:    </ansi>`, `<ansi fg="yellow">XP: </ansi>`, xpValue).
+		Add(`<ansi fg="yellow">Exp:    </ansi>`, `<ansi fg="yellow">XP: </ansi>`, xpValue)
+	if ashveil {
+		addAshveilAlignment(layout.Panel("info"), summary)
+	}
+	vitals.
 		Add(`<ansi fg="yellow">Health: </ansi>`, `<ansi fg="yellow">HP: </ansi>`, hpValue).
 		Add(`<ansi fg="yellow">Mana:   </ansi>`, `<ansi fg="yellow">MP: </ansi>`, mpValue).
 		Add(`<ansi fg="yellow">Armor:  </ansi>`, `<ansi fg="yellow">Arm:</ansi>`, armorValue)
+	if ashveil {
+		addAshveilVitals(vitals, summary)
+	}
+	if layout.HasPanel("company") {
+		addAshveilCompany(layout.Panel("company"), summary)
+	}
 
 	addStat := func(fullLabel, shortLabel string, base, mod int) {
 		value := fmt.Sprintf(`<ansi fg="stat">%-4d</ansi><ansi fg="statmod">(%-3d)</ansi>`, base, mod)
@@ -79,7 +102,11 @@ func buildStatusPanel(user *users.UserRecord) string {
 	header := fmt.Sprintf(` <ansi fg="black-bold">.:</ansi> <ansi fg="username">%s</ansi> the <ansi fg="%s">%s</ansi> %s`,
 		c.Name, c.AlignmentName(), c.AlignmentName(), profession)
 
-	return header + term.CRLFStr + layout.Render()
+	out := header + term.CRLFStr + layout.Render()
+	if ashveil {
+		out += term.CRLFStr + ashveilStatusFooter
+	}
+	return out
 }
 
 // buildStatusTrainPanel renders the status train stat panel.

@@ -1,4 +1,10 @@
-# Panel layout for the character status screen.
+# Panel layout for the character status screen (Ashveil, Phase 26a).
+#
+# The Go side fills whichever panels this layout defines: with "vitals",
+# health, mana, and armor move there beside the survival needs, and
+# "company" shows the company, its load, what it is doing, the rest tier,
+# and where you wake if you fall. A layout without them (like the upstream
+# empty world's) keeps the engine's sheet.
 
 border: open
 charset: single
@@ -9,7 +15,11 @@ slots:
   - rows:
       - panels:
           - id: info
-            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Info</ansi>'
+            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Character</ansi>'
+            width: 29
+      - panels:
+          - id: vitals
+            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Vitals</ansi>'
             width: 29
 
   - rows:
@@ -24,5 +34,9 @@ slots:
             title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Wealth</ansi>'
             width: 23
           - id: training
-            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Trading</ansi>'
+            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Training</ansi>'
             width: 24
+      - panels:
+          - id: company
+            title: '<ansi fg="black-bold">.:</ansi><ansi fg="20">Company</ansi>'
+            width: 48
