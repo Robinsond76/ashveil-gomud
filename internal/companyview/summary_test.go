@@ -79,7 +79,9 @@ func fullSources() sources {
 	}
 	src.light = func(*users.UserRecord) (int, bool) { return 1, true }
 	src.archetype = func(int) (string, bool) { return "ranger", true }
-	src.name = func(id string) (string, bool) { return map[string]string{"ranger": "Ranger", "warrior": "Warrior"}[id], true }
+	src.name = func(id string) (string, bool) {
+		return map[string]string{"ranger": "Ranger", "warrior": "Warrior"}[id], true
+	}
 	src.room = func(id int) *rooms.Room {
 		if id == 2007 {
 			return &rooms.Room{RoomId: 2007, Title: "The Chapel of the Wayfarer"}
@@ -133,7 +135,9 @@ func TestSummaryJourneyWinsOverCamp(t *testing.T) {
 	src.journey = func(int) (expedition.Progress, bool) { return expedition.Progress{Interrupted: true}, true }
 	assert.Equal(t, "Stopped", src.summary(testUser()).Activity.Label())
 	src = fullSources()
-	src.rest = func(int) (camping.RestActivity, bool) { return camping.RestActivity{Inn: true, Resting: true, Remaining: time.Minute}, true }
+	src.rest = func(int) (camping.RestActivity, bool) {
+		return camping.RestActivity{Inn: true, Resting: true, Remaining: time.Minute}, true
+	}
 	assert.Equal(t, "At inn 1m", src.summary(testUser()).Activity.Label())
 	src.rest = func(int) (camping.RestActivity, bool) { return camping.RestActivity{}, true }
 	assert.Equal(t, "Camped", src.summary(testUser()).Activity.Label())
