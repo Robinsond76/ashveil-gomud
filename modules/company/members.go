@@ -47,3 +47,11 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 	}
 	return out, true
 }
+
+var _ domain.ClaimProvider = (*CompanyModule)(nil)
+
+// HasClaimed implements company.ClaimProvider (Phase 27a).
+func (m *CompanyModule) HasClaimed(leaderUserID, mobTemplateID int) bool {
+	record, ok := m.registry.Get(leaderUserID)
+	return ok && record.HasClaimed(mobTemplateID)
+}

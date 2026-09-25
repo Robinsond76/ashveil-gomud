@@ -46,3 +46,11 @@ func TestCompanyMembersLiveLevel(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, 6, members[1].Level)
 }
+
+func TestHasClaimed(t *testing.T) {
+	module, _, _, _ := newDeathModule(t)
+	assert.False(t, module.HasClaimed(7, 61))
+	require.NoError(t, module.registry.Claim(7, 61))
+	assert.True(t, module.HasClaimed(7, 61))
+	assert.False(t, module.HasClaimed(8, 61))
+}

@@ -320,3 +320,23 @@ func CompanyMembers(leaderUserID int) ([]MemberView, bool) {
 	}
 	return mp.CompanyMembers(leaderUserID)
 }
+
+// ClaimProvider is optionally implemented by the registered
+// FormationProvider (Phase 27a): whether a leader has claimed a free
+// tutorial recruit of a template.
+type ClaimProvider interface {
+	HasClaimed(leaderUserID, mobTemplateID int) bool
+}
+
+// HasClaimed reports whether a leader has claimed a tutorial recruit of
+// this template; false without a provider.
+func HasClaimed(leaderUserID, mobTemplateID int) bool {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	cp, ok := p.(ClaimProvider)
+	if !ok {
+		return false
+	}
+	return cp.HasClaimed(leaderUserID, mobTemplateID)
+}

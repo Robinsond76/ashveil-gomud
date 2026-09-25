@@ -21,6 +21,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/mount"
 	_ "github.com/GoMudEngine/GoMud/modules/standing"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
+	_ "github.com/GoMudEngine/GoMud/modules/tutorial"
 	_ "github.com/GoMudEngine/GoMud/modules/walking"
 	_ "github.com/GoMudEngine/GoMud/modules/weather"
 	_ "github.com/GoMudEngine/GoMud/modules/webhelp"

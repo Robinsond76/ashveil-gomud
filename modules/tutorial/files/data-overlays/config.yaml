@@ -1,0 +1,12 @@
+# Phase 27a: the Ashveil tutorial. The course runs in per-player copies of
+# the rooms listed in SpecialRooms.TutorialRooms (one room per stage, in
+# order); the way to the next room opens when a stage is passed.
+#
+# GraduationItemId is given once, when a player walks out of the last room
+# having finished the course; skipping gives nothing.
+GraduationItemId: 20043
+# The free tutorial recruits of the Company stage (the Muster Yard's
+# candidates in the company module's Recruiters). When both have already
+# been claimed and the company is short, "tutorial next" lets the player
+# through.
+TutorialRecruits: [61, 62]
