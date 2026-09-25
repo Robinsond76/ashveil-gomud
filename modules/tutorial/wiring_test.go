@@ -2,6 +2,7 @@ package tutorial
 
 import (
 	"os"
+	"regexp"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -449,13 +450,17 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	require.NotNil(t, aria.Character.Aggro)
 	require.Equal(t, archer, aria.Character.Aggro.MobInstanceId)
 	var r uint64
+	// Attack messages vary ("You hit", "You punch", ...); a line of Aria's
+	// own naming a foe is her blow.
+	footmanBlow := regexp.MustCompile(`(?m)^Your? [^\n]*straw footman`)
+	archerBlow := regexp.MustCompile(`(?m)^Your? [^\n]*straw archer`)
 	seen := ""
-	for r = 1; r < 200 && !strings.Contains(seen, "You hit straw footman"); r++ {
+	for r = 1; r < 200 && !footmanBlow.MatchString(seen); r++ {
 		fightRound(r)
 		seen += text(aria)
 	}
-	require.Contains(t, seen, "You hit straw footman", "a blow landed")
-	assert.NotContains(t, seen, "You hit straw archer", "the archer is shielded")
+	require.Regexp(t, footmanBlow, seen, "a blow landed")
+	assert.NotRegexp(t, archerBlow, seen, "the archer is shielded")
 	assert.Equal(t, "straw footman", squad[aria.Character.Aggro.MobInstanceId], "her aim moves to the footman who caught it")
 
 	// Re-targeting (11b): a foe Aria is aiming at falls to another blow

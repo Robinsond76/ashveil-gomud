@@ -294,8 +294,14 @@ func companyDone(members []company.MemberView) bool {
 
 // formationDone: a living companion in the front row and another behind.
 func formationDone(f company.Formation, members []company.MemberView) bool {
+	front, rear := formationRanks(f, members)
+	return front && rear
+}
+
+// formationRanks: whether a living companion stands in the front row, and
+// whether one stands behind it.
+func formationRanks(f company.Formation, members []company.MemberView) (front, rear bool) {
 	alive := living(members)
-	front, rear := false, false
 	for r := 0; r < company.FormationRows; r++ {
 		for c := 0; c < company.FormationCols; c++ {
 			if key := f.At(r, c); alive[key] {
@@ -307,5 +313,5 @@ func formationDone(f company.Formation, members []company.MemberView) bool {
 			}
 		}
 	}
-	return front && rear
+	return front, rear
 }

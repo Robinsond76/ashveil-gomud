@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
+	domain "github.com/GoMudEngine/GoMud/internal/tutorial"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -802,4 +803,76 @@ func TestSubcommandInspections(t *testing.T) {
 	assert.False(t, inspectionMatches("company inspect", "company", ""))
 	assert.True(t, inspectionMatches("standing", "standing", "anything"))
 	assert.False(t, inspectionMatches("standing", "stand", ""))
+}
+
+// --- Phase 27d: the view the browser panel shows ---
+
+func checklist(v domain.View) map[string]bool {
+	out := map[string]bool{}
+	for _, c := range v.Checklist {
+		out[c.Label] = c.Done
+	}
+	return out
+}
+
+func TestTutorialViewPerStage(t *testing.T) {
+	c := newCourse(t)
+	_, ok := c.m.TutorialView(7)
+	assert.False(t, ok, "not in the course")
+	c.m.Begin(7)
+	c.run("status")
+	v, ok := c.m.TutorialView(7)
+	require.True(t, ok)
+	assert.Equal(t, domain.View{Stage: 1, Stages: len(stages), ID: "character", Title: "Your character", Goal: stages[0].Goal, Checklist: v.Checklist, Hints: v.Hints}, v)
+	assert.Equal(t, map[string]bool{"status": true, "inventory": false, "experience": false, "conditions": false}, checklist(v))
+	for _, h := range v.Hints {
+		assert.NotContains(t, h, "<ansi", "plain text")
+	}
+
+	c.at(StageCompany)
+	c.members = []company.MemberView{view(1, company.MemberPresent)}
+	v, _ = c.m.TutorialView(7)
+	assert.Equal(t, map[string]bool{"two companions (1 of 2)": false}, checklist(v))
+
+	c.at(StageFormation)
+	c.members = []company.MemberView{view(1, company.MemberPresent), view(2, company.MemberPresent)}
+	require.NoError(t, c.form.Place(company.CompanionMemberKey(1), 0, 1))
+	v, _ = c.m.TutorialView(7)
+	assert.Equal(t, map[string]bool{"a companion in the front row": true, "another behind it": false}, checklist(v))
+	var usage string
+	for _, h := range v.Hints {
+		if strings.Contains(h, "formation move") {
+			usage = h
+		}
+	}
+	assert.Contains(t, usage, "formation move <name> <row> <col>", "angle brackets that aren't markup stay")
+
+	c.at(StageSurvival)
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 7, Benefit: survival.Benefit{Nutrition: 1}})
+	v, _ = c.m.TutorialView(7)
+	assert.True(t, checklist(v)["eat something"])
+	assert.False(t, checklist(v)["drink something"])
+	assert.Contains(t, checklist(v), "weather")
+
+	c.at(StageAlignment)
+	c.m.onCommandDone(usercommands.CommandDone{UserId: 7, Command: "company", Rest: "alignment"})
+	v, _ = c.m.TutorialView(7)
+	assert.Equal(t, 7, v.Stage)
+	assert.Equal(t, map[string]bool{"company alignment": true, "company inspect": false, "standing": false}, checklist(v))
+
+	c.at(StageDeparture)
+	v, _ = c.m.TutorialView(7)
+	assert.Equal(t, map[string]bool{"go through the gate": false}, checklist(v))
+
+	// The terminal shows the same checklist.
+	c.at(StageFormation)
+	c.text()
+	_, _ = c.m.command("", c.user, nil, 0)
+	out := c.text()
+	assert.Contains(t, out, "[x] a companion in the front row")
+	assert.Contains(t, out, "[ ] another behind it")
+
+	_, _ = c.m.command("skip yes", c.user, nil, 0)
+	_, ok = c.m.TutorialView(7)
+	assert.False(t, ok, "left the course")
 }

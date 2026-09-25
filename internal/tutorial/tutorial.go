@@ -43,3 +43,43 @@ func Begin(userID int) bool {
 	}
 	return p.Begin(userID)
 }
+
+// View is a player's place in the course, for surfaces other than the
+// terminal (Phase 27d: the browser panel). Its text is plain, without
+// colour markup.
+type View struct {
+	// Stage is 1-based, of Stages.
+	Stage     int
+	Stages    int
+	ID        string
+	Title     string
+	Goal      string
+	Checklist []Check
+	Hints     []string
+}
+
+// Check is one checklist line.
+type Check struct {
+	Label string
+	Done  bool
+}
+
+// Viewer is optionally implemented by the Provider. TutorialView reports
+// false for a player not in the course. It reads character state, so call
+// it on the game loop.
+type Viewer interface {
+	TutorialView(userID int) (View, bool)
+}
+
+// ViewOf is a player's view of the course. ok is false without a provider
+// that can show one, or when the player isn't in the course.
+func ViewOf(userID int) (View, bool) {
+	mu.RLock()
+	p := provider
+	mu.RUnlock()
+	v, ok := p.(Viewer)
+	if !ok {
+		return View{}, false
+	}
+	return v.TutorialView(userID)
+}

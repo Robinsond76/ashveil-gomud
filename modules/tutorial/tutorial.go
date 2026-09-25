@@ -13,6 +13,7 @@ package tutorial
 import (
 	"embed"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -860,14 +861,35 @@ func (m *TutorialModule) view(user *users.UserRecord, p progress) string {
 		fmt.Sprintf(`<ansi fg="yellow-bold">Tutorial, stage %d of %d: %s</ansi>`, at+1, len(stages), s.Title),
 		fmt.Sprintf(`<ansi fg="yellow">Goal:</ansi> %s`, s.Goal),
 	}
-	check := func(done bool, what string) {
+	for _, c := range m.checklist(user, p, s) {
 		mark := "[ ]"
-		if done {
+		if c.Done {
 			mark = "[x]"
 		}
-		lines = append(lines, fmt.Sprintf("  %s %s", mark, what))
+		lines = append(lines, fmt.Sprintf("  %s %s", mark, c.Label))
 	}
+	for _, h := range s.Hints {
+		lines = append(lines, "  - "+h)
+	}
+	lines = append(lines, `<ansi fg="black-bold">tutorial next (when a stage can't be done), tutorial skip (leave the course, without its reward)</ansi>`)
+	return strings.Join(lines, "\n")
+}
+
+// checklist is a stage's checks, as the terminal and the panel show them.
+func (m *TutorialModule) checklist(user *users.UserRecord, p progress, s Stage) []domain.Check {
+	var out []domain.Check
+	check := func(done bool, label string) { out = append(out, domain.Check{Label: label, Done: done}) }
 	switch s.ID {
+	case StageCompany:
+		members, _ := m.members(user.UserId)
+		n := len(living(members))
+		check(n >= 2, fmt.Sprintf("two companions (%d of 2)", min(n, 2)))
+	case StageFormation:
+		members, _ := m.members(user.UserId)
+		f, _ := m.formation(user.UserId)
+		front, rear := formationRanks(f, members)
+		check(front, "a companion in the front row")
+		check(rear, "another behind it")
 	case StageSurvival:
 		check(p.Seen[seenFed], "eat something")
 		check(p.Seen[seenWatered], "drink something")
@@ -879,15 +901,42 @@ func (m *TutorialModule) view(user *users.UserRecord, p progress) string {
 			beaten, raised = f.raised-len(f.standing), f.raised
 		}
 		check(m.squadBeaten(user.UserId), fmt.Sprintf("beat the straw soldiers (%d of %d)", beaten, raised))
+	case StageDeparture:
+		check(false, "go through the gate")
 	}
-	for _, cmd := range required(s, m.registered) {
-		check(p.Seen[cmd], cmd)
+	for _, key := range required(s, m.registered) {
+		check(p.Seen[key], key)
 	}
+	return out
+}
+
+// ansiTags matches colour markup, and nothing else in angle brackets
+// ("<name>" in a usage line stays).
+var ansiTags = regexp.MustCompile(`</?ansi[^>]*>`)
+
+func plain(text string) string { return ansiTags.ReplaceAllString(text, "") }
+
+var _ domain.Viewer = (*TutorialModule)(nil)
+
+// TutorialView implements internal/tutorial.Viewer (27d): the stage, goal,
+// checklist, and hints the terminal shows, in plain text, for a player in
+// the course.
+func (m *TutorialModule) TutorialView(userID int) (domain.View, bool) {
+	user := m.lookupUser(userID)
+	if user == nil || user.Character == nil {
+		return domain.View{}, false
+	}
+	p := progressOf(user.Character)
+	at := stageIndex(p.Stage)
+	if p.State != stateActive || at < 0 {
+		return domain.View{}, false
+	}
+	s := stages[at]
+	v := domain.View{Stage: at + 1, Stages: len(stages), ID: string(s.ID), Title: s.Title, Goal: plain(s.Goal), Checklist: m.checklist(user, p, s)}
 	for _, h := range s.Hints {
-		lines = append(lines, "  - "+h)
+		v.Hints = append(v.Hints, plain(h))
 	}
-	lines = append(lines, `<ansi fg="black-bold">tutorial next (when a stage can't be done), tutorial skip (leave the course, without its reward)</ansi>`)
-	return strings.Join(lines, "\n")
+	return v, true
 }
 
 // next lets a stuck player through a stage they can no longer finish:

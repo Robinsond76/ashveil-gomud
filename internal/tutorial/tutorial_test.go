@@ -21,3 +21,26 @@ func TestBeginWithoutProvider(t *testing.T) {
 	assert.True(t, Begin(7))
 	assert.Equal(t, []int{7}, f.calls)
 }
+
+type viewing struct{ fake }
+
+func (viewing) TutorialView(userID int) (View, bool) {
+	return View{Stage: 2, Stages: 8, Title: "Your company"}, userID == 7
+}
+
+// Phase 27d: ViewOf reads a provider that is also a Viewer.
+func TestViewOf(t *testing.T) {
+	SetProvider(nil)
+	_, ok := ViewOf(7)
+	assert.False(t, ok, "no provider")
+	SetProvider(&fake{})
+	t.Cleanup(func() { SetProvider(nil) })
+	_, ok = ViewOf(7)
+	assert.False(t, ok, "a provider that can't show a view")
+	SetProvider(&viewing{})
+	v, ok := ViewOf(7)
+	assert.True(t, ok)
+	assert.Equal(t, "Your company", v.Title)
+	_, ok = ViewOf(8)
+	assert.False(t, ok, "not in the course")
+}
