@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"strings"
 	"time"
 
@@ -249,6 +250,10 @@ func GetHelpSuggestions(text string, includeAdmin bool) []string {
 }
 
 func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bool, error) {
+
+	// Ashveil (Phase 26a): recompute the prompt's company tokens once the
+	// command has changed whatever it changes.
+	defer companyview.RefreshUser(userId)
 
 	// Do not allow scripts to intercept server commands
 	if cmd != `server` {

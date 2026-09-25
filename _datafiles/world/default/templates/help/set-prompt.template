@@ -46,8 +46,21 @@ The <ansi fg="command">set prompt</ansi> command allows you to customize your in
     <ansi fg="magenta">{t}</ansi>     Day/Night symbol (<ansi fg="night">☾</ansi>/<ansi fg="day">☀️</ansi>)    <ansi fg="magenta">{T}</ansi>     Full time of day
     <ansi fg="magenta">{ap}</ansi>    Action Points             <ansi fg="magenta">{w}</ansi>     Wait rounds (fprompt)
 
+  <ansi fg="8">Survival and company:</ansi>
+    <ansi fg="magenta">{hunger}</ansi>   Hunger (Hungry, Starving...)  <ansi fg="magenta">{hungerv}</ansi>  Hunger 0-100
+    <ansi fg="magenta">{thirst}</ansi>   Thirst (Thirsty, Parched...)  <ansi fg="magenta">{thirstv}</ansi>  Thirst 0-100
+    <ansi fg="magenta">{fatigue}</ansi>  Fatigue (Tired, Exhausted...) <ansi fg="magenta">{fatiguev}</ansi> Fatigue 0-100
+    <ansi fg="magenta">{light}</ansi>    Dark or Dim, when it is       <ansi fg="magenta">{warmth}</ansi>   Chilled, Overheated...
+    <ansi fg="magenta">{load}</ansi>     Unburdened, Burdened, or Overloaded
+    <ansi fg="magenta">{company}</ansi>  Company alive (and dead): 3, 1 dead
+    <ansi fg="magenta">{activity}</ansi> Travelling 42%, Resting 12m, At inn 5m...
+    <ansi fg="magenta">{warn}</ansi>     Only what needs your attention: low needs, darkness,
+             cold or heat, an overloaded company (up to four)
+  {activity} and {warn} start with a space and show nothing when there is
+  nothing to say, so the default prompt stays short when all is well.
+
 The default prompt is:
-<ansi fg="246">{8}[{t} {T} {255}HP:{hp}{8}/{HP} {255}MP:{13}{mp}{8}/{13}{MP}{8}]{239}{h}{8}:</ansi>
+<ansi fg="246">{8}[{t} {T} {255}HP:{hp}{8}/{HP} {255}MP:{13}{mp}{8}/{13}{MP}{8}]{warn}{activity}{239}{h}{8}:</ansi>
 
 <ansi fg="red">Note:</ansi> You can reset your prompt to the default with <ansi fg="command">set prompt default</ansi>
 
