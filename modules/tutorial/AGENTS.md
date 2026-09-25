@@ -5,17 +5,30 @@ new character walks through in their own ephemeral copies. See the
 [27a design](../../docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md).
 
 - **Stages** (`stages.go`) are data, in order: Character, Company, Formation,
-  Departure. Each names its room by index into `SpecialRooms.TutorialRooms`
-  (900–903). Later phases (27b, 27c) insert theirs before Departure; keep
-  Departure last and keep one room per stage (`TestShippedTutorialRooms`).
-- **Gates check results, never typed text.** Character counts the four
-  inspections through `usercommands.OnCommandDone` (aliases resolved); the
-  others read the company seams (`company.CompanyMembers`,
-  `company.FormationFor`). Gates run on `companyview.OnRefresh`, so after
-  every command and every round, on the game loop.
+  Survival, Camp (27b), Departure. Each names its room by index into
+  `SpecialRooms.TutorialRooms` (900–905). New rooms are appended to that
+  list, so existing indexes never shift: Survival is 904 (index 4), Camp 905
+  (index 5), and the Gate stays 903 (index 3). 27c inserts its stages before
+  Departure; keep Departure last and one room per stage
+  (`TestShippedTutorialRooms`, which checks exits in stage order).
+- **Gates check results, never typed text.** A stage's `Inspections` are
+  counted through `usercommands.OnCommandDone` (aliases resolved), only in
+  that stage, and only for registered commands (`usercommands.IsRegistered`),
+  so a missing module never traps anyone. Company and Formation read the
+  company seams; Survival also needs a real meal and drink
+  (`survival.OnProvision`, any member fed); Camp needs a rest tier held
+  (`camping.RestTierOf`), which only a completed rest grants. Gates run on
+  `companyview.OnRefresh`, so after every command and every round, on the
+  game loop.
+- **Supplies (27b):** reaching Survival (walking in, or being placed there)
+  gives a ration and water once per character (`tutorial-supplied`), and
+  only what the pack lacks (`RationItemId`, `WaterItemId`).
+- **Course camps are struck** (`camping.AbandonCamp`) when Camp passes, on
+  skip and leave, and on every placement: a camp in a room copy can't
+  outlive the copy, and a stale one would block the player's next camp.
 - **Progress** is `MiscData` on the character (`tutorial-state`,
-  `tutorial-stage`, `tutorial-seen`), saved with the user file. The room
-  copies (`copies`) are in memory only: `PlayerSpawn` queues a resume that
+  `tutorial-stage`, `tutorial-seen`, `tutorial-supplied`), saved with the
+  user file. The room copies (`copies`) are in memory only: `PlayerSpawn` queues a resume that
   makes fresh copies and opens the way up to the saved stage.
 - **Ways on** are temporary exits (`east`, and `gate` to the start room)
   opened by the module. The room files have no forward exits and no
@@ -32,5 +45,8 @@ new character walks through in their own ephemeral copies. See the
 - **Hand-off:** `internal/tutorial.Begin` is called by `start` when the
   player keeps the tutorial. Without this module, `start` falls back to the
   engine's ephemeral path.
-- `wiring_test.go` calls `plugins.Load` with the company module; it
-  restores plugin state with `plugins.SnapshotLoadStateForTest`.
+- `wiring_test.go` calls `plugins.Load` with the company, survival,
+  camping, weather, exposure, walking, and encumbrance modules; it restores
+  plugin state with `plugins.SnapshotLoadStateForTest`. A camp rest takes a
+  real minute, so the test starts a real one and then gives the Rested buff
+  it would grant.
