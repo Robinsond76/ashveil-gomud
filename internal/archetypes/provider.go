@@ -78,6 +78,10 @@ func Name(archetypeID string) (string, bool) {
 	return "", false
 }
 
+// Active reports whether a provider is registered (Phase 26a), so "none
+// chosen" can be told from "can't tell".
+func Active() bool { return current() != nil }
+
 // PlayerArchetype returns the user's chosen archetype; ok is false when
 // unchosen or without a provider.
 func PlayerArchetype(userID int) (string, bool) {

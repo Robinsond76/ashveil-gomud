@@ -120,7 +120,7 @@ are split the same way as 21a/21b and 25a/25b:
    | `{warmth}` | The exposure label, or empty |
    | `{load}` | The load label |
    | `{company}` | "3" alive, or "3, 1 dead" |
-   | `{activity}` | Travelling 42%, Stopped, Resting 12m, At inn 5m, or empty |
+   | `{activity}` | Travelling 42%, Stopped, Camped (a pitched camp, not resting), Resting 12m, At inn 5m, or empty |
    | `{warn}` | A compact cluster, described below |
 
    `{warn}` shows each need at Hungry/Thirsty/Tired or worse, then Dark or

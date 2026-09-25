@@ -52,7 +52,7 @@ func sampleSummary() companyview.Summary {
 		return companyview.Need{Known: true, Value: v, Label: label}
 	}
 	return companyview.Summary{
-		Leader: companyview.Member{Leader: true, Archetype: "Ranger", Hunger: need(40, "Hungry"), Thirst: need(90, "Hydrated"),
+		Leader: companyview.Member{Leader: true, Archetype: "Ranger", ArchetypeKnown: true, Hunger: need(40, "Hungry"), Thirst: need(90, "Hydrated"),
 			Fatigue: need(45, "Tired"), Warmth: "Chilled", WarmthKnown: true},
 		CompanyKnown: true,
 		Companions:   []companyview.Member{{ID: 1}, {ID: 2}, {ID: 3, Status: company.MemberDead}},
@@ -105,7 +105,7 @@ func TestStatusUnknownsAreLeftOut(t *testing.T) {
 		assert.NotContains(t, text, absent)
 	}
 	assert.Regexp(t, `Members: +unknown`, text)
-	assert.Contains(t, text, "none chosen")
+	assert.NotContains(t, text, "Path:", "no archetype provider: left out")
 }
 
 // TestStatusEmptyWorldLayoutUnchanged: the upstream empty world's layout

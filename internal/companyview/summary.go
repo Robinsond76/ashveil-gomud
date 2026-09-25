@@ -3,6 +3,7 @@ package companyview
 import (
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -25,10 +26,12 @@ type Member struct {
 	Name   string
 	Status company.MemberStatus
 	Level  int
-	// Archetype is the display name; "" when none or unknown.
-	Archetype string
-	HasHP     bool
-	HP, HPMax int
+	// Archetype is the display name; "" when none. ArchetypeKnown is false
+	// when no provider can say (the leader only).
+	Archetype      string
+	ArchetypeKnown bool
+	HasHP          bool
+	HP, HPMax      int
 	// Hunger, Thirst, and Fatigue are unknown for the dead and whenever
 	// survival can't report them.
 	Hunger, Thirst, Fatigue Need
@@ -88,24 +91,31 @@ type sources struct {
 	exposure  func(leaderUserID int, memberKey string) (int, bool)
 	light     func(user *users.UserRecord) (int, bool)
 	archetype func(userID int) (string, bool)
-	name      func(archetypeID string) (string, bool)
-	room      func(roomID int) *rooms.Room
+	// The *Reporting seams tell "none" from "no provider to ask".
+	archetypeReporting func() bool
+	journeyReporting   func() bool
+	restReporting      func() bool
+	name               func(archetypeID string) (string, bool)
+	room               func(roomID int) *rooms.Room
 }
 
 func nativeSources() sources {
 	return sources{
-		members:   company.CompanyMembers,
-		needs:     survival.CompanyNeeds,
-		load:      encumbrance.CurrentLoad,
-		band:      encumbrance.CurrentBand,
-		journey:   expedition.JourneyProgress,
-		rest:      camping.LeaderRest,
-		tier:      camping.RestTierOf,
-		exposure:  climate.ExposureOf,
-		light:     nativeLight,
-		archetype: archetypes.PlayerArchetype,
-		name:      archetypes.Name,
-		room:      rooms.LoadRoom,
+		members:            company.CompanyMembers,
+		needs:              survival.CompanyNeeds,
+		load:               encumbrance.CurrentLoad,
+		band:               encumbrance.CurrentBand,
+		journey:            expedition.JourneyProgress,
+		rest:               camping.LeaderRest,
+		tier:               camping.RestTierOf,
+		exposure:           climate.ExposureOf,
+		light:              nativeLight,
+		archetype:          archetypes.PlayerArchetype,
+		archetypeReporting: archetypes.Active,
+		journeyReporting:   expedition.ProgressReporting,
+		restReporting:      camping.RestReporting,
+		name:               archetypes.Name,
+		room:               rooms.LoadRoom,
 	}
 }
 
@@ -146,8 +156,11 @@ func (src sources) summary(user *users.UserRecord) Summary {
 
 	s.Leader = Member{Key: company.LeaderMemberKey, Leader: true, Name: c.Name, Status: company.MemberPresent,
 		Level: c.Level, HasHP: true, HP: c.Health, HPMax: c.HealthMax.Value}
-	if id, ok := src.archetype(uid); ok {
-		s.Leader.Archetype = src.archetypeName(id)
+	if src.archetypeReporting() {
+		s.Leader.ArchetypeKnown = true
+		if id, ok := src.archetype(uid); ok {
+			s.Leader.Archetype = src.archetypeName(id)
+		}
 	}
 
 	needs := map[company.MemberKey]survival.Needs{}
@@ -207,9 +220,8 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		default:
 			s.Activity = Activity{Kind: Camped}
 		}
-	} else {
-		// Neither provider reports a journey or a stay: idle, as far as
-		// anything registered knows.
+	} else if src.journeyReporting() && src.restReporting() {
+		// Both can report, and neither has anything: idle.
 		s.ActivityKnown = true
 	}
 
@@ -222,11 +234,33 @@ func (src sources) summary(user *users.UserRecord) Summary {
 	}
 
 	if id := checkpointID(c.GetMiscData(death.CheckpointKey)); id > 0 {
-		if room := src.room(id); room != nil {
-			s.Checkpoint = room.Title
-		}
+		s.Checkpoint = src.roomTitle(id)
 	}
 	return s
+}
+
+var (
+	titleMu sync.Mutex
+	titles  = map[int]string{}
+)
+
+// roomTitle is a room's title, remembered once read so a refresh never
+// reloads an unloaded church from disk.
+func (src sources) roomTitle(roomID int) string {
+	titleMu.Lock()
+	title, ok := titles[roomID]
+	titleMu.Unlock()
+	if ok {
+		return title
+	}
+	room := src.room(roomID)
+	if room == nil {
+		return ""
+	}
+	titleMu.Lock()
+	titles[roomID] = room.Title
+	titleMu.Unlock()
+	return room.Title
 }
 
 // checkpointID reads the checkpoint, which YAML may bring back as another

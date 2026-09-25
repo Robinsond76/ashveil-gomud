@@ -53,7 +53,7 @@ The <ansi fg="command">set prompt</ansi> command allows you to customize your in
     <ansi fg="magenta">{light}</ansi>    Dark or Dim, when it is       <ansi fg="magenta">{warmth}</ansi>   Chilled, Overheated...
     <ansi fg="magenta">{load}</ansi>     Unburdened, Burdened, or Overloaded
     <ansi fg="magenta">{company}</ansi>  Company alive (and dead): 3, 1 dead
-    <ansi fg="magenta">{activity}</ansi> Travelling 42%, Resting 12m, At inn 5m...
+    <ansi fg="magenta">{activity}</ansi> Travelling 42%, Stopped, Camped, Resting 12m, At inn 5m
     <ansi fg="magenta">{warn}</ansi>     Only what needs your attention: low needs, darkness,
              cold or heat, an overloaded company (up to four)
   {activity} and {warn} start with a space and show nothing when there is

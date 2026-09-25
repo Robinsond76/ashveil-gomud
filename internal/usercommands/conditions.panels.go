@@ -2,11 +2,9 @@ package usercommands
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
-	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -63,16 +61,4 @@ func buildConditionsPanel(user *users.UserRecord) string {
 	}
 
 	return layout.Render() + term.CRLFStr
-}
-
-// sharpenedSummary describes the edges on the character's equipped
-// weapons, or "" when none has one.
-func sharpenedSummary(user *users.UserRecord) string {
-	parts := []string{}
-	for _, itm := range []items.Item{user.Character.Equipment.Weapon, user.Character.Equipment.Offhand} {
-		if itm.ItemId > 0 && itm.Sharpened() {
-			parts = append(parts, fmt.Sprintf(`%s: +%d damage for %d more strikes`, itm.Name(), itm.SharpBonus, itm.SharpStrikes))
-		}
-	}
-	return strings.Join(parts, `; `)
 }

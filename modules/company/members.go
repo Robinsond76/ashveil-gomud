@@ -35,6 +35,12 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 			if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsAttached(leaderUserID, instanceID) {
 				view.Status = domain.MemberPresent
 				view.HP, view.HPMax, _ = m.runtime.Vitals(instanceID)
+				if view.Level < 1 {
+					// A record with no saved state yet: the live mob's level.
+					if live, ok := m.runtime.Snapshot(instanceID); ok {
+						view.Level = live.Level
+					}
+				}
 			}
 		}
 		out = append(out, view)

@@ -110,8 +110,9 @@ type RestProvider interface {
 	// LeaderRest reports the leader's camp or inn stay; ok is false with
 	// neither.
 	LeaderRest(leaderUserID int) (RestActivity, bool)
-	// RestTierOf reports a character's rest tier buff (Rested or Well
-	// Rested) and its time left; ok is false with none.
+	// RestTierOf reports a character's rest tier buff (Rested, Well
+	// Rested, or TierNone) and its time left; ok is false when it can't
+	// tell.
 	RestTierOf(userID int) (tier Tier, remaining time.Duration, ok bool)
 }
 
@@ -121,6 +122,13 @@ func restProvider() (RestProvider, bool) {
 	providerMu.RUnlock()
 	rp, ok := p.(RestProvider)
 	return rp, ok
+}
+
+// RestReporting reports whether a registered provider can report camps and
+// inn stays (Phase 26a), so "none" can be told from "can't tell".
+func RestReporting() bool {
+	_, ok := restProvider()
+	return ok
 }
 
 // LeaderRest reports a leader's camp or inn stay. ok is false without a

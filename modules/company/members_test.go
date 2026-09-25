@@ -33,3 +33,16 @@ func TestCompanyMembersStates(t *testing.T) {
 	_, ok = module.CompanyMembers(7)
 	assert.False(t, ok, "unreadable")
 }
+
+// TestCompanyMembersLiveLevel (review finding 5): a present companion with
+// no saved state yet shows its live mob's level.
+func TestCompanyMembersLiveLevel(t *testing.T) {
+	module, _, runtime, _ := newDeathModule(t)
+	record, _ := module.registry.Get(7)
+	record.Companions[1].State = nil
+	module.registry.Put(record)
+	runtime.liveState = map[int]domain.MemberState{102: {Level: 6}}
+	members, ok := module.CompanyMembers(7)
+	require.True(t, ok)
+	assert.Equal(t, 6, members[1].Level)
+}

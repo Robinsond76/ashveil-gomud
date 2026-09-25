@@ -337,6 +337,10 @@ func init() {
 			mudlog.Error("camping: save", "error", err)
 		}
 	})
+	// Phase 26a: the default rest tier buffs are rest conditions even if
+	// the camping data never loads; load files the configured ones.
+	d := defaultInnSettings()
+	companyview.RegisterBuffGroup(companyview.GroupRest, d.RestedBuffId, d.WellRestedBuffId)
 	camping.SetViewProvider(m)
 	camping.SetMovementProvider(m)
 	camping.SetAbandonProvider(m)
@@ -998,7 +1002,8 @@ func (m *CampingModule) LeaderRest(leaderUserID int) (camping.RestActivity, bool
 }
 
 // RestTierOf implements camping.RestProvider: the best rest tier the
-// character holds and its real time left. Call it on the game loop: it
+// character holds (TierNone when none) and its real time left; ok is false
+// only for a user who isn't online. Call it on the game loop: it
 // reads the character's buffs.
 func (m *CampingModule) RestTierOf(userID int) (camping.Tier, time.Duration, bool) {
 	user := m.userByID(userID)
@@ -1010,7 +1015,7 @@ func (m *CampingModule) RestTierOf(userID int) (camping.Tier, time.Duration, boo
 	m.mu.Unlock()
 	tier := m.heldTier(user.Character, s)
 	if tier == camping.TierNone {
-		return camping.TierNone, 0, false
+		return camping.TierNone, 0, true // known: not rested
 	}
 	rounds := m.buffRoundsLeft(user.Character, s.tierBuff(tier))
 	return tier, time.Duration(rounds*m.roundLength()) * time.Second, true

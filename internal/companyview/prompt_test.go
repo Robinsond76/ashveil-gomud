@@ -36,7 +36,7 @@ func TestPromptValues(t *testing.T) {
 	assert.Empty(t, quiet["{warn}"])
 	assert.Empty(t, quiet["{activity}"])
 	assert.Empty(t, quiet["{hunger}"], "unknown renders as nothing")
-	assert.Equal(t, "1", quiet["{company}"])
+	assert.Empty(t, quiet["{company}"], "unknown company: nothing, not a count")
 }
 
 func TestPromptTokens(t *testing.T) {
@@ -81,4 +81,29 @@ func TestPromptCacheRace(t *testing.T) {
 	cacheMu.Lock()
 	delete(cache, other.UserId)
 	cacheMu.Unlock()
+}
+
+// TestRealRefreshRace (review coverage): the real game-loop refresh against
+// prompts built on another goroutine, under -race.
+func TestRealRefreshRace(t *testing.T) {
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	u := users.NewUserRecord(31, 1)
+	users.SetTestUser(u)
+	t.Cleanup(func() {
+		cacheMu.Lock()
+		delete(cache, 31)
+		cacheMu.Unlock()
+	})
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 200; i++ {
+			_ = u.ProcessPromptString("{warn}{company}")
+		}
+	}()
+	for i := 0; i < 200; i++ {
+		refreshAll()
+	}
+	<-done
 }

@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 25b (companion death and resurrection) is complete, reviewed, and on `master`, after Phase 25a (player death and the church return).
+- **HEAD:** Phase 26a (company summary and text surfaces) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`, awaiting merge to `master`. Phase 25b is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -57,42 +57,9 @@ instead of duplicating them.
   the living company), and Phase 25b (companion death: dead on the roster for
   three game days of the leader's online time, `resurrect` at a church or
   village shaman for a level, then lost).
-- **Next:** Phase 26a, company summary and text surfaces
-  ([draft spec](superpowers/specs/2026-09-24-phase-26a-company-summary-text-design.md),
-  [plan](superpowers/plans/2026-09-24-phase-26a-company-summary-text.md)),
-  waiting on the owner's answers to its open decisions; then 26b, the browser
-  Company panel. Both come from the next spec on the
-  [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md).
-  The Phase 19b inter-market profit question is resolved: the small
-  standing trade-route profit stays (see the 19b spec). Phase 18 and 19 have design docs
-  and implementation plans, confirmed with the user 2026-09-23 (all
-  recommended options): 18a layers a new category-shared weighted loot
-  table on top of the existing `ItemDropChance` roll (mirrors Phase 12b's
-  weighted-table pattern); 18b is a minimal cooking slice over the
-  existing room-container crafting mechanism; 19 is an engine-first,
-  narrow zone-scoped market registry with bounded round-driven price
-  drift and a read-only `market` command (mirrors `modules/weather`'s
-  shape), with the buy/sell-integration question explicitly left open to
-  the plan's first task. See
-  [18 spec](superpowers/specs/2026-09-23-phase-18-loot-tables-design.md) /
-  [18 plan](superpowers/plans/2026-09-23-phase-18-loot-tables.md) and
-  [19 spec](superpowers/specs/2026-09-23-phase-19-commodities-markets-design.md) /
-  [19 plan](superpowers/plans/2026-09-23-phase-19-commodities-markets.md).
-  Phase 18, 19, and 19b are complete.
-  Earlier notes: Phase 11's formation combat wiring is entirely done; Phase 11d
-  (guard reactions, crit effects, wounds, AI personality) remains an
-  unscheduled bucket. Phase 12's engine plumbing is now complete: 12a's
-  encounter-kind abstraction, 12b's weighted tables, and 12c's combat
-  encounters (see above) all ship. No shipped route uses any of it yet
-  (`oak-road` stays plain `fallen-tree`) — deferred until there's a real
-  reason to author new route content, same deferral every 12-series pass
-  has made. Per explicit direction this session, combat is the only
-  Phase 12 *encounter subsystem* being built; the rest of the overview
-  doc's list — merchants, injured NPCs, route choices, camp
-  opportunities, ruined sites, resources, social encounters — are kept
-  as named future ideas (each needing its own subsystem: a shop flow,
-  dialogue, branching choice UX, or `internal/camping` integration), not
-  committed work.
+- **Next:** merge Phase 26a to `master`; then Phase 26b, the browser Company
+  panel (a `Company` GMCP payload read from the same `internal/companyview`
+  summary), from the [player information surfaces spec](superpowers/specs/2026-09-23-player-information-surfaces-design.md).
 
 ## Phase progress
 
@@ -136,11 +103,95 @@ instead of duplicating them.
 | 24 | Company chemistry | Complete: company-wide. Each member's durable service with the band; a band's tier from the average saved service of the members together (each capped at Sworn), so recruits dilute it; Familiar/Trusted/Sworn (900/2700/6300 rounds) give everyone in the band +2/+4/+6 hit in all four combat directions; `company chemistry`, `status bonuses` |
 | 25a | Player death and church return | Complete: one level lost (no protection levels; peak level stops re-granted points), a durable pending mark so a death is charged once, wake at the last city's church (Dunmar's new Chapel of the Wayfarer, Frostfang's Sanctuary as fallback) with the living company; travel, camp, and inn stay abandoned first |
 | 25b | Companion death and resurrection | Complete: a dead companion stays on the roster, keeping the gear its body kept; a 3-game-day rescue allowance spent only in the leader's online time; `resurrect` at a church or village shaman with its keeper costs a level; at zero it is lost and archived; Fernhollow village and Old Wenna |
-| 26a | Company summary and text surfaces | Planned: design drafted, open decisions awaiting the owner |
+| 26a | Company summary and text surfaces | Complete (awaiting merge): `internal/companyview` read model; prompt tokens from a game-loop cache and a default prompt that warns only when needed; `status` as the Ashveil character sheet, grouped `conditions`, company load in `inventory`, last level lost in `experience` |
 | 26b | Browser Company panel (GMCP) | Planned |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 26a: company summary and text surfaces (2026-09-25)
+
+- **What:** A read-only summary, `internal/companyview` (`For(user)`), is
+  built on the game loop from the providers that own each value, through
+  new seams: `company.MemberViewProvider` (present, awaiting, or dead with
+  rescue time), `expedition.ProgressProvider`, `camping.RestProvider` (camp
+  or inn, rest tier), `companyview.RegisterBuffGroup` (camping's rest buffs,
+  exposure's band buffs), and `templates.PanelLayout.HasPanel`. Anything a
+  provider can't report stays unknown and is left out, never shown as
+  healthy.
+  - **Prompt tokens:** `{hunger}` `{thirst}` `{fatigue}` (and `v` values),
+    `{light}`, `{warmth}`, `{load}`, `{company}`, `{activity}`, `{warn}`.
+    They are served from a mutex-guarded cache refreshed on `NewRound` and
+    after every command (a deferred call in `usercommands.TryCommand`),
+    because prompts are built off the game loop. The default prompt adds
+    `{warn}{activity}`, which show only what needs attention, so a quiet
+    player's prompt is unchanged.
+  - **`status`** is the Ashveil sheet (Character, Vitals, Attributes,
+    Wealth, Training, Company, and a pointer footer), via new panels in the
+    default world's layout. The upstream `empty` layout keeps the engine
+    sheet.
+  - **`conditions`** is grouped: Rest, Weapon edges, Survival, Company
+    chemistry (never expiring), and Other.
+  - **`inventory`** leads with company load and cargo, supplies, and the
+    item-count note.
+  - **`experience`** shows the last level lost to death (a new
+    `MiscData["death-last-loss"]` from `Respawn`).
+
+  Design and plan:
+  [26a spec](superpowers/specs/2026-09-24-phase-26a-company-summary-text-design.md) /
+  [26a plan](superpowers/plans/2026-09-24-phase-26a-company-summary-text.md).
+- **Why:** Roadmap spec 5, split like 25a/25b: text surfaces are 26a, the
+  browser panel is 26b. The owner confirmed the decisions on 2026-09-25, after
+  asking for a richer prompt and rearranged panels.
+- **Verification:** `go test -race ./...`, `make generate`, `make validate`.
+  The wiring test goes through `plugins.Load` with the company, survival,
+  travel, camping, death, and encumbrance modules and the shipped layouts:
+  - two companions; hunger reaching the default prompt through the real
+    `NewRound` refresh;
+  - a real journey shown by the command's own refresh;
+  - a camp rest;
+  - a companion's death (`{company}` "2, 1 dead", "2 alive, 1 fallen") and
+    its resurrection;
+  - a save and a full `plugins.Load` reload with the same summary;
+  - the leader's own death and the `experience` line;
+  - the clock unchanged.
+
+  Two `internal/usercommands` tests fail under `-shuffle=on` on `master`
+  too (order-dependent, not this phase).
+- **Review:** The independent reviewer found no clock, race, or deadlock
+  problems (prompt handler reads only the cache; refresh only on the game
+  loop; no lock inversion). Its findings:
+  1. *Medium, fixed:* activity showed "Nothing in particular" with no
+     travel or camping provider. It is now known only when both can report
+     (`ProgressReporting`/`RestReporting`; `TestSummaryIdleAndNoArchetypeAreKnown`).
+  2. *Medium-low, fixed:* `{company}` rendered "1" when the company couldn't
+     be read; it is now empty.
+  3. *Low-medium, fixed:* comfortable warmth and "not rested" could never
+     show. Exposure now reports a comfortable member as known 0 (unknown only
+     while its data is unreadable), and `RestTierOf` reports `TierNone` as
+     known.
+  4. *Low, fixed:* "none chosen" showed without an archetype provider
+     (`archetypes.Active`).
+  5. *Low, fixed:* a present companion with no saved state had level 0; it
+     now uses the live mob's (`TestCompanyMembersLiveLevel`).
+  6. *Documented:* the "Camped" activity (a pitched camp, not resting) is in
+     `help prompt` and the spec.
+  7. *Performance, partly fixed:* the checkpoint church's title is now
+     remembered, so a refresh never reloads an unloaded room
+     (`TestCheckpointTitleRemembered`); `status` builds the summary only for
+     the Ashveil layout. *Recorded:* the load is computed twice per summary,
+     and the refresh takes camping's and travel's module locks, which their
+     timers hold while saving, as commands already do.
+  8. *Low, fixed:* the default rest buffs are filed at init, so they group
+     correctly even if the camping data fails to load. *Recorded:* a
+     changed buff ID leaves the old one filed.
+  9. *Nits, fixed:* dead `sharpenedSummary` removed; import grouping.
+
+  Coverage added: the real `refreshAll` against prompt building under
+  `-race`, the real buff-duration path, `experience` through `TryCommand`
+  after the leader's death, and a fuller reload comparison (activity, rest
+  tier, warmth, companion keys and statuses).
+- **Step completed:** Phase 26a.
 
 ### Phase 25b: companion death and resurrection (2026-09-24)
 

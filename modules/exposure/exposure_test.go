@@ -592,6 +592,10 @@ func TestExposureOfThroughClimateSeam(t *testing.T) {
 	value, ok := climate.ExposureOf(7, string(survival.CompanionMemberKey(2)))
 	require.True(t, ok)
 	assert.Equal(t, -55, value)
+	value, ok = climate.ExposureOf(7, string(survival.LeaderMemberKey))
+	assert.True(t, ok, "a comfortable member is known: 0 (Phase 26a)")
+	assert.Zero(t, value)
+	e.m.loadErr = assert.AnError
 	_, ok = climate.ExposureOf(7, string(survival.LeaderMemberKey))
-	assert.False(t, ok, "a comfortable member has no stored exposure")
+	assert.False(t, ok, "unreadable data: unknown")
 }

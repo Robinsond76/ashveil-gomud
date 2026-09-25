@@ -28,6 +28,9 @@ func addRow(p *templates.Panel, full, short, value string) {
 }
 
 func addAshveilIdentity(p *templates.Panel, s companyview.Summary) {
+	if !s.Leader.ArchetypeKnown {
+		return
+	}
 	archetype := s.Leader.Archetype
 	if archetype == `` {
 		archetype = `<ansi fg="black-bold">none chosen</ansi>`

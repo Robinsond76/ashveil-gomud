@@ -64,7 +64,9 @@ func PromptValues(s Summary) map[string]string {
 		"{fatiguev}": needValue(s.Leader.Fatigue),
 		"{warmth}":   s.Leader.Warmth,
 		"{load}":     s.LoadLabel,
-		"{company}":  CompanyCount(s.Alive, s.Dead),
+	}
+	if s.CompanyKnown {
+		values["{company}"] = CompanyCount(s.Alive, s.Dead)
 	}
 	if s.LightKnown {
 		values["{light}"] = LightLabel(s.Light)

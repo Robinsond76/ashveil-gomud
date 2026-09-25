@@ -770,6 +770,16 @@ type ProgressProvider interface {
 	JourneyProgress(leaderUserID int) (Progress, bool)
 }
 
+// ProgressReporting reports whether a registered provider can report
+// journeys (Phase 26a), so "no journey" can be told from "can't tell".
+func ProgressReporting() bool {
+	providerMu.RLock()
+	p := movementProvider
+	providerMu.RUnlock()
+	_, ok := p.(ProgressProvider)
+	return ok
+}
+
 // JourneyProgress reports a leader's active journey. ok is false without a
 // provider or a journey.
 func JourneyProgress(leaderUserID int) (Progress, bool) {

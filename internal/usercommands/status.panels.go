@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -51,7 +52,10 @@ func buildStatusPanel(user *users.UserRecord) string {
 	// Ashveil (Phase 26a): a layout with a "vitals" panel gets the Ashveil
 	// sheet (status.ashveil.go); health, mana, and armor move there.
 	ashveil := layout.HasPanel("vitals")
-	summary := summaryFor(user)
+	var summary companyview.Summary
+	if ashveil || layout.HasPanel("company") {
+		summary = summaryFor(user)
+	}
 	vitals := layout.Panel("info")
 	if ashveil {
 		vitals = layout.Panel("vitals")

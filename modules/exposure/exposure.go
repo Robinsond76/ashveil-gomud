@@ -399,13 +399,16 @@ func (m *ExposureModule) AirTemperatureIn(roomId int) (int, bool) {
 }
 
 // ExposureOf implements climate.ExposureProvider: a member's stored signed
-// exposure, read under the module lock. ok is false for a member with no
-// exposure on record (i.e. comfortable, 0).
+// exposure, read under the module lock. A member with none on record is
+// comfortable, 0 (Phase 26a: known, so surfaces can say so); ok is false
+// only while the module's data couldn't be read.
 func (m *ExposureModule) ExposureOf(leaderUserID int, memberKey string) (int, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	value, ok := m.registry.Exposure[leaderUserID][memberKey]
-	return value, ok
+	if m.loadErr != nil {
+		return 0, false
+	}
+	return m.registry.Exposure[leaderUserID][memberKey], true
 }
 
 // warmthOf is the insulation a character is wearing.

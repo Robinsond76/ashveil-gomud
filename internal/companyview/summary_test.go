@@ -19,18 +19,21 @@ import (
 // noSources reports nothing, as with no modules registered.
 func noSources() sources {
 	return sources{
-		members:   func(int) ([]company.MemberView, bool) { return nil, false },
-		needs:     func(int) []survival.MemberNeeds { return nil },
-		load:      func(int) (encumbrance.Load, bool) { return encumbrance.Load{}, false },
-		band:      func(int) (encumbrance.LoadBand, bool) { return encumbrance.LoadBand{}, false },
-		journey:   func(int) (expedition.Progress, bool) { return expedition.Progress{}, false },
-		rest:      func(int) (camping.RestActivity, bool) { return camping.RestActivity{}, false },
-		tier:      func(int) (camping.Tier, time.Duration, bool) { return camping.TierNone, 0, false },
-		exposure:  func(int, string) (int, bool) { return 0, false },
-		light:     func(*users.UserRecord) (int, bool) { return 0, false },
-		archetype: func(int) (string, bool) { return "", false },
-		name:      func(string) (string, bool) { return "", false },
-		room:      func(int) *rooms.Room { return nil },
+		members:            func(int) ([]company.MemberView, bool) { return nil, false },
+		needs:              func(int) []survival.MemberNeeds { return nil },
+		load:               func(int) (encumbrance.Load, bool) { return encumbrance.Load{}, false },
+		band:               func(int) (encumbrance.LoadBand, bool) { return encumbrance.LoadBand{}, false },
+		journey:            func(int) (expedition.Progress, bool) { return expedition.Progress{}, false },
+		rest:               func(int) (camping.RestActivity, bool) { return camping.RestActivity{}, false },
+		tier:               func(int) (camping.Tier, time.Duration, bool) { return camping.TierNone, 0, false },
+		exposure:           func(int, string) (int, bool) { return 0, false },
+		light:              func(*users.UserRecord) (int, bool) { return 0, false },
+		archetype:          func(int) (string, bool) { return "", false },
+		archetypeReporting: func() bool { return false },
+		journeyReporting:   func() bool { return false },
+		restReporting:      func() bool { return false },
+		name:               func(string) (string, bool) { return "", false },
+		room:               func(int) *rooms.Room { return nil },
 	}
 }
 
@@ -79,6 +82,9 @@ func fullSources() sources {
 	}
 	src.light = func(*users.UserRecord) (int, bool) { return 1, true }
 	src.archetype = func(int) (string, bool) { return "ranger", true }
+	src.archetypeReporting = func() bool { return true }
+	src.journeyReporting = func() bool { return true }
+	src.restReporting = func() bool { return true }
 	src.name = func(id string) (string, bool) {
 		return map[string]string{"ranger": "Ranger", "warrior": "Warrior"}[id], true
 	}
@@ -154,6 +160,8 @@ func TestSummaryMissingProvidersAreUnknown(t *testing.T) {
 	assert.Empty(t, s.LoadLabel)
 	assert.False(t, s.RestKnown)
 	assert.False(t, s.LightKnown)
+	assert.False(t, s.ActivityKnown, "no provider can say what the company is doing")
+	assert.False(t, s.Leader.ArchetypeKnown)
 	assert.Empty(t, s.Checkpoint)
 	assert.Empty(t, WarnCluster(s.WarnWords()), "nothing known, nothing warned")
 }
@@ -163,4 +171,32 @@ func TestSummaryKeysByMemberID(t *testing.T) {
 	assert.Equal(t, s.Companions[0].Name, s.Companions[1].Name, "two companions share a name")
 	assert.NotEqual(t, s.Companions[0].Key, s.Companions[1].Key)
 	assert.Equal(t, company.CompanionMemberKey(2), s.Companions[1].Key)
+}
+
+// TestSummaryIdleAndNoArchetypeAreKnown: with the providers present but
+// nothing to report, the company is known to be idle and the leader known
+// to have no archetype (review findings 1 and 4).
+func TestSummaryIdleAndNoArchetypeAreKnown(t *testing.T) {
+	src := noSources()
+	src.journeyReporting = func() bool { return true }
+	src.restReporting = func() bool { return true }
+	src.archetypeReporting = func() bool { return true }
+	s := src.summary(testUser())
+	assert.True(t, s.ActivityKnown)
+	assert.Equal(t, Idle, s.Activity.Kind)
+	assert.True(t, s.Leader.ArchetypeKnown)
+	assert.Empty(t, s.Leader.Archetype)
+}
+
+// TestCheckpointTitleRemembered: the church's title is read once, so a
+// refresh never reloads an unloaded room (review finding 7).
+func TestCheckpointTitleRemembered(t *testing.T) {
+	loads := 0
+	src := noSources()
+	src.room = func(id int) *rooms.Room { loads++; return &rooms.Room{RoomId: id, Title: "Shrine"} }
+	user := testUser()
+	user.Character.SetMiscData(death.CheckpointKey, 424242)
+	assert.Equal(t, "Shrine", src.summary(user).Checkpoint)
+	assert.Equal(t, "Shrine", src.summary(user).Checkpoint)
+	assert.Equal(t, 1, loads)
 }

@@ -195,6 +195,20 @@ func TestCompanySummaryThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, before.Leader.Hunger, after.Leader.Hunger)
 	assert.Equal(t, before.LoadLabel, after.LoadLabel)
 	assert.Equal(t, before.Checkpoint, after.Checkpoint)
+	assert.Equal(t, before.Activity, after.Activity)
+	assert.Equal(t, before.RestTier, after.RestTier)
+	assert.Equal(t, before.Leader.Warmth, after.Leader.Warmth)
+	require.Len(t, after.Companions, len(before.Companions))
+	for i := range before.Companions {
+		assert.Equal(t, before.Companions[i].Key, after.Companions[i].Key)
+		assert.Equal(t, before.Companions[i].Status, after.Companions[i].Status)
+	}
+
+	// The leader's own death: experience names the level it cost.
+	assert.NotContains(t, run("experience", ""), "last death")
+	run("suicide", "")
+	assert.Equal(t, 4, user.Character.Level)
+	assert.Contains(t, run("experience", ""), "Your last death cost you a level: 5 to 4.")
 
 	assert.Equal(t, turn, util.GetTurnCount(), "never advances the clock")
 	assert.Equal(t, round, util.GetRoundCount())
