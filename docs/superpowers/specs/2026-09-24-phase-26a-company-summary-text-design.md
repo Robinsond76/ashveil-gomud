@@ -4,9 +4,9 @@ Implements the text half of the
 [player information surfaces spec](2026-09-23-player-information-surfaces-design.md),
 fifth on the [onboarding roadmap](2026-09-23-company-life-onboarding-roadmap.md).
 
-**Status:** Draft for owner review (2026-09-24). The open decisions below
-carry recommendations and are **not yet confirmed**. Implementation starts
-once they are.
+**Status:** Decisions confirmed by the owner on 2026-09-25 ("Ok go"), after
+revising B and E: a richer default prompt and rearranged panels (see
+Decisions).
 
 **Split.** The parent spec has three parts that change different code. They
 are split the same way as 21a/21b and 25a/25b:
@@ -46,74 +46,112 @@ are split the same way as 21a/21b and 25a/25b:
 - **Browser Party window** (`modules/gmcp/gmcp.Party.go`) is GoMud's human
   party only. That is 26b's concern.
 
-## Proposed design
+## Decisions
 
 1. **The read model** is a new package, `internal/companyview`, with no
-   state of its own. `companyview.For(userID)` builds a `Summary` on the
-   game loop by calling the existing seams:
-   - the leader: archetype, level, HP and MP, alignment, needs, rest tier,
-     and exposure;
+   state of its own. `companyview.For(user)` builds a `Summary` on the game
+   loop by calling the existing seams:
+   - the leader: archetype, level, HP and MP, alignment, needs, warmth
+     (exposure), light where they stand, and rest tier;
    - each companion, keyed by member ID: `present`, `awaiting`, or `dead`,
      with name, archetype, level, HP when present, needs, formation cell,
-     chemistry tier, and rescue time left when dead;
-   - the company: alive and dead counts, load and band, activity
-     (travelling, camping, resting, at an inn, or none), and checkpoint
-     church.
+     and rescue time left when dead;
+   - the company: alive and dead counts, load and its band, activity
+     (travelling, stopped on the road, resting at camp, or at an inn, with
+     progress or time left), and checkpoint church.
 
-   A missing provider leaves its field unknown (`ok=false`). It is never
+   A missing provider leaves its field unknown (`Known=false`). It is never
    filled with a healthy default.
-2. **One new seam each** where there isn't one yet:
-   - a `company.MemberViewProvider` (`CompanyMembers`) listing members with
+2. **New seams, only where none exists:**
+   - `company.MemberViewProvider` (`CompanyMembers`) lists members with
      their state;
-   - an `ActivityProvider` on the expedition and camping seams: a
-     structured activity plus the label the travel and camp commands
-     already use.
-3. **Labels come from one place.** Band labels and short forms ("Weary",
-   "Heavy", "Resting 12m") are functions in `companyview`, used by both 26a
-   and 26b.
-4. **Text commands.** Each keeps its engine output and adds an Ashveil
-   block. Every line of that block names the command that shows more:
-   - `status`: archetype, alignment, the leader's needs in short form, the
-     company "3 alive, 1 fallen", the load band, the activity, the rest
-     tier, and pointers to `company status` and `formation`;
-   - `experience`: level, experience to the next level, training and stat
-     points, and the most recent level lost to death (a new durable
-     `MiscData["death-last-loss"]` written by `Respawn`);
-   - `inventory`: company load (personal plus cargo) against capacity, with
-     cargo shown separately, and whetstone uses. A note explains that the
-     engine's item-count limit is a separate thing;
-   - `conditions`: buffs grouped as ordinary, rest (Rested or Well Rested,
-     with the real time left), edges (strikes left per weapon),
-     survival/exposure, and chemistry (its tier, never shown as an expiring
-     buff).
-5. **Prompt tokens** through `OnBuildPrompt`: `{fatigue}` (band), `{fatiguev}`
-   (value), `{company}` ("3/1": alive/dead), `{load}` (band), and
-   `{activity}` (a short word or empty). They are plain text, with no colour
-   needed to read them.
+   - `expedition.ProgressProvider` (`Progress`) and `camping.RestProvider`
+     (`RestActivity`, `RestTier`) are optional interfaces on the providers
+     those modules already register. They read state under the module's own
+     mutex, with no side effects;
+   - `companyview.RegisterBuffGroup` lets the camping and exposure modules
+     name their buff IDs (rest and exposure) for `conditions`.
+3. **Labels come from one place.** Band labels and short forms live in
+   `companyview` and serve both 26a and 26b:
+   - needs use survival's `HungerLabel`, `ThirstLabel`, and `FatigueLabel`;
+   - warmth uses the exposure buff names (Chilled … Freezing to Death;
+     Overheated … Heatstroke);
+   - light is Dark or Dim;
+   - load is Unburdened, Burdened, or Overloaded, from the configured band's
+     effect and the load ratio. The band table has no names.
+4. **Rearranged panels** (owner revision of E). The panel code stays in
+   separate Ashveil files; each engine command calls into them, so the
+   upstream diff stays small.
+   - **`status`** is Ashveil's character sheet. The layout file
+     `panel-layouts/character/status.yaml` gains panels, and Go fills
+     whichever panels the layout defines (a new
+     `templates.PanelLayout.HasPanel`), so the upstream `empty` world keeps
+     its old sheet.
+     - **Character:** area, race, archetype, level, experience, alignment
+       (−100..100 and its band).
+     - **Vitals:** health, mana, armor, hunger, thirst, fatigue, warmth,
+       light.
+     - **Attributes**, **Wealth**, and **Training** stay as they are.
+     - **Company:** members ("3 alive, 1 fallen"), load, what the company is
+       doing, the rest tier, and where the player wakes if they fall.
+     - A footer line names `company status`, `formation`, `conditions`, and
+       `survival`.
 
-## Open decisions (owner to confirm)
+     Stat training and `status bonuses` are unchanged.
+   - **`conditions`** is fully grouped: Rest (Rested or Well Rested, real
+     time left), Weapon edges (strikes left), Survival (need warnings and
+     warmth), Company (chemistry: tier and band, never an expiring buff),
+     and Other effects (every other visible buff, with time left). An empty
+     group is left out. A player with none of these sees "None", as today.
+   - **`inventory`** leads with company load: personal plus cargo against
+     capacity, with the cargo portion separate, and a note that the engine's
+     item-count limit (shown on the Carrying line) is a separate thing.
+     Then the equipment and items as today. Filters are unchanged.
+   - **`experience`** keeps its line and adds the most recent level lost to
+     death (decision 7), when there is one.
+5. **The prompt** (owner revision of B). There is a token for each value,
+   in plain text so no colour is needed to read it:
 
-- **A. Split** 26a (text) / 26b (browser), as above. *Recommended.*
-- **B. Default prompt.** Leave the shipped default prompt alone and document
-  the new tokens, or add one survival warning and one activity word to it.
-  *Recommend adding them*, as the parent spec asks, shown only when there
-  is something to warn about, so a quiet prompt stays as short as today.
-- **C. Where the read model lives.** A new `internal/companyview` package,
-  or methods on `modules/company`. *Recommend `internal/companyview`*: the
-  engine commands can import it, and it reads other modules only through
-  their seams.
-- **D. Level-loss note.** Record the most recent level lost to death for
-  `experience`. *Recommended*, as one `MiscData` entry in the user file.
-- **E. Scope of `conditions`.** Regroup the whole engine panel, or append
-  Ashveil groups beneath it. *Recommend appending*, to keep the upstream
-  panel and its tests intact.
+   | Tokens | Meaning |
+   |---|---|
+   | `{hunger}` `{thirst}` `{fatigue}` | The need's band label |
+   | `{hungerv}` `{thirstv}` `{fatiguev}` | The need's value |
+   | `{light}` | Dark, Dim, or empty |
+   | `{warmth}` | The exposure label, or empty |
+   | `{load}` | The load label |
+   | `{company}` | "3" alive, or "3, 1 dead" |
+   | `{activity}` | Travelling 42%, Stopped, Resting 12m, At inn 5m, or empty |
+   | `{warn}` | A compact cluster, described below |
+
+   `{warn}` shows each need at Hungry/Thirsty/Tired or worse, then Dark or
+   Dim, the warmth band, and Overloaded. It has a fixed order and at most
+   four words. Each word leads with a space, so an empty cluster adds
+   nothing.
+
+   The shipped default prompt becomes
+   `…MP:{mp}/{MP}]{warn}{activity}{h}:`. A fed, rested, warm player in the
+   light who is doing nothing sees exactly today's prompt. Players can
+   still build their own prompt with `prompt` or `fprompt`, and `help
+   prompt` lists the new tokens.
+6. **The prompt is built from a cache.** The engine builds prompts on
+   connection goroutines as well as on the game loop, and outside the world
+   lock. The company module has no mutex, so a prompt must never read game
+   state directly. `companyview` works out each online player's token
+   values on the game loop, on every `NewRound` and after every command
+   (one deferred call at the end of `usercommands.TryCommand`). It stores
+   them in a mutex-guarded cache. `OnBuildPrompt` only reads the cache.
+   Values can lag by at most one round.
+7. **Level-loss note.** `Respawn` records the most recent level lost to
+   death in `MiscData["death-last-loss"]` (the levels before and after), in
+   the user file.
 
 ## Constraints
 
 - Read only. No command or prompt path writes a store or advances the
   world clock.
-- The prompt is built often. Token handlers do constant work per member and
-  never flatten plugin config on each call (the Phase 24 lesson).
+- The prompt is built often and off the game loop. Its handler reads only
+  the cache (decision 6), and nothing on that path flattens plugin config
+  (the Phase 24 lesson).
 - Member IDs are the keys everywhere, so two companions with the same name
   stay distinct.
 - No new locks. The summary is built on the game loop; module seams take
@@ -122,7 +160,11 @@ are split the same way as 21a/21b and 25a/25b:
 ## Acceptance criteria
 
 - Pure: every label function is table-tested. A missing provider gives an
-  unknown field, never a default.
+  unknown field, never a default. `{warn}` keeps its order and its
+  four-word cap, and a quiet player's default prompt matches today's.
+- Concurrency: the prompt handler under `-race` reads the cache while the
+  game loop refreshes it.
+- The `empty` world's status layout (no new panels) renders with no errors.
 - Wiring, through `plugins.Load` with the real modules: a leader with two
   companions is followed through recruitment, a journey (activity), a camp
   rest (the rest tier), one companion's death (counts, `status`, the prompt
