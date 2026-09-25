@@ -6,10 +6,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +25,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// course is a module on fake rooms: templates 900..903, copies at +1000 on
+// course is a module on fake rooms: templates 900..905, copies at +1000 on
 // each placement (+1000 again for a second placement).
 type course struct {
 	m         *TutorialModule
@@ -38,13 +40,18 @@ type course struct {
 	relocated []int
 	messages  *[]string
 	next      int
+	// Phase 27b.
+	food, drink bool
+	tier        camping.Tier
+	reporting   bool
+	struck      int
 }
 
 func newCourse(t *testing.T) *course {
 	t.Helper()
-	c := &course{rooms: map[int]*rooms.Room{}, original: map[int]int{}, claimed: map[int]bool{}, next: 1000}
+	c := &course{rooms: map[int]*rooms.Room{}, original: map[int]int{}, claimed: map[int]bool{}, next: 1000, reporting: true}
 	m := newModule()
-	m.roomIDs = func() []int { return []int{900, 901, 902, 903} }
+	m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905} }
 	m.copyRooms = func(ids ...int) (map[int]int, error) {
 		out := map[int]int{}
 		for _, id := range ids {
@@ -81,6 +88,16 @@ func newCourse(t *testing.T) *course {
 	m.formation = func(int) (company.Formation, bool) { return c.form, true }
 	m.hasClaimed = func(_ int, id int) bool { return c.claimed[id] }
 	m.giveItem = func(_ *users.UserRecord, id int) bool { c.given = append(c.given, id); return true }
+	m.registered = func(string) bool { return true }
+	m.carries = func(_ *users.UserRecord, drink bool) bool {
+		if drink {
+			return c.drink
+		}
+		return c.food
+	}
+	m.restTier = func(int) (camping.Tier, bool) { return c.tier, true }
+	m.restReporting = func() bool { return c.reporting }
+	m.abandonCamp = func(int) error { c.struck++; return nil }
 	c.m = m
 
 	users.ResetActiveUsers()
@@ -123,6 +140,15 @@ func (c *course) exit(roomID int, name string) (int, bool) {
 
 func (c *course) stage() StageID { return progressOf(c.user.Character).Stage }
 
+// at puts the player at a stage, as if walked there.
+func (c *course) at(id StageID) {
+	p := progressOf(c.user.Character)
+	p.Stage = id
+	p.save(c.user.Character)
+}
+
+func inspectionsOf(id StageID) []string { return stages[stageIndex(id)].Inspections }
+
 func TestBeginPlacesAtTheFirstStage(t *testing.T) {
 	c := newCourse(t)
 	require.True(t, c.m.Begin(7))
@@ -132,7 +158,7 @@ func TestBeginPlacesAtTheFirstStage(t *testing.T) {
 	assert.Equal(t, -1, c.user.Character.RoomIdOnReset)
 	assert.Equal(t, StageCharacter, c.stage())
 	assert.Equal(t, stateActive, progressOf(c.user.Character).State)
-	assert.Contains(t, c.text(), "stage 1 of 4: Your character")
+	assert.Contains(t, c.text(), "stage 1 of 6: Your character")
 	_, open := c.exit(1900, "east")
 	assert.False(t, open, "the way on is closed until the stage is passed")
 }
@@ -141,7 +167,7 @@ func TestAdvanceUnlocksNextRoom(t *testing.T) {
 	c := newCourse(t)
 	c.m.Begin(7)
 	c.text()
-	for _, cmd := range inspections[:3] {
+	for _, cmd := range inspectionsOf(StageCharacter)[:3] {
 		c.run(cmd)
 	}
 	assert.Equal(t, StageCharacter, c.stage())
@@ -155,7 +181,7 @@ func TestAdvanceUnlocksNextRoom(t *testing.T) {
 
 	// Walking in shows the stage.
 	require.NoError(t, c.m.moveTo(7, 1901))
-	assert.Contains(t, c.text(), "stage 2 of 4: Your company")
+	assert.Contains(t, c.text(), "stage 2 of 6: Your company")
 
 	// Two living companions pass Company; a formation passes Formation.
 	c.members = []company.MemberView{{ID: 1, Status: company.MemberPresent}, {ID: 2, Status: company.MemberPresent}}
@@ -164,7 +190,34 @@ func TestAdvanceUnlocksNextRoom(t *testing.T) {
 	require.NoError(t, c.form.Place(company.CompanionMemberKey(1), 0, 1))
 	require.NoError(t, c.form.Place(company.CompanionMemberKey(2), 2, 1))
 	c.m.check(c.user)
+	assert.Equal(t, StageSurvival, c.stage())
+	to, open = c.exit(1902, "east")
+	require.True(t, open)
+	assert.Equal(t, 1904, to, "the Weather Yard follows the Drill Ground")
+
+	// Survival: fed, watered, and the four inspections.
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 7, Benefit: survival.Benefit{Nutrition: 35}})
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 7, Benefit: survival.Benefit{Hydration: 40}})
+	for _, cmd := range inspectionsOf(StageSurvival) {
+		assert.Equal(t, StageSurvival, c.stage())
+		c.run(cmd)
+	}
+	assert.Equal(t, StageCamp, c.stage())
+	to, open = c.exit(1904, "east")
+	require.True(t, open)
+	assert.Equal(t, 1905, to)
+
+	// Camp: Rested passes it, and the camp is struck.
+	struck := c.struck
+	c.m.check(c.user)
+	assert.Equal(t, StageCamp, c.stage(), "not rested yet")
+	c.tier = camping.TierRested
+	c.m.check(c.user)
 	assert.Equal(t, StageDeparture, c.stage())
+	assert.Equal(t, struck+1, c.struck, "the course camp is struck")
+	to, open = c.exit(1905, "east")
+	require.True(t, open)
+	assert.Equal(t, 1903, to, "on to the Gate")
 	to, open = c.exit(1903, "gate")
 	require.True(t, open)
 	assert.Equal(t, rooms.StartRoomIdAlias, to)
@@ -265,7 +318,32 @@ func TestNextOnlyWhenAllowed(t *testing.T) {
 	assert.Equal(t, StageFormation, c.stage(), "a recruit is still claimable")
 	c.claimed[62] = true
 	_, _ = c.m.command("next", c.user, nil, 0)
-	assert.Equal(t, StageDeparture, c.stage(), "short and nothing left to claim: waived")
+	assert.Equal(t, StageSurvival, c.stage(), "short and nothing left to claim: waived")
+
+	// Survival: waived only once supplied and with nothing left to eat or
+	// drink that's still needed.
+	c.food, c.drink = true, true
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageSurvival, c.stage(), "not supplied yet")
+	p = progressOf(c.user.Character)
+	p.Supplied = true
+	p.save(c.user.Character)
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageSurvival, c.stage(), "food and drink in the pack")
+	c.drink = false
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 7, Benefit: survival.Benefit{Hydration: 10}})
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageSurvival, c.stage(), "out of drink, but already watered")
+	c.food = false
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageCamp, c.stage(), "nothing left to eat: waived")
+
+	// Camp: waived only when nothing can camp.
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageCamp, c.stage())
+	c.reporting = false
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageDeparture, c.stage(), "no camping: waived")
 	_, _ = c.m.command("next", c.user, nil, 0)
 	assert.Equal(t, StageDeparture, c.stage(), "departure is walked, not waived")
 }
@@ -288,7 +366,7 @@ func TestTutorialViewChecklist(t *testing.T) {
 func TestBeginAgainKeepsProgress(t *testing.T) {
 	c := newCourse(t)
 	require.True(t, c.m.Begin(7))
-	for _, cmd := range inspections {
+	for _, cmd := range inspectionsOf(StageCharacter) {
 		c.run(cmd)
 	}
 	c.m.check(c.user)
@@ -305,4 +383,135 @@ func TestBeginAgainKeepsProgress(t *testing.T) {
 	assert.Equal(t, rooms.StartRoomIdAlias, c.user.Character.RoomId, "out to the start room")
 	assert.Equal(t, stateGraduated, progressOf(c.user.Character).State)
 	assert.Empty(t, c.given)
+}
+
+// --- Phase 27b ---
+
+func TestInspectionsCountOnlyInTheirStage(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.run("weather")
+	assert.False(t, progressOf(c.user.Character).Seen["weather"], "a Survival inspection doesn't count at Character")
+	c.at(StageSurvival)
+	c.run("weather")
+	c.run("status")
+	p := progressOf(c.user.Character)
+	assert.True(t, p.Seen["weather"])
+	assert.False(t, p.Seen["status"], "nor a Character one at Survival")
+}
+
+func TestProvisionCountsOnlyInSurvival(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 7, Benefit: survival.Benefit{Nutrition: 35, Hydration: 5}})
+	assert.False(t, progressOf(c.user.Character).Seen[seenFed])
+	c.at(StageSurvival)
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 8, Benefit: survival.Benefit{Nutrition: 35}})
+	assert.False(t, progressOf(c.user.Character).Seen[seenFed], "someone else's meal")
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 7, Benefit: survival.Benefit{Nutrition: 35}})
+	p := progressOf(c.user.Character)
+	assert.True(t, p.Seen[seenFed])
+	assert.False(t, p.Seen[seenWatered], "food alone")
+
+	for _, cmd := range inspectionsOf(StageSurvival) {
+		c.run(cmd)
+	}
+	assert.Equal(t, StageSurvival, c.stage(), "still thirsty work")
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 7, Benefit: survival.Benefit{Hydration: 40}})
+	c.m.check(c.user)
+	assert.Equal(t, StageCamp, c.stage())
+}
+
+func TestMissingInspectionCommandIsNotAskedFor(t *testing.T) {
+	c := newCourse(t)
+	c.m.registered = func(cmd string) bool { return cmd != "strain" }
+	c.m.Begin(7)
+	c.at(StageSurvival)
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 7, Benefit: survival.Benefit{Nutrition: 1, Hydration: 1}})
+	for _, cmd := range []string{"weather", "temperature", "cargo"} {
+		c.run(cmd)
+	}
+	assert.Equal(t, StageCamp, c.stage())
+}
+
+// walkIn puts the player at stage id's previous stage and walks them into
+// its room, as the east exit would.
+func (c *course) walkIn(t *testing.T, id StageID) {
+	t.Helper()
+	c.at(id)
+	at := stageIndex(id)
+	from := c.m.copyOf(7, stages[at-1].Room)
+	c.user.Character.RoomId = from
+	require.NoError(t, c.m.moveTo(7, c.m.copyOf(7, stages[at].Room)))
+}
+
+func TestSuppliesOnceAndOnlyWhatsMissing(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.food = true // the kit's sandwich is still in the pack
+	c.walkIn(t, StageSurvival)
+	assert.Equal(t, []int{defaultWaterItem}, c.given, "only the missing drink")
+	assert.True(t, progressOf(c.user.Character).Supplied)
+	assert.Contains(t, c.text(), "stage 4 of 6: Survival")
+
+	c.food, c.drink = false, false
+	c.walkIn(t, StageSurvival)
+	c.m.resume(7)
+	delete(c.m.copies, 7)
+	c.user.Character.RoomId = -1
+	c.m.resume(7)
+	assert.Equal(t, []int{defaultWaterItem}, c.given, "never again, by walking in or by resume")
+}
+
+func TestSuppliesOnResumeAtSurvival(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.at(StageSurvival)
+	delete(c.m.copies, 7)
+	c.user.Character.RoomId = -1
+	c.m.resume(7)
+	assert.Equal(t, 2904, c.user.Character.RoomId)
+	assert.Equal(t, []int{defaultRationItem, defaultWaterItem}, c.given, "an empty pack gets both")
+}
+
+func TestCampStruckOnPlaceSkipAndLeave(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	assert.Equal(t, 1, c.struck, "placement strikes any stale course camp")
+	c.at(StageCamp)
+	delete(c.m.copies, 7)
+	c.user.Character.RoomId = -1
+	c.m.resume(7)
+	assert.Equal(t, 2, c.struck, "and so does resume")
+	_, _ = c.m.command("skip yes", c.user, nil, 0)
+	assert.Equal(t, 3, c.struck, "and skipping")
+
+	d := newCourse(t)
+	d.m.Begin(7)
+	d.at(StageCamp)
+	require.NoError(t, d.m.moveTo(7, 1)) // walked out some other way
+	assert.Equal(t, 2, d.struck, "and leaving")
+	assert.Equal(t, stateSkipped, progressOf(d.user.Character).State)
+}
+
+func TestSurvivalAndCampViews(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.at(StageSurvival)
+	c.m.onProvision(survival.Provisioned{LeaderUserID: 7, Benefit: survival.Benefit{Nutrition: 35}})
+	c.run("cargo")
+	c.text()
+	_, _ = c.m.command("", c.user, nil, 0)
+	out := c.text()
+	assert.Contains(t, out, "stage 4 of 6: Survival")
+	assert.Contains(t, out, "[x] eat something")
+	assert.Contains(t, out, "[ ] drink something")
+	assert.Contains(t, out, "[x] cargo")
+	assert.Contains(t, out, "[ ] weather")
+
+	c.at(StageCamp)
+	_, _ = c.m.command("", c.user, nil, 0)
+	out = c.text()
+	assert.Contains(t, out, "[ ] Rested")
+	assert.Contains(t, out, "camp rest")
 }

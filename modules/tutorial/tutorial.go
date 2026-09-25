@@ -4,6 +4,8 @@
 // progress on the character, resume after logout, restart, or copyover, a
 // skip, and a once-only graduation reward. See
 // docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md.
+// Phase 27b adds the Survival and Camp lessons:
+// docs/superpowers/specs/2026-09-25-phase-27b-tutorial-survival-camp-design.md.
 package tutorial
 
 import (
@@ -12,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -21,6 +24,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	domain "github.com/GoMudEngine/GoMud/internal/tutorial"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -31,6 +35,10 @@ var files embed.FS
 
 const (
 	defaultGraduationItem = 20043
+	// The Survival stage's supplies (27b): a cheese sandwich and a
+	// waterskin, as in the starter kits.
+	defaultRationItem = 30004
+	defaultWaterItem  = 30015
 	// exitLifetime keeps an opened way open as long as anyone could need it.
 	exitLifetime = "7 real days"
 )
@@ -54,8 +62,16 @@ type TutorialModule struct {
 	formation    func(leaderUserID int) (company.Formation, bool)
 	hasClaimed   func(leaderUserID, templateID int) bool
 	giveItem     func(user *users.UserRecord, itemID int) bool
+	// Phase 27b.
+	registered    func(command string) bool
+	carries       func(user *users.UserRecord, drink bool) bool
+	restTier      func(userID int) (camping.Tier, bool)
+	restReporting func() bool
+	abandonCamp   func(leaderUserID int) error
 
 	graduationItem int
+	rationItem     int
+	waterItem      int
 	recruits       []int
 
 	// copies maps each player in the course to their room copies, template
@@ -90,7 +106,17 @@ func newModule() *TutorialModule {
 			}
 			return user.Character.StoreItem(items.New(itemID))
 		},
+		registered: usercommands.IsRegistered,
+		carries:    carriesProvision,
+		restTier: func(userID int) (camping.Tier, bool) {
+			tier, _, ok := camping.RestTierOf(userID)
+			return tier, ok
+		},
+		restReporting:  camping.RestReporting,
+		abandonCamp:    camping.AbandonCamp,
 		graduationItem: defaultGraduationItem,
+		rationItem:     defaultRationItem,
+		waterItem:      defaultWaterItem,
 		recruits:       defaultRecruits,
 		copies:         map[int]map[int]int{},
 	}
@@ -111,6 +137,10 @@ func init() {
 	usercommands.OnCommandDone.Register(func(d usercommands.CommandDone) usercommands.CommandDone {
 		m.onCommandDone(d)
 		return d
+	})
+	survival.OnProvision.Register(func(p survival.Provisioned) survival.Provisioned {
+		m.onProvision(p)
+		return p
 	})
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
@@ -148,6 +178,12 @@ func (m *TutorialModule) load() {
 	if n, ok := configInt(m.plug.Config.Get("GraduationItemId")); ok && n > 0 {
 		m.graduationItem = n
 	}
+	if n, ok := configInt(m.plug.Config.Get("RationItemId")); ok && n > 0 {
+		m.rationItem = n
+	}
+	if n, ok := configInt(m.plug.Config.Get("WaterItemId")); ok && n > 0 {
+		m.waterItem = n
+	}
 	if list, ok := m.plug.Config.Get("TutorialRecruits").([]any); ok {
 		var ids []int
 		for _, raw := range list {
@@ -180,6 +216,9 @@ func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
 		return false
 	}
 	m.copies[user.UserId] = copies
+	// No course camp outlives its room copies: a rest cut short by a
+	// logout or restart is made again in the new ones.
+	m.strikeCamp(user.UserId)
 	for i := 0; i < at; i++ {
 		m.openAfter(user.UserId, i)
 	}
@@ -195,6 +234,7 @@ func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
 		return false
 	}
 	m.sendStage(user, at)
+	m.enterStage(user, p)
 	return true
 }
 
@@ -303,10 +343,11 @@ func (m *TutorialModule) onCommandDone(d usercommands.CommandDone) {
 		return
 	}
 	p := progressOf(user.Character)
-	if p.State != stateActive || p.Stage != StageCharacter {
+	at := stageIndex(p.Stage)
+	if p.State != stateActive || at < 0 {
 		return
 	}
-	for _, cmd := range inspections {
+	for _, cmd := range stages[at].Inspections {
 		if d.Command == cmd && !p.Seen[cmd] {
 			p.Seen[cmd] = true
 			p.save(user.Character)
@@ -315,11 +356,85 @@ func (m *TutorialModule) onCommandDone(d usercommands.CommandDone) {
 	}
 }
 
+// onProvision counts a real meal and drink in the Survival stage, whoever
+// in the company was fed.
+func (m *TutorialModule) onProvision(e survival.Provisioned) {
+	user := m.lookupUser(e.LeaderUserID)
+	if user == nil || user.Character == nil {
+		return
+	}
+	p := progressOf(user.Character)
+	if p.State != stateActive || p.Stage != StageSurvival {
+		return
+	}
+	changed := false
+	if e.Benefit.Nutrition > 0 && !p.Seen[seenFed] {
+		p.Seen[seenFed], changed = true, true
+	}
+	if e.Benefit.Hydration > 0 && !p.Seen[seenWatered] {
+		p.Seen[seenWatered], changed = true, true
+	}
+	if changed {
+		p.save(user.Character)
+	}
+}
+
+// enterStage readies the stage a player has just reached (walked into or
+// been placed in): Survival's supplies, once per character and only for
+// what they lack.
+func (m *TutorialModule) enterStage(user *users.UserRecord, p progress) {
+	if p.Stage != StageSurvival || p.Supplied {
+		return
+	}
+	p.Supplied = true
+	p.save(user.Character)
+	for _, supply := range []struct {
+		drink  bool
+		itemID int
+	}{{false, m.rationItem}, {true, m.waterItem}} {
+		if m.carries(user, supply.drink) || !m.giveItem(user, supply.itemID) {
+			continue
+		}
+		if spec := items.GetItemSpec(supply.itemID); spec != nil {
+			user.SendText(fmt.Sprintf(`A warden presses a <ansi fg="item">%s</ansi> into your hands.`, spec.Name))
+		}
+	}
+}
+
+// carriesProvision reports whether a character carries something to eat
+// (with nutrition) or, with drink, to drink (with hydration).
+func carriesProvision(user *users.UserRecord, drink bool) bool {
+	for _, item := range user.Character.GetAllBackpackItems() {
+		spec := item.GetSpec()
+		switch {
+		case drink && spec.Subtype == items.Drinkable && spec.Hydration > 0:
+			return true
+		case !drink && spec.Subtype == items.Edible && spec.Nutrition > 0:
+			return true
+		}
+	}
+	return false
+}
+
+// strikeCamp removes a player's camp: in the course it can only be a
+// course camp, in a room copy that won't outlast the course.
+func (m *TutorialModule) strikeCamp(userID int) {
+	if err := m.abandonCamp(userID); err != nil {
+		mudlog.Error("tutorial: strike camp", "user", userID, "error", err)
+	}
+}
+
+// rested: the Camp gate, a rest tier held.
+func (m *TutorialModule) rested(userID int) bool {
+	tier, ok := m.restTier(userID)
+	return ok && tier >= camping.TierRested
+}
+
 // passed reports whether the player's current stage's gate is met.
 func (m *TutorialModule) passed(user *users.UserRecord, p progress) bool {
 	switch p.Stage {
 	case StageCharacter:
-		return characterDone(p)
+		return characterDone(p, m.registered)
 	case StageCompany:
 		members, ok := m.members(user.UserId)
 		return ok && companyDone(members)
@@ -327,6 +442,10 @@ func (m *TutorialModule) passed(user *users.UserRecord, p progress) bool {
 		members, ok := m.members(user.UserId)
 		f, fok := m.formation(user.UserId)
 		return ok && fok && formationDone(f, members)
+	case StageSurvival:
+		return survivalDone(p, m.registered)
+	case StageCamp:
+		return m.rested(user.UserId)
 	}
 	return false // Departure ends at the gate
 }
@@ -352,6 +471,9 @@ func (m *TutorialModule) advance(user *users.UserRecord, p progress) {
 	}
 	p.Stage = stages[at+1].ID
 	p.save(user.Character)
+	if stages[at].ID == StageCamp {
+		m.strikeCamp(user.UserId) // rested; the camp's work is done
+	}
 	m.openAfter(user.UserId, at)
 	done := stages[at].Done
 	if done == "" {
@@ -382,6 +504,7 @@ func (m *TutorialModule) onRoomChange(e events.Event) events.ListenerReturn {
 	case to:
 		if at := stageIndex(p.Stage); at >= 0 && m.copyOf(user.UserId, stages[at].Room) == evt.ToRoomId && evt.FromRoomId != evt.ToRoomId && from {
 			m.sendStage(user, at)
+			m.enterStage(user, p)
 		}
 	}
 	return events.Continue
@@ -397,6 +520,7 @@ func (m *TutorialModule) onRoomChange(e events.Event) events.ListenerReturn {
 func (m *TutorialModule) leave(user *users.UserRecord, p progress) {
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
+	m.strikeCamp(user.UserId)
 	// Companions follow on foot a moment later; bring them now, so none
 	// is left behind in the course's copies.
 	m.relocate(user.UserId, user.Character.RoomId)
@@ -504,14 +628,22 @@ func (m *TutorialModule) view(user *users.UserRecord, p progress) string {
 		fmt.Sprintf(`<ansi fg="yellow-bold">Tutorial, stage %d of %d: %s</ansi>`, at+1, len(stages), s.Title),
 		fmt.Sprintf(`<ansi fg="yellow">Goal:</ansi> %s`, s.Goal),
 	}
-	if s.ID == StageCharacter {
-		for _, cmd := range inspections {
-			mark := "[ ]"
-			if p.Seen[cmd] {
-				mark = "[x]"
-			}
-			lines = append(lines, fmt.Sprintf("  %s %s", mark, cmd))
+	check := func(done bool, what string) {
+		mark := "[ ]"
+		if done {
+			mark = "[x]"
 		}
+		lines = append(lines, fmt.Sprintf("  %s %s", mark, what))
+	}
+	switch s.ID {
+	case StageSurvival:
+		check(p.Seen[seenFed], "eat something")
+		check(p.Seen[seenWatered], "drink something")
+	case StageCamp:
+		check(m.rested(user.UserId), "Rested")
+	}
+	for _, cmd := range required(s, m.registered) {
+		check(p.Seen[cmd], cmd)
 	}
 	for _, h := range s.Hints {
 		lines = append(lines, "  - "+h)
@@ -520,8 +652,9 @@ func (m *TutorialModule) view(user *users.UserRecord, p progress) string {
 	return strings.Join(lines, "\n")
 }
 
-// next lets a stuck player through the Company stage: both free recruits
-// were already claimed and the company is short.
+// next lets a stuck player through a stage they can no longer finish:
+// Company or Formation short of companions with the course's recruits
+// claimed, Survival with nothing left to eat or drink, Camp without camping.
 func (m *TutorialModule) next(user *users.UserRecord, p progress) {
 	// Company and Formation both need two living companions. Once both
 	// free recruits are claimed (TutorialRecruits, which must match the
@@ -541,6 +674,20 @@ func (m *TutorialModule) next(user *users.UserRecord, p progress) {
 			return
 		}
 	}
+	// Survival: the supplies are gone (eaten by a companion, dropped) and
+	// the player has nothing left to eat or drink.
+	if p.Stage == StageSurvival && p.Supplied &&
+		((!p.Seen[seenFed] && !m.carries(user, false)) || (!p.Seen[seenWatered] && !m.carries(user, true))) {
+		user.SendText("You have nothing left to eat or drink, so this lesson is waived. Buy food and water at a market before a long road.")
+		m.advance(user, p)
+		return
+	}
+	// Camp: nothing here can camp or rest.
+	if p.Stage == StageCamp && !m.restReporting() {
+		user.SendText("Camping isn't available right now, so this lesson is waived.")
+		m.advance(user, p)
+		return
+	}
 	if at := stageIndex(p.Stage); at >= 0 {
 		user.SendText(fmt.Sprintf(`Not yet. <ansi fg="yellow">Goal:</ansi> %s Type <ansi fg="command">tutorial</ansi> for hints.`, stages[at].Goal))
 	}
@@ -556,6 +703,7 @@ func (m *TutorialModule) skip(user *users.UserRecord, p progress, confirmed bool
 	p.save(user.Character)
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
+	m.strikeCamp(user.UserId) // before moving: a rest in progress holds the player
 	user.SendText(`<ansi fg="magenta">You leave the training grounds behind.</ansi>`)
 	if err := m.travel(user, rooms.StartRoomIdAlias); err != nil {
 		mudlog.Error("tutorial: skip", "user", user.UserId, "error", err)

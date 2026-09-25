@@ -15,21 +15,50 @@ func TestStageOrder(t *testing.T) {
 	for _, s := range stages {
 		ids = append(ids, s.ID)
 	}
-	assert.Equal(t, []StageID{StageCharacter, StageCompany, StageFormation, StageDeparture}, ids)
+	assert.Equal(t, []StageID{StageCharacter, StageCompany, StageFormation, StageSurvival, StageCamp, StageDeparture}, ids)
 	assert.Equal(t, 1, stageIndex(StageCompany))
 	assert.Equal(t, -1, stageIndex("nope"))
-	for i, s := range stages {
-		assert.Equal(t, i, s.Room, "one room per stage, in order")
+	// Phase 27b's rooms (904, 905) come after the Gate (903) in
+	// TutorialRooms, so 27a's room indexes stay put.
+	rooms := []int{}
+	for _, s := range stages {
+		rooms = append(rooms, s.Room)
 		assert.NotEmpty(t, s.Title)
 		assert.NotEmpty(t, s.Goal)
 	}
+	assert.Equal(t, []int{0, 1, 2, 4, 5, 3}, rooms)
+}
+
+func everything(string) bool { return true }
+
+func TestRequiredInspectionsSkipMissingCommands(t *testing.T) {
+	s := stages[stageIndex(StageSurvival)]
+	assert.Equal(t, []string{"weather", "temperature", "strain", "cargo"}, required(s, everything))
+	noWeather := func(cmd string) bool { return cmd != "weather" }
+	assert.Equal(t, []string{"temperature", "strain", "cargo"}, required(s, noWeather))
+	assert.Empty(t, required(stages[stageIndex(StageCompany)], everything))
+}
+
+func TestSurvivalGate(t *testing.T) {
+	p := progress{Seen: map[string]bool{}}
+	for _, cmd := range []string{"weather", "temperature", "strain", "cargo"} {
+		p.Seen[cmd] = true
+	}
+	assert.False(t, survivalDone(p, everything), "not yet fed or watered")
+	p.Seen[seenFed] = true
+	assert.False(t, survivalDone(p, everything))
+	p.Seen[seenWatered] = true
+	assert.True(t, survivalDone(p, everything))
+	delete(p.Seen, "strain")
+	assert.False(t, survivalDone(p, everything))
+	assert.True(t, survivalDone(p, func(cmd string) bool { return cmd != "strain" }), "a missing command isn't asked for")
 }
 
 func TestProgressRoundTrip(t *testing.T) {
 	c := &characters.Character{}
 	p := progressOf(c)
 	assert.Equal(t, stateNone, p.State)
-	p = progress{State: stateActive, Stage: StageCompany, Seen: map[string]bool{"status": true, "inventory": true}}
+	p = progress{State: stateActive, Stage: StageCompany, Seen: map[string]bool{"status": true, "inventory": true}, Supplied: true}
 	p.save(c)
 
 	data, err := yaml.Marshal(c)
@@ -40,16 +69,19 @@ func TestProgressRoundTrip(t *testing.T) {
 	assert.Equal(t, p.State, got.State)
 	assert.Equal(t, p.Stage, got.Stage)
 	assert.Equal(t, p.Seen, got.Seen)
+	assert.True(t, got.Supplied)
 }
 
 func TestCharacterGate(t *testing.T) {
 	p := progress{Seen: map[string]bool{}}
+	inspections := stages[stageIndex(StageCharacter)].Inspections
+	assert.Equal(t, []string{"status", "inventory", "experience", "conditions"}, inspections)
 	for _, cmd := range inspections[:3] {
 		p.Seen[cmd] = true
-		assert.False(t, characterDone(p))
+		assert.False(t, characterDone(p, everything))
 	}
 	p.Seen[inspections[3]] = true
-	assert.True(t, characterDone(p))
+	assert.True(t, characterDone(p, everything))
 }
 
 func view(id int, status company.MemberStatus) company.MemberView {

@@ -2,6 +2,8 @@ package tutorial
 
 // Phase 27a: the stages, their gates, and the progress kept on the
 // character. See docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md.
+// Phase 27b adds Survival and Camp:
+// docs/superpowers/specs/2026-09-25-phase-27b-tutorial-survival-camp-design.md.
 
 import (
 	"sort"
@@ -18,19 +20,23 @@ const (
 	StageCharacter StageID = "character"
 	StageCompany   StageID = "company"
 	StageFormation StageID = "formation"
+	StageSurvival  StageID = "survival"
+	StageCamp      StageID = "camp"
 	StageDeparture StageID = "departure"
 )
 
 // Stage is one lesson: the room it is taught in (an index into the
-// configured tutorial rooms), its goal, and what to try.
+// configured tutorial rooms), its goal, and what to try. Inspections are
+// commands, by registered name, the stage asks the player to run.
 type Stage struct {
-	ID    StageID
-	Room  int
-	Title string
-	Intro string
-	Goal  string
-	Hints []string
-	Done  string
+	ID          StageID
+	Room        int
+	Title       string
+	Intro       string
+	Goal        string
+	Hints       []string
+	Done        string
+	Inspections []string
 }
 
 var stages []Stage
@@ -39,6 +45,7 @@ func init() {
 	stages = []Stage{
 		{
 			ID: StageCharacter, Room: 0, Title: "Your character",
+			Inspections: []string{"status", "inventory", "experience", "conditions"},
 			Intro: "You chose your path when you made your character, and it gave you a starter kit. Before you set out, look yourself over.",
 			Goal:  "Look yourself over: status, inventory, experience, and conditions.",
 			Hints: []string{
@@ -73,6 +80,33 @@ func init() {
 			Done: "A sound formation.",
 		},
 		{
+			// Rooms 904 and 905 follow the Gate (903) in TutorialRooms.
+			ID: StageSurvival, Room: 4, Title: "Survival",
+			Intro: "Out here the weather is your enemy as much as any beast. You and every companion grow hungry, thirsty, and tired, the cold bites the unsheltered, and a heavy pack wears a company down.",
+			Goal:  "Eat something and drink something, then check the weather, the temperature, your strain, and your cargo.",
+			Hints: []string{
+				`<ansi fg="command">eat <food></ansi> and <ansi fg="command">drink <drink></ansi>, e.g. <ansi fg="command">eat sandwich</ansi> and <ansi fg="command">drink waterskin</ansi>. Add a companion's name to feed them instead: <ansi fg="command">eat sandwich tamsin</ansi>.`,
+				`<ansi fg="command">weather</ansi> shows the sky. Storms slow travel and spoil rest.`,
+				`<ansi fg="command">temperature</ansi> shows how warm you are. Try it here in the open, then back in the Waking Hall: shelter, a fire, and warm clothes all help.`,
+				`<ansi fg="command">strain</ansi> shows how worn your company is from walking; <ansi fg="command">cargo</ansi> shows your load. Too heavy a load tires everyone faster.`,
+				`Walking from room to room nearby is quick. A journey between places, with <ansi fg="command">travel</ansi>, takes real time and never hurries the world along.`,
+			},
+			Done:        "You know what the road will ask of you.",
+			Inspections: []string{"weather", "temperature", "strain", "cargo"},
+		},
+		{
+			ID: StageCamp, Room: 5, Title: "Camp",
+			Intro: "A company that never rests falls apart. In the wild you make camp, light a fire, and rest; a good rest leaves everyone Rested for a while. An inn's bed is better still: Well Rested.",
+			Goal:  "Make camp, light a fire, and rest until your company is Rested.",
+			Hints: []string{
+				`<ansi fg="command">camp</ansi> makes camp here, <ansi fg="command">camp fire</ansi> lights the fire, and <ansi fg="command">camp rest</ansi> rests for about a minute. You stay put while you rest.`,
+				`<ansi fg="command">camp status</ansi> shows the rest's progress and everyone's needs; <ansi fg="command">conditions</ansi> shows Rested afterwards.`,
+				`With a whetstone, <ansi fg="command">camp sharpen on</ansi> hones every blade in the company at the end of a rest, using the stone once. Whetstones are sold in markets.`,
+				`An inn stay (<ansi fg="command">inn</ansi>) costs gold but leaves you Well Rested, which is better than Rested.`,
+			},
+			Done: "Rested and ready.",
+		},
+		{
 			ID: StageDeparture, Room: 3, Title: "Departure",
 			Intro: "Your training is done. Look over your company and your pack before you go.",
 			Goal:  "When you're ready, go through the gate.",
@@ -94,8 +128,33 @@ func stageIndex(id StageID) int {
 	return -1
 }
 
-// inspections are the Character stage's commands, by registered name.
-var inspections = []string{"status", "inventory", "experience", "conditions"}
+// required is a stage's inspections whose commands are registered; a
+// command whose module isn't loaded is never asked for.
+func required(s Stage, registered func(string) bool) []string {
+	var out []string
+	for _, cmd := range s.Inspections {
+		if registered(cmd) {
+			out = append(out, cmd)
+		}
+	}
+	return out
+}
+
+// inspected: every required inspection of a stage was run.
+func inspected(s Stage, p progress, registered func(string) bool) bool {
+	for _, cmd := range required(s, registered) {
+		if !p.Seen[cmd] {
+			return false
+		}
+	}
+	return true
+}
+
+// Results the Survival stage records in Seen alongside its inspections.
+const (
+	seenFed     = "fed"
+	seenWatered = "watered"
+)
 
 // Progress states.
 const (
@@ -110,13 +169,16 @@ const (
 	keyState = "tutorial-state"
 	keyStage = "tutorial-stage"
 	keySeen  = "tutorial-seen"
+	// keySupplied marks the Survival stage's supplies as given (27b).
+	keySupplied = "tutorial-supplied"
 )
 
 // progress is a character's place in the course.
 type progress struct {
-	State string
-	Stage StageID
-	Seen  map[string]bool
+	State    string
+	Stage    StageID
+	Seen     map[string]bool
+	Supplied bool
 }
 
 func progressOf(c *characters.Character) progress {
@@ -124,6 +186,8 @@ func progressOf(c *characters.Character) progress {
 	p.State, _ = c.GetMiscData(keyState).(string)
 	stage, _ := c.GetMiscData(keyStage).(string)
 	p.Stage = StageID(stage)
+	supplied, _ := c.GetMiscData(keySupplied).(string)
+	p.Supplied = supplied == "yes"
 	seen, _ := c.GetMiscData(keySeen).(string)
 	for _, s := range strings.Split(seen, ",") {
 		if s != "" {
@@ -142,16 +206,21 @@ func (p progress) save(c *characters.Character) {
 	}
 	sort.Strings(seen)
 	c.SetMiscData(keySeen, strings.Join(seen, ","))
+	if p.Supplied {
+		c.SetMiscData(keySupplied, "yes")
+	} else {
+		c.SetMiscData(keySupplied, nil)
+	}
 }
 
 // characterDone: every inspection was run.
-func characterDone(p progress) bool {
-	for _, cmd := range inspections {
-		if !p.Seen[cmd] {
-			return false
-		}
-	}
-	return true
+func characterDone(p progress, registered func(string) bool) bool {
+	return inspected(stages[stageIndex(StageCharacter)], p, registered)
+}
+
+// survivalDone: fed, watered, and every inspection run.
+func survivalDone(p progress, registered func(string) bool) bool {
+	return p.Seen[seenFed] && p.Seen[seenWatered] && inspected(stages[stageIndex(StageSurvival)], p, registered)
 }
 
 func living(members []company.MemberView) map[company.MemberKey]bool {
