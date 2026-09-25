@@ -1,0 +1,23 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">tutorial</ansi>
+
+New characters begin in a short course of rooms, their own copy of it, that
+teaches the basics one lesson at a time: taking stock of yourself, gathering
+a company, and setting it in formation. The way into each next room opens
+when you have done what the lesson asks. Your place in the course is saved,
+so logging out and back in picks up where you left off.
+
+<ansi fg="yellow">Usage: </ansi>
+
+  <ansi fg="command">tutorial</ansi>
+  Show the current lesson, its goal, a checklist, and hints.
+
+  <ansi fg="command">tutorial next</ansi>
+  Move past a lesson you cannot finish, for example when both tutorial
+  recruits were already claimed by an earlier character on your account.
+
+  <ansi fg="command">tutorial skip</ansi>
+  Leave the course now, for the town. It asks you to confirm with
+  <ansi fg="command">tutorial skip yes</ansi>. Skipping gives no graduation reward.
+
+Every command works during the course: chat, <ansi fg="command">help</ansi>, <ansi fg="command">status</ansi>, and the rest.
+Once you have left the course, it is finished and can't be restarted.

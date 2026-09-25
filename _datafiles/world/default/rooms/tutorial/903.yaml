@@ -1,10 +1,14 @@
 roomid: 903
 zone: Tutorial
-title: Training Complete
-description: Welcome to the graduation room! You've completed the basic training and
-  are ready to embark into the wide world.
-exits: {}
-mapx: -10
-mapy: 1
+title: The Gate
+description: A heavy timber gate in the palisade, its bar lifted, opens onto the
+  road beyond. The wardens have seen you take stock of yourself, gather a company,
+  and set it in order. All that remains is to step through the gate and into the
+  wide world. The drill ground lies back to the west.
+exits:
+  west:
+    roomid: 902
+mapx: -7
+mapy: 0
 mapz: -99
 hascoordinates: true

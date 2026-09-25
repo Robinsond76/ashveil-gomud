@@ -68,6 +68,7 @@ help:
       - who
       - history
       - visited
+      - tutorial
     items:
       - drop
       - drink

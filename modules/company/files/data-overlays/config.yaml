@@ -58,6 +58,11 @@ Recruiters:
       - { Id: tamsin, MobTemplateId: 61, Tutorial: true }
       - { Id: oswin, MobTemplateId: 62, Tutorial: true }
       - { Id: garrick, MobTemplateId: 63, Price: 120 }
+  - RoomId: 901 # the Muster Yard (tutorial; each player's copy resolves here)
+    Name: the notched hiring post
+    Candidates:
+      - { Id: tamsin, MobTemplateId: 61, Tutorial: true }
+      - { Id: oswin, MobTemplateId: 62, Tutorial: true }
   - RoomId: 2005 # Trappers' Post, Old Kings Road
     Name: the notched stick by the lean-to
     Candidates:

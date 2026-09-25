@@ -47,6 +47,7 @@ type TutorialModule struct {
 	copyRooms    func(roomIDs ...int) (map[int]int, error)
 	loadRoom     func(roomID int) *rooms.Room
 	moveTo       func(userID, roomID int) error
+	look         func(user *users.UserRecord, roomID int)
 	originalRoom func(roomID int) int
 	members      func(leaderUserID int) ([]company.MemberView, bool)
 	formation    func(leaderUserID int) (company.Formation, bool)
@@ -67,11 +68,16 @@ var _ domain.Provider = (*TutorialModule)(nil)
 
 func newModule() *TutorialModule {
 	return &TutorialModule{
-		lookupUser:   users.GetByUserId,
-		roomIDs:      configuredRooms,
-		copyRooms:    rooms.CreateEphemeralRoomIds,
-		loadRoom:     rooms.LoadRoom,
-		moveTo:       func(userID, roomID int) error { return rooms.MoveToRoom(userID, roomID) },
+		lookupUser: users.GetByUserId,
+		roomIDs:    configuredRooms,
+		copyRooms:  rooms.CreateEphemeralRoomIds,
+		loadRoom:   rooms.LoadRoom,
+		moveTo:     func(userID, roomID int) error { return rooms.MoveToRoom(userID, roomID) },
+		look: func(user *users.UserRecord, roomID int) {
+			if room := rooms.LoadRoom(roomID); room != nil {
+				usercommands.Look(``, user, room, events.CmdSecretly)
+			}
+		},
 		originalRoom: rooms.GetOriginalRoom,
 		members:      company.CompanyMembers,
 		formation:    company.FormationFor,
@@ -186,6 +192,7 @@ func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
 		mudlog.Error("tutorial: place", "user", user.UserId, "room", target, "error", err)
 		return false
 	}
+	m.look(user, target)
 	m.sendStage(user, at)
 	return true
 }

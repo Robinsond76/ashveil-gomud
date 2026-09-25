@@ -1,19 +1,15 @@
 roomid: 902
 zone: Tutorial
-title: Learning to Fight
-description: This is a room for basic fight training. Here you can learn how to engage
-  in combat.
+title: The Drill Ground
+description: A square of trampled grass marked out with chalk into a three-by-three
+  grid -- a front rank, a middle rank, and a rear. Here a company learns its
+  formation, which says who stands in harm's way and who is sheltered behind them.
+  The grid is a battle order, not a map. The way east opens once one companion
+  holds the front rank and another stands behind. The yard lies back to the west.
 exits:
-  north:
-    roomid: 901
-    lock:
-      difficulty: 10
   west:
-    roomid: 903
-mutators:
-- mutatorid: training-combat
-  spawnedround: 1356530
-mapx: -9
-mapy: 1
+    roomid: 901
+mapx: -8
+mapy: 0
 mapz: -99
 hascoordinates: true

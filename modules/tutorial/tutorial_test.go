@@ -34,6 +34,7 @@ type course struct {
 	form     company.Formation
 	claimed  map[int]bool
 	given    []int
+	looked   []int
 	messages *[]string
 	next     int
 }
@@ -67,6 +68,7 @@ func newCourse(t *testing.T) *course {
 		m.onRoomChange(events.RoomChange{UserId: userID, FromRoomId: from, ToRoomId: roomID})
 		return nil
 	}
+	m.look = func(_ *users.UserRecord, roomID int) { c.looked = append(c.looked, roomID) }
 	m.lookupUser = func(id int) *users.UserRecord {
 		if c.user != nil && c.user.UserId == id {
 			return c.user
@@ -123,6 +125,7 @@ func TestBeginPlacesAtTheFirstStage(t *testing.T) {
 	c := newCourse(t)
 	require.True(t, c.m.Begin(7))
 	assert.Equal(t, 1900, c.user.Character.RoomId)
+	assert.Equal(t, []int{1900}, c.looked, "placement shows the room")
 	assert.Equal(t, -1, c.user.Character.RoomIdOnReset)
 	assert.Equal(t, StageCharacter, c.stage())
 	assert.Equal(t, stateActive, progressOf(c.user.Character).State)

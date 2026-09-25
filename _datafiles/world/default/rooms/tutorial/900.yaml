@@ -1,13 +1,13 @@
 roomid: 900
 zone: Tutorial
-title: Learning to Look
-description: You are at the Newbie School. Here you will learn the very basics of
-  how to navigate and interact with the world. Pay attention, because once you complete
-  this area, you will be all on your own. Currently you are learning about looking
-  around.
-exits:
-  east:
-    roomid: 901
+title: The Waking Hall
+description: A long, low hall of whitewashed timber, where new arrivals wake on
+  straw pallets under a row of shuttered windows. A slate by the door lists the
+  things every traveller should know about themselves before setting out -- their
+  health and hunger, what they carry, how far they have come, and what ails them.
+  A door stands in the east wall, barred until you have taken stock. (Type
+  "tutorial" at any time for your current lesson.)
+exits: {}
 mapx: -10
 mapy: 0
 mapz: -99

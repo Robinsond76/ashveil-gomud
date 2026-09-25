@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
+	"github.com/GoMudEngine/GoMud/internal/tutorial"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -229,6 +230,14 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	user.ClearPrompt()
 
+	// Phase 27a: the tutorial module runs the course when it is loaded.
+	// Without it (or when it can't place the player), the engine's own
+	// ephemeral tutorial below runs.
+	user.SendText(fmt.Sprintf(`<ansi fg="magenta">Suddenly, a vortex appears before you, drawing you in before you have any chance to react!</ansi>%s`, term.CRLFStr))
+	if tutorial.Begin(user.UserId) {
+		return true, nil
+	}
+
 	tutorialRoomIds := []int{}
 	startRoom := 0
 	for i, roomIdStr := range configs.GetSpecialRoomsConfig().TutorialRooms {
@@ -250,8 +259,6 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	user.Character.RoomIdOnReset = -1
 
 	ephemeralStartRoomId := createdRoomIds[startRoom]
-
-	user.SendText(fmt.Sprintf(`<ansi fg="magenta">Suddenly, a vortex appears before you, drawing you in before you have any chance to react!</ansi>%s`, term.CRLFStr))
 
 	rooms.MoveToRoom(user.UserId, ephemeralStartRoomId)
 
