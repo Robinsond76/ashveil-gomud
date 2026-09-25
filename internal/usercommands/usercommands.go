@@ -482,6 +482,13 @@ func RegisterCommand(command string, handlerFunc UserCommand, disabledWhenDowned
 	}
 }
 
+// IsRegistered reports whether a user command is registered, by its
+// registered name (Phase 27b).
+func IsRegistered(command string) bool {
+	_, ok := userCommands[command]
+	return ok
+}
+
 // TryRoomScripts is called to try both the onCommand_X direct route and also onCommand with a 'cmd' parameter.
 // Returns true if a script handled it. False if not.
 func TryRoomScripts(input, alias, rest string, userId int) (bool, error) {

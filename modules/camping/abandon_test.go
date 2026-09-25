@@ -116,3 +116,78 @@ func TestAbandonForDeathNothing(t *testing.T) {
 	assert.Error(t, module.AbandonForDeath(7), "unreadable camp data may hold a camp")
 	assert.Zero(t, store.saveCalls)
 }
+
+// --- Phase 27b: AbandonCamp (the tutorial's course camps) ---
+
+func TestAbandonCampRestingCamp(t *testing.T) {
+	now := baseTime()
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	surv := &fakeSurvival{}
+	module := newTestModule(store, scheduler, surv, func() time.Time { return now })
+	user := campUser(t, 7, 100)
+	module.establish(user, eligibleRoom())
+	module.lightFire(user, eligibleRoom())
+	module.startRest(user, eligibleRoom())
+
+	require.NoError(t, module.AbandonCamp(7))
+
+	assert.Empty(t, module.camps)
+	assert.Empty(t, store.saved.Camps, "saved at once")
+	assert.False(t, module.RoomHasLitFire(100))
+	blocked, _ := module.MovementBlocked(7)
+	assert.False(t, blocked)
+	now = now.Add(camping.RestDuration + time.Minute)
+	scheduler.fireLatest()
+	assert.Zero(t, surv.applyCalls, "a rest cut short grants nothing")
+	assert.False(t, module.restedPending[7])
+	assert.Equal(t, "You make camp here.", module.establish(user, eligibleRoom()), "a new camp can be made")
+}
+
+func TestAbandonCampFinishedRestKeepsRecoveryAndRested(t *testing.T) {
+	now := baseTime()
+	store := &fakeStore{}
+	surv := &fakeSurvival{}
+	module := newTestModule(store, &fakeScheduler{}, surv, func() time.Time { return now })
+	user := campUser(t, 7, 100)
+	module.establish(user, eligibleRoom())
+	module.lightFire(user, eligibleRoom())
+	module.startRest(user, eligibleRoom())
+	now = now.Add(camping.RestDuration + time.Second)
+
+	require.NoError(t, module.AbandonCamp(7))
+
+	assert.Equal(t, 1, surv.applyCalls)
+	assert.True(t, store.saved.RestedPending[7], "Rested is still owed")
+	assert.Empty(t, store.saved.Camps)
+}
+
+func TestAbandonCampLeavesTheInnStay(t *testing.T) {
+	e := newInnEnv(t)
+	user := campUser(t, 7, 2003)
+	user.Character.Gold = 25
+	e.module.innRest(user, innRoom())
+	require.Contains(t, e.store.saved.Stays, 7)
+
+	require.NoError(t, e.module.AbandonCamp(7))
+
+	assert.Contains(t, e.module.stays, 7, "only camps are abandoned")
+}
+
+func TestAbandonCampSaveFailureAndNothing(t *testing.T) {
+	store := &fakeStore{}
+	module := newTestModule(store, &fakeScheduler{}, &fakeSurvival{}, baseTime)
+	assert.NoError(t, module.AbandonCamp(7))
+	assert.Zero(t, store.saveCalls, "no camp, no save")
+
+	user := campUser(t, 7, 100)
+	module.establish(user, eligibleRoom())
+	module.lightFire(user, eligibleRoom())
+	store.failNextSave = true
+	assert.Error(t, module.AbandonCamp(7))
+	assert.Contains(t, module.camps, 7, "the camp is kept")
+	assert.True(t, module.RoomHasLitFire(100))
+
+	module.loadErr = assert.AnError
+	assert.Error(t, module.AbandonCamp(7))
+}

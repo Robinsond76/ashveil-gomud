@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // MemberKey identifies a company member for survival state.
@@ -705,8 +706,24 @@ func Provision(leaderUserID int, selector string, benefit Benefit) (ProvisionRes
 	if p == nil {
 		return ProvisionResult{}, ErrProvisionUnavailable
 	}
-	return p.Provision(leaderUserID, selector, benefit)
+	result, err := p.Provision(leaderUserID, selector, benefit)
+	if err == nil {
+		OnProvision.Fire(Provisioned{LeaderUserID: leaderUserID, Benefit: benefit, Result: result})
+	}
+	return result, err
 }
+
+// Provisioned is a successful Provision (Phase 27b).
+type Provisioned struct {
+	LeaderUserID int
+	Benefit      Benefit
+	Result       ProvisionResult
+}
+
+// OnProvision fires after each successful Provision, on the caller's
+// goroutine (the game loop for eat and drink). Phase 27b: the tutorial's
+// Survival lesson counts a real meal and drink.
+var OnProvision util.Hook[Provisioned]
 
 // IsMemberSelector reports whether selector names a current company member
 // through the registered module. It returns false when no module is loaded, so

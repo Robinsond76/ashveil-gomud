@@ -512,3 +512,33 @@ func TestLifecycleSeamNoOpsWithoutModuleAndForwardsOtherwise(t *testing.T) {
 	_, err = NextReservedCompanionID(7)
 	assert.ErrorIs(t, err, rec.err)
 }
+
+// Phase 27b: OnProvision reports each successful provision, and nothing on
+// failure.
+func TestOnProvisionFiresOnlyOnSuccess(t *testing.T) {
+	var got []Provisioned
+	OnProvision.Register(func(p Provisioned) Provisioned {
+		if p.LeaderUserID == 4271 {
+			got = append(got, p)
+		}
+		return p
+	})
+	fake := &recordingProvisioner{result: ProvisionResult{Member: LeaderMemberKey, Name: "Hero"}}
+	SetProvisioner(fake)
+	t.Cleanup(func() { SetProvisioner(nil) })
+
+	_, err := Provision(4271, "", Benefit{Nutrition: 30})
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Equal(t, Benefit{Nutrition: 30}, got[0].Benefit)
+	assert.Equal(t, "Hero", got[0].Result.Name)
+
+	fake.err = errors.New("no such member")
+	_, err = Provision(4271, "#9", Benefit{Hydration: 10})
+	require.Error(t, err)
+	assert.Len(t, got, 1, "a failed provision isn't reported")
+
+	SetProvisioner(nil)
+	_, _ = Provision(4271, "", Benefit{Hydration: 10})
+	assert.Len(t, got, 1, "nor is one without a module")
+}

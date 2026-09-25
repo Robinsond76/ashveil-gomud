@@ -150,3 +150,33 @@ func RestTierOf(userID int) (Tier, time.Duration, bool) {
 	}
 	return rp.RestTierOf(userID)
 }
+
+// CampAbandoner is implemented by modules/camping (Phase 27b). AbandonCamp
+// removes a leader's camp, resting or not, and saves at once; a finished
+// rest keeps its recovery and any rest tier owed. Inn stays are untouched.
+// An error means the camp is still there.
+type CampAbandoner interface {
+	AbandonCamp(leaderUserID int) error
+}
+
+var campAbandoner CampAbandoner
+
+// SetCampAbandoner registers the active camp abandoner. Passing nil clears
+// it.
+func SetCampAbandoner(p CampAbandoner) {
+	providerMu.Lock()
+	defer providerMu.Unlock()
+	campAbandoner = p
+}
+
+// AbandonCamp removes a leader's camp. Without a provider there is nothing
+// to remove.
+func AbandonCamp(leaderUserID int) error {
+	providerMu.RLock()
+	p := campAbandoner
+	providerMu.RUnlock()
+	if p == nil {
+		return nil
+	}
+	return p.AbandonCamp(leaderUserID)
+}

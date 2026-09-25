@@ -344,6 +344,7 @@ func init() {
 	camping.SetViewProvider(m)
 	camping.SetMovementProvider(m)
 	camping.SetAbandonProvider(m)
+	camping.SetCampAbandoner(m)
 	rooms.RegisterLightFixture(m.RoomHasLitFire)
 	// A lit campfire also warms its room (Phase 15).
 	climate.RegisterHeatSource(m.RoomHasLitFire)
@@ -647,13 +648,29 @@ func (m *CampingModule) breakCamp(user *users.UserRecord, room *rooms.Room) stri
 }
 
 // AbandonForDeath implements camping.AbandonProvider (Phase 25a). The leader
-// died, so their camp (resting or not) and any inn stay are left behind: a
-// rest still running grants nothing and an inn stay refunds nothing. A rest
-// that had already finished keeps its recovery, applied here first if it
-// hadn't been. Everything is removed in one save; a failed save keeps it all,
+// died, so their camp (resting or not) and any inn stay are left behind; see
+// abandon.
+func (m *CampingModule) AbandonForDeath(leaderUserID int) error {
+	return m.abandon(leaderUserID, true)
+}
+
+var _ camping.CampAbandoner = (*CampingModule)(nil)
+
+// AbandonCamp implements camping.CampAbandoner (Phase 27b): the leader's
+// camp alone, resting or not, on the same terms as AbandonForDeath. The
+// tutorial strikes its course camps with it, since a camp in a room copy
+// can't outlive the copy.
+func (m *CampingModule) AbandonCamp(leaderUserID int) error {
+	return m.abandon(leaderUserID, false)
+}
+
+// abandon removes the leader's camp and, with inn, their inn stay: a rest
+// still running grants nothing and an inn stay refunds nothing. A rest that
+// had already finished keeps its recovery, applied here first if it hadn't
+// been. Everything is removed in one save; a failed save keeps it all,
 // timers included. Camp data that couldn't be read may hold a camp this
 // module doesn't know about, so that is an error too.
-func (m *CampingModule) AbandonForDeath(leaderUserID int) error {
+func (m *CampingModule) abandon(leaderUserID int, inn bool) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
@@ -662,23 +679,31 @@ func (m *CampingModule) AbandonForDeath(leaderUserID int) error {
 	}
 	_, hasCamp := m.camps[leaderUserID]
 	_, hasStay := m.stays[leaderUserID]
+	hasStay = hasStay && inn
 	if !hasCamp && !hasStay {
 		return nil
 	}
-	if err := m.syncLocked(leaderUserID); err != nil {
-		mudlog.Warn("camping: abandon sync", "leader", leaderUserID, "error", err)
+	if hasCamp {
+		if err := m.syncLocked(leaderUserID); err != nil {
+			mudlog.Warn("camping: abandon sync", "leader", leaderUserID, "error", err)
+		}
 	}
-	if err := m.syncStayLocked(leaderUserID); err != nil {
-		mudlog.Warn("camping: abandon inn sync", "leader", leaderUserID, "error", err)
+	if hasStay {
+		if err := m.syncStayLocked(leaderUserID); err != nil {
+			mudlog.Warn("camping: abandon inn sync", "leader", leaderUserID, "error", err)
+		}
 	}
 	camp, hasCamp := m.camps[leaderUserID]
 	applied, hasApplied := m.recoveryApplied[leaderUserID]
 	stay, hasStay := m.stays[leaderUserID]
 	innApplied, hasInnApplied := m.innRecoveryApplied[leaderUserID]
+	hasStay, hasInnApplied = hasStay && inn, hasInnApplied && inn
 	delete(m.camps, leaderUserID)
 	delete(m.recoveryApplied, leaderUserID)
-	delete(m.stays, leaderUserID)
-	delete(m.innRecoveryApplied, leaderUserID)
+	if inn {
+		delete(m.stays, leaderUserID)
+		delete(m.innRecoveryApplied, leaderUserID)
+	}
 	if err := m.saveLocked(); err != nil {
 		if hasCamp {
 			m.camps[leaderUserID] = camp
@@ -695,7 +720,9 @@ func (m *CampingModule) AbandonForDeath(leaderUserID int) error {
 		return err
 	}
 	m.stopTimerLocked(leaderUserID)
-	m.stopInnTimerLocked(leaderUserID)
+	if inn {
+		m.stopInnTimerLocked(leaderUserID)
+	}
 	return nil
 }
 

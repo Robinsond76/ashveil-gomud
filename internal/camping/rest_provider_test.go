@@ -39,3 +39,22 @@ func TestRestProviderNone(t *testing.T) {
 	assert.Equal(t, TierRested, tier)
 	assert.Equal(t, time.Hour, left)
 }
+
+type fakeAbandoner struct{ got []int }
+
+func (f *fakeAbandoner) AbandonCamp(leaderUserID int) error {
+	f.got = append(f.got, leaderUserID)
+	return nil
+}
+
+// Phase 27b: AbandonCamp is a no-op without a provider and delegates with
+// one.
+func TestAbandonCampSeam(t *testing.T) {
+	SetCampAbandoner(nil)
+	assert.NoError(t, AbandonCamp(7))
+	f := &fakeAbandoner{}
+	SetCampAbandoner(f)
+	t.Cleanup(func() { SetCampAbandoner(nil) })
+	assert.NoError(t, AbandonCamp(7))
+	assert.Equal(t, []int{7}, f.got)
+}
