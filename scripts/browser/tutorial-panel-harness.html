@@ -1,0 +1,74 @@
+<!doctype html>
+<!--
+  Phase 27d browser check harness: loads the real window-tutorial.js with a
+  stub client (VirtualWindow, VirtualWindows, Client, injectStyles) so
+  tutorial-panel-check.mjs can feed it GMCP payloads. Not served by the game.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial panel check</title>
+<link rel="stylesheet" href="../../_datafiles/html/public/static/css/theme-brooding.css">
+<style>body { margin: 0; background: var(--t-bg); color: var(--t-text); font-family: sans-serif; }
+#host { width: 100%; max-width: 420px; }</style>
+<script>
+  window.requests = [];
+  function injectStyles(css) { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); }
+  // Like the real VirtualWindow: a closed window stays closed (open() is a
+  // no-op once the user closed it) until reopen() runs the factory again.
+  class VirtualWindow {
+    constructor(id, opts) { this._id = id; this._opts = opts; this._open = false; this._closed = false; }
+    open() {
+      if (this._open || this._closed) { return; }
+      const spec = this._opts.factory();
+      document.getElementById('host').appendChild(spec.mount);
+      this._open = true;
+    }
+    close() {
+      const mount = document.getElementById('tutorial-panel');
+      if (mount) { mount.remove(); }
+      this._open = false;
+      this._closed = true;
+    }
+    reopen() { this._closed = false; this.open(); }
+    isOpen() { return this._open; }
+  }
+  window.windows = [];
+  const handlers = {};
+  const VirtualWindows = {
+    register(d) {
+      window.windows.push(d.window);
+      d.gmcpHandlers.forEach(ns => { (handlers[ns] = handlers[ns] || []).push(d); });
+    },
+  };
+  const Client = {
+    GMCPStructs: {},
+    GMCPRequest(id) { window.requests.push(id); },
+  };
+  // Mirrors webclient-core: store, then call handlers at every matching
+  // level, skipping those whose window is closed.
+  window.gmcp = function(namespace, body) {
+    const parts = namespace.split('.');
+    let cursor = Client.GMCPStructs;
+    const last = parts[parts.length - 1];
+    parts.slice(0, -1).forEach(seg => { cursor = cursor[seg] = cursor[seg] || {}; });
+    cursor[last] = body;
+    for (let i = parts.length; i >= 1; i--) {
+      (handlers[parts.slice(0, i).join('.')] || []).forEach(d => {
+        if (d.window && !d.window.isOpen()) { return; }
+        d.onGMCP(namespace, body);
+      });
+    }
+  };
+</script>
+</head>
+<body>
+<div id="host"></div>
+<script src="../../_datafiles/html/public/static/js/windows/window-tutorial.js"></script>
+<script>
+  // Like Client.init's VirtualWindows.openAll().
+  window.windows.forEach(w => w.open());
+</script>
+</body>
+</html>

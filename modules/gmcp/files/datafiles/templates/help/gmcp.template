@@ -24,6 +24,9 @@ The server sends GMCP data automatically as game state changes. Clients may also
   <ansi fg="white-bold">Company</ansi>      - Your Ashveil company: members, formation, needs, rescue time
                  See <ansi fg="command">help gmcp-company</ansi>
 
+  <ansi fg="white-bold">Tutorial</ansi>     - Your place in the tutorial course: stage, goal, checklist
+                 See <ansi fg="command">help gmcp-tutorial</ansi>
+
   <ansi fg="white-bold">Room.Info</ansi>    - Current room details, exits, and contents
                  See <ansi fg="command">help gmcp-room</ansi>
 
@@ -44,4 +47,4 @@ The server sends GMCP data automatically as game state changes. Clients may also
 - Clients declare which modules they support via <ansi fg="white-bold">Core.Supports.Set</ansi>.
 - All payloads are JSON objects unless otherwise noted.
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help client</ansi>, <ansi fg="command">help gmcp-char</ansi>, <ansi fg="command">help gmcp-room</ansi>, <ansi fg="command">help gmcp-party</ansi>, <ansi fg="command">help gmcp-company</ansi>
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help client</ansi>, <ansi fg="command">help gmcp-char</ansi>, <ansi fg="command">help gmcp-room</ansi>, <ansi fg="command">help gmcp-party</ansi>, <ansi fg="command">help gmcp-company</ansi>, <ansi fg="command">help gmcp-tutorial</ansi>

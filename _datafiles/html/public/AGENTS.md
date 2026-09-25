@@ -16,6 +16,7 @@
   - read live state from `Client.GMCPStructs`
   - keep GMCP namespace handling local to the window
 - Prefer extending existing shared client code before duplicating terminal, GMCP, docking, or modal logic.
+- Ashveil windows (`window-party.js` Company section, `window-tutorial.js`) set every server string with `textContent`, never `innerHTML`, use the theme's secondary text colour rather than `--t-text-dim` for readable muted text, and have a Playwright check in `scripts/browser/`.
 - Keep third-party vendored assets vendored. Do not casually replace or reformat them.
 
 ## Verification

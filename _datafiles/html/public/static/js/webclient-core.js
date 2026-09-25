@@ -999,6 +999,7 @@ const WINDOW_DOCK_DEFAULTS = [
     { id: 'Party',          side: 'right' },
     { id: 'Communications', side: 'right' },
     { id: 'RoomInfo',       side: 'right' },
+    { id: 'Tutorial',       side: 'right' },
     
 ];
 

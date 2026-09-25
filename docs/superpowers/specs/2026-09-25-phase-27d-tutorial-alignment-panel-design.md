@@ -77,9 +77,10 @@ the owner's "carry on to 27d" instruction (2026-09-25).
      all through `textContent`.
    - The checklist is a list whose items say "done" or "to do" in text, not
      only by mark or colour.
-   - The window opens itself when an active course arrives and shows "Not
-     in the tutorial" otherwise. It reads `Client.GMCPStructs.Tutorial`, so
-     it is current when reopened.
+   - The window is docked on the right by default, as every window is
+     opened at start-up, and shows "Not in the tutorial." outside the
+     course. The player can close it like any other. It reads
+     `Client.GMCPStructs.Tutorial`, so it is current when reopened.
 6. **Help:** `help tutorial` lists Alignment, and `help gmcp-tutorial`
    documents the package.
 
@@ -119,3 +120,25 @@ the owner's "carry on to 27d" instruction (2026-09-25).
   and refused by a new company's average; help.
 - `go test -race ./...`, `make generate`, `make validate`, `make js-lint`
   pass.
+
+## Implementation notes (2026-09-25)
+
+- **`company inspect` weighs recruiter candidates.** 21a's inspect only
+  knew summonable templates (`AllowedCompanionMobIDs`). It now also finds
+  any recruiter's candidate by id or name, anywhere, so the Oath Stone's
+  Corvin can be weighed. Corvin is mapped to the rogue archetype, as every
+  candidate must be.
+- **The panel moves at once.** The panel's refresh runs before the
+  tutorial's gates on the same refresh, so a passed stage would show a round
+  late. `internal/tutorial.OnChanged`, fired by the module whenever a
+  player's place in the course changes (placement, a pass or waiver, a
+  skip, leaving), makes the feed resend at once.
+- **A course missing rooms is closed.** A deployment whose `TutorialRooms`
+  lacks a stage's room can't run the course: `start` sends new characters
+  to the start room, and a player mid-course is let out as skipped.
+- **Readable muted text.** The panel's secondary text uses the theme's
+  secondary text colour; the "dim" one was too faint on the dark
+  background.
+- **A steadier fight check.** 27c's wiring test matched "You hit straw
+  footman", but attack messages vary ("You punch", "Your fists connect");
+  it now matches any line of the player's own naming the foe.

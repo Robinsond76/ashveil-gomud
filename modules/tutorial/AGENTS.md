@@ -5,12 +5,14 @@ new character walks through in their own ephemeral copies. See the
 [27a design](../../docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md).
 
 - **Stages** (`stages.go`) are data, in order: Character, Company,
-  Formation, Survival, Camp (27b), Combat (27c), Departure. Each names its
-  room by index into `SpecialRooms.TutorialRooms` (900–906). New rooms are
-  appended to that list, so existing indexes never shift: Survival is 904 (index 4), Camp 905
-  (index 5), Combat 906 (index 6), and the Gate stays 903 (index 3). New
-  stages go before Departure; keep Departure last and one room per stage
-  (`TestShippedTutorialRooms`, which checks exits in stage order).
+  Formation, Survival, Camp (27b), Combat (27c), Alignment (27d),
+  Departure. Each names its room by index into
+  `SpecialRooms.TutorialRooms` (900–907). New rooms are appended to that
+  list, so existing indexes never shift: Survival is 904 (index 4), Camp
+  905 (index 5), Combat 906 (index 6), Alignment 907 (index 7), and the
+  Gate stays 903 (index 3). New stages go before Departure; keep Departure
+  last and one room per stage (`TestShippedTutorialRooms`, which checks
+  exits in stage order).
 - **Gates check results, never typed text.** A stage's `Inspections` are
   counted through `usercommands.OnCommandDone` (aliases resolved), only in
   that stage, and only for registered commands (`usercommands.IsRegistered`),
@@ -29,6 +31,15 @@ new character walks through in their own ephemeral copies. See the
   fresh one and removes the old; leave, skip, and passing remove what's
   left. The leader must be placed in the grid for formation rules to cover
   their blows.
+- **Inspections can name a subcommand** (27d): "company alignment" counts
+  `company` with `alignment` as the first word of the rest
+  (`inspectionMatches`); registration is checked by the command.
+- **The view** (27d): `TutorialView` implements `internal/tutorial.Viewer`
+  with the same checklist the terminal shows (`checklist`), in plain text;
+  the gmcp module sends it as the `Tutorial` package. Fire
+  `domain.Changed` whenever a player's place in the course changes, so the
+  panel resends at once. A course whose `TutorialRooms` lacks a stage's
+  room is closed (`available`, `closeCourse`).
 - **Death in the course** is an ordinary death that ends the course as a
   skip (27c decision): nothing in the course can kill quickly.
 - **Supplies (27b):** reaching Survival (walking in, or being placed there)
