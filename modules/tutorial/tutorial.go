@@ -48,6 +48,7 @@ type TutorialModule struct {
 	loadRoom     func(roomID int) *rooms.Room
 	moveTo       func(userID, roomID int) error
 	look         func(user *users.UserRecord, roomID int)
+	relocate     func(leaderUserID, roomID int) int
 	originalRoom func(roomID int) int
 	members      func(leaderUserID int) ([]company.MemberView, bool)
 	formation    func(leaderUserID int) (company.Formation, bool)
@@ -79,6 +80,7 @@ func newModule() *TutorialModule {
 			}
 		},
 		originalRoom: rooms.GetOriginalRoom,
+		relocate:     company.RelocateCompany,
 		members:      company.CompanyMembers,
 		formation:    company.FormationFor,
 		hasClaimed:   company.HasClaimed,
@@ -188,13 +190,23 @@ func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
 	// brings them back.
 	user.Character.RoomIdOnReset = -1
 	target := copies[ids[stages[at].Room]]
-	if err := m.moveTo(user.UserId, target); err != nil {
+	if err := m.travel(user, target); err != nil {
 		mudlog.Error("tutorial: place", "user", user.UserId, "room", target, "error", err)
 		return false
 	}
-	m.look(user, target)
 	m.sendStage(user, at)
 	return true
+}
+
+// travel moves a player (and their living companions, which only follow
+// on foot) into a room and shows it.
+func (m *TutorialModule) travel(user *users.UserRecord, roomID int) error {
+	if err := m.moveTo(user.UserId, roomID); err != nil {
+		return err
+	}
+	m.relocate(user.UserId, user.Character.RoomId)
+	m.look(user, user.Character.RoomId)
+	return nil
 }
 
 // copyOf is a player's copy of the tutorial room at index i; 0 when none.
@@ -250,6 +262,19 @@ func (m *TutorialModule) Begin(userID int) bool {
 	user := m.lookupUser(userID)
 	if user == nil || user.Character == nil {
 		return false
+	}
+	switch prior := progressOf(user.Character); prior.State {
+	case stateActive:
+		// Already in the course (e.g. "start" typed in the Void before
+		// resume ran): carry on at their stage, never from the top.
+		if stageIndex(prior.Stage) < 0 {
+			prior.Stage = stages[0].ID
+			prior.save(user.Character)
+		}
+		return m.place(user, prior)
+	case stateSkipped, stateGraduated:
+		// The course is done and doesn't restart: out to the start room.
+		return m.travel(user, rooms.StartRoomIdAlias) == nil
 	}
 	p := progress{State: stateActive, Stage: stages[0].ID, Seen: map[string]bool{}}
 	p.save(user.Character)
@@ -367,6 +392,9 @@ func (m *TutorialModule) onRoomChange(e events.Event) events.ListenerReturn {
 func (m *TutorialModule) leave(user *users.UserRecord, p progress) {
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
+	// Companions follow on foot a moment later; bring them now, so none
+	// is left behind in the course's copies.
+	m.relocate(user.UserId, user.Character.RoomId)
 	if p.Stage != StageDeparture {
 		p.State = stateSkipped
 		p.save(user.Character)
@@ -517,8 +545,7 @@ func (m *TutorialModule) skip(user *users.UserRecord, p progress, confirmed bool
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
 	user.SendText(`<ansi fg="magenta">You leave the training grounds behind.</ansi>`)
-	if err := m.moveTo(user.UserId, rooms.StartRoomIdAlias); err != nil {
+	if err := m.travel(user, rooms.StartRoomIdAlias); err != nil {
 		mudlog.Error("tutorial: skip", "user", user.UserId, "error", err)
 	}
-	user.Command("look")
 }

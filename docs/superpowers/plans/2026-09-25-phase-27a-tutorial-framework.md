@@ -23,7 +23,7 @@ Each task is tests first.
   `TestShippedTutorialRooms` and `TestShippedTutorialRecruiter`.
 - [x] **Task 6: `start` hand-off.** `start` calls `tutorial.Begin` when a
   provider is registered. Test: the legacy path without one.
-- [ ] **Task 7: wiring** (`modules/tutorial/wiring_test.go`). Through
+- [x] **Task 7: wiring** (`modules/tutorial/wiring_test.go`). Through
   `plugins.Load`: the whole course, resume, a second player's skip, and
   the clock unchanged.
 - [ ] **Task 8: docs and verification.** Module guides,

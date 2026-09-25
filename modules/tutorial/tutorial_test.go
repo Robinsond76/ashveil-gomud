@@ -26,17 +26,18 @@ func TestMain(m *testing.M) {
 // course is a module on fake rooms: templates 900..903, copies at +1000 on
 // each placement (+1000 again for a second placement).
 type course struct {
-	m        *TutorialModule
-	user     *users.UserRecord
-	rooms    map[int]*rooms.Room
-	original map[int]int
-	members  []company.MemberView
-	form     company.Formation
-	claimed  map[int]bool
-	given    []int
-	looked   []int
-	messages *[]string
-	next     int
+	m         *TutorialModule
+	user      *users.UserRecord
+	rooms     map[int]*rooms.Room
+	original  map[int]int
+	members   []company.MemberView
+	form      company.Formation
+	claimed   map[int]bool
+	given     []int
+	looked    []int
+	relocated []int
+	messages  *[]string
+	next      int
 }
 
 func newCourse(t *testing.T) *course {
@@ -69,6 +70,7 @@ func newCourse(t *testing.T) *course {
 		return nil
 	}
 	m.look = func(_ *users.UserRecord, roomID int) { c.looked = append(c.looked, roomID) }
+	m.relocate = func(_, roomID int) int { c.relocated = append(c.relocated, roomID); return 0 }
 	m.lookupUser = func(id int) *users.UserRecord {
 		if c.user != nil && c.user.UserId == id {
 			return c.user
@@ -126,6 +128,7 @@ func TestBeginPlacesAtTheFirstStage(t *testing.T) {
 	require.True(t, c.m.Begin(7))
 	assert.Equal(t, 1900, c.user.Character.RoomId)
 	assert.Equal(t, []int{1900}, c.looked, "placement shows the room")
+	assert.Equal(t, []int{1900}, c.relocated, "the company comes along")
 	assert.Equal(t, -1, c.user.Character.RoomIdOnReset)
 	assert.Equal(t, StageCharacter, c.stage())
 	assert.Equal(t, stateActive, progressOf(c.user.Character).State)
@@ -178,6 +181,7 @@ func TestGraduateOnce(t *testing.T) {
 	c.user.Character.RoomId = 1903
 	require.NoError(t, c.m.moveTo(7, 1))
 	assert.Equal(t, []int{defaultGraduationItem}, c.given)
+	assert.Equal(t, 1, c.relocated[len(c.relocated)-1], "the company leaves with the player")
 	assert.Equal(t, stateGraduated, progressOf(c.user.Character).State)
 	assert.Zero(t, c.user.Character.RoomIdOnReset)
 	assert.Contains(t, c.text(), "You have finished your training")
@@ -206,6 +210,7 @@ func TestSkipGivesNothing(t *testing.T) {
 	_, _ = c.m.command("skip yes", c.user, nil, 0)
 	assert.Equal(t, stateSkipped, progressOf(c.user.Character).State)
 	assert.Equal(t, rooms.StartRoomIdAlias, c.user.Character.RoomId)
+	assert.Equal(t, rooms.StartRoomIdAlias, c.relocated[len(c.relocated)-1], "companions leave with the player")
 	assert.Empty(t, c.given)
 	_, _ = c.m.command("", c.user, nil, 0)
 	assert.Contains(t, c.text(), "You left the tutorial")
@@ -262,4 +267,29 @@ func TestTutorialViewChecklist(t *testing.T) {
 	assert.Contains(t, out, "[x] status")
 	assert.Contains(t, out, "[ ] inventory")
 	assert.Contains(t, out, "Goal:")
+}
+
+// TestBeginAgainKeepsProgress: a second Begin (start typed in the Void
+// before resume) carries on at the saved stage, and a finished course is
+// never restarted.
+func TestBeginAgainKeepsProgress(t *testing.T) {
+	c := newCourse(t)
+	require.True(t, c.m.Begin(7))
+	for _, cmd := range inspections {
+		c.run(cmd)
+	}
+	c.m.check(c.user)
+	require.Equal(t, StageCompany, c.stage())
+	c.user.Character.RoomId = -1
+	require.True(t, c.m.Begin(7))
+	assert.Equal(t, StageCompany, c.stage(), "not reset to the first stage")
+	assert.Equal(t, 901+c.next-1000, c.user.Character.RoomId, "placed in the stage's room of fresh copies")
+
+	progress{State: stateGraduated, Stage: StageDeparture}.save(c.user.Character)
+	c.user.Character.RoomId = -1
+	c.given = nil
+	require.True(t, c.m.Begin(7))
+	assert.Equal(t, rooms.StartRoomIdAlias, c.user.Character.RoomId, "out to the start room")
+	assert.Equal(t, stateGraduated, progressOf(c.user.Character).State)
+	assert.Empty(t, c.given)
 }
