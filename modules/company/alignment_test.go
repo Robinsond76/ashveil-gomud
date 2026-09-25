@@ -488,3 +488,20 @@ func TestCompanyAlignmentProviderUsesCompanyAverage(t *testing.T) {
 	_, ok = module.CompanyAlignment(7)
 	assert.False(t, ok, "never judged against an unloaded company")
 }
+
+// Phase 27d: a recruiter's candidate (not summonable) can be weighed with
+// "company inspect", by its candidate id, anywhere.
+func TestInspectWeighsARecruiterCandidate(t *testing.T) {
+	world := newFakeWorld()
+	world.templates[59] = -80
+	world.leaders[7] = 30
+	module, _ := newAlignmentModule(*domain.NewRegistry(), world)
+	module.recruitersForTest = map[int]recruiter{907: {RoomID: 907, Name: "the notices", Candidates: []candidate{{ID: "corvin", MobTemplateID: 59, Price: 150}}}}
+	defaultAllowedTemplates = map[int]struct{}{58: {}}
+	out := module.inspect(7, "corvin")
+	assert.NotContains(t, out, "isn't available")
+	assert.Contains(t, out, "alignment -80")
+	assert.Contains(t, out, "won't join")
+	world.leaders[7] = -40
+	assert.Contains(t, module.inspect(7, "corvin"), "would join")
+}

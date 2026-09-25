@@ -1,0 +1,19 @@
+roomid: 907
+zone: Tutorial
+title: The Oath Stone
+description: A standing stone beside the gate road, worn smooth by the hands of
+  those who swore on it. Notices are pinned to a post at its foot, among them an
+  offer from an outlaw sellsword who will join anyone who pays. The wardens teach
+  here that a company is judged by the company it keeps -- by its own members,
+  and by the towns it trades in. The way east to the gate opens once you have
+  taken the measure of your company's alignment and standing. The practice yard
+  lies back to the west.
+tags:
+- outdoor
+exits:
+  west:
+    roomid: 906
+mapx: -4
+mapy: 0
+mapz: -99
+hascoordinates: true

@@ -1,0 +1,21 @@
+mobid: 69
+zone: Tutorial
+# Phase 27d: the Oath Stone's would-be recruit, an outlaw. The Alignment
+# lesson inspects him: a new company is refused him by the recruit gate
+# (more than RecruitMaxGap from its average). Recruiting him is an
+# ordinary paid recruit for a company near enough to his alignment.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Corvin Blackthorn
+  description: 'A lean outlaw in a stolen officer''s coat, Corvin smiles with
+    half his mouth and counts your purse with his eyes. He will fight for anyone
+    who pays, and turn on them the day someone pays more.'
+  raceid: 1
+  level: 3
+  alignment: -80
+  equipment:
+    weapon:
+      itemid: 10002

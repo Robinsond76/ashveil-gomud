@@ -4,11 +4,11 @@ title: The Gate
 description: A heavy timber gate in the palisade, its bar lifted, opens onto the
   road beyond. Beyond it lies the frontier, where a company must feed itself,
   rest where it can, and keep its order. All that remains is to step through the
-  gate and into the wide world. The practice yard lies back to the west.
+  gate and into the wide world. The oath stone lies back to the west.
 exits:
   west:
-    roomid: 906
-mapx: -4
+    roomid: 907
+mapx: -3
 mapy: 0
 mapz: -99
 hascoordinates: true

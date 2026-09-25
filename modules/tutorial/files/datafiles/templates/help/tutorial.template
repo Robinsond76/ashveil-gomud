@@ -12,6 +12,8 @@ when you have done what the lesson asks:
   <ansi fg="yellow">Camp</ansi>       make camp, light a fire, and rest until you are Rested.
   <ansi fg="yellow">Combat</ansi>     beat a squad of straw soldiers, which can't hurt you, and see
              how reach, interception, and re-targeting work.
+  <ansi fg="yellow">Alignment</ansi>  check your company's alignment, weigh an outlaw recruit against
+             it, and check your standing with the towns.
   <ansi fg="yellow">Departure</ansi>  walk out through the gate.
 Your place in the course is saved,
 so logging out and back in picks up where you left off.

@@ -359,12 +359,15 @@ func (m *CompanyModule) inspect(leaderUserID int, selector string) string {
 		return err.Error()
 	}
 	selector = strings.TrimSpace(selector)
-	templateID, err := m.resolveTemplateID(selector)
-	if err != nil {
-		return fmt.Sprintf("There's no one called %q to recruit.", selector)
+	templateID, isCandidate := m.candidateTemplate(selector)
+	if !isCandidate {
+		var err error
+		if templateID, err = m.resolveTemplateID(selector); err != nil {
+			return fmt.Sprintf("There's no one called %q to recruit.", selector)
+		}
 	}
 	name := templateName(templateID, selector)
-	if _, ok := m.allowedTemplates()[templateID]; !ok {
+	if _, ok := m.allowedTemplates()[templateID]; !ok && !isCandidate {
 		return fmt.Sprintf("%s isn't available to recruit.", name)
 	}
 	candidate := m.alignmentWorld().TemplateAlignment(templateID)
@@ -389,6 +392,25 @@ func (m *CompanyModule) inspect(leaderUserID int, selector string) string {
 		lines = append(lines, "They won't join a company so far from their ways.")
 	}
 	return strings.Join(lines, "\n")
+}
+
+// candidateTemplate finds a recruiter's candidate by id or name, at any
+// recruiter (Phase 27d: the tutorial's Oath Stone weighs one it can't
+// take). ok is false unless exactly one template matches.
+func (m *CompanyModule) candidateTemplate(selector string) (int, bool) {
+	found := map[int]bool{}
+	for _, rec := range m.recruiters() {
+		if c, ok := matchCandidate(rec, selector); ok {
+			found[c.MobTemplateID] = true
+		}
+	}
+	if len(found) != 1 {
+		return 0, false
+	}
+	for id := range found {
+		return id, true
+	}
+	return 0, false
 }
 
 // alignmentView shows the leader, every companion, and the company average.

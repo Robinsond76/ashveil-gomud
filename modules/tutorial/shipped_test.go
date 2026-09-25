@@ -171,7 +171,7 @@ func TestShippedHelpTemplate(t *testing.T) {
 	data, err := files.ReadFile("files/datafiles/templates/help/tutorial.template")
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "tutorial skip")
-	for _, stage := range []string{"Survival", "Camp", "Combat"} {
+	for _, stage := range []string{"Survival", "Camp", "Combat", "Alignment"} {
 		assert.Contains(t, string(data), stage)
 	}
 	kw, err := os.ReadFile(filepath.Join(repoRoot(), "_datafiles", "world", "default", "keywords.yaml"))
@@ -221,4 +221,56 @@ func TestShippedPracticeSquad(t *testing.T) {
 		levels[id] = mob.Character.Level
 	}
 	assert.Greater(t, levels[67], levels[68], "footmen in front, the archer behind")
+}
+
+// TestShippedOathStone (27d): the Alignment stage's room offers Corvin, an
+// outlaw a company made of the course's recruits is refused by the gate.
+func TestShippedOathStone(t *testing.T) {
+	var comp struct {
+		RecruitMaxGap int `yaml:"RecruitMaxGap"`
+		Recruiters    []struct {
+			RoomId     int `yaml:"RoomId"`
+			Candidates []struct {
+				Id            string `yaml:"Id"`
+				MobTemplateId int    `yaml:"MobTemplateId"`
+				Tutorial      bool   `yaml:"Tutorial"`
+				Price         int    `yaml:"Price"`
+			} `yaml:"Candidates"`
+		} `yaml:"Recruiters"`
+	}
+	readYAML(t, filepath.Join(repoRoot(), "modules", "company", "files", "data-overlays", "config.yaml"), &comp)
+	oath := shippedTutorialRooms(t)[stages[stageIndex(StageAlignment)].Room]
+	assert.Equal(t, 907, oath)
+	var corvin int
+	for _, r := range comp.Recruiters {
+		if r.RoomId != oath {
+			continue
+		}
+		for _, c := range r.Candidates {
+			assert.Equal(t, "corvin", c.Id, "the hints name him")
+			assert.False(t, c.Tutorial, "not a free claim")
+			assert.Positive(t, c.Price)
+			corvin = c.MobTemplateId
+		}
+	}
+	require.NotZero(t, corvin)
+	alignment := func(dir string, id int) int {
+		found, err := filepath.Glob(filepath.Join(repoRoot(), "_datafiles", "world", "default", "mobs", dir, strconv.Itoa(id)+"-*.yaml"))
+		require.NoError(t, err)
+		require.Len(t, found, 1, "mob %d", id)
+		var mob struct {
+			Character struct {
+				Alignment int `yaml:"alignment"`
+			} `yaml:"character"`
+		}
+		readYAML(t, found[0], &mob)
+		return mob.Character.Alignment
+	}
+	gap := comp.RecruitMaxGap
+	if gap == 0 {
+		gap = 60
+	}
+	average := (alignment("dunmar", 61) + alignment("dunmar", 62)) / 2
+	assert.Greater(t, average-alignment("tutorial", corvin), gap, "refused to the course's company")
+	assert.Greater(t, 0-alignment("tutorial", corvin), gap, "and to a company of one new, neutral leader")
 }

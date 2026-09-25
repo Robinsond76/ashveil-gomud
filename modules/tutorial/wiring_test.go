@@ -34,6 +34,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/company"
 	_ "github.com/GoMudEngine/GoMud/modules/encumbrance"
 	_ "github.com/GoMudEngine/GoMud/modules/exposure"
+	_ "github.com/GoMudEngine/GoMud/modules/standing"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
 	_ "github.com/GoMudEngine/GoMud/modules/walking"
 	_ "github.com/GoMudEngine/GoMud/modules/weather"
@@ -68,6 +69,8 @@ func writeTutorialWorld(t *testing.T, dataDir string) {
 		"rooms/tutorial/904.yaml",
 		"rooms/tutorial/905.yaml",
 		"rooms/tutorial/906.yaml",
+		"rooms/tutorial/907.yaml",
+		"mobs/tutorial/69-corvin_blackthorn.yaml",
 		"races/19-dummy.yaml",
 		"mobs/tutorial/67-straw_footman.yaml",
 		"mobs/tutorial/68-straw_archer.yaml",
@@ -130,7 +133,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	setOverrides(t, map[string]any{
 		"FilePaths.DataFiles":        dataDir,
 		"SpecialRooms.StartRoom":     1,
-		"SpecialRooms.TutorialRooms": []any{"900", "901", "902", "903", "904", "905", "906"},
+		"SpecialRooms.TutorialRooms": []any{"900", "901", "902", "903", "904", "905", "906", "907"},
 	})
 	writeTutorialWorld(t, dataDir)
 	races.LoadDataFiles()
@@ -139,10 +142,10 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	rooms.LoadBiomeDataFiles()
 	mobs.LoadDataFiles()
 	keywords.LoadAliases()
-	for _, id := range []int{900, 901, 902, 903, 904, 905, 906, 1} {
+	for _, id := range []int{900, 901, 902, 903, 904, 905, 906, 907, 1} {
 		require.NotNil(t, rooms.LoadRoom(id), "room %d", id)
 	}
-	require.Equal(t, []int{900, 901, 902, 903, 904, 905, 906}, configuredRooms())
+	require.Equal(t, []int{900, 901, 902, 903, 904, 905, 906, 907}, configuredRooms())
 
 	require.NotNil(t, module)
 	t.Cleanup(plugins.SnapshotLoadStateForTest())
@@ -241,7 +244,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, 900, template(aria))
 	assert.NotEqual(t, 900, aria.Character.RoomId, "a copy, not the template")
 	assert.Contains(t, got, "A long, low hall")
-	assert.Contains(t, got, "stage 1 of 7")
+	assert.Contains(t, got, "stage 1 of 8")
 	assert.Equal(t, StageCharacter, stageOf(aria))
 	assert.Contains(t, run(aria, "tutorial", ""), "Goal:")
 
@@ -264,7 +267,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Company: recruit both tutorial candidates in the Muster Yard copy.
 	got = run(aria, "east", "")
 	require.Equal(t, 901, template(aria))
-	assert.Contains(t, got, "stage 2 of 7")
+	assert.Contains(t, got, "stage 2 of 8")
 	got = run(aria, "company", "recruit")
 	assert.Contains(t, got, "Tamsin Reed")
 	assert.Contains(t, got, "Oswin")
@@ -279,7 +282,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Formation: one in the front row, one behind.
 	got = run(aria, "east", "")
 	require.Equal(t, 902, template(aria))
-	assert.Contains(t, got, "stage 3 of 7")
+	assert.Contains(t, got, "stage 3 of 8")
 	run(aria, "formation", "move #1 1 2")
 	assert.Equal(t, StageFormation, stageOf(aria), "no one behind yet")
 
@@ -305,7 +308,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	got = text(aria)
 	assert.Equal(t, 902, template(aria), "back at the Drill Ground")
 	assert.Contains(t, got, "back where your training left off")
-	assert.Contains(t, got, "stage 3 of 7")
+	assert.Contains(t, got, "stage 3 of 8")
 	assert.Equal(t, -1, aria.Character.RoomIdOnReset)
 	here := aria.Character.RoomId
 	for _, key := range []int{1, 2} {
@@ -326,7 +329,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// pack lacks, once. The real eat and drink, and the inspections.
 	got = run(aria, "east", "")
 	require.Equal(t, 904, template(aria))
-	assert.Contains(t, got, "stage 4 of 7: Survival")
+	assert.Contains(t, got, "stage 4 of 8: Survival")
 	assert.Contains(t, got, "cheese sandwich")
 	assert.Contains(t, got, "waterskin")
 	assert.True(t, progressOf(aria.Character).Supplied)
@@ -353,7 +356,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Camp: a real camp and rest in the Campground copy.
 	got = run(aria, "east", "")
 	require.Equal(t, 905, template(aria))
-	assert.Contains(t, got, "stage 5 of 7: Camp")
+	assert.Contains(t, got, "stage 5 of 8: Camp")
 	assert.Contains(t, run(aria, "camp", ""), "You make camp here.")
 	assert.Contains(t, run(aria, "camp", "fire"), "campfire")
 	assert.Contains(t, run(aria, "camp", "rest"), "You settle in by the fire to rest.")
@@ -383,7 +386,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// one party, footmen in front, the archer behind.
 	got = run(aria, "east", "")
 	require.Equal(t, 906, template(aria))
-	assert.Contains(t, got, "stage 6 of 7: Combat")
+	assert.Contains(t, got, "stage 6 of 8: Combat")
 	yard := rooms.LoadRoom(aria.Character.RoomId)
 	require.NotNil(t, yard)
 	squad := map[int]string{}
@@ -488,7 +491,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 		}
 		fightRound(r)
 	}
-	require.Equal(t, StageDeparture, stageOf(aria), "the squad is beaten")
+	require.Equal(t, StageAlignment, stageOf(aria), "the squad is beaten")
 	for id := range squad {
 		assert.Nil(t, mobs.GetInstance(id), "%s left the field", squad[id])
 	}
@@ -497,6 +500,25 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Empty(t, yard.Items, "nothing dropped")
 	assert.Zero(t, yard.Gold)
 	assert.Empty(t, yard.Corpses)
+
+	// Alignment (27d): inspections, one a subcommand, and the outlaw
+	// weighed against the company and refused by the real gate.
+	got = run(aria, "east", "")
+	require.Equal(t, 907, template(aria))
+	assert.Contains(t, got, "stage 7 of 8: Alignment")
+	run(aria, "company", "status")
+	assert.False(t, progressOf(aria.Character).Seen["company alignment"], "another subcommand doesn't count")
+	assert.Contains(t, run(aria, "company", "alignment"), "Company alignment")
+	got = run(aria, "company", "inspect corvin")
+	assert.Contains(t, got, "Corvin Blackthorn: alignment")
+	assert.Contains(t, got, "They won't join a company so far from their ways.")
+	aria.Character.Gold = 500
+	assert.Contains(t, run(aria, "company", "recruit corvin"), "won't join a company", "the real gate refuses him")
+	aria.Character.Gold = goldBefore
+	assert.Equal(t, StageAlignment, stageOf(aria))
+	got = run(aria, "standing", "")
+	assert.Equal(t, StageDeparture, stageOf(aria))
+	assert.Contains(t, got, "Head east for the next lesson: Departure")
 
 	// Departure: out through the gate, with one cap.
 	run(aria, "east", "")

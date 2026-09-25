@@ -11,6 +11,7 @@ CompanionArchetypes:
   - { MobTemplateId: 62, Archetype: cleric }
   - { MobTemplateId: 63, Archetype: warrior }
   - { MobTemplateId: 64, Archetype: ranger }
+  - { MobTemplateId: 69, Archetype: rogue }
 # Phase 21a: company alignment. Values are alignment points on the
 # -100..100 scale players see. Out-of-range values fall back to the
 # default.
@@ -63,6 +64,10 @@ Recruiters:
     Candidates:
       - { Id: tamsin, MobTemplateId: 61, Tutorial: true }
       - { Id: oswin, MobTemplateId: 62, Tutorial: true }
+  - RoomId: 907 # the Oath Stone (tutorial Alignment lesson; inspected, and refused to a new company)
+    Name: the notices at the oath stone's foot
+    Candidates:
+      - { Id: corvin, MobTemplateId: 69, Price: 150 }
   - RoomId: 2005 # Trappers' Post, Old Kings Road
     Name: the notched stick by the lean-to
     Candidates:
