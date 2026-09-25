@@ -167,3 +167,12 @@ func (nativeRuntime) TemplateState(mobTemplateID int) (domain.MemberState, bool)
 	}
 	return state, true
 }
+
+// Vitals reads a live mob's health.
+func (nativeRuntime) Vitals(instanceID int) (int, int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, 0, false
+	}
+	return mob.Character.Health, mob.Character.HealthMax.Value, true
+}

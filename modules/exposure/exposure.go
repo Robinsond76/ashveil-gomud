@@ -21,6 +21,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/climate"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
@@ -264,6 +265,12 @@ var (
 )
 
 func init() {
+	// Phase 26a: the band buffs are survival conditions.
+	for _, table := range []map[climate.Band]int{coldBuffs, heatBuffs} {
+		for _, id := range table {
+			companyview.RegisterBuffGroup(companyview.GroupSurvival, id)
+		}
+	}
 	m := newModule()
 	m.plug = plugins.New("exposure", "1.0")
 	if err := m.plug.AttachFileSystem(files); err != nil {

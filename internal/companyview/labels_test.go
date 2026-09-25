@@ -75,3 +75,17 @@ func TestNeedWarns(t *testing.T) {
 	assert.True(t, Need{Known: true, Value: 0}.Warns())
 	assert.False(t, Need{Value: 0}.Warns(), "unknown never warns")
 }
+
+func TestBuffGroups(t *testing.T) {
+	RegisterBuffGroup(GroupRest, 9901, 0, -1)
+	RegisterBuffGroup(GroupSurvival, 9902)
+	g, ok := GroupOf(9901)
+	assert.True(t, ok)
+	assert.Equal(t, GroupRest, g)
+	g, _ = GroupOf(9902)
+	assert.Equal(t, GroupSurvival, g)
+	_, ok = GroupOf(0)
+	assert.False(t, ok)
+	_, ok = GroupOf(9903)
+	assert.False(t, ok)
+}

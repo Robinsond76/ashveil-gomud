@@ -3,6 +3,7 @@ package exposure
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,4 +26,13 @@ func TestCompanionRosterSkipsDead(t *testing.T) {
 	require.True(t, ok)
 	require.Len(t, members, 1)
 	assert.Equal(t, "Bear", members[0].Name)
+}
+
+// TestBandBuffsAreSurvivalConditions (Phase 26a).
+func TestBandBuffsAreSurvivalConditions(t *testing.T) {
+	for _, id := range []int{1010, 1013, 1020, 1023} {
+		g, ok := companyview.GroupOf(id)
+		assert.True(t, ok, id)
+		assert.Equal(t, companyview.GroupSurvival, g)
+	}
 }

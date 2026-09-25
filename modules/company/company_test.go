@@ -203,6 +203,13 @@ type fakeRuntime struct {
 	// each instance moved and where.
 	dying     map[int]bool
 	relocated map[int]int
+	// Phase 26a: vitals per instance, {hp, max}.
+	vitals map[int][2]int
+}
+
+func (f *fakeRuntime) Vitals(instanceID int) (int, int, bool) {
+	v, ok := f.vitals[instanceID]
+	return v[0], v[1], ok && f.live[instanceID]
 }
 
 func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {

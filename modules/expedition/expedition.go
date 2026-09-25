@@ -1279,3 +1279,24 @@ func (m *ExpeditionModule) userCommand(rest string, user *users.UserRecord, _ *r
 	}
 	return true, nil
 }
+
+var _ expedition.ProgressProvider = (*ExpeditionModule)(nil)
+
+// JourneyProgress implements expedition.ProgressProvider (Phase 26a): the
+// leader's active journey, read under the module mutex with no side
+// effects.
+func (m *ExpeditionModule) JourneyProgress(leaderUserID int) (expedition.Progress, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	session, ok := m.sessions[leaderUserID]
+	if !ok || (session.State != expedition.Traveling && session.State != expedition.Interrupted) {
+		return expedition.Progress{}, false
+	}
+	p := expedition.Progress{Interrupted: session.State == expedition.Interrupted, Route: session.ProfileName}
+	if profile, ok := m.sessionProfile(session); ok {
+		now := m.clock().UTC()
+		p.Percent = int(session.ProgressAt(now, profile.Duration) * 100)
+		p.Remaining = session.RemainingAt(now, profile.Duration)
+	}
+	return p, true
+}

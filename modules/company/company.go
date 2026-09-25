@@ -42,6 +42,8 @@ type Runtime interface {
 	// (Phase 25a). It reports false when the mob is gone or dead, or the
 	// room doesn't load.
 	Relocate(instanceID, roomID int) bool
+	// Vitals reads a live mob's health (Phase 26a).
+	Vitals(instanceID int) (hp, hpMax int, ok bool)
 }
 
 type Store interface {

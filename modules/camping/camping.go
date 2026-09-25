@@ -16,9 +16,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/climate"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -289,6 +291,8 @@ type CampingModule struct {
 	grantBuff    func(c *characters.Character, buffID, rounds int) error
 	removeBuff   func(c *characters.Character, buffID int)
 	hasBuff      func(c *characters.Character, buffID int) bool
+	// buffRounds overrides a held buff's rounds left in tests (Phase 26a).
+	buffRounds   func(c *characters.Character, buffID int) int
 	roundSeconds func() int
 	travelling   func(leaderUserID int) bool
 
@@ -449,6 +453,7 @@ func (m *CampingModule) load() {
 	if m.plug != nil {
 		m.innCfg = parseInnSettings(m.plug.Config.Get)
 		m.innCfgLoaded = true
+		m.registerBuffGroupsLocked()
 	}
 	m.loadErr = nil
 	m.recoverLocked()
@@ -968,4 +973,68 @@ func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(campUsage)
 	}
 	return true, nil
+}
+
+// --- Phase 26a: read-only views for the information surfaces ---
+
+var _ camping.RestProvider = (*CampingModule)(nil)
+
+// LeaderRest implements camping.RestProvider: the leader's inn stay or
+// camp, read under the module mutex with no side effects.
+func (m *CampingModule) LeaderRest(leaderUserID int) (camping.RestActivity, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if stay, ok := m.stays[leaderUserID]; ok && stay.Resting() {
+		return camping.RestActivity{Inn: true, Resting: true, Remaining: stay.RemainingAt(m.clock().UTC())}, true
+	}
+	camp, ok := m.camps[leaderUserID]
+	if !ok {
+		return camping.RestActivity{}, false
+	}
+	if camp.Rest != nil && camp.Rest.State == camping.Resting {
+		return camping.RestActivity{Resting: true, Remaining: m.remainingLocked(camp)}, true
+	}
+	return camping.RestActivity{}, true
+}
+
+// RestTierOf implements camping.RestProvider: the best rest tier the
+// character holds and its real time left. Call it on the game loop: it
+// reads the character's buffs.
+func (m *CampingModule) RestTierOf(userID int) (camping.Tier, time.Duration, bool) {
+	user := m.userByID(userID)
+	if user == nil || user.Character == nil {
+		return camping.TierNone, 0, false
+	}
+	m.mu.Lock()
+	s := m.innSettings()
+	m.mu.Unlock()
+	tier := m.heldTier(user.Character, s)
+	if tier == camping.TierNone {
+		return camping.TierNone, 0, false
+	}
+	rounds := m.buffRoundsLeft(user.Character, s.tierBuff(tier))
+	return tier, time.Duration(rounds*m.roundLength()) * time.Second, true
+}
+
+// buffRoundsLeft is the rounds a held buff has left.
+func (m *CampingModule) buffRoundsLeft(c *characters.Character, buffID int) int {
+	if m.buffRounds != nil {
+		return m.buffRounds(c, buffID)
+	}
+	for i := range c.Buffs.List {
+		if b := c.Buffs.List[i]; b.BuffId == buffID && b.TriggersLeft > 0 {
+			if spec := buffs.GetBuffSpec(buffID); spec != nil {
+				rounds, _ := buffs.GetDurations(b, spec)
+				return rounds
+			}
+		}
+	}
+	return 0
+}
+
+// registerBuffGroupsLocked files the rest tier buffs under the conditions
+// rest group. The caller holds m.mu (load).
+func (m *CampingModule) registerBuffGroupsLocked() {
+	s := m.innSettings()
+	companyview.RegisterBuffGroup(companyview.GroupRest, s.RestedBuffId, s.WellRestedBuffId)
 }
