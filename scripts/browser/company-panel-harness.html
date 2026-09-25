@@ -1,0 +1,53 @@
+<!doctype html>
+<!--
+  Phase 26b browser check harness: loads the real window-party.js with a
+  stub client (VirtualWindow, VirtualWindows, Client, injectStyles) so
+  company-panel-check.mjs can feed it GMCP payloads. Not served by the game.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Company panel check</title>
+<link rel="stylesheet" href="../../_datafiles/html/public/static/css/theme-brooding.css">
+<style>body { margin: 0; background: var(--t-bg); color: var(--t-text); font-family: sans-serif; }
+#host { width: 100%; max-width: 420px; }</style>
+<script>
+  window.requests = [];
+  function injectStyles(css) { const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s); }
+  class VirtualWindow {
+    constructor(id, opts) { this._id = id; this._opts = opts; this._open = false; }
+    open() {
+      if (this._open) { return; }
+      const spec = this._opts.factory();
+      document.getElementById('host').appendChild(spec.mount);
+      this._open = true;
+    }
+    isOpen() { return this._open; }
+  }
+  const handlers = {};
+  const VirtualWindows = {
+    register(d) { d.gmcpHandlers.forEach(ns => { (handlers[ns] = handlers[ns] || []).push(d); }); },
+  };
+  const Client = {
+    GMCPStructs: {},
+    GMCPRequest(id) { window.requests.push(id); },
+  };
+  // Mirrors webclient-core: store, then call handlers at every matching level.
+  window.gmcp = function(namespace, body) {
+    const parts = namespace.split('.');
+    let cursor = Client.GMCPStructs;
+    const last = parts[parts.length - 1];
+    parts.slice(0, -1).forEach(seg => { cursor = cursor[seg] = cursor[seg] || {}; });
+    cursor[last] = body;
+    for (let i = parts.length; i >= 1; i--) {
+      (handlers[parts.slice(0, i).join('.')] || []).forEach(d => d.onGMCP(namespace, body));
+    }
+  };
+</script>
+</head>
+<body>
+<div id="host"></div>
+<script src="../../_datafiles/html/public/static/js/windows/window-party.js"></script>
+</body>
+</html>
