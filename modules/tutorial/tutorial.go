@@ -389,6 +389,11 @@ func (m *TutorialModule) onRoomChange(e events.Event) events.ListenerReturn {
 
 // leave ends the course: graduation, with its reward once, when the player
 // reached Departure; otherwise it counts as skipped.
+//
+// Any move out counts, not only the gate: a death respawn or an admin
+// teleport also ends the course, as a skip without confirmation. No 27a
+// room can kill a player (the rooms spawn nothing); 27c's practice fight
+// must decide this before death is reachable here.
 func (m *TutorialModule) leave(user *users.UserRecord, p progress) {
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
@@ -421,6 +426,9 @@ type resumeTutorial struct{ UserId int }
 
 func (resumeTutorial) Type() string { return "TutorialResume" }
 
+// The engine's own PlayerSpawn handling runs first: a player saved in the
+// Void with RoomIdOnReset -1 lands in the start room for a moment, and the
+// queued resume then brings them back to the course. That hop is expected.
 func (m *TutorialModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if evt, ok := e.(events.PlayerSpawn); ok {
 		events.AddToQueue(resumeTutorial{UserId: evt.UserId})
@@ -515,7 +523,11 @@ func (m *TutorialModule) view(user *users.UserRecord, p progress) string {
 // next lets a stuck player through the Company stage: both free recruits
 // were already claimed and the company is short.
 func (m *TutorialModule) next(user *users.UserRecord, p progress) {
-	if p.Stage == StageCompany {
+	// Company and Formation both need two living companions. Once both
+	// free recruits are claimed (TutorialRecruits, which must match the
+	// company module's Muster Yard candidates) a player short of two, say
+	// after a dismissal, can't get them back here, so the lesson is waived.
+	if p.Stage == StageCompany || p.Stage == StageFormation {
 		members, _ := m.members(user.UserId)
 		claimedAll := len(m.recruits) > 0
 		for _, id := range m.recruits {
@@ -524,7 +536,7 @@ func (m *TutorialModule) next(user *users.UserRecord, p progress) {
 			}
 		}
 		if !companyDone(members) && claimedAll {
-			user.SendText("You've already claimed this course's recruits, so this lesson is waived.")
+			user.SendText("You've already claimed this course's recruits and have too few companions for this lesson, so it is waived.")
 			m.advance(user, p)
 			return
 		}

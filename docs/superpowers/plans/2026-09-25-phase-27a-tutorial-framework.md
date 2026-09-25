@@ -26,6 +26,6 @@ Each task is tests first.
 - [x] **Task 7: wiring** (`modules/tutorial/wiring_test.go`). Through
   `plugins.Load`: the whole course, resume, a second player's skip, and
   the clock unchanged.
-- [ ] **Task 8: docs and verification.** Module guides,
+- [x] **Task 8: docs and verification.** Module guides,
   `go test -race ./...`, `make generate`, `make validate`, `make js-lint`,
   independent review, `docs/PROJECT_STATUS.md`.

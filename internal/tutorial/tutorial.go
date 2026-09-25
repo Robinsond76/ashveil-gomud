@@ -24,6 +24,14 @@ func SetProvider(p Provider) {
 	provider = p
 }
 
+// Active reports whether a provider is installed (the tutorial module is
+// loaded).
+func Active() bool {
+	mu.RLock()
+	defer mu.RUnlock()
+	return provider != nil
+}
+
 // Begin hands a new character to the tutorial. It reports false without a
 // provider, or when the provider couldn't place them.
 func Begin(userID int) bool {

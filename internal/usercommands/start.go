@@ -203,26 +203,7 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 		user.SendText(fmt.Sprintf(`<ansi fg="magenta">Suddenly, a vortex appears before you, drawing you in before you have any chance to react!</ansi>%s`, term.CRLFStr))
 
-		if destRoom := rooms.LoadRoom(rooms.StartRoomIdAlias); destRoom != nil {
-
-			rooms.MoveToRoom(user.UserId, destRoom.RoomId)
-
-			// Tell the new room they have arrived
-
-			destRoom.SendText(
-				fmt.Sprintf(configs.GetTextFormatsConfig().EnterRoomMessageWrapper.String(),
-					fmt.Sprintf(`<ansi fg="username">%s</ansi> enters from <ansi fg="exit">somewhere</ansi>.`, user.Character.Name),
-				),
-				user.UserId,
-			)
-
-			if doLook, err := scripting.TryRoomScriptEvent(`onEnter`, user.UserId, destRoom.RoomId); err != nil || doLook {
-				Look(``, user, destRoom, events.CmdSecretly) // Do a secret look.
-			}
-
-			room.PlaySound(`room-exit`, `movement`, user.UserId)
-			destRoom.PlaySound(`room-enter`, `movement`, user.UserId)
-
+		if startRoomArrival(user, room) {
 			return true, nil
 		}
 
@@ -231,10 +212,17 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	user.ClearPrompt()
 
 	// Phase 27a: the tutorial module runs the course when it is loaded.
-	// Without it (or when it can't place the player), the engine's own
-	// ephemeral tutorial below runs.
+	// When it is loaded but can't place the player, the shipped tutorial
+	// rooms (which have no scripts or forward exits of their own) would
+	// trap them, so they go to the start room instead. Only without the
+	// module does the engine's own ephemeral tutorial below run.
 	user.SendText(fmt.Sprintf(`<ansi fg="magenta">Suddenly, a vortex appears before you, drawing you in before you have any chance to react!</ansi>%s`, term.CRLFStr))
-	if tutorial.Begin(user.UserId) {
+	if tutorial.Active() {
+		if tutorial.Begin(user.UserId) {
+			return true, nil
+		}
+		user.SendText(`The training grounds are unavailable right now, so you begin your journey at once.`)
+		startRoomArrival(user, room)
 		return true, nil
 	}
 
@@ -269,4 +257,33 @@ func Start(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	return true, nil
+}
+
+// startRoomArrival moves a new character to the start room and announces
+// them. It reports false when the start room can't be loaded.
+func startRoomArrival(user *users.UserRecord, room *rooms.Room) bool {
+	if destRoom := rooms.LoadRoom(rooms.StartRoomIdAlias); destRoom != nil {
+
+		rooms.MoveToRoom(user.UserId, destRoom.RoomId)
+
+		// Tell the new room they have arrived
+
+		destRoom.SendText(
+			fmt.Sprintf(configs.GetTextFormatsConfig().EnterRoomMessageWrapper.String(),
+				fmt.Sprintf(`<ansi fg="username">%s</ansi> enters from <ansi fg="exit">somewhere</ansi>.`, user.Character.Name),
+			),
+			user.UserId,
+		)
+
+		if doLook, err := scripting.TryRoomScriptEvent(`onEnter`, user.UserId, destRoom.RoomId); err != nil || doLook {
+			Look(``, user, destRoom, events.CmdSecretly) // Do a secret look.
+		}
+
+		room.PlaySound(`room-exit`, `movement`, user.UserId)
+		destRoom.PlaySound(`room-enter`, `movement`, user.UserId)
+
+		return true
+	}
+
+	return false
 }

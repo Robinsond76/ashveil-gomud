@@ -253,8 +253,21 @@ func TestNextOnlyWhenAllowed(t *testing.T) {
 	c.claimed[61], c.claimed[62] = true, true
 	_, _ = c.m.command("next", c.user, nil, 0)
 	assert.Equal(t, StageFormation, c.stage(), "both recruits already claimed: waived")
+
+	// Formation: waived only while the company is short and can't refill
+	// from the course's recruits (e.g. one was dismissed after Company).
+	c.members = []company.MemberView{view(1, company.MemberPresent), view(2, company.MemberPresent)}
 	_, _ = c.m.command("next", c.user, nil, 0)
-	assert.Equal(t, StageFormation, c.stage(), "formation can't be waived")
+	assert.Equal(t, StageFormation, c.stage(), "two companions: set the formation instead")
+	c.members = []company.MemberView{view(1, company.MemberPresent)}
+	c.claimed[62] = false
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageFormation, c.stage(), "a recruit is still claimable")
+	c.claimed[62] = true
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageDeparture, c.stage(), "short and nothing left to claim: waived")
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageDeparture, c.stage(), "departure is walked, not waived")
 }
 
 func TestTutorialViewChecklist(t *testing.T) {

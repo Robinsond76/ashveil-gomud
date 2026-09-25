@@ -5,8 +5,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-24
-- **HEAD:** Phase 26b (browser Company panel) is complete, reviewed, and on `master`.
+- **Last updated:** 2026-09-25
+- **HEAD:** Phase 27a (tutorial framework and first lessons) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 26b is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -56,10 +56,13 @@ instead of duplicating them.
   and Phase 25a (player death: one level, wake at the last city's church with
   the living company), and Phase 25b (companion death: dead on the roster for
   three game days of the leader's online time, `resurrect` at a church or
-  village shaman for a level, then lost).
-- **Next:** the last spec on the
-  [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md),
-  the [Ashveil tutorial](superpowers/specs/2026-09-23-ashveil-tutorial-design.md).
+  village shaman for a level, then lost), and Phase 26a/26b (the company
+  summary in text and in the browser), and Phase 27a (the tutorial framework:
+  durable progress, resume, skip, and the Character, Company, Formation, and
+  Departure lessons).
+- **Next:** Phase 27b, the tutorial's Survival and Camp lessons, then 27c
+  (practice fight, Alignment, browser tutorial panel), per the
+  [Ashveil tutorial](superpowers/specs/2026-09-23-ashveil-tutorial-design.md).
 
 ## Phase progress
 
@@ -105,9 +108,95 @@ instead of duplicating them.
 | 25b | Companion death and resurrection | Complete: a dead companion stays on the roster, keeping the gear its body kept; a 3-game-day rescue allowance spent only in the leader's online time; `resurrect` at a church or village shaman with its keeper costs a level; at zero it is lost and archived; Fernhollow village and Old Wenna |
 | 26a | Company summary and text surfaces | Complete: `internal/companyview` read model; prompt tokens from a game-loop cache and a default prompt that warns only when needed; `status` as the Ashveil character sheet, grouped `conditions`, company load in `inventory`, last level lost in `experience` |
 | 26b | Browser Company panel (GMCP) | Complete: `Company`/`Company.Vitals` GMCP from the 26a summary, sent on change and only to the leader; a Company section above Players in the web client's Party window, safe DOM, keyboard and screen-reader friendly, checked in Chromium |
+| 27a | Tutorial framework and first lessons | Complete: `modules/tutorial` runs the course in per-player copies of rooms 900–903 (Waking Hall, Muster Yard, Drill Ground, Gate); progress in MiscData, resumed on login; gates check results; `tutorial`, `tutorial next`, `tutorial skip`; graduation cap once; old JS rooms removed |
+| 27b | Tutorial: Survival and Camp lessons | Planned |
+| 27c | Tutorial: practice fight, Alignment, browser panel | Planned |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 27a: tutorial framework and first lessons (2026-09-25)
+
+- **What:** A tutorial module, `modules/tutorial`, runs the course that a new
+  character walks after `start`.
+  - **The course:** rooms 900–903, rewritten as the Waking Hall, the
+    Muster Yard, the Drill Ground, and the Gate. Each player gets their own
+    ephemeral copies, and the old JS room scripts, orb teachers, and command
+    allowlists are gone. The module opens temporary exits (`east`, then a
+    `gate` to the start room) as each lesson is passed.
+  - **Lessons:** Character (`status`, `inventory`, `experience`,
+    `conditions` by any alias, seen through a new
+    `usercommands.OnCommandDone` hook); Company (two living companions,
+    from the Muster Yard recruiter's free Tamsin and Oswin claims); Formation
+    (a living companion in the front row and another behind); Departure
+    (the gate). Stages are data, so 27b and 27c insert theirs before
+    Departure.
+  - **Durable progress:** state, stage, and inspections in the character's
+    MiscData. On login or copyover a player in the course gets fresh copies
+    at their stage with the ways up to it open, and their companions come
+    along.
+  - **Commands:** `tutorial` (the lesson, goal, checklist, and hints),
+    `tutorial next` (waives a lesson a player can no longer finish), and
+    `tutorial skip` / `tutorial skip yes`. `help tutorial`.
+  - **Rewards:** the graduation cap once, only on graduating; skipping gives
+    nothing. Recruits and kits stay with their own claims.
+  - **Seams:** `internal/tutorial` (`Begin`, `Active`), which `start` hands
+    to; `company.HasClaimed`; recruiters resolve a copy to its template
+    room.
+
+  Design and plan:
+  [27a spec](superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md) /
+  [27a plan](superpowers/plans/2026-09-25-phase-27a-tutorial-framework.md).
+- **Why:** The first slice of the tutorial spec, the last on the onboarding
+  roadmap. Decisions were applied under the owner's "carry on to next" and
+  are recorded in the spec, with the review's amendments.
+- **Verification:** `go test -race ./...`, `make generate`, `make validate`,
+  `make js-lint`.
+  - **Wiring test** (`modules/tutorial/wiring_test.go`): through
+    `plugins.Load` with the company module, the shipped tutorial rooms,
+    keywords, recruits, and cap, and the real `start` command. It covers:
+    - placement in a copy, with the way on shut;
+    - inspections by alias;
+    - `company recruit tamsin` and `oswin` in the Muster Yard copy;
+    - `formation move`;
+    - a logout, save, reload, and login mid-course that resumes at the
+      Drill Ground with both companions;
+    - walking out of the Gate with one cap and the company;
+    - a second `start` giving nothing;
+    - a second player's skip giving nothing;
+    - the clock unchanged.
+  - **Shipped-content tests:** one room per stage, no scripts or forward
+    exits; the Muster Yard offers exactly the tutorial recruits; the cap
+    exists; `help tutorial` is listed.
+  - **`start` tests:** the hand-off, the legacy path without the module,
+    and the start room when the module can't place.
+- **Review:** The independent reviewer confirmed game-loop-only state,
+  once-only grants, safe recruiter resolution, self-healing ephemeral
+  chunks, and an unchanged clock. Its findings:
+  1. *High, fixed:* a failed placement fell through to the engine's legacy
+     path, into copies of the now script-less, exit-less rooms. With the
+     module loaded, `start` now sends the player to the start room
+     (`TestStartWhenTheTutorialCannotPlace`).
+  2. *Medium, fixed:* a dismissal after the Company lesson could make
+     Formation impossible, with no waiver. `tutorial next` now waives
+     Formation too when the company is short and the recruits are claimed
+     (`TestNextOnlyWhenAllowed`).
+  3. *Deferred to 27c:* any move out of the course (a death respawn, an
+     admin teleport) ends it as an unconfirmed skip. No 27a room can kill
+     a player; it is pinned by `TestLeavingEarlyIsASkip` and noted in the
+     code and spec.
+  4. *Low, commented:* the tutorial's `TutorialRecruits` must match the
+     Muster Yard candidates; `TestShippedTutorialRecruiter` pins them.
+  5. *Low, commented:* on resume the engine puts the player in the start
+     room for a moment before the course takes them back; this is expected.
+
+  Coverage gaps it named that stay open: a real copyover run (simulated by
+  logout and login) and two players acting in the course at once.
+  Found while writing the wiring test, before the review: companions only
+  follow on foot, so placement, resume, skip, and leaving now relocate the
+  company. A second `Begin` resumes rather than restarting. *Known
+  limitation:* the upstream `empty` world keeps the old scripted rooms.
+- **Step completed:** Phase 27a.
 
 ### Phase 26b: browser Company panel (2026-09-25)
 

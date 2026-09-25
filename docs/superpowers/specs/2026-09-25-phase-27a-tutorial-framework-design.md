@@ -146,3 +146,24 @@ instruction (2026-09-25).
   - the clock is unchanged.
 - `go test -race ./...`, `make generate`, `make validate`, and
   `make js-lint` pass. The old room scripts are removed.
+
+## Review amendments (2026-09-25)
+
+- **No trap on a failed placement.** `internal/tutorial.Active` reports a
+  loaded module. When it is loaded but can't place the player, `start`
+  sends them to the start room with a note. The engine's legacy ephemeral
+  path runs only without the module, since the shipped rooms no longer
+  have its scripts or forward exits.
+- **Formation can be waived too.** `tutorial next` waives Company or
+  Formation when the company has fewer than two living companions and both
+  course recruits are already claimed (for example after a dismissal).
+- **Companions travel with the player.** Placement, resume, skip, and
+  leaving the course relocate the company (`company.RelocateCompany`),
+  since companions only follow on foot. A second `Begin` resumes an active
+  course, and a finished one goes to the start room.
+- **Deferred to 27c:** any move out of the course (a death respawn, an
+  admin teleport) ends it as an unconfirmed skip. No 27a room can kill a
+  player; the practice fight must settle this.
+- **Known limitation:** the upstream `empty` world still ships the old
+  scripted tutorial rooms; with this module loaded, that world's course
+  would run under both. Ashveil ships the default world.

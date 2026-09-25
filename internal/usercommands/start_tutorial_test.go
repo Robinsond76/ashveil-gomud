@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/tutorial"
@@ -72,18 +73,44 @@ func TestStartHandsTheTutorialToTheProvider(t *testing.T) {
 	assert.Nil(t, u.GetPrompt(), "creation is finished")
 }
 
-// TestStartFallsBackWithoutTheTutorial: without a provider, or when it
-// can't place the player, the engine's own tutorial path runs (here with
-// no tutorial rooms loaded, so it reports the zone full).
+// TestStartFallsBackWithoutTheTutorial: without a provider, the engine's
+// own tutorial path runs (here with no tutorial rooms loaded, so it reports
+// the zone full).
 func TestStartFallsBackWithoutTheTutorial(t *testing.T) {
 	tutorial.SetProvider(nil)
 	_, text := startToTutorial(t, 4102)
 	assert.Contains(t, text, "fully occupied")
+}
 
+// TestStartWhenTheTutorialCannotPlace: with the module loaded but unable to
+// place the player, they go to the start room, never into the legacy
+// copies of the script-less course rooms (Phase 27a review).
+func TestStartWhenTheTutorialCannotPlace(t *testing.T) {
+	loadTravelTestWorld(t, map[string]string{
+		"biomes/default.yaml":              "biomeid: default\nname: Test\nsymbol: '.'\n",
+		"keywords.yaml":                    "direction-aliases: {}\n",
+		"rooms/startzone/zone-config.yaml": "name: startzone\nroomid: 920901\n",
+		"rooms/startzone/920901.yaml":      roomYAML(920901, "startzone", "Start", "  {}\n"),
+	})
+	flat := configs.Flatten(configs.GetOverrides())
+	previous := flat["SpecialRooms.StartRoom"]
+	flat["SpecialRooms.StartRoom"] = 920901
+	require.NoError(t, configs.RestoreOverrides(flat))
+	t.Cleanup(func() {
+		flat := configs.Flatten(configs.GetOverrides())
+		if previous == nil {
+			delete(flat, "SpecialRooms.StartRoom")
+		} else {
+			flat["SpecialRooms.StartRoom"] = previous
+		}
+		require.NoError(t, configs.RestoreOverrides(flat))
+	})
 	f := &fakeTutorial{placed: false}
 	tutorial.SetProvider(f)
 	t.Cleanup(func() { tutorial.SetProvider(nil) })
-	_, text = startToTutorial(t, 4103)
+	u, text := startToTutorial(t, 4103)
 	assert.Equal(t, []int{4103}, f.calls)
-	assert.Contains(t, text, "fully occupied")
+	assert.NotContains(t, text, "fully occupied", "the legacy path doesn't run")
+	assert.Contains(t, text, "training grounds are unavailable")
+	assert.Equal(t, 920901, u.Character.RoomId)
 }
