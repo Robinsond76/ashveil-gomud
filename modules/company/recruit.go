@@ -12,6 +12,7 @@ import (
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -208,7 +209,9 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error(), nil
 	}
-	rec, ok := m.recruiters()[roomID]
+	// Phase 27a: an ephemeral copy (the tutorial's) uses its template
+	// room's recruiter.
+	rec, ok := m.recruiters()[rooms.GetOriginalRoom(roomID)]
 	if !ok {
 		return "No one here is hiring. Look for a recruiter in a settlement.", nil
 	}

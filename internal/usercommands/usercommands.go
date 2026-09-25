@@ -249,6 +249,18 @@ func GetHelpSuggestions(text string, includeAdmin bool) []string {
 	return results
 }
 
+// CommandDone is a handled user command, with aliases resolved (Phase 27a).
+type CommandDone struct {
+	UserId  int
+	Command string
+	Rest    string
+}
+
+// OnCommandDone fires on the game loop after a registered command handles
+// its input (Phase 27a: the tutorial's inspection lessons). Handlers must
+// not run commands of their own.
+var OnCommandDone util.Hook[CommandDone]
+
 func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bool, error) {
 
 	// Ashveil (Phase 26a): recompute the prompt's company tokens once the
@@ -422,6 +434,10 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 
 			// Run the command here
 			handled, err := cmdInfo.Func(rest, user, room, flags)
+			if handled {
+				// Ashveil (Phase 27a): the tutorial watches handled commands.
+				OnCommandDone.Fire(CommandDone{UserId: user.UserId, Command: cmd, Rest: rest})
+			}
 			return handled, err
 
 		} else if cmdInfo.AdminOnly {
