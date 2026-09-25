@@ -282,6 +282,17 @@ func (g *GMCPModule) HandleWebGMCP(connectionId uint64, webGMCP []byte) bool {
 			return true
 		}
 
+		if identifier == `Tutorial` {
+			// Phase 27d: the tutorial panel asks for the player's stage.
+			for _, user := range users.GetAllActiveUsers() {
+				if user.ConnectionId() == connectionId {
+					events.AddToQueue(GMCPTutorialRequest{UserId: user.UserId})
+					break
+				}
+			}
+			return true
+		}
+
 		if identifier == `Company` {
 			// Phase 26b: the Ashveil company panel asks for a full snapshot.
 			for _, user := range users.GetAllActiveUsers() {

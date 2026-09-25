@@ -876,3 +876,29 @@ func TestTutorialViewPerStage(t *testing.T) {
 	_, ok = c.m.TutorialView(7)
 	assert.False(t, ok, "left the course")
 }
+
+var changedFor []int
+
+func init() {
+	domain.OnChanged.Register(func(userID int) int {
+		changedFor = append(changedFor, userID)
+		return userID
+	})
+}
+
+// 27d: a pass, placement, or leaving reports the change at once, for the
+// panel.
+func TestCourseChangesAreReported(t *testing.T) {
+	c := newCourse(t)
+	changedFor = nil
+	c.m.Begin(7)
+	assert.Contains(t, changedFor, 7, "placement")
+	changedFor = nil
+	for _, cmd := range inspectionsOf(StageCharacter) {
+		c.run(cmd)
+	}
+	assert.Contains(t, changedFor, 7, "a stage passed")
+	changedFor = nil
+	_, _ = c.m.command("skip yes", c.user, nil, 0)
+	assert.Contains(t, changedFor, 7, "leaving")
+}

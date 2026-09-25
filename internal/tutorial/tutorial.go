@@ -2,7 +2,11 @@
 // the Ashveil tutorial module (Phase 27a). It holds no state.
 package tutorial
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/GoMudEngine/GoMud/internal/util"
+)
 
 // Provider is implemented by modules/tutorial.
 type Provider interface {
@@ -83,3 +87,12 @@ func ViewOf(userID int) (View, bool) {
 	}
 	return v.TutorialView(userID)
 }
+
+// OnChanged fires, on the game loop, when a player's place in the course
+// changes (a stage passed or waived, placement, leaving): Phase 27d's
+// panel resends at once rather than at the next refresh. Handlers must not
+// change the course.
+var OnChanged util.Hook[int]
+
+// Changed reports a change to a player's place in the course.
+func Changed(userID int) { OnChanged.Fire(userID) }

@@ -1,9 +1,10 @@
 package tutorial
 
 import (
+	"encoding/json"
 	"os"
-	"regexp"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -35,6 +36,7 @@ import (
 	_ "github.com/GoMudEngine/GoMud/modules/company"
 	_ "github.com/GoMudEngine/GoMud/modules/encumbrance"
 	_ "github.com/GoMudEngine/GoMud/modules/exposure"
+	"github.com/GoMudEngine/GoMud/modules/gmcp"
 	_ "github.com/GoMudEngine/GoMud/modules/standing"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
 	_ "github.com/GoMudEngine/GoMud/modules/walking"
@@ -237,6 +239,28 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	}
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
 
+	// Phase 27d: the Tutorial GMCP package, as the gmcp module sends it.
+	panels := map[int][]map[string]any{}
+	gid := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
+		if out, ok := e.(gmcp.GMCPOut); ok && out.Module == "Tutorial" {
+			var body map[string]any
+			if raw, ok := out.Payload.([]byte); ok {
+				_ = json.Unmarshal(raw, &body)
+			}
+			panels[out.UserId] = append(panels[out.UserId], body)
+		}
+		return events.Cancel // no connection to deliver to
+	}, events.First)
+	t.Cleanup(func() { events.UnregisterListener(gmcp.GMCPOut{}, gid) })
+	lastPanel := func(u *users.UserRecord) map[string]any {
+		events.ProcessEvents()
+		list := panels[u.UserId]
+		if len(list) == 0 {
+			return nil
+		}
+		return list[len(list)-1]
+	}
+
 	// Creation hands the new character to the course: their own copy of
 	// the Waking Hall, with the first lesson shown.
 	aria := newPlayer(7, "Aria")
@@ -248,6 +272,11 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, got, "stage 1 of 8")
 	assert.Equal(t, StageCharacter, stageOf(aria))
 	assert.Contains(t, run(aria, "tutorial", ""), "Goal:")
+	panel := lastPanel(aria)
+	require.NotNil(t, panel, "the panel is sent")
+	assert.Equal(t, "Your character", panel["title"])
+	assert.EqualValues(t, 1, panel["stage"])
+	assert.EqualValues(t, 8, panel["stages"])
 
 	// No command is blocked, and the way east stays shut until the stage
 	// is passed.
@@ -264,6 +293,13 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	got = run(aria, "c", "")
 	assert.Equal(t, StageCompany, stageOf(aria))
 	assert.Contains(t, got, "Head east for the next lesson")
+	panel = lastPanel(aria)
+	assert.Equal(t, "Your company", panel["title"], "the panel follows the course")
+	assert.Equal(t, []any{map[string]any{"label": "two companions (0 of 2)", "done": false}}, panel["checklist"])
+	sentSoFar := len(panels[aria.UserId])
+	run(aria, "say", "still here")
+	lastPanel(aria)
+	assert.Len(t, panels[aria.UserId], sentSoFar, "nothing resent without a change")
 
 	// Company: recruit both tutorial candidates in the Muster Yard copy.
 	got = run(aria, "east", "")
@@ -595,7 +631,10 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	restAt()
 	assert.Contains(t, run(bram, "tutorial", "skip"), "tutorial skip yes")
 	assert.Equal(t, 905, template(bram), "asks first")
+	require.NotEmpty(t, lastPanel(bram), "Bram's own panel")
+	assert.Equal(t, "Camp", lastPanel(bram)["title"])
 	run(bram, "tutorial", "skip yes")
+	assert.Empty(t, lastPanel(bram), "{} once the course is done")
 	assert.Equal(t, 1, bram.Character.RoomId)
 	assert.Equal(t, stateSkipped, progressOf(bram.Character).State)
 	assert.Zero(t, caps(bram))

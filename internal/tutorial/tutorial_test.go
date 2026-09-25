@@ -44,3 +44,15 @@ func TestViewOf(t *testing.T) {
 	_, ok = ViewOf(8)
 	assert.False(t, ok, "not in the course")
 }
+
+func TestChangedFiresOnChanged(t *testing.T) {
+	var got []int
+	OnChanged.Register(func(userID int) int {
+		if userID == 4401 {
+			got = append(got, userID)
+		}
+		return userID
+	})
+	Changed(4401)
+	assert.Equal(t, []int{4401}, got)
+}

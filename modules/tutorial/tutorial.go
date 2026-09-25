@@ -253,6 +253,7 @@ func (m *TutorialModule) load() {
 // place makes fresh room copies for a player in the course, opens the way
 // up to their current stage's room, and moves them there.
 func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
+	defer domain.Changed(user.UserId) // 27d: the panel resends at once
 	ids := m.roomIDs()
 	at := stageIndex(p.Stage)
 	if at < 0 || !m.available() {
@@ -304,6 +305,7 @@ func (m *TutorialModule) available() bool {
 // closeCourse lets a player in the course out when it can't run: skipped,
 // with no reward, wherever the engine put them.
 func (m *TutorialModule) closeCourse(user *users.UserRecord, p progress) {
+	defer domain.Changed(user.UserId) // 27d: the panel resends at once
 	p.State = stateSkipped
 	p.save(user.Character)
 	delete(m.copies, user.UserId)
@@ -690,6 +692,7 @@ func (m *TutorialModule) check(user *users.UserRecord) {
 
 // advance moves a player on to the next stage and opens the way to it.
 func (m *TutorialModule) advance(user *users.UserRecord, p progress) {
+	defer domain.Changed(user.UserId) // 27d: the panel resends at once
 	at := stageIndex(p.Stage)
 	if at < 0 || at+1 >= len(stages) {
 		return
@@ -746,6 +749,7 @@ func (m *TutorialModule) onRoomChange(e events.Event) events.ListenerReturn {
 // room can kill a player (the rooms spawn nothing); 27c's practice fight
 // must decide this before death is reachable here.
 func (m *TutorialModule) leave(user *users.UserRecord, p progress) {
+	defer domain.Changed(user.UserId) // 27d: the panel resends at once
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
 	m.strikeCamp(user)
@@ -1006,6 +1010,7 @@ func (m *TutorialModule) next(user *users.UserRecord, p progress) {
 
 // skip leaves the course for the start room, with no graduation reward.
 func (m *TutorialModule) skip(user *users.UserRecord, p progress, confirmed bool) {
+	defer domain.Changed(user.UserId) // 27d: the panel resends at once
 	if !confirmed {
 		user.SendText(`Leave the tutorial now? You won't get its graduation reward. Type <ansi fg="command">tutorial skip yes</ansi> to leave.`)
 		return
