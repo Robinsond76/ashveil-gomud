@@ -6,6 +6,8 @@
 // docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md.
 // Phase 27b adds the Survival and Camp lessons:
 // docs/superpowers/specs/2026-09-25-phase-27b-tutorial-survival-camp-design.md.
+// Phase 27c adds the practice fight:
+// docs/superpowers/specs/2026-09-25-phase-27c-tutorial-practice-fight-design.md.
 package tutorial
 
 import (
@@ -21,6 +23,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -44,6 +48,19 @@ const (
 )
 
 var defaultRecruits = []int{61, 62}
+
+// defaultSquad is the practice fight's foes (27c): three straw footmen and
+// a straw archer, who stands behind them.
+var defaultSquad = []int{67, 67, 67, 68}
+
+// fight is a player's practice squad: its room copy, the foes still
+// standing, and how many were raised. In memory only, like the copies:
+// resume raises a fresh squad.
+type fight struct {
+	room     int
+	standing map[int]bool
+	raised   int
+}
 
 // TutorialModule runs the course.
 type TutorialModule struct {
@@ -69,15 +86,21 @@ type TutorialModule struct {
 	restReporting func() bool
 	abandonCamp   func(leaderUserID int) error
 	survivalUp    func() bool
+	// Phase 27c.
+	spawnFoe  func(mobID, roomID int) (instanceID int, ok bool)
+	removeFoe func(instanceID int)
 
 	graduationItem int
 	rationItem     int
 	waterItem      int
 	recruits       []int
+	squad          []int
 
 	// copies maps each player in the course to their room copies, template
 	// room ID to copy ID. In memory only: resume makes new ones.
 	copies map[int]map[int]int
+	// fights maps each player at the practice fight to their squad.
+	fights map[int]*fight
 }
 
 var module *TutorialModule
@@ -116,6 +139,10 @@ func newModule() *TutorialModule {
 		restReporting:  camping.RestReporting,
 		abandonCamp:    camping.AbandonCamp,
 		survivalUp:     survival.CompanyServiceAvailable,
+		spawnFoe:       spawnPracticeFoe,
+		removeFoe:      removePracticeFoe,
+		squad:          defaultSquad,
+		fights:         map[int]*fight{},
 		graduationItem: defaultGraduationItem,
 		rationItem:     defaultRationItem,
 		waterItem:      defaultWaterItem,
@@ -139,6 +166,10 @@ func init() {
 	usercommands.OnCommandDone.Register(func(d usercommands.CommandDone) usercommands.CommandDone {
 		m.onCommandDone(d)
 		return d
+	})
+	mobcommands.OnPracticeBeaten.Register(func(b mobcommands.PracticeBeaten) mobcommands.PracticeBeaten {
+		m.onPracticeBeaten(b)
+		return b
 	})
 	survival.OnProvision.Register(func(p survival.Provisioned) survival.Provisioned {
 		m.onProvision(p)
@@ -186,6 +217,17 @@ func (m *TutorialModule) load() {
 	}
 	if n, ok := configInt(m.plug.Config.Get("WaterItemId")); ok && n > 0 {
 		m.waterItem = n
+	}
+	if list, ok := m.plug.Config.Get("PracticeSquad").([]any); ok {
+		var ids []int
+		for _, raw := range list {
+			if n, ok := configInt(raw); ok && n > 0 {
+				ids = append(ids, n)
+			}
+		}
+		if len(ids) > 0 {
+			m.squad = ids
+		}
 	}
 	if list, ok := m.plug.Config.Get("TutorialRecruits").([]any); ok {
 		var ids []int
@@ -387,6 +429,10 @@ func (m *TutorialModule) onProvision(e survival.Provisioned) {
 // been placed in): Survival's supplies, once per character and only for
 // what they lack.
 func (m *TutorialModule) enterStage(user *users.UserRecord, p progress) {
+	if p.Stage == StageCombat {
+		m.raiseSquad(user)
+		return
+	}
 	if p.Stage != StageSurvival || p.Supplied {
 		return
 	}
@@ -461,6 +507,86 @@ func (m *TutorialModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
+// --- the practice fight (27c) ---
+
+// raiseSquad stands a practice squad up in the player's copy of the Combat
+// room, unless one stands there already. A squad left in an older copy
+// (before a resume) is removed first.
+func (m *TutorialModule) raiseSquad(user *users.UserRecord) {
+	room := m.copyOf(user.UserId, stages[stageIndex(StageCombat)].Room)
+	if room == 0 {
+		return
+	}
+	if f := m.fights[user.UserId]; f != nil {
+		if f.room == room {
+			return
+		}
+		m.clearSquad(user.UserId)
+	}
+	f := &fight{room: room, standing: map[int]bool{}}
+	for _, mobID := range m.squad {
+		if id, ok := m.spawnFoe(mobID, room); ok {
+			f.standing[id] = true
+			f.raised++
+		}
+	}
+	m.fights[user.UserId] = f
+	if f.raised == 0 {
+		mudlog.Error("tutorial: no practice squad", "user", user.UserId, "squad", m.squad)
+		user.SendText(`The practice yard is empty today. Type <ansi fg="command">tutorial next</ansi> to go on.`)
+	}
+}
+
+// clearSquad removes a player's foes still standing.
+func (m *TutorialModule) clearSquad(userID int) {
+	f := m.fights[userID]
+	if f == nil {
+		return
+	}
+	for id := range f.standing {
+		m.removeFoe(id)
+	}
+	delete(m.fights, userID)
+}
+
+// onPracticeBeaten counts a beaten foe for the player whose squad it was.
+func (m *TutorialModule) onPracticeBeaten(b mobcommands.PracticeBeaten) {
+	for _, f := range m.fights {
+		if f.standing[b.InstanceId] {
+			delete(f.standing, b.InstanceId)
+			return
+		}
+	}
+}
+
+// squadBeaten: the Combat gate, every foe raised was beaten.
+func (m *TutorialModule) squadBeaten(userID int) bool {
+	f := m.fights[userID]
+	return f != nil && f.raised > 0 && len(f.standing) == 0
+}
+
+func spawnPracticeFoe(mobID, roomID int) (int, bool) {
+	room := rooms.LoadRoom(roomID)
+	if room == nil {
+		return 0, false
+	}
+	mob := mobs.NewMobByIdNoElite(mobs.MobId(mobID), roomID, 0)
+	if mob == nil {
+		return 0, false
+	}
+	room.AddMob(mob.InstanceId)
+	return mob.InstanceId, true
+}
+
+func removePracticeFoe(instanceID int) {
+	if mob := mobs.GetInstance(instanceID); mob != nil {
+		if room := rooms.LoadRoom(mob.Character.RoomId); room != nil {
+			room.RemoveMob(instanceID)
+		}
+	}
+	mobs.DestroyInstance(instanceID)
+}
+
 // rested: the Camp gate, a rest tier held.
 func (m *TutorialModule) rested(userID int) bool {
 	tier, ok := m.restTier(userID)
@@ -483,6 +609,8 @@ func (m *TutorialModule) passed(user *users.UserRecord, p progress) bool {
 		return survivalDone(p, m.registered)
 	case StageCamp:
 		return m.rested(user.UserId)
+	case StageCombat:
+		return m.squadBeaten(user.UserId)
 	}
 	return false // Departure ends at the gate
 }
@@ -509,8 +637,11 @@ func (m *TutorialModule) advance(user *users.UserRecord, p progress) {
 	}
 	p.Stage = stages[at+1].ID
 	p.save(user.Character)
-	if stages[at].ID == StageCamp {
+	switch stages[at].ID {
+	case StageCamp:
 		m.strikeCamp(user) // rested; the camp's work is done
+	case StageCombat:
+		m.clearSquad(user.UserId) // beaten, or waived
 	}
 	m.openAfter(user.UserId, at)
 	done := stages[at].Done
@@ -559,6 +690,7 @@ func (m *TutorialModule) leave(user *users.UserRecord, p progress) {
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
 	m.strikeCamp(user)
+	m.clearSquad(user.UserId)
 	// Companions follow on foot a moment later; bring them now, so none
 	// is left behind in the course's copies.
 	m.relocate(user.UserId, user.Character.RoomId)
@@ -679,6 +811,12 @@ func (m *TutorialModule) view(user *users.UserRecord, p progress) string {
 		check(p.Seen[seenWatered], "drink something")
 	case StageCamp:
 		check(m.rested(user.UserId), "Rested")
+	case StageCombat:
+		beaten, raised := 0, len(m.squad)
+		if f := m.fights[user.UserId]; f != nil {
+			beaten, raised = f.raised-len(f.standing), f.raised
+		}
+		check(m.squadBeaten(user.UserId), fmt.Sprintf("beat the straw soldiers (%d of %d)", beaten, raised))
 	}
 	for _, cmd := range required(s, m.registered) {
 		check(p.Seen[cmd], cmd)
@@ -738,6 +876,12 @@ func (m *TutorialModule) next(user *users.UserRecord, p progress) {
 		}
 	}
 	// Camp: nothing here can camp or rest.
+	// Combat: the yard is entered but no squad could be raised.
+	if f := m.fights[user.UserId]; p.Stage == StageCombat && f != nil && f.raised == 0 {
+		user.SendText("There's no one to practice against, so this lesson is waived.")
+		m.advance(user, p)
+		return
+	}
 	if p.Stage == StageCamp && (!m.restReporting() || !m.survivalUp()) {
 		user.SendText("Camping isn't available right now, so this lesson is waived.")
 		m.advance(user, p)
@@ -759,6 +903,7 @@ func (m *TutorialModule) skip(user *users.UserRecord, p progress, confirmed bool
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
 	m.strikeCamp(user) // before moving: a rest in progress holds the player
+	m.clearSquad(user.UserId)
 	user.SendText(`<ansi fg="magenta">You leave the training grounds behind.</ansi>`)
 	if err := m.travel(user, rooms.StartRoomIdAlias); err != nil {
 		mudlog.Error("tutorial: skip", "user", user.UserId, "error", err)

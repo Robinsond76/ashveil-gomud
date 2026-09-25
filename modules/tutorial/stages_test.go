@@ -15,18 +15,18 @@ func TestStageOrder(t *testing.T) {
 	for _, s := range stages {
 		ids = append(ids, s.ID)
 	}
-	assert.Equal(t, []StageID{StageCharacter, StageCompany, StageFormation, StageSurvival, StageCamp, StageDeparture}, ids)
+	assert.Equal(t, []StageID{StageCharacter, StageCompany, StageFormation, StageSurvival, StageCamp, StageCombat, StageDeparture}, ids)
 	assert.Equal(t, 1, stageIndex(StageCompany))
 	assert.Equal(t, -1, stageIndex("nope"))
-	// Phase 27b's rooms (904, 905) come after the Gate (903) in
-	// TutorialRooms, so 27a's room indexes stay put.
+	// Later rooms (27b's 904 and 905, 27c's 906) come after the Gate (903)
+	// in TutorialRooms, so earlier room indexes stay put.
 	rooms := []int{}
 	for _, s := range stages {
 		rooms = append(rooms, s.Room)
 		assert.NotEmpty(t, s.Title)
 		assert.NotEmpty(t, s.Goal)
 	}
-	assert.Equal(t, []int{0, 1, 2, 4, 5, 3}, rooms)
+	assert.Equal(t, []int{0, 1, 2, 4, 5, 6, 3}, rooms)
 }
 
 func everything(string) bool { return true }

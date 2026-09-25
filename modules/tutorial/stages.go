@@ -4,6 +4,8 @@ package tutorial
 // character. See docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md.
 // Phase 27b adds Survival and Camp:
 // docs/superpowers/specs/2026-09-25-phase-27b-tutorial-survival-camp-design.md.
+// Phase 27c adds Combat:
+// docs/superpowers/specs/2026-09-25-phase-27c-tutorial-practice-fight-design.md.
 
 import (
 	"sort"
@@ -22,6 +24,7 @@ const (
 	StageFormation StageID = "formation"
 	StageSurvival  StageID = "survival"
 	StageCamp      StageID = "camp"
+	StageCombat    StageID = "combat"
 	StageDeparture StageID = "departure"
 )
 
@@ -105,6 +108,20 @@ func init() {
 				`An inn stay (<ansi fg="command">inn</ansi>) costs gold but leaves you Well Rested, which is better than Rested.`,
 			},
 			Done: "Rested and ready.",
+		},
+		{
+			ID: StageCombat, Room: 6, Title: "Combat",
+			Intro: "Enemies fight as a band, in a formation like yours. Those in front shield those behind, and who can strike whom depends on where everyone stands. These straw soldiers can't hurt you; beat them to learn how a fight goes.",
+			Goal:  "Beat all four straw soldiers, with your company's help.",
+			Hints: []string{
+				`<ansi fg="command">attack footman</ansi> starts the fight; your companions join in. You keep fighting, round by round, until your target falls.`,
+				`The archer stands behind the footmen: an attack aimed at it is caught by a footman in front (interception).`,
+				`"You can't reach that target from here" means it's too far across the grid, or too deep for your weapon. <ansi fg="command">formation reach <name></ansi> shows who can reach what; long weapons reach one rank deeper, bows any.`,
+				`When your target falls you turn to the next one you can reach, on your own.`,
+				`Set your formation before a fight (<ansi fg="command">formation move</ansi>); it holds once blows are struck.`,
+				`Watch your health in your prompt and <ansi fg="command">status</ansi>, and what ails you in <ansi fg="command">conditions</ansi>. A sharpened edge is spent one strike at a time, whether the blow does much or little.`,
+			},
+			Done: "The straw soldiers are beaten.",
 		},
 		{
 			ID: StageDeparture, Room: 3, Title: "Departure",

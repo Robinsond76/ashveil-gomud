@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -26,7 +27,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// course is a module on fake rooms: templates 900..905, copies at +1000 on
+// course is a module on fake rooms: templates 900..906, copies at +1000 on
 // each placement (+1000 again for a second placement).
 type course struct {
 	m         *TutorialModule
@@ -48,13 +49,18 @@ type course struct {
 	struck      int
 	survivalUp  bool
 	strikeErr   error
+	// Phase 27c: foes spawned (instance -> room) and removed.
+	foes       map[int]int
+	removed    []int
+	nextFoe    int
+	spawnFails bool
 }
 
 func newCourse(t *testing.T) *course {
 	t.Helper()
-	c := &course{rooms: map[int]*rooms.Room{}, original: map[int]int{}, claimed: map[int]bool{}, next: 1000, reporting: true, survivalUp: true}
+	c := &course{rooms: map[int]*rooms.Room{}, original: map[int]int{}, claimed: map[int]bool{}, next: 1000, reporting: true, survivalUp: true, foes: map[int]int{}, nextFoe: 5000}
 	m := newModule()
-	m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905} }
+	m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905, 906} }
 	m.copyRooms = func(ids ...int) (map[int]int, error) {
 		out := map[int]int{}
 		for _, id := range ids {
@@ -108,6 +114,15 @@ func newCourse(t *testing.T) *course {
 		return nil
 	}
 	m.survivalUp = func() bool { return c.survivalUp }
+	m.spawnFoe = func(_, roomID int) (int, bool) {
+		if c.spawnFails {
+			return 0, false
+		}
+		c.nextFoe++
+		c.foes[c.nextFoe] = roomID
+		return c.nextFoe, true
+	}
+	m.removeFoe = func(id int) { c.removed = append(c.removed, id); delete(c.foes, id) }
 	c.m = m
 
 	users.ResetActiveUsers()
@@ -168,7 +183,7 @@ func TestBeginPlacesAtTheFirstStage(t *testing.T) {
 	assert.Equal(t, -1, c.user.Character.RoomIdOnReset)
 	assert.Equal(t, StageCharacter, c.stage())
 	assert.Equal(t, stateActive, progressOf(c.user.Character).State)
-	assert.Contains(t, c.text(), "stage 1 of 6: Your character")
+	assert.Contains(t, c.text(), "stage 1 of 7: Your character")
 	_, open := c.exit(1900, "east")
 	assert.False(t, open, "the way on is closed until the stage is passed")
 }
@@ -191,7 +206,7 @@ func TestAdvanceUnlocksNextRoom(t *testing.T) {
 
 	// Walking in shows the stage.
 	require.NoError(t, c.m.moveTo(7, 1901))
-	assert.Contains(t, c.text(), "stage 2 of 6: Your company")
+	assert.Contains(t, c.text(), "stage 2 of 7: Your company")
 
 	// Two living companions pass Company; a formation passes Formation.
 	c.members = []company.MemberView{{ID: 1, Status: company.MemberPresent}, {ID: 2, Status: company.MemberPresent}}
@@ -223,9 +238,23 @@ func TestAdvanceUnlocksNextRoom(t *testing.T) {
 	assert.Equal(t, StageCamp, c.stage(), "not rested yet")
 	c.tier = camping.TierRested
 	c.m.check(c.user)
-	assert.Equal(t, StageDeparture, c.stage())
+	assert.Equal(t, StageCombat, c.stage())
 	assert.Equal(t, struck+1, c.struck, "the course camp is struck")
 	to, open = c.exit(1905, "east")
+	require.True(t, open)
+	assert.Equal(t, 1906, to, "on to the Practice Yard")
+
+	// Combat: walking in raises the squad; beating them all passes.
+	c.user.Character.RoomId = 1905
+	require.NoError(t, c.m.moveTo(7, 1906))
+	require.Len(t, c.foes, 4)
+	for id, room := range c.foes {
+		assert.Equal(t, 1906, room, "in the player's own copy")
+		c.m.onPracticeBeaten(mobcommands.PracticeBeaten{InstanceId: id, RoomId: room})
+		c.m.check(c.user)
+	}
+	assert.Equal(t, StageDeparture, c.stage())
+	to, open = c.exit(1906, "east")
 	require.True(t, open)
 	assert.Equal(t, 1903, to, "on to the Gate")
 	to, open = c.exit(1903, "gate")
@@ -358,7 +387,15 @@ func TestNextOnlyWhenAllowed(t *testing.T) {
 	assert.Equal(t, StageCamp, c.stage())
 	c.reporting = false
 	_, _ = c.m.command("next", c.user, nil, 0)
-	assert.Equal(t, StageDeparture, c.stage(), "no camping: waived")
+	assert.Equal(t, StageCombat, c.stage(), "no camping: waived")
+
+	// Combat: waived only when no squad could be raised.
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageCombat, c.stage(), "not in the yard yet")
+	c.spawnFails = true
+	c.walkIn(t, StageCombat)
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageDeparture, c.stage(), "no squad: waived")
 	_, _ = c.m.command("next", c.user, nil, 0)
 	assert.Equal(t, StageDeparture, c.stage(), "departure is walked, not waived")
 }
@@ -467,7 +504,7 @@ func TestSuppliesOnceAndOnlyWhatsMissing(t *testing.T) {
 	c.walkIn(t, StageSurvival)
 	assert.Equal(t, []int{defaultWaterItem}, c.given, "only the missing drink")
 	assert.True(t, progressOf(c.user.Character).Supplied)
-	assert.Contains(t, c.text(), "stage 4 of 6: Survival")
+	assert.Contains(t, c.text(), "stage 4 of 7: Survival")
 
 	c.food, c.drink = false, false
 	c.walkIn(t, StageSurvival)
@@ -518,7 +555,7 @@ func TestSurvivalAndCampViews(t *testing.T) {
 	c.text()
 	_, _ = c.m.command("", c.user, nil, 0)
 	out := c.text()
-	assert.Contains(t, out, "stage 4 of 6: Survival")
+	assert.Contains(t, out, "stage 4 of 7: Survival")
 	assert.Contains(t, out, "[x] eat something")
 	assert.Contains(t, out, "[ ] drink something")
 	assert.Contains(t, out, "[x] cargo")
@@ -548,7 +585,7 @@ func TestSurvivalWaiverWithoutSurvival(t *testing.T) {
 	}
 	assert.Equal(t, StageCamp, c.stage())
 	_, _ = c.m.command("next", c.user, nil, 0)
-	assert.Equal(t, StageDeparture, c.stage(), "no rest without survival: Camp waived")
+	assert.Equal(t, StageCombat, c.stage(), "no rest without survival: Camp waived")
 }
 
 func TestFailedStrikeIsRetried(t *testing.T) {
@@ -589,4 +626,75 @@ func TestEdibleWaterCountsAsDrink(t *testing.T) {
 	assert.False(t, provisionKind(items.ItemSpec{Subtype: items.Drinkable}, true))
 	assert.True(t, provisionKind(items.ItemSpec{Subtype: items.Edible, Nutrition: 5}, false))
 	assert.False(t, provisionKind(items.ItemSpec{Subtype: items.Drinkable, Hydration: 5}, false))
+}
+
+// --- Phase 27c ---
+
+func TestSquadRaisedOnceAndOnlyForItsOwner(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.walkIn(t, StageCombat)
+	require.Len(t, c.foes, 4)
+	assert.Contains(t, c.text(), "stage 6 of 7: Combat")
+
+	// Walking out and back keeps the squad.
+	c.user.Character.RoomId = 1906
+	require.NoError(t, c.m.moveTo(7, 1905))
+	require.NoError(t, c.m.moveTo(7, 1906))
+	assert.Len(t, c.foes, 4, "no second squad")
+
+	// Someone else's practice foe doesn't count.
+	c.m.onPracticeBeaten(mobcommands.PracticeBeaten{InstanceId: 99999, RoomId: 1906})
+	var ids []int
+	for id := range c.foes {
+		ids = append(ids, id)
+	}
+	for _, id := range ids[:3] {
+		c.m.onPracticeBeaten(mobcommands.PracticeBeaten{InstanceId: id})
+	}
+	c.m.check(c.user)
+	assert.Equal(t, StageCombat, c.stage(), "one still stands")
+	c.text()
+	_, _ = c.m.command("", c.user, nil, 0)
+	assert.Contains(t, c.text(), "[ ] beat the straw soldiers (3 of 4)")
+	c.m.onPracticeBeaten(mobcommands.PracticeBeaten{InstanceId: ids[3]})
+	c.m.check(c.user)
+	assert.Equal(t, StageDeparture, c.stage())
+}
+
+func TestSquadReplacedOnResume(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.walkIn(t, StageCombat)
+	old := map[int]bool{}
+	for id := range c.foes {
+		old[id] = true
+	}
+	delete(c.m.copies, 7)
+	c.user.Character.RoomId = -1
+	c.m.resume(7)
+	assert.Equal(t, 2906, c.user.Character.RoomId)
+	assert.Len(t, c.removed, 4, "the old squad is removed")
+	for _, id := range c.removed {
+		assert.True(t, old[id])
+	}
+	require.Len(t, c.foes, 4, "a fresh squad")
+	for _, room := range c.foes {
+		assert.Equal(t, 2906, room)
+	}
+}
+
+func TestSquadRemovedOnSkipAndLeave(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.walkIn(t, StageCombat)
+	_, _ = c.m.command("skip yes", c.user, nil, 0)
+	assert.Empty(t, c.foes, "skip removes it")
+
+	d := newCourse(t)
+	d.m.Begin(7)
+	d.walkIn(t, StageCombat)
+	require.NoError(t, d.m.moveTo(7, 1))
+	assert.Empty(t, d.foes, "leaving removes it")
+	assert.Empty(t, d.m.fights)
 }
