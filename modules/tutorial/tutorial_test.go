@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// course is a module on fake rooms: templates 900..906, copies at +1000 on
+// course is a module on fake rooms: templates 900..907, copies at +1000 on
 // each placement (+1000 again for a second placement).
 type course struct {
 	m         *TutorialModule
@@ -61,7 +61,7 @@ func newCourse(t *testing.T) *course {
 	t.Helper()
 	c := &course{rooms: map[int]*rooms.Room{}, original: map[int]int{}, claimed: map[int]bool{}, next: 1000, reporting: true, survivalUp: true, foes: map[int]int{}, nextFoe: 5000}
 	m := newModule()
-	m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905, 906} }
+	m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905, 906, 907} }
 	m.copyRooms = func(ids ...int) (map[int]int, error) {
 		out := map[int]int{}
 		for _, id := range ids {
@@ -190,7 +190,7 @@ func TestBeginPlacesAtTheFirstStage(t *testing.T) {
 	assert.Equal(t, -1, c.user.Character.RoomIdOnReset)
 	assert.Equal(t, StageCharacter, c.stage())
 	assert.Equal(t, stateActive, progressOf(c.user.Character).State)
-	assert.Contains(t, c.text(), "stage 1 of 7: Your character")
+	assert.Contains(t, c.text(), "stage 1 of 8: Your character")
 	_, open := c.exit(1900, "east")
 	assert.False(t, open, "the way on is closed until the stage is passed")
 }
@@ -213,7 +213,7 @@ func TestAdvanceUnlocksNextRoom(t *testing.T) {
 
 	// Walking in shows the stage.
 	require.NoError(t, c.m.moveTo(7, 1901))
-	assert.Contains(t, c.text(), "stage 2 of 7: Your company")
+	assert.Contains(t, c.text(), "stage 2 of 8: Your company")
 
 	// Two living companions pass Company; a formation passes Formation.
 	c.members = []company.MemberView{{ID: 1, Status: company.MemberPresent}, {ID: 2, Status: company.MemberPresent}}
@@ -260,8 +260,21 @@ func TestAdvanceUnlocksNextRoom(t *testing.T) {
 		c.m.onPracticeBeaten(mobcommands.PracticeBeaten{InstanceId: id, RoomId: room})
 		c.m.check(c.user)
 	}
-	assert.Equal(t, StageDeparture, c.stage())
+	assert.Equal(t, StageAlignment, c.stage())
 	to, open = c.exit(1906, "east")
+	require.True(t, open)
+	assert.Equal(t, 1907, to, "on to the Oath Stone")
+
+	// Alignment: the three inspections, a subcommand counting only with
+	// its own first word.
+	c.m.onCommandDone(usercommands.CommandDone{UserId: 7, Command: "company", Rest: "status"})
+	c.m.onCommandDone(usercommands.CommandDone{UserId: 7, Command: "company", Rest: "alignment"})
+	c.m.onCommandDone(usercommands.CommandDone{UserId: 7, Command: "company", Rest: "inspect corvin"})
+	c.m.check(c.user)
+	assert.Equal(t, StageAlignment, c.stage(), "standing still to check")
+	c.run("standing")
+	assert.Equal(t, StageDeparture, c.stage())
+	to, open = c.exit(1907, "east")
 	require.True(t, open)
 	assert.Equal(t, 1903, to, "on to the Gate")
 	to, open = c.exit(1903, "gate")
@@ -402,7 +415,15 @@ func TestNextOnlyWhenAllowed(t *testing.T) {
 	c.spawnFails = true
 	c.walkIn(t, StageCombat)
 	_, _ = c.m.command("next", c.user, nil, 0)
-	assert.Equal(t, StageDeparture, c.stage(), "no squad: waived")
+	assert.Equal(t, StageAlignment, c.stage(), "no squad: waived")
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageAlignment, c.stage(), "the checks can always be run")
+	for _, key := range inspectionsOf(StageAlignment) {
+		cmd, rest, _ := strings.Cut(key, " ")
+		c.m.onCommandDone(usercommands.CommandDone{UserId: 7, Command: cmd, Rest: rest})
+	}
+	c.m.check(c.user)
+	assert.Equal(t, StageDeparture, c.stage())
 	_, _ = c.m.command("next", c.user, nil, 0)
 	assert.Equal(t, StageDeparture, c.stage(), "departure is walked, not waived")
 }
@@ -511,7 +532,7 @@ func TestSuppliesOnceAndOnlyWhatsMissing(t *testing.T) {
 	c.walkIn(t, StageSurvival)
 	assert.Equal(t, []int{defaultWaterItem}, c.given, "only the missing drink")
 	assert.True(t, progressOf(c.user.Character).Supplied)
-	assert.Contains(t, c.text(), "stage 4 of 7: Survival")
+	assert.Contains(t, c.text(), "stage 4 of 8: Survival")
 
 	c.food, c.drink = false, false
 	c.walkIn(t, StageSurvival)
@@ -562,7 +583,7 @@ func TestSurvivalAndCampViews(t *testing.T) {
 	c.text()
 	_, _ = c.m.command("", c.user, nil, 0)
 	out := c.text()
-	assert.Contains(t, out, "stage 4 of 7: Survival")
+	assert.Contains(t, out, "stage 4 of 8: Survival")
 	assert.Contains(t, out, "[x] eat something")
 	assert.Contains(t, out, "[ ] drink something")
 	assert.Contains(t, out, "[x] cargo")
@@ -642,7 +663,7 @@ func TestSquadRaisedOnceAndOnlyForItsOwner(t *testing.T) {
 	c.m.Begin(7)
 	c.walkIn(t, StageCombat)
 	require.Len(t, c.foes, 4)
-	assert.Contains(t, c.text(), "stage 6 of 7: Combat")
+	assert.Contains(t, c.text(), "stage 6 of 8: Combat")
 
 	// Walking out and back keeps the squad.
 	c.user.Character.RoomId = 1906
@@ -666,7 +687,7 @@ func TestSquadRaisedOnceAndOnlyForItsOwner(t *testing.T) {
 	assert.Contains(t, c.text(), "[ ] beat the straw soldiers (3 of 4)")
 	c.m.onPracticeBeaten(mobcommands.PracticeBeaten{InstanceId: ids[3]})
 	c.m.check(c.user)
-	assert.Equal(t, StageDeparture, c.stage())
+	assert.Equal(t, StageAlignment, c.stage())
 }
 
 func TestSquadReplacedOnResume(t *testing.T) {
@@ -755,11 +776,30 @@ func TestLostFoeRaisesTheSquadAgain(t *testing.T) {
 	assert.Len(t, c.foes, 4)
 }
 
-func TestCombatWaivedWithoutAYard(t *testing.T) {
+// A deployment whose TutorialRooms lacks a stage's room can't run the
+// course: nobody starts it, and anyone mid-course is let out as skipped.
+func TestCourseUnavailableWithoutEveryRoom(t *testing.T) {
 	c := newCourse(t)
 	c.m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905} }
-	c.m.Begin(7)
-	c.at(StageCombat)
-	_, _ = c.m.command("next", c.user, nil, 0)
-	assert.Equal(t, StageDeparture, c.stage(), "no Practice Yard copy: waived")
+	assert.False(t, c.m.Begin(7), "not started")
+	assert.Equal(t, stateNone, progressOf(c.user.Character).State)
+
+	progress{State: stateActive, Stage: StageSurvival}.save(c.user.Character)
+	c.user.Character.RoomId = 1
+	c.m.resume(7)
+	assert.Equal(t, stateSkipped, progressOf(c.user.Character).State, "let out, without the reward")
+	assert.Empty(t, c.given)
+	assert.Contains(t, c.text(), "training grounds are closed")
+}
+
+func TestSubcommandInspections(t *testing.T) {
+	s := stages[stageIndex(StageAlignment)]
+	assert.Equal(t, []string{"company alignment", "company inspect", "standing"}, s.Inspections)
+	assert.Equal(t, []string{"company alignment", "company inspect"}, required(s, func(cmd string) bool { return cmd == "company" }), "registered by command")
+	assert.True(t, inspectionMatches("company alignment", "company", "Alignment"))
+	assert.True(t, inspectionMatches("company inspect", "company", "inspect  corvin"))
+	assert.False(t, inspectionMatches("company inspect", "company", "status"))
+	assert.False(t, inspectionMatches("company inspect", "company", ""))
+	assert.True(t, inspectionMatches("standing", "standing", "anything"))
+	assert.False(t, inspectionMatches("standing", "stand", ""))
 }

@@ -6,6 +6,8 @@ package tutorial
 // docs/superpowers/specs/2026-09-25-phase-27b-tutorial-survival-camp-design.md.
 // Phase 27c adds Combat:
 // docs/superpowers/specs/2026-09-25-phase-27c-tutorial-practice-fight-design.md.
+// Phase 27d adds Alignment:
+// docs/superpowers/specs/2026-09-25-phase-27d-tutorial-alignment-panel-design.md.
 
 import (
 	"sort"
@@ -25,12 +27,15 @@ const (
 	StageSurvival  StageID = "survival"
 	StageCamp      StageID = "camp"
 	StageCombat    StageID = "combat"
+	StageAlignment StageID = "alignment"
 	StageDeparture StageID = "departure"
 )
 
 // Stage is one lesson: the room it is taught in (an index into the
 // configured tutorial rooms), its goal, and what to try. Inspections are
-// commands, by registered name, the stage asks the player to run.
+// commands the stage asks the player to run: a registered name, optionally
+// with a subcommand ("company alignment") that must be the first word of the
+// rest of the line.
 type Stage struct {
 	ID          StageID
 	Room        int
@@ -125,6 +130,19 @@ func init() {
 			Done: "The straw soldiers are beaten.",
 		},
 		{
+			ID: StageAlignment, Room: 7, Title: "Alignment",
+			Intro: "Everyone leans good or evil, your companions too. A company slowly drifts toward its members' common ground, and a companion who stands far from the rest loses loyalty and may one day walk away. You never drift: you set the course. Towns weigh a company's reputation as well.",
+			Goal:  "Check your company's alignment, inspect the outlaw Corvin, and check your standing.",
+			Hints: []string{
+				`<ansi fg="command">company alignment</ansi> shows the company's average and each member's alignment and loyalty.`,
+				`<ansi fg="command">company inspect corvin</ansi> weighs a would-be recruit against your company. Too far from its average, and a recruit refuses to join: Corvin is an outlaw your company won't take.`,
+				`Companions drift a little toward the rest of the company over time. One kept too far from the others loses loyalty, and at none deserts.`,
+				`<ansi fg="command">standing</ansi> shows how a settlement regards your company: good standing gets fair prices, poor standing higher ones, and outlaws are turned away but for the black market.`,
+			},
+			Done:        "You know where your company stands.",
+			Inspections: []string{"company alignment", "company inspect", "standing"},
+		},
+		{
 			ID: StageDeparture, Room: 3, Title: "Departure",
 			Intro: "Your training is done. Look over your company and your pack before you go.",
 			Goal:  "When you're ready, go through the gate.",
@@ -150,12 +168,28 @@ func stageIndex(id StageID) int {
 // command whose module isn't loaded is never asked for.
 func required(s Stage, registered func(string) bool) []string {
 	var out []string
-	for _, cmd := range s.Inspections {
+	for _, key := range s.Inspections {
+		cmd, _, _ := strings.Cut(key, " ")
 		if registered(cmd) {
-			out = append(out, cmd)
+			out = append(out, key)
 		}
 	}
 	return out
+}
+
+// inspectionMatches reports whether a handled command (its registered
+// name and the rest of the line) is an inspection: the command, and the
+// key's subcommand, if it has one, as the first word of the rest.
+func inspectionMatches(key, command, rest string) bool {
+	keyCmd, keySub, _ := strings.Cut(key, " ")
+	if command != keyCmd {
+		return false
+	}
+	if keySub == "" {
+		return true
+	}
+	words := strings.Fields(rest)
+	return len(words) > 0 && strings.EqualFold(words[0], keySub)
 }
 
 // inspected: every required inspection of a stage was run.

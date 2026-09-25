@@ -254,7 +254,7 @@ func (m *TutorialModule) load() {
 func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
 	ids := m.roomIDs()
 	at := stageIndex(p.Stage)
-	if at < 0 || stages[at].Room >= len(ids) {
+	if at < 0 || !m.available() {
 		return false
 	}
 	copies, err := m.copyRooms(ids...)
@@ -286,6 +286,31 @@ func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
 	m.sendStage(user, at)
 	m.enterStage(user, p)
 	return true
+}
+
+// available reports whether every stage has its room: a deployment whose
+// TutorialRooms lacks one can't run the course (27d review).
+func (m *TutorialModule) available() bool {
+	ids := m.roomIDs()
+	for _, s := range stages {
+		if s.Room < 0 || s.Room >= len(ids) {
+			return false
+		}
+	}
+	return true
+}
+
+// closeCourse lets a player in the course out when it can't run: skipped,
+// with no reward, wherever the engine put them.
+func (m *TutorialModule) closeCourse(user *users.UserRecord, p progress) {
+	p.State = stateSkipped
+	p.save(user.Character)
+	delete(m.copies, user.UserId)
+	user.Character.RoomIdOnReset = 0
+	m.strikeCamp(user)
+	m.clearSquad(user.UserId)
+	mudlog.Error("tutorial: course unavailable", "user", user.UserId, "rooms", len(m.roomIDs()), "stages", len(stages))
+	user.SendText(`The training grounds are closed, so your training ends here. Your journey begins.`)
 }
 
 // travel moves a player (and their living companions, which only follow
@@ -355,6 +380,10 @@ func (m *TutorialModule) Begin(userID int) bool {
 	}
 	switch prior := progressOf(user.Character); prior.State {
 	case stateActive:
+		if !m.available() {
+			m.closeCourse(user, prior)
+			return false
+		}
 		// Already in the course (e.g. "start" typed in the Void before
 		// resume ran): carry on at their stage, never from the top.
 		if stageIndex(prior.Stage) < 0 {
@@ -397,9 +426,9 @@ func (m *TutorialModule) onCommandDone(d usercommands.CommandDone) {
 	if p.State != stateActive || at < 0 {
 		return
 	}
-	for _, cmd := range stages[at].Inspections {
-		if d.Command == cmd && !p.Seen[cmd] {
-			p.Seen[cmd] = true
+	for _, key := range stages[at].Inspections {
+		if inspectionMatches(key, d.Command, d.Rest) && !p.Seen[key] {
+			p.Seen[key] = true
 			p.save(user.Character)
 			return
 		}
@@ -633,6 +662,8 @@ func (m *TutorialModule) passed(user *users.UserRecord, p progress) bool {
 		return m.rested(user.UserId)
 	case StageCombat:
 		return m.squadBeaten(user.UserId)
+	case StageAlignment:
+		return inspected(stages[stageIndex(StageAlignment)], p, m.registered)
 	}
 	return false // Departure ends at the gate
 }
@@ -783,6 +814,10 @@ func (m *TutorialModule) resume(userID int) {
 	if stageIndex(p.Stage) < 0 {
 		p.Stage = stages[0].ID
 		p.save(user.Character)
+	}
+	if !m.available() {
+		m.closeCourse(user, p)
+		return
 	}
 	user.SendText(`<ansi fg="magenta">You find yourself back where your training left off.</ansi>`)
 	m.place(user, p)
