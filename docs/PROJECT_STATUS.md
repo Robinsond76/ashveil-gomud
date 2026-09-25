@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-25
-- **HEAD:** Phase 27b (tutorial Survival and Camp lessons) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27a is on `master`.
+- **HEAD:** Phase 27c (tutorial practice fight) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27b is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -60,9 +60,9 @@ instead of duplicating them.
   summary in text and in the browser), and Phase 27a (the tutorial framework:
   durable progress, resume, skip, and the Character, Company, Formation, and
   Departure lessons), and Phase 27b (the tutorial's Survival and Camp
-  lessons).
-- **Next:** Phase 27c (the tutorial's practice fight, Alignment, and browser
-  tutorial panel), per the
+  lessons), and Phase 27c (the tutorial's practice fight).
+- **Next:** Phase 27d (the tutorial's Alignment lesson and browser tutorial
+  panel), per the
   [Ashveil tutorial](superpowers/specs/2026-09-23-ashveil-tutorial-design.md).
 
 ## Phase progress
@@ -111,10 +111,100 @@ instead of duplicating them.
 | 26b | Browser Company panel (GMCP) | Complete: `Company`/`Company.Vitals` GMCP from the 26a summary, sent on change and only to the leader; a Company section above Players in the web client's Party window, safe DOM, keyboard and screen-reader friendly, checked in Chromium |
 | 27a | Tutorial framework and first lessons | Complete: `modules/tutorial` runs the course in per-player copies of rooms 900–903 (Waking Hall, Muster Yard, Drill Ground, Gate); progress in MiscData, resumed on login; gates check results; `tutorial`, `tutorial next`, `tutorial skip`; graduation cap once; old JS rooms removed |
 | 27b | Tutorial: Survival and Camp lessons | Complete: Weather Yard (904) and Campground (905) before the Gate; Survival passes on a real meal and drink (`survival.OnProvision`) plus `weather`/`temperature`/`strain`/`cargo`, with food and water given once for what the pack lacks; Camp passes on Rested from a real camp rest; course camps struck (`camping.AbandonCamp`) on pass, skip, leave, logout, and placement |
-| 27c | Tutorial: practice fight, Alignment, browser panel | Planned |
+| 27c | Tutorial: practice fight | Complete: Practice Yard (906) before the Gate; a squad of harmless straw soldiers (three footmen in front, an archer behind) per player; `practice` mobs beaten with no XP, drops, gold, kills, or `MobDeath` (`mobcommands.OnPracticeBeaten`); the gate is the squad beaten; death in the course decided (an ordinary death, ending the course as a skip) |
+| 27d | Tutorial: Alignment lesson, browser panel | Planned |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 27c: tutorial practice fight (2026-09-25)
+
+- **What:** A Combat lesson in a new Practice Yard (room 906), before the
+  Gate.
+  - **The squad:** walking in (or being placed there) raises the player's
+    own squad in their copy: three straw footmen (mob 67) in front and a
+    straw archer (68) behind, one enemy party (`practice-squad`). They use
+    the `dummy` race (`0d0`), so they can't hurt anyone.
+  - **No farm:** a new mob field, `practice: true`, makes `Suicide` beat
+    the foe instead of killing it. It announces it, fires
+    `mobcommands.OnPracticeBeaten`, and removes it as `vanish` does: no
+    XP, alignment, kills, taming, drops, loot, gold, corpse, or
+    `MobDeath`. Practice mobs never despawn from boredom.
+  - **The gate:** every foe of the player's squad beaten, by anyone in the
+    company. The hints cover taking your own place in the grid,
+    interception, "can't reach", `formation reach`, moving mid-fight,
+    re-targeting, health, conditions, and sharpened edges.
+  - **Squads** live in memory. Placement and logout remove them, and a
+    squad missing a foe that wasn't beaten is raised again while the
+    player is in the yard. Skip, leave, and passing remove what's left.
+    `tutorial next` waives Combat when there's no yard or no squad.
+  - **Death in the course, decided:** an ordinary death that ends the
+    course as a skip. Nothing in the course can kill quickly.
+  - **Split:** the Alignment lesson and the browser tutorial panel move to
+    27d.
+
+  Design and plan:
+  [27c spec](superpowers/specs/2026-09-25-phase-27c-tutorial-practice-fight-design.md) /
+  [27c plan](superpowers/plans/2026-09-25-phase-27c-tutorial-practice-fight.md).
+- **Why:** The tutorial spec's stage 6, and 27a's deferred death decision.
+- **Verification:** `go test -race ./...` (78 packages), `make generate`,
+  `make validate`.
+  - **Wiring test**, through `plugins.Load` and the real combat round
+    (`hooks.DoCombat`, with the test relaying queued mob commands as the
+    world loop does):
+    - the squad forms one party with the archer behind;
+    - the leader takes a place in the grid;
+    - Aria's attack at the archer lands on a footman ("You hit straw
+      footman", never the archer), and her aim moves to it;
+    - a foe she's aiming at falls to another blow and she turns to a
+      standing foe without a command (a mutation disabling re-targeting
+      fails it);
+    - the whole squad beaten passes Combat, with no XP, gold, drops, or
+      corpse;
+    - the clock is unchanged.
+  - **Engine tests:** a practice mob's death gives no XP, kill, alignment,
+    drops, gold, corpse, or `MobDeath`, fires the hook, and leaves the room;
+    an ordinary mob still rewards; practice mobs never despawn.
+  - **Module tests:** the squad raised once and only for its owner,
+    replaced on resume, removed on skip, leave, and logout, raised again
+    after reused copy IDs or a lost foe; the waivers; the checklist.
+  - **Shipped content:** seven rooms in stage order; the squad's mobs are
+    practice, `dummy` race, in one group, footmen hardier than the archer.
+- **Review:** The independent reviewer confirmed every reward path is
+  skipped (solo and party XP, kills, scripts, `MobDeath`, drops, loot,
+  gold, corpses, and taming, which the race blocks anyway), that companion
+  blows can't reward, and that ordinary mobs are unaffected. Its findings:
+  1. *High, fixed:* a logout at Combat could leave the yard empty for
+     good. The freed copy's IDs were handed back on resume, and the
+     remembered squad counted as standing. Placement and logout now remove
+     the squad, and a squad is kept only while intact
+     (`TestSquadRaisedAgainWhenCopyIDsAreReused`).
+  2. *Medium, fixed:* a foe removed without being beaten (boredom
+     despawn, admin) stranded the gate. Practice mobs no longer despawn,
+     and a lost foe raises the squad again (`TestLostFoeRaisesTheSquadAgain`,
+     `TestPracticeMobsNeverDespawn`).
+  3. *Low, fixed:* stale squads and live mobs after a logout (fixed with 1).
+  4. *Low, fixed:* no waiver without a Practice Yard copy
+     (`TestCombatWaivedWithoutAYard`).
+  5. *Low, fixed:* a hint claimed the formation locks in combat; it
+     doesn't.
+  6. *Low, fixed:* the interception hint now says it needs the leader in
+     the grid, and suggests another footman when one is out of reach.
+  7. *Low, fixed:* spec levels and death wording.
+  8. *Low, not changed:* no `AggroChanged` when a practice foe is beaten
+     (the next round re-targets and sends it), and the squad's hostility
+     after a fight is group-wide for a couple of minutes. Both are
+     harmless.
+  9. *Medium, fixed:* re-targeting was untested (the loop re-issued
+     `attack`). There is now a direct check, and a mutation fails it.
+  10. *Low, partly fixed:* interception is now proved from Aria's own
+      messages. The gold and item checks can't fail (the squad carries
+      none) but stay as guards. The party-shape check uses HealthMax, not
+      the hooks' private effective HP; it matches for the `dummy` race's
+      zero defense.
+  11. *Low, fixed:* ID reuse, logout, and lost foes are tested; kills and
+      alignment are asserted in the engine test.
+- **Step completed:** Phase 27c.
 
 ### Phase 27b: tutorial Survival and Camp lessons (2026-09-25)
 

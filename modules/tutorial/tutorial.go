@@ -89,6 +89,7 @@ type TutorialModule struct {
 	// Phase 27c.
 	spawnFoe  func(mobID, roomID int) (instanceID int, ok bool)
 	removeFoe func(instanceID int)
+	foeHere   func(instanceID, roomID int) bool
 
 	graduationItem int
 	rationItem     int
@@ -141,6 +142,7 @@ func newModule() *TutorialModule {
 		survivalUp:     survival.CompanyServiceAvailable,
 		spawnFoe:       spawnPracticeFoe,
 		removeFoe:      removePracticeFoe,
+		foeHere:        practiceFoeHere,
 		squad:          defaultSquad,
 		fights:         map[int]*fight{},
 		graduationItem: defaultGraduationItem,
@@ -261,6 +263,8 @@ func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
 		return false
 	}
 	m.copies[user.UserId] = copies
+	// Fresh copies, fresh squad: the old one stood in the old copies.
+	m.clearSquad(user.UserId)
 	// No course camp outlives its room copies. A logout strikes it already;
 	// this catches a crash or restart, where a rest that ran its minute
 	// meanwhile has completed and still grants Rested.
@@ -504,21 +508,24 @@ func (m *TutorialModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 	m.strikeCamp(user)
+	// The squad goes too: the copies it stands in are freed, and their IDs
+	// may be handed back on resume.
+	m.clearSquad(user.UserId)
 	return events.Continue
 }
 
 // --- the practice fight (27c) ---
 
 // raiseSquad stands a practice squad up in the player's copy of the Combat
-// room, unless one stands there already. A squad left in an older copy
-// (before a resume) is removed first.
+// room, unless the whole of it still stands there. A squad in an older
+// copy, or one missing a foe that wasn't beaten, is removed first.
 func (m *TutorialModule) raiseSquad(user *users.UserRecord) {
 	room := m.copyOf(user.UserId, stages[stageIndex(StageCombat)].Room)
 	if room == 0 {
 		return
 	}
 	if f := m.fights[user.UserId]; f != nil {
-		if f.room == room {
+		if f.room == room && m.intact(f) {
 			return
 		}
 		m.clearSquad(user.UserId)
@@ -535,6 +542,16 @@ func (m *TutorialModule) raiseSquad(user *users.UserRecord) {
 		mudlog.Error("tutorial: no practice squad", "user", user.UserId, "squad", m.squad)
 		user.SendText(`The practice yard is empty today. Type <ansi fg="command">tutorial next</ansi> to go on.`)
 	}
+}
+
+// intact: every foe not yet beaten still stands in the squad's room.
+func (m *TutorialModule) intact(f *fight) bool {
+	for id := range f.standing {
+		if !m.foeHere(id, f.room) {
+			return false
+		}
+	}
+	return true
 }
 
 // clearSquad removes a player's foes still standing.
@@ -576,6 +593,11 @@ func spawnPracticeFoe(mobID, roomID int) (int, bool) {
 	}
 	room.AddMob(mob.InstanceId)
 	return mob.InstanceId, true
+}
+
+func practiceFoeHere(instanceID, roomID int) bool {
+	mob := mobs.GetInstance(instanceID)
+	return mob != nil && mob.Character.RoomId == roomID
 }
 
 func removePracticeFoe(instanceID int) {
@@ -623,6 +645,11 @@ func (m *TutorialModule) check(user *users.UserRecord) {
 	}
 	m.retryStrike(user)
 	p := progressOf(user.Character)
+	// A foe gone without being beaten (despawned, torn down) is made good
+	// while the player is in the yard.
+	if p.State == stateActive && p.Stage == StageCombat && user.Character.RoomId == m.copyOf(user.UserId, stages[stageIndex(StageCombat)].Room) {
+		m.raiseSquad(user)
+	}
 	if p.State != stateActive || !m.passed(user, p) {
 		return
 	}
@@ -876,8 +903,9 @@ func (m *TutorialModule) next(user *users.UserRecord, p progress) {
 		}
 	}
 	// Camp: nothing here can camp or rest.
-	// Combat: the yard is entered but no squad could be raised.
-	if f := m.fights[user.UserId]; p.Stage == StageCombat && f != nil && f.raised == 0 {
+	// Combat: there's no yard, or no squad could be raised in it.
+	if f := m.fights[user.UserId]; p.Stage == StageCombat &&
+		(m.copyOf(user.UserId, stages[stageIndex(StageCombat)].Room) == 0 || (f != nil && f.raised == 0)) {
 		user.SendText("There's no one to practice against, so this lesson is waived.")
 		m.advance(user, p)
 		return

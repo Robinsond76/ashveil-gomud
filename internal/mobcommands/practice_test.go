@@ -76,6 +76,9 @@ func TestPracticeMobGivesNothing(t *testing.T) {
 	assert.Equal(t, 424242, beaten[0].InstanceId)
 	assert.Equal(t, room.RoomId, beaten[0].RoomId)
 	assert.NotContains(t, room.GetMobs(), 424242, "it leaves the room")
+	user := users.GetByUserId(7)
+	assert.Zero(t, user.Character.KD.GetMobKills(999), "no kill counted")
+	assert.Zero(t, user.Character.Alignment)
 }
 
 func TestOrdinaryMobStillRewards(t *testing.T) {

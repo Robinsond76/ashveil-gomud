@@ -116,10 +116,10 @@ func init() {
 			Hints: []string{
 				`Take your own place in the grid first, e.g. <ansi fg="command">formation move me 3 2</ansi>: where you stand decides what you can reach.`,
 				`<ansi fg="command">attack footman</ansi> starts the fight; your companions join in. You keep fighting, round by round, until your target falls.`,
-				`The archer stands behind the footmen: an attack aimed at it is caught by a footman in front (interception).`,
-				`"You can't reach that target from here" means it's too far across the grid, or too deep for your weapon. <ansi fg="command">formation reach <name></ansi> shows who can reach what; long weapons reach one rank deeper, bows any.`,
+				`The archer stands behind the footmen: once you stand in the grid, an attack aimed at it is caught by the footman in front of it (interception).`,
+				`"You can't reach that target from here" means it's too far across the grid, or too deep for your weapon: attack another footman, or move. <ansi fg="command">formation reach <name></ansi> shows who can reach what; long weapons reach one rank deeper, bows any.`,
 				`When a foe falls, companions who were aiming at it turn to the next one they can reach, on their own. The one who struck it down picks a new target: <ansi fg="command">attack</ansi> again.`,
-				`Set your formation before a fight (<ansi fg="command">formation move</ansi>); it holds once blows are struck.`,
+				`You can move anyone with <ansi fg="command">formation move</ansi> at any time, even mid-fight, to bring a foe within reach.`,
 				`Watch your health in your prompt and <ansi fg="command">status</ansi>, and what ails you in <ansi fg="command">conditions</ansi>. A sharpened edge is spent one strike at a time, whether the blow does much or little.`,
 			},
 			Done: "The straw soldiers are beaten.",

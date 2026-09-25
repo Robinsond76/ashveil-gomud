@@ -440,26 +440,38 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, [2]int{2, 1}, [2]int{row, col})
 
-	// An attack at the archer is caught by a footman in front.
+	// An attack at the archer is caught by a footman in front: Aria's own
+	// blows land on a footman, never the archer.
 	run(aria, "attack", "archer")
 	require.NotNil(t, aria.Character.Aggro)
+	require.Equal(t, archer, aria.Character.Aggro.MobInstanceId)
 	var r uint64
-	for r = 1; r < 200; r++ {
+	seen := ""
+	for r = 1; r < 200 && !strings.Contains(seen, "You hit straw footman"); r++ {
 		fightRound(r)
-		hit := false
-		for id := range squad {
-			if mob := mobs.GetInstance(id); mob != nil && id != archer && mob.Character.PlayerDamage[aria.UserId] > 0 {
-				hit = true
-			}
-		}
-		if hit {
-			break
-		}
+		seen += text(aria)
 	}
-	require.Less(t, r, uint64(200), "a blow landed: %s", text(aria))
-	if mob := mobs.GetInstance(archer); mob != nil {
-		assert.Zero(t, mob.Character.PlayerDamage[aria.UserId], "the archer is shielded")
-	}
+	require.Contains(t, seen, "You hit straw footman", "a blow landed")
+	assert.NotContains(t, seen, "You hit straw archer", "the archer is shielded")
+	assert.Equal(t, "straw footman", squad[aria.Character.Aggro.MobInstanceId], "her aim moves to the footman who caught it")
+
+	// Re-targeting (11b): a foe Aria is aiming at falls to another blow
+	// (a companion's, here beaten directly); next round she turns to a
+	// standing foe she can reach, without another command.
+	run(aria, "attack", "footman")
+	aimed := aria.Character.Aggro.MobInstanceId
+	require.NotEqual(t, archer, aimed)
+	beatenMob := mobs.GetInstance(aimed)
+	require.NotNil(t, beatenMob)
+	_, err = mobcommands.Suicide("", beatenMob, yard)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	fightRound(r)
+	r++
+	require.NotNil(t, aria.Character.Aggro, "not dropped")
+	assert.NotEqual(t, aimed, aria.Character.Aggro.MobInstanceId, "turned to another foe")
+	assert.NotNil(t, mobs.GetInstance(aria.Character.Aggro.MobInstanceId), "a standing one")
+	assert.Contains(t, squad, aria.Character.Aggro.MobInstanceId)
 
 	// Fight on until the squad is beaten, attacking again whenever a foe
 	// falls to Aria's own blow (a killing blow ends the attacker's aim;

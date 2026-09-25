@@ -447,7 +447,9 @@ func (m *Mob) GetTempData(key string) any {
 }
 
 func (m *Mob) Despawns() bool {
-	if m.HasShop() {
+	// Ashveil (Phase 27c): a practice foe waits for its player, however
+	// long they're away from it.
+	if m.Practice || m.HasShop() {
 		return false
 	}
 	return true

@@ -54,6 +54,7 @@ type course struct {
 	removed    []int
 	nextFoe    int
 	spawnFails bool
+	reuseIDs   bool
 }
 
 func newCourse(t *testing.T) *course {
@@ -69,7 +70,9 @@ func newCourse(t *testing.T) *course {
 			c.original[copyID] = id
 			out[id] = copyID
 		}
-		c.next += 1000
+		if !c.reuseIDs {
+			c.next += 1000 // a real server may hand the same IDs back
+		}
 		return out, nil
 	}
 	m.loadRoom = func(id int) *rooms.Room { return c.rooms[id] }
@@ -123,6 +126,10 @@ func newCourse(t *testing.T) *course {
 		return c.nextFoe, true
 	}
 	m.removeFoe = func(id int) { c.removed = append(c.removed, id); delete(c.foes, id) }
+	m.foeHere = func(id, roomID int) bool {
+		room, ok := c.foes[id]
+		return ok && room == roomID
+	}
 	c.m = m
 
 	users.ResetActiveUsers()
@@ -697,4 +704,62 @@ func TestSquadRemovedOnSkipAndLeave(t *testing.T) {
 	require.NoError(t, d.m.moveTo(7, 1))
 	assert.Empty(t, d.foes, "leaving removes it")
 	assert.Empty(t, d.m.fights)
+}
+
+// --- Phase 27c review ---
+
+// A logout frees the room copies (and their mobs); the next placement can
+// be handed the very same IDs.
+func TestSquadRaisedAgainWhenCopyIDsAreReused(t *testing.T) {
+	c := newCourse(t)
+	c.reuseIDs = true
+	c.m.Begin(7)
+	c.walkIn(t, StageCombat)
+	require.Len(t, c.foes, 4)
+	c.m.onPlayerDespawn(events.PlayerDespawn{UserId: 7})
+	assert.Empty(t, c.foes, "logout removes the squad")
+	assert.Empty(t, c.m.fights)
+	delete(c.m.copies, 7)
+	c.user.Character.RoomId = -1
+	c.m.resume(7)
+	require.Equal(t, 1906, c.user.Character.RoomId, "the same copy ID")
+	assert.Len(t, c.foes, 4, "a fresh squad stands")
+}
+
+// A foe that vanishes without being beaten (despawned, torn down) is made
+// good: the squad is raised again once the player is in the yard.
+func TestLostFoeRaisesTheSquadAgain(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.walkIn(t, StageCombat)
+	var gone int
+	for id := range c.foes {
+		gone = id
+		break
+	}
+	delete(c.foes, gone) // despawned, no OnPracticeBeaten
+	c.m.check(c.user)
+	assert.Len(t, c.foes, 4, "raised again in the yard")
+	assert.NotContains(t, c.foes, gone)
+
+	// Away from the yard, it waits for the player to walk back in.
+	for id := range c.foes {
+		delete(c.foes, id)
+		break
+	}
+	c.user.Character.RoomId = 1906
+	require.NoError(t, c.m.moveTo(7, 1905))
+	c.m.check(c.user)
+	assert.Len(t, c.foes, 3)
+	require.NoError(t, c.m.moveTo(7, 1906))
+	assert.Len(t, c.foes, 4)
+}
+
+func TestCombatWaivedWithoutAYard(t *testing.T) {
+	c := newCourse(t)
+	c.m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905} }
+	c.m.Begin(7)
+	c.at(StageCombat)
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageDeparture, c.stage(), "no Practice Yard copy: waived")
 }

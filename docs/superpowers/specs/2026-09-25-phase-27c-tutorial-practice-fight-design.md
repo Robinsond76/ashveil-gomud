@@ -46,8 +46,8 @@ the owner's "carry on to 27c" instruction (2026-09-25).
    Company, Formation, Survival, Camp, Combat, Departure.
 2. **A squad of straw soldiers.** Four practice foes share the Groups tag
    `practice-squad`, so they form one enemy party:
-   - three straw footmen (mob 67, level 2) fill the front row;
-   - a straw archer (mob 68, level 1, lower HP) stands behind them.
+   - three straw footmen (mob 67, level 3) fill the front row;
+   - a straw archer (mob 68, level 2, lower HP) stands behind them.
 
    They use the `dummy` race, so they deal no damage. No injury, death, or
    rescue can come from the fight.
@@ -86,8 +86,9 @@ the owner's "carry on to 27c" instruction (2026-09-25).
 6. **Waiver:** `tutorial next` passes Combat when no squad could be spawned
    (the templates are missing).
 7. **Death in the course is decided:** nothing in the course deals damage
-   quickly. The practice foes are harmless, and only lingering in the open
-   Weather Yard for a very long time could hurt. A death there is an
+   quickly. The practice foes are harmless, and only lingering outdoors (the
+   Weather Yard, the Campground, or the Practice Yard) for a very long time
+   could hurt. A death there is an
    ordinary death (Phase 25a): the player wakes at the church, and leaving
    the course that way counts as a skip, as before. The course can't be
    re-entered, and nothing it grants is lost that a graduate would keep.
@@ -135,3 +136,20 @@ the owner's "carry on to 27c" instruction (2026-09-25).
   with this, and the wiring test places the leader before attacking.
 - **The squad's levels** are 3 (footmen, 16 HP) and 2 (archer, 11 HP): a
   level-1 `dummy` has 1 HP, too fragile to show anything.
+
+## Review amendments (2026-09-25)
+
+- **A squad is checked, not assumed.** Ephemeral copy IDs are reused (the
+  lowest free chunk), so a squad remembered by room ID could be "standing"
+  in a freed copy. Placement and logout now remove the squad, and
+  `raiseSquad` keeps a squad only while every foe not yet beaten still
+  stands in its room. A foe gone without being beaten is made good by
+  raising the squad again while the player is in the yard (checked every
+  refresh).
+- **Practice foes never despawn** from boredom (`Mob.Despawns`).
+- **Combat is waived** when the player has no Practice Yard copy (e.g. a
+  deployment's `TutorialRooms` without room 906), as well as when no squad
+  could be raised.
+- **Hints corrected:** the formation can be changed at any time, even
+  mid-fight; interception applies once the leader stands in the grid, and
+  an interception moves the attacker's aim to the foe that caught it.
