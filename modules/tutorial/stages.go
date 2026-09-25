@@ -46,8 +46,8 @@ func init() {
 		{
 			ID: StageCharacter, Room: 0, Title: "Your character",
 			Inspections: []string{"status", "inventory", "experience", "conditions"},
-			Intro: "You chose your path when you made your character, and it gave you a starter kit. Before you set out, look yourself over.",
-			Goal:  "Look yourself over: status, inventory, experience, and conditions.",
+			Intro:       "You chose your path when you made your character, and it gave you a starter kit. Before you set out, look yourself over.",
+			Goal:        "Look yourself over: status, inventory, experience, and conditions.",
 			Hints: []string{
 				`<ansi fg="command">status</ansi> is your character sheet: your path, vitals, hunger, thirst, fatigue, and company.`,
 				`<ansi fg="command">inventory</ansi> shows your gear and your company's load.`,
