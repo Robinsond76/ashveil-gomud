@@ -348,8 +348,8 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	require.True(t, ok)
 	assert.True(t, activity.Resting, "a real, running rest")
 	campRoom := aria.Character.RoomId
-	run(aria, "east", "")
-	assert.Equal(t, campRoom, aria.Character.RoomId, "no way on, and resting holds the company")
+	assert.Contains(t, run(aria, "west", ""), "resting at camp")
+	assert.Equal(t, campRoom, aria.Character.RoomId, "resting holds the company")
 	assert.Equal(t, StageCamp, stageOf(aria))
 	// The rest takes a real minute; camping's own tests finish it. Here
 	// the Rested it grants at the end is given directly, as its grant does.
@@ -360,6 +360,12 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	_, ok = camping.LeaderRest(aria.UserId)
 	assert.False(t, ok, "the course camp is struck")
 
+	// A camp made after the lesson (the Campground still allows one) is
+	// struck when the player walks out.
+	run(aria, "camp", "")
+	_, ok = camping.LeaderRest(aria.UserId)
+	require.True(t, ok)
+
 	// Departure: out through the gate, with one cap.
 	run(aria, "east", "")
 	require.Equal(t, 903, template(aria))
@@ -369,6 +375,8 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, stateGraduated, progressOf(aria.Character).State)
 	assert.Equal(t, 1, caps(aria))
 	assert.Contains(t, got, "You have finished your training")
+	_, ok = camping.LeaderRest(aria.UserId)
+	assert.False(t, ok, "no camp left in the course")
 	assert.Equal(t, 0, aria.Character.RoomIdOnReset)
 	for _, key := range []int{1, 2} {
 		instanceID, ok := company.InstanceFor(aria.UserId, key)
@@ -400,12 +408,32 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	require.True(t, module.Begin(bram.UserId), "carries on at the saved stage")
 	events.ProcessEvents()
 	require.Equal(t, 905, template(bram))
-	run(bram, "camp", "")
-	run(bram, "camp", "fire")
-	run(bram, "camp", "rest")
-	activity, ok = camping.LeaderRest(bram.UserId)
-	require.True(t, ok)
-	require.True(t, activity.Resting)
+	restAt := func() {
+		t.Helper()
+		assert.Contains(t, run(bram, "camp", ""), "You make camp here.")
+		run(bram, "camp", "fire")
+		run(bram, "camp", "rest")
+		activity, ok = camping.LeaderRest(bram.UserId)
+		require.True(t, ok)
+		require.True(t, activity.Resting)
+	}
+	restAt()
+
+	// Logging out mid-rest strikes the camp; resuming, the rest is made
+	// again in the new copies.
+	events.AddToQueue(events.PlayerDespawn{UserId: bram.UserId, RoomId: bram.Character.RoomId, Username: bram.Username, CharacterName: bram.Character.Name})
+	events.ProcessEvents()
+	_, ok = camping.LeaderRest(bram.UserId)
+	assert.False(t, ok, "struck on logout")
+	if room := rooms.LoadRoom(bram.Character.RoomId); room != nil {
+		room.RemovePlayer(bram.UserId)
+	}
+	bram.Character.RoomId = -1
+	events.AddToQueue(events.PlayerSpawn{UserId: bram.UserId, RoomId: -1, Username: bram.Username, CharacterName: bram.Character.Name})
+	events.ProcessEvents()
+	require.Equal(t, 905, template(bram), "back at the Campground")
+	text(bram)
+	restAt()
 	assert.Contains(t, run(bram, "tutorial", "skip"), "tutorial skip yes")
 	assert.Equal(t, 905, template(bram), "asks first")
 	run(bram, "tutorial", "skip yes")
@@ -414,7 +442,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Zero(t, caps(bram))
 	_, ok = camping.LeaderRest(bram.UserId)
 	assert.False(t, ok, "the rest is abandoned with the course")
-	assert.Contains(t, run(bram, "camp", ""), "There is nowhere here to make camp.", "not \"You already have a camp\"")
+	assert.Contains(t, run(bram, "camp", "status"), "You have no camp.")
 
 	assert.Equal(t, turn, util.GetTurnCount(), "the clock never moves")
 	assert.Equal(t, round, util.GetRoundCount())

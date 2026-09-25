@@ -11,7 +11,7 @@ when you have done what the lesson asks:
              and cargo. The wardens hand you food or water if you have none.
   <ansi fg="yellow">Camp</ansi>       make camp, light a fire, and rest until you are Rested.
   <ansi fg="yellow">Departure</ansi>  walk out through the gate.
- Your place in the course is saved,
+Your place in the course is saved,
 so logging out and back in picks up where you left off.
 
 <ansi fg="yellow">Usage: </ansi>
@@ -22,7 +22,8 @@ so logging out and back in picks up where you left off.
   <ansi fg="command">tutorial next</ansi>
   Move past a lesson you cannot finish, for example when both tutorial
   recruits were already claimed by an earlier character on your account,
-  or when you have nothing left to eat or drink.
+  when you have nothing left to eat or drink (the meal is waived, the
+  checks aren't), or when camping isn't available.
 
   <ansi fg="command">tutorial skip</ansi>
   Leave the course now, for the town. It asks you to confirm with

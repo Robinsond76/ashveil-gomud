@@ -82,8 +82,8 @@ recommendations under the owner's "proceed with next phase" instruction
    - when the Camp stage passes;
    - on `tutorial skip yes` and on leaving the course;
    - when placing a player (start and resume), since no camp of theirs can
-     survive new copies. A rest cut short by a logout or restart is
-     started again.
+     survive new copies. A rest cut short by a logout is started again (see
+     the review amendments).
 8. **Waivers (`tutorial next`).**
    - **Survival:** supplies were given and the player still needs to eat or
      drink but carries nothing edible or drinkable.
@@ -121,3 +121,19 @@ recommendations under the owner's "proceed with next phase" instruction
   `camping`; the Waking Hall is indoor and the Weather Yard outdoor; the
   supply items exist; `help tutorial` covers the new lessons.
 - `go test -race ./...`, `make generate`, `make validate` pass.
+
+## Review amendments (2026-09-25)
+
+- **Logout strikes a course camp.** A `PlayerDespawn` in the course strikes
+  the camp, so its room copy (whose ID a later player's copy may reuse)
+  never keeps a fire lit; the rest is made again on resume. Placement still
+  strikes too: after a crash or restart, a rest whose minute ran out
+  meanwhile has completed and its Rested is kept.
+- **A failed strike is retried.** If camping can't save, `tutorial-strike`
+  is set and the strike is retried every refresh, after the course too,
+  until it succeeds.
+- **Waivers are narrower and cover a missing survival module.** `tutorial
+  next` in Survival waives only the meal (when survival isn't available, or
+  the supplies are gone and nothing is left); the inspections are still
+  asked for. Camp is also waived when survival isn't available, since a
+  rest needs it. Anything eaten with hydration counts as something to drink.

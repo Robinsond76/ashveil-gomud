@@ -24,12 +24,15 @@ new character walks through in their own ephemeral copies. See the
   gives a ration and water once per character (`tutorial-supplied`), and
   only what the pack lacks (`RationItemId`, `WaterItemId`).
 - **Course camps are struck** (`camping.AbandonCamp`) when Camp passes, on
-  skip and leave, and on every placement: a camp in a room copy can't
-  outlive the copy, and a stale one would block the player's next camp.
+  skip, leave, and logout, and on every placement: a camp in a room copy
+  can't outlive the copy (whose ID a later copy may reuse), and a stale one
+  would block the player's next camp. A failed strike sets
+  `tutorial-strike` and is retried on every refresh until it succeeds.
 - **Progress** is `MiscData` on the character (`tutorial-state`,
-  `tutorial-stage`, `tutorial-seen`, `tutorial-supplied`), saved with the
-  user file. The room copies (`copies`) are in memory only: `PlayerSpawn` queues a resume that
-  makes fresh copies and opens the way up to the saved stage.
+  `tutorial-stage`, `tutorial-seen`, `tutorial-supplied`, `tutorial-strike`),
+  saved with the user file. The room copies (`copies`) are in memory only:
+  `PlayerSpawn` queues a resume that makes fresh copies and opens the way up
+  to the saved stage.
 - **Ways on** are temporary exits (`east`, and `gate` to the start room)
   opened by the module. The room files have no forward exits and no
   scripts; don't add them back, and never block commands in the course.

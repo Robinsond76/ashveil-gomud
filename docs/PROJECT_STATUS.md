@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-25
-- **HEAD:** Phase 27a (tutorial framework and first lessons) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 26b is on `master`.
+- **HEAD:** Phase 27b (tutorial Survival and Camp lessons) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27a is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -59,9 +59,10 @@ instead of duplicating them.
   village shaman for a level, then lost), and Phase 26a/26b (the company
   summary in text and in the browser), and Phase 27a (the tutorial framework:
   durable progress, resume, skip, and the Character, Company, Formation, and
-  Departure lessons).
-- **Next:** Phase 27b, the tutorial's Survival and Camp lessons, then 27c
-  (practice fight, Alignment, browser tutorial panel), per the
+  Departure lessons), and Phase 27b (the tutorial's Survival and Camp
+  lessons).
+- **Next:** Phase 27c (the tutorial's practice fight, Alignment, and browser
+  tutorial panel), per the
   [Ashveil tutorial](superpowers/specs/2026-09-23-ashveil-tutorial-design.md).
 
 ## Phase progress
@@ -109,11 +110,95 @@ instead of duplicating them.
 | 26a | Company summary and text surfaces | Complete: `internal/companyview` read model; prompt tokens from a game-loop cache and a default prompt that warns only when needed; `status` as the Ashveil character sheet, grouped `conditions`, company load in `inventory`, last level lost in `experience` |
 | 26b | Browser Company panel (GMCP) | Complete: `Company`/`Company.Vitals` GMCP from the 26a summary, sent on change and only to the leader; a Company section above Players in the web client's Party window, safe DOM, keyboard and screen-reader friendly, checked in Chromium |
 | 27a | Tutorial framework and first lessons | Complete: `modules/tutorial` runs the course in per-player copies of rooms 900–903 (Waking Hall, Muster Yard, Drill Ground, Gate); progress in MiscData, resumed on login; gates check results; `tutorial`, `tutorial next`, `tutorial skip`; graduation cap once; old JS rooms removed |
-| 27b | Tutorial: Survival and Camp lessons | Planned |
+| 27b | Tutorial: Survival and Camp lessons | Complete: Weather Yard (904) and Campground (905) before the Gate; Survival passes on a real meal and drink (`survival.OnProvision`) plus `weather`/`temperature`/`strain`/`cargo`, with food and water given once for what the pack lacks; Camp passes on Rested from a real camp rest; course camps struck (`camping.AbandonCamp`) on pass, skip, leave, logout, and placement |
 | 27c | Tutorial: practice fight, Alignment, browser panel | Planned |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 27b: tutorial Survival and Camp lessons (2026-09-25)
+
+- **What:** Two new lessons in the tutorial course, before Departure.
+  - **Survival** in the Weather Yard (room 904, outdoors). It passes on a
+    real meal and drink (a new `survival.OnProvision` hook; a failed `eat`
+    doesn't count, feeding a companion does), plus `weather`,
+    `temperature`, `strain`, and `cargo` by any alias. Commands whose module
+    isn't loaded aren't asked for (`usercommands.IsRegistered`). Walking in
+    gives a cheese sandwich and a waterskin once per character, only for
+    what the pack lacks. The Waking Hall is now indoor, so shelter is shown
+    by comparing `temperature`.
+  - **Camp** in the Campground (room 905, tagged `camping`). It passes on
+    Rested, which only a completed real camp rest (the shipped 60 s) grants.
+    Sharpening is explained; no whetstone is given.
+  - **Course camps are struck** through a new `camping.AbandonCamp` (the
+    camp half of `AbandonForDeath`, now shared): when Camp passes, on skip,
+    leave, and logout, and on every placement. A failed strike is retried.
+  - `TutorialRooms` is `[900..905]`; new rooms are appended so stage room
+    indexes don't shift. `tutorial next` waives the meal when it can't be
+    had, and Camp when camping or survival is unavailable.
+
+  Design and plan:
+  [27b spec](superpowers/specs/2026-09-25-phase-27b-tutorial-survival-camp-design.md) /
+  [27b plan](superpowers/plans/2026-09-25-phase-27b-tutorial-survival-camp.md).
+- **Why:** The tutorial spec's stages 4 and 5. Decisions were applied under
+  the owner's "proceed with next phase" and are recorded in the spec.
+- **Verification:** `go test -race ./...` (78 packages), `make generate`,
+  `make validate`.
+  - **Wiring test** (`modules/tutorial/wiring_test.go`), through
+    `plugins.Load` with the company, survival, camping, weather, exposure,
+    walking, and encumbrance modules:
+    - the supplies on walking in, and none on walking in again;
+    - a failed `eat` not counting, then real `eat` and `drink`;
+    - the four inspections;
+    - a real `camp`, `camp fire`, `camp rest` in the Campground copy, with
+      the rest holding the company in place;
+    - Rested passing Camp and striking the camp;
+    - a camp made afterwards struck on graduating;
+    - a second player's logout mid-rest striking the camp, resuming and
+      resting again, and then `tutorial skip yes` mid-rest leaving no camp;
+    - the clock unchanged.
+
+    A rest takes a real minute, so the test gives the Rested buff the rest
+    grants; completion and the grant are the camping module's own tests.
+  - **Unit tests:** stage order and rooms; inspections only in their own
+    stage; provisions only in Survival; supplies once and only for what's
+    missing; the Camp gate; strikes on place, skip, leave, and logout; the
+    waivers; the views; `AbandonCamp` (idle, resting, finished, inn stay
+    untouched, save failure).
+  - **Shipped content:** exits in stage order; the hall indoor, the yard
+    outdoor, and the Campground `camping`; the supply items edible and
+    drinkable; help lists every lesson.
+- **Review:** The independent reviewer found no confirmed bugs. It checked
+  that the `AbandonForDeath` refactor is behaviour-identical, that
+  `AbandonCamp`'s locking and rollback are sound, that `OnProvision` fires
+  only on success outside locks, the `tutorial-supplied` round trip, the
+  exit chain, and the map coordinates. Its design and coverage findings:
+  1. *Medium, fixed:* without a working survival module, Survival and Camp
+     could only be skipped. Now the meal and Camp are waived
+     (`TestSurvivalWaiverWithoutSurvival`).
+  2. *Low-medium, fixed:* a strike that failed on skip or leave left a
+     camp nothing retried. It is now owed (`tutorial-strike`) and retried on
+     every refresh (`TestFailedStrikeIsRetried`).
+  3. *Low, fixed:* a player who logged out mid-course and never came back
+     kept a camp whose room ID a later copy could reuse, with its fire lit.
+     Logout in the course now strikes it (`TestLogoutInCourseStrikesTheCamp`
+     and the wiring test).
+  4. *Low, fixed:* the Survival waiver skipped the inspections too, and
+     edible items with water didn't count as drink. The waiver now covers
+     only the meal (`TestNextOnlyWhenAllowed`, `TestEdibleWaterCountsAsDrink`).
+  5. *Low, fixed:* the spec misdescribed restarted rests. It is corrected:
+     after a crash, a rest that finished meanwhile keeps its Rested.
+  6. *Low, fixed:* content nits (the Campground wasn't "sheltered"; the
+     Gate's text; help spacing and waivers).
+  7. *Coverage, partly addressed:* no test drives a real rest to the gate.
+     The rest's completion and the Rested grant are covered by the camping
+     module's own tests; the tutorial's side reads the buff. The wiring test
+     now covers the real hold during a rest.
+  8. *Coverage, fixed:* resume mid-rest through the real modules.
+  9. *Coverage, fixed:* two assertions that couldn't fail now use `west`
+     (a real exit) and `camp status`.
+  10. *Coverage, fixed:* graduating with a camp through the real modules.
+- **Step completed:** Phase 27b.
 
 ### Phase 27a: tutorial framework and first lessons (2026-09-25)
 

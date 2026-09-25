@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -45,11 +46,13 @@ type course struct {
 	tier        camping.Tier
 	reporting   bool
 	struck      int
+	survivalUp  bool
+	strikeErr   error
 }
 
 func newCourse(t *testing.T) *course {
 	t.Helper()
-	c := &course{rooms: map[int]*rooms.Room{}, original: map[int]int{}, claimed: map[int]bool{}, next: 1000, reporting: true}
+	c := &course{rooms: map[int]*rooms.Room{}, original: map[int]int{}, claimed: map[int]bool{}, next: 1000, reporting: true, survivalUp: true}
 	m := newModule()
 	m.roomIDs = func() []int { return []int{900, 901, 902, 903, 904, 905} }
 	m.copyRooms = func(ids ...int) (map[int]int, error) {
@@ -97,7 +100,14 @@ func newCourse(t *testing.T) *course {
 	}
 	m.restTier = func(int) (camping.Tier, bool) { return c.tier, true }
 	m.restReporting = func() bool { return c.reporting }
-	m.abandonCamp = func(int) error { c.struck++; return nil }
+	m.abandonCamp = func(int) error {
+		if c.strikeErr != nil {
+			return c.strikeErr
+		}
+		c.struck++
+		return nil
+	}
+	m.survivalUp = func() bool { return c.survivalUp }
 	c.m = m
 
 	users.ResetActiveUsers()
@@ -336,7 +346,12 @@ func TestNextOnlyWhenAllowed(t *testing.T) {
 	assert.Equal(t, StageSurvival, c.stage(), "out of drink, but already watered")
 	c.food = false
 	_, _ = c.m.command("next", c.user, nil, 0)
-	assert.Equal(t, StageCamp, c.stage(), "nothing left to eat: waived")
+	assert.Equal(t, StageSurvival, c.stage(), "the meal is waived, the inspections aren't")
+	assert.True(t, progressOf(c.user.Character).Seen[seenFed])
+	for _, cmd := range inspectionsOf(StageSurvival) {
+		c.run(cmd)
+	}
+	assert.Equal(t, StageCamp, c.stage())
 
 	// Camp: waived only when nothing can camp.
 	_, _ = c.m.command("next", c.user, nil, 0)
@@ -514,4 +529,64 @@ func TestSurvivalAndCampViews(t *testing.T) {
 	out = c.text()
 	assert.Contains(t, out, "[ ] Rested")
 	assert.Contains(t, out, "camp rest")
+}
+
+// --- Phase 27b review ---
+
+func TestSurvivalWaiverWithoutSurvival(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.at(StageSurvival)
+	c.food, c.drink = true, true // the kit is in the pack, but eating can't count
+	c.survivalUp = false
+	_, _ = c.m.command("next", c.user, nil, 0)
+	p := progressOf(c.user.Character)
+	assert.True(t, p.Seen[seenFed] && p.Seen[seenWatered], "the meal is waived")
+	assert.Equal(t, StageSurvival, c.stage())
+	for _, cmd := range inspectionsOf(StageSurvival) {
+		c.run(cmd)
+	}
+	assert.Equal(t, StageCamp, c.stage())
+	_, _ = c.m.command("next", c.user, nil, 0)
+	assert.Equal(t, StageDeparture, c.stage(), "no rest without survival: Camp waived")
+}
+
+func TestFailedStrikeIsRetried(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.at(StageCamp)
+	c.strikeErr = assert.AnError
+	struck := c.struck
+	_, _ = c.m.command("skip yes", c.user, nil, 0)
+	assert.Equal(t, stateSkipped, progressOf(c.user.Character).State)
+	assert.Equal(t, "yes", c.user.Character.GetMiscData(keyStrike), "a retry is owed")
+	c.m.check(c.user)
+	assert.Equal(t, struck, c.struck, "still failing")
+	c.strikeErr = nil
+	c.m.check(c.user)
+	assert.Equal(t, struck+1, c.struck, "retried after the course")
+	assert.Nil(t, c.user.Character.GetMiscData(keyStrike))
+	c.m.check(c.user)
+	assert.Equal(t, struck+1, c.struck, "once")
+}
+
+func TestLogoutInCourseStrikesTheCamp(t *testing.T) {
+	c := newCourse(t)
+	c.m.Begin(7)
+	c.at(StageCamp)
+	struck := c.struck
+	c.m.onPlayerDespawn(events.PlayerDespawn{UserId: 7})
+	assert.Equal(t, struck+1, c.struck)
+
+	progress{State: stateGraduated, Stage: StageDeparture}.save(c.user.Character)
+	c.m.onPlayerDespawn(events.PlayerDespawn{UserId: 7})
+	assert.Equal(t, struck+1, c.struck, "a real-world camp is left alone")
+}
+
+func TestEdibleWaterCountsAsDrink(t *testing.T) {
+	assert.True(t, provisionKind(items.ItemSpec{Subtype: items.Edible, Hydration: 5}, true))
+	assert.True(t, provisionKind(items.ItemSpec{Subtype: items.Drinkable, Hydration: 5}, true))
+	assert.False(t, provisionKind(items.ItemSpec{Subtype: items.Drinkable}, true))
+	assert.True(t, provisionKind(items.ItemSpec{Subtype: items.Edible, Nutrition: 5}, false))
+	assert.False(t, provisionKind(items.ItemSpec{Subtype: items.Drinkable, Hydration: 5}, false))
 }

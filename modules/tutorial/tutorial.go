@@ -68,6 +68,7 @@ type TutorialModule struct {
 	restTier      func(userID int) (camping.Tier, bool)
 	restReporting func() bool
 	abandonCamp   func(leaderUserID int) error
+	survivalUp    func() bool
 
 	graduationItem int
 	rationItem     int
@@ -114,6 +115,7 @@ func newModule() *TutorialModule {
 		},
 		restReporting:  camping.RestReporting,
 		abandonCamp:    camping.AbandonCamp,
+		survivalUp:     survival.CompanyServiceAvailable,
 		graduationItem: defaultGraduationItem,
 		rationItem:     defaultRationItem,
 		waterItem:      defaultWaterItem,
@@ -144,6 +146,7 @@ func init() {
 	})
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	events.RegisterListener(events.PlayerDespawn{}, m.onPlayerDespawn)
 	events.RegisterListener(resumeTutorial{}, m.onResume)
 	domain.SetProvider(m)
 	module = m
@@ -216,9 +219,10 @@ func (m *TutorialModule) place(user *users.UserRecord, p progress) bool {
 		return false
 	}
 	m.copies[user.UserId] = copies
-	// No course camp outlives its room copies: a rest cut short by a
-	// logout or restart is made again in the new ones.
-	m.strikeCamp(user.UserId)
+	// No course camp outlives its room copies. A logout strikes it already;
+	// this catches a crash or restart, where a rest that ran its minute
+	// meanwhile has completed and still grants Rested.
+	m.strikeCamp(user)
 	for i := 0; i < at; i++ {
 		m.openAfter(user.UserId, i)
 	}
@@ -402,26 +406,59 @@ func (m *TutorialModule) enterStage(user *users.UserRecord, p progress) {
 }
 
 // carriesProvision reports whether a character carries something to eat
-// (with nutrition) or, with drink, to drink (with hydration).
+// or, with drink, to drink.
 func carriesProvision(user *users.UserRecord, drink bool) bool {
 	for _, item := range user.Character.GetAllBackpackItems() {
-		spec := item.GetSpec()
-		switch {
-		case drink && spec.Subtype == items.Drinkable && spec.Hydration > 0:
-			return true
-		case !drink && spec.Subtype == items.Edible && spec.Nutrition > 0:
+		if provisionKind(item.GetSpec(), drink) {
 			return true
 		}
 	}
 	return false
 }
 
-// strikeCamp removes a player's camp: in the course it can only be a
-// course camp, in a room copy that won't outlast the course.
-func (m *TutorialModule) strikeCamp(userID int) {
-	if err := m.abandonCamp(userID); err != nil {
-		mudlog.Error("tutorial: strike camp", "user", userID, "error", err)
+// provisionKind: food is edible with nutrition; drink is anything eaten or
+// drunk with hydration, as eat and drink provision it.
+func provisionKind(spec items.ItemSpec, drink bool) bool {
+	if drink {
+		return (spec.Subtype == items.Drinkable || spec.Subtype == items.Edible) && spec.Hydration > 0
 	}
+	return spec.Subtype == items.Edible && spec.Nutrition > 0
+}
+
+// strikeCamp removes a player's camp: in the course it can only be a
+// course camp, in a room copy that won't outlast the course. A failure
+// (camping can't save) is owed as a retry, which check makes every round
+// until it succeeds, even after the player has left the course.
+func (m *TutorialModule) strikeCamp(user *users.UserRecord) {
+	if err := m.abandonCamp(user.UserId); err != nil {
+		mudlog.Error("tutorial: strike camp", "user", user.UserId, "error", err)
+		user.Character.SetMiscData(keyStrike, "yes")
+		return
+	}
+	user.Character.SetMiscData(keyStrike, nil)
+}
+
+// retryStrike makes an owed strike.
+func (m *TutorialModule) retryStrike(user *users.UserRecord) {
+	if owed, _ := user.Character.GetMiscData(keyStrike).(string); owed == "yes" {
+		m.strikeCamp(user)
+	}
+}
+
+// onPlayerDespawn strikes a course camp on logout: its room copy won't be
+// there to come back to, and a rest cut short is made again on resume.
+// This runs before the engine's own leave handling.
+func (m *TutorialModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.PlayerDespawn)
+	if !ok {
+		return events.Continue
+	}
+	user := m.lookupUser(evt.UserId)
+	if user == nil || user.Character == nil || progressOf(user.Character).State != stateActive {
+		return events.Continue
+	}
+	m.strikeCamp(user)
+	return events.Continue
 }
 
 // rested: the Camp gate, a rest tier held.
@@ -456,6 +493,7 @@ func (m *TutorialModule) check(user *users.UserRecord) {
 	if user == nil || user.Character == nil {
 		return
 	}
+	m.retryStrike(user)
 	p := progressOf(user.Character)
 	if p.State != stateActive || !m.passed(user, p) {
 		return
@@ -472,7 +510,7 @@ func (m *TutorialModule) advance(user *users.UserRecord, p progress) {
 	p.Stage = stages[at+1].ID
 	p.save(user.Character)
 	if stages[at].ID == StageCamp {
-		m.strikeCamp(user.UserId) // rested; the camp's work is done
+		m.strikeCamp(user) // rested; the camp's work is done
 	}
 	m.openAfter(user.UserId, at)
 	done := stages[at].Done
@@ -520,7 +558,7 @@ func (m *TutorialModule) onRoomChange(e events.Event) events.ListenerReturn {
 func (m *TutorialModule) leave(user *users.UserRecord, p progress) {
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
-	m.strikeCamp(user.UserId)
+	m.strikeCamp(user)
 	// Companions follow on foot a moment later; bring them now, so none
 	// is left behind in the course's copies.
 	m.relocate(user.UserId, user.Character.RoomId)
@@ -674,16 +712,33 @@ func (m *TutorialModule) next(user *users.UserRecord, p progress) {
 			return
 		}
 	}
-	// Survival: the supplies are gone (eaten by a companion, dropped) and
-	// the player has nothing left to eat or drink.
-	if p.Stage == StageSurvival && p.Supplied &&
-		((!p.Seen[seenFed] && !m.carries(user, false)) || (!p.Seen[seenWatered] && !m.carries(user, true))) {
-		user.SendText("You have nothing left to eat or drink, so this lesson is waived. Buy food and water at a market before a long road.")
-		m.advance(user, p)
-		return
+	// Survival: the meal alone is waived when it can't be had (no
+	// survival, or the supplies are gone and nothing is left); the
+	// inspections are still asked for.
+	if p.Stage == StageSurvival {
+		up := m.survivalUp()
+		waived := false
+		for _, part := range []struct {
+			seen  string
+			drink bool
+		}{{seenFed, false}, {seenWatered, true}} {
+			if !p.Seen[part.seen] && (!up || (p.Supplied && !m.carries(user, part.drink))) {
+				p.Seen[part.seen], waived = true, true
+			}
+		}
+		if waived {
+			p.save(user.Character)
+			user.SendText("You can't eat or drink here now, so that part of the lesson is waived. Buy food and water at a market before a long road.")
+			if m.passed(user, p) {
+				m.advance(user, p)
+			} else {
+				user.SendText(`Check the weather, temperature, strain, and cargo to finish. Type <ansi fg="command">tutorial</ansi> for the checklist.`)
+			}
+			return
+		}
 	}
 	// Camp: nothing here can camp or rest.
-	if p.Stage == StageCamp && !m.restReporting() {
+	if p.Stage == StageCamp && (!m.restReporting() || !m.survivalUp()) {
 		user.SendText("Camping isn't available right now, so this lesson is waived.")
 		m.advance(user, p)
 		return
@@ -703,7 +758,7 @@ func (m *TutorialModule) skip(user *users.UserRecord, p progress, confirmed bool
 	p.save(user.Character)
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
-	m.strikeCamp(user.UserId) // before moving: a rest in progress holds the player
+	m.strikeCamp(user) // before moving: a rest in progress holds the player
 	user.SendText(`<ansi fg="magenta">You leave the training grounds behind.</ansi>`)
 	if err := m.travel(user, rooms.StartRoomIdAlias); err != nil {
 		mudlog.Error("tutorial: skip", "user", user.UserId, "error", err)

@@ -171,6 +171,8 @@ const (
 	keySeen  = "tutorial-seen"
 	// keySupplied marks the Survival stage's supplies as given (27b).
 	keySupplied = "tutorial-supplied"
+	// keyStrike marks a course camp strike that failed and is retried.
+	keyStrike = "tutorial-strike"
 )
 
 // progress is a character's place in the course.
