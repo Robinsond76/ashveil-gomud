@@ -48,7 +48,9 @@ func useSummary(t *testing.T, s companyview.Summary) {
 // companions and one fallen, burdened, resting at camp, Rested, and a
 // checkpoint.
 func sampleSummary() companyview.Summary {
-	need := func(v int, label string) companyview.Need { return companyview.Need{Known: true, Value: v, Label: label} }
+	need := func(v int, label string) companyview.Need {
+		return companyview.Need{Known: true, Value: v, Label: label}
+	}
 	return companyview.Summary{
 		Leader: companyview.Member{Leader: true, Archetype: "Ranger", Hunger: need(40, "Hungry"), Thirst: need(90, "Hydrated"),
 			Fatigue: need(45, "Tired"), Warmth: "Chilled", WarmthKnown: true},
