@@ -1,6 +1,9 @@
 package camping
 
-import "sync"
+import (
+	"sync"
+	"time"
+)
 
 // ViewProvider is implemented by modules/camping. RenderCampView returns
 // handled=true when it rendered an active resting session's view in place of
@@ -88,4 +91,54 @@ func AbandonForDeath(leaderUserID int) error {
 		return nil
 	}
 	return p.AbandonForDeath(leaderUserID)
+}
+
+// RestActivity is a leader's camp or inn stay as the information surfaces
+// show it (Phase 26a).
+type RestActivity struct {
+	// Inn is true for an inn stay, false for a camp.
+	Inn bool
+	// Resting is true while a rest runs; a pitched camp that isn't resting
+	// is false.
+	Resting   bool
+	Remaining time.Duration
+}
+
+// RestProvider is optionally implemented by the registered movement
+// provider (Phase 26a). Both read state only.
+type RestProvider interface {
+	// LeaderRest reports the leader's camp or inn stay; ok is false with
+	// neither.
+	LeaderRest(leaderUserID int) (RestActivity, bool)
+	// RestTierOf reports a character's rest tier buff (Rested or Well
+	// Rested) and its time left; ok is false with none.
+	RestTierOf(userID int) (tier Tier, remaining time.Duration, ok bool)
+}
+
+func restProvider() (RestProvider, bool) {
+	providerMu.RLock()
+	p := movementProvider
+	providerMu.RUnlock()
+	rp, ok := p.(RestProvider)
+	return rp, ok
+}
+
+// LeaderRest reports a leader's camp or inn stay. ok is false without a
+// provider or either.
+func LeaderRest(leaderUserID int) (RestActivity, bool) {
+	rp, ok := restProvider()
+	if !ok {
+		return RestActivity{}, false
+	}
+	return rp.LeaderRest(leaderUserID)
+}
+
+// RestTierOf reports a character's rest tier. ok is false without a
+// provider or a tier.
+func RestTierOf(userID int) (Tier, time.Duration, bool) {
+	rp, ok := restProvider()
+	if !ok {
+		return TierNone, 0, false
+	}
+	return rp.RestTierOf(userID)
 }

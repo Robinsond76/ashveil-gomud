@@ -209,6 +209,14 @@ func (l *PanelLayout) Panel(id string) *Panel {
 	return p
 }
 
+// HasPanel reports whether the layout defines a panel with this id, so a
+// caller can fill optional panels without logging an error when a layout
+// leaves them out.
+func (l *PanelLayout) HasPanel(id string) bool {
+	_, ok := l.byID[id]
+	return ok
+}
+
 // Render synthesizes all slots into a single terminal string.
 func (l *PanelLayout) Render() string {
 	if len(l.slots) == 0 {

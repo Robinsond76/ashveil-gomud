@@ -269,3 +269,54 @@ func ResurrectCompanion(leaderUserID int, selector string, roomID int) (Resurrec
 	}
 	return rp.ResurrectCompanion(leaderUserID, selector, roomID)
 }
+
+// MemberStatus is where a companion is (Phase 26a).
+type MemberStatus int
+
+const (
+	// MemberPresent has a live mob attached to the leader.
+	MemberPresent MemberStatus = iota
+	// MemberAwaiting is alive but not spawned (it rejoins with the leader).
+	MemberAwaiting
+	// MemberDead is dead, awaiting resurrection (Phase 25b).
+	MemberDead
+)
+
+// MemberView is one companion as the information surfaces show it.
+type MemberView struct {
+	ID        int
+	Name      string
+	Status    MemberStatus
+	Level     int
+	Archetype string
+	// HP and HPMax are set only for a present companion.
+	HP, HPMax int
+	// Placed, Row, and Col are its formation cell (0-based).
+	Placed   bool
+	Row, Col int
+	// RescueSeconds is a dead companion's rescue allowance left.
+	RescueSeconds int
+}
+
+// MemberViewProvider is optionally implemented by the registered
+// FormationProvider (Phase 26a). modules/company runs on the game loop, so
+// call it from the game loop only.
+type MemberViewProvider interface {
+	// CompanyMembers lists the leader's companions by ID; ok is false when
+	// the company can't be read.
+	CompanyMembers(leaderUserID int) ([]MemberView, bool)
+}
+
+// CompanyMembers lists a leader's companions. ok is false without a
+// provider, or while the company can't be read; a leader with no
+// companions is an empty list with ok true.
+func CompanyMembers(leaderUserID int) ([]MemberView, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	mp, ok := p.(MemberViewProvider)
+	if !ok {
+		return nil, false
+	}
+	return mp.CompanyMembers(leaderUserID)
+}

@@ -752,3 +752,33 @@ func AbandonForDeath(leaderUserID int) error {
 	}
 	return p.AbandonForDeath(leaderUserID)
 }
+
+// Progress is a leader's journey as the information surfaces show it
+// (Phase 26a).
+type Progress struct {
+	// Interrupted is true while the journey is stopped on the road.
+	Interrupted bool
+	Percent     int
+	Remaining   time.Duration
+	Route       string
+}
+
+// ProgressProvider is optionally implemented by the registered movement
+// provider (Phase 26a). It reads state only; ok is false with no active
+// journey.
+type ProgressProvider interface {
+	JourneyProgress(leaderUserID int) (Progress, bool)
+}
+
+// JourneyProgress reports a leader's active journey. ok is false without a
+// provider or a journey.
+func JourneyProgress(leaderUserID int) (Progress, bool) {
+	providerMu.RLock()
+	p := movementProvider
+	providerMu.RUnlock()
+	pp, ok := p.(ProgressProvider)
+	if !ok {
+		return Progress{}, false
+	}
+	return pp.JourneyProgress(leaderUserID)
+}

@@ -701,3 +701,10 @@ func TestPanelLayout_Render_NestedLayout_StatusShape(t *testing.T) {
 	assert.Contains(t, full, "Wealth")
 	assert.Contains(t, full, "Training")
 }
+
+func TestPanelLayoutHasPanel(t *testing.T) {
+	layout := NewPanelLayout("open", "single", 1, 1)
+	layout.AddPanelsToSlot(layout.AddSlot(), "info")
+	assert.True(t, layout.HasPanel("info"))
+	assert.False(t, layout.HasPanel("company"))
+}

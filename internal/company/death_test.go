@@ -148,3 +148,23 @@ func TestResurrectionProviderDelegates(t *testing.T) {
 	assert.True(t, result.Spawned)
 	assert.Equal(t, 1, fake.calls)
 }
+
+type fakeMembers struct{ fakeFormationProvider }
+
+func (fakeMembers) CompanyMembers(int) ([]company.MemberView, bool) {
+	return []company.MemberView{{ID: 1, Status: company.MemberDead, RescueSeconds: 60}}, true
+}
+
+func TestMemberViewProviderNone(t *testing.T) {
+	company.SetFormationProvider(nil)
+	_, ok := company.CompanyMembers(7)
+	assert.False(t, ok)
+	company.SetFormationProvider(fakeFormationProvider{})
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+	_, ok = company.CompanyMembers(7)
+	assert.False(t, ok, "a provider without member views")
+	company.SetFormationProvider(fakeMembers{})
+	members, ok := company.CompanyMembers(7)
+	assert.True(t, ok)
+	assert.Equal(t, company.MemberDead, members[0].Status)
+}
