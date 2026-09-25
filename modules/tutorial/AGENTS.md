@@ -4,12 +4,12 @@ Phase 27a. The Ashveil tutorial: a short course of rooms, one per stage, that a
 new character walks through in their own ephemeral copies. See the
 [27a design](../../docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md).
 
-- **Stages** (`stages.go`) are data, in order: Character, Company, Formation,
-  Survival, Camp (27b), Departure. Each names its room by index into
-  `SpecialRooms.TutorialRooms` (900–905). New rooms are appended to that
-  list, so existing indexes never shift: Survival is 904 (index 4), Camp 905
-  (index 5), and the Gate stays 903 (index 3). 27c inserts its stages before
-  Departure; keep Departure last and one room per stage
+- **Stages** (`stages.go`) are data, in order: Character, Company,
+  Formation, Survival, Camp (27b), Combat (27c), Departure. Each names its
+  room by index into `SpecialRooms.TutorialRooms` (900–906). New rooms are
+  appended to that list, so existing indexes never shift: Survival is 904 (index 4), Camp 905
+  (index 5), Combat 906 (index 6), and the Gate stays 903 (index 3). New
+  stages go before Departure; keep Departure last and one room per stage
   (`TestShippedTutorialRooms`, which checks exits in stage order).
 - **Gates check results, never typed text.** A stage's `Inspections` are
   counted through `usercommands.OnCommandDone` (aliases resolved), only in
@@ -20,6 +20,17 @@ new character walks through in their own ephemeral copies. See the
   (`camping.RestTierOf`), which only a completed rest grants. Gates run on
   `companyview.OnRefresh`, so after every command and every round, on the
   game loop.
+- **The practice fight (27c):** Combat (room 906) raises a squad
+  (`PracticeSquad`: three straw footmen, 67, and a straw archer, 68) in the
+  player's copy when they walk in or are placed there. Practice mobs
+  (`practice: true`, the harmless `dummy` race) are beaten without rewards
+  and fire `mobcommands.OnPracticeBeaten`; the gate is every foe of the
+  player's squad beaten. Squads are in memory (`fights`): resume raises a
+  fresh one and removes the old; leave, skip, and passing remove what's
+  left. The leader must be placed in the grid for formation rules to cover
+  their blows.
+- **Death in the course** is an ordinary death that ends the course as a
+  skip (27c decision): nothing in the course can kill quickly.
 - **Supplies (27b):** reaching Survival (walking in, or being placed there)
   gives a ration and water once per character (`tutorial-supplied`), and
   only what the pack lacks (`RationItemId`, `WaterItemId`).

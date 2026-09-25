@@ -628,7 +628,7 @@ SpecialRooms:
   #   The first one on the list is the room they will be placed in when beginning
   #   Rooms 900-999 are a special range of RoomId's that tell GoMud the user is
   #   in a tutorial.
-  TutorialRooms: [900, 901, 902, 903, 904, 905]
+  TutorialRooms: [900, 901, 902, 903, 904, 905, 906]
 
 ################################################################################
 #

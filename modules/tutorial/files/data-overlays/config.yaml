@@ -15,3 +15,8 @@ TutorialRecruits: [61, 62]
 # they carry nothing to eat, WaterItemId when nothing to drink.
 RationItemId: 30004
 WaterItemId: 30015
+# Phase 27c: the practice fight's squad, by mob template, raised in the
+# player's own copy of the Combat room. Practice mobs (practice: true) are
+# beaten without any reward. The first three are straw footmen; the archer
+# (lower level, so less hardy) stands behind them.
+PracticeSquad: [67, 67, 67, 68]

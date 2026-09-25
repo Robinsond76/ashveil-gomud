@@ -11,8 +11,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/races"
@@ -64,6 +67,10 @@ func writeTutorialWorld(t *testing.T, dataDir string) {
 		"rooms/tutorial/903.yaml",
 		"rooms/tutorial/904.yaml",
 		"rooms/tutorial/905.yaml",
+		"rooms/tutorial/906.yaml",
+		"races/19-dummy.yaml",
+		"mobs/tutorial/67-straw_footman.yaml",
+		"mobs/tutorial/68-straw_archer.yaml",
 		"rooms/frostfang/1.yaml",
 		"rooms/nowhere/zone-config.yaml",
 		"rooms/nowhere/-1.yaml",
@@ -81,6 +88,12 @@ func writeTutorialWorld(t *testing.T, dataDir string) {
 		rel, err := filepath.Rel(shipped, matches[0])
 		require.NoError(t, err)
 		copies = append(copies, rel)
+	}
+	// Attack messages, for the practice fight (27c).
+	messages, err := filepath.Glob(filepath.Join(shipped, "combat-messages", "*.yaml"))
+	require.NoError(t, err)
+	for _, path := range messages {
+		copies = append(copies, filepath.Join("combat-messages", filepath.Base(path)))
 	}
 	biomes, err := filepath.Glob(filepath.Join(shipped, "biomes", "*.yaml"))
 	require.NoError(t, err)
@@ -117,7 +130,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	setOverrides(t, map[string]any{
 		"FilePaths.DataFiles":        dataDir,
 		"SpecialRooms.StartRoom":     1,
-		"SpecialRooms.TutorialRooms": []any{"900", "901", "902", "903", "904", "905"},
+		"SpecialRooms.TutorialRooms": []any{"900", "901", "902", "903", "904", "905", "906"},
 	})
 	writeTutorialWorld(t, dataDir)
 	races.LoadDataFiles()
@@ -126,10 +139,10 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	rooms.LoadBiomeDataFiles()
 	mobs.LoadDataFiles()
 	keywords.LoadAliases()
-	for _, id := range []int{900, 901, 902, 903, 904, 905, 1} {
+	for _, id := range []int{900, 901, 902, 903, 904, 905, 906, 1} {
 		require.NotNil(t, rooms.LoadRoom(id), "room %d", id)
 	}
-	require.Equal(t, []int{900, 901, 902, 903, 904, 905}, configuredRooms())
+	require.Equal(t, []int{900, 901, 902, 903, 904, 905, 906}, configuredRooms())
 
 	require.NotNil(t, module)
 	t.Cleanup(plugins.SnapshotLoadStateForTest())
@@ -228,7 +241,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, 900, template(aria))
 	assert.NotEqual(t, 900, aria.Character.RoomId, "a copy, not the template")
 	assert.Contains(t, got, "A long, low hall")
-	assert.Contains(t, got, "stage 1 of 6")
+	assert.Contains(t, got, "stage 1 of 7")
 	assert.Equal(t, StageCharacter, stageOf(aria))
 	assert.Contains(t, run(aria, "tutorial", ""), "Goal:")
 
@@ -251,7 +264,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Company: recruit both tutorial candidates in the Muster Yard copy.
 	got = run(aria, "east", "")
 	require.Equal(t, 901, template(aria))
-	assert.Contains(t, got, "stage 2 of 6")
+	assert.Contains(t, got, "stage 2 of 7")
 	got = run(aria, "company", "recruit")
 	assert.Contains(t, got, "Tamsin Reed")
 	assert.Contains(t, got, "Oswin")
@@ -266,7 +279,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Formation: one in the front row, one behind.
 	got = run(aria, "east", "")
 	require.Equal(t, 902, template(aria))
-	assert.Contains(t, got, "stage 3 of 6")
+	assert.Contains(t, got, "stage 3 of 7")
 	run(aria, "formation", "move #1 1 2")
 	assert.Equal(t, StageFormation, stageOf(aria), "no one behind yet")
 
@@ -292,7 +305,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	got = text(aria)
 	assert.Equal(t, 902, template(aria), "back at the Drill Ground")
 	assert.Contains(t, got, "back where your training left off")
-	assert.Contains(t, got, "stage 3 of 6")
+	assert.Contains(t, got, "stage 3 of 7")
 	assert.Equal(t, -1, aria.Character.RoomIdOnReset)
 	here := aria.Character.RoomId
 	for _, key := range []int{1, 2} {
@@ -313,7 +326,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// pack lacks, once. The real eat and drink, and the inspections.
 	got = run(aria, "east", "")
 	require.Equal(t, 904, template(aria))
-	assert.Contains(t, got, "stage 4 of 6: Survival")
+	assert.Contains(t, got, "stage 4 of 7: Survival")
 	assert.Contains(t, got, "cheese sandwich")
 	assert.Contains(t, got, "waterskin")
 	assert.True(t, progressOf(aria.Character).Supplied)
@@ -340,7 +353,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Camp: a real camp and rest in the Campground copy.
 	got = run(aria, "east", "")
 	require.Equal(t, 905, template(aria))
-	assert.Contains(t, got, "stage 5 of 6: Camp")
+	assert.Contains(t, got, "stage 5 of 7: Camp")
 	assert.Contains(t, run(aria, "camp", ""), "You make camp here.")
 	assert.Contains(t, run(aria, "camp", "fire"), "campfire")
 	assert.Contains(t, run(aria, "camp", "rest"), "You settle in by the fire to rest.")
@@ -355,8 +368,8 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// the Rested it grants at the end is given directly, as its grant does.
 	require.NoError(t, aria.Character.AddBuff(1033, false, 100))
 	got = run(aria, "look", "")
-	assert.Equal(t, StageDeparture, stageOf(aria), "Rested passes Camp")
-	assert.Contains(t, got, "Head east for the next lesson: Departure")
+	assert.Equal(t, StageCombat, stageOf(aria), "Rested passes Camp")
+	assert.Contains(t, got, "Head east for the next lesson: Combat")
 	_, ok = camping.LeaderRest(aria.UserId)
 	assert.False(t, ok, "the course camp is struck")
 
@@ -365,6 +378,113 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	run(aria, "camp", "")
 	_, ok = camping.LeaderRest(aria.UserId)
 	require.True(t, ok)
+
+	// Combat (27c): the squad stands in the player's own Practice Yard as
+	// one party, footmen in front, the archer behind.
+	got = run(aria, "east", "")
+	require.Equal(t, 906, template(aria))
+	assert.Contains(t, got, "stage 6 of 7: Combat")
+	yard := rooms.LoadRoom(aria.Character.RoomId)
+	require.NotNil(t, yard)
+	squad := map[int]string{}
+	var summaries []mobparty.MobSummary
+	for _, id := range yard.GetMobs() {
+		mob := mobs.GetInstance(id)
+		require.NotNil(t, mob)
+		if mob.Character.IsCharmed() {
+			continue // the company
+		}
+		require.True(t, mob.Practice, mob.Character.Name)
+		squad[id] = mob.Character.Name
+		summaries = append(summaries, mobparty.MobSummary{InstanceId: id, Groups: mob.Groups, EHP: float64(mob.Character.HealthMax.Value)})
+	}
+	require.Len(t, squad, 4)
+	parties := mobparty.Assemble(summaries)
+	require.Len(t, parties, 1, "one party")
+	archer := 0
+	for id, name := range squad {
+		row, _, found := parties[0].Formation.Find(mobparty.MemberKeyFor(id))
+		require.True(t, found)
+		if name == "straw archer" {
+			archer = id
+			assert.Equal(t, 1, row, "the archer stands behind")
+		} else {
+			assert.Equal(t, 0, row, "a footman in front")
+		}
+	}
+	require.NotZero(t, archer)
+
+	// The real combat round: the test stands in for the world loop, which
+	// runs queued mob commands (a beaten foe's "suicide").
+	mid := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
+		if in, ok := e.(events.Input); ok && in.MobInstanceId > 0 {
+			cmd, rest, _ := strings.Cut(in.InputText, " ")
+			_, _ = mobcommands.TryCommand(strings.ToLower(cmd), rest, in.MobInstanceId)
+		}
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.Input{}, mid) })
+	fightRound := func(n uint64) {
+		hooks.DoCombat(events.NewRound{RoundNumber: n})
+		events.ProcessEvents()
+		usercommands.TryCommand("look", "", aria.UserId, events.CmdSkipScripts|events.CmdSecretly) // a refresh, as each round gives
+		events.ProcessEvents()
+	}
+	xpBefore, goldBefore := aria.Character.Experience, aria.Character.Gold
+
+	// Aria takes her own place, behind, in the middle column.
+	run(aria, "formation", "move me 3 2")
+	f, ok := company.FormationFor(aria.UserId)
+	require.True(t, ok)
+	row, col, found := f.Find(company.LeaderMemberKey)
+	require.True(t, found)
+	require.Equal(t, [2]int{2, 1}, [2]int{row, col})
+
+	// An attack at the archer is caught by a footman in front.
+	run(aria, "attack", "archer")
+	require.NotNil(t, aria.Character.Aggro)
+	var r uint64
+	for r = 1; r < 200; r++ {
+		fightRound(r)
+		hit := false
+		for id := range squad {
+			if mob := mobs.GetInstance(id); mob != nil && id != archer && mob.Character.PlayerDamage[aria.UserId] > 0 {
+				hit = true
+			}
+		}
+		if hit {
+			break
+		}
+	}
+	require.Less(t, r, uint64(200), "a blow landed: %s", text(aria))
+	if mob := mobs.GetInstance(archer); mob != nil {
+		assert.Zero(t, mob.Character.PlayerDamage[aria.UserId], "the archer is shielded")
+	}
+
+	// Fight on until the squad is beaten, attacking again whenever a foe
+	// falls to Aria's own blow (a killing blow ends the attacker's aim;
+	// others aiming at it are re-targeted, 11b).
+	for ; r < 5000 && stageOf(aria) == StageCombat; r++ {
+		if aria.Character.Aggro == nil {
+			next := "archer"
+			for id, name := range squad {
+				if mobs.GetInstance(id) != nil && name == "straw footman" {
+					next = "footman"
+				}
+			}
+			run(aria, "attack", next)
+		}
+		fightRound(r)
+	}
+	require.Equal(t, StageDeparture, stageOf(aria), "the squad is beaten")
+	for id := range squad {
+		assert.Nil(t, mobs.GetInstance(id), "%s left the field", squad[id])
+	}
+	assert.Equal(t, xpBefore, aria.Character.Experience, "no XP from practice")
+	assert.Equal(t, goldBefore, aria.Character.Gold)
+	assert.Empty(t, yard.Items, "nothing dropped")
+	assert.Zero(t, yard.Gold)
+	assert.Empty(t, yard.Corpses)
 
 	// Departure: out through the gate, with one cap.
 	run(aria, "east", "")

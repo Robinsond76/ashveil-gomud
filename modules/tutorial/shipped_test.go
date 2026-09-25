@@ -89,6 +89,8 @@ func TestShippedTutorialRooms(t *testing.T) {
 			assert.Contains(t, room.Tags, "outdoor", "the Weather Yard is exposed")
 		case StageCamp:
 			assert.Contains(t, room.Tags, "camping")
+		case StageCombat:
+			assert.NotContains(t, room.Tags, "camping", "the squad is raised by the module, not camped beside")
 		}
 	}
 	scripts, err := filepath.Glob(filepath.Join(dir, "*.js"))
@@ -169,10 +171,54 @@ func TestShippedHelpTemplate(t *testing.T) {
 	data, err := files.ReadFile("files/datafiles/templates/help/tutorial.template")
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "tutorial skip")
-	for _, stage := range []string{"Survival", "Camp"} {
+	for _, stage := range []string{"Survival", "Camp", "Combat"} {
 		assert.Contains(t, string(data), stage)
 	}
 	kw, err := os.ReadFile(filepath.Join(repoRoot(), "_datafiles", "world", "default", "keywords.yaml"))
 	require.NoError(t, err)
 	assert.True(t, strings.Contains(string(kw), "      - tutorial\n"))
+}
+
+// TestShippedPracticeSquad (27c): the squad's foes are practice mobs of the
+// harmless dummy race in one party, the footmen hardier than the archer so
+// the archer stands behind them.
+func TestShippedPracticeSquad(t *testing.T) {
+	var tut struct {
+		PracticeSquad []int `yaml:"PracticeSquad"`
+	}
+	readYAML(t, filepath.Join(repoRoot(), "modules", "tutorial", "files", "data-overlays", "config.yaml"), &tut)
+	assert.Equal(t, defaultSquad, tut.PracticeSquad)
+	var dummy struct {
+		Damage struct {
+			DiceRoll string `yaml:"diceroll"`
+		} `yaml:"damage"`
+	}
+	readYAML(t, filepath.Join(repoRoot(), "_datafiles", "world", "default", "races", "19-dummy.yaml"), &dummy)
+	assert.Equal(t, "0d0", dummy.Damage.DiceRoll, "the dummy race can't hurt anyone")
+	levels := map[int]int{}
+	for _, id := range tut.PracticeSquad {
+		found, err := filepath.Glob(filepath.Join(repoRoot(), "_datafiles", "world", "default", "mobs", "tutorial", strconv.Itoa(id)+"-*.yaml"))
+		require.NoError(t, err)
+		require.Len(t, found, 1, "mob %d", id)
+		var mob struct {
+			Practice  bool     `yaml:"practice"`
+			Hostile   bool     `yaml:"hostile"`
+			Groups    []string `yaml:"groups"`
+			Character struct {
+				RaceId int `yaml:"raceid"`
+				Level  int `yaml:"level"`
+				Items  []any
+				Gold   int `yaml:"gold"`
+			} `yaml:"character"`
+		}
+		readYAML(t, found[0], &mob)
+		assert.True(t, mob.Practice, "mob %d", id)
+		assert.False(t, mob.Hostile, "mob %d waits to be attacked", id)
+		assert.Equal(t, []string{"practice-squad"}, mob.Groups)
+		assert.Equal(t, 19, mob.Character.RaceId)
+		assert.Empty(t, mob.Character.Items)
+		assert.Zero(t, mob.Character.Gold)
+		levels[id] = mob.Character.Level
+	}
+	assert.Greater(t, levels[67], levels[68], "footmen in front, the archer behind")
 }

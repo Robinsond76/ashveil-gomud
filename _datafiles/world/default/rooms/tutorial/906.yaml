@@ -1,0 +1,17 @@
+roomid: 906
+zone: Tutorial
+title: The Practice Yard
+description: A trampled yard fenced with stakes, where the wardens stand straw
+  soldiers up in a rank -- three footmen shoulder to shoulder, with an archer
+  sheltering behind them -- and set new companies against them. The straw can't
+  hurt anyone, but it teaches how a fight goes. The way east to the gate opens
+  once every straw soldier is beaten. The campground lies back to the west.
+tags:
+- outdoor
+exits:
+  west:
+    roomid: 905
+mapx: -5
+mapy: 0
+mapz: -99
+hascoordinates: true

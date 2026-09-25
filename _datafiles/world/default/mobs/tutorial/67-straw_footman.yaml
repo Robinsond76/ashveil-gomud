@@ -1,0 +1,14 @@
+mobid: 67
+zone: Tutorial
+itemdropchance: 0
+hostile: false
+practice: true
+maxwander: 0
+activitylevel: 10
+groups:
+  - practice-squad
+character:
+  name: straw footman
+  description: 'A soldier of bound straw on a wooden frame, a painted shield strapped to its arm. It stands in the front rank, where it catches the blows meant for those behind it. It cannot hurt anyone.'
+  raceid: 19
+  level: 3

@@ -14,6 +14,13 @@ The `internal/mobcommands` package implements the AI command system for non-play
 - **Command registry**: Central mapping of AI command names to implementations
 - **Autonomous execution**: Commands executed by AI logic rather than player input
 
+### Practice mobs (Ashveil, Phase 27c)
+
+A mob with `practice: true` (the tutorial's straw soldiers) is beaten, not
+killed: `Suicide` announces it, fires `OnPracticeBeaten`, and removes it as
+`vanish` does. No XP, alignment, kills, taming, drops, loot, gold, or
+`MobDeath`. Keep that branch ahead of the reward code.
+
 ### AI Behavior Categories
 
 #### **Combat Intelligence**

@@ -10,6 +10,8 @@ when you have done what the lesson asks:
   <ansi fg="yellow">Survival</ansi>   eat and drink, and check the weather, temperature, strain,
              and cargo. The wardens hand you food or water if you have none.
   <ansi fg="yellow">Camp</ansi>       make camp, light a fire, and rest until you are Rested.
+  <ansi fg="yellow">Combat</ansi>     beat a squad of straw soldiers, which can't hurt you, and see
+             how reach, interception, and re-targeting work.
   <ansi fg="yellow">Departure</ansi>  walk out through the gate.
 Your place in the course is saved,
 so logging out and back in picks up where you left off.
@@ -23,11 +25,13 @@ so logging out and back in picks up where you left off.
   Move past a lesson you cannot finish, for example when both tutorial
   recruits were already claimed by an earlier character on your account,
   when you have nothing left to eat or drink (the meal is waived, the
-  checks aren't), or when camping isn't available.
+  checks aren't), when camping isn't available, or when there's no one to
+  practice against.
 
   <ansi fg="command">tutorial skip</ansi>
   Leave the course now, for the town. It asks you to confirm with
   <ansi fg="command">tutorial skip yes</ansi>. Skipping gives no graduation reward.
 
 Every command works during the course: chat, <ansi fg="command">help</ansi>, <ansi fg="command">status</ansi>, and the rest.
-Once you have left the course, it is finished and can't be restarted.
+Once you have left the course, it is finished and can't be restarted. That
+includes leaving by dying, which nothing in the course can quickly cause.

@@ -58,9 +58,11 @@ the owner's "carry on to 27c" instruction (2026-09-25).
    - leave as `vanish` does.
 
    So there is no XP, alignment shift, kill count, taming, drop, loot, gold,
-   or `MobDeath`. Attackers keep their aim, so the next round's
-   reassignment (11b) picks a new legal target: the lesson's "target
-   reassignment when an enemy falls", from real combat.
+   or `MobDeath`. Others aiming at a beaten foe keep their aim, so the next
+   round's reassignment (11b) turns them to a new legal target: the
+   lesson's "target reassignment when an enemy falls", from real combat.
+   The one who struck the killing blow ends their aim, as in any fight, and
+   attacks again.
 4. **The tutorial owns the squad.** The foes are spawned by the module, not
    by room spawns:
    - when the player enters the Combat room, or is placed there;
@@ -124,3 +126,12 @@ the owner's "carry on to 27c" instruction (2026-09-25).
 - **Shipped content:** seven rooms in stage order; the Practice Yard has no
   spawns; mobs 67 and 68 are practice, `dummy` race, in `practice-squad`.
 - `go test -race ./...`, `make generate`, `make validate` pass.
+
+## Implementation notes (2026-09-25)
+
+- **The leader must stand in the grid.** Formation rules cover a leader's
+  own attacks only once the leader is placed (`formation move me <row>
+  <col>`); unplaced, they strike whoever they choose. The Combat hints lead
+  with this, and the wiring test places the leader before attacking.
+- **The squad's levels** are 3 (footmen, 16 HP) and 2 (archer, 11 HP): a
+  level-1 `dummy` has 1 HP, too fragile to show anything.
