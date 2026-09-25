@@ -39,3 +39,10 @@ The top-level check in `TryCommand` uses `simpleMatch=true`: granting `room` let
 - Run targeted tests for the changed command path where available.
 - Use at least one higher-level validation path that exercises the actual command behavior.
 - If a command change is mostly prompt-driven or integration-heavy, note what was not exercised live.
+
+## Ashveil panels (Phase 26a)
+
+- `status`, `conditions`, `inventory`, and `experience` show Ashveil state from `internal/companyview` (the read model) through the `summaryFor` seam. The Ashveil parts live in `*.ashveil.go` files; keep the engine files' changes to calls into them, so upstream merges stay small.
+- `status` fills optional panels only when the layout defines them (`templates.PanelLayout.HasPanel`): the default world's `panel-layouts/character/status.yaml` has `vitals` and `company`; the upstream `empty` world's doesn't and keeps the engine sheet.
+- `TryCommand` defers `companyview.RefreshUser`, which refreshes the prompt cache after every command. Don't read game state from a prompt token: prompts are built off the game loop (see `internal/companyview/AGENTS.md`).
+- Tests that point the data files at a world use `configs.RestoreOverrides`, not `AddOverlayOverrides`, which skips a key already set.

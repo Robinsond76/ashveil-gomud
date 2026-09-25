@@ -59,3 +59,5 @@ Phase 25b companion death (`death.go`, `resurrect.go`):
 - "Online" is `users.GetByUserId`, so a link-dead leader is charged until their despawn (at most `LinkDeadSeconds`).
 - **Resurrection** is `company.ResurrectionProvider` (`DeadCompanions`, `ResurrectCompanion`), called by `modules/death`'s `resurrect` command. It charges first (so time that ran out is lost, not raised), takes one level (floor 1, experience 0), revives into the old cell if free, saves, and only then spawns; a failed save changes nothing; a failed spawn leaves the companion awaiting restoration. The dead are matched by name before the living.
 - `wiring_resurrect_test.go` also calls `plugins.Load`, with the same `SnapshotLoadStateForTest` guard, and imports `modules/death` for the command.
+
+Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`CompanyMembers`): each companion present (with live health via `Runtime.Vitals`), awaiting restoration, or dead (with rescue time), with its cell. `internal/companyview` reads it on the game loop for `status`, the prompt, and (26b) the browser.
