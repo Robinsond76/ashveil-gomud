@@ -1,9 +1,17 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">tutorial</ansi>
 
 New characters begin in a short course of rooms, their own copy of it, that
-teaches the basics one lesson at a time: taking stock of yourself, gathering
-a company, and setting it in formation. The way into each next room opens
-when you have done what the lesson asks. Your place in the course is saved,
+teaches the basics one lesson at a time. The way into each next room opens
+when you have done what the lesson asks:
+
+  <ansi fg="yellow">Character</ansi>  look yourself over: status, inventory, experience, conditions.
+  <ansi fg="yellow">Company</ansi>    recruit two companions.
+  <ansi fg="yellow">Formation</ansi>  put one in the front row and another behind.
+  <ansi fg="yellow">Survival</ansi>   eat and drink, and check the weather, temperature, strain,
+             and cargo. The wardens hand you food or water if you have none.
+  <ansi fg="yellow">Camp</ansi>       make camp, light a fire, and rest until you are Rested.
+  <ansi fg="yellow">Departure</ansi>  walk out through the gate.
+ Your place in the course is saved,
 so logging out and back in picks up where you left off.
 
 <ansi fg="yellow">Usage: </ansi>
@@ -13,7 +21,8 @@ so logging out and back in picks up where you left off.
 
   <ansi fg="command">tutorial next</ansi>
   Move past a lesson you cannot finish, for example when both tutorial
-  recruits were already claimed by an earlier character on your account.
+  recruits were already claimed by an earlier character on your account,
+  or when you have nothing left to eat or drink.
 
   <ansi fg="command">tutorial skip</ansi>
   Leave the course now, for the town. It asks you to confirm with

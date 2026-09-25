@@ -7,6 +7,8 @@ description: A long, low hall of whitewashed timber, where new arrivals wake on
   health and hunger, what they carry, how far they have come, and what ails them.
   A door stands in the east wall, barred until you have taken stock. (Type
   "tutorial" at any time for your current lesson.)
+tags:
+- indoor
 exits: {}
 mapx: -10
 mapy: 0

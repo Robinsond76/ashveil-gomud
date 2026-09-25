@@ -1,0 +1,19 @@
+roomid: 904
+zone: Tutorial
+title: The Weather Yard
+description: An open square of beaten earth beyond the drill ground, with nothing
+  overhead but sky. A weathervane creaks on its pole, and a trough and a ration
+  barrel stand by the rail. Here the wardens teach what the road will ask of a
+  company -- food, water, warmth, and a load it can bear. Feel the air out here,
+  then think of the hall's shelter. The way east opens once you have eaten, drunk,
+  and taken the measure of the weather, the cold, your strain, and your cargo. The
+  drill ground lies back to the west.
+tags:
+- outdoor
+exits:
+  west:
+    roomid: 902
+mapx: -7
+mapy: 0
+mapz: -99
+hascoordinates: true

@@ -40,12 +40,18 @@ func shippedTutorialRooms(t *testing.T) []int {
 
 // TestShippedTutorialRooms pins the course's rooms: one per stage, each
 // with a description, no script, mutator, or spawns, and no static way
-// forward (the module opens those), so a player can only walk back.
+// forward (the module opens those), so a player can only walk back to an
+// earlier stage's room.
 func TestShippedTutorialRooms(t *testing.T) {
 	ids := shippedTutorialRooms(t)
 	require.Len(t, ids, len(stages), "one tutorial room per stage")
 	dir := filepath.Join(repoRoot(), "_datafiles", "world", "default", "rooms", "tutorial")
-	for i, id := range ids {
+	used := map[int]bool{}
+	for i, stage := range stages {
+		require.Less(t, stage.Room, len(ids))
+		assert.False(t, used[stage.Room], "stage %s shares a room", stage.ID)
+		used[stage.Room] = true
+		id := ids[stage.Room]
 		var room struct {
 			RoomId      int    `yaml:"roomid"`
 			Title       string `yaml:"title"`
@@ -53,8 +59,9 @@ func TestShippedTutorialRooms(t *testing.T) {
 			Exits       map[string]struct {
 				RoomId int `yaml:"roomid"`
 			} `yaml:"exits"`
-			Mutators  []any `yaml:"mutators"`
-			SpawnInfo []any `yaml:"spawninfo"`
+			Mutators  []any    `yaml:"mutators"`
+			SpawnInfo []any    `yaml:"spawninfo"`
+			Tags      []string `yaml:"tags"`
 		}
 		readYAML(t, filepath.Join(dir, strconv.Itoa(id)+".yaml"), &room)
 		assert.Equal(t, id, room.RoomId)
@@ -66,12 +73,22 @@ func TestShippedTutorialRooms(t *testing.T) {
 		assert.True(t, os.IsNotExist(err), "room %d has no script", id)
 		for name, e := range room.Exits {
 			back := -1
-			for j, other := range ids {
-				if other == e.RoomId {
+			for j, earlier := range stages {
+				if ids[earlier.Room] == e.RoomId {
 					back = j
 				}
 			}
-			assert.True(t, back >= 0 && back < i, "room %d exit %s leads back inside the course", id, name)
+			assert.True(t, back >= 0 && back < i, "room %d exit %s leads back to an earlier stage", id, name)
+		}
+		// Phase 27b: shelter is shown by comparison, and the Camp stage's
+		// room allows a camp.
+		switch stage.ID {
+		case StageCharacter:
+			assert.Contains(t, room.Tags, "indoor", "the Waking Hall is sheltered")
+		case StageSurvival:
+			assert.Contains(t, room.Tags, "outdoor", "the Weather Yard is exposed")
+		case StageCamp:
+			assert.Contains(t, room.Tags, "camping")
 		}
 	}
 	scripts, err := filepath.Glob(filepath.Join(dir, "*.js"))
@@ -86,6 +103,8 @@ func TestShippedTutorialRecruiter(t *testing.T) {
 	var tut struct {
 		TutorialRecruits []int `yaml:"TutorialRecruits"`
 		GraduationItemId int   `yaml:"GraduationItemId"`
+		RationItemId     int   `yaml:"RationItemId"`
+		WaterItemId      int   `yaml:"WaterItemId"`
 	}
 	readYAML(t, filepath.Join(repoRoot(), "modules", "tutorial", "files", "data-overlays", "config.yaml"), &tut)
 	require.Len(t, tut.TutorialRecruits, 2)
@@ -116,10 +135,32 @@ func TestShippedTutorialRecruiter(t *testing.T) {
 	}
 	assert.ElementsMatch(t, tut.TutorialRecruits, offered)
 
-	// The graduation cap exists.
-	items, err := filepath.Glob(filepath.Join(repoRoot(), "_datafiles", "world", "default", "items", "*", "*", strconv.Itoa(tut.GraduationItemId)+"-*.yaml"))
-	require.NoError(t, err)
-	assert.Len(t, items, 1)
+	// The graduation cap and the Survival supplies exist; the supplies can
+	// be eaten and drunk.
+	assert.Equal(t, defaultRationItem, tut.RationItemId)
+	assert.Equal(t, defaultWaterItem, tut.WaterItemId)
+	for _, id := range []int{tut.GraduationItemId, tut.RationItemId, tut.WaterItemId} {
+		found, err := filepath.Glob(filepath.Join(repoRoot(), "_datafiles", "world", "default", "items", "*", strconv.Itoa(id)+"-*.yaml"))
+		require.NoError(t, err)
+		deeper, err := filepath.Glob(filepath.Join(repoRoot(), "_datafiles", "world", "default", "items", "*", "*", strconv.Itoa(id)+"-*.yaml"))
+		require.NoError(t, err)
+		found = append(found, deeper...)
+		require.Len(t, found, 1, "item %d", id)
+		var spec struct {
+			Subtype   string `yaml:"subtype"`
+			Nutrition int    `yaml:"nutrition"`
+			Hydration int    `yaml:"hydration"`
+		}
+		readYAML(t, found[0], &spec)
+		switch id {
+		case tut.RationItemId:
+			assert.Equal(t, "edible", spec.Subtype)
+			assert.Positive(t, spec.Nutrition)
+		case tut.WaterItemId:
+			assert.Equal(t, "drinkable", spec.Subtype)
+			assert.Positive(t, spec.Hydration)
+		}
+	}
 }
 
 // TestShippedHelpTemplate: "help tutorial" ships with the module and is
@@ -128,6 +169,9 @@ func TestShippedHelpTemplate(t *testing.T) {
 	data, err := files.ReadFile("files/datafiles/templates/help/tutorial.template")
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "tutorial skip")
+	for _, stage := range []string{"Survival", "Camp"} {
+		assert.Contains(t, string(data), stage)
+	}
 	kw, err := os.ReadFile(filepath.Join(repoRoot(), "_datafiles", "world", "default", "keywords.yaml"))
 	require.NoError(t, err)
 	assert.True(t, strings.Contains(string(kw), "      - tutorial\n"))

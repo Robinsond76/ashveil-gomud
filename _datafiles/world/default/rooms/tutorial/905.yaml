@@ -1,0 +1,18 @@
+roomid: 905
+zone: Tutorial
+title: The Campground
+description: A sheltered hollow ringed with fallen logs, where a blackened fire
+  ring waits beside a stack of dry kindling. Travellers who never rest fall apart
+  on the road, so the wardens have every company make camp here, light a fire, and
+  rest until they are Rested. The way east to the gate opens once your company has
+  rested. The weather yard lies back to the west.
+tags:
+- outdoor
+- camping
+exits:
+  west:
+    roomid: 904
+mapx: -6
+mapy: 0
+mapz: -99
+hascoordinates: true

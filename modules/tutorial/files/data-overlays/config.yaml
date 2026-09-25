@@ -10,3 +10,8 @@ GraduationItemId: 20043
 # been claimed and the company is short, "tutorial next" lets the player
 # through.
 TutorialRecruits: [61, 62]
+# Phase 27b: the Survival stage's supplies, given once per character on
+# first reaching it, and only for what the player lacks: RationItemId when
+# they carry nothing to eat, WaterItemId when nothing to drink.
+RationItemId: 30004
+WaterItemId: 30015

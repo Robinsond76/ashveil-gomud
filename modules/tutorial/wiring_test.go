@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -23,9 +25,15 @@ import (
 	"gopkg.in/yaml.v2"
 
 	// The company module owns recruiting and formation; survival loads
-	// with it.
+	// with it. Phase 27b: camping, and the modules behind the Survival
+	// stage's inspections (weather, temperature, strain, cargo).
+	_ "github.com/GoMudEngine/GoMud/modules/camping"
 	_ "github.com/GoMudEngine/GoMud/modules/company"
+	_ "github.com/GoMudEngine/GoMud/modules/encumbrance"
+	_ "github.com/GoMudEngine/GoMud/modules/exposure"
 	_ "github.com/GoMudEngine/GoMud/modules/survival"
+	_ "github.com/GoMudEngine/GoMud/modules/walking"
+	_ "github.com/GoMudEngine/GoMud/modules/weather"
 )
 
 // setOverrides sets config keys for one test and restores them after.
@@ -54,6 +62,8 @@ func writeTutorialWorld(t *testing.T, dataDir string) {
 		"rooms/tutorial/901.yaml",
 		"rooms/tutorial/902.yaml",
 		"rooms/tutorial/903.yaml",
+		"rooms/tutorial/904.yaml",
+		"rooms/tutorial/905.yaml",
 		"rooms/frostfang/1.yaml",
 		"rooms/nowhere/zone-config.yaml",
 		"rooms/nowhere/-1.yaml",
@@ -61,7 +71,7 @@ func writeTutorialWorld(t *testing.T, dataDir string) {
 		"mobs/dunmar/62-brother_oswin.yaml",
 		"items/armor-20000/head/20043-graduation_cap.yaml",
 	}
-	for _, id := range []string{"10015", "20004", "20008"} {
+	for _, id := range []string{"10015", "20004", "20008", "30004", "30015"} {
 		matches, err := filepath.Glob(filepath.Join(shipped, "items", "*", id+"-*.yaml"))
 		require.NoError(t, err)
 		more, err := filepath.Glob(filepath.Join(shipped, "items", "*", "*", id+"-*.yaml"))
@@ -90,7 +100,7 @@ func writeTutorialWorld(t *testing.T, dataDir string) {
 		require.NoError(t, os.MkdirAll(filepath.Dir(filepath.Join(dataDir, path)), 0755))
 		require.NoError(t, os.WriteFile(filepath.Join(dataDir, path), []byte(data), 0600))
 	}
-	for _, dir := range []string{"users", "plugin-data", "combat-messages"} {
+	for _, dir := range []string{"users", "plugin-data", "combat-messages", "buffs"} {
 		require.NoError(t, os.MkdirAll(filepath.Join(dataDir, dir), 0755))
 	}
 }
@@ -107,7 +117,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	setOverrides(t, map[string]any{
 		"FilePaths.DataFiles":        dataDir,
 		"SpecialRooms.StartRoom":     1,
-		"SpecialRooms.TutorialRooms": []any{"900", "901", "902", "903"},
+		"SpecialRooms.TutorialRooms": []any{"900", "901", "902", "903", "904", "905"},
 	})
 	writeTutorialWorld(t, dataDir)
 	races.LoadDataFiles()
@@ -116,15 +126,21 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	rooms.LoadBiomeDataFiles()
 	mobs.LoadDataFiles()
 	keywords.LoadAliases()
-	for _, id := range []int{900, 901, 902, 903, 1} {
+	for _, id := range []int{900, 901, 902, 903, 904, 905, 1} {
 		require.NotNil(t, rooms.LoadRoom(id), "room %d", id)
 	}
-	require.Equal(t, []int{900, 901, 902, 903}, configuredRooms())
+	require.Equal(t, []int{900, 901, 902, 903, 904, 905}, configuredRooms())
 
 	require.NotNil(t, module)
 	t.Cleanup(plugins.SnapshotLoadStateForTest())
 	plugins.Load(dataDir)
 	assert.Equal(t, 20043, module.graduationItem, "the shipped overlay")
+	assert.Equal(t, 30004, module.rationItem)
+	assert.Equal(t, 30015, module.waterItem)
+	// The rest tier buffs ship with the walking module.
+	buffs.RegisterFS(plugins.GetPluginRegistry())
+	buffs.LoadDataFiles()
+	require.NotNil(t, buffs.GetBuffSpec(1033), "Rested")
 
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
@@ -212,7 +228,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, 900, template(aria))
 	assert.NotEqual(t, 900, aria.Character.RoomId, "a copy, not the template")
 	assert.Contains(t, got, "A long, low hall")
-	assert.Contains(t, got, "stage 1 of 4")
+	assert.Contains(t, got, "stage 1 of 6")
 	assert.Equal(t, StageCharacter, stageOf(aria))
 	assert.Contains(t, run(aria, "tutorial", ""), "Goal:")
 
@@ -235,7 +251,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Company: recruit both tutorial candidates in the Muster Yard copy.
 	got = run(aria, "east", "")
 	require.Equal(t, 901, template(aria))
-	assert.Contains(t, got, "stage 2 of 4")
+	assert.Contains(t, got, "stage 2 of 6")
 	got = run(aria, "company", "recruit")
 	assert.Contains(t, got, "Tamsin Reed")
 	assert.Contains(t, got, "Oswin")
@@ -250,7 +266,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Formation: one in the front row, one behind.
 	got = run(aria, "east", "")
 	require.Equal(t, 902, template(aria))
-	assert.Contains(t, got, "stage 3 of 4")
+	assert.Contains(t, got, "stage 3 of 6")
 	run(aria, "formation", "move #1 1 2")
 	assert.Equal(t, StageFormation, stageOf(aria), "no one behind yet")
 
@@ -268,6 +284,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	reloaded := users.UserRecord{}
 	require.NoError(t, yaml.Unmarshal(data, &reloaded))
 	reloaded.UserId = aria.UserId
+	require.NoError(t, reloaded.Character.Validate(true), "as users.LoadUser does")
 	aria = &reloaded
 	users.SetTestUser(aria)
 	require.Equal(t, StageFormation, stageOf(aria), "progress is in the user file")
@@ -275,7 +292,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	got = text(aria)
 	assert.Equal(t, 902, template(aria), "back at the Drill Ground")
 	assert.Contains(t, got, "back where your training left off")
-	assert.Contains(t, got, "stage 3 of 4")
+	assert.Contains(t, got, "stage 3 of 6")
 	assert.Equal(t, -1, aria.Character.RoomIdOnReset)
 	here := aria.Character.RoomId
 	for _, key := range []int{1, 2} {
@@ -290,7 +307,58 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, 902, template(aria))
 
 	got = run(aria, "formation", "move #2 2 2")
-	assert.Equal(t, StageDeparture, stageOf(aria))
+	assert.Equal(t, StageSurvival, stageOf(aria))
+
+	// Survival (27b): walking into the Weather Yard hands over what the
+	// pack lacks, once. The real eat and drink, and the inspections.
+	got = run(aria, "east", "")
+	require.Equal(t, 904, template(aria))
+	assert.Contains(t, got, "stage 4 of 6: Survival")
+	assert.Contains(t, got, "cheese sandwich")
+	assert.Contains(t, got, "waterskin")
+	assert.True(t, progressOf(aria.Character).Supplied)
+	run(aria, "eat", "nothing-here")
+	assert.False(t, progressOf(aria.Character).Seen[seenFed], "a failed eat doesn't count")
+	run(aria, "eat", "sandwich")
+	run(aria, "drink", "waterskin")
+	p := progressOf(aria.Character)
+	assert.True(t, p.Seen[seenFed])
+	assert.True(t, p.Seen[seenWatered])
+	for _, cmd := range []string{"weather", "temperature", "strain"} {
+		require.True(t, usercommands.IsRegistered(cmd), cmd)
+		run(aria, cmd, "")
+		assert.Equal(t, StageSurvival, stageOf(aria), "after "+cmd)
+	}
+	got = run(aria, "cargo", "")
+	assert.Equal(t, StageCamp, stageOf(aria))
+	assert.Contains(t, got, "Head east for the next lesson: Camp")
+	run(aria, "west", "")
+	run(aria, "east", "")
+	assert.Equal(t, 904, template(aria))
+	assert.Equal(t, 1, countItem(aria, 30004), "walking back in gives no more")
+
+	// Camp: a real camp and rest in the Campground copy.
+	got = run(aria, "east", "")
+	require.Equal(t, 905, template(aria))
+	assert.Contains(t, got, "stage 5 of 6: Camp")
+	assert.Contains(t, run(aria, "camp", ""), "You make camp here.")
+	assert.Contains(t, run(aria, "camp", "fire"), "campfire")
+	assert.Contains(t, run(aria, "camp", "rest"), "You settle in by the fire to rest.")
+	activity, ok := camping.LeaderRest(aria.UserId)
+	require.True(t, ok)
+	assert.True(t, activity.Resting, "a real, running rest")
+	campRoom := aria.Character.RoomId
+	run(aria, "east", "")
+	assert.Equal(t, campRoom, aria.Character.RoomId, "no way on, and resting holds the company")
+	assert.Equal(t, StageCamp, stageOf(aria))
+	// The rest takes a real minute; camping's own tests finish it. Here
+	// the Rested it grants at the end is given directly, as its grant does.
+	require.NoError(t, aria.Character.AddBuff(1033, false, 100))
+	got = run(aria, "look", "")
+	assert.Equal(t, StageDeparture, stageOf(aria), "Rested passes Camp")
+	assert.Contains(t, got, "Head east for the next lesson: Departure")
+	_, ok = camping.LeaderRest(aria.UserId)
+	assert.False(t, ok, "the course camp is struck")
 
 	// Departure: out through the gate, with one cap.
 	run(aria, "east", "")
@@ -319,19 +387,45 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, 1, caps(aria), "no second cap")
 	assert.Equal(t, stateGraduated, progressOf(aria.Character).State)
 
-	// A second player skips: out to the start room with nothing.
+	// A second player skips mid-rest: out to the start room with nothing,
+	// and no camp left in the course.
 	bram := newPlayer(8, "Bram")
 	create(bram)
 	text(bram)
 	require.Equal(t, 900, template(bram))
 	assert.NotEqual(t, before, bram.Character.RoomId, "their own copy")
+	p = progressOf(bram.Character)
+	p.Stage = StageCamp
+	p.save(bram.Character)
+	require.True(t, module.Begin(bram.UserId), "carries on at the saved stage")
+	events.ProcessEvents()
+	require.Equal(t, 905, template(bram))
+	run(bram, "camp", "")
+	run(bram, "camp", "fire")
+	run(bram, "camp", "rest")
+	activity, ok = camping.LeaderRest(bram.UserId)
+	require.True(t, ok)
+	require.True(t, activity.Resting)
 	assert.Contains(t, run(bram, "tutorial", "skip"), "tutorial skip yes")
-	assert.Equal(t, 900, template(bram), "asks first")
+	assert.Equal(t, 905, template(bram), "asks first")
 	run(bram, "tutorial", "skip yes")
 	assert.Equal(t, 1, bram.Character.RoomId)
 	assert.Equal(t, stateSkipped, progressOf(bram.Character).State)
 	assert.Zero(t, caps(bram))
+	_, ok = camping.LeaderRest(bram.UserId)
+	assert.False(t, ok, "the rest is abandoned with the course")
+	assert.Contains(t, run(bram, "camp", ""), "There is nowhere here to make camp.", "not \"You already have a camp\"")
 
 	assert.Equal(t, turn, util.GetTurnCount(), "the clock never moves")
 	assert.Equal(t, round, util.GetRoundCount())
+}
+
+func countItem(u *users.UserRecord, itemID int) int {
+	n := 0
+	for _, itm := range u.Character.GetAllBackpackItems() {
+		if itm.ItemId == itemID {
+			n++
+		}
+	}
+	return n
 }
