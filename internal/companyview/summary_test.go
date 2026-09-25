@@ -34,6 +34,7 @@ func noSources() sources {
 		restReporting:      func() bool { return false },
 		name:               func(string) (string, bool) { return "", false },
 		room:               func(int) *rooms.Room { return nil },
+		formation:          func(int) (company.Formation, bool) { return company.Formation{}, false },
 	}
 }
 
@@ -199,4 +200,17 @@ func TestCheckpointTitleRemembered(t *testing.T) {
 	assert.Equal(t, "Shrine", src.summary(user).Checkpoint)
 	assert.Equal(t, "Shrine", src.summary(user).Checkpoint)
 	assert.Equal(t, 1, loads)
+}
+
+func TestSummaryLeaderCell(t *testing.T) {
+	src := noSources()
+	src.formation = func(int) (company.Formation, bool) {
+		var f company.Formation
+		_ = f.Place(company.LeaderMemberKey, 1, 2)
+		return f, true
+	}
+	s := src.summary(testUser())
+	assert.True(t, s.Leader.Placed)
+	assert.Equal(t, [2]int{1, 2}, [2]int{s.Leader.Row, s.Leader.Col})
+	assert.False(t, noSources().summary(testUser()).Leader.Placed)
 }

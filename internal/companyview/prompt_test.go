@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func setCache(t *testing.T, userID int, values map[string]string) {
@@ -106,4 +107,26 @@ func TestRealRefreshRace(t *testing.T) {
 		refreshAll()
 	}
 	<-done
+}
+
+func TestOnRefreshFiresWithSummary(t *testing.T) {
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	u := users.NewUserRecord(32, 1)
+	u.Character.Name = "Hook"
+	users.SetTestUser(u)
+	var got []Refreshed
+	OnRefresh.Register(func(r Refreshed) Refreshed {
+		if r.User.UserId == 32 {
+			got = append(got, r)
+		}
+		return r
+	})
+	RefreshUser(32)
+	RefreshUser(999) // not online: nothing
+	require.Len(t, got, 1)
+	assert.Equal(t, "Hook", got[0].Summary.Leader.Name)
+	cacheMu.Lock()
+	delete(cache, 32)
+	cacheMu.Unlock()
 }

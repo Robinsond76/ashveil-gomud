@@ -282,6 +282,17 @@ func (g *GMCPModule) HandleWebGMCP(connectionId uint64, webGMCP []byte) bool {
 			return true
 		}
 
+		if identifier == `Company` {
+			// Phase 26b: the Ashveil company panel asks for a full snapshot.
+			for _, user := range users.GetAllActiveUsers() {
+				if user.ConnectionId() == connectionId {
+					events.AddToQueue(GMCPCompanyRequest{UserId: user.UserId})
+					break
+				}
+			}
+			return true
+		}
+
 		if strings.HasPrefix(identifier, `World`) {
 			// Try to find the user ID associated with this connection
 			for _, user := range users.GetAllActiveUsers() {

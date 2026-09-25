@@ -13,6 +13,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Tokens are the prompt tokens this package fills. An unknown value renders
@@ -80,15 +81,28 @@ func PromptValues(s Summary) map[string]string {
 	return values
 }
 
-// Refresh recomputes a user's prompt values. Call it on the game loop.
+// Refreshed is a fresh summary, handed to OnRefresh handlers.
+type Refreshed struct {
+	User    *users.UserRecord
+	Summary Summary
+}
+
+// OnRefresh fires on the game loop after each Refresh, with the summary it
+// built (Phase 26b: the GMCP Company panel). Handlers must not block.
+var OnRefresh util.Hook[Refreshed]
+
+// Refresh recomputes a user's prompt values and hands the summary to
+// OnRefresh. Call it on the game loop.
 func Refresh(user *users.UserRecord) {
 	if user == nil || user.Character == nil {
 		return
 	}
-	values := PromptValues(For(user))
+	s := For(user)
+	values := PromptValues(s)
 	cacheMu.Lock()
 	cache[user.UserId] = values
 	cacheMu.Unlock()
+	OnRefresh.Fire(Refreshed{User: user, Summary: s})
 }
 
 // RefreshUser is Refresh by user ID; it does nothing for a user who isn't

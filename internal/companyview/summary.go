@@ -97,6 +97,7 @@ type sources struct {
 	restReporting      func() bool
 	name               func(archetypeID string) (string, bool)
 	room               func(roomID int) *rooms.Room
+	formation          func(leaderUserID int) (company.Formation, bool)
 }
 
 func nativeSources() sources {
@@ -116,6 +117,7 @@ func nativeSources() sources {
 		restReporting:      camping.RestReporting,
 		name:               archetypes.Name,
 		room:               rooms.LoadRoom,
+		formation:          company.FormationFor,
 	}
 }
 
@@ -156,6 +158,12 @@ func (src sources) summary(user *users.UserRecord) Summary {
 
 	s.Leader = Member{Key: company.LeaderMemberKey, Leader: true, Name: c.Name, Status: company.MemberPresent,
 		Level: c.Level, HasHP: true, HP: c.Health, HPMax: c.HealthMax.Value}
+	if f, ok := src.formation(uid); ok {
+		s.Leader.Row, s.Leader.Col, s.Leader.Placed = f.Find(company.LeaderMemberKey)
+		if !s.Leader.Placed {
+			s.Leader.Row, s.Leader.Col = 0, 0
+		}
+	}
 	if src.archetypeReporting() {
 		s.Leader.ArchetypeKnown = true
 		if id, ok := src.archetype(uid); ok {
