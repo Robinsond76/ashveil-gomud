@@ -328,6 +328,7 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 		from, to := c.LoseLevel()
 		op := fmt.Sprintf("death-%d-%d", userID, m.round())
 		c.SetMiscData(domain.PendingKey, op)
+		c.SetMiscData(domain.LastLossKey, domain.LastLossValue(from, to))
 		mudlog.Info("death: level taken", "user", userID, "op", op, "from", from, "to", to)
 		if from > to {
 			user.SendText(fmt.Sprintf(`You lose a level (now level <ansi fg="yellow">%d</ansi>).`, to))

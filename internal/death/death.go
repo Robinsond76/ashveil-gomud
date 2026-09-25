@@ -8,6 +8,7 @@ package death
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -35,7 +36,33 @@ const (
 	// PendingKey holds the operation ID of a death whose level has been
 	// taken but whose return to a church hasn't happened yet.
 	PendingKey = "death-pending"
+	// LastLossKey holds the most recent death's levels, "from>to" (Phase
+	// 26a), for the experience command.
+	LastLossKey = "death-last-loss"
 )
+
+// LastLoss reads the most recent death's levels from a character's
+// MiscData. ok is false when none is recorded.
+func LastLoss(c interface{ GetMiscData(string) any }) (from, to int, ok bool) {
+	raw, _ := c.GetMiscData(LastLossKey).(string)
+	before, after, found := strings.Cut(raw, ">")
+	if !found {
+		return 0, 0, false
+	}
+	var err1, err2 error
+	from, err1 = strconv.Atoi(before)
+	to, err2 = strconv.Atoi(after)
+	if err1 != nil || err2 != nil || from < 1 || to < 1 {
+		return 0, 0, false
+	}
+	return from, to, true
+}
+
+// LastLossValue is the LastLossKey value for a death from one level to
+// another.
+func LastLossValue(from, to int) string {
+	return strconv.Itoa(from) + ">" + strconv.Itoa(to)
+}
 
 var (
 	ErrInvalidSettlement = errors.New("death: invalid settlement")

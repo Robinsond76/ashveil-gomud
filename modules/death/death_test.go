@@ -465,3 +465,27 @@ func TestHoldClearsAggro(t *testing.T) {
 
 	assert.Nil(t, w.user.Character.Aggro, "so AutoHeal retries")
 }
+
+// TestRespawnRecordsLastLoss (Phase 26a): a new death records the levels
+// before and after, for experience; a retry doesn't change it, and it
+// survives a YAML reload.
+func TestRespawnRecordsLastLoss(t *testing.T) {
+	w := newTestWorld(t)
+	w.enter(2001)
+	w.module.Respawn(w.user.UserId, true)
+	from, to, ok := domain.LastLoss(w.user.Character)
+	require.True(t, ok)
+	assert.Equal(t, [2]int{6, 5}, [2]int{from, to})
+
+	data, err := yaml.Marshal(w.user)
+	require.NoError(t, err)
+	reloaded := &users.UserRecord{}
+	require.NoError(t, yaml.Unmarshal(data, reloaded))
+	from, to, ok = domain.LastLoss(reloaded.Character)
+	require.True(t, ok)
+	assert.Equal(t, [2]int{6, 5}, [2]int{from, to})
+
+	fresh := users.NewUserRecord(9, 1)
+	_, _, ok = domain.LastLoss(fresh.Character)
+	assert.False(t, ok)
+}
