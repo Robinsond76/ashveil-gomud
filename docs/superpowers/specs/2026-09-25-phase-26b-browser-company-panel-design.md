@@ -138,3 +138,24 @@ and the tutorial's use of the panel (Phase 27).
     formation's text is in the accessibility tree.
 - `go test -race ./...`, `make generate`, `make validate`, and `jshint` on
   the changed script pass.
+
+## Review amendments (2026-09-25)
+
+- **Countdowns are live, not structure.** Activity, rest time, and each
+  fallen member's rescue time travel with the vitals in `Company.Vitals`, in
+  whole minutes. The snapshot no longer resends every round while a timer
+  runs. A member no longer carries `rescue_seconds`; the payload has a
+  top-level `rescue` map by member key.
+- **Chemistry only in a band.** A member alone (including a solo leader) or
+  dead has none, so "Strangers" isn't shown everywhere.
+- **No client request.** The Party window reads `Client.GMCPStructs`, which
+  the client fills even while the window is closed. A reopened window is
+  current, and the server's login and copyover snapshot is enough. The
+  `!!GMCP(Company)` request stays for other clients.
+- **Focus kept.** A rebuild puts keyboard focus back on the same card.
+- **Only GMCP connections.** Nothing is built for a telnet connection that
+  hasn't accepted GMCP. The last-sent record is pruned each round for users
+  no longer online.
+- **Every player has a Company section**, their own card at least, so a
+  lone leader still sees their needs. "No company or party" is only the
+  state before the first snapshot.

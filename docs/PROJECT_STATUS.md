@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-24
-- **HEAD:** Phase 26a (company summary and text surfaces) is complete, reviewed, and on `master`.
+- **HEAD:** Phase 26b (browser Company panel) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`, awaiting merge to `master`. Phase 26a is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -57,9 +57,9 @@ instead of duplicating them.
   the living company), and Phase 25b (companion death: dead on the roster for
   three game days of the leader's online time, `resurrect` at a church or
   village shaman for a level, then lost).
-- **Next:** Phase 26b, the browser Company
-  panel (a `Company` GMCP payload read from the same `internal/companyview`
-  summary), from the [player information surfaces spec](superpowers/specs/2026-09-23-player-information-surfaces-design.md).
+- **Next:** merge Phase 26b to `master`; then the last spec on the
+  [onboarding roadmap](superpowers/specs/2026-09-23-company-life-onboarding-roadmap.md),
+  the [Ashveil tutorial](superpowers/specs/2026-09-23-ashveil-tutorial-design.md).
 
 ## Phase progress
 
@@ -104,10 +104,95 @@ instead of duplicating them.
 | 25a | Player death and church return | Complete: one level lost (no protection levels; peak level stops re-granted points), a durable pending mark so a death is charged once, wake at the last city's church (Dunmar's new Chapel of the Wayfarer, Frostfang's Sanctuary as fallback) with the living company; travel, camp, and inn stay abandoned first |
 | 25b | Companion death and resurrection | Complete: a dead companion stays on the roster, keeping the gear its body kept; a 3-game-day rescue allowance spent only in the leader's online time; `resurrect` at a church or village shaman with its keeper costs a level; at zero it is lost and archived; Fernhollow village and Old Wenna |
 | 26a | Company summary and text surfaces | Complete: `internal/companyview` read model; prompt tokens from a game-loop cache and a default prompt that warns only when needed; `status` as the Ashveil character sheet, grouped `conditions`, company load in `inventory`, last level lost in `experience` |
-| 26b | Browser Company panel (GMCP) | Planned |
+| 26b | Browser Company panel (GMCP) | Complete (awaiting merge): `Company`/`Company.Vitals` GMCP from the 26a summary, sent on change and only to the leader; a Company section above Players in the web client's Party window, safe DOM, keyboard and screen-reader friendly, checked in Chromium |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 26b: browser Company panel (2026-09-25)
+
+- **What:** A GMCP `Company` namespace built from the 26a summary.
+  - **Snapshot and live parts:** `Company` is the snapshot: members by
+    member key, status, level, archetype, formation cell, chemistry, load,
+    and checkpoint. `Company.Vitals` is the live part: health, needs,
+    warmth, and the countdowns (activity, rest, rescue) in whole minutes.
+  - **Unknowns:** unknown values are `null`.
+  - **When it is sent:** `companyview.OnRefresh` (every round and after
+    every command) sends only on change, and only to that player. It resends
+    the snapshot on `PlayerSpawn` (login, copyover) or on a
+    `!!GMCP(Company)` request. Nothing is built for a telnet connection that
+    hasn't accepted GMCP.
+  - **Web client:** the Party window now shows a **Company** section (a 3×3
+    formation table and a member card per member) above a **Players**
+    section for GoMud human parties.
+    - Every string goes in with `textContent`, which also fixes the old
+      party names' `innerHTML`.
+    - It reads its state from `Client.GMCPStructs`, so it is current after
+      being closed and reopened, and it keeps keyboard focus across updates.
+  - **Help:** `help gmcp-company`.
+
+  Design and plan:
+  [26b spec](superpowers/specs/2026-09-25-phase-26b-browser-company-panel-design.md) /
+  [26b plan](superpowers/plans/2026-09-25-phase-26b-browser-company-panel.md).
+- **Why:** Roadmap spec 5, second half. Decisions were applied under the
+  owner's "continue with next phase" and are recorded in the spec, with the
+  review's amendments.
+- **Verification:** `go test -race ./...`, `make generate`, `make validate`,
+  `make js-lint`.
+  - **Wiring test:** through `plugins.Load` with the GMCP module, capturing
+    real `GMCPOut` events: login sends the snapshot, a recruit resends it,
+    damage sends only `Company.Vitals`, a death shows the member dead with
+    its rescue time, a resurrection shows it present, a request resends the
+    snapshot, another player gets only their own, and the clock is
+    unchanged.
+  - **Browser check:** `scripts/browser/company-panel-check.mjs` runs
+    Playwright in Chromium against the real `window-party.js`, with 30
+    checks:
+    - the two sections are distinct, and a company shows with no party;
+    - the formation table and cards render;
+    - a name holding markup is shown as text;
+    - vitals and countdowns apply over the roster;
+    - focus is kept, and the cards are reachable by keyboard;
+    - a vitals-only party payload still shows the party;
+    - a closed-then-reopened window is current;
+    - there is no overflow at 360px;
+    - headings, the table, and cells are in the accessibility tree.
+
+    Desktop and 360px screenshots were inspected. A full server with the
+    real web client was not run.
+- **Review:** The independent reviewer confirmed privacy (each payload is
+  built from the player's own summary), game-loop-only state, deterministic
+  JSON comparison, and unchanged `Party`/`Party.Vitals`. Its findings:
+  1. *Medium, fixed:* the countdowns were in the snapshot half, so a dead
+     companion or a rest tier resent the full `Company` every round. They
+     are now live, in whole minutes (`TestCountdownsDontResendSnapshot`).
+  2. *Medium, fixed:* every update rebuilt the panel and dropped keyboard
+     focus. Focus is now restored to the same card (browser check).
+  3. *Medium, fixed:* while the window was closed, company payloads were
+     skipped and the reopened window was stale. It now reads
+     `Client.GMCPStructs` (browser check, with the harness modelling
+     closed-window dispatch).
+  4. *Low, fixed:* the help promised a request path that only the web
+     client has; the help is reworded.
+  5. *Low, fixed:* "Chemistry: Strangers" showed on everyone. Chemistry is
+     now only for a member in a band (`TestChemistryOnlyInABand`).
+  6. *Decided:* every player has a Company section with at least their own
+     card; recorded in the spec.
+  7. *Low, fixed:* two snapshots were sent at login; the client request was
+     removed.
+  8. *Low, fixed:* the last-sent record is now pruned each round for users
+     gone offline (`TestPruneAndDespawn`).
+  9. *Low, fixed:* payloads were built for telnet connections without GMCP
+     (`TestNothingForNonGMCPConnections`). *Recorded:* one
+     `ChemistryStanding` per member per refresh.
+  10. *Recorded:* an `OnRefresh` test handler can't be unregistered
+      (`util.Hook` has no removal); it is guarded by its user ID.
+  11. *Fixed by 3:* `Company.Vitals` nesting under the stored snapshot is
+      now how the window finds the newest live values.
+
+  Coverage added: warmth-only changes send `Company.Vitals`; checkpoint and
+  chemistry changes send `Company`; despawn forgets.
+- **Step completed:** Phase 26b.
 
 ### Phase 26a: company summary and text surfaces (2026-09-25)
 

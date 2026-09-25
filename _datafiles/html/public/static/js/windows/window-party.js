@@ -14,10 +14,15 @@
  *
  * Responds to GMCP namespaces:
  *   Company         - full company snapshot ({} when there is none)
- *   Company.Vitals  - members' health and needs only; merged, never replacing
+ *   Company.Vitals  - health, needs, and countdowns (activity, rest, rescue
+ *                     time); applied over the roster, never replacing it
  *   Party           - full party update (roster + vitals)
  *   Party.Vitals    - lightweight vitals-only update
- *   Char            - used once, to ask for the company after login
+ *
+ * The state is read from Client.GMCPStructs on every render, where the
+ * client stores each payload even while this window is closed, so a
+ * reopened window is current. The server sends the snapshot at login and
+ * copyover.
  */
 
 'use strict';
@@ -270,6 +275,8 @@
         dockedHeight:  200,
         factory() {
             const root = createDOM();
+            // Opened or reopened: show what arrived while it was closed.
+            setTimeout(update, 0);
             return {
                 title:      'Party',
                 mount:      root,
@@ -286,23 +293,24 @@
     });
 
     // --- Company state (Phase 26b) ---
-    let company          = null; // the last Company snapshot, or null
-    let companyVitals    = {};   // member key -> vitals, merged from Company.Vitals
-    let companyRequested = false;
+    // company is the last snapshot; live is the newest health, needs, and
+    // countdowns: a Company.Vitals that arrived after the snapshot (the
+    // client stores it at Company.Vitals, and a new snapshot replaces the
+    // whole Company object), else the snapshot's own.
+    let company = null;
+    let live    = null;
 
-    function applyCompany(namespace, body) {
-        if (namespace === 'Company.Vitals') {
-            if (!company || !body || typeof body.vitals !== 'object' || body.vitals === null) { return; }
-            Object.keys(body.vitals).forEach(key => { companyVitals[key] = body.vitals[key]; });
-            return;
-        }
-        if (!body || !body.leader) {
-            company       = null;
-            companyVitals = {};
-            return;
-        }
-        company       = body;
-        companyVitals = Object.assign({}, body.vitals || {});
+    function readCompany() {
+        const stored = Client.GMCPStructs.Company;
+        company = (stored && stored.leader) ? stored : null;
+        live    = null;
+        if (!company) { return; }
+        const newer = stored.Vitals;
+        live = (newer && typeof newer === 'object' && newer.vitals) ? newer : company;
+    }
+
+    function liveVitals(key) {
+        return (live && live.vitals && live.vitals[key]) || {};
     }
 
     function companyMembers() {
@@ -328,9 +336,9 @@
         if (company.load && company.load.label) {
             parts.push(company.load.label + ' (' + (company.load.total_g / 1000).toFixed(1) + '/' + (company.load.capacity_g / 1000).toFixed(1) + ' kg)');
         }
-        if (company.activity) { parts.push(company.activity); }
-        if (company.rest && company.rest.tier && company.rest.tier !== 'none') {
-            parts.push(company.rest.tier + ' ' + formatSeconds(company.rest.seconds));
+        if (live.activity) { parts.push(live.activity); }
+        if (live.rest && live.rest.tier && live.rest.tier !== 'none') {
+            parts.push(live.rest.tier + ' ' + formatSeconds(live.rest.seconds));
         }
         return parts.join(' \u00b7 ');
     }
@@ -359,9 +367,10 @@
     }
 
     function memberCard(m) {
-        const v    = companyVitals[m.key] || {};
+        const v    = liveVitals(m.key);
         const card = el('li', 'party-member company-member' + (m.key === 'leader' ? ' is-leader' : '') + ' status-' + m.status);
         card.tabIndex = 0;
+        card.setAttribute('data-key', m.key);
 
         const header = el('div', 'party-member-header');
         header.appendChild(el('span', 'party-member-name', m.name + (m.key === 'leader' ? ' \u2605' : '')));
@@ -371,7 +380,8 @@
 
         const spoken = [m.name, m.level ? 'level ' + m.level : '', m.archetype || ''];
         if (m.status === 'dead') {
-            const left = 'Fallen: ' + formatSeconds(m.rescue_seconds) + ' to raise';
+            const rescue = live.rescue && live.rescue[m.key];
+            const left = typeof rescue === 'number' ? 'Fallen: ' + formatSeconds(rescue) + ' to raise' : 'Fallen';
             card.appendChild(el('div', 'company-status company-fallen', left));
             spoken.push(left);
         } else if (m.status === 'awaiting') {
@@ -398,7 +408,7 @@
             card.appendChild(el('div', 'company-warmth need-warn', v.warmth));
             spoken.push(v.warmth);
         }
-        if (m.chemistry && m.chemistry !== 'none') {
+        if (m.chemistry) {
             card.appendChild(el('div', 'company-chemistry', 'Chemistry: ' + m.chemistry));
             spoken.push('chemistry ' + m.chemistry);
         }
@@ -477,7 +487,12 @@
 
         const panel = document.getElementById('party-panel');
         if (!panel) { return; }
+        readCompany();
         const partyData = Client.GMCPStructs.Party;
+
+        // Keep keyboard focus on the same card across the rebuild.
+        const focused    = document.activeElement;
+        const focusedKey = (focused && panel.contains(focused) && focused.getAttribute('data-key')) || null;
         const hasParty  = !!(partyData && ((partyData.Members && partyData.Members.length) || (partyData.Vitals && Object.keys(partyData.Vitals).length)));
 
         panel.textContent = '';
@@ -487,30 +502,19 @@
         }
         if (company) { panel.appendChild(companySection()); }
         panel.appendChild(playersSection(partyData));
+
+        if (focusedKey) {
+            const again = panel.querySelector('[data-key="' + (window.CSS && CSS.escape ? CSS.escape(focusedKey) : focusedKey) + '"]');
+            if (again) { again.focus(); }
+        }
     }
 
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Company', 'Party', 'Char'],
-        onGMCP(namespace, body) {
-            // handleGMCP calls this once per matching level, so each
-            // namespace is acted on only for its own full name.
-            if (namespace === 'Company' || namespace === 'Company.Vitals') {
-                applyCompany(namespace, body);
-                update();
-                return;
-            }
-            if (namespace.indexOf('Char') === 0) {
-                // Logged in: ask once for the company, in case a login
-                // snapshot was missed (a reloaded tab, a reconnect).
-                if (!companyRequested && Client.GMCPRequest) {
-                    companyRequested = true;
-                    Client.GMCPRequest('Company');
-                }
-                return;
-            }
-            update();
-        },
+        // handleGMCP calls a handler once per matching level; registering
+        // only the top names gives one call per payload.
+        gmcpHandlers: ['Company', 'Party'],
+        onGMCP() { update(); },
     });
 
 })();

@@ -75,6 +75,9 @@ func TestCompanyGMCPThroughPluginsLoad(t *testing.T) {
 	other := users.NewUserRecord(28, 2828)
 	other.Character.Name = "Watcher"
 	users.SetTestUser(other)
+	// Both connect like web clients, which accept GMCP from the start.
+	gmcp.AcceptGMCPForTest(2727)
+	gmcp.AcceptGMCPForTest(2828)
 	require.NoError(t, rooms.MoveToRoom(user.UserId, 2004))
 	require.NoError(t, rooms.MoveToRoom(other.UserId, 2004))
 	t.Cleanup(func() {
@@ -177,7 +180,7 @@ func TestCompanyGMCPThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, "Company", last.module)
 	dead := member(last, "companion:1")
 	assert.Equal(t, "dead", dead["status"])
-	assert.Equal(t, 10800.0, dead["rescue_seconds"])
+	assert.Equal(t, 10800.0, last.body["rescue"].(map[string]any)["companion:1"])
 	assert.Equal(t, 1.0, last.body["dead"])
 
 	// The chapel raises it: present again.

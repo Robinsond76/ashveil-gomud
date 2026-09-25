@@ -1,6 +1,6 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">gmcp-company</ansi>
 
-The <ansi fg="white-bold">Company</ansi> payload is your own Ashveil company: you and the companions who travel with you. It is separate from <ansi fg="white-bold">Party</ansi>, which is a party of human players. It is sent only to you, and only when something changes: at login, after a command, or at most once a round. Request it any time with <ansi fg="white-bold">Company</ansi>.
+The <ansi fg="white-bold">Company</ansi> payload is your own Ashveil company: you and the companions who travel with you. It is separate from <ansi fg="white-bold">Party</ansi>, which is a party of human players. It is sent only to you, and only when something changes: at login and copyover, after a command, or at most once a round. The web client can also ask for it (<ansi fg="white-bold">!!GMCP(Company)</ansi>).
 
 Members are keyed by <ansi fg="cyan">key</ansi> ("leader" or "companion:ID"), never by name, since two companions can share a name. A value the game can't report right now is <ansi fg="white-bold">null</ansi>; it is never filled in. An empty object means there is no company data to show.
 
@@ -12,22 +12,22 @@ Full snapshot.
   <ansi fg="cyan">alive</ansi>       <ansi fg="yellow">number</ansi>  - Living members, you included
   <ansi fg="cyan">dead</ansi>        <ansi fg="yellow">number</ansi>  - Fallen companions awaiting resurrection
   <ansi fg="cyan">load</ansi>        <ansi fg="blue-bold">object</ansi>  - label, total_g, capacity_g, cargo_g
-  <ansi fg="cyan">activity</ansi>    <ansi fg="green">string</ansi>  - "Travelling 42%", "Resting 12m", ... or "" when idle
-  <ansi fg="cyan">rest</ansi>        <ansi fg="blue-bold">object</ansi>  - tier ("Rested", "Well Rested", "none") and seconds left
   <ansi fg="cyan">checkpoint</ansi>  <ansi fg="green">string</ansi>  - The church where you wake if you fall
-  <ansi fg="cyan">vitals</ansi>      <ansi fg="blue-bold">object</ansi>  - Keyed by member key (see Company.Vitals)
+  and everything in Company.Vitals (vitals, activity, rest, rescue).
 
   Each member contains:
   <ansi fg="cyan">key</ansi>, <ansi fg="cyan">id</ansi>, <ansi fg="cyan">name</ansi>, <ansi fg="cyan">level</ansi>, <ansi fg="cyan">archetype</ansi>
   <ansi fg="cyan">status</ansi>          <ansi fg="green">string</ansi>  - "present", "awaiting" (rejoins when you return), or "dead"
   <ansi fg="cyan">cell</ansi>            <ansi fg="blue-bold">object</ansi>  - Formation cell: row and col, 0-based, row 0 in front
-  <ansi fg="cyan">rescue_seconds</ansi>  <ansi fg="yellow">number</ansi>  - A fallen companion's time left to be raised
-  <ansi fg="cyan">chemistry</ansi>       <ansi fg="green">string</ansi>  - The tier of the band the member stands with
+  <ansi fg="cyan">chemistry</ansi>       <ansi fg="green">string</ansi>  - The tier of the band the member stands with (null alone)
 
 <ansi fg="yellow-bold">Company.Vitals</ansi>
-Sent when only health or needs changed. Merge it into the last snapshot.
+Sent when only these changed. It replaces them in the last snapshot; the roster stays. Countdowns are in whole minutes (seconds under a minute), so it isn't sent every round.
 
-  <ansi fg="cyan">vitals</ansi>  <ansi fg="blue-bold">object</ansi>  - Keyed by member key. Each has:
+  <ansi fg="cyan">activity</ansi>  <ansi fg="green">string</ansi>  - "Travelling 42%", "Resting 12m", ... or "" when idle
+  <ansi fg="cyan">rest</ansi>      <ansi fg="blue-bold">object</ansi>  - tier ("Rested", "Well Rested", "none") and seconds left
+  <ansi fg="cyan">rescue</ansi>    <ansi fg="blue-bold">object</ansi>  - Each fallen companion's seconds left to be raised, by member key
+  <ansi fg="cyan">vitals</ansi>    <ansi fg="blue-bold">object</ansi>  - Keyed by member key. Each has:
     <ansi fg="cyan">hp</ansi>, <ansi fg="cyan">hp_max</ansi>  - Health, for a member who is present
     <ansi fg="cyan">needs</ansi>       - hunger, thirst, fatigue: value (0-100), label, warn
     <ansi fg="cyan">warmth</ansi>      - "" when comfortable, else Chilled, Overheated, ...

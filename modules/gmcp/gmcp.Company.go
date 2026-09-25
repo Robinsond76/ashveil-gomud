@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 type companyNeed struct {
@@ -42,15 +43,14 @@ type companyCell struct {
 }
 
 type companyMember struct {
-	Key           string       `json:"key"`
-	ID            int          `json:"id"`
-	Name          string       `json:"name"`
-	Status        string       `json:"status"`
-	Level         int          `json:"level"`
-	Archetype     *string      `json:"archetype"`
-	Cell          *companyCell `json:"cell"`
-	RescueSeconds *int         `json:"rescue_seconds"`
-	Chemistry     *string      `json:"chemistry"`
+	Key       string       `json:"key"`
+	ID        int          `json:"id"`
+	Name      string       `json:"name"`
+	Status    string       `json:"status"`
+	Level     int          `json:"level"`
+	Archetype *string      `json:"archetype"`
+	Cell      *companyCell `json:"cell"`
+	Chemistry *string      `json:"chemistry"`
 }
 
 type companyLoad struct {
@@ -65,27 +65,42 @@ type companyRest struct {
 	Seconds int    `json:"seconds"`
 }
 
-// companyStructure is everything but the vitals.
+// companyStructure is what changes only with the roster, formation, load,
+// chemistry, or checkpoint.
 type companyStructure struct {
 	Leader     companyMember   `json:"leader"`
 	Members    []companyMember `json:"members"`
 	Alive      int             `json:"alive"`
 	Dead       int             `json:"dead"`
 	Load       *companyLoad    `json:"load"`
-	Activity   *string         `json:"activity"`
-	Rest       *companyRest    `json:"rest"`
 	Checkpoint *string         `json:"checkpoint"`
+}
+
+// companyLive is what changes as time passes: health, needs, and the
+// countdowns (activity, rest, a fallen member's rescue time). Countdowns
+// are in whole minutes, the client's display granularity, so they don't
+// change every round. "Company.Vitals" carries all of it.
+type companyLive struct {
+	Vitals   map[string]companyVitals `json:"vitals"`
+	Activity *string                  `json:"activity"`
+	Rest     *companyRest             `json:"rest"`
+	// Rescue is each fallen member's rescue time left, by member key.
+	Rescue map[string]int `json:"rescue"`
 }
 
 // companyPayload is the full "Company" snapshot.
 type companyPayload struct {
 	companyStructure
-	Vitals map[string]companyVitals `json:"vitals"`
+	companyLive
 }
 
-// companyVitalsPayload is "Company.Vitals".
-type companyVitalsPayload struct {
-	Vitals map[string]companyVitals `json:"vitals"`
+// wholeMinutes rounds a countdown down to whole minutes, in seconds;
+// under a minute it is kept to the second, so "45s" still shows.
+func wholeMinutes(seconds int) int {
+	if seconds < 60 {
+		return max(seconds, 0)
+	}
+	return seconds - seconds%60
 }
 
 func strPtr(s string) *string { return &s }
@@ -133,10 +148,12 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	if m.Placed {
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}
 	}
-	if m.Status == company.MemberDead {
-		out.RescueSeconds = intPtr(int(m.RescueLeft.Seconds()))
-	} else if standing, ok := chemistry(leaderUserID, m.Key); ok {
-		out.Chemistry = strPtr(company.TierName(standing.Tier))
+	// Chemistry is shown only for a member standing with a band; alone or
+	// dead there is none (not "Strangers" on everyone).
+	if m.Status != company.MemberDead {
+		if standing, ok := chemistry(leaderUserID, m.Key); ok && standing.Together >= 2 {
+			out.Chemistry = strPtr(company.TierName(standing.Tier))
+		}
 	}
 	return out
 }
@@ -147,13 +164,16 @@ func buildCompanyPayload(leaderUserID int, s companyview.Summary, chemistry chem
 	if !s.CompanyKnown {
 		return companyPayload{}, false
 	}
-	p := companyPayload{Vitals: map[string]companyVitals{}}
+	p := companyPayload{companyLive: companyLive{Vitals: map[string]companyVitals{}, Rescue: map[string]int{}}}
 	p.Leader = memberOf(s.Leader, leaderUserID, chemistry)
 	p.Vitals[string(s.Leader.Key)] = vitalsOf(s.Leader)
 	p.Members = []companyMember{}
 	for _, m := range s.Companions {
 		p.Members = append(p.Members, memberOf(m, leaderUserID, chemistry))
 		p.Vitals[string(m.Key)] = vitalsOf(m)
+		if m.Status == company.MemberDead {
+			p.Rescue[string(m.Key)] = wholeMinutes(int(m.RescueLeft.Seconds()))
+		}
 	}
 	p.Alive, p.Dead = s.Alive, s.Dead
 	if s.LoadKnown {
@@ -163,7 +183,7 @@ func buildCompanyPayload(leaderUserID int, s companyview.Summary, chemistry chem
 		p.Activity = strPtr(s.Activity.Label())
 	}
 	if s.RestKnown {
-		p.Rest = &companyRest{Tier: s.RestTier.String(), Seconds: int(s.RestLeft.Seconds())}
+		p.Rest = &companyRest{Tier: s.RestTier.String(), Seconds: wholeMinutes(int(s.RestLeft.Seconds()))}
 	}
 	if s.Checkpoint != "" {
 		p.Checkpoint = strPtr(s.Checkpoint)
@@ -184,6 +204,9 @@ type companyFeed struct {
 	last      map[int]companySent
 	chemistry chemistryFunc
 	send      func(userID int, module string, payload []byte)
+	// accepting reports whether the user's connection may take GMCP; a
+	// telnet client that hasn't accepted it gets nothing built.
+	accepting func(userID int) bool
 }
 
 func newCompanyFeed() *companyFeed {
@@ -193,19 +216,35 @@ func newCompanyFeed() *companyFeed {
 		send: func(userID int, module string, payload []byte) {
 			events.AddToQueue(GMCPOut{UserId: userID, Module: module, Payload: payload})
 		},
+		accepting: nativeAccepting,
 	}
+}
+
+// nativeAccepting is false only for a connection known to the GMCP module
+// that hasn't accepted GMCP (a plain telnet client). An unknown one is
+// left to dispatchGMCP, which negotiates.
+func nativeAccepting(userID int) bool {
+	if gmcpModule.cache == nil {
+		return true
+	}
+	settings, known := gmcpModule.cache.Get(users.GetConnectionId(userID))
+	return !known || settings.GMCPAccepted
 }
 
 // update sends a user's Company or Company.Vitals when it changed since
 // the last send.
 func (f *companyFeed) update(userID int, s companyview.Summary) {
+	if f.accepting != nil && !f.accepting(userID) {
+		f.forget(userID) // a full snapshot once GMCP is accepted
+		return
+	}
 	p, ok := buildCompanyPayload(userID, s, f.chemistry)
 	structure, err := json.Marshal(p.companyStructure)
 	if err != nil {
 		mudlog.Error("gmcp: Company payload", "error", err)
 		return
 	}
-	vitals, _ := json.Marshal(p.Vitals)
+	vitals, _ := json.Marshal(p.companyLive)
 	if !ok {
 		structure, vitals = []byte("{}"), nil
 	}
@@ -224,7 +263,7 @@ func (f *companyFeed) update(userID int, s companyview.Summary) {
 		}
 		f.send(userID, "Company", full)
 	case prev.vitals != next.vitals:
-		body, _ := json.Marshal(companyVitalsPayload{Vitals: p.Vitals})
+		body, _ := json.Marshal(p.companyLive)
 		f.send(userID, "Company.Vitals", body)
 	}
 }
@@ -234,6 +273,22 @@ func (f *companyFeed) update(userID int, s companyview.Summary) {
 func (f *companyFeed) forget(userID int) {
 	f.mu.Lock()
 	delete(f.last, userID)
+	f.mu.Unlock()
+}
+
+// prune drops users no longer online, in case one left without a
+// PlayerDespawn.
+func (f *companyFeed) prune(online []int) {
+	live := make(map[int]bool, len(online))
+	for _, id := range online {
+		live[id] = true
+	}
+	f.mu.Lock()
+	for id := range f.last {
+		if !live[id] {
+			delete(f.last, id)
+		}
+	}
 	f.mu.Unlock()
 }
 
@@ -261,6 +316,10 @@ func init() {
 		if evt, ok := e.(events.PlayerDespawn); ok {
 			companyFeeds.forget(evt.UserId)
 		}
+		return events.Continue
+	})
+	events.RegisterListener(events.NewRound{}, func(events.Event) events.ListenerReturn {
+		companyFeeds.prune(users.GetOnlineUserIds())
 		return events.Continue
 	})
 	events.RegisterListener(GMCPCompanyRequest{}, func(e events.Event) events.ListenerReturn {

@@ -77,13 +77,13 @@ func TestCompanyPayloadShape(t *testing.T) {
 	assert.Equal(t, "companion:1", bran["key"])
 	assert.Equal(t, "present", bran["status"])
 	assert.Equal(t, map[string]any{"row": 0.0, "col": 1.0}, bran["cell"])
-	assert.Nil(t, bran["rescue_seconds"])
+	assert.NotContains(t, bran, "rescue_seconds", "countdowns live in the live half")
 	awaiting := members[1].(map[string]any)
 	assert.Equal(t, "awaiting", awaiting["status"])
 	assert.Nil(t, awaiting["cell"])
 	dead := members[2].(map[string]any)
 	assert.Equal(t, "dead", dead["status"])
-	assert.Equal(t, 5400.0, dead["rescue_seconds"])
+	assert.Equal(t, map[string]any{"companion:3": 5400.0}, got["rescue"])
 	assert.Nil(t, dead["chemistry"], "the dead have no band")
 	assert.Equal(t, "<b>Ysolde</b>", dead["name"], "names travel as data; the client renders them as text")
 
@@ -134,6 +134,7 @@ func testFeed() (*companyFeed, *[]sent) {
 	out := &[]sent{}
 	f := newCompanyFeed()
 	f.chemistry = noChemistry
+	f.accepting = func(int) bool { return true }
 	f.send = func(userID int, module string, payload []byte) {
 		var body map[string]any
 		_ = json.Unmarshal(payload, &body)
@@ -216,4 +217,95 @@ func TestCompanyWebRequest(t *testing.T) {
 	assert.True(t, gmcpModule.HandleWebGMCP(u.ConnectionId(), []byte("!!GMCP(Company)")))
 	events.ProcessEvents()
 	assert.Equal(t, []int{41}, got)
+}
+
+// TestCountdownsDontResendSnapshot (review finding 1): a ticking rescue or
+// rest timer changes Company.Vitals once a minute, never the snapshot.
+func TestCountdownsDontResendSnapshot(t *testing.T) {
+	f, out := testFeed()
+	s := sampleCompany()
+	f.update(7, s)
+	for i := 1; i <= 15; i++ { // 15 rounds of 4 seconds
+		s.Companions[2].RescueLeft -= 4 * time.Second
+		s.RestLeft -= 4 * time.Second
+		f.update(7, s)
+	}
+	for _, m := range (*out)[1:] {
+		assert.Equal(t, "Company.Vitals", m.module, "no snapshot for a countdown")
+	}
+	assert.LessOrEqual(t, len(*out)-1, 2, "at most one update per minute boundary")
+	last := (*out)[len(*out)-1].body
+	assert.Equal(t, map[string]any{"companion:3": 5340.0}, last["rescue"], "whole minutes")
+	assert.Equal(t, 3540.0, last["rest"].(map[string]any)["seconds"])
+}
+
+func TestWarmthOnlySendsVitals(t *testing.T) {
+	f, out := testFeed()
+	s := sampleCompany()
+	f.update(7, s)
+	s.Leader.Warmth = "Chilled"
+	f.update(7, s)
+	require.Len(t, *out, 2)
+	assert.Equal(t, "Company.Vitals", (*out)[1].module)
+}
+
+func TestCheckpointAndChemistrySendSnapshot(t *testing.T) {
+	f, out := testFeed()
+	s := sampleCompany()
+	f.update(7, s)
+	s.Checkpoint = "The Sanctuary"
+	f.update(7, s)
+	f.chemistry = trustedChemistry
+	f.update(7, s)
+	require.Len(t, *out, 3)
+	assert.Equal(t, "Company", (*out)[1].module)
+	assert.Equal(t, "Company", (*out)[2].module)
+}
+
+// TestChemistryOnlyInABand (review finding 5): alone, no chemistry.
+func TestChemistryOnlyInABand(t *testing.T) {
+	alone := func(int, company.MemberKey) (company.ChemistryStandingView, bool) {
+		return company.ChemistryStandingView{Together: 1}, true
+	}
+	p, _ := buildCompanyPayload(7, sampleCompany(), alone)
+	assert.Nil(t, p.Leader.Chemistry)
+	p, _ = buildCompanyPayload(7, sampleCompany(), trustedChemistry)
+	assert.Equal(t, "Trusted", *p.Leader.Chemistry)
+}
+
+// TestNothingForNonGMCPConnections (review finding 9): a telnet client that
+// hasn't accepted GMCP gets nothing built; once it does, the snapshot.
+func TestNothingForNonGMCPConnections(t *testing.T) {
+	f, out := testFeed()
+	accepting := false
+	f.accepting = func(int) bool { return accepting }
+	f.update(7, sampleCompany())
+	assert.Empty(t, *out)
+	accepting = true
+	f.update(7, sampleCompany())
+	require.Len(t, *out, 1)
+	assert.Equal(t, "Company", (*out)[0].module)
+}
+
+// TestPruneAndDespawn (review finding 8): users gone offline are dropped,
+// and PlayerDespawn forgets.
+func TestPruneAndDespawn(t *testing.T) {
+	f, _ := testFeed()
+	f.update(7, sampleCompany())
+	f.update(8, sampleCompany())
+	f.prune([]int{8})
+	f.mu.Lock()
+	_, has7 := f.last[7]
+	_, has8 := f.last[8]
+	f.mu.Unlock()
+	assert.False(t, has7)
+	assert.True(t, has8)
+
+	companyFeeds.update(9, sampleCompany())
+	events.AddToQueue(events.PlayerDespawn{UserId: 9})
+	events.ProcessEvents()
+	companyFeeds.mu.Lock()
+	_, has9 := companyFeeds.last[9]
+	companyFeeds.mu.Unlock()
+	assert.False(t, has9)
 }
