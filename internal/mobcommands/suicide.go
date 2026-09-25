@@ -19,6 +19,17 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
+// PracticeBeaten is a practice foe beaten (Phase 27c).
+type PracticeBeaten struct {
+	InstanceId int
+	MobId      int
+	RoomId     int
+}
+
+// OnPracticeBeaten fires on the game loop when a practice mob
+// (mobs.Mob.Practice) is beaten. The tutorial's practice fight counts it.
+var OnPracticeBeaten util.Hook[PracticeBeaten]
+
 func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	currentRound := util.GetRoundCount()
@@ -45,6 +56,16 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		if charmedUser := users.GetByUserId(charmedUserId); charmedUser != nil {
 			charmedUser.Character.TrackCharmed(mob.InstanceId, false)
 		}
+	}
+
+	// Ashveil (Phase 27c): a practice foe is beaten, not killed. It leaves
+	// as a vanish does: no XP, alignment, kills, taming, drops, loot, gold,
+	// or MobDeath. Its attackers keep their aim, so the next round
+	// re-targets them.
+	if rest != `vanish` && mob.Practice {
+		room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is beaten and yields the field.`, mob.Character.Name))
+		OnPracticeBeaten.Fire(PracticeBeaten{InstanceId: mob.InstanceId, MobId: int(mob.MobId), RoomId: room.RoomId})
+		rest = `vanish`
 	}
 
 	// vanish is meant to remove the mob without any rewards/drops/etc.
