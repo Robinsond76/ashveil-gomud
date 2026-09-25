@@ -55,7 +55,8 @@ func TestConditionsShowsSharpened(t *testing.T) {
 	events.ProcessEvents()
 	panel := strings.Join(*messages, "\n")
 	assert.Contains(t, panel, `Sharpened`)
-	assert.Contains(t, panel, `sword: +1 damage for 9 more strikes`)
+	assert.Contains(t, panel, `sword: +1 damage`)
+	assert.Contains(t, panel, `9 strikes left`)
 	assert.NotContains(t, panel, `None`)
 }
 

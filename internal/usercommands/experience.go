@@ -202,6 +202,8 @@ func Experience(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	}
 
 	tplTxt, _ := templates.Process("character/experience", xpInfo, user.UserId)
+	// Ashveil (Phase 26a): the last level lost to death.
+	tplTxt += lastLossLine(user)
 	user.SendText(tplTxt)
 
 	return true, nil

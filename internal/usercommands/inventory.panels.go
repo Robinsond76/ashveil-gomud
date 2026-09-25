@@ -42,6 +42,8 @@ func buildInventoryPanel(user *users.UserRecord, itemList []items.Item, searchin
 			)
 		}
 
+		// Ashveil (Phase 26a): the company's load and supplies lead.
+		sb.WriteString(companyLoadLines(user, summaryFor(user)))
 		sb.WriteString(layout.Render())
 		sb.WriteString(term.CRLFStr)
 

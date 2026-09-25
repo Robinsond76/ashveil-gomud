@@ -20,61 +20,46 @@ func buildConditionsPanel(user *users.UserRecord) string {
 		layout.Panel("conditions").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Conditions</ansi> `).SetWidth(78)
 	}
 
-	charBuffs := user.Character.GetBuffs()
-	edges := sharpenedSummary(user)
-	if len(charBuffs) == 0 && edges == `` {
+	// Ashveil (Phase 26a): conditions are grouped (conditions.ashveil.go).
+	groups := conditionGroups(user, summaryFor(user))
+	if len(groups) == 0 {
 		layout.Panel("conditions").Add(``, ``, `<ansi fg="black-bold">None</ansi>`)
 		return layout.Render() + term.CRLFStr
 	}
 
-	// Collect rows and measure the longest name for label alignment.
-	type condRow struct {
-		name        string
-		description string
-		permaBuff   bool
-		roundsLeft  int
-	}
-	rows := make([]condRow, 0, len(charBuffs)+1)
 	maxNameWidth := 0
+	for _, g := range groups {
+		for _, row := range g.rows {
+			if w := len(row.name); w > maxNameWidth {
+				maxNameWidth = w
+			}
+		}
+	}
 	roundSecs := int(configs.GetTimingConfig().RoundSeconds)
 
-	// Phase 23b: a whetstone's edge is on the weapon, not a buff, but it
-	// is still the wielder's condition. It counts strikes, not time, so it
-	// is shown like a permanent row.
-	if edges != `` {
-		rows = append(rows, condRow{name: `Sharpened`, description: edges, permaBuff: true})
-		maxNameWidth = len(`Sharpened`)
-	}
-
-	for _, buff := range charBuffs {
-		spec := buffs.GetBuffSpec(buff.BuffId)
-		roundsLeft, _ := buffs.GetDurations(buff, spec)
-		name, description := spec.VisibleNameDesc()
-		rows = append(rows, condRow{
-			name:        name,
-			description: description,
-			permaBuff:   buff.PermaBuff,
-			roundsLeft:  roundsLeft,
-		})
-		if w := len(name); w > maxNameWidth {
-			maxNameWidth = w
-		}
-	}
-
 	panel := layout.Panel("conditions").SetLabelWidth(maxNameWidth)
-	for _, row := range rows {
-		var value string
-		if row.permaBuff || row.roundsLeft >= buffs.TriggersLeftUnlimited {
-			value = fmt.Sprintf(`<ansi fg="yellow">%s</ansi>`, row.description)
-		} else {
-			timeStr := formatDurationFromRounds(row.roundsLeft, roundSecs)
-			value = fmt.Sprintf(`<ansi fg="yellow">%s</ansi>  <ansi fg="red">(%s left)</ansi>`, row.description, timeStr)
+	for i, g := range groups {
+		if i > 0 {
+			panel.AddBlank()
 		}
-		panel.Add(
-			fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi>`, row.name),
-			fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi>`, row.name),
-			value,
-		)
+		panel.Add(``, ``, fmt.Sprintf(`<ansi fg="20">%s</ansi>`, g.title))
+		for _, row := range g.rows {
+			var value string
+			switch {
+			case row.left != ``:
+				value = fmt.Sprintf(`<ansi fg="yellow">%s</ansi>  <ansi fg="red">(%s)</ansi>`, row.description, row.left)
+			case row.permaBuff || row.roundsLeft >= buffs.TriggersLeftUnlimited || row.roundsLeft <= 0:
+				value = fmt.Sprintf(`<ansi fg="yellow">%s</ansi>`, row.description)
+			default:
+				timeStr := formatDurationFromRounds(row.roundsLeft, roundSecs)
+				value = fmt.Sprintf(`<ansi fg="yellow">%s</ansi>  <ansi fg="red">(%s left)</ansi>`, row.description, timeStr)
+			}
+			panel.Add(
+				fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi>`, row.name),
+				fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi>`, row.name),
+				value,
+			)
+		}
 	}
 
 	return layout.Render() + term.CRLFStr

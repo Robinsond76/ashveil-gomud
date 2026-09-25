@@ -72,7 +72,11 @@ func bidirectionalExits(originId, destId int, originExit string) map[string]stri
 func loadTravelTestWorld(t *testing.T, fixtures map[string]string) {
 	t.Helper()
 	dataDir := t.TempDir()
-	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
+	// Set the key directly: AddOverlayOverrides skips a key another test
+	// already set (useWorld, Phase 26a).
+	flat := configs.Flatten(configs.GetOverrides())
+	flat["FilePaths.DataFiles"] = dataDir
+	require.NoError(t, configs.RestoreOverrides(flat))
 	for path, data := range fixtures {
 		fullPath := filepath.Join(dataDir, path)
 		require.NoError(t, os.MkdirAll(filepath.Dir(fullPath), 0755))
