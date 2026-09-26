@@ -5,3 +5,4 @@ description: A set of lockpicks. You can use these to unlock doors and chests.
 type: lockpicks
 subtype: generic
 uses: 3
+weight: 200

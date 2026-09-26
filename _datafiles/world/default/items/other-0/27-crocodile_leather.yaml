@@ -6,3 +6,4 @@ subtype: mundane
 value: 20
 statmods:
   damage: 2 # This appears on crocodiles, give them an improved damage since they spawn wearing it and have no weapon. Normally can't be worn.
+weight: 1500

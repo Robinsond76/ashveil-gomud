@@ -6,3 +6,4 @@ type: readable
 subtype: usable
 uses: 1
 value: 900
+weight: 900

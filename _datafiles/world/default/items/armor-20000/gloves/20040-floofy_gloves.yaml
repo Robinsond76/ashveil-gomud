@@ -8,3 +8,4 @@ damagereduction: 2
 wornbuffids:
   - 3 # Cold Tolerant
 warmth: 5
+weight: 200

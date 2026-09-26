@@ -8,3 +8,4 @@ subtype: wearable
 breakchance: 5
 wornbuffids:
   - 1
+weight: 1000

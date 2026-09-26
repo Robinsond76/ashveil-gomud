@@ -13,3 +13,4 @@ statmods:
 cursed: true
 wornbuffids:
   - 1
+weight: 3000

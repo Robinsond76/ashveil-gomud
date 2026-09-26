@@ -7,3 +7,4 @@ hands: 1
 subtype: claws
 damage:
   diceroll: 1d4
+weight: 400

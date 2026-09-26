@@ -6,3 +6,4 @@ type: object
 questtoken: 5-return
 subtype: mundane
 value: 300
+weight: 200

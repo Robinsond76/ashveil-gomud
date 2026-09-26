@@ -7,3 +7,4 @@ subtype: drinkable
 uses: 1
 buffids: 
 - 6
+weight: 300

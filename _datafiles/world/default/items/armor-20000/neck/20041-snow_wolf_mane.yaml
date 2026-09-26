@@ -14,3 +14,4 @@ statmods:
 wornbuffids:
   - 3 # Cold Tolerant
 warmth: 12
+weight: 1500

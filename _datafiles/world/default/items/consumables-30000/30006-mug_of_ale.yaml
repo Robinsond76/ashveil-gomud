@@ -7,3 +7,4 @@ subtype: drinkable
 uses: 2
 buffids: 
 - 19 # drunk/warmed
+weight: 600

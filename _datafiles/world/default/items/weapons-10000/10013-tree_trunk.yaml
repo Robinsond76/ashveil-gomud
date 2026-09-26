@@ -12,3 +12,4 @@ statmods:
   vitality: 10
 damage:
   diceroll: 1d8+2
+weight: 20000

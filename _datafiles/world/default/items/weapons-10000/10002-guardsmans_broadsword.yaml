@@ -7,3 +7,4 @@ hands: 1
 subtype: slashing
 damage:
   diceroll: 1d6
+weight: 1500
