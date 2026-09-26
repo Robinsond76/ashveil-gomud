@@ -138,3 +138,14 @@ func TestResolveBand(t *testing.T) {
 		t.Errorf("expected no-modifier default for empty table, got %+v", empty)
 	}
 }
+
+// Phase 28: companions' gear is part of the total.
+func TestTotalIncludesCompanions(t *testing.T) {
+	l := Load{PersonalGrams: 1000, CompanionGrams: 3000, CargoGrams: 2000, CapacityGrams: 12000}
+	if got := l.TotalGrams(); got != 6000 {
+		t.Fatalf("TotalGrams = %d, want 6000", got)
+	}
+	if got := l.Ratio(); got != 0.5 {
+		t.Fatalf("Ratio = %v, want 0.5", got)
+	}
+}

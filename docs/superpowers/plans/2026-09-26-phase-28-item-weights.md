@@ -24,9 +24,10 @@ Design: [28 spec](../specs/2026-09-26-phase-28-item-weights-design.md).
 
 ## Task 3: Wiring
 
-- [ ] Through `plugins.Load` with the company and encumbrance modules:
-  a recruit's gear raises the load; `cargo put` of heavy goods moves the
-  band.
+- [ ] Through `plugins.Load` with the company and encumbrance modules
+  (the tutorial's wiring test): recruiting Tamsin and Oswin raises the
+  load by exactly their gear, and `cargo` shows it. The band's response is
+  a unit test.
 
 ## Task 4: Docs, verification, review
 

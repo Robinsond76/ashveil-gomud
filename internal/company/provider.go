@@ -340,3 +340,23 @@ func HasClaimed(leaderUserID, mobTemplateID int) bool {
 	}
 	return cp.HasClaimed(leaderUserID, mobTemplateID)
 }
+
+// GearProvider is optionally implemented by the registered
+// FormationProvider (Phase 28): the weight, in grams, of a leader's living
+// companions' worn and carried gear. Call it on the game loop.
+type GearProvider interface {
+	CompanionGearGrams(leaderUserID int) int
+}
+
+// CompanionGearGrams is a leader's living companions' gear weight; 0
+// without a provider that can weigh it.
+func CompanionGearGrams(leaderUserID int) int {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	gp, ok := p.(GearProvider)
+	if !ok {
+		return 0
+	}
+	return gp.CompanionGearGrams(leaderUserID)
+}

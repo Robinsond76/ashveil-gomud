@@ -4,6 +4,7 @@ package company
 // (internal/companyview). Read only.
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 )
 
@@ -54,4 +55,49 @@ var _ domain.ClaimProvider = (*CompanyModule)(nil)
 func (m *CompanyModule) HasClaimed(leaderUserID, mobTemplateID int) bool {
 	record, ok := m.registry.Get(leaderUserID)
 	return ok && record.HasClaimed(mobTemplateID)
+}
+
+var _ domain.GearProvider = (*CompanyModule)(nil)
+
+// CompanionGearGrams implements company.GearProvider (Phase 28): the weight
+// of every living companion's worn and carried gear, from the live mob
+// when it is out (what it carries now), else from its record. A fallen
+// companion's gear stays with the body and isn't carried. Game loop only.
+func (m *CompanyModule) CompanionGearGrams(leaderUserID int) int {
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return 0
+	}
+	total := 0
+	for _, c := range record.Companions {
+		if c.Dead() {
+			continue
+		}
+		state := c.State
+		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {
+			if live, ok := m.runtime.Snapshot(instanceID); ok {
+				state = &live
+			}
+		}
+		if state != nil {
+			total += gearGrams(*state)
+		}
+	}
+	return total
+}
+
+// gearGrams weighs a member's worn and carried items.
+func gearGrams(s domain.MemberState) int {
+	total := 0
+	for _, slot := range characters.AllSlots() {
+		if itm := s.Equipment.Get(slot); itm != nil && itm.ItemId > 0 {
+			total += itm.GetSpec().Weight
+		}
+	}
+	for _, itm := range s.Items {
+		if itm.ItemId > 0 {
+			total += itm.GetSpec().Weight
+		}
+	}
+	return total
 }

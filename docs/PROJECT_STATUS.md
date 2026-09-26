@@ -3315,146 +3315,45 @@ instead of duplicating them.
 
 ## Known issues / deferred items
 
-- Phase 5 was implemented and committed directly on `master`. Going forward,
-  plan and phase work must run on an isolated worktree/feature branch and merge
-  back only after verification; see the root `AGENTS.md` ("Branching &
-  Worktrees") and `docs/superpowers/plans/README.md`.
-- `make test` stalls in the `js-lint` stage because it shells out to `npx
-  jshint`; the documented fallback `go test -race ./...` passes. Environmental,
-  not a code failure.
-- Plugin `WriteStruct`/`WriteBytes` persistence is a direct (non-atomic) file
-  write. Command state rolls back on failure, but a partial low-level write
-  cannot be recovered.
-- Live server acceptance has not been run for Phase 3, Phase 4, or Phase 5;
-  unit/race tests cover the roster, formation, migration, survival persistence,
-  provisioning, travel start/view/completion/recovery, and command behavior.
-- Company and survival use separate plugin writes, so summon/dismiss is not
-  cross-file atomic. Compensation failures are surfaced alongside the primary
-  error, and the survival-side durable reservation prevents reuse of an ID once
-  its survival initialization has persisted. A partial low-level file write is
-  still not transactionally recoverable.
-- Expedition survival exertion and its own checkpoint remain separate plugin
-  writes, but Phase 5 now persists a deterministic pending operation before
-  charging survival. The survival ledger deduplicates recovery, so a crash or
-  failed checkpoint write cannot double-charge the company.
-- Phase 5 copyover continuity relies on plugin `SetOnSave`/`SetOnLoad` rather
-  than a `copyover.Contributor`, because modules are forbidden from registering
-  copyover contributors. `onLoad` runs after `copyover.Restore` and reschedules
-  or completes sessions from the durable record.
-- Company/formation/survival state is process-local with no mutex, matching the
-  existing event-loop dispatch assumption; revisit if command dispatch moves off
-  the main loop.
-- Camping and survival rest recovery are separate plugin writes, like
-  expedition/survival exertion. `modules/camping` persists `Completed` before
-  calling survival, and a durable per-leader `RecoveryApplied` marker (plus
-  survival's own applied-operation ledger) makes a crash between the two
-  writes retry recovery alone rather than double-apply or silently drop it.
-- Live server acceptance has not been run for Phase 7; unit/race coverage
-  spans the camp/rest domain, module commands, eligibility, timers, recovery,
-  and movement/view integration.
-- Live server acceptance has not been run for Phase 8; unit/race coverage
-  spans the weather domain, module recovery/round-advance/command behavior,
-  and the `look` line integration.
-- Phase 8 weather is read-only this phase (design doc Option A): its
-  `TravelDurationPct`/`ExertionPct`/`RestRecoveryPct` multipliers are
-  computed and validated but nothing yet applies them to
-  `modules/expedition`'s `TravelSession` or `modules/camping`'s rest
-  recovery. That wiring is an explicit deferred follow-up, not an oversight.
-- Deferred by design: recruitment economics, companion custom names, equipment,
-  injuries, AI orders, death/permadeath rules, formation combat effects, and
-  cargo/mount integration (Phases 9–10). Camping itself excludes weather
-  effects, shelter, fire fuel/items, cooking, watches, encounters,
-  temporary/discoverable camp rooms, multi-player camps, and sleep-until-dawn.
-  Weather itself excludes storms as hazard encounters, weather-driven
-  room/exit changes, forecasts, seasons/climate modeling, and non-forest
-  biome tables.
-- Live server acceptance has not been run for Phase 9; unit/race coverage
-  spans the encumbrance domain, cargo deposit/withdraw, module load
-  computation, the `cargo` command, and config parsing.
-- Phase 9 encumbrance is read-only this phase (design doc Option A, same
-  shape as Phase 8): `TravelDurationPct`/`FatiguePct` are computed and
-  validated but nothing yet applies them to `modules/expedition` or
-  `modules/camping`. Every current item defaults to `Weight: 0`
-  (unweighted); no item in the shipped data was authored with a real
-  weight this phase, so the engine has nothing to compute against until a
-  follow-up data pass. Encumbrance is a party/expedition-level weight
-  system, kept deliberately separate from GoMud's native, unrelated,
-  count-based `Character.CarryCapacity()` per-move throttle.
-- Live server acceptance has not been run for Phase 10; unit/race coverage
-  spans the mount domain, stable/release persistence-failure rollback, the
-  capacity-bonus provider, the `mount` command, and the
-  `modules/encumbrance` capacity-bonus integration.
-- Phase 10 mounts wires only the cargo-capacity effect this phase;
-  `TravelDurationPct` is computed and validated on `MountSpec` but nothing
-  yet applies it to `modules/expedition`'s `TravelSession`, same Option A
-  shape as weather's/encumbrance's own deferred multipliers. Mount
-  fatigue/health/feed, terrain suitability, per-member assignment, and an
-  acquisition economy are all deferred to a later pass, per handoff §35's
-  own "Later" list.
-- Live server acceptance has not been run for Phase 11a; unit coverage
-  spans the `mobparty` domain package and the `internal/rooms` grouped-
-  display rendering. `internal/rooms` cannot import `internal/combat`
-  (would cycle), so the room-display integration passes zero-value
-  `EHP`/`DPS` into `mobparty.Assemble` — display grouping doesn't need real
-  values, but nothing has wired real `EHP`/`DPS` into a `Formation` that
-  combat code actually reads yet; that's 11b's job. `modules/gmcp`'s mob
-  list is still per-mob, not party-grouped.
-- Phase 11b ships only the `internal/engagement` domain layer; nothing in
-  `internal/hooks/NewRound_DoCombat.go` was touched. No player-visible
-  combat behavior changed this phase — company members still only retaliate
-  reactively (today's pre-11b behavior), because the coordinated-engagement
-  wiring is intentionally deferred until Phase 11c's legality predicate
-  exists to inject into `AssignTarget`'s `legal` parameter for real (see
-  the Phase 11b work-log entry). Live server acceptance has not been run
-  for Phase 11b; unit coverage spans `internal/engagement`'s selection,
-  filtering, and engagement-end logic.
-- Phase 11c ships `internal/formationcombat`, the `Reach` schema fields,
-  and one read-only `formation reach` command; nothing in
-  `internal/hooks/NewRound_DoCombat.go` was touched, so combat behavior is
-  unchanged from pre-11c — no interception, no reach gating, no
-  coordinated targeting actually happen in a fight yet. The
-  `formation reach` command only queries a company's own formation (there
-  is no live enemy party/formation to query outside combat), and only at
-  `ReachNone` (plain melee) — it's a correctness demo of the predicate, not
-  a combat feature. Both `internal/formationcombat` and 11b's
-  `internal/engagement` are now fully tested and ready to be wired
-  together; that wiring (and the new company-formation-by-mob-instance
-  query seam it needs) is the next real piece of work — see the Phase 11c
-  work-log entry and the "Next" line above for the full reasoning.
-- The player-vs-mob combat-loop wiring above ships only that one
-  direction. Mob-vs-player, mob-vs-mob, and 11b's `AssignTarget`
-  reassignment-on-death remain exactly as described in the two bullets
-  above (still unwired) — see the "Formation combat-loop wiring" work-log
-  entry for why each is its own separable follow-up. `internal/hooks` has
-  no live-server/integration test coverage for the new gate; only the pure
-  `resolveAttackTarget` core and the `FormationProvider`/`mobparty`
-  seam-level unit tests exercise it.
-- Mob-vs-player interception now ships too (see the "mob-vs-player
-  interception" work-log entry): the two bullets above's mob-vs-player
-  item is resolved. Mob-vs-mob and 11b's reassignment-on-death remain
-  unwired for the same reasons stated there. Same test-coverage caveat as
-  the player-vs-mob pass: no `internal/hooks` integration harness, only
-  pure/seam-level unit tests.
-- Mob-vs-mob now ships too (see the "mob-vs-mob" work-log entry): all
-  three bullets above's non-11b items are resolved. Only 11b's
-  reassignment-on-death remains unwired for the reasons stated there, plus
-  the newly-introduced leader-as-interceptor edge case (a leader placed in
-  the front row of their own formation can't intercept for a companion —
-  see that work-log entry). Same test-coverage caveat as the previous two
-  passes: no `internal/hooks` integration harness, only pure/seam-level
-  unit tests.
-- 11b's reassignment-on-death now ships too (see the "reassignment-on-death"
-  work-log entry): the item named in every bullet above is resolved. This
-  closes out Phase 11's foundational combat wiring entirely — what's left
-  (11d, the leader-as-interceptor gap) is genuinely new work, not
-  follow-up wiring for 11a-11c. Same test-coverage caveat as every prior
-  combat-wiring pass: no `internal/hooks` integration harness, only
-  pure/seam-level unit tests.
-- Docs correction (see that work-log entry): the "proactive
-  engagement-trigger" item named above as unbuilt was a documentation
-  error. It already existed pre-Ashveil in `attack.go`'s charmed-mob-
-  assist loop, and company companions get it for free as permanently-
-  charmed mobs. No code changed; only the status doc was wrong.
+Refreshed 2026-09-26 (Phase 28). Earlier entries that later phases
+resolved (the weather, load, and mount multipliers, and the 11a–11c
+combat wiring) are removed; each phase's work-log entry keeps its own
+history.
+
+- **Plugin persistence is a direct, non-atomic file write**
+  (`WriteStruct`/`WriteBytes`). Command state rolls back on a failed save,
+  but a partial low-level write can't be recovered.
+- **Separate plugin files, no cross-file transaction.** Company, survival,
+  expedition, camping, and encumbrance each persist separately. Durable
+  operation IDs and applied-markers (expedition exertion, camp recovery,
+  the survival ledger) make a crash between writes retry, not double-apply.
+  Summon and dismiss are still not atomic across the company and survival
+  files.
+- **Copyover continuity** relies on plugin `SetOnSave`/`SetOnLoad`, because
+  modules may not register copyover contributors. `onLoad` runs after
+  `copyover.Restore` and reschedules or completes sessions.
+- **Game-loop state without mutexes** (company, formation, survival,
+  tutorial, the company view) assumes command dispatch stays on the main
+  loop.
+- **Live server acceptance** hasn't been run for most phases. Unit, race,
+  wiring (`plugins.Load`), and browser (Playwright) tests cover them. The
+  tutorial has no test of a real copyover or of two players in the course
+  at once.
+- **Capacity is flat per company** (`CapacityKg` 200, plus a mount). Phase
+  28 gave every item a weight, so loads now mean something, but capacity
+  doesn't grow with the company's size. That is left for play-testing.
+- **Deferred by design, not scheduled:**
+  - 11d: guard reactions, crit effects, wounds, AI personality;
+  - the "12+" encounter kinds;
+  - mount fatigue, feed, and terrain;
+  - companion custom names and AI orders;
+  - multi-player camps;
+  - forecasts and seasons.
+- `make test`'s `js-lint` stage can stall on some hosts (`npx jshint`); `make
+  js-lint` on its own and `go test -race ./...` are the documented checks.
+- A shipped-world test can leave a gitignored
+  `_datafiles/world/default/config-overrides.yaml`; delete a stray copy if
+  wiring tests fail on a relative data path.
 
 ## Key documents
 

@@ -284,3 +284,30 @@ func TestCurrentBandNeutralWithoutProvider(t *testing.T) {
 	assert.False(t, ok)
 	assert.Equal(t, encumbrance.LoadBand{TravelDurationPct: 100, FatiguePct: 100}, band)
 }
+
+// Phase 28: the living companions' gear joins the load, and cargo shows
+// the split.
+func TestCurrentLoadAddsCompanionGear(t *testing.T) {
+	user := testUser(t, 7)
+	user.Character.Items = []items.Item{testItem(rockId)}
+	module := newTestModule(&fakeStore{}, user)
+	module.capacityGrams = 10000
+	module.bands = []encumbrance.LoadBand{{MinRatio: 0.75, TravelDurationPct: 110, FatiguePct: 108}}
+	module.companionGear = func(leader int) int {
+		if leader == 7 {
+			return 7500
+		}
+		return 0
+	}
+	load, ok := module.CurrentLoad(7)
+	require.True(t, ok)
+	assert.Equal(t, 500, load.PersonalGrams)
+	assert.Equal(t, 7500, load.CompanionGrams)
+	assert.Equal(t, 8000, load.TotalGrams())
+	band, _ := module.CurrentBand(7)
+	assert.Equal(t, 110, band.TravelDurationPct, "companions' gear moves the band")
+
+	status := module.status(7)
+	assert.Contains(t, status, "8.0 kg / 10.0 kg (80%)")
+	assert.Contains(t, status, "You 0.5 kg, companions 7.5 kg, cargo 0.0 kg.")
+}

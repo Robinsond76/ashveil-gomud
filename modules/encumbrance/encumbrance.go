@@ -18,6 +18,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -106,6 +107,9 @@ type EncumbranceModule struct {
 	store      Store
 	itemSpec   func(itemId int) (items.ItemSpec, bool)
 	userLookup func(userId int) *users.UserRecord
+	// companionGear is the living companions' gear weight (Phase 28); nil
+	// counts none.
+	companionGear func(leaderUserID int) int
 
 	capacityGrams int
 	bands         []encumbrance.LoadBand
@@ -131,8 +135,9 @@ func init() {
 			}
 			return *spec, true
 		},
-		userLookup: users.GetByUserId,
-		cargo:      map[int]encumbrance.Cargo{},
+		userLookup:    users.GetByUserId,
+		companionGear: company.CompanionGearGrams,
+		cargo:         map[int]encumbrance.Cargo{},
 	}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
@@ -226,10 +231,15 @@ func (m *EncumbranceModule) CurrentLoad(leaderUserID int) (encumbrance.Load, boo
 	if tracked {
 		cargoGrams = m.cargoGramsOf(cargo)
 	}
+	companionGrams := 0
+	if m.companionGear != nil {
+		companionGrams = m.companionGear(leaderUserID)
+	}
 	return encumbrance.Load{
-		PersonalGrams: m.personalGrams(leaderUserID),
-		CargoGrams:    cargoGrams,
-		CapacityGrams: capacityGrams,
+		PersonalGrams:  m.personalGrams(leaderUserID),
+		CompanionGrams: companionGrams,
+		CargoGrams:     cargoGrams,
+		CapacityGrams:  capacityGrams,
 	}, true
 }
 
@@ -397,6 +407,7 @@ func (m *EncumbranceModule) status(leaderUserID int) string {
 	}
 	lines := []string{
 		fmt.Sprintf("Party load: %.1f kg / %.1f kg (%.0f%%)", float64(load.TotalGrams())/1000, float64(load.CapacityGrams)/1000, load.Ratio()*100),
+		fmt.Sprintf("You %.1f kg, companions %.1f kg, cargo %.1f kg.", float64(load.PersonalGrams)/1000, float64(load.CompanionGrams)/1000, float64(load.CargoGrams)/1000),
 	}
 	band := encumbrance.ResolveBand(load.Ratio(), m.bandsSnapshot())
 	if band.TravelDurationPct != 100 || band.FatiguePct != 100 {

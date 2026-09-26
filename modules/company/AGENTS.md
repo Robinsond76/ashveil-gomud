@@ -61,3 +61,7 @@ Phase 25b companion death (`death.go`, `resurrect.go`):
 - `wiring_resurrect_test.go` also calls `plugins.Load`, with the same `SnapshotLoadStateForTest` guard, and imports `modules/death` for the command.
 
 Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`CompanyMembers`): each companion present (with live health via `Runtime.Vitals`), awaiting restoration, or dead (with rescue time), with its cell. `internal/companyview` reads it on the game loop for `status`, the prompt, and (26b) the browser.
+
+## Phase 28: companions' gear in the company load
+
+- `CompanionGearGrams` (the `company.GearProvider` seam) weighs every living companion's worn and carried gear. It uses the live mob's current gear when it is out (`runtime.Snapshot`, read-only; it saves nothing), and the record's `State` otherwise. A fallen companion's gear stays with the body and is left out. `modules/encumbrance` adds it to the load as `CompanionGrams`. Call it on the game loop.
