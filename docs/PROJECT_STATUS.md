@@ -5,7 +5,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-25
+- **Last updated:** 2026-09-26
 - **HEAD:** Phase 27d (tutorial Alignment lesson and browser panel) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27c is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
@@ -64,7 +64,10 @@ instead of duplicating them.
   (the tutorial's Alignment lesson and browser panel). The onboarding
   roadmap's tutorial is complete.
 - **Next:** the owner's choice. The onboarding roadmap is done; the
-  handoff doc's later phases and the "Future ideas" row remain.
+  handoff doc's later phases and the "Future ideas" row remain. A combat
+  presentation roadmap (potential Phases 28a–28e and 29) is specified and
+  awaiting scheduling: see the
+  [roadmap](superpowers/specs/2026-09-26-combat-presentation-roadmap.md).
 
 ## Phase progress
 
@@ -114,9 +117,33 @@ instead of duplicating them.
 | 27b | Tutorial: Survival and Camp lessons | Complete: Weather Yard (904) and Campground (905) before the Gate; Survival passes on a real meal and drink (`survival.OnProvision`) plus `weather`/`temperature`/`strain`/`cargo`, with food and water given once for what the pack lacks; Camp passes on Rested from a real camp rest; course camps struck (`camping.AbandonCamp`) on pass, skip, leave, logout, and placement |
 | 27c | Tutorial: practice fight | Complete: Practice Yard (906) before the Gate; a squad of harmless straw soldiers (three footmen in front, an archer behind) per player; `practice` mobs beaten with no XP, drops, gold, kills, or `MobDeath` (`mobcommands.OnPracticeBeaten`); the gate is the squad beaten; death in the course decided (an ordinary death, ending the course as a skip) |
 | 27d | Tutorial: Alignment lesson, browser panel | Complete: the Oath Stone (907) before the Gate; `company alignment`, `company inspect corvin` (an outlaw a new company is refused), and `standing`; `company inspect` weighs any recruiter's candidate; a `Tutorial` GMCP package and web client window from the same checklist as the terminal; a course missing rooms is closed but kept |
+| 28a | Combat fixes from the 5v5 simulation | Proposed: [spec](superpowers/specs/2026-09-26-combat-fixes-design.md). The leader stuck on an unreachable target; a fight stalling with enemies standing (to reproduce with shipped config); `formation reach` in a fight |
+| 28b | Combat narration voice | Proposed: [spec](superpowers/specs/2026-09-26-combat-narration-design.md). Rewritten attack text, `(N damage)` on every hit, `(critical hit, N damage)`, no `***`/caps/`!`, no charmed tag on companions, an opener and "turns toward" instead of "prepares to fight", a fight-end line, indented death notices |
+| 28c | Pronouns and ordinals | Proposed: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Mob pronouns (beasts "it"), "the first/second cutthroat" fixed for the fight |
+| 28d | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race with fallbacks |
+| 28e | Spell narration and combat casting | Proposed: [spec](superpowers/specs/2026-09-26-spell-narration-combat-casting-design.md). Spell text in the same voice with `(N damage)`/`(N healed)`; companion casting, enemy casters, and spell critical hits as separate candidates |
+| 29 | Browser battle panel | Proposed: [spec](superpowers/specs/2026-09-26-battle-panel-design.md). Enemy and company grids with target lines, from a `Company.Battle` GMCP package |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Combat presentation specifications (2026-09-26)
+
+- **What:** Ran a 5v5 company-vs-bandit fight through the real combat
+  round in a throwaway test harness (not committed), then iterated mock
+  transcripts with the owner until the text read right. The result is a
+  spec packet for potential Phases 28a–28e and 29; see the
+  [roadmap](superpowers/specs/2026-09-26-combat-presentation-roadmap.md).
+  - Findings from the simulation are in the
+    [combat fixes spec](superpowers/specs/2026-09-26-combat-fixes-design.md).
+  - One early finding (level-1 companions with 1 HP) is withdrawn there:
+    the harness ran without the shipped `HPBase: 5`.
+- **Why:** The owner wants fights to read as a dark, story-like narrative,
+  with damage counts, dramatic critical hits, pain reactions, and companions
+  who aren't tagged "charmed". They also want a browser view of both
+  formations and their targets.
+- **Step:** Design documents for owner scheduling. No code changed and no
+  phase completed.
 
 ### Phase 27d: tutorial Alignment lesson and browser panel (2026-09-25)
 
