@@ -60,10 +60,16 @@ func (m *CompanyModule) HasClaimed(leaderUserID, mobTemplateID int) bool {
 var _ domain.GearProvider = (*CompanyModule)(nil)
 
 // CompanionGearGrams implements company.GearProvider (Phase 28): the weight
-// of every living companion's worn and carried gear, from the live mob
-// when it is out (what it carries now), else from its record. A fallen
-// companion's gear stays with the body and isn't carried. Game loop only.
+// of every living companion's worn and carried gear. A companion out in
+// the world is weighed as it stands (its live gear, read in place); one
+// charmed away by another player carries nothing for this company.
+// Otherwise its record, or, before it has one, its template's gear. A
+// fallen companion's gear stays with the body. An unreadable company
+// weighs nothing. Game loop only.
 func (m *CompanyModule) CompanionGearGrams(leaderUserID int) int {
+	if m.persistenceAvailable() != nil {
+		return 0
+	}
 	record, ok := m.registry.Get(leaderUserID)
 	if !ok {
 		return 0
@@ -73,14 +79,22 @@ func (m *CompanyModule) CompanionGearGrams(leaderUserID int) int {
 		if c.Dead() {
 			continue
 		}
-		state := c.State
 		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {
-			if live, ok := m.runtime.Snapshot(instanceID); ok {
-				state = &live
+			if m.runtime.CharmedByOther(leaderUserID, instanceID) {
+				continue
+			}
+			if grams, ok := m.runtime.GearGrams(instanceID); ok {
+				total += grams
+				continue
 			}
 		}
-		if state != nil {
-			total += gearGrams(*state)
+		switch {
+		case c.State != nil:
+			total += gearGrams(*c.State)
+		default:
+			if template, ok := m.runtime.TemplateState(c.MobTemplateID); ok {
+				total += gearGrams(template)
+			}
 		}
 	}
 	return total
@@ -91,12 +105,12 @@ func gearGrams(s domain.MemberState) int {
 	total := 0
 	for _, slot := range characters.AllSlots() {
 		if itm := s.Equipment.Get(slot); itm != nil && itm.ItemId > 0 {
-			total += itm.GetSpec().Weight
+			total += itm.Weight()
 		}
 	}
-	for _, itm := range s.Items {
-		if itm.ItemId > 0 {
-			total += itm.GetSpec().Weight
+	for i := range s.Items {
+		if s.Items[i].ItemId > 0 {
+			total += s.Items[i].Weight()
 		}
 	}
 	return total

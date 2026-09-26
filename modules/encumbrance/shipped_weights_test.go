@@ -3,6 +3,7 @@ package encumbrance
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,8 +23,13 @@ type shippedItem struct {
 
 func shippedItems(t *testing.T) map[int]shippedItem {
 	t.Helper()
+	return worldItems(t, "default")
+}
+
+func worldItems(t *testing.T, world string) map[int]shippedItem {
+	t.Helper()
 	out := map[int]shippedItem{}
-	root := filepath.Join("..", "..", "_datafiles", "world", "default", "items")
+	root := filepath.Join("..", "..", "_datafiles", "world", world, "items")
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || filepath.Ext(path) != ".yaml" {
 			return err
@@ -66,7 +72,13 @@ func weightRange(itemType string) (lo, hi int) {
 }
 
 func TestShippedItemsWeighSomething(t *testing.T) {
-	for id, it := range shippedItems(t) {
+	for _, world := range []string{"default", "empty"} {
+		t.Run(world, func(t *testing.T) { weighSomething(t, worldItems(t, world)) })
+	}
+}
+
+func weighSomething(t *testing.T, items map[int]shippedItem) {
+	for id, it := range items {
 		if it.Type == "service" {
 			assert.Zero(t, it.Weight, "%d %s: a service isn't carried", id, it.Name)
 			continue
@@ -110,4 +122,55 @@ func TestStarterKitsAreLight(t *testing.T) {
 		assert.LessOrEqual(t, total, 12000, a.ArchetypeId)
 		assert.Less(t, float64(total)/float64(capacity), 0.1, "%s: well below the first band", a.ArchetypeId)
 	}
+}
+
+// A fresh company of five (the leader's heaviest starter kit and four
+// recruiters' candidates in their template gear) is still Light: well
+// below the first band, 75% of capacity.
+func TestFreshCompanyIsLight(t *testing.T) {
+	items := shippedItems(t)
+	heaviestKit := 0
+	data, err := os.ReadFile(filepath.Join("..", "archetype", "files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	var arch struct {
+		Archetypes []struct {
+			Kit []int `yaml:"Kit"`
+		} `yaml:"Archetypes"`
+	}
+	require.NoError(t, yaml.Unmarshal(data, &arch))
+	for _, a := range arch.Archetypes {
+		total := 0
+		for _, id := range a.Kit {
+			total += items[id].Weight
+		}
+		heaviestKit = max(heaviestKit, total)
+	}
+	companions := 0
+	for _, template := range []int{61, 62, 63, 64} {
+		found, err := filepath.Glob(filepath.Join("..", "..", "_datafiles", "world", "default", "mobs", "*", strconv.Itoa(template)+"-*.yaml"))
+		require.NoError(t, err)
+		require.Len(t, found, 1)
+		raw, err := os.ReadFile(found[0])
+		require.NoError(t, err)
+		var mob struct {
+			Character struct {
+				Equipment map[string]struct {
+					ItemId int `yaml:"itemid"`
+				} `yaml:"equipment"`
+				Items []struct {
+					ItemId int `yaml:"itemid"`
+				} `yaml:"items"`
+			} `yaml:"character"`
+		}
+		require.NoError(t, yaml.Unmarshal(raw, &mob))
+		for _, e := range mob.Character.Equipment {
+			companions += items[e.ItemId].Weight
+		}
+		for _, it := range mob.Character.Items {
+			companions += items[it.ItemId].Weight
+		}
+	}
+	capacity, _ := parseConfig(200, nil)
+	ratio := float64(heaviestKit+companions) / float64(capacity)
+	assert.Less(t, ratio, 0.3, "a fresh company of five: %d g", heaviestKit+companions)
 }

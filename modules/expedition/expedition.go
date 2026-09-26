@@ -596,6 +596,9 @@ func neutralPct(pct int) int {
 // departureFactorsLocked reads weather (the origin zone, or the destination
 // zone when the origin is untracked), the company load band, and the mount.
 // Lock order: expedition -> {encumbrance, mount, weather}; none call back.
+// Encumbrance also reads the company module's companion gear (Phase 28),
+// which is game-loop state, so departure must run on the game loop (it
+// does: the "go" command).
 func (m *ExpeditionModule) departureFactorsLocked(req expedition.StartRequest) departureFactors {
 	weatherIn := m.weatherIn
 	if weatherIn == nil {

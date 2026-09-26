@@ -725,3 +725,18 @@ func FindMatchIn(itemName string, items ...Item) (pMatch Item, fMatch Item) {
 
 	return Item{}, Item{}
 }
+
+// Weight is the item's encumbrance weight in grams (Phase 28), from its
+// base data: an item carrying its own spec copy (taken from cargo,
+// enchanted, renamed, or saved before weights were authored) would
+// otherwise keep a stale weight for good. An item with no base data uses
+// its own spec.
+func (i *Item) Weight() int {
+	if base := GetItemSpec(i.ItemId); base != nil {
+		return base.Weight
+	}
+	if i.Spec != nil {
+		return i.Spec.Weight
+	}
+	return 0
+}

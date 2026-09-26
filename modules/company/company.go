@@ -31,6 +31,9 @@ type Runtime interface {
 	Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState) (int, error)
 	// Snapshot reads a live mob's level and gear.
 	Snapshot(instanceID int) (domain.MemberState, bool)
+	// GearGrams weighs a live instance's worn and carried items (Phase
+	// 28), read in place: no copy of its gear is made.
+	GearGrams(instanceID int) (int, bool)
 	// CharmedByOther reports whether a live mob now serves someone else.
 	CharmedByOther(leaderUserID, instanceID int) bool
 	// TemplateState is the state a template starts with, without spawning.

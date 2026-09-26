@@ -311,3 +311,16 @@ func TestCurrentLoadAddsCompanionGear(t *testing.T) {
 	assert.Contains(t, status, "8.0 kg / 10.0 kg (80%)")
 	assert.Contains(t, status, "You 0.5 kg, companions 7.5 kg, cargo 0.0 kg.")
 }
+
+// Review finding: an item holding a stale spec copy (taken from cargo,
+// enchanted, saved before weights existed) is weighed from its base data.
+func TestPersonalLoadIgnoresStaleSpecCopies(t *testing.T) {
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: 988201, Name: "old sword", Weight: 1500})
+	t.Cleanup(func() { items.RemoveTestItemSpec(988201) })
+	user := testUser(t, 7)
+	user.Character.Items = []items.Item{{ItemId: 988201, Spec: &items.ItemSpec{ItemId: 988201, Name: "old sword", Weight: 0}}}
+	module := newTestModule(&fakeStore{}, user)
+	load, ok := module.CurrentLoad(7)
+	require.True(t, ok)
+	assert.Equal(t, 1500, load.PersonalGrams)
+}

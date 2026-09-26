@@ -96,3 +96,21 @@ apply this design's recommendations and are recorded here.
   modules: recruiting a companion in gear raises the company load by that
   gear's weight, and the load band follows `cargo put` of heavy goods.
 - `go test -race ./...`, `make generate`, `make validate` pass.
+
+## Review amendments (2026-09-26)
+
+- **Weigh from base data.** `Item.Weight()` reads the item's base spec, so
+  an item holding a spec copy (from cargo, an enchantment, a rename, or a
+  save from before this phase) is weighed correctly. It is used wherever a
+  load is summed.
+- **Companions:**
+  - a live companion is weighed in place (`runtime.GearGrams`), with no
+    copy of its gear;
+  - one charmed away by another player carries nothing for this company;
+  - one with no record yet weighs its template's gear;
+  - an unreadable company weighs nothing.
+- **GMCP** `load` carries `companion_g`.
+- **The upstream `empty` world's** 14 items are weighed and tested too.
+- **The band's response to load** is a unit test (injected gear), not a
+  `plugins.Load` wiring test; the wiring test checks that recruits' gear
+  reaches the real load.

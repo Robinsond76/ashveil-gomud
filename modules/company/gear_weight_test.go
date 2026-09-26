@@ -46,3 +46,37 @@ func TestCompanionGearGrams(t *testing.T) {
 	delete(runtime.live, 501) // gone: back to its record
 	assert.Equal(t, 1900+1200, module.CompanionGearGrams(7))
 }
+
+// Review findings: a companion charmed away by another player carries
+// nothing for this company; one with no record yet weighs its template's
+// gear; an unreadable company weighs nothing; an item with a stale spec
+// copy weighs its base data.
+func TestCompanionGearGramsEdges(t *testing.T) {
+	sword, pack := weighted(t, 988011, 1500), weighted(t, 988012, 400)
+	live := domain.MemberState{Level: 1}
+	live.Equipment.Weapon = sword
+	frozen := items.Item{ItemId: 988012, Spec: &items.ItemSpec{ItemId: 988012, Weight: 0}}
+	recorded := domain.MemberState{Level: 1, Items: []items.Item{frozen}}
+	template := domain.MemberState{Level: 1, Items: []items.Item{pack, pack}}
+
+	runtime := &fakeRuntime{
+		live:          map[int]bool{601: true},
+		liveState:     map[int]domain.MemberState{601: live},
+		stolen:        map[int]bool{},
+		templateState: &template,
+	}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{
+			{ID: 1, MobTemplateID: 58},                   // no record yet: its template's gear
+			{ID: 2, MobTemplateID: 58, State: &recorded}, // a stale spec copy
+			{ID: 3, MobTemplateID: 58},                   // out, live
+		}},
+	}}, runtime)
+	module.setInstance(7, 3, 601)
+
+	assert.Equal(t, 800+400+1500, module.CompanionGearGrams(7))
+	runtime.stolen[601] = true
+	assert.Equal(t, 800+400, module.CompanionGearGrams(7), "charmed away: not this company's to carry")
+	module.loadErr = assert.AnError
+	assert.Zero(t, module.CompanionGearGrams(7), "an unreadable company weighs nothing")
+}

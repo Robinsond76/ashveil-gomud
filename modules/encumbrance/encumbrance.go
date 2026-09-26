@@ -262,11 +262,13 @@ func (m *EncumbranceModule) personalGrams(leaderUserID int) int {
 		return 0
 	}
 	total := 0
-	for _, item := range user.Character.Items {
-		total += item.GetSpec().Weight
+	// Weight reads the base data, so an item holding a stale spec copy
+	// (from cargo, an enchantment, an old save) is still weighed.
+	for i := range user.Character.Items {
+		total += user.Character.Items[i].Weight()
 	}
 	for _, item := range user.Character.Equipment.GetAllItems() {
-		total += item.GetSpec().Weight
+		total += item.Weight()
 	}
 	return total
 }

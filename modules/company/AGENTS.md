@@ -64,4 +64,4 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 
 ## Phase 28: companions' gear in the company load
 
-- `CompanionGearGrams` (the `company.GearProvider` seam) weighs every living companion's worn and carried gear. It uses the live mob's current gear when it is out (`runtime.Snapshot`, read-only; it saves nothing), and the record's `State` otherwise. A fallen companion's gear stays with the body and is left out. `modules/encumbrance` adds it to the load as `CompanionGrams`. Call it on the game loop.
+- `CompanionGearGrams` (the `company.GearProvider` seam) weighs every living companion's worn and carried gear. A companion out in the world is weighed in place (`runtime.GearGrams`, no copy); one charmed away by another player counts nothing. Otherwise it uses the record's `State`, or the template's gear before there is one. A fallen companion's gear stays with the body and is left out, and an unreadable company weighs nothing. Items are weighed with `Item.Weight()` (base data). `modules/encumbrance` adds it to the load as `CompanionGrams`. Call it on the game loop.

@@ -5,3 +5,4 @@ description: A simple wooden shield.
 type: offhand
 subtype: wearable
 damagereduction: 5
+weight: 3000

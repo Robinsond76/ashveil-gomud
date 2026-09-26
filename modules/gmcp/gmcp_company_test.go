@@ -42,7 +42,7 @@ func sampleCompany() companyview.Summary {
 			{Key: company.CompanionMemberKey(3), ID: 3, Name: "<b>Ysolde</b>", Status: company.MemberDead, Level: 5, RescueLeft: 90 * time.Minute},
 		},
 		Alive: 3, Dead: 1,
-		LoadKnown: true, Load: encumbrance.Load{PersonalGrams: 5000, CargoGrams: 3000, CapacityGrams: 10000}, LoadLabel: "Burdened",
+		LoadKnown: true, Load: encumbrance.Load{PersonalGrams: 3000, CompanionGrams: 2000, CargoGrams: 3000, CapacityGrams: 10000}, LoadLabel: "Burdened",
 		ActivityKnown: true, Activity: companyview.Activity{Kind: companyview.CampRest, Remaining: 12 * time.Minute},
 		RestKnown: true, RestTier: camping.TierRested, RestLeft: time.Hour,
 		Checkpoint: "The Chapel of the Wayfarer",
@@ -99,7 +99,7 @@ func TestCompanyPayloadShape(t *testing.T) {
 
 	assert.Equal(t, 3.0, got["alive"])
 	assert.Equal(t, 1.0, got["dead"])
-	assert.Equal(t, map[string]any{"label": "Burdened", "total_g": 8000.0, "capacity_g": 10000.0, "cargo_g": 3000.0}, got["load"])
+	assert.Equal(t, map[string]any{"label": "Burdened", "total_g": 8000.0, "capacity_g": 10000.0, "cargo_g": 3000.0, "companion_g": 2000.0}, got["load"])
 	assert.Equal(t, "Resting 12m", got["activity"])
 	assert.Equal(t, map[string]any{"tier": "Rested", "seconds": 3600.0}, got["rest"])
 	assert.Equal(t, "The Chapel of the Wayfarer", got["checkpoint"])

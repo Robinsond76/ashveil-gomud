@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-25
-- **HEAD:** Phase 27d (tutorial Alignment lesson and browser panel) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27c is on `master`.
+- **HEAD:** Phase 28 (item weights and the company's whole load) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27d is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -62,9 +62,11 @@ instead of duplicating them.
   Departure lessons), and Phase 27b (the tutorial's Survival and Camp
   lessons), and Phase 27c (the tutorial's practice fight), and Phase 27d
   (the tutorial's Alignment lesson and browser panel). The onboarding
-  roadmap's tutorial is complete.
-- **Next:** the owner's choice. The onboarding roadmap is done; the
-  handoff doc's later phases and the "Future ideas" row remain.
+  roadmap's tutorial is complete. Phase 28 (item weights: every shipped item
+  weighed, and living companions' gear in the company load).
+- **Next:** the owner's choice. Both roadmaps are done. Open: capacity per
+  company size (play-testing), 11d, and the "Future ideas" row; see Known
+  issues.
 
 ## Phase progress
 
@@ -114,9 +116,98 @@ instead of duplicating them.
 | 27b | Tutorial: Survival and Camp lessons | Complete: Weather Yard (904) and Campground (905) before the Gate; Survival passes on a real meal and drink (`survival.OnProvision`) plus `weather`/`temperature`/`strain`/`cargo`, with food and water given once for what the pack lacks; Camp passes on Rested from a real camp rest; course camps struck (`camping.AbandonCamp`) on pass, skip, leave, logout, and placement |
 | 27c | Tutorial: practice fight | Complete: Practice Yard (906) before the Gate; a squad of harmless straw soldiers (three footmen in front, an archer behind) per player; `practice` mobs beaten with no XP, drops, gold, kills, or `MobDeath` (`mobcommands.OnPracticeBeaten`); the gate is the squad beaten; death in the course decided (an ordinary death, ending the course as a skip) |
 | 27d | Tutorial: Alignment lesson, browser panel | Complete: the Oath Stone (907) before the Gate; `company alignment`, `company inspect corvin` (an outlaw a new company is refused), and `standing`; `company inspect` weighs any recruiter's candidate; a `Tutorial` GMCP package and web client window from the same checklist as the terminal; a course missing rooms is closed but kept |
+| 28 | Item weights and the company's whole load | Complete: every shipped item weighed (grams, per-type ranges), starter kits 4.8–8.5 kg; living companions' worn and carried gear in the company load (`company.CompanionGearGrams`), live mob when out, else record or template; `cargo` shows the split; GMCP `companion_g` |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 28: item weights and the company's whole load (2026-09-26)
+
+- **What:** The data pass Phase 9 deferred.
+  - **Weights:** all 115 unweighted shipped items in the default world (and
+    the 14 of the upstream `empty` world) now have a realistic weight in
+    grams. Examples: a 5 g coupon, a 1.5 kg broadsword, a 9 kg steel
+    breastplate, a full 1.5 kg waterskin. The room-rental service stays
+    weightless, and the four authored weights are kept. Starter kits weigh
+    4.8–8.5 kg.
+  - **The company's whole load:** living companions' worn and carried
+    gear now counts, as `Load.CompanionGrams` in `TotalGrams`, through
+    `company.CompanionGearGrams`.
+    - A companion out in the world is weighed as it stands, read in place.
+    - One charmed away by another player carries nothing for this company.
+    - Otherwise its record, or its template's gear before it has one.
+    - A fallen companion's gear stays with the body.
+  - **Every reader picks the load up unchanged:** route departure, walking
+    strain, `inventory`, `status`, and GMCP (now with `companion_g`).
+    `cargo` shows the split.
+  - **`Item.Weight()`** reads base data, so an item holding a spec copy
+    (taken from cargo, enchanted, or saved before weights) is still
+    weighed.
+  - The stale "Known issues" list was rewritten.
+
+  Design and plan:
+  [28 spec](superpowers/specs/2026-09-26-phase-28-item-weights-design.md) /
+  [28 plan](superpowers/plans/2026-09-26-phase-28-item-weights.md).
+- **Why:** Load has driven travel and strain since Phase 16, but only 4 of
+  120 items weighed anything, so every company read Light. The roadmaps are
+  complete; this was the clearest open deferral, taken under the owner's
+  "carry on".
+- **Verification:** `go test -race ./...` (78 packages), `make generate`,
+  `make validate`.
+  - **Content tests:** every item in both worlds weighs something within its
+    type's range, the service excepted; the authored weights are kept; each
+    starter kit is 1–12 kg; a fresh company of five (the heaviest kit plus
+    the four recruiters' candidates) is under 30% of capacity.
+  - **Unit tests:** `Load` totals; the seam; the company module (live,
+    record, template, fallen, charmed away, unreadable, stale spec
+    copies); the encumbrance module (companions in the load and band, the
+    `cargo` split, stale spec copies); GMCP `companion_g`.
+  - **Wiring** (the tutorial's `plugins.Load` test): recruiting Tamsin and
+    Oswin raises the company load by exactly their gear, and `cargo` shows
+    it.
+- **Review:** The independent reviewer confirmed:
+  - no clock or persistence change;
+  - every load reader is on the game loop;
+  - the lock order holds;
+  - `Snapshot` has no side effects;
+  - no system assumed zero weights.
+
+  Its findings:
+  1. *Medium, fixed:* items holding a spec copy (taken from cargo,
+     enchanted, renamed, or saved before this phase with weight 0) kept a
+     stale weight. `Item.Weight()` reads the base data
+     (`TestWeightReadsBaseData`, `TestPersonalLoadIgnoresStaleSpecCopies`,
+     `TestCompanionGearGramsEdges`).
+  2. *Low-medium, fixed:* a companion charmed away by another player still
+     counted toward the old company. It now counts nothing
+     (`TestCompanionGearGramsEdges`).
+  3. *Low, partly fixed:* each weighing deep-copied every live companion's
+     gear. It is now read in place (`runtime.GearGrams`). The company view
+     still resolves the load twice (load, then band); that is cheap and
+     left as is.
+  4. *Low, fixed:* a companion with no record yet weighed nothing. It now
+     weighs its template's gear.
+  5. *Low, fixed:* the expedition lock-order comment names the game-loop
+     requirement.
+  6. *Low, fixed:* an unreadable company weighs nothing, explicitly.
+  7. *Low, fixed:* GMCP `load` gained `companion_g`.
+  8. *Low, fixed:* the upstream `empty` world's items are weighed and
+     tested too.
+  9. *Noted:* the Ent's tree trunk (20 kg, a 5% drop) could, in extremis,
+     put a company of trunk-wielders into a band. No normal path does, and
+     a fresh company is pinned under 30%.
+  10. *Docs, fixed:* the dropped 11a display note is back in Known issues;
+      the plan is ticked; the spec records that the band's response is a
+      unit test.
+  11. *Coverage, fixed:* stale spec copies (1).
+  12. *Coverage, fixed:* charmed away (2).
+  13. *Coverage, left:* the band through a real departure or step is
+      covered by the injected unit test and Phase 16's own tests of the
+      band.
+  14. *Coverage, left:* the away and dead cases through `plugins.Load` are
+      covered by the module unit tests.
+  15. *Coverage, fixed:* a fresh company of five is pinned light.
+- **Step completed:** Phase 28.
 
 ### Phase 27d: tutorial Alignment lesson and browser panel (2026-09-25)
 
@@ -3339,6 +3430,11 @@ history.
   wiring (`plugins.Load`), and browser (Playwright) tests cover them. The
   tutorial has no test of a real copyover or of two players in the course
   at once.
+- **Enemy parties in displays (11a):** the room listing groups party
+  members but passes zero EHP/DPS into `mobparty.Assemble`
+  (`internal/rooms` can't import `internal/combat`), so display order isn't
+  combat order. The GMCP room mob list is still per mob, not grouped by
+  party. Combat itself assembles parties with real values.
 - **Capacity is flat per company** (`CapacityKg` 200, plus a mount). Phase
   28 gave every item a weight, so loads now mean something, but capacity
   doesn't grow with the company's size. That is left for play-testing.
