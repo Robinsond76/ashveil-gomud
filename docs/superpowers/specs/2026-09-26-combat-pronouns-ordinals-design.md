@@ -1,4 +1,4 @@
-# Potential Phase 28c: Pronouns and Ordinals in Combat Text
+# Potential Phase 28d: Pronouns and Ordinals in Combat Text
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.
@@ -50,7 +50,7 @@ Status: owner-approved direction (2026-09-26); needs a design pass and plan.
 - **Targeting:** whether players can type `attack second cutthroat` is an
   open decision; the existing `2.cutthroat`-style selection (if any) is
   checked in the design pass.
-- **Battle panel:** the Phase 29 grid uses the same names ("cutthr. 1",
+- **Battle panel:** the Phase 30 grid uses the same names ("cutthr. 1",
   "cutthr. 2").
 
 ## Acceptance criteria

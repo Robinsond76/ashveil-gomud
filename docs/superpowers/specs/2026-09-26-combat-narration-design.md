@@ -1,4 +1,4 @@
-# Potential Phase 28b: Combat Narration Voice
+# Potential Phase 28c: Narration Voice (Weapons and Spells)
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.
@@ -43,6 +43,10 @@ Status: owner-approved direction (2026-09-26); needs a design pass and plan.
 
 ## Scope
 
+Combat text is rendered from the [28b event stream](2026-09-26-combat-event-stream-design.md),
+not written inline by the combat code.
+
+
 1. **Rewrite the eight message files** in a dark, physical, story voice:
    - no `!`, no ALL-CAPS;
    - keep the pool structure and tokens;
@@ -84,6 +88,43 @@ Status: owner-approved direction (2026-09-26); needs a design pass and plan.
    - Open: how "proper name" is known. It could be a template flag, or any
      name starting with a capital.
 
+## Spells (folded in from the former spell spec)
+
+- **Where spell text lives today:** each spell's script in
+  `_datafiles/world/default/spells/*.js`, through `SendUserMessage` and
+  `SendRoomMessage`:
+  - wizard, conjuration: `mm` (Magic Missile, 1 wait round) and `sparks`
+    (Shower of Sparks, hits each enemy);
+  - cleric, restoration: `heal` (Minor Heal, 2 wait rounds) and `healall`.
+- **Today's wording:** "begins to chant softly", "continues chanting...",
+  "lets loose a magical projectile at X hurting them!".
+- **The rewrite:**
+  - chanting lines stay each round while a spell builds, voiced per school,
+    with `(chanting: <spell>, N rounds)`;
+  - the release line is physical;
+  - damage ends ` (N damage)` and heals end ` (N healed)`;
+  - a multi-target spell prints one cast line, then an indented line per
+    target;
+  - a multi-target heal prints one line listing everyone healed.
+- **Where the mechanics went:** companion casting is in the
+  [tactics spec](2026-09-26-company-tactics-design.md) (29c). Spell
+  critical hits are in [29a](2026-09-26-status-crit-effects-design.md).
+  Enemy casters are in [29d](2026-09-26-telegraphs-interrupts-design.md).
+
+```
+> cast mm captain
+You begin to murmur the words of binding. Frost creeps across your knuckles. (chanting: Magic Missile, 1 round)
+You loose a bolt of pale fire. It punches into the bandit captain's chest, and the reek of scorched cloth fills the air. (6 damage)
+
+You fling your hands wide, and a storm of sparks tears across the bandits.
+    The sparks sear the bandit captain's face. (3 damage)
+    The sparks catch in the first cutthroat's hair, and he beats at it, screaming. (2 damage)
+
+Brother Oswin lays his glowing hands on Garrick Vane's hip, and the torn flesh knits closed beneath them. (4 healed)
+Brother Oswin raises his arms, and a warm light washes over the company.
+    Garrick Vane (3 healed) · Ysolde (2 healed) · you (4 healed)
+```
+
 ## Constraints
 
 - Keep the message files' schema and tokens. Only the text and the
@@ -111,7 +152,7 @@ Status: owner-approved direction (2026-09-26); needs a design pass and plan.
 
 ## Reference text (approved mock, 2026-09-26)
 
-The target voice. It uses 28c's pronouns and ordinals and 28d's pain lines,
+The target voice. It uses 28d's pronouns and ordinals and 28e's pain lines,
 which land in later phases. Damage numbers are illustrative.
 
 ```

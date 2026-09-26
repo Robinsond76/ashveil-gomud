@@ -71,7 +71,7 @@ before it is fixed. Each finding below says whether that applies.
 
 - **What happened:** Unlit night fights were mostly misses. That is Phase
   14's darkness penalty working as intended.
-- **Direction:** the narration opener (28b) can mention the dark when it
+- **Direction:** the narration opener (28c) can mention the dark when it
   applies, so the misses make sense.
 
 ### F6. Grouped enemies don't show in `look` in the harness (harness only)
