@@ -107,14 +107,16 @@ and listed for the owner in `docs/PROJECT_STATUS.md`.
      resolvers add the interceptor to the round's affected lists, so a
      killing intercepted blow ends the interceptor that round, as a
      direct blow does, and its death is reported.
-4. **Fight identity: one company against one enemy party.**
+4. **Fight identity: one company against the enemies it fights in a
+   room** (revised after review: the spec's "one enemy party" gave three
+   ungrouped wolves three fights and three summaries, and let a
+   re-forming group leave an enemy in two fights).
    - **Start:** 29a's upkeep already finds each engaged company/party
-     pair at the top of the round. For a pair with no open fight, the
-     stream opens one (a new id, from 1, in memory) and emits
-     `fight-start`. An open fight is found by the leader and the room,
-     and any enemy of the party already in it, so a party whose id
-     changes (a member dies and the group re-forms) stays one fight.
-     New party members join it each round.
+     pair at the top of the round. When the leader has no open fight in
+     that room, the stream opens one (a new id, from 1, in memory) and
+     emits `fight-start`. Every party the company engages there joins the
+     same fight, and new members join it each round. Each event names its
+     enemy actor's own party.
    - **Company side:** the leader, and each companion in the room when the
      fight opens or while it runs (a companion summoned mid-fight joins).
    - **Solo fights** (no companion present, the same rule as 29a's
@@ -122,10 +124,13 @@ and listed for the owner in `docs/PROJECT_STATUS.md`.
      events carry fight id 0 and no summary is made.
    - **End,** checked twice per round:
      - **at the end of the round,** after deaths are reported: every
-       enemy of the fight is dead or gone from the room (`victory`), or
-       the leader is down or gone and no companion stands (`defeat`);
+       company member is dead (`defeat`; a company that walked or fled
+       away is not beaten), or every enemy of the fight is dead or gone
+       from the room and no other mob there is fighting the company or
+       would join (`victory`);
      - **at the top of the round,** after the upkeep: no living member of
-       either side has a plain attack on the other in the room
+       either side is attacking the other in the room (an enemy still
+       beating a downed leader counts, as in the upkeep)
        (`broken-off`: a flee, a `break` that held, a walk out, a logout).
        This is checked after the upkeep so a party member that the
        upkeep draws in keeps the fight open.
@@ -137,8 +142,9 @@ and listed for the owner in `docs/PROJECT_STATUS.md`.
      and spell), healing and what a wound held back, damage by company
      member (most first), the highest single hit, interrupts, guards,
      effects applied (by name), kills by company member, how each enemy
-     ended (slain, fled, or still standing; spared and yielded come with
-     30e), and the company's health at the end.
+     ended (slain, beaten for a practice foe, fled, left, or still
+     standing; spared and yielded come with 30e), and the company's
+     health at the end (a member slain in the fight reads as fallen).
    - **Company health at the end** is read from the live world when the
      fight ends and passed to the stream. It is never computed from
      events: the stream is never the source of truth for health.
@@ -220,8 +226,15 @@ No persistence changes.
   - the leader receives the summary text once, at the fight's end;
   - `set battlesummary` off: no summary text, the events still flow;
   - a solo fight produces events with fight id 0 and no summary.
-- **Death fix:** an interceptor killed by an intercepted blow is sent
-  `suicide` that round (hooks test).
+- **Death fix:** a leader dropped by an intercepted blow is reported
+  down in that same round (wiring test; the interception needs a live
+  world). Over a whole 5v5, nobody strikes after their death.
+- **Also through the round:** a real `flee` (broken off), ungrouped
+  enemies (one fight), and Minor Heal and Magic Missile (cast progress,
+  cast complete, heal, spell hit, counted in the summary).
+- **Player help** (added at the owner's request during the phase): help
+  pages for the summary and every combat system before it, indexed and
+  linked from `help combat`, pointed to from the tutorial, and tested.
 - **Existing combat text is unchanged:** the 27c practice-fight and 29a
   wiring tests still pass untouched.
 - `go test -race ./...`, `make generate`, and `make validate` pass. The

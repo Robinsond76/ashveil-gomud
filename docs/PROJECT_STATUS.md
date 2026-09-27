@@ -6,9 +6,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-27
-- **HEAD:** Phase 29a (combat fixes from the 5v5 simulation) is complete
-  on branch `claude/next-phase-mo3cmq`, awaiting merge to `master`. It is
-  the first slice of the combat roadmap (29a–31).
+- **HEAD:** Phase 29b (the combat event stream and battle summary, with
+  player help for combat) is complete on branch
+  `claude/next-phase-wfav4w`, awaiting merge to `master`. 29a is on
+  `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -68,8 +69,9 @@ instead of duplicating them.
   weighed, and living companions' gear in the company load). Phase 29a
   (combat fixes: engaged fights kept whole, the leader turned from an
   unreachable target, unplaced members strikable, `formation reach` in a
-  fight).
-- **Next:** 29b (the combat event stream), per the decided
+  fight). Phase 29b (the combat event stream and battle summary; player
+  help for combat, pointed to from the tutorial).
+- **Next:** 29c (the narration voice), per the decided
   [build order](superpowers/specs/2026-09-26-combat-presentation-roadmap.md#build-order-decided-2026-09-27).
   Also open: capacity per company size (play-testing) and the "Future
   ideas" row; see Known issues.
@@ -124,7 +126,7 @@ instead of duplicating them.
 | 27d | Tutorial: Alignment lesson, browser panel | Complete: the Oath Stone (907) before the Gate; `company alignment`, `company inspect corvin` (an outlaw a new company is refused), and `standing`; `company inspect` weighs any recruiter's candidate; a `Tutorial` GMCP package and web client window from the same checklist as the terminal; a course missing rooms is closed but kept |
 | 28 | Item weights and the company's whole load | Complete: every shipped item weighed (grams, per-type ranges), starter kits 4.8–8.5 kg; living companions' worn and carried gear in the company load (`company.CompanionGearGrams`), live mob when out, else record or template; `cargo` shows the split; GMCP `companion_g` |
 | 29a | Combat fixes from the 5v5 simulation | Complete: a round-start engagement upkeep keeps an engaged company and enemy party fighting as a whole (the leader turns from an unreachable target, the killer and leader rejoin, the whole party joins, hostility can't lapse mid-fight); unplaced members can be struck; `break` holds; `formation reach` answers against the enemy in a fight; `internal/enemyparty` |
-| 29b | Combat event stream and battle summary | Proposed: [spec](superpowers/specs/2026-09-26-combat-event-stream-design.md). One structured event per combat happening, which narration, pacing, the panel, and balancing read; an end-of-fight summary |
+| 29b | Combat event stream and battle summary | Complete: `internal/combatstream` (one event per combat happening, fights of a company against the enemies it fights in a room, a summary folded from the events), producers at every attack, cast, target change, flee, and death; the summary at a fight's end (`set battlesummary`); interceptors fall in the round they're struck; player help for combat (`help combat` and seven pages), pointed to from the tutorial |
 | 29c | Narration voice (weapons and spells) | Proposed: [spec](superpowers/specs/2026-09-26-combat-narration-design.md). Dark, story-like text; `(N damage)` on every hit, `(critical hit, N damage)`; no `***`/caps/`!`; no charmed tag; an opener, "turns toward", and a closing line; indented death notices; spell text in the same voice |
 | 29d | Pronouns and ordinals | Proposed: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Mob pronouns (beasts "it"); "the first/second cutthroat" fixed for the fight |
 | 29e | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race |
@@ -139,6 +141,81 @@ instead of duplicating them.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 29b: combat event stream and battle summary; combat help (2026-09-27)
+
+- **What:** The second slice of the combat roadmap. Details are in the
+  [29b design](superpowers/specs/2026-09-27-phase-29b-combat-event-stream-design.md)
+  and [29b plan](superpowers/plans/2026-09-27-phase-29b-combat-event-stream.md).
+  - **`internal/combatstream`** (pure, in memory, never persisted): one
+    `Event` per combat happening (attack, spell hit, heal, cast progress
+    and complete, status applied, target change, flee, death, fight start
+    and end). The kinds later phases produce (wounds, interrupts, guards,
+    yield, mercy, cast start) are declared.
+  - **Fights:** a company against the enemies it fights in one room,
+    opened from 29a's upkeep, ended at victory, defeat, or when neither
+    side fights on. Solo fights report events with fight id 0.
+  - **The summary:** damage by side and member, highest hit, effects,
+    kills, enemy endings, company health; sent to the leader at the
+    fight's end; `set battlesummary` turns it off.
+  - **Fixed:** an interceptor (11c) struck by an intercepted blow wasn't
+    in the round's affected lists, so a killing blow let it swing again.
+  - **Player help (owner's request, mid-phase):** `help combat` (the hub),
+    `formation`, `targeting`, `chemistry`, `sharpen`, `light`,
+    `battle-summary`, `resurrect`; GoMud's `death`, `break`, `flee`, and
+    `attack` pages updated to Ashveil's rules. The tutorial's Formation,
+    Camp, Combat, and Departure lessons point to them, and the Combat
+    lesson's stale "attack again" hint is corrected. The owner asked that
+    every future feature do the same: now in `AGENTS.md`, `CLAUDE.md`,
+    the plans README, and handoff rule 23.
+  - **Fixed, found writing the help tests:** `templates.readFile`
+    reported success with no content when no plugin file system was
+    registered, so help pages rendered blank in bare tests.
+- **Why:** The build order puts 29b next; the owner asked to continue,
+  then for combat help and a standing rule. Two decisions were settled by
+  applying the design's recommendations (recorded in the design doc):
+  the totals live in memory, so a restart loses a fight's summary, not
+  the fight; consumers subscribe to the stream, not the events bus, until
+  a bus listener exists (31).
+- **Verification:** `go test -race ./...`, `make generate`, and
+  `make validate` pass.
+  - **Wiring** (`modules/company/wiring_stream_test.go`, on 29a's 5v5
+    through `plugins.Load`, the shipped config, real commands, and
+    `DoCombat`): the event sequence and ids to the end of the fight;
+    summary totals equal to the attack and spell events, kills to the
+    deaths; the summary sent once; `set battlesummary` off; a solo fight;
+    a real `flee`; ungrouped enemies as one fight; the intercepted blow
+    that drops the leader in its round; Minor Heal and Magic Missile
+    through the round; the clock unchanged. The seven ran 20–60 times
+    clean after the last change.
+  - **Unit:** `internal/combatstream`, `internal/hooks`,
+    `internal/templates`; help: `TestCombatHelpTopics`,
+    `TestTutorialHelpPointersExist`.
+- **Review:** The independent reviewer found no invariant violations: no
+  clock change, nothing persisted, sinks called outside the lock, and no
+  change to existing combat text or behaviour but the interceptor fix.
+  All findings were verified against the code.
+  - **Fixed, each with a regression test:**
+    1. *Medium:* ungrouped enemies were one fight each, so a company got a
+       summary per wolf. A company now has one fight per room.
+    2. *Medium:* a re-forming group could leave an enemy in two fights and
+       send a second, empty summary (fixed by 1).
+    3. *Low:* the two engagement checks disagreed about a downed leader,
+       so a fight could open and close every round.
+    4. *Low:* a kill by an outsider was credited to the company.
+    5. *Low:* a slain leader, respawned, read as healthy in the summary.
+    6. *Low:* an enemy that walked off read "still standing" (now "left");
+       the tutorial's straw soldiers read as slain kills (now "beaten").
+    7. *Low:* `set battlesummary` assumed a bool; a closed fight id stayed
+       on an event; `EndFight` indexed an empty company.
+    8. *Coverage:* flee, spells, two parties, and the intercepted death
+       had no test through the round.
+  - **Found by those new tests, fixed:** a fled company's fight ended as
+    a defeat (defeat now means every member dead), and a hostile enemy
+    not yet engaged when the first fell split the fight in two (a
+    victory now waits for other foes in the room).
+  - **Accepted:** *Low:* `Emit` sorts the open fights and sinks per event.
+    It's small at current scale.
 
 ### Phase 29a: combat fixes from the 5v5 simulation (2026-09-27)
 
@@ -3616,6 +3693,17 @@ history.
   - companion custom names and AI orders;
   - multi-player camps;
   - forecasts and seasons.
+- **Combat event stream (29b) limits:** the stream lives in memory, so a
+  restart mid-fight loses that fight's summary. Each company player's own
+  summary waits for companies with more than one player.
+- **Player help gaps:** combat is covered (29b). Company, camping,
+  survival, travel, weather, markets, standing, and the other Ashveil
+  systems have little or no `help` page yet; the 2026-09-27 rule covers
+  new work only, so these need a backfill pass.
+- `modules/tutorial`'s wiring test can't run twice in one process
+  (`go test -count=2` fails the second run, before 29b too), and running
+  it alongside `modules/company` in one `go test` with a high `-count` can
+  collide on the shared config-overrides file.
 - `make test`'s `js-lint` stage can stall on some hosts (`npx jshint`); `make
   js-lint` on its own and `go test -race ./...` are the documented checks.
 - A shipped-world test can leave a gitignored
