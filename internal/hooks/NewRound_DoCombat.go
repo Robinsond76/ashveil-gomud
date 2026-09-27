@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -24,9 +25,16 @@ func DoCombat(e events.Event) events.ListenerReturn {
 
 	evt := e.(events.NewRound)
 
+	// Ashveil Phase 29b: every event this round reports is stamped with it.
+	combatRound.Store(evt.RoundNumber)
+	resetRoundExtras()
+
 	// Ashveil Phase 29a: keep every engaged company and enemy party
-	// fighting as a whole before this round's attacks are resolved.
+	// fighting as a whole before this round's attacks are resolved. It
+	// also opens a fight on the combat event stream for each newly
+	// engaged pair (29b), and fights no one is still fighting end.
 	upkeepEngagements()
+	closeDisengagedFights()
 
 	//
 	// Combat rounds
@@ -36,7 +44,12 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	affectedPlayers2, affectedMobs2 := handleMobCombat(evt)
 
 	// Do any resolution or extra checks based on everyone that has been involved in combat this round.
-	handleAffected(append(affectedPlayers1, affectedPlayers2...), append(affectedMobs1, affectedMobs2...))
+	affectedPlayers := append(append(affectedPlayers1, affectedPlayers2...), roundExtraPlayers...)
+	affectedMobs := append(append(affectedMobs1, affectedMobs2...), roundExtraMobs...)
+	handleAffected(affectedPlayers, affectedMobs)
+
+	// Ashveil Phase 29b: end each fight one side of which has fallen.
+	settleFights()
 
 	return events.Continue
 }
@@ -151,6 +164,8 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				continue
 			}
 
+			emitCombat(combatstream.Event{Kind: combatstream.Flee, RoomId: user.Character.RoomId, Source: userRef(user)})
+
 			user.SendText(fmt.Sprintf(`You flee to the <ansi fg="exit">%s</ansi> exit!`, exitName))
 			uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> flees to the <ansi fg="exit">%s</ansi> exit!`, user.Character.Name, exitName), user.UserId)
 
@@ -194,6 +209,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				user.Character.Aggro.RoundsWaiting--
 
 				scripting.TrySpellScriptEvent(`onWait`, user.UserId, 0, user.Character.Aggro.SpellInfo)
+				emitCast(combatstream.CastProgress, userRef(user), user.Character.Aggro.SpellInfo.SpellId, ``, roomId)
 
 				continue
 			}
@@ -205,6 +221,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				// fail
 				user.SendText(fmt.Sprintf(`<ansi fg="spell-text"><ansi fg="magenta">***</ansi> Your spell fizzles! <ansi fg="magenta">***</ansi> (Rolled %d on %d%% chance of success)</ansi>`, roll, successChance))
 				uRoom.SendText(fmt.Sprintf(`<ansi fg="spell-text"><ansi fg="username">%s</ansi> tries to cast a spell but it <ansi fg="magenta">fizzles</ansi>!</ansi>`, user.Character.Name), userId)
+				emitCast(combatstream.CastComplete, userRef(user), user.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeFizzled, roomId)
 				user.Character.Aggro = nil
 
 				continue
@@ -225,12 +242,18 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				}
 			}
 
+			spellInfo := user.Character.Aggro.SpellInfo
+			spellTargetsBefore := snapshotSpellTargets(spellInfo)
+
 			allowRetaliation := true
 			if handled, err := scripting.TrySpellScriptEvent(`onMagic`, user.UserId, 0, user.Character.Aggro.SpellInfo); err == nil {
 				if handled {
 					allowRetaliation = false
 				}
 			}
+
+			emitCast(combatstream.CastComplete, userRef(user), spellInfo.SpellId, combatstream.OutcomeCast, roomId)
+			spellTargetsBefore.emitResults(userRef(user), spellInfo.SpellId, roomId)
 
 			user.Character.TrackSpellCast(user.Character.Aggro.SpellInfo.SpellId)
 
@@ -378,6 +401,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			affectedPlayerIds = append(affectedPlayerIds, user.Character.Aggro.UserId)
 
 			roundResult := combat.AttackPlayerVsPlayer(user, defUser)
+			emitAttack(userRef(user), userRef(defUser), roomId, user.Character, roundResult)
 
 			// If a mob attacks a player, check whether player has a charmed mob helping them, and if so, they will move to attack back
 			room := rooms.LoadRoom(roomId)
@@ -575,6 +599,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			var roundResult combat.AttackResult
 
 			roundResult = combat.AttackPlayerVsMob(user, defMob)
+			emitAttack(userRef(user), mobRef(defMob), roomId, user.Character, roundResult)
 
 			for _, buffId := range roundResult.BuffSource {
 				user.AddBuff(buffId, `combat`)
@@ -702,6 +727,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				mob.Character.Aggro.RoundsWaiting--
 
 				scripting.TrySpellScriptEvent(`onWait`, 0, mob.InstanceId, mob.Character.Aggro.SpellInfo)
+				emitCast(combatstream.CastProgress, mobRef(mob), mob.Character.Aggro.SpellInfo.SpellId, ``, mob.Character.RoomId)
 
 				continue
 			}
@@ -711,11 +737,15 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 				// fail
 				mobRoom.SendText(fmt.Sprintf(`<ansi fg="mobnamme">%s</ansi> tries to cast a spell but it <ansi fg="magenta">fizzles</ansi>!`, mob.Character.Name))
+				emitCast(combatstream.CastComplete, mobRef(mob), mob.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeFizzled, mob.Character.RoomId)
 				mob.Character.Aggro = nil
 
 				continue
 
 			}
+
+			spellInfo := mob.Character.Aggro.SpellInfo
+			spellTargetsBefore := snapshotSpellTargets(spellInfo)
 
 			allowRetaliation := true
 			if handled, err := scripting.TrySpellScriptEvent(`onMagic`, 0, mob.InstanceId, mob.Character.Aggro.SpellInfo); err == nil {
@@ -723,6 +753,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 					allowRetaliation = false
 				}
 			}
+
+			emitCast(combatstream.CastComplete, mobRef(mob), spellInfo.SpellId, combatstream.OutcomeCast, mob.Character.RoomId)
+			spellTargetsBefore.emitResults(mobRef(mob), spellInfo.SpellId, mob.Character.RoomId)
 
 			if allowRetaliation {
 				if spellData := spells.GetSpell(mob.Character.Aggro.SpellInfo.SpellId); spellData != nil {
@@ -890,6 +923,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			var roundResult combat.AttackResult
 
 			roundResult = combat.AttackMobVsPlayer(mob, defUser)
+			emitAttack(mobRef(mob), userRef(defUser), roomId, &mob.Character, roundResult)
 
 			// If a mob attacks a player, check whether player has a charmed mob helping them, and if so, they will move to attack back
 			room := rooms.LoadRoom(roomId)
@@ -1048,6 +1082,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			var roundResult combat.AttackResult
 
 			roundResult = combat.AttackMobVsMob(mob, defMob)
+			emitAttack(mobRef(mob), mobRef(defMob), mob.Character.RoomId, &mob.Character, roundResult)
 
 			for _, buffId := range roundResult.BuffSource {
 				mob.AddBuff(buffId, `combat`)
@@ -1156,6 +1191,8 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 
 			if user.Character.Health <= -10 {
 
+				emitCombat(combatstream.Event{Kind: combatstream.Death, RoomId: user.Character.RoomId, Target: userRef(user), Outcome: combatstream.OutcomeSlain})
+
 				if user.Character.Aggro != nil && user.Character.Aggro.MobInstanceId > 0 {
 					user.Character.KillerMobInstanceId = user.Character.Aggro.MobInstanceId
 					if killerMob := mobs.GetInstance(user.Character.Aggro.MobInstanceId); killerMob != nil {
@@ -1166,6 +1203,8 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 				user.Command(`suicide`) // suicide drops all money/items and transports to land of the dead.
 
 			} else if user.Character.Health < 1 {
+
+				emitCombat(combatstream.Event{Kind: combatstream.Death, RoomId: user.Character.RoomId, Target: userRef(user), Outcome: combatstream.OutcomeIncapacitated})
 
 				events.AddToQueue(events.PlayerDrop{UserId: user.UserId, RoomId: user.Character.RoomId})
 
@@ -1183,6 +1222,8 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 
 		if mob := mobs.GetInstance(mobId); mob != nil {
 			if mob.Character.Health < 1 {
+
+				emitCombat(combatstream.Event{Kind: combatstream.Death, RoomId: mob.Character.RoomId, Target: mobRef(mob), Outcome: combatstream.OutcomeSlain})
 
 				mob.Command(`suicide`)
 

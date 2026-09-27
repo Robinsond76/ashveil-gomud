@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
@@ -69,6 +70,7 @@ func upkeepEngagements() {
 					continue
 				}
 				engaged = true
+				engageFight(side, party) // Phase 29b: the fight, for the stream
 				side.markHostility(party)
 				side.keepCompanyEngaged(party, room)
 				side.keepPartyEngaged(party, room)
@@ -260,6 +262,7 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 		col, placed := s.column(company.LeaderMemberKey)
 		reach := combat.ResolveReach(leader.Character, false)
 		if previous, newId, ok := s.retarget(leader.Character.Aggro, col, placed, reach, party, members, alive, room); ok {
+			emitTargetChange(userRef(leader), mobRefById(previous), mobRefById(newId), room.RoomId)
 			leader.Character.SetAggro(0, newId, attackType(leader.Character.Aggro))
 			events.AddToQueue(events.AggroChanged{UserId: leader.UserId, RoomId: leader.Character.RoomId})
 			leader.SendText(leaderTurnText(previous, newId, alive))
@@ -273,10 +276,11 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 		}
 		col, placed := s.column(s.companions[instanceId])
 		reach := combat.ResolveReach(&mob.Character, mob.Reach)
-		_, newId, ok := s.retarget(mob.Character.Aggro, col, placed, reach, party, members, alive, room)
+		previous, newId, ok := s.retarget(mob.Character.Aggro, col, placed, reach, party, members, alive, room)
 		if !ok {
 			continue
 		}
+		emitTargetChange(mobRef(mob), mobRefById(previous), mobRefById(newId), room.RoomId)
 		mob.Character.SetAggro(0, newId, attackType(mob.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 		room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, mobName(newId)))
@@ -515,7 +519,9 @@ func (s companySide) memberHidden(key company.MemberKey) bool {
 }
 
 func (s companySide) aimPartyMember(mob *mobs.Mob, key company.MemberKey, room *rooms.Room) {
+	previous := s.aimRef(mob.Character.Aggro)
 	targetName := fmt.Sprintf(`<ansi fg="username">%s</ansi>`, s.leader.Character.Name)
+	next := userRef(s.leader)
 	if key == company.LeaderMemberKey {
 		mob.Character.SetAggro(s.leader.UserId, 0, attackType(mob.Character.Aggro))
 		mob.PlayerAttacked(s.leader.UserId) // as the attack command records it
@@ -532,9 +538,22 @@ func (s companySide) aimPartyMember(mob *mobs.Mob, key company.MemberKey, room *
 			return
 		}
 		targetName = fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, target.Character.Name)
+		next = mobRef(target)
 		mob.Character.SetAggro(0, instanceId, attackType(mob.Character.Aggro))
 	}
+	emitTargetChange(mobRef(mob), previous, next, room.RoomId)
 	mob.PreventIdle = true
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on %s.`, mob.Character.Name, targetName))
+}
+
+// aimRef names what an enemy's Aggro was aimed at, for a target change.
+func (s companySide) aimRef(a *characters.Aggro) combatstream.Ref {
+	switch {
+	case a == nil:
+		return combatstream.Ref{}
+	case a.UserId > 0:
+		return userRef(users.GetByUserId(a.UserId))
+	}
+	return mobRefById(a.MobInstanceId)
 }

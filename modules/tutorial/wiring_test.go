@@ -10,6 +10,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
@@ -478,6 +479,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 		return events.Continue
 	})
 	t.Cleanup(func() { events.UnregisterListener(events.Input{}, mid) })
+	t.Cleanup(combatstream.UseForTest(combatstream.New())) // Phase 29b: a stream of its own
 	fightRound := func(n uint64) {
 		hooks.DoCombat(events.NewRound{RoundNumber: n})
 		events.ProcessEvents()

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -163,6 +164,10 @@ func newBrawl(t *testing.T) *brawl {
 	t.Cleanup(func() { events.UnregisterListener(events.Input{}, mid) })
 	idle := events.RegisterListener(events.MobIdle{}, hooks.HandleIdleMobs)
 	t.Cleanup(func() { events.UnregisterListener(events.MobIdle{}, idle) })
+
+	// Each brawl reports to a stream of its own (Phase 29b), so no fight
+	// is carried from one test into the next.
+	t.Cleanup(combatstream.UseForTest(combatstream.New()))
 
 	b := &brawl{t: t, road: road, aria: aria, messages: captureCompanyMessages(t), bandits: map[string][]int{}}
 	for _, name := range []string{"tamsin reed", "brother oswin", "garrick vane", "ysolde"} {

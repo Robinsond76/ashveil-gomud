@@ -54,6 +54,14 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		user.SendText(`<ansi fg="yellow-bold">tinymap:</ansi> ` + onTxt)
 		user.SendText(``)
 
+		on = user.GetConfigOption(`battlesummary`)
+		onTxt = `<ansi fg="red">OFF</ansi>`
+		if on == nil || on.(bool) {
+			onTxt = `<ansi fg="green">ON</ansi>`
+		}
+		user.SendText(`<ansi fg="yellow-bold">battlesummary:</ansi> ` + onTxt)
+		user.SendText(``)
+
 		currentPrompt := user.GetConfigOption(`prompt`)
 		if currentPrompt == nil {
 			currentPrompt = c.Prompt.String()
@@ -150,6 +158,31 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		events.AddToQueue(events.UserSettingChanged{
 			UserId: user.UserId,
 			Name:   `shortadjectives`,
+		})
+
+		return true, nil
+
+	}
+
+	// Ashveil Phase 29b: the battle summary at a fight's end. On when unset.
+	if setTarget == `battlesummary` {
+		on := user.GetConfigOption(`battlesummary`)
+		if on == nil {
+			on = true
+		}
+		if !on.(bool) {
+			on = true
+			user.SendText(`Battle summary toggled <ansi fg="green">ON</ansi>.`)
+		} else {
+			on = false
+			user.SendText(`Battle summary toggled <ansi fg="red">OFF</ansi>.`)
+		}
+
+		user.SetConfigOption(`battlesummary`, on)
+
+		events.AddToQueue(events.UserSettingChanged{
+			UserId: user.UserId,
+			Name:   `battlesummary`,
 		})
 
 		return true, nil

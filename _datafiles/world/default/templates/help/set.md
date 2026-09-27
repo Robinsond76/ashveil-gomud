@@ -29,6 +29,11 @@ There are a handful of settings you can adjust with this command, including:
   ~set tinymap~  
   This toggles the automatic tinymap on or off. It shows when looking at rooms.
 
+  ~set battlesummary~  
+  This toggles the battle summary on or off. When your company's fight ends, it  
+  shows the damage each side dealt, who dealt the most, the highest hit, kills,  
+  how each enemy ended, and your company's health. It is on by default.
+
   ~set wimpy~  
   Set your wimpy percentage (See ~help wimpy~)
 

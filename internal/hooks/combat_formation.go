@@ -305,6 +305,8 @@ func aliveMapForCompany(leader *users.UserRecord, f company.Formation) map[compa
 // direct hit in every way except who takes the damage.
 func resolveInterceptedMobAttack(mob, interceptor *mobs.Mob, mobRoom, defRoom *rooms.Room, defenderUserId int) {
 	roundResult := combat.AttackMobVsMob(mob, interceptor)
+	emitAttack(mobRef(mob), mobRef(interceptor), mob.Character.RoomId, &mob.Character, roundResult)
+	roundExtraMobs = append(roundExtraMobs, interceptor.InstanceId)
 
 	for _, instanceId := range mobRoom.GetMobs(rooms.FindCharmed) {
 		if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
@@ -372,6 +374,8 @@ func resolveInterceptedMobAttack(mob, interceptor *mobs.Mob, mobRoom, defRoom *r
 // any client the same way a player's is.
 func resolveInterceptedAttackOnLeader(mob *mobs.Mob, leader *users.UserRecord, mobRoom, defRoom *rooms.Room) {
 	roundResult := combat.AttackMobVsPlayer(mob, leader)
+	emitAttack(mobRef(mob), userRef(leader), mob.Character.RoomId, &mob.Character, roundResult)
+	roundExtraPlayers = append(roundExtraPlayers, leader.UserId)
 
 	for _, instanceId := range mobRoom.GetMobs(rooms.FindCharmed) {
 		if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
@@ -510,10 +514,12 @@ func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
 	}
 	_, col, placed := f.Find(company.LeaderMemberKey)
 	reach := combat.ResolveReach(user.Character, false)
-	newTargetId, ok := reassignWithinLostParty(user.UserId, user.Character.Aggro.MobInstanceId, col, placed, reach, room)
+	lostId := user.Character.Aggro.MobInstanceId
+	newTargetId, ok := reassignWithinLostParty(user.UserId, lostId, col, placed, reach, room)
 	if !ok {
 		return false
 	}
+	emitTargetChange(userRef(user), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	user.Character.SetAggro(0, newTargetId, attackType(user.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 	user.SendText(fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, mobName(newTargetId)))
@@ -534,10 +540,12 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	}
 	_, col, placed := f.Find(key)
 	reach := combat.ResolveReach(&mob.Character, mob.Reach)
-	newTargetId, ok := reassignWithinLostParty(leaderUserID, mob.Character.Aggro.MobInstanceId, col, placed, reach, room)
+	lostId := mob.Character.Aggro.MobInstanceId
+	newTargetId, ok := reassignWithinLostParty(leaderUserID, lostId, col, placed, reach, room)
 	if !ok {
 		return false
 	}
+	emitTargetChange(mobRef(mob), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	mob.Character.SetAggro(0, newTargetId, attackType(mob.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, mobName(newTargetId)))
