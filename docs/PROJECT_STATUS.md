@@ -7,9 +7,8 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-27
 - **HEAD:** Phase 29b (the combat event stream and battle summary, with
-  player help for combat) is complete on branch
-  `claude/next-phase-wfav4w`, awaiting merge to `master`. 29a is on
-  `master`.
+  player help for combat) is complete and merged to `master`
+  (2026-09-27, from `claude/next-phase-wfav4w`).
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
