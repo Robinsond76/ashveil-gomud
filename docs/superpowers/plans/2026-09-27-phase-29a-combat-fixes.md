@@ -81,7 +81,8 @@ Findings: [29a findings](../specs/2026-09-26-combat-fixes-design.md).
 - [x] Update `internal/hooks` and `modules/company` guides if they
   describe the gates or `formation reach`.
 - [x] Run `go test -race ./...`, `make generate`, and `make validate`.
-- [ ] Independent review of `git diff <base>..HEAD`; verify each finding
-  and fix the real ones with regression tests.
-- [ ] `docs/PROJECT_STATUS.md`: the Phase 29a row and a work-log entry
+- [x] Independent review of `git diff <base>..HEAD`; verify each finding
+  and fix the real ones with regression tests (10 fixed, 1 accepted; see
+  `docs/PROJECT_STATUS.md`).
+- [x] `docs/PROJECT_STATUS.md`: the Phase 29a row and a work-log entry
   with **Review:**.

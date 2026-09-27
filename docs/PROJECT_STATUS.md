@@ -6,8 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-27
-- **HEAD:** Phase 28 (item weights and the company's whole load) is complete and merged on `master`. A combat presentation/tactics spec packet
-  (potential Phases 29a–31, docs only) is proposed and not yet implemented.
+- **HEAD:** Phase 29a (combat fixes from the 5v5 simulation) is complete
+  on branch `claude/next-phase-mo3cmq`, awaiting merge to `master`. It is
+  the first slice of the combat roadmap (29a–31).
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -64,12 +65,14 @@ instead of duplicating them.
   lessons), and Phase 27c (the tutorial's practice fight), and Phase 27d
   (the tutorial's Alignment lesson and browser panel). The onboarding
   roadmap's tutorial is complete. Phase 28 (item weights: every shipped item
-  weighed, and living companions' gear in the company load).
-- **Next:** the owner's choice. Both roadmaps are done. Open: capacity per
-  company size (play-testing), 11d, and the "Future ideas" row; see Known
-  issues. A combat roadmap (potential Phases 29a–29f, 30a–30f, and 31) is
-  specified and awaiting scheduling: see the
-  [roadmap](superpowers/specs/2026-09-26-combat-presentation-roadmap.md).
+  weighed, and living companions' gear in the company load). Phase 29a
+  (combat fixes: engaged fights kept whole, the leader turned from an
+  unreachable target, unplaced members strikable, `formation reach` in a
+  fight).
+- **Next:** 29b (the combat event stream), per the decided
+  [build order](superpowers/specs/2026-09-26-combat-presentation-roadmap.md#build-order-decided-2026-09-27).
+  Also open: capacity per company size (play-testing) and the "Future
+  ideas" row; see Known issues.
 
 ## Phase progress
 
@@ -120,7 +123,7 @@ instead of duplicating them.
 | 27c | Tutorial: practice fight | Complete: Practice Yard (906) before the Gate; a squad of harmless straw soldiers (three footmen in front, an archer behind) per player; `practice` mobs beaten with no XP, drops, gold, kills, or `MobDeath` (`mobcommands.OnPracticeBeaten`); the gate is the squad beaten; death in the course decided (an ordinary death, ending the course as a skip) |
 | 27d | Tutorial: Alignment lesson, browser panel | Complete: the Oath Stone (907) before the Gate; `company alignment`, `company inspect corvin` (an outlaw a new company is refused), and `standing`; `company inspect` weighs any recruiter's candidate; a `Tutorial` GMCP package and web client window from the same checklist as the terminal; a course missing rooms is closed but kept |
 | 28 | Item weights and the company's whole load | Complete: every shipped item weighed (grams, per-type ranges), starter kits 4.8–8.5 kg; living companions' worn and carried gear in the company load (`company.CompanionGearGrams`), live mob when out, else record or template; `cargo` shows the split; GMCP `companion_g` |
-| 29a | Combat fixes from the 5v5 simulation | Proposed: [spec](superpowers/specs/2026-09-26-combat-fixes-design.md). The leader stuck on an unreachable target; a fight stalling with enemies standing (to reproduce with shipped config); `formation reach` in a fight |
+| 29a | Combat fixes from the 5v5 simulation | Complete: a round-start engagement upkeep keeps an engaged company and enemy party fighting as a whole (the leader turns from an unreachable target, the killer and leader rejoin, the whole party joins, hostility can't lapse mid-fight); unplaced members can be struck; `break` holds; `formation reach` answers against the enemy in a fight; `internal/enemyparty` |
 | 29b | Combat event stream and battle summary | Proposed: [spec](superpowers/specs/2026-09-26-combat-event-stream-design.md). One structured event per combat happening, which narration, pacing, the panel, and balancing read; an end-of-fight summary |
 | 29c | Narration voice (weapons and spells) | Proposed: [spec](superpowers/specs/2026-09-26-combat-narration-design.md). Dark, story-like text; `(N damage)` on every hit, `(critical hit, N damage)`; no `***`/caps/`!`; no charmed tag; an opener, "turns toward", and a closing line; indented death notices; spell text in the same voice |
 | 29d | Pronouns and ordinals | Proposed: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Mob pronouns (beasts "it"); "the first/second cutthroat" fixed for the fight |
@@ -136,6 +139,91 @@ instead of duplicating them.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 29a: combat fixes from the 5v5 simulation (2026-09-27)
+
+- **What:** The first slice of the combat roadmap. Details are in the
+  [29a design](superpowers/specs/2026-09-27-phase-29a-combat-fixes-design.md)
+  and [29a plan](superpowers/plans/2026-09-27-phase-29a-combat-fixes.md).
+  - **Reproduced first,** with the shipped config through the real round:
+    - **F1:** the leader in column 3 got `You can't reach that target`
+      for ten rounds.
+    - **The kill case:** a kill ended the killer's aim, and a companion's
+      kill cleared the leader's aim, and both stood idle.
+    - **F2:** the rest of a non-hostile party watched its members die
+      one at a time, because only the leader's blow set group hostility.
+    - **An exploit:** an unplaced company member could never be struck.
+    - **F3** stays withdrawn: with `HPBase: 5`, level-1 companions have
+      6 HP.
+  - **Engagement upkeep** (`internal/hooks/combat_engagement.go`) runs at
+    the top of `DoCombat`. For each online leader with a companion
+    present, each enemy party engaged with the company in that room:
+    - keeps its hostility up;
+    - gives every living member of both sides with no target, a lost one,
+      or one the gate would skip the weakest legal target;
+    - never moves an aim the gate lets through, interception included.
+    - **Messages:** `You can't reach X from here. You turn on Y.`,
+      `You turn on Y.`, and `X turns on Y.`
+  - **Unplaced members:** `resolveAttackTarget` fails open for an
+    unplaced target, and unplaced attackers fail open when reassigned.
+  - **In-turn reassignment** now chooses from the lost target's party,
+    else from a party hostile to the leader, never a bystander.
+  - **`formation reach`** in a fight names the enemies the member can
+    reach with its own reach. Out of a fight, the demonstration is
+    labelled.
+  - **`internal/enemyparty`** holds the live-room party adapters, and
+    `engagement.StandDown`/`Resume` is the runtime marker for `break`.
+- **Why:** The build order (decided 2026-09-27) puts 29a first. The owner
+  asked to begin the next phase. The open F1 decision (reassign, not
+  refuse) and the new ones were settled by applying the design's
+  recommendations, and are recorded in the design doc for the owner to
+  revisit.
+- **Verification:** `go test -race ./...`, `make generate`, and
+  `make validate` pass.
+  - **Wiring** (`modules/company/wiring_combat_test.go`): `plugins.Load`,
+    `configs.ReloadConfig()` (F3), and the real `company summon`,
+    `formation`, `attack`, and `break` commands, run through `DoCombat`
+    and the idle-mob pass. It covers:
+    - F1, the kill case, F2 with a whole fight to the end, and the enemy
+      side;
+    - an unplaced company, a solo player with a record, and a
+      same-group shopkeeper;
+    - `break`, F4, and the clock.
+  - **The random-outcome wiring tests** ran 25–60 times clean after each
+    change.
+  - **Unit tests** in `internal/hooks`, `internal/enemyparty`, and
+    `internal/engagement`.
+  - **The tutorial's practice-fight wiring test** caught two regressions
+    during implementation, both fixed before review:
+    - the upkeep bypassed interception;
+    - reassignment lost a gone target's party.
+- **Review:** The independent reviewer found no invariant violations: no
+  clock change, nothing persisted, no lock held across a re-entrant call.
+  All findings were verified against the code.
+  - **Fixed, each with a regression test:**
+    1. *Medium-high:* the upkeep counted unplaced companions as dead, so
+       enemies were pulled off them onto the leader.
+    2. *Medium:* `break` was undone the next round. It now stands the
+       player down until they attack or the fight ends.
+    3. *Medium:* a solo player with a company record got the upkeep. A
+       companion must now be present.
+    4. *Medium:* same-group bystanders (the frostfang shopkeepers share
+       `frostfang-npc`) could be drafted, and hostility spread to every
+       group of every member. Now:
+       - an idle member joins only if it is already hostile;
+       - shops and conversations never join;
+       - only groups that were struck or are already hostile are kept.
+    5. *Low:* `no-combat` and hidden members weren't respected.
+    6. *Low:* the markup on a companion target was wrong.
+    7. *Low:* an in-turn companion retarget was silent.
+    8. *Low:* `formation reach` gaps: an unplaced member in a fight, and
+       an engaged party found only from the enemy side.
+    9. *Low:* the in-turn reassignment didn't fall back when the lost
+       party had nothing in reach.
+    10. *Low:* per-round cost. There is now an early exit for rooms with
+        no aggro, and the upkeep needs a companion present.
+  - **Accepted:** 11. *Low:* a blocked flee turns the leader back onto a
+    foe the next round. Recorded in Known issues.
 
 ### Combat presentation and tactics specifications (2026-09-26)
 
@@ -3509,6 +3597,15 @@ history.
   (`internal/rooms` can't import `internal/combat`), so display order isn't
   combat order. The GMCP room mob list is still per mob, not grouped by
   party. Combat itself assembles parties with real values.
+- **Combat upkeep (29a) limits:**
+  - A blocked `flee` is followed by the leader turning back onto a foe
+    the next round.
+  - GoMud's own `lookfortrouble` can still draw a group-hostile
+    shopkeeper into a fight; the upkeep never does.
+  - The upkeep's cost is per online leader with a companion present, and
+    skips rooms with no aggro.
+  - `formation reach`'s "can't reach any of the enemy" branch has no
+    test.
 - **Capacity is flat per company** (`CapacityKg` 200, plus a mount). Phase
   28 gave every item a weight, so loads now mean something, but capacity
   doesn't grow with the company's size. That is left for play-testing.

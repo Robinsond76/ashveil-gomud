@@ -79,15 +79,23 @@ What happened:
 1. **One upkeep pass at the start of each combat round** keeps every
    engaged fight whole. It runs before any attack is resolved, and it
    covers F1, the kill cases, and F2 together.
-   - **Which rooms:** the room of each online leader with a company.
+   - **Which rooms:** the room of each online leader with a company and
+     at least one companion present. A solo player, even with a company
+     record, fights exactly as in GoMud (review fix).
    - **Engaged:** a company and an enemy party (`mobparty.Assemble` over
      the room's non-charmed mobs) are engaged when any living member of
      one side has a plain-attack `Aggro` on a member of the other in that
      room.
    - **For each engaged pair:**
-     1. **Hostility is refreshed** for the party's groups against the
-        leader (the same `MakeHostile` duration the leader's own blow
-        uses), so it can't wear off mid-fight.
+     1. **Hostility is kept up** against the leader, with the same
+        `MakeHostile` duration the leader's own blow uses, so it can't
+        wear off mid-fight.
+        - A member a company member is attacking has all its groups made
+          hostile, as the leader's blow would do. A companion fights on
+          the leader's behalf.
+        - Any other member's group is only refreshed if it is already
+          hostile. Hostility never spreads to a group nobody touched
+          (review fix).
      2. **Every living company member** in the room with no target,
         or with a target that is dead, gone, or out of reach, takes the
         weakest legal member of the party. This covers the leader too.
@@ -99,10 +107,25 @@ What happened:
           tutorial's practice-fight wiring test during implementation).
      3. **Every living party member** is treated the same way against the
         company: the weakest legal company member.
+        - **An idle member joins only if it would attack the leader
+          anyway:** a `hostile` mob, or one whose group is hostile to
+          the leader.
+        - **Never drafted:** a shopkeeper or a mob in conversation
+          (review fix). A frostfang shopkeeper shares `frostfang-npc`
+          with the citizens.
    - **Nothing legal:** a member keeps its current target, and the gates
      go on skipping it until something changes (11c's self-healing model).
-   - **Left alone:** members whose `Aggro` is a spell cast, a backstab,
-     or a shot through an exit, and downed players.
+   - **Left alone:**
+     - members whose `Aggro` is a spell cast, a backstab, or a shot
+       through an exit;
+     - downed players;
+     - anyone under a `no-combat` effect.
+   - **Hidden members** are never chosen as a new target, and an aim at a
+     hidden one is moved like an unreachable one.
+   - **`break` holds (review fix).** A leader who types `break` stays out
+     of the fight until they attack again, or until the company's fight
+     ends. This uses a runtime stand-down marker
+     (`engagement.StandDown`), never persisted.
    - **Same-room shots count:** a same-room `shoot` (`Aggro.Type`
      `Shooting` with no exit, as Ysolde's sling uses) is an ordinary
      attack. It is counted and retargeted, and keeps its type.
@@ -118,8 +141,7 @@ What happened:
    the leader's target died to someone else's blow, or they had none,
    they take the next legal target while their company is engaged, and
    see `You turn on the bandit slinger.`
-   - **Leaving a fight:** `flee` or walking out still works, since only
-     members in the room are touched.
+   - **Leaving a fight:** `break`, `flee`, or walking out.
 4. **Enemies keep fighting as a party (recommendation applied).** A party
    member whose company target is out of reach turns on a legal one,
    instead of waiting forever. This is the enemy-side mirror of F1. Idle

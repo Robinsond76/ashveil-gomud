@@ -31,6 +31,12 @@ import (
 // something changes (the self-healing model). Spell casts, ranged attacks
 // through an exit, and fights with anyone outside this company/party pair
 // are left alone. Nothing here is persisted.
+//
+// Only a company with a companion in the leader's room is kept: a solo
+// player fights exactly as in GoMud. A leader who used `break` stays out
+// until they attack again (engagement.StandDown). An idle enemy joins only
+// if it would attack the leader anyway (a hostile mob, or a group the
+// fight has made hostile), and never a shopkeeper or a mob in conversation.
 
 // companySide is one leader's company as it stands in the leader's room.
 type companySide struct {
@@ -48,42 +54,69 @@ func upkeepEngagements() {
 		if leader == nil || leader.Character == nil {
 			continue
 		}
-		side, ok := loadCompanySide(leader)
-		if !ok {
-			continue
-		}
 		room := rooms.LoadRoom(leader.Character.RoomId)
 		if room == nil {
 			continue
 		}
-		for _, party := range enemyparty.Parties(room) {
-			if !side.engagedWith(party) {
-				continue
+		side, ok := loadCompanySide(leader, room)
+		if !ok || len(side.companionIds) == 0 {
+			continue
+		}
+		engaged := false
+		if side.anyAggro(room) {
+			for _, party := range enemyparty.Parties(room) {
+				if !side.engagedWith(party) {
+					continue
+				}
+				engaged = true
+				side.markHostility(party)
+				side.keepCompanyEngaged(party, room)
+				side.keepPartyEngaged(party, room)
 			}
-			refreshHostility(leader, party)
-			side.keepCompanyEngaged(party, room)
-			side.keepPartyEngaged(party, room)
+		}
+		if !engaged {
+			// The fight is over: a leader who broke off may be pulled
+			// into the next one.
+			engagement.Resume(leader.UserId)
 		}
 	}
 }
 
-func loadCompanySide(leader *users.UserRecord) (companySide, bool) {
+// anyAggro reports whether anyone in the room (the leader, a companion, or
+// any mob) has an Aggro at all: a cheap early exit for rooms at peace.
+func (s companySide) anyAggro(room *rooms.Room) bool {
+	if s.leader.Character.Aggro != nil {
+		return true
+	}
+	for _, instanceId := range room.GetMobs() {
+		if mob := mobs.GetInstance(instanceId); mob != nil && mob.Character.Aggro != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func loadCompanySide(leader *users.UserRecord, room *rooms.Room) (companySide, bool) {
 	f, ok := company.FormationFor(leader.UserId)
 	if !ok {
 		return companySide{}, false
 	}
 	side := companySide{leader: leader, formation: f, companions: map[int]company.MemberKey{}}
-	if room := rooms.LoadRoom(leader.Character.RoomId); room != nil {
-		for _, instanceId := range room.GetMobs(rooms.FindCharmed) {
-			leaderId, key, isCompanion := company.LeaderAndKeyForInstance(instanceId)
-			if isCompanion && leaderId == leader.UserId {
-				side.companions[instanceId] = key
-				side.companionIds = append(side.companionIds, instanceId)
-			}
+	for _, instanceId := range room.GetMobs(rooms.FindCharmed) {
+		leaderId, key, isCompanion := company.LeaderAndKeyForInstance(instanceId)
+		if isCompanion && leaderId == leader.UserId {
+			side.companions[instanceId] = key
+			side.companionIds = append(side.companionIds, instanceId)
 		}
 	}
 	sort.Ints(side.companionIds)
 	side.alive = aliveMapForCompany(leader, f)
+	// aliveMapForCompany covers only formation-placed members; an unplaced
+	// companion here is alive too (and fails open as a target).
+	for _, instanceId := range side.companionIds {
+		mob := mobs.GetInstance(instanceId)
+		side.alive[side.companions[instanceId]] = mob != nil && mob.Character.Health > 0
+	}
 	return side, true
 }
 
@@ -155,20 +188,60 @@ func retargetable(a *characters.Aggro) bool {
 	return a == nil || plainAttack(a)
 }
 
-// refreshHostility keeps every group of an engaged party hostile to the
-// leader for as long as the fight lasts, with the duration the leader's own
-// blow sets (NewRound_DoCombat.go), so hostility can't wear off mid-fight.
-func refreshHostility(leader *users.UserRecord, party mobparty.Party) {
-	rounds := configs.GetTimingConfig().MinutesToRounds(2) - leader.Character.Stats.Perception.ValueAdj
+// markHostility keeps an engaged party's hostility to the leader from
+// wearing off mid-fight, with the duration the leader's own blow sets
+// (NewRound_DoCombat.go). A party member a company member is attacking has
+// its groups made hostile, as the leader's blow would do (a companion
+// fights on the leader's behalf); any other member's group is only
+// refreshed if the fight already made it hostile, so hostility never
+// spreads to a group nobody touched.
+func (s companySide) markHostility(party mobparty.Party) {
+	leaderId := s.leader.UserId
+	rounds := configs.GetTimingConfig().MinutesToRounds(2) - s.leader.Character.Stats.Perception.ValueAdj
+	attacked := map[int]bool{}
+	if a := s.leader.Character.Aggro; plainAttack(a) && a.MobInstanceId > 0 {
+		attacked[a.MobInstanceId] = true
+	}
+	for _, instanceId := range s.companionIds {
+		if mob := mobs.GetInstance(instanceId); mob != nil && plainAttack(mob.Character.Aggro) && mob.Character.Aggro.MobInstanceId > 0 {
+			attacked[mob.Character.Aggro.MobInstanceId] = true
+		}
+	}
 	for _, instanceId := range party.Members {
 		mob := mobs.GetInstance(instanceId)
 		if mob == nil {
 			continue
 		}
 		for _, group := range mob.Groups {
-			mobs.MakeHostile(group, leader.UserId, rounds)
+			if attacked[instanceId] || mobs.IsHostile(group, leaderId) {
+				mobs.MakeHostile(group, leaderId, rounds)
+			}
 		}
 	}
+}
+
+// joinsTheFight reports whether an idle party member is drawn into its
+// party's fight with the company: only if it would attack the leader
+// anyway (a hostile mob, or one whose group is hostile to the leader), and
+// never a shopkeeper or a mob in conversation.
+func joinsTheFight(mob *mobs.Mob, leaderId int) bool {
+	if mob.HasShop() || mob.InConversation() {
+		return false
+	}
+	if mob.Hostile {
+		return true
+	}
+	for _, group := range mob.Groups {
+		if mobs.IsHostile(group, leaderId) {
+			return true
+		}
+	}
+	return false
+}
+
+// canFight reports whether c can act in combat this round at all.
+func canFight(c *characters.Character) bool {
+	return c.Health > 0 && !c.HasBuffFlag("no-combat")
 }
 
 // keepCompanyEngaged gives each living company member in the room a legal
@@ -179,7 +252,11 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 	members := partyMemberSet(party)
 
 	leader := s.leader
-	if leader.Character.Health > 0 && retargetable(leader.Character.Aggro) {
+	if leader.Character.Aggro != nil {
+		engagement.Resume(leader.UserId) // they are fighting again
+	}
+	stoodDown := leader.Character.Aggro == nil && engagement.StoodDown(leader.UserId)
+	if canFight(leader.Character) && !stoodDown && retargetable(leader.Character.Aggro) {
 		col, placed := s.column(company.LeaderMemberKey)
 		reach := combat.ResolveReach(leader.Character, false)
 		if previous, newId, ok := s.retarget(leader.Character.Aggro, col, placed, reach, party, members, alive, room); ok {
@@ -191,7 +268,7 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 
 	for _, instanceId := range s.companionIds {
 		mob := mobs.GetInstance(instanceId)
-		if mob == nil || mob.Character.Health < 1 || !retargetable(mob.Character.Aggro) {
+		if mob == nil || !canFight(&mob.Character) || !retargetable(mob.Character.Aggro) {
 			continue
 		}
 		col, placed := s.column(s.companions[instanceId])
@@ -216,7 +293,9 @@ func (s companySide) retarget(a *characters.Aggro, col int, placed bool, reach f
 	case targetElsewhere:
 		return 0, 0, false
 	case targetInParty:
-		if gateLetsThrough(col, placed, party.Formation, mobparty.MemberKeyFor(current), alive, reach) {
+		// A hidden target can't be fought ("You can't seem to find your
+		// target"), so it is moved off like an unreachable one.
+		if !mobHidden(current) && gateLetsThrough(col, placed, party.Formation, mobparty.MemberKeyFor(current), alive, reach) {
 			return 0, 0, false
 		}
 	}
@@ -282,6 +361,9 @@ func gateLetsThrough(col int, placed bool, f company.Formation, target company.M
 // may strike target in party. An unplaced attacker fails open, as it does
 // at the attack gates.
 func legalAgainstParty(col int, placed bool, party mobparty.Party, target int, alive map[company.MemberKey]bool, reach formationcombat.Reach) bool {
+	if mobHidden(target) {
+		return false // can't be seen to be chosen
+	}
 	if !placed {
 		return alive[mobparty.MemberKeyFor(target)]
 	}
@@ -306,6 +388,11 @@ func leaderTurnText(previous, newId int, alive map[company.MemberKey]bool) strin
 	return fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, name)
 }
 
+func mobHidden(instanceId int) bool {
+	mob := mobs.GetInstance(instanceId)
+	return mob != nil && mob.Character.HasBuffFlag("hidden")
+}
+
 func mobName(instanceId int) string {
 	if mob := mobs.GetInstance(instanceId); mob != nil {
 		return mob.Character.Name
@@ -324,7 +411,10 @@ func (s companySide) keepPartyEngaged(party mobparty.Party, room *rooms.Room) {
 	}
 	for _, instanceId := range party.Members {
 		mob := mobs.GetInstance(instanceId)
-		if mob == nil || mob.Character.Health < 1 || !retargetable(mob.Character.Aggro) {
+		if mob == nil || !canFight(&mob.Character) || !retargetable(mob.Character.Aggro) {
+			continue
+		}
+		if mob.Character.Aggro == nil && !joinsTheFight(mob, s.leader.UserId) {
 			continue
 		}
 		current, keep, other := s.currentCompanyTarget(mob.Character.Aggro, room)
@@ -336,7 +426,7 @@ func (s companySide) keepPartyEngaged(party mobparty.Party, room *rooms.Room) {
 			continue
 		}
 		reach := combat.ResolveReach(&mob.Character, mob.Reach)
-		if keep && gateLetsThrough(attackerCol, true, s.formation, current, s.alive, reach) {
+		if keep && !s.memberHidden(current) && gateLetsThrough(attackerCol, true, s.formation, current, s.alive, reach) {
 			continue
 		}
 		legal := func(_, defender engagement.Combatant) bool {
@@ -401,7 +491,7 @@ func (s companySide) currentCompanyTarget(a *characters.Aggro, room *rooms.Room)
 // key. A member not placed in the formation fails open (always legal), as
 // it does at the attack gates.
 func (s companySide) legalAgainstCompany(attackerCol int, key company.MemberKey, reach formationcombat.Reach) bool {
-	if key == "" {
+	if key == "" || s.memberHidden(key) {
 		return false
 	}
 	if _, _, placed := s.formation.Find(key); !placed {
@@ -410,10 +500,25 @@ func (s companySide) legalAgainstCompany(attackerCol int, key company.MemberKey,
 	return formationcombat.Legal(attackerCol, s.formation, key, s.alive, reach)
 }
 
+// memberHidden reports whether a company member is hidden (sneaking), which
+// mobs looking for trouble ignore.
+func (s companySide) memberHidden(key company.MemberKey) bool {
+	if key == company.LeaderMemberKey {
+		return s.leader.Character.HasBuffFlag("hidden")
+	}
+	for _, instanceId := range s.companionIds {
+		if s.companions[instanceId] == key {
+			return mobHidden(instanceId)
+		}
+	}
+	return false
+}
+
 func (s companySide) aimPartyMember(mob *mobs.Mob, key company.MemberKey, room *rooms.Room) {
-	targetName := s.leader.Character.Name
+	targetName := fmt.Sprintf(`<ansi fg="username">%s</ansi>`, s.leader.Character.Name)
 	if key == company.LeaderMemberKey {
 		mob.Character.SetAggro(s.leader.UserId, 0, attackType(mob.Character.Aggro))
+		mob.PlayerAttacked(s.leader.UserId) // as the attack command records it
 	} else {
 		var instanceId int
 		for _, id := range s.companionIds {
@@ -426,10 +531,10 @@ func (s companySide) aimPartyMember(mob *mobs.Mob, key company.MemberKey, room *
 		if target == nil {
 			return
 		}
-		targetName = target.Character.Name
+		targetName = fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, target.Character.Name)
 		mob.Character.SetAggro(0, instanceId, attackType(mob.Character.Aggro))
 	}
 	mob.PreventIdle = true
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="username">%s</ansi>.`, mob.Character.Name, targetName))
+	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on %s.`, mob.Character.Name, targetName))
 }

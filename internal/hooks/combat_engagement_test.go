@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -187,4 +188,40 @@ func TestReassignWithinLostPartyNeverTurnsOnABystander(t *testing.T) {
 	id, ok = reassignWithinLostParty(8, 8303, 1, true, formationcombat.ReachAny, room)
 	require.True(t, ok)
 	assert.Equal(t, 8301, id)
+}
+
+func TestJoinsTheFight(t *testing.T) {
+	m := engagementMob(t, 8401, 5, 1)
+	m.Groups = []string{"29a-join"}
+	assert.False(t, joinsTheFight(m, 7), "not hostile: stays out")
+
+	m.Hostile = true
+	assert.True(t, joinsTheFight(m, 7), "a hostile mob joins")
+	m.Hostile = false
+
+	mobs.MakeHostile("29a-join", 7, 100)
+	assert.True(t, joinsTheFight(m, 7), "its group is hostile to the leader")
+	assert.False(t, joinsTheFight(m, 8), "only to that leader")
+
+	m.SetConversation(1)
+	assert.False(t, joinsTheFight(m, 7), "never a mob in conversation")
+}
+
+// TestMarkHostilityNeverSpreadsToAnUntouchedGroup: the member a company
+// member attacks has all its groups made hostile (as the leader's blow
+// does); another member's group is only refreshed if already hostile.
+func TestMarkHostilityNeverSpreadsToAnUntouchedGroup(t *testing.T) {
+	struck := engagementMob(t, 8501, 5, 1)
+	struck.Groups = []string{"29a-mh-a", "29a-mh-b"}
+	bystander := engagementMob(t, 8502, 5, 1)
+	bystander.Groups = []string{"29a-mh-c"}
+
+	leader := &users.UserRecord{UserId: 7, Character: &characters.Character{}}
+	leader.Character.SetAggro(0, 8501, characters.DefaultAttack)
+	s := companySide{leader: leader}
+
+	s.markHostility(mobparty.Party{Members: []int{8501, 8502}})
+	assert.True(t, mobs.IsHostile("29a-mh-a", 7))
+	assert.True(t, mobs.IsHostile("29a-mh-b", 7))
+	assert.False(t, mobs.IsHostile("29a-mh-c", 7), "nobody touched the bystander's group")
 }

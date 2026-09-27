@@ -211,15 +211,16 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 		}
 		record, _ := m.registry.Get(user.UserId)
 		_, col, placed := record.Formation.Find(key)
-		if !placed {
-			user.SendText(fmt.Sprintf("%s isn't placed in the formation.", m.memberName(user.UserId, key)))
-			return true, nil
-		}
 
 		// Phase 29a: in a fight, answer against the enemy the member is
-		// fighting, with its own reach.
-		if text, inFight := m.reachInFight(user, key, col); inFight {
+		// fighting, with its own reach. An unplaced member fails open, as
+		// at the attack gates: it can reach anyone standing.
+		if text, inFight := m.reachInFight(user, key, col, placed); inFight {
 			user.SendText(text)
+			return true, nil
+		}
+		if !placed {
+			user.SendText(fmt.Sprintf("%s isn't placed in the formation.", m.memberName(user.UserId, key)))
 			return true, nil
 		}
 
@@ -257,7 +258,7 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 // any party engaged with the company) it could strike right now, with its
 // own reach (weapon or innate). inFight=false means the member (or the
 // company) isn't fighting an enemy party here.
-func (m *CompanyModule) reachInFight(leader *users.UserRecord, key domain.MemberKey, col int) (string, bool) {
+func (m *CompanyModule) reachInFight(leader *users.UserRecord, key domain.MemberKey, col int, placed bool) (string, bool) {
 	room := rooms.LoadRoom(leader.Character.RoomId)
 	if room == nil {
 		return "", false
@@ -298,7 +299,16 @@ func (m *CompanyModule) reachInFight(leader *users.UserRecord, key domain.Member
 	name := m.memberName(leader.UserId, key)
 	alive := enemyparty.Alive(party)
 	names := []string{}
-	for _, target := range formationcombat.LegalTargets(col, party.Formation, alive, reach) {
+	targets := formationcombat.LegalTargets(col, party.Formation, alive, reach)
+	if !placed {
+		targets = targets[:0]
+		for _, instanceID := range party.Members {
+			if alive[mobparty.MemberKeyFor(instanceID)] {
+				targets = append(targets, mobparty.MemberKeyFor(instanceID))
+			}
+		}
+	}
+	for _, target := range targets {
 		if instanceID, ok := mobparty.InstanceIdFromMemberKey(target); ok {
 			if mob := mobs.GetInstance(instanceID); mob != nil {
 				names = append(names, mob.Character.Name)
@@ -311,20 +321,37 @@ func (m *CompanyModule) reachInFight(leader *users.UserRecord, key domain.Member
 	return fmt.Sprintf("In this fight, %s can reach: %s.", name, strings.Join(names, ", ")), true
 }
 
-// engagedParty returns an enemy party in room that is fighting the leader
-// or one of the leader's companions.
+// engagedParty returns an enemy party in room engaged with the company:
+// one whose member attacks the leader or a companion, or one a company
+// member attacks (the same test as the combat round's engagement upkeep).
 func (m *CompanyModule) engagedParty(leader *users.UserRecord, room *rooms.Room) (mobparty.Party, bool) {
 	companions := map[int]bool{}
 	for _, instanceID := range m.instances[leader.UserId] {
 		companions[instanceID] = true
 	}
+	targeted := map[int]bool{}
+	if leader.Character.Aggro != nil && leader.Character.Aggro.MobInstanceId > 0 {
+		targeted[leader.Character.Aggro.MobInstanceId] = true
+	}
+	for instanceID := range companions {
+		if mob := mobs.GetInstance(instanceID); mob != nil && mob.Character.Aggro != nil && mob.Character.Aggro.MobInstanceId > 0 {
+			targeted[mob.Character.Aggro.MobInstanceId] = true
+		}
+	}
 	for _, party := range enemyparty.Parties(room) {
 		for _, instanceID := range party.Members {
 			mob := mobs.GetInstance(instanceID)
-			if mob == nil || mob.Character.Health < 1 || mob.Character.Aggro == nil {
+			if mob == nil || mob.Character.Health < 1 {
 				continue
 			}
-			if mob.Character.Aggro.UserId == leader.UserId || companions[mob.Character.Aggro.MobInstanceId] {
+			if targeted[instanceID] {
+				return party, true
+			}
+			a := mob.Character.Aggro
+			if a == nil || a.ExitName != "" || (a.Type != characters.DefaultAttack && a.Type != characters.Shooting) {
+				continue
+			}
+			if a.UserId == leader.UserId || companions[a.MobInstanceId] {
 				return party, true
 			}
 		}

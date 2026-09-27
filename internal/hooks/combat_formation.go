@@ -449,8 +449,9 @@ func partyCombatants(party mobparty.Party, alive map[company.MemberKey]bool) []e
 // for a company attacker whose target lostId was just found dead or gone
 // on its own turn. It chooses from lostId's own party while that party can
 // still be assembled in room (a dead member stays in the room until its
-// death is processed); once the lost member is gone, from a party in room
-// already hostile to leaderId. It never turns on a bystander party. An
+// death is processed); failing that (the lost member is gone, or nothing in
+// its party is in reach), from another party in room already hostile to
+// leaderId. It never turns on a bystander party. An
 // attacker not placed in the formation fails open, as at the gates.
 // ok=false leaves the caller's "target lost" behavior unchanged; the
 // engagement upkeep at the start of the next round (combat_engagement.go)
@@ -459,11 +460,14 @@ func reassignWithinLostParty(leaderId, lostId int, col int, placed bool, reach f
 	if room == nil || lostId <= 0 {
 		return 0, false
 	}
-	if party, ok := enemyparty.PartyOf(room, lostId); ok {
-		return chooseFromParty(col, placed, party, enemyparty.Alive(party), reach)
+	lostParty, found := enemyparty.PartyOf(room, lostId)
+	if found {
+		if id, ok := chooseFromParty(col, placed, lostParty, enemyparty.Alive(lostParty), reach); ok {
+			return id, true
+		}
 	}
 	for _, party := range enemyparty.Parties(room) {
-		if !hostileTo(party, leaderId) {
+		if (found && party.ID == lostParty.ID) || !hostileTo(party, leaderId) {
 			continue
 		}
 		if id, ok := chooseFromParty(col, placed, party, enemyparty.Alive(party), reach); ok {
@@ -536,5 +540,6 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	}
 	mob.Character.SetAggro(0, newTargetId, attackType(mob.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, mobName(newTargetId)))
 	return true
 }

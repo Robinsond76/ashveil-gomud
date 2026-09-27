@@ -92,6 +92,8 @@ func newBrawl(t *testing.T) *brawl {
 		"mobs/brawl/9102-bandit_bruiser.yaml":   banditMob(9102, "bandit bruiser", 1),
 		"mobs/brawl/9103-bandit_slinger.yaml":   banditMob(9103, "bandit slinger", 1),
 		"mobs/brawl/9104-bandit_captain.yaml":   banditMob(9104, "bandit captain", 4),
+		// A fence who trades with the bandits: same group, but a shop.
+		"mobs/brawl/9105-bandit_fence.yaml": banditMob(9105, "bandit fence", 1) + "  shop:\n    - itemid: 10002\n      price: 50\n",
 	}
 	for path, data := range fixtures {
 		full := filepath.Join(dataDir, path)
@@ -366,6 +368,18 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	assert.Contains(t, got, "You turn on bandit ", "the leader rejoins")
 	assert.Contains(t, got, "Garrick Vane turns on bandit ", "the killer rejoins")
 
+	// Review fix: `break` holds. The upkeep leaves a leader who broke off
+	// out of the fight, until she attacks again.
+	b.cmd("break", "") // "You break off combat.", or, between blows, "You aren't in combat!"
+	assert.Nil(t, b.aria.Character.Aggro)
+	for i := 0; i < 3; i++ {
+		got = b.fight()
+		assert.NotContains(t, got, "You turn on", "a leader who broke off stays out")
+		assert.Nil(t, b.aria.Character.Aggro)
+	}
+	b.cmd("attack", "bandit")
+	require.NotNil(t, b.aria.Character.Aggro, "she rejoins by attacking")
+
 	// And the fight runs to its end with nobody left idle.
 	b.fightToTheEnd(200)
 
@@ -380,6 +394,72 @@ func TestUnplacedCompanyFightsAndCanBeStruck(t *testing.T) {
 	b := newBrawl(t)
 	require.Contains(t, b.cmd("formation", ""), "Unplaced: leader")
 
+	// Review fix: an enemy aimed at an unplaced companion keeps it (the
+	// upkeep once counted unplaced companions as dead and pulled every
+	// enemy onto the leader).
+	tamsin := b.companion(1)
+	slinger := mobs.GetInstance(b.bandits["bandit slinger"][0])
+	slinger.Character.SetAggro(0, tamsin.InstanceId, characters.DefaultAttack)
+
 	b.cmd("attack", "bandit cutthroat")
+	// In a fight, an unplaced member can reach anyone standing.
+	got := b.cmd("formation", "reach me")
+	assert.Contains(t, got, "In this fight, Aria can reach: ")
+	assert.Contains(t, got, "bandit captain")
+
+	b.toughen()
+	got = b.fight()
+	assert.NotContains(t, got, "bandit slinger turns on")
+	if slinger.Character.Health > 0 {
+		require.NotNil(t, slinger.Character.Aggro)
+		assert.Equal(t, tamsin.InstanceId, slinger.Character.Aggro.MobInstanceId, "the slinger keeps Tamsin")
+	}
+
 	assert.Positive(t, b.fightToTheEnd(200), "an unplaced company can be struck")
+}
+
+// TestSoloPlayerWithARecordFightsAsBefore: the upkeep only keeps a company
+// with a companion present. A player whose companions are all dismissed
+// (the record stays) fights exactly as in GoMud: no turns, no drafting.
+func TestSoloPlayerWithARecordFightsAsBefore(t *testing.T) {
+	b := newBrawl(t)
+	b.cmd("company", "dismiss all")
+	_, hasRecord := domain.FormationFor(7)
+	require.True(t, hasRecord)
+	require.Empty(t, b.companyInstances())
+
+	b.cmd("attack", "bandit cutthroat")
+	for i := 0; i < 5; i++ {
+		b.aria.Character.HealthMax.Value = 1000
+		b.aria.Character.Health = 1000
+		got := b.fight()
+		assert.NotContains(t, got, "turn on", "round %d", b.round)
+		assert.NotContains(t, got, "turns on", "round %d", b.round)
+	}
+}
+
+// TestShopkeeperInTheGroupStaysOut: a fence sharing the bandits' group is
+// in their party, but the upkeep never draws a shopkeeper into the fight.
+func TestShopkeeperInTheGroupStaysOut(t *testing.T) {
+	b := newBrawl(t)
+	for _, name := range []string{"bandit slinger", "bandit bruiser"} {
+		id := b.bandits[name][0]
+		b.road.RemoveMob(id)
+		mobs.DestroyInstance(id)
+		delete(b.bandits, name)
+	}
+	fence := mobs.NewMobById(9105, b.road.RoomId)
+	require.NotNil(t, fence)
+	require.True(t, fence.HasShop())
+	b.road.AddMob(fence.InstanceId)
+
+	b.cmd("attack", "bandit cutthroat")
+	b.toughen()
+	got := b.fight()
+	assert.Contains(t, got, "bandit captain turns on", "the rest of the party joins")
+	assert.NotContains(t, got, "bandit fence turns on", "the shopkeeper doesn't")
+	for i := 0; i < 3; i++ {
+		b.toughen()
+		assert.NotContains(t, b.fight(), "bandit fence turns on")
+	}
 }

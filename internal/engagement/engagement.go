@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"sync"
 )
 
 // Combatant is the minimal view of one participant (player or mob) needed
@@ -105,4 +106,36 @@ func PartyAlive(candidates []Combatant) bool {
 // String renders an Engagement for logging/debugging.
 func (e Engagement) String() string {
 	return fmt.Sprintf("engagement(leader=%d, party=%s)", e.LeaderUserID, e.PartyID)
+}
+
+// Stand-down (Phase 29a). A player who breaks off combat (`break`) is not
+// pulled back into the fight by the combat round's engagement upkeep until
+// they attack again or their company's fight ends. Runtime only, never
+// persisted: after a restart nobody is fighting.
+var (
+	standDownMu sync.Mutex
+	stoodDown   = map[int]struct{}{}
+)
+
+// StandDown records that userID broke off combat.
+func StandDown(userID int) {
+	standDownMu.Lock()
+	defer standDownMu.Unlock()
+	stoodDown[userID] = struct{}{}
+}
+
+// Resume clears userID's stand-down: they attacked again, or the fight
+// ended.
+func Resume(userID int) {
+	standDownMu.Lock()
+	defer standDownMu.Unlock()
+	delete(stoodDown, userID)
+}
+
+// StoodDown reports whether userID broke off combat and hasn't resumed.
+func StoodDown(userID int) bool {
+	standDownMu.Lock()
+	defer standDownMu.Unlock()
+	_, ok := stoodDown[userID]
+	return ok
 }

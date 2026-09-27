@@ -132,3 +132,13 @@ func TestPartyAliveFalseWhenAllMembersDead(t *testing.T) {
 func TestPartyAliveFalseWhenNoMembers(t *testing.T) {
 	assert.False(t, engagement.PartyAlive(nil))
 }
+
+func TestStandDownUntilResumed(t *testing.T) {
+	assert.False(t, engagement.StoodDown(9101))
+	engagement.StandDown(9101)
+	assert.True(t, engagement.StoodDown(9101))
+	assert.False(t, engagement.StoodDown(9102), "per player")
+	engagement.Resume(9101)
+	assert.False(t, engagement.StoodDown(9101))
+	engagement.Resume(9101) // idempotent
+}
