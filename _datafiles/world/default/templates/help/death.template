@@ -2,14 +2,15 @@
 
 When your hitpoints fall to zero or less, you'll drop to the ground and begin
 to bleed out. While bleeding out, each round you'll fall more and more into 
-the negative range.
+the negative range. Someone can still heal you back up.
 
 Once you reach -10 hitpoints, you will die!
 
-Dying can have many consequences - you can drop some of your gear or lose some 
-of your experience points.
+Dying costs you <ansi fg="yellow">one level</ansi> (at level 1 you keep your level but lose its
+progress). Earning that level back doesn't give its training points again.
+You may also drop some of your gear, which you'll need to go back for.
 
-You will also be transported to the shadow realm, where you must wait for your
-hitpoints to recover and for the next portal out to appear.
+You wake at the church of the last city you visited, with your living
+companions beside you. Any journey, camp, or inn stay is left behind.
 
-If you lost gear on death, you'll need to go find it and recover it.
+Your companions can die too: see <ansi fg="command">help resurrect</ansi>.

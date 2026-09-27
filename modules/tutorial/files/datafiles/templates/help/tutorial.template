@@ -35,5 +35,6 @@ so logging out and back in picks up where you left off.
   <ansi fg="command">tutorial skip yes</ansi>. Skipping gives no graduation reward.
 
 Every command works during the course: chat, <ansi fg="command">help</ansi>, <ansi fg="command">status</ansi>, and the rest.
+For every detail of how battles work, see <ansi fg="command">help combat</ansi>.
 Once you have left the course, it is finished and can't be restarted. That
 includes leaving by dying, which nothing in the course can quickly cause.

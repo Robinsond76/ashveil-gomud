@@ -53,11 +53,19 @@ help:
       - quests
     combat:
       - attack
+      - battle-summary
       - break
       - cast
+      - chemistry
+      - combat
       - consider
       - flee
+      - formation
+      - light
+      - resurrect
+      - sharpen
       - shoot
+      - targeting
     information:
       - biome
       - exits
@@ -156,6 +164,13 @@ help:
 # Aliases for keywords when typing: help <keyword>
 # Key is the target keyword, value is the list of aliases
 help-aliases:
+  combat:           [battle, battles, fighting, fight]
+  formation:        [reach, interception, formations]
+  targeting:        [target, targets, enemy-parties]
+  sharpen:          [whetstone, whetstones, edge]
+  battle-summary:   [battlesummary, summary]
+  resurrect:        [resurrection]
+  light:            [darkness, dark]
   brawling:         [tackle, brawl, disarm, recover, throw]
   enchant:          [unenchant, uncurse]
   skulduggery:      [sneak, bump, backstab, pickpocket]

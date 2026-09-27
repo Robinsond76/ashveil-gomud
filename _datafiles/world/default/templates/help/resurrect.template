@@ -1,0 +1,21 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">resurrect</ansi>
+
+A companion who dies isn't gone at once. They stay on your roster, dead,
+keeping whatever gear their body kept, and you have <ansi fg="yellow">3 game days</ansi> to have
+them raised. Only the time you're logged in counts, and you're warned
+when half an hour is left.
+
+A church (in a city) or a village shaman can raise them, if the keeper is
+there. Coming back costs the companion one level (never below 1). If time
+runs out, the companion is lost for good.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">resurrect</ansi>
+  List your dead companions and how long each has left.
+
+  <ansi fg="command">resurrect [member]</ansi>
+  Have a companion raised, at a church or shaman.
+
+<ansi fg="command">company status</ansi> also lists the dead and the lost. See <ansi fg="command">help death</ansi> for
+your own death.

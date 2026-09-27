@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">chemistry</ansi>
+
+Companions who have fought and travelled together for a long time learn
+each other's ways. Each member of your company builds up service for every
+round they spend alive beside at least one other member, while you're
+logged in.
+
+The company's chemistry comes from the average service of the members
+together, so a new recruit dilutes it until they have served their time:
+
+  <ansi fg="command">Familiar</ansi>  about 1 game day together   +2% to hit
+  <ansi fg="command">Trusted</ansi>   about 3 game days together  +4% to hit
+  <ansi fg="command">Sworn</ansi>     about 7 game days together  +6% to hit
+
+Every member together in the room gets the bonus, you and your
+companions alike, new recruits included. When a blow lands only because of it, you'll see:
+<ansi fg="command">Fighting beside a companion you know well, you find an opening.</ansi>
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">company chemistry</ansi>
+  Show your company's chemistry, its progress to the next tier, and each
+  member's service.
+
+  <ansi fg="command">status bonuses</ansi>
+  Your bonuses, chemistry among them.
+
+See also: <ansi fg="command">help combat</ansi>.

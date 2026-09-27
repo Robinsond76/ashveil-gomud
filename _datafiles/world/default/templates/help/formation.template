@@ -1,0 +1,63 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">formation</ansi>
+
+Your company stands in a 3x3 formation: three <ansi fg="yellow">columns</ansi> (1 to 3, left to
+right) and three <ansi fg="yellow">rows</ansi> (row 1 is the front, row 3 the back). Enemy groups
+stand in a formation too, arranged for them: their toughest stand in front.
+
+Where everyone stands decides who can strike whom.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">formation</ansi>
+  Show your company's formation, and anyone not yet placed in it.
+
+  <ansi fg="command">formation move [member] [row] [col]</ansi> - e.g. <ansi fg="command">formation move #1 1 2</ansi>
+  Place a member. A member is <ansi fg="command">me</ansi> (you), a companion's number (<ansi fg="command">#1</ansi>), or a
+  companion's name.
+
+  <ansi fg="command">formation swap [member] [member]</ansi>
+  Swap two members' places.
+
+  <ansi fg="command">formation clear [member]</ansi>
+  Take a member out of the formation.
+
+  <ansi fg="command">formation reach [member]</ansi>
+  In a fight, name the enemies that member can strike right now. Out of a
+  fight, it shows how reach works within your own company.
+
+<ansi fg="yellow-bold">Reach</ansi>
+
+A fighter can strike a column of the other side only if it is their own
+column or the one beside it. Column 1 can reach columns 1 and 2, but not 3.
+
+How deep into that column they can strike depends on their weapon:
+
+- <ansi fg="yellow">Plain melee</ansi> (swords, axes, fists): only the frontmost fighter standing
+  in that column.
+- <ansi fg="yellow">Reach</ansi> (weapons with reach, like polearms, and some beasts): the
+  frontmost fighter, or the one just behind them.
+- <ansi fg="yellow">Ranged</ansi> (bows, slings): anyone in the column, however deep.
+
+When a front fighter falls, the one behind them becomes the frontmost, and
+can be struck.
+
+<ansi fg="yellow-bold">Interception</ansi>
+
+A blow aimed at someone behind the front row is caught by the fighter in
+the front row of the same column, if that fighter is alive.
+Put your toughest in front to shield the rest. Your company does this for
+you, and the enemy does it to you.
+
+<ansi fg="yellow-bold">Unplaced members</ansi>
+
+A member not placed in the formation has no place to shield or be shielded
+from. They can strike any enemy, and any enemy can strike them.
+
+<ansi fg="yellow-bold">In a fight</ansi>
+
+If your target is out of your reach, you turn on the weakest enemy you can
+reach, and are told so: "You can't reach the bandit captain from here. You
+turn on the bandit cutthroat." See <ansi fg="command">help targeting</ansi>.
+
+Set your formation up before a fight: it's where everyone stands when the
+blows begin.

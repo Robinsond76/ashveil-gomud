@@ -18,3 +18,7 @@ You always have a minimum 5% chance to miss, and a minimum 5% chance to hit.
 
 - (**Strength** + **Speed**) / (**attackerLevel** - **defenderLevel**) + **5**
 
+Your company's chemistry adds to your chance to hit, and darkness takes
+from it. Your formation decides which foes you can reach; if your target is
+out of reach, you turn on one you can. See ~help combat~.
+

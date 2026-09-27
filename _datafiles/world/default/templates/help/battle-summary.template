@@ -1,0 +1,31 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">battle-summary</ansi>
+
+When your company's fight ends, you get a short summary of it:
+
+  <ansi fg="command">── The fighting is over ──</ansi>
+  <ansi fg="command">Damage dealt   Company 96 · Enemies 38</ansi>
+  <ansi fg="command">Most damage    You 23 · Garrick Vane 21 · Ysolde 18</ansi>
+  <ansi fg="command">Highest hit    Garrick Vane 11 on bandit captain (critical)</ansi>
+  <ansi fg="command">Kills          Garrick Vane 2 · You 1 · Ysolde 2</ansi>
+  <ansi fg="command">Enemies        bandit captain slain · bandit slinger fled</ansi>
+  <ansi fg="command">Company        You 12/14 · Garrick Vane 6/15 · Tamsin Reed fallen</ansi>
+
+The heading tells how it ended: <ansi fg="yellow">The fighting is over</ansi> (you won), **The
+company is beaten<ansi fg="yellow"> (every member fell), or </ansi>The fight breaks off** (you
+fled, broke off, or walked away).
+
+- <ansi fg="yellow">Damage dealt</ansi> counts weapon blows and spells.
+- <ansi fg="yellow">Healing</ansi> (when there was any) counts healing your company received.
+- <ansi fg="yellow">Effects</ansi> (when there were any) counts effects the blows put on anyone.
+- An enemy ends <ansi fg="yellow">slain</ansi>, <ansi fg="yellow">fled</ansi>, <ansi fg="yellow">left</ansi> (walked away), <ansi fg="yellow">beaten</ansi> (a
+  practice foe), or <ansi fg="yellow">still standing</ansi>.
+
+A fight is your company against the enemies it's fighting in one room. When
+you fight alone, with no companion beside you, there is no summary.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">set battlesummary</ansi>
+  Turn the summary off, or back on. It's on to start with.
+
+See also: <ansi fg="command">help combat</ansi>.

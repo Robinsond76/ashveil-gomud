@@ -87,6 +87,7 @@ func init() {
 				`<ansi fg="command">formation</ansi> shows the grid, row by row.`,
 				`<ansi fg="command">formation move <name> <row> <col></ansi> places someone, e.g. <ansi fg="command">formation move tamsin 1 2</ansi>.`,
 				`<ansi fg="command">formation swap <a> <b></ansi> trades two members' places.`,
+				`<ansi fg="command">help formation</ansi> explains reach and interception in full.`,
 			},
 			Done: "A sound formation.",
 		},
@@ -112,7 +113,7 @@ func init() {
 			Hints: []string{
 				`<ansi fg="command">camp</ansi> makes camp here, <ansi fg="command">camp fire</ansi> lights the fire, and <ansi fg="command">camp rest</ansi> rests for about a minute. You stay put while you rest.`,
 				`<ansi fg="command">camp status</ansi> shows the rest's progress and everyone's needs; <ansi fg="command">conditions</ansi> shows Rested afterwards.`,
-				`With a whetstone, <ansi fg="command">camp sharpen on</ansi> hones every blade in the company at the end of a rest, using the stone once. Whetstones are sold in markets.`,
+				`With a whetstone, <ansi fg="command">camp sharpen on</ansi> hones every blade in the company at the end of a rest, using the stone once. Whetstones are sold in markets (<ansi fg="command">help sharpen</ansi>).`,
 				`An inn stay (<ansi fg="command">inn</ansi>) costs gold but leaves you Well Rested, which is better than Rested.`,
 			},
 			Done: "Rested and ready.",
@@ -126,9 +127,11 @@ func init() {
 				`<ansi fg="command">attack footman</ansi> starts the fight; your companions join in. You keep fighting, round by round, until your target falls.`,
 				`The archer stands behind the footmen: once you stand in the grid, an attack aimed at it is caught by the footman in front of it (interception).`,
 				`"You can't reach that target from here" means it's too far across the grid, or too deep for your weapon: attack another footman, or move. <ansi fg="command">formation reach <name></ansi> shows who can reach what; long weapons reach one rank deeper, bows any.`,
-				`When a foe falls, companions who were aiming at it turn to the next one they can reach, on their own. The one who struck it down picks a new target: <ansi fg="command">attack</ansi> again.`,
+				`When a foe falls, everyone who was aiming at it, you included, turns to the next one they can reach, on their own. The rest of a band joins in when one of them is struck.`,
 				`You can move anyone with <ansi fg="command">formation move</ansi> at any time, even mid-fight, to bring a foe within reach.`,
 				`Watch your health in your prompt and <ansi fg="command">status</ansi>, and what ails you in <ansi fg="command">conditions</ansi>. A sharpened edge is spent one strike at a time, whether the blow does much or little.`,
+				`When the last foe falls, a battle summary shows the damage, the kills, and your company's health (<ansi fg="command">help battle-summary</ansi>).`,
+				`For every detail of how battles work, see <ansi fg="command">help combat</ansi>, and from there <ansi fg="command">help formation</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help chemistry</ansi>, and <ansi fg="command">help light</ansi>.`,
 			},
 			Done: "The straw soldiers are beaten.",
 		},
@@ -153,6 +156,7 @@ func init() {
 			Hints: []string{
 				`<ansi fg="command">company status</ansi>, <ansi fg="command">inventory</ansi>, and <ansi fg="command">status</ansi> one last time.`,
 				`Go through the <ansi fg="exit">gate</ansi> to begin your journey.`,
+				`<ansi fg="command">help</ansi> lists every topic. <ansi fg="command">help combat</ansi> covers battles, and <ansi fg="command">help death</ansi> and <ansi fg="command">help resurrect</ansi> what happens when someone falls.`,
 			},
 		},
 	}

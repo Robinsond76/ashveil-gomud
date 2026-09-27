@@ -1,0 +1,70 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">combat</ansi>
+
+How a battle works, from the first blow to the last. Each part has its own
+help page, named in brackets.
+
+<ansi fg="yellow-bold">The round</ansi>
+
+Combat resolves once a round (a round is 4 seconds). Every fighter on both
+sides takes their turn each round: an attack, a round of a spell being cast,
+or waiting. A fight goes on until one side is dead or gone, or nobody is
+fighting any more.
+
+<ansi fg="yellow-bold">Your company fights as one (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help targeting</ansi><ansi fg="yellow-bold">)</ansi>
+
+Your companions fight beside you. When your company and a group of enemies
+start fighting:
+
+- the whole enemy group joins in, not just the one you struck;
+- anyone on either side left without a target, or with one they can't reach,
+  turns on the weakest foe they can reach, and you're told about it
+  (<ansi fg="command">You turn on the bandit cutthroat.</ansi>);
+- this goes on until the fight is over, or until you <ansi fg="command">break</ansi> or <ansi fg="command">flee</ansi>.
+
+<ansi fg="yellow-bold">Who can strike whom (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">)</ansi>
+
+Both sides stand in a 3x3 formation: three columns, and three rows from the
+front to the back. Where a fighter stands, and the reach of their weapon,
+decide who they can strike. A fighter in the front row shields the one
+behind them. <ansi fg="command">formation reach [member]</ansi> shows who a member can reach.
+
+<ansi fg="yellow-bold">Hitting (</ansi><ansi fg="command">help attack</ansi><ansi fg="yellow-bold">)</ansi>
+
+Your chance to hit comes from your speed against your target's. Several
+things add to it or take it away:
+
+- <ansi fg="yellow">Chemistry</ansi> (<ansi fg="command">help chemistry</ansi>): a company that has served together
+  a long time gets up to +6% to hit.
+- <ansi fg="yellow">Darkness</ansi> (<ansi fg="command">help light</ansi>): fighting in the dark costs -40% to hit, and in
+  dim light -10%.
+- <ansi fg="yellow">Dual wielding</ansi> (<ansi fg="command">help dual-wield</ansi>): an off-hand weapon swings with a
+  penalty.
+
+A sharpened blade (<ansi fg="command">help sharpen</ansi>) does +1 damage on each strike while its
+edge lasts.
+
+<ansi fg="yellow-bold">Falling (</ansi><ansi fg="command">help death</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help resurrect</ansi><ansi fg="yellow-bold">)</ansi>
+
+At 0 health you drop. At -10 you die: you lose a level and wake at the last
+city's church, with your living company. A companion who dies stays on your
+roster for a while, and can be raised at a church or a village shaman.
+
+<ansi fg="yellow-bold">After the fight (</ansi><ansi fg="command">help battle-summary</ansi><ansi fg="yellow-bold">)</ansi>
+
+When your company's fight ends, you see a summary. It shows the damage each
+side did, who did the most, the highest hit, kills, how each enemy ended,
+and your company's health.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">attack [target]</ansi>   start a fight
+  <ansi fg="command">break</ansi>             stop fighting (enemies may keep attacking you)
+  <ansi fg="command">flee</ansi>              try to run out of the room
+  <ansi fg="command">consider [target]</ansi> size up a foe
+  <ansi fg="command">formation</ansi>         see and arrange your company's formation
+  <ansi fg="command">company chemistry</ansi> your company's chemistry
+  <ansi fg="command">sharpen</ansi>           sharpen your company's blades
+  <ansi fg="command">light</ansi>             how well you can see here
+
+In the tutorial, the Practice Yard lets you try all of this against straw
+soldiers that can't hurt you (<ansi fg="command">help tutorial</ansi>).

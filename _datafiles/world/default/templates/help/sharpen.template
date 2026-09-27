@@ -1,0 +1,25 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">sharpen</ansi>
+
+A whetstone puts an edge on a bladed weapon (slashing, cleaving, or
+stabbing). A sharp blade does <ansi fg="yellow">+1 damage</ansi> on each strike that lands, for
+its next 20 strikes. Then it's dull again.
+
+A whetstone has 10 uses, and one use sharpens every blade one member has
+equipped. Your whetstones sharpen your whole company, you first, then your
+companions in order, until the uses run out. Blades that are still sharp
+cost nothing. Whetstones are sold at the markets.
+
+You can sharpen any time, except in the middle of a fight.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">sharpen</ansi>
+  Sharpen your company's blades.
+
+  <ansi fg="command">sharpen status</ansi>
+  See whose blades are sharp, and how many whetstone uses you have.
+
+  <ansi fg="command">sharpen auto on</ansi> / <ansi fg="command">sharpen auto off</ansi>
+  Sharpen automatically at the end of each camp rest.
+
+<ansi fg="command">camp sharpen</ansi> does the same at camp. <ansi fg="command">look</ansi> at a blade shows its edge.

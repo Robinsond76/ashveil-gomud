@@ -3,6 +3,7 @@ package tutorial
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -273,4 +274,56 @@ func TestShippedOathStone(t *testing.T) {
 	average := (alignment("dunmar", 61) + alignment("dunmar", 62)) / 2
 	assert.Greater(t, average-alignment("tutorial", corvin), gap, "refused to the course's company")
 	assert.Greater(t, 0-alignment("tutorial", corvin), gap, "and to a company of one new, neutral leader")
+}
+
+// TestTutorialHelpPointersExist: every "help <topic>" a lesson or the
+// tutorial's own help page points to is a shipped help page (in the world,
+// or in a module), or an alias of one, and the Combat lesson points to
+// the combat pages.
+func TestTutorialHelpPointersExist(t *testing.T) {
+	pointer := regexp.MustCompile(`help ([a-z-]+)</ansi>`)
+	var texts []string
+	for _, s := range stages {
+		texts = append(texts, s.Hints...)
+	}
+	page, err := files.ReadFile("files/datafiles/templates/help/tutorial.template")
+	require.NoError(t, err)
+	texts = append(texts, string(page))
+
+	var kw struct {
+		Aliases map[string][]string `yaml:"help-aliases"`
+	}
+	readYAML(t, filepath.Join(repoRoot(), "_datafiles", "world", "default", "keywords.yaml"), &kw)
+	aliasOf := map[string]string{}
+	for topic, aliases := range kw.Aliases {
+		for _, a := range aliases {
+			aliasOf[a] = topic
+		}
+	}
+	exists := func(topic string) bool {
+		if real, ok := aliasOf[topic]; ok {
+			topic = real
+		}
+		dirs := []string{filepath.Join(repoRoot(), "_datafiles", "world", "default", "templates", "help")}
+		mods, _ := filepath.Glob(filepath.Join(repoRoot(), "modules", "*", "files", "datafiles", "templates", "help"))
+		for _, dir := range append(dirs, mods...) {
+			for _, ext := range []string{".md", ".template"} {
+				if _, err := os.Stat(filepath.Join(dir, topic+ext)); err == nil {
+					return true
+				}
+			}
+		}
+		return false
+	}
+
+	seen := map[string]bool{}
+	for _, text := range texts {
+		for _, m := range pointer.FindAllStringSubmatch(text, -1) {
+			seen[m[1]] = true
+			assert.True(t, exists(m[1]), "help %s is a shipped page", m[1])
+		}
+	}
+	for _, topic := range []string{"combat", "formation", "targeting", "battle-summary", "sharpen"} {
+		assert.True(t, seen[topic], "the tutorial points to help %s", topic)
+	}
 }

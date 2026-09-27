@@ -67,6 +67,9 @@ func RegisterFS(f fs.ReadFileFS) {
 
 func readFile(path string) (b []byte, err error) {
 
+	// With no file systems registered, the file is not found (the loop
+	// below would otherwise report success with no content).
+	err = fs.ErrNotExist
 	for _, f := range fileSystems {
 		if b, err = f.ReadFile(path); err == nil {
 			return b, nil

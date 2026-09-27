@@ -1,0 +1,41 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">targeting</ansi>
+
+Who each fighter aims at, and how a fight holds together.
+
+<ansi fg="yellow-bold">Enemy groups</ansi>
+
+Enemies that belong together (a band of bandits, a pack of wolves) fight as a
+group, in a formation of up to five. Strike one, and the whole group comes
+for you. An enemy that belongs to no group fights on its own. A shopkeeper,
+or someone you're talking with, isn't drawn into their group's fight.
+
+<ansi fg="yellow-bold">Keeping everyone fighting</ansi>
+
+At the start of each round, while your company and an enemy group are
+fighting:
+
+- any fighter, on either side, with no target, a fallen target, or a target
+  they can't reach turns on the weakest foe they can reach;
+- a fighter whose target is still in reach keeps it;
+- the enemy group's anger at you doesn't wear off while the fight lasts.
+
+You're told when you turn (<ansi fg="command">You turn on the bandit slinger.</ansi>), and see when
+others do (<ansi fg="command">Garrick Vane turns on the bandit bruiser.</ansi>).
+
+A fighter who can reach no one waits, and strikes as soon as someone comes
+into reach (when a front fighter falls, for example).
+
+<ansi fg="yellow-bold">Stepping out</ansi>
+
+<ansi fg="command">break</ansi> takes you out of the fight until you attack again, or the fight
+ends. Your companions fight on, and enemies may keep attacking you.
+
+<ansi fg="command">flee</ansi> tries to run out of the room. Your companions follow you. The fight
+ends when nobody is fighting any more.
+
+<ansi fg="yellow-bold">Alone</ansi>
+
+With no companion beside you, you fight as a lone adventurer: the fight
+isn't held together for you, and you choose each new target yourself.
+
+See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
