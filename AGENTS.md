@@ -51,6 +51,14 @@ Use idiomatic Go, `gofmt`, tabs, exported `PascalCase`, and unexported `camelCas
 
 Use Go's standard `testing` package. Name tests `TestBehavior` and benchmarks `BenchmarkBehavior`, beside covered code. Add a regression test for each bug fix. Start targeted, then run `make validate`; run `make test` before requesting review when practical. Do not claim checks not run.
 
+Every phase that changes what a player can do or see also ships its **player help** (adopted 2026-09-27 at the owner's request):
+
+- **A help page** for each new command or mechanic, written for players: what it does, the numbers that matter, and its commands. Put it in `_datafiles/world/default/templates/help/` (or the owning module's `files/datafiles/templates/help/`), prefer `.template` (it renders line for line; the `.md` renderer joins lines and swallows `<placeholders>`), and write placeholders as `[member]`. A changed mechanic updates its existing page, including GoMud's own pages it makes stale (as 29b did for `death`, `break`, `flee`, and `attack`).
+- **Indexed and linked:** list the topic in `_datafiles/world/default/keywords.yaml` under its `help:` category, add useful `help-aliases`, and link it from its hub page (`help combat` for anything about battles).
+- **Pointed to from the tutorial:** add a hint in the lesson that covers the feature (`modules/tutorial/stages.go`), or the Departure lesson when none does, and correct any hint the change makes stale.
+- **Tested:** the page renders through `help` (`internal/usercommands/help_combat_test.go` is the pattern) and `TestTutorialHelpPointersExist` passes.
+- A phase's design doc lists its help pages under its acceptance criteria, and its plan has a help-and-tutorial task.
+
 Every phase also passes a testing and review gate before merging to `master`: tests cover each integration point the phase wires (not only pure helpers), and an independent reviewer subagent checks the full phase diff for bugs, design gaps, and missing coverage. The lead verifies each finding, fixes real ones with regression tests, and records the review outcome in `docs/PROJECT_STATUS.md`. See `CLAUDE.md` ("Testing and review gate") for the details.
 
 ## Commit & Pull Request Guidelines

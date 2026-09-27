@@ -2392,6 +2392,7 @@ The AI coding agent should follow these rules.
 20. Do not dispatch an implementation task until the current phase design has explicit owner approval.
 21. Keep the Python prototype read-only. Its local reference copy lives at `reference/ashveil-mud/`, is excluded through `.git/info/exclude`, and is a mechanics/design archive rather than a source tree to modify.
 22. Isolate every plan, phase, or feature on its own git worktree and feature branch. Never implement or commit plan work directly on `master`; `master` is an integration branch and must stay clean. Create the workspace with `git worktree add .worktrees/<branch-name> -b <branch-name>` (`.worktrees/` is gitignored and is the project convention), run the baseline checks there, commit the plan tasks on that branch, and merge locally or open a PR against `origin` only after the phase's checks pass. Remove the worktree when the branch is finished. If a worktree is unavailable, create and check out a feature branch before making any commit.
+23. Ship player help with every player-facing change: a help page for each new command or mechanic (or an update to the page it makes stale), listed in `_datafiles/world/default/keywords.yaml` and linked from its hub page (`help combat` for battles), a pointer from the tutorial lesson that covers it, and tests that it renders and that the tutorial's pointers resolve. See the root `AGENTS.md` ("Testing Guidelines"). Adopted 2026-09-27 at the owner's request.
 
 ## Repository Layout and Remote Policy
 

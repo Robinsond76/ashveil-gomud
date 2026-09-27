@@ -41,13 +41,23 @@ criteria — mirroring the existing spec files; (2) get the open decisions confi
 the user, or apply their standing "proceed with your recommendation" instruction if one is
 in force, and record which happened in the doc); (3) write a companion plan doc under
 `docs/superpowers/plans/<date>-phase-N-<name>.md`, task-by-task with checkboxes, each task
-naming its files and its tests-first step, mirroring `docs/superpowers/plans/2026-09-22-phase-7-camping.md`'s
+naming its files and its tests-first step, and including a **player help and tutorial**
+task (see "Player help" below), mirroring `docs/superpowers/plans/2026-09-22-phase-7-camping.md`'s
 format; (4) create the worktree/branch per "Branching & Worktrees" below and execute the
 plan task-by-task, checking boxes off as they land; (5) verify
 (`go test -race ./...`, `make generate`, `make validate`); (6) **independent review**
 (below); (7) record the verification and review results in `docs/PROJECT_STATUS.md`;
 (8) merge and push. Do not implement first and backfill the plan doc after — write it
 before code, the same as the plugin would.
+
+**Player help (every phase, adopted 2026-09-27 at the user's request):** any phase that
+adds or changes something a player can do or see ships player-facing help with it, the
+same way Phase 29b did for combat: a help page per new command or mechanic (or an update
+to the existing page, including a stale GoMud one), listed in `keywords.yaml` with its
+aliases and linked from its hub (`help combat` for battles), a pointer from the tutorial
+lesson that covers it (or the Departure lesson), and tests that the page renders and the
+tutorial's pointers resolve. The full rule is in `AGENTS.md` ("Testing Guidelines"). The
+design doc's acceptance criteria name the pages; the reviewer checks them.
 
 **Testing and review gate (every phase, adopted 2026-09-23 at the user's request):**
 
@@ -60,7 +70,8 @@ before code, the same as the plugin would.
   model tier) over the full phase diff (`git diff <base>..HEAD`). Brief it with the
   phase's design doc, the non-negotiable invariants (never advance the world clock,
   survive restart/copyover, concurrency and lock ordering), and ask it to report bugs,
-  design gaps, and missing test coverage — findings only, no edits, no commits.
+  design gaps, missing test coverage, and missing or inaccurate player help — findings
+  only, no edits, no commits.
 - **Verify every finding yourself.** Treat the review like any subagent output: an
   untrusted proposal. Reproduce each finding; fix the real ones with a regression test;
   note the rejected ones and why. Re-run the full verification after fixes.
