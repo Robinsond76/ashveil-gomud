@@ -1,4 +1,4 @@
-# Potential Phase 30: Browser Battle Panel
+# Potential Phase 31: Browser Battle Panel
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: proposed by the owner (2026-09-26); needs a design pass and plan.
@@ -28,13 +28,13 @@ During a fight, the web client shows:
 
 ## Scope
 
-The panel's data comes from the [28b event stream](2026-09-26-combat-event-stream-design.md).
-With pacing on (28f), each update is released with the line it matches.
+The panel's data comes from the [29b event stream](2026-09-26-combat-event-stream-design.md).
+With pacing on (29f), each update is released with the line it matches.
 
 
 1. **Server:** a new `Company.Battle` GMCP message, sent only to the leader,
    only while the company is fighting an enemy party, and only on change.
-   - **Enemies:** name (with 28d ordinals), cell, a rough health band
+   - **Enemies:** name (with 29d ordinals), cell, a rough health band
      (unhurt, wounded, badly wounded, down) rather than exact numbers, and a
      fallen mark.
    - **Targets:** one arrow per fighter on both sides, from attacker to

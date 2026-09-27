@@ -1,4 +1,4 @@
-# Potential Phase 29d: Wind-Ups, Telegraphs, and Interrupts
+# Potential Phase 30d: Wind-Ups, Telegraphs, and Interrupts
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.
@@ -34,7 +34,7 @@ combat. Sub-round beats and the continuous timeline are declined.
    of pressure:
    - a shield bash, which a guardian does automatically when the tactic is
      on;
-   - stagger, stun, or knockdown (29a);
+   - stagger, stun, or knockdown (30a);
    - a heavy crit;
    - specialised anti-caster abilities.
 3. **Accumulation.** Pressure accumulates within the one wind-up. When it
@@ -54,7 +54,7 @@ combat. Sub-round beats and the continuous timeline are declined.
 ## Events and text
 
 Wind-up start and land, cast start/progress/complete, and interrupt
-(pressure, success or failure) are all events (28b):
+(pressure, success or failure) are all events (29b):
 
 ```
 Ironhide plants his feet and drags the great club up over his shoulder. (winding up: Crushing Blow, 1 round)

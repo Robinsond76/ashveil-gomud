@@ -1,4 +1,4 @@
-# Potential Phase 29b: Wounds, Treatment, and `heal wounds`
+# Potential Phase 30b: Wounds, Treatment, and `heal wounds`
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.
@@ -36,7 +36,7 @@ has whoever and whatever can help tend the company.
 ## `heal wounds` (after a fight only)
 
 - **In a fight:** it's refused. Clerics heal on their own during a fight,
-  by the company's tactics (29c).
+  by the company's tactics (30c).
 - **Out of a fight**, the command goes through these steps in order:
   1. Pick healers. Every living company cleric with mana, in order of
      mana.

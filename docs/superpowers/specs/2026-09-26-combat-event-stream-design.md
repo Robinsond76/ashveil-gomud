@@ -1,12 +1,12 @@
-# Potential Phase 28b: Combat Event Stream and Battle Summary
+# Potential Phase 29b: Combat Event Stream and Battle Summary
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.
 
 ## Goal
 
-Every combat happening becomes one structured event. Narration (28c–28e),
-paced delivery (28f), the battle summary (below), the battle panel (30), and
+Every combat happening becomes one structured event. Narration (29c–29e),
+paced delivery (29f), the battle summary (below), the battle panel (31), and
 balancing data all read the same stream. Combat code produces events;
 presentation consumes them.
 
@@ -43,7 +43,7 @@ presentation consumes them.
    - death or incapacitation;
    - mercy decision.
 2. **Producers.** The existing combat paths emit events at the point they
-   now build text. In this phase they still send today's text too, so 28b
+   now build text. In this phase they still send today's text too, so 29b
    changes no player-visible output except the summary.
 3. **Fight identity.** A fight is the engagement between one company and
    one enemy party, from the first blow to the last enemy's fall, flight,

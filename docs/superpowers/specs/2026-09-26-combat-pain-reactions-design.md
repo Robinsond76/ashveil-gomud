@@ -1,4 +1,4 @@
-# Potential Phase 28e: Pain Reactions on Critical Hits
+# Potential Phase 29e: Pain Reactions on Critical Hits
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.
@@ -19,7 +19,7 @@ Status: owner-approved direction (2026-09-26); needs a design pass and plan.
   boss or a named NPC.
 - **Fallback:** a generic humanoid set, and a generic beast set using "it",
   cover anything without a set of its own.
-- **Players and companions:** use the humanoid set, with 28d pronouns.
+- **Players and companions:** use the humanoid set, with 29d pronouns.
 - **Where it lives:** probably a `pain-reactions/` data directory keyed by
   race and optional mob id, loaded like `combat-messages`.
   - Open: whether it lives there or on the race files.

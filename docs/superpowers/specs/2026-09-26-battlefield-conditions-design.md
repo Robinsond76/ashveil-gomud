@@ -1,4 +1,4 @@
-# Potential Phase 29f: Battlefield Conditions
+# Potential Phase 30f: Battlefield Conditions
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26), from the "new combat

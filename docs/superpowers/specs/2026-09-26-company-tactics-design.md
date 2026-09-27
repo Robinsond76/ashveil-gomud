@@ -1,4 +1,4 @@
-# Potential Phase 29c: Pre-Fight Tactics — Roles, Personalities, Guards, Companion Casting
+# Potential Phase 30c: Pre-Fight Tactics — Roles, Personalities, Guards, Companion Casting
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.
@@ -34,23 +34,23 @@ personality), formerly in deferred Phase 11d.
      weakest, or strongest. Each rule falls back to the nearest legal
      target.
    - **Healing:** heal anyone below a threshold (default: half).
-   - **Interrupts:** break heavy blows and spells when someone can (29d).
+   - **Interrupts:** break heavy blows and spells when someone can (30d).
      On or off.
    - **Guard:** who each guardian guards.
    - **Rotate the wounded:** swap a badly hurt front-liner back when
      someone can take the place, at the cost of a round. On or off.
-   - **Mercy:** always ask (the owner's default; see 29e).
+   - **Mercy:** always ask (the owner's default; see 30e).
 2. **Roles and personalities.** Each member has a role from their
    archetype, which can be changed in tactics. The role decides whom they
    target and what they do:
 
    | Role | Behaviour |
    |---|---|
-   | **Guardian** | guards an assigned ally; bashes heavy wind-ups (29d); otherwise fights threats to allies |
+   | **Guardian** | guards an assigned ally; bashes heavy wind-ups (30d); otherwise fights threats to allies |
    | **Duelist** | fights whoever engages them; favours dangerous front-line foes |
    | **Hunter** | the focus, else the wounded, the exposed, and the lightly armoured |
    | **Cleric** | heals below the threshold (single or group heal by how many are hurt); otherwise fights |
-   | **Wizard** | area spells when foes cluster (29f); bolts on the focus |
+   | **Wizard** | area spells when foes cluster (30f); bolts on the focus |
    | **Rogue** | goes for the exposed and the knocked down |
 
    - The **focus rule** overrides a role's own preference, and the text
@@ -76,13 +76,13 @@ personality), formerly in deferred Phase 11d.
    cycle.
    - **What a guard does:** redirects a blow aimed at the guarded ally.
      It's an interception, and now narrated.
-   - **Lost while knocked down or stunned** (29a).
+   - **Lost while knocked down or stunned** (30a).
 5. **Companion casting.** Companions cast their archetype's spells by their
    role, with real mana and chant rounds (spells' `waitrounds`). The mob
    `combatcommands` path, or a new tactics driver, is chosen in the design
    pass.
 6. **Events:** target change, guard used, guard exhausted, and cast
-   start/complete (28b).
+   start/complete (29b).
 
 ## Reference text
 

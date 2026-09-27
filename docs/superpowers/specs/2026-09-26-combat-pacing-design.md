@@ -1,4 +1,4 @@
-# Potential Phase 28f: Paced Combat Output
+# Potential Phase 29f: Paced Combat Output
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction, including the cadence decision below
@@ -73,7 +73,7 @@ Consequences:
   round. Anything still queued then is flushed at once.
 - **Non-combat text is never delayed:** says, tells, and your own command
   echoes pass straight through. Input is never blocked.
-- **The battle panel (30)** is updated as each line is released, not at
+- **The battle panel (31)** is updated as each line is released, not at
   the end of the round.
 
 ## Reference text (normal pacing, times since the round began)

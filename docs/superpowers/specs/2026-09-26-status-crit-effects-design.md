@@ -1,4 +1,4 @@
-# Potential Phase 29a: Status Effects and Critical-Hit Effects
+# Potential Phase 30a: Status Effects and Critical-Hit Effects
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.
@@ -30,8 +30,8 @@ wounds, morale) can read.
    | Status | Effect |
    |---|---|
    | **Bleeding** | damage each combat round, stacking in severity |
-   | **Staggered** | loses the next action; adds interrupt pressure (29d) |
-   | **Knocked down** | loses the next action; can't guard (29c); is easier to hit and to leap over (29f) |
+   | **Staggered** | loses the next action; adds interrupt pressure (30d) |
+   | **Knocked down** | loses the next action; can't guard (30c); is easier to hit and to leap over (30f) |
    | **Armor broken** | lowered defense for the fight |
    | **Exposed** | the next hit against it is more likely to crit |
    | **Burning** | fire damage over time (magic) |
@@ -43,7 +43,7 @@ wounds, morale) can read.
    | Weapon | Crit effect |
    |---|---|
    | slashing (sword) | bleeding |
-   | stabbing (dagger) | deep bleeding and wound (29b) |
+   | stabbing (dagger) | deep bleeding and wound (30b) |
    | bludgeoning (mace, cudgel, club) | staggered |
    | cleaving and heavy (hammer, great club) | knocked down, or armor broken |
    | shooting (arrow, sling) | exposed; a sling staggers |
@@ -53,15 +53,15 @@ wounds, morale) can read.
    A weapon or mob can override its effect.
 3. **Spells do not critical hit.** The owner declined this (2026-09-27).
    Spell damage stays a single roll with no crit tier, no secondary
-   effect, and no pain reaction (28e only fires off a weapon crit). The
+   effect, and no pain reaction (29e only fires off a weapon crit). The
    `burning` and `overloaded` statuses above are for spells that
    deliberately apply them as part of their normal effect (e.g. a fire
    spell that always burns), not as a crit outcome. `magic` is dropped
    from the crit effect table.
-4. **Durations** count combat rounds (see 28f's cadence). Statuses end when
-   the fight ends, unless 29b turns them into a wound.
+4. **Durations** count combat rounds (see 29f's cadence). Statuses end when
+   the fight ends, unless 30b turns them into a wound.
 5. **Events and text:** applying, ticking, and expiring each emit an event
-   (28b). The status is named in the hit's parentheses
+   (29b). The status is named in the hit's parentheses
    (`(critical hit, 6 damage, bleeding)`). A bleed tick reads
    `The first skirmisher bleeds. (1 damage, bleeding)`.
 

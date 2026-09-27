@@ -1,4 +1,4 @@
-# Potential Phase 29e: Morale and Mercy
+# Potential Phase 30e: Morale and Mercy
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.

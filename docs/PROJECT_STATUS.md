@@ -65,7 +65,7 @@ instead of duplicating them.
   roadmap's tutorial is complete.
 - **Next:** the owner's choice. The onboarding roadmap is done; the
   handoff doc's later phases and the "Future ideas" row remain. A combat
-  roadmap (potential Phases 28a–28f, 29a–29f, and 30) is specified and
+  roadmap (potential Phases 29a–29f, 30a–30f, and 31) is specified and
   awaiting scheduling: see the
   [roadmap](superpowers/specs/2026-09-26-combat-presentation-roadmap.md).
 
@@ -117,19 +117,19 @@ instead of duplicating them.
 | 27b | Tutorial: Survival and Camp lessons | Complete: Weather Yard (904) and Campground (905) before the Gate; Survival passes on a real meal and drink (`survival.OnProvision`) plus `weather`/`temperature`/`strain`/`cargo`, with food and water given once for what the pack lacks; Camp passes on Rested from a real camp rest; course camps struck (`camping.AbandonCamp`) on pass, skip, leave, logout, and placement |
 | 27c | Tutorial: practice fight | Complete: Practice Yard (906) before the Gate; a squad of harmless straw soldiers (three footmen in front, an archer behind) per player; `practice` mobs beaten with no XP, drops, gold, kills, or `MobDeath` (`mobcommands.OnPracticeBeaten`); the gate is the squad beaten; death in the course decided (an ordinary death, ending the course as a skip) |
 | 27d | Tutorial: Alignment lesson, browser panel | Complete: the Oath Stone (907) before the Gate; `company alignment`, `company inspect corvin` (an outlaw a new company is refused), and `standing`; `company inspect` weighs any recruiter's candidate; a `Tutorial` GMCP package and web client window from the same checklist as the terminal; a course missing rooms is closed but kept |
-| 28a | Combat fixes from the 5v5 simulation | Proposed: [spec](superpowers/specs/2026-09-26-combat-fixes-design.md). The leader stuck on an unreachable target; a fight stalling with enemies standing (to reproduce with shipped config); `formation reach` in a fight |
-| 28b | Combat event stream and battle summary | Proposed: [spec](superpowers/specs/2026-09-26-combat-event-stream-design.md). One structured event per combat happening, which narration, pacing, the panel, and balancing read; an end-of-fight summary |
-| 28c | Narration voice (weapons and spells) | Proposed: [spec](superpowers/specs/2026-09-26-combat-narration-design.md). Dark, story-like text; `(N damage)` on every hit, `(critical hit, N damage)`; no `***`/caps/`!`; no charmed tag; an opener, "turns toward", and a closing line; indented death notices; spell text in the same voice |
-| 28d | Pronouns and ordinals | Proposed: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Mob pronouns (beasts "it"); "the first/second cutthroat" fixed for the fight |
-| 28e | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race |
-| 28f | Paced combat output | Proposed: [spec](superpowers/specs/2026-09-26-combat-pacing-design.md). Round lines released over time, with fast, normal (~6s), slow, and off settings; combat resolves every 2 game rounds (an 8-second combat round) |
-| 29a | Status effects and critical-hit effects (weapons only) | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, and others as buffs; crit effects by weapon type; spells do not critical hit |
-| 29b | Wounds, treatment, and `heal wounds` | Proposed: [spec](superpowers/specs/2026-09-26-wounds-treatment-design.md). Wound limits on healing; durable critical-hit wounds; one after-fight command using clerics, splints and bandages, or an inn physician; camp rest heals |
-| 29c | Pre-fight tactics | Proposed: [spec](superpowers/specs/2026-09-26-company-tactics-design.md). `company tactics` (focus, healing, interrupts, guards, rotation, mercy); roles and personalities; guard reactions; companions casting; no commands mid-fight |
-| 29d | Wind-ups, telegraphs, and interrupts | Proposed: [spec](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md). Wind-ups in whole rounds, interrupt thresholds with accumulated pressure, concentration, enemy casters |
-| 29e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
-| 29f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
-| 30 | Browser battle panel | Proposed: [spec](superpowers/specs/2026-09-26-battle-panel-design.md). Enemy and company grids with target lines, from the event stream |
+| 29a | Combat fixes from the 5v5 simulation | Proposed: [spec](superpowers/specs/2026-09-26-combat-fixes-design.md). The leader stuck on an unreachable target; a fight stalling with enemies standing (to reproduce with shipped config); `formation reach` in a fight |
+| 29b | Combat event stream and battle summary | Proposed: [spec](superpowers/specs/2026-09-26-combat-event-stream-design.md). One structured event per combat happening, which narration, pacing, the panel, and balancing read; an end-of-fight summary |
+| 29c | Narration voice (weapons and spells) | Proposed: [spec](superpowers/specs/2026-09-26-combat-narration-design.md). Dark, story-like text; `(N damage)` on every hit, `(critical hit, N damage)`; no `***`/caps/`!`; no charmed tag; an opener, "turns toward", and a closing line; indented death notices; spell text in the same voice |
+| 29d | Pronouns and ordinals | Proposed: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Mob pronouns (beasts "it"); "the first/second cutthroat" fixed for the fight |
+| 29e | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race |
+| 29f | Paced combat output | Proposed: [spec](superpowers/specs/2026-09-26-combat-pacing-design.md). Round lines released over time, with fast, normal (~6s), slow, and off settings; combat resolves every 2 game rounds (an 8-second combat round) |
+| 30a | Status effects and critical-hit effects (weapons only) | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, and others as buffs; crit effects by weapon type; spells do not critical hit |
+| 30b | Wounds, treatment, and `heal wounds` | Proposed: [spec](superpowers/specs/2026-09-26-wounds-treatment-design.md). Wound limits on healing; durable critical-hit wounds; one after-fight command using clerics, splints and bandages, or an inn physician; camp rest heals |
+| 30c | Pre-fight tactics | Proposed: [spec](superpowers/specs/2026-09-26-company-tactics-design.md). `company tactics` (focus, healing, interrupts, guards, rotation, mercy); roles and personalities; guard reactions; companions casting; no commands mid-fight |
+| 30d | Wind-ups, telegraphs, and interrupts | Proposed: [spec](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md). Wind-ups in whole rounds, interrupt thresholds with accumulated pressure, concentration, enemy casters |
+| 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
+| 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
+| 31 | Browser battle panel | Proposed: [spec](superpowers/specs/2026-09-26-battle-panel-design.md). Enemy and company grids with target lines, from the event stream |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
@@ -140,8 +140,8 @@ instead of duplicating them.
   round in a throwaway harness (not committed). Then iterated mock
   transcripts with the owner, covering weapons, spells, critical hits,
   pain, wounds, interrupts, morale, and pacing. The result is a spec packet
-  sorted into Phases 28a–28f (presentation), 29a–29f (tactical combat),
-  and 30 (the browser battle panel); see the
+  sorted into Phases 29a–29f (presentation), 30a–30f (tactical combat),
+  and 31 (the browser battle panel); see the
   [roadmap](superpowers/specs/2026-09-26-combat-presentation-roadmap.md).
   - The external combat reference's layered ideas were adopted. Its
     continuous timeline and sub-round beats were declined by the owner.
@@ -154,7 +154,7 @@ instead of duplicating them.
   formations.
 - **Step:** Design documents for owner scheduling. No code changed and no
   phase completed.
-- **Open, before 28f:** how to pace a round over 6 seconds when rounds
+- **Open, before 29f:** how to pace a round over 6 seconds when rounds
   last 4 (recommended: a combat round every 2 game rounds).
 
 ### Combat roadmap: pacing decided, spell crits declined, build order set (2026-09-27)
@@ -167,17 +167,30 @@ instead of duplicating them.
     keeps its existing 4-second round; only `DoCombat`'s own cadence
     changes. Normal pacing fills about 6 of the 8 seconds.
   - **Spell critical hits declined.** Spells keep a single damage roll,
-    with no crit tier, no weapon-style secondary effect, and no 28e pain
-    reaction. [29a](superpowers/specs/2026-09-26-status-crit-effects-design.md)'s
+    with no crit tier, no weapon-style secondary effect, and no 29e pain
+    reaction. [30a](superpowers/specs/2026-09-26-status-crit-effects-design.md)'s
     crit effect table now covers weapon subtypes only.
-  - **Build order set:** 28a, then 28b, then 28c→28d→28e, then 28f, then
-    29a→29b, then 29c, then 29d/29e/29f (flexible order, interrupts
-    first suggested), then 30 last. See the
+  - **Build order set:** 29a, then 29b, then 29c→29d→29e, then 29f, then
+    30a→30b, then 30c, then 30d/30e/30f (flexible order, interrupts
+    first suggested), then 31 last. See the
     [roadmap](superpowers/specs/2026-09-26-combat-presentation-roadmap.md#build-order-decided-2026-09-27).
 - **Why:** The owner approved the 8-second combat round, asked spell
   crits off the plan, and asked for a decided order rather than a menu.
-- **Step:** Roadmap and two specs (29a, 28f) updated. No code changed and
-  no phase completed; 28a is next when the owner starts implementation.
+- **Step:** Roadmap and two specs (30a, 29f) updated. No code changed and
+  no phase completed; 29a is next when the owner starts implementation.
+
+### Combat roadmap renumbered: 28a–30 → 29a–31 (2026-09-27)
+
+- **What:** Before merging this spec branch to `master`, found that a real
+  Phase 28 (item weights and the company's whole load) had landed and
+  completed on `master` while this branch's speculative combat phases were
+  also numbered 28a–28f/29a–29f/30. Renumbered the whole combat packet up
+  by one phase group: 28a–28f → 29a–29f, 29a–29f → 30a–30f, and the
+  battle panel 30 → 31. Every spec file's heading, cross-reference, and
+  the roadmap and status tables were updated to match; no content changed.
+- **Why:** Two features can't both claim "Phase 28"; the real, completed
+  phase keeps its number and the still-speculative one moves.
+- **Step:** Docs only, then merged to `master`.
 
 ### Phase 27d: tutorial Alignment lesson and browser panel (2026-09-25)
 

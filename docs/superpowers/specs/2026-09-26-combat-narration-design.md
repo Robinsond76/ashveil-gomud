@@ -1,4 +1,4 @@
-# Potential Phase 28c: Narration Voice (Weapons and Spells)
+# Potential Phase 29c: Narration Voice (Weapons and Spells)
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26); needs a design pass and plan.
@@ -43,7 +43,7 @@ Status: owner-approved direction (2026-09-26); needs a design pass and plan.
 
 ## Scope
 
-Combat text is rendered from the [28b event stream](2026-09-26-combat-event-stream-design.md),
+Combat text is rendered from the [29b event stream](2026-09-26-combat-event-stream-design.md),
 not written inline by the combat code.
 
 
@@ -107,9 +107,9 @@ not written inline by the combat code.
     target;
   - a multi-target heal prints one line listing everyone healed.
 - **Where the mechanics went:** companion casting is in the
-  [tactics spec](2026-09-26-company-tactics-design.md) (29c). Spell
-  critical hits are in [29a](2026-09-26-status-crit-effects-design.md).
-  Enemy casters are in [29d](2026-09-26-telegraphs-interrupts-design.md).
+  [tactics spec](2026-09-26-company-tactics-design.md) (30c). Spell
+  critical hits are in [30a](2026-09-26-status-crit-effects-design.md).
+  Enemy casters are in [30d](2026-09-26-telegraphs-interrupts-design.md).
 
 ```
 > cast mm captain
@@ -152,7 +152,7 @@ Brother Oswin raises his arms, and a warm light washes over the company.
 
 ## Reference text (approved mock, 2026-09-26)
 
-The target voice. It uses 28d's pronouns and ordinals and 28e's pain lines,
+The target voice. It uses 29d's pronouns and ordinals and 29e's pain lines,
 which land in later phases. Damage numbers are illustrative.
 
 ```

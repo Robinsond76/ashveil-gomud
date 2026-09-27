@@ -32,57 +32,57 @@ the fight went.
 
 ## Phases
 
-### Phase 28 — Combat presentation
+### Phase 29 — Combat presentation
 
 | Phase | Spec | Depends on |
 |---|---|---|
-| 28a Combat fixes | [combat fixes](2026-09-26-combat-fixes-design.md) | Phase 11 wiring |
-| 28b Combat event stream and battle summary | [event stream](2026-09-26-combat-event-stream-design.md) | — |
-| 28c Narration voice (weapons and spells) | [narration](2026-09-26-combat-narration-design.md) | 28b |
-| 28d Pronouns and ordinals | [pronouns and ordinals](2026-09-26-combat-pronouns-ordinals-design.md) | 28c |
-| 28e Pain reactions | [pain reactions](2026-09-26-combat-pain-reactions-design.md) | 28c, 28d |
-| 28f Paced combat output | [pacing](2026-09-26-combat-pacing-design.md) | 28b |
+| 29a Combat fixes | [combat fixes](2026-09-26-combat-fixes-design.md) | Phase 11 wiring |
+| 29b Combat event stream and battle summary | [event stream](2026-09-26-combat-event-stream-design.md) | — |
+| 29c Narration voice (weapons and spells) | [narration](2026-09-26-combat-narration-design.md) | 29b |
+| 29d Pronouns and ordinals | [pronouns and ordinals](2026-09-26-combat-pronouns-ordinals-design.md) | 29c |
+| 29e Pain reactions | [pain reactions](2026-09-26-combat-pain-reactions-design.md) | 29c, 29d |
+| 29f Paced combat output | [pacing](2026-09-26-combat-pacing-design.md) | 29b |
 
-### Phase 29 — Tactical combat
-
-| Phase | Spec | Depends on |
-|---|---|---|
-| 29a Status effects and critical-hit effects (weapons only) | [status and crit effects](2026-09-26-status-crit-effects-design.md) | 28b; 28c for text |
-| 29b Wounds, treatment, and `heal wounds` | [wounds](2026-09-26-wounds-treatment-design.md) | 29a |
-| 29c Pre-fight tactics: roles, personalities, guards, companion casting | [tactics](2026-09-26-company-tactics-design.md) | 28b, 29a |
-| 29d Wind-ups, telegraphs, and interrupts | [interrupts](2026-09-26-telegraphs-interrupts-design.md) | 29a, 29c |
-| 29e Morale and mercy | [morale and mercy](2026-09-26-morale-mercy-design.md) | 28b, 29c |
-| 29f Battlefield conditions | [battlefield](2026-09-26-battlefield-conditions-design.md) | 29c |
-
-### Phase 30 — Browser battle panel
+### Phase 30 — Tactical combat
 
 | Phase | Spec | Depends on |
 |---|---|---|
-| 30 Battle panel | [battle panel](2026-09-26-battle-panel-design.md) | 28b, 28d |
+| 30a Status effects and critical-hit effects (weapons only) | [status and crit effects](2026-09-26-status-crit-effects-design.md) | 29b; 29c for text |
+| 30b Wounds, treatment, and `heal wounds` | [wounds](2026-09-26-wounds-treatment-design.md) | 30a |
+| 30c Pre-fight tactics: roles, personalities, guards, companion casting | [tactics](2026-09-26-company-tactics-design.md) | 29b, 30a |
+| 30d Wind-ups, telegraphs, and interrupts | [interrupts](2026-09-26-telegraphs-interrupts-design.md) | 30a, 30c |
+| 30e Morale and mercy | [morale and mercy](2026-09-26-morale-mercy-design.md) | 29b, 30c |
+| 30f Battlefield conditions | [battlefield](2026-09-26-battlefield-conditions-design.md) | 30c |
+
+### Phase 31 — Browser battle panel
+
+| Phase | Spec | Depends on |
+|---|---|---|
+| 31 Battle panel | [battle panel](2026-09-26-battle-panel-design.md) | 30b, 30d |
 
 ### Build order (decided 2026-09-27)
 
-1. **28a** — independent, fixes behaviour rather than text; a quick,
+1. **29a** — independent, fixes behaviour rather than text; a quick,
    low-risk first slice.
-2. **28b** — the event stream is the foundation every later phase reports
+2. **29b** — the event stream is the foundation every later phase reports
    through, so it comes before any text or tactical work.
-3. **28c → 28d → 28e** — the narration voice, then pronouns/ordinals, then
+3. **29c → 29d → 29e** — the narration voice, then pronouns/ordinals, then
    pain reactions, in that order since each extends the one before.
-4. **28f** — pacing, once the text it's pacing out is settled.
-5. **29a → 29b** — status/crit effects, then wounds, which is built on
+4. **29f** — pacing, once the text it's pacing out is settled.
+5. **30a → 30b** — status/crit effects, then wounds, which is built on
    them.
-6. **29c** — pre-fight tactics (roles, personalities, guards, companion
-   casting). This is the largest slice in Phase 29 and unlocks 29d–29f.
-7. **29d → 29e → 29f** — telegraphs/interrupts, morale/mercy, and
-   battlefield conditions, each building on 29c's tactics layer. Order
-   among these three is flexible; interrupts first gives 29e's "breaking
+6. **30c** — pre-fight tactics (roles, personalities, guards, companion
+   casting). This is the largest slice in Phase 30 and unlocks 30d–30f.
+7. **30d → 30e → 30f** — telegraphs/interrupts, morale/mercy, and
+   battlefield conditions, each building on 30c's tactics layer. Order
+   among these three is flexible; interrupts first gives 30e's "breaking
    under pressure" more to draw on.
-8. **30** — the battle panel, last. It only strictly needs 28b and 28d,
-   but showing the grid is far more interesting once 29c's roles,
+8. **31** — the battle panel, last. It only strictly needs 29b and 29d,
+   but showing the grid is far more interesting once 30c's roles,
    targeting, and guards give it something to display.
 
-This is Phase 28 (presentation) end to end, then Phase 29 (tactics) end to
-end, then Phase 30. A phase is never started before the phases it depends
+This is Phase 29 (presentation) end to end, then Phase 30 (tactics) end to
+end, then Phase 31. A phase is never started before the phases it depends
 on (per the tables above) are complete and reviewed.
 
 ## Decisions carried forward (owner, 2026-09-26)
@@ -116,7 +116,7 @@ on (per the tables above) are complete and reviewed.
   every second game round (`CombatEveryRounds: 2`); every other
   round-based system (survival, drift, chemistry, buffs, autosave) keeps
   the existing 4-second game round unchanged. See
-  [28f](2026-09-26-combat-pacing-design.md).
+  [29f](2026-09-26-combat-pacing-design.md).
 - **Paced output:** each combat round's lines are paced out on screen over
   about 6 of its 8 seconds, with a fast, normal, or slow setting (and
   off, for screen readers or by preference).
@@ -154,7 +154,7 @@ on (per the tables above) are complete and reviewed.
   adopted. New values are derived from GoMud's existing stats.
 - **Spell critical hits:** declined by the owner on 2026-09-27. Spells
   keep a single damage roll with no crit tier, no weapon-style secondary
-  effect, and no 28e pain reaction. [29a](2026-09-26-status-crit-effects-design.md)
+  effect, and no 29e pain reaction. [30a](2026-09-26-status-crit-effects-design.md)
   reflects this: its crit effect table covers weapon subtypes only.
 
 ## Integration and review gate
