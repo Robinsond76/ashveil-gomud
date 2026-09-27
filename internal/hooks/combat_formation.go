@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
@@ -25,7 +26,14 @@ import (
 // this round — the caller must leave Aggro untouched so the same target
 // becomes legal again automatically once whatever blocks it dies (11c's
 // self-healing model; see internal/formationcombat's own package doc).
+// A target not placed in f fails open (ok=true, no redirect).
 func resolveAttackTarget(attackerCol int, f company.Formation, originalTarget company.MemberKey, alive map[company.MemberKey]bool, reach formationcombat.Reach) (finalTarget company.MemberKey, ok bool) {
+	if _, _, placed := f.Find(originalTarget); !placed {
+		// A member not placed in the formation has no position to shield
+		// or block it: the attack proceeds directly (Phase 29a; before, an
+		// unplaced company member could never be struck).
+		return originalTarget, true
+	}
 	target := originalTarget
 	if interceptor, intercepted := formationcombat.InterceptFrontRow(f, originalTarget, alive); intercepted {
 		target = interceptor
@@ -57,12 +65,12 @@ func gateFormationAttack(user *users.UserRecord, defMob *mobs.Mob, room *rooms.R
 func resolveEnemyAttack(attackerCol int, defenderInstanceId int, room *rooms.Room, reach formationcombat.Reach) (*mobs.Mob, bool) {
 	original := mobs.GetInstance(defenderInstanceId)
 
-	party, ok := resolveEnemyParty(room, defenderInstanceId)
+	party, ok := enemyparty.PartyOf(room, defenderInstanceId)
 	if !ok {
 		return original, true
 	}
 
-	alive := aliveMapForParty(party)
+	alive := enemyparty.Alive(party)
 	targetKey := mobparty.MemberKeyFor(defenderInstanceId)
 
 	finalKey, ok := resolveAttackTarget(attackerCol, party.Formation, targetKey, alive, reach)
@@ -189,48 +197,6 @@ func resolvePlayerColumn(leaderUserID int) (int, bool) {
 	return col, true
 }
 
-// resolveEnemyParty finds the assembled mobparty.Party (fresh, never
-// cached — matching 11a's own design) that currently contains
-// targetInstanceId among the room's hostile (non-charmed) mobs.
-func resolveEnemyParty(room *rooms.Room, targetInstanceId int) (mobparty.Party, bool) {
-	summaries := hostileMobSummaries(room)
-	for _, p := range mobparty.Assemble(summaries) {
-		for _, id := range p.Members {
-			if id == targetInstanceId {
-				return p, true
-			}
-		}
-	}
-	return mobparty.Party{}, false
-}
-
-func hostileMobSummaries(room *rooms.Room) []mobparty.MobSummary {
-	var summaries []mobparty.MobSummary
-	for _, instanceId := range room.GetMobs() {
-		mob := mobs.GetInstance(instanceId)
-		if mob == nil || mob.Character.IsCharmed() {
-			continue
-		}
-		summaries = append(summaries, mobparty.MobSummary{
-			InstanceId: instanceId,
-			Groups:     mob.Groups,
-			EHP:        effectiveHP(mob.Character.HealthMax.Value, mob.Character.GetDefense()),
-		})
-	}
-	return summaries
-}
-
-// aliveMapForParty reports, for every member of an assembled party,
-// whether its live mob instance still exists and has positive HP.
-func aliveMapForParty(p mobparty.Party) map[company.MemberKey]bool {
-	alive := make(map[company.MemberKey]bool, len(p.Members))
-	for _, id := range p.Members {
-		mob := mobs.GetInstance(id)
-		alive[mobparty.MemberKeyFor(id)] = mob != nil && mob.Character.Health > 0
-	}
-	return alive
-}
-
 // gateMobVsPlayerAttack decides whether mob's attack on defUser should be
 // redirected to an intercepting companion (11c front-row interception) or
 // skipped this round (11c legality), before the caller resolves the
@@ -283,10 +249,10 @@ func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, de
 }
 
 // resolveHostileAttackerColumn returns a hostile mob's own column within
-// its assembled enemy party (mirrors resolveEnemyParty, applied to the
+// its assembled enemy party (mirrors enemyparty.PartyOf, applied to the
 // attacker instead of a target).
 func resolveHostileAttackerColumn(room *rooms.Room, attackerInstanceId int) (int, bool) {
-	party, ok := resolveEnemyParty(room, attackerInstanceId)
+	party, ok := enemyparty.PartyOf(room, attackerInstanceId)
 	if !ok {
 		return 0, false
 	}
@@ -462,33 +428,6 @@ func resolveInterceptedAttackOnLeader(mob *mobs.Mob, leader *users.UserRecord, m
 	}
 }
 
-// effectiveHP mirrors combat.RankMobs' own EHP formula
-// (internal/combat/mob_rank.go:164-171), applied directly to a live
-// combatant's current HealthMax/Defense instead of a simulated spec —
-// cheap enough to call once per hostile mob per round, unlike RankMobs
-// itself which ranks every mob spec in the game.
-func effectiveHP(hp, defense int) float64 {
-	defFrac := float64(defense) / 200.0
-	if defFrac > 0.95 {
-		defFrac = 0.95
-	}
-	if defFrac < 0 {
-		defFrac = 0
-	}
-	return float64(hp) / (1.0 - defFrac)
-}
-
-// firstHostilePartyInRoom returns the first assembled hostile party
-// currently in room, if any. mobparty.Assemble is never cached (11a's own
-// design), so this is always a fresh snapshot.
-func firstHostilePartyInRoom(room *rooms.Room) (mobparty.Party, bool) {
-	parties := mobparty.Assemble(hostileMobSummaries(room))
-	if len(parties) == 0 {
-		return mobparty.Party{}, false
-	}
-	return parties[0], true
-}
-
 // partyCombatants adapts an assembled party's members into
 // engagement.Combatant values (live HP, formation row/col) for
 // engagement.AssignTarget. A member with no live mob instance reports
@@ -506,73 +445,96 @@ func partyCombatants(party mobparty.Party, alive map[company.MemberKey]bool) []e
 	return combatants
 }
 
-// reassignEnemyTarget picks a new legal target (11b's weakest-HP
-// preference) for an attacker in attackerCol, from whichever hostile
-// party is currently in room. ok=false means no hostile party is present,
-// or none of its members are both alive and legal — the caller must fall
-// back to its existing "target lost, give up" behavior unchanged.
-func reassignEnemyTarget(attackerCol int, reach formationcombat.Reach, room *rooms.Room) (int, bool) {
-	party, ok := firstHostilePartyInRoom(room)
-	if !ok {
+// reassignWithinLostParty picks a new target (11b's weakest-HP preference)
+// for a company attacker whose target lostId was just found dead or gone
+// on its own turn. It chooses from lostId's own party while that party can
+// still be assembled in room (a dead member stays in the room until its
+// death is processed); once the lost member is gone, from a party in room
+// already hostile to leaderId. It never turns on a bystander party. An
+// attacker not placed in the formation fails open, as at the gates.
+// ok=false leaves the caller's "target lost" behavior unchanged; the
+// engagement upkeep at the start of the next round (combat_engagement.go)
+// catches anything this misses.
+func reassignWithinLostParty(leaderId, lostId int, col int, placed bool, reach formationcombat.Reach, room *rooms.Room) (int, bool) {
+	if room == nil || lostId <= 0 {
 		return 0, false
 	}
-
-	alive := aliveMapForParty(party)
-	candidates := partyCombatants(party, alive)
-
-	legal := func(attacker, defender engagement.Combatant) bool {
-		return formationcombat.Legal(attackerCol, party.Formation, mobparty.MemberKeyFor(defender.ID), alive, reach)
+	if party, ok := enemyparty.PartyOf(room, lostId); ok {
+		return chooseFromParty(col, placed, party, enemyparty.Alive(party), reach)
 	}
+	for _, party := range enemyparty.Parties(room) {
+		if !hostileTo(party, leaderId) {
+			continue
+		}
+		if id, ok := chooseFromParty(col, placed, party, enemyparty.Alive(party), reach); ok {
+			return id, true
+		}
+	}
+	return 0, false
+}
 
-	attacker := engagement.Combatant{Col: attackerCol}
-	return engagement.AssignTarget(attacker, candidates, engagement.Weakest, legal)
+// hostileTo reports whether any living member of party attacks leaderId on
+// sight: a hostile mob, or one whose group the leader has made hostile.
+func hostileTo(party mobparty.Party, leaderId int) bool {
+	for _, instanceId := range party.Members {
+		mob := mobs.GetInstance(instanceId)
+		if mob == nil || mob.Character.Health < 1 {
+			continue
+		}
+		if mob.Hostile {
+			return true
+		}
+		for _, group := range mob.Groups {
+			if mobs.IsHostile(group, leaderId) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // reassignPlayerTarget attempts 11b's reassignment-on-target-loss for a
 // player whose current mob target just became invalid. On success it sets
 // a new Aggro target and returns true — the caller skips its own "target
 // lost" message/clear, and combat resumes normally next round against the
-// new target. false means unchanged pre-existing behavior: no company
-// formation, or no living legal replacement in any hostile party
-// currently in the room.
+// new target. false means unchanged pre-existing behavior: no company, or
+// no living legal replacement in the lost target's party.
 func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
-	col, ok := resolvePlayerColumn(user.UserId)
-	if !ok {
+	f, ok := company.FormationFor(user.UserId)
+	if !ok || user.Character.Aggro == nil {
 		return false
 	}
+	_, col, placed := f.Find(company.LeaderMemberKey)
 	reach := combat.ResolveReach(user.Character, false)
-	newTargetId, ok := reassignEnemyTarget(col, reach, room)
+	newTargetId, ok := reassignWithinLostParty(user.UserId, user.Character.Aggro.MobInstanceId, col, placed, reach, room)
 	if !ok {
 		return false
 	}
-	user.Character.SetAggro(0, newTargetId, characters.DefaultAttack)
+	user.Character.SetAggro(0, newTargetId, attackType(user.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+	user.SendText(fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, mobName(newTargetId)))
 	return true
 }
 
 // reassignCompanionTarget is reassignPlayerTarget's companion-mob
 // counterpart. It only applies when mob is a currently-attached company
-// member (hostile mobs whose own target died are not reassigned — that's
-// enemy AI, out of scope; see this plan's Design Decision 1).
+// member; hostile mobs are kept engaged by the round-start upkeep instead.
 func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	leaderUserID, key, isCompanion := company.LeaderAndKeyForInstance(mob.InstanceId)
-	if !isCompanion {
+	if !isCompanion || mob.Character.Aggro == nil {
 		return false
 	}
 	f, ok := company.FormationFor(leaderUserID)
 	if !ok {
 		return false
 	}
-	_, col, found := f.Find(key)
-	if !found {
-		return false
-	}
+	_, col, placed := f.Find(key)
 	reach := combat.ResolveReach(&mob.Character, mob.Reach)
-	newTargetId, ok := reassignEnemyTarget(col, reach, room)
+	newTargetId, ok := reassignWithinLostParty(leaderUserID, mob.Character.Aggro.MobInstanceId, col, placed, reach, room)
 	if !ok {
 		return false
 	}
-	mob.Character.SetAggro(0, newTargetId, characters.DefaultAttack)
+	mob.Character.SetAggro(0, newTargetId, attackType(mob.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 	return true
 }

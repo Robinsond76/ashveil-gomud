@@ -5,9 +5,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -211,11 +216,19 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 			return true, nil
 		}
 
-		// A read-only demo of the Phase 11c legality predicate against the
-		// company's own formation (its members are the only formation
-		// live outside of combat) — plain melee (ReachNone), the
-		// strictest case. There is no formation-wide "dead" tracking
-		// outside combat, so every placed member counts as alive here.
+		// Phase 29a: in a fight, answer against the enemy the member is
+		// fighting, with its own reach.
+		if text, inFight := m.reachInFight(user, key, col); inFight {
+			user.SendText(text)
+			return true, nil
+		}
+
+		// Out of a fight, a read-only demo of the Phase 11c legality
+		// predicate against the company's own formation (its members are
+		// the only formation live outside of combat) — plain melee
+		// (ReachNone), the strictest case. There is no formation-wide
+		// "dead" tracking outside combat, so every placed member counts as
+		// alive here.
 		alive := map[domain.MemberKey]bool{domain.LeaderMemberKey: true}
 		for _, companion := range record.Companions {
 			alive[domain.CompanionMemberKey(companion.ID)] = true
@@ -229,12 +242,92 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 			names = append(names, m.memberName(user.UserId, target))
 		}
 		if len(names) == 0 {
-			user.SendText(fmt.Sprintf("%s has no legal plain-melee targets within the company right now.", m.memberName(user.UserId, key)))
+			user.SendText(fmt.Sprintf("Out of a fight, this shows plain-melee reach within your own company: %s can reach no one.", m.memberName(user.UserId, key)))
 			return true, nil
 		}
-		user.SendText(fmt.Sprintf("%s could plain-melee-reach: %s", m.memberName(user.UserId, key), strings.Join(names, ", ")))
+		user.SendText(fmt.Sprintf("Out of a fight, this shows plain-melee reach within your own company: %s could reach %s.", m.memberName(user.UserId, key), strings.Join(names, ", ")))
 	default:
 		user.SendText(formationUsage)
 	}
 	return true, nil
+}
+
+// reachInFight answers `formation reach` for a member in a fight: the
+// members of the enemy party it is fighting (its own target's party, else
+// any party engaged with the company) it could strike right now, with its
+// own reach (weapon or innate). inFight=false means the member (or the
+// company) isn't fighting an enemy party here.
+func (m *CompanyModule) reachInFight(leader *users.UserRecord, key domain.MemberKey, col int) (string, bool) {
+	room := rooms.LoadRoom(leader.Character.RoomId)
+	if room == nil {
+		return "", false
+	}
+	var aggro *characters.Aggro
+	var reach formationcombat.Reach
+	if key == domain.LeaderMemberKey {
+		aggro = leader.Character.Aggro
+		reach = combat.ResolveReach(leader.Character, false)
+	} else {
+		companionID, ok := domain.CompanionIDFromMemberKey(key)
+		if !ok {
+			return "", false
+		}
+		instanceID, ok := m.instance(leader.UserId, companionID)
+		if !ok {
+			return "", false
+		}
+		mob := mobs.GetInstance(instanceID)
+		if mob == nil || mob.Character.RoomId != room.RoomId {
+			return "", false
+		}
+		aggro = mob.Character.Aggro
+		reach = combat.ResolveReach(&mob.Character, mob.Reach)
+	}
+
+	party, ok := mobparty.Party{}, false
+	if aggro != nil && aggro.MobInstanceId > 0 {
+		party, ok = enemyparty.PartyOf(room, aggro.MobInstanceId)
+	}
+	if !ok {
+		party, ok = m.engagedParty(leader, room)
+	}
+	if !ok {
+		return "", false
+	}
+
+	name := m.memberName(leader.UserId, key)
+	alive := enemyparty.Alive(party)
+	names := []string{}
+	for _, target := range formationcombat.LegalTargets(col, party.Formation, alive, reach) {
+		if instanceID, ok := mobparty.InstanceIdFromMemberKey(target); ok {
+			if mob := mobs.GetInstance(instanceID); mob != nil {
+				names = append(names, mob.Character.Name)
+			}
+		}
+	}
+	if len(names) == 0 {
+		return fmt.Sprintf("In this fight, %s can't reach any of the enemy right now.", name), true
+	}
+	return fmt.Sprintf("In this fight, %s can reach: %s.", name, strings.Join(names, ", ")), true
+}
+
+// engagedParty returns an enemy party in room that is fighting the leader
+// or one of the leader's companions.
+func (m *CompanyModule) engagedParty(leader *users.UserRecord, room *rooms.Room) (mobparty.Party, bool) {
+	companions := map[int]bool{}
+	for _, instanceID := range m.instances[leader.UserId] {
+		companions[instanceID] = true
+	}
+	for _, party := range enemyparty.Parties(room) {
+		for _, instanceID := range party.Members {
+			mob := mobs.GetInstance(instanceID)
+			if mob == nil || mob.Character.Health < 1 || mob.Character.Aggro == nil {
+				continue
+			}
+			if mob.Character.Aggro.UserId == leader.UserId || companions[mob.Character.Aggro.MobInstanceId] {
+				return party, true
+			}
+		}
+	}
+	return mobparty.Party{}, false
 }

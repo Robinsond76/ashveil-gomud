@@ -66,10 +66,13 @@ func TestResolveAttackTargetSkipsWhenFrontIsDeadAndALivingMiddleStillBlocks(t *t
 	assert.False(t, ok)
 }
 
-func TestResolveAttackTargetSkipsWhenTargetGoneAndNoFormationEntry(t *testing.T) {
+func TestResolveAttackTargetFailsOpenForAnUnplacedTarget(t *testing.T) {
+	// Phase 29a: a company member not placed in the formation has no
+	// position to be shielded or blocked; before, it could never be struck.
 	f := workedExample(t)
-	_, ok := resolveAttackTarget(1, f, company.MemberKey("ghost"), allAlive(keyA, keyB, keyC), formationcombat.ReachNone)
-	assert.False(t, ok)
+	final, ok := resolveAttackTarget(1, f, company.MemberKey("ghost"), allAlive(keyA, keyB, keyC), formationcombat.ReachNone)
+	require.True(t, ok)
+	assert.Equal(t, company.MemberKey("ghost"), final)
 }
 
 func TestResolveAttackTargetOutOfLateralRangeSkipsEvenWithInterception(t *testing.T) {
@@ -110,13 +113,4 @@ func TestPartyCombatantsUsesFormationPositionAndAliveHP(t *testing.T) {
 	for _, c := range combatants {
 		assert.Equal(t, 0, c.HP, "no mob instance 1/2 exists in this test process")
 	}
-}
-
-func TestEffectiveHPMatchesRankMobsFormula(t *testing.T) {
-	// 200 HP, 0 defense: no mitigation, EHP == HP.
-	assert.InDelta(t, 200.0, effectiveHP(200, 0), 0.001)
-	// 100 HP, 100 defense (50% mitigation): EHP == 200.
-	assert.InDelta(t, 200.0, effectiveHP(100, 100), 0.001)
-	// Defense clamps at 95% mitigation even for very high defense values.
-	assert.InDelta(t, 100.0/0.05, effectiveHP(100, 10000), 0.001)
 }

@@ -90,15 +90,22 @@ What happened:
         uses), so it can't wear off mid-fight.
      2. **Every living company member** in the room with no target,
         or with a target that is dead, gone, or out of reach, takes the
-        weakest legal member of the party. A member whose
-        target is still legal is never moved. This covers the leader
-        too.
+        weakest legal member of the party. This covers the leader too.
+        - **"Out of reach"** means the attack gate would skip it (`You
+          can't reach that target from here.`). A target the gate lets
+          through, legally or by 11c's front-row interception, is never
+          moved. So an attack on a shielded back-row member is still
+          caught by the one in front, exactly as before (found by the
+          tutorial's practice-fight wiring test during implementation).
      3. **Every living party member** is treated the same way against the
         company: the weakest legal company member.
    - **Nothing legal:** a member keeps its current target, and the gates
      go on skipping it until something changes (11c's self-healing model).
-   - **Left alone:** members whose `Aggro` is a spell cast or a ranged
-     attack through an exit, and downed players.
+   - **Left alone:** members whose `Aggro` is a spell cast, a backstab,
+     or a shot through an exit, and downed players.
+   - **Same-room shots count:** a same-room `shoot` (`Aggro.Type`
+     `Shooting` with no exit, as Ysolde's sling uses) is an ordinary
+     attack. It is counted and retargeted, and keeps its type.
 2. **F1: reassign, not refuse (recommendation applied).**
    - **What the leader sees:** `You can't reach the bandit captain from
      here. You turn on the bandit cutthroat.` They swing at the new
@@ -121,15 +128,27 @@ What happened:
      out of scope". Here it is limited to keeping the party *engaged*.
      There is still no preference beyond "weakest legal"; 30c's
      personalities replace that.
-5. **Unplaced company members fail open for reassignment** as they do at
-   the gates: any living party member is eligible.
-   - **Not fixed here:** an unplaced member is not a legal target for
-     enemies (`formationcombat.Legal` needs a position). That was so
-     before this phase, and it is recorded as a known issue.
-6. **The room text is plain and minimal.** A mob that turns says
+5. **Unplaced company members fail open, on both sides.**
+   - **As attackers,** they fail open for reassignment as they do at the
+     gates: any living party member is eligible.
+   - **As targets:** before this phase, an unplaced member could **never
+     be struck**. `resolveAttackTarget` treated "not in the formation" as
+     illegal, so a company that never set its formation was invulnerable.
+     The reproduction showed the captain aiming at unplaced Tamsin for ten
+     rounds without landing a blow. Now an unplaced target has no position
+     to shield or block it, and the attack proceeds directly. Found during
+     reproduction; fixed here as an exploit.
+6. **The in-turn reassignment never turns on a bystander.** 11b's
+   `reassignPlayerTarget`/`reassignCompanionTarget` used to choose from
+   the first party in the room, which could be a shopkeeper.
+   - **Now:** they choose from the lost target's own party while it can
+     still be assembled. Once that member is gone, they choose from a
+     party hostile to the leader (a `hostile` mob, or a group made hostile
+     by the fight).
+7. **The room text is plain and minimal.** A mob that turns says
    `Garrick Vane turns on the bandit bruiser.` 29c restyles every combat
    line, this one included.
-7. **F4: `formation reach` in a fight answers against the enemy.**
+8. **F4: `formation reach` in a fight answers against the enemy.**
    - **Which party:** the one the member is fighting (its target's
      party), or else a party engaged with the company.
    - **Which reach:** the member's own (weapon or innate), not plain
@@ -140,11 +159,11 @@ What happened:
    - **Outside a fight:** the demonstration is kept, and now says so:
      `Out of a fight, this shows plain-melee reach within your own
      company: ...`.
-8. **F3: wiring tests load the shipped config.** The new wiring test runs
+9. **F3: wiring tests load the shipped config.** The new wiring test runs
    `configs.ReloadConfig()` from the repo root, as the walking and
    exposure modules' tests already do, and asserts level-1 companions
    have more than 1 HP.
-9. **F5 and F6 need no code.** F5 (mention the dark) moves to 29c's
+10. **F5 and F6 need no code.** F5 (mention the dark) moves to 29c's
    opener, and F6 was a harness artifact.
 
 ## Module
@@ -154,8 +173,9 @@ What happened:
     called at the top of `DoCombat`;
   - pure selection helpers, testable without a live world, where the
     logic allows;
-  - `reassignEnemyTarget` takes the party to choose from, instead of
-    always `firstHostilePartyInRoom`.
+  - `reassignEnemyTarget`/`firstHostilePartyInRoom` are replaced by
+    `reassignWithinLostParty` (decision 6);
+  - `resolveAttackTarget` fails open for an unplaced target (decision 5).
 - **A new `internal/enemyparty` package:** the live-room adapters
   (`Parties`, `PartyOf`, `Alive`) move out of `hooks` so that
   `modules/company` can answer `formation reach` without importing
@@ -202,4 +222,3 @@ neither is anything this phase adds.
 - **All combat text:** 29c.
 - **The event stream:** 29b.
 - **Enemy targeting personalities:** 30c.
-- **Unplaced members as enemy targets:** a known issue.

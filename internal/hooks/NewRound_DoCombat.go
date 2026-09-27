@@ -24,6 +24,10 @@ func DoCombat(e events.Event) events.ListenerReturn {
 
 	evt := e.(events.NewRound)
 
+	// Ashveil Phase 29a: keep every engaged company and enemy party
+	// fighting as a whole before this round's attacks are resolved.
+	upkeepEngagements()
+
 	//
 	// Combat rounds
 	//
