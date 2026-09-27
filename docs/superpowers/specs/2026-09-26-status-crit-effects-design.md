@@ -48,12 +48,16 @@ wounds, morale) can read.
    | cleaving and heavy (hammer, great club) | knocked down, or armor broken |
    | shooting (arrow, sling) | exposed; a sling staggers |
    | claws | bleeding |
-   | magic | burning, or overloaded, by spell |
    | shield | stunned |
 
    A weapon or mob can override its effect.
-3. **Spell criticals** exist (owner-approved with the reference's §19).
-   They carry the spell's elemental effect.
+3. **Spells do not critical hit.** The owner declined this (2026-09-27).
+   Spell damage stays a single roll with no crit tier, no secondary
+   effect, and no pain reaction (28e only fires off a weapon crit). The
+   `burning` and `overloaded` statuses above are for spells that
+   deliberately apply them as part of their normal effect (e.g. a fire
+   spell that always burns), not as a crit outcome. `magic` is dropped
+   from the crit effect table.
 4. **Durations** count combat rounds (see 28f's cadence). Statuses end when
    the fight ends, unless 29b turns them into a wound.
 5. **Events and text:** applying, ticking, and expiring each emit an event

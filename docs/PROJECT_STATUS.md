@@ -5,7 +5,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-26
+- **Last updated:** 2026-09-27
 - **HEAD:** Phase 27d (tutorial Alignment lesson and browser panel) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27c is on `master`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
@@ -122,8 +122,8 @@ instead of duplicating them.
 | 28c | Narration voice (weapons and spells) | Proposed: [spec](superpowers/specs/2026-09-26-combat-narration-design.md). Dark, story-like text; `(N damage)` on every hit, `(critical hit, N damage)`; no `***`/caps/`!`; no charmed tag; an opener, "turns toward", and a closing line; indented death notices; spell text in the same voice |
 | 28d | Pronouns and ordinals | Proposed: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Mob pronouns (beasts "it"); "the first/second cutthroat" fixed for the fight |
 | 28e | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race |
-| 28f | Paced combat output | Proposed: [spec](superpowers/specs/2026-09-26-combat-pacing-design.md). Round lines released over time, with fast, normal (~6s), slow, and off settings; open: a combat round every 2 game rounds (recommended) |
-| 29a | Status effects and critical-hit effects | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, burning, and others as buffs; crit effects by weapon type; spell crits |
+| 28f | Paced combat output | Proposed: [spec](superpowers/specs/2026-09-26-combat-pacing-design.md). Round lines released over time, with fast, normal (~6s), slow, and off settings; combat resolves every 2 game rounds (an 8-second combat round) |
+| 29a | Status effects and critical-hit effects (weapons only) | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, and others as buffs; crit effects by weapon type; spells do not critical hit |
 | 29b | Wounds, treatment, and `heal wounds` | Proposed: [spec](superpowers/specs/2026-09-26-wounds-treatment-design.md). Wound limits on healing; durable critical-hit wounds; one after-fight command using clerics, splints and bandages, or an inn physician; camp rest heals |
 | 29c | Pre-fight tactics | Proposed: [spec](superpowers/specs/2026-09-26-company-tactics-design.md). `company tactics` (focus, healing, interrupts, guards, rotation, mercy); roles and personalities; guard reactions; companions casting; no commands mid-fight |
 | 29d | Wind-ups, telegraphs, and interrupts | Proposed: [spec](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md). Wind-ups in whole rounds, interrupt thresholds with accumulated pressure, concentration, enemy casters |
@@ -156,6 +156,28 @@ instead of duplicating them.
   phase completed.
 - **Open, before 28f:** how to pace a round over 6 seconds when rounds
   last 4 (recommended: a combat round every 2 game rounds).
+
+### Combat roadmap: pacing decided, spell crits declined, build order set (2026-09-27)
+
+- **What:** Closed the open item above and finished sequencing the
+  combat packet.
+  - **Pacing:** combat now resolves every second game round
+    (`CombatEveryRounds: 2`), an 8-second combat round. Every other
+    round-based system (survival, drift, chemistry, buffs, autosave)
+    keeps its existing 4-second round; only `DoCombat`'s own cadence
+    changes. Normal pacing fills about 6 of the 8 seconds.
+  - **Spell critical hits declined.** Spells keep a single damage roll,
+    with no crit tier, no weapon-style secondary effect, and no 28e pain
+    reaction. [29a](superpowers/specs/2026-09-26-status-crit-effects-design.md)'s
+    crit effect table now covers weapon subtypes only.
+  - **Build order set:** 28a, then 28b, then 28c→28d→28e, then 28f, then
+    29a→29b, then 29c, then 29d/29e/29f (flexible order, interrupts
+    first suggested), then 30 last. See the
+    [roadmap](superpowers/specs/2026-09-26-combat-presentation-roadmap.md#build-order-decided-2026-09-27).
+- **Why:** The owner approved the 8-second combat round, asked spell
+  crits off the plan, and asked for a decided order rather than a menu.
+- **Step:** Roadmap and two specs (29a, 28f) updated. No code changed and
+  no phase completed; 28a is next when the owner starts implementation.
 
 ### Phase 27d: tutorial Alignment lesson and browser panel (2026-09-25)
 

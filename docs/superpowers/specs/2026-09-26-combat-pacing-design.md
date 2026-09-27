@@ -1,8 +1,8 @@
 # Potential Phase 28f: Paced Combat Output
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
-Status: owner-approved direction (2026-09-26); the cadence decision below is
-open and must be settled first.
+Status: owner-approved direction, including the cadence decision below
+(2026-09-27); needs a design pass and plan.
 
 ## Goal
 
@@ -22,32 +22,34 @@ lines. The first mock's 3 seconds read too fast.
 - **Delivery:** combat text goes out as `events.Message` (user or room) and
   is delivered when the event queue is processed each turn.
 
-## The cadence decision (open, must settle first)
+## The cadence decision (settled, 2026-09-27)
 
 Lines can't be paced over 6 seconds if a new combat round starts every 4:
 - output would fall further behind each round;
 - a line would describe a blow already several rounds old;
 - a death could arrive after the next round's opener.
 
-Options:
+**Decision: combat resolves every second game round.** `DoCombat` fires
+only on alternating `NewRound` events, via a new `CombatEveryRounds: 2`
+setting, giving an **8-second combat round**. Everything else (survival
+drain, chemistry service, alignment drift, buffs, hostility timers,
+autosave) keeps the existing 4-second game round unchanged; only the
+`DoCombat` listener's own cadence changes.
 
-1. **A combat cadence of every second round (recommended).**
-   - `DoCombat` resolves a fight every 2 game rounds, 8 seconds, via a new
-     `CombatEveryRounds: 2` setting. Everything else keeps its 4-second
-     round.
-   - Normal pacing fills 6 of the 8 seconds, leaving a breath.
-   - Fights take twice as long in wall time. Round-based combat numbers
-     (wind-ups in rounds, status durations, cooldowns) count combat
-     rounds, not game rounds.
-2. **Lengthen `RoundSeconds` to 8.**
-   - This slows every round-based system in the world: survival, drift,
-     chemistry, and every "N rounds" rule.
-   - It touches the travel/rest real-time invariant's tuning.
-   - Not recommended.
-3. **Keep 4-second rounds and cap pacing at about 3 seconds.**
-   - The owner has said that reads too fast.
+Consequences:
+- Normal pacing fills 6 of the 8 seconds, leaving a breath before the next
+  round starts.
+- Fights take about twice as long in wall-clock time as they would at a
+  4-second cadence. They do not take longer in round-count terms — a
+  wind-up, cast time, status duration, or cooldown still expressed in "N
+  rounds" means N *combat* rounds (8 seconds each), not N *game* rounds.
+- The two rejected alternatives, for the record: lengthening
+  `RoundSeconds` itself to 8 (rejected — it would slow every round-based
+  system in the game, including the travel/rest real-time tuning, not
+  just combat); and keeping 4-second rounds with pacing capped near 3
+  seconds (rejected by the owner as reading too fast).
 
-## Scope (assuming option 1)
+## Scope
 
 - **A per-player paced queue.** Combat-event text for a player is queued,
   not sent at once. Each turn, due lines are released.
@@ -94,5 +96,6 @@ Options:
   - never lets a round's lines spill past the next combat round;
   - delivers non-combat messages without delay;
   - with `off`, delivers at once.
-- With option 1, a test shows that survival drain, drift, and the world
-  clock are unchanged by the combat cadence.
+- A test shows that survival drain, drift, and the world clock are
+  unchanged by the combat cadence — only `DoCombat`'s own firing skips
+  alternating rounds.
