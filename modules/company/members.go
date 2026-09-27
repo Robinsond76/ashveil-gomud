@@ -4,6 +4,7 @@ package company
 // (internal/companyview). Read only.
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 )
 
@@ -54,4 +55,63 @@ var _ domain.ClaimProvider = (*CompanyModule)(nil)
 func (m *CompanyModule) HasClaimed(leaderUserID, mobTemplateID int) bool {
 	record, ok := m.registry.Get(leaderUserID)
 	return ok && record.HasClaimed(mobTemplateID)
+}
+
+var _ domain.GearProvider = (*CompanyModule)(nil)
+
+// CompanionGearGrams implements company.GearProvider (Phase 28): the weight
+// of every living companion's worn and carried gear. A companion out in
+// the world is weighed as it stands (its live gear, read in place); one
+// charmed away by another player carries nothing for this company.
+// Otherwise its record, or, before it has one, its template's gear. A
+// fallen companion's gear stays with the body. An unreadable company
+// weighs nothing. Game loop only.
+func (m *CompanyModule) CompanionGearGrams(leaderUserID int) int {
+	if m.persistenceAvailable() != nil {
+		return 0
+	}
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return 0
+	}
+	total := 0
+	for _, c := range record.Companions {
+		if c.Dead() {
+			continue
+		}
+		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {
+			if m.runtime.CharmedByOther(leaderUserID, instanceID) {
+				continue
+			}
+			if grams, ok := m.runtime.GearGrams(instanceID); ok {
+				total += grams
+				continue
+			}
+		}
+		switch {
+		case c.State != nil:
+			total += gearGrams(*c.State)
+		default:
+			if template, ok := m.runtime.TemplateState(c.MobTemplateID); ok {
+				total += gearGrams(template)
+			}
+		}
+	}
+	return total
+}
+
+// gearGrams weighs a member's worn and carried items.
+func gearGrams(s domain.MemberState) int {
+	total := 0
+	for _, slot := range characters.AllSlots() {
+		if itm := s.Equipment.Get(slot); itm != nil && itm.ItemId > 0 {
+			total += itm.Weight()
+		}
+	}
+	for i := range s.Items {
+		if s.Items[i].ItemId > 0 {
+			total += s.Items[i].Weight()
+		}
+	}
+	return total
 }

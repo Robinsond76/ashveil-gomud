@@ -5,3 +5,4 @@ description: A simple wooden box with a hinged lid, containing a spring-loaded m
 type: object
 subtype: generic
 questtoken: 7-tradetrap
+weight: 800

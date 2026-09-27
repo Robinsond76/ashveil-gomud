@@ -8,3 +8,4 @@ uses: 5
 value: 200
 buffids: 
 - 15
+weight: 2000

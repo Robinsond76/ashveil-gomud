@@ -5,3 +5,4 @@ description: An ancient and crude key. I wonder where it could be used?
 type: key
 subtype: generic
 keylockid: 110-west
+weight: 80

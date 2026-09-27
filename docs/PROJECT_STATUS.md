@@ -6,7 +6,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-27
-- **HEAD:** Phase 27d (tutorial Alignment lesson and browser panel) is complete and reviewed on `claude/phase-25b-implementation-8g2d5b`; Phase 27c is on `master`.
+- **HEAD:** Phase 28 (item weights and the company's whole load) is complete and merged on `master`. A combat presentation/tactics spec packet
+  (potential Phases 29a–31, docs only) is proposed and not yet implemented.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -62,11 +63,12 @@ instead of duplicating them.
   Departure lessons), and Phase 27b (the tutorial's Survival and Camp
   lessons), and Phase 27c (the tutorial's practice fight), and Phase 27d
   (the tutorial's Alignment lesson and browser panel). The onboarding
-  roadmap's tutorial is complete.
-- **Next:** the owner's choice. The onboarding roadmap is done; the
-  handoff doc's later phases and the "Future ideas" row remain. A combat
-  roadmap (potential Phases 29a–29f, 30a–30f, and 31) is specified and
-  awaiting scheduling: see the
+  roadmap's tutorial is complete. Phase 28 (item weights: every shipped item
+  weighed, and living companions' gear in the company load).
+- **Next:** the owner's choice. Both roadmaps are done. Open: capacity per
+  company size (play-testing), 11d, and the "Future ideas" row; see Known
+  issues. A combat roadmap (potential Phases 29a–29f, 30a–30f, and 31) is
+  specified and awaiting scheduling: see the
   [roadmap](superpowers/specs/2026-09-26-combat-presentation-roadmap.md).
 
 ## Phase progress
@@ -117,6 +119,7 @@ instead of duplicating them.
 | 27b | Tutorial: Survival and Camp lessons | Complete: Weather Yard (904) and Campground (905) before the Gate; Survival passes on a real meal and drink (`survival.OnProvision`) plus `weather`/`temperature`/`strain`/`cargo`, with food and water given once for what the pack lacks; Camp passes on Rested from a real camp rest; course camps struck (`camping.AbandonCamp`) on pass, skip, leave, logout, and placement |
 | 27c | Tutorial: practice fight | Complete: Practice Yard (906) before the Gate; a squad of harmless straw soldiers (three footmen in front, an archer behind) per player; `practice` mobs beaten with no XP, drops, gold, kills, or `MobDeath` (`mobcommands.OnPracticeBeaten`); the gate is the squad beaten; death in the course decided (an ordinary death, ending the course as a skip) |
 | 27d | Tutorial: Alignment lesson, browser panel | Complete: the Oath Stone (907) before the Gate; `company alignment`, `company inspect corvin` (an outlaw a new company is refused), and `standing`; `company inspect` weighs any recruiter's candidate; a `Tutorial` GMCP package and web client window from the same checklist as the terminal; a course missing rooms is closed but kept |
+| 28 | Item weights and the company's whole load | Complete: every shipped item weighed (grams, per-type ranges), starter kits 4.8–8.5 kg; living companions' worn and carried gear in the company load (`company.CompanionGearGrams`), live mob when out, else record or template; `cargo` shows the split; GMCP `companion_g` |
 | 29a | Combat fixes from the 5v5 simulation | Proposed: [spec](superpowers/specs/2026-09-26-combat-fixes-design.md). The leader stuck on an unreachable target; a fight stalling with enemies standing (to reproduce with shipped config); `formation reach` in a fight |
 | 29b | Combat event stream and battle summary | Proposed: [spec](superpowers/specs/2026-09-26-combat-event-stream-design.md). One structured event per combat happening, which narration, pacing, the panel, and balancing read; an end-of-fight summary |
 | 29c | Narration voice (weapons and spells) | Proposed: [spec](superpowers/specs/2026-09-26-combat-narration-design.md). Dark, story-like text; `(N damage)` on every hit, `(critical hit, N damage)`; no `***`/caps/`!`; no charmed tag; an opener, "turns toward", and a closing line; indented death notices; spell text in the same voice |
@@ -191,6 +194,94 @@ instead of duplicating them.
 - **Why:** Two features can't both claim "Phase 28"; the real, completed
   phase keeps its number and the still-speculative one moves.
 - **Step:** Docs only, then merged to `master`.
+
+### Phase 28: item weights and the company's whole load (2026-09-26)
+
+- **What:** The data pass Phase 9 deferred.
+  - **Weights:** all 115 unweighted shipped items in the default world (and
+    the 14 of the upstream `empty` world) now have a realistic weight in
+    grams. Examples: a 5 g coupon, a 1.5 kg broadsword, a 9 kg steel
+    breastplate, a full 1.5 kg waterskin. The room-rental service stays
+    weightless, and the four authored weights are kept. Starter kits weigh
+    4.8–8.5 kg.
+  - **The company's whole load:** living companions' worn and carried
+    gear now counts, as `Load.CompanionGrams` in `TotalGrams`, through
+    `company.CompanionGearGrams`.
+    - A companion out in the world is weighed as it stands, read in place.
+    - One charmed away by another player carries nothing for this company.
+    - Otherwise its record, or its template's gear before it has one.
+    - A fallen companion's gear stays with the body.
+  - **Every reader picks the load up unchanged:** route departure, walking
+    strain, `inventory`, `status`, and GMCP (now with `companion_g`).
+    `cargo` shows the split.
+  - **`Item.Weight()`** reads base data, so an item holding a spec copy
+    (taken from cargo, enchanted, or saved before weights) is still
+    weighed.
+  - The stale "Known issues" list was rewritten.
+
+  Design and plan:
+  [28 spec](superpowers/specs/2026-09-26-phase-28-item-weights-design.md) /
+  [28 plan](superpowers/plans/2026-09-26-phase-28-item-weights.md).
+- **Why:** Load has driven travel and strain since Phase 16, but only 4 of
+  120 items weighed anything, so every company read Light. The roadmaps are
+  complete; this was the clearest open deferral, taken under the owner's
+  "carry on".
+- **Verification:** `go test -race ./...` (78 packages), `make generate`,
+  `make validate`.
+  - **Content tests:** every item in both worlds weighs something within its
+    type's range, the service excepted; the authored weights are kept; each
+    starter kit is 1–12 kg; a fresh company of five (the heaviest kit plus
+    the four recruiters' candidates) is under 30% of capacity.
+  - **Unit tests:** `Load` totals; the seam; the company module (live,
+    record, template, fallen, charmed away, unreadable, stale spec
+    copies); the encumbrance module (companions in the load and band, the
+    `cargo` split, stale spec copies); GMCP `companion_g`.
+  - **Wiring** (the tutorial's `plugins.Load` test): recruiting Tamsin and
+    Oswin raises the company load by exactly their gear, and `cargo` shows
+    it.
+- **Review:** The independent reviewer confirmed:
+  - no clock or persistence change;
+  - every load reader is on the game loop;
+  - the lock order holds;
+  - `Snapshot` has no side effects;
+  - no system assumed zero weights.
+
+  Its findings:
+  1. *Medium, fixed:* items holding a spec copy (taken from cargo,
+     enchanted, renamed, or saved before this phase with weight 0) kept a
+     stale weight. `Item.Weight()` reads the base data
+     (`TestWeightReadsBaseData`, `TestPersonalLoadIgnoresStaleSpecCopies`,
+     `TestCompanionGearGramsEdges`).
+  2. *Low-medium, fixed:* a companion charmed away by another player still
+     counted toward the old company. It now counts nothing
+     (`TestCompanionGearGramsEdges`).
+  3. *Low, partly fixed:* each weighing deep-copied every live companion's
+     gear. It is now read in place (`runtime.GearGrams`). The company view
+     still resolves the load twice (load, then band); that is cheap and
+     left as is.
+  4. *Low, fixed:* a companion with no record yet weighed nothing. It now
+     weighs its template's gear.
+  5. *Low, fixed:* the expedition lock-order comment names the game-loop
+     requirement.
+  6. *Low, fixed:* an unreadable company weighs nothing, explicitly.
+  7. *Low, fixed:* GMCP `load` gained `companion_g`.
+  8. *Low, fixed:* the upstream `empty` world's items are weighed and
+     tested too.
+  9. *Noted:* the Ent's tree trunk (20 kg, a 5% drop) could, in extremis,
+     put a company of trunk-wielders into a band. No normal path does, and
+     a fresh company is pinned under 30%.
+  10. *Docs, fixed:* the dropped 11a display note is back in Known issues;
+      the plan is ticked; the spec records that the band's response is a
+      unit test.
+  11. *Coverage, fixed:* stale spec copies (1).
+  12. *Coverage, fixed:* charmed away (2).
+  13. *Coverage, left:* the band through a real departure or step is
+      covered by the injected unit test and Phase 16's own tests of the
+      band.
+  14. *Coverage, left:* the away and dead cases through `plugins.Load` are
+      covered by the module unit tests.
+  15. *Coverage, fixed:* a fresh company of five is pinned light.
+- **Step completed:** Phase 28.
 
 ### Phase 27d: tutorial Alignment lesson and browser panel (2026-09-25)
 
@@ -3389,146 +3480,50 @@ instead of duplicating them.
 
 ## Known issues / deferred items
 
-- Phase 5 was implemented and committed directly on `master`. Going forward,
-  plan and phase work must run on an isolated worktree/feature branch and merge
-  back only after verification; see the root `AGENTS.md` ("Branching &
-  Worktrees") and `docs/superpowers/plans/README.md`.
-- `make test` stalls in the `js-lint` stage because it shells out to `npx
-  jshint`; the documented fallback `go test -race ./...` passes. Environmental,
-  not a code failure.
-- Plugin `WriteStruct`/`WriteBytes` persistence is a direct (non-atomic) file
-  write. Command state rolls back on failure, but a partial low-level write
-  cannot be recovered.
-- Live server acceptance has not been run for Phase 3, Phase 4, or Phase 5;
-  unit/race tests cover the roster, formation, migration, survival persistence,
-  provisioning, travel start/view/completion/recovery, and command behavior.
-- Company and survival use separate plugin writes, so summon/dismiss is not
-  cross-file atomic. Compensation failures are surfaced alongside the primary
-  error, and the survival-side durable reservation prevents reuse of an ID once
-  its survival initialization has persisted. A partial low-level file write is
-  still not transactionally recoverable.
-- Expedition survival exertion and its own checkpoint remain separate plugin
-  writes, but Phase 5 now persists a deterministic pending operation before
-  charging survival. The survival ledger deduplicates recovery, so a crash or
-  failed checkpoint write cannot double-charge the company.
-- Phase 5 copyover continuity relies on plugin `SetOnSave`/`SetOnLoad` rather
-  than a `copyover.Contributor`, because modules are forbidden from registering
-  copyover contributors. `onLoad` runs after `copyover.Restore` and reschedules
-  or completes sessions from the durable record.
-- Company/formation/survival state is process-local with no mutex, matching the
-  existing event-loop dispatch assumption; revisit if command dispatch moves off
-  the main loop.
-- Camping and survival rest recovery are separate plugin writes, like
-  expedition/survival exertion. `modules/camping` persists `Completed` before
-  calling survival, and a durable per-leader `RecoveryApplied` marker (plus
-  survival's own applied-operation ledger) makes a crash between the two
-  writes retry recovery alone rather than double-apply or silently drop it.
-- Live server acceptance has not been run for Phase 7; unit/race coverage
-  spans the camp/rest domain, module commands, eligibility, timers, recovery,
-  and movement/view integration.
-- Live server acceptance has not been run for Phase 8; unit/race coverage
-  spans the weather domain, module recovery/round-advance/command behavior,
-  and the `look` line integration.
-- Phase 8 weather is read-only this phase (design doc Option A): its
-  `TravelDurationPct`/`ExertionPct`/`RestRecoveryPct` multipliers are
-  computed and validated but nothing yet applies them to
-  `modules/expedition`'s `TravelSession` or `modules/camping`'s rest
-  recovery. That wiring is an explicit deferred follow-up, not an oversight.
-- Deferred by design: recruitment economics, companion custom names, equipment,
-  injuries, AI orders, death/permadeath rules, formation combat effects, and
-  cargo/mount integration (Phases 9–10). Camping itself excludes weather
-  effects, shelter, fire fuel/items, cooking, watches, encounters,
-  temporary/discoverable camp rooms, multi-player camps, and sleep-until-dawn.
-  Weather itself excludes storms as hazard encounters, weather-driven
-  room/exit changes, forecasts, seasons/climate modeling, and non-forest
-  biome tables.
-- Live server acceptance has not been run for Phase 9; unit/race coverage
-  spans the encumbrance domain, cargo deposit/withdraw, module load
-  computation, the `cargo` command, and config parsing.
-- Phase 9 encumbrance is read-only this phase (design doc Option A, same
-  shape as Phase 8): `TravelDurationPct`/`FatiguePct` are computed and
-  validated but nothing yet applies them to `modules/expedition` or
-  `modules/camping`. Every current item defaults to `Weight: 0`
-  (unweighted); no item in the shipped data was authored with a real
-  weight this phase, so the engine has nothing to compute against until a
-  follow-up data pass. Encumbrance is a party/expedition-level weight
-  system, kept deliberately separate from GoMud's native, unrelated,
-  count-based `Character.CarryCapacity()` per-move throttle.
-- Live server acceptance has not been run for Phase 10; unit/race coverage
-  spans the mount domain, stable/release persistence-failure rollback, the
-  capacity-bonus provider, the `mount` command, and the
-  `modules/encumbrance` capacity-bonus integration.
-- Phase 10 mounts wires only the cargo-capacity effect this phase;
-  `TravelDurationPct` is computed and validated on `MountSpec` but nothing
-  yet applies it to `modules/expedition`'s `TravelSession`, same Option A
-  shape as weather's/encumbrance's own deferred multipliers. Mount
-  fatigue/health/feed, terrain suitability, per-member assignment, and an
-  acquisition economy are all deferred to a later pass, per handoff §35's
-  own "Later" list.
-- Live server acceptance has not been run for Phase 11a; unit coverage
-  spans the `mobparty` domain package and the `internal/rooms` grouped-
-  display rendering. `internal/rooms` cannot import `internal/combat`
-  (would cycle), so the room-display integration passes zero-value
-  `EHP`/`DPS` into `mobparty.Assemble` — display grouping doesn't need real
-  values, but nothing has wired real `EHP`/`DPS` into a `Formation` that
-  combat code actually reads yet; that's 11b's job. `modules/gmcp`'s mob
-  list is still per-mob, not party-grouped.
-- Phase 11b ships only the `internal/engagement` domain layer; nothing in
-  `internal/hooks/NewRound_DoCombat.go` was touched. No player-visible
-  combat behavior changed this phase — company members still only retaliate
-  reactively (today's pre-11b behavior), because the coordinated-engagement
-  wiring is intentionally deferred until Phase 11c's legality predicate
-  exists to inject into `AssignTarget`'s `legal` parameter for real (see
-  the Phase 11b work-log entry). Live server acceptance has not been run
-  for Phase 11b; unit coverage spans `internal/engagement`'s selection,
-  filtering, and engagement-end logic.
-- Phase 11c ships `internal/formationcombat`, the `Reach` schema fields,
-  and one read-only `formation reach` command; nothing in
-  `internal/hooks/NewRound_DoCombat.go` was touched, so combat behavior is
-  unchanged from pre-11c — no interception, no reach gating, no
-  coordinated targeting actually happen in a fight yet. The
-  `formation reach` command only queries a company's own formation (there
-  is no live enemy party/formation to query outside combat), and only at
-  `ReachNone` (plain melee) — it's a correctness demo of the predicate, not
-  a combat feature. Both `internal/formationcombat` and 11b's
-  `internal/engagement` are now fully tested and ready to be wired
-  together; that wiring (and the new company-formation-by-mob-instance
-  query seam it needs) is the next real piece of work — see the Phase 11c
-  work-log entry and the "Next" line above for the full reasoning.
-- The player-vs-mob combat-loop wiring above ships only that one
-  direction. Mob-vs-player, mob-vs-mob, and 11b's `AssignTarget`
-  reassignment-on-death remain exactly as described in the two bullets
-  above (still unwired) — see the "Formation combat-loop wiring" work-log
-  entry for why each is its own separable follow-up. `internal/hooks` has
-  no live-server/integration test coverage for the new gate; only the pure
-  `resolveAttackTarget` core and the `FormationProvider`/`mobparty`
-  seam-level unit tests exercise it.
-- Mob-vs-player interception now ships too (see the "mob-vs-player
-  interception" work-log entry): the two bullets above's mob-vs-player
-  item is resolved. Mob-vs-mob and 11b's reassignment-on-death remain
-  unwired for the same reasons stated there. Same test-coverage caveat as
-  the player-vs-mob pass: no `internal/hooks` integration harness, only
-  pure/seam-level unit tests.
-- Mob-vs-mob now ships too (see the "mob-vs-mob" work-log entry): all
-  three bullets above's non-11b items are resolved. Only 11b's
-  reassignment-on-death remains unwired for the reasons stated there, plus
-  the newly-introduced leader-as-interceptor edge case (a leader placed in
-  the front row of their own formation can't intercept for a companion —
-  see that work-log entry). Same test-coverage caveat as the previous two
-  passes: no `internal/hooks` integration harness, only pure/seam-level
-  unit tests.
-- 11b's reassignment-on-death now ships too (see the "reassignment-on-death"
-  work-log entry): the item named in every bullet above is resolved. This
-  closes out Phase 11's foundational combat wiring entirely — what's left
-  (11d, the leader-as-interceptor gap) is genuinely new work, not
-  follow-up wiring for 11a-11c. Same test-coverage caveat as every prior
-  combat-wiring pass: no `internal/hooks` integration harness, only
-  pure/seam-level unit tests.
-- Docs correction (see that work-log entry): the "proactive
-  engagement-trigger" item named above as unbuilt was a documentation
-  error. It already existed pre-Ashveil in `attack.go`'s charmed-mob-
-  assist loop, and company companions get it for free as permanently-
-  charmed mobs. No code changed; only the status doc was wrong.
+Refreshed 2026-09-26 (Phase 28). Earlier entries that later phases
+resolved (the weather, load, and mount multipliers, and the 11a–11c
+combat wiring) are removed; each phase's work-log entry keeps its own
+history.
+
+- **Plugin persistence is a direct, non-atomic file write**
+  (`WriteStruct`/`WriteBytes`). Command state rolls back on a failed save,
+  but a partial low-level write can't be recovered.
+- **Separate plugin files, no cross-file transaction.** Company, survival,
+  expedition, camping, and encumbrance each persist separately. Durable
+  operation IDs and applied-markers (expedition exertion, camp recovery,
+  the survival ledger) make a crash between writes retry, not double-apply.
+  Summon and dismiss are still not atomic across the company and survival
+  files.
+- **Copyover continuity** relies on plugin `SetOnSave`/`SetOnLoad`, because
+  modules may not register copyover contributors. `onLoad` runs after
+  `copyover.Restore` and reschedules or completes sessions.
+- **Game-loop state without mutexes** (company, formation, survival,
+  tutorial, the company view) assumes command dispatch stays on the main
+  loop.
+- **Live server acceptance** hasn't been run for most phases. Unit, race,
+  wiring (`plugins.Load`), and browser (Playwright) tests cover them. The
+  tutorial has no test of a real copyover or of two players in the course
+  at once.
+- **Enemy parties in displays (11a):** the room listing groups party
+  members but passes zero EHP/DPS into `mobparty.Assemble`
+  (`internal/rooms` can't import `internal/combat`), so display order isn't
+  combat order. The GMCP room mob list is still per mob, not grouped by
+  party. Combat itself assembles parties with real values.
+- **Capacity is flat per company** (`CapacityKg` 200, plus a mount). Phase
+  28 gave every item a weight, so loads now mean something, but capacity
+  doesn't grow with the company's size. That is left for play-testing.
+- **Deferred by design, not scheduled:**
+  - 11d: guard reactions, crit effects, wounds, AI personality;
+  - the "12+" encounter kinds;
+  - mount fatigue, feed, and terrain;
+  - companion custom names and AI orders;
+  - multi-player camps;
+  - forecasts and seasons.
+- `make test`'s `js-lint` stage can stall on some hosts (`npx jshint`); `make
+  js-lint` on its own and `go test -race ./...` are the documented checks.
+- A shipped-world test can leave a gitignored
+  `_datafiles/world/default/config-overrides.yaml`; delete a stray copy if
+  wiring tests fail on a relative data path.
 
 ## Key documents
 

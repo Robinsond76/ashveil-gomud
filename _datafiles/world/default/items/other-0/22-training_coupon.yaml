@@ -7,3 +7,4 @@ type: object
 subtype: usable
 uses: 1
 value: 1
+weight: 5

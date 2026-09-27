@@ -5,3 +5,4 @@ description: A multicolored flower that changes hues with the dawn and dusk, sym
 type: botanical
 subtype: mundane
 value: 95
+weight: 20

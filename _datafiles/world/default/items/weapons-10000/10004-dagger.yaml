@@ -9,3 +9,4 @@ damage:
   diceroll: 1d4
 statmods:
   speed: 1
+weight: 400

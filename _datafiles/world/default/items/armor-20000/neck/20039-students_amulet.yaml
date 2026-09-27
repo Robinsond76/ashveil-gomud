@@ -8,3 +8,4 @@ damagereduction: 0
 statmods:
   perception: 1
 warmth: -1
+weight: 50

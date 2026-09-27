@@ -5,3 +5,4 @@ type: head
 subtype: wearable
 damagereduction: 3
 warmth: 3
+weight: 400

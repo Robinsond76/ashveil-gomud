@@ -5,3 +5,4 @@ description: A key to a residence in Frostfang. It's a bit rusty, but it should 
 type: key
 subtype: generic
 keylockid: 778-north
+weight: 30

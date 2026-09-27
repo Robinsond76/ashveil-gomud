@@ -4,3 +4,4 @@ namesimple: broom
 description: A straw broom. You can <ansi fg="command">sweep broom</ansi> to use it.
 type: object
 subtype: mundane
+weight: 1000

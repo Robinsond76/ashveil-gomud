@@ -8,3 +8,4 @@ subtype: shooting
 waitrounds: 1
 damage:
   diceroll: 1d4
+weight: 150

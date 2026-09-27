@@ -168,3 +168,18 @@ func TestMemberViewProviderNone(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, company.MemberDead, members[0].Status)
 }
+
+type fakeGear struct{ fakeFormationProvider }
+
+func (fakeGear) CompanionGearGrams(leaderUserID int) int { return leaderUserID * 1000 }
+
+// Phase 28: companions' gear counts toward the company load.
+func TestCompanionGearGramsSeam(t *testing.T) {
+	company.SetFormationProvider(nil)
+	assert.Zero(t, company.CompanionGearGrams(7))
+	company.SetFormationProvider(fakeFormationProvider{})
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+	assert.Zero(t, company.CompanionGearGrams(7), "a provider that can't weigh gear")
+	company.SetFormationProvider(fakeGear{})
+	assert.Equal(t, 7000, company.CompanionGearGrams(7))
+}

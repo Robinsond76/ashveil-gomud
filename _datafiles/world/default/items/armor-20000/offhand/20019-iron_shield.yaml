@@ -8,3 +8,4 @@ damagereduction: 10
 statmods:
   speed: -15
 cursed: true
+weight: 6000

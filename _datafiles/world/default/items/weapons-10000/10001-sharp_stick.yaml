@@ -8,3 +8,4 @@ subtype: bludgeoning
 uses: 0
 damage:
   diceroll: 1d2
+weight: 300

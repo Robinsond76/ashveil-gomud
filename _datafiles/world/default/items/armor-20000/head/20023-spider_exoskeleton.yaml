@@ -6,3 +6,4 @@ subtype: wearable
 damagereduction: 9
 statmods:
   speed: 7
+weight: 1200

@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -315,6 +316,19 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, got, "Head east for the next lesson")
 	assert.True(t, company.HasClaimed(aria.UserId, 61))
 	assert.True(t, company.HasClaimed(aria.UserId, 62))
+
+	// Phase 28: the recruits' gear is part of the company's load.
+	gear := 0
+	for _, id := range []int{10015, 20004, 10015, 20008} { // Tamsin's and Oswin's
+		spec := items.GetItemSpec(id)
+		require.NotNil(t, spec)
+		require.Positive(t, spec.Weight, "item %d is weighed", id)
+		gear += spec.Weight
+	}
+	load, ok := encumbrance.CurrentLoad(aria.UserId)
+	require.True(t, ok)
+	assert.Equal(t, gear, load.CompanionGrams, "the companions' gear, through the real modules")
+	assert.Contains(t, run(aria, "cargo", ""), "companions 5.")
 
 	// Formation: one in the front row, one behind.
 	got = run(aria, "east", "")

@@ -116,12 +116,15 @@ func (c Cargo) TotalCount() int {
 // weight, in grams, against its capacity.
 type Load struct {
 	PersonalGrams int
-	CargoGrams    int
-	CapacityGrams int
+	// CompanionGrams is the living companions' worn and carried gear
+	// (Phase 28).
+	CompanionGrams int
+	CargoGrams     int
+	CapacityGrams  int
 }
 
 func (l Load) TotalGrams() int {
-	return l.PersonalGrams + l.CargoGrams
+	return l.PersonalGrams + l.CompanionGrams + l.CargoGrams
 }
 
 // Ratio is TotalGrams/CapacityGrams, or 0 when capacity is non-positive

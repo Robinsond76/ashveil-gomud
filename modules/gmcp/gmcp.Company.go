@@ -58,6 +58,8 @@ type companyLoad struct {
 	TotalG    int    `json:"total_g"`
 	CapacityG int    `json:"capacity_g"`
 	CargoG    int    `json:"cargo_g"`
+	// CompanionG is the living companions' gear (Phase 28).
+	CompanionG int `json:"companion_g"`
 }
 
 type companyRest struct {
@@ -177,7 +179,7 @@ func buildCompanyPayload(leaderUserID int, s companyview.Summary, chemistry chem
 	}
 	p.Alive, p.Dead = s.Alive, s.Dead
 	if s.LoadKnown {
-		p.Load = &companyLoad{Label: s.LoadLabel, TotalG: s.Load.TotalGrams(), CapacityG: s.Load.CapacityGrams, CargoG: s.Load.CargoGrams}
+		p.Load = &companyLoad{Label: s.LoadLabel, TotalG: s.Load.TotalGrams(), CapacityG: s.Load.CapacityGrams, CargoG: s.Load.CargoGrams, CompanionG: s.Load.CompanionGrams}
 	}
 	if s.ActivityKnown {
 		p.Activity = strPtr(s.Activity.Label())

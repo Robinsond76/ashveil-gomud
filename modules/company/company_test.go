@@ -253,6 +253,13 @@ func (f *fakeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 	}
 	return s.Clone(), true
 }
+func (f *fakeRuntime) GearGrams(instanceID int) (int, bool) {
+	s, ok := f.liveState[instanceID]
+	if !ok || !f.live[instanceID] {
+		return 0, false
+	}
+	return gearGrams(s), true
+}
 func (f *fakeRuntime) CharmedByOther(_ int, instanceID int) bool {
 	return f.live[instanceID] && f.stolen[instanceID]
 }

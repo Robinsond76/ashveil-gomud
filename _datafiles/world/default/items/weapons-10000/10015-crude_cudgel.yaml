@@ -7,3 +7,4 @@ hands: 1
 subtype: bludgeoning
 damage:
   diceroll: 2d2
+weight: 1000

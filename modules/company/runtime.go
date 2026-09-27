@@ -141,6 +141,21 @@ func (nativeRuntime) CharmedByOther(leaderUserID, instanceID int) bool {
 // TemplateState is the state a companion of this template starts with,
 // derived from the spec without spawning (the legacy upgrade). Every item
 // gets its own fresh UUID.
+func (nativeRuntime) GearGrams(instanceID int) (int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, false
+	}
+	total := 0
+	for _, itm := range mob.Character.Equipment.GetAllItems() {
+		total += itm.Weight()
+	}
+	for i := range mob.Character.Items {
+		total += mob.Character.Items[i].Weight()
+	}
+	return total, true
+}
+
 func (nativeRuntime) TemplateState(mobTemplateID int) (domain.MemberState, bool) {
 	spec := mobs.GetMobSpec(mobs.MobId(mobTemplateID))
 	if spec == nil {

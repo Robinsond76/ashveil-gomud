@@ -11,7 +11,7 @@ Full snapshot.
   <ansi fg="cyan">members</ansi>     <ansi fg="magenta">array</ansi>   - Your companions, in roster order
   <ansi fg="cyan">alive</ansi>       <ansi fg="yellow">number</ansi>  - Living members, you included
   <ansi fg="cyan">dead</ansi>        <ansi fg="yellow">number</ansi>  - Fallen companions awaiting resurrection
-  <ansi fg="cyan">load</ansi>        <ansi fg="blue-bold">object</ansi>  - label, total_g, capacity_g, cargo_g
+  <ansi fg="cyan">load</ansi>        <ansi fg="blue-bold">object</ansi>  - label, total_g, capacity_g, cargo_g, companion_g (companions' gear)
   <ansi fg="cyan">checkpoint</ansi>  <ansi fg="green">string</ansi>  - The church where you wake if you fall
   and everything in Company.Vitals (vitals, activity, rest, rescue).
 
