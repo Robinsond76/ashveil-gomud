@@ -25,10 +25,18 @@ type FightInfo struct {
 	ID           uint64
 	LeaderUserId int
 	RoomId       int
-	PartyID      string
+	PartyID      string // the first enemy party engaged
 	StartRound   uint64
 	Company      []Ref
 	Enemies      []Ref
+}
+
+// Final is what the caller reads from the world when a fight ends: the
+// company's health, and which enemies are no longer in the fight's room
+// (neither slain nor fled, they left it).
+type Final struct {
+	Company []MemberHealth
+	Gone    []Ref
 }
 
 type fight struct {
@@ -41,6 +49,7 @@ type fight struct {
 	companyOrder []string
 	enemies      map[string]Ref
 	enemyOrder   []string
+	enemyParty   map[string]string // enemy key -> its party id
 	lastDamager  map[string]Ref
 	down         map[string]string // key -> death outcome recorded
 	fled         map[string]bool
@@ -58,10 +67,13 @@ func (f *fight) addCompany(r Ref) {
 	f.company[k] = r
 }
 
-func (f *fight) addEnemy(r Ref) {
+func (f *fight) addEnemy(r Ref, partyID string) {
 	k := r.Key()
 	if k == "" {
 		return
+	}
+	if partyID != "" {
+		f.enemyParty[k] = partyID
 	}
 	if _, ok := f.enemies[k]; !ok {
 		f.enemyOrder = append(f.enemyOrder, k)
@@ -158,6 +170,9 @@ func (s *Stream) Emit(e Event) (Event, bool) {
 			s.mu.Unlock()
 			return e, false
 		}
+	} else {
+		e.FightID, e.PartyID = 0, ""
+		s.noteOutsideDamage(e)
 	}
 	e, sinks := s.stampLocked(e)
 	s.mu.Unlock()
@@ -191,7 +206,7 @@ func call(sinks []Sink, e Event) {
 // (for a one-actor event) the lowest-id fight holding that actor.
 func (s *Stream) fightFor(e Event) *fight {
 	if e.FightID != 0 {
-		return s.fights[e.FightID]
+		return s.fights[e.FightID] // nil once it has ended
 	}
 	for _, id := range s.openIds() {
 		f := s.fights[id]
@@ -222,17 +237,37 @@ func (s *Stream) openIds() []uint64 {
 	return ids
 }
 
+// noteOutsideDamage records a blow from outside any fight on a fight's
+// member as its last damage, so a kill by an outsider is not credited to
+// the company.
+func (s *Stream) noteOutsideDamage(e Event) {
+	if (e.Kind != Attack && e.Kind != SpellHit) || e.Damage <= 0 || e.Source.Zero() {
+		return
+	}
+	for _, f := range s.fights {
+		if f.has(e.Target) {
+			f.lastDamager[e.Target.Key()] = e.Source
+		}
+	}
+}
+
 // place stamps e with f's identity and folds it in. false drops e.
 func (s *Stream) place(f *fight, e *Event) bool {
 	e.FightID = f.id
 	e.PartyID = f.partyID
+	for _, r := range []Ref{e.Target, e.Source} {
+		if p, ok := f.enemyParty[r.Key()]; ok {
+			e.PartyID = p // the enemy actor's own party
+			break
+		}
+	}
 	if e.RoomId == 0 {
 		e.RoomId = f.roomId
 	}
 	switch e.Kind {
 	case Death:
 		k := e.Target.Key()
-		if prior, ok := f.down[k]; ok && (prior == OutcomeSlain || prior == e.Outcome) {
+		if prior, ok := f.down[k]; ok && (prior != OutcomeIncapacitated || prior == e.Outcome) {
 			return false
 		}
 		f.down[k] = e.Outcome
@@ -251,40 +286,28 @@ func (s *Stream) place(f *fight, e *Event) bool {
 }
 
 // Engage records that the company led by leader, with companions, is
-// engaged with an enemy party in a room this round. It opens a fight (and
-// emits FightStart) when none is open for this leader and room with this
-// party id or any of these enemies; otherwise it adds any new members to
-// the open one. It returns the fight id.
+// engaged with an enemy party in a room this round. A company has one
+// fight per room, however many parties it is fighting there: Engage opens
+// it (and emits FightStart) when none is open for this leader and room,
+// and otherwise adds any new members, and any new party, to the open one.
+// It returns the fight id.
 func (s *Stream) Engage(round uint64, roomId int, partyID string, leader Ref, companions []Ref, enemies []Ref) uint64 {
 	s.mu.Lock()
 	var f *fight
 	for _, id := range s.openIds() {
 		candidate := s.fights[id]
-		if candidate.leaderUserId != leader.UserId || candidate.roomId != roomId {
-			continue
-		}
-		if candidate.partyID == partyID {
+		if candidate.leaderUserId == leader.UserId && candidate.roomId == roomId {
 			f = candidate
-			break
-		}
-		for _, r := range enemies {
-			if _, ok := candidate.enemies[r.Key()]; ok {
-				f = candidate
-				break
-			}
-		}
-		if f != nil {
 			break
 		}
 	}
 	if f != nil {
-		f.partyID = partyID
 		f.addCompany(leader)
 		for _, r := range companions {
 			f.addCompany(r)
 		}
 		for _, r := range enemies {
-			f.addEnemy(r)
+			f.addEnemy(r, partyID)
 		}
 		s.mu.Unlock()
 		return f.id
@@ -299,6 +322,7 @@ func (s *Stream) Engage(round uint64, roomId int, partyID string, leader Ref, co
 		startRound:   round,
 		company:      map[string]Ref{},
 		enemies:      map[string]Ref{},
+		enemyParty:   map[string]string{},
 		lastDamager:  map[string]Ref{},
 		down:         map[string]string{},
 		fled:         map[string]bool{},
@@ -309,7 +333,7 @@ func (s *Stream) Engage(round uint64, roomId int, partyID string, leader Ref, co
 		f.addCompany(r)
 	}
 	for _, r := range enemies {
-		f.addEnemy(r)
+		f.addEnemy(r, partyID)
 	}
 	s.fights[f.id] = f
 	e, sinks := s.stampLocked(Event{Kind: FightStart, Round: round, FightID: f.id, PartyID: partyID, RoomId: roomId, Source: leader})
@@ -329,10 +353,10 @@ func (s *Stream) OpenFights() []FightInfo {
 	return out
 }
 
-// EndFight closes an open fight: it builds the fight's Summary (company
-// health as the caller read it from the world), emits FightEnd carrying
-// it, and forgets the fight. ok is false when the fight isn't open.
-func (s *Stream) EndFight(id uint64, round uint64, outcome string, company []MemberHealth) (*Summary, bool) {
+// EndFight closes an open fight: it builds the fight's Summary (with what
+// the caller read from the world), emits FightEnd carrying it, and forgets
+// the fight. ok is false when the fight isn't open.
+func (s *Stream) EndFight(id uint64, round uint64, outcome string, final Final) (*Summary, bool) {
 	s.mu.Lock()
 	f, ok := s.fights[id]
 	if !ok {
@@ -340,8 +364,12 @@ func (s *Stream) EndFight(id uint64, round uint64, outcome string, company []Mem
 		return nil, false
 	}
 	delete(s.fights, id)
-	sum := f.summary(round, outcome, company)
-	e, sinks := s.stampLocked(Event{Kind: FightEnd, Round: round, FightID: f.id, PartyID: f.partyID, RoomId: f.roomId, Outcome: outcome, Source: f.company[f.companyOrder[0]], Summary: sum})
+	sum := f.summary(round, outcome, final)
+	var leader Ref
+	if len(f.companyOrder) > 0 {
+		leader = f.company[f.companyOrder[0]]
+	}
+	e, sinks := s.stampLocked(Event{Kind: FightEnd, Round: round, FightID: f.id, PartyID: f.partyID, RoomId: f.roomId, Outcome: outcome, Source: leader, Summary: sum})
 	s.mu.Unlock()
 	call(sinks, e)
 	return sum, true

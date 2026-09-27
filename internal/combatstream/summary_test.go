@@ -28,11 +28,11 @@ func skirmish(t *testing.T) *Summary {
 	emit(Event{Kind: Death, Target: captain, Outcome: OutcomeSlain})
 	emit(Event{Kind: Flee, Source: slinger})
 
-	sum, ok := s.EndFight(id, 9, OutcomeVictory, []MemberHealth{
+	sum, ok := s.EndFight(id, 9, OutcomeVictory, Final{Company: []MemberHealth{
 		{Ref: aria, Health: 12, Max: 14},
 		{Ref: garrick, Health: 15, Max: 15},
 		{Ref: tamsin, Fallen: true},
-	})
+	}})
 	require.True(t, ok)
 	return sum
 }
@@ -60,7 +60,7 @@ func TestSummaryStillStandingAndInterruptsAndGuards(t *testing.T) {
 	s.Emit(Event{Kind: Interrupt, Source: captain, Target: tamsin, Outcome: OutcomeSucceeded})
 	s.Emit(Event{Kind: GuardUsed, Source: tamsin})
 	s.Emit(Event{Kind: Heal, Source: tamsin, Target: tamsin, Amount: 3, HeldBack: 1})
-	sum, _ := s.EndFight(id, 3, OutcomeBrokenOff, nil)
+	sum, _ := s.EndFight(id, 3, OutcomeBrokenOff, Final{})
 	assert.Equal(t, []EnemyEnding{{Ref: captain, Ending: EndingStanding}}, sum.Enemies)
 	assert.Equal(t, []string{"Crushing Blow"}, sum.InterruptsDealt)
 	assert.Equal(t, 1, sum.InterruptsFailed)
@@ -95,7 +95,7 @@ func TestRenderLeavesOutEmptyLines(t *testing.T) {
 	s := New()
 	id := s.Engage(1, 100, "bandits#0", aria, nil, []Ref{captain})
 	s.Emit(Event{Kind: Attack, Source: captain, Target: aria, Outcome: OutcomeMiss})
-	sum, _ := s.EndFight(id, 2, OutcomeDefeat, []MemberHealth{{Ref: aria, Health: -2, Max: 14}})
+	sum, _ := s.EndFight(id, 2, OutcomeDefeat, Final{Company: []MemberHealth{{Ref: aria, Health: -2, Max: 14}}})
 	lines := Render(*sum, 99)
 	assert.Equal(t, []string{
 		"── The company is beaten ──",
@@ -103,4 +103,34 @@ func TestRenderLeavesOutEmptyLines(t *testing.T) {
 		"Enemies        bandit captain still standing",
 		"Company        Aria -2/14",
 	}, lines, "another viewer reads the leader's name")
+}
+
+// TestSlainLeaderIsFallenAndEnemyEndings (review L3, L4): a leader slain in
+// the fight reads as fallen though respawned at full health; an enemy
+// that walked out "left"; a practice foe is "beaten" and no kill.
+func TestSlainLeaderIsFallenAndEnemyEndings(t *testing.T) {
+	s := New()
+	straw := Ref{MobInstanceId: 51, Name: "straw footman"}
+	id := s.Engage(1, 100, "straw#0", aria, []Ref{garrick}, []Ref{captain, slinger, straw})
+	s.Emit(Event{Kind: Attack, Source: captain, Target: aria, Damage: 30})
+	s.Emit(Event{Kind: Death, Target: aria, Outcome: OutcomeSlain})
+	s.Emit(Event{Kind: Attack, Source: garrick, Target: straw, Damage: 3})
+	d, _ := s.Emit(Event{Kind: Death, Target: straw, Outcome: OutcomeBeaten})
+	assert.Equal(t, garrick, d.Source)
+	_, ok := s.Emit(Event{Kind: Death, Target: straw, Outcome: OutcomeSlain})
+	assert.False(t, ok, "a beaten foe doesn't die again")
+
+	sum, _ := s.EndFight(id, 5, OutcomeVictory, Final{
+		Company: []MemberHealth{{Ref: aria, Health: 14, Max: 14}, {Ref: garrick, Health: 9, Max: 15}},
+		Gone:    []Ref{slinger},
+	})
+	assert.True(t, sum.Company[0].Fallen)
+	assert.False(t, sum.Company[1].Fallen)
+	assert.Equal(t, []EnemyEnding{
+		{Ref: captain, Ending: EndingStanding},
+		{Ref: slinger, Ending: EndingLeft},
+		{Ref: straw, Ending: EndingBeaten},
+	}, sum.Enemies)
+	assert.Empty(t, sum.Kills, "beating a practice foe is no kill")
+	assert.Contains(t, Render(*sum, 7), "Company        You fallen · Garrick Vane 9/15")
 }

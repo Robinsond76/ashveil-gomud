@@ -1223,7 +1223,11 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 		if mob := mobs.GetInstance(mobId); mob != nil {
 			if mob.Character.Health < 1 {
 
-				emitCombat(combatstream.Event{Kind: combatstream.Death, RoomId: mob.Character.RoomId, Target: mobRef(mob), Outcome: combatstream.OutcomeSlain})
+				outcome := combatstream.OutcomeSlain
+				if mob.Practice {
+					outcome = combatstream.OutcomeBeaten // the tutorial's practice foes are beaten, not killed
+				}
+				emitCombat(combatstream.Event{Kind: combatstream.Death, RoomId: mob.Character.RoomId, Target: mobRef(mob), Outcome: outcome})
 
 				mob.Command(`suicide`)
 

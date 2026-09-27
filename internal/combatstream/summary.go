@@ -9,7 +9,9 @@ import (
 // Enemy endings in a Summary.
 const (
 	EndingSlain    = "slain"
+	EndingBeaten   = "beaten" // a practice foe (the tutorial's straw soldiers)
 	EndingFled     = "fled"
+	EndingLeft     = "left"
 	EndingStanding = "still standing"
 )
 
@@ -162,7 +164,7 @@ func (t *tally) amounts(m map[string]int) []Amount {
 	return out
 }
 
-func (f *fight) summary(round uint64, outcome string, company []MemberHealth) *Summary {
+func (f *fight) summary(round uint64, outcome string, final Final) *Summary {
 	t := &f.tally
 	s := &Summary{
 		FightID:          f.id,
@@ -181,7 +183,16 @@ func (f *fight) summary(round uint64, outcome string, company []MemberHealth) *S
 		InterruptsTaken:  t.interruptsTaken,
 		Guards:           t.amounts(t.guards),
 		Kills:            t.amounts(t.kills),
-		Company:          append([]MemberHealth(nil), company...),
+	}
+	for _, m := range final.Company {
+		if f.down[m.Ref.Key()] == OutcomeSlain {
+			m.Fallen = true // slain in the fight, whatever their health now
+		}
+		s.Company = append(s.Company, m)
+	}
+	gone := map[string]bool{}
+	for _, r := range final.Gone {
+		gone[r.Key()] = true
 	}
 	for _, name := range t.effectOrder {
 		s.Effects = append(s.Effects, Count{Name: name, Count: t.effects[name]})
@@ -191,8 +202,12 @@ func (f *fight) summary(round uint64, outcome string, company []MemberHealth) *S
 		switch {
 		case f.down[k] == OutcomeSlain:
 			ending = EndingSlain
+		case f.down[k] == OutcomeBeaten:
+			ending = EndingBeaten
 		case f.fled[k]:
 			ending = EndingFled
+		case gone[k]:
+			ending = EndingLeft
 		}
 		s.Enemies = append(s.Enemies, EnemyEnding{Ref: f.enemies[k], Ending: ending})
 	}

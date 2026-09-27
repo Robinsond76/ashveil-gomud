@@ -43,9 +43,9 @@ const (
 	GuardExhausted Kind = "guard-exhausted" // Phase 30c
 	Yield          Kind = "yield"           // Phase 30e
 	Flee           Kind = "flee"
-	// Death is a death or an incapacitation: Outcome is OutcomeSlain or
-	// OutcomeIncapacitated. An empty Source is filled with the victim's
-	// last damager in the fight.
+	// Death is a death or an incapacitation: Outcome is OutcomeSlain,
+	// OutcomeBeaten (a practice foe), or OutcomeIncapacitated. An empty
+	// Source is filled with the victim's last damager in the fight.
 	Death Kind = "death"
 	Mercy Kind = "mercy" // Phase 30e
 )
@@ -59,6 +59,7 @@ const (
 	OutcomeFizzled       = "fizzled"
 	OutcomeSlain         = "slain"
 	OutcomeIncapacitated = "incapacitated"
+	OutcomeBeaten        = "beaten"    // a practice foe, beaten without a death
 	OutcomeSucceeded     = "succeeded" // interrupts, Phase 30d
 	OutcomeFailed        = "failed"    // interrupts, Phase 30d
 

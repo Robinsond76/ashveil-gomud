@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -239,35 +240,226 @@ func TestSoloFightIsNotAFight(t *testing.T) {
 	assert.NotContains(t, strings.Join(seen, "\n"), summaryHeading)
 }
 
-// TestFightBreaksOffWhenTheLeaderLeaves: a company that walks out of a
-// fight ends it as broken off, with the summary so far.
-func TestFightBreaksOffWhenTheLeaderLeaves(t *testing.T) {
+// TestFleeBreaksTheFightOff: a real `flee` through the round is reported
+// in the fight, and the fight ends as broken off once the company is gone
+// from the room, with the summary so far.
+func TestFleeBreaksTheFightOff(t *testing.T) {
+	b := newBrawl(t)
+	got := b.listen()
+	b.cmd("attack", "bandit cutthroat")
+	var seen []string
+	fled := false
+	for i := 0; i < 40 && !fled; i++ {
+		b.aria.Character.HealthMax.Value = 1000
+		b.aria.Character.Health = 1000
+		if b.aria.Character.RoomId == b.road.RoomId && (b.aria.Character.Aggro == nil || b.aria.Character.Aggro.Type != characters.Flee) {
+			b.cmd("flee", "")
+		}
+		seen = append(seen, b.fight())
+		fled = b.aria.Character.RoomId != b.road.RoomId
+	}
+	require.True(t, fled, "Aria gets away")
+	for i := 0; i < 3 && len(combatstream.Default().OpenFights()) > 0; i++ {
+		seen = append(seen, b.fight())
+	}
+	assert.Empty(t, combatstream.Default().OpenFights())
+
+	var flee, end *combatstream.Event
+	for i := range *got {
+		switch e := &(*got)[i]; e.Kind {
+		case combatstream.Flee:
+			flee = e
+		case combatstream.FightEnd:
+			end = e
+		}
+	}
+	require.NotNil(t, flee)
+	require.NotNil(t, end)
+	assert.Equal(t, 7, flee.Source.UserId)
+	assert.Equal(t, end.FightID, flee.FightID, "the flee is in the fight")
+	assert.Equal(t, combatstream.OutcomeBrokenOff, end.Outcome)
+	assert.Contains(t, strings.Join(seen, "\n"), "── The fight breaks off ──")
+}
+
+// TestUngroupedEnemiesAreOneFight (review M1): bandits with no group tag
+// are each a party of their own; the company fighting them all has one
+// fight and reads one summary.
+func TestUngroupedEnemiesAreOneFight(t *testing.T) {
+	b := newBrawl(t)
+	got := b.listen()
+	for _, mob := range b.livingBandits() {
+		mob.Groups = nil
+		mob.Hostile = true // so each joins without a shared group's hostility
+	}
+	b.cmd("attack", "bandit cutthroat")
+	seen := b.fightItOut(200)
+
+	starts, ends := 0, 0
+	parties := map[string]bool{}
+	for _, e := range *got {
+		switch e.Kind {
+		case combatstream.FightStart:
+			starts++
+		case combatstream.FightEnd:
+			ends++
+		case combatstream.Attack:
+			if e.FightID != 0 {
+				parties[e.PartyID] = true
+			}
+		}
+	}
+	assert.Equal(t, 1, starts)
+	assert.Equal(t, 1, ends)
+	assert.Greater(t, len(parties), 1, "blows name each enemy's own party")
+	assert.Equal(t, 1, strings.Count(seen, summaryHeading))
+}
+
+// TestInterceptedBlowFellsTheLeaderThatRound (the 29b death fix): the
+// leader shielding a companion behind her is struck through interception
+// alone. A blow that drops her is reported, and she is dropped, in that
+// same round; before 29b nothing named her in the round's affected list.
+func TestInterceptedBlowFellsTheLeaderThatRound(t *testing.T) {
+	b := newBrawl(t)
+	got := b.listen()
+	// One enemy, too tough to die: the captain.
+	for name, ids := range b.bandits {
+		if name == "bandit captain" {
+			continue
+		}
+		for _, id := range ids {
+			b.road.RemoveMob(id)
+			mobs.DestroyInstance(id)
+		}
+		delete(b.bandits, name)
+	}
+	captain := mobs.GetInstance(b.bandits["bandit captain"][0])
+	require.NotNil(t, captain)
+	// Aria in front of Tamsin, in the middle column the lone captain faces.
+	for _, mv := range []string{"move me 1 2", "move #1 2 2"} {
+		require.Contains(t, b.cmd("formation", mv), "Placed")
+	}
+	tamsin := b.companion(1)
+	for i := 0; i < 60; i++ {
+		captain.Character.HealthMax.Value = 1000
+		captain.Character.Health = 1000
+		captain.Character.SetAggro(0, tamsin.InstanceId, characters.DefaultAttack)
+		b.aria.Character.Health = 1
+		b.aria.Character.Aggro = nil
+		mark := len(*got)
+		b.fight()
+		var hit, fell *combatstream.Event
+		for j := mark; j < len(*got); j++ {
+			e := &(*got)[j]
+			if e.Kind == combatstream.Attack && e.Source.MobInstanceId == captain.InstanceId && e.Target.UserId == 7 && e.Damage > 0 {
+				hit = e
+			}
+			if e.Kind == combatstream.Death && e.Target.UserId == 7 {
+				fell = e
+			}
+		}
+		if hit == nil {
+			assert.Nil(t, fell, "round %d: no blow, no fall", b.round)
+			continue
+		}
+		require.NotNil(t, fell, "the intercepted blow drops Aria in its round")
+		assert.Equal(t, hit.Round, fell.Round)
+		assert.Equal(t, captain.InstanceId, fell.Source.MobInstanceId, "credited to the captain")
+		return
+	}
+	t.Fatal("the captain never landed an intercepted blow")
+}
+
+// TestSpellEventsThroughTheRealRound: a cast's waiting round, its end, and
+// what it did are reported through the round, with the shipped Minor Heal
+// and Magic Missile: a heal on Aria, and spell damage on a bandit in the
+// fight, counted in the summary's company damage.
+func TestSpellEventsThroughTheRealRound(t *testing.T) {
 	b := newBrawl(t)
 	got := b.listen()
 	b.cmd("attack", "bandit cutthroat")
 	b.aria.Character.HealthMax.Value = 1000
 	b.aria.Character.Health = 1000
-	b.fight()
-	require.Len(t, combatstream.Default().OpenFights(), 1)
+	b.fight() // the fight is open
 
-	// Everyone stops: Aria and her company stand down, and the bandits
-	// lose interest (as when the company walks off).
-	b.aria.Character.Aggro = nil
-	for instance := range b.companyInstances() {
-		if mob := mobs.GetInstance(instance); mob != nil {
-			mob.Character.Aggro = nil
+	cast := func(spellId string, users, mobIds []int) *combatstream.Event {
+		for i := 0; i < 60; i++ {
+			b.aria.Character.HealthMax.Value = 1000
+			b.aria.Character.Health = 500
+			b.aria.Character.Aggro = &characters.Aggro{Type: characters.SpellCast, RoundsWaiting: 1,
+				SpellInfo: characters.SpellAggroInfo{SpellId: spellId, TargetUserIds: users, TargetMobInstanceIds: mobIds}}
+			mark := len(*got)
+			b.fight() // the waiting round
+			b.fight() // the cast
+			var progress, complete *combatstream.Event
+			for j := mark; j < len(*got); j++ {
+				e := &(*got)[j]
+				if e.Source.UserId != 7 || e.SpellId != spellId {
+					continue
+				}
+				switch e.Kind {
+				case combatstream.CastProgress:
+					progress = e
+				case combatstream.CastComplete:
+					complete = e
+				}
+			}
+			require.NotNil(t, progress, "the waiting round is reported")
+			require.NotNil(t, complete, "the cast's end is reported")
+			if complete.Outcome == combatstream.OutcomeCast {
+				return complete
+			}
+			assert.Equal(t, combatstream.OutcomeFizzled, complete.Outcome)
+		}
+		t.Fatalf("%s never went off", spellId)
+		return nil
+	}
+
+	complete := cast("heal", []int{7}, nil)
+	var heal *combatstream.Event
+	for i := range *got {
+		if e := &(*got)[i]; e.Kind == combatstream.Heal && e.Seq > complete.Seq && e.Target.UserId == 7 {
+			heal = e
+			break
 		}
 	}
-	for _, mob := range b.livingBandits() {
-		mob.Character.Aggro = nil
-	}
-	b.road.RemovePlayer(7)
-	b.aria.Character.RoomId = 1
-	seen := b.fight()
+	require.NotNil(t, heal, "the heal is reported")
+	assert.GreaterOrEqual(t, heal.Amount, 2, "Minor Heal is 2d3")
+	assert.LessOrEqual(t, heal.Amount, 6)
+	assert.NotZero(t, heal.FightID, "healing the leader mid-fight is in the fight")
 
-	assert.Empty(t, combatstream.Default().OpenFights())
-	last := (*got)[len(*got)-1]
-	require.Equal(t, combatstream.FightEnd, last.Kind)
-	assert.Equal(t, combatstream.OutcomeBrokenOff, last.Outcome)
-	assert.Contains(t, seen, "── The fight breaks off ──")
+	living := b.livingBandits()
+	require.NotEmpty(t, living)
+	target := living[0]
+	target.Character.HealthMax.Value = 1000
+	target.Character.Health = 1000
+	complete = cast("mm", nil, []int{target.InstanceId})
+	var hit *combatstream.Event
+	for i := range *got {
+		if e := &(*got)[i]; e.Kind == combatstream.SpellHit && e.Seq > complete.Seq && e.Target.MobInstanceId == target.InstanceId {
+			hit = e
+			break
+		}
+	}
+	require.NotNil(t, hit, "the spell's damage is reported")
+	assert.Positive(t, hit.Damage)
+	assert.NotZero(t, hit.FightID)
+	target.Character.HealthMax.Value = 10 // back to a bandit's toughness
+	target.Character.Health = 5
+
+	// The fight's summary counts the spell with the blows.
+	seen := b.fightItOut(200)
+	var end *combatstream.Event
+	companyDamage := 0
+	for i := range *got {
+		e := &(*got)[i]
+		if (e.Kind == combatstream.Attack || e.Kind == combatstream.SpellHit) && e.FightID == hit.FightID && (e.Source.UserId == 7 || b.companyInstances()[e.Source.MobInstanceId] || e.Source.LeaderUserId == 7) {
+			companyDamage += e.Damage
+		}
+		if e.Kind == combatstream.FightEnd {
+			end = e
+		}
+	}
+	require.NotNil(t, end)
+	assert.Equal(t, companyDamage, end.Summary.CompanyDamage)
+	assert.Contains(t, seen, "Healing        Company ")
 }

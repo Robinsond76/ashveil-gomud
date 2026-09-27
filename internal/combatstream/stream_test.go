@@ -82,13 +82,13 @@ func TestEngageOpensOnceAndMerges(t *testing.T) {
 	assert.Equal(t, id, again)
 	assert.Len(t, *got, 1, "no second fight-start")
 
-	// The party id changed but a known enemy is in it: still the same fight.
+	// The party id changed (the group re-formed): still the same fight.
 	third := s.Engage(7, 100, "bandits#1", aria, []Ref{garrick}, []Ref{slinger})
 	assert.Equal(t, id, third)
 
 	fights := s.OpenFights()
 	require.Len(t, fights, 1)
-	assert.Equal(t, "bandits#1", fights[0].PartyID)
+	assert.Equal(t, "bandits#0", fights[0].PartyID, "the first party engaged")
 	assert.Equal(t, []Ref{aria, garrick, tamsin}, fights[0].Company)
 	assert.Equal(t, []Ref{captain, slinger}, fights[0].Enemies)
 	assert.Equal(t, uint64(5), fights[0].StartRound)
@@ -148,7 +148,7 @@ func TestEndFightEmitsSummaryAndForgets(t *testing.T) {
 	got := record(s)
 	id := s.Engage(1, 100, "bandits#0", aria, []Ref{garrick}, []Ref{captain})
 	s.Emit(Event{Kind: Attack, Source: garrick, Target: captain, Damage: 5})
-	sum, ok := s.EndFight(id, 4, OutcomeVictory, []MemberHealth{{Ref: aria, Health: 10, Max: 14}})
+	sum, ok := s.EndFight(id, 4, OutcomeVictory, Final{Company: []MemberHealth{{Ref: aria, Health: 10, Max: 14}}})
 	require.True(t, ok)
 	require.NotNil(t, sum)
 	assert.Equal(t, 5, sum.CompanyDamage)
@@ -163,7 +163,7 @@ func TestEndFightEmitsSummaryAndForgets(t *testing.T) {
 	assert.Equal(t, aria, last.Source)
 
 	assert.Empty(t, s.OpenFights())
-	_, ok = s.EndFight(id, 5, OutcomeVictory, nil)
+	_, ok = s.EndFight(id, 5, OutcomeVictory, Final{})
 	assert.False(t, ok)
 	e, _ := s.Emit(Event{Kind: Attack, Source: garrick, Target: captain})
 	assert.Zero(t, e.FightID)
@@ -176,4 +176,64 @@ func TestUseForTestRestores(t *testing.T) {
 	assert.Same(t, mine, Default())
 	restore()
 	assert.Same(t, before, Default())
+}
+
+// TestOneFightPerCompanyAndRoom (review M1, M2): a company fighting two
+// parties at once (three ungrouped wolves are three solo parties) has one
+// fight, one start, and one end; each event names its enemy's own party.
+func TestOneFightPerCompanyAndRoom(t *testing.T) {
+	s := New()
+	got := record(s)
+	wolf1 := Ref{MobInstanceId: 41, Name: "wolf"}
+	wolf2 := Ref{MobInstanceId: 42, Name: "wolf"}
+	id := s.Engage(1, 100, "solo:41", aria, []Ref{garrick}, []Ref{wolf1})
+	assert.Equal(t, id, s.Engage(1, 100, "solo:42", aria, []Ref{garrick}, []Ref{wolf2}))
+	require.Len(t, s.OpenFights(), 1)
+
+	e, _ := s.Emit(Event{Kind: Attack, Source: wolf2, Target: garrick, Damage: 2})
+	assert.Equal(t, id, e.FightID)
+	assert.Equal(t, "solo:42", e.PartyID, "the attacking enemy's own party")
+	e, _ = s.Emit(Event{Kind: Attack, Source: aria, Target: wolf1, Damage: 2})
+	assert.Equal(t, "solo:41", e.PartyID)
+	d, _ := s.Emit(Event{Kind: Death, Target: garrick, Outcome: OutcomeSlain})
+	assert.Equal(t, id, d.FightID)
+	assert.Equal(t, wolf2, d.Source)
+
+	sum, ok := s.EndFight(id, 3, OutcomeVictory, Final{})
+	require.True(t, ok)
+	assert.Len(t, sum.Enemies, 2)
+	starts := 0
+	for _, e := range *got {
+		if e.Kind == FightStart {
+			starts++
+		}
+	}
+	assert.Equal(t, 1, starts)
+}
+
+// TestOutsiderKillIsNotCreditedToTheCompany (review L2): a blow from
+// outside the fight is not in it, but it is the victim's last damage, so a
+// kill it makes is not the company's.
+func TestOutsiderKillIsNotCreditedToTheCompany(t *testing.T) {
+	s := New()
+	id := s.Engage(1, 100, "bandits#0", aria, []Ref{garrick}, []Ref{captain})
+	s.Emit(Event{Kind: Attack, Source: garrick, Target: captain, Damage: 3})
+	e, _ := s.Emit(Event{Kind: Attack, Source: fence, Target: captain, Damage: 4})
+	assert.Zero(t, e.FightID, "the outsider's blow is not in the fight")
+	d, _ := s.Emit(Event{Kind: Death, Target: captain, Outcome: OutcomeSlain})
+	assert.Equal(t, fence, d.Source)
+	sum, _ := s.EndFight(id, 2, OutcomeVictory, Final{})
+	assert.Empty(t, sum.Kills)
+	assert.Equal(t, 3, sum.CompanyDamage)
+}
+
+// TestClosedFightIdIsCleared: an event naming a fight that has ended is
+// not left carrying its id.
+func TestClosedFightIdIsCleared(t *testing.T) {
+	s := New()
+	id := s.Engage(1, 100, "bandits#0", aria, nil, []Ref{captain})
+	s.EndFight(id, 2, OutcomeBrokenOff, Final{})
+	e, _ := s.Emit(Event{Kind: Attack, FightID: id, PartyID: "x", Source: aria, Target: captain})
+	assert.Zero(t, e.FightID)
+	assert.Empty(t, e.PartyID)
 }

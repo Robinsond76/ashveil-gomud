@@ -22,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -83,12 +84,13 @@ func newBrawl(t *testing.T) *brawl {
 
 	dataDir := t.TempDir()
 	useDataDir(t, dataDir)
-	copyShipped(t, dataDir, "items", "races", "combat-messages", "biomes", "keywords.yaml",
+	copyShipped(t, dataDir, "items", "races", "combat-messages", "biomes", "keywords.yaml", "spells",
 		"mobs/dunmar/61-tamsin_reed.yaml", "mobs/dunmar/62-brother_oswin.yaml",
 		"mobs/dunmar/63-garrick_vane.yaml", "mobs/old_kings_road/64-ysolde.yaml")
 	fixtures := map[string]string{
 		"rooms/brawl/zone-config.yaml":          "name: brawl\nroomid: 920101\n",
-		"rooms/brawl/920101.yaml":               "roomid: 920101\nzone: brawl\ntitle: Road\ndescription: A road.\nbiome: road\n",
+		"rooms/brawl/920101.yaml":               "roomid: 920101\nzone: brawl\ntitle: Road\ndescription: A road.\nbiome: road\nexits:\n  east:\n    roomid: 920102\n",
+		"rooms/brawl/920102.yaml":               "roomid: 920102\nzone: brawl\ntitle: Verge\ndescription: The road's verge.\nbiome: road\nexits:\n  west:\n    roomid: 920101\n",
 		"mobs/brawl/9101-bandit_cutthroat.yaml": banditMob(9101, "bandit cutthroat", 1),
 		"mobs/brawl/9102-bandit_bruiser.yaml":   banditMob(9102, "bandit bruiser", 1),
 		"mobs/brawl/9103-bandit_slinger.yaml":   banditMob(9103, "bandit slinger", 1),
@@ -105,6 +107,7 @@ func newBrawl(t *testing.T) *brawl {
 		require.NoError(t, os.MkdirAll(filepath.Join(dataDir, dir), 0755))
 	}
 	races.LoadDataFiles()
+	spells.LoadSpellFiles()
 	items.LoadDataFiles()
 	rooms.LoadDataFiles()
 	rooms.LoadBiomeDataFiles()

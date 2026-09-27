@@ -54,9 +54,8 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		user.SendText(`<ansi fg="yellow-bold">tinymap:</ansi> ` + onTxt)
 		user.SendText(``)
 
-		on = user.GetConfigOption(`battlesummary`)
 		onTxt = `<ansi fg="red">OFF</ansi>`
-		if on == nil || on.(bool) {
+		if enabled, isBool := user.GetConfigOption(`battlesummary`).(bool); !isBool || enabled {
 			onTxt = `<ansi fg="green">ON</ansi>`
 		}
 		user.SendText(`<ansi fg="yellow-bold">battlesummary:</ansi> ` + onTxt)
@@ -166,11 +165,11 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	// Ashveil Phase 29b: the battle summary at a fight's end. On when unset.
 	if setTarget == `battlesummary` {
-		on := user.GetConfigOption(`battlesummary`)
-		if on == nil {
+		on, isBool := user.GetConfigOption(`battlesummary`).(bool)
+		if !isBool {
 			on = true
 		}
-		if !on.(bool) {
+		if !on {
 			on = true
 			user.SendText(`Battle summary toggled <ansi fg="green">ON</ansi>.`)
 		} else {

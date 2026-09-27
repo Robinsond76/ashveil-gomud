@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -273,12 +274,42 @@ func (fs fightSides) enemiesStanding() bool {
 	return false
 }
 
-func (fs fightSides) companyStanding() bool {
-	if fs.leaderStanding() {
+// companyAlive reports whether any company member is still alive,
+// wherever they are: a company that walked or fled out of the room is not
+// beaten (its fight breaks off instead).
+func (fs fightSides) companyAlive() bool {
+	if fs.leader != nil && fs.leader.Character.Health > 0 {
 		return true
 	}
 	for instanceId := range fs.companyMobs {
-		if fs.standingMob(instanceId) != nil {
+		if m := mobs.GetInstance(instanceId); m != nil && m.Character.Health > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// otherFoesHere reports whether a living mob in the fight's room, not yet
+// counted among its enemies, is fighting the company or would join the
+// fight (a hostile mob, or one whose group is hostile to the leader). The
+// upkeep adds it to the fight next round, so the fight isn't over.
+func (fs fightSides) otherFoesHere() bool {
+	room := rooms.LoadRoom(fs.info.RoomId)
+	if room == nil {
+		return false
+	}
+	for _, instanceId := range room.GetMobs() {
+		if fs.enemyMobs[instanceId] || fs.companyMobs[instanceId] {
+			continue
+		}
+		m := fs.standingMob(instanceId)
+		if m == nil || m.Character.IsCharmed() || !canFight(&m.Character) {
+			continue
+		}
+		if a := m.Character.Aggro; a != nil && (a.UserId == fs.info.LeaderUserId || fs.companyMobs[a.MobInstanceId]) {
+			return true
+		}
+		if joinsTheFight(m, fs.info.LeaderUserId) {
 			return true
 		}
 	}
@@ -303,7 +334,9 @@ func aimsAt(a *characters.Aggro, mobSet map[int]bool) bool {
 }
 
 // engaged reports whether any standing member of either side is still
-// fighting the other.
+// fighting the other. An enemy still beating a downed leader in the room
+// is fighting (the same test as the upkeep's engagedWith, so a fight the
+// upkeep finds is never closed in the same round).
 func (fs fightSides) engaged() bool {
 	if fs.leaderStanding() && aimsAt(fs.leader.Character.Aggro, fs.enemyMobs) {
 		return true
@@ -321,7 +354,7 @@ func (fs fightSides) engaged() bool {
 		if aimsAt(m.Character.Aggro, fs.companyMobs) {
 			return true
 		}
-		if fs.leaderStanding() && m.Character.Aggro.UserId == fs.info.LeaderUserId {
+		if fs.leader != nil && fs.leader.Character.RoomId == fs.info.RoomId && m.Character.Aggro.UserId == fs.info.LeaderUserId {
 			return true
 		}
 	}
@@ -351,10 +384,22 @@ func (fs fightSides) companyHealth() []combatstream.MemberHealth {
 	return out
 }
 
+// gone lists the fight's enemies no longer in its room, alive.
+func (fs fightSides) gone() []combatstream.Ref {
+	var out []combatstream.Ref
+	for _, r := range fs.info.Enemies {
+		if m := mobs.GetInstance(r.MobInstanceId); m != nil && m.Character.Health > 0 && m.Character.RoomId != fs.info.RoomId {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
 // endFight closes a fight and sends its summary to the leader, if online
 // and their setting is on.
 func (fs fightSides) end(outcome string) {
-	sum, ok := combatstream.Default().EndFight(fs.info.ID, combatRound.Load(), outcome, fs.companyHealth())
+	final := combatstream.Final{Company: fs.companyHealth(), Gone: fs.gone()}
+	sum, ok := combatstream.Default().EndFight(fs.info.ID, combatRound.Load(), outcome, final)
 	if !ok || fs.leader == nil {
 		return
 	}
@@ -382,15 +427,17 @@ func closeDisengagedFights() {
 }
 
 // settleFights ends, at the end of the round and after its deaths are
-// reported, each open fight one side of which no longer stands.
+// reported, each open fight one side of which has fallen: every company
+// member dead (defeat), or no enemy standing in the room and no other foe
+// there to join (victory).
 func settleFights() {
 	for _, fi := range combatstream.Default().OpenFights() {
 		fs := loadFightSides(fi)
 		switch {
-		case !fs.enemiesStanding():
-			fs.end(combatstream.OutcomeVictory)
-		case !fs.companyStanding():
+		case !fs.companyAlive():
 			fs.end(combatstream.OutcomeDefeat)
+		case !fs.enemiesStanding() && !fs.otherFoesHere():
+			fs.end(combatstream.OutcomeVictory)
 		}
 	}
 }
