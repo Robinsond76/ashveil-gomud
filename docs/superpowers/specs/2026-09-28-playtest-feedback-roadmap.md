@@ -56,7 +56,7 @@ Researched on `4cb2faf` (2026-09-28).
 | 32a | Company polish: no `♥friend` on companions; one arrival/departure line for a company; no drink flourish; camp and fire in `look`; recruiters listed in the room; readable formation grid | [32a design](2026-09-28-phase-32a-company-polish-design.md) |
 | 32a2 | Per-player recruit rosters: generated candidates (name, archetype, level, alignment, price) that come and go on each player's own notice; companions get their own names | [32a2 design](2026-09-28-phase-32a2-recruit-rosters-design.md) |
 | 32b | Tutorial replay: a throwaway level-1 character, back to the real one on leaving | [32b design](2026-09-28-phase-32b-tutorial-replay-design.md) |
-| 32c | Enemy groups: named and described groups, `attack <group>` only, `scout` to see a group's formation before a fight | to write |
+| 32c | Enemy groups: named and described groups, `attack <group>` only, `scout` to see a group's formation before a fight | [32c design](2026-09-28-phase-32c-enemy-groups-design.md) |
 | 32d | Automatic combat for the player and companions: act by archetype role, casters cast with real mana (the casting slice of 30c, pulled forward) | to write |
 | 32e | Company experience: every member present earns the full award; `experience` lists the company | to write |
 | 32f | Company logistics: capacity from members, backpacks, horses and saddles; `company inventory` (gear, packs, cargo); `company eat`/`drink` | to write |
