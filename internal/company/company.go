@@ -122,6 +122,17 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	return record, true
 }
 
+// Remove drops a leader's record entirely, claims and lost companions
+// included (Phase 32b: a purged user), and reports whether there was one.
+func (r *Registry) Remove(leaderUserID int) bool {
+	if r == nil {
+		return false
+	}
+	_, ok := r.Companies[leaderUserID]
+	delete(r.Companies, leaderUserID)
+	return ok
+}
+
 // Put stores a record after pruning stale formation cells and normalizing the
 // next companion ID. A record with no companions and an empty formation is
 // removed entirely unless it carries a companion-ID high-water mark above 1,

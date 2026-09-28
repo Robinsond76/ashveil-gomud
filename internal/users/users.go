@@ -674,7 +674,7 @@ func GetUniqueUserId() int {
 		// Check all user id's of offline users
 		SearchOfflineUsers(func(u *UserRecord) bool {
 
-			if u.UserId > highestUserId {
+			if u.UserId > highestUserId && u.UserId < ReplayUserIdBase {
 				highestUserId = u.UserId
 			}
 
@@ -683,7 +683,7 @@ func GetUniqueUserId() int {
 
 		// Check all user id's of online users
 		for _, u := range GetAllActiveUsers() {
-			if u.UserId > highestUserId {
+			if u.UserId > highestUserId && u.UserId < ReplayUserIdBase {
 				highestUserId = u.UserId
 			}
 		}

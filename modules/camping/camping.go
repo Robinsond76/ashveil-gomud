@@ -333,6 +333,7 @@ func init() {
 	m.plug.AddUserCommand("sharpen", m.sharpenCommand, false, false)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {

@@ -103,6 +103,11 @@ type TutorialModule struct {
 	copies map[int]map[int]int
 	// fights maps each player at the practice fight to their squad.
 	fights map[int]*fight
+
+	// Phase 32b: replays. handingBack marks a throwaway already on its way
+	// out, so it is handed back once.
+	seams       replaySeams
+	handingBack map[int]bool
 }
 
 var module *TutorialModule
@@ -151,6 +156,8 @@ func newModule() *TutorialModule {
 		waterItem:      defaultWaterItem,
 		recruits:       defaultRecruits,
 		copies:         map[int]map[int]int{},
+		seams:          nativeReplaySeams(),
+		handingBack:    map[int]bool{},
 	}
 }
 
@@ -182,6 +189,7 @@ func init() {
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.PlayerDespawn{}, m.onPlayerDespawn)
 	events.RegisterListener(resumeTutorial{}, m.onResume)
+	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	domain.SetProvider(m)
 	module = m
 }
@@ -246,6 +254,8 @@ func (m *TutorialModule) load() {
 	if len(m.roomIDs()) < len(stages) {
 		mudlog.Error("tutorial: fewer TutorialRooms than stages", "rooms", len(m.roomIDs()), "stages", len(stages))
 	}
+	// Phase 32b: replays left by a restart or crash.
+	m.sweepReplays()
 }
 
 // --- placement ---
@@ -312,6 +322,12 @@ func (m *TutorialModule) closedCourse(user *users.UserRecord) {
 	m.strikeCamp(user)
 	m.clearSquad(user.UserId)
 	mudlog.Error("tutorial: course unavailable", "user", user.UserId, "rooms", len(m.roomIDs()), "stages", len(stages))
+	if user.IsReplay() {
+		// Phase 32b: a replay ends with the course.
+		user.SendText("The training grounds are closed right now.")
+		m.handBack(user)
+		return
+	}
 	user.SendText(`The training grounds are closed right now. Your place in them is kept for when they reopen; <ansi fg="command">tutorial skip yes</ansi> leaves the course for good.`)
 }
 
@@ -536,13 +552,20 @@ func (m *TutorialModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 		return events.Continue
 	}
 	user := m.lookupUser(evt.UserId)
-	if user == nil || user.Character == nil || progressOf(user.Character).State != stateActive {
+	if user == nil || user.Character == nil {
 		return events.Continue
 	}
-	m.strikeCamp(user)
-	// The squad goes too: the copies it stands in are freed, and their IDs
-	// may be handed back on resume.
-	m.clearSquad(user.UserId)
+	if progressOf(user.Character).State == stateActive {
+		m.strikeCamp(user)
+		// The squad goes too: the copies it stands in are freed, and their
+		// IDs may be handed back on resume.
+		m.clearSquad(user.UserId)
+	}
+	// Phase 32b: a throwaway leaving, by any way, is purged once it's out
+	// (the engine's leave handling runs before the queued purge).
+	if user.IsReplay() {
+		m.seams.queue(events.UserPurged{UserId: user.UserId})
+	}
 	return events.Continue
 }
 
@@ -764,6 +787,7 @@ func (m *TutorialModule) leave(user *users.UserRecord, p progress) {
 		p.State = stateSkipped
 		p.save(user.Character)
 		mudlog.Info("tutorial: left early", "user", user.UserId, "stage", p.Stage)
+		m.handBack(user) // Phase 32b: a replay ends with the course
 		return
 	}
 	p.State = stateGraduated
@@ -774,6 +798,12 @@ func (m *TutorialModule) leave(user *users.UserRecord, p progress) {
 		if spec := items.GetItemSpec(m.graduationItem); spec != nil {
 			text += fmt.Sprintf(` You receive a <ansi fg="item">%s</ansi>.`, spec.Name)
 		}
+	}
+	if user.IsReplay() {
+		// Phase 32b: the reward goes with the practice character.
+		user.SendText(text)
+		m.handBack(user)
+		return
 	}
 	user.SendText(text + ` Your journey begins.`)
 }
@@ -791,7 +821,17 @@ func (resumeTutorial) Type() string { return "TutorialResume" }
 // queued resume then brings them back to the course. That hop is expected.
 func (m *TutorialModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if evt, ok := e.(events.PlayerSpawn); ok {
+		user := m.lookupUser(evt.UserId)
+		if user != nil && user.Character != nil && user.IsReplay() && progressOf(user.Character).State == stateNone {
+			// Phase 32b: a throwaway's first spawn goes straight into the
+			// course, before the engine's join shows it the Void.
+			m.startReplay(user)
+			return events.Continue
+		}
 		events.AddToQueue(resumeTutorial{UserId: evt.UserId})
+		if user != nil && user.Character != nil {
+			m.onReplaySpawn(user)
+		}
 	}
 	return events.Continue
 }
@@ -813,6 +853,10 @@ func (m *TutorialModule) resume(userID int) {
 		return
 	}
 	p := progressOf(user.Character)
+	if user.IsReplay() && p.State == stateNone {
+		m.startReplay(user) // Phase 32b: a throwaway's first spawn
+		return
+	}
 	if p.State != stateActive {
 		return
 	}
@@ -841,6 +885,8 @@ func (m *TutorialModule) command(rest string, user *users.UserRecord, _ *rooms.R
 		sub = args[0]
 	}
 	switch {
+	case sub == "replay":
+		m.replay(user, len(args) > 1 && args[1] == "yes")
 	case p.State == stateGraduated:
 		user.SendText("You finished the tutorial. See <ansi fg=\"command\">help</ansi> for any command.")
 	case p.State == stateSkipped:
@@ -1030,6 +1076,9 @@ func (m *TutorialModule) skip(user *users.UserRecord, p progress, confirmed bool
 	user.Character.RoomIdOnReset = 0
 	m.strikeCamp(user) // before moving: a rest in progress holds the player
 	m.clearSquad(user.UserId)
+	if m.handBack(user) {
+		return // Phase 32b: a replay ends here, not in the start room
+	}
 	user.SendText(`<ansi fg="magenta">You leave the training grounds behind.</ansi>`)
 	if err := m.travel(user, rooms.StartRoomIdAlias); err != nil {
 		mudlog.Error("tutorial: skip", "user", user.UserId, "error", err)

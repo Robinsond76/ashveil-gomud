@@ -505,15 +505,17 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 		clientInput.BSPressed = false
 
 		n, err := connDetails.Read(inputBuffer)
+
+		// Ashveil 32b: a tutorial replay can hand this connection to another user.
+		userObject = currentUser(connDetails.ConnectionId(), userObject)
 		if err != nil {
 			userObject.EventLog.Add(`conn`, `Disconnected`)
 
 			if c.Network.LinkDeadSeconds > 0 {
 				connDetails.SetState(connections.LinkDead)
-				worldManager.SendSetLinkDead(userObject.UserId, true)
+				worldManager.SendDisconnect(connDetails.ConnectionId(), true) // Ashveil 32b: whoever is on it now
 			} else {
-				worldManager.SendLeaveWorld(userObject.UserId)
-				worldManager.SendLogoutConnectionId(connDetails.ConnectionId())
+				worldManager.SendDisconnect(connDetails.ConnectionId(), false) // Ashveil 32b: whoever is on it now
 			}
 
 			mudlog.Warn("Telnet", "connectionID", connDetails.ConnectionId(), "error", err)
@@ -607,6 +609,20 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 			time.Sleep(time.Duration(10) * time.Millisecond)
 		}
 	}
+}
+
+// currentUser is the user on a connection now. A tutorial replay (Ashveil
+// 32b) hands a connection from one user to another on the game loop, so
+// each connection loop re-reads it after every read. Before login (nil)
+// it stays nil.
+func currentUser(connId connections.ConnectionId, known *users.UserRecord) *users.UserRecord {
+	if known == nil {
+		return nil
+	}
+	if u := users.GetByConnectionId(connId); u != nil {
+		return u
+	}
+	return known
 }
 
 // Bounds for the connect-time client-type detection probe.
@@ -851,6 +867,9 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 		clientInput.BSPressed = false    // Default state is always false
 
 		n, err := connDetails.Read(inputBuffer)
+
+		// Ashveil 32b: a tutorial replay can hand this connection to another user.
+		userObject = currentUser(connDetails.ConnectionId(), userObject)
 		if err != nil {
 
 			// If failed to read from the connection, switch to linkdead state
@@ -861,12 +880,11 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 				if c.Network.LinkDeadSeconds > 0 {
 
 					connDetails.SetState(connections.LinkDead)
-					worldManager.SendSetLinkDead(userObject.UserId, true)
+					worldManager.SendDisconnect(connDetails.ConnectionId(), true) // Ashveil 32b: whoever is on it now
 
 				} else {
 
-					worldManager.SendLeaveWorld(userObject.UserId)
-					worldManager.SendLogoutConnectionId(connDetails.ConnectionId())
+					worldManager.SendDisconnect(connDetails.ConnectionId(), false) // Ashveil 32b: whoever is on it now
 
 				}
 
@@ -1167,6 +1185,9 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 	for {
 		_, message, err := conn.ReadMessage()
 
+		// Ashveil 32b: a tutorial replay can hand this connection to another user.
+		userObject = currentUser(connDetails.ConnectionId(), userObject)
+
 		if err != nil {
 
 			// If failed to read from the connection, switch to linkdead state
@@ -1177,12 +1198,11 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 				if c.Network.LinkDeadSeconds > 0 {
 
 					connDetails.SetState(connections.LinkDead)
-					worldManager.SendSetLinkDead(userObject.UserId, true)
+					worldManager.SendDisconnect(connDetails.ConnectionId(), true) // Ashveil 32b: whoever is on it now
 
 				} else {
 
-					worldManager.SendLeaveWorld(userObject.UserId)
-					worldManager.SendLogoutConnectionId(connDetails.ConnectionId())
+					worldManager.SendDisconnect(connDetails.ConnectionId(), false) // Ashveil 32b: whoever is on it now
 
 				}
 
@@ -1564,15 +1584,17 @@ func handleSSHConnection(connDetails *connections.ConnectionDetails, reqs <-chan
 		clientInput.BSPressed = false
 
 		n, err := connDetails.Read(inputBuffer)
+
+		// Ashveil 32b: a tutorial replay can hand this connection to another user.
+		userObject = currentUser(connDetails.ConnectionId(), userObject)
 		if err != nil {
 			if userObject != nil {
 				userObject.EventLog.Add(`conn`, `Disconnected`)
 				if c.Network.LinkDeadSeconds > 0 {
 					connDetails.SetState(connections.LinkDead)
-					worldManager.SendSetLinkDead(userObject.UserId, true)
+					worldManager.SendDisconnect(connDetails.ConnectionId(), true) // Ashveil 32b: whoever is on it now
 				} else {
-					worldManager.SendLeaveWorld(userObject.UserId)
-					worldManager.SendLogoutConnectionId(connDetails.ConnectionId())
+					worldManager.SendDisconnect(connDetails.ConnectionId(), false) // Ashveil 32b: whoever is on it now
 				}
 			}
 			mudlog.Warn("SSH", "connectionID", connDetails.ConnectionId(), "error", err)

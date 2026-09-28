@@ -172,6 +172,10 @@ func TestShippedHelpTemplate(t *testing.T) {
 	data, err := files.ReadFile("files/datafiles/templates/help/tutorial.template")
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "tutorial skip")
+	assert.Contains(t, string(data), "tutorial replay", "32b")
+	// 32b review: the page says what logout and skip do during a replay.
+	assert.Contains(t, string(data), "except during a replay")
+	assert.Contains(t, string(data), "During a replay it ends the replay instead")
 	for _, stage := range []string{"Survival", "Camp", "Combat", "Alignment"} {
 		assert.Contains(t, string(data), stage)
 	}

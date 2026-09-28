@@ -45,6 +45,7 @@ type UserRecord struct {
 	IsAI           bool                  `yaml:"isai,omitempty"`         // Flagged as an AI/test account
 	EmailAddress   string                `yaml:"emailaddress,omitempty"` // Email address (if provided)
 	TipsComplete   map[string]bool       `yaml:"tipscomplete,omitempty"` // Tips the user has followed/completed so they can be quiet
+	ReplayOf       int                   `yaml:"replayof,omitempty"`     // Ashveil 32b: a tutorial replay standing in for this real user id
 	EventLog       UserLog               `yaml:"-"`                      // Do not retain in user file (for now)
 	LastMusic      string                `yaml:"-"`                      // Keeps track of the last music that was played
 	connectionId   uint64
