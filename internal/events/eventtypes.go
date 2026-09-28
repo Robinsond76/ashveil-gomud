@@ -233,9 +233,33 @@ type PlayerDespawn struct {
 	Username      string
 	CharacterName string
 	TimeOnline    string
+	// HandOff (Ashveil 32b): the connection stays open for another user,
+	// whose UserHandOff is queued right after this event. Everything else
+	// about leaving is the same.
+	HandOff bool
 }
 
 func (p PlayerDespawn) Type() string { return `PlayerDespawn` }
+
+// UserHandOff (Ashveil 32b) logs ToUserId in on a connection that
+// FromUserId has just left with a HandOff despawn, and brings them into
+// the world. Queue it right after that despawn.
+type UserHandOff struct {
+	ConnectionId uint64
+	FromUserId   int
+	ToUserId     int
+}
+
+func (u UserHandOff) Type() string { return `UserHandOff` }
+
+// UserPurged (Ashveil 32b) removes an offline user for good: every module
+// that keeps state by user id drops this user's, and the final listener
+// removes the user file. Idempotent: running it twice is safe.
+type UserPurged struct {
+	UserId int
+}
+
+func (u UserPurged) Type() string { return `UserPurged` }
 
 // Something has changed about a a player.
 type PlayerChanged struct {

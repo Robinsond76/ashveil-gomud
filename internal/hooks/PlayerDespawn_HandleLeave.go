@@ -59,13 +59,19 @@ func HandleLeave(e events.Event) events.ListenerReturn {
 		room.SendText(tplTxt)
 	}
 
-	tplTxt, _ := templates.Process("goodbye", nil, evt.UserId)
-	connections.SendTo([]byte(templates.AnsiParse(tplTxt)), connId)
+	// Ashveil 32b: a hand-off keeps the connection for the next user
+	// (UserHandOff, queued after this), so no goodbye and no hang-up.
+	if !evt.HandOff {
+		tplTxt, _ := templates.Process("goodbye", nil, evt.UserId)
+		connections.SendTo([]byte(templates.AnsiParse(tplTxt)), connId)
+	}
 
 	if err := users.LogOutUserByConnectionId(connId); err != nil {
 		mudlog.Error("Log Out Error", "connectionId", connId, "error", err)
 	}
-	connections.Remove(connId)
+	if !evt.HandOff {
+		connections.Remove(connId)
+	}
 
 	specialRooms := configs.GetSpecialRoomsConfig()
 	testRoomId := rooms.GetOriginalRoom(user.Character.RoomId)

@@ -505,6 +505,9 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 		clientInput.BSPressed = false
 
 		n, err := connDetails.Read(inputBuffer)
+
+		// Ashveil 32b: a tutorial replay can hand this connection to another user.
+		userObject = currentUser(connDetails.ConnectionId(), userObject)
 		if err != nil {
 			userObject.EventLog.Add(`conn`, `Disconnected`)
 
@@ -607,6 +610,20 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 			time.Sleep(time.Duration(10) * time.Millisecond)
 		}
 	}
+}
+
+// currentUser is the user on a connection now. A tutorial replay (Ashveil
+// 32b) hands a connection from one user to another on the game loop, so
+// each connection loop re-reads it after every read. Before login (nil)
+// it stays nil.
+func currentUser(connId connections.ConnectionId, known *users.UserRecord) *users.UserRecord {
+	if known == nil {
+		return nil
+	}
+	if u := users.GetByConnectionId(connId); u != nil {
+		return u
+	}
+	return known
 }
 
 // Bounds for the connect-time client-type detection probe.
@@ -851,6 +868,9 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 		clientInput.BSPressed = false    // Default state is always false
 
 		n, err := connDetails.Read(inputBuffer)
+
+		// Ashveil 32b: a tutorial replay can hand this connection to another user.
+		userObject = currentUser(connDetails.ConnectionId(), userObject)
 		if err != nil {
 
 			// If failed to read from the connection, switch to linkdead state
@@ -1166,6 +1186,9 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 
 	for {
 		_, message, err := conn.ReadMessage()
+
+		// Ashveil 32b: a tutorial replay can hand this connection to another user.
+		userObject = currentUser(connDetails.ConnectionId(), userObject)
 
 		if err != nil {
 
@@ -1564,6 +1587,9 @@ func handleSSHConnection(connDetails *connections.ConnectionDetails, reqs <-chan
 		clientInput.BSPressed = false
 
 		n, err := connDetails.Read(inputBuffer)
+
+		// Ashveil 32b: a tutorial replay can hand this connection to another user.
+		userObject = currentUser(connDetails.ConnectionId(), userObject)
 		if err != nil {
 			if userObject != nil {
 				userObject.EventLog.Add(`conn`, `Disconnected`)
