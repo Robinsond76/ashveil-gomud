@@ -59,7 +59,7 @@ Researched on `4cb2faf` (2026-09-28).
 | 32c | Enemy groups: named and described groups, `attack <group>` only, `scout` to see a group's formation before a fight | to write |
 | 32d | Automatic combat for the player and companions: act by archetype role, casters cast with real mana (the casting slice of 30c, pulled forward) | to write |
 | 32e | Company experience: every member present earns the full award; `experience` lists the company | to write |
-| 32f | Company logistics: capacity from members, backpacks, horses and saddles; `company inventory` (gear, packs, cargo); `company eat`/`drink` | to write |
+| 32f | Company logistics: capacity from members, backpacks, horses and saddles; `company inventory` (gear, packs, cargo); `company eat`/`drink` | [32f design](2026-09-28-phase-32f-company-logistics-design.md) |
 | 32g | Web company dock: a tabbed section under the map (Company: Cargo, Status, Camp; Comm; Combat), cargo hover actions | to write |
 | 32h | Character deletion: confirmed by password, purging every module's state | to write |
 
