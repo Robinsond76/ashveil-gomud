@@ -319,15 +319,15 @@ func (b *brawl) fightToTheEnd(maxRounds int) (companyDamage int) {
 }
 
 // swungAt reports whether seen holds one of Aria's own attack lines naming
-// foe: to her ("You hit...", "the foe dodges your attack"), or about her to
-// the room ("Aria's fists...").
+// foe: to her ("You hit...", "The foe twists aside from your blow", "The
+// foe sways aside, and your blow falls on empty air"; she fights with her
+// fists, the generic pool), or about her to the room ("Aria's fists...").
 func swungAt(seen, foe string) bool {
 	for _, line := range strings.Split(seen, "\n") {
-		line = strings.TrimPrefix(line, "*** ") // a critical hit
-		if strings.Contains(line, "turn on") || !strings.Contains(line, foe) {
+		if strings.Contains(line, "turn toward") || !strings.Contains(line, foe) {
 			continue
 		}
-		if strings.HasPrefix(line, "You") || strings.HasPrefix(line, "Aria") || strings.Contains(line, "your attack") {
+		if strings.HasPrefix(line, "You") || strings.HasPrefix(line, "Aria") || strings.Contains(line, "your blow") {
 			return true
 		}
 	}
@@ -379,7 +379,7 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	b.toughen()
 	got = b.fight()
 	assert.NotContains(t, got, "You can't reach that target from here.")
-	turned := regexp.MustCompile(`You can't reach bandit captain from here\. You turn on (bandit \w+)\.`).FindStringSubmatch(got)
+	turned := regexp.MustCompile(`You can't reach the bandit captain from here\. You turn toward the (bandit \w+)\.`).FindStringSubmatch(got)
 	require.Len(t, turned, 2, "Aria is told she turns from the captain:\n%s", got)
 	assert.NotEqual(t, "bandit captain", turned[1])
 	assert.True(t, swungAt(got, turned[1]), "Aria swung at her new target in the same round:\n%s", got)
@@ -404,8 +404,8 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	garrick := b.companion(3)
 	garrick.Character.EndAggro()
 	got = b.fight()
-	assert.Contains(t, got, "You turn on bandit ", "the leader rejoins")
-	assert.Contains(t, got, "Garrick Vane turns on bandit ", "the killer rejoins")
+	assert.Contains(t, got, "You turn toward the bandit ", "the leader rejoins")
+	assert.Contains(t, got, "Garrick Vane turns toward the bandit ", "the killer rejoins")
 
 	// Review fix: `break` holds. The upkeep leaves a leader who broke off
 	// out of the fight, until she attacks again.
@@ -448,7 +448,7 @@ func TestUnplacedCompanyFightsAndCanBeStruck(t *testing.T) {
 
 	b.toughen()
 	got = b.fight()
-	assert.NotContains(t, got, "bandit slinger turns on")
+	assert.NotContains(t, got, "bandit slinger turns toward")
 	if slinger.Character.Health > 0 {
 		require.NotNil(t, slinger.Character.Aggro)
 		assert.Equal(t, tamsin.InstanceId, slinger.Character.Aggro.MobInstanceId, "the slinger keeps Tamsin")
@@ -461,7 +461,7 @@ func TestUnplacedCompanyFightsAndCanBeStruck(t *testing.T) {
 // with a companion present. A player whose companions are all dismissed
 // (the record stays) chooses their own targets: they are never turned.
 // Since 29b2 they do fight in a battle, so the group they struck comes at
-// them ("turns on Aria"), as the owner's one-battle rule applies to
+// them ("turns toward Aria"), as the owner's one-battle rule applies to
 // everyone.
 func TestSoloPlayerWithARecordFightsAsBefore(t *testing.T) {
 	b := newBrawl(t)
@@ -475,7 +475,7 @@ func TestSoloPlayerWithARecordFightsAsBefore(t *testing.T) {
 		b.aria.Character.HealthMax.Value = 1000
 		b.aria.Character.Health = 1000
 		got := b.fight()
-		assert.NotContains(t, got, "You turn on", "round %d", b.round)
+		assert.NotContains(t, got, "You turn toward", "round %d", b.round)
 		assert.NotContains(t, got, "can't reach", "round %d", b.round)
 	}
 }
@@ -498,10 +498,10 @@ func TestShopkeeperInTheGroupStaysOut(t *testing.T) {
 	b.cmd("attack", "bandit cutthroat")
 	b.toughen()
 	got := b.fight()
-	assert.Contains(t, got, "bandit captain turns on", "the rest of the party joins")
-	assert.NotContains(t, got, "bandit fence turns on", "the shopkeeper doesn't")
+	assert.Contains(t, got, "bandit captain turns toward", "the rest of the party joins")
+	assert.NotContains(t, got, "bandit fence turns toward", "the shopkeeper doesn't")
 	for i := 0; i < 3; i++ {
 		b.toughen()
-		assert.NotContains(t, b.fight(), "bandit fence turns on")
+		assert.NotContains(t, b.fight(), "bandit fence turns toward")
 	}
 }

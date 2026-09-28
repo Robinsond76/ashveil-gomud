@@ -1,6 +1,6 @@
 # Phase 29c Narration Voice Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Combat reads in a dark, physical voice with every mechanic in
 lowercase parentheses at the end of a line.
@@ -42,7 +42,7 @@ where the fight's stream events are produced; spells rewrite their own text.
 - Produces: `util.Article(name string) string`,
   `util.CapitalizeFirst(line string) string`.
 
-- [ ] **Step 1: Write the failing test** — table cases:
+- [x] **Step 1: Write the failing test** — table cases:
   `Article("bandit captain") == "the bandit captain"`;
   `Article("Garrick Vane") == "Garrick Vane"`;
   `Article("<ansi fg=\"mobname\">rat</ansi>") == "the <ansi fg=\"mobname\">rat</ansi>"`;
@@ -50,13 +50,13 @@ where the fight's stream events are produced; spells rewrite their own text.
   `CapitalizeFirst("the rat bites.") == "The rat bites."`;
   `CapitalizeFirst("<ansi fg=\"x\">the</ansi> rat") == "<ansi fg=\"x\">The</ansi> rat"`;
   `CapitalizeFirst("")`, `CapitalizeFirst("<ansi>")` unchanged.
-- [ ] **Step 2:** `go test ./internal/util -run 'TestArticle|TestCapitalizeFirst'` → FAIL (undefined).
-- [ ] **Step 3: Implement.** Both scan past `<...>` tags to the first
+- [x] **Step 2:** `go test ./internal/util -run 'TestArticle|TestCapitalizeFirst'` → FAIL (undefined).
+- [x] **Step 3: Implement.** Both scan past `<...>` tags to the first
   visible rune. `Article` returns the name unchanged when that rune is
   upper-case or the visible text already starts with "the "; else prefixes
   `"the "`. `CapitalizeFirst` upper-cases that rune.
-- [ ] **Step 4:** tests PASS.
-- [ ] **Step 5: Commit** `feat(util): article and capitalisation helpers for narration (29c)`.
+- [x] **Step 4:** tests PASS.
+- [x] **Step 5: Commit** `feat(util): article and capitalisation helpers for narration (29c)`.
 
 ### Task 2: Pool choice, suffixes, and articles in the combat round
 
@@ -73,7 +73,7 @@ where the fight's stream events are produced; spells rewrite their own text.
   `combat.damageSuffix(damage int, crit bool) string` →
   `" (5 damage)"` / `" (critical hit, 5 damage)"`.
 
-- [ ] **Step 1: Failing tests.**
+- [x] **Step 1: Failing tests.**
   - `attack_messages_test.go`: with a test group registered for a subtype
     whose pools carry distinct marker lines, `GetAttackMessage(st, 150, false)`
     returns the `heavy` pool, `(st, 40, true)` the `critical` pool,
@@ -84,8 +84,8 @@ where the fight's stream events are produced; spells rewrite their own text.
     (the defender's with `, N blocked)` when reduced), no line contains
     `***`, and every miss line has no `(`. A crit round is reached by
     giving the source the `accuracy` buff flag and looping.
-- [ ] **Step 2:** run both → FAIL.
-- [ ] **Step 3: Implement.**
+- [x] **Step 2:** run both → FAIL.
+- [x] **Step 3: Implement.**
   - `GetAttackMessage`: `crit` → `Critical`; else the tiers with
     `>= 75` → `Heavy` (the `>= 101` branch removed).
   - `buildCombatMessages`: `{source}`/`{target}` values through
@@ -96,8 +96,8 @@ where the fight's stream events are produced; spells rewrite their own text.
     when `attackTargetReduction > 0` (replacing `[you blocked N]`).
   - Dodge lines: `The <target> twists aside from your blow.` /
     `You twist aside from the blow.` (articles via Task 1).
-- [ ] **Step 4:** `go test ./internal/items ./internal/combat` PASS.
-- [ ] **Step 5: Commit** `feat(combat): crit-only critical pool, damage suffixes, articles (29c)`.
+- [x] **Step 4:** `go test ./internal/items ./internal/combat` PASS.
+- [x] **Step 5: Commit** `feat(combat): crit-only critical pool, damage suffixes, articles (29c)`.
 
 ### Task 3: Rewrite the eight weapon message files
 
@@ -105,14 +105,14 @@ where the fight's stream events are produced; spells rewrite their own text.
 - Modify: `_datafiles/world/default/combat-messages/{bludgeoning,claws,cleaving,generic,shooting,slashing,stabbing,whipping}.yaml`
 - Test: `internal/items/attack_messages_shipped_test.go` (create)
 
-- [ ] **Step 1: Failing data test.** Load every shipped file (as
+- [x] **Step 1: Failing data test.** Load every shipped file (as
   `LoadDataFiles` does, from `_datafiles/world/default/combat-messages`),
   walk every line of every pool: none contains `!`, `{damage}`, or a word
   of two or more letters in ALL-CAPS outside `<ansi ...>` tags; every group
   still `Validate()`s; every pool variant that existed still has at least
   one line.
-- [ ] **Step 2:** run → FAIL on today's files.
-- [ ] **Step 3: Rewrite.** Keep the header comment (drop `{damage}` from
+- [x] **Step 2:** run → FAIL on today's files.
+- [x] **Step 3: Rewrite.** Keep the header comment (drop `{damage}` from
   it), `optionid`, every pool and variant, and `{source}`, `{target}`,
   `{itemname}`, `{sourcetype}`, `{targettype}`, `{exitname}`,
   `{entrancename}`. Three or four lines per variant. Names are written
@@ -121,13 +121,15 @@ where the fight's stream events are produced; spells rewrite their own text.
   a solid blow, `heavy` a strong, clean blow (never "critical"),
   `critical` decisive and bloody. `prepare`/`wait` are aiming, circling,
   drawing breath.
-- [ ] **Step 4:** data test and `go test ./internal/items ./internal/combat` PASS.
-- [ ] **Step 5: Commit** `content(combat): weapon text in the narration voice (29c)`.
+- [x] **Step 4:** data test and `go test ./internal/items ./internal/combat` PASS.
+- [x] **Step 5: Commit** `content(combat): weapon text in the narration voice (29c)`.
 
 ### Task 4: Names and engagement lines
 
 **Files:**
-- Modify: `modules/company/runtime.go:48` (clear `charmed` after `Charm`)
+- ~~Modify: `modules/company/runtime.go:48` (clear `charmed` after `Charm`)~~ —
+  already done by Phase 32a (`Character.CharmAsCompanion`, tested in
+  `internal/characters/companion_name_test.go`), merged while 29c was open
 - Modify: `internal/usercommands/attack.go:216,273,277`,
   `internal/mobcommands/attack.go:126,129,150` (remove "prepares to fight")
 - Modify: `internal/hooks/combat_battle.go:195,205,365,464-478`,
@@ -142,18 +144,18 @@ where the fight's stream events are produced; spells rewrite their own text.
   `"The bandit captain turns toward Garrick Vane."` (names are coloured
   names; `who` may be `"You"` → `"You turn toward …"`).
 
-- [ ] **Step 1: Failing tests.** `turnsToward` cases (mob→player,
+- [x] **Step 1: Failing tests.** `turnsToward` cases (mob→player,
   player→mob, "You"); `groupTurnsOn` renamed `groupTurnsToward` and its test
   (`combat_stream_test.go:88`) updated to `"The ruffian turns toward"`;
   a summoned companion's formatted name has no `♥`.
-- [ ] **Step 2:** FAIL.
-- [ ] **Step 3: Implement.** Replace each site's `fmt.Sprintf` with
+- [x] **Step 2:** FAIL.
+- [x] **Step 3: Implement.** Replace each site's `fmt.Sprintf` with
   `turnsToward`; delete the six "prepares to fight" sends (keep their aggro
   logic); `mob.Character.SetAdjective("charmed", false)` after `Charm`.
-- [ ] **Step 4:** `go test ./internal/hooks ./internal/usercommands ./internal/mobcommands ./modules/company` —
+- [x] **Step 4:** `go test ./internal/hooks ./internal/usercommands ./internal/mobcommands ./modules/company` —
   update `wiring_combat_test.go:326,408,451,501-505` from "turns on" to
   "turns toward" and drop the `***` trim. PASS.
-- [ ] **Step 5: Commit** `feat(combat): no charmed tag on companions, no "prepares to fight", "turns toward" (29c)`.
+- [x] **Step 5: Commit** `feat(combat): no charmed tag on companions, no "prepares to fight", "turns toward" (29c)`.
 
 ### Task 5: Opener, closing, and death lines in order
 
