@@ -49,7 +49,7 @@ Use idiomatic Go, `gofmt`, tabs, exported `PascalCase`, and unexported `camelCas
 
 ## Testing Guidelines
 
-Use Go's standard `testing` package. Name tests `TestBehavior` and benchmarks `BenchmarkBehavior`, beside covered code. Add a regression test for each bug fix. Start targeted, then run `make validate`; run `make test` before requesting review when practical. Do not claim checks not run.
+Use Go's standard `testing` package. Name tests `TestBehavior` and benchmarks `BenchmarkBehavior`, beside covered code. Add a regression test for each bug fix. Start targeted: while working, run only the packages you touched. Run the full checks (`make generate`, `make validate`, `go test -race ./...`) once, at the end of a unit of work, and again only if code changed after that run; don't repeat a green run or run a baseline suite on a fresh branch. A docs-only change needs no Go tests unless a test reads it (help templates, world data). Do not claim checks not run.
 
 Every phase that changes what a player can do or see also ships its **player help** (adopted 2026-09-27 at the owner's request):
 

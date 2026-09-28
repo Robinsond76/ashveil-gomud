@@ -81,12 +81,23 @@ func TestWeaponType(t *testing.T) {
 	assert.Equal(t, "", weaponType(c))
 }
 
-func TestGroupTurnsOn(t *testing.T) {
-	assert.Equal(t, "They turn on", groupTurnsOn(mobparty.Party{}))
+func TestGroupTurnsToward(t *testing.T) {
+	assert.Equal(t, "They turn toward", groupTurnsToward(mobparty.Party{}))
 	a := engagementMob(t, 8601, 5, 1)
 	a.Character.Name = "ruffian"
-	assert.Equal(t, "The ruffian turns on", groupTurnsOn(mobparty.Party{Members: []int{8601}}))
+	assert.Equal(t, `The <ansi fg="mobname">ruffian</ansi> turns toward`, groupTurnsToward(mobparty.Party{Members: []int{8601}}))
 	b := engagementMob(t, 8602, 5, 1)
 	b.Character.Name = "big rat"
-	assert.Equal(t, "The ruffian and the others turn on", groupTurnsOn(mobparty.Party{Members: []int{8601, 8602}}))
+	assert.Equal(t, `The <ansi fg="mobname">ruffian</ansi> and the others turn toward`, groupTurnsToward(mobparty.Party{Members: []int{8601, 8602}}))
+}
+
+func TestTurnsToward(t *testing.T) {
+	assert.Equal(t, `The <ansi fg="mobname">bandit cutthroat</ansi> turns toward <ansi fg="username">Aria</ansi>.`,
+		turnsToward(mobTag("bandit cutthroat"), userTag("Aria")))
+	assert.Equal(t, `You turn toward the <ansi fg="mobname">bandit captain</ansi>.`, turnsToward(`You`, mobTag("bandit captain")))
+	assert.Equal(t, `<ansi fg="mobname">Garrick Vane</ansi> turns toward the <ansi fg="mobname">bandit bruiser</ansi>.`,
+		turnsToward(mobTag("Garrick Vane"), mobTag("bandit bruiser")))
+	// Review fix: a player's lowercase name takes no article.
+	assert.Equal(t, `The <ansi fg="mobname">bandit captain</ansi> turns toward <ansi fg="username">bob</ansi>.`,
+		turnsToward(mobTag("bandit captain"), userTag("bob")))
 }

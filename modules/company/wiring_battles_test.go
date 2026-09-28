@@ -152,7 +152,7 @@ func TestSecondPlayerTakesTheNextGroup(t *testing.T) {
 	}
 	bromBattle, ok := battle.Current(8)
 	require.True(t, ok, "Brom is fighting the next group")
-	assert.Regexp(t, `turns? on Brom`, strings.Join(seen, "\n"))
+	assert.Regexp(t, `turns? toward Brom`, strings.Join(seen, "\n"))
 	ariaBattle, ok := battle.Current(7)
 	if ok {
 		for id := range bromBattle.Enemies {
@@ -429,7 +429,7 @@ func TestWaitingGroupsDontBlockFlight(t *testing.T) {
 	b.cmd("flee", "")
 	got := b.fight()
 	assert.NotContains(t, got, "blocks you from fleeing")
-	assert.Contains(t, got, "You flee")
+	assert.Contains(t, got, "You break away and flee")
 }
 
 // hostilesIn lists a room's living hostile mobs.

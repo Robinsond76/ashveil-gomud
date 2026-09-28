@@ -34,9 +34,10 @@ in force, and record which happened in the doc); (3) write a companion plan doc 
 naming its files and its tests-first step, and including a **player help and tutorial**
 task (see "Player help" below), mirroring `docs/superpowers/plans/2026-09-27-phase-29b2-battles-spawn-groups.md`'s
 format; (4) create the worktree/branch per "Branching & Worktrees" below and execute the
-plan task-by-task, checking boxes off as they land; (5) verify
-(`go test -race ./...`, `make generate`, `make validate`); (6) **independent review**
-(below); (7) record the verification and review results in `docs/PROJECT_STATUS.md`;
+plan task-by-task, checking boxes off as they land, running only the tests of the
+packages each task touches; (5) **independent review** (below) of the diff, with those
+focused tests green; (6) fix the findings, then run the full verification **once**
+(`go test -race ./...`, `make generate`, `make validate`; see "Verification"); (7) record the verification and review results in `docs/PROJECT_STATUS.md`;
 (8) merge and push. Do not implement first and backfill the plan doc after — write it
 before code, the same as the plugin would.
 
@@ -64,7 +65,8 @@ design doc's acceptance criteria name the pages; the reviewer checks them.
   only, no edits, no commits.
 - **Verify every finding yourself.** Treat the review like any subagent output: an
   untrusted proposal. Reproduce each finding; fix the real ones with a regression test;
-  note the rejected ones and why. Re-run the full verification after fixes.
+  note the rejected ones and why. Test each fix in its own package; the phase's single
+full verification runs after the fixes, not before and after.
 - **Record it.** Each phase's `docs/PROJECT_STATUS.md` work-log entry gets a
   **Review:** line (what the reviewer found, what was fixed, what was rejected). A phase
   isn't done, and isn't merged, until that line exists.
@@ -130,7 +132,14 @@ PR back to `origin`, and remove the worktree when done. `master`'s own checkout 
 workspace — not even for a single docs file.
 
 **Verification:** `go test -race ./...`, `make generate`, and `make validate` before
-calling anything done. `make test`'s `js-lint` stage can stall on this host (it shells
+calling anything done — run **once**, at the end of a unit of work (after review fixes),
+and again only if code changed since that run. While working, run just the packages you
+touched (`go test ./internal/<pkg>`, plus the module whose wiring test covers it). Don't
+run a baseline full suite on a fresh branch (master was verified when it merged), don't
+repeat a green run to double-check, and loop a test (`-count=N`) only to diagnose a
+suspected flake. A docs-only change needs no Go tests unless it's shipped content a test
+reads (help templates → `go test ./internal/usercommands ./modules/tutorial`; world data
+→ that system's package). `make test`'s `js-lint` stage can stall on this host (it shells
 out to `npx jshint`) — that's environmental, not a code failure; `go test -race ./...`
 is the documented fallback. Never claim a check passed without running it.
 

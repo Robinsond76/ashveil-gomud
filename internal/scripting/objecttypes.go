@@ -78,6 +78,8 @@ func actorObjectType() ObjectTypeDef {
 			m("RevertFormChange", "boolean", "Reverts a previous form change."),
 			m("SendText", "void", "Sends a text message to the actor.", p("msg", "string")),
 			m("GetCharacterName", "string", "Returns the actor's character name.", p("wrapInTags", "boolean")),
+			m("GetCombatName", "string", "Returns the actor's coloured name as combat text prints it: a mob's with \"the\", capitalised at the start of a line.", p("startOfLine", "boolean")),
+			m("ChantRoundsLeft", "number", "Returns the rounds left before the actor's spell is released, counting this one, or 0 when not casting."),
 			m("SetCharacterName", "void", "Sets the actor's character name.", p("newName", "string")),
 			m("GetDescription", "string", "Returns the actor's description."),
 			m("SetTempData", "void", "Stores temporary (non-persisted) data on the actor.", p("key", "string"), p("value", "any")),

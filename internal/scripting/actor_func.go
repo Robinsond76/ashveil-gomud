@@ -209,6 +209,30 @@ func (a ScriptActor) GetMiscCharacterDataKeys(prefixMatches ...string) []string 
 	return a.characterRecord.GetMiscDataKeys(prefixMatches...)
 }
 
+// GetCombatName is the actor's coloured name as combat narration prints it
+// (Phase 29c): a mob's with its article ("the bandit captain"), capitalised
+// when startOfLine; a player's as it is.
+func (a ScriptActor) GetCombatName(startOfLine bool) string {
+	name := a.GetCharacterName(true)
+	if a.mobRecord != nil {
+		name = util.Article(name)
+	}
+	if startOfLine {
+		name = util.CapitalizeFirst(name)
+	}
+	return name
+}
+
+// ChantRoundsLeft is how many rounds from now the actor's spell is
+// released, the release round included (Phase 29c): 1 means it lands next
+// round. 0 when the actor isn't casting.
+func (a ScriptActor) ChantRoundsLeft() int {
+	if aggro := a.characterRecord.Aggro; aggro != nil && aggro.Type == characters.SpellCast {
+		return aggro.RoundsWaiting + 1
+	}
+	return 0
+}
+
 func (a ScriptActor) GetCharacterName(wrapInTags bool) string {
 
 	if wrapInTags {

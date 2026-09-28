@@ -140,10 +140,10 @@ func TestLeaderTurnText(t *testing.T) {
 	_, alive := twoByTwo(t)
 	mobs.GetInstance(8201).Character.Name = "bandit captain"
 	mobs.GetInstance(8203).Character.Name = "bandit cutthroat"
-	assert.Equal(t, `You can't reach <ansi fg="mobname">bandit captain</ansi> from here. You turn on <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(8201, 8203, alive))
+	assert.Equal(t, `You can't reach the <ansi fg="mobname">bandit captain</ansi> from here. You turn toward the <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(8201, 8203, alive))
 	delete(alive, mobparty.MemberKeyFor(8201))
-	assert.Equal(t, `You turn on <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(8201, 8203, alive), "a fallen target is not unreachable")
-	assert.Equal(t, `You turn on <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(0, 8203, alive))
+	assert.Equal(t, `You turn toward the <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(8201, 8203, alive), "a fallen target is not unreachable")
+	assert.Equal(t, `You turn toward the <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(0, 8203, alive))
 }
 
 // TestReassignWithinLostPartyNeverTurnsOnABystander: once a lost target is

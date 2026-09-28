@@ -1,116 +1,112 @@
-# Possible tokens: 
+# Phase 29c narration voice: dark and physical, no exclamation marks, no
+# ALL-CAPS. The combat code appends each hit's mechanics, " (5 damage)" or
+# " (critical hit, 9 damage)", and puts "the" before a lowercase name and a
+# capital at the start of a line, so write names bare.
+# Possible tokens:
 # {itemname}    - name of weapon/object e.g. 'sword'
 # {source}      - name of mob or user e.g. 'goblin'
 # {sourcetype}  - 'user' or 'mob'
 # {target}      - name of mob or user e.g. 'goblin'
 # {targettype}  - 'user' or 'mob'
-# {damage}      - damage dealt as an integer e.g. '5'
 # {exitname}    - name of exit for attack e.g. 'north'
 # {entrancename}- name of entrance for attack e.g. 'south'
 optionid: stabbing
 options:
   prepare:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You prepare to enter into mortal combat with <ansi fg="{targettype}">{target}</ansi>.'
-      - 'You ready your <ansi fg="item">{itemname}</ansi> against <ansi fg="{targettype}">{target}</ansi>.'
-      - 'You brace yourself for battle with <ansi fg="{targettype}">{target}</ansi>.'
+      - 'You turn your <ansi fg="item">{itemname}</ansi> point-first toward <ansi fg="{targettype}">{target}</ansi>.'
+      - 'You set your feet and measure the distance to <ansi fg="{targettype}">{target}</ansi>.'
+      - 'You settle low, your <ansi fg="item">{itemname}</ansi> held close, and watch <ansi fg="{targettype}">{target}</ansi>.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> prepares to fight you with their <ansi fg="item">{itemname}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> eyes you warily, gripping their <ansi fg="item">{itemname}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> assumes a fighting stance against you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> turns point-first toward you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> sets both feet and measures the distance to you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> settles low, the <ansi fg="item">{itemname}</ansi> held close, and watches you.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> prepares to attack <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> readies their <ansi fg="item">{itemname}</ansi> against <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> braces for combat with <ansi fg="{targettype}">{target}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> turns point-first toward <ansi fg="{targettype}">{target}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> sets both feet and measures the distance to <ansi fg="{targettype}">{target}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> settles low, the <ansi fg="item">{itemname}</ansi> held close, and watches <ansi fg="{targettype}">{target}</ansi>.'
   wait:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You aim carefully at <ansi fg="{targettype}">{target}</ansi>.'
-      - 'You watch <ansi fg="{targettype}">{target}</ansi> closely, looking for an opening.'
-      - 'You wait patiently, anticipating <ansi fg="{targettype}">{target}</ansi>''s next move.'
+      - 'You circle <ansi fg="{targettype}">{target}</ansi>, looking for a gap.'
+      - 'You hold your <ansi fg="item">{itemname}</ansi> low and wait for <ansi fg="{targettype}">{target}</ansi> to open up.'
+      - 'You draw a slow breath and watch <ansi fg="{targettype}">{target}</ansi>''s feet.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> circles dangerously.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> watches you intently, waiting to strike.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> holds their <ansi fg="item">{itemname}</ansi> steady, eyeing you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> circles you, looking for a gap.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> holds a low guard and waits for you to open up.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> watches your feet and does not blink.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> circles <ansi fg="{targettype}">{target}</ansi> with cruel intentions.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> waits for the right moment to attack <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> watches <ansi fg="{targettype}">{target}</ansi> carefully, ready to strike.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> circles <ansi fg="{targettype}">{target}</ansi>, looking for a gap.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> holds a low guard and waits for <ansi fg="{targettype}">{target}</ansi> to open up.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> watches <ansi fg="{targettype}">{target}</ansi>''s feet and does not blink.'
   miss:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You thrust at <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi> but miss!'
-      - 'Your attack misses as <ansi fg="{targettype}">{target}</ansi> dodges swiftly!'
-      - 'You lunge forward with your <ansi fg="item">{itemname}</ansi>, but fail to hit <ansi fg="{targettype}">{target}</ansi>!'
+      - 'Your thrust at <ansi fg="{targettype}">{target}</ansi> stabs empty air.'
+      - '<ansi fg="{targettype}">{target}</ansi> slips aside, and your <ansi fg="item">{itemname}</ansi> finds nothing.'
+      - 'Your lunge at <ansi fg="{targettype}">{target}</ansi> falls a hand''s width short.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> thrusts their <ansi fg="item">{itemname}</ansi> at you, but misses!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> swings at you with their <ansi fg="item">{itemname}</ansi>, but you evade the attack!'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> slices through the air, missing you entirely!'
+      - '<ansi fg="{sourcetype}">{source}</ansi> lunges at you and stabs empty air.'
+      - 'You slip aside, and <ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> finds nothing.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s lunge falls a hand''s width short of you.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> thrusts their <ansi fg="item">{itemname}</ansi> at <ansi fg="{targettype}">{target}</ansi>, but misses!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> attempts to strike <ansi fg="{targettype}">{target}</ansi>, but fails to connect!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> swings wildly at <ansi fg="{targettype}">{target}</ansi>, but misses!'
+      - '<ansi fg="{sourcetype}">{source}</ansi> lunges at <ansi fg="{targettype}">{target}</ansi> and stabs empty air.'
+      - '<ansi fg="{targettype}">{target}</ansi> slips aside, and <ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> finds nothing.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s lunge falls a hand''s width short of <ansi fg="{targettype}">{target}</ansi>.'
   weak:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You jab your <ansi fg="item">{itemname}</ansi> into <ansi fg="{targettype}">{target}</ansi> causing <ansi fg="damage">{damage} damage</ansi>.'
-      - 'You lightly wound <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>.'
-      - 'Your <ansi fg="item">{itemname}</ansi> grazes <ansi fg="{targettype}">{target}</ansi>, causing minor damage of <ansi fg="damage">{damage}</ansi>.'
+      - 'Your <ansi fg="item">{itemname}</ansi> nicks <ansi fg="{targettype}">{target}</ansi>''s forearm and draws a thin line of blood.'
+      - 'The point of your <ansi fg="item">{itemname}</ansi> catches <ansi fg="{targettype}">{target}</ansi>''s side and skips away.'
+      - 'You prick <ansi fg="{targettype}">{target}</ansi>''s shoulder, no deeper than a thorn.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> jabs their <ansi fg="item">{itemname}</ansi> into you, causing <ansi fg="damage">{damage} damage</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> slightly wounds you with their <ansi fg="item">{itemname}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> grazes you with their <ansi fg="item">{itemname}</ansi>, causing minor damage of <ansi fg="damage">{damage}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> nicks your forearm and draws a thin line of blood.'
+      - 'The point of <ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> catches your side and skips away.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> pricks your shoulder, no deeper than a thorn.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> jabs their <ansi fg="item">{itemname}</ansi> into <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> lightly wounds <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> grazes <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> nicks <ansi fg="{targettype}">{target}</ansi>''s forearm and draws a thin line of blood.'
+      - 'The point of <ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> catches <ansi fg="{targettype}">{target}</ansi>''s side and skips away.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> pricks <ansi fg="{targettype}">{target}</ansi>''s shoulder, no deeper than a thorn.'
   normal:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You stab <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi> and do <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You strike <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>!'
-      - 'Your <ansi fg="item">{itemname}</ansi> pierces <ansi fg="{targettype}">{target}</ansi>, inflicting <ansi fg="damage">{damage} damage</ansi>!'
+      - 'Your <ansi fg="item">{itemname}</ansi> slides into <ansi fg="{targettype}">{target}</ansi>''s thigh and comes away red.'
+      - 'You drive your <ansi fg="item">{itemname}</ansi> into <ansi fg="{targettype}">{target}</ansi>''s side.'
+      - 'Your thrust punches through <ansi fg="{targettype}">{target}</ansi>''s guard and into the shoulder beneath.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> stabs you with their <ansi fg="item">{itemname}</ansi> and does <ansi fg="damage">{damage} damage</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> strikes you with their <ansi fg="item">{itemname}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> pierces you, inflicting <ansi fg="damage">{damage} damage</ansi>!'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> slides into your thigh and comes away red.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> bites into your side.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s thrust punches through your guard and into your shoulder.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> stabs <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> strikes <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> pierces <ansi fg="{targettype}">{target}</ansi>!'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> slides into <ansi fg="{targettype}">{target}</ansi>''s thigh and comes away red.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> bites into <ansi fg="{targettype}">{target}</ansi>''s side.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s thrust punches through <ansi fg="{targettype}">{target}</ansi>''s guard and into the shoulder beneath.'
   heavy:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You impale <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi>, causing an impressive <ansi fg="damage">{damage} damage</ansi>!'
-      - 'Your powerful strike pierces deeply into <ansi fg="{targettype}">{target}</ansi>, dealing a significant <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You deliver a heavy blow to <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi>, inflicting <ansi fg="damage">{damage} damage</ansi>!'
+      - 'Your <ansi fg="item">{itemname}</ansi> slips under <ansi fg="{targettype}">{target}</ansi>''s guard and sinks deep into the gut.'
+      - 'Your <ansi fg="item">{itemname}</ansi> goes in between <ansi fg="{targettype}">{target}</ansi>''s ribs and scrapes bone.'
+      - 'Your thrust takes <ansi fg="{targettype}">{target}</ansi> high in the chest, and <ansi fg="{targettype}">{target}</ansi> staggers back.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> impales you with their <ansi fg="item">{itemname}</ansi>, causing an impressive <ansi fg="damage">{damage} damage</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s powerful strike pierces deeply into you, dealing a significant <ansi fg="damage">{damage} damage</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> delivers a heavy blow with their <ansi fg="item">{itemname}</ansi>, inflicting <ansi fg="damage">{damage} damage</ansi>!'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> slips under your guard and sinks deep into your gut.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> goes in between your ribs and scrapes bone.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s thrust takes you high in the chest, and you stagger back.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> impales <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s powerful strike pierces deeply into <ansi fg="{targettype}">{target}</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> delivers a heavy blow to <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> slips under <ansi fg="{targettype}">{target}</ansi>''s guard and sinks deep into the gut.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> goes in between <ansi fg="{targettype}">{target}</ansi>''s ribs and scrapes bone.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s thrust takes <ansi fg="{targettype}">{target}</ansi> high in the chest, and <ansi fg="{targettype}">{target}</ansi> staggers back.'
   critical:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY IMPALES</ansi> <ansi fg="{targettype}">{target}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You deliver a <ansi fg="cyan-bold">CRITICAL STRIKE</ansi> to <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi>, causing <ansi fg="damage">{damage} damage</ansi>!'
-      - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">PIERCES THROUGH</ansi> <ansi fg="{targettype}">{target}</ansi> for a devastating <ansi fg="damage">{damage} damage</ansi>!'
+      - 'You find the gap beneath <ansi fg="{targettype}">{target}</ansi>''s arm, drive your <ansi fg="item">{itemname}</ansi> in to the hilt, and twist.'
+      - 'Your <ansi fg="item">{itemname}</ansi> punches into <ansi fg="{targettype}">{target}</ansi>''s throat, and blood sheets down the blade.'
+      - 'You bury your <ansi fg="item">{itemname}</ansi> in <ansi fg="{targettype}">{target}</ansi>''s belly and wrench it free in a gout of blood.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY IMPALES</ansi> you for <ansi fg="damage">{damage} damage</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL STRIKE</ansi>, causing you <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You are <ansi fg="cyan-bold">DEVASTATED</ansi> by <ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> finds the gap beneath your arm, sinks to the hilt, and twists.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> punches into your throat, and blood sheets down the blade.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> sinks into your belly and wrenches free in a gout of blood.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY IMPALES</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL STRIKE</ansi> to <ansi fg="{targettype}">{target}</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> finds the gap beneath <ansi fg="{targettype}">{target}</ansi>''s arm, sinks to the hilt, and twists.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> punches into <ansi fg="{targettype}">{target}</ansi>''s throat, and blood sheets down the blade.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s <ansi fg="item">{itemname}</ansi> sinks into <ansi fg="{targettype}">{target}</ansi>''s belly and wrenches free in a gout of blood.'

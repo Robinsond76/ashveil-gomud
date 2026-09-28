@@ -55,9 +55,9 @@ from. They can strike any enemy, and any enemy can strike them.
 
 <ansi fg="yellow-bold">In a fight</ansi>
 
-If your target is out of your reach, you turn on the weakest enemy you can
-reach, and are told so: "You can't reach the bandit captain from here. You
-turn on the bandit cutthroat." See <ansi fg="command">help targeting</ansi>.
+If your target is out of your reach, you turn toward the weakest enemy you
+can reach, and are told so: "You can't reach the bandit captain from here.
+You turn toward the bandit cutthroat." See <ansi fg="command">help targeting</ansi>.
 
 Set your formation up before a fight: it's where everyone stands when the
 blows begin.

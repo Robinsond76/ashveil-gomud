@@ -321,7 +321,16 @@ func (fs fightSides) gone() []combatstream.Ref {
 func (fs fightSides) end(outcome string) {
 	final := combatstream.Final{Company: fs.companyHealth(), Gone: fs.gone()}
 	sum, ok := combatstream.Default().EndFight(fs.info.ID, combatRound.Load(), outcome, final)
-	if !ok || fs.leader == nil {
+	if !ok {
+		return
+	}
+	// Phase 29c: a won fight's closing line, to its room, after the last
+	// death line and before the summary. Not when an enemy got away, and
+	// only from the last player's battle to end against the group.
+	if outcome == combatstream.OutcomeVictory && len(final.Gone) == 0 && !groupInOtherBattle(fs.info.LeaderUserId, fs.info.RoomId, fs.info.PartyID) {
+		sendFightClosing(fs.info.RoomId, fs.info.Enemies)
+	}
+	if fs.leader == nil {
 		return
 	}
 	if on := fs.leader.GetConfigOption(BattleSummarySetting); on != nil {

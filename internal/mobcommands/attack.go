@@ -121,15 +121,7 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 			events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 
-			if !isSneaking {
-
-				u.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight you!`, mob.Character.Name))
-
-				room.SendText(
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="username">%s</ansi>`, mob.Character.Name, u.Character.Name),
-					u.UserId)
-
-			}
+			// Phase 29c: no "prepares to fight"; the fight's opener speaks.
 		}
 
 		return true, nil
@@ -144,13 +136,12 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 			events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 
+			// Phase 29c: no battle opens between mobs, so the room is told
+			// here.
 			if !isSneaking {
-
-				room.SendText(
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="mobname">%s</ansi>`, mob.Character.Name, m.Character.Name))
-
+				room.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s goes for %s.`,
+					util.Article(`<ansi fg="mobname">`+mob.Character.Name+`</ansi>`), util.Article(`<ansi fg="mobname">`+m.Character.Name+`</ansi>`))))
 			}
-
 		}
 
 		return true, nil

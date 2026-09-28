@@ -349,7 +349,7 @@ func resolveInterceptedMobAttack(mob, interceptor *mobs.Mob, mobRoom, defRoom *r
 		return
 	}
 
-	defRoom.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="mobname">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, interceptor.Character.Equipment.Offhand.NameSimple(), interceptor.Character.Name))
+	defRoom.SendText(shieldBreaksRoomLine(interceptor.Character.Equipment.Offhand.NameSimple(), mobTag(interceptor.Character.Name)))
 	events.AddToQueue(events.ItemOwnership{MobInstanceId: interceptor.InstanceId, Item: interceptor.Character.Equipment.Offhand, Gained: false})
 	interceptor.Character.RemoveFromBody(interceptor.Character.Equipment.Offhand)
 	itm := items.New(20)
@@ -419,10 +419,8 @@ func resolveInterceptedAttackOnLeader(mob *mobs.Mob, leader *users.UserRecord, m
 		return
 	}
 
-	leader.SendText(`<ansi fg="202">***</ansi>`)
-	leader.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> Your <ansi fg="item">%s</ansi> breaks! <ansi fg="202">***</ansi></ansi>`, leader.Character.Equipment.Offhand.NameSimple()))
-	leader.SendText(`<ansi fg="202">***</ansi>`)
-	defRoom.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="username">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, leader.Character.Equipment.Offhand.NameSimple(), leader.Character.Name), leader.UserId)
+	leader.SendText(shieldBreaksOwnerLine(leader.Character.Equipment.Offhand.NameSimple()))
+	defRoom.SendText(shieldBreaksRoomLine(leader.Character.Equipment.Offhand.NameSimple(), userTag(leader.Character.Name)), leader.UserId)
 
 	events.AddToQueue(events.ItemOwnership{UserId: leader.UserId, Item: leader.Character.Equipment.Offhand, Gained: false})
 	leader.Character.RemoveFromBody(leader.Character.Equipment.Offhand)
@@ -535,7 +533,7 @@ func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
 	emitTargetChange(userRef(user), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	user.Character.SetAggro(0, newTargetId, attackType(user.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
-	user.SendText(fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, mobName(newTargetId)))
+	user.SendText(turnsToward(`You`, mobTag(mobName(newTargetId))))
 	return true
 }
 
@@ -561,6 +559,6 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	emitTargetChange(mobRef(mob), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	mob.Character.SetAggro(0, newTargetId, attackType(mob.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, mobName(newTargetId)))
+	room.SendText(turnsToward(mobTag(mob.Character.Name), mobTag(mobName(newTargetId))))
 	return true
 }
