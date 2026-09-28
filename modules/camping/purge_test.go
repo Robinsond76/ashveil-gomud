@@ -30,7 +30,7 @@ func TestUserPurgedDropsCampingState(t *testing.T) {
 	camp, inn := &stubTimer{}, &stubTimer{}
 	m.timers[7], m.innTimers[7] = camp, inn
 	m.refreshLitRoomsLocked()
-	assert.True(t, m.litRooms[100])
+	assert.True(t, m.RoomHasLitFire(100))
 
 	m.onUserPurged(events.UserPurged{UserId: 7})
 	assert.Equal(t, 1, store.saveCalls)
@@ -43,7 +43,7 @@ func TestUserPurgedDropsCampingState(t *testing.T) {
 	assert.Empty(t, store.saved.RecoveryApplied)
 	assert.True(t, camp.stopped)
 	assert.True(t, inn.stopped)
-	assert.False(t, m.litRooms[100], "the fire went with the camp")
+	assert.False(t, m.RoomHasLitFire(100), "the fire went with the camp")
 
 	m.onUserPurged(events.UserPurged{UserId: 7})
 	assert.Equal(t, 1, store.saveCalls, "nothing left to save")
