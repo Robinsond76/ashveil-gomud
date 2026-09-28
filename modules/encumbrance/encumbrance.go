@@ -3,9 +3,10 @@
 // calculation, the read-only query seam other modules can consult, and the
 // player-facing cargo command.
 //
-// This is a party/expedition-level weight system, separate from GoMud's
-// native per-character, count-based Character.CarryCapacity() throttle
-// (internal/characters/character.go), which it never touches.
+// This is a party/expedition-level weight system. Since Phase 32f it is
+// the only carrying limit: capacity comes from the members (a base, their
+// Strength, and one pack each) and the horses, and a full company takes
+// on nothing more (encumbrance.WouldExceed).
 package encumbrance
 
 import (
@@ -110,9 +111,15 @@ type EncumbranceModule struct {
 	// companionGear is the living companions' gear weight (Phase 28); nil
 	// counts none.
 	companionGear func(leaderUserID int) int
+	// companionCarry is each counted companion's carrying share (Phase
+	// 32f); nil counts none.
+	companionCarry func(leaderUserID int) []company.MemberCarry
 
-	capacityGrams int
-	bands         []encumbrance.LoadBand
+	// memberBaseGrams is each member's base share of the capacity and
+	// strengthGrams what a point of Strength adds (Phase 32f).
+	memberBaseGrams int
+	strengthGrams   int
+	bands           []encumbrance.LoadBand
 
 	cargo   map[int]encumbrance.Cargo
 	loadErr error
@@ -136,8 +143,9 @@ func init() {
 			return *spec, true
 		},
 		userLookup:    users.GetByUserId,
-		companionGear: company.CompanionGearGrams,
-		cargo:         map[int]encumbrance.Cargo{},
+		companionGear:  company.CompanionGearGrams,
+		companionCarry: company.CompanionCarry,
+		cargo:          map[int]encumbrance.Cargo{},
 	}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
@@ -202,7 +210,10 @@ func (m *EncumbranceModule) load() {
 	}
 	m.loadErr = nil
 	if m.plug != nil {
-		m.capacityGrams, m.bands = parseConfig(m.plug.Config.Get("CapacityKg"), m.plug.Config.Get("LoadBands"))
+		if m.plug.Config.Get("CapacityKg") != nil {
+			mudlog.Warn("encumbrance: CapacityKg is retired (Phase 32f); capacity comes from MemberBaseKg, StrengthKg, packs, and horses")
+		}
+		m.memberBaseGrams, m.strengthGrams, m.bands = parseConfig(m.plug.Config.Get("MemberBaseKg"), m.plug.Config.Get("StrengthKg"), m.plug.Config.Get("LoadBands"))
 	}
 	for leaderUserID, cargo := range m.cargo {
 		if err := cargo.Validate(); err != nil {
@@ -212,21 +223,30 @@ func (m *EncumbranceModule) load() {
 }
 
 // CurrentLoad implements encumbrance.Provider. An unconfigured (non-positive)
-// capacity reports untracked rather than a guessed default.
+// member base reports untracked rather than a guessed default.
+//
+// Capacity (Phase 32f) is each member's share (the base, their Strength,
+// and their largest pack) plus the horses' (mount.CapacityBonus). The
+// members are the leader and the companions CompanionGearGrams weighs.
+// Game loop only: it reads the leader's character and the company.
 func (m *EncumbranceModule) CurrentLoad(leaderUserID int) (encumbrance.Load, bool) {
 	if leaderUserID <= 0 {
 		return encumbrance.Load{}, false
 	}
 	m.mu.Lock()
-	capacityGrams := m.capacityGrams
+	baseGrams, strengthGrams := m.memberBaseGrams, m.strengthGrams
 	cargo, tracked := m.cargo[leaderUserID]
 	m.mu.Unlock()
-	if capacityGrams <= 0 {
+	if baseGrams <= 0 {
 		return encumbrance.Load{}, false
 	}
-	// A mount's cargo-capacity bonus (if any) adds to the configured base
-	// capacity; without a tracked mount, mount.CapacityBonus is 0.
-	capacityGrams += mount.CapacityBonus(leaderUserID)
+	memberGrams := m.leaderCapacity(leaderUserID, baseGrams, strengthGrams)
+	if m.companionCarry != nil {
+		for _, c := range m.companionCarry(leaderUserID) {
+			memberGrams += encumbrance.MemberCapacity(baseGrams, strengthGrams, c.Strength, c.PackGrams)
+		}
+	}
+	mountGrams := mount.CapacityBonus(leaderUserID)
 	cargoGrams := 0
 	if tracked {
 		cargoGrams = m.cargoGramsOf(cargo)
@@ -236,11 +256,26 @@ func (m *EncumbranceModule) CurrentLoad(leaderUserID int) (encumbrance.Load, boo
 		companionGrams = m.companionGear(leaderUserID)
 	}
 	return encumbrance.Load{
-		PersonalGrams:  m.personalGrams(leaderUserID),
-		CompanionGrams: companionGrams,
-		CargoGrams:     cargoGrams,
-		CapacityGrams:  capacityGrams,
+		PersonalGrams:       m.personalGrams(leaderUserID),
+		CompanionGrams:      companionGrams,
+		CargoGrams:          cargoGrams,
+		CapacityGrams:       memberGrams + mountGrams,
+		MemberCapacityGrams: memberGrams,
+		MountCapacityGrams:  mountGrams,
 	}, true
+}
+
+// leaderCapacity is the leader's own share: the base, their Strength, and
+// their largest carried pack.
+func (m *EncumbranceModule) leaderCapacity(leaderUserID, baseGrams, strengthGrams int) int {
+	strength, pack := 0, 0
+	if m.userLookup != nil {
+		if user := m.userLookup(leaderUserID); user != nil && user.Character != nil {
+			strength = user.Character.Stats.Strength.ValueAdj
+			pack = company.BestPackGrams(user.Character.Items)
+		}
+	}
+	return encumbrance.MemberCapacity(baseGrams, strengthGrams, strength, pack)
 }
 
 // CurrentBand implements encumbrance.BandProvider: the configured load band
@@ -410,6 +445,7 @@ func (m *EncumbranceModule) status(leaderUserID int) string {
 	lines := []string{
 		fmt.Sprintf("Party load: %.1f kg / %.1f kg (%.0f%%)", float64(load.TotalGrams())/1000, float64(load.CapacityGrams)/1000, load.Ratio()*100),
 		fmt.Sprintf("You %.1f kg, companions %.1f kg, cargo %.1f kg.", float64(load.PersonalGrams)/1000, float64(load.CompanionGrams)/1000, float64(load.CargoGrams)/1000),
+		fmt.Sprintf("Capacity: members %.1f kg, horses %.1f kg.", float64(load.MemberCapacityGrams)/1000, float64(load.MountCapacityGrams)/1000),
 	}
 	band := encumbrance.ResolveBand(load.Ratio(), m.bandsSnapshot())
 	if band.TravelDurationPct != 100 || band.FatiguePct != 100 {
@@ -448,19 +484,17 @@ func (m *EncumbranceModule) userCommand(rest string, user *users.UserRecord, _ *
 	return true, nil
 }
 
-// parseConfig normalizes the configured capacity and load-band table,
-// rejecting a malformed band rather than applying a guess, matching
-// modules/weather's parseBiomeTables.
-func parseConfig(capacityRaw, bandsRaw any) (int, []encumbrance.LoadBand) {
-	capacityGrams := int(configFloat(capacityRaw) * 1000)
-	if capacityGrams < 0 {
-		capacityGrams = 0
-	}
+// parseConfig normalizes the configured member base, the Strength bonus
+// (both in kg), and the load-band table, rejecting a malformed band rather
+// than applying a guess, matching modules/weather's parseBiomeTables.
+func parseConfig(baseRaw, strengthRaw, bandsRaw any) (int, int, []encumbrance.LoadBand) {
+	baseGrams := max(int(configFloat(baseRaw)*1000), 0)
+	strengthGrams := max(int(configFloat(strengthRaw)*1000), 0)
 
 	bands := []encumbrance.LoadBand{}
 	list, ok := bandsRaw.([]any)
 	if !ok {
-		return capacityGrams, bands
+		return baseGrams, strengthGrams, bands
 	}
 	for _, entry := range list {
 		fields := stringMap(entry)
@@ -479,7 +513,7 @@ func parseConfig(capacityRaw, bandsRaw any) (int, []encumbrance.LoadBand) {
 		bands = append(bands, band)
 	}
 	sort.Slice(bands, func(i, j int) bool { return bands[i].MinRatio < bands[j].MinRatio })
-	return capacityGrams, bands
+	return baseGrams, strengthGrams, bands
 }
 
 func stringMap(raw any) map[string]any {

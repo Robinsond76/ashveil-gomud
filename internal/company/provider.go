@@ -360,3 +360,37 @@ func CompanionGearGrams(leaderUserID int) int {
 	}
 	return gp.CompanionGearGrams(leaderUserID)
 }
+
+// MemberCarry is one counted companion's share of the company's carrying
+// capacity (Phase 32f): its Strength and its largest pack's bonus, in
+// grams.
+type MemberCarry struct {
+	Strength  int
+	PackGrams int
+}
+
+// CarryProvider is optionally implemented by the registered
+// FormationProvider (Phase 32f): the companions who carry for a leader,
+// the same ones CompanionGearGrams weighs. Call it on the game loop.
+type CarryProvider interface {
+	CompanionCarry(leaderUserID int) []MemberCarry
+}
+
+// CompanionCarry is each counted companion's carrying share; nil without a
+// provider.
+func CompanionCarry(leaderUserID int) []MemberCarry {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	cp, ok := p.(CarryProvider)
+	if !ok {
+		return nil
+	}
+	return cp.CompanionCarry(leaderUserID)
+}
+
+// CountedMembers is how many members carry for a leader: the leader and
+// each counted companion (Phase 32f). A leader with no company is one.
+func CountedMembers(leaderUserID int) int {
+	return 1 + len(CompanionCarry(leaderUserID))
+}

@@ -1,0 +1,10 @@
+itemid: 34
+name: pack saddle
+namesimple: saddle
+description: A wooden sawbuck saddle hung with panniers. Fitted to a pack
+  horse, it lets the horse carry a full load (mount saddle).
+type: object
+subtype: mundane
+value: 60
+weight: 9000
+saddle: pack

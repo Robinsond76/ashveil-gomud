@@ -156,6 +156,15 @@ func (nativeRuntime) GearGrams(instanceID int) (int, bool) {
 	return total, true
 }
 
+// Carry reads a live mob's Strength and its largest pack (Phase 32f).
+func (nativeRuntime) Carry(instanceID int) (int, int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, 0, false
+	}
+	return mob.Character.Stats.Strength.ValueAdj, domain.BestPackGrams(mob.Character.Items), true
+}
+
 func (nativeRuntime) TemplateState(mobTemplateID int) (domain.MemberState, bool) {
 	spec := mobs.GetMobSpec(mobs.MobId(mobTemplateID))
 	if spec == nil {

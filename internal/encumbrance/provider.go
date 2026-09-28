@@ -57,3 +57,18 @@ func CurrentBand(leaderUserID int) (LoadBand, bool) {
 	}
 	return band, true
 }
+
+// WouldExceed reports whether adding grams to a leader's company would put
+// its load over capacity (Phase 32f), with the current load. An untracked
+// load (no provider, no capacity configured) never refuses. Call it on the
+// game loop: the load reads company state.
+func WouldExceed(leaderUserID, addGrams int) (Load, bool) {
+	if addGrams <= 0 {
+		return Load{}, false
+	}
+	load, ok := CurrentLoad(leaderUserID)
+	if !ok {
+		return Load{}, false
+	}
+	return load, load.WouldExceed(addGrams)
+}

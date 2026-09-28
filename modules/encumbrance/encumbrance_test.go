@@ -78,7 +78,7 @@ func newTestModule(store Store, user *users.UserRecord) *EncumbranceModule {
 		store:         store,
 		itemSpec:      fakeItemSpec,
 		userLookup:    func(userId int) *users.UserRecord { return user },
-		capacityGrams: 10000,
+		memberBaseGrams: 10000,
 		cargo:         map[int]encumbrance.Cargo{},
 	}
 }
@@ -86,7 +86,7 @@ func newTestModule(store Store, user *users.UserRecord) *EncumbranceModule {
 func TestCurrentLoadUntrackedWithoutCapacity(t *testing.T) {
 	user := testUser(t, 7)
 	module := newTestModule(&fakeStore{}, user)
-	module.capacityGrams = 0
+	module.memberBaseGrams = 0
 
 	_, ok := module.CurrentLoad(7)
 	assert.False(t, ok, "an unconfigured capacity must be untracked, not a guessed default")
@@ -189,7 +189,7 @@ func TestStatusRendersLoadAndCargo(t *testing.T) {
 	user := testUser(t, 7)
 	user.Character.Items = []items.Item{testItem(rockId)}
 	module := newTestModule(&fakeStore{}, user)
-	module.capacityGrams = 1000
+	module.memberBaseGrams = 1000
 	module.bands = []encumbrance.LoadBand{{MinRatio: 0.4, TravelDurationPct: 110, FatiguePct: 108}}
 	module.cargo[7] = encumbrance.Cargo{LeaderUserID: 7, Stacks: []encumbrance.CargoStack{{ItemId: rockId, Count: 1}}}
 
@@ -206,17 +206,19 @@ func TestParseConfigRejectsMalformedBands(t *testing.T) {
 		map[string]any{"minratio": 0.5, "traveldurationpct": 105, "fatiguepct": 103},
 	}
 
-	capacityGrams, bands := parseConfig(200.0, bandsRaw)
+	baseGrams, strengthGrams, bands := parseConfig(20.0, 0.5, bandsRaw)
 
-	assert.Equal(t, 200000, capacityGrams)
+	assert.Equal(t, 20000, baseGrams)
+	assert.Equal(t, 500, strengthGrams)
 	require.Len(t, bands, 2, "the negative-ratio band is rejected")
 	assert.Equal(t, 0.5, bands[0].MinRatio, "bands must be sorted ascending")
 	assert.Equal(t, 0.75, bands[1].MinRatio)
 }
 
 func TestParseConfigHandlesMissingBands(t *testing.T) {
-	capacityGrams, bands := parseConfig(150.0, nil)
-	assert.Equal(t, 150000, capacityGrams)
+	baseGrams, strengthGrams, bands := parseConfig(15.0, nil, nil)
+	assert.Equal(t, 15000, baseGrams)
+	assert.Zero(t, strengthGrams)
 	assert.Empty(t, bands)
 }
 
@@ -227,20 +229,20 @@ func (f fakeMountProvider) CapacityBonusGrams(_ int) int { return f.bonusGrams }
 func TestCurrentLoadAddsMountCapacityBonus(t *testing.T) {
 	user := testUser(t, 7)
 	module := newTestModule(&fakeStore{}, user)
-	module.capacityGrams = 10000
+	module.memberBaseGrams = 10000
 
 	mount.SetProvider(fakeMountProvider{bonusGrams: 50000})
 	t.Cleanup(func() { mount.SetProvider(nil) })
 
 	load, ok := module.CurrentLoad(7)
 	require.True(t, ok)
-	assert.Equal(t, 60000, load.CapacityGrams, "the mount's bonus must add to the configured base capacity")
+	assert.Equal(t, 60000, load.CapacityGrams, "the horses' capacity adds to the members'")
 }
 
 func TestCurrentLoadWithoutMountProviderIsUnaffected(t *testing.T) {
 	user := testUser(t, 7)
 	module := newTestModule(&fakeStore{}, user)
-	module.capacityGrams = 10000
+	module.memberBaseGrams = 10000
 	mount.SetProvider(nil)
 
 	load, ok := module.CurrentLoad(7)
@@ -253,7 +255,7 @@ func TestCurrentLoadWithoutMountProviderIsUnaffected(t *testing.T) {
 func TestCurrentBandResolvesConfiguredBandForRealLoad(t *testing.T) {
 	user := testUser(t, 7)
 	module := newTestModule(&fakeStore{}, user)
-	module.capacityGrams = 1000
+	module.memberBaseGrams = 1000
 	module.bands = []encumbrance.LoadBand{
 		{MinRatio: 0.75, TravelDurationPct: 110, FatiguePct: 108},
 		{MinRatio: 0.9, TravelDurationPct: 125, FatiguePct: 115},
@@ -272,7 +274,7 @@ func TestCurrentBandResolvesConfiguredBandForRealLoad(t *testing.T) {
 	assert.Equal(t, 115, band.FatiguePct)
 	assert.Equal(t, 125, band.TravelDurationPct)
 
-	module.capacityGrams = 0
+	module.memberBaseGrams = 0
 	band, ok = encumbrance.CurrentBand(7)
 	assert.False(t, ok, "an untracked load is neutral")
 	assert.Equal(t, 100, band.FatiguePct)
@@ -291,7 +293,7 @@ func TestCurrentLoadAddsCompanionGear(t *testing.T) {
 	user := testUser(t, 7)
 	user.Character.Items = []items.Item{testItem(rockId)}
 	module := newTestModule(&fakeStore{}, user)
-	module.capacityGrams = 10000
+	module.memberBaseGrams = 10000
 	module.bands = []encumbrance.LoadBand{{MinRatio: 0.75, TravelDurationPct: 110, FatiguePct: 108}}
 	module.companionGear = func(leader int) int {
 		if leader == 7 {

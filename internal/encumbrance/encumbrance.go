@@ -3,11 +3,9 @@
 // domain/module split of internal/expedition, internal/camping, and
 // internal/weather.
 //
-// This is a separate, weight-based, party/expedition-level system. It is
-// deliberately independent of GoMud's native, count-based
-// Character.CarryCapacity() (internal/characters/character.go), which
-// already throttles a single player's per-move action-point cost and must
-// not be touched by this package.
+// This is a separate, weight-based, party/expedition-level system. Since
+// Phase 32f it is the only carrying limit: GoMud's count-based
+// Character.CarryCapacity() no longer throttles movement.
 package encumbrance
 
 import "errors"
@@ -121,6 +119,30 @@ type Load struct {
 	CompanionGrams int
 	CargoGrams     int
 	CapacityGrams  int
+	// MemberCapacityGrams and MountCapacityGrams split CapacityGrams
+	// (Phase 32f): what the members carry, and what the horses do.
+	MemberCapacityGrams int
+	MountCapacityGrams  int
+}
+
+// WouldExceed reports whether adding grams would put the load over its
+// capacity (Phase 32f). Adding nothing never does; reaching capacity
+// exactly is allowed.
+func (l Load) WouldExceed(addGrams int) bool {
+	return addGrams > 0 && l.TotalGrams()+addGrams > l.CapacityGrams
+}
+
+// MemberCapacity is one member's share of the company's capacity (Phase
+// 32f): the configured base, plus perStrength grams per point of Strength,
+// plus their largest pack. Negative Strength adds nothing.
+func MemberCapacity(baseGrams, perStrengthGrams, strength, packGrams int) int {
+	if strength < 0 {
+		strength = 0
+	}
+	if packGrams < 0 {
+		packGrams = 0
+	}
+	return baseGrams + perStrengthGrams*strength + packGrams
 }
 
 func (l Load) TotalGrams() int {

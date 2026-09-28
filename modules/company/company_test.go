@@ -205,6 +205,8 @@ type fakeRuntime struct {
 	relocated map[int]int
 	// Phase 26a: vitals per instance, {hp, max}.
 	vitals map[int][2]int
+	// Phase 32f: Strength per live instance.
+	strength map[int]int
 }
 
 func (f *fakeRuntime) Vitals(instanceID int) (int, int, bool) {
@@ -259,6 +261,13 @@ func (f *fakeRuntime) GearGrams(instanceID int) (int, bool) {
 		return 0, false
 	}
 	return gearGrams(s), true
+}
+func (f *fakeRuntime) Carry(instanceID int) (int, int, bool) {
+	s, ok := f.liveState[instanceID]
+	if !ok || !f.live[instanceID] {
+		return 0, 0, false
+	}
+	return f.strength[instanceID], domain.BestPackGrams(s.Items), true
 }
 func (f *fakeRuntime) CharmedByOther(_ int, instanceID int) bool {
 	return f.live[instanceID] && f.stolen[instanceID]

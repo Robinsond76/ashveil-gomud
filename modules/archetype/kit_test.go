@@ -68,11 +68,12 @@ func TestBuildTableDropsUnknownKitItems(t *testing.T) {
 func TestShippedKitsResolveAndBalance(t *testing.T) {
 	m, _ := testModule(t)
 	want := map[string][]int{
-		"warrior": {10002, 20004, 20020, 30004, 30015},
-		"rogue":   {10004, 8, 20029, 20003, 23, 30004, 30015},
-		"wizard":  {10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014},
-		"cleric":  {10015, 20004, 20008, 30004, 30015, 30001, 30001},
-		"ranger":  {10014, 20020, 20024, 20003, 30019, 30015, 23},
+		// Phase 32f: every kit ends with a satchel (31).
+		"warrior": {10002, 20004, 20020, 30004, 30015, 31},
+		"rogue":   {10004, 8, 20029, 20003, 23, 30004, 30015, 31},
+		"wizard":  {10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 31},
+		"cleric":  {10015, 20004, 20008, 30004, 30015, 30001, 30001, 31},
+		"ranger":  {10014, 20020, 20024, 20003, 30019, 30015, 23, 31},
 	}
 	lowest, highest := 0, 0
 	for id, kit := range want {
