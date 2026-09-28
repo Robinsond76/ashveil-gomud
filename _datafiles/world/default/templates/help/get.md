@@ -2,6 +2,8 @@
 
 The ~get~ command picks up an item on the ground and puts it in your backpack.
 
+If your company is already carrying all it can, you can't pick anything more up; you're told how full you are. Drop, sell, or eat something first, or find more room with a pack or a horse (see ~help cargo~).
+
 ## Usage:
 
   ~get stick~  

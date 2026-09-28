@@ -32,6 +32,8 @@ help:
       - archetype
     company:
       - company
+      - company-inventory
+      - company-meal
       - standing
     road:
       - travel
@@ -186,14 +188,16 @@ help:
 help-aliases:
   adventure:        [ashveil, basics]
   company:          [recruit, recruiting, roster, companions, companion]
+  company-inventory: [company inventory, company inv, company-inv]
+  company-meal:     [company meal, company eat, company drink, meal, meals, company-eat, company-drink]
   standing:         [reputation, blackmarket, black-market]
   archetype:        [archetypes, class, classes]
   trap:             [traps]
   survival:         [needs, hunger, thirst, fatigue]
   strain:           [walking]
   temperature:      [warmth, exposure, cold, heat]
-  cargo:            [load, overloaded]
-  mount:            [mounts, horse, stable]
+  cargo:            [load, overloaded, capacity, pack, packs, satchel]
+  mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
   camp:             [camping, campfire]
   cooking:          [cook, hearth, recipe, recipes]

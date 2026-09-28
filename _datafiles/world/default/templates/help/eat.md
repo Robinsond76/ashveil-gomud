@@ -21,4 +21,6 @@ Thirst too. When it moves someone's Hunger or Thirst into a new band
 told you provisioned them. See ~help survival~ for what
 Hunger and Thirst mean and how they're spent.
 
+To feed your whole company at once, from the cargo and everyone's packs, type ~company eat~ or ~company meal~ (see ~help company meal~).
+
 Find out more about referring to items by name by typing ~help item-names~.

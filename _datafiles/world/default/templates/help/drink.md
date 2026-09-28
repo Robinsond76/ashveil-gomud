@@ -19,4 +19,6 @@ When it moves someone's Thirst into a new band, you're told; watering a
 named companion, you're told you provisioned them.
 See ~help survival~ for what Thirst means and how it's spent.
 
+To water your whole company at once, from the cargo and everyone's packs, type ~company drink~ or ~company meal~ (see ~help company meal~).
+
 Find out more about referring to items by name by typing ~help item-names~.

@@ -1,0 +1,24 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">company inventory</ansi>
+
+One screen for everything your company carries.
+
+  <ansi fg="command">company inventory</ansi> (or <ansi fg="command">company inv</ansi>)
+
+It shows:
+
+  - The company's load against its capacity, and how much of that the
+    horses carry (<ansi fg="command">help cargo</ansi>).
+  - Each member in turn, you first: the weight of what they wear and
+    carry, the pack that counts toward their share, what they're
+    wearing, and what they're carrying. A partly used item shows its
+    uses left, like <ansi fg="yellow">waterskin (3 of 5)</ansi>.
+  - A fallen companion, whose gear stays with the body until they're
+    raised (<ansi fg="command">help resurrect</ansi>).
+  - Your horses and their saddles (<ansi fg="command">help mount</ansi>).
+  - The shared cargo and its weight.
+
+For one companion in full, type <ansi fg="command">company gear [member]</ansi>; for the load and
+capacity split, <ansi fg="command">cargo</ansi>.
+
+See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help company meal</ansi>,
+<ansi fg="command">help company</ansi>, <ansi fg="command">help inventory</ansi>.

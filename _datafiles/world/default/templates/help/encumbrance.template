@@ -1,16 +1,14 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">encumbrance</ansi>
 
-When you personally carry more objects than your strength permits, you
-become encumbered.
+There is one carrying limit, and it belongs to the whole company: the
+weight everyone carries, wears, and keeps in the cargo, against what the
+members, their packs, and their horses can bear
+(<ansi fg="command">help cargo</ansi>). How many items you hold doesn't matter, only how
+much they weigh.
 
-Check your inventory to see how many objects you can carry.
+Once the company is full, no one can pick up, buy, or be handed
+anything more. A heavy load slows journeys and makes walking more
+tiring (<ansi fg="command">help strain</ansi>), but walking is never blocked.
 
-This is separate from your company's shared cargo load, which is
-weighed in grams rather than counted in objects, and covers your
-companions' gear and cargo too, not just your own pack (<ansi fg="command">help cargo</ansi>).
-Being encumbered yourself and your company being overloaded can happen
-independently of each other.
-
-When encumbered, each step costs you far more effort (five times as much), so you tire quickly on the move.
-
-See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help inventory</ansi>.
+See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help mount</ansi>,
+<ansi fg="command">help strain</ansi>, <ansi fg="command">help inventory</ansi>.
