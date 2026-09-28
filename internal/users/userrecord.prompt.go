@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
@@ -110,6 +111,12 @@ func (u *UserRecord) GetCommandPrompt() string {
 	}
 
 	unsent, suggested := u.GetUnsentText()
+	// Ashveil 32h: a password being typed is redrawn as stars, with no
+	// suggestion (the connection's mask is lock-guarded, so this is safe on
+	// a connection goroutine).
+	if connections.InputMasked(u.connectionId) {
+		unsent, suggested = strings.Repeat(`*`, utf8.RuneCountInString(unsent)), ``
+	}
 	if len(suggested) > 0 {
 		suggested = `<ansi fg="suggested-text">` + suggested + `</ansi>`
 	}

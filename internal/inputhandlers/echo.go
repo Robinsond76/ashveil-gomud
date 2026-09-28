@@ -9,8 +9,12 @@ func EchoInputHandler(clientInput *connections.ClientInput, sharedState map[stri
 
 	// If no actual input, for now just do/change nothing
 	if len(clientInput.DataIn) > 0 {
-		// echo it back
-		connections.SendTo(clientInput.DataIn, clientInput.ConnectionId)
+		// echo it back (Ashveil 32h: as stars while the input is masked)
+		if connections.InputMasked(clientInput.ConnectionId) {
+			connections.SendTo(maskEcho(clientInput.DataIn), clientInput.ConnectionId)
+		} else {
+			connections.SendTo(clientInput.DataIn, clientInput.ConnectionId)
+		}
 	}
 
 	// if they didn't hit enter, just keep buffering, go next.
@@ -22,4 +26,18 @@ func EchoInputHandler(clientInput *connections.ClientInput, sharedState map[stri
 	connections.SendTo(term.CRLF, clientInput.ConnectionId)
 
 	return true
+}
+
+// maskEcho is input with every printable character replaced by a star;
+// control bytes (erasing, line ends) pass through.
+func maskEcho(in []byte) []byte {
+	out := make([]byte, len(in))
+	for i, b := range in {
+		if b >= 32 && b != 127 {
+			out[i] = '*'
+		} else {
+			out[i] = b
+		}
+	}
+	return out
 }

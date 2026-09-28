@@ -12,12 +12,20 @@ func Password(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	cmdPrompt, _ := user.StartPrompt(`password`, rest)
 
 	if !user.HasPlaintextPassword() {
+		// Ashveil 32h: three wrong passwords in a row lock this and
+		// `delete character` until the next login.
+		if PasswordLocked(user) {
+			user.SendText(`<ansi fg="alert-5">` + deleteLockedMsg + `</ansi>`)
+			user.ClearPrompt()
+			return true, nil
+		}
 		question := cmdPrompt.Ask(`What is your current password?`, []string{})
+		question.Masked = true // Ashveil 32h
 		if !question.Done {
 			return true, nil
 		}
 
-		if !user.PasswordMatches(question.Response) {
+		if !CheckPassword(user, question.Response, `password`) {
 			user.SendText(`<ansi fg="alert-5">Sorry, your password was incorrect.</ansi>`)
 			user.ClearPrompt()
 			return true, nil
@@ -25,6 +33,7 @@ func Password(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	question := cmdPrompt.Ask(`What new password would you like?`, []string{})
+	question.Masked = true // Ashveil 32h
 	if !question.Done {
 		return true, nil
 	}
@@ -32,6 +41,7 @@ func Password(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	newPW := question.Response
 
 	question = cmdPrompt.Ask(`Confirm the change by entered the new password one more time.`, []string{})
+	question.Masked = true // Ashveil 32h
 	if !question.Done {
 		return true, nil
 	}

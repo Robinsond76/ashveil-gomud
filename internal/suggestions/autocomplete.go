@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -53,6 +54,12 @@ func GetAutoComplete(userId int, inputText string) []string {
 
 	user := users.GetByUserId(userId)
 	if user == nil {
+		return result
+	}
+
+	// Ashveil 32h: never complete (or show) a password being typed, from
+	// the terminal or the web client.
+	if connections.InputMasked(connections.ConnectionId(user.ConnectionId())) {
 		return result
 	}
 
