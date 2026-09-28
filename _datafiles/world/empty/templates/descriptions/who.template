@@ -15,4 +15,8 @@
 
 {{- end -}}
 {{- if ne $whoCt 0 }}
+{{ end }}{{- range $index, $groupLine := .VisibleGroups }}
+{{ $groupLine }}
+{{- end }}
+{{- if ne (len .VisibleGroups) 0 }}
 {{ end }}

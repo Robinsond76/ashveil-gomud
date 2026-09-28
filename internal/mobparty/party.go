@@ -29,6 +29,10 @@ type MobSummary struct {
 	Groups     []string
 	EHP        float64
 	DPS        float64
+	Name       string // Phase 32c: the member's own name, for its group's name
+	Noun       string // Phase 32c: the collective noun it gives a group ("band", "pack")
+	GroupName  string // Phase 32c: the name its group was given, "" when none yet
+	GroupDesc  string // Phase 32c: an authored group's description
 }
 
 // Party is a stable-for-this-listing group of mobs with an auto-assigned

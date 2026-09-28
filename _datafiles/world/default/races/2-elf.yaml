@@ -6,6 +6,7 @@ buffids:
   - 28 # Super hearing
   - 29 # Night Vision
 size: medium
+groupnoun: band
 unarmedname: fists
 angrycommands: 
   - emote narrows their eyes, looking for trouble.

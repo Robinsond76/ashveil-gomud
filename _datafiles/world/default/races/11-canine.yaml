@@ -5,6 +5,7 @@ defaultalignment: 0
 buffids:
   - 28 # Super hearing
 size: medium
+groupnoun: pack
 unarmedname: jaws
 tnlscale: 1
 angrycommands: 

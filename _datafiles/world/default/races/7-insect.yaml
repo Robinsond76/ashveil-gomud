@@ -3,6 +3,7 @@ name: insect
 description: A multi-legged creature with an armored exterior.
 defaultalignment: 0
 size: small
+groupnoun: swarm
 unarmedname: mandibles
 tnlscale: 1
 angrycommands: [emote chitters.]

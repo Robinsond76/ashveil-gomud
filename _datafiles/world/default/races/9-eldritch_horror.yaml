@@ -6,6 +6,7 @@ buffids:
   - 28 # Super hearing
   - 29 # Night Vision
 size: medium
+groupnoun: brood
 unarmedname: tentacles
 tnlscale: 1
 angrycommands: [emote gibbers unintelligibly.]
