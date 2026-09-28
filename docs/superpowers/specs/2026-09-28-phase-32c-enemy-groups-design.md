@@ -11,14 +11,25 @@ shows a group's formation before the fight.
 2. There's no way to see an enemy's formation.
 3. **Decided (owner, 2026-09-28):** only a **group** can be attacked, by
    the group's name. Naming a member is not a way to start a fight.
-4. **Decided on review (owner, 2026-09-28):** no switching targets
-   during a fight, for now: naming a member inside your battle doesn't
-   retarget you (C.3). `cast`, `backstab`, and `shoot` follow the group
-   rule (C.6), and `scout` is free, with no skill (E.3).
+4. **Decided on review (owner, 2026-09-28):** `scout` is free, with no
+   skill (E.3); the group nouns (A.1, A.2) and the room line's
+   "(fighting you)" and "(waiting)" tags (B.2) are accepted.
+5. **Battles play out on their own (owner, 2026-09-28),** in the owner's
+   words: "think Ogre Battle: we can't do anything mid battle. When the
+   battle starts, it all plays out based on company setup beforehand.
+   Cast ends up being a utility skill for casting outside combat only.
+   During combat, offensive, defensive and any spells are cast by
+   characters on their own based on strategies predetermined."
+6. **Targets come from strategy (owner, 2026-09-28):** "based on each
+   character's strategy is the target set, and if it can't reach them
+   (for example, the weakest in group), then it automatically attacks one
+   from the available list based on formation."
 
-The rest are this design's recommendations, marked **(recommendation
-applied)**, still for the owner to confirm: the group nouns (A.1, A.2)
-and the room line's "(fighting you)" and "(waiting)" tags (B.2).
+Rules 5 and 6 are mostly 32d's (automatic combat, strategies). What 32c
+takes from them: `attack <group>` is the only way to start a fight, and
+nothing a player types changes a battle once it has started (C). The
+player's first aim is set the way rule 6 describes, with 29a's "weakest
+you can reach" as the one strategy until 32d adds more.
 
 ## Prior-art check
 
@@ -67,7 +78,7 @@ and the room line's "(fighting you)" and "(waiting)" tags (B.2).
 ### A. A group's name
 
 1. **Every group has a name**, given when it forms and kept while it
-   stands **(recommendation applied)**:
+   stands **(owner, 2026-09-28)**:
    - **generated:** a collective noun and the plural of its most common
      member ("a band of ruffians", "a pack of wolves", "a swarm of
      rats"); a tie goes to the toughest (the one in front). A mixed group
@@ -108,7 +119,7 @@ and the room line's "(fighting you)" and "(waiting)" tags (B.2).
    mob is today.
 2. **What it's doing**, appended when it's fighting: "(fighting you)",
    "(fighting Brom)", or "(waiting)" for a group set on you while you
-   fight another **(recommendation applied)**.
+   fight another **(owner, 2026-09-28)**.
 3. **Hidden members** aren't counted or listed unless the viewer can see
    hidden things, the same as today's per-mob line. A group whose
    members are all hidden isn't shown.
@@ -118,40 +129,43 @@ and the room line's "(fighting you)" and "(waiting)" tags (B.2).
 
 ### C. Starting a fight: `attack <group>`
 
-1. **`attack <group>`** starts a battle with that group. Your first aim
-   is the member you'd turn on anyway: the weakest foe you can reach
-   (29a's rule). Your companions join as they do today.
+1. **`attack <group>` is the only way to start a fight.** It starts a
+   battle with that group, and from then on the battle plays out on its
+   own (rule 5). You and your companions join as today; your first aim
+   comes from your strategy (rule 6): until 32d, the weakest foe you can
+   reach, else one you can reach, by formation.
    ```
    You prepare to fight a band of ruffians!
    Dain prepares to fight a band of ruffians.
    ```
-2. **Naming a member is refused** (the owner's rule), and the refusal
-   says what to type:
+2. **Naming a member is refused** (rule 3), and the refusal says what to
+   type:
    ```
    The ruffian fights with a band of ruffians. Type attack ruffians.
    ```
-3. **No switching targets in a fight (owner, 2026-09-28).** Naming a
-   member of the group you're already fighting is refused too, and
-   doesn't change your aim:
+3. **Nothing acts on a battle once it's started** (rule 5). In a battle,
+   `attack` (bare, at your group, at a member, or at another group),
+   harmful and helpful `cast`, `backstab`, and `shoot` are refused:
    ```
-   You're already fighting a band of ruffians. You strike whoever you can reach.
+   The battle is under way: your company fights as it was set up.
    ```
-   Your aim changes only as it does today without you: 29a's upkeep turns
-   you (with a companion present) when your target falls or is out of
-   reach, and a bare `attack` takes a foe from your battle, now the
-   weakest one you can reach rather than the first in the room.
-4. **A mob alone** is attacked by its own name, as today (A.4).
-5. **Unchanged:** a bare `attack` (29b2), `attack` at another group while
-   you're in a battle (refused, 29b2), `attack <player>` (PvP rules), the
-   exact `#<id>` and `@<id>` forms companions and parties use, and the
-   `*`, `*mob`, and `*user` random forms.
-6. **`cast`, `backstab`, and `shoot`** follow the same rule
-   **(owner, 2026-09-28)**: a group's name starts the fight, or aims into
-   the battle you're in, at the member `attack` would choose (a shot,
-   having no reach limit, takes the weakest member in the group); a
-   member's name is refused, in or out of a fight. Otherwise a harmful
-   spell or an arrow would be the way around the owner's rules. A helpful spell at
-   anyone, and `look`, `consider`, and `peep` at a member, are unchanged.
+   Your aim changes only by itself: when your target falls or can't be
+   reached, you turn on another by your strategy (29a's upkeep, extended
+   in 32d to a player fighting alone, who today picks by bare `attack`).
+4. **Out of a battle, `cast`, `backstab`, and `shoot` don't start
+   fights** (rule 5): a harmful spell, a backstab, or a shot at an enemy
+   is refused and points to `attack <group>`. `cast` stays for spells out
+   of combat (healing, light, utility). An opening move, such as a
+   rogue's backstab from hiding, becomes a strategy in 32d.
+5. **A mob alone** is attacked by its own name, as today (A.4).
+6. **Unchanged:** `attack <player>` (PvP rules), the exact `#<id>` and
+   `@<id>` forms companions and parties use (they are the game's own
+   commands, not the player's), and `look`, `consider`, and `peep` at a
+   member. The `*`, `*mob`, and `*user` random forms start a fight only
+   out of a battle, like any `attack`.
+7. **`flee` and `break`** are left as they are in 32c. Whether a player
+   can still flee or step out mid-battle under rule 5 is settled with
+   32d's strategies (a retreat order, for example).
 
 ### D. `look <group>`
 
@@ -214,10 +228,10 @@ presentation phases (29c, 32g) can use it.
 - The practice squad is named **"the straw squad"**, set by
   `modules/tutorial` when it raises the squad.
 - The Combat lesson's hints change: `scout squad` to see how they stand,
-  then `attack squad` to start the fight. The reach hint no longer
-  says to attack another footman: your company turns you onto one you can
-  reach, and a bare `attack` does the same; it names `formation reach`
-  and `scout`.
+  then `attack squad` to start the fight, and the fight plays out by
+  itself. The reach hint no longer says to attack another footman: your
+  company turns you onto one you can reach. It names `formation reach`
+  and `scout`, so the formation is set before the fight.
 - The travel ambush pair (29b2) is named like any group: two bandits
   are "a band of bandits".
 
@@ -258,14 +272,17 @@ presentation phases (29c, 32g) can use it.
 - **Wiring** (shipped config, real commands, `DoCombat`):
   - a room with a mixed group: `look` shows its name and list;
     `attack <noun>` and `attack <kind>` start a battle with it; the first
-    aim is the weakest reachable member;
+    aim is the weakest reachable member, else a reachable one by
+    formation;
   - `attack <member>` with no battle is refused with the group's
-    command; inside that battle it's refused and the aim is unchanged;
-    a bare `attack` in a battle takes the weakest reachable foe;
+    command;
+  - in a battle, every `attack` form, `cast`, `backstab`, and `shoot`
+    are refused and change nothing;
   - two groups of the same name: `attack ruffians#2` takes the second;
   - a `solitary` mob and a shopkeeper are attacked by their own names;
-  - `backstab`, `shoot`, and `cast` at a member are refused, in or out
-    of a fight, and at the group start the fight;
+  - out of a battle, a harmful `cast`, `backstab`, or `shoot` at an
+    enemy is refused with the `attack` pointer; a healing or light spell
+    still casts;
   - `look <group>` and `scout <group>` in and out of a fight, with a
     waiting group, with a hidden member, and in the dark;
   - the name holds as members fall; a regrouped survivor takes its new
@@ -277,9 +294,10 @@ presentation phases (29c, 32g) can use it.
   - 29a, 29b, and 29b2's fight tests pass (their `attack <member>` calls
     moved to the group's name where they start a fight).
 - **Player help:** a new `help scout`; `help attack` rewritten for
-  groups (replacing GoMud's page); `help targeting` (naming a group, no
-  switching targets in a fight), `help combat` (the hub links `scout`),
-  `help backstab`, `help shoot`, and `help cast` updated; `scout` and
+  groups (replacing GoMud's page); `help targeting` (naming a group; a
+  battle plays out by itself; targets by strategy), `help combat` (the hub links `scout`),
+  `help backstab`, `help shoot`, and `help cast` (out of combat only)
+  updated; `scout` and
   its aliases in `keywords.yaml`; the Combat lesson points to `scout`;
   `TestTutorialHelpPointersExist` passes.
 - `go test -race ./...`, `make generate`, and `make validate` pass. The
@@ -292,5 +310,6 @@ presentation phases (29c, 32g) can use it.
 - **`consider <group>`** (rating a whole group against the company).
 - **What `scout` reveals with skill** (roles, morale): 32d, 30e.
 - **Groups in the web client:** 32g's Combat tab.
-- **Choosing a target within a battle** (the owner's "not for now"):
-  revisit with 32d's automatic combat.
+- **Strategies** (who each character targets, what spells they cast,
+  openers such as a backstab, retreat): 32d, under rules 5 and 6.
+- **`flee` and `break` under rule 5:** 32d.

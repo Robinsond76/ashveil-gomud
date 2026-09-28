@@ -48,6 +48,14 @@ Researched on `4cb2faf` (2026-09-28).
    candidates of their own (32a2).
 7. **Replay character:** copies the real character (name, race,
    archetype) at level 1 with nothing, and goes straight into the course.
+8. **Battles play out on their own** (on the 32c review), like Ogre
+   Battle: once a battle starts, nothing the player types changes it; it
+   plays out from the company's setup beforehand. `cast` is for spells
+   out of combat only; in combat, characters cast offensive, defensive,
+   and any other spells on their own, by predetermined strategies (32d).
+9. **Targets come from strategy:** each character's strategy sets its
+   target (for example, the weakest in the group); if it can't reach
+   that one, it attacks one it can reach, by formation (32d).
 
 ## Phases
 
@@ -57,7 +65,7 @@ Researched on `4cb2faf` (2026-09-28).
 | 32a2 | Per-player recruit rosters: generated candidates (name, archetype, level, alignment, price) that come and go on each player's own notice; companions get their own names | [32a2 design](2026-09-28-phase-32a2-recruit-rosters-design.md) |
 | 32b | Tutorial replay: a throwaway level-1 character, back to the real one on leaving | [32b design](2026-09-28-phase-32b-tutorial-replay-design.md) |
 | 32c | Enemy groups: named and described groups, `attack <group>` only, `scout` to see a group's formation before a fight | [32c design](2026-09-28-phase-32c-enemy-groups-design.md) |
-| 32d | Automatic combat for the player and companions: act by archetype role, casters cast with real mana (the casting slice of 30c, pulled forward) | to write |
+| 32d | Automatic combat for the player and companions, by strategies set before the battle (decisions 8 and 9): targets, spells cast with real mana (the casting slice of 30c, pulled forward), and what a player may still do mid-battle (`flee`, `break`) | to write |
 | 32e | Company experience: every member present earns the full award; `experience` lists the company | to write |
 | 32f | Company logistics: capacity from members, backpacks, horses and saddles; `company inventory` (gear, packs, cargo); `company eat`/`drink` | to write |
 | 32g | Web company dock: a tabbed section under the map (Company: Cargo, Status, Camp; Comm; Combat), cargo hover actions | to write |
