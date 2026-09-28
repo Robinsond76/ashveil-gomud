@@ -7,8 +7,10 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/stretchr/testify/assert"
@@ -201,4 +203,129 @@ func TestAPlayerAloneAimsByTheirRule(t *testing.T) {
 	mobs.DestroyInstance(pair[1].InstanceId)
 	b.fight()
 	assert.Equal(t, pair[0].InstanceId, aimOf(b.aria.Character), "alone, she turns to the next by her rule")
+}
+
+// castEvents are the stream's cast events by kind, for one caster.
+func castEvents(events []combatstream.Event, kind combatstream.Kind, name string) int {
+	n := 0
+	for _, e := range events {
+		if e.Kind == kind && e.Source.Name == name {
+			n++
+		}
+	}
+	return n
+}
+
+func TestAClericCompanionHealsTheHurt(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	b.unplaced()
+	captain, _, _, _, _ := b.shapeBandits()
+	stream := b.listen()
+	oswin := b.companion(2)
+	oswin.Character.ManaMax.Value, oswin.Character.Mana = 20, 20
+
+	b.cmd("attack", fmt.Sprintf("#%d", captain))
+	for _, m := range b.livingBandits() { // aims are set: now no one falls
+		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+	}
+	b.toughen()
+	b.fight()
+	assert.NotEqual(t, characters.SpellCast, oswin.Character.Aggro.Type, "no one hurt: Oswin swings")
+	assert.Equal(t, 20, oswin.Character.Mana)
+	aim := aimOf(&oswin.Character)
+	require.NotZero(t, aim)
+
+	// Aria below half: Oswin heals her, with mana and a chant.
+	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 300
+	out := b.fight()
+	require.NotNil(t, oswin.Character.Aggro)
+	assert.Equal(t, characters.SpellCast, oswin.Character.Aggro.Type, "Oswin chants")
+	assert.Equal(t, "heal", oswin.Character.Aggro.SpellInfo.SpellId)
+	assert.Equal(t, []int{7}, oswin.Character.Aggro.SpellInfo.TargetUserIds, "on Aria, the most hurt")
+	assert.Equal(t, 17, oswin.Character.Mana, "Minor Heal costs 3")
+	assert.Contains(t, out, "Brother Oswin begins a low prayer.", "the spell's own chant line")
+	assert.Equal(t, 1, castEvents(*stream, combatstream.CastStart, "Brother Oswin"))
+
+	// Two rounds of chanting, then the heal lands and he turns back to his
+	// foe without a "turns toward".
+	healed := false
+	for i := 0; i < 3 && !healed; i++ {
+		b.aria.Character.HealthMax.Value = 1000
+		out = b.fight()
+		for _, e := range *stream {
+			if e.Kind == combatstream.Heal && e.Source.Name == "Brother Oswin" {
+				healed = true
+			}
+		}
+	}
+	require.True(t, healed, "the heal landed")
+	assert.NotContains(t, out, "Brother Oswin turns toward")
+	require.NotNil(t, oswin.Character.Aggro)
+	if oswin.Character.Aggro.Type != characters.SpellCast { // not already chanting again
+		assert.Equal(t, aim, aimOf(&oswin.Character), "back to his foe")
+	}
+}
+
+func TestAWizardPlayerCastsWithNoCommand(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("wizard")
+	b.unplaced()
+	_, bruiser, _, _, _ := b.shapeBandits()
+	stream := b.listen()
+	b.aria.Character.SetSkill("cast", 1)
+	b.aria.Character.LearnSpell("mm")
+	b.aria.Character.ManaMax.Value, b.aria.Character.Mana = 20, 20
+	assert.Regexp(t, `You\s+wizard\s+caster\s+weakest\s+Magic Missile \(6 mana\)`, b.cmd("strategy", ""))
+	b.cmd("strategy", "me strongest")
+
+	b.cmd("attack", fmt.Sprintf("#%d", bruiser))
+	require.Equal(t, bruiser, aimOf(b.aria.Character))
+	b.toughen()
+	out := b.fight()
+	require.NotNil(t, b.aria.Character.Aggro)
+	assert.Equal(t, characters.SpellCast, b.aria.Character.Aggro.Type, "she casts with no command")
+	assert.Equal(t, "mm", b.aria.Character.Aggro.SpellInfo.SpellId)
+	assert.Equal(t, []int{bruiser}, b.aria.Character.Aggro.SpellInfo.TargetMobInstanceIds, "at her rule's choice")
+	assert.Equal(t, 14, b.aria.Character.Mana)
+	assert.Contains(t, out, "You begin to chant")
+	assert.Equal(t, 1, castEvents(*stream, combatstream.CastStart, "Aria"))
+
+	// The spell ends (cast or fizzled) the next round, and she turns back
+	// to the bruiser without a word.
+	b.toughen()
+	out = b.fight()
+	assert.Equal(t, 1, castEvents(*stream, combatstream.CastComplete, "Aria"))
+	require.NotNil(t, b.aria.Character.Aggro)
+	assert.Equal(t, characters.DefaultAttack, b.aria.Character.Aggro.Type)
+	assert.Equal(t, bruiser, aimOf(b.aria.Character))
+	assert.NotContains(t, out, "You turn toward")
+
+	// Out of mana, she swings.
+	b.aria.Character.Mana = 0
+	b.toughen()
+	b.fight()
+	require.NotNil(t, b.aria.Character.Aggro)
+	assert.Equal(t, characters.DefaultAttack, b.aria.Character.Aggro.Type, "no mana: she swings")
+
+	// A fighter never casts.
+	b.aria.Character.Mana = 20
+	b.cmd("strategy", "me fighter")
+	assert.Equal(t, 20, b.aria.Character.Mana)
+}
+
+func TestCompanionManaComesBackOutOfCombat(t *testing.T) {
+	b := newBrawl(t)
+	oswin := b.companion(2)
+	oswin.Character.ManaMax.Value, oswin.Character.Mana = 20, 5
+	hooks.AutoHeal(events.NewRound{RoundNumber: 3})
+	assert.Equal(t, 5+oswin.Character.ManaPerRound(), oswin.Character.Mana, "out of combat, every third round")
+
+	oswin.Character.Mana = 5
+	hooks.AutoHeal(events.NewRound{RoundNumber: 4})
+	assert.Equal(t, 5, oswin.Character.Mana, "only every third round")
+
+	oswin.Character.SetAggro(0, b.bandits["bandit captain"][0], characters.DefaultAttack)
+	hooks.AutoHeal(events.NewRound{RoundNumber: 6})
+	assert.Equal(t, 5, oswin.Character.Mana, "not in combat")
 }

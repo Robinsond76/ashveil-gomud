@@ -71,13 +71,13 @@ inventory/provision code.
 
 ## Task 5: Healers and casters (`internal/hooks`)
 
-- [ ] Tests first (wiring, same file): a cleric companion heals the
+- [x] Tests first (wiring, same file): a cleric companion heals the
   player below half, with mana, chant rounds, the chant line, and a
   `cast-start` event; a healer with no one hurt swings; a wizard player
   on `caster` casts Magic Missile with no command, spends mana, and turns
   back to their aim with no "turns toward"; out of mana, swings; a
   caster's spell keeps to its battle (29b2's hold).
-- [ ] `combat_strategy.go`: the strategy pass after `closeIdleBattles`
+- [x] `combat_strategy.go`: the strategy pass after `closeIdleBattles`
   (player and companions in battles), `startCast` (onCast, mana,
   `SetCast`, `SkillUsed` for players, `cast-start`), the aim-restore map
   used where `DoCombat` ends a cast (success, fizzle, held).
