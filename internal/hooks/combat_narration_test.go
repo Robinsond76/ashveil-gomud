@@ -1,8 +1,11 @@
 package hooks
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,5 +33,47 @@ func TestNarrationPoolByGroup(t *testing.T) {
 	assert.Equal(t, fightOpeners[""], narrationPool(fightOpeners, []string{"wolves"}), "an unknown group falls back")
 	assert.Equal(t, fightOpeners[""], narrationPool(fightOpeners, nil))
 	assert.Contains(t, fightClosings["practice-squad"], fightClosing([]string{"practice-squad"}))
+	assert.Contains(t, fightOpeners["slum-ruffians"], fightOpener([]string{"slum-ruffians"}))
 	assert.Contains(t, fightOpeners[""], fightOpener([]string{""}))
+}
+
+// TestShieldBreakLines (review fix): a breaking shield is told in the
+// narration voice, no *** and no !, with the owner's article.
+func TestShieldBreakLines(t *testing.T) {
+	owner := shieldBreaksOwnerLine("wooden shield")
+	room := shieldBreaksRoomLine("wooden shield", mobTag("bandit bruiser"))
+	player := shieldBreaksRoomLine("wooden shield", userTag("bob"))
+	for _, line := range []string{owner, room, player} {
+		assert.Empty(t, util.NarrationVoiceProblem(line), line)
+		assert.NotContains(t, line, "***")
+	}
+	assert.Contains(t, room, `The <ansi fg="mobname">bandit bruiser</ansi>'s <ansi fg="item">wooden shield</ansi> cracks apart`)
+	assert.Contains(t, player, `<ansi fg="username">Bob</ansi>'s`, "a player's name takes no article")
+}
+
+// TestDeathNoticeOnce (review fix): a mob still at 0 health when a later
+// round reports it again (its queued suicide not yet run) gets no second
+// death line.
+func TestDeathNoticeOnce(t *testing.T) {
+	room := &rooms.Room{RoomId: 990301}
+	rooms.SetTestRoom(room)
+	t.Cleanup(func() { rooms.RemoveTestRoom(room.RoomId) })
+	m := engagementMob(t, 8301, 0, room.RoomId)
+	m.Character.Name = "bandit captain"
+
+	var deaths int
+	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+		if msg := e.(events.Message); msg.RoomId == room.RoomId && strings.Contains(msg.Text, "bandit captain") {
+			deaths++
+		}
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.Message{}, id) })
+	events.ProcessEvents()
+	deaths = 0
+
+	handleAffected(nil, []int{8301})
+	handleAffected(nil, []int{8301}) // the next round, suicide still queued
+	events.ProcessEvents()
+	assert.Equal(t, 1, deaths, "one death line")
 }

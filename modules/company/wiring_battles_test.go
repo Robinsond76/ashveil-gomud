@@ -429,7 +429,7 @@ func TestWaitingGroupsDontBlockFlight(t *testing.T) {
 	b.cmd("flee", "")
 	got := b.fight()
 	assert.NotContains(t, got, "blocks you from fleeing")
-	assert.Contains(t, got, "You flee")
+	assert.Contains(t, got, "You break away and flee")
 }
 
 // hostilesIn lists a room's living hostile mobs.

@@ -7,8 +7,8 @@ import (
 )
 
 // Phase 29c: death notices in the narration voice. Each takes a tagged
-// name (`<ansi fg="mobname">bandit captain</ansi>`) and puts "the" before
-// a lowercase one.
+// name (`<ansi fg="mobname">bandit captain</ansi>`); a mob's gets "the"
+// before a lowercase one, a player's is left as typed.
 
 var (
 	// DeathLines are a slain mob's last line.
@@ -30,15 +30,15 @@ var (
 )
 
 // DeathLine is a slain mob's death notice.
-func DeathLine(name string) string { return pickLine(DeathLines, name) }
+func DeathLine(name string) string { return pickLine(DeathLines, util.Article(name)) }
 
 // BeatenLine is a practice foe's notice.
-func BeatenLine(name string) string { return pickLine(BeatenLines, name) }
+func BeatenLine(name string) string { return pickLine(BeatenLines, util.Article(name)) }
 
 // PlayerDeathLine is a player's death notice, for the room.
 func PlayerDeathLine(name string) string { return pickLine(PlayerDeathLines, name) }
 
 func pickLine(pool []string, name string) string {
 	line := pool[util.Rand(len(pool))]
-	return util.CapitalizeFirst(fmt.Sprintf(line, util.Article(name)))
+	return util.CapitalizeFirst(fmt.Sprintf(line, name))
 }

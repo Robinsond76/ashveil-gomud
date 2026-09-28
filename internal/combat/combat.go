@@ -199,9 +199,14 @@ func buildCombatMessages(
 		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
 	}
 
-	// Phase 29c: "the bandit captain", never "the Garrick Vane".
-	tokenReplacements[items.TokenSource] = util.Article(tokenReplacements[items.TokenSource])
-	tokenReplacements[items.TokenTarget] = util.Article(tokenReplacements[items.TokenTarget])
+	// Phase 29c: "the bandit captain", never "the Garrick Vane". A player's
+	// name is theirs as typed, whatever its case.
+	if sourceType == Mob {
+		tokenReplacements[items.TokenSource] = util.Article(tokenReplacements[items.TokenSource])
+	}
+	if targetType == Mob {
+		tokenReplacements[items.TokenTarget] = util.Article(tokenReplacements[items.TokenTarget])
+	}
 
 	if sourceChar.RoomId == targetChar.RoomId {
 
@@ -366,7 +371,11 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				if hit {
 					// Check dodge before applying damage.
 					if Dodges(targetChar.Stats.Perception.ValueAdj, sourceChar.Stats.Perception.ValueAdj) {
-						attackResult.SendToSource(util.CapitalizeFirst(fmt.Sprintf(`<ansi fg="cyan">%s twists aside from your blow.</ansi>`, util.Article(targetChar.Name))))
+						dodger := targetChar.Name
+						if targetType == Mob {
+							dodger = util.CapitalizeFirst(util.Article(dodger))
+						}
+						attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s twists aside from your blow.</ansi>`, dodger))
 						attackResult.SendToTarget(`<ansi fg="cyan">You twist aside from the blow.</ansi>`)
 						continue
 					}
@@ -407,7 +416,9 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				// An edge raises the strike's ceiling too, so a sharpened
 				// top roll isn't described as a critical.
 				pct := damagePercentOfMax(attackTargetDamage, dCount, dSides, dBonus+edgeBonus)
-				msgs := items.GetAttackMessage(weaponSubType, pct, isCrit)
+				// A crit the armor took entirely reads as any fully blocked
+				// blow does: a miss (Phase 29c review fix).
+				msgs := items.GetAttackMessage(weaponSubType, pct, isCrit && attackTargetDamage > 0)
 
 				toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg := buildCombatMessages(
 					&sourceChar, &targetChar, sourceType, targetType,

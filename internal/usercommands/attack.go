@@ -17,6 +17,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 	attackPlayerId := 0
 	attackMobInstanceId := 0
+	alreadyFighting := user.Character.Aggro != nil // Phase 29c: "turn toward", not "draw"
 
 	// Ashveil Phase 29b2: in a battle, a bare "attack" takes a foe from it.
 	if rest == `` {
@@ -211,7 +212,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			// Phase 29c: no "prepares to fight"; the fight's opener speaks
 			// for the room.
-			user.SendText(goForText(user.Character, util.Article(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Character.Name))))
+			user.SendText(goForText(user.Character, util.Article(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Character.Name)), alreadyFighting))
 
 			for _, instId := range room.GetMobs(rooms.FindCharmed) {
 				if m := mobs.GetInstance(instId); m != nil {
@@ -260,10 +261,13 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 			events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 
-			user.SendText(goForText(user.Character, fmt.Sprintf(`<ansi fg="username">%s</ansi>`, p.Character.Name)))
+			user.SendText(goForText(user.Character, fmt.Sprintf(`<ansi fg="username">%s</ansi>`, p.Character.Name), alreadyFighting))
 
 			if !isSneaking {
 				p.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> comes for you.`, user.Character.Name))
+				// No battle opens between players, so the room is told here.
+				room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> goes for <ansi fg="username">%s</ansi>.`, user.Character.Name, p.Character.Name),
+					user.UserId, attackPlayerId)
 			}
 
 			for _, instId := range room.GetMobs(rooms.FindCharmed) {
@@ -302,8 +306,12 @@ func battleFoeName(b battle.Battle, room *rooms.Room) string {
 }
 
 // goForText is the attacker's own line as a fight begins (Phase 29c):
-// "You draw your broadsword and go for the bandit captain."
-func goForText(c *characters.Character, target string) string {
+// "You draw your broadsword and go for the bandit captain.", or, already
+// fighting, "You turn toward the bandit captain."
+func goForText(c *characters.Character, target string, alreadyFighting bool) string {
+	if alreadyFighting {
+		return fmt.Sprintf(`You turn toward %s.`, target)
+	}
 	if c.Equipment.Weapon.ItemId > 0 {
 		return fmt.Sprintf(`You draw your <ansi fg="item">%s</ansi> and go for %s.`, c.Equipment.Weapon.DisplayName(), target)
 	}

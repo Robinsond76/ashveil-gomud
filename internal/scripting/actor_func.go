@@ -223,8 +223,9 @@ func (a ScriptActor) GetCombatName(startOfLine bool) string {
 	return name
 }
 
-// ChantRoundsLeft is how many rounds the actor's spell has left before it
-// is released, counting this one (Phase 29c), or 0 when it isn't casting.
+// ChantRoundsLeft is how many rounds from now the actor's spell is
+// released, the release round included (Phase 29c): 1 means it lands next
+// round. 0 when the actor isn't casting.
 func (a ScriptActor) ChantRoundsLeft() int {
 	if aggro := a.characterRecord.Aggro; aggro != nil && aggro.Type == characters.SpellCast {
 		return aggro.RoundsWaiting + 1

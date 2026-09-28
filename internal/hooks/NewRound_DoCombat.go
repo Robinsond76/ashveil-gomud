@@ -144,14 +144,14 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			}
 
 			if blockedByMob != `` {
-				user.SendText(fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="mobname">%s</ansi> blocks you from fleeing!</ansi>`, blockedByMob))
-				uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is blocked from fleeing by <ansi fg="mobname">%s</ansi>!`, user.Character.Name, blockedByMob), user.UserId)
+				user.SendText(fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="mobname">%s</ansi> blocks your way out.</ansi>`, blockedByMob))
+				uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to flee, but <ansi fg="mobname">%s</ansi> blocks the way.`, user.Character.Name, blockedByMob), user.UserId)
 				continue
 			}
 
 			if blockedByPlayer != `` {
-				user.SendText(fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi> blocks you from fleeing!</ansi>`, blockedByPlayer))
-				uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is blocked from fleeing by <ansi fg="username">%s</ansi>!`, user.Character.Name, blockedByPlayer), user.UserId, blockedByPlayerId)
+				user.SendText(fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi> blocks your way out.</ansi>`, blockedByPlayer))
+				uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to flee, but <ansi fg="username">%s</ansi> blocks the way.`, user.Character.Name, blockedByPlayer), user.UserId, blockedByPlayerId)
 				continue
 			}
 
@@ -159,24 +159,24 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			exitName, exitRoomId := uRoom.GetRandomExit()
 
 			if exitName == `` {
-				user.SendText(`You can't find an exit!`)
+				user.SendText(`You look for a way out and find none.`)
 				continue
 			}
 
 			if blocked, err := scripting.TryRoomTryExitEvent(exitName, user.UserId, user.Character.RoomId); err == nil && blocked {
-				user.SendText(`Something prevents you from fleeing!`)
+				user.SendText(`Something holds you here. You cannot flee.`)
 				continue
 			}
 
 			if blocked, err := scripting.TryRoomTryEnterEvent(user.UserId, exitRoomId); err == nil && blocked {
-				user.SendText(`Something prevents you from fleeing!`)
+				user.SendText(`Something holds you here. You cannot flee.`)
 				continue
 			}
 
 			emitCombat(combatstream.Event{Kind: combatstream.Flee, RoomId: user.Character.RoomId, Source: userRef(user)})
 
-			user.SendText(fmt.Sprintf(`You flee to the <ansi fg="exit">%s</ansi> exit!`, exitName))
-			uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> flees to the <ansi fg="exit">%s</ansi> exit!`, user.Character.Name, exitName), user.UserId)
+			user.SendText(fmt.Sprintf(`You break away and flee <ansi fg="exit">%s</ansi>.`, exitName))
+			uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> breaks away and flees <ansi fg="exit">%s</ansi>.`, user.Character.Name, exitName), user.UserId)
 
 			user.Character.Aggro = nil
 			events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
@@ -478,11 +478,9 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 					if defUser.Character.Equipment.Offhand.BreakTest(modifier) {
 						// Send message about the break
 
-						defUser.SendText(`<ansi fg="202">***</ansi>`)
-						defUser.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> Your <ansi fg="item">%s</ansi> breaks! <ansi fg="202">***</ansi></ansi>`, defUser.Character.Equipment.Offhand.NameSimple()))
-						defUser.SendText(`<ansi fg="202">***</ansi>`)
+						defUser.SendText(shieldBreaksOwnerLine(defUser.Character.Equipment.Offhand.NameSimple()))
 
-						defRoom.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="username">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, defUser.Character.Equipment.Offhand.NameSimple(), defUser.Character.Name), defUser.UserId)
+						defRoom.SendText(shieldBreaksRoomLine(defUser.Character.Equipment.Offhand.NameSimple(), userTag(defUser.Character.Name)), defUser.UserId)
 
 						events.AddToQueue(events.ItemOwnership{
 							UserId: defUser.UserId,
@@ -1022,11 +1020,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 					if defUser.Character.Equipment.Offhand.BreakTest(modifier) {
 						// Send message about the break
 
-						defUser.SendText(`<ansi fg="202">***</ansi>`)
-						defUser.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> Your <ansi fg="item">%s</ansi> breaks! <ansi fg="202">***</ansi></ansi>`, defUser.Character.Equipment.Offhand.NameSimple()))
-						defUser.SendText(`<ansi fg="202">***</ansi>`)
+						defUser.SendText(shieldBreaksOwnerLine(defUser.Character.Equipment.Offhand.NameSimple()))
 
-						defRoom.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="username">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, defUser.Character.Equipment.Offhand.NameSimple(), defUser.Character.Name), defUser.UserId)
+						defRoom.SendText(shieldBreaksRoomLine(defUser.Character.Equipment.Offhand.NameSimple(), userTag(defUser.Character.Name)), defUser.UserId)
 
 						events.AddToQueue(events.ItemOwnership{
 							UserId: defUser.UserId,
@@ -1181,7 +1177,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 						if defRoom := rooms.LoadRoom(defMob.Character.RoomId); defRoom != nil {
 
-							defRoom.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="mobname">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, defMob.Character.Equipment.Offhand.NameSimple(), defMob.Character.Name))
+							defRoom.SendText(shieldBreaksRoomLine(defMob.Character.Equipment.Offhand.NameSimple(), mobTag(defMob.Character.Name)))
 
 							events.AddToQueue(events.ItemOwnership{
 								MobInstanceId: defMob.InstanceId,

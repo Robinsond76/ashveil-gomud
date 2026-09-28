@@ -97,4 +97,7 @@ func TestTurnsToward(t *testing.T) {
 	assert.Equal(t, `You turn toward the <ansi fg="mobname">bandit captain</ansi>.`, turnsToward(`You`, mobTag("bandit captain")))
 	assert.Equal(t, `<ansi fg="mobname">Garrick Vane</ansi> turns toward the <ansi fg="mobname">bandit bruiser</ansi>.`,
 		turnsToward(mobTag("Garrick Vane"), mobTag("bandit bruiser")))
+	// Review fix: a player's lowercase name takes no article.
+	assert.Equal(t, `The <ansi fg="mobname">bandit captain</ansi> turns toward <ansi fg="username">bob</ansi>.`,
+		turnsToward(mobTag("bandit captain"), userTag("bob")))
 }

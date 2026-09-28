@@ -136,6 +136,12 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 			events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 
+			// Phase 29c: no battle opens between mobs, so the room is told
+			// here.
+			if !isSneaking {
+				room.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s goes for %s.`,
+					util.Article(`<ansi fg="mobname">`+mob.Character.Name+`</ansi>`), util.Article(`<ansi fg="mobname">`+m.Character.Name+`</ansi>`))))
+			}
 		}
 
 		return true, nil

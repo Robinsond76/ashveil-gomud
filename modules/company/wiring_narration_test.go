@@ -7,8 +7,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -143,4 +147,59 @@ func TestCriticalHitNarration(t *testing.T) {
 		}
 	}
 	t.Fatal("no critical hit landed in six fights")
+}
+
+// TestTwoPlayersOneGroupOneOpener (review fix): when a second player joins
+// the fight against a group Aria's company is already fighting, the room
+// hears no second opener, and one closing line when the group falls.
+func TestTwoPlayersOneGroupOneOpener(t *testing.T) {
+	b := newBrawl(t)
+	room := b.ariaHears()
+	b.cmd("attack", "bandit captain")
+	b.toughen()
+	b.fight()
+
+	brom := users.NewUserRecord(8, 2)
+	brom.Username = "brom"
+	brom.Password = "$2a$test"
+	brom.Character.Name = "Brom"
+	brom.Character.RaceId = 1
+	brom.Character.Level = 3
+	brom.Character.RoomId = b.road.RoomId
+	brom.Character.Validate()
+	users.SetTestUser(brom)
+	b.road.AddPlayer(brom.UserId)
+	t.Cleanup(func() { b.road.RemovePlayer(8) })
+	_, err := usercommands.TryCommand("attack", "bandit captain", 8, events.CmdSkipScripts)
+	require.NoError(t, err)
+	events.ProcessEvents()
+
+	shared := false
+	for i := 0; i < 200 && len(b.livingBandits()) > 0; i++ {
+		b.toughen()
+		brom.Character.HealthMax.Value = 1000
+		brom.Character.Health = 1000
+		b.fight()
+		aria, okA := battle.Current(7)
+		bromB, okB := battle.Current(8)
+		if okA && okB && aria.PartyID == bromB.PartyID {
+			shared = true
+		}
+	}
+	require.True(t, shared, "both players fought the one group")
+	b.fight()
+
+	lines := strings.Split(strings.Join(*room, ""), "\n")
+	opener, closing := poolPattern(banditOpeners), poolPattern(banditClosings)
+	openers, closings := 0, 0
+	for _, line := range lines {
+		if opener.MatchString(line) {
+			openers++
+		}
+		if closing.MatchString(line) {
+			closings++
+		}
+	}
+	assert.Equal(t, 1, openers, "one opener for the one fight")
+	assert.Equal(t, 1, closings, "one closing line when the group falls")
 }

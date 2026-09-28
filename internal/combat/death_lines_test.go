@@ -25,6 +25,7 @@ func TestDeathLineArticles(t *testing.T) {
 		assert.True(t, strings.HasPrefix(DeathLine(`<ansi fg="mobname">rat</ansi>`), `The <ansi fg="mobname">rat</ansi> `))
 		assert.True(t, strings.HasPrefix(DeathLine("bandit captain"), "The bandit captain "))
 		assert.True(t, strings.HasPrefix(PlayerDeathLine("Garrick Vane"), "Garrick Vane "))
+		assert.True(t, strings.HasPrefix(PlayerDeathLine(`<ansi fg="username">bob</ansi>`), `<ansi fg="username">Bob</ansi> `), "no article for a player")
 	}
 	assert.Equal(t, "The straw footman is beaten and yields the field.", BeatenLine("straw footman"))
 }

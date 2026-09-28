@@ -309,11 +309,11 @@ XP line ("You gained N experience points!") is GoMud's and out of scope.
   (`master` vs branch) into the scratchpad for the review.
 - [x] Independent reviewer subagent over `git diff master..HEAD` with the
   design doc and invariants.
-- [ ] Verify each finding, fix with regression tests (focused package
+- [x] Verify each finding, fix with regression tests (focused package
   tests only).
-- [ ] Once, after the fixes: `go test -race ./...`, `make generate`,
+- [x] Once, after the fixes: `go test -race ./...`, `make generate`,
   `make validate`.
-- [ ] `docs/PROJECT_STATUS.md`: 29c row Complete, work-log entry with
+- [x] `docs/PROJECT_STATUS.md`: 29c row Complete, work-log entry with
   **Review:** line, known issues folded; remove this phase's design/plan
   per the pruning convention only after merge.
 - [ ] Merge to `master`, push, remove the worktree.

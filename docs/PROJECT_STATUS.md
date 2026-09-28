@@ -18,15 +18,15 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29b2; see the table below. The survival and
+- **Completed:** Phases 0–29c; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
-  and the first combat slices (29a, 29b, 29b2) are all done.
+  and the first combat slices (29a, 29b, 29b2, 29c) are all done.
 - **Next:** 32c–32h (32a, 32a2, and 32b are done), from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
-  the combat roadmap resumes at 29c after them.
+  the combat roadmap continues at 29d.
   Also open: capacity per company size (play-testing) and the "Future
   ideas" row; see Known issues.
 
@@ -107,94 +107,52 @@ fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
 
-### Phase 32b: tutorial replay (2026-09-28)
+### Phase 29c: narration voice (2026-09-28)
 
-- **What:** `tutorial replay` (confirm with `yes`) takes the player's real
-  character out of the world as on quit, keeping the connection, and hands
-  it to a throwaway user: same name, race, archetype and settings, level 1
-  with the starter kit. Graduating, skipping, dying, or any other way out
-  hands the connection back to the real character, unchanged. A new
-  `PlayerDespawn.HandOff` flag keeps the connection open, `UserHandOff`
-  (hooks) logs the next user in on it, and `UserPurged` makes every module
-  with per-user state drop the throwaway before its file is removed
-  (`modules/purge_coverage_test.go` guards new modules). The connection
-  loops in `main.go` re-read their user each input, and a dropped link is
-  now resolved on the game loop (`World.SendDisconnect`). Logging out ends a
-  replay; logging in elsewhere ends a stale one; a restart sweeps leftovers
-  in the tutorial module's load; copyover keeps an online replay. `online`
-  shows "(replaying the tutorial)". Help: `help tutorial` (alias `replay`),
-  pointed to from the first lesson.
-- **Why:** the owner's playtest roadmap (32b).
-- **Verification:** `go test -race ./...`, `make generate`, and
-  `make validate` pass. Wiring tests go through `plugins.Load`, a real pipe
-  connection and the hooks listeners for skip, graduation (twice), death,
-  quit and restart, and check the world clock doesn't move.
-- **Review:** the reviewer found seven issues. Fixed, each with a test:
-  (1) index rebuilds and `GetUniqueUserId` picked up replay files after a
-  restart; (2) a disconnect mid-switch could despawn the wrong user;
-  (3) a replay skipped quit's "busy" check when a mob was set on the player;
-  (4) a loaded replay had no online time; (5) a fresh replay spawned in the
-  Void before the course; (6) a refused hand-off left the throwaway's file;
-  plus help that contradicted replays (logout, skip) and didn't name
-  `whisper`. Accepted: (7) when the real character logs in elsewhere, their
-  login lands before the stale replay's purge, which is harmless. Not yet
-  covered by tests: death through the real death module, quit through its
-  buff path, link-dead expiry, a real copyover, and the purge in every
-  module at once (each module has its own purge test).
-
-### Phase 32a2: per-player recruit rosters (2026-09-28)
-
-- **What:** Each player's own generated recruits at settlement recruiters,
-  and companions with their own names
-  ([32a2 design](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md),
-  [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md)).
-  - A `Generated` recruiter (the Waymark Inn, the Trappers' Post, the latter
-    favouring rangers) posts every player 3 generated candidates after its
-    regulars: name, archetype, level (leader ±1), alignment (−80..80, so
-    some are refused), price, and a line of character. Rosters live on the
-    leader's company record, one per recruiter room.
-  - Each candidate stays 450–1800 world rounds, then leaves and another
-    takes the slot, one at a time; a hire's slot refills after 60–180
-    rounds. Refreshed lazily when read (notice, `company recruit`, `company
-    inspect`, `look [name]`), from the world round, which is only read.
-    Refreshes stay in memory and ride the next company save (the file also
-    carries gear snapshots); a hire saves at once and rolls back whole.
-  - `Companion.Name`/`Description`: a hired recruit keeps its own name in
-    `company`, formation, gear, alignment, GMCP, survival, and on its live
-    mob (so the room and combat text), through logout, restart, copyover,
-    resurrection, and the lost list. Several companions may share a
-    template (recruit bases 80–84).
-  - Help: `help company` ("Your own recruits"); the Departure lesson
-    points to it.
-- **Why:** The owner's rule of 2026-09-28: recruits per player, generated,
-  coming and going, so no one takes everyone else's candidates.
-- **Verification:** `go test -race ./...` (81 packages), `make generate`,
-  `make validate` pass. Wiring: `modules/company/wiring_roster_test.go`
-  (`plugins.Load` with the shipped config and templates, real commands and
-  round: two players' rosters differ and one's hires leave the other's
-  alone; two generated warriors hired, named in status, formation, gear,
-  the room, and GMCP members; logout and reload restore both names and
-  levels; rounds past a stay show new faces; a far-aligned candidate is
-  refused; the tutorial's recruiters list only Tamsin, Oswin, and Corvin).
-  Unit: `internal/company/roster_test.go` (generation, staggering, long
-  absence, hire and refill, shrinking), `modules/company/roster_test.go`
-  (notice, hire, rollbacks, names, inspect/look, config, shipped content),
-  resurrection keeps a generated name, help page.
-- **Review:** One independent review; no high-severity bugs and no
-  invariant violations (clock, restart, isolation, farming, by-id
-  lookups). Fixed with regression tests: `company inspect` and `company
-  recruit` could read one partial name as two different people (inspect
-  now uses recruit's order); generated names now avoid every recruiter's
-  regulars, not only this one's; a smaller `RosterSize` now trims rosters
-  at once; added tests for a failed save during a generated hire and for
-  resurrecting and losing a generated companion; help no longer states
-  config numbers as fixed, says inspect by name works at the recruiter,
-  and notes "won't join you". Accepted: a new hire's experience is 0 at
-  its level, the same as authored recruits; config is re-parsed on each
-  read (as `Recruiters` already is), so a malformed entry warns on each
-  look; rosters for rooms later removed from config stay on the record
-  (small, harmless); combat text isn't asserted separately (it reads the
-  live mob's name, which the wiring test checks).
+- **What:** combat reads as a story, with its numbers in brackets at the
+  end of a line. All eight weapon files rewritten; every hit ends
+  `(N damage)` / `(critical hit, N damage)` (the defender's adds
+  `, M blocked`); only a real crit draws the critical pool, and one the
+  armor takes entirely reads as a miss. No `***`, `!`, ALL-CAPS, or
+  "prepares to fight" in the round (weapon, dodge, fizzle, flee, and
+  shield-break lines). Mob names get "the", players' names never do
+  (`util.Article`). One opener per fight and one closing line after a win,
+  from pools keyed by mob group (generic, `slum-ruffians`,
+  `practice-squad`, and `bandits` for 32c), once per fight when two players
+  share a group; "turns toward"; a mob's death line printed in the round
+  (then `suicide quiet`), so the closing follows the last death. PvP and
+  mob-vs-mob fights get a "goes for" room line. The company fallen notice
+  is indented and in words. `mm`, `sparks`, `heal`, and `healall` chant
+  with their rounds (`ChantRoundsLeft`) and land with `(N damage)` /
+  `(N healed)`; `healall` lists everyone on one line. `help narration`
+  (aliases `critical`, `crit`, `healed`, `chanting`), linked from
+  `help combat` and `help damage`, pointed to from the Practice Yard.
+- **Why:** the owner-approved [narration design](superpowers/specs/2026-09-28-phase-29c-narration-voice-design.md);
+  combat roadmap 29c.
+- **Verification:** `make generate` and `make validate` pass;
+  `go test -race ./...` passes except `TestRecruitThroughPluginsLoad`, a
+  flake already on `master` (32a2's partial recruit selector falls through
+  to a random roster candidate; queued as its own task). Wiring tests go
+  through `hooks.DoCombat` (full 5v5 narration, two players on one group),
+  the real `cast` command (`mm`, `healall` by a companion), and `help`.
+- **Review:** the reviewer found 2 major, 5 minor, 6 nits. Fixed, each with
+  a test: (1) lowercase player names got "the"; (2) two players on one group
+  got two openers and closings; (3) a fully absorbed crit read as a bloody
+  critical with no brackets; (4) shield-break `***` and flee `!` lines
+  remained; (5) a mob reported dead twice before its queued suicide ran got
+  two death lines; (6) PvP and mob-vs-mob fights started silently (the PvP
+  line has no test: no attack harness for two players); (7) the `bandits`
+  pools matched no shipped mob (added `slum-ruffians`). Nits fixed: an
+  `attack` mid-fight "turns toward" instead of drawing again; the
+  `ChantRoundsLeft` doc; the unshipped `empty` world's weapon files synced
+  (they would print damage twice). Accepted: spell suffixes report the
+  health actually changed (`(0 healed)` at full health), as designed; the
+  spells' `WAIT_ROUNDS` constants mirror their yaml (onCast runs before the
+  cast is set); "Garrick Vane's guardsman's broadsword" (29d's pronouns);
+  before/after transcripts diverge after a few lines (the new pools draw
+  from the RNG). Gaps left: no test that a defeat or broken-off fight
+  prints no closing line, none counting "turns toward" lines, none for
+  `sparks` or `heal`.
 
 ## Known issues / deferred items
 
@@ -203,6 +161,19 @@ resolved (the weather, load, and mount multipliers, and the 11a–11c
 combat wiring) are removed; each phase's work-log entry (in git history)
 keeps its own history.
 
+- **Narration (29c):** a player's own death line still comes from the
+  queued `suicide` (a user script may cancel the death), so it can follow
+  a closing line; untested: no closing on defeat or broken-off, a count of
+  "turns toward" lines, `sparks` and `heal` through a real cast, the PvP
+  "goes for" line.
+- **Flaky test on `master`:** `TestRecruitThroughPluginsLoad` fails about
+  2 runs in 5: "company recruit r" is ambiguous among the regulars and
+  falls through to a random roster candidate (32a2). Queued as its own fix.
+- **Tutorial replay (32b), untested paths:** death through the real death
+  module, quit through its buff path, link-dead expiry, a real copyover,
+  and the purge in every module at once (each module has its own purge
+  test). Accepted: a real character's login elsewhere lands before the
+  stale replay's purge.
 - **Company polish (32a) and rosters (32a2), accepted:** the company move
   line doesn't recheck that every companion made it (a `no-go` buff, a
   locked far door); a pet isn't named in it; an offline leader's camp
