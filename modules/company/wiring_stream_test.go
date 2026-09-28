@@ -12,7 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const summaryHeading = "── The fighting is over ──"
+// summaryHeading ends a victory's heading, named or not: "── The fighting
+// is over ──", "── The fight with a band of bandit cutthroats is over ──".
+const summaryHeading = " is over ──"
 
 // listen records every event on the brawl's stream.
 func (b *brawl) listen() *[]combatstream.Event {
@@ -177,6 +179,8 @@ func TestCombatEventStreamThroughTheRealRound(t *testing.T) {
 
 	// The leader is sent the summary once, at the end.
 	assert.Equal(t, 1, strings.Count(seen, summaryHeading))
+	assert.Equal(t, "a band of bandit cutthroats", sum.GroupName, "the fight is named after its group (32c)")
+	assert.Contains(t, seen, "── The fight with a band of bandit cutthroats is over ──")
 	assert.Contains(t, seen, "Damage dealt   Company ")
 	for _, line := range combatstream.Render(*sum, 7) {
 		assert.Contains(t, seen, line)
@@ -247,7 +251,7 @@ func TestFleeBreaksTheFightOff(t *testing.T) {
 	assert.Equal(t, 7, flee.Source.UserId)
 	assert.Equal(t, end.FightID, flee.FightID, "the flee is in the fight")
 	assert.Equal(t, combatstream.OutcomeBrokenOff, end.Outcome)
-	assert.Contains(t, strings.Join(seen, "\n"), "── The fight breaks off ──")
+	assert.Contains(t, strings.Join(seen, "\n"), "── The fight with a band of bandit cutthroats breaks off ──")
 }
 
 // TestInterceptedBlowFellsTheLeaderThatRound (the 29b death fix): the

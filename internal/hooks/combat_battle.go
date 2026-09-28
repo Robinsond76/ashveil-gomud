@@ -151,6 +151,11 @@ func partyRefs(p mobparty.Party) []combatstream.Ref {
 func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) battle.Battle {
 	b := battle.Begin(sd.user.UserId, room.RoomId, round, p.ID, p.Members)
 	id := combatstream.Default().Open(round, room.RoomId, p.ID, userRef(sd.user), sd.allyRefs(), partyRefs(p))
+	if len(p.Members) > 0 {
+		if g, ok := enemyparty.GroupOf(room, p.Members[0]); ok && !g.Solo() {
+			combatstream.Default().Name(id, g.Name) // Phase 32c: "The fight with a band of ruffians is over"
+		}
+	}
 	battle.SetFight(sd.user.UserId, id)
 	b.FightID = id
 	sd.keepOnBattle(b, room)

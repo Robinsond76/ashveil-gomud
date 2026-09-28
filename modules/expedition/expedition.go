@@ -22,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -184,14 +185,22 @@ func (nativeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUserI
 			foes = append(foes, second)
 		}
 	}
-	group := ""
+	group, groupName := "", ""
 	if len(foes) > 1 {
 		group = encounterGroup(roomID, mob.InstanceId)
+		// Phase 32c: the pair is named as it forms ("a band of ruffians")
+		// and keeps the name while it stands.
+		summaries := make([]mobparty.MobSummary, len(foes))
+		for i, foe := range foes {
+			summaries[i] = rooms.GroupSummary(foe)
+		}
+		groupName = mobparty.Generate(summaries).Name
 	}
 	for _, foe := range foes {
 		foe.Hostile = true
 		foe.MaxWander = 0
 		foe.SpawnGroup = group
+		foe.GroupName = groupName
 		room.AddMob(foe.InstanceId)
 		foe.Command(fmt.Sprintf("attack @%d", leaderUserID))
 	}

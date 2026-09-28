@@ -134,3 +134,29 @@ func TestSlainLeaderIsFallenAndEnemyEndings(t *testing.T) {
 	assert.Empty(t, sum.Kills, "beating a practice foe is no kill")
 	assert.Contains(t, Render(*sum, 7), "Company        You fallen · Garrick Vane 9/15")
 }
+
+func TestNamedFightHeadings(t *testing.T) {
+	cases := map[string]string{
+		OutcomeVictory:   "── The fight with a band of ruffians is over ──",
+		OutcomeDefeat:    "── The company is beaten by a band of ruffians ──",
+		OutcomeBrokenOff: "── The fight with a band of ruffians breaks off ──",
+	}
+	for outcome, want := range cases {
+		s := New()
+		id := s.Open(1, 100, "ruffians#0", aria, nil, []Ref{captain})
+		s.Name(id, "a band of ruffians")
+		info, ok := s.Fight(id)
+		require.True(t, ok)
+		assert.Equal(t, "a band of ruffians", info.GroupName)
+		sum, ok := s.EndFight(id, 3, outcome, Final{})
+		require.True(t, ok)
+		assert.Equal(t, "a band of ruffians", sum.GroupName)
+		assert.Equal(t, want, Render(*sum, 7)[0], outcome)
+	}
+}
+
+func TestUnnamedFightHeadingsAreUnchanged(t *testing.T) {
+	assert.Equal(t, "── The company is beaten ──", Render(Summary{Outcome: OutcomeDefeat}, 0)[0])
+	assert.Equal(t, "── The fight breaks off ──", Render(Summary{Outcome: OutcomeBrokenOff}, 0)[0])
+	assert.Equal(t, "── The fighting is over ──", Render(Summary{Outcome: OutcomeVictory}, 0)[0])
+}
