@@ -127,6 +127,9 @@ func (n Naming) Keywords() []string {
 	}
 	add(n.Noun)
 	add(n.Kind)
+	if i := strings.LastIndex(n.Kind, " "); i >= 0 {
+		add(n.Kind[i+1:]) // "rats" for "big rats"
+	}
 	add(StripArticle(n.Name))
 	if n.Authored {
 		for _, w := range nameWords(n.Name) {

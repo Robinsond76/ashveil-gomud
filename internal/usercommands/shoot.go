@@ -17,14 +17,15 @@ import (
 
 func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	if user.Character.Equipment.Weapon.GetSpec().Subtype != items.Shooting {
-		user.SendText(`You don't have a shooting weapon.`)
-		return true, nil
-	}
-
 	// Ashveil Phase 32c (the owner's rule 5): nothing typed acts on a battle.
 	if _, inBattle := battle.Current(user.UserId); inBattle || fightingMob(user) {
 		user.SendText(BattleUnderWay)
+		return true, nil
+	}
+
+
+	if user.Character.Equipment.Weapon.GetSpec().Subtype != items.Shooting {
+		user.SendText(`You don't have a shooting weapon.`)
 		return true, nil
 	}
 

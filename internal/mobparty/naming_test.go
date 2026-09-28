@@ -112,3 +112,11 @@ func TestListKinds(t *testing.T) {
 	assert.Equal(t, "an archer and three footmen", ListKinds([]string{"archer", "footman", "footman", "footman"}))
 	assert.Equal(t, "two rats", ListKinds([]string{"rat", "rat"}))
 }
+
+func TestMatchesTheLastWordOfAKind(t *testing.T) {
+	n := NameGroup([]MobSummary{{InstanceId: 1, Name: "big rat"}, {InstanceId: 2, Name: "big rat"}})
+	assert.Equal(t, "a band of big rats", n.Name)
+	assert.True(t, n.Matches("rats"))
+	assert.True(t, n.Matches("big rats"))
+	assert.False(t, n.Matches("rat"))
+}
