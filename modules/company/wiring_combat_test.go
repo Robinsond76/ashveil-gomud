@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
@@ -44,6 +45,24 @@ type brawl struct {
 // banditMob is a non-hostile bandit sharing the party's groups tag.
 func banditMob(id int, name string, level int) string {
 	return fmt.Sprintf("mobid: %d\nzone: brawl\nhostile: false\nmaxwander: 0\nactivitylevel: 0\ngroups: [bandits]\ncharacter:\n  name: %s\n  raceid: 1\n  level: %d\n", id, name, level)
+}
+
+// hostileMob is a hostile mob that stays put, in a group when one is named.
+func hostileMob(id int, name, group, extra string) string {
+	groups := ""
+	if group != "" {
+		groups = "groups: [" + group + "]\n"
+	}
+	return fmt.Sprintf("mobid: %d\nzone: brawl\nhostile: true\nmaxwander: 0\nactivitylevel: 0\n%s%scharacter:\n  name: %s\n  raceid: 1\n  level: 1\n", id, groups, extra, name)
+}
+
+// spawnRoom is a room whose spawn list names these mobs, one entry each.
+func spawnRoom(roomId int, mobIds ...int) string {
+	out := fmt.Sprintf("roomid: %d\nzone: brawl\ntitle: Alley\ndescription: An alley.\nbiome: road\nspawninfo:\n", roomId)
+	for _, id := range mobIds {
+		out += fmt.Sprintf("  - mobid: %d\n", id)
+	}
+	return out
 }
 
 func copyShipped(t *testing.T, dataDir string, rels ...string) {
@@ -97,6 +116,14 @@ func newBrawl(t *testing.T) *brawl {
 		"mobs/brawl/9104-bandit_captain.yaml":   banditMob(9104, "bandit captain", 4),
 		// A fence who trades with the bandits: same group, but a shop.
 		"mobs/brawl/9105-bandit_fence.yaml": banditMob(9105, "bandit fence", 1) + "  shop:\n    - itemid: 10002\n      price: 50\n",
+		// Phase 29b2 spawn fixtures: hostile mobs and rooms with spawn lists.
+		"mobs/brawl/9106-ruffian.yaml":    hostileMob(9106, "ruffian", "slum-ruffians", ""),
+		"mobs/brawl/9107-big_rat.yaml":    hostileMob(9107, "big rat", "rats", ""),
+		"mobs/brawl/9108-cave_troll.yaml": hostileMob(9108, "cave troll", "", "solitary: true\n"),
+		"rooms/brawl/920103.yaml":         spawnRoom(920103, 9106),
+		"rooms/brawl/920104.yaml":         spawnRoom(920104, 9107, 9106),
+		"rooms/brawl/920105.yaml":         spawnRoom(920105, 9108),
+		"rooms/brawl/920106.yaml":         spawnRoom(920106, 9106, 9106, 9106, 9106, 9106, 9106),
 	}
 	for path, data := range fixtures {
 		full := filepath.Join(dataDir, path)
@@ -171,6 +198,8 @@ func newBrawl(t *testing.T) *brawl {
 	// Each brawl reports to a stream of its own (Phase 29b), so no fight
 	// is carried from one test into the next.
 	t.Cleanup(combatstream.UseForTest(combatstream.New()))
+	battle.Reset() // and no battle (29b2)
+	t.Cleanup(battle.Reset)
 
 	b := &brawl{t: t, road: road, aria: aria, messages: captureCompanyMessages(t), bandits: map[string][]int{}}
 	for _, name := range []string{"tamsin reed", "brother oswin", "garrick vane", "ysolde"} {
@@ -428,7 +457,10 @@ func TestUnplacedCompanyFightsAndCanBeStruck(t *testing.T) {
 
 // TestSoloPlayerWithARecordFightsAsBefore: the upkeep only keeps a company
 // with a companion present. A player whose companions are all dismissed
-// (the record stays) fights exactly as in GoMud: no turns, no drafting.
+// (the record stays) chooses their own targets: they are never turned.
+// Since 29b2 they do fight in a battle, so the group they struck comes at
+// them ("turns on Aria"), as the owner's one-battle rule applies to
+// everyone.
 func TestSoloPlayerWithARecordFightsAsBefore(t *testing.T) {
 	b := newBrawl(t)
 	b.cmd("company", "dismiss all")
@@ -441,8 +473,8 @@ func TestSoloPlayerWithARecordFightsAsBefore(t *testing.T) {
 		b.aria.Character.HealthMax.Value = 1000
 		b.aria.Character.Health = 1000
 		got := b.fight()
-		assert.NotContains(t, got, "turn on", "round %d", b.round)
-		assert.NotContains(t, got, "turns on", "round %d", b.round)
+		assert.NotContains(t, got, "You turn on", "round %d", b.round)
+		assert.NotContains(t, got, "can't reach", "round %d", b.round)
 	}
 }
 

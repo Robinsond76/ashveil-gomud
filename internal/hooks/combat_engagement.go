@@ -66,11 +66,11 @@ func upkeepEngagements() {
 		engaged := false
 		if side.anyAggro(room) {
 			for _, party := range enemyparty.Parties(room) {
-				if !side.engagedWith(party) {
+				// Phase 29b2: only the group the leader is in battle with.
+				if !inBattleWith(leader.UserId, party) || !side.engagedWith(party) {
 					continue
 				}
 				engaged = true
-				engageFight(side, party) // Phase 29b: the fight, for the stream
 				side.markHostility(party)
 				side.keepCompanyEngaged(party, room)
 				side.keepPartyEngaged(party, room)

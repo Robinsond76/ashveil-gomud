@@ -75,12 +75,38 @@ func TestAssembleCapsAtFiveAndSplits(t *testing.T) {
 
 	parties := mobparty.Assemble(members)
 
+	// Phase 29b2: split evenly, never leaving one alone.
 	require.Len(t, parties, 2)
-	assert.Len(t, parties[0].Members, mobparty.MaxPartySize)
-	assert.Len(t, parties[1].Members, 1)
-	assert.ElementsMatch(t, []int{1, 2, 3, 4, 5}, parties[0].Members)
-	assert.Equal(t, []int{6}, parties[1].Members)
+	assert.ElementsMatch(t, []int{1, 2, 3}, parties[0].Members)
+	assert.ElementsMatch(t, []int{4, 5, 6}, parties[1].Members)
 	assert.NotEqual(t, parties[0].ID, parties[1].ID)
+}
+
+func TestEvenSizes(t *testing.T) {
+	assert.Nil(t, mobparty.EvenSizes(0, 5))
+	assert.Equal(t, []int{1}, mobparty.EvenSizes(1, 5))
+	assert.Equal(t, []int{5}, mobparty.EvenSizes(5, 5))
+	assert.Equal(t, []int{3, 3}, mobparty.EvenSizes(6, 5))
+	assert.Equal(t, []int{4, 3}, mobparty.EvenSizes(7, 5))
+	assert.Equal(t, []int{4, 4, 3}, mobparty.EvenSizes(11, 5))
+}
+
+// TestAssembleGroupsBySpawnGroup (29b2): a spawn group decides a mob's
+// party over its zone-wide group tag, so a rat and a ruffian spawned
+// together are one party, and two spawn groups sharing a tag are two.
+func TestAssembleGroupsBySpawnGroup(t *testing.T) {
+	parties := mobparty.Assemble([]mobparty.MobSummary{
+		{InstanceId: 1, SpawnGroup: "spawn:441:1", Groups: []string{"rats"}},
+		{InstanceId: 2, SpawnGroup: "spawn:441:1", Groups: []string{"slum-ruffians"}},
+		{InstanceId: 3, SpawnGroup: "spawn:441:2", Groups: []string{"rats"}},
+		{InstanceId: 4, SpawnGroup: "spawn:441:2", Groups: []string{"rats"}},
+		{InstanceId: 5, Groups: []string{"rats"}},
+	})
+	require.Len(t, parties, 3)
+	assert.ElementsMatch(t, []int{1, 2}, parties[0].Members)
+	assert.Equal(t, "spawngroup:spawn:441:1", parties[0].ID)
+	assert.ElementsMatch(t, []int{3, 4}, parties[1].Members)
+	assert.Equal(t, []int{5}, parties[2].Members, "no spawn group: its tag, as before")
 }
 
 func memberKeyFor(instanceId int) string {

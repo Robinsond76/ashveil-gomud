@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -17,7 +18,19 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	attackPlayerId := 0
 	attackMobInstanceId := 0
 
+	// Ashveil Phase 29b2: in a battle, a bare "attack" takes a foe from it.
 	if rest == `` {
+		if b, inBattle := battle.Current(user.UserId); inBattle {
+			for _, mId := range room.GetMobs() {
+				if m := mobs.GetInstance(mId); m != nil && b.Has(mId) && m.Character.Health > 0 {
+					attackMobInstanceId = mId
+					break
+				}
+			}
+		}
+	}
+
+	if rest == `` && attackMobInstanceId == 0 {
 		partyInfo := parties.Get(user.UserId)
 
 		// If no argument supplied, attack whoever is attacking the player currently.
@@ -167,6 +180,13 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				return true, nil
 			}
 
+			// Ashveil Phase 29b2: one battle at a time. A group waiting its
+			// turn can't be attacked until this fight is over.
+			if b, inBattle := battle.Current(user.UserId); inBattle && !b.Has(m.InstanceId) {
+				user.SendText(fmt.Sprintf(`You're fighting %s. Finish that fight first.`, battleFoeName(b, room)))
+				return true, nil
+			}
+
 			if party := parties.Get(user.UserId); party != nil {
 				if party.IsLeader(user.UserId) {
 					for _, id := range party.GetAutoAttackUserIds() {
@@ -273,4 +293,22 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	return true, nil
+}
+
+// battleFoeName names a player's battle for the refusal: its first living
+// foe in the room, and "and the others" when it has more.
+func battleFoeName(b battle.Battle, room *rooms.Room) string {
+	var names []string
+	for _, mId := range room.GetMobs() {
+		if m := mobs.GetInstance(mId); m != nil && b.Has(mId) && m.Character.Health > 0 {
+			names = append(names, m.Character.Name)
+		}
+	}
+	switch len(names) {
+	case 0:
+		return `another foe`
+	case 1:
+		return fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, names[0])
+	}
+	return fmt.Sprintf(`<ansi fg="mobname">%s</ansi> and the others`, names[0])
 }

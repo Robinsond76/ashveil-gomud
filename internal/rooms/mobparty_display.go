@@ -12,6 +12,7 @@ import (
 // line, without re-touching mobs.GetInstance or the engine.
 type hostileMobDisplay struct {
 	instanceId int
+	spawnGroup string
 	groups     []string
 	rawName    string // undecorated Character.Name, used for the mixed-party check
 	display    string // fully rendered mob name (colors, adjectives, quest alert, etc.)
@@ -33,7 +34,7 @@ func groupedMobDisplay(entries []hostileMobDisplay) []string {
 	rawNameByInstance := make(map[int]string, len(entries))
 
 	for i, e := range entries {
-		summaries[i] = mobparty.MobSummary{InstanceId: e.instanceId, Groups: e.groups}
+		summaries[i] = mobparty.MobSummary{InstanceId: e.instanceId, SpawnGroup: e.spawnGroup, Groups: e.groups}
 		displayByInstance[e.instanceId] = e.display
 		rawNameByInstance[e.instanceId] = e.rawName
 	}

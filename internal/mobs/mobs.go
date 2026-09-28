@@ -51,6 +51,8 @@ type Mob struct {
 	Hostile         bool     `yaml:"hostile,omitempty"`        // whether they attack on sight
 	Reach           bool     `yaml:"reach,omitempty"`          // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
 	Practice        bool     `yaml:"practice,omitempty"`       // Ashveil (Phase 27c): a practice foe, beaten without any reward (see mobcommands.Suicide)
+	Solitary        bool     `yaml:"solitary,omitempty"`       // Ashveil (Phase 29b2): stands alone; never grouped or topped up by spawning
+	SpawnGroup      string   `yaml:"-"`                        // Ashveil (Phase 29b2): the spawn group it fights in (runtime only), e.g. spawn:<room>:<n>
 	LastIdleCommand uint8    `yaml:"-"`                        // Track what hte last used idlecommand was
 	BoredomCounter  uint8    `yaml:"-"`                        // how many rounds have passed since this mob has seen a player
 	Groups          []string `yaml:"groups,omitempty"`         // What group do they identify with? Helps with teamwork

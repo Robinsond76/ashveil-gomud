@@ -96,6 +96,7 @@ type Room struct {
 	// Unexported/private
 	players       []int                          // list of user IDs currently in the room
 	mobs          []int                          // list of mob instance IDs currently in the room. Does not get saved.
+	spawnGroupSeq int                            // Phase 29b2: the last spawn group number used in this room (runtime only)
 	visitors      map[VisitorType]map[int]uint64 // list of user IDs that have visited this room, and the last round they did
 	lastVisited   uint64                         // last round a visitor was in the room
 	tempDataStore map[string]any                 // Temporary data store for the room
@@ -595,68 +596,7 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 		// New instances needed? Spawn them
 		if spawnInfo.MobId > 0 {
 
-			forceLevel := 0
-
-			if spawnInfo.Level > 0 {
-				forceLevel = spawnInfo.Level
-			} else {
-
-				// Get the zone settings, check for scaling
-				if zConfig := GetZoneConfig(r.Zone); zConfig != nil {
-
-					if zConfig.MobAutoScale.Minimum > 0 {
-						forceLevel = zConfig.GenerateRandomLevel()
-					}
-
-					if forceLevel > 0 {
-						forceLevel += spawnInfo.LevelMod
-						if forceLevel < 1 {
-							forceLevel = 1
-						}
-					}
-
-				}
-			}
-
-			if mob := mobs.NewMobById(mobs.MobId(spawnInfo.MobId), r.RoomId, forceLevel); mob != nil {
-
-				// If a merchant, fill up stocks on first time being loaded in
-				if mob.HasShop() {
-					mob.Character.Shop.Restock()
-				}
-
-				if len(spawnInfo.BuffIds) > 0 {
-					mob.Character.SetPermaBuffs(spawnInfo.BuffIds)
-				}
-
-				// If there are idle commands for this spawn, overwrite.
-				if len(spawnInfo.IdleCommands) > 0 {
-					mob.IdleCommands = append([]string{}, spawnInfo.IdleCommands...)
-				}
-
-				if len(spawnInfo.ScriptTag) > 0 {
-					mob.ScriptTag = spawnInfo.ScriptTag
-				}
-
-				if len(spawnInfo.QuestFlags) > 0 {
-					mob.QuestFlags = spawnInfo.QuestFlags
-				}
-
-				// Does this mob have a special name?
-				if len(spawnInfo.Name) > 0 {
-					mob.Character.Name = spawnInfo.Name
-				}
-
-				if spawnInfo.ForceHostile {
-					mob.Hostile = true
-				}
-
-				if spawnInfo.MaxWander != 0 {
-					mob.MaxWander = spawnInfo.MaxWander
-				}
-
-				mob.Character.Zone = r.Zone
-				mob.Validate()
+			if mob := r.spawnMob(spawnInfo); mob != nil {
 
 				r.mobs = append(r.mobs, mob.InstanceId)
 
@@ -722,6 +662,10 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 
 	}
 
+	// Ashveil Phase 29b2: the room's hostile mobs fight as groups of two or
+	// more, built from its spawn list.
+	r.FormSpawnGroups()
+
 	// Reach out one more room to prepare those exit rooms
 	if !checkAdjacentRooms {
 		return
@@ -746,6 +690,79 @@ func (r *Room) Prepare(checkAdjacentRooms bool) {
 
 	}
 
+}
+
+// spawnMob makes one mob from a spawn entry, with the entry's level, name,
+// buffs, and other overrides, as the room's spawn pass does (Phase 29b2
+// uses it for a spawn group's top-up too). It doesn't add the mob to the
+// room or track it on the entry.
+func (r *Room) spawnMob(spawnInfo SpawnInfo) *mobs.Mob {
+	forceLevel := 0
+
+	if spawnInfo.Level > 0 {
+		forceLevel = spawnInfo.Level
+	} else {
+
+		// Get the zone settings, check for scaling
+		if zConfig := GetZoneConfig(r.Zone); zConfig != nil {
+
+			if zConfig.MobAutoScale.Minimum > 0 {
+				forceLevel = zConfig.GenerateRandomLevel()
+			}
+
+			if forceLevel > 0 {
+				forceLevel += spawnInfo.LevelMod
+				if forceLevel < 1 {
+					forceLevel = 1
+				}
+			}
+
+		}
+	}
+
+	mob := mobs.NewMobById(mobs.MobId(spawnInfo.MobId), r.RoomId, forceLevel)
+	if mob == nil {
+		return nil
+	}
+
+	// If a merchant, fill up stocks on first time being loaded in
+	if mob.HasShop() {
+		mob.Character.Shop.Restock()
+	}
+
+	if len(spawnInfo.BuffIds) > 0 {
+		mob.Character.SetPermaBuffs(spawnInfo.BuffIds)
+	}
+
+	// If there are idle commands for this spawn, overwrite.
+	if len(spawnInfo.IdleCommands) > 0 {
+		mob.IdleCommands = append([]string{}, spawnInfo.IdleCommands...)
+	}
+
+	if len(spawnInfo.ScriptTag) > 0 {
+		mob.ScriptTag = spawnInfo.ScriptTag
+	}
+
+	if len(spawnInfo.QuestFlags) > 0 {
+		mob.QuestFlags = spawnInfo.QuestFlags
+	}
+
+	// Does this mob have a special name?
+	if len(spawnInfo.Name) > 0 {
+		mob.Character.Name = spawnInfo.Name
+	}
+
+	if spawnInfo.ForceHostile {
+		mob.Hostile = true
+	}
+
+	if spawnInfo.MaxWander != 0 {
+		mob.MaxWander = spawnInfo.MaxWander
+	}
+
+	mob.Character.Zone = r.Zone
+	mob.Validate()
+	return mob
 }
 
 func (r *Room) CleanupMobSpawns(noCooldown bool) {

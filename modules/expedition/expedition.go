@@ -161,6 +161,9 @@ func (nativeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUserI
 	mob.Hostile = true
 	mob.MaxWander = 0
 	room.AddMob(mob.InstanceId)
+	// Phase 29b2: no lone enemies. The encounter's foe is joined by another
+	// from the room's list (or another of its kind), and they fight as one.
+	room.FormSpawnGroups()
 	mob.Command(fmt.Sprintf("attack @%d", leaderUserID))
 	return mob.InstanceId, nil
 }

@@ -285,36 +285,14 @@ func (s *Stream) place(f *fight, e *Event) bool {
 	return true
 }
 
-// Engage records that the company led by leader, with companions, is
-// engaged with an enemy party in a room this round. A company has one
-// fight per room, however many parties it is fighting there: Engage opens
-// it (and emits FightStart) when none is open for this leader and room,
-// and otherwise adds any new members, and any new party, to the open one.
-// It returns the fight id.
-func (s *Stream) Engage(round uint64, roomId int, partyID string, leader Ref, companions []Ref, enemies []Ref) uint64 {
+// Open opens a fight (and emits FightStart) for one battle (Phase 29b2):
+// the player (leader), with any companions, against one enemy group in a
+// room. It returns the fight id. Each battle is its own fight, however
+// many groups share the room.
+func (s *Stream) Open(round uint64, roomId int, partyID string, leader Ref, companions []Ref, enemies []Ref) uint64 {
 	s.mu.Lock()
-	var f *fight
-	for _, id := range s.openIds() {
-		candidate := s.fights[id]
-		if candidate.leaderUserId == leader.UserId && candidate.roomId == roomId {
-			f = candidate
-			break
-		}
-	}
-	if f != nil {
-		f.addCompany(leader)
-		for _, r := range companions {
-			f.addCompany(r)
-		}
-		for _, r := range enemies {
-			f.addEnemy(r, partyID)
-		}
-		s.mu.Unlock()
-		return f.id
-	}
-
 	s.nextFight++
-	f = &fight{
+	f := &fight{
 		id:           s.nextFight,
 		leaderUserId: leader.UserId,
 		roomId:       roomId,
@@ -340,6 +318,35 @@ func (s *Stream) Engage(round uint64, roomId int, partyID string, leader Ref, co
 	s.mu.Unlock()
 	call(sinks, e)
 	return f.id
+}
+
+// Grow adds members seen this round to an open fight: companions who have
+// joined the company, and the group's members (with its current party
+// id). It does nothing for a fight that isn't open.
+func (s *Stream) Grow(id uint64, partyID string, companions []Ref, enemies []Ref) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	f, ok := s.fights[id]
+	if !ok {
+		return
+	}
+	for _, r := range companions {
+		f.addCompany(r)
+	}
+	for _, r := range enemies {
+		f.addEnemy(r, partyID)
+	}
+}
+
+// Fight returns an open fight.
+func (s *Stream) Fight(id uint64) (FightInfo, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	f, ok := s.fights[id]
+	if !ok {
+		return FightInfo{}, false
+	}
+	return f.info(), true
 }
 
 // OpenFights lists the open fights by id.

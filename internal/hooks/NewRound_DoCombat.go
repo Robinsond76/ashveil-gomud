@@ -29,12 +29,15 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	combatRound.Store(evt.RoundNumber)
 	resetRoundExtras()
 
-	// Ashveil Phase 29a: keep every engaged company and enemy party
-	// fighting as a whole before this round's attacks are resolved. It
-	// also opens a fight on the combat event stream for each newly
-	// engaged pair (29b), and fights no one is still fighting end.
+	// Ashveil Phase 29b2: each player fights one enemy group at a time.
+	// Decide every player's battle first; battles opening and ending open
+	// and end their fights on the combat event stream (29b).
+	battlePass()
+
+	// Ashveil Phase 29a: keep each player's company and the group they're
+	// in battle with fighting as a whole before any blow is struck.
 	upkeepEngagements()
-	closeDisengagedFights()
+	closeIdleBattles()
 
 	//
 	// Combat rounds
@@ -48,8 +51,9 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	affectedMobs := append(append(affectedMobs1, affectedMobs2...), roundExtraMobs...)
 	handleAffected(affectedPlayers, affectedMobs)
 
-	// Ashveil Phase 29b: end each fight one side of which has fallen.
-	settleFights()
+	// Ashveil Phase 29b2: end each battle one side of which has fallen, and
+	// begin the next at once.
+	settleBattles()
 
 	return events.Continue
 }
@@ -587,6 +591,11 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				continue
 			}
 
+			// Ashveil Phase 29b2: a foe outside the player's battle waits.
+			if playerHolds(user.UserId, defMob) {
+				continue
+			}
+
 			if gated, gateOk := gateFormationAttack(user, defMob, uRoom); !gateOk {
 				user.SendText("You can't reach that target from here.")
 				continue
@@ -914,6 +923,11 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				continue
 			}
 
+			// Ashveil Phase 29b2: a group waiting its turn holds back.
+			if holdsAgainstPlayer(mob, defUser.UserId) {
+				continue
+			}
+
 			if handled, gateOk := gateMobVsPlayerAttack(mob, defUser, mobRoom, defRoom); !gateOk {
 				continue
 			} else if handled {
@@ -1068,6 +1082,11 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 			// Can't see them, can't fight them.
 			if defMob.Character.HasBuffFlag("hidden") {
+				continue
+			}
+
+			// Ashveil Phase 29b2: a blow outside a player's battle waits.
+			if mobHolds(mob, defMob) {
 				continue
 			}
 

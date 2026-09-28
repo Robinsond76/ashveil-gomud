@@ -11,7 +11,7 @@ import (
 func skirmish(t *testing.T) *Summary {
 	t.Helper()
 	s := New()
-	id := s.Engage(1, 100, "bandits#0", aria, []Ref{garrick, tamsin}, []Ref{captain, slinger})
+	id := s.Open(1, 100, "bandits#0", aria, []Ref{garrick, tamsin}, []Ref{captain, slinger})
 	emit := func(e Event) { s.Emit(e) }
 
 	emit(Event{Kind: Attack, Source: aria, Target: captain, Damage: 4, Outcome: OutcomeHit})
@@ -54,7 +54,7 @@ func TestSummaryFold(t *testing.T) {
 
 func TestSummaryStillStandingAndInterruptsAndGuards(t *testing.T) {
 	s := New()
-	id := s.Engage(1, 100, "bandits#0", aria, []Ref{tamsin}, []Ref{captain})
+	id := s.Open(1, 100, "bandits#0", aria, []Ref{tamsin}, []Ref{captain})
 	s.Emit(Event{Kind: Interrupt, Source: aria, Target: captain, Outcome: OutcomeSucceeded, Status: "Crushing Blow"})
 	s.Emit(Event{Kind: Interrupt, Source: tamsin, Target: captain, Outcome: OutcomeFailed})
 	s.Emit(Event{Kind: Interrupt, Source: captain, Target: tamsin, Outcome: OutcomeSucceeded})
@@ -93,7 +93,7 @@ func TestRender(t *testing.T) {
 
 func TestRenderLeavesOutEmptyLines(t *testing.T) {
 	s := New()
-	id := s.Engage(1, 100, "bandits#0", aria, nil, []Ref{captain})
+	id := s.Open(1, 100, "bandits#0", aria, nil, []Ref{captain})
 	s.Emit(Event{Kind: Attack, Source: captain, Target: aria, Outcome: OutcomeMiss})
 	sum, _ := s.EndFight(id, 2, OutcomeDefeat, Final{Company: []MemberHealth{{Ref: aria, Health: -2, Max: 14}}})
 	lines := Render(*sum, 99)
@@ -111,7 +111,7 @@ func TestRenderLeavesOutEmptyLines(t *testing.T) {
 func TestSlainLeaderIsFallenAndEnemyEndings(t *testing.T) {
 	s := New()
 	straw := Ref{MobInstanceId: 51, Name: "straw footman"}
-	id := s.Engage(1, 100, "straw#0", aria, []Ref{garrick}, []Ref{captain, slinger, straw})
+	id := s.Open(1, 100, "straw#0", aria, []Ref{garrick}, []Ref{captain, slinger, straw})
 	s.Emit(Event{Kind: Attack, Source: captain, Target: aria, Damage: 30})
 	s.Emit(Event{Kind: Death, Target: aria, Outcome: OutcomeSlain})
 	s.Emit(Event{Kind: Attack, Source: garrick, Target: straw, Damage: 3})

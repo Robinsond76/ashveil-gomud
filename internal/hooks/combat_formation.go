@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
@@ -465,6 +466,18 @@ func reassignWithinLostParty(leaderId, lostId int, col int, placed bool, reach f
 		return 0, false
 	}
 	lostParty, found := enemyparty.PartyOf(room, lostId)
+	// Phase 29b2: in a battle, only its group.
+	if b, inBattle := battle.Current(leaderId); inBattle {
+		for _, party := range enemyparty.Parties(room) {
+			if _, current := battleParty(b, []mobparty.Party{party}); !current {
+				continue
+			}
+			if id, ok := chooseFromParty(col, placed, party, enemyparty.Alive(party), reach); ok {
+				return id, true
+			}
+		}
+		return 0, false
+	}
 	if found {
 		if id, ok := chooseFromParty(col, placed, lostParty, enemyparty.Alive(lostParty), reach); ok {
 			return id, true

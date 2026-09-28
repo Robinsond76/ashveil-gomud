@@ -25,6 +25,7 @@ const MaxPartySize = company.MaxCompanions + 1
 // Callers (module/engine-layer code) adapt a live *mobs.Mob into this.
 type MobSummary struct {
 	InstanceId int
+	SpawnGroup string // Phase 29b2: a spawn group, when it has one, decides its party
 	Groups     []string
 	EHP        float64
 	DPS        float64
@@ -87,10 +88,14 @@ func Assemble(mobs []MobSummary) []Party {
 	return parties
 }
 
-// groupKey returns the grouping key for a mob: its first Groups tag,
-// prefixed to avoid colliding with the "solo:<id>" key space, or "" if the
-// mob has no Groups tag (always solo).
+// groupKey returns the grouping key for a mob: its spawn group (Phase
+// 29b2) when it has one, else its first Groups tag, prefixed to avoid
+// colliding with the "solo:<id>" key space, or "" if the mob has neither
+// (always solo).
 func groupKey(m MobSummary) string {
+	if m.SpawnGroup != "" {
+		return "spawngroup:" + m.SpawnGroup
+	}
 	if len(m.Groups) == 0 || m.Groups[0] == "" {
 		return ""
 	}
@@ -98,18 +103,34 @@ func groupKey(m MobSummary) string {
 }
 
 // chunk splits members into groups of at most size, preserving order —
-// this is the "split by spawn order" rule for parties over the cap.
+// this is the "split by spawn order" rule for parties over the cap. The
+// groups are as even as they can be (Phase 29b2: six are three and three,
+// never five and a lone one).
 func chunk(members []MobSummary, size int) [][]MobSummary {
 	var chunks [][]MobSummary
-	for len(members) > 0 {
-		n := size
-		if n > len(members) {
-			n = len(members)
-		}
+	for _, n := range EvenSizes(len(members), size) {
 		chunks = append(chunks, members[:n])
 		members = members[n:]
 	}
 	return chunks
+}
+
+// EvenSizes splits total into the fewest groups of at most size, as even
+// as they can be, larger groups first: EvenSizes(6, 5) is [3 3], (7, 5)
+// is [4 3], (11, 5) is [4 4 3].
+func EvenSizes(total, size int) []int {
+	if total <= 0 || size <= 0 {
+		return nil
+	}
+	groups := (total + size - 1) / size
+	out := make([]int, groups)
+	for i := range out {
+		out[i] = total / groups
+		if i < total%groups {
+			out[i]++
+		}
+	}
+	return out
 }
 
 // buildParty ranks members by descending EHP and fills the Formation

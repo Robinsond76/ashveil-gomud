@@ -8,9 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
-	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -213,24 +211,6 @@ func resetRoundExtras() {
 	roundExtraMobs = nil
 }
 
-// engageFight records one engaged company/party pair for the stream,
-// opening a fight on the first round.
-func engageFight(s companySide, party mobparty.Party) {
-	companions := make([]combatstream.Ref, 0, len(s.companionIds))
-	for _, instanceId := range s.companionIds {
-		if m := mobs.GetInstance(instanceId); m != nil {
-			companions = append(companions, mobRef(m))
-		}
-	}
-	enemies := make([]combatstream.Ref, 0, len(party.Members))
-	for _, instanceId := range party.Members {
-		if m := mobs.GetInstance(instanceId); m != nil {
-			enemies = append(enemies, mobRef(m))
-		}
-	}
-	combatstream.Default().Engage(combatRound.Load(), s.leader.Character.RoomId, party.ID, userRef(s.leader), companions, enemies)
-}
-
 // fightSides are an open fight's actors as they stand in the world now.
 type fightSides struct {
 	info        combatstream.FightInfo
@@ -261,10 +241,6 @@ func (fs fightSides) standingMob(instanceId int) *mobs.Mob {
 	return m
 }
 
-func (fs fightSides) leaderStanding() bool {
-	return fs.leader != nil && fs.leader.Character.RoomId == fs.info.RoomId && fs.leader.Character.Health > 0
-}
-
 func (fs fightSides) enemiesStanding() bool {
 	for instanceId := range fs.enemyMobs {
 		if fs.standingMob(instanceId) != nil {
@@ -289,33 +265,6 @@ func (fs fightSides) companyAlive() bool {
 	return false
 }
 
-// otherFoesHere reports whether a living mob in the fight's room, not yet
-// counted among its enemies, is fighting the company or would join the
-// fight (a hostile mob, or one whose group is hostile to the leader). The
-// upkeep adds it to the fight next round, so the fight isn't over.
-func (fs fightSides) otherFoesHere() bool {
-	room := rooms.LoadRoom(fs.info.RoomId)
-	if room == nil {
-		return false
-	}
-	for _, instanceId := range room.GetMobs() {
-		if fs.enemyMobs[instanceId] || fs.companyMobs[instanceId] {
-			continue
-		}
-		m := fs.standingMob(instanceId)
-		if m == nil || m.Character.IsCharmed() || !canFight(&m.Character) {
-			continue
-		}
-		if a := m.Character.Aggro; a != nil && (a.UserId == fs.info.LeaderUserId || fs.companyMobs[a.MobInstanceId]) {
-			return true
-		}
-		if joinsTheFight(m, fs.info.LeaderUserId) {
-			return true
-		}
-	}
-	return false
-}
-
 // aimsAt reports whether an Aggro is on one of the given mobs (a cast
 // counts through its targets).
 func aimsAt(a *characters.Aggro, mobSet map[int]bool) bool {
@@ -327,34 +276,6 @@ func aimsAt(a *characters.Aggro, mobSet map[int]bool) bool {
 	}
 	for _, instanceId := range a.SpellInfo.TargetMobInstanceIds {
 		if mobSet[instanceId] {
-			return true
-		}
-	}
-	return false
-}
-
-// engaged reports whether any standing member of either side is still
-// fighting the other. An enemy still beating a downed leader in the room
-// is fighting (the same test as the upkeep's engagedWith, so a fight the
-// upkeep finds is never closed in the same round).
-func (fs fightSides) engaged() bool {
-	if fs.leaderStanding() && aimsAt(fs.leader.Character.Aggro, fs.enemyMobs) {
-		return true
-	}
-	for instanceId := range fs.companyMobs {
-		if m := fs.standingMob(instanceId); m != nil && aimsAt(m.Character.Aggro, fs.enemyMobs) {
-			return true
-		}
-	}
-	for instanceId := range fs.enemyMobs {
-		m := fs.standingMob(instanceId)
-		if m == nil || m.Character.Aggro == nil {
-			continue
-		}
-		if aimsAt(m.Character.Aggro, fs.companyMobs) {
-			return true
-		}
-		if fs.leader != nil && fs.leader.Character.RoomId == fs.info.RoomId && m.Character.Aggro.UserId == fs.info.LeaderUserId {
 			return true
 		}
 	}
@@ -410,34 +331,5 @@ func (fs fightSides) end(outcome string) {
 	}
 	for _, line := range combatstream.Render(*sum, fs.leader.UserId) {
 		fs.leader.SendText(line)
-	}
-}
-
-// closeDisengagedFights ends, after the upkeep, each open fight neither
-// side is still fighting (a flee, a `break` that held, a walk out, a
-// logout). The upkeep runs first, so a party member it draws in keeps the
-// fight open.
-func closeDisengagedFights() {
-	for _, fi := range combatstream.Default().OpenFights() {
-		fs := loadFightSides(fi)
-		if fs.leader == nil || !fs.engaged() {
-			fs.end(combatstream.OutcomeBrokenOff)
-		}
-	}
-}
-
-// settleFights ends, at the end of the round and after its deaths are
-// reported, each open fight one side of which has fallen: every company
-// member dead (defeat), or no enemy standing in the room and no other foe
-// there to join (victory).
-func settleFights() {
-	for _, fi := range combatstream.Default().OpenFights() {
-		fs := loadFightSides(fi)
-		switch {
-		case !fs.companyAlive():
-			fs.end(combatstream.OutcomeDefeat)
-		case !fs.enemiesStanding() && !fs.otherFoesHere():
-			fs.end(combatstream.OutcomeVictory)
-		}
 	}
 }

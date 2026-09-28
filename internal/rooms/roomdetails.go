@@ -297,6 +297,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 			} else {
 				hostileMobs = append(hostileMobs, hostileMobDisplay{
 					instanceId: mobInstanceId,
+					spawnGroup: mob.SpawnGroup,
 					groups:     mob.Groups,
 					rawName:    mob.Character.Name,
 					display:    mobName.String(),

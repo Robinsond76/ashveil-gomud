@@ -212,34 +212,6 @@ func TestBattleSummaryCanBeTurnedOff(t *testing.T) {
 	assert.Contains(t, b.cmd("set", "battlesummary"), "Battle summary toggled ON")
 }
 
-// TestSoloFightIsNotAFight: with no companion present (the 29a upkeep's
-// rule), blows are reported with fight id 0 and no summary is made.
-func TestSoloFightIsNotAFight(t *testing.T) {
-	b := newBrawl(t)
-	got := b.listen()
-	b.cmd("company", "dismiss all")
-	require.Empty(t, b.companyInstances())
-
-	b.cmd("attack", "bandit cutthroat")
-	var seen []string
-	for i := 0; i < 5; i++ {
-		b.aria.Character.HealthMax.Value = 1000
-		b.aria.Character.Health = 1000
-		seen = append(seen, b.fight())
-	}
-	attacks := 0
-	for _, e := range *got {
-		assert.NotEqual(t, combatstream.FightStart, e.Kind)
-		assert.NotEqual(t, combatstream.FightEnd, e.Kind)
-		assert.Zero(t, e.FightID)
-		if e.Kind == combatstream.Attack && e.Source.UserId == 7 {
-			attacks++
-		}
-	}
-	assert.Positive(t, attacks, "Aria's blows are still reported")
-	assert.NotContains(t, strings.Join(seen, "\n"), summaryHeading)
-}
-
 // TestFleeBreaksTheFightOff: a real `flee` through the round is reported
 // in the fight, and the fight ends as broken off once the company is gone
 // from the room, with the summary so far.
@@ -279,39 +251,6 @@ func TestFleeBreaksTheFightOff(t *testing.T) {
 	assert.Equal(t, end.FightID, flee.FightID, "the flee is in the fight")
 	assert.Equal(t, combatstream.OutcomeBrokenOff, end.Outcome)
 	assert.Contains(t, strings.Join(seen, "\n"), "── The fight breaks off ──")
-}
-
-// TestUngroupedEnemiesAreOneFight (review M1): bandits with no group tag
-// are each a party of their own; the company fighting them all has one
-// fight and reads one summary.
-func TestUngroupedEnemiesAreOneFight(t *testing.T) {
-	b := newBrawl(t)
-	got := b.listen()
-	for _, mob := range b.livingBandits() {
-		mob.Groups = nil
-		mob.Hostile = true // so each joins without a shared group's hostility
-	}
-	b.cmd("attack", "bandit cutthroat")
-	seen := b.fightItOut(200)
-
-	starts, ends := 0, 0
-	parties := map[string]bool{}
-	for _, e := range *got {
-		switch e.Kind {
-		case combatstream.FightStart:
-			starts++
-		case combatstream.FightEnd:
-			ends++
-		case combatstream.Attack:
-			if e.FightID != 0 {
-				parties[e.PartyID] = true
-			}
-		}
-	}
-	assert.Equal(t, 1, starts)
-	assert.Equal(t, 1, ends)
-	assert.Greater(t, len(parties), 1, "blows name each enemy's own party")
-	assert.Equal(t, 1, strings.Count(seen, summaryHeading))
 }
 
 // TestInterceptedBlowFellsTheLeaderThatRound (the 29b death fix): the
