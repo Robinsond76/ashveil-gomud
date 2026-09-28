@@ -1,0 +1,36 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">archetype</ansi>
+
+Your archetype is the path you choose at character creation: it decides
+which skills and spell schools you can train, gives you a starter kit of
+gear, and is permanent for that character.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">archetype</ansi>
+  Show your archetype (or that you haven't chosen one yet), and the full
+  list with what each one offers.
+
+  <ansi fg="command">archetype choose [name]</ansi>
+  Preview an archetype: its description and starter kit.
+
+  <ansi fg="command">archetype choose [name] confirm</ansi>
+  Commit to it. This cannot be undone.
+
+<ansi fg="yellow-bold">What an archetype claims</ansi>
+
+Some skills and some spell schools belong to specific archetypes; only a
+character of a claiming archetype can train that skill or learn spells of
+that school. A skill or school no archetype claims is open to everyone.
+Once you choose, you keep any skill or spell you already knew - choosing
+never takes anything away, only opens doors closed to other archetypes.
+
+<ansi fg="yellow-bold">Companions</ansi>
+
+Companions have archetypes too. Most arrive with one already; a
+companion without one can be given one, once, with
+<ansi fg="command">company archetype [member] [archetype]</ansi> (see
+<ansi fg="command">help company</ansi>). A companion's archetype decides which
+utility skills they can use for the company as they level up
+(<ansi fg="command">help autoskill</ansi>, <ansi fg="command">help trap</ansi>).
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help autoskill</ansi>, <ansi fg="command">help trap</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help train</ansi>.

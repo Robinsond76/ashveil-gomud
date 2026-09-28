@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">mount</ansi>
+
+Your company can keep one mount, which adds to how much you can carry
+and eases the walk for the company members riding it.
+
+<ansi fg="yellow-bold">What a mount does</ansi>
+
+A mount adds to your company's cargo capacity (<ansi fg="command">help cargo</ansi>). It also
+carries riders: the leader first, then companions in order, up to
+however many the mount takes. A rider strains less with every step they
+walk beside you (<ansi fg="command">help strain</ansi>); a route travelled together goes a
+little faster too. Anyone not riding, or not currently with you, gets
+none of this.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">mount</ansi>
+  Shows your current mount, if any, and its cargo-capacity bonus.
+
+  <ansi fg="command">mount stable [type]</ansi>
+  Assigns your company a mount of that type, replacing any mount you
+  already had.
+
+  <ansi fg="command">mount release</ansi>
+  Gives up your current mount.
+
+See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help travel</ansi>,
+<ansi fg="command">help company</ansi>.

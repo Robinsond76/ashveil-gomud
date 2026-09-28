@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">autoskill</ansi>
+
+Some of your company's skills work automatically, so you don't have to
+call for them every time. Whoever in your company is best at a given one
+handles it - you or a companion, whichever has the higher level in it.
+
+<ansi fg="yellow-bold">What runs automatically</ansi>
+
+  <ansi fg="yellow">traps</ansi>   sensing traps as you walk into a room, and once, for
+           free, the moment you start picking a trapped lock
+           (<ansi fg="command">help trap</ansi>)
+  <ansi fg="yellow">light</ansi>   conjuring a floating light when you step into the
+           dark and nobody in your company is already carrying one
+
+Only a companion able to act right now (not fighting, not out of mana) is
+considered, so a busy companion never blocks an able one from stepping
+in.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">autoskill</ansi>
+  Show each automatic skill and whether it's on or off for you.
+
+  <ansi fg="command">autoskill [skill] on</ansi>
+  <ansi fg="command">autoskill [skill] off</ansi>
+  Turn one on or off. Both are on by default.
+
+See also: <ansi fg="command">help trap</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help light</ansi>, <ansi fg="command">help picklock</ansi>.

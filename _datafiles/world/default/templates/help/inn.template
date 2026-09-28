@@ -1,0 +1,42 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">inn</ansi>
+
+An inn offers your company a paid room for the night, a better rest than
+a roadside camp. It's a real-time stay, not game time: it doesn't touch
+the world clock, and weather never spoils it.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">inn</ansi> / <ansi fg="command">inn status</ansi>
+  Shows the price of a room here (or your stay in progress, if you're
+  already resting).
+
+  <ansi fg="command">inn rest</ansi>
+  Pays for the room and starts the stay, about a minute of real time.
+  While resting you can't use ordinary exits, but you can still talk and
+  use most non-movement commands. You can't take a room while
+  travelling.
+
+<ansi fg="yellow-bold">Cost</ansi>
+
+  A room costs 5 gold per company member, taken from your own gold when
+  you pay. A settlement that distrusts your company charges more for a
+  room (<ansi fg="command">help standing</ansi> explains the tiers); one that shuns your
+  company won't give you a room at all.
+
+<ansi fg="yellow-bold">Well Rested</ansi>
+
+  When the stay finishes, every current company member's Fatigue rises
+  by 60, and you and every companion with you gain the <ansi fg="yellow">Well Rested</ansi>
+  buff for 30 minutes of real time — the better rest tier, cutting your
+  walking strain more than a camp's Rested does (<ansi fg="command">help camp</ansi>), and
+  giving you +2 speed and +2 perception besides. Well Rested always
+  replaces Rested, and a camp rest afterward can't
+  downgrade it back. A companion who wasn't with you when the stay
+  finished still gets its share of Well Rested once it rejoins, for
+  whatever time is left.
+
+Only one room is bought per stay, for your whole company; there's
+nothing to strike or break afterward.
+
+See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help conditions</ansi>,
+<ansi fg="command">help travel</ansi>.

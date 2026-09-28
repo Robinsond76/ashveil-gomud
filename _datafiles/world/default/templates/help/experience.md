@@ -1,6 +1,6 @@
 # Help for ~experience~
 
-The ~experience~ command gives you your current level, current experience points, what you need to reach for your next level, and how many unspent training points you have.
+The ~experience~ command gives you your current level, current experience points, what you need to reach for your next level, and how many unspent training points you have. If death has cost you a level (or progress toward one) recently, it also shows your most recent loss.
 
 ## Usage:
 

@@ -24,3 +24,24 @@ may see unscrupulous acts and intervene.
 When PVP is enabled, players may freely attack others with an <ansi fg="evil">Evil</ansi> alignment
 or lower, and receive no penalty.
 
+<ansi fg="yellow-bold">Your company's alignment</ansi>
+
+Each companion has their own alignment, shown the same way (-100 most
+evil, 100 most good) by <ansi fg="command">company alignment</ansi> and
+<ansi fg="command">company status</ansi> (<ansi fg="command">help company</ansi>).
+Left to themselves, companions drift toward the rest of the company: every
+few minutes, each one moves a little way toward the average alignment of
+everyone else in it (you included, if you're online). The whole company
+pulls together over time.
+
+A companion far from that average grows uneasy and loses loyalty; kept
+close, they gain it back. Loyalty runs 0 to 100. Losing too much of it
+too long costs you the companion outright: at 0 loyalty they lose faith
+and desert, taking nothing with them.
+
+This also gates who will join you. A candidate whose alignment is too far
+from your company's average won't take service with you at all;
+<ansi fg="command">company inspect</ansi> tells you before you pay whether they
+would join, and whether they'd join uneasy.
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help standing</ansi>.

@@ -1,0 +1,41 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">cooking</ansi>
+
+Raw game meat needs a hearth before it's worth eating. The <ansi fg="skill">Cooking</ansi> skill
+turns meat and gathered herbs into proper meals at a hearth, a fixture
+found in some rooms (not a campfire — see <ansi fg="command">help camp</ansi>).
+
+<ansi fg="yellow-bold">How to cook</ansi>
+
+  <ansi fg="command">use hearth</ansi>
+  Cooks a meal. The hearth checks its recipes in a fixed order, skips
+  any whose ingredients aren't all there or whose Cooking level you
+  haven't reached, and makes the first one left. It consumes the
+  ingredients and adds the finished meal to the hearth for you to take.
+
+  <ansi fg="command">look hearth</ansi>
+  Lists every recipe the hearth knows, and names the Cooking level any
+  of them requires.
+
+A recipe with no skill requirement can be cooked by anyone. One that
+needs a level you don't have is simply skipped; if every ready recipe
+is out of your reach, cooking there tells you the lowest level you'd
+need and makes nothing, without using up any ingredients.
+
+<ansi fg="yellow-bold">Where to cook</ansi>
+
+The Waymark Inn's hearth (Dunmar) makes three meals from raw game meat
+and wild thyme, gathered on the road:
+
+  <ansi fg="yellow">Seared game meat</ansi>    1 meat                    Cooking 1
+  <ansi fg="yellow">Thyme-roasted game</ansi>  1 meat, 1 wild thyme      Cooking 2
+  <ansi fg="yellow">Hunter's stew</ansi>       2 meat, 1 wild thyme      Cooking 3
+
+The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train</ansi>).
+
+<ansi fg="yellow-bold">The Cook profession</ansi>
+
+The <ansi fg="skill">Cook</ansi> profession pairs Cooking with Track and Search, for hunting and
+foraging the ingredients a hearth wants.
+
+See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help use</ansi>, <ansi fg="command">help look</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help train</ansi>,
+<ansi fg="command">help skills</ansi>.

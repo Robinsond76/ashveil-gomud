@@ -1,7 +1,16 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">encumbrance</ansi>
 
-When you carry more objects than your strength permits, you become encumbered.
+When you personally carry more objects than your strength permits, you
+become encumbered.
 
 Check your inventory to see how many objects you can carry.
 
+This is separate from your company's shared cargo load, which is
+weighed in grams rather than counted in objects, and covers your
+companions' gear and cargo too, not just your own pack (<ansi fg="command">help cargo</ansi>).
+Being encumbered yourself and your company being overloaded can happen
+independently of each other.
+
 When encumbered, you will quickly become tired when moving and take longer to recover.
+
+See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help inventory</ansi>.

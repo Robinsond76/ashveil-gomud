@@ -29,6 +29,21 @@ help:
       - stat-train
       - stats
       - bury
+      - archetype
+    company:
+      - company
+      - standing
+    road:
+      - travel
+      - survival
+      - strain
+      - weather
+      - temperature
+      - cargo
+      - mount
+      - camp
+      - inn
+      - cooking
     communication:
       - emote
       - say
@@ -48,6 +63,8 @@ help:
       - store
       - unstore
       - withdraw
+      - market
+      - rumors
     quests:
       - ask
       - quests
@@ -77,6 +94,7 @@ help:
       - history
       - visited
       - tutorial
+      - adventure
     items:
       - drop
       - drink
@@ -130,6 +148,8 @@ help:
       - track
       - unenchant
       - uncurse
+      - autoskill
+      - trap
   admin:
     all:
       - badcommands
@@ -164,6 +184,21 @@ help:
 # Aliases for keywords when typing: help <keyword>
 # Key is the target keyword, value is the list of aliases
 help-aliases:
+  adventure:        [ashveil, basics]
+  company:          [recruit, recruiting, roster, companions, companion]
+  standing:         [reputation, blackmarket, black-market]
+  archetype:        [archetypes, class, classes]
+  trap:             [traps]
+  survival:         [needs, hunger, thirst, fatigue]
+  strain:           [walking]
+  temperature:      [warmth, exposure, cold, heat]
+  cargo:            [load, overloaded]
+  mount:            [mounts, horse, stable]
+  travel:           [journey, journeys]
+  camp:             [camping, campfire]
+  cooking:          [cook, hearth, recipe, recipes]
+  market:           [markets]
+  rumors:           [rumours, rumor, rumour, gossip]
   combat:           [battle, battles, fighting, fight]
   formation:        [reach, interception, formations]
   targeting:        [target, targets, enemy-parties]

@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -78,4 +79,14 @@ func TestWeaponType(t *testing.T) {
 	c := &characters.Character{}
 	c.Equipment.Weapon = items.Item{ItemId: 999999} // no spec loaded
 	assert.Equal(t, "", weaponType(c))
+}
+
+func TestGroupTurnsOn(t *testing.T) {
+	assert.Equal(t, "They turn on", groupTurnsOn(mobparty.Party{}))
+	a := engagementMob(t, 8601, 5, 1)
+	a.Character.Name = "ruffian"
+	assert.Equal(t, "The ruffian turns on", groupTurnsOn(mobparty.Party{Members: []int{8601}}))
+	b := engagementMob(t, 8602, 5, 1)
+	b.Character.Name = "big rat"
+	assert.Equal(t, "The ruffian and the others turn on", groupTurnsOn(mobparty.Party{Members: []int{8601, 8602}}))
 }

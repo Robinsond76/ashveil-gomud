@@ -20,8 +20,9 @@ fled, broke off, or walked away).
 - An enemy ends <ansi fg="yellow">slain</ansi>, <ansi fg="yellow">fled</ansi>, <ansi fg="yellow">left</ansi> (walked away), <ansi fg="yellow">beaten</ansi> (a
   practice foe), or <ansi fg="yellow">still standing</ansi>.
 
-A fight is your company against the enemies it's fighting in one room. When
-you fight alone, with no companion beside you, there is no summary.
+A fight is one battle: you, and your company if you have one, against one
+group. Fighting alone, you get a summary too. Where several groups wait
+their turn, each battle gets its own summary.
 
 <ansi fg="yellow">Usage:</ansi>
 

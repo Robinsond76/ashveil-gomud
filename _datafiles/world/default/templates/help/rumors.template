@@ -1,0 +1,22 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">rumors</ansi>
+
+Listen to the talk of the road at an inn, and you'll pick up a few
+hints about the markets — where a good is running short, where it's
+piling up, and, for goods traded in more than one market, where it's
+cheapest to buy or best to sell.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">rumors</ansi>
+  Shares a few rumors about nearby markets. Works the same as <ansi fg="command">rumours</ansi>,
+  <ansi fg="command">rumor</ansi>, or <ansi fg="command">rumour</ansi> — spell it however you like.
+
+You only hear rumors at an inn. Away from one, you're told there's no
+talk of the markets to hear.
+
+Rumors never quote an exact price, and they're always a little out of
+date: they're drawn from a snapshot of the markets' stock that only
+refreshes every so often, so what you hear may no longer match what
+<ansi fg="command">market</ansi> shows when you get there.
+
+See also: <ansi fg="command">help market</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help standing</ansi>.

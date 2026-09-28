@@ -1,0 +1,56 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">travel</ansi>
+
+Some exits between places are real journeys, not an instant step. You
+set out on one the ordinary way, by going through that exit, and the
+game tells you a route has begun.
+
+<ansi fg="yellow-bold">Real time, not game time</ansi>
+
+A journey runs in real time, in the background, on the server. It goes
+on while you're logged out, and survives a server restart; nothing
+about it fast-forwards or slows down the shared game clock. If you log
+back in mid-journey, it has kept going exactly as if you'd stayed.
+
+Along the way it spends your company's Hunger, Thirst, and Fatigue, a
+little at a time rather than all at once, at a rate set by the route
+and by however bad the weather is where you set out (<ansi fg="command">help weather</ansi>);
+being overloaded also adds extra Fatigue cost (<ansi fg="command">help cargo</ansi>). How
+long the whole route takes is also shortened by a mount (<ansi fg="command">help mount</ansi>).
+All of this is fixed the moment you set out, for that route
+(<ansi fg="command">help survival</ansi>). A company with a Collapsed member can't set out
+(<ansi fg="command">help strain</ansi>).
+
+<ansi fg="yellow-bold">Interruptions</ansi>
+
+A route can pause you partway with something to deal with: a fallen
+tree blocking the way, something that catches your eye, tracks worth
+looking over, or an ambush you have to fight off. While paused, you
+choose:
+
+  <ansi fg="command">travel resume</ansi>
+  Carry on toward your destination.
+
+  <ansi fg="command">travel return</ansi>
+  Give up and head back to where you started. This ends the journey.
+
+If the interruption is a fight, you must finish it (win, flee, or
+otherwise end it) before you can resume or return.
+
+<ansi fg="yellow-bold">Arrival</ansi>
+
+When the route's time is up, your company arrives, exactly as if you'd
+walked there. There's no way to cancel or turn back once you're moving
+and nothing has interrupted you; only an interruption gives you the
+chance to return early.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">travel status</ansi>
+  Shows where you're headed, how far along you are and how much
+  active travel time is left, and your company's current needs.
+
+  <ansi fg="command">travel resume</ansi> | <ansi fg="command">travel return</ansi>
+  Only work while a route is paused by an interruption.
+
+See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>, <ansi fg="command">help strain</ansi>,
+<ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help go</ansi>.

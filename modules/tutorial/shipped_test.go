@@ -323,7 +323,9 @@ func TestTutorialHelpPointersExist(t *testing.T) {
 			assert.True(t, exists(m[1]), "help %s is a shipped page", m[1])
 		}
 	}
-	for _, topic := range []string{"combat", "formation", "targeting", "battle-summary", "sharpen"} {
+	for _, topic := range []string{"combat", "formation", "targeting", "battle-summary", "sharpen",
+		"adventure", "status", "archetype", "company", "survival", "weather", "temperature", "strain",
+		"cargo", "travel", "camp", "inn", "cooking", "alignment", "standing", "market", "rumors"} {
 		assert.True(t, seen[topic], "the tutorial points to help %s", topic)
 	}
 }

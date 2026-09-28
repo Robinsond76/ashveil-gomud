@@ -1,0 +1,68 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">camp</ansi>
+
+On the road, your company can stop and make camp instead of pushing on.
+A camp is real: it stays put while you're logged in or off, and it
+survives a restart. Nothing about it advances the world clock or the
+round count; a rest takes real time, not game time.
+
+<ansi fg="yellow-bold">Making camp</ansi>
+
+  <ansi fg="command">camp</ansi>
+  Makes camp in this room, if the ground here allows it. You can only
+  have one camp at a time; if you already have one, this just points you
+  at <ansi fg="command">camp status</ansi>.
+
+  <ansi fg="command">camp fire</ansi>
+  Lights the campfire. You need a lit fire before you can rest.
+
+  <ansi fg="command">camp status</ansi>
+  Shows your camp, whether the fire is lit, how a rest is progressing,
+  and your company's current needs.
+
+<ansi fg="yellow-bold">Resting</ansi>
+
+  <ansi fg="command">camp rest</ansi>
+  Settles your company in by the fire for one real-time rest, about a
+  minute. While resting you can't use ordinary exits, though you can
+  still talk and use most non-movement commands; <ansi fg="command">camp status</ansi> or
+  <ansi fg="command">look</ansi> shows how far along it is.
+
+  When the rest finishes, every current company member's Fatigue rises
+  by 20 (less if bad weather is spoiling the rest, see below), and you
+  and every companion with you gain the <ansi fg="yellow">Rested</ansi> buff for 15 minutes of
+  real time. Rested cuts your walking strain. If anyone already has the
+  better <ansi fg="yellow">Well Rested</ansi> buff from an inn stay (<ansi fg="command">help inn</ansi>), the camp rest
+  still restores their Fatigue but doesn't touch that buff — Well Rested
+  always wins, and a camp rest never replaces it with the lesser Rested.
+  A companion who wasn't with you when the rest finished still gets its
+  share of Rested once it rejoins, for whatever time is left.
+
+  Foul weather makes for a poorer rest: the Fatigue you recover is
+  scaled down (never increased) by how bad conditions are where you've
+  camped, so the same rest recovers less in a storm than under clear
+  skies. Each rest only happens once — you can't rest again at a camp
+  that has already rested.
+
+  <ansi fg="command">camp sharpen</ansi>
+  Spends your whetstones sharpening your company's blades, the same as
+  the <ansi fg="command">sharpen</ansi> command. See <ansi fg="command">help sharpen</ansi> for how that works, including
+  <ansi fg="command">sharpen auto on</ansi>, which sharpens automatically whenever a camp rest
+  ends.
+
+<ansi fg="yellow-bold">Breaking camp</ansi>
+
+  <ansi fg="command">camp break</ansi>
+  Strikes the camp. You can't break camp while resting; wait for the
+  rest to finish (or let it lapse) first. Breaking camp doesn't refund
+  the rest, change your hunger or thirst, or move you anywhere.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">camp</ansi> | <ansi fg="command">camp status</ansi> | <ansi fg="command">camp fire</ansi> | <ansi fg="command">camp rest</ansi> | <ansi fg="command">camp break</ansi>
+  <ansi fg="command">camp sharpen</ansi> [<ansi fg="command">status</ansi> | <ansi fg="command">auto on</ansi>|<ansi fg="command">off</ansi>]
+
+Camping isn't cooking: a campfire is just a light, not a hearth, so you
+can't cook at camp (<ansi fg="command">help cooking</ansi> covers where you can).
+
+See also: <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
+<ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>.

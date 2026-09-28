@@ -1,6 +1,6 @@
 # Help for ~status~
 
-The ~status~ command gives you a summary of your characters information.
+The ~status~ command is your character sheet: your path, race, level, and alignment; your vitals (health, mana, armor, hunger, thirst, fatigue, warmth, and light); your attributes, wealth, and training; and your company (who's alive, your load, what you're doing, your rest tier, and where you'll wake if you fall).
 
 When you level up, you gain *Stat Points* which you can spend to upgrade your stats base value.
 
@@ -10,7 +10,7 @@ When you level up, you gain *Stat Points* which you can spend to upgrade your st
 
   ~status train~ - Spend stat points on upgrades to base stats.
 
-  ~status bonuses~ - View all stat bonuses from equipment, buffs, and pets.
+  ~status bonuses~ - View all stat bonuses from equipment, buffs, chemistry, and pets.
 
 ## Related Help:
 
@@ -26,4 +26,9 @@ When you level up, you gain *Stat Points* which you can spend to upgrade your st
   ~speed~  
   ~mysticism~  
   ~smarts~  
-  ~perception~
+  ~perception~  
+
+  ~company~  
+  ~conditions~  
+  ~survival~  
+  ~formation~

@@ -21,6 +21,10 @@ start fighting:
   (<ansi fg="command">You turn on the bandit cutthroat.</ansi>);
 - this goes on until the fight is over, or until you <ansi fg="command">break</ansi> or <ansi fg="command">flee</ansi>.
 
+Where several groups are in one place, you fight them one at a time. The
+others wait their turn without striking, and the next battle begins as
+soon as one ends. Another player can take on a waiting group meanwhile.
+
 <ansi fg="yellow-bold">Who can strike whom (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">)</ansi>
 
 Both sides stand in a 3x3 formation: three columns, and three rows from the

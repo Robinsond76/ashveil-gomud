@@ -5,9 +5,25 @@ Who each fighter aims at, and how a fight holds together.
 <ansi fg="yellow-bold">Enemy groups</ansi>
 
 Enemies that belong together (a band of bandits, a pack of wolves) fight as a
-group, in a formation of up to five. Strike one, and the whole group comes
-for you. An enemy that belongs to no group fights on its own. A shopkeeper,
+group, in a formation of two to five. Hostile creatures never appear alone:
+the ones a place is known for gather into groups, a rat and a ruffian
+together if that's what haunts the alley. Only a few great beasts stand
+alone. Strike one member, and the whole group comes for you. A shopkeeper,
 or someone you're talking with, isn't drawn into their group's fight.
+
+<ansi fg="yellow-bold">One battle at a time</ansi>
+
+You and your company fight one group at a time: that's your battle. Any
+other group that turns on you waits its turn, and doesn't strike while it
+waits. When your battle ends, the group that turned on you first begins
+the next one at once.
+
+While another player is free in the same place, a waiting group turns on
+them instead ("The ruffian and the others turn on Brom."), and you each
+fight your own battle.
+
+You can't <ansi fg="command">attack</ansi> a waiting group until your battle is over; a bare
+<ansi fg="command">attack</ansi> picks a foe from your battle.
 
 <ansi fg="yellow-bold">Keeping everyone fighting</ansi>
 
@@ -35,7 +51,8 @@ ends when nobody is fighting any more.
 
 <ansi fg="yellow-bold">Alone</ansi>
 
-With no companion beside you, you fight as a lone adventurer: the fight
-isn't held together for you, and you choose each new target yourself.
+With no companion beside you, you still fight one group at a time, and a
+group whose target fell turns on you. But nothing turns you: you choose
+each new target yourself.
 
 See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

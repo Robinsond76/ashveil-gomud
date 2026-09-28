@@ -1,0 +1,42 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">strain</ansi>
+
+Walking from room to room costs Fatigue, on top of anything travel or
+the cold spends. Settlements are free; open ground isn't. Rougher
+ground costs more strain per step than a road, and mountains, cliffs,
+and snow cost the most. Every 100 strain drains 1 point of Fatigue;
+smaller amounts carry over to your next step instead of being lost.
+
+<ansi fg="yellow-bold">What changes it</ansi>
+
+Several things scale a step's strain up or down:
+
+  - <ansi fg="yellow">Load:</ansi> an overloaded company strains harder with every step
+    (<ansi fg="command">help cargo</ansi>).
+  - <ansi fg="yellow">Weather:</ansi> foul weather outdoors adds to it (<ansi fg="command">help weather</ansi>).
+  - <ansi fg="yellow">Cold:</ansi> being chilled, frostbitten, or worse adds to it
+    (<ansi fg="command">help temperature</ansi>).
+  - <ansi fg="yellow">A mount:</ansi> riding cuts strain for however many company members
+    it carries (<ansi fg="command">help mount</ansi>).
+  - <ansi fg="yellow">Rest:</ansi> the Rested and Well Rested buffs from camping or an inn
+    stay cut strain, Well Rested more than Rested (<ansi fg="command">help camp</ansi>,
+    <ansi fg="command">help inn</ansi>).
+
+Only members actually walking with you take a share of the strain at
+all; a companion left behind takes none. Beyond how many a mount
+carries, extra riders walk at the full, unmounted cost.
+
+<ansi fg="yellow-bold">Getting tired</ansi>
+
+Fatigue at 25 or below leaves you Exhausted; at 0 you Collapse, and
+your company can't set out on a route until someone rests. Recovering
+Fatigue is a matter of resting, at a camp or an inn (<ansi fg="command">help survival</ansi>).
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">strain</ansi>
+  Shows what walking into this room would cost each current company
+  member right now, and why: the ground's base strain, and which of
+  the factors above are in play.
+
+See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help cargo</ansi>, <ansi fg="command">help weather</ansi>,
+<ansi fg="command">help temperature</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help travel</ansi>.

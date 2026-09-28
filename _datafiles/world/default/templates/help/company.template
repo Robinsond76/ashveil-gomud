@@ -1,0 +1,70 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">company</ansi>
+
+Your company is you, the leader, plus up to 4 companions who fight and
+travel beside you. They stand with you in formation
+(<ansi fg="command">help formation</ansi>), share your chemistry in battle
+(<ansi fg="command">help chemistry</ansi>), and need food and rest just like
+you do (<ansi fg="command">help survival</ansi>, <ansi fg="command">help camp</ansi>).
+
+<ansi fg="yellow-bold">Finding companions</ansi>
+
+Settlements have recruiters: a person or a posted notice offering
+candidates for hire.
+
+  <ansi fg="command">company recruit</ansi>
+  List who is hiring here, with their archetype, level, alignment, gear,
+  and price.
+
+  <ansi fg="command">company recruit [candidate]</ansi>
+  Take one on. Most candidates cost gold; some are offered free, but only
+  once ever, per account. If your company won't have them (see
+  Alignment, below), they say so instead of joining.
+
+  <ansi fg="command">company inspect [candidate]</ansi>
+  Check a candidate's alignment against your company's before you pay:
+  whether they would join, and whether they would join uneasily.
+
+<ansi fg="command">company summon [name]</ansi> enlists a companion directly,
+without a recruiter, but only the few the world allows (a training dummy,
+as the world ships).
+
+<ansi fg="yellow-bold">Your roster</ansi>
+
+  <ansi fg="command">company status</ansi>
+  Every companion's number, name, level, archetype, alignment, loyalty,
+  and whether they're present, awaiting restoration, fallen, or lost for
+  good.
+
+  <ansi fg="command">company gear [member]</ansi>
+  What a companion is wearing and carrying.
+
+  <ansi fg="command">company dismiss [member]</ansi>
+  Let a companion go. <ansi fg="command">company dismiss all</ansi> lets your
+  whole company go.
+
+A fallen companion stays on your roster, waiting to be raised at a church
+or a village shaman (<ansi fg="command">help resurrect</ansi>). Wait too long
+and they're lost for good; <ansi fg="command">company status</ansi> shows
+anyone lost.
+
+<ansi fg="yellow-bold">Archetype</ansi>
+
+  <ansi fg="command">company archetype [member] [archetype]</ansi>
+  Give a companion without one their archetype. This is permanent, the
+  same as your own choice (<ansi fg="command">help archetype</ansi>). It sets
+  what they can be trained to do and which utility skills they can use
+  for the company (<ansi fg="command">help autoskill</ansi>,
+  <ansi fg="command">help trap</ansi>).
+
+<ansi fg="yellow-bold">Alignment and chemistry</ansi>
+
+  <ansi fg="command">company alignment</ansi>
+  Your company's alignment: yours, each companion's, and the average.
+  See <ansi fg="command">help alignment</ansi> for what it means and how it
+  drifts.
+
+  <ansi fg="command">company chemistry</ansi>
+  How well your company fights together after time served side by side.
+  See <ansi fg="command">help chemistry</ansi>.
+
+See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help chemistry</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help resurrect</ansi>.

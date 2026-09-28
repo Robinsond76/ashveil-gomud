@@ -1,0 +1,23 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">trap</ansi>
+
+Some locked exits and containers are trapped. Finding and clearing them
+is a rogue's (and other trap-trained companions') trade.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">trap sense [exit or container]</ansi>
+  Search the room, or one exit or container, for traps. Whoever in your
+  company is best at it tries. There's a short wait before you can search
+  again.
+
+  <ansi fg="command">trap disarm [exit or container]</ansi>
+  Try to clear a trap you've found. Success keeps it clear for about a
+  day; fail badly and it springs on you instead, so don't try a trap far
+  beyond your company's skill.
+
+Your company also senses traps for you automatically as you walk into a
+room, and gets one free look the moment you start picking a trapped lock
+- turn either off with <ansi fg="command">autoskill</ansi> (<ansi fg="command">help
+autoskill</ansi>).
+
+See also: <ansi fg="command">help autoskill</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help picklock</ansi>, <ansi fg="command">help lock</ansi>, <ansi fg="command">help company</ansi>.

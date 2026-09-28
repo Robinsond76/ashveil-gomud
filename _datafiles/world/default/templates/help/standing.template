@@ -1,0 +1,42 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">standing</ansi>
+
+Settlements judge your company by how close your alignment
+(<ansi fg="command">help alignment</ansi>) is to their own. That standing
+decides what you pay at market and at the inn, and whether they'll deal
+with you at all.
+
+<ansi fg="yellow-bold">How standing is judged</ansi>
+
+Your company's standing in a settlement comes from the gap between your
+company's average alignment and the settlement's own:
+
+  <ansi fg="yellow">welcome</ansi>      a small gap: normal prices everywhere
+  <ansi fg="yellow">tolerated</ansi>    a larger gap: still normal prices
+  <ansi fg="yellow">distrusted</ansi>   a bigger gap still: markets and inns charge more
+  <ansi fg="yellow">shunned</ansi>      too far apart: markets and inns turn you away
+
+Being distrusted or shunned only ever costs you; a company in especially
+good standing pays no less than the normal price.
+
+<ansi fg="yellow-bold">Effects</ansi>
+
+A distrusted company pays more to buy at any market here, is paid less
+when selling, and pays more for a room at any inn here. A shunned company
+is refused by every ordinary market and inn in the settlement.
+
+<ansi fg="yellow-bold">Black markets</ansi>
+
+Some settlements hide a black market: an out-of-the-way spot that trades
+at ordinary prices, but only with companies the settlement distrusts or
+shuns. A company in good standing gets turned away there instead - a
+black market has no reason to deal with someone the town already
+welcomes.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">standing</ansi>
+  Shows your company's standing here (both alignments, the tier, and its
+  effects), if this is a settlement, then every other settlement's tier,
+  so you can plan ahead.
+
+See also: <ansi fg="command">help alignment</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help market</ansi>, <ansi fg="command">help inn</ansi>.

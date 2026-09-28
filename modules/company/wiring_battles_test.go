@@ -150,7 +150,7 @@ func TestSecondPlayerTakesTheNextGroup(t *testing.T) {
 	}
 	bromBattle, ok := battle.Current(8)
 	require.True(t, ok, "Brom is fighting the next group")
-	assert.Contains(t, strings.Join(seen, "\n"), "turn on Brom")
+	assert.Regexp(t, `turns? on Brom`, strings.Join(seen, "\n"))
 	ariaBattle, ok := battle.Current(7)
 	if ok {
 		for id := range bromBattle.Enemies {

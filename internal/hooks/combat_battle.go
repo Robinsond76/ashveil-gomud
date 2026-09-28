@@ -408,7 +408,7 @@ func turnWaitingOntoFreePlayers(round uint64) {
 			if !turned {
 				continue
 			}
-			room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turn on <ansi fg="username">%s</ansi>.`, groupName(p), free.Character.Name))
+			room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> <ansi fg="username">%s</ansi>.`, groupTurnsOn(p), free.Character.Name))
 			freeSide := loadSide(free, room)
 			battle.NoteSet(free.UserId, p.ID, round)
 			freeSide.beginBattle(p, room, round)
@@ -439,9 +439,9 @@ func freePlayer(room *rooms.Room, busyId int) *users.UserRecord {
 	return best
 }
 
-// groupName names a group for a message: "The bandit captain and the
-// others", or its one member.
-func groupName(p mobparty.Party) string {
+// groupTurnsOn names a group turning on someone, for a message: "The
+// ruffian turns on", or "The ruffian and the others turn on".
+func groupTurnsOn(p mobparty.Party) string {
 	var names []string
 	for _, instanceId := range p.Members {
 		if m := mobs.GetInstance(instanceId); m != nil && m.Character.Health > 0 {
@@ -450,11 +450,11 @@ func groupName(p mobparty.Party) string {
 	}
 	switch len(names) {
 	case 0:
-		return `They`
+		return `They turn on`
 	case 1:
-		return `The ` + names[0]
+		return `The ` + names[0] + ` turns on`
 	}
-	return fmt.Sprintf(`The %s and the others`, names[0])
+	return fmt.Sprintf(`The %s and the others turn on`, names[0])
 }
 
 // settleBattles ends, at the end of the round and after its deaths are

@@ -1,0 +1,44 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">weather</ansi>
+
+Outdoor zones have their own weather: clear skies, overcast, rain,
+storms, and fog, each with its own odds. It changes on its own, at
+random intervals, without anyone doing anything.
+
+<ansi fg="yellow-bold">The </ansi><ansi fg="command">weather</ansi><ansi fg="yellow-bold"> command</ansi>
+
+  <ansi fg="command">weather</ansi>
+  Shows the time of day, the air temperature here if it can be judged,
+  and:
+
+  - <ansi fg="yellow">Sky:</ansi> how cloudy it is, and a line describing the current
+    condition (rain, fog, and so on).
+  - Whether fog is thickening around you.
+  - At night, the moon's phase, if clouds aren't hiding it.
+
+  Indoors with no view outside, you're simply told you can't see the
+  sky. Indoors near an exit that looks outside, you get a glimpse of
+  the weather through it instead.
+
+  A zone with no weather table of its own (most settlements) has none
+  to show.
+
+<ansi fg="yellow-bold">How weather affects you</ansi>
+
+Bad weather outdoors, in a tracked zone, does three things:
+
+  - It slows a route: worse weather adds to how long a journey takes
+    (<ansi fg="command">help travel</ansi>). This is set once, when you set out.
+  - It tires you faster: worse weather adds to the Hunger, Thirst, and
+    Fatigue a route or a step of walking costs (<ansi fg="command">help strain</ansi>).
+  - It spoils rest: resting at a camp in foul weather recovers less
+    Fatigue than the same rest under clear skies (<ansi fg="command">help camp</ansi>).
+
+Cold weather also chills the air, which can drain your Fatigue and,
+if it's severe enough, hurt you, the same as any other cold exposure
+(<ansi fg="command">help temperature</ansi>).
+
+Fog thick enough to matter also makes things harder to see and hit in
+the dark (<ansi fg="command">help light</ansi>).
+
+See also: <ansi fg="command">help travel</ansi>, <ansi fg="command">help temperature</ansi>, <ansi fg="command">help strain</ansi>,
+<ansi fg="command">help camp</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help light</ansi>.

@@ -1,4 +1,21 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">conditions</ansi>
 
-The <ansi fg="command">conditions</ansi> command lists current afflictions.
+The <ansi fg="command">conditions</ansi> command lists everything currently affecting you,
+grouped so you can see what matters at a glance:
+
+  <ansi fg="yellow">Rest</ansi>          <ansi fg="command">Rested</ansi> or <ansi fg="command">Well Rested</ansi>, and the real time left on it.
+  <ansi fg="yellow">Weapon edges</ansi>  A sharpened blade, and how many strikes its edge
+                has left (<ansi fg="command">help sharpen</ansi>).
+  <ansi fg="yellow">Survival</ansi>      Any need — hunger, thirst, fatigue — worth a
+                warning, and your warmth if it's uncomfortable.
+  <ansi fg="yellow">Company</ansi>       Your company's chemistry tier, if you've served
+                together long enough for one (<ansi fg="command">help chemistry</ansi>).
+  <ansi fg="yellow">Other effects</ansi> Everything else affecting you, with time left
+                where it has any.
+
+A group with nothing in it is left out. If you have none of the above,
+<ansi fg="command">conditions</ansi> simply says so.
+
+See also: <ansi fg="command">help status</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help camp</ansi>,
+<ansi fg="command">help inn</ansi>.
 

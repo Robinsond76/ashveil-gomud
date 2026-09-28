@@ -1,0 +1,48 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">adventure</ansi>
+
+Ashveil is a world of long roads and hard fights. You lead a company of
+companions, keep them fed and rested, travel between towns, and fight as
+a band. Every part has its own page:
+
+<ansi fg="yellow-bold">You</ansi>
+  <ansi fg="command">help status</ansi>        your character sheet
+  <ansi fg="command">help archetype</ansi>     your path, chosen when you made your character
+  <ansi fg="command">help conditions</ansi>    what is affecting you, and for how long
+  <ansi fg="command">help experience</ansi>    levels, and what dying costs
+  <ansi fg="command">help autoskill</ansi>     utility skills your company uses for you
+  <ansi fg="command">help trap</ansi>          sensing and disarming traps
+
+<ansi fg="yellow-bold">Your company</ansi>
+  <ansi fg="command">help company</ansi>       recruiting, your roster, gear, and dismissal
+  <ansi fg="command">help formation</ansi>     where everyone stands in a fight
+  <ansi fg="command">help chemistry</ansi>     a company that serves together fights better
+  <ansi fg="command">help alignment</ansi>     good and evil, loyalty, and desertion
+
+<ansi fg="yellow-bold">Battle</ansi>
+  <ansi fg="command">help combat</ansi>        how a battle works, from the first blow to the last
+
+<ansi fg="yellow-bold">The road</ansi>
+  <ansi fg="command">help travel</ansi>        journeys between places
+  <ansi fg="command">help survival</ansi>      hunger, thirst, and fatigue
+  <ansi fg="command">help strain</ansi>        how walking wears you down
+  <ansi fg="command">help weather</ansi>       the sky, and what it does to travel and rest
+  <ansi fg="command">help temperature</ansi>   cold, heat, clothing, and shelter
+  <ansi fg="command">help cargo</ansi>         your company's load
+  <ansi fg="command">help mount</ansi>         a pack animal to carry more
+
+<ansi fg="yellow-bold">Rest</ansi>
+  <ansi fg="command">help camp</ansi>          making camp and resting in the wild
+  <ansi fg="command">help inn</ansi>           a bed at an inn
+  <ansi fg="command">help cooking</ansi>       cooking a meal at a hearth
+  <ansi fg="command">help sharpen</ansi>       putting an edge on your blades
+
+<ansi fg="yellow-bold">Towns</ansi>
+  <ansi fg="command">help market</ansi>        buying and selling goods
+  <ansi fg="command">help rumors</ansi>        trade gossip at the inns
+  <ansi fg="command">help standing</ansi>      how a town regards your company
+
+<ansi fg="yellow-bold">Falling</ansi>
+  <ansi fg="command">help death</ansi>         what happens when you die
+  <ansi fg="command">help resurrect</ansi>     raising a fallen companion
+
+New to the world? <ansi fg="command">help tutorial</ansi> explains the training course.

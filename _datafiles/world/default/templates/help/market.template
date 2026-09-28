@@ -1,0 +1,45 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">market</ansi>
+
+A market trades in a settlement's tracked goods, at prices that move
+with its own stock, not a fixed shop price.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">market</ansi>
+  Lists what's traded here: what you'd pay to buy each good, what the
+  market pays you to sell it, and a rough stock level (<ansi fg="yellow">none</ansi>, <ansi fg="yellow">scarce</ansi>,
+  <ansi fg="yellow">short</ansi>, <ansi fg="yellow">steady</ansi>, <ansi fg="yellow">plentiful</ansi>, or <ansi fg="yellow">glutted</ansi>).
+
+  <ansi fg="command">market buy [good]</ansi>
+  Buys one unit of a good, naming it by any close match to its name.
+
+  <ansi fg="command">market sell [good]</ansi>
+  Sells one unit of a good you carry.
+
+Trading only works in the settlement's market room, not everywhere in
+its zone; asking elsewhere tells you where it is.
+
+<ansi fg="yellow-bold">Prices</ansi>
+
+The market's buy and sell prices both come from its current stock: the
+less it has, the more it charges to buy and the more it pays to sell;
+the more it has, the cheaper it sells and the less it pays. Selling
+pays about 20% less than buying costs at the same stock (the spread),
+so buying and immediately selling back always loses money. Buying
+takes a unit from stock; selling adds one. Every round (4 seconds), a
+market's stock drifts a little toward its target level, so prices creep
+back over time even if no one trades.
+
+A market with poor standing toward your company charges more to buy and
+pays less to sell, and one that shuns your company won't trade with it
+at all; a black market may still deal with an outlaw company at
+ordinary prices when the regular market won't. See <ansi fg="command">help standing</ansi>.
+
+<ansi fg="yellow-bold">Where</ansi>
+
+Markets are found in a settlement's market square — Dunmar's Market
+Square and Trappers' Post on the Old Kings Road are the ones known so
+far. Not every settlement has one.
+
+See also: <ansi fg="command">help standing</ansi>, <ansi fg="command">help rumors</ansi>, <ansi fg="command">help buy</ansi>, <ansi fg="command">help sell</ansi>,
+<ansi fg="command">help cargo</ansi>.

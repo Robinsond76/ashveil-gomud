@@ -1,0 +1,49 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">survival</ansi>
+
+Every member of your company, you and each companion alike, keeps three
+needs: Hunger, Thirst, and Fatigue. Each runs 0 to 100. 100 means fully
+fed, watered, or rested; 0 means starving, dehydrated, or collapsed.
+These belong to each member individually, not the company as a whole.
+
+<ansi fg="yellow-bold">What drains them</ansi>
+
+Nothing drains while you sit idle or log off. Needs only change when
+something spends them:
+
+  - Travelling a route (<ansi fg="command">help travel</ansi>) spends Hunger, Thirst, and
+    Fatigue over the journey, by however much that route calls for.
+  - Walking from room to room off the road costs Fatigue as strain
+    (<ansi fg="command">help strain</ansi>); rough or wild ground costs more than a road,
+    and settlements cost nothing.
+  - Cold costs Fatigue, and heat costs Thirst, while you're exposed to
+    it (<ansi fg="command">help temperature</ansi>).
+
+<ansi fg="yellow-bold">Bands</ansi>
+
+  <ansi fg="yellow">Value</ansi>    <ansi fg="yellow">Hunger</ansi>    <ansi fg="yellow">Thirst</ansi>       <ansi fg="yellow">Fatigue</ansi>
+  76-100   Well fed   Hydrated     Rested
+  51-75    Sated      Comfortable  Ready
+  26-50    Hungry     Thirsty      Tired
+  1-25     Starving   Parched      Exhausted
+  0        Starving   Dehydrated   Collapsed
+
+<ansi fg="yellow-bold">Running out</ansi>
+
+A member at 0 Fatigue is Collapsed: your company can't set out on a
+route until someone rests (<ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>). Anyone above 0
+but at or below 25 Fatigue is Exhausted; you'll be told when a member
+crosses into or out of either band. Hunger and Thirst at 0 only change
+the label right now; they don't yet stop you doing anything.
+
+<ansi fg="yellow-bold">Feeding your company</ansi>
+
+<ansi fg="command">eat</ansi> and <ansi fg="command">drink</ansi> restore Hunger and/or Thirst from your own pack, for
+yourself or a named companion. See <ansi fg="command">help eat</ansi> and <ansi fg="command">help drink</ansi>.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">survival</ansi>
+  Shows every current company member's Hunger, Thirst, and Fatigue.
+
+See also: <ansi fg="command">help eat</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>,
+<ansi fg="command">help temperature</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help company</ansi>.

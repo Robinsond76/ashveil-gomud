@@ -1,0 +1,43 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">temperature</ansi>
+
+The air around you has a temperature, and each member of your company
+has an exposure meter that tracks whether it's too cold or too hot for
+them. Exposure runs 0 (comfortable) to 100 in either direction: negative
+for cold, positive for heat.
+
+<ansi fg="yellow-bold">Staying comfortable</ansi>
+
+What you wear gives warmth, which shifts your comfortable range. With
+nothing on, you're comfortable outdoors only in a narrow, mild band;
+a full set of warm clothing pushes the cold edge of that range well
+below freezing while still keeping the hot edge close by. Being indoors
+in a lit, furnished room, or standing at a lit fire, keeps you warm
+regardless of what you're wearing; caves and dungeons hold a steady
+temperature of their own.
+
+When the air is outside your comfortable range, your exposure meter
+climbs toward a ceiling set by how far outside it you are. Getting back
+inside that range, especially somewhere sheltered or by a fire, brings
+it back down.
+
+<ansi fg="yellow-bold">The cost</ansi>
+
+The deeper your exposure, the more it costs you:
+
+  - Cold exposure of any real degree drains your Fatigue every so
+    often, on top of anything else spending it.
+  - Heat exposure drains your Thirst.
+  - Severe exposure, in either direction, starts doing you real
+    damage; critical exposure does much more, and can kill.
+
+<ansi fg="yellow-bold">The </ansi><ansi fg="command">temperature</ansi><ansi fg="yellow-bold"> command</ansi>
+
+  <ansi fg="command">temperature</ansi>
+  Shows the air temperature here and why (weather, night, a fire),
+  your clothing's warmth and the range it keeps you comfortable in,
+  and how exposed you and each companion currently are: comfortable, a
+  little cold or warm, or somewhere on the chilled-to-freezing or
+  overheated-to-heatstroke scale.
+
+See also: <ansi fg="command">help weather</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help strain</ansi>,
+<ansi fg="command">help camp</ansi>, <ansi fg="command">help conditions</ansi>.
