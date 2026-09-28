@@ -125,3 +125,36 @@ func TestRemoveUserFile(t *testing.T) {
 	assert.NoFileExists(t, path)
 	require.NoError(t, RemoveUserFile(replay.UserId), "twice is fine")
 }
+
+// TestBootIndexesSkipReplays (32b review): a replay file left by a restart
+// is never indexed at boot. The user index rebuild and the character index
+// leave it out, and new account ids stay below the reserved range, so no
+// account can take a replay's id and the real name still finds the real
+// character.
+func TestBootIndexesSkipReplays(t *testing.T) {
+	replayDataDir(t)
+	real := veteran()
+	require.NoError(t, SaveUser(*real))
+	_, err := NewReplayUser(real)
+	require.NoError(t, err)
+
+	idx := InitUserIndex()
+	t.Cleanup(func() { userIndex = nil })
+	require.NoError(t, idx.Rebuild())
+	_, found := idx.FindByUsername("replay:900000000")
+	assert.False(t, found, "not in the user index")
+	id, found := idx.FindByUsername("acctaria")
+	assert.True(t, found)
+	assert.Equal(t, 7, id)
+	assert.Equal(t, 8, GetUniqueUserId(), "the next account id ignores replays")
+
+	GetCharacterIndex().Rebuild()
+	id, found = GetCharacterIndex().Find("Aria")
+	assert.True(t, found)
+	assert.Equal(t, 7, id, "the name is the real character's")
+
+	// Without an index, the id scan ignores replays too.
+	idx.Delete()
+	userIndex = &UserIndex{Filename: idx.Filename}
+	assert.Equal(t, 8, GetUniqueUserId())
+}

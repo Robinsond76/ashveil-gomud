@@ -513,10 +513,9 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 
 			if c.Network.LinkDeadSeconds > 0 {
 				connDetails.SetState(connections.LinkDead)
-				worldManager.SendSetLinkDead(userObject.UserId, true)
+				worldManager.SendDisconnect(connDetails.ConnectionId(), true) // Ashveil 32b: whoever is on it now
 			} else {
-				worldManager.SendLeaveWorld(userObject.UserId)
-				worldManager.SendLogoutConnectionId(connDetails.ConnectionId())
+				worldManager.SendDisconnect(connDetails.ConnectionId(), false) // Ashveil 32b: whoever is on it now
 			}
 
 			mudlog.Warn("Telnet", "connectionID", connDetails.ConnectionId(), "error", err)
@@ -881,12 +880,11 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 				if c.Network.LinkDeadSeconds > 0 {
 
 					connDetails.SetState(connections.LinkDead)
-					worldManager.SendSetLinkDead(userObject.UserId, true)
+					worldManager.SendDisconnect(connDetails.ConnectionId(), true) // Ashveil 32b: whoever is on it now
 
 				} else {
 
-					worldManager.SendLeaveWorld(userObject.UserId)
-					worldManager.SendLogoutConnectionId(connDetails.ConnectionId())
+					worldManager.SendDisconnect(connDetails.ConnectionId(), false) // Ashveil 32b: whoever is on it now
 
 				}
 
@@ -1200,12 +1198,11 @@ func HandleWebSocketConnection(conn *websocket.Conn) {
 				if c.Network.LinkDeadSeconds > 0 {
 
 					connDetails.SetState(connections.LinkDead)
-					worldManager.SendSetLinkDead(userObject.UserId, true)
+					worldManager.SendDisconnect(connDetails.ConnectionId(), true) // Ashveil 32b: whoever is on it now
 
 				} else {
 
-					worldManager.SendLeaveWorld(userObject.UserId)
-					worldManager.SendLogoutConnectionId(connDetails.ConnectionId())
+					worldManager.SendDisconnect(connDetails.ConnectionId(), false) // Ashveil 32b: whoever is on it now
 
 				}
 
@@ -1595,10 +1592,9 @@ func handleSSHConnection(connDetails *connections.ConnectionDetails, reqs <-chan
 				userObject.EventLog.Add(`conn`, `Disconnected`)
 				if c.Network.LinkDeadSeconds > 0 {
 					connDetails.SetState(connections.LinkDead)
-					worldManager.SendSetLinkDead(userObject.UserId, true)
+					worldManager.SendDisconnect(connDetails.ConnectionId(), true) // Ashveil 32b: whoever is on it now
 				} else {
-					worldManager.SendLeaveWorld(userObject.UserId)
-					worldManager.SendLogoutConnectionId(connDetails.ConnectionId())
+					worldManager.SendDisconnect(connDetails.ConnectionId(), false) // Ashveil 32b: whoever is on it now
 				}
 			}
 			mudlog.Warn("SSH", "connectionID", connDetails.ConnectionId(), "error", err)

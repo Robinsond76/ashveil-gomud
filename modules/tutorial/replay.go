@@ -9,8 +9,11 @@ package tutorial
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -27,6 +30,9 @@ type replaySeams struct {
 	chooseArchetype func(userID int, archetypeID string) (string, bool)
 	onlineReplayOf  func(realUserID int) *users.UserRecord
 	offlineReplays  func() []int
+	// inFight: the player is fighting, in a battle, or set on by a foe
+	// (a replay leaves the world at once, so it waits for peace).
+	inFight func(user *users.UserRecord) bool
 }
 
 func nativeReplaySeams() replaySeams {
@@ -38,7 +44,25 @@ func nativeReplaySeams() replaySeams {
 		chooseArchetype: archetypes.ChooseAtCreation,
 		onlineReplayOf:  users.OnlineReplayOf,
 		offlineReplays:  users.OfflineReplayUserIds,
+		inFight:         nativeInFight,
 	}
+}
+
+func nativeInFight(user *users.UserRecord) bool {
+	if user.Character.Aggro != nil {
+		return true
+	}
+	if _, ok := battle.Current(user.UserId); ok {
+		return true
+	}
+	if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
+		for _, id := range room.GetMobs() {
+			if mob := mobs.GetInstance(id); mob != nil && mob.Character.Aggro != nil && mob.Character.Aggro.UserId == user.UserId {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // replay is "tutorial replay [yes]".
@@ -47,7 +71,7 @@ func (m *TutorialModule) replay(user *users.UserRecord, confirmed bool) {
 	case user.IsReplay():
 		user.SendText(`You're already replaying the tutorial. <ansi fg="command">tutorial skip yes</ansi> sets this practice character aside.`)
 		return
-	case user.Character.Aggro != nil:
+	case m.seams.inFight(user):
 		user.SendText("You're too busy to leave right now!")
 		return
 	case user.ConnectionId() == 0:

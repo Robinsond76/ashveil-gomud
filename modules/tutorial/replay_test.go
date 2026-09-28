@@ -42,6 +42,7 @@ func newReplayCourse(t *testing.T) *replayCourse {
 		},
 		onlineReplayOf: func(int) *users.UserRecord { return rc.stale },
 		offlineReplays: func() []int { return rc.offline },
+		inFight:        func(u *users.UserRecord) bool { return u.Character.Aggro != nil },
 	}
 	return rc
 }

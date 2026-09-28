@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -173,7 +174,12 @@ func OfflineReplayUserIds() []int {
 // LoadUserFile loads a user straight from their file by id, without the
 // user index: the only way to load a replay user.
 func LoadUserFile(userId int) (*UserRecord, error) {
-	return loadUserById(userId)
+	u, err := loadUserById(userId)
+	if err != nil {
+		return nil, err
+	}
+	u.connectionTime = time.Now() // as LoadUser: time online starts now
+	return u, nil
 }
 
 // RemoveUserFile removes an offline user's file. Removing one that is

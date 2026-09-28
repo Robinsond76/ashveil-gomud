@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,4 +29,22 @@ func TestConnectionLoopFollowsAHandOff(t *testing.T) {
 
 	assert.Nil(t, currentUser(42, nil), "not logged in yet")
 	assert.Same(t, real, currentUser(99, real), "no user on the connection: keep the known one")
+}
+
+// TestDisconnectResolvesTheUserOnTheGameLoop: a dropped link is reported
+// by connection, so after a hand-off it is the user on the connection now
+// who goes link-dead, never the one who left it.
+func TestDisconnectResolvesTheUserOnTheGameLoop(t *testing.T) {
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	mudlog.SetupLogger(nil, "", "", false)
+
+	replay := users.NewUserRecord(900000001, 42)
+	users.SetTestUser(replay)
+	users.SetTestConnection(42, replay.UserId)
+
+	w := &World{}
+	w.handleDisconnect(disconnected{connId: 42, linkDead: true})
+	assert.True(t, users.IsLinkDeadConnection(42), "the user on the connection now is link-dead")
+	assert.Contains(t, users.GetExpiredLinkDeadUsers(^uint64(0)), replay.UserId)
 }

@@ -821,8 +821,15 @@ func (resumeTutorial) Type() string { return "TutorialResume" }
 // queued resume then brings them back to the course. That hop is expected.
 func (m *TutorialModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if evt, ok := e.(events.PlayerSpawn); ok {
+		user := m.lookupUser(evt.UserId)
+		if user != nil && user.Character != nil && user.IsReplay() && progressOf(user.Character).State == stateNone {
+			// Phase 32b: a throwaway's first spawn goes straight into the
+			// course, before the engine's join shows it the Void.
+			m.startReplay(user)
+			return events.Continue
+		}
 		events.AddToQueue(resumeTutorial{UserId: evt.UserId})
-		if user := m.lookupUser(evt.UserId); user != nil && user.Character != nil {
+		if user != nil && user.Character != nil {
 			m.onReplaySpawn(user)
 		}
 	}

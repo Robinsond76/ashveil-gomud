@@ -15,8 +15,8 @@ when you have done what the lesson asks:
   <ansi fg="yellow">Alignment</ansi>  check your company's alignment, weigh an outlaw recruit against
              it, and check your standing with the towns.
   <ansi fg="yellow">Departure</ansi>  walk out through the gate.
-Your place in the course is saved,
-so logging out and back in picks up where you left off.
+Your place in the course is saved, so logging out and back in picks up
+where you left off (except during a replay, below).
 
 <ansi fg="yellow">Usage: </ansi>
 
@@ -33,6 +33,8 @@ so logging out and back in picks up where you left off.
   <ansi fg="command">tutorial skip</ansi>
   Leave the course now, for the town. It asks you to confirm with
   <ansi fg="command">tutorial skip yes</ansi>. Skipping gives no graduation reward.
+  During a replay it ends the replay instead, and you are back where
+  your own character was.
 
   <ansi fg="command">tutorial replay</ansi>
   Run the whole course again, as often as you like, from anywhere but a
@@ -49,7 +51,7 @@ A replay is a practice character: your name, race, and archetype, at
 level 1 with only the starter kit, no company, and a new character's
 purse. Your own character steps out of the world while you play, exactly
 as if you had logged out. <ansi fg="command">online</ansi> shows you as replaying the
-tutorial, and tells to your name still reach you.
+tutorial, and a <ansi fg="command">whisper</ansi> to your name still reaches you.
 
 The replay ends when you graduate, skip, die, or leave the course any
 other way: "You set the practice character aside," and you are your own

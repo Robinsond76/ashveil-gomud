@@ -22,14 +22,20 @@ func HandleUserHandOff(e events.Event) events.ListenerReturn {
 	}
 
 	connId := evt.ConnectionId
-	if connections.Get(connId) == nil {
+	cd := connections.Get(connId)
+	if cd == nil || cd.State() == connections.LinkDead {
 		// The player hung up in between; the next user stays offline.
 		mudlog.Info("HandOff", "result", "connection gone", "connectionId", connId, "toUserId", evt.ToUserId)
+		if cd != nil {
+			connections.Remove(connId)
+		}
+		dropUnused(evt.ToUserId)
 		return events.Continue
 	}
 
 	if current := users.GetByConnectionId(connId); current != nil {
 		mudlog.Error("HandOff", "error", "connection still has a user", "connectionId", connId, "userId", current.UserId, "toUserId", evt.ToUserId)
+		dropUnused(evt.ToUserId)
 		return events.Continue
 	}
 
@@ -44,6 +50,7 @@ func HandleUserHandOff(e events.Event) events.ListenerReturn {
 	if err != nil {
 		mudlog.Warn("HandOff", "error", err, "connectionId", connId, "toUserId", evt.ToUserId)
 		hangUp(connId, msg)
+		dropUnused(evt.ToUserId)
 		return events.Continue
 	}
 
@@ -60,6 +67,15 @@ func HandleUserHandOff(e events.Event) events.ListenerReturn {
 	}
 
 	return events.Continue
+}
+
+// dropUnused purges a tutorial replay that a refused hand-off never
+// brought online; a real user just stays offline.
+func dropUnused(userId int) {
+	if userId < users.ReplayUserIdBase || users.GetByUserId(userId) != nil {
+		return
+	}
+	events.AddToQueue(events.UserPurged{UserId: userId})
 }
 
 // hangUp says why, then goodbye, and closes a connection with no user.
