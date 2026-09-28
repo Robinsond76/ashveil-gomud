@@ -163,6 +163,7 @@ func init() {
 			Hints: []string{
 				`<ansi fg="command">company status</ansi>, <ansi fg="command">inventory</ansi>, and <ansi fg="command">status</ansi> one last time.`,
 				`Go through the <ansi fg="exit">gate</ansi> to begin your journey.`,
+				`Settlements post recruits of your own, and the faces change over time: <ansi fg="command">look</ansi> at the Waymark Inn's hiring slate, and see <ansi fg="command">help company</ansi>.`,
 				`<ansi fg="command">help adventure</ansi> lists every part of the game. <ansi fg="command">help combat</ansi> covers battles, and <ansi fg="command">help death</ansi> and <ansi fg="command">help resurrect</ansi> what happens when someone falls.`,
 			},
 		},

@@ -16,6 +16,23 @@ refuse (see Alignment, below). Anyone already in your company, and a free
 offer you've already taken, isn't listed; a full company is noted.
 <ansi fg="command">look post</ansi> (or the notice's name) reads the notice again.
 
+<ansi fg="yellow-bold">Your own recruits</ansi>
+
+Settlement recruiters (the Waymark Inn's hiring slate, the Trappers'
+Post) also post recruits of your own: 3 at a time, listed after the
+regulars. Each is a new face with their own name, archetype, level (within
+one of yours), alignment, price, and a line about them. Your list is yours
+alone: another player at the same notice sees different people, and what
+you hire never changes their list, or theirs yours.
+
+The list changes over time. Each recruit waits between half a game day
+and two game days, then moves on and someone new takes their place, one
+face at a time; time you spend away counts. Hire one and their place
+stays empty for a little while before someone new turns up. Type a
+recruit's first name to hire, look at, or inspect them
+(<ansi fg="command">company recruit hild</ansi>). Once hired, they keep their
+own name in your company, even if two of them are the same archetype.
+
   <ansi fg="command">look [candidate]</ansi>
   Read a candidate's description on the notice.
 
