@@ -172,6 +172,7 @@ func TestShippedHelpTemplate(t *testing.T) {
 	data, err := files.ReadFile("files/datafiles/templates/help/tutorial.template")
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "tutorial skip")
+	assert.Contains(t, string(data), "tutorial replay", "32b")
 	for _, stage := range []string{"Survival", "Camp", "Combat", "Alignment"} {
 		assert.Contains(t, string(data), stage)
 	}

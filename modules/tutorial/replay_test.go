@@ -1,6 +1,7 @@
 package tutorial
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -231,4 +232,16 @@ func TestReplaySweepAndPurge(t *testing.T) {
 	assert.Nil(t, rc.m.copies[7])
 	assert.Nil(t, rc.m.fights[7])
 	assert.False(t, rc.m.handingBack[7])
+}
+
+// TestFirstLessonMentionsReplay (32b help): the first lesson tells a new
+// player the course can be replayed later.
+func TestFirstLessonMentionsReplay(t *testing.T) {
+	found := false
+	for _, h := range stages[0].Hints {
+		if strings.Contains(h, "tutorial replay") {
+			found = true
+		}
+	}
+	assert.True(t, found)
 }

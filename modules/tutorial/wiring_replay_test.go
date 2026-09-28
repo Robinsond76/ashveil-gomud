@@ -24,6 +24,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -129,6 +130,16 @@ func TestTutorialReplayThroughPluginsLoad(t *testing.T) {
 	plugins.Load(dataDir)
 	buffs.RegisterFS(plugins.GetPluginRegistry())
 	buffs.LoadDataFiles()
+
+	// Player help: "help tutorial" (and "help replay") renders the replay.
+	templates.RegisterFS(plugins.GetPluginRegistry())
+	for _, topic := range []string{"tutorial", "replay"} {
+		page, err := usercommands.GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		page = tagPattern.ReplaceAllString(page, "")
+		assert.Contains(t, page, "tutorial replay yes", topic)
+		assert.Contains(t, page, "Nothing from a replay is kept", topic)
+	}
 
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)

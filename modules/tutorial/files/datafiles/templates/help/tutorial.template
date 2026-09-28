@@ -34,7 +34,26 @@ so logging out and back in picks up where you left off.
   Leave the course now, for the town. It asks you to confirm with
   <ansi fg="command">tutorial skip yes</ansi>. Skipping gives no graduation reward.
 
+  <ansi fg="command">tutorial replay</ansi>
+  Run the whole course again, as often as you like, from anywhere but a
+  fight. It asks you to confirm with <ansi fg="command">tutorial replay yes</ansi>.
+
 Every command works during the course: chat, <ansi fg="command">help</ansi>, <ansi fg="command">status</ansi>, and the rest.
 For every detail of how battles work, see <ansi fg="command">help combat</ansi>.
-Once you have left the course, it is finished and can't be restarted. That
-includes leaving by dying, which nothing in the course can quickly cause.
+Leaving the course, including by dying (which nothing in it can quickly
+cause), finishes it for your character.
+
+<ansi fg="yellow">Replaying the course</ansi>
+
+A replay is a practice character: your name, race, and archetype, at
+level 1 with only the starter kit, no company, and a new character's
+purse. Your own character steps out of the world while you play, exactly
+as if you had logged out. <ansi fg="command">online</ansi> shows you as replaying the
+tutorial, and tells to your name still reach you.
+
+The replay ends when you graduate, skip, die, or leave the course any
+other way: "You set the practice character aside," and you are your own
+character again, in the same place, with the same company, camp, gear,
+gold, and experience. Logging out or losing your connection ends it too;
+you log back in as your own character. Nothing from a replay is kept: not
+its items, experience, recruits, camp, or graduation reward.
