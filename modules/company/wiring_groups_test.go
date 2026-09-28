@@ -84,7 +84,7 @@ func TestAGroupKeepsItsNameAsMembersFall(t *testing.T) {
 	require.Len(t, lines, 1)
 	assert.Contains(t, lines[0], fmt.Sprintf("(1): a %s.", left.Character.Name))
 	kind := name[strings.LastIndex(name, " ")+1:]
-	assert.Contains(t, b.cmd("attack", kind), "You prepare to fight "+name+"!", "the survivor answers to its group's name")
+	assert.Contains(t, b.cmd("attack", kind), "You go for the "+name[strings.Index(name, " ")+1:]+".", "the survivor answers to its group's name")
 }
 
 func TestAttackStartsABattleWithAGroup(t *testing.T) {
@@ -98,7 +98,7 @@ func TestAttackStartsABattleWithAGroup(t *testing.T) {
 	assert.Nil(t, b.aria.Character.Aggro, "a member's name starts nothing")
 
 	got = b.cmd("attack", "band")
-	assert.Contains(t, got, "You prepare to fight a band of ruffians!")
+	assert.Contains(t, got, "You go for the band of ruffians.")
 	require.NotNil(t, b.aria.Character.Aggro)
 	aim := b.aria.Character.Aggro.MobInstanceId
 	assert.Contains(t, []int{pair[0].InstanceId, pair[1].InstanceId}, aim)
@@ -115,7 +115,7 @@ func TestAttackByIdTakesTheWholeGroup(t *testing.T) {
 	pair := spawnedHostiles(t, 920103)
 	b.into(920103)
 	got := b.cmd("attack", fmt.Sprintf("#%d", pair[1].InstanceId))
-	assert.Contains(t, got, "You prepare to fight a band of ruffians!")
+	assert.Contains(t, got, "You go for the band of ruffians.")
 	require.NotNil(t, b.aria.Character.Aggro)
 }
 
@@ -148,7 +148,7 @@ func TestALoneMobIsAttackedByItsName(t *testing.T) {
 	troll := spawnedHostiles(t, 920105)
 	require.Len(t, troll, 1)
 	b.into(920105)
-	assert.Contains(t, b.cmd("attack", "cave troll"), "You prepare to fight cave troll!")
+	assert.Contains(t, b.cmd("attack", "cave troll"), "go for the cave troll.")
 	require.NotNil(t, b.aria.Character.Aggro)
 	assert.Equal(t, troll[0].InstanceId, b.aria.Character.Aggro.MobInstanceId)
 }

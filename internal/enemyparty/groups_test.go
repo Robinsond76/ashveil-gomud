@@ -3,6 +3,8 @@ package enemyparty
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
+
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,4 +65,34 @@ func TestGroupsAreNamedAndFound(t *testing.T) {
 	g, ok = GroupOf(room, 9104)
 	require.True(t, ok)
 	assert.Equal(t, "a second band of ruffians", g.Name)
+}
+
+// TestAnUnspawnedGroupKeepsItsNameAsMembersFall (32c review): a group that
+// formed outside a spawn list (tagged mobs a script or admin placed) is
+// named when first seen and keeps the name when its most common kind
+// falls, so the word a player typed still names it.
+func TestAnUnspawnedGroupKeepsItsNameAsMembersFall(t *testing.T) {
+	mudlog.SetupLogger(nil, "", "", false)
+	captain := testMob(t, 9201, 40, "bandits")
+	captain.Character.Name = "bandit captain"
+	for _, id := range []int{9202, 9203} {
+		m := testMob(t, id, 10, "bandits")
+		m.Character.Name = "bandit cutthroat"
+	}
+	room := testRoom(t, 990201, 9201, 9202, 9203)
+	gs := Groups(room)
+	require.Len(t, gs, 1)
+	assert.Equal(t, "a band of bandit cutthroats", gs[0].Name)
+
+	// A cutthroat falls: a fresh name would now tie and go to the
+	// toughest, "a band of bandit captains".
+	room.SetTestOccupants(nil, []int{9201, 9202})
+	assert.Equal(t, "a band of bandit captains", mobparty.Generate([]mobparty.MobSummary{
+		{Name: "bandit captain", EHP: 40}, {Name: "bandit cutthroat", EHP: 10},
+	}).Name)
+	gs = Groups(room)
+	require.Len(t, gs, 1)
+	assert.Equal(t, "a band of bandit cutthroats", gs[0].Name)
+	_, ok := FindGroup(room, "cutthroats")
+	assert.True(t, ok, "the typed name still finds it")
 }

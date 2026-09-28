@@ -63,7 +63,7 @@ ends when nobody is fighting any more.
 
 With no companion beside you, you still fight one group at a time, and a
 group whose target fell turns on you. You're turned the same way your
-companions are: when your target falls, you turn on the weakest foe you
+companions are: when your target falls, you turn toward the weakest foe you
 can reach.
 
 See also: <ansi fg="command">help scout</ansi>, <ansi fg="command">help attack</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

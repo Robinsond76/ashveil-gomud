@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
@@ -210,7 +211,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			foeName := m.Character.Name
 			if g, ok := enemyparty.GroupOf(room, m.InstanceId); ok {
 				if !g.Solo() {
-					foeName = g.Name
+					foeName = theGroup(g.Name)
 				}
 				if aim, ok := enemyparty.FirstAim(g, user.UserId, user.Character); ok {
 					attackMobInstanceId = aim
@@ -380,4 +381,15 @@ func goForText(c *characters.Character, target string, alreadyFighting bool) str
 		return fmt.Sprintf(`You draw your <ansi fg="item">%s</ansi> and go for %s.`, c.Equipment.Weapon.DisplayName(), target)
 	}
 	return fmt.Sprintf(`You go for %s.`, target)
+}
+
+// theGroup turns a group's name into the one being gone for: "a band of
+// ruffians" reads "the band of ruffians" (Phase 32c with 29c's voice).
+func theGroup(name string) string {
+	for _, a := range []string{`a `, `an `} {
+		if strings.HasPrefix(name, a) {
+			return `the ` + name[len(a):]
+		}
+	}
+	return name
 }

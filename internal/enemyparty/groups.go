@@ -46,6 +46,16 @@ func Groups(room *rooms.Room) []Group {
 			members[i] = byId[id]
 		}
 		n := mobparty.NameGroup(members)
+		if !n.Solo && !named(members) {
+			// A group that formed outside a room's spawn list (a script's or
+			// an admin's spawn, a company's quarry) is named the first time
+			// it is seen, and keeps the name while members fall.
+			for _, id := range p.Members {
+				if m := mobs.GetInstance(id); m != nil {
+					m.GroupName = n.Name
+				}
+			}
+		}
 		name := n.Name
 		if !n.Solo {
 			seen[n.Name]++
@@ -54,6 +64,16 @@ func Groups(room *rooms.Room) []Group {
 		out = append(out, Group{Party: p, Naming: n, Name: name})
 	}
 	return out
+}
+
+// named reports whether any member already carries its group's name.
+func named(members []mobparty.MobSummary) bool {
+	for _, m := range members {
+		if m.GroupName != "" {
+			return true
+		}
+	}
+	return false
 }
 
 // GroupOf is the group holding instanceId.

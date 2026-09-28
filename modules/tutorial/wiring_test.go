@@ -548,7 +548,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Phase 32c: a member's name doesn't start the fight; the squad's does.
 	assert.Contains(t, run(aria, "attack", "archer"), "Type attack squad", "a member is not how a fight starts")
 	require.Nil(t, aria.Character.Aggro)
-	assert.Contains(t, run(aria, "attack", "squad"), "You prepare to fight the straw squad!")
+	assert.Contains(t, run(aria, "attack", "squad"), "go for the straw squad.")
 	require.NotNil(t, aria.Character.Aggro)
 	assert.Equal(t, "straw footman", squad[aria.Character.Aggro.MobInstanceId], "her first aim is a footman she can reach")
 
