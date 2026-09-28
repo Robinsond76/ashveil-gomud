@@ -75,3 +75,11 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 - **Companions' own names:** `Companion.Name`/`Description` (blank for authored companions). Always name a companion with `nameOf(c, fallback)`, never `templateName(c.MobTemplateID, …)`. `Runtime.Spawn` takes the `domain.Identity`, and the live mob wears it on every spawn, restore, and resurrection, so combat text and the room follow. Several companions may share a template (generated recruits use 80–84): look companions up by ID or name, never by template.
 - The module's `math/rand` source (`m.rng`) is game-loop only, like the rest of the module.
 - `wiring_roster_test.go` also calls `plugins.Load`, with the same `SnapshotLoadStateForTest` guard; it sets the real round with `util.SetRoundCount` and restores it.
+
+## Phase 32f: company logistics (`members.go`, `inventory.go`, `provision.go`)
+
+- `CompanionCarry` (`company.CarryProvider`) is each companion `CompanionGearGrams` weighs, with its Strength (live only) and its largest pack; `modules/encumbrance` turns it into capacity, and `company.CountedMembers` (1 + its length) caps the herd in `modules/mount`.
+- `CompanionsWithLeader` (`company.PresenceProvider`, 32f review) is the living companions out, still the company's, and in the leader's room (`Runtime.WithLeader`). The riding pace (`company.WalkingMembers`) and meals count only these.
+- `company inventory` (`inventory.go`) lists the load, every member's worn and carried items (live gear when out, as `company gear`), the herd, and the cargo. Name companions with `nameOf`.
+- `company eat`/`drink`/`meal` (`provision.go`): `planMeal` is pure; `mealView` feeds the leader and the companions present, from the cargo, then the member's own pack, then the leader's. Each step spends the item first and only then provisions (so food that can't be spent feeds no one; a crash in between loses one use). Only meal buffs (17, 18, 34) qualify.
+- `useCompanionItem` takes a use from a live companion (then refreshes its record in memory, as a gear change does) or from its record (saved at once, rolled back on a failed save; a companion not out has no other seam).
