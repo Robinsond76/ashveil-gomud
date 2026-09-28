@@ -25,12 +25,14 @@ func TestLogisticsHelpTopics(t *testing.T) {
 	assert.Contains(t, company, "company-meal")
 
 	want := map[string][]string{
-		"cargo":             {"20 kg each", "satchel adds 5 kg", "pack horse carries 40 kg", "keeps its uses"},
+		"cargo":             {"pet's", "20 kg each", "satchel adds 5 kg", "pack horse carries 40 kg", "keeps its uses"},
 		"mount":             {"one riding horse and one pack horse", "120 gold", "mount saddle [horse] [saddle]", "Dunmar West Gate"},
 		"encumbrance":       {"one carrying limit", "never blocked"},
 		"inventory":         {"company inventory", "no limit on how many"},
 		"get":               {"can't pick anything more up"},
 		"buy":               {"keeps it and your gold"},
+		"give":              {"can't carry any more", "own companion"},
+		"market":            {"refused before any gold"},
 		"eat":               {"company eat"},
 		"drink":             {"company drink"},
 		"set-prompt":        {"Company capacity in kg"},

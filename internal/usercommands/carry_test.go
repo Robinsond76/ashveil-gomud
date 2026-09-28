@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"strings"
 	"testing"
 
 	"maps"
@@ -260,4 +261,53 @@ func TestGiveToOwnCompanionAtCapacity(t *testing.T) {
 	assert.NotContains(t, out, "can't carry any more")
 	assert.False(t, holds(giver, carryAnvil))
 	require.Len(t, tamsin.Character.Items, 1, "Tamsin carries it now")
+}
+
+// TestGetPackWhenFull (32f review nit): a pack picked up counts the room it
+// makes, so a full company can still take on a satchel that pays for itself.
+func TestGetPackWhenFull(t *testing.T) {
+	setupCarry(t, map[int]int{7: 3000})
+	const satchel = 988303
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: satchel, Name: "satchel", NameSimple: "satchel", Type: items.Object, Weight: 600, CarryBonus: 5000})
+	t.Cleanup(func() { items.RemoveTestItemSpec(satchel) })
+	room := testRoom()
+	user := carrier(t, 7, "Dain", room)
+	user.Character.Items = []items.Item{newItem(carryPebble), newItem(carryPebble)}
+	for len(user.Character.Items) < 30 {
+		user.Character.Items = append(user.Character.Items, newItem(carryPebble))
+	} // 3.0 kg: full
+
+	room.AddItem(newItem(satchel), false)
+	_, err := Get("satchel", user, room, 0)
+	require.NoError(t, err)
+	assert.True(t, holds(user, satchel), "it makes more room than it weighs")
+}
+
+// TestGetAllSaysOnceWhenFull (32f review nit): `get all` takes what fits
+// and names the rest in one line.
+func TestGetAllSaysOnceWhenFull(t *testing.T) {
+	setupCarry(t, map[int]int{7: 3000})
+	room := testRoom()
+	user := carrier(t, 7, "Dain", room)
+	room.AddItem(newItem(carryAnvil), false)
+	room.AddItem(newItem(carryAnvil), false)
+	room.AddItem(newItem(carryPebble), false)
+
+	out := captureUserText(t, func() {
+		_, err := Get("all", user, room, 0)
+		require.NoError(t, err)
+	})
+	assert.True(t, holds(user, carryPebble))
+	assert.Equal(t, 1, strings.Count(out, "can't carry any more"), out)
+	assert.Contains(t, out, "You leave 2 things behind")
+	assert.NotContains(t, out, "too much for your company to carry")
+}
+
+// TestPeepShowsWeight (32f review nit): peep weighs what someone carries.
+func TestPeepShowsWeight(t *testing.T) {
+	setupCarry(t, map[int]int{})
+	c := characters.New()
+	c.Items = []items.Item{newItem(carryAnvil), newItem(carryPebble)}
+	out := buildPeepInventoryPanel(c, []string{"anvil", "pebble"})
+	assert.Contains(t, out, "Weight:   4.1 kg")
 }

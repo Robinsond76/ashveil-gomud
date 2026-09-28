@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
-	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/weather"
 	"github.com/stretchr/testify/assert"

@@ -29,9 +29,17 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if len(room.Items) > 0 {
 			iCopies := append([]items.Item{}, room.Items...)
 
+			left := 0
 			for _, item := range iCopies {
+				// One line for everything left behind, not one each
+				// (32f review).
+				if !fits(user, item) {
+					left++
+					continue
+				}
 				Get(item.Name(), user, room, flags)
 			}
+			leftBehind(user, left)
 		}
 
 		return true, nil
@@ -162,6 +170,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		// "get all <corpse>"
 		if rest == "all" {
 			tookSomething := false
+			left := 0
 
 			if corpseRef.Gold > 0 {
 				goldAmt := corpseRef.Gold
@@ -181,7 +190,8 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			// Backpack items on corpse
 			allCorpseItems := append([]items.Item{}, corpseRef.Items...)
 			for _, item := range allCorpseItems {
-				if tooHeavy(user, item) {
+				if !fits(user, item) {
+					left++
 					continue
 				}
 				if user.Character.StoreItem(item) {
@@ -202,7 +212,8 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			// Worn items on corpse character
 			allWorn := corpseRef.Character.GetAllWornItems()
 			for _, item := range allWorn {
-				if tooHeavy(user, item) {
+				if !fits(user, item) {
+					left++
 					continue
 				}
 				if user.Character.StoreItem(item) {
@@ -220,7 +231,8 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				}
 			}
 
-			if !tookSomething {
+			leftBehind(user, left)
+			if !tookSomething && left == 0 {
 				user.SendText(fmt.Sprintf(`There is nothing to take from the %s.`, corpseName))
 			}
 

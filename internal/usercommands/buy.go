@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -328,7 +329,7 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 	// difference counts.
 	if matchedShopItem.ItemId > 0 {
 		added := items.New(matchedShopItem.ItemId)
-		grams := added.Weight()
+		grams := company.AddedGrams(user.Character.Items, added)
 		if matchedShopItem.TradeItemId > 0 {
 			traded := items.New(matchedShopItem.TradeItemId)
 			grams -= traded.Weight()

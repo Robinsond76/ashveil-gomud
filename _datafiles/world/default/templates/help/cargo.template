@@ -1,9 +1,9 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">cargo</ansi>
 
 Your company shares one pool of carrying capacity. Everything counts
-toward it by its actual weight: what you carry and wear, what every
-living companion with you carries and wears, and whatever sits in the
-company's shared cargo.
+toward it by its actual weight: what you carry and wear, your pet's
+pouch, what every living companion carries and wears, and whatever sits
+in the company's shared cargo.
 
 <ansi fg="yellow-bold">How much you can carry</ansi>
 

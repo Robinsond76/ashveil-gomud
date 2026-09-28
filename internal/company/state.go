@@ -78,6 +78,14 @@ func BestPackGrams(carried []items.Item) int {
 	return grams
 }
 
+// AddedGrams is what taking itm into carried adds to a company's load net
+// of the room it makes (32f review): its weight less any capacity it adds
+// by becoming the carrier's largest pack. It can be negative.
+func AddedGrams(carried []items.Item, itm items.Item) int {
+	gain := itm.CarryBonusGrams() - BestPackGrams(carried)
+	return itm.Weight() - max(0, gain)
+}
+
 // BestPack is the carried pack that counts, and its bonus; a zero item
 // and 0 when there is none.
 func BestPack(carried []items.Item) (items.Item, int) {
