@@ -116,7 +116,7 @@ func TestAuthoredWeightsKept(t *testing.T) {
 	}
 }
 
-// Each archetype's starter kit is a light pack: 1–12 kg, under half of a
+// Each archetype's starter kit is a light pack: 1–12 kg, under 40% of a
 // fresh member's own share (the base plus the kit's best pack; Strength
 // left out) and so well below the first load band, 75% (Phase 32f).
 func TestStarterKitsAreLight(t *testing.T) {
@@ -143,7 +143,7 @@ func TestStarterKitsAreLight(t *testing.T) {
 		assert.GreaterOrEqual(t, total, 1000, a.ArchetypeId)
 		assert.LessOrEqual(t, total, 12000, a.ArchetypeId)
 		assert.Positive(t, pack, "%s: the kit has a pack", a.ArchetypeId)
-		assert.Less(t, float64(total)/float64(base+pack), 0.5, "%s: well below the first band", a.ArchetypeId)
+		assert.Less(t, float64(total)/float64(base+pack), 0.4, "%s: under 40%% of their own share, as the design says", a.ArchetypeId)
 	}
 }
 

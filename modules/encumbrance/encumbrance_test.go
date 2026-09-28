@@ -344,3 +344,20 @@ func TestPersonalLoadCountsThePetsPouch(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, 500, load.PersonalGrams)
 }
+
+// TestCargoMovesAtCapacity (32f review test gap): moving a thing between
+// the pack and the cargo keeps it in the company, so an overloaded one may.
+func TestCargoMovesAtCapacity(t *testing.T) {
+	user := testUser(t, 7)
+	user.Character.Items = []items.Item{testItem(rockId)}
+	module := newTestModule(&fakeStore{}, user)
+	module.cargo[7] = encumbrance.Cargo{LeaderUserID: 7, Stacks: []encumbrance.CargoStack{{ItemId: rockId, Count: 40}}}
+	load, ok := module.CurrentLoad(7)
+	require.True(t, ok)
+	require.Greater(t, load.TotalGrams(), load.CapacityGrams, "overloaded")
+
+	assert.Contains(t, module.take(user, "rock"), "take")
+	assert.Len(t, user.Character.Items, 2)
+	assert.Contains(t, module.put(user, "rock"), "stow")
+	assert.Len(t, user.Character.Items, 1)
+}

@@ -6,9 +6,11 @@ import (
 	"maps"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -222,4 +224,40 @@ func TestGiveToFullPlayersPetRefused(t *testing.T) {
 	assert.Contains(t, out, "can't carry any more")
 	assert.True(t, holds(giver, carryAnvil), "the giver keeps it")
 	assert.Empty(t, owner.Character.Pet.Items)
+}
+
+type ownCompanion struct{}
+
+func (ownCompanion) FormationFor(int) (company.Formation, bool) { return company.Formation{}, false }
+func (ownCompanion) InstanceFor(int, int) (int, bool)           { return 988399, true }
+func (ownCompanion) LeaderAndKeyForInstance(instanceId int) (int, company.MemberKey, bool) {
+	if instanceId == 988399 {
+		return 7, company.MemberKey("companion:1"), true
+	}
+	return 0, "", false
+}
+
+// TestGiveToOwnCompanionAtCapacity (32f review test gap): handing a thing
+// to your own companion keeps it in the company, so a full company may.
+func TestGiveToOwnCompanionAtCapacity(t *testing.T) {
+	setupCarry(t, map[int]int{7: 4000}) // the anvil alone fills it
+	company.SetFormationProvider(ownCompanion{})
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+	room := testRoom()
+	giver := carrier(t, 7, "Dain", room)
+	giver.Character.Items = []items.Item{newItem(carryAnvil)}
+	tamsin := &mobs.Mob{InstanceId: 988399}
+	tamsin.Character.Name = "Tamsin"
+	tamsin.Character.RoomId = room.RoomId
+	mobs.SetTestInstance(tamsin)
+	t.Cleanup(func() { mobs.RemoveTestInstance(988399) })
+	room.AddMob(988399)
+
+	out := captureUserText(t, func() {
+		_, err := Give("anvil tamsin", giver, room, 0)
+		require.NoError(t, err)
+	})
+	assert.NotContains(t, out, "can't carry any more")
+	assert.False(t, holds(giver, carryAnvil))
+	require.Len(t, tamsin.Character.Items, 1, "Tamsin carries it now")
 }

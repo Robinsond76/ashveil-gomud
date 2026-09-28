@@ -1,11 +1,14 @@
 package company
 
 import (
+	"strings"
 	"testing"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
@@ -192,9 +195,12 @@ func TestMealFeedsOnlyThosePresent(t *testing.T) {
 	useCargo(t, &fakeCargo{stacks: []encumbrance.CargoStack{{ItemId: 989201, Count: 5}}})
 	spec(t, items.ItemSpec{ItemId: 989201, Name: "jerky", Subtype: items.Edible, Nutrition: 90})
 
-	out := module.mealView(user, nil, mealEat)
+	messages := captureCompanyMessages(t)
+	out := module.mealView(user, rooms.NewEmptyRoom(), mealEat)
 	assert.ElementsMatch(t, []string{"", "#1"}, prov.fed, "the leader and #1, not #2")
 	assert.NotContains(t, out, "Oswin")
+	events.ProcessEvents()
+	assert.Contains(t, strings.Join(*messages, "\n"), "Dain</ansi>'s company eats.", "the room sees one line")
 }
 
 // TestMealSpendsBeforeFeeding (32f review finding 7): food that can't be
