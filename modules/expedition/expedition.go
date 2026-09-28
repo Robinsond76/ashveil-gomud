@@ -303,6 +303,7 @@ func init() {
 	m.plug.AddUserCommand("travel", m.userCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	events.RegisterListener(travelTimerDue{}, onTravelTimerDue)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {

@@ -208,6 +208,7 @@ func init() {
 	})
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
+	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	archetypes.SetProvider(m)
 }
 

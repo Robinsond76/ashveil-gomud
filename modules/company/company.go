@@ -170,6 +170,7 @@ func init() {
 	events.RegisterListener(events.MobDeath{}, m.onMobDeath)
 	events.RegisterListener(events.ItemOwnership{}, m.onItemOwnership)
 	events.RegisterListener(events.PlayerDespawn{}, m.onPlayerDespawn)
+	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	module = m
 	survival.SetRosterProvider(m)

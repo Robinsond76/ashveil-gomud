@@ -247,6 +247,7 @@ func init() {
 	m.store = pluginStore{plug: m.plug}
 	m.plug.AddUserCommand("strain", m.userCommand, true, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
+	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
 			mudlog.Error("walking: save", "error", err)
