@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -119,6 +120,10 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 
 	t.Cleanup(plugins.SnapshotLoadStateForTest())
 	plugins.Load(dataDir)
+	// Other tests here register their own module as the provider; this
+	// one needs the registered module, as the server has it.
+	mount.SetProvider(registered)
+	t.Cleanup(func() { mount.SetProvider(registered) })
 
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
