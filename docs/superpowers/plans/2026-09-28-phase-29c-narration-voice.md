@@ -233,20 +233,27 @@ death), so it can follow a closing line.
   and a data test in `internal/spells` that no shipped spell script string
   literal contains `!`
 
+**As built:** `GetCombatName(startOfLine)` (a capital when the name opens a
+line) and `ChantRoundsLeft()` (rounds before release, counting this one,
+so each chant line is accurate: onCast prints `waitrounds + 1`). Spells
+apply their effect first and print what `AddHealth` actually changed. The
+fizzle lines in `NewRound_DoCombat.go` lose `***` and `!` too. A player's
+XP line ("You gained N experience points!") is GoMud's and out of scope.
+
 **Interfaces:**
 - Produces: JS `actor.GetCombatName()` → coloured name with its article
   (`the <ansi fg="mobname">bandit captain</ansi>`; a user's own name bare).
 
-- [ ] **Step 1: Failing tests.** In the brawl world: Aria casts `mm` at a
+- [x] **Step 1: Failing tests.** In the brawl world: Aria casts `mm` at a
   bandit → her line ends `(N damage)` with N = health lost and she saw a
   `(chanting: Magic Missile, 1 round)` line; Oswin's `healall` (cast
   through the script entry the battles tests use) prints one cast line and
   one indented line of `Name (N healed)` entries joined by ` · `.
-- [ ] **Step 2:** FAIL.
-- [ ] **Step 3:** implement per design §7; the round counts are constants
+- [x] **Step 2:** FAIL.
+- [x] **Step 3:** implement per design §7; the round counts are constants
   per script matching each spell's yaml `waitrounds`.
-- [ ] **Step 4:** PASS; `make js-lint` if it runs on this host.
-- [ ] **Step 5: Commit** `content(spells): chanting and release in the narration voice (29c)`.
+- [x] **Step 4:** PASS; `make js-lint` if it runs on this host.
+- [x] **Step 5: Commit** `content(spells): chanting and release in the narration voice (29c)`.
 
 ### Task 8: Player help and tutorial
 

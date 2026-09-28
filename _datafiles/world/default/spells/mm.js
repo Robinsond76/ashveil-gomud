@@ -3,6 +3,14 @@ HARM_DICE_QTY = 1;
 HARM_DICE_SIDES = 6;
 HARM_DICE_MOD = 2;
 
+SPELL_NAME = 'Magic Missile';
+WAIT_ROUNDS = 1; // mm.yaml's waitrounds
+
+// Phase 29c narration voice: mechanics in lowercase parentheses at the end.
+function chanting(rounds) {
+    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
+}
+
 /**
  * Called when the casting is initialized.
  * @param {ActorObject} sourceActor - The actor casting the spell.
@@ -11,8 +19,9 @@ HARM_DICE_MOD = 2;
  */
 function onCast(sourceActor, targetActor) {
 
-    SendUserMessage(sourceActor.UserId(), 'You begin to chant softly.');
-    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCharacterName(true)+' begins to chant softly.', sourceActor.UserId());
+    var rounds = chanting(WAIT_ROUNDS + 1);
+    SendUserMessage(sourceActor.UserId(), 'You begin to chant, and a point of cold light gathers at your fingertips.' + rounds);
+    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCombatName(true) + ' begins to chant, and a point of cold light gathers in the air.' + rounds, sourceActor.UserId());
     return true;
 }
 
@@ -24,8 +33,9 @@ function onCast(sourceActor, targetActor) {
  */
 function onWait(sourceActor, targetActor) {
 
-    SendUserMessage(sourceActor.UserId(), 'You continue chanting, as a swirling light gathers...');
-    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCharacterName(true)+' continues chanting, as a swirling light gathers...', sourceActor.UserId());
+    var rounds = chanting(sourceActor.ChantRoundsLeft());
+    SendUserMessage(sourceActor.UserId(), 'You keep chanting. The light brightens and begins to turn.' + rounds);
+    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCombatName(true) + ' keeps chanting. The light brightens and begins to turn.' + rounds, sourceActor.UserId());
 }
 
 /**
@@ -36,27 +46,15 @@ function onWait(sourceActor, targetActor) {
  */
 function onMagic(sourceActor, targetActor) {
 
-    roomId = sourceActor.GetRoomId();
+    var roomId = sourceActor.GetRoomId();
+    var sourceUserId = sourceActor.UserId();
+    var targetUserId = targetActor.UserId();
 
-    harmAmt = UtilDiceRoll(HARM_DICE_QTY, HARM_DICE_SIDES) + HARM_DICE_MOD;
-    harmAmtStr = String(harmAmt);
+    // Apply the harm first, and report what it took.
+    var dealt = -targetActor.AddHealth(-(UtilDiceRoll(HARM_DICE_QTY, HARM_DICE_SIDES) + HARM_DICE_MOD));
+    var suffix = ' (' + dealt + ' damage)';
 
-    sourceUserId = sourceActor.UserId();
-    sourceName = sourceActor.GetCharacterName(true);
-
-    targetUserId = targetActor.UserId();
-    targetName = targetActor.GetCharacterName(true);
-
-    // Tell the caster about the action
-    SendUserMessage(sourceUserId, 'You let loose a magical projectile at '+targetName+', doing <ansi fg="damage">'+harmAmtStr+' hitpoints</ansi> of damage!');
-
-    // Tell the room about the heal, except the source and target
-    SendRoomMessage(roomId, sourceName+' lets loose a magical projectile at '+targetName+' hurting them!', sourceUserId, targetUserId);
-
-    // Tell the target about the heal
-    SendUserMessage(targetUserId, sourceName+' lets loose a magical projectile at you, doing <ansi fg="damage">'+harmAmtStr+' hitpoints</ansi> of damage!');
-
-    // Apply the heal to the target
-    targetActor.AddHealth(harmAmt * -1);
-    
+    SendUserMessage(sourceUserId, 'You release the light, and it streaks into ' + targetActor.GetCombatName(false) + '.' + suffix);
+    SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' releases a streak of cold light into ' + targetActor.GetCombatName(false) + '.' + suffix, sourceUserId, targetUserId);
+    SendUserMessage(targetUserId, sourceActor.GetCombatName(true) + ' releases a streak of cold light, and it strikes you.' + suffix);
 }

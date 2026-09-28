@@ -2,6 +2,14 @@
 HEAL_DICE_QTY = 2;
 HEAL_DICE_SIDES = 3;
 
+SPELL_NAME = 'Minor Heal';
+WAIT_ROUNDS = 2; // heal.yaml's waitrounds
+
+// Phase 29c narration voice: mechanics in lowercase parentheses at the end.
+function chanting(rounds) {
+    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
+}
+
 /**
  * Called when the casting is initialized.
  * @param {ActorObject} sourceActor - The actor casting the spell.
@@ -10,8 +18,9 @@ HEAL_DICE_SIDES = 3;
  */
 function onCast(sourceActor, targetActor) {
 
-    SendUserMessage(sourceActor.UserId(), 'You begin to chant softly.');
-    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCharacterName(true)+' begins to chant softly.', sourceActor.UserId());
+    var rounds = chanting(WAIT_ROUNDS + 1);
+    SendUserMessage(sourceActor.UserId(), 'You begin a low prayer, and warmth gathers in your palms.' + rounds);
+    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCombatName(true) + ' begins a low prayer.' + rounds, sourceActor.UserId());
     return true;
 }
 
@@ -23,8 +32,9 @@ function onCast(sourceActor, targetActor) {
  */
 function onWait(sourceActor, targetActor) {
 
-    SendUserMessage(sourceActor.UserId(), 'You continue chanting...');
-    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCharacterName(true)+' continues chanting...', sourceActor.UserId());
+    var rounds = chanting(sourceActor.ChantRoundsLeft());
+    SendUserMessage(sourceActor.UserId(), 'You keep praying. Your hands begin to glow.' + rounds);
+    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCombatName(true) + ' keeps praying, and a soft glow grows in their hands.' + rounds, sourceActor.UserId());
 }
 
 /**
@@ -35,39 +45,21 @@ function onWait(sourceActor, targetActor) {
  */
 function onMagic(sourceActor, targetActor) {
 
-    roomId = sourceActor.GetRoomId();
+    var roomId = sourceActor.GetRoomId();
+    var sourceUserId = sourceActor.UserId();
+    var targetUserId = targetActor.UserId();
 
-    healAmt = UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES);
-    healAmtStr = String(healAmt);
+    // Apply the heal first, and report what it mended.
+    var healed = targetActor.AddHealth(UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES));
+    var suffix = ' (' + healed + ' healed)';
 
-    sourceUserId = sourceActor.UserId();
-    sourceName = sourceActor.GetCharacterName(true);
-
-    targetUserId = targetActor.UserId();
-    targetName = targetActor.GetCharacterName(true);
-
-    if ( sourceActor.UserId() != targetActor.UserId() ) {
-
-        // Tell the caster about the action
-        SendUserMessage(sourceUserId, 'You stop chanting and touch '+targetName+' with glowing hands, healing <ansi fg="healing">'+healAmtStr+' hitpoints</ansi>.');
-
-        // Tell the room about the heal, except the source and target
-        SendRoomMessage(roomId, sourceName+' stops chanting and touches '+targetName+' with glowing hands, providing health.', sourceUserId, targetUserId);
-
-        // Tell the target about the heal
-        SendUserMessage(targetUserId, sourceName+' stops chanting and touches you with glowing hands, healing <ansi fg="healing">'+healAmtStr+' hitpoints</ansi>.');
-
-    } else {
-
-        // Tell the cast they did it to themselves
-        SendUserMessage(sourceUserId, 'You stop chanting and embrace yourself with glowing hands, healing <ansi fg="healing">'+healAmtStr+' hitpoints</ansi>.');
-
-        // Tell the room about the heal, except the source and target
-        SendRoomMessage(roomId, sourceName+' stops chanting and embraces themselves with glowing hands, providing health.', sourceUserId, targetUserId);
-
+    if (sourceUserId != 0 && sourceUserId == targetUserId) {
+        SendUserMessage(sourceUserId, 'You press your glowing hands to your own wounds, and they close a little.' + suffix);
+        SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' presses glowing hands to their own wounds.' + suffix, sourceUserId);
+        return;
     }
 
-    // Apply the heal to the target
-    targetActor.AddHealth(healAmt);
-    
+    SendUserMessage(sourceUserId, 'You lay your glowing hands on ' + targetActor.GetCombatName(false) + ', and the wounds close a little.' + suffix);
+    SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' lays glowing hands on ' + targetActor.GetCombatName(false) + '.' + suffix, sourceUserId, targetUserId);
+    SendUserMessage(targetUserId, sourceActor.GetCombatName(true) + ' lays glowing hands on you, and your wounds close a little.' + suffix);
 }

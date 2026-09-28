@@ -237,8 +237,8 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			if roll >= successChance {
 
 				// fail
-				user.SendText(fmt.Sprintf(`<ansi fg="spell-text"><ansi fg="magenta">***</ansi> Your spell fizzles! <ansi fg="magenta">***</ansi> (Rolled %d on %d%% chance of success)</ansi>`, roll, successChance))
-				uRoom.SendText(fmt.Sprintf(`<ansi fg="spell-text"><ansi fg="username">%s</ansi> tries to cast a spell but it <ansi fg="magenta">fizzles</ansi>!</ansi>`, user.Character.Name), userId)
+				user.SendText(fmt.Sprintf(`<ansi fg="spell-text">The words slip away from you, and your spell <ansi fg="magenta">fizzles</ansi>. (rolled %d against a %d%% chance)</ansi>`, roll, successChance))
+				uRoom.SendText(fmt.Sprintf(`<ansi fg="spell-text"><ansi fg="username">%s</ansi> falters, and the spell <ansi fg="magenta">fizzles</ansi>.</ansi>`, user.Character.Name), userId)
 				emitCast(combatstream.CastComplete, userRef(user), user.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeFizzled, roomId)
 				user.Character.Aggro = nil
 
@@ -778,7 +778,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			if util.RollDice(1, 100) >= successChance {
 
 				// fail
-				mobRoom.SendText(fmt.Sprintf(`<ansi fg="mobnamme">%s</ansi> tries to cast a spell but it <ansi fg="magenta">fizzles</ansi>!`, mob.Character.Name))
+				mobRoom.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s falters, and the spell <ansi fg="magenta">fizzles</ansi>.`, util.Article(mobTag(mob.Character.Name)))))
 				emitCast(combatstream.CastComplete, mobRef(mob), mob.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeFizzled, mob.Character.RoomId)
 				mob.Character.Aggro = nil
 
