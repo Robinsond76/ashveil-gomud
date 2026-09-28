@@ -548,6 +548,13 @@ func (m *TutorialModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 
 // --- the practice fight (27c) ---
 
+// SquadName and SquadDesc name the practice squad as a group (Phase 32c):
+// players scout it and attack it by name ("attack squad").
+const (
+	SquadName = `the straw squad`
+	SquadDesc = `Straw soldiers on wooden frames, set out in ranks for practice. They can't hurt anyone.`
+)
+
 // raiseSquad stands a practice squad up in the player's copy of the Combat
 // room, unless the whole of it still stands there. A squad in an older
 // copy, or one missing a foe that wasn't beaten, is removed first.
@@ -567,6 +574,9 @@ func (m *TutorialModule) raiseSquad(user *users.UserRecord) {
 		if id, ok := m.spawnFoe(mobID, room); ok {
 			f.standing[id] = true
 			f.raised++
+			if mob := mobs.GetInstance(id); mob != nil {
+				mob.GroupName, mob.GroupDesc = SquadName, SquadDesc // Phase 32c
+			}
 		}
 	}
 	m.fights[user.UserId] = f

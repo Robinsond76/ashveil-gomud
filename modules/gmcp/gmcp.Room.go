@@ -2,6 +2,7 @@ package gmcp
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"strconv"
 	"strings"
 
@@ -363,6 +364,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 	////////////////////////////////////////////////
 	if all || g.wantsGMCPPayload(`Room.Info.Contents.Npcs`, gmcpModule) {
 		payload.Contents.Npcs = []GMCPRoomModule_Payload_Contents_Character{}
+		groupOf := npcGroups(room)
 		for _, mIId := range room.GetMobs() {
 			mob := mobs.GetInstance(mIId)
 			if mob == nil {
@@ -378,6 +380,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 				Name:       mob.Character.Name,
 				Adjectives: mob.Character.GetAdjectives(),
 				Aggro:      mob.Character.Aggro != nil,
+				Group:      groupOf[mIId],
 			}
 
 			if len(mob.QuestFlags) > 0 {
@@ -583,6 +586,7 @@ type GMCPRoomModule_Payload_Contents_Character struct {
 	Adjectives []string `json:"adjectives"`
 	Aggro      bool     `json:"aggro"`
 	QuestFlag  bool     `json:"quest_flag"`
+	Group      string   `json:"group,omitempty"` // Ashveil Phase 32c: the enemy group an NPC fights in, "" for a lone mob
 }
 
 type GMCPRoomModule_Payload_Contents_Item struct {
@@ -597,4 +601,19 @@ type GMCPRoomModule_Payload_Contents_Container struct {
 	HasKey       bool   `json:"haskey"`
 	HasPickCombo bool   `json:"haspickcombo"`
 	Usable       bool   `json:"usable"`
+}
+
+// npcGroups maps each NPC in an enemy group of more than one to its
+// group's name (Ashveil Phase 32c), as the room lists it.
+func npcGroups(room *rooms.Room) map[int]string {
+	out := map[int]string{}
+	for _, g := range enemyparty.Groups(room) {
+		if g.Solo() {
+			continue
+		}
+		for _, id := range g.Party.Members {
+			out[id] = g.Name
+		}
+	}
+	return out
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -499,11 +500,17 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, [2]int{2, 1}, [2]int{row, col})
 
-	// An attack at the archer is caught by a footman in front: Aria's own
-	// blows land on a footman, never the archer.
-	run(aria, "attack", "archer")
+	// Phase 32c: a member's name doesn't start the fight; the squad's does.
+	assert.Contains(t, run(aria, "attack", "archer"), "Type attack squad", "a member is not how a fight starts")
+	require.Nil(t, aria.Character.Aggro)
+	assert.Contains(t, run(aria, "attack", "squad"), "You prepare to fight the straw squad!")
 	require.NotNil(t, aria.Character.Aggro)
-	require.Equal(t, archer, aria.Character.Aggro.MobInstanceId)
+	assert.Equal(t, "straw footman", squad[aria.Character.Aggro.MobInstanceId], "her first aim is a footman she can reach")
+
+	// An attack at the archer (as a strategy might aim, 32d) is caught by
+	// a footman in front: Aria's own blows land on a footman, never the
+	// archer.
+	aria.Character.SetAggro(0, archer, characters.DefaultAttack)
 	var r uint64
 	// Attack messages vary ("You hit", "Your fists connect", ...). A line
 	// of Aria's own naming a foe, and not a miss, is a blow that landed; any
@@ -537,7 +544,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	// Re-targeting (11b): a foe Aria is aiming at falls to another blow
 	// (a companion's, here beaten directly); next round she turns to a
 	// standing foe she can reach, without another command.
-	run(aria, "attack", "footman")
+	assert.Contains(t, run(aria, "attack", "footman"), "The battle is under way", "nothing typed changes a battle (32c)")
 	aimed := aria.Character.Aggro.MobInstanceId
 	require.NotEqual(t, archer, aimed)
 	beatenMob := mobs.GetInstance(aimed)
@@ -552,19 +559,9 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.NotNil(t, mobs.GetInstance(aria.Character.Aggro.MobInstanceId), "a standing one")
 	assert.Contains(t, squad, aria.Character.Aggro.MobInstanceId)
 
-	// Fight on until the squad is beaten, attacking again whenever a foe
-	// falls to Aria's own blow (a killing blow ends the attacker's aim;
-	// others aiming at it are re-targeted, 11b).
+	// Fight on until the squad is beaten: the battle plays out on its own
+	// (32c), Aria turning on the next foe whenever hers falls.
 	for ; r < 5000 && stageOf(aria) == StageCombat; r++ {
-		if aria.Character.Aggro == nil {
-			next := "archer"
-			for id, name := range squad {
-				if mobs.GetInstance(id) != nil && name == "straw footman" {
-					next = "footman"
-				}
-			}
-			run(aria, "attack", next)
-		}
 		fightRound(r)
 	}
 	require.Equal(t, StageAlignment, stageOf(aria), "the squad is beaten")
