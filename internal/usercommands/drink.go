@@ -36,7 +36,7 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			if err != nil {
 				return true, err
 			}
-			suffix = provisionSuffix(result, selector != "")
+			suffix = drinkSuffix(result, selector != "")
 		}
 
 		user.Character.CancelBuffsWithFlag("hidden")
@@ -53,4 +53,18 @@ func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	}
 
 	return true, nil
+}
+
+// drinkSuffix is provisionSuffix, but a drink for yourself that crosses no
+// band still says where your thirst stands (Phase 32a: the status line is
+// the whole message, with no buff flourish).
+func drinkSuffix(result survival.ProvisionResult, explicit bool) string {
+	// "drink waterskin me" is still a drink for yourself.
+	if result.Member == survival.LeaderMemberKey {
+		explicit = false
+	}
+	if suffix := provisionSuffix(result, explicit); suffix != "" {
+		return suffix
+	}
+	return fmt.Sprintf(" Thirst: %s.", survival.ThirstLabel(result.Needs.Thirst))
 }

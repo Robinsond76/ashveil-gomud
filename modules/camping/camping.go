@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -298,10 +299,11 @@ type CampingModule struct {
 
 	mu sync.Mutex
 
-	// litRooms is a snapshot of rooms with a lit campfire, read by the
-	// rooms light-fixture query under litMu only (lock order: mu, then litMu).
-	litMu    sync.RWMutex
-	litRooms map[int]bool
+	// roomCamps is a snapshot of the camps in each room (whose, and
+	// whether lit), read by the rooms light-fixture query and look under
+	// litMu only (lock order: mu, then litMu).
+	litMu     sync.RWMutex
+	roomCamps map[int][]camping.RoomCamp
 }
 
 var (
@@ -347,6 +349,8 @@ func init() {
 	camping.SetAbandonProvider(m)
 	camping.SetCampAbandoner(m)
 	rooms.RegisterLightFixture(m.RoomHasLitFire)
+	// Phase 32a: look shows the camps in a room.
+	camping.SetRoomCampsReader(m.RoomCamps)
 	// A lit campfire also warms its room (Phase 15).
 	climate.RegisterHeatSource(m.RoomHasLitFire)
 }
@@ -358,21 +362,36 @@ func init() {
 func (m *CampingModule) RoomHasLitFire(roomID int) bool {
 	m.litMu.RLock()
 	defer m.litMu.RUnlock()
-	return m.litRooms[roomID]
+	for _, camp := range m.roomCamps[roomID] {
+		if camp.FireLit {
+			return true
+		}
+	}
+	return false
 }
 
-// refreshLitRoomsLocked rebuilds the lit-campfire snapshot from m.camps.
+// RoomCamps returns a copy of the camps pitched in roomID, leader order,
+// from the same snapshot as RoomHasLitFire, so look never waits on m.mu
+// (Phase 32a).
+func (m *CampingModule) RoomCamps(roomID int) []camping.RoomCamp {
+	m.litMu.RLock()
+	defer m.litMu.RUnlock()
+	return slices.Clone(m.roomCamps[roomID])
+}
+
+// refreshLitRoomsLocked rebuilds the room-camps snapshot from m.camps.
 // Callers hold m.mu; it is deferred after every m.mu section so the snapshot
 // always matches the final (possibly reverted) camp state.
 func (m *CampingModule) refreshLitRoomsLocked() {
-	lit := map[int]bool{}
+	byRoom := map[int][]camping.RoomCamp{}
 	for _, camp := range m.camps {
-		if camp.FireLit {
-			lit[camp.RoomID] = true
-		}
+		byRoom[camp.RoomID] = append(byRoom[camp.RoomID], camping.RoomCamp{LeaderUserID: camp.LeaderUserID, FireLit: camp.FireLit})
+	}
+	for _, list := range byRoom {
+		slices.SortFunc(list, func(a, b camping.RoomCamp) int { return a.LeaderUserID - b.LeaderUserID })
 	}
 	m.litMu.Lock()
-	m.litRooms = lit
+	m.roomCamps = byRoom
 	m.litMu.Unlock()
 }
 

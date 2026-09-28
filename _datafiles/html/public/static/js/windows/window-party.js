@@ -165,36 +165,42 @@
             color: var(--t-text-secondary);
         }
 
+        /* Phase 32a: names at the member cards' size and colour, wrapped
+           rather than cut off. */
         .company-formation {
             border-collapse: collapse;
-            font-size: 0.68em;
+            font-size: 0.82em;
+            color: var(--t-text);
             table-layout: fixed;
             width: 100%;
         }
 
         .company-formation caption {
             text-align: left;
-            color: var(--t-text-dim);
+            font-size: 0.88em;
+            color: var(--t-text-secondary);
             padding-bottom: 2px;
         }
 
         .company-formation th {
-            width: 3.2em;
+            width: 3.6em;
+            font-size: 0.88em;
             font-weight: normal;
-            color: var(--t-text-dim);
+            color: var(--t-text-secondary);
             text-align: left;
         }
 
         .company-formation td {
             border: 1px solid var(--t-accent-dim);
-            padding: 2px 3px;
+            padding: 3px 4px;
             text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            line-height: 1.25;
         }
 
         .company-formation td.empty { color: var(--t-text-dim); }
+        .company-formation td.is-leader { color: var(--t-party-leader); font-weight: bold; }
 
         .company-members {
             list-style: none;
@@ -357,7 +363,7 @@
             th.setAttribute('scope', 'row');
             tr.appendChild(th);
             row.forEach(m => {
-                const td = el('td', m ? 'filled' : 'empty', m ? m.name : '\u00b7');
+                const td = el('td', m ? 'filled' + (m.key === 'leader' ? ' is-leader' : '') : 'empty', m ? m.name : '\u00b7');
                 if (m) { td.title = m.name; } else { td.setAttribute('aria-label', 'empty'); }
                 tr.appendChild(td);
             });

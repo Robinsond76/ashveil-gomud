@@ -7,9 +7,8 @@
  */
 function onStart(actor, triggersLeft) {
 
+    // Phase 32a: no flourish; drink's own thirst status line says enough.
     actor.CancelBuffWithFlag("thirsty");
-
-    SendUserMessage(actor.UserId(), 'Ahhhhhh, life giving water. Nectar of the gods!');
 }
 
 /**
