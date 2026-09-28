@@ -360,3 +360,45 @@ func CompanionGearGrams(leaderUserID int) int {
 	}
 	return gp.CompanionGearGrams(leaderUserID)
 }
+
+// RecruiterViewProvider is optionally implemented by the registered
+// FormationProvider (Phase 32a): a recruiter room's notice as look shows it.
+// modules/company runs on the game loop, so call these from the game loop
+// only.
+type RecruiterViewProvider interface {
+	// RecruiterLines is what look shows in roomID for viewerUserID: the
+	// notice and the candidates they can still take. None outside a
+	// recruiter room.
+	RecruiterLines(viewerUserID, roomID int) []string
+	// LookCandidate describes a candidate on roomID's notice matched by
+	// selector. ok is false when nothing there matches.
+	LookCandidate(viewerUserID, roomID int, selector string) (text string, ok bool)
+}
+
+func recruiterViewProvider() (RecruiterViewProvider, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	rp, ok := p.(RecruiterViewProvider)
+	return rp, ok
+}
+
+// RecruiterLines returns roomID's notice lines for viewerUserID, or none
+// without a provider or a recruiter there.
+func RecruiterLines(viewerUserID, roomID int) []string {
+	rp, ok := recruiterViewProvider()
+	if !ok {
+		return nil
+	}
+	return rp.RecruiterLines(viewerUserID, roomID)
+}
+
+// LookCandidate describes a candidate on roomID's notice. ok is false
+// without a provider or a match.
+func LookCandidate(viewerUserID, roomID int, selector string) (string, bool) {
+	rp, ok := recruiterViewProvider()
+	if !ok {
+		return "", false
+	}
+	return rp.LookCandidate(viewerUserID, roomID, selector)
+}

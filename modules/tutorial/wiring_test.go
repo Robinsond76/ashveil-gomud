@@ -86,6 +86,10 @@ func writeTutorialWorld(t *testing.T, dataDir string) {
 		"mobs/dunmar/61-tamsin_reed.yaml",
 		"mobs/dunmar/62-brother_oswin.yaml",
 		"items/armor-20000/head/20043-graduation_cap.yaml",
+		// Phase 32a: the waterskin's Hydrated buff, to show drink has no
+		// flourish.
+		"buffs/34-hydrated.yaml",
+		"buffs/34-hydrated.js",
 	}
 	for _, id := range []string{"10015", "20004", "20008", "30004", "30015"} {
 		matches, err := filepath.Glob(filepath.Join(shipped, "items", "*", id+"-*.yaml"))
@@ -308,11 +312,42 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	got = run(aria, "east", "")
 	require.Equal(t, 901, template(aria))
 	assert.Contains(t, got, "stage 2 of 8")
+	// Phase 32a: the hiring post is part of the room, and each candidate
+	// can be looked at.
+	got = run(aria, "look", "")
+	assert.Contains(t, got, "On the notched hiring post: Tamsin Reed (free), Brother Oswin (free).")
+	assert.Contains(t, got, "company inspect [name]")
+	got = run(aria, "look", "tamsin")
+	assert.Contains(t, got, "guarded carters")
+	assert.Contains(t, got, "company inspect tamsin")
 	got = run(aria, "company", "recruit")
 	assert.Contains(t, got, "Tamsin Reed")
 	assert.Contains(t, got, "Oswin")
 	run(aria, "company", "recruit tamsin")
 	assert.Equal(t, StageCompany, stageOf(aria), "one companion isn't enough")
+	// Taken on, Tamsin leaves the notice and stands in the room with no
+	// ♥friend tag; a mob charmed some other way keeps it.
+	assert.Contains(t, run(aria, "look", ""), "On the notched hiring post: Brother Oswin (free).")
+	yardHere := rooms.LoadRoom(aria.Character.RoomId)
+	stray := mobs.NewMobById(69, yardHere.RoomId)
+	require.NotNil(t, stray)
+	stray.Character.Charm(aria.UserId, -2, "")
+	yardHere.AddMob(stray.InstanceId)
+	listed := map[string]string{}
+	for _, line := range rooms.GetDetails(yardHere, aria).VisibleMobs {
+		plain := tagPattern.ReplaceAllString(line, "")
+		for _, name := range []string{"Tamsin Reed", "Corvin Blackthorn"} {
+			if strings.Contains(plain, name) {
+				listed[name] = plain
+			}
+		}
+	}
+	require.Contains(t, listed, "Tamsin Reed")
+	// (Without compiled adjective styles the tag renders as "charmed".)
+	assert.NotContains(t, listed["Tamsin Reed"], "charmed", "a companion isn't a ♥friend")
+	assert.Contains(t, listed["Corvin Blackthorn"], "charmed", "any other charmed mob is")
+	yardHere.RemoveMob(stray.InstanceId)
+	mobs.DestroyInstance(stray.InstanceId)
 	got = run(aria, "company", "recruit oswin")
 	assert.Equal(t, StageFormation, stageOf(aria))
 	assert.Contains(t, got, "Head east for the next lesson")
@@ -389,7 +424,13 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	run(aria, "eat", "nothing-here")
 	assert.False(t, progressOf(aria.Character).Seen[seenFed], "a failed eat doesn't count")
 	run(aria, "eat", "sandwich")
-	run(aria, "drink", "waterskin")
+	// Phase 32a: the drink ends with the thirst status, and the Hydrated
+	// buff adds no flourish.
+	require.NotNil(t, buffs.GetBuffSpec(34), "Hydrated")
+	got = run(aria, "drink", "waterskin")
+	assert.Contains(t, got, "You drink the waterskin.")
+	assert.Regexp(t, `(?i)thirst:? \w+\.`, got)
+	assert.NotContains(t, got, "Nectar")
 	p := progressOf(aria.Character)
 	assert.True(t, p.Seen[seenFed])
 	assert.True(t, p.Seen[seenWatered])
@@ -411,7 +452,10 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	require.Equal(t, 905, template(aria))
 	assert.Contains(t, got, "stage 5 of 8: Camp")
 	assert.Contains(t, run(aria, "camp", ""), "You make camp here.")
+	// Phase 32a: the camp is part of the room.
+	assert.Contains(t, run(aria, "look", ""), "A camp is pitched here, around a cold fire pit.")
 	assert.Contains(t, run(aria, "camp", "fire"), "campfire")
+	assert.Contains(t, run(aria, "look", ""), "A camp is pitched here: bedrolls around a crackling campfire.")
 	assert.Contains(t, run(aria, "camp", "rest"), "You settle in by the fire to rest.")
 	activity, ok := camping.LeaderRest(aria.UserId)
 	require.True(t, ok)
@@ -582,6 +626,8 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	got = run(aria, "east", "")
 	require.Equal(t, 907, template(aria))
 	assert.Contains(t, got, "stage 7 of 8: Alignment")
+	// Phase 32a: the notice lists Corvin, who won't join this company.
+	assert.Contains(t, run(aria, "look", ""), "Corvin Blackthorn (won't join you)")
 	run(aria, "company", "status")
 	assert.False(t, progressOf(aria.Character).Seen["company alignment"], "another subcommand doesn't count")
 	assert.Contains(t, run(aria, "company", "alignment"), "Company alignment")

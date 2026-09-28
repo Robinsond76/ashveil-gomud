@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -262,3 +263,90 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 }
 
 func nativeSaveUser(user *users.UserRecord) error { return users.SaveUser(*user) }
+
+var _ domain.RecruiterViewProvider = (*CompanyModule)(nil)
+
+// noticeEntry is one candidate as a recruiter room's notice shows it to one
+// viewer (Phase 32a).
+type noticeEntry struct {
+	Name    string
+	Price   int
+	Free    bool
+	Refused bool
+}
+
+// noticeLines renders a recruiter's notice: the candidates on it, or that
+// no one is left for this viewer.
+func noticeLines(noticeName string, entries []noticeEntry) []string {
+	if len(entries) == 0 {
+		return []string{fmt.Sprintf("No one on %s is looking for work with you now.", noticeName)}
+	}
+	parts := make([]string, 0, len(entries))
+	for _, e := range entries {
+		label := fmt.Sprintf("%d gold", e.Price)
+		switch {
+		case e.Refused:
+			label = "won't join you"
+		case e.Free:
+			label = "free"
+		}
+		parts = append(parts, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> (%s)`, e.Name, label))
+	}
+	return []string{
+		fmt.Sprintf("On %s: %s.", noticeName, strings.Join(parts, ", ")),
+		`  Type <ansi fg="command">company recruit</ansi> to see them, or <ansi fg="command">company inspect [name]</ansi>.`,
+	}
+}
+
+// RecruiterLines implements domain.RecruiterViewProvider: the notice in a
+// recruiter room, less the candidates already in the viewer's company and
+// the once-only offers they've already taken. One the company would refuse
+// is listed as such.
+func (m *CompanyModule) RecruiterLines(viewerUserID, roomID int) []string {
+	rec, ok := m.recruiters()[rooms.GetOriginalRoom(roomID)]
+	if !ok {
+		return nil
+	}
+	record, _ := m.registry.Get(viewerUserID)
+	inCompany := map[int]bool{}
+	for _, c := range record.Companions {
+		inCompany[c.MobTemplateID] = true
+	}
+	entries := []noticeEntry{}
+	for _, c := range rec.Candidates {
+		if inCompany[c.MobTemplateID] || (c.Tutorial && record.HasClaimed(c.MobTemplateID)) {
+			continue
+		}
+		if _, ok := m.runtime.TemplateState(c.MobTemplateID); !ok {
+			continue
+		}
+		name := templateName(c.MobTemplateID, c.ID)
+		entries = append(entries, noticeEntry{
+			Name:    name,
+			Price:   c.cost(),
+			Free:    c.Tutorial,
+			Refused: m.recruitRefusal(viewerUserID, c.MobTemplateID, name) != "",
+		})
+	}
+	return noticeLines(rec.Name, entries)
+}
+
+// LookCandidate implements domain.RecruiterViewProvider: "look <name>" at
+// a candidate on the notice.
+func (m *CompanyModule) LookCandidate(viewerUserID, roomID int, selector string) (string, bool) {
+	rec, ok := m.recruiters()[rooms.GetOriginalRoom(roomID)]
+	if !ok {
+		return "", false
+	}
+	c, ok := matchCandidate(rec, selector)
+	if !ok {
+		return "", false
+	}
+	name := templateName(c.MobTemplateID, c.ID)
+	lines := []string{fmt.Sprintf(`You read about <ansi fg="mobname">%s</ansi> on %s.`, name, rec.Name)}
+	if spec := mobs.GetMobSpec(mobs.MobId(c.MobTemplateID)); spec != nil && spec.Character.Description != "" {
+		lines = append(lines, spec.Character.Description)
+	}
+	lines = append(lines, fmt.Sprintf(`Type <ansi fg="command">company inspect %s</ansi> to weigh them against your company.`, c.ID))
+	return strings.Join(lines, "\n"), true
+}
