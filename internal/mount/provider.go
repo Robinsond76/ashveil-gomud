@@ -72,3 +72,30 @@ func TravelDurationPct(leaderUserID int) int {
 	}
 	return rp.TravelDurationPct(leaderUserID)
 }
+
+// HorseView is one horse as a player sees it (Phase 32f).
+type HorseView struct {
+	ID            int
+	Name          string
+	Kind          Kind
+	Saddle        string // the fitted saddle's name, or "" when bare
+	CapacityGrams int
+}
+
+// HerdProvider is optionally implemented by the registered Provider (Phase
+// 32f): a leader's horses, by ascending id.
+type HerdProvider interface {
+	Herd(leaderUserID int) []HorseView
+}
+
+// HerdOf consults the registered provider; nil without one.
+func HerdOf(leaderUserID int) []HorseView {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	hp, ok := p.(HerdProvider)
+	if !ok {
+		return nil
+	}
+	return hp.Herd(leaderUserID)
+}
