@@ -156,7 +156,9 @@ func TestALoneMobIsAttackedByItsName(t *testing.T) {
 // unchanged (the owner's rule 5).
 func TestNothingTypedChangesABattle(t *testing.T) {
 	b := newBrawl(t)
-	spawnedHostiles(t, 920106)
+	for _, m := range spawnedHostiles(t, 920106) {
+		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000 // none falls: her aim holds
+	}
 	b.into(920106)
 	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
 	b.cmd("attack", "ruffians")

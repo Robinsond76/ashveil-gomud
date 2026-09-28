@@ -23,7 +23,6 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		return true, nil
 	}
 
-
 	if user.Character.Equipment.Weapon.GetSpec().Subtype != items.Shooting {
 		user.SendText(`You don't have a shooting weapon.`)
 		return true, nil
