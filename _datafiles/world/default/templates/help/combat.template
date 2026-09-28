@@ -17,8 +17,8 @@ start fighting:
 
 - the whole enemy group joins in, not just the one you struck;
 - anyone on either side left without a target, or with one they can't reach,
-  turns on the weakest foe they can reach, and you're told about it
-  (<ansi fg="command">You turn on the bandit cutthroat.</ansi>);
+  turns toward the weakest foe they can reach, and you're told about it
+  (<ansi fg="command">You turn toward the bandit cutthroat.</ansi>);
 - this goes on until the fight is over, or until you <ansi fg="command">break</ansi> or <ansi fg="command">flee</ansi>.
 
 Where several groups are in one place, you fight them one at a time. The
@@ -52,6 +52,12 @@ edge lasts.
 At 0 health you drop. At -10 you die: you lose a level and wake at the last
 city's church, with your living company. A companion who dies stays on your
 roster for a while, and can be raised at a church or a village shaman.
+
+<ansi fg="yellow-bold">Reading a fight (</ansi><ansi fg="command">help narration</ansi><ansi fg="yellow-bold">)</ansi>
+
+Every blow gets a line, and its numbers sit in brackets at the end:
+<ansi fg="command">(5 damage)</ansi>, or <ansi fg="command">(critical hit, 9 damage)</ansi> for a critical hit. A line with no
+brackets is a miss. One line opens a fight and one closes it.
 
 <ansi fg="yellow-bold">After the fight (</ansi><ansi fg="command">help battle-summary</ansi><ansi fg="yellow-bold">)</ansi>
 

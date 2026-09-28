@@ -260,7 +260,8 @@ XP line ("You gained N experience points!") is GoMud's and out of scope.
 **Files:**
 - Create: `_datafiles/world/default/templates/help/narration.template`
 - Modify: `_datafiles/world/default/keywords.yaml` (topic under the combat
-  help category; aliases `damage`, `critical`, `crit`, `healed`, `chanting`)
+  help category; aliases `critical`, `crit`, `healed`, `chanting`,
+  `combat-text`; `damage` is GoMud's own page, which now links here)
 - Modify: `_datafiles/world/default/templates/help/combat.template` (link),
   and any help page that quotes `***`, "prepares to fight", or "turns on"
   (grep `templates/help`)
@@ -268,12 +269,12 @@ XP line ("You gained N experience points!") is GoMud's and out of scope.
 - Test: `internal/usercommands/help_combat_test.go` (add `narration`),
   `TestTutorialHelpPointersExist`
 
-- [ ] **Step 1:** add `narration` to the help render test → FAIL.
-- [ ] **Step 2:** write the page (what each parenthesis means, that every
+- [x] **Step 1:** add `narration` to the help render test → FAIL.
+- [x] **Step 2:** write the page (what each parenthesis means, that every
   miss is shown, that critical hits are named, the opener/closing), index,
   link, hint.
-- [ ] **Step 3:** `go test ./internal/usercommands ./modules/tutorial` PASS.
-- [ ] **Step 4: Commit** `docs(help,tutorial): help narration (29c)`.
+- [x] **Step 3:** `go test ./internal/usercommands ./modules/tutorial` PASS.
+- [x] **Step 4: Commit** `docs(help,tutorial): help narration (29c)`.
 
 ### Task 9: Wiring test through the real round
 

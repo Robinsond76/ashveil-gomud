@@ -137,6 +137,7 @@ func init() {
 				`Where several bands stand together, you fight them one at a time: the others wait their turn, and the next fight begins as soon as one ends.`,
 				`You can move anyone with <ansi fg="command">formation move</ansi> at any time, even mid-fight, to bring a foe within reach.`,
 				`Watch your health in your prompt and <ansi fg="command">status</ansi>, and what ails you in <ansi fg="command">conditions</ansi>. A sharpened edge is spent one strike at a time, whether the blow does much or little.`,
+				`Each hit ends with what it did, e.g. (5 damage) or (critical hit, 9 damage); a line with no brackets is a miss (<ansi fg="command">help narration</ansi>).`,
 				`When the last foe falls, a battle summary shows the damage, the kills, and your company's health (<ansi fg="command">help battle-summary</ansi>).`,
 				`For every detail of how battles work, see <ansi fg="command">help combat</ansi>, and from there <ansi fg="command">help formation</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help chemistry</ansi>, and <ansi fg="command">help light</ansi>.`,
 			},

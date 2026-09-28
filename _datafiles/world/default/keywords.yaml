@@ -79,6 +79,7 @@ help:
       - flee
       - formation
       - light
+      - narration
       - resurrect
       - sharpen
       - shoot
@@ -205,6 +206,7 @@ help-aliases:
   targeting:        [target, targets, enemy-parties]
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
+  narration:        [critical, crit, healed, chanting, combat-text]
   resurrect:        [resurrection]
   light:            [darkness, dark]
   brawling:         [tackle, brawl, disarm, recover, throw]

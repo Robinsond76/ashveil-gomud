@@ -21,7 +21,7 @@ func TestCombatHelpTopics(t *testing.T) {
 			combat = append(combat, topic.Command)
 		}
 	}
-	for _, want := range []string{"combat", "formation", "targeting", "chemistry", "sharpen", "light", "battle-summary", "resurrect"} {
+	for _, want := range []string{"combat", "formation", "targeting", "chemistry", "sharpen", "light", "battle-summary", "resurrect", "narration"} {
 		assert.Contains(t, combat, want, "help index lists %s under combat", want)
 	}
 	for _, topic := range combat {
@@ -35,6 +35,7 @@ func TestCombatHelpTopics(t *testing.T) {
 		"reach": "formation", "interception": "formation",
 		"target": "targeting", "whetstone": "sharpen", "darkness": "light",
 		"battlesummary": "battle-summary", "resurrection": "resurrect",
+		"critical": "narration", "crit": "narration", "healed": "narration", "chanting": "narration",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)
@@ -44,8 +45,27 @@ func TestCombatHelpTopics(t *testing.T) {
 		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
 	}
 
+	// Phase 29c: the narration page explains the parentheses, and the
+	// pages that quoted combat lines quote the new voice.
+	text, err := GetHelpContents("narration")
+	require.NoError(t, err)
+	for _, want := range []string{"(5 damage)", "(critical hit, 9 damage)", "blocked", "healed)", "(chanting: "} {
+		assert.Contains(t, text, want)
+	}
+	for _, topic := range []string{"combat", "targeting", "formation", "attack"} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.NotContains(t, text, "turn on the", topic)
+		assert.NotContains(t, text, "turns on the", topic)
+	}
+	for _, topic := range []string{"combat", "damage"} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, text, "help narration", "%s links to help narration", topic)
+	}
+
 	// The death page reflects Ashveil's death rules (Phase 25a).
-	text, err := GetHelpContents("death")
+	text, err = GetHelpContents("death")
 	require.NoError(t, err)
 	assert.Contains(t, text, "one level")
 	assert.Contains(t, text, "church")

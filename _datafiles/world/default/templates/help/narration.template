@@ -1,0 +1,41 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">narration</ansi>
+
+How to read a fight. Combat is told as a story, one line per blow, and the
+numbers that matter sit in brackets at the end of the line.
+
+<ansi fg="yellow-bold">What the brackets mean</ansi>
+
+  <ansi fg="command">(5 damage)</ansi>                a hit, and the health it took
+  <ansi fg="command">(critical hit, 9 damage)</ansi>  a critical hit: it lands harder
+  <ansi fg="command">(5 damage, 2 blocked)</ansi>     a hit on you; your armor stopped 2 of it
+  <ansi fg="command">(4 healed)</ansi>                health a spell gave back
+  <ansi fg="command">(chanting: Magic Missile, 2 rounds)</ansi>
+                            a spell being cast, and the rounds left
+                            before it is released
+
+A line with nothing in brackets is a miss, a dodge, or someone getting
+ready. Every miss is shown, yours and theirs.
+
+<ansi fg="yellow-bold">A critical hit</ansi>
+
+Only a real critical hit is called one, and it reads like one. A strong
+blow that isn't critical reads as a clean, heavy hit. Your chance of a
+critical hit comes from your smarts (<ansi fg="command">help smarts</ansi>), and how hard it lands
+from your perception (<ansi fg="command">help perception</ansi>).
+
+<ansi fg="yellow-bold">How a fight reads</ansi>
+
+- One line opens the fight, when a group comes at you or you at them.
+- When anyone takes a new target, you see it: "The bandit captain turns
+  toward Garrick Vane."
+- When a foe falls, you see it fall, in the order it happened.
+- When the last foe falls, one line closes the fight, and then your battle
+  summary follows (<ansi fg="command">help battle-summary</ansi>).
+- A spell shows its chant each round, then one line when it is released.
+  A spell that heals several people lists them all on one line:
+  "Garrick Vane (3 healed) · Ysolde (2 healed) · you (4 healed)".
+
+Names of people are written as they are ("Garrick Vane"); everything else
+gets "the" ("the bandit captain").
+
+See also <ansi fg="command">help combat</ansi>, <ansi fg="command">help damage</ansi>, and <ansi fg="command">help cast</ansi>.
