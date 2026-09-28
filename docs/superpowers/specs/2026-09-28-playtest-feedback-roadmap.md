@@ -43,12 +43,18 @@ Researched on `4cb2faf` (2026-09-28).
 4. **Targeting:** only a **group** can be attacked, by the group's name.
    Naming a member is not a way to start a fight.
 5. **Order:** as recommended (below).
+6. **Recruits:** listed on the room's notice, per player, randomly
+   generated and changing over time, so every player always has
+   candidates of their own (32a2).
+7. **Replay character:** copies the real character (name, race,
+   archetype) at level 1 with nothing, and goes straight into the course.
 
 ## Phases
 
 | Phase | Scope | Spec |
 |---|---|---|
 | 32a | Company polish: no `♥friend` on companions; one arrival/departure line for a company; no drink flourish; camp and fire in `look`; recruiters listed in the room; readable formation grid | [32a design](2026-09-28-phase-32a-company-polish-design.md) |
+| 32a2 | Per-player recruit rosters: generated candidates (name, archetype, level, alignment, price) that come and go on each player's own notice; companions get their own names | [32a2 design](2026-09-28-phase-32a2-recruit-rosters-design.md) |
 | 32b | Tutorial replay: a throwaway level-1 character, back to the real one on leaving | [32b design](2026-09-28-phase-32b-tutorial-replay-design.md) |
 | 32c | Enemy groups: named and described groups, `attack <group>` only, `scout` to see a group's formation before a fight | to write |
 | 32d | Automatic combat for the player and companions: act by archetype role, casters cast with real mana (the casting slice of 30c, pulled forward) | to write |
@@ -59,7 +65,8 @@ Researched on `4cb2faf` (2026-09-28).
 
 ### Build order (recommended, accepted 2026-09-28)
 
-1. **32a → 32b** — small, and they make play-testing easier.
+1. **32a → 32a2 → 32b** — 32a and 32b are small and make play-testing
+   easier; 32a2 builds on 32a's notice listing.
 2. **32c → 32d** — combat you can start and watch play out is worth more
    than polishing its text, so these go before 29c. 32d takes 30c's
    casting and role-driven action; 30c keeps tactics settings, guards,

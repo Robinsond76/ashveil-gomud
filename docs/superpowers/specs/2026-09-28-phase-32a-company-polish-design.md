@@ -116,12 +116,12 @@ On the notched hiring post: Tamsin Reed (free), Brother Oswin (free).
   description and points to `company inspect <name>`.
 - The tutorial's Company lesson hint says to look at the hiring post.
 
-**Open (for the owner):** should candidates instead be **real NPCs
-standing in the room**? That reads better ("Tamsin Reed is here,
-sharpening a spear") but means spawning a per-viewer mob that vanishes
-once hired, in per-player tutorial copies and shared inns alike. The
-recommendation is the listing above now, and NPCs later if the listing
-still feels flat in play.
+**Decided (owner, 2026-09-28):** candidates stay on the notice, not as
+NPCs in the room, and each player's list is their own, generated and
+changing over time. That's
+[Phase 32a2](2026-09-28-phase-32a2-recruit-rosters-design.md). 32a ships
+the listing over today's authored candidates, filtered per viewer as
+above; 32a2 swaps in the per-player rosters.
 
 ### 6. A readable formation grid
 
@@ -181,6 +181,6 @@ both themes.
 
 ## Deferred
 
-- Recruit candidates as NPCs in the room (open above).
+- Generated, per-player candidates: 32a2.
 - Pronouns in the company line: 29d.
 - The camp in the GMCP room info and the web client's room panel: 32g.

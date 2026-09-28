@@ -87,11 +87,9 @@ Two ways to meet "exactly back, nothing kept":
 - **The throwaway** is created with a new user id, flagged `Replay` with
   the real user's id (durable, on the user record). It isn't in the user
   or character name indexes and can't be logged into.
-- **Creation:** the replay runs the real creation steps, **race and
-  archetype**, so each replay can try a different build. It skips the
-  name (the throwaway uses the real character's name) and the "skip the
-  tutorial?" question. **Open (for the owner):** or keep the real
-  character's race and archetype and go straight in.
+- **Creation (owner, 2026-09-28): copy the real character and go
+  straight in.** The throwaway takes the real character's name, race, and
+  archetype, at level 1 with nothing, and no creation step runs.
 - It then enters the course at stage 1 exactly as a new player would.
 
 ### B. During a replay
@@ -152,8 +150,8 @@ and travel as they were.
   events in order. **This is the riskiest part.** Plan task 1 is a spike
   that proves the switch on a real connection before the rest is built.
 - `internal/events`: `UserPurged`. Each per-user module listens for it.
-- `internal/usercommands/start.go`: creation steps callable for a
-  replay (race and archetype only).
+- `internal/users` / `internal/characters`: a level-1 character built
+  from the real one's name, race, and archetype (no creation prompts).
 
 ## Invariants
 
