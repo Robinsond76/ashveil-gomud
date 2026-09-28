@@ -57,3 +57,47 @@ func TestTooMuchToCarry(t *testing.T) {
 	_, refuse = TooMuchToCarry(7, 500)
 	assert.False(t, refuse)
 }
+
+// Phase 32f: partly used items stack apart and come out first.
+func TestCargoKeepsUses(t *testing.T) {
+	c, _ := Established(7)
+	c, _ = c.Deposit(300, 2)
+	c, _ = c.DepositUses(300, 2, 1)
+	c, _ = c.DepositUses(300, 1, 1)
+	c, _ = c.DepositUses(300, 2, 1)
+	assert.Equal(t, []CargoStack{{ItemId: 300, Count: 2}, {ItemId: 300, Count: 2, Uses: 2}, {ItemId: 300, Count: 1, Uses: 1}}, c.Stacks)
+	assert.Equal(t, 5, c.CountOf(300))
+
+	c, uses, err := c.WithdrawOne(300)
+	assert.NoError(t, err)
+	assert.Equal(t, 1, uses, "the most used first")
+	c, uses, _ = c.WithdrawOne(300)
+	assert.Equal(t, 2, uses)
+
+	_, _, err = c.WithdrawOne(999)
+	assert.ErrorIs(t, err, ErrInsufficientCargo)
+	_, err = c.DepositUses(300, -1, 1)
+	assert.ErrorIs(t, err, ErrInvalidAmount)
+	assert.ErrorIs(t, Cargo{LeaderUserID: 7, Stacks: []CargoStack{{ItemId: 1, Count: 1, Uses: -1}}}.Validate(), ErrInvalidCargo)
+
+	c, err = c.Withdraw(300, 3)
+	assert.NoError(t, err)
+	assert.Empty(t, c.Stacks)
+}
+
+func TestCargoConsumeUse(t *testing.T) {
+	c, _ := Established(7)
+	c, _ = c.Deposit(300, 1)
+	c, err := c.ConsumeUse(300, 3)
+	assert.NoError(t, err)
+	assert.Equal(t, []CargoStack{{ItemId: 300, Count: 1, Uses: 2}}, c.Stacks, "a full waterskin becomes a partly used one")
+	c, _ = c.ConsumeUse(300, 3)
+	c, _ = c.ConsumeUse(300, 3)
+	assert.Empty(t, c.Stacks, "its last use empties it")
+
+	c, _ = c.Deposit(400, 2)
+	c, _ = c.ConsumeUse(400, 0)
+	assert.Equal(t, 1, c.CountOf(400), "an item without uses is eaten whole")
+	_, err = c.ConsumeUse(999, 1)
+	assert.ErrorIs(t, err, ErrInsufficientCargo)
+}

@@ -128,8 +128,9 @@ type EncumbranceModule struct {
 }
 
 var (
-	_ encumbrance.Provider     = (*EncumbranceModule)(nil)
-	_ encumbrance.BandProvider = (*EncumbranceModule)(nil)
+	_ encumbrance.Provider      = (*EncumbranceModule)(nil)
+	_ encumbrance.BandProvider  = (*EncumbranceModule)(nil)
+	_ encumbrance.CargoProvider = (*EncumbranceModule)(nil)
 )
 
 func init() {
@@ -142,7 +143,7 @@ func init() {
 			}
 			return *spec, true
 		},
-		userLookup:    users.GetByUserId,
+		userLookup:     users.GetByUserId,
 		companionGear:  company.CompanionGearGrams,
 		companionCarry: company.CompanionCarry,
 		cargo:          map[int]encumbrance.Cargo{},
@@ -351,7 +352,7 @@ func (m *EncumbranceModule) put(user *users.UserRecord, itemName string) string 
 		}
 		cargo = established
 	}
-	updated, err := cargo.Deposit(matchItem.ItemId, 1)
+	updated, err := cargo.DepositUses(matchItem.ItemId, m.partialUses(matchItem), 1)
 	if err != nil {
 		return "You can't put that in the cargo."
 	}
@@ -388,7 +389,7 @@ func (m *EncumbranceModule) take(user *users.UserRecord, itemName string) string
 	if !found {
 		return fmt.Sprintf(`The company cargo has no "%s".`, itemName)
 	}
-	updated, err := cargo.Withdraw(itemId, 1)
+	updated, uses, err := cargo.WithdrawOne(itemId)
 	if err != nil {
 		return "You can't take that from the cargo."
 	}
@@ -398,8 +399,62 @@ func (m *EncumbranceModule) take(user *users.UserRecord, itemName string) string
 		return err.Error()
 	}
 	newItem := m.newCargoItem(itemId)
+	if uses > 0 {
+		newItem.Uses = uses
+	}
 	user.Character.StoreItem(newItem)
 	return fmt.Sprintf(`You take the <ansi fg="item">%s</ansi> from the company cargo.`, newItem.DisplayName())
+}
+
+// partialUses is the uses a partly used item has left, or 0 for a full
+// one (or an item without uses), so it stacks apart in cargo (Phase 32f).
+func (m *EncumbranceModule) partialUses(itm items.Item) int {
+	spec, ok := m.itemSpec(itm.ItemId)
+	if !ok || spec.Uses <= 0 || itm.Uses <= 0 || itm.Uses >= spec.Uses {
+		return 0
+	}
+	return itm.Uses
+}
+
+// CargoContents implements encumbrance.CargoProvider: a copy of the
+// leader's stacks.
+func (m *EncumbranceModule) CargoContents(leaderUserID int) []encumbrance.CargoStack {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cargo, ok := m.cargo[leaderUserID]
+	if !ok || len(cargo.Stacks) == 0 {
+		return nil
+	}
+	return append([]encumbrance.CargoStack(nil), cargo.Stacks...)
+}
+
+// ConsumeCargoUse implements encumbrance.CargoProvider: one use from one
+// item, a partly used one first, saved (and rolled back if the save
+// fails).
+func (m *EncumbranceModule) ConsumeCargoUse(leaderUserID, itemId int) error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	fullUses := 0
+	if spec, ok := m.itemSpec(itemId); ok {
+		fullUses = spec.Uses
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cargo, ok := m.cargo[leaderUserID]
+	if !ok {
+		return encumbrance.ErrInsufficientCargo
+	}
+	updated, err := cargo.ConsumeUse(itemId, fullUses)
+	if err != nil {
+		return err
+	}
+	m.cargo[leaderUserID] = updated
+	if err := m.saveLocked(); err != nil {
+		m.cargo[leaderUserID] = cargo
+		return err
+	}
+	return nil
 }
 
 // newCargoItem builds a fresh Item instance for a cargo-stack's item ID,
@@ -460,7 +515,11 @@ func (m *EncumbranceModule) status(leaderUserID int) string {
 		lines = append(lines, "Cargo:")
 		for _, s := range cargo.Stacks {
 			stackItem := m.newCargoItem(s.ItemId)
-			lines = append(lines, fmt.Sprintf("  %s x%d", stackItem.DisplayName(), s.Count))
+			line := fmt.Sprintf("  %s x%d", stackItem.DisplayName(), s.Count)
+			if s.Uses > 0 {
+				line += fmt.Sprintf(" (%d %s left)", s.Uses, pluralUses(s.Uses))
+			}
+			lines = append(lines, line)
 		}
 	}
 	return strings.Join(lines, "\n")
@@ -482,6 +541,13 @@ func (m *EncumbranceModule) userCommand(rest string, user *users.UserRecord, _ *
 		user.SendText(cargoUsage)
 	}
 	return true, nil
+}
+
+func pluralUses(n int) string {
+	if n == 1 {
+		return "use"
+	}
+	return "uses"
 }
 
 // parseConfig normalizes the configured member base, the Strength bonus

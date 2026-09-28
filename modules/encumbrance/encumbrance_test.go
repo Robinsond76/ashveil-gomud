@@ -45,12 +45,17 @@ func (f *fakeStore) Save(registry Registry) error {
 const rockId = 100
 const featherId = 200
 
+// waterId is a 3-use waterskin (Phase 32f).
+const waterId = 300
+
 func fakeItemSpec(itemId int) (items.ItemSpec, bool) {
 	switch itemId {
 	case rockId:
 		return items.ItemSpec{ItemId: rockId, Name: "rock", Weight: 500}, true
 	case featherId:
 		return items.ItemSpec{ItemId: featherId, Name: "feather", Weight: 0}, true
+	case waterId:
+		return items.ItemSpec{ItemId: waterId, Name: "waterskin", Weight: 1000, Uses: 3, Subtype: items.Drinkable}, true
 	}
 	return items.ItemSpec{}, false
 }
@@ -75,11 +80,11 @@ func testUser(t *testing.T, userId int) *users.UserRecord {
 
 func newTestModule(store Store, user *users.UserRecord) *EncumbranceModule {
 	return &EncumbranceModule{
-		store:         store,
-		itemSpec:      fakeItemSpec,
-		userLookup:    func(userId int) *users.UserRecord { return user },
+		store:           store,
+		itemSpec:        fakeItemSpec,
+		userLookup:      func(userId int) *users.UserRecord { return user },
 		memberBaseGrams: 10000,
-		cargo:         map[int]encumbrance.Cargo{},
+		cargo:           map[int]encumbrance.Cargo{},
 	}
 }
 

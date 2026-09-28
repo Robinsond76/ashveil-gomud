@@ -17,9 +17,13 @@ var (
 )
 
 // CargoStack is one item type's quantity in a company's shared cargo.
+// Uses is how many uses each item in the stack has left; 0 means full (or
+// an item without uses). Partly used items stack apart from full ones, so
+// a half-drunk waterskin comes back out half-drunk (Phase 32f).
 type CargoStack struct {
 	ItemId int
 	Count  int
+	Uses   int `yaml:"uses,omitempty"`
 }
 
 // Cargo is the durable, leader-owned shared cargo container.
@@ -33,7 +37,7 @@ func (c Cargo) Validate() error {
 		return ErrInvalidCargo
 	}
 	for _, s := range c.Stacks {
-		if s.ItemId <= 0 || s.Count <= 0 {
+		if s.ItemId <= 0 || s.Count <= 0 || s.Uses < 0 {
 			return ErrInvalidCargo
 		}
 	}
@@ -49,31 +53,81 @@ func Established(leaderUserID int) (Cargo, error) {
 	return c, nil
 }
 
-// Deposit returns a copy with count more of itemId added, merging into an
-// existing stack. Capacity is not this package's concern: a module checks
-// prospective weight against capacity before calling Deposit.
+// Deposit returns a copy with count more full items of itemId added.
+// Capacity is not this package's concern: a module checks prospective
+// weight against capacity before calling Deposit.
 func (c Cargo) Deposit(itemId, count int) (Cargo, error) {
+	return c.DepositUses(itemId, 0, count)
+}
+
+// DepositUses returns a copy with count more of itemId, each with uses
+// left (0 for full), merged into the stack with the same uses.
+func (c Cargo) DepositUses(itemId, uses, count int) (Cargo, error) {
 	if err := c.Validate(); err != nil {
 		return c, err
 	}
-	if itemId <= 0 || count <= 0 {
+	if itemId <= 0 || count <= 0 || uses < 0 {
 		return c, ErrInvalidAmount
 	}
 	stacks := append([]CargoStack(nil), c.Stacks...)
 	for i, s := range stacks {
-		if s.ItemId == itemId {
+		if s.ItemId == itemId && s.Uses == uses {
 			stacks[i].Count += count
 			c.Stacks = stacks
 			return c, nil
 		}
 	}
-	c.Stacks = append(stacks, CargoStack{ItemId: itemId, Count: count})
+	c.Stacks = append(stacks, CargoStack{ItemId: itemId, Count: count, Uses: uses})
 	return c, nil
 }
 
-// Withdraw returns a copy with count less of itemId, removing the stack
-// entirely once its count reaches zero. It refuses to withdraw more than is
-// stored.
+// pick is the stack index to draw one itemId from: the partly used stack
+// with the fewest uses left, else the full one; -1 when there is none.
+func (c Cargo) pick(itemId int) int {
+	best := -1
+	for i, s := range c.Stacks {
+		if s.ItemId != itemId {
+			continue
+		}
+		if best < 0 {
+			best = i
+			continue
+		}
+		b := c.Stacks[best]
+		if s.Uses > 0 && (b.Uses == 0 || s.Uses < b.Uses) {
+			best = i
+		}
+	}
+	return best
+}
+
+// WithdrawOne returns a copy with one itemId removed, preferring a partly
+// used one, and the uses it had left (0 for full).
+func (c Cargo) WithdrawOne(itemId int) (Cargo, int, error) {
+	if err := c.Validate(); err != nil {
+		return c, 0, err
+	}
+	if itemId <= 0 {
+		return c, 0, ErrInvalidAmount
+	}
+	i := c.pick(itemId)
+	if i < 0 {
+		return c, 0, ErrInsufficientCargo
+	}
+	stacks := append([]CargoStack(nil), c.Stacks...)
+	uses := stacks[i].Uses
+	if stacks[i].Count == 1 {
+		stacks = append(stacks[:i], stacks[i+1:]...)
+	} else {
+		stacks[i].Count--
+	}
+	c.Stacks = stacks
+	return c, uses, nil
+}
+
+// Withdraw returns a copy with count less of itemId, partly used items
+// first, removing a stack once its count reaches zero. It refuses to
+// withdraw more than is stored.
 func (c Cargo) Withdraw(itemId, count int) (Cargo, error) {
 	if err := c.Validate(); err != nil {
 		return c, err
@@ -81,23 +135,47 @@ func (c Cargo) Withdraw(itemId, count int) (Cargo, error) {
 	if itemId <= 0 || count <= 0 {
 		return c, ErrInvalidAmount
 	}
-	stacks := append([]CargoStack(nil), c.Stacks...)
-	for i, s := range stacks {
-		if s.ItemId != itemId {
-			continue
-		}
-		if s.Count < count {
-			return c, ErrInsufficientCargo
-		}
-		if s.Count == count {
-			stacks = append(stacks[:i], stacks[i+1:]...)
-		} else {
-			stacks[i].Count -= count
-		}
-		c.Stacks = stacks
-		return c, nil
+	if c.CountOf(itemId) < count {
+		return c, ErrInsufficientCargo
 	}
-	return c, ErrInsufficientCargo
+	out := c
+	for range count {
+		var err error
+		if out, _, err = out.WithdrawOne(itemId); err != nil {
+			return c, err
+		}
+	}
+	return out, nil
+}
+
+// ConsumeUse returns a copy with one use taken from one itemId, a partly
+// used one first. fullUses is the item's uses when full; an item with one
+// use or none is used up whole.
+func (c Cargo) ConsumeUse(itemId, fullUses int) (Cargo, error) {
+	out, uses, err := c.WithdrawOne(itemId)
+	if err != nil {
+		return c, err
+	}
+	if uses == 0 {
+		uses = fullUses
+	}
+	if left := uses - 1; left > 0 {
+		if out, err = out.DepositUses(itemId, left, 1); err != nil {
+			return c, err
+		}
+	}
+	return out, nil
+}
+
+// CountOf is how many of itemId the cargo holds, full or partly used.
+func (c Cargo) CountOf(itemId int) int {
+	n := 0
+	for _, s := range c.Stacks {
+		if s.ItemId == itemId {
+			n += s.Count
+		}
+	}
+	return n
 }
 
 // TotalCount returns the total number of individual items across all
