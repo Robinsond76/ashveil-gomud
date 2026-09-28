@@ -262,7 +262,8 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 	if canFight(leader.Character) && !stoodDown && retargetable(leader.Character.Aggro) {
 		col, placed := s.column(company.LeaderMemberKey)
 		reach := combat.ResolveReach(leader.Character, false)
-		if previous, newId, ok := s.retarget(leader.Character.Aggro, col, placed, reach, party, members, alive, room); ok {
+		att := enemyparty.PlayerAttacker(leader)
+		if previous, newId, ok := s.retarget(leader.Character.Aggro, att, col, placed, reach, party, members, alive, room); ok {
 			emitTargetChange(userRef(leader), mobRefById(previous), mobRefById(newId), room.RoomId)
 			leader.Character.SetAggro(0, newId, attackType(leader.Character.Aggro))
 			events.AddToQueue(events.AggroChanged{UserId: leader.UserId, RoomId: leader.Character.RoomId})
@@ -277,7 +278,8 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 		}
 		col, placed := s.column(s.companions[instanceId])
 		reach := combat.ResolveReach(&mob.Character, mob.Reach)
-		previous, newId, ok := s.retarget(mob.Character.Aggro, col, placed, reach, party, members, alive, room)
+		att := enemyparty.CompanionAttacker(leader.UserId, s.companions[instanceId], mob, s.leaderAim())
+		previous, newId, ok := s.retarget(mob.Character.Aggro, att, col, placed, reach, party, members, alive, room)
 		if !ok {
 			continue
 		}
@@ -292,8 +294,14 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 // leave its Aggro as it is: its target is still legal, it is fighting
 // someone outside this party, or no legal alternative exists. previous is
 // the party member it was aimed at, if any.
-func (s companySide) retarget(a *characters.Aggro, col int, placed bool, reach formationcombat.Reach, party mobparty.Party, members map[int]bool, alive map[company.MemberKey]bool, room *rooms.Room) (previous int, newId int, ok bool) {
+//
+// Phase 32d: the new target comes from the member's strategy (att.Rule).
+// A kept target is sticky, except under a rule that follows something
+// (assist, defend): that member turns when the rule's own choice, in
+// reach, is someone else.
+func (s companySide) retarget(a *characters.Aggro, att enemyparty.Attacker, col int, placed bool, reach formationcombat.Reach, party mobparty.Party, members map[int]bool, alive map[company.MemberKey]bool, room *rooms.Room) (previous int, newId int, ok bool) {
 	state, current := classifyPartyTarget(a, members, alive, room.RoomId)
+	g := enemyparty.Group{Party: party}
 	switch state {
 	case targetElsewhere:
 		return 0, 0, false
@@ -301,14 +309,44 @@ func (s companySide) retarget(a *characters.Aggro, col int, placed bool, reach f
 		// A hidden target can't be fought ("You can't seem to find your
 		// target"), so it is moved off like an unreachable one.
 		if !mobHidden(current) && gateLetsThrough(col, placed, party.Formation, mobparty.MemberKeyFor(current), alive, reach) {
+			if att.Rule.ReaimsEachRound() {
+				if choice, ok := enemyparty.RuleChoice(g, att); ok && choice != current {
+					return current, choice, true
+				}
+			}
 			return 0, 0, false
 		}
 	}
-	newId, ok = chooseFromParty(col, placed, party, alive, reach)
+	// With no one in reach, the member keeps whatever it has, so 11c's
+	// gates skip it until something changes (the self-healing model).
+	if !anyLegal(col, placed, party, alive, reach) {
+		return 0, 0, false
+	}
+	newId, ok = enemyparty.Aim(g, att)
 	if !ok || newId == current {
 		return 0, 0, false
 	}
 	return current, newId, true
+}
+
+// anyLegal reports whether a company attacker can reach any living,
+// visible member of party.
+func anyLegal(col int, placed bool, party mobparty.Party, alive map[company.MemberKey]bool, reach formationcombat.Reach) bool {
+	for _, id := range party.Members {
+		if legalAgainstParty(col, placed, party, id, alive, reach) {
+			return true
+		}
+	}
+	return false
+}
+
+// leaderAim is the party member the leader is striking, for companions on
+// assist (0 when none).
+func (s companySide) leaderAim() int {
+	if a := s.leader.Character.Aggro; plainAttack(a) && a.MobInstanceId > 0 && s.leader.Character.Health > 0 {
+		return a.MobInstanceId
+	}
+	return 0
 }
 
 // targetState classifies an attacker's current Aggro for the upkeep.
@@ -373,16 +411,6 @@ func legalAgainstParty(col int, placed bool, party mobparty.Party, target int, a
 		return alive[mobparty.MemberKeyFor(target)]
 	}
 	return formationcombat.Legal(col, party.Formation, mobparty.MemberKeyFor(target), alive, reach)
-}
-
-// chooseFromParty picks the weakest legal living member of party for a
-// company attacker (11b's preference). An unplaced attacker may choose any
-// living member.
-func chooseFromParty(col int, placed bool, party mobparty.Party, alive map[company.MemberKey]bool, reach formationcombat.Reach) (int, bool) {
-	legal := func(_, defender engagement.Combatant) bool {
-		return legalAgainstParty(col, placed, party, defender.ID, alive, reach)
-	}
-	return engagement.AssignTarget(engagement.Combatant{Col: col}, partyCombatants(party, alive), engagement.Weakest, legal)
 }
 
 func leaderTurnText(previous, newId int, alive map[company.MemberKey]bool) string {

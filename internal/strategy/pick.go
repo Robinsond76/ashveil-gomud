@@ -59,6 +59,19 @@ func byFormation(fs []Foe) {
 	})
 }
 
+// Choose is the rule's own choice among pool, with no fallback: ok is false
+// when the rule has none (no leader, no player's target, nobody striking
+// us among them). Ties go front row first, then left.
+func Choose(rule Rule, pool []Foe, assistID int) (int, bool) {
+	if len(pool) == 0 {
+		return 0, false
+	}
+	ordered := make([]Foe, len(pool))
+	copy(ordered, pool)
+	byFormation(ordered)
+	return choose(rule, ordered, assistID)
+}
+
 // choose applies a rule to foes already in formation order; the first of
 // equals wins, so ties go front row first, then left.
 func choose(rule Rule, pool []Foe, assistID int) (int, bool) {

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 
@@ -32,7 +33,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			return true, nil
 		}
 		if g, ok := battleGroup(b, room); ok {
-			attackMobInstanceId, _ = enemyparty.FirstAim(g, user.UserId, user.Character)
+			attackMobInstanceId, _ = enemyparty.Aim(g, enemyparty.PlayerAttacker(user))
 		}
 	}
 
@@ -206,14 +207,15 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			}
 
 			// Ashveil Phase 32c: the fight is with the mob's whole group, and
-			// the first member struck is chosen as the player's strategy
-			// would (enemyparty.FirstAim).
+			// the first member struck is chosen by the player's strategy
+			// (32d: enemyparty.Aim), as is each companion's.
 			foeName := m.Character.Name
-			if g, ok := enemyparty.GroupOf(room, m.InstanceId); ok {
-				if !g.Solo() {
-					foeName = theGroup(g.Name)
+			group, grouped := enemyparty.GroupOf(room, m.InstanceId)
+			if grouped {
+				if !group.Solo() {
+					foeName = theGroup(group.Name)
 				}
-				if aim, ok := enemyparty.FirstAim(g, user.UserId, user.Character); ok {
+				if aim, ok := enemyparty.Aim(group, enemyparty.PlayerAttacker(user)); ok {
 					attackMobInstanceId = aim
 				}
 			}
@@ -251,7 +253,14 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				if m := mobs.GetInstance(instId); m != nil {
 					if m.Character.Aggro == nil && m.Character.IsCharmed(user.UserId) { // Charmed mobs help the player
 
-						m.Command(fmt.Sprintf(`attack #%d`, attackMobInstanceId)) // # denotes a specific mob instanceId
+						// Phase 32d: a companion starts on its own strategy's choice.
+						aim := attackMobInstanceId
+						if leaderId, key, ok := company.LeaderAndKeyForInstance(instId); ok && leaderId == user.UserId && grouped {
+							if id, ok := enemyparty.Aim(group, enemyparty.CompanionAttacker(user.UserId, key, m, attackMobInstanceId)); ok {
+								aim = id
+							}
+						}
+						m.Command(fmt.Sprintf(`attack #%d`, aim)) // # denotes a specific mob instanceId
 
 					}
 				}

@@ -56,17 +56,18 @@ inventory/provision code.
 
 ## Task 4: Aiming by rule (`internal/enemyparty`, `internal/hooks`, `internal/usercommands`)
 
-- [ ] Tests first: `enemyparty.Aim` builds foes (reach, leader, what each
+- [x] Tests first: `enemyparty.Aim` builds foes (reach, leader, what each
   foe strikes) and follows each rule (`groups_test.go`); wiring
   (`modules/company/wiring_strategy_test.go`, real commands and
   `DoCombat`): `attack <group>` starts the player and each companion on
   its own rule's choice; the upkeep re-aims by rule when a target falls;
   `assist` follows the player; `defend` finds the foe on the most hurt;
   a player alone re-aims by their rule.
-- [ ] `FirstAim` → `Aim(g, attacker, strategy, assistId)`; the upkeep's
+- [x] `FirstAim` → `Aim(g, attacker, strategy, assistId)`; the upkeep's
   `chooseFromParty` and `retarget` take the member's strategy (re-read
   `assist`/`defend` each round); `turnAlone` uses it; `attack.go` sends
-  each companion `attack #<its aim>`.
+  each companion `attack #<its aim>`; `keepOnBattle` and the mid-round
+  reassignment (`reassignWithinLostParty`) aim by rule too.
 
 ## Task 5: Healers and casters (`internal/hooks`)
 
