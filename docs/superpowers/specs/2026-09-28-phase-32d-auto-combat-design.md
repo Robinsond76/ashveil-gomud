@@ -219,11 +219,12 @@ between a finished spell and the next round a caster had no Aggro, so
   `formation` (to read), `conditions`, `say` and the other talk commands,
   `help`, `quit`.
 - **Refused, with 32c's line** ("The battle is under way: it plays out as
-  you set it up."): `break`; `formation` changes (`move`, `swap`,
-  `clear`, and the like: anything but reading it); `strategy` changes;
-  `eat`, `drink` (potions too), `use`; `equip`, `remove`; walking out
-  (`go` and bare exit names). `flee` says so: "Only flee takes you out of a
-  battle."
+  you set it up."): `formation` changes (`move`, `swap`, `clear`:
+  anything but reading it); `strategy` changes; `eat`, `drink` (potions
+  too), `use`; `equip`, `remove`. `break` and walking out (`go` and bare
+  exit names) add "Only flee takes you out of it."
+- **A flight that gets away ends the battle at once** (implementation),
+  so the player isn't held to it for another round.
 - **Not in a battle,** all of these work as today, including `break` for
   a player-versus-player fight.
 - 32f's `company eat`/`drink` (another session) gets the same check when it

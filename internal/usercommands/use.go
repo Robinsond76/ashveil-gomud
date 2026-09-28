@@ -12,6 +12,12 @@ import (
 
 func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Ashveil Phase 32d: a battle plays out as it was set up.
+	if InBattle(user) {
+		user.SendText(BattleUnderWay)
+		return true, nil
+	}
+
 	containerName := room.FindContainerByName(rest)
 	if containerName != `` {
 

@@ -299,9 +299,9 @@ func TestScoutFindsNoGroup(t *testing.T) {
 }
 
 // TestALonePlayerWhoBrokeOffIsTurnedAgain (32c review M1, M2): a player
-// with no company record who breaks off and rejoins with a bare attack is
-// turned onto the next foe when theirs falls, in 29c's voice, and the room
-// sees it.
+// with no company record is turned onto the next foe when theirs falls, in
+// 29c's voice, and the room sees it. Phase 32d: `break` and a bare
+// `attack` are refused in the battle and change nothing.
 func TestALonePlayerWhoBrokeOffIsTurnedAgain(t *testing.T) {
 	b := newBrawl(t)
 	b.cmd("company", "dismiss all")
@@ -317,10 +317,10 @@ func TestALonePlayerWhoBrokeOffIsTurnedAgain(t *testing.T) {
 	b.fight()
 	_, ok := battle.Current(7)
 	require.True(t, ok)
-	b.cmd("break", "")
+	assert.Contains(t, b.cmd("break", ""), "Only flee takes you out of it.")
 	b.fight()
-	b.cmd("attack", "")
-	require.NotNil(t, b.aria.Character.Aggro, "rejoined")
+	assert.Contains(t, b.cmd("attack", ""), "The battle is under way")
+	require.NotNil(t, b.aria.Character.Aggro, "still fighting")
 
 	target := b.aria.Character.Aggro.MobInstanceId
 	room.RemoveMob(target)

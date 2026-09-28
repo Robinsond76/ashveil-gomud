@@ -11,6 +11,12 @@ import (
 
 func Break(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Ashveil Phase 32d: a battle plays out as it was set up.
+	if InBattle(user) {
+		user.SendText(BattleOnlyFlee)
+		return true, nil
+	}
+
 	// Ashveil Phase 29a: the company's engagement upkeep leaves a player
 	// who broke off out of the fight until they attack again. That holds
 	// even between blows (no target just then), while the company fights.

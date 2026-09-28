@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -422,17 +423,12 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	assert.Contains(t, got, "You turn toward the bandit ", "the leader rejoins")
 	assert.Contains(t, got, "Garrick Vane turns toward the bandit ", "the killer rejoins")
 
-	// Review fix: `break` holds. The upkeep leaves a leader who broke off
-	// out of the fight, until she attacks again.
-	b.cmd("break", "") // "You break off combat.", or, between blows, "You aren't in combat!"
-	assert.Nil(t, b.aria.Character.Aggro)
-	for i := 0; i < 3; i++ {
-		got = b.fight()
-		assert.NotContains(t, got, "You turn on", "a leader who broke off stays out")
-		assert.Nil(t, b.aria.Character.Aggro)
-	}
-	b.cmd("attack", "")
-	require.NotNil(t, b.aria.Character.Aggro, "she rejoins her battle with a bare attack")
+	// Phase 32d: `break` is refused in a battle (only flee takes her out),
+	// and she fights on.
+	assert.Contains(t, b.cmd("break", ""), "Only flee takes you out of it.")
+	assert.False(t, engagement.StoodDown(7), "nothing stood her down")
+	_, inBattle := battle.Current(7)
+	assert.True(t, inBattle, "her battle goes on")
 
 	// And the fight runs to its end with nobody left idle.
 	b.fightToTheEnd(200)

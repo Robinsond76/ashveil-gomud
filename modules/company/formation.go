@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -135,6 +136,15 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 	if len(args) == 0 {
 		user.SendText(m.renderFormation(user.UserId))
 		return true, nil
+	}
+	// Ashveil Phase 32d: the formation is set before a battle; reading it
+	// is fine during one.
+	switch args[0] {
+	case "move", "swap", "clear":
+		if usercommands.InBattle(user) {
+			user.SendText(usercommands.BattleUnderWay)
+			return true, nil
+		}
 	}
 	switch args[0] {
 	case "move":

@@ -84,13 +84,15 @@ inventory/provision code.
 
 ## Task 6: What a player may do in a battle (`internal/usercommands`, `modules/company`)
 
-- [ ] Tests first (`internal/usercommands/battle_refusals_test.go`, and
+- [x] Tests first (`internal/usercommands/battle_refusals_test.go`, and
   the wiring file): in a battle `break`, `eat`, `drink`, `use`, `equip`,
   `remove`, `go`/an exit, `formation move`, and a `strategy` change are
   refused and change nothing; `flee` still works and companions follow;
   out of a battle each works.
-- [ ] `usercommands.InBattle(user)` beside `BattleUnderWay`; the checks
-  in each command; `formation.go` (changes only).
+- [x] `usercommands.InBattle(user)` beside `BattleUnderWay`; the checks
+  in each command; `formation.go` (changes only); a flight that
+  gets away ends the battle at once (`NewRound_DoCombat.go`); 29a's and
+  32c's `break` scenarios updated to the refusal.
 
 ## Task 7: Peaceful mobs (`internal/mobparty`, `internal/rooms`, `modules/tutorial`)
 

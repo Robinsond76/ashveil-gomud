@@ -333,6 +333,10 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 // started (Ashveil Phase 32c, the owner's rule 5).
 const BattleUnderWay = `The battle is under way: it plays out as you set it up.`
 
+// BattleOnlyFlee is the answer to trying to step out of a battle (Ashveil
+// Phase 32d): only flee takes a player out.
+const BattleOnlyFlee = BattleUnderWay + ` Only <ansi fg="command">flee</ansi> takes you out of it.`
+
 // InBattle reports whether the player is in a battle (Ashveil Phase 32c
 // and 32d): they have one, or are aimed at a mob (a battle about to
 // begin). Once one has started, nothing typed changes it; only flee takes

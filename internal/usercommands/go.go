@@ -21,6 +21,12 @@ import (
 
 func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Ashveil Phase 32d: a battle plays out as it was set up.
+	if InBattle(user) {
+		user.SendText(BattleOnlyFlee)
+		return true, nil
+	}
+
 	if user.Character.Aggro != nil {
 		user.SendText("You can't do that! You are in combat!")
 		return true, nil

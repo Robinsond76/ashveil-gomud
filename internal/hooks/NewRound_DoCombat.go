@@ -185,6 +185,10 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			user.Character.Aggro = nil
 			events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 
+			// Ashveil Phase 32d: a flight that gets away ends the battle
+			// now, so the player isn't held to it for another round.
+			endBattle(user.UserId, combatstream.OutcomeBrokenOff)
+
 			originRoomId := user.Character.RoomId
 			if err := rooms.MoveToRoom(user.UserId, exitRoomId); err == nil {
 

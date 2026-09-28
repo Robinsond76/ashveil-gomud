@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
@@ -328,4 +329,39 @@ func TestCompanionManaComesBackOutOfCombat(t *testing.T) {
 	oswin.Character.SetAggro(0, b.bandits["bandit captain"][0], characters.DefaultAttack)
 	hooks.AutoHeal(events.NewRound{RoundNumber: 6})
 	assert.Equal(t, 5, oswin.Character.Mana, "not in combat")
+}
+
+// Phase 32d: in a battle only flee takes her out; the setup can't change.
+func TestInABattleOnlyFleeWorks(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	captain, _, _, _, _ := b.shapeBandits()
+	b.cmd("attack", fmt.Sprintf("#%d", captain))
+	b.toughen()
+	b.fight()
+	before, _ := domain.FormationFor(7)
+
+	assert.Contains(t, b.cmd("formation", "move tamsin 3 3"), "The battle is under way")
+	after, _ := domain.FormationFor(7)
+	assert.Equal(t, before, after, "the formation is unchanged")
+	assert.Contains(t, b.cmd("formation", ""), "Company formation", "reading it is fine")
+
+	assert.Contains(t, b.cmd("strategy", "tamsin leader"), "The battle is under way")
+	assert.NotContains(t, b.cmd("strategy", ""), "leader ", "unchanged")
+
+	assert.Contains(t, b.cmd("east", ""), "Only flee takes you out of it.")
+	assert.Equal(t, 920101, b.aria.Character.RoomId)
+
+	// Flee still works (made certain: she is far quicker than they are).
+	for _, m := range b.livingBandits() {
+		m.Character.Stats.Speed.ValueAdj = 0
+	}
+	b.aria.Character.Stats.Speed.ValueAdj = 100000
+	b.cmd("flee", "")
+	assert.Contains(t, b.fight(), "You break away and flee east.")
+	_, inBattle := battle.Current(7)
+	assert.False(t, inBattle, "the flight ended her battle at once")
+
+	// Out of the battle, the formation can change again.
+	assert.Contains(t, b.cmd("formation", "move tamsin 3 3"), "Placed Tamsin Reed")
 }
