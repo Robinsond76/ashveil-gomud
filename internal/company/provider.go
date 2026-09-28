@@ -289,6 +289,10 @@ type MemberView struct {
 	Status    MemberStatus
 	Level     int
 	Archetype string
+	// ExpInto and ExpTNL are the experience into the level and the span to
+	// the next, for a present companion only (Phase 32e); ExpKnown says so.
+	ExpInto, ExpTNL int
+	ExpKnown        bool
 	// HP and HPMax are set only for a present companion.
 	HP, HPMax int
 	// Placed, Row, and Col are its formation cell (0-based).

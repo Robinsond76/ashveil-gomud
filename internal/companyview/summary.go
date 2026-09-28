@@ -26,6 +26,10 @@ type Member struct {
 	Name   string
 	Status company.MemberStatus
 	Level  int
+	// ExpInto and ExpTNL are experience into the level and the span to the
+	// next (Phase 32e); ExpKnown is false for a companion that isn't out.
+	ExpInto, ExpTNL int
+	ExpKnown        bool
 	// Archetype is the display name; "" when none. ArchetypeKnown is false
 	// when no provider can say (the leader only).
 	Archetype      string
@@ -158,6 +162,8 @@ func (src sources) summary(user *users.UserRecord) Summary {
 
 	s.Leader = Member{Key: company.LeaderMemberKey, Leader: true, Name: c.Name, Status: company.MemberPresent,
 		Level: c.Level, HasHP: true, HP: c.Health, HPMax: c.HealthMax.Value}
+	s.Leader.ExpInto, s.Leader.ExpTNL = c.XPTNLActual()
+	s.Leader.ExpKnown = true
 	if f, ok := src.formation(uid); ok {
 		s.Leader.Row, s.Leader.Col, s.Leader.Placed = f.Find(company.LeaderMemberKey)
 		if !s.Leader.Placed {
@@ -186,7 +192,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		s.CompanyKnown = true
 		for _, v := range views {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
-				Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col}
+				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col}
 			switch v.Status {
 			case company.MemberDead:
 				s.Dead++

@@ -40,3 +40,20 @@ func TestCompanyPolishHelp(t *testing.T) {
 	drink := page("drink")
 	assert.Contains(t, drink, "Thirst: Hydrated.")
 }
+
+// Phase 32e: help company explains company experience, and help experience
+// mentions the company listing.
+func TestCompanyExperienceHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	page := func(topic string) string {
+		t.Helper()
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		return tagPattern.ReplaceAllString(text, "")
+	}
+	company := page("company")
+	assert.Contains(t, company, "earns the same amount")
+	assert.Contains(t, company, "nothing is split")
+	assert.Contains(t, page("experience"), "it lists your company")
+}

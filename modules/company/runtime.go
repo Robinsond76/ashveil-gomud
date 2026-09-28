@@ -190,6 +190,16 @@ func (nativeRuntime) TemplateState(mobTemplateID int) (domain.MemberState, bool)
 	return state, true
 }
 
+// Progress reads a live mob's level and experience progress.
+func (nativeRuntime) Progress(instanceID int) (int, int, int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, 0, 0, false
+	}
+	into, tnl := mob.Character.XPTNLActual()
+	return mob.Character.Level, into, tnl, true
+}
+
 // Vitals reads a live mob's health.
 func (nativeRuntime) Vitals(instanceID int) (int, int, bool) {
 	mob := mobs.GetInstance(instanceID)

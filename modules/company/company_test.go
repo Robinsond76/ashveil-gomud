@@ -205,8 +205,15 @@ type fakeRuntime struct {
 	relocated map[int]int
 	// Phase 26a: vitals per instance, {hp, max}.
 	vitals map[int][2]int
+	// Phase 32e: {level, into, tnl} per instance.
+	progress map[int][3]int
 	// Phase 32a2: the identity each spawn received.
 	spawnedIdentities []domain.Identity
+}
+
+func (f *fakeRuntime) Progress(instanceID int) (int, int, int, bool) {
+	v, ok := f.progress[instanceID]
+	return v[0], v[1], v[2], ok && f.live[instanceID]
 }
 
 func (f *fakeRuntime) Vitals(instanceID int) (int, int, bool) {

@@ -211,6 +211,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					mudlog.Debug("XP Calculation", "MobLevel", mob.Character.Level, "XPBase", mobXP, "xpVal", xpVal, "xpVariation", xpVariation, "xpScaler", xpScaler, "finalXPVal", finalXPVal)
 
 					user.GrantXP(finalXPVal, `combat`)
+					for _, line := range awardCompanyXP(user.UserId, user.Character, finalXPVal, room.RoomId) {
+						user.SendText(line)
+					}
 
 					// Apply alignment changes
 					alignmentBefore := user.Character.AlignmentName()
@@ -307,6 +310,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 						}
 
 						user.GrantXP(xpSplit, `combat`)
+						for _, line := range awardCompanyXP(user.UserId, user.Character, xpSplit, room.RoomId) {
+							user.SendText(line)
+						}
 
 						// Apply alignment changes
 						alignmentBefore := user.Character.AlignmentName()

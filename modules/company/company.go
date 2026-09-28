@@ -48,6 +48,9 @@ type Runtime interface {
 	Relocate(instanceID, roomID int) bool
 	// Vitals reads a live mob's health (Phase 26a).
 	Vitals(instanceID int) (hp, hpMax int, ok bool)
+	// Progress reads a live mob's level and experience into it and to its
+	// next level (Phase 32e).
+	Progress(instanceID int) (level, into, tnl int, ok bool)
 }
 
 type Store interface {
