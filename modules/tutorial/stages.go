@@ -66,6 +66,7 @@ func init() {
 				`<ansi fg="command">conditions</ansi> lists what is affecting you, and for how long.`,
 				`Short forms work too. Your prompt adds warnings such as Hungry or Dark only when something needs your attention.`,
 				`<ansi fg="command">help status</ansi> and <ansi fg="command">help archetype</ansi> explain your sheet and your path. <ansi fg="command">help adventure</ansi> lists every help page.`,
+				`You can run this course again later, as a practice character that keeps nothing: <ansi fg="command">tutorial replay</ansi> (<ansi fg="command">help tutorial</ansi>).`,
 			},
 			Done: "You know yourself well enough.",
 		},

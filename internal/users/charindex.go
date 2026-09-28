@@ -77,6 +77,9 @@ func (ci *CharacterIndex) Rebuild() {
 	newMap := make(map[string]int)
 
 	SearchOfflineUsers(func(u *UserRecord) bool {
+		if u.IsReplay() {
+			return true // Ashveil 32b: a replay borrows its real character's name
+		}
 		if u.Character != nil && u.Character.Name != "" {
 			newMap[strings.ToLower(u.Character.Name)] = u.UserId
 		}
@@ -84,6 +87,9 @@ func (ci *CharacterIndex) Rebuild() {
 	})
 
 	for _, u := range GetAllActiveUsers() {
+		if u.IsReplay() {
+			continue
+		}
 		if u.Character != nil && u.Character.Name != "" {
 			newMap[strings.ToLower(u.Character.Name)] = u.UserId
 		}

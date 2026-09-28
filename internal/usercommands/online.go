@@ -57,7 +57,7 @@ func Online(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			}
 
 			row := []string{
-				onlineInfo.CharacterName,
+				onlineName(u, onlineInfo.CharacterName),
 				strconv.Itoa(onlineInfo.Level),
 				onlineInfo.Alignment,
 				onlineInfo.Profession,
@@ -98,4 +98,13 @@ func Online(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	user.SendText(tplTxt)
 
 	return true, nil
+}
+
+// onlineName is a player's name on the online list; Ashveil 32b notes a
+// player replaying the tutorial.
+func onlineName(u *users.UserRecord, name string) string {
+	if u.IsReplay() {
+		return name + ` (replaying the tutorial)`
+	}
+	return name
 }

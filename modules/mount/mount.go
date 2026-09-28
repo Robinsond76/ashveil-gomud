@@ -119,6 +119,7 @@ func init() {
 	m.store = pluginStore{plug: m.plug}
 	m.plug.AddUserCommand("mount", m.userCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
+	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
 			mudlog.Error("mount: save", "error", err)

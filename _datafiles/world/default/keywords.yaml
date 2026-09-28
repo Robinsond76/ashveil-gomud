@@ -187,6 +187,7 @@ help-aliases:
   adventure:        [ashveil, basics]
   company:          [recruit, recruiting, roster, companions, companion]
   standing:         [reputation, blackmarket, black-market]
+  tutorial:         [replay]
   archetype:        [archetypes, class, classes]
   trap:             [traps]
   survival:         [needs, hunger, thirst, fatigue]

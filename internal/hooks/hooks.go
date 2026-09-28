@@ -52,6 +52,10 @@ func RegisterListeners() {
 	events.RegisterListener(events.PlayerSpawn{}, UserScriptLogin)
 	events.RegisterListener(events.PlayerDespawn{}, UserScriptLogout)         // Must run before the final HandleLeave cleanup
 	events.RegisterListener(events.PlayerDespawn{}, HandleLeave, events.Last) // This is a final listener, has to happen last
+	// Ashveil 32b: a connection handed from one user to another, and a
+	// user purged for good (after every module has dropped its state).
+	events.RegisterListener(events.UserHandOff{}, HandleUserHandOff)
+	events.RegisterListener(events.UserPurged{}, HandlePurge, events.Last)
 
 	// Levelup Notifications
 	events.RegisterListener(events.LevelUp{}, SendLevelNotifications)

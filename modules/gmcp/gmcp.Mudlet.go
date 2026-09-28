@@ -96,6 +96,7 @@ func init() {
 	// Register event listeners
 	events.RegisterListener(events.PlayerSpawn{}, g.playerSpawnHandler)
 	events.RegisterListener(events.PlayerDespawn{}, g.playerDespawnHandler)
+	events.RegisterListener(events.UserPurged{}, g.userPurgedHandler)
 	events.RegisterListener(GMCPMudletDetected{}, g.mudletDetectedHandler)
 	events.RegisterListener(GMCPDiscordStatusRequest{}, g.discordStatusRequestHandler)
 	events.RegisterListener(GMCPDiscordMessage{}, g.discordMessageHandler)
