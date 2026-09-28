@@ -59,7 +59,7 @@ func TestNameGroupNounAndArticle(t *testing.T) {
 
 func TestNameGroupKeepsItsNameAsMembersFall(t *testing.T) {
 	// The ruffians have fallen; only the rat is left, still carrying the name.
-	n := NameGroup([]MobSummary{{InstanceId: 2, Name: "rat", Noun: "swarm", GroupName: "a band of ruffians"}})
+	n := NameGroup([]MobSummary{{InstanceId: 2, Name: "rat", Noun: "swarm", SpawnGroup: "g1", GroupName: "a band of ruffians"}})
 	assert.Equal(t, "a band of ruffians", n.Name)
 	assert.Equal(t, "ruffians", n.Keyword)
 	assert.False(t, n.Solo)

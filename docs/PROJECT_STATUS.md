@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-28
-- **HEAD:** Phase 29b2 (one battle at a time; spawn groups) and player
+- **HEAD:** Phase 32c (enemy groups) merged 2026-09-28. Before it, Phase 29b2 (one battle at a time; spawn groups) and player
   help for every Ashveil system are complete and merged to `master`
   (2026-09-28, from `claude/next-phase-wfav4w`). Docs cleanup (finished-phase
   plans/specs and the old work log moved to git history) on
@@ -22,8 +22,9 @@ instead of duplicating them.
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
-  and the first combat slices (29a, 29b, 29b2, 29c) are all done.
-- **Next:** 32c–32h (32a, 32a2, and 32b are done), from the owner's
+  the first combat slices (29a, 29b, 29b2, 29c), and enemy groups (32c)
+  are all done.
+- **Next:** 32d–32h (32a, 32a2, 32b, and 32c are done), from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
   the combat roadmap continues at 29d.
@@ -96,7 +97,8 @@ instead of duplicating them.
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md), [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md), [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](superpowers/plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
-| 32c–32h | Play-test follow-ups | Proposed, specs to write ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): enemy groups and `scout` (32c, [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md) awaiting the owner's review), automatic player and companion combat (32d), company XP (32e), company logistics (32f), web company dock (32g), character deletion (32h) |
+| 32c | Enemy groups and `scout` | Complete: [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md), [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md). Groups named as they form ("a band of ruffians") and shown on their own room line; `attack <group>` is the only way to start a fight; a battle plays out on its own (attack, cast, backstab, shoot, tackle, disarm refused in one; a bare `attack` after `break` rejoins); `look <group>` and a free `scout`; summaries name the group |
+| 32d–32h | Play-test follow-ups | Proposed ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): automatic player and companion combat (32d), company XP (32e), company logistics (32f, implemented on `claude/project-thread-rxps20`, review done, fixes pending), web company dock (32g), character deletion (32h, [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), in progress) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
@@ -107,54 +109,64 @@ fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
 
-### Phase 29c: narration voice (2026-09-28)
+### Phase 32c: enemy groups and `scout` (2026-09-28)
 
-- **What:** combat reads as a story, with its numbers in brackets at the
-  end of a line. All eight weapon files rewritten; every hit ends
-  `(N damage)` / `(critical hit, N damage)` (the defender's adds
-  `, M blocked`); only a real crit draws the critical pool, and one the
-  armor takes entirely reads as a miss. No `***`, `!`, ALL-CAPS, or
-  "prepares to fight" in the round (weapon, dodge, fizzle, flee, and
-  shield-break lines). Mob names get "the", players' names never do
-  (`util.Article`). One opener per fight and one closing line after a win,
-  from pools keyed by mob group (generic, `slum-ruffians`,
-  `practice-squad`, and `bandits` for 32c), once per fight when two players
-  share a group; "turns toward"; a mob's death line printed in the round
-  (then `suicide quiet`), so the closing follows the last death. PvP and
-  mob-vs-mob fights get a "goes for" room line. The company fallen notice
-  is indented and in words. `mm`, `sparks`, `heal`, and `healall` chant
-  with their rounds (`ChantRoundsLeft`) and land with `(N damage)` /
-  `(N healed)`; `healall` lists everyone on one line. `help narration`
-  (aliases `critical`, `crit`, `healed`, `chanting`), linked from
-  `help combat` and `help damage`, pointed to from the Practice Yard.
-- **Why:** the owner-approved [narration design](superpowers/specs/2026-09-28-phase-29c-narration-voice-design.md);
-  combat roadmap 29c.
-- **Verification:** `make generate` and `make validate` pass;
-  `go test -race ./...` passed except `TestRecruitThroughPluginsLoad`, a
-  flake already on `master`, since fixed there (`71406ee`, merged in with
-  its package re-run green). Wiring tests go
-  through `hooks.DoCombat` (full 5v5 narration, two players on one group),
-  the real `cast` command (`mm`, `healall` by a companion), and `help`.
-- **Review:** the reviewer found 2 major, 5 minor, 6 nits. Fixed, each with
-  a test: (1) lowercase player names got "the"; (2) two players on one group
-  got two openers and closings; (3) a fully absorbed crit read as a bloody
-  critical with no brackets; (4) shield-break `***` and flee `!` lines
-  remained; (5) a mob reported dead twice before its queued suicide ran got
-  two death lines; (6) PvP and mob-vs-mob fights started silently (the PvP
-  line has no test: no attack harness for two players); (7) the `bandits`
-  pools matched no shipped mob (added `slum-ruffians`). Nits fixed: an
-  `attack` mid-fight "turns toward" instead of drawing again; the
-  `ChantRoundsLeft` doc; the unshipped `empty` world's weapon files synced
-  (they would print damage twice). Accepted: spell suffixes report the
-  health actually changed (`(0 healed)` at full health), as designed; the
-  spells' `WAIT_ROUNDS` constants mirror their yaml (onCast runs before the
-  cast is set); "Garrick Vane's guardsman's broadsword" (29d's pronouns);
-  before/after transcripts diverge after a few lines (the new pools draw
-  from the RNG). Gaps left: no test that a defeat or broken-off fight
-  prints no closing line, none counting "turns toward" lines, none for
-  `sparks` or `heal`.
+- **What:** per the [32c design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md)
+  and [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md).
+  Groups are named when they form ("a band of ruffians") and keep the name
+  while members fall; a group formed outside a spawn list (a script's or
+  admin's spawn) is named when first seen. Each shows on its own room line
+  with a count, its kinds, and what it's doing. Names are runtime only: a
+  restart regroups and renames. `attack <group>` is the only way to start a
+  fight ("You go for the band of ruffians."); a member's name is refused
+  with the command to type; `#id` takes the whole group. In a battle,
+  `attack`, `cast`, `backstab`, `shoot`, `tackle`, and `disarm` are
+  refused; a bare `attack` after `break` rejoins. Out of one, a harmful
+  spell, backstab, or shot at a mob doesn't start a fight. A lone player
+  turns toward the next foe on their own. `look <group>` and a free
+  `scout [group]` show a group and its formation. Summaries name the group;
+  the ambush pair and the tutorial's "straw squad" are named. Collective
+  nouns by race (`groupnoun`). Help: `scout` (new), `attack` (rewritten),
+  `targeting`, `combat`, `cast`, `shoot`, `skulduggery`, `battle-summary`,
+  `brawling`, `break`; the Combat lesson teaches `scout squad`/`attack squad`.
+- **Why:** the owner's play-test notes ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)).
+  Written before 29c on `claude/project-thread-4xs9vt` and merged onto it:
+  29c's spell test now casts through a companion, since a player can't cast
+  into a running battle.
+- **Verification:** `go test -race ./...`, `make generate`, and
+  `make validate` pass. Wiring tests in `modules/company/wiring_groups_test.go`
+  (real commands and `DoCombat`), narration, stream, tutorial, and
+  expedition tests.
+- **Review:** 3 major, 8 minor, 12 nits. Fixed with tests: (M1) a lone
+  player who used `break` and rejoined was never turned again (`attack`
+  now resumes them); (M2) the lone turn read "You turn on ruffian" (now
+  "You turn toward the ruffian.", and the room sees it); (M3) the suggested
+  keyword could name another group ("rats" matched "a band of big rats";
+  `enemyparty.Keyword` numbers by what the lookup matches); a group formed
+  outside a spawn list renamed as members fell (found merging onto 29c);
+  (m1) a tag group's member that wandered off kept the group's name;
+  (m3) `attack wolf` with a player named Wolf fought the wolves; (m4) group
+  words hid things in `look` ("look pack"); (m5) `help brawling`,
+  `help break`, and the cast notes; (m7) tackle and disarm were allowed
+  between `attack` and the battle's start; nits: member refusals' articles
+  ("The Captain Varek"). Left for the owner: (m2) non-hostile mobs sharing
+  a tag (the Frostfang guards) group and show under "Enemies here" in
+  `scout`; (m8) `formation move`, `flee`, `break`, potions, and `use` stay
+  allowed mid-battle until 32d. Accepted nits: an authored capitalised name
+  reads "You go for Rat King's court."; ordinals count hidden groups; two
+  lone mobs of one name get no `#2` in the hint; the scout grid overflows
+  on long names; tab completion still offers members' names; `-man`
+  plurals ("shamen"); the empty world's `attack.md`. Test gaps left (m6): a
+  regrouped survivor's new name, a shopkeeper by its own name, the weakest
+  reachable first aim, `groupnoun` loading, an authored `groupname`, a
+  hidden member in look/scout, `scout` in the tutorial wiring test.
 
 ## Known issues / deferred items
+
+- **Enemy groups (32c), for the owner:** non-hostile mobs sharing a tag
+  form groups (scout lists them as enemies); `formation move`, `flee`,
+  `break`, potions, and `use` stay allowed mid-battle until 32d. Test gaps
+  are in the 32c work-log entry.
 
 Refreshed 2026-09-26 (Phase 28). Earlier entries that later phases
 resolved (the weather, load, and mount multipliers, and the 11a–11c

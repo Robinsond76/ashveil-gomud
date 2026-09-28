@@ -411,7 +411,8 @@ func (sd side) turnAlone(p mobparty.Party, room *rooms.Room) {
 	emitTargetChange(userRef(u), mobRefById(previous), mobRefById(next), room.RoomId)
 	u.Character.SetAggro(0, next, attackType(u.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
-	u.SendText(fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, mobName(next)))
+	u.SendText(turnsToward(`You`, mobTag(mobName(next))))
+	room.SendText(turnsToward(userTag(u.Character.Name), mobTag(mobName(next))), u.UserId)
 }
 
 // turnWaitingOntoFreePlayers turns each group waiting on a busy player onto

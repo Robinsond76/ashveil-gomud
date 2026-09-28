@@ -34,6 +34,12 @@ func NameGroup(members []MobSummary) Naming {
 	if len(members) == 0 {
 		return Naming{}
 	}
+	// A lone mob outside a spawn group (a tag-formed group's member that
+	// wandered off) goes by its own name, whatever group it was once seen
+	// in (32c review); a spawn group's lone survivor keeps its group's.
+	if len(members) == 1 && members[0].SpawnGroup == "" {
+		return Naming{Name: members[0].Name, Keyword: strings.ToLower(members[0].Name), Solo: true}
+	}
 	for _, m := range members {
 		if m.GroupName != "" {
 			return fromName(m.GroupName, members)

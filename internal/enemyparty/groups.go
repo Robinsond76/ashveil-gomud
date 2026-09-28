@@ -1,6 +1,7 @@
 package enemyparty
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -116,7 +117,11 @@ func FindGroup(room *rooms.Room, search string) (Group, bool) {
 		return g, true
 	}
 	// A lone mob, by its name as the room matches names.
-	if _, mobId := room.FindByName(search); mobId > 0 {
+	playerId, mobId := room.FindByName(search)
+	if mobId == 0 && playerId > 0 {
+		return Group{}, false // a player of that name, not a group (32c review)
+	}
+	if mobId > 0 {
 		for _, g := range groups {
 			if g.Solo() && g.Party.Members[0] == mobId {
 				return g, true
@@ -127,10 +132,33 @@ func FindGroup(room *rooms.Room, search string) (Group, bool) {
 	return pick(func(g Group) bool { return !g.Solo() && g.Naming.MatchesPrefix(name) })
 }
 
+// Keyword is what a player types to name g, found back by FindGroupNamed:
+// its keyword, with "#2" when an earlier visible group also answers to
+// that word ("a band of big rats" answers to "rats" too, 32c review). A
+// lone mob goes by its own name.
+func Keyword(room *rooms.Room, g Group) string {
+	if g.Solo() {
+		return g.Naming.Keyword
+	}
+	n := 0
+	for _, other := range visibleGroups(room) {
+		if !other.Solo() && other.Naming.Matches(g.Naming.Keyword) {
+			n++
+		}
+		if other.Party.ID == g.Party.ID {
+			break
+		}
+	}
+	if n > 1 {
+		return fmt.Sprintf(`%s#%d`, g.Naming.Keyword, n)
+	}
+	return g.Naming.Keyword
+}
+
 // FindGroupNamed finds a group of more than one by exactly one of its
 // words ("ruffians", "band", "ruffians#2"), and nothing else: no lone mob,
-// no partial word. look uses it, so a group never hides a thing of the
-// same name.
+// no partial word. look uses it after checking the word names no thing
+// there, so a group never hides a thing of the same name.
 func FindGroupNamed(room *rooms.Room, search string) (Group, bool) {
 	name, nth := util.GetMatchNumber(search)
 	if name == "" {

@@ -169,8 +169,8 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			// owner's rule 3): say what to type instead.
 			if g, ok := enemyparty.GroupOf(room, attackMobInstanceId); ok && !g.Solo() {
 				m := mobs.GetInstance(attackMobInstanceId)
-				user.SendText(fmt.Sprintf(`The <ansi fg="mobname">%s</ansi> fights with <ansi fg="mobname">%s</ansi>. Type <ansi fg="command">attack %s</ansi>.`,
-					m.Character.Name, g.Name, GroupKeyword(room, g)))
+				user.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s fights with <ansi fg="mobname">%s</ansi>. Type <ansi fg="command">attack %s</ansi>.`,
+					util.Article(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, m.Character.Name)), g.Name, GroupKeyword(room, g))))
 				return true, nil
 			}
 		}
@@ -237,6 +237,9 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			}
 
 			user.Character.SetAggro(0, attackMobInstanceId, characters.DefaultAttack)
+			// Back in the fight (a bare attack after break): the game turns
+			// them again (32c review: a lone player stayed stood down).
+			engagement.Resume(user.UserId)
 
 			events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 
@@ -343,19 +346,7 @@ func battleGroup(b battle.Battle, room *rooms.Room) (enemyparty.Group, bool) {
 // GroupKeyword is what a player types to name g: its keyword, with "#2"
 // for the second group of that name in the room.
 func GroupKeyword(room *rooms.Room, g enemyparty.Group) string {
-	n := 0
-	for _, other := range enemyparty.Groups(room) {
-		if !other.Solo() && other.Naming.Name == g.Naming.Name {
-			n++
-		}
-		if other.Party.ID == g.Party.ID {
-			break
-		}
-	}
-	if n > 1 {
-		return fmt.Sprintf(`%s#%d`, g.Naming.Keyword, n)
-	}
-	return g.Naming.Keyword
+	return enemyparty.Keyword(room, g)
 }
 
 // NotAnOpener refuses a move that isn't how a fight starts (Ashveil Phase
@@ -364,7 +355,7 @@ func GroupKeyword(room *rooms.Room, g enemyparty.Group) string {
 func NotAnOpener(room *rooms.Room, mobInstanceId int, what string) string {
 	if room != nil {
 		if g, ok := enemyparty.GroupOf(room, mobInstanceId); ok {
-			return fmt.Sprintf(`%s doesn't start a fight. Type <ansi fg="command">attack %s</ansi> to fight <ansi fg="mobname">%s</ansi>.`, what, GroupKeyword(room, g), g.Name)
+			return fmt.Sprintf(`%s doesn't start a fight. Type <ansi fg="command">attack %s</ansi> to fight %s.`, what, GroupKeyword(room, g), util.Article(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, g.Name)))
 		}
 	}
 	return fmt.Sprintf(`%s doesn't start a fight. Start one with <ansi fg="command">attack</ansi>.`, what)

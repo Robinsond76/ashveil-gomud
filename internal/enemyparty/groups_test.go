@@ -96,3 +96,39 @@ func TestAnUnspawnedGroupKeepsItsNameAsMembersFall(t *testing.T) {
 	_, ok := FindGroup(room, "cutthroats")
 	assert.True(t, ok, "the typed name still finds it")
 }
+
+// TestTheSuggestedKeywordNamesItsOwnGroup (32c review M3): "a band of big
+// rats" answers to "rats" too, so the plain rats' keyword is numbered, and
+// each group's suggested word finds that group.
+func TestTheSuggestedKeywordNamesItsOwnGroup(t *testing.T) {
+	mudlog.SetupLogger(nil, "", "", false)
+	namedMob(t, 9301, "big rat", "a")
+	namedMob(t, 9302, "big rat", "a")
+	namedMob(t, 9303, "rat", "b")
+	namedMob(t, 9304, "rat", "b")
+	room := testRoom(t, 990301, 9301, 9302, 9303, 9304)
+	for _, g := range Groups(room) {
+		kw := Keyword(room, g)
+		found, ok := FindGroup(room, kw)
+		require.True(t, ok, kw)
+		assert.Equal(t, g.Party.ID, found.Party.ID, "%q names %q", kw, g.Name)
+	}
+}
+
+// TestAWanderingMemberGoesByItsOwnName (32c review m1): a tag-formed
+// group's member that wanders off alone is a lone mob again.
+func TestAWanderingMemberGoesByItsOwnName(t *testing.T) {
+	mudlog.SetupLogger(nil, "", "", false)
+	for _, id := range []int{9311, 9312} {
+		m := testMob(t, id, 10, "law")
+		m.Character.Name = "guard"
+	}
+	room := testRoom(t, 990311, 9311, 9312)
+	require.Equal(t, "a band of guards", Groups(room)[0].Name)
+	room.SetTestOccupants(nil, []int{9311})
+	away := testRoom(t, 990312, 9312)
+	g, ok := FindGroup(away, "guard")
+	require.True(t, ok, "attack guard")
+	assert.True(t, g.Solo())
+	assert.Equal(t, "guard", g.Name)
+}

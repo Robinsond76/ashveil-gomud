@@ -25,7 +25,7 @@ func Disarm(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	// Ashveil Phase 32c (the owner's rule 5): a battle plays out on its own.
-	if _, inBattle := battle.Current(user.UserId); inBattle {
+	if _, inBattle := battle.Current(user.UserId); inBattle || fightingMob(user) {
 		user.SendText(BattleUnderWay)
 		return true, nil
 	}

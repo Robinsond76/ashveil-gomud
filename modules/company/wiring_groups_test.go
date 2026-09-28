@@ -297,3 +297,59 @@ func TestScoutFindsNoGroup(t *testing.T) {
 	assert.Contains(t, b.cmd("scout", ""), "You see no enemies here.")
 	assert.Contains(t, b.cmd("scout", "ruffians"), `You see no group called "ruffians" here.`)
 }
+
+// TestALonePlayerWhoBrokeOffIsTurnedAgain (32c review M1, M2): a player
+// with no company record who breaks off and rejoins with a bare attack is
+// turned onto the next foe when theirs falls, in 29c's voice, and the room
+// sees it.
+func TestALonePlayerWhoBrokeOffIsTurnedAgain(t *testing.T) {
+	b := newBrawl(t)
+	b.cmd("company", "dismiss all")
+	rec, _ := module.registry.Get(7)
+	module.registry.Remove(7)
+	t.Cleanup(func() { module.registry.Put(rec) })
+	for _, m := range spawnedHostiles(t, 920106) {
+		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+	}
+	room := b.into(920106)
+	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	b.cmd("attack", "ruffians")
+	b.fight()
+	_, ok := battle.Current(7)
+	require.True(t, ok)
+	b.cmd("break", "")
+	b.fight()
+	b.cmd("attack", "")
+	require.NotNil(t, b.aria.Character.Aggro, "rejoined")
+
+	target := b.aria.Character.Aggro.MobInstanceId
+	room.RemoveMob(target)
+	mobs.DestroyInstance(target)
+	all := ""
+	for i := 0; i < 3; i++ {
+		b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+		all += b.fight()
+	}
+	a := b.aria.Character.Aggro
+	require.NotNil(t, a, "turned onto the next foe")
+	assert.NotEqual(t, target, a.MobInstanceId)
+	assert.Regexp(t, `You turn toward the ruffian\.`, all)
+	assert.NotContains(t, all, "You turn on")
+}
+
+// TestAThingIsNotHiddenByAGroup (32c review m4): a word that names a thing
+// here (a room noun) looks at the thing, not at the group sharing the word.
+func TestAThingIsNotHiddenByAGroup(t *testing.T) {
+	b := newBrawl(t)
+	spawnedHostiles(t, 920103)
+	room := b.into(920103)
+	if room.Nouns == nil {
+		room.Nouns = map[string]string{}
+	}
+	room.Nouns["band"] = "A faded band of cloth is tied to a post."
+	t.Cleanup(func() { delete(room.Nouns, "band") })
+	got := b.cmd("look", "band")
+	assert.Contains(t, got, "faded band of cloth")
+	assert.NotContains(t, got, "two strong")
+	assert.Contains(t, b.cmd("look", "ruffians"), "two strong", "the group's other words still work")
+}
