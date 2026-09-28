@@ -96,7 +96,7 @@ instead of duplicating them.
 | 32a | Company polish | Proposed: [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Proposed: [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Proposed: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md). `tutorial replay`: a throwaway level-1 copy of the real character runs the course; the real character comes back exactly as it was; a `UserPurged` event every module handles |
-| 32c–32h | Play-test follow-ups | Proposed, specs to write ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): enemy groups and `scout` (32c, [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md) awaiting the owner's review), automatic player and companion combat (32d), company XP (32e), company logistics (32f), web company dock (32g), character deletion (32h) |
+| 32c–32h | Play-test follow-ups | Proposed, specs to write ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): enemy groups and `scout` (32c, [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md) merged; implemented and verified on `claude/project-thread-4xs9vt`, independent review still to run), automatic player and companion combat (32d), company XP (32e), company logistics (32f), web company dock (32g), character deletion (32h) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
@@ -106,6 +106,47 @@ Keep only the latest phase's entry here (What / Why / Verification /
 fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
+
+### Phase 32c: enemy groups and `scout` (in progress, stopped 2026-09-28)
+
+- **Where it stopped:** the owner paused all work. Implementation, player
+  help, and verification are done on `claude/project-thread-4xs9vt`
+  (draft PR). The independent review was started and stopped before it
+  reported, so it hasn't run. Left: run the review over
+  `git diff 4728f6a0..HEAD`, fix what it finds with regression tests,
+  add the **Review:** line here, then merge.
+- **What:** per the [32c design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md)
+  and [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md) (tasks 1 to 8 done):
+  - Groups are named when they form ("a band of ruffians"), keep the name
+    while members fall, and show in the room on their own line with a
+    count, the kinds, and what they're doing. Names are runtime only: a
+    restart regroups and renames.
+  - `attack <group>` is the only way to start a fight; naming a member of
+    a larger group is refused with the command to type; `#id` takes the
+    whole group. In a battle, `attack`, `cast`, `backstab`, `shoot`,
+    `tackle`, and `disarm` are refused (a bare `attack` after `break`
+    rejoins). Out of one, a harmful spell, backstab, or shot at a mob
+    doesn't start a fight. A lone player turns to the next foe on their
+    own. `look <group>` and the new free `scout [group]` show a group and
+    its formation. Battle summaries name the group; the travel ambush
+    pair and the tutorial's "straw squad" are named.
+  - Collective nouns by race (`groupnoun`, for the owner to adjust): host
+    (ghostly spirit, undead); band (human, elf, troll, goblin, reptilian,
+    faerie, golem); swarm (insect, rodent, giant spider); brood (eldritch
+    horror); pack (canine); patch (fungus); grove (tree); troop (monkey);
+    colony (lagomorph); squad (dummy); cluster (orb); nest (reptile).
+  - Help: new `help scout`; `help attack` rewritten; `targeting`,
+    `combat`, `cast`, `shoot`, `skulduggery`, and `battle-summary`
+    updated; the Combat lesson teaches `scout squad` and `attack squad`.
+- **Verification:** `go test -race ./...`, `make generate`, and
+  `make validate` pass. Wiring tests in
+  `modules/company/wiring_groups_test.go` (real commands and `DoCombat`),
+  the stream, tutorial, and expedition tests; unit tests in
+  `internal/mobparty`, `internal/enemyparty`, `internal/combatstream`,
+  `modules/gmcp`, and the help pages.
+- **Review:** not run yet (stopped at the owner's request).
+- **Open for 32d:** `formation move` mid-fight is still allowed, as are
+  `flee` and `break`.
 
 ### Phase 29b2: one battle at a time; spawn groups; help for every system (2026-09-28)
 

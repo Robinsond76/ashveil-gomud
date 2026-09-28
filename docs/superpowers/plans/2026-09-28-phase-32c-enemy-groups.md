@@ -103,6 +103,6 @@ Design: [32c design](../specs/2026-09-28-phase-32c-enemy-groups-design.md).
 
 ## Task 9: Verification, review, status
 
-- [ ] `go test -race ./...`, `make generate`, `make validate`.
+- [x] `go test -race ./...`, `make generate`, `make validate`.
 - [ ] Independent review; verify and fix findings with regression tests.
 - [ ] `docs/PROJECT_STATUS.md` work-log entry with the **Review:** line.
