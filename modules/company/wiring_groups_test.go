@@ -8,8 +8,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -230,4 +232,68 @@ func TestSpellsAndShotsDontStartFights(t *testing.T) {
 	got = b.cmd("shoot", "ruffian north")
 	assert.Contains(t, got, "A shot doesn't start a fight.")
 	assert.Nil(t, b.aria.Character.Aggro)
+}
+
+func TestLookAtAGroup(t *testing.T) {
+	b := newBrawl(t)
+	spawnedHostiles(t, 920103)
+	b.into(920103)
+	got := b.cmd("look", "band")
+	assert.Contains(t, got, "A band of ruffians, two strong, idle.")
+	assert.Contains(t, got, "a ruffian (unhurt), a ruffian (unhurt)")
+	assert.Contains(t, got, "Type scout ruffians to see how they stand, or attack ruffians to fight them.")
+	assert.NotContains(t, b.cmd("look", "ruffian"), "strong,", "a member is looked at as before")
+
+	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	b.cmd("attack", "ruffians")
+	b.fight()
+	assert.Contains(t, b.cmd("look", "ruffians"), "fighting you.")
+}
+
+func TestScoutAGroup(t *testing.T) {
+	b := newBrawl(t)
+	mixed := spawnedHostiles(t, 920104)
+	room := b.into(920104)
+	name := mixed[0].GroupName
+	kind := strings.TrimPrefix(name, "a band of ")
+
+	got := b.cmd("scout", "")
+	assert.Contains(t, got, "Enemies here:")
+	assert.Contains(t, got, mobparty.Capitalize(name)+" (2): a ")
+	assert.Contains(t, got, "Type scout "+kind)
+
+	round := util.GetRoundCount()
+	got = b.cmd("scout", kind)
+	assert.Contains(t, got, mobparty.Capitalize(name)+", as they stand (front row nearest you):")
+	assert.Contains(t, got, "front [")
+	assert.Contains(t, got, "(unhurt)")
+	assert.Contains(t, got, "You aren't placed in your company's formation")
+	assert.Equal(t, round, util.GetRoundCount(), "scouting spends no round")
+	assert.Nil(t, b.aria.Character.Aggro, "and starts nothing")
+
+	// Placed at the front, left: Aria can reach the front of columns 1 and 2.
+	require.Contains(t, b.cmd("formation", "move me 1 1"), "Placed")
+	got = b.cmd("scout", kind)
+	assert.Contains(t, got, "* you can reach them from your place in the formation.")
+	assert.Contains(t, got, "*")
+
+	// In a fight, and on a waiting group, it works the same.
+	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+	b.cmd("attack", kind)
+	b.fight()
+	assert.Contains(t, b.cmd("scout", kind), "as they stand")
+
+	// In the dark, nothing.
+	biome := room.Biome
+	room.Biome = "cave"
+	t.Cleanup(func() { room.Biome = biome })
+	assert.Contains(t, b.cmd("scout", kind), "It's too dark to make them out.")
+	assert.Contains(t, b.cmd("scout", "nobody"), "It's too dark")
+}
+
+func TestScoutFindsNoGroup(t *testing.T) {
+	b := newBrawl(t)
+	b.into(920102)
+	assert.Contains(t, b.cmd("scout", ""), "You see no enemies here.")
+	assert.Contains(t, b.cmd("scout", "ruffians"), `You see no group called "ruffians" here.`)
 }

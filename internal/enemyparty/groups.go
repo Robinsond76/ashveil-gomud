@@ -92,7 +92,7 @@ func FindGroup(room *rooms.Room, search string) (Group, bool) {
 		}
 		return Group{}, false
 	}
-	if g, ok := pick(func(g Group) bool { return !g.Solo() && g.Naming.Matches(name) }); ok {
+	if g, ok := FindGroupNamed(room, search); ok {
 		return g, true
 	}
 	// A lone mob, by its name as the room matches names.
@@ -105,6 +105,78 @@ func FindGroup(room *rooms.Room, search string) (Group, bool) {
 		return Group{}, false // a member of a larger group: not a group's name
 	}
 	return pick(func(g Group) bool { return !g.Solo() && g.Naming.MatchesPrefix(name) })
+}
+
+// FindGroupNamed finds a group of more than one by exactly one of its
+// words ("ruffians", "band", "ruffians#2"), and nothing else: no lone mob,
+// no partial word. look uses it, so a group never hides a thing of the
+// same name.
+func FindGroupNamed(room *rooms.Room, search string) (Group, bool) {
+	name, nth := util.GetMatchNumber(search)
+	if name == "" {
+		return Group{}, false
+	}
+	n := 0
+	for _, g := range visibleGroups(room) {
+		if !g.Solo() && g.Naming.Matches(name) {
+			n++
+			if n == nth {
+				return g, true
+			}
+		}
+	}
+	return Group{}, false
+}
+
+// Visible lists the group's living members the viewer can see (hidden ones
+// are left out), in its formation order: front row first.
+func (g Group) Visible() []*mobs.Mob {
+	type placed struct {
+		m        *mobs.Mob
+		row, col int
+	}
+	var ps []placed
+	for _, id := range g.Party.Members {
+		m := mobs.GetInstance(id)
+		if m == nil || m.Character.Health < 1 || m.Character.HasBuffFlag("hidden") {
+			continue
+		}
+		row, col, _ := g.Party.Formation.Find(mobparty.MemberKeyFor(id))
+		ps = append(ps, placed{m, row, col})
+	}
+	sort.SliceStable(ps, func(i, j int) bool {
+		if ps[i].row != ps[j].row {
+			return ps[i].row < ps[j].row
+		}
+		return ps[i].col < ps[j].col
+	})
+	out := make([]*mobs.Mob, len(ps))
+	for i, p := range ps {
+		out[i] = p.m
+	}
+	return out
+}
+
+// HealthWord says how hurt a fighter looks: unhurt, scratched, wounded,
+// badly wounded, near death, or down.
+func HealthWord(health, max int) string {
+	if health < 1 {
+		return "down"
+	}
+	if max < 1 {
+		max = 1
+	}
+	switch pct := health * 100 / max; {
+	case pct >= 100:
+		return "unhurt"
+	case pct >= 75:
+		return "scratched"
+	case pct >= 50:
+		return "wounded"
+	case pct >= 25:
+		return "badly wounded"
+	}
+	return "near death"
 }
 
 // visibleGroups are the room's groups with at least one member not hidden.
