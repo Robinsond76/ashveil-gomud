@@ -7,7 +7,7 @@ import (
 )
 
 // awardCompanyXP is Phase 32e: when a kill pays a company's leader, every
-// companion of that company that is alive, attached, and in the room where
+// companion of that company that is alive, attached (still charmed by this leader), and in the room where
 // the mob died earns the same figure, in full (no split). It returns one
 // notice per level a companion gained, for the leader. Companions are
 // found through the leader's charmed instances and confirmed against the
@@ -24,7 +24,7 @@ func awardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 			continue
 		}
 		mob := mobs.GetInstance(instanceID)
-		if mob == nil || mob.Character.RoomId != roomID || mob.Character.Health <= 0 {
+		if mob == nil || mob.Character.RoomId != roomID || mob.Character.Health <= 0 || !mob.Character.IsCharmed(leaderUserID) {
 			continue
 		}
 		mob.Character.GrantXP(amount)
@@ -34,6 +34,12 @@ func awardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 				break
 			}
 			lines = append(lines, company.LevelLine(mob.Character.Name, mob.Character.Level))
+		}
+		if len(lines) > 0 {
+			// A respawn at this level would spend the level's points, so a
+			// companion levelled live must too, or it is stronger after a
+			// logout than before.
+			mob.Character.AutoTrain()
 		}
 	}
 	return lines

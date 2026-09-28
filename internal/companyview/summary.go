@@ -162,8 +162,6 @@ func (src sources) summary(user *users.UserRecord) Summary {
 
 	s.Leader = Member{Key: company.LeaderMemberKey, Leader: true, Name: c.Name, Status: company.MemberPresent,
 		Level: c.Level, HasHP: true, HP: c.Health, HPMax: c.HealthMax.Value}
-	s.Leader.ExpInto, s.Leader.ExpTNL = c.XPTNLActual()
-	s.Leader.ExpKnown = true
 	if f, ok := src.formation(uid); ok {
 		s.Leader.Row, s.Leader.Col, s.Leader.Placed = f.Find(company.LeaderMemberKey)
 		if !s.Leader.Placed {

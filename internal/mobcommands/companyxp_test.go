@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -39,6 +40,7 @@ func xpMob(t *testing.T, instance, roomID, hp int) *mobs.Mob {
 	m.Character.RoomId = roomID
 	m.Character.Validate(true)
 	m.Character.Health = hp
+	m.Character.Charm(xpLeader, -1, "")
 	mobs.SetTestInstance(m)
 	t.Cleanup(func() { mobs.RemoveTestInstance(instance) })
 	return m
@@ -96,6 +98,9 @@ func TestAwardCompanyXPLevelsUp(t *testing.T) {
 	}
 	if len(lines) != m.Character.Level-1 {
 		t.Fatalf("lines = %d, want one per level gained (%d)", len(lines), m.Character.Level-1)
+	}
+	if m.Character.StatPoints != 0 {
+		t.Errorf("level points left unspent: %d", m.Character.StatPoints)
 	}
 	if m.Character.Health != m.Character.HealthMax.Value {
 		t.Errorf("not refilled: %d/%d", m.Character.Health, m.Character.HealthMax.Value)
@@ -159,4 +164,59 @@ func TestKillPaysTheCompanyThroughSuicide(t *testing.T) {
 	require.Positive(t, leaderGain)
 	assert.Equal(t, leaderGain, here.Character.Experience-hereBefore, "the companion here earns the leader's figure in full")
 	assert.Equal(t, awayBefore, away.Character.Experience, "an absent companion earns nothing")
+}
+
+// TestAwardCompanyXPSkipsBefriendedAway: a companion another player has
+// since charmed is no longer this leader's, whatever the leader's list says.
+func TestAwardCompanyXPSkipsBefriendedAway(t *testing.T) {
+	const room = 7004
+	m := xpMob(t, 880041, room, 5)
+	m.Character.Charm(xpLeader+9, -1, "")
+	leader := characters.New()
+	leader.TrackCharmed(m.InstanceId, true)
+	company.SetFormationProvider(xpProvider{attached: map[int]bool{880041: true}})
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+
+	awardCompanyXP(xpLeader, leader, 40, room)
+	if m.Character.Experience > 1 {
+		t.Fatalf("gained xp: %d", m.Character.Experience)
+	}
+}
+
+// TestPartyKillPaysTheMembersCompany: in a GoMud party the split share goes
+// to each member, and each member's companion earns that member's share.
+func TestPartyKillPaysTheMembersCompany(t *testing.T) {
+	mudlog.SetupLogger(nil, "low", "", false)
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	user := users.NewUserRecord(xpLeader, 5151)
+	user.Character.Level = 1
+	users.SetTestUser(user)
+	p := parties.New(xpLeader)
+	require.NotNil(t, p)
+	t.Cleanup(p.Disband)
+
+	room := rooms.NewEmptyRoom()
+	here := xpMob(t, 880051, room.RoomId, 5)
+	user.Character.TrackCharmed(here.InstanceId, true)
+	company.SetFormationProvider(xpProvider{attached: map[int]bool{880051: true}})
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+
+	foe := &mobs.Mob{MobId: 999}
+	foe.Character.Name = "bandit"
+	foe.Character.Level = 5
+	foe.Character.TNLScale = 1
+	foe.Character.PlayerDamage = map[int]int{xpLeader: 10}
+	foe.InstanceId = 424244
+	room.AddMob(foe.InstanceId)
+
+	userBefore, hereBefore := user.Character.Experience, here.Character.Experience
+	ok, err := Suicide("", foe, room)
+	require.NoError(t, err)
+	require.True(t, ok)
+	events.ProcessEvents()
+
+	leaderGain := user.Character.Experience - userBefore
+	require.Positive(t, leaderGain)
+	assert.Equal(t, leaderGain, here.Character.Experience-hereBefore)
 }

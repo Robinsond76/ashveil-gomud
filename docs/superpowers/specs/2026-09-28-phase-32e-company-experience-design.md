@@ -40,7 +40,7 @@ This phase applies the recommendations below under the owner's standing
 ## Scope
 
 1. **Companions earn XP.** When a kill pays a company's leader, every
-   companion of that company that is **alive, tracked, and in the room
+   companion of that company that is **alive, still charmed by the leader, tracked, and in the room
    where the mob died** earns the **same amount the leader was paid**
    (the leader's figure after the level-delta scaler and elite bonus, and
    before `GrantXP`'s own config scale and mods; each character then

@@ -115,6 +115,8 @@ func keptState(c domain.Companion, evt events.MobDeath) domain.MemberState {
 		state = c.State.Clone()
 	}
 	if evt.Level > 0 {
+		// The level is live; the saved experience may lag it. Harmless:
+		// resurrection zeroes experience so the level's floor applies.
 		state.Level = evt.Level
 	}
 	state.Equipment = characters.Worn{}
