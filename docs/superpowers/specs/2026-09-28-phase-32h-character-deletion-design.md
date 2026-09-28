@@ -52,12 +52,15 @@ module's state**, reusing 32b's per-user purge.
 
 ## Decisions
 
-Open questions are marked **(open)** with a recommendation; everything
-else is a default this design picks.
+The owner answered the four open questions on 2026-09-28: keep the login
+and go straight to a new character (A, option 1); confirm with the
+password **and** the character's name (B); destroy items and gold (D);
+lock the command after three wrong passwords (B). Every other point is a
+default this design picks.
 
-### A. What is deleted **(open)**
+### A. What is deleted **(owner, 2026-09-28: option 1)**
 
-- **1. The character, keeping the login (recommended).** The character
+- **1. The character, keeping the login (chosen).** The character
   and everything about it goes; the account (username, password, role,
   settings, macros) stays. The player is put straight into character
   creation on the same connection, as a new account would be. This is
@@ -68,9 +71,7 @@ else is a default this design picks.
   disconnected and must register again to play. Frees the username as
   well as the character name.
 
-The rest of this design assumes option 1. Option 2 changes only D's last
-step (remove the file and both index entries; say goodbye and close the
-connection instead of a hand-off).
+Option 2 was not chosen.
 
 ### B. The command
 
@@ -82,11 +83,14 @@ connection instead of a hand-off).
   and everything else. Your login stays, and you'll make a new
   character. This can't be undone.
   Type your password to delete Dain, or anything else to cancel:
+  ********
+  Type Dain to confirm, or anything else to cancel:
   ```
 
-- **The password is the confirmation.** A right password deletes at once;
-  anything else cancels ("Nothing was deleted."). No second "type the
-  name" step. **(open; recommendation: password only)**
+- **Password, then the name (owner, 2026-09-28).** A wrong password
+  cancels ("Nothing was deleted."). A right one asks for the character's
+  name; the name must match exactly, ignoring case, or it cancels. Only
+  both together delete.
 - **The password is masked** on the prompt, as at login. In-game prompts
   get a `Masked` question option that does the same `WILL ECHO` masking
   as the login handler and keeps the answer out of input history; the
@@ -102,7 +106,7 @@ connection instead of a hand-off).
   companions out: each module already handles its player logging out in
   those states, and the purge then drops the state.
 - **Wrong passwords** are logged (user id, no password). Three wrong in a
-  row lock the command until the next login. **(open; recommendation: yes)**
+  row lock the command until the next login. **(owner, 2026-09-28)**
 
 ### C. What the player sees
 
@@ -128,8 +132,8 @@ On the game loop, in order:
    the same connection; they land in the Void and creation begins.
 
 Items, gold, and the bank balance go with the character: nothing is
-dropped in the room. **(open; recommendation: destroyed, not dropped, so
-deletion can't be used to hand gear to another character.)**
+dropped in the room, so deletion can't hand gear to another character.
+**(owner, 2026-09-28)**
 
 Kept, as account data: username, password, role, config options (prompt,
 colours, screen settings), macros. Everything on the character and in
@@ -195,7 +199,8 @@ every module goes.
     32b purge checks, run on a kept account);
   - the old name can be taken by the new character or anyone else;
   - the same username and password log in afterwards;
-  - a wrong password deletes nothing; refusals in a fight, while down,
+  - a wrong password, or a right password and a wrong name, deletes
+    nothing; three wrong passwords lock the command until the next login; refusals in a fight, while down,
     in a replay, and in the Void;
   - the password isn't echoed (telnet: `WILL ECHO` around the prompt);
   - a crash between the reset and the purge: the boot sweep finishes it;
