@@ -27,13 +27,13 @@ inventory/provision code.
 
 ## Task 2: The module and `strategy` command (`modules/strategy`)
 
-- [ ] Tests first (`modules/strategy/strategy_test.go`,
+- [x] Tests first (`modules/strategy/strategy_test.go`,
   `purge_test.go`): registry set/clear/default not stored; load/save
   round trip through a fresh module; `UserPurged` drops the user; the
   command: list, one character, set role, set rule (both forms),
   `default`, unknown member or rule, `assist` for `me`, a role it can't
   do yet warns; refused in a battle.
-- [ ] `modules/strategy`: plugin, `SetOnLoad`/`SetOnSave`, config
+- [x] `modules/strategy`: plugin, `SetOnLoad`/`SetOnSave`, config
   (`AutoSpells`), the command, provider registration; `make generate`.
   Companions resolved through `internal/company` (the record and the
   formation's member keys) and the company's own selector rule.

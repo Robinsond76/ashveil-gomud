@@ -1,0 +1,20 @@
+# Phase 32d: battle strategies.
+#
+# A battle plays out on its own. Each character (the player and each
+# companion) fights by a strategy set beforehand with the strategy command:
+# a role (fighter, healer, caster) and a target rule. Only settings that
+# differ from a character's default are stored.
+#
+# AutoSpells are the only spells ever cast automatically in a battle, in
+# the order tried, with what each is for:
+#   heal        heals one (a healer's single heal)
+#   heal-all    heals the company (a healer's group heal)
+#   attack      harms one foe (a caster's spell)
+#   attack-all  harms the foe's group (a caster's spell at two or more foes)
+# A character casts the first listed spell of a use that it knows and can
+# pay for. Unknown spells are dropped at load with a warning.
+AutoSpells:
+  - { Spell: heal, Use: heal }
+  - { Spell: healall, Use: heal-all }
+  - { Spell: mm, Use: attack }
+  - { Spell: sparks, Use: attack-all }

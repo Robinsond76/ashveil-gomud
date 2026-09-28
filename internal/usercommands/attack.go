@@ -324,6 +324,18 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 // started (Ashveil Phase 32c, the owner's rule 5).
 const BattleUnderWay = `The battle is under way: it plays out as you set it up.`
 
+// InBattle reports whether the player is in a battle (Ashveil Phase 32c
+// and 32d): they have one, or are aimed at a mob (a battle about to
+// begin). Once one has started, nothing typed changes it; only flee takes
+// them out.
+func InBattle(user *users.UserRecord) bool {
+	if user == nil {
+		return false
+	}
+	_, inBattle := battle.Current(user.UserId)
+	return inBattle || fightingMob(user)
+}
+
 // fightingMob reports whether the player is already aimed at a mob, a
 // battle about to begin.
 func fightingMob(user *users.UserRecord) bool {
