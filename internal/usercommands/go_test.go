@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -158,6 +159,24 @@ func TestGoTravelInterception(t *testing.T) {
 		assert.Zero(t, starter.calls, "unmarked exits must never consult the travel provider")
 		assert.Equal(t, 920012, user.Character.RoomId)
 		assert.Equal(t, 90, user.Character.ActionPoints)
+	})
+
+	// Phase 32f: weight is the only carrying limit; carrying more items
+	// than GoMud's old count no longer makes a step cost more.
+	t.Run("a crowded pack costs an ordinary step", func(t *testing.T) {
+		origin := rooms.LoadRoom(920011)
+		require.NotNil(t, origin)
+		user := travelTestUser(t, 11, origin.RoomId)
+		for len(user.Character.Items) <= user.Character.CarryCapacity()+5 {
+			user.Character.Items = append(user.Character.Items, items.Item{ItemId: 1})
+		}
+		expedition.SetStartProvider(nil)
+
+		handled, err := Go("north", user, origin, 0)
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, 920012, user.Character.RoomId)
+		assert.Equal(t, 90, user.Character.ActionPoints, "ten, not fifty")
 	})
 
 	t.Run("propagates travel start error", func(t *testing.T) {

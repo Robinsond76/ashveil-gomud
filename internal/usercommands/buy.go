@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -318,6 +319,22 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 
 	if matchedShopItem.ItemId > 0 {
 		if blocked, err := scripting.TryItemTryPurchaseEvent(items.New(matchedShopItem.ItemId), user.UserId); err == nil && blocked {
+			return false
+		}
+	}
+
+	// Phase 32f: a full company can't buy more; checked before any stock
+	// or gold changes hands. A traded-in item leaves the pack, so only the
+	// difference counts.
+	if matchedShopItem.ItemId > 0 {
+		added := items.New(matchedShopItem.ItemId)
+		grams := added.Weight()
+		if matchedShopItem.TradeItemId > 0 {
+			traded := items.New(matchedShopItem.TradeItemId)
+			grams -= traded.Weight()
+		}
+		if text, refuse := encumbrance.TooMuchToCarry(user.UserId, grams); refuse {
+			user.SendText(text)
 			return false
 		}
 	}

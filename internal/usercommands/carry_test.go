@@ -1,0 +1,172 @@
+package usercommands
+
+import (
+	"testing"
+
+	"maps"
+
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// Phase 32f: weight is the only limit, and a full company takes on nothing
+// more. The fake load is each leader's own carried items against a set
+// capacity.
+
+const (
+	carryAnvil  = 988301 // 4 kg
+	carryPebble = 988302 // 100 g
+)
+
+type packLoad struct{ capacity map[int]int }
+
+func (p packLoad) CurrentLoad(leaderUserID int) (encumbrance.Load, bool) {
+	capacity, ok := p.capacity[leaderUserID]
+	if !ok {
+		return encumbrance.Load{}, false
+	}
+	carried := 0
+	if user := users.GetByUserId(leaderUserID); user != nil {
+		for i := range user.Character.Items {
+			carried += user.Character.Items[i].Weight()
+		}
+	}
+	return encumbrance.Load{PersonalGrams: carried, CapacityGrams: capacity}, true
+}
+
+func setupCarry(t *testing.T, capacity map[int]int) {
+	t.Helper()
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: carryAnvil, Name: "anvil", NameSimple: "anvil", Type: items.Object, Weight: 4000, Value: 5})
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: carryPebble, Name: "pebble", NameSimple: "pebble", Type: items.Object, Weight: 100, Value: 1})
+	encumbrance.SetProvider(packLoad{capacity: capacity})
+	users.ResetActiveUsers()
+	t.Cleanup(func() {
+		items.RemoveTestItemSpec(carryAnvil)
+		items.RemoveTestItemSpec(carryPebble)
+		encumbrance.SetProvider(nil)
+		users.ResetActiveUsers()
+	})
+}
+
+func carrier(t *testing.T, userID int, name string, room *rooms.Room) *users.UserRecord {
+	t.Helper()
+	user := users.NewUserRecord(userID, 1)
+	user.Character.Name = name
+	user.Character.RoomId = room.RoomId
+	user.Character.Gold = 100
+	users.SetTestUser(user)
+	room.AddPlayer(userID)
+	return user
+}
+
+func newItem(id int) items.Item { return items.Item{ItemId: id, UUID: uuid.New(items.UUIDItem)} }
+
+func holds(user *users.UserRecord, id int) bool {
+	for _, itm := range user.Character.Items {
+		if itm.ItemId == id {
+			return true
+		}
+	}
+	return false
+}
+
+func TestGetRefusedWhenFull(t *testing.T) {
+	setupCarry(t, map[int]int{7: 3000})
+	room := testRoom()
+	user := carrier(t, 7, "Dain", room)
+
+	room.AddItem(newItem(carryAnvil), false)
+	out := captureUserText(t, func() {
+		_, err := Get("anvil", user, room, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "too much for your company to carry")
+	assert.False(t, holds(user, carryAnvil))
+	_, onFloor := room.FindOnFloor("anvil", false)
+	assert.True(t, onFloor, "it stays where it was")
+
+	room.AddItem(newItem(carryPebble), false)
+	_, err := Get("pebble", user, room, 0)
+	require.NoError(t, err)
+	assert.True(t, holds(user, carryPebble), "a light thing still fits")
+}
+
+func TestGetFromContainerRefusedWhenFull(t *testing.T) {
+	setupCarry(t, map[int]int{7: 3000})
+	room := testRoom()
+	room.Containers = map[string]rooms.Container{"chest": {Items: []items.Item{newItem(carryAnvil)}}}
+	user := carrier(t, 7, "Dain", room)
+
+	out := captureUserText(t, func() {
+		_, err := Get("anvil chest", user, room, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "too much for your company to carry")
+	assert.False(t, holds(user, carryAnvil))
+	assert.Len(t, room.Containers["chest"].Items, 1)
+}
+
+func TestBuyRefusedWhenFullAndNoGoldTaken(t *testing.T) {
+	setupCarry(t, map[int]int{7: 3000})
+	room := testRoom()
+	buyer := carrier(t, 7, "Dain", room)
+	seller := carrier(t, 8, "Mira", room)
+	seller.Character.Shop = characters.Shop{{ItemId: carryAnvil, Quantity: 1, QuantityMax: 1, Price: 5}}
+
+	out := captureUserText(t, func() {
+		assert.False(t, tryPurchase("anvil", buyer, room, nil, seller))
+	})
+	assert.Contains(t, out, "too much for your company to carry")
+	assert.Equal(t, 100, buyer.Character.Gold, "no gold changes hands")
+	assert.Equal(t, 1, seller.Character.Shop[0].Quantity, "no stock changes hands")
+	assert.False(t, holds(buyer, carryAnvil))
+}
+
+func TestGiveToFullPlayerRefused(t *testing.T) {
+	setupCarry(t, map[int]int{7: 100000, 8: 3000})
+	room := testRoom()
+	giver := carrier(t, 7, "Dain", room)
+	receiver := carrier(t, 8, "Mira", room)
+	giver.Character.Items = []items.Item{newItem(carryAnvil)}
+
+	out := captureUserText(t, func() {
+		_, err := Give("anvil mira", giver, room, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "can't carry any more")
+	assert.True(t, holds(giver, carryAnvil), "the giver keeps it")
+	assert.False(t, holds(receiver, carryAnvil))
+}
+
+func TestGetFromCorpseRefusedWhenFull(t *testing.T) {
+	setupCarry(t, map[int]int{7: 3000})
+	before := configs.Flatten(configs.GetOverrides())
+	after := maps.Clone(before)
+	after["GamePlay.Death.CorpseItems"] = true
+	require.NoError(t, configs.RestoreOverrides(after))
+	t.Cleanup(func() { _ = configs.RestoreOverrides(before) })
+
+	room := testRoom()
+	corpse := rooms.Corpse{MobId: 5, Items: []items.Item{newItem(carryAnvil), newItem(carryPebble)}}
+	corpse.Character.Name = "wolf"
+	room.AddCorpse(corpse)
+	user := carrier(t, 7, "Dain", room)
+
+	out := captureUserText(t, func() {
+		_, err := Get("anvil wolf", user, room, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "too much for your company to carry")
+	assert.False(t, holds(user, carryAnvil))
+
+	_, err := Get("pebble wolf", user, room, 0)
+	require.NoError(t, err)
+	assert.True(t, holds(user, carryPebble), "a light thing still fits")
+}

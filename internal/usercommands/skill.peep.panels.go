@@ -109,7 +109,7 @@ func buildPeepInventoryPanel(c *characters.Character, itemNamesFormatted []strin
 	sb.WriteString(layout.Render())
 	sb.WriteString(term.CRLFStr)
 
-	count := fmt.Sprintf(`(%d/%d)`, len(c.Items), c.CarryCapacity())
+	count := fmt.Sprintf(`(%d)`, len(c.Items)) // weight is the only limit (Phase 32f)
 	sb.WriteString(` Carrying: `)
 	lineLen := 0
 	lineNum := 1

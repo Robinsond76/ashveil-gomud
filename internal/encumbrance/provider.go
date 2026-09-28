@@ -1,6 +1,9 @@
 package encumbrance
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // Provider is implemented by modules/encumbrance. It is a read-only query
 // seam, the same shape as weather.Provider and survival.CompanyService.
@@ -71,4 +74,15 @@ func WouldExceed(leaderUserID, addGrams int) (Load, bool) {
 		return Load{}, false
 	}
 	return load, load.WouldExceed(addGrams)
+}
+
+// TooMuchToCarry is the refusal a player sees when adding grams would put
+// their company over capacity (Phase 32f); ok is false when it fits.
+func TooMuchToCarry(leaderUserID, addGrams int) (string, bool) {
+	load, refuse := WouldExceed(leaderUserID, addGrams)
+	if !refuse {
+		return "", false
+	}
+	return fmt.Sprintf(`That would be too much for your company to carry: %.1f kg of %.1f kg already (<ansi fg="command">help cargo</ansi>).`,
+		float64(load.TotalGrams())/1000, float64(load.CapacityGrams)/1000), true
 }

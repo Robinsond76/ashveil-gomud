@@ -47,3 +47,13 @@ func TestWouldExceedThroughProvider(t *testing.T) {
 	_, refuse = WouldExceed(7, 5000)
 	assert.False(t, refuse, "an untracked load never refuses")
 }
+
+func TestTooMuchToCarry(t *testing.T) {
+	SetProvider(fixedLoad{load: Load{PersonalGrams: 9500, CapacityGrams: 10000}, ok: true})
+	t.Cleanup(func() { SetProvider(nil) })
+	text, refuse := TooMuchToCarry(7, 600)
+	assert.True(t, refuse)
+	assert.Contains(t, text, "9.5 kg of 10.0 kg")
+	_, refuse = TooMuchToCarry(7, 500)
+	assert.False(t, refuse)
+}
