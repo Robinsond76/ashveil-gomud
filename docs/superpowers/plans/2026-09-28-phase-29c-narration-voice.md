@@ -282,7 +282,7 @@ XP line ("You gained N experience points!") is GoMud's and out of scope.
 - Create: `modules/company/wiring_narration_test.go` (brawl harness,
   `newBrawl`, `fightToTheEnd`, `b.fight()`)
 
-- [ ] **Step 1: Write it** (should pass after Tasks 2–6; write it before
+- [x] **Step 1: Write it** (should pass after Tasks 2–6; write it before
   Task 2 lands if executing strictly tests-first, and watch it fail):
   over the full 5v5 with the shipped config —
   - every line naming a hit ends in `(N damage)` or
@@ -294,8 +294,14 @@ XP line ("You gained N experience points!") is GoMud's and out of scope.
   - at least one `turns toward` line.
   A second test forces a crit (captain given the `accuracy` flag, looped
   over seeds) and checks the `critical hit` suffix.
-- [ ] **Step 2:** `go test ./modules/company -run Narration` PASS.
-- [ ] **Step 3: Commit** `test(company): narration through the real combat round (29c)`.
+  **As built:** hits are matched to the stream's `Attack` events (each
+  `(N damage)` / crit is narrated at least as often as the stream reports
+  it); openers and closings are counted against `FightStart` and victorious
+  `FightEnd` events; the crit test runs up to six fights until one lands
+  (the unit test in `internal/combat` forces one directly). Mutation check:
+  queuing plain `suicide` again makes the closing-after-death assertion fail.
+- [x] **Step 2:** `go test ./modules/company -run Narration` PASS.
+- [x] **Step 3: Commit** `test(company): narration through the real combat round (29c)`.
 
 ### Task 10: Verify, review, record, merge
 
