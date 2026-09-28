@@ -136,5 +136,5 @@ func (m *CompanyModule) setArchetype(leaderUserID int, selector, archetype strin
 		m.registry.Put(before)
 		return err.Error()
 	}
-	return fmt.Sprintf("#%d %s is now a %s.", companion.ID, templateName(companion.MobTemplateID, "companion"), archetypeLabel(archetype))
+	return fmt.Sprintf("#%d %s is now a %s.", companion.ID, nameOf(companion, "companion"), archetypeLabel(archetype))
 }

@@ -205,6 +205,8 @@ type fakeRuntime struct {
 	relocated map[int]int
 	// Phase 26a: vitals per instance, {hp, max}.
 	vitals map[int][2]int
+	// Phase 32a2: the identity each spawn received.
+	spawnedIdentities []domain.Identity
 }
 
 func (f *fakeRuntime) Vitals(instanceID int) (int, int, bool) {
@@ -216,8 +218,9 @@ func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
 	id, ok := f.resolved[name]
 	return id, ok
 }
-func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int, state *domain.MemberState) (int, error) {
+func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int, state *domain.MemberState, identity domain.Identity) (int, error) {
 	f.spawnCalls++
+	f.spawnedIdentities = append(f.spawnedIdentities, identity)
 	if state != nil {
 		s := state.Clone()
 		f.spawnedStates = append(f.spawnedStates, &s)

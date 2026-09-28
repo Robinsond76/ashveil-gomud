@@ -134,8 +134,10 @@ func TestRecruitThroughPluginsLoad(t *testing.T) {
 	assert.True(t, handled)
 	assert.ErrorIs(t, err, domain.ErrTemplateNotAllowed)
 	events.ProcessEvents()
-	_, hasRecord := module.registry.Get(7)
-	assert.False(t, hasRecord, "nothing recorded")
+	// Only the roster the listing rolled (Phase 32a2): no companion, no claim.
+	noted, _ := module.registry.Get(7)
+	assert.Empty(t, noted.Companions, "nothing recorded")
+	assert.Empty(t, noted.Claimed, "nothing recorded")
 
 	// The free tutorial candidate joins with its template gear, claimed in
 	// the same real save.

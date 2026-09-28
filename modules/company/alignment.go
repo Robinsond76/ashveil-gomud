@@ -153,12 +153,17 @@ func (m *CompanyModule) companyAverage(leaderUserID int) (int, bool) {
 // recruitRefusal is the message refusing a candidate too far from the
 // company's alignment, or "" when the candidate would join.
 func (m *CompanyModule) recruitRefusal(leaderUserID, templateID int, name string) string {
+	return m.alignmentRefusal(leaderUserID, m.alignmentWorld().TemplateAlignment(templateID), name)
+}
+
+// alignmentRefusal is recruitRefusal for a candidate of this alignment (a
+// generated recruit's own, Phase 32a2).
+func (m *CompanyModule) alignmentRefusal(leaderUserID, candidate int, name string) string {
 	rules, _ := m.alignmentConfig()
 	average, ok := m.companyAverage(leaderUserID)
 	if !ok {
 		return ""
 	}
-	candidate := m.alignmentWorld().TemplateAlignment(templateID)
 	if domain.CanRecruit(candidate, average, rules) {
 		return ""
 	}
@@ -348,7 +353,7 @@ func (m *CompanyModule) companionLabel(leaderUserID, companionID int) string {
 	name := "A companion"
 	if record, ok := m.registry.Get(leaderUserID); ok {
 		if c, found := findCompanion(record, companionID); found {
-			name = templateName(c.MobTemplateID, name)
+			name = nameOf(c, name)
 		}
 	}
 	return fmt.Sprintf("%s (#%d)", name, companionID)
@@ -526,7 +531,7 @@ func (m *CompanyModule) alignmentView(leaderUserID int) string {
 	i := -1
 	for _, c := range record.Companions {
 		if c.Dead() {
-			lines = append(lines, fmt.Sprintf("  #%d %s: fallen", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID))))
+			lines = append(lines, fmt.Sprintf("  #%d %s: fallen", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID))))
 			continue
 		}
 		i++
@@ -544,7 +549,7 @@ func (m *CompanyModule) alignmentView(leaderUserID int) string {
 				mood = "uneasy"
 			}
 		}
-		lines = append(lines, fmt.Sprintf("  #%d %s: %s, loyalty %d, %s", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)), alignmentLabel(members[i].Alignment), loyalty, mood))
+		lines = append(lines, fmt.Sprintf("  #%d %s: %s, loyalty %d, %s", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)), alignmentLabel(members[i].Alignment), loyalty, mood))
 	}
 	lines = append(lines, "Companions drift toward the rest of the company. One far from it loses loyalty, and at none, deserts.")
 	return strings.Join(lines, "\n")
