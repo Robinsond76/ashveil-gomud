@@ -60,10 +60,10 @@ only**, no item-count limit. Horses, saddles, and backpacks raise it.
 
 ## Decisions
 
-The owner answered C (horses), D (no hard stop), and G (source order,
-and a combined command) on 2026-09-28; those are recorded where they
-fall. Anything still marked **(open)** is a recommendation awaiting an
-answer.
+The owner answered C (horses), D (the pickup limit, no movement
+stop), and G (source order, and a combined command) on 2026-09-28, and
+accepted every other recommendation here the same day ("Everything
+sounds good"). Each is recorded where it falls.
 
 ### A. Capacity comes from the members
 
@@ -83,7 +83,7 @@ capacity = Σ members (MemberBaseKg + StrengthKg × Strength + best pack)
   human's base is 1 per level, `races/1-human.yaml`), so a fresh player
   carrying a 5–8.5 kg starter kit has a little over 20 kg, about a third
   full; a company of five has about 100–110 kg before packs or horses.
-  Strength matters more as members level. **(open: the numbers)**
+  Strength matters more as members level. **(recommendation accepted)**
 - `shipped_weights_test.go`'s "a fresh company of five stays under 30%"
   becomes "a fresh member stays under 40% of their own share", since
   capacity is now per member.
@@ -95,7 +95,7 @@ capacity = Σ members (MemberBaseKg + StrengthKg × Strength + best pack)
 A backpack is a **carried** item with a new item field, `carrybonus`
 (grams). Each member counts **one** pack, the largest they carry; a
 second pack is just weight. It weighs what it weighs, like anything
-else. **(open: carried, not worn)**
+else. **(recommendation accepted)**
 
 - The alternative is a new worn `back` slot. It reads more naturally
   ("wear backpack"), but touches GoMud's `Worn`, every slot list, the
@@ -129,11 +129,11 @@ at 5 group members."
 - **Faster routes** only when everyone rides: a route journey takes the
   riding horse's `TravelDurationPct` (90%) when every member walking with
   the leader has a saddled riding horse; otherwise the company moves at
-  walking pace. Pack horses never set the pace. **(open)**
+  walking pace. Pack horses never set the pace. **(recommendation accepted)**
 - **Mounts are bought, not conjured.** `mount stable <type>` works only
   in a room flagged as a stable, and costs the type's `Price` in gold.
   `mount release <horse>` lets one go for nothing. Today's free,
-  anywhere assignment makes capacity free. **(open)**
+  anywhere assignment makes capacity free. **(recommendation accepted)**
 - **Saddles** are items with a `saddle` field: its kind (`pack` or
   `riding`) and its bonus. `mount saddle <horse> <item>` fits one from
   the player's pack onto a horse of the matching kind (the old saddle
@@ -143,7 +143,7 @@ at 5 group members."
     100 kg saddled (today's figure).
   - A **riding saddle** is what lets a riding horse carry a rider. Bare,
     it's led and carries 10 kg.
-  **(open: the numbers)**
+  **(recommendation accepted)**
 - **Existing saves:** a stored single pack horse becomes the first entry
   in the list, with a pack saddle fitted, so no one loses capacity on
   upgrade. It no longer carries riders (a pack horse carries no one);
@@ -161,9 +161,30 @@ GoMud's item-count limit goes, per the owner's decision:
   grams; the prompt token keeps working but reads the weight.
 - `CarryCapacity()` itself stays for scripts that call it
   (`GetCarryCapacity`), marked deprecated.
-- **Nothing blocks** picking up, buying, or walking by weight in this
-  phase; being over capacity is the top load band (travel 150%, strain
-  130%), as today. **(owner, 2026-09-28: agreed, no hard stop)**
+- **A full company can't take on more** (owner, 2026-09-28: "once
+  weight is at its maximum, an item cannot be picked up anymore"). Any
+  command that would add weight to the company and put its load over
+  capacity is refused, with the load shown:
+  "That would be too much to carry (208.4 kg of 210.0 kg)."
+  - Refused: `get` (from the floor, a container, or a corpse), `buy`
+    (before any gold changes hands), and `give` from another player or
+    outsider into the company. A companion mob picking up an item
+    (`internal/mobcommands`) is held to its leader's capacity the same
+    way.
+  - Not refused: moving items within the company (`cargo put`/`take`,
+    `give` to your own companion, `mount saddle`), `drop`, and anything
+    that lowers the load.
+  - Not refused either, because there is no one to hand it back to: a
+    quest or script reward, or an item returned by the game (a dead
+    companion's gear coming back on resurrection). It lands, and the
+    company is over capacity until it sheds weight.
+  - Being over capacity, however it happens (a companion falling, a
+    horse released, a reward), still only slows travel and adds strain
+    through the top load band (travel 150%, strain 130%). **Walking is
+    never blocked** (owner, 2026-09-28: no hard stop on movement).
+  - The check lives in `internal/encumbrance` (`WouldExceed(leader,
+    grams)`), read on the game loop; a player outside any company is
+    checked against their own member share.
 
 ### E. `company inventory`
 
@@ -257,6 +278,8 @@ How they choose:
   kinds, saddles, the per-member caps (from the company provider),
   prices, the stable room flag, the save migration.
 - `internal/usercommands`: `go.go` (count limit), `inventory`, `peep`;
+  the capacity check in `get`, `buy`, and `give`; `internal/mobcommands`
+  for a companion's pickup;
   `company eat`/`drink`/`meal` share `eat.go`'s provisioning helpers.
 - `modules/gmcp`: capacity in grams, packs, mounts, cargo uses.
 - Content: packs and saddles in `items/`, a stable room and market
@@ -302,6 +325,11 @@ How they choose:
     same capacity;
   - carrying 20 items no longer makes `go` cost 50 action points;
     `inventory` shows kilograms;
+  - at capacity, `get`, `buy` (no gold taken), and a `give` from another
+    player are refused, while `cargo put`/`take` and `give` to a
+    companion still work; a companion mob can't pick up past it;
+  - over capacity after a companion is dismissed: walking still works,
+    at the top band;
   - `cargo put` a waterskin with 3 uses, `cargo take` it: still 3;
   - `company inventory` lists every member, mounts, and cargo;
   - `company meal` feeds and waters everyone, drawing cargo, then each
@@ -313,7 +341,8 @@ How they choose:
 - **Player help:** `help cargo` (member capacity, packs, horses,
   saddles, cargo keeps uses), `help mount` (several mounts, stables,
   prices, saddles), `help encumbrance` and GoMud's `help inventory`
-  (no item count), new `help company inventory` and `help company eat`
+  (no item count; full means no more pickups), `help get` and
+  `help buy` (the refusal), new `help company inventory` and `help company eat`
   pages (aliases `company inv`, `company drink`, `company meal`), `help eat` and
   `help drink` pointing to `company eat`; the Survival lesson's hint
   mentions `company eat` and `company inventory`;
@@ -326,6 +355,5 @@ How they choose:
 - The web company dock, its Cargo tab and hover actions: 32g.
 - Mount upkeep, feed, fatigue, and death; mounts in combat.
 - Carts and wagons (a mount that needs a road).
-- A hard weight stop, unless the owner picks it in D.
 - Trading items between members from one screen (`company give`):
   `give` covers it for now.
