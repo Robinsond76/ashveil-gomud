@@ -7,4 +7,5 @@ The ~shoot~ command fires a weapon into an adjacent room.
   ~shoot [target] [exit]~  
   This shoots at the target specified in the direction specified.
 
-  **Note:** This engages combat but will break combat if the space between you and the target is not closed quickly.
+  A shot at a creature doesn't start a fight: start one with ~attack [group]~.
+  Once a battle is under way, you can't shoot until it's over.

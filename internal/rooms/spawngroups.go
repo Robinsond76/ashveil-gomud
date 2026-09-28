@@ -203,9 +203,11 @@ func (r *Room) FormSpawnGroups() {
 		ids = append(ids, id)
 	}
 	sort.Ints(ids)
+	joined := map[int]bool{}
 	for _, id := range ids {
 		byID[id].SpawnGroup = plan.Assign[id]
 		byID[id].MaxWander = 0
+		joined[id] = true
 	}
 
 	pool := r.hostilePool()
@@ -230,5 +232,76 @@ func (r *Room) FormSpawnGroups() {
 		mob.MaxWander = 0
 		r.mobs = append(r.mobs, mob.InstanceId)
 		roomManager.roomsWithMobs[r.RoomId] = len(r.mobs)
+		joined[mob.InstanceId] = true
+	}
+
+	r.nameSpawnGroups(ours, joined)
+}
+
+// nameSpawnGroups gives each of the room's spawn groups its name (Phase
+// 32c), once: a group keeps the name its standing members carry, and a mob
+// that just joined it (a regrouped survivor, a top-up) takes that name. A
+// group with no name yet takes an authored one from a member's spawn entry
+// (groupname), else a generated one ("a band of ruffians").
+func (r *Room) nameSpawnGroups(prefix string, joined map[int]bool) {
+	entryOf := map[int]SpawnInfo{}
+	for _, e := range r.SpawnInfo {
+		if e.InstanceId > 0 {
+			entryOf[e.InstanceId] = e
+		}
+	}
+	members := map[string][]*mobs.Mob{}
+	var order []string
+	for _, instanceId := range r.mobs {
+		mob := mobs.GetInstance(instanceId)
+		if mob == nil || !strings.HasPrefix(mob.SpawnGroup, prefix) || mob.Character.Health < 1 {
+			continue
+		}
+		if _, ok := members[mob.SpawnGroup]; !ok {
+			order = append(order, mob.SpawnGroup)
+		}
+		members[mob.SpawnGroup] = append(members[mob.SpawnGroup], mob)
+	}
+	for _, g := range order {
+		ms := members[g]
+		name, desc := "", ""
+		for _, m := range ms {
+			if !joined[m.InstanceId] && m.GroupName != "" {
+				name, desc = m.GroupName, m.GroupDesc
+				break
+			}
+		}
+		if name == "" {
+			for _, m := range ms {
+				if e, ok := entryOf[m.InstanceId]; ok && e.GroupName != "" {
+					name, desc = e.GroupName, e.GroupDesc
+					break
+				}
+			}
+		}
+		if name == "" {
+			summaries := make([]mobparty.MobSummary, len(ms))
+			for i, m := range ms {
+				summaries[i] = GroupSummary(m)
+			}
+			name = mobparty.Generate(summaries).Name
+		}
+		for _, m := range ms {
+			m.GroupName, m.GroupDesc = name, desc
+		}
+	}
+}
+
+// GroupSummary is a mob as group naming and grouping see it (Phase 32c).
+func GroupSummary(mob *mobs.Mob) mobparty.MobSummary {
+	return mobparty.MobSummary{
+		InstanceId: mob.InstanceId,
+		SpawnGroup: mob.SpawnGroup,
+		Groups:     mob.Groups,
+		EHP:        float64(mob.Character.HealthMax.Value),
+		Name:       mob.Character.Name,
+		Noun:       mob.CollectiveNoun(),
+		GroupName:  mob.GroupName,
+		GroupDesc:  mob.GroupDesc,
 	}
 }

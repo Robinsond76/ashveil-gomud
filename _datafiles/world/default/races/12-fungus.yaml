@@ -3,6 +3,7 @@ name: fungus
 description: A mushroomy entity.
 defaultalignment: 0
 size: medium
+groupnoun: patch
 unarmedname: spores
 angrycommands: [emote pulsates.]
 tnlscale: 1

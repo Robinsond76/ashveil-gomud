@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"sort"
 	"strings"
 
@@ -90,6 +91,14 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	//
 	// look for any mobs, players, npcs
 	//
+
+	// Ashveil Phase 32c: an enemy group, by its name, unless the word names
+	// a thing here or on you ("look pack" is your backpack beside a pack of
+	// wolves; 32c review).
+	if g, ok := enemyparty.FindGroupNamed(room, lookAt); ok && !namesAThing(user, room, lookAt) {
+		user.SendText(describeGroup(room, g, user))
+		return true, nil
+	}
 
 	playerId, mobId := room.FindByName(lookAt)
 
@@ -714,4 +723,23 @@ func archetypeLookLine(userId, mobInstanceId int) string {
 		name = id
 	}
 	return fmt.Sprintf(`  Archetype: <ansi fg="yellow">%s</ansi>`, name)
+}
+
+// namesAThing reports whether lookAt names a container, exit, item carried
+// or worn, or noun here: things a group's word must not hide (Phase 32c).
+func namesAThing(user *users.UserRecord, room *rooms.Room, lookAt string) bool {
+	if room.FindContainerByName(lookAt) != `` {
+		return true
+	}
+	if exitName, _ := room.FindExitByName(lookAt); exitName != `` {
+		return true
+	}
+	if _, ok := user.Character.FindInBackpack(lookAt); ok {
+		return true
+	}
+	if _, ok := user.Character.FindOnBody(lookAt); ok {
+		return true
+	}
+	noun, _ := room.FindNoun(lookAt)
+	return len(noun) > 0
 }

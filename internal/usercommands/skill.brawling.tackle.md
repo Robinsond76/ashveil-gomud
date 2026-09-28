@@ -15,6 +15,7 @@
 - Brawling skill level >= 3.
 - Player must be in combat (`Aggro != nil`).
 - Cooldown: **5 rounds** per use (keyed `brawling:tackle`).
+- Phase 32c: refused in a battle (`BattleUnderWay`).
 
 ## Execution Flow
 

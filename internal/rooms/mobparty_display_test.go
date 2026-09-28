@@ -3,48 +3,67 @@ package rooms
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/stretchr/testify/assert"
 )
 
+func entry(id int, name, group, display string) hostileMobDisplay {
+	return hostileMobDisplay{summary: mobparty.MobSummary{InstanceId: id, Name: name, SpawnGroup: group}, display: display}
+}
+
 func TestGroupedMobDisplaySoloMobRendersItsOwnLine(t *testing.T) {
-	lines := groupedMobDisplay([]hostileMobDisplay{
-		{instanceId: 1, rawName: "goblin", display: "a rusty goblin"},
-	})
-
-	assert.Equal(t, []string{"a rusty goblin"}, lines)
+	solo, groups := groupedMobDisplay([]hostileMobDisplay{entry(1, "goblin", "", "a rusty goblin")}, nil)
+	assert.Equal(t, []string{"a rusty goblin"}, solo)
+	assert.Empty(t, groups)
 }
 
-func TestGroupedMobDisplayGroupsSharedTagIntoOneAggregateLine(t *testing.T) {
-	lines := groupedMobDisplay([]hostileMobDisplay{
-		{instanceId: 1, groups: []string{"goblin-raiders"}, rawName: "goblin", display: "a rusty goblin"},
-		{instanceId: 2, groups: []string{"goblin-raiders"}, rawName: "goblin", display: "a scarred goblin"},
-		{instanceId: 3, groups: []string{"goblin-raiders"}, rawName: "goblin", display: "a young goblin"},
-	})
-
-	assert.Equal(t, []string{"a pack of 3 goblins"}, lines)
+func TestGroupedMobDisplayOneKindNeedsNoList(t *testing.T) {
+	solo, groups := groupedMobDisplay([]hostileMobDisplay{
+		entry(1, "goblin", "spawn:1:1", "a rusty goblin"),
+		entry(2, "goblin", "spawn:1:1", "a scarred goblin"),
+		entry(3, "goblin", "spawn:1:1", "a young goblin"),
+	}, nil)
+	assert.Empty(t, solo)
+	assert.Equal(t, []string{`<ansi fg="mobname">A band of goblins</ansi> (3).`}, groups)
 }
 
-func TestGroupedMobDisplayMixedNamesUseGenericLabel(t *testing.T) {
-	lines := groupedMobDisplay([]hostileMobDisplay{
-		{instanceId: 1, groups: []string{"mixed-pack"}, rawName: "goblin", display: "a rusty goblin"},
-		{instanceId: 2, groups: []string{"mixed-pack"}, rawName: "wolf", display: "a gray wolf"},
-	})
+func TestGroupedMobDisplayMixedGroupListsItsMembers(t *testing.T) {
+	_, groups := groupedMobDisplay([]hostileMobDisplay{
+		entry(1, "ruffian", "spawn:1:1", "a ruffian"),
+		entry(2, "cutpurse", "spawn:1:1", "a cutpurse"),
+		entry(3, "ruffian", "spawn:1:1", "a ruffian"),
+		entry(4, "rat", "spawn:1:1", "a rat"),
+	}, func([]int) string { return "fighting you" })
+	assert.Equal(t, []string{`<ansi fg="mobname">A band of ruffians</ansi> (4): two ruffians, a cutpurse, and a rat (fighting you).`}, groups)
+}
 
-	assert.Equal(t, []string{"a pack of 2 creatures"}, lines)
+func TestGroupedMobDisplayRepeatsAreNumbered(t *testing.T) {
+	_, groups := groupedMobDisplay([]hostileMobDisplay{
+		entry(1, "ruffian", "spawn:1:1", "a ruffian"),
+		entry(2, "ruffian", "spawn:1:1", "a ruffian"),
+		entry(3, "ruffian", "spawn:1:2", "a ruffian"),
+		entry(4, "ruffian", "spawn:1:2", "a ruffian"),
+	}, nil)
+	assert.Equal(t, []string{
+		`<ansi fg="mobname">A band of ruffians</ansi> (2).`,
+		`<ansi fg="mobname">A second band of ruffians</ansi> (2).`,
+	}, groups)
+}
+
+func TestGroupedMobDisplayALastSurvivorKeepsTheName(t *testing.T) {
+	e := entry(4, "rat", "spawn:1:1", "a rat")
+	e.summary.GroupName = "a band of ruffians"
+	solo, groups := groupedMobDisplay([]hostileMobDisplay{e}, nil)
+	assert.Empty(t, solo)
+	assert.Equal(t, []string{`<ansi fg="mobname">A band of ruffians</ansi> (1): a rat.`}, groups)
 }
 
 func TestGroupedMobDisplayKeepsUngroupedMobsSeparate(t *testing.T) {
-	lines := groupedMobDisplay([]hostileMobDisplay{
-		{instanceId: 1, rawName: "bear", display: "a hungry bear"},
-		{instanceId: 2, rawName: "bear", display: "a sleepy bear"},
-	})
-
-	// No shared Groups tag: two solo parties, not one aggregate line.
-	assert.ElementsMatch(t, []string{"a hungry bear", "a sleepy bear"}, lines)
-}
-
-func TestPluralize(t *testing.T) {
-	assert.Equal(t, "goblins", pluralize("goblin"))
-	assert.Equal(t, "foxes", pluralize("fox"))
-	assert.Equal(t, "", pluralize(""))
+	solo, groups := groupedMobDisplay([]hostileMobDisplay{
+		entry(1, "bear", "", "a hungry bear"),
+		entry(2, "bear", "", "a sleepy bear"),
+	}, nil)
+	// No shared group: two lone mobs, not one group line.
+	assert.ElementsMatch(t, []string{"a hungry bear", "a sleepy bear"}, solo)
+	assert.Empty(t, groups)
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -151,6 +152,11 @@ func partyRefs(p mobparty.Party) []combatstream.Ref {
 func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) battle.Battle {
 	b := battle.Begin(sd.user.UserId, room.RoomId, round, p.ID, p.Members)
 	id := combatstream.Default().Open(round, room.RoomId, p.ID, userRef(sd.user), sd.allyRefs(), partyRefs(p))
+	if len(p.Members) > 0 {
+		if g, ok := enemyparty.GroupOf(room, p.Members[0]); ok && !g.Solo() {
+			combatstream.Default().Name(id, g.Name) // Phase 32c: "The fight with a band of ruffians is over"
+		}
+	}
 	battle.SetFight(sd.user.UserId, id)
 	b.FightID = id
 	// Phase 29c: the fight's opener, unless another player is already
@@ -338,6 +344,7 @@ func closeIdleBattles() {
 		p, found := battleParty(b, parties)
 		if found {
 			sd.rallyIdleFoes(p, room)
+			sd.turnAlone(p, room)
 		}
 		if found && sd.setOn(p, room) {
 			continue
@@ -370,6 +377,42 @@ func (sd side) rallyIdleFoes(p mobparty.Party, room *rooms.Room) {
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
 		room.SendText(turnsToward(mobTag(m.Character.Name), userTag(u.Character.Name)))
 	}
+}
+
+// turnAlone gives a player fighting with no companion beside them their
+// next foe from the battle's group when their target has fallen or gone
+// (Phase 32c: a battle plays out on its own, and a bare attack no longer
+// picks the next foe). With a companion present, 29a's upkeep does this.
+// A player who used break stays out.
+func (sd side) turnAlone(p mobparty.Party, room *rooms.Room) {
+	u := sd.user
+	if u.Character.Health < 1 || u.Character.RoomId != room.RoomId || engagement.StoodDown(u.UserId) {
+		return
+	}
+	for _, instanceId := range room.GetMobs(rooms.FindCharmed) {
+		if leaderId, _, ok := company.LeaderAndKeyForInstance(instanceId); ok && leaderId == u.UserId {
+			return // the upkeep's
+		}
+	}
+	previous := 0
+	if a := u.Character.Aggro; a != nil {
+		if !plainAttack(a) || a.MobInstanceId <= 0 {
+			return
+		}
+		if m := mobs.GetInstance(a.MobInstanceId); m != nil && m.Character.Health > 0 && m.Character.RoomId == room.RoomId && !m.Character.HasBuffFlag("hidden") {
+			return // still has a foe
+		}
+		previous = a.MobInstanceId
+	}
+	next, ok := enemyparty.FirstAim(enemyparty.Group{Party: p}, u.UserId, u.Character)
+	if !ok || next == previous {
+		return
+	}
+	emitTargetChange(userRef(u), mobRefById(previous), mobRefById(next), room.RoomId)
+	u.Character.SetAggro(0, next, attackType(u.Character.Aggro))
+	events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
+	u.SendText(turnsToward(`You`, mobTag(mobName(next))))
+	room.SendText(turnsToward(userTag(u.Character.Name), mobTag(mobName(next))), u.UserId)
 }
 
 // turnWaitingOntoFreePlayers turns each group waiting on a busy player onto

@@ -106,6 +106,6 @@ hold a space, so not `delete character`).
 
 ## Task 7: Verify, review, record
 
-- [ ] `go test -race ./...`, `make generate`, `make validate`.
-- [ ] Independent review over the phase diff; verify each finding.
-- [ ] `docs/PROJECT_STATUS.md` entry with **Review:**.
+- [x] `go test -race ./...`, `make generate`, `make validate`.
+- [x] Independent review over the phase diff; verify each finding.
+- [x] `docs/PROJECT_STATUS.md` entry with **Review:**.

@@ -1,0 +1,144 @@
+package usercommands
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/formationcombat"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
+)
+
+// Ashveil Phase 32c: scout. A player sees how an enemy group stands before
+// a fight (or during one), free and instant: no skill, no roll, no round.
+// It sees what look sees: hidden members are left out, and in the dark it
+// sees nothing.
+
+func Scout(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+
+	if room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
+		user.SendText(`It's too dark to make them out.`)
+		return true, nil
+	}
+
+	rest = strings.TrimSpace(rest)
+	if rest == `` {
+		user.SendText(scoutList(room, user))
+		return true, nil
+	}
+
+	g, ok := enemyparty.FindGroup(room, rest)
+	if !ok || len(g.Visible()) == 0 {
+		user.SendText(fmt.Sprintf(`You see no group called "%s" here. Type <ansi fg="command">scout</ansi> to see who's here.`, rest))
+		return true, nil
+	}
+	user.SendText(scoutGroup(room, g, user))
+	return true, nil
+}
+
+// scoutList lists the room's enemy groups, as the room's lines do.
+func scoutList(room *rooms.Room, user *users.UserRecord) string {
+	var lines []string
+	for _, g := range enemyparty.Groups(room) {
+		vis := g.Visible()
+		if len(vis) == 0 {
+			continue
+		}
+		if g.Solo() && !vis[0].Hostile {
+			continue // a shopkeeper or a bystander is no group to scout
+		}
+		names := make([]string, len(vis))
+		for i, m := range vis {
+			names[i] = m.Character.Name
+		}
+		line := fmt.Sprintf(`  <ansi fg="mobname">%s</ansi> (%d)`, mobparty.Capitalize(g.Name), len(vis))
+		if !g.Solo() {
+			line += ": " + mobparty.ListKinds(names)
+		}
+		if doing := rooms.GroupDoing(user.UserId, g.Party.Members); doing != `` {
+			line += ` (` + doing + `)`
+		}
+		lines = append(lines, line+`. Type <ansi fg="command">scout `+GroupKeyword(room, g)+`</ansi>.`)
+	}
+	if len(lines) == 0 {
+		return `You see no enemies here.`
+	}
+	return "Enemies here:\n" + strings.Join(lines, "\n")
+}
+
+// scoutGroup draws the group's formation, front row nearest the viewer,
+// each member with how hurt it looks, and marks those the viewer can reach
+// from their place in their company's formation.
+func scoutGroup(room *rooms.Room, g enemyparty.Group, user *users.UserRecord) string {
+	visible := map[int]*mobs.Mob{}
+	for _, m := range g.Visible() {
+		visible[m.InstanceId] = m
+	}
+
+	col, placed, hasCompany := 0, false, false
+	if f, ok := company.FormationFor(user.UserId); ok {
+		hasCompany = true
+		_, col, placed = f.Find(company.LeaderMemberKey)
+	}
+	reach := combat.ResolveReach(user.Character, false)
+	alive := enemyparty.Alive(g.Party)
+
+	lines := []string{fmt.Sprintf(`<ansi fg="mobname">%s</ansi>, as they stand (front row nearest you):`, mobparty.Capitalize(g.Name))}
+	lines = append(lines, `        `+fmt.Sprintf(`%-24s%-24s%s`, `col 1`, `col 2`, `col 3`))
+	rowLabels := [company.FormationRows]string{"front", "mid  ", "back "}
+	marked := false
+	for r := 0; r < company.FormationRows; r++ {
+		cells := make([]string, 0, company.FormationCols)
+		for c := 0; c < company.FormationCols; c++ {
+			cell := `------`
+			key := g.Party.Formation.At(r, c)
+			if id, ok := mobparty.InstanceIdFromMemberKey(key); ok {
+				if m := visible[id]; m != nil {
+					mark := ` `
+					if placed && formationcombat.Legal(col, g.Party.Formation, key, alive, reach) {
+						mark, marked = `*`, true
+					}
+					cell = fmt.Sprintf(`%s%s (%s)`, mark, m.Character.Name, enemyparty.HealthWord(m.Character.Health, m.Character.HealthMax.Value))
+				}
+			}
+			cells = append(cells, fmt.Sprintf(`%-21s`, cell))
+		}
+		lines = append(lines, fmt.Sprintf(`%s [ %s ]`, rowLabels[r], strings.Join(cells, ` | `)))
+	}
+	switch {
+	case marked:
+		lines = append(lines, `* you can reach them from your place in the formation.`)
+	case placed:
+		lines = append(lines, `You can reach none of them from your place in the formation.`)
+	case hasCompany:
+		lines = append(lines, `You aren't placed in your company's formation: you can strike any of them, and any of them you.`)
+	}
+	lines = append(lines, `The front of each column takes the first blows: plain melee reaches only the front, a reach weapon one rank deeper, a bow anyone.`)
+	return strings.Join(lines, "\n")
+}
+
+// describeGroup is look at a group: its description, how many and what it
+// is doing, each member with how hurt it looks, and what to type.
+func describeGroup(room *rooms.Room, g enemyparty.Group, user *users.UserRecord) string {
+	vis := g.Visible()
+	var lines []string
+	if g.Naming.Desc != `` {
+		lines = append(lines, g.Naming.Desc)
+	}
+	lines = append(lines, fmt.Sprintf(`<ansi fg="mobname">%s</ansi>, %s strong, %s.`,
+		mobparty.Capitalize(g.Name), mobparty.CountWord(len(vis)), rooms.DoingPhrase(rooms.GroupDoing(user.UserId, g.Party.Members))))
+	parts := make([]string, len(vis))
+	for i, m := range vis {
+		parts[i] = fmt.Sprintf(`%s %s (%s)`, mobparty.Article(m.Character.Name), m.Character.Name, enemyparty.HealthWord(m.Character.Health, m.Character.HealthMax.Value))
+	}
+	lines = append(lines, `  `+strings.Join(parts, `, `))
+	kw := GroupKeyword(room, g)
+	lines = append(lines, fmt.Sprintf(`  Type <ansi fg="command">scout %s</ansi> to see how they stand, or <ansi fg="command">attack %s</ansi> to fight them.`, kw, kw))
+	return strings.Join(lines, "\n")
+}

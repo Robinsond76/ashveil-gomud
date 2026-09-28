@@ -17,6 +17,12 @@ import (
 
 func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Ashveil Phase 32c (the owner's rule 5): nothing typed acts on a battle.
+	if _, inBattle := battle.Current(user.UserId); inBattle || fightingMob(user) {
+		user.SendText(BattleUnderWay)
+		return true, nil
+	}
+
 	if user.Character.Equipment.Weapon.GetSpec().Subtype != items.Shooting {
 		user.SendText(`You don't have a shooting weapon.`)
 		return true, nil
@@ -73,10 +79,9 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 	if attackMobInstanceId > 0 {
 
-		// Ashveil Phase 29b2: a group waiting its turn can't be struck
-		// until this fight is over; refused before anything is spent.
-		if b, inBattle := battle.Current(user.UserId); inBattle && !b.Has(attackMobInstanceId) {
-			user.SendText(fmt.Sprintf(`You're fighting %s. Finish that fight first.`, battleFoeName(b, room)))
+		// Ashveil Phase 32c: a shot doesn't start a fight with an enemy.
+		if m := mobs.GetInstance(attackMobInstanceId); m != nil && !m.Character.IsCharmed() {
+			user.SendText(NotAnOpener(rooms.LoadRoom(m.Character.RoomId), attackMobInstanceId, `A shot`))
 			return true, nil
 		}
 

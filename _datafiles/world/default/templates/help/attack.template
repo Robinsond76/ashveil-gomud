@@ -1,0 +1,51 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">attack</ansi>
+
+Start a fight with a group of enemies. Once it starts, the battle plays out
+on its own, the way your company was set up beforehand: nothing you type
+changes it.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">attack [group]</ansi>
+  Start a battle with a group, by the word the room shows for it:
+  <ansi fg="command">attack ruffians</ansi> for "A band of ruffians (4)".
+
+  <ansi fg="command">attack [group]#2</ansi>
+  The second group of that name in the room ("a second band of ruffians").
+
+  <ansi fg="command">attack [name]</ansi>
+  A creature alone is attacked by its own name. So is another player,
+  where the rules allow it.
+
+You can't pick out one member of a group: the whole group fights together,
+and you're told what to type ("The ruffian fights with a band of ruffians.
+Type attack ruffians."). Look a group over first with <ansi fg="command">look [group]</ansi> or
+<ansi fg="command">scout [group]</ansi>.
+
+<ansi fg="yellow-bold">Who you strike</ansi>
+
+You start on the weakest member you can reach from your place in your
+company's formation. When your target falls or can't be reached, you turn
+on the next one the same way, with companions beside you or alone.
+
+<ansi fg="yellow-bold">Once the battle is under way</ansi>
+
+<ansi fg="command">attack</ansi>, <ansi fg="command">cast</ansi>, <ansi fg="command">backstab</ansi>, <ansi fg="command">shoot</ansi>, <ansi fg="command">tackle</ansi>, and <ansi fg="command">disarm</ansi> are held
+until it's over ("The battle is under way: it plays out as you set it up.").
+<ansi fg="command">break</ansi> and <ansi fg="command">flee</ansi> still
+work. After a <ansi fg="command">break</ansi>, a bare <ansi fg="command">attack</ansi> takes you back into the battle.
+
+Spells, backstabs, and shots don't start fights: begin with <ansi fg="command">attack</ansi>.
+
+<ansi fg="yellow-bold">Hitting</ansi>
+
+Your chance to hit is your speed against your target's:
+
+  speed / (speed + target's speed) x 70 + 30 percent
+
+You always have at least a 5% chance to miss, and to hit. Your chance of a
+critical hit is (strength + speed) / (your level - target's level) + 5.
+Your company's chemistry adds to your chance to hit, and darkness takes
+from it.
+
+See also: <ansi fg="command">help scout</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
