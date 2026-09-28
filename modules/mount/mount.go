@@ -171,7 +171,11 @@ func init() {
 		}
 	})
 	mount.SetProvider(m)
+	registered = m
 }
+
+// registered is the module instance init registers, for wiring tests.
+var registered *MountModule
 
 func (m *MountModule) persistenceAvailable() error {
 	if m.loadErr != nil {

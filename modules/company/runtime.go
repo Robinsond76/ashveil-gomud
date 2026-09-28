@@ -130,6 +130,22 @@ func (nativeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 	return state.Clone(), true
 }
 
+// UseItem takes one use of a carried item from a live mob, removing it
+// when used up.
+func (nativeRuntime) UseItem(instanceID int, itm items.Item) bool {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return false
+	}
+	for i := range mob.Character.Items {
+		if mob.Character.Items[i].Equals(itm) {
+			mob.Character.UseItem(itm)
+			return true
+		}
+	}
+	return false
+}
+
 // CharmedByOther reports whether a live mob is now charmed by someone other
 // than the leader (befriended away). An uncharmed companion, such as one
 // whose charm expired when its leader left, is still the company's.
