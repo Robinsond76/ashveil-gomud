@@ -10,8 +10,14 @@ the ones a place is known for spawn together, a rat and a ruffian if
 that's what haunts the alley, never one alone. A lone survivor of a
 broken group, or a straggler that wandered in, joins another idle group
 there when it can; otherwise it lingers alone until the place brings it
-company. Only a few great beasts always stand alone. Strike one member, and the whole group comes for you. A shopkeeper,
+company. Only a few great beasts always stand alone. A shopkeeper,
 or someone you're talking with, isn't drawn into their group's fight.
+
+Each group has a name, shown in the room with its numbers: "A band of
+ruffians (4): three ruffians and a rat." You fight a whole group, never
+one member: <ansi fg="command">attack [group]</ansi> starts the battle (<ansi fg="command">attack ruffians</ansi>), and
+<ansi fg="command">scout [group]</ansi> shows how it stands first. A creature alone goes by its
+own name.
 
 <ansi fg="yellow-bold">One battle at a time</ansi>
 
@@ -24,10 +30,10 @@ While another player is free in the same place, a waiting group turns on
 them instead ("The ruffian and the others turn on Brom."), and you each
 fight your own battle.
 
-You can't <ansi fg="command">attack</ansi> a waiting group until your battle is over; a bare
-<ansi fg="command">attack</ansi> picks a foe from your battle. A harmful spell, a backstab, or a
-shot at a waiting group is held too, and a waiting group's spells hold
-off you. When you <ansi fg="command">flee</ansi>, only your battle's group can block the way.
+Once your battle starts, it plays out on its own: <ansi fg="command">attack</ansi>, <ansi fg="command">cast</ansi>,
+<ansi fg="command">backstab</ansi>, and <ansi fg="command">shoot</ansi> are held until it's over, and a waiting group's
+spells hold off you. When you <ansi fg="command">flee</ansi>, only your battle's group can block
+the way.
 
 <ansi fg="yellow-bold">Keeping everyone fighting</ansi>
 
@@ -47,8 +53,8 @@ into reach (when a front fighter falls, for example).
 
 <ansi fg="yellow-bold">Stepping out</ansi>
 
-<ansi fg="command">break</ansi> takes you out of the fight until you attack again, or the fight
-ends. Your companions fight on, and enemies may keep attacking you.
+<ansi fg="command">break</ansi> takes you out of the fight until you type <ansi fg="command">attack</ansi> to step back
+in, or the fight ends. Your companions fight on, and enemies may keep attacking you.
 
 <ansi fg="command">flee</ansi> tries to run out of the room. Your companions follow you. The fight
 ends when nobody is fighting any more.
@@ -56,7 +62,8 @@ ends when nobody is fighting any more.
 <ansi fg="yellow-bold">Alone</ansi>
 
 With no companion beside you, you still fight one group at a time, and a
-group whose target fell turns on you. But nothing turns you: you choose
-each new target yourself.
+group whose target fell turns on you. You're turned the same way your
+companions are: when your target falls, you turn on the weakest foe you
+can reach.
 
-See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help scout</ansi>, <ansi fg="command">help attack</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

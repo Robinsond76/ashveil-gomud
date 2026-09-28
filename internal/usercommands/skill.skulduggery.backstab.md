@@ -17,6 +17,7 @@
 - The equipped weapon (main hand and off-hand if applicable) must be a backstab-compatible subtype — checked via `items.CanBackstab(subtype)`. Incompatible weapon types are rejected with a message.
 - For player targets: PvP rules must allow the attack, and the target must not be in the player's party.
 - For mob targets: the mob must not be charmed by the player.
+- Phase 32c: refused in a battle (`BattleUnderWay`), and at a mob that isn't charmed out of one (`NotAnOpener`): a backstab doesn't start a fight.
 
 ## Target Resolution
 

@@ -26,6 +26,7 @@ Proficiency gain is handled by the spell resolution system, not in this command 
 - The player must know the spell (`user.Character.HasSpell(spellName)`).
 - The player must have sufficient mana (`Character.Mana >= spellInfo.Cost`).
 - Mana is deducted immediately when the cast is queued.
+- Phase 32c: refused while the caster is in a battle (or aiming at a mob) with `BattleUnderWay`; a harmful spell at a mob that isn't the caster's charmed companion is refused out of a battle too, pointing at `attack <group>` (`NotAnOpener`). Cast is for spells outside fights.
 
 ## Syntax
 

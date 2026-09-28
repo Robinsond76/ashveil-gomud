@@ -1,6 +1,7 @@
 package tutorial
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -111,4 +112,23 @@ func TestFormationGate(t *testing.T) {
 	require.NoError(t, g.Place(company.CompanionMemberKey(3), 1, 1))
 	require.NoError(t, g.Place(company.CompanionMemberKey(1), 1, 0))
 	assert.False(t, formationDone(g, members), "the leader and the dead don't count; no companion in front")
+}
+
+// TestCombatHintsStartByTheGroup: the Combat lesson teaches Phase 32c's
+// fight: scout the squad, attack it by name, and let the battle play out;
+// no hint names a single straw soldier to attack.
+func TestCombatHintsStartByTheGroup(t *testing.T) {
+	var hints string
+	for _, s := range stages {
+		if s.ID == StageCombat {
+			hints = strings.Join(s.Hints, "\n")
+		}
+	}
+	require.NotEmpty(t, hints)
+	assert.Contains(t, hints, `<ansi fg="command">scout squad</ansi>`)
+	assert.Contains(t, hints, `<ansi fg="command">attack squad</ansi>`)
+	assert.Contains(t, hints, `help scout</ansi>`)
+	assert.Contains(t, hints, "plays out")
+	assert.NotContains(t, hints, "attack footman")
+	assert.NotContains(t, hints, "attack another")
 }
