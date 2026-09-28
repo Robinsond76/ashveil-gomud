@@ -110,7 +110,12 @@ applied)**, listed for the owner in `docs/PROJECT_STATUS.md`.
    the caster's battle: a player's spell at a waiting group lands on no
    one ("Your spell has no foe in your battle."), and a waiting mob's spell
    at a player in another battle is held, the mob keeping its place in
-   line. A backstab or shot at a waiting group is called off with a
+   line. The `cast`, `backstab`, and `shoot` commands refuse a waiting
+   group up front, like `attack`, so no mana or skill use is spent; a
+   mob's `cast` at a player in another battle isn't cast (no mana spent)
+   and the mob keeps its place in line. Anything that still reaches the
+   round is held there too (a held cast is `cast-complete` with outcome
+   `held` on the stream), and a backstab or shot is called off with a
    message (a plain attack is turned onto the battle instead). A group
    waiting its turn doesn't block a flight from the battle. A downed
    player or companion sets no group on the player, so a player who falls
@@ -137,8 +142,13 @@ applied)**, listed for the owner in `docs/PROJECT_STATUS.md`.
    respawn on their own. **Changed in review:** only a new group is
    topped up; a group whittled down by a fight is never reinforced (a
    fresh spawn joins it instead), and a mob still fighting isn't grouped
-   until its fight is over. Only the room's own spawns take part: a mob
-   that wandered in is left as it is.
+   until its fight is over. **Regrouping (second review, the owner's
+   Ogre Battle guide):** a lone survivor, idle, joins the smallest other
+   idle group in the room with room, the way a broken unit regroups; a
+   straggler that wandered in joins an idle group, but never starts one
+   (so wanderers don't breed top-ups). With nothing to join, either
+   lingers alone until the room's list brings it company. Another room's
+   group, or a travel encounter's pair, is left as it is.
 4. **More than five:** a room whose hostile entries exceed five forms
    several groups of even size (six gives three and three, never five and
    one) **(recommendation applied)**. `mobparty`'s chunking of a large
@@ -154,8 +164,11 @@ applied)**, listed for the owner in `docs/PROJECT_STATUS.md`.
    together. Roaming groups are deferred.
 8. **Travel encounters (review):** a travel ambush spawns a pair of its
    foe (one, if solitary) as a group of their own
-   (`encounter:<room>:<first>`), directly on the game loop; the encounter
-   lasts while either stands.
+   (`encounter:<room>:<first>`); the encounter lasts while either stands.
+   **Second review:** travel timers (checkpoints, arrival, the ambush)
+   used to run on the timer's goroutine, off the game loop; the real
+   scheduler now only queues a `TravelTimerDue` event, and the callback
+   runs when the loop processes events.
 
 ### C. The event stream and summary (29b, revised)
 
@@ -226,3 +239,14 @@ applied)**, listed for the owner in `docs/PROJECT_STATUS.md`.
 - **A group pulled into a battle by a blow** (the owner chose hold back).
 - **Group composition rules** beyond the room's list (leaders, roles):
   30c.
+
+## Gameplay guide for review fixes (the owner, 2026-09-28)
+
+The owner asked that fixes found in review be made as seen best, noted in
+the docs, and guided by **Ogre Battle** (a unit is a small, fixed band;
+bands meet one at a time; a broken band regroups) and **Mount & Blade**
+(a company on the road; bands met in the field; a band that breaks
+scatters or joins another). This phase applied it to regrouping survivors
+and stragglers and to the travel ambush pair; later phases (30e morale and
+mercy: routed foes; 30f battlefield conditions) should keep to it.
+

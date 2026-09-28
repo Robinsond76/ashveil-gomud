@@ -23,6 +23,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -103,7 +104,7 @@ func newBrawl(t *testing.T) *brawl {
 
 	dataDir := t.TempDir()
 	useDataDir(t, dataDir)
-	copyShipped(t, dataDir, "items", "races", "combat-messages", "biomes", "keywords.yaml", "spells",
+	copyShipped(t, dataDir, "items", "races", "combat-messages", "biomes", "keywords.yaml", "spells", "skills",
 		"mobs/dunmar/61-tamsin_reed.yaml", "mobs/dunmar/62-brother_oswin.yaml",
 		"mobs/dunmar/63-garrick_vane.yaml", "mobs/old_kings_road/64-ysolde.yaml")
 	fixtures := map[string]string{
@@ -135,6 +136,7 @@ func newBrawl(t *testing.T) *brawl {
 	}
 	races.LoadDataFiles()
 	spells.LoadSpellFiles()
+	skills.LoadDataFiles()
 	items.LoadDataFiles()
 	rooms.LoadDataFiles()
 	rooms.LoadBiomeDataFiles()

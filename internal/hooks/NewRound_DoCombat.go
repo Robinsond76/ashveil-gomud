@@ -226,7 +226,9 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			// Phase 29b2: a harmful spell keeps to the caster's battle.
 			if holdPlayerSpell(user.UserId, &user.Character.Aggro.SpellInfo) {
 				user.SendText(`Your spell has no foe in your battle. The others wait their turn.`)
+				emitCast(combatstream.CastComplete, userRef(user), user.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeHeld, roomId)
 				user.Character.Aggro = nil
+				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 				continue
 			}
 
@@ -763,10 +765,12 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			// Phase 29b2: a harmful spell waits its turn against a player
 			// fighting another group, and the mob keeps its place in line.
 			if held, waitOn := holdMobSpell(mob, &mob.Character.Aggro.SpellInfo); held {
+				emitCast(combatstream.CastComplete, mobRef(mob), mob.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeHeld, mob.Character.RoomId)
 				mob.Character.Aggro = nil
 				if waitOn > 0 {
 					mob.Character.SetAggro(waitOn, 0, characters.DefaultAttack)
 				}
+				events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 				continue
 			}
 

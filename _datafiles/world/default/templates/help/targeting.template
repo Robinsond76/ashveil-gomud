@@ -5,10 +5,12 @@ Who each fighter aims at, and how a fight holds together.
 <ansi fg="yellow-bold">Enemy groups</ansi>
 
 Enemies that belong together (a band of bandits, a pack of wolves) fight as a
-group, in a formation of two to five. Hostile creatures never appear alone:
-the ones a place is known for gather into groups, a rat and a ruffian
-together if that's what haunts the alley. Only a few great beasts stand
-alone. Strike one member, and the whole group comes for you. A shopkeeper,
+group, in a formation of two to five. Hostile creatures gather in groups:
+the ones a place is known for spawn together, a rat and a ruffian if
+that's what haunts the alley, never one alone. A lone survivor of a
+broken group, or a straggler that wandered in, joins another idle group
+there when it can; otherwise it lingers alone until the place brings it
+company. Only a few great beasts always stand alone. Strike one member, and the whole group comes for you. A shopkeeper,
 or someone you're talking with, isn't drawn into their group's fight.
 
 <ansi fg="yellow-bold">One battle at a time</ansi>

@@ -27,31 +27,40 @@ type groupable struct {
 	MobId      int
 	Group      string // its spawn group, "" when it has none
 	Fighting   bool
+	Straggler  bool // not spawned by this room's list: it wandered in
 }
 
-// spawnGroupPlan is what the planner decided: the group each ungrouped
-// mob joins, and the groups to top up by one.
+// spawnGroupPlan is what the planner decided: the group each mob joins
+// (an ungrouped mob, or a lone survivor regrouping), and the groups to top
+// up by one.
 type spawnGroupPlan struct {
 	Assign map[int]string
 	TopUp  []string
 }
 
-// planSpawnGroups decides who joins which group. An ungrouped mob that
-// isn't fighting joins the smallest group in the room that isn't fighting
-// and has room, else the ungrouped mobs left form new groups as even as
-// they can be. Only a new group of one is topped up: a group whittled down
-// by a fight is never reinforced, and an ungrouped mob in a fight waits
-// until it is over. newID names a new group.
+// planSpawnGroups decides who joins which group, the way a broken unit
+// regroups in Ogre Battle:
+//   - a lone survivor of a group, idle now, joins the smallest other idle
+//     group with room;
+//   - an ungrouped mob that isn't fighting joins the smallest idle group
+//     with room;
+//   - the room's own ungrouped spawns left over form new groups as even as
+//     they can be, and a new group of one is topped up. A straggler that
+//     wandered in never starts a group: with none to join it stays as it is.
+//
+// A group in a fight is never joined or reinforced, and an ungrouped mob in
+// a fight waits until it is over. newID names a new group.
 func planSpawnGroups(ms []groupable, newID func() string) spawnGroupPlan {
 	plan := spawnGroupPlan{Assign: map[int]string{}}
 	size := map[string]int{}
 	fighting := map[string]bool{}
+	members := map[string][]int{}
 	var order []string
-	var loose []int
+	var loose []groupable
 	for _, m := range ms {
 		if m.Group == "" {
 			if !m.Fighting {
-				loose = append(loose, m.InstanceId)
+				loose = append(loose, m)
 			}
 			continue
 		}
@@ -59,26 +68,45 @@ func planSpawnGroups(ms []groupable, newID func() string) spawnGroupPlan {
 			order = append(order, m.Group)
 		}
 		size[m.Group]++
+		members[m.Group] = append(members[m.Group], m.InstanceId)
 		fighting[m.Group] = fighting[m.Group] || m.Fighting
 	}
 
-	var left []int
-	for _, id := range loose {
+	// smallestIdle is the smallest idle group with room, other than skip.
+	smallestIdle := func(skip string) string {
 		best := ""
 		for _, g := range order {
-			if fighting[g] || size[g] >= mobparty.MaxPartySize {
+			if g == skip || size[g] == 0 || fighting[g] || size[g] >= mobparty.MaxPartySize {
 				continue
 			}
 			if best == "" || size[g] < size[best] {
 				best = g
 			}
 		}
-		if best == "" {
-			left = append(left, id)
+		return best
+	}
+
+	for _, g := range order {
+		if size[g] != 1 || fighting[g] {
 			continue
 		}
-		plan.Assign[id] = best
-		size[best]++
+		if to := smallestIdle(g); to != "" {
+			plan.Assign[members[g][0]] = to
+			size[to]++
+			size[g] = 0
+		}
+	}
+
+	var left []int
+	for _, m := range loose {
+		if best := smallestIdle(""); best != "" {
+			plan.Assign[m.InstanceId] = best
+			size[best]++
+			continue
+		}
+		if !m.Straggler {
+			left = append(left, m.InstanceId)
+		}
 	}
 
 	for _, n := range mobparty.EvenSizes(len(left), mobparty.MaxPartySize) {
@@ -136,10 +164,10 @@ func (r *Room) hostilePool() []SpawnInfo {
 
 // FormSpawnGroups puts the hostile mobs the room's spawn list made into
 // spawn groups of at least two, topping up a new group of one from the
-// list. Grouped mobs stop wandering, so a group stays together. Only the
-// room's own spawns take part (a mob that wandered in, or a travel
-// encounter's pair, is left as it is). It is called after the room's spawn
-// pass, on the game loop.
+// list, and regroups lone survivors and stragglers into the room's idle
+// groups (planSpawnGroups). Grouped mobs stop wandering, so a group stays
+// together. Another room's group, or a travel encounter's pair, is left as
+// it is. It is called after the room's spawn pass, on the game loop.
 func (r *Room) FormSpawnGroups() {
 	spawned := map[int]bool{}
 	for _, e := range r.SpawnInfo {
@@ -155,15 +183,13 @@ func (r *Room) FormSpawnGroups() {
 		if !groupsHere(mob) {
 			continue
 		}
-		if mob.SpawnGroup == "" && !spawned[instanceId] {
-			continue
-		}
 		if mob.SpawnGroup != "" && !strings.HasPrefix(mob.SpawnGroup, ours) {
-			continue
+			continue // another room's group, or a travel encounter's
 		}
 		byID[instanceId] = mob
 		fighting := mob.Character.Aggro != nil || battle.Engaged(instanceId)
-		ms = append(ms, groupable{InstanceId: instanceId, MobId: int(mob.MobId), Group: mob.SpawnGroup, Fighting: fighting})
+		ms = append(ms, groupable{InstanceId: instanceId, MobId: int(mob.MobId), Group: mob.SpawnGroup, Fighting: fighting,
+			Straggler: mob.SpawnGroup == "" && !spawned[instanceId]})
 	}
 	if len(ms) == 0 {
 		return

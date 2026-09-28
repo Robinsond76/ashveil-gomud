@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -71,6 +72,13 @@ func Shoot(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	*/
 
 	if attackMobInstanceId > 0 {
+
+		// Ashveil Phase 29b2: a group waiting its turn can't be struck
+		// until this fight is over; refused before anything is spent.
+		if b, inBattle := battle.Current(user.UserId); inBattle && !b.Has(attackMobInstanceId) {
+			user.SendText(fmt.Sprintf(`You're fighting %s. Finish that fight first.`, battleFoeName(b, room)))
+			return true, nil
+		}
 
 		m := mobs.GetInstance(attackMobInstanceId)
 

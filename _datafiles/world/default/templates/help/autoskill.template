@@ -12,9 +12,9 @@ handles it - you or a companion, whichever has the higher level in it.
   <ansi fg="yellow">light</ansi>   conjuring a floating light when you step into the
            dark and nobody in your company is already carrying one
 
-Only a companion able to act right now (not fighting, not out of mana) is
-considered, so a busy companion never blocks an able one from stepping
-in.
+A companion who is down is never considered. For a light, a companion
+who is fighting or out of mana is passed over too, so a busy companion
+never blocks an able one from stepping in.
 
 <ansi fg="yellow-bold">Usage:</ansi>
 

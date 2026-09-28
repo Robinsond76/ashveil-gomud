@@ -15,7 +15,8 @@ Along the way it spends your company's Hunger, Thirst, and Fatigue, a
 little at a time rather than all at once, at a rate set by the route
 and by however bad the weather is where you set out (<ansi fg="command">help weather</ansi>);
 being overloaded also adds extra Fatigue cost (<ansi fg="command">help cargo</ansi>). How
-long the whole route takes is also shortened by a mount (<ansi fg="command">help mount</ansi>).
+long the whole route takes is stretched by bad weather and by a heavy
+load, and shortened by a mount (<ansi fg="command">help mount</ansi>).
 All of this is fixed the moment you set out, for that route
 (<ansi fg="command">help survival</ansi>). A company with a Collapsed member can't set out
 (<ansi fg="command">help strain</ansi>).
@@ -24,8 +25,9 @@ All of this is fixed the moment you set out, for that route
 
 A route can pause you partway with something to deal with: a fallen
 tree blocking the way, something that catches your eye, tracks worth
-looking over, or an ambush you have to fight off (a pair of foes, unless
-the foe is one of the few great beasts that hunt alone). While paused, you
+looking over, or an ambush you have to fight off (on a route that has
+them: a pair of foes, unless the foe is one of the few great beasts that
+hunt alone). While paused, you
 choose:
 
   <ansi fg="command">travel resume</ansi>

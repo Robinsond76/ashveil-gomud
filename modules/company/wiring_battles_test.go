@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -332,12 +333,15 @@ func TestSpellAtAWaitingGroupIsHeld(t *testing.T) {
 	var mm bool
 	events := b.listen()
 	b.fight()
+	held := false
 	for _, e := range *events {
 		if e.Kind == combatstream.CastComplete && e.Source.MobInstanceId == caster.InstanceId {
-			mm = true
+			mm = mm || e.Outcome == combatstream.OutcomeCast
+			held = held || e.Outcome == combatstream.OutcomeHeld
 		}
 	}
 	assert.False(t, mm, "the waiting bandit's spell isn't cast")
+	assert.True(t, held, "the stream reports it held")
 	require.NotNil(t, caster.Character.Aggro, "it keeps its place in line")
 	assert.Equal(t, 7, caster.Character.Aggro.UserId)
 }
@@ -537,4 +541,81 @@ func TestASpawnedPairIsOneBattle(t *testing.T) {
 		}
 	}
 	assert.Equal(t, 1, starts)
+}
+
+// TestCastAtAWaitingGroupIsRefused: through the real `cast` commands, a
+// harmful spell at a group waiting its turn is refused before any mana is
+// spent, for Aria and for a waiting bandit casting at her.
+func TestCastAtAWaitingGroupIsRefused(t *testing.T) {
+	b := newBrawl(t)
+	b.looseBandits()
+	b.cmd("attack", "bandit captain")
+	b.toughen()
+	b.fight()
+	b.toughen()
+
+	waiting := b.waitingBandit()
+	b.aria.Character.SpellBook["mm"] = 1
+	if b.aria.Character.Skills == nil {
+		b.aria.Character.Skills = map[string]int{}
+	}
+	b.aria.Character.Skills["cast"] = 1
+	b.aria.Character.ManaMax.Value = 100
+	b.aria.Character.Mana = 100
+	got := b.cmd("cast", "mm #"+strconv.Itoa(waiting.InstanceId))
+	assert.Contains(t, got, "Finish that fight first.")
+	assert.Equal(t, 100, b.aria.Character.Mana, "no mana spent")
+	if a := b.aria.Character.Aggro; a != nil {
+		assert.NotEqual(t, characters.SpellCast, a.Type)
+	}
+
+	caster := b.waitingBandit()
+	caster.Character.SpellBook["mm"] = 1
+	caster.Character.ManaMax.Value = 100
+	caster.Character.Mana = 100
+	_, err := mobcommands.TryCommand("cast", "mm @7", caster.InstanceId)
+	require.NoError(t, err)
+	assert.Equal(t, 100, caster.Character.Mana, "the waiting bandit spends no mana")
+	require.NotNil(t, caster.Character.Aggro, "it keeps its place in line")
+	assert.Equal(t, characters.DefaultAttack, caster.Character.Aggro.Type)
+	assert.Equal(t, 7, caster.Character.Aggro.UserId)
+}
+
+// TestRoomRegroupsStragglers: through Room.Prepare, a hostile mob that
+// wandered in joins the room's idle group; a travel encounter's pair is
+// left as it is; and a group in a battle takes no one.
+func TestRoomRegroupsStragglers(t *testing.T) {
+	newBrawl(t)
+	pair := spawnedHostiles(t, 920103)
+	require.Len(t, pair, 2)
+	room := rooms.LoadRoom(920103)
+	group := pair[0].SpawnGroup
+	add := func(spawnGroup string) *mobs.Mob {
+		m := mobs.NewMobById(9107, room.RoomId)
+		require.NotNil(t, m)
+		m.Hostile = true
+		m.SpawnGroup = spawnGroup
+		room.AddMob(m.InstanceId)
+		t.Cleanup(func() {
+			room.RemoveMob(m.InstanceId)
+			mobs.DestroyInstance(m.InstanceId)
+		})
+		return m
+	}
+
+	// In a battle, the group takes no one.
+	battle.Begin(99, room.RoomId, 1, "p", []int{pair[0].InstanceId, pair[1].InstanceId})
+	rat := add("")
+	room.Prepare(false)
+	assert.Empty(t, rat.SpawnGroup, "a group in a battle takes no straggler")
+	battle.Reset()
+
+	// Idle again: the straggler joins; the encounter pair is left alone.
+	enc := []*mobs.Mob{add("encounter:920103:1"), add("encounter:920103:1")}
+	room.Prepare(false)
+	assert.Equal(t, group, rat.SpawnGroup, "the straggler joins the idle group")
+	assert.Zero(t, rat.MaxWander)
+	for _, m := range enc {
+		assert.Equal(t, "encounter:920103:1", m.SpawnGroup)
+	}
 }

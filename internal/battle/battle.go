@@ -223,3 +223,12 @@ func Retain(userIds map[int]bool) {
 		}
 	}
 }
+
+// Allows reports whether the player userId may fight the mob instanceId
+// now: they have no battle, or the mob is one of its enemies.
+func Allows(userId, instanceId int) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	b, ok := battles[userId]
+	return !ok || b.Enemies[instanceId]
+}

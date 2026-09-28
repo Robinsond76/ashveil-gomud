@@ -12,7 +12,7 @@ is a rogue's (and other trap-trained companions') trade.
 
   <ansi fg="command">trap disarm [exit or container]</ansi>
   Try to clear a trap you've found. Success keeps it clear for about a
-  day; fail badly and it springs on you instead, so don't try a trap far
+  day; fail badly and it springs on whoever tried it, so don't try a trap far
   beyond your company's skill.
 
 Your company also senses traps for you automatically as you walk into a

@@ -251,7 +251,7 @@ command-aliases:
   inventory:          ['i', 'inv', 'eq']
   look:               ['l', 'examine']
   go:                 ['enter']
-  experience:         ['exp', 'xp', 'tnl']
+  experience:         ['exp', 'xp', 'tnl', 'level', 'levels']
   map:                ['m']
   conditions:         ['c', 'cond', 'conds']
   skills:             ['sk', 'skill']

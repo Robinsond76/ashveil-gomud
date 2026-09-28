@@ -31,7 +31,8 @@ const (
 	Heal         Kind = "heal"
 	CastStart    Kind = "cast-start" // Phase 30d
 	CastProgress Kind = "cast-progress"
-	// CastComplete ends a cast. Outcome is OutcomeCast or OutcomeFizzled.
+	// CastComplete ends a cast. Outcome is OutcomeCast, OutcomeFizzled, or
+	// OutcomeHeld.
 	CastComplete   Kind = "cast-complete"
 	WindUpStart    Kind = "windup-start" // Phase 30d
 	WindUpLand     Kind = "windup-land"  // Phase 30d
@@ -57,6 +58,7 @@ const (
 	OutcomeCrit          = "crit"
 	OutcomeCast          = "cast"
 	OutcomeFizzled       = "fizzled"
+	OutcomeHeld          = "held" // a spell at a group waiting its turn (29b2)
 	OutcomeSlain         = "slain"
 	OutcomeIncapacitated = "incapacitated"
 	OutcomeBeaten        = "beaten"    // a practice foe, beaten without a death

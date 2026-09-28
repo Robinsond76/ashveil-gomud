@@ -5,10 +5,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-27
-- **HEAD:** Phase 29b (the combat event stream and battle summary, with
-  player help for combat) is complete and merged to `master`
-  (2026-09-27, from `claude/next-phase-wfav4w`).
+- **Last updated:** 2026-09-28
+- **HEAD:** Phase 29b2 (one battle at a time; spawn groups) and player
+  help for every Ashveil system are complete and merged to `master`
+  (2026-09-28, from `claude/next-phase-wfav4w`).
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -69,7 +69,9 @@ instead of duplicating them.
   (combat fixes: engaged fights kept whole, the leader turned from an
   unreachable target, unplaced members strikable, `formation reach` in a
   fight). Phase 29b (the combat event stream and battle summary; player
-  help for combat, pointed to from the tutorial).
+  help for combat, pointed to from the tutorial). Phase 29b2 (one battle
+  at a time per player; hostile mobs spawn and regroup in groups of at
+  least two, bosses alone), and player help for every Ashveil system.
 - **Next:** 29c (the narration voice), per the decided
   [build order](superpowers/specs/2026-09-26-combat-presentation-roadmap.md#build-order-decided-2026-09-27).
   Also open: capacity per company size (play-testing) and the "Future
@@ -126,6 +128,7 @@ instead of duplicating them.
 | 28 | Item weights and the company's whole load | Complete: every shipped item weighed (grams, per-type ranges), starter kits 4.8–8.5 kg; living companions' worn and carried gear in the company load (`company.CompanionGearGrams`), live mob when out, else record or template; `cargo` shows the split; GMCP `companion_g` |
 | 29a | Combat fixes from the 5v5 simulation | Complete: a round-start engagement upkeep keeps an engaged company and enemy party fighting as a whole (the leader turns from an unreachable target, the killer and leader rejoin, the whole party joins, hostility can't lapse mid-fight); unplaced members can be struck; `break` holds; `formation reach` answers against the enemy in a fight; `internal/enemyparty` |
 | 29b | Combat event stream and battle summary | Complete: `internal/combatstream` (one event per combat happening, fights of a company against the enemies it fights in a room, a summary folded from the events), producers at every attack, cast, target change, flee, and death; the summary at a fight's end (`set battlesummary`); interceptors fall in the round they're struck; player help for combat (`help combat` and seven pages), pointed to from the tutorial |
+| 29b2 | One battle at a time; spawn groups | Complete: `internal/battle` (each player, with their company, fights one enemy group at a time; other groups set on them hold back, then begin the next battle in the order they turned; a waiting group turns on a free player); `attack`/`cast`/`backstab`/`shoot` refuse a waiting group; hostile spawns form groups of two to five from the room's list, a lone survivor or straggler regroups, `solitary` bosses stand alone; travel ambushes are a pair; solo players get battles and summaries; help for every Ashveil system |
 | 29c | Narration voice (weapons and spells) | Proposed: [spec](superpowers/specs/2026-09-26-combat-narration-design.md). Dark, story-like text; `(N damage)` on every hit, `(critical hit, N damage)`; no `***`/caps/`!`; no charmed tag; an opener, "turns toward", and a closing line; indented death notices; spell text in the same voice |
 | 29d | Pronouns and ordinals | Proposed: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Mob pronouns (beasts "it"); "the first/second cutthroat" fixed for the fight |
 | 29e | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race |
@@ -140,6 +143,88 @@ instead of duplicating them.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 29b2: one battle at a time; spawn groups; help for every system (2026-09-28)
+
+- **What:** The owner's clarification of fights, and their request for help
+  pages for the rest of the game. Details are in the
+  [29b2 design](superpowers/specs/2026-09-27-phase-29b2-battles-spawn-groups-design.md)
+  and [29b2 plan](superpowers/plans/2026-09-27-phase-29b2-battles-spawn-groups.md).
+  - **Battles (`internal/battle`, runtime only):** a player and their
+    company fight one enemy group at a time. Other groups that set on
+    them hold back without striking (blows, spells, and shots) and begin
+    the next battle, in the order they turned, the moment one ends. A
+    waiting group turns on another player in the room who has no battle,
+    and each fights their own. `attack`, `cast`, `backstab`, and `shoot`
+    refuse a waiting group before anything is spent. A downed player
+    isn't drawn into new battles; a waiting group doesn't block a flight.
+    Solo players have battles and summaries too.
+  - **Spawn groups ("think Ogre Battle"):** hostile mobs a room's list
+    spawns form groups of two to five (six make three and three), topped
+    up from the list when a new group would be one; grouped mobs don't
+    wander. A lone survivor or a straggler joins another idle group; a
+    `solitary` mob (the lich, abyssal creeper, ent, spider queen) stands
+    alone. A travel ambush is a pair on its own group.
+  - **Stream (29b revised):** a fight is a battle: one player against one
+    group.
+  - **Help for the rest of the game (owner's request):** new pages
+    `adventure` (the hub), `company`, `standing`, `archetype`, `autoskill`,
+    `trap`, `travel`, `survival`, `strain`, `weather`, `temperature`,
+    `cargo`, `mount`, `camp`, `inn`, `cooking`, `market`, `rumors`;
+    GoMud's `alignment`, `conditions`, `encumbrance`, `status`,
+    `inventory`, `experience`, `eat`, and `drink` updated; indexed in
+    `keywords.yaml` with aliases; every tutorial lesson points to its
+    pages (`TestAshveilHelpTopics`, `TestTutorialHelpPointersExist`).
+  - **Also fixed:** travel timers ran their checkpoints, arrival, and
+    ambush spawn on the timer's goroutine, off the game loop (older than
+    29b2); the timer now queues a `TravelTimerDue` event the loop runs.
+- **Why:** The owner clarified that a player fights one group at a time,
+  another player can take the next, and no hostile mob should appear
+  alone; their answers (hold back, then engage; groups built from the
+  room's list; a per-mob `solitary` flag; solo players too) are in the
+  design doc. For review fixes they asked for the best fix, noted in the
+  docs, guided by Ogre Battle and Mount & Blade (design doc, last
+  section).
+- **Verification:** `go test -race ./...`, `make generate`, and
+  `make validate` pass.
+  - **Wiring** (`modules/company/wiring_battles_test.go`, the 5v5 through
+    `plugins.Load`, the shipped config, real commands, `DoCombat`, idle
+    mobs): five groups fought one at a time with a fight and summary
+    each and no blow from a waiting group; a second player takes the
+    next group; `attack` and `cast` refused (no mana spent, player or
+    mob); spells, a backstab, and a flight past waiting groups; a downed
+    player; a spawned pair as one battle; spawning from room lists
+    (pair, mixed, solitary, three and three); a survivor never
+    reinforced; stragglers regrouped, encounter pairs left alone.
+    `modules/expedition`: the ambush pair and `EncounterActive`; the
+    shipped lich alone; the travel timer runs on the loop.
+  - **Unit:** `internal/battle`, `internal/rooms` (the planner),
+    `internal/mobparty`, `internal/combatstream`, `internal/hooks`.
+- **Review:** Two independent reviews.
+  - **First (code):** fixed, each with a regression test: *High:* bosses
+    were grouped and topped up (the `solitary` list above); a whittled
+    group was topped up mid-fight, reinforcing survivors; spells ignored
+    battles. *Medium:* the ambush spawn formed groups off the game loop
+    (now a pair on its own group); a downed player was drawn into battle
+    after battle. *Low:* a backstab or shot at a waiting group hung
+    silently; waiting groups blocked a flight; an offline player's line
+    was never pruned; waiting groups turned on a free player in room
+    order, not the order they turned; solo drafting (`rallyIdleFoes`)
+    wasn't in the design (now recorded).
+  - **Second (the fixes, and a fact-check of every help page):** fixed:
+    a held spell still cost its mana, and backstab/shoot their use (now
+    refused at the command); a held cast wasn't on the stream or sent as
+    an aggro change; the ambush still ran off the loop (the travel-timer
+    fix above); a lone survivor or straggler stood alone for good
+    (regrouping); ten inaccurate help claims (battle-summary markup, fire
+    warmth, the autoskill and trap rules, the eat/drink messages, the
+    inventory food count, travel's time factors, weather and walking,
+    encumbrance, "never alone"); `help level` now finds experience.
+  - **Accepted:** the waiting-group turn order and `battle.Retain` are
+    unit-tested, not through a two-player wiring test;
+    `EncounterActive` reads the room under the expedition lock (now on
+    the game loop, so no race); companions don't cast yet (30c), so a
+    companion's spell at a waiting group has no test.
 
 ### Phase 29b: combat event stream and battle summary; combat help (2026-09-27)
 
@@ -3695,10 +3780,19 @@ history.
 - **Combat event stream (29b) limits:** the stream lives in memory, so a
   restart mid-fight loses that fight's summary. Each company player's own
   summary waits for companies with more than one player.
-- **Player help gaps:** combat is covered (29b). Company, camping,
-  survival, travel, weather, markets, standing, and the other Ashveil
-  systems have little or no `help` page yet; the 2026-09-27 rule covers
-  new work only, so these need a backfill pass.
+- **Battles and spawn groups (29b2) limits:**
+  - Battles are runtime only: after a restart a fight resumes from
+    `Aggro` as a new battle, and rooms respawn and regroup.
+  - A lone survivor or straggler with no idle group to join lingers
+    alone; roaming groups that wander together are deferred.
+  - The shipped `solitary` list (lich, abyssal creeper, ent, spider
+    queen) is for the owner to check; the dark acolyte stays grouped.
+  - The only shipped route (oak-road) has no ambush, so the ambush pair
+    is reached only by tests and future routes.
+- **Found writing the help pages (behaviour, not text):** a camp rest
+  says it "will be interrupted", but nothing interrupts it; stabling a
+  mount is free; Hunger or Thirst at 0 has no further effect; the
+  `company` and `archetype` usage strings leave out some subcommands.
 - `modules/tutorial`'s wiring test can't run twice in one process
   (`go test -count=2` fails the second run, before 29b too), and running
   it alongside `modules/company` in one `go test` with a high `-count` can

@@ -3,9 +3,12 @@ package expedition
 import (
 	"path/filepath"
 	"strconv"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
@@ -116,4 +119,17 @@ func TestShippedBossesStandAlone(t *testing.T) {
 	require.Len(t, hostiles, 1, "the lich alone")
 	assert.Equal(t, "lich", hostiles[0].Character.Name)
 	assert.Empty(t, hostiles[0].SpawnGroup)
+}
+
+// TestTravelTimerRunsOnTheGameLoop: the real scheduler's timer only queues
+// its callback; the callback runs when the game loop processes events, so
+// an ambush spawn never touches the world from the timer's goroutine.
+func TestTravelTimerRunsOnTheGameLoop(t *testing.T) {
+	// The module's init registered onTravelTimerDue.
+	var ran atomic.Int32
+	realScheduler{}.AfterFunc(0, func() { ran.Add(1) })
+	time.Sleep(50 * time.Millisecond) // the timer has fired, and queued
+	assert.Zero(t, ran.Load(), "not run on the timer's goroutine")
+	events.ProcessEvents()
+	assert.Equal(t, int32(1), ran.Load(), "run once, on the loop")
 }

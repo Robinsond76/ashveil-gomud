@@ -29,7 +29,8 @@ Bad weather outdoors, in a tracked zone, does three things:
   - It slows a route: worse weather adds to how long a journey takes
     (<ansi fg="command">help travel</ansi>). This is set once, when you set out.
   - It tires you faster: worse weather adds to the Hunger, Thirst, and
-    Fatigue a route or a step of walking costs (<ansi fg="command">help strain</ansi>).
+    Fatigue a route costs, and to the Fatigue a step of walking costs
+    (<ansi fg="command">help strain</ansi>).
   - It spoils rest: resting at a camp in foul weather recovers less
     Fatigue than the same rest under clear skies (<ansi fg="command">help camp</ansi>).
 

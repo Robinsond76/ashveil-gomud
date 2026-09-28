@@ -114,11 +114,29 @@ type Scheduler interface {
 
 type realScheduler struct{}
 
+// AfterFunc runs f on the game loop once d has passed: the timer only
+// queues it (travelTimerDue), so a journey's checkpoints, arrival, and
+// ambush spawn touch the world on the loop, never on the timer's goroutine.
 func (realScheduler) AfterFunc(d time.Duration, f func()) Timer {
 	if d < 0 {
 		d = 0
 	}
-	return realTimer{timer: time.AfterFunc(d, f)}
+	return realTimer{timer: time.AfterFunc(d, func() { events.AddToQueue(travelTimerDue{run: f}) })}
+}
+
+// travelTimerDue carries a travel timer's callback onto the game loop.
+type travelTimerDue struct{ run func() }
+
+func (travelTimerDue) Type() string { return `TravelTimerDue` }
+
+// onTravelTimerDue runs a travel timer's callback, on the game loop. A
+// callback for a timer stopped after it fired finds its generation stale
+// and does nothing.
+func onTravelTimerDue(e events.Event) events.ListenerReturn {
+	if due, ok := e.(travelTimerDue); ok && due.run != nil {
+		due.run()
+	}
+	return events.Continue
 }
 
 type realTimer struct{ timer *time.Timer }
@@ -285,6 +303,7 @@ func init() {
 	m.plug.AddUserCommand("travel", m.userCommand, false, false)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	events.RegisterListener(travelTimerDue{}, onTravelTimerDue)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
 			mudlog.Error("expedition: save", "error", err)

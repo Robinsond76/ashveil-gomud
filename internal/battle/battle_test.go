@@ -94,3 +94,12 @@ func TestRetain(t *testing.T) {
 	assert.Equal(t, uint64(9), NoteSet(2, "q", 9), "player 2's line was dropped")
 	assert.Equal(t, uint64(3), NoteSet(3, "r", 9), "player 3's line is kept")
 }
+
+func TestAllows(t *testing.T) {
+	Reset()
+	t.Cleanup(Reset)
+	assert.True(t, Allows(1, 5), "no battle: anyone")
+	Begin(1, 10, 1, "p", []int{5})
+	assert.True(t, Allows(1, 5))
+	assert.False(t, Allows(1, 6), "a group waiting its turn")
+}

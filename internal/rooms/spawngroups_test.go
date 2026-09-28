@@ -106,3 +106,44 @@ func TestPlanSpawnGroupsLeavesAnUngroupedFighterAlone(t *testing.T) {
 	assert.Empty(t, plan.Assign, "grouped once its fight is over")
 	assert.Empty(t, plan.TopUp)
 }
+
+func TestPlanSpawnGroupsRegroupsSurvivors(t *testing.T) {
+	// A lone survivor joins another idle group with room.
+	plan := planSpawnGroups([]groupable{
+		{InstanceId: 1, MobId: 10, Group: "a"},
+		{InstanceId: 2, MobId: 10, Group: "b"},
+		{InstanceId: 3, MobId: 10, Group: "b"},
+	}, ids())
+	assert.Equal(t, map[int]string{1: "b"}, plan.Assign)
+	assert.Empty(t, plan.TopUp)
+
+	// Two lone survivors become a pair.
+	plan = planSpawnGroups([]groupable{
+		{InstanceId: 1, MobId: 10, Group: "a"},
+		{InstanceId: 2, MobId: 20, Group: "b"},
+	}, ids())
+	assert.Equal(t, map[int]string{1: "b"}, plan.Assign)
+
+	// Never into a group in a fight.
+	plan = planSpawnGroups([]groupable{
+		{InstanceId: 1, MobId: 10, Group: "a"},
+		{InstanceId: 2, MobId: 10, Group: "b", Fighting: true},
+		{InstanceId: 3, MobId: 10, Group: "b"},
+	}, ids())
+	assert.Empty(t, plan.Assign)
+}
+
+func TestPlanSpawnGroupsStragglers(t *testing.T) {
+	// A straggler joins an idle group.
+	plan := planSpawnGroups([]groupable{
+		{InstanceId: 1, MobId: 10, Group: "a"},
+		{InstanceId: 2, MobId: 10, Group: "a"},
+		{InstanceId: 9, MobId: 30, Straggler: true},
+	}, ids())
+	assert.Equal(t, map[int]string{9: "a"}, plan.Assign)
+
+	// With none to join, it starts no group and nothing is spawned for it.
+	plan = planSpawnGroups([]groupable{{InstanceId: 9, MobId: 30, Straggler: true}}, ids())
+	assert.Empty(t, plan.Assign)
+	assert.Empty(t, plan.TopUp)
+}

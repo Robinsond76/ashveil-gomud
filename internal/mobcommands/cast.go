@@ -3,6 +3,7 @@ package mobcommands
 import (
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
@@ -205,6 +206,42 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		spellAggro.TargetUserIds = room.GetPlayers()
 		spellAggro.TargetMobInstanceIds = room.GetMobs()
 
+	}
+
+	// Ashveil Phase 29b2: a harmful spell waits its turn. Players fighting
+	// another group, and their charmed companions, are dropped from its
+	// targets; a spell left with none isn't cast (no mana spent), and the
+	// mob keeps its place in line with a plain attack.
+	if spellInfo.Type == spells.HarmSingle || spellInfo.Type == spells.HarmMulti || spellInfo.Type == spells.HarmArea {
+		before := len(spellAggro.TargetUserIds) + len(spellAggro.TargetMobInstanceIds)
+		waitOn := 0
+		var keepUsers, keepMobs []int
+		for _, uid := range spellAggro.TargetUserIds {
+			if !battle.Allows(uid, mob.InstanceId) {
+				if waitOn == 0 {
+					waitOn = uid
+				}
+				continue
+			}
+			keepUsers = append(keepUsers, uid)
+		}
+		for _, id := range spellAggro.TargetMobInstanceIds {
+			if m := mobs.GetInstance(id); m != nil && m.Character.Charmed != nil && m.Character.Charmed.UserId > 0 &&
+				!battle.Allows(m.Character.Charmed.UserId, mob.InstanceId) {
+				if waitOn == 0 {
+					waitOn = m.Character.Charmed.UserId
+				}
+				continue
+			}
+			keepMobs = append(keepMobs, id)
+		}
+		spellAggro.TargetUserIds, spellAggro.TargetMobInstanceIds = keepUsers, keepMobs
+		if before > 0 && len(keepUsers)+len(keepMobs) == 0 {
+			if waitOn > 0 {
+				mob.Character.SetAggro(waitOn, 0, characters.DefaultAttack)
+			}
+			return true, nil
+		}
 	}
 
 	if len(spellAggro.TargetUserIds) > 0 || len(spellAggro.TargetMobInstanceIds) > 0 || len(spellAggro.SpellRest) > 0 {
