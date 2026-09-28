@@ -1478,7 +1478,7 @@ func (c *Character) Heal(hp int, mana int) (int, int) {
 	if c.Health > c.HealthMax.Value {
 		c.Health = c.HealthMax.Value
 	}
-	c.Mana += hp
+	c.Mana += mana
 	if c.Mana > c.ManaMax.Value {
 		c.Mana = c.ManaMax.Value
 	}

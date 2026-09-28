@@ -10,7 +10,7 @@ inventory/provision code.
 
 ## Task 1: Strategies, pure (`internal/strategy`)
 
-- [ ] Tests first (`internal/strategy/strategy_test.go`): parsing roles
+- [x] Tests first (`internal/strategy/strategy_test.go`): parsing roles
   and rules (and aliases), `assist` refused for the player; defaults by
   archetype (cleric healer, wizard caster, else fighter; weakest); each
   rule's `Pick` over plain `Foe` values: weakest, strongest, wounded
@@ -22,7 +22,7 @@ inventory/provision code.
   heal at two or more, swings otherwise; a caster's area spell at two
   foes, else single; mana and known spells gate each; spells outside
   the configured list never cast.
-- [ ] `strategy.go` (types, parse, describe, defaults), `pick.go`,
+- [x] `strategy.go` (types, parse, describe, defaults), `pick.go`,
   `decide.go`, `provider.go` (the `For` seam with the default).
 
 ## Task 2: The module and `strategy` command (`modules/strategy`)
@@ -40,17 +40,19 @@ inventory/provision code.
 
 ## Task 3: Companion spells, grants, and mana (`internal/archetypes`, `modules/archetype`, `internal/hooks`)
 
-- [ ] Tests first: `CompanionSpells` by level, and a spell outside the
+- [x] Tests first: `CompanionSpells` by level, and a spell outside the
   archetype's schools rejected at load (`internal/archetypes`,
   `modules/archetype`); the shipped config grants wizard `mm` and cleric
   `heal`, and an existing wizard gets it at `PlayerSpawn`
   (`modules/archetype/wiring_test.go`); a companion regains mana every
   third round out of combat and not in it
   (`internal/hooks/companion_mana_test.go`).
-- [ ] `Archetype.CompanionSpells`, `archetypes.CompanionSpells(id,
+- [x] `Archetype.CompanionSpells`, `archetypes.CompanionSpells(id,
   level)`; config (cleric heal 1, healall 5; wizard mm 1, sparks 5);
   `GrantSpells` for wizard and cleric; `regenCompanionMana` in
-  `NewRound_AutoHeal.go`.
+  `NewRound_AutoHeal.go`. Found and fixed on the way: GoMud's
+  `Character.Heal` added the health amount to mana (regression test in
+  `internal/characters`).
 
 ## Task 4: Aiming by rule (`internal/enemyparty`, `internal/hooks`, `internal/usercommands`)
 

@@ -199,3 +199,24 @@ func TestValidateDropsNonPositiveKitIDs(t *testing.T) {
 	assert.NoError(t, a.Validate())
 	assert.Equal(t, []int{10002, 30001, 30001}, a.Kit, "invalid ids dropped, repeats kept")
 }
+
+// Phase 32d: companion spells by level.
+func TestCompanionSpells(t *testing.T) {
+	schools := map[string]string{"mm": "conjuration", "sparks": "conjuration", "heal": "restoration"}
+	schoolOf := func(id string) (string, bool) {
+		s, ok := schools[id]
+		return s, ok
+	}
+	a := wizard()
+	a.CompanionSpells = []LevelSpell{{Spell: " MM ", Level: 1}, {Spell: "sparks", Level: 5}, {Spell: "heal", Level: 1}, {Spell: "nosuch", Level: 1}}
+	require.NoError(t, a.Validate())
+	errs := a.FilterCompanionSpells(schoolOf)
+	assert.Len(t, errs, 2, "heal is outside the wizard's schools; nosuch doesn't exist")
+	assert.Equal(t, []string{"mm"}, a.SpellsAtLevel(1))
+	assert.Equal(t, []string{"mm"}, a.SpellsAtLevel(4))
+	assert.Equal(t, []string{"mm", "sparks"}, a.SpellsAtLevel(5))
+
+	bad := wizard()
+	bad.CompanionSpells = []LevelSpell{{Spell: "mm", Level: 0}}
+	assert.Error(t, bad.Validate(), "a companion spell needs a level")
+}

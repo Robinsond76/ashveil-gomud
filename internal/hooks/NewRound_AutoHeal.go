@@ -3,8 +3,10 @@ package hooks
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -24,6 +26,9 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 	}
 
 	deathRecoveryRoomId := int(configs.GetSpecialRoomsConfig().DeathRecoveryRoom)
+
+	// Ashveil Phase 32d: companions regain mana as players do.
+	regenCompanionMana(company.LeaderAndKeyForInstance)
 
 	onlineIds := users.GetOnlineUserIds()
 	for _, userId := range onlineIds {
@@ -78,4 +83,25 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 	}
 
 	return events.Continue
+}
+
+// regenCompanionMana gives each living companion out of combat its mana
+// per round (Phase 32d), on the same every-third-round beat as players,
+// while its leader is online. Mobs otherwise never regain mana: a
+// companion that cast in a battle would stay empty. Health is left as it
+// is (companions heal by their own rules).
+func regenCompanionMana(leaderOf func(instanceId int) (int, company.MemberKey, bool)) {
+	for _, instanceId := range mobs.GetAllMobInstanceIds() {
+		mob := mobs.GetInstance(instanceId)
+		if mob == nil || mob.Character.Aggro != nil || mob.Character.Health < 1 {
+			continue
+		}
+		leaderId, _, ok := leaderOf(instanceId)
+		if !ok || users.GetByUserId(leaderId) == nil {
+			continue
+		}
+		if mob.Character.Mana < mob.Character.ManaMax.Value {
+			mob.Character.Heal(0, mob.Character.ManaPerRound())
+		}
+	}
 }
