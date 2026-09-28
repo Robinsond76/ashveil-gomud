@@ -47,6 +47,10 @@ type Runtime interface {
 	// TemplateState is the state a template starts with, without spawning.
 	TemplateState(mobTemplateID int) (domain.MemberState, bool)
 	IsLive(instanceID int) bool
+	// WithLeader reports whether a live mob stands in its leader's room,
+	// walking with them (32f review: meals and the riding pace count only
+	// members present).
+	WithLeader(leaderUserID, instanceID int) bool
 	IsAttached(leaderUserID, instanceID int) bool
 	Detach(leaderUserID, instanceID int)
 	// Relocate moves a live, living mob into roomID and out of any fight

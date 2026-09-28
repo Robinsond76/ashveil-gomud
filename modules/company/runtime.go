@@ -60,6 +60,12 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 
 func (nativeRuntime) IsLive(instanceID int) bool { return mobs.MobInstanceExists(instanceID) }
 
+func (nativeRuntime) WithLeader(leaderUserID, instanceID int) bool {
+	leader := users.GetByUserId(leaderUserID)
+	mob := mobs.GetInstance(instanceID)
+	return leader != nil && mob != nil && mob.Character.RoomId == leader.Character.RoomId
+}
+
 func (nativeRuntime) IsAttached(leaderUserID, instanceID int) bool {
 	leader := users.GetByUserId(leaderUserID)
 	mob := mobs.GetInstance(instanceID)

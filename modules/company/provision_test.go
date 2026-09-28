@@ -4,8 +4,10 @@ import (
 	"testing"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
 	"github.com/stretchr/testify/assert"
 )
@@ -133,4 +135,94 @@ func TestUseCompanionItemFromRecord(t *testing.T) {
 	record, _ = module.registry.Get(7)
 	assert.Empty(t, record.Companions[0].State.Items, "the last use empties it")
 	assert.False(t, module.useCompanionItem(7, 1, skin), "gone")
+}
+
+type fakeProvisioner struct{ fed []string }
+
+func (f *fakeProvisioner) Provision(_ int, selector string, _ survival.Benefit) (survival.ProvisionResult, error) {
+	f.fed = append(f.fed, selector)
+	return survival.ProvisionResult{Name: selector, Needs: survival.Needs{Hunger: 100, Thirst: 100}}, nil
+}
+func (f *fakeProvisioner) IsMemberSelector(int, string) bool { return true }
+
+type fakeNeeds struct{ needs []survival.MemberNeeds }
+
+func (f fakeNeeds) ApplyCompanyExertion(int, string, survival.Exertion) ([]survival.ExertionResult, error) {
+	return nil, nil
+}
+func (f fakeNeeds) ApplyCompanyRestRecovery(int, string, int) ([]survival.ExertionResult, error) {
+	return nil, nil
+}
+func (f fakeNeeds) CompanyNeeds(int) []survival.MemberNeeds { return f.needs }
+
+// mealSetup is a leader with companions #1 (out, beside them) and #2 (out,
+// elsewhere), everyone hungry, and a fake survival service.
+func mealSetup(t *testing.T) (*CompanyModule, *fakeProvisioner, *users.UserRecord) {
+	t.Helper()
+	runtime := &fakeRuntime{live: map[int]bool{101: true, 102: true}, away: map[int]bool{102: true}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}}},
+	}}, runtime)
+	module.instances = map[int]map[int]int{7: {1: 101, 2: 102}}
+	prov := &fakeProvisioner{}
+	survival.SetProvisioner(prov)
+	survival.SetCompanyService(fakeNeeds{needs: []survival.MemberNeeds{
+		member(you, "Dain", 10, 100), member(tamsin, "Tamsin", 10, 100), member(oswin, "Oswin", 10, 100),
+	}})
+	t.Cleanup(func() {
+		survival.SetProvisioner(nil)
+		survival.SetCompanyService(nil)
+	})
+	user := users.NewUserRecord(7, 1)
+	user.Character.Name = "Dain"
+	return module, prov, user
+}
+
+// TestCompanionsWithLeader (32f review): out, living, the company's, and
+// in the leader's room.
+func TestCompanionsWithLeader(t *testing.T) {
+	module, _, _ := mealSetup(t)
+	assert.Equal(t, []int{1}, module.CompanionsWithLeader(7))
+}
+
+// TestMealFeedsOnlyThosePresent (32f review finding 6): a companion away
+// from the leader isn't fed from the company's food.
+func TestMealFeedsOnlyThosePresent(t *testing.T) {
+	module, prov, user := mealSetup(t)
+	useCargo(t, &fakeCargo{stacks: []encumbrance.CargoStack{{ItemId: 989201, Count: 5}}})
+	spec(t, items.ItemSpec{ItemId: 989201, Name: "jerky", Subtype: items.Edible, Nutrition: 90})
+
+	out := module.mealView(user, nil, mealEat)
+	assert.ElementsMatch(t, []string{"", "#1"}, prov.fed, "the leader and #1, not #2")
+	assert.NotContains(t, out, "Oswin")
+}
+
+// TestMealSpendsBeforeFeeding (32f review finding 7): food that can't be
+// spent feeds no one.
+func TestMealSpendsBeforeFeeding(t *testing.T) {
+	module, prov, user := mealSetup(t)
+	useCargo(t, &fakeCargo{stacks: []encumbrance.CargoStack{{ItemId: 989201, Count: 5}}, err: assert.AnError})
+	spec(t, items.ItemSpec{ItemId: 989201, Name: "jerky", Subtype: items.Edible, Nutrition: 90})
+
+	out := module.mealView(user, nil, mealEat)
+	assert.Empty(t, prov.fed)
+	assert.Contains(t, out, "couldn't get at the jerky")
+}
+
+// TestUseCompanionItemLiveRecordsGear (32f review finding 7): a live
+// companion's meal updates its record at once.
+func TestUseCompanionItemLiveRecordsGear(t *testing.T) {
+	skin := spec(t, items.ItemSpec{ItemId: 989102, Name: "waterskin", Uses: 5, Subtype: items.Drinkable, Hydration: 40})
+	skin.Uses = 2
+	skin.UUID = uuid.New(items.UUIDItem)
+	state := domain.MemberState{Level: 1, Items: []items.Item{skin}}
+	runtime := &fakeRuntime{live: map[int]bool{101: true}, liveState: map[int]domain.MemberState{101: state.Clone()}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58, State: &state}}},
+	}}, runtime)
+	module.instances = map[int]map[int]int{7: {1: 101}}
+
+	assert.True(t, module.useCompanionItem(7, 1, skin))
+	record, _ := module.registry.Get(7)
+	assert.Equal(t, 1, record.Companions[0].State.Items[0].Uses, "the record follows the live mob")
 }

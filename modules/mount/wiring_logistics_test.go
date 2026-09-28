@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -219,6 +220,27 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, run("mount", "stable riding-horse"), "one riding horse per member")
 	herd = mountModule().herds[user.UserId]
 	assert.Len(t, herd.Horses, 4, "and two riding horses; the third of each is refused")
+
+	// The pace (32f review finding 5): one saddled riding horse, two
+	// walking, so the company walks; once the dummy is elsewhere, the
+	// leader alone rides at pace.
+	user.Character.StoreItem(items.New(35))
+	run("mount", "saddle riding riding saddle")
+	assert.Equal(t, 2, company.WalkingMembers(user.UserId))
+	assert.Equal(t, 100, mount.TravelDurationPct(user.UserId), "the dummy walks")
+	dummyID, ok := company.InstanceFor(user.UserId, 1)
+	require.True(t, ok)
+	dummy := mobs.GetInstance(dummyID)
+	home := dummy.Character.RoomId
+	dummy.Character.RoomId = home + 1
+	assert.Equal(t, 1, company.WalkingMembers(user.UserId))
+	assert.Equal(t, 90, mount.TravelDurationPct(user.UserId), "only the leader walks, and rides")
+	dummy.Character.RoomId = home
+	run("mount", "unsaddle riding")
+	user.Character.RemoveItem(items.New(35))
+	if saddle, found := user.Character.FindInBackpack("riding saddle"); found {
+		user.Character.RemoveItem(saddle)
+	}
 
 	// Cargo keeps a half-drunk waterskin half-drunk.
 	skin := items.New(30015)

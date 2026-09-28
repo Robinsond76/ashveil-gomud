@@ -57,6 +57,7 @@ func newTestModule(store Store) *MountModule {
 	return &MountModule{
 		store:     store,
 		members:   func(int) int { return 1 },
+		walkers:   func(int) int { return 1 },
 		specs:     testSpecs(),
 		stableTag: defaultStableTag,
 		herds:     map[int]mount.Herd{},
@@ -355,6 +356,7 @@ func TestReliefThroughRegisteredSeam(t *testing.T) {
 	user := testUser(t, 7)
 	module := newTestModule(&fakeStore{})
 	module.members = func(int) int { return 2 }
+	module.walkers = func(int) int { return 2 }
 	mount.SetProvider(module)
 	t.Cleanup(func() { mount.SetProvider(nil) })
 
@@ -406,4 +408,21 @@ func TestHerdChangesSaveTheLeader(t *testing.T) {
 	failing.saveUser = module.saveUser
 	failing.stable(user, stableRoom(), "pack-horse")
 	assert.Empty(t, saved, "no herd, no user save")
+}
+
+// TestPaceCountsOnlyWalkers (32f review finding 5): a companion away from
+// the leader needs no riding horse for the company to ride at pace, and
+// one who comes back does.
+func TestPaceCountsOnlyWalkers(t *testing.T) {
+	saddles(t)
+	user := testUser(t, 7)
+	module := newTestModule(&fakeStore{})
+	module.members = func(int) int { return 2 } // two carry
+	module.walkers = func(int) int { return 1 } // one walks with the leader
+	module.stable(user, stableRoom(), "riding-horse")
+	user.Character.Items = []items.Item{items.New(ridingSaddleID)}
+	module.saddle(user, "#1", "riding saddle")
+	assert.Equal(t, 90, module.TravelDurationPct(7), "everyone walking rides")
+	module.walkers = func(int) int { return 2 }
+	assert.Equal(t, 100, module.TravelDurationPct(7), "one walks: walking pace")
 }

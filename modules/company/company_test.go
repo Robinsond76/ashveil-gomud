@@ -210,6 +210,8 @@ type fakeRuntime struct {
 	spawnedIdentities []domain.Identity
 	// Phase 32f: Strength per live instance.
 	strength map[int]int
+	// away marks live instances not in their leader's room (32f review).
+	away map[int]bool
 }
 
 func (f *fakeRuntime) Vitals(instanceID int) (int, int, bool) {
@@ -304,6 +306,9 @@ func (f *fakeRuntime) TemplateState(int) (domain.MemberState, bool) {
 	return domain.MemberState{Level: 1}, true
 }
 func (f *fakeRuntime) IsLive(instanceID int) bool { return f.live[instanceID] }
+func (f *fakeRuntime) WithLeader(_ int, instanceID int) bool {
+	return f.live[instanceID] && !f.away[instanceID]
+}
 func (f *fakeRuntime) IsAttached(_ int, instanceID int) bool {
 	return f.live[instanceID] && !f.stolen[instanceID]
 }

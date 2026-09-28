@@ -431,6 +431,33 @@ func CompanionCarry(leaderUserID int) []MemberCarry {
 	return cp.CompanionCarry(leaderUserID)
 }
 
+// PresenceProvider is optionally implemented by the registered
+// FormationProvider (32f review): the living companions out and in their
+// leader's room. Call it on the game loop.
+type PresenceProvider interface {
+	CompanionsWithLeader(leaderUserID int) []int
+}
+
+// CompanionsWithLeader is the ids of a leader's living companions walking
+// with them; nil without a provider.
+func CompanionsWithLeader(leaderUserID int) []int {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	pp, ok := p.(PresenceProvider)
+	if !ok {
+		return nil
+	}
+	return pp.CompanionsWithLeader(leaderUserID)
+}
+
+// WalkingMembers is how many members walk with a leader: the leader and
+// each living companion in their room (32f review: the riding pace). A
+// leader alone is one.
+func WalkingMembers(leaderUserID int) int {
+	return 1 + len(CompanionsWithLeader(leaderUserID))
+}
+
 // CountedMembers is how many members carry for a leader: the leader and
 // each counted companion (Phase 32f). A leader with no company is one.
 func CountedMembers(leaderUserID int) int {

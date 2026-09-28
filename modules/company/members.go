@@ -142,6 +142,35 @@ func (m *CompanyModule) CompanionCarry(leaderUserID int) []domain.MemberCarry {
 	return out
 }
 
+var _ domain.PresenceProvider = (*CompanyModule)(nil)
+
+// CompanionsWithLeader implements company.PresenceProvider (32f review):
+// the ids of living companions out and walking with their leader, in the
+// leader's room and still the company's. Game loop only.
+func (m *CompanyModule) CompanionsWithLeader(leaderUserID int) []int {
+	if m.persistenceAvailable() != nil {
+		return nil
+	}
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return nil
+	}
+	out := []int{}
+	for _, c := range record.Companions {
+		if c.Dead() {
+			continue
+		}
+		instanceID, tracked := m.instance(leaderUserID, c.ID)
+		if !tracked || !m.runtime.IsLive(instanceID) || m.runtime.CharmedByOther(leaderUserID, instanceID) {
+			continue
+		}
+		if m.runtime.WithLeader(leaderUserID, instanceID) {
+			out = append(out, c.ID)
+		}
+	}
+	return out
+}
+
 // gearGrams weighs a member's worn and carried items.
 func gearGrams(s domain.MemberState) int {
 	total := 0

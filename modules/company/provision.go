@@ -16,8 +16,9 @@ import (
 )
 
 // Phase 32f: `company eat`, `company drink`, and `company meal` feed and
-// water every living member from the cargo, then the member's own pack,
-// then the leader's (owner, 2026-09-28).
+// water every living member present (the leader and each companion
+// walking with them) from the cargo, then the member's own pack, then the
+// leader's (owner, 2026-09-28).
 
 type mealKind int
 
@@ -287,7 +288,13 @@ func (m *CompanyModule) carriedBy(leaderUserID, companionID int) ([]items.Item, 
 // mob when it is out, else from its record, saved.
 func (m *CompanyModule) useCompanionItem(leaderUserID, companionID int, itm items.Item) bool {
 	if instanceID, tracked := m.instance(leaderUserID, companionID); tracked && m.runtime.IsLive(instanceID) {
-		return m.runtime.UseItem(instanceID, itm)
+		if !m.runtime.UseItem(instanceID, itm) {
+			return false
+		}
+		// Record the gear now, as a gear change does (32f review
+		// finding 7): a live mob's UseItem fires no ItemOwnership.
+		m.refreshSnapshot(leaderUserID, companionID)
+		return true
 	}
 	record, ok := m.registry.Get(leaderUserID)
 	if !ok {
@@ -322,14 +329,33 @@ func (m *CompanyModule) useCompanionItem(leaderUserID, companionID int, itm item
 	return false
 }
 
-// mealView runs a meal: plan, then for each step provision the member and
-// only then use the item. It never holds another module's lock across
-// the steps: survival and encumbrance each lock and save per call.
+// presentNeeds keeps the leader and the companions walking with them
+// (32f review finding 6): one elsewhere, or not out, eats on their own.
+func (m *CompanyModule) presentNeeds(leaderUserID int, needs []survival.MemberNeeds) []survival.MemberNeeds {
+	present := map[int]bool{}
+	for _, id := range m.CompanionsWithLeader(leaderUserID) {
+		present[id] = true
+	}
+	out := make([]survival.MemberNeeds, 0, len(needs))
+	for _, n := range needs {
+		if id, isCompanion := companionIDOf(n.Key); isCompanion && !present[id] {
+			continue
+		}
+		out = append(out, n)
+	}
+	return out
+}
+
+// mealView runs a meal: plan, then for each step use the item and only
+// then provision the member, so no one is fed from food that wasn't spent
+// (32f review finding 7). It never holds another module's lock across the
+// steps: survival and encumbrance each lock and save per call.
 func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind mealKind) string {
 	needs := survival.CompanyNeeds(user.UserId)
 	if len(needs) == 0 {
 		return "Your company's needs can't be read right now."
 	}
+	needs = m.presentNeeds(user.UserId, needs)
 	larder := m.larderFor(user, needs)
 	plan := planMeal(needs, larder, kind)
 
@@ -345,13 +371,15 @@ func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind 
 		if isCompanion {
 			selector = "#" + strconv.Itoa(companionID)
 		}
+		if !m.useFood(user, food) {
+			mudlog.Warn("company: meal item not used", "leader", user.UserId, "item", food.ItemId)
+			lines = append(lines, fmt.Sprintf("%s couldn't get at the %s.", step.Member.Name, food.Name))
+			continue
+		}
 		result, err := survival.Provision(user.UserId, selector, mealBenefit(food, step.Drink))
 		if err != nil {
 			lines = append(lines, fmt.Sprintf("%s couldn't be provisioned: %s", step.Member.Name, err))
 			continue
-		}
-		if !m.useFood(user, food) {
-			mudlog.Warn("company: meal item not used", "leader", user.UserId, "item", food.ItemId)
 		}
 		if step.Drink {
 			drank = true

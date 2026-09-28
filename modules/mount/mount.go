@@ -133,6 +133,10 @@ type MountModule struct {
 	// members is how many members a leader's company counts (the leader and
 	// each counted companion); it caps the herd. Game loop only.
 	members func(leaderUserID int) int
+	// walkers is how many members walk with the leader (the leader and
+	// each companion in their room); only they set the riding pace (32f
+	// review). Game loop only.
+	walkers func(leaderUserID int) int
 
 	specs map[string]mount.MountSpec
 	// stableTag is the room tag where horses are sold; legacySaddle the
@@ -158,6 +162,7 @@ func init() {
 	m := &MountModule{
 		plug:      plugins.New("mount", "1.0"),
 		members:   company.CountedMembers,
+		walkers:   company.WalkingMembers,
 		specs:     map[string]mount.MountSpec{},
 		stableTag: defaultStableTag,
 		herds:     map[int]mount.Herd{},
@@ -286,9 +291,13 @@ func (m *MountModule) Relief(leaderUserID int) (fatiguePct, riders int) {
 }
 
 // TravelDurationPct implements mount.ReliefProvider: the riding pace only
-// when every counted member has a saddled riding horse; 100 otherwise.
+// when every member walking with the leader has a saddled riding horse;
+// 100 otherwise.
 func (m *MountModule) TravelDurationPct(leaderUserID int) int {
-	members := m.memberCount(leaderUserID)
+	members := 1
+	if m.walkers != nil {
+		members = m.walkers(leaderUserID)
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.herds[leaderUserID].TravelDurationPct(m.specsLocked(), members)
