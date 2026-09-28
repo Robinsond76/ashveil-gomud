@@ -101,7 +101,20 @@ applied)**, listed for the owner in `docs/PROJECT_STATUS.md`.
    still fights one group.
 7. **Solo players too** (the owner's answer). A player with no companion
    has battles, waits, and refusals the same way. 29a's upkeep (turning
-   and drafting) still needs a companion present, as before.
+   and drafting) still needs a companion present, as before. **Changed in
+   review:** so that a lone player's battle isn't broken off when the foe
+   they struck falls, an idle member of the battle's group that would fight
+   the player anyway turns on them (`rallyIdleFoes`), the small part of
+   drafting a solo battle needs.
+8. **Everything holds, not just blows (review).** A harmful spell keeps to
+   the caster's battle: a player's spell at a waiting group lands on no
+   one ("Your spell has no foe in your battle."), and a waiting mob's spell
+   at a player in another battle is held, the mob keeping its place in
+   line. A backstab or shot at a waiting group is called off with a
+   message (a plain attack is turned onto the battle instead). A group
+   waiting its turn doesn't block a flight from the battle. A downed
+   player or companion sets no group on the player, so a player who falls
+   isn't drawn into battle after battle.
 
 ### B. Spawn groups (`internal/rooms`, `internal/mobparty`)
 
@@ -116,13 +129,16 @@ applied)**, listed for the owner in `docs/PROJECT_STATUS.md`.
    its spawn group when it has one, else by its first `groups` tag as
    before. The zone-wide `groups` tags keep their other meaning
    (hostility shared across a zone).
-3. **At least two (rule 3).** A spawn group with one member is topped up
-   to two with a copy drawn from the room's hostile entries, in list
+3. **At least two (rule 3).** A newly formed spawn group with one member
+   is topped up to two with a copy drawn from the room's hostile entries, in list
    order, so a room listing a rat and a ruffian gives a rat and a ruffian,
    and a room listing only a ruffian gives two ruffians **(recommendation
    applied)**. Top-up copies are not tracked by the spawn list: they don't
-   respawn on their own, and are made again, if needed, when the group
-   next forms.
+   respawn on their own. **Changed in review:** only a new group is
+   topped up; a group whittled down by a fight is never reinforced (a
+   fresh spawn joins it instead), and a mob still fighting isn't grouped
+   until its fight is over. Only the room's own spawns take part: a mob
+   that wandered in is left as it is.
 4. **More than five:** a room whose hostile entries exceed five forms
    several groups of even size (six gives three and three, never five and
    one) **(recommendation applied)**. `mobparty`'s chunking of a large
@@ -136,6 +152,10 @@ applied)**, listed for the owner in `docs/PROJECT_STATUS.md`.
 7. **Grouped mobs don't wander off alone** **(recommendation applied)**:
    a spawn-group member's wandering is turned off, so a group stays
    together. Roaming groups are deferred.
+8. **Travel encounters (review):** a travel ambush spawns a pair of its
+   foe (one, if solitary) as a group of their own
+   (`encounter:<room>:<first>`), directly on the game loop; the encounter
+   lasts while either stands.
 
 ### C. The event stream and summary (29b, revised)
 
@@ -165,7 +185,8 @@ applied)**, listed for the owner in `docs/PROJECT_STATUS.md`.
   spawn pass.
 - **`internal/mobparty`:** grouping by spawn group, even chunks.
 - **Content:** `solitary: true` on the shipped large or boss mobs that
-  should stand alone (reported for the owner's check).
+  should stand alone (reported for the owner's check): the lich (14), the
+  abyssal creeper (25), the ent (34), and the spider queen (37).
 
 ## Invariants
 

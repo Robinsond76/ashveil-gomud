@@ -98,6 +98,11 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 					if mob.Character.Aggro == nil || mob.Character.Aggro.UserId != userId {
 						continue
 					}
+					// Ashveil Phase 29b2: a group waiting its turn doesn't
+					// block a flight from the battle.
+					if holdsAgainstPlayer(mob, userId) {
+						continue
+					}
 
 					// Stat comparison accounts for up to 70% of chance to flee.
 					chanceIn100 := int(float64(user.Character.Stats.Speed.ValueAdj) / (float64(user.Character.Stats.Speed.ValueAdj) + float64(mob.Character.Stats.Speed.ValueAdj)) * 70)
@@ -215,6 +220,13 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				scripting.TrySpellScriptEvent(`onWait`, user.UserId, 0, user.Character.Aggro.SpellInfo)
 				emitCast(combatstream.CastProgress, userRef(user), user.Character.Aggro.SpellInfo.SpellId, ``, roomId)
 
+				continue
+			}
+
+			// Phase 29b2: a harmful spell keeps to the caster's battle.
+			if holdPlayerSpell(user.UserId, &user.Character.Aggro.SpellInfo) {
+				user.SendText(`Your spell has no foe in your battle. The others wait their turn.`)
+				user.Character.Aggro = nil
 				continue
 			}
 
@@ -591,8 +603,15 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				continue
 			}
 
-			// Ashveil Phase 29b2: a foe outside the player's battle waits.
+			// Ashveil Phase 29b2: a foe outside the player's battle waits. A
+			// plain attack is turned onto the battle (keepOnBattle); any
+			// other (a backstab, a shot) is called off.
 			if playerHolds(user.UserId, defMob) {
+				if user.Character.Aggro.Type != characters.DefaultAttack {
+					user.SendText(`That foe is waiting its turn. Finish your battle first.`)
+					user.Character.Aggro = nil
+					events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+				}
 				continue
 			}
 
@@ -738,6 +757,16 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				scripting.TrySpellScriptEvent(`onWait`, 0, mob.InstanceId, mob.Character.Aggro.SpellInfo)
 				emitCast(combatstream.CastProgress, mobRef(mob), mob.Character.Aggro.SpellInfo.SpellId, ``, mob.Character.RoomId)
 
+				continue
+			}
+
+			// Phase 29b2: a harmful spell waits its turn against a player
+			// fighting another group, and the mob keeps its place in line.
+			if held, waitOn := holdMobSpell(mob, &mob.Character.Aggro.SpellInfo); held {
+				mob.Character.Aggro = nil
+				if waitOn > 0 {
+					mob.Character.SetAggro(waitOn, 0, characters.DefaultAttack)
+				}
 				continue
 			}
 

@@ -194,3 +194,32 @@ func Next(candidates []Candidate) (int, bool) {
 	}
 	return best, best >= 0
 }
+
+// Engaged reports whether a mob is one of any player's battle enemies.
+func Engaged(instanceId int) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	for _, b := range battles {
+		if b.Enemies[instanceId] {
+			return true
+		}
+	}
+	return false
+}
+
+// Retain drops everything held for players not named: those who left the
+// game.
+func Retain(userIds map[int]bool) {
+	mu.Lock()
+	defer mu.Unlock()
+	for id := range battles {
+		if !userIds[id] {
+			delete(battles, id)
+		}
+	}
+	for id := range firstSet {
+		if !userIds[id] {
+			delete(firstSet, id)
+		}
+	}
+}

@@ -88,3 +88,21 @@ func TestTopUpEntry(t *testing.T) {
 	e, _ = topUpEntry([]SpawnInfo{{MobId: 10}}, 10)
 	assert.Equal(t, 10, e.MobId, "the only kind: another of the same")
 }
+
+func TestPlanSpawnGroupsNeverReinforcesASurvivor(t *testing.T) {
+	// A group down to one after a fight, idle now: left as it is.
+	plan := planSpawnGroups([]groupable{{InstanceId: 1, MobId: 10, Group: "a"}}, ids())
+	assert.Empty(t, plan.Assign)
+	assert.Empty(t, plan.TopUp, "a survivor isn't topped up")
+
+	// A fresh spawn joins the survivor: a pair again, nothing new.
+	plan = planSpawnGroups([]groupable{{InstanceId: 1, MobId: 10, Group: "a"}, {InstanceId: 2, MobId: 10}}, ids())
+	assert.Equal(t, map[int]string{2: "a"}, plan.Assign)
+	assert.Empty(t, plan.TopUp)
+}
+
+func TestPlanSpawnGroupsLeavesAnUngroupedFighterAlone(t *testing.T) {
+	plan := planSpawnGroups([]groupable{{InstanceId: 1, MobId: 10, Fighting: true}}, ids())
+	assert.Empty(t, plan.Assign, "grouped once its fight is over")
+	assert.Empty(t, plan.TopUp)
+}

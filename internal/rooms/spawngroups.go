@@ -3,15 +3,17 @@ package rooms
 import (
 	"fmt"
 	"sort"
+	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 )
 
 // Phase 29b2: spawn groups. A room's hostile mobs fight as groups of at
 // least two, built from its spawn list ("think Ogre Battle"): after the
-// spawn pass, hostile mobs with no group join one, and a group of one is
-// topped up from the list. A mob marked solitary stands alone, and
+// spawn pass, the hostile mobs it spawned with no group join one, and a new
+// group of one is topped up from the list. A mob marked solitary stands alone, and
 // shopkeepers, practice foes, companions, and mobs that aren't hostile are
 // never grouped. Spawn groups are runtime only: after a restart the room
 // respawns and regroups.
@@ -34,10 +36,12 @@ type spawnGroupPlan struct {
 	TopUp  []string
 }
 
-// planSpawnGroups decides who joins which group. An ungrouped mob joins
-// the smallest group in the room that isn't fighting and has room, else
-// the ungrouped mobs left form new groups as even as they can be. Any
-// group of one that isn't fighting is topped up. newID names a new group.
+// planSpawnGroups decides who joins which group. An ungrouped mob that
+// isn't fighting joins the smallest group in the room that isn't fighting
+// and has room, else the ungrouped mobs left form new groups as even as
+// they can be. Only a new group of one is topped up: a group whittled down
+// by a fight is never reinforced, and an ungrouped mob in a fight waits
+// until it is over. newID names a new group.
 func planSpawnGroups(ms []groupable, newID func() string) spawnGroupPlan {
 	plan := spawnGroupPlan{Assign: map[int]string{}}
 	size := map[string]int{}
@@ -46,7 +50,9 @@ func planSpawnGroups(ms []groupable, newID func() string) spawnGroupPlan {
 	var loose []int
 	for _, m := range ms {
 		if m.Group == "" {
-			loose = append(loose, m.InstanceId)
+			if !m.Fighting {
+				loose = append(loose, m.InstanceId)
+			}
 			continue
 		}
 		if _, ok := size[m.Group]; !ok {
@@ -77,18 +83,13 @@ func planSpawnGroups(ms []groupable, newID func() string) spawnGroupPlan {
 
 	for _, n := range mobparty.EvenSizes(len(left), mobparty.MaxPartySize) {
 		g := newID()
-		order = append(order, g)
 		for _, id := range left[:n] {
 			plan.Assign[id] = g
 		}
-		size[g] = n
-		left = left[n:]
-	}
-
-	for _, g := range order {
-		if size[g] < MinSpawnGroup && !fighting[g] {
+		if n < MinSpawnGroup {
 			plan.TopUp = append(plan.TopUp, g)
 		}
+		left = left[n:]
 	}
 	return plan
 }
@@ -133,13 +134,20 @@ func (r *Room) hostilePool() []SpawnInfo {
 	return pool
 }
 
-// FormSpawnGroups puts the room's hostile mobs into spawn groups of at
-// least two, topping up a group of one from the room's spawn list (or, with
-// no list, with another of the same mob). Grouped mobs stop wandering, so
-// a group stays together. It is called after the room's spawn pass, and
-// may be called by anything else that puts hostile mobs in a room (a
-// travel encounter).
+// FormSpawnGroups puts the hostile mobs the room's spawn list made into
+// spawn groups of at least two, topping up a new group of one from the
+// list. Grouped mobs stop wandering, so a group stays together. Only the
+// room's own spawns take part (a mob that wandered in, or a travel
+// encounter's pair, is left as it is). It is called after the room's spawn
+// pass, on the game loop.
 func (r *Room) FormSpawnGroups() {
+	spawned := map[int]bool{}
+	for _, e := range r.SpawnInfo {
+		if e.InstanceId > 0 {
+			spawned[e.InstanceId] = true
+		}
+	}
+	ours := fmt.Sprintf("spawn:%d:", r.RoomId)
 	var ms []groupable
 	byID := map[int]*mobs.Mob{}
 	for _, instanceId := range r.mobs {
@@ -147,8 +155,15 @@ func (r *Room) FormSpawnGroups() {
 		if !groupsHere(mob) {
 			continue
 		}
+		if mob.SpawnGroup == "" && !spawned[instanceId] {
+			continue
+		}
+		if mob.SpawnGroup != "" && !strings.HasPrefix(mob.SpawnGroup, ours) {
+			continue
+		}
 		byID[instanceId] = mob
-		ms = append(ms, groupable{InstanceId: instanceId, MobId: int(mob.MobId), Group: mob.SpawnGroup, Fighting: mob.Character.Aggro != nil})
+		fighting := mob.Character.Aggro != nil || battle.Engaged(instanceId)
+		ms = append(ms, groupable{InstanceId: instanceId, MobId: int(mob.MobId), Group: mob.SpawnGroup, Fighting: fighting})
 	}
 	if len(ms) == 0 {
 		return

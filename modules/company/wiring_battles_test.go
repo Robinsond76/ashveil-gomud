@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -210,6 +211,9 @@ func spawnedHostiles(t *testing.T, roomId int) []*mobs.Mob {
 			mobs.DestroyInstance(m.InstanceId)
 		}
 		room.CleanupMobSpawns(true) // ready to spawn again on a repeated run
+		for i := range room.SpawnInfo {
+			room.SpawnInfo[i].InstanceId, room.SpawnInfo[i].DespawnedRound = 0, 0
+		}
 	})
 	return out
 }
@@ -287,4 +291,250 @@ func TestSoloPlayerHasBattles(t *testing.T) {
 	}
 	assert.Positive(t, fights)
 	assert.Equal(t, fights, strings.Count(seen, summaryHeading))
+}
+
+// waitingBandit returns a living bandit outside Aria's battle.
+func (b *brawl) waitingBandit() *mobs.Mob {
+	b.t.Helper()
+	cur, ok := battle.Current(7)
+	require.True(b.t, ok)
+	for _, m := range b.livingBandits() {
+		if !cur.Has(m.InstanceId) {
+			return m
+		}
+	}
+	b.t.Fatal("no bandit is waiting")
+	return nil
+}
+
+// TestSpellAtAWaitingGroupIsHeld: a harmful spell Aria casts at a group
+// waiting its turn lands on no one, and a waiting group's harmful spell at
+// Aria is held too, the caster keeping its place in line.
+func TestSpellAtAWaitingGroupIsHeld(t *testing.T) {
+	b := newBrawl(t)
+	b.looseBandits()
+	b.cmd("attack", "bandit captain")
+	b.toughen()
+	b.fight()
+	b.toughen()
+
+	waiting := b.waitingBandit()
+	health := waiting.Character.Health
+	b.aria.Character.Mana = 100
+	b.aria.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "mm", TargetMobInstanceIds: []int{waiting.InstanceId}})
+	got := b.fight()
+	assert.Contains(t, got, "Your spell has no foe in your battle.")
+	assert.Equal(t, health, waiting.Character.Health, "the waiting bandit is untouched")
+
+	b.toughen()
+	caster := b.waitingBandit()
+	caster.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "mm", TargetUserIds: []int{7}})
+	var mm bool
+	events := b.listen()
+	b.fight()
+	for _, e := range *events {
+		if e.Kind == combatstream.CastComplete && e.Source.MobInstanceId == caster.InstanceId {
+			mm = true
+		}
+	}
+	assert.False(t, mm, "the waiting bandit's spell isn't cast")
+	require.NotNil(t, caster.Character.Aggro, "it keeps its place in line")
+	assert.Equal(t, 7, caster.Character.Aggro.UserId)
+}
+
+// TestDownedPlayerIsNotDrawnIntoNewBattles: when a lone player falls, their
+// battle ends, and the groups still aiming at them don't begin battle after
+// battle while they lie there.
+func TestDownedPlayerIsNotDrawnIntoNewBattles(t *testing.T) {
+	b := newBrawl(t)
+	got := b.listen()
+	b.cmd("company", "dismiss all")
+	b.looseBandits()
+	b.cmd("attack", "bandit captain")
+	for i := 0; i < 2; i++ {
+		b.aria.Character.HealthMax.Value = 1000
+		b.aria.Character.Health = 1000
+		b.fight()
+	}
+	_, ok := battle.Current(7)
+	require.True(t, ok)
+
+	*got = nil
+	for i := 0; i < 3; i++ {
+		b.aria.Character.Health = -1 // down, not yet dead
+		b.fight()
+	}
+	starts := 0
+	for _, e := range *got {
+		if e.Kind == combatstream.FightStart && e.Source.UserId == 7 {
+			starts++
+		}
+	}
+	assert.Zero(t, starts, "no new battle while she's down")
+	_, ok = battle.Current(7)
+	assert.False(t, ok)
+}
+
+// TestBackstabAtAWaitingGroupIsCalledOff: an attack other than a plain one
+// (a backstab) at a group waiting its turn isn't left hanging: it's called
+// off, and the player told why.
+func TestBackstabAtAWaitingGroupIsCalledOff(t *testing.T) {
+	b := newBrawl(t)
+	b.looseBandits()
+	b.cmd("attack", "bandit captain")
+	b.toughen()
+	b.fight()
+	b.toughen()
+
+	waiting := b.waitingBandit()
+	health := waiting.Character.Health
+	b.aria.Character.SetAggro(0, waiting.InstanceId, characters.BackStab, 0)
+	got := b.fight()
+	assert.Contains(t, got, "That foe is waiting its turn. Finish your battle first.")
+	assert.Equal(t, health, waiting.Character.Health)
+	if a := b.aria.Character.Aggro; a != nil {
+		assert.NotEqual(t, characters.BackStab, a.Type)
+	}
+}
+
+// TestWaitingGroupsDontBlockFlight: fleeing a battle, only the battle's
+// group can block the way; the groups waiting their turn don't. The
+// battle's foe is made too slow to block, the waiting ones quick.
+func TestWaitingGroupsDontBlockFlight(t *testing.T) {
+	b := newBrawl(t)
+	b.looseBandits()
+	b.cmd("attack", "bandit captain")
+	b.toughen()
+	b.fight()
+	b.toughen()
+	cur, ok := battle.Current(7)
+	require.True(t, ok)
+	waiting := 0
+	for _, m := range b.livingBandits() {
+		if cur.Has(m.InstanceId) {
+			m.Character.Stats.Speed.ValueAdj = 0
+			continue
+		}
+		m.Character.Stats.Speed.ValueAdj = 100000
+		m.Character.SetAggro(7, 0, characters.DefaultAttack)
+		waiting++
+	}
+	require.Positive(t, waiting)
+	b.aria.Character.Stats.Speed.ValueAdj = 1
+
+	b.cmd("flee", "")
+	got := b.fight()
+	assert.NotContains(t, got, "blocks you from fleeing")
+	assert.Contains(t, got, "You flee")
+}
+
+// hostilesIn lists a room's living hostile mobs.
+func hostilesIn(room *rooms.Room) []*mobs.Mob {
+	var out []*mobs.Mob
+	for _, id := range room.GetMobs() {
+		if m := mobs.GetInstance(id); m != nil && m.Hostile && m.Character.Health > 0 {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
+// TestASurvivorIsNotReinforced: a spawned pair whittled down to one isn't
+// topped up again; when the room respawns its fallen, the newcomer joins
+// the survivor, a pair once more.
+func TestASurvivorIsNotReinforced(t *testing.T) {
+	newBrawl(t)
+	pair := spawnedHostiles(t, 920103)
+	require.Len(t, pair, 2)
+	room := rooms.LoadRoom(920103)
+	t.Cleanup(func() {
+		for _, m := range hostilesIn(room) {
+			room.RemoveMob(m.InstanceId)
+			mobs.DestroyInstance(m.InstanceId)
+		}
+		room.CleanupMobSpawns(true)
+	})
+	tracked := room.SpawnInfo[0].InstanceId
+	var topUp, listed *mobs.Mob
+	for _, m := range pair {
+		if m.InstanceId == tracked {
+			listed = m
+		} else {
+			topUp = m
+		}
+	}
+	require.NotNil(t, topUp)
+	require.NotNil(t, listed)
+
+	// The top-up falls: the listed ruffian stands alone, and stays so.
+	room.RemoveMob(topUp.InstanceId)
+	mobs.DestroyInstance(topUp.InstanceId)
+	room.Prepare(false)
+	require.Len(t, hostilesIn(room), 1, "a survivor isn't topped up")
+
+	// It falls too, and the room respawns it: a new group of one, topped
+	// up. Then the listed one of the new pair falls and respawns, joining
+	// the survivor.
+	room.RemoveMob(listed.InstanceId)
+	mobs.DestroyInstance(listed.InstanceId)
+	room.Prepare(false) // notes the loss
+	room.SpawnInfo[0].DespawnedRound = 0
+	room.Prepare(false) // respawns: a new group of one, topped up
+	fresh := hostilesIn(room)
+	require.Len(t, fresh, 2)
+	assert.Equal(t, fresh[0].SpawnGroup, fresh[1].SpawnGroup)
+
+	var survivor *mobs.Mob
+	for _, m := range fresh {
+		if m.InstanceId == room.SpawnInfo[0].InstanceId {
+			room.RemoveMob(m.InstanceId)
+			mobs.DestroyInstance(m.InstanceId)
+		} else {
+			survivor = m
+		}
+	}
+	require.NotNil(t, survivor)
+	room.Prepare(false)
+	room.SpawnInfo[0].DespawnedRound = 0
+	room.Prepare(false)
+	again := hostilesIn(room)
+	require.Len(t, again, 2, "the newcomer joins the survivor; no third")
+	for _, m := range again {
+		assert.Equal(t, survivor.SpawnGroup, m.SpawnGroup)
+	}
+}
+
+// TestASpawnedPairIsOneBattle: a pair spawned from a room's list fights as
+// one group: Aria, alone, fights both in a single battle.
+func TestASpawnedPairIsOneBattle(t *testing.T) {
+	b := newBrawl(t)
+	got := b.listen()
+	b.cmd("company", "dismiss all")
+	pair := spawnedHostiles(t, 920103)
+	require.Len(t, pair, 2)
+	alley := rooms.LoadRoom(920103)
+	b.road.RemovePlayer(7)
+	b.aria.Character.RoomId = alley.RoomId
+	alley.AddPlayer(7)
+	t.Cleanup(func() { alley.RemovePlayer(7) })
+
+	b.cmd("attack", "ruffian")
+	var cur battle.Battle
+	for i := 0; i < 5; i++ {
+		b.aria.Character.HealthMax.Value = 1000
+		b.aria.Character.Health = 1000
+		b.fight()
+		if c, ok := battle.Current(7); ok {
+			cur = c
+		}
+	}
+	require.NotNil(t, cur.Enemies)
+	assert.True(t, cur.Has(pair[0].InstanceId) && cur.Has(pair[1].InstanceId), "both are in the one battle")
+	starts := 0
+	for _, e := range *got {
+		if e.Kind == combatstream.FightStart {
+			starts++
+		}
+	}
+	assert.Equal(t, 1, starts)
 }

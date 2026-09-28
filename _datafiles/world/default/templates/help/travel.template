@@ -24,7 +24,8 @@ All of this is fixed the moment you set out, for that route
 
 A route can pause you partway with something to deal with: a fallen
 tree blocking the way, something that catches your eye, tracks worth
-looking over, or an ambush you have to fight off. While paused, you
+looking over, or an ambush you have to fight off (a pair of foes, unless
+the foe is one of the few great beasts that hunt alone). While paused, you
 choose:
 
   <ansi fg="command">travel resume</ansi>

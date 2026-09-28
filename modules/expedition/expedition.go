@@ -158,19 +158,53 @@ func (nativeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUserI
 	if mob == nil {
 		return 0, fmt.Errorf("expedition: combat encounter mob template %d is unavailable", mobTemplateID)
 	}
-	mob.Hostile = true
-	mob.MaxWander = 0
-	room.AddMob(mob.InstanceId)
-	// Phase 29b2: no lone enemies. The encounter's foe is joined by another
-	// from the room's list (or another of its kind), and they fight as one.
-	room.FormSpawnGroups()
-	mob.Command(fmt.Sprintf("attack @%d", leaderUserID))
+	// Phase 29b2: no lone enemies. Unless the foe is solitary, a second of
+	// its kind comes with it, and they fight as one group of their own.
+	foes := []*mobs.Mob{mob}
+	if !mob.Solitary {
+		if second := mobs.NewMobById(mobs.MobId(mobTemplateID), roomID); second != nil {
+			foes = append(foes, second)
+		}
+	}
+	group := ""
+	if len(foes) > 1 {
+		group = encounterGroup(roomID, mob.InstanceId)
+	}
+	for _, foe := range foes {
+		foe.Hostile = true
+		foe.MaxWander = 0
+		foe.SpawnGroup = group
+		room.AddMob(foe.InstanceId)
+		foe.Command(fmt.Sprintf("attack @%d", leaderUserID))
+	}
 	return mob.InstanceId, nil
 }
 
+// encounterGroup names a travel encounter's group after its first foe.
+func encounterGroup(roomID, firstInstanceID int) string {
+	return fmt.Sprintf("encounter:%d:%d", roomID, firstInstanceID)
+}
+
+// EncounterActive reports whether any foe of the encounter led by
+// instanceID still stands in roomID.
 func (nativeMobSpawner) EncounterActive(instanceID, roomID int) bool {
-	mob := mobs.GetInstance(instanceID)
-	return mob != nil && mob.Character.Health > 0 && mob.Character.RoomId == roomID
+	standing := func(mob *mobs.Mob) bool {
+		return mob != nil && mob.Character.Health > 0 && mob.Character.RoomId == roomID
+	}
+	if standing(mobs.GetInstance(instanceID)) {
+		return true
+	}
+	room := rooms.LoadRoom(roomID)
+	if room == nil {
+		return false
+	}
+	group := encounterGroup(roomID, instanceID)
+	for _, id := range room.GetMobs() {
+		if mob := mobs.GetInstance(id); standing(mob) && mob.SpawnGroup == group {
+			return true
+		}
+	}
+	return false
 }
 
 // Survival is the Phase 4 company service needed by travel.

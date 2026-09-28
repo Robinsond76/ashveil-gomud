@@ -23,7 +23,9 @@ them instead ("The ruffian and the others turn on Brom."), and you each
 fight your own battle.
 
 You can't <ansi fg="command">attack</ansi> a waiting group until your battle is over; a bare
-<ansi fg="command">attack</ansi> picks a foe from your battle.
+<ansi fg="command">attack</ansi> picks a foe from your battle. A harmful spell, a backstab, or a
+shot at a waiting group is held too, and a waiting group's spells hold
+off you. When you <ansi fg="command">flee</ansi>, only your battle's group can block the way.
 
 <ansi fg="yellow-bold">Keeping everyone fighting</ansi>
 

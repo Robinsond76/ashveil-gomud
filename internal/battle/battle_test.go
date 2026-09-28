@@ -70,3 +70,27 @@ func TestNext(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, 2, i, "set first, ties by room order")
 }
+
+func TestEngaged(t *testing.T) {
+	Reset()
+	t.Cleanup(Reset)
+	assert.False(t, Engaged(5))
+	Begin(1, 10, 1, "p", []int{5, 6})
+	assert.True(t, Engaged(5))
+	assert.False(t, Engaged(7))
+	End(1)
+	assert.False(t, Engaged(5))
+}
+
+func TestRetain(t *testing.T) {
+	Reset()
+	t.Cleanup(Reset)
+	Begin(1, 10, 1, "p", []int{5})
+	NoteSet(2, "q", 3) // waiting on player 2, who has no battle
+	NoteSet(3, "r", 3)
+	Retain(map[int]bool{3: true})
+	_, ok := Current(1)
+	assert.False(t, ok)
+	assert.Equal(t, uint64(9), NoteSet(2, "q", 9), "player 2's line was dropped")
+	assert.Equal(t, uint64(3), NoteSet(3, "r", 9), "player 3's line is kept")
+}

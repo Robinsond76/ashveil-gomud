@@ -2,6 +2,7 @@ mobid:  37
 zone: Dark Forest
 itemdropchance: 100
 hostile: true
+solitary: true
 maxwander: 0
 groups: 
   - spider

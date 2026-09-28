@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -81,8 +82,15 @@ func (sd side) setOn(party mobparty.Party, room *rooms.Room) bool {
 		if m == nil || m.Character.Health < 1 || m.Character.RoomId != room.RoomId || m.Character.Aggro == nil {
 			continue
 		}
-		if m.Character.Aggro.UserId == sd.user.UserId || sd.allies[m.Character.Aggro.MobInstanceId] {
+		// An aim at a downed player or ally sets nothing: a player who
+		// falls isn't drawn into battle after battle while they lie there.
+		if m.Character.Aggro.UserId == sd.user.UserId && sd.user.Character.Health > 0 {
 			return true
+		}
+		if ally := m.Character.Aggro.MobInstanceId; sd.allies[ally] {
+			if a := mobs.GetInstance(ally); a != nil && a.Character.Health > 0 {
+				return true
+			}
 		}
 	}
 	return false
@@ -257,9 +265,9 @@ func battlePass() {
 	for _, uid := range battle.Players() {
 		if !online[uid] {
 			endBattle(uid, combatstream.OutcomeBrokenOff)
-			battle.Forget(uid)
 		}
 	}
+	battle.Retain(online) // a player who left waits in no line
 
 	for _, uid := range users.GetOnlineUserIds() {
 		u := users.GetByUserId(uid)
@@ -380,13 +388,26 @@ func turnWaitingOntoFreePlayers(round uint64) {
 			continue
 		}
 		sd := loadSide(busy, room)
-		for _, p := range enemyparty.Parties(room) {
-			if free == nil {
-				break
-			}
+		// The waiting groups turn in the order they set on the busy player.
+		var waiting []battle.Candidate
+		parties := enemyparty.Parties(room)
+		for i, p := range parties {
 			if _, current := battleParty(b, []mobparty.Party{p}); current || !sd.setOn(p, room) {
 				continue
 			}
+			waiting = append(waiting, battle.Candidate{PartyID: p.ID, FirstSet: battle.NoteSet(uid, p.ID, round), Order: i})
+		}
+		sort.SliceStable(waiting, func(i, j int) bool {
+			if waiting[i].FirstSet != waiting[j].FirstSet {
+				return waiting[i].FirstSet < waiting[j].FirstSet
+			}
+			return waiting[i].Order < waiting[j].Order
+		})
+		for _, w := range waiting {
+			if free == nil {
+				break
+			}
+			p := parties[w.Order]
 			turned := false
 			for _, instanceId := range p.Members {
 				m := mobs.GetInstance(instanceId)
@@ -537,4 +558,66 @@ func sortedKeys(m map[int]bool) []int {
 	}
 	sort.Ints(out)
 	return out
+}
+
+// harmful reports whether a spell harms its targets.
+func harmful(spellId string) bool {
+	s := spells.GetSpell(spellId)
+	return s != nil && (s.Type == spells.HarmSingle || s.Type == spells.HarmMulti || s.Type == spells.HarmArea)
+}
+
+// holdPlayerSpell keeps a player's harmful spell to their battle: targets
+// outside it are dropped. held is true when it had targets and none are
+// left.
+func holdPlayerSpell(userId int, info *characters.SpellAggroInfo) (held bool) {
+	if info == nil || len(info.TargetMobInstanceIds) == 0 || !harmful(info.SpellId) {
+		return false
+	}
+	var keep []int
+	for _, id := range info.TargetMobInstanceIds {
+		if m := mobs.GetInstance(id); m != nil && playerHolds(userId, m) {
+			continue
+		}
+		keep = append(keep, id)
+	}
+	info.TargetMobInstanceIds = keep
+	return len(keep) == 0
+}
+
+// holdMobSpell keeps a mob's harmful spell off players (and their allies)
+// who are fighting another group. held is true when it had targets and none
+// are left; waitOn is then a player it held back from, whose line it keeps
+// its place in (0 when none).
+func holdMobSpell(mob *mobs.Mob, info *characters.SpellAggroInfo) (held bool, waitOn int) {
+	if info == nil || !harmful(info.SpellId) {
+		return false, 0
+	}
+	if len(info.TargetUserIds)+len(info.TargetMobInstanceIds) == 0 {
+		return false, 0
+	}
+	var users []int
+	for _, id := range info.TargetUserIds {
+		if holdsAgainstPlayer(mob, id) {
+			if waitOn == 0 {
+				waitOn = id
+			}
+			continue
+		}
+		users = append(users, id)
+	}
+	var foes []int
+	for _, id := range info.TargetMobInstanceIds {
+		if m := mobs.GetInstance(id); m != nil && mobHolds(mob, m) {
+			if owner, ok := allyOwner(id); ok && waitOn == 0 {
+				waitOn = owner
+			}
+			continue
+		}
+		foes = append(foes, id)
+	}
+	info.TargetUserIds, info.TargetMobInstanceIds = users, foes
+	if len(users)+len(foes) > 0 {
+		return false, 0
+	}
+	return true, waitOn
 }
