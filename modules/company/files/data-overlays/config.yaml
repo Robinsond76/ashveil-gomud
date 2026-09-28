@@ -12,6 +12,12 @@ CompanionArchetypes:
   - { MobTemplateId: 63, Archetype: warrior }
   - { MobTemplateId: 64, Archetype: ranger }
   - { MobTemplateId: 69, Archetype: rogue }
+  # Phase 32a2 generated recruit bases (see RecruitTemplates).
+  - { MobTemplateId: 80, Archetype: warrior }
+  - { MobTemplateId: 81, Archetype: rogue }
+  - { MobTemplateId: 82, Archetype: wizard }
+  - { MobTemplateId: 83, Archetype: cleric }
+  - { MobTemplateId: 84, Archetype: ranger }
 # Phase 21a: company alignment. Values are alignment points on the
 # -100..100 scale players see. Out-of-range values fall back to the
 # default.
@@ -52,9 +58,15 @@ RecruitMaxGap: 60
 # category, so a recruit can't be farmed for items.
 # Entries with no room, a blank or repeated Id, no template, or a negative
 # price are skipped with a warning.
+#
+# Phase 32a2: a Generated recruiter also posts each player's own roster of
+# generated candidates (see RosterSize below); ArchetypeWeights, when set,
+# is its own archetype mix ([{Archetype, Weight}]; an archetype left out
+# never appears there).
 Recruiters:
   - RoomId: 2003 # the Waymark Inn, Dunmar
     Name: the hiring slate by the hearth
+    Generated: true
     Candidates:
       - { Id: tamsin, MobTemplateId: 61, Tutorial: true }
       - { Id: oswin, MobTemplateId: 62, Tutorial: true }
@@ -70,8 +82,62 @@ Recruiters:
       - { Id: corvin, MobTemplateId: 69, Price: 150 }
   - RoomId: 2005 # Trappers' Post, Old Kings Road
     Name: the notched stick by the lean-to
+    Generated: true
+    ArchetypeWeights:
+      - { Archetype: ranger, Weight: 4 }
+      - { Archetype: warrior, Weight: 2 }
+      - { Archetype: rogue, Weight: 2 }
+      - { Archetype: cleric, Weight: 1 }
+      - { Archetype: wizard, Weight: 1 }
     Candidates:
       - { Id: ysolde, MobTemplateId: 64, Price: 80 }
+# Phase 32a2: per-player recruit rosters. At a Generated recruiter each
+# player sees their own RosterSize (0..8; 0 turns rosters off) generated
+# candidates, below the authored ones; what one player hires never changes
+# another's list. Each candidate stays CandidateStayRoundsMin..Max world
+# rounds (900 rounds is a game day; offline time counts), then leaves and a
+# new one takes the slot. A hired candidate's slot fills again after
+# RefillDelayRoundsMin..Max rounds. Rounds are only read, never advanced.
+# A candidate's level is the leader's, -1 to +1 (at least 1); its alignment
+# is RecruitAlignmentMin..Max (-100..100), so some are refused by the
+# RecruitMaxGap gate; its price is (RecruitPriceBase + RecruitPricePerLevel
+# x level) x the template's PricePercent / 100. RecruitTemplates are the
+# base mob per archetype (the archetype comes from CompanionArchetypes);
+# keep them to the recruit shape above (itemdropchance 0, no gold, no
+# loot). Names are a given name (unique within a player's company and
+# rosters, and the word players type) plus, RecruitBynamePercent of the
+# time, a byname. Each candidate has one RecruitTraits line.
+RosterSize: 3
+CandidateStayRoundsMin: 450
+CandidateStayRoundsMax: 1800
+RefillDelayRoundsMin: 60
+RefillDelayRoundsMax: 180
+RecruitPriceBase: 30
+RecruitPricePerLevel: 30
+RecruitAlignmentMin: -80
+RecruitAlignmentMax: 80
+RecruitBynamePercent: 60
+RecruitTemplates:
+  - { MobTemplateId: 80, Weight: 1 }
+  - { MobTemplateId: 81, Weight: 1, PricePercent: 90 }
+  - { MobTemplateId: 82, Weight: 1, PricePercent: 110 }
+  - { MobTemplateId: 83, Weight: 1, PricePercent: 110 }
+  - { MobTemplateId: 84, Weight: 1 }
+RecruitGivenNames: [Hild, Anselm, Tobin, Wren, Edda, Bram, Ilse, Corrin, Maud, Osric, Petra, Aldo, Sabine, Lorn, Nessa, Joren, Thea, Ulric, Brisa, Cade, Fenna, Hugo, Ines, Kester, Liesl, Merrit, Orla, Quill, Rowan, Senna]
+RecruitBynames: [Marrow, Reyes, Ashdown, Thorne, Pike, Holloway, of the Ford, of Dunmar, the Younger, Fletcher, Cobb, Wick, Harrow, Stane]
+RecruitTraits:
+  - A scarred former caravan guard, still in the habit of watching the treeline.
+  - Quiet, and quick with a sling.
+  - Laughs easily and eats like two, but never shirks a watch.
+  - Was a miller's apprentice until the mill burned; hasn't said how.
+  - Keeps a tally of every road walked, scratched on a strip of hide.
+  - Soft-spoken, with a soldier's way of standing.
+  - Talks to the weather as if it might answer.
+  - Wants enough coin to buy back a family plot, and says so often.
+  - Knows three songs and sings all of them badly.
+  - Came down from the hill farms after a bad winter and means to see the world.
+  - Careful with gear, careless with words.
+  - Once served a lord's hunt and still flinches at horns.
 # Phase 24: company chemistry. Each member serves the band for every round
 # it is alive and in one room with at least one other member while the
 # leader is signed in. A band (the members together in a room) takes its

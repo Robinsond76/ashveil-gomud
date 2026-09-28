@@ -24,6 +24,14 @@ func TestCompanyPolishHelp(t *testing.T) {
 	assert.Contains(t, company, "leads their company towards the east exit.")
 	assert.Contains(t, company, "look [candidate]")
 	assert.Contains(t, company, "won't join you")
+	// Phase 32a2: rosters of your own that change.
+	assert.Contains(t, company, "Your own recruits")
+	assert.Contains(t, company, "Your list is yours")
+	assert.Contains(t, company, "then moves on and someone new takes their place")
+	assert.Contains(t, company, "company recruit hild")
+
+	recruit := page("recruit")
+	assert.Contains(t, recruit, "Your own recruits", "help recruit reaches the same page")
 
 	camp := page("camp")
 	assert.Contains(t, camp, "A camp is part of the room")

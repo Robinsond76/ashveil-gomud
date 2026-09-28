@@ -23,7 +23,7 @@ func (nativeRuntime) ResolveTemplate(name string) (int, bool) {
 // Spawn creates the companion's live mob. With a state (Phase 22b), the mob
 // is spawned at the saved level and the template's minted gear is replaced
 // by copies of the saved gear.
-func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState) (int, error) {
+func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState, identity domain.Identity) (int, error) {
 	leader := users.GetByUserId(leaderUserID)
 	if leader == nil {
 		return 0, fmt.Errorf("company: leader %d is unavailable", leaderUserID)
@@ -44,6 +44,13 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 	}
 	if state != nil {
 		applyState(mob, *state)
+	}
+	// Phase 32a2: a generated recruit's own name and description.
+	if identity.Name != "" {
+		mob.Character.Name = identity.Name
+	}
+	if identity.Description != "" {
+		mob.Character.Description = identity.Description
 	}
 	mob.Character.CharmAsCompanion(leaderUserID, -2, characters.CharmExpiredRevert)
 	leader.Character.TrackCharmed(mob.InstanceId, true)

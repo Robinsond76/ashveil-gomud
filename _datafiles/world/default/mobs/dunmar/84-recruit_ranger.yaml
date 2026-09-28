@@ -1,0 +1,22 @@
+mobid: 84
+zone: Dunmar
+# Phase 32a2 generated recruit base (ranger). See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Recruit Ranger
+  description: A tracker looking for a company to guide.
+  raceid: 1
+  level: 1
+  alignment: 0
+  equipment:
+    weapon:
+      itemid: 10014
+    head:
+      itemid: 20020
+    neck:
+      itemid: 20024
+    feet:
+      itemid: 20003

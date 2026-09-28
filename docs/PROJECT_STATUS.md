@@ -23,7 +23,7 @@ instead of duplicating them.
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
   and the first combat slices (29a, 29b, 29b2) are all done.
-- **Next:** Phase 32a (company polish), then 32a2 and 32b–32h, from the owner's
+- **Next:** 32c–32h (32a, 32a2, and 32b are done), from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
   the combat roadmap resumes at 29c after them.
@@ -94,7 +94,7 @@ instead of duplicating them.
 | 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
 | 31 | Browser battle panel | Proposed: [spec](superpowers/specs/2026-09-26-battle-panel-design.md). Enemy and company grids with target lines, from the event stream |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md), [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
-| 32a2 | Per-player recruit rosters | Proposed: [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
+| 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md), [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](superpowers/plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
 | 32c–32h | Play-test follow-ups | Proposed, specs to write ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): enemy groups and `scout` (32c, [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md) awaiting the owner's review), automatic player and companion combat (32d), company XP (32e), company logistics (32f), web company dock (32g), character deletion (32h) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
@@ -142,141 +142,59 @@ Phase 29b2 is at commit `d5ace46`).
   buff path, link-dead expiry, a real copyover, and the purge in every
   module at once (each module has its own purge test).
 
-### Phase 32a: company polish (2026-09-28)
+### Phase 32a2: per-player recruit rosters (2026-09-28)
 
-- **What:** Six display changes from the owner's play-test notes
-  ([32a design](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md),
-  [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md)); no new
-  mechanics or durable state.
-  - No `♥friend` on company members (`look`, `party`, GMCP `Party` show
-    "Company"): a `Companion` flag on the companion's charm, set by
-    `modules/company` when it spawns one; any other charm brings the tag back.
-  - One line for a company on the move: "Dain leads their company towards
-    the east exit." / "Dain arrives from the west, their company behind."
-    The leader's `go` marks the companions it announces; a marked companion
-    following into that room prints nothing. Any other move (flight,
-    travel, sneak, alone) keeps its own lines.
-  - No Hydrated buff flourish; `drink` for yourself always ends with
-    "Thirst: <band>." (or the band crossed).
-  - The camp in `look` ("A camp is pitched here, around a cold fire pit." /
-    "...: bedrolls around a crackling campfire.", "Dain's camp" to others),
-    from `modules/camping`'s lock-free room-camps snapshot (`litMu`).
-  - Recruiter notices in `look`, per viewer (taken, in company, "won't join
-    you", company full); `look [candidate]` and `look post` read it.
-  - A readable formation grid (card-sized text, wrapping, tooltip, leader
-    accent).
-  - Help: `company`, `camp`, `drink`; the Company lesson's hint points to
-    the hiring post.
-- **Why:** The owner's play-test notes of 2026-09-28 (roadmap).
-- **Verification:** `go test -race ./...`, `make generate`, `make validate`
-  pass. Wiring: `modules/company/wiring_moving_test.go` (real `go` and mob
-  `go`: no companion line, one line per room, a companion alone or
-  rejoining, a leader moved without a company line);
-  `modules/camping/look_camp_test.go` (camp, fire, break through `look`, a
-  second player); `modules/tutorial/wiring_test.go` (hiring post and
-  Oath Stone notices, `look tamsin`, `look at the hiring post`, no
-  `charmed` on a companion but on another charmed mob, `drink`). Unit:
-  `internal/characters`, `internal/camping`, `modules/company` notice,
-  `drinkSuffix`, the shipped Hydrated script, help pages. Browser:
-  `scripts/browser/company-panel-check.mjs` run in Chromium, all checks
-  pass (grid at dark/light themes, 1024 and 360px).
-- **Review:** One independent review. No invariant violations (clock,
-  restart, locks). Fixed with regression tests: companions went silent
-  on every leader move that isn't `go` (flight, travel, sneak) and when
-  walking back to rejoin (now a per-move mark set by the leader's `go`);
-  downed companions were counted inconsistently; the notice ignored a
-  full company; the hint's "look at the hiring post" found nothing (now
-  the notice answers to its name); `drink ... me` showed no thirst
-  status; help `company` overstated the company line and `party`; the
-  camp test cleared the module's reader instead of restoring it.
-  Accepted: the company line doesn't recheck that every companion made it
-  (a `no-go` buff or a locked far door); a pet isn't named in the company
-  line; an offline leader's camp reads "A camp"; the notice hides a
-  template already in the company even though paid ones can be hired
-  twice (32a2 replaces authored candidates); recruiter config parsed per
-  `look` (small); `party`/GMCP "Company" status has no dedicated test.
-
-### Phase 29b2: one battle at a time; spawn groups; help for every system (2026-09-28)
-
-- **What:** The owner's clarification of fights, and their request for help
-  pages for the rest of the game. Details are in the
-  [29b2 design](superpowers/specs/2026-09-27-phase-29b2-battles-spawn-groups-design.md)
-  and [29b2 plan](superpowers/plans/2026-09-27-phase-29b2-battles-spawn-groups.md).
-  - **Battles (`internal/battle`, runtime only):** a player and their
-    company fight one enemy group at a time. Other groups that set on
-    them hold back without striking (blows, spells, and shots) and begin
-    the next battle, in the order they turned, the moment one ends. A
-    waiting group turns on another player in the room who has no battle,
-    and each fights their own. `attack`, `cast`, `backstab`, and `shoot`
-    refuse a waiting group before anything is spent. A downed player
-    isn't drawn into new battles; a waiting group doesn't block a flight.
-    Solo players have battles and summaries too.
-  - **Spawn groups ("think Ogre Battle"):** hostile mobs a room's list
-    spawns form groups of two to five (six make three and three), topped
-    up from the list when a new group would be one; grouped mobs don't
-    wander. A lone survivor or a straggler joins another idle group; a
-    `solitary` mob (the lich, abyssal creeper, ent, spider queen) stands
-    alone. A travel ambush is a pair on its own group.
-  - **Stream (29b revised):** a fight is a battle: one player against one
-    group.
-  - **Help for the rest of the game (owner's request):** new pages
-    `adventure` (the hub), `company`, `standing`, `archetype`, `autoskill`,
-    `trap`, `travel`, `survival`, `strain`, `weather`, `temperature`,
-    `cargo`, `mount`, `camp`, `inn`, `cooking`, `market`, `rumors`;
-    GoMud's `alignment`, `conditions`, `encumbrance`, `status`,
-    `inventory`, `experience`, `eat`, and `drink` updated; indexed in
-    `keywords.yaml` with aliases; every tutorial lesson points to its
-    pages (`TestAshveilHelpTopics`, `TestTutorialHelpPointersExist`).
-  - **Also fixed:** travel timers ran their checkpoints, arrival, and
-    ambush spawn on the timer's goroutine, off the game loop (older than
-    29b2); the timer now queues a `TravelTimerDue` event the loop runs.
-- **Why:** The owner clarified that a player fights one group at a time,
-  another player can take the next, and no hostile mob should appear
-  alone; their answers (hold back, then engage; groups built from the
-  room's list; a per-mob `solitary` flag; solo players too) are in the
-  design doc. For review fixes they asked for the best fix, noted in the
-  docs, guided by Ogre Battle and Mount & Blade (design doc, last
-  section).
-- **Verification:** `go test -race ./...`, `make generate`, and
-  `make validate` pass.
-  - **Wiring** (`modules/company/wiring_battles_test.go`, the 5v5 through
-    `plugins.Load`, the shipped config, real commands, `DoCombat`, idle
-    mobs): five groups fought one at a time with a fight and summary
-    each and no blow from a waiting group; a second player takes the
-    next group; `attack` and `cast` refused (no mana spent, player or
-    mob); spells, a backstab, and a flight past waiting groups; a downed
-    player; a spawned pair as one battle; spawning from room lists
-    (pair, mixed, solitary, three and three); a survivor never
-    reinforced; stragglers regrouped, encounter pairs left alone.
-    `modules/expedition`: the ambush pair and `EncounterActive`; the
-    shipped lich alone; the travel timer runs on the loop.
-  - **Unit:** `internal/battle`, `internal/rooms` (the planner),
-    `internal/mobparty`, `internal/combatstream`, `internal/hooks`.
-- **Review:** Two independent reviews.
-  - **First (code):** fixed, each with a regression test: *High:* bosses
-    were grouped and topped up (the `solitary` list above); a whittled
-    group was topped up mid-fight, reinforcing survivors; spells ignored
-    battles. *Medium:* the ambush spawn formed groups off the game loop
-    (now a pair on its own group); a downed player was drawn into battle
-    after battle. *Low:* a backstab or shot at a waiting group hung
-    silently; waiting groups blocked a flight; an offline player's line
-    was never pruned; waiting groups turned on a free player in room
-    order, not the order they turned; solo drafting (`rallyIdleFoes`)
-    wasn't in the design (now recorded).
-  - **Second (the fixes, and a fact-check of every help page):** fixed:
-    a held spell still cost its mana, and backstab/shoot their use (now
-    refused at the command); a held cast wasn't on the stream or sent as
-    an aggro change; the ambush still ran off the loop (the travel-timer
-    fix above); a lone survivor or straggler stood alone for good
-    (regrouping); ten inaccurate help claims (battle-summary markup, fire
-    warmth, the autoskill and trap rules, the eat/drink messages, the
-    inventory food count, travel's time factors, weather and walking,
-    encumbrance, "never alone"); `help level` now finds experience.
-  - **Accepted:** the waiting-group turn order and `battle.Retain` are
-    unit-tested, not through a two-player wiring test;
-    `EncounterActive` reads the room under the expedition lock (now on
-    the game loop, so no race); companions don't cast yet (30c), so a
-    companion's spell at a waiting group has no test.
+- **What:** Each player's own generated recruits at settlement recruiters,
+  and companions with their own names
+  ([32a2 design](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md),
+  [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md)).
+  - A `Generated` recruiter (the Waymark Inn, the Trappers' Post, the latter
+    favouring rangers) posts every player 3 generated candidates after its
+    regulars: name, archetype, level (leader ±1), alignment (−80..80, so
+    some are refused), price, and a line of character. Rosters live on the
+    leader's company record, one per recruiter room.
+  - Each candidate stays 450–1800 world rounds, then leaves and another
+    takes the slot, one at a time; a hire's slot refills after 60–180
+    rounds. Refreshed lazily when read (notice, `company recruit`, `company
+    inspect`, `look [name]`), from the world round, which is only read.
+    Refreshes stay in memory and ride the next company save (the file also
+    carries gear snapshots); a hire saves at once and rolls back whole.
+  - `Companion.Name`/`Description`: a hired recruit keeps its own name in
+    `company`, formation, gear, alignment, GMCP, survival, and on its live
+    mob (so the room and combat text), through logout, restart, copyover,
+    resurrection, and the lost list. Several companions may share a
+    template (recruit bases 80–84).
+  - Help: `help company` ("Your own recruits"); the Departure lesson
+    points to it.
+- **Why:** The owner's rule of 2026-09-28: recruits per player, generated,
+  coming and going, so no one takes everyone else's candidates.
+- **Verification:** `go test -race ./...` (81 packages), `make generate`,
+  `make validate` pass. Wiring: `modules/company/wiring_roster_test.go`
+  (`plugins.Load` with the shipped config and templates, real commands and
+  round: two players' rosters differ and one's hires leave the other's
+  alone; two generated warriors hired, named in status, formation, gear,
+  the room, and GMCP members; logout and reload restore both names and
+  levels; rounds past a stay show new faces; a far-aligned candidate is
+  refused; the tutorial's recruiters list only Tamsin, Oswin, and Corvin).
+  Unit: `internal/company/roster_test.go` (generation, staggering, long
+  absence, hire and refill, shrinking), `modules/company/roster_test.go`
+  (notice, hire, rollbacks, names, inspect/look, config, shipped content),
+  resurrection keeps a generated name, help page.
+- **Review:** One independent review; no high-severity bugs and no
+  invariant violations (clock, restart, isolation, farming, by-id
+  lookups). Fixed with regression tests: `company inspect` and `company
+  recruit` could read one partial name as two different people (inspect
+  now uses recruit's order); generated names now avoid every recruiter's
+  regulars, not only this one's; a smaller `RosterSize` now trims rosters
+  at once; added tests for a failed save during a generated hire and for
+  resurrecting and losing a generated companion; help no longer states
+  config numbers as fixed, says inspect by name works at the recruiter,
+  and notes "won't join you". Accepted: a new hire's experience is 0 at
+  its level, the same as authored recruits; config is re-parsed on each
+  read (as `Recruiters` already is), so a malformed entry warns on each
+  look; rosters for rooms later removed from config stay on the record
+  (small, harmless); combat text isn't asserted separately (it reads the
+  live mob's name, which the wiring test checks).
 
 ## Known issues / deferred items
 
@@ -284,6 +202,15 @@ Refreshed 2026-09-26 (Phase 28). Earlier entries that later phases
 resolved (the weather, load, and mount multipliers, and the 11a–11c
 combat wiring) are removed; each phase's work-log entry (in git history)
 keeps its own history.
+
+- **Company polish (32a) and rosters (32a2), accepted:** the company move
+  line doesn't recheck that every companion made it (a `no-go` buff, a
+  locked far door); a pet isn't named in it; an offline leader's camp
+  reads "A camp"; recruiter and roster config are parsed on each read, so
+  a malformed entry warns on each look; rosters for recruiter rooms later
+  removed from config stay on the record; `party`/GMCP "Company" status
+  has no dedicated test. 29b2's accepted items (waiting-group order and
+  `battle.Retain` unit-tested only) stand.
 
 - **Plugin persistence is a direct, non-atomic file write**
   (`WriteStruct`/`WriteBytes`). Command state rolls back on a failed save,

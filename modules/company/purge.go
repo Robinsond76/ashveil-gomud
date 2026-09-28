@@ -6,7 +6,8 @@ import (
 )
 
 // onUserPurged (Phase 32b) forgets a purged leader's company: the record
-// (companions, formation, claims, service, the lost), any companion mob
+// (companions, formation, claims, service, the lost, recruit rosters),
+// any companion mob
 // still standing (the leader's logout detaches them already), the rescue
 // clock, and tier-ups not yet announced.
 func (m *CompanyModule) onUserPurged(e events.Event) events.ListenerReturn {

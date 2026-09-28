@@ -82,7 +82,7 @@ func formatAllowance(seconds int) string {
 }
 
 func companionName(c domain.Companion) string {
-	return templateName(c.MobTemplateID, "#"+strconv.Itoa(c.ID))
+	return nameOf(c, "#"+strconv.Itoa(c.ID))
 }
 
 // keptState is the companion's state after its death: its level and

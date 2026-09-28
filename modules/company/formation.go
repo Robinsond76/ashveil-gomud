@@ -47,7 +47,7 @@ func (m *CompanyModule) renderFormation(leaderUserID int) string {
 	}
 	for _, companion := range record.Companions {
 		if !placed[domain.CompanionMemberKey(companion.ID)] {
-			unplaced = append(unplaced, fmt.Sprintf("%s (#%d)", templateName(companion.MobTemplateID, strconv.Itoa(companion.MobTemplateID)), companion.ID))
+			unplaced = append(unplaced, fmt.Sprintf("%s (#%d)", nameOf(companion, strconv.Itoa(companion.MobTemplateID)), companion.ID))
 		}
 	}
 	if len(unplaced) > 0 {
@@ -67,7 +67,7 @@ func (m *CompanyModule) memberName(leaderUserID int, key domain.MemberKey) strin
 	record, _ := m.registry.Get(leaderUserID)
 	for _, companion := range record.Companions {
 		if domain.CompanionMemberKey(companion.ID) == key {
-			return fmt.Sprintf("%s(#%d)", templateName(companion.MobTemplateID, strconv.Itoa(companion.MobTemplateID)), companion.ID)
+			return fmt.Sprintf("%s(#%d)", nameOf(companion, strconv.Itoa(companion.MobTemplateID)), companion.ID)
 		}
 	}
 	return string(key)

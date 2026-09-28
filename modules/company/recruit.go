@@ -10,7 +10,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
-	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -37,6 +36,10 @@ type recruiter struct {
 	RoomID     int
 	Name       string
 	Candidates []candidate
+	// Generated recruiters also post each player's own roster (Phase
+	// 32a2); Weights, when set, is their archetype mix.
+	Generated bool
+	Weights   map[string]int
 }
 
 // parseRecruiters reads Recruiters ([{RoomId, Name, Candidates: [{Id,
@@ -69,6 +72,8 @@ func parseRecruiters(raw any) map[int]recruiter {
 			name = "the recruiter"
 		}
 		rec := recruiter{RoomID: roomID, Name: name}
+		rec.Generated, _ = fields["generated"].(bool)
+		rec.Weights = parseArchetypeWeights(fields["archetypeweights"], roomID)
 		seen := map[string]bool{}
 		candidates, _ := fields["candidates"].([]any)
 		for _, rawCandidate := range candidates {
@@ -150,7 +155,8 @@ func matchCandidate(rec recruiter, selector string) (candidate, bool) {
 
 // listing shows every candidate here with what a player needs to choose.
 func (m *CompanyModule) listing(leaderUserID int, rec recruiter) string {
-	if len(rec.Candidates) == 0 {
+	roster, _ := m.rosterFor(leaderUserID, rec)
+	if len(rec.Candidates) == 0 && len(roster.Candidates) == 0 {
 		return fmt.Sprintf("No one on %s is looking for work right now.", rec.Name)
 	}
 	record, _ := m.registry.Get(leaderUserID)
@@ -174,6 +180,10 @@ func (m *CompanyModule) listing(leaderUserID int, rec recruiter) string {
 		default:
 			lines = append(lines, fmt.Sprintf("    Price: %d gold", c.Price))
 		}
+	}
+	// Phase 32a2: the viewer's own generated candidates, after the regulars.
+	for _, c := range roster.Candidates {
+		lines = append(lines, m.generatedListing(c)...)
 	}
 	lines = append(lines, fmt.Sprintf("Your company: %d/%d companions.", len(record.Companions), m.maxCompanions()))
 	return strings.Join(lines, "\n")
@@ -220,8 +230,17 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 	if selector == "" || selector == "list" {
 		return m.listing(user.UserId, rec), nil
 	}
+	// Phase 32a2: a generated candidate by exact name first, then the
+	// regulars, then a generated candidate by part of a name.
+	roster, hasRoster := m.rosterFor(user.UserId, rec)
+	if g, ok := findGenerated(roster, selector, false); hasRoster && ok {
+		return m.hireGenerated(user, roomID, roster, g)
+	}
 	c, ok := matchCandidate(rec, selector)
 	if !ok {
+		if g, ok := findGenerated(roster, selector, true); hasRoster && ok {
+			return m.hireGenerated(user, roomID, roster, g)
+		}
 		return fmt.Sprintf(`No one called "%s" is hiring here. Type "company recruit" to see who is.`, selector), nil
 	}
 	name := templateName(c.MobTemplateID, c.ID)
@@ -242,21 +261,13 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 	if user.Character.Gold < price {
 		return fmt.Sprintf("%s asks %d gold, and you have %d.", name, price, user.Character.Gold), nil
 	}
-	companion, err := m.enlist(user.UserId, roomID, c.MobTemplateID, map[int]struct{}{c.MobTemplateID: {}}, c.Tutorial)
+	companion, err := m.enlist(user.UserId, roomID, c.MobTemplateID, map[int]struct{}{c.MobTemplateID: {}}, c.Tutorial, nil)
 	if err != nil {
 		return "", err
 	}
 	text := fmt.Sprintf("%s joins your company (#%d).", name, companion.ID)
 	if price > 0 {
-		user.Character.Gold -= price
-		events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -price})
-		if m.saveUser != nil {
-			// The gold is in memory and goes out with the next autosave,
-			// logout, or copyover save if this one fails.
-			if err := m.saveUser(user); err != nil {
-				mudlog.Error("company: save after recruit", "user", user.UserId, "error", err)
-			}
-		}
+		m.chargeGold(user, price)
 		text = fmt.Sprintf("You pay %d gold. %s", price, text)
 	}
 	return text + ` Place them with "formation move".`, nil
@@ -334,6 +345,15 @@ func (m *CompanyModule) RecruiterLines(viewerUserID, roomID int) []string {
 			Refused: m.recruitRefusal(viewerUserID, c.MobTemplateID, name) != "",
 		})
 	}
+	// Phase 32a2: then the viewer's own generated candidates.
+	roster, _ := m.rosterFor(viewerUserID, rec)
+	for _, c := range roster.Candidates {
+		entries = append(entries, noticeEntry{
+			Name:    c.Name,
+			Price:   c.Price,
+			Refused: m.alignmentRefusal(viewerUserID, c.Alignment, c.Name) != "",
+		})
+	}
 	full := 0
 	if len(record.Companions) >= m.maxCompanions() {
 		full = len(record.Companions)
@@ -352,8 +372,15 @@ func (m *CompanyModule) LookCandidate(viewerUserID, roomID int, selector string)
 	if sel := strings.ToLower(strings.TrimSpace(selector)); len(sel) >= 3 && strings.Contains(strings.ToLower(rec.Name), sel) {
 		return strings.Join(m.RecruiterLines(viewerUserID, roomID), "\n"), true
 	}
+	roster, hasRoster := m.rosterFor(viewerUserID, rec)
+	if g, ok := findGenerated(roster, selector, false); hasRoster && ok {
+		return lookGenerated(rec.Name, g), true
+	}
 	c, ok := matchCandidate(rec, selector)
 	if !ok {
+		if g, ok := findGenerated(roster, selector, true); hasRoster && ok {
+			return lookGenerated(rec.Name, g), true
+		}
 		return "", false
 	}
 	name := templateName(c.MobTemplateID, c.ID)

@@ -45,7 +45,7 @@ func nameMatches(record domain.Record, selector string) int {
 	}
 	n := 0
 	for _, c := range record.Companions {
-		if strings.Contains(strings.ToLower(templateName(c.MobTemplateID, "")), selector) {
+		if strings.Contains(strings.ToLower(nameOf(c, "")), selector) {
 			n++
 		}
 	}
@@ -136,7 +136,7 @@ func (m *CompanyModule) ResurrectCompanion(leaderUserID int, selector string, ro
 	}
 	result := domain.ResurrectionResult{ID: c.ID, Name: companionName(c), Level: state.Level}
 	mudlog.Info("company: companion resurrected", "leader", leaderUserID, "companion", c.ID, "op", op, "level", state.Level, "room", roomID)
-	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, c.MobTemplateID, &state)
+	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, c.MobTemplateID, &state, c.Identity())
 	if err != nil {
 		mudlog.Warn("company: resurrected companion awaits restoration", "leader", leaderUserID, "companion", c.ID, "error", err)
 		return result, nil

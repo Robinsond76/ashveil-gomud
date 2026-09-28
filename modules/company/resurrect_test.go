@@ -92,6 +92,8 @@ func TestResurrectSpawnFailureAwaitsRestoration(t *testing.T) {
 // raised, even if the round hasn't charged it yet.
 func TestResurrectExpiredIsLost(t *testing.T) {
 	module, _, runtime, clock := newDeathModule(t)
+	module, _, _, clock = newDeathModule(t)
+	require.NoError(t, module.registry.SetIdentity(7, 1, domain.Identity{Name: "Hild Marrow"}))
 	killOne(module)
 	record, _ := module.registry.Get(7)
 	record.Companions[0].Death.Remaining = 3
@@ -125,4 +127,29 @@ func TestDeadCompanionsListing(t *testing.T) {
 	killOne(module)
 	assert.Equal(t, []domain.DeadCompanionView{{ID: 1, Name: "#1", Level: 5, Remaining: 3600}}, module.DeadCompanions(7))
 	assert.Empty(t, module.DeadCompanions(8))
+}
+
+// Phase 32a2 review: a generated companion is raised, and lost, under its
+// own name, and its live mob wears it again.
+func TestResurrectKeepsAGeneratedName(t *testing.T) {
+	module, _, runtime, clock := newDeathModule(t)
+	require.NoError(t, module.registry.SetIdentity(7, 1, domain.Identity{Name: "Hild Marrow", Description: "Quiet."}))
+	killOne(module)
+	result, err := module.ResurrectCompanion(7, "hild", 2007)
+	require.NoError(t, err)
+	assert.Equal(t, "Hild Marrow", result.Name)
+	assert.Equal(t, domain.Identity{Name: "Hild Marrow", Description: "Quiet."}, runtime.spawnedIdentities[len(runtime.spawnedIdentities)-1])
+
+	module, _, _, clock = newDeathModule(t)
+	require.NoError(t, module.registry.SetIdentity(7, 1, domain.Identity{Name: "Hild Marrow"}))
+	killOne(module)
+	record, _ := module.registry.Get(7)
+	record.Companions[0].Death.Remaining = 3
+	module.registry.Put(record)
+	clock.advance(5_000_000_000)
+	_, err = module.ResurrectCompanion(7, "hild", 2007)
+	assert.ErrorIs(t, err, domain.ErrCompanionLost)
+	record, _ = module.registry.Get(7)
+	require.Len(t, record.Lost, 1)
+	assert.Equal(t, "Hild Marrow", record.Lost[0].Name)
 }
