@@ -1,7 +1,7 @@
 # Phase 25b: Companion Death and Resurrection
 
 Implements the second half of the
-[death and resurrection spec](2026-09-23-death-resurrection-design.md),
+death and resurrection spec (`2026-09-23-death-resurrection-design.md`, removed; see commit `d5ace46`),
 after [Phase 25a](2026-09-24-phase-25a-player-death-design.md) (player death
 and the church return).
 

@@ -1,8 +1,8 @@
 # Phase 25a: Player Death and Church Return
 
 Implements the first half of the
-[death and resurrection spec](2026-09-23-death-resurrection-design.md),
-fourth on the [onboarding roadmap](2026-09-23-company-life-onboarding-roadmap.md).
+death and resurrection spec (`2026-09-23-death-resurrection-design.md`, removed; see commit `d5ace46`),
+fourth on the onboarding roadmap (`2026-09-23-company-life-onboarding-roadmap.md`, removed; see commit `d5ace46`).
 
 **Split.** The parent spec has two mechanics that share little code. They are
 split the same way as 21a/21b and 23a/23b:

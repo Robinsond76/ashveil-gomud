@@ -1,6 +1,6 @@
 # Phase 27b: Tutorial Survival and Camp Lessons
 
-The second slice of the [Ashveil tutorial spec](2026-09-23-ashveil-tutorial-design.md),
+The second slice of the Ashveil tutorial spec (`2026-09-23-ashveil-tutorial-design.md`, removed; see commit `d5ace46`),
 on the [27a framework](2026-09-25-phase-27a-tutorial-framework-design.md).
 It adds stage 4 (Survival) and stage 5 (Camp) before Departure. 27c adds the
 practice fight, Alignment, and the browser panel.

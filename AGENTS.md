@@ -2,7 +2,7 @@
 
 ## Ashveil Context
 
-This fork is becoming the Ashveil game, with GoMud as its engine foundation. Use game-domain names such as `company`, `companion`, and `expedition`, not `ashveil*` prefixes. Persist multiplayer state across restart/copyover; never advance global game time for travel or rest. Before gameplay, consult `docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md`, the Phase 0–1 plan, and `docs/PROJECT_STATUS.md`.
+This fork is becoming the Ashveil game, with GoMud as its engine foundation. Use game-domain names such as `company`, `companion`, and `expedition`, not `ashveil*` prefixes. Persist multiplayer state across restart/copyover; never advance global game time for travel or rest. Before gameplay, consult `docs/PROJECT_STATUS.md` and `docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md`.
 
 ## Project Status
 

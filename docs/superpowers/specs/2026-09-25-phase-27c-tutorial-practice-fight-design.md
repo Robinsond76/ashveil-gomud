@@ -1,6 +1,6 @@
 # Phase 27c: Tutorial Practice Fight
 
-The third slice of the [Ashveil tutorial spec](2026-09-23-ashveil-tutorial-design.md),
+The third slice of the Ashveil tutorial spec (`2026-09-23-ashveil-tutorial-design.md`, removed; see commit `d5ace46`),
 on the [27a framework](2026-09-25-phase-27a-tutorial-framework-design.md) and
 [27b](2026-09-25-phase-27b-tutorial-survival-camp-design.md).
 

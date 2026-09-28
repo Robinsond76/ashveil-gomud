@@ -8,20 +8,10 @@ are written for ChatGPT/Codex, which delegates to a native Codex subagent runnin
 driving methodology is the **Superpowers** plugin (`obra/superpowers`, nominally enabled
 for this repo via `.claude/settings.json` → `enabledPlugins["superpowers@claude-plugins-official"]`).
 
-**Known gap, verify before relying on this (checked 2026-09-22):** that `settings.json`
-flag does not by itself install the plugin. On at least one Claude Code host working this
-project, `superpowers@claude-plugins-official` was never actually installed — only the
-marketplace was registered — so none of its skills (`using-superpowers`, `brainstorming`,
-`writing-plans`, `executing-plans`, `subagent-driven-development`,
-`test-driven-development`, `requesting-code-review`, `finishing-a-development-branch`)
-were available, and Phases 8-10 were built without them, using the manual fallback below
-instead. Before trusting the "supersedes the manual worktree/plan steps" claim in the next
-paragraph, confirm the skills actually appear in this session's available-skills listing;
-if they don't, the plugin isn't installed here. A person can install it from an
-interactive `claude` terminal with `/plugin install superpowers@claude-plugins-official`
-(Claude Code agents cannot run that themselves — it's a terminal-dialog command). Once
-genuinely installed and confirmed available, the paragraph below is accurate and takes
-over.
+**Check first:** the `settings.json` flag does not install the plugin. If the Superpowers
+skills (`brainstorming`, `writing-plans`, `executing-plans`, ...) are not in this session's
+available-skills listing, the plugin isn't installed — use the manual fallback below (a
+person can install it with `/plugin install superpowers@claude-plugins-official`).
 
 Superpowers' `using-superpowers` skill is mandatory-invocation: before any response or
 action, check whether a Superpowers skill applies and use it if so. In practice that
@@ -42,7 +32,7 @@ the user, or apply their standing "proceed with your recommendation" instruction
 in force, and record which happened in the doc); (3) write a companion plan doc under
 `docs/superpowers/plans/<date>-phase-N-<name>.md`, task-by-task with checkboxes, each task
 naming its files and its tests-first step, and including a **player help and tutorial**
-task (see "Player help" below), mirroring `docs/superpowers/plans/2026-09-22-phase-7-camping.md`'s
+task (see "Player help" below), mirroring `docs/superpowers/plans/2026-09-27-phase-29b2-battles-spawn-groups.md`'s
 format; (4) create the worktree/branch per "Branching & Worktrees" below and execute the
 plan task-by-task, checking boxes off as they land; (5) verify
 (`go test -race ./...`, `make generate`, `make validate`); (6) **independent review**
@@ -128,11 +118,9 @@ clock/round count. Every migrated system must survive restart/copyover.
 4. Any nested `AGENTS.md` in the package being edited (`internal/<pkg>/AGENTS.md`,
    `modules/<pkg>/AGENTS.md`, etc. — nearly every package has one).
 
-**Status snapshot (2026-09-22, verify against `docs/PROJECT_STATUS.md` before relying on
-it):** Phases 0–9 complete (fork/baseline, company companion, 3×3 formation, survival
-state, terrain/travel profiles, travel interruptions, camping, weather, encumbrance and
-cargo). Phase 10 (mounts) is next. `master` is pushed through Phase 9 — check
-`git status`/`git log` rather than trusting this snapshot once it ages.
+**Status:** see `docs/PROJECT_STATUS.md` ("Current position") and `git log`; this file
+deliberately carries no snapshot. Designs and plans of finished phases are removed from
+`docs/superpowers/` once shipped — find them in git history (all present at `d5ace46`).
 
 **Branching:** never commit directly to `master`, for any change — code, a design doc, or
 a `docs/PROJECT_STATUS.md` update alike. Create

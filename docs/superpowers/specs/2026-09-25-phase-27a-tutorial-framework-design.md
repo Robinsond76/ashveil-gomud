@@ -1,8 +1,8 @@
 # Phase 27a: Tutorial Framework and the First Lessons
 
 Implements the first part of the
-[Ashveil tutorial spec](2026-09-23-ashveil-tutorial-design.md), the last spec
-on the [onboarding roadmap](2026-09-23-company-life-onboarding-roadmap.md).
+Ashveil tutorial spec (`2026-09-23-ashveil-tutorial-design.md`, removed; see commit `d5ace46`), the last spec
+on the onboarding roadmap (`2026-09-23-company-life-onboarding-roadmap.md`, removed; see commit `d5ace46`).
 
 **Split.** The spec has eight stages. Each group needs different content
 and systems, so they ship in three slices:

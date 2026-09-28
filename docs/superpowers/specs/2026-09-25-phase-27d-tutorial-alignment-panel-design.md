@@ -1,6 +1,6 @@
 # Phase 27d: Tutorial Alignment Lesson and Browser Panel
 
-The last slice of the [Ashveil tutorial spec](2026-09-23-ashveil-tutorial-design.md),
+The last slice of the Ashveil tutorial spec (`2026-09-23-ashveil-tutorial-design.md`, removed; see commit `d5ace46`),
 on 27a–27c (see the
 [27c spec](2026-09-25-phase-27c-tutorial-practice-fight-design.md) for the
 split). It adds stage 7 (Alignment), before Departure, and a browser panel

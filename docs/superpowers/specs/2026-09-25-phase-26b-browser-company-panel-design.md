@@ -1,7 +1,7 @@
 # Phase 26b: Browser Company Panel
 
 Implements the browser half of the
-[player information surfaces spec](2026-09-23-player-information-surfaces-design.md),
+player information surfaces spec (`2026-09-23-player-information-surfaces-design.md`, removed; see commit `d5ace46`),
 after [Phase 26a](2026-09-24-phase-26a-company-summary-text-design.md).
 
 The open decisions below were settled by applying this design's

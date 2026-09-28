@@ -1476,403 +1476,69 @@ The goal is to migrate the distinctive gameplay.
 
 ---
 
-# 24. GoMud Systems the Agent Must Inspect Before Planning Code
+# 24. GoMud systems to inspect before planning (done in Phases 0–1; nested `AGENTS.md` files now document each package)
 
-Before writing substantial Ashveil code, inspect and document at least:
-
-```text
-rooms
-exits/directions
-movement command
-areas/zones
-mapper/map editor
-pathfinding
-
-players/users/characters
-mobs
-mercenaries
-
-parties
-party commands
-
-items
-inventory
-containers
-equipment
-item weight support
-
-combat
-combat rounds/ticks
-mob AI
-
-game time / day-night
-server timers/ticks
-
-events
-hooks
-
-commands/command registration
-modules/module registration
-
-persistence / save/load / data files
-
-disconnect/reconnect behavior
-server restart behavior
-```
-
-Also read repository guidance files such as:
-
-```text
-AGENTS.md
-CLAUDE.md
-README.md
-contributor/development docs
-```
-
-before modifying source.
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 25. Phase 0 — Fork and Bootstrap
+# 25. Phase 0 — Fork and Bootstrap (shipped)
 
-The first engineering task is **not gameplay**.
-
-The first task is to establish an Ashveil GoMud fork that runs cleanly.
-
-Recommended target repository:
-
-```text
-Robinsond76/ashveil-gomud
-```
-
-because `Robinsond76/ashveil-mud` already exists and must remain intact.
-
-## Option A — GitHub CLI
-
-If authenticated GitHub CLI is available:
-
-```bash
-gh repo fork GoMudEngine/GoMud \
-  --fork-name ashveil-gomud \
-  --clone
-```
-
-Verify remotes:
-
-```bash
-git remote -v
-```
-
-Desired conceptual setup:
-
-```text
-origin   -> Robinsond76/ashveil-gomud
-upstream -> GoMudEngine/GoMud
-```
-
-If `upstream` is not configured automatically:
-
-```bash
-git remote add upstream https://github.com/GoMudEngine/GoMud.git
-```
-
-## Option B — existing GitHub fork UI
-
-Fork:
-
-```text
-GoMudEngine/GoMud
-```
-
-into:
-
-```text
-Robinsond76/ashveil-gomud
-```
-
-then clone the fork and add upstream.
-
-## Do not
-
-- delete the Python prototype
-- force-push over `ashveil-mud`
-- remove GoMud history
-- immediately rename all engine packages
-- delete the default world before the engine has been understood
-- rewrite GoMud core to "make it Ashveil" during bootstrap
-
-## Bootstrap checks
-
-Current GoMud documentation requires modern Go (currently Go 1.24+ in the reviewed README).
-
-Run/read the repository's current instructions rather than trusting this document if they differ.
-
-Typical commands currently documented include:
-
-```bash
-make reset-admin-pw
-make build
-make run
-```
-
-Also inspect:
-
-```bash
-make help
-```
-
-Establish a clean baseline:
-
-- build succeeds
-- tests succeed if test suite exists
-- server starts
-- web client loads
-- admin panel loads
-- character can log in
-- character can move through rooms
-- default combat works
-- a party can be created if available
-- hired mercenary behavior can be exercised if available
-
-Commit a baseline before Ashveil changes.
-
-Suggested commit:
-
-```text
-chore: establish Ashveil fork baseline
-```
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 26. Phase 1 — Produce a GoMud Integration Map
+# 26. Phase 1 — Produce a GoMud Integration Map (shipped)
 
-Before coding new systems, create:
-
-```text
-docs/ASHVEIL_GOMUD_INTEGRATION.md
-```
-
-This should contain a concrete mapping from Ashveil concepts to exact GoMud packages/types/files.
-
-Required mapping table:
-
-| Ashveil concept | Existing GoMud type/package | Reuse / Extend / Replace | Notes |
-|---|---|---|---|
-| Party | TBD after inspection | Prefer extend | |
-| Mercenary | TBD | Prefer extend | |
-| Formation | none expected | Add | |
-| Hunger | TBD | Add/extend | |
-| Thirst | TBD | Add/extend | |
-| Fatigue | TBD | Add | |
-| Weather | TBD | Inspect first | |
-| Camping | TBD | Add | |
-| TravelSession | TBD | Add | |
-| Route metadata | exits/rooms TBD | Extend | |
-| Encumbrance | items TBD | Extend | |
-| Mounts | TBD | Add | |
-
-The agent should cite exact source files/functions in this internal document.
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 27. Phase 2 — Minimal Company Slice
+# 27. Phase 2 — Minimal Company Slice (shipped)
 
-Goal:
-
-- reuse GoMud mob spawning, friendly/charm, and ordinary-exit following behavior
-- introduce a persistent `company` domain record rather than an `ashveil*` layer
-- prove a saved companion can be restored as a fresh live mob instance
-- expose useful company status
-
-Target:
-
-```text
-1 player leader
-1 companion in this proof slice
-```
-
-Do not add recruitment economics, formation combat, human-member support, or the eventual five-member limit yet.
-
-Acceptance tests:
-
-- `company summon <template>` permits only an allow-listed companion template and refuses a second companion
-- `company status` reports the saved companion and live attachment state
-- `company dismiss` removes the saved record and its live instance
-- a companion follows its leader through ordinary rooms by reusing GoMud behavior
-- restart/reconnect restores the saved template as a fresh live mob instance; it does not persist an in-memory instance ID
-- a removed template produces a clear restore error and never substitutes another mob
-- no global game time advances and no duplicate movement/following framework is created
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 28. Phase 3 — 3x3 Formation State
+# 28. Phase 3 — 3x3 Formation State (shipped)
 
-Implement formation as persistent party metadata.
-
-Acceptance:
-
-```text
-party has max five characters
-each character can occupy one valid cell
-two characters cannot occupy same cell
-formation displays correctly
-formation survives save/reload
-```
-
-No combat effects required yet.
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 29. Phase 4 — Survival State
+# 29. Phase 4 — Survival State (shipped)
 
-Implement:
-
-- hunger
-- thirst
-- fatigue
-
-Requirements:
-
-- persistent
-- accessible for player + mercenaries
-- threshold system
-- commands/status display
-- food/drink modifies needs
-- clean service API so travel/camping can use it
-
-Important:
-
-Do not implement travel by setting giant countdown-specific survival hacks.
-
-Provide operations conceptually like:
-
-```text
-ApplyTravelExertion(...)
-ApplyRestRecovery(...)
-ConsumeFood(...)
-ConsumeWater(...)
-```
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 30. Phase 5 — Terrain and Travel Profiles
+# 30. Phase 5 — Terrain and Travel Profiles (shipped)
 
-Add data-driven terrain definitions.
-
-Add travel metadata to the most natural GoMud world-link abstraction discovered in Phase 1.
-
-Normal exits remain instant.
-
-Travel-enabled exits start `TravelSession`.
-
-Create only one or two test routes.
-
-Example test world:
-
-```text
-Dunmar West Gate
-    |
-    | travel-enabled route
-    |
-Fork at the Black Oak
-```
-
-Acceptance:
-
-- `north` or normal exit command detects travel profile
-- party remains unavailable for ordinary movement while traveling
-- connection remains responsive
-- countdown/status works
-- global world time is NOT modified
-- party arrives when duration completes
-- hunger/thirst/fatigue accrue based on progress
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 31. Phase 6 — Travel Interruptions
+# 31. Phase 6 — Travel Interruptions (shipped)
 
-Implement one simple encounter type.
-
-Example:
-
-```text
-bandit ambush
-```
-
-Acceptance:
-
-- event can trigger mid-route
-- travel progress is preserved
-- travel pauses
-- party resolves event/combat
-- party resumes
-- remaining duration/cost remains correct
-- no duplicate completion timer fires
-
-This phase needs strong concurrency/timer tests.
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 32. Phase 7 — Camping
+# 32. Phase 7 — Camping (shipped)
 
-Port Ashveil's campsite/campfire loop.
-
-MVP:
-
-- establish camp
-- light fire
-- rest
-- break camp
-- recover fatigue over real time
-- no world fast-forward
-
-Then integrate:
-
-- weather
-- encounters
-- food
-- water
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 33. Phase 8 — Weather
+# 33. Phase 8 — Weather (shipped)
 
-Integrate/port weather only after inspecting GoMud's actual current implementation.
-
-Desired Ashveil behavior:
-
-- shared environmental state
-- preferably region/area scoped
-- server driven
-- affects travel duration
-- affects fatigue/thirst
-- affects camp quality
-- affects descriptions
-
-Weather transitions should not be based on a per-player clock.
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 34. Phase 9 — Encumbrance and Cargo
+# 34. Phase 9 — Encumbrance and Cargo (shipped)
 
-Add expedition weight calculations.
-
-Inputs:
-
-- personal equipment
-- personal inventory
-- shared cargo
-- eventually mount capacity
-
-Output:
-
-- party total weight
-- party total capacity
-- load ratio
-- travel modifier
-- fatigue modifier
-
-The implementation should reuse item weight if GoMud already supports it.
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
@@ -2399,9 +2065,8 @@ The AI coding agent should follow these rules.
 Keep all project-owned material inside the Ashveil GoMud project:
 
 ```text
-/Users/robinsondesouza/Documents/Codex/
-└── ashveil-gomud/
-    ├── docs/                # plans, handoff, integration map, verification evidence
+ashveil-gomud/
+    ├── docs/                # handoff, status log, active specs and plans
     └── reference/
         └── ashveil-mud/     # read-only, untracked Python mechanics reference
 ```
@@ -2417,147 +2082,15 @@ upstream -> GoMudEngine/GoMud
 
 ---
 
-# 51. First Agent Assignment
+# 51. First agent assignment (Phase 0–1 bootstrap; done)
 
-The first AI agent receiving this file should do the following.
-
-## Task A — inspect both repositories
-
-Inspect:
-
-```text
-https://github.com/Robinsond76/ashveil-mud
-https://github.com/GoMudEngine/GoMud
-```
-
-Produce a concise repository audit.
-
-For Ashveil:
-
-- inventory actual current mechanics
-- find their concrete files/classes/functions
-- note anything this handoff missed
-- identify what is prototype-only or incomplete
-
-For GoMud:
-
-- identify exact packages/files for rooms
-- exits/directions
-- areas
-- maps/pathfinding
-- parties
-- hired mercenaries
-- mobs
-- players
-- inventory/items/equipment
-- combat
-- game time
-- events/hooks
-- commands
-- modules
-- persistence
-- server ticks/timers
-- disconnect/reconnect
-
-## Task B — fork GoMud
-
-Create/use:
-
-```text
-Robinsond76/ashveil-gomud
-```
-
-unless the owner specifies a different name.
-
-Preserve upstream remote.
-
-Build/run/test vanilla GoMud.
-
-Do not add gameplay until the baseline is confirmed.
-
-## Task C — create integration document
-
-Create:
-
-```text
-docs/ASHVEIL_GOMUD_INTEGRATION.md
-```
-
-Map exact Ashveil concepts to exact GoMud types/packages/functions.
-
-## Task D — create implementation plan
-
-Create a phased plan matching the dependency order in this handoff.
-
-For each phase include:
-
-- goal
-- GoMud files/packages involved
-- new files/packages
-- data model changes
-- commands
-- persistence changes
-- event hooks
-- tests
-- migration risks
-- acceptance criteria
-
-## Task E — begin only Phase 0/1
-
-Do not jump straight into implementing all gameplay.
-
-First complete:
-
-- fork
-- baseline
-- integration audit
-- plan
-
-Then begin the smallest party-extension slice.
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 52. Reference Feature Mapping Summary
+# 52. Reference feature mapping summary (superseded by the shipped phases; see `docs/PROJECT_STATUS.md`)
 
-| Ashveil Feature | GoMud Foundation | Migration Direction |
-|---|---|---|
-| Multiplayer server | Existing | Reuse |
-| Accounts/sessions | Existing | Reuse |
-| Rooms | Existing | Reuse |
-| Exits | Existing | Extend for travel metadata |
-| N/S/E/W/U/D movement | Existing | Reuse |
-| Diagonals | Not assumed | Investigate later |
-| Maps/editor | Existing | Reuse/extend |
-| Day/night | Existing | Reuse |
-| Weather | Ashveil requirement | Inspect GoMud; add/extend |
-| Hunger | Ashveil | Add |
-| Thirst | Ashveil | Add |
-| Fatigue | Ashveil | Add |
-| Campfire | Ashveil | Port |
-| Camping/rest | Ashveil | Port as real-time state |
-| Parties | Existing | Extend |
-| Hired mercs | Existing | Extend heavily |
-| Party cap 5 | Ashveil rule | Add |
-| 3x3 formation | Ashveil | Add |
-| Formation combat | Ashveil | Add incrementally |
-| Merc tactics | Ashveil | Integrate with combat AI |
-| Inventory | Existing | Reuse |
-| Equipment | Existing | Reuse |
-| Shared cargo | Ashveil | Add atop item system |
-| Weight/encumbrance | Ashveil requirement | Extend existing item model if possible |
-| Food/water items | Existing item foundation | Add survival properties/effects |
-| Mounts/horses | Ashveil | Add later |
-| Route travel | Ashveil | Add |
-| Real-time TravelSession | Ashveil | Add |
-| Random travel events | Ashveil | Add |
-| Travel encounters | Existing combat foundation | Integrate |
-| Quests | Existing | Reuse |
-| Shops | Existing | Reuse |
-| NPC scripting | Existing | Reuse |
-| Room scripting | Existing | Reuse |
-| Admin tools | Existing | Reuse |
-| Persistence | Existing framework | Extend |
-| Web/Telnet clients | Existing | Reuse |
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
@@ -2590,30 +2123,14 @@ If yes, the project is heading in the intended direction.
 
 ---
 
-# 54. Source Links / Starting References
+# 54. Source links (the prototype is at `reference/ashveil-mud/`; `upstream` is GoMud)
 
-Ashveil prototype:
-
-`https://github.com/Robinsond76/ashveil-mud`
-
-GoMud:
-
-`https://github.com/GoMudEngine/GoMud`
-
-GoMud player navigation guide:
-
-`https://github.com/GoMudEngine/GoMud/blob/master/_datafiles/guides/playing/README.md`
-
-GoMud feature screenshots/documentation:
-
-`https://github.com/GoMudEngine/GoMud/blob/master/feature-screenshots/README.md`
-
-Important: repository code evolves. The agent should treat the current checked-out source as authoritative over this document where implementation details differ.
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
 
-# 55. Short Context Prompt for a Fresh AI Agent
+# 55. Short context prompt for a fresh agent (superseded by `CLAUDE.md`/`AGENTS.md`)
 
-If a future agent needs a one-paragraph orientation, use this:
+Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
-> We are migrating the Python multiplayer MUD Ashveil to a fork of GoMud. GoMud should remain the engine for networking, rooms, users, maps, combat, mobs, items, quests, shops, parties, mercenaries, persistence, and admin tooling wherever possible. Ashveil's identity is a maximum-five-member mercenary party, persistent 3x3 tactical formation, expedition logistics, hunger, thirst, long-term fatigue, carrying weight, food/water supplies, camping/campfires, weather, mounts, and dangerous long-distance journeys. Rooms should represent interesting locations rather than wilderness tiles. Long-distance links create asynchronous real-time TravelSessions: the player remains connected and can use allowed commands while a server-side timer/progress state runs; global multiplayer world time is never fast-forwarded. Travel costs accrue gradually, terrain/weather/load/mounts affect duration and fatigue, and random events can interrupt a journey before it resumes. Start by forking GoMud into a separate Ashveil Go repo, build vanilla GoMud, inspect exact integration points, document the mapping, and only then implement the smallest party/formation/travel vertical slices without duplicating mature GoMud systems.
+---

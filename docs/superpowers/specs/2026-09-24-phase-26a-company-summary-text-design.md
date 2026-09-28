@@ -1,8 +1,8 @@
 # Phase 26a: Company Summary and Text Surfaces
 
 Implements the text half of the
-[player information surfaces spec](2026-09-23-player-information-surfaces-design.md),
-fifth on the [onboarding roadmap](2026-09-23-company-life-onboarding-roadmap.md).
+player information surfaces spec (`2026-09-23-player-information-surfaces-design.md`, removed; see commit `d5ace46`),
+fifth on the onboarding roadmap (`2026-09-23-company-life-onboarding-roadmap.md`, removed; see commit `d5ace46`).
 
 **Status:** Decisions confirmed by the owner on 2026-09-25 ("Ok go"), after
 revising B and E: a richer default prompt and rearranged panels (see
