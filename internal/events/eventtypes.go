@@ -257,6 +257,10 @@ func (u UserHandOff) Type() string { return `UserHandOff` }
 // removes the user file. Idempotent: running it twice is safe.
 type UserPurged struct {
 	UserId int
+	// KeepAccount (Ashveil 32h): a character deletion. Modules drop the
+	// user's state exactly as for any purge, but the final listener keeps
+	// the login and gives it a new character instead of removing the file.
+	KeepAccount bool
 }
 
 func (u UserPurged) Type() string { return `UserPurged` }

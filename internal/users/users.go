@@ -240,6 +240,13 @@ func LoginUser(user *UserRecord, connectionId connections.ConnectionId) (*UserRe
 
 	mudlog.Info("LoginUser()", "username", user.Username, "connectionId", connectionId)
 
+	// Ashveil 32h: a record flagged for deletion waits for its purge and
+	// reset (moments away, or the boot sweep) rather than logging in half
+	// reset.
+	if user.Deleting {
+		return nil, DeletingLoginRefusal, errors.New("character is being deleted")
+	}
+
 	user.Character.SetAdjective(`zombie`, false)
 
 	userManagerMu.Lock()

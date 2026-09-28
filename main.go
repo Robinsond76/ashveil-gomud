@@ -311,6 +311,9 @@ func main() {
 		configs.GetFilePathsConfig().DataFiles.String(),
 	)
 
+	// Ashveil 32h: finish any character deletion a restart interrupted.
+	hooks.SweepDeletions()
+
 	mudlog.Info("CharacterIndex", "info", "Character name index complete.", "characters", users.GetCharacterIndex().Len())
 
 	web.SetWebPlugin(plugins.GetPluginRegistry())
