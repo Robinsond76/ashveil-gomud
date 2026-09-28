@@ -3,8 +3,8 @@ package survival
 import (
 	"testing"
 
-	domain "github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	domain "github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/stretchr/testify/assert"
 )
 

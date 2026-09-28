@@ -3,8 +3,8 @@ package expedition
 import (
 	"testing"
 
-	domain "github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	domain "github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -3,8 +3,8 @@ package mount
 import (
 	"testing"
 
-	domain "github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	domain "github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/stretchr/testify/assert"
 )
 
