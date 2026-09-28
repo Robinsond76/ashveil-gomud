@@ -96,10 +96,13 @@ func GetPreAttackMessage(subType ItemSubType, messageType Intensity) AttackOptio
 	return GetPreAttackMessage(Generic, messageType)
 }
 
-func GetAttackMessage(subType ItemSubType, pctDamage int) AttackOptions {
+// GetAttackMessage picks a strike's pool. Phase 29c: only a real critical
+// hit draws the critical pool; any other roll, even one over 100% (a
+// sharpened top roll), caps at heavy.
+func GetAttackMessage(subType ItemSubType, pctDamage int, crit bool) AttackOptions {
 
 	var intensity Intensity
-	if pctDamage >= 101 {
+	if crit {
 		intensity = Critical
 	} else if pctDamage >= 75 {
 		intensity = Heavy
@@ -119,5 +122,5 @@ func GetAttackMessage(subType ItemSubType, pctDamage int) AttackOptions {
 		}
 	}
 	// default to generic.
-	return GetAttackMessage(Generic, pctDamage)
+	return GetAttackMessage(Generic, pctDamage, crit)
 }

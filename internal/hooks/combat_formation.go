@@ -535,7 +535,7 @@ func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
 	emitTargetChange(userRef(user), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	user.Character.SetAggro(0, newTargetId, attackType(user.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
-	user.SendText(fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, mobName(newTargetId)))
+	user.SendText(turnsToward(`You`, mobTag(mobName(newTargetId))))
 	return true
 }
 
@@ -561,6 +561,6 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	emitTargetChange(mobRef(mob), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	mob.Character.SetAggro(0, newTargetId, attackType(mob.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, mobName(newTargetId)))
+	room.SendText(turnsToward(mobTag(mob.Character.Name), mobTag(mobName(newTargetId))))
 	return true
 }

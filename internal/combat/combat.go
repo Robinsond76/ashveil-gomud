@@ -199,6 +199,10 @@ func buildCombatMessages(
 		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
 	}
 
+	// Phase 29c: "the bandit captain", never "the Garrick Vane".
+	tokenReplacements[items.TokenSource] = util.Article(tokenReplacements[items.TokenSource])
+	tokenReplacements[items.TokenTarget] = util.Article(tokenReplacements[items.TokenTarget])
+
 	if sourceChar.RoomId == targetChar.RoomId {
 
 		toAttackerMsg = togetherToAttacker.Get(msgSeed)
@@ -242,7 +246,22 @@ func buildCombatMessages(
 		}
 	}
 
-	return toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg
+	capitalize := func(m items.ItemMessage) items.ItemMessage { return items.ItemMessage(util.CapitalizeFirst(string(m))) }
+	return capitalize(toAttackerMsg), capitalize(toDefenderMsg), capitalize(toAttackerRoomMsg), capitalize(toDefenderRoomMsg)
+}
+
+// damageSuffix is what a hit did, in words at the end of its line (Phase
+// 29c): " (5 damage)", " (critical hit, 9 damage)", and on the
+// defender's line what their armor blocked, " (5 damage, 2 blocked)".
+func damageSuffix(damage int, crit bool, blocked int) string {
+	out := fmt.Sprintf("%d damage", damage)
+	if crit {
+		out = "critical hit, " + out
+	}
+	if blocked > 0 {
+		out += fmt.Sprintf(", %d blocked", blocked)
+	}
+	return " (" + out + ")"
 }
 
 // chemistryHitText tells the attacker that company chemistry made a hit.
@@ -347,8 +366,8 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				if hit {
 					// Check dodge before applying damage.
 					if Dodges(targetChar.Stats.Perception.ValueAdj, sourceChar.Stats.Perception.ValueAdj) {
-						attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s dodges your attack!</ansi>`, targetChar.Name))
-						attackResult.SendToTarget(`<ansi fg="cyan">You dodge the attack!</ansi>`)
+						attackResult.SendToSource(util.CapitalizeFirst(fmt.Sprintf(`<ansi fg="cyan">%s twists aside from your blow.</ansi>`, util.Article(targetChar.Name))))
+						attackResult.SendToTarget(`<ansi fg="cyan">You twist aside from the blow.</ansi>`)
 						continue
 					}
 					// Phase 24: say so, once a round, when only company
@@ -388,7 +407,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				// An edge raises the strike's ceiling too, so a sharpened
 				// top roll isn't described as a critical.
 				pct := damagePercentOfMax(attackTargetDamage, dCount, dSides, dBonus+edgeBonus)
-				msgs := items.GetAttackMessage(weaponSubType, pct)
+				msgs := items.GetAttackMessage(weaponSubType, pct, isCrit)
 
 				toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg := buildCombatMessages(
 					&sourceChar, &targetChar, sourceType, targetType,
@@ -397,12 +416,14 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					msgs.Separate.ToAttacker, msgs.Separate.ToDefender, msgs.Separate.ToAttackerRoom, msgs.Separate.ToDefenderRoom,
 				)
 
-				if isCrit {
-					toAttackerMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toAttackerMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
-					toDefenderMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toDefenderMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
-					toAttackerRoomMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toAttackerRoomMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
+				// Phase 29c: every hit says what it did, in all four lines.
+				if attackTargetDamage > 0 {
+					suffix := damageSuffix(attackTargetDamage, isCrit, 0)
+					toAttackerMsg = items.ItemMessage(string(toAttackerMsg) + suffix)
+					toDefenderMsg = items.ItemMessage(string(toDefenderMsg) + damageSuffix(attackTargetDamage, isCrit, attackTargetReduction))
+					toAttackerRoomMsg = items.ItemMessage(string(toAttackerRoomMsg) + suffix)
 					if len(string(toDefenderRoomMsg)) > 0 {
-						toDefenderRoomMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toDefenderRoomMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
+						toDefenderRoomMsg = items.ItemMessage(string(toDefenderRoomMsg) + suffix)
 					}
 				}
 
@@ -418,12 +439,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				attackResult.SendToSource(string(toAttackerMsg))
 
 				// Send to victim
-				defenderMsg := string(toDefenderMsg)
-				if attackTargetDamage > 0 && attackTargetReduction > 0 {
-					defenderMsg += fmt.Sprintf(` <ansi fg="red">[you blocked %d]</ansi>`, attackTargetReduction)
-				}
-
-				attackResult.SendToTarget(defenderMsg)
+				attackResult.SendToTarget(string(toDefenderMsg))
 
 				// Send to room
 				attackResult.SendToSourceRoom(

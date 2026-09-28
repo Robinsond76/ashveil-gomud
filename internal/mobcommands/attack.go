@@ -121,15 +121,7 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 			events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 
-			if !isSneaking {
-
-				u.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight you!`, mob.Character.Name))
-
-				room.SendText(
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="username">%s</ansi>`, mob.Character.Name, u.Character.Name),
-					u.UserId)
-
-			}
+			// Phase 29c: no "prepares to fight"; the fight's opener speaks.
 		}
 
 		return true, nil
@@ -143,13 +135,6 @@ func Attack(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			mob.Character.SetAggro(0, attackMobInstanceId, characters.DefaultAttack)
 
 			events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-
-			if !isSneaking {
-
-				room.SendText(
-					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> prepares to fight <ansi fg="mobname">%s</ansi>`, mob.Character.Name, m.Character.Name))
-
-			}
 
 		}
 
