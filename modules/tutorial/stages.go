@@ -74,6 +74,7 @@ func init() {
 			Intro: "You lead a company: you and up to four companions who follow you, fight beside you, and need food and rest like you do. It isn't a party of other players; players can form parties as well.",
 			Goal:  "Recruit two companions.",
 			Hints: []string{
+				`<ansi fg="command">look</ansi> at the hiring post: Tamsin and Oswin are waiting to join. <ansi fg="command">look tamsin</ansi> reads about one.`,
 				`<ansi fg="command">company recruit</ansi> shows who is hiring here. Recruit two: <ansi fg="command">company recruit tamsin</ansi> and <ansi fg="command">company recruit oswin</ansi>. Each is free, once.`,
 				`<ansi fg="command">company status</ansi> shows your companions. A company holds five at most, you included.`,
 				`Companions keep their own gear (<ansi fg="command">company gear</ansi>). <ansi fg="command">company dismiss</ansi> lets one go, with their gear.`,

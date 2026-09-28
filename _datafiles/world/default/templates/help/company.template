@@ -9,7 +9,14 @@ you do (<ansi fg="command">help survival</ansi>, <ansi fg="command">help camp</a
 <ansi fg="yellow-bold">Finding companions</ansi>
 
 Settlements have recruiters: a person or a posted notice offering
-candidates for hire.
+candidates for hire. <ansi fg="command">look</ansi> in a recruiter's room shows the
+notice and the candidates you can still take, with their price: "free"
+for a once-only offer, or "won't join you" for one your company would
+refuse (see Alignment, below). Anyone already in your company, and a free
+offer you've already taken, isn't listed.
+
+  <ansi fg="command">look [candidate]</ansi>
+  Read a candidate's description on the notice.
 
   <ansi fg="command">company recruit</ansi>
   List who is hiring here, with their archetype, level, alignment, gear,
@@ -27,6 +34,16 @@ candidates for hire.
 <ansi fg="command">company summon [name]</ansi> enlists a companion directly,
 without a recruiter, but only the few the world allows (a training dummy,
 as the world ships).
+
+<ansi fg="yellow-bold">Moving together</ansi>
+
+Your companions follow you from room to room. You aren't told each one
+arriving; the rooms you leave and enter hear one line for the whole
+company ("Dain leads their company towards the east exit.", "Dain arrives
+from the west, their company behind."). A companion moving on its own
+still shows its own line. <ansi fg="command">look</ansi> lists your companions by
+name, without the ♥friend tag other charmed creatures carry, and
+<ansi fg="command">party</ansi> lists them as Company.
 
 <ansi fg="yellow-bold">Your roster</ansi>
 

@@ -15,6 +15,11 @@ round count; a rest takes real time, not game time.
   <ansi fg="command">camp fire</ansi>
   Lights the campfire. You need a lit fire before you can rest.
 
+  A camp is part of the room: <ansi fg="command">look</ansi> shows it to everyone
+  there, a cold fire pit until the fire is lit and bedrolls around a
+  crackling campfire after. Someone else's camp is shown with its
+  leader's name. It goes when the camp is struck.
+
   <ansi fg="command">camp status</ansi>
   Shows your camp, whether the fire is lit, how a rest is progressing,
   and your company's current needs.

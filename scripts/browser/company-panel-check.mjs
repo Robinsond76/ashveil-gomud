@@ -22,7 +22,7 @@ const snapshot = {
   members: [
     { key: 'companion:1', id: 1, name: 'Bran', status: 'present', level: 3, archetype: 'Warrior', cell: { row: 0, col: 1 }, chemistry: 'Trusted' },
     { key: 'companion:2', id: 2, name: '<img src=x onerror="window.__xss=1">', status: 'awaiting', level: 2, archetype: null, cell: null, chemistry: null },
-    { key: 'companion:3', id: 3, name: 'Ysolde', status: 'dead', level: 5, archetype: 'Cleric', cell: null, chemistry: null },
+    { key: 'companion:3', id: 3, name: 'Ysolde of the Western Marches', status: 'dead', level: 5, archetype: 'Cleric', cell: { row: 1, col: 1 }, chemistry: null },
   ],
   alive: 3, dead: 1,
   load: { label: 'Burdened', total_g: 8000, capacity_g: 10000, cargo_g: 3000 },
@@ -76,6 +76,43 @@ check(await table.count() === 1, 'formation table with its caption');
 check((await table.textContent()).includes('Wren') && (await table.textContent()).includes('Bran'), 'formation cells hold names as text');
 check(await page.getByRole('listitem', { name: /Bran, level 3, Warrior, Health 12 of 25/ }).count() === 1, 'member card has a spoken summary');
 if (outdir) { await page.locator('#party-panel').screenshot({ path: path.join(outdir, 'company-desktop.png') }); }
+
+// Phase 32a: the grid reads at the member cards' size and colour, a long
+// name wraps whole instead of being cut off, its tooltip carries it, and
+// the leader's cell keeps its accent. In a dark and a light theme.
+async function gridReadable(label) {
+  const grid = await page.evaluate(() => {
+    const cell = [...document.querySelectorAll('.company-formation td')].find(td => td.textContent.startsWith('Ysolde'));
+    const lead = document.querySelector('.company-formation td.is-leader');
+    const name = document.querySelector('.company-member:not(.is-leader) .party-member-name');
+    const cs = e => getComputedStyle(e);
+    return {
+      text: cell && cell.textContent, title: cell && cell.title,
+      cut: cell ? cell.scrollWidth > cell.clientWidth || cs(cell).textOverflow === 'ellipsis' : true,
+      lines: cell ? Math.round(cell.getBoundingClientRect().height / parseFloat(cs(cell).lineHeight)) : 0,
+      size: cell && cs(cell).fontSize, nameSize: name && cs(name).fontSize,
+      color: cell && cs(cell).color, nameColor: name && cs(name).color,
+      lead: lead && lead.textContent, leadColor: lead && cs(lead).color,
+      leaderName: cs(document.querySelector('.company-member.is-leader .party-member-name')).color,
+    };
+  });
+  check(grid.text === 'Ysolde of the Western Marches' && grid.title === grid.text, label + ': a long name shown whole, with its tooltip');
+  check(!grid.cut && grid.lines >= 2, label + ': a long name wraps rather than being cut (' + grid.lines + ' lines)');
+  check(grid.size === grid.nameSize, label + ': grid text at the cards\' size (' + grid.size + ' vs ' + grid.nameSize + ')');
+  check(grid.color === grid.nameColor, label + ': grid text in the cards\' colour (' + grid.color + ')');
+  check(grid.lead === 'Wren' && grid.leadColor === grid.leaderName && grid.leadColor !== grid.color, label + ': the leader\'s cell keeps its accent');
+}
+await gridReadable('dark theme, 1024px');
+await page.evaluate(() => { document.querySelector('link[rel=stylesheet]').href = document.querySelector('link[rel=stylesheet]').href.replace('theme-brooding', 'theme-parchment'); });
+await page.waitForTimeout(100);
+await gridReadable('light theme, 1024px');
+await page.setViewportSize({ width: 360, height: 900 });
+await gridReadable('light theme, 360px');
+if (outdir) { await page.locator('#party-panel').screenshot({ path: path.join(outdir, 'company-grid-light-narrow.png') }); }
+await page.evaluate(() => { document.querySelector('link[rel=stylesheet]').href = document.querySelector('link[rel=stylesheet]').href.replace('theme-parchment', 'theme-brooding'); });
+await page.waitForTimeout(100);
+await gridReadable('dark theme, 360px');
+await page.setViewportSize({ width: 1024, height: 900 });
 
 // A Company.Vitals keeps the roster and brings the live values, and the
 // focused card keeps focus across the rebuild.
