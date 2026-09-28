@@ -81,6 +81,11 @@ the fight went.
    but showing the grid is far more interesting once 30c's roles,
    targeting, and guards give it something to display.
 
+**Revised 2026-09-28:** the owner's play-test notes come first
+([play-test roadmap](2026-09-28-playtest-feedback-roadmap.md)). Its 32d
+takes 30c's casting and role-driven actions, and its 32g Combat tab takes
+Phase 31's grids. 30c and 31 keep the rest.
+
 This is Phase 29 (presentation) end to end, then Phase 30 (tactics) end to
 end, then Phase 31. A phase is never started before the phases it depends
 on (per the tables above) are complete and reviewed.

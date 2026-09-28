@@ -11,6 +11,9 @@ instead of duplicating them.
   (2026-09-28, from `claude/next-phase-wfav4w`). Docs cleanup (finished-phase
   plans/specs and the old work log moved to git history) on
   `claude/docs-cleanup-py1rfb`.
+  Play-test feedback (2026-09-28): the
+  [roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)
+  and the 32a and 32b designs, on `claude/hopeful-wozniak-piu2lb`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
@@ -20,8 +23,10 @@ instead of duplicating them.
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
   and the first combat slices (29a, 29b, 29b2) are all done.
-- **Next:** 29c (the narration voice), per the decided
-  [build order](superpowers/specs/2026-09-26-combat-presentation-roadmap.md#build-order-decided-2026-09-27).
+- **Next:** Phase 32a (company polish), then 32b–32h, from the owner's
+  play-test notes, per the
+  [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
+  the combat roadmap resumes at 29c after them.
   Also open: capacity per company size (play-testing) and the "Future
   ideas" row; see Known issues.
 
@@ -88,6 +93,9 @@ instead of duplicating them.
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
 | 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
 | 31 | Browser battle panel | Proposed: [spec](superpowers/specs/2026-09-26-battle-panel-design.md). Enemy and company grids with target lines, from the event stream |
+| 32a | Company polish | Proposed: [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
+| 32b | Tutorial replay | Proposed: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md). `tutorial replay`: a throwaway level-1 user runs the course; the real character comes back exactly as it was; a `UserPurged` event every module handles |
+| 32c–32h | Play-test follow-ups | Proposed, specs to write ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): enemy groups and `scout` (32c), automatic player and companion combat (32d), company XP (32e), company logistics (32f), web company dock (32g), character deletion (32h) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
