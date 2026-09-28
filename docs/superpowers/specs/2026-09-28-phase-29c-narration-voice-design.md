@@ -89,39 +89,54 @@ The feature spec's inventory still holds. Line numbers today:
 - `buildCombatMessages` uses them for `{source}`/`{target}`; every
   weapon line is passed through `CapitalizeFirst`. The death line,
   opener, "turns toward", and the spell scripts use the same pair (the
-  scripts through a new script function, `TheName(actor)`, which returns
-  the formatted name with its article).
+  scripts through a new actor method, `GetCombatName()`, which returns
+  the coloured name with its article).
 
 ### 4. Charmed tag
 
-`modules/company` hooks `OnGetFormattedName` and removes the `charmed`
-adjective when the named mob is a company companion
-(`company.LeaderAndKeyForInstance`).
+`OnGetFormattedName` carries no mob identity, so it can't tell a
+companion from a pet. Instead, `modules/company/runtime.go` clears the
+`charmed` adjective right after it charms a companion
+(`Character.Charm` sets it). Nothing reads that adjective for logic; the
+charm itself (`Character.Charmed`) is untouched. Other charmed mobs keep
+the tag.
 
 ### 5. Engagement and fight-end lines (`internal/hooks`)
 
-A narration sink in `internal/hooks`, subscribed to the default stream:
+Found in planning: every retarget site already prints its own "turns on"
+line beside its `emitTargetChange`, so a separate stream sink would print
+twice. The lines are rendered where the events are produced instead:
 
-- **Opener** — on a fight's open: one line to the room. Text comes from
-  a new `_datafiles/world/default/combat-messages/fights.yaml`: a generic
-  pool, plus optional pools keyed by a mob `groups` name (the first enemy's
-  first group that has one).
-- **Turns toward** — on `TargetChange` with both `Previous` and `Target`
-  set: `The bandit cutthroat turns toward you.` to the new target, and
-  `… turns toward Garrick Vane.` to the room. A first target (empty
-  `Previous`) prints nothing; the opener covers it.
-- **Closing** — on `FightEnd` with `victory`: one line from the same file's
-  closing pools.
+- **Opener** — `beginBattle` (right after `combatstream.Open`) sends one
+  line to the room: a generic pool, or a pool keyed by the first enemy's
+  first mob `groups` name when one exists (`bandits`, the practice
+  squad's group). The pools are Go maps in
+  `internal/hooks/combat_narration.go`; a `fights.yaml` beside the weapon
+  files would be loaded as a weapon file, and no one edits these outside
+  code yet.
+- **Turns toward** — every existing "turns on" line (the battle, engagement,
+  and formation retargets, and `groupTurnsOn`) is reworded to "turns
+  toward" through one helper, with articles.
+- **Closing** — `fightSides.end` sends one closing line to the fight's room
+  on `victory` only, before the summary.
 - Every "prepares to fight" line is removed.
 
 ### 6. Death notices
 
-- The core death line becomes a small pool of physical, final lines
-  (`The bandit captain folds around the wound and does not rise.`), in
-  `fights.yaml`, used by both `suicide.go` files.
-- The company fallen notice is indented four spaces, reads the time as
-  whole hours and minutes in words (`3 hours`, `2 hours 30 minutes`), and
-  drops its colour tag's `has fallen` emphasis to match the voice.
+- Mob death text comes from `suicide`, a queued command, so it would print
+  after the closing line. `handleAffected` (`NewRound_DoCombat.go`) now
+  prints the combat death line itself, at once, and queues
+  `suicide quiet`, which skips the room line (also the practice "is
+  beaten" line, printed at once the same way). A mob with
+  `revive-on-death` keeps today's path. Other deaths (`suicide` from
+  buffs or scripts) print the same re-voiced line from `suicide`.
+- The death line is a small pool of physical, final lines
+  (`The bandit captain crumples and does not rise.`), exported from
+  `mobcommands` as `DeathLine(name string) string`; the player's own death
+  line in `usercommands/suicide.go` is re-voiced the same way.
+- The company fallen notice is indented four spaces and reads its time
+  in words (`3 hours`, `2 hours 30 minutes`, `45 seconds`) through a new
+  `allowanceWords`; the other notices keep `formatAllowance`.
 
 ### 7. Spells (`mm`, `sparks`, `heal`, `healall`)
 
@@ -156,8 +171,9 @@ A narration sink in `internal/hooks`, subscribed to the default stream:
 
 ## Acceptance criteria
 
-- No line in the eight weapon files or `fights.yaml` contains `!` or an
-  ALL-CAPS word, and none contains `{damage}` (a data test).
+- No line in the eight weapon files or the narration pools contains `!`
+  or an ALL-CAPS word, and no weapon line contains `{damage}` (a data
+  test).
 - A wiring test through `hooks.DoCombat` with the shipped config:
   - every hit line ends in `(N damage)`, N matching the damage dealt;
   - a forced critical hit ends in `(critical hit, N damage)` and its text
@@ -167,7 +183,8 @@ A narration sink in `internal/hooks`, subscribed to the default stream:
   - no company companion's name carries the charmed tag;
   - exactly one opener per fight, and one closing line when the group is
     beaten (none on defeat or broken-off);
-  - a retarget mid-fight prints one "turns toward" line.
+  - a retarget mid-fight prints one "turns toward" line;
+  - the closing line comes after the last enemy's death line.
 - Unit tests: `Article`/`CapitalizeFirst` (tags, empty, proper names);
   pool choice (crit, capped heavy); the fallen-notice format.
 - Spell tests: `mm` and `healall` through a real cast print the suffixes.
