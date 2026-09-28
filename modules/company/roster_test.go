@@ -168,7 +168,7 @@ func TestRecruitGeneratedRefusalsChangeNothing(t *testing.T) {
 	m.RecruiterLines(user.UserId, hiringRoom)
 	before := rosterOf(t, m, 7)
 	far := domain.Candidate{Key: "morrow", Name: "Morrow Black", Archetype: "warrior", MobTemplateID: 980, Level: 1, Alignment: -80, Price: 10, Leaves: 999999}
-	before.Candidates = append(before.Candidates, far)
+	before.Candidates[2] = far
 	require.NoError(t, m.registry.PutRoster(7, before))
 
 	text, err := m.recruit(user, hiringRoom, "morrow")
@@ -184,7 +184,7 @@ func TestRecruitGeneratedRefusalsChangeNothing(t *testing.T) {
 	assert.Equal(t, "Morrow Black asks 10 gold, and you have 0.", text)
 	record, _ := m.registry.Get(7)
 	assert.Empty(t, record.Companions)
-	assert.Len(t, rosterOf(t, m, 7).Candidates, 4, "nothing taken off the list")
+	assert.Equal(t, before, rosterOf(t, m, 7), "nothing taken off the list")
 }
 
 func TestRecruitGeneratedRollsBackTheRoster(t *testing.T) {
@@ -385,4 +385,60 @@ func TestShippedRosters(t *testing.T) {
 		}
 	}
 	assert.Equal(t, map[int]bool{2003: true, 2005: true, 901: false, 907: false}, generated)
+}
+
+// Phase 32a2 review: inspect and recruit read a partial name the same way,
+// even when a regular at another recruiter shares its start.
+func TestInspectAndRecruitAgreeOnAPartialName(t *testing.T) {
+	m, _, user, _ := newRosterModule(t, 500)
+	m.world.(*fakeWorld).leaders[7] = 0
+	m.recruitersForTest[907] = recruiter{RoomID: 907, Name: "the notices", Candidates: []candidate{{ID: "corvin", MobTemplateID: 969, Price: 150}}}
+	require.NoError(t, m.registry.PutRoster(7, domain.Roster{RoomID: hiringRoom, Candidates: []domain.Candidate{
+		{Key: "corrin", Name: "Corrin Pike", Archetype: "warrior", MobTemplateID: 980, Level: 1, Price: 60, Leaves: 999999},
+		{Key: "hild", Name: "Hild", Archetype: "warrior", MobTemplateID: 980, Level: 1, Price: 60, Leaves: 999999},
+		{Key: "edda", Name: "Edda", Archetype: "warrior", MobTemplateID: 980, Level: 1, Price: 60, Leaves: 999999},
+	}}))
+	assert.Contains(t, m.inspectAt(7, hiringRoom, "cor"), "Corrin Pike, warrior, level 1")
+	text, err := m.recruit(user, hiringRoom, "cor")
+	require.NoError(t, err)
+	assert.Contains(t, text, "Corrin Pike joins your company")
+	// This recruiter's own regular is still the regular.
+	assert.NotContains(t, m.inspectAt(7, hiringRoom, "garrick"), "They ask")
+}
+
+// Phase 32a2 review: no generated name shadows any recruiter's regular.
+func TestRosterNamesAvoidEveryRecruitersRegulars(t *testing.T) {
+	m, _, user, _ := newRosterModule(t, 0)
+	m.recruitersForTest[907] = recruiter{RoomID: 907, Name: "the notices", Candidates: []candidate{{ID: "corvin", MobTemplateID: 969}}}
+	rules := testRosterRules()
+	rules.GivenNames = []string{"Corvin", "Hild"}
+	m.rosterRulesForTest = &rules
+	m.RecruiterLines(user.UserId, hiringRoom)
+	ros := rosterOf(t, m, 7)
+	require.Len(t, ros.Candidates, 1)
+	assert.Equal(t, "hild", ros.Candidates[0].Key)
+}
+
+// Phase 32a2 review: a hire whose company save fails leaves the candidate
+// on the list, the gold, and the company as they were.
+func TestRecruitGeneratedSaveFailureRollsBack(t *testing.T) {
+	m, runtime, user, _ := newRosterModule(t, 500)
+	m.world.(*fakeWorld).leaders[7] = 0
+	m.RecruiterLines(user.UserId, hiringRoom)
+	before := rosterOf(t, m, 7)
+	var hire domain.Candidate
+	for _, c := range before.Candidates {
+		if c.Alignment >= -60 && c.Alignment <= 60 {
+			hire = c
+		}
+	}
+	require.NotEmpty(t, hire.Key)
+	m.store.(*fakeStore).failSaveOnCall = m.store.(*fakeStore).saveCalls + 1
+	_, err := m.recruit(user, hiringRoom, hire.Key)
+	require.Error(t, err)
+	assert.Equal(t, before, rosterOf(t, m, 7))
+	assert.Equal(t, 500, user.Character.Gold)
+	record, _ := m.registry.Get(7)
+	assert.Empty(t, record.Companions)
+	assert.Equal(t, 1, runtime.detachCalls, "the spawned mob is removed")
 }

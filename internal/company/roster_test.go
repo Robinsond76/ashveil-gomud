@@ -238,3 +238,19 @@ func TestSetIdentity(t *testing.T) {
 	assert.Equal(t, Identity{Name: "Hild Marrow", Description: "Quiet."}, record.Companions[0].Identity())
 	assert.ErrorIs(t, reg.SetIdentity(7, 99, Identity{Name: "x"}), ErrUnknownMember)
 }
+
+// Phase 32a2 review: a smaller RosterSize takes effect at once.
+func TestRefreshRosterShrinks(t *testing.T) {
+	rules := testRosterRules()
+	rng := rand.New(rand.NewSource(8))
+	ros, _ := RefreshRoster(Roster{RoomID: 1}, rules, RosterContext{Now: 1000, LeaderLevel: 1}, rng)
+	ros, _ = HireFromRoster(ros, ros.Candidates[2].Key, rules, 1000, rng)
+	rules.Size = 1
+	small, changed := RefreshRoster(ros, rules, RosterContext{Now: 1001, LeaderLevel: 1}, rng)
+	assert.True(t, changed)
+	assert.Equal(t, ros.Candidates[:1], small.Candidates)
+	assert.Empty(t, small.Openings)
+	rules.Size = 0
+	none, _ := RefreshRoster(ros, rules, RosterContext{Now: 1001, LeaderLevel: 1}, rng)
+	assert.Empty(t, none.Candidates)
+}

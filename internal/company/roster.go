@@ -150,7 +150,18 @@ func RefreshRoster(r Roster, rules RosterRules, ctx RosterContext, rng Rand) (Ro
 	for _, c := range kept {
 		taken[c.Key] = true
 	}
-	slots := rules.Size - len(kept) - len(pending)
+	// A smaller RosterSize takes effect at once: the newest faces and the
+	// latest openings go first.
+	size := max(rules.Size, 0)
+	if len(kept) > size {
+		kept = kept[:size]
+		changed = true
+	}
+	if len(kept)+len(pending) > size {
+		pending = pending[:size-len(kept)]
+		changed = true
+	}
+	slots := size - len(kept) - len(pending)
 	for i := 0; i < slots; i++ {
 		c, ok := generateCandidate(rules, ctx, taken, rng)
 		if !ok {

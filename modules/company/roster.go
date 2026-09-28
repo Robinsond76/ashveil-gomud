@@ -197,9 +197,13 @@ func (m *CompanyModule) rosterFor(leaderUserID int, rec recruiter) (domain.Roste
 			}
 		}
 	}
-	for _, c := range rec.Candidates {
-		taken[c.ID] = true
-		taken[givenKey(templateName(c.MobTemplateID, ""))] = true
+	// Every recruiter's regulars, not only this one's, so a generated face
+	// never shares a name with a well-known one.
+	for _, r := range m.recruiters() {
+		for _, c := range r.Candidates {
+			taken[c.ID] = true
+			taken[givenKey(templateName(c.MobTemplateID, ""))] = true
+		}
 	}
 	ctx := domain.RosterContext{Now: m.round(), LeaderLevel: leaderLevel(leaderUserID), Taken: taken, Weights: rec.Weights}
 	next, changed := domain.RefreshRoster(current, m.rosterRules(), ctx, m.random())
@@ -330,22 +334,23 @@ func (m *CompanyModule) inspectAt(leaderUserID, roomID int, selector string) str
 	if c, ok := findGenerated(roster, selector, false); ok {
 		return m.inspectGenerated(leaderUserID, c)
 	}
-	if c, ok := findGenerated(roster, selector, true); ok && !m.regularMatch(selector) {
-		return m.inspectGenerated(leaderUserID, c)
+	// The same order "company recruit" uses, so inspect and recruit always
+	// mean the same person: this recruiter's regulars, then a partial
+	// roster name.
+	if _, regular := matchCandidate(rec, selector); !regular && !m.summonableName(selector) {
+		if c, ok := findGenerated(roster, selector, true); ok {
+			return m.inspectGenerated(leaderUserID, c)
+		}
 	}
 	return m.inspect(leaderUserID, selector)
 }
 
-// regularMatch reports whether a selector names an authored candidate or
-// summonable template the way inspect reads it (exactly, or a template
-// number), so a partial roster match never shadows one.
-func (m *CompanyModule) regularMatch(selector string) bool {
-	templateID, isCandidate, _ := m.inspectTarget(strings.TrimSpace(selector))
-	if templateID == 0 {
+// summonableName reports whether a selector names a template "company
+// summon" allows (by number or name), which inspect weighs first.
+func (m *CompanyModule) summonableName(selector string) bool {
+	templateID, err := m.resolveTemplateID(strings.TrimSpace(selector))
+	if err != nil {
 		return false
-	}
-	if isCandidate {
-		return true
 	}
 	_, allowed := m.allowedTemplates()[templateID]
 	return allowed
