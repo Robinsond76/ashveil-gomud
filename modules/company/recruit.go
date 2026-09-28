@@ -277,7 +277,9 @@ type noticeEntry struct {
 
 // noticeLines renders a recruiter's notice: the candidates on it, or that
 // no one is left for this viewer.
-func noticeLines(noticeName string, entries []noticeEntry) []string {
+// full is the viewer's companion count when their company is full (0
+// otherwise), with its limit.
+func noticeLines(noticeName string, entries []noticeEntry, full, limit int) []string {
 	if len(entries) == 0 {
 		return []string{fmt.Sprintf("No one on %s is looking for work with you now.", noticeName)}
 	}
@@ -292,10 +294,14 @@ func noticeLines(noticeName string, entries []noticeEntry) []string {
 		}
 		parts = append(parts, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> (%s)`, e.Name, label))
 	}
-	return []string{
+	lines := []string{
 		fmt.Sprintf("On %s: %s.", noticeName, strings.Join(parts, ", ")),
 		`  Type <ansi fg="command">company recruit</ansi> to see them, or <ansi fg="command">company inspect [name]</ansi>.`,
 	}
+	if full > 0 {
+		lines = append(lines, fmt.Sprintf("  Your company is full (%d/%d companions); dismiss someone to take another on.", full, limit))
+	}
+	return lines
 }
 
 // RecruiterLines implements domain.RecruiterViewProvider: the notice in a
@@ -328,7 +334,11 @@ func (m *CompanyModule) RecruiterLines(viewerUserID, roomID int) []string {
 			Refused: m.recruitRefusal(viewerUserID, c.MobTemplateID, name) != "",
 		})
 	}
-	return noticeLines(rec.Name, entries)
+	full := 0
+	if len(record.Companions) >= m.maxCompanions() {
+		full = len(record.Companions)
+	}
+	return noticeLines(rec.Name, entries, full, m.maxCompanions())
 }
 
 // LookCandidate implements domain.RecruiterViewProvider: "look <name>" at
@@ -337,6 +347,10 @@ func (m *CompanyModule) LookCandidate(viewerUserID, roomID int, selector string)
 	rec, ok := m.recruiters()[rooms.GetOriginalRoom(roomID)]
 	if !ok {
 		return "", false
+	}
+	// "look post", "look hiring slate": the notice itself.
+	if sel := strings.ToLower(strings.TrimSpace(selector)); len(sel) >= 3 && strings.Contains(strings.ToLower(rec.Name), sel) {
+		return strings.Join(m.RecruiterLines(viewerUserID, roomID), "\n"), true
 	}
 	c, ok := matchCandidate(rec, selector)
 	if !ok {

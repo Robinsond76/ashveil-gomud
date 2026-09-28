@@ -317,6 +317,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	got = run(aria, "look", "")
 	assert.Contains(t, got, "On the notched hiring post: Tamsin Reed (free), Brother Oswin (free).")
 	assert.Contains(t, got, "company inspect [name]")
+	assert.Contains(t, run(aria, "look", "at the hiring post"), "On the notched hiring post: Tamsin Reed (free)", "the hint's wording works")
 	got = run(aria, "look", "tamsin")
 	assert.Contains(t, got, "guarded carters")
 	assert.Contains(t, got, "company inspect tamsin")

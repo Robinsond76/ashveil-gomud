@@ -11,86 +11,86 @@ by someone else gets a fresh `CharmInfo` and its `♥friend` back.
 
 ## Task 1: No `♥friend` on company members
 
-- [ ] Tests first (`internal/characters`): a companion charm leaves
+- [x] Tests first (`internal/characters`): a companion charm leaves
   `charmed` out of the formatted name; an ordinary charm keeps it;
   `RemoveCharm` clears both.
-- [ ] `CharmInfo.Companion`, `Character.CharmAsCompanion`,
+- [x] `CharmInfo.Companion`, `Character.CharmAsCompanion`,
   `Character.IsCompanion`; `getFormattedName` drops `charmed` for a
   companion.
-- [ ] `modules/company` `Spawn` charms as a companion.
-- [ ] `party` and GMCP `Party` show `Company` for a companion's status,
+- [x] `modules/company` `Spawn` charms as a companion.
+- [x] `party` and GMCP `Party` show `Company` for a companion's status,
   `♥friend` for other charmed mobs.
-- [ ] Wiring (`modules/company`): `look` in a room with a live companion
+- [x] Wiring (`modules/company`): `look` in a room with a live companion
   shows no `♥friend`; a charmed non-companion still does; `party`.
 
 ## Task 2: One line for a company on the move
 
-- [ ] Tests first (pure, `internal/usercommands`): the leave/arrive
+- [x] Tests first (pure, `internal/usercommands`): the leave/arrive
   wording with and without companions.
-- [ ] `usercommands/go.go`: a leader with an attached companion in the
+- [x] `usercommands/go.go`: a leader with an attached companion in the
   room they leave sends "Dain leads their company west." to the origin
   and "Dain arrives from the east, their company behind." to the
   destination.
-- [ ] `mobcommands/go.go`: a companion whose leader is already in the
+- [x] `mobcommands/go.go`: a companion whose leader is already in the
   destination prints no leave/arrive/"moving around" line.
-- [ ] Wiring (`modules/company`): a leader walks with two companions
+- [x] Wiring (`modules/company`): a leader walks with two companions
   through the real `go`; the leader sees no companion line; a watcher in
   the destination sees exactly one arrival line and one in the origin sees
   exactly one departure line; a companion walking alone keeps its lines.
 
 ## Task 3: No drink flourish
 
-- [ ] `buffs/34-hydrated.js`: remove the `onStart` message; it still
+- [x] `buffs/34-hydrated.js`: remove the `onStart` message; it still
   cancels Thirsty.
-- [ ] Wiring: `drink` water shows the status line and not the flourish.
+- [x] Wiring: `drink` water shows the status line and not the flourish.
 
 ## Task 4: The camp in the room
 
-- [ ] Tests first (`internal/camping`): `CampLines` for lit, unlit, the
+- [x] Tests first (`internal/camping`): `CampLines` for lit, unlit, the
   viewer's own, someone else's, and none.
-- [ ] `internal/camping`: a room-camps snapshot seam
+- [x] `internal/camping`: a room-camps snapshot seam
   (`SetRoomCampsReader`, `RoomCamps`, `CampLines`).
-- [ ] `modules/camping`: the lit-room snapshot becomes a room-camps
+- [x] `modules/camping`: the lit-room snapshot becomes a room-camps
   snapshot under `litMu` (lock order unchanged: `mu`, then `litMu`);
   `RoomHasLitFire` reads it.
-- [ ] `look` prints the camp lines after the sky lines.
-- [ ] Wiring (`modules/camping`): `camp` then `look` shows the camp
+- [x] `look` prints the camp lines after the sky lines.
+- [x] Wiring (`modules/camping`): `camp` then `look` shows the camp
   line; `camp fire` makes it lit; `camp break` removes it; a second player
   sees "Dain's camp".
 
 ## Task 5: Recruiters shown in the room
 
-- [ ] Tests first (`modules/company`): the notice line for free, priced,
+- [x] Tests first (`modules/company`): the notice line for free, priced,
   claimed, in-company, refused, and none left.
-- [ ] `internal/company`: an optional `RecruiterViewProvider`
+- [x] `internal/company`: an optional `RecruiterViewProvider`
   (`RecruiterLines`, `LookCandidate`) on the registered provider.
-- [ ] `modules/company`: implements both over today's config.
-- [ ] `look` prints the notice lines after the camp lines, and
+- [x] `modules/company`: implements both over today's config.
+- [x] `look` prints the notice lines after the camp lines, and
   `look <candidate>` falls back to the candidate before "Look at what???".
-- [ ] Wiring (shipped config): the Muster Yard lists Tamsin and Oswin;
+- [x] Wiring (shipped config): the Muster Yard lists Tamsin and Oswin;
   after `company recruit tamsin`, only Oswin; the Oath Stone lists Corvin
   as won't join; `look tamsin` shows the description.
 
 ## Task 6: A readable formation grid
 
-- [ ] `window-party.js`: the grid uses the panel's body size and colour;
+- [x] `window-party.js`: the grid uses the panel's body size and colour;
   cells wrap and carry a `title` with the full name; the leader keeps its
   accent.
-- [ ] Browser check (Playwright, Chromium): the cell's font size equals the
+- [x] Browser check (Playwright, Chromium): the cell's font size equals the
   panel's, and the title carries the full name, at default and narrow
   widths.
 
 ## Task 7: Player help and tutorial
 
-- [ ] `help company`: moving together, recruiters in the room.
-- [ ] `help camp`: the camp in the room.
-- [ ] `help drink`: the status line.
-- [ ] The Company lesson's first hint says to look at the hiring post.
-- [ ] Tests: the pages render through `help`;
+- [x] `help company`: moving together, recruiters in the room.
+- [x] `help camp`: the camp in the room.
+- [x] `help drink`: the status line.
+- [x] The Company lesson's first hint says to look at the hiring post.
+- [x] Tests: the pages render through `help`;
   `TestTutorialHelpPointersExist` passes.
 
 ## Task 8: Verify, review, record
 
-- [ ] `go test -race ./...`, `make generate`, `make validate`.
-- [ ] Independent review over the phase diff; verify each finding.
-- [ ] `docs/PROJECT_STATUS.md` work-log entry with the **Review:** line.
+- [x] `go test -race ./...`, `make generate`, `make validate`.
+- [x] Independent review over the phase diff; verify each finding.
+- [x] `docs/PROJECT_STATUS.md` work-log entry with the **Review:** line.

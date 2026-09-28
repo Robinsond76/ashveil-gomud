@@ -46,6 +46,19 @@ func TestRecruiterLines(t *testing.T) {
 		m.registry.Put(domain.Record{LeaderUserID: 7, NextCompanionID: 2, Claimed: []int{961}, Companions: []domain.Companion{{ID: 1, MobTemplateID: 963}}})
 		assert.Equal(t, []string{"No one on the hiring slate is looking for work with you now."}, plain(m.RecruiterLines(7, hiringRoom)))
 	})
+	t.Run("full company", func(t *testing.T) {
+		m, _, _, _ := newRecruitModule(t, 0)
+		m.registry.Put(domain.Record{LeaderUserID: 7, NextCompanionID: 5, Companions: []domain.Companion{
+			{ID: 1, MobTemplateID: 58}, {ID: 2, MobTemplateID: 58}, {ID: 3, MobTemplateID: 58}, {ID: 4, MobTemplateID: 58}}})
+		assert.Equal(t, []string{"On the hiring slate: tamsin (free), garrick (120 gold).", hint,
+			"  Your company is full (4/4 companions); dismiss someone to take another on."}, plain(m.RecruiterLines(7, hiringRoom)))
+	})
+	t.Run("look at the notice", func(t *testing.T) {
+		m, _, _, _ := newRecruitModule(t, 0)
+		text, ok := m.LookCandidate(7, hiringRoom, "slate")
+		assert.True(t, ok)
+		assert.Contains(t, companyTagPattern.ReplaceAllString(text, ""), "On the hiring slate: tamsin (free)")
+	})
 	t.Run("not a recruiter room", func(t *testing.T) {
 		m, _, _, _ := newRecruitModule(t, 0)
 		assert.Empty(t, m.RecruiterLines(7, 1))

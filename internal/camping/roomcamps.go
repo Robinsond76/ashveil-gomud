@@ -53,3 +53,13 @@ func CampLines(camps []RoomCamp, viewerUserID int, nameOf func(userID int) strin
 	}
 	return lines
 }
+
+// UseRoomCampsReaderForTest registers f and returns a func that restores
+// the reader it replaced.
+func UseRoomCampsReaderForTest(f func(roomID int) []RoomCamp) (restore func()) {
+	roomCampsMu.Lock()
+	previous := roomCampsReader
+	roomCampsReader = f
+	roomCampsMu.Unlock()
+	return func() { SetRoomCampsReader(previous) }
+}

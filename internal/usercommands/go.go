@@ -152,7 +152,7 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 				// Phase 32a: companions following their leader move as one
 				// company, so the rooms hear one line for all of them.
-				withCompany := companionsFollowing(user.UserId, room)
+				withCompany := companionsFollowing(user.UserId, room, destRoom.RoomId)
 
 				// Tell the old room they are leaving
 				if withCompany {
@@ -368,19 +368,24 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 // handleExitLock attempts to open a locked exit. It reports whether the exit is
 // still locked, in which case the caller must stop.
-// companionsFollowing reports whether any of leaderUserID's live company
-// members stands in room, about to follow them out (Phase 32a).
-func companionsFollowing(leaderUserID int, room *rooms.Room) bool {
+// companionsFollowing reports whether any of leaderUserID's company members
+// stands in room, about to follow them out to destRoomId (Phase 32a). Each
+// is marked as covered by the leader's company line, so its own move to
+// destRoomId prints nothing; a companion moving any other way (a flight,
+// travel, a sneaking leader, on its own) still announces itself.
+func companionsFollowing(leaderUserID int, room *rooms.Room, destRoomId int) bool {
+	found := false
 	for _, instId := range room.GetMobs(rooms.FindCharmed) {
 		mob := mobs.GetInstance(instId)
-		if mob == nil || mob.Character.RoomId != room.RoomId || mob.Character.Health < 1 {
+		if mob == nil || mob.Character.RoomId != room.RoomId {
 			continue
 		}
 		if mob.Character.IsCompanion() && mob.Character.IsCharmed(leaderUserID) {
-			return true
+			mob.CompanyMoveTo = destRoomId
+			found = true
 		}
 	}
-	return false
+	return found
 }
 
 // companyLeaveLine is what the room a company leaves sees (Phase 32a).

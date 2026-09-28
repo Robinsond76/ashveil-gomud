@@ -13,7 +13,11 @@ import (
 // stands; a band crossed, or a companion watered, reads as before.
 func TestDrinkSuffix(t *testing.T) {
 	full := survival.FullNeeds()
-	same := survival.ProvisionResult{Name: "Aria", Needs: full}
+	same := survival.ProvisionResult{Name: "Aria", Needs: full, Member: survival.CompanionMemberKey(1)}
+	self := survival.ProvisionResult{Name: "Aria", Needs: full, Member: survival.LeaderMemberKey}
+	if got, want := drinkSuffix(self, true), " Thirst: "+survival.ThirstLabel(full.Thirst)+"."; got != want {
+		t.Fatalf("drink ... me = %q, want %q", got, want)
+	}
 	if got, want := drinkSuffix(same, false), " Thirst: "+survival.ThirstLabel(full.Thirst)+"."; got != want {
 		t.Fatalf("no band crossed = %q, want %q", got, want)
 	}

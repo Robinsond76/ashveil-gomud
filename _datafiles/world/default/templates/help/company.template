@@ -13,7 +13,8 @@ candidates for hire. <ansi fg="command">look</ansi> in a recruiter's room shows 
 notice and the candidates you can still take, with their price: "free"
 for a once-only offer, or "won't join you" for one your company would
 refuse (see Alignment, below). Anyone already in your company, and a free
-offer you've already taken, isn't listed.
+offer you've already taken, isn't listed; a full company is noted.
+<ansi fg="command">look post</ansi> (or the notice's name) reads the notice again.
 
   <ansi fg="command">look [candidate]</ansi>
   Read a candidate's description on the notice.
@@ -40,10 +41,11 @@ as the world ships).
 Your companions follow you from room to room. You aren't told each one
 arriving; the rooms you leave and enter hear one line for the whole
 company ("Dain leads their company towards the east exit.", "Dain arrives
-from the west, their company behind."). A companion moving on its own
-still shows its own line. <ansi fg="command">look</ansi> lists your companions by
-name, without the ♥friend tag other charmed creatures carry, and
-<ansi fg="command">party</ansi> lists them as Company.
+from the west, their company behind."). Any other move (a companion on
+its own, or following you after a flight, a journey, or a sneak) still
+shows its own line. <ansi fg="command">look</ansi> lists your companions by name,
+without the ♥friend tag other charmed creatures carry; in a party of
+players, <ansi fg="command">party</ansi> lists them as Company.
 
 <ansi fg="yellow-bold">Your roster</ansi>
 

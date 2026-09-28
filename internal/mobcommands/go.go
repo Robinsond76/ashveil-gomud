@@ -114,7 +114,7 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		// Phase 32a: a companion moving with its leader is part of the
 		// leader's one company line; it prints nothing of its own.
-		if !companionMovingWithLeader(mob, destRoom.RoomId) {
+		if !companionMovingWithLeader(mob, room.RoomId, destRoom.RoomId) {
 
 			c := configs.GetTextFormatsConfig()
 
@@ -155,13 +155,17 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	return false, nil
 }
 
-// companionMovingWithLeader reports whether mob is a company member whose
-// leader is already in the room it is entering (Phase 32a). One moving on
-// its own (sent, relocated, or left behind) still announces itself.
-func companionMovingWithLeader(mob *mobs.Mob, destRoomId int) bool {
-	if !mob.Character.IsCompanion() {
+// companionMovingWithLeader reports whether mob is a company member
+// following its leader out of a room whose one company line already
+// announced it (Phase 32a): the leader's "go" marked it for destRoomId and
+// the leader is there. One moving any other way still announces itself.
+// The mark is spent either way.
+func companionMovingWithLeader(mob *mobs.Mob, originRoomId, destRoomId int) bool {
+	marked := mob.CompanyMoveTo
+	mob.CompanyMoveTo = 0
+	if marked != destRoomId || !mob.Character.IsCompanion() {
 		return false
 	}
 	leader := users.GetByUserId(mob.Character.GetCharmedUserId())
-	return leader != nil && leader.Character.RoomId == destRoomId
+	return leader != nil && leader.Character.RoomId == destRoomId && originRoomId != destRoomId
 }

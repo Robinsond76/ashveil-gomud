@@ -188,6 +188,24 @@ func TestCompanyMovesAsOneThroughGo(t *testing.T) {
 	assert.Contains(t, strings.Join(seenBy(ahead), "\n"), "Tamsin Reed leaves towards the west exit.")
 	assert.Contains(t, strings.Join(seenBy(behind), "\n"), "Tamsin Reed enters from the east.")
 
+	// Review fix: walking back to rejoin the leader is its own move, not
+	// the company line's, so it still shows.
+	sent = nil
+	_, err = mobcommands.TryCommand("go", "east", companions[0])
+	require.NoError(t, err)
+	events.ProcessEvents()
+	require.Equal(t, gate.RoomId, mobs.GetInstance(companions[0]).Character.RoomId)
+	assert.Contains(t, strings.Join(seenBy(behind), "\n"), "Tamsin Reed leaves towards the east exit.")
+
+	// Review fix: a leader moved without a company line (a flight, travel's
+	// arrival, a sneak) leaves companions who follow announcing themselves.
+	sent = nil
+	require.NoError(t, rooms.MoveToRoom(dain.UserId, inn.RoomId))
+	_, err = mobcommands.TryCommand("go", "west", companions[1])
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.Join(seenBy(behind), "\n"), "Brother Oswin enters from the east.")
+
 	// A leader with no companion beside them walks as anyone does.
 	sent = nil
 	run(ahead, "go", "west")

@@ -26,8 +26,7 @@ func TestCampShowsInLook(t *testing.T) {
 	fork := rooms.LoadRoom(2002)
 	require.NotNil(t, fork)
 	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeSurvival{}, func() time.Time { return baseTime() })
-	camping.SetRoomCampsReader(module.RoomCamps)
-	t.Cleanup(func() { camping.SetRoomCampsReader(nil) })
+	t.Cleanup(camping.UseRoomCampsReaderForTest(module.RoomCamps))
 
 	dain := campUser(t, 7, fork.RoomId)
 	dain.Character.Name = "Dain"
