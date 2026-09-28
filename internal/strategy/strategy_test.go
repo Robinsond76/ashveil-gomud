@@ -80,10 +80,10 @@ func TestPickRules(t *testing.T) {
 		{Furthest, 0, true, 4},   // the back row
 		{Leader, 0, false, 1},
 		{Assist, 2, false, 2},
-		{Assist, 3, false, 1},   // the player's target is out of reach: the nearest
-		{Assist, 3, true, 3},    // a spell reaches it
-		{Defend, 0, false, 2},   // the only reachable foe striking one of us
-		{Defend, 0, true, 3},    // it strikes the one at 40%
+		{Assist, 3, false, 1}, // the player's target is out of reach: the nearest
+		{Assist, 3, true, 3},  // a spell reaches it
+		{Defend, 0, false, 2}, // the only reachable foe striking one of us
+		{Defend, 0, true, 3},  // it strikes the one at 40%
 		{Leader, 0, true, 1},
 	}
 	for _, c := range cases {

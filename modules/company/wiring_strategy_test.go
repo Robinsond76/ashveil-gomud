@@ -26,13 +26,13 @@ import (
 // tests don't load): Aria's archetype, and the shipped companion spells.
 type fakeArchetypes struct{ player string }
 
-func (fakeArchetypes) CanTrain(int, string) (bool, string)     { return true, "" }
+func (fakeArchetypes) CanTrain(int, string) (bool, string)      { return true, "" }
 func (fakeArchetypes) CanLearnSpell(int, string) (bool, string) { return true, "" }
 func (fakeArchetypes) Exists(id string) bool {
 	return id == "warrior" || id == "cleric" || id == "wizard" || id == "ranger" || id == "rogue"
 }
 func (fakeArchetypes) ArchetypeName(id string) (string, bool) { return strings.Title(id), true }
-func (f fakeArchetypes) PlayerArchetype(int) (string, bool) { return f.player, f.player != "" }
+func (f fakeArchetypes) PlayerArchetype(int) (string, bool)   { return f.player, f.player != "" }
 func (fakeArchetypes) CompanionSpells(id string, level int) []string {
 	switch id {
 	case "cleric":
