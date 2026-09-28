@@ -9,6 +9,7 @@ help:
       - macros
       - set
       - password
+      - delete
     character:
       - actionpoints
       - alignment
@@ -185,6 +186,7 @@ help:
 # Aliases for keywords when typing: help <keyword>
 # Key is the target keyword, value is the list of aliases
 help-aliases:
+  delete:           [deletion, delete-character, reroll]
   adventure:        [ashveil, basics]
   company:          [recruit, recruiting, roster, companions, companion]
   standing:         [reputation, blackmarket, black-market]

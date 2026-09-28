@@ -115,7 +115,8 @@ var (
 		`online`:      {Online, true, false},
 		`party`:       {Party, true, false},
 		`password`:    {Password, true, false},
-		`paz`:         {Paz, true, true}, // Admin only
+		`delete`:      {Delete, false, false}, // Ashveil 32h
+		`paz`:         {Paz, true, true},      // Admin only
 		`peep`:        {Peep, false, false},
 		`pet`:         {Pet, false, false},
 		`picklock`:    {Picklock, false, false},
