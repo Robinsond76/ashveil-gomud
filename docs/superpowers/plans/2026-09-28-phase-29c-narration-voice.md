@@ -305,12 +305,14 @@ XP line ("You gained N experience points!") is GoMud's and out of scope.
 
 ### Task 10: Verify, review, record, merge
 
-- [ ] Capture before/after transcripts of the same seeded brawl
+- [x] Capture before/after transcripts of the same seeded brawl
   (`master` vs branch) into the scratchpad for the review.
-- [ ] `go test -race ./...`, `make generate`, `make validate`.
-- [ ] Independent reviewer subagent over `git diff master..HEAD` with the
-  design doc and invariants; verify each finding, fix with regression
-  tests, re-verify.
+- [x] Independent reviewer subagent over `git diff master..HEAD` with the
+  design doc and invariants.
+- [ ] Verify each finding, fix with regression tests (focused package
+  tests only).
+- [ ] Once, after the fixes: `go test -race ./...`, `make generate`,
+  `make validate`.
 - [ ] `docs/PROJECT_STATUS.md`: 29c row Complete, work-log entry with
   **Review:** line, known issues folded; remove this phase's design/plan
   per the pruning convention only after merge.

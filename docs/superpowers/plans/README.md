@@ -15,8 +15,10 @@ plan:
 
    `.worktrees/` is gitignored and is the project convention (for example
    `.worktrees/phase-6-interruptions`).
-3. Run the baseline checks in the worktree before changing code
-   (`make generate`, `make validate`, `go test -race ./...`).
+3. No baseline full-suite run: `master` was verified when it merged. Run
+   focused tests per task; the full checks (`make generate`,
+   `make validate`, `go test -race ./...`) run once, after review fixes
+   (see `CLAUDE.md`, "Verification").
 4. Execute the plan task-by-task with `superpowers:executing-plans` or
    `superpowers:subagent-driven-development`, committing each task on the
    feature branch.
