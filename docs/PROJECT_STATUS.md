@@ -95,7 +95,7 @@ instead of duplicating them.
 | 31 | Browser battle panel | Proposed: [spec](superpowers/specs/2026-09-26-battle-panel-design.md). Enemy and company grids with target lines, from the event stream |
 | 32a | Company polish | Proposed: [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Proposed: [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
-| 32b | Tutorial replay | Proposed: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md). `tutorial replay`: a throwaway level-1 copy of the real character runs the course; the real character comes back exactly as it was; a `UserPurged` event every module handles |
+| 32b | Tutorial replay | Complete, in review: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](superpowers/plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
 | 32c–32h | Play-test follow-ups | Proposed, specs to write ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): enemy groups and `scout` (32c), automatic player and companion combat (32d), company XP (32e), company logistics (32f), web company dock (32g), character deletion (32h) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
@@ -106,6 +106,41 @@ Keep only the latest phase's entry here (What / Why / Verification /
 fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
+
+### Phase 32b: tutorial replay (2026-09-28)
+
+- **What:** `tutorial replay` (confirm with `yes`) takes the player's real
+  character out of the world as on quit, keeping the connection, and hands
+  it to a throwaway user: same name, race, archetype and settings, level 1
+  with the starter kit. Graduating, skipping, dying, or any other way out
+  hands the connection back to the real character, unchanged. A new
+  `PlayerDespawn.HandOff` flag keeps the connection open, `UserHandOff`
+  (hooks) logs the next user in on it, and `UserPurged` makes every module
+  with per-user state drop the throwaway before its file is removed
+  (`modules/purge_coverage_test.go` guards new modules). The connection
+  loops in `main.go` re-read their user each input, and a dropped link is
+  now resolved on the game loop (`World.SendDisconnect`). Logging out ends a
+  replay; logging in elsewhere ends a stale one; a restart sweeps leftovers
+  in the tutorial module's load; copyover keeps an online replay. `online`
+  shows "(replaying the tutorial)". Help: `help tutorial` (alias `replay`),
+  pointed to from the first lesson.
+- **Why:** the owner's playtest roadmap (32b).
+- **Verification:** `go test -race ./...`, `make generate`, and
+  `make validate` pass. Wiring tests go through `plugins.Load`, a real pipe
+  connection and the hooks listeners for skip, graduation (twice), death,
+  quit and restart, and check the world clock doesn't move.
+- **Review:** the reviewer found seven issues. Fixed, each with a test:
+  (1) index rebuilds and `GetUniqueUserId` picked up replay files after a
+  restart; (2) a disconnect mid-switch could despawn the wrong user;
+  (3) a replay skipped quit's "busy" check when a mob was set on the player;
+  (4) a loaded replay had no online time; (5) a fresh replay spawned in the
+  Void before the course; (6) a refused hand-off left the throwaway's file;
+  plus help that contradicted replays (logout, skip) and didn't name
+  `whisper`. Accepted: (7) when the real character logs in elsewhere, their
+  login lands before the stale replay's purge, which is harmless. Not yet
+  covered by tests: death through the real death module, quit through its
+  buff path, link-dead expiry, a real copyover, and the purge in every
+  module at once (each module has its own purge test).
 
 ### Phase 29b2: one battle at a time; spawn groups; help for every system (2026-09-28)
 
