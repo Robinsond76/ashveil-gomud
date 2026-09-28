@@ -6,7 +6,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-28
-- **HEAD:** Phase 32c (enemy groups) merged 2026-09-28. Before it, Phase 29b2 (one battle at a time; spawn groups) and player
+- **HEAD:** Phase 32h (character deletion) merged 2026-09-28, after 32c
+  (enemy groups). Before it, Phase 29b2 (one battle at a time; spawn groups) and player
   help for every Ashveil system are complete and merged to `master`
   (2026-09-28, from `claude/next-phase-wfav4w`). Docs cleanup (finished-phase
   plans/specs and the old work log moved to git history) on
@@ -22,9 +23,10 @@ instead of duplicating them.
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
-  the first combat slices (29a, 29b, 29b2, 29c), and enemy groups (32c)
-  are all done.
-- **Next:** 32d–32h (32a, 32a2, 32b, and 32c are done), from the owner's
+  the first combat slices (29a, 29b, 29b2, 29c), enemy groups (32c), and
+  character deletion (32h) are all done.
+- **Next:** 32d–32g (32a, 32a2, 32b, 32c, and 32h are done; 32f is
+  being finished in another session), from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
   the combat roadmap continues at 29d.
@@ -98,7 +100,8 @@ instead of duplicating them.
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md), [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](superpowers/plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
 | 32c | Enemy groups and `scout` | Complete: [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md), [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md). Groups named as they form ("a band of ruffians") and shown on their own room line; `attack <group>` is the only way to start a fight; a battle plays out on its own (attack, cast, backstab, shoot, tackle, disarm refused in one; a bare `attack` after `break` rejoins); `look <group>` and a free `scout`; summaries name the group |
-| 32d–32h | Play-test follow-ups | Proposed ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): automatic player and companion combat (32d), company XP (32e), company logistics (32f, implemented on `claude/project-thread-rxps20`, review done, fixes pending), web company dock (32g), character deletion (32h, [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), in progress) |
+| 32h | Character deletion | Complete: [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), [plan](superpowers/plans/2026-09-28-phase-32h-character-deletion.md). `delete character`, confirmed by the password (masked) and the name; every module's state purged with the login kept; back in creation on the same connection; a durable `Deleting` flag and a boot sweep; masked in-game password prompts (also `password`) |
+| 32d–32g | Play-test follow-ups | Proposed ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): automatic player and companion combat (32d), company XP (32e), company logistics (32f, implemented on `claude/project-thread-rxps20`; its review fixes and merge handed to another session), web company dock (32g) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
@@ -109,64 +112,75 @@ fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
 
-### Phase 32c: enemy groups and `scout` (2026-09-28)
+### Phase 32h: character deletion (2026-09-28)
 
-- **What:** per the [32c design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md)
-  and [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md).
-  Groups are named when they form ("a band of ruffians") and keep the name
-  while members fall; a group formed outside a spawn list (a script's or
-  admin's spawn) is named when first seen. Each shows on its own room line
-  with a count, its kinds, and what it's doing. Names are runtime only: a
-  restart regroups and renames. `attack <group>` is the only way to start a
-  fight ("You go for the band of ruffians."); a member's name is refused
-  with the command to type; `#id` takes the whole group. In a battle,
-  `attack`, `cast`, `backstab`, `shoot`, `tackle`, and `disarm` are
-  refused; a bare `attack` after `break` rejoins. Out of one, a harmful
-  spell, backstab, or shot at a mob doesn't start a fight. A lone player
-  turns toward the next foe on their own. `look <group>` and a free
-  `scout [group]` show a group and its formation. Summaries name the group;
-  the ambush pair and the tutorial's "straw squad" are named. Collective
-  nouns by race (`groupnoun`). Help: `scout` (new), `attack` (rewritten),
-  `targeting`, `combat`, `cast`, `shoot`, `skulduggery`, `battle-summary`,
-  `brawling`, `break`; the Combat lesson teaches `scout squad`/`attack squad`.
-- **Why:** the owner's play-test notes ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)).
-  Written before 29c on `claude/project-thread-4xs9vt` and merged onto it:
-  29c's spell test now casts through a companion, since a player can't cast
-  into a running battle.
+- **What:** per the [32h design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md)
+  (the owner's answers: keep the login, confirm with password and name,
+  destroy items and gold, lock after three wrong passwords) and
+  [plan](superpowers/plans/2026-09-28-phase-32h-character-deletion.md).
+  `delete character` warns, asks for the password (masked) and then the
+  name; both right flag the record (`Deleting`, durable), save it, and
+  leave the world with 32b's hand-off despawn. `HandleLeave` then queues
+  `UserPurged{KeepAccount: true}` (every module drops the user's state) and
+  a hand-off to the same user; `HandlePurge` resets the record
+  (`users.ResetDeletedCharacter`: a new character in the Void, the old
+  name out of the index, the flag cleared) instead of removing it. A
+  flagged record can't log in; `hooks.SweepDeletions` at boot finishes an
+  interrupted deletion. Refused in a fight or battle, while down, in a
+  replay, and before a character exists. Masked prompt questions
+  (`prompt.Question.Masked`, `connections.SetInputMasked`: star echo, no
+  history, `TEXTMASK` for the web client, `WILL/WONT ECHO` for Mudlet, the
+  redrawn prompt starred, no autocomplete), used by `password` too. Three
+  wrong passwords in a row, in either command, lock both until the next
+  login. Help: `help delete` (aliases `deletion`, `delete-character`,
+  `reroll`), linked from `help password`, pointed to from the Departure
+  lesson.
+- **Why:** the owner's play-test note "How do I delete a character?"
+  ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)).
+  Task 1 was done on `claude/project-thread-kmltne` before the pause.
 - **Verification:** `go test -race ./...`, `make generate`, and
-  `make validate` pass. Wiring tests in `modules/company/wiring_groups_test.go`
-  (real commands and `DoCombat`), narration, stream, tutorial, and
-  expedition tests.
-- **Review:** 3 major, 8 minor, 12 nits. Fixed with tests: (M1) a lone
-  player who used `break` and rejoined was never turned again (`attack`
-  now resumes them); (M2) the lone turn read "You turn on ruffian" (now
-  "You turn toward the ruffian.", and the room sees it); (M3) the suggested
-  keyword could name another group ("rats" matched "a band of big rats";
-  `enemyparty.Keyword` numbers by what the lookup matches); a group formed
-  outside a spawn list renamed as members fell (found merging onto 29c);
-  (m1) a tag group's member that wandered off kept the group's name;
-  (m3) `attack wolf` with a player named Wolf fought the wolves; (m4) group
-  words hid things in `look` ("look pack"); (m5) `help brawling`,
-  `help break`, and the cast notes; (m7) tackle and disarm were allowed
-  between `attack` and the battle's start; nits: member refusals' articles
-  ("The Captain Varek"). Left for the owner: (m2) non-hostile mobs sharing
-  a tag (the Frostfang guards) group and show under "Enemies here" in
-  `scout`; (m8) `formation move`, `flee`, `break`, potions, and `use` stay
-  allowed mid-battle until 32d. Accepted nits: an authored capitalised name
-  reads "You go for Rat King's court."; ordinals count hidden groups; two
-  lone mobs of one name get no `#2` in the hint; the scout grid overflows
-  on long names; tab completion still offers members' names; `-man`
-  plurals ("shamen"); the empty world's `attack.md`. Test gaps left (m6): a
-  regrouped survivor's new name, a shopkeeper by its own name, the weakest
-  reachable first aim, `groupnoun` loading, an authored `groupname`, a
-  hidden member in look/scout, `scout` in the tutorial wiring test.
+  `make validate` pass. `modules/tutorial/wiring_delete_test.go` drives it
+  through `plugins.Load`, a piped connection, the engine's leave, hand-off,
+  join, and purge handlers, and the real `delete` command (company, camp,
+  cargo, gear, gold; wrong password or name; Mudlet echo; the same login
+  after; a restart swept at boot; the clock unmoved); unit tests in
+  `internal/users`, `internal/hooks`, `internal/usercommands`,
+  `internal/connections`, `internal/inputhandlers`.
+- **Review:** 2 major, 7 minor, 6 nits. Fixed with tests: (1) raw telnet
+  redrew the prompt with the typed password in clear (now stars) and Tab
+  completed it (autocomplete now returns nothing while masked, for the web
+  client's GMCP suggestions too; a debug log of the input buffer dropped);
+  (2) a link-dead reconnect left the password question open on an unmasked
+  connection (the reconnect paths sync the mask); (3) the count wasn't "in
+  a row" (a right password clears it); (4, part) `password` was an
+  unlimited guessing oracle (it shares the count and the lock); nit: the
+  checked password is dropped from the prompt; help wording (a bare Enter
+  asks again; the lock covers both commands); the wiring test checks
+  nothing is dropped in the room. Accepted, recorded under Known issues:
+  (4) a tutorial replay's hand-back is a login, so it resets the count;
+  (5) copyover with a flagged user online races the resumed connection
+  (hard to reach: one `ProcessEvents` under the MUD lock); (6) a failed
+  reset leaves the flag until the boot sweep, and a login loaded before the
+  flag was saved can bring the old character back after the purge; (7) the
+  user id is reused, so references held elsewhere (mob `PlayerDamage`,
+  party invites, charms outside the room) point at the new character;
+  (9) web numpad/F-key macros can answer the password question. Test gaps
+  left: no test through `world.processInput` (the tests sync the mask by
+  hand), none for the `battle.Current` and death-pending refusals, the
+  survival/expedition/exposure/walking/archetype state checked only through
+  the purge coverage test, and the old name taken by a second character.
 
 ## Known issues / deferred items
 
 - **Enemy groups (32c), for the owner:** non-hostile mobs sharing a tag
   form groups (scout lists them as enemies); `formation move`, `flee`,
   `break`, potions, and `use` stay allowed mid-battle until 32d. Test gaps
-  are in the 32c work-log entry.
+  are in 32c's work-log entry (git history, commit `ff1f663e`).
+- **Character deletion (32h), accepted:** a replay's hand-back resets the
+  wrong-password count; copyover with a flagged user online races the
+  resumed connection; a failed reset waits for the boot sweep; the reused
+  user id keeps references elsewhere (mob XP credit, party invites,
+  charms outside the room); web macros can answer the password question.
 
 Refreshed 2026-09-26 (Phase 28). Earlier entries that later phases
 resolved (the weather, load, and mount multipliers, and the 11a–11c

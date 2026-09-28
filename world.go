@@ -640,6 +640,9 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 		}
 	}
 
+	// Ashveil 32h: mask the connection while a password is being asked.
+	user.SyncInputMask()
+
 	// If they had an input prompt, but now they don't, lets make sure to resend a status prompt
 	if hadPrompt || (!hadPrompt && user.GetPrompt() != nil) {
 		connId := user.ConnectionId()

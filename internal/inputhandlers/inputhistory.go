@@ -6,8 +6,9 @@ import "github.com/GoMudEngine/GoMud/internal/connections"
 func HistoryInputHandler(clientInput *connections.ClientInput, sharedState map[string]any) (nextHandler bool) {
 	// Save whatever was in the buffer when enter was hit as the last submitted
 	if clientInput.EnterPressed {
-		// copy the bytes over (If not just an enter press)
-		if len(clientInput.Buffer) > 0 {
+		// copy the bytes over (If not just an enter press). Ashveil 32h: a
+		// masked answer (a password) is never kept.
+		if len(clientInput.Buffer) > 0 && !connections.InputMasked(clientInput.ConnectionId) {
 			clientInput.History.Add(clientInput.Buffer)
 		}
 	}

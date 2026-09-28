@@ -15,6 +15,15 @@ func HandlePurge(e events.Event) events.ListenerReturn {
 		mudlog.Error("Event", "Expected Type", "UserPurged", "Actual Type", e.Type())
 		return events.Cancel
 	}
+	// Ashveil 32h: a deleted character keeps its login and starts again.
+	if evt.KeepAccount {
+		if err := users.ResetDeletedCharacter(evt.UserId); err != nil {
+			mudlog.Error("HandlePurge", "userId", evt.UserId, "keepAccount", true, "error", err)
+			return events.Continue
+		}
+		mudlog.Info("HandlePurge", "userId", evt.UserId, "result", "character reset")
+		return events.Continue
+	}
 	if err := users.RemoveUserFile(evt.UserId); err != nil {
 		mudlog.Error("HandlePurge", "userId", evt.UserId, "error", err)
 		return events.Continue
