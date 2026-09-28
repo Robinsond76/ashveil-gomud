@@ -303,5 +303,6 @@ func GroupSummary(mob *mobs.Mob) mobparty.MobSummary {
 		Noun:       mob.CollectiveNoun(),
 		GroupName:  mob.GroupName,
 		GroupDesc:  mob.GroupDesc,
+		Hostile:    mob.Hostile,
 	}
 }

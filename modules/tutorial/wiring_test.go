@@ -498,7 +498,8 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 		}
 		require.True(t, mob.Practice, mob.Character.Name)
 		squad[id] = mob.Character.Name
-		summaries = append(summaries, mobparty.MobSummary{InstanceId: id, Groups: mob.Groups, EHP: float64(mob.Character.HealthMax.Value)})
+		assert.NotEmpty(t, mob.SpawnGroup, "Phase 32d: the (non-hostile) squad is one spawn group")
+		summaries = append(summaries, mobparty.MobSummary{InstanceId: id, SpawnGroup: mob.SpawnGroup, Groups: mob.Groups, EHP: float64(mob.Character.HealthMax.Value)})
 	}
 	require.Len(t, squad, 4)
 	parties := mobparty.Assemble(summaries)

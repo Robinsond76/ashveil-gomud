@@ -599,6 +599,9 @@ func (m *TutorialModule) raiseSquad(user *users.UserRecord) {
 			f.raised++
 			if mob := mobs.GetInstance(id); mob != nil {
 				mob.GroupName, mob.GroupDesc = SquadName, SquadDesc // Phase 32c
+				// Phase 32d: straw soldiers aren't hostile, so their shared
+				// tag alone no longer makes them one group; a spawn group does.
+				mob.SpawnGroup = fmt.Sprintf("practice:%d", user.UserId)
 			}
 		}
 	}

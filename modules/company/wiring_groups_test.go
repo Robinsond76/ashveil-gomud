@@ -353,3 +353,18 @@ func TestAThingIsNotHiddenByAGroup(t *testing.T) {
 	assert.NotContains(t, got, "two strong")
 	assert.Contains(t, b.cmd("look", "ruffians"), "two strong", "the group's other words still work")
 }
+
+// TestPeacefulTagMatesAreNotAGroup (Phase 32d, the owner): the bandits
+// here aren't hostile; without a spawn group their shared tag makes no
+// "band", and each is attacked by its own name.
+func TestPeacefulTagMatesAreNotAGroup(t *testing.T) {
+	b := newBrawl(t)
+	for _, m := range b.livingBandits() {
+		m.SpawnGroup = ""
+	}
+	assert.Empty(t, b.groupLines(), "no band of bandits")
+	assert.NotContains(t, b.cmd("scout", ""), "band of bandit")
+	assert.Contains(t, b.cmd("attack", "bandit captain"), "You go for the bandit captain.")
+	require.NotNil(t, b.aria.Character.Aggro)
+	assert.Equal(t, b.bandits["bandit captain"][0], b.aria.Character.Aggro.MobInstanceId)
+}

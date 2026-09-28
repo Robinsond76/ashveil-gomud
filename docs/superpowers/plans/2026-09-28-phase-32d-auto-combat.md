@@ -96,11 +96,11 @@ inventory/provision code.
 
 ## Task 7: Peaceful mobs (`internal/mobparty`, `internal/rooms`, `modules/tutorial`)
 
-- [ ] Tests first: `groupKey` ignores the tag of a non-hostile mob, keeps
+- [x] Tests first: `groupKey` ignores the tag of a non-hostile mob, keeps
   its spawn group (`party_test.go`); the tutorial squad (non-hostile)
   is one group with a spawn group, and the Combat lesson's wiring test
   passes.
-- [ ] `MobSummary.Hostile` from `rooms.GroupSummary`; `groupKey`; the
+- [x] `MobSummary.Hostile` from `rooms.GroupSummary`; `groupKey`; the
   squad's `SpawnGroup` in `modules/tutorial`.
 
 ## Task 8: Player help and tutorial

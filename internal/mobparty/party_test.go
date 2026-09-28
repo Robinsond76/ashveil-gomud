@@ -29,9 +29,9 @@ func TestAssembleSoloMobsEachBecomeOwnParty(t *testing.T) {
 
 func TestAssembleGroupsSharedTagIntoOneParty(t *testing.T) {
 	parties := mobparty.Assemble([]mobparty.MobSummary{
-		{InstanceId: 1, Groups: []string{"goblin-raiders"}},
-		{InstanceId: 2, Groups: []string{"goblin-raiders"}},
-		{InstanceId: 3, Groups: []string{"goblin-raiders"}},
+		{InstanceId: 1, Groups: []string{"goblin-raiders"}, Hostile: true},
+		{InstanceId: 2, Groups: []string{"goblin-raiders"}, Hostile: true},
+		{InstanceId: 3, Groups: []string{"goblin-raiders"}, Hostile: true},
 		{InstanceId: 4}, // untagged, solo
 	})
 
@@ -52,9 +52,9 @@ func TestAssembleGroupsSharedTagIntoOneParty(t *testing.T) {
 
 func TestAssembleOrdersFormationByEHPDescending(t *testing.T) {
 	parties := mobparty.Assemble([]mobparty.MobSummary{
-		{InstanceId: 1, Groups: []string{"pack"}, EHP: 10},
-		{InstanceId: 2, Groups: []string{"pack"}, EHP: 50},
-		{InstanceId: 3, Groups: []string{"pack"}, EHP: 30},
+		{InstanceId: 1, Groups: []string{"pack"}, Hostile: true, EHP: 10},
+		{InstanceId: 2, Groups: []string{"pack"}, Hostile: true, EHP: 50},
+		{InstanceId: 3, Groups: []string{"pack"}, Hostile: true, EHP: 30},
 	})
 
 	require.Len(t, parties, 1)
@@ -70,7 +70,7 @@ func TestAssembleOrdersFormationByEHPDescending(t *testing.T) {
 func TestAssembleCapsAtFiveAndSplits(t *testing.T) {
 	members := make([]mobparty.MobSummary, 0, 6)
 	for i := 1; i <= 6; i++ {
-		members = append(members, mobparty.MobSummary{InstanceId: i, Groups: []string{"horde"}})
+		members = append(members, mobparty.MobSummary{InstanceId: i, Groups: []string{"horde"}, Hostile: true})
 	}
 
 	parties := mobparty.Assemble(members)
@@ -100,7 +100,7 @@ func TestAssembleGroupsBySpawnGroup(t *testing.T) {
 		{InstanceId: 2, SpawnGroup: "spawn:441:1", Groups: []string{"slum-ruffians"}},
 		{InstanceId: 3, SpawnGroup: "spawn:441:2", Groups: []string{"rats"}},
 		{InstanceId: 4, SpawnGroup: "spawn:441:2", Groups: []string{"rats"}},
-		{InstanceId: 5, Groups: []string{"rats"}},
+		{InstanceId: 5, Groups: []string{"rats"}, Hostile: true},
 	})
 	require.Len(t, parties, 3)
 	assert.ElementsMatch(t, []int{1, 2}, parties[0].Members)
@@ -126,4 +126,23 @@ func TestInstanceIdFromMemberKeyRejectsNonMobKeys(t *testing.T) {
 
 	_, ok = mobparty.InstanceIdFromMemberKey(company.CompanionMemberKey(3))
 	assert.False(t, ok)
+}
+
+// TestAPeacefulTagGroupsNobody (Phase 32d, the owner): non-hostile mobs
+// sharing a tag (townsfolk) are each their own party; a spawn group still
+// groups them, and hostile ones group by the tag as before.
+func TestAPeacefulTagGroupsNobody(t *testing.T) {
+	parties := mobparty.Assemble([]mobparty.MobSummary{
+		{InstanceId: 1, Groups: []string{"townsfolk"}},
+		{InstanceId: 2, Groups: []string{"townsfolk"}},
+		{InstanceId: 3, SpawnGroup: "practice:7", Groups: []string{"straw"}},
+		{InstanceId: 4, SpawnGroup: "practice:7", Groups: []string{"straw"}},
+		{InstanceId: 5, Groups: []string{"wolves"}, Hostile: true},
+		{InstanceId: 6, Groups: []string{"wolves"}, Hostile: true},
+	})
+	require.Len(t, parties, 4)
+	assert.Equal(t, []int{1}, parties[0].Members)
+	assert.Equal(t, []int{2}, parties[1].Members)
+	assert.ElementsMatch(t, []int{3, 4}, parties[2].Members)
+	assert.ElementsMatch(t, []int{5, 6}, parties[3].Members)
 }

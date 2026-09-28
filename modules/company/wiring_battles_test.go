@@ -29,6 +29,7 @@ func (b *brawl) looseBandits() []int {
 	var ids []int
 	for _, mob := range b.livingBandits() {
 		mob.Groups = nil
+		mob.SpawnGroup = ""
 		mob.Hostile = true
 		ids = append(ids, mob.InstanceId)
 	}

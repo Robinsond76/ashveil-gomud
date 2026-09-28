@@ -154,6 +154,7 @@ func TestReassignWithinLostPartyNeverTurnsOnABystander(t *testing.T) {
 	const roomId = 990102
 	shopkeeper := engagementMob(t, 8301, 5, roomId)
 	shopkeeper.Groups = []string{"29a-merchants"}
+	shopkeeper.SpawnGroup = "29a-merchants" // peaceful: a group by its spawn (32d)
 	room := &rooms.Room{RoomId: roomId}
 	room.SetTestOccupants(nil, []int{8301})
 	rooms.SetTestRoom(room)
@@ -185,6 +186,7 @@ func TestReassignWithinLostPartyNeverTurnsOnABystander(t *testing.T) {
 	footman.Hostile = false
 	lost := engagementMob(t, 8303, 0, roomId)
 	lost.Groups = []string{"29a-merchants"}
+	lost.SpawnGroup = "29a-merchants"
 	room.SetTestOccupants(nil, []int{8301, 8302, 8303})
 	id, ok = reassignWithinLostParty(8, 8303, 1, true, formationcombat.ReachAny, strategy.Weakest, 0, room)
 	require.True(t, ok)

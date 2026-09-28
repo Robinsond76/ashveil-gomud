@@ -44,6 +44,10 @@ type brawl struct {
 	round    uint64
 }
 
+// brawlBandits is the bandits' spawn group: they are non-hostile, and
+// since Phase 32d a shared tag groups only hostile mobs.
+const brawlBandits = "brawl:bandits"
+
 // banditMob is a non-hostile bandit sharing the party's groups tag.
 func banditMob(id int, name string, level int) string {
 	return fmt.Sprintf("mobid: %d\nzone: brawl\nhostile: false\nmaxwander: 0\nactivitylevel: 0\ngroups: [bandits]\ncharacter:\n  name: %s\n  raceid: 1\n  level: %d\n", id, name, level)
@@ -211,6 +215,8 @@ func newBrawl(t *testing.T) *brawl {
 	for _, id := range []int{9101, 9101, 9102, 9103, 9104} {
 		m := mobs.NewMobById(mobs.MobId(id), road.RoomId)
 		require.NotNil(t, m)
+		// Phase 32d: non-hostile mobs are a group only by a spawn group.
+		m.SpawnGroup = brawlBandits
 		road.AddMob(m.InstanceId)
 		b.bandits[m.Character.Name] = append(b.bandits[m.Character.Name], m.InstanceId)
 	}
@@ -506,6 +512,7 @@ func TestShopkeeperInTheGroupStaysOut(t *testing.T) {
 	}
 	fence := mobs.NewMobById(9105, b.road.RoomId)
 	require.NotNil(t, fence)
+	fence.SpawnGroup = brawlBandits
 	require.True(t, fence.HasShop())
 	b.road.AddMob(fence.InstanceId)
 
