@@ -624,6 +624,19 @@ func (u *UserRecord) ClearPrompt() {
 	u.activePrompt = nil
 }
 
+// SyncInputMask (Ashveil 32h) masks the user's connection exactly while
+// their open prompt question is a masked one (a password), and unmasks it
+// otherwise. The world calls it after every input.
+func (u *UserRecord) SyncInputMask() {
+	masked := false
+	if u.activePrompt != nil {
+		if q := u.activePrompt.GetNextQuestion(); q != nil && q.Masked {
+			masked = true
+		}
+	}
+	connections.SetInputMasked(u.connectionId, masked)
+}
+
 func (u *UserRecord) GetOnlineInfo() OnlineInfo {
 	c := configs.GetTimingConfig()
 	afkRounds := uint64(c.SecondsToRounds(int(configs.GetNetworkConfig().AfkSeconds)))

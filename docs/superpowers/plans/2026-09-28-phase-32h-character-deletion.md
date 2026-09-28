@@ -37,16 +37,16 @@ The owner's answers are recorded there (2026-09-28); nothing is left open.
 
 ## Task 1: Masked prompt questions (`internal/prompt`, `internal/connections`, `internal/inputhandlers`, `world.go`, `internal/usercommands/password.go`)
 
-- [ ] Tests first: `Question.Masked` round trip; `SetInputMasked` sends
+- [x] Tests first (done except `SyncInputMask`, still to write): `Question.Masked` round trip; `SetInputMasked` sends
   `TEXTMASK` to a websocket and `WILL/WONT ECHO` to Mudlet, nothing
   twice; the echo handler stars masked input and passes it through
   otherwise; the history handler skips masked input;
   `SyncInputMask` masks while the next question is masked and unmasks
   when answered or cleared.
-- [ ] `prompt.Question.Masked`, `connections.SetInputMasked` /
+- [x] `prompt.Question.Masked`, `connections.SetInputMasked` /
   `InputMasked`, echo and history handlers, `users.SyncInputMask`
   called at the end of `world.processInput`.
-- [ ] `password` marks its questions masked.
+- [x] `password` marks its questions masked.
 
 ## Task 2: The deletion record (`internal/users`)
 

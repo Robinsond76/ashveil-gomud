@@ -149,6 +149,7 @@ type ConnectionDetails struct {
 	stripAnsi         bool
 	aiCommandRound    int64
 	aiCommandCount    int
+	inputMasked       bool // Ashveil 32h: the next input is a password (see SetInputMasked)
 }
 
 func (cd *ConnectionDetails) IsLocal() bool {
