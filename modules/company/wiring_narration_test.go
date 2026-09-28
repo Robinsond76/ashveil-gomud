@@ -46,7 +46,8 @@ var (
 func narratedFight(t *testing.T) ([]string, []combatstream.Event) {
 	b := newBrawl(t)
 	events := b.listen()
-	opening := b.cmd("attack", "bandit captain")
+	opening := b.cmd("attack", "bandit cutthroats")
+	assert.Contains(t, opening, "You go for the band of bandit cutthroats.")
 	assert.NotContains(t, opening, "prepares to fight")
 	lines := strings.Split(opening+"\n"+b.fightItOut(200), "\n")
 	return lines, *events
@@ -155,7 +156,7 @@ func TestCriticalHitNarration(t *testing.T) {
 func TestTwoPlayersOneGroupOneOpener(t *testing.T) {
 	b := newBrawl(t)
 	room := b.ariaHears()
-	b.cmd("attack", "bandit captain")
+	b.cmd("attack", "bandit cutthroats")
 	b.toughen()
 	b.fight()
 
@@ -170,9 +171,11 @@ func TestTwoPlayersOneGroupOneOpener(t *testing.T) {
 	users.SetTestUser(brom)
 	b.road.AddPlayer(brom.UserId)
 	t.Cleanup(func() { b.road.RemovePlayer(8) })
-	_, err := usercommands.TryCommand("attack", "bandit captain", 8, events.CmdSkipScripts)
+	*b.messages = nil
+	_, err := usercommands.TryCommand("attack", "bandit cutthroats", 8, events.CmdSkipScripts)
 	require.NoError(t, err)
 	events.ProcessEvents()
+	require.NotNil(t, brom.Character.Aggro, "Brom joins by the group's name: %q", *b.messages)
 
 	shared := false
 	for i := 0; i < 200 && len(b.livingBandits()) > 0; i++ {

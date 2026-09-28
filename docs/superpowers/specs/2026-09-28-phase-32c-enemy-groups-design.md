@@ -145,10 +145,14 @@ you can reach" as the one strategy until 32d adds more.
    ```
 3. **Nothing acts on a battle once it's started** (rule 5). In a battle,
    `attack` (bare, at your group, at a member, or at another group),
-   harmful and helpful `cast`, `backstab`, and `shoot` are refused:
+   harmful and helpful `cast`, `backstab`, `shoot`, `tackle`, and
+   `disarm` are refused (tackle and disarm added in implementation: they
+   act on a foe mid-fight like the rest):
    ```
-   The battle is under way: your company fights as it was set up.
+   The battle is under way: it plays out as you set it up.
    ```
+   One exception keeps `break` coherent: after a `break`, a bare `attack`
+   steps back into the same battle (implementation).
    Your aim changes only by itself: when your target falls or can't be
    reached, you turn on another by your strategy (29a's upkeep). **A
    player fighting alone is turned too** (final review): today 29a's
@@ -183,8 +187,10 @@ A band of ruffians, four strong, idling by the door.
 
 - the name and count, and what it's doing (idle, fighting you, fighting
   another, waiting its turn);
-- each visible member with a health word (the words `peep`'s first level
-  gives);
+- each visible member with a health word: unhurt, scratched (75% or
+  more), wounded (50%), badly wounded (25%), near death, or down
+  (`enemyparty.HealthWord`; peep has no word scale to reuse, so
+  implementation added this one);
 - an authored group may carry its own description (`groupdesc` beside
   `groupname` in the spawn list), shown first.
 

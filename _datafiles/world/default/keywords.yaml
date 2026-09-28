@@ -81,6 +81,7 @@ help:
       - light
       - narration
       - resurrect
+      - scout
       - sharpen
       - shoot
       - targeting
@@ -204,6 +205,7 @@ help-aliases:
   combat:           [battle, battles, fighting, fight]
   formation:        [reach, interception, formations]
   targeting:        [target, targets, enemy-parties]
+  scout:            [scouting, enemy-groups, groups]
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
   narration:        [critical, crit, healed, chanting, combat-text]

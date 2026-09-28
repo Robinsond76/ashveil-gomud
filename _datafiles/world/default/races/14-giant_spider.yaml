@@ -3,6 +3,7 @@ name: giant spider
 description: A massive arachnid.
 defaultalignment: -50
 size: large
+groupnoun: swarm
 unarmedname: fangs
 angrycommands: [emote chitters and stares.]
 tnlscale: 1

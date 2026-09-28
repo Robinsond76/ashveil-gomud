@@ -216,6 +216,21 @@ func newBrawl(t *testing.T) *brawl {
 	return b
 }
 
+// aimAt starts the fight with the bandits' group and then sets Aria's aim
+// on one named bandit, as `attack <bandit>` did before Phase 32c (a fight is
+// now started by naming a group, and the first aim is chosen for her). The
+// 29a/29b scenarios that need a particular foe use it.
+func (b *brawl) aimAt(name string) {
+	b.t.Helper()
+	_, id := b.road.FindByName(name)
+	if id == 0 {
+		_, id = rooms.LoadRoom(b.aria.Character.RoomId).FindByName(name)
+	}
+	require.NotZero(b.t, id, name)
+	b.cmd("attack", fmt.Sprintf("#%d", id))
+	b.aria.Character.SetAggro(0, id, characters.DefaultAttack)
+}
+
 func (b *brawl) cmd(c, rest string) string {
 	b.t.Helper()
 	*b.messages = nil
@@ -365,7 +380,7 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	mobs.GetInstance(captain).Character.SetAggro(7, 0, characters.DefaultAttack)
 
 	// F1: Aria attacks the captain, out of her reach.
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	require.NotNil(t, b.aria.Character.Aggro)
 	require.Equal(t, captain, b.aria.Character.Aggro.MobInstanceId)
 
@@ -416,8 +431,8 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 		assert.NotContains(t, got, "You turn on", "a leader who broke off stays out")
 		assert.Nil(t, b.aria.Character.Aggro)
 	}
-	b.cmd("attack", "bandit")
-	require.NotNil(t, b.aria.Character.Aggro, "she rejoins by attacking")
+	b.cmd("attack", "")
+	require.NotNil(t, b.aria.Character.Aggro, "she rejoins her battle with a bare attack")
 
 	// And the fight runs to its end with nobody left idle.
 	b.fightToTheEnd(200)
@@ -440,7 +455,7 @@ func TestUnplacedCompanyFightsAndCanBeStruck(t *testing.T) {
 	slinger := mobs.GetInstance(b.bandits["bandit slinger"][0])
 	slinger.Character.SetAggro(0, tamsin.InstanceId, characters.DefaultAttack)
 
-	b.cmd("attack", "bandit cutthroat")
+	b.aimAt("bandit cutthroat")
 	// In a fight, an unplaced member can reach anyone standing.
 	got := b.cmd("formation", "reach me")
 	assert.Contains(t, got, "In this fight, Aria can reach: ")
@@ -457,26 +472,29 @@ func TestUnplacedCompanyFightsAndCanBeStruck(t *testing.T) {
 	assert.Positive(t, b.fightToTheEnd(200), "an unplaced company can be struck")
 }
 
-// TestSoloPlayerWithARecordFightsAsBefore: the upkeep only keeps a company
-// with a companion present. A player whose companions are all dismissed
-// (the record stays) chooses their own targets: they are never turned.
-// Since 29b2 they do fight in a battle, so the group they struck comes at
-// them ("turns toward Aria"), as the owner's one-battle rule applies to
-// everyone.
-func TestSoloPlayerWithARecordFightsAsBefore(t *testing.T) {
+// TestSoloPlayerWithARecordTurnsOnHerOwn: the 29a upkeep only keeps a
+// company with a companion present. A player whose companions are all
+// dismissed (the record stays) is never told she can't reach anyone, and
+// since Phase 32c (a battle plays out on its own) she turns on the next foe
+// of her battle by herself when hers falls; since 29b2 the group she
+// struck comes at her ("turns toward Aria").
+func TestSoloPlayerWithARecordTurnsOnHerOwn(t *testing.T) {
 	b := newBrawl(t)
 	b.cmd("company", "dismiss all")
 	_, hasRecord := domain.FormationFor(7)
 	require.True(t, hasRecord)
 	require.Empty(t, b.companyInstances())
 
-	b.cmd("attack", "bandit cutthroat")
-	for i := 0; i < 5; i++ {
+	b.aimAt("bandit cutthroat")
+	for i := 0; i < 8; i++ {
 		b.aria.Character.HealthMax.Value = 1000
 		b.aria.Character.Health = 1000
+		before := len(b.livingBandits())
 		got := b.fight()
-		assert.NotContains(t, got, "You turn toward", "round %d", b.round)
 		assert.NotContains(t, got, "can't reach", "round %d", b.round)
+		if len(b.livingBandits()) > 0 && len(b.livingBandits()) == before {
+			assert.NotNil(t, b.aria.Character.Aggro, "round %d: she is fighting", b.round)
+		}
 	}
 }
 
@@ -495,7 +513,7 @@ func TestShopkeeperInTheGroupStaysOut(t *testing.T) {
 	require.True(t, fence.HasShop())
 	b.road.AddMob(fence.InstanceId)
 
-	b.cmd("attack", "bandit cutthroat")
+	b.aimAt("bandit cutthroat")
 	b.toughen()
 	got := b.fight()
 	assert.Contains(t, got, "bandit captain turns toward", "the rest of the party joins")

@@ -3,6 +3,7 @@ name: reptilian
 description: A creature resembling a lizard somewhat.
 defaultalignment: -20
 size: medium
+groupnoun: band
 unarmedname: claws
 tnlscale: 1
 knowsfirstaid: true

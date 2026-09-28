@@ -12,10 +12,14 @@ fighting any more.
 
 <ansi fg="yellow-bold">Your company fights as one (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help targeting</ansi><ansi fg="yellow-bold">)</ansi>
 
-Your companions fight beside you. When your company and a group of enemies
-start fighting:
+Enemies come in named groups ("A band of ruffians (4)"), and you fight a
+whole group, never one member: <ansi fg="command">attack ruffians</ansi> starts the battle. From
+then on it plays out on its own, from how your company was set up: nothing
+you type changes it until it's over. Set your formation first, and
+<ansi fg="command">scout</ansi> the group to see how it stands. Your companions fight beside you.
+Once the battle starts:
 
-- the whole enemy group joins in, not just the one you struck;
+- the whole enemy group fights, and you start on the weakest you can reach;
 - anyone on either side left without a target, or with one they can't reach,
   turns toward the weakest foe they can reach, and you're told about it
   (<ansi fg="command">You turn toward the bandit cutthroat.</ansi>);
@@ -30,7 +34,9 @@ soon as one ends. Another player can take on a waiting group meanwhile.
 Both sides stand in a 3x3 formation: three columns, and three rows from the
 front to the back. Where a fighter stands, and the reach of their weapon,
 decide who they can strike. A fighter in the front row shields the one
-behind them. <ansi fg="command">formation reach [member]</ansi> shows who a member can reach.
+behind them. <ansi fg="command">formation reach [member]</ansi> shows who a member can reach, and
+<ansi fg="command">scout [group]</ansi> (<ansi fg="command">help scout</ansi>) shows an enemy group's formation and which
+of them you can reach.
 
 <ansi fg="yellow-bold">Hitting (</ansi><ansi fg="command">help attack</ansi><ansi fg="yellow-bold">)</ansi>
 
@@ -67,7 +73,8 @@ and your company's health.
 
 <ansi fg="yellow-bold">Commands</ansi>
 
-  <ansi fg="command">attack [target]</ansi>   start a fight
+  <ansi fg="command">attack [group]</ansi>    start a fight with a group
+  <ansi fg="command">scout [group]</ansi>     see how a group stands
   <ansi fg="command">break</ansi>             stop fighting (enemies may keep attacking you)
   <ansi fg="command">flee</ansi>              try to run out of the room
   <ansi fg="command">consider [target]</ansi> size up a foe

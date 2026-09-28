@@ -3,6 +3,7 @@ name: monkey
 description: Just a monkey
 defaultalignment: -30
 size: medium
+groupnoun: troop
 unarmedname: fists
 tnlscale: 1
 selectable: false

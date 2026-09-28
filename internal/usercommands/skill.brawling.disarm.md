@@ -15,6 +15,7 @@
 - Brawling skill level >= 4.
 - Player must be in combat (`Aggro != nil`).
 - Cooldown: **1 real minute** per use (keyed `brawling:disarm`).
+- Phase 32c: refused in a battle (`BattleUnderWay`).
 
 ## Execution Flow
 

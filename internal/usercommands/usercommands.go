@@ -75,6 +75,7 @@ var (
 		`copyover`:    {Copyover, true, true}, // Admin only
 		`conditions`:  {Conditions, true, false},
 		`consider`:    {Consider, true, false},
+		`scout`:       {Scout, true, false}, // Ashveil Phase 32c
 		`default`:     {Default, false, false},
 		`disarm`:      {Disarm, false, false},
 		`drop`:        {Drop, true, false},
