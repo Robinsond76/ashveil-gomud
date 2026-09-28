@@ -334,12 +334,11 @@ func (m *CompanyModule) inspectAt(leaderUserID, roomID int, selector string) str
 	if c, ok := findGenerated(roster, selector, false); ok {
 		return m.inspectGenerated(leaderUserID, c)
 	}
-	// The same order "company recruit" uses, so inspect and recruit always
-	// mean the same person: this recruiter's regulars, then a partial
-	// roster name.
-	if _, regular := matchCandidate(rec, selector); !regular && !m.summonableName(selector) {
-		if c, ok := findGenerated(roster, selector, true); ok {
-			return m.inspectGenerated(leaderUserID, c)
+	// The same resolution "company recruit" uses, so inspect and recruit
+	// always mean the same person.
+	if !m.summonableName(selector) {
+		if _, c := resolveCandidate(rec, roster, selector); c != nil {
+			return m.inspectGenerated(leaderUserID, *c)
 		}
 	}
 	return m.inspect(leaderUserID, selector)

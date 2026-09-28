@@ -130,9 +130,9 @@ Phase 29b2 is at commit `d5ace46`).
 - **Why:** the owner-approved [narration design](superpowers/specs/2026-09-28-phase-29c-narration-voice-design.md);
   combat roadmap 29c.
 - **Verification:** `make generate` and `make validate` pass;
-  `go test -race ./...` passes except `TestRecruitThroughPluginsLoad`, a
-  flake already on `master` (32a2's partial recruit selector falls through
-  to a random roster candidate; queued as its own task). Wiring tests go
+  `go test -race ./...` passed except `TestRecruitThroughPluginsLoad`, a
+  flake already on `master`, since fixed there (`71406ee`, merged in with
+  its package re-run green). Wiring tests go
   through `hooks.DoCombat` (full 5v5 narration, two players on one group),
   the real `cast` command (`mm`, `healall` by a companion), and `help`.
 - **Review:** the reviewer found 2 major, 5 minor, 6 nits. Fixed, each with
@@ -166,9 +166,6 @@ keeps its own history.
   a closing line; untested: no closing on defeat or broken-off, a count of
   "turns toward" lines, `sparks` and `heal` through a real cast, the PvP
   "goes for" line.
-- **Flaky test on `master`:** `TestRecruitThroughPluginsLoad` fails about
-  2 runs in 5: "company recruit r" is ambiguous among the regulars and
-  falls through to a random roster candidate (32a2). Queued as its own fix.
 - **Tutorial replay (32b), untested paths:** death through the real death
   module, quit through its buff path, link-dead expiry, a real copyover,
   and the purge in every module at once (each module has its own purge
