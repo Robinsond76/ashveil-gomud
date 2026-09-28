@@ -11,9 +11,14 @@ shows a group's formation before the fight.
 2. There's no way to see an enemy's formation.
 3. **Decided (owner, 2026-09-28):** only a **group** can be attacked, by
    the group's name. Naming a member is not a way to start a fight.
+4. **Decided on review (owner, 2026-09-28):** no switching targets
+   during a fight, for now: naming a member inside your battle doesn't
+   retarget you (C.3). `cast`, `backstab`, and `shoot` follow the group
+   rule (C.6), and `scout` is free, with no skill (E.3).
 
 The rest are this design's recommendations, marked **(recommendation
-applied)**, for the owner to confirm on review.
+applied)**, still for the owner to confirm: the group nouns (A.1, A.2)
+and the room line's "(fighting you)" and "(waiting)" tags (B.2).
 
 ## Prior-art check
 
@@ -120,27 +125,32 @@ applied)**, for the owner to confirm on review.
    You prepare to fight a band of ruffians!
    Dain prepares to fight a band of ruffians.
    ```
-2. **Naming a member is refused** when you aren't already fighting its
-   group (the owner's rule), and the refusal says what to type:
+2. **Naming a member is refused** (the owner's rule), and the refusal
+   says what to type:
    ```
    The ruffian fights with a band of ruffians. Type attack ruffians.
    ```
-3. **Inside your battle, naming a member aims at it** **(recommendation
-   applied)**: `attack cutpurse` while you fight its band turns you on the
-   cutpurse, with the usual reach check. The owner's rule is about
-   starting a fight; picking a target within one is still useful, and 32d
-   keeps it for players who want to override their automatic choice.
+3. **No switching targets in a fight (owner, 2026-09-28).** Naming a
+   member of the group you're already fighting is refused too, and
+   doesn't change your aim:
+   ```
+   You're already fighting a band of ruffians. You strike whoever you can reach.
+   ```
+   Your aim changes only as it does today without you: 29a's upkeep turns
+   you (with a companion present) when your target falls or is out of
+   reach, and a bare `attack` takes a foe from your battle, now the
+   weakest one you can reach rather than the first in the room.
 4. **A mob alone** is attacked by its own name, as today (A.4).
 5. **Unchanged:** a bare `attack` (29b2), `attack` at another group while
    you're in a battle (refused, 29b2), `attack <player>` (PvP rules), the
    exact `#<id>` and `@<id>` forms companions and parties use, and the
    `*`, `*mob`, and `*user` random forms.
 6. **`cast`, `backstab`, and `shoot`** follow the same rule
-   **(recommendation applied)**: a group's name starts the fight, aimed
-   at the member `attack` would choose (a shot, having no reach limit,
-   takes the weakest member in the group); a member's name is refused
-   unless you're already fighting its group. Otherwise a harmful spell or
-   an arrow would be the way around the owner's rule. A helpful spell at
+   **(owner, 2026-09-28)**: a group's name starts the fight, or aims into
+   the battle you're in, at the member `attack` would choose (a shot,
+   having no reach limit, takes the weakest member in the group); a
+   member's name is refused, in or out of a fight. Otherwise a harmful
+   spell or an arrow would be the way around the owner's rules. A helpful spell at
    anyone, and `look`, `consider`, and `peep` at a member, are unchanged.
 
 ### D. `look <group>`
@@ -180,7 +190,7 @@ A band of ruffians, four strong, idling by the door.
    (what `formation reach me` would name).
 2. **`scout`** alone lists the groups in the room with their counts, the
    same as the room lines (B.1), and says to `scout <name>` one.
-3. **Free and instant** **(recommendation applied)**: no skill, no roll,
+3. **Free and instant** **(owner, 2026-09-28)**: no skill, no roll,
    no round spent, in or out of a fight, including a group waiting its
    turn. Ogre Battle shows a unit's make-up to anyone who looks; a skill
    gate would hide the one thing the owner asked to see. A skill that
@@ -204,9 +214,10 @@ presentation phases (29c, 32g) can use it.
 - The practice squad is named **"the straw squad"**, set by
   `modules/tutorial` when it raises the squad.
 - The Combat lesson's hints change: `scout squad` to see how they stand,
-  then `attack squad` to start the fight; `attack <name>` inside the
-  fight picks a target; the reach hint names `formation reach` and
-  `scout`.
+  then `attack squad` to start the fight. The reach hint no longer
+  says to attack another footman: your company turns you onto one you can
+  reach, and a bare `attack` does the same; it names `formation reach`
+  and `scout`.
 - The travel ambush pair (29b2) is named like any group: two bandits
   are "a band of bandits".
 
@@ -249,11 +260,12 @@ presentation phases (29c, 32g) can use it.
     `attack <noun>` and `attack <kind>` start a battle with it; the first
     aim is the weakest reachable member;
   - `attack <member>` with no battle is refused with the group's
-    command; inside that battle it retargets;
+    command; inside that battle it's refused and the aim is unchanged;
+    a bare `attack` in a battle takes the weakest reachable foe;
   - two groups of the same name: `attack ruffians#2` takes the second;
   - a `solitary` mob and a shopkeeper are attacked by their own names;
-  - `backstab`, `shoot`, and `cast` at a member are refused, and at the
-    group start the fight;
+  - `backstab`, `shoot`, and `cast` at a member are refused, in or out
+    of a fight, and at the group start the fight;
   - `look <group>` and `scout <group>` in and out of a fight, with a
     waiting group, with a hidden member, and in the dark;
   - the name holds as members fall; a regrouped survivor takes its new
@@ -265,8 +277,8 @@ presentation phases (29c, 32g) can use it.
   - 29a, 29b, and 29b2's fight tests pass (their `attack <member>` calls
     moved to the group's name where they start a fight).
 - **Player help:** a new `help scout`; `help attack` rewritten for
-  groups (replacing GoMud's page); `help targeting` (naming a group,
-  retargeting inside a battle), `help combat` (the hub links `scout`),
+  groups (replacing GoMud's page); `help targeting` (naming a group, no
+  switching targets in a fight), `help combat` (the hub links `scout`),
   `help backstab`, `help shoot`, and `help cast` updated; `scout` and
   its aliases in `keywords.yaml`; the Combat lesson points to `scout`;
   `TestTutorialHelpPointersExist` passes.
@@ -280,4 +292,5 @@ presentation phases (29c, 32g) can use it.
 - **`consider <group>`** (rating a whole group against the company).
 - **What `scout` reveals with skill** (roles, morale): 32d, 30e.
 - **Groups in the web client:** 32g's Combat tab.
-- **Automatic targeting within a battle** for the player: 32d.
+- **Choosing a target within a battle** (the owner's "not for now"):
+  revisit with 32d's automatic combat.
