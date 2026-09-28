@@ -109,7 +109,7 @@ design.
 
 ## Task 10: Docs, verification, review
 
-- [ ] `go test -race ./...`, `make generate`, `make validate`.
+- [x] `go test -race ./...`, `make generate`, `make validate`.
 - [x] Independent review; verify and fix findings with regression tests.
-- [ ] `docs/PROJECT_STATUS.md`: the 32f row, a work-log entry with
+- [x] `docs/PROJECT_STATUS.md`: the 32f row, a work-log entry with
   **Review:**, and the stale "capacity is flat" known issue removed.

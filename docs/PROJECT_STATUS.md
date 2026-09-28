@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-28
-- **HEAD:** Phase 32c (enemy groups) merged 2026-09-28. Before it, Phase 29b2 (one battle at a time; spawn groups) and player
+- **HEAD:** Phase 32f (company logistics) merged 2026-09-28, after 32c (enemy groups). Before them, Phase 29b2 (one battle at a time; spawn groups) and player
   help for every Ashveil system are complete and merged to `master`
   (2026-09-28, from `claude/next-phase-wfav4w`). Docs cleanup (finished-phase
   plans/specs and the old work log moved to git history) on
@@ -22,14 +22,15 @@ instead of duplicating them.
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
-  the first combat slices (29a, 29b, 29b2, 29c), and enemy groups (32c)
-  are all done.
-- **Next:** 32d–32h (32a, 32a2, 32b, and 32c are done), from the owner's
+  the first combat slices (29a, 29b, 29b2, 29c), enemy groups (32c), and
+  company logistics (32f) are all done.
+- **Next:** 32d (automatic player and companion combat), then 32e, 32g,
+  and 32h (32a, 32a2, 32b, 32c, and 32f are done; 32h is in progress in
+  another session), from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
   the combat roadmap continues at 29d.
-  Also open: capacity per company size (play-testing) and the "Future
-  ideas" row; see Known issues.
+  Also open: the "Future ideas" row; see Known issues.
 
 ## Phase progress
 
@@ -98,7 +99,8 @@ instead of duplicating them.
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md), [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](superpowers/plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
 | 32c | Enemy groups and `scout` | Complete: [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md), [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md). Groups named as they form ("a band of ruffians") and shown on their own room line; `attack <group>` is the only way to start a fight; a battle plays out on its own (attack, cast, backstab, shoot, tackle, disarm refused in one; a bare `attack` after `break` rejoins); `look <group>` and a free `scout`; summaries name the group |
-| 32d–32h | Play-test follow-ups | Proposed ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): automatic player and companion combat (32d), company XP (32e), company logistics (32f, implemented on `claude/project-thread-rxps20`, review done, fixes pending), web company dock (32g), character deletion (32h, [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), in progress) |
+| 32f | Company logistics | Complete: [design](superpowers/specs/2026-09-28-phase-32f-company-logistics-design.md), [plan](superpowers/plans/2026-09-28-phase-32f-company-logistics.md). Capacity from members (20 kg + Strength), one pack each, and horses; weight the only limit (a full company takes on nothing more; walking never blocked); a herd of riding and pack horses bought at stables, with saddles; cargo keeps uses; `company inventory`; `company eat`/`drink`/`meal` |
+| 32d, 32e, 32g, 32h | Play-test follow-ups | Proposed ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): automatic player and companion combat (32d), company XP (32e), web company dock (32g, takes 32f's GMCP extras), character deletion (32h, [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), in progress) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
@@ -109,64 +111,78 @@ fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
 
-### Phase 32c: enemy groups and `scout` (2026-09-28)
+### Phase 32f: company logistics (2026-09-28)
 
-- **What:** per the [32c design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md)
-  and [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md).
-  Groups are named when they form ("a band of ruffians") and keep the name
-  while members fall; a group formed outside a spawn list (a script's or
-  admin's spawn) is named when first seen. Each shows on its own room line
-  with a count, its kinds, and what it's doing. Names are runtime only: a
-  restart regroups and renames. `attack <group>` is the only way to start a
-  fight ("You go for the band of ruffians."); a member's name is refused
-  with the command to type; `#id` takes the whole group. In a battle,
-  `attack`, `cast`, `backstab`, `shoot`, `tackle`, and `disarm` are
-  refused; a bare `attack` after `break` rejoins. Out of one, a harmful
-  spell, backstab, or shot at a mob doesn't start a fight. A lone player
-  turns toward the next foe on their own. `look <group>` and a free
-  `scout [group]` show a group and its formation. Summaries name the group;
-  the ambush pair and the tutorial's "straw squad" are named. Collective
-  nouns by race (`groupnoun`). Help: `scout` (new), `attack` (rewritten),
-  `targeting`, `combat`, `cast`, `shoot`, `skulduggery`, `battle-summary`,
-  `brawling`, `break`; the Combat lesson teaches `scout squad`/`attack squad`.
-- **Why:** the owner's play-test notes ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)).
-  Written before 29c on `claude/project-thread-4xs9vt` and merged onto it:
-  29c's spell test now casts through a companion, since a player can't cast
-  into a running battle.
-- **Verification:** `go test -race ./...`, `make generate`, and
-  `make validate` pass. Wiring tests in `modules/company/wiring_groups_test.go`
-  (real commands and `DoCombat`), narration, stream, tutorial, and
-  expedition tests.
-- **Review:** 3 major, 8 minor, 12 nits. Fixed with tests: (M1) a lone
-  player who used `break` and rejoined was never turned again (`attack`
-  now resumes them); (M2) the lone turn read "You turn on ruffian" (now
-  "You turn toward the ruffian.", and the room sees it); (M3) the suggested
-  keyword could name another group ("rats" matched "a band of big rats";
-  `enemyparty.Keyword` numbers by what the lookup matches); a group formed
-  outside a spawn list renamed as members fell (found merging onto 29c);
-  (m1) a tag group's member that wandered off kept the group's name;
-  (m3) `attack wolf` with a player named Wolf fought the wolves; (m4) group
-  words hid things in `look` ("look pack"); (m5) `help brawling`,
-  `help break`, and the cast notes; (m7) tackle and disarm were allowed
-  between `attack` and the battle's start; nits: member refusals' articles
-  ("The Captain Varek"). Left for the owner: (m2) non-hostile mobs sharing
-  a tag (the Frostfang guards) group and show under "Enemies here" in
-  `scout`; (m8) `formation move`, `flee`, `break`, potions, and `use` stay
-  allowed mid-battle until 32d. Accepted nits: an authored capitalised name
-  reads "You go for Rat King's court."; ordinals count hidden groups; two
-  lone mobs of one name get no `#2` in the hint; the scout grid overflows
-  on long names; tab completion still offers members' names; `-man`
-  plurals ("shamen"); the empty world's `attack.md`. Test gaps left (m6): a
-  regrouped survivor's new name, a shopkeeper by its own name, the weakest
-  reachable first aim, `groupnoun` loading, an authored `groupname`, a
-  hidden member in look/scout, `scout` in the tutorial wiring test.
+- **What:** per the [32f design](superpowers/specs/2026-09-28-phase-32f-company-logistics-design.md)
+  and [plan](superpowers/plans/2026-09-28-phase-32f-company-logistics.md).
+  Capacity is each member's share (20 kg, half a kilogram per Strength, and
+  their largest pack: satchel 5, traveller's 10, frame 15 kg) plus the
+  herd's; the flat 200 kg is retired. Weight is the only limit: GoMud's item
+  count no longer slows `go`; `get`, `buy`, `market buy`, `give` from outside
+  the company, pickpocketing, and a companion's pickup are refused when they
+  would overfill it (moves within the company always work; walking is never
+  blocked, only slowed by the load bands). A herd of up to one riding and one
+  pack horse per member, bought at stables (Dunmar West Gate, Trappers'
+  Post), each needing its own saddle; riders strain less, and a route goes a
+  tenth faster only when everyone walking rides; the old single mount
+  migrates to a saddled pack horse. Cargo keeps a partly used item's uses.
+  `company inventory`; `company eat`/`drink`/`meal` feed the members present
+  from the cargo, their own packs, then the leader's. `{I}` reads capacity
+  in kg; `peep` shows weight. Help: `cargo`, `mount`, `encumbrance`,
+  `inventory`, `get`, `buy`, `give`, `market`, `eat`, `drink`, `set-prompt`,
+  `company`, new `company-inventory` and `company-meal`; Survival lesson hints.
+- **Why:** the owner's play-test notes ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)):
+  "company load is 200 kg with no one in the company"; one weight limit.
+  Built on `claude/project-thread-rxps20` before 32a2, 32b, 29c, and 32c;
+  merged onto them here (additive conflicts in the company provider and its
+  test fake; 32b's mount purge moved to herds).
+- **Verification:** `go test -race ./...` (83 packages), `make generate`,
+  and `make validate` pass, once, after the review fixes. Wiring:
+  `modules/mount/wiring_logistics_test.go` (plugins.Load, real commands,
+  restart), plus usercommands, mobcommands, company, encumbrance, market,
+  expedition, and companyview tests.
+- **Review:** 1 major, 6 minor bugs, 4 design/doc gaps, 6 test gaps,
+  7 nits; all reproduced before fixing. Fixed with tests: (1) the `{I}`
+  prompt token read company state off the game loop (now from
+  `companyview`'s cache); (2) `mount stable`/`saddle`/`unsaddle`/`release`
+  now save the leader right after the herd; (3) `company inventory` names
+  generated recruits by their own names; (4) pickpocketing respects the
+  limit and a pet's pouch counts in its owner's load (a full company can't
+  take through its pet); (5) the riding pace counts only members walking
+  with the leader (`company.WalkingMembers`); (6) meals feed only the
+  members present; (7) a meal spends the item before provisioning (a failed
+  spend fed for free; the design's crash note updated to match), and a live
+  companion's meal updates its record. Docs: (8) the design now says GMCP
+  drops `Max` and its extras move to 32g; (9) encumbrance and company
+  AGENTS guides, the stale "capacity is flat" known issue, the plan's
+  boxes; (10) `CarryCapacity()` marked deprecated; (11) the design notes
+  that pre-32f characters drop to ~20–25 kg with no satchel (intended: the
+  200 kg was the bug). Test gaps closed: a companion's pickup, `give` to
+  your own companion and cargo moves at capacity, walking over capacity,
+  the route pace through the mount seam, the meal's room line, kits under
+  40%. Nits fixed: a pack counts the room it makes; `get all` says once
+  what it left; `peep` shows weight; `help give`/`help market` name the
+  refusals; the design now matches the shipped `company meal` hint.
+  Rejected: a horse type configured without `Kind` is refused with a
+  warning and shown as unrecognized (the project's validate-don't-guess
+  rule); the legacy migration's free pack saddle is intended (no one loses
+  what their old mount carried). Two riders' strain is covered by the
+  walking relief test plus the mount seam test, not one end-to-end test.
 
 ## Known issues / deferred items
 
 - **Enemy groups (32c), for the owner:** non-hostile mobs sharing a tag
   form groups (scout lists them as enemies); `formation move`, `flee`,
   `break`, potions, and `use` stay allowed mid-battle until 32d. Test gaps
-  are in the 32c work-log entry.
+  (in git history, 32c's work-log entry): a regrouped survivor's new name,
+  a shopkeeper by its own name, the weakest reachable first aim,
+  `groupnoun` loading, an authored `groupname`, a hidden member in
+  look/scout, `scout` in the tutorial wiring test.
+- **Company logistics (32f):** GMCP drops the inventory `Max` (the web
+  gear window shows "count / —") until 32g adds capacity, packs, mounts,
+  and cargo uses; a crash mid-meal can spend one use without its
+  provision; characters made before 32f start at ~20–25 kg with no
+  satchel.
 
 Refreshed 2026-09-26 (Phase 28). Earlier entries that later phases
 resolved (the weather, load, and mount multipliers, and the 11a–11c
@@ -225,9 +241,6 @@ keeps its own history.
     skips rooms with no aggro.
   - `formation reach`'s "can't reach any of the enemy" branch has no
     test.
-- **Capacity is flat per company** (`CapacityKg` 200, plus a mount). Phase
-  28 gave every item a weight, so loads now mean something, but capacity
-  doesn't grow with the company's size. That is left for play-testing.
 - **Deferred by design, not scheduled:**
   - 11d: guard reactions, crit effects, wounds, AI personality;
   - the "12+" encounter kinds;
