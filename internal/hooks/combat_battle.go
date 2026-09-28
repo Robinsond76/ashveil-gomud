@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -192,7 +193,7 @@ func (sd side) keepOnBattle(b battle.Battle, room *rooms.Room) {
 		emitTargetChange(userRef(u), mobRefById(u.Character.Aggro.MobInstanceId), mobRefById(foe), room.RoomId)
 		u.Character.SetAggro(0, foe, attackType(u.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
-		u.SendText(fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, mobName(foe)))
+		u.SendText(turnsToward(`You`, mobTag(mobName(foe))))
 	}
 	for _, instanceId := range sortedKeys(sd.allies) {
 		m := mobs.GetInstance(instanceId)
@@ -202,7 +203,7 @@ func (sd side) keepOnBattle(b battle.Battle, room *rooms.Room) {
 		emitTargetChange(mobRef(m), mobRefById(m.Character.Aggro.MobInstanceId), mobRefById(foe), room.RoomId)
 		m.Character.SetAggro(0, foe, attackType(m.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
-		room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="mobname">%s</ansi>.`, m.Character.Name, mobName(foe)))
+		room.SendText(turnsToward(mobTag(m.Character.Name), mobTag(mobName(foe))))
 	}
 }
 
@@ -362,7 +363,7 @@ func (sd side) rallyIdleFoes(p mobparty.Party, room *rooms.Room) {
 		m.PlayerAttacked(u.UserId)
 		m.PreventIdle = true
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
-		room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="username">%s</ansi>.`, m.Character.Name, u.Character.Name))
+		room.SendText(turnsToward(mobTag(m.Character.Name), userTag(u.Character.Name)))
 	}
 }
 
@@ -429,7 +430,7 @@ func turnWaitingOntoFreePlayers(round uint64) {
 			if !turned {
 				continue
 			}
-			room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> <ansi fg="username">%s</ansi>.`, groupTurnsOn(p), free.Character.Name))
+			room.SendText(fmt.Sprintf(`%s %s.`, groupTurnsToward(p), userTag(free.Character.Name)))
 			freeSide := loadSide(free, room)
 			battle.NoteSet(free.UserId, p.ID, round)
 			freeSide.beginBattle(p, room, round)
@@ -460,9 +461,9 @@ func freePlayer(room *rooms.Room, busyId int) *users.UserRecord {
 	return best
 }
 
-// groupTurnsOn names a group turning on someone, for a message: "The
-// ruffian turns on", or "The ruffian and the others turn on".
-func groupTurnsOn(p mobparty.Party) string {
+// groupTurnsToward names a group turning on someone, for a message: "The
+// ruffian turns toward", or "The ruffian and the others turn toward".
+func groupTurnsToward(p mobparty.Party) string {
 	var names []string
 	for _, instanceId := range p.Members {
 		if m := mobs.GetInstance(instanceId); m != nil && m.Character.Health > 0 {
@@ -471,11 +472,11 @@ func groupTurnsOn(p mobparty.Party) string {
 	}
 	switch len(names) {
 	case 0:
-		return `They turn on`
+		return `They turn toward`
 	case 1:
-		return `The ` + names[0] + ` turns on`
+		return util.CapitalizeFirst(util.Article(mobTag(names[0]))) + ` turns toward`
 	}
-	return fmt.Sprintf(`The %s and the others turn on`, names[0])
+	return util.CapitalizeFirst(util.Article(mobTag(names[0]))) + ` and the others turn toward`
 }
 
 // settleBattles ends, at the end of the round and after its deaths are

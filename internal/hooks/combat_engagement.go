@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -283,7 +284,7 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 		emitTargetChange(mobRef(mob), mobRefById(previous), mobRefById(newId), room.RoomId)
 		mob.Character.SetAggro(0, newId, attackType(mob.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-		room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, mobName(newId)))
+		room.SendText(turnsToward(mobTag(mob.Character.Name), mobTag(mobName(newId))))
 	}
 }
 
@@ -387,9 +388,9 @@ func chooseFromParty(col int, placed bool, party mobparty.Party, alive map[compa
 func leaderTurnText(previous, newId int, alive map[company.MemberKey]bool) string {
 	name := mobName(newId)
 	if previous > 0 && alive[mobparty.MemberKeyFor(previous)] {
-		return fmt.Sprintf(`You can't reach <ansi fg="mobname">%s</ansi> from here. You turn on <ansi fg="mobname">%s</ansi>.`, mobName(previous), name)
+		return fmt.Sprintf(`You can't reach %s from here. %s`, util.Article(mobTag(mobName(previous))), turnsToward(`You`, mobTag(name)))
 	}
-	return fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, name)
+	return turnsToward(`You`, mobTag(name))
 }
 
 func mobHidden(instanceId int) bool {
@@ -544,7 +545,7 @@ func (s companySide) aimPartyMember(mob *mobs.Mob, key company.MemberKey, room *
 	emitTargetChange(mobRef(mob), previous, next, room.RoomId)
 	mob.PreventIdle = true
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on %s.`, mob.Character.Name, targetName))
+	room.SendText(turnsToward(mobTag(mob.Character.Name), targetName))
 }
 
 // aimRef names what an enemy's Aggro was aimed at, for a target change.
