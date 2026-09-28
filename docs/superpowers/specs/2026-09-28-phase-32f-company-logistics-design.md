@@ -60,8 +60,10 @@ only**, no item-count limit. Horses, saddles, and backpacks raise it.
 
 ## Decisions
 
-Recommendations below are **not yet confirmed by the owner**; each is
-marked **(open)** until Robinson answers on the draft PR.
+The owner answered C (horses), D (no hard stop), and G (source order,
+and a combined command) on 2026-09-28; those are recorded where they
+fall. Anything still marked **(open)** is a recommendation awaiting an
+answer.
 
 ### A. Capacity comes from the members
 
@@ -106,28 +108,46 @@ else. **(open: carried, not worn)**
 
 ### C. Horses and saddles
 
-- **More than one mount.** A company keeps up to `MaxMounts` (config,
-  default 3) mounts. The mount record becomes a list per leader; each
-  has an id, a type, and a saddle. Riders add up across mounts (each
-  still carries the leader first, then companions by id).
-  **(open: the cap)**
+**Decided (owner, 2026-09-28):** "A company can have up to one horse per
+member for riding, plus an extra pack horse. So a maximum of 10 horses
+at 5 group members."
+
+- **Two kinds of horse.** A **riding horse** carries one member. A
+  **pack horse** carries load and no one. The mount record becomes a
+  list per leader; each horse has an id, a kind (its type), and a
+  saddle.
+- **The cap** is per kind, counted from the members the load counts
+  (the leader and each living companion not charmed away): up to one
+  riding horse and one pack horse per member. Five members can keep ten
+  horses. A company that shrinks keeps the horses it has, but can't
+  stable more until it's back under the cap; a riding horse with no one
+  to carry is only led.
+- **Riders.** Each saddled riding horse carries one member: the leader
+  first, then companions by id, counting only members walking with the
+  leader (Phase 16's rule, now one rider per horse instead of two per
+  pack horse). A rider strains less walking (`FatiguePct`).
+- **Faster routes** only when everyone rides: a route journey takes the
+  riding horse's `TravelDurationPct` (90%) when every member walking with
+  the leader has a saddled riding horse; otherwise the company moves at
+  walking pace. Pack horses never set the pace. **(open)**
 - **Mounts are bought, not conjured.** `mount stable <type>` works only
   in a room flagged as a stable, and costs the type's `Price` in gold.
-  `mount release <mount>` sells it back for nothing. Today's free,
+  `mount release <horse>` lets one go for nothing. Today's free,
   anywhere assignment makes capacity free. **(open)**
 - **Saddles** are items with a `saddle` field: its kind (`pack` or
-  `riding`) and its bonus. `mount saddle <mount> <item>` fits one from
-  the player's pack onto a mount (the old saddle goes into the pack);
-  `mount unsaddle <mount>` takes it off. A saddle on a horse is part of
-  the mount record, so it survives restart.
-  - A **pack saddle** adds cargo capacity (+60 kg on a pack horse).
-  - A **riding saddle** adds one rider and no capacity.
-  - With no saddle a horse carries its base only.
-- **Numbers:** a pack horse's base becomes 40 kg; with a pack saddle it
-  carries 100 kg, today's figure. **(open)**
-- **Existing saves:** a stored single mount becomes the first entry in
-  the list, with a pack saddle fitted, so no one loses capacity on
-  upgrade.
+  `riding`) and its bonus. `mount saddle <horse> <item>` fits one from
+  the player's pack onto a horse of the matching kind (the old saddle
+  goes into the pack); `mount unsaddle <horse>` takes it off. A saddle
+  on a horse is part of the mount record, so it survives restart.
+  - A **pack saddle** is what lets a pack horse carry much: 40 kg bare,
+    100 kg saddled (today's figure).
+  - A **riding saddle** is what lets a riding horse carry a rider. Bare,
+    it's led and carries 10 kg.
+  **(open: the numbers)**
+- **Existing saves:** a stored single pack horse becomes the first entry
+  in the list, with a pack saddle fitted, so no one loses capacity on
+  upgrade. It no longer carries riders (a pack horse carries no one);
+  that walking relief comes back with a riding horse.
 
 ### D. One weight limit
 
@@ -143,8 +163,7 @@ GoMud's item-count limit goes, per the owner's decision:
   (`GetCarryCapacity`), marked deprecated.
 - **Nothing blocks** picking up, buying, or walking by weight in this
   phase; being over capacity is the top load band (travel 150%, strain
-  130%), as today. **(open: whether to add a hard stop, for example
-  "can't move" past 150%)**
+  130%), as today. **(owner, 2026-09-28: agreed, no hard stop)**
 
 ### E. `company inventory`
 
@@ -162,7 +181,8 @@ Dain (you)            12.4 kg   pack: traveller's pack (+10 kg)
   Carrying: nothing
 #2 Brother Oswin      ...
 
-Mounts: pack horse (pack saddle, +100 kg)
+Horses: pack horse (pack saddle, +100 kg); riding horse (riding saddle,
+        carries Dain)
 Cargo (18.0 kg): rope, seared game meat x6, waterskin x2
 ```
 
@@ -183,20 +203,29 @@ still stack by id; a partly used item is its own stack of one with its
 remaining uses, and `take` gives it back as it went in. Needed by G,
 which draws single uses from cargo.
 
-### G. `company eat` and `company drink`
+### G. `company eat`, `company drink`, and `company meal`
 
-One command feeds or waters everyone who needs it:
+Three commands, one planner:
+
+- `company eat` feeds everyone who's hungry.
+- `company drink` waters everyone who's thirsty.
+- `company meal` does both in one go: food first, then drink. (Owner,
+  2026-09-28: "one command for the party to both eat and drink".) The
+  name is a recommendation; `company provision` is the alternative.
+
+How they choose:
 
 - **Who:** every living member present (leader and companions), most
   in need first. A member already at the top band ("Well fed",
   "Hydrated") is skipped.
-- **From where:** the cargo first, then the leader's pack, then the
-  member's own pack. **(open: the order)**
+- **From where** (owner, 2026-09-28): the cargo first, then the
+  member's own pack, then the leader's pack.
 - **What:** one use of the edible (or drinkable) item that best covers
   that member's need without much waste; the smallest item that
   covers it, else the largest there is. Items with buffs other than Well
   Fed and Hydrated (potions, ale) are never used; those stay a choice
-  made by hand.
+  made by hand. Food that also waters (stew) counts toward thirst in
+  `company meal`, so drink isn't wasted after it.
 - **Buffs:** Well Fed and Hydrated go on the member who ate, when that
   member is the player. A companion gets the provision only, as with
   `eat <item> <member>` today.
@@ -205,13 +234,15 @@ One command feeds or waters everyone who needs it:
   ```
   Tamsin Reed eats a seared game meat (cargo). Hunger: Well fed.
   You eat some of the cheese sandwich (your pack). Hunger: Sated.
+  Brother Oswin drinks from a waterskin (own pack). Thirst: Hydrated.
   Brother Oswin is still hungry; there's nothing left to eat.
   ```
-- The room sees one line: "Dain's company eats."
+- The room sees one line: "Dain's company eats." ("…drinks.", "…eats
+  and drinks.")
 - `eat` and `drink` with an item keep working as they do.
 - Each member is provisioned through `survival.Provision`, one call per
-  member, so each save and rollback stays as it is; items are used only
-  after that member's provision succeeds.
+  member and need, so each save and rollback stays as it is; items are
+  used only after that provision succeeds.
 
 ## Module
 
@@ -222,10 +253,11 @@ One command feeds or waters everyone who needs it:
   member's Strength and best pack (read the way `CompanionGearGrams`
   reads gear); `company inventory`.
 - `internal/items`: the `carrybonus` and `saddle` fields.
-- `internal/mount` / `modules/mount`: the mount list, saddles, `MaxMounts`,
+- `internal/mount` / `modules/mount`: the horse list, riding and pack
+  kinds, saddles, the per-member caps (from the company provider),
   prices, the stable room flag, the save migration.
 - `internal/usercommands`: `go.go` (count limit), `inventory`, `peep`;
-  `company eat`/`drink` share `eat.go`'s provisioning helpers.
+  `company eat`/`drink`/`meal` share `eat.go`'s provisioning helpers.
 - `modules/gmcp`: capacity in grams, packs, mounts, cargo uses.
 - Content: packs and saddles in `items/`, a stable room and market
   stock, the starter kit's satchel.
@@ -249,8 +281,9 @@ One command feeds or waters everyone who needs it:
 - **Unit:** the capacity formula (members, Strength, one pack each,
   mounts, saddles, a fallen or charmed-away member); cargo stacks with
   uses (merge, split, round trip); the eat planner (who first, which
-  item, which source, skipping the sated, running out); the mount list
-  migration; saddle fit and swap.
+  item, which source, skipping the sated, running out, food that also
+  waters); the horse caps per kind; riders and the everyone-rides pace;
+  the mount list migration; saddle fit, swap, and wrong kind.
 - **Wiring** (shipped config, real commands):
   - a new player alone: `cargo` shows a little over 20 kg capacity, not
     200;
@@ -258,14 +291,21 @@ One command feeds or waters everyone who needs it:
   - `give satchel tamsin` raises capacity by 5 kg; a second pack on the
     same member doesn't;
   - `mount stable pack-horse` outside a stable is refused; in one it
-    costs its price; `mount saddle horse pack saddle` adds 60 kg;
-    a second and third horse stack; a fourth is refused;
+    costs its price; `mount saddle horse pack saddle` takes it from 40
+    to 100 kg;
+  - a company of two keeps two riding and two pack horses; a third of
+    either is refused; after a companion is dismissed, it keeps all
+    four but can't add one;
+  - two saddled riding horses carry the leader and one companion (both
+    strain less); a route is faster only when every walking member rides;
   - an old single-mount save loads as one saddled pack horse with the
     same capacity;
   - carrying 20 items no longer makes `go` cost 50 action points;
     `inventory` shows kilograms;
   - `cargo put` a waterskin with 3 uses, `cargo take` it: still 3;
   - `company inventory` lists every member, mounts, and cargo;
+  - `company meal` feeds and waters everyone, drawing cargo, then each
+    member's pack, then the leader's;
   - `company drink` with water only in cargo waters everyone thirsty,
     skips the hydrated, uses the cargo, and reports who went without
     when it runs out; a restart after it keeps what was used and what
@@ -274,7 +314,7 @@ One command feeds or waters everyone who needs it:
   saddles, cargo keeps uses), `help mount` (several mounts, stables,
   prices, saddles), `help encumbrance` and GoMud's `help inventory`
   (no item count), new `help company inventory` and `help company eat`
-  pages (aliases `company inv`, `company drink`), `help eat` and
+  pages (aliases `company inv`, `company drink`, `company meal`), `help eat` and
   `help drink` pointing to `company eat`; the Survival lesson's hint
   mentions `company eat` and `company inventory`;
   `TestTutorialHelpPointersExist` passes.
