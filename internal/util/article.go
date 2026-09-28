@@ -1,6 +1,7 @@
 package util
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -48,4 +49,23 @@ func CapitalizeFirst(line string) string {
 	}
 	r, size := utf8.DecodeRuneInString(line[i:])
 	return line[:i] + string(unicode.ToUpper(r)) + line[i+size:]
+}
+
+var (
+	narrationTag  = regexp.MustCompile(`<[^>]*>`)
+	narrationCaps = regexp.MustCompile(`\b[A-Z]{2,}\b`)
+)
+
+// NarrationVoiceProblem reports what, if anything, breaks the Phase 29c
+// narration voice in one line of combat text: an exclamation mark or an
+// ALL-CAPS word outside markup. "" when the line is fine.
+func NarrationVoiceProblem(line string) string {
+	visible := narrationTag.ReplaceAllString(line, "")
+	if strings.Contains(visible, "!") {
+		return "exclamation mark"
+	}
+	if w := narrationCaps.FindString(visible); w != "" {
+		return "ALL-CAPS word " + w
+	}
+	return ""
 }

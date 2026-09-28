@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -63,7 +64,7 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 
 	// Send a death msg to everyone in the room.
 	room.SendText(
-		fmt.Sprintf(`<ansi fg="username">%s</ansi> has died.`, user.Character.Name),
+		combat.PlayerDeathLine(`<ansi fg="username">`+user.Character.Name+`</ansi>`),
 		user.UserId,
 	)
 

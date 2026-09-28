@@ -169,19 +169,27 @@ where the fight's stream events are produced; spells rewrite their own text.
 - Test: `internal/hooks/combat_narration_test.go`,
   `internal/mobcommands/suicide_test.go` (create if absent)
 
+**As built:** the death pools live in `internal/combat/death_lines.go`
+(`DeathLine`, `BeatenLine`, `PlayerDeathLine`, each taking a tagged name)
+so `mobcommands`, `usercommands`, and `hooks` share them; the voice check
+is `util.NarrationVoiceProblem`. No closing line when an enemy left the
+room alive (the lines speak of the last one falling). A player's own death
+line still comes from the queued `suicide` (its script hook may cancel the
+death), so it can follow a closing line.
+
 **Interfaces:**
 - Produces: `mobcommands.DeathLine(name string) string` (a random line from
   a pool, article applied, capitalised); `hooks.fightOpener(groups []string) string`,
   `hooks.fightClosing(groups []string) string` — pool keyed by the first
   group with one, else generic (`""` key).
 
-- [ ] **Step 1: Failing tests.** Every pool line (openers, closings, death
+- [x] **Step 1: Failing tests.** Every pool line (openers, closings, death
   lines, player death lines) has no `!` and no ALL-CAPS word; the
   `bandits` key picks its own pool; an unknown group falls back to generic;
   `DeathLine("bandit captain")` starts with `The bandit captain`;
   `suicide quiet` sends no room line (a mob in a test room).
-- [ ] **Step 2:** FAIL.
-- [ ] **Step 3: Implement.**
+- [x] **Step 2:** FAIL.
+- [x] **Step 3: Implement.**
   - Pools: generic, `bandits`, and the practice squad's group (straw
     soldiers: `The last straw soldier topples. The drill is done.`).
   - `beginBattle`: after `Open`, `room.SendText(fightOpener(firstEnemyGroups))`.
@@ -192,9 +200,9 @@ where the fight's stream events are produced; spells rewrite their own text.
     queue `suicide quiet`; with it, queue plain `suicide` as today.
   - `suicide`: `quiet` suppresses the death/beaten room line only; the rest
     of `quiet` behaves as the default path.
-- [ ] **Step 4:** focused tests PASS; `go test ./modules/tutorial` updated
+- [x] **Step 4:** focused tests PASS; `go test ./modules/tutorial` updated
   deliberately where it asserts "is beaten and yields the field" order.
-- [ ] **Step 5: Commit** `feat(combat): one opener, one closing line, death lines before them (29c)`.
+- [x] **Step 5: Commit** `feat(combat): one opener, one closing line, death lines before them (29c)`.
 
 ### Task 6: Company fallen notice
 

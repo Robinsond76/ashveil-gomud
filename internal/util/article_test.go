@@ -35,3 +35,17 @@ func TestCapitalizeFirst(t *testing.T) {
 		}
 	}
 }
+
+func TestNarrationVoiceProblem(t *testing.T) {
+	cases := map[string]string{
+		`The <ansi fg="mobname">rat</ansi> bites you. (5 damage)`: "",
+		`<ansi fg="ALERT">A</ansi> quiet line.`:                   "", // markup is not text
+		`You hit it!`:                                             "exclamation mark",
+		`A CRITICAL blow.`:                                        "ALL-CAPS word CRITICAL",
+	}
+	for line, want := range cases {
+		if got := NarrationVoiceProblem(line); got != want {
+			t.Errorf("NarrationVoiceProblem(%q) = %q, want %q", line, got, want)
+		}
+	}
+}

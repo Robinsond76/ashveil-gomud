@@ -1281,7 +1281,15 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 				}
 				emitCombat(combatstream.Event{Kind: combatstream.Death, RoomId: mob.Character.RoomId, Target: mobRef(mob), Outcome: outcome})
 
-				mob.Command(`suicide`)
+				// Phase 29c: the death line now, in the round's order (the
+				// fight's closing line follows at once); a mob that will
+				// revive keeps suicide's own path.
+				if mob.Character.HasBuffFlag("revive-on-death") {
+					mob.Command(`suicide`)
+				} else {
+					mobDeathNotice(mob)
+					mob.Command(`suicide quiet`)
+				}
 
 			}
 		}

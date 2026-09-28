@@ -3,32 +3,13 @@ package items
 import (
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
 )
-
-var (
-	ansiTag  = regexp.MustCompile(`<[^>]*>`)
-	capsWord = regexp.MustCompile(`\b[A-Z]{2,}\b`)
-)
-
-// NarrationVoiceProblem reports what, if anything, breaks the Phase 29c
-// voice in one line of combat text: an exclamation mark or an ALL-CAPS
-// word outside markup.
-func narrationVoiceProblem(line string) string {
-	visible := ansiTag.ReplaceAllString(line, "")
-	if strings.Contains(visible, "!") {
-		return "exclamation mark"
-	}
-	if w := capsWord.FindString(visible); w != "" {
-		return "ALL-CAPS word " + w
-	}
-	return ""
-}
 
 // TestShippedWeaponTextVoice (Phase 29c): every line of every shipped
 // weapon pool is in the narration voice, carries no {damage} (the combat
@@ -70,7 +51,7 @@ func TestShippedWeaponTextVoice(t *testing.T) {
 			for name, lines := range pools {
 				for _, line := range lines {
 					where := filepath.Base(path) + " " + string(intensity) + " " + name
-					if p := narrationVoiceProblem(string(line)); p != "" {
+					if p := util.NarrationVoiceProblem(string(line)); p != "" {
 						t.Errorf("%s: %s in %q", where, p, line)
 					}
 					if strings.Contains(string(line), "{damage}") {

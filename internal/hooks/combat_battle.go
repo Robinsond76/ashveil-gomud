@@ -153,6 +153,7 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	id := combatstream.Default().Open(round, room.RoomId, p.ID, userRef(sd.user), sd.allyRefs(), partyRefs(p))
 	battle.SetFight(sd.user.UserId, id)
 	b.FightID = id
+	room.SendText(fightOpener(enemyGroups(partyRefs(p)))) // Phase 29c
 	sd.keepOnBattle(b, room)
 	return b
 }

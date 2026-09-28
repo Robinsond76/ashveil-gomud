@@ -30,6 +30,15 @@ type PracticeBeaten struct {
 // (mobs.Mob.Practice) is beaten. The tutorial's practice fight counts it.
 var OnPracticeBeaten util.Hook[PracticeBeaten]
 
+// mobNameTag is a mob's name as the death notices print it.
+func mobNameTag(mob *mobs.Mob) string {
+	return `<ansi fg="mobname">` + mob.Character.Name + `</ansi>`
+}
+
+// Suicide kills mob. rest is "" (a death, with its notice), "quiet" (the
+// same, but the room's death or beaten notice was already printed: Phase
+// 29c's combat deaths print it in the round, in order), or "vanish" (gone
+// without a trace or reward).
 func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	currentRound := util.GetRoundCount()
@@ -63,7 +72,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// or MobDeath. Its attackers keep their aim, so the next round
 	// re-targets them.
 	if rest != `vanish` && mob.Practice {
-		room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> is beaten and yields the field.`, mob.Character.Name))
+		if rest != `quiet` {
+			room.SendText(combat.BeatenLine(mobNameTag(mob)))
+		}
 		OnPracticeBeaten.Fire(PracticeBeaten{InstanceId: mob.InstanceId, MobId: int(mob.MobId), RoomId: room.RoomId})
 		rest = `vanish`
 	}
@@ -85,10 +96,11 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 
-	// Send a death msg to everyone in the room.
-	room.SendText(
-		fmt.Sprintf(`<ansi fg="mobname">%s</ansi> has died.`, mob.Character.Name),
-	)
+	// Send a death msg to everyone in the room. Phase 29c: a combat death
+	// ("suicide quiet") has already printed it, in order, from the round.
+	if rest != `quiet` {
+		room.SendText(combat.DeathLine(mobNameTag(mob)))
+	}
 
 	// Special handling of "The Guide"
 	// Mark this moment to prevent an immediate respawn
