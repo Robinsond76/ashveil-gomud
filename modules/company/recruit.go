@@ -153,6 +153,42 @@ func matchCandidate(rec recruiter, selector string) (candidate, bool) {
 	return candidate{}, false
 }
 
+// resolveCandidate is who a selector means at a recruiter (Phase 32a2): a
+// generated candidate by key or exact name, then a regular by id or exact
+// name, then part of a name across both lists together, refused when it
+// fits more than one. At most one result is set.
+func resolveCandidate(rec recruiter, roster domain.Roster, selector string) (*candidate, *domain.Candidate) {
+	sel := strings.ToLower(strings.TrimSpace(selector))
+	if g, ok := findGenerated(roster, sel, false); ok {
+		return nil, &g
+	}
+	c, ok := matchCandidate(rec, sel)
+	if ok && (c.ID == sel || strings.ToLower(templateName(c.MobTemplateID, "")) == sel) {
+		return &c, nil
+	}
+	matches := 0
+	for _, r := range rec.Candidates {
+		if strings.Contains(strings.ToLower(templateName(r.MobTemplateID, "")), sel) {
+			matches++
+		}
+	}
+	for _, g := range roster.Candidates {
+		if strings.Contains(strings.ToLower(g.Name), sel) {
+			matches++
+		}
+	}
+	if matches != 1 {
+		return nil, nil
+	}
+	if ok {
+		return &c, nil
+	}
+	if g, ok := findGenerated(roster, sel, true); ok {
+		return nil, &g
+	}
+	return nil, nil
+}
+
 // listing shows every candidate here with what a player needs to choose.
 func (m *CompanyModule) listing(leaderUserID int, rec recruiter) string {
 	roster, _ := m.rosterFor(leaderUserID, rec)
@@ -230,19 +266,15 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 	if selector == "" || selector == "list" {
 		return m.listing(user.UserId, rec), nil
 	}
-	// Phase 32a2: a generated candidate by exact name first, then the
-	// regulars, then a generated candidate by part of a name.
-	roster, hasRoster := m.rosterFor(user.UserId, rec)
-	if g, ok := findGenerated(roster, selector, false); hasRoster && ok {
-		return m.hireGenerated(user, roomID, roster, g)
+	roster, _ := m.rosterFor(user.UserId, rec)
+	regular, g := resolveCandidate(rec, roster, selector)
+	if g != nil {
+		return m.hireGenerated(user, roomID, roster, *g)
 	}
-	c, ok := matchCandidate(rec, selector)
-	if !ok {
-		if g, ok := findGenerated(roster, selector, true); hasRoster && ok {
-			return m.hireGenerated(user, roomID, roster, g)
-		}
+	if regular == nil {
 		return fmt.Sprintf(`No one called "%s" is hiring here. Type "company recruit" to see who is.`, selector), nil
 	}
+	c := *regular
 	name := templateName(c.MobTemplateID, c.ID)
 	if _, ok := m.runtime.TemplateState(c.MobTemplateID); !ok {
 		return fmt.Sprintf("%s isn't available right now.", name), nil
@@ -372,17 +404,15 @@ func (m *CompanyModule) LookCandidate(viewerUserID, roomID int, selector string)
 	if sel := strings.ToLower(strings.TrimSpace(selector)); len(sel) >= 3 && strings.Contains(strings.ToLower(rec.Name), sel) {
 		return strings.Join(m.RecruiterLines(viewerUserID, roomID), "\n"), true
 	}
-	roster, hasRoster := m.rosterFor(viewerUserID, rec)
-	if g, ok := findGenerated(roster, selector, false); hasRoster && ok {
-		return lookGenerated(rec.Name, g), true
+	roster, _ := m.rosterFor(viewerUserID, rec)
+	regular, g := resolveCandidate(rec, roster, selector)
+	if g != nil {
+		return lookGenerated(rec.Name, *g), true
 	}
-	c, ok := matchCandidate(rec, selector)
-	if !ok {
-		if g, ok := findGenerated(roster, selector, true); hasRoster && ok {
-			return lookGenerated(rec.Name, g), true
-		}
+	if regular == nil {
 		return "", false
 	}
+	c := *regular
 	name := templateName(c.MobTemplateID, c.ID)
 	lines := []string{fmt.Sprintf(`You read about <ansi fg="mobname">%s</ansi> on %s.`, name, rec.Name)}
 	if spec := mobs.GetMobSpec(mobs.MobId(c.MobTemplateID)); spec != nil && spec.Character.Description != "" {

@@ -107,6 +107,23 @@ fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
 
+### Fix: 32a2 ambiguous recruit selectors (2026-09-28)
+
+- **What:** `company recruit`, `company inspect`, and `look` at a recruiter
+  now resolve a name through one `resolveCandidate`: a generated key/exact
+  name, then a regular's id/exact name, then part of a name across the
+  regulars and the generated roster *together*, refused when it fits more
+  than one.
+- **Why:** an ambiguous part among the regulars ("r": Tamsin Reed, Garrick
+  Vane) fell through to the random roster and could hire someone the player
+  didn't mean; `TestRecruitThroughPluginsLoad` failed ~2 in 5 runs on
+  `84dd39a`.
+- **Verification:** deterministic regression (a pinned roster) in
+  `wiring_recruit_test.go`, shown to fail against the old fall-through;
+  the wiring test passes `-count=20`; `go test -race ./...` (82 packages),
+  `make generate`, `make validate` green.
+- **Review:** bug fix, not a phase; no reviewer subagent run.
+
 ### Phase 32b: tutorial replay (2026-09-28)
 
 - **What:** `tutorial replay` (confirm with `yes`) takes the player's real
