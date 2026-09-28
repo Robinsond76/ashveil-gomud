@@ -458,11 +458,25 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	}
 
+	// Phase 32a: a candidate on a recruiter's notice.
+	if text, ok := company.LookCandidate(user.UserId, room.RoomId, rest); ok {
+		user.SendText(text)
+		return true, nil
+	}
+
 	// Nothing found
 	user.SendText("Look at what???")
 
 	return true, nil
 
+}
+
+// characterName is an online user's character name, or "" (Phase 32a).
+func characterName(userID int) string {
+	if u := users.GetByUserId(userID); u != nil && u.Character != nil {
+		return u.Character.Name
+	}
+	return ""
 }
 
 func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
@@ -583,6 +597,14 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 	// through an exit when indoors, plus the moon at night), never replacing
 	// the room rendering above.
 	for _, line := range weather.SkyLines(room.SkyView(), true) {
+		user.SendText(line)
+	}
+
+	// Phase 32a: the camps pitched here, then a recruiter's notice.
+	for _, line := range camping.CampLines(camping.RoomCamps(room.RoomId), user.UserId, characterName) {
+		user.SendText(line)
+	}
+	for _, line := range company.RecruiterLines(user.UserId, room.RoomId) {
 		user.SendText(line)
 	}
 

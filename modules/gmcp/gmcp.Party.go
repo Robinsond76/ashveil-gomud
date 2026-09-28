@@ -293,10 +293,15 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 			continue
 		}
 
+		// A company member is the leader's own, not a ♥friend (Phase 32a).
+		mStatus := `♥friend`
+		if m.Character.IsCompanion() {
+			mStatus = `Company`
+		}
 		partyPayload.Members = append(partyPayload.Members,
 			GMCPPartyModule_Payload_User{
 				Name:     m.Character.Name,
-				Status:   `♥friend`,
+				Status:   mStatus,
 				Position: `-`,
 			},
 		)

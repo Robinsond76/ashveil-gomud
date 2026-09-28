@@ -93,7 +93,7 @@ instead of duplicating them.
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
 | 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
 | 31 | Browser battle panel | Proposed: [spec](superpowers/specs/2026-09-26-battle-panel-design.md). Enemy and company grids with target lines, from the event stream |
-| 32a | Company polish | Proposed: [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
+| 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md), [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Proposed: [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Proposed: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md). `tutorial replay`: a throwaway level-1 copy of the real character runs the course; the real character comes back exactly as it was; a `UserPurged` event every module handles |
 | 32c–32h | Play-test follow-ups | Proposed, specs to write ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): enemy groups and `scout` (32c, [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md) awaiting the owner's review), automatic player and companion combat (32d), company XP (32e), company logistics (32f), web company dock (32g), character deletion (32h) |
@@ -106,6 +106,60 @@ Keep only the latest phase's entry here (What / Why / Verification /
 fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
+
+### Phase 32a: company polish (2026-09-28)
+
+- **What:** Six display changes from the owner's play-test notes
+  ([32a design](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md),
+  [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md)); no new
+  mechanics or durable state.
+  - No `♥friend` on company members (`look`, `party`, GMCP `Party` show
+    "Company"): a `Companion` flag on the companion's charm, set by
+    `modules/company` when it spawns one; any other charm brings the tag back.
+  - One line for a company on the move: "Dain leads their company towards
+    the east exit." / "Dain arrives from the west, their company behind."
+    The leader's `go` marks the companions it announces; a marked companion
+    following into that room prints nothing. Any other move (flight,
+    travel, sneak, alone) keeps its own lines.
+  - No Hydrated buff flourish; `drink` for yourself always ends with
+    "Thirst: <band>." (or the band crossed).
+  - The camp in `look` ("A camp is pitched here, around a cold fire pit." /
+    "...: bedrolls around a crackling campfire.", "Dain's camp" to others),
+    from `modules/camping`'s lock-free room-camps snapshot (`litMu`).
+  - Recruiter notices in `look`, per viewer (taken, in company, "won't join
+    you", company full); `look [candidate]` and `look post` read it.
+  - A readable formation grid (card-sized text, wrapping, tooltip, leader
+    accent).
+  - Help: `company`, `camp`, `drink`; the Company lesson's hint points to
+    the hiring post.
+- **Why:** The owner's play-test notes of 2026-09-28 (roadmap).
+- **Verification:** `go test -race ./...`, `make generate`, `make validate`
+  pass. Wiring: `modules/company/wiring_moving_test.go` (real `go` and mob
+  `go`: no companion line, one line per room, a companion alone or
+  rejoining, a leader moved without a company line);
+  `modules/camping/look_camp_test.go` (camp, fire, break through `look`, a
+  second player); `modules/tutorial/wiring_test.go` (hiring post and
+  Oath Stone notices, `look tamsin`, `look at the hiring post`, no
+  `charmed` on a companion but on another charmed mob, `drink`). Unit:
+  `internal/characters`, `internal/camping`, `modules/company` notice,
+  `drinkSuffix`, the shipped Hydrated script, help pages. Browser:
+  `scripts/browser/company-panel-check.mjs` run in Chromium, all checks
+  pass (grid at dark/light themes, 1024 and 360px).
+- **Review:** One independent review. No invariant violations (clock,
+  restart, locks). Fixed with regression tests: companions went silent
+  on every leader move that isn't `go` (flight, travel, sneak) and when
+  walking back to rejoin (now a per-move mark set by the leader's `go`);
+  downed companions were counted inconsistently; the notice ignored a
+  full company; the hint's "look at the hiring post" found nothing (now
+  the notice answers to its name); `drink ... me` showed no thirst
+  status; help `company` overstated the company line and `party`; the
+  camp test cleared the module's reader instead of restoring it.
+  Accepted: the company line doesn't recheck that every companion made it
+  (a `no-go` buff or a locked far door); a pet isn't named in the company
+  line; an offline leader's camp reads "A camp"; the notice hides a
+  template already in the company even though paid ones can be hired
+  twice (32a2 replaces authored candidates); recruiter config parsed per
+  `look` (small); `party`/GMCP "Company" status has no dedicated test.
 
 ### Phase 29b2: one battle at a time; spawn groups; help for every system (2026-09-28)
 

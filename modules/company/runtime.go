@@ -45,7 +45,7 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 	if state != nil {
 		applyState(mob, *state)
 	}
-	mob.Character.Charm(leaderUserID, -2, characters.CharmExpiredRevert)
+	mob.Character.CharmAsCompanion(leaderUserID, -2, characters.CharmExpiredRevert)
 	leader.Character.TrackCharmed(mob.InstanceId, true)
 	room.AddMob(mob.InstanceId)
 	return mob.InstanceId, nil

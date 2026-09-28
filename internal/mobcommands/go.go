@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
@@ -111,25 +112,30 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		room.RemoveMob(mob.InstanceId)
 		destRoom.AddMob(mob.InstanceId)
 
-		c := configs.GetTextFormatsConfig()
+		// Phase 32a: a companion moving with its leader is part of the
+		// leader's one company line; it prints nothing of its own.
+		if !companionMovingWithLeader(mob, room.RoomId, destRoom.RoomId) {
 
-		// Tell the old room they are leaving
-		room.SendText(
-			fmt.Sprintf(string(c.ExitRoomMessageWrapper),
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaves towards the <ansi fg="exit">%s</ansi> exit.`, mob.Character.Name, exitName),
-			))
+			c := configs.GetTextFormatsConfig()
 
-		// Tell the new room they have arrived
+			// Tell the old room they are leaving
+			room.SendText(
+				fmt.Sprintf(string(c.ExitRoomMessageWrapper),
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> leaves towards the <ansi fg="exit">%s</ansi> exit.`, mob.Character.Name, exitName),
+				))
 
-		destRoom.SendText(
-			fmt.Sprintf(string(c.EnterRoomMessageWrapper),
-				fmt.Sprintf(`<ansi fg="mobname">%s</ansi> enters from %s.`, mob.Character.Name, enterFromExit),
-			))
+			// Tell the new room they have arrived
 
-		destRoom.SendTextToExits(`You hear someone moving around.`, true, room.GetPlayers(rooms.FindAll)...)
+			destRoom.SendText(
+				fmt.Sprintf(string(c.EnterRoomMessageWrapper),
+					fmt.Sprintf(`<ansi fg="mobname">%s</ansi> enters from %s.`, mob.Character.Name, enterFromExit),
+				))
 
-		room.PlaySound(`room-exit`, `movement`)
-		destRoom.PlaySound(`room-enter`, `movement`)
+			destRoom.SendTextToExits(`You hear someone moving around.`, true, room.GetPlayers(rooms.FindAll)...)
+
+			room.PlaySound(`room-exit`, `movement`)
+			destRoom.PlaySound(`room-enter`, `movement`)
+		}
 
 		// We want the `waypoint` onPath event triggered right after they enter the room.
 		if currentStep := mob.Path.Current(); currentStep != nil && currentStep.Waypoint() {
@@ -147,4 +153,19 @@ func Go(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// companionMovingWithLeader reports whether mob is a company member
+// following its leader out of a room whose one company line already
+// announced it (Phase 32a): the leader's "go" marked it for destRoomId and
+// the leader is there. One moving any other way still announces itself.
+// The mark is spent either way.
+func companionMovingWithLeader(mob *mobs.Mob, originRoomId, destRoomId int) bool {
+	marked := mob.CompanyMoveTo
+	mob.CompanyMoveTo = 0
+	if marked != destRoomId || !mob.Character.IsCompanion() {
+		return false
+	}
+	leader := users.GetByUserId(mob.Character.GetCharmedUserId())
+	return leader != nil && leader.Character.RoomId == destRoomId && originRoomId != destRoomId
 }

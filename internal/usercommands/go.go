@@ -150,8 +150,18 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 						fmt.Sprintf(`You head towards the <ansi fg="exit">%s</ansi> exit.`, exitName),
 					))
 
+				// Phase 32a: companions following their leader move as one
+				// company, so the rooms hear one line for all of them.
+				withCompany := companionsFollowing(user.UserId, room, destRoom.RoomId)
+
 				// Tell the old room they are leaving
-				if user.Character.Pet.Exists() && !user.Character.Pet.IsMissing() {
+				if withCompany {
+
+					room.SendText(
+						fmt.Sprintf(string(c.ExitRoomMessageWrapper), companyLeaveLine(user.Character.Name, exitName)),
+						user.UserId)
+
+				} else if user.Character.Pet.Exists() && !user.Character.Pet.IsMissing() {
 
 					room.SendText(
 						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
@@ -171,6 +181,15 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				if user.Character.Pet.Exists() && !user.Character.Pet.IsMissing() {
 
 					user.SendText(fmt.Sprintf(`%s follows you.`, user.Character.Pet.DisplayName()))
+				}
+
+				if withCompany {
+
+					destRoom.SendText(
+						fmt.Sprintf(string(c.EnterRoomMessageWrapper), companyArriveLine(user.Character.Name, enterFromExit)),
+						user.UserId)
+
+				} else if user.Character.Pet.Exists() && !user.Character.Pet.IsMissing() {
 
 					destRoom.SendText(
 						fmt.Sprintf(string(c.ExitRoomMessageWrapper),
@@ -349,6 +368,37 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 
 // handleExitLock attempts to open a locked exit. It reports whether the exit is
 // still locked, in which case the caller must stop.
+// companionsFollowing reports whether any of leaderUserID's company members
+// stands in room, about to follow them out to destRoomId (Phase 32a). Each
+// is marked as covered by the leader's company line, so its own move to
+// destRoomId prints nothing; a companion moving any other way (a flight,
+// travel, a sneaking leader, on its own) still announces itself.
+func companionsFollowing(leaderUserID int, room *rooms.Room, destRoomId int) bool {
+	found := false
+	for _, instId := range room.GetMobs(rooms.FindCharmed) {
+		mob := mobs.GetInstance(instId)
+		if mob == nil || mob.Character.RoomId != room.RoomId {
+			continue
+		}
+		if mob.Character.IsCompanion() && mob.Character.IsCharmed(leaderUserID) {
+			mob.CompanyMoveTo = destRoomId
+			found = true
+		}
+	}
+	return found
+}
+
+// companyLeaveLine is what the room a company leaves sees (Phase 32a).
+func companyLeaveLine(leaderName, exitName string) string {
+	return fmt.Sprintf(`<ansi fg="username">%s</ansi> leads their company towards the <ansi fg="exit">%s</ansi> exit.`, leaderName, exitName)
+}
+
+// companyArriveLine is what the room a company enters sees (Phase 32a).
+// enterFrom is already rendered ("the <exit>" or "somewhere").
+func companyArriveLine(leaderName, enterFrom string) string {
+	return fmt.Sprintf(`<ansi fg="username">%s</ansi> arrives from %s, their company behind.`, leaderName, enterFrom)
+}
+
 func handleExitLock(user *users.UserRecord, room *rooms.Room, exitName string, exitInfo exit.RoomExit) bool {
 
 	if !exitInfo.Lock.IsLocked() {
