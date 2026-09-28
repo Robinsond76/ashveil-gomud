@@ -8,7 +8,8 @@ Delete your character for good and start a new one, keeping your login.
 
 You're told what will be lost, then asked for your password (it isn't
 shown as you type), then for your character's name. Only both together
-delete. Anything else you type cancels: "Nothing was deleted."
+delete. Any other answer cancels: "Nothing was deleted." (Pressing Enter
+on its own just asks again.)
 
 <ansi fg="yellow-bold">What goes, and what stays</ansi>
 
@@ -29,7 +30,8 @@ character in a tutorial replay, and not before you've made a character.
 Travelling, camping, resting at an inn, riding, or with companions out
 is fine.
 
-Three wrong passwords lock the command until you next log in.
+Three wrong passwords in a row, here or in <ansi fg="command">password</ansi>, lock both
+commands until you next log in.
 
 This can't be undone.
 

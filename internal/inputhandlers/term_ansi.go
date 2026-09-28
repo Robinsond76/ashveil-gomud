@@ -93,7 +93,7 @@ func AnsiHandler(clientInput *connections.ClientInput, sharedState map[string]an
 		}
 
 		if ok, _ := term.Matches(ansiCmds, term.AnsiMoveCursorUp); ok {
-			mudlog.Debug("Received", "type", "ANSI (MoveCursorUp)", "currentInput", string(clientInput.Buffer), "LastSubmitted", string(clientInput.LastSubmitted))
+			mudlog.Debug("Received", "type", "ANSI (MoveCursorUp)", "LastSubmitted", string(clientInput.LastSubmitted))
 
 			// For each character in the buffer, backspace it out
 			// Then add whatever was last submitted
@@ -127,7 +127,7 @@ func AnsiHandler(clientInput *connections.ClientInput, sharedState map[string]an
 		}
 
 		if ok, _ := term.Matches(ansiCmds, term.AnsiMoveCursorDown); ok {
-			mudlog.Debug("Received", "type", "ANSI (MoveCursorDown)", "currentInput", string(clientInput.Buffer), "LastSubmitted", string(clientInput.LastSubmitted))
+			mudlog.Debug("Received", "type", "ANSI (MoveCursorDown)", "LastSubmitted", string(clientInput.LastSubmitted))
 
 			// For each character in the buffer, backspace it out
 			// Then add whatever was last submitted

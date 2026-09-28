@@ -232,6 +232,7 @@ func CopyoverReconnectUser(user *UserRecord, connectionId connections.Connection
 
 	user.EventLog.Add(`conn`, `Reconnected`)
 
+	user.SyncInputMask() // Ashveil 32h: a password question may still be open
 	return user, "Reconnecting...", nil
 }
 
@@ -288,7 +289,8 @@ func LoginUser(user *UserRecord, connectionId connections.ConnectionId) (*UserRe
 
 				user.EventLog.Add(`conn`, `Reconnected`)
 
-				return user, "Reconnecting...", nil
+				user.SyncInputMask() // Ashveil 32h: a password question may still be open
+	return user, "Reconnecting...", nil
 			}
 
 		}

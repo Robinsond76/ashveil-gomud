@@ -19,10 +19,12 @@ import (
 // the login kept, resets the record to a new character, and logs the same
 // user back in on the same connection, in the Void, where creation runs.
 
-// deleteFailsKey counts wrong passwords since login (temp data, so a new
-// login starts it empty). Three lock the command until the next login.
+// deleteFailsKey counts wrong passwords in a row since login (temp data,
+// so a new login starts it empty), typed to `delete character` or
+// `password`. Three lock both until the next login, so neither is a way to
+// guess an unattended player's password.
 const (
-	deleteFailsKey  = `delete-character-fails`
+	deleteFailsKey  = `password-fails`
 	deleteMaxFails  = 3
 	DeleteNothing   = `Nothing was deleted.`
 	deleteLockedMsg = `You've given the wrong password too many times. Log in again to try once more.`
@@ -42,7 +44,7 @@ func Delete(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 		user.ClearPrompt()
 		return true, nil
 	}
-	if fails, _ := user.GetTempData(deleteFailsKey).(int); fails >= deleteMaxFails {
+	if PasswordLocked(user) {
 		user.SendText(deleteLockedMsg)
 		user.ClearPrompt()
 		return true, nil
@@ -59,19 +61,19 @@ func Delete(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	if !question.Done {
 		return true, nil
 	}
-	if !user.PasswordMatches(question.Response) {
-		fails, _ := user.GetTempData(deleteFailsKey).(int)
-		fails++
-		user.SetTempData(deleteFailsKey, fails)
-		mudlog.Warn("delete character", "userId", user.UserId, "result", "wrong password", "fails", fails)
+	if _, verified := cmdPrompt.Recall(`verified`); verified {
+		// checked on an earlier input
+	} else if !CheckPassword(user, question.Response, `delete character`) {
 		user.ClearPrompt()
-		if fails >= deleteMaxFails {
+		if PasswordLocked(user) {
 			user.SendText(DeleteNothing + ` ` + deleteLockedMsg)
 			return true, nil
 		}
 		user.SendText(DeleteNothing)
 		return true, nil
 	}
+	cmdPrompt.Store(`verified`, true)
+	question.Response = `` // checked; don't keep the password
 
 	question = cmdPrompt.Ask(fmt.Sprintf(`Type %s to confirm, or anything else to cancel:`, name), []string{})
 	if !question.Done {
@@ -125,4 +127,26 @@ func deleteRefusal(user *users.UserRecord) string {
 		return `You're too busy fighting to do that right now.`
 	}
 	return ``
+}
+
+// PasswordLocked reports whether three wrong passwords in a row have
+// locked the password checks until the next login (Ashveil 32h).
+func PasswordLocked(user *users.UserRecord) bool {
+	fails, _ := user.GetTempData(deleteFailsKey).(int)
+	return fails >= deleteMaxFails
+}
+
+// CheckPassword checks an in-game password answer, counting wrong ones in
+// a row (logged by user id, never the password) and clearing the count on
+// a right one.
+func CheckPassword(user *users.UserRecord, answer string, what string) bool {
+	if user.PasswordMatches(answer) {
+		user.SetTempData(deleteFailsKey, nil)
+		return true
+	}
+	fails, _ := user.GetTempData(deleteFailsKey).(int)
+	fails++
+	user.SetTempData(deleteFailsKey, fails)
+	mudlog.Warn("password check", "command", what, "userId", user.UserId, "result", "wrong password", "fails", fails)
+	return false
 }

@@ -185,3 +185,30 @@ func TestDeleteCharacterRefusals(t *testing.T) {
 	assert.Empty(t, *d.despawns)
 	assert.Nil(t, d.user.GetPrompt())
 }
+
+// TestWrongPasswordsCountInARow (32h review): a right password clears the
+// count, and the lock covers `password` too, so neither command is a way
+// to guess a password.
+func TestWrongPasswordsCountInARow(t *testing.T) {
+	d := newDeleter(t)
+	for i := 0; i < 2; i++ {
+		d.run("character")
+		d.answer("wrong")
+	}
+	d.run("character")
+	d.answer("hunter22")
+	d.answer("Brom") // right password, wrong name: cancelled, count cleared
+	d.run("character")
+	assert.NotContains(t, d.answer("wrong"), "too many times", "one wrong in a row")
+	d.run("character")
+	d.answer("wrong")
+	d.run("character")
+	assert.Contains(t, d.answer("wrong"), "too many times", "three in a row")
+
+	*d.heard = nil
+	_, err := Password("", d.user, nil, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.Join(*d.heard, ""), "too many times", "password is locked too")
+	assert.Nil(t, d.user.GetPrompt())
+}

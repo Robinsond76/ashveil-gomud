@@ -199,6 +199,8 @@ func TestDeleteCharacterThroughPluginsLoad(t *testing.T) {
 	// connection, in the Void, making a new character.
 	run(aria, "delete", "character")
 	answer(aria, "hunter22")
+	itemsHere := len(start.Items)
+	goldHere := start.Gold
 	assert.Contains(t, answer(aria, "aria"), "Aria is gone.")
 	events.ProcessEvents()
 	fresh := users.GetByConnectionId(conn)
@@ -214,6 +216,8 @@ func TestDeleteCharacterThroughPluginsLoad(t *testing.T) {
 	assert.Less(t, fresh.Character.Experience, 4321)
 	assert.Empty(t, fresh.Character.GetAllBackpackItems())
 	assert.NotContains(t, wire.String(), "Goodbye", "no goodbye on a hand-off")
+	assert.Equal(t, itemsHere, len(start.Items), "nothing dropped where Aria stood")
+	assert.Equal(t, goldHere, start.Gold)
 	assertDeleted(t, 7)
 	assert.NotContains(t, run(fresh, "cargo", ""), cargoItem, "no cargo")
 	_, found := users.GetCharacterIndex().Find("Aria")
