@@ -150,18 +150,22 @@ you can reach" as the one strategy until 32d adds more.
    The battle is under way: your company fights as it was set up.
    ```
    Your aim changes only by itself: when your target falls or can't be
-   reached, you turn on another by your strategy (29a's upkeep, extended
-   in 32d to a player fighting alone, who today picks by bare `attack`).
+   reached, you turn on another by your strategy (29a's upkeep). **A
+   player fighting alone is turned too** (final review): today 29a's
+   turning needs a companion present, and a lone player picks their next
+   foe with a bare `attack`, which rule 5 now refuses; without this, a
+   solo battle would stall when the first foe fell.
 4. **Out of a battle, `cast`, `backstab`, and `shoot` don't start
    fights** (rule 5): a harmful spell, a backstab, or a shot at an enemy
    is refused and points to `attack <group>`. `cast` stays for spells out
    of combat (healing, light, utility). An opening move, such as a
    rogue's backstab from hiding, becomes a strategy in 32d.
 5. **A mob alone** is attacked by its own name, as today (A.4).
-6. **Unchanged:** `attack <player>` (PvP rules), the exact `#<id>` and
-   `@<id>` forms companions and parties use (they are the game's own
-   commands, not the player's), and `look`, `consider`, and `peep` at a
-   member. The `*`, `*mob`, and `*user` random forms start a fight only
+6. **Unchanged:** `attack <player>` (PvP rules), `@<id>`, and `look`,
+   `consider`, and `peep` at a member. **`#<id>`** (how companions and
+   GoMud party members join a fight) now starts a battle with that mob's
+   whole group, like naming the group, so it can't be typed to get
+   around rule 3 (final review). The `*`, `*mob`, and `*user` random forms start a fight only
    out of a battle, like any `attack`.
 7. **`flee` and `break`** are left as they are in 32c. Whether a player
    can still flee or step out mid-battle under rule 5 is settled with
@@ -275,7 +279,9 @@ presentation phases (29c, 32g) can use it.
     aim is the weakest reachable member, else a reachable one by
     formation;
   - `attack <member>` with no battle is refused with the group's
-    command;
+    command; `attack #<id>` starts a battle with that mob's group;
+  - a player alone: when their first foe falls, they turn on the next
+    member of the group with no command;
   - in a battle, every `attack` form, `cast`, `backstab`, and `shoot`
     are refused and change nothing;
   - two groups of the same name: `attack ruffians#2` takes the second;
@@ -295,10 +301,9 @@ presentation phases (29c, 32g) can use it.
     moved to the group's name where they start a fight).
 - **Player help:** a new `help scout`; `help attack` rewritten for
   groups (replacing GoMud's page); `help targeting` (naming a group; a
-  battle plays out by itself; targets by strategy), `help combat` (the hub links `scout`),
-  `help backstab`, `help shoot`, and `help cast` (out of combat only)
-  updated; `scout` and
-  its aliases in `keywords.yaml`; the Combat lesson points to `scout`;
+  battle plays out by itself; targets by strategy), `help combat` (the
+  hub links `scout`), `help backstab`, `help shoot`, and `help cast` (out
+  of combat only) updated; `scout` and its aliases in `keywords.yaml`; the Combat lesson points to `scout`;
   `TestTutorialHelpPointersExist` passes.
 - `go test -race ./...`, `make generate`, and `make validate` pass. The
   independent review is recorded.
