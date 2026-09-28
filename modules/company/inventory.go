@@ -34,7 +34,7 @@ func (m *CompanyModule) inventoryView(user *users.UserRecord) string {
 	if m.persistenceAvailable() == nil {
 		if record, ok := m.registry.Get(leaderUserID); ok {
 			for _, c := range record.Companions {
-				name := fmt.Sprintf("#%d %s", c.ID, templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID)))
+				name := fmt.Sprintf("#%d %s", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)))
 				if c.Dead() {
 					lines = append(lines, name+"  fallen; their gear is with the body")
 					continue

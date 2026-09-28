@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
 	"github.com/stretchr/testify/assert"
@@ -169,4 +170,56 @@ func TestGetFromCorpseRefusedWhenFull(t *testing.T) {
 	_, err := Get("pebble wolf", user, room, 0)
 	require.NoError(t, err)
 	assert.True(t, holds(user, carryPebble), "a light thing still fits")
+}
+
+// TestPickpocketLeavesWhatWontFit (32f review finding 4): a stolen item
+// that would overload the thief's company stays with its owner.
+func TestPickpocketLeavesWhatWontFit(t *testing.T) {
+	setupCarry(t, map[int]int{7: 3000, 8: 100000})
+	skills.SetTestData([]*skills.Skill{{SkillId: "skulduggery", Name: "Skulduggery", Description: "Sneak.", MaxLevel: 4}}, nil)
+	t.Cleanup(func() { skills.SetTestData(nil, nil) })
+	before := configs.Flatten(configs.GetOverrides())
+	after := maps.Clone(before)
+	after["GamePlay.PVP.Enabled"] = "enabled"
+	after["GamePlay.PVP.MinimumLevel"] = 0
+	require.NoError(t, configs.RestoreOverrides(after))
+	t.Cleanup(func() { _ = configs.RestoreOverrides(before) })
+	room := testRoom()
+	room.RoomId = 988300 // not the death-recovery room, where no one fights
+	thief := carrier(t, 7, "Dain", room)
+	mark := carrier(t, 8, "Mira", room)
+	mark.Character.Gold = 0
+	mark.Character.Items = []items.Item{newItem(carryAnvil)}
+	thief.Character.Skills = map[string]int{"skulduggery": 4}
+	thief.Character.Stats.Speed.ValueAdj = 500
+	thief.Character.Stats.Smarts.ValueAdj = 500
+	thief.Character.Stats.Perception.ValueAdj = 500
+
+	out := captureUserText(t, func() {
+		_, err := Pickpocket("mira", thief, room, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "can't carry any more")
+	assert.False(t, holds(thief, carryAnvil))
+	assert.True(t, holds(mark, carryAnvil), "the mark keeps it")
+}
+
+// TestGiveToFullPlayersPetRefused (32f review finding 4): a pet's pouch is
+// its owner's load, so a full company can't take it through the pet.
+func TestGiveToFullPlayersPetRefused(t *testing.T) {
+	setupCarry(t, map[int]int{7: 100000, 8: 3000})
+	room := testRoom()
+	giver := carrier(t, 7, "Dain", room)
+	owner := carrier(t, 8, "Mira", room)
+	owner.Character.Pet.Type = "dog"
+	owner.Character.Pet.Name = "rex"
+	giver.Character.Items = []items.Item{newItem(carryAnvil)}
+
+	out := captureUserText(t, func() {
+		_, err := Give("anvil rex", giver, room, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, out, "can't carry any more")
+	assert.True(t, holds(giver, carryAnvil), "the giver keeps it")
+	assert.Empty(t, owner.Character.Pet.Items)
 }

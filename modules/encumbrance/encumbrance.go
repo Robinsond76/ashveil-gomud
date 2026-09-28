@@ -307,6 +307,13 @@ func (m *EncumbranceModule) personalGrams(leaderUserID int) int {
 	for _, item := range user.Character.Equipment.GetAllItems() {
 		total += item.Weight()
 	}
+	// A pet travels with its owner, so its pouch is the owner's load
+	// (32f review finding 4).
+	if user.Character.Pet.Exists() {
+		for i := range user.Character.Pet.Items {
+			total += user.Character.Pet.Items[i].Weight()
+		}
+	}
 	return total
 }
 

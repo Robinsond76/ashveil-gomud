@@ -2,7 +2,6 @@ package users
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"math"
 	"strconv"
 	"strings"
@@ -272,11 +271,10 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 
 			case `{I}`:
 				// Phase 32f: the company's carrying capacity in whole kg
-				// (weight is the only limit); "?" when it isn't tracked.
+				// (weight is the only limit). Prompts are built off the game
+				// loop, so internal/companyview fills it from its cache; "?"
+				// until it has.
 				value = "?"
-				if load, ok := encumbrance.CurrentLoad(u.UserId); ok {
-					value = strconv.Itoa(load.CapacityGrams / 1000)
-				}
 
 			case `{lvl}`:
 				value = strconv.Itoa(u.Character.Level)

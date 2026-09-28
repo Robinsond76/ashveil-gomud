@@ -117,10 +117,8 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			user.SendText(fmt.Sprintf(`You don't see a %s carried by %s.`, rest, user.Character.Pet.DisplayName()))
 		} else {
 
-			if tooHeavy(user, matchItem) {
-				return true, nil
-			}
-
+			// A pet's pouch already counts in its owner's load (Phase
+			// 32f), so taking from it needs no capacity check.
 			if user.Character.Pet.RemoveItem(matchItem) {
 				if !user.Character.StoreItem(matchItem) {
 					user.Character.Pet.StoreItem(matchItem)

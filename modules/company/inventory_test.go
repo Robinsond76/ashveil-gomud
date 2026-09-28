@@ -85,7 +85,7 @@ func TestCompanyInventory(t *testing.T) {
 	fallen := domain.MemberState{Level: 1, Items: []items.Item{meat}}
 	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
 		7: {LeaderUserID: 7, Companions: []domain.Companion{
-			{ID: 1, MobTemplateID: 58, State: &carried},
+			{ID: 1, MobTemplateID: 58, Name: "Maren Vale", State: &carried},
 			{ID: 2, MobTemplateID: 58, State: &fallen, Death: &domain.CompanionDeath{OpID: "x", Remaining: 60}},
 		}},
 	}}, &fakeRuntime{})
@@ -101,6 +101,7 @@ func TestCompanyInventory(t *testing.T) {
 
 	assert.Contains(t, out, "Company load: 4.0 kg / 145.0 kg (3%), of which horses 100.0 kg.")
 	assert.Contains(t, out, "Dain (you)")
+	assert.Contains(t, out, "#1 Maren Vale", "a generated recruit by its own name (32f review finding 3)")
 	assert.Contains(t, out, "Carrying: waterskin (3 of 5), seared meat x2")
 	assert.Contains(t, out, "pack: satchel (+5.0 kg)")
 	assert.Contains(t, out, "Wearing: iron sword")

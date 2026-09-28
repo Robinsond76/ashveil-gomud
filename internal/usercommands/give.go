@@ -257,6 +257,15 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			return true, nil
 		}
 
+		// Phase 32f: a pet's pouch counts in its owner's load, so another
+		// player's full company can't take it through their pet.
+		if petUserId != user.UserId {
+			if _, full := encumbrance.WouldExceed(petUserId, giveItem.Weight()); full {
+				user.SendText(fmt.Sprintf(`%s's company can't carry any more.`, petUser.Character.Pet.DisplayName()))
+				return true, nil
+			}
+		}
+
 		user.SendText(fmt.Sprintf(`You give the <ansi fg="itemname">%s</ansi> to %s.`, giveItem.DisplayName(), petUser.Character.Pet.DisplayName()))
 		room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> gives their <ansi fg="itemname">%s</ansi> to %s...`, user.Character.Name, giveItem.DisplayName(), petUser.Character.Pet.DisplayName()), user.UserId)
 

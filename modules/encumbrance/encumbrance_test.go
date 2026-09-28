@@ -331,3 +331,16 @@ func TestPersonalLoadIgnoresStaleSpecCopies(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, 1500, load.PersonalGrams)
 }
+
+// TestPersonalLoadCountsThePetsPouch (32f review finding 4): a pet walks
+// with its owner, so what it carries is the owner's load.
+func TestPersonalLoadCountsThePetsPouch(t *testing.T) {
+	user := testUser(t, 7)
+	user.Character.Pet.Type = "dog"
+	user.Character.Pet.Items = []items.Item{testItem(rockId)}
+	module := newTestModule(&fakeStore{}, user)
+
+	load, ok := module.CurrentLoad(7)
+	require.True(t, ok)
+	assert.Equal(t, 500, load.PersonalGrams)
+}

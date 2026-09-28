@@ -378,3 +378,32 @@ func TestReliefThroughRegisteredSeam(t *testing.T) {
 	assert.Equal(t, 20000, mount.CapacityBonus(7))
 	assert.Len(t, mount.HerdOf(7), 2)
 }
+
+// TestHerdChangesSaveTheLeader (32f review finding 2): stable, saddle,
+// unsaddle, and release move gold or a saddle, so the leader is saved right
+// after the herd, never left for the next autosave.
+func TestHerdChangesSaveTheLeader(t *testing.T) {
+	saddles(t)
+	user := testUser(t, 7)
+	module := newTestModule(&fakeStore{})
+	var saved []int
+	module.saveUser = func(u *users.UserRecord) error {
+		saved = append(saved, u.Character.Gold)
+		return nil
+	}
+	module.stable(user, stableRoom(), "pack-horse")
+	require.Equal(t, []int{880}, saved, "saved with the gold already paid")
+	user.Character.Items = []items.Item{items.New(packSaddleID)}
+	module.saddle(user, "pack", "pack saddle")
+	module.unsaddle(user, "pack")
+	module.saddle(user, "pack", "pack saddle")
+	module.release(user, "pack")
+	assert.Len(t, saved, 5)
+
+	saved = nil
+	store := &fakeStore{saveErr: assert.AnError}
+	failing := newTestModule(store)
+	failing.saveUser = module.saveUser
+	failing.stable(user, stableRoom(), "pack-horse")
+	assert.Empty(t, saved, "no herd, no user save")
+}

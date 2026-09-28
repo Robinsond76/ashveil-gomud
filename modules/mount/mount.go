@@ -141,6 +141,9 @@ type MountModule struct {
 	legacySaddle int
 	herds        map[int]mount.Herd
 	loadErr      error
+	// saveUser writes the leader right after a herd change moves gold or a
+	// saddle (32f review), so a crash can't split the two; nil skips.
+	saveUser func(*users.UserRecord) error
 
 	mu sync.Mutex
 }
@@ -158,6 +161,7 @@ func init() {
 		specs:     map[string]mount.MountSpec{},
 		stableTag: defaultStableTag,
 		herds:     map[int]mount.Herd{},
+		saveUser:  func(user *users.UserRecord) error { return users.SaveUser(*user) },
 	}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
@@ -417,6 +421,7 @@ func (m *MountModule) stable(user *users.UserRecord, room *rooms.Room, horseType
 	if spec.Price > 0 {
 		user.Character.Gold -= spec.Price
 		events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -spec.Price})
+		m.saveLeader(user)
 	}
 	return fmt.Sprintf(`You buy a %s (#%d) for <ansi fg="gold">%d gold</ansi>. Fit it with a %s saddle to put it to full use (<ansi fg="command">mount saddle #%d [saddle]</ansi>).`,
 		spec.Name(), horse.ID, spec.Price, spec.Kind, horse.ID)
@@ -446,6 +451,7 @@ func (m *MountModule) release(user *users.UserRecord, selector string) string {
 	name := m.horseNameLocked(horse)
 	if horse.Saddled() {
 		m.giveSaddle(user, horse.SaddleItemId)
+		m.saveLeader(user)
 		return fmt.Sprintf("You release your %s (#%d), keeping its %s.", name, horse.ID, itemName(horse.SaddleItemId))
 	}
 	return fmt.Sprintf("You release your %s (#%d).", name, horse.ID)
@@ -499,6 +505,7 @@ func (m *MountModule) saddle(user *users.UserRecord, selector, saddleName string
 		m.giveSaddle(user, old)
 		text += fmt.Sprintf(" You keep the %s it wore.", itemName(old))
 	}
+	m.saveLeader(user)
 	return text
 }
 
@@ -527,7 +534,20 @@ func (m *MountModule) unsaddle(user *users.UserRecord, selector string) string {
 		return err.Error()
 	}
 	m.giveSaddle(user, old)
+	m.saveLeader(user)
 	return fmt.Sprintf("You take the %s off your %s (#%d).", itemName(old), m.horseNameLocked(horse), horse.ID)
+}
+
+// saveLeader writes the leader after the herd save, as a paid recruit does
+// (modules/company). A failed save leaves the change in memory for the next
+// autosave, logout, or copyover save.
+func (m *MountModule) saveLeader(user *users.UserRecord) {
+	if m.saveUser == nil {
+		return
+	}
+	if err := m.saveUser(user); err != nil {
+		mudlog.Error("mount: save leader after herd change", "user", user.UserId, "error", err)
+	}
 }
 
 // giveSaddle puts a saddle item into the leader's pack.
