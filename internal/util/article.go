@@ -26,7 +26,8 @@ func firstVisible(s string) int {
 
 // Article puts "the " before a name whose first visible letter is
 // lowercase ("the bandit captain"). A capitalised name is proper and is
-// returned as is ("Garrick Vane"), as is one that already begins "the ".
+// returned as is ("Garrick Vane"), as is one that already begins with an
+// article ("the rat", "a stray dog") or not with a letter ("#3").
 // Phase 29c.
 func Article(name string) string {
 	i := firstVisible(name)
@@ -34,8 +35,13 @@ func Article(name string) string {
 		return name
 	}
 	r, _ := utf8.DecodeRuneInString(name[i:])
-	if unicode.IsUpper(r) || strings.HasPrefix(name[i:], "the ") {
+	if !unicode.IsLower(r) {
 		return name
+	}
+	for _, article := range []string{"the ", "a ", "an "} {
+		if strings.HasPrefix(name[i:], article) {
+			return name
+		}
 	}
 	return "the " + name
 }

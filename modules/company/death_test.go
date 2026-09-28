@@ -100,8 +100,8 @@ func TestCompanionDeathMarksDead(t *testing.T) {
 	assert.Equal(t, 1, module.store.(*fakeStore).saveCalls)
 	saved := module.store.(*fakeStore).saved.Companies[7].Companions[0]
 	assert.True(t, saved.Dead(), "saved at once")
-	assert.Contains(t, told(world), "has fallen")
-	assert.Contains(t, told(world), "1h 0m")
+	// Phase 29c: indented, and the time in words.
+	assert.Regexp(t, `(?m)^    (<[^>]*>)?\S.* has fallen\.(<[^>]*>)? You have 1 hour of your own time to reach a church or a village shaman`, told(world))
 
 	// A second death event for the same companion changes nothing.
 	module.onMobDeath(events.MobDeath{InstanceId: 101, Level: 5})
@@ -391,4 +391,22 @@ func TestLogoutSavesRemainingUnderASecond(t *testing.T) {
 	module.onPlayerDespawn(events.PlayerDespawn{UserId: 7})
 	assert.Greater(t, module.store.(*fakeStore).saveCalls, saves)
 	assert.Equal(t, 3592, module.store.(*fakeStore).saved.Companies[7].Companions[0].Death.Remaining)
+}
+
+// TestAllowanceWords (Phase 29c): the fallen notice's time, in words.
+func TestAllowanceWords(t *testing.T) {
+	cases := map[int]string{
+		10800: "3 hours",
+		9000:  "2 hours 30 minutes",
+		3660:  "1 hour 1 minute",
+		3600:  "1 hour",
+		120:   "2 minutes",
+		45:    "45 seconds",
+		1:     "1 second",
+		0:     "0 seconds",
+		-5:    "0 seconds",
+	}
+	for seconds, want := range cases {
+		assert.Equal(t, want, allowanceWords(seconds), "%d seconds", seconds)
+	}
 }

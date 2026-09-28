@@ -214,13 +214,13 @@ death), so it can follow a closing line.
 - Produces: `allowanceWords(seconds int) string` → `3 hours`,
   `2 hours 30 minutes`, `1 hour 1 minute`, `45 seconds`.
 
-- [ ] **Step 1:** failing table test for `allowanceWords`; `death_test.go:103`
+- [x] **Step 1:** failing table test for `allowanceWords`; `death_test.go:103`
   asserts the notice starts with four spaces and reads `has fallen. You have 3 hours of your own time`.
-- [ ] **Step 2:** FAIL.
-- [ ] **Step 3:** implement; the notice becomes
+- [x] **Step 2:** FAIL.
+- [x] **Step 3:** implement; the notice becomes
   `    <name> has fallen. You have <words> of your own time to reach a church or a village shaman and <ansi fg="command">resurrect</ansi> them.`
-- [ ] **Step 4:** update `wiring_resurrect_test.go:181`; PASS.
-- [ ] **Step 5: Commit** `feat(company): indented fallen notice in words (29c)`.
+- [x] **Step 4:** update `wiring_resurrect_test.go:181`; PASS.
+- [x] **Step 5: Commit** `feat(company): indented fallen notice in words (29c)`.
 
 ### Task 7: Spells
 

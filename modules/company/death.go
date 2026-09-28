@@ -81,6 +81,28 @@ func formatAllowance(seconds int) string {
 	return fmt.Sprintf("%dh %dm", seconds/3600, seconds%3600/60)
 }
 
+// allowanceWords renders seconds in words for the fallen notice (Phase
+// 29c): "3 hours", "2 hours 30 minutes", "45 seconds".
+func allowanceWords(seconds int) string {
+	unit := func(n int, word string) string {
+		if n == 1 {
+			return "1 " + word
+		}
+		return fmt.Sprintf("%d %ss", n, word)
+	}
+	if seconds < 60 {
+		return unit(max(seconds, 0), "second")
+	}
+	hours, minutes := seconds/3600, seconds%3600/60
+	switch {
+	case hours == 0:
+		return unit(minutes, "minute")
+	case minutes == 0:
+		return unit(hours, "hour")
+	}
+	return unit(hours, "hour") + " " + unit(minutes, "minute")
+}
+
 func companionName(c domain.Companion) string {
 	return nameOf(c, "#"+strconv.Itoa(c.ID))
 }
@@ -138,8 +160,9 @@ func (m *CompanyModule) recordCompanionDeath(leaderUserID, companionID int, evt 
 	if err := m.save(); err != nil {
 		mudlog.Error("company: save companion death", "leader", leaderUserID, "companion", companionID, "error", err)
 	}
-	m.chemistryWorld().Tell(leaderUserID, fmt.Sprintf(`<ansi fg="red">%s has fallen.</ansi> You have %s of your own time to bring your company to a church or a village shaman and <ansi fg="command">resurrect</ansi> them.`,
-		companionName(c), formatAllowance(allowance)))
+	fallen := util.CapitalizeFirst(fmt.Sprintf(`<ansi fg="red">%s has fallen.</ansi>`, util.Article(companionName(c))))
+	m.chemistryWorld().Tell(leaderUserID, fmt.Sprintf(`    %s You have %s of your own time to reach a church or a village shaman and <ansi fg="command">resurrect</ansi> them.`,
+		fallen, allowanceWords(allowance)))
 }
 
 // --- the allowance clock ---

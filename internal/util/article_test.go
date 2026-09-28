@@ -10,6 +10,10 @@ func TestArticle(t *testing.T) {
 		`<ansi fg="mobname">Ysolde</ansi>`:  `<ansi fg="mobname">Ysolde</ansi>`,
 		"":                                  "",
 		"the rat":                           "the rat",
+		"a stray dog":                       "a stray dog",
+		"an ent":                            "an ent",
+		"ant":                               "the ant",
+		"#3":                                "#3",
 		`<ansi fg="mobname">the rat</ansi>`: `<ansi fg="mobname">the rat</ansi>`,
 		"theodric's hound":                  "the theodric's hound",
 	}
