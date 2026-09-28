@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -21,6 +22,12 @@ func Tackle(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	// If they don't have a skill, act like it's not a valid command
 	if skillLevel < 3 {
 		return false, nil
+	}
+
+	// Ashveil Phase 32c (the owner's rule 5): a battle plays out on its own.
+	if _, inBattle := battle.Current(user.UserId); inBattle {
+		user.SendText(BattleUnderWay)
+		return true, nil
 	}
 
 	if user.Character.Aggro == nil {

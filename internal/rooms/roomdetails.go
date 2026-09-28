@@ -31,6 +31,7 @@ var OnRoomLook util.Hook[RoomTemplateDetails]
 type RoomTemplateDetails struct {
 	VisiblePlayers []string
 	VisibleMobs    []string
+	VisibleGroups  []string // Ashveil Phase 32c: one line per enemy group
 	VisibleCorpses []string
 	VisibleExits   map[string]exit.RoomExit
 	TemporaryExits map[string]exit.TemporaryRoomExit
@@ -296,11 +297,8 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 				visibleFriendlyMobs = append(visibleFriendlyMobs, mobName.String())
 			} else {
 				hostileMobs = append(hostileMobs, hostileMobDisplay{
-					instanceId: mobInstanceId,
-					spawnGroup: mob.SpawnGroup,
-					groups:     mob.Groups,
-					rawName:    mob.Character.Name,
-					display:    mobName.String(),
+					summary: GroupSummary(mob),
+					display: mobName.String(),
 				})
 			}
 		} else {
@@ -308,7 +306,11 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		}
 	}
 
-	details.VisibleMobs = groupedMobDisplay(hostileMobs)
+	// Ashveil Phase 32c: a lone mob is listed as before; each group has a
+	// line of its own.
+	details.VisibleMobs, details.VisibleGroups = groupedMobDisplay(hostileMobs, func(members []int) string {
+		return GroupDoing(user.UserId, members)
+	})
 
 	// Add the friendly mobs to the end
 	details.VisibleMobs = append(details.VisibleMobs, visibleFriendlyMobs...)

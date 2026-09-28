@@ -5,6 +5,7 @@ defaultalignment: 70
 buffids:
   - 29 # Night Vision
 size: small
+groupnoun: band
 unarmedname: sharp teeth
 angrycommands: 
   - shout we are a peaceful people!

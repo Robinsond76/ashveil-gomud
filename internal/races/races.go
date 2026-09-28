@@ -37,6 +37,7 @@ type Race struct {
 	TNLScale         float32
 	UnarmedName      string
 	Tameable         bool
+	GroupNoun        string `yaml:"groupnoun,omitempty"` // Ashveil (Phase 32c): what a group of them is called ("band", "pack"); empty for mobparty.DefaultNoun
 	Damage           items.Damage
 	Selectable       bool
 	AngryCommands    []string         // randomly chosen to queue when they are angry/entering combat.

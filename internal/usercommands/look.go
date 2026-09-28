@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"sort"
 	"strings"
 
@@ -90,6 +91,12 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	//
 	// look for any mobs, players, npcs
 	//
+
+	// Ashveil Phase 32c: an enemy group, by its name.
+	if g, ok := enemyparty.FindGroupNamed(room, lookAt); ok {
+		user.SendText(describeGroup(room, g, user))
+		return true, nil
+	}
 
 	playerId, mobId := room.FindByName(lookAt)
 

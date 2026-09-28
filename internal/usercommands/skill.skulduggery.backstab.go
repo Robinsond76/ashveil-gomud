@@ -26,6 +26,12 @@ func Backstab(rest string, user *users.UserRecord, room *rooms.Room, flags event
 		return false, nil
 	}
 
+	// Ashveil Phase 32c (the owner's rule 5): nothing typed acts on a battle.
+	if _, inBattle := battle.Current(user.UserId); inBattle || fightingMob(user) {
+		user.SendText(BattleUnderWay)
+		return true, nil
+	}
+
 	// Must be sneaking
 	isSneaking := user.Character.HasBuffFlag("hidden")
 	if !isSneaking {
@@ -91,10 +97,11 @@ func Backstab(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 
 	if attackMobInstanceId > 0 {
-		// Ashveil Phase 29b2: a group waiting its turn can't be struck
-		// until this fight is over; refused before anything is spent.
-		if b, inBattle := battle.Current(user.UserId); inBattle && !b.Has(attackMobInstanceId) {
-			user.SendText(fmt.Sprintf(`You're fighting %s. Finish that fight first.`, battleFoeName(b, room)))
+		// Ashveil Phase 32c: a backstab doesn't start a fight with an enemy
+		// (an opener becomes a strategy in 32d); refused before anything is
+		// spent.
+		if m := mobs.GetInstance(attackMobInstanceId); m != nil && !m.Character.IsCharmed() {
+			user.SendText(NotAnOpener(room, attackMobInstanceId, `A backstab`))
 			return true, nil
 		}
 	}

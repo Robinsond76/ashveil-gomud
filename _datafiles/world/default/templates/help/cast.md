@@ -9,4 +9,8 @@ The ~cast~ command attempts to cast a learned spell.
 
   Spells can also be cast by using their shorthand/ID directly, such as: ~illum~
 
-**See also:** ~help spells~
+Cast is for spells outside a fight: healing, light, and other help. A harmful
+spell doesn't start a fight; start one with ~attack [group]~. Once a battle is
+under way, nothing is cast by hand: your company fights as it was set up.
+
+**See also:** ~help spells~, ~help attack~
