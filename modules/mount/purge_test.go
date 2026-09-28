@@ -8,10 +8,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestUserPurgedDropsTheMount (Phase 32b).
-func TestUserPurgedDropsTheMount(t *testing.T) {
+// TestUserPurgedDropsTheHerd (Phase 32b, herds from 32f).
+func TestUserPurgedDropsTheHerd(t *testing.T) {
 	store := &fakeStore{}
-	m := &MountModule{store: store, mounts: map[int]domain.Mount{7: {LeaderUserID: 7, Type: "horse"}, 8: {LeaderUserID: 8, Type: "horse"}}}
+	m := &MountModule{store: store, herds: map[int]domain.Herd{
+		7: {LeaderUserID: 7, NextID: 2, Horses: []domain.Horse{{ID: 1, Type: "horse"}}},
+		8: {LeaderUserID: 8, NextID: 2, Horses: []domain.Horse{{ID: 1, Type: "horse"}}},
+	}}
 	m.onUserPurged(events.UserPurged{UserId: 7})
-	assert.Equal(t, map[int]domain.Mount{8: {LeaderUserID: 8, Type: "horse"}}, store.saved.Mounts)
+	assert.Equal(t, map[int]domain.Herd{8: {LeaderUserID: 8, NextID: 2, Horses: []domain.Horse{{ID: 1, Type: "horse"}}}}, store.saved.Herds)
 }

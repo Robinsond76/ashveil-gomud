@@ -70,22 +70,14 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 			}
 		}
 
+		// Phase 32f: weight is the only carrying limit, and it never stops
+		// a step (heavy loads cost strain instead); GoMud's item-count
+		// throttle is gone.
 		actionCost := 10
-		encumbered := false
-		if len(user.Character.Items) > user.Character.CarryCapacity() {
-			actionCost = 50
-			encumbered = true
-		}
 
 		if !user.Character.DeductActionPoints(actionCost) {
-
-			if encumbered {
-				user.SendText("You're too encumbered to move (<ansi fg=\"command\">help encumbrance</ansi>)!")
-			} else {
-				user.SendText("You're too tired to move (slow down)!")
-				mudlog.Debug("No ActionPoints", "AP", user.Character.ActionPoints, "Needed", actionCost)
-			}
-
+			user.SendText("You're too tired to move (slow down)!")
+			mudlog.Debug("No ActionPoints", "AP", user.Character.ActionPoints, "Needed", actionCost)
 			return true, nil
 		}
 

@@ -1,0 +1,39 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">company meal</ansi>
+
+Feed and water your whole company with one command.
+
+  <ansi fg="command">company eat</ansi>
+  Feeds everyone who's hungry.
+
+  <ansi fg="command">company drink</ansi>
+  Waters everyone who's thirsty.
+
+  <ansi fg="command">company meal</ansi>
+  Both: food first, then drink.
+
+<ansi fg="yellow-bold">Who eats</ansi>
+
+Every living member, you included, the hungriest (or thirstiest) first.
+Anyone already Well fed (or Hydrated) is skipped. Each member eats or
+drinks one portion per command.
+
+<ansi fg="yellow-bold">What they eat</ansi>
+
+Food and drink come from the company's cargo first, then from the
+member's own pack, then from yours. From the first of those with
+anything suitable, each member gets the smallest portion that fills
+them, or the biggest there is when nothing will. Food that also waters,
+like a stew, counts toward thirst, so no one drinks after it who
+doesn't need to.
+
+Only plain food and water are used. Anything with another effect, such
+as a potion or an ale, is left for you to use by hand with
+<ansi fg="command">eat</ansi> or <ansi fg="command">drink</ansi>. Well fed and Hydrated come to you when you eat
+food that gives them; companions get the meal itself.
+
+You're told who ate or drank what, where from, and how they feel now,
+and who still went without because there was nothing left. The room
+sees your company eat.
+
+See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help cargo</ansi>,
+<ansi fg="command">help company inventory</ansi>, <ansi fg="command">help company</ansi>.

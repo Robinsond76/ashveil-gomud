@@ -1,12 +1,17 @@
 # Phase 9 encumbrance capacity and load-modifier bands.
 #
-# CapacityKg is a flat, config-driven party capacity (no per-company
-# Strength aggregation this phase). LoadBands maps load ratio thresholds to
+# Phase 32f: capacity comes from the members. Each member (the leader and
+# every living companion not charmed away) carries MemberBaseKg, plus
+# StrengthKg per point of Strength, plus their largest pack's carrybonus
+# (item data). The horses add theirs (modules/mount). A full company takes
+# on nothing more: get, buy, and gifts are refused past capacity. The old
+# flat CapacityKg is retired and ignored. LoadBands maps load ratio thresholds to
 # travel-duration/fatigue percentage modifiers; the implicit band below the
 # lowest MinRatio is always 100%/100% (unchanged). Phase 16 applies them:
 # TravelDurationPct and FatiguePct are locked onto a route journey at
 # departure, and FatiguePct scales every walking step's strain.
-CapacityKg: 200
+MemberBaseKg: 20
+StrengthKg: 0.5
 LoadBands:
   - MinRatio: 0.75
     TravelDurationPct: 110

@@ -75,6 +75,13 @@ players, <ansi fg="command">party</ansi> lists them as Company.
   <ansi fg="command">company gear [member]</ansi>
   What a companion is wearing and carrying.
 
+  <ansi fg="command">company inventory</ansi>
+  Everything the whole company carries, its horses, and the cargo
+  (<ansi fg="command">help company inventory</ansi>).
+
+  <ansi fg="command">company eat</ansi> | <ansi fg="command">company drink</ansi> | <ansi fg="command">company meal</ansi>
+  Feed and water everyone at once (<ansi fg="command">help company meal</ansi>).
+
   <ansi fg="command">company dismiss [member]</ansi>
   Let a companion go. <ansi fg="command">company dismiss all</ansi> lets your
   whole company go.

@@ -740,3 +740,27 @@ func (i *Item) Weight() int {
 	}
 	return 0
 }
+
+// CarryBonusGrams is a pack's added carrying capacity (Phase 32f), read
+// from base data like Weight.
+func (i *Item) CarryBonusGrams() int {
+	if base := GetItemSpec(i.ItemId); base != nil {
+		return base.CarryBonus
+	}
+	if i.Spec != nil {
+		return i.Spec.CarryBonus
+	}
+	return 0
+}
+
+// SaddleKind is the kind of horse the item fits as a saddle (Phase 32f),
+// or "" for anything that isn't one. Read from base data like Weight.
+func (i *Item) SaddleKind() SaddleKind {
+	if base := GetItemSpec(i.ItemId); base != nil {
+		return base.Saddle
+	}
+	if i.Spec != nil {
+		return i.Spec.Saddle
+	}
+	return ""
+}

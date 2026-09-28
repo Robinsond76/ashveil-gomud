@@ -1,0 +1,126 @@
+package company
+
+import (
+	"strings"
+	"testing"
+
+	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mount"
+	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+type fakeCargo struct {
+	load     encumbrance.Load
+	stacks   []encumbrance.CargoStack
+	consumed []int
+	err      error
+}
+
+func (f *fakeCargo) CurrentLoad(int) (encumbrance.Load, bool) { return f.load, true }
+func (f *fakeCargo) CargoContents(int) []encumbrance.CargoStack {
+	return append([]encumbrance.CargoStack(nil), f.stacks...)
+}
+func (f *fakeCargo) ConsumeCargoUse(_ int, itemId int) error {
+	if f.err != nil {
+		return f.err
+	}
+	for i, s := range f.stacks {
+		if s.ItemId == itemId {
+			f.consumed = append(f.consumed, itemId)
+			if f.stacks[i].Count--; f.stacks[i].Count == 0 {
+				f.stacks = append(f.stacks[:i], f.stacks[i+1:]...)
+			}
+			return nil
+		}
+	}
+	return encumbrance.ErrInsufficientCargo
+}
+
+type fakeHerd struct{ horses []mount.HorseView }
+
+func (f fakeHerd) CapacityBonusGrams(int) int { return 0 }
+func (f fakeHerd) Herd(int) []mount.HorseView { return f.horses }
+
+func useCargo(t *testing.T, c *fakeCargo) {
+	t.Helper()
+	encumbrance.SetProvider(c)
+	t.Cleanup(func() { encumbrance.SetProvider(nil) })
+}
+
+func spec(t *testing.T, s items.ItemSpec) items.Item {
+	t.Helper()
+	items.SetTestItemSpec(&s)
+	t.Cleanup(func() { items.RemoveTestItemSpec(s.ItemId) })
+	return items.Item{ItemId: s.ItemId, Uses: s.Uses}
+}
+
+// Phase 32f: one screen for everything the company carries, through the
+// real `company inventory` command.
+func TestCompanyInventory(t *testing.T) {
+	messages := captureCompanyMessages(t)
+	sword := spec(t, items.ItemSpec{ItemId: 989001, Name: "iron sword", Weight: 1500, Type: items.Weapon})
+	satchel := spec(t, items.ItemSpec{ItemId: 989002, Name: "satchel", Weight: 600, CarryBonus: 5000})
+	water := spec(t, items.ItemSpec{ItemId: 989003, Name: "waterskin", Weight: 1000, Uses: 5})
+	meat := spec(t, items.ItemSpec{ItemId: 989004, Name: "seared meat", Weight: 300})
+	half := water
+	half.Uses = 3
+
+	useCargo(t, &fakeCargo{
+		load:   encumbrance.Load{PersonalGrams: 4000, CapacityGrams: 145000, MountCapacityGrams: 100000},
+		stacks: []encumbrance.CargoStack{{ItemId: 989004, Count: 6}, {ItemId: 989003, Count: 1, Uses: 2}},
+	})
+	mount.SetProvider(fakeHerd{horses: []mount.HorseView{
+		{ID: 1, Name: "pack horse", Kind: mount.KindPack, Saddle: "pack saddle", CapacityGrams: 100000},
+		{ID: 2, Name: "riding horse", Kind: mount.KindRiding, Saddle: "riding saddle", CapacityGrams: 10000},
+	}})
+	t.Cleanup(func() { mount.SetProvider(nil) })
+
+	carried := domain.MemberState{Level: 1, Items: []items.Item{satchel}}
+	carried.Equipment.Weapon = sword
+	fallen := domain.MemberState{Level: 1, Items: []items.Item{meat}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{
+			{ID: 1, MobTemplateID: 58, State: &carried},
+			{ID: 2, MobTemplateID: 58, State: &fallen, Death: &domain.CompanionDeath{OpID: "x", Remaining: 60}},
+		}},
+	}}, &fakeRuntime{})
+	user := users.NewUserRecord(7, 1)
+	user.Character.Name = "Dain"
+	user.Character.Items = []items.Item{half, meat, meat}
+
+	handled, err := module.userCommand("inv", user, nil, 0)
+	require.NoError(t, err)
+	assert.True(t, handled)
+	events.ProcessEvents()
+	out := strings.Join(*messages, "\n")
+
+	assert.Contains(t, out, "Company load: 4.0 kg / 145.0 kg (3%), of which horses 100.0 kg.")
+	assert.Contains(t, out, "Dain (you)")
+	assert.Contains(t, out, "Carrying: waterskin (3 of 5), seared meat x2")
+	assert.Contains(t, out, "pack: satchel (+5.0 kg)")
+	assert.Contains(t, out, "Wearing: iron sword")
+	assert.Contains(t, out, "2.1 kg", "the companion's gear weight")
+	assert.Contains(t, out, "fallen; their gear is with the body")
+	assert.Contains(t, out, "Horses: #1 pack horse (pack saddle, +100.0 kg); #2 riding horse (riding saddle, carries a rider)")
+	assert.Contains(t, out, "Cargo (2.8 kg): seared meat x6, waterskin (2 of 5)")
+}
+
+func TestCompanyInventoryAlone(t *testing.T) {
+	messages := captureCompanyMessages(t)
+	module := newTestModule(*domain.NewRegistry(), &fakeRuntime{})
+	user := users.NewUserRecord(7, 1)
+	user.Character.Name = "Dain"
+
+	_, err := module.userCommand("inventory", user, nil, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	out := strings.Join(*messages, "\n")
+	assert.Contains(t, out, "Carrying: nothing")
+	assert.Contains(t, out, "Horses: none")
+	assert.Contains(t, out, "Cargo: empty")
+}

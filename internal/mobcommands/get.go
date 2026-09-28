@@ -2,6 +2,8 @@ package mobcommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -82,6 +84,14 @@ func Get(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	matchItem, found := room.FindOnFloor(rest, getFromStash)
 
 	if found {
+
+		// Phase 32f: a companion carries for its company, so it can't pick
+		// up what would put the company over capacity.
+		if leaderID, _, isCompanion := company.LeaderAndKeyForInstance(mob.InstanceId); isCompanion {
+			if _, full := encumbrance.WouldExceed(leaderID, matchItem.Weight()); full {
+				return true, nil
+			}
+		}
 
 		mob.Character.CancelBuffsWithFlag("hidden") // No longer sneaking
 

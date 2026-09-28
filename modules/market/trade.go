@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/market"
@@ -166,6 +167,12 @@ func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string
 	if newItem.ItemId == 0 {
 		mudlog.Error("market: tracked good has no item spec", "zone", room.Zone, "itemid", good.ItemID)
 		user.SendText(fmt.Sprintf(`No one at the market has any <ansi fg="itemname">%s</ansi> to sell right now.`, name))
+		return
+	}
+	// Phase 32f: a full company can't buy more; refused before the ledger
+	// or gold changes.
+	if text, refuse := encumbrance.TooMuchToCarry(user.UserId, newItem.Weight()); refuse {
+		user.SendText(text)
 		return
 	}
 	price, err := m.commitBuy(room.Zone, good.ItemID, user.Character.Gold, pricing)

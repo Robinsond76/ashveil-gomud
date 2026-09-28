@@ -1,20 +1,37 @@
-# Phase 10 mount type table.
+# Phase 32f horse types (Phase 10's single mount became a herd).
 #
-# CargoCapacityBonusKg is added to a leader's computed cargo capacity by
-# modules/encumbrance.
+# A company keeps up to one riding horse and one pack horse per member
+# (the leader and each living companion not charmed away). Horses are
+# bought for Price gold in a room tagged StableRoomTag.
 #
-# Phase 16 wires the rest:
-# - TravelDurationPct (100 = unchanged, lower = faster) is locked onto a
-#   route journey at departure and shortens it for the whole company.
-# - FatiguePct (100 = unchanged) scales walking strain for the members who
-#   ride. Riders is how many (default 2): the leader first, then companions
-#   by ascending companion id, counting only members walking with the
-#   leader. Everyone else walks at full cost. Route travel does not use
-#   FatiguePct yet.
+# Kind is pack or riding. A horse carries BareCapacityKg with no saddle and
+# SaddledCapacityKg with a saddle of its own kind fitted (items with
+# saddle: pack or saddle: riding). modules/encumbrance adds what the horses
+# carry to the company's capacity.
+#
+# A saddled riding horse carries one member: the leader first, then
+# companions by ascending id, counting only members walking with the
+# leader. A rider strains less walking (FatiguePct, 100 = unchanged).
+# TravelDurationPct (100 = unchanged, lower = faster) sets a route
+# journey's pace only when every member rides; otherwise the company
+# walks at walking pace. Pack horses never set the pace.
+#
+# LegacySaddleItemId is the pack saddle fitted, on load, to a save's old
+# single mount, so no one lost capacity when mounts became herds.
+StableRoomTag: stable
+LegacySaddleItemId: 34
 Mounts:
   - Type: pack-horse
-    Description: "A sturdy pack horse, laden with saddlebags."
-    CargoCapacityBonusKg: 100
+    Kind: pack
+    Description: "A sturdy pack horse. Bare, it carries 40 kg; with a pack saddle, 100 kg."
+    Price: 120
+    BareCapacityKg: 40
+    SaddledCapacityKg: 100
+  - Type: riding-horse
+    Kind: riding
+    Description: "A steady riding horse. With a riding saddle it carries one rider."
+    Price: 150
+    BareCapacityKg: 10
+    SaddledCapacityKg: 10
     TravelDurationPct: 90
     FatiguePct: 75
-    Riders: 2

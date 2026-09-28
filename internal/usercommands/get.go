@@ -117,6 +117,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			user.SendText(fmt.Sprintf(`You don't see a %s carried by %s.`, rest, user.Character.Pet.DisplayName()))
 		} else {
 
+			if tooHeavy(user, matchItem) {
+				return true, nil
+			}
+
 			if user.Character.Pet.RemoveItem(matchItem) {
 				if !user.Character.StoreItem(matchItem) {
 					user.Character.Pet.StoreItem(matchItem)
@@ -179,6 +183,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			// Backpack items on corpse
 			allCorpseItems := append([]items.Item{}, corpseRef.Items...)
 			for _, item := range allCorpseItems {
+				if tooHeavy(user, item) {
+					continue
+				}
 				if user.Character.StoreItem(item) {
 					corpseRef.RemoveItem(item)
 					events.AddToQueue(events.ItemOwnership{
@@ -197,6 +204,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			// Worn items on corpse character
 			allWorn := corpseRef.Character.GetAllWornItems()
 			for _, item := range allWorn {
+				if tooHeavy(user, item) {
+					continue
+				}
 				if user.Character.StoreItem(item) {
 					corpseRef.Character.RemoveFromBody(item)
 					events.AddToQueue(events.ItemOwnership{
@@ -262,6 +272,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			return true, nil
 		}
 
+		if tooHeavy(user, matchItem) {
+			return true, nil
+		}
+
 		user.Character.CancelBuffsWithFlag("hidden")
 
 		if !user.Character.StoreItem(matchItem) {
@@ -324,6 +338,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if !found {
 			user.SendText(fmt.Sprintf(`You don't see a %s in the <ansi fg="container">%s</ansi>.`, rest, containerName))
 		} else {
+
+			if tooHeavy(user, matchItem) {
+				return true, nil
+			}
 
 			user.Character.CancelBuffsWithFlag("hidden") // No longer sneaking
 
@@ -407,6 +425,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 			if matchItem.HasAdjective(`exploding`) {
 				user.SendText(`You can't pick that up, it's about to explode!`)
+				return true, nil
+			}
+
+			if tooHeavy(user, matchItem) {
 				return true, nil
 			}
 
