@@ -74,14 +74,21 @@ func (r *Registry) SetState(leaderUserID, companionID int, state MemberState) er
 // BestPackGrams is the largest pack bonus among carried items (Phase 32f):
 // a member counts one pack; a second is only weight.
 func BestPackGrams(carried []items.Item) int {
-	best := 0
+	_, grams := BestPack(carried)
+	return grams
+}
+
+// BestPack is the carried pack that counts, and its bonus; a zero item
+// and 0 when there is none.
+func BestPack(carried []items.Item) (items.Item, int) {
+	best, bestGrams := items.Item{}, 0
 	for i := range carried {
 		if carried[i].ItemId <= 0 {
 			continue
 		}
-		if bonus := carried[i].CarryBonusGrams(); bonus > best {
-			best = bonus
+		if bonus := carried[i].CarryBonusGrams(); bonus > bestGrams {
+			best, bestGrams = carried[i], bonus
 		}
 	}
-	return best
+	return best, bestGrams
 }

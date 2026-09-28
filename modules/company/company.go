@@ -234,7 +234,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company chemistry | company gear <member> | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company chemistry | company gear <member> | company inventory | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -687,6 +687,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.alignmentView(user.UserId))
 	case "chemistry":
 		user.SendText(m.chemistryView(user.UserId))
+	case "inventory", "inv":
+		user.SendText(m.inventoryView(user))
 	case "gear":
 		if len(args) < 2 {
 			user.SendText(companyUsage)
