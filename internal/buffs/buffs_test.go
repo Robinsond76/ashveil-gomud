@@ -3,6 +3,7 @@ package buffs
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -474,4 +475,38 @@ func TestBuff_Expired(t *testing.T) {
 			assert.Equal(t, tt.want, b.Expired())
 		})
 	}
+}
+
+func TestAddBuffStacksUpToMaxStacks(t *testing.T) {
+	SetTestBuffSpec(&BuffSpec{BuffId: 9101, Name: "Stacky", RoundInterval: 10, TriggerCount: 3, MaxStacks: 3})
+	SetTestBuffSpec(&BuffSpec{BuffId: 9102, Name: "Flat", RoundInterval: 10, TriggerCount: 3})
+	defer RemoveTestBuffSpec(9101)
+	defer RemoveTestBuffSpec(9102)
+
+	bs := New()
+	for i := 0; i < 5; i++ {
+		assert.True(t, bs.AddBuff(9101, false))
+	}
+	assert.Len(t, bs.List, 1)
+	assert.Equal(t, 3, bs.List[0].Stacks, "stacks cap at MaxStacks")
+
+	// A reapplication refreshes the count.
+	bs.List[0].TriggersLeft = 1
+	bs.AddBuff(9101, false)
+	assert.Equal(t, 3, bs.List[0].TriggersLeft)
+
+	// A spec without MaxStacks never stacks past one.
+	bs.AddBuff(9102, false)
+	bs.AddBuff(9102, false)
+	assert.Equal(t, 1, bs.List[1].Stacks)
+}
+
+func TestGetDurationsForCombatRoundBuffs(t *testing.T) {
+	every := max(int(configs.GetTimingConfig().CombatEveryRounds), 1)
+	spec := &BuffSpec{TriggerCount: 3, RoundInterval: 100000, CombatRounds: true}
+	left, total := GetDurations(&Buff{TriggersLeft: 2, TriggersInitial: 3}, spec)
+	assert.Equal(t, 2*every, left, "combat rounds, shown as game rounds")
+	assert.Equal(t, 3*every, total)
+	left, _ = GetDurations(&Buff{TriggersLeft: 0, TriggersInitial: 3}, spec)
+	assert.Equal(t, 0, left)
 }

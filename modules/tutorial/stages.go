@@ -143,6 +143,7 @@ func init() {
 				`Repeated enemies have fixed names: the first footman and the second footman. When the first falls, the second keeps its name. Pronouns follow the people and creatures in the fight (<ansi fg="command">help narration</ansi>).`,
 				`Each hit ends with what it did, e.g. (5 damage) or (critical hit, 9 damage); a line with no brackets is a miss (<ansi fg="command">help narration</ansi>).`,
 				`A damaging critical hit gets a pain reaction if its victim stays standing. A fatal critical goes straight to a death line (<ansi fg="command">help narration</ansi>).`,
+				`A critical hit also leaves a mark that matches the weapon: bleeding, a stagger, a knockdown. Staggered and knocked-down fighters lose their next action, and it all ends with the fight (<ansi fg="command">help statuses</ansi>).`,
 				`A round's lines come to you one by one, so you watch the fight unfold; your prompt's health catches up when they finish. <ansi fg="command">set combatpace fast</ansi>, normal, slow, or off sets how fast (<ansi fg="command">help combatpace</ansi>).`,
 				`When the last foe falls, a battle summary shows the damage, the kills, and your company's health (<ansi fg="command">help battle-summary</ansi>).`,
 				`Playing in the web client? The Combat tab shows the battle as it goes: both formations, who strikes whom, and how hurt each foe looks (<ansi fg="command">help webclient</ansi>).`,

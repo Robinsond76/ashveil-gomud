@@ -1,0 +1,4 @@
+flag: bleeding
+name: "Bleeding"
+description: "Damage each combat round, stacking in severity."
+locked: true

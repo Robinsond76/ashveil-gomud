@@ -33,12 +33,16 @@ const (
 	CastProgress Kind = "cast-progress"
 	// CastComplete ends a cast. Outcome is OutcomeCast, OutcomeFizzled, or
 	// OutcomeHeld.
-	CastComplete   Kind = "cast-complete"
-	WindUpStart    Kind = "windup-start" // Phase 30d
-	WindUpLand     Kind = "windup-land"  // Phase 30d
-	Interrupt      Kind = "interrupt"    // Phase 30d
-	StatusApplied  Kind = "status-applied"
-	StatusExpired  Kind = "status-expired"  // Phase 30a
+	CastComplete  Kind = "cast-complete"
+	WindUpStart   Kind = "windup-start" // Phase 30d
+	WindUpLand    Kind = "windup-land"  // Phase 30d
+	Interrupt     Kind = "interrupt"    // Phase 30d
+	StatusApplied Kind = "status-applied"
+	StatusExpired Kind = "status-expired" // Phase 30a
+	// StatusTick is one combat round of a status (Phase 30a): Damage is what
+	// it took, or Outcome is OutcomeLostAction when it cost the holder its
+	// action. Target is the holder.
+	StatusTick     Kind = "status-tick"
 	WoundChange    Kind = "wound-change"    // Phase 30b
 	GuardUsed      Kind = "guard-used"      // Phase 30c
 	GuardExhausted Kind = "guard-exhausted" // Phase 30c
@@ -61,9 +65,10 @@ const (
 	OutcomeHeld          = "held" // a spell at a group waiting its turn (29b2)
 	OutcomeSlain         = "slain"
 	OutcomeIncapacitated = "incapacitated"
-	OutcomeBeaten        = "beaten"    // a practice foe, beaten without a death
-	OutcomeSucceeded     = "succeeded" // interrupts, Phase 30d
-	OutcomeFailed        = "failed"    // interrupts, Phase 30d
+	OutcomeBeaten        = "beaten"      // a practice foe, beaten without a death
+	OutcomeLostAction    = "lost-action" // a status cost the holder its action (30a)
+	OutcomeSucceeded     = "succeeded"   // interrupts, Phase 30d
+	OutcomeFailed        = "failed"      // interrupts, Phase 30d
 
 	// Fight endings (FightEnd's Outcome).
 	OutcomeVictory   = "victory"

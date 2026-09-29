@@ -1,0 +1,54 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">statuses</ansi>
+
+A critical hit does more than hurt. The blow leaves a mark that matches the
+weapon, and the mark is a status: a timed effect on whoever was struck. Enemies
+suffer them too, and so do you. A status that costs damage or an action is
+told to the room as it happens.
+
+<ansi fg="yellow-bold">What a critical hit leaves</ansi>
+
+  <ansi fg="command">slashing</ansi> and <ansi fg="command">claws</ansi>   bleeding
+  <ansi fg="command">stabbing</ansi>            deep bleeding: two stacks at once
+  <ansi fg="command">bludgeoning</ansi>         staggered
+  <ansi fg="command">cleaving</ansi>            knocked down (40%), armor broken (40%), stunned (20%)
+  <ansi fg="command">shooting</ansi>            exposed
+  <ansi fg="command">whipping</ansi>            hobbled
+
+A weapon with its own critical effect uses that one instead. Only a
+critical hit that gets through the armor leaves a mark, and only weapons
+do: spells never critically hit. The mark is named in the hit's brackets:
+<ansi fg="command">(critical hit, 6 damage, bleeding)</ansi>.
+
+<ansi fg="yellow-bold">The statuses</ansi>
+
+  <ansi fg="yellow">Bleeding</ansi>      1 damage each combat round for each stack, for 3 rounds. It
+                  stacks up to 3, and each new cut renews the time.
+  <ansi fg="yellow">Staggered</ansi>     loses its next action.
+  <ansi fg="yellow">Knocked down</ansi>  loses its next action, and is easier to hit while it is
+                  down (-4 speed) for 2 more rounds.
+  <ansi fg="yellow">Stunned</ansi>       loses its next two actions.
+  <ansi fg="yellow">Armor broken</ansi>  its armor gives half its protection for the rest of the
+                  fight.
+  <ansi fg="yellow">Exposed</ansi>       blows against it are 25% more likely to be critical, for
+                  2 rounds.
+  <ansi fg="yellow">Hobbled</ansi>       cannot <ansi fg="command">flee</ansi> and moves slowly (-3 speed), for 3 rounds.
+  <ansi fg="yellow">Burning</ansi>       2 fire damage each combat round, for 4 rounds. Water puts
+                  it out.
+  <ansi fg="yellow">Overloaded</ansi>    casts poorly (-30%) and moves slowly (-3 speed), for
+                  3 rounds. Shower of Sparks overloads what it sears.
+
+A fighter who loses its action does nothing that round: no blow, no spell
+round, no flight. It is told so in the line, as in
+<ansi fg="command">The bandit captain reels, and loses the action. (staggered)</ansi>.
+
+<ansi fg="yellow-bold">How long they last</ansi>
+
+Statuses count combat rounds (8 seconds each), not the game's 4-second
+rounds, and they all end when the fight does. A status that took damage
+reads <ansi fg="command">The first cutthroat bleeds. (1 damage, bleeding)</ansi>, and its end reads
+<ansi fg="command">The first cutthroat's bleeding stops.</ansi>. Damage from a status can bring
+someone down like any other. See what ails you with <ansi fg="command">conditions</ansi>.
+
+The battle summary counts the damage they do (<ansi fg="command">help battle-summary</ansi>), and
+the rest of a fight is explained in <ansi fg="command">help combat</ansi> and
+<ansi fg="command">help narration</ansi>.

@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -287,13 +288,17 @@ func combatPronouns(character *characters.Character, actorType SourceTarget) cha
 // damageSuffix is what a hit did, in words at the end of its line (Phase
 // 29c): " (5 damage)", " (critical hit, 9 damage)", and on the
 // defender's line what their armor blocked, " (5 damage, 2 blocked)".
-func damageSuffix(damage int, crit bool, blocked int) string {
+func damageSuffix(damage int, crit bool, blocked int, statuses ...string) string {
 	out := fmt.Sprintf("%d damage", damage)
 	if crit {
 		out = "critical hit, " + out
 	}
 	if blocked > 0 {
 		out += fmt.Sprintf(", %d blocked", blocked)
+	}
+	// Phase 30a: a critical hit names the status it leaves.
+	for _, word := range statuses {
+		out += ", " + word
 	}
 	return " (" + out + ")"
 }
@@ -444,6 +449,19 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
 
+				// Phase 30a: a critical hit that got through the armor leaves
+				// its weapon's status: the weapon's own crit buffs, else the
+				// subtype's effect. It is named in the hit's parentheses.
+				var critStatuses []string
+				if isCrit && attackTargetDamage > 0 {
+					effect := critBuffs
+					if len(effect) == 0 {
+						effect = status.CritEffect(weaponSubType, nil, util.Rand)
+						attackResult.BuffTarget = append(attackResult.BuffTarget, effect...)
+					}
+					critStatuses = status.Words(effect)
+				}
+
 				// An edge raises the strike's ceiling too, so a sharpened
 				// top roll isn't described as a critical.
 				pct := damagePercentOfMax(attackTargetDamage, dCount, dSides, dBonus+edgeBonus)
@@ -460,9 +478,9 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 				// Phase 29c: every hit says what it did, in all four lines.
 				if attackTargetDamage > 0 {
-					suffix := damageSuffix(attackTargetDamage, isCrit, 0)
+					suffix := damageSuffix(attackTargetDamage, isCrit, 0, critStatuses...)
 					toAttackerMsg = items.ItemMessage(string(toAttackerMsg) + suffix)
-					toDefenderMsg = items.ItemMessage(string(toDefenderMsg) + damageSuffix(attackTargetDamage, isCrit, attackTargetReduction))
+					toDefenderMsg = items.ItemMessage(string(toDefenderMsg) + damageSuffix(attackTargetDamage, isCrit, attackTargetReduction, critStatuses...))
 					toAttackerRoomMsg = items.ItemMessage(string(toAttackerRoomMsg) + suffix)
 					if len(string(toDefenderRoomMsg)) > 0 {
 						toDefenderRoomMsg = items.ItemMessage(string(toDefenderRoomMsg) + suffix)

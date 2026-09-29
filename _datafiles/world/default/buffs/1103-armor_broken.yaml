@@ -1,0 +1,12 @@
+buffid: 1103
+name: Armor Broken
+description: Your armor is broken open. Your defense is halved for the rest of the fight.
+secret: false
+# Phase 30a: ticked by the combat round (see internal/status), never by game
+# rounds; triggercount is the number of combat-round ticks.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 60
+flags:
+  - combat-status
+  - armor-broken

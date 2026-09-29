@@ -320,6 +320,8 @@ func (fs fightSides) gone() []combatstream.Ref {
 // endFight closes a fight and sends its summary to the leader, if online
 // and their setting is on.
 func (fs fightSides) end(outcome string) {
+	// Phase 30a: statuses end with the fight.
+	clearFightStatuses(fs.info)
 	final := combatstream.Final{Company: fs.companyHealth(), Gone: fs.gone()}
 	sum, ok := combatstream.Default().EndFight(fs.info.ID, combatRound.Load(), outcome, final)
 	if !ok {

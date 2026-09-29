@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -184,6 +185,10 @@ func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 // player) not stood down.
 func readyToCast(a actor, u *users.UserRecord) bool {
 	if !canFight(a.char) {
+		return false
+	}
+	// Phase 30a: a status that costs its holder the action costs the cast.
+	if _, lost := status.LostAction(a.char); lost {
 		return false
 	}
 	if agg := a.char.Aggro; agg != nil && (agg.Type == characters.SpellCast || agg.Type == characters.Flee) {

@@ -120,6 +120,18 @@ func (t *tally) add(f *fight, e Event) {
 			t.healing += e.Amount
 			t.heldBack += e.HeldBack
 		}
+	case StatusTick:
+		// A status's damage has no attacker to credit; it counts to the
+		// other side.
+		if e.Damage <= 0 {
+			return
+		}
+		switch {
+		case targetEnemy:
+			t.companyDamage += e.Damage
+		case targetCompany:
+			t.enemyDamage += e.Damage
+		}
 	case StatusApplied:
 		if e.Status == "" {
 			return

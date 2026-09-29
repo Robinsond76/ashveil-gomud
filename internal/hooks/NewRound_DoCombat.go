@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -47,6 +48,10 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// in battle with fighting as a whole before any blow is struck.
 	upkeepEngagements()
 	closeIdleBattles()
+
+	// Ashveil Phase 30a: statuses tick once per combat round, before any
+	// blow; a fall they cause is resolved at once.
+	statusPass()
 
 	// Ashveil Phase 32d: healers and casters cast by their strategies,
 	// before any blow.
@@ -87,6 +92,12 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 		}
 
 		if user == nil || user.Character.Aggro == nil {
+			continue
+		}
+
+		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
+		// its action.
+		if status.Has(user.Character) && statusCostsAction(userHolder(user)) {
 			continue
 		}
 
@@ -747,6 +758,12 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 		// If has a buff that prevents combat, skip the player
 		if mob.Character.HasBuffFlag("no-combat") {
+			continue
+		}
+
+		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
+		// its action.
+		if status.Has(&mob.Character) && statusCostsAction(mobHolder(mob)) {
 			continue
 		}
 

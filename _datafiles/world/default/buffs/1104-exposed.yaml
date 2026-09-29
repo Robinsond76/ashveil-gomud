@@ -1,0 +1,12 @@
+buffid: 1104
+name: Exposed
+description: You are left open. Blows against you are more likely to crit.
+secret: false
+# Phase 30a: ticked by the combat round (see internal/status), never by game
+# rounds; triggercount is the number of combat-round ticks.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 3
+flags:
+  - combat-status
+  - exposed

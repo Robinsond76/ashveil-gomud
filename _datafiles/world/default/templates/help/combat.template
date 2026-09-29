@@ -10,8 +10,9 @@ Combat resolves once a combat round, every 8 seconds (two of the game's
 round: an attack, a round of a spell being cast, or waiting. A fight goes on
 until one side is dead or gone, or nobody is fighting any more. What you
 start mid-round, such as <ansi fg="command">flee</ansi> or a spell, waits for the next combat
-round, up to 8 seconds. Spell rounds and waits count combat rounds; buffs
-and effects that last a number of rounds count the game's 4-second rounds.
+round, up to 8 seconds. Spell rounds, waits, and combat statuses (bleeding,
+staggered, and the rest) count combat rounds; other buffs and effects that
+last a number of rounds count the game's 4-second rounds.
 
 The round is decided at once, but its lines are paced out to you over a
 few seconds, so you watch the fight unfold. Choose how fast with
@@ -76,11 +77,18 @@ roster for a while, and can be raised at a church or a village shaman.
 <ansi fg="yellow-bold">Reading a fight (</ansi><ansi fg="command">help narration</ansi><ansi fg="yellow-bold">)</ansi>
 
 Every blow gets a line, and its numbers sit in brackets at the end:
-<ansi fg="command">(5 damage)</ansi>, or <ansi fg="command">(critical hit, 9 damage)</ansi> for a critical hit. A line with no
-brackets is a miss. A damaging critical hit that leaves someone standing
-gets a pain reaction right after the blow; a fatal one gets a death line
-instead. These reactions do not change damage or status (<ansi fg="command">help narration</ansi>).
-One line opens a fight and one closes it.
+<ansi fg="command">(5 damage)</ansi>, or <ansi fg="command">(critical hit, 9 damage, bleeding)</ansi> for a critical hit, which
+also names the status it leaves. A line with no brackets is a miss. A
+damaging critical hit that leaves someone standing gets a pain reaction
+right after the blow; a fatal one gets a death line instead. The reactions
+are only text (<ansi fg="command">help narration</ansi>). One line opens a fight and one closes it.
+
+<ansi fg="yellow-bold">Statuses (</ansi><ansi fg="command">help statuses</ansi><ansi fg="yellow-bold">)</ansi>
+
+A critical hit leaves a mark that matches the weapon: swords and claws make
+you bleed, maces stagger, hammers and axes knock down or break armor, bows
+leave you exposed. Staggered, knocked down, and stunned fighters lose their
+action. Statuses last a few combat rounds and end with the fight.
 
 <ansi fg="yellow-bold">After the fight (</ansi><ansi fg="command">help battle-summary</ansi><ansi fg="yellow-bold">)</ansi>
 
@@ -97,6 +105,7 @@ and your company's health.
   <ansi fg="command">consider [target]</ansi> size up a foe
   <ansi fg="command">formation</ansi>         see and arrange your company's formation
   <ansi fg="command">company chemistry</ansi> your company's chemistry
+  <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
   <ansi fg="command">light</ansi>             how well you can see here
   <ansi fg="command">set combatpace</ansi>    how fast a round's lines come to you
