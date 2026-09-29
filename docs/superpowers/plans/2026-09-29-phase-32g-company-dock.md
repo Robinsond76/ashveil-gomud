@@ -94,20 +94,27 @@ does.
 
 ## Task 6: Feed wiring (`modules/gmcp`, the modules above)
 
-- [ ] Wiring tests first (real commands, shipped config), capturing
-  what the feed sends:
+- [x] Wiring tests first (real commands, shipped config), capturing
+  what the feed sends. As built: `modules/tutorial/wiring_dock_test.go`
+  (the package that loads every shipped module), with the payload's own
+  references typed into the real commands (checked to fail with a broken
+  reference):
   - `cargo put` then `cargo take` a 3-use waterskin: `Company.Inventory`
     after each, the stack then the pack showing 3 uses;
-  - `give satchel tamsin`: her pack and the capacity split change;
-  - `mount saddle`: the horse's saddle and capacity change;
+  - `give <ref> tamsin` (a ration; no satchel in the test world): hers,
+    read from her live mob;
+  - horses: unit-tested in `modules/gmcp` (the mount module isn't in
+    that harness); `mount saddle` already resolves `!<id>:<uuid>` through
+    `FindInBackpack`;
   - `camp`, `camp fire`, `camp rest`, and the rest's end: `Company.Camp`
     follows each;
-  - a companion casting in a battle: `Company.Vitals` carries its lower
-    mana;
-  - login and copyover re-send `Company`, `Company.Inventory`,
-    `Company.Camp`; a non-leader and a telnet client without GMCP get
-    none of them.
-- [ ] `forget` clears every message's last-sent state; purge drops them
+  - a companion's mana: unit-tested (`modules/company`, the live mob's
+    mana; `modules/gmcp`, a mana change sends `Company.Vitals`);
+  - login (a `PlayerSpawn`, as login and copyover raise) re-sends
+    `Company`, `Company.Inventory`, `Company.Camp`; a connection without
+    GMCP gets none (unit-tested; each player only ever gets their own
+    company's messages, so there is no "non-leader" case).
+- [x] `forget` clears every message's last-sent state; purge drops them
   (`modules/gmcp/purge.go`).
 
 ## Task 7: Dock tab groups (`webclient-core.js`)
