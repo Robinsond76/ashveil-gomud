@@ -103,11 +103,11 @@ shapes.
 
 ## Task 7: Docs, review, verification, merge
 
-- [ ] `modules/gmcp/AGENTS.md`: `Company.Battle` in the extras bullet.
-- [ ] Independent review of `git diff master..HEAD`; verify each finding;
+- [x] `modules/gmcp/AGENTS.md`: `Company.Battle` in the extras bullet.
+- [x] Independent review of `git diff master..HEAD`; verify each finding;
   fix real ones with regression tests.
-- [ ] Full verification once: `go test -race ./...`, `make generate`,
+- [x] Full verification once: `go test -race ./...`, `make generate`,
   `make validate`, `make js-lint`, every `scripts/browser/` check.
-- [ ] `docs/PROJECT_STATUS.md`: the 32g2 row, a work-log entry with
+- [x] `docs/PROJECT_STATUS.md`: the 32g2 row, a work-log entry with
   **Review:**, the next phase named.
 - [ ] Merge to `master` and push; remove the worktree.
