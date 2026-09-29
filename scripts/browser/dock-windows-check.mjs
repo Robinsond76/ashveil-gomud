@@ -285,6 +285,106 @@ await page.evaluate(() => VirtualWindows.getWindows().find(w => w._id === 'KillS
 check((await dockTabs()).includes('Kills'), 'Kills appears when Kill Stats is enabled');
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'dock-full.png') }); }
 
+// --- Phase 32g2: the Battle view ---
+const battleFix = {
+  group: 'a band of cutthroats',
+  enemies: [
+    { id: 'm:412', label: 'the cutthroat captain', cell: { row: 0, col: 0 }, health: 'wounded', reach: true, target: 'leader' },
+    { id: 'm:413', label: 'the first cutthroat', cell: { row: 0, col: 1 }, health: 'unhurt', reach: true, target: 'companion:1' },
+    { id: 'm:414', label: 'the slinger', cell: { row: 1, col: 1 }, health: 'near death', reach: false, target: 'u:9' },
+    { id: 'm:416', label: '<img src=x onerror="window.__xss3=1">', cell: { row: 0, col: 2 }, health: 'unhurt', reach: true },
+  ],
+  fallen: [{ id: 'm:415', label: 'the bruiser' }],
+  company: [{ key: 'leader', target: 'm:412' }, { key: 'companion:1', target: 'm:412' }, { key: 'companion:2', target: 'm:413' }],
+  others: [{ id: 'u:9', name: 'Brannoc' }],
+  waiting: ['a pack of grey wolves'],
+};
+await page.evaluate(c => window.gmcp('Company', c), company);
+await page.getByRole('tab', { name: 'Character' }).click();
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+check(await page.getByRole('tab', { name: 'Combat, a battle is under way' }).count() === 1, 'a battle while another tab shows: a marker on Combat');
+await page.getByRole('tab', { name: /^Combat/ }).click();
+check(await page.getByRole('tab', { name: 'Combat' }).count() === 1, 'opening Combat clears the marker');
+await page.waitForFunction(() => document.querySelectorAll('#combat-window .cbt-lines line').length > 0);
+const cbt = () => page.evaluate(() => document.getElementById('combat-body').textContent);
+check(await page.getByRole('heading', { name: 'Battle: a band of cutthroats' }).count() === 1, 'the Battle view replaces Setup');
+const them = page.getByRole('group', { name: 'a band of cutthroats' });
+const usField = page.getByRole('group', { name: 'Your company' });
+check(await them.locator('.cbt-fighter').count() === 4, 'the enemy grid: each enemy');
+const order = await page.evaluate(() => [...document.querySelectorAll('[aria-label="a band of cutthroats"] .cbt-fighter')].map(n => n.getAttribute('data-fid')));
+check(order.indexOf('m:414') < order.indexOf('m:412'), 'the enemy\'s back row is drawn first: its front faces the middle');
+const tb = await them.boundingBox();
+const ub = await usField.boundingBox();
+check(tb.y + tb.height <= ub.y, 'the enemy above, the company below');
+check(await page.getByRole('button', { name: 'the cutthroat captain, wounded, within your reach, striking you' }).count() === 1, 'an enemy: its label, word, reach, and target');
+check(await page.getByRole('button', { name: 'the slinger, near death, striking Brannoc' }).count() === 1, 'an enemy out of reach, striking someone else');
+check(await page.getByRole('button', { name: 'Wren (you), health 30 of 40, striking the cutthroat captain' }).count() === 1, 'the player: health and target');
+check(await page.getByRole('button', { name: /^Ysolde, fallen/ }).count() === 1, 'a fallen companion shows fallen');
+check(await page.getByRole('button', { name: /^Tamsin/ }).count() === 0, 'a companion not with you is not in the battle');
+const lineInfo = await page.evaluate(() => [...document.querySelectorAll('#combat-window .cbt-lines line')].map(l => l.getAttribute('data-from') + '>' + l.getAttribute('data-to')));
+check(lineInfo.length === 6 && lineInfo.includes('leader>m:412') && lineInfo.includes('m:414>u:9') && lineInfo.includes('m:412>leader'), 'a line per target, both sides (' + lineInfo.join(' ') + ')');
+const toChip = await page.evaluate(() => {
+  const l = document.querySelector('#combat-window line[data-to="u:9"]');
+  const chip = document.querySelector('#combat-window [data-fid="u:9"]').getBoundingClientRect();
+  const arena = document.querySelector('#combat-window .cbt-arena').getBoundingClientRect();
+  const x = arena.left + Number(l.getAttribute('x2'));
+  const y = arena.top + Number(l.getAttribute('y2'));
+  return x >= chip.left && x <= chip.right && y >= chip.top && y <= chip.bottom;
+});
+check(toChip, 'a line to someone outside the company ends at their chip');
+const body = await cbt();
+check(body.includes('Wren (you) → the cutthroat captain') && body.includes('the slinger → Brannoc') && body.includes('Oswin → the cutthroat captain'), 'the text list matches the lines');
+check(body.includes('Fallen: the bruiser') && body.includes('Waiting their turn: a pack of grey wolves'), 'the fallen and waiting lines');
+check(await page.evaluate(() => window.__xss3 === undefined) && body.includes('<img'), 'markup in a label renders as text');
+check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === 'Battle: a band of cutthroats.', 'the live region announces the battle');
+const lit = () => page.evaluate(() => [...document.querySelectorAll('#combat-window .cbt-fighter.is-hl')].map(n => n.getAttribute('data-fid')).sort().join(' '));
+await page.getByRole('button', { name: /^the cutthroat captain/ }).hover();
+check((await lit()) === 'companion:1 leader m:412', 'hover: the fighter, its target, and those striking it (' + (await lit()) + ')');
+check(await page.evaluate(() => document.querySelectorAll('#combat-window line.is-hl').length === 3), 'hover lights its lines');
+await page.mouse.move(0, 0);
+await page.getByRole('button', { name: /^the slinger/ }).focus();
+check((await lit()) === 'm:414 u:9', 'keyboard focus lights a fighter too');
+got = await sentNow(async () => { await page.getByRole('button', { name: /^Oswin, health/ }).click(); await page.getByText('Role: caster').click(); });
+check(JSON.stringify(got) === '["strategy #1 caster"]', 'a member\'s click opens the Setup menu');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Flee' }).click(); });
+check(JSON.stringify(got) === '["flee"]', 'Flee sends flee');
+check(await page.locator('details.cbt-setup summary').count() === 1, 'Setup folds under the view');
+
+// An update: the slinger falls, the first cutthroat turns on the player.
+const next = JSON.parse(JSON.stringify(battleFix));
+next.enemies = next.enemies.filter(e => e.id !== 'm:414');
+next.enemies[1].target = 'leader';
+next.fallen.push({ id: 'm:414', label: 'the slinger' });
+next.others = [];
+await page.evaluate(b => window.gmcp('Company.Battle', b), next);
+check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === 'the slinger falls. the first cutthroat turns on you.', 'the live region: a fall and a new foe on the player, nothing else');
+check((await cbt()).includes('Fallen: the bruiser, the slinger'), 'the fallen line grows');
+
+// Narrow: the dock at 280px in a 360px window.
+await page.setViewportSize({ width: 360, height: 800 });
+await page.evaluate(() => { document.getElementById('dock-right').style.width = '280px'; });
+await page.waitForTimeout(50);
+const bover = await page.evaluate(() => { const p = document.getElementById('combat-window'); return p.scrollWidth - p.clientWidth; });
+check(bover <= 0, 'Battle: no horizontal overflow at 280px (' + bover + ')');
+check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'Battle: no horizontal page scroll at 360px');
+if (outdir) { await page.screenshot({ path: path.join(outdir, 'battle-narrow.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(() => { document.getElementById('dock-right').style.width = ''; });
+if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, 'battle.png') }); }
+
+// The end: back to Setup.
+await page.evaluate(() => window.gmcp('Company.Battle', {}));
+check(await page.getByRole('table', { name: /Formation/ }).count() === 1 && await page.getByRole('heading', { name: /^Battle/ }).count() === 0, '{} returns to Setup');
+check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === 'The battle is over.', 'the live region: the battle is over');
+
+// Alone: the player is "You", with their lines.
+await page.evaluate(() => window.gmcp('Company', {}));
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+await page.waitForFunction(() => document.querySelectorAll('#combat-window .cbt-lines line').length > 0);
+check(await page.getByRole('button', { name: 'You, striking the cutthroat captain' }).count() === 1, 'alone: the player is You');
+check(await page.evaluate(() => [...document.querySelectorAll('#combat-window .cbt-lines line')].some(l => l.getAttribute('data-to') === 'leader')), 'alone: the enemy\'s line reaches You');
+await page.evaluate(() => window.gmcp('Company.Battle', {}));
+
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all dock window checks passed');

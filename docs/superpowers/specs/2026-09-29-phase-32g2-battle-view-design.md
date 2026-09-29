@@ -246,8 +246,9 @@ blow. Setup stays one click away under the view.
     tab is active and clears on opening it;
   - a member's menu and Flee send the right commands;
   - markup in a label or name renders as text; at a 280 px dock and a
-    360 px window the grids stack (enemy above company) with no
-    horizontal scroll; keyboard focus reaches every fighter.
+    360 px window there is no horizontal scroll (as built, the grids
+    always stack, enemy above company: the dock is one narrow column);
+    keyboard focus reaches every fighter.
 - **Player help:**
   - `help webclient` gains the Battle view (what the grids, lines, and
     words mean; the marker; Flee);

@@ -65,21 +65,24 @@ shapes.
 
 ## Task 4: The Battle view (`window-combat.js`)
 
-- [ ] Browser check first (Task 5's fixtures).
-- [ ] While `Company.Battle` has enemies: the enemy grid (front row toward
+- [x] Browser check first (Task 5's fixtures).
+- [x] While `Company.Battle` has enemies: the enemy grid (front row toward
   the middle), the company grid (from the `Company` snapshot; "You" alone
   without a company), SVG target lines, the "others" chips, the fallen
   and waiting lines, the text list, a polite live region (a new target on
   the player, a new fall), a **Flee** button, and Setup under a
   disclosure. Hover or focus highlights a fighter's target and attackers.
   A company member's click opens Setup's member menu.
-- [ ] The Combat tab's marker (`setBadge`) while a battle runs and the tab
+- [x] The Combat tab's marker (`setBadge`) while a battle runs and the tab
   isn't active; cleared on opening it or when the battle ends.
-- [ ] At a 280 px dock the grids stack, enemy above company.
+- [x] As built: the grids always stack, enemy above company (the dock
+  is one narrow column, so the sides face up and down), and each grid
+  shows rows only as deep as anyone stands. `setBadge` takes an optional
+  spoken label ("Combat, a battle is under way").
 
 ## Task 5: Browser check (`scripts/browser/dock-windows-check.mjs`)
 
-- [ ] Fixtures: a battle, an update (a fall, a new target on the player),
+- [x] Fixtures: a battle, an update (a fall, a new target on the player),
   and `{}`. Checks: the grids and labels, lines per target (to the chip
   for `others`), the text list, the live region's text, the marker, Flee
   and the member menu's commands, markup rendered as text, 280 px and
