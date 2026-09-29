@@ -169,9 +169,12 @@ Phase 29b2 is at commit `d5ace46`).
 - **Why:** 32g's decision C split the live view out; the owner's
   play-test notes and the Phase 31 battle panel design.
 - **Verification:** `make generate` (no diff), `make validate`,
-  `make js-lint`, and the Chromium checks `dock-check.mjs`,
-  `dock-windows-check.mjs`, `tutorial-panel-check.mjs` pass after the
-  review fixes (2026-09-29); `go test -race ./...`: PENDING. Wiring:
+  `go test -race ./...`, `make js-lint`, and the Chromium checks
+  `dock-check.mjs`, `dock-windows-check.mjs`, `tutorial-panel-check.mjs`
+  pass after the review fixes (2026-09-29). The first full race run
+  failed on the battle view's own wiring test (the "only if seen" rule,
+  below); after that fix, the wiring tests passed 10 race loops and the
+  full run passed. Wiring:
   `modules/company/wiring_battle_view_test.go` drives real `DoCombat`
   rounds in the brawl world with the gmcp feed: the view's enemies,
   cells, words, reach (placed by `formation move`), company and
