@@ -27,7 +27,12 @@ instead of duplicating them.
   the first combat slices (29a, 29b, 29b2, 29c), enemy groups (32c),
   automatic combat by strategy (32d), company experience (32e), company
   logistics (32f), and character deletion (32h) are all done.
-- **Next:** 32g (32a, 32a2, 32b, 32c, 32d, 32e, 32f, and 32h are done),
+- **Active planning:** 29d (pronouns and stable enemy labels), prioritized by
+  the owner in the current task. Detailed design and plan are drafted on
+  `codex/phase-29d-pronouns-ordinals`; implementation awaits written-design
+  review and will use GPT-5.6 Terra at medium reasoning. Player pronoun
+  selection is deferred by the owner.
+- **Next in the play-test roadmap:** 32g (32a, 32a2, 32b, 32c, 32d, 32e, 32f, and 32h are done),
   from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
@@ -87,7 +92,7 @@ instead of duplicating them.
 | 29b | Combat event stream and battle summary | Complete: `internal/combatstream` (one event per combat happening, fights of a company against the enemies it fights in a room, a summary folded from the events), producers at every attack, cast, target change, flee, and death; the summary at a fight's end (`set battlesummary`); interceptors fall in the round they're struck; player help for combat (`help combat` and seven pages), pointed to from the tutorial |
 | 29b2 | One battle at a time; spawn groups | Complete: `internal/battle` (each player, with their company, fights one enemy group at a time; other groups set on them hold back, then begin the next battle in the order they turned; a waiting group turns on a free player); `attack`/`cast`/`backstab`/`shoot` refuse a waiting group; hostile spawns form groups of two to five from the room's list, a lone survivor or straggler regroups, `solitary` bosses stand alone; travel ambushes are a pair; solo players get battles and summaries; help for every Ashveil system |
 | 29c | Narration voice (weapons and spells) | Complete (branch `master-6csfy6`): [design](superpowers/specs/2026-09-28-phase-29c-narration-voice-design.md), [plan](superpowers/plans/2026-09-28-phase-29c-narration-voice.md). Every weapon line rewritten, `(N damage)` / `(critical hit, N damage)` / `, M blocked` at the end of each hit, only real crits draw the critical pool; no `***`, `!`, caps, or "prepares to fight"; "the" before common names; an opener per fight, "turns toward", death lines in order, a closing line after the last; the fallen notice indented and in words; spells chant with their rounds and land with `(N damage)` / `(N healed)`; `help narration` |
-| 29d | Pronouns and ordinals | Proposed: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Mob pronouns (beasts "it"); "the first/second cutthroat" fixed for the fight |
+| 29d | Pronouns and ordinals | Design and [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md) drafted, awaiting owner review: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Authored NPC/race pronouns; stable enemy labels shared across overlapping battles; player selection deferred. Implementation: Terra medium |
 | 29e | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race |
 | 29f | Paced combat output | Proposed: [spec](superpowers/specs/2026-09-26-combat-pacing-design.md). Round lines released over time, with fast, normal (~6s), slow, and off settings; combat resolves every 2 game rounds (an 8-second combat round) |
 | 30a | Status effects and critical-hit effects (weapons only) | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, and others as buffs; crit effects by weapon type; spells do not critical hit |
@@ -109,6 +114,12 @@ instead of duplicating them.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+- **29d planning (current task):** expanded the approved presentation direction
+  into a code-grounded design and tests-first plan. Resolved player selection
+  as deferred; generated recruits use they; naming follows existing runtime
+  battle ownership and restarts with rebuilt battles. Docs only; implementation
+  and independent phase review have not run.
 
 Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). When a new phase lands, replace the previous entry with it and
