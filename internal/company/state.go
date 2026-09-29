@@ -70,3 +70,33 @@ func (r *Registry) SetState(leaderUserID, companionID int, state MemberState) er
 	}
 	return ErrUnknownMember
 }
+
+// BestPackGrams is the largest pack bonus among carried items (Phase 32f):
+// a member counts one pack; a second is only weight.
+func BestPackGrams(carried []items.Item) int {
+	_, grams := BestPack(carried)
+	return grams
+}
+
+// AddedGrams is what taking itm into carried adds to a company's load net
+// of the room it makes (32f review): its weight less any capacity it adds
+// by becoming the carrier's largest pack. It can be negative.
+func AddedGrams(carried []items.Item, itm items.Item) int {
+	gain := itm.CarryBonusGrams() - BestPackGrams(carried)
+	return itm.Weight() - max(0, gain)
+}
+
+// BestPack is the carried pack that counts, and its bonus; a zero item
+// and 0 when there is none.
+func BestPack(carried []items.Item) (items.Item, int) {
+	best, bestGrams := items.Item{}, 0
+	for i := range carried {
+		if carried[i].ItemId <= 0 {
+			continue
+		}
+		if bonus := carried[i].CarryBonusGrams(); bonus > bestGrams {
+			best, bestGrams = carried[i], bonus
+		}
+	}
+	return best, bestGrams
+}

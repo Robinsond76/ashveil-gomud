@@ -1,10 +1,12 @@
 raceid: 6
 name: undead
+defaultpronouns: it
 description: A dead creature animated by magical means.
 defaultalignment: -90
 buffids:
   - 29 # Night Vision
 size: medium
+groupnoun: host
 unarmedname: claws
 tnlscale: 1.0
 angrycommands: 

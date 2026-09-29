@@ -78,6 +78,48 @@ Markets:
         TargetStock: 10
         StartStock: 8
         DriftStep: 1
+      # Phase 32f: packs raise a member's carrying share; saddles fit horses
+      # bought at a stable (help mount).
+      - ItemId: 31 # satchel (+5 kg)
+        BasePrice: 15
+        MinPrice: 9
+        MaxPrice: 30
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 6
+        DriftStep: 1
+      - ItemId: 32 # traveller's pack (+10 kg)
+        BasePrice: 40
+        MinPrice: 25
+        MaxPrice: 80
+        MaxStock: 12
+        TargetStock: 6
+        StartStock: 4
+        DriftStep: 1
+      - ItemId: 33 # frame pack (+15 kg)
+        BasePrice: 90
+        MinPrice: 60
+        MaxPrice: 160
+        MaxStock: 8
+        TargetStock: 4
+        StartStock: 2
+        DriftStep: 1
+      - ItemId: 34 # pack saddle
+        BasePrice: 60
+        MinPrice: 40
+        MaxPrice: 110
+        MaxStock: 8
+        TargetStock: 4
+        StartStock: 2
+        DriftStep: 1
+      - ItemId: 35 # riding saddle
+        BasePrice: 50
+        MinPrice: 32
+        MaxPrice: 95
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 3
+        DriftStep: 1
   - Zone: Old Kings Road
     Goods:
       - ItemId: 28 # wolf hide
@@ -103,4 +145,29 @@ Markets:
         MaxStock: 10
         TargetStock: 5
         StartStock: 3
+        DriftStep: 1
+      # Phase 32f: the post keeps a little tack, dearer than in town.
+      - ItemId: 32 # traveller's pack (+10 kg)
+        BasePrice: 46
+        MinPrice: 30
+        MaxPrice: 90
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 2
+        DriftStep: 1
+      - ItemId: 34 # pack saddle
+        BasePrice: 70
+        MinPrice: 45
+        MaxPrice: 120
+        MaxStock: 4
+        TargetStock: 2
+        StartStock: 1
+        DriftStep: 1
+      - ItemId: 35 # riding saddle
+        BasePrice: 58
+        MinPrice: 38
+        MaxPrice: 105
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 2
         DriftStep: 1

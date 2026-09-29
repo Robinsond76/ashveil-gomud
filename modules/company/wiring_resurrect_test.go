@@ -178,7 +178,7 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 	// #1 dies through the real mob suicide: dead on the roster, its worn
 	// broadsword kept, the carried sandwich dropped, three hours to raise.
 	kill(1)
-	assert.Contains(t, heard(), "training dummy has fallen. You have 3h 0m of your own time")
+	assert.Contains(t, heard(), "    The training dummy has fallen. You have 3 hours of your own time")
 	record := stored()
 	require.True(t, record.Companions[0].Dead(), "saved dead")
 	assert.Equal(t, 10800, record.Companions[0].Death.Remaining)

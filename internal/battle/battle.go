@@ -20,8 +20,9 @@ type Battle struct {
 	RoomId     int
 	PartyID    string // the group's party id when the battle began or was last seen
 	StartRound uint64
-	Enemies    map[int]bool // the group's mob instance ids seen in this battle
-	FightID    uint64       // its fight on the combat event stream
+	Enemies    map[int]bool      // the group's mob instance ids seen in this battle
+	EnemyNames map[int]EnemyName // immutable enemy narration snapshots
+	FightID    uint64            // its fight on the combat event stream
 }
 
 // Has reports whether instanceId is one of the battle's enemies.
@@ -33,6 +34,7 @@ func (b Battle) clone() Battle {
 	for id := range b.Enemies {
 		c.Enemies[id] = true
 	}
+	c.EnemyNames = cloneEnemyNames(b.EnemyNames)
 	return c
 }
 
@@ -57,7 +59,7 @@ func Current(userId int) (Battle, bool) {
 func Begin(userId, roomId int, round uint64, partyID string, enemies []int) Battle {
 	mu.Lock()
 	defer mu.Unlock()
-	b := &Battle{UserId: userId, RoomId: roomId, PartyID: partyID, StartRound: round, Enemies: map[int]bool{}}
+	b := &Battle{UserId: userId, RoomId: roomId, PartyID: partyID, StartRound: round, Enemies: map[int]bool{}, EnemyNames: map[int]EnemyName{}}
 	for _, id := range enemies {
 		b.Enemies[id] = true
 	}
@@ -122,6 +124,33 @@ func NoteSet(userId int, partyID string, round uint64) uint64 {
 	}
 	set[partyID] = round
 	return round
+}
+
+// Waiting lists the groups set on a player in a battle, other than the
+// battle's own, in the order they were first set (ties by party id): the
+// groups waiting their turn (32g2's battle view). Nothing waits on a
+// player who isn't in a battle.
+func Waiting(userId int) []string {
+	mu.Lock()
+	defer mu.Unlock()
+	b, ok := battles[userId]
+	if !ok {
+		return nil
+	}
+	var out []string
+	for id := range firstSet[userId] {
+		if id != b.PartyID {
+			out = append(out, id)
+		}
+	}
+	set := firstSet[userId]
+	sort.Slice(out, func(i, j int) bool {
+		if set[out[i]] != set[out[j]] {
+			return set[out[i]] < set[out[j]]
+		}
+		return out[i] < out[j]
+	})
+	return out
 }
 
 // KeepSet forgets every group set on the player except those named: a

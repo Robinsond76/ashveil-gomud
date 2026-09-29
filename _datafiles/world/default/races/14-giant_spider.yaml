@@ -1,8 +1,15 @@
 raceid: 14
 name: giant spider
+defaultpronouns: it
+painreactions:
+  - tovictim: 'Ichor leaks from the wound. Your legs curl, then spread again.'
+    toroom: '{name} shrieks as ichor spills from {his} side, legs curling inward.'
+  - tovictim: 'A hard blow shakes your carapace. You cling fast with the legs that remain steady.'
+    toroom: '{name} shudders, several legs scraping for purchase.'
 description: A massive arachnid.
 defaultalignment: -50
 size: large
+groupnoun: swarm
 unarmedname: fangs
 angrycommands: [emote chitters and stares.]
 tnlscale: 1

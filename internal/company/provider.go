@@ -289,8 +289,15 @@ type MemberView struct {
 	Status    MemberStatus
 	Level     int
 	Archetype string
+	// ExpInto and ExpTNL are the experience into the level and the span to
+	// the next, for a present companion only (Phase 32e); ExpKnown says so.
+	ExpInto, ExpTNL int
+	ExpKnown        bool
 	// HP and HPMax are set only for a present companion.
 	HP, HPMax int
+	// MP and MPMax are its live mana, set only for a present companion
+	// (Phase 32g); MPMax 0 means it has none.
+	MP, MPMax int
 	// Placed, Row, and Col are its formation cell (0-based).
 	Placed   bool
 	Row, Col int
@@ -359,4 +366,107 @@ func CompanionGearGrams(leaderUserID int) int {
 		return 0
 	}
 	return gp.CompanionGearGrams(leaderUserID)
+}
+
+// RecruiterViewProvider is optionally implemented by the registered
+// FormationProvider (Phase 32a): a recruiter room's notice as look shows it.
+// modules/company runs on the game loop, so call these from the game loop
+// only.
+type RecruiterViewProvider interface {
+	// RecruiterLines is what look shows in roomID for viewerUserID: the
+	// notice and the candidates they can still take. None outside a
+	// recruiter room.
+	RecruiterLines(viewerUserID, roomID int) []string
+	// LookCandidate describes a candidate on roomID's notice matched by
+	// selector. ok is false when nothing there matches.
+	LookCandidate(viewerUserID, roomID int, selector string) (text string, ok bool)
+}
+
+func recruiterViewProvider() (RecruiterViewProvider, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	rp, ok := p.(RecruiterViewProvider)
+	return rp, ok
+}
+
+// RecruiterLines returns roomID's notice lines for viewerUserID, or none
+// without a provider or a recruiter there.
+func RecruiterLines(viewerUserID, roomID int) []string {
+	rp, ok := recruiterViewProvider()
+	if !ok {
+		return nil
+	}
+	return rp.RecruiterLines(viewerUserID, roomID)
+}
+
+// LookCandidate describes a candidate on roomID's notice. ok is false
+// without a provider or a match.
+func LookCandidate(viewerUserID, roomID int, selector string) (string, bool) {
+	rp, ok := recruiterViewProvider()
+	if !ok {
+		return "", false
+	}
+	return rp.LookCandidate(viewerUserID, roomID, selector)
+}
+
+// MemberCarry is one counted companion's share of the company's carrying
+// capacity (Phase 32f): its Strength and its largest pack's bonus, in
+// grams.
+type MemberCarry struct {
+	Strength  int
+	PackGrams int
+}
+
+// CarryProvider is optionally implemented by the registered
+// FormationProvider (Phase 32f): the companions who carry for a leader,
+// the same ones CompanionGearGrams weighs. Call it on the game loop.
+type CarryProvider interface {
+	CompanionCarry(leaderUserID int) []MemberCarry
+}
+
+// CompanionCarry is each counted companion's carrying share; nil without a
+// provider.
+func CompanionCarry(leaderUserID int) []MemberCarry {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	cp, ok := p.(CarryProvider)
+	if !ok {
+		return nil
+	}
+	return cp.CompanionCarry(leaderUserID)
+}
+
+// PresenceProvider is optionally implemented by the registered
+// FormationProvider (32f review): the living companions out and in their
+// leader's room. Call it on the game loop.
+type PresenceProvider interface {
+	CompanionsWithLeader(leaderUserID int) []int
+}
+
+// CompanionsWithLeader is the ids of a leader's living companions walking
+// with them; nil without a provider.
+func CompanionsWithLeader(leaderUserID int) []int {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	pp, ok := p.(PresenceProvider)
+	if !ok {
+		return nil
+	}
+	return pp.CompanionsWithLeader(leaderUserID)
+}
+
+// WalkingMembers is how many members walk with a leader: the leader and
+// each living companion in their room (32f review: the riding pace). A
+// leader alone is one.
+func WalkingMembers(leaderUserID int) int {
+	return 1 + len(CompanionsWithLeader(leaderUserID))
+}
+
+// CountedMembers is how many members carry for a leader: the leader and
+// each counted companion (Phase 32f). A leader with no company is one.
+func CountedMembers(leaderUserID int) int {
+	return 1 + len(CompanionCarry(leaderUserID))
 }

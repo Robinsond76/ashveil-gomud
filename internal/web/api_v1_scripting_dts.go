@@ -28,6 +28,9 @@ declare interface ActorObject {
     RevertFormChange(): boolean;
     SendText(msg: string): void;
     GetCharacterName(wrapInTags: boolean): string;
+    GetCombatName(startOfLine: boolean): string;
+    GetCombatPronoun(form: string): string;
+    ChantRoundsLeft(): number;
     SetCharacterName(newName: string): void;
     GetDescription(): string;
     SetTempData(key: string, value: any): void;

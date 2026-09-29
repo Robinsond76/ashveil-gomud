@@ -3,6 +3,7 @@ name: human
 description: A basic human who gains ordinary stats.
 defaultalignment: 0
 size: medium
+groupnoun: band
 unarmedname: fists
 tnlscale: 1
 selectable: true

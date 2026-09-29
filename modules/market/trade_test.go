@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/market"
@@ -287,4 +288,27 @@ func TestMarketTradesQueueOwnershipGoldAndPurchaseEvents(t *testing.T) {
 	require.Len(t, got.purchases, 1, "only buys are purchases")
 	assert.Equal(t, events.Purchase{UserId: w.user.UserId, RoomId: 2004, Cost: 27, ItemId: 28}, got.purchases[0])
 	assert.Contains(t, out, "buys the wolf hide at the market.", "the room hears the trade")
+}
+
+type fullLoad struct{}
+
+func (fullLoad) CurrentLoad(int) (encumbrance.Load, bool) {
+	return encumbrance.Load{PersonalGrams: 10000, CapacityGrams: 10000}, true
+}
+
+// Phase 32f: a full company can't buy at the market; nothing changes hands.
+func TestMarketBuyRefusedWhenCompanyFull(t *testing.T) {
+	w := newTradeWorld(t, 100)
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: 28, Name: "wolf hide", NameSimple: "hide", Type: items.Commodity, Weight: 700})
+	encumbrance.SetProvider(fullLoad{})
+	t.Cleanup(func() { encumbrance.SetProvider(nil) })
+	saves := w.store.saveCalls
+
+	out := w.run(t, "buy hide")
+
+	assert.Contains(t, out, "too much for your company to carry")
+	assert.Equal(t, 100, w.user.Character.Gold)
+	assert.Zero(t, countItem(w.user.Character.Items, 28))
+	assert.Equal(t, 4, stockOf(t, w.store.saved, "Dunmar", 28), "the ledger is untouched")
+	assert.Equal(t, saves, w.store.saveCalls)
 }

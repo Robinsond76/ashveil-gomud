@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -86,6 +87,10 @@ func writeTutorialWorld(t *testing.T, dataDir string) {
 		"mobs/dunmar/61-tamsin_reed.yaml",
 		"mobs/dunmar/62-brother_oswin.yaml",
 		"items/armor-20000/head/20043-graduation_cap.yaml",
+		// Phase 32a: the waterskin's Hydrated buff, to show drink has no
+		// flourish.
+		"buffs/34-hydrated.yaml",
+		"buffs/34-hydrated.js",
 	}
 	for _, id := range []string{"10015", "20004", "20008", "30004", "30015"} {
 		matches, err := filepath.Glob(filepath.Join(shipped, "items", "*", id+"-*.yaml"))
@@ -308,11 +313,43 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	got = run(aria, "east", "")
 	require.Equal(t, 901, template(aria))
 	assert.Contains(t, got, "stage 2 of 8")
+	// Phase 32a: the hiring post is part of the room, and each candidate
+	// can be looked at.
+	got = run(aria, "look", "")
+	assert.Contains(t, got, "On the notched hiring post: Tamsin Reed (free), Brother Oswin (free).")
+	assert.Contains(t, got, "company inspect [name]")
+	assert.Contains(t, run(aria, "look", "at the hiring post"), "On the notched hiring post: Tamsin Reed (free)", "the hint's wording works")
+	got = run(aria, "look", "tamsin")
+	assert.Contains(t, got, "guarded carters")
+	assert.Contains(t, got, "company inspect tamsin")
 	got = run(aria, "company", "recruit")
 	assert.Contains(t, got, "Tamsin Reed")
 	assert.Contains(t, got, "Oswin")
 	run(aria, "company", "recruit tamsin")
 	assert.Equal(t, StageCompany, stageOf(aria), "one companion isn't enough")
+	// Taken on, Tamsin leaves the notice and stands in the room with no
+	// ♥friend tag; a mob charmed some other way keeps it.
+	assert.Contains(t, run(aria, "look", ""), "On the notched hiring post: Brother Oswin (free).")
+	yardHere := rooms.LoadRoom(aria.Character.RoomId)
+	stray := mobs.NewMobById(69, yardHere.RoomId)
+	require.NotNil(t, stray)
+	stray.Character.Charm(aria.UserId, -2, "")
+	yardHere.AddMob(stray.InstanceId)
+	listed := map[string]string{}
+	for _, line := range rooms.GetDetails(yardHere, aria).VisibleMobs {
+		plain := tagPattern.ReplaceAllString(line, "")
+		for _, name := range []string{"Tamsin Reed", "Corvin Blackthorn"} {
+			if strings.Contains(plain, name) {
+				listed[name] = plain
+			}
+		}
+	}
+	require.Contains(t, listed, "Tamsin Reed")
+	// (Without compiled adjective styles the tag renders as "charmed".)
+	assert.NotContains(t, listed["Tamsin Reed"], "charmed", "a companion isn't a ♥friend")
+	assert.Contains(t, listed["Corvin Blackthorn"], "charmed", "any other charmed mob is")
+	yardHere.RemoveMob(stray.InstanceId)
+	mobs.DestroyInstance(stray.InstanceId)
 	got = run(aria, "company", "recruit oswin")
 	assert.Equal(t, StageFormation, stageOf(aria))
 	assert.Contains(t, got, "Head east for the next lesson")
@@ -389,7 +426,13 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	run(aria, "eat", "nothing-here")
 	assert.False(t, progressOf(aria.Character).Seen[seenFed], "a failed eat doesn't count")
 	run(aria, "eat", "sandwich")
-	run(aria, "drink", "waterskin")
+	// Phase 32a: the drink ends with the thirst status, and the Hydrated
+	// buff adds no flourish.
+	require.NotNil(t, buffs.GetBuffSpec(34), "Hydrated")
+	got = run(aria, "drink", "waterskin")
+	assert.Contains(t, got, "You drink the waterskin.")
+	assert.Regexp(t, `(?i)thirst:? \w+\.`, got)
+	assert.NotContains(t, got, "Nectar")
 	p := progressOf(aria.Character)
 	assert.True(t, p.Seen[seenFed])
 	assert.True(t, p.Seen[seenWatered])
@@ -411,7 +454,10 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	require.Equal(t, 905, template(aria))
 	assert.Contains(t, got, "stage 5 of 8: Camp")
 	assert.Contains(t, run(aria, "camp", ""), "You make camp here.")
+	// Phase 32a: the camp is part of the room.
+	assert.Contains(t, run(aria, "look", ""), "A camp is pitched here, around a cold fire pit.")
 	assert.Contains(t, run(aria, "camp", "fire"), "campfire")
+	assert.Contains(t, run(aria, "look", ""), "A camp is pitched here: bedrolls around a crackling campfire.")
 	assert.Contains(t, run(aria, "camp", "rest"), "You settle in by the fire to rest.")
 	activity, ok := camping.LeaderRest(aria.UserId)
 	require.True(t, ok)
@@ -452,7 +498,8 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 		}
 		require.True(t, mob.Practice, mob.Character.Name)
 		squad[id] = mob.Character.Name
-		summaries = append(summaries, mobparty.MobSummary{InstanceId: id, Groups: mob.Groups, EHP: float64(mob.Character.HealthMax.Value)})
+		assert.NotEmpty(t, mob.SpawnGroup, "Phase 32d: the (non-hostile) squad is one spawn group")
+		summaries = append(summaries, mobparty.MobSummary{InstanceId: id, SpawnGroup: mob.SpawnGroup, Groups: mob.Groups, EHP: float64(mob.Character.HealthMax.Value)})
 	}
 	require.Len(t, squad, 4)
 	parties := mobparty.Assemble(summaries)
@@ -499,11 +546,17 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, [2]int{2, 1}, [2]int{row, col})
 
-	// An attack at the archer is caught by a footman in front: Aria's own
-	// blows land on a footman, never the archer.
-	run(aria, "attack", "archer")
+	// Phase 32c: a member's name doesn't start the fight; the squad's does.
+	assert.Contains(t, run(aria, "attack", "archer"), "Type attack squad", "a member is not how a fight starts")
+	require.Nil(t, aria.Character.Aggro)
+	assert.Contains(t, run(aria, "attack", "squad"), "go for the straw squad.")
 	require.NotNil(t, aria.Character.Aggro)
-	require.Equal(t, archer, aria.Character.Aggro.MobInstanceId)
+	assert.Equal(t, "straw footman", squad[aria.Character.Aggro.MobInstanceId], "her first aim is a footman she can reach")
+
+	// An attack at the archer (as a strategy might aim, 32d) is caught by
+	// a footman in front: Aria's own blows land on a footman, never the
+	// archer.
+	aria.Character.SetAggro(0, archer, characters.DefaultAttack)
 	var r uint64
 	// Attack messages vary ("You hit", "Your fists connect", ...). A line
 	// of Aria's own naming a foe, and not a miss, is a blow that landed; any
@@ -526,18 +579,18 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 		return false
 	}
 	seen := ""
-	for r = 1; r < 200 && !landed(seen, "straw footman"); r++ {
+	for r = 1; r < 200 && !landed(seen, "footman"); r++ {
 		fightRound(r)
 		seen += text(aria)
 	}
-	require.True(t, landed(seen, "straw footman"), "a blow landed on a footman: %s", seen)
+	require.True(t, landed(seen, "footman"), "a blow landed on a footman: %s", seen)
 	assert.False(t, aimedAt(seen, "straw archer"), "the archer is shielded")
 	assert.Equal(t, "straw footman", squad[aria.Character.Aggro.MobInstanceId], "her aim moves to the footman who caught it")
 
 	// Re-targeting (11b): a foe Aria is aiming at falls to another blow
 	// (a companion's, here beaten directly); next round she turns to a
 	// standing foe she can reach, without another command.
-	run(aria, "attack", "footman")
+	assert.Contains(t, run(aria, "attack", "footman"), "The battle is under way", "nothing typed changes a battle (32c)")
 	aimed := aria.Character.Aggro.MobInstanceId
 	require.NotEqual(t, archer, aimed)
 	beatenMob := mobs.GetInstance(aimed)
@@ -552,19 +605,9 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.NotNil(t, mobs.GetInstance(aria.Character.Aggro.MobInstanceId), "a standing one")
 	assert.Contains(t, squad, aria.Character.Aggro.MobInstanceId)
 
-	// Fight on until the squad is beaten, attacking again whenever a foe
-	// falls to Aria's own blow (a killing blow ends the attacker's aim;
-	// others aiming at it are re-targeted, 11b).
+	// Fight on until the squad is beaten: the battle plays out on its own
+	// (32c), Aria turning on the next foe whenever hers falls.
 	for ; r < 5000 && stageOf(aria) == StageCombat; r++ {
-		if aria.Character.Aggro == nil {
-			next := "archer"
-			for id, name := range squad {
-				if mobs.GetInstance(id) != nil && name == "straw footman" {
-					next = "footman"
-				}
-			}
-			run(aria, "attack", next)
-		}
 		fightRound(r)
 	}
 	require.Equal(t, StageAlignment, stageOf(aria), "the squad is beaten")
@@ -582,6 +625,8 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	got = run(aria, "east", "")
 	require.Equal(t, 907, template(aria))
 	assert.Contains(t, got, "stage 7 of 8: Alignment")
+	// Phase 32a: the notice lists Corvin, who won't join this company.
+	assert.Contains(t, run(aria, "look", ""), "Corvin Blackthorn (won't join you)")
 	run(aria, "company", "status")
 	assert.False(t, progressOf(aria.Character).Seen["company alignment"], "another subcommand doesn't count")
 	assert.Contains(t, run(aria, "company", "alignment"), "Company alignment")

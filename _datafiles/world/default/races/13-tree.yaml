@@ -1,8 +1,10 @@
 raceid: 13
 name: tree
+defaultpronouns: it
 description: A massive wooden lifeform.
 defaultalignment: 60
 size: large
+groupnoun: grove
 unarmedname: branches
 tnlscale: 1
 angrycommands: [emote creeks and sways with intent.]

@@ -34,6 +34,16 @@ Permissions are managed via the admin web UI (`/admin/users`) and the API:
 
 Only `*.write` and command permission keys exist. There are no `*.read` keys — all read access is open to any authenticated mod/admin.
 
+## Replay users (Ashveil 32b)
+
+- `replay.go`: a tutorial replay is a throwaway `UserRecord` with
+  `ReplayOf` set (durable, `replayof`), an id from `ReplayUserIdBase` up
+  (never from the user index), and username `replay:<id>`. It is in
+  neither index, so it can't be logged into; load it with `LoadUserFile`.
+- `RemoveUserFile` refuses an online user and is idempotent; it is the
+  final step of `events.UserPurged` (`internal/hooks/UserPurged_HandlePurge.go`).
+- `OfflineReplayUserIds` lists replay files not online (the boot sweep).
+
 ## Working Rules
 
 - Preserve on-disk compatibility for user records and user index behavior unless the task explicitly includes a migration.

@@ -11,7 +11,9 @@ with its own stock, not a fixed shop price.
   <ansi fg="yellow">short</ansi>, <ansi fg="yellow">steady</ansi>, <ansi fg="yellow">plentiful</ansi>, or <ansi fg="yellow">glutted</ansi>).
 
   <ansi fg="command">market buy [good]</ansi>
-  Buys one unit of a good, naming it by any close match to its name.
+  Buys one unit of a good, naming it by any close match to its name. A
+  company already carrying all it can is refused before any gold
+  changes hands (<ansi fg="command">help cargo</ansi>).
 
   <ansi fg="command">market sell [good]</ansi>
   Sells one unit of a good you carry.

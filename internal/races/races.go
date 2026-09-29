@@ -31,12 +31,15 @@ type Race struct {
 	RaceId           int
 	Name             string
 	Description      string
+	DefaultPronouns  string         `yaml:"defaultpronouns,omitempty"`
+	PainReactions    []PainReaction `yaml:"painreactions,omitempty"`
 	DefaultAlignment int8
 	BuffIds          []int // Permabuffs this race always has
 	Size             Size
 	TNLScale         float32
 	UnarmedName      string
 	Tameable         bool
+	GroupNoun        string `yaml:"groupnoun,omitempty"` // Ashveil (Phase 32c): what a group of them is called ("band", "pack"); empty for mobparty.DefaultNoun
 	Damage           items.Damage
 	Selectable       bool
 	AngryCommands    []string         // randomly chosen to queue when they are angry/entering combat.
@@ -95,6 +98,14 @@ func (r *Race) Validate() error {
 	r.Size = Size(strings.ToLower(string(r.Size)))
 	if r.Size != Small && r.Size != Medium && r.Size != Large {
 		return fmt.Errorf("invalid size %q: must be small, medium, or large", r.Size)
+	}
+
+	r.DefaultPronouns = strings.ToLower(strings.TrimSpace(r.DefaultPronouns))
+	if r.DefaultPronouns != "" && r.DefaultPronouns != "he" && r.DefaultPronouns != "she" && r.DefaultPronouns != "they" && r.DefaultPronouns != "it" {
+		return fmt.Errorf("invalid default pronouns %q: must be he, she, they, or it", r.DefaultPronouns)
+	}
+	if err := ValidatePainReactions(r.PainReactions); err != nil {
+		return err
 	}
 
 	if r.DefaultAlignment < -100 {

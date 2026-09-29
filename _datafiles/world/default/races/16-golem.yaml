@@ -1,10 +1,12 @@
 raceid: 16
 name: golem
+defaultpronouns: it
 description: Animated material
 defaultalignment: 0
 buffids:
   - 29 # Night Vision
 size: large
+groupnoun: band
 unarmedname: fists
 tnlscale: 1
 angrycommands: [emote groans and shrieks.]

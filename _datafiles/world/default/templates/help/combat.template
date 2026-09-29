@@ -5,32 +5,52 @@ help page, named in brackets.
 
 <ansi fg="yellow-bold">The round</ansi>
 
-Combat resolves once a round (a round is 4 seconds). Every fighter on both
-sides takes their turn each round: an attack, a round of a spell being cast,
-or waiting. A fight goes on until one side is dead or gone, or nobody is
-fighting any more.
+Combat resolves once a combat round, every 8 seconds (two of the game's
+4-second rounds). Every fighter on both sides takes their turn each combat
+round: an attack, a round of a spell being cast, or waiting. A fight goes on
+until one side is dead or gone, or nobody is fighting any more. What you
+start mid-round, such as <ansi fg="command">flee</ansi> or a spell, waits for the next combat
+round, up to 8 seconds. Spell rounds and waits count combat rounds; buffs
+and effects that last a number of rounds count the game's 4-second rounds.
+
+The round is decided at once, but its lines are paced out to you over a
+few seconds, so you watch the fight unfold. Choose how fast with
+<ansi fg="command">set combatpace fast</ansi>, <ansi fg="command">normal</ansi>, <ansi fg="command">slow</ansi>, or <ansi fg="command">off</ansi> (<ansi fg="command">help combatpace</ansi>).
 
 <ansi fg="yellow-bold">Your company fights as one (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help targeting</ansi><ansi fg="yellow-bold">)</ansi>
 
-Your companions fight beside you. When your company and a group of enemies
-start fighting:
+Enemies come in named groups ("A band of ruffians (4)"), and you fight a
+whole group, never one member: <ansi fg="command">attack ruffians</ansi> starts the battle. From
+then on it plays out on its own, from how your company was set up: nothing
+you type changes it until it's over, and only <ansi fg="command">flee</ansi> takes you out. Set
+your formation and everyone's strategy first (<ansi fg="command">help strategy</ansi>), and
+<ansi fg="command">scout</ansi> the group to see how it stands. Your companions fight beside you.
+Once the battle starts:
 
-- the whole enemy group joins in, not just the one you struck;
-- anyone on either side left without a target, or with one they can't reach,
-  turns on the weakest foe they can reach, and you're told about it
-  (<ansi fg="command">You turn on the bandit cutthroat.</ansi>);
-- this goes on until the fight is over, or until you <ansi fg="command">break</ansi> or <ansi fg="command">flee</ansi>.
+- the whole enemy group fights, and each of you starts on the foe your
+  strategy picks (the weakest you can reach, unless you set another rule);
+- healers heal the hurt and casters cast their spells, with real mana;
+- anyone left without a target, or with one they can't reach, turns to
+  another by their strategy, and you're told about it
+  (<ansi fg="command">You turn toward the bandit cutthroat.</ansi>);
+- this goes on until the fight is over, or until you <ansi fg="command">flee</ansi>.
 
 Where several groups are in one place, you fight them one at a time. The
 others wait their turn without striking, and the next battle begins as
 soon as one ends. Another player can take on a waiting group meanwhile.
+
+In the web client, the Combat tab shows your battle as it goes: both
+formations, who strikes whom, how hurt each enemy looks, the fallen, and
+the groups waiting their turn (<ansi fg="command">help webclient</ansi>).
 
 <ansi fg="yellow-bold">Who can strike whom (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">)</ansi>
 
 Both sides stand in a 3x3 formation: three columns, and three rows from the
 front to the back. Where a fighter stands, and the reach of their weapon,
 decide who they can strike. A fighter in the front row shields the one
-behind them. <ansi fg="command">formation reach [member]</ansi> shows who a member can reach.
+behind them. <ansi fg="command">formation reach [member]</ansi> shows who a member can reach, and
+<ansi fg="command">scout [group]</ansi> (<ansi fg="command">help scout</ansi>) shows an enemy group's formation and which
+of them you can reach.
 
 <ansi fg="yellow-bold">Hitting (</ansi><ansi fg="command">help attack</ansi><ansi fg="yellow-bold">)</ansi>
 
@@ -53,6 +73,15 @@ At 0 health you drop. At -10 you die: you lose a level and wake at the last
 city's church, with your living company. A companion who dies stays on your
 roster for a while, and can be raised at a church or a village shaman.
 
+<ansi fg="yellow-bold">Reading a fight (</ansi><ansi fg="command">help narration</ansi><ansi fg="yellow-bold">)</ansi>
+
+Every blow gets a line, and its numbers sit in brackets at the end:
+<ansi fg="command">(5 damage)</ansi>, or <ansi fg="command">(critical hit, 9 damage)</ansi> for a critical hit. A line with no
+brackets is a miss. A damaging critical hit that leaves someone standing
+gets a pain reaction right after the blow; a fatal one gets a death line
+instead. These reactions do not change damage or status (<ansi fg="command">help narration</ansi>).
+One line opens a fight and one closes it.
+
 <ansi fg="yellow-bold">After the fight (</ansi><ansi fg="command">help battle-summary</ansi><ansi fg="yellow-bold">)</ansi>
 
 When your company's fight ends, you see a summary. It shows the damage each
@@ -61,14 +90,19 @@ and your company's health.
 
 <ansi fg="yellow-bold">Commands</ansi>
 
-  <ansi fg="command">attack [target]</ansi>   start a fight
-  <ansi fg="command">break</ansi>             stop fighting (enemies may keep attacking you)
-  <ansi fg="command">flee</ansi>              try to run out of the room
+  <ansi fg="command">attack [group]</ansi>    start a fight with a group
+  <ansi fg="command">scout [group]</ansi>     see how a group stands
+  <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
+  <ansi fg="command">flee</ansi>              try to run out of the room (the only way out of a battle)
   <ansi fg="command">consider [target]</ansi> size up a foe
   <ansi fg="command">formation</ansi>         see and arrange your company's formation
   <ansi fg="command">company chemistry</ansi> your company's chemistry
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
   <ansi fg="command">light</ansi>             how well you can see here
+  <ansi fg="command">set combatpace</ansi>    how fast a round's lines come to you
 
 In the tutorial, the Practice Yard lets you try all of this against straw
 soldiers that can't hurt you (<ansi fg="command">help tutorial</ansi>).
+Repeated enemy names become fixed labels such as the first cutthroat and
+the second cutthroat. A survivor keeps its label when another falls; see
+<ansi fg="command">help narration</ansi> for pronouns and names.

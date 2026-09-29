@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
@@ -110,6 +111,12 @@ func (u *UserRecord) GetCommandPrompt() string {
 	}
 
 	unsent, suggested := u.GetUnsentText()
+	// Ashveil 32h: a password being typed is redrawn as stars, with no
+	// suggestion (the connection's mask is lock-guarded, so this is safe on
+	// a connection goroutine).
+	if connections.InputMasked(u.connectionId) {
+		unsent, suggested = strings.Repeat(`*`, utf8.RuneCountInString(unsent)), ``
+	}
 	if len(suggested) > 0 {
 		suggested = `<ansi fg="suggested-text">` + suggested + `</ansi>`
 	}
@@ -270,7 +277,11 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 				value = strconv.Itoa(len(u.Character.Items))
 
 			case `{I}`:
-				value = strconv.Itoa(u.Character.CarryCapacity())
+				// Phase 32f: the company's carrying capacity in whole kg
+				// (weight is the only limit). Prompts are built off the game
+				// loop, so internal/companyview fills it from its cache; "?"
+				// until it has.
+				value = "?"
 
 			case `{lvl}`:
 				value = strconv.Itoa(u.Character.Level)

@@ -41,12 +41,18 @@ function injectStyles(css) {
 //       { label: 'look item',   cmd: 'look longsword'   },
 //       { label: 'remove item', cmd: 'remove longsword' },
 //   ]);
+//
+// An item with confirm: '<question>' asks first and sends nothing unless
+// the player agrees (Phase 32g: for what can't be undone).
 // ---------------------------------------------------------------------------
 (function() {
     let menuEl   = null;
     let offClick = null;
+    let opener   = null;
 
-    function dismiss() {
+    // dismiss closes the menu; refocus returns focus to what opened it
+    // (Escape), so a keyboard user isn't left nowhere.
+    function dismiss(refocus) {
         if (menuEl) {
             menuEl.remove();
             menuEl = null;
@@ -55,12 +61,20 @@ function injectStyles(css) {
             document.removeEventListener('mousedown', offClick, true);
             offClick = null;
         }
+        if (refocus && opener && typeof opener.focus === 'function') { opener.focus(); }
+        opener = null;
     }
 
+    // Phase 32g: entries are buttons in a role="menu" list, so the keyboard
+    // reaches them: the first is focused on open, arrows, Home, and End
+    // move, Enter or Space chooses, Escape closes.
     window.uiMenu = function uiMenu(event, items) {
-        dismiss();
+        dismiss(false);
+        opener = (event && event.currentTarget instanceof Element) ? event.currentTarget
+               : (event && event.target instanceof Element ? event.target : null);
 
         menuEl = document.createElement('div');
+        menuEl.setAttribute('role', 'menu');
         menuEl.style.cssText = [
             'position:fixed',
             'z-index:2147483647',
@@ -72,10 +86,16 @@ function injectStyles(css) {
             'min-width:120px',
             'font-family:inherit',
             'font-size:0.75em',
+            'display:flex',
+            'flex-direction:column',
         ].join(';');
 
+        const entries = [];
         items.forEach(function(item) {
-            const entry = document.createElement('div');
+            const entry = document.createElement('button');
+            entry.type = 'button';
+            entry.setAttribute('role', 'menuitem');
+            entry.tabIndex = -1;
             entry.textContent = item.label;
             entry.style.cssText = [
                 'padding:5px 12px',
@@ -83,43 +103,75 @@ function injectStyles(css) {
                 'cursor:pointer',
                 'white-space:nowrap',
                 'letter-spacing:0.03em',
+                'background:none',
+                'border:none',
+                'text-align:left',
+                'font:inherit',
             ].join(';');
-            entry.addEventListener('mouseenter', function() {
-                entry.style.background = 'var(--t-accent-dim)';
-                entry.style.color      = 'var(--t-text-white)';
-            });
-            entry.addEventListener('mouseleave', function() {
-                entry.style.background = '';
-                entry.style.color      = 'var(--t-text)';
-            });
-            entry.addEventListener('mousedown', function(e) {
+            const on  = function() { entry.style.background = 'var(--t-accent-dim)'; entry.style.color = 'var(--t-text-white)'; };
+            const off = function() { entry.style.background = ''; entry.style.color = 'var(--t-text)'; };
+            entry.addEventListener('mouseenter', on);
+            entry.addEventListener('mouseleave', off);
+            entry.addEventListener('focus', on);
+            entry.addEventListener('blur', off);
+            entry.addEventListener('click', function(e) {
                 e.stopPropagation();
-                dismiss();
+                dismiss(false);
+                if (item.confirm && !window.confirm(item.confirm)) { return; }
                 Client.SendInput(item.cmd);
             });
+            entries.push(entry);
             menuEl.appendChild(entry);
         });
 
-        // Position: prefer below-right of the click, flip if it would overflow
+        menuEl.addEventListener('keydown', function(e) {
+            const at = entries.indexOf(document.activeElement);
+            let next = -1;
+            if (e.key === 'ArrowDown') { next = (at + 1) % entries.length; }
+            if (e.key === 'ArrowUp')   { next = (at - 1 + entries.length) % entries.length; }
+            if (e.key === 'Home')      { next = 0; }
+            if (e.key === 'End')       { next = entries.length - 1; }
+            if (e.key === 'Escape' || e.key === 'Tab') {
+                e.preventDefault();
+                dismiss(true);
+                return;
+            }
+            if (next !== -1) {
+                e.preventDefault();
+                entries[next].focus();
+            }
+        });
+
+        // Position: prefer below-right of the click, flip if it would
+        // overflow. A menu opened from the keyboard (no pointer position)
+        // opens by the control that opened it.
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         menuEl.style.left = '-9999px';
         menuEl.style.top  = '-9999px';
         document.body.appendChild(menuEl);
 
+        let cx = event ? event.clientX : 0;
+        let cy = event ? event.clientY : 0;
+        if (!cx && !cy && opener) {
+            const r = opener.getBoundingClientRect();
+            cx = r.left;
+            cy = r.bottom;
+        }
         const mw = menuEl.offsetWidth;
         const mh = menuEl.offsetHeight;
-        let x = event.clientX;
-        let y = event.clientY + 4;
+        let x = cx;
+        let y = cy + 4;
         if (x + mw > vw - 8) { x = vw - mw - 8; }
-        if (y + mh > vh - 8) { y = event.clientY - mh - 4; }
+        if (y + mh > vh - 8) { y = cy - mh - 4; }
         menuEl.style.left = Math.max(8, x) + 'px';
         menuEl.style.top  = Math.max(8, y) + 'px';
 
         offClick = function(e) {
-            if (menuEl && !menuEl.contains(e.target)) { dismiss(); }
+            if (menuEl && !menuEl.contains(e.target)) { dismiss(false); }
         };
         document.addEventListener('mousedown', offClick, true);
+        if (entries.length) { entries[0].focus(); }
     };
 }());
 
@@ -553,6 +605,280 @@ class DockSlot {
 const DockSlots = {};
 
 // ---------------------------------------------------------------------------
+// DockTabGroup (Phase 32g)
+//
+// One dock panel holding several windows as tabs. A VirtualWindow with
+// tabGroup: '<name>' joins its group's panel when docked instead of getting
+// a panel of its own; with groupHeader: true it is shown above the tabs
+// (the vitals strip) instead of as a tab. Each window keeps its own content
+// element and GMCP handling; the group only shows one tab's content at a
+// time. The panel's pop-out button floats the active tab, and a floating
+// member's dock button returns it to its tab. The group's panel fills the
+// column; dragging it to the other column moves every member.
+//
+// Tab order is WINDOW_DOCK_DEFAULTS order. The active tab is remembered in
+// LayoutStore. A member can show a count on its tab (setBadge) and be told
+// when its tab is shown (the window's onTabShown option).
+// ---------------------------------------------------------------------------
+class DockTabGroup {
+    constructor(name) {
+        this.name     = name;
+        this.side     = null;
+        this.root     = null;   // the content element handed to the DockSlot
+        this._header  = null;
+        this._tablist = null;
+        this._panes   = null;
+        this._members = [];     // { win, tab, pane, badge }
+        this._active  = null;   // window id
+    }
+
+    _order(win) {
+        const i = WINDOW_DOCK_DEFAULTS.findIndex(d => d.id === win._id);
+        return i === -1 ? WINDOW_DOCK_DEFAULTS.length : i;
+    }
+
+    // The window whose id stands for the group in the dock order: its
+    // first member in WINDOW_DOCK_DEFAULTS.
+    anchorId() {
+        const first = WINDOW_DOCK_DEFAULTS.find(d => d.group === this.name);
+        return first ? first.id : this.name;
+    }
+
+    _build() {
+        const root = document.createElement('div');
+        root.className = 'dock-tabgroup';
+        root.dataset.group = this.name;
+        this._header = document.createElement('div');
+        this._header.className = 'dock-tabgroup-header';
+        this._tablist = document.createElement('div');
+        this._tablist.className = 'dock-tabgroup-tabs';
+        this._tablist.setAttribute('role', 'tablist');
+        this._tablist.addEventListener('keydown', (e) => {
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'Home' && e.key !== 'End') { return; }
+            const tabs = this._members.filter(m => m.tab).map(m => m.tab);
+            const at = tabs.indexOf(document.activeElement);
+            if (at === -1) { return; }
+            e.preventDefault();
+            let next = at;
+            if (e.key === 'ArrowLeft')  { next = (at - 1 + tabs.length) % tabs.length; }
+            if (e.key === 'ArrowRight') { next = (at + 1) % tabs.length; }
+            if (e.key === 'Home')       { next = 0; }
+            if (e.key === 'End')        { next = tabs.length - 1; }
+            tabs[next].focus();
+            tabs[next].click();
+        });
+        this._panes = document.createElement('div');
+        this._panes.className = 'dock-tabgroup-panes';
+        root.appendChild(this._header);
+        root.appendChild(this._tablist);
+        root.appendChild(this._panes);
+        this.root = root;
+    }
+
+    _title() {
+        const m = this._members.find(x => x.win._id === this._active);
+        return m ? m.label : this.name;
+    }
+
+    _ensurePanel(side) {
+        if (!this.root) { this._build(); }
+        const slot = DockSlots[side];
+        if (!slot) { return; }
+        if (this.side === side && slot.hasPanel(this.root)) { return; }
+        this.side = side;
+        const panel = slot.addPanel(
+            this.root,
+            this._title(),
+            () => this.popOutActive(),
+            null,
+            null,
+            (newSide) => this.moveTo(newSide),
+            VirtualWindows.getDockInsertIndexFor(this.anchorId(), side)
+        );
+        if (panel) { panel.classList.add('dock-panel-fill'); }
+    }
+
+    _syncTitle() {
+        const slot = DockSlots[this.side];
+        if (!slot || !this.root) { return; }
+        const entry = slot._panels.find(p => p.contentEl === this.root);
+        const title = entry && entry.panel.querySelector('.dock-panel-title');
+        if (title) { title.textContent = this._title(); }
+    }
+
+    has(win) {
+        return this._members.some(m => m.win === win);
+    }
+
+    add(win, side) {
+        this._ensurePanel(side);
+        if (this.has(win)) { return; }
+        const label = win._tabLabel || (win._vwinOpts && win._vwinOpts.title) || win._id;
+        const member = { win, label, tab: null, pane: null, badge: null };
+        if (win._groupHeader) {
+            this._header.appendChild(win._contentEl);
+        } else {
+            const key = win._id.replace(/[^A-Za-z0-9]/g, '');
+            const tab = document.createElement('button');
+            tab.type = 'button';
+            tab.className = 'dock-tabgroup-tab';
+            tab.id = 'dock-tab-' + key;
+            tab.setAttribute('role', 'tab');
+            tab.setAttribute('aria-controls', 'dock-pane-' + key);
+            tab.dataset.win = win._id;
+            const text = document.createElement('span');
+            text.textContent = label;
+            const badge = document.createElement('span');
+            badge.className = 'dock-tabgroup-badge';
+            badge.hidden = true;
+            tab.appendChild(text);
+            tab.appendChild(badge);
+            tab.addEventListener('click', () => this.activate(win._id));
+            const pane = document.createElement('div');
+            pane.className = 'dock-tabgroup-pane';
+            pane.id = 'dock-pane-' + key;
+            pane.setAttribute('role', 'tabpanel');
+            pane.setAttribute('aria-labelledby', tab.id);
+            pane.appendChild(win._contentEl);
+            member.tab = tab;
+            member.pane = pane;
+            member.badge = badge;
+        }
+        // Keep WINDOW_DOCK_DEFAULTS order.
+        const order = this._order(win);
+        let at = this._members.findIndex(m => this._order(m.win) > order);
+        if (at === -1) { at = this._members.length; }
+        this._members.splice(at, 0, member);
+        if (member.tab) {
+            const after = this._members.slice(at + 1).find(m => m.tab);
+            this._tablist.insertBefore(member.tab, after ? after.tab : null);
+            this._panes.appendChild(member.pane);
+        }
+        const saved = LayoutStore.getActiveTab(this.name);
+        const current = this._members.find(m => m.win._id === this._active && m.tab);
+        if (!current || (saved === win._id && member.tab)) {
+            this.activate(saved && this._members.some(m => m.win._id === saved && m.tab) ? saved : this._firstTabId(), true);
+        } else {
+            this._showActive();
+        }
+    }
+
+    _firstTabId() {
+        const m = this._members.find(x => x.tab);
+        return m ? m.win._id : null;
+    }
+
+    remove(win) {
+        const i = this._members.findIndex(m => m.win === win);
+        if (i === -1) { return; }
+        const member = this._members[i];
+        this._members.splice(i, 1);
+        if (member.tab) { member.tab.remove(); }
+        if (member.pane) { member.pane.remove(); }
+        if (win._contentEl && win._contentEl.parentNode) {
+            document.body.appendChild(win._contentEl);
+        }
+        if (this._members.length === 0) {
+            const slot = DockSlots[this.side];
+            if (slot) { slot.removePanel(this.root); }
+            if (this.root.parentNode) { this.root.parentNode.removeChild(this.root); }
+            this.side = null;
+            return;
+        }
+        if (this._active === win._id) {
+            this.activate(this._firstTabId(), true);
+        }
+    }
+
+    // Show one tab. quiet: don't remember it as the player's choice.
+    activate(id, quiet) {
+        if (!id) { this._active = null; this._showActive(); return; }
+        this._active = id;
+        if (!quiet) { LayoutStore.saveActiveTab(this.name, id); }
+        this._showActive();
+        const m = this._members.find(x => x.win._id === id);
+        if (m && typeof m.win._onTabShown === 'function') { m.win._onTabShown(); }
+    }
+
+    _showActive() {
+        this._members.forEach(m => {
+            if (!m.tab) { return; }
+            const on = m.win._id === this._active;
+            m.tab.classList.toggle('active', on);
+            m.tab.setAttribute('aria-selected', on ? 'true' : 'false');
+            m.tab.tabIndex = on ? 0 : -1;
+            m.pane.hidden = !on;
+        });
+        this._syncTitle();
+    }
+
+    isActive(id) {
+        return this._active === id;
+    }
+
+    // spoken (32g2) replaces "<text> new" in the tab's accessible name.
+    setBadge(id, text, spoken) {
+        const m = this._members.find(x => x.win._id === id);
+        if (!m || !m.badge) { return; }
+        m.badge.textContent = text ? String(text) : '';
+        m.badge.hidden = !text;
+        if (text) {
+            m.tab.setAttribute('aria-label', m.label + ', ' + (spoken || text + ' new'));
+        } else {
+            m.tab.removeAttribute('aria-label');
+        }
+    }
+
+    popOutActive() {
+        const m = this._members.find(x => x.win._id === this._active);
+        if (m) { m.win.undock(); }
+    }
+
+    // Move the whole group to the other column.
+    moveTo(newSide) {
+        const oldSide = this.side;
+        if (!oldSide || newSide === oldSide) { return; }
+        const slot = DockSlots[oldSide];
+        if (slot) { slot.removePanel(this.root); }
+        // Every window of the group moves, docked or not: one popped out, or
+        // one not yet enabled, docks back here (32g review finding 2).
+        const all = VirtualWindows.getWindows().filter(w => w._tabGroup === this.name);
+        all.forEach(w => {
+            VirtualWindows.notifySlotChange(w._id, oldSide, newSide);
+            w._dockSide = newSide;
+        });
+        this.side = null;
+        this._ensurePanel(newSide);
+        all.forEach(w => LayoutStore.saveWindow(w));
+    }
+
+    // The group panel's rectangle, for a popped-out tab to open over.
+    panelRect() {
+        const slot = DockSlots[this.side];
+        const entry = slot && slot._panels.find(p => p.contentEl === this.root);
+        return entry ? entry.panel.getBoundingClientRect() : null;
+    }
+}
+
+const DockTabGroups = (() => {
+    const groups = {};
+    return {
+        get(name) {
+            if (!groups[name]) { groups[name] = new DockTabGroup(name); }
+            return groups[name];
+        },
+        // The group holding a window id, or null.
+        of(id) {
+            return Object.values(groups).find(g => g._members.some(m => m.win._id === id)) || null;
+        },
+        // The group whose panel is this content element, or null.
+        byRoot(contentEl) {
+            return Object.values(groups).find(g => g.root === contentEl) || null;
+        },
+    };
+})();
+
+// ---------------------------------------------------------------------------
 // LayoutStore
 //
 // Persists window layout to localStorage under the key 'windowLayout'.
@@ -570,11 +896,22 @@ const DockSlots = {};
 // ---------------------------------------------------------------------------
 const LayoutStore = (() => {
     const KEY = 'windowLayout';
+    // VERSION 2 (Phase 32g): the company dock. A layout saved before it
+    // names windows that no longer exist and puts the map on the right, so
+    // it is discarded once and the player told (takeResetNotice).
+    const VERSION = 2;
+    let resetNotice = false;
 
     function load() {
         try {
             const raw = localStorage.getItem(KEY);
-            return raw ? JSON.parse(raw) : {};
+            const data = raw ? JSON.parse(raw) : {};
+            if (data && Object.keys(data).length > 0 && data.version !== VERSION) {
+                localStorage.removeItem(KEY);
+                resetNotice = true;
+                return {};
+            }
+            return data || {};
         } catch (e) {
             return {};
         }
@@ -582,10 +919,31 @@ const LayoutStore = (() => {
 
     function save(data) {
         try {
+            data.version = VERSION;
             localStorage.setItem(KEY, JSON.stringify(data));
         } catch (e) {
             // localStorage unavailable - silently ignore
         }
+    }
+
+    // True once after an old layout was discarded.
+    function takeResetNotice() {
+        load();
+        const was = resetNotice;
+        resetNotice = false;
+        return was;
+    }
+
+    function saveActiveTab(group, id) {
+        patch(data => {
+            if (!data.activeTabs) { data.activeTabs = {}; }
+            data.activeTabs[group] = id;
+        });
+    }
+
+    function getActiveTab(group) {
+        const data = load();
+        return (data.activeTabs && data.activeTabs[group]) || null;
     }
 
     // Merge a partial update into the stored layout and persist.
@@ -656,7 +1014,7 @@ const LayoutStore = (() => {
     }
 
     function reset() {
-        localStorage.removeItem(KEY);
+        try { localStorage.removeItem(KEY); } catch (e) { /* unavailable */ }
     }
 
     function clearWindow(id) {
@@ -680,7 +1038,8 @@ const LayoutStore = (() => {
         return data.dockOrder || null;
     }
 
-    return { saveWindow, saveDockWidths, getWindow, getDockWidths, reset, clearWindow, saveDockOrder, getDockOrder };
+    return { saveWindow, saveDockWidths, getWindow, getDockWidths, reset, clearWindow, saveDockOrder, getDockOrder,
+        saveActiveTab, getActiveTab, takeResetNotice };
 })();
 
 // ---------------------------------------------------------------------------
@@ -727,6 +1086,23 @@ class VirtualWindow {
         this._win             = options.offOnLoad ? false : undefined;
         this._contentEl       = null;
         this._vwinOpts        = null;
+        // Phase 32g: tab groups (DockTabGroup).
+        this._tabGroup        = options.tabGroup || null;
+        this._tabLabel        = options.tabLabel || null;
+        this._groupHeader     = !!options.groupHeader;
+        this._onTabShown      = options.onTabShown || null;
+    }
+
+    // Take a docked window out of its dock panel or tab group (Phase 32g).
+    _removeDocked() {
+        if (this._win !== 'docked') { return; }
+        const group = this._tabGroup ? DockTabGroups.of(this._id) : null;
+        if (group) {
+            group.remove(this);
+            return;
+        }
+        const slot = DockSlots[this._dockSide];
+        if (slot) { slot.removePanel(this._contentEl); }
     }
 
     // Open the window. On first call, honours defaultDocked and saved layout.
@@ -830,6 +1206,23 @@ class VirtualWindow {
     // Move from docked to floating. Safe to call when already floating.
     undock() {
         if (this._win !== 'docked') { return; }
+
+        const group = this._tabGroup ? DockTabGroups.of(this._id) : null;
+        if (group) {
+            // A tab pops out over its group's panel.
+            const rect = group.panelRect();
+            group.remove(this);
+            this._win = undefined;
+            let spawnY = null, spawnSize = null;
+            if (rect) {
+                const margin = 10;
+                spawnY    = Math.min(Math.max(margin, Math.round(rect.top)), window.innerHeight - Math.round(rect.height) - margin);
+                spawnSize = { width: Math.round(rect.width), height: Math.round(rect.height) - 24 };
+            }
+            this._floatNow(spawnY, spawnSize);
+            LayoutStore.saveWindow(this);
+            return;
+        }
 
         const slot = DockSlots[this._dockSide];
 
@@ -943,6 +1336,16 @@ class VirtualWindow {
     }
 
     _dockNow() {
+        if (this._tabGroup) {
+            // A tab docks into its group wherever the group now is, even if
+            // the group moved while this tab was out (32g review finding 2).
+            const group = DockTabGroups.get(this._tabGroup);
+            if (group.side) { this._dockSide = group.side; }
+            group.add(this, this._dockSide);
+            this._win = 'docked';
+            LayoutStore.saveWindow(this);
+            return;
+        }
         const slot      = DockSlots[this._dockSide];
         const height    = this._dockedHeight || (this._vwinOpts && this._vwinOpts.height) || null;
         const insertAt  = VirtualWindows.getDockInsertIndex(this);
@@ -986,21 +1389,23 @@ class VirtualWindow {
 // out-of-the-box layout.  Modules not listed here fall back to their own
 // constructor-declared dock side and are appended after configured windows.
 // ---------------------------------------------------------------------------
+// Phase 32g: the left column is the world (time, map, room, the tutorial
+// while in the course); the right column is the company dock, one tab
+// group ('dock'): the vitals strip above Character, Company, Combat, Comm,
+// and, when enabled in Settings, Who (Online) and Kills (KillStats). A
+// group's order here is its tab order.
 const WINDOW_DOCK_DEFAULTS = [
     { id: 'Time & Date',    side: 'left' },
-    { id: 'Vitals',         side: 'left' },    
-    { id: 'Character',      side: 'left' },
-    { id: 'Worth',          side: 'left' },
-    { id: 'Gear',           side: 'left' },
-    { id: 'Pet',            side: 'left' },    
-    { id: 'Map',            side: 'right' },
-    { id: 'Online',         side: 'right' },
-    { id: 'KillStats',      side: 'right' },
-    { id: 'Party',          side: 'right' },
-    { id: 'Communications', side: 'right' },
-    { id: 'RoomInfo',       side: 'right' },
-    { id: 'Tutorial',       side: 'right' },
-    
+    { id: 'Map',            side: 'left' },
+    { id: 'RoomInfo',       side: 'left' },
+    { id: 'Tutorial',       side: 'left' },
+    { id: 'Vitals',         side: 'right', group: 'dock' },
+    { id: 'Character',      side: 'right', group: 'dock' },
+    { id: 'Company',        side: 'right', group: 'dock' },
+    { id: 'Combat',         side: 'right', group: 'dock' },
+    { id: 'Communications', side: 'right', group: 'dock' },
+    { id: 'Online',         side: 'right', group: 'dock' },
+    { id: 'KillStats',      side: 'right', group: 'dock' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1063,6 +1468,7 @@ const VirtualWindows = (() => {
             if (defaultEntry) {
                 win._dockSide     = defaultEntry.side;
                 win._origDockSide = defaultEntry.side;
+                if (defaultEntry.group && !win._tabGroup) { win._tabGroup = defaultEntry.group; }
             }
 
             // Insert into _dockOrderOriginal (and _dockOrder) at the position
@@ -1095,11 +1501,23 @@ const VirtualWindows = (() => {
     // Returns the index at which a window should be inserted into its dock slot,
     // based on the canonical order relative to currently docked windows.
     function getDockInsertIndex(win) {
-        const side = win._dockSide;
+        return getDockInsertIndexFor(win._id, win._dockSide);
+    }
+
+    // The window id a dock panel stands for: its window's, or for a tab
+    // group's panel the group's anchor (Phase 32g).
+    function _idForContent(contentEl) {
+        const w = _windows.find(x => x._contentEl === contentEl);
+        if (w) { return w._id; }
+        const group = DockTabGroups.byRoot(contentEl);
+        return group ? group.anchorId() : null;
+    }
+
+    function getDockInsertIndexFor(id, side) {
         if (!side || !_dockOrder[side]) { return undefined; }
 
         const order     = _dockOrder[side];
-        const winPos    = order.indexOf(win._id);
+        const winPos    = order.indexOf(id);
         if (winPos === -1) { return undefined; }
 
         const slot      = DockSlots[side];
@@ -1109,9 +1527,9 @@ const VirtualWindows = (() => {
         // appear before this window in the canonical order.
         let insertIdx = 0;
         for (const entry of slot._panels) {
-            const entryWin = _windows.find(w => w._contentEl === entry.contentEl);
-            if (!entryWin) { continue; }
-            const entryPos = order.indexOf(entryWin._id);
+            const entryId = _idForContent(entry.contentEl);
+            if (entryId === null) { continue; }
+            const entryPos = order.indexOf(entryId);
             if (entryPos !== -1 && entryPos < winPos) {
                 insertIdx++;
             }
@@ -1130,10 +1548,7 @@ const VirtualWindows = (() => {
         // Rebuild the canonical order for this side by mapping contentEls back
         // to window IDs, preserving the positions of any IDs not currently docked.
         const currentIds = newOrder
-            .map(contentEl => {
-                const w = _windows.find(w => w._contentEl === contentEl);
-                return w ? w._id : null;
-            })
+            .map(contentEl => _idForContent(contentEl))
             .filter(id => id !== null);
 
         // Merge: replace positions of currently-docked windows with the new
@@ -1278,7 +1693,19 @@ const VirtualWindows = (() => {
         }
     }
 
-    return { register, handleGMCP, openAll, getWindows, setConnected, getDockInsertIndex, notifyReorder, notifySlotChange, resetOrder };
+    // Phase 32g: a tab's count, and whether its tab is showing.
+    function setTabBadge(id, text, spoken) {
+        const group = DockTabGroups.of(id);
+        if (group) { group.setBadge(id, text, spoken); }
+    }
+
+    function isTabShowing(id) {
+        const group = DockTabGroups.of(id);
+        return group ? group.isActive(id) : true;
+    }
+
+    return { register, handleGMCP, openAll, getWindows, setConnected, getDockInsertIndex, getDockInsertIndexFor,
+        notifyReorder, notifySlotChange, resetOrder, setTabBadge, isTabShowing };
 })();
 
 // ---------------------------------------------------------------------------
@@ -1854,8 +2281,7 @@ const Client = (() => {
                 } else {
                     // Close: mimic user closing the window
                     if (win._win === 'docked') {
-                        const slot = DockSlots[win._dockSide];
-                        slot.removePanel(win._contentEl);
+                        win._removeDocked();
                         if (win._contentEl && win._contentEl.parentNode) {
                             win._contentEl.parentNode.removeChild(win._contentEl);
                         }
@@ -1925,8 +2351,7 @@ const Client = (() => {
         VirtualWindows.getWindows().forEach(win => {
             // Tear down whatever state the window is currently in
             if (win._win === 'docked') {
-                const slot = DockSlots[win._dockSide];
-                if (slot) { slot.removePanel(win._contentEl); }
+                win._removeDocked();
                 if (win._contentEl && win._contentEl.parentNode) {
                     win._contentEl.parentNode.removeChild(win._contentEl);
                 }
@@ -2255,6 +2680,9 @@ const Client = (() => {
         // WebSocket connects.
         VirtualWindows.setConnected(false);
         VirtualWindows.openAll();
+        if (LayoutStore.takeResetNotice()) {
+            term.writeln('The web client\'s layout has changed; Settings > Reset Layout restores it at any time.');
+        }
     }
 
     function getByPath(obj, path) {

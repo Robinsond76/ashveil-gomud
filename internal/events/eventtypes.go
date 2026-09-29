@@ -233,9 +233,37 @@ type PlayerDespawn struct {
 	Username      string
 	CharacterName string
 	TimeOnline    string
+	// HandOff (Ashveil 32b): the connection stays open for another user,
+	// whose UserHandOff is queued right after this event. Everything else
+	// about leaving is the same.
+	HandOff bool
 }
 
 func (p PlayerDespawn) Type() string { return `PlayerDespawn` }
+
+// UserHandOff (Ashveil 32b) logs ToUserId in on a connection that
+// FromUserId has just left with a HandOff despawn, and brings them into
+// the world. Queue it right after that despawn.
+type UserHandOff struct {
+	ConnectionId uint64
+	FromUserId   int
+	ToUserId     int
+}
+
+func (u UserHandOff) Type() string { return `UserHandOff` }
+
+// UserPurged (Ashveil 32b) removes an offline user for good: every module
+// that keeps state by user id drops this user's, and the final listener
+// removes the user file. Idempotent: running it twice is safe.
+type UserPurged struct {
+	UserId int
+	// KeepAccount (Ashveil 32h): a character deletion. Modules drop the
+	// user's state exactly as for any purge, but the final listener keeps
+	// the login and gives it a new character instead of removing the file.
+	KeepAccount bool
+}
+
+func (u UserPurged) Type() string { return `UserPurged` }
 
 // Something has changed about a a player.
 type PlayerChanged struct {
@@ -440,6 +468,15 @@ type RedrawPrompt struct {
 
 func (l RedrawPrompt) Type() string     { return `RedrawPrompt` }
 func (l RedrawPrompt) UniqueID() string { return `RedrawPrompt-` + strconv.Itoa(l.UserId) }
+
+// CombatPaceDrained (Ashveil Phase 29f) fires when the last of a player's
+// held combat lines has gone out, so views held back with them (the
+// prompt, the web client's vitals and battle view) can catch up.
+type CombatPaceDrained struct {
+	UserId int
+}
+
+func (c CombatPaceDrained) Type() string { return `CombatPaceDrained` }
 
 // Fired when a player or mob enters or leaves aggro state
 type AggroChanged struct {

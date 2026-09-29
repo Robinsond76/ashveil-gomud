@@ -172,6 +172,10 @@ func TestShippedHelpTemplate(t *testing.T) {
 	data, err := files.ReadFile("files/datafiles/templates/help/tutorial.template")
 	require.NoError(t, err)
 	assert.Contains(t, string(data), "tutorial skip")
+	assert.Contains(t, string(data), "tutorial replay", "32b")
+	// 32b review: the page says what logout and skip do during a replay.
+	assert.Contains(t, string(data), "except during a replay")
+	assert.Contains(t, string(data), "During a replay it ends the replay instead")
 	for _, stage := range []string{"Survival", "Camp", "Combat", "Alignment"} {
 		assert.Contains(t, string(data), stage)
 	}
@@ -328,4 +332,35 @@ func TestTutorialHelpPointersExist(t *testing.T) {
 		"cargo", "travel", "camp", "inn", "cooking", "alignment", "standing", "market", "rumors"} {
 		assert.True(t, seen[topic], "the tutorial points to help %s", topic)
 	}
+}
+
+func TestTutorialNarrationLabels(t *testing.T) {
+	for _, stage := range stages {
+		if stage.ID != StageCombat {
+			continue
+		}
+		hints := strings.Join(stage.Hints, "\n")
+		assert.Contains(t, hints, "first footman")
+		assert.Contains(t, hints, "second footman")
+		assert.Contains(t, hints, "help narration")
+		assert.Contains(t, hints, "pain reaction")
+		return
+	}
+	t.Fatal("combat lesson missing")
+}
+
+// TestCombatLessonPointsToBattleView (Phase 32g2): the Combat lesson tells
+// web client players about the Combat tab's Battle view.
+func TestCombatLessonPointsToBattleView(t *testing.T) {
+	for _, s := range stages {
+		if s.ID != StageCombat {
+			continue
+		}
+		for _, h := range s.Hints {
+			if strings.Contains(h, "Combat tab") && strings.Contains(h, "help webclient") {
+				return
+			}
+		}
+	}
+	t.Fatal("the Combat lesson has no hint about the Combat tab's battle view")
 }

@@ -36,6 +36,9 @@ type Question struct {
 	Response        string   // What was the response last submitted
 	Done            bool     // Was it seen and responded to?
 	Flags           int      // Mask reply etc
+	// Masked (Ashveil 32h): the answer is secret (a password). The
+	// connection's input is masked while this is the open question.
+	Masked bool
 }
 
 type Prompt struct {

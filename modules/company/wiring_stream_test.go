@@ -12,7 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const summaryHeading = "── The fighting is over ──"
+// summaryHeading ends a victory's heading, named or not: "── The fighting
+// is over ──", "── The fight with a band of bandit cutthroats is over ──".
+const summaryHeading = " is over ──"
 
 // listen records every event on the brawl's stream.
 func (b *brawl) listen() *[]combatstream.Event {
@@ -33,11 +35,8 @@ func (b *brawl) fightItOut(maxRounds int) string {
 	var seen []string
 	for i := 0; i < maxRounds && len(b.livingBandits()) > 0; i++ {
 		b.aria.Character.HealthMax.Value = 1000
-		if living := b.livingBandits(); b.aria.Character.Aggro == nil && len(b.companyInstances()) == 0 {
-			// Her company has fallen: alone, she fights on as a player
-			// would (a solo player isn't kept engaged by the 29a upkeep).
-			b.cmd("attack", living[0].Character.Name)
-		}
+		// Her company may fall: alone, she turns on the next bandit by
+		// herself (Phase 32c).
 		seen = append(seen, b.fight())
 	}
 	require.Empty(b.t, b.livingBandits(), "the bandits fall")
@@ -86,7 +85,7 @@ func TestCombatEventStreamThroughTheRealRound(t *testing.T) {
 	}
 	s := b.sides() // before anyone falls
 
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	seen := b.fightItOut(200)
 
 	var starts, ends []combatstream.Event
@@ -180,6 +179,8 @@ func TestCombatEventStreamThroughTheRealRound(t *testing.T) {
 
 	// The leader is sent the summary once, at the end.
 	assert.Equal(t, 1, strings.Count(seen, summaryHeading))
+	assert.Equal(t, "a band of bandit cutthroats", sum.GroupName, "the fight is named after its group (32c)")
+	assert.Contains(t, seen, "── The fight with a band of bandit cutthroats is over ──")
 	assert.Contains(t, seen, "Damage dealt   Company ")
 	for _, line := range combatstream.Render(*sum, 7) {
 		assert.Contains(t, seen, line)
@@ -197,7 +198,7 @@ func TestBattleSummaryCanBeTurnedOff(t *testing.T) {
 	assert.Contains(t, b.cmd("set", ""), "battlesummary:")
 	assert.Contains(t, b.cmd("set", "battlesummary"), "Battle summary toggled OFF")
 
-	b.cmd("attack", "bandit cutthroat")
+	b.aimAt("bandit cutthroat")
 	seen := b.fightItOut(200)
 	assert.NotContains(t, seen, summaryHeading)
 	ended := 0
@@ -218,7 +219,7 @@ func TestBattleSummaryCanBeTurnedOff(t *testing.T) {
 func TestFleeBreaksTheFightOff(t *testing.T) {
 	b := newBrawl(t)
 	got := b.listen()
-	b.cmd("attack", "bandit cutthroat")
+	b.aimAt("bandit cutthroat")
 	var seen []string
 	fled := false
 	for i := 0; i < 40 && !fled; i++ {
@@ -250,7 +251,7 @@ func TestFleeBreaksTheFightOff(t *testing.T) {
 	assert.Equal(t, 7, flee.Source.UserId)
 	assert.Equal(t, end.FightID, flee.FightID, "the flee is in the fight")
 	assert.Equal(t, combatstream.OutcomeBrokenOff, end.Outcome)
-	assert.Contains(t, strings.Join(seen, "\n"), "── The fight breaks off ──")
+	assert.Contains(t, strings.Join(seen, "\n"), "── The fight with a band of bandit cutthroats breaks off ──")
 }
 
 // TestInterceptedBlowFellsTheLeaderThatRound (the 29b death fix): the
@@ -315,7 +316,7 @@ func TestInterceptedBlowFellsTheLeaderThatRound(t *testing.T) {
 func TestSpellEventsThroughTheRealRound(t *testing.T) {
 	b := newBrawl(t)
 	got := b.listen()
-	b.cmd("attack", "bandit cutthroat")
+	b.aimAt("bandit cutthroat")
 	b.aria.Character.HealthMax.Value = 1000
 	b.aria.Character.Health = 1000
 	b.fight() // the fight is open

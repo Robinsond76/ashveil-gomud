@@ -237,6 +237,9 @@ func (idx *UserIndex) Rebuild() error {
 
 	var firstErr error
 	SearchOfflineUsers(func(u *UserRecord) bool {
+		if u.IsReplay() || u.UserId >= ReplayUserIdBase {
+			return true // Ashveil 32b: a tutorial replay is never indexed
+		}
 		if err := idx.AddUser(u.UserId, u.Username); err != nil {
 			mudlog.Error("UserIndex.Rebuild", "error", err.Error(), "userId", u.UserId, "username", u.Username)
 			if firstErr == nil {

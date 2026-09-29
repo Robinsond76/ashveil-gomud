@@ -1,214 +1,182 @@
-# Possible tokens: 
+# Phase 29c narration voice: dark and physical, no exclamation marks, no
+# ALL-CAPS. The combat code appends each hit's mechanics, " (5 damage)" or
+# " (critical hit, 9 damage)", and puts "the" before a lowercase name and a
+# capital at the start of a line, so write names bare.
+# Possible tokens:
 # {itemname}    - name of weapon/object e.g. 'sword'
 # {source}      - name of mob or user e.g. 'goblin'
 # {sourcetype}  - 'user' or 'mob'
 # {target}      - name of mob or user e.g. 'goblin'
 # {targettype}  - 'user' or 'mob'
-# {damage}      - damage dealt as an integer e.g. '5'
 # {exitname}    - name of exit for attack e.g. 'north'
 # {entrancename}- name of entrance for attack e.g. 'south'
 optionid: generic
 options:
   prepare:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You prepare to enter into mortal combat with <ansi fg="{targettype}">{target}</ansi>.'
-      - 'You ready yourself to face <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi>.'
-      - 'You grip your <ansi fg="item">{itemname}</ansi> tightly, preparing to battle <ansi fg="{targettype}">{target}</ansi>.'
+      - 'You square up to <ansi fg="{targettype}">{target}</ansi>.'
+      - 'You raise your <ansi fg="item">{itemname}</ansi> and step toward <ansi fg="{targettype}">{target}</ansi>.'
+      - 'You lock eyes with <ansi fg="{targettype}">{target}</ansi>.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> prepares to fight you with their <ansi fg="item">{itemname}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> readies their <ansi fg="item">{itemname}</ansi> and focuses on you.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> locks eyes with you, weapon in hand.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> squares up to you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> raises a guard and steps toward you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> locks eyes with you.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> prepares to attack <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> readies their <ansi fg="item">{itemname}</ansi> against <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> grips their <ansi fg="item">{itemname}</ansi> and faces <ansi fg="{targettype}">{target}</ansi> in battle stance.'
-    # messages for when they are in different rooms, such as with projectiles
+      - '<ansi fg="{sourcetype}">{source}</ansi> squares up to <ansi fg="{targettype}">{target}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> raises a guard and steps toward <ansi fg="{targettype}">{target}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> locks eyes with <ansi fg="{targettype}">{target}</ansi>.'
+    # when they are in different rooms, such as with projectiles
     separate:
       toattacker:
-      - 'You prepare to attack <ansi fg="{targettype}">{target}</ansi> from a distance.'
-      - 'You get ready to strike at <ansi fg="{targettype}">{target}</ansi> through the <ansi fg="exit">{exitname}</ansi>.'
+      - 'You ready your <ansi fg="item">{itemname}</ansi> toward the <ansi fg="exit">{exitname}</ansi>, where <ansi fg="{targettype}">{target}</ansi> stands.'
       todefender:
-      - 'You sense that someone is preparing to attack you from afar.'
-      - 'You feel a hostile presence coming from the <ansi fg="exit">{entrancename}</ansi> direction.'
+      - 'Something stirs to the <ansi fg="exit">{entrancename}</ansi>. You are being watched.'
       toattackerroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> prepares to attack towards the <ansi fg="exit">{exitname}</ansi> direction.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> readies their <ansi fg="item">{itemname}</ansi> towards the <ansi fg="exit">{exitname}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> readies the <ansi fg="item">{itemname}</ansi> toward the <ansi fg="exit">{exitname}</ansi>.'
       todefenderroom:
-      - 'A feeling of unease passes through the room.'
-      - 'The air feels tense, as if a battle is about to begin.'
+      - 'A cold stillness settles over the room from the <ansi fg="exit">{entrancename}</ansi>.'
   wait:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You aim carefully at <ansi fg="{targettype}">{target}</ansi>.'
-      - 'You study <ansi fg="{targettype}">{target}</ansi>, looking for an opening.'
-      - 'You watch <ansi fg="{targettype}">{target}</ansi> intently, biding your time.'
+      - 'You circle <ansi fg="{targettype}">{target}</ansi>, looking for an opening.'
+      - 'You draw a slow breath and wait for <ansi fg="{targettype}">{target}</ansi> to move.'
+      - 'You shift your weight and watch <ansi fg="{targettype}">{target}</ansi>.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> circles you dangerously.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> watches your every move.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> waits for the right moment to strike.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> circles you, looking for an opening.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> waits, breathing slow, for you to move.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> shifts weight and watches you.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> circles <ansi fg="{targettype}">{target}</ansi> with cruel intentions.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> watches <ansi fg="{targettype}">{target}</ansi> carefully.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> seems poised to attack <ansi fg="{targettype}">{target}</ansi> at any moment.'
-    # messages for when they are in different rooms, such as with projectiles
+      - '<ansi fg="{sourcetype}">{source}</ansi> circles <ansi fg="{targettype}">{target}</ansi>, looking for an opening.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> waits, breathing slow, for <ansi fg="{targettype}">{target}</ansi> to move.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> shifts weight and watches <ansi fg="{targettype}">{target}</ansi>.'
+    # when they are in different rooms, such as with projectiles
     separate:
       toattacker:
-      - 'You patiently wait for the right moment to attack <ansi fg="{targettype}">{target}</ansi> from afar.'
-      - 'You keep your focus on <ansi fg="{targettype}">{target}</ansi>, ready to act when the time is right.'
+      - 'You wait for <ansi fg="{targettype}">{target}</ansi> to show through the <ansi fg="exit">{exitname}</ansi>.'
       todefender:
-      - 'An uneasy feeling washes over you.'
-      - 'You sense that someone is watching you.'
+      - 'Someone waits for you, to the <ansi fg="exit">{entrancename}</ansi>.'
       toattackerroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> waits silently, focused on a distant target.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> seems lost in concentration.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> waits, watching the <ansi fg="exit">{exitname}</ansi>.'
       todefenderroom:
-      - 'A sense of anticipation fills the air.'
-      - 'Everything feels strangely still.'
+      - 'Something watches this room from the <ansi fg="exit">{entrancename}</ansi>.'
   miss:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You miss with your <ansi fg="item">{itemname}</ansi>.'
-      - 'Your attack fails to hit <ansi fg="{targettype}">{target}</ansi>.'
-      - 'You swing your <ansi fg="item">{itemname}</ansi>, but miss completely!'
+      - 'Your swing at <ansi fg="{targettype}">{target}</ansi> goes wide.'
+      - 'You strike at <ansi fg="{targettype}">{target}</ansi> and hit nothing.'
+      - '<ansi fg="{targettype}">{target}</ansi> sways aside, and your blow falls on empty air.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> missed you with their <ansi fg="item">{itemname}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> swings at you but misses!'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s attack goes wide.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s swing at you goes wide.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes at you and hits nothing.'
+      - 'You sway aside, and <ansi fg="{sourcetype}">{source}</ansi>''s blow falls on empty air.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> missed <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> swings at <ansi fg="{targettype}">{target}</ansi>, but misses.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> attacks <ansi fg="{targettype}">{target}</ansi> but fails to connect.'
-    # messages for when they are in different rooms, such as with projectiles
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s swing at <ansi fg="{targettype}">{target}</ansi> goes wide.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes at <ansi fg="{targettype}">{target}</ansi> and hits nothing.'
+      - '<ansi fg="{targettype}">{target}</ansi> sways aside, and <ansi fg="{sourcetype}">{source}</ansi>''s blow falls on empty air.'
+    # when they are in different rooms, such as with projectiles
     separate:
       toattacker:
-      - 'Your attack misses <ansi fg="{targettype}">{target}</ansi> from afar.'
-      - 'You attempt to hit <ansi fg="{targettype}">{target}</ansi>, but your attack fails to reach.'
+      - 'Your attack through the <ansi fg="exit">{exitname}</ansi> misses <ansi fg="{targettype}">{target}</ansi>.'
       todefender:
-      - 'You feel a sudden rush of wind, but nothing happens.'
-      - 'An attack comes your way but misses.'
+      - 'Something flies in from the <ansi fg="exit">{entrancename}</ansi> and misses you.'
       toattackerroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> attempts an attack into the distance, but misses.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> attacks towards the <ansi fg="exit">{exitname}</ansi>, but nothing happens.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes toward the <ansi fg="exit">{exitname}</ansi> and misses.'
       todefenderroom:
-      - 'An attack seems to come from elsewhere, but fails to hit anyone.'
-      - 'You hear a distant sound of an attack missing its mark.'
+      - 'Something flies in from the <ansi fg="exit">{entrancename}</ansi> and misses <ansi fg="{targettype}">{target}</ansi>.'
   weak:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'Your <ansi fg="item">{itemname}</ansi> barely manages to damage <ansi fg="{targettype}">{target}</ansi> for <ansi fg="damage">{damage} damage</ansi>.'
-      - 'You land a weak hit on <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>.'
-      - 'Your attack only slightly injures <ansi fg="{targettype}">{target}</ansi>, causing <ansi fg="damage">{damage} damage</ansi>.'
+      - 'You clip <ansi fg="{targettype}">{target}</ansi> on the arm with your <ansi fg="item">{itemname}</ansi>.'
+      - 'Your blow glances off <ansi fg="{targettype}">{target}</ansi>''s shoulder.'
+      - 'You catch <ansi fg="{targettype}">{target}</ansi> a glancing blow across the cheek.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> manages to weakly hit you for <ansi fg="damage">{damage} damage</ansi>.'
-      - 'You barely feel the impact as <ansi fg="{sourcetype}">{source}</ansi> hits you for <ansi fg="damage">{damage} damage</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> lands a weak blow on you, causing <ansi fg="damage">{damage} damage</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> clips you on the arm.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow glances off your shoulder.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> catches you a glancing blow across the cheek.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> manages to weakly hit <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> lands a weak hit on <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> barely injures <ansi fg="{targettype}">{target}</ansi>.'
-    # messages for when they are in different rooms, such as with projectiles
+      - '<ansi fg="{sourcetype}">{source}</ansi> clips <ansi fg="{targettype}">{target}</ansi> on the arm.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow glances off <ansi fg="{targettype}">{target}</ansi>''s shoulder.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> catches <ansi fg="{targettype}">{target}</ansi> a glancing blow across the cheek.'
+    # when they are in different rooms, such as with projectiles
     separate:
       toattacker:
-      - 'Your distant attack barely scratches <ansi fg="{targettype}">{target}</ansi> for <ansi fg="damage">{damage} damage</ansi>.'
-      - 'You manage to inflict minor damage on <ansi fg="{targettype}">{target}</ansi> from afar, causing <ansi fg="damage">{damage} damage</ansi>.'
+      - 'Your attack through the <ansi fg="exit">{exitname}</ansi> grazes <ansi fg="{targettype}">{target}</ansi>.'
       todefender:
-      - 'An attack from afar slightly injures you for <ansi fg="damage">{damage} damage</ansi>.'
-      - 'You feel a slight pain as a distant attack hits you for <ansi fg="damage">{damage} damage</ansi>.'
+      - 'Something from the <ansi fg="exit">{entrancename}</ansi> grazes you.'
       toattackerroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> attacks into the distance, slightly injuring someone.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> lands a weak hit on a distant target.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes toward the <ansi fg="exit">{exitname}</ansi> and grazes something.'
       todefenderroom:
-      - 'A minor attack comes from elsewhere, slightly injuring <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{targettype}">{target}</ansi> winces as a distant attack causes minor damage.'
+      - 'Something from the <ansi fg="exit">{entrancename}</ansi> grazes <ansi fg="{targettype}">{target}</ansi>.'
   normal:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'Your <ansi fg="item">{itemname}</ansi> connects with <ansi fg="{targettype}">{target}</ansi> for <ansi fg="damage">{damage} damage</ansi>.'
-      - 'You hit <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>.'
-      - 'Your attack strikes <ansi fg="{targettype}">{target}</ansi>, causing <ansi fg="damage">{damage} damage</ansi>.'
+      - 'You strike <ansi fg="{targettype}">{target}</ansi> hard in the ribs with your <ansi fg="item">{itemname}</ansi>.'
+      - 'Your blow lands square on <ansi fg="{targettype}">{target}</ansi>''s jaw.'
+      - 'You drive your <ansi fg="item">{itemname}</ansi> into <ansi fg="{targettype}">{target}</ansi>''s gut.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> connects with you for <ansi fg="damage">{damage} damage</ansi>.'
-      - 'You are hit by <ansi fg="{sourcetype}">{source}</ansi>''s attack for <ansi fg="damage">{damage} damage</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> strikes you with their <ansi fg="item">{itemname}</ansi>, causing <ansi fg="damage">{damage} damage</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes you hard in the ribs.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow lands square on your jaw.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow drives into your gut.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}''s</ansi> <ansi fg="item">{itemname}</ansi> connects with <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> hits <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> strikes <ansi fg="{targettype}">{target}</ansi>, dealing damage.'
-    # messages for when they are in different rooms, such as with projectiles
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes <ansi fg="{targettype}">{target}</ansi> hard in the ribs.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow lands square on <ansi fg="{targettype}">{target}</ansi>''s jaw.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow drives into <ansi fg="{targettype}">{target}</ansi>''s gut.'
+    # when they are in different rooms, such as with projectiles
     separate:
       toattacker:
-      - 'Your attack from afar hits <ansi fg="{targettype}">{target}</ansi> for <ansi fg="damage">{damage} damage</ansi>.'
-      - 'You successfully strike <ansi fg="{targettype}">{target}</ansi> from a distance, causing <ansi fg="damage">{damage} damage</ansi>.'
+      - 'Your attack through the <ansi fg="exit">{exitname}</ansi> strikes <ansi fg="{targettype}">{target}</ansi>.'
       todefender:
-      - 'An attack from afar hits you for <ansi fg="damage">{damage} damage</ansi>.'
-      - 'You are struck by a distant attack, taking <ansi fg="damage">{damage} damage</ansi>.'
+      - 'Something from the <ansi fg="exit">{entrancename}</ansi> strikes you hard.'
       toattackerroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> attacks into the distance, hitting their target.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> successfully strikes a distant foe.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes toward the <ansi fg="exit">{exitname}</ansi>, and something is hit.'
       todefenderroom:
-      - 'An attack comes from elsewhere, hitting <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{targettype}">{target}</ansi> is struck by a distant attack.'
+      - 'Something from the <ansi fg="exit">{entrancename}</ansi> strikes <ansi fg="{targettype}">{target}</ansi> hard.'
   heavy:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You wallop <ansi fg="{targettype}">{target}</ansi> with your <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You deliver a powerful blow to <ansi fg="{targettype}">{target}</ansi>, causing <ansi fg="damage">{damage} damage</ansi>!'
-      - 'Your <ansi fg="item">{itemname}</ansi> hits <ansi fg="{targettype}">{target}</ansi> hard for <ansi fg="damage">{damage} damage</ansi>!'
+      - 'You hammer <ansi fg="{targettype}">{target}</ansi> across the face, and <ansi fg="{targettype}">{target}</ansi> reels.'
+      - 'Your blow folds <ansi fg="{targettype}">{target}</ansi> over, gasping.'
+      - 'You drive your <ansi fg="item">{itemname}</ansi> into <ansi fg="{targettype}">{target}</ansi>''s chest, and something cracks.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> wallops you with their <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> smashes you with their <ansi fg="item">{itemname}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You are hit hard by <ansi fg="{sourcetype}">{source}</ansi>, taking <ansi fg="damage">{damage} damage</ansi>!'
+      - '<ansi fg="{sourcetype}">{source}</ansi> hammers you across the face, and you reel.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow folds you over, gasping.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow drives into your chest, and something cracks.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> wallops <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> smashes <ansi fg="{targettype}">{target}</ansi> with a powerful blow!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> delivers a heavy hit to <ansi fg="{targettype}">{target}</ansi>!'
-    # messages for when they are in different rooms, such as with projectiles
+      - '<ansi fg="{sourcetype}">{source}</ansi> hammers <ansi fg="{targettype}">{target}</ansi> across the face, and <ansi fg="{targettype}">{target}</ansi> reels.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow folds <ansi fg="{targettype}">{target}</ansi> over, gasping.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow drives into <ansi fg="{targettype}">{target}</ansi>''s chest, and something cracks.'
+    # when they are in different rooms, such as with projectiles
     separate:
       toattacker:
-      - 'You deliver a powerful attack from afar to <ansi fg="{targettype}">{target}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>!'
-      - 'Your attack from a distance hits <ansi fg="{targettype}">{target}</ansi> heavily for <ansi fg="damage">{damage} damage</ansi>!'
+      - 'Your attack through the <ansi fg="exit">{exitname}</ansi> strikes <ansi fg="{targettype}">{target}</ansi> hard, and <ansi fg="{targettype}">{target}</ansi> staggers.'
       todefender:
-      - 'A powerful attack from afar hits you for <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You are struck hard by a distant attack, taking <ansi fg="damage">{damage} damage</ansi>!'
+      - 'Something from the <ansi fg="exit">{entrancename}</ansi> strikes you hard, and you stagger.'
       toattackerroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> launches a heavy attack into the distance.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> unleashes a powerful strike towards a distant target.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes toward the <ansi fg="exit">{exitname}</ansi>, and something cries out.'
       todefenderroom:
-      - 'A powerful attack comes from elsewhere, hitting <ansi fg="{targettype}">{target}</ansi>!'
-      - '<ansi fg="{targettype}">{target}</ansi> is hit hard by a distant attack!'
+      - 'Something from the <ansi fg="exit">{entrancename}</ansi> strikes <ansi fg="{targettype}">{target}</ansi>, and <ansi fg="{targettype}">{target}</ansi> staggers.'
   critical:
-    # messages for when they are in the same room
     together:
       toattacker:
-      - 'You <ansi fg="cyan-bold">CRITICALLY HIT</ansi> <ansi fg="{targettype}">{target}</ansi> with <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
-      - 'Your <ansi fg="item">{itemname}</ansi> <ansi fg="cyan-bold">CRITICALLY STRIKES</ansi> <ansi fg="{targettype}">{target}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You land a <ansi fg="cyan-bold">CRITICAL HIT</ansi> on <ansi fg="{targettype}">{target}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>!'
+      - 'Your blow snaps <ansi fg="{targettype}">{target}</ansi>''s head back, and blood sprays from the nose.'
+      - 'You smash <ansi fg="{targettype}">{target}</ansi> in the throat, and <ansi fg="{targettype}">{target}</ansi> chokes on blood.'
+      - 'You drive your <ansi fg="item">{itemname}</ansi> into <ansi fg="{targettype}">{target}</ansi>''s temple, and <ansi fg="{targettype}">{target}</ansi>''s eyes roll.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">CRITICALLY HITS</ansi> you with their <ansi fg="item">{itemname}</ansi> for <ansi fg="damage">{damage} damage</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s attack <ansi fg="cyan-bold">CRITICALLY STRIKES</ansi> you for <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You are <ansi fg="cyan-bold">CRITICALLY HIT</ansi> by <ansi fg="{sourcetype}">{source}</ansi>, taking <ansi fg="damage">{damage} damage</ansi>!'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow snaps your head back, and blood sprays from your nose.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> smashes you in the throat, and you choke on blood.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> drives a blow into your temple, and the world tilts.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">CRITICALLY HITS</ansi> <ansi fg="{targettype}">{target}</ansi> with their <ansi fg="item">{itemname}</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> lands a <ansi fg="cyan-bold">CRITICAL HIT</ansi> on <ansi fg="{targettype}">{target}</ansi>!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> <ansi fg="cyan-bold">DEVASTATES</ansi> <ansi fg="{targettype}">{target}</ansi> with their attack!'
-    # messages for when they are in different rooms, such as with projectiles
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s blow snaps <ansi fg="{targettype}">{target}</ansi>''s head back, and blood sprays from the nose.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> smashes <ansi fg="{targettype}">{target}</ansi> in the throat, and <ansi fg="{targettype}">{target}</ansi> chokes on blood.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> drives a blow into <ansi fg="{targettype}">{target}</ansi>''s temple, and <ansi fg="{targettype}">{target}</ansi>''s eyes roll.'
+    # when they are in different rooms, such as with projectiles
     separate:
       toattacker:
-      - 'You <ansi fg="cyan-bold">CRITICALLY HIT</ansi> <ansi fg="{targettype}">{target}</ansi> from afar for <ansi fg="damage">{damage} damage</ansi>!'
-      - 'Your distant attack <ansi fg="cyan-bold">CRITICALLY STRIKES</ansi> <ansi fg="{targettype}">{target}</ansi>, dealing <ansi fg="damage">{damage} damage</ansi>!'
+      - 'Your attack through the <ansi fg="exit">{exitname}</ansi> tears into <ansi fg="{targettype}">{target}</ansi>.'
       todefender:
-      - 'A <ansi fg="cyan-bold">CRITICAL HIT</ansi> from afar strikes you for <ansi fg="damage">{damage} damage</ansi>!'
-      - 'You are <ansi fg="cyan-bold">CRITICALLY STRUCK</ansi> by a distant attack, taking <ansi fg="damage">{damage} damage</ansi>!'
+      - 'Something from the <ansi fg="exit">{entrancename}</ansi> tears into you.'
       toattackerroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> unleashes a devastating attack into the distance!'
-      - '<ansi fg="{sourcetype}">{source}</ansi> delivers a <ansi fg="cyan-bold">CRITICAL STRIKE</ansi> towards a distant target!'
+      - '<ansi fg="{sourcetype}">{source}</ansi> strikes toward the <ansi fg="exit">{exitname}</ansi>, and a scream answers.'
       todefenderroom:
-      - 'A devastating attack comes from elsewhere, <ansi fg="cyan-bold">CRITICALLY HITTING</ansi> <ansi fg="{targettype}">{target}</ansi>!'
-      - '<ansi fg="{targettype}">{target}</ansi> is <ansi fg="cyan-bold">CRITICALLY STRUCK</ansi> by a distant attack!'
+      - 'Something from the <ansi fg="exit">{entrancename}</ansi> tears into <ansi fg="{targettype}">{target}</ansi>.'

@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -31,8 +32,11 @@ type companyNeeds struct {
 }
 
 type companyVitals struct {
-	HP     *int          `json:"hp"`
-	HPMax  *int          `json:"hp_max"`
+	HP    *int `json:"hp"`
+	HPMax *int `json:"hp_max"`
+	// MP and MPMax are omitted for a member with no mana to show (32g).
+	MP     *int          `json:"mp,omitempty"`
+	MPMax  *int          `json:"mp_max,omitempty"`
 	Needs  *companyNeeds `json:"needs"`
 	Warmth *string       `json:"warmth"`
 }
@@ -40,6 +44,12 @@ type companyVitals struct {
 type companyCell struct {
 	Row int `json:"row"`
 	Col int `json:"col"`
+}
+
+// companyStrategy is a member's role and target rule (Phase 32g).
+type companyStrategy struct {
+	Role   string `json:"role"`
+	Target string `json:"target"`
 }
 
 type companyMember struct {
@@ -51,6 +61,8 @@ type companyMember struct {
 	Archetype *string      `json:"archetype"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
+	// Strategy is nil when unknown.
+	Strategy *companyStrategy `json:"strategy"`
 }
 
 type companyLoad struct {
@@ -130,6 +142,9 @@ func vitalsOf(m companyview.Member) companyVitals {
 	if m.HasHP {
 		v.HP, v.HPMax = intPtr(m.HP), intPtr(m.HPMax)
 	}
+	if m.HasMP {
+		v.MP, v.MPMax = intPtr(m.MP), intPtr(m.MPMax)
+	}
 	if m.Hunger.Known || m.Thirst.Known || m.Fatigue.Known {
 		v.Needs = &companyNeeds{Hunger: needOf(m.Hunger), Thirst: needOf(m.Thirst), Fatigue: needOf(m.Fatigue)}
 	}
@@ -149,6 +164,9 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	}
 	if m.Placed {
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}
+	}
+	if !m.Strategy.IsZero() {
+		out.Strategy = &companyStrategy{Role: string(m.Strategy.Role), Target: string(m.Strategy.Rule)}
 	}
 	// Chemistry is shown only for a member standing with a band; alone or
 	// dead there is none (not "Strangers" on everyone).
@@ -199,11 +217,21 @@ type companySent struct {
 	vitals    string
 }
 
+// companyExtra is one more message the feed keeps current (Phase 32g):
+// built for a user each refresh, sent only when it changed. A nil build
+// result sends nothing.
+type companyExtra struct {
+	module string
+	build  func(user *users.UserRecord) []byte
+}
+
 // companyFeed decides what to send. It runs on the game loop; mu only
 // keeps tests honest.
 type companyFeed struct {
 	mu        sync.Mutex
 	last      map[int]companySent
+	extras    []companyExtra
+	lastExtra map[int]map[string]string
 	chemistry chemistryFunc
 	send      func(userID int, module string, payload []byte)
 	// accepting reports whether the user's connection may take GMCP; a
@@ -214,6 +242,8 @@ type companyFeed struct {
 func newCompanyFeed() *companyFeed {
 	return &companyFeed{
 		last:      map[int]companySent{},
+		extras:    []companyExtra{inventoryExtra(), campExtra(camping.CampStateOf), battleExtra(gatherBattle)},
+		lastExtra: map[int]map[string]string{},
 		chemistry: company.ChemistryStanding,
 		send: func(userID int, module string, payload []byte) {
 			events.AddToQueue(GMCPOut{UserId: userID, Module: module, Payload: payload})
@@ -264,17 +294,46 @@ func (f *companyFeed) update(userID int, s companyview.Summary) {
 			full, _ = json.Marshal(p)
 		}
 		f.send(userID, "Company", full)
+		// The client stores the extras under Company, which this replaces:
+		// send them again after it (32g review finding 1).
+		f.mu.Lock()
+		delete(f.lastExtra, userID)
+		f.mu.Unlock()
 	case prev.vitals != next.vitals:
 		body, _ := json.Marshal(p.companyLive)
 		f.send(userID, "Company.Vitals", body)
 	}
 }
 
-// forget makes the next update send the full snapshot (login, copyover,
-// a request) or drops the user (logout).
+// updateExtras sends each extra message that changed since its last send.
+func (f *companyFeed) updateExtras(user *users.UserRecord) {
+	if f.accepting != nil && !f.accepting(user.UserId) {
+		return // update forgets the user, so all is sent once accepted
+	}
+	for _, extra := range f.extras {
+		body := extra.build(user)
+		if body == nil {
+			continue
+		}
+		f.mu.Lock()
+		if f.lastExtra[user.UserId] == nil {
+			f.lastExtra[user.UserId] = map[string]string{}
+		}
+		changed := f.lastExtra[user.UserId][extra.module] != string(body)
+		f.lastExtra[user.UserId][extra.module] = string(body)
+		f.mu.Unlock()
+		if changed {
+			f.send(user.UserId, extra.module, body)
+		}
+	}
+}
+
+// forget makes the next update send the full snapshot and every extra
+// (login, copyover, a request) or drops the user (logout).
 func (f *companyFeed) forget(userID int) {
 	f.mu.Lock()
 	delete(f.last, userID)
+	delete(f.lastExtra, userID)
 	f.mu.Unlock()
 }
 
@@ -291,6 +350,11 @@ func (f *companyFeed) prune(online []int) {
 			delete(f.last, id)
 		}
 	}
+	for id := range f.lastExtra {
+		if !live[id] {
+			delete(f.lastExtra, id)
+		}
+	}
 	f.mu.Unlock()
 }
 
@@ -305,7 +369,12 @@ var companyFeeds = newCompanyFeed()
 
 func init() {
 	companyview.OnRefresh.Register(func(r companyview.Refreshed) companyview.Refreshed {
+		// Phase 29f: nothing runs ahead of a player's paced combat lines.
+		if holdCompany(r.User.UserId) {
+			return r
+		}
 		companyFeeds.update(r.User.UserId, r.Summary)
+		companyFeeds.updateExtras(r.User)
 		return r
 	})
 	events.RegisterListener(events.PlayerSpawn{}, func(e events.Event) events.ListenerReturn {
@@ -317,11 +386,14 @@ func init() {
 	events.RegisterListener(events.PlayerDespawn{}, func(e events.Event) events.ListenerReturn {
 		if evt, ok := e.(events.PlayerDespawn); ok {
 			companyFeeds.forget(evt.UserId)
+			battleSeen.forget(evt.UserId)
 		}
 		return events.Continue
 	})
 	events.RegisterListener(events.NewRound{}, func(events.Event) events.ListenerReturn {
-		companyFeeds.prune(users.GetOnlineUserIds())
+		online := users.GetOnlineUserIds()
+		companyFeeds.prune(online)
+		battleSeen.prune(online)
 		return events.Continue
 	})
 	events.RegisterListener(GMCPCompanyRequest{}, func(e events.Event) events.ListenerReturn {

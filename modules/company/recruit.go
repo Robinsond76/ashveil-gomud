@@ -10,7 +10,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
-	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -36,6 +36,10 @@ type recruiter struct {
 	RoomID     int
 	Name       string
 	Candidates []candidate
+	// Generated recruiters also post each player's own roster (Phase
+	// 32a2); Weights, when set, is their archetype mix.
+	Generated bool
+	Weights   map[string]int
 }
 
 // parseRecruiters reads Recruiters ([{RoomId, Name, Candidates: [{Id,
@@ -68,6 +72,8 @@ func parseRecruiters(raw any) map[int]recruiter {
 			name = "the recruiter"
 		}
 		rec := recruiter{RoomID: roomID, Name: name}
+		rec.Generated, _ = fields["generated"].(bool)
+		rec.Weights = parseArchetypeWeights(fields["archetypeweights"], roomID)
 		seen := map[string]bool{}
 		candidates, _ := fields["candidates"].([]any)
 		for _, rawCandidate := range candidates {
@@ -147,9 +153,46 @@ func matchCandidate(rec recruiter, selector string) (candidate, bool) {
 	return candidate{}, false
 }
 
+// resolveCandidate is who a selector means at a recruiter (Phase 32a2): a
+// generated candidate by key or exact name, then a regular by id or exact
+// name, then part of a name across both lists together, refused when it
+// fits more than one. At most one result is set.
+func resolveCandidate(rec recruiter, roster domain.Roster, selector string) (*candidate, *domain.Candidate) {
+	sel := strings.ToLower(strings.TrimSpace(selector))
+	if g, ok := findGenerated(roster, sel, false); ok {
+		return nil, &g
+	}
+	c, ok := matchCandidate(rec, sel)
+	if ok && (c.ID == sel || strings.ToLower(templateName(c.MobTemplateID, "")) == sel) {
+		return &c, nil
+	}
+	matches := 0
+	for _, r := range rec.Candidates {
+		if strings.Contains(strings.ToLower(templateName(r.MobTemplateID, "")), sel) {
+			matches++
+		}
+	}
+	for _, g := range roster.Candidates {
+		if strings.Contains(strings.ToLower(g.Name), sel) {
+			matches++
+		}
+	}
+	if matches != 1 {
+		return nil, nil
+	}
+	if ok {
+		return &c, nil
+	}
+	if g, ok := findGenerated(roster, sel, true); ok {
+		return nil, &g
+	}
+	return nil, nil
+}
+
 // listing shows every candidate here with what a player needs to choose.
 func (m *CompanyModule) listing(leaderUserID int, rec recruiter) string {
-	if len(rec.Candidates) == 0 {
+	roster, _ := m.rosterFor(leaderUserID, rec)
+	if len(rec.Candidates) == 0 && len(roster.Candidates) == 0 {
 		return fmt.Sprintf("No one on %s is looking for work right now.", rec.Name)
 	}
 	record, _ := m.registry.Get(leaderUserID)
@@ -173,6 +216,10 @@ func (m *CompanyModule) listing(leaderUserID int, rec recruiter) string {
 		default:
 			lines = append(lines, fmt.Sprintf("    Price: %d gold", c.Price))
 		}
+	}
+	// Phase 32a2: the viewer's own generated candidates, after the regulars.
+	for _, c := range roster.Candidates {
+		lines = append(lines, m.generatedListing(c)...)
 	}
 	lines = append(lines, fmt.Sprintf("Your company: %d/%d companions.", len(record.Companions), m.maxCompanions()))
 	return strings.Join(lines, "\n")
@@ -219,10 +266,15 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 	if selector == "" || selector == "list" {
 		return m.listing(user.UserId, rec), nil
 	}
-	c, ok := matchCandidate(rec, selector)
-	if !ok {
+	roster, _ := m.rosterFor(user.UserId, rec)
+	regular, g := resolveCandidate(rec, roster, selector)
+	if g != nil {
+		return m.hireGenerated(user, roomID, roster, *g)
+	}
+	if regular == nil {
 		return fmt.Sprintf(`No one called "%s" is hiring here. Type "company recruit" to see who is.`, selector), nil
 	}
+	c := *regular
 	name := templateName(c.MobTemplateID, c.ID)
 	if _, ok := m.runtime.TemplateState(c.MobTemplateID); !ok {
 		return fmt.Sprintf("%s isn't available right now.", name), nil
@@ -241,24 +293,131 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 	if user.Character.Gold < price {
 		return fmt.Sprintf("%s asks %d gold, and you have %d.", name, price, user.Character.Gold), nil
 	}
-	companion, err := m.enlist(user.UserId, roomID, c.MobTemplateID, map[int]struct{}{c.MobTemplateID: {}}, c.Tutorial)
+	companion, err := m.enlist(user.UserId, roomID, c.MobTemplateID, map[int]struct{}{c.MobTemplateID: {}}, c.Tutorial, nil)
 	if err != nil {
 		return "", err
 	}
 	text := fmt.Sprintf("%s joins your company (#%d).", name, companion.ID)
 	if price > 0 {
-		user.Character.Gold -= price
-		events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -price})
-		if m.saveUser != nil {
-			// The gold is in memory and goes out with the next autosave,
-			// logout, or copyover save if this one fails.
-			if err := m.saveUser(user); err != nil {
-				mudlog.Error("company: save after recruit", "user", user.UserId, "error", err)
-			}
-		}
+		m.chargeGold(user, price)
 		text = fmt.Sprintf("You pay %d gold. %s", price, text)
 	}
 	return text + ` Place them with "formation move".`, nil
 }
 
 func nativeSaveUser(user *users.UserRecord) error { return users.SaveUser(*user) }
+
+var _ domain.RecruiterViewProvider = (*CompanyModule)(nil)
+
+// noticeEntry is one candidate as a recruiter room's notice shows it to one
+// viewer (Phase 32a).
+type noticeEntry struct {
+	Name    string
+	Price   int
+	Free    bool
+	Refused bool
+}
+
+// noticeLines renders a recruiter's notice: the candidates on it, or that
+// no one is left for this viewer.
+// full is the viewer's companion count when their company is full (0
+// otherwise), with its limit.
+func noticeLines(noticeName string, entries []noticeEntry, full, limit int) []string {
+	if len(entries) == 0 {
+		return []string{fmt.Sprintf("No one on %s is looking for work with you now.", noticeName)}
+	}
+	parts := make([]string, 0, len(entries))
+	for _, e := range entries {
+		label := fmt.Sprintf("%d gold", e.Price)
+		switch {
+		case e.Refused:
+			label = "won't join you"
+		case e.Free:
+			label = "free"
+		}
+		parts = append(parts, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> (%s)`, e.Name, label))
+	}
+	lines := []string{
+		fmt.Sprintf("On %s: %s.", noticeName, strings.Join(parts, ", ")),
+		`  Type <ansi fg="command">company recruit</ansi> to see them, or <ansi fg="command">company inspect [name]</ansi>.`,
+	}
+	if full > 0 {
+		lines = append(lines, fmt.Sprintf("  Your company is full (%d/%d companions); dismiss someone to take another on.", full, limit))
+	}
+	return lines
+}
+
+// RecruiterLines implements domain.RecruiterViewProvider: the notice in a
+// recruiter room, less the candidates already in the viewer's company and
+// the once-only offers they've already taken. One the company would refuse
+// is listed as such.
+func (m *CompanyModule) RecruiterLines(viewerUserID, roomID int) []string {
+	rec, ok := m.recruiters()[rooms.GetOriginalRoom(roomID)]
+	if !ok {
+		return nil
+	}
+	record, _ := m.registry.Get(viewerUserID)
+	inCompany := map[int]bool{}
+	for _, c := range record.Companions {
+		inCompany[c.MobTemplateID] = true
+	}
+	entries := []noticeEntry{}
+	for _, c := range rec.Candidates {
+		if inCompany[c.MobTemplateID] || (c.Tutorial && record.HasClaimed(c.MobTemplateID)) {
+			continue
+		}
+		if _, ok := m.runtime.TemplateState(c.MobTemplateID); !ok {
+			continue
+		}
+		name := templateName(c.MobTemplateID, c.ID)
+		entries = append(entries, noticeEntry{
+			Name:    name,
+			Price:   c.cost(),
+			Free:    c.Tutorial,
+			Refused: m.recruitRefusal(viewerUserID, c.MobTemplateID, name) != "",
+		})
+	}
+	// Phase 32a2: then the viewer's own generated candidates.
+	roster, _ := m.rosterFor(viewerUserID, rec)
+	for _, c := range roster.Candidates {
+		entries = append(entries, noticeEntry{
+			Name:    c.Name,
+			Price:   c.Price,
+			Refused: m.alignmentRefusal(viewerUserID, c.Alignment, c.Name) != "",
+		})
+	}
+	full := 0
+	if len(record.Companions) >= m.maxCompanions() {
+		full = len(record.Companions)
+	}
+	return noticeLines(rec.Name, entries, full, m.maxCompanions())
+}
+
+// LookCandidate implements domain.RecruiterViewProvider: "look <name>" at
+// a candidate on the notice.
+func (m *CompanyModule) LookCandidate(viewerUserID, roomID int, selector string) (string, bool) {
+	rec, ok := m.recruiters()[rooms.GetOriginalRoom(roomID)]
+	if !ok {
+		return "", false
+	}
+	// "look post", "look hiring slate": the notice itself.
+	if sel := strings.ToLower(strings.TrimSpace(selector)); len(sel) >= 3 && strings.Contains(strings.ToLower(rec.Name), sel) {
+		return strings.Join(m.RecruiterLines(viewerUserID, roomID), "\n"), true
+	}
+	roster, _ := m.rosterFor(viewerUserID, rec)
+	regular, g := resolveCandidate(rec, roster, selector)
+	if g != nil {
+		return lookGenerated(rec.Name, *g), true
+	}
+	if regular == nil {
+		return "", false
+	}
+	c := *regular
+	name := templateName(c.MobTemplateID, c.ID)
+	lines := []string{fmt.Sprintf(`You read about <ansi fg="mobname">%s</ansi> on %s.`, name, rec.Name)}
+	if spec := mobs.GetMobSpec(mobs.MobId(c.MobTemplateID)); spec != nil && spec.Character.Description != "" {
+		lines = append(lines, spec.Character.Description)
+	}
+	lines = append(lines, fmt.Sprintf(`Type <ansi fg="command">company inspect %s</ansi> to weigh them against your company.`, c.ID))
+	return strings.Join(lines, "\n"), true
+}

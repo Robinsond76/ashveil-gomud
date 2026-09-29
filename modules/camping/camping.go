@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -298,10 +299,11 @@ type CampingModule struct {
 
 	mu sync.Mutex
 
-	// litRooms is a snapshot of rooms with a lit campfire, read by the
-	// rooms light-fixture query under litMu only (lock order: mu, then litMu).
-	litMu    sync.RWMutex
-	litRooms map[int]bool
+	// roomCamps is a snapshot of the camps in each room (whose, and
+	// whether lit), read by the rooms light-fixture query and look under
+	// litMu only (lock order: mu, then litMu).
+	litMu     sync.RWMutex
+	roomCamps map[int][]camping.RoomCamp
 }
 
 var (
@@ -331,6 +333,7 @@ func init() {
 	m.plug.AddUserCommand("sharpen", m.sharpenCommand, false, false)
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
@@ -346,6 +349,8 @@ func init() {
 	camping.SetAbandonProvider(m)
 	camping.SetCampAbandoner(m)
 	rooms.RegisterLightFixture(m.RoomHasLitFire)
+	// Phase 32a: look shows the camps in a room.
+	camping.SetRoomCampsReader(m.RoomCamps)
 	// A lit campfire also warms its room (Phase 15).
 	climate.RegisterHeatSource(m.RoomHasLitFire)
 }
@@ -357,21 +362,36 @@ func init() {
 func (m *CampingModule) RoomHasLitFire(roomID int) bool {
 	m.litMu.RLock()
 	defer m.litMu.RUnlock()
-	return m.litRooms[roomID]
+	for _, camp := range m.roomCamps[roomID] {
+		if camp.FireLit {
+			return true
+		}
+	}
+	return false
 }
 
-// refreshLitRoomsLocked rebuilds the lit-campfire snapshot from m.camps.
+// RoomCamps returns a copy of the camps pitched in roomID, leader order,
+// from the same snapshot as RoomHasLitFire, so look never waits on m.mu
+// (Phase 32a).
+func (m *CampingModule) RoomCamps(roomID int) []camping.RoomCamp {
+	m.litMu.RLock()
+	defer m.litMu.RUnlock()
+	return slices.Clone(m.roomCamps[roomID])
+}
+
+// refreshLitRoomsLocked rebuilds the room-camps snapshot from m.camps.
 // Callers hold m.mu; it is deferred after every m.mu section so the snapshot
 // always matches the final (possibly reverted) camp state.
 func (m *CampingModule) refreshLitRoomsLocked() {
-	lit := map[int]bool{}
+	byRoom := map[int][]camping.RoomCamp{}
 	for _, camp := range m.camps {
-		if camp.FireLit {
-			lit[camp.RoomID] = true
-		}
+		byRoom[camp.RoomID] = append(byRoom[camp.RoomID], camping.RoomCamp{LeaderUserID: camp.LeaderUserID, FireLit: camp.FireLit})
+	}
+	for _, list := range byRoom {
+		slices.SortFunc(list, func(a, b camping.RoomCamp) int { return a.LeaderUserID - b.LeaderUserID })
 	}
 	m.litMu.Lock()
-	m.litRooms = lit
+	m.roomCamps = byRoom
 	m.litMu.Unlock()
 }
 
@@ -1069,4 +1089,42 @@ func (m *CampingModule) buffRoundsLeft(c *characters.Character, buffID int) int 
 func (m *CampingModule) registerBuffGroupsLocked() {
 	s := m.innSettings()
 	companyview.RegisterBuffGroup(companyview.GroupRest, s.RestedBuffId, s.WellRestedBuffId)
+}
+
+var _ camping.CampStateProvider = (*CampingModule)(nil)
+
+// CampStateOf implements camping.CampStateProvider (Phase 32g): the
+// leader's camp seen from a room with those tags. It reads state only; the
+// camp's room title is looked up after the lock is released.
+func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string) (camping.CampState, bool) {
+	has := func(tag string) bool {
+		for _, t := range roomTags {
+			if t == tag {
+				return true
+			}
+		}
+		return false
+	}
+	m.mu.Lock()
+	camp, ok := m.camps[leaderUserID]
+	s := camping.CampState{Inn: has(m.innSettings().RoomTag)}
+	if !ok {
+		s.CanCamp = has(m.roomTag())
+	} else {
+		s.HasCamp, s.Here, s.FireLit = true, camp.RoomID == roomID, camp.FireLit
+		if camp.Rest != nil && camp.Rest.State == camping.Completed {
+			s.Rested = true
+		}
+		if camp.Rest != nil && camp.Rest.State == camping.Resting {
+			left := m.remainingLocked(camp)
+			s.Resting = true
+			s.RestSeconds = int(left.Round(time.Second).Seconds())
+			s.RestPercent = int(camp.ProgressAt(m.clock().UTC()) * 100)
+		}
+	}
+	m.mu.Unlock()
+	if s.HasCamp && !s.Here {
+		s.RoomTitle = roomTitle(camp.RoomID)
+	}
+	return s, true
 }

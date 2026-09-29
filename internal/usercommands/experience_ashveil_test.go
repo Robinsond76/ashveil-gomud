@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -30,4 +31,37 @@ func TestExperienceShowsLastLoss(t *testing.T) {
 	assert.Contains(t, text, "Your last death cost you a level: 6 to 5.")
 	user.Character.SetMiscData(death.LastLossKey, death.LastLossValue(1, 1))
 	assert.Contains(t, experienceText(t, user, ""), "progress toward level 2")
+}
+
+// fakeMembers is a company provider whose members carry live progress.
+type fakeMembers struct {
+	fakeChemistryStanding
+	views []company.MemberView
+}
+
+func (f fakeMembers) CompanyMembers(int) ([]company.MemberView, bool) { return f.views, true }
+
+// TestExperienceListsTheCompany drives the real command (Phase 32e): each
+// companion's level and progress under the leader's block, the fallen
+// marked, and a solo player's output unchanged.
+func TestExperienceListsTheCompany(t *testing.T) {
+	useWorld(t, "default")
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+	user := users.NewUserRecord(7, 1)
+
+	company.SetFormationProvider(fakeMembers{views: []company.MemberView{}})
+	solo := experienceText(t, user, "")
+	assert.NotContains(t, solo, "Your company")
+
+	company.SetFormationProvider(fakeMembers{views: []company.MemberView{
+		{ID: 1, Name: "Corvin", Level: 4, Status: company.MemberPresent, ExpInto: 50, ExpTNL: 200, ExpKnown: true},
+		{ID: 2, Name: "Mira", Level: 2, Status: company.MemberAwaiting},
+		{ID: 3, Name: "Tobb", Level: 3, Status: company.MemberDead},
+	}})
+	text := experienceText(t, user, "")
+	assert.True(t, strings.HasPrefix(text, strings.Split(solo, "\n")[0]), "the leader's block still leads")
+	assert.Contains(t, text, "Your company:")
+	assert.Contains(t, text, "Corvin Lvl: 4 XP: 50/200 (25%)")
+	assert.Contains(t, text, "Mira Lvl: 2")
+	assert.Contains(t, text, "Tobb level 3, fallen")
 }

@@ -87,6 +87,7 @@ func init() {
 	m.plug.AddUserCommand("resurrect", m.resurrectCommand, false, false)
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	domain.SetProvider(m)
 	module = m
 }

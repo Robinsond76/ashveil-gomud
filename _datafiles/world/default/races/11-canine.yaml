@@ -1,10 +1,17 @@
 raceid: 11
 name: canine
+defaultpronouns: it
+painreactions:
+  - tovictim: 'Pain tears along your flank. Your legs buckle, then find the ground again.'
+    toroom: '{name} yelps and drags a hind leg, snapping through the pain.'
+  - tovictim: 'A blow jolts your ribs. You bare your teeth and force another breath.'
+    toroom: '{name} twists away with a sharp yelp, then bares {his} teeth.'
 description: A canine.
 defaultalignment: 0
 buffids:
   - 28 # Super hearing
 size: medium
+groupnoun: pack
 unarmedname: jaws
 tnlscale: 1
 angrycommands: 

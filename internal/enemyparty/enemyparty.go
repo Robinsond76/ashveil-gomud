@@ -68,12 +68,9 @@ func summaries(room *rooms.Room) []mobparty.MobSummary {
 		if mob == nil || mob.Character.IsCharmed() {
 			continue
 		}
-		out = append(out, mobparty.MobSummary{
-			InstanceId: instanceId,
-			SpawnGroup: mob.SpawnGroup,
-			Groups:     mob.Groups,
-			EHP:        EffectiveHP(mob.Character.HealthMax.Value, mob.Character.GetDefense()),
-		})
+		s := rooms.GroupSummary(mob)
+		s.EHP = EffectiveHP(mob.Character.HealthMax.Value, mob.Character.GetDefense())
+		out = append(out, s)
 	}
 	return out
 }

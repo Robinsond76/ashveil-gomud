@@ -47,6 +47,8 @@ const (
 type Character struct {
 	Name                string                         // The name of the character
 	Description         string                         // A description of the character.
+	Pronouns            string                         `yaml:"pronouns,omitempty"`      // Authored third-person combat pronouns.
+	CombatNoun          string                         `yaml:"combatnoun,omitempty"`    // Authored short noun for combat narration.
 	Adjectives          []string                       `yaml:"adjectives,omitempty"`    // Decorative text for the name of the character (e.g. "sleeping", "dead", "wounded")
 	RoomId              int                            `yaml:"roomid,omitempty"`        // The room id the character is in.
 	RoomIdOnReset       int                            `yaml:"roomidonreset,omitempty"` // The room they are sent to if their RoomId isn't found.
@@ -232,6 +234,11 @@ func (c *Character) GetBaseCastSuccessChance(spellId string) int {
 	return targetNumber
 }
 
+// CarryCapacity is GoMud's old item-count limit.
+//
+// Deprecated: weight is the only carrying limit (Ashveil Phase 32f; see
+// internal/encumbrance). Nothing in the engine reads this any more; it stays
+// for scripts that call GetCarryCapacity.
 func (c *Character) CarryCapacity() int {
 	return 5 + c.Stats.Strength.ValueAdj/3
 }
@@ -488,6 +495,19 @@ func (c *Character) Charm(userId int, rounds int, expireCommand string) {
 	}
 }
 
+// CharmAsCompanion charms c as a company member of userId (Phase 32a):
+// the same as Charm, but the name shows no ♥friend tag. Charming it again
+// by anyone else (Charm) brings the tag back.
+func (c *Character) CharmAsCompanion(userId int, rounds int, expireCommand string) {
+	c.Charm(userId, rounds, expireCommand)
+	c.Charmed.Companion = true
+}
+
+// IsCompanion reports whether c is currently charmed as a company member.
+func (c *Character) IsCompanion() bool {
+	return c.Charmed != nil && c.Charmed.Companion
+}
+
 func (c *Character) KnowsFirstAid() bool {
 	if r := races.GetRace(c.GetRaceId()); r != nil {
 		return r.KnowsFirstAid
@@ -682,7 +702,14 @@ func (c *Character) getFormattedName(viewingUserId int, uType string, renderFlag
 		f.Adjectives = append(f.Adjectives, strconv.Itoa(pctHealth)+`%`)
 	}
 
-	f.Adjectives = append(f.Adjectives, c.GetAdjectives()...)
+	for _, adj := range c.GetAdjectives() {
+		// A company member is the leader's own; ♥friend is for other
+		// charmed mobs (Phase 32a).
+		if adj == `charmed` && c.IsCompanion() {
+			continue
+		}
+		f.Adjectives = append(f.Adjectives, adj)
+	}
 
 	if c.Health < 1 {
 		f.Suffix = `downed`
@@ -1458,7 +1485,7 @@ func (c *Character) Heal(hp int, mana int) (int, int) {
 	if c.Health > c.HealthMax.Value {
 		c.Health = c.HealthMax.Value
 	}
-	c.Mana += hp
+	c.Mana += mana
 	if c.Mana > c.ManaMax.Value {
 		c.Mana = c.ManaMax.Value
 	}

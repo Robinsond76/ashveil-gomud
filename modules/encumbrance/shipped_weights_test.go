@@ -19,6 +19,26 @@ type shippedItem struct {
 	Name   string `yaml:"name"`
 	Type   string `yaml:"type"`
 	Weight int    `yaml:"weight"`
+	// CarryBonus is a pack's added capacity (Phase 32f).
+	CarryBonus int `yaml:"carrybonus"`
+}
+
+// shippedMemberBase is the shipped per-member base capacity, in grams
+// (Phase 32f).
+func shippedMemberBase(t *testing.T) int {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	var cfg struct {
+		MemberBaseKg float64 `yaml:"MemberBaseKg"`
+		StrengthKg   float64 `yaml:"StrengthKg"`
+		CapacityKg   any     `yaml:"CapacityKg"`
+	}
+	require.NoError(t, yaml.Unmarshal(data, &cfg))
+	require.Nil(t, cfg.CapacityKg, "CapacityKg is retired")
+	base, _, _ := parseConfig(cfg.MemberBaseKg, cfg.StrengthKg, nil)
+	require.Positive(t, base)
+	return base
 }
 
 func shippedItems(t *testing.T) map[int]shippedItem {
@@ -96,8 +116,9 @@ func TestAuthoredWeightsKept(t *testing.T) {
 	}
 }
 
-// Each archetype's starter kit is a light pack: 1–12 kg, far below the
-// first load band (75% of the company's capacity) on its own.
+// Each archetype's starter kit is a light pack: 1–12 kg, under 40% of a
+// fresh member's own share (the base plus the kit's best pack; Strength
+// left out) and so well below the first load band, 75% (Phase 32f).
 func TestStarterKitsAreLight(t *testing.T) {
 	items := shippedItems(t)
 	data, err := os.ReadFile(filepath.Join("..", "archetype", "files", "data-overlays", "config.yaml"))
@@ -110,23 +131,26 @@ func TestStarterKitsAreLight(t *testing.T) {
 	}
 	require.NoError(t, yaml.Unmarshal(data, &cfg))
 	require.NotEmpty(t, cfg.Archetypes)
-	capacity, _ := parseConfig(200, nil)
+	base := shippedMemberBase(t)
 	for _, a := range cfg.Archetypes {
-		total := 0
+		total, pack := 0, 0
 		for _, id := range a.Kit {
 			it, ok := items[id]
 			require.True(t, ok, "%s kit item %d exists", a.ArchetypeId, id)
 			total += it.Weight
+			pack = max(pack, it.CarryBonus)
 		}
 		assert.GreaterOrEqual(t, total, 1000, a.ArchetypeId)
 		assert.LessOrEqual(t, total, 12000, a.ArchetypeId)
-		assert.Less(t, float64(total)/float64(capacity), 0.1, "%s: well below the first band", a.ArchetypeId)
+		assert.Positive(t, pack, "%s: the kit has a pack", a.ArchetypeId)
+		assert.Less(t, float64(total)/float64(base+pack), 0.4, "%s: under 40%% of their own share, as the design says", a.ArchetypeId)
 	}
 }
 
 // A fresh company of five (the leader's heaviest starter kit and four
-// recruiters' candidates in their template gear) is still Light: well
-// below the first band, 75% of capacity.
+// recruiters' candidates in their template gear) is still Light: under
+// half of five members' base shares (Phase 32f), well below the first
+// band, 75%.
 func TestFreshCompanyIsLight(t *testing.T) {
 	items := shippedItems(t)
 	heaviestKit := 0
@@ -170,7 +194,7 @@ func TestFreshCompanyIsLight(t *testing.T) {
 			companions += items[it.ItemId].Weight
 		}
 	}
-	capacity, _ := parseConfig(200, nil)
+	capacity := 5 * shippedMemberBase(t)
 	ratio := float64(heaviestKit+companions) / float64(capacity)
-	assert.Less(t, ratio, 0.3, "a fresh company of five: %d g", heaviestKit+companions)
+	assert.Less(t, ratio, 0.5, "a fresh company of five: %d g", heaviestKit+companions)
 }

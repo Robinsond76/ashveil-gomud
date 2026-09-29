@@ -176,6 +176,12 @@ const (
 	TokenDamage       TokenName = "{damage}"
 	TokenEntranceName TokenName = "{entrancename}"
 	TokenExitName     TokenName = "{exitname}"
+	TokenSourceHe     TokenName = "{sourcehe}"
+	TokenSourceHim    TokenName = "{sourcehim}"
+	TokenSourceHis    TokenName = "{sourcehis}"
+	TokenTargetHe     TokenName = "{targethe}"
+	TokenTargetHim    TokenName = "{targethim}"
+	TokenTargetHis    TokenName = "{targethis}"
 
 	POVUser  = 0
 	POVOther = 1
@@ -225,7 +231,17 @@ type ItemSpec struct {
 	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
 	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
 	Warmth          int               `yaml:"warmth,omitempty"`      // Insulation when worn (Phase 15); 0 uses the exposure module's per-slot default, negative means none
+	CarryBonus      int               `yaml:"carrybonus,omitempty"`  // A pack's added carrying capacity in grams (Phase 32f); a member counts only their largest
+	Saddle          SaddleKind        `yaml:"saddle,omitempty"`      // A saddle's kind (Phase 32f): fits a horse of the same kind
 }
+
+// SaddleKind is the kind of horse a saddle fits (Phase 32f).
+type SaddleKind string
+
+const (
+	SaddlePack   SaddleKind = "pack"
+	SaddleRiding SaddleKind = "riding"
+)
 
 // AllEquipSlots returns every equipment slot ItemType in canonical display order.
 // This is the single authoritative definition used by the characters, races,

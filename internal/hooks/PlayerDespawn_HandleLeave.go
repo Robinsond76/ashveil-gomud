@@ -59,13 +59,19 @@ func HandleLeave(e events.Event) events.ListenerReturn {
 		room.SendText(tplTxt)
 	}
 
-	tplTxt, _ := templates.Process("goodbye", nil, evt.UserId)
-	connections.SendTo([]byte(templates.AnsiParse(tplTxt)), connId)
+	// Ashveil 32b: a hand-off keeps the connection for the next user
+	// (UserHandOff, queued after this), so no goodbye and no hang-up.
+	if !evt.HandOff {
+		tplTxt, _ := templates.Process("goodbye", nil, evt.UserId)
+		connections.SendTo([]byte(templates.AnsiParse(tplTxt)), connId)
+	}
 
 	if err := users.LogOutUserByConnectionId(connId); err != nil {
 		mudlog.Error("Log Out Error", "connectionId", connId, "error", err)
 	}
-	connections.Remove(connId)
+	if !evt.HandOff {
+		connections.Remove(connId)
+	}
 
 	specialRooms := configs.GetSpecialRoomsConfig()
 	testRoomId := rooms.GetOriginalRoom(user.Character.RoomId)
@@ -78,6 +84,18 @@ func HandleLeave(e events.Event) events.ListenerReturn {
 	}
 
 	users.SaveUser(*user)
+
+	// Ashveil 32h: a character being deleted, now out of the world, is
+	// purged with its login kept; on a hand-off the same user comes back on
+	// the same connection, in the Void, to make a new character. Queued
+	// from this final listener, both follow whatever the other despawn
+	// listeners queued.
+	if user.Deleting {
+		events.AddToQueue(events.UserPurged{UserId: user.UserId, KeepAccount: true})
+		if evt.HandOff {
+			events.AddToQueue(events.UserHandOff{ConnectionId: uint64(connId), FromUserId: user.UserId, ToUserId: user.UserId})
+		}
+	}
 
 	return events.Continue
 }

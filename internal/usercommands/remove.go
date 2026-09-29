@@ -12,6 +12,12 @@ import (
 
 func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Ashveil Phase 32d: a battle plays out as it was set up.
+	if InBattle(user) {
+		user.SendText(BattleUnderWay)
+		return true, nil
+	}
+
 	if rest == "all" {
 		removedItems := []items.Item{}
 		for _, item := range user.Character.Equipment.GetAllItems() {

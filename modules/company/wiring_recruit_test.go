@@ -125,6 +125,31 @@ func TestRecruitThroughPluginsLoad(t *testing.T) {
 	// Names work as well as ids; an ambiguous one is refused.
 	assert.Contains(t, run("company", "recruit r"), `No one called "r" is hiring here.`)
 	assert.Equal(t, 150, user.Character.Gold)
+	// A part of a name is matched across the regulars and the generated
+	// roster together (the roster above is random, so pin one here).
+	rec := module.recruiters()[2003]
+	liesl := domain.Candidate{Key: "liesl", Name: "Liesl of the Ford", MobTemplateID: 61}
+	pinned := domain.Roster{Candidates: []domain.Candidate{liesl, {Key: "tamsyn", Name: "Tamsyn Hale", MobTemplateID: 61}}}
+	for sel, want := range map[string]string{
+		"r":           "",        // two regulars and Liesl
+		"tams":        "",        // Tamsin Reed and Tamsyn Hale
+		"ford":        "liesl",   // only Liesl
+		"tamsyn":      "tamsyn",  // a generated key
+		"tamsin reed": "tamsin",  // a regular's exact name
+		"garrick":     "garrick", // a regular's id
+	} {
+		regular, generated := resolveCandidate(rec, pinned, sel)
+		got := ""
+		switch {
+		case regular != nil && generated != nil:
+			t.Fatalf("%q resolved to both", sel)
+		case regular != nil:
+			got = regular.ID
+		case generated != nil:
+			got = generated.Key
+		}
+		assert.Equal(t, want, got, sel)
+	}
 
 	// "company summon" can't bypass the price or the claim.
 	handled, err := usercommands.TryCommand("company", "summon 61", user.UserId, events.CmdSkipScripts)
@@ -134,8 +159,10 @@ func TestRecruitThroughPluginsLoad(t *testing.T) {
 	assert.True(t, handled)
 	assert.ErrorIs(t, err, domain.ErrTemplateNotAllowed)
 	events.ProcessEvents()
-	_, hasRecord := module.registry.Get(7)
-	assert.False(t, hasRecord, "nothing recorded")
+	// Only the roster the listing rolled (Phase 32a2): no companion, no claim.
+	noted, _ := module.registry.Get(7)
+	assert.Empty(t, noted.Companions, "nothing recorded")
+	assert.Empty(t, noted.Claimed, "nothing recorded")
 
 	// The free tutorial candidate joins with its template gear, claimed in
 	// the same real save.

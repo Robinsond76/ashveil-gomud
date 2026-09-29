@@ -2,6 +2,14 @@
 DMG_DICE_QTY = 1;
 DMG_DICE_SIDES = 3;
 
+SPELL_NAME = 'Shower of Sparks';
+WAIT_ROUNDS = 1; // sparks.yaml's waitrounds
+
+// Phase 29c narration voice: mechanics in lowercase parentheses at the end.
+function chanting(rounds) {
+    return ' (chanting: ' + SPELL_NAME + ', ' + rounds + (rounds == 1 ? ' round)' : ' rounds)');
+}
+
 /**
  * Called when the casting is initialized.
  * @param {ActorObject} sourceActor - The actor casting the spell.
@@ -10,8 +18,9 @@ DMG_DICE_SIDES = 3;
  */
 function onCast(sourceActor, targetActors) {
 
-    SendUserMessage(sourceActor.UserId(), 'You begin to chant softly.');
-    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCharacterName(true)+' begins to chant softly.', sourceActor.UserId());
+    var rounds = chanting(WAIT_ROUNDS + 1);
+    SendUserMessage(sourceActor.UserId(), 'You begin to chant, and the air around your hands starts to crackle.' + rounds);
+    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCombatName(true) + ' begins to chant, and the air starts to crackle.' + rounds, sourceActor.UserId());
     return true;
 }
 
@@ -23,54 +32,43 @@ function onCast(sourceActor, targetActors) {
  */
 function onWait(sourceActor, targetActors) {
 
-    SendUserMessage(sourceActor.UserId(), 'You continue chanting...');
-    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCharacterName(true)+' continues chanting...', sourceActor.UserId());
+    var rounds = chanting(sourceActor.ChantRoundsLeft());
+    SendUserMessage(sourceActor.UserId(), 'You keep chanting. Sparks jump between your fingers.' + rounds);
+    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCombatName(true) + ' keeps chanting. Sparks jump and snap in the air.' + rounds, sourceActor.UserId());
 }
 
 /**
- * Called when the spell succeeds its cast attempt.
+ * Called when the spell succeeds its cast attempt: one cast line, then an
+ * indented line per target.
  * @param {ActorObject} sourceActor - The actor casting the spell.
  * @param {ActorObject[]} targetActors - The targets of the spell.
  * @returns {boolean} Return false to prevent default post-cast behavior.
  */
 function onMagic(sourceActor, targetActors) {
 
-    roomId = sourceActor.GetRoomId();
+    var roomId = sourceActor.GetRoomId();
+    var sourceUserId = sourceActor.UserId();
 
-    sourceUserId = sourceActor.UserId();
-    sourceName = sourceActor.GetCharacterName(true);
+    SendUserMessage(sourceUserId, 'You fling your hands open, and a shower of sparks bursts from them.');
+    SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' flings open ' + sourceActor.GetCombatPronoun('possessive') + ' hands, and a shower of sparks bursts out.', sourceUserId);
 
     for (var i = 0; i < targetActors.length; i++) {
-        
-        dmgAmt = UtilDiceRoll(DMG_DICE_QTY, DMG_DICE_SIDES) + 1;
-        dmgAmtStr = String(dmgAmt);
 
-        targetUserId = targetActors[i].UserId();
-        targetName = targetActors[i].GetCharacterName(true);
+        var target = targetActors[i];
+        var targetUserId = target.UserId();
 
-        if ( sourceActor.UserId() != targetActors[i].UserId() ) {
+        // Apply the harm first, and report what it took.
+        var dealt = -target.AddHealth(-(UtilDiceRoll(DMG_DICE_QTY, DMG_DICE_SIDES) + 1));
+        var suffix = ' (' + dealt + ' damage)';
 
-            // Tell the caster about the action
-            SendUserMessage(sourceUserId, 'You let loose a shower of sparks that hit '+targetName+', doing <ansi fg="damage">'+dmgAmtStr+' damage</ansi>.');
-
-            // Tell the room about the dmg, except the source and target
-            SendRoomMessage(roomId, sourceName+' stops chanting and lets loose a shower of sparks, hitting '+targetName+'.', sourceUserId, targetUserId);
-
-            // Tell the target about the dmg
-            SendUserMessage(targetUserId, sourceName+' stops chanting and fires a shower of sparks at you, hitting for <ansi fg="damage">'+dmgAmtStr+' damage</ansi>.');
-
-        } else {
-
-            // Tell the cast they did it to themselves
-            SendUserMessage(sourceUserId, 'You stop chanting and fire a shower of sparks at yourself, doing <ansi fg="damage">'+dmgAmtStr+' damage</ansi>.');
-
-            // Tell the room about the dmg, except the source and target
-            SendRoomMessage(roomId, sourceName+' stops chanting and fires a shower of sparks at themselves, hurting themselves.', sourceUserId, targetUserId);
-
+        if (sourceUserId != 0 && sourceUserId == targetUserId) {
+            SendUserMessage(sourceUserId, '    Sparks sear your own skin.' + suffix);
+            SendRoomMessage(roomId, '    Sparks sear ' + sourceActor.GetCombatName(false) + '.' + suffix, sourceUserId);
+            continue;
         }
 
-        // Apply the dmg to the target
-        targetActors[i].AddHealth(dmgAmt * -1);
+        SendUserMessage(sourceUserId, '    Sparks sear ' + target.GetCombatName(false) + '.' + suffix);
+        SendRoomMessage(roomId, '    Sparks sear ' + target.GetCombatName(false) + '.' + suffix, sourceUserId, targetUserId);
+        SendUserMessage(targetUserId, '    Sparks sear you.' + suffix);
     }
-    
 }

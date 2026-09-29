@@ -48,6 +48,22 @@ type Companion struct {
 	State *MemberState `yaml:"state,omitempty"`
 	// Death is set while the companion is dead (Phase 25b).
 	Death *CompanionDeath `yaml:"death,omitempty"`
+	// Name and Description are a generated recruit's own (Phase 32a2).
+	// Blank for an authored companion, which uses its template's.
+	Name        string `yaml:"name,omitempty"`
+	Description string `yaml:"description,omitempty"`
+}
+
+// Identity is what a companion's live mob is called and looks like, over
+// its template's (Phase 32a2). Blank fields keep the template's.
+type Identity struct {
+	Name        string
+	Description string
+}
+
+// Identity is the companion's own name and description.
+func (c Companion) Identity() Identity {
+	return Identity{Name: c.Name, Description: c.Description}
 }
 
 type Record struct {
@@ -63,6 +79,9 @@ type Record struct {
 	Service []Service `yaml:"service,omitempty"`
 	// Lost are the companions whose rescue allowance ran out (Phase 25b).
 	Lost []LostCompanion `yaml:"lost,omitempty"`
+	// Rosters are the leader's generated recruit candidates, one per
+	// recruiter room (Phase 32a2).
+	Rosters []Roster `yaml:"rosters,omitempty"`
 }
 
 // HasClaimed reports whether the tutorial recruit of this template has
@@ -105,6 +124,13 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	if record.Lost != nil {
 		record.Lost = append([]LostCompanion(nil), record.Lost...)
 	}
+	if record.Rosters != nil {
+		rosters := make([]Roster, len(record.Rosters))
+		for i, ros := range record.Rosters {
+			rosters[i] = ros.clone()
+		}
+		record.Rosters = rosters
+	}
 	for i, c := range record.Companions {
 		if c.Disposition != nil {
 			d := *c.Disposition
@@ -122,11 +148,22 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	return record, true
 }
 
+// Remove drops a leader's record entirely, claims and lost companions
+// included (Phase 32b: a purged user), and reports whether there was one.
+func (r *Registry) Remove(leaderUserID int) bool {
+	if r == nil {
+		return false
+	}
+	_, ok := r.Companies[leaderUserID]
+	delete(r.Companies, leaderUserID)
+	return ok
+}
+
 // Put stores a record after pruning stale formation cells and normalizing the
 // next companion ID. A record with no companions and an empty formation is
 // removed entirely unless it carries a companion-ID high-water mark above 1,
-// which must survive dismissal so IDs are never reused, a tutorial claim, or
-// a lost companion.
+// which must survive dismissal so IDs are never reused, a tutorial claim, a
+// lost companion, or a recruit roster.
 func (r *Registry) Put(record Record) {
 	if r.Companies == nil {
 		r.Companies = make(map[int]Record)
@@ -135,7 +172,7 @@ func (r *Registry) Put(record Record) {
 	valid := validMemberKeys(record)
 	record.Formation.Prune(valid)
 	record.Service = pruneService(record.Service, valid)
-	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 && len(record.Lost) == 0 {
+	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 && len(record.Lost) == 0 && len(record.Rosters) == 0 {
 		delete(r.Companies, record.LeaderUserID)
 		return
 	}
@@ -200,6 +237,23 @@ func (r *Registry) Summon(leaderUserID, mobTemplateID int, allowed map[int]struc
 	record.Companions = append(record.Companions, companion)
 	r.Put(record)
 	return companion, nil
+}
+
+// SetIdentity gives a companion its own name and description.
+func (r *Registry) SetIdentity(leaderUserID, companionID int, id Identity) error {
+	record, ok := r.Get(leaderUserID)
+	if !ok {
+		return ErrUnknownMember
+	}
+	for i, c := range record.Companions {
+		if c.ID == companionID {
+			record.Companions[i].Name = strings.TrimSpace(id.Name)
+			record.Companions[i].Description = strings.TrimSpace(id.Description)
+			r.Put(record)
+			return nil
+		}
+	}
+	return ErrUnknownMember
 }
 
 // SetCompanionArchetype records a companion's archetype. It is set at most

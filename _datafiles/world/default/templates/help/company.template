@@ -6,10 +6,47 @@ travel beside you. They stand with you in formation
 (<ansi fg="command">help chemistry</ansi>), and need food and rest just like
 you do (<ansi fg="command">help survival</ansi>, <ansi fg="command">help camp</ansi>).
 
+<ansi fg="yellow-bold">Experience</ansi>
+
+Companions grow. When a kill earns you experience, every companion who is
+alive and standing in the room where the enemy fell earns the same amount,
+in full: nothing is split, so a bigger company never shrinks your share.
+A companion who is away, fallen, or still waiting to rejoin earns
+nothing. Enough experience is a new level: the companion is healed and
+you're told. Companions have no level cap, and no training or stat points
+to spend. <ansi fg="command">experience</ansi> lists each companion's level and
+progress below your own (<ansi fg="command">help experience</ansi>).
+
 <ansi fg="yellow-bold">Finding companions</ansi>
 
 Settlements have recruiters: a person or a posted notice offering
-candidates for hire.
+candidates for hire. <ansi fg="command">look</ansi> in a recruiter's room shows the
+notice and the candidates you can still take, with their price: "free"
+for a once-only offer, or "won't join you" for one your company would
+refuse (see Alignment, below). Anyone already in your company, and a free
+offer you've already taken, isn't listed; a full company is noted.
+<ansi fg="command">look post</ansi> (or the notice's name) reads the notice again.
+
+<ansi fg="yellow-bold">Your own recruits</ansi>
+
+Settlement recruiters (the Waymark Inn's hiring slate, the Trappers'
+Post) also post recruits of your own: 3 at a time as the world ships,
+listed after the regulars. Each is a new face with their own name, archetype, level (within
+one of yours), alignment, price, and a line about them. Your list is yours
+alone: another player at the same notice sees different people, and what
+you hire never changes their list, or theirs yours.
+
+The list changes over time. Each recruit waits a while (half a game day
+to two game days, as the world ships), then moves on and someone new takes their place, one
+face at a time; time you spend away counts. Hire one and their place
+stays empty for a little while before someone new turns up. One your
+company would refuse is marked "won't join you", the same as any other
+candidate. At the recruiter, type a recruit's first name to hire, look
+at, or inspect them (<ansi fg="command">company recruit hild</ansi>). Once hired, they keep their
+own name in your company, even if two of them are the same archetype.
+
+  <ansi fg="command">look [candidate]</ansi>
+  Read a candidate's description on the notice.
 
   <ansi fg="command">company recruit</ansi>
   List who is hiring here, with their archetype, level, alignment, gear,
@@ -28,6 +65,17 @@ candidates for hire.
 without a recruiter, but only the few the world allows (a training dummy,
 as the world ships).
 
+<ansi fg="yellow-bold">Moving together</ansi>
+
+Your companions follow you from room to room. You aren't told each one
+arriving; the rooms you leave and enter hear one line for the whole
+company ("Dain leads their company towards the east exit.", "Dain arrives
+from the west, their company behind."). Any other move (a companion on
+its own, or following you after a flight, a journey, or a sneak) still
+shows its own line. <ansi fg="command">look</ansi> lists your companions by name,
+without the ♥friend tag other charmed creatures carry; in a party of
+players, <ansi fg="command">party</ansi> lists them as Company.
+
 <ansi fg="yellow-bold">Your roster</ansi>
 
   <ansi fg="command">company status</ansi>
@@ -37,6 +85,13 @@ as the world ships).
 
   <ansi fg="command">company gear [member]</ansi>
   What a companion is wearing and carrying.
+
+  <ansi fg="command">company inventory</ansi>
+  Everything the whole company carries, its horses, and the cargo
+  (<ansi fg="command">help company inventory</ansi>).
+
+  <ansi fg="command">company eat</ansi> | <ansi fg="command">company drink</ansi> | <ansi fg="command">company meal</ansi>
+  Feed and water everyone at once (<ansi fg="command">help company meal</ansi>).
 
   <ansi fg="command">company dismiss [member]</ansi>
   Let a companion go. <ansi fg="command">company dismiss all</ansi> lets your
@@ -66,5 +121,8 @@ anyone lost.
   <ansi fg="command">company chemistry</ansi>
   How well your company fights together after time served side by side.
   See <ansi fg="command">help chemistry</ansi>.
+
+In the web client, the Company tab shows the same: its Status, Inventory,
+and Camp (<ansi fg="command">help webclient</ansi>).
 
 See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help chemistry</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help resurrect</ansi>.

@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -349,7 +350,7 @@ func resolveInterceptedMobAttack(mob, interceptor *mobs.Mob, mobRoom, defRoom *r
 		return
 	}
 
-	defRoom.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="mobname">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, interceptor.Character.Equipment.Offhand.NameSimple(), interceptor.Character.Name))
+	defRoom.SendText(shieldBreaksRoomLine(interceptor.Character.Equipment.Offhand.NameSimple(), mobTag(mobName(interceptor.InstanceId))))
 	events.AddToQueue(events.ItemOwnership{MobInstanceId: interceptor.InstanceId, Item: interceptor.Character.Equipment.Offhand, Gained: false})
 	interceptor.Character.RemoveFromBody(interceptor.Character.Equipment.Offhand)
 	itm := items.New(20)
@@ -419,10 +420,8 @@ func resolveInterceptedAttackOnLeader(mob *mobs.Mob, leader *users.UserRecord, m
 		return
 	}
 
-	leader.SendText(`<ansi fg="202">***</ansi>`)
-	leader.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> Your <ansi fg="item">%s</ansi> breaks! <ansi fg="202">***</ansi></ansi>`, leader.Character.Equipment.Offhand.NameSimple()))
-	leader.SendText(`<ansi fg="202">***</ansi>`)
-	defRoom.SendText(fmt.Sprintf(`<ansi fg="214"><ansi fg="202">***</ansi> The <ansi fg="item">%s</ansi> <ansi fg="username">%s</ansi> was carrying breaks! <ansi fg="202">***</ansi></ansi>`, leader.Character.Equipment.Offhand.NameSimple(), leader.Character.Name), leader.UserId)
+	leader.SendText(shieldBreaksOwnerLine(leader.Character.Equipment.Offhand.NameSimple()))
+	defRoom.SendText(shieldBreaksRoomLine(leader.Character.Equipment.Offhand.NameSimple(), userTag(leader.Character.Name)), leader.UserId)
 
 	events.AddToQueue(events.ItemOwnership{UserId: leader.UserId, Item: leader.Character.Equipment.Offhand, Gained: false})
 	leader.Character.RemoveFromBody(leader.Character.Equipment.Offhand)
@@ -431,6 +430,33 @@ func resolveInterceptedAttackOnLeader(mob *mobs.Mob, leader *users.UserRecord, m
 		defRoom.AddItem(itm, false)
 		events.AddToQueue(events.ItemOwnership{UserId: leader.UserId, Item: itm, Gained: true})
 	}
+}
+
+// chooseFromParty picks a company attacker's target in party by its rule
+// (Phase 32d) among the living, visible members it may strike. ok is
+// false when it can strike none. An unplaced attacker may choose any
+// living member.
+func chooseFromParty(leaderId, col int, placed bool, party mobparty.Party, alive map[company.MemberKey]bool, reach formationcombat.Reach, rule strategy.Rule, assistId int) (int, bool) {
+	var foes []strategy.Foe
+	any, leader := false, true
+	for _, id := range party.Members {
+		m := mobs.GetInstance(id)
+		if m == nil || m.Character.Health < 1 || m.Character.HasBuffFlag("hidden") {
+			continue
+		}
+		legal := legalAgainstParty(col, placed, party, id, alive, reach)
+		any = any || legal
+		row, mcol, _ := party.Formation.Find(mobparty.MemberKeyFor(id))
+		foes = append(foes, strategy.Foe{
+			ID: id, HP: m.Character.Health, MaxHP: m.Character.HealthMax.Value, Row: row, Col: mcol,
+			Reachable: legal, Leader: leader, StrikesPct: enemyparty.StrikesPct(m.Character.Aggro, leaderId),
+		})
+		leader = false
+	}
+	if !any {
+		return 0, false
+	}
+	return strategy.Pick(rule, foes, assistId, false)
 }
 
 // partyCombatants adapts an assembled party's members into
@@ -461,7 +487,10 @@ func partyCombatants(party mobparty.Party, alive map[company.MemberKey]bool) []e
 // ok=false leaves the caller's "target lost" behavior unchanged; the
 // engagement upkeep at the start of the next round (combat_engagement.go)
 // catches anything this misses.
-func reassignWithinLostParty(leaderId, lostId int, col int, placed bool, reach formationcombat.Reach, room *rooms.Room) (int, bool) {
+//
+// Phase 32d: the new target is chosen by the attacker's rule (assistId is
+// the player's target, for assist).
+func reassignWithinLostParty(leaderId, lostId int, col int, placed bool, reach formationcombat.Reach, rule strategy.Rule, assistId int, room *rooms.Room) (int, bool) {
 	if room == nil || lostId <= 0 {
 		return 0, false
 	}
@@ -472,14 +501,14 @@ func reassignWithinLostParty(leaderId, lostId int, col int, placed bool, reach f
 			if _, current := battleParty(b, []mobparty.Party{party}); !current {
 				continue
 			}
-			if id, ok := chooseFromParty(col, placed, party, enemyparty.Alive(party), reach); ok {
+			if id, ok := chooseFromParty(leaderId, col, placed, party, enemyparty.Alive(party), reach, rule, assistId); ok {
 				return id, true
 			}
 		}
 		return 0, false
 	}
 	if found {
-		if id, ok := chooseFromParty(col, placed, lostParty, enemyparty.Alive(lostParty), reach); ok {
+		if id, ok := chooseFromParty(leaderId, col, placed, lostParty, enemyparty.Alive(lostParty), reach, rule, assistId); ok {
 			return id, true
 		}
 	}
@@ -487,7 +516,7 @@ func reassignWithinLostParty(leaderId, lostId int, col int, placed bool, reach f
 		if (found && party.ID == lostParty.ID) || !hostileTo(party, leaderId) {
 			continue
 		}
-		if id, ok := chooseFromParty(col, placed, party, enemyparty.Alive(party), reach); ok {
+		if id, ok := chooseFromParty(leaderId, col, placed, party, enemyparty.Alive(party), reach, rule, assistId); ok {
 			return id, true
 		}
 	}
@@ -528,14 +557,15 @@ func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
 	_, col, placed := f.Find(company.LeaderMemberKey)
 	reach := combat.ResolveReach(user.Character, false)
 	lostId := user.Character.Aggro.MobInstanceId
-	newTargetId, ok := reassignWithinLostParty(user.UserId, lostId, col, placed, reach, room)
+	rule := enemyparty.MemberStrategy(user.UserId, company.LeaderMemberKey).Rule
+	newTargetId, ok := reassignWithinLostParty(user.UserId, lostId, col, placed, reach, rule, 0, room)
 	if !ok {
 		return false
 	}
 	emitTargetChange(userRef(user), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	user.Character.SetAggro(0, newTargetId, attackType(user.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
-	user.SendText(fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, mobName(newTargetId)))
+	user.SendText(turnsToward(`You`, mobTag(mobName(newTargetId))))
 	return true
 }
 
@@ -554,13 +584,18 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	_, col, placed := f.Find(key)
 	reach := combat.ResolveReach(&mob.Character, mob.Reach)
 	lostId := mob.Character.Aggro.MobInstanceId
-	newTargetId, ok := reassignWithinLostParty(leaderUserID, lostId, col, placed, reach, room)
+	assistId := 0
+	if leader := users.GetByUserId(leaderUserID); leader != nil && plainAttack(leader.Character.Aggro) {
+		assistId = leader.Character.Aggro.MobInstanceId
+	}
+	rule := enemyparty.MemberStrategy(leaderUserID, key).Rule
+	newTargetId, ok := reassignWithinLostParty(leaderUserID, lostId, col, placed, reach, rule, assistId, room)
 	if !ok {
 		return false
 	}
 	emitTargetChange(mobRef(mob), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	mob.Character.SetAggro(0, newTargetId, attackType(mob.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-	room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="mobname">%s</ansi>.`, mob.Character.Name, mobName(newTargetId)))
+	room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), mobTag(mobName(newTargetId))))
 	return true
 }

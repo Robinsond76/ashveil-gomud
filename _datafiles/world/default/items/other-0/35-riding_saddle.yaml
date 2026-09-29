@@ -1,0 +1,10 @@
+itemid: 35
+name: riding saddle
+namesimple: saddle
+description: A worn leather riding saddle with stirrups. Fitted to a riding
+  horse, it lets the horse carry a rider (mount saddle).
+type: object
+subtype: mundane
+value: 50
+weight: 7000
+saddle: riding

@@ -283,9 +283,14 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 					mLoc = mRoom.Title
 				}
 				mHealthPct := int(math.Floor((float64(m.Character.Health) / float64(m.Character.HealthMax.Value)) * 100))
+				// A company member is the leader's own, not a ♥friend (Phase 32a).
+				mStatus := `♥friend`
+				if m.Character.IsCompanion() {
+					mStatus = `Company`
+				}
 				rows = append(rows, []string{
 					m.Character.Name,
-					`♥friend`,
+					mStatus,
 					fmt.Sprintf(`%d`, m.Character.Level),
 					//fmt.Sprintf(`%d/%d`, m.Character.Health, m.Character.HealthMax.Value),
 					fmt.Sprintf(`%d%%`, mHealthPct),

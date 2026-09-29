@@ -7,7 +7,9 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -473,6 +475,12 @@ func (g *GMCPCharModule) buildAndSendGMCPPayload(e events.Event) events.Listener
 
 			requestedId := strings.Join(identifierParts, `.`)
 
+			// Ashveil Phase 29f: vitals wait for a player's paced combat
+			// lines, and are sent when they drain.
+			if holdCharNode(user.UserId, requestedId) {
+				continue
+			}
+
 			payload, moduleName := g.GetCharNode(user, requestedId)
 
 			events.AddToQueue(GMCPOut{
@@ -596,10 +604,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 
 		payload.Inventory = &GMCPCharModule_Payload_Inventory{
 			Backpack: &GMCPCharModule_Payload_Inventory_Backpack{
-				Summary: GMCPCharModule_Payload_Inventory_Backpack_Summary{
-					Count: len(user.Character.Items),
-					Max:   user.Character.CarryCapacity(),
-				},
+				Summary: backpackSummary(user, encumbrance.CurrentLoad),
 			},
 		}
 
@@ -611,11 +616,8 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 		payload.Inventory = &GMCPCharModule_Payload_Inventory{
 
 			Backpack: &GMCPCharModule_Payload_Inventory_Backpack{
-				Items: []GMCPCharModule_Payload_Inventory_Item{},
-				Summary: GMCPCharModule_Payload_Inventory_Backpack_Summary{
-					Count: len(user.Character.Items),
-					Max:   user.Character.CarryCapacity(),
-				},
+				Items:   []GMCPCharModule_Payload_Inventory_Item{},
+				Summary: backpackSummary(user, encumbrance.CurrentLoad),
 			},
 
 			Worn: buildWornPayload(user.Character.Equipment),
@@ -973,6 +975,23 @@ type GMCPCharModule_Payload_Inventory_Backpack struct {
 type GMCPCharModule_Payload_Inventory_Backpack_Summary struct {
 	Count int `json:"count,omitempty"`
 	Max   int `json:"max,omitempty"`
+	// WeightG is the player's own worn and carried gear; LoadG and
+	// CapacityG are the company's load and capacity, omitted when unknown
+	// (Phase 32g).
+	WeightG   int `json:"weight_g,omitempty"`
+	LoadG     int `json:"load_g,omitempty"`
+	CapacityG int `json:"capacity_g,omitempty"`
+}
+
+// backpackSummary is the backpack's header: the item count (no Max: weight
+// is the only limit, Phase 32f) and the weights.
+func backpackSummary(user *users.UserRecord, load func(leaderUserID int) (encumbrance.Load, bool)) GMCPCharModule_Payload_Inventory_Backpack_Summary {
+	s := GMCPCharModule_Payload_Inventory_Backpack_Summary{Count: len(user.Character.Items)}
+	s.WeightG = company.InventoryMemberOf(company.LeaderMemberKey, "", company.MemberState{Items: user.Character.Items, Equipment: user.Character.Equipment}).Grams
+	if l, ok := load(user.UserId); ok {
+		s.LoadG, s.CapacityG = l.TotalGrams(), l.CapacityGrams
+	}
+	return s
 }
 
 // GMCPCharModule_Payload_Inventory_Worn is keyed by slot name (e.g. "weapon",

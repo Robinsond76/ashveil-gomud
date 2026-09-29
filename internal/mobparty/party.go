@@ -29,6 +29,11 @@ type MobSummary struct {
 	Groups     []string
 	EHP        float64
 	DPS        float64
+	Name       string // Phase 32c: the member's own name, for its group's name
+	Noun       string // Phase 32c: the collective noun it gives a group ("band", "pack")
+	GroupName  string // Phase 32c: the name its group was given, "" when none yet
+	GroupDesc  string // Phase 32c: an authored group's description
+	Hostile    bool   // Phase 32d: only a hostile mob groups by its tag
 }
 
 // Party is a stable-for-this-listing group of mobs with an auto-assigned
@@ -89,14 +94,15 @@ func Assemble(mobs []MobSummary) []Party {
 }
 
 // groupKey returns the grouping key for a mob: its spawn group (Phase
-// 29b2) when it has one, else its first Groups tag, prefixed to avoid
-// colliding with the "solo:<id>" key space, or "" if the mob has neither
-// (always solo).
+// 29b2) when it has one, else, for a hostile mob, its first Groups tag,
+// prefixed to avoid colliding with the "solo:<id>" key space, or "" (always
+// solo). A non-hostile mob sharing a tag (townsfolk) is not an enemy group
+// (the owner, Phase 32d): it stands alone unless it came from a spawn group.
 func groupKey(m MobSummary) string {
 	if m.SpawnGroup != "" {
 		return "spawngroup:" + m.SpawnGroup
 	}
-	if len(m.Groups) == 0 || m.Groups[0] == "" {
+	if !m.Hostile || len(m.Groups) == 0 || m.Groups[0] == "" {
 		return ""
 	}
 	return "group:" + m.Groups[0]

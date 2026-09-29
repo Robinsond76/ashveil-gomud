@@ -194,7 +194,7 @@ func (m *CompanyModule) gearView(leaderUserID int, selector string) string {
 		record, _ = m.registry.Get(leaderUserID)
 		c, _ = resolveCompanion(record, "#"+strconv.Itoa(c.ID))
 	}
-	name := templateName(c.MobTemplateID, strconv.Itoa(c.MobTemplateID))
+	name := nameOf(c, strconv.Itoa(c.MobTemplateID))
 	lines := []string{fmt.Sprintf("#%d %s, %s", c.ID, name, companionLevel(c))}
 	if c.State == nil {
 		lines = append(lines, "  Gear is recorded the next time this companion is restored.")

@@ -10,6 +10,7 @@ maxwander: 0
 activitylevel: 10
 character:
   name: Corvin Blackthorn
+  pronouns: he
   description: 'A lean outlaw in a stolen officer''s coat, Corvin smiles with
     half his mouth and counts your purse with his eyes. He will fight for anyone
     who pays, and turn on them the day someone pays more.'

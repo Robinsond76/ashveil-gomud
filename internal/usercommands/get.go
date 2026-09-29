@@ -29,9 +29,17 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if len(room.Items) > 0 {
 			iCopies := append([]items.Item{}, room.Items...)
 
+			left := 0
 			for _, item := range iCopies {
+				// One line for everything left behind, not one each
+				// (32f review).
+				if !fits(user, item) {
+					left++
+					continue
+				}
 				Get(item.Name(), user, room, flags)
 			}
+			leftBehind(user, left)
 		}
 
 		return true, nil
@@ -117,6 +125,8 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			user.SendText(fmt.Sprintf(`You don't see a %s carried by %s.`, rest, user.Character.Pet.DisplayName()))
 		} else {
 
+			// A pet's pouch already counts in its owner's load (Phase
+			// 32f), so taking from it needs no capacity check.
 			if user.Character.Pet.RemoveItem(matchItem) {
 				if !user.Character.StoreItem(matchItem) {
 					user.Character.Pet.StoreItem(matchItem)
@@ -160,6 +170,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		// "get all <corpse>"
 		if rest == "all" {
 			tookSomething := false
+			left := 0
 
 			if corpseRef.Gold > 0 {
 				goldAmt := corpseRef.Gold
@@ -179,6 +190,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			// Backpack items on corpse
 			allCorpseItems := append([]items.Item{}, corpseRef.Items...)
 			for _, item := range allCorpseItems {
+				if !fits(user, item) {
+					left++
+					continue
+				}
 				if user.Character.StoreItem(item) {
 					corpseRef.RemoveItem(item)
 					events.AddToQueue(events.ItemOwnership{
@@ -197,6 +212,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			// Worn items on corpse character
 			allWorn := corpseRef.Character.GetAllWornItems()
 			for _, item := range allWorn {
+				if !fits(user, item) {
+					left++
+					continue
+				}
 				if user.Character.StoreItem(item) {
 					corpseRef.Character.RemoveFromBody(item)
 					events.AddToQueue(events.ItemOwnership{
@@ -212,7 +231,8 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				}
 			}
 
-			if !tookSomething {
+			leftBehind(user, left)
+			if !tookSomething && left == 0 {
 				user.SendText(fmt.Sprintf(`There is nothing to take from the %s.`, corpseName))
 			}
 
@@ -259,6 +279,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		if !found {
 			user.SendText(fmt.Sprintf(`You don't see a %s on the %s.`, rest, corpseName))
+			return true, nil
+		}
+
+		if tooHeavy(user, matchItem) {
 			return true, nil
 		}
 
@@ -324,6 +348,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if !found {
 			user.SendText(fmt.Sprintf(`You don't see a %s in the <ansi fg="container">%s</ansi>.`, rest, containerName))
 		} else {
+
+			if tooHeavy(user, matchItem) {
+				return true, nil
+			}
 
 			user.Character.CancelBuffsWithFlag("hidden") // No longer sneaking
 
@@ -407,6 +435,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 			if matchItem.HasAdjective(`exploding`) {
 				user.SendText(`You can't pick that up, it's about to explode!`)
+				return true, nil
+			}
+
+			if tooHeavy(user, matchItem) {
 				return true, nil
 			}
 

@@ -23,7 +23,7 @@ func (nativeRuntime) ResolveTemplate(name string) (int, bool) {
 // Spawn creates the companion's live mob. With a state (Phase 22b), the mob
 // is spawned at the saved level and the template's minted gear is replaced
 // by copies of the saved gear.
-func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState) (int, error) {
+func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState, identity domain.Identity) (int, error) {
 	leader := users.GetByUserId(leaderUserID)
 	if leader == nil {
 		return 0, fmt.Errorf("company: leader %d is unavailable", leaderUserID)
@@ -45,13 +45,28 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 	if state != nil {
 		applyState(mob, *state)
 	}
-	mob.Character.Charm(leaderUserID, -2, characters.CharmExpiredRevert)
+	// Phase 32a2: a generated recruit's own name and description.
+	if identity.Name != "" {
+		mob.Character.Name = identity.Name
+		// Generated identities have no authored pronouns of their own.
+		mob.Character.Pronouns = "they"
+	}
+	if identity.Description != "" {
+		mob.Character.Description = identity.Description
+	}
+	mob.Character.CharmAsCompanion(leaderUserID, -2, characters.CharmExpiredRevert)
 	leader.Character.TrackCharmed(mob.InstanceId, true)
 	room.AddMob(mob.InstanceId)
 	return mob.InstanceId, nil
 }
 
 func (nativeRuntime) IsLive(instanceID int) bool { return mobs.MobInstanceExists(instanceID) }
+
+func (nativeRuntime) WithLeader(leaderUserID, instanceID int) bool {
+	leader := users.GetByUserId(leaderUserID)
+	mob := mobs.GetInstance(instanceID)
+	return leader != nil && mob != nil && mob.Character.RoomId == leader.Character.RoomId
+}
 
 func (nativeRuntime) IsAttached(leaderUserID, instanceID int) bool {
 	leader := users.GetByUserId(leaderUserID)
@@ -130,6 +145,22 @@ func (nativeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 	return state.Clone(), true
 }
 
+// UseItem takes one use of a carried item from a live mob, removing it
+// when used up.
+func (nativeRuntime) UseItem(instanceID int, itm items.Item) bool {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return false
+	}
+	for i := range mob.Character.Items {
+		if mob.Character.Items[i].Equals(itm) {
+			mob.Character.UseItem(itm)
+			return true
+		}
+	}
+	return false
+}
+
 // CharmedByOther reports whether a live mob is now charmed by someone other
 // than the leader (befriended away). An uncharmed companion, such as one
 // whose charm expired when its leader left, is still the company's.
@@ -154,6 +185,15 @@ func (nativeRuntime) GearGrams(instanceID int) (int, bool) {
 		total += mob.Character.Items[i].Weight()
 	}
 	return total, true
+}
+
+// Carry reads a live mob's Strength and its largest pack (Phase 32f).
+func (nativeRuntime) Carry(instanceID int) (int, int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, 0, false
+	}
+	return mob.Character.Stats.Strength.ValueAdj, domain.BestPackGrams(mob.Character.Items), true
 }
 
 func (nativeRuntime) TemplateState(mobTemplateID int) (domain.MemberState, bool) {
@@ -181,6 +221,25 @@ func (nativeRuntime) TemplateState(mobTemplateID int) (domain.MemberState, bool)
 		state.Items[i].Validate()
 	}
 	return state, true
+}
+
+// Progress reads a live mob's level and experience progress.
+func (nativeRuntime) Progress(instanceID int) (int, int, int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, 0, 0, false
+	}
+	into, tnl := mob.Character.XPTNLActual()
+	return mob.Character.Level, into, tnl, true
+}
+
+// Mana reads a live mob's mana.
+func (nativeRuntime) Mana(instanceID int) (int, int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, 0, false
+	}
+	return mob.Character.Mana, mob.Character.ManaMax.Value, true
 }
 
 // Vitals reads a live mob's health.

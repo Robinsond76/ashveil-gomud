@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -29,7 +31,8 @@ const (
 func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(user.Character.RoomId), &mob.Character, func(r *rooms.Room) int { return r.VisibilityForUser(user) })
-	attackResult := calculateCombat(*user.Character, mob.Character, User, Mob, penalty, company.ChemistryBonusForUser(user.UserId))
+	targetChar := mobCombatCharacter(mob)
+	attackResult := calculateCombat(*user.Character, targetChar, User, Mob, penalty, company.ChemistryBonusForUser(user.UserId), mob)
 	spendEdges(user.Character, attackResult.EdgeSpent)
 
 	if attackResult.DamageToSource != 0 {
@@ -82,7 +85,8 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) 
 func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mob.Character.RoomId), user.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mob) })
-	attackResult := calculateCombat(mob.Character, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId))
+	sourceChar := mobCombatCharacter(mob)
+	attackResult := calculateCombat(sourceChar, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId))
 	spendEdges(&mob.Character, attackResult.EdgeSpent)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -103,7 +107,9 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
-	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId))
+	sourceChar := mobCombatCharacter(mobAtk)
+	targetChar := mobCombatCharacter(mobDef)
+	attackResult := calculateCombat(sourceChar, targetChar, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId), mobDef)
 	spendEdges(&mobAtk.Character, attackResult.EdgeSpent)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -116,6 +122,14 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 	}
 
 	return attackResult
+}
+
+// mobCombatCharacter makes a narration-only copy for the combat calculation.
+// Damage, edge spending, and attribution keep using the live mob instance.
+func mobCombatCharacter(m *mobs.Mob) characters.Character {
+	character := m.Character
+	character.Name = battle.EnemyDisplayName(m.InstanceId, character.Name)
+	return character
 }
 
 func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget) AttackResult {
@@ -178,6 +192,8 @@ func buildCombatMessages(
 	togetherToAttacker, togetherToDefender, togetherToRoom, togetherToDefenderRoom items.MessageOptions,
 	separateToAttacker, separateToDefender, separateToAttackerRoom, separateToDefenderRoom items.MessageOptions,
 ) (toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg items.ItemMessage) {
+	sourcePronouns := combatPronouns(sourceChar, sourceType)
+	targetPronouns := combatPronouns(targetChar, targetType)
 
 	tokenReplacements := map[items.TokenName]string{
 		items.TokenItemName:     weaponName,
@@ -189,6 +205,12 @@ func buildCombatMessages(
 		items.TokenDamage:       damageStr,
 		items.TokenEntranceName: `unknown`,
 		items.TokenExitName:     `unknown`,
+		items.TokenSourceHe:     sourcePronouns.Subject,
+		items.TokenSourceHim:    sourcePronouns.Object,
+		items.TokenSourceHis:    sourcePronouns.Possessive,
+		items.TokenTargetHe:     targetPronouns.Subject,
+		items.TokenTargetHim:    targetPronouns.Object,
+		items.TokenTargetHis:    targetPronouns.Possessive,
 	}
 
 	if sourceType == Mob {
@@ -197,6 +219,15 @@ func buildCombatMessages(
 
 	if targetType == Mob {
 		tokenReplacements[items.TokenTarget] = targetChar.GetMobName(0).String()
+	}
+
+	// Phase 29c: "the bandit captain", never "the Garrick Vane". A player's
+	// name is theirs as typed, whatever its case.
+	if sourceType == Mob {
+		tokenReplacements[items.TokenSource] = util.Article(tokenReplacements[items.TokenSource])
+	}
+	if targetType == Mob {
+		tokenReplacements[items.TokenTarget] = util.Article(tokenReplacements[items.TokenTarget])
 	}
 
 	if sourceChar.RoomId == targetChar.RoomId {
@@ -242,7 +273,29 @@ func buildCombatMessages(
 		}
 	}
 
-	return toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg
+	capitalize := func(m items.ItemMessage) items.ItemMessage { return items.ItemMessage(util.CapitalizeFirst(string(m))) }
+	return capitalize(toAttackerMsg), capitalize(toDefenderMsg), capitalize(toAttackerRoomMsg), capitalize(toDefenderRoomMsg)
+}
+
+func combatPronouns(character *characters.Character, actorType SourceTarget) characters.PronounForms {
+	if actorType == User {
+		return characters.PronounFormsFor("they")
+	}
+	return character.CombatPronouns()
+}
+
+// damageSuffix is what a hit did, in words at the end of its line (Phase
+// 29c): " (5 damage)", " (critical hit, 9 damage)", and on the
+// defender's line what their armor blocked, " (5 damage, 2 blocked)".
+func damageSuffix(damage int, crit bool, blocked int) string {
+	out := fmt.Sprintf("%d damage", damage)
+	if crit {
+		out = "critical hit, " + out
+	}
+	if blocked > 0 {
+		out += fmt.Sprintf(", %d blocked", blocked)
+	}
+	return " (" + out + ")"
 }
 
 // chemistryHitText tells the attacker that company chemistry made a hit.
@@ -253,10 +306,11 @@ const chemistryHitText = `<ansi fg="cyan">Fighting beside a companion you know w
 // magnitude that is subtracted from the hit chance. chemistryBonus is the
 // attacker's Phase 24 company chemistry, in points added to the hit chance
 // of its weapon strikes (not its pet's).
-func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int, chemistryBonus int) AttackResult {
+func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int, chemistryBonus int, targetMob ...*mobs.Mob) AttackResult {
 
 	attackResult := AttackResult{}
 	chemistryShown := false
+	strikeOrdinal := 0
 
 	atkCount := combatAttackCount(sourceChar, targetChar)
 
@@ -337,6 +391,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 			// Individual weapons may get multiple attacks
 			for j := 0; j < attacks; j++ {
+				strikeOrdinal++
 
 				attackTargetDamage := 0
 				attackTargetReduction := 0
@@ -347,8 +402,12 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				if hit {
 					// Check dodge before applying damage.
 					if Dodges(targetChar.Stats.Perception.ValueAdj, sourceChar.Stats.Perception.ValueAdj) {
-						attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s dodges your attack!</ansi>`, targetChar.Name))
-						attackResult.SendToTarget(`<ansi fg="cyan">You dodge the attack!</ansi>`)
+						dodger := targetChar.Name
+						if targetType == Mob {
+							dodger = util.CapitalizeFirst(util.Article(dodger))
+						}
+						attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s twists aside from your blow.</ansi>`, dodger))
+						attackResult.SendToTarget(`<ansi fg="cyan">You twist aside from the blow.</ansi>`)
 						continue
 					}
 					// Phase 24: say so, once a round, when only company
@@ -388,7 +447,9 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				// An edge raises the strike's ceiling too, so a sharpened
 				// top roll isn't described as a critical.
 				pct := damagePercentOfMax(attackTargetDamage, dCount, dSides, dBonus+edgeBonus)
-				msgs := items.GetAttackMessage(weaponSubType, pct)
+				// A crit the armor took entirely reads as any fully blocked
+				// blow does: a miss (Phase 29c review fix).
+				msgs := items.GetAttackMessage(weaponSubType, pct, isCrit && attackTargetDamage > 0)
 
 				toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg := buildCombatMessages(
 					&sourceChar, &targetChar, sourceType, targetType,
@@ -397,12 +458,14 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					msgs.Separate.ToAttacker, msgs.Separate.ToDefender, msgs.Separate.ToAttackerRoom, msgs.Separate.ToDefenderRoom,
 				)
 
-				if isCrit {
-					toAttackerMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toAttackerMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
-					toDefenderMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toDefenderMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
-					toAttackerRoomMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toAttackerRoomMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
+				// Phase 29c: every hit says what it did, in all four lines.
+				if attackTargetDamage > 0 {
+					suffix := damageSuffix(attackTargetDamage, isCrit, 0)
+					toAttackerMsg = items.ItemMessage(string(toAttackerMsg) + suffix)
+					toDefenderMsg = items.ItemMessage(string(toDefenderMsg) + damageSuffix(attackTargetDamage, isCrit, attackTargetReduction))
+					toAttackerRoomMsg = items.ItemMessage(string(toAttackerRoomMsg) + suffix)
 					if len(string(toDefenderRoomMsg)) > 0 {
-						toDefenderRoomMsg = items.ItemMessage(`<ansi fg="yellow-bold">***</ansi> ` + string(toDefenderRoomMsg) + ` <ansi fg="yellow-bold">***</ansi>`)
+						toDefenderRoomMsg = items.ItemMessage(string(toDefenderRoomMsg) + suffix)
 					}
 				}
 
@@ -418,12 +481,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				attackResult.SendToSource(string(toAttackerMsg))
 
 				// Send to victim
-				defenderMsg := string(toDefenderMsg)
-				if attackTargetDamage > 0 && attackTargetReduction > 0 {
-					defenderMsg += fmt.Sprintf(` <ansi fg="red">[you blocked %d]</ansi>`, attackTargetReduction)
-				}
-
-				attackResult.SendToTarget(defenderMsg)
+				attackResult.SendToTarget(string(toDefenderMsg))
 
 				// Send to room
 				attackResult.SendToSourceRoom(
@@ -436,6 +494,25 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					attackResult.SendToTargetRoom(
 						string(toDefenderRoomMsg.SetTokenValue(items.TokenTarget, targetChar.Name).SetTokenValue(items.TokenTargetType, string(targetType))),
 					)
+				}
+
+				// A reaction belongs to this strike, not the round's aggregate
+				// Crit flag. The live target is changed only after the whole round,
+				// so subtract earlier strikes when deciding whether it still stands.
+				if isCrit && attackTargetDamage > 0 && targetChar.Health-attackResult.DamageToTarget-attackTargetDamage > 0 {
+					var victimMob *mobs.Mob
+					if len(targetMob) > 0 {
+						victimMob = targetMob[0]
+					}
+					toVictim, toWitness := painReactionFor(&targetChar, targetType, victimMob, targetChar.Health-attackResult.DamageToTarget-attackTargetDamage, strikeOrdinal)
+					// Phase 29f: a beat of silence before the pain lands.
+					combatpace.Default().Mark(toVictim, toWitness)
+					attackResult.SendToTarget(toVictim)
+					attackResult.SendToSource(toWitness)
+					attackResult.SendToSourceRoom(toWitness)
+					if sourceChar.RoomId != targetChar.RoomId {
+						attackResult.SendToTargetRoom(toWitness)
+					}
 				}
 
 				attackResult.DamageToTarget += attackTargetDamage

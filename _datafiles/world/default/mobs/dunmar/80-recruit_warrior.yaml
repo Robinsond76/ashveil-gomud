@@ -1,0 +1,25 @@
+mobid: 80
+zone: Dunmar
+# Phase 32a2 generated recruit base (warrior). Every player's generated
+# warriors spawn from this template under their own name, level, and
+# alignment (the company record's), so its name, level, and alignment are
+# placeholders. Like the 22c candidates, it wears its gear, carries
+# nothing, has no gold, and itemdropchance 0 keeps a death from dropping
+# anything, so a recruit can't be farmed.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Recruit Warrior
+  description: A sellsword looking for a company to march with.
+  raceid: 1
+  level: 1
+  alignment: 0
+  equipment:
+    weapon:
+      itemid: 10002
+    offhand:
+      itemid: 20004
+    head:
+      itemid: 20020

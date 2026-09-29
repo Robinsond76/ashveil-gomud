@@ -12,6 +12,9 @@ type CharmInfo struct {
 	UserId          int    // Charmed or serving a player?
 	RoundsRemaining int    // If -1, never expires
 	ExpiredCommand  string // Any valid mob commands such as `emote bows and waves farewell;despawn`
+	// Companion marks a company member's charm (Phase 32a): its name
+	// leaves out the ♥friend tag. Set only by CharmAsCompanion.
+	Companion bool
 }
 
 func NewCharm(userId int, rounds int, expireCommand string) *CharmInfo {

@@ -12,7 +12,9 @@ When your company's fight ends, you get a short summary of it:
 
 The heading tells how it ended: <ansi fg="yellow">The fighting is over</ansi> (you won),
 <ansi fg="yellow">The company is beaten</ansi> (every member fell), or <ansi fg="yellow">The fight breaks off</ansi>
-(you fled, broke off, or walked away).
+(you fled, broke off, or walked away). A fight with a named group names it:
+<ansi fg="yellow">The fight with a band of ruffians is over</ansi>, <ansi fg="yellow">The company is beaten by a
+band of ruffians</ansi>, or <ansi fg="yellow">The fight with a band of ruffians breaks off</ansi>.
 
 - <ansi fg="yellow">Damage dealt</ansi> counts weapon blows and spells.
 - <ansi fg="yellow">Healing</ansi> (when there was any) counts healing your company received.
@@ -28,5 +30,10 @@ their turn, each battle gets its own summary.
 
   <ansi fg="command">set battlesummary</ansi>
   Turn the summary off, or back on. It's on to start with.
+
+The summary uses the same fixed enemy labels as the fight: the second
+cutthroat stays second even after the first falls. A new battle, including
+one rebuilt after restart or copyover, starts its labels afresh
+(<ansi fg="command">help narration</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>.

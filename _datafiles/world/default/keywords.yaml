@@ -9,6 +9,8 @@ help:
       - macros
       - set
       - password
+      - delete
+      - webclient
     character:
       - actionpoints
       - alignment
@@ -32,6 +34,8 @@ help:
       - archetype
     company:
       - company
+      - company-inventory
+      - company-meal
       - standing
     road:
       - travel
@@ -75,13 +79,17 @@ help:
       - cast
       - chemistry
       - combat
+      - combatpace
       - consider
       - flee
       - formation
       - light
+      - narration
       - resurrect
+      - scout
       - sharpen
       - shoot
+      - strategy
       - targeting
     information:
       - biome
@@ -184,16 +192,21 @@ help:
 # Aliases for keywords when typing: help <keyword>
 # Key is the target keyword, value is the list of aliases
 help-aliases:
+  delete:           [deletion, delete-character, reroll]
+  webclient:        [web client, web-client, dock, panels, tabs, layout]
   adventure:        [ashveil, basics]
   company:          [recruit, recruiting, roster, companions, companion]
+  company-inventory: [company inventory, company inv, company-inv]
+  company-meal:     [company meal, company eat, company drink, meal, meals, company-eat, company-drink]
   standing:         [reputation, blackmarket, black-market]
+  tutorial:         [replay]
   archetype:        [archetypes, class, classes]
   trap:             [traps]
   survival:         [needs, hunger, thirst, fatigue]
   strain:           [walking]
   temperature:      [warmth, exposure, cold, heat]
-  cargo:            [load, overloaded]
-  mount:            [mounts, horse, stable]
+  cargo:            [load, overloaded, capacity, pack, packs, satchel]
+  mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
   camp:             [camping, campfire]
   cooking:          [cook, hearth, recipe, recipes]
@@ -202,8 +215,12 @@ help-aliases:
   combat:           [battle, battles, fighting, fight]
   formation:        [reach, interception, formations]
   targeting:        [target, targets, enemy-parties]
+  scout:            [scouting, enemy-groups, groups]
+  strategy:         [strategies, gambits, roles]
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
+  combatpace:       [pace, pacing, combat-pace]
+  narration:        [critical, crit, healed, chanting, combat-text, pronouns, ordinals, pain, pain-reaction]
   resurrect:        [resurrection]
   light:            [darkness, dark]
   brawling:         [tackle, brawl, disarm, recover, throw]
@@ -258,6 +275,7 @@ command-aliases:
   scribe:             ['scribble', 'write']
   equip:              ['wear', 'wield', 'hold']
   remove:             ['rem', 'unequip', 'unwear', 'unwield']
+  strategy:           ['strategies']
   throw:              ['toss']
   attack:             ['a', 'k', 'kill', 'fight']
   get:                ['g', 'take']

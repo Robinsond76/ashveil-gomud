@@ -3,6 +3,11 @@ zone: Dark Forest
 itemdropchance: 100
 hostile: true
 solitary: true
+painreactions:
+  - tovictim: 'A crack runs through the chitin at your crown. You shriek and hold the web.'
+    toroom: '{name} shrieks as the chitin of the crown splits, but clings to the web.'
+  - tovictim: 'Ichor runs beneath your crown. You drag your wounded bulk forward.'
+    toroom: '{name} shudders beneath the torn crown and hauls forward on hooked legs.'
 maxwander: 0
 groups: 
   - spider
@@ -18,4 +23,3 @@ character:
   equipment:
     body:
       itemid: 20031
-

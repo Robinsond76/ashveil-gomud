@@ -42,24 +42,29 @@ type MobId int // Creating a custom type to help prevent confusion over MobId an
 
 type Mob struct {
 	MobId           MobId
-	Zone            string   `yaml:"zone,omitempty"`
-	ItemDropChance  int      `yaml:"itemdropchance,omitempty"` // chance in 100
-	LootCategory    string   `yaml:"lootcategory,omitempty"`   // optional shared weighted loot table
-	ActivityLevel   int      `yaml:"activitylevel,omitempty"`  // 1-100%
-	InstanceId      int      `yaml:"-"`
-	HomeRoomId      int      `yaml:"-"`
-	Hostile         bool     `yaml:"hostile,omitempty"`        // whether they attack on sight
-	Reach           bool     `yaml:"reach,omitempty"`          // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
-	Practice        bool     `yaml:"practice,omitempty"`       // Ashveil (Phase 27c): a practice foe, beaten without any reward (see mobcommands.Suicide)
-	Solitary        bool     `yaml:"solitary,omitempty"`       // Ashveil (Phase 29b2): stands alone; never grouped or topped up by spawning
-	SpawnGroup      string   `yaml:"-"`                        // Ashveil (Phase 29b2): the spawn group it fights in (runtime only), e.g. spawn:<room>:<n>
-	LastIdleCommand uint8    `yaml:"-"`                        // Track what hte last used idlecommand was
-	BoredomCounter  uint8    `yaml:"-"`                        // how many rounds have passed since this mob has seen a player
-	Groups          []string `yaml:"groups,omitempty"`         // What group do they identify with? Helps with teamwork
-	Hates           []string `yaml:"hates,omitempty"`          // What NPC groups or races do they hate and probably fight if encountered?
-	IdleCommands    []string `yaml:"idlecommands,omitempty"`   // Commands they may do while idle (not in combat)
-	AngryCommands   []string `yaml:"angrycommands,omitempty"`  // randomly chosen to queue when they are angry/entering combat.
-	CombatCommands  []string `yaml:"combatcommands,omitempty"` // Commands they may do while in combat
+	Zone            string               `yaml:"zone,omitempty"`
+	ItemDropChance  int                  `yaml:"itemdropchance,omitempty"` // chance in 100
+	LootCategory    string               `yaml:"lootcategory,omitempty"`   // optional shared weighted loot table
+	ActivityLevel   int                  `yaml:"activitylevel,omitempty"`  // 1-100%
+	InstanceId      int                  `yaml:"-"`
+	HomeRoomId      int                  `yaml:"-"`
+	Hostile         bool                 `yaml:"hostile,omitempty"`        // whether they attack on sight
+	Reach           bool                 `yaml:"reach,omitempty"`          // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
+	Practice        bool                 `yaml:"practice,omitempty"`       // Ashveil (Phase 27c): a practice foe, beaten without any reward (see mobcommands.Suicide)
+	Solitary        bool                 `yaml:"solitary,omitempty"`       // Ashveil (Phase 29b2): stands alone; never grouped or topped up by spawning
+	CompanyMoveTo   int                  `yaml:"-"`                        // Ashveil (Phase 32a): the room its leader's one company line announced it moving to (runtime only)
+	SpawnGroup      string               `yaml:"-"`                        // Ashveil (Phase 29b2): the spawn group it fights in (runtime only), e.g. spawn:<room>:<n>
+	GroupNoun       string               `yaml:"groupnoun,omitempty"`      // Ashveil (Phase 32c): overrides its race's collective noun for its group ("patrol")
+	PainReactions   []races.PainReaction `yaml:"painreactions,omitempty"`  // Optional Phase 29e override for this NPC template.
+	GroupName       string               `yaml:"-"`                        // Ashveil (Phase 32c): its group's name, given when the group formed (runtime only)
+	GroupDesc       string               `yaml:"-"`                        // Ashveil (Phase 32c): an authored group's description (runtime only)
+	LastIdleCommand uint8                `yaml:"-"`                        // Track what hte last used idlecommand was
+	BoredomCounter  uint8                `yaml:"-"`                        // how many rounds have passed since this mob has seen a player
+	Groups          []string             `yaml:"groups,omitempty"`         // What group do they identify with? Helps with teamwork
+	Hates           []string             `yaml:"hates,omitempty"`          // What NPC groups or races do they hate and probably fight if encountered?
+	IdleCommands    []string             `yaml:"idlecommands,omitempty"`   // Commands they may do while idle (not in combat)
+	AngryCommands   []string             `yaml:"angrycommands,omitempty"`  // randomly chosen to queue when they are angry/entering combat.
+	CombatCommands  []string             `yaml:"combatcommands,omitempty"` // Commands they may do while in combat
 	Character       characters.Character
 	MaxWander       int       `yaml:"maxwander,omitempty"`       // Max rooms to wander from home
 	WanderCount     int       `yaml:"-"`                         // How many times this mob has wandered
@@ -653,6 +658,9 @@ func (r *Mob) Id() int {
 }
 
 func (r *Mob) Validate() error {
+	if err := races.ValidatePainReactions(r.PainReactions); err != nil {
+		return err
+	}
 
 	if r.ActivityLevel < 1 {
 		r.ActivityLevel = 10
@@ -912,4 +920,16 @@ func LoadDataFiles() {
 
 	mudlog.Info("mobs.LoadDataFiles()", "loadedCount", len(mobs), "Time Taken", time.Since(start))
 
+}
+
+// CollectiveNoun is what a group of this mob is called (Ashveil Phase
+// 32c): its own groupnoun, else its race's, else "" (the caller's default).
+func (m *Mob) CollectiveNoun() string {
+	if m.GroupNoun != `` {
+		return m.GroupNoun
+	}
+	if r := races.GetRace(m.Character.RaceId); r != nil {
+		return r.GroupNoun
+	}
+	return ``
 }

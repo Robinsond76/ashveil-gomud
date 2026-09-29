@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"sort"
 	"strings"
 
@@ -90,6 +91,14 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	//
 	// look for any mobs, players, npcs
 	//
+
+	// Ashveil Phase 32c: an enemy group, by its name, unless the word names
+	// a thing here or on you ("look pack" is your backpack beside a pack of
+	// wolves; 32c review).
+	if g, ok := enemyparty.FindGroupNamed(room, lookAt); ok && !namesAThing(user, room, lookAt) {
+		user.SendText(describeGroup(room, g, user))
+		return true, nil
+	}
 
 	playerId, mobId := room.FindByName(lookAt)
 
@@ -458,11 +467,25 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	}
 
+	// Phase 32a: a candidate on a recruiter's notice.
+	if text, ok := company.LookCandidate(user.UserId, room.RoomId, rest); ok {
+		user.SendText(text)
+		return true, nil
+	}
+
 	// Nothing found
 	user.SendText("Look at what???")
 
 	return true, nil
 
+}
+
+// characterName is an online user's character name, or "" (Phase 32a).
+func characterName(userID int) string {
+	if u := users.GetByUserId(userID); u != nil && u.Character != nil {
+		return u.Character.Name
+	}
+	return ""
 }
 
 func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
@@ -586,6 +609,14 @@ func lookRoom(user *users.UserRecord, roomId int, secretLook bool) {
 		user.SendText(line)
 	}
 
+	// Phase 32a: the camps pitched here, then a recruiter's notice.
+	for _, line := range camping.CampLines(camping.RoomCamps(room.RoomId), user.UserId, characterName) {
+		user.SendText(line)
+	}
+	for _, line := range company.RecruiterLines(user.UserId, room.RoomId) {
+		user.SendText(line)
+	}
+
 	signCt := 0
 	privateSigns := room.GetPrivateSigns()
 	for _, sign := range privateSigns {
@@ -692,4 +723,23 @@ func archetypeLookLine(userId, mobInstanceId int) string {
 		name = id
 	}
 	return fmt.Sprintf(`  Archetype: <ansi fg="yellow">%s</ansi>`, name)
+}
+
+// namesAThing reports whether lookAt names a container, exit, item carried
+// or worn, or noun here: things a group's word must not hide (Phase 32c).
+func namesAThing(user *users.UserRecord, room *rooms.Room, lookAt string) bool {
+	if room.FindContainerByName(lookAt) != `` {
+		return true
+	}
+	if exitName, _ := room.FindExitByName(lookAt); exitName != `` {
+		return true
+	}
+	if _, ok := user.Character.FindInBackpack(lookAt); ok {
+		return true
+	}
+	if _, ok := user.Character.FindOnBody(lookAt); ok {
+		return true
+	}
+	noun, _ := room.FindNoun(lookAt)
+	return len(noun) > 0
 }

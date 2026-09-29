@@ -14,12 +14,12 @@ const FiveMinutes = 60*5;
 function onCast(sourceActor, targetActor) {
 
     if ( !targetActor.IsTameable() ) {
-        SendUserMessage(sourceActor.UserId(), targetActor.GetCharacterName(true)+' can\'t be tamed!');
+        SendUserMessage(sourceActor.UserId(), targetActor.GetCharacterName(true)+' can\'t be tamed.');
         return false;
     }
 
     if ( targetActor.IsCharmed() ) {
-        SendUserMessage(sourceActor.UserId(), 'Already friendly!');
+        SendUserMessage(sourceActor.UserId(), 'Already friendly.');
         return false;
     }
 
@@ -92,12 +92,12 @@ function onWait(sourceActor, targetActor) {
             SendRoomMessage(sourceActor.GetRoomId(), `<ansi fg="219">`+sourceActor.GetCharacterName(true)+' jingles a little bell.</ansi>', sourceActor.UserId());
             break;
         case 9:
-            SendUserMessage(sourceActor.UserId(), '<ansi fg="219">You raise one eyebrow... then the other!</ansi>');
-            SendRoomMessage(sourceActor.GetRoomId(), `<ansi fg="219">`+sourceActor.GetCharacterName(true)+' raises one eyebrow... then the other!</ansi>', sourceActor.UserId());
+            SendUserMessage(sourceActor.UserId(), '<ansi fg="219">You raise one eyebrow... then the other.</ansi>');
+            SendRoomMessage(sourceActor.GetRoomId(), `<ansi fg="219">`+sourceActor.GetCharacterName(true)+' raises one eyebrow... then the other.</ansi>', sourceActor.UserId());
             break;
         case 10:
-            SendUserMessage(sourceActor.UserId(), '<ansi fg="219">You slowly raise your hands upwards, and then CLAP them together loudly!</ansi>');
-            SendRoomMessage(sourceActor.GetRoomId(), `<ansi fg="219">`+sourceActor.GetCharacterName(true)+' slowly raises their hands upwards, and then CLAPS them together loudly!</ansi>', sourceActor.UserId());
+            SendUserMessage(sourceActor.UserId(), '<ansi fg="219">You slowly raise your hands upwards, and then clap them together loudly.</ansi>');
+            SendRoomMessage(sourceActor.GetRoomId(), `<ansi fg="219">`+sourceActor.GetCharacterName(true)+' slowly raises their hands upwards, and then claps them together loudly.</ansi>', sourceActor.UserId());
             break;
         default:
             SendUserMessage(sourceActor.UserId(), '<ansi fg="219">You whistle several times, changing your pitch ever so slightly.</ansi>');
@@ -115,7 +115,7 @@ function onWait(sourceActor, targetActor) {
 function onMagic(sourceActor, targetActor) {
 
     if ( targetActor.IsCharmed() ) {
-        SendUserMessage(sourceActor.UserId(), 'Already friendly!');
+        SendUserMessage(sourceActor.UserId(), 'Already friendly.');
         return false;
     }
 
@@ -131,15 +131,15 @@ function onMagic(sourceActor, targetActor) {
     randNumber = UtilDiceRoll(1, 100) - 1;
     
     if ( randNumber >= successChance ) {
-        SendUserMessage(sourceActor.UserId(), '<ansi fg="219">The '+targetName+' <ansi fg="182">RESISTS</ansi> your attempt to tame it!</ansi>');
-        SendRoomMessage(sourceActor.GetRoomId(), '<ansi fg="219">The '+targetName+' <ansi fg="182">RESISTS</ansi> '+sourceName+'\'s attempt to tame it!</ansi>', sourceActor.UserId());
+        SendUserMessage(sourceActor.UserId(), '<ansi fg="219">The '+targetName+' <ansi fg="182">resists</ansi> your attempt to tame it.</ansi>');
+        SendRoomMessage(sourceActor.GetRoomId(), '<ansi fg="219">The '+targetName+' <ansi fg="182">resists</ansi> '+sourceName+'\'s attempt to tame it.</ansi>', sourceActor.UserId());
         
         targetActor.Command(`attack ` + sourceActor.ShorthandId());
         return false;
     }
 
-    SendUserMessage(sourceActor.UserId(), '<ansi fg="219">You <ansi fg="151">SUCCESSFULLY</ansi> tame the '+targetName+'!</ansi>');
-    SendRoomMessage(sourceActor.GetRoomId(), `<ansi fg="219">`+sourceName+' <ansi fg="151">SUCCESSFULLY</ansi> tames the '+targetName+'!</ansi>', sourceActor.UserId());
+    SendUserMessage(sourceActor.UserId(), '<ansi fg="219">You <ansi fg="151">successfully</ansi> tame the '+targetName+'.</ansi>');
+    SendRoomMessage(sourceActor.GetRoomId(), `<ansi fg="219">`+sourceName+' <ansi fg="151">successfully</ansi> tames the '+targetName+'.</ansi>', sourceActor.UserId());
     
     skillLevel = sourceActor.GetSkillLevel("tame");
     tameRounds = 0;
@@ -161,13 +161,13 @@ function onMagic(sourceActor, targetActor) {
 
     // Tell the caster about the action
     if ( tameRounds == UnlimitedMinutes ) {
-        SendUserMessage(sourceActor.UserId(), 'The '+targetName+' has been tamed by you!');
+        SendUserMessage(sourceActor.UserId(), 'The '+targetName+' has been tamed by you.');
     } else {
-        SendUserMessage(sourceActor.UserId(), 'The '+targetName+' has been tamed by you for '+String(tameRounds)+' rounds!');
+        SendUserMessage(sourceActor.UserId(), 'The '+targetName+' has been tamed by you for '+String(tameRounds)+' rounds.');
     }
 
     // Tell the room about the heal, except the source and target
-    SendRoomMessage(sourceActor.GetRoomId(), sourceName+' tames the '+targetName+'!', sourceActor.UserId(), targetActor.UserId());
+    SendRoomMessage(sourceActor.GetRoomId(), sourceName+' tames the '+targetName+'.', sourceActor.UserId(), targetActor.UserId());
 
  
     return true;

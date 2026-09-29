@@ -1,0 +1,39 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">scout</ansi>
+
+See how the enemy groups here stand before you fight them. Scouting is free:
+it takes no skill and no time, and works in a fight, on a group waiting its
+turn, or on one that hasn't noticed you.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">scout</ansi>
+  List the enemy groups here, with their numbers and what they're doing.
+
+  <ansi fg="command">scout [group]</ansi>
+  Draw a group's formation, front row nearest you, with each member's
+  health: <ansi fg="command">scout ruffians</ansi>.
+
+  A band of ruffians, as they stand (front row nearest you):
+          col 1                   col 2                   col 3
+  front [ *ruffian (unhurt)     |  ruffian (wounded)    | ------ ]
+  mid   [  cutpurse (unhurt)    | ------                | ------ ]
+  back  [ ------                |  rat (unhurt)         | ------ ]
+  * you can reach them from your place in the formation.
+
+<ansi fg="yellow-bold">Reading it</ansi>
+
+- A <ansi fg="yellow">*</ansi> marks the members you can reach from your place in your company's
+  formation (what <ansi fg="command">formation reach</ansi> tells you). Move in the formation
+  before you <ansi fg="command">attack</ansi> if you can't reach the ones you want.
+- The front of each column takes the first blows: plain melee reaches only
+  the front, a reach weapon one rank deeper, and a bow anyone.
+- Health reads unhurt, scratched, wounded, badly wounded, or near death.
+- The formation changes as members fall: the one behind steps up.
+
+In the web client, the Combat tab's Battle view shows your battle's group
+the same way, with the same words, and keeps it current (<ansi fg="command">help webclient</ansi>).
+
+You see what <ansi fg="command">look</ansi> sees: hidden members are left out, and in the dark
+you can't make them out. <ansi fg="command">look [group]</ansi> describes a group in words.
+
+See also: <ansi fg="command">help attack</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help targeting</ansi>.

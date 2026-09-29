@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -9,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -115,14 +117,7 @@ func (sd side) setParties(parties []mobparty.Party, room *rooms.Room, round uint
 // battleParty finds the battle's group among the room's parties: the one
 // sharing an enemy with it.
 func battleParty(b battle.Battle, parties []mobparty.Party) (mobparty.Party, bool) {
-	for _, p := range parties {
-		for _, instanceId := range p.Members {
-			if b.Has(instanceId) {
-				return p, true
-			}
-		}
-	}
-	return mobparty.Party{}, false
+	return enemyparty.BattleParty(b, parties)
 }
 
 func (sd side) allyRefs() []combatstream.Ref {
@@ -145,13 +140,35 @@ func partyRefs(p mobparty.Party) []combatstream.Ref {
 	return out
 }
 
+// assignPartyEnemyNames captures live mob data before battle takes its mutex.
+func assignPartyEnemyNames(userId int, p mobparty.Party) {
+	members := make([]battle.EnemyName, 0, len(p.Members))
+	for _, instanceId := range p.Members {
+		if m := mobs.GetInstance(instanceId); m != nil {
+			members = append(members, battle.EnemyName{InstanceId: m.InstanceId, BaseName: m.Character.Name, Noun: m.Character.CombatNoun})
+		}
+	}
+	battle.AssignEnemyNames(userId, members)
+}
+
 // beginBattle starts the player's battle against a group, opening its
 // fight on the stream.
 func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) battle.Battle {
 	b := battle.Begin(sd.user.UserId, room.RoomId, round, p.ID, p.Members)
+	assignPartyEnemyNames(sd.user.UserId, p)
 	id := combatstream.Default().Open(round, room.RoomId, p.ID, userRef(sd.user), sd.allyRefs(), partyRefs(p))
+	if len(p.Members) > 0 {
+		if g, ok := enemyparty.GroupOf(room, p.Members[0]); ok && !g.Solo() {
+			combatstream.Default().Name(id, g.Name) // Phase 32c: "The fight with a band of ruffians is over"
+		}
+	}
 	battle.SetFight(sd.user.UserId, id)
 	b.FightID = id
+	// Phase 29c: the fight's opener, unless another player is already
+	// fighting this group here (one fight to the room, one opener).
+	if !groupInOtherBattle(sd.user.UserId, room.RoomId, p.ID) {
+		room.SendText(fightOpener(enemyGroups(partyRefs(p))))
+	}
 	sd.keepOnBattle(b, room)
 	return b
 }
@@ -188,21 +205,39 @@ func (sd side) keepOnBattle(b battle.Battle, room *rooms.Room) {
 		m := mobs.GetInstance(a.MobInstanceId)
 		return m != nil && m.Character.Health > 0 && m.Character.RoomId == room.RoomId
 	}
+	// Phase 32d: each turns onto the foe its own strategy picks.
+	g, grouped := enemyparty.Group{}, false
+	if p, found := battleParty(b, enemyparty.Parties(room)); found {
+		g, grouped = enemyparty.Group{Party: p}, true
+	}
+	aimFor := func(att enemyparty.Attacker) int {
+		if grouped {
+			if id, ok := enemyparty.Aim(g, att); ok {
+				return id
+			}
+		}
+		return foe
+	}
 	if u := sd.user; offBattle(u.Character.Aggro) {
-		emitTargetChange(userRef(u), mobRefById(u.Character.Aggro.MobInstanceId), mobRefById(foe), room.RoomId)
-		u.Character.SetAggro(0, foe, attackType(u.Character.Aggro))
+		next := aimFor(enemyparty.PlayerAttacker(u))
+		emitTargetChange(userRef(u), mobRefById(u.Character.Aggro.MobInstanceId), mobRefById(next), room.RoomId)
+		u.Character.SetAggro(0, next, attackType(u.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
-		u.SendText(fmt.Sprintf(`You turn on <ansi fg="mobname">%s</ansi>.`, mobName(foe)))
+		u.SendText(turnsToward(`You`, mobTag(mobName(next))))
 	}
 	for _, instanceId := range sortedKeys(sd.allies) {
 		m := mobs.GetInstance(instanceId)
 		if m == nil || !offBattle(m.Character.Aggro) {
 			continue
 		}
+		foe := foe
+		if leaderId, key, ok := company.LeaderAndKeyForInstance(instanceId); ok && leaderId == sd.user.UserId {
+			foe = aimFor(enemyparty.CompanionAttacker(leaderId, key, m, 0))
+		}
 		emitTargetChange(mobRef(m), mobRefById(m.Character.Aggro.MobInstanceId), mobRefById(foe), room.RoomId)
 		m.Character.SetAggro(0, foe, attackType(m.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
-		room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="mobname">%s</ansi>.`, m.Character.Name, mobName(foe)))
+		room.SendText(turnsToward(mobTag(mobName(m.InstanceId)), mobTag(mobName(foe))))
 	}
 }
 
@@ -242,7 +277,7 @@ func sidesOf(b battle.Battle) fightSides {
 
 // endBattle ends the player's battle and its fight, and sends the summary.
 func endBattle(userId int, outcome string) {
-	b, ok := battle.End(userId)
+	b, ok := battle.Current(userId)
 	if !ok {
 		return
 	}
@@ -250,6 +285,7 @@ func endBattle(userId int, outcome string) {
 	if _, open := combatstream.Default().Fight(b.FightID); open {
 		fs.end(outcome)
 	}
+	battle.End(userId)
 }
 
 // battlePass decides every player's battle at the top of the round,
@@ -287,6 +323,7 @@ func battlePass() {
 			// (closeIdleBattles), which may have turned them back on.
 			if p, found := battleParty(b, parties); found && b.RoomId == room.RoomId && battleOutcome(b) == "" {
 				battle.Grow(uid, p.ID, p.Members)
+				assignPartyEnemyNames(uid, p)
 				combatstream.Default().Grow(b.FightID, p.ID, sd.allyRefs(), partyRefs(p))
 				b, _ = battle.Current(uid)
 				sd.keepOnBattle(b, room)
@@ -332,6 +369,7 @@ func closeIdleBattles() {
 		p, found := battleParty(b, parties)
 		if found {
 			sd.rallyIdleFoes(p, room)
+			sd.turnAlone(p, room)
 		}
 		if found && sd.setOn(p, room) {
 			continue
@@ -362,8 +400,62 @@ func (sd side) rallyIdleFoes(p mobparty.Party, room *rooms.Room) {
 		m.PlayerAttacked(u.UserId)
 		m.PreventIdle = true
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
-		room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> turns on <ansi fg="username">%s</ansi>.`, m.Character.Name, u.Character.Name))
+		room.SendText(turnsToward(mobTag(mobName(m.InstanceId)), userTag(u.Character.Name)))
 	}
+}
+
+// turnAlone gives a player fighting with no companion beside them their
+// next foe from the battle's group when their target has fallen or gone
+// (Phase 32c: a battle plays out on its own, and a bare attack no longer
+// picks the next foe). With a companion present, 29a's upkeep does this.
+// A player who used break stays out.
+func (sd side) turnAlone(p mobparty.Party, room *rooms.Room) {
+	u := sd.user
+	if u.Character.Health < 1 || u.Character.RoomId != room.RoomId || engagement.StoodDown(u.UserId) {
+		return
+	}
+	for _, instanceId := range room.GetMobs(rooms.FindCharmed) {
+		if leaderId, _, ok := company.LeaderAndKeyForInstance(instanceId); ok && leaderId == u.UserId {
+			return // the upkeep's
+		}
+	}
+	previous := 0
+	if a := u.Character.Aggro; a != nil {
+		if !plainAttack(a) || a.MobInstanceId <= 0 {
+			return
+		}
+		if m := mobs.GetInstance(a.MobInstanceId); m != nil && m.Character.Health > 0 && m.Character.RoomId == room.RoomId && !m.Character.HasBuffFlag("hidden") {
+			// Still has a foe. Phase 32d: a rule that follows something
+			// (defend) turns when its own choice is someone else.
+			att := enemyparty.PlayerAttacker(u)
+			if !att.Rule.ReaimsEachRound() {
+				return
+			}
+			choice, ok := enemyparty.RuleChoice(enemyparty.Group{Party: p}, att, a.MobInstanceId)
+			if !ok || choice == a.MobInstanceId {
+				return
+			}
+			sd.turnTo(a.MobInstanceId, choice, room)
+			return
+		}
+		previous = a.MobInstanceId
+	}
+	next, ok := enemyparty.Aim(enemyparty.Group{Party: p}, enemyparty.PlayerAttacker(u))
+	if !ok || next == previous {
+		return
+	}
+	sd.turnTo(previous, next, room)
+}
+
+// turnTo turns the player from previous (0 for none) onto next, and says
+// so.
+func (sd side) turnTo(previous, next int, room *rooms.Room) {
+	u := sd.user
+	emitTargetChange(userRef(u), mobRefById(previous), mobRefById(next), room.RoomId)
+	u.Character.SetAggro(0, next, attackType(u.Character.Aggro))
+	events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
+	u.SendText(turnsToward(`You`, mobTag(mobName(next))))
+	room.SendText(turnsToward(userTag(u.Character.Name), mobTag(mobName(next))), u.UserId)
 }
 
 // turnWaitingOntoFreePlayers turns each group waiting on a busy player onto
@@ -429,7 +521,7 @@ func turnWaitingOntoFreePlayers(round uint64) {
 			if !turned {
 				continue
 			}
-			room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> <ansi fg="username">%s</ansi>.`, groupTurnsOn(p), free.Character.Name))
+			room.SendText(fmt.Sprintf(`%s %s.`, groupTurnsToward(p), userTag(free.Character.Name)))
 			freeSide := loadSide(free, room)
 			battle.NoteSet(free.UserId, p.ID, round)
 			freeSide.beginBattle(p, room, round)
@@ -460,22 +552,22 @@ func freePlayer(room *rooms.Room, busyId int) *users.UserRecord {
 	return best
 }
 
-// groupTurnsOn names a group turning on someone, for a message: "The
-// ruffian turns on", or "The ruffian and the others turn on".
-func groupTurnsOn(p mobparty.Party) string {
+// groupTurnsToward names a group turning on someone, for a message: "The
+// ruffian turns toward", or "The ruffian and the others turn toward".
+func groupTurnsToward(p mobparty.Party) string {
 	var names []string
 	for _, instanceId := range p.Members {
 		if m := mobs.GetInstance(instanceId); m != nil && m.Character.Health > 0 {
-			names = append(names, m.Character.Name)
+			names = append(names, mobName(m.InstanceId))
 		}
 	}
 	switch len(names) {
 	case 0:
-		return `They turn on`
+		return `They turn toward`
 	case 1:
-		return `The ` + names[0] + ` turns on`
+		return util.CapitalizeFirst(util.Article(mobTag(names[0]))) + ` turns toward`
 	}
-	return fmt.Sprintf(`The %s and the others turn on`, names[0])
+	return util.CapitalizeFirst(util.Article(mobTag(names[0]))) + ` and the others turn toward`
 }
 
 // settleBattles ends, at the end of the round and after its deaths are

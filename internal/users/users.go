@@ -232,6 +232,7 @@ func CopyoverReconnectUser(user *UserRecord, connectionId connections.Connection
 
 	user.EventLog.Add(`conn`, `Reconnected`)
 
+	user.SyncInputMask() // Ashveil 32h: a password question may still be open
 	return user, "Reconnecting...", nil
 }
 
@@ -239,6 +240,13 @@ func CopyoverReconnectUser(user *UserRecord, connectionId connections.Connection
 func LoginUser(user *UserRecord, connectionId connections.ConnectionId) (*UserRecord, string, error) {
 
 	mudlog.Info("LoginUser()", "username", user.Username, "connectionId", connectionId)
+
+	// Ashveil 32h: a record flagged for deletion waits for its purge and
+	// reset (moments away, or the boot sweep) rather than logging in half
+	// reset.
+	if user.Deleting {
+		return nil, DeletingLoginRefusal, errors.New("character is being deleted")
+	}
 
 	user.Character.SetAdjective(`zombie`, false)
 
@@ -281,6 +289,7 @@ func LoginUser(user *UserRecord, connectionId connections.ConnectionId) (*UserRe
 
 				user.EventLog.Add(`conn`, `Reconnected`)
 
+				user.SyncInputMask() // Ashveil 32h: a password question may still be open
 				return user, "Reconnecting...", nil
 			}
 
@@ -674,7 +683,7 @@ func GetUniqueUserId() int {
 		// Check all user id's of offline users
 		SearchOfflineUsers(func(u *UserRecord) bool {
 
-			if u.UserId > highestUserId {
+			if u.UserId > highestUserId && u.UserId < ReplayUserIdBase {
 				highestUserId = u.UserId
 			}
 
@@ -683,7 +692,7 @@ func GetUniqueUserId() int {
 
 		// Check all user id's of online users
 		for _, u := range GetAllActiveUsers() {
-			if u.UserId > highestUserId {
+			if u.UserId > highestUserId && u.UserId < ReplayUserIdBase {
 				highestUserId = u.UserId
 			}
 		}

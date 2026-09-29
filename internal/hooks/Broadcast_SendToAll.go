@@ -30,6 +30,20 @@ func Broadcast_SendToAll(e events.Event) events.ListenerReturn {
 
 	for _, u := range users.GetAllActiveUsers() {
 
+		// Ashveil Phase 29f: a broadcast a combat round caused ("X has
+		// DIED!", a level gained by a kill) waits its turn among a pacing
+		// player's held lines. A line-refresh-free broadcast (a prompt, a
+		// countdown) never waits.
+		if !broadcast.SkipLineRefresh {
+			text := broadcast.Text
+			if u.ScreenReader && len(broadcast.TextScreenReader) > 0 {
+				text = broadcast.TextScreenReader
+			}
+			if len(text) > 0 && holdBehindCombat(u, text, broadcast.IsCommunication) {
+				continue
+			}
+		}
+
 		events.AddToQueue(events.RedrawPrompt{UserId: u.UserId}, 100)
 
 		if u.ScreenReader {

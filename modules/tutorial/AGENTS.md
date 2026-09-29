@@ -68,7 +68,18 @@ new character walks through in their own ephemeral copies. See the
   stay with the company claims and the archetype claim marker; the
   tutorial grants neither. `Begin` on an active course resumes it, and on a
   finished one sends the player to the start room, so the course never
-  restarts.
+  restarts (a replay is a new character, so it starts at the top).
+- **Replays (32b, `replay.go`):** `tutorial replay yes` builds a throwaway
+  user (`users.NewReplayUser`: reserved id, `ReplayOf` flag, unindexed),
+  remembers the real archetype in its `MiscData`, and hands the connection
+  to it (`PlayerDespawn{HandOff}` then `events.UserHandOff`). Its first
+  spawn chooses that archetype (the kit) and `Begin`s the course. Every
+  way out (`leave`, `skip`, `closedCourse`) calls `handBack` for a replay,
+  which hands the connection back to the real user once; a replay's skip
+  doesn't visit the start room. Any despawn of a replay queues
+  `events.UserPurged`. A real login while its replay is online ends the
+  replay (its connection closes). `load` sweeps replay files left by a
+  restart. Seams are in `replaySeams`.
 - **Hand-off:** `internal/tutorial.Begin` is called by `start` when the
   player keeps the tutorial. Without this module, `start` falls back to the
   engine's ephemeral path.

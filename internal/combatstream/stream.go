@@ -26,6 +26,7 @@ type FightInfo struct {
 	LeaderUserId int
 	RoomId       int
 	PartyID      string // the first enemy party engaged
+	GroupName    string // the enemy group's name (Phase 32c), "" if unnamed
 	StartRound   uint64
 	Company      []Ref
 	Enemies      []Ref
@@ -44,6 +45,7 @@ type fight struct {
 	leaderUserId int
 	roomId       int
 	partyID      string
+	groupName    string
 	startRound   uint64
 	company      map[string]Ref
 	companyOrder []string
@@ -92,7 +94,7 @@ func (f *fight) has(r Ref) bool {
 }
 
 func (f *fight) info() FightInfo {
-	fi := FightInfo{ID: f.id, LeaderUserId: f.leaderUserId, RoomId: f.roomId, PartyID: f.partyID, StartRound: f.startRound}
+	fi := FightInfo{ID: f.id, LeaderUserId: f.leaderUserId, RoomId: f.roomId, PartyID: f.partyID, GroupName: f.groupName, StartRound: f.startRound}
 	for _, k := range f.companyOrder {
 		fi.Company = append(fi.Company, f.company[k])
 	}
@@ -335,6 +337,17 @@ func (s *Stream) Grow(id uint64, partyID string, companions []Ref, enemies []Ref
 	}
 	for _, r := range enemies {
 		f.addEnemy(r, partyID)
+	}
+}
+
+// Name names an open fight after the enemy group it is fought with
+// (Phase 32c): "a band of ruffians". The summary's heading uses it. It
+// does nothing for a fight that isn't open.
+func (s *Stream) Name(id uint64, groupName string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if f, ok := s.fights[id]; ok {
+		f.groupName = groupName
 	}
 }
 

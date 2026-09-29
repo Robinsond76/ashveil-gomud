@@ -102,7 +102,7 @@ func Pickpocket(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 					}
 				}
 
-				if itemStolen, found := m.Character.GetRandomItem(); found {
+				if itemStolen, found := m.Character.GetRandomItem(); found && canCarryStolen(user, itemStolen) {
 
 					m.Character.RemoveItem(itemStolen)
 					user.Character.StoreItem(itemStolen)
@@ -207,7 +207,7 @@ func Pickpocket(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 					}
 				}
 
-				if itemStolen, found := p.Character.GetRandomItem(); found {
+				if itemStolen, found := p.Character.GetRandomItem(); found && canCarryStolen(user, itemStolen) {
 
 					p.Character.RemoveItem(itemStolen)
 					user.Character.StoreItem(itemStolen)

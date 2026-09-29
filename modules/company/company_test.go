@@ -8,6 +8,7 @@ import (
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -205,6 +206,26 @@ type fakeRuntime struct {
 	relocated map[int]int
 	// Phase 26a: vitals per instance, {hp, max}.
 	vitals map[int][2]int
+	// mana is each live instance's mana and max (Phase 32g).
+	mana map[int][2]int
+	// Phase 32e: {level, into, tnl} per instance.
+	progress map[int][3]int
+	// Phase 32a2: the identity each spawn received.
+	spawnedIdentities []domain.Identity
+	// Phase 32f: Strength per live instance.
+	strength map[int]int
+	// away marks live instances not in their leader's room (32f review).
+	away map[int]bool
+}
+
+func (f *fakeRuntime) Progress(instanceID int) (int, int, int, bool) {
+	v, ok := f.progress[instanceID]
+	return v[0], v[1], v[2], ok && f.live[instanceID]
+}
+
+func (f *fakeRuntime) Mana(instanceID int) (int, int, bool) {
+	v, ok := f.mana[instanceID]
+	return v[0], v[1], ok && f.live[instanceID]
 }
 
 func (f *fakeRuntime) Vitals(instanceID int) (int, int, bool) {
@@ -216,8 +237,9 @@ func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
 	id, ok := f.resolved[name]
 	return id, ok
 }
-func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int, state *domain.MemberState) (int, error) {
+func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int, state *domain.MemberState, identity domain.Identity) (int, error) {
 	f.spawnCalls++
+	f.spawnedIdentities = append(f.spawnedIdentities, identity)
 	if state != nil {
 		s := state.Clone()
 		f.spawnedStates = append(f.spawnedStates, &s)
@@ -260,6 +282,31 @@ func (f *fakeRuntime) GearGrams(instanceID int) (int, bool) {
 	}
 	return gearGrams(s), true
 }
+func (f *fakeRuntime) Carry(instanceID int) (int, int, bool) {
+	s, ok := f.liveState[instanceID]
+	if !ok || !f.live[instanceID] {
+		return 0, 0, false
+	}
+	return f.strength[instanceID], domain.BestPackGrams(s.Items), true
+}
+func (f *fakeRuntime) UseItem(instanceID int, itm items.Item) bool {
+	s, ok := f.liveState[instanceID]
+	if !ok || !f.live[instanceID] {
+		return false
+	}
+	for i := range s.Items {
+		if s.Items[i].Equals(itm) {
+			if s.Items[i].Uses > 1 {
+				s.Items[i].Uses--
+			} else {
+				s.Items = append(s.Items[:i:i], s.Items[i+1:]...)
+			}
+			f.liveState[instanceID] = s
+			return true
+		}
+	}
+	return false
+}
 func (f *fakeRuntime) CharmedByOther(_ int, instanceID int) bool {
 	return f.live[instanceID] && f.stolen[instanceID]
 }
@@ -273,6 +320,9 @@ func (f *fakeRuntime) TemplateState(int) (domain.MemberState, bool) {
 	return domain.MemberState{Level: 1}, true
 }
 func (f *fakeRuntime) IsLive(instanceID int) bool { return f.live[instanceID] }
+func (f *fakeRuntime) WithLeader(_ int, instanceID int) bool {
+	return f.live[instanceID] && !f.away[instanceID]
+}
 func (f *fakeRuntime) IsAttached(_ int, instanceID int) bool {
 	return f.live[instanceID] && !f.stolen[instanceID]
 }

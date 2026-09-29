@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -51,6 +53,13 @@ type fakeMovementProvider struct {
 func (f *fakeMovementProvider) MovementBlocked(int) (bool, string) {
 	f.calls++
 	return f.blocked, f.message
+}
+
+// overLoad is a company far over its capacity.
+type overLoad struct{}
+
+func (overLoad) CurrentLoad(int) (encumbrance.Load, bool) {
+	return encumbrance.Load{PersonalGrams: 90000, CapacityGrams: 20000}, true
 }
 
 func str(n int) string { return strconv.Itoa(n) }
@@ -158,6 +167,40 @@ func TestGoTravelInterception(t *testing.T) {
 		assert.Zero(t, starter.calls, "unmarked exits must never consult the travel provider")
 		assert.Equal(t, 920012, user.Character.RoomId)
 		assert.Equal(t, 90, user.Character.ActionPoints)
+	})
+
+	// Phase 32f: weight is the only carrying limit; carrying more items
+	// than GoMud's old count no longer makes a step cost more.
+	t.Run("a crowded pack costs an ordinary step", func(t *testing.T) {
+		origin := rooms.LoadRoom(920011)
+		require.NotNil(t, origin)
+		user := travelTestUser(t, 11, origin.RoomId)
+		for len(user.Character.Items) <= user.Character.CarryCapacity()+5 {
+			user.Character.Items = append(user.Character.Items, items.Item{ItemId: 1})
+		}
+		expedition.SetStartProvider(nil)
+
+		handled, err := Go("north", user, origin, 0)
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, 920012, user.Character.RoomId)
+		assert.Equal(t, 90, user.Character.ActionPoints, "ten, not fifty")
+	})
+
+	// Phase 32f (review test gap): over capacity, as after a companion is
+	// dismissed, the company still walks; the load band only slows it.
+	t.Run("over capacity still walks", func(t *testing.T) {
+		origin := rooms.LoadRoom(920011)
+		require.NotNil(t, origin)
+		user := travelTestUser(t, 12, origin.RoomId)
+		encumbrance.SetProvider(overLoad{})
+		t.Cleanup(func() { encumbrance.SetProvider(nil) })
+		expedition.SetStartProvider(nil)
+
+		handled, err := Go("north", user, origin, 0)
+		require.NoError(t, err)
+		assert.True(t, handled)
+		assert.Equal(t, 920012, user.Character.RoomId)
 	})
 
 	t.Run("propagates travel start error", func(t *testing.T) {

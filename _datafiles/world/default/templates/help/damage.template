@@ -14,3 +14,5 @@ scales up with the second number (Number of sides)
 Sometimes a weapon may automatically receive extra attacks. This is shown by 
 a <ansi fg="red">#@</ansi> prefix to the damage. For example: <ansi fg="red">5@2d6+1</ansi> would attack <ansi fg="red">5 times</ansi> with <ansi fg="red">2d6+1</ansi>.
 
+In a fight, each hit shows the damage it did at the end of its line, e.g.
+<ansi fg="command">(5 damage)</ansi>. See <ansi fg="command">help narration</ansi>.

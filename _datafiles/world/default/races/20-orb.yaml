@@ -1,8 +1,10 @@
 raceid: 20
 name: orb
+defaultpronouns: it
 description: A sphere of pure energy
 defaultalignment: 30
 size: medium
+groupnoun: cluster
 unarmedname: energy
 tnlscale: 1
 damage:

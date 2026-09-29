@@ -3,6 +3,7 @@ package hooks
 import (
 	"sync/atomic"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
@@ -45,7 +46,7 @@ func mobRef(m *mobs.Mob) combatstream.Ref {
 	if m == nil {
 		return combatstream.Ref{}
 	}
-	r := combatstream.Ref{MobInstanceId: m.InstanceId, MobId: int(m.MobId), Name: m.Character.Name}
+	r := combatstream.Ref{MobInstanceId: m.InstanceId, MobId: int(m.MobId), Name: battle.EnemyDisplayName(m.InstanceId, m.Character.Name)}
 	if leaderId, key, ok := company.LeaderAndKeyForInstance(m.InstanceId); ok {
 		r.LeaderUserId = leaderId
 		r.MemberKey = string(key)
@@ -62,7 +63,7 @@ func mobRefById(instanceId int) combatstream.Ref {
 	if m := mobs.GetInstance(instanceId); m != nil {
 		return mobRef(m)
 	}
-	return combatstream.Ref{MobInstanceId: instanceId}
+	return combatstream.Ref{MobInstanceId: instanceId, Name: battle.EnemyDisplayName(instanceId, "")}
 }
 
 // weaponType is the attacker's weapon subtype (stabbing, bludgeoning, ...),
@@ -321,7 +322,16 @@ func (fs fightSides) gone() []combatstream.Ref {
 func (fs fightSides) end(outcome string) {
 	final := combatstream.Final{Company: fs.companyHealth(), Gone: fs.gone()}
 	sum, ok := combatstream.Default().EndFight(fs.info.ID, combatRound.Load(), outcome, final)
-	if !ok || fs.leader == nil {
+	if !ok {
+		return
+	}
+	// Phase 29c: a won fight's closing line, to its room, after the last
+	// death line and before the summary. Not when an enemy got away, and
+	// only from the last player's battle to end against the group.
+	if outcome == combatstream.OutcomeVictory && len(final.Gone) == 0 && !groupInOtherBattle(fs.info.LeaderUserId, fs.info.RoomId, fs.info.PartyID) {
+		sendFightClosing(fs.info.RoomId, fs.info.Enemies)
+	}
+	if fs.leader == nil {
 		return
 	}
 	if on := fs.leader.GetConfigOption(BattleSummarySetting); on != nil {

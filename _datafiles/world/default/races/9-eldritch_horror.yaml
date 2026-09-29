@@ -1,11 +1,13 @@
 raceid: 9
 name: eldritch horror
+defaultpronouns: it
 description: A strange and disgusting being that makes your skin crawl, and confuses your senses.
 defaultalignment: -100
 buffids:
   - 28 # Super hearing
   - 29 # Night Vision
 size: medium
+groupnoun: brood
 unarmedname: tentacles
 tnlscale: 1
 angrycommands: [emote gibbers unintelligibly.]

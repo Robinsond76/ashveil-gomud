@@ -45,6 +45,7 @@ type World struct {
 	leaveWorldUserId   chan int
 	logoutConnectionId chan connections.ConnectionId
 	linkDeadFlag       chan [2]int
+	disconnect         chan disconnected
 	//
 	eventRequeue          []events.Event
 	userInputEventTracker map[int]struct{}
@@ -60,6 +61,7 @@ func NewWorld(osSignalChan chan os.Signal) *World {
 		leaveWorldUserId:   make(chan int),
 		logoutConnectionId: make(chan connections.ConnectionId),
 		linkDeadFlag:       make(chan [2]int),
+		disconnect:         make(chan disconnected),
 		//
 		eventRequeue:          []events.Event{},
 		userInputEventTracker: map[int]struct{}{},
@@ -274,6 +276,49 @@ func (w *World) SendSetLinkDead(userId int, on bool) {
 	}
 }
 
+// disconnected is a connection whose link dropped: link-dead for the
+// grace period, or out of the world at once.
+type disconnected struct {
+	connId   connections.ConnectionId
+	linkDead bool
+}
+
+// SendDisconnect reports a dropped link by connection (Ashveil 32b). The
+// user is resolved on the game loop, so a tutorial replay's hand-off,
+// which moves a connection from one user to another there, can't leave the
+// wrong user link-dead or a dead connection logged in.
+func (w *World) SendDisconnect(connId connections.ConnectionId, linkDead bool) {
+	if !serverAlive.Load() {
+		return
+	}
+	w.disconnect <- disconnected{connId: connId, linkDead: linkDead}
+}
+
+// handleDisconnect does what a dropped link did before, for whoever is on
+// the connection now: link-dead, or a leave and a logout.
+func (w *World) handleDisconnect(d disconnected) {
+	user := users.GetByConnectionId(d.connId)
+	if user == nil {
+		if !d.linkDead {
+			w.logOutUserByConnectionId(d.connId) // a stale mapping, as before
+		}
+		return
+	}
+	if d.linkDead {
+		users.SetLinkDeadUser(user.UserId)
+		events.AddToQueue(events.PlayerChanged{UserId: user.UserId})
+		return
+	}
+	events.AddToQueue(events.PlayerDespawn{
+		UserId:        user.UserId,
+		RoomId:        user.Character.RoomId,
+		Username:      user.Username,
+		CharacterName: user.Character.Name,
+		TimeOnline:    user.GetOnlineInfo().OnlineTimeStr,
+	})
+	w.logOutUserByConnectionId(d.connId)
+}
+
 func (w *World) logOutUserByConnectionId(connectionId connections.ConnectionId) {
 
 	if err := users.LogOutUserByConnectionId(connectionId); err != nil {
@@ -444,6 +489,12 @@ loop:
 			w.logOutUserByConnectionId(logoutConnectionId)
 			util.UnlockMud()
 
+		case d := <-w.disconnect:
+
+			util.LockMud()
+			w.handleDisconnect(d)
+			util.UnlockMud()
+
 		case linkDeadFlag := <-w.linkDeadFlag: //  [2]int
 			if linkDeadFlag[1] == 1 {
 
@@ -480,7 +531,9 @@ loop:
 			break loop
 		case wi := <-w.worldInput:
 
-			events.AddToQueue(events.Input{
+			// Ashveil Phase 29f: typed input never takes a combat round's
+			// cause, and its output is never held back by pacing.
+			events.AddTyped(events.Input{
 				UserId:    wi.FromId,
 				InputText: wi.InputText,
 				ReadyTurn: util.GetTurnCount(),
@@ -588,6 +641,9 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 			user.Command(`emote @looks a little confused`)
 		}
 	}
+
+	// Ashveil 32h: mask the connection while a password is being asked.
+	user.SyncInputMask()
 
 	// If they had an input prompt, but now they don't, lets make sure to resend a status prompt
 	if hadPrompt || (!hadPrompt && user.GetPrompt() != nil) {

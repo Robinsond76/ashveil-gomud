@@ -157,6 +157,101 @@
     border-bottom: 1px solid var(--t-border-row);
 }
 
+/* -------------------------------------------------------------------------
+ * Tab groups (Phase 32g)
+ *
+ * A DockTabGroup is one panel that fills its column: a header (the vitals
+ * strip), a row of tabs, and the active tab's content.
+ * ------------------------------------------------------------------------- */
+.dock-panel.dock-panel-fill {
+    flex: 1 1 auto;
+    min-height: 200px;
+}
+
+.dock-tabgroup {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--t-bg);
+}
+
+.dock-tabgroup-header {
+    flex: 0 0 auto;
+}
+
+.dock-tabgroup-header:empty {
+    display: none;
+}
+
+.dock-tabgroup-tabs {
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 3px 4px 0;
+    border-bottom: 1px solid var(--t-border-accent);
+    background: var(--t-bg-panel);
+}
+
+.dock-tabgroup-tab {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    padding: 4px 10px;
+    border: 1px solid var(--t-border-accent);
+    border-bottom: none;
+    border-radius: 3px 3px 0 0;
+    background: var(--t-bg-surface-alt, var(--t-bg));
+    color: var(--t-text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dock-tabgroup-tab:hover {
+    background: var(--t-accent-dim);
+    color: var(--t-text-white);
+}
+
+.dock-tabgroup-tab.active {
+    background: var(--t-accent-dim);
+    color: var(--t-text-white);
+    font-weight: bold;
+}
+
+.dock-tabgroup-tab:focus-visible {
+    outline: 2px solid var(--t-accent);
+    outline-offset: 1px;
+}
+
+.dock-tabgroup-badge {
+    min-width: 16px;
+    padding: 0 4px;
+    border-radius: 8px;
+    background: var(--t-accent);
+    color: var(--t-text-white);
+    font-size: 10px;
+    line-height: 16px;
+    text-align: center;
+}
+
+.dock-tabgroup-badge[hidden],
+.dock-tabgroup-pane[hidden] {
+    display: none !important;
+}
+
+.dock-tabgroup-panes {
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+}
+
+.dock-tabgroup-pane {
+    position: absolute;
+    inset: 0;
+    overflow: auto;
+}
+
 /* Dock button injected into VWin header via addControl() */
 .vw-dock-btn {
     background-image: none !important;

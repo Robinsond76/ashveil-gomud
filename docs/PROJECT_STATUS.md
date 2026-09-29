@@ -5,25 +5,65 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-28
-- **HEAD:** Phase 29b2 (one battle at a time; spawn groups) and player
+- **Last updated:** 2026-09-29
+- **HEAD:** `master` 2026-09-29: Phase 29f (paced combat output),
+  squash-merged as `fb28df3` from `claude/next-phase-planning-9u98ae`
+  (branch since deleted). Before it, Phase 29e (pain reactions), integrated
+  from `codex/phase-29e-pain-reactions`. Before that, Phase 32g2 (live battle view),
+  merged from `phase-32g2-battle-view`, and Phase 32g (web company dock), merged from
+  `phase-32g-company-dock`. Before that, Phase 29d (NPC pronouns and stable enemy
+  labels), integrated from `codex/phase-29d-pronouns-ordinals`. Before that, Phase 32d (automatic combat by
+  strategy), with 32c (enemy groups), 32f (company logistics), and 32h
+  (character deletion), merged onto 32e (company experience, PR #10). Before them, Phase 29b2 (one battle at a time; spawn groups) and player
   help for every Ashveil system are complete and merged to `master`
   (2026-09-28, from `claude/next-phase-wfav4w`). Docs cleanup (finished-phase
   plans/specs and the old work log moved to git history) on
   `claude/docs-cleanup-py1rfb`.
+  Play-test feedback (2026-09-28): the
+  [roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)
+  and the 32a, 32a2, and 32b designs, on `claude/hopeful-wozniak-piu2lb`.
 - **Upstream baseline:** `39e44013 fix(telnet): stop Mudlet masking all input for the whole session (#633)`
 
 ## Current position
 
-- **Completed:** Phases 0–29b2; see the table below. The survival and
+- **Completed:** Phases 0–29f, 32g, and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
-  and the first combat slices (29a, 29b, 29b2) are all done.
-- **Next:** 29c (the narration voice), per the decided
-  [build order](superpowers/specs/2026-09-26-combat-presentation-roadmap.md#build-order-decided-2026-09-27).
-  Also open: capacity per company size (play-testing) and the "Future
-  ideas" row; see Known issues.
+  the first combat slices (29a, 29b, 29b2, 29c, 29d, 29e, 29f), enemy groups (32c),
+  automatic combat by strategy (32d), company experience (32e), company
+  logistics (32f), the web company dock (32g) and its live battle view
+  (32g2), and character deletion
+  (32h) are all done.
+- **Latest completed phase:** 29f (paced combat output), squash-merged
+  to `master` as `fb28df3`; see its work-log entry below. Before
+  it, 29e (pain reactions), from `codex/phase-29e-pain-reactions`, 32g2
+  (live battle view), from `phase-32g2-battle-view`, and 32g (web company
+  dock), from `phase-32g-company-dock`.
+- **Before it:** 29d (pronouns and stable enemy labels), from
+  `codex/phase-29d-pronouns-ordinals`; see the [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md).
+  NPC/race pronouns, generated recruit neutrality, frozen shared enemy labels,
+  combat/script/event wiring, and player help/tutorial are verified. A seeded
+  comparison against b9729809 preserves combat mechanics. Labels are runtime-only;
+  restart/copyover starts fresh battles. Player pronoun selection remains deferred.
+  **Review:** independent default-agent reviewer found fallback-label collisions and
+  a Sparks possessive; both reproduced and were fixed with regression tests. A
+  separate plain late-name collision claim was rejected because its regression passed
+  before the fix. **Final verification:** `make generate`, `make validate`,
+  `go test -race ./...`, `make js-lint`, and `git diff --check` all passed (2026-09-29);
+  generation produced no diff. Workflow docs now use the current task's default
+  agent/settings and direct implementation, retaining independent review and verification.
+  Integration verification exposed a narration-test flake: a random dodge intentionally
+  produces no room attack line. The fixture now disables dodging only within that test
+  and restores settings afterward; 100 focused race-test repetitions passed.
+  Independent follow-up review found no issues and passed 40 focused repetitions.
+- **Next:** the play-test roadmap (32a–32h, 32g2) is done, per the
+  [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
+  the combat roadmap's 29 series is done with 29f; next is 30a (status
+  effects and critical-hit effects), then 30b (wounds). Phase 30 should
+  set its durations in combat rounds and retune the balance shifts that
+  29f's cadence brought (see Known issues).
+  Also open: the "Future ideas" row; see Known issues.
 
 ## Phase progress
 
@@ -77,10 +117,10 @@ instead of duplicating them.
 | 29a | Combat fixes from the 5v5 simulation | Complete: a round-start engagement upkeep keeps an engaged company and enemy party fighting as a whole (the leader turns from an unreachable target, the killer and leader rejoin, the whole party joins, hostility can't lapse mid-fight); unplaced members can be struck; `break` holds; `formation reach` answers against the enemy in a fight; `internal/enemyparty` |
 | 29b | Combat event stream and battle summary | Complete: `internal/combatstream` (one event per combat happening, fights of a company against the enemies it fights in a room, a summary folded from the events), producers at every attack, cast, target change, flee, and death; the summary at a fight's end (`set battlesummary`); interceptors fall in the round they're struck; player help for combat (`help combat` and seven pages), pointed to from the tutorial |
 | 29b2 | One battle at a time; spawn groups | Complete: `internal/battle` (each player, with their company, fights one enemy group at a time; other groups set on them hold back, then begin the next battle in the order they turned; a waiting group turns on a free player); `attack`/`cast`/`backstab`/`shoot` refuse a waiting group; hostile spawns form groups of two to five from the room's list, a lone survivor or straggler regroups, `solitary` bosses stand alone; travel ambushes are a pair; solo players get battles and summaries; help for every Ashveil system |
-| 29c | Narration voice (weapons and spells) | Proposed: [spec](superpowers/specs/2026-09-26-combat-narration-design.md). Dark, story-like text; `(N damage)` on every hit, `(critical hit, N damage)`; no `***`/caps/`!`; no charmed tag; an opener, "turns toward", and a closing line; indented death notices; spell text in the same voice |
-| 29d | Pronouns and ordinals | Proposed: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Mob pronouns (beasts "it"); "the first/second cutthroat" fixed for the fight |
-| 29e | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race |
-| 29f | Paced combat output | Proposed: [spec](superpowers/specs/2026-09-26-combat-pacing-design.md). Round lines released over time, with fast, normal (~6s), slow, and off settings; combat resolves every 2 game rounds (an 8-second combat round) |
+| 29c | Narration voice (weapons and spells) | Complete (branch `master-6csfy6`): [design](superpowers/specs/2026-09-28-phase-29c-narration-voice-design.md), [plan](superpowers/plans/2026-09-28-phase-29c-narration-voice.md). Every weapon line rewritten, `(N damage)` / `(critical hit, N damage)` / `, M blocked` at the end of each hit, only real crits draw the critical pool; no `***`, `!`, caps, or "prepares to fight"; "the" before common names; an opener per fight, "turns toward", death lines in order, a closing line after the last; the fallen notice indented and in words; spells chant with their rounds and land with `(N damage)` / `(N healed)`; `help narration` |
+| 29d | Pronouns and ordinals | Complete and integrated: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md), [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md). NPC/race pronouns, neutral generated recruits, stable shared enemy labels, help/tutorial; independent review and full race suite passed. Player selection deferred |
+| 29e | Pain reactions | Complete: [design](superpowers/specs/2026-09-29-phase-29e-pain-reactions-design.md), [plan](superpowers/plans/2026-09-29-phase-29e-pain-reactions.md). A victim reacts after each damaging critical strike that leaves them standing; second person for the victim, third person for witnesses, distinct beast-race sets and NPC overrides, without changing combat mechanics |
+| 29f | Paced combat output | Complete: [design](superpowers/specs/2026-09-29-phase-29f-paced-combat-design.md), [plan](superpowers/plans/2026-09-29-phase-29f-paced-combat.md). Combat resolves every `CombatEveryRounds` (2) game rounds, an 8-second combat round; everything a round causes is tagged (`events.WithCause`) and paced out per player (`internal/combatpace`), with `set combatpace fast|normal|slow|off` (off for screen readers); a pause before pain and death lines; typed output, tells, and says never wait; the prompt and the web client's vitals and battle view wait for the lines; flushes on move, quit, pace change, and copyover; `help combatpace` |
 | 30a | Status effects and critical-hit effects (weapons only) | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, and others as buffs; crit effects by weapon type; spells do not critical hit |
 | 30b | Wounds, treatment, and `heal wounds` | Proposed: [spec](superpowers/specs/2026-09-26-wounds-treatment-design.md). Wound limits on healing; durable critical-hit wounds; one after-fight command using clerics, splints and bandages, or an inn physician; camp rest heals |
 | 30c | Pre-fight tactics | Proposed: [spec](superpowers/specs/2026-09-26-company-tactics-design.md). `company tactics` (focus, healing, interrupts, guards, rotation, mercy); roles and personalities; guard reactions; companions casting; no commands mid-fight |
@@ -88,104 +128,159 @@ instead of duplicating them.
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
 | 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
 | 31 | Browser battle panel | Proposed: [spec](superpowers/specs/2026-09-26-battle-panel-design.md). Enemy and company grids with target lines, from the event stream |
+| 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md), [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
+| 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md), [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
+| 32b | Tutorial replay | Complete, in review: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](superpowers/plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
+| 32c | Enemy groups and `scout` | Complete: [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md), [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md). Groups named as they form ("a band of ruffians") and shown on their own room line; `attack <group>` is the only way to start a fight; a battle plays out on its own (attack, cast, backstab, shoot, tackle, disarm refused in one; a bare `attack` after `break` rejoins); `look <group>` and a free `scout`; summaries name the group |
+| 32e | Company experience | Complete: a kill that pays the leader pays every living companion still charmed by them in the kill room the same figure in full (no split), in both the solo and party branches; companions level up live (spending the level's points, so a respawn changes nothing); `experience` lists each companion; `company.MemberView`/`companyview.Member` carry live level and progress. **Verification (2026-09-28):** `go test -race ./...`, `make generate`, `make validate` green. **Review:** Opus reviewer found no blocking bugs. Fixed: a levelled companion kept unspent points until respawn (now `AutoTrain`); a companion charmed away was still paid (now requires `IsCharmed(leader)`); the design contradicted the code on rows for absent companions; dead `Leader` progress fields removed; party-branch and befriended-away regression tests added. Rejected/deferred: full seam test of logout/copyover (the snapshot/restore round-trip is tested, the seams are 22b's), a practice-mob companion test (mobs vanish before any XP), mid-fight level-up refill (accepted). A rare failure of the combat brawl test under `-count=4` was traced to a level-up resetting the test's forced health; the brawl now runs with kill XP off. |
+| 32f | Company logistics | Complete: [design](superpowers/specs/2026-09-28-phase-32f-company-logistics-design.md), [plan](superpowers/plans/2026-09-28-phase-32f-company-logistics.md). Capacity from members (20 kg + Strength), one pack each, and horses; weight the only limit (a full company takes on nothing more; walking never blocked); a herd of riding and pack horses bought at stables, with saddles; cargo keeps uses; `company inventory`; `company eat`/`drink`/`meal` |
+| 32h | Character deletion | Complete: [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), [plan](superpowers/plans/2026-09-28-phase-32h-character-deletion.md). `delete character`, confirmed by the password (masked) and the name; every module's state purged with the login kept; back in creation on the same connection; a durable `Deleting` flag and a boot sweep; masked in-game password prompts (also `password`) |
+| 32d | Automatic combat by strategy | Complete: [design](superpowers/specs/2026-09-28-phase-32d-auto-combat-design.md), [plan](superpowers/plans/2026-09-28-phase-32d-auto-combat.md). `strategy`: each character's role (fighter, healer, caster) and target rule (weakest, strongest, wounded, nearest, furthest, leader, assist, defend), durable; healers and casters cast real spells with mana; companions know spells by archetype and level and regain mana; wizards/clerics granted Magic Missile/Minor Heal; in a battle only `flee`; only hostile mobs group by tag |
+| 32g | Web company dock | Complete: [design](superpowers/specs/2026-09-29-phase-32g-company-dock-design.md), [plan](superpowers/plans/2026-09-29-phase-32g-company-dock.md). Left column the world (time, map, room, tutorial); right a tabbed dock: a vitals strip for every member above Character (Overview with worth, Gear with weights, Skills and jobs, Quests, Effects, Pet), Company (Status, Inventory with menus by exact item reference, Camp), Combat (setup: roles, targets, formation, Scout), Comm (unread count), and Who/Kills when enabled; `Company.Inventory`, `Company.Camp`, members' mana and strategies; `help webclient` |
+| 32g2 | Live battle view | Complete: [design](superpowers/specs/2026-09-29-phase-32g2-battle-view-design.md), [plan](superpowers/plans/2026-09-29-phase-32g2-battle-view.md). During a battle the Combat tab shows the enemy group's formation above the company's (fronts to the middle), scout's health words (never numbers), reach, target lines both ways, outsiders struck, the fallen, the waiting groups, a text list, a live region, Flee, and Setup's member menu; a marker on the tab; `Company.Battle` for every player in a battle; dark rooms show nothing, as scout |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
 
 Keep only the latest phase's entry here (What / Why / Verification /
-**Review:**). When a new phase lands, replace the previous entry with it and
-fold anything still true into "Known issues". Older entries live in git
-history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
-Phase 29b2 is at commit `d5ace46`).
+**Review:**). Older entries live in git history: `git log -p --
+docs/PROJECT_STATUS.md`.
 
-### Phase 29b2: one battle at a time; spawn groups; help for every system (2026-09-28)
+### Phase 29f: paced combat output (2026-09-29)
 
-- **What:** The owner's clarification of fights, and their request for help
-  pages for the rest of the game. Details are in the
-  [29b2 design](superpowers/specs/2026-09-27-phase-29b2-battles-spawn-groups-design.md)
-  and [29b2 plan](superpowers/plans/2026-09-27-phase-29b2-battles-spawn-groups.md).
-  - **Battles (`internal/battle`, runtime only):** a player and their
-    company fight one enemy group at a time. Other groups that set on
-    them hold back without striking (blows, spells, and shots) and begin
-    the next battle, in the order they turned, the moment one ends. A
-    waiting group turns on another player in the room who has no battle,
-    and each fights their own. `attack`, `cast`, `backstab`, and `shoot`
-    refuse a waiting group before anything is spent. A downed player
-    isn't drawn into new battles; a waiting group doesn't block a flight.
-    Solo players have battles and summaries too.
-  - **Spawn groups ("think Ogre Battle"):** hostile mobs a room's list
-    spawns form groups of two to five (six make three and three), topped
-    up from the list when a new group would be one; grouped mobs don't
-    wander. A lone survivor or a straggler joins another idle group; a
-    `solitary` mob (the lich, abyssal creeper, ent, spider queen) stands
-    alone. A travel ambush is a pair on its own group.
-  - **Stream (29b revised):** a fight is a battle: one player against one
-    group.
-  - **Help for the rest of the game (owner's request):** new pages
-    `adventure` (the hub), `company`, `standing`, `archetype`, `autoskill`,
-    `trap`, `travel`, `survival`, `strain`, `weather`, `temperature`,
-    `cargo`, `mount`, `camp`, `inn`, `cooking`, `market`, `rumors`;
-    GoMud's `alignment`, `conditions`, `encumbrance`, `status`,
-    `inventory`, `experience`, `eat`, and `drink` updated; indexed in
-    `keywords.yaml` with aliases; every tutorial lesson points to its
-    pages (`TestAshveilHelpTopics`, `TestTutorialHelpPointersExist`).
-  - **Also fixed:** travel timers ran their checkpoints, arrival, and
-    ambush spawn on the timer's goroutine, off the game loop (older than
-    29b2); the timer now queues a `TravelTimerDue` event the loop runs.
-- **Why:** The owner clarified that a player fights one group at a time,
-  another player can take the next, and no hostile mob should appear
-  alone; their answers (hold back, then engage; groups built from the
-  room's list; a per-mob `solitary` flag; solo players too) are in the
-  design doc. For review fixes they asked for the best fix, noted in the
-  docs, guided by Ogre Battle and Mount & Blade (design doc, last
-  section).
-- **Verification:** `go test -race ./...`, `make generate`, and
-  `make validate` pass.
-  - **Wiring** (`modules/company/wiring_battles_test.go`, the 5v5 through
-    `plugins.Load`, the shipped config, real commands, `DoCombat`, idle
-    mobs): five groups fought one at a time with a fight and summary
-    each and no blow from a waiting group; a second player takes the
-    next group; `attack` and `cast` refused (no mana spent, player or
-    mob); spells, a backstab, and a flight past waiting groups; a downed
-    player; a spawned pair as one battle; spawning from room lists
-    (pair, mixed, solitary, three and three); a survivor never
-    reinforced; stragglers regrouped, encounter pairs left alone.
-    `modules/expedition`: the ambush pair and `EncounterActive`; the
-    shipped lich alone; the travel timer runs on the loop.
-  - **Unit:** `internal/battle`, `internal/rooms` (the planner),
-    `internal/mobparty`, `internal/combatstream`, `internal/hooks`.
-- **Review:** Two independent reviews.
-  - **First (code):** fixed, each with a regression test: *High:* bosses
-    were grouped and topped up (the `solitary` list above); a whittled
-    group was topped up mid-fight, reinforcing survivors; spells ignored
-    battles. *Medium:* the ambush spawn formed groups off the game loop
-    (now a pair on its own group); a downed player was drawn into battle
-    after battle. *Low:* a backstab or shot at a waiting group hung
-    silently; waiting groups blocked a flight; an offline player's line
-    was never pruned; waiting groups turned on a free player in room
-    order, not the order they turned; solo drafting (`rallyIdleFoes`)
-    wasn't in the design (now recorded).
-  - **Second (the fixes, and a fact-check of every help page):** fixed:
-    a held spell still cost its mana, and backstab/shoot their use (now
-    refused at the command); a held cast wasn't on the stream or sent as
-    an aggro change; the ambush still ran off the loop (the travel-timer
-    fix above); a lone survivor or straggler stood alone for good
-    (regrouping); ten inaccurate help claims (battle-summary markup, fire
-    warmth, the autoskill and trap rules, the eat/drink messages, the
-    inventory food count, travel's time factors, weather and walking,
-    encumbrance, "never alone"); `help level` now finds experience.
-  - **Accepted:** the waiting-group turn order and `battle.Retain` are
-    unit-tested, not through a two-player wiring test;
-    `EncounterActive` reads the room under the expedition lock (now on
-    the game loop, so no race); companions don't cast yet (30c), so a
-    companion's spell at a waiting group has no test.
+- **What:**
+  - `Timing.CombatEveryRounds` (2) gates only `DoCombat`
+    (`hooks.CombatOnCadence`), giving an 8-second combat round.
+  - Causal tagging in `internal/events`: everything a combat round causes
+    carries its round (`WithCause`, inherited through the queue).
+    Players' typed input (`AddTyped`) is never caused, and what it causes
+    is `Typed()`.
+  - `internal/combatpace` holds each player's lines and releases them on
+    each turn over the pace's window (fast 3s, normal 6s, slow about 7s,
+    clamped to 90% of the combat round), compressing a busy round. Pain
+    and death lines get a longer gap, indented lines a short one. A round's
+    leftovers flush before the next round.
+  - Untyped goings-on (a mob's next target, "bleeding out", a death's
+    broadcast) wait behind held lines. Typed output, tells, and says never
+    do.
+  - The prompt shows the round's start while lines are held. `Char`,
+    `Char.Vitals`, and the Company/battle-view payloads wait for
+    `CombatPaceDrained`.
+  - Held lines flush on the player's own move, on quit, on a pace change,
+    and at copyover (a contributor).
+  - `set combatpace` is saved in `ConfigOptions` (off by default for
+    screen readers).
+  - Help: `help combatpace`, plus `combat`, `set`, and `narration`
+    updates, and a Combat lesson hint.
+- **Why:** the owner-approved combat-presentation roadmap: a fight should
+  read as if it happens live, without changing what happens.
+- **Verification:**
+  - Focused tests passed for `internal/{events,combatpace,hooks,combat,configs,usercommands}`,
+    `modules/{company,gmcp,tutorial}`, and the root package, including
+    real-round wiring tests:
+    - paced output equals the unpaced order;
+    - the window is filled, never overrun;
+    - a companion's death notice follows its death line, and the summary
+      follows the closing line;
+    - a slain player's death is paced;
+    - walking away flushes;
+    - typed input through the real input worker;
+    - cadence vs. drift and the round count.
+  - 30 to 40 repetitions of the company pacing tests passed.
+  - `make generate` (no diff), `make validate`, and `go test -race ./...`
+    (87 packages) passed after the review fixes.
+  - `git diff --check` flags only `help set`'s intentional Markdown
+    line-break spaces.
+- **Review:** an independent default-agent reviewer made one blocker, one
+  major, and seven minor/nit findings.
+  - **Fixed (with regression tests):**
+    - a slain player's `suicide`, "DIED!" broadcast, penalty, and move
+      escaped pacing and cut the round short (typed/untyped origin replaced
+      the player-`Input` exclusion, and broadcasts are held);
+    - a late older-round line flushed the newer round;
+    - the help's slow timing was wrong;
+    - vitals leaked through `Char` and level-up payloads;
+    - every online player got a round opened (now only players near a
+      fight);
+    - wiring coverage was missing (death, walk-away, and the real input
+      worker are now tested);
+    - comments, import grouping, and a despawn leak.
+  - **Found by the new tests:** scaling a busy round's gaps overflowed
+    `int64` nanoseconds and squeezed 20+ lines into half a second. It now
+    scales in float64.
+  - **Blocker, partly resolved:** a 39 MB build binary (`GoMud`) was
+    committed in `c793454`. It was removed from the tree and `/GoMud` is
+    now ignored, but a history rewrite was not permitted, so the blob
+    stayed in the branch's history. The owner chose a squash merge, which
+    keeps it out of `master`; the branch was then deleted.
+  - **Partly rejected:** a dedicated survival-drain test. The cadence test
+    shows every later `NewRound` listener runs every round, and exposure's
+    tick keys on round numbers. The Party payload hold is deferred.
 
 ## Known issues / deferred items
+
+- **Paced combat (29f), for the owner and Phase 30:**
+  - Game-round systems now tick twice per combat round:
+    - regeneration heals more between blows;
+    - a fight costs about twice the survival;
+    - round-timed buffs last half as many combat rounds;
+    - bleeding out gives fewer combat rounds to save someone.
+
+    The owner accepted this for now, to retune in Phase 30.
+    `CombatEveryRounds: 1` reverts it.
+  - A movement command's own first line can precede the flush its move
+    triggers.
+  - The Party GMCP payload isn't held.
+  - Held lines aren't saved, so a crash loses at most one round's
+    unshown text.
+
+- **Live battle view (32g2), deferred:** casting, statuses, wounds, and guards on the grid (Phase 30); the
+  battle summary in the view; exact enemy numbers behind a skill. (29f
+  now holds the view until a round's lines are out.) A hidden enemy that
+  joins and falls within one round, before the view ever looks, is named
+  under Fallen (accepted: the view names every foe it never saw hidden).
+
+- **Automatic combat (32d), for the owner and later phases:** Magic
+  Missile's difficulty 75 gives a new wizard about a one-in-three chance
+  to cast (GoMud's odds; spell balance not retuned); companion mana and
+  health aren't saved (a restart refills both); enemies still aim at the weakest they can reach (personalities are
+  30c's); companions following a flee is untested. 32c's two owner items
+  (peaceful tag groups; what's allowed mid-battle) are settled by 32d.
+  32c's test gaps are in its work-log entry (git history, commit
+  `ff1f663e`).
+- **Company logistics (32f)** (work log at commit `bea052b`): a crash
+  mid-meal can spend one use without its provision; characters made
+  before 32f start at ~20–25 kg with no satchel. (The web gear window's
+  "count / —" is fixed by 32g: it shows weights.)
+- **Character deletion (32h), accepted** (work log at commit `f418e1d`): a replay's hand-back resets the
+  wrong-password count; copyover with a flagged user online races the
+  resumed connection; a failed reset waits for the boot sweep; the reused
+  user id keeps references elsewhere (mob XP credit, party invites,
+  charms outside the room); web macros can answer the password question.
 
 Refreshed 2026-09-26 (Phase 28). Earlier entries that later phases
 resolved (the weather, load, and mount multipliers, and the 11a–11c
 combat wiring) are removed; each phase's work-log entry (in git history)
 keeps its own history.
+
+- **Narration (29c):** a player's own death line still comes from the
+  queued `suicide` (a user script may cancel the death), so it can follow
+  a closing line; untested: no closing on defeat or broken-off, a count of
+  "turns toward" lines, `sparks` and `heal` through a real cast, the PvP
+  "goes for" line.
+- **Tutorial replay (32b), untested paths:** death through the real death
+  module, quit through its buff path, link-dead expiry, a real copyover,
+  and the purge in every module at once (each module has its own purge
+  test). Accepted: a real character's login elsewhere lands before the
+  stale replay's purge.
+- **Company polish (32a) and rosters (32a2), accepted:** the company move
+  line doesn't recheck that every companion made it (a `no-go` buff, a
+  locked far door); a pet isn't named in it; an offline leader's camp
+  reads "A camp"; recruiter and roster config are parsed on each read, so
+  a malformed entry warns on each look; rosters for recruiter rooms later
+  removed from config stay on the record; `party`/GMCP "Company" status
+  has no dedicated test. 29b2's accepted items (waiting-group order and
+  `battle.Retain` unit-tested only) stand.
 
 - **Plugin persistence is a direct, non-atomic file write**
   (`WriteStruct`/`WriteBytes`). Command state rolls back on a failed save,
@@ -220,9 +315,6 @@ keeps its own history.
     skips rooms with no aggro.
   - `formation reach`'s "can't reach any of the enemy" branch has no
     test.
-- **Capacity is flat per company** (`CapacityKg` 200, plus a mount). Phase
-  28 gave every item a weight, so loads now mean something, but capacity
-  doesn't grow with the company's size. That is left for play-testing.
 - **Deferred by design, not scheduled:**
   - 11d: guard reactions, crit effects, wounds, AI personality;
   - the "12+" encounter kinds;

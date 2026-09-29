@@ -1,6 +1,6 @@
 # Help for ~eat~
 
-The ~eat~ command eats an item you carry (if it is edible).
+The ~eat~ command eats an item you carry (if it is edible). Not in a battle.
 
 If the food restores Hunger or Thirst, eating it feeds you, or a named
 companion instead of you.
@@ -20,5 +20,7 @@ Thirst too. When it moves someone's Hunger or Thirst into a new band
 (from Hungry to Fed, say), you're told; feeding a named companion, you're
 told you provisioned them. See ~help survival~ for what
 Hunger and Thirst mean and how they're spent.
+
+To feed your whole company at once, from the cargo and everyone's packs, type ~company eat~ or ~company meal~ (see ~help company meal~).
 
 Find out more about referring to items by name by typing ~help item-names~.

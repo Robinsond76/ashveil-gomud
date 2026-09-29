@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -103,28 +104,28 @@ func TestChooseFromPartyPicksTheWeakestLegal(t *testing.T) {
 	party, alive := twoByTwo(t)
 
 	// Column 3, plain melee: only 8203 (front-right) is in reach.
-	id, ok := chooseFromParty(2, true, party, alive, formationcombat.ReachNone)
+	id, ok := chooseFromParty(0, 2, true, party, alive, formationcombat.ReachNone, strategy.Weakest, 0)
 	require.True(t, ok)
 	assert.Equal(t, 8203, id)
 
 	// Column 1, plain melee: 8201 (9 HP) blocks 8202 (2 HP); 8203 is out
 	// of lateral range. The weakest legal is 8201.
-	id, ok = chooseFromParty(0, true, party, alive, formationcombat.ReachNone)
+	id, ok = chooseFromParty(0, 0, true, party, alive, formationcombat.ReachNone, strategy.Weakest, 0)
 	require.True(t, ok)
 	assert.Equal(t, 8201, id)
 
 	// Column 1 with a ranged weapon: 8202 is the weakest and in reach.
-	id, ok = chooseFromParty(0, true, party, alive, formationcombat.ReachAny)
+	id, ok = chooseFromParty(0, 0, true, party, alive, formationcombat.ReachAny, strategy.Weakest, 0)
 	require.True(t, ok)
 	assert.Equal(t, 8202, id)
 
 	// Unplaced: fails open, the weakest living member anywhere.
-	id, ok = chooseFromParty(0, false, party, alive, formationcombat.ReachNone)
+	id, ok = chooseFromParty(0, 0, false, party, alive, formationcombat.ReachNone, strategy.Weakest, 0)
 	require.True(t, ok)
 	assert.Equal(t, 8202, id)
 
 	// Nothing living: no choice.
-	_, ok = chooseFromParty(1, true, party, map[company.MemberKey]bool{}, formationcombat.ReachAny)
+	_, ok = chooseFromParty(0, 1, true, party, map[company.MemberKey]bool{}, formationcombat.ReachAny, strategy.Weakest, 0)
 	assert.False(t, ok)
 }
 
@@ -140,10 +141,10 @@ func TestLeaderTurnText(t *testing.T) {
 	_, alive := twoByTwo(t)
 	mobs.GetInstance(8201).Character.Name = "bandit captain"
 	mobs.GetInstance(8203).Character.Name = "bandit cutthroat"
-	assert.Equal(t, `You can't reach <ansi fg="mobname">bandit captain</ansi> from here. You turn on <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(8201, 8203, alive))
+	assert.Equal(t, `You can't reach the <ansi fg="mobname">bandit captain</ansi> from here. You turn toward the <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(8201, 8203, alive))
 	delete(alive, mobparty.MemberKeyFor(8201))
-	assert.Equal(t, `You turn on <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(8201, 8203, alive), "a fallen target is not unreachable")
-	assert.Equal(t, `You turn on <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(0, 8203, alive))
+	assert.Equal(t, `You turn toward the <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(8201, 8203, alive), "a fallen target is not unreachable")
+	assert.Equal(t, `You turn toward the <ansi fg="mobname">bandit cutthroat</ansi>.`, leaderTurnText(0, 8203, alive))
 }
 
 // TestReassignWithinLostPartyNeverTurnsOnABystander: once a lost target is
@@ -153,12 +154,13 @@ func TestReassignWithinLostPartyNeverTurnsOnABystander(t *testing.T) {
 	const roomId = 990102
 	shopkeeper := engagementMob(t, 8301, 5, roomId)
 	shopkeeper.Groups = []string{"29a-merchants"}
+	shopkeeper.SpawnGroup = "29a-merchants" // peaceful: a group by its spawn (32d)
 	room := &rooms.Room{RoomId: roomId}
 	room.SetTestOccupants(nil, []int{8301})
 	rooms.SetTestRoom(room)
 	t.Cleanup(func() { rooms.RemoveTestRoom(roomId) })
 
-	_, ok := reassignWithinLostParty(7, 8399, 1, true, formationcombat.ReachAny, room)
+	_, ok := reassignWithinLostParty(7, 8399, 1, true, formationcombat.ReachAny, strategy.Weakest, 0, room)
 	assert.False(t, ok, "the lost target is gone and the only party here is a bystander")
 
 	// The squad the leader was fighting: its group hostile to the leader.
@@ -166,16 +168,16 @@ func TestReassignWithinLostPartyNeverTurnsOnABystander(t *testing.T) {
 	footman.Groups = []string{"29a-squad"}
 	room.SetTestOccupants(nil, []int{8301, 8302})
 	mobs.MakeHostile("29a-squad", 7, 100)
-	id, ok := reassignWithinLostParty(7, 8399, 1, true, formationcombat.ReachAny, room)
+	id, ok := reassignWithinLostParty(7, 8399, 1, true, formationcombat.ReachAny, strategy.Weakest, 0, room)
 	require.True(t, ok)
 	assert.Equal(t, 8302, id)
-	_, ok = reassignWithinLostParty(8, 8399, 1, true, formationcombat.ReachAny, room)
+	_, ok = reassignWithinLostParty(8, 8399, 1, true, formationcombat.ReachAny, strategy.Weakest, 0, room)
 	assert.False(t, ok, "hostile to that leader only")
 
 	// A hostile mob is hostile to everyone.
 	footman.Groups = nil
 	footman.Hostile = true
-	id, ok = reassignWithinLostParty(8, 8399, 1, true, formationcombat.ReachAny, room)
+	id, ok = reassignWithinLostParty(8, 8399, 1, true, formationcombat.ReachAny, strategy.Weakest, 0, room)
 	require.True(t, ok)
 	assert.Equal(t, 8302, id)
 
@@ -184,8 +186,9 @@ func TestReassignWithinLostPartyNeverTurnsOnABystander(t *testing.T) {
 	footman.Hostile = false
 	lost := engagementMob(t, 8303, 0, roomId)
 	lost.Groups = []string{"29a-merchants"}
+	lost.SpawnGroup = "29a-merchants"
 	room.SetTestOccupants(nil, []int{8301, 8302, 8303})
-	id, ok = reassignWithinLostParty(8, 8303, 1, true, formationcombat.ReachAny, room)
+	id, ok = reassignWithinLostParty(8, 8303, 1, true, formationcombat.ReachAny, strategy.Weakest, 0, room)
 	require.True(t, ok)
 	assert.Equal(t, 8301, id)
 }
@@ -224,4 +227,18 @@ func TestMarkHostilityNeverSpreadsToAnUntouchedGroup(t *testing.T) {
 	assert.True(t, mobs.IsHostile("29a-mh-a", 7))
 	assert.True(t, mobs.IsHostile("29a-mh-b", 7))
 	assert.False(t, mobs.IsHostile("29a-mh-c", 7), "nobody touched the bystander's group")
+}
+
+// Phase 32d: the reassignment chooses by the attacker's rule.
+func TestChooseFromPartyByRule(t *testing.T) {
+	party, alive := twoByTwo(t)
+	id, ok := chooseFromParty(0, 0, false, party, alive, formationcombat.ReachNone, strategy.Strongest, 0)
+	require.True(t, ok)
+	assert.Equal(t, 8201, id, "the strongest (unplaced: everyone is in reach)")
+	id, ok = chooseFromParty(0, 0, false, party, alive, formationcombat.ReachNone, strategy.Assist, 8203)
+	require.True(t, ok)
+	assert.Equal(t, 8203, id, "the player's target")
+	id, ok = chooseFromParty(0, 0, true, party, alive, formationcombat.ReachNone, strategy.Assist, 8203)
+	require.True(t, ok)
+	assert.Equal(t, 8201, id, "the player's target out of reach: the nearest in reach")
 }
