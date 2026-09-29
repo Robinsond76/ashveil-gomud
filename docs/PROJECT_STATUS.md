@@ -6,10 +6,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-29
-- **HEAD:** branch `claude/next-phase-planning-9u98ae` 2026-09-29: Phase 29f
-  (paced combat output), verified and reviewed, awaiting merge to `master`.
-  `master` 2026-09-29: Phase 29e (pain reactions), integrated from
-  `codex/phase-29e-pain-reactions`. Before it, Phase 32g2 (live battle view),
+- **HEAD:** `master` 2026-09-29: Phase 29f (paced combat output),
+  squash-merged as `fb28df3` from `claude/next-phase-planning-9u98ae`
+  (branch since deleted). Before it, Phase 29e (pain reactions), integrated
+  from `codex/phase-29e-pain-reactions`. Before that, Phase 32g2 (live battle view),
   merged from `phase-32g2-battle-view`, and Phase 32g (web company dock), merged from
   `phase-32g-company-dock`. Before that, Phase 29d (NPC pronouns and stable enemy
   labels), integrated from `codex/phase-29d-pronouns-ordinals`. Before that, Phase 32d (automatic combat by
@@ -35,8 +35,8 @@ instead of duplicating them.
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 29f (paced combat output), on
-  `claude/next-phase-planning-9u98ae`; see its work-log entry below. Before
+- **Latest completed phase:** 29f (paced combat output), squash-merged
+  to `master` as `fb28df3`; see its work-log entry below. Before
   it, 29e (pain reactions), from `codex/phase-29e-pain-reactions`, 32g2
   (live battle view), from `phase-32g2-battle-view`, and 32g (web company
   dock), from `phase-32g-company-dock`.
@@ -211,8 +211,8 @@ docs/PROJECT_STATUS.md`.
   - **Blocker, partly resolved:** a 39 MB build binary (`GoMud`) was
     committed in `c793454`. It was removed from the tree and `/GoMud` is
     now ignored, but a history rewrite was not permitted, so the blob
-    stays in the branch's history. A squash merge (or an owner-approved
-    rewrite) keeps it out of `master`.
+    stayed in the branch's history. The owner chose a squash merge, which
+    keeps it out of `master`; the branch was then deleted.
   - **Partly rejected:** a dedicated survival-drain test. The cadence test
     shows every later `NewRound` listener runs every round, and exposure's
     tick keys on round numbers. The Party payload hold is deferred.

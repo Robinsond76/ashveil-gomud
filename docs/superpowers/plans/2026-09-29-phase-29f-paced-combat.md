@@ -210,8 +210,8 @@ Files:
   `git diff --check` once, after the fixes.
 - [x] Record the phase, the verification, and a **Review:** line in
   `docs/PROJECT_STATUS.md`; commit; push the branch.
-- [ ] Merge to `master` (awaiting the owner: squash, to keep a
-  mistakenly committed binary out of `master`'s history).
+- [x] Merge to `master`: squash-merged as `fb28df3` (the owner's choice,
+  to keep a mistakenly committed binary out of `master`'s history).
 
 ## Review focus
 
