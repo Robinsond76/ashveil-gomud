@@ -183,8 +183,11 @@ Phase 29b2 is at commit `d5ace46`).
   battle, so the view flickered to Setup, announced "The battle is over"
   and lost focus (the client keeps the last battle until it's re-sent;
   the browser check fails without the fix); (2) a hidden enemy that died
-  or left was named under Fallen (fallen are named only if seen in this
-  battle: a runtime memory per player and battle); (3) the view ignored
+  or left was named under Fallen (a fallen enemy is named unless the view
+  last saw it hidden: a runtime memory per player and battle; the first
+  version, "only if seen", dropped a foe that fell in its first round,
+  which the full race run caught, and the wiring tests now start each
+  from a fresh login so they loop cleanly); (3) the view ignored
   darkness (it now shows only that it's too dark, as `scout`); (4)
   wiring gaps: companion targets, `others`, darkness, and a connection
   without GMCP now go through real rounds; (5) a wholly hidden group was
@@ -198,8 +201,9 @@ Phase 29b2 is at commit `d5ace46`).
 - **Live battle view (32g2), deferred:** pacing the view to the narration
   (29f); casting, statuses, wounds, and guards on the grid (Phase 30); the
   battle summary in the view; exact enemy numbers behind a skill. The
-  view can lead the round's narration by a few lines. After a restart the
-  memory of enemies seen is empty, so earlier falls go unnamed.
+  view can lead the round's narration by a few lines. A hidden enemy that
+  joins and falls within one round, before the view ever looks, is named
+  under Fallen (accepted: the view names every foe it never saw hidden).
 
 - **Automatic combat (32d), for the owner and later phases:** Magic
   Missile's difficulty 75 gives a new wizard about a one-in-three chance

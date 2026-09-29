@@ -25,7 +25,7 @@ func sampleBattle() battleFacts {
 			{Id: 414, Label: "the second cutthroat", Standing: true, Row: 1, Col: 1, Health: 4, HealthMax: 20,
 				Target: targetFact{UserId: 9, Name: "Brannoc"}},
 			{Id: 415, Label: "the slinger", Seen: true},
-			{Id: 418, Label: "the lurker"}, // gone, never seen: not named
+			{Id: 418, Label: "the lurker"}, // gone, last seen hidden: not named
 			{Id: 416, Label: "the bruiser", Standing: true, Hidden: true, Row: 1, Col: 0, Health: 40, HealthMax: 40,
 				Target: targetFact{Key: "leader"}},
 			{Id: 417, Label: "the third cutthroat", Standing: true, Row: 0, Col: 2, Health: 20, HealthMax: 20,
@@ -134,22 +134,29 @@ func TestBattlePayloadDark(t *testing.T) {
 	assert.JSONEq(t, `{"group":"the enemy","dark":true,"enemies":[]}`, string(raw))
 }
 
-// TestSeenEnemies (32g2 review finding 2): the enemies the player has seen
-// in this battle, forgotten when a new battle begins or the player leaves.
+// TestSeenEnemies (32g2 review finding 2): whether each enemy was hidden
+// when last seen in this battle, forgotten when a new battle begins or the
+// player leaves.
 func TestSeenEnemies(t *testing.T) {
+	a, b := battleSeenKey{fight: 100}, battleSeenKey{fight: 101}
 	s := newSeenEnemies()
-	s.mark(7, battleSeenKey{fight: 100}, 21)
-	assert.True(t, s.has(7, battleSeenKey{fight: 100}, 21))
-	assert.False(t, s.has(7, battleSeenKey{fight: 100}, 22))
-	assert.False(t, s.has(8, battleSeenKey{fight: 100}, 21))
-	assert.False(t, s.has(7, battleSeenKey{fight: 101}, 21), "another battle starts afresh")
-	s.mark(7, battleSeenKey{fight: 101}, 22)
-	assert.False(t, s.has(7, battleSeenKey{fight: 100}, 21), "the old battle is forgotten")
+	s.note(7, a, 21, true)
+	s.note(7, a, 22, false)
+	assert.True(t, s.hiddenLast(7, a, 21))
+	assert.False(t, s.hiddenLast(7, a, 22))
+	assert.False(t, s.hiddenLast(7, a, 23), "never seen: not known hidden")
+	s.note(7, a, 21, false)
+	assert.False(t, s.hiddenLast(7, a, 21), "the last sight counts")
+	s.note(7, a, 21, true)
+	assert.False(t, s.hiddenLast(8, a, 21))
+	assert.False(t, s.hiddenLast(7, b, 21), "another battle starts afresh")
+	s.note(7, b, 22, true)
+	assert.False(t, s.hiddenLast(7, a, 21), "the old battle is forgotten")
 	s.forget(7)
-	assert.False(t, s.has(7, battleSeenKey{fight: 101}, 22))
-	s.mark(7, battleSeenKey{fight: 5}, 1)
-	s.mark(9, battleSeenKey{fight: 5}, 1)
+	assert.False(t, s.hiddenLast(7, b, 22))
+	s.note(7, a, 1, true)
+	s.note(9, a, 1, true)
 	s.prune([]int{9})
-	assert.False(t, s.has(7, battleSeenKey{fight: 5}, 1))
-	assert.True(t, s.has(9, battleSeenKey{fight: 5}, 1))
+	assert.False(t, s.hiddenLast(7, a, 1))
+	assert.True(t, s.hiddenLast(9, a, 1))
 }

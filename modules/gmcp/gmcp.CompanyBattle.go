@@ -48,7 +48,7 @@ type enemyFact struct {
 	Label             string // its 29d battle label
 	Standing          bool   // alive, here, and still in the battle's group
 	Hidden            bool
-	Seen              bool // the player saw it in this battle (a fallen one is named only then)
+	Seen              bool // a fallen one may be named: not last seen hidden
 	Row, Col          int
 	Health, HealthMax int
 	Reach             bool // the player can strike it from their cell
@@ -251,15 +251,12 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 			e.Health, e.HealthMax = m.Character.Health, m.Character.HealthMax.Value
 			e.Reach = f.Placed && formationcombat.Legal(col, group.Party.Formation, key, alive, reach)
 			e.Target = targetOf(user.UserId, room.RoomId, m)
-			if !e.Hidden {
-				battleSeen.mark(user.UserId, fight, id)
-			}
+			battleSeen.note(user.UserId, fight, id, e.Hidden)
+		} else if m != nil {
+			// A body not yet taken away, or one that walked off.
+			battleSeen.note(user.UserId, fight, id, m.Character.HasBuffFlag("hidden"))
 		}
-		if !e.Standing && m != nil && !m.Character.HasBuffFlag("hidden") {
-			// A body not yet taken away, or one that walked off, in plain view.
-			battleSeen.mark(user.UserId, fight, id)
-		}
-		e.Seen = battleSeen.has(user.UserId, fight, id)
+		e.Seen = !battleSeen.hiddenLast(user.UserId, fight, id)
 		f.Enemies = append(f.Enemies, e)
 	}
 
@@ -326,38 +323,42 @@ type battleSeenKey struct {
 	party string
 }
 
-// seenEnemies remembers, per player, the enemies they have seen in their
-// current battle, so an enemy that falls or leaves unseen (hidden) is never
-// named in the view (32g2 review finding 2). Runtime only: after a restart
-// the battle is a new one. Built on the game loop; mu keeps tests honest.
+// seenEnemies remembers, per player, whether each enemy of their current
+// battle was hidden when the view last looked, so one that falls or leaves
+// while hidden is never named in the view (32g2 review finding 2). One the
+// view never looked at (it fell in the round it joined) is named: the
+// player saw it fight. Runtime only: after a restart the battle is a new
+// one. Built on the game loop; mu keeps tests honest.
 type seenEnemies struct {
 	mu     sync.Mutex
 	byUser map[int]seenFight
 }
 
 type seenFight struct {
-	key battleSeenKey
-	ids map[int]bool
+	key    battleSeenKey
+	hidden map[int]bool // instance -> hidden when last seen
 }
 
 func newSeenEnemies() *seenEnemies { return &seenEnemies{byUser: map[int]seenFight{}} }
 
-func (s *seenEnemies) mark(userId int, key battleSeenKey, id int) {
+func (s *seenEnemies) note(userId int, key battleSeenKey, id int, hidden bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	f, ok := s.byUser[userId]
 	if !ok || f.key != key {
-		f = seenFight{key: key, ids: map[int]bool{}}
+		f = seenFight{key: key, hidden: map[int]bool{}}
 		s.byUser[userId] = f
 	}
-	f.ids[id] = true
+	f.hidden[id] = hidden
 }
 
-func (s *seenEnemies) has(userId int, key battleSeenKey, id int) bool {
+// hiddenLast reports whether the enemy was hidden when last seen in this
+// battle; false when it was never seen.
+func (s *seenEnemies) hiddenLast(userId int, key battleSeenKey, id int) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	f, ok := s.byUser[userId]
-	return ok && f.key == key && f.ids[id]
+	return ok && f.key == key && f.hidden[id]
 }
 
 func (s *seenEnemies) forget(userId int) {

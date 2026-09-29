@@ -113,9 +113,9 @@ Researched on `bcc7e6c` (2026-09-29).
 - **End of battle:** `{}` clears the view; the tab returns to Setup.
 - **As built (review):** in the dark the payload is only
   `{"group":"the enemy","dark":true,"enemies":[]}`, as `scout` refuses; a
-  fallen enemy is named only if the player saw it in this battle (a
-  runtime memory per player and battle, so a hidden one that dies or
-  slips away stays unnamed); a wholly hidden group isn't named in the
+  fallen enemy is named unless the view last saw it hidden (a runtime
+  memory per player and battle, so a hidden one that dies or slips away
+  stays unnamed); a wholly hidden group isn't named in the
   header or the waiting line. The client keeps the last battle across a
   `Company` snapshot (which replaces everything stored under `Company`)
   until the server's re-sent battle arrives.

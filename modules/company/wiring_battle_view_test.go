@@ -26,6 +26,9 @@ import (
 func battleViews(t *testing.T) map[int][]map[string]any {
 	t.Helper()
 	gmcp.AcceptGMCPForTest(users.GetConnectionId(7)) // a web client
+	// A fresh login: the feed forgets what it sent user 7 in an earlier test.
+	events.AddToQueue(events.PlayerSpawn{UserId: 7})
+	events.ProcessEvents()
 	got := map[int][]map[string]any{}
 	id := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		if out, ok := e.(gmcp.GMCPOut); ok && out.Module == "Company.Battle" {
