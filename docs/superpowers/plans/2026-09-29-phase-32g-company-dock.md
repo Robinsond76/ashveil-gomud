@@ -40,7 +40,7 @@ does.
 
 ## Task 3: `Company.Inventory` (`modules/company`, `modules/gmcp`)
 
-- [ ] Tests first:
+- [x] Tests first:
   - `modules/company`: a pure `inventoryData(user)` returns the members
     (the player first; key, name, fallen, weight, pack and bonus, worn
     and carried items), horses (id, kind, saddle, capacity added, rider
@@ -48,18 +48,25 @@ does.
     command name, display name, weight, count, uses and max uses, type
     and subtype. A fallen member's gear is "with the body"; a player with
     no company gets their own share.
-  - `inventoryView` (the text `company inventory`) is rebuilt on
-    `inventoryData` and its existing tests still pass unchanged.
+  - As built: the data is `CompanyModule.CompanyInventory` (companions,
+    read only: the live mob's gear by `Snapshot`, never
+    `refreshSnapshot`, which writes the record; the feed asks every
+    round) over `company.InventoryMemberOf`; the text `company inventory`
+    keeps its own builder and tests, since it refreshes as it reads.
   - `modules/gmcp`: the payload marshals names as data; an unchanged
     inventory sends nothing; one used waterskin sends `Company.Inventory`
     only.
-- [ ] `inventoryData`; an `InventoryProvider` seam; the
+- [x] `inventoryData`; an `InventoryProvider` seam; the
   `Company.Inventory` payload in the company feed, change-detected on
   its own.
-- [ ] Confirm how `cargo take`, `give`, and `mount saddle` resolve two
-  items of the same name; if a name is ambiguous, the payload's command
-  name is the form those commands accept for the right one (e.g.
-  `2.waterskin`), with a test.
+- [x] Confirm how `cargo take`, `give`, and `mount saddle` resolve two
+  items of the same name. Found: `cargo put`, `give`, `mount saddle`,
+  `eat`, `drink`, `equip` all use `FindInBackpack` → `items.FindMatchIn`,
+  which takes `!<id>:<uuid>` for exactly one item (`Item.ShorthandId`,
+  as the gear window's GMCP `id`); `cargo take` matches stacks by
+  `!<id>`. Each item's `ref` is that form (tested).
+- Horses carry `rides` (a saddled riding horse), not a rider key: the
+  mount module doesn't expose which member rides.
 
 ## Task 4: `Company.Camp` (`modules/camping`, `modules/gmcp`)
 

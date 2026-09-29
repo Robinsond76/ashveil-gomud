@@ -216,11 +216,21 @@ type companySent struct {
 	vitals    string
 }
 
+// companyExtra is one more message the feed keeps current (Phase 32g):
+// built for a user each refresh, sent only when it changed. A nil build
+// result sends nothing.
+type companyExtra struct {
+	module string
+	build  func(user *users.UserRecord) []byte
+}
+
 // companyFeed decides what to send. It runs on the game loop; mu only
 // keeps tests honest.
 type companyFeed struct {
 	mu        sync.Mutex
 	last      map[int]companySent
+	extras    []companyExtra
+	lastExtra map[int]map[string]string
 	chemistry chemistryFunc
 	send      func(userID int, module string, payload []byte)
 	// accepting reports whether the user's connection may take GMCP; a
@@ -231,6 +241,8 @@ type companyFeed struct {
 func newCompanyFeed() *companyFeed {
 	return &companyFeed{
 		last:      map[int]companySent{},
+		extras:    []companyExtra{inventoryExtra()},
+		lastExtra: map[int]map[string]string{},
 		chemistry: company.ChemistryStanding,
 		send: func(userID int, module string, payload []byte) {
 			events.AddToQueue(GMCPOut{UserId: userID, Module: module, Payload: payload})
@@ -287,11 +299,35 @@ func (f *companyFeed) update(userID int, s companyview.Summary) {
 	}
 }
 
-// forget makes the next update send the full snapshot (login, copyover,
-// a request) or drops the user (logout).
+// updateExtras sends each extra message that changed since its last send.
+func (f *companyFeed) updateExtras(user *users.UserRecord) {
+	if f.accepting != nil && !f.accepting(user.UserId) {
+		return // update forgets the user, so all is sent once accepted
+	}
+	for _, extra := range f.extras {
+		body := extra.build(user)
+		if body == nil {
+			continue
+		}
+		f.mu.Lock()
+		if f.lastExtra[user.UserId] == nil {
+			f.lastExtra[user.UserId] = map[string]string{}
+		}
+		changed := f.lastExtra[user.UserId][extra.module] != string(body)
+		f.lastExtra[user.UserId][extra.module] = string(body)
+		f.mu.Unlock()
+		if changed {
+			f.send(user.UserId, extra.module, body)
+		}
+	}
+}
+
+// forget makes the next update send the full snapshot and every extra
+// (login, copyover, a request) or drops the user (logout).
 func (f *companyFeed) forget(userID int) {
 	f.mu.Lock()
 	delete(f.last, userID)
+	delete(f.lastExtra, userID)
 	f.mu.Unlock()
 }
 
@@ -306,6 +342,11 @@ func (f *companyFeed) prune(online []int) {
 	for id := range f.last {
 		if !live[id] {
 			delete(f.last, id)
+		}
+	}
+	for id := range f.lastExtra {
+		if !live[id] {
+			delete(f.lastExtra, id)
 		}
 	}
 	f.mu.Unlock()
@@ -323,6 +364,7 @@ var companyFeeds = newCompanyFeed()
 func init() {
 	companyview.OnRefresh.Register(func(r companyview.Refreshed) companyview.Refreshed {
 		companyFeeds.update(r.User.UserId, r.Summary)
+		companyFeeds.updateExtras(r.User)
 		return r
 	})
 	events.RegisterListener(events.PlayerSpawn{}, func(e events.Event) events.ListenerReturn {

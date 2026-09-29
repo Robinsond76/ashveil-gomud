@@ -125,3 +125,41 @@ func TestCompanyInventoryAlone(t *testing.T) {
 	assert.Contains(t, out, "Horses: none")
 	assert.Contains(t, out, "Cargo: empty")
 }
+
+// TestCompanyInventoryData (Phase 32g): the Inventory tab's data, read
+// only: an out companion from its live mob (its record untouched), a
+// stored one from its record, a fallen one with nothing, in ID order.
+func TestCompanyInventoryData(t *testing.T) {
+	spec(t, items.ItemSpec{ItemId: 989011, Name: "spear", Weight: 2000, Type: items.Weapon})
+	spear := items.New(989011)
+	recorded := domain.MemberState{Level: 1}
+	stored := domain.MemberState{Level: 1, Items: []items.Item{spear}}
+	live := domain.MemberState{Level: 1}
+	live.Equipment.Weapon = spear
+	runtime := &fakeRuntime{live: map[int]bool{501: true}, liveState: map[int]domain.MemberState{501: live}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{
+			{ID: 1, MobTemplateID: 58, Name: "Maren", State: &recorded},
+			{ID: 2, MobTemplateID: 58, Name: "Oswin", State: &stored},
+			{ID: 3, MobTemplateID: 58, Name: "Ysolde", State: &stored, Death: &domain.CompanionDeath{OpID: "x", Remaining: 60}},
+		}},
+	}}, runtime)
+	module.instances = map[int]map[int]int{7: {1: 501}}
+
+	members, ok := module.CompanyInventory(7)
+	require.True(t, ok)
+	require.Len(t, members, 3)
+	assert.Equal(t, "Maren", members[0].Name)
+	require.Len(t, members[0].Worn, 1, "the live mob's gear")
+	assert.Equal(t, "spear", members[0].Worn[0].Name)
+	after, _ := module.registry.Get(7)
+	assert.Nil(t, after.Companions[0].State.Equipment.Weapon.Spec, "reading never writes the record")
+	assert.Zero(t, after.Companions[0].State.Equipment.Weapon.ItemId)
+	require.Len(t, members[1].Carried, 1, "the stored record")
+	assert.True(t, members[2].Fallen)
+	assert.Empty(t, members[2].Carried, "the fallen's gear is with the body")
+
+	none, ok := module.CompanyInventory(8)
+	assert.True(t, ok)
+	assert.Empty(t, none)
+}
