@@ -13,7 +13,8 @@ func RegisterListeners() {
 	// RoomChange Listeners
 	events.RegisterListener(events.RoomChange{}, LocationMusicChange)
 	events.RegisterListener(events.RoomChange{}, CleanupEphemeralRooms)
-	// Phase 29f: leaving the room sends any held combat lines first.
+	// Phase 29f: leaving the room by your own doing sends any held combat
+	// lines before the new room's text.
 	events.RegisterListener(events.RoomChange{}, FlushPacedOnRoomChange)
 
 	// NewRound Listeners

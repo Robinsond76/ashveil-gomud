@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/copyover"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -79,25 +80,35 @@ func paceOf(user *users.UserRecord) combatpace.Pace {
 // round caused it and the recipient paces combat, at once otherwise.
 //
 // One exception keeps the story in order: while the recipient has lines
-// held, other goings-on in their room (a mob that goes for someone after
-// the round, a player walking in) wait behind them. What is said to them
-// directly (their own command's output, a tell) and what is said aloud (a
-// say, an emote) never waits.
+// held, what the game does meanwhile (a mob that goes for someone after the
+// round, a round tick's "you are bleeding out") waits behind them. What a
+// player typed never waits: their own command's output, a tell to them,
+// and anything said aloud (a say, an emote).
 func sendOrHold(user *users.UserRecord, message events.Message) {
-	text := message.Text
-	pace := paceOf(user)
-	if round := events.Cause(); round != 0 && pace != combatpace.Off {
+	if !holdBehindCombat(user, message.Text, message.IsCommunication) {
+		deliver(user, message.Text)
+	}
+}
+
+// holdBehindCombat holds text for a player, if pacing calls for it, and
+// reports whether it did.
+func holdBehindCombat(user *users.UserRecord, text string, spoken bool) bool {
+	pacer := combatpace.Default()
+	if round := events.Cause(); round != 0 {
+		pace := paceOf(user)
+		if pace == combatpace.Off {
+			return false
+		}
 		spec := pace.ForRound(configs.GetTimingConfig().CombatRoundDuration())
-		for _, older := range combatpace.Default().Hold(user.UserId, round, text, spec, paceNow()) {
+		for _, older := range pacer.Hold(user.UserId, round, text, spec, paceNow()) {
 			deliver(user, older)
 		}
-		return
+		return true
 	}
-	direct := message.UserId == user.UserId
-	if !direct && !message.IsCommunication && combatpace.Default().Follow(user.UserId, text) {
-		return
+	if spoken || events.Typed() {
+		return false
 	}
-	deliver(user, text)
+	return pacer.Follow(user.UserId, text)
 }
 
 // CombatOnCadence is DoCombat's NewRound listener: combat resolves only on
@@ -128,7 +139,7 @@ func startPacedRound() {
 	snapshot := map[int]string{}
 	var pacing []int
 	for _, userId := range users.GetOnlineUserIds() {
-		if user := users.GetByUserId(userId); user != nil && paceOf(user) != combatpace.Off {
+		if user := users.GetByUserId(userId); user != nil && paceOf(user) != combatpace.Off && nearAFight(user) {
 			snapshot[userId] = user.GetCommandPrompt()
 			pacing = append(pacing, userId)
 		}
@@ -138,6 +149,21 @@ func startPacedRound() {
 	roundPrompts = snapshot
 	promptHeld = map[int]bool{}
 	roundPromptsMu.Unlock()
+}
+
+// nearAFight reports whether a player is fighting, or is in a room where a
+// fight is going on: only they have a round opened (their prompt and web
+// views held until its lines are out). Anyone else a round's text reaches
+// is paced all the same, without the hold.
+func nearAFight(user *users.UserRecord) bool {
+	if user.Character.Aggro != nil {
+		return true
+	}
+	room := rooms.LoadRoom(user.Character.RoomId)
+	if room == nil {
+		return false
+	}
+	return len(room.GetPlayers(rooms.FindFighting)) > 0 || len(room.GetMobs(rooms.FindFighting)) > 0
 }
 
 // ReleasePacedCombat is a NewTurn listener: it sends every held line now due.

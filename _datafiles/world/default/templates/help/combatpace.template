@@ -6,7 +6,7 @@ watch. How fast they come is up to you:
 
   <ansi fg="command">set combatpace fast</ansi>     a line about every 0.4 seconds, done in 3 seconds
   <ansi fg="command">set combatpace normal</ansi>   a line about every 0.8 seconds, done in 6 seconds
-  <ansi fg="command">set combatpace slow</ansi>     a line about every second, done in 7.5 seconds
+  <ansi fg="command">set combatpace slow</ansi>     a line about every second, done in about 7 seconds
   <ansi fg="command">set combatpace off</ansi>      the whole round at once
 
 Normal is the default. If you play with a screen reader (<ansi fg="command">set</ansi> shows
@@ -30,9 +30,10 @@ ScreenReader), the default is off. <ansi fg="command">set</ansi> shows your pace
 <ansi fg="yellow-bold">What is never held back</ansi>
 
 What people say, tells, and anything your own commands show you come at
-once, even mid-round. You can type at any time. Only other goings-on in
-the room (someone walking in, a foe choosing its next target) wait
-behind the round's lines, so they don't arrive out of order.
+once, even mid-round. You can type at any time. Everything else that
+happens meanwhile (a foe choosing its next target, a notice that you are
+bleeding, news of a death) waits behind the round's lines, so nothing
+arrives ahead of what led to it.
 
 Pacing only changes when you read the round. The fight itself is decided
 the moment the round starts, the same for everyone.

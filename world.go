@@ -531,7 +531,9 @@ loop:
 			break loop
 		case wi := <-w.worldInput:
 
-			events.AddToQueue(events.Input{
+			// Ashveil Phase 29f: typed input never takes a combat round's
+			// cause, and its output is never held back by pacing.
+			events.AddTyped(events.Input{
 				UserId:    wi.FromId,
 				InputText: wi.InputText,
 				ReadyTurn: util.GetTurnCount(),

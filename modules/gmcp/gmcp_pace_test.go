@@ -32,19 +32,22 @@ func TestPacedCombatHoldsTheWebViews(t *testing.T) {
 	pacer := combatpace.New()
 	t.Cleanup(combatpace.UseForTest(pacer))
 
+	AcceptGMCPForTest(u.ConnectionId())
 	var vitals int
-	id := events.RegisterListener(GMCPCharUpdate{}, func(e events.Event) events.ListenerReturn {
-		if up := e.(GMCPCharUpdate); up.UserId == 7 && up.Identifier == `Char.Vitals` {
+	id := events.RegisterListener(GMCPOut{}, func(e events.Event) events.ListenerReturn {
+		if out := e.(GMCPOut); out.UserId == 7 && (out.Module == `Char.Vitals` || out.Module == `Char`) {
 			vitals++
 		}
 		return events.Cancel // no connection to send it to
 	}, events.First)
-	t.Cleanup(func() { events.UnregisterListener(GMCPCharUpdate{}, id) })
+	t.Cleanup(func() { events.UnregisterListener(GMCPOut{}, id) })
 	events.ProcessEvents()
 
 	pacer.StartRound(7) // a combat round opens for Aria
 	companyview.Refresh(u)
 	events.AddToQueue(events.CharacterVitalsChanged{UserId: 7})
+	// A level gained mid-round sends a full Char payload: it waits too.
+	events.AddToQueue(GMCPCharUpdate{UserId: 7, Identifier: `Char`})
 	events.ProcessEvents()
 	assert.Empty(t, *out, "no Company payload during the paced round")
 	assert.Zero(t, vitals, "no Char.Vitals during the paced round")
@@ -59,7 +62,7 @@ func TestPacedCombatHoldsTheWebViews(t *testing.T) {
 	}
 	assert.True(t, modules["Company"], "Company caught up: %v", *out)
 	assert.True(t, modules["Company.Battle"], "the battle view caught up: %v", *out)
-	assert.Equal(t, 1, vitals, "Char.Vitals caught up once")
+	assert.Equal(t, 2, vitals, "Char and Char.Vitals caught up, once each")
 
 	// Outside a paced round, both go out as before.
 	*out = nil

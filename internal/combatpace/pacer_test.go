@@ -230,3 +230,40 @@ func TestAnOpenRoundIsBusyUntilDrained(t *testing.T) {
 		t.Fatalf("FlushAll drained %v", drained)
 	}
 }
+
+func TestALateLineOfAnOlderRoundJoinsTheNewer(t *testing.T) {
+	p := New()
+	spec := Normal.ForRound(8 * time.Second)
+	p.Hold(1, 4, "n1", spec, at(0))
+	p.Hold(1, 4, "n2", spec, at(0))
+	if flushed := p.Hold(1, 2, "late", spec, at(0)); flushed != nil {
+		t.Fatalf("a late older line flushed the newer round: %v", flushed)
+	}
+	got := release(p, 3000)
+	want := map[string]int{"n1": 0, "n2": 800, "late": 1600}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("release times %v, want %v", got, want)
+	}
+}
+
+// TestABusyRoundStillFillsItsWindow: 30 lines at the normal pace would take
+// 23.2s; they are squeezed into the 6s window, evenly, not into a fraction
+// of a second (a regression: the scaling overflowed int64 nanoseconds).
+func TestABusyRoundStillFillsItsWindow(t *testing.T) {
+	p := New()
+	spec := Normal.ForRound(8 * time.Second)
+	for i := 0; i < 30; i++ {
+		p.Hold(1, 2, string(rune('A'+i)), spec, at(0))
+	}
+	got := release(p, 7000)
+	if len(got) != 30 {
+		t.Fatalf("released %d of 30", len(got))
+	}
+	last := got[string(rune('A'+29))]
+	if last < 5900 || last > 6000 {
+		t.Fatalf("last line at %dms, want the end of the 6s window", last)
+	}
+	if mid := got[string(rune('A'+15))]; mid < 3000 || mid > 3400 {
+		t.Fatalf("line 16 at %dms, want it about halfway", mid)
+	}
+}

@@ -1,10 +1,10 @@
 package hooks
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"

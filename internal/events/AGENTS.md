@@ -19,11 +19,13 @@
   (`WithCause`, inherited while a caused event is dispatched). `Cause()`
   reads it during dispatch; `hooks.Message_SendMessage` uses it to pace
   combat text.
-- The cause is set on the game loop only. A player's `Input` never
-  inherits one, since the input worker queues it off the loop. Keep any new
-  off-loop producer from queueing `Message` events, or exclude its event in
-  `causeFor`.
-- Requeued events keep their cause.
+- The cause is set on the game loop only. What players type is queued by
+  the input worker with `AddTyped`: it takes no cause, and it and
+  everything it causes are `Typed()`. Pacing never holds typed text. Any
+  new off-loop producer of player input must use `AddTyped` too. A
+  command the game issues for a player (`user.Command`) inherits the
+  current cause, so a slain player's `suicide` stays part of the round.
+- Requeued events keep their cause and typed mark.
 
 ## Verification
 

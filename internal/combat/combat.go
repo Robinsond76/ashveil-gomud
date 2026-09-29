@@ -2,12 +2,12 @@ package combat
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"strconv"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"

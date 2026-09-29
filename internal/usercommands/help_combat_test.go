@@ -128,7 +128,7 @@ func TestCombatPaceHelp(t *testing.T) {
 	page = tagPattern.ReplaceAllString(page, "")
 	for _, want := range []string{
 		"set combatpace fast", "set combatpace normal", "set combatpace slow", "set combatpace off",
-		"0.4 seconds", "done in 6 seconds", "7.5 seconds",
+		"0.4 seconds", "done in 6 seconds", "about 7 seconds",
 		"screen reader", "the default is off",
 		"every 8 seconds", "before the next begins",
 		"pain reaction or a death line",

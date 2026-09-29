@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/copyover"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -114,18 +115,18 @@ func TestPacedLinesReleaseOverTheRound(t *testing.T) {
 	if strings.Join(r.got, "|") != "one" {
 		t.Fatalf("after one turn got %v", r.got)
 	}
-	// A non-combat message in the middle of the round goes out at once.
-	r.user.SendText("Brin says, hello")
+	// What a player typed (a tell to Aria) goes out at once mid-round.
+	events.AddTyped(events.Message{UserId: r.user.UserId, Text: "Brin tells you, hello\n"})
 	events.ProcessEvents()
-	if strings.Join(r.got, "|") != "one|Brin says, hello" {
+	if strings.Join(r.got, "|") != "one|Brin tells you, hello" {
 		t.Fatalf("chat was delayed: %v", r.got)
 	}
 	r.advance(800 * time.Millisecond)
-	if strings.Join(r.got, "|") != "one|Brin says, hello|two" {
+	if strings.Join(r.got, "|") != "one|Brin tells you, hello|two" {
 		t.Fatalf("after 0.85s got %v", r.got)
 	}
 	r.advance(800 * time.Millisecond)
-	if strings.Join(r.got, "|") != "one|Brin says, hello|two|three" {
+	if strings.Join(r.got, "|") != "one|Brin tells you, hello|two|three" {
 		t.Fatalf("after 1.65s got %v", r.got)
 	}
 }
@@ -170,6 +171,7 @@ func TestPromptWaitsForTheLines(t *testing.T) {
 	r.user.SetConfigOption(`prompt-compiled`, `HP {hp}`)
 	r.user.SetConfigOption(`fprompt-compiled`, `HP {hp}`)
 	r.user.Character.Health = 20
+	r.user.Character.SetAggro(0, 1, characters.DefaultAttack) // in a fight
 	start := r.user.GetCommandPrompt()
 	combatOnCadence(events.NewRound{RoundNumber: 2}, func(events.Event) events.ListenerReturn {
 		r.user.Character.Health = 7 // the round's damage lands at once
@@ -244,7 +246,7 @@ func TestRoomGoingsOnWaitBehindHeldLines(t *testing.T) {
 	sendOrHold(r.user, events.Message{RoomId: 9, Text: "The captain goes for Ysolde.\n"})
 	// Said aloud, or said to Aria herself: at once.
 	sendOrHold(r.user, events.Message{RoomId: 9, Text: "Brin says, run!\n", IsCommunication: true})
-	sendOrHold(r.user, events.Message{UserId: r.user.UserId, Text: "You are carrying nothing.\n"})
+	events.AddTyped(events.Message{UserId: r.user.UserId, Text: "You are carrying nothing.\n"})
 	events.ProcessEvents()
 	if strings.Join(r.got, "|") != "h1|Brin says, run!|You are carrying nothing." {
 		t.Fatalf("got %v", r.got)
@@ -289,7 +291,8 @@ func TestIdlePlayerIsNotRedrawnEachRound(t *testing.T) {
 	})
 	t.Cleanup(func() { events.UnregisterListener(events.CombatPaceDrained{}, id) })
 	r.prompts = nil
-	r.round(2) // a combat round that sends Aria nothing
+	r.user.Character.SetAggro(0, 1, characters.DefaultAttack) // in a fight
+	r.round(2)                                                // a combat round that sends Aria nothing
 	r.advance(100 * time.Millisecond)
 	if len(r.prompts) != 0 {
 		t.Fatalf("an idle player's prompt was redrawn: %q", r.prompts)
@@ -299,5 +302,32 @@ func TestIdlePlayerIsNotRedrawnEachRound(t *testing.T) {
 	}
 	if combatpace.Default().Busy(r.user.UserId) {
 		t.Fatal("idle player still busy after the first turn")
+	}
+}
+
+func TestUntypedNoticesWaitButTypedOutputDoesNot(t *testing.T) {
+	r := newPaceRig(t)
+	r.round(2, "k1", "k2")
+	r.advance(50 * time.Millisecond) // k1 out, k2 held
+	// A round tick's notice to Aria ("you are bleeding out") waits.
+	r.user.SendText("You are bleeding out!")
+	events.ProcessEvents()
+	if strings.Join(r.got, "|") != "k1" {
+		t.Fatalf("an untyped notice jumped ahead: %v", r.got)
+	}
+	r.advance(2 * time.Second)
+	if strings.Join(r.got, "|") != "k1|k2|You are bleeding out!" {
+		t.Fatalf("got %v", r.got)
+	}
+}
+
+func TestNearAFight(t *testing.T) {
+	r := newPaceRig(t)
+	if nearAFight(r.user) {
+		t.Fatal("a player alone in no room is not near a fight")
+	}
+	r.user.Character.SetAggro(0, 1, characters.DefaultAttack)
+	if !nearAFight(r.user) {
+		t.Fatal("a fighting player is near a fight")
 	}
 }

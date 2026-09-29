@@ -2,10 +2,10 @@ package usercommands
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"

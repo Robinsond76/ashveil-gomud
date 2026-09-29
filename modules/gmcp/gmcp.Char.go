@@ -287,12 +287,6 @@ func (g *GMCPCharModule) vitalsChangedHandler(e events.Event) events.ListenerRet
 		return events.Continue
 	}
 
-	// Ashveil Phase 29f: while a player's combat lines are paced out, their
-	// vitals wait for the lines, and are sent when they drain.
-	if holdVitals(evt.UserId) {
-		return events.Continue
-	}
-
 	// Changing equipment might affect stats, inventory, maxhp/maxmp etc
 	events.AddToQueue(GMCPCharUpdate{
 		UserId:     evt.UserId,
@@ -480,6 +474,12 @@ func (g *GMCPCharModule) buildAndSendGMCPPayload(e events.Event) events.Listener
 			}
 
 			requestedId := strings.Join(identifierParts, `.`)
+
+			// Ashveil Phase 29f: vitals wait for a player's paced combat
+			// lines, and are sent when they drain.
+			if holdCharNode(user.UserId, requestedId) {
+				continue
+			}
 
 			payload, moduleName := g.GetCharNode(user, requestedId)
 

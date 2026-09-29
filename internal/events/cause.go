@@ -13,29 +13,43 @@ import "sync/atomic"
 //
 // The current cause is set only on the game loop: by WithCause, and while
 // ProcessEvents dispatches a caused event. A goroutine off the loop that
-// queues an event during that dispatch would inherit the cause too. The only
-// regular off-loop producer is the input worker, whose player Input events
-// never inherit one; anything else off the loop queues Broadcasts or web
-// client commands, which pacing ignores.
+// queues an event during that dispatch would inherit the cause too, so the
+// input worker queues what players type with AddTyped, which never takes
+// a cause; anything else off the loop queues Broadcasts or system events
+// that carry no combat text.
+//
+// "Typed" is the second mark: what a player typed, and everything it
+// causes in turn. A typed message (a command's output, a tell) is never held
+// back by pacing; an untyped one (a mob's action, a round tick's notice)
+// waits behind a player's held combat lines.
 
-var currentCause atomic.Uint64
+var (
+	currentCause atomic.Uint64
+	currentTyped atomic.Bool
+)
 
 // Cause is the combat round that caused the event being dispatched, or 0.
 func Cause() uint64 { return currentCause.Load() }
 
+// Typed reports whether the event being dispatched came from what a player
+// typed.
+func Typed() bool { return currentTyped.Load() }
+
 // WithCause runs fn with round as the current cause: events it queues, and
-// the events their listeners queue in turn, carry round.
+// the events their listeners queue in turn, carry round. They are not
+// typed: a combat round is the game's doing.
 func WithCause(round uint64, fn func()) {
-	prev := currentCause.Swap(round)
-	defer currentCause.Store(prev)
+	prevCause := currentCause.Swap(round)
+	prevTyped := currentTyped.Swap(false)
+	defer func() {
+		currentCause.Store(prevCause)
+		currentTyped.Store(prevTyped)
+	}()
 	fn()
 }
 
-// causeFor is the cause a newly queued event carries. A player's typed
-// command never inherits one: its output is theirs, not the round's.
-func causeFor(e Event) uint64 {
-	if in, ok := e.(Input); ok && in.UserId > 0 && in.MobInstanceId == 0 {
-		return 0
-	}
-	return currentCause.Load()
+// AddTyped queues what a player typed (the input worker's Input): it never
+// inherits a combat round, and what it causes is typed.
+func AddTyped(e Event, priority ...int) {
+	add(e, 0, true, priority...)
 }

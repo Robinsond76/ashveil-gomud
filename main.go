@@ -113,7 +113,8 @@ func main() {
 	flags.HandleFlags(VERSION)
 
 	// Register copyover contributors (must happen before Restore is called).
-	// Ashveil Phase 29f: held combat lines are sent before anything is saved.
+	// Ashveil Phase 29f: held combat lines are sent before the other
+	// contributors save (rooms and users are saved before copyover starts).
 	copyover.Register(hooks.PaceCopyoverContributor())
 	copyover.Register(connections.CopyoverContributor())
 	copyover.Register(users.CopyoverContributor())

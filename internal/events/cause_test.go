@@ -45,8 +45,9 @@ func TestCauseIsInheritedThroughTheQueue(t *testing.T) {
 			t.Fatalf("Cause inside WithCause = %d", Cause())
 		}
 		AddToQueue(causeProbe{name: "combat"})
-		// A player's typed command never belongs to the round.
-		AddToQueue(Input{UserId: 3, InputText: "say hi"})
+		// What a player types never belongs to the round, even when the
+		// input worker queues it mid-dispatch.
+		AddTyped(Input{UserId: 3, InputText: "say hi"})
 	})
 	if Cause() != 0 {
 		t.Fatalf("Cause after WithCause = %d", Cause())
@@ -54,8 +55,10 @@ func TestCauseIsInheritedThroughTheQueue(t *testing.T) {
 	AddToQueue(causeProbe{name: "plain"})
 
 	var inputCause uint64 = 99
+	var inputTyped bool
 	in := RegisterListener(Input{}, func(e Event) ListenerReturn {
 		inputCause = Cause()
+		inputTyped = Typed()
 		return Continue
 	})
 	t.Cleanup(func() { UnregisterListener(Input{}, in) })
@@ -68,8 +71,8 @@ func TestCauseIsInheritedThroughTheQueue(t *testing.T) {
 			t.Errorf("%s dispatched with cause %d (seen %v), want %d", k, got, ok, v)
 		}
 	}
-	if inputCause != 0 {
-		t.Errorf("player Input dispatched with cause %d, want 0", inputCause)
+	if inputCause != 0 || !inputTyped {
+		t.Errorf("typed Input dispatched with cause %d typed %v, want 0 and typed", inputCause, inputTyped)
 	}
 	if Cause() != 0 {
 		t.Errorf("Cause after ProcessEvents = %d", Cause())
@@ -109,5 +112,50 @@ func TestRequeuedEventKeepsItsCause(t *testing.T) {
 	ProcessEvents()
 	if len(causes) != 2 || causes[0] != 6 || causes[1] != 6 {
 		t.Fatalf("requeued causes = %v, want [6 6]", causes)
+	}
+}
+
+// TestGameCommandsInheritTheRound: a command the game issues for a player
+// mid-round (a slain player's "suicide") is part of the round, and what a
+// typed command causes is typed.
+func TestGameCommandsInheritTheRoundAndTypedSpreads(t *testing.T) {
+	drainForTest()
+	t.Cleanup(drainForTest)
+	type seen struct {
+		cause uint64
+		typed bool
+	}
+	got := map[string]seen{}
+	in := RegisterListener(Input{}, func(e Event) ListenerReturn {
+		i := e.(Input)
+		got[i.InputText] = seen{Cause(), Typed()}
+		if i.InputText == "look" {
+			AddToQueue(causeProbe{name: "look-output"})
+		}
+		return Continue
+	})
+	probe := RegisterListener(causeProbe{}, func(e Event) ListenerReturn {
+		got[e.(causeProbe).name] = seen{Cause(), Typed()}
+		return Continue
+	})
+	t.Cleanup(func() {
+		UnregisterListener(Input{}, in)
+		UnregisterListener(causeProbe{}, probe)
+	})
+	WithCause(10, func() { AddToQueue(Input{UserId: 3, InputText: "suicide"}) })
+	AddTyped(Input{UserId: 3, InputText: "look"})
+	ProcessEvents()
+	want := map[string]seen{
+		"suicide":     {10, false},
+		"look":        {0, true},
+		"look-output": {0, true},
+	}
+	for k, v := range want {
+		if got[k] != v {
+			t.Errorf("%s dispatched with %+v, want %+v", k, got[k], v)
+		}
+	}
+	if Typed() {
+		t.Error("typed leaked past dispatch")
 	}
 }

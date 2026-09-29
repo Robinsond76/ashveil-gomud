@@ -1,11 +1,11 @@
 package combat
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"

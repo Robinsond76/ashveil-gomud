@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -148,11 +149,14 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 		for _, off := range offs {
 			assert.LessOrEqual(t, off, 6*time.Second+50*time.Millisecond, "round %d line at +%v overruns the window", r, off)
 		}
-		if len(offs) > 2 && offs[len(offs)-1]-offs[0] >= time.Second {
+		// A busy round (more lines than fit at 0.8s apart) fills its
+		// window rather than collapsing.
+		if len(offs) >= 9 {
 			spread = true
+			assert.GreaterOrEqual(t, offs[len(offs)-1]-offs[0], 5*time.Second, "round %d's %d lines were squeezed together", r, len(offs))
 		}
 	}
-	assert.True(t, spread, "some round's lines were spread over time")
+	assert.True(t, spread, "some round was busy")
 }
 
 // TestCombatCadenceLeavesOtherRoundsAlone (Phase 29f): with combat on every
@@ -196,4 +200,84 @@ func TestCombatCadenceLeavesOtherRoundsAlone(t *testing.T) {
 	assert.Equal(t, driftBefore-6, module.registry.DriftIn, "the drift clock counts every game round")
 	assert.Equal(t, roundsBefore, util.GetRoundCount(), "combat never moves the round count")
 	assert.Equal(t, []uint64{102, 104, 106}, fought, "combat resolves only on every second round")
+}
+
+// TestPacedPlayerDeathStaysInOrder (Phase 29f review finding 2): a slain
+// player's death is part of the round that killed them. DoCombat issues
+// "suicide" for them (user.Command, inside the round); its "has DIED!"
+// broadcast, penalty lines, and move to the land of the dead are held and
+// come after the round's lines, paced, instead of cutting the round short.
+func TestPacedPlayerDeathStaysInOrder(t *testing.T) {
+	b := newBrawl(t)
+	start := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+	now := start
+	t.Cleanup(combatpace.UseForTest(combatpace.New()))
+	t.Cleanup(hooks.SetPaceClockForTest(func() time.Time { return now }))
+	var sent []pacedLine
+	t.Cleanup(hooks.SetWriteTextForTest(func(userId int, text string) {
+		if userId == 7 {
+			sent = append(sent, pacedLine{text: companyTagPattern.ReplaceAllString(text, ""), at: now.Sub(start), marked: combatpace.Default().Marked(text)})
+		}
+	}))
+	for _, reg := range []struct {
+		evt events.Event
+		fn  events.Listener
+	}{
+		{events.NewRound{}, hooks.CombatOnCadence},
+		{events.Message{}, hooks.Message_SendMessage},
+		{events.Broadcast{}, hooks.Broadcast_SendToAll},
+		{events.RoomChange{}, hooks.FlushPacedOnRoomChange},
+		{events.NewTurn{}, hooks.ReleasePacedCombat},
+		// The world loop runs a player's queued commands.
+		{events.Input{}, func(e events.Event) events.ListenerReturn {
+			if in, ok := e.(events.Input); ok && in.UserId > 0 && in.MobInstanceId == 0 {
+				c, rest, _ := strings.Cut(in.InputText, " ")
+				_, _ = usercommands.TryCommand(strings.ToLower(c), rest, in.UserId, 0)
+			}
+			return events.Continue
+		}},
+	} {
+		id := events.RegisterListener(reg.evt, reg.fn)
+		evt := reg.evt
+		t.Cleanup(func() { events.UnregisterListener(evt, id) })
+	}
+
+	b.toughen()
+	b.aimAt("bandit captain")
+	sent = nil
+
+	// A real combat round, its lines held...
+	events.AddToQueue(events.NewRound{RoundNumber: 2})
+	events.ProcessEvents()
+	require.True(t, combatpace.Default().Busy(7))
+	// ...in which Aria is slain: DoCombat's handleAffected issues her
+	// "suicide" within the round.
+	events.WithCause(2, func() {
+		b.aria.Character.Health = -10
+		b.aria.Command(`suicide`)
+	})
+	events.ProcessEvents()
+	assert.Empty(t, sent, "nothing, the death included, goes out before the round's first turn")
+
+	for turn := 0; turn < 160; turn++ {
+		now = now.Add(50 * time.Millisecond)
+		events.AddToQueue(events.NewTurn{})
+		events.ProcessEvents()
+	}
+	require.NotEmpty(t, sent)
+	died := -1
+	for i, l := range sent {
+		if strings.Contains(l.text, "DIED!") {
+			died = i
+		}
+	}
+	require.Greater(t, died, 2, "the death announcement comes after the round's lines: %v", sent)
+	// Paced like the rest: at least 0.8s after the line before it, or the
+	// whole round squeezed into its window.
+	assert.True(t, sent[died].at-sent[died-1].at >= 250*time.Millisecond || sent[died].at-sent[0].at >= 5*time.Second,
+		"the death is paced like the round's other lines: %v after the line before it", sent[died].at-sent[died-1].at)
+	assert.LessOrEqual(t, sent[len(sent)-1].at-sent[0].at, 6*time.Second+50*time.Millisecond, "and the round still ends within its window")
+	for _, l := range sent[:died] {
+		assert.NotContains(t, l.text, "You lose", "no penalty line before the announcement")
+	}
 }

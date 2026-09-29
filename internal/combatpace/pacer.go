@@ -121,13 +121,19 @@ func (p *Pacer) beatOf(text string) Beat {
 	return Plain
 }
 
-// Hold queues a line of round's text for a player. A line of an older round
-// still held is returned first, for the caller to send at once: a round's
-// lines never run into the next round's.
+// Hold queues a line of round's text for a player. Lines of an older round
+// still held are returned first, for the caller to send at once: a round's
+// lines never run into the next round's. A late line of an older round (a
+// caused event requeued past the round's end) joins the newer round's
+// lines rather than cutting them short.
 func (p *Pacer) Hold(userId int, round uint64, text string, spec Spec, now time.Time) (flushed []string) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	q := p.queues[userId]
+	if q != nil && round < q.round {
+		q.lines = append(q.lines, held{text: text, beat: p.beatOf(text)})
+		return nil
+	}
 	if q != nil && q.round != round {
 		flushed = q.remaining()
 		q = nil
@@ -183,8 +189,11 @@ func (q *queue) offsets() []time.Duration {
 		out[i] = total
 	}
 	if total > q.spec.Window && total > 0 {
+		// Scale in floating point: offset × window overflows int64
+		// nanoseconds once a round runs past a dozen seconds of gaps.
+		scale := float64(q.spec.Window) / float64(total)
 		for i := range out {
-			out[i] = time.Duration(int64(out[i]) * int64(q.spec.Window) / int64(total))
+			out[i] = time.Duration(float64(out[i]) * scale)
 		}
 	}
 	return out

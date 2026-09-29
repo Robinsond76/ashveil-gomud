@@ -29,6 +29,7 @@ type requeue struct {
 	evt      Event
 	priority int
 	cause    uint64
+	typed    bool
 }
 
 // Event is the common interface for events.
@@ -48,6 +49,7 @@ type prioritizedEvent struct {
 	priority int    // Lower numbers indicate higher priority. Default is 0.
 	order    uint64 // Used to preserve FIFO order among events with the same priority.
 	cause    uint64 // The combat round that caused it (Phase 29f), or 0.
+	typed    bool   // It came from what a player typed (Phase 29f).
 }
 
 // UniqueEvent is implemented by events that should be unique in the queue.
@@ -90,6 +92,11 @@ func (pq *priorityQueue) Pop() interface{} {
 // The caller can optionally pass a priority value.
 // If omitted, the default priority is 0.
 func AddToQueue(e Event, priority ...int) {
+	add(e, currentCause.Load(), currentTyped.Load(), priority...)
+}
+
+// add queues an event with its cause and typed marks (Phase 29f).
+func add(e Event, cause uint64, typed bool, priority ...int) {
 
 	qLock.Lock()
 	defer qLock.Unlock()
@@ -115,7 +122,8 @@ func AddToQueue(e Event, priority ...int) {
 		event:    e,
 		priority: prio,
 		order:    orderCounter,
-		cause:    causeFor(e),
+		cause:    cause,
+		typed:    typed,
 	}
 
 	if eventDebugging {
@@ -127,7 +135,7 @@ func AddToQueue(e Event, priority ...int) {
 
 // Same as AddToQueue but avoids a mutex lock for optimization purposes
 // Should only be used when a mutex lock is already held
-func reAddToQueue(e Event, cause uint64, priority ...int) {
+func reAddToQueue(e Event, cause uint64, typed bool, priority ...int) {
 
 	prio := 0
 	if len(priority) > 0 {
@@ -151,6 +159,7 @@ func reAddToQueue(e Event, cause uint64, priority ...int) {
 		priority: prio,
 		order:    orderCounter,
 		cause:    cause,
+		typed:    typed,
 	}
 
 	if eventDebugging {
@@ -160,7 +169,7 @@ func reAddToQueue(e Event, cause uint64, priority ...int) {
 	heap.Push(&globalQueue, pe)
 }
 
-func addToRequeue(e Event, cause uint64, priority ...int) {
+func addToRequeue(e Event, cause uint64, typed bool, priority ...int) {
 	qLock.Lock()
 	defer qLock.Unlock()
 
@@ -172,6 +181,7 @@ func addToRequeue(e Event, cause uint64, priority ...int) {
 		evt:      e,
 		priority: prio,
 		cause:    cause,
+		typed:    typed,
 	})
 }
 
@@ -200,7 +210,7 @@ func ProcessEvents() {
 	// Requeues are a special group that has been deferred to the next processevents loop
 	// They are added back into the event queue at the top of the process events function
 	for _, itm := range requeues {
-		reAddToQueue(itm.evt, itm.cause, itm.priority)
+		reAddToQueue(itm.evt, itm.cause, itm.typed, itm.priority)
 	}
 	requeues = requeues[:0]
 
@@ -228,10 +238,12 @@ func ProcessEvents() {
 		// Phase 29f: while a caused event is dispatched, what its
 		// listeners queue inherits its cause.
 		prevCause := currentCause.Swap(pe.cause)
+		prevTyped := currentTyped.Swap(pe.typed)
 		evtResult = DoListeners(pe.event)
 		currentCause.Store(prevCause)
+		currentTyped.Store(prevTyped)
 		if evtResult == CancelAndRequeue {
-			addToRequeue(pe.event, pe.cause, pe.priority)
+			addToRequeue(pe.event, pe.cause, pe.typed, pe.priority)
 		}
 
 		qLock.Lock()
