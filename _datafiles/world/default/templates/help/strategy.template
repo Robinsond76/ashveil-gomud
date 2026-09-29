@@ -23,7 +23,9 @@ Minor Heal All at level 5, a wizard Shower of Sparks).
 
 Spells in a battle are real casts: they cost mana, take their chanting
 rounds, and can fizzle. After a spell, the caster turns back to the foe it
-was fighting. Mana comes back out of combat, for companions too.
+was fighting. Mana comes back out of combat, not during a battle; your
+companions' comes back too, while you are online. A healer heals you even
+when you are down and bleeding out.
 
 <ansi fg="yellow-bold">Target rules</ansi>
 
@@ -38,7 +40,9 @@ was fighting. Mana comes back out of combat, for companions too.
 
 A rule chooses among the foes a character can reach from its place in the
 formation (<ansi fg="command">help formation</ansi>). When the rule's choice is out of reach, it
-goes for the nearest foe it can reach instead. A spell reaches anyone, so a
+goes for the nearest foe it can reach instead; with none in reach at all,
+it goes for the front-most foe (a blow at the back is caught by the front).
+A spell reaches anyone, so a
 caster's spell goes to the rule's choice wherever it stands.
 
 A character keeps its target until that foe falls or can't be reached,

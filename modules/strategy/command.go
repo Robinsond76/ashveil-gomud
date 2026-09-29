@@ -213,7 +213,7 @@ func rulesList() string {
 // or a unique part of it (as company commands name one).
 func resolve(members []member, selector string) (member, bool) {
 	switch selector {
-	case "me", "self", "you", "myself", "leader":
+	case "me", "self", "you", "myself":
 		return members[0], true
 	}
 	if id, err := strconv.Atoi(strings.TrimPrefix(selector, "#")); err == nil {

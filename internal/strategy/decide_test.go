@@ -50,6 +50,11 @@ func TestDecideHealer(t *testing.T) {
 	if a := Decide(s); a.Kind != Swing {
 		t.Errorf("fallen ally: %+v", a)
 	}
+	// 32d review: a downed player (bleeding out) is healed first.
+	s.Allies = []Ally{{HP: 8, MaxHP: 20}, {HP: -3, MaxHP: 20, Downed: true}}
+	if a := Decide(s); a.Kind != Heal || a.Ally != 1 {
+		t.Errorf("downed player: %+v", a)
+	}
 }
 
 func TestDecideCaster(t *testing.T) {

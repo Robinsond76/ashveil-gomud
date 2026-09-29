@@ -34,8 +34,9 @@ fight your own battle.
 
 Once your battle starts, it plays out on its own: <ansi fg="command">attack</ansi>, <ansi fg="command">cast</ansi>,
 <ansi fg="command">backstab</ansi>, <ansi fg="command">shoot</ansi>, <ansi fg="command">break</ansi>, walking out, and changes to your
-<ansi fg="command">formation</ansi> or <ansi fg="command">strategy</ansi> are held until it's over, and a waiting
-group's spells hold off you. When you <ansi fg="command">flee</ansi>, only your battle's group can block
+<ansi fg="command">formation</ansi> or <ansi fg="command">strategy</ansi>, eating, drinking, <ansi fg="command">use</ansi>, <ansi fg="command">equip</ansi>, and
+<ansi fg="command">remove</ansi> are refused until it's over (type them again afterwards), and a
+waiting group's spells hold off you. When you <ansi fg="command">flee</ansi>, only your battle's group can block
 the way.
 
 <ansi fg="yellow-bold">Keeping everyone fighting</ansi>

@@ -3,6 +3,7 @@ package hooks
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -34,8 +35,12 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 	for _, userId := range onlineIds {
 		user := users.GetByUserId(userId)
 
-		// Only heal if not in combat
+		// Only heal if not in combat. Ashveil Phase 32d: nor in a battle,
+		// between blows (a spell just ended, a target just fell).
 		if user.Character.Aggro != nil {
+			continue
+		}
+		if _, inBattle := battle.Current(userId); inBattle {
 			continue
 		}
 
@@ -99,6 +104,9 @@ func regenCompanionMana(leaderOf func(instanceId int) (int, company.MemberKey, b
 		leaderId, _, ok := leaderOf(instanceId)
 		if !ok || users.GetByUserId(leaderId) == nil {
 			continue
+		}
+		if _, inBattle := battle.Current(leaderId); inBattle {
+			continue // between blows in a battle is still the battle
 		}
 		if mob.Character.Mana < mob.Character.ManaMax.Value {
 			mob.Character.Heal(0, mob.Character.ManaPerRound())

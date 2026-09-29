@@ -54,6 +54,9 @@ func SpellFor(spells []Spell, use Use, knows func(string) bool) (Spell, bool) {
 // here, for a healer.
 type Ally struct {
 	HP, MaxHP int
+	// Downed is a player at or below 0 health but not dead: still healed
+	// (the most hurt of all). A companion at 0 is dead and isn't.
+	Downed bool
 }
 
 // Situation is what a character's role decides from, each round.
@@ -105,7 +108,7 @@ func Decide(s Situation) Action {
 	case Healer:
 		hurt, worst := 0, -1
 		for i, a := range s.Allies {
-			if a.HP < 1 || a.HP*2 >= a.MaxHP {
+			if (a.HP < 1 && !a.Downed) || a.HP*2 >= a.MaxHP {
 				continue
 			}
 			hurt++

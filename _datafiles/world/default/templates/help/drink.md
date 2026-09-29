@@ -1,6 +1,7 @@
 # Help for ~drink~
 
-The ~drink~ command drinks an item you carry (if it is drinkable).
+The ~drink~ command drinks an item you carry (if it is drinkable). Not in a
+battle: potions too wait until it's over (~help strategy~).
 
 If the drink restores Thirst, drinking it waters you, or a named
 companion instead of you.

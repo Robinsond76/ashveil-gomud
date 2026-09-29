@@ -109,7 +109,8 @@ a battle and read at every decision during one.
   file. It survives restart and copyover; only settings that differ from
   the default are stored, so `strategy <who> default` removes one.
 - **Purged** with the player (32b's `UserPurged`). A dismissed or lost
-  companion's entry is dropped when the company no longer has it.
+  companion's entry is dropped the next time the player uses `strategy`
+  (companion ids are never reused, so a stale entry changes nothing).
 
 ## B. Target rules
 
@@ -162,6 +163,8 @@ is not already chanting and can fight (not `no-combat`):
   more are below half, else its single heal on the most hurt (by
   fraction). With no one that hurt, no heal known, or too little mana,
   it swings like a fighter. (The half threshold becomes 30c's setting.)
+  A player who is down and bleeding out counts as the most hurt of all
+  (review fix); a companion at 0 is dead and is left to `resurrect`.
 - **Caster:** casts its attack spell while it has the mana: the area
   spell it knows when two or more foes of its battle stand, else its
   single-target spell at its rule's choice (any visible foe: spells reach

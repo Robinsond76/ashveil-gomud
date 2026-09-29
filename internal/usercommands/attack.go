@@ -353,7 +353,7 @@ func InBattle(user *users.UserRecord) bool {
 // battle about to begin.
 func fightingMob(user *users.UserRecord) bool {
 	a := user.Character.Aggro
-	return a != nil && a.MobInstanceId > 0
+	return a != nil && a.MobInstanceId > 0 && a.ExitName == `` // a shot into the next room is no battle (32d review)
 }
 
 // battleGroup is the player's battle's group in the room.

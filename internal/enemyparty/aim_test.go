@@ -61,9 +61,37 @@ func TestAimByRule(t *testing.T) {
 	require.Len(t, foes, 2)
 	assert.True(t, foes[0].Leader && foes[0].ID == 9202)
 
-	_, ok = RuleChoice(g, Attacker{LeaderId: 92010, Key: company.LeaderMemberKey, Rule: strategy.Assist, AssistId: 9999})
+	_, ok = RuleChoice(g, Attacker{LeaderId: 92010, Key: company.LeaderMemberKey, Rule: strategy.Assist, AssistId: 9999}, 0)
 	assert.False(t, ok, "assist with no target of the player's has no choice of its own")
-	id, ok := RuleChoice(g, Attacker{LeaderId: 92010, Key: company.LeaderMemberKey, Rule: strategy.Assist, AssistId: 9203})
+	id, ok := RuleChoice(g, Attacker{LeaderId: 92010, Key: company.LeaderMemberKey, Rule: strategy.Assist, AssistId: 9203}, 0)
 	assert.True(t, ok)
 	assert.Equal(t, 9203, id)
+}
+
+// 32d review: defend keeps a foe that ties with its choice, and a foe
+// chanting a harmful spell at one of us counts as striking them.
+func TestDefendKeepsATieAndCountsSpells(t *testing.T) {
+	mudlog.SetupLogger(nil, "", "", false)
+	leader := users.NewUserRecord(92020, 1)
+	leader.Character.Health, leader.Character.HealthMax.Value = 5, 20
+	users.SetTestUser(leader)
+	t.Cleanup(func() { users.RemoveTestUser(92020) })
+	a, b := testMob(t, 9211, 20), testMob(t, 9212, 20)
+	a.SpawnGroup, b.SpawnGroup = "d", "d"
+	a.Character.Aggro = &characters.Aggro{UserId: 92020}
+	b.Character.Aggro = &characters.Aggro{UserId: 92020}
+	room := testRoom(t, 990211, 9211, 9212)
+	g, ok := GroupOf(room, 9211)
+	require.True(t, ok)
+	att := Attacker{LeaderId: 92020, Key: company.LeaderMemberKey, Rule: strategy.Defend}
+	first, _ := RuleChoice(g, att, 0)
+	other := 9211
+	if first == 9211 {
+		other = 9212
+	}
+	id, ok := RuleChoice(g, att, other)
+	require.True(t, ok)
+	assert.Equal(t, other, id, "both strike the player: the current foe is kept")
+
+	assert.Equal(t, -1, StrikesPct(&characters.Aggro{Type: characters.SpellCast, SpellInfo: characters.SpellAggroInfo{SpellId: "nosuch", TargetUserIds: []int{92020}}}, 92020), "not a harmful spell")
 }

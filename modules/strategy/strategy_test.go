@@ -144,6 +144,8 @@ func TestRefusals(t *testing.T) {
 	assert.Contains(t, run(m, u, "nobody leader"), `No one in your company answers to "nobody"`)
 	assert.Contains(t, run(m, u, "dain dance"), `"dance" is neither a role nor a target`)
 	assert.Contains(t, run(m, u, "dain target"), "Target which way?")
+	// 32d review: "leader" is a rule, never the player.
+	assert.Contains(t, run(m, u, "leader"), `No one in your company answers to "leader"`)
 
 	*battle = true
 	assert.Equal(t, usercommands.BattleUnderWay, run(m, u, "dain leader"), "no changes in a battle")

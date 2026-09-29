@@ -1,6 +1,7 @@
 # Help for ~equip~
 
-The ~equip~ command wields or wears an item from your backpack.
+The ~equip~ command wields or wears an item from your backpack. Not in a
+battle: arm yourself before it starts.
 
 ## Usage:
 

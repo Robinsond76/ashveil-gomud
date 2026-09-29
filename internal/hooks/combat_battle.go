@@ -424,7 +424,7 @@ func (sd side) turnAlone(p mobparty.Party, room *rooms.Room) {
 			if !att.Rule.ReaimsEachRound() {
 				return
 			}
-			choice, ok := enemyparty.RuleChoice(enemyparty.Group{Party: p}, att)
+			choice, ok := enemyparty.RuleChoice(enemyparty.Group{Party: p}, att, a.MobInstanceId)
 			if !ok || choice == a.MobInstanceId {
 				return
 			}

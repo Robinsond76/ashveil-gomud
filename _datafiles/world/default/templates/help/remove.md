@@ -1,6 +1,7 @@
 # Help for ~remove~
 
 The ~remove~ command removes an equipped item and returns it to your backpack.
+Not in a battle.
 
 ## Usage:
 

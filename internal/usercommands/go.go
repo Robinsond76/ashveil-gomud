@@ -21,10 +21,13 @@ import (
 
 func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
-	// Ashveil Phase 32d: a battle plays out as it was set up.
+	// Ashveil Phase 32d: a battle plays out as it was set up; walking out
+	// is refused (an unknown word falls through to the lines below).
 	if InBattle(user) {
-		user.SendText(BattleOnlyFlee)
-		return true, nil
+		if exitName, _ := room.FindExitByName(rest); exitName != `` {
+			user.SendText(BattleOnlyFlee)
+			return true, nil
+		}
 	}
 
 	if user.Character.Aggro != nil {

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -110,6 +111,22 @@ func StrikesPct(a *characters.Aggro, leaderId int) int {
 	if a == nil {
 		return -1
 	}
+	// A foe chanting a harmful spell strikes its first target (32d review).
+	if a.Type == characters.SpellCast {
+		spell := *a
+		spell.UserId, spell.MobInstanceId = 0, 0
+		if len(a.SpellInfo.TargetUserIds) > 0 {
+			spell.UserId = a.SpellInfo.TargetUserIds[0]
+		} else if len(a.SpellInfo.TargetMobInstanceIds) > 0 {
+			spell.MobInstanceId = a.SpellInfo.TargetMobInstanceIds[0]
+		} else {
+			return -1
+		}
+		if !harmfulSpell(a.SpellInfo.SpellId) {
+			return -1
+		}
+		a = &spell
+	}
 	if a.UserId > 0 {
 		if a.UserId != leaderId {
 			return -1
@@ -139,15 +156,32 @@ func Aim(g Group, a Attacker) (int, bool) {
 // is out of reach, or it follows something that isn't there). The upkeep
 // uses it to move a rule that follows something (assist, defend) only
 // when the rule itself points elsewhere.
-func RuleChoice(g Group, a Attacker) (int, bool) {
+//
+// current is the foe the attacker is on: under defend, a current foe that
+// strikes someone as hurt as the rule's choice does is kept (32d review:
+// no turning on ties).
+func RuleChoice(g Group, a Attacker, current int) (int, bool) {
 	var pool []strategy.Foe
+	pct := map[int]int{}
 	for _, f := range Foes(g, a) {
 		if f.Reachable {
 			pool = append(pool, f)
+			pct[f.ID] = f.StrikesPct
 		}
 	}
 	if len(pool) == 0 {
 		return 0, false
 	}
-	return strategy.Choose(a.Rule, pool, a.AssistId)
+	choice, ok := strategy.Choose(a.Rule, pool, a.AssistId)
+	if ok && a.Rule == strategy.Defend && choice != current {
+		if p, here := pct[current]; here && p >= 0 && p == pct[choice] {
+			return current, true
+		}
+	}
+	return choice, ok
+}
+
+func harmfulSpell(id string) bool {
+	s := spells.GetSpell(id)
+	return s != nil && (s.Type == spells.HarmSingle || s.Type == spells.HarmMulti || s.Type == spells.HarmArea)
 }

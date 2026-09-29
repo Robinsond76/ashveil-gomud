@@ -8,6 +8,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -33,8 +35,11 @@ func heard(t *testing.T, fn func()) string {
 // typed changes it: break, eat, drink, use, equip, remove, and walking out
 // are refused and change nothing.
 func TestBattleRefusesWhatWouldChangeIt(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases() // exit names
 	user := userWithItem(t, 18, drinkableSpec("healing potion", 10, 2))
 	room := testRoom()
+	room.Exits = map[string]exit.RoomExit{"north": {RoomId: 2}}
 	battle.Reset()
 	t.Cleanup(battle.Reset)
 	battle.Begin(18, room.RoomId, 1, "party", []int{501})
@@ -48,6 +53,8 @@ func TestBattleRefusesWhatWouldChangeIt(t *testing.T) {
 	}{
 		{"break", func() (bool, error) { return Break("", user, room, 0) }, BattleOnlyFlee},
 		{"go", func() (bool, error) { return Go("north", user, room, 0) }, BattleOnlyFlee},
+		// 32d review: a word that isn't an exit isn't told about flee.
+		{"not an exit", func() (bool, error) { return Go("attak", user, room, 0) }, "You can't do that! You are in combat!"},
 		{"drink", func() (bool, error) { return Drink("potion", user, room, 0) }, BattleUnderWay},
 		{"eat", func() (bool, error) { return Eat("potion", user, room, 0) }, BattleUnderWay},
 		{"use", func() (bool, error) { return Use("potion", user, room, 0) }, BattleUnderWay},
@@ -82,6 +89,11 @@ func TestOutOfBattleTheCommandsWork(t *testing.T) {
 	battle.Reset()
 	t.Cleanup(battle.Reset)
 	assert.False(t, InBattle(user))
+
+	// 32d review: a shot into the next room is not a battle.
+	user.Character.Aggro = &characters.Aggro{Type: characters.Shooting, MobInstanceId: 777, ExitName: "north"}
+	assert.False(t, InBattle(user))
+	user.Character.Aggro = nil
 
 	// A fight with another player is not a battle: break still works.
 	other := users.NewUserRecord(20, 1)

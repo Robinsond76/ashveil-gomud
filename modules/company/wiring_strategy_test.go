@@ -44,6 +44,9 @@ func (fakeArchetypes) CompanionSpells(id string, level int) []string {
 		}
 		return []string{"heal"}
 	case "wizard":
+		if level >= 5 {
+			return []string{"mm", "sparks"}
+		}
 		return []string{"mm"}
 	}
 	return nil
@@ -52,10 +55,15 @@ func (fakeArchetypes) CompanionSpells(id string, level int) []string {
 // withArchetypes gives Aria an archetype and her companions the shipped
 // ones (Tamsin and Garrick warriors, Oswin a cleric, Ysolde a ranger).
 func (b *brawl) withArchetypes(player string) {
+	b.withArchetypesFor(player, map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"})
+}
+
+// withArchetypesFor is withArchetypes with the companions' archetypes given.
+func (b *brawl) withArchetypesFor(player string, companions map[int]string) {
 	b.t.Helper()
 	archetypes.SetProvider(fakeArchetypes{player: player})
 	b.t.Cleanup(func() { archetypes.SetProvider(nil) })
-	for id, arch := range map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"} {
+	for id, arch := range companions {
 		if err := module.registry.SetCompanionArchetype(7, id, arch); err != nil {
 			require.ErrorIs(b.t, err, domain.ErrArchetypeAlreadySet)
 		}
@@ -262,10 +270,11 @@ func TestAClericCompanionHealsTheHurt(t *testing.T) {
 	}
 	require.True(t, healed, "the heal landed")
 	assert.NotContains(t, out, "Brother Oswin turns toward")
+	// The heal landed this round (after this round's strategy pass), so he
+	// is back on his foe until the next round's pass.
 	require.NotNil(t, oswin.Character.Aggro)
-	if oswin.Character.Aggro.Type != characters.SpellCast { // not already chanting again
-		assert.Equal(t, aim, aimOf(&oswin.Character), "back to his foe")
-	}
+	assert.Equal(t, characters.DefaultAttack, oswin.Character.Aggro.Type)
+	assert.Equal(t, aim, aimOf(&oswin.Character), "back to his foe")
 }
 
 func TestAWizardPlayerCastsWithNoCommand(t *testing.T) {
@@ -351,6 +360,11 @@ func TestInABattleOnlyFleeWorks(t *testing.T) {
 
 	assert.Contains(t, b.cmd("east", ""), "Only flee takes you out of it.")
 	assert.Equal(t, 920101, b.aria.Character.RoomId)
+	// Through the real dispatch, aliases included (32d review).
+	for _, c := range [][2]string{{"wear", "sword"}, {"wield", "sword"}, {"unequip", "all"}, {"drink", "water"}, {"eat", "bread"}, {"use", "whetstone"}} {
+		assert.Contains(t, b.cmd(c[0], c[1]), "The battle is under way", c[0])
+	}
+	assert.Contains(t, b.cmd("break", ""), "Only flee takes you out of it.")
 
 	// Flee still works (made certain: she is far quicker than they are).
 	for _, m := range b.livingBandits() {

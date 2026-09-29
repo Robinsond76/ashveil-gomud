@@ -34,6 +34,10 @@ type caster struct {
 	userId, mobId int
 }
 
+// playerDeathHealth is the health at which a downed player dies
+// (NewRound_AutoHeal: at -10 they die).
+const playerDeathHealth = -10
+
 // castAims holds the foe each automatic caster was aimed at before its
 // spell, to turn back to when the spell ends. Game loop only.
 var castAims = map[caster]int{}
@@ -75,7 +79,9 @@ func strategyPass() {
 		side := sideActors(u, room)
 		allies := make([]strategy.Ally, len(side))
 		for i, a := range side {
-			allies[i] = strategy.Ally{HP: a.char.Health, MaxHP: a.char.HealthMax.Value}
+			// A player who is down (bleeding out, not yet dead) can still
+			// be healed (32d review).
+			allies[i] = strategy.Ally{HP: a.char.Health, MaxHP: a.char.HealthMax.Value, Downed: a.who.userId > 0 && a.char.Health < 1}
 		}
 		for _, a := range side {
 			if !readyToCast(a, u) {
@@ -126,10 +132,12 @@ func standingFoes(g enemyparty.Group, room *rooms.Room) []int {
 	return out
 }
 
-// sideActors are the player and their living companions in the room.
+// sideActors are the player (standing, or down but not yet dead: they can
+// be healed, though they cast nothing) and their living companions in the
+// room.
 func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 	var out []actor
-	if u.Character.Health > 0 {
+	if u.Character.Health > playerDeathHealth {
 		out = append(out, actor{
 			who:  caster{userId: u.UserId},
 			char: u.Character,
