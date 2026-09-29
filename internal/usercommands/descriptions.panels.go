@@ -229,6 +229,9 @@ func buildInspectPanel(inspectLevel int, itm *items.Item, iSpec *items.ItemSpec)
 }
 
 func buffDurationString(spec *buffs.BuffSpec) string {
+	if text, ok := spec.CombatRoundsText(); ok {
+		return text
+	}
 	if spec.RoundInterval == 1 && spec.TriggerCount == 1 {
 		return `Activates once`
 	}

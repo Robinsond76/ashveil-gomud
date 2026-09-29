@@ -30,10 +30,23 @@ func TestStatusesHelp(t *testing.T) {
 	plain := tagPattern.ReplaceAllString(page, "")
 	assert.Contains(t, plain, "Help for")
 
-	for _, alias := range []string{"status", "status-effects", "bleeding", "stagger", "knockdown", "stun", "burning", "exposed", "armor-break", "hobbled", "overloaded", "crit-effects"} {
+	for _, alias := range []string{"status-effects", "bleeding", "stagger", "knockdown", "stun", "burning", "exposed", "armor-break", "hobbled", "overload", "crit-effects"} {
 		got, err := GetHelpContents(alias)
 		require.NoError(t, err, alias)
 		assert.Equal(t, page, got, "help %s is help statuses", alias)
+	}
+
+	// Review fix: the aliases take no other topic's word. help status is
+	// still the character sheet, and help overloaded is still cargo.
+	for alias, topic := range map[string]string{"status": "status", "overloaded": "cargo"} {
+		want, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.NotEqual(t, page, got, "help %s is not help statuses", alias)
+		if alias != topic {
+			assert.Equal(t, want, got, "help %s is help %s", alias, topic)
+		}
 	}
 
 	// Every shipped status is named on the page.

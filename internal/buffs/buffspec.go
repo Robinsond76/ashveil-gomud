@@ -60,6 +60,18 @@ func (b *BuffSpec) GetValue() int {
 	return val
 }
 
+// CombatRoundsText describes a combat-round buff's length (Phase 30a), and
+// reports false for any other buff.
+func (b *BuffSpec) CombatRoundsText() (string, bool) {
+	if !b.CombatRounds {
+		return ``, false
+	}
+	if b.TriggerCount == 1 {
+		return `Lasts 1 combat round`, true
+	}
+	return fmt.Sprintf(`Lasts %d combat rounds`, b.TriggerCount), true
+}
+
 func (b *BuffSpec) VisibleNameDesc() (name, description string) {
 	if b.Secret {
 		return "Mysterious Affliction", "Unknown"

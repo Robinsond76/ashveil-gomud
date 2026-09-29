@@ -47,7 +47,7 @@ the fight went.
 
 | Phase | Spec | Depends on |
 |---|---|---|
-| 30a Status effects and critical-hit effects (weapons only) | [status and crit effects](2026-09-26-status-crit-effects-design.md) | 29b; 29c for text |
+| 30a Status effects and critical-hit effects (weapons only) | [status and crit effects](2026-09-29-phase-30a-status-crit-effects-design.md) | 29b; 29c for text |
 | 30b Wounds, treatment, and `heal wounds` | [wounds](2026-09-26-wounds-treatment-design.md) | 30a |
 | 30c Company tactics: focus (mid-battle), healing, enemy personalities, guardian | [tactics](2026-09-29-phase-30c-company-tactics-design.md) | 29b, 30a |
 | 30d Wind-ups, telegraphs, and interrupts | [interrupts](2026-09-26-telegraphs-interrupts-design.md) | 30a, 30c |
@@ -150,7 +150,7 @@ on (per the tables above) are complete and reviewed.
   adopted. New values are derived from GoMud's existing stats.
 - **Spell critical hits:** declined by the owner on 2026-09-27. Spells
   keep a single damage roll with no crit tier, no weapon-style secondary
-  effect, and no 29e pain reaction. [30a](2026-09-26-status-crit-effects-design.md)
+  effect, and no 29e pain reaction. [30a](2026-09-29-phase-30a-status-crit-effects-design.md)
   reflects this: its crit effect table covers weapon subtypes only.
 
 ## Integration and review gate

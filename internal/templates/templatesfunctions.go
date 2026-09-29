@@ -127,6 +127,9 @@ var (
 				return "Unknown"
 			}
 
+			if text, ok := buffSpec.CombatRoundsText(); ok {
+				return text
+			}
 			if buffSpec.RoundInterval == 1 && buffSpec.TriggerCount == 1 {
 				return `Activates once`
 			}

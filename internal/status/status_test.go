@@ -157,3 +157,31 @@ func TestWordsNamesStatusesOnce(t *testing.T) {
 	assert.Equal(t, []string{"bleeding"}, Words([]int{Bleeding, Bleeding, 7}))
 	assert.Nil(t, Words([]int{7}))
 }
+
+// Phase 30a review: a knockdown's speed penalty ends with it, in the round
+// it ends, not at the next prune; the fighter is down for two rounds after
+// the one it loses.
+func TestKnockdownSpeedEndsWithIt(t *testing.T) {
+	loadShipped(t)
+	c := holder(t)
+	c.Stats.Speed.Base = 20
+	c.RecalculateStats()
+	base := c.Stats.Speed.ValueAdj
+	c.AddBuff(KnockedDown, false)
+	c.RecalculateStats()
+	down := c.Stats.Speed.ValueAdj
+	assert.Less(t, down, base)
+
+	Tick(c) // loses this round
+	_, lost := LostAction(c)
+	assert.True(t, lost)
+	for i := 0; i < 2; i++ {
+		Tick(c)
+		_, lost = LostAction(c)
+		assert.False(t, lost)
+		assert.Equal(t, down, c.Stats.Speed.ValueAdj, "still down")
+	}
+	got := Tick(c)
+	assert.True(t, got[0].Expired)
+	assert.Equal(t, base, c.Stats.Speed.ValueAdj, "back up the round it ends")
+}

@@ -106,7 +106,14 @@ func attackEvents(source, target combatstream.Ref, roomId int, attacker *charact
 		}
 		return combatstream.Event{Kind: combatstream.StatusApplied, RoomId: roomId, Source: source, Target: on, BuffId: buffId, Status: name}
 	}
+	// A status is reported once per blow, however many stacks it put on
+	// (a stab's deep bleeding is one status, two stacks).
+	seen := map[int]bool{}
 	for _, buffId := range r.BuffTarget {
+		if seen[buffId] {
+			continue
+		}
+		seen[buffId] = true
 		out = append(out, status(target, buffId))
 	}
 	for _, buffId := range r.BuffSource {

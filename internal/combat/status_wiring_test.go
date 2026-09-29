@@ -175,3 +175,21 @@ func TestArmorBrokenHalvesDefenseAndExposedRaisesCritChance(t *testing.T) {
 		t.Fatalf("crits over 400 rolls: plain %d (want 0), exposed %d (want ~100)", plain, exposed)
 	}
 }
+
+// Phase 30a review: every critical strike in a round leaves its status; a
+// later crit never replaces an earlier one's.
+func TestEveryCritStrikeInARoundLeavesItsStatus(t *testing.T) {
+	edgeSpecs(t)
+	forceCrits(t)
+	const twinID = 99313
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: twinID, Name: "test twin blade", Type: items.Weapon, Subtype: items.Slashing, Hands: 1,
+		Damage: items.Damage{DiceRoll: "2@1d4", Attacks: 2, DiceCount: 1, SideCount: 4}})
+	t.Cleanup(func() { items.RemoveTestItemSpec(twinID) })
+
+	source := edgeFighter(90231)
+	source.Equipment.Weapon = items.New(twinID)
+	result := calculateCombat(*source, *edgeFighter(90231), User, User, 0, 0)
+	if len(result.BuffTarget) != 2 || result.BuffTarget[0] != status.Bleeding || result.BuffTarget[1] != status.Bleeding {
+		t.Fatalf("two critical cuts leave two bleeds, got %v", result.BuffTarget)
+	}
+}

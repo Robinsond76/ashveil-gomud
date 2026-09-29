@@ -116,6 +116,13 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			// Revert to Default combat regardless of outcome
 			user.Character.SetAggro(user.Character.Aggro.UserId, user.Character.Aggro.MobInstanceId, characters.DefaultAttack)
 
+			// Ashveil Phase 30a: a flight begun before a hobbling blow is
+			// held by it too.
+			if user.Character.HasBuffFlag("no-flee") {
+				user.SendText(`Your legs will not carry you out of this. You cannot flee.`)
+				continue
+			}
+
 			blockedByMob := ``
 			for _, mobInstId := range uRoom.GetMobs(rooms.FindFighting) {
 				if mob := mobs.GetInstance(mobInstId); mob != nil {

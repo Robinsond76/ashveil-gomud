@@ -1,8 +1,8 @@
 # Phase 30a: Status Effects and Critical-Hit Effects — Design
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md);
-refines the [proposal](2026-09-26-status-crit-effects-design.md) (handoff §36
-item 7). Written 2026-09-29. Open decisions were put to the owner the same day
+refines the 2026-09-26 proposal (handoff §36 item 7; in git history at
+`5f46bb4`, removed once this shipped). Written 2026-09-29. Open decisions were put to the owner the same day
 (answers below); no standing "proceed with your recommendation" was in force.
 
 ## Goal

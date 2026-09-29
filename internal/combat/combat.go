@@ -441,7 +441,9 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					attackResult.Crit = false // consume the backstab flag after one use
 					if isCrit {
 						attackResult.Crit = true // record that at least one crit occurred this round
-						attackResult.BuffTarget = critBuffs
+						// Phase 30a review: added, so a later crit never drops an
+						// earlier strike's status.
+						attackResult.BuffTarget = append(attackResult.BuffTarget, critBuffs...)
 						attackTargetDamage += critDamageBonus(dCount, dSides, dBonus,
 							sourceChar.Stats.Perception.ValueAdj, targetChar.Stats.Perception.ValueAdj)
 					}
@@ -578,7 +580,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 							// pets doing max damage are considered "crits" and will always apply any special critBuffs
 							if len(critBuffs) > 0 && (attackTargetDamage == (pDCount*pDSides)+pDBonus) {
-								attackResult.BuffTarget = critBuffs
+								attackResult.BuffTarget = append(attackResult.BuffTarget, critBuffs...)
 							}
 						}
 

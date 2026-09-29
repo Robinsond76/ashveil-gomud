@@ -6,7 +6,7 @@ secret: false
 # rounds; triggercount is the number of combat-round ticks.
 triggerrate: 100000 rounds
 combatrounds: true
-triggercount: 3
+triggercount: 4
 statmods:
   speed: -4
 flags:

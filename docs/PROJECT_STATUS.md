@@ -6,6 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-29
+- **Phase 30a** (status and critical-hit effects) is complete on
+  `claude/next-phase-7ekckc`, pushed to `origin` and awaiting merge to
+  `master`; see its work-log entry below.
 - **HEAD:** `master` 2026-09-29: Phase 29f (paced combat output),
   squash-merged as `fb28df3` from `claude/next-phase-planning-9u98ae`
   (branch since deleted). Before it, Phase 29e (pain reactions), integrated
@@ -26,7 +29,8 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29f, 32g, and 32g2; see the table below. The survival and
+- **Completed:** Phases 0–29f, 30a (on its branch, awaiting merge), 32g,
+  and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
@@ -35,9 +39,10 @@ instead of duplicating them.
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 29f (paced combat output), squash-merged
-  to `master` as `fb28df3`; see its work-log entry below. Before
-  it, 29e (pain reactions), from `codex/phase-29e-pain-reactions`, 32g2
+- **Latest completed phase:** 30a (status and critical-hit effects), on
+  `claude/next-phase-7ekckc`; see its work-log entry below. Before it, 29f
+  (paced combat output), squash-merged to `master` as `fb28df3`, and before
+  that 29e (pain reactions), from `codex/phase-29e-pain-reactions`, 32g2
   (live battle view), from `phase-32g2-battle-view`, and 32g (web company
   dock), from `phase-32g-company-dock`.
 - **Before it:** 29d (pronouns and stable enemy labels), from
@@ -59,10 +64,10 @@ instead of duplicating them.
   Independent follow-up review found no issues and passed 40 focused repetitions.
 - **Next:** the play-test roadmap (32a–32h, 32g2) is done, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
-  the combat roadmap's 29 series is done with 29f; next is 30a (status
-  effects and critical-hit effects), then 30b (wounds). Phase 30 should
-  set its durations in combat rounds and retune the balance shifts that
-  29f's cadence brought (see Known issues).
+  the combat roadmap's 29 series is done with 29f, and 30a is done; next is
+  30b (wounds), built on 30a's statuses. 30a's statuses count combat
+  rounds; the other balance shifts 29f's cadence brought are still to
+  retune (see Known issues).
   Also open: the "Future ideas" row; see Known issues.
 
 ## Phase progress
@@ -121,7 +126,7 @@ instead of duplicating them.
 | 29d | Pronouns and ordinals | Complete and integrated: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md), [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md). NPC/race pronouns, neutral generated recruits, stable shared enemy labels, help/tutorial; independent review and full race suite passed. Player selection deferred |
 | 29e | Pain reactions | Complete: [design](superpowers/specs/2026-09-29-phase-29e-pain-reactions-design.md), [plan](superpowers/plans/2026-09-29-phase-29e-pain-reactions.md). A victim reacts after each damaging critical strike that leaves them standing; second person for the victim, third person for witnesses, distinct beast-race sets and NPC overrides, without changing combat mechanics |
 | 29f | Paced combat output | Complete: [design](superpowers/specs/2026-09-29-phase-29f-paced-combat-design.md), [plan](superpowers/plans/2026-09-29-phase-29f-paced-combat.md). Combat resolves every `CombatEveryRounds` (2) game rounds, an 8-second combat round; everything a round causes is tagged (`events.WithCause`) and paced out per player (`internal/combatpace`), with `set combatpace fast|normal|slow|off` (off for screen readers); a pause before pain and death lines; typed output, tells, and says never wait; the prompt and the web client's vitals and battle view wait for the lines; flushes on move, quit, pace change, and copyover; `help combatpace` |
-| 30a | Status effects and critical-hit effects (weapons only) | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, and others as buffs; crit effects by weapon type; spells do not critical hit |
+| 30a | Status effects and critical-hit effects (weapons only) | Complete (branch `claude/next-phase-7ekckc`): [design](superpowers/specs/2026-09-29-phase-30a-status-crit-effects-design.md), [plan](superpowers/plans/2026-09-29-phase-30a-status-crit-effects.md). Nine statuses (bleeding, staggered, knocked down, armor broken, exposed, burning, overloaded, stunned, hobbled) as combat-round buffs (`internal/status`); crit effects by weapon subtype; ticked, and actions lost, in the combat round; cleared at fight end; Sparks overloads; `help statuses` |
 | 30b | Wounds, treatment, and `heal wounds` | Proposed: [spec](superpowers/specs/2026-09-26-wounds-treatment-design.md). Wound limits on healing; durable critical-hit wounds; one after-fight command using clerics, splints and bandages, or an inn physician; camp rest heals |
 | 30c | Company tactics | Proposed, rescoped 2026-09-29: [design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md). 30c1: `company tactics` (company-wide focus, changeable mid-battle for that battle only, leader-only, one-round cooldown, with web Combat-tab buttons; healing threshold) and enemy personalities. 30c2: guardian role and guards. Rotate the wounded deferred |
 | 30d | Wind-ups, telegraphs, and interrupts | Proposed: [spec](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md). Wind-ups in whole rounds, interrupt thresholds with accumulated pressure, concentration, enemy casters |
@@ -145,76 +150,83 @@ Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
 
-### Phase 29f: paced combat output (2026-09-29)
+### Phase 30a: status effects and critical-hit effects (2026-09-29)
 
 - **What:**
-  - `Timing.CombatEveryRounds` (2) gates only `DoCombat`
-    (`hooks.CombatOnCadence`), giving an 8-second combat round.
-  - Causal tagging in `internal/events`: everything a combat round causes
-    carries its round (`WithCause`, inherited through the queue).
-    Players' typed input (`AddTyped`) is never caused, and what it causes
-    is `Typed()`.
-  - `internal/combatpace` holds each player's lines and releases them on
-    each turn over the pace's window (fast 3s, normal 6s, slow about 7s,
-    clamped to 90% of the combat round), compressing a busy round. Pain
-    and death lines get a longer gap, indented lines a short one. A round's
-    leftovers flush before the next round.
-  - Untyped goings-on (a mob's next target, "bleeding out", a death's
-    broadcast) wait behind held lines. Typed output, tells, and says never
-    do.
-  - The prompt shows the round's start while lines are held. `Char`,
-    `Char.Vitals`, and the Company/battle-view payloads wait for
-    `CombatPaceDrained`.
-  - Held lines flush on the player's own move, on quit, on a pace change,
-    and at copyover (a contributor).
-  - `set combatpace` is saved in `ConfigOptions` (off by default for
-    screen readers).
-  - Help: `help combatpace`, plus `combat`, `set`, and `narration`
-    updates, and a Combat lesson hint.
-- **Why:** the owner-approved combat-presentation roadmap: a fight should
-  read as if it happens live, without changing what happens.
+  - Nine statuses as buffs 1100–1108 with `combatrounds: true`. Their
+    count is combat rounds, ticked by the combat loop (`statusPass` in
+    `internal/hooks/combat_status.go`), never by game rounds.
+    - Bleeding stacks to 3 (`BuffSpec.MaxStacks`, `Buff.Stacks`) and
+      refreshes.
+    - Staggered and knocked down cost the next action, and stunned the next
+      two, in the player, mob, and strategy passes.
+    - Armor broken halves `GetDefense`, and exposed adds 25 points to the
+      crit chance against its holder.
+    - Hobbled carries `no-flee`, which `flee` and a pending flight now
+      enforce. The existing Hamstrung, Tackled, and Winded buffs carry that
+      flag too, so they now block fleeing as well.
+  - `internal/status` holds the rules, the text, and the crit table by
+    weapon subtype; a weapon's own `CritBuffIds` override the table.
+    `calculateCombat` adds each crit's effect to `BuffTarget` and names it
+    in the hit's parentheses.
+  - The stream gains `StatusTick`, and expiry emits `StatusExpired`. The
+    battle summary counts a status's damage to the sufferer's foes.
+  - Statuses clear at fight end. They land, and keep ticking, only on
+    members of an open fight (or a player in PvP); a leftover from a
+    restart is cleared silently.
+  - A bleed can fell someone. The fall is resolved that round and ends
+    their aim.
+  - Shower of Sparks overloads each target.
+  - `conditions`, GMCP, and item crit-buff text show combat-round lengths.
+  - Help: `help statuses` (listed under combat, with aliases), links from
+    `combat` and `narration`, an updated `flee`, and a Practice Yard hint.
+- **Why:** step 5 of the combat roadmap: a crit leaves a mark that matches
+  the weapon, as ordinary statuses that 30b–30d can read. Owner decisions
+  (2026-09-29):
+  - all eight proposed statuses, plus extras (Hobbled was added);
+  - bleeding stacks to 3;
+  - statuses end with the fight.
 - **Verification:**
-  - Focused tests passed for `internal/{events,combatpace,hooks,combat,configs,usercommands}`,
-    `modules/{company,gmcp,tutorial}`, and the root package, including
-    real-round wiring tests:
-    - paced output equals the unpaced order;
-    - the window is filled, never overrun;
-    - a companion's death notice follows its death line, and the summary
-      follows the closing line;
-    - a slain player's death is paced;
-    - walking away flushes;
-    - typed input through the real input worker;
-    - cadence vs. drift and the round count.
-  - 30 to 40 repetitions of the company pacing tests passed.
-  - `make generate` (no diff), `make validate`, and `go test -race ./...`
-    (87 packages) passed after the review fixes.
-  - `git diff --check` flags only `help set`'s intentional Markdown
-    line-break spaces.
-- **Review:** an independent default-agent reviewer made one blocker, one
-  major, and seven minor/nit findings.
-  - **Fixed (with regression tests):**
-    - a slain player's `suicide`, "DIED!" broadcast, penalty, and move
-      escaped pacing and cut the round short (typed/untyped origin replaced
-      the player-`Input` exclusion, and broadcasts are held);
-    - a late older-round line flushed the newer round;
-    - the help's slow timing was wrong;
-    - vitals leaked through `Char` and level-up payloads;
-    - every online player got a round opened (now only players near a
-      fight);
-    - wiring coverage was missing (death, walk-away, and the real input
-      worker are now tested);
-    - comments, import grouping, and a despawn leak.
-  - **Found by the new tests:** scaling a busy round's gaps overflowed
-    `int64` nanoseconds and squeezed 20+ lines into half a second. It now
-    scales in float64.
-  - **Blocker, partly resolved:** a 39 MB build binary (`GoMud`) was
-    committed in `c793454`. It was removed from the tree and `/GoMud` is
-    now ignored, but a history rewrite was not permitted, so the blob
-    stayed in the branch's history. The owner chose a squash merge, which
-    keeps it out of `master`; the branch was then deleted.
-  - **Partly rejected:** a dedicated survival-drain test. The cadence test
-    shows every later `NewRound` listener runs every round, and exposure's
-    tick keys on round numbers. The Party payload hold is deferred.
+  - Focused package tests passed, including wiring tests through the real
+    round:
+    - a forced crit for each weapon subtype, and a crit in `DoCombat`;
+    - bleeding ticks, stacks, expires, and fells a foe that then strikes no
+      blow;
+    - the actions lost to stagger, knockdown, and stun;
+    - clearing at fight end and of strays;
+    - a status lands only in a fight;
+    - a pending flight is held;
+    - Sparks through a real cast.
+  - Mutation checks: disabling `statusPass`, or reverting the review's hook
+    fixes, fails the wiring tests.
+  - Final: `make generate` (no diff), `make validate`, and
+    `go test -race ./...` all passed (2026-09-29).
+- **Review:** the independent default-agent reviewer made 11 findings; each
+  was reproduced or checked.
+  - **Fixed, with regression tests:**
+    - a foe felled by a status tick still struck that round (its aim now
+      ends);
+    - the `status` and `overloaded` aliases collided with the character
+      sheet and `cargo`, which gave a random help page per process and a
+      flaky test;
+    - a refresh revived an expired, unpruned bleed at its old stacks;
+    - a later crit overwrote an earlier strike's statuses in `BuffTarget`
+      (they are now appended, for pets too);
+    - statuses from a fight's last round landed after the fight ended, and
+      a holder kept ticking beside someone else's fight (the check is now
+      fight membership, not the room);
+    - a flight already begun escaped a hobble;
+    - an expired speed penalty outlasted its end line by a round. Stats are
+      now recalculated on expiry, and knocked down's count went from 3 to 4
+      to keep "down for 2 more rounds" true;
+    - a stab's two stacks counted twice in the summary;
+    - item crit-buff text for combat-round buffs;
+    - help wording (points, not %; blocked crits; claw weapons only), and
+      `flee.md`.
+  - **Accepted:** mobs ignore `no-flee` (GoMud's mob flight has no such
+    check), and natural (generic-subtype) attacks leave no status.
+  - The review's test gaps are closed by the tests above; the restart case
+    is covered by the stray-clear and lands-only-in-a-fight tests.
 
 ## Known issues / deferred items
 
@@ -232,6 +244,15 @@ docs/PROJECT_STATUS.md`.
   - The Party GMCP payload isn't held.
   - Held lines aren't saved, so a crash loses at most one round's
     unshown text.
+
+- **Status effects (30a), accepted:** a status struck in the last round of
+  one battle lands if the next battle has already begun against the same
+  player (who is then in that fight). No sling-specific stagger, shield stun,
+  or fire spell for Burning yet (a weapon override can burn). Mobs are not
+  held by `no-flee`, and natural (generic) attacks leave no status. The
+  `modules/company` brawl tests have a pre-existing intermittent failure
+  (about 2 of 16 full runs, on `master` too): an un-toughened companion
+  falls to a random crit.
 
 - **Live battle view (32g2), deferred:** casting, statuses, wounds, and guards on the grid (Phase 30); the
   battle summary in the view; exact enemy numbers behind a skill. (29f

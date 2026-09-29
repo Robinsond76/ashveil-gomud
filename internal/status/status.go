@@ -135,6 +135,14 @@ func Tick(c *characters.Character) []Change {
 		}
 		out = append(out, ch)
 	})
+	// An ended status's stat mods (a knockdown's speed) stop now, not at
+	// the next prune.
+	for _, ch := range out {
+		if ch.Expired {
+			c.RecalculateStats()
+			break
+		}
+	}
 	return out
 }
 

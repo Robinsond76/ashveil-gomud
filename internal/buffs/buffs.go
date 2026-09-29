@@ -204,15 +204,24 @@ func (bs *Buffs) AddBuff(buffId int, isPermanent bool, triggerCountOverride ...i
 		}
 
 		if idx, ok := bs.buffIds[buffId]; ok {
+			// Phase 30a: an expired buff still awaiting the pruner starts
+			// over, not from its old stacks and round count; a live one
+			// gains a stack, up to its maximum.
+			revived := bs.List[idx].Expired()
 			bs.List[idx].TriggersLeft = newBuff.TriggersLeft
 			bs.List[idx].TriggersInitial = newBuff.TriggersInitial
 			bs.List[idx].PermaBuff = newBuff.PermaBuff
-			// Phase 30a: a stacking buff gains a stack, up to its maximum.
-			if bs.List[idx].Stacks < 1 {
+			switch {
+			case revived:
 				bs.List[idx].Stacks = 1
-			}
-			if bs.List[idx].Stacks < buffInfo.MaxStacks {
-				bs.List[idx].Stacks++
+				bs.List[idx].RoundCounter = 0
+			case bs.List[idx].Stacks < 1:
+				bs.List[idx].Stacks = 1
+				fallthrough
+			default:
+				if bs.List[idx].Stacks < buffInfo.MaxStacks {
+					bs.List[idx].Stacks++
+				}
 			}
 			return true
 		}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/status"
@@ -60,10 +61,46 @@ func (h statusHolder) say(you, other, suffix string) {
 	}
 }
 
-// inFight reports whether the holder is still in a fight: one is open in
-// its room, or it has an aim (a player-versus-player fight opens none).
-func (h statusHolder) inFight(fightRooms map[int]bool) bool {
-	return fightRooms[h.roomId] || h.char.Aggro != nil
+// fightMembers is everyone in an open fight, by Ref key.
+func fightMembers() map[string]bool {
+	members := map[string]bool{}
+	for _, fi := range combatstream.Default().OpenFights() {
+		for _, r := range fi.Company {
+			members[r.Key()] = true
+		}
+		for _, r := range fi.Enemies {
+			members[r.Key()] = true
+		}
+	}
+	return members
+}
+
+// inFight reports whether the holder is still in a fight: it is a member of
+// an open one, or it is fighting another player (which opens none). Being
+// in the same room as someone else's fight is not enough.
+func (h statusHolder) inFight(members map[string]bool) bool {
+	if members[h.ref.Key()] {
+		return true
+	}
+	return h.user != nil && h.char.Aggro != nil && h.char.Aggro.UserId > 0
+}
+
+// statusBuffLands reports whether a status buff about to be applied (a
+// queued Buff event) may land on its holder: only while the holder is still
+// in a fight. A blow struck in a fight's last round is applied after the
+// fight has ended and cleared its statuses; it lands on nobody.
+func statusBuffLands(buffId int, char *characters.Character, user *users.UserRecord, mob *mobs.Mob) bool {
+	if status.Get(buffId) == nil {
+		return true
+	}
+	h := statusHolder{char: char, user: user, mob: mob}
+	switch {
+	case user != nil:
+		h.ref = userRef(user)
+	case mob != nil:
+		h.ref = mobRef(mob)
+	}
+	return h.inFight(fightMembers())
 }
 
 // tickStatuses moves the holder's statuses on one combat round, with the
@@ -86,10 +123,7 @@ func tickStatuses(h statusHolder) {
 // a restart, or of a flight); the rest tick. Anyone a tick brought down is
 // resolved at once, in the round it happens.
 func statusPass() {
-	fightRooms := map[int]bool{}
-	for _, fi := range combatstream.Default().OpenFights() {
-		fightRooms[fi.RoomId] = true
-	}
+	members := fightMembers()
 
 	var downPlayers, downMobs []int
 	// felled reports whether a tick took the holder down or out.
@@ -106,7 +140,7 @@ func statusPass() {
 			continue
 		}
 		h := userHolder(u)
-		if !h.inFight(fightRooms) {
+		if !h.inFight(members) {
 			status.Clear(u.Character)
 			continue
 		}
@@ -114,6 +148,9 @@ func statusPass() {
 		tickStatuses(h)
 		if felled(before, u.Character.Health, true) {
 			downPlayers = append(downPlayers, userId)
+			// A fall stops the fighting at once, as a killing blow does.
+			u.Character.EndAggro()
+			events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
 		}
 	}
 
@@ -123,7 +160,7 @@ func statusPass() {
 			continue
 		}
 		h := mobHolder(m)
-		if !h.inFight(fightRooms) {
+		if !h.inFight(members) {
 			status.Clear(&m.Character)
 			continue
 		}
@@ -131,6 +168,8 @@ func statusPass() {
 		tickStatuses(h)
 		if felled(before, m.Character.Health, false) {
 			downMobs = append(downMobs, instanceId)
+			m.Character.EndAggro()
+			events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
 		}
 	}
 

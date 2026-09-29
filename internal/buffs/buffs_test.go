@@ -501,6 +501,31 @@ func TestAddBuffStacksUpToMaxStacks(t *testing.T) {
 	assert.Equal(t, 1, bs.List[1].Stacks)
 }
 
+// Phase 30a review: a buff that expired this round but is not yet pruned
+// is reapplied fresh, at one stack.
+func TestAddBuffOverExpiredEntryStartsFresh(t *testing.T) {
+	SetTestBuffSpec(&BuffSpec{BuffId: 9103, Name: "Stacky", RoundInterval: 10, TriggerCount: 3, MaxStacks: 3})
+	defer RemoveTestBuffSpec(9103)
+	bs := New()
+	bs.AddBuff(9103, false)
+	bs.AddBuff(9103, false)
+	bs.AddBuff(9103, false)
+	bs.List[0].TriggersLeft = TriggersLeftExpired
+	bs.List[0].RoundCounter = 7
+	bs.AddBuff(9103, false)
+	assert.Equal(t, 1, bs.List[0].Stacks)
+	assert.Equal(t, 0, bs.List[0].RoundCounter)
+	assert.Equal(t, 3, bs.List[0].TriggersLeft)
+}
+
+func TestCombatRoundsText(t *testing.T) {
+	text, ok := (&BuffSpec{CombatRounds: true, TriggerCount: 3}).CombatRoundsText()
+	assert.True(t, ok)
+	assert.Equal(t, "Lasts 3 combat rounds", text)
+	_, ok = (&BuffSpec{TriggerCount: 3}).CombatRoundsText()
+	assert.False(t, ok)
+}
+
 func TestGetDurationsForCombatRoundBuffs(t *testing.T) {
 	every := max(int(configs.GetTimingConfig().CombatEveryRounds), 1)
 	spec := &BuffSpec{TriggerCount: 3, RoundInterval: 100000, CombatRounds: true}

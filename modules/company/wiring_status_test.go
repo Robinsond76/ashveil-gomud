@@ -113,8 +113,12 @@ func TestBleedingCanFellAFoeInTheRoundItHappens(t *testing.T) {
 	captain.Character.AddBuff(status.Bleeding, false)
 	captain.Character.Health = 1
 
+	attacks := statusEvents(t, combatstream.Attack)
 	out := b.fight()
 	assert.Regexp(t, `bandit captain bleeds\. \(1 damage, bleeding\)`, out)
+	for _, e := range *attacks {
+		assert.NotEqual(t, captain.InstanceId, e.Source.MobInstanceId, "a foe the bleed felled strikes no blow that round")
+	}
 	assert.Less(t, captain.Character.Health, 1, "the bleed took it down")
 	assert.Nil(t, mobs.GetInstance(captain.InstanceId), "and its fall was resolved that round")
 }
@@ -251,4 +255,41 @@ func TestSparksOverloadsItsTargetsThroughARealCast(t *testing.T) {
 	require.Contains(t, transcript, "Sparks sear")
 	assert.Regexp(t, `Sparks sear .*\(\d+ damage, overloaded\)`, transcript)
 	assert.True(t, target.Character.HasBuff(status.Overloaded))
+}
+
+// Phase 30a review: a flight begun before a hobbling blow is held by it.
+func TestPendingFlightIsHeldByHobbled(t *testing.T) {
+	b := newBrawl(t)
+	loadStatusBuffs(t)
+	b.aimAt("bandit captain")
+	b.toughen()
+	b.fight()
+	require.NoError(t, b.aria.Character.AddBuff(status.Hobbled, false))
+	b.aria.Character.Aggro.Type = characters.Flee
+	b.toughen()
+	out := b.fight()
+	assert.Contains(t, out, "You cannot flee.")
+	assert.NotContains(t, out, "You break away")
+	assert.Equal(t, b.road.RoomId, b.aria.Character.RoomId)
+}
+
+// Phase 30a review: a status lands only on someone still in a fight. One
+// struck in a fight's last round arrives after the fight ended and cleared
+// its statuses, and lands on nobody.
+func TestStatusLandsOnlyInAFight(t *testing.T) {
+	b := newBrawl(t)
+	loadStatusBuffs(t)
+	buffId := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
+	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffId) })
+
+	b.aria.AddBuff(status.ArmorBroken, `combat`)
+	events.ProcessEvents()
+	assert.False(t, b.aria.Character.HasBuff(status.ArmorBroken), "no fight: it lands on nobody")
+
+	b.aimAt("bandit captain")
+	b.toughen()
+	b.fight()
+	b.aria.AddBuff(status.ArmorBroken, `combat`)
+	events.ProcessEvents()
+	assert.True(t, b.aria.Character.HasBuff(status.ArmorBroken), "in the fight it lands")
 }
