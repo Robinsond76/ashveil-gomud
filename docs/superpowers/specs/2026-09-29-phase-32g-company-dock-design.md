@@ -152,9 +152,10 @@ sub-tabs; the separate Vitals, Worth, Gear, and Pet panels go away.
 | **Effects** | buffs and debuffs, as now | Character Effects |
 | **Pet** | only while the player has a pet: info, then its items | Pet |
 
-Jobs fold into Skills to keep the strip short; Kill Stats stays an
-optional window (off by default) and, when enabled, becomes a **Kills**
-sub-tab here.
+Jobs fold into Skills to keep the strip short. Kill Stats stays an
+optional window (off by default); as built, when enabled it joins the
+dock as a **Kills** tab of its own, like Who, so it keeps its Settings
+switch.
 
 ### Company tab
 
@@ -181,8 +182,8 @@ own share.
       **Put in cargo** (`cargo put`), **Give to** each companion present
       (`give <item> <member>`);
     - a cargo stack: **Take** (`cargo take`);
-    - a companion's item: look only (moving it is `company give`, still
-      deferred by 32f);
+    - a companion's item: a tooltip, no menu (no command acts on another
+      member's item; moving it is `company give`, still deferred by 32f);
     - a horse: **Fit saddle** (each matching saddle in the pack),
       **Unsaddle**, **Release** (asks first; it can't be undone).
   - **Buttons**: **Meal** (`company meal`), **Eat**, **Drink**.
@@ -289,13 +290,16 @@ the load), as `Company` is:
 
 - **`Company.Inventory`**: per member (key, name, fallen, weight in
   grams, pack name and bonus, worn items, carried items), horses (id,
-  kind, saddle, capacity added, rider key), cargo stacks, and the
-  capacity split. Each item: its name as a command would name it, a
+  kind, saddle, capacity added, and, as built, `rides` for a saddled
+  riding horse: the mount module doesn't expose which member rides),
+  cargo stacks, and the capacity split. Each item: its name as a command would name it, a
   display name, weight in grams, count, uses and max uses, type and
   subtype (for the menus). Built from what `company inventory` reads.
 - **`Company.Camp`**: camp here/elsewhere/none, the camp's room name,
-  fire lit, resting with percent and seconds left, and whether an inn is
-  here. `{}` with no camp and no inn.
+  fire lit, resting with percent and seconds left, whether a camp can be
+  made here, and whether an inn is here. As built, the whole object is
+  always sent (`can_camp` drives Make camp); nothing without a camping
+  provider.
 - **`Company` members gain `strategy {role, target}`**, from 32d's
   strategy store.
 - **`Company.Vitals` gains `mp` and `mp_max`** per member, for the strip:

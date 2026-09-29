@@ -1,3 +1,4 @@
+/* global Client */
 /**
  * company-data.js (Phase 32g)
  *
