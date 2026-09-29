@@ -22,7 +22,7 @@ var Tokens = []string{
 	"{hunger}", "{thirst}", "{fatigue}",
 	"{hungerv}", "{thirstv}", "{fatiguev}",
 	"{light}", "{warmth}", "{load}", "{company}",
-	"{activity}", "{warn}",
+	"{activity}", "{warn}", "{I}",
 }
 
 var tokenSet = func() map[string]bool {
@@ -65,6 +65,11 @@ func PromptValues(s Summary) map[string]string {
 		"{fatiguev}": needValue(s.Leader.Fatigue),
 		"{warmth}":   s.Leader.Warmth,
 		"{load}":     s.LoadLabel,
+		"{I}":        "?",
+	}
+	if s.LoadKnown {
+		// Phase 32f: carrying capacity in whole kg.
+		values["{I}"] = strconv.Itoa(s.Load.CapacityGrams / 1000)
 	}
 	if s.CompanyKnown {
 		values["{company}"] = CompanyCount(s.Alive, s.Dead)
@@ -134,9 +139,12 @@ func fillPrompt(d users.PromptData) users.PromptData {
 		return d
 	}
 	cacheMu.RLock()
-	values := cache[d.User.UserId]
+	values, cached := cache[d.User.UserId]
 	cacheMu.RUnlock()
 	for i, t := range d.Tokens {
+		if !cached && t.Tag == "{I}" {
+			continue // keep the engine's "?" until the first refresh
+		}
 		if tokenSet[t.Tag] {
 			d.Tokens[i].Value = values[t.Tag]
 		}

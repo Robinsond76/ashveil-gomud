@@ -1,6 +1,10 @@
 package encumbrance
 
-import "sync"
+import (
+	"errors"
+	"fmt"
+	"sync"
+)
 
 // Provider is implemented by modules/encumbrance. It is a read-only query
 // seam, the same shape as weather.Provider and survival.CompanyService.
@@ -56,4 +60,69 @@ func CurrentBand(leaderUserID int) (LoadBand, bool) {
 		return neutral, false
 	}
 	return band, true
+}
+
+// WouldExceed reports whether adding grams to a leader's company would put
+// its load over capacity (Phase 32f), with the current load. An untracked
+// load (no provider, no capacity configured) never refuses. Call it on the
+// game loop: the load reads company state.
+func WouldExceed(leaderUserID, addGrams int) (Load, bool) {
+	if addGrams <= 0 {
+		return Load{}, false
+	}
+	load, ok := CurrentLoad(leaderUserID)
+	if !ok {
+		return Load{}, false
+	}
+	return load, load.WouldExceed(addGrams)
+}
+
+// TooMuchToCarry is the refusal a player sees when adding grams would put
+// their company over capacity (Phase 32f); ok is false when it fits.
+func TooMuchToCarry(leaderUserID, addGrams int) (string, bool) {
+	load, refuse := WouldExceed(leaderUserID, addGrams)
+	if !refuse {
+		return "", false
+	}
+	return fmt.Sprintf(`That would be too much for your company to carry: %.1f kg of %.1f kg already (<ansi fg="command">help cargo</ansi>).`,
+		float64(load.TotalGrams())/1000, float64(load.CapacityGrams)/1000), true
+}
+
+// CargoProvider is optionally implemented by the registered Provider: it
+// reads a company's cargo and uses it up (Phase 32f's company inventory
+// and meals). Call it on the game loop.
+type CargoProvider interface {
+	CargoContents(leaderUserID int) []CargoStack
+	ConsumeCargoUse(leaderUserID, itemId int) error
+}
+
+// ErrNoCargo is returned when no cargo provider is registered.
+var ErrNoCargo = errors.New("encumbrance: no cargo")
+
+func cargoProvider() (CargoProvider, bool) {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	cp, ok := p.(CargoProvider)
+	return cp, ok
+}
+
+// CargoContents is a copy of a leader's cargo stacks; nil without a
+// provider or cargo.
+func CargoContents(leaderUserID int) []CargoStack {
+	cp, ok := cargoProvider()
+	if !ok {
+		return nil
+	}
+	return cp.CargoContents(leaderUserID)
+}
+
+// ConsumeCargoUse takes one use from one of a leader's cargo items and
+// saves, a partly used one first.
+func ConsumeCargoUse(leaderUserID, itemId int) error {
+	cp, ok := cargoProvider()
+	if !ok {
+		return ErrNoCargo
+	}
+	return cp.ConsumeCargoUse(leaderUserID, itemId)
 }

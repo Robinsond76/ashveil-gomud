@@ -277,7 +277,11 @@ func (u *UserRecord) ProcessPromptString(promptStr string) string {
 				value = strconv.Itoa(len(u.Character.Items))
 
 			case `{I}`:
-				value = strconv.Itoa(u.Character.CarryCapacity())
+				// Phase 32f: the company's carrying capacity in whole kg
+				// (weight is the only limit). Prompts are built off the game
+				// loop, so internal/companyview fills it from its cache; "?"
+				// until it has.
+				value = "?"
 
 			case `{lvl}`:
 				value = strconv.Itoa(u.Character.Level)

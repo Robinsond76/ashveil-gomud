@@ -128,7 +128,9 @@ at 5 group members."
   pack horse). A rider strains less walking (`FatiguePct`).
 - **Faster routes** only when everyone rides: a route journey takes the
   riding horse's `TravelDurationPct` (90%) when every member walking with
-  the leader has a saddled riding horse; otherwise the company moves at
+  the leader (the leader and each companion in their room,
+  `company.WalkingMembers`; review fix: it first counted every living
+  member) has a saddled riding horse; otherwise the company moves at
   walking pace. Pack horses never set the pace. **(recommendation accepted)**
 - **Mounts are bought, not conjured.** `mount stable <type>` works only
   in a room flagged as a stable, and costs the type's `Price` in gold.
@@ -157,10 +159,20 @@ GoMud's item-count limit goes, per the owner's decision:
   `CarryCapacity()` items. Being heavy already costs strain and travel
   time through the load bands (`help strain`).
 - `inventory` and `peep` show kilograms against the company's capacity
-  instead of `(n/max)`. GMCP's inventory `Max` becomes the capacity in
-  grams; the prompt token keeps working but reads the weight.
+  instead of `(n/max)`. The prompt's `{I}` reads the company's capacity
+  in kg, served from `internal/companyview`'s game-loop cache like the
+  other company tokens (review fix: prompts are built off the game
+  loop). **GMCP (as shipped):** the inventory `Max` is dropped, not
+  turned into grams, so the web gear window shows "count / —" until
+  32g; the GMCP extras (capacity in grams, packs, mounts, cargo uses)
+  move to 32g with the Company tab that reads them.
 - `CarryCapacity()` itself stays for scripts that call it
   (`GetCarryCapacity`), marked deprecated.
+- **Existing characters** (noted at review): with `CapacityKg: 200`
+  gone, a character made before 32f has only their member share, about
+  20–25 kg, and no satchel (only new characters' kits have one). This is
+  intended, not migrated: the 200 kg was the bug the owner reported.
+  They buy a pack in a market or stable a horse; `help cargo` says how.
 - **A full company can't take on more** (owner, 2026-09-28: "once
   weight is at its maximum, an item cannot be picked up anymore"). Any
   command that would add weight to the company and put its load over
@@ -168,7 +180,11 @@ GoMud's item-count limit goes, per the owner's decision:
   "That would be too much to carry (208.4 kg of 210.0 kg)."
   - Refused: `get` (from the floor, a container, or a corpse), `buy`
     (before any gold changes hands), and `give` from another player or
-    outsider into the company. A companion mob picking up an item
+    outsider into the company. Added at review: pickpocketing (the item
+    stays with its owner) and `give` to another player's pet; a pet's
+    pouch counts in its owner's load. A pack counts the room it makes
+    (`company.AddedGrams`), so a full company can still take on a satchel
+    that pays for itself. `get all` says once what it left. A companion mob picking up an item
     (`internal/mobcommands`) is held to its leader's capacity the same
     way.
   - Not refused: moving items within the company (`cargo put`/`take`,
@@ -236,8 +252,9 @@ Three commands, one planner:
 
 How they choose:
 
-- **Who:** every living member present (leader and companions), most
-  in need first. A member already at the top band ("Well fed",
+- **Who:** every living member present (the leader and each companion
+  out and in the leader's room; `company.CompanionsWithLeader`), most
+  in need first. A companion elsewhere, or not out, eats on its own. A member already at the top band ("Well fed",
   "Hydrated") is skipped.
 - **From where** (owner, 2026-09-28): the cargo first, then the
   member's own pack, then the leader's pack.
@@ -262,8 +279,11 @@ How they choose:
   and drinks.")
 - `eat` and `drink` with an item keep working as they do.
 - Each member is provisioned through `survival.Provision`, one call per
-  member and need, so each save and rollback stays as it is; items are
-  used only after that provision succeeds.
+  member and need, so each save and rollback stays as it is. **Changed
+  at review (2026-09-28):** the item's use is spent first and the member
+  provisioned only after, so food that can't be spent (a failed save)
+  feeds no one; the old order fed a member for free whenever spending
+  failed, repeatably while saves failed.
 
 ## Module
 
@@ -292,8 +312,9 @@ How they choose:
 - **Restart and copyover:** mounts, saddles, and cargo uses are saved
   in their modules; capacity is computed, never stored. The single-mount
   save migrates on load. A mid-command crash in `company eat` leaves
-  some members fed and their items used, never an item used without
-  its provision.
+  some members fed and their items used; at worst the one use in
+  flight is spent without its provision (review change, section G),
+  never a member fed without the use spent.
 - **Locks:** capacity is read on the game loop, as the load is now. The
   company provider is read outside the encumbrance lock (as
   `companionGear` is today); `company eat` never holds the encumbrance
@@ -345,7 +366,8 @@ How they choose:
   `help buy` (the refusal), new `help company inventory` and `help company eat`
   pages (aliases `company inv`, `company drink`, `company meal`), `help eat` and
   `help drink` pointing to `company eat`; the Survival lesson's hint
-  mentions `company eat` and `company inventory`;
+  mentions `company meal` (as shipped: it does both; `help company-meal`
+  answers to `company eat` and `company drink`) and `company inventory`;
   `TestTutorialHelpPointersExist` passes.
 - `go test -race ./...`, `make generate`, and `make validate` pass. The
   independent review is recorded.

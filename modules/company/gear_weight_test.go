@@ -80,3 +80,48 @@ func TestCompanionGearGramsEdges(t *testing.T) {
 	module.loadErr = assert.AnError
 	assert.Zero(t, module.CompanionGearGrams(7), "an unreadable company weighs nothing")
 }
+
+func pack(t *testing.T, id, bonus int) items.Item {
+	t.Helper()
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: id, Name: "pack", Weight: 600, CarryBonus: bonus})
+	t.Cleanup(func() { items.RemoveTestItemSpec(id) })
+	return items.Item{ItemId: id}
+}
+
+// Phase 32f: the companions who carry are the ones whose gear is weighed.
+// A live one brings its Strength and its largest pack; one not out brings
+// its recorded (or template) pack and no Strength; the fallen and the
+// charmed away carry nothing.
+func TestCompanionCarry(t *testing.T) {
+	satchel, frame := pack(t, 988021, 5000), pack(t, 988022, 15000)
+	recorded := domain.MemberState{Level: 1, Items: []items.Item{satchel, frame}}
+	live := domain.MemberState{Level: 1, Items: []items.Item{satchel}}
+	template := domain.MemberState{Level: 1, Items: []items.Item{satchel}}
+	runtime := &fakeRuntime{
+		live:          map[int]bool{701: true, 702: true},
+		liveState:     map[int]domain.MemberState{701: live, 702: live},
+		strength:      map[int]int{701: 12},
+		stolen:        map[int]bool{702: true},
+		templateState: &template,
+	}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{
+			{ID: 1, MobTemplateID: 58, State: &recorded},
+			{ID: 2, MobTemplateID: 58},
+			{ID: 3, MobTemplateID: 58, State: &recorded, Death: &domain.CompanionDeath{OpID: "x", Remaining: 60}},
+			{ID: 4, MobTemplateID: 58},
+			{ID: 5, MobTemplateID: 58},
+		}},
+	}}, runtime)
+	module.setInstance(7, 4, 701)
+	module.setInstance(7, 5, 702)
+
+	assert.Equal(t, []domain.MemberCarry{
+		{PackGrams: 15000},              // #1: the larger of its two packs
+		{PackGrams: 5000},               // #2: its template's pack
+		{Strength: 12, PackGrams: 5000}, // #4: live
+	}, module.CompanionCarry(7), "not the fallen #3 or the charmed-away #5")
+	assert.Nil(t, module.CompanionCarry(8), "no company")
+	module.loadErr = assert.AnError
+	assert.Nil(t, module.CompanionCarry(7), "an unreadable company carries nothing")
+}

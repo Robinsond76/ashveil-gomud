@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/weather"
 	"github.com/stretchr/testify/assert"
@@ -288,4 +289,37 @@ func TestJourneyViewShowsEffectiveDuration(t *testing.T) {
 	assert.Contains(t, message, "20%")
 	assert.Contains(t, message, "12s remaining")
 	_ = expedition.Traveling
+}
+
+// paceMount is a mount provider whose pace depends on whether everyone
+// walking rides.
+type paceMount struct{ everyoneRides bool }
+
+func (paceMount) CapacityBonusGrams(int) int { return 0 }
+func (paceMount) Relief(int) (int, int)      { return 75, 1 }
+func (p paceMount) TravelDurationPct(int) int {
+	if p.everyoneRides {
+		return 90
+	}
+	return 100
+}
+
+// TestRoutePaceThroughMountSeam (32f review test gap): a route reads the
+// registered mount provider's pace, faster only when everyone rides.
+func TestRoutePaceThroughMountSeam(t *testing.T) {
+	for _, tc := range []struct {
+		everyoneRides bool
+		want          int
+	}{{false, 0}, {true, 90}} {
+		mount.SetProvider(paceMount{everyoneRides: tc.everyoneRides})
+		t.Cleanup(func() { mount.SetProvider(nil) })
+		store := &fakeStore{}
+		module := newTestModule(store, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, baseTime, testProfiles())
+		(&multiplierEnv{}).install(module)
+		module.mountDurationPct = nil // the real seam
+
+		_, err := module.StartTravel(startRequest())
+		require.NoError(t, err)
+		assert.Equal(t, tc.want, store.saved.Sessions[7].DurationPct, "everyone rides: %v", tc.everyoneRides)
+	}
 }

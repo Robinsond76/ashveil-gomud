@@ -597,8 +597,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 		payload.Inventory = &GMCPCharModule_Payload_Inventory{
 			Backpack: &GMCPCharModule_Payload_Inventory_Backpack{
 				Summary: GMCPCharModule_Payload_Inventory_Backpack_Summary{
-					Count: len(user.Character.Items),
-					Max:   user.Character.CarryCapacity(),
+					Count: len(user.Character.Items), // no Max: weight is the only limit (Phase 32f)
 				},
 			},
 		}
@@ -613,8 +612,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 			Backpack: &GMCPCharModule_Payload_Inventory_Backpack{
 				Items: []GMCPCharModule_Payload_Inventory_Item{},
 				Summary: GMCPCharModule_Payload_Inventory_Backpack_Summary{
-					Count: len(user.Character.Items),
-					Max:   user.Character.CarryCapacity(),
+					Count: len(user.Character.Items), // no Max: weight is the only limit (Phase 32f)
 				},
 			},
 

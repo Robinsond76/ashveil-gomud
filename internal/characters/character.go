@@ -232,6 +232,11 @@ func (c *Character) GetBaseCastSuccessChance(spellId string) int {
 	return targetNumber
 }
 
+// CarryCapacity is GoMud's old item-count limit.
+//
+// Deprecated: weight is the only carrying limit (Ashveil Phase 32f; see
+// internal/encumbrance). Nothing in the engine reads this any more; it stays
+// for scripts that call GetCarryCapacity.
 func (c *Character) CarryCapacity() int {
 	return 5 + c.Stats.Strength.ValueAdj/3
 }

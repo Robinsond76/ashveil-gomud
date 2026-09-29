@@ -29,6 +29,7 @@ func TestPromptValues(t *testing.T) {
 	assert.Equal(t, "Dim", v["{light}"])
 	assert.Equal(t, "Chilled", v["{warmth}"])
 	assert.Equal(t, "Burdened", v["{load}"])
+	assert.Equal(t, "10", v["{I}"], "capacity in whole kg")
 	assert.Equal(t, "3, 1 dead", v["{company}"])
 	assert.Equal(t, ` <ansi fg="cyan">Resting 12m</ansi>`, v["{activity}"])
 	assert.Equal(t, ` <ansi fg="yellow">Hungry Tired Dim Chilled</ansi>`, v["{warn}"])
@@ -38,6 +39,16 @@ func TestPromptValues(t *testing.T) {
 	assert.Empty(t, quiet["{activity}"])
 	assert.Empty(t, quiet["{hunger}"], "unknown renders as nothing")
 	assert.Empty(t, quiet["{company}"], "unknown company: nothing, not a count")
+	assert.Equal(t, "?", quiet["{I}"], "untracked capacity")
+}
+
+// TestCapacityTokenFromCache (32f review finding 1): {I} comes from the
+// game-loop cache, never from live game state, and reads "?" before it.
+func TestCapacityTokenFromCache(t *testing.T) {
+	u := testUser()
+	assert.Equal(t, "[?]", u.ProcessPromptString("[{I}]"), "no cache yet")
+	setCache(t, u.UserId, PromptValues(fullSources().summary(u)))
+	assert.Equal(t, "[10]", u.ProcessPromptString("[{I}]"))
 }
 
 func TestPromptTokens(t *testing.T) {
@@ -66,7 +77,7 @@ func TestPromptCacheRace(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		for i := 0; i < 200; i++ {
-			_ = other.ProcessPromptString("{warn}{activity}{hunger}")
+			_ = other.ProcessPromptString("{warn}{activity}{hunger}{I}")
 		}
 	}()
 	go func() {
@@ -100,7 +111,7 @@ func TestRealRefreshRace(t *testing.T) {
 	go func() {
 		defer close(done)
 		for i := 0; i < 200; i++ {
-			_ = u.ProcessPromptString("{warn}{company}")
+			_ = u.ProcessPromptString("{warn}{company}{I}")
 		}
 	}()
 	for i := 0; i < 200; i++ {

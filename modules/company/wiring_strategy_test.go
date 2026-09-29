@@ -361,7 +361,8 @@ func TestInABattleOnlyFleeWorks(t *testing.T) {
 	assert.Contains(t, b.cmd("east", ""), "Only flee takes you out of it.")
 	assert.Equal(t, 920101, b.aria.Character.RoomId)
 	// Through the real dispatch, aliases included (32d review).
-	for _, c := range [][2]string{{"wear", "sword"}, {"wield", "sword"}, {"unequip", "all"}, {"drink", "water"}, {"eat", "bread"}, {"use", "whetstone"}} {
+	for _, c := range [][2]string{{"wear", "sword"}, {"wield", "sword"}, {"unequip", "all"}, {"drink", "water"}, {"eat", "bread"}, {"use", "whetstone"},
+		{"company", "eat"}, {"company", "drink"}, {"company", "meal"}} { // 32f's company meals too
 		assert.Contains(t, b.cmd(c[0], c[1]), "The battle is under way", c[0])
 	}
 	assert.Contains(t, b.cmd("break", ""), "Only flee takes you out of it.")

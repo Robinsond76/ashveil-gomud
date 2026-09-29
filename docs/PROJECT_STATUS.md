@@ -7,8 +7,8 @@ instead of duplicating them.
 
 - **Last updated:** 2026-09-29
 - **HEAD:** Phase 32d (automatic combat by strategy) merged 2026-09-29,
-  after 32h. Phase 32h (character deletion) merged 2026-09-28, after 32c
-  (enemy groups). Before it, Phase 29b2 (one battle at a time; spawn groups) and player
+  after 32f (company logistics) and 32h (character deletion), merged
+  2026-09-28 after 32c (enemy groups). Before them, Phase 29b2 (one battle at a time; spawn groups) and player
   help for every Ashveil system are complete and merged to `master`
   (2026-09-28, from `claude/next-phase-wfav4w`). Docs cleanup (finished-phase
   plans/specs and the old work log moved to git history) on
@@ -25,16 +25,15 @@ instead of duplicating them.
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
   the first combat slices (29a, 29b, 29b2, 29c), enemy groups (32c),
-  automatic combat by strategy (32d), and character deletion (32h) are
-  all done.
-- **Next:** 32e–32g (32a, 32a2, 32b, 32c, 32d, and 32h are done; 32f is
-  being finished in another session, and 32e is under way in another
-  session, `claude/next-phase-planning-l2fctp`), from the owner's
+  company logistics (32f), automatic combat by strategy (32d), and
+  character deletion (32h) are all done.
+- **Next:** 32e and 32g (32a, 32a2, 32b, 32c, 32d, 32f, and 32h are
+  done; 32e is under way in another session,
+  `claude/next-phase-planning-l2fctp`), from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
   the combat roadmap continues at 29d.
-  Also open: capacity per company size (play-testing) and the "Future
-  ideas" row; see Known issues.
+  Also open: the "Future ideas" row; see Known issues.
 
 ## Phase progress
 
@@ -103,9 +102,10 @@ instead of duplicating them.
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md), [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](superpowers/plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
 | 32c | Enemy groups and `scout` | Complete: [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md), [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md). Groups named as they form ("a band of ruffians") and shown on their own room line; `attack <group>` is the only way to start a fight; a battle plays out on its own (attack, cast, backstab, shoot, tackle, disarm refused in one; a bare `attack` after `break` rejoins); `look <group>` and a free `scout`; summaries name the group |
+| 32f | Company logistics | Complete: [design](superpowers/specs/2026-09-28-phase-32f-company-logistics-design.md), [plan](superpowers/plans/2026-09-28-phase-32f-company-logistics.md). Capacity from members (20 kg + Strength), one pack each, and horses; weight the only limit (a full company takes on nothing more; walking never blocked); a herd of riding and pack horses bought at stables, with saddles; cargo keeps uses; `company inventory`; `company eat`/`drink`/`meal` |
 | 32h | Character deletion | Complete: [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), [plan](superpowers/plans/2026-09-28-phase-32h-character-deletion.md). `delete character`, confirmed by the password (masked) and the name; every module's state purged with the login kept; back in creation on the same connection; a durable `Deleting` flag and a boot sweep; masked in-game password prompts (also `password`) |
 | 32d | Automatic combat by strategy | Complete: [design](superpowers/specs/2026-09-28-phase-32d-auto-combat-design.md), [plan](superpowers/plans/2026-09-28-phase-32d-auto-combat.md). `strategy`: each character's role (fighter, healer, caster) and target rule (weakest, strongest, wounded, nearest, furthest, leader, assist, defend), durable; healers and casters cast real spells with mana; companions know spells by archetype and level and regain mana; wizards/clerics granted Magic Missile/Minor Heal; in a battle only `flee`; only hostile mobs group by tag |
-| 32e–32g | Play-test follow-ups | Proposed ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): company XP (32e), company logistics (32f, implemented on `claude/project-thread-rxps20`; its review fixes and merge handed to another session), web company dock (32g) |
+| 32e, 32g | Play-test follow-ups | Proposed ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): company XP (32e), web company dock (32g, takes 32f's GMCP extras) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
@@ -135,7 +135,8 @@ Phase 29b2 is at commit `d5ace46`).
   roll, events incl. `cast-start`) and `endCast` turns the caster back to
   its aim. Companion mana regain (and none, for anyone, between blows in a
   battle). Refused in a battle: `break`, exits, `formation` changes,
-  `strategy` changes, `eat`, `drink`, `use`, `equip`, `remove`; a flight
+  `strategy` changes, `eat`, `drink`, `use`, `equip`, `remove`, and
+  32f's `company eat`/`drink`/`meal` (added on merging 32f); a flight
   that gets away ends the battle at once. `mobparty` groups by tag only
   hostile mobs; the tutorial's straw squad gets a spawn group. Found and
   fixed: GoMud's `Character.Heal` added the health amount to mana. Help:
@@ -186,13 +187,16 @@ Phase 29b2 is at commit `d5ace46`).
 - **Automatic combat (32d), for the owner and later phases:** Magic
   Missile's difficulty 75 gives a new wizard about a one-in-three chance
   to cast (GoMud's odds; spell balance not retuned); companion mana and
-  health aren't saved (a restart refills both); 32f's `company eat`/`drink`
-  (another session) needs the same in-battle refusal when it merges;
-  enemies still aim at the weakest they can reach (personalities are
+  health aren't saved (a restart refills both); enemies still aim at the weakest they can reach (personalities are
   30c's); companions following a flee is untested. 32c's two owner items
   (peaceful tag groups; what's allowed mid-battle) are settled by 32d.
   32c's test gaps are in its work-log entry (git history, commit
   `ff1f663e`).
+- **Company logistics (32f)** (work log at commit `bea052b`): GMCP drops the inventory `Max` (the web
+  gear window shows "count / —") until 32g adds capacity, packs, mounts,
+  and cargo uses; a crash mid-meal can spend one use without its
+  provision; characters made before 32f start at ~20–25 kg with no
+  satchel.
 - **Character deletion (32h), accepted** (work log at commit `f418e1d`): a replay's hand-back resets the
   wrong-password count; copyover with a flagged user online races the
   resumed connection; a failed reset waits for the boot sweep; the reused
@@ -256,9 +260,6 @@ keeps its own history.
     skips rooms with no aggro.
   - `formation reach`'s "can't reach any of the enemy" branch has no
     test.
-- **Capacity is flat per company** (`CapacityKg` 200, plus a mount). Phase
-  28 gave every item a weight, so loads now mean something, but capacity
-  doesn't grow with the company's size. That is left for play-testing.
 - **Deferred by design, not scheduled:**
   - 11d: guard reactions, crit effects, wounds, AI personality;
   - the "12+" encounter kinds;

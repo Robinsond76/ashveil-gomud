@@ -109,7 +109,7 @@ func buildPeepInventoryPanel(c *characters.Character, itemNamesFormatted []strin
 	sb.WriteString(layout.Render())
 	sb.WriteString(term.CRLFStr)
 
-	count := fmt.Sprintf(`(%d/%d)`, len(c.Items), c.CarryCapacity())
+	count := fmt.Sprintf(`(%d)`, len(c.Items)) // weight is the only limit (Phase 32f)
 	sb.WriteString(` Carrying: `)
 	lineLen := 0
 	lineNum := 1
@@ -140,6 +140,21 @@ func buildPeepInventoryPanel(c *characters.Character, itemNamesFormatted []strin
 		}
 	}
 	sb.WriteString(term.CRLFStr)
+	// Weight is the only limit (Phase 32f): what they carry and wear weighs.
+	sb.WriteString(fmt.Sprintf(` Weight:   %.1f kg`, float64(carriedGrams(c))/1000))
+	sb.WriteString(term.CRLFStr)
 
 	return sb.String()
+}
+
+// carriedGrams weighs a character's carried and worn items.
+func carriedGrams(c *characters.Character) int {
+	total := 0
+	for i := range c.Items {
+		total += c.Items[i].Weight()
+	}
+	for _, itm := range c.Equipment.GetAllItems() {
+		total += itm.Weight()
+	}
+	return total
 }

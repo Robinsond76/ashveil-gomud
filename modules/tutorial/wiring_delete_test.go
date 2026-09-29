@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/camping"
@@ -185,8 +186,12 @@ func TestDeleteCharacterThroughPluginsLoad(t *testing.T) {
 	assert.True(t, connections.InputMasked(conn), "the password isn't echoed")
 	assert.Contains(t, answer(aria, "wrong"), "Nothing was deleted.")
 	assert.False(t, connections.InputMasked(conn))
-	assert.Contains(t, wire.String(), "\xff\xfb\x01", "WILL ECHO")
-	assert.Contains(t, wire.String(), "\xff\xfc\x01", "WONT ECHO")
+	// The pipe's reader appends after the write returns, so wait for it.
+	onWire := func(b string) func() bool {
+		return func() bool { return strings.Contains(wire.String(), b) }
+	}
+	assert.Eventually(t, onWire("\xff\xfb\x01"), time.Second, 5*time.Millisecond, "WILL ECHO")
+	assert.Eventually(t, onWire("\xff\xfc\x01"), time.Second, 5*time.Millisecond, "WONT ECHO")
 
 	// The right password and the wrong name delete nothing either.
 	run(aria, "delete", "character")

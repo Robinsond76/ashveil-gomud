@@ -60,6 +60,12 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 
 func (nativeRuntime) IsLive(instanceID int) bool { return mobs.MobInstanceExists(instanceID) }
 
+func (nativeRuntime) WithLeader(leaderUserID, instanceID int) bool {
+	leader := users.GetByUserId(leaderUserID)
+	mob := mobs.GetInstance(instanceID)
+	return leader != nil && mob != nil && mob.Character.RoomId == leader.Character.RoomId
+}
+
 func (nativeRuntime) IsAttached(leaderUserID, instanceID int) bool {
 	leader := users.GetByUserId(leaderUserID)
 	mob := mobs.GetInstance(instanceID)
@@ -137,6 +143,22 @@ func (nativeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 	return state.Clone(), true
 }
 
+// UseItem takes one use of a carried item from a live mob, removing it
+// when used up.
+func (nativeRuntime) UseItem(instanceID int, itm items.Item) bool {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return false
+	}
+	for i := range mob.Character.Items {
+		if mob.Character.Items[i].Equals(itm) {
+			mob.Character.UseItem(itm)
+			return true
+		}
+	}
+	return false
+}
+
 // CharmedByOther reports whether a live mob is now charmed by someone other
 // than the leader (befriended away). An uncharmed companion, such as one
 // whose charm expired when its leader left, is still the company's.
@@ -161,6 +183,15 @@ func (nativeRuntime) GearGrams(instanceID int) (int, bool) {
 		total += mob.Character.Items[i].Weight()
 	}
 	return total, true
+}
+
+// Carry reads a live mob's Strength and its largest pack (Phase 32f).
+func (nativeRuntime) Carry(instanceID int) (int, int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, 0, false
+	}
+	return mob.Character.Stats.Strength.ValueAdj, domain.BestPackGrams(mob.Character.Items), true
 }
 
 func (nativeRuntime) TemplateState(mobTemplateID int) (domain.MemberState, bool) {
