@@ -189,6 +189,14 @@ func TestCompanyDockThroughPluginsLoad(t *testing.T) {
 	_, hers := refOf(last("Company.Inventory")["members"].([]any)[1].(map[string]any), ration.GetSpec().Name)
 	assert.NotNil(t, hers, "Tamsin carries it")
 
+	// A new Company snapshot (a formation change) replaces what the client
+	// stores under Company, so the unchanged Inventory follows it (32g
+	// review finding 1).
+	snapshots, invs := count("Company"), count("Company.Inventory")
+	run(aria, "formation", "move #1 2 2")
+	assert.Greater(t, count("Company"), snapshots, "the formation change sends a snapshot")
+	assert.Greater(t, count("Company.Inventory"), invs, "and the Inventory follows it")
+
 	// The Camp tab.
 	camp := last("Company.Camp")
 	require.NotNil(t, camp, "Company.Camp is sent")

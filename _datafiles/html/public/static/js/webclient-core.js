@@ -48,8 +48,11 @@ function injectStyles(css) {
 (function() {
     let menuEl   = null;
     let offClick = null;
+    let opener   = null;
 
-    function dismiss() {
+    // dismiss closes the menu; refocus returns focus to what opened it
+    // (Escape), so a keyboard user isn't left nowhere.
+    function dismiss(refocus) {
         if (menuEl) {
             menuEl.remove();
             menuEl = null;
@@ -58,12 +61,20 @@ function injectStyles(css) {
             document.removeEventListener('mousedown', offClick, true);
             offClick = null;
         }
+        if (refocus && opener && typeof opener.focus === 'function') { opener.focus(); }
+        opener = null;
     }
 
+    // Phase 32g: entries are buttons in a role="menu" list, so the keyboard
+    // reaches them: the first is focused on open, arrows, Home, and End
+    // move, Enter or Space chooses, Escape closes.
     window.uiMenu = function uiMenu(event, items) {
-        dismiss();
+        dismiss(false);
+        opener = (event && event.currentTarget instanceof Element) ? event.currentTarget
+               : (event && event.target instanceof Element ? event.target : null);
 
         menuEl = document.createElement('div');
+        menuEl.setAttribute('role', 'menu');
         menuEl.style.cssText = [
             'position:fixed',
             'z-index:2147483647',
@@ -75,10 +86,16 @@ function injectStyles(css) {
             'min-width:120px',
             'font-family:inherit',
             'font-size:0.75em',
+            'display:flex',
+            'flex-direction:column',
         ].join(';');
 
+        const entries = [];
         items.forEach(function(item) {
-            const entry = document.createElement('div');
+            const entry = document.createElement('button');
+            entry.type = 'button';
+            entry.setAttribute('role', 'menuitem');
+            entry.tabIndex = -1;
             entry.textContent = item.label;
             entry.style.cssText = [
                 'padding:5px 12px',
@@ -86,44 +103,75 @@ function injectStyles(css) {
                 'cursor:pointer',
                 'white-space:nowrap',
                 'letter-spacing:0.03em',
+                'background:none',
+                'border:none',
+                'text-align:left',
+                'font:inherit',
             ].join(';');
-            entry.addEventListener('mouseenter', function() {
-                entry.style.background = 'var(--t-accent-dim)';
-                entry.style.color      = 'var(--t-text-white)';
-            });
-            entry.addEventListener('mouseleave', function() {
-                entry.style.background = '';
-                entry.style.color      = 'var(--t-text)';
-            });
-            entry.addEventListener('mousedown', function(e) {
+            const on  = function() { entry.style.background = 'var(--t-accent-dim)'; entry.style.color = 'var(--t-text-white)'; };
+            const off = function() { entry.style.background = ''; entry.style.color = 'var(--t-text)'; };
+            entry.addEventListener('mouseenter', on);
+            entry.addEventListener('mouseleave', off);
+            entry.addEventListener('focus', on);
+            entry.addEventListener('blur', off);
+            entry.addEventListener('click', function(e) {
                 e.stopPropagation();
-                dismiss();
+                dismiss(false);
                 if (item.confirm && !window.confirm(item.confirm)) { return; }
                 Client.SendInput(item.cmd);
             });
+            entries.push(entry);
             menuEl.appendChild(entry);
         });
 
-        // Position: prefer below-right of the click, flip if it would overflow
+        menuEl.addEventListener('keydown', function(e) {
+            const at = entries.indexOf(document.activeElement);
+            let next = -1;
+            if (e.key === 'ArrowDown') { next = (at + 1) % entries.length; }
+            if (e.key === 'ArrowUp')   { next = (at - 1 + entries.length) % entries.length; }
+            if (e.key === 'Home')      { next = 0; }
+            if (e.key === 'End')       { next = entries.length - 1; }
+            if (e.key === 'Escape' || e.key === 'Tab') {
+                e.preventDefault();
+                dismiss(true);
+                return;
+            }
+            if (next !== -1) {
+                e.preventDefault();
+                entries[next].focus();
+            }
+        });
+
+        // Position: prefer below-right of the click, flip if it would
+        // overflow. A menu opened from the keyboard (no pointer position)
+        // opens by the control that opened it.
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         menuEl.style.left = '-9999px';
         menuEl.style.top  = '-9999px';
         document.body.appendChild(menuEl);
 
+        let cx = event ? event.clientX : 0;
+        let cy = event ? event.clientY : 0;
+        if (!cx && !cy && opener) {
+            const r = opener.getBoundingClientRect();
+            cx = r.left;
+            cy = r.bottom;
+        }
         const mw = menuEl.offsetWidth;
         const mh = menuEl.offsetHeight;
-        let x = event.clientX;
-        let y = event.clientY + 4;
+        let x = cx;
+        let y = cy + 4;
         if (x + mw > vw - 8) { x = vw - mw - 8; }
-        if (y + mh > vh - 8) { y = event.clientY - mh - 4; }
+        if (y + mh > vh - 8) { y = cy - mh - 4; }
         menuEl.style.left = Math.max(8, x) + 'px';
         menuEl.style.top  = Math.max(8, y) + 'px';
 
         offClick = function(e) {
-            if (menuEl && !menuEl.contains(e.target)) { dismiss(); }
+            if (menuEl && !menuEl.contains(e.target)) { dismiss(false); }
         };
         document.addEventListener('mousedown', offClick, true);
+        if (entries.length) { entries[0].focus(); }
     };
 }());
 
@@ -791,13 +839,16 @@ class DockTabGroup {
         if (!oldSide || newSide === oldSide) { return; }
         const slot = DockSlots[oldSide];
         if (slot) { slot.removePanel(this.root); }
-        this._members.forEach(m => {
-            VirtualWindows.notifySlotChange(m.win._id, oldSide, newSide);
-            m.win._dockSide = newSide;
+        // Every window of the group moves, docked or not: one popped out, or
+        // one not yet enabled, docks back here (32g review finding 2).
+        const all = VirtualWindows.getWindows().filter(w => w._tabGroup === this.name);
+        all.forEach(w => {
+            VirtualWindows.notifySlotChange(w._id, oldSide, newSide);
+            w._dockSide = newSide;
         });
         this.side = null;
         this._ensurePanel(newSide);
-        this._members.forEach(m => LayoutStore.saveWindow(m.win));
+        all.forEach(w => LayoutStore.saveWindow(w));
     }
 
     // The group panel's rectangle, for a popped-out tab to open over.
@@ -1285,7 +1336,11 @@ class VirtualWindow {
 
     _dockNow() {
         if (this._tabGroup) {
-            DockTabGroups.get(this._tabGroup).add(this, this._dockSide);
+            // A tab docks into its group wherever the group now is, even if
+            // the group moved while this tab was out (32g review finding 2).
+            const group = DockTabGroups.get(this._tabGroup);
+            if (group.side) { this._dockSide = group.side; }
+            group.add(this, this._dockSide);
             this._win = 'docked';
             LayoutStore.saveWindow(this);
             return;

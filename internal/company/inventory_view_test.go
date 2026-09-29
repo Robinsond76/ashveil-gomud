@@ -35,7 +35,7 @@ func TestInventoryMemberOf(t *testing.T) {
 	assert.Equal(t, "satchel", m.Pack)
 	assert.Equal(t, 5000, m.PackBonusGrams)
 	require.Len(t, m.Worn, 1)
-	assert.Equal(t, InventoryItem{Ref: sword.ShorthandId(), Name: "iron sword", Grams: 1500, Count: 1, Type: "weapon", Slot: "weapon"}, m.Worn[0])
+	assert.Equal(t, InventoryItem{Ref: sword.ShorthandId(), Name: "iron sword", Label: "iron sword", Grams: 1500, Count: 1, Type: "weapon", Slot: "weapon"}, m.Worn[0])
 	require.Len(t, m.Carried, 2)
 	assert.Equal(t, water.ShorthandId(), m.Carried[1].Ref, "a reference to exactly this waterskin")
 	assert.Equal(t, 3, m.Carried[1].Uses)
@@ -46,4 +46,23 @@ func TestInventoryMemberOf(t *testing.T) {
 	assert.Empty(t, empty.Pack)
 	assert.Equal(t, []InventoryItem{}, empty.Worn, "empty lists, never null")
 	assert.Equal(t, []InventoryItem{}, empty.Carried)
+}
+
+// TestInventoryItemPlainLabel (32g review finding 3): a sharpened item's
+// label carries its edge as text, never markup, and its name stays the
+// plain one a command matches.
+func TestInventoryItemPlainLabel(t *testing.T) {
+	spec := items.ItemSpec{ItemId: 989111, Name: "iron sword", Weight: 1500, Type: items.Weapon}
+	items.SetTestItemSpec(&spec)
+	t.Cleanup(func() { items.RemoveTestItemSpec(spec.ItemId) })
+	sword := items.New(989111)
+	sword.SharpStrikes, sword.SharpBonus = 3, 1
+	state := MemberState{}
+	state.Equipment.Weapon = sword
+
+	m := InventoryMemberOf(LeaderMemberKey, "Dain", state)
+	require.Len(t, m.Worn, 1)
+	assert.Equal(t, "iron sword", m.Worn[0].Name)
+	assert.Equal(t, "iron sword (sharp: 3)", m.Worn[0].Label)
+	assert.NotContains(t, m.Worn[0].Label, "<")
 }

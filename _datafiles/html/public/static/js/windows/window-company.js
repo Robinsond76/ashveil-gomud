@@ -640,7 +640,8 @@
         return section;
     }
 
-    function update() {
+    // update redraws the tab; namespace is the payload that prompted it.
+    function update(namespace) {
         win.open();
         if (!win.isOpen()) { return; }
 
@@ -666,8 +667,9 @@
             const again = panel.querySelector('[data-key="' + (window.CSS && CSS.escape ? CSS.escape(focusedKey) : focusedKey) + '"]');
             if (again) { again.focus(); }
         }
-        // The other sub-tabs read the snapshot too (names, needs).
-        updateInventory();
+        // The other sub-tabs read the snapshot too: Camp its needs, and
+        // Inventory the companions out (names only, so not on vitals).
+        if (namespace !== 'Company.Vitals') { updateInventory(); }
         updateCamp();
     }
 
@@ -683,9 +685,10 @@
         return '"' + String(name).replace(/"/g, '') + '"';
     }
 
-    function button(label, cmd, title) {
-        const b = el('button', 'cmp-btn', label);
+    function button(text, cmd, title) {
+        const b = el('button', 'cmp-btn', text);
         b.type = 'button';
+        b.setAttribute('data-focus', 'btn|' + text);
         if (title) { b.title = title; }
         b.addEventListener('click', () => send(cmd));
         return b;
@@ -695,8 +698,14 @@
         return i.uses_max > 1 && i.uses > 0 ? i.uses + '/' + i.uses_max : '';
     }
 
+    // label is how players see an item; name, the plain name a command
+    // matches (32g review finding 3).
+    function label(i) {
+        return i.label || i.name;
+    }
+
     function itemTip(i) {
-        const parts = [i.name, CompanyData.kg(i.grams) + (i.count > 1 ? ' each' : '')];
+        const parts = [label(i), CompanyData.kg(i.grams) + (i.count > 1 ? ' each' : '')];
         if (usesText(i)) { parts.push(i.uses + ' of ' + i.uses_max + ' uses left'); }
         return parts.join(' \u00b7 ');
     }
@@ -733,7 +742,8 @@
             row.setAttribute('aria-haspopup', 'menu');
             row.addEventListener('click', e => uiMenu(e, menu()));
         }
-        row.appendChild(el('span', 'cmp-name', i.name + (i.count > 1 ? ' x' + i.count : '')));
+        row.appendChild(el('span', 'cmp-name', label(i) + (i.count > 1 ? ' x' + i.count : '')));
+        if (menu) { row.setAttribute('data-focus', (i.ref || '') + '|' + label(i)); }
         row.appendChild(el('span', 'cmp-meta', [usesText(i), CompanyData.kg(i.grams * Math.max(1, i.count || 1))].filter(Boolean).join(' \u00b7 ')));
         row.title = itemTip(i);
         li.appendChild(row);
@@ -772,7 +782,7 @@
     function horseMenu(h, yourItems) {
         const items = [];
         yourItems.filter(i => /saddle/i.test(i.name)).forEach(i => {
-            items.push({ label: 'Fit ' + i.name, cmd: 'mount saddle #' + h.id + ' ' + i.ref });
+            items.push({ label: 'Fit ' + label(i), cmd: 'mount saddle #' + h.id + ' ' + i.ref });
         });
         if (h.saddle) { items.push({ label: 'Unsaddle', cmd: 'mount unsaddle #' + h.id }); }
         // A released horse is gone for good: ask first.
@@ -791,14 +801,30 @@
         if (h.rides) { what.push('carries a rider'); } else if (h.capacity_g > 0) { what.push('+' + CompanyData.kg(h.capacity_g)); }
         row.appendChild(el('span', 'cmp-meta', what.join(', ')));
         row.title = '#' + h.id + ' ' + h.name + ': ' + what.join(', ');
+        row.setAttribute('data-focus', 'horse|' + h.id);
         row.addEventListener('click', e => uiMenu(e, horseMenu(h, yourItems)));
         li.appendChild(row);
         return li;
     }
 
+    // keepFocus rebuilds a panel, keeping keyboard focus on the same
+    // control by its data-focus (32g review finding 8).
+    function keepFocus(panel, rebuild) {
+        const focused = document.activeElement;
+        const key = focused && panel.contains(focused) ? focused.getAttribute('data-focus') : null;
+        rebuild();
+        if (!key) { return; }
+        const again = [...panel.querySelectorAll('[data-focus]')].find(n => n.getAttribute('data-focus') === key);
+        if (again) { again.focus(); }
+    }
+
     function updateInventory() {
         const panel = document.getElementById('company-inventory');
         if (!panel) { return; }
+        keepFocus(panel, () => buildInventory(panel));
+    }
+
+    function buildInventory(panel) {
         const inv = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Inventory;
         panel.textContent = '';
         const pad = el('div', 'cmp-pad');
@@ -861,6 +887,10 @@
     function updateCamp() {
         const panel = document.getElementById('company-camp');
         if (!panel) { return; }
+        keepFocus(panel, () => buildCamp(panel));
+    }
+
+    function buildCamp(panel) {
         const camp = (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Camp) || {};
         const data = CompanyData.read();
         panel.textContent = '';
@@ -874,6 +904,9 @@
             where = 'Your camp is at ' + (camp.room || 'another place') + '.';
         }
         pad.appendChild(el('div', null, where));
+        if (camp.rested && camp.here) {
+            pad.appendChild(el('div', 'cmp-line', 'Your company has rested at this camp; break it and make a new one to rest again.'));
+        }
         if (camp.resting) {
             pad.appendChild(el('div', null, 'Resting: ' + CompanyData.formatSeconds(camp.rest_seconds) + ' left.'));
             const meter = el('div', 'cmp-meter');
@@ -895,7 +928,7 @@
         const actions = el('div', 'cmp-actions');
         if (camp.can_camp) { actions.appendChild(button('Make camp', 'camp', 'Make camp here (camp)')); }
         if (camp.has_camp && camp.here && !camp.fire_lit) { actions.appendChild(button('Light fire', 'camp fire', 'Light the campfire (camp fire)')); }
-        if (camp.has_camp && camp.here && camp.fire_lit && !camp.resting) { actions.appendChild(button('Rest', 'camp rest', 'Rest by the fire (camp rest)')); }
+        if (camp.has_camp && camp.here && camp.fire_lit && !camp.resting && !camp.rested) { actions.appendChild(button('Rest', 'camp rest', 'Rest by the fire (camp rest)')); }
         if (camp.has_camp && camp.here && !camp.resting) { actions.appendChild(button('Break camp', 'camp break', 'Strike the camp (camp break)')); }
         actions.appendChild(button('Meal', 'company meal', 'Everyone with you eats and drinks (company meal)'));
         if (camp.inn) { actions.appendChild(button('Inn', 'inn', 'This inn\'s price and your stay (inn)')); }
@@ -940,7 +973,7 @@
                 if (win.isOpen()) { updateCamp(); }
                 return;
             }
-            update();
+            update(namespace);
         },
     });
 

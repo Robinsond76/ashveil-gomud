@@ -191,6 +191,19 @@ await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.members[1]
 check(await page.evaluate(() => window.__xss === undefined) && (await invText()).includes('<img'), 'markup in a name renders as text');
 await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
 
+// Review finding 3: an item's label is shown, its plain name used in commands.
+await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.members[0].worn[0].label = 'iron sword (sharp: 3)'; window.gmcp('Company.Inventory', x); }, inventory);
+check((await invText()).includes('iron sword (sharp: 3)'), 'the label, with its edge, as text');
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'sharp' }).click(); await page.getByText('remove iron sword', { exact: true }).click(); });
+check(JSON.stringify(got) === '["remove iron sword"]', 'commands use the plain name');
+// Review findings 4 and 8: a menu from the keyboard; focus kept across updates.
+await page.locator('#company-inventory button.cmp-item', { hasText: 'seared meat x6' }).focus();
+await page.evaluate(() => { window.gmcp('Company.Vitals', { vitals: {}, rescue: {} }); });
+await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
+check(await page.evaluate(() => document.activeElement && document.activeElement.textContent.startsWith('seared meat x6')), 'focus stays on the same item across updates');
+got = await sentNow(async () => { await page.keyboard.press('Enter'); await page.keyboard.press('Enter'); });
+check(JSON.stringify(got) === '["cargo take !3"]', 'an item\'s menu works from the keyboard');
+
 // Camp: each button only when it would work.
 await page.getByRole('tab', { name: 'Camp' }).click();
 const campButtons = () => page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-btn')].map(b => b.textContent));
@@ -203,6 +216,8 @@ check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 25, rest_seconds: 45, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Meal"]' && await page.getByRole('progressbar', { name: 'Rest' }).count() === 1, 'resting: the progress bar, no Rest or Break');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Resting: 45s left.'), 'the time left');
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check(JSON.stringify(await campButtons()) === '["Break camp","Meal"]' && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('has rested at this camp'), 'after a rest: no Rest (review finding 7)');
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: false, room: 'A Clearing', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: true }));
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Your camp is at A Clearing.') && JSON.stringify(await campButtons()) === '["Meal","Inn"]', 'a camp elsewhere; an inn here');
 got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Inn' }).click(); });

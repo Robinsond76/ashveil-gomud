@@ -5,16 +5,30 @@ package company
 // modules/company's `company inventory`.
 
 import (
+	"regexp"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
+
+var markup = regexp.MustCompile(`<[^>]*>`)
+
+// PlainLabel is ItemLabel without its markup, for the web client, which
+// shows server strings as text.
+func PlainLabel(itm items.Item) string {
+	return markup.ReplaceAllString(ItemLabel(itm), "")
+}
 
 // InventoryItem is one item as the Inventory tab shows it.
 type InventoryItem struct {
 	// Ref names exactly this item to a command (items.FindMatchIn's
 	// "!<id>:<uuid>" form), so two same-named items are never confused.
-	Ref     string
+	Ref string
+	// Name is the item's plain name, as a command names it (look, equip,
+	// eat); Label is how players see it (an edge, a quest mark), with the
+	// markup taken out (32g review finding 3).
 	Name    string
+	Label   string
 	Grams   int // one item's weight
 	Count   int
 	Uses    int
@@ -47,7 +61,7 @@ func ItemLabel(itm items.Item) string {
 }
 
 func inventoryItem(itm items.Item, slot string) InventoryItem {
-	out := InventoryItem{Ref: itm.ShorthandId(), Name: ItemLabel(itm), Grams: itm.Weight(), Count: 1, Uses: itm.Uses, Slot: slot}
+	out := InventoryItem{Ref: itm.ShorthandId(), Name: itm.Name(), Label: PlainLabel(itm), Grams: itm.Weight(), Count: 1, Uses: itm.Uses, Slot: slot}
 	if spec := items.GetItemSpec(itm.ItemId); spec != nil {
 		out.UsesMax, out.Type, out.Subtype = spec.Uses, string(spec.Type), string(spec.Subtype)
 	}
@@ -70,7 +84,7 @@ func InventoryMemberOf(key MemberKey, name string, s MemberState) InventoryMembe
 		}
 	}
 	if pack, grams := BestPack(s.Items); grams > 0 {
-		m.Pack, m.PackBonusGrams = ItemLabel(pack), grams
+		m.Pack, m.PackBonusGrams = PlainLabel(pack), grams
 	}
 	return m
 }

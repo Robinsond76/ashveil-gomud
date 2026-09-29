@@ -163,3 +163,29 @@ func TestCompanyInventoryData(t *testing.T) {
 	assert.True(t, ok)
 	assert.Empty(t, none)
 }
+
+// TestCompanyInventoryDataReview (32g review findings 5 and 9): a
+// companion's items carry no reference (none takes a command, and a
+// template's would change every read), and one charmed away shows no
+// gear, as the text view says.
+func TestCompanyInventoryDataReview(t *testing.T) {
+	spec(t, items.ItemSpec{ItemId: 989012, Name: "spear", Weight: 2000, Type: items.Weapon})
+	stored := domain.MemberState{Level: 1, Items: []items.Item{items.New(989012)}}
+	runtime := &fakeRuntime{live: map[int]bool{501: true}, stolen: map[int]bool{501: true}, liveState: map[int]domain.MemberState{501: stored}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{
+			{ID: 1, MobTemplateID: 58, Name: "Maren", State: &stored},
+			{ID: 2, MobTemplateID: 58, Name: "Oswin", State: &stored},
+		}},
+	}}, runtime)
+	module.instances = map[int]map[int]int{7: {1: 501}}
+
+	members, ok := module.CompanyInventory(7)
+	require.True(t, ok)
+	require.Len(t, members, 2)
+	assert.Empty(t, members[0].Carried, "charmed away: not the company's gear")
+	require.Len(t, members[1].Carried, 1)
+	assert.Empty(t, members[1].Carried[0].Ref, "no reference on a companion's item")
+	again, _ := module.CompanyInventory(7)
+	assert.Equal(t, members, again, "the same state reads the same")
+}

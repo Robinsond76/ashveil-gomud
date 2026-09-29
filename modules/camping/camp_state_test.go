@@ -42,3 +42,15 @@ func TestCampStateOf(t *testing.T) {
 	s, _ = m.CampStateOf(8, 300, []string{m.innSettings().RoomTag})
 	assert.True(t, s.Inn)
 }
+
+// TestCampStateRested (32g review finding 7): a camp whose rest is done
+// says so, and isn't resting, so the Camp tab offers no Rest.
+func TestCampStateRested(t *testing.T) {
+	now := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+	m := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeSurvival{}, func() time.Time { return now })
+	m.camps[7] = camping.Camp{LeaderUserID: 7, RoomID: 100, FireLit: true,
+		Rest: &camping.RestSession{StartedAtUTC: now.Add(-2 * time.Minute), State: camping.Completed}}
+	s, _ := m.CampStateOf(7, 100, nil)
+	assert.True(t, s.Rested)
+	assert.False(t, s.Resting)
+}

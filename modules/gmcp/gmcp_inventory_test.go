@@ -155,3 +155,26 @@ func TestBackpackSummaryWeights(t *testing.T) {
 	assert.Equal(t, 1000, unknown.WeightG)
 	assert.Zero(t, unknown.CapacityG, "omitted when the load can't be read")
 }
+
+// TestExtrasFollowASnapshot (32g review finding 1): the client stores the
+// extras under Company, which a new snapshot replaces, so every extra is
+// sent again after one, unchanged or not, and after it.
+func TestExtrasFollowASnapshot(t *testing.T) {
+	f, out := testFeed()
+	f.extras = []companyExtra{{module: "Company.Inventory", build: func(*users.UserRecord) []byte { return []byte(`{"a":1}`) }}}
+	u := users.NewUserRecord(7, 1)
+	s := sampleCompany()
+	refresh := func() { f.update(7, s); f.updateExtras(u) }
+	refresh()
+	refresh()
+	require.Len(t, *out, 2, "nothing new: nothing sent")
+	s.Checkpoint = "Elsewhere"
+	refresh()
+	require.Len(t, *out, 4)
+	assert.Equal(t, "Company", (*out)[2].module)
+	assert.Equal(t, "Company.Inventory", (*out)[3].module, "the unchanged extra follows the snapshot")
+	s.Leader.HP = 1
+	refresh()
+	require.Len(t, *out, 5)
+	assert.Equal(t, "Company.Vitals", (*out)[4].module, "a vitals update replaces nothing: no extras")
+}

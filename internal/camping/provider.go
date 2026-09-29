@@ -190,6 +190,9 @@ type CampState struct {
 	RoomTitle     string
 	FireLit       bool
 	Resting       bool
+	// Rested is a camp whose rest is done: it can't rest again (32g
+	// review finding 7).
+	Rested bool
 	// RestPercent and RestSeconds are a running rest's progress and time
 	// left.
 	RestPercent, RestSeconds int

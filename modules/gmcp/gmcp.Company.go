@@ -294,6 +294,11 @@ func (f *companyFeed) update(userID int, s companyview.Summary) {
 			full, _ = json.Marshal(p)
 		}
 		f.send(userID, "Company", full)
+		// The client stores the extras under Company, which this replaces:
+		// send them again after it (32g review finding 1).
+		f.mu.Lock()
+		delete(f.lastExtra, userID)
+		f.mu.Unlock()
 	case prev.vitals != next.vitals:
 		body, _ := json.Marshal(p.companyLive)
 		f.send(userID, "Company.Vitals", body)

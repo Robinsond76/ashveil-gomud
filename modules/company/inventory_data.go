@@ -28,7 +28,13 @@ func (m *CompanyModule) CompanyInventory(leaderUserID int) ([]domain.InventoryMe
 			continue
 		}
 		var state *domain.MemberState
-		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) && !m.runtime.CharmedByOther(leaderUserID, instanceID) {
+		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {
+			if m.runtime.CharmedByOther(leaderUserID, instanceID) {
+				// Charmed away: its gear is no longer the company's, as
+				// the text view says (32g review finding 9).
+				out = append(out, domain.InventoryMember{Key: key, Name: name, Worn: []domain.InventoryItem{}, Carried: []domain.InventoryItem{}})
+				continue
+			}
 			if live, ok := m.runtime.Snapshot(instanceID); ok {
 				state = &live
 			}
@@ -45,7 +51,17 @@ func (m *CompanyModule) CompanyInventory(leaderUserID int) ([]domain.InventoryMe
 			out = append(out, domain.InventoryMember{Key: key, Name: name, Unrecorded: true, Worn: []domain.InventoryItem{}, Carried: []domain.InventoryItem{}})
 			continue
 		}
-		out = append(out, domain.InventoryMemberOf(key, name, *state))
+		member := domain.InventoryMemberOf(key, name, *state)
+		// A companion's items take no commands, so they carry no
+		// reference; a template's items get fresh UUIDs on every read,
+		// which would resend the payload every round (32g review finding 5).
+		for i := range member.Worn {
+			member.Worn[i].Ref = ""
+		}
+		for i := range member.Carried {
+			member.Carried[i].Ref = ""
+		}
+		out = append(out, member)
 	}
 	return out, true
 }

@@ -78,6 +78,52 @@ check((await tabs()).find(t => t.selected).label === 'Character', 'another tab s
 await page.click('.vwin .vw-dock-btn');
 check((await tabs()).map(t => t.label).join(',') === 'Character,Company,Combat,Comm', 'docking it returns it to its place');
 
+// Review finding 2: moving the group while a tab is out, then docking it
+// back, keeps one group panel, in the new column; and so after a reload.
+await page.getByRole('tab', { name: 'Combat' }).click();
+await page.click('#dock-right .dock-panel-popout');
+await page.evaluate(() => DockTabGroups.get('dock').moveTo('left'));
+await page.click('.vwin .vw-dock-btn');
+const cols = () => page.evaluate(() => ({
+  left: document.querySelectorAll('#dock-left .dock-panel').length,
+  right: document.querySelectorAll('#dock-right .dock-panel').length,
+  tabs: [...document.querySelectorAll('#dock-left [role=tab]')].map(t => t.textContent.replace(/\d+$/, '')),
+}));
+let c = await cols();
+check(c.left === 2 && c.right === 0 && c.tabs.join(',') === 'Character,Company,Combat,Comm', 'a tab out while the group moved docks back into it, in the new column (' + JSON.stringify(c) + ')');
+await page.reload();
+c = await cols();
+check(c.left === 2 && c.right === 0 && c.tabs.length === 4, 'and so after a reload (' + JSON.stringify(c) + ')');
+await page.evaluate(() => DockTabGroups.get('dock').moveTo('right'));
+
+// Review finding 4: a menu from the keyboard.
+await page.evaluate(() => {
+  const b = document.createElement('button');
+  b.id = 'opener';
+  b.textContent = 'open';
+  b.addEventListener('click', e => uiMenu(e, [{ label: 'first', cmd: 'one' }, { label: 'second', cmd: 'two' }]));
+  document.querySelector('[data-stub=Character]').appendChild(b);
+  window.sent = [];
+});
+await page.getByRole('tab', { name: 'Character' }).click();
+await page.focus('#opener');
+await page.keyboard.press('Enter');
+check(await page.getByRole('menu').count() === 1 && await page.evaluate(() => document.activeElement.textContent) === 'first', 'Enter opens the menu with its first entry focused');
+check(await page.evaluate(() => { const m = document.querySelector('[role=menu]').getBoundingClientRect(); const o = document.getElementById('opener').getBoundingClientRect(); return Math.abs(m.top - o.bottom) < 40; }), 'and opens by the control, not the screen corner');
+await page.keyboard.press('ArrowDown');
+await page.keyboard.press('Enter');
+check(JSON.stringify(await page.evaluate(() => window.sent)) === '["two"]' && await page.getByRole('menu').count() === 0, 'arrows and Enter choose an entry');
+await page.focus('#opener');
+await page.keyboard.press('Enter');
+await page.keyboard.press('Escape');
+check(await page.getByRole('menu').count() === 0 && await page.evaluate(() => document.activeElement.id) === 'opener', 'Escape closes it, back on the control');
+
+// Reset Layout with the group.
+await page.evaluate(() => DockTabGroups.get('dock').moveTo('left'));
+await page.evaluate(() => Client.resetLayout());
+c = await cols();
+check(await page.evaluate(() => document.querySelectorAll('#dock-right [role=tab]').length) === 4 && c.left === 1, 'Reset Layout puts the group back on the right');
+
 // Leaving: the panel goes with its last member.
 await page.evaluate(() => Object.values(window.wins).filter(w => w._id !== 'Map').forEach(w => { w._removeDocked(); w._win = false; }));
 check(await page.evaluate(() => !document.getElementById('dock-right').classList.contains('has-panels')), 'the group panel goes when its last member leaves');

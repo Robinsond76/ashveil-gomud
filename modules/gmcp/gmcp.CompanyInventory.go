@@ -20,7 +20,8 @@ import (
 
 type inventoryItem struct {
 	Ref     string `json:"ref"`
-	Name    string `json:"name"`
+	Name    string `json:"name"`  // plain, as a command names it
+	Label   string `json:"label"` // as players see it, without markup
 	Grams   int    `json:"grams"`
 	Count   int    `json:"count"`
 	Uses    int    `json:"uses"`
@@ -89,7 +90,7 @@ func nativeInventorySources() inventorySources {
 }
 
 func inventoryItemOf(i company.InventoryItem) inventoryItem {
-	return inventoryItem{Ref: i.Ref, Name: i.Name, Grams: i.Grams, Count: i.Count, Uses: i.Uses, UsesMax: i.UsesMax,
+	return inventoryItem{Ref: i.Ref, Name: i.Name, Label: i.Label, Grams: i.Grams, Count: i.Count, Uses: i.Uses, UsesMax: i.UsesMax,
 		Type: i.Type, Subtype: i.Subtype, Slot: i.Slot}
 }
 
@@ -110,7 +111,7 @@ func inventoryMemberOf(m company.InventoryMember) inventoryMember {
 // `cargo take` matches (it prefers a partly used stack of that item).
 func cargoItem(s encumbrance.CargoStack) inventoryItem {
 	itm := items.Item{ItemId: s.ItemId}
-	out := inventoryItem{Ref: "!" + strconv.Itoa(s.ItemId), Name: company.ItemLabel(itm), Count: s.Count, Uses: s.Uses}
+	out := inventoryItem{Ref: "!" + strconv.Itoa(s.ItemId), Name: itm.Name(), Label: company.PlainLabel(itm), Count: s.Count, Uses: s.Uses}
 	if spec := items.GetItemSpec(s.ItemId); spec != nil {
 		out.Grams, out.UsesMax, out.Type, out.Subtype = spec.Weight, spec.Uses, string(spec.Type), string(spec.Subtype)
 		if out.Uses == 0 {

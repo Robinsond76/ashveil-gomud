@@ -18,6 +18,7 @@ type campPayload struct {
 	Room        string `json:"room"`
 	FireLit     bool   `json:"fire_lit"`
 	Resting     bool   `json:"resting"`
+	Rested      bool   `json:"rested"`
 	RestPercent int    `json:"rest_percent"`
 	RestSeconds int    `json:"rest_seconds"`
 	CanCamp     bool   `json:"can_camp"`
@@ -25,7 +26,7 @@ type campPayload struct {
 }
 
 func campPayloadOf(s camping.CampState) campPayload {
-	return campPayload{HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting,
+	return campPayload{HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 

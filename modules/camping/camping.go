@@ -1112,6 +1112,9 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 		s.CanCamp = has(m.roomTag())
 	} else {
 		s.HasCamp, s.Here, s.FireLit = true, camp.RoomID == roomID, camp.FireLit
+		if camp.Rest != nil && camp.Rest.State == camping.Completed {
+			s.Rested = true
+		}
 		if camp.Rest != nil && camp.Rest.State == camping.Resting {
 			left := m.remainingLocked(camp)
 			s.Resting = true

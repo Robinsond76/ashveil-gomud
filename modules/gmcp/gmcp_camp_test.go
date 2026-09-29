@@ -19,7 +19,7 @@ func TestCompanyCampPayload(t *testing.T) {
 
 	var got map[string]any
 	require.NoError(t, json.Unmarshal(extra.build(u), &got))
-	assert.Equal(t, map[string]any{"has_camp": true, "here": true, "room": "", "fire_lit": true, "resting": true,
+	assert.Equal(t, map[string]any{"has_camp": true, "here": true, "room": "", "fire_lit": true, "resting": true, "rested": false,
 		"rest_percent": 25.0, "rest_seconds": 45.0, "can_camp": false, "inn": false}, got)
 
 	none := campExtra(func(int, int, []string) (camping.CampState, bool) { return camping.CampState{}, false })
