@@ -195,7 +195,7 @@ Files:
 
 ## Task 9 — Review, verification, integration
 
-- [ ] Get an independent reviewer report on the full diff (`git diff
+- [x] Get an independent reviewer report on the full diff (`git diff
   135b72e..HEAD`). Focus:
   - the causal tagging's goroutine assumptions;
   - leaks or ordering holes in held lines;
@@ -204,12 +204,14 @@ Files:
   - copyover;
   - missing wiring coverage;
   - inaccurate help.
-- [ ] Reproduce each finding. Fix the real ones with regression tests;
+- [x] Reproduce each finding. Fix the real ones with regression tests;
   note the rejected ones.
-- [ ] Run `make generate`, `make validate`, `go test -race ./...`, and
+- [x] Run `make generate`, `make validate`, `go test -race ./...`, and
   `git diff --check` once, after the fixes.
-- [ ] Record the phase, the verification, and a **Review:** line in
-  `docs/PROJECT_STATUS.md`; commit; merge to `master`; push.
+- [x] Record the phase, the verification, and a **Review:** line in
+  `docs/PROJECT_STATUS.md`; commit; push the branch.
+- [ ] Merge to `master` (awaiting the owner: squash, to keep a
+  mistakenly committed binary out of `master`'s history).
 
 ## Review focus
 
