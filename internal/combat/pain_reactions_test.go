@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"strings"
 	"testing"
 
@@ -172,6 +173,7 @@ func TestSeparateRoomCriticalSendsWitnessReactionToBothRooms(t *testing.T) {
 
 func TestSurvivingCriticalStrikeGetsImmediatePainLineForEachViewer(t *testing.T) {
 	edgeSpecs(t)
+	t.Cleanup(combatpace.UseForTest(combatpace.New()))
 	source := edgeFighter(90231)
 	source.Name = "Aria"
 	source.Equipment.Weapon = items.New(edgeSwordID)
@@ -193,6 +195,15 @@ func TestSurvivingCriticalStrikeGetsImmediatePainLineForEachViewer(t *testing.T)
 		}
 		if !strings.Contains(result.MessagesToSource[1], "The timber wolf") || result.MessagesToSource[1] != result.MessagesToSourceRoom[1] {
 			t.Fatalf("witness reaction differs or loses target label: %q, %q", result.MessagesToSource, result.MessagesToSourceRoom)
+		}
+		// Phase 29f: both viewpoints of the pain line wait the longer gap;
+		// the hit itself does not.
+		pacer := combatpace.Default()
+		if !pacer.Marked(result.MessagesToTarget[1]) || !pacer.Marked(result.MessagesToSource[1]) {
+			t.Fatalf("pain lines not marked dramatic: %q, %q", result.MessagesToTarget[1], result.MessagesToSource[1])
+		}
+		if pacer.Marked(result.MessagesToTarget[0]) || pacer.Marked(result.MessagesToSource[0]) {
+			t.Fatalf("the critical hit line itself was marked")
 		}
 		return
 	}

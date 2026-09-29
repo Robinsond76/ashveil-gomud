@@ -86,6 +86,14 @@ func (p *Pacer) Mark(texts ...string) {
 	}
 }
 
+// Marked reports whether a line is marked dramatic this round.
+func (p *Pacer) Marked(text string) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	_, ok := p.marks[key(text)]
+	return ok
+}
+
 // StartRound forgets the previous round's marks. It is called as each
 // combat round begins, after FlushAll.
 func (p *Pacer) StartRound() {

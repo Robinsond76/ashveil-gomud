@@ -16,8 +16,9 @@ import (
 
 // pacedLine is a line Aria was sent, and when.
 type pacedLine struct {
-	text string
-	at   time.Duration // since the first combat round began
+	text   string
+	at     time.Duration // since the first combat round began
+	marked bool          // marked dramatic (a pain or death line)
 }
 
 // TestPacedCombatThroughTheRealRound (Phase 29f) fights the brawl to its end
@@ -38,7 +39,7 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	var sent []pacedLine
 	t.Cleanup(hooks.SetWriteTextForTest(func(userId int, text string) {
 		if userId == 7 {
-			sent = append(sent, pacedLine{text: companyTagPattern.ReplaceAllString(text, ""), at: now.Sub(start)})
+			sent = append(sent, pacedLine{text: companyTagPattern.ReplaceAllString(text, ""), at: now.Sub(start), marked: combatpace.Default().Marked(text)})
 		}
 	}))
 	for _, reg := range []struct {
@@ -118,6 +119,20 @@ func TestPacedCombatThroughTheRealRound(t *testing.T) {
 	}
 	require.Greater(t, summary, 0, "the battle summary was sent")
 	assert.Contains(t, got[summary-1], "The last bandit", "the closing line comes before the summary")
+
+	// The dramatic beat: every death line, as the player receives it, is
+	// marked for the longer gap; a critical hit's own line is not.
+	deaths := 0
+	for _, l := range sent {
+		switch {
+		case strings.Contains(l.text, "does not rise") || strings.Contains(l.text, "lies still") || strings.Contains(l.text, "and is still"):
+			deaths++
+			assert.True(t, l.marked, "death line not marked: %q", l.text)
+		case strings.Contains(l.text, "(critical hit"):
+			assert.False(t, l.marked, "critical hit line marked: %q", l.text)
+		}
+	}
+	assert.Positive(t, deaths, "death lines were seen")
 
 	// Timing: combat rounds start every 8s (rounds 2, 4, ... begin at
 	// 0s, 8s, ...). No line goes out more than 6s into its round, and a

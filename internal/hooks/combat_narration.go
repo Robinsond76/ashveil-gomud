@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -168,9 +169,11 @@ func mobDeathNotice(mob *mobs.Mob) {
 	}
 	mob.SetTempData(deathNoticedKey, true)
 	name := mobTag(mobName(mob.InstanceId))
+	line := combat.DeathLine(name)
 	if mob.Practice {
-		room.SendText(combat.BeatenLine(name))
-		return
+		line = combat.BeatenLine(name)
 	}
-	room.SendText(combat.DeathLine(name))
+	// Phase 29f: a beat of silence before a death, paced or not.
+	combatpace.Default().Mark(line)
+	room.SendText(line)
 }
