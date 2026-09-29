@@ -1,5 +1,6 @@
 raceid: 21
 name: reptile
+defaultpronouns: it
 description: A lizard creature.
 defaultalignment: 0
 size: medium

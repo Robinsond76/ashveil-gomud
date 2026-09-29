@@ -7,6 +7,7 @@ maxwander: 0
 activitylevel: 10
 character:
   name: Garrick Vane
+  pronouns: he
   description: 'A scarred sellsword with a broken nose and an easy grin, Garrick
     keeps his broadsword oiled and his prices high. He has fought for three lords
     and outlived two of them, and he is happy to tell you which.'

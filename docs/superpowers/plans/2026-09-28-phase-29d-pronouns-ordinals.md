@@ -10,7 +10,7 @@
 
 **Spec:** [Phase 29d design](../specs/2026-09-26-combat-pronouns-ordinals-design.md).
 
-**Status:** Draft awaiting owner review. No implementation tasks have started.
+**Status:** Owner approved; implementation in progress. Task 1 independently verified.
 
 **Workspace:** `.worktrees/phase-29d-pronouns-ordinals`, branch `codex/phase-29d-pronouns-ordinals`, based on `b9729809`.
 
@@ -71,23 +71,23 @@ model; it does not mark this newly written design approved.
 `(*Character).CombatPronouns() PronounForms`; `Character.Pronouns string`,
 `Character.CombatNoun string`; `Race.DefaultPronouns string`.
 
-- [ ] Write table-driven tests `TestCombatPronouns` for all four sets,
+- [x] Write table-driven tests `TestCombatPronouns` for all four sets,
   whitespace/case, empty/invalid values, unknown race, explicit override,
   effective race change, and no mutation during rendering. Pin she to
   `{Subject: "she", Object: "her", Possessive: "her"}` and it to
   `{Subject: "it", Object: "it", Possessive: "its"}`.
-- [ ] Add `TestPronounDataRoundTrip` using the existing YAML serializer:
+- [x] Add `TestPronounDataRoundTrip` using the existing YAML serializer:
   explicit pronouns/noun survive; old YAML with missing fields still loads
   and resolves through its race without requiring a save migration.
-- [ ] Add `TestRacePronounValidation` and `TestShippedPronounDefaults`:
+- [x] Add `TestRacePronounValidation` and `TestShippedPronounDefaults`:
   validate normalization/error behavior and load every specified shipped
   race/NPC through real loaders. `NewMobByIdNoElite` must retain the template
   pronouns. Reptilian (8) resolves they; reptile (21) resolves it.
-- [ ] Run `go test ./internal/characters ./internal/races ./internal/mobs -run 'Pronoun'`;
+- [x] Run `go test ./internal/characters ./internal/races ./internal/mobs -run 'Pronoun'`;
   confirm the new behavior fails before implementing it.
-- [ ] Add fields and resolver/default validation, then the exact shipped
+- [x] Add fields and resolver/default validation, then the exact shipped
   data from the spec. Do not guess genders for other authored mobs.
-- [ ] Run `go test ./internal/characters ./internal/races ./internal/mobs`;
+- [x] Run `go test ./internal/characters ./internal/races ./internal/mobs`;
   require exit 0. Lead inspects and commits as `feat(narration): add NPC pronouns and race defaults`.
 
 ## Task 2: Freeze enemy names inside battle ownership

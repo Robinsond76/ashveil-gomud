@@ -1,5 +1,6 @@
 raceid: 18
 name: lagomorph
+defaultpronouns: it
 description: Kinda like a rodent. But not.
 defaultalignment: 0
 buffids:

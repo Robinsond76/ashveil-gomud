@@ -1,5 +1,6 @@
 raceid: 12
 name: fungus
+defaultpronouns: it
 description: A mushroomy entity.
 defaultalignment: 0
 size: medium
@@ -16,4 +17,3 @@ damage:
   critbuffids: 
   - 13
 disabledslots: ['weapon', 'offhand', 'belt', 'gloves', 'ring']
-

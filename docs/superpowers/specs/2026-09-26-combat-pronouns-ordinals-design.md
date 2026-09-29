@@ -1,7 +1,7 @@
 # Phase 29d: Pronouns and Stable Enemy Labels
 
-Status: detailed design drafted 2026-09-28; awaiting owner review before
-implementation. The presentation direction was approved 2026-09-26. The
+Status: owner approved the detailed design and plan in the current task;
+implementation in progress. Detailed design drafted 2026-09-28. The presentation direction was approved 2026-09-26. The
 owner requested the specification and plan together, with GPT-5.6 Terra at
 medium reasoning for implementation. Player pronoun selection is deferred
 by the owner's explicit decision in this task.

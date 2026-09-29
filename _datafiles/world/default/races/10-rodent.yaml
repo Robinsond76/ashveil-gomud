@@ -1,5 +1,6 @@
 raceid: 10
 name: rodent
+defaultpronouns: it
 description: A small furry creature with strong teeth.
 defaultalignment: -20
 size: small
