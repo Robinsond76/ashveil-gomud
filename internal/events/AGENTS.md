@@ -13,6 +13,18 @@
 - If a package relies on event ordering, document that assumption in the consuming package too instead of hiding it only here.
 - Avoid introducing event-side policy that belongs in handlers or modules.
 
+## Causal combat tagging (Ashveil Phase 29f)
+
+- `cause.go`: every queued event carries the combat round that caused it
+  (`WithCause`, inherited while a caused event is dispatched). `Cause()`
+  reads it during dispatch; `hooks.Message_SendMessage` uses it to pace
+  combat text.
+- The cause is set on the game loop only. A player's `Input` never
+  inherits one, since the input worker queues it off the loop. Keep any new
+  off-loop producer from queueing `Message` events, or exclude its event in
+  `causeFor`.
+- Requeued events keep their cause.
+
 ## Verification
 
 - Run targeted `internal/events` tests for queue, ordering, or uniqueness changes.

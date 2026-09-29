@@ -28,6 +28,7 @@ var (
 type requeue struct {
 	evt      Event
 	priority int
+	cause    uint64
 }
 
 // Event is the common interface for events.
@@ -46,6 +47,7 @@ type prioritizedEvent struct {
 	event    Event
 	priority int    // Lower numbers indicate higher priority. Default is 0.
 	order    uint64 // Used to preserve FIFO order among events with the same priority.
+	cause    uint64 // The combat round that caused it (Phase 29f), or 0.
 }
 
 // UniqueEvent is implemented by events that should be unique in the queue.
@@ -113,6 +115,7 @@ func AddToQueue(e Event, priority ...int) {
 		event:    e,
 		priority: prio,
 		order:    orderCounter,
+		cause:    causeFor(e),
 	}
 
 	if eventDebugging {
@@ -124,7 +127,7 @@ func AddToQueue(e Event, priority ...int) {
 
 // Same as AddToQueue but avoids a mutex lock for optimization purposes
 // Should only be used when a mutex lock is already held
-func reAddToQueue(e Event, priority ...int) {
+func reAddToQueue(e Event, cause uint64, priority ...int) {
 
 	prio := 0
 	if len(priority) > 0 {
@@ -147,6 +150,7 @@ func reAddToQueue(e Event, priority ...int) {
 		event:    e,
 		priority: prio,
 		order:    orderCounter,
+		cause:    cause,
 	}
 
 	if eventDebugging {
@@ -156,7 +160,7 @@ func reAddToQueue(e Event, priority ...int) {
 	heap.Push(&globalQueue, pe)
 }
 
-func addToRequeue(e Event, priority ...int) {
+func addToRequeue(e Event, cause uint64, priority ...int) {
 	qLock.Lock()
 	defer qLock.Unlock()
 
@@ -167,6 +171,7 @@ func addToRequeue(e Event, priority ...int) {
 	requeues = append(requeues, requeue{
 		evt:      e,
 		priority: prio,
+		cause:    cause,
 	})
 }
 
@@ -195,7 +200,7 @@ func ProcessEvents() {
 	// Requeues are a special group that has been deferred to the next processevents loop
 	// They are added back into the event queue at the top of the process events function
 	for _, itm := range requeues {
-		reAddToQueue(itm.evt, itm.priority)
+		reAddToQueue(itm.evt, itm.cause, itm.priority)
 	}
 	requeues = requeues[:0]
 
@@ -220,9 +225,13 @@ func ProcessEvents() {
 
 		qLock.Unlock()
 
+		// Phase 29f: while a caused event is dispatched, what its
+		// listeners queue inherits its cause.
+		prevCause := currentCause.Swap(pe.cause)
 		evtResult = DoListeners(pe.event)
+		currentCause.Store(prevCause)
 		if evtResult == CancelAndRequeue {
-			addToRequeue(pe.event, pe.priority)
+			addToRequeue(pe.event, pe.cause, pe.priority)
 		}
 
 		qLock.Lock()
