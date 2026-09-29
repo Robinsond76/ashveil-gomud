@@ -68,7 +68,7 @@ Researched on `4cb2faf` (2026-09-28).
 | 32d | Automatic combat for the player and companions, by strategies set before the battle (decisions 8 and 9): targets, spells cast with real mana (the casting slice of 30c, pulled forward), and what a player may still do mid-battle (`flee`, `break`) | to write |
 | 32e | Company experience: every member present earns the full award; `experience` lists the company | to write |
 | 32f | Company logistics: capacity from members, backpacks, horses and saddles; `company inventory` (gear, packs, cargo); `company eat`/`drink` | [32f design](2026-09-28-phase-32f-company-logistics-design.md) |
-| 32g | Web company dock: a tabbed section under the map (Company: Cargo, Status, Camp; Comm; Combat), cargo hover actions | to write |
+| 32g | Web company dock: a tabbed section under the map (Company: Cargo, Status, Camp; Comm; Combat), cargo hover actions | [32g design](2026-09-29-phase-32g-company-dock-design.md) (draft) |
 | 32h | Character deletion: confirmed by password, purging every module's state | to write |
 
 ### Build order (recommended, accepted 2026-09-28)
