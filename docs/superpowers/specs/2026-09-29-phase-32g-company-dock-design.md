@@ -2,8 +2,8 @@
 
 From the owner's play-test notes of 2026-09-28
 ([roadmap](2026-09-28-playtest-feedback-roadmap.md)) and the owner's
-layout request of 2026-09-29. Status: **draft; open decisions A–F await the
-owner.**
+layout request of 2026-09-29. Status: **decisions A–F settled by the
+owner (2026-09-29); ready for the plan.**
 
 ## The owner's notes
 
@@ -96,7 +96,9 @@ its talk).
 ┌ LEFT: the world ──────┐ ┌──────────────────────┐ ┌ RIGHT: the dock ──────────────┐
 │ Time & Date           │ │                      │ │ HP ██████████░░  34/40        │
 ├───────────────────────┤ │                      │ │ MP ██████░░░░░░  12/20        │
-│ Map                   │ │                      │ │ ⚠ Tamsin: Hungry · Load 82%   │
+│ Map                   │ │                      │ │ Tamsin  ███████░ ▒▒▒░         │
+│                       │ │                      │ │ Oswin   █████░░░ ▒▒▒▒         │
+│                       │ │                      │ │ ⚠ Tamsin: Hungry · Load 82%   │
 │                       │ │      terminal        │ ├───────────────────────────────┤
 │                       │ │                      │ │ Character│Company│Combat│Comm │
 ├───────────────────────┤ │                      │ ├───────────────────────────────┤
@@ -118,11 +120,19 @@ its talk).
 
 **Right column: the dock**, one panel filling the column:
 
-- **The vitals strip**, always visible above the tabs (decision A): the
-  player's HP and MP bars, and one line of warnings drawn from the
-  `Company` data already sent (a member's need that warns, a fallen
-  member's rescue time, the load at or past its top bands). The line is
-  absent when nothing warns.
+- **The vitals strip**, always visible above the tabs (decision A):
+  - the player's HP and MP bars, full width, with numbers;
+  - a compact row per companion (owner, 2026-09-29: "show it for all
+    party members"): name, an HP bar, and an MP bar for a companion
+    with mana; the numbers in the row's tooltip and accessible name. An
+    awaiting companion (not out) is dimmed with "not with you"; a fallen
+    one shows "fallen" and its rescue time instead of bars. With no
+    companions there are no rows;
+  - one line of warnings drawn from the `Company` data (a member's need
+    that warns, the load at or past its top bands), absent when nothing
+    warns.
+  GoMud's human party (other players) is shown in Company → Status, not
+  in the strip.
 - **Tabs:** Character, Company, Combat, Comm. Each is described below.
   The active tab and each tab's sub-tab are remembered per browser.
   Every tab can still be popped out into a floating window and docked
@@ -148,17 +158,17 @@ sub-tab here.
 
 ### Company tab
 
-The Company section leaves the Party window for this tab, with the three
-sub-tabs the owner named. A player with no company sees a short note
-("You travel alone; `help company` to recruit.") and, in Cargo, their own
-share.
+The Company section leaves the Party window for this tab, with three
+sub-tabs. A player with no company sees a short note
+("You travel alone; `help company` to recruit.") and, in Inventory, their
+own share.
 
 - **Status** (26b's section, moved as it is): the formation grid and a
   card per member (health, needs, warmth, chemistry, rescue time), the
   activity and rest line, the load bar, the checkpoint. GoMud's human
   party, when there is one, follows under **Travelling with**, so the
   Party window goes away.
-- **Cargo**: the web view of `company inventory` (32f).
+- **Inventory**: the web view of `company inventory` (32f).
   - The load bar and the capacity split (members, horses).
   - A block per member, the player first: weight, the pack that counts,
     worn and carried items, each with a tooltip (weight, uses left,
@@ -216,7 +226,10 @@ plan is written.
 
 ### A. Vitals: pinned or in the Character tab
 
-**Recommended: pinned above the tabs.** The owner asked for vitals in the
+**Decided (owner, 2026-09-29): pinned above the tabs, for every company
+member** (the strip above). Companions' HP is already in
+`Company.Vitals`; their mana is added (decision E).
+The reasoning, as recommended: The owner asked for vitals in the
 Character tab; but a battle now plays out on its own while the player
 watches, most likely from the Combat or Company tab, and HP and MP hidden
 behind the Character tab can't be watched then. The strip costs about
@@ -225,7 +238,8 @@ The alternative is vitals inside Character > Overview only.
 
 ### B. How tabs are built: a generic tab group in the dock
 
-**Recommended:** the dock core learns **tab groups**. A `VirtualWindow`
+**Decided (owner, 2026-09-29), as recommended:** the dock core learns
+**tab groups**. A `VirtualWindow`
 gains `tabGroup: 'dock'`; a `DockSlot` renders every docked member of a
 group as one panel with a tab strip, showing one member's content at a
 time. Each window keeps its own GMCP handling and DOM exactly as now; the
@@ -239,7 +253,7 @@ records each window's group and the active tab.
   instead render into a container the Character window hands them,
   keeping their GMCP handlers. `window-vitals.js` renders into the strip.
 - Company's content moves out of `window-party.js` into a new
-  `window-company.js` (Status, Cargo, Camp); `window-party.js` is
+  `window-company.js` (Status, Inventory, Camp); `window-party.js` is
   retired, its Players section moving into Status.
 - A new `window-combat.js` holds the Combat tab.
 - The alternative, one hand-built `window-dock.js` that owns every tab,
@@ -248,7 +262,7 @@ records each window's group and the active tab.
 
 ### C. Split the live battle view into 32g2
 
-**Recommended:** 32g ships the layout, Character, Company (all three
+**Decided (owner, 2026-09-29), as recommended:** 32g ships the layout, Character, Company (all three
 sub-tabs), Combat's **Setup**, and Comm. **32g2** adds Combat's
 **Battle** view and its `Company.Battle` message: new server-side data
 from `internal/battle` every round, target arrows, health bands, and the
@@ -257,7 +271,7 @@ which deserve their own design. The alternative is one larger phase.
 
 ### D. Existing saved layouts: reset once
 
-**Recommended:** bump a layout version in `LayoutStore`; a layout saved
+**Decided (owner, 2026-09-29), as recommended:** bump a layout version in `LayoutStore`; a layout saved
 before 32g is discarded once and the new defaults apply, since it names
 windows that no longer exist (Vitals, Worth, Gear, Pet, Party) and would
 put the map on the right. A terminal line says so the first time: "The
@@ -265,9 +279,10 @@ web client's layout has changed; Settings → Reset Layout restores it at
 any time." The alternative is to migrate saved sides window by window,
 which keeps a customised layout but mostly produces a half-old layout.
 
-### E. New GMCP for the Cargo and Camp sub-tabs and strategies
+### E. New GMCP for the Inventory and Camp sub-tabs, strategies, and mana
 
-**Recommended:** two new messages and two new fields, all built on the
+**Decided (owner, 2026-09-29), as recommended:** two new messages and
+three new fields, all built on the
 game loop from the same sources as today's text commands, sent on change,
 only to the leader (a player with no company gets their own share, like
 the load), as `Company` is:
@@ -283,6 +298,10 @@ the load), as `Company` is:
   here. `{}` with no camp and no inn.
 - **`Company` members gain `strategy {role, target}`**, from 32d's
   strategy store.
+- **`Company.Vitals` gains `mp` and `mp_max`** per member, for the strip:
+  the player's from their character, a companion's from its live mob
+  (as `strategy <who>` reads it), absent when it isn't out or has no
+  mana. `internal/companyview.Member` gains `HasMP`, `MP`, `MPMax`.
 - **`Char.Inventory` gains `capacity_g` and `load_g`** for the Gear
   header, restoring what 32f dropped.
 
@@ -293,10 +312,11 @@ terminal.
 
 ### F. Tab and sub-tab names
 
-**Recommended:** Character (Overview, Gear, Skills, Quests, Effects,
-Pet, Kills); Company (Status, Cargo, Camp); Combat (Setup; Battle in
-32g2); Comm; Who. "Cargo" is the owner's name, although it shows every
-member's gear too; "Packs" or "Inventory" are the alternatives.
+**Decided (owner, 2026-09-29):** Character (Overview, Gear, Skills,
+Quests, Effects, Pet, Kills); Company (Status, **Inventory**, Camp);
+Combat (Setup; Battle in 32g2); Comm; Who. The owner renamed Cargo to
+**Inventory**, since it shows every member's gear, the horses, and the
+cargo; it matches `company inventory`.
 
 ## Module
 
@@ -307,15 +327,17 @@ member's gear too; "Packs" or "Inventory" are the alternatives.
   - `window-character.js` hosts the sub-tabs; `window-status.js`,
     `window-gear.js`, `window-pet.js`, `window-killstats.js` render into
     it; `window-vitals.js` renders into the strip.
-  - New `window-company.js` (Status, Cargo, Camp) and
+  - New `window-company.js` (Status, Inventory, Camp) and
     `window-combat.js` (Setup); `window-party.js` retired.
   - `window-comm.js` joins the tab group, with its unread count.
   - `window-map.js`, `window-room.js`, `window-tutorial.js` change only
     their default side.
 - **`_datafiles/html/public/webclient-pure.html`**: script tags, the
   strip's container, any shared tab styles.
+- **`internal/companyview`**: members' mana (`HasMP`, `MP`, `MPMax`).
 - **`modules/gmcp`**: `Company.Inventory`, `Company.Camp`, the
-  `strategy` field, `Char.Inventory`'s capacity. Sources are read
+  `strategy` field, members' mana in `Company.Vitals`,
+  `Char.Inventory`'s capacity. Sources are read
   through providers the owning modules register (`modules/company`,
   `modules/encumbrance`, `modules/mount`, `modules/camping`,
   `modules/strategy`), the way `Company` reads `companyview`, so
@@ -358,6 +380,8 @@ member's gear too; "Packs" or "Inventory" are the alternatives.
   - `camp`, `camp fire`, `camp rest`: `Company.Camp` follows each, and
     the rest's end;
   - `strategy tamsin healer`: the `Company` snapshot carries it;
+  - a companion casting a spell in a battle: `Company.Vitals` carries its
+    lower mana;
   - login and copyover re-send every message; a non-leader and a telnet
     client without GMCP get none.
 - **Browser (Playwright, Chromium), through a harness running the real
@@ -365,10 +389,12 @@ member's gear too; "Packs" or "Inventory" are the alternatives.
   - the default layout: Time & Date, Map, Room on the left; the strip
     and the four tabs on the right; a pre-32g saved layout is replaced
     once, with the notice;
+  - the strip shows the player's bars and a row per companion (HP; MP
+    for a caster; awaiting dimmed; fallen with its rescue time);
   - each tab and sub-tab renders from fixture payloads; the active tab
     and sub-tab survive a reload; popping a tab out and docking it back
     restores its place;
-  - Cargo's menus send the right commands for the player's item, a
+  - Inventory's menus send the right commands for the player's item, a
     cargo stack, a companion's item, and a horse; Release asks first;
   - Camp's buttons show only when they'd work;
   - Combat Setup's menus send `strategy` and `formation` commands;
