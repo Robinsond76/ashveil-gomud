@@ -360,6 +360,43 @@ await page.evaluate(b => window.gmcp('Company.Battle', b), next);
 check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === 'the slinger falls. the first cutthroat turns on you.', 'the live region: a fall and a new foe on the player, nothing else');
 check((await cbt()).includes('Fallen: the bruiser, the slinger'), 'the fallen line grows');
 
+// Review finding 1: a Company snapshot mid-battle (a companion falls)
+// keeps the view, its focus, and Setup's fold; nothing is announced.
+await page.locator('details.cbt-setup summary').click();
+await page.getByRole('button', { name: /^the cutthroat captain/ }).focus();
+await page.evaluate(() => { const live = document.getElementById('combat-live'); live.textContent = ''; });
+await page.evaluate(c => { const x = JSON.parse(JSON.stringify(c)); x.members[0].status = 'dead'; window.gmcp('Company', x); }, company);
+const kept = await page.evaluate(() => ({
+  heading: !!document.querySelector('#combat-body h3'),
+  said: document.getElementById('combat-live').textContent,
+  focus: document.activeElement && document.activeElement.getAttribute('data-fid'),
+  open: !!document.querySelector('details.cbt-setup[open]'),
+}));
+check(kept.heading && kept.said === '' && kept.focus === 'm:412' && kept.open, 'a Company snapshot mid-battle keeps the view, focus, and Setup open, and says nothing (' + JSON.stringify(kept) + ')');
+check(await page.getByRole('button', { name: /^Oswin, fallen/ }).count() === 1, 'and shows the companion fallen');
+await page.evaluate(b => window.gmcp('Company.Battle', b), next);
+check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === '', 'the battle sent again after it: nothing announced');
+await page.evaluate(c => window.gmcp('Company', c), company);
+await page.evaluate(b => window.gmcp('Company.Battle', b), next);
+
+// Review finding 6: the lines follow a resized dock.
+await page.evaluate(() => { document.getElementById('dock-right').style.width = '420px'; });
+await page.waitForTimeout(100);
+const follows = await page.evaluate(() => {
+  const l = document.querySelector('#combat-window line[data-from="m:413"]');
+  const n = document.querySelector('#combat-window [data-fid="m:413"]').getBoundingClientRect();
+  const arena = document.querySelector('#combat-window .cbt-arena').getBoundingClientRect();
+  const x = arena.left + Number(l.getAttribute('x1'));
+  return Math.abs(x - (n.left + n.width / 2)) < 2;
+});
+check(follows, 'target lines follow a resized dock');
+await page.evaluate(() => { document.getElementById('dock-right').style.width = ''; });
+
+// Review finding 3: in the dark, nothing but that.
+await page.evaluate(() => window.gmcp('Company.Battle', { group: 'the enemy', dark: true, enemies: [] }));
+check((await cbt()).includes("It's too dark to make them out.") && await page.locator('#combat-window .cbt-field').count() === 0, 'in the dark: no grids, as scout');
+await page.evaluate(b => window.gmcp('Company.Battle', b), next);
+
 // Narrow: the dock at 280px in a 360px window.
 await page.setViewportSize({ width: 360, height: 800 });
 await page.evaluate(() => { document.getElementById('dock-right').style.width = '280px'; });

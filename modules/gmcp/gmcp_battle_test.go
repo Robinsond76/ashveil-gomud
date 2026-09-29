@@ -24,7 +24,8 @@ func sampleBattle() battleFacts {
 				Target: targetFact{Key: "companion:2"}},
 			{Id: 414, Label: "the second cutthroat", Standing: true, Row: 1, Col: 1, Health: 4, HealthMax: 20,
 				Target: targetFact{UserId: 9, Name: "Brannoc"}},
-			{Id: 415, Label: "the slinger"},
+			{Id: 415, Label: "the slinger", Seen: true},
+			{Id: 418, Label: "the lurker"}, // gone, never seen: not named
 			{Id: 416, Label: "the bruiser", Standing: true, Hidden: true, Row: 1, Col: 0, Health: 40, HealthMax: 40,
 				Target: targetFact{Key: "leader"}},
 			{Id: 417, Label: "the third cutthroat", Standing: true, Row: 0, Col: 2, Health: 20, HealthMax: 20,
@@ -82,7 +83,7 @@ func TestBattlePayloadUnplacedAndNone(t *testing.T) {
 	raw, _ = json.Marshal(buildBattle(battleFacts{}))
 	assert.Equal(t, "{}", string(raw))
 
-	raw, _ = json.Marshal(buildBattle(battleFacts{InBattle: true, Enemies: []enemyFact{{Id: 5, Label: "the rat"}}}))
+	raw, _ = json.Marshal(buildBattle(battleFacts{InBattle: true, Enemies: []enemyFact{{Id: 5, Label: "the rat", Seen: true}}}))
 	assert.JSONEq(t, `{"group":"the enemy","enemies":[],"fallen":[{"id":"m:5","label":"the rat"}]}`, string(raw))
 }
 
@@ -122,4 +123,33 @@ func TestBattleExtraNotBuiltWithoutGMCP(t *testing.T) {
 	f.updateExtras(users.NewUserRecord(7, 1))
 	assert.False(t, built)
 	assert.Empty(t, *out)
+}
+
+// TestBattlePayloadDark (32g2 review finding 3): in the dark the view shows
+// what scout does: nothing about the enemy but that it is too dark.
+func TestBattlePayloadDark(t *testing.T) {
+	f := sampleBattle()
+	f.Dark = true
+	raw, _ := json.Marshal(buildBattle(f))
+	assert.JSONEq(t, `{"group":"the enemy","dark":true,"enemies":[]}`, string(raw))
+}
+
+// TestSeenEnemies (32g2 review finding 2): the enemies the player has seen
+// in this battle, forgotten when a new battle begins or the player leaves.
+func TestSeenEnemies(t *testing.T) {
+	s := newSeenEnemies()
+	s.mark(7, battleSeenKey{fight: 100}, 21)
+	assert.True(t, s.has(7, battleSeenKey{fight: 100}, 21))
+	assert.False(t, s.has(7, battleSeenKey{fight: 100}, 22))
+	assert.False(t, s.has(8, battleSeenKey{fight: 100}, 21))
+	assert.False(t, s.has(7, battleSeenKey{fight: 101}, 21), "another battle starts afresh")
+	s.mark(7, battleSeenKey{fight: 101}, 22)
+	assert.False(t, s.has(7, battleSeenKey{fight: 100}, 21), "the old battle is forgotten")
+	s.forget(7)
+	assert.False(t, s.has(7, battleSeenKey{fight: 101}, 22))
+	s.mark(7, battleSeenKey{fight: 5}, 1)
+	s.mark(9, battleSeenKey{fight: 5}, 1)
+	s.prune([]int{9})
+	assert.False(t, s.has(7, battleSeenKey{fight: 5}, 1))
+	assert.True(t, s.has(9, battleSeenKey{fight: 5}, 1))
 }

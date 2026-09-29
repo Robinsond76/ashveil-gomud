@@ -382,11 +382,14 @@ func init() {
 	events.RegisterListener(events.PlayerDespawn{}, func(e events.Event) events.ListenerReturn {
 		if evt, ok := e.(events.PlayerDespawn); ok {
 			companyFeeds.forget(evt.UserId)
+			battleSeen.forget(evt.UserId)
 		}
 		return events.Continue
 	})
 	events.RegisterListener(events.NewRound{}, func(events.Event) events.ListenerReturn {
-		companyFeeds.prune(users.GetOnlineUserIds())
+		online := users.GetOnlineUserIds()
+		companyFeeds.prune(online)
+		battleSeen.prune(online)
 		return events.Continue
 	})
 	events.RegisterListener(GMCPCompanyRequest{}, func(e events.Event) events.ListenerReturn {

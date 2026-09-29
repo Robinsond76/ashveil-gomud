@@ -57,10 +57,12 @@ button in them just types a command for you.
   back to Setup. If you're looking at another tab when a battle begins,
   a marker on the Combat tab tells you; it never switches tabs for you.
 
-  The enemy group stands above, your company below, each front row
-  nearest the middle, the way <ansi fg="command">scout</ansi> draws them. Each enemy's health reads
-  unhurt, scratched, wounded, badly wounded, or near death (never
-  numbers), and a dot marks the ones you can reach from your place.
+  The enemy group stands above, your company below (or just "You" when
+  you fight alone), each front row nearest the middle, the way <ansi fg="command">scout</ansi>
+  draws them. Your company shows its health as numbers; each enemy's
+  health reads unhurt, scratched, wounded, badly wounded, or near death,
+  never numbers, and a dot marks the ones you can reach from your place.
+  In the dark you see only that it's too dark to make them out.
   Lines run from each fighter to whom it strikes; someone outside your
   company that an enemy strikes shows under "Also fighting". Point at a
   fighter, tab to it, or tap it to light it up with its target and
@@ -68,9 +70,9 @@ button in them just types a command for you.
 
   Below the grids: who has fallen ("Fallen"), the groups
   "Waiting their turn", and the same lines as a list
-  ("Tamsin → the captain"). Click a companion for the Setup menu (a
-  battle plays out by it); Setup itself is folded under the view. Flee
-  tries to get away (<ansi fg="command">flee</ansi>).
+  ("Tamsin → the captain"). Click a companion to change their role,
+  target rule, or place (the battle plays out by these); the full Setup
+  is folded under the view. Flee tries to get away (<ansi fg="command">flee</ansi>).
 
 <ansi fg="yellow-bold">Arranging it</ansi>
 

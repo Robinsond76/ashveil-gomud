@@ -348,6 +348,12 @@
     // id: an enemy's "m:<id>", a member's key, an outsider's "u:<id>".
     let lines = [];
     let pinned = null;   // a tapped fighter whose lines stay lit
+    let arenaObserver = null;
+    // The newest Company.Battle. A Company snapshot replaces everything
+    // stored under Company, the battle too, and the server sends the battle
+    // again right after it; until then the view keeps this one rather than
+    // flicker to Setup and back (32g2 review finding 1).
+    let lastBattle = null;
 
     // The company's fighters: every member from the snapshot (the player
     // alone, as "You", without a company).
@@ -418,6 +424,15 @@
         root.appendChild(head);
 
         lines = [];
+        if (battle.dark) {
+            // As scout: in the dark, nothing to see (32g2 review finding 3).
+            root.appendChild(el('div', 'cbt-note', "It's too dark to make them out."));
+            const setup = el('details', 'cbt-setup');
+            setup.appendChild(el('summary', null, 'Setup: formation and strategies'));
+            renderSetup(setup, data);
+            root.appendChild(setup);
+            return;
+        }
         const aimsAt = {};
         (battle.company || []).forEach(a => { aimsAt[a.key] = a.target; lines.push({ from: a.key, to: a.target, us: true }); });
 
@@ -484,6 +499,13 @@
         svg.setAttribute('aria-hidden', 'true');
         arena.appendChild(svg);
         root.appendChild(arena);
+        // Lines follow the fighters when the dock is resized, which fires
+        // no window resize (32g2 review finding 6).
+        if (window.ResizeObserver) {
+            if (arenaObserver) { arenaObserver.disconnect(); }
+            arenaObserver = new ResizeObserver(() => requestAnimationFrame(drawLines));
+            arenaObserver.observe(arena);
+        }
 
         if (battle.fallen && battle.fallen.length) {
             root.appendChild(el('div', 'cbt-aside', 'Fallen: ' + battle.fallen.map(f => f.label).join(', ')));
@@ -629,6 +651,7 @@
         } else {
             lines = [];
             pinned = null;
+            if (arenaObserver) { arenaObserver.disconnect(); arenaObserver = null; }
             renderSetup(root, data);
         }
 
@@ -643,7 +666,13 @@
     VirtualWindows.register({
         window:       win,
         gmcpHandlers: ['Company', 'Room'],
-        onGMCP(namespace) {
+        onGMCP(namespace, body) {
+            if (namespace === 'Company.Battle') {
+                lastBattle = (body && Array.isArray(body.enemies)) ? body : null;
+            } else if (namespace === 'Company' && lastBattle) {
+                const stored = Client.GMCPStructs.Company;
+                if (stored && typeof stored === 'object' && !stored.Battle) { stored.Battle = lastBattle; }
+            }
             if (namespace === 'Company.Inventory' || namespace === 'Company.Camp') { return; }
             if (namespace === 'Company.Vitals' && !currentBattle()) { return; }
             update();

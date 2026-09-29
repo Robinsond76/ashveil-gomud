@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"sort"
 	"strconv"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/combat"
@@ -33,6 +34,7 @@ import (
 // battleFacts is what the builder needs, read from the live game.
 type battleFacts struct {
 	InBattle bool
+	Dark     bool // too dark to make the enemy out, as scout says
 	Group    string
 	Placed   bool        // the player stands in their company's formation
 	Enemies  []enemyFact // every enemy seen in the battle, in instance order
@@ -46,6 +48,7 @@ type enemyFact struct {
 	Label             string // its 29d battle label
 	Standing          bool   // alive, here, and still in the battle's group
 	Hidden            bool
+	Seen              bool // the player saw it in this battle (a fallen one is named only then)
 	Row, Col          int
 	Health, HealthMax int
 	Reach             bool // the player can strike it from their cell
@@ -98,6 +101,7 @@ type battleOther struct {
 
 type battlePayload struct {
 	Group   string         `json:"group"`
+	Dark    bool           `json:"dark,omitempty"`
 	Enemies []battleEnemy  `json:"enemies"`
 	Fallen  []battleFallen `json:"fallen,omitempty"`
 	Company []battleAim    `json:"company,omitempty"`
@@ -112,6 +116,9 @@ func buildBattle(f battleFacts) any {
 	if !f.InBattle {
 		return struct{}{}
 	}
+	if f.Dark {
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}}
+	}
 	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting}
 	if p.Group == "" {
 		p.Group = "the enemy"
@@ -120,7 +127,9 @@ func buildBattle(f battleFacts) any {
 	others := map[string]bool{}
 	for _, e := range f.Enemies {
 		if !e.Standing {
-			p.Fallen = append(p.Fallen, battleFallen{ID: mobID(e.Id), Label: e.Label})
+			if e.Seen {
+				p.Fallen = append(p.Fallen, battleFallen{ID: mobID(e.Id), Label: e.Label})
+			}
 			continue
 		}
 		if e.Hidden {
@@ -177,6 +186,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	}
 	b, ok := battle.Current(user.UserId)
 	if !ok || user.Character.RoomId != b.RoomId {
+		battleSeen.forget(user.UserId)
 		return battleFacts{}
 	}
 	room := rooms.LoadRoom(b.RoomId)
@@ -184,6 +194,11 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		return battleFacts{}
 	}
 	f := battleFacts{InBattle: true}
+	if room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
+		f.Dark = true
+		return f
+	}
+	fight := battleSeenKey{start: b.StartRound, fight: b.FightID, party: b.PartyID}
 
 	groups := enemyparty.Groups(room)
 	var group enemyparty.Group
@@ -191,7 +206,9 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	for _, g := range groups {
 		if _, ok := enemyparty.BattleParty(b, []mobparty.Party{g.Party}); ok {
 			group, found = g, true
-			f.Group = g.Name
+			if len(g.Visible()) > 0 {
+				f.Group = g.Name // a group wholly hidden goes unnamed, as scout lists it
+			}
 			break
 		}
 	}
@@ -234,7 +251,15 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 			e.Health, e.HealthMax = m.Character.Health, m.Character.HealthMax.Value
 			e.Reach = f.Placed && formationcombat.Legal(col, group.Party.Formation, key, alive, reach)
 			e.Target = targetOf(user.UserId, room.RoomId, m)
+			if !e.Hidden {
+				battleSeen.mark(user.UserId, fight, id)
+			}
 		}
+		if !e.Standing && m != nil && !m.Character.HasBuffFlag("hidden") {
+			// A body not yet taken away, or one that walked off, in plain view.
+			battleSeen.mark(user.UserId, fight, id)
+		}
+		e.Seen = battleSeen.has(user.UserId, fight, id)
 		f.Enemies = append(f.Enemies, e)
 	}
 
@@ -254,7 +279,9 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 
 	byParty := map[string]string{}
 	for _, g := range groups {
-		byParty[g.Party.ID] = g.Name
+		if len(g.Visible()) > 0 {
+			byParty[g.Party.ID] = g.Name // a wholly hidden group isn't named
+		}
 	}
 	for _, id := range battle.Waiting(user.UserId) {
 		if name, ok := byParty[id]; ok {
@@ -291,3 +318,67 @@ func targetOf(userId, roomId int, m *mobs.Mob) targetFact {
 	}
 	return targetFact{}
 }
+
+// battleSeenKey names one battle of a player's.
+type battleSeenKey struct {
+	start uint64
+	fight uint64
+	party string
+}
+
+// seenEnemies remembers, per player, the enemies they have seen in their
+// current battle, so an enemy that falls or leaves unseen (hidden) is never
+// named in the view (32g2 review finding 2). Runtime only: after a restart
+// the battle is a new one. Built on the game loop; mu keeps tests honest.
+type seenEnemies struct {
+	mu     sync.Mutex
+	byUser map[int]seenFight
+}
+
+type seenFight struct {
+	key battleSeenKey
+	ids map[int]bool
+}
+
+func newSeenEnemies() *seenEnemies { return &seenEnemies{byUser: map[int]seenFight{}} }
+
+func (s *seenEnemies) mark(userId int, key battleSeenKey, id int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	f, ok := s.byUser[userId]
+	if !ok || f.key != key {
+		f = seenFight{key: key, ids: map[int]bool{}}
+		s.byUser[userId] = f
+	}
+	f.ids[id] = true
+}
+
+func (s *seenEnemies) has(userId int, key battleSeenKey, id int) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	f, ok := s.byUser[userId]
+	return ok && f.key == key && f.ids[id]
+}
+
+func (s *seenEnemies) forget(userId int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.byUser, userId)
+}
+
+// prune drops players no longer online.
+func (s *seenEnemies) prune(online []int) {
+	live := make(map[int]bool, len(online))
+	for _, id := range online {
+		live[id] = true
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for id := range s.byUser {
+		if !live[id] {
+			delete(s.byUser, id)
+		}
+	}
+}
+
+var battleSeen = newSeenEnemies()

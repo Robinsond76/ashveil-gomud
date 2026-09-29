@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -258,4 +259,93 @@ func TestBattleViewPerPlayer(t *testing.T) {
 func listOf(v any) []any {
 	list, _ := v.([]any)
 	return list
+}
+
+// companyAims is a view's company targets, by member key.
+func companyAims(view map[string]any) map[string]string {
+	out := map[string]string{}
+	for _, a := range listOf(view["company"]) {
+		m := a.(map[string]any)
+		out[m["key"].(string)] = m["target"].(string)
+	}
+	return out
+}
+
+// TestBattleViewCompanionsOthersDarkAndTelnet (32g2 review finding 4):
+// through real rounds, companions' targets are sent by member key and
+// change as they turn to new foes; a bandit set on another player in the
+// room names them under others; in the dark the view carries nothing but
+// that; and a connection that hasn't accepted GMCP gets no view.
+func TestBattleViewCompanionsOthersDarkAndTelnet(t *testing.T) {
+	b := newBrawl(t)
+	views := battleViews(t)
+	b.aimAt("bandit captain")
+
+	// Companions' targets, and their changes as bandits fall.
+	aimSets := map[string]bool{}
+	sawCompanion := false
+	for i := 0; i < 6 && len(b.livingBandits()) > 1; i++ {
+		b.toughen()
+		b.fight()
+		b.refresh(7)
+		for key, target := range companyAims(lastView(views, 7)) {
+			if key != "leader" {
+				sawCompanion = true
+				assert.Regexp(t, `^companion:\d+$`, key)
+				assert.Regexp(t, `^m:\d+$`, target)
+			}
+		}
+		raw, _ := json.Marshal(lastView(views, 7)["company"])
+		aimSets[string(raw)] = true
+	}
+	assert.True(t, sawCompanion, "companions' targets are in the view, by key")
+	assert.Greater(t, len(aimSets), 1, "a companion's new target is sent")
+
+	// A bandit set on Brom, who isn't in Aria's company.
+	brom := users.NewUserRecord(8, 2)
+	brom.Username = "brom"
+	brom.Password = "$2a$test"
+	brom.Character.Name = "Brom"
+	brom.Character.RaceId = 1
+	brom.Character.RoomId = b.road.RoomId
+	brom.Character.Validate()
+	users.SetTestUser(brom)
+	b.road.AddPlayer(brom.UserId)
+	t.Cleanup(func() { b.road.RemovePlayer(8) })
+	living := b.livingBandits()
+	require.NotEmpty(t, living)
+	cur, ok := battle.Current(7)
+	require.True(t, ok)
+	var bandit = living[0]
+	for _, m := range living {
+		if cur.Has(m.InstanceId) {
+			bandit = m
+			break
+		}
+	}
+	bandit.Character.SetAggro(8, 0, characters.DefaultAttack)
+	b.refresh(7)
+	view := lastView(views, 7)
+	assert.Equal(t, []any{map[string]any{"id": "u:8", "name": "Brom"}}, view["others"], "an outsider is named under others")
+	assert.Equal(t, "u:8", viewEnemies(view)["m:"+strconv.Itoa(bandit.InstanceId)]["target"])
+
+	// In the dark: nothing but that.
+	biome := b.road.Biome
+	b.road.Biome = "cave"
+	t.Cleanup(func() { b.road.Biome = biome })
+	b.refresh(7)
+	dark := lastView(views, 7)
+	assert.Equal(t, true, dark["dark"], "too dark to make them out")
+	assert.Empty(t, dark["enemies"])
+	assert.Nil(t, dark["fallen"])
+	assert.Nil(t, dark["others"])
+	b.road.Biome = biome
+
+	// A telnet client that hasn't accepted GMCP: nothing.
+	gmcp.RefuseGMCPForTest(users.GetConnectionId(7))
+	t.Cleanup(func() { gmcp.AcceptGMCPForTest(users.GetConnectionId(7)) })
+	n := len(views[7])
+	b.fight()
+	b.refresh(7)
+	assert.Len(t, views[7], n, "no view without GMCP")
 }
