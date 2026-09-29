@@ -1,14 +1,10 @@
 package hooks
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
-	"github.com/GoMudEngine/GoMud/internal/templates"
-	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
-	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Checks whether their level is too high for a guide
@@ -23,15 +19,8 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 	if message.UserId > 0 {
 
 		if user := users.GetByUserId(message.UserId); user != nil {
-
-			textOut := templates.AnsiParse(message.Text)
-			if user.ScreenReader {
-				textOut = util.StripCharsForScreenReaders(textOut)
-			}
-			connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+textOut), user.ConnectionId())
-
-			events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
-
+			// Phase 29f: a combat round's text may be held and paced.
+			sendOrHold(user, message.Text)
 		}
 	}
 
@@ -72,14 +61,7 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 					}
 				}
 
-				textOut := templates.AnsiParse(message.Text)
-				if user.ScreenReader {
-					textOut = util.StripCharsForScreenReaders(textOut)
-				}
-
-				connections.SendTo([]byte(term.AnsiMoveCursorColumn.String()+term.AnsiEraseLine.String()+textOut), user.ConnectionId())
-
-				events.AddToQueue(events.RedrawPrompt{UserId: user.UserId}, 100)
+				sendOrHold(user, message.Text)
 
 			}
 		}
