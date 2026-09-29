@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -279,5 +280,81 @@ func TestPacedPlayerDeathStaysInOrder(t *testing.T) {
 	assert.LessOrEqual(t, sent[len(sent)-1].at-sent[0].at, 6*time.Second+50*time.Millisecond, "and the round still ends within its window")
 	for _, l := range sent[:died] {
 		assert.NotContains(t, l.text, "You lose", "no penalty line before the announcement")
+	}
+}
+
+// TestWalkingAwayFlushesHeldLines (Phase 29f): mid-round, Aria's own move
+// out of the room (a real `go` command, typed) sends the round's held lines
+// at once, before the new room's text; her command's output isn't held.
+func TestWalkingAwayFlushesHeldLines(t *testing.T) {
+	b := newBrawl(t)
+	start := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+	now := start
+	t.Cleanup(combatpace.UseForTest(combatpace.New()))
+	t.Cleanup(hooks.SetPaceClockForTest(func() time.Time { return now }))
+	var sent []string
+	t.Cleanup(hooks.SetWriteTextForTest(func(userId int, text string) {
+		if userId == 7 {
+			sent = append(sent, companyTagPattern.ReplaceAllString(text, ""))
+		}
+	}))
+	for _, reg := range []struct {
+		evt events.Event
+		fn  events.Listener
+	}{
+		{events.NewRound{}, hooks.CombatOnCadence},
+		{events.Message{}, hooks.Message_SendMessage},
+		{events.RoomChange{}, hooks.FlushPacedOnRoomChange},
+		{events.NewTurn{}, hooks.ReleasePacedCombat},
+		{events.Input{}, func(e events.Event) events.ListenerReturn {
+			if in, ok := e.(events.Input); ok && in.UserId > 0 && in.MobInstanceId == 0 {
+				c, rest, _ := strings.Cut(in.InputText, " ")
+				_, _ = usercommands.TryCommand(strings.ToLower(c), rest, in.UserId, 0)
+			}
+			return events.Continue
+		}},
+	} {
+		id := events.RegisterListener(reg.evt, reg.fn)
+		evt := reg.evt
+		t.Cleanup(func() { events.UnregisterListener(evt, id) })
+	}
+
+	b.toughen()
+	b.aimAt("bandit captain")
+	sent = nil
+	events.AddToQueue(events.NewRound{RoundNumber: 2})
+	events.ProcessEvents()
+	now = now.Add(50 * time.Millisecond)
+	events.AddToQueue(events.NewTurn{})
+	events.ProcessEvents()
+	require.Len(t, sent, 1, "one line out; the rest of the round is held")
+	require.True(t, combatpace.Default().Busy(7))
+
+	// Mid-battle she can't walk off, and is told so at once: her own
+	// command's output is never held.
+	events.AddTyped(events.Input{UserId: 7, InputText: "east"})
+	events.ProcessEvents()
+	require.Len(t, sent, 2)
+	assert.Contains(t, sent[1], "Only flee takes you out")
+	require.True(t, combatpace.Default().Busy(7), "the round is still held")
+
+	// Her battle over (as for a bystander, or once it ends), she walks east.
+	b.aria.Character.EndAggro()
+	battle.Reset()
+	b.aria.Character.ActionPoints = 100
+	events.AddTyped(events.Input{UserId: 7, InputText: "east"})
+	events.ProcessEvents()
+
+	verge := -1
+	for i, l := range sent {
+		if strings.Contains(l, "Verge") || strings.Contains(l, "verge") {
+			verge = i
+			break
+		}
+	}
+	require.Greater(t, verge, 3, "the new room was shown after the held lines: %q", sent)
+	assert.False(t, combatpace.Default().Busy(7), "nothing is held once she has gone")
+	for _, l := range sent[2:verge] {
+		assert.NotContains(t, l, "Verge", "held combat lines come before the new room")
 	}
 }

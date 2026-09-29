@@ -238,6 +238,26 @@ no other lock, and `events` does not call `combatpace`.
 - **Cadence phase.** Combat runs on game rounds whose number is a multiple
   of `CombatEveryRounds`, a single phase shared by the whole world.
 
+- **Typed vs. untyped (review fix).** "Never delayed" is decided by
+  origin, not by event type:
+  - The input worker queues what players type with `events.AddTyped`. It
+    takes no cause, and everything it causes is `Typed()`: command output
+    and tells go out at once.
+  - A command the game issues (`user.Command`, such as a slain player's
+    `suicide`) inherits the round's cause. So a death's "has DIED!"
+    broadcast, penalty lines, and move are paced after the killing blow.
+    Broadcasts use the same hold.
+  - Untyped notices (a round tick's "you are bleeding out", a mob's next
+    target) wait behind held lines.
+- **Open rounds only near a fight (review fix).** Only players fighting,
+  or in a room with a fight, get the prompt and web-view hold.
+- **Web holds (review fix).** `Char` and `Char.Vitals` wait wherever they
+  are requested (level-ups included). The Party payload (a party of human
+  players) is not held; that is deferred.
+- **Known limit.** A movement command's own first line ("You can't go
+  that way", or a mount's line) can come before the flush that its move
+  triggers, since typed output is never held.
+
 ## Constraints and deferrals
 
 - Never advance or fast-forward the world clock or round count. Pacing is
