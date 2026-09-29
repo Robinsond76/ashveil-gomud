@@ -84,10 +84,13 @@ does.
 
 ## Task 5: `Char.Inventory` capacity (`modules/gmcp`)
 
-- [ ] Tests first: `Char.Inventory.Backpack` carries `capacity_g` and
+- [x] Tests first: `Char.Inventory.Backpack` carries `capacity_g` and
   `load_g` from the same load `cargo` reads; a player with no company
   gets their own share.
-- [ ] The two fields in `gmcp.Char.go`.
+- [x] As built: `weight_g` (the player's own gear), `load_g`, and
+  `capacity_g` in the backpack summary (`backpackSummary`). `Char.Inventory`
+  is sent only when the player's items change, so the Gear header takes
+  the company figures from `Company.Inventory` when it has them.
 
 ## Task 6: Feed wiring (`modules/gmcp`, the modules above)
 

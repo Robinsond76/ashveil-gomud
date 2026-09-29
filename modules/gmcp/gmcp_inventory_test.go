@@ -140,3 +140,18 @@ func TestCompanyExtrasSendOnlyOnChange(t *testing.T) {
 	f.updateExtras(u)
 	assert.Len(t, *out, 3, "nothing to a connection without GMCP")
 }
+
+// TestBackpackSummaryWeights (Phase 32g): the gear window's header reads
+// the player's own gear weight against the company's load and capacity,
+// which 32f's weight limit replaced the item count with.
+func TestBackpackSummaryWeights(t *testing.T) {
+	u := inventoryUser(t) // a 1 kg waterskin
+	s := backpackSummary(u, func(int) (encumbrance.Load, bool) {
+		return encumbrance.Load{PersonalGrams: 1000, CargoGrams: 3000, CapacityGrams: 25000}, true
+	})
+	assert.Equal(t, GMCPCharModule_Payload_Inventory_Backpack_Summary{Count: 1, WeightG: 1000, LoadG: 4000, CapacityG: 25000}, s)
+
+	unknown := backpackSummary(u, func(int) (encumbrance.Load, bool) { return encumbrance.Load{}, false })
+	assert.Equal(t, 1000, unknown.WeightG)
+	assert.Zero(t, unknown.CapacityG, "omitted when the load can't be read")
+}
