@@ -49,10 +49,9 @@ the fight went.
 |---|---|---|
 | 30a Status effects and critical-hit effects (weapons only) | [status and crit effects](2026-09-26-status-crit-effects-design.md) | 29b; 29c for text |
 | 30b Wounds, treatment, and `heal wounds` | [wounds](2026-09-26-wounds-treatment-design.md) | 30a |
-| 30c Pre-fight tactics: roles, personalities, guards, companion casting | [tactics](2026-09-26-company-tactics-design.md) | 29b, 30a |
-| 30d Wind-ups, telegraphs, and interrupts | [interrupts](2026-09-26-telegraphs-interrupts-design.md) | 30a, 30c |
-| 30e Morale and mercy | [morale and mercy](2026-09-26-morale-mercy-design.md) | 29b, 30c |
-| 30f Battlefield conditions | [battlefield](2026-09-26-battlefield-conditions-design.md) | 30c |
+| 30d Wind-ups, telegraphs, and interrupts | [interrupts](2026-09-26-telegraphs-interrupts-design.md) | 30a |
+| 30e Morale and mercy | [morale and mercy](2026-09-26-morale-mercy-design.md) | 29b |
+| 30f Battlefield conditions | [battlefield](2026-09-26-battlefield-conditions-design.md) | 30a |
 
 ### Build order (decided 2026-09-27)
 
@@ -65,17 +64,15 @@ the fight went.
 4. **29f** — pacing, once the text it's pacing out is settled.
 5. **30a → 30b** — status/crit effects, then wounds, which is built on
    them.
-6. **30c** — pre-fight tactics (roles, personalities, guards, companion
-   casting). This is the largest slice in Phase 30 and unlocks 30d–30f.
-7. **30d → 30e → 30f** — telegraphs/interrupts, morale/mercy, and
-   battlefield conditions, each building on 30c's tactics layer. Order
+6. **30d → 30e → 30f** — telegraphs/interrupts, morale/mercy, and
+   battlefield conditions, each building on 30a's status effects. Order
    among these three is flexible; interrupts first gives 30e's "breaking
    under pressure" more to draw on.
 
 **Revised 2026-09-28:** the owner's play-test notes come first
 ([play-test roadmap](2026-09-28-playtest-feedback-roadmap.md)). Its 32d
-takes 30c's casting and role-driven actions, and its 32g Combat tab took
-Phase 31's grids; **Phase 31 was dropped 2026-09-29** (owner). 30c keeps the rest.
+takes 30c's casting and role-driven actions (the rest of 30c was dropped 2026-09-29, owner), and its 32g Combat tab took
+Phase 31's grids; **Phase 31 was dropped 2026-09-29** (owner).
 
 This is Phase 29 (presentation) end to end, then Phase 30 (tactics) end to
 end. A phase is never started before the phases it depends

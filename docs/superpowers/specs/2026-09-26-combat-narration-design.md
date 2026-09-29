@@ -107,7 +107,7 @@ not written inline by the combat code.
     target;
   - a multi-target heal prints one line listing everyone healed.
 - **Where the mechanics went:** companion casting is in the
-  [tactics spec](2026-09-26-company-tactics-design.md) (30c). Spell
+  tactics spec (30c, dropped). Spell
   critical hits are in [30a](2026-09-26-status-crit-effects-design.md).
   Enemy casters are in [30d](2026-09-26-telegraphs-interrupts-design.md).
 
