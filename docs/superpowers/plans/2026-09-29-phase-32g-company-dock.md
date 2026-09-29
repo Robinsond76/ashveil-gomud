@@ -214,11 +214,12 @@ does.
 
 ## Task 14: Docs, review, verification
 
-- [ ] `_datafiles/html/public/AGENTS.md`: one bullet on tab groups and
-  the dock (new windows join `tabGroup: 'dock'` or the left column).
-- [ ] Independent review of `git diff master..HEAD`; verify each finding,
-  fix real ones with regression tests.
-- [ ] Full verification once: `go test -race ./...`, `make generate`,
+- [x] `_datafiles/html/public/AGENTS.md`: one bullet on tab groups and
+  the dock (new windows join `tabGroup: 'dock'` or the left column);
+  `modules/gmcp/AGENTS.md` updated for the extras (review finding 14).
+- [x] Independent review of `git diff master..HEAD`; verify each finding,
+  fix real ones with regression tests (15 findings; see the work log).
+- [x] Full verification once: `go test -race ./...`, `make generate`,
   `make validate`, `make js-lint`, every `scripts/browser/` check.
-- [ ] `docs/PROJECT_STATUS.md`: the 32g row, a work-log entry with
+- [x] `docs/PROJECT_STATUS.md`: the 32g row, a work-log entry with
   **Review:**, 32g2 named as next; the roadmap row updated.

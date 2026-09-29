@@ -6,8 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-29
-- **HEAD:** `master` 2026-09-29: Phase 29d (NPC pronouns and stable enemy
-  labels), integrated from `codex/phase-29d-pronouns-ordinals`. Before it, Phase 32d (automatic combat by
+- **HEAD:** `master` 2026-09-29: Phase 32g (web company dock), merged from
+  `phase-32g-company-dock`. Before it, Phase 29d (NPC pronouns and stable enemy
+  labels), integrated from `codex/phase-29d-pronouns-ordinals`. Before that, Phase 32d (automatic combat by
   strategy), with 32c (enemy groups), 32f (company logistics), and 32h
   (character deletion), merged onto 32e (company experience, PR #10). Before them, Phase 29b2 (one battle at a time; spawn groups) and player
   help for every Ashveil system are complete and merged to `master`
@@ -21,14 +22,17 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29d; see the table below. The survival and
+- **Completed:** Phases 0–29d and 32g; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
   the first combat slices (29a, 29b, 29b2, 29c, 29d), enemy groups (32c),
   automatic combat by strategy (32d), company experience (32e), company
-  logistics (32f), and character deletion (32h) are all done.
-- **Latest completed phase:** 29d (pronouns and stable enemy labels), from
+  logistics (32f), the web company dock (32g), and character deletion
+  (32h) are all done.
+- **Latest completed phase:** 32g (web company dock), from
+  `phase-32g-company-dock`; see its work-log entry below.
+- **Before it:** 29d (pronouns and stable enemy labels), from
   `codex/phase-29d-pronouns-ordinals`; see the [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md).
   NPC/race pronouns, generated recruit neutrality, frozen shared enemy labels,
   combat/script/event wiring, and player help/tutorial are verified. A seeded
@@ -45,8 +49,8 @@ instead of duplicating them.
   produces no room attack line. The fixture now disables dodging only within that test
   and restores settings afterward; 100 focused race-test repetitions passed.
   Independent follow-up review found no issues and passed 40 focused repetitions.
-- **Next in the play-test roadmap:** 32g (32a, 32a2, 32b, 32c, 32d, 32e, 32f, and 32h are done),
-  from the owner's
+- **Next in the play-test roadmap:** 32g2, the Combat tab's live battle view
+  (32a–32h are done), from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
   the combat roadmap continues at 29e (pain reactions).
@@ -144,76 +148,69 @@ fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
 
-### Phase 32d: automatic combat by strategy (2026-09-29)
+### Phase 32g: web company dock (2026-09-29)
 
-- **What:** per the [32d design](superpowers/specs/2026-09-28-phase-32d-auto-combat-design.md)
-  (the owner's answers: eight target rules after Ogre Battle and FF12;
-  fighter/healer/caster roles from archetype, the player automatic too;
-  only `flee` mid-battle; only hostile mobs group by tag; companion spells
-  by archetype and level with mana regain; wizard Magic Missile and
-  cleric Minor Heal grants, existing characters at login; the `strategy`
-  command) and [plan](superpowers/plans/2026-09-28-phase-32d-auto-combat.md).
-  `internal/strategy` (pure rules, roles, provider seam); `modules/strategy`
-  (durable per-member strategies in its plugin file, the command, the
-  `AutoSpells` config); `enemyparty.Aim`/`RuleChoice` replace `FirstAim`,
-  used by `attack` (each companion starts on its own choice), the 29a
-  upkeep (sticky aims; `assist`/`defend` re-read each round), `turnAlone`,
-  `keepOnBattle`, and the mid-round reassignment; a strategy pass in
-  `DoCombat` starts heals and attack spells as `cast` would (chant, mana,
-  roll, events incl. `cast-start`) and `endCast` turns the caster back to
-  its aim. Companion mana regain (and none, for anyone, between blows in a
-  battle). Refused in a battle: `break`, exits, `formation` changes,
-  `strategy` changes, `eat`, `drink`, `use`, `equip`, `remove`, and
-  32f's `company eat`/`drink`/`meal` (added on merging 32f); a flight
-  that gets away ends the battle at once. `mobparty` groups by tag only
-  hostile mobs; the tutorial's straw squad gets a spawn group. Found and
-  fixed: GoMud's `Character.Heal` added the health amount to mana. Help:
-  `help strategy` (aliases `strategies`, `gambits`, `roles`) and updates to
-  `combat`, `targeting`, `attack`, `formation`, `cast`, `flee`, `break`,
-  `mana`, `archetype`, `eat`, `drink`, `use`, `equip`, `remove`; the Combat
-  lesson's hints (a stale "move anyone mid-fight" corrected).
-- **Why:** the owner's play-test note "a wizard doesn't cast in combat",
-  and decisions 8 and 9 of the
-  [roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md):
-  a battle plays out by strategies set beforehand.
-- **Verification:** `go test -race ./...` (85 packages), `make generate`,
-  and `make validate` pass after the review fixes, again after merging
-  32f (which landed on the base meanwhile), and again on `master` after
-  merging onto 32e. That last run caught a flaky wiring test
-  (`TestDefendGoesForTheFoeOnTheMostHurt`: the 30-HP slinger it needs
-  could die in the first round; the bandits are now hardened, 12/12 runs
-  pass). Wiring tests in `modules/company`
-  (`wiring_strategy_test.go`, `wiring_strategy_review_test.go`) drive the
-  real `strategy`, `attack`, `formation`, `flee`, alias dispatch, and
-  `DoCombat`: each rule's first aim, the upkeep's re-aim, assist, defend,
-  a player alone, reach fallback, a cleric's heal (chant, mana, back to
-  its foe), a group heal, a downed player healed, a wizard player and a
-  wizard companion casting (single, then area at level 5), companion mana
-  in and out of battle, the refusals and flee; `modules/strategy` persists
-  through the real plugin file and a fresh load; unit tests in
-  `internal/strategy`, `internal/enemyparty`, `internal/hooks`,
-  `internal/archetypes`, `internal/characters`, `internal/usercommands`
-  (refusals, help).
-- **Review:** 10 findings, all verified. Fixed with regression tests:
-  (1) a leader turned by `defend` was told "can't reach" a foe in reach;
-  (2) a downed player was never healed (now the most hurt of all;
-  recorded in the design); (3) mana and health came back between blows in
-  a battle when an aim was empty; (4) a shot into the next room counted as
-  a battle (`break` refused); (5) any unknown word in a battle got the
-  flee line (now only real exits); (6) `defend` turned on ties (now keeps
-  a tying foe) and ignored a foe chanting a harmful spell; (8)
-  `strategy leader` named the player; (9) a companion healing itself was
-  narrated as healing another. Test gaps closed: companion caster, area
-  spell, group heal, reach through `attack`, aliases through the dispatch,
-  the cleric's return to its foe made unconditional. Help: `targeting`
-  (refused, not held; the full list), `strategy` (front-most fallback;
-  mana while online; downed heals), `flee` (only the battle's group
-  blocks), and a line on `eat`/`drink`/`use`/`equip`/`remove`. Accepted:
-  (7) stored strategies of departed companions are pruned only when the
-  player next uses `strategy` (ids are never reused; the design says so);
-  the leaf lock is held across the plugin file write (a stall only).
-  Untested: companions following a flee (the harness doesn't complete a
-  room move, as in 29b2's flee test).
+- **What:** per the [32g design](superpowers/specs/2026-09-29-phase-32g-company-dock-design.md)
+  (the owner's decisions A–F: vitals pinned for every member; tab groups
+  in the dock core; the live battle view split into 32g2; old layouts
+  reset once; new GMCP; the Company sub-tab named Inventory) and
+  [plan](superpowers/plans/2026-09-29-phase-32g-company-dock.md). Server:
+  `companyview` members carry mana and the strategy a battle aims by
+  (`enemyparty.MemberStrategy`); the company feed gains *extras*, sent
+  only on change: `Company.Inventory` (a read-only `CompanyInventory`:
+  every member's gear with `!<id>:<uuid>` references, horses, cargo, the
+  load split) and `Company.Camp` (`CampStateOf`); `Company.Vitals` carries
+  `mp`; the backpack summary carries weights. Browser: `DockTabGroup` in
+  `webclient-core.js` (tabs, pop-out and back, badges, moving to the other
+  column, `LayoutStore` v2 with a one-time notice); the left column is the
+  world (time, map, room, tutorial) and the right the dock: the vitals
+  strip, Character (Overview with worth, Gear with weights, Skills with
+  jobs, Quests, Effects, Pet), Company (`window-party.js` became
+  `window-company.js`: Status, Inventory with menus, Camp), Combat
+  (`window-combat.js`: formation, roles, targets, Scout), Comm (unread
+  count), and Who and Kills when enabled; keyboard menus (`uiMenu`, with
+  `confirm`). Help: `help webclient` (aliases `web client`, `dock`,
+  `panels`, `tabs`, `layout`) and pointers from `company`, `cargo`,
+  `company-inventory`, `camp`, `strategy`, `formation`; a Character lesson
+  hint.
+- **Why:** the owner's play-test note (a tabbed Company/Comm/Combat panel,
+  cargo hover actions) and layout request of 2026-09-29 (the map and room
+  info left under the time; character, vitals, worth, gear, and pet in a
+  tab on the right).
+- **Verification:** `make generate` (no diff), `make validate`,
+  `go test -race ./...`, `make js-lint`, and the Chromium checks
+  `scripts/browser/dock-check.mjs`, `dock-windows-check.mjs`, and
+  `tutorial-panel-check.mjs` pass after the review fixes. Wiring:
+  `modules/tutorial/wiring_dock_test.go` drives `plugins.Load`, the real
+  `cargo put`/`take` and `give` with the payload's own references (checked
+  to fail with a broken reference), `formation`, `camp`, `camp fire`,
+  `camp rest`, and a login, capturing what the feed sends;
+  `modules/strategy` sets strategies through the real command and reads
+  them back through `companyview`.
+- **Review:** 15 findings, each verified. Fixed with regression tests:
+  (1) a new `Company` snapshot erased the client's stored Inventory and
+  Camp, never re-sent (the extras now follow every snapshot; unit and
+  wiring tests); (2) moving the dock while a tab was out left an empty
+  panel (a tab docks into its group wherever it is; a move updates every
+  group window; the browser check reproduces the reviewer's numbers
+  without the fix); (3) item labels and menu commands carried `<ansi>`
+  markup (a plain `name` for commands, a `label` without markup); (4)
+  menus were mouse-only (buttons in a `role=menu`: arrows, Enter, Escape,
+  placed by the control); (5) a companion read from its template re-sent
+  the Inventory every round (companions' items carry no reference); (7)
+  Rest was offered at a rested camp (`rested`); (8) Inventory and Camp
+  lost keyboard focus on updates; (9) a companion charmed away showed
+  stale gear; (12, 13) checks added for a snapshot then the extras, a
+  group move, keyboard menus, and Reset Layout; (14, 15) the gmcp guide
+  and `help webclient` corrected. Accepted: (6) `Company.Camp` resends
+  each round during a one-minute rest (the progress bar needs it;
+  recorded in the gmcp guide); (10) "Take one" on either of two stacks of
+  one item takes the partly used first, as `cargo take` does (the help
+  says so); (11) `give` strips prepositions from a quoted name ("Oswin the
+  Bold") and prefers a player of the same name, a companion attached but
+  in another room is still offered, and a saddle of the wrong kind is
+  refused by the server. Not added: a wiring test of a rest's end (it
+  takes a real minute; the unit test covers `rested`).
 
 ## Known issues / deferred items
 
