@@ -105,15 +105,16 @@ inventory/provision code.
 
 ## Task 8: Player help and tutorial
 
-- [ ] Tests first: `help strategy` and its aliases render through `help`
+- [x] Tests first: `help strategy` and its aliases render through `help`
   (`internal/usercommands/help_strategy_test.go`, after
   `help_combat_test.go`); `TestTutorialHelpPointersExist` covers the new
   pointer.
-- [ ] `strategy.template` (new); updates to `targeting`, `combat`,
+- [x] `strategy.template` (new); updates to `targeting`, `combat`,
   `cast`, `flee`, `break`, `formation`, `mana`, `attack`, and any
   archetype page listing starting spells; `keywords.yaml` (`strategy`,
-  aliases `strategies`, `gambits`, `roles`); the Combat lesson's hint
-  (`modules/tutorial/stages.go`).
+  aliases `strategies`, `gambits`, `roles`); the Combat lesson's hints
+  (`modules/tutorial/stages.go`: a new `strategy` hint; the stale "move
+  anyone even mid-fight" hint corrected); the `strategies` command alias.
 
 ## Task 9: Review, verification, status
 

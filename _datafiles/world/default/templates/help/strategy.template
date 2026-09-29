@@ -1,0 +1,63 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">strategy</ansi>
+
+Once a battle starts it plays out on its own: nothing you type changes it.
+What it plays out by is each character's strategy, set beforehand: yours,
+and each companion's. A strategy is a role (what they do) and a target rule
+(whom they go for).
+
+<ansi fg="yellow-bold">Roles</ansi>
+
+  <ansi fg="command">fighter</ansi>   fights with weapon or fists, and never casts.
+  <ansi fg="command">healer</ansi>    heals anyone in your company below half health: a group heal
+            when two or more are, else a single heal on the most hurt.
+            With no one that hurt, or no mana, fights.
+  <ansi fg="command">caster</ansi>    casts an attack spell every round it can pay for one: an area
+            spell when two or more foes stand, else a single-target spell.
+            Out of mana, fights.
+
+Each character starts with its archetype's role: clerics heal, wizards
+cast, everyone else fights. A healer or caster casts only the spells it
+knows. Wizards start with Magic Missile and clerics with Minor Heal; a
+companion knows its archetype's spells for its level (a cleric learns
+Minor Heal All at level 5, a wizard Shower of Sparks).
+
+Spells in a battle are real casts: they cost mana, take their chanting
+rounds, and can fizzle. After a spell, the caster turns back to the foe it
+was fighting. Mana comes back out of combat, for companions too.
+
+<ansi fg="yellow-bold">Target rules</ansi>
+
+  <ansi fg="command">weakest</ansi>    the foe with the least health left (the default)
+  <ansi fg="command">strongest</ansi>  the foe with the most health left
+  <ansi fg="command">wounded</ansi>    the most badly hurt foe, to finish it
+  <ansi fg="command">nearest</ansi>    the front-most foe
+  <ansi fg="command">furthest</ansi>   the back-most foe
+  <ansi fg="command">leader</ansi>     their leader, the toughest of them
+  <ansi fg="command">assist</ansi>     whatever you are striking (companions only)
+  <ansi fg="command">defend</ansi>     the foe striking whichever of you is most hurt
+
+A rule chooses among the foes a character can reach from its place in the
+formation (<ansi fg="command">help formation</ansi>). When the rule's choice is out of reach, it
+goes for the nearest foe it can reach instead. A spell reaches anyone, so a
+caster's spell goes to the rule's choice wherever it stands.
+
+A character keeps its target until that foe falls or can't be reached,
+then picks again by its rule. <ansi fg="command">assist</ansi> and <ansi fg="command">defend</ansi> follow what moves: they
+turn with your target, or to whoever strikes your most hurt member.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">strategy</ansi>                    how everyone in your company fights
+  <ansi fg="command">strategy [who]</ansi>              one character, with the spells they'd cast
+  <ansi fg="command">strategy [who] [role]</ansi>       set a role, e.g. <ansi fg="command">strategy dain healer</ansi>
+  <ansi fg="command">strategy [who] target [rule]</ansi>
+                              set a rule, e.g. <ansi fg="command">strategy tamsin target leader</ansi>
+  <ansi fg="command">strategy [who] default</ansi>      back to the archetype's default
+
+[who] is <ansi fg="command">me</ansi>, or a companion by name (part of it will do) or number
+(<ansi fg="command">#2</ansi>). The word target can be left out: <ansi fg="command">strategy tamsin leader</ansi>.
+
+Set strategies before a battle: during one they can be read but not
+changed. Strategies are kept when you log out.
+
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help mana</ansi>.
