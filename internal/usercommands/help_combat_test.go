@@ -21,7 +21,7 @@ func TestCombatHelpTopics(t *testing.T) {
 			combat = append(combat, topic.Command)
 		}
 	}
-	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "resurrect", "narration"} {
+	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "resurrect", "narration", "combatpace"} {
 		assert.Contains(t, combat, want, "help index lists %s under combat", want)
 	}
 	for _, topic := range combat {
@@ -36,6 +36,7 @@ func TestCombatHelpTopics(t *testing.T) {
 		"target": "targeting", "whetstone": "sharpen", "darkness": "light",
 		"battlesummary": "battle-summary", "resurrection": "resurrect",
 		"critical": "narration", "crit": "narration", "healed": "narration", "chanting": "narration",
+		"pace": "combatpace", "pacing": "combatpace", "combat-pace": "combatpace",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)
@@ -113,4 +114,44 @@ func TestPainReactionHelpExplainsCriticalAndLethalCases(t *testing.T) {
 	pain, err := GetHelpContents("pain")
 	require.NoError(t, err)
 	assert.Equal(t, narration, pain)
+}
+
+// TestCombatPaceHelp (Phase 29f): the pacing page gives the four paces and
+// their timings, the screen-reader default, the catch-up and flush rules,
+// and what is never held back; combat, set, and narration point to it.
+func TestCombatPaceHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	page, err := GetHelpContents("combatpace")
+	require.NoError(t, err)
+	page = tagPattern.ReplaceAllString(page, "")
+	for _, want := range []string{
+		"set combatpace fast", "set combatpace normal", "set combatpace slow", "set combatpace off",
+		"0.4 seconds", "done in 6 seconds", "7.5 seconds",
+		"screen reader", "the default is off",
+		"every 8 seconds", "before the next begins",
+		"pain reaction or a death line",
+		"Your prompt", "battle view",
+		"Nothing is lost",
+		"never held back", "tells",
+	} {
+		assert.Contains(t, page, want)
+	}
+
+	combat, err := GetHelpContents("combat")
+	require.NoError(t, err)
+	combat = tagPattern.ReplaceAllString(combat, "")
+	for _, want := range []string{"every 8 seconds", "up to 8 seconds", "help combatpace", "set combatpace"} {
+		assert.Contains(t, combat, want)
+	}
+	assert.NotContains(t, combat, "a round is 4 seconds", "the old round length is gone")
+
+	set, err := GetHelpContents("set")
+	require.NoError(t, err)
+	assert.Contains(t, set, "combatpace")
+
+	narration, err := GetHelpContents("narration")
+	require.NoError(t, err)
+	assert.Contains(t, tagPattern.ReplaceAllString(narration, ""), "A short pause comes before a pain reaction")
 }

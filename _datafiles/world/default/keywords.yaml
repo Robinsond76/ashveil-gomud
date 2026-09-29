@@ -79,6 +79,7 @@ help:
       - cast
       - chemistry
       - combat
+      - combatpace
       - consider
       - flee
       - formation
@@ -218,6 +219,7 @@ help-aliases:
   strategy:         [strategies, gambits, roles]
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
+  combatpace:       [pace, pacing, combat-pace]
   narration:        [critical, crit, healed, chanting, combat-text, pronouns, ordinals, pain, pain-reaction]
   resurrect:        [resurrection]
   light:            [darkness, dark]

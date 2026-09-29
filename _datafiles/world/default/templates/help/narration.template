@@ -28,6 +28,8 @@ follows the hit line. You read your own pain as "you"; everyone else sees the
 victim react by name. A normal hit, a fully blocked critical hit, or a dodge
 has no pain reaction. When a critical hit drops the victim, the death line
 follows instead. Pain reactions are words only: they add no damage or status.
+A short pause comes before a pain reaction or a death line, so the blow lands
+first (<ansi fg="command">help combatpace</ansi>).
 
 <ansi fg="yellow-bold">How a fight reads</ansi>
 

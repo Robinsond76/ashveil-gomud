@@ -19,17 +19,17 @@ Files:
 - `internal/hooks/hooks.go`
 - `internal/hooks/combat_pace_test.go`
 
-- [ ] Write failing tests:
+- [x] Write failing tests:
   - `Timing.CombatEveryRounds` defaults to 2 and a value below 1 becomes 2;
   - `combatRoundDue(n)` is true only on multiples of it, and on every round
     when it is 1;
   - the registered `NewRound` wrapper `CombatOnCadence` calls combat only
     on due rounds (a counting stub stands in for `DoCombat`).
-- [ ] Add the setting, with a comment in `config.yaml`, and add
+- [x] Add the setting, with a comment in `config.yaml`, and add
   `CombatRoundDuration()`.
-- [ ] Add the wrapper and register it in place of `DoCombat`. Tests that
+- [x] Add the wrapper and register it in place of `DoCombat`. Tests that
   call `hooks.DoCombat` directly are unaffected.
-- [ ] Wiring test: over several `NewRound` events queued through the real
+- [x] Wiring test: over several `NewRound` events queued through the real
   event queue with every usual listener registered, survival drain,
   alignment drift, and `util.GetRoundCount()` advance exactly as before.
   Only combat skips rounds. It lives in `modules/company`, whose harness
@@ -42,7 +42,7 @@ Files:
 - `internal/events/cause.go` (new)
 - `internal/events/cause_test.go`
 
-- [ ] Write failing tests:
+- [x] Write failing tests:
   - `WithCause(r, fn)` makes events queued inside `fn` carry `r`;
   - while an event carrying `r` is dispatched, `Cause()` reports `r`, and
     events its listeners queue inherit it;
@@ -50,7 +50,7 @@ Files:
   - an event requeued with `CancelAndRequeue` keeps its cause;
   - `Input` events never inherit a cause;
   - untagged events stay 0.
-- [ ] Implement:
+- [x] Implement:
   - an unexported `cause` on `prioritizedEvent` and on requeues;
   - a current cause held in an atomic, set around `DoListeners` in
     `ProcessEvents` and by `WithCause`;
@@ -67,7 +67,7 @@ Files:
 - `internal/combatpace/pacer_test.go`
 - `internal/combatpace/AGENTS.md`
 
-- [ ] Write failing table tests, all on an explicit clock:
+- [x] Write failing table tests, all on an explicit clock:
   - pace parsing and defaults (`normal`, or `off` for a screen reader);
   - gaps per pace;
   - the first line due at once, the rest in order;
@@ -78,7 +78,7 @@ Files:
   - `Busy`;
   - marks cleared by `StartRound`;
   - lines from an older round flushed ahead of a newer round's.
-- [ ] Implement:
+- [x] Implement:
   - `Pace` and `Spec`;
   - `Parse` and `For(option, screenReader)`;
   - a `Pacer` with `Hold`, `Due(now)`, `Flush`, `FlushAll`, `Busy`,
@@ -97,11 +97,11 @@ Files:
 - `internal/hooks/hooks.go`
 - `internal/events/eventtypes.go` (the new `CombatPaceDrained` event)
 
-- [ ] Write failing tests for the helpers:
+- [x] Write failing tests for the helpers:
   - the pace lookup reads `ConfigOptions["combatpace"]`, with defaults;
   - a delivery seam (`deliver`) that tests replace;
   - a clock seam (`paceNow`).
-- [ ] Implement:
+- [x] Implement:
   - `Message_SendMessage` holds a recipient's text when `events.Cause()`
     is non-zero and that recipient's pace isn't `off`, and otherwise
     delivers at once (quiet-message checks come first);
@@ -114,7 +114,7 @@ Files:
   - an untagged `RoomChange`, `PlayerDespawn`, or copyover (a flush-only
     copyover contributor registered with the hooks) sends that player's
     held lines at once.
-- [ ] **Wiring test (real entry points)** in
+- [x] **Wiring test (real entry points)** in
   `modules/company/wiring_pace_test.go`, driving the brawl harness through
   `CombatOnCadence` → `ProcessEvents` → `Message_SendMessage` → `NewTurn`
   releases on a fake clock:
@@ -134,10 +134,10 @@ Files:
 - `internal/hooks/combat_narration.go` (death lines)
 - tests beside each
 
-- [ ] Write failing tests: a surviving critical's pain lines (the victim
+- [x] Write failing tests: a surviving critical's pain lines (the victim
   and room variants) and a critical kill's death lines are marked with the
   pacer. Normal hits and misses are not.
-- [ ] Mark the rendered strings when they are appended. Extend the wiring
+- [x] Mark the rendered strings when they are appended. Extend the wiring
   test: the pain line's gap is the longer one.
 
 ## Task 6 — `set combatpace`
@@ -146,13 +146,13 @@ Files:
 - `internal/usercommands/set.go`
 - `internal/usercommands/set_combatpace_test.go`
 
-- [ ] Write failing tests:
+- [x] Write failing tests:
   - `set combatpace slow` stores `slow`, and it survives a user save and
     load;
   - a bad value is rejected with the valid values;
   - `set` with no arguments lists it, with the default shown;
   - switching to `off` flushes held lines.
-- [ ] Implement.
+- [x] Implement.
 
 ## Task 7 — Web client holds (D4, D7)
 
@@ -161,11 +161,11 @@ Files:
 - `modules/gmcp/gmcp.Char.go`
 - `modules/gmcp/gmcp_pace_test.go`
 
-- [ ] Write failing tests. While `combatpace` is busy for a user:
+- [x] Write failing tests. While `combatpace` is busy for a user:
   - the company feed's refresh sends nothing, the battle view included;
   - `Char.Vitals` is not sent;
   - on `CombatPaceDrained`, both are sent with the current values.
-- [ ] Implement: `modules/gmcp` imports only the engine package
+- [x] Implement: `modules/gmcp` imports only the engine package
   `combatpace`.
 
 ## Task 8 — Player help and tutorial
@@ -180,7 +180,7 @@ Files:
 - `internal/usercommands/help_combat_test.go`
 - the tutorial tests
 
-- [ ] Write failing assertions:
+- [x] Write failing assertions:
   - `help combatpace` renders the four paces, the screen-reader default,
     the catch-up and flush rules, and the note that chat is never delayed;
   - its aliases `pace`, `pacing`, and `combat-pace` resolve;
@@ -190,7 +190,7 @@ Files:
   - `help narration` mentions the dramatic pause;
   - the Combat lesson points to `set combatpace` / `help combatpace`, and
     `TestTutorialHelpPointersExist` passes.
-- [ ] Write the content and pass `go test ./internal/usercommands
+- [x] Write the content and pass `go test ./internal/usercommands
   ./modules/tutorial`.
 
 ## Task 9 — Review, verification, integration

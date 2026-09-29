@@ -217,6 +217,27 @@ no other lock, and `events` does not call `combatpace`.
 
   `CombatEveryRounds: 1` reverts the cadence.
 
+## Implementation notes (found while building)
+
+- **Room goings-on wait behind held lines.** The real-round wiring test
+  found a mob's post-round engagement line ("The bandit captain goes for
+  Ysolde.", from `IdleMobs`, outside the combat round) arriving ahead of
+  the round's held narration, before the death that caused it. Now, while
+  a player has held lines, an untagged room message joins the end of their
+  queue (`combatpace.Follow`). Say/emote (`IsCommunication`) and anything
+  addressed to them directly still go out at once.
+- **An open round.** The per-round web refresh can run before the round's
+  lines are held, so `StartRound` opens the round for every pacing player.
+  They are `Busy` from the round's start until their lines drain, or until
+  the first turn if they had none. Every pacing player gets
+  `CombatPaceDrained` once per combat round. The prompt is redrawn only if
+  its round-start snapshot was actually shown.
+- **Death lines are always dramatic.** The pacer can't tell whether a
+  killing blow was critical, so every death line gets the longer gap, and
+  so does every pain line (which only a critical hit causes).
+- **Cadence phase.** Combat runs on game rounds whose number is a multiple
+  of `CombatEveryRounds`, a single phase shared by the whole world.
+
 ## Constraints and deferrals
 
 - Never advance or fast-forward the world clock or round count. Pacing is
