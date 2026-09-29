@@ -217,3 +217,12 @@ func PaceCopyoverContributor() copyover.Contributor {
 		func(dec *copyover.Decoder) error { return nil },
 	)
 }
+
+// FlushPacedOnPaceChange sends a player's held lines when they change their
+// pace (`set combatpace`): the new pace applies from the next round.
+func FlushPacedOnPaceChange(e events.Event) events.ListenerReturn {
+	if evt, ok := e.(events.UserSettingChanged); ok && evt.Name == combatpace.OptionKey {
+		FlushPacedCombat(evt.UserId)
+	}
+	return events.Continue
+}

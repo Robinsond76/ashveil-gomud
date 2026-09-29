@@ -44,6 +44,7 @@ func RegisterListeners() {
 	events.RegisterListener(events.NewTurn{}, PruneBuffs)
 	events.RegisterListener(events.NewTurn{}, ActionPoints)
 	events.RegisterListener(events.NewTurn{}, ReleasePacedCombat)
+	events.RegisterListener(events.UserSettingChanged{}, FlushPacedOnPaceChange)
 
 	// ItemOwnership
 	events.RegisterListener(events.ItemOwnership{}, CheckItemQuests)

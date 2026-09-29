@@ -261,3 +261,21 @@ func TestRoomGoingsOnWaitBehindHeldLines(t *testing.T) {
 		t.Fatalf("got %v", r.got)
 	}
 }
+
+func TestChangingPaceSendsHeldLines(t *testing.T) {
+	r := newPaceRig(t)
+	id := events.RegisterListener(events.UserSettingChanged{}, FlushPacedOnPaceChange)
+	t.Cleanup(func() { events.UnregisterListener(events.UserSettingChanged{}, id) })
+	r.round(2, "p1", "p2")
+	events.AddToQueue(events.UserSettingChanged{UserId: r.user.UserId, Name: "tinymap"})
+	events.ProcessEvents()
+	if len(r.got) != 0 {
+		t.Fatalf("another setting flushed: %v", r.got)
+	}
+	r.user.SetConfigOption(combatpace.OptionKey, "off")
+	events.AddToQueue(events.UserSettingChanged{UserId: r.user.UserId, Name: combatpace.OptionKey})
+	events.ProcessEvents()
+	if strings.Join(r.got, "|") != "p1|p2" {
+		t.Fatalf("changing pace did not send held lines: %v", r.got)
+	}
+}

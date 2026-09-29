@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"strconv"
 	"strings"
 
@@ -11,6 +12,17 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// combatPaceText is a player's combat pace for `set`, marked when it is the
+// default.
+func combatPaceText(user *users.UserRecord) string {
+	if saved, ok := user.GetConfigOption(combatpace.OptionKey).(string); ok {
+		if pace, ok := combatpace.Parse(saved); ok {
+			return string(pace)
+		}
+	}
+	return string(combatpace.DefaultPace(user.ScreenReader)) + ` (default)`
+}
 
 func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
@@ -59,6 +71,9 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			onTxt = `<ansi fg="green">ON</ansi>`
 		}
 		user.SendText(`<ansi fg="yellow-bold">battlesummary:</ansi> ` + onTxt)
+		user.SendText(``)
+
+		user.SendText(`<ansi fg="yellow-bold">combatpace:</ansi> ` + combatPaceText(user))
 		user.SendText(``)
 
 		currentPrompt := user.GetConfigOption(`prompt`)
@@ -186,6 +201,30 @@ func Set(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		return true, nil
 
+	}
+
+	// Ashveil Phase 29f: how fast combat text is paced out.
+	if setTarget == combatpace.OptionKey {
+		if len(args) == 0 {
+			user.SendText(`<ansi fg="yellow-bold">combatpace:</ansi> ` + combatPaceText(user))
+			user.SendText(`Usage: <ansi fg="command">set combatpace fast|normal|slow|off</ansi> (<ansi fg="command">help combatpace</ansi>)`)
+			return true, nil
+		}
+		pace, ok := combatpace.Parse(args[0])
+		if !ok {
+			user.SendText(`Combat pace must be one of: <ansi fg="command">fast</ansi>, <ansi fg="command">normal</ansi>, <ansi fg="command">slow</ansi>, or <ansi fg="command">off</ansi>.`)
+			return true, nil
+		}
+		user.SetConfigOption(combatpace.OptionKey, string(pace))
+		user.SendText(`Combat pace set to <ansi fg="green">` + string(pace) + `</ansi>.`)
+
+		// The hooks send any lines still held under the old pace.
+		events.AddToQueue(events.UserSettingChanged{
+			UserId: user.UserId,
+			Name:   combatpace.OptionKey,
+		})
+
+		return true, nil
 	}
 
 	if setTarget == `tinymap` {
