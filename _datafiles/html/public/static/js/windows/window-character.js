@@ -1,14 +1,20 @@
 /**
  * window-character.js
  *
- * Virtual window: Character - left dock, tabbed.
- *
- * Tabs:
- *   Overview - name, race/class, level, alignment, stats grid, point badges
+ * Virtual window: Character - the company dock's first tab (Phase 32g),
+ * with sub-tabs:
+ *   Overview - name, race/class, level, alignment, stats grid, point
+ *              badges, then Worth (window-status.js: XP, gold)
+ *   Gear     - worn and carried items (window-gear.js)
+ *   Skills   - learned skills with levels and max indicator, then jobs
+ *              (profession completion and proficiency)
  *   Quests   - in-progress quest log, click to expand
- *   Skills   - learned skills with levels and max indicator
- *   Jobs     - profession completion and proficiency
  *   Effects  - active buffs/debuffs with duration bars
+ *   Pet      - only while the player has a pet (window-pet.js)
+ *
+ * Other windows' scripts host their content here through
+ * window.CharacterTabs (add, addToOverview, setVisible); they keep their
+ * own GMCP handling. The chosen sub-tab is remembered per browser.
  *
  * Responds to GMCP namespaces:
  *   Char         - full character update
@@ -386,6 +392,26 @@
             display: block;
         }
 
+        #character-window .cw-sub {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #character-window .cw-subhead {
+            margin: 6px 6px 0;
+            font-size: 0.7em;
+            font-weight: bold;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--t-text-secondary);
+            border-bottom: 1px solid var(--t-accent-dim);
+        }
+
+        #character-window .cw-tab-btn[hidden],
+        #character-window .cw-tab-panel[hidden] {
+            display: none !important;
+        }
+
         /* ---- Skills tab ---- */
         #cw-skills {
             padding: 4px 6px;
@@ -684,18 +710,85 @@
     // -----------------------------------------------------------------------
     // Tab switching
     // -----------------------------------------------------------------------
-    function makeTabSwitcher(root) {
-        const btns   = root.querySelectorAll('.cw-tab-btn');
-        const panels = root.querySelectorAll('.cw-tab-panel');
-        btns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                btns.forEach(b   => b.classList.remove('active'));
-                panels.forEach(p => p.classList.remove('active'));
-                btn.classList.add('active');
-                root.querySelector('#' + btn.dataset.panel).classList.add('active');
-            });
+    const SUBTAB_KEY = 'characterSubTab';
+
+    function showPanel(root, panelId, remember) {
+        const btn = root.querySelector('.cw-tab-btn[data-panel="' + panelId + '"]');
+        if (!btn || btn.hidden) { panelId = 'cw-overview'; }
+        root.querySelectorAll('.cw-tab-btn').forEach(b => {
+            const on = b.dataset.panel === panelId;
+            b.classList.toggle('active', on);
+            b.setAttribute('aria-selected', on ? 'true' : 'false');
         });
+        root.querySelectorAll('.cw-tab-panel').forEach(p => p.classList.toggle('active', p.id === panelId));
+        if (remember) {
+            try { localStorage.setItem(SUBTAB_KEY, panelId); } catch (e) { /* unavailable */ }
+        }
     }
+
+    function wireTab(root, btn) {
+        btn.setAttribute('role', 'tab');
+        btn.addEventListener('click', () => showPanel(root, btn.dataset.panel, true));
+    }
+
+    function makeTabSwitcher(root) {
+        root.querySelector('.cw-tab-bar').setAttribute('role', 'tablist');
+        root.querySelector('.cw-tab-bar').setAttribute('aria-label', 'Character');
+        root.querySelectorAll('.cw-tab-btn').forEach(btn => wireTab(root, btn));
+    }
+
+    // -----------------------------------------------------------------------
+    // Hosted sub-tabs (Phase 32g): other windows' content, by order among
+    // the built-in tabs (Overview 0, Skills 2, Quests 3, Effects 4).
+    // -----------------------------------------------------------------------
+    const hosted   = [];   // { id, label, order, build, visible }
+    const overview = [];   // build functions appended to Overview
+    let root = null;
+
+    function attachHosted(spec) {
+        const panelId = 'cw-hosted-' + spec.id;
+        const btn = document.createElement('button');
+        btn.className = 'cw-tab-btn';
+        btn.dataset.panel = panelId;
+        btn.dataset.order = String(spec.order);
+        btn.textContent = spec.label;
+        btn.hidden = spec.visible === false;
+        const bar = root.querySelector('.cw-tab-bar');
+        const after = [...bar.children].find(b => Number(b.dataset.order) > spec.order);
+        bar.insertBefore(btn, after || null);
+        wireTab(root, btn);
+        const panel = document.createElement('div');
+        panel.className = 'cw-tab-panel';
+        panel.id = panelId;
+        panel.setAttribute('role', 'tabpanel');
+        panel.hidden = btn.hidden;
+        panel.appendChild(spec.build());
+        root.appendChild(panel);
+    }
+
+    window.CharacterTabs = {
+        // spec: { id, label, order, build() -> element, visible (default true) }
+        add(spec) {
+            hosted.push(spec);
+            if (root) { attachHosted(spec); }
+        },
+        // build() -> element, appended to the Overview tab.
+        addToOverview(build) {
+            overview.push(build);
+            if (root) { root.querySelector('#cw-overview').appendChild(build()); }
+        },
+        setVisible(id, visible) {
+            const spec = hosted.find(h => h.id === id);
+            if (spec) { spec.visible = visible; }
+            if (!root) { return; }
+            const btn = root.querySelector('.cw-tab-btn[data-panel="cw-hosted-' + id + '"]');
+            const panel = root.querySelector('#cw-hosted-' + id);
+            if (!btn || !panel) { return; }
+            btn.hidden = !visible;
+            panel.hidden = !visible;
+            if (!visible && btn.classList.contains('active')) { showPanel(root, 'cw-overview', false); }
+        },
+    };
 
     // -----------------------------------------------------------------------
     // Data definitions
@@ -739,11 +832,10 @@
         el.id = 'character-window';
         el.innerHTML =
             '<div class="cw-tab-bar">' +
-                '<button class="cw-tab-btn active" data-panel="cw-overview">Overview</button>' +
-                '<button class="cw-tab-btn"        data-panel="cw-quests">Quests</button>' +
-                '<button class="cw-tab-btn"        data-panel="cw-skills">Skills</button>' +
-                '<button class="cw-tab-btn"        data-panel="cw-jobs">Jobs</button>' +
-                '<button class="cw-tab-btn"        data-panel="cw-effects">Effects</button>' +
+                '<button class="cw-tab-btn active" data-panel="cw-overview" data-order="0">Overview</button>' +
+                '<button class="cw-tab-btn"        data-panel="cw-skills-tab" data-order="2">Skills</button>' +
+                '<button class="cw-tab-btn"        data-panel="cw-quests" data-order="3">Quests</button>' +
+                '<button class="cw-tab-btn"        data-panel="cw-effects" data-order="4">Effects</button>' +
             '</div>' +
 
             '<div class="cw-tab-panel active" id="cw-overview">' +
@@ -757,12 +849,14 @@
                 '<div class="cq-empty">No active quests</div>' +
             '</div>' +
 
-            '<div class="cw-tab-panel" id="cw-skills">' +
-                '<div class="csk-empty">No skills learned</div>' +
-            '</div>' +
-
-            '<div class="cw-tab-panel" id="cw-jobs">' +
-                '<div class="cjb-empty">No job progress</div>' +
+            '<div class="cw-tab-panel" id="cw-skills-tab">' +
+                '<div class="cw-sub" id="cw-skills">' +
+                    '<div class="csk-empty">No skills learned</div>' +
+                '</div>' +
+                '<h4 class="cw-subhead">Jobs</h4>' +
+                '<div class="cw-sub" id="cw-jobs">' +
+                    '<div class="cjb-empty">No job progress</div>' +
+                '</div>' +
             '</div>' +
 
             '<div class="cw-tab-panel" id="cw-effects">' +
@@ -770,7 +864,14 @@
             '</div>';
 
         document.body.appendChild(el);
+        root = el;
         makeTabSwitcher(el);
+        el.querySelectorAll('.cw-tab-panel').forEach(p => p.setAttribute('role', 'tabpanel'));
+        overview.forEach(build => el.querySelector('#cw-overview').appendChild(build()));
+        hosted.forEach(attachHosted);
+        let saved = null;
+        try { saved = localStorage.getItem(SUBTAB_KEY); } catch (e) { /* unavailable */ }
+        showPanel(el, saved || 'cw-overview', false);
 
         STAT_DEFS.forEach(d => {
             const cell  = el.querySelector('.cw-stat-cell:has(#cw-stat-' + d.key + ')');
@@ -796,9 +897,9 @@
     // VirtualWindow
     // -----------------------------------------------------------------------
     const win = new VirtualWindow('Character', {
-        dock:          'left',
+        dock:          'right',
         defaultDocked: true,
-        dockedHeight:  200,
+        tabGroup:      'dock',
         factory() {
             const el = createDOM();
             return {

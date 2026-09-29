@@ -144,12 +144,14 @@ does.
 
 ## Task 9: Character tab (`window-character.js` and friends)
 
-- [ ] Browser check first: sub-tabs Overview (with XP, gold, bank),
+- [x] Browser check first: sub-tabs Overview (with XP, gold, bank),
   Gear (Worn then pack; header kg of capacity; weight in tooltips),
-  Skills (with Jobs), Quests, Effects; Pet only with a pet; Kills only
-  when Kill Stats is enabled; the gear menus send the same commands as
-  before.
-- [ ] `window-character.js` joins the dock group and hosts the
+  Skills (with Jobs), Quests, Effects; Pet only with a pet; the gear
+  menus send the same commands as before. As built: Kill Stats, when
+  enabled in Settings, is a dock tab of its own (Kills), like Who, not a
+  Character sub-tab: an optional window keeps its Settings switch that
+  way.
+- [x] `window-character.js` joins the dock group and hosts the
   sub-tabs; `window-status.js`, `window-gear.js`, `window-pet.js`,
   `window-killstats.js` render into containers it hands them (keeping
   their GMCP handlers) and stop registering their own windows.

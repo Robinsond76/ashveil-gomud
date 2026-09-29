@@ -1332,7 +1332,8 @@ class VirtualWindow {
 // Phase 32g: the left column is the world (time, map, room, the tutorial
 // while in the course); the right column is the company dock, one tab
 // group ('dock'): the vitals strip above Character, Company, Combat, Comm,
-// and Who (when Online is enabled). A group's order here is its tab order.
+// and, when enabled in Settings, Who (Online) and Kills (KillStats). A
+// group's order here is its tab order.
 const WINDOW_DOCK_DEFAULTS = [
     { id: 'Time & Date',    side: 'left' },
     { id: 'Map',            side: 'left' },
@@ -1344,6 +1345,7 @@ const WINDOW_DOCK_DEFAULTS = [
     { id: 'Combat',         side: 'right', group: 'dock' },
     { id: 'Communications', side: 'right', group: 'dock' },
     { id: 'Online',         side: 'right', group: 'dock' },
+    { id: 'KillStats',      side: 'right', group: 'dock' },
 ];
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,8 @@
 /**
  * window-status.js
  *
- * Virtual window: Worth - left dock.
+ * Worth - shown in the Character tab's Overview (Phase 32g; hosted
+ * through window.CharacterTabs).
  *
  * Displays XP progress bar, gold (carried + bank).
  *
@@ -19,7 +20,7 @@
 
     injectStyles(`
         #status-window {
-            height: 100%;
+            flex: 0 0 auto;
             display: flex;
             flex-direction: column;
             background: var(--t-bg);
@@ -110,29 +111,6 @@
         return el;
     }
 
-    // -----------------------------------------------------------------------
-    // VirtualWindow
-    // -----------------------------------------------------------------------
-    const win = new VirtualWindow('Worth', {
-        dock:          'left',
-        defaultDocked: true,
-        dockedHeight:  100,
-        factory() {
-            const el = createDOM();
-            return {
-                title:      'Worth',
-                mount:      el,
-                background: 'var(--t-bg)',
-                border:     1,
-                x:          0,
-                y:          0,
-                width:      363,
-                height:     140,
-                header:     20,
-                bottom:     60,
-            };
-        },
-    });
 
     // -----------------------------------------------------------------------
     // Worth update
@@ -160,17 +138,21 @@
     // Update
     // -----------------------------------------------------------------------
     function update() {
-        win.open();
-        if (!win.isOpen()) { return; }
+        if (!document.getElementById('sw-xp-fill')) { return; }
         updateWorth();
     }
 
     // -----------------------------------------------------------------------
     // Registration
     // -----------------------------------------------------------------------
+    CharacterTabs.addToOverview(() => {
+        const el = createDOM();
+        setTimeout(update, 0);
+        return el;
+    });
+
     VirtualWindows.register({
-        window:       win,
-        gmcpHandlers: ['Char.Worth', 'Char'],
+        gmcpHandlers: ['Char'],
         onGMCP() { update(); },
     });
 

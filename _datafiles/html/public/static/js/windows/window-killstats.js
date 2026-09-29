@@ -1,7 +1,8 @@
 /**
  * window-killstats.js
  *
- * Virtual window: Kill Stats - right dock, tabbed, off by default.
+ * Virtual window: Kill Stats - the company dock's Kills tab when enabled
+ * in Settings (Phase 32g), tabbed, off by default.
  *
  * Tabs:
  *   Mobs   - kill counts by mob name with totals and K/D ratio
@@ -356,6 +357,9 @@
         defaultDocked: true,
         dockedHeight:  260,
         offOnLoad:     true,
+        // Phase 32g: a tab of the company dock when enabled.
+        tabGroup:      'dock',
+        tabLabel:      'Kills',
         factory() {
             const el = createDOM();
             Client.GMCPRequest('Char.Kills');
