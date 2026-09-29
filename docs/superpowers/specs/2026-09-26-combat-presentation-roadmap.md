@@ -49,7 +49,7 @@ the fight went.
 |---|---|---|
 | 30a Status effects and critical-hit effects (weapons only) | [status and crit effects](2026-09-26-status-crit-effects-design.md) | 29b; 29c for text |
 | 30b Wounds, treatment, and `heal wounds` | [wounds](2026-09-26-wounds-treatment-design.md) | 30a |
-| 30c Pre-fight tactics: roles, personalities, guards, companion casting | [tactics](2026-09-26-company-tactics-design.md) | 29b, 30a |
+| 30c Company tactics: focus (mid-battle), healing, enemy personalities, guardian | [tactics](2026-09-29-phase-30c-company-tactics-design.md) | 29b, 30a |
 | 30d Wind-ups, telegraphs, and interrupts | [interrupts](2026-09-26-telegraphs-interrupts-design.md) | 30a, 30c |
 | 30e Morale and mercy | [morale and mercy](2026-09-26-morale-mercy-design.md) | 29b, 30c |
 | 30f Battlefield conditions | [battlefield](2026-09-26-battlefield-conditions-design.md) | 30c |
