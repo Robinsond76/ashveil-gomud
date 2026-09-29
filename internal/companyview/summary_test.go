@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -35,6 +36,7 @@ func noSources() sources {
 		name:               func(string) (string, bool) { return "", false },
 		room:               func(int) *rooms.Room { return nil },
 		formation:          func(int) (company.Formation, bool) { return company.Formation{}, false },
+		strategy:           func(int, company.MemberKey) strategy.Strategy { return strategy.Strategy{} },
 	}
 }
 
@@ -246,4 +248,23 @@ func TestSummaryMana(t *testing.T) {
 
 	user.Character.ManaMax.Value = 0
 	assert.False(t, src.summary(user).Leader.HasMP, "a leader with no mana")
+}
+
+// TestSummaryStrategies (Phase 32g): each member carries the strategy a
+// battle would use; with no strategy source it stays unknown (zero).
+func TestSummaryStrategies(t *testing.T) {
+	src := fullSources()
+	src.strategy = func(_ int, key company.MemberKey) strategy.Strategy {
+		if key == company.LeaderMemberKey {
+			return strategy.Strategy{Role: strategy.Caster, Rule: strategy.Weakest}
+		}
+		return strategy.Strategy{Role: strategy.Healer, Rule: strategy.Defend}
+	}
+	s := src.summary(testUser())
+	assert.Equal(t, strategy.Strategy{Role: strategy.Caster, Rule: strategy.Weakest}, s.Leader.Strategy)
+	require.Len(t, s.Companions, 3)
+	for _, c := range s.Companions {
+		assert.Equal(t, strategy.Strategy{Role: strategy.Healer, Rule: strategy.Defend}, c.Strategy, c.Name)
+	}
+	assert.True(t, noSources().summary(testUser()).Leader.Strategy.IsZero(), "no source: unknown")
 }

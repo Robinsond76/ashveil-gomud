@@ -45,6 +45,12 @@ type companyCell struct {
 	Col int `json:"col"`
 }
 
+// companyStrategy is a member's role and target rule (Phase 32g).
+type companyStrategy struct {
+	Role   string `json:"role"`
+	Target string `json:"target"`
+}
+
 type companyMember struct {
 	Key       string       `json:"key"`
 	ID        int          `json:"id"`
@@ -54,6 +60,8 @@ type companyMember struct {
 	Archetype *string      `json:"archetype"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
+	// Strategy is nil when unknown.
+	Strategy *companyStrategy `json:"strategy"`
 }
 
 type companyLoad struct {
@@ -155,6 +163,9 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	}
 	if m.Placed {
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}
+	}
+	if !m.Strategy.IsZero() {
+		out.Strategy = &companyStrategy{Role: string(m.Strategy.Role), Target: string(m.Strategy.Rule)}
 	}
 	// Chemistry is shown only for a member standing with a band; alone or
 	// dead there is none (not "Strangers" on everyone).

@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -335,4 +336,28 @@ func TestCompanyVitalsMana(t *testing.T) {
 	require.Len(t, *out, 2)
 	assert.Equal(t, "Company.Vitals", (*out)[1].module)
 	assert.Equal(t, 2.0, (*out)[1].body["vitals"].(map[string]any)["leader"].(map[string]any)["mp"])
+}
+
+// TestCompanyStrategies (Phase 32g): each member's role and target rule
+// travel in the snapshot, absent when unknown, and a change resends it.
+func TestCompanyStrategies(t *testing.T) {
+	s := sampleCompany()
+	s.Leader.Strategy = strategy.Strategy{Role: strategy.Caster, Rule: strategy.Weakest}
+	s.Companions[0].Strategy = strategy.Strategy{Role: strategy.Fighter, Rule: strategy.Leader}
+	p, ok := buildCompanyPayload(7, s, noChemistry)
+	require.True(t, ok)
+	data, _ := json.Marshal(p)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(data, &got))
+	assert.Equal(t, map[string]any{"role": "caster", "target": "weakest"}, got["leader"].(map[string]any)["strategy"])
+	members := got["members"].([]any)
+	assert.Equal(t, map[string]any{"role": "fighter", "target": "leader"}, members[0].(map[string]any)["strategy"])
+	assert.Nil(t, members[1].(map[string]any)["strategy"], "unknown")
+
+	f, out := testFeed()
+	f.update(7, s)
+	s.Companions[0].Strategy.Rule = strategy.Defend
+	f.update(7, s)
+	require.Len(t, *out, 2)
+	assert.Equal(t, "Company", (*out)[1].module, "a strategy is structure")
 }

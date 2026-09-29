@@ -12,8 +12,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -51,6 +53,9 @@ type Member struct {
 	Row, Col    int
 	// RescueLeft is a dead companion's rescue allowance left.
 	RescueLeft time.Duration
+	// Strategy is the role and target rule a battle would use for this
+	// member (Phase 32g); zero when no source can say.
+	Strategy strategy.Strategy
 }
 
 // Summary is a player and their company, as every surface shows them.
@@ -106,6 +111,7 @@ type sources struct {
 	name               func(archetypeID string) (string, bool)
 	room               func(roomID int) *rooms.Room
 	formation          func(leaderUserID int) (company.Formation, bool)
+	strategy           func(leaderUserID int, key company.MemberKey) strategy.Strategy
 }
 
 func nativeSources() sources {
@@ -126,6 +132,7 @@ func nativeSources() sources {
 		name:               archetypes.Name,
 		room:               rooms.LoadRoom,
 		formation:          company.FormationFor,
+		strategy:           enemyparty.MemberStrategy,
 	}
 }
 
@@ -173,6 +180,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			s.Leader.Row, s.Leader.Col = 0, 0
 		}
 	}
+	s.Leader.Strategy = src.strategy(uid, company.LeaderMemberKey)
 	if src.archetypeReporting() {
 		s.Leader.ArchetypeKnown = true
 		if id, ok := src.archetype(uid); ok {
@@ -196,6 +204,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		for _, v := range views {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
 				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col}
+			m.Strategy = src.strategy(uid, m.Key)
 			switch v.Status {
 			case company.MemberDead:
 				s.Dead++

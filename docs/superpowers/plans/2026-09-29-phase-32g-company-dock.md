@@ -26,15 +26,17 @@ does.
 
 ## Task 2: Strategies in the snapshot (`modules/strategy`, `modules/gmcp`)
 
-- [ ] Tests first:
+- [x] Tests first:
   - `modules/gmcp`: a member's `strategy {role, target}` from a stub
     provider; absent when the provider has none; a strategy change sends
     the full `Company`.
   - Wiring (`modules/strategy`): `strategy tamsin healer` then
     `strategy tamsin target leader` through the real command; the
     `Company` payload built afterwards carries both.
-- [ ] A `StrategyProvider` seam that `modules/gmcp` reads (registered by
-  `modules/strategy`, so gmcp doesn't import it); `companyMember.Strategy`.
+- [x] `companyview.Member.Strategy`, read through
+  `enemyparty.MemberStrategy` (the resolution a battle aims by, over
+  `internal/strategy`'s existing seam; no new seam needed);
+  `companyMember.Strategy`.
 
 ## Task 3: `Company.Inventory` (`modules/company`, `modules/gmcp`)
 
