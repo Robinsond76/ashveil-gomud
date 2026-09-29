@@ -90,15 +90,16 @@ shapes.
 
 ## Task 6: Player help and tutorial
 
-- [ ] `help webclient`: the Battle view (grids, lines, words, the fallen
+- [x] `help webclient`: the Battle view (grids, lines, words, the fallen
   and waiting lines, the marker, Flee).
-- [ ] `help combat`: a line pointing web client players to the Combat
+- [x] `help combat`: a line pointing web client players to the Combat
   tab; `help scout`: the same words appear in the Battle view.
-- [ ] The practice-fight lesson's hint (`modules/tutorial/stages.go`)
+- [x] The practice-fight lesson's hint (`modules/tutorial/stages.go`)
   mentions the Battle view for web client players.
-- [ ] Tests: `internal/usercommands` renders each page through `help`
+- [x] Tests: `internal/usercommands` renders each page through `help`
   (extend `help_webclient_test.go`); `TestTutorialHelpPointersExist`
-  passes.
+  passes. As built: `TestBattleViewHelp` and
+  `TestCombatLessonPointsToBattleView`.
 
 ## Task 7: Docs, review, verification, merge
 

@@ -32,6 +32,10 @@ Where several groups are in one place, you fight them one at a time. The
 others wait their turn without striking, and the next battle begins as
 soon as one ends. Another player can take on a waiting group meanwhile.
 
+In the web client, the Combat tab shows your battle as it goes: both
+formations, who strikes whom, how hurt each enemy looks, the fallen, and
+the groups waiting their turn (<ansi fg="command">help webclient</ansi>).
+
 <ansi fg="yellow-bold">Who can strike whom (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">)</ansi>
 
 Both sides stand in a 3x3 formation: three columns, and three rows from the

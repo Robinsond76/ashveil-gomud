@@ -347,3 +347,19 @@ func TestTutorialNarrationLabels(t *testing.T) {
 	}
 	t.Fatal("combat lesson missing")
 }
+
+// TestCombatLessonPointsToBattleView (Phase 32g2): the Combat lesson tells
+// web client players about the Combat tab's Battle view.
+func TestCombatLessonPointsToBattleView(t *testing.T) {
+	for _, s := range stages {
+		if s.ID != StageCombat {
+			continue
+		}
+		for _, h := range s.Hints {
+			if strings.Contains(h, "Combat tab") && strings.Contains(h, "help webclient") {
+				return
+			}
+		}
+	}
+	t.Fatal("the Combat lesson has no hint about the Combat tab's battle view")
+}
