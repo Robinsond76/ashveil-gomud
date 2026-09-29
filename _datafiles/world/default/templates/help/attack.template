@@ -24,16 +24,19 @@ Type attack ruffians."). Look a group over first with <ansi fg="command">look [g
 
 <ansi fg="yellow-bold">Who you strike</ansi>
 
-You start on the weakest member you can reach from your place in your
-company's formation. When your target falls or can't be reached, you turn
-on the next one the same way, with companions beside you or alone.
+You start on the member your strategy picks: by default the weakest you
+can reach from your place in your company's formation. Each companion
+starts on its own strategy's choice. When a target falls or can't be
+reached, its fighter turns to the next one the same way, with companions
+beside you or alone. See <ansi fg="command">help strategy</ansi>.
 
 <ansi fg="yellow-bold">Once the battle is under way</ansi>
 
 <ansi fg="command">attack</ansi>, <ansi fg="command">cast</ansi>, <ansi fg="command">backstab</ansi>, <ansi fg="command">shoot</ansi>, <ansi fg="command">tackle</ansi>, and <ansi fg="command">disarm</ansi> are held
-until it's over ("The battle is under way: it plays out as you set it up.").
-<ansi fg="command">break</ansi> and <ansi fg="command">flee</ansi> still
-work. After a <ansi fg="command">break</ansi>, a bare <ansi fg="command">attack</ansi> takes you back into the battle.
+until it's over ("The battle is under way: it plays out as you set it up."),
+and so are <ansi fg="command">break</ansi>, walking out, <ansi fg="command">formation</ansi> and <ansi fg="command">strategy</ansi> changes,
+eating, drinking, <ansi fg="command">use</ansi>, <ansi fg="command">equip</ansi>, and <ansi fg="command">remove</ansi>. Only <ansi fg="command">flee</ansi> takes you out.
+Spells are cast by strategy, on their own.
 
 Spells, backstabs, and shots don't start fights: begin with <ansi fg="command">attack</ansi>.
 

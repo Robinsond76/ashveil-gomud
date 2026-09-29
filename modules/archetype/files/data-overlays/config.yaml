@@ -14,6 +14,10 @@
 # Every kit ends with a satchel (item 31, Phase 32f) for its carrying share.
 # Unknown ids are dropped at load with a warning. Keep kit values balanced
 # (the shipped-data test allows the largest total 1.25x the smallest).
+# CompanionSpells (Phase 32d) are the spells a companion of the archetype
+# knows from a character level, cast in battle by its strategy; each must
+# be in the archetype's Schools (else it is dropped at load with a warning).
+# GrantSpells reach existing characters too: they are applied at every login.
 # (Lists, not maps: module config maps are flattened by the loader.)
 Archetypes:
   - ArchetypeId: warrior
@@ -40,7 +44,10 @@ Archetypes:
     Schools: [illusion, conjuration]
     GrantSkills:
       - { Skill: cast, Level: 1 }
-    GrantSpells: [floatinglight]
+    GrantSpells: [floatinglight, mm]
+    CompanionSpells:
+      - { Spell: mm, Level: 1 }
+      - { Spell: sparks, Level: 5 }
     Utility: [light]
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 31]
@@ -52,6 +59,10 @@ Archetypes:
     GrantSkills:
       - { Skill: cast, Level: 1 }
       - { Skill: protection, Level: 1 }
+    GrantSpells: [heal]
+    CompanionSpells:
+      - { Spell: heal, Level: 1 }
+      - { Spell: healall, Level: 5 }
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10015, 20004, 20008, 30004, 30015, 30001, 30001, 31]
   - ArchetypeId: ranger

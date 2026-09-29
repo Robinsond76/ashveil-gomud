@@ -59,6 +59,12 @@ function onMagic(sourceActor, targetActor) {
         return;
     }
 
+    // Phase 32d: a companion healer tending its own wounds.
+    if (sourceUserId == 0 && targetUserId == 0 && sourceActor.InstanceId() == targetActor.InstanceId()) {
+        SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' presses glowing hands to their own wounds.' + suffix);
+        return;
+    }
+
     SendUserMessage(sourceUserId, 'You lay your glowing hands on ' + targetActor.GetCombatName(false) + ', and the wounds close a little.' + suffix);
     SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' lays glowing hands on ' + targetActor.GetCombatName(false) + '.' + suffix, sourceUserId, targetUserId);
     SendUserMessage(targetUserId, sourceActor.GetCombatName(true) + ' lays glowing hands on you, and your wounds close a little.' + suffix);

@@ -299,9 +299,9 @@ func TestScoutFindsNoGroup(t *testing.T) {
 }
 
 // TestALonePlayerWhoBrokeOffIsTurnedAgain (32c review M1, M2): a player
-// with no company record who breaks off and rejoins with a bare attack is
-// turned onto the next foe when theirs falls, in 29c's voice, and the room
-// sees it.
+// with no company record is turned onto the next foe when theirs falls, in
+// 29c's voice, and the room sees it. Phase 32d: `break` and a bare
+// `attack` are refused in the battle and change nothing.
 func TestALonePlayerWhoBrokeOffIsTurnedAgain(t *testing.T) {
 	b := newBrawl(t)
 	b.cmd("company", "dismiss all")
@@ -317,10 +317,10 @@ func TestALonePlayerWhoBrokeOffIsTurnedAgain(t *testing.T) {
 	b.fight()
 	_, ok := battle.Current(7)
 	require.True(t, ok)
-	b.cmd("break", "")
+	assert.Contains(t, b.cmd("break", ""), "Only flee takes you out of it.")
 	b.fight()
-	b.cmd("attack", "")
-	require.NotNil(t, b.aria.Character.Aggro, "rejoined")
+	assert.Contains(t, b.cmd("attack", ""), "The battle is under way")
+	require.NotNil(t, b.aria.Character.Aggro, "still fighting")
 
 	target := b.aria.Character.Aggro.MobInstanceId
 	room.RemoveMob(target)
@@ -352,4 +352,19 @@ func TestAThingIsNotHiddenByAGroup(t *testing.T) {
 	assert.Contains(t, got, "faded band of cloth")
 	assert.NotContains(t, got, "two strong")
 	assert.Contains(t, b.cmd("look", "ruffians"), "two strong", "the group's other words still work")
+}
+
+// TestPeacefulTagMatesAreNotAGroup (Phase 32d, the owner): the bandits
+// here aren't hostile; without a spawn group their shared tag makes no
+// "band", and each is attacked by its own name.
+func TestPeacefulTagMatesAreNotAGroup(t *testing.T) {
+	b := newBrawl(t)
+	for _, m := range b.livingBandits() {
+		m.SpawnGroup = ""
+	}
+	assert.Empty(t, b.groupLines(), "no band of bandits")
+	assert.NotContains(t, b.cmd("scout", ""), "band of bandit")
+	assert.Contains(t, b.cmd("attack", "bandit captain"), "You go for the bandit captain.")
+	require.NotNil(t, b.aria.Character.Aggro)
+	assert.Equal(t, b.bandits["bandit captain"][0], b.aria.Character.Aggro.MobInstanceId)
 }

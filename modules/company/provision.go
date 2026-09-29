@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -351,6 +352,10 @@ func (m *CompanyModule) presentNeeds(leaderUserID int, needs []survival.MemberNe
 // (32f review finding 7). It never holds another module's lock across the
 // steps: survival and encumbrance each lock and save per call.
 func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind mealKind) string {
+	// Phase 32d: a battle plays out as it was set up; no meals in one.
+	if usercommands.InBattle(user) {
+		return usercommands.BattleUnderWay
+	}
 	needs := survival.CompanyNeeds(user.UserId)
 	if len(needs) == 0 {
 		return "Your company's needs can't be read right now."

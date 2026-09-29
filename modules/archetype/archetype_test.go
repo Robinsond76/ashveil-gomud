@@ -126,7 +126,16 @@ func TestShippedArchetypesLoad(t *testing.T) {
 
 	wiz, ok := m.table.Get("wizard")
 	require.True(t, ok)
-	assert.Equal(t, []string{"floatinglight"}, wiz.GrantSpells)
+	assert.Equal(t, []string{"floatinglight", "mm"}, wiz.GrantSpells)
+	assert.Equal(t, []string{"mm"}, wiz.SpellsAtLevel(1), "Phase 32d: a wizard companion's spells")
+	assert.Equal(t, []string{"mm", "sparks"}, wiz.SpellsAtLevel(5))
+	cleric, ok := m.table.Get("cleric")
+	require.True(t, ok)
+	assert.Equal(t, []string{"heal"}, cleric.GrantSpells)
+	assert.Equal(t, []string{"heal"}, m.CompanionSpells("cleric", 4))
+	assert.Equal(t, []string{"heal", "healall"}, m.CompanionSpells("cleric", 5))
+	assert.Nil(t, m.CompanionSpells("warrior", 30))
+	assert.Nil(t, m.CompanionSpells("nosuch", 1))
 	assert.True(t, wiz.HasUtility("light"))
 	assert.Equal(t, []string{"cleric", "wizard"}, m.table.SkillClaimants("cast"))
 	assert.False(t, m.table.SkillClaimed("search"), "search is a trade skill")
@@ -444,6 +453,28 @@ func TestSpawnRegrantThroughEventQueue(t *testing.T) {
 	events.AddToQueue(events.PlayerSpawn{UserId: 115})
 	events.ProcessEvents()
 	assert.True(t, u.Character.HasSpell("floatinglight"))
+}
+
+// Phase 32d: a wizard or cleric made before Magic Missile and Minor Heal
+// were granted gets them at the next login, once.
+func TestExistingCastersGetTheirCombatSpellAtLogin(t *testing.T) {
+	m, _ := testModule(t)
+	id := events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	t.Cleanup(func() { events.UnregisterListener(events.PlayerSpawn{}, id) })
+	for uid, arch := range map[int]string{116: "wizard", 117: "cleric"} {
+		u := newUser(uid)
+		users.SetTestUser(u)
+		t.Cleanup(func() { users.RemoveTestUser(u.UserId) })
+		m.choose(u, arch, true)
+		u.Character.UnLearnSpell("mm")
+		u.Character.UnLearnSpell("heal")
+		events.AddToQueue(events.PlayerSpawn{UserId: uid})
+	}
+	events.ProcessEvents()
+	assert.True(t, users.GetByUserId(116).Character.HasSpell("mm"))
+	assert.False(t, users.GetByUserId(116).Character.HasSpell("heal"))
+	assert.True(t, users.GetByUserId(117).Character.HasSpell("heal"))
+	assert.False(t, users.GetByUserId(117).Character.HasSpell("mm"))
 }
 
 // The module lock guards the registry against concurrent callers (the

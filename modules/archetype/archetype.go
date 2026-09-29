@@ -316,6 +316,9 @@ func (m *ArchetypeModule) buildTable(list []archetypes.Archetype) archetypes.Tab
 				mudlog.Warn("archetype: invalid spell grant", "error", err)
 				continue
 			}
+			for _, err := range a.FilterCompanionSpells(m.schoolOf) {
+				mudlog.Warn("archetype: companion spell dropped", "error", err)
+			}
 		}
 		a.Kit = m.resolveKit(a)
 		valid = append(valid, a)
@@ -436,6 +439,17 @@ func (m *ArchetypeModule) PlayerArchetype(userID int) (string, bool) {
 }
 
 // --- choice and grants ------------------------------------------------------
+
+// CompanionSpells implements archetypes.CompanionSpellProvider (Phase 32d).
+func (m *ArchetypeModule) CompanionSpells(archetypeID string, level int) []string {
+	m.mu.Lock()
+	a, ok := m.table.Get(archetypeID)
+	m.mu.Unlock()
+	if !ok {
+		return nil
+	}
+	return a.SpellsAtLevel(level)
+}
 
 // applyGrants gives the user the archetype's starting skills and spells. It
 // never lowers a higher existing skill level and is idempotent, so it is
@@ -718,6 +732,15 @@ func parseArchetypes(raw any) []archetypes.Archetype {
 			CompanionLevels: intList(fields["companionlevels"]),
 			Kit:             intList(fields["kit"]),
 			GrantSkills:     map[string]int{},
+		}
+		if spells, ok := fields["companionspells"].([]any); ok {
+			for _, sp := range spells {
+				sf := stringMap(sp)
+				if sf == nil {
+					continue
+				}
+				a.CompanionSpells = append(a.CompanionSpells, archetypes.LevelSpell{Spell: configString(sf["spell"]), Level: configInt(sf["level"])})
+			}
 		}
 		if grants, ok := fields["grantskills"].([]any); ok {
 			for _, g := range grants {

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 
@@ -32,7 +33,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			return true, nil
 		}
 		if g, ok := battleGroup(b, room); ok {
-			attackMobInstanceId, _ = enemyparty.FirstAim(g, user.UserId, user.Character)
+			attackMobInstanceId, _ = enemyparty.Aim(g, enemyparty.PlayerAttacker(user))
 		}
 	}
 
@@ -206,14 +207,15 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 			}
 
 			// Ashveil Phase 32c: the fight is with the mob's whole group, and
-			// the first member struck is chosen as the player's strategy
-			// would (enemyparty.FirstAim).
+			// the first member struck is chosen by the player's strategy
+			// (32d: enemyparty.Aim), as is each companion's.
 			foeName := m.Character.Name
-			if g, ok := enemyparty.GroupOf(room, m.InstanceId); ok {
-				if !g.Solo() {
-					foeName = theGroup(g.Name)
+			group, grouped := enemyparty.GroupOf(room, m.InstanceId)
+			if grouped {
+				if !group.Solo() {
+					foeName = theGroup(group.Name)
 				}
-				if aim, ok := enemyparty.FirstAim(g, user.UserId, user.Character); ok {
+				if aim, ok := enemyparty.Aim(group, enemyparty.PlayerAttacker(user)); ok {
 					attackMobInstanceId = aim
 				}
 			}
@@ -251,7 +253,14 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				if m := mobs.GetInstance(instId); m != nil {
 					if m.Character.Aggro == nil && m.Character.IsCharmed(user.UserId) { // Charmed mobs help the player
 
-						m.Command(fmt.Sprintf(`attack #%d`, attackMobInstanceId)) // # denotes a specific mob instanceId
+						// Phase 32d: a companion starts on its own strategy's choice.
+						aim := attackMobInstanceId
+						if leaderId, key, ok := company.LeaderAndKeyForInstance(instId); ok && leaderId == user.UserId && grouped {
+							if id, ok := enemyparty.Aim(group, enemyparty.CompanionAttacker(user.UserId, key, m, attackMobInstanceId)); ok {
+								aim = id
+							}
+						}
+						m.Command(fmt.Sprintf(`attack #%d`, aim)) // # denotes a specific mob instanceId
 
 					}
 				}
@@ -324,11 +333,27 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 // started (Ashveil Phase 32c, the owner's rule 5).
 const BattleUnderWay = `The battle is under way: it plays out as you set it up.`
 
+// BattleOnlyFlee is the answer to trying to step out of a battle (Ashveil
+// Phase 32d): only flee takes a player out.
+const BattleOnlyFlee = BattleUnderWay + ` Only <ansi fg="command">flee</ansi> takes you out of it.`
+
+// InBattle reports whether the player is in a battle (Ashveil Phase 32c
+// and 32d): they have one, or are aimed at a mob (a battle about to
+// begin). Once one has started, nothing typed changes it; only flee takes
+// them out.
+func InBattle(user *users.UserRecord) bool {
+	if user == nil {
+		return false
+	}
+	_, inBattle := battle.Current(user.UserId)
+	return inBattle || fightingMob(user)
+}
+
 // fightingMob reports whether the player is already aimed at a mob, a
 // battle about to begin.
 func fightingMob(user *users.UserRecord) bool {
 	a := user.Character.Aggro
-	return a != nil && a.MobInstanceId > 0
+	return a != nil && a.MobInstanceId > 0 && a.ExitName == `` // a shot into the next room is no battle (32d review)
 }
 
 // battleGroup is the player's battle's group in the room.

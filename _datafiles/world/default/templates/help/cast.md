@@ -11,6 +11,7 @@ The ~cast~ command attempts to cast a learned spell.
 
 Cast is for spells outside a fight: healing, light, and other help. A harmful
 spell doesn't start a fight; start one with ~attack [group]~. Once a battle is
-under way, nothing is cast by hand: your company fights as it was set up.
+under way, nothing is cast by hand: healers and casters cast on their own, by
+their strategy, with real mana (see ~help strategy~).
 
-**See also:** ~help spells~, ~help attack~
+**See also:** ~help spells~, ~help attack~, ~help strategy~

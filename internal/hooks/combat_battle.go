@@ -200,16 +200,34 @@ func (sd side) keepOnBattle(b battle.Battle, room *rooms.Room) {
 		m := mobs.GetInstance(a.MobInstanceId)
 		return m != nil && m.Character.Health > 0 && m.Character.RoomId == room.RoomId
 	}
+	// Phase 32d: each turns onto the foe its own strategy picks.
+	g, grouped := enemyparty.Group{}, false
+	if p, found := battleParty(b, enemyparty.Parties(room)); found {
+		g, grouped = enemyparty.Group{Party: p}, true
+	}
+	aimFor := func(att enemyparty.Attacker) int {
+		if grouped {
+			if id, ok := enemyparty.Aim(g, att); ok {
+				return id
+			}
+		}
+		return foe
+	}
 	if u := sd.user; offBattle(u.Character.Aggro) {
-		emitTargetChange(userRef(u), mobRefById(u.Character.Aggro.MobInstanceId), mobRefById(foe), room.RoomId)
-		u.Character.SetAggro(0, foe, attackType(u.Character.Aggro))
+		next := aimFor(enemyparty.PlayerAttacker(u))
+		emitTargetChange(userRef(u), mobRefById(u.Character.Aggro.MobInstanceId), mobRefById(next), room.RoomId)
+		u.Character.SetAggro(0, next, attackType(u.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
-		u.SendText(turnsToward(`You`, mobTag(mobName(foe))))
+		u.SendText(turnsToward(`You`, mobTag(mobName(next))))
 	}
 	for _, instanceId := range sortedKeys(sd.allies) {
 		m := mobs.GetInstance(instanceId)
 		if m == nil || !offBattle(m.Character.Aggro) {
 			continue
+		}
+		foe := foe
+		if leaderId, key, ok := company.LeaderAndKeyForInstance(instanceId); ok && leaderId == sd.user.UserId {
+			foe = aimFor(enemyparty.CompanionAttacker(leaderId, key, m, 0))
 		}
 		emitTargetChange(mobRef(m), mobRefById(m.Character.Aggro.MobInstanceId), mobRefById(foe), room.RoomId)
 		m.Character.SetAggro(0, foe, attackType(m.Character.Aggro))
@@ -400,14 +418,32 @@ func (sd side) turnAlone(p mobparty.Party, room *rooms.Room) {
 			return
 		}
 		if m := mobs.GetInstance(a.MobInstanceId); m != nil && m.Character.Health > 0 && m.Character.RoomId == room.RoomId && !m.Character.HasBuffFlag("hidden") {
-			return // still has a foe
+			// Still has a foe. Phase 32d: a rule that follows something
+			// (defend) turns when its own choice is someone else.
+			att := enemyparty.PlayerAttacker(u)
+			if !att.Rule.ReaimsEachRound() {
+				return
+			}
+			choice, ok := enemyparty.RuleChoice(enemyparty.Group{Party: p}, att, a.MobInstanceId)
+			if !ok || choice == a.MobInstanceId {
+				return
+			}
+			sd.turnTo(a.MobInstanceId, choice, room)
+			return
 		}
 		previous = a.MobInstanceId
 	}
-	next, ok := enemyparty.FirstAim(enemyparty.Group{Party: p}, u.UserId, u.Character)
+	next, ok := enemyparty.Aim(enemyparty.Group{Party: p}, enemyparty.PlayerAttacker(u))
 	if !ok || next == previous {
 		return
 	}
+	sd.turnTo(previous, next, room)
+}
+
+// turnTo turns the player from previous (0 for none) onto next, and says
+// so.
+func (sd side) turnTo(previous, next int, room *rooms.Room) {
+	u := sd.user
 	emitTargetChange(userRef(u), mobRefById(previous), mobRefById(next), room.RoomId)
 	u.Character.SetAggro(0, next, attackType(u.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})

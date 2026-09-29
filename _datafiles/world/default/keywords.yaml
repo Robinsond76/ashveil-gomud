@@ -87,6 +87,7 @@ help:
       - scout
       - sharpen
       - shoot
+      - strategy
       - targeting
     information:
       - biome
@@ -212,6 +213,7 @@ help-aliases:
   formation:        [reach, interception, formations]
   targeting:        [target, targets, enemy-parties]
   scout:            [scouting, enemy-groups, groups]
+  strategy:         [strategies, gambits, roles]
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
   narration:        [critical, crit, healed, chanting, combat-text]
@@ -269,6 +271,7 @@ command-aliases:
   scribe:             ['scribble', 'write']
   equip:              ['wear', 'wield', 'hold']
   remove:             ['rem', 'unequip', 'unwear', 'unwield']
+  strategy:           ['strategies']
   throw:              ['toss']
   attack:             ['a', 'k', 'kill', 'fight']
   get:                ['g', 'take']

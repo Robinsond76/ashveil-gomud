@@ -2108,3 +2108,18 @@ func TestCharacter_GetSkillLevel(t *testing.T) {
 		})
 	}
 }
+
+// Phase 32d found GoMud's Heal adding the health amount to mana.
+func TestHealRestoresManaByTheManaAmount(t *testing.T) {
+	c := New()
+	c.HealthMax.Value, c.ManaMax.Value = 50, 50
+	c.Health, c.Mana = 10, 10
+	hp, mp := c.Heal(0, 3)
+	if hp != 0 || mp != 3 || c.Mana != 13 || c.Health != 10 {
+		t.Fatalf("Heal(0, 3) = %d, %d; health %d, mana %d", hp, mp, c.Health, c.Mana)
+	}
+	c.Heal(5, 100)
+	if c.Health != 15 || c.Mana != 50 {
+		t.Fatalf("Heal(5, 100): health %d, mana %d", c.Health, c.Mana)
+	}
+}

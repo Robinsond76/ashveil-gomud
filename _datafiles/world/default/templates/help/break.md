@@ -3,10 +3,9 @@
 The ~break~ command disengages your part of combat.  
 **Note:** Enemies may still attack you!
 
-You stay out of the fight until you type ~attack~ on its own, which
-steps you back into your battle, or the fight ends; your companions fight
-on. Naming a group with ~attack~ is refused while your battle lasts. See
-~help targeting~.
+In a battle with an enemy group, ~break~ is refused: a battle plays out as
+you set it up, and only ~flee~ takes you out. It still stops a fight with
+another player. See ~help targeting~.
 
 ## Usage:
 

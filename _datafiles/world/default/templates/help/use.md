@@ -1,6 +1,7 @@
 # Help for ~use~
 
 The ~use~ command uses items (if they are usable). For example, a sleeping bag.
+Not in a battle.
 
 ## Usage:
 

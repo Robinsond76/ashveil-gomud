@@ -1,6 +1,6 @@
 # Help for ~eat~
 
-The ~eat~ command eats an item you carry (if it is edible).
+The ~eat~ command eats an item you carry (if it is edible). Not in a battle.
 
 If the food restores Hunger or Thirst, eating it feeds you, or a named
 companion instead of you.

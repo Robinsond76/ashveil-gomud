@@ -21,6 +21,21 @@ type Provider interface {
 	PlayerArchetype(userID int) (string, bool)
 }
 
+// CompanionSpellProvider is optionally implemented by the provider (Phase
+// 32d): the spells a companion of an archetype knows at a level.
+type CompanionSpellProvider interface {
+	CompanionSpells(archetypeID string, level int) []string
+}
+
+// CompanionSpells is the spells a companion of the archetype knows at a
+// character level; nil without a provider or for an unknown archetype.
+func CompanionSpells(archetypeID string, level int) []string {
+	if cp, ok := current().(CompanionSpellProvider); ok {
+		return cp.CompanionSpells(archetypeID, level)
+	}
+	return nil
+}
+
 // TrapProvider is optionally implemented by the provider (Phase 17b). A
 // trapped lock stays armed unless it reports otherwise.
 type TrapProvider interface {

@@ -12,6 +12,8 @@ broken group, or a straggler that wandered in, joins another idle group
 there when it can; otherwise it lingers alone until the place brings it
 company. Only a few great beasts always stand alone. A shopkeeper,
 or someone you're talking with, isn't drawn into their group's fight.
+Peaceful folk don't form groups: townsfolk who belong together each stand
+alone, and are fought (if you must) one at a time, by name.
 
 Each group has a name, shown in the room with its numbers: "A band of
 ruffians (4): three ruffians and a rat." You fight a whole group, never
@@ -31,8 +33,10 @@ them instead ("The ruffian and the others turn toward Brom."), and you each
 fight your own battle.
 
 Once your battle starts, it plays out on its own: <ansi fg="command">attack</ansi>, <ansi fg="command">cast</ansi>,
-<ansi fg="command">backstab</ansi>, and <ansi fg="command">shoot</ansi> are held until it's over, and a waiting group's
-spells hold off you. When you <ansi fg="command">flee</ansi>, only your battle's group can block
+<ansi fg="command">backstab</ansi>, <ansi fg="command">shoot</ansi>, <ansi fg="command">break</ansi>, walking out, and changes to your
+<ansi fg="command">formation</ansi> or <ansi fg="command">strategy</ansi>, eating, drinking, <ansi fg="command">use</ansi>, <ansi fg="command">equip</ansi>, and
+<ansi fg="command">remove</ansi> are refused until it's over (type them again afterwards), and a
+waiting group's spells hold off you. When you <ansi fg="command">flee</ansi>, only your battle's group can block
 the way.
 
 <ansi fg="yellow-bold">Keeping everyone fighting</ansi>
@@ -40,9 +44,12 @@ the way.
 At the start of each round, while your company and an enemy group are
 fighting:
 
-- any fighter, on either side, with no target, a fallen target, or a target
-  they can't reach turns toward the weakest foe they can reach;
-- a fighter whose target is still in reach keeps it;
+- any fighter on your side with no target, a fallen target, or a target
+  they can't reach turns to the foe their strategy picks among those they
+  can reach (<ansi fg="command">help strategy</ansi>: the weakest, unless you set another rule);
+  an enemy turns toward the weakest of you it can reach;
+- a fighter whose target is still in reach keeps it (a companion on
+  <ansi fg="command">assist</ansi> or <ansi fg="command">defend</ansi> turns with what it follows);
 - the enemy group's anger at you doesn't wear off while the fight lasts.
 
 You're told when you turn (<ansi fg="command">You turn toward the bandit slinger.</ansi>), and see
@@ -53,17 +60,16 @@ into reach (when a front fighter falls, for example).
 
 <ansi fg="yellow-bold">Stepping out</ansi>
 
-<ansi fg="command">break</ansi> takes you out of the fight until you type <ansi fg="command">attack</ansi> to step back
-in, or the fight ends. Your companions fight on, and enemies may keep attacking you.
-
-<ansi fg="command">flee</ansi> tries to run out of the room. Your companions follow you. The fight
-ends when nobody is fighting any more.
+Only <ansi fg="command">flee</ansi> takes you out of a battle: it tries to run out of the room,
+and your companions follow you. A flight that gets away ends your battle.
+(<ansi fg="command">break</ansi> still stops a fight with another player.) A fight that isn't a
+battle ends when nobody is fighting any more.
 
 <ansi fg="yellow-bold">Alone</ansi>
 
 With no companion beside you, you still fight one group at a time, and a
 group whose target fell turns on you. You're turned the same way your
-companions are: when your target falls, you turn toward the weakest foe you
-can reach.
+companions are: when your target falls, you turn to the foe your strategy
+picks among those you can reach.
 
-See also: <ansi fg="command">help scout</ansi>, <ansi fg="command">help attack</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help attack</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

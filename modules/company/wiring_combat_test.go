@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -42,6 +43,10 @@ type brawl struct {
 	bandits  map[string][]int // name -> live instance ids
 	round    uint64
 }
+
+// brawlBandits is the bandits' spawn group: they are non-hostile, and
+// since Phase 32d a shared tag groups only hostile mobs.
+const brawlBandits = "brawl:bandits"
 
 // banditMob is a non-hostile bandit sharing the party's groups tag.
 func banditMob(id int, name string, level int) string {
@@ -210,6 +215,8 @@ func newBrawl(t *testing.T) *brawl {
 	for _, id := range []int{9101, 9101, 9102, 9103, 9104} {
 		m := mobs.NewMobById(mobs.MobId(id), road.RoomId)
 		require.NotNil(t, m)
+		// Phase 32d: non-hostile mobs are a group only by a spawn group.
+		m.SpawnGroup = brawlBandits
 		road.AddMob(m.InstanceId)
 		b.bandits[m.Character.Name] = append(b.bandits[m.Character.Name], m.InstanceId)
 	}
@@ -422,17 +429,12 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	assert.Contains(t, got, "You turn toward the bandit ", "the leader rejoins")
 	assert.Contains(t, got, "Garrick Vane turns toward the bandit ", "the killer rejoins")
 
-	// Review fix: `break` holds. The upkeep leaves a leader who broke off
-	// out of the fight, until she attacks again.
-	b.cmd("break", "") // "You break off combat.", or, between blows, "You aren't in combat!"
-	assert.Nil(t, b.aria.Character.Aggro)
-	for i := 0; i < 3; i++ {
-		got = b.fight()
-		assert.NotContains(t, got, "You turn on", "a leader who broke off stays out")
-		assert.Nil(t, b.aria.Character.Aggro)
-	}
-	b.cmd("attack", "")
-	require.NotNil(t, b.aria.Character.Aggro, "she rejoins her battle with a bare attack")
+	// Phase 32d: `break` is refused in a battle (only flee takes her out),
+	// and she fights on.
+	assert.Contains(t, b.cmd("break", ""), "Only flee takes you out of it.")
+	assert.False(t, engagement.StoodDown(7), "nothing stood her down")
+	_, inBattle := battle.Current(7)
+	assert.True(t, inBattle, "her battle goes on")
 
 	// And the fight runs to its end with nobody left idle.
 	b.fightToTheEnd(200)
@@ -510,6 +512,7 @@ func TestShopkeeperInTheGroupStaysOut(t *testing.T) {
 	}
 	fence := mobs.NewMobById(9105, b.road.RoomId)
 	require.NotNil(t, fence)
+	fence.SpawnGroup = brawlBandits
 	require.True(t, fence.HasShop())
 	b.road.AddMob(fence.InstanceId)
 

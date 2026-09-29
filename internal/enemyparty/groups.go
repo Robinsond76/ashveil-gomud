@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/combat"
-	"github.com/GoMudEngine/GoMud/internal/company"
-	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -239,56 +235,4 @@ func visibleGroups(room *rooms.Room) []Group {
 		}
 	}
 	return out
-}
-
-// FirstAim is the member of g a player strikes first (Phase 32c, the
-// owner's rule 6: a character's strategy sets its target, and if it can't
-// reach that one it attacks one it can reach, by formation). Until 32d adds
-// strategies, the one strategy is 29a's: the weakest living, visible member
-// the player can reach from their place in their company's formation; a
-// player with no place may strike anyone. With no one in reach, the
-// frontmost member (a blow at the back is caught by the front, 11c).
-func FirstAim(g Group, userId int, c *characters.Character) (int, bool) {
-	alive := Alive(g.Party)
-	col, placed := 0, false
-	if f, ok := company.FormationFor(userId); ok {
-		_, col, placed = f.Find(company.LeaderMemberKey)
-	}
-	reach := combat.ResolveReach(c, false)
-
-	type cand struct {
-		id, hp, row, col int
-	}
-	var cands []cand
-	for _, id := range g.Party.Members {
-		m := mobs.GetInstance(id)
-		if m == nil || m.Character.Health < 1 || m.Character.HasBuffFlag("hidden") {
-			continue
-		}
-		row, mcol, _ := g.Party.Formation.Find(mobparty.MemberKeyFor(id))
-		cands = append(cands, cand{id: id, hp: m.Character.Health, row: row, col: mcol})
-	}
-	if len(cands) == 0 {
-		return 0, false
-	}
-	// By formation: front row first, then left to right; the weakest wins.
-	sort.SliceStable(cands, func(i, j int) bool {
-		if cands[i].row != cands[j].row {
-			return cands[i].row < cands[j].row
-		}
-		return cands[i].col < cands[j].col
-	})
-	best := -1
-	for i, cd := range cands {
-		if placed && !formationcombat.Legal(col, g.Party.Formation, mobparty.MemberKeyFor(cd.id), alive, reach) {
-			continue
-		}
-		if best < 0 || cd.hp < cands[best].hp {
-			best = i
-		}
-	}
-	if best < 0 {
-		return cands[0].id, true
-	}
-	return cands[best].id, true
 }
