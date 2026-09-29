@@ -579,11 +579,11 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 		return false
 	}
 	seen := ""
-	for r = 1; r < 200 && !landed(seen, "straw footman"); r++ {
+	for r = 1; r < 200 && !landed(seen, "footman"); r++ {
 		fightRound(r)
 		seen += text(aria)
 	}
-	require.True(t, landed(seen, "straw footman"), "a blow landed on a footman: %s", seen)
+	require.True(t, landed(seen, "footman"), "a blow landed on a footman: %s", seen)
 	assert.False(t, aimedAt(seen, "straw archer"), "the archer is shielded")
 	assert.Equal(t, "straw footman", squad[aria.Character.Aggro.MobInstanceId], "her aim moves to the footman who caught it")
 

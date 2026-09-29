@@ -216,7 +216,7 @@ help-aliases:
   strategy:         [strategies, gambits, roles]
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
-  narration:        [critical, crit, healed, chanting, combat-text]
+  narration:        [critical, crit, healed, chanting, combat-text, pronouns, ordinals]
   resurrect:        [resurrection]
   light:            [darkness, dark]
   brawling:         [tackle, brawl, disarm, recover, throw]

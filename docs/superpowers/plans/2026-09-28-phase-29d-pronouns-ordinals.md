@@ -246,15 +246,15 @@ explicitly they, regardless of its template's authored pronouns.
 **Interfaces:** keep narration under combat; pronouns and ordinals are
 help-aliases to narration. Combat tutorial hints link help narration.
 
-- [ ] Extend real help rendering tests to assert labels stay fixed after
+- [x] Extend real help rendering tests to assert labels stay fixed after
   a death, aliases match narration, and all four pages render. Assert help
   continues to require attacking groups and contains no set pronouns
   command. Pin the tutorial hint to first/second footman.
-- [ ] Run `go test ./internal/usercommands ./modules/tutorial -run 'CombatHelp|TutorialHelpPointers|Narration'`;
+- [x] Run `go test ./internal/usercommands ./modules/tutorial -run 'CombatHelp|TutorialHelpPointers|Narration'`;
   confirm the new content assertions fail.
-- [ ] Write the player-facing explanation/examples from the spec; retain
+- [x] Write the player-facing explanation/examples from the spec; retain
   existing combat mechanics and add the fresh-battle restart explanation.
-- [ ] Run `go test ./internal/usercommands ./modules/tutorial`; require
+- [x] Run `go test ./internal/usercommands ./modules/tutorial`; require
   exit 0. Lead commits as `docs(help): explain combat pronouns and enemy labels`.
 
 ## Task 7: Independent review, final verification, and integration

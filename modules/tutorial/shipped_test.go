@@ -333,3 +333,17 @@ func TestTutorialHelpPointersExist(t *testing.T) {
 		assert.True(t, seen[topic], "the tutorial points to help %s", topic)
 	}
 }
+
+func TestTutorialNarrationLabels(t *testing.T) {
+	for _, stage := range stages {
+		if stage.ID != StageCombat {
+			continue
+		}
+		hints := strings.Join(stage.Hints, "\n")
+		assert.Contains(t, hints, "first footman")
+		assert.Contains(t, hints, "second footman")
+		assert.Contains(t, hints, "help narration")
+		return
+	}
+	t.Fatal("combat lesson missing")
+}

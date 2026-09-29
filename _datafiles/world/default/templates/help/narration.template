@@ -38,4 +38,28 @@ from your perception (<ansi fg="command">help perception</ansi>).
 Names of people are written as they are ("Garrick Vane"); everything else
 gets "the" ("the bandit captain").
 
+<ansi fg="yellow-bold">Pronouns and repeated enemy names</ansi>
+
+People and creatures use their own pronouns: he/him/his, she/her/her,
+they/them/their, or it/it/its. Tamsin Reed prays with a glow in her hands;
+Brother Oswin uses his. Generated recruits use they. Your own lines still
+say you and your; other people see they when a line refers to you.
+
+Two foes with the same name are given fixed labels, such as the first
+cutthroat and the second cutthroat. If the first falls, the survivor stays
+second. A newcomer is the third cutthroat: fallen foes keep their numbers
+reserved until the battle ends. A foe that began alone keeps its original
+name even if another of its kind joins later. Different kinds with the
+same short name use fuller labels to keep them distinct.
+
+The labels agree in blows, spells, target changes and your battle summary.
+Players fighting the same foes in the same room see the same labels.
+These labels help you follow the story; start a fight with attack [group]
+as before. Room descriptions, scouting and group selection use their
+ordinary names. Player pronoun selection is reserved for a later phase.
+
+A new battle starts its labels afresh. After a server restart or copyover,
+newly rebuilt battles also start afresh; the old ordering and summary are
+not retained.
+
 See also <ansi fg="command">help combat</ansi>, <ansi fg="command">help damage</ansi>, and <ansi fg="command">help cast</ansi>.

@@ -72,4 +72,9 @@ group whose target fell turns on you. You're turned the same way your
 companions are: when your target falls, you turn to the foe your strategy
 picks among those you can reach.
 
+Combat labels such as the first cutthroat and the second cutthroat stay
+fixed throughout the battle, including after a death. They help you follow
+target changes; you still begin with attack [group]. See
+<ansi fg="command">help narration</ansi> for how names and pronouns read.
+
 See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help attack</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
