@@ -134,12 +134,12 @@ does.
 
 ## Task 8: The vitals strip (`window-vitals.js`)
 
-- [ ] Browser check first: the player's HP and MP bars with numbers; a
+- [x] Browser check first: the player's HP and MP bars with numbers; a
   row per companion (HP; MP only with mana; awaiting dimmed with "not
   with you"; fallen with its rescue time, no bars); the warnings line
   appears and disappears; markup in a name renders as text; each row's
   accessible name carries its numbers.
-- [ ] `window-vitals.js` renders the strip above the dock group, reading
+- [x] `window-vitals.js` renders the strip above the dock group, reading
   `Char.Vitals`, `Company`, and `Company.Vitals`.
 
 ## Task 9: Character tab (`window-character.js` and friends)
