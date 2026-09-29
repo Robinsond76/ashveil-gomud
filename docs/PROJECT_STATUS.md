@@ -6,8 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-29
-- **HEAD:** `master` 2026-09-29: Phase 32g2 (live battle view), merged from
-  `phase-32g2-battle-view`. Before it, Phase 32g (web company dock), merged from
+- **HEAD:** `master` 2026-09-29: Phase 29e (pain reactions), integrated from
+  `codex/phase-29e-pain-reactions`. Before it, Phase 32g2 (live battle view),
+  merged from `phase-32g2-battle-view`, and Phase 32g (web company dock), merged from
   `phase-32g-company-dock`. Before that, Phase 29d (NPC pronouns and stable enemy
   labels), integrated from `codex/phase-29d-pronouns-ordinals`. Before that, Phase 32d (automatic combat by
   strategy), with 32c (enemy groups), 32f (company logistics), and 32h
@@ -23,19 +24,19 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29d, 32g, and 32g2; see the table below. The survival and
+- **Completed:** Phases 0–29e, 32g, and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
-  the first combat slices (29a, 29b, 29b2, 29c, 29d), enemy groups (32c),
+  the first combat slices (29a, 29b, 29b2, 29c, 29d, 29e), enemy groups (32c),
   automatic combat by strategy (32d), company experience (32e), company
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 32g2 (live battle view), from
-  `phase-32g2-battle-view`; see its work-log entry below. Before it, 32g
-  (web company dock), from `phase-32g-company-dock` (work log at commit
-  `4ce8f66`).
+- **Latest completed phase:** 29e (pain reactions), from
+  `codex/phase-29e-pain-reactions`; see its work-log entry below. Before it,
+  32g2 (live battle view), from `phase-32g2-battle-view`, and 32g
+  (web company dock), from `phase-32g-company-dock`.
 - **Before it:** 29d (pronouns and stable enemy labels), from
   `codex/phase-29d-pronouns-ordinals`; see the [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md).
   NPC/race pronouns, generated recruit neutrality, frozen shared enemy labels,
@@ -55,7 +56,7 @@ instead of duplicating them.
   Independent follow-up review found no issues and passed 40 focused repetitions.
 - **Next:** the play-test roadmap (32a–32h, 32g2) is done, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
-  the combat roadmap continues at 29e (pain reactions).
+  the combat roadmap continues at 29f (paced combat output).
   Also open: the "Future ideas" row; see Known issues.
 
 ## Phase progress
@@ -112,7 +113,7 @@ instead of duplicating them.
 | 29b2 | One battle at a time; spawn groups | Complete: `internal/battle` (each player, with their company, fights one enemy group at a time; other groups set on them hold back, then begin the next battle in the order they turned; a waiting group turns on a free player); `attack`/`cast`/`backstab`/`shoot` refuse a waiting group; hostile spawns form groups of two to five from the room's list, a lone survivor or straggler regroups, `solitary` bosses stand alone; travel ambushes are a pair; solo players get battles and summaries; help for every Ashveil system |
 | 29c | Narration voice (weapons and spells) | Complete (branch `master-6csfy6`): [design](superpowers/specs/2026-09-28-phase-29c-narration-voice-design.md), [plan](superpowers/plans/2026-09-28-phase-29c-narration-voice.md). Every weapon line rewritten, `(N damage)` / `(critical hit, N damage)` / `, M blocked` at the end of each hit, only real crits draw the critical pool; no `***`, `!`, caps, or "prepares to fight"; "the" before common names; an opener per fight, "turns toward", death lines in order, a closing line after the last; the fallen notice indented and in words; spells chant with their rounds and land with `(N damage)` / `(N healed)`; `help narration` |
 | 29d | Pronouns and ordinals | Complete and integrated: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md), [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md). NPC/race pronouns, neutral generated recruits, stable shared enemy labels, help/tutorial; independent review and full race suite passed. Player selection deferred |
-| 29e | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race |
+| 29e | Pain reactions | Complete: [design](superpowers/specs/2026-09-29-phase-29e-pain-reactions-design.md), [plan](superpowers/plans/2026-09-29-phase-29e-pain-reactions.md). A victim reacts after each damaging critical strike that leaves them standing; second person for the victim, third person for witnesses, distinct beast-race sets and NPC overrides, without changing combat mechanics |
 | 29f | Paced combat output | Proposed: [spec](superpowers/specs/2026-09-26-combat-pacing-design.md). Round lines released over time, with fast, normal (~6s), slow, and off settings; combat resolves every 2 game rounds (an 8-second combat round) |
 | 30a | Status effects and critical-hit effects (weapons only) | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, and others as buffs; crit effects by weapon type; spells do not critical hit |
 | 30b | Wounds, treatment, and `heal wounds` | Proposed: [spec](superpowers/specs/2026-09-26-wounds-treatment-design.md). Wound limits on healing; durable critical-hit wounds; one after-fight command using clerics, splints and bandages, or an inn physician; camp rest heals |
@@ -135,69 +136,36 @@ instead of duplicating them.
 
 ## Recent work log
 
-- **29d planning (current task):** expanded the approved presentation direction
-  into a code-grounded design and tests-first plan. Resolved player selection
-  as deferred; generated recruits use they; naming follows existing runtime
-  battle ownership and restarts with rebuilt battles. Pronoun defaults and
-  frozen battle labels and weapon rendering are implemented and independently
-  verified, including
-  shared battles, name collisions, late growth, and lifecycle cleanup.
-  **Review:** lead task reviews passed; independent full-phase review pending.
-
 Keep only the latest phase's entry here (What / Why / Verification /
-**Review:**). When a new phase lands, replace the previous entry with it and
-fold anything still true into "Known issues". Older entries live in git
-history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
-Phase 29b2 is at commit `d5ace46`).
+**Review:**). Older entries live in git history: `git log -p --
+docs/PROJECT_STATUS.md`.
 
-### Phase 32g2: live battle view (2026-09-29)
+### Phase 29e: pain reactions (2026-09-29)
 
-- **What:** per the [32g2 design](superpowers/specs/2026-09-29-phase-32g2-battle-view-design.md)
-  (the owner accepted decisions A–G as recommended: scout's health words;
-  every player sees their own battle; the fallen listed off the live
-  grid; an "others" chip; a tab marker, never a switch; the feed's usual
-  beat; watching plus Setup's menu and Flee) and
-  [plan](superpowers/plans/2026-09-29-phase-32g2-battle-view.md). Server:
-  `battle.Waiting`, `enemyparty.BattleParty` (shared with `hooks`), and
-  `Company.Battle` (`modules/gmcp/gmcp.CompanyBattle.go`), a third feed
-  extra built from `battle.Current` and the live room, sent only on
-  change, `{}` out of battle. Browser: `window-combat.js`'s Battle view
-  (grids, SVG lines, hover/focus/tap lighting, text list, live region,
-  Flee, Setup folded under), the Combat tab's marker (`setBadge` gains a
-  spoken label). Help: `help webclient` (the Battle view), pointers from
-  `help combat` and `help scout`, a Combat lesson hint.
-- **Why:** 32g's decision C split the live view out; the owner's
-  play-test notes and the Phase 31 battle panel design.
-- **Verification:** `make generate` (no diff), `make validate`,
-  `go test -race ./...`, `make js-lint`, and the Chromium checks
-  `dock-check.mjs`, `dock-windows-check.mjs`, `tutorial-panel-check.mjs`
-  pass after the review fixes (2026-09-29). The first full race run
-  failed on the battle view's own wiring test (the "only if seen" rule,
-  below); after that fix, the wiring tests passed 10 race loops and the
-  full run passed. Wiring:
-  `modules/company/wiring_battle_view_test.go` drives real `DoCombat`
-  rounds in the brawl world with the gmcp feed: the view's enemies,
-  cells, words, reach (placed by `formation move`), company and
-  companion targets, falls, a login re-send, the end's `{}`, Brom's own
-  view and Aria's waiting groups, an outsider under `others`, the dark,
-  and a connection without GMCP. The clock never moves.
-- **Review:** independent reviewer, 7 findings, each verified. Fixed with
-  regression tests: (1) a `Company` snapshot mid-battle erased the stored
-  battle, so the view flickered to Setup, announced "The battle is over"
-  and lost focus (the client keeps the last battle until it's re-sent;
-  the browser check fails without the fix); (2) a hidden enemy that died
-  or left was named under Fallen (a fallen enemy is named unless the view
-  last saw it hidden: a runtime memory per player and battle; the first
-  version, "only if seen", dropped a foe that fell in its first round,
-  which the full race run caught, and the wiring tests now start each
-  from a fresh login so they loop cleanly); (3) the view ignored
-  darkness (it now shows only that it's too dark, as `scout`); (4)
-  wiring gaps: companion targets, `others`, darkness, and a connection
-  without GMCP now go through real rounds; (5) a wholly hidden group was
-  named in the header and waiting line (no longer); (7) help wording
-  (alone as "You", the company's numbers, the dark). Not reproduced: (6)
-  lines going stale on a dock resize (the check passed without the fix);
-  a `ResizeObserver` was kept as cheap hardening.
+- **What:** paired victim/witness reaction lines on races and NPC templates;
+  seven distinct shipped creature sets and a spider queen override. Each
+  damaging critical strike that leaves its victim above zero gets one line
+  immediately after the blow, in second person for the victim and third
+  person for witnesses. Normal, dodged, fully blocked, and lethal strikes
+  get none. Variant selection uses a stable name hash, remaining health,
+  and strike order without drawing from combat RNG. `help narration`,
+  `help combat`, aliases, and the Combat lesson explain the feature.
+- **Why:** complete the owner's combat-presentation roadmap after 29d,
+  making critical blows felt without altering combat mechanics or time.
+- **Verification:** focused tests for `internal/races`, `internal/mobs`,
+  `internal/combat`, `internal/usercommands`, `modules/company`, and
+  `modules/tutorial` passed. `make generate` (no generated diff),
+  `make validate`, `go test -race ./...` (103 packages), `make js-lint`,
+  and `git diff --check` passed. JavaScript lint needed network access to
+  fetch JSHint; no JavaScript changed. The seeded
+  `TestNarrationPreservesCombatOutcome` passed, as did real `DoCombat`
+  reaction routing and help/tutorial checks.
+- **Review:** independent default-agent reviewer found the deterministic
+  variant omitted victim name; a regression reproduced it and the stable
+  name hash fixed it. The requested generic creature fallback test was
+  added. No critical or important bugs were found. The reviewer's broader
+  company run reported a fixture disk-full error; the lead found 668 GiB
+  free and the focused company and full race suites passed afterward.
 
 ## Known issues / deferred items
 

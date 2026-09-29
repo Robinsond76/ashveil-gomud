@@ -343,6 +343,7 @@ func TestTutorialNarrationLabels(t *testing.T) {
 		assert.Contains(t, hints, "first footman")
 		assert.Contains(t, hints, "second footman")
 		assert.Contains(t, hints, "help narration")
+		assert.Contains(t, hints, "pain reaction")
 		return
 	}
 	t.Fatal("combat lesson missing")

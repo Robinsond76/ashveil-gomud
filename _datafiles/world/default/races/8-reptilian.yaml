@@ -1,5 +1,10 @@
 raceid: 8
 name: reptilian
+painreactions:
+  - tovictim: 'Pain burns beneath your scales. You hiss and set your feet.'
+    toroom: '{name} hisses, blood darkening the scales at {his} side.'
+  - tovictim: 'The blow jars your jaw. You spit blood and lunge back.'
+    toroom: '{name} spits blood through clenched teeth and holds {his} ground.'
 description: A creature resembling a lizard somewhat.
 defaultalignment: -20
 size: medium

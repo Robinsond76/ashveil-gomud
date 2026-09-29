@@ -31,7 +31,7 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(user.Character.RoomId), &mob.Character, func(r *rooms.Room) int { return r.VisibilityForUser(user) })
 	targetChar := mobCombatCharacter(mob)
-	attackResult := calculateCombat(*user.Character, targetChar, User, Mob, penalty, company.ChemistryBonusForUser(user.UserId))
+	attackResult := calculateCombat(*user.Character, targetChar, User, Mob, penalty, company.ChemistryBonusForUser(user.UserId), mob)
 	spendEdges(user.Character, attackResult.EdgeSpent)
 
 	if attackResult.DamageToSource != 0 {
@@ -108,7 +108,7 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
 	sourceChar := mobCombatCharacter(mobAtk)
 	targetChar := mobCombatCharacter(mobDef)
-	attackResult := calculateCombat(sourceChar, targetChar, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId))
+	attackResult := calculateCombat(sourceChar, targetChar, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId), mobDef)
 	spendEdges(&mobAtk.Character, attackResult.EdgeSpent)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -305,10 +305,11 @@ const chemistryHitText = `<ansi fg="cyan">Fighting beside a companion you know w
 // magnitude that is subtracted from the hit chance. chemistryBonus is the
 // attacker's Phase 24 company chemistry, in points added to the hit chance
 // of its weapon strikes (not its pet's).
-func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int, chemistryBonus int) AttackResult {
+func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int, chemistryBonus int, targetMob ...*mobs.Mob) AttackResult {
 
 	attackResult := AttackResult{}
 	chemistryShown := false
+	strikeOrdinal := 0
 
 	atkCount := combatAttackCount(sourceChar, targetChar)
 
@@ -389,6 +390,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 			// Individual weapons may get multiple attacks
 			for j := 0; j < attacks; j++ {
+				strikeOrdinal++
 
 				attackTargetDamage := 0
 				attackTargetReduction := 0
@@ -491,6 +493,23 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					attackResult.SendToTargetRoom(
 						string(toDefenderRoomMsg.SetTokenValue(items.TokenTarget, targetChar.Name).SetTokenValue(items.TokenTargetType, string(targetType))),
 					)
+				}
+
+				// A reaction belongs to this strike, not the round's aggregate
+				// Crit flag. The live target is changed only after the whole round,
+				// so subtract earlier strikes when deciding whether it still stands.
+				if isCrit && attackTargetDamage > 0 && targetChar.Health-attackResult.DamageToTarget-attackTargetDamage > 0 {
+					var victimMob *mobs.Mob
+					if len(targetMob) > 0 {
+						victimMob = targetMob[0]
+					}
+					toVictim, toWitness := painReactionFor(&targetChar, targetType, victimMob, targetChar.Health-attackResult.DamageToTarget-attackTargetDamage, strikeOrdinal)
+					attackResult.SendToTarget(toVictim)
+					attackResult.SendToSource(toWitness)
+					attackResult.SendToSourceRoom(toWitness)
+					if sourceChar.RoomId != targetChar.RoomId {
+						attackResult.SendToTargetRoom(toWitness)
+					}
 				}
 
 				attackResult.DamageToTarget += attackTargetDamage

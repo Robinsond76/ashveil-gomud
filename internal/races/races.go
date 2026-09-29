@@ -31,7 +31,8 @@ type Race struct {
 	RaceId           int
 	Name             string
 	Description      string
-	DefaultPronouns  string `yaml:"defaultpronouns,omitempty"`
+	DefaultPronouns  string         `yaml:"defaultpronouns,omitempty"`
+	PainReactions    []PainReaction `yaml:"painreactions,omitempty"`
 	DefaultAlignment int8
 	BuffIds          []int // Permabuffs this race always has
 	Size             Size
@@ -102,6 +103,9 @@ func (r *Race) Validate() error {
 	r.DefaultPronouns = strings.ToLower(strings.TrimSpace(r.DefaultPronouns))
 	if r.DefaultPronouns != "" && r.DefaultPronouns != "he" && r.DefaultPronouns != "she" && r.DefaultPronouns != "they" && r.DefaultPronouns != "it" {
 		return fmt.Errorf("invalid default pronouns %q: must be he, she, they, or it", r.DefaultPronouns)
+	}
+	if err := ValidatePainReactions(r.PainReactions); err != nil {
+		return err
 	}
 
 	if r.DefaultAlignment < -100 {

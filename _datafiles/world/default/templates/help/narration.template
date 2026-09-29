@@ -23,6 +23,12 @@ blow that isn't critical reads as a clean, heavy hit. Your chance of a
 critical hit comes from your smarts (<ansi fg="command">help smarts</ansi>), and how hard it lands
 from your perception (<ansi fg="command">help perception</ansi>).
 
+When a critical hit does damage and the victim stays standing, a pain reaction
+follows the hit line. You read your own pain as "you"; everyone else sees the
+victim react by name. A normal hit, a fully blocked critical hit, or a dodge
+has no pain reaction. When a critical hit drops the victim, the death line
+follows instead. Pain reactions are words only: they add no damage or status.
+
 <ansi fg="yellow-bold">How a fight reads</ansi>
 
 - One line opens the fight, when a group comes at you or you at them.

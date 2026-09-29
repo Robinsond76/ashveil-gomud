@@ -47,10 +47,10 @@ func TestRoundLinesCarryTheirMechanics(t *testing.T) {
 		}
 		want := damageSuffix(res.DamageToTarget, res.Crit, 0)
 		require.NotEmpty(t, res.MessagesToSource)
-		assert.True(t, strings.HasSuffix(res.MessagesToSource[len(res.MessagesToSource)-1], want), "attacker line %q ends %q", res.MessagesToSource, want)
-		assert.True(t, strings.HasSuffix(res.MessagesToSourceRoom[len(res.MessagesToSourceRoom)-1], want), "room line %q ends %q", res.MessagesToSourceRoom, want)
+		assert.True(t, strings.HasSuffix(res.MessagesToSource[0], want), "attacker hit line %q ends %q", res.MessagesToSource, want)
+		assert.True(t, strings.HasSuffix(res.MessagesToSourceRoom[0], want), "room hit line %q ends %q", res.MessagesToSourceRoom, want)
 		wantDef := damageSuffix(res.DamageToTarget, res.Crit, res.DamageToTargetReduction)
-		assert.True(t, strings.HasSuffix(res.MessagesToTarget[len(res.MessagesToTarget)-1], wantDef), "defender line %q ends %q", res.MessagesToTarget, wantDef)
+		assert.True(t, strings.HasSuffix(res.MessagesToTarget[0], wantDef), "defender hit line %q ends %q", res.MessagesToTarget, wantDef)
 	}
 	require.Positive(t, hits, fmt.Sprintf("hits %d misses %d", hits, misses))
 	require.Positive(t, crits, "some rounds must crit")

@@ -1,6 +1,11 @@
 raceid: 21
 name: reptile
 defaultpronouns: it
+painreactions:
+  - tovictim: 'Pain runs beneath your scales. Your tail lashes while you steady yourself.'
+    toroom: '{name} whips {his} tail through the dust and hisses through the wound.'
+  - tovictim: 'The strike turns you sideways. You claw back to your feet.'
+    toroom: '{name} rolls to one side, claws scraping as {he} rises.'
 description: A lizard creature.
 defaultalignment: 0
 size: medium

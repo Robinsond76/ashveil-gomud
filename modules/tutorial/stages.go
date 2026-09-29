@@ -142,6 +142,7 @@ func init() {
 				`Watch your health in your prompt and <ansi fg="command">status</ansi>, and what ails you in <ansi fg="command">conditions</ansi>. A sharpened edge is spent one strike at a time, whether the blow does much or little.`,
 				`Repeated enemies have fixed names: the first footman and the second footman. When the first falls, the second keeps its name. Pronouns follow the people and creatures in the fight (<ansi fg="command">help narration</ansi>).`,
 				`Each hit ends with what it did, e.g. (5 damage) or (critical hit, 9 damage); a line with no brackets is a miss (<ansi fg="command">help narration</ansi>).`,
+				`A damaging critical hit gets a pain reaction if its victim stays standing. A fatal critical goes straight to a death line (<ansi fg="command">help narration</ansi>).`,
 				`When the last foe falls, a battle summary shows the damage, the kills, and your company's health (<ansi fg="command">help battle-summary</ansi>).`,
 				`Playing in the web client? The Combat tab shows the battle as it goes: both formations, who strikes whom, and how hurt each foe looks (<ansi fg="command">help webclient</ansi>).`,
 				`For every detail of how battles work, see <ansi fg="command">help combat</ansi>, and from there <ansi fg="command">help formation</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help chemistry</ansi>, and <ansi fg="command">help light</ansi>.`,
