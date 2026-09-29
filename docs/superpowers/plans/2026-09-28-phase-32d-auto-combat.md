@@ -118,11 +118,11 @@ inventory/provision code.
 
 ## Task 9: Review, verification, status
 
-- [ ] Independent reviewer subagent over `git diff f418e1d..HEAD` with the
+- [x] Independent reviewer subagent over `git diff f418e1d..HEAD` with the
   design and the invariants; verify each finding, fix the real ones with
   regression tests.
-- [ ] `go test -race ./...`, `make generate`, `make validate`, once.
-- [ ] `docs/PROJECT_STATUS.md`: the work-log entry with **Review:**; the
+- [x] `go test -race ./...`, `make generate`, `make validate`, once.
+- [x] `docs/PROJECT_STATUS.md`: the work-log entry with **Review:**; the
   phase table; Known issues (32c's two items resolved; Magic Missile's
   odds for the owner; 32f's `company eat`/`drink` check).
-- [ ] Merge into `claude/confident-pasteur-2n0e2x` and push.
+- [x] Merge into `claude/confident-pasteur-2n0e2x` and push.
