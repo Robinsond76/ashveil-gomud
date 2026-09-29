@@ -6,10 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-29
-- **Phase 30a** (status and critical-hit effects) is complete on
-  `claude/next-phase-7ekckc`, pushed to `origin` and awaiting merge to
-  `master`; see its work-log entry below.
-- **HEAD:** `master` 2026-09-29: Phase 29f (paced combat output),
+- **HEAD:** `master` 2026-09-29: Phase 30a (status and critical-hit
+  effects), merged as `2ef931c` from `claude/next-phase-7ekckc`. Before it,
+  Phase 29f (paced combat output),
   squash-merged as `fb28df3` from `claude/next-phase-planning-9u98ae`
   (branch since deleted). Before it, Phase 29e (pain reactions), integrated
   from `codex/phase-29e-pain-reactions`. Before that, Phase 32g2 (live battle view),
@@ -29,7 +28,7 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29f, 30a (on its branch, awaiting merge), 32g,
+- **Completed:** Phases 0–29f, 30a, 32g,
   and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
@@ -39,8 +38,8 @@ instead of duplicating them.
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 30a (status and critical-hit effects), on
-  `claude/next-phase-7ekckc`; see its work-log entry below. Before it, 29f
+- **Latest completed phase:** 30a (status and critical-hit effects),
+  merged to `master` as `2ef931c`; see its work-log entry below. Before it, 29f
   (paced combat output), squash-merged to `master` as `fb28df3`, and before
   that 29e (pain reactions), from `codex/phase-29e-pain-reactions`, 32g2
   (live battle view), from `phase-32g2-battle-view`, and 32g (web company
@@ -126,7 +125,7 @@ instead of duplicating them.
 | 29d | Pronouns and ordinals | Complete and integrated: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md), [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md). NPC/race pronouns, neutral generated recruits, stable shared enemy labels, help/tutorial; independent review and full race suite passed. Player selection deferred |
 | 29e | Pain reactions | Complete: [design](superpowers/specs/2026-09-29-phase-29e-pain-reactions-design.md), [plan](superpowers/plans/2026-09-29-phase-29e-pain-reactions.md). A victim reacts after each damaging critical strike that leaves them standing; second person for the victim, third person for witnesses, distinct beast-race sets and NPC overrides, without changing combat mechanics |
 | 29f | Paced combat output | Complete: [design](superpowers/specs/2026-09-29-phase-29f-paced-combat-design.md), [plan](superpowers/plans/2026-09-29-phase-29f-paced-combat.md). Combat resolves every `CombatEveryRounds` (2) game rounds, an 8-second combat round; everything a round causes is tagged (`events.WithCause`) and paced out per player (`internal/combatpace`), with `set combatpace fast|normal|slow|off` (off for screen readers); a pause before pain and death lines; typed output, tells, and says never wait; the prompt and the web client's vitals and battle view wait for the lines; flushes on move, quit, pace change, and copyover; `help combatpace` |
-| 30a | Status effects and critical-hit effects (weapons only) | Complete (branch `claude/next-phase-7ekckc`): [design](superpowers/specs/2026-09-29-phase-30a-status-crit-effects-design.md), [plan](superpowers/plans/2026-09-29-phase-30a-status-crit-effects.md). Nine statuses (bleeding, staggered, knocked down, armor broken, exposed, burning, overloaded, stunned, hobbled) as combat-round buffs (`internal/status`); crit effects by weapon subtype; ticked, and actions lost, in the combat round; cleared at fight end; Sparks overloads; `help statuses` |
+| 30a | Status effects and critical-hit effects (weapons only) | Complete (merged as `2ef931c`): [design](superpowers/specs/2026-09-29-phase-30a-status-crit-effects-design.md), [plan](superpowers/plans/2026-09-29-phase-30a-status-crit-effects.md). Nine statuses (bleeding, staggered, knocked down, armor broken, exposed, burning, overloaded, stunned, hobbled) as combat-round buffs (`internal/status`); crit effects by weapon subtype; ticked, and actions lost, in the combat round; cleared at fight end; Sparks overloads; `help statuses` |
 | 30b | Wounds, treatment, and `heal wounds` | Proposed: [spec](superpowers/specs/2026-09-26-wounds-treatment-design.md). Wound limits on healing; durable critical-hit wounds; one after-fight command using clerics, splints and bandages, or an inn physician; camp rest heals |
 | 30c | Company tactics | Proposed, rescoped 2026-09-29: [design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md). 30c1: `company tactics` (company-wide focus, changeable mid-battle for that battle only, leader-only, one-round cooldown, with web Combat-tab buttons; healing threshold) and enemy personalities. 30c2: guardian role and guards. Rotate the wounded deferred |
 | 30d | Wind-ups, telegraphs, and interrupts | Proposed: [spec](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md). Wind-ups in whole rounds, interrupt thresholds with accumulated pressure, concentration, enemy casters |
