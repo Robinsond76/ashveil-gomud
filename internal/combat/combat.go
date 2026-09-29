@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -29,7 +30,8 @@ const (
 func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(user.Character.RoomId), &mob.Character, func(r *rooms.Room) int { return r.VisibilityForUser(user) })
-	attackResult := calculateCombat(*user.Character, mob.Character, User, Mob, penalty, company.ChemistryBonusForUser(user.UserId))
+	targetChar := mobCombatCharacter(mob)
+	attackResult := calculateCombat(*user.Character, targetChar, User, Mob, penalty, company.ChemistryBonusForUser(user.UserId))
 	spendEdges(user.Character, attackResult.EdgeSpent)
 
 	if attackResult.DamageToSource != 0 {
@@ -82,7 +84,8 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) 
 func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mob.Character.RoomId), user.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mob) })
-	attackResult := calculateCombat(mob.Character, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId))
+	sourceChar := mobCombatCharacter(mob)
+	attackResult := calculateCombat(sourceChar, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId))
 	spendEdges(&mob.Character, attackResult.EdgeSpent)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -103,7 +106,9 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
-	attackResult := calculateCombat(mobAtk.Character, mobDef.Character, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId))
+	sourceChar := mobCombatCharacter(mobAtk)
+	targetChar := mobCombatCharacter(mobDef)
+	attackResult := calculateCombat(sourceChar, targetChar, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId))
 	spendEdges(&mobAtk.Character, attackResult.EdgeSpent)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -116,6 +121,14 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 	}
 
 	return attackResult
+}
+
+// mobCombatCharacter makes a narration-only copy for the combat calculation.
+// Damage, edge spending, and attribution keep using the live mob instance.
+func mobCombatCharacter(m *mobs.Mob) characters.Character {
+	character := m.Character
+	character.Name = battle.EnemyDisplayName(m.InstanceId, character.Name)
+	return character
 }
 
 func GetWaitMessages(stepType items.Intensity, sourceChar *characters.Character, targetChar *characters.Character, sourceType SourceTarget, targetType SourceTarget) AttackResult {
@@ -178,6 +191,8 @@ func buildCombatMessages(
 	togetherToAttacker, togetherToDefender, togetherToRoom, togetherToDefenderRoom items.MessageOptions,
 	separateToAttacker, separateToDefender, separateToAttackerRoom, separateToDefenderRoom items.MessageOptions,
 ) (toAttackerMsg, toDefenderMsg, toAttackerRoomMsg, toDefenderRoomMsg items.ItemMessage) {
+	sourcePronouns := combatPronouns(sourceChar, sourceType)
+	targetPronouns := combatPronouns(targetChar, targetType)
 
 	tokenReplacements := map[items.TokenName]string{
 		items.TokenItemName:     weaponName,
@@ -189,6 +204,12 @@ func buildCombatMessages(
 		items.TokenDamage:       damageStr,
 		items.TokenEntranceName: `unknown`,
 		items.TokenExitName:     `unknown`,
+		items.TokenSourceHe:     sourcePronouns.Subject,
+		items.TokenSourceHim:    sourcePronouns.Object,
+		items.TokenSourceHis:    sourcePronouns.Possessive,
+		items.TokenTargetHe:     targetPronouns.Subject,
+		items.TokenTargetHim:    targetPronouns.Object,
+		items.TokenTargetHis:    targetPronouns.Possessive,
 	}
 
 	if sourceType == Mob {
@@ -253,6 +274,13 @@ func buildCombatMessages(
 
 	capitalize := func(m items.ItemMessage) items.ItemMessage { return items.ItemMessage(util.CapitalizeFirst(string(m))) }
 	return capitalize(toAttackerMsg), capitalize(toDefenderMsg), capitalize(toAttackerRoomMsg), capitalize(toDefenderRoomMsg)
+}
+
+func combatPronouns(character *characters.Character, actorType SourceTarget) characters.PronounForms {
+	if actorType == User {
+		return characters.PronounFormsFor("they")
+	}
+	return character.CombatPronouns()
 }
 
 // damageSuffix is what a hit did, in words at the end of its line (Phase

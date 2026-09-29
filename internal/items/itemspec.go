@@ -176,6 +176,12 @@ const (
 	TokenDamage       TokenName = "{damage}"
 	TokenEntranceName TokenName = "{entrancename}"
 	TokenExitName     TokenName = "{exitname}"
+	TokenSourceHe     TokenName = "{sourcehe}"
+	TokenSourceHim    TokenName = "{sourcehim}"
+	TokenSourceHis    TokenName = "{sourcehis}"
+	TokenTargetHe     TokenName = "{targethe}"
+	TokenTargetHim    TokenName = "{targethim}"
+	TokenTargetHis    TokenName = "{targethis}"
 
 	POVUser  = 0
 	POVOther = 1

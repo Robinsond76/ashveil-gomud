@@ -10,7 +10,7 @@
 
 **Spec:** [Phase 29d design](../specs/2026-09-26-combat-pronouns-ordinals-design.md).
 
-**Status:** Owner approved; implementation in progress. Tasks 1–2 independently verified.
+**Status:** Owner approved; implementation in progress. Tasks 1–3 independently verified.
 
 **Workspace:** `.worktrees/phase-29d-pronouns-ordinals`, branch `codex/phase-29d-pronouns-ordinals`, based on `b9729809`.
 
@@ -141,24 +141,24 @@ that returns a local copy with Name replaced by EnemyDisplayName.
 Use that copy in all mob sides of the attack wrappers; retain original
 objects for health, edge spending, and damage attribution.
 
-- [ ] Add `TestCombatPronounTokens`: direct `buildCombatMessages` calls
+- [x] Add `TestCombatPronounTokens`: direct `buildCombatMessages` calls
   with fixed test templates exercise all six tokens in every together/
   separate recipient slot. Assert she/her/her, it/it/its, he/him/his,
   they/them/their; User actors always use they even with a beast form.
   Assert first-/second-person you/your and capitalization stay intact.
-- [ ] Add `TestAttackEntryPointsUseEnemyLabels`: execute player-to-mob,
+- [x] Add `TestAttackEntryPointsUseEnemyLabels`: execute player-to-mob,
   mob-to-player, and mob-to-mob entry points with tracked names. Assert
   rendered labels and unchanged original Character.Name/target IDs;
   include PvP/untracked fallbacks and damage/edge attribution assertions.
-- [ ] Add shipped pool coverage ensuring actor-owned possessives use
+- [x] Add shipped pool coverage ensuring actor-owned possessives use
   tokens (including claws), new tokens resolve, voice rules hold, and
   literals such as “buries itself” are not rewritten as actor pronouns.
-- [ ] Run `go test ./internal/combat ./internal/items -run 'Pronoun|EnemyLabels'`;
+- [x] Run `go test ./internal/combat ./internal/items -run 'Pronoun|EnemyLabels'`;
   confirm failure.
-- [ ] Implement token resolution and local name copies, then replace
+- [x] Implement token resolution and local name copies, then replace
   actor-owned hard-coded pronouns in shipped pools. Preserve mechanics,
   seeds, pools, damage suffixes, tags, and named-subject verb grammar.
-- [ ] Run `go test ./internal/combat ./internal/items`; require exit 0.
+- [x] Run `go test ./internal/combat ./internal/items`; require exit 0.
   Lead commits as `feat(combat): render NPC pronouns and stable enemy names`.
 
 ## Task 4: Wire every combat surface and the event stream
@@ -166,7 +166,9 @@ objects for health, edge spending, and damage attribution.
 **Files:** modify `internal/hooks/combat_battle.go`, `combat_stream.go`,
 `combat_narration.go`, `combat_engagement.go`, `combat_formation.go`,
 `NewRound_DoCombat.go`; modify `internal/scripting/actor_func.go`,
-`internal/mobcommands/suicide.go`; create focused pronoun/name tests in
+`internal/mobcommands/suicide.go`; sync the new script wrapper method in
+`internal/scripting/objecttypes.go` and `internal/web/api_v1_scripting_dts.go`
+(as required by scripting AGENTS.md); create focused pronoun/name tests in
 hooks/scripting/mobcommands and `modules/company/wiring_pronouns_test.go`;
 update `modules/company/wiring_narration_test.go`, `wiring_spells_test.go`
 where exact old enemy names change. Modify combat spell JS files with
@@ -208,7 +210,8 @@ mob fallback refs use stored labels without changing Ref.Key.
   fallback notices consult labels before battle teardown. Keep enemy name
   snapshots intact until death output and summary refs are captured.
 - [ ] Run `go test ./internal/hooks ./internal/scripting ./internal/mobcommands ./modules/company`;
-  require exit 0; run `make js-lint` for changed JS if available and report
+  require exit 0; run `go test ./internal/web -run ObjectTypes` for editor
+  method metadata synchronization; run `make js-lint` for changed JS if available and report
   any environmental block without claiming success. Lead reviews the
   full wiring diff and commits as `feat(narration): unify combat text and event identities`.
 

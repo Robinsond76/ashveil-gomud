@@ -19,13 +19,13 @@ options:
       - 'You drop low, ready to spring at <ansi fg="{targettype}">{target}</ansi>.'
       - 'You bare your teeth at <ansi fg="{targettype}">{target}</ansi>.'
       todefender:
-      - '<ansi fg="{sourcetype}">{source}</ansi> flexes its claws and fixes its eyes on you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> flexes {sourcehis} claws and fixes {sourcehis} eyes on you.'
       - '<ansi fg="{sourcetype}">{source}</ansi> drops low, ready to spring.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> bares its teeth at you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> bares {sourcehis} teeth at you.'
       toroom:
-      - '<ansi fg="{sourcetype}">{source}</ansi> flexes its claws and fixes its eyes on <ansi fg="{targettype}">{target}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> flexes {sourcehis} claws and fixes {sourcehis} eyes on <ansi fg="{targettype}">{target}</ansi>.'
       - '<ansi fg="{sourcetype}">{source}</ansi> drops low, ready to spring at <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> bares its teeth at <ansi fg="{targettype}">{target}</ansi>.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> bares {sourcehis} teeth at <ansi fg="{targettype}">{target}</ansi>.'
   wait:
     together:
       toattacker:
@@ -38,7 +38,7 @@ options:
       - '<ansi fg="{sourcetype}">{source}</ansi> crouches and waits for you to turn.'
       toroom:
       - '<ansi fg="{sourcetype}">{source}</ansi> paces around <ansi fg="{targettype}">{target}</ansi>, low to the ground.'
-      - 'A growl builds in <ansi fg="{sourcetype}">{source}</ansi>''s throat as it watches <ansi fg="{targettype}">{target}</ansi>.'
+      - 'A growl builds in <ansi fg="{sourcetype}">{source}</ansi>''s throat while watching <ansi fg="{targettype}">{target}</ansi>.'
       - '<ansi fg="{sourcetype}">{source}</ansi> crouches and waits for <ansi fg="{targettype}">{target}</ansi> to turn.'
   miss:
     together:
@@ -48,11 +48,11 @@ options:
       - '<ansi fg="{targettype}">{target}</ansi> twists away, and your swipe falls short.'
       todefender:
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws rake the air beside you.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> lunges, and its jaws snap shut an inch from you.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> lunges, and {sourcehis} jaws snap shut an inch from you.'
       - 'You twist away, and <ansi fg="{sourcetype}">{source}</ansi>''s swipe falls short.'
       toroom:
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws rake the air beside <ansi fg="{targettype}">{target}</ansi>.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> lunges at <ansi fg="{targettype}">{target}</ansi>, and its jaws snap shut on nothing.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> lunges at <ansi fg="{targettype}">{target}</ansi>, and {sourcehis} jaws snap shut on nothing.'
       - '<ansi fg="{targettype}">{target}</ansi> twists away, and <ansi fg="{sourcetype}">{source}</ansi>''s swipe falls short.'
   weak:
     together:
@@ -76,11 +76,11 @@ options:
       - 'Your claws open <ansi fg="{targettype}">{target}</ansi>''s side in three ragged lines.'
       todefender:
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws rake across your chest.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> sinks its teeth into your forearm and tears.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> sinks {sourcehis} teeth into your forearm and tears.'
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws open your side in three ragged lines.'
       toroom:
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws rake across <ansi fg="{targettype}">{target}</ansi>''s chest.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> sinks its teeth into <ansi fg="{targettype}">{target}</ansi>''s forearm and tears.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> sinks {sourcehis} teeth into <ansi fg="{targettype}">{target}</ansi>''s forearm and tears.'
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws open <ansi fg="{targettype}">{target}</ansi>''s side in three ragged lines.'
   heavy:
     together:
@@ -90,11 +90,11 @@ options:
       - 'Your claws rip through <ansi fg="{targettype}">{target}</ansi>''s guard and into the flesh behind it.'
       todefender:
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws tear deep into your thigh.'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s jaws clamp on your shoulder, and it shakes you like a rag.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s jaws clamp on your shoulder and shake you like a rag.'
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws rip through your guard and into the flesh behind it.'
       toroom:
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws tear deep into <ansi fg="{targettype}">{target}</ansi>''s thigh.'
-      - '<ansi fg="{sourcetype}">{source}</ansi> clamps its jaws on <ansi fg="{targettype}">{target}</ansi>''s shoulder and shakes.'
+      - '<ansi fg="{sourcetype}">{source}</ansi> clamps {sourcehis} jaws on <ansi fg="{targettype}">{target}</ansi>''s shoulder and shakes.'
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws rip through <ansi fg="{targettype}">{target}</ansi>''s guard and into the flesh behind it.'
   critical:
     together:
@@ -105,8 +105,8 @@ options:
       todefender:
       - '<ansi fg="{sourcetype}">{source}</ansi> bears you down and tears at your throat.'
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws gouge your face, and blood runs into your eyes.'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s jaws close on your leg, and bone cracks between its teeth.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s jaws close on your leg, and bone cracks between {sourcehis} teeth.'
       toroom:
       - '<ansi fg="{sourcetype}">{source}</ansi> bears <ansi fg="{targettype}">{target}</ansi> down and tears at the throat.'
       - '<ansi fg="{sourcetype}">{source}</ansi>''s claws gouge <ansi fg="{targettype}">{target}</ansi>''s face, and blood runs into the eyes.'
-      - '<ansi fg="{sourcetype}">{source}</ansi>''s jaws close on <ansi fg="{targettype}">{target}</ansi>''s leg, and bone cracks between its teeth.'
+      - '<ansi fg="{sourcetype}">{source}</ansi>''s jaws close on <ansi fg="{targettype}">{target}</ansi>''s leg, and bone cracks between {sourcehis} teeth.'
