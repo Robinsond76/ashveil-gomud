@@ -48,6 +48,8 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 	// Phase 32a2: a generated recruit's own name and description.
 	if identity.Name != "" {
 		mob.Character.Name = identity.Name
+		// Generated identities have no authored pronouns of their own.
+		mob.Character.Pronouns = "they"
 	}
 	if identity.Description != "" {
 		mob.Character.Description = identity.Description

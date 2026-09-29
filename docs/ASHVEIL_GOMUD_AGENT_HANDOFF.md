@@ -2050,11 +2050,11 @@ The AI coding agent should follow these rules.
 16. Before large engine-core changes, explain why a module/hook/extension is insufficient.
 17. Avoid premature systems such as morale, spoilage, temperature simulation, complex mounts, and advanced tactical AI until the vertical slice works.
 18. Preserve compatibility with future upstream GoMud merges when reasonably possible.
-19. Use a deliberate agent-model split:
-    - GPT-5.6 Terra at medium reasoning is the orchestrator. It owns architecture, planning, integration decisions, task scoping, and acceptance decisions.
-    - GPT-5.6 Luna implements only narrowly scoped changes with explicit file boundaries, acceptance criteria, and test commands supplied by the orchestrator.
-    - GPT-5.6 Terra at medium reasoning independently reviews every implementation diff and its test evidence before the change is accepted.
-    - Elevate the implementation work to high reasoning, or assign it to Terra, when it involves concurrency, timers, persistent state recovery, disconnect/reconnect behavior, or other multiplayer invariants.
+19. Use the current task's default agent and reasoning settings for implementation:
+    - The lead owns architecture, planning, task scoping, implementation, review, verification, and commits.
+    - Do not require a named model unless the owner explicitly requests one; a later default-agent request supersedes an earlier model selection.
+    - Execute directly by default. Any authorized delegation follows `docs/AGENT_IMPLEMENTATION_WORKFLOW.md` with inherited model settings and a narrow brief.
+    - Preserve the independent full-phase review gate and all concurrency, persistence, and multiplayer checks.
 20. Do not dispatch an implementation task until the current phase design has explicit owner approval.
 21. Keep the Python prototype read-only. Its local reference copy lives at `reference/ashveil-mud/`, is excluded through `.git/info/exclude`, and is a mechanics/design archive rather than a source tree to modify.
 22. Isolate every plan, phase, or feature on its own git worktree and feature branch. Never implement or commit plan work directly on `master`; `master` is an integration branch and must stay clean. Create the workspace with `git worktree add .worktrees/<branch-name> -b <branch-name>` (`.worktrees/` is gitignored and is the project convention), run the baseline checks there, commit the plan tasks on that branch, and merge locally or open a PR against `origin` only after the phase's checks pass. Remove the worktree when the branch is finished. If a worktree is unavailable, create and check out a feature branch before making any commit.

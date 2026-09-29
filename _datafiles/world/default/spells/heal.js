@@ -34,7 +34,7 @@ function onWait(sourceActor, targetActor) {
 
     var rounds = chanting(sourceActor.ChantRoundsLeft());
     SendUserMessage(sourceActor.UserId(), 'You keep praying. Your hands begin to glow.' + rounds);
-    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCombatName(true) + ' keeps praying, and a soft glow grows in their hands.' + rounds, sourceActor.UserId());
+    SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCombatName(true) + ' keeps praying, and a soft glow grows in ' + sourceActor.GetCombatPronoun('possessive') + ' hands.' + rounds, sourceActor.UserId());
 }
 
 /**
@@ -55,13 +55,13 @@ function onMagic(sourceActor, targetActor) {
 
     if (sourceUserId != 0 && sourceUserId == targetUserId) {
         SendUserMessage(sourceUserId, 'You press your glowing hands to your own wounds, and they close a little.' + suffix);
-        SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' presses glowing hands to their own wounds.' + suffix, sourceUserId);
+        SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' presses glowing hands to ' + sourceActor.GetCombatPronoun('possessive') + ' own wounds.' + suffix, sourceUserId);
         return;
     }
 
     // Phase 32d: a companion healer tending its own wounds.
     if (sourceUserId == 0 && targetUserId == 0 && sourceActor.InstanceId() == targetActor.InstanceId()) {
-        SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' presses glowing hands to their own wounds.' + suffix);
+        SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' presses glowing hands to ' + sourceActor.GetCombatPronoun('possessive') + ' own wounds.' + suffix);
         return;
     }
 

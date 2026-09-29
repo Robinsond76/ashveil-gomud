@@ -1,5 +1,6 @@
 raceid: 16
 name: golem
+defaultpronouns: it
 description: Animated material
 defaultalignment: 0
 buffids:

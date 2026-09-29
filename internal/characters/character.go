@@ -47,6 +47,8 @@ const (
 type Character struct {
 	Name                string                         // The name of the character
 	Description         string                         // A description of the character.
+	Pronouns            string                         `yaml:"pronouns,omitempty"`      // Authored third-person combat pronouns.
+	CombatNoun          string                         `yaml:"combatnoun,omitempty"`    // Authored short noun for combat narration.
 	Adjectives          []string                       `yaml:"adjectives,omitempty"`    // Decorative text for the name of the character (e.g. "sleeping", "dead", "wounded")
 	RoomId              int                            `yaml:"roomid,omitempty"`        // The room id the character is in.
 	RoomIdOnReset       int                            `yaml:"roomidonreset,omitempty"` // The room they are sent to if their RoomId isn't found.

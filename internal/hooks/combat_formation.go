@@ -350,7 +350,7 @@ func resolveInterceptedMobAttack(mob, interceptor *mobs.Mob, mobRoom, defRoom *r
 		return
 	}
 
-	defRoom.SendText(shieldBreaksRoomLine(interceptor.Character.Equipment.Offhand.NameSimple(), mobTag(interceptor.Character.Name)))
+	defRoom.SendText(shieldBreaksRoomLine(interceptor.Character.Equipment.Offhand.NameSimple(), mobTag(mobName(interceptor.InstanceId))))
 	events.AddToQueue(events.ItemOwnership{MobInstanceId: interceptor.InstanceId, Item: interceptor.Character.Equipment.Offhand, Gained: false})
 	interceptor.Character.RemoveFromBody(interceptor.Character.Equipment.Offhand)
 	itm := items.New(20)
@@ -596,6 +596,6 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	emitTargetChange(mobRef(mob), mobRefById(lostId), mobRefById(newTargetId), room.RoomId)
 	mob.Character.SetAggro(0, newTargetId, attackType(mob.Character.Aggro))
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-	room.SendText(turnsToward(mobTag(mob.Character.Name), mobTag(mobName(newTargetId))))
+	room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), mobTag(mobName(newTargetId))))
 	return true
 }

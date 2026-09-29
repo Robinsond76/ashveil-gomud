@@ -31,6 +31,7 @@ type Race struct {
 	RaceId           int
 	Name             string
 	Description      string
+	DefaultPronouns  string `yaml:"defaultpronouns,omitempty"`
 	DefaultAlignment int8
 	BuffIds          []int // Permabuffs this race always has
 	Size             Size
@@ -96,6 +97,11 @@ func (r *Race) Validate() error {
 	r.Size = Size(strings.ToLower(string(r.Size)))
 	if r.Size != Small && r.Size != Medium && r.Size != Large {
 		return fmt.Errorf("invalid size %q: must be small, medium, or large", r.Size)
+	}
+
+	r.DefaultPronouns = strings.ToLower(strings.TrimSpace(r.DefaultPronouns))
+	if r.DefaultPronouns != "" && r.DefaultPronouns != "he" && r.DefaultPronouns != "she" && r.DefaultPronouns != "they" && r.DefaultPronouns != "it" {
+		return fmt.Errorf("invalid default pronouns %q: must be he, she, they, or it", r.DefaultPronouns)
 	}
 
 	if r.DefaultAlignment < -100 {

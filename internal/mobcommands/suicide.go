@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -32,7 +33,7 @@ var OnPracticeBeaten util.Hook[PracticeBeaten]
 
 // mobNameTag is a mob's name as the death notices print it.
 func mobNameTag(mob *mobs.Mob) string {
-	return `<ansi fg="mobname">` + mob.Character.Name + `</ansi>`
+	return `<ansi fg="mobname">` + battle.EnemyDisplayName(mob.InstanceId, mob.Character.Name) + `</ansi>`
 }
 
 // Suicide kills mob. rest is "" (a death, with its notice), "quiet" (the

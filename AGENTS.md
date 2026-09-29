@@ -8,24 +8,26 @@ This fork is becoming the Ashveil game, with GoMud as its engine foundation. Use
 
 `docs/PROJECT_STATUS.md` is the living status log for the migration. Update it whenever a commit lands or a phase completes, recording what was done, why, and which step or phase completed. Keep it short and current, and link to detailed docs instead of duplicating them.
 
-## Terra + Luna Implementation Workflow
+## Agent Implementation Workflow
 
-Terra is the lead engineer for Ashveil: it owns architecture, task scoping,
-code review, verification, follow-up work, and commits. For a scoped
-implementation task, Terra may delegate the first implementation pass to one
-native Codex subagent using `gpt-5.6-luna` at medium reasoning effort. Read
-`docs/LUNA_IMPLEMENTER_WORKFLOW.md` before doing so.
+Use the current task's default agent and reasoning settings for implementation.
+Do not require Terra, Luna, or another named model unless the owner explicitly
+requests one for the current task. Read
+`docs/AGENT_IMPLEMENTATION_WORKFLOW.md` for the workflow.
 
-Delegate only after the change is understood and the appropriate feature
-worktree is active. Give Luna a narrow, self-contained brief with acceptance
-criteria, relevant invariants, package or file boundaries, and focused checks.
-Do not edit the same worktree while Luna is running.
+The lead agent owns architecture, task scoping, implementation, code review,
+verification, follow-up work, and commits. Implement directly by default.
+When delegation is explicitly requested by the owner or applicable workflow,
+give the worker a narrow, self-contained brief with acceptance criteria,
+relevant invariants, package or file boundaries, and focused checks. Inherit
+the task's model settings unless the owner requests an override. Do not edit
+the same worktree while a worker is running.
 
-Treat Luna's output as an untrusted implementation proposal: after it exits,
-Terra must inspect the complete diff, verify the phase invariants and nested
-`AGENTS.md` instructions, run proportionate tests itself, and either request a
-focused Luna fix round or make the final corrections. Only Terra may update
-project status, commit, merge, push, or claim verification passed.
+Treat a worker's output as an untrusted implementation proposal: after it
+exits, inspect the complete diff, verify the phase invariants and nested
+`AGENTS.md` instructions, and independently run proportionate tests. Only the
+lead may update project status, commit, merge, push, or claim verification
+passed. The independent final review gate below still applies.
 
 ## Project Structure & Module Organization
 

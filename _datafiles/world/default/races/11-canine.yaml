@@ -1,5 +1,6 @@
 raceid: 11
 name: canine
+defaultpronouns: it
 description: A canine.
 defaultalignment: 0
 buffids:

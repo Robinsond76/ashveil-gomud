@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"sort"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
@@ -290,7 +291,7 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 		emitTargetChange(mobRef(mob), mobRefById(previous), mobRefById(newId), room.RoomId)
 		mob.Character.SetAggro(0, newId, attackType(mob.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-		room.SendText(turnsToward(mobTag(mob.Character.Name), mobTag(mobName(newId))))
+		room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), mobTag(mobName(newId))))
 	}
 }
 
@@ -434,9 +435,9 @@ func mobHidden(instanceId int) bool {
 
 func mobName(instanceId int) string {
 	if mob := mobs.GetInstance(instanceId); mob != nil {
-		return mob.Character.Name
+		return battle.EnemyDisplayName(instanceId, mob.Character.Name)
 	}
-	return `someone`
+	return battle.EnemyDisplayName(instanceId, `someone`)
 }
 
 // keepPartyEngaged gives each living party member a legal company target
@@ -572,14 +573,14 @@ func (s companySide) aimPartyMember(mob *mobs.Mob, key company.MemberKey, room *
 		if target == nil {
 			return
 		}
-		targetName = fmt.Sprintf(`<ansi fg="mobname">%s</ansi>`, target.Character.Name)
+		targetName = mobTag(mobName(target.InstanceId))
 		next = mobRef(target)
 		mob.Character.SetAggro(0, instanceId, attackType(mob.Character.Aggro))
 	}
 	emitTargetChange(mobRef(mob), previous, next, room.RoomId)
 	mob.PreventIdle = true
 	events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
-	room.SendText(turnsToward(mobTag(mob.Character.Name), targetName))
+	room.SendText(turnsToward(mobTag(mobName(mob.InstanceId)), targetName))
 }
 
 // aimRef names what an enemy's Aggro was aimed at, for a target change.

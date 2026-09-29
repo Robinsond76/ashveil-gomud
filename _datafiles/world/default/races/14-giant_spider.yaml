@@ -1,5 +1,6 @@
 raceid: 14
 name: giant spider
+defaultpronouns: it
 description: A massive arachnid.
 defaultalignment: -50
 size: large

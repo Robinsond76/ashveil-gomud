@@ -70,3 +70,27 @@ func TestCombatHelpTopics(t *testing.T) {
 	assert.Contains(t, text, "one level")
 	assert.Contains(t, text, "church")
 }
+
+func TestCombatHelpPronounsAndOrdinals(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	narration, err := GetHelpContents("narration")
+	require.NoError(t, err)
+	for _, alias := range []string{"pronouns", "ordinals"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err)
+		assert.Equal(t, narration, got)
+	}
+	for _, want := range []string{"he", "she", "they", "it", "second cutthroat", "third cutthroat", "restart", "you", "your"} {
+		assert.Contains(t, narration, want)
+	}
+	for _, topic := range []string{"narration", "combat", "targeting", "battle-summary"} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err)
+		assert.Contains(t, text, "second", topic)
+		assert.NotContains(t, text, "set pronouns", topic)
+	}
+	targeting, err := GetHelpContents("targeting")
+	require.NoError(t, err)
+	assert.Contains(t, targeting, "attack [group]")
+}

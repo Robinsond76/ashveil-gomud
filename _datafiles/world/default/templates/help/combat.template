@@ -88,3 +88,6 @@ and your company's health.
 
 In the tutorial, the Practice Yard lets you try all of this against straw
 soldiers that can't hurt you (<ansi fg="command">help tutorial</ansi>).
+Repeated enemy names become fixed labels such as the first cutthroat and
+the second cutthroat. A survivor keeps its label when another falls; see
+<ansi fg="command">help narration</ansi> for pronouns and names.

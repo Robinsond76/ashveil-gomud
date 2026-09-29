@@ -20,8 +20,9 @@ type Battle struct {
 	RoomId     int
 	PartyID    string // the group's party id when the battle began or was last seen
 	StartRound uint64
-	Enemies    map[int]bool // the group's mob instance ids seen in this battle
-	FightID    uint64       // its fight on the combat event stream
+	Enemies    map[int]bool      // the group's mob instance ids seen in this battle
+	EnemyNames map[int]EnemyName // immutable enemy narration snapshots
+	FightID    uint64            // its fight on the combat event stream
 }
 
 // Has reports whether instanceId is one of the battle's enemies.
@@ -33,6 +34,7 @@ func (b Battle) clone() Battle {
 	for id := range b.Enemies {
 		c.Enemies[id] = true
 	}
+	c.EnemyNames = cloneEnemyNames(b.EnemyNames)
 	return c
 }
 
@@ -57,7 +59,7 @@ func Current(userId int) (Battle, bool) {
 func Begin(userId, roomId int, round uint64, partyID string, enemies []int) Battle {
 	mu.Lock()
 	defer mu.Unlock()
-	b := &Battle{UserId: userId, RoomId: roomId, PartyID: partyID, StartRound: round, Enemies: map[int]bool{}}
+	b := &Battle{UserId: userId, RoomId: roomId, PartyID: partyID, StartRound: round, Enemies: map[int]bool{}, EnemyNames: map[int]EnemyName{}}
 	for _, id := range enemies {
 		b.Enemies[id] = true
 	}

@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -215,12 +216,34 @@ func (a ScriptActor) GetMiscCharacterDataKeys(prefixMatches ...string) []string 
 func (a ScriptActor) GetCombatName(startOfLine bool) string {
 	name := a.GetCharacterName(true)
 	if a.mobRecord != nil {
+		name = `<ansi fg="mobname">` + battle.EnemyDisplayName(a.mobInstanceId, a.characterRecord.Name) + `</ansi>`
 		name = util.Article(name)
 	}
 	if startOfLine {
 		name = util.CapitalizeFirst(name)
 	}
 	return name
+}
+
+// GetCombatPronoun returns subject, object, or possessive combat pronouns.
+// Players always use they forms, including while polymorphed.
+func (a ScriptActor) GetCombatPronoun(form string) string {
+	if a.characterRecord == nil {
+		return ""
+	}
+	pronouns := a.characterRecord.CombatPronouns()
+	if a.userRecord != nil {
+		pronouns = characters.PronounFormsFor("they")
+	}
+	switch form {
+	case "subject":
+		return pronouns.Subject
+	case "object":
+		return pronouns.Object
+	case "possessive":
+		return pronouns.Possessive
+	}
+	return ""
 }
 
 // ChantRoundsLeft is how many rounds from now the actor's spell is

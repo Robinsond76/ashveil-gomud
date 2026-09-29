@@ -333,7 +333,7 @@ func TestALonePlayerWhoBrokeOffIsTurnedAgain(t *testing.T) {
 	a := b.aria.Character.Aggro
 	require.NotNil(t, a, "turned onto the next foe")
 	assert.NotEqual(t, target, a.MobInstanceId)
-	assert.Regexp(t, `You turn toward the ruffian\.`, all)
+	assert.Regexp(t, `You turn toward the (?:second|third) ruffian\.`, all)
 	assert.NotContains(t, all, "You turn on")
 }
 

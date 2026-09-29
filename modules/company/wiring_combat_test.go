@@ -109,9 +109,6 @@ func newBrawl(t *testing.T) *brawl {
 	// Phase 32e: this brawl forces every member's health to 1000 each round
 	// (toughen); a level-up mid-round would recompute it and could let a
 	// member fall. Kill XP is switched off so nobody levels here.
-	gameplay := configs.GetGamePlayConfig()
-	gameplay.XPScale = 0
-	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 
 	dataDir := t.TempDir()
 	useDataDir(t, dataDir)
@@ -166,6 +163,10 @@ func newBrawl(t *testing.T) *brawl {
 	flat["Modules.company.AllowedCompanionMobIDs"] = []any{61, 62, 63, 64}
 	require.NoError(t, configs.RestoreOverrides(flat))
 	t.Cleanup(func() { require.NoError(t, configs.RestoreOverrides(previous)) })
+	// Apply after RestoreOverrides, which validates zero XPScale back to 100.
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.XPScale = 0
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
@@ -407,7 +408,7 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	b.toughen()
 	got = b.fight()
 	assert.NotContains(t, got, "You can't reach that target from here.")
-	turned := regexp.MustCompile(`You can't reach the bandit captain from here\. You turn toward the (bandit \w+)\.`).FindStringSubmatch(got)
+	turned := regexp.MustCompile(`You can't reach the bandit captain from here\. You turn toward the ((?:first|second) cutthroat)\.`).FindStringSubmatch(got)
 	require.Len(t, turned, 2, "Aria is told she turns from the captain:\n%s", got)
 	assert.NotEqual(t, "bandit captain", turned[1])
 	assert.True(t, swungAt(got, turned[1]), "Aria swung at her new target in the same round:\n%s", got)
@@ -432,8 +433,8 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 	garrick := b.companion(3)
 	garrick.Character.EndAggro()
 	got = b.fight()
-	assert.Contains(t, got, "You turn toward the bandit ", "the leader rejoins")
-	assert.Contains(t, got, "Garrick Vane turns toward the bandit ", "the killer rejoins")
+	assert.Regexp(t, `You turn toward the (first|second) cutthroat\.`, got, "the leader rejoins")
+	assert.Regexp(t, `Garrick Vane turns toward the (first|second) cutthroat\.`, got, "the killer rejoins")
 
 	// Phase 32d: `break` is refused in a battle (only flee takes her out),
 	// and she fights on.

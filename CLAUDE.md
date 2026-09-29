@@ -1,12 +1,11 @@
 @AGENTS.md
 
-## Claude-specific workflow (overrides "Terra + Luna" for Claude sessions)
+## Claude workflow
 
-The "Terra + Luna Implementation Workflow" above, and `docs/LUNA_IMPLEMENTER_WORKFLOW.md`,
-are written for ChatGPT/Codex, which delegates to a native Codex subagent running
-`gpt-5.6-luna`. This project is also worked on with Claude Code, where the intended
-driving methodology is the **Superpowers** plugin (`obra/superpowers`, nominally enabled
-for this repo via `.claude/settings.json` → `enabledPlugins["superpowers@claude-plugins-official"]`).
+Use the current task's default agent and reasoning settings, following
+`docs/AGENT_IMPLEMENTATION_WORKFLOW.md`. This project also uses the
+**Superpowers** plugin (`obra/superpowers`, nominally enabled via
+`.claude/settings.json` → `enabledPlugins["superpowers@claude-plugins-official"]`).
 
 **Check first:** the `settings.json` flag does not install the plugin. If the Superpowers
 skills (`brainstorming`, `writing-plans`, `executing-plans`, ...) are not in this session's
@@ -57,8 +56,8 @@ design doc's acceptance criteria name the pages; the reviewer checks them.
   providers) gets at least one test that goes through the real entry point, not just the
   helper underneath it. A plan's task list must name these wiring tests explicitly.
 - **Independent review before merge.** After the phase verifies green and before merging
-  to `master`, dispatch a reviewer subagent (`Agent`, `general-purpose`, `model: "opus"`, the most capable
-  model tier) over the full phase diff (`git diff <base>..HEAD`). Brief it with the
+  to `master`, dispatch an independent reviewer subagent using the task's default
+  model over the full phase diff (`git diff <base>..HEAD`). Brief it with the
   phase's design doc, the non-negotiable invariants (never advance the world clock,
   survive restart/copyover, concurrency and lock ordering), and ask it to report bugs,
   design gaps, missing test coverage, and missing or inaccurate player help — findings
@@ -71,32 +70,12 @@ full verification runs after the fixes, not before and after.
   **Review:** line (what the reviewer found, what was fixed, what was rejected). A phase
   isn't done, and isn't merged, until that line exists.
 
-Superpowers' `subagent-driven-development` skill dispatches implementer/reviewer
-subagents itself (via the `Agent` tool) and asks the driving session to pick a model per
-task under its own "Model Selection" tiers. Map those tiers to this project's Terra/Luna
-split — Opus as the orchestrator, Sonnet as the implementer:
-
-- **Terra role → the main Claude session, on Opus.** Own architecture, task scoping,
-  brainstorming/plan approval, code review, verification, `docs/PROJECT_STATUS.md`
-  updates, and all commits/merges. Never hand these off. This is also Superpowers'
-  "standard" and "most capable" model tier — use Opus for integration/judgment tasks,
-  architecture/design tasks, and all review/escalation rounds.
-- **Luna role → Superpowers' "cheap, fast model" tier → Sonnet.** When dispatching a
-  mechanical implementation task (isolated function, clear spec, 1–2 files) via
-  `Agent({ ..., model: "sonnet" })`, give it the same kind of narrow, self-contained brief
-  `docs/LUNA_IMPLEMENTER_WORKFLOW.md` describes: acceptance criteria, relevant
-  invariants, exact file/package boundaries, and the focused checks to run. Tell it
-  explicitly not to commit, push, merge, create a worktree, or touch
-  `docs/PROJECT_STATUS.md`.
-- Treat any subagent's diff as an untrusted proposal: read the whole diff yourself,
-  independently run proportionate tests, and either request a focused fix round or make
-  the final corrections yourself.
-- Skip delegation and implement directly yourself (on Opus) for anything involving
-  concurrency, timers, persistent-state recovery, disconnect/reconnect, or other
-  multiplayer invariants — the same threshold the handoff doc uses to escalate past Luna
-  (`docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md`, rule 19 in section 50), and matches
-  Superpowers' own guidance to escalate architecture/design and fix-loop rounds 4–5 to a
-  more capable model.
+Use the current task's default agent for implementation; do not impose a
+Terra/Luna or Opus/Sonnet split. Execute the approved plan directly by default.
+When delegation is explicitly requested or required, follow
+`docs/AGENT_IMPLEMENTATION_WORKFLOW.md` with inherited model settings.
+The independent full-phase review remains mandatory before merge. Treat its
+findings as proposals, verify them, and record the review outcome.
 
 ## Project context for Claude
 

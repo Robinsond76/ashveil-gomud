@@ -31,4 +31,9 @@ their turn, each battle gets its own summary.
   <ansi fg="command">set battlesummary</ansi>
   Turn the summary off, or back on. It's on to start with.
 
+The summary uses the same fixed enemy labels as the fight: the second
+cutthroat stays second even after the first falls. A new battle, including
+one rebuilt after restart or copyover, starts its labels afresh
+(<ansi fg="command">help narration</ansi>).
+
 See also: <ansi fg="command">help combat</ansi>.

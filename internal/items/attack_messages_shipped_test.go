@@ -62,3 +62,34 @@ func TestShippedWeaponTextVoice(t *testing.T) {
 		}
 	}
 }
+
+// Phase 29d: claws can be used by a person or a beast, so actor-owned
+// pronouns are tokens. Reflexives belonging to an item stay literal.
+func TestShippedWeaponPronounTokens(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	dir := filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default", "combat-messages")
+	claws, err := os.ReadFile(filepath.Join(dir, "claws.yaml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(claws)
+	for _, token := range []string{"{sourcehis}"} {
+		if !strings.Contains(text, token) {
+			t.Errorf("claws.yaml missing %s", token)
+		}
+	}
+	for _, literal := range []string{"its claws", "its eyes", "its teeth", "as it watches", "and it shakes", "between its teeth"} {
+		if strings.Contains(text, literal) {
+			t.Errorf("claws.yaml retains actor pronoun %q", literal)
+		}
+	}
+	for _, file := range []string{"cleaving.yaml", "shooting.yaml"} {
+		data, err := os.ReadFile(filepath.Join(dir, file))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(data), "buries itself") {
+			t.Errorf("%s lost item reflexive", file)
+		}
+	}
+}
