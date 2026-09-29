@@ -119,17 +119,17 @@ does.
 
 ## Task 7: Dock tab groups (`webclient-core.js`)
 
-- [ ] Browser check first (`scripts/browser/dock-check.mjs`,
+- [x] Browser check first (`scripts/browser/dock-check.mjs`,
   `dock-harness.html`): four stub windows with `tabGroup: 'dock'` render
   as one panel with a tab strip; the active tab survives a reload; popping
   a tab out floats it and docking it returns it to its tab; closing the
   last tab removes the panel; a window without `tabGroup` stacks as today.
-- [ ] `VirtualWindow` option `tabGroup`; `DockSlot` renders a group as
+- [x] `VirtualWindow` option `tabGroup`; `DockSlot` renders a group as
   one panel (tablist with `role="tab"`/`tabpanel`, arrow-key moves);
   `LayoutStore` saves group and active tab.
-- [ ] Layout version: a layout saved before 32g is discarded once, and
+- [x] Layout version: a layout saved before 32g is discarded once, and
   the terminal shows the notice; check it in the harness.
-- [ ] `WINDOW_DOCK_DEFAULTS`: left Time & Date, Map, RoomInfo, Tutorial;
+- [x] `WINDOW_DOCK_DEFAULTS`: left Time & Date, Map, RoomInfo, Tutorial;
   right the dock group.
 
 ## Task 8: The vitals strip (`window-vitals.js`)
