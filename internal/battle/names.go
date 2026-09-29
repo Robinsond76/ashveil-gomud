@@ -225,7 +225,15 @@ func uniqueDisplayName(base string, instanceID int, used map[string]bool) string
 	if !used[displayKey(base)] {
 		return base
 	}
-	return fmt.Sprintf("%s (%d)", base, instanceID)
+	for discriminator := 1; ; discriminator++ {
+		candidate := fmt.Sprintf("%s (%d)", base, instanceID)
+		if discriminator > 1 {
+			candidate = fmt.Sprintf("%s (%d, %d)", base, instanceID, discriminator)
+		}
+		if !used[displayKey(candidate)] {
+			return candidate
+		}
+	}
 }
 
 func uniqueOrdinalName(rank int, noun, fullBase string, instanceID int, used map[string]bool) string {
@@ -237,7 +245,7 @@ func uniqueOrdinalName(rank int, noun, fullBase string, instanceID int, used map
 	if !used[displayKey(candidate)] {
 		return candidate
 	}
-	return fmt.Sprintf("%s (%d)", candidate, instanceID)
+	return uniqueDisplayName(candidate, instanceID, used)
 }
 
 func ordinal(n int) string {

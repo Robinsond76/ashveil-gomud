@@ -39,7 +39,9 @@ func TestAttackEntryPointsUseEnemyLabels(t *testing.T) {
 	attacker.Character.Equipment.Weapon = sharpenedItem(edgeSwordID, 1, 10)
 	battle.Grow(user.UserId, "bandits", []int{attacker.InstanceId})
 	battle.AssignEnemyNames(user.UserId, []battle.EnemyName{{InstanceId: attacker.InstanceId, BaseName: attacker.Character.Name}})
+	userHealth := user.Character.Health
 	mobResult := AttackMobVsPlayer(attacker, user)
+	assert.Equal(t, userHealth-mobResult.DamageToTarget, user.Character.Health)
 	require.NotEmpty(t, mobResult.MessagesToSourceRoom)
 	assert.True(t, hasMessage(mobResult.MessagesToSourceRoom, "third cutthroat"))
 	assert.Equal(t, "bandit cutthroat", attacker.Character.Name)
@@ -51,7 +53,13 @@ func TestAttackEntryPointsUseEnemyLabels(t *testing.T) {
 	attacker.Character.Charm(user.UserId, characters.CharmPermanent, characters.CharmExpiredRevert)
 	battle.Grow(user.UserId, "bandits", []int{ally.InstanceId})
 	battle.AssignEnemyNames(user.UserId, []battle.EnemyName{{InstanceId: ally.InstanceId, BaseName: ally.Character.Name}})
+	allyHealth := ally.Character.Health
+	attackerHealth := attacker.Character.Health
+	attackerEdge := attacker.Character.Equipment.Weapon.SharpStrikes
 	mobVsMob := AttackMobVsMob(attacker, ally)
+	assert.Equal(t, allyHealth-mobVsMob.DamageToTarget, ally.Character.Health)
+	assert.Equal(t, attackerHealth-mobVsMob.DamageToSource, attacker.Character.Health)
+	assert.Equal(t, attackerEdge-mobVsMob.EdgeSpent[items.Weapon], attacker.Character.Equipment.Weapon.SharpStrikes)
 	require.NotEmpty(t, mobVsMob.MessagesToSourceRoom)
 	assert.True(t, hasMessage(mobVsMob.MessagesToSourceRoom, "third cutthroat"))
 	assert.True(t, hasMessage(mobVsMob.MessagesToSourceRoom, "fourth cutthroat"))
@@ -62,6 +70,10 @@ func TestAttackEntryPointsUseEnemyLabels(t *testing.T) {
 	untracked := &mobs.Mob{InstanceId: 9999, Character: *edgeFighter(90231)}
 	untracked.Character.Name = "untracked foe"
 	assert.Equal(t, "untracked foe", mobCombatCharacter(untracked).Name)
+	untrackedResult := AttackMobVsPlayer(untracked, user)
+	require.NotEmpty(t, untrackedResult.MessagesToSourceRoom)
+	assert.True(t, hasMessage(untrackedResult.MessagesToSourceRoom, "untracked foe"))
+	assert.Equal(t, "untracked foe", untracked.Character.Name)
 
 	pvpTarget := users.NewUserRecord(9926, 9926)
 	pvpTarget.Character = edgeFighter(90231)

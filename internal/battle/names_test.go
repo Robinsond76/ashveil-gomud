@@ -148,3 +148,46 @@ func TestEnemyNamesLifecycleAndCopies(t *testing.T) {
 	Reset()
 	assert.Equal(t, "fallback", EnemyDisplayName(71, "fallback"))
 }
+
+func TestEnemyNamesReserveAuthoredFallbacks(t *testing.T) {
+	t.Run("late literal ordinal", func(t *testing.T) {
+		Reset()
+		t.Cleanup(Reset)
+		Begin(7, 100, 1, "foes", []int{1, 2})
+		AssignEnemyNames(7, []EnemyName{named(1, "bandit cutthroat"), named(2, "bandit cutthroat")})
+		Grow(7, "foes", []int{3})
+		AssignEnemyNames(7, []EnemyName{named(3, "first cutthroat")})
+		assert.Equal(t, "first cutthroat", EnemyDisplayName(1, ""))
+		assert.Equal(t, "first cutthroat (3)", EnemyDisplayName(3, ""))
+	})
+	t.Run("late suffix literal", func(t *testing.T) {
+		Reset()
+		t.Cleanup(Reset)
+		Begin(7, 100, 1, "foes", []int{1, 2, 4})
+		AssignEnemyNames(7, []EnemyName{named(1, "bandit cutthroat"), named(2, "bandit cutthroat"), named(4, "first cutthroat (5)")})
+		before, _ := Current(7)
+		Grow(7, "foes", []int{5})
+		AssignEnemyNames(7, []EnemyName{named(5, "first cutthroat")})
+		after, _ := Current(7)
+		for id, name := range before.EnemyNames {
+			assert.Equal(t, name, after.EnemyNames[id], "issued snapshots stay frozen")
+		}
+		labels := map[string]bool{}
+		for _, name := range after.EnemyNames {
+			require.False(t, labels[name.DisplayName], "duplicate label %q", name.DisplayName)
+			labels[name.DisplayName] = true
+		}
+	})
+	t.Run("initial ordinal suffix literal", func(t *testing.T) {
+		Reset()
+		t.Cleanup(Reset)
+		Begin(7, 100, 1, "foes", []int{1, 2, 3, 4, 5})
+		AssignEnemyNames(7, []EnemyName{named(1, "bandit cutthroat"), named(2, "bandit cutthroat"), named(3, "first cutthroat"), named(4, "first bandit cutthroat"), named(5, "first bandit cutthroat (1)")})
+		current, _ := Current(7)
+		labels := map[string]bool{}
+		for _, name := range current.EnemyNames {
+			require.False(t, labels[name.DisplayName], "duplicate label %q", name.DisplayName)
+			labels[name.DisplayName] = true
+		}
+	})
+}

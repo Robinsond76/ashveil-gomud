@@ -10,7 +10,7 @@
 
 **Spec:** [Phase 29d design](../specs/2026-09-26-combat-pronouns-ordinals-design.md).
 
-**Status:** Owner approved; implementation in progress. Tasks 1–3 independently verified.
+**Status:** Owner approved; all seven tasks complete and verified (2026-09-29). Feature branch ready for integration.
 
 **Workspace:** `.worktrees/phase-29d-pronouns-ordinals`, branch `codex/phase-29d-pronouns-ordinals`, based on `b9729809`.
 
@@ -262,25 +262,25 @@ help-aliases to narration. Combat tutorial hints link help narration.
 **Files:** lead-only plan checkboxes and `docs/PROJECT_STATUS.md`; any
 confirmed review fixes and regression tests in the owning packages.
 
-- [ ] Lead inspects the complete phase diff and cross-checks all ten spec
+- [x] Lead inspects the complete phase diff and cross-checks all ten spec
   acceptance criteria against actual tests. Check nested instructions,
   stable labels/lock order, missing output paths, and help scope.
-- [ ] Dispatch an independent reviewer over `git diff b9729809..HEAD`
+- [x] Dispatch an independent reviewer over `git diff b9729809..HEAD`
   with the spec/plan and phase invariants. Request findings only: bugs,
   design gaps, missing integration tests, and inaccurate/missing help.
   Use an independent reviewer with the task’s default model settings.
   The owner’s default-agent instruction supersedes earlier model overrides.
-- [ ] Verify every finding, fix real issues with focused regression tests,
+- [x] Verify every finding, fix real issues with focused regression tests,
   and record rejected findings with reasons. Finish all code corrections
   before the single full verification run.
-- [ ] Run `make generate`, then `make validate`, then `go test -race ./...`.
+- [x] Run `make generate`, then `make validate`, then `go test -race ./...`.
   Require exit 0 for each; inspect generated diffs. If generated code
   changes affect behavior, resolve that before claiming completion.
   Re-run full checks only if code changed after the green run.
-- [ ] Record review outcome and exact verification in PROJECT_STATUS.md;
+- [x] Record review outcome and exact verification in PROJECT_STATUS.md;
   mark implementation checkboxes only for work actually done. Include the
   intentional fresh-battle restart contract and deferred player selection.
-- [ ] Lead commits the verified status/plan and any final fixes. Prepare
+- [x] Lead commits the verified status/plan and any final fixes. Prepare
   a reviewable branch or PR for integration; do not merge/push unreviewed
   work or commit on master. Attach every created PR to the current task.
 
@@ -288,5 +288,6 @@ confirmed review fixes and regression tests in the owning packages.
 
 The planning change is Markdown only. The lead checks diff whitespace,
 relative links, acceptance-to-task coverage, and scope/approval consistency.
-No Go checks are required until implementation changes shipped content or
-code. All implementation verification boxes above remain unchecked.
+No Go checks were required for that initial planning commit. The implementation
+checks above now record completed work. Final generation produced no diff;
+validation, the full race suite, JavaScript lint, and whitespace checks passed.

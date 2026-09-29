@@ -50,7 +50,7 @@ function onMagic(sourceActor, targetActors) {
     var sourceUserId = sourceActor.UserId();
 
     SendUserMessage(sourceUserId, 'You fling your hands open, and a shower of sparks bursts from them.');
-    SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' flings open their hands, and a shower of sparks bursts out.', sourceUserId);
+    SendRoomMessage(roomId, sourceActor.GetCombatName(true) + ' flings open ' + sourceActor.GetCombatPronoun('possessive') + ' hands, and a shower of sparks bursts out.', sourceUserId);
 
     for (var i = 0; i < targetActors.length; i++) {
 

@@ -1,9 +1,11 @@
 # Phase 29d: Pronouns and Stable Enemy Labels
 
 Status: owner approved the detailed design and plan in the current task;
-implementation in progress. Detailed design drafted 2026-09-28. The presentation direction was approved 2026-09-26. The
-owner requested the specification and plan together, with GPT-5.6 Terra at
-medium reasoning for implementation. Player pronoun selection is deferred
+implementation complete and verified on the feature branch (2026-09-29).
+Detailed design drafted 2026-09-28. The presentation direction was approved 2026-09-26. The
+owner requested the specification and plan together. Implementation uses the
+current task's default agent and reasoning settings, per the owner's 2026-09-29
+instruction. Player pronoun selection is deferred
 by the owner's explicit decision in this task.
 
 Part of the [combat roadmap](2026-09-26-combat-presentation-roadmap.md).

@@ -20,29 +20,31 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29c; see the table below. The survival and
+- **Completed:** Phases 0–29d; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
-  the first combat slices (29a, 29b, 29b2, 29c), enemy groups (32c),
+  the first combat slices (29a, 29b, 29b2, 29c, 29d), enemy groups (32c),
   automatic combat by strategy (32d), company experience (32e), company
   logistics (32f), and character deletion (32h) are all done.
-- **Active implementation:** 29d (pronouns and stable enemy labels), prioritized by
-  the owner in the current task. The owner approved the design and plan on
-  `codex/phase-29d-pronouns-ordinals`; implementation now uses the current task’s default
-  agent and reasoning settings, per the owner’s 2026-09-29 instruction. Tasks 1–6 (pronouns, frozen labels, combat/stream wiring, recruit restoration, and help)
-  are complete. Lead verified hooks/scripting/mobcommands/company, editor metadata,
-  and JavaScript lint; the seeded comparison against b9729809 preserves mechanics.
-  Generated identities resolve to they through real store reload, PlayerSpawn, and
-  resurrection; authored recruits retain he/she. Updated combat help/aliases and
-  tutorial guidance; usercommands/tutorial suites passed. Final independent review and full verification remain pending. Player pronoun
-  selection is deferred by the owner. Workflow docs now use the task defaults
-  and direct implementation, retaining the independent review and verification gates.
+- **Ready for integration:** 29d (pronouns and stable enemy labels) is complete on
+  `codex/phase-29d-pronouns-ordinals`; see the [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md).
+  NPC/race pronouns, generated recruit neutrality, frozen shared enemy labels,
+  combat/script/event wiring, and player help/tutorial are verified. A seeded
+  comparison against b9729809 preserves combat mechanics. Labels are runtime-only;
+  restart/copyover starts fresh battles. Player pronoun selection remains deferred.
+  **Review:** independent default-agent reviewer found fallback-label collisions and
+  a Sparks possessive; both reproduced and were fixed with regression tests. A
+  separate plain late-name collision claim was rejected because its regression passed
+  before the fix. **Final verification:** `make generate`, `make validate`,
+  `go test -race ./...`, `make js-lint`, and `git diff --check` all passed (2026-09-29);
+  generation produced no diff. Workflow docs now use the current task's default
+  agent/settings and direct implementation, retaining independent review and verification.
 - **Next in the play-test roadmap:** 32g (32a, 32a2, 32b, 32c, 32d, 32e, 32f, and 32h are done),
   from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
-  the combat roadmap continues at 29d.
+  the combat roadmap continues at 29e (pain reactions).
   Also open: the "Future ideas" row; see Known issues.
 
 ## Phase progress
@@ -98,7 +100,7 @@ instead of duplicating them.
 | 29b | Combat event stream and battle summary | Complete: `internal/combatstream` (one event per combat happening, fights of a company against the enemies it fights in a room, a summary folded from the events), producers at every attack, cast, target change, flee, and death; the summary at a fight's end (`set battlesummary`); interceptors fall in the round they're struck; player help for combat (`help combat` and seven pages), pointed to from the tutorial |
 | 29b2 | One battle at a time; spawn groups | Complete: `internal/battle` (each player, with their company, fights one enemy group at a time; other groups set on them hold back, then begin the next battle in the order they turned; a waiting group turns on a free player); `attack`/`cast`/`backstab`/`shoot` refuse a waiting group; hostile spawns form groups of two to five from the room's list, a lone survivor or straggler regroups, `solitary` bosses stand alone; travel ambushes are a pair; solo players get battles and summaries; help for every Ashveil system |
 | 29c | Narration voice (weapons and spells) | Complete (branch `master-6csfy6`): [design](superpowers/specs/2026-09-28-phase-29c-narration-voice-design.md), [plan](superpowers/plans/2026-09-28-phase-29c-narration-voice.md). Every weapon line rewritten, `(N damage)` / `(critical hit, N damage)` / `, M blocked` at the end of each hit, only real crits draw the critical pool; no `***`, `!`, caps, or "prepares to fight"; "the" before common names; an opener per fight, "turns toward", death lines in order, a closing line after the last; the fallen notice indented and in words; spells chant with their rounds and land with `(N damage)` / `(N healed)`; `help narration` |
-| 29d | Pronouns and ordinals | Approved design and [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md) in progress (Tasks 1–6 verified): [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md). Authored NPC/race pronouns; stable enemy labels shared across overlapping battles; player selection deferred. Implementation: task default agent |
+| 29d | Pronouns and ordinals | Complete on feature branch, ready for integration: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md), [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md). NPC/race pronouns, neutral generated recruits, stable shared enemy labels, help/tutorial; independent review and full race suite passed. Player selection deferred |
 | 29e | Pain reactions | Proposed: [spec](superpowers/specs/2026-09-26-combat-pain-reactions-design.md). A victim's reaction after a non-lethal critical hit; a set per beast race |
 | 29f | Paced combat output | Proposed: [spec](superpowers/specs/2026-09-26-combat-pacing-design.md). Round lines released over time, with fast, normal (~6s), slow, and off settings; combat resolves every 2 game rounds (an 8-second combat round) |
 | 30a | Status effects and critical-hit effects (weapons only) | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, and others as buffs; crit effects by weapon type; spells do not critical hit |

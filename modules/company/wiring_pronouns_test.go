@@ -372,3 +372,31 @@ func startNarrationBrawl(t *testing.T) *brawl {
 	b.fight()
 	return b
 }
+
+func TestSparksCombatPronouns(t *testing.T) {
+	for _, tc := range []struct {
+		id               int
+		name, possessive string
+	}{{1, "Tamsin Reed", "her"}, {2, "Brother Oswin", "his"}, {0, "Aria", "their"}} {
+		t.Run(tc.name, func(t *testing.T) {
+			b := startNarrationBrawl(t)
+			c := b.aria.Character
+			if tc.id > 0 {
+				c = &b.companion(tc.id).Character
+			}
+			c.Pronouns = "she" // the player must still render their
+			if tc.id == 2 {
+				c.Pronouns = "he"
+			}
+			c.SpellBook["sparks"] = 5000
+			c.Stats.Mysticism.ValueAdj = 1000
+			var transcript string
+			for attempt := 0; attempt < 30 && !strings.Contains(transcript, "flings open"); attempt++ {
+				b.toughen()
+				c.SetCast(0, characters.SpellAggroInfo{SpellId: "sparks", TargetMobInstanceIds: []int{b.bandits["bandit cutthroat"][0]}})
+				transcript += b.fight() + "\n"
+			}
+			require.Contains(t, transcript, tc.name+" flings open "+tc.possessive+" hands")
+		})
+	}
+}
