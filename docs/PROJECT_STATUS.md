@@ -41,6 +41,10 @@ instead of duplicating them.
   `go test -race ./...`, `make js-lint`, and `git diff --check` all passed (2026-09-29);
   generation produced no diff. Workflow docs now use the current task's default
   agent/settings and direct implementation, retaining independent review and verification.
+  Integration verification exposed a narration-test flake: a random dodge intentionally
+  produces no room attack line. The fixture now disables dodging only within that test
+  and restores settings afterward; 100 focused race-test repetitions passed.
+  Independent follow-up review found no issues and passed 40 focused repetitions.
 - **Next in the play-test roadmap:** 32g (32a, 32a2, 32b, 32c, 32d, 32e, 32f, and 32h are done),
   from the owner's
   play-test notes, per the

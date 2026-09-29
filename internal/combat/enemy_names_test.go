@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -14,6 +15,11 @@ import (
 
 func TestAttackEntryPointsUseEnemyLabels(t *testing.T) {
 	edgeSpecs(t)
+	// A dodge intentionally emits only source/target messages. Exercise the
+	// room narration path deterministically without changing gameplay defaults.
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	battle.Reset()
 	t.Cleanup(battle.Reset)
 
