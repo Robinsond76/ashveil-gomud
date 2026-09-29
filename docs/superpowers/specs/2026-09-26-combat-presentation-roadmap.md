@@ -49,16 +49,10 @@ the fight went.
 |---|---|---|
 | 30a Status effects and critical-hit effects (weapons only) | [status and crit effects](2026-09-26-status-crit-effects-design.md) | 29b; 29c for text |
 | 30b Wounds, treatment, and `heal wounds` | [wounds](2026-09-26-wounds-treatment-design.md) | 30a |
-| 30c Pre-fight tactics: roles, personalities, guards, companion casting | [tactics](2026-09-26-company-tactics-design.md) | 29b, 30a |
+| 30c Company tactics: focus (mid-battle), healing, enemy personalities, guardian | [tactics](2026-09-29-phase-30c-company-tactics-design.md) | 29b, 30a |
 | 30d Wind-ups, telegraphs, and interrupts | [interrupts](2026-09-26-telegraphs-interrupts-design.md) | 30a, 30c |
 | 30e Morale and mercy | [morale and mercy](2026-09-26-morale-mercy-design.md) | 29b, 30c |
 | 30f Battlefield conditions | [battlefield](2026-09-26-battlefield-conditions-design.md) | 30c |
-
-### Phase 31 — Browser battle panel
-
-| Phase | Spec | Depends on |
-|---|---|---|
-| 31 Battle panel | [battle panel](2026-09-26-battle-panel-design.md) | 30b, 30d |
 
 ### Build order (decided 2026-09-27)
 
@@ -77,17 +71,14 @@ the fight went.
    battlefield conditions, each building on 30c's tactics layer. Order
    among these three is flexible; interrupts first gives 30e's "breaking
    under pressure" more to draw on.
-8. **31** — the battle panel, last. It only strictly needs 29b and 29d,
-   but showing the grid is far more interesting once 30c's roles,
-   targeting, and guards give it something to display.
 
 **Revised 2026-09-28:** the owner's play-test notes come first
 ([play-test roadmap](2026-09-28-playtest-feedback-roadmap.md)). Its 32d
-takes 30c's casting and role-driven actions, and its 32g Combat tab takes
-Phase 31's grids. 30c and 31 keep the rest.
+takes 30c's casting and role-driven actions, and its 32g Combat tab took
+Phase 31's grids; **Phase 31 was dropped 2026-09-29** (owner). 30c keeps the rest.
 
 This is Phase 29 (presentation) end to end, then Phase 30 (tactics) end to
-end, then Phase 31. A phase is never started before the phases it depends
+end. A phase is never started before the phases it depends
 on (per the tables above) are complete and reviewed.
 
 ## Decisions carried forward (owner, 2026-09-26)

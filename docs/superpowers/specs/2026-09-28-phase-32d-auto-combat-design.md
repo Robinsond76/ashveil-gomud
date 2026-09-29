@@ -6,7 +6,7 @@ and 9). Once a battle starts it plays out on its own (32c made nothing
 typed change it). This phase is what it plays out *by*: each character's
 strategy, set before the battle, picks its target and decides whether it
 swings, heals, or casts, and characters cast real spells with real mana.
-It takes the casting slice of [30c](2026-09-26-company-tactics-design.md);
+It takes the casting slice of [30c](2026-09-29-phase-30c-company-tactics-design.md);
 30c keeps the company-wide tactics settings (focus, healing threshold,
 interrupts, rotation, mercy), guards, and enemy personalities.
 
