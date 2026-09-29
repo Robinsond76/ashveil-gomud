@@ -1,6 +1,6 @@
 # Phase 29d: Pronouns and Stable Enemy Labels Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. The owner selected GPT-5.6 Terra at medium reasoning for implementation; retain that choice.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. The owner now requests the current task’s default agent and reasoning settings for implementation; this supersedes the earlier Terra-medium selection.
 
 **Goal:** Render correct NPC pronouns and enemy labels that stay fixed throughout a battle, including its fallen enemies.
 
@@ -38,20 +38,13 @@
 
 ## Execution and review ownership
 
-The lead scopes one task at a time for a native subagent using
-`gpt-5.6-terra`, `reasoning_effort: medium`, as the owner requested. Supply
-the approved spec, this plan, exact file boundaries, invariants, and focused
-checks. The implementation worker must not commit, merge, push, create a
-worktree, change credentials, edit PROJECT_STATUS.md, or broaden scope.
-Do not edit this worktree while the worker runs. The lead reviews the
-entire proposal, runs its focused checks independently, and commits accepted
-tasks. Reuse the worker for later narrow tasks/fixes. A separate reviewer
-checks the entire phase in Task 7. Do not create a user-owned Codex task.
-
-The detailed written design must have explicit owner approval before any
-implementation dispatch (handoff section 50, rule 20). The owner's current
-request authorizes drafting both artifacts and selects the implementation
-model; it does not mark this newly written design approved.
+The owner approved the written design and plan, then requested on 2026-09-29
+that implementation continue with the current task's default agent. This
+supersedes the earlier Terra-medium selection. Execute the remaining tasks
+directly using superpowers:executing-plans, retaining completed work and the
+existing worktree. The lead owns review, verification, status, and commits.
+A separate reviewer checks the full phase in Task 7 using inherited model
+settings. Do not create a user-owned Codex task.
 
 ## Task 1: Pronoun model and authored defaults
 
@@ -271,8 +264,8 @@ confirmed review fixes and regression tests in the owning packages.
 - [ ] Dispatch an independent reviewer over `git diff b9729809..HEAD`
   with the spec/plan and phase invariants. Request findings only: bugs,
   design gaps, missing integration tests, and inaccurate/missing help.
-  Use the most capable available reviewer per the repository review gate;
-  Terra medium remains the selected implementation model.
+  Use an independent reviewer with the task’s default model settings.
+  The owner’s default-agent instruction supersedes earlier model overrides.
 - [ ] Verify every finding, fix real issues with focused regression tests,
   and record rejected findings with reasons. Finish all code corrections
   before the single full verification run.
