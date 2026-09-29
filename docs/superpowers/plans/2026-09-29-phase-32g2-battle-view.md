@@ -13,13 +13,13 @@ shapes.
 
 ## Task 1: Engine helpers (`internal/enemyparty`, `internal/battle`, `internal/hooks`)
 
-- [ ] Tests first:
+- [x] Tests first:
   - `internal/enemyparty`: `BattleParty(b, parties)` finds the party
     sharing an enemy with the battle, and none when no party does.
   - `internal/battle`: `Waiting(userId)` lists the groups set on the
     player other than the battle's own, by first-set round then party id;
     empty with no battle; `End` and `KeepSet` drop from it.
-- [ ] `enemyparty.BattleParty` (moved from `hooks.battleParty`, which now
+- [x] `enemyparty.BattleParty` (moved from `hooks.battleParty`, which now
   calls it); `battle.Waiting`.
 
 ## Task 2: The `Company.Battle` payload (`modules/gmcp`)

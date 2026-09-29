@@ -126,6 +126,33 @@ func NoteSet(userId int, partyID string, round uint64) uint64 {
 	return round
 }
 
+// Waiting lists the groups set on a player in a battle, other than the
+// battle's own, in the order they were first set (ties by party id): the
+// groups waiting their turn (32g2's battle view). Nothing waits on a
+// player who isn't in a battle.
+func Waiting(userId int) []string {
+	mu.Lock()
+	defer mu.Unlock()
+	b, ok := battles[userId]
+	if !ok {
+		return nil
+	}
+	var out []string
+	for id := range firstSet[userId] {
+		if id != b.PartyID {
+			out = append(out, id)
+		}
+	}
+	set := firstSet[userId]
+	sort.Slice(out, func(i, j int) bool {
+		if set[out[i]] != set[out[j]] {
+			return set[out[i]] < set[out[j]]
+		}
+		return out[i] < out[j]
+	})
+	return out
+}
+
 // KeepSet forgets every group set on the player except those named: a
 // group no longer set on them waits in line no longer.
 func KeepSet(userId int, partyIDs []string) {
