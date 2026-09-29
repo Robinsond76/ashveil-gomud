@@ -123,7 +123,8 @@ instead of duplicating them.
 | 32f | Company logistics | Complete: [design](superpowers/specs/2026-09-28-phase-32f-company-logistics-design.md), [plan](superpowers/plans/2026-09-28-phase-32f-company-logistics.md). Capacity from members (20 kg + Strength), one pack each, and horses; weight the only limit (a full company takes on nothing more; walking never blocked); a herd of riding and pack horses bought at stables, with saddles; cargo keeps uses; `company inventory`; `company eat`/`drink`/`meal` |
 | 32h | Character deletion | Complete: [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), [plan](superpowers/plans/2026-09-28-phase-32h-character-deletion.md). `delete character`, confirmed by the password (masked) and the name; every module's state purged with the login kept; back in creation on the same connection; a durable `Deleting` flag and a boot sweep; masked in-game password prompts (also `password`) |
 | 32d | Automatic combat by strategy | Complete: [design](superpowers/specs/2026-09-28-phase-32d-auto-combat-design.md), [plan](superpowers/plans/2026-09-28-phase-32d-auto-combat.md). `strategy`: each character's role (fighter, healer, caster) and target rule (weakest, strongest, wounded, nearest, furthest, leader, assist, defend), durable; healers and casters cast real spells with mana; companions know spells by archetype and level and regain mana; wizards/clerics granted Magic Missile/Minor Heal; in a battle only `flee`; only hostile mobs group by tag |
-| 32g | Play-test follow-up | Proposed ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): web company dock (32g, takes 32f's GMCP extras) |
+| 32g | Web company dock | Complete: [design](superpowers/specs/2026-09-29-phase-32g-company-dock-design.md), [plan](superpowers/plans/2026-09-29-phase-32g-company-dock.md). Left column the world (time, map, room, tutorial); right a tabbed dock: a vitals strip for every member above Character (Overview with worth, Gear with weights, Skills and jobs, Quests, Effects, Pet), Company (Status, Inventory with menus by exact item reference, Camp), Combat (setup: roles, targets, formation, Scout), Comm (unread count), and Who/Kills when enabled; `Company.Inventory`, `Company.Camp`, members' mana and strategies; `help webclient` |
+| 32g2 | Live battle view | Proposed: the Combat tab's Battle view (both formations, targets, health bands) and a `Company.Battle` message, per the Phase 31 design |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
@@ -224,11 +225,10 @@ Phase 29b2 is at commit `d5ace46`).
   (peaceful tag groups; what's allowed mid-battle) are settled by 32d.
   32c's test gaps are in its work-log entry (git history, commit
   `ff1f663e`).
-- **Company logistics (32f)** (work log at commit `bea052b`): GMCP drops the inventory `Max` (the web
-  gear window shows "count / —") until 32g adds capacity, packs, mounts,
-  and cargo uses; a crash mid-meal can spend one use without its
-  provision; characters made before 32f start at ~20–25 kg with no
-  satchel.
+- **Company logistics (32f)** (work log at commit `bea052b`): a crash
+  mid-meal can spend one use without its provision; characters made
+  before 32f start at ~20–25 kg with no satchel. (The web gear window's
+  "count / —" is fixed by 32g: it shows weights.)
 - **Character deletion (32h), accepted** (work log at commit `f418e1d`): a replay's hand-back resets the
   wrong-password count; copyover with a flagged user online races the
   resumed connection; a failed reset waits for the boot sweep; the reused
