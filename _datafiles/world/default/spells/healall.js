@@ -75,11 +75,11 @@ function onMagic(sourceActor, targetActors) {
             continue;
         }
         exclude.push(healed[i].userId);
-        SendUserMessage(healed[i].userId, sourceActor.GetCombatName(true) + ' opens their hands, and the light settles over you.');
+        SendUserMessage(healed[i].userId, sourceActor.GetCombatName(true) + ' opens ' + sourceActor.GetCombatPronoun('possessive') + ' hands, and the light settles over you.');
         SendUserMessage(healed[i].userId, listFor(healed[i].userId));
     }
 
     // SendRoomMessage's exclusions are variadic: spread the list.
-    SendRoomMessage.apply(null, [roomId, sourceActor.GetCombatName(true) + ' opens their hands, and the light settles over the company.'].concat(exclude));
+    SendRoomMessage.apply(null, [roomId, sourceActor.GetCombatName(true) + ' opens ' + sourceActor.GetCombatPronoun('possessive') + ' hands, and the light settles over the company.'].concat(exclude));
     SendRoomMessage.apply(null, [roomId, listFor(0)].concat(exclude));
 }

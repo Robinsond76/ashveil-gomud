@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
@@ -20,6 +21,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
+
+// combatMobCharacter is a presentation-only copy for combat narration. It
+// keeps health, equipment, and every combat field from the live mob intact.
+func combatMobCharacter(m *mobs.Mob) characters.Character {
+	c := m.Character
+	c.Name = battle.EnemyDisplayName(m.InstanceId, c.Name)
+	return c
+}
 
 func DoCombat(e events.Event) events.ListenerReturn {
 
@@ -117,7 +126,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 					util.LogRoll(`Flee`, roll, chanceIn100)
 
 					if roll >= chanceIn100 {
-						blockedByMob = mob.Character.Name
+						blockedByMob = mobName(mob.InstanceId)
 						break
 					}
 				}
@@ -588,7 +597,8 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 
 				user.Character.Aggro.RoundsWaiting--
 
-				roundResult := combat.GetWaitMessages(items.Wait, user.Character, &defMob.Character, combat.User, combat.Mob)
+				defCharacter := combatMobCharacter(defMob)
+				roundResult := combat.GetWaitMessages(items.Wait, user.Character, &defCharacter, combat.User, combat.Mob)
 
 				for _, msg := range roundResult.MessagesToSource {
 					user.SendText(msg)
@@ -784,7 +794,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			if util.RollDice(1, 100) >= successChance {
 
 				// fail
-				mobRoom.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s falters, and the spell <ansi fg="magenta">fizzles</ansi>.`, util.Article(mobTag(mob.Character.Name)))))
+				mobRoom.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s falters, and the spell <ansi fg="magenta">fizzles</ansi>.`, util.Article(mobTag(mobName(mob.InstanceId))))))
 				emitCast(combatstream.CastComplete, mobRef(mob), mob.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeFizzled, mob.Character.RoomId)
 				endCast(&mob.Character, caster{mobId: mob.InstanceId}) // Phase 32d: back to its aim
 
@@ -945,7 +955,8 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 				mob.Character.Aggro.RoundsWaiting--
 
-				roundResult := combat.GetWaitMessages(items.Wait, &mob.Character, defUser.Character, combat.Mob, combat.User)
+				mobCharacter := combatMobCharacter(mob)
+				roundResult := combat.GetWaitMessages(items.Wait, &mobCharacter, defUser.Character, combat.Mob, combat.User)
 
 				for _, msg := range roundResult.MessagesToTarget {
 					defUser.SendText(msg)
@@ -1104,7 +1115,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 				mob.Character.Aggro.RoundsWaiting--
 
-				roundResult := combat.GetWaitMessages(items.Wait, &mob.Character, &defMob.Character, combat.Mob, combat.Mob)
+				mobCharacter := combatMobCharacter(mob)
+				defCharacter := combatMobCharacter(defMob)
+				roundResult := combat.GetWaitMessages(items.Wait, &mobCharacter, &defCharacter, combat.Mob, combat.Mob)
 
 				for _, msg := range roundResult.MessagesToSourceRoom {
 					mobRoom.SendText(msg)
@@ -1185,7 +1198,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 						if defRoom := rooms.LoadRoom(defMob.Character.RoomId); defRoom != nil {
 
-							defRoom.SendText(shieldBreaksRoomLine(defMob.Character.Equipment.Offhand.NameSimple(), mobTag(defMob.Character.Name)))
+							defRoom.SendText(shieldBreaksRoomLine(defMob.Character.Equipment.Offhand.NameSimple(), mobTag(mobName(defMob.InstanceId))))
 
 							events.AddToQueue(events.ItemOwnership{
 								MobInstanceId: defMob.InstanceId,

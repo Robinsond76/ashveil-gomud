@@ -147,10 +147,22 @@ func partyRefs(p mobparty.Party) []combatstream.Ref {
 	return out
 }
 
+// assignPartyEnemyNames captures live mob data before battle takes its mutex.
+func assignPartyEnemyNames(userId int, p mobparty.Party) {
+	members := make([]battle.EnemyName, 0, len(p.Members))
+	for _, instanceId := range p.Members {
+		if m := mobs.GetInstance(instanceId); m != nil {
+			members = append(members, battle.EnemyName{InstanceId: m.InstanceId, BaseName: m.Character.Name, Noun: m.Character.CombatNoun})
+		}
+	}
+	battle.AssignEnemyNames(userId, members)
+}
+
 // beginBattle starts the player's battle against a group, opening its
 // fight on the stream.
 func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) battle.Battle {
 	b := battle.Begin(sd.user.UserId, room.RoomId, round, p.ID, p.Members)
+	assignPartyEnemyNames(sd.user.UserId, p)
 	id := combatstream.Default().Open(round, room.RoomId, p.ID, userRef(sd.user), sd.allyRefs(), partyRefs(p))
 	if len(p.Members) > 0 {
 		if g, ok := enemyparty.GroupOf(room, p.Members[0]); ok && !g.Solo() {
@@ -232,7 +244,7 @@ func (sd side) keepOnBattle(b battle.Battle, room *rooms.Room) {
 		emitTargetChange(mobRef(m), mobRefById(m.Character.Aggro.MobInstanceId), mobRefById(foe), room.RoomId)
 		m.Character.SetAggro(0, foe, attackType(m.Character.Aggro))
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
-		room.SendText(turnsToward(mobTag(m.Character.Name), mobTag(mobName(foe))))
+		room.SendText(turnsToward(mobTag(mobName(m.InstanceId)), mobTag(mobName(foe))))
 	}
 }
 
@@ -272,7 +284,7 @@ func sidesOf(b battle.Battle) fightSides {
 
 // endBattle ends the player's battle and its fight, and sends the summary.
 func endBattle(userId int, outcome string) {
-	b, ok := battle.End(userId)
+	b, ok := battle.Current(userId)
 	if !ok {
 		return
 	}
@@ -280,6 +292,7 @@ func endBattle(userId int, outcome string) {
 	if _, open := combatstream.Default().Fight(b.FightID); open {
 		fs.end(outcome)
 	}
+	battle.End(userId)
 }
 
 // battlePass decides every player's battle at the top of the round,
@@ -317,6 +330,7 @@ func battlePass() {
 			// (closeIdleBattles), which may have turned them back on.
 			if p, found := battleParty(b, parties); found && b.RoomId == room.RoomId && battleOutcome(b) == "" {
 				battle.Grow(uid, p.ID, p.Members)
+				assignPartyEnemyNames(uid, p)
 				combatstream.Default().Grow(b.FightID, p.ID, sd.allyRefs(), partyRefs(p))
 				b, _ = battle.Current(uid)
 				sd.keepOnBattle(b, room)
@@ -393,7 +407,7 @@ func (sd side) rallyIdleFoes(p mobparty.Party, room *rooms.Room) {
 		m.PlayerAttacked(u.UserId)
 		m.PreventIdle = true
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
-		room.SendText(turnsToward(mobTag(m.Character.Name), userTag(u.Character.Name)))
+		room.SendText(turnsToward(mobTag(mobName(m.InstanceId)), userTag(u.Character.Name)))
 	}
 }
 
@@ -551,7 +565,7 @@ func groupTurnsToward(p mobparty.Party) string {
 	var names []string
 	for _, instanceId := range p.Members {
 		if m := mobs.GetInstance(instanceId); m != nil && m.Character.Health > 0 {
-			names = append(names, m.Character.Name)
+			names = append(names, mobName(m.InstanceId))
 		}
 	}
 	switch len(names) {

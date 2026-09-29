@@ -162,7 +162,8 @@ objects for health, edge spending, and damage attribution.
 `internal/mobcommands/suicide.go`; sync the new script wrapper method in
 `internal/scripting/objecttypes.go` and `internal/web/api_v1_scripting_dts.go`
 (as required by scripting AGENTS.md); create focused pronoun/name tests in
-hooks/scripting/mobcommands and `modules/company/wiring_pronouns_test.go`;
+hooks/scripting/mobcommands and `modules/company/wiring_pronouns_test.go`, `wiring_narration_outcome_test.go`,
+  and its pre-phase JSON golden;
 update `modules/company/wiring_narration_test.go`, `wiring_spells_test.go`
 where exact old enemy names change. Modify combat spell JS files with
 actor-owned hard-coded pronouns (particularly `spells/heal.js`).
@@ -173,36 +174,39 @@ full plain mob inputs. Add `ScriptActor.GetCombatPronoun(form string) string`
 mob labels; ordinary GetCharacterName stays unchanged. `mobRef` and gone
 mob fallback refs use stored labels without changing Ref.Key.
 
-- [ ] Add `TestPronounsAndOrdinalsThroughRealRound` using `newBrawl` and
+- [x] Add `TestPronounsAndOrdinalsThroughRealRound` using `newBrawl` and
   real `hooks.DoCombat` with shipped config: two same-named enemies,
   ordered first/second names before their first hit, first's death, then
   second's later attack/target-change/death. Assert matching event refs,
   FightInfo enemy names and summary, and no live name mutation.
-- [ ] Add `TestEnemyLabelsOnSecondarySurfaces`: real wait/aim and a
+- [x] Add `TestEnemyLabelsOnSecondarySurfaces`: real wait/aim and a
   separate-room shot, blocked flee, fizzle, shield/interception, practice
   beaten, and suicide fallback. Each assertion goes through its actual
   entry point; assert one death/beaten line when quiet suicide follows.
-- [ ] Add `TestScriptCombatIdentity`: GetCombatName renders a label while
+- [x] Add `TestScriptCombatIdentity`: GetCombatName renders a label while
   GetCharacterName returns its base name. Execute script bindings in JS
   and Lua. Cast Minor Heal with authored she/he mobs; actual chanting and
   self-heal lines use her/his, while the user's lines use your/their.
-- [ ] Add `TestBattleNameGrowthReachesStream` for begin/growth ordering,
+- [x] Add `TestBattleNameGrowthReachesStream` for begin/growth ordering,
   shared player battles, and a removed enemy's retained ref name. No Grow
   call can overwrite labels with original names.
-- [ ] Add `TestNarrationPreservesCombatOutcome`: seeded before/after
-  harness, resetting Go's existing math/rand between runs (enable
+- [x] Add `TestNarrationPreservesCombatOutcome`: seeded before/after
+  harness captured from base b9729809 and compared with the current code, resetting
+  Go's existing math/rand after fixture setup (enable
   `GODEBUG=randseednop=0` for this test and call `rand.Seed(29)` after
-  fixture setup). Normalize fresh instance IDs to fixture roles; compare damage,
+  fixture setup). Isolate RNG draws from existing unordered mob turns with one
+  attacking foe and a chanting twin; normalize independent per-round event order.
+  Normalize fresh instance IDs to fixture roles; compare damage,
   crit flags, target IDs, mana, rewards, and outcome after stripping
   narration/Ref.Name. Keep kill XP controlled to avoid existing level-up
   refill behavior obscuring the comparison.
-- [ ] Run focused new tests in hooks, scripting, mobcommands, and company;
+- [x] Run focused new tests in hooks, scripting, mobcommands, and company;
   confirm failures before wiring.
-- [ ] Implement begin/grow ordering and every listed rendering path.
+- [x] Implement begin/grow ordering and every listed rendering path.
   Wait calls pass local mob character copies with the stored label;
   fallback notices consult labels before battle teardown. Keep enemy name
   snapshots intact until death output and summary refs are captured.
-- [ ] Run `go test ./internal/hooks ./internal/scripting ./internal/mobcommands ./modules/company`;
+- [x] Run `go test ./internal/hooks ./internal/scripting ./internal/mobcommands ./modules/company`;
   require exit 0; run `go test ./internal/web -run ObjectTypes` for editor
   method metadata synchronization; run `make js-lint` for changed JS if available and report
   any environmental block without claiming success. Lead reviews the
@@ -237,7 +241,7 @@ explicitly they, regardless of its template's authored pronouns.
 **Files:** modify `_datafiles/world/default/templates/help/narration.template`,
 `combat.template`, `targeting.template`, `battle-summary.template`,
 `_datafiles/world/default/keywords.yaml`, `modules/tutorial/stages.go`,
-`internal/usercommands/help_combat_test.go`, `modules/tutorial/shipped_test.go`.
+`internal/usercommands/help_combat_test.go`, `modules/tutorial/shipped_test.go`, `wiring_test.go` (existing combat transcript assertions).
 
 **Interfaces:** keep narration under combat; pronouns and ordinals are
 help-aliases to narration. Combat tutorial hints link help narration.
@@ -245,7 +249,7 @@ help-aliases to narration. Combat tutorial hints link help narration.
 - [ ] Extend real help rendering tests to assert labels stay fixed after
   a death, aliases match narration, and all four pages render. Assert help
   continues to require attacking groups and contains no set pronouns
-  command. Pin the tutorial hint to first/second straw footman.
+  command. Pin the tutorial hint to first/second footman.
 - [ ] Run `go test ./internal/usercommands ./modules/tutorial -run 'CombatHelp|TutorialHelpPointers|Narration'`;
   confirm the new content assertions fail.
 - [ ] Write the player-facing explanation/examples from the spec; retain
