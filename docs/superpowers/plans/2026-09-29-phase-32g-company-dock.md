@@ -197,17 +197,19 @@ does.
 
 ## Task 13: Player help and tutorial
 
-- [ ] New `help webclient` (`_datafiles/world/default/templates/help/webclient.template`):
+- [x] New `help webclient` (`_datafiles/world/default/templates/help/webclient.template`):
   the two columns, the strip, each tab and sub-tab, what the buttons
-  send, and Reset Layout; `help-aliases` `web client`, `dock`, `panels`;
-  listed in `keywords.yaml`; linked from `help company`.
-- [ ] One line pointing to the tab in `help company`, `help cargo`,
+  send, and Reset Layout; `help-aliases` `web client`, `web-client`,
+  `dock`, `panels`, `tabs`, `layout`; listed in `keywords.yaml` (under
+  configuration); linked from `help company`.
+- [x] One line pointing to the tab in `help company`, `help cargo`,
   `help company-inventory`, `help camp`, `help strategy`,
   `help formation`.
-- [ ] The Character lesson's hint mentions the dock
+- [x] The Character lesson's hint mentions the dock
   (`modules/tutorial/stages.go`).
-- [ ] Tests: the page renders through `help` (pattern:
-  `internal/usercommands/help_combat_test.go`);
+- [x] Tests: the page renders through `help` (pattern:
+  `internal/usercommands/help_combat_test.go`; as built:
+  `help_webclient_test.go`);
   `TestTutorialHelpPointersExist` passes.
 
 ## Task 14: Docs, review, verification

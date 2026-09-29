@@ -55,5 +55,8 @@ A partly used item keeps its uses in the cargo: put in a waterskin with
 three drinks left and it comes back out with three. The company eats
 and drinks from the cargo first (<ansi fg="command">help company meal</ansi>).
 
+In the web client, Company > Inventory shows the cargo; click an item to
+put it in or take it out (<ansi fg="command">help webclient</ansi>).
+
 See also: <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help encumbrance</ansi>,
 <ansi fg="command">help strain</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help company</ansi>.

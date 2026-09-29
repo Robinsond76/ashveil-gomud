@@ -10,6 +10,7 @@ help:
       - set
       - password
       - delete
+      - webclient
     character:
       - actionpoints
       - alignment
@@ -191,6 +192,7 @@ help:
 # Key is the target keyword, value is the list of aliases
 help-aliases:
   delete:           [deletion, delete-character, reroll]
+  webclient:        [web client, web-client, dock, panels, tabs, layout]
   adventure:        [ashveil, basics]
   company:          [recruit, recruiting, roster, companions, companion]
   company-inventory: [company inventory, company inv, company-inv]
