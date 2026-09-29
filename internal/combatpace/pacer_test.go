@@ -1,0 +1,180 @@
+package combatpace
+
+import (
+	"reflect"
+	"testing"
+	"time"
+)
+
+var t0 = time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
+
+func at(ms int) time.Time { return t0.Add(time.Duration(ms) * time.Millisecond) }
+
+func TestParseAndDefaults(t *testing.T) {
+	for _, s := range []string{"fast", "Normal", " slow ", "OFF"} {
+		if _, ok := Parse(s); !ok {
+			t.Errorf("Parse(%q) rejected", s)
+		}
+	}
+	if _, ok := Parse("quick"); ok {
+		t.Error("Parse accepted an unknown pace")
+	}
+	if For(nil, false) != Normal || For(nil, true) != Off {
+		t.Error("unset pace should default to normal, or off for a screen reader")
+	}
+	if For("slow", true) != Slow {
+		t.Error("a chosen pace wins over the screen-reader default")
+	}
+	if For("bogus", false) != Normal || For(3, false) != Normal {
+		t.Error("a bad saved value falls back to the default")
+	}
+	if Off.Spec() != (Spec{}) {
+		t.Error("off has no gaps")
+	}
+}
+
+func TestForRoundClampsTheWindow(t *testing.T) {
+	if got := Slow.ForRound(8 * time.Second).Window; got != 7200*time.Millisecond {
+		t.Fatalf("slow window in an 8s round = %v, want 7.2s", got)
+	}
+	if got := Normal.ForRound(8 * time.Second).Window; got != 6*time.Second {
+		t.Fatalf("normal window in an 8s round = %v, want 6s", got)
+	}
+	if got := Normal.ForRound(4 * time.Second).Window; got != 3600*time.Millisecond {
+		t.Fatalf("normal window in a 4s round = %v, want 3.6s", got)
+	}
+}
+
+// release steps the clock in 50ms turns up to ms and records when each line
+// went out.
+func release(p *Pacer, until int) map[string]int {
+	out := map[string]int{}
+	for ms := 0; ms <= until; ms += 50 {
+		rel, _ := p.Due(at(ms))
+		for _, r := range rel {
+			out[r.Text] = ms
+		}
+	}
+	return out
+}
+
+func TestLinesGoOutInOrderAtThePacesGap(t *testing.T) {
+	p := New()
+	spec := Normal.ForRound(8 * time.Second)
+	for _, l := range []string{"a\n", "b\n", "c\n"} {
+		p.Hold(1, 2, l, spec, at(0))
+	}
+	if !p.Busy(1) {
+		t.Fatal("held lines should make the player busy")
+	}
+	got := release(p, 3000)
+	want := map[string]int{"a\n": 0, "b\n": 800, "c\n": 1600}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("release times %v, want %v", got, want)
+	}
+	if p.Busy(1) {
+		t.Fatal("drained player still busy")
+	}
+}
+
+func TestGapsShrinkToFitTheWindow(t *testing.T) {
+	p := New()
+	spec := Fast.ForRound(8 * time.Second) // 0.4s gap, 3s window
+	for i := 0; i < 21; i++ {                // 20 gaps = 8s unscaled
+		p.Hold(1, 2, string(rune('a'+i)), spec, at(0))
+	}
+	var last time.Time
+	var order []string
+	for ms := 0; ms <= 4000; ms += 50 {
+		rel, _ := p.Due(at(ms))
+		for _, r := range rel {
+			order = append(order, r.Text)
+			last = at(ms)
+		}
+	}
+	if len(order) != 21 || order[0] != "a" || order[20] != "u" {
+		t.Fatalf("order %v", order)
+	}
+	if last.Sub(t0) > 3*time.Second {
+		t.Fatalf("last line at %v, past the 3s window", last.Sub(t0))
+	}
+}
+
+func TestDramaticAndQuickBeats(t *testing.T) {
+	p := New()
+	p.Mark("The bandit howls.") // marks match without the trailing newline
+	spec := Normal.ForRound(8 * time.Second)
+	p.Hold(1, 2, "You strike the bandit. (critical hit, 9 damage)\n", spec, at(0))
+	p.Hold(1, 2, "The bandit howls.\n", spec, at(0))
+	p.Hold(1, 2, "The spell bursts.\n", spec, at(0))
+	p.Hold(1, 2, "  the rat (3 damage)\n", spec, at(0))
+	got := release(p, 4000)
+	want := map[string]int{
+		"You strike the bandit. (critical hit, 9 damage)\n": 0,
+		"The bandit howls.\n":                               1400,
+		"The spell bursts.\n":                               2200,
+		"  the rat (3 damage)\n":                            2450,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("release times %v, want %v", got, want)
+	}
+
+	p.StartRound()
+	p.Hold(1, 4, "The bandit howls.\n", spec, at(0))
+	p.Hold(1, 4, "The bandit howls.\n", spec, at(0))
+	if got := release(p, 4000); got["The bandit howls.\n"] != 800 {
+		t.Fatalf("a mark outlived its round: %v", got)
+	}
+}
+
+func TestAnOlderRoundIsFlushedAheadOfANewOne(t *testing.T) {
+	p := New()
+	spec := Normal.ForRound(8 * time.Second)
+	p.Hold(1, 2, "old1", spec, at(0))
+	p.Hold(1, 2, "old2", spec, at(0))
+	p.Due(at(0)) // old1 out
+	flushed := p.Hold(1, 4, "new1", spec, at(8000))
+	if !reflect.DeepEqual(flushed, []string{"old2"}) {
+		t.Fatalf("flushed %v, want [old2]", flushed)
+	}
+	rel, drained := p.Due(at(8000))
+	if len(rel) != 1 || rel[0].Text != "new1" || !reflect.DeepEqual(drained, []int{1}) {
+		t.Fatalf("new round release %v drained %v", rel, drained)
+	}
+}
+
+func TestFlushAndFlushAll(t *testing.T) {
+	p := New()
+	spec := Slow.ForRound(8 * time.Second)
+	p.Hold(2, 2, "b1", spec, at(0))
+	p.Hold(1, 2, "a1", spec, at(0))
+	p.Hold(1, 2, "a2", spec, at(0))
+	p.Hold(3, 2, "c1", spec, at(0))
+	if got := p.Flush(3); !reflect.DeepEqual(got, []string{"c1"}) {
+		t.Fatalf("Flush(3) = %v", got)
+	}
+	if p.Busy(3) || p.Flush(3) != nil {
+		t.Fatal("a flushed player holds nothing")
+	}
+	rel, drained := p.FlushAll()
+	want := []Release{{1, "a1"}, {1, "a2"}, {2, "b1"}}
+	if !reflect.DeepEqual(rel, want) || !reflect.DeepEqual(drained, []int{1, 2}) {
+		t.Fatalf("FlushAll = %v %v", rel, drained)
+	}
+	if p.Busy(1) || p.Busy(2) {
+		t.Fatal("FlushAll left a player busy")
+	}
+}
+
+func TestUseForTestRestores(t *testing.T) {
+	orig := Default()
+	mine := New()
+	restore := UseForTest(mine)
+	if Default() != mine {
+		t.Fatal("UseForTest did not install the pacer")
+	}
+	restore()
+	if Default() != orig {
+		t.Fatal("restore did not put the original back")
+	}
+}
