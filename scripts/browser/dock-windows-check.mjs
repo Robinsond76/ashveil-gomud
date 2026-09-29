@@ -228,6 +228,48 @@ if (outdir) { await page.screenshot({ path: path.join(outdir, 'company-narrow.pn
 await page.setViewportSize({ width: 1280, height: 900 });
 await page.evaluate(() => { document.getElementById('dock-right').style.width = ''; });
 
+// --- Task 11: the Combat tab (Setup) ---
+await page.evaluate(c => window.gmcp('Company', c), company);
+await page.getByRole('tab', { name: 'Combat' }).click();
+const combat = () => page.evaluate(() => document.getElementById('combat-window').textContent);
+check(await page.getByRole('table', { name: /Formation/ }).filter({ has: page.locator('.cbt-role') }).count() === 1, 'Combat: the formation grid, with roles');
+check(await page.getByRole('button', { name: 'Oswin: healer, weakest' }).count() === 1, 'a row per member: role and target rule');
+check(await page.getByRole('button', { name: 'Scout' }).count() === 0, 'no Scout with no enemies here');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Oswin: healer, weakest' }).click(); await page.getByText('Role: caster').click(); });
+check(JSON.stringify(got) === '["strategy #1 caster"]', 'set a companion\'s role');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Oswin: healer, weakest' }).click(); await page.getByText('Target: defend').click(); });
+check(JSON.stringify(got) === '["strategy #1 target defend"]', 'set a companion\'s target rule');
+await page.getByRole('button', { name: /^Wren \(you\)/ }).click();
+const youMenu = await page.evaluate(() => [...[...document.querySelectorAll('body > div')].pop().children].map(c => c.textContent));
+check(!youMenu.includes('Target: assist') && youMenu.includes('Swap with Oswin') && youMenu.includes('Move to row 3, column 3'), 'your menu: no assist; swap and move by the grid');
+got = await sentNow(async () => { await page.getByText('Move to row 3, column 3').click(); });
+check(JSON.stringify(got) === '["formation move me 3 3"]', 'move yourself');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Oswin: healer, weakest' }).click(); await page.getByText('Swap with Wren').click(); });
+check(JSON.stringify(got) === '["formation swap #1 me"]', 'swap two members');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Oswin: healer, weakest' }).click(); await page.getByText('Back to the default').click(); });
+check(JSON.stringify(got) === '["strategy #1 default"]', 'back to the default');
+await page.evaluate(() => window.gmcp('Room.Info', { Contents: { Npcs: [{ id: '#9', name: 'ruffian', aggro: false, group: 'a band of ruffians' }], Players: [], Items: [], Containers: [] } }));
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Scout' }).click(); });
+check(JSON.stringify(got) === '["scout"]', 'Scout appears with an enemy group here, and sends scout');
+await page.evaluate(() => { const c = JSON.parse(JSON.stringify(Client.GMCPStructs.Company)); c.members[1].name = '<img src=x onerror="window.__xss2=1">'; window.gmcp('Company', c); });
+check(await page.evaluate(() => window.__xss2 === undefined) && (await combat()).includes('<img'), 'markup in a name renders as text');
+
+// --- Task 12: the Comm and Who tabs ---
+await page.getByRole('tab', { name: 'Combat' }).click();
+await page.evaluate(() => { window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Hello' }); window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Again' }); });
+check(await page.getByRole('tab', { name: 'Comm, 2 new' }).count() === 1, 'messages while another tab shows: a count on Comm');
+await page.getByRole('tab', { name: /^Comm/ }).click();
+check(await page.getByRole('tab', { name: 'Comm' }).count() === 1 && await page.evaluate(() => document.querySelector('.dock-tabgroup-badge:not([hidden])') === null), 'opening Comm clears it');
+await page.evaluate(() => window.gmcp('Comm.Channel', { channel: 'say', sender: 'Oswin', source: 'mob', text: 'Seen' }));
+check(await page.evaluate(() => document.querySelector('.dock-tabgroup-badge:not([hidden])') === null), 'no count while Comm shows');
+const dockTabs = () => page.evaluate(() => [...document.querySelectorAll('#dock-right [role=tab].dock-tabgroup-tab')].map(t => t.textContent));
+check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm"]', 'the dock\'s tabs: Character, Company, Combat, Comm');
+await page.evaluate(() => VirtualWindows.getWindows().find(w => w._id === 'Online').reopen());
+check(JSON.stringify(await dockTabs()) === '["Character","Company","Combat","Comm","Who"]', 'Who appears when Online is enabled');
+await page.evaluate(() => VirtualWindows.getWindows().find(w => w._id === 'KillStats').reopen());
+check((await dockTabs()).includes('Kills'), 'Kills appears when Kill Stats is enabled');
+if (outdir) { await page.screenshot({ path: path.join(outdir, 'dock-full.png') }); }
+
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all dock window checks passed');

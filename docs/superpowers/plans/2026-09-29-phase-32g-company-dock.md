@@ -178,19 +178,22 @@ does.
 
 ## Task 11: Combat tab, Setup (`window-combat.js`)
 
-- [ ] Browser check first: the formation grid and a row per member with
+- [x] Browser check first: the formation grid and a row per member with
   role and target rule; the member menu sends `strategy <who> <role>`,
-  `strategy <who> target <rule>`, `formation move|swap|clear`; Scout
-  sends `scout` (shown when `Room.Info` lists a hostile group, else
-  hidden); markup in names renders as text.
-- [ ] `window-combat.js` in the dock group.
+  `strategy <who> target <rule>`, `formation move|swap|clear` (`<who>`:
+  `me`, or `#<id>` for a companion; no assist for the player); Scout
+  sends `scout` (shown when `Room.Info` lists an NPC in a group or an
+  aggressive one, else hidden); markup in names renders as text.
+- [x] `window-combat.js` in the dock group.
 
 ## Task 12: Comm and Who tabs (`window-comm.js`, `window-online.js`)
 
-- [ ] Browser check first: a message while another tab is active shows
+- [x] Browser check first: a message while another tab is active shows
   an unread count on Comm; opening Comm clears it; Who appears as a tab
   only when Online is enabled in Settings.
-- [ ] Both join the dock group.
+- [x] Both join the dock group (Kill Stats too, as Kills). As built:
+  docked, each Comm channel keeps its newest 300 messages (the old trim
+  only ran for a floating window).
 
 ## Task 13: Player help and tutorial
 
