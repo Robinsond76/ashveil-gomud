@@ -31,8 +31,11 @@ type companyNeeds struct {
 }
 
 type companyVitals struct {
-	HP     *int          `json:"hp"`
-	HPMax  *int          `json:"hp_max"`
+	HP    *int `json:"hp"`
+	HPMax *int `json:"hp_max"`
+	// MP and MPMax are omitted for a member with no mana to show (32g).
+	MP     *int          `json:"mp,omitempty"`
+	MPMax  *int          `json:"mp_max,omitempty"`
 	Needs  *companyNeeds `json:"needs"`
 	Warmth *string       `json:"warmth"`
 }
@@ -129,6 +132,9 @@ func vitalsOf(m companyview.Member) companyVitals {
 	v := companyVitals{}
 	if m.HasHP {
 		v.HP, v.HPMax = intPtr(m.HP), intPtr(m.HPMax)
+	}
+	if m.HasMP {
+		v.MP, v.MPMax = intPtr(m.MP), intPtr(m.MPMax)
 	}
 	if m.Hunger.Known || m.Thirst.Known || m.Fatigue.Known {
 		v.Needs = &companyNeeds{Hunger: needOf(m.Hunger), Thirst: needOf(m.Thirst), Fatigue: needOf(m.Fatigue)}

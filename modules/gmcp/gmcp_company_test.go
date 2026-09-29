@@ -309,3 +309,30 @@ func TestPruneAndDespawn(t *testing.T) {
 	companyFeeds.mu.Unlock()
 	assert.False(t, has9)
 }
+
+// TestCompanyVitalsMana (Phase 32g): mana travels in the vitals when known,
+// is absent otherwise, and a mana change alone sends only Company.Vitals.
+func TestCompanyVitalsMana(t *testing.T) {
+	s := sampleCompany()
+	s.Leader.HasMP, s.Leader.MP, s.Leader.MPMax = true, 6, 14
+	p, ok := buildCompanyPayload(7, s, noChemistry)
+	require.True(t, ok)
+	data, _ := json.Marshal(p)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(data, &got))
+	vitals := got["vitals"].(map[string]any)
+	lv := vitals["leader"].(map[string]any)
+	assert.Equal(t, 6.0, lv["mp"])
+	assert.Equal(t, 14.0, lv["mp_max"])
+	bv := vitals["companion:1"].(map[string]any)
+	assert.Nil(t, bv["mp"], "no mana known")
+	assert.Nil(t, bv["mp_max"])
+
+	f, out := testFeed()
+	f.update(7, s)
+	s.Leader.MP = 2
+	f.update(7, s)
+	require.Len(t, *out, 2)
+	assert.Equal(t, "Company.Vitals", (*out)[1].module)
+	assert.Equal(t, 2.0, (*out)[1].body["vitals"].(map[string]any)["leader"].(map[string]any)["mp"])
+}

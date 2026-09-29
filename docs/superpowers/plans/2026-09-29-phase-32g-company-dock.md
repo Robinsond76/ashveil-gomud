@@ -13,7 +13,7 @@ does.
 
 ## Task 1: Members' mana (`internal/companyview`, `modules/gmcp`)
 
-- [ ] Tests first:
+- [x] Tests first:
   - `internal/companyview`: the leader's `MP`/`MPMax` from their
     character; an out companion's from its live mob; an awaiting or
     fallen companion has `HasMP` false; a companion with no mana
@@ -21,7 +21,7 @@ does.
   - `modules/gmcp` (`gmcp_company_test.go`): `vitalsOf` carries `mp` and
     `mp_max` when known and omits them otherwise; a mana change alone
     sends `Company.Vitals`, not the full `Company`.
-- [ ] `Member.HasMP`, `MP`, `MPMax`, read where HP is read
+- [x] `Member.HasMP`, `MP`, `MPMax`, read where HP is read
   (`summary.go`); `companyVitals.MP`, `MPMax`.
 
 ## Task 2: Strategies in the snapshot (`modules/strategy`, `modules/gmcp`)

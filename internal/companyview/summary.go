@@ -36,6 +36,10 @@ type Member struct {
 	ArchetypeKnown bool
 	HasHP          bool
 	HP, HPMax      int
+	// HasMP is false when the member has no mana to show: none at all, or
+	// not out (Phase 32g).
+	HasMP     bool
+	MP, MPMax int
 	// Hunger, Thirst, and Fatigue are unknown for the dead and whenever
 	// survival can't report them.
 	Hunger, Thirst, Fatigue Need
@@ -161,7 +165,8 @@ func (src sources) summary(user *users.UserRecord) Summary {
 	s := Summary{Alive: 1, Alignment: company.DisplayAlignment(int(c.Alignment))}
 
 	s.Leader = Member{Key: company.LeaderMemberKey, Leader: true, Name: c.Name, Status: company.MemberPresent,
-		Level: c.Level, HasHP: true, HP: c.Health, HPMax: c.HealthMax.Value}
+		Level: c.Level, HasHP: true, HP: c.Health, HPMax: c.HealthMax.Value,
+		HasMP: c.ManaMax.Value > 0, MP: c.Mana, MPMax: c.ManaMax.Value}
 	if f, ok := src.formation(uid); ok {
 		s.Leader.Row, s.Leader.Col, s.Leader.Placed = f.Find(company.LeaderMemberKey)
 		if !s.Leader.Placed {
@@ -199,6 +204,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 				s.Alive++
 				if v.Status == company.MemberPresent {
 					m.HasHP, m.HP, m.HPMax = true, v.HP, v.HPMax
+					m.HasMP, m.MP, m.MPMax = v.MPMax > 0, v.MP, v.MPMax
 				}
 				if n, ok := needs[m.Key]; ok {
 					m.Hunger, m.Thirst, m.Fatigue = needsOf(n)

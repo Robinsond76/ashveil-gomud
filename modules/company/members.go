@@ -36,6 +36,7 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 			if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsAttached(leaderUserID, instanceID) {
 				view.Status = domain.MemberPresent
 				view.HP, view.HPMax, _ = m.runtime.Vitals(instanceID)
+				view.MP, view.MPMax, _ = m.runtime.Mana(instanceID)
 				// The live mob is ahead of its record between snapshots.
 				if level, into, tnl, ok := m.runtime.Progress(instanceID); ok {
 					view.Level, view.ExpInto, view.ExpTNL, view.ExpKnown = level, into, tnl, true

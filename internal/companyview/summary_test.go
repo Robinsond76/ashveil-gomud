@@ -214,3 +214,36 @@ func TestSummaryLeaderCell(t *testing.T) {
 	assert.Equal(t, [2]int{1, 2}, [2]int{s.Leader.Row, s.Leader.Col})
 	assert.False(t, noSources().summary(testUser()).Leader.Placed)
 }
+
+// TestSummaryMana (Phase 32g): the leader's mana from their character; a
+// present companion's from its view; none for a companion with no mana,
+// one awaiting, or the fallen.
+func TestSummaryMana(t *testing.T) {
+	user := testUser()
+	user.Character.Mana = 6
+	user.Character.ManaMax.Value = 14
+	src := fullSources()
+	src.members = func(int) ([]company.MemberView, bool) {
+		return []company.MemberView{
+			{ID: 1, Name: "Oswin", Status: company.MemberPresent, HP: 10, HPMax: 20, MP: 8, MPMax: 20},
+			{ID: 2, Name: "Bran", Status: company.MemberPresent, HP: 10, HPMax: 20},
+			{ID: 3, Name: "Tamsin", Status: company.MemberAwaiting, MP: 5, MPMax: 5},
+			{ID: 4, Name: "Ysolde", Status: company.MemberDead, RescueSeconds: 60},
+		}, true
+	}
+	s := src.summary(user)
+
+	assert.True(t, s.Leader.HasMP)
+	assert.Equal(t, 6, s.Leader.MP)
+	assert.Equal(t, 14, s.Leader.MPMax)
+	require.Len(t, s.Companions, 4)
+	assert.True(t, s.Companions[0].HasMP)
+	assert.Equal(t, 8, s.Companions[0].MP)
+	assert.Equal(t, 20, s.Companions[0].MPMax)
+	assert.False(t, s.Companions[1].HasMP, "no mana to show")
+	assert.False(t, s.Companions[2].HasMP, "awaiting: not live")
+	assert.False(t, s.Companions[3].HasMP, "fallen")
+
+	user.Character.ManaMax.Value = 0
+	assert.False(t, src.summary(user).Leader.HasMP, "a leader with no mana")
+}
