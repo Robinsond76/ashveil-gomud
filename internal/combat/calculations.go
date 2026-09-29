@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -242,6 +243,10 @@ func Crits(sourceChar characters.Character, targetChar characters.Character) boo
 		sourceChar.HasBuffFlag("accuracy"),
 		targetChar.HasBuffFlag("blink"),
 	)
+	// Phase 30a: an exposed target is easier to catch open.
+	if targetChar.HasBuffFlag(status.FlagExposed) {
+		chance = min(chance+status.ExposedCritBonus, 100)
+	}
 	critRoll := util.Rand(100)
 	util.LogRoll(`Crits`, critRoll, chance)
 	return critRoll < chance

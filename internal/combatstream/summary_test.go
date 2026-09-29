@@ -160,3 +160,18 @@ func TestUnnamedFightHeadingsAreUnchanged(t *testing.T) {
 	assert.Equal(t, "── The fight breaks off ──", Render(Summary{Outcome: OutcomeBrokenOff}, 0)[0])
 	assert.Equal(t, "── The fighting is over ──", Render(Summary{Outcome: OutcomeVictory}, 0)[0])
 }
+
+// Phase 30a: a status's damage counts to the side that suffers it's foes;
+// a lost action counts to nobody.
+func TestSummaryCountsStatusDamage(t *testing.T) {
+	s := New()
+	id := s.Open(1, 100, "bandits#0", aria, []Ref{tamsin}, []Ref{captain})
+	s.Emit(Event{Kind: StatusTick, Target: captain, Damage: 3, Status: "bleeding"})
+	s.Emit(Event{Kind: StatusTick, Target: tamsin, Damage: 2, Status: "burning"})
+	s.Emit(Event{Kind: StatusTick, Target: captain, Status: "staggered", Outcome: OutcomeLostAction})
+	sum, ok := s.EndFight(id, 3, OutcomeVictory, Final{})
+	require.True(t, ok)
+	assert.Equal(t, 3, sum.CompanyDamage, "the captain's bleeding counts to the company")
+	assert.Equal(t, 2, sum.EnemyDamage, "Tamsin's burning counts to the enemies")
+	assert.Empty(t, sum.MostDamage, "no attacker is credited")
+}

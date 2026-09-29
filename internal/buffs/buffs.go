@@ -1,6 +1,7 @@
 package buffs
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
 
@@ -18,6 +19,7 @@ type Buff struct {
 	RoundCounter    int `yaml:"roundcounter,omitempty"`    // How many rounds have passed. Triggers on (RoundCounter%RoundInterval == 0)
 	TriggersLeft    int `yaml:"triggersleft,omitempty"`    // How many times it triggers
 	TriggersInitial int `yaml:"triggersinitial,omitempty"` // The trigger count when the buff was first applied (may differ from spec if overridden)
+	Stacks          int `yaml:"stacks,omitempty"`          // Phase 30a: how many times it has stacked (0 reads as 1)
 }
 
 func (b *Buff) StatMod(statName string) int {
@@ -187,6 +189,7 @@ func (bs *Buffs) AddBuff(buffId int, isPermanent bool, triggerCountOverride ...i
 			PermaBuff:       false,
 			TriggersLeft:    buffInfo.TriggerCount,
 			TriggersInitial: buffInfo.TriggerCount,
+			Stacks:          1,
 		}
 
 		if len(triggerCountOverride) > 0 && triggerCountOverride[0] > 0 {
@@ -201,9 +204,25 @@ func (bs *Buffs) AddBuff(buffId int, isPermanent bool, triggerCountOverride ...i
 		}
 
 		if idx, ok := bs.buffIds[buffId]; ok {
+			// Phase 30a: an expired buff still awaiting the pruner starts
+			// over, not from its old stacks and round count; a live one
+			// gains a stack, up to its maximum.
+			revived := bs.List[idx].Expired()
 			bs.List[idx].TriggersLeft = newBuff.TriggersLeft
 			bs.List[idx].TriggersInitial = newBuff.TriggersInitial
 			bs.List[idx].PermaBuff = newBuff.PermaBuff
+			switch {
+			case revived:
+				bs.List[idx].Stacks = 1
+				bs.List[idx].RoundCounter = 0
+			case bs.List[idx].Stacks < 1:
+				bs.List[idx].Stacks = 1
+				fallthrough
+			default:
+				if bs.List[idx].Stacks < buffInfo.MaxStacks {
+					bs.List[idx].Stacks++
+				}
+			}
 			return true
 		}
 
@@ -328,6 +347,17 @@ func (bs *Buffs) Prune() (prunedBuffs []*Buff) {
 }
 
 func GetDurations(buff *Buff, spec *BuffSpec) (roundsLeft int, totalRounds int) {
+
+	// Phase 30a: a combat-round buff's count is combat rounds, each several
+	// game rounds long, and game-round triggering never applies to it.
+	if spec.CombatRounds {
+		every := max(int(configs.GetTimingConfig().CombatEveryRounds), 1)
+		initial := buff.TriggersInitial
+		if initial <= 0 {
+			initial = spec.TriggerCount
+		}
+		return max(buff.TriggersLeft, 0) * every, initial * every
+	}
 
 	if spec.RoundInterval <= 0 {
 		return 0, 0

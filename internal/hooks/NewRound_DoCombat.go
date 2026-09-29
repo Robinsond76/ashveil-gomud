@@ -17,6 +17,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -47,6 +48,10 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// in battle with fighting as a whole before any blow is struck.
 	upkeepEngagements()
 	closeIdleBattles()
+
+	// Ashveil Phase 30a: statuses tick once per combat round, before any
+	// blow; a fall they cause is resolved at once.
+	statusPass()
 
 	// Ashveil Phase 32d: healers and casters cast by their strategies,
 	// before any blow.
@@ -90,6 +95,12 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			continue
 		}
 
+		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
+		// its action.
+		if status.Has(user.Character) && statusCostsAction(userHolder(user)) {
+			continue
+		}
+
 		// Disable any buffs that are cancelled by combat
 		user.Character.CancelBuffsWithFlag("cancel-on-combat")
 
@@ -104,6 +115,13 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 
 			// Revert to Default combat regardless of outcome
 			user.Character.SetAggro(user.Character.Aggro.UserId, user.Character.Aggro.MobInstanceId, characters.DefaultAttack)
+
+			// Ashveil Phase 30a: a flight begun before a hobbling blow is
+			// held by it too.
+			if user.Character.HasBuffFlag("no-flee") {
+				user.SendText(`Your legs will not carry you out of this. You cannot flee.`)
+				continue
+			}
 
 			blockedByMob := ``
 			for _, mobInstId := range uRoom.GetMobs(rooms.FindFighting) {
@@ -747,6 +765,12 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 		// If has a buff that prevents combat, skip the player
 		if mob.Character.HasBuffFlag("no-combat") {
+			continue
+		}
+
+		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
+		// its action.
+		if status.Has(&mob.Character) && statusCostsAction(mobHolder(mob)) {
 			continue
 		}
 

@@ -37,6 +37,8 @@ type BuffSpec struct {
 	TriggerCount  int               `yaml:"triggercount,omitempty"`  // How many times it triggers before it is removed
 	StatMods      statmods.StatMods `yaml:"statmods,omitempty"`      // stat mods for the duration of the buff
 	Flags         []string          `yaml:"flags,omitempty"`         // A list of actions and such that this buff prevents or enables
+	CombatRounds  bool              `yaml:"combatrounds,omitempty"`  // Phase 30a: TriggersLeft counts combat rounds, ticked by the combat loop, not game rounds
+	MaxStacks     int               `yaml:"maxstacks,omitempty"`     // Phase 30a: a reapplication adds a stack up to this many (0 or 1: it only refreshes)
 }
 
 // Calculates the value of this buff
@@ -56,6 +58,18 @@ func (b *BuffSpec) GetValue() int {
 	}
 
 	return val
+}
+
+// CombatRoundsText describes a combat-round buff's length (Phase 30a), and
+// reports false for any other buff.
+func (b *BuffSpec) CombatRoundsText() (string, bool) {
+	if !b.CombatRounds {
+		return ``, false
+	}
+	if b.TriggerCount == 1 {
+		return `Lasts 1 combat round`, true
+	}
+	return fmt.Sprintf(`Lasts %d combat rounds`, b.TriggerCount), true
 }
 
 func (b *BuffSpec) VisibleNameDesc() (name, description string) {

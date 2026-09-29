@@ -19,6 +19,8 @@
 
 - Keep spec fields and runtime behavior aligned. If you add a field to `BuffSpec`, update validation, load/save paths, and any admin helpers in the same change.
 - Preserve the `buffIds` and `buffFlags` indexes in `Buffs`; changes to add/remove/expire behavior usually need `Validate()` or equivalent rebuild logic to stay correct.
+- `CombatRounds` (Phase 30a): the buff's `TriggersLeft` counts combat rounds and is ticked by the combat loop (`internal/status`), never by game rounds (its `triggerrate` is set too long to fire); `GetDurations` converts to game rounds for display.
+- `MaxStacks` / `Buff.Stacks` (Phase 30a): reapplying a live buff refreshes its count and adds a stack up to `MaxStacks`; a new buff starts at 1 stack. Only stacking statuses (bleeding) set it.
 - `TriggerCount`, `TriggerRate`, and permanent buffs interact. Check both one-shot and repeating behavior before changing expiration logic.
 - Flag changes are cross-cutting. Flags are plain strings (e.g. `"hidden"`, `"perma-gear"`); search for the literal flag string outside this package before renaming or changing semantics. Runtime flag checks are lenient: an unknown flag logs a warning and is treated as no-match. The `All` sentinel (`""`) matches any buff. New flag definitions must be added as `<DataFiles>/buffs-flags/<flag>.yaml`.
 

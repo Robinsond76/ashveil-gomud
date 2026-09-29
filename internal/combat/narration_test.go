@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,11 +46,13 @@ func TestRoundLinesCarryTheirMechanics(t *testing.T) {
 		if res.Crit {
 			crits++
 		}
-		want := damageSuffix(res.DamageToTarget, res.Crit, 0)
+		// Phase 30a: a critical hit also names the status it leaves.
+		words := status.Words(res.BuffTarget)
+		want := damageSuffix(res.DamageToTarget, res.Crit, 0, words...)
 		require.NotEmpty(t, res.MessagesToSource)
 		assert.True(t, strings.HasSuffix(res.MessagesToSource[0], want), "attacker hit line %q ends %q", res.MessagesToSource, want)
 		assert.True(t, strings.HasSuffix(res.MessagesToSourceRoom[0], want), "room hit line %q ends %q", res.MessagesToSourceRoom, want)
-		wantDef := damageSuffix(res.DamageToTarget, res.Crit, res.DamageToTargetReduction)
+		wantDef := damageSuffix(res.DamageToTarget, res.Crit, res.DamageToTargetReduction, words...)
 		assert.True(t, strings.HasSuffix(res.MessagesToTarget[0], wantDef), "defender hit line %q ends %q", res.MessagesToTarget, wantDef)
 	}
 	require.Positive(t, hits, fmt.Sprintf("hits %d misses %d", hits, misses))

@@ -7,6 +7,8 @@ numbers that matter sit in brackets at the end of the line.
 
   <ansi fg="command">(5 damage)</ansi>                a hit, and the health it took
   <ansi fg="command">(critical hit, 9 damage)</ansi>  a critical hit: it lands harder
+  <ansi fg="command">(critical hit, 9 damage, bleeding)</ansi>  and it left a status (<ansi fg="command">help statuses</ansi>)
+  <ansi fg="command">(1 damage, bleeding)</ansi>  a status doing its damage, on the victim's turn
   <ansi fg="command">(5 damage, 2 blocked)</ansi>     a hit on you; your armor stopped 2 of it
   <ansi fg="command">(4 healed)</ansi>                health a spell gave back
   <ansi fg="command">(chanting: Magic Missile, 2 rounds)</ansi>

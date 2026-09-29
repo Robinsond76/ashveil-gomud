@@ -1,0 +1,14 @@
+buffid: 1102
+name: Knocked Down
+description: You are on the ground. You lose your next action and are easier to hit.
+secret: false
+# Phase 30a: ticked by the combat round (see internal/status), never by game
+# rounds; triggercount is the number of combat-round ticks.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 4
+statmods:
+  speed: -4
+flags:
+  - combat-status
+  - lose-first-action

@@ -604,6 +604,11 @@ func (c *Character) GetDefense() int {
 		reduction = int(float64(reduction) * 1.5)
 	}
 
+	// Phase 30a: a broken armor gives half its protection.
+	if c.HasBuffFlag("armor-broken") {
+		reduction /= 2
+	}
+
 	if reduction > 100 {
 		reduction = 100
 	}

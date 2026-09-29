@@ -1,0 +1,4 @@
+flag: lose-actions
+name: "Loses Actions"
+description: "The holder loses every combat action while the status lasts."
+locked: true

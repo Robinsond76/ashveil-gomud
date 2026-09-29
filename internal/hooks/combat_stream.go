@@ -106,7 +106,14 @@ func attackEvents(source, target combatstream.Ref, roomId int, attacker *charact
 		}
 		return combatstream.Event{Kind: combatstream.StatusApplied, RoomId: roomId, Source: source, Target: on, BuffId: buffId, Status: name}
 	}
+	// A status is reported once per blow, however many stacks it put on
+	// (a stab's deep bleeding is one status, two stacks).
+	seen := map[int]bool{}
 	for _, buffId := range r.BuffTarget {
+		if seen[buffId] {
+			continue
+		}
+		seen[buffId] = true
 		out = append(out, status(target, buffId))
 	}
 	for _, buffId := range r.BuffSource {
@@ -320,6 +327,8 @@ func (fs fightSides) gone() []combatstream.Ref {
 // endFight closes a fight and sends its summary to the leader, if online
 // and their setting is on.
 func (fs fightSides) end(outcome string) {
+	// Phase 30a: statuses end with the fight.
+	clearFightStatuses(fs.info)
 	final := combatstream.Final{Company: fs.companyHealth(), Gone: fs.gone()}
 	sum, ok := combatstream.Default().EndFight(fs.info.ID, combatRound.Load(), outcome, final)
 	if !ok {

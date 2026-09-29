@@ -30,10 +30,12 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	}
 
 	var targetChar *characters.Character
+	var buffMob *mobs.Mob
+	var buffUser *users.UserRecord
 
 	if evt.MobInstanceId > 0 {
 
-		buffMob := mobs.GetInstance(evt.MobInstanceId)
+		buffMob = mobs.GetInstance(evt.MobInstanceId)
 		if buffMob == nil {
 			return events.Cancel
 		}
@@ -42,12 +44,18 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 
 	} else {
 
-		buffUser := users.GetByUserId(evt.UserId)
+		buffUser = users.GetByUserId(evt.UserId)
 		if buffUser == nil {
 			return events.Cancel
 		}
 
 		targetChar = buffUser.Character
+	}
+
+	// Ashveil Phase 30a: a combat status lands only on someone still in a
+	// fight (one struck in a fight's last round arrives after it ended).
+	if evt.BuffId > 0 && !statusBuffLands(evt.BuffId, targetChar, buffUser, buffMob) {
+		return events.Continue
 	}
 
 	if evt.BuffId < 0 {

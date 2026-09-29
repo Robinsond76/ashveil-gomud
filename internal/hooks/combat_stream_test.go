@@ -51,6 +51,11 @@ func TestAttackEvents(t *testing.T) {
 	assert.Equal(t, 901, got[1].BuffId)
 	assert.Equal(t, src, got[2].Target)
 	assert.Equal(t, 902, got[2].BuffId)
+
+	// Phase 30a: a stab's two stacks of bleeding are one status on the blow.
+	got = attackEvents(src, tgt, 100, unarmed, combat.AttackResult{Hit: true, Crit: true, BuffTarget: []int{1100, 1100}})
+	require.Len(t, got, 2)
+	assert.Equal(t, 1100, got[1].BuffId)
 }
 
 func TestSpellDeltaEvents(t *testing.T) {

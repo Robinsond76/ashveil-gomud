@@ -1,0 +1,4 @@
+flag: combat-status
+name: "Combat Status"
+description: "A timed combat effect ticked by the combat round; cleared when the fight ends."
+locked: true

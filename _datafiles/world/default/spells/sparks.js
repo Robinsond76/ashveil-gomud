@@ -3,6 +3,7 @@ DMG_DICE_QTY = 1;
 DMG_DICE_SIDES = 3;
 
 SPELL_NAME = 'Shower of Sparks';
+OVERLOADED_BUFF = 1106; // Phase 30a: the sparks scramble whatever they sear
 WAIT_ROUNDS = 1; // sparks.yaml's waitrounds
 
 // Phase 29c narration voice: mechanics in lowercase parentheses at the end.
@@ -59,7 +60,9 @@ function onMagic(sourceActor, targetActors) {
 
         // Apply the harm first, and report what it took.
         var dealt = -target.AddHealth(-(UtilDiceRoll(DMG_DICE_QTY, DMG_DICE_SIDES) + 1));
-        var suffix = ' (' + dealt + ' damage)';
+        // Phase 30a: the charge leaves its target overloaded.
+        target.GiveBuff(OVERLOADED_BUFF, 'spell');
+        var suffix = ' (' + dealt + ' damage, overloaded)';
 
         if (sourceUserId != 0 && sourceUserId == targetUserId) {
             SendUserMessage(sourceUserId, '    Sparks sear your own skin.' + suffix);

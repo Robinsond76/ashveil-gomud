@@ -1,0 +1,13 @@
+buffid: 1100
+name: Bleeding
+description: A wound bleeds you, worse each time it is reopened.
+secret: false
+# Phase 30a: ticked by the combat round (see internal/status), never by game
+# rounds; triggercount is the number of combat-round ticks.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 3
+maxstacks: 3
+flags:
+  - combat-status
+  - bleeding

@@ -1,0 +1,14 @@
+buffid: 1106
+name: Overloaded
+description: Raw power has scrambled you. You cast poorly and move slowly.
+secret: false
+# Phase 30a: ticked by the combat round (see internal/status), never by game
+# rounds; triggercount is the number of combat-round ticks.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 4
+statmods:
+  casting: -30
+  speed: -3
+flags:
+  - combat-status
