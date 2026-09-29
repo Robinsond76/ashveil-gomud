@@ -242,7 +242,7 @@ type companyFeed struct {
 func newCompanyFeed() *companyFeed {
 	return &companyFeed{
 		last:      map[int]companySent{},
-		extras:    []companyExtra{inventoryExtra(), campExtra(camping.CampStateOf)},
+		extras:    []companyExtra{inventoryExtra(), campExtra(camping.CampStateOf), battleExtra(gatherBattle)},
 		lastExtra: map[int]map[string]string{},
 		chemistry: company.ChemistryStanding,
 		send: func(userID int, module string, payload []byte) {
@@ -382,11 +382,14 @@ func init() {
 	events.RegisterListener(events.PlayerDespawn{}, func(e events.Event) events.ListenerReturn {
 		if evt, ok := e.(events.PlayerDespawn); ok {
 			companyFeeds.forget(evt.UserId)
+			battleSeen.forget(evt.UserId)
 		}
 		return events.Continue
 	})
 	events.RegisterListener(events.NewRound{}, func(events.Event) events.ListenerReturn {
-		companyFeeds.prune(users.GetOnlineUserIds())
+		online := users.GetOnlineUserIds()
+		companyFeeds.prune(online)
+		battleSeen.prune(online)
 		return events.Continue
 	})
 	events.RegisterListener(GMCPCompanyRequest{}, func(e events.Event) events.ListenerReturn {

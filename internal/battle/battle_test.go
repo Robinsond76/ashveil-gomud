@@ -105,3 +105,25 @@ func TestAllows(t *testing.T) {
 	assert.True(t, Allows(1, 5))
 	assert.False(t, Allows(1, 6), "a group waiting its turn")
 }
+
+// TestWaiting (32g2): the groups set on a player other than their battle's
+// own, first set first; End and KeepSet drop from it.
+func TestWaiting(t *testing.T) {
+	Reset()
+	t.Cleanup(Reset)
+	assert.Empty(t, Waiting(7), "no battle, nothing waits")
+
+	NoteSet(7, "a", 3)
+	NoteSet(7, "c", 5)
+	NoteSet(7, "b", 5)
+	NoteSet(7, "d", 1)
+	assert.Empty(t, Waiting(7), "nothing waits on a player not in a battle")
+	Begin(7, 100, 3, "a", []int{21})
+	assert.Equal(t, []string{"d", "b", "c"}, Waiting(7), "by first-set round, then party id")
+
+	KeepSet(7, []string{"a", "b", "c"})
+	assert.Equal(t, []string{"b", "c"}, Waiting(7))
+	End(7)
+	assert.Empty(t, Waiting(7))
+	assert.Empty(t, Waiting(8))
+}

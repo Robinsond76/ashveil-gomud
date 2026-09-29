@@ -45,3 +45,22 @@ func TestWebClientHelp(t *testing.T) {
 		assert.Contains(t, tagPattern.ReplaceAllString(got, ""), "help webclient", page)
 	}
 }
+
+// TestBattleViewHelp (Phase 32g2): `help webclient` explains the Combat
+// tab's Battle view, and the battle hub and `help scout` point to it.
+func TestBattleViewHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	text, err := GetHelpContents("webclient")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, want := range []string{"Battle view", "front row", "health reads", "Also fighting", "Fallen", "Waiting their turn", "Flee", "flee", "a marker on the Combat tab", "Setup"} {
+		assert.Contains(t, plain, want)
+	}
+	for _, page := range []string{"combat", "scout"} {
+		got, err := GetHelpContents(page)
+		require.NoError(t, err, page)
+		assert.Contains(t, tagPattern.ReplaceAllString(got, ""), "help webclient", page)
+	}
+}

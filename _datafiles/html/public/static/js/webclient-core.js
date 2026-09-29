@@ -816,13 +816,14 @@ class DockTabGroup {
         return this._active === id;
     }
 
-    setBadge(id, text) {
+    // spoken (32g2) replaces "<text> new" in the tab's accessible name.
+    setBadge(id, text, spoken) {
         const m = this._members.find(x => x.win._id === id);
         if (!m || !m.badge) { return; }
         m.badge.textContent = text ? String(text) : '';
         m.badge.hidden = !text;
         if (text) {
-            m.tab.setAttribute('aria-label', m.label + ', ' + text + ' new');
+            m.tab.setAttribute('aria-label', m.label + ', ' + (spoken || text + ' new'));
         } else {
             m.tab.removeAttribute('aria-label');
         }
@@ -1693,9 +1694,9 @@ const VirtualWindows = (() => {
     }
 
     // Phase 32g: a tab's count, and whether its tab is showing.
-    function setTabBadge(id, text) {
+    function setTabBadge(id, text, spoken) {
         const group = DockTabGroups.of(id);
-        if (group) { group.setBadge(id, text); }
+        if (group) { group.setBadge(id, text, spoken); }
     }
 
     function isTabShowing(id) {

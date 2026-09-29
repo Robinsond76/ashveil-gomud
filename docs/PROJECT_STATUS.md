@@ -6,8 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-29
-- **HEAD:** `master` 2026-09-29: Phase 32g (web company dock), merged from
-  `phase-32g-company-dock`. Before it, Phase 29d (NPC pronouns and stable enemy
+- **HEAD:** `master` 2026-09-29: Phase 32g2 (live battle view), merged from
+  `phase-32g2-battle-view`. Before it, Phase 32g (web company dock), merged from
+  `phase-32g-company-dock`. Before that, Phase 29d (NPC pronouns and stable enemy
   labels), integrated from `codex/phase-29d-pronouns-ordinals`. Before that, Phase 32d (automatic combat by
   strategy), with 32c (enemy groups), 32f (company logistics), and 32h
   (character deletion), merged onto 32e (company experience, PR #10). Before them, Phase 29b2 (one battle at a time; spawn groups) and player
@@ -22,16 +23,19 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29d and 32g; see the table below. The survival and
+- **Completed:** Phases 0–29d, 32g, and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
   the first combat slices (29a, 29b, 29b2, 29c, 29d), enemy groups (32c),
   automatic combat by strategy (32d), company experience (32e), company
-  logistics (32f), the web company dock (32g), and character deletion
+  logistics (32f), the web company dock (32g) and its live battle view
+  (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 32g (web company dock), from
-  `phase-32g-company-dock`; see its work-log entry below.
+- **Latest completed phase:** 32g2 (live battle view), from
+  `phase-32g2-battle-view`; see its work-log entry below. Before it, 32g
+  (web company dock), from `phase-32g-company-dock` (work log at commit
+  `4ce8f66`).
 - **Before it:** 29d (pronouns and stable enemy labels), from
   `codex/phase-29d-pronouns-ordinals`; see the [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md).
   NPC/race pronouns, generated recruit neutrality, frozen shared enemy labels,
@@ -49,9 +53,7 @@ instead of duplicating them.
   produces no room attack line. The fixture now disables dodging only within that test
   and restores settings afterward; 100 focused race-test repetitions passed.
   Independent follow-up review found no issues and passed 40 focused repetitions.
-- **Next in the play-test roadmap:** 32g2, the Combat tab's live battle view
-  (32a–32h are done), from the owner's
-  play-test notes, per the
+- **Next:** the play-test roadmap (32a–32h, 32g2) is done, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
   the combat roadmap continues at 29e (pain reactions).
   Also open: the "Future ideas" row; see Known issues.
@@ -128,7 +130,7 @@ instead of duplicating them.
 | 32h | Character deletion | Complete: [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), [plan](superpowers/plans/2026-09-28-phase-32h-character-deletion.md). `delete character`, confirmed by the password (masked) and the name; every module's state purged with the login kept; back in creation on the same connection; a durable `Deleting` flag and a boot sweep; masked in-game password prompts (also `password`) |
 | 32d | Automatic combat by strategy | Complete: [design](superpowers/specs/2026-09-28-phase-32d-auto-combat-design.md), [plan](superpowers/plans/2026-09-28-phase-32d-auto-combat.md). `strategy`: each character's role (fighter, healer, caster) and target rule (weakest, strongest, wounded, nearest, furthest, leader, assist, defend), durable; healers and casters cast real spells with mana; companions know spells by archetype and level and regain mana; wizards/clerics granted Magic Missile/Minor Heal; in a battle only `flee`; only hostile mobs group by tag |
 | 32g | Web company dock | Complete: [design](superpowers/specs/2026-09-29-phase-32g-company-dock-design.md), [plan](superpowers/plans/2026-09-29-phase-32g-company-dock.md). Left column the world (time, map, room, tutorial); right a tabbed dock: a vitals strip for every member above Character (Overview with worth, Gear with weights, Skills and jobs, Quests, Effects, Pet), Company (Status, Inventory with menus by exact item reference, Camp), Combat (setup: roles, targets, formation, Scout), Comm (unread count), and Who/Kills when enabled; `Company.Inventory`, `Company.Camp`, members' mana and strategies; `help webclient` |
-| 32g2 | Live battle view | Proposed: the Combat tab's Battle view (both formations, targets, health bands) and a `Company.Battle` message, per the Phase 31 design |
+| 32g2 | Live battle view | Complete: [design](superpowers/specs/2026-09-29-phase-32g2-battle-view-design.md), [plan](superpowers/plans/2026-09-29-phase-32g2-battle-view.md). During a battle the Combat tab shows the enemy group's formation above the company's (fronts to the middle), scout's health words (never numbers), reach, target lines both ways, outsiders struck, the fallen, the waiting groups, a text list, a live region, Flee, and Setup's member menu; a marker on the tab; `Company.Battle` for every player in a battle; dark rooms show nothing, as scout |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
@@ -148,71 +150,63 @@ fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
 
-### Phase 32g: web company dock (2026-09-29)
+### Phase 32g2: live battle view (2026-09-29)
 
-- **What:** per the [32g design](superpowers/specs/2026-09-29-phase-32g-company-dock-design.md)
-  (the owner's decisions A–F: vitals pinned for every member; tab groups
-  in the dock core; the live battle view split into 32g2; old layouts
-  reset once; new GMCP; the Company sub-tab named Inventory) and
-  [plan](superpowers/plans/2026-09-29-phase-32g-company-dock.md). Server:
-  `companyview` members carry mana and the strategy a battle aims by
-  (`enemyparty.MemberStrategy`); the company feed gains *extras*, sent
-  only on change: `Company.Inventory` (a read-only `CompanyInventory`:
-  every member's gear with `!<id>:<uuid>` references, horses, cargo, the
-  load split) and `Company.Camp` (`CampStateOf`); `Company.Vitals` carries
-  `mp`; the backpack summary carries weights. Browser: `DockTabGroup` in
-  `webclient-core.js` (tabs, pop-out and back, badges, moving to the other
-  column, `LayoutStore` v2 with a one-time notice); the left column is the
-  world (time, map, room, tutorial) and the right the dock: the vitals
-  strip, Character (Overview with worth, Gear with weights, Skills with
-  jobs, Quests, Effects, Pet), Company (`window-party.js` became
-  `window-company.js`: Status, Inventory with menus, Camp), Combat
-  (`window-combat.js`: formation, roles, targets, Scout), Comm (unread
-  count), and Who and Kills when enabled; keyboard menus (`uiMenu`, with
-  `confirm`). Help: `help webclient` (aliases `web client`, `dock`,
-  `panels`, `tabs`, `layout`) and pointers from `company`, `cargo`,
-  `company-inventory`, `camp`, `strategy`, `formation`; a Character lesson
-  hint.
-- **Why:** the owner's play-test note (a tabbed Company/Comm/Combat panel,
-  cargo hover actions) and layout request of 2026-09-29 (the map and room
-  info left under the time; character, vitals, worth, gear, and pet in a
-  tab on the right).
+- **What:** per the [32g2 design](superpowers/specs/2026-09-29-phase-32g2-battle-view-design.md)
+  (the owner accepted decisions A–G as recommended: scout's health words;
+  every player sees their own battle; the fallen listed off the live
+  grid; an "others" chip; a tab marker, never a switch; the feed's usual
+  beat; watching plus Setup's menu and Flee) and
+  [plan](superpowers/plans/2026-09-29-phase-32g2-battle-view.md). Server:
+  `battle.Waiting`, `enemyparty.BattleParty` (shared with `hooks`), and
+  `Company.Battle` (`modules/gmcp/gmcp.CompanyBattle.go`), a third feed
+  extra built from `battle.Current` and the live room, sent only on
+  change, `{}` out of battle. Browser: `window-combat.js`'s Battle view
+  (grids, SVG lines, hover/focus/tap lighting, text list, live region,
+  Flee, Setup folded under), the Combat tab's marker (`setBadge` gains a
+  spoken label). Help: `help webclient` (the Battle view), pointers from
+  `help combat` and `help scout`, a Combat lesson hint.
+- **Why:** 32g's decision C split the live view out; the owner's
+  play-test notes and the Phase 31 battle panel design.
 - **Verification:** `make generate` (no diff), `make validate`,
   `go test -race ./...`, `make js-lint`, and the Chromium checks
-  `scripts/browser/dock-check.mjs`, `dock-windows-check.mjs`, and
-  `tutorial-panel-check.mjs` pass after the review fixes. Wiring:
-  `modules/tutorial/wiring_dock_test.go` drives `plugins.Load`, the real
-  `cargo put`/`take` and `give` with the payload's own references (checked
-  to fail with a broken reference), `formation`, `camp`, `camp fire`,
-  `camp rest`, and a login, capturing what the feed sends;
-  `modules/strategy` sets strategies through the real command and reads
-  them back through `companyview`.
-- **Review:** 15 findings, each verified. Fixed with regression tests:
-  (1) a new `Company` snapshot erased the client's stored Inventory and
-  Camp, never re-sent (the extras now follow every snapshot; unit and
-  wiring tests); (2) moving the dock while a tab was out left an empty
-  panel (a tab docks into its group wherever it is; a move updates every
-  group window; the browser check reproduces the reviewer's numbers
-  without the fix); (3) item labels and menu commands carried `<ansi>`
-  markup (a plain `name` for commands, a `label` without markup); (4)
-  menus were mouse-only (buttons in a `role=menu`: arrows, Enter, Escape,
-  placed by the control); (5) a companion read from its template re-sent
-  the Inventory every round (companions' items carry no reference); (7)
-  Rest was offered at a rested camp (`rested`); (8) Inventory and Camp
-  lost keyboard focus on updates; (9) a companion charmed away showed
-  stale gear; (12, 13) checks added for a snapshot then the extras, a
-  group move, keyboard menus, and Reset Layout; (14, 15) the gmcp guide
-  and `help webclient` corrected. Accepted: (6) `Company.Camp` resends
-  each round during a one-minute rest (the progress bar needs it;
-  recorded in the gmcp guide); (10) "Take one" on either of two stacks of
-  one item takes the partly used first, as `cargo take` does (the help
-  says so); (11) `give` strips prepositions from a quoted name ("Oswin the
-  Bold") and prefers a player of the same name, a companion attached but
-  in another room is still offered, and a saddle of the wrong kind is
-  refused by the server. Not added: a wiring test of a rest's end (it
-  takes a real minute; the unit test covers `rested`).
+  `dock-check.mjs`, `dock-windows-check.mjs`, `tutorial-panel-check.mjs`
+  pass after the review fixes (2026-09-29). The first full race run
+  failed on the battle view's own wiring test (the "only if seen" rule,
+  below); after that fix, the wiring tests passed 10 race loops and the
+  full run passed. Wiring:
+  `modules/company/wiring_battle_view_test.go` drives real `DoCombat`
+  rounds in the brawl world with the gmcp feed: the view's enemies,
+  cells, words, reach (placed by `formation move`), company and
+  companion targets, falls, a login re-send, the end's `{}`, Brom's own
+  view and Aria's waiting groups, an outsider under `others`, the dark,
+  and a connection without GMCP. The clock never moves.
+- **Review:** independent reviewer, 7 findings, each verified. Fixed with
+  regression tests: (1) a `Company` snapshot mid-battle erased the stored
+  battle, so the view flickered to Setup, announced "The battle is over"
+  and lost focus (the client keeps the last battle until it's re-sent;
+  the browser check fails without the fix); (2) a hidden enemy that died
+  or left was named under Fallen (a fallen enemy is named unless the view
+  last saw it hidden: a runtime memory per player and battle; the first
+  version, "only if seen", dropped a foe that fell in its first round,
+  which the full race run caught, and the wiring tests now start each
+  from a fresh login so they loop cleanly); (3) the view ignored
+  darkness (it now shows only that it's too dark, as `scout`); (4)
+  wiring gaps: companion targets, `others`, darkness, and a connection
+  without GMCP now go through real rounds; (5) a wholly hidden group was
+  named in the header and waiting line (no longer); (7) help wording
+  (alone as "You", the company's numbers, the dark). Not reproduced: (6)
+  lines going stale on a dock resize (the check passed without the fix);
+  a `ResizeObserver` was kept as cheap hardening.
 
 ## Known issues / deferred items
+
+- **Live battle view (32g2), deferred:** pacing the view to the narration
+  (29f); casting, statuses, wounds, and guards on the grid (Phase 30); the
+  battle summary in the view; exact enemy numbers behind a skill. The
+  view can lead the round's narration by a few lines. A hidden enemy that
+  joins and falls within one round, before the view ever looks, is named
+  under Fallen (accepted: the view names every foe it never saw hidden).
 
 - **Automatic combat (32d), for the owner and later phases:** Magic
   Missile's difficulty 75 gives a new wizard about a one-in-three chance

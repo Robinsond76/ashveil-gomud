@@ -117,14 +117,7 @@ func (sd side) setParties(parties []mobparty.Party, room *rooms.Room, round uint
 // battleParty finds the battle's group among the room's parties: the one
 // sharing an enemy with it.
 func battleParty(b battle.Battle, parties []mobparty.Party) (mobparty.Party, bool) {
-	for _, p := range parties {
-		for _, instanceId := range p.Members {
-			if b.Has(instanceId) {
-				return p, true
-			}
-		}
-	}
-	return mobparty.Party{}, false
+	return enemyparty.BattleParty(b, parties)
 }
 
 func (sd side) allyRefs() []combatstream.Ref {

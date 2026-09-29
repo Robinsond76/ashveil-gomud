@@ -14,12 +14,31 @@
  *   - Scout (sends "scout") when the room holds an enemy group or a
  *     hostile creature.
  *
- * The live battle view (both sides' formations, targets) is Phase 32g2.
+ * Phase 32g2, the Battle view, shown instead while the player's battle
+ * runs (Company.Battle), with Setup folded under it:
+ *
+ *   - The enemy group's formation above the company's, both front rows
+ *     toward the middle (the dock is one narrow column, so the two sides
+ *     face each other up and down). Each enemy shows its battle label and
+ *     how hurt it looks (scout's words, never numbers), and a dot when
+ *     the player can reach it from their place.
+ *   - Target lines (SVG, no server strings) from each fighter to whom it
+ *     strikes; someone outside the company an enemy strikes is a chip
+ *     beside the company. Hovering, focusing, or tapping a fighter lights
+ *     its target and everyone striking it.
+ *   - The fallen and the groups waiting their turn, a plain "who strikes
+ *     whom" list for screen readers and narrow screens, a polite live
+ *     region (a new foe on the player, a fall), and Flee (sends "flee").
+ *   - A company member's click opens Setup's menu. The Combat tab shows a
+ *     marker while a battle runs and another tab is showing.
+ *
  * Every name is set with textContent, never innerHTML.
  *
  * Responds to GMCP namespaces:
- *   Company   - the snapshot: members, cells, strategies
- *   Room      - Room.Info.Contents.Npcs, for Scout
+ *   Company         - the snapshot: members, cells, strategies
+ *   Company.Vitals  - members' health, for the Battle view
+ *   Company.Battle  - the player's battle; {} when there is none
+ *   Room            - Room.Info.Contents.Npcs, for Scout
  */
 
 'use strict';
@@ -106,12 +125,77 @@
         }
 
         .cbt-btn:hover { background: var(--t-accent-dim); color: var(--t-text-white); }
+
+        /* Phase 32g2: the Battle view. */
+        .cbt-live {
+            position: absolute; width: 1px; height: 1px; overflow: hidden;
+            clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+        }
+        .cbt-body { display: flex; flex-direction: column; gap: 6px; }
+        .cbt-battle-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+        .cbt-battle-head h3 { margin: 0; font-size: 1em; color: var(--t-text-heading); overflow-wrap: anywhere; }
+        .cbt-arena { position: relative; display: flex; flex-direction: column; gap: 22px; }
+        .cbt-side-label { color: var(--t-text-secondary); margin-bottom: 2px; }
+        .cbt-field {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 3px;
+        }
+        .cbt-spot { min-height: 2.9em; border: 1px dashed var(--t-border-faint, var(--t-accent-dim)); border-radius: 3px; }
+        .cbt-fighter {
+            position: relative;
+            z-index: 1;
+            min-height: 2.9em;
+            width: 100%;
+            font: inherit;
+            line-height: 1.2;
+            padding: 2px 3px;
+            text-align: center;
+            overflow-wrap: anywhere;
+            color: var(--t-text);
+            background: var(--t-bg-surface-alt);
+            border: 1px solid var(--t-accent-dim);
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .cbt-fighter:focus-visible { outline: 2px solid var(--t-accent); }
+        .cbt-fighter.is-enemy { border-color: var(--t-aggro-text, var(--t-error)); }
+        .cbt-fighter.is-you { color: var(--t-party-leader); font-weight: bold; }
+        .cbt-fighter.is-fallen { opacity: 0.55; border-style: dashed; }
+        .cbt-fighter.is-hl { background: var(--t-accent-dim); color: var(--t-text-white); }
+        .cbt-fighter .cbt-sub { display: block; font-weight: normal; font-size: 0.85em; color: var(--t-text-secondary); }
+        .cbt-fighter.is-hl .cbt-sub { color: var(--t-text-white); }
+        .cbt-fighter .cbt-reach { color: var(--t-success); }
+        .cbt-h-scratched, .cbt-h-wounded { color: var(--t-hp-mid); }
+        .cbt-h-badly-wounded, .cbt-h-near-death { color: var(--t-hp-low); }
+        .cbt-chips { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+        .cbt-chips .cbt-fighter { width: auto; min-height: 0; }
+        .cbt-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 0; }
+        .cbt-lines line { stroke-width: 1.5; opacity: 0.7; }
+        .cbt-lines line.from-us { stroke: var(--t-accent); }
+        .cbt-lines line.from-them { stroke: var(--t-error); stroke-dasharray: 4 3; }
+        .cbt-lines.has-hl line { opacity: 0.12; }
+        .cbt-lines.has-hl line.is-hl { opacity: 1; stroke-width: 2.5; }
+        .cbt-aside { color: var(--t-text-secondary); overflow-wrap: anywhere; }
+        .cbt-strikes { margin: 0; padding-left: 1.2em; color: var(--t-text-secondary); }
+        .cbt-setup > summary { cursor: pointer; color: var(--t-text-secondary); }
+        .cbt-setup[open] > summary { margin-bottom: 4px; }
     `);
 
     function createDOM() {
         const root = el('div');
         root.id = 'combat-window';
-        root.appendChild(el('div', 'cbt-note', 'No company yet.'));
+        // The live region outlives each rebuild of the body, so screen
+        // readers hear what it says.
+        const live = el('div', 'cbt-live');
+        live.id = 'combat-live';
+        live.setAttribute('aria-live', 'polite');
+        live.setAttribute('role', 'status');
+        root.appendChild(live);
+        const body = el('div', 'cbt-body');
+        body.id = 'combat-body';
+        body.appendChild(el('div', 'cbt-note', 'No company yet.'));
+        root.appendChild(body);
         document.body.appendChild(root);
         return root;
     }
@@ -120,6 +204,10 @@
         dock:          'right',
         defaultDocked: true,
         tabGroup:      'dock',
+        onTabShown() {
+            VirtualWindows.setTabBadge('Combat', 0);
+            requestAnimationFrame(drawLines); // lines need a laid-out arena
+        },
         factory() {
             const root = createDOM();
             setTimeout(update, 0);
@@ -209,18 +297,9 @@
         return Array.isArray(npcs) && npcs.some(n => n && (n.group || n.aggro));
     }
 
-    function update() {
-        win.open();
-        if (!win.isOpen()) { return; }
-        const root = document.getElementById('combat-window');
-        if (!root) { return; }
-        const data = CompanyData.read();
-
-        // Keep keyboard focus on the same member across the rebuild.
-        const focused = document.activeElement;
-        const focusedKey = (focused && root.contains(focused) && focused.getAttribute('data-key')) || null;
-
-        root.textContent = '';
+    // Setup: the formation grid and a row per member, each opening the
+    // member menu.
+    function renderSetup(root, data) {
         if (hostileHere()) {
             const actions = el('div', 'cbt-actions');
             const scout = el('button', 'cbt-btn', 'Scout');
@@ -253,18 +332,349 @@
             list.appendChild(li);
         });
         root.appendChild(list);
+    }
 
-        if (focusedKey) {
-            const again = root.querySelector('[data-key="' + (window.CSS && CSS.escape ? CSS.escape(focusedKey) : focusedKey) + '"]');
-            if (again) { again.focus(); }
+    // ---------------------------------------------------------------------
+    // Phase 32g2: the Battle view.
+    // ---------------------------------------------------------------------
+
+    function currentBattle() {
+        const stored = Client.GMCPStructs.Company;
+        const b = stored && stored.Battle;
+        return (b && Array.isArray(b.enemies)) ? b : null;
+    }
+
+    // lines holds this render's target lines, { from, to, us }, by fighter
+    // id: an enemy's "m:<id>", a member's key, an outsider's "u:<id>".
+    let lines = [];
+    let pinned = null;   // a tapped fighter whose lines stay lit
+    let arenaObserver = null;
+    // The newest Company.Battle. A Company snapshot replaces everything
+    // stored under Company, the battle too, and the server sends the battle
+    // again right after it; until then the view keeps this one rather than
+    // flicker to Setup and back (32g2 review finding 1).
+    let lastBattle = null;
+
+    // The company's fighters: every member from the snapshot (the player
+    // alone, as "You", without a company).
+    function ourFighters(data) {
+        if (!data.company) { return [{ key: 'leader', name: 'You', cell: null, status: 'present' }]; }
+        return data.members.filter(m => m && m.key && m.status !== 'awaiting');
+    }
+
+    function fighterButton(id, cls, name, sub, spoken) {
+        const b = el('button', 'cbt-fighter ' + cls);
+        b.type = 'button';
+        b.setAttribute('data-fid', id);
+        b.appendChild(el('span', null, name));
+        if (sub) { b.appendChild(sub); }
+        b.setAttribute('aria-label', spoken);
+        b.addEventListener('mouseenter', () => light(id));
+        b.addEventListener('mouseleave', () => light(pinned));
+        b.addEventListener('focus', () => light(id));
+        b.addEventListener('blur', () => light(pinned));
+        return b;
+    }
+
+    // field lays fighters out on the formation's grid, three columns wide,
+    // from the front row to the deepest row anyone stands in (empty rows
+    // behind them would only take room). The enemy's is drawn back row
+    // first, so both front rows face the middle.
+    function field(fighters, flip, label) {
+        const g = el('div', 'cbt-field');
+        g.setAttribute('role', 'group');
+        g.setAttribute('aria-label', label);
+        const at = {};
+        let deepest = 0;
+        fighters.forEach(f => {
+            const c = f.cell;
+            if (c && c.row >= 0 && c.row < 3 && c.col >= 0 && c.col < 3) {
+                at[c.row + ',' + c.col] = f;
+                deepest = Math.max(deepest, c.row);
+            }
+        });
+        for (let i = 0; i <= deepest; i++) {
+            const r = flip ? deepest - i : i;
+            for (let c = 0; c < 3; c++) {
+                const f = at[r + ',' + c];
+                g.appendChild(f ? f.node : el('div', 'cbt-spot'));
+            }
+        }
+        return g;
+    }
+
+    function nameOf(id, battle, data) {
+        if (id === 'leader') { return data.company ? data.company.leader.name : 'you'; }
+        const e = battle.enemies.find(x => x.id === id);
+        if (e) { return e.label; }
+        const o = (battle.others || []).find(x => x.id === id);
+        if (o) { return o.name; }
+        const m = data.members.find(x => x.key === id);
+        return m ? m.name : '';
+    }
+
+    function renderBattle(root, battle, data) {
+        const head = el('div', 'cbt-battle-head');
+        head.appendChild(el('h3', null, 'Battle: ' + battle.group));
+        const flee = el('button', 'cbt-btn', 'Flee');
+        flee.type = 'button';
+        flee.title = 'Try to get away (flee)';
+        flee.addEventListener('click', () => Client.SendInput('flee'));
+        head.appendChild(flee);
+        root.appendChild(head);
+
+        lines = [];
+        if (battle.dark) {
+            // As scout: in the dark, nothing to see (32g2 review finding 3).
+            root.appendChild(el('div', 'cbt-note', "It's too dark to make them out."));
+            const setup = el('details', 'cbt-setup');
+            setup.appendChild(el('summary', null, 'Setup: formation and strategies'));
+            renderSetup(setup, data);
+            root.appendChild(setup);
+            return;
+        }
+        const aimsAt = {};
+        (battle.company || []).forEach(a => { aimsAt[a.key] = a.target; lines.push({ from: a.key, to: a.target, us: true }); });
+
+        const arena = el('div', 'cbt-arena');
+        const enemies = battle.enemies.map(e => {
+            const sub = el('span', 'cbt-sub');
+            sub.appendChild(el('span', 'cbt-h-' + String(e.health).replace(/ /g, '-'), e.health));
+            if (e.reach) { sub.appendChild(el('span', 'cbt-reach', ' •')); }
+            const spoken = e.label + ', ' + e.health + (e.reach ? ', within your reach' : '') +
+                (e.target ? ', striking ' + (e.target === 'leader' ? 'you' : nameOf(e.target, battle, data)) : '');
+            if (e.target) { lines.push({ from: e.id, to: e.target, us: false }); }
+            return { cell: e.cell, node: fighterButton(e.id, 'is-enemy', e.label, sub, spoken) };
+        });
+        enemies.forEach(f => f.node.addEventListener('click', () => pin(f.node.getAttribute('data-fid'))));
+        const them = el('div');
+        them.appendChild(el('div', 'cbt-side-label', battle.group + ' (front row nearest you)'));
+        them.appendChild(field(enemies, true, battle.group));
+        arena.appendChild(them);
+
+        const members = data.members.filter(m => m && m.key);
+        const ours = ourFighters(data).map(m => {
+            const v = data.company ? data.vitals(m.key) : {};
+            const fallen = m.status === 'dead';
+            let subText = '';
+            if (fallen) { subText = 'fallen'; } else if (v.hp !== null && v.hp !== undefined) { subText = v.hp + ' / ' + v.hp_max; }
+            const sub = subText ? el('span', 'cbt-sub', subText) : null;
+            const you = m.key === 'leader';
+            const target = aimsAt[m.key];
+            const spoken = (you && data.company ? m.name + ' (you)' : m.name) + (subText ? ', ' + (fallen ? 'fallen' : 'health ' + subText.replace(' / ', ' of ')) : '') +
+                (target ? ', striking ' + nameOf(target, battle, data) : '');
+            const node = fighterButton(m.key, (you ? 'is-you' : '') + (fallen ? ' is-fallen' : ''), m.name, sub, spoken);
+            if (data.company) {
+                node.setAttribute('aria-haspopup', 'menu');
+                node.addEventListener('click', e => { pin(m.key); uiMenu(e, memberMenu(m, members)); });
+            } else {
+                node.addEventListener('click', () => pin(m.key));
+            }
+            return { cell: m.cell, node };
+        });
+        const us = el('div');
+        const placed = ours.filter(f => f.cell);
+        const loose = ours.filter(f => !f.cell);
+        us.appendChild(field(placed, false, data.company ? 'Your company' : 'You'));
+        const others = (battle.others || []).map(o =>
+            fighterButton(o.id, '', o.name, el('span', 'cbt-sub', 'not in your company'), o.name + ', not in your company'));
+        others.forEach(n => n.addEventListener('click', () => pin(n.getAttribute('data-fid'))));
+        if (loose.length || others.length) {
+            const chips = el('div', 'cbt-chips');
+            if (loose.length) {
+                if (data.company) { chips.appendChild(el('span', 'cbt-aside', 'Not placed:')); }
+                loose.forEach(f => chips.appendChild(f.node));
+            }
+            if (others.length) {
+                chips.appendChild(el('span', 'cbt-aside', 'Also fighting:'));
+                others.forEach(n => chips.appendChild(n));
+            }
+            us.appendChild(chips);
+        }
+        us.appendChild(el('div', 'cbt-side-label', (data.company ? 'Your company' : 'You') + ' (front row nearest them)'));
+        arena.appendChild(us);
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'cbt-lines');
+        svg.setAttribute('aria-hidden', 'true');
+        arena.appendChild(svg);
+        root.appendChild(arena);
+        // Lines follow the fighters when the dock is resized, which fires
+        // no window resize (32g2 review finding 6).
+        if (window.ResizeObserver) {
+            if (arenaObserver) { arenaObserver.disconnect(); }
+            arenaObserver = new ResizeObserver(() => requestAnimationFrame(drawLines));
+            arenaObserver.observe(arena);
+        }
+
+        if (battle.fallen && battle.fallen.length) {
+            root.appendChild(el('div', 'cbt-aside', 'Fallen: ' + battle.fallen.map(f => f.label).join(', ')));
+        }
+        if (battle.waiting && battle.waiting.length) {
+            root.appendChild(el('div', 'cbt-aside', 'Waiting their turn: ' + battle.waiting.join(', ')));
+        }
+
+        const list = el('ul', 'cbt-strikes');
+        list.setAttribute('aria-label', 'Who strikes whom');
+        lines.forEach(l => {
+            const you = data.company ? nameOf('leader', battle, data) + ' (you)' : 'you';
+            const who = l.from === 'leader' ? (data.company ? you : 'You') : nameOf(l.from, battle, data);
+            const whom = l.to === 'leader' ? you : nameOf(l.to, battle, data);
+            list.appendChild(el('li', null, who + ' → ' + whom));
+        });
+        if (!lines.length) { list.appendChild(el('li', null, 'No one is striking anyone this moment.')); }
+        root.appendChild(list);
+
+        const setup = el('details', 'cbt-setup');
+        setup.appendChild(el('summary', null, 'Setup: formation and strategies'));
+        renderSetup(setup, data);
+        root.appendChild(setup);
+
+        requestAnimationFrame(drawLines);
+    }
+
+    // drawLines draws each target line between its two fighters' centres.
+    function drawLines() {
+        const svg = document.querySelector('#combat-window .cbt-lines');
+        if (!svg) { return; }
+        const arena = svg.parentNode;
+        const box = arena.getBoundingClientRect();
+        while (svg.firstChild) { svg.removeChild(svg.firstChild); }
+        if (!box.width) { return; }
+        const centre = id => {
+            const n = arena.querySelector('[data-fid="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+            if (!n) { return null; }
+            const r = n.getBoundingClientRect();
+            return { x: r.left - box.left + r.width / 2, y: r.top - box.top + r.height / 2 };
+        };
+        lines.forEach(l => {
+            const a = centre(l.from);
+            const b = centre(l.to);
+            if (!a || !b) { return; }
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', a.x);
+            line.setAttribute('y1', a.y);
+            line.setAttribute('x2', b.x);
+            line.setAttribute('y2', b.y);
+            line.setAttribute('class', l.us ? 'from-us' : 'from-them');
+            line.setAttribute('data-from', l.from);
+            line.setAttribute('data-to', l.to);
+            svg.appendChild(line);
+        });
+        light(pinned);
+    }
+
+    // light lights a fighter, its target, those striking it, and the
+    // lines between them; null lights nothing.
+    function light(id) {
+        const root = document.getElementById('combat-window');
+        if (!root) { return; }
+        root.querySelectorAll('.cbt-fighter.is-hl').forEach(n => n.classList.remove('is-hl'));
+        const svg = root.querySelector('.cbt-lines');
+        if (svg) { svg.classList.toggle('has-hl', !!id); }
+        if (!id) {
+            if (svg) { svg.querySelectorAll('line.is-hl').forEach(n => n.classList.remove('is-hl')); }
+            return;
+        }
+        const lit = new Set([id]);
+        lines.forEach(l => {
+            if (l.from === id) { lit.add(l.to); }
+            if (l.to === id) { lit.add(l.from); }
+        });
+        root.querySelectorAll('.cbt-fighter[data-fid]').forEach(n => {
+            if (lit.has(n.getAttribute('data-fid'))) { n.classList.add('is-hl'); }
+        });
+        if (svg) {
+            svg.querySelectorAll('line').forEach(n => {
+                n.classList.toggle('is-hl', n.getAttribute('data-from') === id || n.getAttribute('data-to') === id);
+            });
         }
     }
+
+    // pin keeps a tapped fighter lit (a touch screen has no hover); a
+    // second tap lets go.
+    function pin(id) {
+        pinned = pinned === id ? null : id;
+        light(pinned || id);
+    }
+
+    // What the live region last knew: who struck the player, who had fallen.
+    let heard = null;
+
+    function announce(battle) {
+        const live = document.getElementById('combat-live');
+        if (!live) { return; }
+        const said = [];
+        if (!battle) {
+            if (heard) { said.push('The battle is over.'); }
+            heard = null;
+        } else {
+            const onYou = new Set(battle.enemies.filter(e => e.target === 'leader').map(e => e.id));
+            const fallen = new Set((battle.fallen || []).map(f => f.id));
+            if (!heard) {
+                said.push('Battle: ' + battle.group + '.');
+            } else {
+                (battle.fallen || []).forEach(f => { if (!heard.fallen.has(f.id)) { said.push(f.label + ' falls.'); } });
+                battle.enemies.forEach(e => { if (onYou.has(e.id) && !heard.onYou.has(e.id)) { said.push(e.label + ' turns on you.'); } });
+            }
+            heard = { onYou, fallen };
+        }
+        if (said.length) { live.textContent = said.join(' '); }
+    }
+
+    function update() {
+        const battle = currentBattle();
+        announce(battle);
+        if (battle && !VirtualWindows.isTabShowing('Combat')) {
+            VirtualWindows.setTabBadge('Combat', '⚔', 'a battle is under way');
+        } else {
+            VirtualWindows.setTabBadge('Combat', 0);
+        }
+        win.open();
+        if (!win.isOpen()) { return; }
+        const root = document.getElementById('combat-body');
+        if (!root) { return; }
+        const data = CompanyData.read();
+
+        // Keep keyboard focus on the same member or fighter across the
+        // rebuild.
+        const focused = document.activeElement;
+        const inside = focused && root.contains(focused);
+        const focusedKey = (inside && focused.getAttribute('data-key')) || null;
+        const focusedFid = (inside && focused.getAttribute('data-fid')) || null;
+        const setupOpen = !!root.querySelector('details.cbt-setup[open]');
+
+        root.textContent = '';
+        if (battle) {
+            renderBattle(root, battle, data);
+            if (setupOpen) { root.querySelector('details.cbt-setup').open = true; }
+        } else {
+            lines = [];
+            pinned = null;
+            if (arenaObserver) { arenaObserver.disconnect(); arenaObserver = null; }
+            renderSetup(root, data);
+        }
+
+        const esc = v => (window.CSS && CSS.escape ? CSS.escape(v) : v);
+        const again = focusedFid ? root.querySelector('[data-fid="' + esc(focusedFid) + '"]')
+            : focusedKey ? root.querySelector('[data-key="' + esc(focusedKey) + '"]') : null;
+        if (again) { again.focus(); }
+    }
+
+    window.addEventListener('resize', () => requestAnimationFrame(drawLines));
 
     VirtualWindows.register({
         window:       win,
         gmcpHandlers: ['Company', 'Room'],
-        onGMCP(namespace) {
-            if (namespace === 'Company.Inventory' || namespace === 'Company.Camp' || namespace === 'Company.Vitals') { return; }
+        onGMCP(namespace, body) {
+            if (namespace === 'Company.Battle') {
+                lastBattle = (body && Array.isArray(body.enemies)) ? body : null;
+            } else if (namespace === 'Company' && lastBattle) {
+                const stored = Client.GMCPStructs.Company;
+                if (stored && typeof stored === 'object' && !stored.Battle) { stored.Battle = lastBattle; }
+            }
+            if (namespace === 'Company.Inventory' || namespace === 'Company.Camp') { return; }
+            if (namespace === 'Company.Vitals' && !currentBattle()) { return; }
             update();
         },
     });
