@@ -123,6 +123,20 @@ func (p *Pacer) Hold(userId int, round uint64, text string, spec Spec, now time.
 	return flushed
 }
 
+// Follow adds a line to the end of a player's held lines, if they have any,
+// so it can't jump ahead of the round it follows. It reports whether it
+// did; with nothing held, the caller sends the line at once.
+func (p *Pacer) Follow(userId int, text string) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	q := p.queues[userId]
+	if q == nil || q.next >= len(q.lines) {
+		return false
+	}
+	q.lines = append(q.lines, held{text: text, beat: p.beatOf(text)})
+	return true
+}
+
 func (q *queue) remaining() []string {
 	out := make([]string, 0, len(q.lines)-q.next)
 	for _, l := range q.lines[q.next:] {

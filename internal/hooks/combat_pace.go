@@ -74,15 +74,25 @@ func paceOf(user *users.UserRecord) combatpace.Pace {
 
 // sendOrHold delivers a message's text to one recipient: held when a combat
 // round caused it and the recipient paces combat, at once otherwise.
-func sendOrHold(user *users.UserRecord, text string) {
-	if round := events.Cause(); round != 0 {
-		if pace := paceOf(user); pace != combatpace.Off {
-			spec := pace.ForRound(configs.GetTimingConfig().CombatRoundDuration())
-			for _, older := range combatpace.Default().Hold(user.UserId, round, text, spec, paceNow()) {
-				deliver(user, older)
-			}
-			return
+//
+// One exception keeps the story in order: while the recipient has lines
+// held, other goings-on in their room (a mob that goes for someone after
+// the round, a player walking in) wait behind them. What is said to them
+// directly (their own command's output, a tell) and what is said aloud (a
+// say, an emote) never waits.
+func sendOrHold(user *users.UserRecord, message events.Message) {
+	text := message.Text
+	pace := paceOf(user)
+	if round := events.Cause(); round != 0 && pace != combatpace.Off {
+		spec := pace.ForRound(configs.GetTimingConfig().CombatRoundDuration())
+		for _, older := range combatpace.Default().Hold(user.UserId, round, text, spec, paceNow()) {
+			deliver(user, older)
 		}
+		return
+	}
+	direct := message.UserId == user.UserId
+	if !direct && !message.IsCommunication && combatpace.Default().Follow(user.UserId, text) {
+		return
 	}
 	deliver(user, text)
 }

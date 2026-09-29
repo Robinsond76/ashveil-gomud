@@ -178,3 +178,21 @@ func TestUseForTestRestores(t *testing.T) {
 		t.Fatal("restore did not put the original back")
 	}
 }
+
+func TestFollowJoinsHeldLinesOnly(t *testing.T) {
+	p := New()
+	if p.Follow(1, "alone") {
+		t.Fatal("Follow held a line for a player with nothing held")
+	}
+	spec := Normal.ForRound(8 * time.Second)
+	p.Hold(1, 2, "r1", spec, at(0))
+	p.Hold(1, 2, "r2", spec, at(0))
+	if !p.Follow(1, "after") {
+		t.Fatal("Follow did not join the held lines")
+	}
+	got := release(p, 3000)
+	want := map[string]int{"r1": 0, "r2": 800, "after": 1600}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("release times %v, want %v", got, want)
+	}
+}

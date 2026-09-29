@@ -234,3 +234,30 @@ func TestCopyoverFlushesHeldLines(t *testing.T) {
 		t.Fatal("lines still held after copyover")
 	}
 }
+
+func TestRoomGoingsOnWaitBehindHeldLines(t *testing.T) {
+	r := newPaceRig(t)
+	r.round(2, "h1", "h2")
+	r.advance(50 * time.Millisecond) // h1 out, h2 held
+
+	// Something else happens in the room after the round: it waits.
+	sendOrHold(r.user, events.Message{RoomId: 9, Text: "The captain goes for Ysolde.\n"})
+	// Said aloud, or said to Aria herself: at once.
+	sendOrHold(r.user, events.Message{RoomId: 9, Text: "Brin says, run!\n", IsCommunication: true})
+	sendOrHold(r.user, events.Message{UserId: r.user.UserId, Text: "You are carrying nothing.\n"})
+	events.ProcessEvents()
+	if strings.Join(r.got, "|") != "h1|Brin says, run!|You are carrying nothing." {
+		t.Fatalf("got %v", r.got)
+	}
+	r.advance(2 * time.Second)
+	if strings.Join(r.got, "|") != "h1|Brin says, run!|You are carrying nothing.|h2|The captain goes for Ysolde." {
+		t.Fatalf("room line did not wait behind the round: %v", r.got)
+	}
+
+	// With nothing held, room goings-on go out at once.
+	r.got = nil
+	sendOrHold(r.user, events.Message{RoomId: 9, Text: "A rat scurries past.\n"})
+	if strings.Join(r.got, "|") != "A rat scurries past." {
+		t.Fatalf("got %v", r.got)
+	}
+}

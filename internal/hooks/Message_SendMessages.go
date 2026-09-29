@@ -20,7 +20,7 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 
 		if user := users.GetByUserId(message.UserId); user != nil {
 			// Phase 29f: a combat round's text may be held and paced.
-			sendOrHold(user, message.Text)
+			sendOrHold(user, message)
 		}
 	}
 
@@ -61,7 +61,7 @@ func Message_SendMessage(e events.Event) events.ListenerReturn {
 					}
 				}
 
-				sendOrHold(user, message.Text)
+				sendOrHold(user, message)
 
 			}
 		}
