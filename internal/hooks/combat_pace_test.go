@@ -279,3 +279,25 @@ func TestChangingPaceSendsHeldLines(t *testing.T) {
 		t.Fatalf("changing pace did not send held lines: %v", r.got)
 	}
 }
+
+func TestIdlePlayerIsNotRedrawnEachRound(t *testing.T) {
+	r := newPaceRig(t)
+	var drained []int
+	id := events.RegisterListener(events.CombatPaceDrained{}, func(e events.Event) events.ListenerReturn {
+		drained = append(drained, e.(events.CombatPaceDrained).UserId)
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.CombatPaceDrained{}, id) })
+	r.prompts = nil
+	r.round(2) // a combat round that sends Aria nothing
+	r.advance(100 * time.Millisecond)
+	if len(r.prompts) != 0 {
+		t.Fatalf("an idle player's prompt was redrawn: %q", r.prompts)
+	}
+	if len(drained) != 1 || drained[0] != r.user.UserId {
+		t.Fatalf("drained %v, want the idle player's round to end once", drained)
+	}
+	if combatpace.Default().Busy(r.user.UserId) {
+		t.Fatal("idle player still busy after the first turn")
+	}
+}

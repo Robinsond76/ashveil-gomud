@@ -80,7 +80,7 @@ func TestLinesGoOutInOrderAtThePacesGap(t *testing.T) {
 func TestGapsShrinkToFitTheWindow(t *testing.T) {
 	p := New()
 	spec := Fast.ForRound(8 * time.Second) // 0.4s gap, 3s window
-	for i := 0; i < 21; i++ {                // 20 gaps = 8s unscaled
+	for i := 0; i < 21; i++ {              // 20 gaps = 8s unscaled
 		p.Hold(1, 2, string(rune('a'+i)), spec, at(0))
 	}
 	var last time.Time
@@ -150,10 +150,10 @@ func TestFlushAndFlushAll(t *testing.T) {
 	p.Hold(1, 2, "a1", spec, at(0))
 	p.Hold(1, 2, "a2", spec, at(0))
 	p.Hold(3, 2, "c1", spec, at(0))
-	if got := p.Flush(3); !reflect.DeepEqual(got, []string{"c1"}) {
-		t.Fatalf("Flush(3) = %v", got)
+	if got, ended := p.Flush(3); !reflect.DeepEqual(got, []string{"c1"}) || !ended {
+		t.Fatalf("Flush(3) = %v %v", got, ended)
 	}
-	if p.Busy(3) || p.Flush(3) != nil {
+	if got, ended := p.Flush(3); p.Busy(3) || got != nil || ended {
 		t.Fatal("a flushed player holds nothing")
 	}
 	rel, drained := p.FlushAll()
@@ -194,5 +194,39 @@ func TestFollowJoinsHeldLinesOnly(t *testing.T) {
 	want := map[string]int{"r1": 0, "r2": 800, "after": 1600}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("release times %v, want %v", got, want)
+	}
+}
+
+func TestAnOpenRoundIsBusyUntilDrained(t *testing.T) {
+	p := New()
+	spec := Normal.ForRound(8 * time.Second)
+	p.StartRound(1, 2, 3)
+	for _, id := range []int{1, 2, 3} {
+		if !p.Busy(id) {
+			t.Fatalf("player %d not busy as the round opens", id)
+		}
+	}
+	p.Hold(1, 2, "l1", spec, at(0))
+	p.Hold(1, 2, "l2", spec, at(0))
+	// The first turn: player 2 and 3 were sent nothing, and their round
+	// ends; player 1 still has a line held.
+	_, drained := p.Due(at(0))
+	if !reflect.DeepEqual(drained, []int{2, 3}) || !p.Busy(1) || p.Busy(2) {
+		t.Fatalf("drained %v, busy1 %v busy2 %v", drained, p.Busy(1), p.Busy(2))
+	}
+	_, drained = p.Due(at(800))
+	if !reflect.DeepEqual(drained, []int{1}) || p.Busy(1) {
+		t.Fatalf("drained %v, busy1 %v", drained, p.Busy(1))
+	}
+
+	// Flush ends an open round even with nothing held.
+	p.StartRound(4)
+	if lines, ended := p.Flush(4); len(lines) != 0 || !ended || p.Busy(4) {
+		t.Fatalf("Flush of an open round: %v %v", lines, ended)
+	}
+	// FlushAll ends every open round.
+	p.StartRound(5)
+	if _, drained := p.FlushAll(); !reflect.DeepEqual(drained, []int{5}) || p.Busy(5) {
+		t.Fatalf("FlushAll drained %v", drained)
 	}
 }

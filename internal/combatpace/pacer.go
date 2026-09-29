@@ -42,10 +42,13 @@ type Pacer struct {
 	mu     sync.Mutex
 	queues map[int]*queue
 	marks  map[string]struct{}
+	// open are players in a combat round whose lines haven't all gone out:
+	// from the round's start (before its lines are held) until they drain.
+	open map[int]struct{}
 }
 
 func New() *Pacer {
-	return &Pacer{queues: map[int]*queue{}, marks: map[string]struct{}{}}
+	return &Pacer{queues: map[int]*queue{}, marks: map[string]struct{}{}, open: map[int]struct{}{}}
 }
 
 var (
@@ -94,12 +97,18 @@ func (p *Pacer) Marked(text string) bool {
 	return ok
 }
 
-// StartRound forgets the previous round's marks. It is called as each
-// combat round begins, after FlushAll.
-func (p *Pacer) StartRound() {
+// StartRound forgets the previous round's marks and opens the round for
+// the players who pace combat: they are Busy until Due finds their lines
+// all gone out (or finds they had none). It is called as each combat round
+// begins, after FlushAll.
+func (p *Pacer) StartRound(userIds ...int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.marks = map[string]struct{}{}
+	p.open = make(map[int]struct{}, len(userIds))
+	for _, id := range userIds {
+		p.open[id] = struct{}{}
+	}
 }
 
 func (p *Pacer) beatOf(text string) Beat {
@@ -195,9 +204,23 @@ func (p *Pacer) Due(now time.Time) (out []Release, drained []int) {
 		}
 		if q.next >= len(q.lines) {
 			delete(p.queues, userId)
+			delete(p.open, userId)
 			drained = append(drained, userId)
 		}
 	}
+	// Players the round sent nothing: their round is over.
+	var idle []int
+	for userId := range p.open {
+		if _, held := p.queues[userId]; !held {
+			idle = append(idle, userId)
+		}
+	}
+	sort.Ints(idle)
+	for _, userId := range idle {
+		delete(p.open, userId)
+		drained = append(drained, userId)
+	}
+	sort.Ints(drained)
 	return out, drained
 }
 
@@ -210,17 +233,20 @@ func (p *Pacer) userIdsLocked() []int {
 	return ids
 }
 
-// Flush returns a player's held lines, in order, and holds nothing more
-// for them.
-func (p *Pacer) Flush(userId int) []string {
+// Flush returns a player's held lines, in order, and ends their round:
+// ended is true when they were Busy, so views held back with them can
+// catch up.
+func (p *Pacer) Flush(userId int) (lines []string, ended bool) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	q := p.queues[userId]
-	if q == nil {
-		return nil
+	_, ended = p.open[userId]
+	delete(p.open, userId)
+	if q := p.queues[userId]; q != nil {
+		delete(p.queues, userId)
+		lines = q.remaining()
+		ended = true
 	}
-	delete(p.queues, userId)
-	return q.remaining()
+	return lines, ended
 }
 
 // FlushAll returns every held line, player by player and in order, and the
@@ -233,15 +259,26 @@ func (p *Pacer) FlushAll() (out []Release, drained []int) {
 			out = append(out, Release{UserId: userId, Text: text})
 		}
 		delete(p.queues, userId)
+		delete(p.open, userId)
 		drained = append(drained, userId)
 	}
+	for userId := range p.open {
+		delete(p.open, userId)
+		drained = append(drained, userId)
+	}
+	sort.Ints(drained)
 	return out, drained
 }
 
-// Busy reports whether a player has lines still held.
+// Busy reports whether a player is in a combat round whose lines haven't
+// all gone out: views that must not run ahead of the narration (the
+// prompt, the web client's vitals and battle view) wait while it is true.
 func (p *Pacer) Busy(userId int) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	if _, ok := p.open[userId]; ok {
+		return true
+	}
 	q := p.queues[userId]
 	return q != nil && q.next < len(q.lines)
 }

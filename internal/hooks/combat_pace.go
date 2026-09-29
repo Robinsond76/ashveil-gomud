@@ -36,6 +36,9 @@ var (
 
 	roundPromptsMu sync.Mutex
 	roundPrompts   = map[int]string{}
+	// promptHeld are players shown their round-start prompt, whose live
+	// prompt is drawn when their round ends.
+	promptHeld = map[int]bool{}
 )
 
 // SetPaceClockForTest makes now the pacing clock and returns a restore func.
@@ -121,16 +124,19 @@ func startPacedRound() {
 	pacer := combatpace.Default()
 	released, drained := pacer.FlushAll()
 	sendReleased(released, drained)
-	pacer.StartRound()
 
 	snapshot := map[int]string{}
+	var pacing []int
 	for _, userId := range users.GetOnlineUserIds() {
 		if user := users.GetByUserId(userId); user != nil && paceOf(user) != combatpace.Off {
 			snapshot[userId] = user.GetCommandPrompt()
+			pacing = append(pacing, userId)
 		}
 	}
+	pacer.StartRound(pacing...)
 	roundPromptsMu.Lock()
 	roundPrompts = snapshot
+	promptHeld = map[int]bool{}
 	roundPromptsMu.Unlock()
 }
 
@@ -156,15 +162,19 @@ func sendReleased(released []combatpace.Release, drained []int) {
 func finishDrain(userId int) {
 	roundPromptsMu.Lock()
 	delete(roundPrompts, userId)
+	redraw := promptHeld[userId]
+	delete(promptHeld, userId)
 	roundPromptsMu.Unlock()
-	events.AddToQueue(events.RedrawPrompt{UserId: userId}, 100)
+	if redraw {
+		events.AddToQueue(events.RedrawPrompt{UserId: userId}, 100)
+	}
 	events.AddToQueue(events.CombatPaceDrained{UserId: userId})
 }
 
 // FlushPacedCombat sends a player's held lines at once.
 func FlushPacedCombat(userId int) {
-	lines := combatpace.Default().Flush(userId)
-	if len(lines) == 0 {
+	lines, ended := combatpace.Default().Flush(userId)
+	if !ended {
 		return
 	}
 	if user := users.GetByUserId(userId); user != nil {
@@ -184,6 +194,9 @@ func heldPrompt(userId int) (string, bool) {
 	roundPromptsMu.Lock()
 	defer roundPromptsMu.Unlock()
 	p, ok := roundPrompts[userId]
+	if ok {
+		promptHeld[userId] = true
+	}
 	return p, ok
 }
 
