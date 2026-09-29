@@ -222,18 +222,18 @@ mob fallback refs use stored labels without changing Ref.Key.
 unchanged. A nonempty identity.Name makes the spawned Character.Pronouns
 explicitly they, regardless of its template's authored pronouns.
 
-- [ ] Add `TestGeneratedRecruitPronounsRestore`: hire a generated name
+- [x] Add `TestGeneratedRecruitPronounsRestore`: hire a generated name
   from both an authored he and an authored she template; assert they
   live, serialize/reload the company, spawn again and assert they. Exercise
   the real restoration seam, not only a fake Runtime.
-- [ ] Add `TestAuthoredRecruitPronounsRestore`: empty saved identity keeps
+- [x] Add `TestAuthoredRecruitPronounsRestore`: empty saved identity keeps
   Tamsin's she/Brother Oswin's he before and after restore. Verify generated
   resurrection reapplies they and no old record needs a schema migration.
-- [ ] Run `go test ./modules/company -run 'RecruitPronouns|GeneratedRecruitPronouns'`;
+- [x] Run `go test ./modules/company -run 'RecruitPronouns|GeneratedRecruitPronouns'`;
   confirm failure.
-- [ ] Apply the explicit neutral override while applying saved generated
+- [x] Apply the explicit neutral override while applying saved generated
   identity; do not change company level/gear snapshot behavior or draw RNG.
-- [ ] Run `go test ./modules/company`; require exit 0. Lead commits as
+- [x] Run `go test ./modules/company`; require exit 0. Lead commits as
   `fix(company): keep generated recruit pronouns independent of templates`.
 
 ## Task 6: Player help, aliases, and tutorial
