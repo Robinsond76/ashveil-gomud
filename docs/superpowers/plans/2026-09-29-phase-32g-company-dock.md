@@ -70,14 +70,17 @@ does.
 
 ## Task 4: `Company.Camp` (`modules/camping`, `modules/gmcp`)
 
-- [ ] Tests first:
+- [x] Tests first:
   - `modules/camping`: a pure `campData(leader, room)`: camp here,
     elsewhere (with its room name), or none; fire lit; resting with
     percent and seconds left; `can_camp` in an eligible room with no
     camp; an inn here.
-  - `modules/gmcp`: `{}` with no camp and no inn; change detection.
-- [ ] `campData` (read under the camping lock, returned by value); a
-  `CampProvider` seam; the payload in the company feed.
+  - `modules/gmcp`: nothing sent without a provider (as built: the
+    full object is always sent, since `can_camp` drives the Make camp
+    button); change detection.
+- [x] As built: `CampingModule.CampStateOf(leader, room, tags)` (read
+  under the camping lock, the room title looked up after it), the
+  `camping.CampStateProvider` seam; `campExtra` in the company feed.
 
 ## Task 5: `Char.Inventory` capacity (`modules/gmcp`)
 

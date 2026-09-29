@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -241,7 +242,7 @@ type companyFeed struct {
 func newCompanyFeed() *companyFeed {
 	return &companyFeed{
 		last:      map[int]companySent{},
-		extras:    []companyExtra{inventoryExtra()},
+		extras:    []companyExtra{inventoryExtra(), campExtra(camping.CampStateOf)},
 		lastExtra: map[int]map[string]string{},
 		chemistry: company.ChemistryStanding,
 		send: func(userID int, module string, payload []byte) {
