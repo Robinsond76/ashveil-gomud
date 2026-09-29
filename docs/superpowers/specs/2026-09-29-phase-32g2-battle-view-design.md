@@ -4,7 +4,8 @@ Split from [32g](2026-09-29-phase-32g-company-dock-design.md) (its
 decision C), carrying the proposed Phase 31
 [battle panel](2026-09-26-battle-panel-design.md) into the dock's Combat
 tab, per the [play-test roadmap](2026-09-28-playtest-feedback-roadmap.md).
-Status: **draft; decisions A–G await the owner.**
+Status: **decisions A–G settled by the owner (2026-09-29): "go with
+recommendations"; ready for the plan.**
 
 ## Goal
 
@@ -98,7 +99,8 @@ Researched on `bcc7e6c` (2026-09-29).
   isn't placed), and its target (a company member key, an `others` id,
   or absent).
 - **`fallen`**: the battle's enemies that have fallen or left, by label,
-  in the order they fell. They leave the grid because the live formation
+  in the order they joined the battle (instance order; the order they
+  fell would need state the battle doesn't keep). They leave the grid because the live formation
   closes ranks (decision C).
 - **`company`**: each company member's target, by member key. Cells,
   health, and fallen state come from the `Company` snapshot and
@@ -106,18 +108,18 @@ Researched on `bcc7e6c` (2026-09-29).
 - **`others`**: a player (or another player's companion) outside the
   company that an enemy is striking, by public name (decision D).
 - **`waiting`**: other groups set on the player, waiting their turn, by
-  room name, in the order they will come.
+  room name, in the order they will come (`battle`'s first-set rounds,
+  ties by room order, as `battle.Next` picks).
 - **End of battle:** `{}` clears the view; the tab returns to Setup.
 - **Not in the payload:** exact enemy numbers, levels, or stats.
 
 ## Decisions
 
-Recommendations are marked; each needs the owner's answer before the
-plan is written.
+The owner accepted every recommendation (2026-09-29).
 
 ### A. Enemy health: words or numbers
 
-**Recommended: `scout`'s six health words.** They are already public
+**Decided (owner, 2026-09-29), as recommended: `scout`'s six health words.** They are already public
 (anyone can `scout` a group), so the panel reveals nothing new, and the
 view and the terminal agree. The grid shows the word and a bar split in
 its six steps. Alternatives: exact numbers (leak mob stats that nothing
@@ -126,7 +128,7 @@ own design.
 
 ### B. Who gets the view
 
-**Recommended: every player in a battle gets their own.** The feed is per
+**Decided (owner, 2026-09-29), as recommended: every player in a battle gets their own.** The feed is per
 user and each player's battle is their own (29b2), so a GoMud party
 member fighting beside the leader sees their battle, with their own
 company (usually none). A player not in a battle gets nothing. Phase 31
@@ -135,7 +137,7 @@ so that answer is this one.
 
 ### C. Fallen enemies: off the grid, listed
 
-**Recommended: the grid is the live formation; the fallen are a line
+**Decided (owner, 2026-09-29), as recommended: the grid is the live formation; the fallen are a line
 under it** ("Fallen: the slinger, the first cutthroat"), because the
 grid then shows the ranks combat actually uses: when the front falls,
 the next enemy steps up. The alternative keeps a fallen enemy greyed in
@@ -144,7 +146,7 @@ exists and needs a remembered layout per battle.
 
 ### D. Enemies striking someone outside the company
 
-**Recommended: a small "others" chip beside the company grid**, labelled
+**Decided (owner, 2026-09-29), as recommended: a small "others" chip beside the company grid**, labelled
 with the player's or creature's public name, and in the text list
 ("the first cutthroat → Brannoc"). Nothing about them beyond the name.
 The alternative leaves those lines out, which makes an enemy look idle
@@ -152,7 +154,7 @@ when it isn't.
 
 ### E. Telling the player a battle began
 
-**Recommended: the Combat tab shows a marker (as Comm's unread count
+**Decided (owner, 2026-09-29), as recommended: the Combat tab shows a marker (as Comm's unread count
 does) while a battle runs and Combat isn't the active tab; it never
 switches tabs on its own.** Switching would take the player out of
 whatever they were reading. The alternative, switching to Combat when a
@@ -160,7 +162,7 @@ battle begins, could be a Settings switch later.
 
 ### F. When the view updates
 
-**Recommended: on the feed's usual beat** (every round and after every
+**Decided (owner, 2026-09-29), as recommended: on the feed's usual beat** (every round and after every
 command), sending only when the JSON changes, so a round with no new
 target, band, or fall sends nothing. The view may lead the round's
 narration by a few lines; 29f pacing, when built, can hold the message
@@ -169,7 +171,7 @@ stream now, duplicates state the stream is not the source of for.
 
 ### G. What the Battle view offers
 
-**Recommended: watching only, plus the Setup menu on a company member.**
+**Decided (owner, 2026-09-29), as recommended: watching only, plus the Setup menu on a company member.**
 A battle plays out on its own (32d), and the commands that still work in
 one (`strategy`, `formation`, `flee`) are in Setup's member menu and the
 terminal. The view keeps the same member menu, so a role or target rule
