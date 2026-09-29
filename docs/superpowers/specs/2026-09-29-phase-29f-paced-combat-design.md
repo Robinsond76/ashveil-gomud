@@ -6,7 +6,9 @@ round, giving an 8-second combat round). Part of the
 [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md);
 29b–29e have finished the text this phase paces.
 
-Status: **draft — open decisions below await the owner.**
+Status: **decisions confirmed by the owner (2026-09-29): all six
+recommendations, the combat-balance shifts accepted for now, and the
+prompt's health held with the lines (D7).**
 
 ## Prior-art check (2026-09-29, against `135b72e`)
 
@@ -170,7 +172,7 @@ no other lock, and `events` does not call `combatpace`.
 - The owner's reference text (8 lines, about 6 seconds, with 0.8–0.9 s
   gaps) is the normal row.
 
-## Open decisions (owner to confirm)
+## Decisions (confirmed by the owner, 2026-09-29, as recommended)
 
 - **D1: How combat text is recognised.**
   - *Recommended:* causal tagging in `events`, which catches every line a
@@ -198,6 +200,22 @@ no other lock, and `events` does not call `combatpace`.
   - *Recommended:* flush at once on moving rooms, quitting, and copyover,
     so text is never lost, only un-paced.
   - *Alternative:* drop them.
+
+- **D7 (added, owner: yes): hold the prompt's health with the lines.**
+  At each combat round's start, the prompt of every player whose pace
+  isn't `off` is snapshotted. While that player has held lines, a prompt
+  redraw shows the snapshot. When the lines drain, the live prompt is
+  drawn. By the same rule, the web client's `Char.Vitals` and `Company`
+  payloads wait for the drain, and a `CombatPaceDrained` event then
+  resends them.
+- **Balance shifts (owner: accept for now, retune in Phase 30).** Game-round
+  systems now tick twice per combat round:
+  - passive regeneration heals more between blows;
+  - a fight costs about twice the hunger, thirst, and fatigue;
+  - round-timed buffs and spell effects last half as many combat rounds;
+  - bleeding out gives allies fewer combat rounds to save someone.
+
+  `CombatEveryRounds: 1` reverts the cadence.
 
 ## Constraints and deferrals
 
