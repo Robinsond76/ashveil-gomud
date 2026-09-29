@@ -406,3 +406,64 @@ func LookCandidate(viewerUserID, roomID int, selector string) (string, bool) {
 	}
 	return rp.LookCandidate(viewerUserID, roomID, selector)
 }
+
+// MemberCarry is one counted companion's share of the company's carrying
+// capacity (Phase 32f): its Strength and its largest pack's bonus, in
+// grams.
+type MemberCarry struct {
+	Strength  int
+	PackGrams int
+}
+
+// CarryProvider is optionally implemented by the registered
+// FormationProvider (Phase 32f): the companions who carry for a leader,
+// the same ones CompanionGearGrams weighs. Call it on the game loop.
+type CarryProvider interface {
+	CompanionCarry(leaderUserID int) []MemberCarry
+}
+
+// CompanionCarry is each counted companion's carrying share; nil without a
+// provider.
+func CompanionCarry(leaderUserID int) []MemberCarry {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	cp, ok := p.(CarryProvider)
+	if !ok {
+		return nil
+	}
+	return cp.CompanionCarry(leaderUserID)
+}
+
+// PresenceProvider is optionally implemented by the registered
+// FormationProvider (32f review): the living companions out and in their
+// leader's room. Call it on the game loop.
+type PresenceProvider interface {
+	CompanionsWithLeader(leaderUserID int) []int
+}
+
+// CompanionsWithLeader is the ids of a leader's living companions walking
+// with them; nil without a provider.
+func CompanionsWithLeader(leaderUserID int) []int {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	pp, ok := p.(PresenceProvider)
+	if !ok {
+		return nil
+	}
+	return pp.CompanionsWithLeader(leaderUserID)
+}
+
+// WalkingMembers is how many members walk with a leader: the leader and
+// each living companion in their room (32f review: the riding pace). A
+// leader alone is one.
+func WalkingMembers(leaderUserID int) int {
+	return 1 + len(CompanionsWithLeader(leaderUserID))
+}
+
+// CountedMembers is how many members carry for a leader: the leader and
+// each counted companion (Phase 32f). A leader with no company is one.
+func CountedMembers(leaderUserID int) int {
+	return 1 + len(CompanionCarry(leaderUserID))
+}

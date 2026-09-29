@@ -39,6 +39,10 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	upkeepEngagements()
 	closeIdleBattles()
 
+	// Ashveil Phase 32d: healers and casters cast by their strategies,
+	// before any blow.
+	strategyPass()
+
 	//
 	// Combat rounds
 	//
@@ -181,6 +185,10 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			user.Character.Aggro = nil
 			events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 
+			// Ashveil Phase 32d: a flight that gets away ends the battle
+			// now, so the player isn't held to it for another round.
+			endBattle(user.UserId, combatstream.OutcomeBrokenOff)
+
 			originRoomId := user.Character.RoomId
 			if err := rooms.MoveToRoom(user.UserId, exitRoomId); err == nil {
 
@@ -227,7 +235,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			if holdPlayerSpell(user.UserId, &user.Character.Aggro.SpellInfo) {
 				user.SendText(`Your spell has no foe in your battle. The others wait their turn.`)
 				emitCast(combatstream.CastComplete, userRef(user), user.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeHeld, roomId)
-				user.Character.Aggro = nil
+				endCast(user.Character, caster{userId: user.UserId}) // Phase 32d: back to its aim
 				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
 				continue
 			}
@@ -240,7 +248,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				user.SendText(fmt.Sprintf(`<ansi fg="spell-text">The words slip away from you, and your spell <ansi fg="magenta">fizzles</ansi>. (rolled %d against a %d%% chance)</ansi>`, roll, successChance))
 				uRoom.SendText(fmt.Sprintf(`<ansi fg="spell-text"><ansi fg="username">%s</ansi> falters, and the spell <ansi fg="magenta">fizzles</ansi>.</ansi>`, user.Character.Name), userId)
 				emitCast(combatstream.CastComplete, userRef(user), user.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeFizzled, roomId)
-				user.Character.Aggro = nil
+				endCast(user.Character, caster{userId: user.UserId}) // Phase 32d: back to its aim
 
 				continue
 
@@ -311,7 +319,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				}
 			}
 
-			user.Character.Aggro = nil
+			endCast(user.Character, caster{userId: user.UserId}) // Phase 32d: back to its aim
 
 			continue
 
@@ -764,7 +772,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			// fighting another group, and the mob keeps its place in line.
 			if held, waitOn := holdMobSpell(mob, &mob.Character.Aggro.SpellInfo); held {
 				emitCast(combatstream.CastComplete, mobRef(mob), mob.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeHeld, mob.Character.RoomId)
-				mob.Character.Aggro = nil
+				endCast(&mob.Character, caster{mobId: mob.InstanceId}) // Phase 32d: back to its aim
 				if waitOn > 0 {
 					mob.Character.SetAggro(waitOn, 0, characters.DefaultAttack)
 				}
@@ -778,7 +786,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				// fail
 				mobRoom.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s falters, and the spell <ansi fg="magenta">fizzles</ansi>.`, util.Article(mobTag(mob.Character.Name)))))
 				emitCast(combatstream.CastComplete, mobRef(mob), mob.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeFizzled, mob.Character.RoomId)
-				mob.Character.Aggro = nil
+				endCast(&mob.Character, caster{mobId: mob.InstanceId}) // Phase 32d: back to its aim
 
 				continue
 
@@ -824,7 +832,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				}
 			}
 
-			mob.Character.Aggro = nil
+			endCast(&mob.Character, caster{mobId: mob.InstanceId}) // Phase 32d: back to its aim
 
 			continue
 

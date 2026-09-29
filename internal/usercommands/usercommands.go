@@ -75,6 +75,7 @@ var (
 		`copyover`:    {Copyover, true, true}, // Admin only
 		`conditions`:  {Conditions, true, false},
 		`consider`:    {Consider, true, false},
+		`scout`:       {Scout, true, false}, // Ashveil Phase 32c
 		`default`:     {Default, false, false},
 		`disarm`:      {Disarm, false, false},
 		`drop`:        {Drop, true, false},
@@ -115,7 +116,8 @@ var (
 		`online`:      {Online, true, false},
 		`party`:       {Party, true, false},
 		`password`:    {Password, true, false},
-		`paz`:         {Paz, true, true}, // Admin only
+		`delete`:      {Delete, false, false}, // Ashveil 32h
+		`paz`:         {Paz, true, true},      // Admin only
 		`peep`:        {Peep, false, false},
 		`pet`:         {Pet, false, false},
 		`picklock`:    {Picklock, false, false},

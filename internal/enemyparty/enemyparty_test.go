@@ -13,7 +13,9 @@ import (
 
 func testMob(t *testing.T, instanceId, hp int, groups ...string) *mobs.Mob {
 	t.Helper()
-	m := &mobs.Mob{InstanceId: instanceId, Groups: groups}
+	// A tagged test mob is hostile: since Phase 32d only hostile mobs
+	// group by a shared tag.
+	m := &mobs.Mob{InstanceId: instanceId, Groups: groups, Hostile: len(groups) > 0}
 	m.Character.Health = hp
 	m.Character.HealthMax.Value = hp
 	mobs.SetTestInstance(m)

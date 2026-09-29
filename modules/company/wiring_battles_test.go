@@ -29,6 +29,7 @@ func (b *brawl) looseBandits() []int {
 	var ids []int
 	for _, mob := range b.livingBandits() {
 		mob.Groups = nil
+		mob.SpawnGroup = ""
 		mob.Hostile = true
 		ids = append(ids, mob.InstanceId)
 	}
@@ -79,7 +80,7 @@ func TestGroupsAreFoughtOneAtATime(t *testing.T) {
 	}
 	company := b.companyInstances()
 
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	seen := b.fightItOut(300)
 
 	ft := trackFights(got)
@@ -122,7 +123,7 @@ func TestSecondPlayerTakesTheNextGroup(t *testing.T) {
 	b := newBrawl(t)
 	got := b.listen()
 	b.looseBandits()
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	b.toughen()
 	b.fight()
 	b.toughen()
@@ -173,7 +174,7 @@ func TestSecondPlayerTakesTheNextGroup(t *testing.T) {
 func TestAttackOnAWaitingGroupIsRefused(t *testing.T) {
 	b := newBrawl(t)
 	b.looseBandits()
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	b.toughen()
 	b.fight()
 	cur, ok := battle.Current(7)
@@ -188,7 +189,7 @@ func TestAttackOnAWaitingGroupIsRefused(t *testing.T) {
 	require.NotNil(t, waiting)
 	before := *b.aria.Character.Aggro
 	got := b.cmd("attack", "#"+strconv.Itoa(waiting.InstanceId))
-	assert.Contains(t, got, "Finish that fight first.")
+	assert.Contains(t, got, "The battle is under way", "nothing typed acts on a battle (32c)")
 	require.NotNil(t, b.aria.Character.Aggro)
 	assert.Equal(t, before.MobInstanceId, b.aria.Character.Aggro.MobInstanceId)
 }
@@ -276,7 +277,7 @@ func TestSoloPlayerHasBattles(t *testing.T) {
 	require.Empty(t, b.companyInstances())
 	b.looseBandits()
 
-	b.cmd("attack", "bandit cutthroat")
+	b.aimAt("bandit cutthroat")
 	seen := b.fightItOut(400)
 
 	ft := trackFights(got)
@@ -314,7 +315,7 @@ func (b *brawl) waitingBandit() *mobs.Mob {
 func TestSpellAtAWaitingGroupIsHeld(t *testing.T) {
 	b := newBrawl(t)
 	b.looseBandits()
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	b.toughen()
 	b.fight()
 	b.toughen()
@@ -354,7 +355,7 @@ func TestDownedPlayerIsNotDrawnIntoNewBattles(t *testing.T) {
 	got := b.listen()
 	b.cmd("company", "dismiss all")
 	b.looseBandits()
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	for i := 0; i < 2; i++ {
 		b.aria.Character.HealthMax.Value = 1000
 		b.aria.Character.Health = 1000
@@ -385,7 +386,7 @@ func TestDownedPlayerIsNotDrawnIntoNewBattles(t *testing.T) {
 func TestBackstabAtAWaitingGroupIsCalledOff(t *testing.T) {
 	b := newBrawl(t)
 	b.looseBandits()
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	b.toughen()
 	b.fight()
 	b.toughen()
@@ -407,7 +408,7 @@ func TestBackstabAtAWaitingGroupIsCalledOff(t *testing.T) {
 func TestWaitingGroupsDontBlockFlight(t *testing.T) {
 	b := newBrawl(t)
 	b.looseBandits()
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	b.toughen()
 	b.fight()
 	b.toughen()
@@ -522,7 +523,7 @@ func TestASpawnedPairIsOneBattle(t *testing.T) {
 	alley.AddPlayer(7)
 	t.Cleanup(func() { alley.RemovePlayer(7) })
 
-	b.cmd("attack", "ruffian")
+	b.cmd("attack", "ruffians")
 	var cur battle.Battle
 	for i := 0; i < 5; i++ {
 		b.aria.Character.HealthMax.Value = 1000
@@ -549,7 +550,7 @@ func TestASpawnedPairIsOneBattle(t *testing.T) {
 func TestCastAtAWaitingGroupIsRefused(t *testing.T) {
 	b := newBrawl(t)
 	b.looseBandits()
-	b.cmd("attack", "bandit captain")
+	b.aimAt("bandit captain")
 	b.toughen()
 	b.fight()
 	b.toughen()
@@ -563,7 +564,7 @@ func TestCastAtAWaitingGroupIsRefused(t *testing.T) {
 	b.aria.Character.ManaMax.Value = 100
 	b.aria.Character.Mana = 100
 	got := b.cmd("cast", "mm #"+strconv.Itoa(waiting.InstanceId))
-	assert.Contains(t, got, "Finish that fight first.")
+	assert.Contains(t, got, "The battle is under way", "nothing is cast by hand in a battle (32c)")
 	assert.Equal(t, 100, b.aria.Character.Mana, "no mana spent")
 	if a := b.aria.Character.Aggro; a != nil {
 		assert.NotEqual(t, characters.SpellCast, a.Type)

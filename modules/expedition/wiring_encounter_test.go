@@ -66,6 +66,7 @@ func TestEncounterSpawnsAPair(t *testing.T) {
 	assert.Equal(t, "encounter:2002:"+strconv.Itoa(lead), foes[0].SpawnGroup)
 	assert.Equal(t, foes[0].SpawnGroup, foes[1].SpawnGroup)
 	for _, m := range foes {
+		assert.Equal(t, "a band of ruffians", m.GroupName, "the pair is named (32c)")
 		assert.True(t, m.Hostile)
 		assert.Zero(t, m.MaxWander)
 	}
@@ -83,6 +84,7 @@ func TestEncounterSpawnsAPair(t *testing.T) {
 	alone := encounterFoes(t, room, lich)
 	require.Len(t, alone, 1, "a solitary foe comes alone")
 	assert.Empty(t, alone[0].SpawnGroup)
+	assert.Empty(t, alone[0].GroupName, "a lone foe goes by its own name")
 }
 
 // TestShippedBossesStandAlone: the shipped lair of the lich spawns the lich

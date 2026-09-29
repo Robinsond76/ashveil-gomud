@@ -2,6 +2,8 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"strconv"
 	"strings"
 
@@ -71,6 +73,13 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		// Swap the item location
 		if giveItem.ItemId > 0 {
+			// Phase 32f: another player's full company can't take it.
+			if targetUser.UserId != user.UserId {
+				if _, full := encumbrance.WouldExceed(targetUser.UserId, giveItem.Weight()); full {
+					user.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi>'s company can't carry any more.`, targetUser.Character.Name))
+					return true, nil
+				}
+			}
 			targetUser.Character.StoreItem(giveItem)
 			user.Character.RemoveItem(giveItem)
 
@@ -173,6 +182,15 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 					)
 				} else {
 
+					// Phase 32f: giving to your own companion keeps it in the
+					// company; another company's full one can't take it.
+					if leaderID, _, isCompanion := company.LeaderAndKeyForInstance(m.InstanceId); isCompanion && leaderID != user.UserId {
+						if _, full := encumbrance.WouldExceed(leaderID, giveItem.Weight()); full {
+							user.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi>'s company can't carry any more.`, m.Character.Name))
+							return true, nil
+						}
+					}
+
 					m.Character.StoreItem(giveItem)
 					user.Character.RemoveItem(giveItem)
 
@@ -237,6 +255,15 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		if giveGoldAmount > 0 {
 			room.SendText(fmt.Sprintf(`What would %s do with <ansi fg="gold">%d gold</ansi>?`, petUser.Character.Pet.DisplayName(), giveGoldAmount))
 			return true, nil
+		}
+
+		// Phase 32f: a pet's pouch counts in its owner's load, so another
+		// player's full company can't take it through their pet.
+		if petUserId != user.UserId {
+			if _, full := encumbrance.WouldExceed(petUserId, giveItem.Weight()); full {
+				user.SendText(fmt.Sprintf(`%s's company can't carry any more.`, petUser.Character.Pet.DisplayName()))
+				return true, nil
+			}
 		}
 
 		user.SendText(fmt.Sprintf(`You give the <ansi fg="itemname">%s</ansi> to %s.`, giveItem.DisplayName(), petUser.Character.Pet.DisplayName()))

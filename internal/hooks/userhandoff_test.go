@@ -203,3 +203,118 @@ func TestPurgeRemovesTheUserFile(t *testing.T) {
 	events.ProcessEvents()
 	assert.FileExists(t, filepath.Join(w.dir, "users", "8.yaml"), "an online user is never removed")
 }
+
+// TestDeletionLeaveResetsAndHandsBack (Ashveil 32h): a flagged user who
+// leaves with a hand-off is purged with the login kept (a new character in
+// the Void, the flag cleared) and logged back in on the same connection.
+func TestDeletionLeaveResetsAndHandsBack(t *testing.T) {
+	w := newHandOffWorld(t)
+	connID, _ := connect(t)
+	u := saveUser(t, 7, "Aria")
+	u.Character.Gold = 500
+	loggedIn, _, err := users.LoginUser(u, connID)
+	require.NoError(t, err)
+	require.NoError(t, rooms.MoveToRoom(7, 932001, true))
+	users.GetCharacterIndex().Add("Aria", 7)
+	t.Cleanup(func() { users.GetCharacterIndex().Remove("Aria") })
+
+	purges := []events.UserPurged{}
+	id := events.RegisterListener(events.UserPurged{}, func(e events.Event) events.ListenerReturn {
+		purges = append(purges, e.(events.UserPurged))
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.UserPurged{}, id) })
+
+	loggedIn.Deleting = true
+	require.NoError(t, users.SaveUser(*loggedIn))
+	events.AddToQueue(events.PlayerDespawn{UserId: 7, RoomId: 932001, HandOff: true})
+	events.ProcessEvents()
+
+	assert.Equal(t, []events.UserPurged{{UserId: 7, KeepAccount: true}}, purges, "every module drops the user's state")
+	now := users.GetByConnectionId(connID)
+	require.NotNil(t, now, "back on the same connection")
+	assert.Equal(t, 7, now.UserId)
+	assert.False(t, now.Deleting)
+	assert.NotEqual(t, "Aria", now.Character.Name)
+	assert.Equal(t, -1, now.Character.RoomId, "in the Void, where creation runs")
+	assert.NotEqual(t, 500, now.Character.Gold)
+	assert.Equal(t, "acctAria", now.Username, "the login stays")
+	require.Len(t, w.spawns, 1)
+	_, found := users.GetCharacterIndex().Find("Aria")
+	assert.False(t, found, "the old name is free")
+}
+
+// TestAnUnflaggedHandOffIsNotPurged: an ordinary hand-off (a replay) queues
+// no purge of the user leaving.
+func TestAnUnflaggedHandOffIsNotPurged(t *testing.T) {
+	newHandOffWorld(t)
+	connID, _ := connect(t)
+	u := saveUser(t, 7, "Aria")
+	_, _, err := users.LoginUser(u, connID)
+	require.NoError(t, err)
+	purged := false
+	id := events.RegisterListener(events.UserPurged{}, func(e events.Event) events.ListenerReturn {
+		purged = true
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.UserPurged{}, id) })
+	events.AddToQueue(events.PlayerDespawn{UserId: 7, RoomId: 932001, HandOff: true})
+	events.ProcessEvents()
+	assert.False(t, purged)
+	saved, err := users.LoadUserFile(7)
+	require.NoError(t, err)
+	assert.Equal(t, "Aria", saved.Character.Name)
+}
+
+// TestPurgeKeepingTheAccountResets: HandlePurge with KeepAccount keeps the
+// file and resets the character instead of removing it.
+func TestPurgeKeepingTheAccountResets(t *testing.T) {
+	w := newHandOffWorld(t)
+	u := saveUser(t, 7, "Aria")
+	u.Deleting = true
+	require.NoError(t, users.SaveUser(*u))
+	events.AddToQueue(events.UserPurged{UserId: 7, KeepAccount: true})
+	events.ProcessEvents()
+	require.FileExists(t, filepath.Join(w.dir, "users", "7.yaml"))
+	saved, err := users.LoadUserFile(7)
+	require.NoError(t, err)
+	assert.False(t, saved.Deleting)
+	assert.NotEqual(t, "Aria", saved.Character.Name)
+}
+
+// TestSweepDeletionsFinishesInterruptedOnes: after a restart, an offline
+// flagged user is purged and reset; one still online (copyover) goes
+// through the whole sequence again and comes back in the Void.
+func TestSweepDeletionsFinishesInterruptedOnes(t *testing.T) {
+	newHandOffWorld(t)
+	offline := saveUser(t, 7, "Aria")
+	offline.Deleting = true
+	require.NoError(t, users.SaveUser(*offline))
+	saveUser(t, 9, "Cal") // unflagged: untouched
+
+	connID, _ := connect(t)
+	online := saveUser(t, 8, "Bex")
+	online.Deleting = true
+	require.NoError(t, users.SaveUser(*online))
+	online.Deleting = false // as a copyover might restore it
+	_, _, err := users.LoginUser(online, connID)
+	require.NoError(t, err)
+	require.NoError(t, rooms.MoveToRoom(8, 932001, true))
+
+	SweepDeletions()
+	events.ProcessEvents()
+
+	a, err := users.LoadUserFile(7)
+	require.NoError(t, err)
+	assert.False(t, a.Deleting)
+	assert.NotEqual(t, "Aria", a.Character.Name)
+	c, err := users.LoadUserFile(9)
+	require.NoError(t, err)
+	assert.Equal(t, "Cal", c.Character.Name)
+
+	b := users.GetByConnectionId(connID)
+	require.NotNil(t, b)
+	assert.Equal(t, 8, b.UserId)
+	assert.NotEqual(t, "Bex", b.Character.Name)
+	assert.Equal(t, -1, b.Character.RoomId)
+}

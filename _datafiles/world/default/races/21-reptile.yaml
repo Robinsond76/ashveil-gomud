@@ -3,6 +3,7 @@ name: reptile
 description: A lizard creature.
 defaultalignment: 0
 size: medium
+groupnoun: nest
 unarmedname: teeth
 tnlscale: 1
 angrycommands: [emote hisses.]

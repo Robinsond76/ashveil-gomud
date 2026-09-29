@@ -5,8 +5,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-28
-- **HEAD:** Phase 29b2 (one battle at a time; spawn groups) and player
+- **Last updated:** 2026-09-29
+- **HEAD:** `master` 2026-09-29: Phase 32d (automatic combat by
+  strategy), with 32c (enemy groups), 32f (company logistics), and 32h
+  (character deletion), merged onto 32e (company experience, PR #10). Before them, Phase 29b2 (one battle at a time; spawn groups) and player
   help for every Ashveil system are complete and merged to `master`
   (2026-09-28, from `claude/next-phase-wfav4w`). Docs cleanup (finished-phase
   plans/specs and the old work log moved to git history) on
@@ -22,13 +24,15 @@ instead of duplicating them.
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
-  and the first combat slices (29a, 29b, 29b2, 29c) are all done.
-- **Next:** 32c, 32d, and 32f–32h (32a, 32a2, 32b, and 32e are done), from the owner's
+  the first combat slices (29a, 29b, 29b2, 29c), enemy groups (32c),
+  automatic combat by strategy (32d), company experience (32e), company
+  logistics (32f), and character deletion (32h) are all done.
+- **Next:** 32g (32a, 32a2, 32b, 32c, 32d, 32e, 32f, and 32h are done),
+  from the owner's
   play-test notes, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
   the combat roadmap continues at 29d.
-  Also open: capacity per company size (play-testing) and the "Future
-  ideas" row; see Known issues.
+  Also open: the "Future ideas" row; see Known issues.
 
 ## Phase progress
 
@@ -96,8 +100,12 @@ instead of duplicating them.
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md), [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md), [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](superpowers/plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
+| 32c | Enemy groups and `scout` | Complete: [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md), [plan](superpowers/plans/2026-09-28-phase-32c-enemy-groups.md). Groups named as they form ("a band of ruffians") and shown on their own room line; `attack <group>` is the only way to start a fight; a battle plays out on its own (attack, cast, backstab, shoot, tackle, disarm refused in one; a bare `attack` after `break` rejoins); `look <group>` and a free `scout`; summaries name the group |
 | 32e | Company experience | Complete: a kill that pays the leader pays every living companion still charmed by them in the kill room the same figure in full (no split), in both the solo and party branches; companions level up live (spending the level's points, so a respawn changes nothing); `experience` lists each companion; `company.MemberView`/`companyview.Member` carry live level and progress. **Verification (2026-09-28):** `go test -race ./...`, `make generate`, `make validate` green. **Review:** Opus reviewer found no blocking bugs. Fixed: a levelled companion kept unspent points until respawn (now `AutoTrain`); a companion charmed away was still paid (now requires `IsCharmed(leader)`); the design contradicted the code on rows for absent companions; dead `Leader` progress fields removed; party-branch and befriended-away regression tests added. Rejected/deferred: full seam test of logout/copyover (the snapshot/restore round-trip is tested, the seams are 22b's), a practice-mob companion test (mobs vanish before any XP), mid-fight level-up refill (accepted). A rare failure of the combat brawl test under `-count=4` was traced to a level-up resetting the test's forced health; the brawl now runs with kill XP off. |
-| 32c, 32d, 32f–32h | Play-test follow-ups | Proposed, specs to write ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): enemy groups and `scout` (32c, [design](superpowers/specs/2026-09-28-phase-32c-enemy-groups-design.md) awaiting the owner's review), automatic player and companion combat (32d), company XP (32e, done: [design](superpowers/specs/2026-09-28-phase-32e-company-experience-design.md)), company logistics (32f), web company dock (32g), character deletion (32h) |
+| 32f | Company logistics | Complete: [design](superpowers/specs/2026-09-28-phase-32f-company-logistics-design.md), [plan](superpowers/plans/2026-09-28-phase-32f-company-logistics.md). Capacity from members (20 kg + Strength), one pack each, and horses; weight the only limit (a full company takes on nothing more; walking never blocked); a herd of riding and pack horses bought at stables, with saddles; cargo keeps uses; `company inventory`; `company eat`/`drink`/`meal` |
+| 32h | Character deletion | Complete: [design](superpowers/specs/2026-09-28-phase-32h-character-deletion-design.md), [plan](superpowers/plans/2026-09-28-phase-32h-character-deletion.md). `delete character`, confirmed by the password (masked) and the name; every module's state purged with the login kept; back in creation on the same connection; a durable `Deleting` flag and a boot sweep; masked in-game password prompts (also `password`) |
+| 32d | Automatic combat by strategy | Complete: [design](superpowers/specs/2026-09-28-phase-32d-auto-combat-design.md), [plan](superpowers/plans/2026-09-28-phase-32d-auto-combat.md). `strategy`: each character's role (fighter, healer, caster) and target rule (weakest, strongest, wounded, nearest, furthest, leader, assist, defend), durable; healers and casters cast real spells with mana; companions know spells by archetype and level and regain mana; wizards/clerics granted Magic Missile/Minor Heal; in a battle only `flee`; only hostile mobs group by tag |
+| 32g | Play-test follow-up | Proposed ([roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md)): web company dock (32g, takes 32f's GMCP extras) |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
@@ -108,54 +116,93 @@ fold anything still true into "Known issues". Older entries live in git
 history: `git log -p -- docs/PROJECT_STATUS.md` (the full log through
 Phase 29b2 is at commit `d5ace46`).
 
-### Phase 29c: narration voice (2026-09-28)
+### Phase 32d: automatic combat by strategy (2026-09-29)
 
-- **What:** combat reads as a story, with its numbers in brackets at the
-  end of a line. All eight weapon files rewritten; every hit ends
-  `(N damage)` / `(critical hit, N damage)` (the defender's adds
-  `, M blocked`); only a real crit draws the critical pool, and one the
-  armor takes entirely reads as a miss. No `***`, `!`, ALL-CAPS, or
-  "prepares to fight" in the round (weapon, dodge, fizzle, flee, and
-  shield-break lines). Mob names get "the", players' names never do
-  (`util.Article`). One opener per fight and one closing line after a win,
-  from pools keyed by mob group (generic, `slum-ruffians`,
-  `practice-squad`, and `bandits` for 32c), once per fight when two players
-  share a group; "turns toward"; a mob's death line printed in the round
-  (then `suicide quiet`), so the closing follows the last death. PvP and
-  mob-vs-mob fights get a "goes for" room line. The company fallen notice
-  is indented and in words. `mm`, `sparks`, `heal`, and `healall` chant
-  with their rounds (`ChantRoundsLeft`) and land with `(N damage)` /
-  `(N healed)`; `healall` lists everyone on one line. `help narration`
-  (aliases `critical`, `crit`, `healed`, `chanting`), linked from
-  `help combat` and `help damage`, pointed to from the Practice Yard.
-- **Why:** the owner-approved [narration design](superpowers/specs/2026-09-28-phase-29c-narration-voice-design.md);
-  combat roadmap 29c.
-- **Verification:** `make generate` and `make validate` pass;
-  `go test -race ./...` passed except `TestRecruitThroughPluginsLoad`, a
-  flake already on `master`, since fixed there (`71406ee`, merged in with
-  its package re-run green). Wiring tests go
-  through `hooks.DoCombat` (full 5v5 narration, two players on one group),
-  the real `cast` command (`mm`, `healall` by a companion), and `help`.
-- **Review:** the reviewer found 2 major, 5 minor, 6 nits. Fixed, each with
-  a test: (1) lowercase player names got "the"; (2) two players on one group
-  got two openers and closings; (3) a fully absorbed crit read as a bloody
-  critical with no brackets; (4) shield-break `***` and flee `!` lines
-  remained; (5) a mob reported dead twice before its queued suicide ran got
-  two death lines; (6) PvP and mob-vs-mob fights started silently (the PvP
-  line has no test: no attack harness for two players); (7) the `bandits`
-  pools matched no shipped mob (added `slum-ruffians`). Nits fixed: an
-  `attack` mid-fight "turns toward" instead of drawing again; the
-  `ChantRoundsLeft` doc; the unshipped `empty` world's weapon files synced
-  (they would print damage twice). Accepted: spell suffixes report the
-  health actually changed (`(0 healed)` at full health), as designed; the
-  spells' `WAIT_ROUNDS` constants mirror their yaml (onCast runs before the
-  cast is set); "Garrick Vane's guardsman's broadsword" (29d's pronouns);
-  before/after transcripts diverge after a few lines (the new pools draw
-  from the RNG). Gaps left: no test that a defeat or broken-off fight
-  prints no closing line, none counting "turns toward" lines, none for
-  `sparks` or `heal`.
+- **What:** per the [32d design](superpowers/specs/2026-09-28-phase-32d-auto-combat-design.md)
+  (the owner's answers: eight target rules after Ogre Battle and FF12;
+  fighter/healer/caster roles from archetype, the player automatic too;
+  only `flee` mid-battle; only hostile mobs group by tag; companion spells
+  by archetype and level with mana regain; wizard Magic Missile and
+  cleric Minor Heal grants, existing characters at login; the `strategy`
+  command) and [plan](superpowers/plans/2026-09-28-phase-32d-auto-combat.md).
+  `internal/strategy` (pure rules, roles, provider seam); `modules/strategy`
+  (durable per-member strategies in its plugin file, the command, the
+  `AutoSpells` config); `enemyparty.Aim`/`RuleChoice` replace `FirstAim`,
+  used by `attack` (each companion starts on its own choice), the 29a
+  upkeep (sticky aims; `assist`/`defend` re-read each round), `turnAlone`,
+  `keepOnBattle`, and the mid-round reassignment; a strategy pass in
+  `DoCombat` starts heals and attack spells as `cast` would (chant, mana,
+  roll, events incl. `cast-start`) and `endCast` turns the caster back to
+  its aim. Companion mana regain (and none, for anyone, between blows in a
+  battle). Refused in a battle: `break`, exits, `formation` changes,
+  `strategy` changes, `eat`, `drink`, `use`, `equip`, `remove`, and
+  32f's `company eat`/`drink`/`meal` (added on merging 32f); a flight
+  that gets away ends the battle at once. `mobparty` groups by tag only
+  hostile mobs; the tutorial's straw squad gets a spawn group. Found and
+  fixed: GoMud's `Character.Heal` added the health amount to mana. Help:
+  `help strategy` (aliases `strategies`, `gambits`, `roles`) and updates to
+  `combat`, `targeting`, `attack`, `formation`, `cast`, `flee`, `break`,
+  `mana`, `archetype`, `eat`, `drink`, `use`, `equip`, `remove`; the Combat
+  lesson's hints (a stale "move anyone mid-fight" corrected).
+- **Why:** the owner's play-test note "a wizard doesn't cast in combat",
+  and decisions 8 and 9 of the
+  [roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md):
+  a battle plays out by strategies set beforehand.
+- **Verification:** `go test -race ./...` (85 packages), `make generate`,
+  and `make validate` pass after the review fixes, and again after merging
+  32f (which landed on the base meanwhile). Wiring tests in `modules/company`
+  (`wiring_strategy_test.go`, `wiring_strategy_review_test.go`) drive the
+  real `strategy`, `attack`, `formation`, `flee`, alias dispatch, and
+  `DoCombat`: each rule's first aim, the upkeep's re-aim, assist, defend,
+  a player alone, reach fallback, a cleric's heal (chant, mana, back to
+  its foe), a group heal, a downed player healed, a wizard player and a
+  wizard companion casting (single, then area at level 5), companion mana
+  in and out of battle, the refusals and flee; `modules/strategy` persists
+  through the real plugin file and a fresh load; unit tests in
+  `internal/strategy`, `internal/enemyparty`, `internal/hooks`,
+  `internal/archetypes`, `internal/characters`, `internal/usercommands`
+  (refusals, help).
+- **Review:** 10 findings, all verified. Fixed with regression tests:
+  (1) a leader turned by `defend` was told "can't reach" a foe in reach;
+  (2) a downed player was never healed (now the most hurt of all;
+  recorded in the design); (3) mana and health came back between blows in
+  a battle when an aim was empty; (4) a shot into the next room counted as
+  a battle (`break` refused); (5) any unknown word in a battle got the
+  flee line (now only real exits); (6) `defend` turned on ties (now keeps
+  a tying foe) and ignored a foe chanting a harmful spell; (8)
+  `strategy leader` named the player; (9) a companion healing itself was
+  narrated as healing another. Test gaps closed: companion caster, area
+  spell, group heal, reach through `attack`, aliases through the dispatch,
+  the cleric's return to its foe made unconditional. Help: `targeting`
+  (refused, not held; the full list), `strategy` (front-most fallback;
+  mana while online; downed heals), `flee` (only the battle's group
+  blocks), and a line on `eat`/`drink`/`use`/`equip`/`remove`. Accepted:
+  (7) stored strategies of departed companions are pruned only when the
+  player next uses `strategy` (ids are never reused; the design says so);
+  the leaf lock is held across the plugin file write (a stall only).
+  Untested: companions following a flee (the harness doesn't complete a
+  room move, as in 29b2's flee test).
 
 ## Known issues / deferred items
+
+- **Automatic combat (32d), for the owner and later phases:** Magic
+  Missile's difficulty 75 gives a new wizard about a one-in-three chance
+  to cast (GoMud's odds; spell balance not retuned); companion mana and
+  health aren't saved (a restart refills both); enemies still aim at the weakest they can reach (personalities are
+  30c's); companions following a flee is untested. 32c's two owner items
+  (peaceful tag groups; what's allowed mid-battle) are settled by 32d.
+  32c's test gaps are in its work-log entry (git history, commit
+  `ff1f663e`).
+- **Company logistics (32f)** (work log at commit `bea052b`): GMCP drops the inventory `Max` (the web
+  gear window shows "count / —") until 32g adds capacity, packs, mounts,
+  and cargo uses; a crash mid-meal can spend one use without its
+  provision; characters made before 32f start at ~20–25 kg with no
+  satchel.
+- **Character deletion (32h), accepted** (work log at commit `f418e1d`): a replay's hand-back resets the
+  wrong-password count; copyover with a flagged user online races the
+  resumed connection; a failed reset waits for the boot sweep; the reused
+  user id keeps references elsewhere (mob XP credit, party invites,
+  charms outside the room); web macros can answer the password question.
 
 Refreshed 2026-09-26 (Phase 28). Earlier entries that later phases
 resolved (the weather, load, and mount multipliers, and the 11a–11c
@@ -214,9 +261,6 @@ keeps its own history.
     skips rooms with no aggro.
   - `formation reach`'s "can't reach any of the enemy" branch has no
     test.
-- **Capacity is flat per company** (`CapacityKg` 200, plus a mount). Phase
-  28 gave every item a weight, so loads now mean something, but capacity
-  doesn't grow with the company's size. That is left for play-testing.
 - **Deferred by design, not scheduled:**
   - 11d: guard reactions, crit effects, wounds, AI personality;
   - the "12+" encounter kinds;

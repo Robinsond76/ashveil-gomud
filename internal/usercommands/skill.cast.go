@@ -57,6 +57,13 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		return true, nil
 	}
 
+	// Ashveil Phase 32c (the owner's rule 5): in a battle, characters cast
+	// on their own; nothing is cast by hand.
+	if _, inBattle := battle.Current(user.UserId); inBattle || fightingMob(user) {
+		user.SendText(BattleUnderWay)
+		return true, nil
+	}
+
 	if user.Character.Mana < spellInfo.Cost {
 		user.SendText(fmt.Sprintf(`You don't have enough mana to cast <ansi fg="spellname">%s</ansi>.`, spellName))
 		return true, nil
@@ -273,21 +280,14 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	}
 
-	// Ashveil Phase 29b2: a harmful spell keeps to the caster's battle. Foes
-	// waiting their turn are dropped from its targets, and a spell left with
-	// none is refused before its mana is spent.
-	if b, inBattle := battle.Current(user.UserId); inBattle && len(spellAggro.TargetMobInstanceIds) > 0 &&
-		(spellInfo.Type == spells.HarmSingle || spellInfo.Type == spells.HarmMulti || spellInfo.Type == spells.HarmArea) {
-		var kept []int
+	// Ashveil Phase 32c (the owner's rule 5): a harmful spell doesn't start
+	// a fight with an enemy; fights start with attack and a group's name.
+	if spellInfo.Type == spells.HarmSingle || spellInfo.Type == spells.HarmMulti || spellInfo.Type == spells.HarmArea {
 		for _, id := range spellAggro.TargetMobInstanceIds {
-			if b.Has(id) {
-				kept = append(kept, id)
+			if m := mobs.GetInstance(id); m != nil && !m.Character.IsCharmed() {
+				user.SendText(NotAnOpener(room, id, `A harmful spell`))
+				return true, nil
 			}
-		}
-		spellAggro.TargetMobInstanceIds = kept
-		if len(kept) == 0 && len(spellAggro.TargetUserIds) == 0 {
-			user.SendText(fmt.Sprintf(`You're fighting %s. Finish that fight first.`, battleFoeName(b, room)))
-			return true, nil
 		}
 	}
 

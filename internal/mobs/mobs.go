@@ -54,6 +54,9 @@ type Mob struct {
 	Solitary        bool     `yaml:"solitary,omitempty"`       // Ashveil (Phase 29b2): stands alone; never grouped or topped up by spawning
 	CompanyMoveTo   int      `yaml:"-"`                        // Ashveil (Phase 32a): the room its leader's one company line announced it moving to (runtime only)
 	SpawnGroup      string   `yaml:"-"`                        // Ashveil (Phase 29b2): the spawn group it fights in (runtime only), e.g. spawn:<room>:<n>
+	GroupNoun       string   `yaml:"groupnoun,omitempty"`      // Ashveil (Phase 32c): overrides its race's collective noun for its group ("patrol")
+	GroupName       string   `yaml:"-"`                        // Ashveil (Phase 32c): its group's name, given when the group formed (runtime only)
+	GroupDesc       string   `yaml:"-"`                        // Ashveil (Phase 32c): an authored group's description (runtime only)
 	LastIdleCommand uint8    `yaml:"-"`                        // Track what hte last used idlecommand was
 	BoredomCounter  uint8    `yaml:"-"`                        // how many rounds have passed since this mob has seen a player
 	Groups          []string `yaml:"groups,omitempty"`         // What group do they identify with? Helps with teamwork
@@ -913,4 +916,16 @@ func LoadDataFiles() {
 
 	mudlog.Info("mobs.LoadDataFiles()", "loadedCount", len(mobs), "Time Taken", time.Since(start))
 
+}
+
+// CollectiveNoun is what a group of this mob is called (Ashveil Phase
+// 32c): its own groupnoun, else its race's, else "" (the caller's default).
+func (m *Mob) CollectiveNoun() string {
+	if m.GroupNoun != `` {
+		return m.GroupNoun
+	}
+	if r := races.GetRace(m.Character.RaceId); r != nil {
+		return r.GroupNoun
+	}
+	return ``
 }

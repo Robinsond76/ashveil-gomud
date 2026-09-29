@@ -5,6 +5,7 @@ defaultalignment: -70
 buffids:
   - 29 # Night Vision
 size: small
+groupnoun: band
 unarmedname: claws
 tnlscale: 2.0
 angrycommands: [emote cackles maniacally.]

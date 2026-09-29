@@ -49,8 +49,9 @@ func buildInventoryPanel(user *users.UserRecord, itemList []items.Item, searchin
 
 		// Build the wrapped "Carrying:" line, matching the original template behaviour.
 		// Items are comma-separated and wrapped at 68 visible chars.
-		// The count "(n/cap)" is right-aligned on the second line prefix.
-		count := fmt.Sprintf(`(%d/%d)`, len(itemList), c.CarryCapacity())
+		// The count "(n)" is right-aligned on the second line prefix; weight
+		// is the only limit (Phase 32f), shown in the load lines above.
+		count := fmt.Sprintf(`(%d)`, len(itemList))
 		sb.WriteString(` Carrying: `)
 		lineLen := 0
 		lineNum := 1

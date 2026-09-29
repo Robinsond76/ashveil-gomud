@@ -1,48 +1,59 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">cargo</ansi>
 
 Your company shares one pool of carrying capacity. Everything counts
-toward it by its actual weight in grams: what you personally carry and
-wear, what every living companion with you carries and wears, and
-whatever sits in the company's shared cargo. A companion who isn't
-currently with you doesn't count.
+toward it by its actual weight: what you carry and wear, your pet's
+pouch, what every living companion carries and wears, and whatever sits
+in the company's shared cargo.
 
-<ansi fg="yellow-bold">Moving things into cargo</ansi>
+<ansi fg="yellow-bold">How much you can carry</ansi>
 
-  <ansi fg="command">cargo put [item]</ansi>
-  Moves an item from your own pack into the shared cargo.
+Every member of the company carries a share:
 
-  <ansi fg="command">cargo take [item]</ansi>
-  Moves an item from the shared cargo back into your pack.
+  - 20 kg each, plus half a kilogram for every point of Strength
+    (a companion who isn't out with you right now carries the 20 kg
+    and their pack, without the Strength).
+  - One pack each: a satchel adds 5 kg, a traveller's pack 10 kg, and
+    a frame pack 15 kg. A second pack on the same member is only
+    weight. Every new character starts with a satchel; give a pack to
+    a companion to raise their share.
+  - Horses add their own (<ansi fg="command">help mount</ansi>): a pack horse carries 40 kg,
+    or 100 kg with a pack saddle.
 
-Moving something between your pack and cargo doesn't change your total
-load, so it's never blocked. Cargo is just where you keep things you
-don't need on hand.
+A fallen companion, or one charmed away from you, carries nothing.
+Recruiting raises your capacity; dismissing lowers it.
 
-<ansi fg="yellow-bold">Capacity and being overloaded</ansi>
+<ansi fg="yellow-bold">When you're full</ansi>
 
-Your capacity is a base amount, plus a bonus if you have a mount
-stabled (<ansi fg="command">help mount</ansi>). Once your total load passes about three
-quarters of that capacity, you get worse at everything that depends on
-moving:
+At full capacity nobody can pick up, buy, or be handed anything more
+until something is dropped, sold, or eaten. Walking is never blocked:
+if a companion leaves and you're suddenly over, you can still walk,
+only slowly. Moving things between your pack and the cargo, and giving
+to your own companions, never changes the total, so they always work.
 
-  - Journeys along a route take longer.
-  - Walking room to room strains you and your company more
-    (<ansi fg="command">help strain</ansi>).
+<ansi fg="yellow-bold">Being heavily loaded</ansi>
 
-It gets worse in stages the heavier you load up: past three quarters
-of capacity, routes and strain both cost a little more; past nine
-tenths, noticeably more; and at or over full capacity, a lot more.
-None of this ever speeds you up — an underloaded company travels at its
-ordinary pace, not faster.
+Past three quarters of capacity, journeys along a route take a little
+longer and walking strains everyone a little more
+(<ansi fg="command">help strain</ansi>); past nine tenths, noticeably more; at or over full
+capacity, a lot more. A lightly loaded company never goes faster than
+its ordinary pace.
 
 <ansi fg="yellow-bold">Usage:</ansi>
 
   <ansi fg="command">cargo</ansi>
-  Shows your total load against capacity, the split between your own
-  gear, your companions' gear, and cargo, any travel or strain
-  modifier that's currently in effect, and what's in the cargo.
+  Your load against capacity, split between you, your companions, and
+  the cargo; the capacity split between the members and the horses;
+  any travel or strain penalty in effect; and what's in the cargo.
 
-  <ansi fg="command">cargo put [item]</ansi> | <ansi fg="command">cargo take [item]</ansi>
+  <ansi fg="command">cargo put [item]</ansi>
+  Moves an item from your pack into the shared cargo.
 
-See also: <ansi fg="command">help encumbrance</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help strain</ansi>,
-<ansi fg="command">help travel</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help inventory</ansi>.
+  <ansi fg="command">cargo take [item]</ansi>
+  Moves an item from the cargo back into your pack.
+
+A partly used item keeps its uses in the cargo: put in a waterskin with
+three drinks left and it comes back out with three. The company eats
+and drinks from the cargo first (<ansi fg="command">help company meal</ansi>).
+
+See also: <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help encumbrance</ansi>,
+<ansi fg="command">help strain</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help company</ansi>.

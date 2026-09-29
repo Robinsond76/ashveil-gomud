@@ -104,6 +104,77 @@ func (m *CompanyModule) CompanionGearGrams(leaderUserID int) int {
 	return total
 }
 
+var _ domain.CarryProvider = (*CompanyModule)(nil)
+
+// CompanionCarry implements company.CarryProvider (Phase 32f): each
+// companion CompanionGearGrams weighs carries its share. A live one brings
+// its Strength and its largest pack; one not out brings its recorded pack
+// (or its template's) and no Strength. Game loop only.
+func (m *CompanyModule) CompanionCarry(leaderUserID int) []domain.MemberCarry {
+	if m.persistenceAvailable() != nil {
+		return nil
+	}
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return nil
+	}
+	out := []domain.MemberCarry{}
+	for _, c := range record.Companions {
+		if c.Dead() {
+			continue
+		}
+		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {
+			if m.runtime.CharmedByOther(leaderUserID, instanceID) {
+				continue
+			}
+			if strength, pack, ok := m.runtime.Carry(instanceID); ok {
+				out = append(out, domain.MemberCarry{Strength: strength, PackGrams: pack})
+				continue
+			}
+		}
+		carry := domain.MemberCarry{}
+		switch {
+		case c.State != nil:
+			carry.PackGrams = domain.BestPackGrams(c.State.Items)
+		default:
+			if template, ok := m.runtime.TemplateState(c.MobTemplateID); ok {
+				carry.PackGrams = domain.BestPackGrams(template.Items)
+			}
+		}
+		out = append(out, carry)
+	}
+	return out
+}
+
+var _ domain.PresenceProvider = (*CompanyModule)(nil)
+
+// CompanionsWithLeader implements company.PresenceProvider (32f review):
+// the ids of living companions out and walking with their leader, in the
+// leader's room and still the company's. Game loop only.
+func (m *CompanyModule) CompanionsWithLeader(leaderUserID int) []int {
+	if m.persistenceAvailable() != nil {
+		return nil
+	}
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return nil
+	}
+	out := []int{}
+	for _, c := range record.Companions {
+		if c.Dead() {
+			continue
+		}
+		instanceID, tracked := m.instance(leaderUserID, c.ID)
+		if !tracked || !m.runtime.IsLive(instanceID) || m.runtime.CharmedByOther(leaderUserID, instanceID) {
+			continue
+		}
+		if m.runtime.WithLeader(leaderUserID, instanceID) {
+			out = append(out, c.ID)
+		}
+	}
+	return out
+}
+
 // gearGrams weighs a member's worn and carried items.
 func gearGrams(s domain.MemberState) int {
 	total := 0

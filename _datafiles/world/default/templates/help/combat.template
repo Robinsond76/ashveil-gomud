@@ -12,14 +12,21 @@ fighting any more.
 
 <ansi fg="yellow-bold">Your company fights as one (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help targeting</ansi><ansi fg="yellow-bold">)</ansi>
 
-Your companions fight beside you. When your company and a group of enemies
-start fighting:
+Enemies come in named groups ("A band of ruffians (4)"), and you fight a
+whole group, never one member: <ansi fg="command">attack ruffians</ansi> starts the battle. From
+then on it plays out on its own, from how your company was set up: nothing
+you type changes it until it's over, and only <ansi fg="command">flee</ansi> takes you out. Set
+your formation and everyone's strategy first (<ansi fg="command">help strategy</ansi>), and
+<ansi fg="command">scout</ansi> the group to see how it stands. Your companions fight beside you.
+Once the battle starts:
 
-- the whole enemy group joins in, not just the one you struck;
-- anyone on either side left without a target, or with one they can't reach,
-  turns toward the weakest foe they can reach, and you're told about it
+- the whole enemy group fights, and each of you starts on the foe your
+  strategy picks (the weakest you can reach, unless you set another rule);
+- healers heal the hurt and casters cast their spells, with real mana;
+- anyone left without a target, or with one they can't reach, turns to
+  another by their strategy, and you're told about it
   (<ansi fg="command">You turn toward the bandit cutthroat.</ansi>);
-- this goes on until the fight is over, or until you <ansi fg="command">break</ansi> or <ansi fg="command">flee</ansi>.
+- this goes on until the fight is over, or until you <ansi fg="command">flee</ansi>.
 
 Where several groups are in one place, you fight them one at a time. The
 others wait their turn without striking, and the next battle begins as
@@ -30,7 +37,9 @@ soon as one ends. Another player can take on a waiting group meanwhile.
 Both sides stand in a 3x3 formation: three columns, and three rows from the
 front to the back. Where a fighter stands, and the reach of their weapon,
 decide who they can strike. A fighter in the front row shields the one
-behind them. <ansi fg="command">formation reach [member]</ansi> shows who a member can reach.
+behind them. <ansi fg="command">formation reach [member]</ansi> shows who a member can reach, and
+<ansi fg="command">scout [group]</ansi> (<ansi fg="command">help scout</ansi>) shows an enemy group's formation and which
+of them you can reach.
 
 <ansi fg="yellow-bold">Hitting (</ansi><ansi fg="command">help attack</ansi><ansi fg="yellow-bold">)</ansi>
 
@@ -67,9 +76,10 @@ and your company's health.
 
 <ansi fg="yellow-bold">Commands</ansi>
 
-  <ansi fg="command">attack [target]</ansi>   start a fight
-  <ansi fg="command">break</ansi>             stop fighting (enemies may keep attacking you)
-  <ansi fg="command">flee</ansi>              try to run out of the room
+  <ansi fg="command">attack [group]</ansi>    start a fight with a group
+  <ansi fg="command">scout [group]</ansi>     see how a group stands
+  <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
+  <ansi fg="command">flee</ansi>              try to run out of the room (the only way out of a battle)
   <ansi fg="command">consider [target]</ansi> size up a foe
   <ansi fg="command">formation</ansi>         see and arrange your company's formation
   <ansi fg="command">company chemistry</ansi> your company's chemistry

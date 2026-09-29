@@ -3,8 +3,9 @@
 The ~break~ command disengages your part of combat.  
 **Note:** Enemies may still attack you!
 
-With a company, you stay out of the fight until you attack again or the
-fight ends; your companions fight on. See ~help targeting~.
+In a battle with an enemy group, ~break~ is refused: a battle plays out as
+you set it up, and only ~flee~ takes you out. It still stops a fight with
+another player. See ~help targeting~.
 
 ## Usage:
 

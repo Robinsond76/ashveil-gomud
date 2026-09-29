@@ -47,6 +47,16 @@ type Archetype struct {
 	// Kit is the item ids granted once, as a starter kit, to a player who
 	// chooses this archetype (Phase 22a). Repeat an id to grant it twice.
 	Kit []int
+	// CompanionSpells are the spells a companion of this archetype knows,
+	// each from a character level (Phase 32d). Nothing is written to the
+	// companion: the list is read when it acts in a battle.
+	CompanionSpells []LevelSpell
+}
+
+// LevelSpell is a spell known from a character level.
+type LevelSpell struct {
+	Spell string
+	Level int
 }
 
 func normalizeList(in []string) []string {
@@ -112,6 +122,15 @@ func (a *Archetype) Validate() error {
 		}
 	}
 	a.Kit = kit
+	spells := make([]LevelSpell, 0, len(a.CompanionSpells))
+	for _, ls := range a.CompanionSpells {
+		ls.Spell = strings.ToLower(strings.TrimSpace(ls.Spell))
+		if ls.Spell == "" || ls.Level < 1 {
+			return fmt.Errorf("%w: %q has a companion spell %q at level %d", ErrInvalidArchetype, a.ID, ls.Spell, ls.Level)
+		}
+		spells = append(spells, ls)
+	}
+	a.CompanionSpells = spells
 	if len(a.CompanionLevels) != SkillLevels {
 		return fmt.Errorf("%w: %q needs %d companion levels", ErrInvalidArchetype, a.ID, SkillLevels)
 	}
@@ -137,6 +156,41 @@ func (a Archetype) ValidateGrantedSpells(schoolOf func(spellID string) (school s
 		}
 	}
 	return nil
+}
+
+// FilterCompanionSpells keeps the companion spells that exist and that
+// this archetype may learn (their school is empty or claimed), and reports
+// each one dropped.
+func (a *Archetype) FilterCompanionSpells(schoolOf func(spellID string) (school string, ok bool)) []error {
+	var errs []error
+	kept := a.CompanionSpells[:0:0]
+	for _, ls := range a.CompanionSpells {
+		school, ok := schoolOf(ls.Spell)
+		if !ok {
+			errs = append(errs, fmt.Errorf("%w: %q lists unknown companion spell %q", ErrInvalidArchetype, a.ID, ls.Spell))
+			continue
+		}
+		school = strings.ToLower(strings.TrimSpace(school))
+		if school != "" && !contains(a.Schools, school) {
+			errs = append(errs, fmt.Errorf("%w: %q lists companion spell %q from unclaimed school %q", ErrInvalidArchetype, a.ID, ls.Spell, school))
+			continue
+		}
+		kept = append(kept, ls)
+	}
+	a.CompanionSpells = kept
+	return errs
+}
+
+// SpellsAtLevel is the companion spells known at a character level, in
+// the order configured.
+func (a Archetype) SpellsAtLevel(level int) []string {
+	var out []string
+	for _, ls := range a.CompanionSpells {
+		if level >= ls.Level {
+			out = append(out, ls.Spell)
+		}
+	}
+	return out
 }
 
 // ListsSkill reports whether this archetype claims the skill.

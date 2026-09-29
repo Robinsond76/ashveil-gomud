@@ -85,5 +85,17 @@ func HandleLeave(e events.Event) events.ListenerReturn {
 
 	users.SaveUser(*user)
 
+	// Ashveil 32h: a character being deleted, now out of the world, is
+	// purged with its login kept; on a hand-off the same user comes back on
+	// the same connection, in the Void, to make a new character. Queued
+	// from this final listener, both follow whatever the other despawn
+	// listeners queued.
+	if user.Deleting {
+		events.AddToQueue(events.UserPurged{UserId: user.UserId, KeepAccount: true})
+		if evt.HandOff {
+			events.AddToQueue(events.UserHandOff{ConnectionId: uint64(connId), FromUserId: user.UserId, ToUserId: user.UserId})
+		}
+	}
+
 	return events.Continue
 }

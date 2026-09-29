@@ -33,7 +33,7 @@ func (b *brawl) ariaHears() *[]string {
 }
 
 var (
-	missileLine = regexp.MustCompile(`You release the light, and it streaks into the bandit captain\. \((\d+) damage\)`)
+	missileLine = regexp.MustCompile(`releases a streak of cold light into the bandit captain\. \((\d+) damage\)`)
 	spellLine   = regexp.MustCompile(`\((chanting: .*|\d+ healed)\)|light|prayer|praying`)
 	healedLine  = regexp.MustCompile(`(?m)^    .*\byou \((\d+) healed\)`)
 )
@@ -48,33 +48,33 @@ func TestSpellNarrationThroughTheRealCast(t *testing.T) {
 	heard := b.ariaHears()
 	captain := mobs.GetInstance(b.bandits["bandit captain"][0])
 	require.NotNil(t, captain)
-	b.cmd("attack", "bandit captain")
+	b.cmd("attack", "bandit cutthroats")
 	b.toughen()
 	b.fight()
 
-	b.aria.Character.SpellBook["mm"] = 1
-	if b.aria.Character.Skills == nil {
-		b.aria.Character.Skills = map[string]int{}
-	}
-	b.aria.Character.Skills["cast"] = 4
-
-	// The cast can fizzle; cast until one lands.
+	// Phase 32c: once a battle starts nothing typed changes it, so the
+	// missile is Brother Oswin's, cast the way a companion casts.
+	oswin := b.companion(2)
+	oswin.Character.SpellBook["mm"] = 1
 	var dealt []string
 	for try := 0; try < 30 && dealt == nil; try++ {
 		b.toughen()
 		captain.Character.HealthMax.Value = 1000
 		captain.Character.Health = 1000
-		b.aria.Character.ManaMax.Value = 100
-		b.aria.Character.Mana = 100
-		got := b.cmd("cast", "mm #"+strconv.Itoa(captain.InstanceId))
-		require.Contains(t, got, "(chanting: Magic Missile, 2 rounds)", "the chant names the spell and its rounds")
+		oswin.Character.ManaMax.Value = 100
+		oswin.Character.Mana = 100
+		_, err := mobcommands.TryCommand("cast", "mm #"+strconv.Itoa(captain.InstanceId), oswin.InstanceId)
+		require.NoError(t, err)
+		if oswin.Character.Aggro == nil || oswin.Character.Aggro.Type != characters.SpellCast {
+			continue
+		}
 		for i := 0; i < 3; i++ {
 			b.toughen()
-			got = b.fight()
+			got := b.fight()
 			if strings.Contains(got, "fizzles") {
 				break
 			}
-			if m := missileLine.FindStringSubmatch(got); m != nil {
+			if m := missileLine.FindStringSubmatch(strings.Join(*heard, "")); m != nil {
 				dealt = m
 				break
 			}
@@ -84,10 +84,10 @@ func TestSpellNarrationThroughTheRealCast(t *testing.T) {
 	n, _ := strconv.Atoi(dealt[1])
 	assert.True(t, n >= 3 && n <= 8, "1d6+2 damage, got %d", n)
 	all := strings.Join(*heard, "")
+	assert.Contains(t, all, "(chanting: Magic Missile, 2 rounds)", "the chant names the spell and its rounds")
 	assert.Contains(t, all, "(chanting: Magic Missile, 1 round)")
 
 	// Minor Heal All from Brother Oswin, the company wounded first.
-	oswin := b.companion(2)
 	oswin.Character.SpellBook["healall"] = 1
 	var list []string
 	for try := 0; try < 30 && list == nil; try++ {

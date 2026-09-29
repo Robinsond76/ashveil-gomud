@@ -16,6 +16,8 @@ type SpawnInfo struct {
 	BuffIds      []int    `yaml:"buffids,omitempty,flow"`    // (optional) list of buffs the mob always has active
 	Level        int      `yaml:"level,omitempty"`           // (optional) force this mob to a specific level
 	LevelMod     int      `yaml:"levelmod,omitempty"`        // (optional) modify this mobs level by this amount
+	GroupName    string   `yaml:"groupname,omitempty"`       // (optional, Ashveil Phase 32c) names the group this entry's mob forms ("the Rat King's court")
+	GroupDesc    string   `yaml:"groupdesc,omitempty"`       // (optional, Ashveil Phase 32c) that group's description, for look
 	// spawn tracking and rate
 	DespawnedRound uint64 `yaml:"-"`                     // When this mob was last despawned (killed)
 	RespawnRate    string `yaml:"respawnrate,omitempty"` // How long until it respawns when not present?

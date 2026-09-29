@@ -3,6 +3,7 @@ name: dummy
 description: A wooden target
 defaultalignment: 0
 size: small
+groupnoun: squad
 unarmedname: sticks
 tnlscale: 1
 selectable: false

@@ -5,6 +5,7 @@ defaultalignment: 0
 buffids:
   - 3 # Cold Tolerant
 size: small
+groupnoun: colony
 unarmedname: teeth
 tnlscale: 1
 selectable: false

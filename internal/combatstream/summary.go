@@ -46,6 +46,7 @@ type EnemyEnding struct {
 type Summary struct {
 	FightID      uint64
 	Outcome      string
+	GroupName    string // the enemy group's name, "" if unnamed
 	LeaderUserId int
 	StartRound   uint64
 	EndRound     uint64
@@ -169,6 +170,7 @@ func (f *fight) summary(round uint64, outcome string, final Final) *Summary {
 	s := &Summary{
 		FightID:          f.id,
 		Outcome:          outcome,
+		GroupName:        f.groupName,
 		LeaderUserId:     f.leaderUserId,
 		StartRound:       f.startRound,
 		EndRound:         round,
@@ -221,6 +223,17 @@ var headings = map[string]string{
 	OutcomeBrokenOff: "The fight breaks off",
 }
 
+// namedHeading heads the summary of a fight with a named group.
+func namedHeading(outcome, group string) string {
+	switch outcome {
+	case OutcomeVictory:
+		return "The fight with " + group + " is over"
+	case OutcomeDefeat:
+		return "The company is beaten by " + group
+	}
+	return "The fight with " + group + " breaks off"
+}
+
 // Render lays the summary out as text lines for the player viewerUserId,
 // who reads their own name as "You". A line with nothing to report is
 // left out, except damage, the enemies, and the company.
@@ -246,6 +259,9 @@ func Render(s Summary, viewerUserId int) []string {
 	heading, ok := headings[s.Outcome]
 	if !ok {
 		heading = headings[OutcomeBrokenOff]
+	}
+	if s.GroupName != "" {
+		heading = namedHeading(s.Outcome, s.GroupName)
 	}
 	out := []string{
 		"── " + heading + " ──",

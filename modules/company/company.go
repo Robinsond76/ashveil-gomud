@@ -11,6 +11,7 @@ import (
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -35,11 +36,21 @@ type Runtime interface {
 	// GearGrams weighs a live instance's worn and carried items (Phase
 	// 28), read in place: no copy of its gear is made.
 	GearGrams(instanceID int) (int, bool)
+	// Carry reads a live instance's Strength and largest pack (Phase 32f),
+	// in place.
+	Carry(instanceID int) (strength, packGrams int, ok bool)
+	// UseItem takes one use of a carried item from a live mob (Phase 32f's
+	// company meals); false when the mob or the item is gone.
+	UseItem(instanceID int, itm items.Item) bool
 	// CharmedByOther reports whether a live mob now serves someone else.
 	CharmedByOther(leaderUserID, instanceID int) bool
 	// TemplateState is the state a template starts with, without spawning.
 	TemplateState(mobTemplateID int) (domain.MemberState, bool)
 	IsLive(instanceID int) bool
+	// WithLeader reports whether a live mob stands in its leader's room,
+	// walking with them (32f review: meals and the riding pace count only
+	// members present).
+	WithLeader(leaderUserID, instanceID int) bool
 	IsAttached(leaderUserID, instanceID int) bool
 	Detach(leaderUserID, instanceID int)
 	// Relocate moves a live, living mob into roomID and out of any fight
@@ -243,7 +254,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company chemistry | company gear <member> | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company chemistry | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -737,6 +748,14 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.alignmentView(user.UserId))
 	case "chemistry":
 		user.SendText(m.chemistryView(user.UserId))
+	case "eat":
+		user.SendText(m.mealView(user, room, mealEat))
+	case "drink":
+		user.SendText(m.mealView(user, room, mealDrink))
+	case "meal":
+		user.SendText(m.mealView(user, room, mealBoth))
+	case "inventory", "inv":
+		user.SendText(m.inventoryView(user))
 	case "gear":
 		if len(args) < 2 {
 			user.SendText(companyUsage)

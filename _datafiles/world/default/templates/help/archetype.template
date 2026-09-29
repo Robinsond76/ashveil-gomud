@@ -31,6 +31,10 @@ companion without one can be given one, once, with
 <ansi fg="command">company archetype [member] [archetype]</ansi> (see
 <ansi fg="command">help company</ansi>). A companion's archetype decides which
 utility skills they can use for the company as they level up
-(<ansi fg="command">help autoskill</ansi>, <ansi fg="command">help trap</ansi>).
+(<ansi fg="command">help autoskill</ansi>, <ansi fg="command">help trap</ansi>), and their spells and role in a battle:
+a cleric heals, a wizard casts (<ansi fg="command">help strategy</ansi>).
 
-See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help autoskill</ansi>, <ansi fg="command">help trap</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help train</ansi>.
+Wizards start with Magic Missile and clerics with Minor Heal, the spells
+they cast in battle.
+
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help autoskill</ansi>, <ansi fg="command">help trap</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help spells</ansi>, <ansi fg="command">help train</ansi>.

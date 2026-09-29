@@ -2,6 +2,8 @@
 
 The ~buy~ command buys an item for sale at a merchant.
 
+If your company can't carry the item, the merchant keeps it and your gold (see ~help cargo~).
+
 ## Usage:
 
   ~buy sword~  

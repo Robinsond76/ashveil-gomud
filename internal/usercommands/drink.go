@@ -12,6 +12,12 @@ import (
 
 func Drink(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
+	// Ashveil Phase 32d: a battle plays out as it was set up.
+	if InBattle(user) {
+		user.SendText(BattleUnderWay)
+		return true, nil
+	}
+
 	// Check whether the user has an item in their inventory that matches
 	matchItem, selector, found := findConsumable(rest, user)
 

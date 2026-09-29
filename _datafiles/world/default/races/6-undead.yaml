@@ -5,6 +5,7 @@ defaultalignment: -90
 buffids:
   - 29 # Night Vision
 size: medium
+groupnoun: host
 unarmedname: claws
 tnlscale: 1.0
 angrycommands: 
