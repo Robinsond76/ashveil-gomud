@@ -26,8 +26,10 @@ func TestBeginCurrentGrowEnd(t *testing.T) {
 
 	// Current returns a copy.
 	got.Enemies[99] = true
+	got.EnemyNames = map[int]EnemyName{21: {InstanceId: 21, DisplayName: "changed"}}
 	again, _ := Current(7)
 	assert.False(t, again.Has(99))
+	assert.Empty(t, again.EnemyNames)
 
 	assert.Equal(t, []int{7}, Players())
 	ended, ok := End(7)

@@ -10,7 +10,7 @@
 
 **Spec:** [Phase 29d design](../specs/2026-09-26-combat-pronouns-ordinals-design.md).
 
-**Status:** Owner approved; implementation in progress. Task 1 independently verified.
+**Status:** Owner approved; implementation in progress. Tasks 1–2 independently verified.
 
 **Workspace:** `.worktrees/phase-29d-pronouns-ordinals`, branch `codex/phase-29d-pronouns-ordinals`, based on `b9729809`.
 
@@ -101,30 +101,30 @@ model; it does not mark this newly written design approved.
 Name inputs are collected outside the registry mutex. Keep battle's existing
 Begin/Grow/End signatures. Name assignment contains no live game lookups.
 
-- [ ] Add `TestEnemyNamesFreezeAndGrow`: give IDs 42 and 41 the base name
+- [x] Add `TestEnemyNamesFreezeAndGrow`: give IDs 42 and 41 the base name
   bandit cutthroat, in reversed input order. Assert ID 41 displays first
   cutthroat and 42 second cutthroat. Grow with only 42, then with 43:
   assert 42 remains second and 43 becomes third.
-- [ ] Add `TestEnemyNamesUniqueAndLateDuplicate`: a unique name remains
+- [x] Add `TestEnemyNamesUniqueAndLateDuplicate`: a unique name remains
   bandit cutthroat; its later duplicate becomes second cutthroat without
   changing the original. Noun defaults strip articles and use the last
   word; an authored noun overrides that; blank names resolve creature.
-- [ ] Add `TestEnemyNamesCollisions`: case-fold duplicate cohorts; distinct
+- [x] Add `TestEnemyNamesCollisions`: case-fold duplicate cohorts; distinct
   bandit/goblin cutthroat cohorts use full base nouns; late noun collisions
   do not reuse existing labels; 11/12/13/21 render 11th/12th/13th/21st.
-- [ ] Add `TestEnemyNamesSharedBattles`: two users fight overlapping
+- [x] Add `TestEnemyNamesSharedBattles`: two users fight overlapping
   enemies in one room; both maps inherit fallen snapshots and receive
   growth additions. End/Forget one user and retain the other's labels.
   Different enemy IDs/groups stay independent.
-- [ ] Add `TestEnemyNamesLifecycleAndCopies`: mutate a Current result and
+- [x] Add `TestEnemyNamesLifecycleAndCopies`: mutate a Current result and
   prove the registry is unchanged; End/Forget/Retain/Reset release their
   state. Reset and begin a fresh battle with new IDs: old IDs resolve only
   their fallback and new IDs start fresh numbering.
-- [ ] Run `go test ./internal/battle -run 'EnemyNames'`; confirm failure.
-- [ ] Implement assignment, defensive cloning, overlap synchronization,
+- [x] Run `go test ./internal/battle -run 'EnemyNames'`; confirm failure.
+- [x] Implement assignment, defensive cloning, overlap synchronization,
   growth collision handling, and lifecycle cleanup using the existing
   mutex. Retain original base names/nouns even if mobs disappear.
-- [ ] Run `go test -race ./internal/battle`; require exit 0. Lead reviews
+- [x] Run `go test -race ./internal/battle`; require exit 0. Lead reviews
   lock boundaries and commits as `feat(battle): freeze enemy narration labels`.
 
 ## Task 3: Weapon pronoun tokens and named character copies
