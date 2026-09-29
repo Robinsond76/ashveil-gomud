@@ -109,7 +109,7 @@ Researched on `bcc7e6c` (2026-09-29).
   company that an enemy is striking, by public name (decision D).
 - **`waiting`**: other groups set on the player, waiting their turn, by
   room name, in the order they will come (`battle`'s first-set rounds,
-  ties by room order, as `battle.Next` picks).
+  ties by party id).
 - **End of battle:** `{}` clears the view; the tab returns to Setup.
 - **Not in the payload:** exact enemy numbers, levels, or stats.
 

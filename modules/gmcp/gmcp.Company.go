@@ -242,7 +242,7 @@ type companyFeed struct {
 func newCompanyFeed() *companyFeed {
 	return &companyFeed{
 		last:      map[int]companySent{},
-		extras:    []companyExtra{inventoryExtra(), campExtra(camping.CampStateOf)},
+		extras:    []companyExtra{inventoryExtra(), campExtra(camping.CampStateOf), battleExtra(gatherBattle)},
 		lastExtra: map[int]map[string]string{},
 		chemistry: company.ChemistryStanding,
 		send: func(userID int, module string, payload []byte) {

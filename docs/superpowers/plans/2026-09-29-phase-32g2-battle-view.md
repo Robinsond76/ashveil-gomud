@@ -24,7 +24,7 @@ shapes.
 
 ## Task 2: The `Company.Battle` payload (`modules/gmcp`)
 
-- [ ] Tests first (`gmcp_battle_test.go`), the pure builder from fixed
+- [x] Tests first (`gmcp_battle_test.go`), the pure builder from fixed
   inputs:
   - enemies with label, cell, health word, reach, and a target on the
     player (`leader`) and on a companion (`companion:<id>`);
@@ -35,7 +35,7 @@ shapes.
     listed enemies.
   - Change detection through the feed: an unchanged battle sends nothing;
     a health word change sends once.
-- [ ] `gmcp.CompanyBattle.go`: payload types, `buildBattle(battleFacts)`,
+- [x] `gmcp.CompanyBattle.go`: payload types, `buildBattle(battleFacts)`,
   `gatherBattle(user)` (reads `battle.Current`, the room's groups through
   `enemyparty`, `formationcombat.Legal` with `combat.ResolveReach` as
   `scout` does, `company.LeaderAndKeyForInstance` for companions),
