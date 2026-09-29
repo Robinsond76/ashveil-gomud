@@ -41,6 +41,9 @@ function injectStyles(css) {
 //       { label: 'look item',   cmd: 'look longsword'   },
 //       { label: 'remove item', cmd: 'remove longsword' },
 //   ]);
+//
+// An item with confirm: '<question>' asks first and sends nothing unless
+// the player agrees (Phase 32g: for what can't be undone).
 // ---------------------------------------------------------------------------
 (function() {
     let menuEl   = null;
@@ -95,6 +98,7 @@ function injectStyles(css) {
             entry.addEventListener('mousedown', function(e) {
                 e.stopPropagation();
                 dismiss();
+                if (item.confirm && !window.confirm(item.confirm)) { return; }
                 Client.SendInput(item.cmd);
             });
             menuEl.appendChild(entry);

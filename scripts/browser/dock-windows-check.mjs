@@ -120,6 +120,114 @@ await page.getByRole('tab', { name: 'Gear' }).click();
 await page.reload();
 check(await page.evaluate(() => document.querySelector('#character-window .cw-tab-btn.active').textContent) === 'Gear', 'the sub-tab survives a reload');
 
+// --- Task 10: the Company tab ---
+await page.evaluate(c => window.gmcp('Company', c), company);
+await page.getByRole('tab', { name: 'Company' }).first().click();
+const csubs = await page.evaluate(() => [...document.querySelectorAll('#company-window .cmp-tab-btn')].map(b => b.textContent));
+check(JSON.stringify(csubs) === '["Status","Inventory","Camp"]', 'Company sub-tabs: Status, Inventory, Camp');
+const status = () => page.evaluate(() => document.getElementById('party-panel').textContent);
+check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
+check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
+check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, Health 12 of 25/ }).count() === 1, 'a member card has a spoken summary');
+check(!(await status()).includes('Travelling with'), 'no human party: no Travelling with');
+await page.evaluate(() => window.gmcp('Party', { Leader: 'Wren', Members: [{ Name: 'Wren', Position: 'leader' }, { Name: '<b>Tamsin</b>', Position: 'member' }], Invited: [], Vitals: { Wren: { health: 80, level: 5, location: 'Dunmar' }, '<b>Tamsin</b>': { health: 40, level: 4, location: 'Dunmar' } } }));
+check((await status()).includes('Travelling with') && (await status()).includes('<b>Tamsin</b>') && await page.locator('#party-panel b').count() === 0, 'a human party under Travelling with, names as text');
+await page.locator('.company-member[data-key="companion:1"]').focus();
+await page.evaluate(() => window.gmcp('Company.Vitals', { vitals: { 'companion:1': { hp: 5, hp_max: 25, needs: null, warmth: null } }, rescue: { 'companion:4': 5340 } }));
+check((await status()).includes('5/25') && await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-key')) === 'companion:1', 'a vitals update applies, keeping focus on the card');
+await page.evaluate(c => window.gmcp('Company', c), company);
+
+const inventory = {
+  load: { total_g: 46000, capacity_g: 150000, member_capacity_g: 50000, mount_capacity_g: 100000, cargo_g: 3000 },
+  companions_known: true,
+  members: [
+    { key: 'leader', name: 'Wren', fallen: false, unrecorded: false, grams: 4500, pack: 'satchel', pack_bonus_g: 5000,
+      worn: [{ ref: '!1:sword', name: 'iron sword', grams: 1500, count: 1, uses: 0, uses_max: 0, type: 'weapon', subtype: 'slashing', slot: 'weapon' }],
+      carried: [
+        { ref: '!2:a', name: 'waterskin', grams: 1000, count: 1, uses: 3, uses_max: 5, type: 'object', subtype: 'drinkable' },
+        { ref: '!2:b', name: 'waterskin', grams: 1000, count: 1, uses: 5, uses_max: 5, type: 'object', subtype: 'drinkable' },
+        { ref: '!7:saddle', name: 'pack saddle', grams: 1000, count: 1, uses: 0, uses_max: 0, type: 'object', subtype: '' },
+      ] },
+    { key: 'companion:1', name: 'Brother Oswin', fallen: false, unrecorded: false, grams: 2000, pack: '', pack_bonus_g: 0, worn: [],
+      carried: [{ ref: '!3:meat', name: 'seared meat', grams: 300, count: 1, uses: 0, uses_max: 0, type: 'object', subtype: 'edible' }] },
+    { key: 'companion:4', name: 'Ysolde', fallen: true, unrecorded: false, grams: 0, pack: '', pack_bonus_g: 0, worn: [], carried: [] },
+  ],
+  horses: [{ id: 1, name: 'pack horse', kind: 'pack', saddle: '', capacity_g: 40000, rides: false }],
+  cargo: [{ ref: '!3', name: 'seared meat', grams: 300, count: 6, uses: 0, uses_max: 0, type: 'object', subtype: 'edible' }],
+};
+// Oswin is out with the player (the snapshot's companion:1).
+await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
+await page.getByRole('tab', { name: 'Inventory' }).click();
+const invText = () => page.evaluate(() => document.getElementById('company-inventory').textContent);
+check((await invText()).includes('Load 46.0 kg / 150.0 kg (31%)') && (await invText()).includes('horses 100.0 kg'), 'Inventory: the load and its split');
+check((await invText()).includes('Wren (you)') && (await invText()).includes('Pack: satchel (+5.0 kg)') && (await invText()).includes('Fallen: their gear is with the body.'), 'every member: you first, your pack, the fallen');
+check((await invText()).includes('3/5') && (await invText()).includes('seared meat x6'), 'uses left and cargo counts');
+const sentNow = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+const first = page.locator('#company-inventory button.cmp-item', { hasText: 'waterskin' }).first();
+check((await first.getAttribute('title')).includes('3 of 5 uses left'), 'an item\'s tooltip: weight and uses');
+let got = await sentNow(async () => { await first.click(); await page.getByText('Put in cargo').click(); });
+check(JSON.stringify(got) === '["cargo put !2:a"]', 'Put in cargo names exactly that waterskin');
+await first.click();
+const menuLabels = await page.evaluate(() => { const m = [...document.querySelectorAll('body > div')].pop(); return [...m.children].map(c => c.textContent); });
+check(menuLabels.includes('Give to Oswin') && !menuLabels.some(l => /Tamsin|Ysolde/.test(l)), 'Give only to companions out with you (not away, not fallen)');
+await page.mouse.click(5, 5);
+await page.evaluate(() => { const c = JSON.parse(JSON.stringify(Client.GMCPStructs.Company)); c.members[0].name = 'Brother Oswin'; window.gmcp('Company', c); });
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'waterskin' }).nth(1).click(); await page.getByText('Give to Brother Oswin').click(); });
+check(JSON.stringify(got) === '["give !2:b \\"Brother Oswin\\""]', 'Give to a companion out, by reference, the name quoted');
+check(await page.locator('#company-inventory [aria-label="Brother Oswin"] button').count() === 0, 'a companion\'s items have no menu (tooltip only)');
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'seared meat x6' }).click(); await page.getByText('Take one').click(); });
+check(JSON.stringify(got) === '["cargo take !3"]', 'a cargo stack: Take one');
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'pack horse' }).click(); await page.getByText('Fit pack saddle').click(); });
+check(JSON.stringify(got) === '["mount saddle #1 !7:saddle"]', 'a horse: fit a saddle from your pack');
+page.once('dialog', d => d.dismiss());
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'pack horse' }).click(); await page.getByText('Release').click(); });
+check(got.length === 0, 'Release asks first; declining sends nothing');
+page.once('dialog', d => d.accept());
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'pack horse' }).click(); await page.getByText('Release').click(); });
+check(JSON.stringify(got) === '["mount release #1"]', 'accepting sends mount release');
+got = await sentNow(async () => { await page.locator('#company-inventory').getByRole('button', { name: 'Meal' }).click(); });
+check(JSON.stringify(got) === '["company meal"]', 'the Meal button');
+await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.members[1].name = '<img src=x onerror="window.__xss=1">'; window.gmcp('Company.Inventory', x); }, inventory);
+check(await page.evaluate(() => window.__xss === undefined) && (await invText()).includes('<img'), 'markup in a name renders as text');
+await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
+
+// Camp: each button only when it would work.
+await page.getByRole('tab', { name: 'Camp' }).click();
+const campButtons = () => page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-btn')].map(b => b.textContent));
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: false, here: false, room: '', fire_lit: false, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: true, inn: false }));
+check(JSON.stringify(await campButtons()) === '["Make camp","Meal"]', 'no camp here but allowed: Make camp');
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: false, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check(JSON.stringify(await campButtons()) === '["Light fire","Break camp","Meal"]', 'a cold camp here: Light fire, Break camp');
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a lit fire: Rest');
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 25, rest_seconds: 45, can_camp: false, inn: false }));
+check(JSON.stringify(await campButtons()) === '["Meal"]' && await page.getByRole('progressbar', { name: 'Rest' }).count() === 1, 'resting: the progress bar, no Rest or Break');
+check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Resting: 45s left.'), 'the time left');
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: false, room: 'A Clearing', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: true }));
+check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Your camp is at A Clearing.') && JSON.stringify(await campButtons()) === '["Meal","Inn"]', 'a camp elsewhere; an inn here');
+got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Inn' }).click(); });
+check(JSON.stringify(got) === '["inn"]', 'the Inn button');
+check(await page.getByRole('table', { name: 'Needs' }).count() === 1, 'each member\'s needs in a table');
+
+// No company: the note, and the player's own inventory.
+await page.evaluate(() => { window.gmcp('Company', {}); window.gmcp('Party', {}); });
+await page.getByRole('tab', { name: 'Status' }).click();
+check((await status()).includes('You travel alone'), 'no company: the note');
+
+// Narrow: the dock at 280px in a 360px window, no sideways scrolling.
+await page.evaluate(c => window.gmcp('Company', c), company);
+await page.setViewportSize({ width: 360, height: 800 });
+await page.evaluate(() => { const d = document.getElementById('dock-right'); d.style.width = '280px'; });
+for (const tab of ['Status', 'Inventory', 'Camp']) {
+  await page.getByRole('tab', { name: tab }).click();
+  const over = await page.evaluate(() => { const p = document.querySelector('#company-window .cmp-panel:not([hidden])'); return p.scrollWidth - p.clientWidth; });
+  check(over <= 0, tab + ': no horizontal overflow at 280px (' + over + ')');
+}
+check(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'no horizontal page scroll at 360px');
+if (outdir) { await page.screenshot({ path: path.join(outdir, 'company-narrow.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(() => { document.getElementById('dock-right').style.width = ''; });
+
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all dock window checks passed');

@@ -158,13 +158,15 @@ does.
 
 ## Task 10: Company tab (`window-company.js`; retire `window-party.js`)
 
-- [ ] Browser check first (replaces `company-panel-check.mjs`):
+- [x] Browser check first (replaces `company-panel-check.mjs`):
   - Status: 26b's formation grid and cards as before, and **Travelling
     with** for a human party;
   - Inventory: members, horses, cargo; tooltips; menus send `cargo put`,
-    `give <item> <member>` (one entry per companion present), `cargo
-    take`, `mount saddle|unsaddle`, and `mount release` only after a
-    confirm; a companion's item offers look only; Meal/Eat/Drink send
+    `give <ref> "<member>"` (one entry per companion out with you; `give`
+    takes the quoted last argument as the receiver), `cargo take <ref>`,
+    `mount saddle #<id> <ref>`, `mount unsaddle #<id>`, and `mount release
+    #<id>` only after a confirm (`uiMenu` entries gain `confirm`); a
+    companion's item has a tooltip and no menu (no command acts on it); Meal/Eat/Drink send
     `company meal|eat|drink`;
   - Camp: each button shown only when it would work (Make camp with
     `can_camp`, Light fire with a cold camp here, Rest with a lit fire,
@@ -172,7 +174,7 @@ does.
   - no company: the note, and Inventory with the player's share;
   - markup in member and item names renders as text; 280 px and 360 px
     widths; keyboard focus reaches every menu.
-- [ ] `window-company.js`; remove `window-party.js` and its script tag.
+- [x] `window-company.js`; remove `window-party.js` and its script tag.
 
 ## Task 11: Combat tab, Setup (`window-combat.js`)
 
