@@ -1,6 +1,11 @@
 raceid: 10
 name: rodent
 defaultpronouns: it
+painreactions:
+  - tovictim: 'Pain seizes your side. You squeal and scramble for footing.'
+    toroom: '{name} squeals, one paw tucked against {his} side, and scrambles on.'
+  - tovictim: 'The strike sends you skidding. You dig your claws in and turn back.'
+    toroom: '{name} skids across the ground, then digs in with {his} claws.'
 description: A small furry creature with strong teeth.
 defaultalignment: -20
 size: small

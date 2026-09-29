@@ -94,3 +94,23 @@ func TestCombatHelpPronounsAndOrdinals(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, targeting, "attack [group]")
 }
+
+func TestPainReactionHelpExplainsCriticalAndLethalCases(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	narration, err := GetHelpContents("narration")
+	require.NoError(t, err)
+	for _, want := range []string{"pain reaction", "critical hit", "stays standing", "death line"} {
+		assert.Contains(t, narration, want)
+	}
+	combat, err := GetHelpContents("combat")
+	require.NoError(t, err)
+	assert.Contains(t, combat, "pain reaction")
+	assert.Contains(t, combat, "help narration")
+	critical, err := GetHelpContents("critical")
+	require.NoError(t, err)
+	assert.Equal(t, narration, critical)
+	pain, err := GetHelpContents("pain")
+	require.NoError(t, err)
+	assert.Equal(t, narration, pain)
+}

@@ -1,6 +1,11 @@
 raceid: 18
 name: lagomorph
 defaultpronouns: it
+painreactions:
+  - tovictim: 'Pain flashes down your back. You stumble and spring clear.'
+    toroom: '{name} gives a thin cry and bounds away on an uneven leg.'
+  - tovictim: 'The blow clips your shoulder. You crouch low, trembling, then dart on.'
+    toroom: '{name} crouches with ears pinned flat, then darts onward.'
 description: Kinda like a rodent. But not.
 defaultalignment: 0
 buffids:
