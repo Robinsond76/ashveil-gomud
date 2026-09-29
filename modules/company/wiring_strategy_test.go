@@ -173,6 +173,7 @@ func TestDefendGoesForTheFoeOnTheMostHurt(t *testing.T) {
 	captain, _, _, _, _ := b.shapeBandits()
 	b.cmd("strategy", "garrick defend")
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
+	b.hardenBandits() // the slinger must outlast the rounds (it has 30 HP)
 	b.toughen()
 	b.fight()
 

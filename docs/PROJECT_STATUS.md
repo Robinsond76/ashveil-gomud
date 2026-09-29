@@ -149,8 +149,12 @@ Phase 29b2 is at commit `d5ace46`).
   [roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md):
   a battle plays out by strategies set beforehand.
 - **Verification:** `go test -race ./...` (85 packages), `make generate`,
-  and `make validate` pass after the review fixes, and again after merging
-  32f (which landed on the base meanwhile). Wiring tests in `modules/company`
+  and `make validate` pass after the review fixes, again after merging
+  32f (which landed on the base meanwhile), and again on `master` after
+  merging onto 32e. That last run caught a flaky wiring test
+  (`TestDefendGoesForTheFoeOnTheMostHurt`: the 30-HP slinger it needs
+  could die in the first round; the bandits are now hardened, 12/12 runs
+  pass). Wiring tests in `modules/company`
   (`wiring_strategy_test.go`, `wiring_strategy_review_test.go`) drive the
   real `strategy`, `attack`, `formation`, `flee`, alias dispatch, and
   `DoCombat`: each rule's first aim, the upkeep's re-aim, assist, defend,
