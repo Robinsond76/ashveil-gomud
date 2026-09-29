@@ -68,3 +68,16 @@ func TestCompanyMembersLiveProgress(t *testing.T) {
 	assert.Equal(t, 160, members[1].ExpTNL)
 	assert.False(t, members[0].ExpKnown, "the fallen show no progress")
 }
+
+// TestCompanyMembersMana (Phase 32g): a present companion carries its live
+// mana; the fallen and the awaiting carry none.
+func TestCompanyMembersMana(t *testing.T) {
+	module, _, runtime, _ := newDeathModule(t)
+	runtime.mana = map[int][2]int{102: {8, 20}}
+	killOne(module)
+	members, ok := module.CompanyMembers(7)
+	require.True(t, ok)
+	assert.Equal(t, 8, members[1].MP)
+	assert.Equal(t, 20, members[1].MPMax)
+	assert.Zero(t, members[0].MPMax, "the fallen carry no mana")
+}

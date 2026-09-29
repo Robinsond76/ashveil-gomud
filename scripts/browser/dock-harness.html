@@ -1,0 +1,64 @@
+<!doctype html>
+<!--
+  Phase 32g browser check harness: the real vwin.js and webclient-core.js
+  (dock slots, tab groups, the layout store) with stub windows, so
+  dock-check.mjs can drive the dock. Not served by the game.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dock check</title>
+<link rel="stylesheet" href="../../_datafiles/html/public/static/css/theme-brooding.css">
+<link rel="stylesheet" href="../../_datafiles/html/public/static/css/windows.css">
+<style>
+  html, body { margin: 0; height: 100%; background: var(--t-bg); color: var(--t-text); font-family: sans-serif; }
+  #main-container { display: flex; flex-direction: row; height: 100vh; overflow: hidden; }
+  #terminal { flex: 1; min-width: 0; }
+</style>
+<script src="../../_datafiles/html/public/static/js/xterm/xterm.4.19.0.js"></script>
+<script src="../../_datafiles/html/public/static/js/xterm/xterm-addon-fit.js"></script>
+<script src="../../_datafiles/html/public/static/js/mp3.js"></script>
+<script src="../../_datafiles/html/public/static/js/vwin.js"></script>
+<script src="../../_datafiles/html/public/static/js/webclient-core.js"></script>
+</head>
+<body>
+<div id="main-container">
+  <div id="dock-left"></div>
+  <div id="terminal"></div>
+  <div id="dock-right"></div>
+</div>
+<script>
+  window.sent = [];
+  Client.SendInput = function(cmd) { window.sent.push(cmd); };
+  function stub(id, opts) {
+    const win = new VirtualWindow(id, Object.assign({
+      factory() {
+        const el = document.createElement('div');
+        el.className = 'stub-content';
+        el.dataset.stub = id;
+        el.textContent = id + ' content';
+        document.body.appendChild(el);
+        return { title: id, mount: el, width: 300, height: 200 };
+      },
+      dock: 'right',
+      defaultDocked: true,
+    }, opts || {}));
+    VirtualWindows.register({ window: win, gmcpHandlers: [], onGMCP() {} });
+    return win;
+  }
+  window.wins = {
+    map:       stub('Map', { dock: 'left' }),
+    vitals:    stub('Vitals', { groupHeader: true }),
+    character: stub('Character'),
+    company:   stub('Company'),
+    combat:    stub('Combat'),
+    comm:      stub('Communications', { tabLabel: 'Comm', onTabShown() { window.shown = (window.shown || 0) + 1; } }),
+  };
+  DockSlots.left  = new DockSlot('left');
+  DockSlots.right = new DockSlot('right');
+  VirtualWindows.openAll();
+  window.notice = LayoutStore.takeResetNotice();
+</script>
+</body>
+</html>

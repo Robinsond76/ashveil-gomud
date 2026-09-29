@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	domain "github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/stretchr/testify/assert"
@@ -43,4 +46,21 @@ func TestStrategiesSurviveARestartThroughThePluginFile(t *testing.T) {
 	assert.Equal(t, domain.Strategy{Role: domain.Healer, Rule: domain.Defend}, domain.For(4501, "companion:3", "warrior"))
 	assert.Equal(t, domain.Strategy{Role: domain.Caster, Rule: domain.Weakest}, domain.For(4501, "leader", "wizard"), "unset: the default")
 	assert.Equal(t, domain.DefaultAutoSpells(), domain.AutoSpells(), "the shipped automatic spells")
+}
+
+// TestStrategyReachesTheCompanyView (Phase 32g wiring): a strategy set by
+// the real command is what the company view, and so the web client's
+// Company payload, reports: the same resolution a battle aims by.
+func TestStrategyReachesTheCompanyView(t *testing.T) {
+	m, _, u, _ := testModule(t)
+	domain.SetProvider(m)
+	t.Cleanup(func() { domain.SetProvider(module) })
+
+	run(m, u, "me healer")
+	run(m, u, "me target strongest")
+	assert.Equal(t, domain.Strategy{Role: domain.Healer, Rule: domain.Strongest}, companyview.For(u).Leader.Strategy)
+
+	run(m, u, "dain target leader")
+	assert.Equal(t, domain.Leader, enemyparty.MemberStrategy(u.UserId, company.CompanionMemberKey(1)).Rule,
+		"the battle's resolution, which the view reads")
 }

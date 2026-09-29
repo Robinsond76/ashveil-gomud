@@ -271,6 +271,9 @@
         defaultDocked: true,
         dockedHeight:  200,
         offOnLoad:     true,
+        // Phase 32g: the company dock's Who tab when enabled.
+        tabGroup:      'dock',
+        tabLabel:      'Who',
         factory() {
             const el = createDOM();
             // Request a fresh payload from the server. The response will

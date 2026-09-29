@@ -1,7 +1,9 @@
 {
   "extends": ".jshintrc",
   "globals": {
+    "CharacterTabs": false,
     "Client": false,
+    "CompanyData": false,
     "FitAddon": false,
     "injectStyles": false,
     "ResizeObserver": false,

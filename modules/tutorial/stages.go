@@ -64,6 +64,7 @@ func init() {
 				`<ansi fg="command">inventory</ansi> shows your gear and your company's load.`,
 				`<ansi fg="command">experience</ansi> shows your level and progress, and each companion's (<ansi fg="command">help company</ansi> explains how they earn it).`,
 				`<ansi fg="command">conditions</ansi> lists what is affecting you, and for how long.`,
+				`Playing in the web client? The dock on the right shows your character, your company, and how it fights at a glance (<ansi fg="command">help webclient</ansi>).`,
 				`Short forms work too. Your prompt adds warnings such as Hungry or Dark only when something needs your attention.`,
 				`<ansi fg="command">help status</ansi> and <ansi fg="command">help archetype</ansi> explain your sheet and your path. <ansi fg="command">help adventure</ansi> lists every help page.`,
 				`You can run this course again later, as a practice character that keeps nothing: <ansi fg="command">tutorial replay</ansi> (<ansi fg="command">help tutorial</ansi>).`,

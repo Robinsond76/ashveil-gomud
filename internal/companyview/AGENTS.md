@@ -1,6 +1,6 @@
 # Company View Guide
 
-Phase 26a's read model: `For(user)` builds a `Summary` of a player and their company (needs, warmth, light, companions by member ID, load, activity, rest tier, checkpoint) from the providers that own each value. It stores nothing but the prompt cache. Design: `docs/superpowers/specs/2026-09-24-phase-26a-company-summary-text-design.md`.
+Phase 26a's read model: `For(user)` builds a `Summary` of a player and their company (needs, warmth, light, companions by member ID, load, activity, rest tier, checkpoint; mana and battle strategies since Phase 32g) from the providers that own each value. It stores nothing but the prompt cache. Design: `docs/superpowers/specs/2026-09-24-phase-26a-company-summary-text-design.md`.
 
 - **Unknown is not healthy.** Every value has a `Known` flag (or an ok result); a missing provider leaves it false, and surfaces omit it. Never fill a default.
 - **Game loop only.** `For` reads the company module (no mutex) and live mobs. Call it from commands, events, or `Refresh`.

@@ -3,6 +3,10 @@
  *
  * Virtual window: Communications (tabbed chat channels).
  *
+ * Phase 32g: the company dock's Comm tab. While another dock tab is
+ * showing, a message adds to a count on the Comm tab; showing it clears
+ * the count.
+ *
  * Responds to GMCP namespace:
  *   Comm  - incoming channel message
  *
@@ -109,6 +113,8 @@
     // Channel configuration
     // Add or remove entries here to change which tabs appear.
     // -----------------------------------------------------------------------
+    const MAX_MESSAGES = 300;
+
     const CHANNELS = [
         { id: 'say',       label: 'Say',        cssClass: 'say',       active: true  },
         { id: 'whisper',   label: 'Whisper',     cssClass: 'whisper',   active: false },
@@ -181,10 +187,20 @@
     // -----------------------------------------------------------------------
     // VirtualWindow instance
     // -----------------------------------------------------------------------
+    // unseen counts messages that arrived while the Comm tab wasn't
+    // showing (Phase 32g).
+    let unseen = 0;
+
     const win = new VirtualWindow('Communications', {
         dock:          'right',
         defaultDocked: true,
         dockedHeight:  290,
+        tabGroup:      'dock',
+        tabLabel:      'Comm',
+        onTabShown() {
+            unseen = 0;
+            VirtualWindows.setTabBadge('Communications', 0);
+        },
         factory() {
             const el = createDOM();
             return {
@@ -228,6 +244,16 @@
             '<span class="text-name ' + fromSource + '">' + fromName + '</span>: ' +
             '<span class="text-body ' + fromSource + '">' + message + '</span>';
         panel.appendChild(p);
+
+        if (!VirtualWindows.isTabShowing('Communications')) {
+            unseen++;
+            VirtualWindows.setTabBadge('Communications', unseen);
+        }
+
+        // Docked, keep the newest messages only (Phase 32g).
+        while (panel.childElementCount > MAX_MESSAGES) {
+            panel.removeChild(panel.firstElementChild);
+        }
 
         // Trim overflow: remove oldest messages when content exceeds window height
         const winBox = win.get();

@@ -1,16 +1,20 @@
 /**
  * window-gear.js
  *
- * Virtual window: Gear - left dock, tabbed.
+ * Gear - the Character tab's Gear sub-tab (Phase 32g; hosted through
+ * window.CharacterTabs), tabbed.
  *
  * Tabs:
  *   Worn     - equipped items by slot, hover tooltips, click menu
- *   Backpack - carried items with carry capacity, hover tooltips, click menu
+ *   Backpack - carried items, hover tooltips, click menu; the header shows
+ *              the player's own gear weight against the company's load
+ *              and capacity (weight is the only limit, Phase 32f)
  *
  * Responds to GMCP namespaces:
  *   Char.Inventory          - worn equipment + backpack
  *   Char.Inventory.Backpack - backpack items only
  *   Char                    - full character update
+ *   Company.Inventory       - the company's load, and each item's weight
  *
  * Reads:
  *   Client.GMCPStructs.Char.Inventory.Worn
@@ -163,11 +167,7 @@
             color: var(--t-text-muted);
         }
 
-        #gw-bp-count .gw-bp-count-num {
-            color: var(--t-text);
-        }
-
-        #gw-bp-count .gw-bp-count-num.full {
+        #gw-bp-count.full {
             color: var(--t-cursed-text);
         }
 
@@ -344,6 +344,16 @@
         return null;
     }
 
+    // weightOf is an item's weight from Company.Inventory (Phase 32g), by
+    // the reference both payloads carry; null when unknown.
+    function weightOf(ref) {
+        const inv = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Inventory;
+        const you = inv && Array.isArray(inv.members) && inv.members[0];
+        if (!ref || !you) { return null; }
+        const found = [].concat(you.worn || [], you.carried || []).find(i => i.ref === ref);
+        return found ? found.grams : null;
+    }
+
     function ensureTooltip() {
         if (tooltip) { return; }
         tooltip = document.createElement('div');
@@ -369,6 +379,8 @@
         if (item.type)     { rows.push({ label: 'Type',    value: item.type    }); }
         if (item.subtype)  { rows.push({ label: 'Subtype', value: item.subtype }); }
         if (item.uses > 0) { rows.push({ label: 'Uses',    value: item.uses    }); }
+        const grams = weightOf(item.id);
+        if (grams !== null) { rows.push({ label: 'Weight', value: (grams / 1000).toFixed(1) + ' kg' }); }
 
         if (rows.length > 0) {
             html += '<hr class="gw-tt-divider">';
@@ -485,7 +497,7 @@
             '<div class="gw-tab-panel" id="gw-backpack">' +
                 '<div id="gw-bp-header">' +
                     '<span id="gw-bp-title">Carried Items</span>' +
-                    '<span id="gw-bp-count"><span class="gw-bp-count-num" id="gw-bp-num">0</span> / <span id="gw-bp-max">&#x2014;</span></span>' +
+                    '<span id="gw-bp-count"></span>' +
                 '</div>' +
                 '<div id="gw-bp-list"><div class="gw-bp-empty">Empty</div></div>' +
             '</div>';
@@ -495,29 +507,6 @@
         return el;
     }
 
-    // -----------------------------------------------------------------------
-    // VirtualWindow
-    // -----------------------------------------------------------------------
-    const win = new VirtualWindow('Gear', {
-        dock:          'left',
-        defaultDocked: true,
-        dockedHeight:  270,
-        factory() {
-            const el = createDOM();
-            return {
-                title:      'Gear',
-                mount:      el,
-                background: 'var(--t-bg)',
-                border:     1,
-                x:          0,
-                y:          0,
-                width:      300,
-                height:     280,
-                header:     20,
-                bottom:     60,
-            };
-        },
-    });
 
     // -----------------------------------------------------------------------
     // Update functions
@@ -634,17 +623,7 @@
 
         const bp      = inv.Backpack;
         const items   = bp.items   || [];
-        const summary = bp.Summary || {};
-        const count   = summary.count !== undefined ? summary.count : items.length;
-        const max     = summary.max   || 0;
-
-        const numEl = document.getElementById('gw-bp-num');
-        const maxEl = document.getElementById('gw-bp-max');
-        if (numEl) {
-            numEl.textContent = count;
-            numEl.classList.toggle('full', max > 0 && count >= max);
-        }
-        if (maxEl) { maxEl.textContent = max || '\u2014'; }
+        updateWeights();
 
         const list = document.getElementById('gw-bp-list');
         if (!list) { return; }
@@ -708,20 +687,56 @@
         });
     }
 
+    // updateWeights: "You 12.4 kg · company 46.0 / 50.0 kg". The company
+    // figures come from Company.Inventory, which is sent whenever they
+    // change, else from the backpack summary (Phase 32g).
+    function updateWeights() {
+        const out = document.getElementById('gw-bp-count');
+        if (!out) { return; }
+        const inv     = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Inventory;
+        const summary = (inv && inv.Backpack && inv.Backpack.Summary) || {};
+        const company = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Inventory;
+        const you     = company && Array.isArray(company.members) && company.members[0];
+        const load    = company && company.load;
+        const mine    = you ? you.grams : summary.weight_g;
+        const total   = load ? load.total_g : summary.load_g;
+        const cap     = load ? load.capacity_g : summary.capacity_g;
+        const parts = [];
+        if (typeof mine === 'number') { parts.push('You ' + (mine / 1000).toFixed(1) + ' kg'); }
+        if (cap > 0) { parts.push('company ' + (total / 1000).toFixed(1) + ' / ' + (cap / 1000).toFixed(1) + ' kg'); }
+        out.textContent = parts.join(' \u00b7 ');
+        out.classList.toggle('full', cap > 0 && total >= cap);
+    }
+
     function update() {
-        win.open();
-        if (!win.isOpen()) { return; }
+        if (!document.getElementById('gear-window')) { return; }
         updateWorn();
         updateBackpack();
     }
 
     // -----------------------------------------------------------------------
-    // Registration
+    // Registration: a sub-tab of the Character tab (Phase 32g)
     // -----------------------------------------------------------------------
+    CharacterTabs.add({
+        id:    'gear',
+        label: 'Gear',
+        order: 1,
+        build() {
+            const el = createDOM();
+            setTimeout(update, 0);
+            return el;
+        },
+    });
+
     VirtualWindows.register({
-        window:       win,
-        gmcpHandlers: ['Char.Inventory', 'Char.Inventory.Backpack', 'Char'],
-        onGMCP() { update(); },
+        gmcpHandlers: ['Char', 'Company'],
+        onGMCP(namespace) {
+            if (namespace === 'Company.Inventory') {
+                updateWeights();
+                return;
+            }
+            if (namespace.indexOf('Char') === 0) { update(); }
+        },
     });
 
 })();

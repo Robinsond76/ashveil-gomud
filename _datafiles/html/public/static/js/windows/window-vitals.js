@@ -1,13 +1,20 @@
 /**
  * window-vitals.js
  *
- * Virtual window: Vitals (HP / MP bars).
+ * Virtual window: Vitals, the strip pinned above the company dock's tabs
+ * (Phase 32g; groupHeader of the 'dock' tab group): the player's HP and MP
+ * bars, a compact row per companion (an HP bar, and an MP bar for one with
+ * mana; one not with you dimmed; a fallen one with its time to raise), and
+ * one line of warnings (a member's need or warmth that warns, a heavy
+ * load), absent when nothing warns. Companion names are set with
+ * textContent, never markup.
  *
  * Responds to GMCP namespaces:
  *   Char.Vitals  - direct vitals update
  *   Char         - top-level Char update; delegates to Char.Vitals if present
+ *   Company      - the company snapshot and its Company.Vitals
  *
- * Reads: Client.GMCPStructs.Char.Vitals
+ * Reads: Client.GMCPStructs.Char.Vitals, Client.GMCPStructs.Company
  */
 
 'use strict';
@@ -18,14 +25,72 @@
 
     injectStyles(`
         #vitals-bars {
-            height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
             gap: 6px;
             padding: 4px 6px;
             box-sizing: border-box;
+            background: var(--t-bg);
         }
+
+        /* Phase 32g: a compact row per companion */
+        .vitals-company {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .vitals-company:empty { display: none; }
+
+        .vitals-member {
+            display: grid;
+            grid-template-columns: minmax(0, 7em) 1fr;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72em;
+            color: var(--t-text);
+        }
+
+        .vitals-member-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .vitals-member.is-away { opacity: 0.55; }
+        .vitals-member-note { color: var(--t-text-secondary); font-style: italic; }
+        .vitals-member.is-fallen .vitals-member-note { color: var(--t-party-hp-low); font-style: normal; font-weight: bold; }
+
+        .vitals-mini {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .vitals-mini-track {
+            height: 5px;
+            border-radius: 2px;
+            background: var(--t-bar-empty);
+            overflow: hidden;
+        }
+
+        .vitals-mini-fill { height: 100%; }
+        .vitals-mini-fill.hp-filled-high { background: var(--t-hp-high); }
+        .vitals-mini-fill.hp-filled-mid  { background: var(--t-hp-mid); }
+        .vitals-mini-fill.hp-filled-low  { background: var(--t-hp-low); }
+        .vitals-mini-fill.mp-filled      { background: linear-gradient(to right, var(--t-mana-from), var(--t-mana-to)); }
+
+        .vitals-warn {
+            font-size: 0.72em;
+            color: var(--t-party-hp-low);
+            font-weight: bold;
+        }
+
+        .vitals-warn[hidden] { display: none; }
 
         .vitals-row {
             display: flex;
@@ -173,6 +238,19 @@
         container.appendChild(hpRow);
         container.appendChild(mpRow);
 
+        // Phase 32g: the companions, then the warnings.
+        const company = document.createElement('ul');
+        company.className = 'vitals-company';
+        company.id = 'vitals-company';
+        company.setAttribute('aria-label', 'Companions');
+        container.appendChild(company);
+
+        const warn = document.createElement('div');
+        warn.className = 'vitals-warn';
+        warn.id = 'vitals-warn';
+        warn.hidden = true;
+        container.appendChild(warn);
+
         document.body.appendChild(container);
         return container;
     }
@@ -181,11 +259,14 @@
     // VirtualWindow instance
     // -----------------------------------------------------------------------
     const win = new VirtualWindow('Vitals', {
-        dock:          'left',
+        dock:          'right',
         defaultDocked: true,
-        dockedHeight:  100,
+        tabGroup:      'dock',
+        groupHeader:   true,
         factory() {
             const el = createDOM();
+            // Opened or reopened: show what arrived while it was closed.
+            setTimeout(() => { updateBars(); updateCompany(); }, 0);
             return {
                 title:      'Vitals',
                 mount:      el,
@@ -253,12 +334,104 @@
     }
 
     // -----------------------------------------------------------------------
+    // Phase 32g: the companions and the warnings
+    // -----------------------------------------------------------------------
+    function miniBar(value, max, fillClass, label) {
+        const pct   = max > 0 ? Math.max(0, Math.min(100, Math.round(value * 100 / max))) : 0;
+        const track = CompanyData.el('div', 'vitals-mini-track');
+        track.setAttribute('role', 'meter');
+        track.setAttribute('aria-label', label);
+        track.setAttribute('aria-valuemin', '0');
+        track.setAttribute('aria-valuemax', String(max));
+        track.setAttribute('aria-valuenow', String(value));
+        const fill = CompanyData.el('div', 'vitals-mini-fill ' + (fillClass === 'hp' ? hpClass(pct) : 'mp-filled'));
+        fill.style.width = pct + '%';
+        track.appendChild(fill);
+        return track;
+    }
+
+    function companionRow(m, data) {
+        const v   = data.vitals(m.key);
+        const row = CompanyData.el('li', 'vitals-member');
+        row.setAttribute('data-key', m.key);
+        row.appendChild(CompanyData.el('span', 'vitals-member-name', m.name));
+        const spoken = [m.name];
+        const tip = [m.name];
+        if (m.status === 'dead') {
+            row.classList.add('is-fallen');
+            const rescue = data.live && data.live.rescue && data.live.rescue[m.key];
+            const note = typeof rescue === 'number' ? 'fallen, ' + CompanyData.formatSeconds(rescue) + ' to raise' : 'fallen';
+            row.appendChild(CompanyData.el('span', 'vitals-member-note', note));
+            spoken.push(note);
+        } else if (m.status === 'awaiting' || typeof v.hp !== 'number') {
+            row.classList.add('is-away');
+            row.appendChild(CompanyData.el('span', 'vitals-member-note', 'not with you'));
+            spoken.push('not with you');
+        } else {
+            const bars = CompanyData.el('div', 'vitals-mini');
+            bars.appendChild(miniBar(v.hp, v.hp_max, 'hp', m.name + ' health ' + v.hp + ' of ' + v.hp_max));
+            spoken.push('health ' + v.hp + ' of ' + v.hp_max);
+            tip.push('HP ' + v.hp + '/' + v.hp_max);
+            if (typeof v.mp === 'number' && v.mp_max > 0) {
+                bars.appendChild(miniBar(v.mp, v.mp_max, 'mp', m.name + ' mana ' + v.mp + ' of ' + v.mp_max));
+                spoken.push('mana ' + v.mp + ' of ' + v.mp_max);
+                tip.push('MP ' + v.mp + '/' + v.mp_max);
+            }
+            row.appendChild(bars);
+        }
+        row.title = tip.join(' \u00b7 ');
+        row.setAttribute('aria-label', spoken.join(', '));
+        return row;
+    }
+
+    function warnings(data) {
+        const out = [];
+        data.members.forEach(m => {
+            if (!m || m.status === 'dead') { return; }
+            const v = data.vitals(m.key);
+            const who = m.key === 'leader' ? 'You' : m.name;
+            const needs = v.needs || {};
+            ['hunger', 'thirst', 'fatigue'].forEach(k => {
+                const n = needs[k];
+                if (n && n.warn && n.label) { out.push(who + ': ' + n.label); }
+            });
+            if (v.warmth) { out.push(who + ': ' + v.warmth); }
+        });
+        const load = data.company && data.company.load;
+        if (load && load.capacity_g > 0 && load.total_g / load.capacity_g >= 0.9) {
+            out.push('Load ' + Math.round(load.total_g * 100 / load.capacity_g) + '%');
+        }
+        return out;
+    }
+
+    function updateCompany() {
+        const list = document.getElementById('vitals-company');
+        const warn = document.getElementById('vitals-warn');
+        if (!list || !warn) { return; }
+        const data = CompanyData.read();
+        list.textContent = '';
+        data.members.forEach(m => {
+            if (m && m.key && m.key !== 'leader') { list.appendChild(companionRow(m, data)); }
+        });
+        const words = warnings(data);
+        warn.textContent = words.length ? '\u26a0 ' + words.join(' \u00b7 ') : '';
+        warn.hidden = words.length === 0;
+    }
+
+    // -----------------------------------------------------------------------
     // Registration
     // -----------------------------------------------------------------------
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Char.Vitals', 'Char'],
+        // handleGMCP calls a handler once per matching level; the top names
+        // give one call per payload.
+        gmcpHandlers: ['Char', 'Company'],
         onGMCP(namespace) {
+            if (namespace.indexOf('Company') === 0) {
+                win.open();
+                if (win.isOpen()) { updateCompany(); }
+                return;
+            }
             updateBars();
         },
     });

@@ -180,3 +180,42 @@ func AbandonCamp(leaderUserID int) error {
 	}
 	return p.AbandonCamp(leaderUserID)
 }
+
+// CampState is a leader's camp as the web client's Camp tab shows it
+// (Phase 32g), seen from the room the leader stands in.
+type CampState struct {
+	// HasCamp is true when the leader has a camp; Here when it is in this
+	// room. RoomTitle is the camp's room.
+	HasCamp, Here bool
+	RoomTitle     string
+	FireLit       bool
+	Resting       bool
+	// Rested is a camp whose rest is done: it can't rest again (32g
+	// review finding 7).
+	Rested bool
+	// RestPercent and RestSeconds are a running rest's progress and time
+	// left.
+	RestPercent, RestSeconds int
+	// CanCamp is true when the leader has no camp and this room allows
+	// one; Inn when this room has an inn.
+	CanCamp, Inn bool
+}
+
+// CampStateProvider is optionally implemented by the registered movement
+// provider (Phase 32g). It reads state only.
+type CampStateProvider interface {
+	CampStateOf(leaderUserID, roomID int, roomTags []string) (CampState, bool)
+}
+
+// CampStateOf reports a leader's camp from a room with those tags. ok is
+// false without a provider.
+func CampStateOf(leaderUserID, roomID int, roomTags []string) (CampState, bool) {
+	providerMu.RLock()
+	p := movementProvider
+	providerMu.RUnlock()
+	cp, ok := p.(CampStateProvider)
+	if !ok {
+		return CampState{}, false
+	}
+	return cp.CampStateOf(leaderUserID, roomID, roomTags)
+}

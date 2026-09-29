@@ -122,4 +122,7 @@ anyone lost.
   How well your company fights together after time served side by side.
   See <ansi fg="command">help chemistry</ansi>.
 
+In the web client, the Company tab shows the same: its Status, Inventory,
+and Camp (<ansi fg="command">help webclient</ansi>).
+
 See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help chemistry</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help resurrect</ansi>.

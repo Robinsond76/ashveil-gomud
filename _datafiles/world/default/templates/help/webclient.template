@@ -1,0 +1,63 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">webclient</ansi>
+
+In the web client, the panels either side of the story show your world
+and your company. Everything they show, a command shows too, and every
+button in them just types a command for you.
+
+<ansi fg="yellow-bold">The left column: the world</ansi>
+
+  <ansi fg="yellow">Time and Date</ansi>, then the <ansi fg="yellow">Map</ansi>, then the <ansi fg="yellow">Room</ansi> you stand in (its exits
+  and who's here), and the <ansi fg="yellow">Tutorial</ansi> while you're taking the course.
+
+<ansi fg="yellow-bold">The right column: the dock</ansi>
+
+  Always at the top: your health and mana, a line for each companion
+  (health, and mana for one who casts; one not with you is dimmed; a
+  fallen one shows how long is left to raise them), and one line of
+  warnings when someone is hungry, thirsty, tired, cold, or the load is
+  heavy.
+
+  Below it, the tabs:
+
+  <ansi fg="yellow">Character</ansi>   Overview (your sheet, experience, and gold), Gear (what you
+              wear and carry, and its weight), Skills (with your jobs),
+              Quests, Effects, and Pet when you have one.
+  <ansi fg="yellow">Company</ansi>     Status (formation and each member), Inventory (everyone's
+              gear, your horses, and the cargo), and Camp.
+  <ansi fg="yellow">Combat</ansi>      how your company fights: formation, and each member's role
+              and target rule.
+  <ansi fg="yellow">Comm</ansi>        what's said around you; a number on the tab counts what
+              arrived while you were looking elsewhere.
+
+  Turn on <ansi fg="yellow">Online</ansi> or <ansi fg="yellow">KillStats</ansi> in Settings and they join as <ansi fg="yellow">Who</ansi>
+  and <ansi fg="yellow">Kills</ansi>.
+
+<ansi fg="yellow-bold">What the buttons and menus send</ansi>
+
+  Inventory: click one of your items to look at it, put it in the cargo
+  (<ansi fg="command">cargo put</ansi>), give it to a companion with you (<ansi fg="command">give</ansi>), or eat, drink,
+  equip, or remove it; click a cargo stack to take one (<ansi fg="command">cargo take</ansi>,
+  a partly used one first); click a horse
+  to fit or take off a saddle, or release it (it asks first). Meal, Eat,
+  and Drink feed everyone with you (<ansi fg="command">company meal</ansi>).
+
+  Camp: Make camp, Light fire, Rest, Break camp, and Inn appear only
+  when they would work (<ansi fg="command">camp</ansi>, <ansi fg="command">inn</ansi>); Meal is always there.
+
+  Menus work from the keyboard too: Enter opens one, the arrow keys move,
+  Enter chooses, and Escape closes it.
+
+  Combat: click a member to change their role or target rule (<ansi fg="command">strategy</ansi>)
+  or where they stand (<ansi fg="command">formation</ansi>). Scout appears when enemies are here
+  (<ansi fg="command">scout</ansi>).
+
+<ansi fg="yellow-bold">Arranging it</ansi>
+
+  The button at the top right of the dock opens the tab you're looking
+  at in a window of its own; that window's dock button puts it back.
+  Drag the dock's title bar to move it to the other side, and drag the
+  column's edge to widen it. The client remembers your tabs and layout.
+  <ansi fg="yellow">Settings > Reset Layout</ansi> puts everything back where it started.
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help camp</ansi>,
+<ansi fg="command">help strategy</ansi>, <ansi fg="command">help formation</ansi>.

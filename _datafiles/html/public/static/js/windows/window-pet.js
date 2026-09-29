@@ -1,7 +1,8 @@
 /**
  * window-pet.js
  *
- * Virtual window: Pet - right dock, tabbed.
+ * Pet - the Character tab's Pet sub-tab, shown only while the player has
+ * a pet (Phase 32g; hosted through window.CharacterTabs), tabbed.
  *
  * Tabs:
  *   Info  - pet identity, level bar, hunger, combat, stats, buffs
@@ -444,29 +445,6 @@
         return el;
     }
 
-    // -----------------------------------------------------------------------
-    // VirtualWindow
-    // -----------------------------------------------------------------------
-    var win = new VirtualWindow('Pet', {
-        dock:          'right',
-        defaultDocked: true,
-        dockedHeight:  220,
-        factory: function() {
-            var el = createDOM();
-            return {
-                title:      'Pet',
-                mount:      el,
-                background: 'var(--t-bg)',
-                border:     1,
-                x:          0,
-                y:          0,
-                width:      280,
-                height:     260,
-                header:     20,
-                bottom:     60,
-            };
-        },
-    });
 
     // -----------------------------------------------------------------------
     // Helpers
@@ -667,25 +645,32 @@
     // -----------------------------------------------------------------------
     function update() {
         var pet = getPet();
-
-        if (!pet) {
-            if (win.isOpen()) { updateInfo(); }
-            return;
-        }
-
-        win.open();
-        if (!win.isOpen()) { return; }
+        CharacterTabs.setVisible('pet', !!pet);
+        if (!document.getElementById('pw-info')) { return; }
         updateInfo();
-        updateItems();
+        if (pet) { updateItems(); }
     }
 
     // -----------------------------------------------------------------------
     // Registration
     // -----------------------------------------------------------------------
+    CharacterTabs.add({
+        id:      'pet',
+        label:   'Pet',
+        order:   5,
+        visible: false,
+        build: function() {
+            var el = createDOM();
+            setTimeout(update, 0);
+            return el;
+        },
+    });
+
     VirtualWindows.register({
-        window:       win,
-        gmcpHandlers: ['Char.Pets', 'Char'],
-        onGMCP: function() { update(); },
+        gmcpHandlers: ['Char'],
+        onGMCP: function(namespace) {
+            if (namespace === 'Char' || namespace === 'Char.Pets') { update(); }
+        },
     });
 
 })();

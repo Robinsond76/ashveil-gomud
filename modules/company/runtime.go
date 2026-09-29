@@ -233,6 +233,15 @@ func (nativeRuntime) Progress(instanceID int) (int, int, int, bool) {
 	return mob.Character.Level, into, tnl, true
 }
 
+// Mana reads a live mob's mana.
+func (nativeRuntime) Mana(instanceID int) (int, int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, 0, false
+	}
+	return mob.Character.Mana, mob.Character.ManaMax.Value, true
+}
+
 // Vitals reads a live mob's health.
 func (nativeRuntime) Vitals(instanceID int) (int, int, bool) {
 	mob := mobs.GetInstance(instanceID)

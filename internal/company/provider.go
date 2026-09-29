@@ -295,6 +295,9 @@ type MemberView struct {
 	ExpKnown        bool
 	// HP and HPMax are set only for a present companion.
 	HP, HPMax int
+	// MP and MPMax are its live mana, set only for a present companion
+	// (Phase 32g); MPMax 0 means it has none.
+	MP, MPMax int
 	// Placed, Row, and Col are its formation cell (0-based).
 	Placed   bool
 	Row, Col int

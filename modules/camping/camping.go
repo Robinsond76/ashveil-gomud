@@ -1090,3 +1090,41 @@ func (m *CampingModule) registerBuffGroupsLocked() {
 	s := m.innSettings()
 	companyview.RegisterBuffGroup(companyview.GroupRest, s.RestedBuffId, s.WellRestedBuffId)
 }
+
+var _ camping.CampStateProvider = (*CampingModule)(nil)
+
+// CampStateOf implements camping.CampStateProvider (Phase 32g): the
+// leader's camp seen from a room with those tags. It reads state only; the
+// camp's room title is looked up after the lock is released.
+func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string) (camping.CampState, bool) {
+	has := func(tag string) bool {
+		for _, t := range roomTags {
+			if t == tag {
+				return true
+			}
+		}
+		return false
+	}
+	m.mu.Lock()
+	camp, ok := m.camps[leaderUserID]
+	s := camping.CampState{Inn: has(m.innSettings().RoomTag)}
+	if !ok {
+		s.CanCamp = has(m.roomTag())
+	} else {
+		s.HasCamp, s.Here, s.FireLit = true, camp.RoomID == roomID, camp.FireLit
+		if camp.Rest != nil && camp.Rest.State == camping.Completed {
+			s.Rested = true
+		}
+		if camp.Rest != nil && camp.Rest.State == camping.Resting {
+			left := m.remainingLocked(camp)
+			s.Resting = true
+			s.RestSeconds = int(left.Round(time.Second).Seconds())
+			s.RestPercent = int(camp.ProgressAt(m.clock().UTC()) * 100)
+		}
+	}
+	m.mu.Unlock()
+	if s.HasCamp && !s.Here {
+		s.RoomTitle = roomTitle(camp.RoomID)
+	}
+	return s, true
+}

@@ -63,3 +63,6 @@ bandit captain from here. You turn toward the bandit cutthroat." See
 Set your formation up before a fight: it's where everyone stands when the
 blows begin, and it can't be changed during a battle (reading it, and
 <ansi fg="command">formation reach</ansi>, still work).
+
+In the web client, the Combat tab draws your formation; click a member
+to move them (<ansi fg="command">help webclient</ansi>).

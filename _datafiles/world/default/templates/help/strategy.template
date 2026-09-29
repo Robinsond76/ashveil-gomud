@@ -64,4 +64,7 @@ turn with your target, or to whoever strikes your most hurt member.
 Set strategies before a battle: during one they can be read but not
 changed. Strategies are kept when you log out.
 
+In the web client, the Combat tab shows how everyone fights; click a
+member to change it (<ansi fg="command">help webclient</ansi>).
+
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help mana</ansi>.
