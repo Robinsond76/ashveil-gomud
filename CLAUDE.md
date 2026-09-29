@@ -57,7 +57,7 @@ design doc's acceptance criteria name the pages; the reviewer checks them.
   providers) gets at least one test that goes through the real entry point, not just the
   helper underneath it. A plan's task list must name these wiring tests explicitly.
 - **Independent review before merge.** After the phase verifies green and before merging
-  to `master`, dispatch a reviewer subagent (`Agent`, `general-purpose`, the most capable
+  to `master`, dispatch a reviewer subagent (`Agent`, `general-purpose`, `model: "opus"`, the most capable
   model tier) over the full phase diff (`git diff <base>..HEAD`). Brief it with the
   phase's design doc, the non-negotiable invariants (never advance the world clock,
   survive restart/copyover, concurrency and lock ordering), and ask it to report bugs,
@@ -74,16 +74,16 @@ full verification runs after the fixes, not before and after.
 Superpowers' `subagent-driven-development` skill dispatches implementer/reviewer
 subagents itself (via the `Agent` tool) and asks the driving session to pick a model per
 task under its own "Model Selection" tiers. Map those tiers to this project's Terra/Luna
-split — Sonnet as the brain, Haiku as the implementer:
+split — Opus as the orchestrator, Sonnet as the implementer:
 
-- **Terra role → the main Claude session, on Sonnet.** Own architecture, task scoping,
+- **Terra role → the main Claude session, on Opus.** Own architecture, task scoping,
   brainstorming/plan approval, code review, verification, `docs/PROJECT_STATUS.md`
   updates, and all commits/merges. Never hand these off. This is also Superpowers'
-  "standard" and "most capable" model tier — use Sonnet for integration/judgment tasks,
+  "standard" and "most capable" model tier — use Opus for integration/judgment tasks,
   architecture/design tasks, and all review/escalation rounds.
-- **Luna role → Superpowers' "cheap, fast model" tier → Haiku.** When dispatching a
+- **Luna role → Superpowers' "cheap, fast model" tier → Sonnet.** When dispatching a
   mechanical implementation task (isolated function, clear spec, 1–2 files) via
-  `Agent({ ..., model: "haiku" })`, give it the same kind of narrow, self-contained brief
+  `Agent({ ..., model: "sonnet" })`, give it the same kind of narrow, self-contained brief
   `docs/LUNA_IMPLEMENTER_WORKFLOW.md` describes: acceptance criteria, relevant
   invariants, exact file/package boundaries, and the focused checks to run. Tell it
   explicitly not to commit, push, merge, create a worktree, or touch
@@ -91,7 +91,7 @@ split — Sonnet as the brain, Haiku as the implementer:
 - Treat any subagent's diff as an untrusted proposal: read the whole diff yourself,
   independently run proportionate tests, and either request a focused fix round or make
   the final corrections yourself.
-- Skip delegation and implement directly yourself (on Sonnet) for anything involving
+- Skip delegation and implement directly yourself (on Opus) for anything involving
   concurrency, timers, persistent-state recovery, disconnect/reconnect, or other
   multiplayer invariants — the same threshold the handoff doc uses to escalate past Luna
   (`docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md`, rule 19 in section 50), and matches
