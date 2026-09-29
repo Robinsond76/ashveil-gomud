@@ -162,6 +162,12 @@ Timing:
   #   How many seconds per round. Anything gated by rounds will be affected by
   #   this. This is the main setting for controlling the pace of the game.
   RoundSeconds: 4
+  # - CombatEveryRounds -
+  #   How many rounds make one combat round. Combat resolves only on every
+  #   Nth round; everything else (survival, buffs, healing, autosave) keeps
+  #   the normal round. 2 gives an 8-second combat round, long enough for
+  #   paced combat text (help combatpace). 1 resolves combat every round.
+  CombatEveryRounds: 2
   # - RoundsPerAutoSave -
   #   How often the server will automatically save the game state. This is a
   #   backup feature in case the server crashes. The game state is also saved

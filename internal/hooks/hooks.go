@@ -13,6 +13,9 @@ func RegisterListeners() {
 	// RoomChange Listeners
 	events.RegisterListener(events.RoomChange{}, LocationMusicChange)
 	events.RegisterListener(events.RoomChange{}, CleanupEphemeralRooms)
+	// Phase 29f: leaving the room by your own doing sends any held combat
+	// lines before the new room's text.
+	events.RegisterListener(events.RoomChange{}, FlushPacedOnRoomChange)
 
 	// NewRound Listeners
 	events.RegisterListener(events.NewRound{}, PruneVMs)
@@ -26,7 +29,9 @@ func RegisterListeners() {
 	//
 	// Combat goes here
 	//
-	events.RegisterListener(events.NewRound{}, DoCombat)
+	// Phase 29f: combat resolves every CombatEveryRounds rounds, and its
+	// text is paced out on each turn.
+	events.RegisterListener(events.NewRound{}, CombatOnCadence)
 	//
 	// Done with combat
 	//
@@ -39,6 +44,8 @@ func RegisterListeners() {
 	events.RegisterListener(events.NewTurn{}, AutoSave)
 	events.RegisterListener(events.NewTurn{}, PruneBuffs)
 	events.RegisterListener(events.NewTurn{}, ActionPoints)
+	events.RegisterListener(events.NewTurn{}, ReleasePacedCombat)
+	events.RegisterListener(events.UserSettingChanged{}, FlushPacedOnPaceChange)
 
 	// ItemOwnership
 	events.RegisterListener(events.ItemOwnership{}, CheckItemQuests)
@@ -50,6 +57,7 @@ func RegisterListeners() {
 	// Spawn events
 	events.RegisterListener(events.PlayerSpawn{}, HandleJoin)
 	events.RegisterListener(events.PlayerSpawn{}, UserScriptLogin)
+	events.RegisterListener(events.PlayerDespawn{}, FlushPacedOnDespawn)      // Phase 29f: held combat lines go out first
 	events.RegisterListener(events.PlayerDespawn{}, UserScriptLogout)         // Must run before the final HandleLeave cleanup
 	events.RegisterListener(events.PlayerDespawn{}, HandleLeave, events.Last) // This is a final listener, has to happen last
 	// Ashveil 32b: a connection handed from one user to another, and a

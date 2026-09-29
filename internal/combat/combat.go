@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -504,6 +505,8 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 						victimMob = targetMob[0]
 					}
 					toVictim, toWitness := painReactionFor(&targetChar, targetType, victimMob, targetChar.Health-attackResult.DamageToTarget-attackTargetDamage, strikeOrdinal)
+					// Phase 29f: a beat of silence before the pain lands.
+					combatpace.Default().Mark(toVictim, toWitness)
 					attackResult.SendToTarget(toVictim)
 					attackResult.SendToSource(toWitness)
 					attackResult.SendToSourceRoom(toWitness)

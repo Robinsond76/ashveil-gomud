@@ -6,7 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-29
-- **HEAD:** `master` 2026-09-29: Phase 29e (pain reactions), integrated from
+- **HEAD:** branch `claude/next-phase-planning-9u98ae` 2026-09-29: Phase 29f
+  (paced combat output), verified and reviewed, awaiting merge to `master`.
+  `master` 2026-09-29: Phase 29e (pain reactions), integrated from
   `codex/phase-29e-pain-reactions`. Before it, Phase 32g2 (live battle view),
   merged from `phase-32g2-battle-view`, and Phase 32g (web company dock), merged from
   `phase-32g-company-dock`. Before that, Phase 29d (NPC pronouns and stable enemy
@@ -24,19 +26,20 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29e, 32g, and 32g2; see the table below. The survival and
+- **Completed:** Phases 0–29f, 32g, and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
   and onboarding roadmap (22–27, including the tutorial), item weights (28),
-  the first combat slices (29a, 29b, 29b2, 29c, 29d, 29e), enemy groups (32c),
+  the first combat slices (29a, 29b, 29b2, 29c, 29d, 29e, 29f), enemy groups (32c),
   automatic combat by strategy (32d), company experience (32e), company
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 29e (pain reactions), from
-  `codex/phase-29e-pain-reactions`; see its work-log entry below. Before it,
-  32g2 (live battle view), from `phase-32g2-battle-view`, and 32g
-  (web company dock), from `phase-32g-company-dock`.
+- **Latest completed phase:** 29f (paced combat output), on
+  `claude/next-phase-planning-9u98ae`; see its work-log entry below. Before
+  it, 29e (pain reactions), from `codex/phase-29e-pain-reactions`, 32g2
+  (live battle view), from `phase-32g2-battle-view`, and 32g (web company
+  dock), from `phase-32g-company-dock`.
 - **Before it:** 29d (pronouns and stable enemy labels), from
   `codex/phase-29d-pronouns-ordinals`; see the [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md).
   NPC/race pronouns, generated recruit neutrality, frozen shared enemy labels,
@@ -56,7 +59,10 @@ instead of duplicating them.
   Independent follow-up review found no issues and passed 40 focused repetitions.
 - **Next:** the play-test roadmap (32a–32h, 32g2) is done, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
-  the combat roadmap continues at 29f (paced combat output).
+  the combat roadmap's 29 series is done with 29f; next is 30a (status
+  effects and critical-hit effects), then 30b (wounds). Phase 30 should
+  set its durations in combat rounds and retune the balance shifts that
+  29f's cadence brought (see Known issues).
   Also open: the "Future ideas" row; see Known issues.
 
 ## Phase progress
@@ -114,7 +120,7 @@ instead of duplicating them.
 | 29c | Narration voice (weapons and spells) | Complete (branch `master-6csfy6`): [design](superpowers/specs/2026-09-28-phase-29c-narration-voice-design.md), [plan](superpowers/plans/2026-09-28-phase-29c-narration-voice.md). Every weapon line rewritten, `(N damage)` / `(critical hit, N damage)` / `, M blocked` at the end of each hit, only real crits draw the critical pool; no `***`, `!`, caps, or "prepares to fight"; "the" before common names; an opener per fight, "turns toward", death lines in order, a closing line after the last; the fallen notice indented and in words; spells chant with their rounds and land with `(N damage)` / `(N healed)`; `help narration` |
 | 29d | Pronouns and ordinals | Complete and integrated: [spec](superpowers/specs/2026-09-26-combat-pronouns-ordinals-design.md), [plan](superpowers/plans/2026-09-28-phase-29d-pronouns-ordinals.md). NPC/race pronouns, neutral generated recruits, stable shared enemy labels, help/tutorial; independent review and full race suite passed. Player selection deferred |
 | 29e | Pain reactions | Complete: [design](superpowers/specs/2026-09-29-phase-29e-pain-reactions-design.md), [plan](superpowers/plans/2026-09-29-phase-29e-pain-reactions.md). A victim reacts after each damaging critical strike that leaves them standing; second person for the victim, third person for witnesses, distinct beast-race sets and NPC overrides, without changing combat mechanics |
-| 29f | Paced combat output | Proposed: [spec](superpowers/specs/2026-09-26-combat-pacing-design.md). Round lines released over time, with fast, normal (~6s), slow, and off settings; combat resolves every 2 game rounds (an 8-second combat round) |
+| 29f | Paced combat output | Complete: [design](superpowers/specs/2026-09-29-phase-29f-paced-combat-design.md), [plan](superpowers/plans/2026-09-29-phase-29f-paced-combat.md). Combat resolves every `CombatEveryRounds` (2) game rounds, an 8-second combat round; everything a round causes is tagged (`events.WithCause`) and paced out per player (`internal/combatpace`), with `set combatpace fast|normal|slow|off` (off for screen readers); a pause before pain and death lines; typed output, tells, and says never wait; the prompt and the web client's vitals and battle view wait for the lines; flushes on move, quit, pace change, and copyover; `help combatpace` |
 | 30a | Status effects and critical-hit effects (weapons only) | Proposed: [spec](superpowers/specs/2026-09-26-status-crit-effects-design.md). Bleeding, stagger, knockdown, armor break, and others as buffs; crit effects by weapon type; spells do not critical hit |
 | 30b | Wounds, treatment, and `heal wounds` | Proposed: [spec](superpowers/specs/2026-09-26-wounds-treatment-design.md). Wound limits on healing; durable critical-hit wounds; one after-fight command using clerics, splints and bandages, or an inn physician; camp rest heals |
 | 30c | Pre-fight tactics | Proposed: [spec](superpowers/specs/2026-09-26-company-tactics-design.md). `company tactics` (focus, healing, interrupts, guards, rotation, mercy); roles and personalities; guard reactions; companions casting; no commands mid-fight |
@@ -140,39 +146,97 @@ Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
 
-### Phase 29e: pain reactions (2026-09-29)
+### Phase 29f: paced combat output (2026-09-29)
 
-- **What:** paired victim/witness reaction lines on races and NPC templates;
-  seven distinct shipped creature sets and a spider queen override. Each
-  damaging critical strike that leaves its victim above zero gets one line
-  immediately after the blow, in second person for the victim and third
-  person for witnesses. Normal, dodged, fully blocked, and lethal strikes
-  get none. Variant selection uses a stable name hash, remaining health,
-  and strike order without drawing from combat RNG. `help narration`,
-  `help combat`, aliases, and the Combat lesson explain the feature.
-- **Why:** complete the owner's combat-presentation roadmap after 29d,
-  making critical blows felt without altering combat mechanics or time.
-- **Verification:** focused tests for `internal/races`, `internal/mobs`,
-  `internal/combat`, `internal/usercommands`, `modules/company`, and
-  `modules/tutorial` passed. `make generate` (no generated diff),
-  `make validate`, `go test -race ./...` (103 packages), `make js-lint`,
-  and `git diff --check` passed. JavaScript lint needed network access to
-  fetch JSHint; no JavaScript changed. The seeded
-  `TestNarrationPreservesCombatOutcome` passed, as did real `DoCombat`
-  reaction routing and help/tutorial checks.
-- **Review:** independent default-agent reviewer found the deterministic
-  variant omitted victim name; a regression reproduced it and the stable
-  name hash fixed it. The requested generic creature fallback test was
-  added. No critical or important bugs were found. The reviewer's broader
-  company run reported a fixture disk-full error; the lead found 668 GiB
-  free and the focused company and full race suites passed afterward.
+- **What:**
+  - `Timing.CombatEveryRounds` (2) gates only `DoCombat`
+    (`hooks.CombatOnCadence`), giving an 8-second combat round.
+  - Causal tagging in `internal/events`: everything a combat round causes
+    carries its round (`WithCause`, inherited through the queue).
+    Players' typed input (`AddTyped`) is never caused, and what it causes
+    is `Typed()`.
+  - `internal/combatpace` holds each player's lines and releases them on
+    each turn over the pace's window (fast 3s, normal 6s, slow about 7s,
+    clamped to 90% of the combat round), compressing a busy round. Pain
+    and death lines get a longer gap, indented lines a short one. A round's
+    leftovers flush before the next round.
+  - Untyped goings-on (a mob's next target, "bleeding out", a death's
+    broadcast) wait behind held lines. Typed output, tells, and says never
+    do.
+  - The prompt shows the round's start while lines are held. `Char`,
+    `Char.Vitals`, and the Company/battle-view payloads wait for
+    `CombatPaceDrained`.
+  - Held lines flush on the player's own move, on quit, on a pace change,
+    and at copyover (a contributor).
+  - `set combatpace` is saved in `ConfigOptions` (off by default for
+    screen readers).
+  - Help: `help combatpace`, plus `combat`, `set`, and `narration`
+    updates, and a Combat lesson hint.
+- **Why:** the owner-approved combat-presentation roadmap: a fight should
+  read as if it happens live, without changing what happens.
+- **Verification:**
+  - Focused tests passed for `internal/{events,combatpace,hooks,combat,configs,usercommands}`,
+    `modules/{company,gmcp,tutorial}`, and the root package, including
+    real-round wiring tests:
+    - paced output equals the unpaced order;
+    - the window is filled, never overrun;
+    - a companion's death notice follows its death line, and the summary
+      follows the closing line;
+    - a slain player's death is paced;
+    - walking away flushes;
+    - typed input through the real input worker;
+    - cadence vs. drift and the round count.
+  - 30 to 40 repetitions of the company pacing tests passed.
+  - `make generate` (no diff), `make validate`, and `go test -race ./...`
+    (87 packages) passed after the review fixes.
+  - `git diff --check` flags only `help set`'s intentional Markdown
+    line-break spaces.
+- **Review:** an independent default-agent reviewer made one blocker, one
+  major, and seven minor/nit findings.
+  - **Fixed (with regression tests):**
+    - a slain player's `suicide`, "DIED!" broadcast, penalty, and move
+      escaped pacing and cut the round short (typed/untyped origin replaced
+      the player-`Input` exclusion, and broadcasts are held);
+    - a late older-round line flushed the newer round;
+    - the help's slow timing was wrong;
+    - vitals leaked through `Char` and level-up payloads;
+    - every online player got a round opened (now only players near a
+      fight);
+    - wiring coverage was missing (death, walk-away, and the real input
+      worker are now tested);
+    - comments, import grouping, and a despawn leak.
+  - **Found by the new tests:** scaling a busy round's gaps overflowed
+    `int64` nanoseconds and squeezed 20+ lines into half a second. It now
+    scales in float64.
+  - **Blocker, partly resolved:** a 39 MB build binary (`GoMud`) was
+    committed in `c793454`. It was removed from the tree and `/GoMud` is
+    now ignored, but a history rewrite was not permitted, so the blob
+    stays in the branch's history. A squash merge (or an owner-approved
+    rewrite) keeps it out of `master`.
+  - **Partly rejected:** a dedicated survival-drain test. The cadence test
+    shows every later `NewRound` listener runs every round, and exposure's
+    tick keys on round numbers. The Party payload hold is deferred.
 
 ## Known issues / deferred items
 
-- **Live battle view (32g2), deferred:** pacing the view to the narration
-  (29f); casting, statuses, wounds, and guards on the grid (Phase 30); the
-  battle summary in the view; exact enemy numbers behind a skill. The
-  view can lead the round's narration by a few lines. A hidden enemy that
+- **Paced combat (29f), for the owner and Phase 30:**
+  - Game-round systems now tick twice per combat round:
+    - regeneration heals more between blows;
+    - a fight costs about twice the survival;
+    - round-timed buffs last half as many combat rounds;
+    - bleeding out gives fewer combat rounds to save someone.
+
+    The owner accepted this for now, to retune in Phase 30.
+    `CombatEveryRounds: 1` reverts it.
+  - A movement command's own first line can precede the flush its move
+    triggers.
+  - The Party GMCP payload isn't held.
+  - Held lines aren't saved, so a crash loses at most one round's
+    unshown text.
+
+- **Live battle view (32g2), deferred:** casting, statuses, wounds, and guards on the grid (Phase 30); the
+  battle summary in the view; exact enemy numbers behind a skill. (29f
+  now holds the view until a round's lines are out.) A hidden enemy that
   joins and falls within one round, before the view ever looks, is named
   under Fallen (accepted: the view names every foe it never saw hidden).
 

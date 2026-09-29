@@ -5,10 +5,17 @@ help page, named in brackets.
 
 <ansi fg="yellow-bold">The round</ansi>
 
-Combat resolves once a round (a round is 4 seconds). Every fighter on both
-sides takes their turn each round: an attack, a round of a spell being cast,
-or waiting. A fight goes on until one side is dead or gone, or nobody is
-fighting any more.
+Combat resolves once a combat round, every 8 seconds (two of the game's
+4-second rounds). Every fighter on both sides takes their turn each combat
+round: an attack, a round of a spell being cast, or waiting. A fight goes on
+until one side is dead or gone, or nobody is fighting any more. What you
+start mid-round, such as <ansi fg="command">flee</ansi> or a spell, waits for the next combat
+round, up to 8 seconds. Spell rounds and waits count combat rounds; buffs
+and effects that last a number of rounds count the game's 4-second rounds.
+
+The round is decided at once, but its lines are paced out to you over a
+few seconds, so you watch the fight unfold. Choose how fast with
+<ansi fg="command">set combatpace fast</ansi>, <ansi fg="command">normal</ansi>, <ansi fg="command">slow</ansi>, or <ansi fg="command">off</ansi> (<ansi fg="command">help combatpace</ansi>).
 
 <ansi fg="yellow-bold">Your company fights as one (</ansi><ansi fg="command">help formation</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help targeting</ansi><ansi fg="yellow-bold">)</ansi>
 
@@ -92,6 +99,7 @@ and your company's health.
   <ansi fg="command">company chemistry</ansi> your company's chemistry
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
   <ansi fg="command">light</ansi>             how well you can see here
+  <ansi fg="command">set combatpace</ansi>    how fast a round's lines come to you
 
 In the tutorial, the Practice Yard lets you try all of this against straw
 soldiers that can't hurt you (<ansi fg="command">help tutorial</ansi>).

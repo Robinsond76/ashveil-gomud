@@ -3,6 +3,7 @@ package combat
 import (
 	"fmt"
 
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -38,7 +39,11 @@ func BeatenLine(name string) string { return pickLine(BeatenLines, util.Article(
 // PlayerDeathLine is a player's death notice, for the room.
 func PlayerDeathLine(name string) string { return pickLine(PlayerDeathLines, name) }
 
+// pickLine picks a notice. Phase 29f: every death or defeat notice is
+// marked, so a paced player gets a beat of silence before it.
 func pickLine(pool []string, name string) string {
 	line := pool[util.Rand(len(pool))]
-	return util.CapitalizeFirst(fmt.Sprintf(line, name))
+	out := util.CapitalizeFirst(fmt.Sprintf(line, name))
+	combatpace.Default().Mark(out)
+	return out
 }

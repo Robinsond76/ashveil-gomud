@@ -34,6 +34,10 @@ There are a handful of settings you can adjust with this command, including:
   shows the damage each side dealt, who dealt the most, the highest hit, kills,  
   how each enemy ended, and your company's health. It is on by default.
 
+  ~set combatpace [fast|normal|slow|off]~  
+  How fast a combat round's lines come to you, one by one. Normal is the  
+  default (off with a screen reader). See ~help combatpace~
+
   ~set wimpy~  
   Set your wimpy percentage (See ~help wimpy~)
 

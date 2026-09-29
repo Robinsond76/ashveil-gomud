@@ -369,6 +369,10 @@ var companyFeeds = newCompanyFeed()
 
 func init() {
 	companyview.OnRefresh.Register(func(r companyview.Refreshed) companyview.Refreshed {
+		// Phase 29f: nothing runs ahead of a player's paced combat lines.
+		if holdCompany(r.User.UserId) {
+			return r
+		}
 		companyFeeds.update(r.User.UserId, r.Summary)
 		companyFeeds.updateExtras(r.User)
 		return r

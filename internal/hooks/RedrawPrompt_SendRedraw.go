@@ -20,6 +20,11 @@ func RedrawPrompt_SendRedraw(e events.Event) events.ListenerReturn {
 	if user := users.GetByUserId(evt.UserId); user != nil {
 
 		newCmdPrompt := user.GetCommandPrompt()
+		// Phase 29f: while combat lines are held, the prompt shows the
+		// round's start, so it never runs ahead of the narration.
+		if held, ok := heldPrompt(user.UserId); ok {
+			newCmdPrompt = held
+		}
 
 		if evt.OnlyIfChanged {
 
@@ -35,10 +40,22 @@ func RedrawPrompt_SendRedraw(e events.Event) events.ListenerReturn {
 
 		}
 
-		pTxt := templates.AnsiParse(newCmdPrompt)
-		connections.SendTo([]byte(pTxt), user.ConnectionId())
+		writePrompt(user, newCmdPrompt)
 
 	}
 
 	return events.Continue
+}
+
+// writePrompt sends a prompt to a player's connection; tests replace it
+// (Phase 29f).
+var writePrompt = func(user *users.UserRecord, prompt string) {
+	connections.SendTo([]byte(templates.AnsiParse(prompt)), user.ConnectionId())
+}
+
+// SetWritePromptForTest captures prompt redraws and returns a restore func.
+func SetWritePromptForTest(fn func(userId int, prompt string)) (restore func()) {
+	prev := writePrompt
+	writePrompt = func(user *users.UserRecord, prompt string) { fn(user.UserId, prompt) }
+	return func() { writePrompt = prev }
 }

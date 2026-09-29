@@ -469,6 +469,15 @@ type RedrawPrompt struct {
 func (l RedrawPrompt) Type() string     { return `RedrawPrompt` }
 func (l RedrawPrompt) UniqueID() string { return `RedrawPrompt-` + strconv.Itoa(l.UserId) }
 
+// CombatPaceDrained (Ashveil Phase 29f) fires when the last of a player's
+// held combat lines has gone out, so views held back with them (the
+// prompt, the web client's vitals and battle view) can catch up.
+type CombatPaceDrained struct {
+	UserId int
+}
+
+func (c CombatPaceDrained) Type() string { return `CombatPaceDrained` }
+
 // Fired when a player or mob enters or leaves aggro state
 type AggroChanged struct {
 	UserId        int // non-zero if a player's aggro state changed

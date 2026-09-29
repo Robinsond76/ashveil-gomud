@@ -168,9 +168,9 @@ func mobDeathNotice(mob *mobs.Mob) {
 	}
 	mob.SetTempData(deathNoticedKey, true)
 	name := mobTag(mobName(mob.InstanceId))
+	line := combat.DeathLine(name)
 	if mob.Practice {
-		room.SendText(combat.BeatenLine(name))
-		return
+		line = combat.BeatenLine(name)
 	}
-	room.SendText(combat.DeathLine(name))
+	room.SendText(line)
 }

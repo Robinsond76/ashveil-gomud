@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -72,8 +73,21 @@ func TestDeathNoticeOnce(t *testing.T) {
 	events.ProcessEvents()
 	deaths = 0
 
+	pacer := combatpace.New()
+	t.Cleanup(combatpace.UseForTest(pacer))
+	var line string
+	lineId := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+		if msg := e.(events.Message); msg.RoomId == room.RoomId {
+			line = msg.Text
+		}
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.Message{}, lineId) })
+
 	handleAffected(nil, []int{8301})
 	handleAffected(nil, []int{8301}) // the next round, suicide still queued
 	events.ProcessEvents()
 	assert.Equal(t, 1, deaths, "one death line")
+	// Phase 29f: a death line waits the longer gap.
+	assert.True(t, pacer.Marked(line), "death line marked dramatic: %q", line)
 }
