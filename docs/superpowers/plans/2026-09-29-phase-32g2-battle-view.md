@@ -43,7 +43,7 @@ shapes.
 
 ## Task 3: Wiring (`modules/company`)
 
-- [ ] Wiring test first (`wiring_battle_view_test.go`, the brawl world,
+- [x] Wiring test first (`wiring_battle_view_test.go`, the brawl world,
   real `hooks.DoCombat` rounds, the gmcp module loaded, `GMCPOut`
   captured, `companyview.RefreshUser` standing in for the game loop's
   refresh):
@@ -57,6 +57,11 @@ shapes.
     never moves.
   - A connection without GMCP gets nothing: unit-tested in
     `modules/gmcp` (the feed's `accepting`).
+  - As built: the brawl world has no one placed, so the test places Aria
+    (`formation move me 1 1`) to check `reach` (front row only, bare
+    hands); the test connection accepts GMCP (`gmcp.AcceptGMCPForTest`),
+    as a web client's does. A cutthroat can fall in the first round, so
+    "every bandit once" counts the grid and `fallen` together.
 
 ## Task 4: The Battle view (`window-combat.js`)
 
