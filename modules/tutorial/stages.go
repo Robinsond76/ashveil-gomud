@@ -62,7 +62,7 @@ func init() {
 			Hints: []string{
 				`<ansi fg="command">status</ansi> is your character sheet: your path, vitals, hunger, thirst, fatigue, and company.`,
 				`<ansi fg="command">inventory</ansi> shows your gear and your company's load.`,
-				`<ansi fg="command">experience</ansi> shows your level and progress.`,
+				`<ansi fg="command">experience</ansi> shows your level and progress, and each companion's (<ansi fg="command">help company</ansi> explains how they earn it).`,
 				`<ansi fg="command">conditions</ansi> lists what is affecting you, and for how long.`,
 				`Short forms work too. Your prompt adds warnings such as Hungry or Dark only when something needs your attention.`,
 				`<ansi fg="command">help status</ansi> and <ansi fg="command">help archetype</ansi> explain your sheet and your path. <ansi fg="command">help adventure</ansi> lists every help page.`,

@@ -101,6 +101,12 @@ func newBrawl(t *testing.T) *brawl {
 	_, thisFile, _, _ := runtime.Caller(0)
 	t.Chdir(filepath.Join(filepath.Dir(thisFile), "..", ".."))
 	require.NoError(t, configs.ReloadConfig())
+	// Phase 32e: this brawl forces every member's health to 1000 each round
+	// (toughen); a level-up mid-round would recompute it and could let a
+	// member fall. Kill XP is switched off so nobody levels here.
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.XPScale = 0
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 
 	dataDir := t.TempDir()
 	useDataDir(t, dataDir)

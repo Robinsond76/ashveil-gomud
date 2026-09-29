@@ -54,3 +54,17 @@ func TestHasClaimed(t *testing.T) {
 	assert.True(t, module.HasClaimed(7, 61))
 	assert.False(t, module.HasClaimed(8, 61))
 }
+
+// TestCompanyMembersLiveProgress (Phase 32e): a present companion shows its
+// live level and progress, ahead of its record between snapshots.
+func TestCompanyMembersLiveProgress(t *testing.T) {
+	module, _, runtime, _ := newDeathModule(t)
+	runtime.progress = map[int][3]int{102: {5, 40, 160}}
+	members, ok := module.CompanyMembers(7)
+	require.True(t, ok)
+	assert.Equal(t, 5, members[1].Level, "the live level, not the record's")
+	assert.True(t, members[1].ExpKnown)
+	assert.Equal(t, 40, members[1].ExpInto)
+	assert.Equal(t, 160, members[1].ExpTNL)
+	assert.False(t, members[0].ExpKnown, "the fallen show no progress")
+}

@@ -6,6 +6,17 @@ travel beside you. They stand with you in formation
 (<ansi fg="command">help chemistry</ansi>), and need food and rest just like
 you do (<ansi fg="command">help survival</ansi>, <ansi fg="command">help camp</ansi>).
 
+<ansi fg="yellow-bold">Experience</ansi>
+
+Companions grow. When a kill earns you experience, every companion who is
+alive and standing in the room where the enemy fell earns the same amount,
+in full: nothing is split, so a bigger company never shrinks your share.
+A companion who is away, fallen, or still waiting to rejoin earns
+nothing. Enough experience is a new level: the companion is healed and
+you're told. Companions have no level cap, and no training or stat points
+to spend. <ansi fg="command">experience</ansi> lists each companion's level and
+progress below your own (<ansi fg="command">help experience</ansi>).
+
 <ansi fg="yellow-bold">Finding companions</ansi>
 
 Settlements have recruiters: a person or a posted notice offering
