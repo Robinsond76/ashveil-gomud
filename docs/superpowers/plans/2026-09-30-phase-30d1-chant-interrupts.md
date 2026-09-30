@@ -75,7 +75,7 @@ Each task writes its tests first and runs only its own packages.
     `tactics`, `statuses`, `guardian`, `battle-summary`, `formation`
     pages; `keywords.yaml`; the Practice Yard hint in
     `modules/tutorial/stages.go`.
-- [ ] **7. Review, verification, record.**
+- [x] **7. Review, verification, record.**
   - Independent reviewer subagent over `git diff master..HEAD` with the
     design and invariants; verify each finding, fix with regression
     tests (each in its package).

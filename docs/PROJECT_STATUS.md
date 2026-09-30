@@ -211,8 +211,8 @@ docs/PROJECT_STATUS.md`.
     counters off so brawls keep their seeded rolls. 12 consecutive full
     `modules/company` runs passed; the hexer test 40 of 40.
   - Final (2026-09-30, after the review fixes; `origin/master` had
-    nothing new): `make generate` (no diff), `make validate`, and
-    `git diff --check` passed; `go test -race ./...`: pending.
+    nothing new): `make generate` (no diff), `make validate`,
+    `git diff --check`, and `go test -race ./...` all passed.
 - **Review:** the independent default-agent reviewer found no blockers;
   each finding was checked.
   - **Fixed, with tests:** no wiring test for the player-vs-player and
