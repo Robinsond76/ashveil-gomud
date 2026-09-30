@@ -13,7 +13,7 @@ ward again.
 
 - A guardian has <ansi fg="yellow">2 guards</ansi> in each battle. Each blow it steps in for spends
   one.
-- A spent guard comes back after <ansi fg="yellow">2 combat rounds</ansi>, one at a time, up to 2.
+- While any guard is spent, one comes back every <ansi fg="yellow">2 combat rounds</ansi>, up to 2.
   A new battle starts with both.
 - Only weapon blows are guarded, not spells.
 - A guardian that is <ansi fg="yellow">knocked down</ansi> (4 rounds) or <ansi fg="yellow">stunned</ansi> (3 rounds) can't
@@ -22,10 +22,10 @@ ward again.
 
 <ansi fg="yellow-bold">The ward</ansi>
 
-- Name a ward, and the guardian guards only them. With none named, it
-  guards whoever in your company is <ansi fg="yellow">most hurt</ansi> (the smallest share of their
-  health left) and within its reach. Nobody hurt, nobody guarded: the
-  guards are kept.
+- Name a ward, and the guardian guards only them: while they are away or
+  fallen, it guards no one. With none named, it guards whoever in your
+  company is <ansi fg="yellow">most hurt</ansi> (the smallest share of their health left) and
+  within its reach. Nobody hurt, nobody guarded: the guards are kept.
 - A guardian must stand in its ward's <ansi fg="yellow">column, or the next one</ansi>, in the
   formation (<ansi fg="command">help formation</ansi>). From further away it can't step in.
   <ansi fg="command">strategy</ansi> and <ansi fg="command">formation</ansi> warn you when a guardian stands too far from

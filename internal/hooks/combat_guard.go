@@ -118,6 +118,12 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		if s.Role != strategy.Guardian || !ableToGuard(g) || battle.GuardsLeft(leader.UserId, string(g.key)) < 1 {
 			continue
 		}
+		// A set ward still in the company but not here (away, fallen) is
+		// guarded by no one else: only one gone from the company reads as
+		// none, the most hurt (review finding 1).
+		if s.Ward != "" && !presentIn(members, s.Ward) && inCompany(leader.UserId, s.Ward) {
+			continue
+		}
 		guarded := make([]strategy.Guarded, 0, len(members))
 		for _, m := range members {
 			guarded = append(guarded, strategy.Guarded{
@@ -136,6 +142,30 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		return g, true
 	}
 	return guardMember{}, false
+}
+
+func presentIn(members []guardMember, key string) bool {
+	for _, m := range members {
+		if string(m.key) == key {
+			return true
+		}
+	}
+	return false
+}
+
+// inCompany reports whether key names a member of leaderId's company: the
+// player, or a companion on the record (alive or dead).
+func inCompany(leaderId int, key string) bool {
+	if key == string(company.LeaderMemberKey) {
+		return true
+	}
+	views, _ := company.CompanyMembers(leaderId)
+	for _, v := range views {
+		if string(company.CompanionMemberKey(v.ID)) == key {
+			return true
+		}
+	}
+	return false
 }
 
 // guardLine is the room's line for a guard: "Tamsin Reed steps in front of

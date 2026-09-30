@@ -86,12 +86,14 @@ standing "proceed with your recommendation" instruction.
 - **Ward:** `Strategy.Ward`, a member key (`leader` or `companion:<id>`),
   blank for "the most hurt". Stored only for a guardian; any other role
   clears it. A ward that names no current member (dismissed, lost) reads
-  as blank; the command's prune drops it.
+  as blank; the command's prune drops it. A ward still in the company but
+  away or fallen is guarded by no one else (review finding 1).
 - **Commands** (all refused in a battle, as every strategy change is):
   - `strategy <who> guardian` / `strategy <who> guard`: guardian, no ward.
   - `strategy <who> guard <other>` (also `guardian <other>`): guardian of
     `<other>` (`me` for the player, or a companion's name or `#id`).
-    Refused for itself ("Tamsin can't guard herself").
+    Refused for itself ("A guardian guards someone else: ...", which
+    needs no pronoun).
   - Setting another role (`fighter`, `healer`, `caster`) or `default`
     clears the ward.
   - The confirmation says who is guarded, and warns when the ward stands
@@ -135,7 +137,9 @@ standing "proceed with your recommendation" instruction.
   else: it still acts in its own turn.
 - **Guards:** 2 at the battle's start (each guardian's count is created
   the first time it is read). At each combat round, a guardian below 2
-  gains a charge; at 2 charges it gets a guard back (decision 9). The
+  gains a charge; at 2 charges it gets a guard back (decision 9): while
+  any is spent, one comes back every 2 rounds (a charge carries over a
+  second spend). The
   count is runtime only, on the battle; a new battle starts at 2.
 - **Narration** (29c voice, mechanics in lowercase parentheses), before
   the blow's own line:

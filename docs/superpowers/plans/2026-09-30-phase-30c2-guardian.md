@@ -77,7 +77,7 @@ Each task writes its tests first and runs only its own packages.
   - The Practice Yard (Combat) lesson points to `help guardian`.
   - Tests: `help guardian` and the updated pages render through `help`
     (`internal/usercommands`); `TestTutorialHelpPointersExist`.
-- [ ] **8. Review, fixes, full verification, status, merge.**
+- [x] **8. Review, fixes, full verification, status, merge.**
   - Independent reviewer over `git diff master..HEAD`; verify each
     finding, fix with regression tests.
   - `go test -race ./...`, `make generate`, `make validate`,

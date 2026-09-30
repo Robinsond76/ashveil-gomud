@@ -160,9 +160,15 @@ func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leade
 	if !legalOk {
 		return nil, false, false
 	}
-	// Phase 30c2: a guardian of the member struck steps in.
+	// Phase 30c2: a guardian of the member struck steps in, and takes the
+	// blow itself (the one already found, never looked up again).
 	if g, guarded := guardianFor(leader, f, finalKey); guarded {
-		finalKey = g.key
+		if g.user != nil {
+			defRoom := rooms.LoadRoom(leader.Character.RoomId)
+			resolveInterceptedAttackOnLeader(mob, leader, mobRoom, defRoom)
+			return nil, true, true
+		}
+		return g.mob, false, true
 	}
 	if finalKey == defenderKey {
 		return defMob, false, true
@@ -233,9 +239,14 @@ func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, de
 	if !legalOk {
 		return false, false
 	}
-	// Phase 30c2: a guardian of the member struck steps in.
+	// Phase 30c2: a guardian of the member struck steps in, and takes the
+	// blow itself (the one already found, never looked up again).
 	if g, guarded := guardianFor(defUser, f, finalKey); guarded {
-		finalKey = g.key
+		if g.user != nil {
+			return false, true // the player guards: the blow lands on them
+		}
+		resolveInterceptedMobAttack(mob, g.mob, mobRoom, defRoom, defUser.UserId)
+		return true, true
 	}
 	if finalKey == company.LeaderMemberKey {
 		return false, true

@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/stretchr/testify/assert"
@@ -333,4 +334,57 @@ func TestGuardianInTheBattleView(t *testing.T) {
 	b.refresh(7)
 	view = lastView(views, 7)
 	assert.Equal(t, []any{map[string]any{"key": "companion:1", "left": 1.0, "ward": "leader"}}, view["guards"])
+}
+
+// Review finding 1: a set ward who is here no longer (away or fallen)
+// isn't replaced by the most hurt: the guardian guards only its ward.
+func TestGuardianSetWardAwayGuardsNoOneElse(t *testing.T) {
+	b := guardBrawl(t, "tamsin guard oswin")
+	got := b.listen()
+	oswin := b.companion(2)
+	b.road.RemoveMob(oswin.InstanceId)
+	verge := rooms.LoadRoom(920102)
+	oswin.Character.RoomId = verge.RoomId
+	verge.AddMob(oswin.InstanceId)
+	b.aria.Character.Health = 300 // the most hurt
+	b.strike(0, false)
+	b.fight()
+	assert.Empty(t, guardEvents(*got, combatstream.GuardUsed), "Tamsin guards Oswin only")
+	assert.Equal(t, 1, blowsOn(*got, "u:7"))
+}
+
+// Review finding 6: of two guardians of one ward, the first in order
+// steps in, and one blow spends one guard.
+func TestGuardianTwoGuardiansOneWard(t *testing.T) {
+	b := guardBrawl(t, "tamsin guard me", "garrick guard me")
+	got := b.listen()
+	b.strike(0, false)
+	b.fight()
+	used := guardEvents(*got, combatstream.GuardUsed)
+	require.Len(t, used, 1)
+	assert.Equal(t, b.companion(1).InstanceId, used[0].Source.MobInstanceId, "Tamsin, first unplaced by order")
+	assert.Equal(t, 1, battle.GuardsLeft(7, "companion:1"))
+	assert.Equal(t, 2, battle.GuardsLeft(7, "companion:3"))
+}
+
+// Review finding 5: a guard applies after 11c's front-row interception.
+// A blow at Aria (back left) is caught by Garrick (front left), and
+// Tamsin (front middle), Garrick's guardian, steps in for him.
+func TestGuardianAfterInterception(t *testing.T) {
+	b := placeBrawl(t, "me 3 1", "garrick 1 1", "tamsin 1 2", "oswin 2 3")
+	b.cmd("strategy", "tamsin guard garrick")
+	got := b.listen()
+	b.cmd("attack", fmt.Sprintf("#%d", b.bandits["bandit captain"][0]))
+	for i := 0; i < 3 && len(guardEvents(*got, combatstream.GuardUsed)) == 0; i++ {
+		b.toughen()
+		b.hold(nil)
+		for _, m := range b.livingBandits() {
+			m.Character.SetAggro(7, 0, characters.DefaultAttack)
+		}
+		b.fight()
+	}
+	used := guardEvents(*got, combatstream.GuardUsed)
+	require.NotEmpty(t, used, "a blow at Aria, caught by Garrick, is taken by Tamsin")
+	assert.Equal(t, b.companion(3).InstanceId, used[0].Target.MobInstanceId, "the ward is the interceptor")
+	assert.Zero(t, blowsOn(*got, "u:7"), "Aria behind Garrick is never struck")
 }
