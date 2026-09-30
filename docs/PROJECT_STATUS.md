@@ -6,8 +6,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-30
-- **HEAD:** `phase-30b-wounds` 2026-09-30: Phase 30b (wounds, treatment,
-  and `heal wounds`), verified and reviewed, awaiting merge to `master`.
+- **HEAD:** `master` 2026-09-30: Phase 30b (wounds, treatment, and
+  `heal wounds`), merged from `phase-30b-wounds`.
   Before it, on `master` 2026-09-29: Phase 30a (status and critical-hit
   effects), merged as `2ef931c` from `claude/next-phase-7ekckc`. Before it,
   Phase 29f (paced combat output),
@@ -41,7 +41,7 @@ instead of duplicating them.
   (32g2), and character deletion
   (32h) are all done.
 - **Latest completed phase:** 30b (wounds, treatment, and `heal wounds`),
-  on `phase-30b-wounds`; see its work-log entry below. Before it, 30a
+  merged to `master` from `phase-30b-wounds`; see its work-log entry below. Before it, 30a
   (status and critical-hit effects), merged as `2ef931c`, and 29f
   (paced combat output), squash-merged to `master` as `fb28df3`, and before
   that 29e (pain reactions), from `codex/phase-29e-pain-reactions`, 32g2
