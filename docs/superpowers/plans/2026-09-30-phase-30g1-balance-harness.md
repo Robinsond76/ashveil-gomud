@@ -35,8 +35,9 @@ only `modules/company`.
 - **The leader can't die.** A player at −10 dies (25a: a level lost, a
   church). The harness holds Aria at 0 once she drops below 1: she is
   fallen (out of the fight, healable), and never dies.
-- **Stalls are reported, not failed.** A fight still going after 100
-  rounds counts as a stall in the table (amending the design's "fails"),
+- **Stalls are reported, not failed.** A fight still going after 200
+  rounds (raised from 100 once the first run showed level-10 fights
+  reaching it) counts as a stall in the table (amending the design's "fails"),
   so a baseline with a stall can still be recorded and looked into.
 - **Runtime.** Cells: levels 1, 5, 10 × 2 × 2 = 12. Fights per cell
   from `ASHVEIL_BALANCE_FIGHTS` (default 50).
@@ -58,7 +59,7 @@ only `modules/company`.
     dice, `withArchetypes`, the mirror group spawned in the road,
     everyone levelled, the tactics saved, a stream subscribed, `attack`
     on the group.
-  - `runBalanceFight`: rounds until one side is down or 100 rounds;
+  - `runBalanceFight`: rounds until one side is down or 200 rounds;
     Aria held at 0; the result (rounds, outcome, fallen per side, the
     tally).
 - [ ] **3. The table (`TestBalance5v5`, gated).**
