@@ -2,7 +2,7 @@ package interrupt
 
 import "testing"
 
-func TestBreaks(t *testing.T) {
+func TestCanBreak(t *testing.T) {
 	cases := []struct {
 		name     string
 		hit      bool
@@ -17,9 +17,60 @@ func TestBreaks(t *testing.T) {
 		{"not chanting", true, 5, false, false},
 	}
 	for _, c := range cases {
-		if got := Breaks(c.hit, c.damage, c.chanting); got != c.want {
-			t.Errorf("%s: Breaks = %v, want %v", c.name, got, c.want)
+		if got := CanBreak(c.hit, c.damage, c.chanting); got != c.want {
+			t.Errorf("%s: CanBreak = %v, want %v", c.name, got, c.want)
 		}
+	}
+}
+
+func TestBreakChance(t *testing.T) {
+	cases := []struct {
+		name          string
+		damage, maxHP int
+		heavy         bool
+		want          int
+	}{
+		{"heavy force always breaks", 1, 100, true, 100},
+		{"a nick", 1, 100, false, 42},
+		{"a scratch on a giant", 1, 1000, false, BreakChanceMin},
+		{"a tenth of their health", 10, 100, false, 60},
+		{"a quarter of their health", 25, 100, false, BreakChanceMax},
+		{"more than a quarter is capped", 80, 100, false, BreakChanceMax},
+		{"no damage never breaks", 0, 100, false, 0},
+		{"no damage, even heavy", 0, 100, true, 0},
+		{"no max health counts as 1", 1, 0, false, BreakChanceMax},
+	}
+	for _, c := range cases {
+		if got := BreakChance(c.damage, c.maxHP, c.heavy); got != c.want {
+			t.Errorf("%s: BreakChance(%d, %d, %v) = %d, want %d", c.name, c.damage, c.maxHP, c.heavy, got, c.want)
+		}
+	}
+}
+
+func TestBreakChanceScalesWithDamage(t *testing.T) {
+	prev := 0
+	for damage := 1; damage <= 30; damage++ {
+		got := BreakChance(damage, 100, false)
+		if got < prev || got < BreakChanceMin || got > BreakChanceMax {
+			t.Fatalf("BreakChance(%d, 100) = %d after %d: want rising within %d-%d", damage, got, prev, BreakChanceMin, BreakChanceMax)
+		}
+		prev = got
+	}
+}
+
+func TestRollBreak(t *testing.T) {
+	never := func(int) int { t.Fatal("a certain outcome needs no roll"); return 0 }
+	if !RollBreak(100, never) {
+		t.Error("a chance of 100 breaks")
+	}
+	if RollBreak(0, never) {
+		t.Error("a chance of 0 holds")
+	}
+	if !RollBreak(60, script(59)) {
+		t.Error("a roll under the chance breaks")
+	}
+	if RollBreak(60, script(60)) {
+		t.Error("a roll at the chance holds")
 	}
 }
 
