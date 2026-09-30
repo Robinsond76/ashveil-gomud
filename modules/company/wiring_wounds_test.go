@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"github.com/stretchr/testify/assert"
@@ -58,6 +59,11 @@ func TestABleedThatRunsOutLeavesALightWound(t *testing.T) {
 // the next round's stray pass); lasting ones stay.
 func TestLightWoundsCloseWithTheFight(t *testing.T) {
 	b := newBrawl(t)
+	// Lasting wounds come from crits: none, so the last round can't add a
+	// wound of its own beside the fracture.
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 0, 0
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	b.aimAt("bandit captain")
 	b.toughen()
 	b.fight()
