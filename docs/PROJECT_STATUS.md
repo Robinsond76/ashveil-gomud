@@ -181,7 +181,10 @@ docs/PROJECT_STATUS.md`.
     second cutthroat standing until it has swung after the first's death.
   - **A last-round crit:** `TestLightWoundsCloseWithTheFight` turns crits
     off, so the final round can't add a lasting wound beside the fracture.
-- **Verification:** see below.
+- **Verification:** before, 7 of 30 full `./modules/company` runs failed.
+  After: each fixed test passed 200-300 times in a loop, and 30 of 30
+  full package runs passed. `go test -race ./...`, `make generate` (no
+  diff), and `make validate` passed (2026-09-30).
 - **Review:** no phase review gate (test-only fix); the diff was read for
   weakened assertions (none: each still asserts the same text and events).
 
