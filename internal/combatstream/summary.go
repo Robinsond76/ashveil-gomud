@@ -144,7 +144,7 @@ func (t *tally) add(f *fight, e Event) {
 		switch {
 		case sourceCompany && e.Outcome == OutcomeSucceeded:
 			t.interruptsDealt = append(t.interruptsDealt, e.Status)
-		case sourceCompany:
+		case sourceCompany && targetEnemy:
 			t.interruptsFailed++
 		case sourceEnemy && e.Outcome == OutcomeSucceeded:
 			t.interruptsTaken++
@@ -301,8 +301,9 @@ func Render(s Summary, viewerUserId int) []string {
 		if len(s.InterruptsDealt) > 0 {
 			dealt += " (" + strings.Join(s.InterruptsDealt, ", ") + ")"
 		}
-		// Phase 30d1: a chant breaks on any damaging blow, so an
-		// interrupt rarely fails; "failed" is shown only when one did.
+		// "failed" is the company's blows a foe's chant withstood (Phase
+		// 30d1b: a blow breaks a chant only by chance), shown only when
+		// one did.
 		parts := []string{dealt}
 		if s.InterruptsFailed > 0 {
 			parts = append(parts, fmt.Sprintf("failed %d", s.InterruptsFailed))

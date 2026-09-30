@@ -6,7 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-30
-- **HEAD:** `master` 2026-09-30: Phase 30d1 (broken chants, shield
+- **HEAD:** `master` 2026-09-30: Phase 30d1b (a blow breaks a chant only
+  by chance), merged from `phase-30d1b-chant-break-chance`. Before it,
+  Phase 30d1 (broken chants, shield
   counters, and enemy casters), merged from `phase-30d-interrupts`. Before
   it, Phase 30c2 (guardian role and guards),
   merged from `phase-30c2-guardian`. Before it, Phase 30c1 (company tactics and enemy
@@ -36,7 +38,7 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29f, 30a, 30b, 30c (30c1, 30c2), 30d1, 32g,
+- **Completed:** Phases 0–29f, 30a, 30b, 30c (30c1, 30c2), 30d1, 30d1b, 32g,
   and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
@@ -46,9 +48,10 @@ instead of duplicating them.
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 30d1 (broken chants, shield counters, and
-  enemy casters), merged to `master` from `phase-30d-interrupts`; see its
-  work-log entry below. Before it, 30c2 (guardian role and guards), from
+- **Latest completed phase:** 30d1b (a blow breaks a chant only by
+  chance), merged to `master` from `phase-30d1b-chant-break-chance`; see
+  its work-log entry below. Before it, 30d1 (broken chants, shield
+  counters, and enemy casters), merged from `phase-30d-interrupts`. Before it, 30c2 (guardian role and guards), from
   `phase-30c2-guardian`. Before it, 30c1 (company tactics and enemy personalities), from
   `phase-30c1-company-tactics`, and 30b (wounds, treatment, and
   `heal wounds`), merged from `phase-30b-wounds`, and 30a
@@ -75,8 +78,9 @@ instead of duplicating them.
   and restores settings afterward; 100 focused race-test repetitions passed.
   Independent follow-up review found no issues and passed 40 focused repetitions.
 - **Next:** 30d2 (physical wind-ups and an ogre with Crushing Blow,
-  reusing 30d1's break; open: whether any blow breaks a wind-up or only
-  heavier force), then 30e (morale and mercy) and 30f (battlefield
+  reusing 30d1's break; decided by the owner 2026-09-30: a wind-up for a
+  physical attack breaks only on heavier force — a crit, a stagger, a
+  knockdown, a stun, or a shield bash — never on an ordinary blow), then 30e (morale and mercy) and 30f (battlefield
   conditions). 30a's statuses count combat rounds; the other balance
   shifts 29f's cadence brought are still to retune (see Known issues).
   Also open: the "Future ideas" row; see Known issues.
@@ -140,7 +144,7 @@ instead of duplicating them.
 | 30a | Status effects and critical-hit effects (weapons only) | Complete (merged as `2ef931c`): [design](superpowers/specs/2026-09-29-phase-30a-status-crit-effects-design.md), [plan](superpowers/plans/2026-09-29-phase-30a-status-crit-effects.md). Nine statuses (bleeding, staggered, knocked down, armor broken, exposed, burning, overloaded, stunned, hobbled) as combat-round buffs (`internal/status`); crit effects by weapon subtype; ticked, and actions lost, in the combat round; cleared at fight end; Sparks overloads; `help statuses` |
 | 30b | Wounds, treatment, and `heal wounds` | Complete: [design](superpowers/specs/2026-09-30-phase-30b-wounds-design.md), [plan](superpowers/plans/2026-09-30-phase-30b-wounds.md). Lasting wounds from damaging crits, light ones from crushing blows and finished bleeds; healing stops at the wound limit; `heal`/`heal wounds` (clerics' `tend` and heal, splints and bandages, the Waymark Inn physician); inn stay heals, camp rest one wound per splint or bandage (owner amendment); death clears; `status`, GMCP, web strip; `help wounds` |
 | 30c | Company tactics | 30c1 complete: [design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md), [plan](superpowers/plans/2026-09-30-phase-30c1-company-tactics.md). `company tactics` (`tactics`): a durable company focus (none, leader, casters, nearest, weakest, strongest, wounded) and healing threshold (10–90%); in a battle only the focus changes, for that battle, one order a round, turning everyone at the next upkeep; web focus buttons; the `casters` rule; enemy personalities by race or template (`targeting`, `targetingnoise`); `help tactics`. 30c2 complete: [design](superpowers/specs/2026-09-30-phase-30c2-guardian-design.md), [plan](superpowers/plans/2026-09-30-phase-30c2-guardian.md). A `guardian` role (`strategy <who> guard [other]`) steps in for its ward (set, else the most hurt in reach) within one column: 2 guards a battle, one back per 2 combat rounds, none while knocked down or stunned; `help guardian`. Rotate the wounded deferred |
-| 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](superpowers/specs/2026-09-30-phase-30d1-chant-interrupts-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1-chant-interrupts.md). Any weapon blow that draws blood breaks a chant (owner: no pressure meter); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 (wind-ups, the ogre) next: [proposal](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md) |
+| 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](superpowers/specs/2026-09-30-phase-30d1-chant-interrupts-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1-chant-interrupts.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](superpowers/specs/2026-09-30-phase-30d1b-chant-break-chance-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1b-chant-break-chance.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, stun, or bash always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 (wind-ups, the ogre) next: [proposal](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md) |
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
 | 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md), [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
@@ -160,6 +164,56 @@ instead of duplicating them.
 Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
+
+### Phase 30d1b: a blow breaks a chant only by chance (2026-09-30)
+
+- **What:** an amendment to 30d1 at the owner's request
+  ([design](superpowers/specs/2026-09-30-phase-30d1b-chant-break-chance-design.md),
+  [plan](superpowers/plans/2026-09-30-phase-30d1b-chant-break-chance.md)).
+  - `internal/interrupt`: `Breaks` → `CanBreak`; `BreakChance` (40 + 2 ×
+    damage% of max health, held to 40–90; 100 for heavy force) and
+    `RollBreak`.
+  - `internal/hooks/combat_interrupt.go`: `breakRoll`
+    (`UseBreakRollForTest`), `heavyBlow` (a crit that landed —
+    new `AttackResult.CritLanded` — or a staggered/knocked-down/stunned
+    status), `holdChant` (`… flinches, but the chant holds. (Minor Heal,
+    chant held)`, the player's `You flinch…`, an `Interrupt` `failed`);
+    the bash breaks as heavy force. The summary's "failed" counts only
+    company blows on an enemy's chant.
+  - Help: `interrupts` (the numbers, heavy force, the held lines),
+    `combat`, `cast`, `strategy`, `tactics`, `formation`, `guardian`,
+    `battle-summary`; the Practice Yard hint. The 30d1 design's Deferrals
+    and the Next line record the owner's 30d2 decision (a wind-up breaks
+    only on heavier force).
+- **Why:** the owner asked (2026-09-30) that a blow break a chant by
+  chance, not always; the chance was left to the lead.
+- **Verification:** unit (`internal/interrupt`, `heavyBlow`, `CritLanded`
+  in `internal/combat`, the summary); wiring through `DoCombat`
+  (`TestChantHoldsOnLightBlow`, `TestPlayerChantHolds`,
+  `TestHeavyBlowAlwaysBreaks`, `TestSummaryCountsHeldEnemyChant`; 30d1's
+  chant tests force the roll); `help_interrupts_test.go` and
+  `TestTutorialHelpPointersExist`. `newBrawl` pins the break roll to 0
+  (always breaks, no seeded roll taken), so other brawls are unchanged.
+  `modules/company` looped 5 times, then 3 more after the review fixes,
+  all passing. Final (2026-09-30, after the review fixes): `make generate`
+  (no diff), `make validate`, `git diff --check`, and `go test -race ./...`
+  all passed.
+- **Review:** the independent default-agent reviewer found no invariant
+  problems; each finding was checked.
+  - **Fixed, with regression tests:** a crit the armor took entirely made
+    the round's other damaging strike heavy (`AttackResult.Crit` is set
+    before armor; now `CritLanded`); the summary counted a company blow
+    on a company chant as a failed interrupt (now enemy targets only);
+    the held test didn't check the chant went on, nor that the player
+    isn't told the room's line; help listed the shield bash (not yet
+    reachable) and said "most health".
+  - **Amended in the design:** the stagger case is covered by the unit
+    test (statuses come only from crits today); a stale "broken by any
+    hit" line in the 30d1 design.
+  - **Accepted (the first two under Known issues):** frail casters rarely see
+    the 40% floor; a weapon's own crit statuses on a fully blocked crit
+    (30a) make the round heavy; pet damage without `Hit` breaks nothing
+    (pre-existing).
 
 ### Phase 30d1: broken chants, shield counters, and enemy casters (2026-09-30)
 
@@ -315,8 +369,15 @@ docs/PROJECT_STATUS.md`.
   a round per bearer) are a recommendation to tune. A bash leaves no
   wound; an enemy restarts its chant for ever while hit (no mana spent); a
   mob that runs out of mana wastes the turns it picks `cast` (GoMud's
-  combat commands). No casting on the battle view's grid yet (32g2). 30d2
-  must decide whether any blow breaks a physical wind-up.
+  combat commands). No casting on the battle view's grid yet (32g2). 30d2's
+  wind-ups break only on heavier force (owner, 2026-09-30).
+- **Chance to break a chant (30d1b), for the owner:** the numbers (40% +
+  2 per percent of max health, held to 40–90%) are the lead's choice, to
+  tune. A frail caster's floor is rarely 40% (a 30-health healer hit for
+  3 is at 60%). The shield bash's "always breaks" can't happen until
+  30d2's wind-ups (a character that swings isn't chanting). A weapon's own
+  crit statuses still land on a crit the armor took (30a), so they make
+  that round's other blows heavy.
 
 - **Company tactics (30c1), accepted:** an order given in the round its
   battle ends is dropped silently; a solo player has no web tactics row

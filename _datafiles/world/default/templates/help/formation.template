@@ -47,7 +47,7 @@ A blow aimed at someone behind the front row is caught by the fighter in
 the front row of the same column, if that fighter is alive.
 Put your toughest in front to shield the rest. Your company does this for
 you, and the enemy does it to you. Keep healers and casters behind them:
-a blow that draws blood breaks a chant (<ansi fg="command">help interrupts</ansi>).
+a blow that draws blood may break a chant (<ansi fg="command">help interrupts</ansi>).
 
 <ansi fg="yellow-bold">Guardians</ansi>
 

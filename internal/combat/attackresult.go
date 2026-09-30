@@ -6,8 +6,11 @@ import (
 )
 
 type AttackResult struct {
-	Hit                     bool  // defaults false
-	Crit                    bool  // defaults false
+	Hit  bool // defaults false
+	Crit bool // defaults false
+	// CritLanded is true when a critical strike got through the armor and
+	// did damage (Crit is set before armor; Phase 30d1b's heavy force).
+	CritLanded              bool
 	BuffSource              []int // defaults 0
 	BuffTarget              []int // defaults 0
 	DamageToTarget          int   // defaults 0

@@ -220,6 +220,10 @@ func newBrawl(t *testing.T) *brawl {
 	// Phase 30d1: nor a shield's counter (a test that wants one scripts
 	// its dice), so the brawls keep their seeded rolls.
 	t.Cleanup(hooks.UseCounterRollForTest(func(n int) int { return n - 1 }))
+	// Phase 30d1b: a blow that can break a chant breaks it, as in 30d1,
+	// with no roll taken from the seeded dice (a test about a held chant
+	// scripts its own).
+	t.Cleanup(hooks.UseBreakRollForTest(func(int) int { return 0 }))
 	// Nor a grudge: an earlier fight leaves the bandits' group hostile to
 	// Aria (user 7) for many rounds, and they would open the next brawl.
 	mobs.ResetHostility()

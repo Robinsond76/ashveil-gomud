@@ -49,6 +49,22 @@ func counterDice(t *testing.T, bash, face, stun int) {
 	}))
 }
 
+// breakDice fixes the break roll (0..99) for the rest of the test: 0
+// breaks any chant a blow can break, 99 holds any a blow that isn't heavy
+// strikes (Phase 30d1b).
+func breakDice(t *testing.T, roll int) {
+	t.Helper()
+	t.Cleanup(hooks.UseBreakRollForTest(func(int) int { return roll }))
+}
+
+// forceCrits makes every blow that lands a critical hit.
+func forceCrits(t *testing.T) {
+	t.Helper()
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 100, 100
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
+}
+
 // noCounters makes every counter roll fail, so a test about chants is not
 // disturbed by a shield.
 func noCounters(t *testing.T) {
@@ -103,12 +119,13 @@ func (b *brawl) mobCasts(m *mobs.Mob, spell string) {
 
 func key(m *mobs.Mob) string { return fmt.Sprintf("m:%d", m.InstanceId) }
 
-// A companion's heal breaks when a blow draws blood: the spell is lost,
+// A companion's heal breaks when a blow draws blood and the roll says so: the spell is lost,
 // half its mana comes back, the events say so, and no heal lands.
 func TestCompanionHealBrokenByBlow(t *testing.T) {
 	b := guardBrawl(t)
 	forceBlows(t, true)
 	noCounters(t)
+	breakDice(t, 0) // Phase 30d1b: the blow breaks the chant
 	stream := b.listen()
 	oswin := b.companion(2)
 
@@ -148,6 +165,7 @@ func TestPlayerChantBrokenByBlow(t *testing.T) {
 	captain, _, _, _, _ := b.shapeBandits()
 	forceBlows(t, true)
 	noCounters(t)
+	breakDice(t, 0) // Phase 30d1b: the blow breaks the chant
 	stream := b.listen()
 	b.aria.Character.SetSkill("cast", 1)
 	b.aria.Character.LearnSpell("mm")
@@ -201,6 +219,7 @@ func TestEnemyChantBreaksAndRestarts(t *testing.T) {
 	b := guardBrawl(t)
 	forceBlows(t, true)
 	noCounters(t)
+	breakDice(t, 0) // Phase 30d1b: the blow breaks the chant
 	stream := b.listen()
 	captain := b.captain()
 	tamsin := b.companion(1)
@@ -260,6 +279,7 @@ func TestGuardedBlowBreaksGuardianChant(t *testing.T) {
 	b := guardBrawl(t, "tamsin guard me")
 	forceBlows(t, true)
 	noCounters(t)
+	breakDice(t, 0) // Phase 30d1b: the blow breaks the chant
 	stream := b.listen()
 	tamsin := b.companion(1)
 
@@ -456,6 +476,7 @@ func TestPlayerGuardianChantAndCounter(t *testing.T) {
 	b := guardBrawl(t, "me guard oswin")
 	forceBlows(t, true)
 	noCounters(t)
+	breakDice(t, 0) // Phase 30d1b: the blow breaks the chant
 	stream := b.listen()
 	for try := 0; try < 8 && len(interruptsOf(*stream, "u:7")) == 0; try++ {
 		b.toughen()
@@ -510,6 +531,7 @@ func TestPlayerVsPlayerChantAndCounter(t *testing.T) {
 	stream := b.listen()
 
 	forceBlows(t, true)
+	breakDice(t, 0)
 	for try := 0; try < 8 && len(interruptsOf(*stream, "u:8")) == 0; try++ {
 		brom.Character.HealthMax.Value, brom.Character.Health = 1000, 1000
 		b.toughen()
@@ -567,4 +589,164 @@ func TestGoblinHexerHexesTheHealer(t *testing.T) {
 	assert.Equal(t, key(hexer), hit.Source.Key())
 	assert.Equal(t, key(oswin), hit.Target.Key(), "on the healer")
 	assert.Greater(t, hit.Damage, 0)
+}
+
+// Phase 30d1b: a light blow that loses the roll leaves the chant whole:
+// Oswin flinches, the room is told, and a failed Interrupt is emitted.
+// No mana comes back and nothing is interrupted.
+func TestChantHoldsOnLightBlow(t *testing.T) {
+	b := guardBrawl(t)
+	forceBlows(t, true)
+	noCounters(t)
+	breakDice(t, 99)
+	stream := b.listen()
+	oswin := b.companion(2)
+
+	var out string
+	chantsOn := false // after the round it held, Oswin still chants (or healed)
+	held := func() []combatstream.Event {
+		var got []combatstream.Event
+		for _, e := range interruptsOf(*stream, key(oswin)) {
+			if e.Outcome == combatstream.OutcomeFailed {
+				got = append(got, e)
+			}
+		}
+		return got
+	}
+	for try := 0; try < 8 && len(held()) == 0; try++ {
+		b.toughen()
+		b.hold(nil)
+		b.aria.Character.Health = 500
+		if oswin.Character.Aggro == nil || oswin.Character.Aggro.Type != characters.SpellCast {
+			b.mobCasts(oswin, "heal aria")
+		}
+		b.strike(2, false) // the captain on Oswin
+		out = b.fight()
+		chantsOn = (oswin.Character.Aggro != nil && oswin.Character.Aggro.Type == characters.SpellCast) ||
+			len(ofKind(*stream, combatstream.Heal)) > 0
+	}
+	got := held()
+	require.NotEmpty(t, got, "a blow struck the chant and it held:\n%s", out)
+	assert.Equal(t, b.captain().InstanceId, got[0].Source.MobInstanceId, "the captain's blow")
+	assert.Equal(t, "heal", got[0].SpellId)
+	assert.Equal(t, "Minor Heal", got[0].Status)
+	assert.Contains(t, out, "Brother Oswin flinches, but the chant holds. (Minor Heal, chant held)")
+	for _, e := range interruptsOf(*stream, key(oswin)) {
+		assert.Equal(t, combatstream.OutcomeFailed, e.Outcome, "no blow broke it")
+	}
+	for _, e := range castsBy(*stream, combatstream.CastComplete, key(oswin)) {
+		assert.NotEqual(t, combatstream.OutcomeInterrupted, e.Outcome)
+	}
+	assert.NotContains(t, out, "breaks off under the blow")
+	assert.True(t, chantsOn, "the chant went on after it held")
+}
+
+// A player whose chant holds is told so.
+func TestPlayerChantHolds(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("wizard")
+	b.unplaced()
+	captain, _, _, _, _ := b.shapeBandits()
+	forceBlows(t, true)
+	noCounters(t)
+	breakDice(t, 99)
+	heard := b.ariaHears()
+	b.aria.Character.SetSkill("cast", 1)
+	b.aria.Character.LearnSpell("mm")
+	b.cmd("attack", fmt.Sprintf("#%d", captain))
+
+	var out string
+	for try := 0; try < 8 && !strings.Contains(out, "You flinch"); try++ {
+		b.toughen()
+		b.hold(nil)
+		b.aria.Character.ManaMax.Value, b.aria.Character.Mana = 20, 20
+		b.strike(0, false) // the captain on Aria
+		out = b.fight()
+	}
+	assert.Contains(t, out, "You flinch, but your chant holds. (Magic Missile, chant held)")
+	assert.NotContains(t, out, "The blow breaks your chant")
+	assert.Contains(t, strings.Join(*heard, "\n"), "You flinch, but your chant holds.")
+	assert.NotContains(t, strings.Join(*heard, "\n"), "Aria flinches", "she isn't told the room's line")
+}
+
+// Heavy force always breaks a chant, however the roll falls: a critical
+// hit.
+func TestHeavyBlowAlwaysBreaks(t *testing.T) {
+	b := guardBrawl(t)
+	forceBlows(t, true)
+	forceCrits(t)
+	noCounters(t)
+	breakDice(t, 99) // a roll no ordinary blow breaks on
+	stream := b.listen()
+	oswin := b.companion(2)
+
+	var out string
+	for try := 0; try < 8 && len(interruptsOf(*stream, key(oswin))) == 0; try++ {
+		b.toughen()
+		b.hold(nil)
+		if oswin.Character.Aggro == nil || oswin.Character.Aggro.Type != characters.SpellCast {
+			b.mobCasts(oswin, "heal aria")
+		}
+		b.strike(2, false) // the captain on Oswin
+		out = b.fight()
+	}
+	broken := interruptsOf(*stream, key(oswin))
+	require.NotEmpty(t, broken, "the critical blow broke the chant:\n%s", out)
+	assert.Equal(t, combatstream.OutcomeSucceeded, broken[0].Outcome)
+	assert.Contains(t, out, "Brother Oswin's chant breaks off under the blow. (Minor Heal interrupted)")
+	var crit bool
+	for _, e := range ofKind(*stream, combatstream.Attack) {
+		if e.Target.Key() == key(oswin) && e.Crit {
+			crit = true
+		}
+	}
+	assert.True(t, crit, "the blow was critical")
+}
+
+// The battle summary counts a company blow that a foe's chant withstood
+// as a failed interrupt.
+func TestSummaryCountsHeldEnemyChant(t *testing.T) {
+	b := guardBrawl(t)
+	forceBlows(t, true)
+	noCounters(t)
+	breakDice(t, 99)
+	stream := b.listen()
+	captain := b.captain()
+	tamsin := b.companion(1)
+
+	held := func() bool {
+		for _, e := range interruptsOf(*stream, key(captain)) {
+			if e.Outcome == combatstream.OutcomeFailed {
+				return true
+			}
+		}
+		return false
+	}
+	for try := 0; try < 8 && !held(); try++ {
+		b.toughen()
+		b.hold(nil)
+		for _, m := range b.livingBandits() {
+			m.Character.SetAggro(0, b.companion(4).InstanceId, characters.DefaultAttack)
+			m.Character.Aggro.RoundsWaiting = 1
+		}
+		if captain.Character.Aggro.Type != characters.SpellCast {
+			b.mobCasts(captain, fmt.Sprintf("mm #%d", tamsin.InstanceId))
+		}
+		b.aria.Character.SetAggro(0, captain.InstanceId, characters.DefaultAttack)
+		b.fight()
+	}
+	require.True(t, held(), "a company blow struck the captain's chant and it held")
+
+	for _, m := range b.livingBandits() {
+		m.Character.Health = 1
+	}
+	out := b.fightItOut(10)
+	found := false
+	for _, line := range strings.Split(out, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "Interrupts") {
+			found = true
+			assert.Regexp(t, `failed [1-9]`, line)
+		}
+	}
+	assert.True(t, found, "an Interrupts line: %s", out)
 }

@@ -20,10 +20,11 @@ import (
 // Phase 30d1: broken chants and shield counters (internal/interrupt holds
 // the rules). After every weapon blow, once its lines are out, afterBlow
 // looks at what it did:
-//   - a blow that did damage breaks the target's chant. A player or a
-//     company companion loses the spell with half its mana back; any other
-//     mob (an enemy) starts the chant again from the first word at its
-//     next turn;
+//   - a blow that did damage may break the target's chant (Phase 30d1b:
+//     heavy force always does, any other blow by a chance that grows with
+//     its damage). A player or a company companion loses the spell with
+//     half its mana back; any other mob (an enemy) starts the chant again
+//     from the first word at its next turn. A chant that holds is told;
 //   - a blow that missed a shield-bearer may be countered: the bearer
 //     slams its shield back into the attacker, and the bash may stun.
 //
@@ -40,6 +41,8 @@ var (
 	countered = map[string]bool{}
 	// counterRoll rolls the counters; tests replace it.
 	counterRoll = util.Rand
+	// breakRoll rolls whether a blow breaks a chant; tests replace it.
+	breakRoll = util.Rand
 	// interruptsOff turns this file off, for a test whose golden record
 	// predates Phase 30d1.
 	interruptsOff bool
@@ -60,6 +63,14 @@ func UseCounterRollForTest(roll func(int) int) (restore func()) {
 	prev := counterRoll
 	counterRoll = roll
 	return func() { counterRoll = prev }
+}
+
+// UseBreakRollForTest replaces the chant-break dice until the returned
+// restore is called.
+func UseBreakRollForTest(roll func(int) int) (restore func()) {
+	prev := breakRoll
+	breakRoll = roll
+	return func() { breakRoll = prev }
 }
 
 // interruptRound starts a combat round: no one has countered yet, and a
@@ -89,12 +100,32 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	if interruptsOff {
 		return
 	}
-	if defender.char.Health >= 1 && interrupt.Breaks(r.Hit, r.DamageToTarget, defender.chanting()) {
-		breakChant(attacker, defender)
+	if defender.char.Health >= 1 && interrupt.CanBreak(r.Hit, r.DamageToTarget, defender.chanting()) {
+		chance := interrupt.BreakChance(r.DamageToTarget, defender.char.HealthMax.Value, heavyBlow(r))
+		if interrupt.RollBreak(chance, breakRoll) {
+			breakChant(attacker, defender)
+		} else {
+			holdChant(attacker, defender)
+		}
 	}
 	if !r.Hit {
 		counterBlow(attacker, defender)
 	}
+}
+
+// heavyBlow reports whether a blow lands with heavy force, which always
+// breaks a chant: a critical hit that got through the armor, or one that
+// staggers, knocks down, or stuns.
+func heavyBlow(r combat.AttackResult) bool {
+	if r.CritLanded {
+		return true
+	}
+	for _, id := range r.BuffTarget {
+		if id == status.Staggered || id == status.KnockedDown || id == status.Stunned {
+			return true
+		}
+	}
+	return false
 }
 
 // spellName is a spell's name and cost, the id when it is no longer
@@ -154,6 +185,24 @@ func breakChant(by, chanter statusHolder) {
 		room.SendText(other)
 	}
 	events.AddToQueue(events.AggroChanged{MobInstanceId: chanter.mob.InstanceId, RoomId: roomId})
+}
+
+// holdChant tells of a blow the chant withstood: the lines, and an
+// Interrupt event that failed. The chant goes on untouched.
+func holdChant(by, chanter statusHolder) {
+	spellId := chanter.char.Aggro.SpellInfo.SpellId
+	name, _ := spellName(spellId)
+	roomId := chanter.char.RoomId
+	emitCombat(combatstream.Event{Kind: combatstream.Interrupt, RoomId: roomId, Source: by.ref, Target: chanter.ref, SpellId: spellId, Status: name, Outcome: combatstream.OutcomeFailed})
+
+	var exclude []int
+	if chanter.user != nil {
+		chanter.user.SendText(fmt.Sprintf(`You flinch, but your chant holds. (%s, chant held)`, name))
+		exclude = append(exclude, chanter.user.UserId)
+	}
+	if room := rooms.LoadRoom(roomId); room != nil {
+		room.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s flinches, but the chant holds. (%s, chant held)`, chanter.tag(), name)), exclude...)
+	}
 }
 
 // restartChant starts an enemy's broken chant again from the first word,
@@ -269,8 +318,9 @@ func counterBlow(attacker, bearer statusHolder) {
 		roundExtraMobs = append(roundExtraMobs, attacker.mob.InstanceId)
 	}
 
-	// A bash is a blow: it breaks a chant (Phase 30d2's wind-ups).
-	if interrupt.Breaks(true, dealt, attacker.chanting()) && attacker.char.Health >= 1 {
+	// A bash is heavy force: it always breaks a chant (Phase 30d2's
+	// wind-ups).
+	if interrupt.CanBreak(true, dealt, attacker.chanting()) && attacker.char.Health >= 1 {
 		breakChant(bearer, attacker)
 	}
 }
