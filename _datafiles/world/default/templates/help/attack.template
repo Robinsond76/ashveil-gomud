@@ -2,7 +2,7 @@
 
 Start a fight with a group of enemies. Once it starts, the battle plays out
 on its own, the way your company was set up beforehand: nothing you type
-changes it.
+changes it but a new company focus (<ansi fg="command">help tactics</ansi>).
 
 <ansi fg="yellow">Usage:</ansi>
 

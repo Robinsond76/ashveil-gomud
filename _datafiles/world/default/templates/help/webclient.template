@@ -24,8 +24,9 @@ button in them just types a command for you.
               Quests, Effects, and Pet when you have one.
   <ansi fg="yellow">Company</ansi>     Status (formation and each member), Inventory (everyone's
               gear, your horses, and the cargo), and Camp.
-  <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, and each member's
-              role and target rule), and the Battle view during a battle.
+  <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
+              role and target rule, and your company tactics), and the
+              Battle view during a battle.
   <ansi fg="yellow">Comm</ansi>        what's said around you; a number on the tab counts what
               arrived while you were looking elsewhere.
 
@@ -48,8 +49,9 @@ button in them just types a command for you.
   Enter chooses, and Escape closes it.
 
   Combat: click a member to change their role or target rule (<ansi fg="command">strategy</ansi>)
-  or where they stand (<ansi fg="command">formation</ansi>). Scout appears when enemies are here
-  (<ansi fg="command">scout</ansi>).
+  or where they stand (<ansi fg="command">formation</ansi>); click Company tactics to set the
+  focus or healing threshold (<ansi fg="command">company tactics</ansi>). Scout appears when
+  enemies are here (<ansi fg="command">scout</ansi>).
 
 <ansi fg="yellow-bold">The Battle view</ansi>
 
@@ -74,6 +76,11 @@ button in them just types a command for you.
   target rule, or place (the battle plays out by these); the full Setup
   is folded under the view. Flee tries to get away (<ansi fg="command">flee</ansi>).
 
+  Above the grids, the Focus buttons call a new focus for this battle
+  (<ansi fg="command">company tactics focus</ansi>, <ansi fg="command">help tactics</ansi>): the current one is marked,
+  and all of them wait, greyed out, until your company has turned at the
+  next round. "saved" goes back to your saved focus.
+
 <ansi fg="yellow-bold">Arranging it</ansi>
 
   The button at the top right of the dock opens the tab you're looking
@@ -83,4 +90,4 @@ button in them just types a command for you.
   <ansi fg="yellow">Settings > Reset Layout</ansi> puts everything back where it started.
 
 See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help camp</ansi>,
-<ansi fg="command">help strategy</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help scout</ansi>.
+<ansi fg="command">help strategy</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help scout</ansi>.

@@ -81,7 +81,7 @@ Each task writes its tests first and runs only its own packages.
     Setup; extend `scripts/browser/dock-windows-check.mjs` (buttons
     render, the current one pressed, disabled when not ready, a click
     sends the command; Setup shows the tactics).
-- [ ] **8. Player help and tutorial.**
+- [x] **8. Player help and tutorial.**
   - New `help tactics` (`tactics.template`), in `keywords.yaml` under
     combat with aliases `focus`, `company-tactics`, `personalities`,
     linked from `help combat`.
