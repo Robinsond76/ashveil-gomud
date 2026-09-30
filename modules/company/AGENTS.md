@@ -83,3 +83,10 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 - `company inventory` (`inventory.go`) lists the load, every member's worn and carried items (live gear when out, as `company gear`), the herd, and the cargo. Name companions with `nameOf`.
 - `company eat`/`drink`/`meal` (`provision.go`): `planMeal` is pure; `mealView` feeds the leader and the companions present, from the cargo, then the member's own pack, then the leader's. Each step spends the item first and only then provisions (so food that can't be spent feeds no one; a crash in between loses one use). Only meal buffs (17, 18, 34) qualify.
 - `useCompanionItem` takes a use from a live companion (then refreshes its record in memory, as a gear change does) or from its record (saved at once, rolled back on a failed save; a companion not out has no other seam).
+
+## Phase 30b: wounds (`wounds.go`, `runtime.go`, `death.go`)
+
+- A companion's wounds live on its live mob (`Character.Wounds`) and in `MemberState.Wounds`, captured by `Snapshot` at the 22b seams like gear (in memory; written with the next save). `applyState` restores the lasting ones and spawns the mob at its wound limit, not max. A companion's death drops them (`keptState`).
+- `MemberView.HPLimit` (via `Runtime.HealthLimit`) feeds `internal/companyview` and GMCP.
+- `heal` lists the hurt; `heal wounds` (refused while the leader is in a battle or anyone present has aggro) plans with `wounds.Plan`: clerics first (a player needs `cast` and the spell; a companion its archetype's spells at its level), then items spent before they are applied (cargo, the patient's pack, the leader's, the other companions'), then a configured physician (`Physicians` in the config overlay, matched by template room) asked through the user prompt; `yes` re-checks the price, takes the gold, clears every present member's wounds, saves the company and the user. Instant; never touches the clock.
+- `wiring_heal_wounds_test.go`, `wiring_wounds_test.go`, and `wiring_wound_spells_test.go` run in the brawl world.

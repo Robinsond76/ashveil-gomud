@@ -18,7 +18,9 @@ A weapon with its own critical effect uses that one instead, and that one
 can land even when the armor stops the blow; otherwise only a critical hit
 that gets through the armor leaves a mark. Fists and a beast's natural
 attacks leave none, and spells never critically hit. The mark is named in the hit's brackets:
-<ansi fg="command">(critical hit, 6 damage, bleeding)</ansi>.
+<ansi fg="command">(critical hit, 6 damage, bleeding)</ansi>. On you or a companion, a critical hit that
+gets through also leaves a wound, from any weapon, fists and bites too:
+<ansi fg="command">(critical hit, 6 damage, bleeding, wounded)</ansi> (<ansi fg="command">help wounds</ansi>).
 
 <ansi fg="yellow-bold">The statuses</ansi>
 
@@ -51,7 +53,9 @@ rounds, and they all end when the fight does. A blow struck in a fight's
 last round leaves no status: the fight is already over. A status that took damage
 reads <ansi fg="command">The first cutthroat bleeds. (1 damage, bleeding)</ansi>, and its end reads
 <ansi fg="command">The first cutthroat's bleeding stops.</ansi>. Damage from a status can bring
-someone down like any other. See what ails you with <ansi fg="command">conditions</ansi>.
+someone down like any other. A bleed that runs its full course on you or
+a companion leaves a light wound, which closes when the fight ends. See
+what ails you with <ansi fg="command">conditions</ansi>.
 
 The battle summary counts the damage they do (<ansi fg="command">help battle-summary</ansi>), and
 the rest of a fight is explained in <ansi fg="command">help combat</ansi> and

@@ -83,7 +83,7 @@ Each task writes its tests first and runs only its own packages.
     - GMCP `hp_limit`.
   - Add the web dock's strip text (checked with a JS test or by
     Playwright if there is one for the strip).
-- [ ] **10. Player help and tutorial.**
+- [x] **10. Player help and tutorial.**
   - `help wounds`, and a rewrite of `help heal`.
   - Updates to `statuses`, `camp`, `inn`, `death`, `health`, and the
     `combat` hub link.

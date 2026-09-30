@@ -90,6 +90,13 @@ you bleed, maces stagger, hammers and axes knock down or break armor, bows
 leave you exposed. Staggered, knocked down, and stunned fighters lose their
 action. Statuses last a few combat rounds and end with the fight.
 
+<ansi fg="yellow-bold">Wounds (</ansi><ansi fg="command">help wounds</ansi><ansi fg="yellow-bold">)</ansi>
+
+A critical hit on you or a companion also leaves a wound, which stops
+healing short of your maximum until it is treated. After the fight,
+<ansi fg="command">heal wounds</ansi> has your clerics, bandages, and splints tend the company;
+a camp rest or an inn stay knits what is left.
+
 <ansi fg="yellow-bold">After the fight (</ansi><ansi fg="command">help battle-summary</ansi><ansi fg="yellow-bold">)</ansi>
 
 When your company's fight ends, you see a summary. It shows the damage each
@@ -106,6 +113,7 @@ and your company's health.
   <ansi fg="command">formation</ansi>         see and arrange your company's formation
   <ansi fg="command">company chemistry</ansi> your company's chemistry
   <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind
+  <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
   <ansi fg="command">light</ansi>             how well you can see here
   <ansi fg="command">set combatpace</ansi>    how fast a round's lines come to you

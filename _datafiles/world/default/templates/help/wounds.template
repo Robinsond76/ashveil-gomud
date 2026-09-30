@@ -1,0 +1,52 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">wounds</ansi>
+
+Some blows leave a wound that healing can't mend at once. A wound holds back
+part of your health: while you're wounded, healing stops at your
+<ansi fg="yellow">wound limit</ansi>, not at your maximum. Your maximum health doesn't change.
+With 16 health and a 3-point wound, regeneration, potions, and spells heal
+you only to 13, until the wound is treated.
+
+Only you and your companions are wounded. Enemies are not.
+
+<ansi fg="yellow-bold">Where wounds come from</ansi>
+
+  <ansi fg="yellow">Lasting wounds</ansi>  A critical hit that gets through the armor leaves one. It
+                  holds back half the hit's damage, rounded up. The hit's
+                  brackets say so: <ansi fg="command">(critical hit, 6 damage, bleeding, wounded)</ansi>.
+                  Lasting wounds stay after the fight, through logout and
+                  restarts, until they are treated or rested away.
+  <ansi fg="yellow">Light wounds</ansi>    A crushing blow (one hit of a quarter of your maximum
+                  health or more), or a bleed that runs its full course,
+                  leaves one. Light wounds close when the fight ends.
+
+The weapon decides the wound:
+
+  swords, axes, whips, claws, fists, and bites   a cut
+  daggers, spears, arrows, and bolts             a puncture
+  maces, clubs, and hammers                      a broken bone
+
+However many wounds you carry, healing can always bring you to a quarter of
+your maximum health. Your limit shows in <ansi fg="command">status</ansi> as <ansi fg="command">12/16 (limit 13)</ansi>,
+in <ansi fg="command">heal</ansi>, and in the web client's vitals strip. A heal the limit held
+back says so: <ansi fg="command">(1 healed, wound limit 13 of 16)</ansi>. Your company's healers
+heal a wounded member only up to their limit.
+
+<ansi fg="yellow-bold">Treating wounds</ansi>
+
+  <ansi fg="command">heal wounds</ansi>        after a fight, whoever and whatever can help tends
+                     the company (<ansi fg="command">help heal</ansi>)
+  <ansi fg="command">cast tend [who]</ansi>    a cleric closes 2 to 6 points of the worst wound
+                     (Tend Wounds, 4 mana); it heals no health itself
+  linen bandage      closes 3 points of a cut or a puncture; used up
+  birch splint       closes 4 points of a broken bone; used up
+  a physician        closes every wound, for gold (15 a wound at the
+                     Waymark Inn in Dunmar)
+  a camp rest        a completed rest (<ansi fg="command">help camp</ansi>) knits every wound of
+                     the company with you
+  an inn stay        so does a completed night at an inn (<ansi fg="command">help inn</ansi>)
+
+Bandages and splints are sold in the markets of Dunmar and the Old Kings
+Road (<ansi fg="command">help market</ansi>). Death clears your wounds, and a companion raised
+by <ansi fg="command">resurrect</ansi> comes back whole.
+
+See also: <ansi fg="command">help heal</ansi>, <ansi fg="command">help statuses</ansi>, <ansi fg="command">help health</ansi>, <ansi fg="command">help combat</ansi>.

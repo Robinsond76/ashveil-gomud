@@ -122,6 +122,7 @@ func init() {
 				`<ansi fg="command">camp status</ansi> shows the rest's progress and everyone's needs; <ansi fg="command">conditions</ansi> shows Rested afterwards.`,
 				`With a whetstone, <ansi fg="command">camp sharpen on</ansi> hones every blade in the company at the end of a rest, using the stone once. Whetstones are sold in markets (<ansi fg="command">help sharpen</ansi>).`,
 				`An inn stay (<ansi fg="command">inn</ansi>) costs gold but leaves you Well Rested, which is better than Rested.`,
+				`A finished rest also knits your company's wounds. After a fight, <ansi fg="command">heal wounds</ansi> has your clerics, bandages, and splints tend the hurt (<ansi fg="command">help wounds</ansi>).`,
 				`<ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>, and <ansi fg="command">help cooking</ansi> explain resting and cooking in full.`,
 			},
 			Done: "Rested and ready.",

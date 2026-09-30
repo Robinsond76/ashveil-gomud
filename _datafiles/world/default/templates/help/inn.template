@@ -33,7 +33,9 @@ the world clock, and weather never spoils it.
   replaces Rested, and a camp rest afterward can't
   downgrade it back. A companion who wasn't with you when the stay
   finished still gets its share of Well Rested once it rejoins, for
-  whatever time is left.
+  whatever time is left. A finished stay also knits every wound of you
+  and the companions with you (<ansi fg="command">help wounds</ansi>). The Waymark Inn's
+  physician closes wounds for gold at any time (<ansi fg="command">heal wounds</ansi>).
 
 Only one room is bought per stay, for your whole company; there's
 nothing to strike or break afterward.

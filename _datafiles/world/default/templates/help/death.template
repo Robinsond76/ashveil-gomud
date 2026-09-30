@@ -12,5 +12,6 @@ You may also drop some of your gear, which you'll need to go back for.
 
 You wake at the church of the last city you visited, with your living
 companions beside you. Any journey, camp, or inn stay is left behind.
+You wake without your wounds (<ansi fg="command">help wounds</ansi>).
 
 Your companions can die too: see <ansi fg="command">help resurrect</ansi>.

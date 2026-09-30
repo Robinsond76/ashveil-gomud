@@ -87,9 +87,13 @@ type Wound struct {
 
   | Weapon subtype | Kind |
   |---|---|
-  | slashing, cleaving, whipping, claws, generic (natural) | cut |
+  | slashing, cleaving, whipping, claws, generic (natural attacks and fists) | cut |
   | stabbing, shooting | puncture |
-  | bludgeoning, unarmed | fracture |
+  | bludgeoning | fracture |
+
+  (Implementation note: fists have no subtype of their own, since
+  GoMud's unarmed attack is `generic`, so fists leave a cut, not a
+  fracture.)
 
   The place is picked from the kind's list.
 - `Crushing(damage, max)` gives a light bruise of `ceil(damage/4)` points,
@@ -171,7 +175,8 @@ companion has aggro, or the leader is in a battle. Otherwise:
    - then a bandage on a patient under half their limit, healing 3.
 
    Items come from the cargo, then the patient's pack, then the leader's
-   pack (32f's order). Each is spent first and only then applied.
+   pack (32f's order), then another companion's pack. Each is spent
+   first and only then applied.
 5. **The physician.** In a physician room with lasting wounds left, the
    physician offers to close them all, for the room's price per wound.
    `Pay N gold? [yes/no]`:
@@ -207,7 +212,9 @@ member gets a line: `Tamsin Reed's broken arm has knit. (wound healed)`.
 
 ### Surfaces
 
-- `status`: the health line reads `13/16 (wound limit 13)` while wounded.
+- `status`: the health line reads `13/16 (limit 13)` while wounded.
+  (Implementation note: "wound limit" wrapped the sheet's Vitals panel,
+  so it is shortened here.)
 - `companyview.Member` and `company.MemberView` gain `HPLimit`. The GMCP
   `Company.Vitals` gains `hp_limit` (set only when below max).
 - The web company dock's vitals strip shows `limit 13` in the member's HP
@@ -238,6 +245,7 @@ member gets a line: `Tamsin Reed's broken arm has knit. (wound healed)`.
   its wounds.
 - **Displays.** Wounds aren't shown on the live battle-view grid (32g2) or
   in the battle summary. No combat stream event for a wound.
+- **Pets.** A pet's strikes don't wound.
 - **Burns.** No burn kind. Burning's only source is a weapon override.
 - **Physician price** is flat per wound, with no standing markup.
 
