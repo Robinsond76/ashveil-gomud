@@ -35,10 +35,6 @@ if the design pass prefers.
    - **Cold:** exposure (15) numbs hands, slowing casting and slings.
    - **Narration:** lines say so ("Ysolde's numb fingers fumble the
      stone.").
-6. **Mounted combat** (10):
-   - a first-round charge bonus when mounted;
-   - a mount may panic and bolt in a losing fight or at a fearsome enemy.
-   - This may be its own later slice.
 
 ## Acceptance criteria
 

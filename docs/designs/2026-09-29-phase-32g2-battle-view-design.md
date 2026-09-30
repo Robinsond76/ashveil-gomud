@@ -2,7 +2,7 @@
 
 Split from [32g](2026-09-29-phase-32g-company-dock-design.md) (its
 decision C), carrying the proposed Phase 31
-[battle panel](2026-09-26-battle-panel-design.md) into the dock's Combat
+battle panel (retired Phase 31 proposal; see git history) into the dock's Combat
 tab, per the [play-test roadmap](2026-09-28-playtest-feedback-roadmap.md).
 Status: **decisions A–G settled by the owner (2026-09-29): "go with
 recommendations"; ready for the plan.**

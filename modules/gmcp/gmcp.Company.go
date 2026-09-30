@@ -5,7 +5,7 @@ package gmcp
 // and after every command, on the game loop) and sent only when they
 // change: "Company" is the full snapshot, "Company.Vitals" only the members'
 // health and needs. They go only to the company's own leader. See
-// docs/superpowers/specs/2026-09-25-phase-26b-browser-company-panel-design.md.
+// docs/designs/2026-09-25-phase-26b-browser-company-panel-design.md.
 
 import (
 	"encoding/json"

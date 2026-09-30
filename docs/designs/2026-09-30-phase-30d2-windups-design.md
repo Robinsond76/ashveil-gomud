@@ -4,7 +4,7 @@ Slice two of 30d. Follows [Phase 30d1](2026-09-30-phase-30d1-chant-interrupts-de
 (broken chants, shield counters, enemy casters) and its amendment
 [30d1b](2026-09-30-phase-30d1b-chant-break-chance-design.md) (a blow breaks
 a chant only by chance). Refines the 2026-09-26
-[telegraphs and interrupts proposal](2026-09-26-telegraphs-interrupts-design.md)
+[telegraphs and interrupts proposal](2026-09-30-phase-30d2-windups-design.md)
 (handoff §36). Written 2026-09-30. Open decisions were put to the owner
 the same day with AskUserQuestion (answers below). No standing "proceed
 with your recommendation" instruction was in force.

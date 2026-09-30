@@ -9,7 +9,7 @@ instruction. Player pronoun selection is deferred
 by the owner's explicit decision in this task.
 
 Part of the [combat roadmap](2026-09-26-combat-presentation-roadmap.md).
-Implementation: [29d plan](../plans/2026-09-28-phase-29d-pronouns-ordinals.md).
+Implementation: implementation history (before `792455ea`).
 The owner has chosen to work on 29d before the still-pending 32g dock.
 
 ## Intent and scope

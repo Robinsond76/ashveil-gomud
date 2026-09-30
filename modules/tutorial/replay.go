@@ -5,7 +5,7 @@ package tutorial
 // the same name and race, level 1 with nothing, takes over the connection
 // and runs the course. Any end of the course hands the connection back to
 // the real character, exactly as it was, and purges the throwaway. See
-// docs/superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md.
+// docs/designs/2026-09-28-phase-32b-tutorial-replay-design.md.
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"

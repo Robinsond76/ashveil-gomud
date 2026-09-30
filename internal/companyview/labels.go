@@ -3,7 +3,7 @@
 // that own each value, plus the labels every surface (text commands, the
 // prompt, and in 26b the browser) renders them with. It stores nothing but
 // the prompt cache. See
-// docs/superpowers/specs/2026-09-24-phase-26a-company-summary-text-design.md.
+// docs/designs/2026-09-24-phase-26a-company-summary-text-design.md.
 package companyview
 
 import (

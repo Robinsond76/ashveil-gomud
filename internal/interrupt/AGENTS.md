@@ -10,6 +10,6 @@ nothing). No engine state and no imports: `internal/hooks`
 applies the result. `BashChance` and `StunChance` are package values so
 tests can make a counter certain; restore them after.
 
-Design: `docs/superpowers/specs/2026-09-30-phase-30d1-chant-interrupts-design.md`,
+Design: `docs/designs/2026-09-30-phase-30d1-chant-interrupts-design.md`,
 its amendment `2026-09-30-phase-30d1b-chant-break-chance-design.md`, and
 `2026-09-30-phase-30d2-windups-design.md`.

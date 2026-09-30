@@ -11,4 +11,4 @@ tells the lines; `internal/combat` resolves the landing blow
 A mob template opts in with `windups: {<ability id>: <percent>}`; only an
 enemy uses it. Add an ability here with its four lines in the 29c voice.
 
-Design: `docs/superpowers/specs/2026-09-30-phase-30d2-windups-design.md`.
+Design: `docs/designs/2026-09-30-phase-30d2-windups-design.md`.

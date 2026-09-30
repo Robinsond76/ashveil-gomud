@@ -1,6 +1,6 @@
 # Phase 29c: Narration Voice (Weapons and Spells) — Design
 
-Builds the [narration feature spec](2026-09-26-combat-narration-design.md)
+Builds the [narration feature spec](2026-09-28-phase-29c-narration-voice-design.md)
 (owner-approved direction, 2026-09-26). This is the design pass that spec
 asked for: prior art checked against today's code, the open decisions
 settled, and the acceptance criteria made concrete.

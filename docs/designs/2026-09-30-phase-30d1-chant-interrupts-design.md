@@ -1,7 +1,7 @@
 # Phase 30d1: Broken Chants, Shield Counters, and Enemy Casters — Design
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md);
-refines the 2026-09-26 [telegraphs and interrupts proposal](2026-09-26-telegraphs-interrupts-design.md)
+refines the 2026-09-26 [telegraphs and interrupts proposal](2026-09-30-phase-30d2-windups-design.md)
 (handoff §36). Written 2026-09-30. Open decisions were put to the owner
 the same day with AskUserQuestion (answers below). No standing "proceed
 with your recommendation" instruction was in force.

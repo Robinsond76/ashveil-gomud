@@ -5,7 +5,7 @@ package gmcp
 // horses, and the cargo, as `company inventory` shows them. Each item
 // carries the reference a command resolves to exactly that item. Built on
 // the game loop, sent by the company feed only when it changes. See
-// docs/superpowers/specs/2026-09-29-phase-32g-company-dock-design.md.
+// docs/designs/2026-09-29-phase-32g-company-dock-design.md.
 
 import (
 	"encoding/json"

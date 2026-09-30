@@ -1,6 +1,6 @@
 # Phase 29f: Paced Combat Output — Design
 
-Builds the [owner-approved direction](2026-09-26-combat-pacing-design.md),
+Builds the [owner-approved direction](2026-09-29-phase-29f-paced-combat-design.md),
 including its settled cadence decision (combat resolves every second game
 round, giving an 8-second combat round). Part of the
 [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md);

@@ -2,7 +2,7 @@
 
 The second slice of the [combat roadmap](2026-09-26-combat-presentation-roadmap.md)
 (build order decided 2026-09-27: 29a, then 29b). The owner-approved
-direction is the [29b spec](2026-09-26-combat-event-stream-design.md); this
+direction is the [29b spec](2026-09-27-phase-29b-combat-event-stream-design.md); this
 document settles the design for implementing it.
 
 The owner asked to "continue with next phase" (2026-09-27). The one open
