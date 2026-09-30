@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -27,6 +28,10 @@ type member struct {
 	manaMax   int
 	present   bool // a player, or a companion here to read mana from
 	knows     func(spellID string) bool
+	// col and placed are its place in the formation (Phase 30c2: a
+	// guardian's reach).
+	col    int
+	placed bool
 }
 
 // env is the engine the command reads. Tests replace it.
@@ -89,6 +94,10 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 		present:   true,
 		knows:     PlayerKnows(user),
 	}}
+	form, hasForm := company.FormationFor(user.UserId)
+	if hasForm {
+		_, out[0].col, out[0].placed = form.Find(company.LeaderMemberKey)
+	}
 	views, ok := company.CompanyMembers(user.UserId)
 	for _, v := range views {
 		mb := member{
@@ -96,6 +105,9 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 			name:      v.Name,
 			archetype: v.Archetype,
 			knows:     CompanionKnows(v.Archetype, v.Level),
+		}
+		if hasForm {
+			_, mb.col, mb.placed = form.Find(company.CompanionMemberKey(v.ID))
 		}
 		if instanceId, live := company.InstanceFor(user.UserId, v.ID); live && v.Status == company.MemberPresent {
 			if mob := mobs.GetInstance(instanceId); mob != nil {
@@ -107,7 +119,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 	return out, ok
 }
 
-const usage = `Change one with <ansi fg="command">strategy [who] [role]</ansi> or <ansi fg="command">strategy [who] target [rule]</ansi>. See <ansi fg="command">help strategy</ansi>.`
+const usage = `Change one with <ansi fg="command">strategy [who] [role]</ansi>, <ansi fg="command">strategy [who] target [rule]</ansi>, or <ansi fg="command">strategy [who] guard [other]</ansi>. See <ansi fg="command">help strategy</ansi>.`
 
 func (m *StrategyModule) userCommand(rest string, user *users.UserRecord, _ *rooms.Room, _ events.EventFlag) (bool, error) {
 	user.SendText(m.run(user, strings.Fields(strings.ToLower(rest))))
@@ -132,18 +144,25 @@ func (m *StrategyModule) run(user *users.UserRecord, args []string) string {
 		return fmt.Sprintf(`No one in your company answers to "%s". Type <ansi fg="command">strategy</ansi> to see them.`, args[0])
 	}
 	if len(args) == 1 {
-		return m.describe(user.UserId, mb)
+		return m.describe(user.UserId, mb, members)
 	}
 	if m.env.inBattle(user) {
 		return usercommands.BattleUnderWay
 	}
 	stored := m.Stored(user.UserId, mb.key)
 	change := args[1:]
+	targetOnly := false
 	if change[0] == "target" || change[0] == "rule" {
 		change = change[1:]
 		if len(change) == 0 {
 			return `Target which way? ` + rulesList()
 		}
+		// Phase 30c2: after "target" only a rule is read ("target guard"
+		// is not the guardian).
+		if _, ok := domain.ParseRule(change[0]); !ok {
+			return fmt.Sprintf(`"%s" is not a target. %s`, change[0], rulesList())
+		}
+		targetOnly = true
 	}
 	word := change[0]
 	var next domain.Strategy
@@ -156,14 +175,36 @@ func (m *StrategyModule) run(user *users.UserRecord, args []string) string {
 		}
 		return fmt.Sprintf(`%s %s back to the default: %s, going for %s.`, mb.name, verb(mb, "are", "is"), d.Role, d.Rule.Describe())
 	default:
-		if role, ok := domain.ParseRole(word); ok {
+		if role, ok := domain.ParseRole(word); ok && !targetOnly && role == domain.Guardian {
+			// Phase 30c2: strategy <who> guard [<other>].
+			ward := member{}
+			if len(change) > 1 {
+				sel := strings.Join(change[1:], " ")
+				found := false
+				if ward, found = resolve(members, sel); !found {
+					return fmt.Sprintf(`No one in your company answers to "%s". Type <ansi fg="command">strategy</ansi> to see them.`, sel)
+				}
+				if ward.key == mb.key {
+					return `A guardian guards someone else: name another member of your company, or none for whoever is most hurt.`
+				}
+			}
+			next = domain.Strategy{Role: role, Rule: stored.Rule, Ward: ward.key}
+			if ward.key == "" {
+				said = fmt.Sprintf(`%s %s now a guardian, guarding whoever is most hurt within reach (<ansi fg="command">help guardian</ansi>).`, mb.name, verb(mb, "are", "is"))
+			} else {
+				said = fmt.Sprintf(`%s will guard %s, stepping in to take blows meant for %s (<ansi fg="command">help guardian</ansi>).`, mb.name, object(ward), object(ward))
+				if warn := reachWarning(mb, ward); warn != "" {
+					said += "\n" + warn
+				}
+			}
+		} else if ok && !targetOnly {
 			next = domain.Strategy{Role: role, Rule: stored.Rule}
 			said = fmt.Sprintf(`%s %s now a %s: %s.`, mb.name, verb(mb, "are", "is"), role, role.Describe())
 			if warn := m.cantYet(mb, role); warn != "" {
 				said = warn + "\n" + said
 			}
 		} else if rule, ok := domain.ParseRule(word); ok {
-			next = domain.Strategy{Role: stored.Role, Rule: rule}
+			next = domain.Strategy{Role: stored.Role, Rule: rule, Ward: stored.Ward}
 			if err := next.ValidFor(mb.isPlayer); err != nil {
 				return `Only a companion can assist you: you are the one they assist.`
 			}
@@ -184,6 +225,39 @@ func (m *StrategyModule) run(user *users.UserRecord, args []string) string {
 		return err.Error()
 	}
 	return said
+}
+
+// object names a member as the object of a sentence: "you" for the
+// player.
+func object(mb member) string {
+	if mb.isPlayer {
+		return "you"
+	}
+	return mb.name
+}
+
+// reachWarning says when a guardian stands too far from its ward to step
+// in (Phase 30c2, the owner's decision 11): a guardian must stand in its
+// ward's column or the next. Unplaced members fail open.
+func reachWarning(guardian, ward member) string {
+	if !guardian.placed || !ward.placed || formationcombat.InLateralRange(guardian.col, ward.col) {
+		return ""
+	}
+	return fmt.Sprintf(`Out of reach: %s can't step in for %s from there. A guardian must stand in its ward's column or the next (<ansi fg="command">formation</ansi>).`, guardian.name, object(ward))
+}
+
+// wardOf is the member a guardian's stored ward names, if it is one of
+// members.
+func wardOf(s domain.Strategy, members []member) (member, bool) {
+	if s.Role != domain.Guardian || s.Ward == "" {
+		return member{}, false
+	}
+	for _, mb := range members {
+		if mb.key == s.Ward {
+			return mb, true
+		}
+	}
+	return member{}, false
 }
 
 func verb(mb member, you, other string) string {
@@ -273,7 +347,7 @@ func (m *StrategyModule) spellsFor(mb member, role domain.Role) []string {
 
 // cantYet warns when a member knows no spell its new role would cast.
 func (m *StrategyModule) cantYet(mb member, role domain.Role) string {
-	if role == domain.Fighter || len(m.spellsFor(mb, role)) > 0 {
+	if (role != domain.Healer && role != domain.Caster) || len(m.spellsFor(mb, role)) > 0 {
 		return ""
 	}
 	what := "attack spell"
@@ -292,6 +366,7 @@ func (m *StrategyModule) list(userID int, members []member) string {
 			width = len(mb.name)
 		}
 	}
+	var warnings []string
 	for _, mb := range members {
 		s := m.Stored(userID, mb.key).Resolve(mb.archetype)
 		arch := "-"
@@ -299,12 +374,24 @@ func (m *StrategyModule) list(userID int, members []member) string {
 			arch = m.env.archName(mb.archetype)
 		}
 		line := fmt.Sprintf("  %-*s  %-8s %-8s %-9s", width, mb.name, arch, s.Role, s.Rule)
-		if sp := m.spellsFor(mb, s.Role); len(sp) > 0 {
+		if s.Role == domain.Guardian {
+			if ward, ok := wardOf(s, members); ok {
+				line += " guards " + object(ward)
+				if warn := reachWarning(mb, ward); warn != "" {
+					warnings = append(warnings, warn)
+				}
+			} else {
+				line += " guards the most hurt"
+			}
+		} else if sp := m.spellsFor(mb, s.Role); len(sp) > 0 {
 			line += " " + strings.Join(sp, ", ")
 		} else if s.Role != domain.Fighter {
 			line += " (knows no spell for it: fights)"
 		}
 		b.WriteString(strings.TrimRight(line, " ") + "\n")
+	}
+	for _, w := range warnings {
+		b.WriteString(w + "\n")
 	}
 	// Phase 30c: a company focus overrides every target rule above.
 	if focus, ok := domain.TacticsFor(userID).FocusRule(); ok {
@@ -314,7 +401,7 @@ func (m *StrategyModule) list(userID int, members []member) string {
 	return b.String()
 }
 
-func (m *StrategyModule) describe(userID int, mb member) string {
+func (m *StrategyModule) describe(userID int, mb member, members []member) string {
 	s := m.Stored(userID, mb.key).Resolve(mb.archetype)
 	var b strings.Builder
 	arch := "no archetype"
@@ -323,7 +410,16 @@ func (m *StrategyModule) describe(userID int, mb member) string {
 	}
 	fmt.Fprintf(&b, "%s (%s): %s, %s.\n", mb.name, arch, s.Role, s.Role.Describe())
 	fmt.Fprintf(&b, "  Goes for %s; out of reach, the nearest foe in reach.\n", s.Rule.Describe())
-	if s.Role != domain.Fighter {
+	if s.Role == domain.Guardian {
+		if ward, ok := wardOf(s, members); ok {
+			fmt.Fprintf(&b, "  Guards %s (<ansi fg=\"command\">help guardian</ansi>).\n", object(ward))
+			if warn := reachWarning(mb, ward); warn != "" {
+				b.WriteString("  " + warn + "\n")
+			}
+		} else {
+			b.WriteString("  Guards whoever is most hurt within reach (<ansi fg=\"command\">help guardian</ansi>).\n")
+		}
+	} else if s.Role != domain.Fighter {
 		if sp := m.spellsFor(mb, s.Role); len(sp) > 0 {
 			fmt.Fprintf(&b, "  Casts %s.\n", strings.Join(sp, ", then "))
 		} else {
