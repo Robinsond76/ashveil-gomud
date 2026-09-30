@@ -60,3 +60,51 @@ func TestInterruptsHelp(t *testing.T) {
 		}
 	}
 }
+
+// Phase 30d2: help interrupts tells of wind-ups (the ogre's Crushing
+// Blow): the telegraph, the numbers, what breaks one and what doesn't
+// (never a shield bash), the cooldown, and the tactics; its aliases lead
+// there; the pages that touch it say so.
+func TestInterruptsHelpWindUps(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	text, err := GetHelpContents("interrupts")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, want := range []string{
+		"Wind-ups",
+		"forest ogre",
+		"(winding up: Crushing Blow, 1 round)",
+		"The forest ogre brings his great club down with all his weight.",
+		"(Crushing Blow, 18 damage, knocked down)",
+		"double damage",
+		"(Crushing Blow interrupted)",
+		"An ordinary blow never breaks a wind-up",
+		"two of its turns",
+		"A bash is a counter strike only",
+		// review fixes: the fallback, the wasted blow, statuses, spells
+		"(Crushing Blow wasted)",
+		"whoever it is aiming at",
+		"stuns or knocks it down",
+		"A spell's damage never breaks one",
+	} {
+		assert.Contains(t, plain, want)
+	}
+	for _, alias := range []string{"wind-up", "windup", "windups", "wind-ups", "telegraph", "telegraphs", "crushing-blow", "ogre"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, text, got, "help %s is help interrupts", alias)
+	}
+	for topic, want := range map[string]string{
+		"combat":         "wind",
+		"statuses":       "Crushing Blow",
+		"guardian":       "Crushing Blow",
+		"battle-summary": "wind-up",
+		"formation":      "ogre",
+	} {
+		page, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, tagPattern.ReplaceAllString(page, ""), want, topic)
+	}
+}

@@ -225,7 +225,7 @@ help-aliases:
   strategy:         [strategies, gambits, roles]
   tactics:          [focus, company-tactics, personalities, personality]
   guardian:         [guardians, guard, guards, ward, wards]
-  interrupts:       [interrupt, interrupted, chant, chants, concentration, shield-bash, shieldbash, counter, counters, hexer]
+  interrupts:       [interrupt, interrupted, chant, chants, concentration, shield-bash, shieldbash, counter, counters, hexer, wind-up, wind-ups, windup, windups, telegraph, telegraphs, crushing-blow, ogre]
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]

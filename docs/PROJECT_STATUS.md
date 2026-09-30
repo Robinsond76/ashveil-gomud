@@ -6,7 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-30
-- **HEAD:** `master` 2026-09-30: Phase 30d1b (a blow breaks a chant only
+- **HEAD:** `master` 2026-09-30: Phase 30d2 (physical wind-ups and the
+  forest ogre's Crushing Blow), merged from `phase-30d2-windups`. Before
+  it, Phase 30d1b (a blow breaks a chant only
   by chance), merged from `phase-30d1b-chant-break-chance`. Before it,
   Phase 30d1 (broken chants, shield
   counters, and enemy casters), merged from `phase-30d-interrupts`. Before
@@ -38,7 +40,7 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29f, 30a, 30b, 30c (30c1, 30c2), 30d1, 30d1b, 32g,
+- **Completed:** Phases 0–29f, 30a, 30b, 30c (30c1, 30c2), 30d (30d1, 30d1b, 30d2), 32g,
   and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
@@ -48,9 +50,10 @@ instead of duplicating them.
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 30d1b (a blow breaks a chant only by
-  chance), merged to `master` from `phase-30d1b-chant-break-chance`; see
-  its work-log entry below. Before it, 30d1 (broken chants, shield
+- **Latest completed phase:** 30d2 (physical wind-ups and the forest
+  ogre's Crushing Blow), merged to `master` from `phase-30d2-windups`; see
+  its work-log entry below. Before it, 30d1b (a blow breaks a chant only by
+  chance), from `phase-30d1b-chant-break-chance`. Before it, 30d1 (broken chants, shield
   counters, and enemy casters), merged from `phase-30d-interrupts`. Before it, 30c2 (guardian role and guards), from
   `phase-30c2-guardian`. Before it, 30c1 (company tactics and enemy personalities), from
   `phase-30c1-company-tactics`, and 30b (wounds, treatment, and
@@ -77,10 +80,7 @@ instead of duplicating them.
   produces no room attack line. The fixture now disables dodging only within that test
   and restores settings afterward; 100 focused race-test repetitions passed.
   Independent follow-up review found no issues and passed 40 focused repetitions.
-- **Next:** 30d2 (physical wind-ups and an ogre with Crushing Blow,
-  reusing 30d1's break; decided by the owner 2026-09-30: a wind-up for a
-  physical attack breaks only on heavier force — a crit, a stagger, a
-  knockdown, a stun, or a shield bash — never on an ordinary blow), then 30e (morale and mercy) and 30f (battlefield
+- **Next:** 30e (morale and mercy) and 30f (battlefield
   conditions). 30a's statuses count combat rounds; the other balance
   shifts 29f's cadence brought are still to retune (see Known issues).
   Also open: the "Future ideas" row; see Known issues.
@@ -144,7 +144,7 @@ instead of duplicating them.
 | 30a | Status effects and critical-hit effects (weapons only) | Complete (merged as `2ef931c`): [design](superpowers/specs/2026-09-29-phase-30a-status-crit-effects-design.md), [plan](superpowers/plans/2026-09-29-phase-30a-status-crit-effects.md). Nine statuses (bleeding, staggered, knocked down, armor broken, exposed, burning, overloaded, stunned, hobbled) as combat-round buffs (`internal/status`); crit effects by weapon subtype; ticked, and actions lost, in the combat round; cleared at fight end; Sparks overloads; `help statuses` |
 | 30b | Wounds, treatment, and `heal wounds` | Complete: [design](superpowers/specs/2026-09-30-phase-30b-wounds-design.md), [plan](superpowers/plans/2026-09-30-phase-30b-wounds.md). Lasting wounds from damaging crits, light ones from crushing blows and finished bleeds; healing stops at the wound limit; `heal`/`heal wounds` (clerics' `tend` and heal, splints and bandages, the Waymark Inn physician); inn stay heals, camp rest one wound per splint or bandage (owner amendment); death clears; `status`, GMCP, web strip; `help wounds` |
 | 30c | Company tactics | 30c1 complete: [design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md), [plan](superpowers/plans/2026-09-30-phase-30c1-company-tactics.md). `company tactics` (`tactics`): a durable company focus (none, leader, casters, nearest, weakest, strongest, wounded) and healing threshold (10–90%); in a battle only the focus changes, for that battle, one order a round, turning everyone at the next upkeep; web focus buttons; the `casters` rule; enemy personalities by race or template (`targeting`, `targetingnoise`); `help tactics`. 30c2 complete: [design](superpowers/specs/2026-09-30-phase-30c2-guardian-design.md), [plan](superpowers/plans/2026-09-30-phase-30c2-guardian.md). A `guardian` role (`strategy <who> guard [other]`) steps in for its ward (set, else the most hurt in reach) within one column: 2 guards a battle, one back per 2 combat rounds, none while knocked down or stunned; `help guardian`. Rotate the wounded deferred |
-| 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](superpowers/specs/2026-09-30-phase-30d1-chant-interrupts-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1-chant-interrupts.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](superpowers/specs/2026-09-30-phase-30d1b-chant-break-chance-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1b-chant-break-chance.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, stun, or bash always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 (wind-ups, the ogre) next: [proposal](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md) |
+| 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](superpowers/specs/2026-09-30-phase-30d1-chant-interrupts-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1-chant-interrupts.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](superpowers/specs/2026-09-30-phase-30d1b-chant-break-chance-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1b-chant-break-chance.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, or stun always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 complete: [design](superpowers/specs/2026-09-30-phase-30d2-windups-design.md), [plan](superpowers/plans/2026-09-30-phase-30d2-windups.md). Physical wind-ups (`internal/windup`, mob `windups`): the forest ogre (Dark Forest room 530) winds up Crushing Blow in plain view, then one swing of double damage that knocks down; only a crit that lands, a stagger, a knockdown, or a stun breaks it (owner); a broken or landed one is followed by 2 turns' cooldown; a shield bash is a counter strike only and breaks nothing (owner) |
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
 | 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md), [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
@@ -164,6 +164,73 @@ instead of duplicating them.
 Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
+
+### Phase 30d2: physical wind-ups and the forest ogre (2026-09-30)
+
+- **What** ([design](superpowers/specs/2026-09-30-phase-30d2-windups-design.md),
+  [plan](superpowers/plans/2026-09-30-phase-30d2-windups.md)):
+  - `internal/windup` (pure): abilities (`crushing-blow`: 1 turn, x2,
+    knocks down, its lines), `RollStart`, `Cooldown` 2, `Render`.
+    `interrupt.BreaksWindUp` (a damaging hit with heavy force only).
+    `Mob.WindUps` (`windups:` id -> percent of turns).
+  - `internal/combat`: `Power` and `SetPowerProvider`; a wind-up's swing
+    (`AttackMobVsPlayer`/`AttackMobVsMob`) is one strike, its rolled
+    damage multiplied before armor, a knockdown when it gets through, the
+    name first in its parentheses.
+  - `internal/hooks/combat_windup.go`: at a mob's physical turn an enemy
+    may start (telegraph naming its target, "you" to a player; the turn
+    spent; the reach and battle-hold checks), then lands at its next turn
+    through the ordinary gates (so 11c's interception and 30c2's guards
+    take it), re-aimed at the one it named, else its aim, else wasted. A
+    swing that never happens is told as wasted. Heavy force breaks it
+    (`afterBlow`); a status that costs the turn loses it. Cooldown after
+    either; pruned at each round's start. Events `windup-start`,
+    `windup-land` (hit, miss, `wasted`), `interrupt`. `windUpRoll`
+    injectable, pinned in `newBrawl`. `counterBlow` no longer breaks a
+    chant (owner: a bash is a counter strike only).
+  - Content: race 22 ogre, item 10022 ogre's great club, mob 85 forest
+    ogre (solitary, level 22, `crushing-blow: 35`), spawned in Dark Forest
+    room 530.
+  - Help: `help interrupts` gains Wind-ups (aliases wind-up, wind-ups,
+    windup, windups, telegraph, telegraphs, crushing-blow, ogre); `combat`,
+    `statuses`, `guardian`, `battle-summary`, `formation`; the Practice
+    Yard hint. The 30d1/30d1b designs and this log no longer list the
+    shield bash as heavy force.
+- **Why:** slice two of 30d. Owner decisions (2026-09-30): heavier force
+  only (decided before), and asked this session: only a crit and statuses
+  break a wind-up, the shield bash is a counter strike only; 1 round, x2,
+  knockdown; lost then a cooldown; the ogre in the Dark Forest, solitary,
+  enemies only; ordinary blows on a wind-up are silent.
+- **Verification:** unit (`windup`, `BreaksWindUp`, the power blow incl.
+  armor taking it all, the hooks lifecycle: power once, wasted landings,
+  cooldown, pruning, the lost turn); wiring through `DoCombat`
+  (`wiring_windups_test.go`: wind up then land on the named target,
+  a crit breaks it with the cooldown and the summary, ordinary blows
+  silent, a guardian takes it, falls on the aim, a bash breaks nothing,
+  a status loses it, no start at the pinned roll, the shipped ogre);
+  content (`TestShippedForestOgre`, `TestShippedWindUpsAreRegistered`);
+  `TestInterruptsHelpWindUps`, `TestTutorialHelpPointersExist`.
+  `modules/company` looped 10 times before the review and 3 after, all
+  passing. Final (2026-09-30, after the review fixes): `make generate`
+  (no diff), `make validate`, `go test -race ./...`, and
+  `git diff --check` all passed.
+- **Review:** the independent default-agent reviewer found no bugs and no
+  invariant problems; each finding was checked.
+  - **Fixed, with tests:** a cooldown outlived its fight (now ends with
+    it); no test of a landing wasted for want of a target, of a blow the
+    armor takes entirely, or of a lost turn through the round; a blow the
+    armor took reported `hit` (now `miss`, as 29c reads it); a wind-up lost
+    to a status said "staggers" (a neutral `Lost` line); a shooter's
+    `windups` could never work (a content test refuses them); help missing
+    the aim fallback, the wasted line, statuses and spells, "that gets
+    through the armor", the knockdown in the tutorial hint, and the
+    summary's uncredited losses; this log still called the bash heavy
+    force; comments on the pinned roll and `DisableInterruptsForTest`; the
+    race's "its" line.
+  - **Partly rejected:** a wiring assertion of exact double damage (the
+    fixture's dice aren't fixed; the unit test now compares 3 to 6
+    directly). A wasted landing can't be staged in the brawl (upkeep
+    re-aims, battles regrow), so it is unit-tested in `internal/hooks`.
 
 ### Phase 30d1b: a blow breaks a chant only by chance (2026-09-30)
 
@@ -369,15 +436,22 @@ docs/PROJECT_STATUS.md`.
   a round per bearer) are a recommendation to tune. A bash leaves no
   wound; an enemy restarts its chant for ever while hit (no mana spent); a
   mob that runs out of mana wastes the turns it picks `cast` (GoMud's
-  combat commands). No casting on the battle view's grid yet (32g2). 30d2's
-  wind-ups break only on heavier force (owner, 2026-09-30).
+  combat commands). No casting on the battle view's grid yet (32g2).
 - **Chance to break a chant (30d1b), for the owner:** the numbers (40% +
   2 per percent of max health, held to 40–90%) are the lead's choice, to
   tune. A frail caster's floor is rarely 40% (a 30-health healer hit for
-  3 is at 60%). The shield bash's "always breaks" can't happen until
-  30d2's wind-ups (a character that swings isn't chanting). A weapon's own
+  3 is at 60%). A shield bash breaks no chant (owner, 2026-09-30, with
+  30d2: a counter strike only). A weapon's own
   crit statuses still land on a crit the armor took (30a), so they make
   that round's other blows heavy.
+
+- **Wind-ups (30d2), for the owner:** the numbers (35% of the ogre's
+  turns, x2 damage, 2 turns' cooldown) are the recommendation to tune.
+  Company wind-ups, the proposal's sweep across the front line, and other
+  abilities are deferred; a shooter can't wind up. Ordinary blows on a
+  wind-up are silent (owner), so the summary counts only broken ones; a
+  wind-up lost to a stun no blow dealt is credited to no one. Wind-ups
+  aren't shown on the battle view's grid (32g2).
 
 - **Company tactics (30c1), accepted:** an order given in the round its
   battle ends is dropped silently; a solo player has no web tactics row

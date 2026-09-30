@@ -29,7 +29,7 @@ func TestShippedPronounDefaults(t *testing.T) {
 		require.NotNilf(t, race, "race %d", raceID)
 		assert.Equalf(t, "it", race.DefaultPronouns, "race %d", raceID)
 	}
-	for _, raceID := range []int{1, 2, 4, 5, 8, 15} {
+	for _, raceID := range []int{1, 2, 4, 5, 8, 15, 22} {
 		race := races.GetRace(raceID)
 		require.NotNilf(t, race, "race %d", raceID)
 		assert.Emptyf(t, race.DefaultPronouns, "race %d", raceID)

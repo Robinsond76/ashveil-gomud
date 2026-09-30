@@ -133,9 +133,10 @@ chance.
   50% to bash; damage 1d4; 25% of bashes stun.
 - **Effect:** the damage, a stun buff when rolled, and the attacker's
   fall resolved in this round (`roundExtraPlayers`/`roundExtraMobs`). A
-  bash is a blow: it breaks the attacker's chant if it was chanting (it
-  can't be, having just swung; kept for 30d2's wind-ups). It never
-  triggers a counter of its own.
+  bash never triggers a counter of its own. (It once also broke the
+  attacker's chant, which could never happen: the attacker had just swung.
+  Removed by [30d2](2026-09-30-phase-30d2-windups-design.md): a bash is a
+  counter strike only, owner, 2026-09-30.)
 - **Lines:** you: `You turn the blow and drive your shield into the first
   cutthroat. (shield bash, 3 damage, stunned)`; struck (a player): `Tamsin
   Reed turns your blow and drives her shield into you. (shield bash, 3
@@ -209,11 +210,15 @@ chance.
 - **30d2:** physical wind-ups and the ogre. **Decided by the owner
   (2026-09-30):** a wind-up for a physical attack does not break on an
   ordinary blow, only on heavier force: a critical hit, a stagger, a
-  knockdown, a stun, or a shield bash (a big foe is struck by everyone).
+  knockdown, or a stun (a big foe is struck by everyone). **Amended by
+  [30d2](2026-09-30-phase-30d2-windups-design.md) (owner, 2026-09-30):** a
+  shield bash is a counter strike only and breaks neither a wind-up nor a
+  chant.
 - **Amended by [30d1b](2026-09-30-phase-30d1b-chant-break-chance-design.md)
   (owner, 2026-09-30):** decision 2 above now breaks a chant by chance,
   40 + 2 × (damage × 100 / max health) held to 40–90%, and always on heavy
-  force (a crit, a stagger, a knockdown, a stun, a shield bash); a held
+  force (a crit, a stagger, a knockdown, a stun; the shield bash was
+  struck from this list by 30d2); a held
   chant is told and emits a failed `Interrupt`.
 - Not built: the proposal's pressure meter, concentration, delayed or
   penalised recoveries; anti-caster abilities; casting on the battle

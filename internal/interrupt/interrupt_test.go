@@ -148,3 +148,23 @@ func TestRollCounterChancesAdjustable(t *testing.T) {
 		t.Error("a bash chance of 0 never bashes")
 	}
 }
+
+func TestBreaksWindUp(t *testing.T) {
+	cases := []struct {
+		name   string
+		hit    bool
+		damage int
+		heavy  bool
+		want   bool
+	}{
+		{"heavy force that drew blood", true, 3, true, true},
+		{"an ordinary blow", true, 20, false, false},
+		{"a miss", false, 0, true, false},
+		{"heavy, but no damage", true, 0, true, false},
+	}
+	for _, c := range cases {
+		if got := BreaksWindUp(c.hit, c.damage, c.heavy); got != c.want {
+			t.Errorf("%s: BreaksWindUp = %v, want %v", c.name, got, c.want)
+		}
+	}
+}

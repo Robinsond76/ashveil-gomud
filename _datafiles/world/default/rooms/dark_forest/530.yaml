@@ -15,6 +15,9 @@ spawninfo:
 - mobid: 32
   message: A fungal growth emerges from the ground.
   respawnrate: 9 real minutes
+- mobid: 85
+  message: The trees shudder, and a forest ogre shoulders its way out onto the road.
+  respawnrate: 15 real minutes
 mapx: 43
 mapy: 8
 mapz: 0

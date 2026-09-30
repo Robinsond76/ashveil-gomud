@@ -26,7 +26,10 @@ import (
 //     half its mana back; any other mob (an enemy) starts the chant again
 //     from the first word at its next turn. A chant that holds is told;
 //   - a blow that missed a shield-bearer may be countered: the bearer
-//     slams its shield back into the attacker, and the bash may stun.
+//     slams its shield back into the attacker, and the bash may stun. A
+//     bash is a counter strike only: it breaks no chant or wind-up.
+//
+// Phase 30d2's wind-ups (combat_windup.go) are handled from afterBlow too.
 //
 // Both sets below are runtime only, on the game loop. Aggro (and so every
 // chant) is never saved, so a restart or copyover mid-fight drops them
@@ -50,7 +53,8 @@ var (
 
 // DisableInterruptsForTest turns broken chants and shield counters off
 // until the returned restore is called: only for a test that compares
-// against a record of combat captured before Phase 30d1.
+// against a record of combat captured before Phase 30d1. Wind-ups (30d2)
+// are not affected; a foe without `windups` never starts one.
 func DisableInterruptsForTest() (restore func()) {
 	prev := interruptsOff
 	interruptsOff = true
@@ -77,6 +81,7 @@ func UseBreakRollForTest(roll func(int) int) (restore func()) {
 // mob gone, dead, or no longer chanting has no restart owed.
 func interruptRound() {
 	countered = map[string]bool{}
+	windUpRound() // Phase 30d2
 	for id := range chantRestarts {
 		m := mobs.GetInstance(id)
 		if m == nil || m.Character.Health < 1 || m.Character.Aggro == nil || m.Character.Aggro.Type != characters.SpellCast {
@@ -97,6 +102,7 @@ func (h statusHolder) chanting() bool {
 // afterBlow applies what a resolved blow does to chants and counters.
 // Called at every blow site after the blow's own lines.
 func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
+	afterWindUpBlow(attacker, defender, r) // Phase 30d2
 	if interruptsOff {
 		return
 	}
@@ -318,11 +324,8 @@ func counterBlow(attacker, bearer statusHolder) {
 		roundExtraMobs = append(roundExtraMobs, attacker.mob.InstanceId)
 	}
 
-	// A bash is heavy force: it always breaks a chant (Phase 30d2's
-	// wind-ups).
-	if interrupt.CanBreak(true, dealt, attacker.chanting()) && attacker.char.Health >= 1 {
-		breakChant(bearer, attacker)
-	}
+	// A bash is a counter strike only (owner, 2026-09-30): it breaks
+	// neither a chant nor a wind-up.
 }
 
 // counterLines tells the bearer, the attacker, and the room of a bash.

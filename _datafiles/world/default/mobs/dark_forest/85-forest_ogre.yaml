@@ -1,0 +1,28 @@
+# Ashveil Phase 30d2: a big foe with a physical wind-up. About one turn in
+# three it spends winding up Crushing Blow, in plain view; the next turn
+# it lands for double damage and knocks its target down. Only heavy force
+# breaks it: a crit that lands, a stagger, a knockdown, or a stun
+# (help interrupts).
+mobid: 85
+zone: Dark Forest
+itemdropchance: 10
+hostile: true
+solitary: true
+maxwander: 1
+groups:
+  - forest-creature
+idlecommands:
+  - 'emote scratches his belly with the head of his club.'
+  - 'emote sniffs the air and grunts.'
+windups:
+  crushing-blow: 35
+character:
+  name: forest ogre
+  description: 'A hulking ogre, twice the height of a man, with moss in his matted hair and a belly like a barrel. He carries a great club of knotted oak over one shoulder, and he swings it slowly, as if he has all the time in the world.'
+  raceid: 22
+  pronouns: he
+  level: 22
+  gold: 25
+  equipment:
+    weapon:
+      itemid: 10022

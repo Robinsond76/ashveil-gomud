@@ -11,7 +11,9 @@ set by the lead and given to this branch as decided; it was not re-asked.
 
 1. **Heavy force always breaks:** a critical hit, a blow whose statuses
    include staggered, knocked down, or stunned (30a's `status.Staggered`,
-   `KnockedDown`, `Stunned`), or a shield bash (the counter).
+   `KnockedDown`, `Stunned`). (A shield bash was on this list; amended by
+   [30d2](2026-09-30-phase-30d2-windups-design.md), owner 2026-09-30: a
+   bash is a counter strike only and breaks nothing.)
 2. **Any other hit that does 1+ damage breaks with chance**
    `40 + 2 × (damage × 100 / the chanter's max health)`, clamped to
    40–90%: a nick is about 40%, a blow of a quarter of the chanter's
@@ -26,7 +28,7 @@ set by the lead and given to this branch as decided; it was not re-asked.
    held)`; and an `Interrupt` event with `Outcome: failed`.
 5. **30d2 (recorded, not built):** a wind-up for a physical attack does
    not break on ordinary blows, only on heavier force: a crit, a stagger,
-   a knockdown, a stun, or a shield bash.
+   a knockdown, or a stun (the shield bash struck by 30d2, as above).
 
 ## Prior-art check (against `master` at `7306212`)
 
@@ -55,7 +57,8 @@ set by the lead and given to this branch as decided; it was not re-asked.
   `util.Rand`; `UseBreakRollForTest`); `heavyBlow(r)` (crit, or a
   staggered/knocked-down/stunned buff in `BuffTarget`); `afterBlow`
   rolls, then `breakChant` or the new `holdChant` (lines, event). The
-  shield bash passes heavy, so it always breaks.
+  shield bash passed heavy, so it always broke (removed by 30d2: a bash
+  breaks nothing).
 - **Summary:** "failed N" now means company blows a foe's chant withstood;
   the comment is updated, the line itself is unchanged.
 - **Tests' dice:** `newBrawl` pins the break roll to 0 (always breaks, so
@@ -75,9 +78,10 @@ set by the lead and given to this branch as decided; it was not re-asked.
   design and the status log.
 - The held line is told for enemies and company alike; no line for a
   blow that drew no blood (as before).
-- The shield bash's "always breaks" is kept in code for 30d2's wind-ups,
-  but can't happen yet (a character who swings isn't chanting), so the
-  help doesn't list it (review finding).
+- The shield bash's "always breaks" was kept in code for 30d2's wind-ups,
+  but could never happen (a character who swings isn't chanting, and a
+  foe winding up swings no blow to counter), so the help didn't list it
+  (review finding). 30d2 removed it: a bash is a counter strike only.
 
 ## Acceptance criteria
 
