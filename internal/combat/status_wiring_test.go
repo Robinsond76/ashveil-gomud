@@ -65,7 +65,7 @@ func TestCritLeavesItsWeaponsStatus(t *testing.T) {
 			}
 		}
 		line := strings.Join(result.MessagesToSource, "\n")
-		if !strings.Contains(line, "critical hit") || !strings.Contains(line, ", "+c.word+")") {
+		if !strings.Contains(line, "critical hit") || !strings.Contains(line, ", "+c.word+", wounded)") {
 			t.Fatalf("%s: hit line does not name %q: %q", c.sub, c.word, line)
 		}
 	}
@@ -129,7 +129,7 @@ func TestWeaponsOwnCritBuffsOverrideTheTable(t *testing.T) {
 	if len(result.BuffTarget) != 1 || result.BuffTarget[0] != status.Burning {
 		t.Fatalf("override should win, got %v", result.BuffTarget)
 	}
-	if !strings.Contains(strings.Join(result.MessagesToSource, "\n"), ", burning)") {
+	if !strings.Contains(strings.Join(result.MessagesToSource, "\n"), ", burning, wounded)") {
 		t.Fatalf("the override's status is named: %q", result.MessagesToSource)
 	}
 }

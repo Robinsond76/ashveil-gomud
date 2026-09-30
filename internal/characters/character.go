@@ -21,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 	"github.com/GoMudEngine/GoMud/internal/stats"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 
 	//
 	"maps"
@@ -92,6 +93,7 @@ type Character struct {
 	Created             time.Time                      `yaml:"created"`                  // When this character was created
 	Timers              map[string]gametime.RoundTimer `yaml:"timers,omitempty"`         // any special timers added to this character
 	ZonesVisited        map[string]RoomBitset          `yaml:"zonesvisited,omitempty"`   // permanent record of every room visited, keyed by zone name
+	Wounds              []wounds.Wound                 `yaml:"wounds,omitempty"`         // Ashveil Phase 30b: wounds holding back health (the wound limit)
 	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
 	PlayerDamage        map[int]int                    `yaml:"-"` // key = who, value = how much
 	LastPlayerDamage    uint64                         `yaml:"-"` // last round a player damaged this character
@@ -1358,6 +1360,9 @@ func (c *Character) ApplyHealthChange(healthChange int) int {
 		} else if newHealth <= -10 {
 			newHealth = -10
 		}
+	} else if newHealth > oldHealth {
+		// Phase 30b: healing stops at the wound limit.
+		newHealth = c.CapHealing(oldHealth, newHealth)
 	} else if newHealth > c.HealthMax.Value {
 		newHealth = c.HealthMax.Value
 	}
@@ -1455,7 +1460,7 @@ func (c *Character) LevelUp() (bool, stats.Statistics) {
 	statsDelta.Mysticism.Value -= statsBefore.Mysticism.Value
 	statsDelta.Perception.Value -= statsBefore.Perception.Value
 
-	c.Health = c.HealthMax.Value
+	c.Health = c.CapHealing(c.Health, c.HealthMax.Value)
 	c.Mana = c.ManaMax.Value
 
 	return true, statsDelta
@@ -1486,9 +1491,14 @@ func (c *Character) Heal(hp int, mana int) (int, int) {
 	startHP := c.Health
 	startMP := c.Mana
 
-	c.Health += hp
-	if c.Health > c.HealthMax.Value {
-		c.Health = c.HealthMax.Value
+	if hp > 0 {
+		// Phase 30b: healing stops at the wound limit.
+		c.Health = c.CapHealing(c.Health, c.Health+hp)
+	} else {
+		c.Health += hp
+		if c.Health > c.HealthMax.Value {
+			c.Health = c.HealthMax.Value
+		}
 	}
 	c.Mana += mana
 	if c.Mana > c.ManaMax.Value {
@@ -1496,6 +1506,35 @@ func (c *Character) Heal(hp int, mana int) (int, int) {
 	}
 
 	return c.Health - startHP, c.Mana - startMP
+}
+
+// HealthLimit is how far healing can restore the character: its max
+// health less what its wounds hold back (Phase 30b), never below a quarter
+// of max.
+func (c *Character) HealthLimit() int {
+	return wounds.Limit(c.HealthMax.Value, c.Wounds)
+}
+
+// Wounded reports whether the character carries any wound.
+func (c *Character) Wounded() bool {
+	return len(c.Wounds) > 0
+}
+
+// AddWound gives the character a wound. Health already above the new
+// limit is kept: a wound only stops healing.
+func (c *Character) AddWound(w wounds.Wound) {
+	if w.Points <= 0 {
+		return
+	}
+	c.Wounds = append(c.Wounds, w)
+}
+
+// CapHealing is the health a heal from old to want may reach: no higher
+// than the wound limit (or than old, when old is already above it), and
+// never above max health.
+func (c *Character) CapHealing(old, want int) int {
+	ceiling := min(c.HealthMax.Value, max(c.HealthLimit(), old))
+	return min(want, ceiling)
 }
 
 func (c *Character) HealthPerRound() int {

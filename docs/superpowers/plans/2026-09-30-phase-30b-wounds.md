@@ -5,7 +5,7 @@ Branch: `phase-30b-wounds`, worktree `.worktrees/phase-30b-wounds`.
 
 Each task writes its tests first and runs only its own packages.
 
-- [ ] **1. `internal/wounds` (pure).**
+- [x] **1. `internal/wounds` (pure).**
   - Tests first:
     - `Limit` (the floor, and at least 1);
     - `FromCrit` points and kind by subtype;
@@ -17,7 +17,7 @@ Each task writes its tests first and runs only its own packages.
     - `Plan` (healer and patient order, tend before heal, mana spent,
       items after healers, bandage-on-damage rule, no negative stock).
   - Add the package and its `AGENTS.md`.
-- [ ] **2. Characters.**
+- [x] **2. Characters.**
   - Tests first:
     - `HealthLimit`;
     - `Heal`/`ApplyHealthChange` capped at the limit but never lowering
@@ -26,7 +26,7 @@ Each task writes its tests first and runs only its own packages.
     - a YAML round trip of `Wounds`.
   - Add `Character.Wounds`, `HealthLimit`, `Wounded`, `AddWound`, and
     `CapHealing`, and wire the cap into those paths.
-- [ ] **3. Combat resolver (`internal/combat`).**
+- [x] **3. Combat resolver (`internal/combat`).**
   - Tests first, through `AttackMobVsPlayer`/`AttackMobVsMob` with a
     forced crit:
     - a player and a companion get a lasting wound, and the line says
@@ -35,14 +35,14 @@ Each task writes its tests first and runs only its own packages.
     - a crushing non-crit blow leaves a light wound.
   - Add `AttackResult.WoundsToTarget` and apply it in the `Attack*`
     functions.
-- [ ] **4. Combat loop (`internal/hooks`).**
+- [x] **4. Combat loop (`internal/hooks`).**
   - Wiring tests through `DoCombat`/`statusPass`:
     - a bleed that runs out leaves a light wound (a cleared one doesn't);
     - fight end closes light wounds and keeps lasting ones;
     - a stray light wound (no fight) closes;
     - the strategy healer skips an ally who is at their limit.
   - Wire all four.
-- [ ] **5. Scripting and spells.**
+- [x] **5. Scripting and spells.**
   - Tests first, through real casts:
     - `heal` held back reports `wound limit`;
     - `tend` closes points.

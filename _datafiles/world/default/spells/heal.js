@@ -50,8 +50,10 @@ function onMagic(sourceActor, targetActor) {
     var targetUserId = targetActor.UserId();
 
     // Apply the heal first, and report what it mended.
-    var healed = targetActor.AddHealth(UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES));
-    var suffix = ' (' + healed + ' healed)';
+    // Phase 30b: a wound limit holds some of it back, and says so.
+    var rolled = UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES);
+    var healed = targetActor.AddHealth(rolled);
+    var suffix = ' (' + healed + ' healed' + targetActor.WoundNote(rolled, healed) + ')';
 
     if (sourceUserId != 0 && sourceUserId == targetUserId) {
         SendUserMessage(sourceUserId, 'You press your glowing hands to your own wounds, and they close a little.' + suffix);

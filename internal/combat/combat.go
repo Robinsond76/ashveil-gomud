@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
 type SourceTarget string
@@ -42,6 +43,7 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 	}
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
+	applyWounds(&mob.Character, attackResult)
 
 	// Remember who has hit him
 	mob.Character.TrackPlayerDamage(user.UserId, attackResult.DamageToTarget)
@@ -69,6 +71,7 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) 
 
 	if attackResult.DamageToTarget != 0 {
 		userDef.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
+		applyWounds(userDef.Character, attackResult)
 		userDef.WimpyCheck()
 	}
 
@@ -94,6 +97,7 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 
 	if attackResult.DamageToTarget != 0 {
 		user.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
+		applyWounds(user.Character, attackResult)
 		user.WimpyCheck()
 	}
 
@@ -115,6 +119,7 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
 	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
+	applyWounds(&mobDef.Character, attackResult)
 
 	// If attacking mob was player charmed, attribute damage done to that player
 	if charmedUserId := mobAtk.Character.GetCharmedUserId(); charmedUserId > 0 {
@@ -123,6 +128,14 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 	}
 
 	return attackResult
+}
+
+// applyWounds gives the target the wounds its round's strikes left
+// (Phase 30b); calculateCombat only puts them on a woundable target.
+func applyWounds(target *characters.Character, r AttackResult) {
+	for _, w := range r.WoundsToTarget {
+		target.AddWound(w)
+	}
 }
 
 // mobCombatCharacter makes a narration-only copy for the combat calculation.
@@ -319,6 +332,12 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 	atkCount := combatAttackCount(sourceChar, targetChar)
 
+	// Phase 30b: only players and company companions are wounded.
+	woundable := targetType == User
+	if targetType == Mob && len(targetMob) > 0 && targetMob[0] != nil {
+		_, _, woundable = company.LeaderAndKeyForInstance(targetMob[0].InstanceId)
+	}
+
 	// Statmods can add a damage bonus plus the stat-driven damage bonus.
 	statModDBonus := sourceChar.StatMod(`damage`) + damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
 
@@ -462,6 +481,17 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 						attackResult.BuffTarget = append(attackResult.BuffTarget, effect...)
 					}
 					critStatuses = status.Words(effect)
+				}
+
+				// Phase 30b: a crit that got through leaves a lasting wound,
+				// named in the hit's parentheses; a crushing blow a light one.
+				if woundable && attackTargetDamage > 0 {
+					if isCrit {
+						attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, wounds.FromCrit(weaponSubType, attackTargetDamage, util.Rand))
+						critStatuses = append(critStatuses, "wounded")
+					} else if w, ok := wounds.Crushing(attackTargetDamage, targetChar.HealthMax.Value, util.Rand); ok {
+						attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, w)
+					}
 				}
 
 				// An edge raises the strike's ceiling too, so a sharpened
