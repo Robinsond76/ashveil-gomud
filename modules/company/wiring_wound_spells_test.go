@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,6 +17,14 @@ func (b *brawl) castOnSelf(spell string, landed func(string) bool) string {
 	b.t.Helper()
 	c := b.aria.Character
 	c.Aggro = nil
+	// Out of the road, where an earlier test's bandits may still fight:
+	// nothing but the spell may touch her health.
+	verge := rooms.LoadRoom(920102)
+	require.NotNil(b.t, verge)
+	b.road.RemovePlayer(7)
+	c.RoomId = verge.RoomId
+	verge.AddPlayer(7)
+	b.t.Cleanup(func() { verge.RemovePlayer(7) })
 	c.SetSkill(`cast`, 4)
 	c.SpellBook[spell] = 5000
 	c.Stats.Mysticism.ValueAdj = 1000
