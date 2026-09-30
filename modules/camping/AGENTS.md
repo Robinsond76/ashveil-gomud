@@ -1,0 +1,2 @@
+
+Phase 30b wounds: `grantPendingTiers` heals wounds after a saved grant, outside `m.mu`. An inn stay (Well Rested) closes every wound of the leader and the live companions. A camp rest closes a lasting wound only by spending one bandage through `company.SpendBandage` (the company module's supplies, cargo first), one per wound; with none, wounds stay open (owner, 2026-09-30). Tests stub the seam with `spendBandage`.

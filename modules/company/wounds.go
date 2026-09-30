@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -222,7 +223,7 @@ func (m *CompanyModule) woundsView(user *users.UserRecord, room *rooms.Room) str
 		return "No one in your company is hurt."
 	}
 	out := "Hurt:\n  " + strings.Join(lines, "\n  ")
-	hint := "  <ansi fg=\"command\">heal wounds</ansi> tends them; a camp rest or an inn heals wounds fully."
+	hint := "  <ansi fg=\"command\">heal wounds</ansi> tends them; an inn stay heals wounds fully, a camp rest one per bandage."
 	if p, ok := m.physicianIn(room); ok {
 		hint += fmt.Sprintf(" %s here closes wounds for %d gold each.", util.CapitalizeFirst(p.Name), p.PricePerWound)
 	}
@@ -288,6 +289,18 @@ func (m *CompanyModule) supplies(user *users.UserRecord, members []woundMember, 
 	}
 	return out
 }
+
+// SpendBandage uses one bandage the company can reach, for a camp rest
+// (company.SupplyProvider).
+func (m *CompanyModule) SpendBandage(leaderUserID int) bool {
+	user := users.GetByUserId(leaderUserID)
+	if user == nil || user.Character == nil || m.persistenceAvailable() != nil {
+		return false
+	}
+	return m.spendItem(user, m.woundMembers(user), bandageItemID, 0)
+}
+
+var _ domain.SupplyProvider = (*CompanyModule)(nil)
 
 // useSupply spends one item. It reports whether it was spent.
 func (m *CompanyModule) useSupply(user *users.UserRecord, s supply, itemID int) bool {
@@ -652,7 +665,7 @@ func (m *CompanyModule) stillHurt(members []woundMember) []string {
 	}
 	out := []string{"    Still hurt: " + strings.Join(hurt, ", ") + "."}
 	if wounded {
-		out = append(out, "    A camp rest or an inn will do the rest.")
+		out = append(out, "    An inn will do the rest, or a camp rest with a bandage for each wound.")
 	}
 	return out
 }

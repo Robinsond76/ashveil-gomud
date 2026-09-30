@@ -26,6 +26,10 @@ and whatever can help tend the company.
    - Only players and company companions are wounded. Enemies are not.
 2. **Rests:** a completed camp rest (Rested) **and** a completed inn stay
    (Well Rested) both close every wound of the members present.
+   **Amended by the owner (2026-09-30, after merge):** a camp rest closes
+   a lasting wound only by using up one linen bandage the company carries,
+   one per wound; without bandages a camp heals no wounds. An inn stay
+   still closes them all; otherwise it takes bandages or a physician.
 3. **Tend** is a new castable restoration spell. Clerics and cleric
    companions get it, and `heal wounds` uses it.
 4. **Death clears wounds**: a player waking at a church, and a companion
@@ -192,8 +196,12 @@ The player never names a healer or a patient.
 ### Rest (`modules/camping`)
 
 `grantPendingTiers`, after a saved grant (camp Rested or inn Well Rested),
-closes every wound of the leader and the live companions. Each healed
-member gets a line: `Tamsin Reed's broken arm has knit. (wound healed)`.
+closes the wounds of the leader and the live companions. An inn stay
+closes them all. A camp rest (owner amendment) closes a lasting wound
+only for a bandage `company.SpendBandage` uses up (the cargo, then the
+packs, as `heal wounds`), one each; the rest stay, with a line saying
+bandages, an inn, or a physician will close them. Each healed wound gets
+a line: `Tamsin Reed's broken arm has knit. (wound healed; a bandage used)`.
 
 ### Death
 
@@ -278,7 +286,8 @@ member gets a line: `Tamsin Reed's broken arm has knit. (wound healed)`.
     wounds;
   - it never advances the clock.
 - **`tend`** through a real cast closes wound points.
-- **Rests:** a completed camp rest, and an inn stay, close wounds.
+- **Rests:** an inn stay closes every wound; a camp rest one per bandage
+  it uses up, and none without bandages.
 - **Death:** a church wake, and a companion's death, clear wounds.
 - **Surfaces:** `status`, the companyview, and GMCP show the limit, and
   the strategy healer doesn't heal a member who is at their limit.

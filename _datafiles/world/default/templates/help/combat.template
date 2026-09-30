@@ -95,7 +95,7 @@ action. Statuses last a few combat rounds and end with the fight.
 A critical hit on you or a companion also leaves a wound, which stops
 healing short of your maximum until it is treated. After the fight,
 <ansi fg="command">heal wounds</ansi> has your clerics, bandages, and splints tend the company;
-a camp rest or an inn stay knits what is left.
+an inn stay knits what is left, and a camp rest one wound per bandage.
 
 <ansi fg="yellow-bold">After the fight (</ansi><ansi fg="command">help battle-summary</ansi><ansi fg="yellow-bold">)</ansi>
 

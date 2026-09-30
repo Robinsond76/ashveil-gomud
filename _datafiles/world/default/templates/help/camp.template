@@ -42,8 +42,10 @@ round count; a rest takes real time, not game time.
   A companion who wasn't with you when the rest finished still gets its
   share of Rested once it rejoins, for whatever time is left.
 
-  A finished rest also knits every wound of you and the companions with
-  you (<ansi fg="command">help wounds</ansi>): <ansi fg="command">Your broken arm has knit. (wound healed)</ansi>.
+  A finished rest also knits one wound for each linen bandage the company
+  carries, using it up (<ansi fg="command">help wounds</ansi>):
+  <ansi fg="command">Your broken arm has knit. (wound healed; a bandage used)</ansi>. Without
+  bandages a camp heals no wounds: that takes an inn or a physician.
 
   Foul weather makes for a poorer rest: the Fatigue you recover is
   scaled down (never increased) by how bad conditions are where you've
