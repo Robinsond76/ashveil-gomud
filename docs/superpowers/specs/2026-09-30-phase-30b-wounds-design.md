@@ -30,6 +30,8 @@ and whatever can help tend the company.
    a lasting wound only by using up one linen bandage the company carries,
    one per wound; without bandages a camp heals no wounds. An inn stay
    still closes them all; otherwise it takes bandages or a physician.
+   **Amended again the same day:** a broken bone needs a birch splint at
+   camp, not a bandage; cuts and punctures take a bandage.
 3. **Tend** is a new castable restoration spell. Clerics and cleric
    companions get it, and `heal wounds` uses it.
 4. **Death clears wounds**: a player waking at a church, and a companion
@@ -198,10 +200,11 @@ The player never names a healer or a patient.
 `grantPendingTiers`, after a saved grant (camp Rested or inn Well Rested),
 closes the wounds of the leader and the live companions. An inn stay
 closes them all. A camp rest (owner amendment) closes a lasting wound
-only for a bandage `company.SpendBandage` uses up (the cargo, then the
-packs, as `heal wounds`), one each; the rest stay, with a line saying
-bandages, an inn, or a physician will close them. Each healed wound gets
-a line: `Tamsin Reed's broken arm has knit. (wound healed; a bandage used)`.
+only for the item `company.SpendSupply` uses up (a splint for a broken
+bone, a bandage for a cut or a puncture; the cargo, then the packs, as
+`heal wounds`), one each; the rest stay, with a line naming what ran
+out. Each healed wound gets a line:
+`Tamsin Reed's broken arm has knit. (wound healed; a splint used)`.
 
 ### Death
 
@@ -286,8 +289,9 @@ a line: `Tamsin Reed's broken arm has knit. (wound healed; a bandage used)`.
     wounds;
   - it never advances the clock.
 - **`tend`** through a real cast closes wound points.
-- **Rests:** an inn stay closes every wound; a camp rest one per bandage
-  it uses up, and none without bandages.
+- **Rests:** an inn stay closes every wound; a camp rest one per splint
+  (broken bones) or bandage (cuts, punctures) it uses up, and none
+  without them.
 - **Death:** a church wake, and a companion's death, clear wounds.
 - **Surfaces:** `status`, the companyview, and GMCP show the limit, and
   the strategy healer doesn't heal a member who is at their limit.

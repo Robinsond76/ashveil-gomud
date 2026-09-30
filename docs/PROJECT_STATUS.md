@@ -129,7 +129,7 @@ instead of duplicating them.
 | 29e | Pain reactions | Complete: [design](superpowers/specs/2026-09-29-phase-29e-pain-reactions-design.md), [plan](superpowers/plans/2026-09-29-phase-29e-pain-reactions.md). A victim reacts after each damaging critical strike that leaves them standing; second person for the victim, third person for witnesses, distinct beast-race sets and NPC overrides, without changing combat mechanics |
 | 29f | Paced combat output | Complete: [design](superpowers/specs/2026-09-29-phase-29f-paced-combat-design.md), [plan](superpowers/plans/2026-09-29-phase-29f-paced-combat.md). Combat resolves every `CombatEveryRounds` (2) game rounds, an 8-second combat round; everything a round causes is tagged (`events.WithCause`) and paced out per player (`internal/combatpace`), with `set combatpace fast|normal|slow|off` (off for screen readers); a pause before pain and death lines; typed output, tells, and says never wait; the prompt and the web client's vitals and battle view wait for the lines; flushes on move, quit, pace change, and copyover; `help combatpace` |
 | 30a | Status effects and critical-hit effects (weapons only) | Complete (merged as `2ef931c`): [design](superpowers/specs/2026-09-29-phase-30a-status-crit-effects-design.md), [plan](superpowers/plans/2026-09-29-phase-30a-status-crit-effects.md). Nine statuses (bleeding, staggered, knocked down, armor broken, exposed, burning, overloaded, stunned, hobbled) as combat-round buffs (`internal/status`); crit effects by weapon subtype; ticked, and actions lost, in the combat round; cleared at fight end; Sparks overloads; `help statuses` |
-| 30b | Wounds, treatment, and `heal wounds` | Complete: [design](superpowers/specs/2026-09-30-phase-30b-wounds-design.md), [plan](superpowers/plans/2026-09-30-phase-30b-wounds.md). Lasting wounds from damaging crits, light ones from crushing blows and finished bleeds; healing stops at the wound limit; `heal`/`heal wounds` (clerics' `tend` and heal, splints and bandages, the Waymark Inn physician); inn stay heals, camp rest one wound per bandage (owner amendment); death clears; `status`, GMCP, web strip; `help wounds` |
+| 30b | Wounds, treatment, and `heal wounds` | Complete: [design](superpowers/specs/2026-09-30-phase-30b-wounds-design.md), [plan](superpowers/plans/2026-09-30-phase-30b-wounds.md). Lasting wounds from damaging crits, light ones from crushing blows and finished bleeds; healing stops at the wound limit; `heal`/`heal wounds` (clerics' `tend` and heal, splints and bandages, the Waymark Inn physician); inn stay heals, camp rest one wound per splint or bandage (owner amendment); death clears; `status`, GMCP, web strip; `help wounds` |
 | 30c | Company tactics | Proposed, rescoped 2026-09-29: [design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md). 30c1: `company tactics` (company-wide focus, changeable mid-battle for that battle only, leader-only, one-round cooldown, with web Combat-tab buttons; healing threshold) and enemy personalities. 30c2: guardian role and guards. Rotate the wounded deferred |
 | 30d | Wind-ups, telegraphs, and interrupts | Proposed: [spec](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md). Wind-ups in whole rounds, interrupt thresholds with accumulated pressure, concentration, enemy casters |
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
@@ -175,10 +175,11 @@ docs/PROJECT_STATUS.md`.
     markets.
   - The new `tend` spell (clerics, companions at level 1). Heal spells
     note a held-back heal.
-  - An inn stay knits every wound. A camp rest knits one lasting wound
-    per linen bandage the company has, using it up; with no bandages it
-    heals none (owner amendment, 2026-09-30, after merge, on branch
-    `camp-wounds-bandages`). The church wake clears wounds.
+  - An inn stay knits every wound. A camp rest knits a broken bone per
+    birch splint and a cut or puncture per linen bandage the company has,
+    using them up; without them it heals none (owner amendments,
+    2026-09-30, after merge, on branches `camp-wounds-bandages` and
+    `camp-splints`). The church wake clears wounds.
   - `status` `(limit N)`, `companyview`/GMCP `hp_limit`, and the web
     vitals strip.
   - Help: `help wounds` (new, with aliases), and `help heal` rewritten
@@ -187,7 +188,8 @@ docs/PROJECT_STATUS.md`.
 - **Why:** step 6 of the combat roadmap. Owner decisions (2026-09-30):
   - lasting and light wounds;
   - camp rest and inn stay both heal. Amended the same day: a camp rest
-    heals only with bandages, one per wound;
+    heals only with bandages, one per wound, and a broken bone needs a
+    splint;
   - `tend` is a castable spell;
   - death clears wounds.
 - **Verification:**

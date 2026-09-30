@@ -87,7 +87,7 @@ func TestHealWoundsClericThenItems(t *testing.T) {
 	assert.Contains(t, cargo.consumed, bandageItemID, "under half her limit: bandaged")
 	assert.Contains(t, out, "You wrap Tamsin Reed's hurts.")
 	assert.Contains(t, out, "Still hurt: Tamsin Reed")
-	assert.Contains(t, out, "An inn will do the rest, or a camp rest with a bandage for each wound.")
+	assert.Contains(t, out, "An inn will do the rest, or a camp rest with a splint or bandage for each wound.")
 	assert.Equal(t, turn, util.GetTurnCount(), "never advances the clock")
 	assert.Equal(t, round, util.GetRoundCount())
 }
@@ -211,18 +211,21 @@ func TestHealWoundsSpentHealers(t *testing.T) {
 	assert.Contains(t, b.cmd("heal", "wounds"), "Your healers have no mana left.")
 }
 
-// A camp rest spends bandages through company.SpendBandage: the cargo
-// first, then the packs; none left reports false.
-func TestSpendBandageThroughTheProvider(t *testing.T) {
+// A camp rest spends bandages and splints through company.SpendSupply:
+// the cargo first, then the packs; none left reports false.
+func TestSpendSupplyThroughTheProvider(t *testing.T) {
 	b := newBrawl(t)
 	cargo := &fakeCargo{stacks: []encumbrance.CargoStack{{ItemId: bandageItemID, Count: 1}}}
 	useCargo(t, cargo)
 	b.aria.Character.StoreItem(items.New(bandageItemID))
-	assert.True(t, domain.SpendBandage(7))
+	b.aria.Character.StoreItem(items.New(splintItemID))
+	assert.True(t, domain.SpendSupply(7, wounds.Bandage))
 	assert.Equal(t, []int{bandageItemID}, cargo.consumed, "the cargo first")
-	assert.True(t, domain.SpendBandage(7), "then the leader's pack")
+	assert.True(t, domain.SpendSupply(7, wounds.Bandage), "then the leader's pack")
+	assert.False(t, domain.SpendSupply(7, wounds.Bandage), "no bandages left")
+	assert.True(t, domain.SpendSupply(7, wounds.Splint), "a splint from the pack")
+	assert.False(t, domain.SpendSupply(7, wounds.Splint), "no splints left")
 	for _, itm := range b.aria.Character.Items {
-		assert.NotEqual(t, bandageItemID, itm.ItemId)
+		assert.NotContains(t, []int{bandageItemID, splintItemID}, itm.ItemId)
 	}
-	assert.False(t, domain.SpendBandage(7), "none left")
 }
