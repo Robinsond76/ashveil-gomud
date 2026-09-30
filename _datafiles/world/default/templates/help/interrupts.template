@@ -47,6 +47,31 @@ burning, and a spell never do.
   foes that chant (<ansi fg="command">help tactics</ansi>). A foe chanting from its back row can
   still be reached with a bow or sling.
 
+<ansi fg="yellow-bold">Wind-ups</ansi>
+
+Some big foes wind up a heavy blow in plain view before they swing. The
+<ansi fg="yellow">forest ogre</ansi> of the Dark Forest winds up <ansi fg="yellow">Crushing Blow</ansi>:
+
+  <ansi fg="command">The forest ogre plants his feet and drags his great club up over his shoulder, eyes on Tamsin Reed. (winding up: Crushing Blow, 1 round)</ansi>
+  <ansi fg="command">The forest ogre brings his great club down with all his weight.</ansi>
+  <ansi fg="command">The forest ogre's great club catches Tamsin Reed across the jaw. (Crushing Blow, 18 damage, knocked down)</ansi>
+
+- Winding up takes the foe's whole turn. At its <ansi fg="yellow">next turn</ansi> it swings once
+  at the one it named, with <ansi fg="yellow">double damage</ansi> before armor, and a blow that
+  gets through the armor <ansi fg="yellow">knocks the target down</ansi> (they lose their next
+  action; <ansi fg="command">help statuses</ansi>). It can still miss or be dodged.
+- Only <ansi fg="yellow">heavy force</ansi> breaks a wind-up: a <ansi fg="yellow">critical hit</ansi> that gets through the
+  armor, or a blow that <ansi fg="yellow">staggers</ansi>, <ansi fg="yellow">knocks down</ansi>, or <ansi fg="yellow">stuns</ansi> the foe:
+  <ansi fg="command">The forest ogre staggers, and the blow dies before it can fall. (Crushing Blow interrupted)</ansi>
+  An ordinary blow never breaks a wind-up, however hard it lands, and
+  neither does a shield bash.
+- A broken wind-up is lost. After a wind-up lands or breaks, the foe
+  swings normally for <ansi fg="yellow">two of its turns</ansi> before it can wind up again.
+- To weather it: hit the foe with everything while it winds up (every
+  blow is a chance at a critical hit), keep your frail members out of its
+  reach (<ansi fg="command">help formation</ansi>), and give its target a <ansi fg="yellow">guardian</ansi>, who steps
+  in and takes the blow (<ansi fg="command">help guardian</ansi>).
+
 <ansi fg="yellow-bold">Shield counters</ansi>
 
 When a melee blow misses someone holding a <ansi fg="yellow">shield</ansi>, they may slam it back
@@ -61,8 +86,9 @@ into the attacker:
   down, stunned, or chanting.
 - It works both ways: a foe with a shield counters you. You choose nothing;
   holding a shield is enough.
+- A bash is a counter strike only: it breaks no chant and no wind-up.
 
-The battle summary lists the chants each side broke, and how many of your
-blows a foe's chant withstood ("failed") (<ansi fg="command">help battle-summary</ansi>).
+The battle summary lists the chants and wind-ups each side broke, and how
+many of your blows a foe's chant withstood ("failed") (<ansi fg="command">help battle-summary</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help guardian</ansi>.
