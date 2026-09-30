@@ -84,6 +84,16 @@ Settled in a third round (2026-09-30):
     the player has to adapt. A focused company against a passive enemy
     should win faster; an enemy focusing on the company should hurt.
 
+Settled in a fourth round (2026-09-30): the owner accepted the lead's
+recommendations on the remaining open decisions ("Ok go"):
+
+15. **Parry or dodge (A):** when both could apply, roll whichever
+    chance is higher, once.
+16. **Parry by weapon (B):** swords and staves +5, axes and maces 0,
+    daggers −5, two-handed polearms +5; unarmed and claws can't parry.
+17. **Armor suffix (D):** `(5 damage, 2 absorbed)`.
+18. **Stat step size (I):** every **5** levels (`StatStepLevels: 5`).
+
 ## Prior-art check (against `master` at `66fc6dc`)
 
 - **Hit, dodge, armor** (`internal/combat/combat.go`, the strike loop): a
@@ -339,19 +349,19 @@ Structure first, with provisional numbers; 30g6 tunes them.
   - level 15 against level 10: the higher side is clearly favored but can
     lose.
 
-## Open decisions (lead's recommendations)
+## Open decisions (all settled; kept for the reasoning)
 
-- **A. Parry or dodge, when both could apply** (a melee strike on an
+- **A. Parry or dodge, when both could apply** (settled: decision 15) (a melee strike on an
   armed fighter without a shield). Recommend: **roll whichever chance is
   higher, once**. It is still one attempt per strike (decision 5), and
   nobody is worse off for holding a weapon. The alternative (always
   parry) makes a light, perceptive fighter weaker for drawing a blade.
-- **B. Parry by weapon.** Recommend a small subtype modifier: swords and
+- **B. Parry by weapon** (settled: decision 16). Recommend a small subtype modifier: swords and
   staves +5, axes and maces 0, daggers −5, two-handed polearms +5;
   unarmed and claws can't parry (they dodge). The owner may prefer no
   modifier at first.
 - **C. What triggers the shield bash.** Settled: decision 10.
-- **D. The armor suffix.** Today's `(5 damage, 2 blocked)` means armor,
+- **D. The armor suffix** (settled: decision 17). Today's `(5 damage, 2 blocked)` means armor,
   which will read wrongly once shields block. Recommend
   `(5 damage, 2 absorbed)`; `help narration` and 29c's tests follow.
 - **E. Tempo's Speed reference.** Replaced by decision 13 (stats in
@@ -362,7 +372,7 @@ Structure first, with provisional numbers; 30g6 tunes them.
   archetype).
 - **H. Which fight the target describes.** Settled: decision 14 (the
   spread-out fight; enemy tactics cut both ways).
-- **I. Stat step size** (decision 13: every 5 or every 10 levels).
+- **I. Stat step size** (settled: decision 18, every 5).
   Recommend **5**. Every 10 gives only six steps by level 60, so each
   step must be large to mean anything, and nine levels in a row pass with
   no stat change. Every 5 gives twelve smaller steps, keeps the gap
