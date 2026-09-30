@@ -58,6 +58,10 @@ func TestSummaryStillStandingAndInterruptsAndGuards(t *testing.T) {
 	s.Emit(Event{Kind: Interrupt, Source: aria, Target: captain, Outcome: OutcomeSucceeded, Status: "Crushing Blow"})
 	s.Emit(Event{Kind: Interrupt, Source: tamsin, Target: captain, Outcome: OutcomeFailed})
 	s.Emit(Event{Kind: Interrupt, Source: captain, Target: tamsin, Outcome: OutcomeSucceeded})
+	// Review (30d1b): a company blow a company chant withstood is no
+	// failed interrupt, nor is an enemy's blow a company chant withstood.
+	s.Emit(Event{Kind: Interrupt, Source: aria, Target: tamsin, Outcome: OutcomeFailed})
+	s.Emit(Event{Kind: Interrupt, Source: captain, Target: tamsin, Outcome: OutcomeFailed})
 	s.Emit(Event{Kind: GuardUsed, Source: tamsin})
 	s.Emit(Event{Kind: Heal, Source: tamsin, Target: tamsin, Amount: 3, HeldBack: 1})
 	sum, _ := s.EndFight(id, 3, OutcomeBrokenOff, Final{})
@@ -76,8 +80,7 @@ func TestSummaryStillStandingAndInterruptsAndGuards(t *testing.T) {
 	assert.Contains(t, lines, "Enemies        bandit captain still standing")
 }
 
-// Phase 30d1: with no failed interrupts (a chant breaks on any damaging
-// blow) the line leaves "failed" out.
+// With no failed interrupts the line leaves "failed" out.
 func TestSummaryInterruptsWithoutFailures(t *testing.T) {
 	s := New()
 	id := s.Open(1, 100, "bandits#0", aria, []Ref{tamsin}, []Ref{captain})

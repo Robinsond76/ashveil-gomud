@@ -53,7 +53,7 @@ func TestCritLeavesItsWeaponsStatus(t *testing.T) {
 		target := edgeFighter(90231)
 
 		result := calculateCombat(*source, *target, User, User, 0, 0)
-		if !result.Hit || !result.Crit {
+		if !result.Hit || !result.Crit || !result.CritLanded {
 			t.Fatalf("%s: forced crit expected, got %+v", c.sub, result)
 		}
 		if len(result.BuffTarget) != len(c.want) {
@@ -106,6 +106,9 @@ func TestFullyBlockedCritLeavesNoStatus(t *testing.T) {
 			continue
 		}
 		seen++
+		if result.CritLanded {
+			t.Fatal("a fully blocked crit didn't land (Phase 30d1b: it is no heavy blow)")
+		}
 		if len(result.BuffTarget) != 0 {
 			t.Fatalf("a fully blocked crit left %v", result.BuffTarget)
 		}

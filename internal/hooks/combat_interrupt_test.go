@@ -16,7 +16,8 @@ func TestHeavyBlow(t *testing.T) {
 	}{
 		{"an ordinary hit", combat.AttackResult{Hit: true, DamageToTarget: 5}, false},
 		{"a bleeding cut", combat.AttackResult{Hit: true, BuffTarget: []int{status.Bleeding}}, false},
-		{"a critical hit", combat.AttackResult{Hit: true, Crit: true}, true},
+		{"a critical hit", combat.AttackResult{Hit: true, Crit: true, CritLanded: true}, true},
+		{"a crit the armor took, beside a hit", combat.AttackResult{Hit: true, Crit: true, DamageToTarget: 2}, false},
 		{"a stagger", combat.AttackResult{Hit: true, BuffTarget: []int{status.Staggered}}, true},
 		{"a knockdown", combat.AttackResult{Hit: true, BuffTarget: []int{status.Bleeding, status.KnockedDown}}, true},
 		{"a stun", combat.AttackResult{Hit: true, BuffTarget: []int{status.Stunned}}, true},

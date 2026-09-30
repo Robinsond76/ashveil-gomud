@@ -45,7 +45,7 @@ built. Enemy casters restart from the first word, as the proposal says
 
 The owner's rule makes chants a formation question, not a meter: keep
 healers and casters where blows can't reach them (11c's back rows), and
-guard them (30c2). An enemy caster in reach is broken by any hit; one in
+guard them (30c2). An enemy caster in reach may be broken by any hit (by chance since 30d1b); one in
 its back row must be reached by a bow, a sling, or a guard's absence.
 30d2's physical wind-ups (the ogre) break only on heavier force (the
 owner's decision; see Deferrals). 30d1b later made a chant's break a

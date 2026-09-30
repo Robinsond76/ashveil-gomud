@@ -29,7 +29,7 @@ func TestInterruptsHelp(t *testing.T) {
 		"Help for interrupts",
 		"A weapon blow that draws blood\nmay break it",
 		"40%", "90%", "a quarter of their health",
-		"critical hit", "staggers", "knocks down", "stuns", "shield bash",
+		"critical hit", "staggers", "knocks down", "stuns", "maximum health",
 		"always breaks",
 		"Brother Oswin flinches, but the chant holds. (Minor Heal, chant held)",
 		"You flinch, but your chant holds. (Minor Heal, chant held)",

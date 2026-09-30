@@ -75,6 +75,9 @@ set by the lead and given to this branch as decided; it was not re-asked.
   design and the status log.
 - The held line is told for enemies and company alike; no line for a
   blow that drew no blood (as before).
+- The shield bash's "always breaks" is kept in code for 30d2's wind-ups,
+  but can't happen yet (a character who swings isn't chanting), so the
+  help doesn't list it (review finding).
 
 ## Acceptance criteria
 
@@ -86,8 +89,11 @@ set by the lead and given to this branch as decided; it was not re-asked.
   - a held chant: roll forced high, a light blow on Oswin's heal — the
     room line, an `Interrupt` `failed`, the chant continues;
   - a player's held chant gets `You flinch, but your chant holds.`;
-  - a crit, and a blow that staggers, break even with the roll forced
-    high;
+  - a crit breaks even with the roll forced high (a stagger, knockdown,
+    or stun comes only from a crit today, so the status cases are the
+    `heavyBlow` unit test's; amended after review);
+  - a crit the armor took entirely is no heavy blow (`CritLanded`;
+    review finding);
   - the battle summary shows "failed 1" after a company blow a foe's
     chant withstood;
   - 30d1's interrupt tests pass with the roll forced to break.

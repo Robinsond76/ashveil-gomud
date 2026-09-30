@@ -476,6 +476,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				// subtype's effect. It is named in the hit's parentheses.
 				var critStatuses []string
 				if isCrit && attackTargetDamage > 0 {
+					attackResult.CritLanded = true
 					effect := critBuffs
 					if len(effect) == 0 {
 						effect = status.CritEffect(weaponSubType, nil, util.Rand)

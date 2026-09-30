@@ -6,12 +6,14 @@ may break it</ansi>:
 
   <ansi fg="command">The goblin hexer's chant breaks off under the blow. (Withering Hex interrupted)</ansi>
 
-- Heavy force <ansi fg="yellow">always breaks</ansi> a chant: a <ansi fg="yellow">critical hit</ansi>, a blow that <ansi fg="yellow">staggers</ansi>,
-  <ansi fg="yellow">knocks down</ansi>, or <ansi fg="yellow">stuns</ansi> the caster, and a <ansi fg="yellow">shield bash</ansi>.
+- Heavy force <ansi fg="yellow">always breaks</ansi> a chant: a <ansi fg="yellow">critical hit</ansi> that gets through
+  the armor, or a blow that <ansi fg="yellow">staggers</ansi>, <ansi fg="yellow">knocks down</ansi>, or <ansi fg="yellow">stuns</ansi> the caster.
 - Any other blow breaks it by chance, more often the harder it lands
-  against the caster's health: a nick breaks it <ansi fg="yellow">40%</ansi> of the time, and a
-  blow that takes <ansi fg="yellow">a quarter of their health</ansi> (or more) <ansi fg="yellow">90%</ansi>. The chance is
-  40% plus 2% for each percent of the caster's most health the blow took.
+  against the caster's maximum health: a scratch on a sturdy caster breaks
+  it about <ansi fg="yellow">40%</ansi> of the time, and a blow that takes <ansi fg="yellow">a quarter of their health</ansi>
+  (or more) <ansi fg="yellow">90%</ansi>. The chance is 40% plus 2% for each percent of the
+  caster's maximum health the blow took, so a frail healer's chant breaks
+  more easily than a sturdy one's.
 - When the chant holds, the caster flinches and chants on:
   <ansi fg="command">Brother Oswin flinches, but the chant holds. (Minor Heal, chant held)</ansi>
   <ansi fg="command">You flinch, but your chant holds. (Minor Heal, chant held)</ansi>

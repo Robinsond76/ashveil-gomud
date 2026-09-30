@@ -144,7 +144,7 @@ func (t *tally) add(f *fight, e Event) {
 		switch {
 		case sourceCompany && e.Outcome == OutcomeSucceeded:
 			t.interruptsDealt = append(t.interruptsDealt, e.Status)
-		case sourceCompany:
+		case sourceCompany && targetEnemy:
 			t.interruptsFailed++
 		case sourceEnemy && e.Outcome == OutcomeSucceeded:
 			t.interruptsTaken++

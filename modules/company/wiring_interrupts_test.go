@@ -603,6 +603,7 @@ func TestChantHoldsOnLightBlow(t *testing.T) {
 	oswin := b.companion(2)
 
 	var out string
+	chantsOn := false // after the round it held, Oswin still chants (or healed)
 	held := func() []combatstream.Event {
 		var got []combatstream.Event
 		for _, e := range interruptsOf(*stream, key(oswin)) {
@@ -621,6 +622,8 @@ func TestChantHoldsOnLightBlow(t *testing.T) {
 		}
 		b.strike(2, false) // the captain on Oswin
 		out = b.fight()
+		chantsOn = (oswin.Character.Aggro != nil && oswin.Character.Aggro.Type == characters.SpellCast) ||
+			len(ofKind(*stream, combatstream.Heal)) > 0
 	}
 	got := held()
 	require.NotEmpty(t, got, "a blow struck the chant and it held:\n%s", out)
@@ -635,6 +638,7 @@ func TestChantHoldsOnLightBlow(t *testing.T) {
 		assert.NotEqual(t, combatstream.OutcomeInterrupted, e.Outcome)
 	}
 	assert.NotContains(t, out, "breaks off under the blow")
+	assert.True(t, chantsOn, "the chant went on after it held")
 }
 
 // A player whose chant holds is told so.
@@ -646,6 +650,7 @@ func TestPlayerChantHolds(t *testing.T) {
 	forceBlows(t, true)
 	noCounters(t)
 	breakDice(t, 99)
+	heard := b.ariaHears()
 	b.aria.Character.SetSkill("cast", 1)
 	b.aria.Character.LearnSpell("mm")
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
@@ -660,6 +665,8 @@ func TestPlayerChantHolds(t *testing.T) {
 	}
 	assert.Contains(t, out, "You flinch, but your chant holds. (Magic Missile, chant held)")
 	assert.NotContains(t, out, "The blow breaks your chant")
+	assert.Contains(t, strings.Join(*heard, "\n"), "You flinch, but your chant holds.")
+	assert.NotContains(t, strings.Join(*heard, "\n"), "Aria flinches", "she isn't told the room's line")
 }
 
 // Heavy force always breaks a chant, however the roll falls: a critical

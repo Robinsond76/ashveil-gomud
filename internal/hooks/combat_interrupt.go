@@ -114,10 +114,10 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 }
 
 // heavyBlow reports whether a blow lands with heavy force, which always
-// breaks a chant: a critical hit, or one that staggers, knocks down, or
-// stuns.
+// breaks a chant: a critical hit that got through the armor, or one that
+// staggers, knocks down, or stuns.
 func heavyBlow(r combat.AttackResult) bool {
-	if r.Crit {
+	if r.CritLanded {
 		return true
 	}
 	for _, id := range r.BuffTarget {
