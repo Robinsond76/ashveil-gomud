@@ -3,6 +3,7 @@ package camping
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
@@ -199,8 +200,9 @@ func (m *CampingModule) grantPendingTiers() {
 			user.SendText("Your company is Rested: the road will feel a little lighter for a while.")
 		}
 		// Phase 30b: an inn stay knits every wound of the members present;
-		// a camp rest only those it has a bandage for (owner, 2026-09-30).
-		spend := m.bandage(leaderUserID)
+		// a camp rest only those it has a splint (a broken bone) or a
+		// bandage (a cut or a puncture) for (owner, 2026-09-30).
+		spend := m.supply(leaderUserID)
 		if tier == camping.TierWellRested {
 			spend = nil
 		}
@@ -223,34 +225,47 @@ func (m *CampingModule) grantPendingTiers() {
 	}
 }
 
-// bandage is the seam a camp rest spends the company's bandages through.
-func (m *CampingModule) bandage(leaderUserID int) func() bool {
-	if m.spendBandage != nil {
-		return func() bool { return m.spendBandage(leaderUserID) }
+// supply is the seam a camp rest spends the company's bandages and
+// splints through.
+func (m *CampingModule) supply(leaderUserID int) func(wounds.Item) bool {
+	if m.spendSupply != nil {
+		return func(item wounds.Item) bool { return m.spendSupply(leaderUserID, item) }
 	}
-	return func() bool { return company.SpendBandage(leaderUserID) }
+	return func(item wounds.Item) bool { return company.SpendSupply(leaderUserID, item) }
+}
+
+// restItem is what a camp rest needs to close a wound: a splint for a
+// broken bone, a bandage for anything else.
+func restItem(w wounds.Wound) wounds.Item {
+	if w.Kind == wounds.Fracture {
+		return wounds.Splint
+	}
+	return wounds.Bandage
 }
 
 // healRestWounds closes the wounds of the leader and the live companions
 // at a rest's end (Phase 30b), with a line for each lasting wound it
 // closes. With spend nil (an inn stay) every wound closes. Otherwise (a
-// camp rest) each lasting wound closes only for a bandage spend can use
-// up; the rest stay open, and a line says what would help.
-func healRestWounds(leader *characters.Character, live map[int]*characters.Character, spend func() bool) []string {
+// camp rest) each lasting wound closes only for the item it needs (a
+// splint for a broken bone, a bandage for a cut or a puncture) that spend
+// can use up; the rest stay open, and a line says what would help.
+func healRestWounds(leader *characters.Character, live map[int]*characters.Character, spend func(wounds.Item) bool) []string {
 	var lines []string
-	open, outOfBandages := 0, false
+	open := 0
+	outOf := map[wounds.Item]bool{}
 	heal := func(c *characters.Character, owner string) {
 		var kept []wounds.Wound
 		for _, w := range wounds.Lasting(c.Wounds) {
 			used := ""
 			if spend != nil {
-				if outOfBandages || !spend() {
-					outOfBandages = true
+				item := restItem(w)
+				if outOf[item] || !spend(item) {
+					outOf[item] = true
 					kept = append(kept, w)
 					open++
 					continue
 				}
-				used = "; a bandage used"
+				used = "; a " + string(item) + " used"
 			}
 			verb := " has knit."
 			if w.Place == "ribs" {
@@ -265,11 +280,20 @@ func healRestWounds(leader *characters.Character, live map[int]*characters.Chara
 		heal(live[id], `<ansi fg="username">`+live[id].Name+`</ansi>'s`)
 	}
 	if open > 0 {
-		noun := "wounds stay"
-		if open == 1 {
-			noun = "wound stays"
+		var missing []string
+		if outOf[wounds.Splint] {
+			missing = append(missing, "splints")
 		}
-		lines = append(lines, fmt.Sprintf("With no bandages left, %d %s open. Bandages, an inn, or a physician will close them (<ansi fg=\"command\">help wounds</ansi>).", open, noun))
+		if outOf[wounds.Bandage] {
+			missing = append(missing, "bandages")
+		}
+		what := strings.Join(missing, " or ")
+		noun, them := "wounds stay", "them"
+		if open == 1 {
+			noun, them = "wound stays", "it"
+		}
+		lines = append(lines, fmt.Sprintf("With no %s left, %d %s open. %s, an inn, or a physician will close %s (<ansi fg=\"command\">help wounds</ansi>).",
+			what, open, noun, util.CapitalizeFirst(strings.Join(missing, ", ")), them))
 	}
 	return lines
 }

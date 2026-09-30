@@ -11,6 +11,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"os"
 	"slices"
 	"strings"
@@ -290,10 +291,11 @@ type CampingModule struct {
 	// companion ID, and every rostered companion ID.
 	companionsOf func(leaderUserID int) (map[int]*characters.Character, []int)
 	grantBuff    func(c *characters.Character, buffID, rounds int) error
-	// spendBandage overrides the company's bandages in tests (Phase 30b).
-	spendBandage func(leaderUserID int) bool
-	removeBuff   func(c *characters.Character, buffID int)
-	hasBuff      func(c *characters.Character, buffID int) bool
+	// spendSupply overrides the company's bandages and splints in tests
+	// (Phase 30b).
+	spendSupply func(leaderUserID int, item wounds.Item) bool
+	removeBuff  func(c *characters.Character, buffID int)
+	hasBuff     func(c *characters.Character, buffID int) bool
 	// buffRounds overrides a held buff's rounds left in tests (Phase 26a).
 	buffRounds   func(c *characters.Character, buffID int) int
 	roundSeconds func() int

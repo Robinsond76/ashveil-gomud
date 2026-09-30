@@ -1,6 +1,10 @@
 package company
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/GoMudEngine/GoMud/internal/wounds"
+)
 
 // FormationProvider is implemented by modules/company. It is a read-only
 // query seam — the same shape as survival.CompanyService and
@@ -134,23 +138,23 @@ type ChemistryStandingView struct {
 }
 
 // SupplyProvider is optionally implemented by the registered
-// FormationProvider: a camp rest's use of the company's bandages
-// (Phase 30b follow-up). Game loop only.
+// FormationProvider: a camp rest's use of the company's bandages and
+// splints (Phase 30b follow-up). Game loop only.
 type SupplyProvider interface {
-	// SpendBandage uses up one bandage the leader's company can reach (the
-	// cargo, then the companions' packs and the leader's), reporting
-	// whether there was one.
-	SpendBandage(leaderUserID int) bool
+	// SpendSupply uses up one of item (a bandage or a splint) the leader's
+	// company can reach (the cargo, then the leader's and the companions'
+	// packs), reporting whether there was one.
+	SpendSupply(leaderUserID int, item wounds.Item) bool
 }
 
-// SpendBandage spends one of the company's bandages; false with no
-// provider or no bandage.
-func SpendBandage(leaderUserID int) bool {
+// SpendSupply spends one of the company's bandages or splints; false with
+// no provider or none left.
+func SpendSupply(leaderUserID int, item wounds.Item) bool {
 	formationProviderMu.RLock()
 	p := formationProvider
 	formationProviderMu.RUnlock()
 	sp, ok := p.(SupplyProvider)
-	return ok && sp.SpendBandage(leaderUserID)
+	return ok && sp.SpendSupply(leaderUserID, item)
 }
 
 // ChemistryProvider is optionally implemented by the registered

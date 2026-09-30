@@ -43,9 +43,10 @@ heal a wounded member only up to their limit.
                      Waymark Inn in Dunmar)
   an inn stay        a completed night at an inn (<ansi fg="command">help inn</ansi>) knits every
                      wound of the company with you
-  a camp rest        a completed rest (<ansi fg="command">help camp</ansi>) knits one wound for
-                     each linen bandage the company has, using it up;
-                     without bandages, a camp heals no wounds
+  a camp rest        a completed rest (<ansi fg="command">help camp</ansi>) knits a broken bone
+                     for each birch splint the company has, and a cut or
+                     puncture for each linen bandage, using them up;
+                     without them, a camp heals no wounds
 
 Bandages and splints are sold in the markets of Dunmar and the Old Kings
 Road (<ansi fg="command">help market</ansi>). Death clears your wounds, and a companion raised

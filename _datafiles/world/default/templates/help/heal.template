@@ -26,7 +26,8 @@ a patient; it goes in this order:
 
 It can't be used in a fight: your healers heal during a fight by their
 strategy (<ansi fg="command">help strategy</ansi>). An inn stay closes whatever is left; a camp
-rest closes one wound for each bandage you carry (<ansi fg="command">help wounds</ansi>).
+rest closes a broken bone for each splint, and a cut or puncture for each
+bandage, you carry (<ansi fg="command">help wounds</ansi>).
 
 Clerics can also cast the spells by hand: <ansi fg="command">cast heal [who]</ansi> and
 <ansi fg="command">cast tend [who]</ansi> (<ansi fg="command">help cast</ansi>).

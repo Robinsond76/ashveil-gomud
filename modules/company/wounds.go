@@ -223,7 +223,7 @@ func (m *CompanyModule) woundsView(user *users.UserRecord, room *rooms.Room) str
 		return "No one in your company is hurt."
 	}
 	out := "Hurt:\n  " + strings.Join(lines, "\n  ")
-	hint := "  <ansi fg=\"command\">heal wounds</ansi> tends them; an inn stay heals wounds fully, a camp rest one per bandage."
+	hint := "  <ansi fg=\"command\">heal wounds</ansi> tends them; an inn stay heals wounds fully, a camp rest one per splint or bandage."
 	if p, ok := m.physicianIn(room); ok {
 		hint += fmt.Sprintf(" %s here closes wounds for %d gold each.", util.CapitalizeFirst(p.Name), p.PricePerWound)
 	}
@@ -290,14 +290,18 @@ func (m *CompanyModule) supplies(user *users.UserRecord, members []woundMember, 
 	return out
 }
 
-// SpendBandage uses one bandage the company can reach, for a camp rest
-// (company.SupplyProvider).
-func (m *CompanyModule) SpendBandage(leaderUserID int) bool {
+// SpendSupply uses one bandage or splint the company can reach, for a
+// camp rest (company.SupplyProvider).
+func (m *CompanyModule) SpendSupply(leaderUserID int, item wounds.Item) bool {
 	user := users.GetByUserId(leaderUserID)
 	if user == nil || user.Character == nil || m.persistenceAvailable() != nil {
 		return false
 	}
-	return m.spendItem(user, m.woundMembers(user), bandageItemID, 0)
+	itemID := bandageItemID
+	if item == wounds.Splint {
+		itemID = splintItemID
+	}
+	return m.spendItem(user, m.woundMembers(user), itemID, 0)
 }
 
 var _ domain.SupplyProvider = (*CompanyModule)(nil)
@@ -665,7 +669,7 @@ func (m *CompanyModule) stillHurt(members []woundMember) []string {
 	}
 	out := []string{"    Still hurt: " + strings.Join(hurt, ", ") + "."}
 	if wounded {
-		out = append(out, "    An inn will do the rest, or a camp rest with a bandage for each wound.")
+		out = append(out, "    An inn will do the rest, or a camp rest with a splint or bandage for each wound.")
 	}
 	return out
 }
