@@ -133,6 +133,9 @@ func newBrawl(t *testing.T) *brawl {
 		"rooms/brawl/920104.yaml":         spawnRoom(920104, 9107, 9106),
 		"rooms/brawl/920105.yaml":         spawnRoom(920105, 9108),
 		"rooms/brawl/920106.yaml":         spawnRoom(920106, 9106, 9106, 9106, 9106, 9106, 9106),
+		// Phase 30d2: an ogre with Crushing Blow, spawned only by the
+		// wind-up tests (ogreBrawl).
+		"mobs/brawl/9109-hill_ogre.yaml": banditMob(9109, "hill ogre", 4) + "  pronouns: he\n  equipment:\n    weapon:\n      itemid: 10010\nwindups:\n  crushing-blow: 50\n",
 	}
 	for path, data := range fixtures {
 		full := filepath.Join(dataDir, path)
@@ -224,6 +227,9 @@ func newBrawl(t *testing.T) *brawl {
 	// with no roll taken from the seeded dice (a test about a held chant
 	// scripts its own).
 	t.Cleanup(hooks.UseBreakRollForTest(func(int) int { return 0 }))
+	// Phase 30d2: no wind-up starts (a test about one scripts its dice),
+	// so an enemy with `windups` keeps the brawls' seeded rolls.
+	t.Cleanup(hooks.UseWindUpRollForTest(func(n int) int { return n - 1 }))
 	// Nor a grudge: an earlier fight leaves the bandits' group hostile to
 	// Aria (user 7) for many rounds, and they would open the next brawl.
 	mobs.ResetHostility()

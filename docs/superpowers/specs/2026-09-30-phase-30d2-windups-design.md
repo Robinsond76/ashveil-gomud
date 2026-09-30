@@ -156,8 +156,9 @@ when unarmed):
 - **Release:** `The forest ogre brings his great club down with all his
   weight.`, then the swing's own hit or miss line, e.g. `…
   (Crushing Blow, 18 damage, knocked down)`.
-- **Broken:** `The forest ogre staggers, and his great club drops from its
-  height. (Crushing Blow interrupted)`.
+- **Broken:** `The forest ogre staggers, and the blow dies before it can
+  fall. (Crushing Blow interrupted)` (no weapon named, so it reads for
+  fists too).
 - **Wasted:** `The forest ogre lets his great club fall, with nothing
   left to strike. (Crushing Blow wasted)`.
 

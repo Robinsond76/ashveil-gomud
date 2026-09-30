@@ -6,7 +6,7 @@ Design: [phase-30d2 design](../specs/2026-09-30-phase-30d2-windups-design.md)
 
 Each task writes its tests first and runs only its own packages.
 
-- [ ] **1. The rules (`internal/windup`, new; `internal/interrupt`).**
+- [x] **1. The rules (`internal/windup`, new; `internal/interrupt`).**
   - Tests first: `windup_test.go` (`Get` finds `crushing-blow` with its
     numbers, unknown is false; `RollStart` never at 0, certain at 100
     with no roll, `chance-1` starts, `chance` doesn't);
@@ -15,9 +15,9 @@ Each task writes its tests first and runs only its own packages.
   - `internal/windup/windup.go`, `AGENTS.md`; `interrupt.BreaksWindUp`,
     and the package comment no longer lists the shield bash as heavy force
     (decision 2); `internal/interrupt/AGENTS.md`.
-- [ ] **2. Mob data (`internal/mobs`).** `Mob.WindUps` (`windups:`), and a
+- [x] **2. Mob data (`internal/mobs`).** `Mob.WindUps` (`windups:`), and a
   note in `internal/mobs/AGENTS.md`.
-- [ ] **3. The power blow (`internal/combat`).**
+- [x] **3. The power blow (`internal/combat`).**
   - Tests first (`windup_power_test.go`): with a provider set, a mob's
     `AttackMobVsPlayer` is one strike, its damage doubled before armor (a
     fixed-dice weapon, crits and dodges off), the target's `BuffTarget`
@@ -27,7 +27,7 @@ Each task writes its tests first and runs only its own packages.
   - `Power`, `SetPowerProvider`, `calculateCombatPower` (the old
     `calculateCombat` wraps it); `AttackMobVsPlayer`/`AttackMobVsMob` ask
     the provider; `damageSuffix` takes a leading name.
-- [ ] **4. The turn (`internal/hooks/combat_windup.go`).**
+- [x] **4. The turn (`internal/hooks/combat_windup.go`).**
   - `windUps`, `windUpCooldown`, `landing`; `windUpRoll`,
     `UseWindUpRollForTest`; `windUpTurn` (start, hold, land, waste,
     cooldown), the reach check (gates' legality), the provider, the

@@ -29,6 +29,39 @@ const (
 	Mob  SourceTarget = "mob"
 )
 
+// Power is a wind-up's blow (Phase 30d2, internal/windup): one strike,
+// its weapon's rolled damage multiplied before armor, a status left by a
+// strike that gets through, and its name leading the hit's parentheses.
+type Power struct {
+	Name       string
+	Multiplier int
+	Status     int // the buff a strike that got through leaves; 0 for none
+}
+
+// powerProvider says whether a mob's blow now is a wind-up's. It is set by
+// internal/hooks, which keeps who is winding up, and asked once per blow.
+var powerProvider func(mobInstanceId int) (Power, bool)
+
+// SetPowerProvider sets what AttackMobVsPlayer and AttackMobVsMob ask
+// whether a mob's blow is a wind-up's, until the returned restore is
+// called.
+func SetPowerProvider(f func(mobInstanceId int) (Power, bool)) (restore func()) {
+	prev := powerProvider
+	powerProvider = f
+	return func() { powerProvider = prev }
+}
+
+// mobPower is the power of the mob's blow now, nil for an ordinary one.
+func mobPower(m *mobs.Mob) *Power {
+	if powerProvider == nil || m == nil {
+		return nil
+	}
+	if p, ok := powerProvider(m.InstanceId); ok {
+		return &p
+	}
+	return nil
+}
+
 // Performs a combat round from a player to a mob
 func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 
@@ -90,7 +123,7 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(mob.Character.RoomId), user.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mob) })
 	sourceChar := mobCombatCharacter(mob)
-	attackResult := calculateCombat(sourceChar, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId))
+	attackResult := calculateCombatPower(sourceChar, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId), mobPower(mob))
 	spendEdges(&mob.Character, attackResult.EdgeSpent)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -114,7 +147,7 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
 	sourceChar := mobCombatCharacter(mobAtk)
 	targetChar := mobCombatCharacter(mobDef)
-	attackResult := calculateCombat(sourceChar, targetChar, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId), mobDef)
+	attackResult := calculateCombatPower(sourceChar, targetChar, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId), mobPower(mobAtk), mobDef)
 	spendEdges(&mobAtk.Character, attackResult.EdgeSpent)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -316,6 +349,15 @@ func damageSuffix(damage int, crit bool, blocked int, statuses ...string) string
 	return " (" + out + ")"
 }
 
+// powerSuffix names a wind-up's blow first in a hit's parentheses (Phase
+// 30d2): " (Crushing Blow, 18 damage, knocked down)".
+func powerSuffix(power *Power, suffix string) string {
+	if power == nil || power.Name == "" || !strings.HasPrefix(suffix, " (") {
+		return suffix
+	}
+	return " (" + power.Name + ", " + suffix[2:]
+}
+
 // chemistryHitText tells the attacker that company chemistry made a hit.
 const chemistryHitText = `<ansi fg="cyan">Fighting beside a companion you know well, you find an opening.</ansi>`
 
@@ -325,12 +367,22 @@ const chemistryHitText = `<ansi fg="cyan">Fighting beside a companion you know w
 // attacker's Phase 24 company chemistry, in points added to the hit chance
 // of its weapon strikes (not its pet's).
 func calculateCombat(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int, chemistryBonus int, targetMob ...*mobs.Mob) AttackResult {
+	return calculateCombatPower(sourceChar, targetChar, sourceType, targetType, darkPenalty, chemistryBonus, nil, targetMob...)
+}
+
+// calculateCombatPower is calculateCombat with a wind-up's power (Phase
+// 30d2): with one, the round is a single strike of the first weapon, its
+// rolled damage multiplied, and no pet joins.
+func calculateCombatPower(sourceChar characters.Character, targetChar characters.Character, sourceType SourceTarget, targetType SourceTarget, darkPenalty int, chemistryBonus int, power *Power, targetMob ...*mobs.Mob) AttackResult {
 
 	attackResult := AttackResult{}
 	chemistryShown := false
 	strikeOrdinal := 0
 
 	atkCount := combatAttackCount(sourceChar, targetChar)
+	if power != nil {
+		atkCount = 1
+	}
 
 	// Phase 30b: only players and company companions are wounded.
 	woundable := targetType == User
@@ -348,6 +400,10 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 		attackWeapons, weaponSlots := resolveAttackWeaponSlots(sourceChar)
 
 		dualWieldLevel := sourceChar.GetSkillLevel(`dual-wield`)
+
+		if power != nil && len(attackWeapons) > 1 {
+			attackWeapons, weaponSlots = attackWeapons[:1], weaponSlots[:1]
+		}
 
 		if len(attackWeapons) > 1 {
 			bothClaws := sourceChar.Equipment.Weapon.GetSpec().Subtype == items.Claws &&
@@ -413,6 +469,10 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 			mudlog.Debug("DiceRolls", "attacks", attacks, "dCount", dCount, "dSides", dSides, "dBonus", dBonus, "critBuffs", critBuffs)
 
+			if power != nil {
+				attacks = 1
+			}
+
 			// Individual weapons may get multiple attacks
 			for j := 0; j < attacks; j++ {
 				strikeOrdinal++
@@ -443,6 +503,10 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					}
 					attackResult.Hit = true
 					attackTargetDamage = util.RollDice(dCount, dSides) + dBonus
+					// Phase 30d2: a wind-up's blow multiplies what it rolled.
+					if power != nil && power.Multiplier > 1 {
+						attackTargetDamage *= power.Multiplier
+					}
 
 					// Phase 23b: a sharpened weapon adds its edge to each
 					// successful strike until its strikes are spent.
@@ -485,6 +549,13 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 					critStatuses = status.Words(effect)
 				}
 
+				// Phase 30d2: a wind-up's blow that got through leaves its
+				// status (Crushing Blow: knocked down), named after a crit's.
+				if power != nil && power.Status > 0 && attackTargetDamage > 0 {
+					attackResult.BuffTarget = append(attackResult.BuffTarget, power.Status)
+					critStatuses = append(critStatuses, status.Words([]int{power.Status})...)
+				}
+
 				// Phase 30b: a crit that got through leaves a lasting wound,
 				// named in the hit's parentheses; a crushing blow a light one.
 				if woundable && attackTargetDamage > 0 {
@@ -512,9 +583,9 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 
 				// Phase 29c: every hit says what it did, in all four lines.
 				if attackTargetDamage > 0 {
-					suffix := damageSuffix(attackTargetDamage, isCrit, 0, critStatuses...)
+					suffix := powerSuffix(power, damageSuffix(attackTargetDamage, isCrit, 0, critStatuses...))
 					toAttackerMsg = items.ItemMessage(string(toAttackerMsg) + suffix)
-					toDefenderMsg = items.ItemMessage(string(toDefenderMsg) + damageSuffix(attackTargetDamage, isCrit, attackTargetReduction, critStatuses...))
+					toDefenderMsg = items.ItemMessage(string(toDefenderMsg) + powerSuffix(power, damageSuffix(attackTargetDamage, isCrit, attackTargetReduction, critStatuses...)))
 					toAttackerRoomMsg = items.ItemMessage(string(toAttackerRoomMsg) + suffix)
 					if len(string(toDefenderRoomMsg)) > 0 {
 						toDefenderRoomMsg = items.ItemMessage(string(toDefenderRoomMsg) + suffix)
@@ -574,7 +645,7 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 		}
 
 		// Pet has a 20% chance per attack round to join the fight (once, regardless of weapon count)
-		if sourceChar.Pet.Exists() && !sourceChar.Pet.IsMissing() {
+		if power == nil && sourceChar.Pet.Exists() && !sourceChar.Pet.IsMissing() {
 			chance, petDmg := sourceChar.Pet.GetEffectiveDamage()
 			if chance > 0 && util.RollDice(1, chance) <= chance {
 				if sourceChar.RoomId == targetChar.RoomId {

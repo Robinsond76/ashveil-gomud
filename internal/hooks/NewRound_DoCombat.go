@@ -775,6 +775,10 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 	// Handle mob round of combat
 	for _, mobId := range mobs.GetAllMobInstanceIds() {
 
+		// Ashveil Phase 30d2: the last mob's wind-up blow, if its swing
+		// never happened, is told as wasted.
+		finishLanding()
+
 		mob := mobs.GetInstance(mobId)
 
 		// Only handling combat functions here, so ditch out if not in combat
@@ -788,8 +792,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		}
 
 		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
-		// its action.
+		// its action (and Phase 30d2: a wind-up with it).
 		if status.Has(&mob.Character) && statusCostsAction(mobHolder(mob)) {
+			windUpLostTurn(mob)
 			continue
 		}
 
@@ -910,8 +915,15 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		**************************/
 		c := configs.GetConfig()
 
+		// Ashveil Phase 30d2: a wind-up takes the turn, or makes this
+		// turn's swing its blow.
+		if mob.Character.Aggro.Type == characters.DefaultAttack && windUpTurn(mob) {
+			continue
+		}
+
 		// H2H is the base level combat, can do combat commands then
-		if mob.Character.Aggro.Type == characters.DefaultAttack {
+		// (not while a wind-up's blow lands, Phase 30d2)
+		if mob.Character.Aggro.Type == characters.DefaultAttack && !isLanding(mob.InstanceId) {
 
 			// If they have idle commands, maybe do one of them?
 			cmdCt := len(mob.CombatCommands)
@@ -1296,6 +1308,8 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		**************************/
 
 	}
+
+	finishLanding() // Phase 30d2
 
 	util.TrackTime(`World::handleMobCombat()`, time.Since(tStart).Seconds())
 

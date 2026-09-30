@@ -27,3 +27,7 @@
 ## Ashveil Phase 30c: enemy personalities
 
 - `targeting`/`targetingnoise` on a mob template (overriding its race's, `internal/races`) set how it re-aims at a company (`Mob.Personality`). Only `internal/hooks`' enemy upkeep reads it, and only when the enemy re-aims (joins, loses, or can't reach its target). No personality keeps the old weakest pick unchanged.
+
+## Ashveil Phase 30d2: wind-ups
+
+- `windups` on a mob template maps a wind-up ability id (`internal/windup`) to the percent of its turns it starts one. Only `internal/hooks` (`combat_windup.go`) reads it, and only for an enemy (never a company companion or a charmed mob). The template map is shared by every instance; never write to it.
