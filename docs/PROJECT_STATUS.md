@@ -239,6 +239,27 @@ docs/PROJECT_STATUS.md`.
   - **Accepted:** no test of another player hearing the guard line (it is
     the same room broadcast as every combat line).
 
+### Knockdown and stun shortened (2026-09-30, owner, not a phase)
+
+- **What:** knocked down now lasts 2 combat rounds (loses its next action,
+  then down one more round at -4 speed; buff 1102 count 4 -> 3) and
+  stunned 1 (loses its next action; buff 1107 count 3 -> 2, its
+  description too). A 30c2 guardian can't step in for exactly those
+  rounds. `help statuses` and `help guardian` updated; notes on 30a's
+  design and plan.
+- **Why:** the owner's call after 30c2 (the durations had been 3 and 2
+  rounds of effect, and 30c2's question had understated them).
+- **Verification:** status unit tests (`Grounded` per round, one action
+  for a stun, the knockdown's speed), `TestStunnedLosesOneAction`, and
+  `TestGuardianBackAfterKnockdown`/`...Stun` through `DoCombat` (the
+  old knockdown count fails it). Final: `make generate` (no diff),
+  `make validate`, `go test -race ./...`, `git diff --check` all passed.
+- **Review:** an independent reviewer found no bugs and confirmed the
+  counts give 2 and 1 rounds. Added the guardian-returns wiring tests and
+  the 30a doc notes it suggested. Noted for the owner: a stun now costs
+  one action, as a stagger does; it differs only in grounding a
+  guardian.
+
 ### Brawl test flakes fixed (2026-09-30, not a phase)
 
 - **What:** the `modules/company` brawl wiring tests failed in about 1 of
