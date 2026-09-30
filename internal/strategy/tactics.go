@@ -31,7 +31,9 @@ type Tactics struct {
 }
 
 // IsZero reports whether nothing is set.
-func (t Tactics) IsZero() bool { return (t.Focus == "" || t.Focus == NoFocus) && (t.Healing == 0 || t.Healing == DefaultHealing) }
+func (t Tactics) IsZero() bool {
+	return (t.Focus == "" || t.Focus == NoFocus) && (t.Healing == 0 || t.Healing == DefaultHealing)
+}
 
 // Resolve fills blank fields with the defaults.
 func (t Tactics) Resolve() Tactics {
