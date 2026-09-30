@@ -228,6 +228,12 @@ func TestBattleViewPerPlayer(t *testing.T) {
 
 	b.refresh(8)
 	assert.Empty(t, lastView(views, 8), "Brom is in no battle yet")
+	// The waiting bandits have a few HP: a crit from Brom would end his
+	// battle in the round it began, before the loop could see it.
+	for _, m := range b.livingBandits() {
+		m.Character.HealthMax.Value = 1000
+		m.Character.Health = 1000
+	}
 	for i := 0; i < 10; i++ {
 		if _, ok := battle.Current(8); ok {
 			break

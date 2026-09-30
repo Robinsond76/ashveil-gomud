@@ -14,3 +14,10 @@ func SetTestInstance(m *Mob) {
 func RemoveTestInstance(instanceId int) {
 	delete(mobInstances, instanceId)
 }
+
+// ResetHostility forgets every group's grudge against every player, so a
+// test's fight doesn't leave the next test's mobs hostile (MakeHostile's
+// grudges outlast a test by many rounds). For testing only.
+func ResetHostility() {
+	mobsHatePlayers = map[string]map[int]int{}
+}

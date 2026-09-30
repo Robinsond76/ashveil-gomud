@@ -214,10 +214,23 @@ func newBrawl(t *testing.T) *brawl {
 	t.Cleanup(combatstream.UseForTest(combatstream.New()))
 	battle.Reset() // and no battle (29b2)
 	t.Cleanup(battle.Reset)
+	// Nor a grudge: an earlier fight leaves the bandits' group hostile to
+	// Aria (user 7) for many rounds, and they would open the next brawl.
+	mobs.ResetHostility()
+	t.Cleanup(mobs.ResetHostility)
 
 	b := &brawl{t: t, road: road, aria: aria, messages: captureCompanyMessages(t), bandits: map[string][]int{}}
 	for _, name := range []string{"tamsin reed", "brother oswin", "garrick vane", "ysolde"} {
 		require.Contains(t, b.cmd("company", "summon "+name), "Companion summoned")
+	}
+	// A level-1 mob spawns holding level 2's experience (mobs.NewMobById
+	// sets XPTL(0), which clamps to XPTL(1)), so without kill XP its first
+	// kill still levels it and refills its health. Start the level-1
+	// companions at no experience, so nobody levels here.
+	for id := 1; id <= 4; id++ {
+		if mob := b.companion(id); mob.Character.Level == 1 {
+			mob.Character.Experience = 0
+		}
 	}
 	for _, id := range []int{9101, 9101, 9102, 9103, 9104} {
 		m := mobs.NewMobById(mobs.MobId(id), road.RoomId)

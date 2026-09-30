@@ -55,6 +55,26 @@ func TestPronounsAndOrdinalsThroughRealRound(t *testing.T) {
 	assert.Equal(t, "bandit cutthroat", firstMob.Character.Name)
 	assert.Equal(t, "bandit cutthroat", secondMob.Character.Name)
 
+	// The second cutthroat must swing after the first has fallen; a round
+	// of company crits could otherwise drop it before its turn. Keep it
+	// standing until it has.
+	swungSinceFirstFell := func() bool {
+		fell := false
+		for _, e := range *events {
+			fell = fell || (e.Kind == combatstream.Death && e.Target.MobInstanceId == first)
+			if fell && e.Kind == combatstream.Attack && e.Source.MobInstanceId == second {
+				return true
+			}
+		}
+		return false
+	}
+	for round := 0; round < 30 && !swungSinceFirstFell(); round++ {
+		b.toughen()
+		secondMob.Character.HealthMax.Value = 1000
+		secondMob.Character.Health = 1000
+		transcript += b.fight() + "\n"
+	}
+	require.True(t, swungSinceFirstFell(), "the second cutthroat fights on after the first falls")
 	for _, foe := range b.livingBandits() {
 		foe.Character.Health = min(foe.Character.Health, 30)
 	}
@@ -169,6 +189,9 @@ func TestBattleNameGrowthReachesStream(t *testing.T) {
 	assert.Equal(t, "second cutthroat", battle.EnemyDisplayName(second, "lost"))
 }
 
+// TestMinorHealCombatPronouns casts Minor Heal through real rounds. Every
+// cast can fizzle (a roll of 100 fails even a 100% chance), so a fizzled
+// cast is cast again.
 func TestMinorHealCombatPronouns(t *testing.T) {
 	b := newBrawl(t)
 	for _, tc := range []struct {
@@ -179,23 +202,30 @@ func TestMinorHealCombatPronouns(t *testing.T) {
 		m.Character.HealthMax.Value = 1000
 		m.Character.Health = 900
 		m.Character.SpellBook["heal"] = 5000
-		m.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "heal", TargetMobInstanceIds: []int{m.InstanceId}})
-		m.Character.Aggro.RoundsWaiting = 1
-		waiting := b.fight()
-		assert.Contains(t, waiting, tc.name+" keeps praying, and a soft glow grows in "+tc.possessive+" hands.")
-		assert.Contains(t, b.fight(), tc.name+" presses glowing hands to "+tc.possessive+" own wounds.")
+		var landed string
+		for attempt := 0; attempt < 10 && (attempt == 0 || strings.Contains(landed, "the spell fizzles")); attempt++ {
+			m.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "heal", TargetMobInstanceIds: []int{m.InstanceId}})
+			m.Character.Aggro.RoundsWaiting = 1
+			waiting := b.fight()
+			assert.Contains(t, waiting, tc.name+" keeps praying, and a soft glow grows in "+tc.possessive+" hands.")
+			landed = b.fight()
+		}
+		assert.Contains(t, landed, tc.name+" presses glowing hands to "+tc.possessive+" own wounds.")
 		assert.Positive(t, m.Character.Health)
 	}
 	b.aria.Character.Pronouns = "she"
 	b.aria.Character.HealthMax.Value = 1000
 	b.aria.Character.Health = 900
 	b.aria.Character.SpellBook["heal"] = 5000
-	b.aria.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "heal", TargetUserIds: []int{7}})
-	b.aria.Character.Aggro.RoundsWaiting = 1
-	waiting := b.fight()
-	assert.Contains(t, waiting, "Your hands begin to glow")
-	assert.Contains(t, waiting, "their hands")
-	landed := b.fight()
+	var landed string
+	for attempt := 0; attempt < 10 && (attempt == 0 || strings.Contains(landed, "the spell fizzles")); attempt++ {
+		b.aria.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "heal", TargetUserIds: []int{7}})
+		b.aria.Character.Aggro.RoundsWaiting = 1
+		waiting := b.fight()
+		assert.Contains(t, waiting, "Your hands begin to glow")
+		assert.Contains(t, waiting, "their hands")
+		landed = b.fight()
+	}
 	assert.Contains(t, landed, "your own wounds")
 	assert.Contains(t, landed, "their own wounds")
 	assert.Positive(t, b.aria.Character.Health)
