@@ -47,8 +47,9 @@ The owner's rule makes chants a formation question, not a meter: keep
 healers and casters where blows can't reach them (11c's back rows), and
 guard them (30c2). An enemy caster in reach is broken by any hit; one in
 its back row must be reached by a bow, a sling, or a guard's absence.
-30d2 decides separately whether a physical wind-up (the ogre) breaks on
-any blow or needs heavier force (see Deferrals).
+30d2's physical wind-ups (the ogre) break only on heavier force (the
+owner's decision; see Deferrals). 30d1b later made a chant's break a
+chance.
 
 ## Prior-art check (against `master` at `d2f7b89`, 2026-09-30)
 
@@ -205,9 +206,15 @@ any blow or needs heavier force (see Deferrals).
 
 ## Constraints and deferrals
 
-- **30d2:** physical wind-ups and the ogre. Open for its design: whether
-  any blow breaks a wind-up (as a chant) or only heavier force (a stun,
-  a knockdown, a counter bash), since a big foe is struck by everyone.
+- **30d2:** physical wind-ups and the ogre. **Decided by the owner
+  (2026-09-30):** a wind-up for a physical attack does not break on an
+  ordinary blow, only on heavier force: a critical hit, a stagger, a
+  knockdown, a stun, or a shield bash (a big foe is struck by everyone).
+- **Amended by [30d1b](2026-09-30-phase-30d1b-chant-break-chance-design.md)
+  (owner, 2026-09-30):** decision 2 above now breaks a chant by chance,
+  40 + 2 × (damage × 100 / max health) held to 40–90%, and always on heavy
+  force (a crit, a stagger, a knockdown, a stun, a shield bash); a held
+  chant is told and emits a failed `Interrupt`.
 - Not built: the proposal's pressure meter, concentration, delayed or
   penalised recoveries; anti-caster abilities; casting on the battle
   view's grid (32g2's deferred item stands); per-spell interrupt outcomes.

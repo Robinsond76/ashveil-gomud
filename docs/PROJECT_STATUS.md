@@ -75,8 +75,9 @@ instead of duplicating them.
   and restores settings afterward; 100 focused race-test repetitions passed.
   Independent follow-up review found no issues and passed 40 focused repetitions.
 - **Next:** 30d2 (physical wind-ups and an ogre with Crushing Blow,
-  reusing 30d1's break; open: whether any blow breaks a wind-up or only
-  heavier force), then 30e (morale and mercy) and 30f (battlefield
+  reusing 30d1's break; decided by the owner 2026-09-30: a wind-up for a
+  physical attack breaks only on heavier force — a crit, a stagger, a
+  knockdown, a stun, or a shield bash — never on an ordinary blow), then 30e (morale and mercy) and 30f (battlefield
   conditions). 30a's statuses count combat rounds; the other balance
   shifts 29f's cadence brought are still to retune (see Known issues).
   Also open: the "Future ideas" row; see Known issues.

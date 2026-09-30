@@ -1,15 +1,25 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">interrupts</ansi>
 
 A spell takes time: its caster <ansi fg="yellow">chants</ansi> for a round or two before it goes
-off (<ansi fg="command">help cast</ansi>). A chant is fragile. <ansi fg="yellow">Any weapon blow that draws blood
-breaks it</ansi>, however light:
+off (<ansi fg="command">help cast</ansi>). A chant is fragile. <ansi fg="yellow">A weapon blow that draws blood
+may break it</ansi>:
 
   <ansi fg="command">The goblin hexer's chant breaks off under the blow. (Withering Hex interrupted)</ansi>
 
-A melee blow, a sling stone, or an arrow breaks it, and so does a blow
+- Heavy force <ansi fg="yellow">always breaks</ansi> a chant: a <ansi fg="yellow">critical hit</ansi>, a blow that <ansi fg="yellow">staggers</ansi>,
+  <ansi fg="yellow">knocks down</ansi>, or <ansi fg="yellow">stuns</ansi> the caster, and a <ansi fg="yellow">shield bash</ansi>.
+- Any other blow breaks it by chance, more often the harder it lands
+  against the caster's health: a nick breaks it <ansi fg="yellow">40%</ansi> of the time, and a
+  blow that takes <ansi fg="yellow">a quarter of their health</ansi> (or more) <ansi fg="yellow">90%</ansi>. The chance is
+  40% plus 2% for each percent of the caster's most health the blow took.
+- When the chant holds, the caster flinches and chants on:
+  <ansi fg="command">Brother Oswin flinches, but the chant holds. (Minor Heal, chant held)</ansi>
+  <ansi fg="command">You flinch, but your chant holds. (Minor Heal, chant held)</ansi>
+
+A melee blow, a sling stone, or an arrow can break it, and so can a blow
 you take in someone else's place (guarding them, or catching it in the
 front row). A miss, a dodged blow, a hit that does no damage, bleeding or
-burning, and a spell do not.
+burning, and a spell never do.
 
 <ansi fg="yellow-bold">When your chant breaks</ansi>
 
@@ -23,7 +33,7 @@ burning, and a spell do not.
 - An enemy caster, such as the <ansi fg="yellow">goblin hexer</ansi> of the Dark Forest, starts
   the chant again from the first word at its next turn. It spends no more
   mana, but must chant the whole spell again, and every blow that draws
-  blood breaks it again.
+  blood may break it again.
 
 <ansi fg="yellow-bold">Keeping your casters chanting</ansi>
 
@@ -50,6 +60,7 @@ into the attacker:
 - It works both ways: a foe with a shield counters you. You choose nothing;
   holding a shield is enough.
 
-The battle summary lists the chants each side broke (<ansi fg="command">help battle-summary</ansi>).
+The battle summary lists the chants each side broke, and how many of your
+blows a foe's chant withstood ("failed") (<ansi fg="command">help battle-summary</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help guardian</ansi>.

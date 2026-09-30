@@ -35,7 +35,8 @@ Once the battle starts:
 - healers heal the hurt and casters cast their spells, with real mana;
 - guardians step in front of their wards to take blows meant for them
   (<ansi fg="command">help guardian</ansi>);
-- a blow that draws blood breaks its target's chant, on either side, and
+- a blow that draws blood may break its target's chant (a heavy one
+  always does), on either side, and
   a shield-bearer may slam a missed blow back (<ansi fg="command">help interrupts</ansi>);
 - anyone left without a target, or with one they can't reach, turns to
   another by their strategy, and you're told about it

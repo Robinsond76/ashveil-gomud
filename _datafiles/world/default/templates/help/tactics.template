@@ -60,7 +60,7 @@ or is out of reach), it picks the way its kind does: wolves go for the
 most badly hurt, the undead for the nearest, goblins for your healers and
 casters, spiders and insects for the weakest, and people for the weakest.
 Some foes chant spells: the goblin hexer croaks a Withering Hex at your
-healers. Any blow that draws blood breaks a chant, so the <ansi fg="command">casters</ansi> focus
+healers. A blow that draws blood may break a chant, so the <ansi fg="command">casters</ansi> focus
 is how to stop them (<ansi fg="command">help interrupts</ansi>).
 Some are less predictable than others and now and then go for anyone
 they can reach. <ansi fg="command">help targeting</ansi> has more.

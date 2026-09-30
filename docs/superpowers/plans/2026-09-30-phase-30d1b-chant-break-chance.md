@@ -6,14 +6,14 @@ Design: [phase-30d1b design](../specs/2026-09-30-phase-30d1b-chant-break-chance-
 
 Each task writes its tests first and runs only its own packages.
 
-- [ ] **1. The rule (`internal/interrupt`, pure).**
+- [x] **1. The rule (`internal/interrupt`, pure).**
   - Tests first (`interrupt_test.go`): `BreakChance` table (heavy, nick,
     quarter, 10%, zero damage, zero max health, clamp at 90);
     `RollBreak` (100 needs no roll, 0 never, `chance-1` breaks,
     `chance` holds); `CanBreak` (30d1's `Breaks` table, renamed).
   - Add `BreakChance`, `RollBreak`, the min/max constants; rename
     `Breaks` → `CanBreak`; update the package doc and `AGENTS.md`.
-- [ ] **2. The roll in the round (`internal/hooks/combat_interrupt.go`).**
+- [x] **2. The roll in the round (`internal/hooks/combat_interrupt.go`).**
   - `breakRoll` and `UseBreakRollForTest`; `heavyBlow`; `afterBlow`
     rolls; `holdChant` (room line, the player's line, `Interrupt`
     `failed`); the bash breaks as heavy.
@@ -26,7 +26,7 @@ Each task writes its tests first and runs only its own packages.
     - `TestHeavyBlowAlwaysBreaks` (a crit; a blow whose statuses
       stagger, both with the roll forced high);
     - `TestSummaryCountsHeldEnemyChant` ("failed 1").
-- [ ] **3. Player help and tutorial.**
+- [x] **3. Player help and tutorial.**
   - Tests first: `internal/usercommands/help_interrupts_test.go` checks
     the chance, the heavy blows, and the held line.
   - `help interrupts` (numbers, heavy blows, held line); `combat`,
@@ -34,7 +34,7 @@ Each task writes its tests first and runs only its own packages.
     Practice Yard hint in `modules/tutorial/stages.go`;
     `TestTutorialHelpPointersExist`.
   - Summary comment in `internal/combatstream/summary.go`.
-- [ ] **4. Record 30d2's decision.** The 30d1 design's Deferrals and
+- [x] **4. Record 30d2's decision.** The 30d1 design's Deferrals and
   `docs/PROJECT_STATUS.md`'s Next line: a physical wind-up breaks only on
   heavier force (crit, stagger, knockdown, stun, shield bash).
 - [ ] **5. Review and verification.** Loop `modules/company`
