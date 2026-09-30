@@ -151,7 +151,7 @@ func TestKnockedDownLeaderLosesTheNextActionAndStaysDown(t *testing.T) {
 	assert.NotContains(t, b.fight(), "lose your action")
 }
 
-func TestStunnedLosesTwoActions(t *testing.T) {
+func TestStunnedLosesOneAction(t *testing.T) {
 	b := newBrawl(t)
 	loadStatusBuffs(t)
 	b.aimAt("bandit captain")
@@ -165,7 +165,7 @@ func TestStunnedLosesTwoActions(t *testing.T) {
 			lost++
 		}
 	}
-	assert.Equal(t, 2, lost)
+	assert.Equal(t, 1, lost, "stunned lasts 1 round (owner, 2026-09-30)")
 }
 
 func TestStatusesEndWithTheFight(t *testing.T) {

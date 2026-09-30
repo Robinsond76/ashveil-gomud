@@ -1,12 +1,12 @@
 buffid: 1107
 name: Stunned
-description: You are stunned. You lose your next two actions.
+description: You are stunned. You lose your next action.
 secret: false
 # Phase 30a: ticked by the combat round (see internal/status), never by game
 # rounds; triggercount is the number of combat-round ticks.
 triggerrate: 100000 rounds
 combatrounds: true
-triggercount: 3
+triggercount: 2
 flags:
   - combat-status
   - lose-actions
