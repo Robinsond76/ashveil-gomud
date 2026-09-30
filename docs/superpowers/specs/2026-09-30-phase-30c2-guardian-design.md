@@ -29,9 +29,10 @@ standing "proceed with your recommendation" instruction.
 12. **Knocked down or stunned: can't guard; guards kept** (recommended,
     chosen). While either status lasts the guardian doesn't step in, but it
     keeps its unspent guards and refills as usual. (The question said the
-    statuses last 1–2 rounds; the shipped data has knocked down 4 combat
-    rounds and stunned 3, so a guardian is out of it that long. Flagged to
-    the owner.)
+    statuses last 1–2 rounds; the shipped data then had knocked down 4
+    combat rounds and stunned 3. Flagged to the owner, who set them to 2
+    and 1 afterwards: knocked down loses its next action and stays down one
+    more round, stunned loses its next action.)
 
 ## Prior-art check (against `master` at `bc4e311`, 2026-09-30)
 

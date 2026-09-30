@@ -127,20 +127,23 @@ func TestLostActionRules(t *testing.T) {
 	Tick(down)
 	_, lost = LostAction(down)
 	assert.True(t, lost)
+	assert.True(t, Grounded(down), "down, round one")
 	Tick(down)
 	_, lost = LostAction(down)
 	assert.False(t, lost, "knocked down loses only its next action, though it stays down")
-	assert.True(t, Has(down))
+	assert.True(t, Grounded(down), "down, round two")
+	Tick(down)
+	assert.False(t, Grounded(down), "knocked down lasts 2 rounds (owner, 2026-09-30)")
 
 	stun := holder(t)
 	stun.AddBuff(Stunned, false)
 	Tick(stun)
 	_, first := LostAction(stun)
+	assert.True(t, Grounded(stun))
 	Tick(stun)
 	_, second := LostAction(stun)
-	Tick(stun)
-	_, third := LostAction(stun)
-	assert.True(t, first && second && !third, "stunned costs two actions")
+	assert.True(t, first && !second, "stunned costs one action")
+	assert.False(t, Grounded(stun), "stunned lasts 1 round (owner, 2026-09-30)")
 }
 
 func TestClearEndsEveryStatus(t *testing.T) {
@@ -175,12 +178,10 @@ func TestKnockdownSpeedEndsWithIt(t *testing.T) {
 	Tick(c) // loses this round
 	_, lost := LostAction(c)
 	assert.True(t, lost)
-	for i := 0; i < 2; i++ {
-		Tick(c)
-		_, lost = LostAction(c)
-		assert.False(t, lost)
-		assert.Equal(t, down, c.Stats.Speed.ValueAdj, "still down")
-	}
+	Tick(c) // down one more round (2 in all)
+	_, lost = LostAction(c)
+	assert.False(t, lost)
+	assert.Equal(t, down, c.Stats.Speed.ValueAdj, "still down")
 	got := Tick(c)
 	assert.True(t, got[0].Expired)
 	assert.Equal(t, base, c.Stats.Speed.ValueAdj, "back up the round it ends")

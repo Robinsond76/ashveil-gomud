@@ -23,7 +23,7 @@ worktree). Each task writes its tests first and runs only its own packages.
   `statusPass`, action skip in player/mob loops and strategy pass, clear at
   fight end and with no open fight, death by bleeding. Wiring tests through
   `DoCombat`: bleed ticks and stacks and ends at fight end and kills;
-  knockdown loses one action; stun two; expiry event; stale clear.
+  knockdown loses one action; stun two (one since the owner's 2026-09-30 change); expiry event; stale clear.
 - [x] **6. Spells.** Sparks applies Overloaded; a scripted test through a real
   cast.
 - [x] **7. Player help and tutorial.** `help statuses` page, `keywords.yaml`

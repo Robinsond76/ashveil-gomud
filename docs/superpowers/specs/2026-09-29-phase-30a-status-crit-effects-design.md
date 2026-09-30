@@ -59,7 +59,9 @@ decrements. A status is *alive after a tick* while `TriggersLeft ≥ 1`.
 | 1107 | Stunned | 3 | loses its next two actions | `combat-status`, `lose-actions` |
 | 1108 | Hobbled | 4 | cannot flee; Speed −3 | `combat-status`, `no-flee` |
 
-(1109 reserved.) "Exposed" is a duration, not "the next hit": consuming it
+(1109 reserved.) **Changed 2026-09-30 (owner):** knocked down lasts 2
+rounds (count 3: its next action, then down one more round) and stunned 1
+(count 2: its next action); see `docs/PROJECT_STATUS.md`. "Exposed" is a duration, not "the next hit": consuming it
 would need every attack site to remove a buff after a hit, and the combat
 resolver works on copies. Recorded deviation from the proposal.
 

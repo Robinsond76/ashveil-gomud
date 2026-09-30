@@ -388,3 +388,29 @@ func TestGuardianAfterInterception(t *testing.T) {
 	assert.Equal(t, b.companion(3).InstanceId, used[0].Target.MobInstanceId, "the ward is the interceptor")
 	assert.Zero(t, blowsOn(*got, "u:7"), "Aria behind Garrick is never struck")
 }
+
+// The owner's durations (2026-09-30): a knocked-down guardian is out for 2
+// rounds and a stunned one for 1, then steps in again, through the real
+// combat round.
+func TestGuardianBackAfterKnockdown(t *testing.T) { guardianOutFor(t, status.KnockedDown, 2) }
+
+func TestGuardianBackAfterStun(t *testing.T) { guardianOutFor(t, status.Stunned, 1) }
+
+func guardianOutFor(t *testing.T, buff, out int) {
+	b := guardBrawl(t, "tamsin guard me")
+	loadStatusBuffs(t)
+	got := b.listen()
+	require.NoError(t, b.companion(1).Character.AddBuff(buff, false))
+	for round := 1; round <= out+1; round++ {
+		*got = nil
+		b.toughen()
+		b.hold(nil)
+		b.strike(0, false)
+		b.fight()
+		if round <= out {
+			assert.Empty(t, guardEvents(*got, combatstream.GuardUsed), "%s: out in round %d", status.Word(buff), round)
+		} else {
+			assert.Len(t, guardEvents(*got, combatstream.GuardUsed), 1, "%s: back in round %d", status.Word(buff), round)
+		}
+	}
+}
