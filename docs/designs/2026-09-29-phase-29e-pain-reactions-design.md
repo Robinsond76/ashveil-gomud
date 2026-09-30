@@ -1,6 +1,6 @@
 # Phase 29e: Pain Reactions — Design
 
-Builds the [owner-approved direction](2026-09-26-combat-pain-reactions-design.md).
+Builds the [owner-approved direction](2026-09-29-phase-29e-pain-reactions-design.md).
 
 ## Intent and decisions
 

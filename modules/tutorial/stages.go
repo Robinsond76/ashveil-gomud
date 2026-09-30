@@ -1,13 +1,13 @@
 package tutorial
 
 // Phase 27a: the stages, their gates, and the progress kept on the
-// character. See docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md.
+// character. See docs/designs/2026-09-25-phase-27a-tutorial-framework-design.md.
 // Phase 27b adds Survival and Camp:
-// docs/superpowers/specs/2026-09-25-phase-27b-tutorial-survival-camp-design.md.
+// docs/designs/2026-09-25-phase-27b-tutorial-survival-camp-design.md.
 // Phase 27c adds Combat:
-// docs/superpowers/specs/2026-09-25-phase-27c-tutorial-practice-fight-design.md.
+// docs/designs/2026-09-25-phase-27c-tutorial-practice-fight-design.md.
 // Phase 27d adds Alignment:
-// docs/superpowers/specs/2026-09-25-phase-27d-tutorial-alignment-panel-design.md.
+// docs/designs/2026-09-25-phase-27d-tutorial-alignment-panel-design.md.
 
 import (
 	"sort"

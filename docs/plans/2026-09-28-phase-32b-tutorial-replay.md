@@ -1,6 +1,6 @@
 # Phase 32b: Tutorial Replay — Plan
 
-Design: [32b design](../specs/2026-09-28-phase-32b-tutorial-replay-design.md).
+Design: [32b design](../designs/2026-09-28-phase-32b-tutorial-replay-design.md).
 The owner's decisions are recorded there (2026-09-28); nothing is left open.
 
 ## Implementation decisions (lead, 2026-09-28)

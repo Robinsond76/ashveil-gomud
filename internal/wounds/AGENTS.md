@@ -1,6 +1,6 @@
 # Wounds Package Guide
 
-Phase 30b ([design](../../docs/superpowers/specs/2026-09-30-phase-30b-wounds-design.md)).
+Phase 30b ([design](../../docs/designs/2026-09-30-phase-30b-wounds-design.md)).
 Pure rules, no world state: callers pass characters' health and wounds in and apply
 what comes back.
 

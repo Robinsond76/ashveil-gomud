@@ -2,7 +2,7 @@
 
 Phase 27a. The Ashveil tutorial: a short course of rooms, one per stage, that a
 new character walks through in their own ephemeral copies. See the
-[27a design](../../docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md).
+[27a design](../../docs/designs/2026-09-25-phase-27a-tutorial-framework-design.md).
 
 - **Stages** (`stages.go`) are data, in order: Character, Company,
   Formation, Survival, Camp (27b), Combat (27c), Alignment (27d),

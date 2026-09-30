@@ -11,6 +11,18 @@ The lead agent owns discovery, design decisions, task decomposition,
 implementation, review, verification, integration, project status, and commits.
 Execute the approved plan directly, task by task, by default.
 
+## Design and implementation
+
+No external plugin or skill is required. For a new gameplay phase, inspect
+current code and write a design in `docs/designs/` covering scope, prior art,
+state ownership, persistence/recovery, integration points, player help, and
+acceptance tests. Separate owner decisions from proposed balance defaults.
+Obtain owner approval of the phase design before implementation (handoff
+rule 20); do not infer approval of new gameplay choices from a request to
+start the phase. Then write an actionable plan in `docs/plans/` and implement
+it directly. Routine fixes and explicitly requested documentation maintenance
+do not need a new phase-design approval.
+
 ## Optional delegation
 
 Delegate only when the owner or applicable workflow explicitly calls for it.

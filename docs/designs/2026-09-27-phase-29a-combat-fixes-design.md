@@ -2,7 +2,7 @@
 
 The first slice of the [combat roadmap](2026-09-26-combat-presentation-roadmap.md)
 (build order decided 2026-09-27: 29a first). The findings are recorded in
-the [29a findings spec](2026-09-26-combat-fixes-design.md); this document
+the [29a findings spec](2026-09-27-phase-29a-combat-fixes-design.md); this document
 settles the design for implementing them.
 
 The owner asked to "begin work on next phase" (2026-09-27). The one open

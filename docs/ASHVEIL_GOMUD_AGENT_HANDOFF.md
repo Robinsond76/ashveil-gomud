@@ -1,8 +1,8 @@
 # Ashveil on GoMud — AI Agent Handoff & Implementation Context
 
-**Status:** Architecture / migration planning
+**Status:** Design context for the existing Ashveil game; current progress is in `docs/PROJECT_STATUS.md`.
 **Primary goal:** Rebuild Ashveil as a multiplayer MUD on top of GoMud while preserving Ashveil's distinctive expedition, survival, mercenary-party, camping, mount, and 3x3 tactical-formation systems.
-**Intended reader:** An AI coding agent that will inspect the repositories, fork GoMud, produce an implementation plan, and begin the migration carefully.
+**Intended reader:** Contributors extending the existing GoMud fork. Original examples below describe design intent; current code, player help, and phase status describe shipped behavior.
 
 ---
 
@@ -52,13 +52,9 @@ Purpose during migration:
 
 The existing repository should **not be overwritten by the GoMud fork**.
 
-Recommended initial strategy:
+The fork is `Robinsond76/ashveil-gomud`; the Python reference stays read-only.
 
-- keep `ashveil-mud` intact
-- create a separate GoMud fork, provisionally named `ashveil-gomud`
-- only rename/reorganize repositories later after the Go implementation is established
-
-## Engine to adopt
+## Engine foundation
 
 Repository:
 
@@ -95,16 +91,6 @@ As of the migration-planning review, GoMud publicly documents or demonstrates fe
 - persistent world/game infrastructure
 - optional compiled modules that can add gameplay, commands, events, and other features
 
-Current player-facing GoMud movement documentation explicitly lists:
-
-- north
-- south
-- east
-- west
-- up
-- down
-
-Do **not** assume northeast/northwest/southeast/southwest are natively supported everywhere until the code is inspected.
 
 ---
 
@@ -1476,131 +1462,23 @@ The goal is to migrate the distinctive gameplay.
 
 ---
 
-# 24. GoMud systems to inspect before planning (done in Phases 0–1; nested `AGENTS.md` files now document each package)
 
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
----
 
-# 25. Phase 0 — Fork and Bootstrap (shipped)
 
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
----
 
-# 26. Phase 1 — Produce a GoMud Integration Map (shipped)
 
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
----
 
-# 27. Phase 2 — Minimal Company Slice (shipped)
 
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
----
+# 35–36. Mounts and formation combat (shipped)
 
-# 28. Phase 3 — 3x3 Formation State (shipped)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
-
-# 29. Phase 4 — Survival State (shipped)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
-
-# 30. Phase 5 — Terrain and Travel Profiles (shipped)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
-
-# 31. Phase 6 — Travel Interruptions (shipped)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
-
-# 32. Phase 7 — Camping (shipped)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
-
-# 33. Phase 8 — Weather (shipped)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
-
-# 34. Phase 9 — Encumbrance and Cargo (shipped)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
-
-# 35. Phase 10 — Mounts
-
-Only after travel and load systems work.
-
-MVP mount effects:
-
-- increases travel speed and/or
-- increases cargo capacity
-
-Later:
-
-- mount fatigue
-- health
-- feed
-- terrain suitability
-- individual assignment
-
----
-
-# 36. Phase 11 — Formation Combat
-
-Integrate formation into GoMud combat.
-
-First tactical rules:
-
-1. front-row protection/interception
-2. melee reach
-3. polearm extended reach
-4. ranged rear-line behavior
-5. adjacency queries
-
-Do not replace all GoMud combat unless unavoidable.
-
-Prefer adding a tactical targeting/reach layer around the existing combat lifecycle.
-
-Also in scope, pulled from the external combat design reference
-(`docs/superpowers/specs/2026-09-22-combat-design-reference-external.md`) as
-low-risk additions that layer onto the existing round-based
-`internal/combat` resolution loop:
-
-6. Guard Reactions — a limited per-combatant intercept/block resource
-   (e.g. a shield-warrior role) that refreshes after the defender completes
-   its next normal action, rather than being unlimited.
-7. Weapon-flavored critical-hit secondary effects (e.g. sword crit →
-   bleed, mace crit → stagger, hammer crit → knockdown) layered onto the
-   existing crit branch in `internal/combat/calculations.go`.
-8. Wounds — a status effect that temporarily lowers a combatant's
-   recoverable max HP, independent of the timing model.
-9. AI target-selection personality — priority tendencies per class/monster
-   (favor wounded targets, favor threats to allies, etc.) rather than
-   always picking the mathematically optimal target.
-
-**Deliberately out of scope for Phase 11:** the reference doc's continuous
-Readiness/Wind-up/Cast/Recovery timeline model. That replaces GoMud's
-round-based combat resolution loop rather than layering on it, crosses this
-project's concurrency/timer-rewrite escalation threshold, and needs its own
-future design doc and owner decision before any implementation. Revisit it
-as a later phase, after Phase 11 ships — see the reference doc's intake note
-for detail.
+Mount logistics and the formation-combat extensions are implemented. Use
+`docs/PROJECT_STATUS.md`, the relevant package guidance, and the retained
+Phase 30 designs for current behavior. The continuous readiness/timeline
+combat model was declined; combat remains round-based.
 
 ---
 
@@ -1947,44 +1825,12 @@ Follow GoMud's existing data-file/config conventions.
 
 ---
 
-# 47. Open Design Questions
+# 47. Remaining design questions
 
-The AI agent should not silently decide all of these.
-
-Document recommendations and flag decisions.
-
-## Travel
-- What happens if leader disconnects?
-- Can a leader cancel and return to origin?
-- Can a party turn back after >50%?
-- Are routes one segment or multiple checkpoints?
-- Can players meet each other mid-route in MVP?
-- Can players attack traveling parties later?
-
-## Survival
-- Do hunger/thirst increase while idle?
-- Do logged-out characters consume resources?
-- How punitive are zero hunger/water states?
-- Is fatigue individual, party-level, or both?
-
-Recommended: individual values, with party travel speed constrained by relevant slowest/aggregate factor.
-
-## Party
-- Can other human players join an Ashveil mercenary party?
-- Does human grouping use the same formation?
-- Who controls formation in a mixed human party?
-
-## Camping
-- Is camp represented as a temporary room/object?
-- Can other players discover a camp?
-- Can camps persist through logout?
-
-## Death
-- What happens to mercenaries?
-- Can mercs permanently die?
-- What happens to cargo/mounts?
-
-Do not let these block the first vertical slice unless required.
+Early migration questions about travel, survival, company state, camping,
+and death have been resolved by shipped phases. Consult the Known issues
+section of `docs/PROJECT_STATUS.md` and active phase designs for actual
+remaining decisions; do not reopen the original bootstrap questionnaire.
 
 ---
 
@@ -2057,7 +1903,7 @@ The AI coding agent should follow these rules.
     - Preserve the independent full-phase review gate and all concurrency, persistence, and multiplayer checks.
 20. Do not dispatch an implementation task until the current phase design has explicit owner approval.
 21. Keep the Python prototype read-only. Its local reference copy lives at `reference/ashveil-mud/`, is excluded through `.git/info/exclude`, and is a mechanics/design archive rather than a source tree to modify.
-22. Isolate every plan, phase, or feature on its own git worktree and feature branch. Never implement or commit plan work directly on `master`; `master` is an integration branch and must stay clean. Create the workspace with `git worktree add .worktrees/<branch-name> -b <branch-name>` (`.worktrees/` is gitignored and is the project convention), run the baseline checks there, commit the plan tasks on that branch, and merge locally or open a PR against `origin` only after the phase's checks pass. Remove the worktree when the branch is finished. If a worktree is unavailable, create and check out a feature branch before making any commit.
+22. Isolate every plan, phase, or feature on its own git worktree and feature branch. Never implement or commit plan work directly on `master`; `master` is an integration branch and must stay clean. Create the workspace with `git worktree add .worktrees/<branch-name> -b <branch-name>` (`.worktrees/` is gitignored and is the project convention), run focused checks for changed behavior there, commit the plan tasks on that branch, and merge locally or open a PR against `origin` only after the phase's checks pass. Remove the worktree when the branch is finished. If a worktree is unavailable, create and check out a feature branch before making any commit.
 23. Ship player help with every player-facing change: a help page for each new command or mechanic (or an update to the page it makes stale), listed in `_datafiles/world/default/keywords.yaml` and linked from its hub page (`help combat` for battles), a pointer from the tutorial lesson that covers it, and tests that it renders and that the tutorial's pointers resolve. See the root `AGENTS.md` ("Testing Guidelines"). Adopted 2026-09-27 at the owner's request.
 
 ## Repository Layout and Remote Policy
@@ -2082,17 +1928,7 @@ upstream -> GoMudEngine/GoMud
 
 ---
 
-# 51. First agent assignment (Phase 0–1 bootstrap; done)
 
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
-
-# 52. Reference feature mapping summary (superseded by the shipped phases; see `docs/PROJECT_STATUS.md`)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
 
 # 53. Definition of Success
 
@@ -2120,17 +1956,5 @@ The central design test is:
 > Does preparing for and undertaking a journey with a small mercenary company create interesting decisions?
 
 If yes, the project is heading in the intended direction.
-
----
-
-# 54. Source links (the prototype is at `reference/ashveil-mud/`; `upstream` is GoMud)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
-
----
-
-# 55. Short context prompt for a fresh agent (superseded by `CLAUDE.md`/`AGENTS.md`)
-
-Removed on 2026-09-28 once complete; see git history (commit `d5ace46`).
 
 ---
