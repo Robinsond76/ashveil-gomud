@@ -227,7 +227,7 @@ func TestStunnedCantDodgeOrBlock(t *testing.T) {
 	c.Equipment.Offhand = items.New(shieldID)
 	shielded := c.GetDefense()
 	if shielded <= bare {
-		t.Skip("the test gear rolled no defense")
+		t.Fatalf("the shield adds no defense: bare %d, shielded %d", bare, shielded)
 	}
 	c.AddBuff(status.Stunned, false)
 	armorOnly := bare + c.Equipment.Offhand.GetDefense() // the shield's own armor, no +50%

@@ -31,9 +31,9 @@ standing "proceed with your recommendation" instruction.
     keeps its unspent guards and refills as usual. (The question said the
     statuses last 1–2 rounds; the shipped data then had knocked down 4
     combat rounds and stunned 3. Flagged to the owner, who set knocked
-    down to 2 rounds (its next action, then down one more round) and kept
-    stunned at 2 (its next two actions), with no dodging or shield block
-    while stunned.)
+    down to 2 rounds (its next action, then down one more round) and, after
+    first setting stunned to 1, returned it to 2 (its next two actions)
+    with no dodging or shield block while stunned.)
 
 ## Prior-art check (against `master` at `bc4e311`, 2026-09-30)
 

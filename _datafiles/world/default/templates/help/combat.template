@@ -91,8 +91,9 @@ are only text (<ansi fg="command">help narration</ansi>). One line opens a fight
 
 A critical hit leaves a mark that matches the weapon: swords and claws make
 you bleed, maces stagger, hammers and axes knock down or break armor, bows
-leave you exposed. Staggered, knocked down, and stunned fighters lose their
-action. Statuses last a few combat rounds and end with the fight.
+leave you exposed. Staggered and knocked-down fighters lose an action,
+stunned ones two, and can't dodge or raise a shield meanwhile (<ansi fg="command">help statuses</ansi>).
+Statuses last a few combat rounds and end with the fight.
 
 <ansi fg="yellow-bold">Wounds (</ansi><ansi fg="command">help wounds</ansi><ansi fg="yellow-bold">)</ansi>
 

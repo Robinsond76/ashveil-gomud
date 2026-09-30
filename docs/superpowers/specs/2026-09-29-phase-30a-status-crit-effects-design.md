@@ -56,7 +56,7 @@ decrements. A status is *alive after a tick* while `TriggersLeft ≥ 1`.
 | 1104 | Exposed | 3 | crit chance against it +25 points for 2 rounds | `combat-status`, `exposed` |
 | 1105 | Burning | 4 | 2 fire damage per tick | `combat-status`, `burning`, `cancel-on-water` |
 | 1106 | Overloaded | 4 | casting −30, Speed −3 | `combat-status` |
-| 1107 | Stunned | 3 | loses its next two actions | `combat-status`, `lose-actions` |
+| 1107 | Stunned | 3 | loses its next two actions; can't dodge or shield-block (2026-09-30) | `combat-status`, `lose-actions`, `no-dodge`, `no-block` |
 | 1108 | Hobbled | 4 | cannot flee; Speed −3 | `combat-status`, `no-flee` |
 
 (1109 reserved.) **Changed 2026-09-30 (owner):** knocked down lasts 2

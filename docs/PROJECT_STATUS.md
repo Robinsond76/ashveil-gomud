@@ -244,7 +244,8 @@ docs/PROJECT_STATUS.md`.
 - **What:**
   - Knocked down lasts 2 combat rounds: it loses its next action, then
     stays down one more round at -4 speed (buff 1102, count 4 -> 3).
-  - Stunned keeps 2 rounds (its next two actions; buff 1107, count 3).
+  - Stunned is back to 2 rounds (its next two actions; buff 1107, count
+    2 -> 3, after a brief step at 1 round).
     While stunned the holder can't dodge (`no-dodge`, checked at the
     dodge roll in `internal/combat`) or block with a shield (`no-block`:
     the shield's +50% defense is lost in `Character.GetDefense`; armor,
@@ -263,11 +264,21 @@ docs/PROJECT_STATUS.md`.
     (with every dodge certain, the captain dodges only once the stun
     ends; removing the dodge check fails it) and
     `TestGuardianBackAfterKnockdown`/`...Stun`.
-  - Final: see the review line.
-- **Review:** an independent reviewer checked the first step (knockdown
-  2, stun 1): no bugs, tick counts confirmed; its points (the
-  guardian-returns tests, the 30a doc notes) were added. The stun
-  follow-up had its own review, below.
+  - Final (2026-09-30): `make generate` (no diff), `make validate`,
+    `go test -race ./...`, `git diff --check` all passed.
+- **Review:** an independent reviewer checked each step.
+  - Knockdown 2 / stun 1: no bugs; tick counts confirmed. Its points
+    (the guardian-returns tests, the 30a doc notes) were added.
+  - Stun 2 with no dodge or shield block: no bugs. It confirmed an
+    expired stun keeps no flags, no other dodge path exists, and both
+    tests fail when either check is removed. Fixed: stale doc lines,
+    `help combat`'s status sentence, and a test skip made a failure.
+  - Accepted, noted for the owner: the no-dodge and no-shield penalties
+    start the moment a stun lands (the rest of that round, then its 2
+    rounds), while lost actions start the next round; `status` and
+    `peep` show the lower defense while stunned. No test combines a
+    stun with broken armor (the order in `GetDefense` is checked by
+    reading).
 
 ### Brawl test flakes fixed (2026-09-30, not a phase)
 
