@@ -264,7 +264,7 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 		col, placed := s.column(company.LeaderMemberKey)
 		reach := combat.ResolveReach(leader.Character, false)
 		att := enemyparty.PlayerAttacker(leader)
-		if previous, newId, byRule, ok := s.retarget(leader.Character.Aggro, att, col, placed, reach, party, members, alive, room); ok {
+		if previous, newId, byRule, ok := s.retarget(leader.Character.Aggro, att, col, placed, reach, party, members, alive, room, refocusing[leader.UserId]); ok {
 			emitTargetChange(userRef(leader), mobRefById(previous), mobRefById(newId), room.RoomId)
 			leader.Character.SetAggro(0, newId, attackType(leader.Character.Aggro))
 			events.AddToQueue(events.AggroChanged{UserId: leader.UserId, RoomId: leader.Character.RoomId})
@@ -284,7 +284,7 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 		col, placed := s.column(s.companions[instanceId])
 		reach := combat.ResolveReach(&mob.Character, mob.Reach)
 		att := enemyparty.CompanionAttacker(leader.UserId, s.companions[instanceId], mob, s.leaderAim())
-		previous, newId, _, ok := s.retarget(mob.Character.Aggro, att, col, placed, reach, party, members, alive, room)
+		previous, newId, _, ok := s.retarget(mob.Character.Aggro, att, col, placed, reach, party, members, alive, room, refocusing[leader.UserId])
 		if !ok {
 			continue
 		}
@@ -306,7 +306,10 @@ func (s companySide) keepCompanyEngaged(party mobparty.Party, room *rooms.Room) 
 // reach, is someone else.
 // byRule is true when a kept, reachable target was left because the rule
 // now points elsewhere (not "can't reach").
-func (s companySide) retarget(a *characters.Aggro, att enemyparty.Attacker, col int, placed bool, reach formationcombat.Reach, party mobparty.Party, members map[int]bool, alive map[company.MemberKey]bool, room *rooms.Room) (previous int, newId int, byRule bool, ok bool) {
+//
+// Phase 30c: refocus is a round in which the company's focus changed; the
+// member then turns to the focus's choice even from a legal target.
+func (s companySide) retarget(a *characters.Aggro, att enemyparty.Attacker, col int, placed bool, reach formationcombat.Reach, party mobparty.Party, members map[int]bool, alive map[company.MemberKey]bool, room *rooms.Room, refocus bool) (previous int, newId int, byRule bool, ok bool) {
 	state, current := classifyPartyTarget(a, members, alive, room.RoomId)
 	g := enemyparty.Group{Party: party}
 	switch state {
@@ -316,7 +319,7 @@ func (s companySide) retarget(a *characters.Aggro, att enemyparty.Attacker, col 
 		// A hidden target can't be fought ("You can't seem to find your
 		// target"), so it is moved off like an unreachable one.
 		if !mobHidden(current) && gateLetsThrough(col, placed, party.Formation, mobparty.MemberKeyFor(current), alive, reach) {
-			if att.Rule.ReaimsEachRound() {
+			if att.Rule.ReaimsEachRound() || refocus {
 				if choice, ok := enemyparty.RuleChoice(g, att, current); ok && choice != current {
 					return current, choice, true, true
 				}

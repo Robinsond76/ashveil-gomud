@@ -557,7 +557,7 @@ func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
 	_, col, placed := f.Find(company.LeaderMemberKey)
 	reach := combat.ResolveReach(user.Character, false)
 	lostId := user.Character.Aggro.MobInstanceId
-	rule := enemyparty.MemberStrategy(user.UserId, company.LeaderMemberKey).Rule
+	rule := enemyparty.AimRule(user.UserId, company.LeaderMemberKey)
 	newTargetId, ok := reassignWithinLostParty(user.UserId, lostId, col, placed, reach, rule, 0, room)
 	if !ok {
 		return false
@@ -588,7 +588,7 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	if leader := users.GetByUserId(leaderUserID); leader != nil && plainAttack(leader.Character.Aggro) {
 		assistId = leader.Character.Aggro.MobInstanceId
 	}
-	rule := enemyparty.MemberStrategy(leaderUserID, key).Rule
+	rule := enemyparty.AimRule(leaderUserID, key)
 	newTargetId, ok := reassignWithinLostParty(leaderUserID, lostId, col, placed, reach, rule, assistId, room)
 	if !ok {
 		return false

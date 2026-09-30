@@ -8,7 +8,7 @@ Branch: `phase-30c1-company-tactics`, worktree
 
 Each task writes its tests first and runs only its own packages.
 
-- [ ] **1. `internal/strategy` (pure).**
+- [x] **1. `internal/strategy` (pure).**
   - Tests first:
     - `Casters` parses, is listed, and chooses the chanting foe, then a
       foe that knows spells, else none (so `Pick` falls to the nearest);
@@ -21,19 +21,19 @@ Each task writes its tests first and runs only its own packages.
       seeded noise roll that hits and one that misses;
     - `TacticsFor` falls back to defaults with no provider.
   - Add them, and update `AGENTS.md`.
-- [ ] **2. Durable tactics (`modules/strategy`).**
+- [x] **2. Durable tactics (`modules/strategy`).**
   - Tests first: set and read back; save failure rolls back; a
     save/load round trip through the plugin store; bad stored values are
     dropped; `UserPurged` drops the user's tactics.
   - Add `Registry.Tactics`, `TacticsFor`/`SetTactics`, and register the
     `TacticsProvider`.
-- [ ] **3. Battle focus (`internal/battle`) and the stream.**
+- [x] **3. Battle focus (`internal/battle`) and the stream.**
   - Tests first: `SetFocus` needs a battle and sets it pending;
     `Focus` reads it; `TakeRefocus` returns the pending players and
     clears them; `ClearFocus` (back to saved); a new battle starts with
     no override; `End` drops it.
   - Add `combatstream.FocusChange` and `Event.Rule`.
-- [ ] **4. Aiming by focus (`internal/enemyparty`, `internal/hooks`).**
+- [x] **4. Aiming by focus (`internal/enemyparty`, `internal/hooks`).**
   - `PlayerAttacker`/`CompanionAttacker` use the effective focus (the
     battle's, else the saved one, else the member's own rule).
   - `Foes` fills `Chanting` and `Caster` for the `casters` rule.

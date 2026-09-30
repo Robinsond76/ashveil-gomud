@@ -44,6 +44,11 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// and end their fights on the combat event stream (29b).
 	battlePass()
 
+	// Ashveil Phase 30c: a focus ordered since the last round turns the
+	// company at this round's upkeep.
+	beginRefocus()
+	defer endRefocus()
+
 	// Ashveil Phase 29a: keep each player's company and the group they're
 	// in battle with fighting as a whole before any blow is struck.
 	upkeepEngagements()

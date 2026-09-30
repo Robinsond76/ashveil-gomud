@@ -78,6 +78,7 @@ func strategyPass() {
 			continue
 		}
 		side := sideActors(u, room)
+		healBelow := strategy.TacticsFor(uid).Healing
 		allies := make([]strategy.Ally, len(side))
 		for i, a := range side {
 			// A player who is down (bleeding out, not yet dead) can still
@@ -100,6 +101,8 @@ func strategyPass() {
 				Spells: autoSpells,
 				Allies: allies,
 				Foes:   len(foes),
+				// Phase 30c: the company's healing threshold.
+				HealBelow: healBelow,
 			})
 			info, ok := autoSpellTargets(action, a, side, g, foes)
 			if !ok {

@@ -2,6 +2,7 @@ package enemyparty
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -29,27 +30,52 @@ type Attacker struct {
 	Spell    bool          // aiming a spell: every foe is in reach
 }
 
-// PlayerAttacker is a player aiming by their own strategy.
+// PlayerAttacker is a player aiming by their company's focus, else their
+// own strategy.
 func PlayerAttacker(u *users.UserRecord) Attacker {
 	return Attacker{
 		LeaderId: u.UserId,
 		Key:      company.LeaderMemberKey,
 		Char:     u.Character,
-		Rule:     MemberStrategy(u.UserId, company.LeaderMemberKey).Rule,
+		Rule:     AimRule(u.UserId, company.LeaderMemberKey),
 	}
 }
 
-// CompanionAttacker is a player's companion aiming by its own strategy;
-// assistId is the player's target.
+// CompanionAttacker is a player's companion aiming by the company's focus,
+// else its own strategy; assistId is the player's target.
 func CompanionAttacker(leaderId int, key company.MemberKey, mob *mobs.Mob, assistId int) Attacker {
 	return Attacker{
 		LeaderId: leaderId,
 		Key:      key,
 		Char:     &mob.Character,
 		MobReach: mob.Reach,
-		Rule:     MemberStrategy(leaderId, key).Rule,
+		Rule:     AimRule(leaderId, key),
 		AssistId: assistId,
 	}
+}
+
+// Focus is the company focus leaderId's side aims by now (Phase 30c): the
+// focus ordered for their battle, else their saved tactics' focus. ok is
+// false for none (each member by its own rule).
+func Focus(leaderId int) (strategy.Rule, bool) {
+	if r, set := battle.Focus(leaderId); set {
+		rule := strategy.Rule(r)
+		if rule == "" || rule == strategy.NoFocus {
+			return "", false
+		}
+		return rule, true
+	}
+	return strategy.TacticsFor(leaderId).FocusRule()
+}
+
+// AimRule is the target rule a company member aims by: the company's
+// focus when one is set, else the member's own strategy rule. Roles are
+// untouched (a healer still heals).
+func AimRule(leaderId int, key company.MemberKey) strategy.Rule {
+	if rule, ok := Focus(leaderId); ok {
+		return rule
+	}
+	return MemberStrategy(leaderId, key).Rule
 }
 
 // MemberStrategy is a company member's strategy, resolved against its
@@ -94,6 +120,8 @@ func Foes(g Group, a Attacker) []strategy.Foe {
 			Col:        mcol,
 			Reachable:  a.Spell || !placed || formationcombat.Legal(col, g.Party.Formation, key, alive, reach),
 			StrikesPct: StrikesPct(m.Character.Aggro, a.LeaderId),
+			Chanting:   m.Character.Aggro != nil && m.Character.Aggro.Type == characters.SpellCast,
+			Caster:     len(m.Character.SpellBook) > 0,
 		}
 		// Members are ranked toughest first: the first standing is the
 		// leader, and the next steps up when it falls.
