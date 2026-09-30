@@ -378,3 +378,15 @@ func TestCompanyVitalsWoundLimit(t *testing.T) {
 	assert.NotContains(t, vitals["leader"].(map[string]any), "hp_limit", "unwounded: no limit sent")
 	assert.Equal(t, 20.0, vitals["companion:1"].(map[string]any)["hp_limit"])
 }
+
+// TestCompanyPayloadTactics (30c): the saved tactics, defaults filled in.
+func TestCompanyPayloadTactics(t *testing.T) {
+	s := sampleCompany()
+	p, _ := buildCompanyPayload(7, s, noChemistry)
+	assert.Equal(t, companyTactics{Focus: "none", Healing: 50}, p.Tactics)
+	s.Tactics = strategy.Tactics{Focus: strategy.Wounded, Healing: 70}
+	p, _ = buildCompanyPayload(7, s, noChemistry)
+	raw, err := json.Marshal(p)
+	require.NoError(t, err)
+	assert.Contains(t, string(raw), `"tactics":{"focus":"wounded","healing":70}`)
+}

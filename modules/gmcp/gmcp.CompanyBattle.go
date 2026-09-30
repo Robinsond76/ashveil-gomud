@@ -28,6 +28,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -40,6 +41,10 @@ type battleFacts struct {
 	Enemies  []enemyFact // every enemy seen in the battle, in instance order
 	Company  []aimFact
 	Waiting  []string // the waiting groups' names, in the order they come
+	// Phase 30c: the focus the company aims by now, the saved one, and
+	// whether an order may be given (none waiting for the next round).
+	Focus, SavedFocus string
+	FocusReady        bool
 }
 
 // enemyFact is one enemy of the battle.
@@ -107,6 +112,10 @@ type battlePayload struct {
 	Company []battleAim    `json:"company,omitempty"`
 	Others  []battleOther  `json:"others,omitempty"`
 	Waiting []string       `json:"waiting,omitempty"`
+	// Phase 30c: the company focus (the Combat tab's focus buttons).
+	Focus      string `json:"focus"`
+	SavedFocus string `json:"saved_focus"`
+	FocusReady bool   `json:"focus_ready"`
 }
 
 func mobID(instanceId int) string { return "m:" + strconv.Itoa(instanceId) }
@@ -116,10 +125,17 @@ func buildBattle(f battleFacts) any {
 	if !f.InBattle {
 		return struct{}{}
 	}
-	if f.Dark {
-		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}}
+	focus, saved := f.Focus, f.SavedFocus
+	if focus == "" {
+		focus = "none"
 	}
-	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting}
+	if saved == "" {
+		saved = "none"
+	}
+	if f.Dark {
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady}
+	}
+	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -193,7 +209,10 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	if room == nil {
 		return battleFacts{}
 	}
-	f := battleFacts{InBattle: true}
+	f := battleFacts{InBattle: true, SavedFocus: string(strategy.TacticsFor(user.UserId).Focus), FocusReady: battle.FocusReady(user.UserId)}
+	if rule, ok := enemyparty.Focus(user.UserId); ok {
+		f.Focus = string(rule)
+	}
 	if room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
 		f.Dark = true
 		return f

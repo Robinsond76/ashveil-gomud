@@ -269,3 +269,31 @@ func TestTacticsCommandMidBattle(t *testing.T) {
 	_, set := battle.Focus(7)
 	assert.False(t, set, "back to the saved focus")
 }
+
+// TestBattleViewCarriesTheFocus (30c): Company.Battle, through the real
+// feed, carries the focus, the saved one, and whether an order may be
+// given.
+func TestBattleViewCarriesTheFocus(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	views := battleViews(t)
+	b.saveTactics(strategy.Tactics{Focus: strategy.Wounded, Healing: 60})
+	captain, _, _, _, _ := b.shapeBandits()
+	b.cmd("attack", fmt.Sprintf("#%d", captain))
+	b.hold(nil)
+	b.toughen()
+	b.fight()
+	b.refresh(7)
+	view := lastView(views, 7)
+	require.NotEmpty(t, view)
+	assert.Equal(t, "wounded", view["focus"], "the saved focus holds")
+	assert.Equal(t, "wounded", view["saved_focus"])
+	assert.Equal(t, true, view["focus_ready"])
+
+	b.cmd("company", "tactics focus leader")
+	b.refresh(7)
+	view = lastView(views, 7)
+	assert.Equal(t, "leader", view["focus"])
+	assert.Equal(t, "wounded", view["saved_focus"])
+	assert.Equal(t, false, view["focus_ready"], "the order waits for the next round")
+}

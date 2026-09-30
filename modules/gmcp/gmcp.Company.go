@@ -81,8 +81,14 @@ type companyRest struct {
 	Seconds int    `json:"seconds"`
 }
 
+// companyTactics is the saved company tactics (Phase 30c).
+type companyTactics struct {
+	Focus   string `json:"focus"`
+	Healing int    `json:"healing"`
+}
+
 // companyStructure is what changes only with the roster, formation, load,
-// chemistry, or checkpoint.
+// chemistry, checkpoint, or tactics.
 type companyStructure struct {
 	Leader     companyMember   `json:"leader"`
 	Members    []companyMember `json:"members"`
@@ -90,6 +96,7 @@ type companyStructure struct {
 	Dead       int             `json:"dead"`
 	Load       *companyLoad    `json:"load"`
 	Checkpoint *string         `json:"checkpoint"`
+	Tactics    companyTactics  `json:"tactics"`
 }
 
 // companyLive is what changes as time passes: health, needs, and the
@@ -213,6 +220,8 @@ func buildCompanyPayload(leaderUserID int, s companyview.Summary, chemistry chem
 	if s.Checkpoint != "" {
 		p.Checkpoint = strPtr(s.Checkpoint)
 	}
+	t := s.Tactics.Resolve()
+	p.Tactics = companyTactics{Focus: string(t.Focus), Healing: t.Healing}
 	return p, true
 }
 

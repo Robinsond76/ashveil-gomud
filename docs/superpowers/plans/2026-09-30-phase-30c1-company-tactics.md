@@ -74,7 +74,7 @@ Each task writes its tests first and runs only its own packages.
     battle; the "still turning" cooldown; the room line.
   - Add `tactics.go`, the `company tactics` case, and the `tactics`
     command.
-- [ ] **7. Web (`modules/gmcp`, `window-combat.js`).**
+- [x] **7. Web (`modules/gmcp`, `window-combat.js`).**
   - Tests first: `Company.Battle` carries `focus`, `saved_focus`,
     `focus_ready` (`gmcp_battle_test.go`); `Company` carries `tactics`.
   - Add the focus buttons to the battle view and the tactics row in

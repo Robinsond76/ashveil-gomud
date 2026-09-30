@@ -31,6 +31,7 @@ const company = {
   alive: 4, dead: 1,
   load: { label: 'Heavily burdened', total_g: 46000, capacity_g: 50000, cargo_g: 3000, companion_g: 20000 },
   activity: 'Camped', rest: { tier: 'Rested', seconds: 600 }, checkpoint: 'The Chapel',
+  tactics: { focus: 'none', healing: 50 },
   rescue: { 'companion:4': 5400 },
   vitals: {
     leader: { hp: 30, hp_max: 40, mp: 6, mp_max: 14, needs: { hunger: need(40, 'Hungry', true), thirst: need(90, 'Hydrated', false), fatigue: need(80, 'Rested', false) }, warmth: '' },
@@ -271,6 +272,12 @@ got = await sentNow(async () => { await page.getByRole('button', { name: 'Oswin:
 check(JSON.stringify(got) === '["formation swap #1 me"]', 'swap two members');
 got = await sentNow(async () => { await page.getByRole('button', { name: 'Oswin: healer, weakest' }).click(); await page.getByText('Back to the default').click(); });
 check(JSON.stringify(got) === '["strategy #1 default"]', 'back to the default');
+// Phase 30c: the tactics row.
+check(await page.getByRole('button', { name: 'Company tactics: focus none, heal below 50%' }).count() === 1, 'Setup shows the saved tactics');
+got = await sentNow(async () => { await page.getByRole('button', { name: /^Company tactics/ }).click(); await page.getByText('Heal below 70%').click(); });
+check(JSON.stringify(got) === '["company tactics healing 70"]', 'the tactics menu sets the healing threshold');
+got = await sentNow(async () => { await page.getByRole('button', { name: /^Company tactics/ }).click(); await page.getByText('Focus: casters').click(); });
+check(JSON.stringify(got) === '["company tactics focus casters"]', 'the tactics menu sets the focus');
 await page.evaluate(() => window.gmcp('Room.Info', { Contents: { Npcs: [{ id: '#9', name: 'ruffian', aggro: false, group: 'a band of ruffians' }], Players: [], Items: [], Containers: [] } }));
 got = await sentNow(async () => { await page.getByRole('button', { name: 'Scout' }).click(); });
 check(JSON.stringify(got) === '["scout"]', 'Scout appears with an enemy group here, and sends scout');
@@ -404,6 +411,27 @@ await page.evaluate(() => { document.getElementById('dock-right').style.width = 
 await page.evaluate(() => window.gmcp('Company.Battle', { group: 'the enemy', dark: true, enemies: [] }));
 check((await cbt()).includes("It's too dark to make them out.") && await page.locator('#combat-window .cbt-field').count() === 0, 'in the dark: no grids, as scout');
 await page.evaluate(b => window.gmcp('Company.Battle', b), next);
+
+// Phase 30c: the focus buttons.
+const focused = JSON.parse(JSON.stringify(next));
+Object.assign(focused, { focus: 'none', saved_focus: 'none', focus_ready: true });
+await page.evaluate(b => window.gmcp('Company.Battle', b), focused);
+const bar = page.getByRole('group', { name: 'Company focus' });
+check(await bar.getByRole('button').count() === 7, 'seven focus buttons');
+check((await page.locator('.cbt-focus [aria-pressed="true"]').allTextContents()).join() === 'none', 'the current focus is pressed');
+got = await sentNow(async () => { await page.locator('.cbt-focus [data-focus="leader"]').click(); });
+check(JSON.stringify(got) === '["company tactics focus leader"]', 'a focus button sends the order');
+await page.evaluate(() => { document.getElementById('combat-live').textContent = ''; });
+Object.assign(focused, { focus: 'leader', focus_ready: false });
+await page.evaluate(b => window.gmcp('Company.Battle', b), focused);
+check(await page.getByRole('group', { name: 'Company focus, turning next round' }).count() === 1, 'while the order waits, the bar says so');
+check(await page.evaluate(() => [...document.querySelectorAll('.cbt-focus button')].every(b => b.disabled)), 'every focus button is disabled while an order waits');
+check((await page.locator('.cbt-focus [aria-pressed="true"]').allTextContents()).join() === 'leader', 'the new focus is pressed');
+check((await page.evaluate(() => document.getElementById('combat-live').textContent)) === 'Focus: leader.', 'the live region: the focus changed');
+focused.focus_ready = true;
+await page.evaluate(b => window.gmcp('Company.Battle', b), focused);
+got = await sentNow(async () => { await page.getByRole('button', { name: 'saved (none)' }).click(); });
+check(JSON.stringify(got) === '["company tactics focus default"]', 'saved returns to the saved focus');
 
 // Narrow: the dock at 280px in a 360px window.
 await page.setViewportSize({ width: 360, height: 800 });

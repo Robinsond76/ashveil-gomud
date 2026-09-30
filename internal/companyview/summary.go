@@ -91,6 +91,10 @@ type Summary struct {
 	// Checkpoint is the title of the church where the player wakes; "" when
 	// none is recorded.
 	Checkpoint string
+
+	// Tactics is the player's saved company tactics (Phase 30c), resolved
+	// against the defaults.
+	Tactics strategy.Tactics
 }
 
 // sources are the providers a summary reads; natives unless a test swaps
@@ -114,6 +118,7 @@ type sources struct {
 	room               func(roomID int) *rooms.Room
 	formation          func(leaderUserID int) (company.Formation, bool)
 	strategy           func(leaderUserID int, key company.MemberKey) strategy.Strategy
+	tactics            func(userID int) strategy.Tactics
 }
 
 func nativeSources() sources {
@@ -135,6 +140,7 @@ func nativeSources() sources {
 		room:               rooms.LoadRoom,
 		formation:          company.FormationFor,
 		strategy:           enemyparty.MemberStrategy,
+		tactics:            strategy.TacticsFor,
 	}
 }
 
@@ -183,6 +189,10 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		}
 	}
 	s.Leader.Strategy = src.strategy(uid, company.LeaderMemberKey)
+	s.Tactics = strategy.Tactics{}.Resolve()
+	if src.tactics != nil {
+		s.Tactics = src.tactics(uid)
+	}
 	if src.archetypeReporting() {
 		s.Leader.ArchetypeKnown = true
 		if id, ok := src.archetype(uid); ok {
