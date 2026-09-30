@@ -94,10 +94,11 @@ func windUpPower(mobInstanceId int) (combat.Power, bool) {
 
 // windUpRound starts a combat round: a landing left over is told, and a
 // wind-up of a foe gone, fallen, or no longer on a plain attack (casting,
-// fleeing, out of the fight) is dropped. A cooldown lasts while its foe
-// lives.
+// fleeing, out of the fight) is dropped. A cooldown ends with its foe's
+// fight.
 func windUpRound() {
 	finishLanding()
+	members := fightMembers()
 	for id := range windUps {
 		m := mobs.GetInstance(id)
 		if m == nil || m.Character.Health < 1 || m.Character.Aggro == nil || m.Character.Aggro.Type != characters.DefaultAttack {
@@ -105,7 +106,7 @@ func windUpRound() {
 		}
 	}
 	for id := range windUpCooldown {
-		if m := mobs.GetInstance(id); m == nil || m.Character.Health < 1 {
+		if m := mobs.GetInstance(id); m == nil || m.Character.Health < 1 || !mobHolder(m).inFight(members) {
 			delete(windUpCooldown, id)
 		}
 	}
@@ -299,7 +300,8 @@ func wasteWindUp(mob *mobs.Mob, a windup.Ability) {
 }
 
 // breakWindUp breaks a foe's wind-up: the line, an Interrupt credited to
-// the striker (none when a status alone cost it the turn), the cooldown.
+// the striker (none, and the Lost line, when a status alone cost it the
+// turn), the cooldown.
 func breakWindUp(by statusHolder, mob *mobs.Mob) {
 	st := windUps[mob.InstanceId]
 	if st == nil {
@@ -308,7 +310,11 @@ func breakWindUp(by statusHolder, mob *mobs.Mob) {
 	delete(windUps, mob.InstanceId)
 	windUpCooldown[mob.InstanceId] = windup.Cooldown
 	a := st.ability
-	windUpLine(mob, a.Broken, fmt.Sprintf(` (%s interrupted)`, a.Name), ``)
+	line := a.Broken
+	if by.ref.Zero() {
+		line = a.Lost
+	}
+	windUpLine(mob, line, fmt.Sprintf(` (%s interrupted)`, a.Name), ``)
 	if !by.ref.Zero() {
 		emitCombat(combatstream.Event{Kind: combatstream.Interrupt, RoomId: mob.Character.RoomId, Source: by.ref, Target: mobRef(mob), SpellId: a.Id, Status: a.Name, Outcome: combatstream.OutcomeSucceeded})
 	}
@@ -321,7 +327,7 @@ func afterWindUpBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	if l := landing; l != nil && l.struck && !l.told && attacker.mob != nil && attacker.mob.InstanceId == l.mobId {
 		l.told = true
 		outcome := combatstream.OutcomeMiss
-		if r.Hit {
+		if r.Hit && r.DamageToTarget > 0 { // a blow the armor took reads as a miss (29c)
 			outcome = combatstream.OutcomeHit
 		}
 		emitCombat(combatstream.Event{Kind: combatstream.WindUpLand, RoomId: attacker.char.RoomId, Source: attacker.ref, Target: defender.ref,

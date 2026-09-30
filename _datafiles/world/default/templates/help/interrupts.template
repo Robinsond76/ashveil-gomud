@@ -64,7 +64,12 @@ Some big foes wind up a heavy blow in plain view before they swing. The
   armor, or a blow that <ansi fg="yellow">staggers</ansi>, <ansi fg="yellow">knocks down</ansi>, or <ansi fg="yellow">stuns</ansi> the foe:
   <ansi fg="command">The forest ogre staggers, and the blow dies before it can fall. (Crushing Blow interrupted)</ansi>
   An ordinary blow never breaks a wind-up, however hard it lands, and
-  neither does a shield bash.
+  neither does a shield bash. A spell's damage never breaks one either,
+  but anything that stuns or knocks it down (a spell too) costs it the
+  turn, and the wind-up with it.
+- If the one it named has gone, the blow falls on whoever it is aiming at
+  now. With no one left in reach it is wasted:
+  <ansi fg="command">The forest ogre lets his great club fall, with nothing left to strike. (Crushing Blow wasted)</ansi>
 - A broken wind-up is lost. After a wind-up lands or breaks, the foe
   swings normally for <ansi fg="yellow">two of its turns</ansi> before it can wind up again.
 - To weather it: hit the foe with everything while it winds up (every

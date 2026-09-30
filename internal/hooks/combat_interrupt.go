@@ -53,7 +53,8 @@ var (
 
 // DisableInterruptsForTest turns broken chants and shield counters off
 // until the returned restore is called: only for a test that compares
-// against a record of combat captured before Phase 30d1.
+// against a record of combat captured before Phase 30d1. Wind-ups (30d2)
+// are not affected; a foe without `windups` never starts one.
 func DisableInterruptsForTest() (restore func()) {
 	prev := interruptsOff
 	interruptsOff = true

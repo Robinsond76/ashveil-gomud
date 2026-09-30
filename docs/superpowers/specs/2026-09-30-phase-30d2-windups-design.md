@@ -129,7 +129,8 @@ commands, `windUpTurn(mob)`:
 
 A landing whose swing never happened (its target left reach, a hold) is
 told as wasted when the next mob's turn begins. `WindUpLand` is emitted
-from `afterBlow` for the landing mob's swing (outcome `hit` or `miss`,
+from `afterBlow` for the landing mob's swing (outcome `hit`, or `miss`
+when it missed or the armor took it all, as 29c reads such a blow;
 damage).
 
 **Breaking:** in `afterBlow`, a blow on a mob winding up that
@@ -161,11 +162,14 @@ when unarmed):
   fists too).
 - **Wasted:** `The forest ogre lets his great club fall, with nothing
   left to strike. (Crushing Blow wasted)`.
+- **Lost to a status** (not a blow; amended after review, since nothing
+  staggered it): `The blow the forest ogre was winding up is lost.
+  (Crushing Blow interrupted)`.
 
 ### F. Content
 
 - **Race 22, ogre:** large, `unarmedname: huge fists`, `1d6+3`, strength
-  3, vitality 2, perception 0; not tameable; band.
+  3, vitality 2, speed -1; not tameable; band.
 - **Item 10022, ogre's great club** (`namesimple: great club`):
   two-handed bludgeoning, `2d6+2`, heavy.
 - **Mob 85, forest ogre:** Dark Forest, hostile, `solitary: true`, level
@@ -215,6 +219,8 @@ when unarmed):
   Interrupts line counts only broken wind-ups.
 - A spell's damage never breaks a wind-up (as with chants); a spell's
   stun costs the turn and so drops it.
+- A mob that shoots (a bow makes its `DefaultAttack` `Shooting`) never
+  winds up; shipped `windups` on a shooter fail a content test (review).
 
 ## Acceptance criteria
 

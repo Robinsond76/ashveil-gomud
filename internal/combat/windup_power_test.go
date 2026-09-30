@@ -17,9 +17,9 @@ import (
 
 const powerClubID = 99340
 
-// powerFight is a room, an ogre (mob 4350) with a fixed 3-damage club that
-// strikes twice a round when ordinary, and every strike landing, undodged,
-// with no crits.
+// powerFight is a room, an ogre (mob 4350) with a fixed 3-damage club
+// (one strike a round), and every strike landing, undodged, with no
+// crits.
 func powerFight(t *testing.T, toHit int) *mobs.Mob {
 	t.Helper()
 	edgeSpecs(t)
@@ -31,7 +31,7 @@ func powerFight(t *testing.T, toHit int) *mobs.Mob {
 	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: powerClubID, Name: "test great club", Type: items.Weapon, Subtype: items.Bludgeoning, Hands: 2,
-		Damage: items.Damage{DiceRoll: "2x1d1+2", Attacks: 2, DiceCount: 1, SideCount: 1, BonusDamage: 2}})
+		Damage: items.Damage{DiceRoll: "1d1+2", Attacks: 1, DiceCount: 1, SideCount: 1, BonusDamage: 2}})
 	t.Cleanup(func() { items.RemoveTestItemSpec(powerClubID) })
 	ogre := &mobs.Mob{InstanceId: 4350, Character: *edgeFighter(90231)}
 	ogre.Character.Equipment.Weapon = items.New(powerClubID)
@@ -55,14 +55,14 @@ func TestPowerBlowIsOneDoubledStrikeThatKnocksDown(t *testing.T) {
 	*user.Character = *edgeFighter(90231)
 
 	plain := AttackMobVsPlayer(ogre, user)
-	if !plain.Hit || plain.DamageToTarget != 6 {
-		t.Fatalf("an ordinary round is two 3-damage strikes, got %d: %+v", plain.DamageToTarget, plain.MessagesToTarget)
+	if !plain.Hit || plain.DamageToTarget != 3 || len(plain.BuffTarget) != 0 {
+		t.Fatalf("an ordinary blow does 3, got %d: %+v", plain.DamageToTarget, plain.MessagesToTarget)
 	}
 
 	crushing(t)
 	r := AttackMobVsPlayer(ogre, user)
 	if !r.Hit || r.DamageToTarget != 6 {
-		t.Fatalf("a Crushing Blow is one strike of double damage (6), got %d", r.DamageToTarget)
+		t.Fatalf("a Crushing Blow doubles it to 6, got %d", r.DamageToTarget)
 	}
 	if len(r.BuffTarget) != 1 || r.BuffTarget[0] != status.KnockedDown {
 		t.Fatalf("a blow that got through knocks down: %v", r.BuffTarget)
@@ -98,5 +98,40 @@ func TestPowerBlowOnAMobAndOnlyForItsMob(t *testing.T) {
 	r := AttackMobVsMob(other, target)
 	if len(r.BuffTarget) != 0 || strings.Contains(strings.Join(r.MessagesToSource, "\n"), "Crushing Blow") {
 		t.Fatalf("another mob's blow is ordinary: %+v", r)
+	}
+}
+
+// Review fix: a Crushing Blow the armor takes entirely hits for nothing
+// and knocks nobody down; one that gets through does.
+func TestPowerBlowTheArmorTakesKnocksNobodyDown(t *testing.T) {
+	ogre := powerFight(t, 100)
+	crushing(t)
+	const plateID = 99341
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: plateID, Name: "test plate", Type: items.Body, DamageReduction: 100})
+	t.Cleanup(func() { items.RemoveTestItemSpec(plateID) })
+	user := users.NewUserRecord(90342, 90342)
+	*user.Character = *edgeFighter(90231)
+	user.Character.Equipment.Body = items.New(plateID)
+
+	var blocked, through bool
+	for i := 0; i < 400 && !(blocked && through); i++ {
+		r := AttackMobVsPlayer(ogre, user)
+		if !r.Hit {
+			t.Fatal("every strike lands")
+		}
+		if r.DamageToTarget == 0 {
+			blocked = true
+			if len(r.BuffTarget) != 0 {
+				t.Fatalf("a blow the armor took knocks nobody down: %v", r.BuffTarget)
+			}
+		} else {
+			through = true
+			if len(r.BuffTarget) != 1 || r.BuffTarget[0] != status.KnockedDown {
+				t.Fatalf("a blow that got through knocks down: %v", r.BuffTarget)
+			}
+		}
+	}
+	if !blocked || !through {
+		t.Fatalf("both cases seen: blocked %v, through %v", blocked, through)
 	}
 }

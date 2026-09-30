@@ -83,6 +83,11 @@ func TestInterruptsHelpWindUps(t *testing.T) {
 		"An ordinary blow never breaks a wind-up",
 		"two of its turns",
 		"A bash is a counter strike only",
+		// review fixes: the fallback, the wasted blow, statuses, spells
+		"(Crushing Blow wasted)",
+		"whoever it is aiming at",
+		"stuns or knocks it down",
+		"A spell's damage never breaks one",
 	} {
 		assert.Contains(t, plain, want)
 	}

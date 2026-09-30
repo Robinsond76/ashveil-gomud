@@ -46,8 +46,12 @@ Each task writes its tests first and runs only its own packages.
       `Interrupt`, it lands);
     - `TestGuardianTakesCrushingBlow` (30c2: the guard steps in and is
       knocked down);
-    - `TestWindUpWastedWhenTargetGone` (the named target leaves: wasted
-      line, `WindUpLand` wasted);
+    - `TestWindUpFallsOnAimWhenNamedTargetGone` (the named target left:
+      the blow falls on its aim). The wasted cases can't be staged in the
+      brawl (upkeep re-aims, battles regrow), so they are the hooks unit
+      tests `TestWindUpTurnWastedWhenNoOneStands` and
+      `TestFinishLandingWastesAnUnstruckBlow`;
+    - `TestWindUpLostToAStatusThroughTheRound` (review);
     - `TestShieldBashBreaksNoWindUp` (a counter on the landing's miss
       breaks nothing; the ogre isn't winding);
     - `TestSummaryListsBrokenWindUp` (Interrupts dealt: Crushing Blow).
@@ -64,7 +68,7 @@ Each task writes its tests first and runs only its own packages.
   - `help interrupts`; `combat`, `statuses`, `guardian`,
     `battle-summary`, `formation`; `keywords.yaml`; the Practice Yard hint
     in `modules/tutorial/stages.go`; `TestTutorialHelpPointersExist`.
-- [ ] **7. Correct the docs on the shield bash (decision 2).** The 30d1 and
+- [x] **7. Correct the docs on the shield bash (decision 2).** The 30d1 and
   30d1b designs (amendment notes); `docs/PROJECT_STATUS.md`'s Next line,
   30d table row, and Known issues.
 - [ ] **8. Review and verification.** Loop `modules/company`

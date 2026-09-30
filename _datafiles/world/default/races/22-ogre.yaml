@@ -11,7 +11,7 @@ groupnoun: band
 unarmedname: huge fists
 tnlscale: 1.5
 angrycommands:
-  - emote bellows and beats its chest.
+  - emote bellows and pounds the ground with a fist.
 tameable: false
 stats:
   strength:

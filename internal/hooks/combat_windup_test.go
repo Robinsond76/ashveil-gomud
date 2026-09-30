@@ -122,6 +122,12 @@ func TestWindUpRoundPrunes(t *testing.T) {
 	windUpRound()
 	assert.NotContains(t, windUps, ogreId, "casting ends it")
 
+	// Review fix: a cooldown ends with the fight (no fight is open here).
+	ogre.Character.Aggro.Type = characters.DefaultAttack
+	windUpCooldown[ogreId] = 1
+	windUpRound()
+	assert.NotContains(t, windUpCooldown, ogreId, "out of a fight, the cooldown ends")
+
 	windUps[ogreId] = &windUpState{ability: a, turnsLeft: 1}
 	windUpCooldown[ogreId] = 1
 	ogre.Character.Health = 0
@@ -142,6 +148,7 @@ func TestWindUpLostTurn(t *testing.T) {
 	assert.Equal(t, windup.Cooldown, windUpCooldown[ogreId])
 	require.Len(t, *lines, 1)
 	assert.True(t, strings.HasSuffix(strings.TrimSpace((*lines)[0]), "(Crushing Blow interrupted)"), (*lines)[0])
+	assert.Contains(t, (*lines)[0], "was winding up is lost", "a neutral line: nothing staggered it (review)")
 	assert.Empty(t, *stream, "no interrupt to credit")
 }
 
@@ -150,4 +157,24 @@ func mustMob(t *testing.T, id int) *mobs.Mob {
 	m := mobs.GetInstance(id)
 	require.NotNil(t, m)
 	return m
+}
+
+// Review fix: a landing with neither the named target nor its aim left
+// standing is wasted at once: the line, the event, no swing, the cooldown.
+func TestWindUpTurnWastedWhenNoOneStands(t *testing.T) {
+	ogreId, foeId, lines, stream := windUpWorld(t)
+	a, _ := windup.Get("crushing-blow")
+	ogre := mustMob(t, ogreId)
+	windUps[ogreId] = &windUpState{ability: a, turnsLeft: 1, mobId: foeId}
+	mustMob(t, foeId).Character.Health = 0
+	ogre.Character.SetAggro(0, 999, characters.DefaultAttack, 0) // no one
+
+	assert.True(t, windUpTurn(ogre), "the turn is spent")
+	events.ProcessEvents()
+	assert.False(t, isLanding(ogreId), "no swing follows")
+	assert.Equal(t, windup.Cooldown, windUpCooldown[ogreId])
+	require.Len(t, *lines, 1)
+	assert.Contains(t, (*lines)[0], "(Crushing Blow wasted)")
+	require.Len(t, *stream, 1)
+	assert.Equal(t, combatstream.OutcomeWasted, (*stream)[0].Outcome)
 }

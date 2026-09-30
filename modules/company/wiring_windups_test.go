@@ -350,3 +350,30 @@ func TestShippedForestOgreCrushes(t *testing.T) {
 	assert.Equal(t, 7, lands[0].Target.UserId)
 	assert.Equal(t, combatstream.OutcomeHit, lands[0].Outcome)
 }
+
+// Review fix: a status not from a blow (here set directly, as a spell's
+// would be) costs the winding ogre its turn, and the wind-up with it, told
+// with the neutral line and credited to no one.
+func TestWindUpLostToAStatusThroughTheRound(t *testing.T) {
+	b, ogre := ogreBrawl(t)
+	forceBlows(t, true)
+	noCounters(t)
+	windUpDice(t, 0)
+	stream := b.listen()
+
+	b.ogreOn(ogre, 0)
+	b.aria.Character.SetAggro(0, b.captain().InstanceId, characters.DefaultAttack)
+	b.fight()
+	require.True(t, hooks.WindingUp(ogre.InstanceId))
+
+	windUpDice(t, 99)
+	b.ogreOn(ogre, 0)
+	b.aria.Character.SetAggro(0, b.captain().InstanceId, characters.DefaultAttack)
+	require.NoError(t, ogre.Character.AddBuff(status.Stunned, false))
+	out := b.fight()
+	assert.Contains(t, out, "The blow the hill ogre was winding up is lost. (Crushing Blow interrupted)")
+	assert.False(t, hooks.WindingUp(ogre.InstanceId))
+	assert.Empty(t, windUpsOf(*stream, combatstream.WindUpLand, key(ogre)), "no blow")
+	assert.Empty(t, interruptsOf(*stream, key(ogre)), "no one to credit")
+	assert.Empty(t, attacksBy(*stream, key(ogre)), "no swing")
+}

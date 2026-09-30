@@ -28,6 +28,7 @@ type Ability struct {
 	Telegraph string // the room, when it starts
 	Release   string // the room, as it swings (the swing's own line follows)
 	Broken    string // the room, when heavy force breaks it
+	Lost      string // the room, when a status not from a blow costs it the turn
 	Wasted    string // the room, when nothing is left to strike
 }
 
@@ -42,6 +43,7 @@ var abilities = map[string]Ability{
 		Release:    "{actor} brings {his} {weapon} down with all {his} weight.",
 		Broken:     "{actor} staggers, and the blow dies before it can fall.",
 		Wasted:     "{actor} lets {his} {weapon} fall, with nothing left to strike.",
+		Lost:       "The blow {actor} was winding up is lost.",
 	},
 }
 

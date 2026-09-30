@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/windup"
 	"github.com/stretchr/testify/assert"
@@ -50,6 +51,7 @@ func TestShippedForestOgre(t *testing.T) {
 // registered ability with a chance in 1-100.
 func TestShippedWindUpsAreRegistered(t *testing.T) {
 	loadShippedPronounData(t)
+	items.LoadDataFiles()
 	found := 0
 	for _, m := range GetAllMobInfo() {
 		for id, chance := range m.WindUps {
@@ -57,6 +59,11 @@ func TestShippedWindUpsAreRegistered(t *testing.T) {
 			_, ok := windup.Get(id)
 			assert.True(t, ok, "mob %d: unknown wind-up %q", m.MobId, id)
 			assert.True(t, chance >= 1 && chance <= 100, "mob %d: %s chance %d", m.MobId, id, chance)
+			// Review fix: a foe that shoots never swings a plain attack, so
+			// it could not wind up (only DefaultAttack does).
+			if w := m.Character.Equipment.Weapon; w.ItemId > 0 {
+				assert.NotEqual(t, items.Shooting, w.GetSpec().Subtype, "mob %d: a shooter can't wind up", m.MobId)
+			}
 		}
 	}
 	assert.Positive(t, found, "at least one shipped wind-up")

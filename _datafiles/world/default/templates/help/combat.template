@@ -39,8 +39,8 @@ Once the battle starts:
   always does), on either side, and
   a shield-bearer may slam a missed blow back (<ansi fg="command">help interrupts</ansi>);
 - a big foe, such as the forest ogre, may wind up a heavy blow in plain
-  view, and only a critical hit or a stagger, knockdown, or stun breaks
-  it (<ansi fg="command">help interrupts</ansi>);
+  view, and only a critical hit that gets through the armor, or a
+  stagger, knockdown, or stun, breaks it (<ansi fg="command">help interrupts</ansi>);
 - anyone left without a target, or with one they can't reach, turns to
   another by their strategy, and you're told about it
   (<ansi fg="command">You turn toward the bandit cutthroat.</ansi>);

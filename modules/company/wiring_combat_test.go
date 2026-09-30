@@ -228,7 +228,8 @@ func newBrawl(t *testing.T) *brawl {
 	// scripts its own).
 	t.Cleanup(hooks.UseBreakRollForTest(func(int) int { return 0 }))
 	// Phase 30d2: no wind-up starts (a test about one scripts its dice),
-	// so an enemy with `windups` keeps the brawls' seeded rolls.
+	// so an enemy with `windups` keeps the brawls' seeded rolls. A chance
+	// of 100 needs no roll and always starts: keep fixtures below it.
 	t.Cleanup(hooks.UseWindUpRollForTest(func(n int) int { return n - 1 }))
 	// Nor a grudge: an earlier fight leaves the bandits' group hostile to
 	// Aria (user 7) for many rounds, and they would open the next brawl.

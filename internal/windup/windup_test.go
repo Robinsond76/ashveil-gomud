@@ -10,7 +10,7 @@ func TestGetCrushingBlow(t *testing.T) {
 	if a.Name != "Crushing Blow" || a.Rounds != 1 || a.Multiplier != 2 || !a.KnockDown {
 		t.Errorf("crushing-blow = %+v, want Crushing Blow, 1 round, x2, knocks down", a)
 	}
-	for _, line := range []string{a.Telegraph, a.Release, a.Broken, a.Wasted} {
+	for _, line := range []string{a.Telegraph, a.Release, a.Broken, a.Wasted, a.Lost} {
 		if line == "" {
 			t.Errorf("crushing-blow is missing a line: %+v", a)
 		}
