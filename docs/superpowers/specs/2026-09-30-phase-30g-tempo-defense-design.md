@@ -32,12 +32,14 @@ Agreed in conversation; not to be re-asked:
    (80–120 seconds at 29f's 8-second combat round). HP, damage, action
    frequency, defenses, healing, and focus fire are reviewed **together**
    against it. The owner's concern: HP grows too fast against weapon
-   damage. D&D and Pathfinder may guide the shape of progression; **no HP
-   formula or level cap is agreed yet** (30g5's decisions).
-9. **Sequencing** (the lead's recommendation, accepted): measure first
-   (30g1), then defenses (30g2), personal load (30g3), the action meter
-   (30g4), and the HP/damage tuning pass (30g5), each measured against the
-   30g1 baseline.
+   damage. D&D and Pathfinder may guide the shape of progression.
+   (The HP shape and level cap were open here; settled since by
+   decisions 11, 12, and 13.)
+9. **Sequencing** (the lead's recommendation, accepted; reordered by
+   decision 13): measure first (30g1), then defenses (30g2), personal
+   load (30g3), progression (30g4: stat steps, archetype HP, the XP
+   knee), the action meter (30g5), and the tuning pass (30g6), each
+   measured against the 30g1 baseline.
 
 Settled in a second round (2026-09-30):
 
@@ -58,6 +60,29 @@ Settled in a second round (2026-09-30):
     practical ceiling. The balance band (decision 8) must therefore hold
     from level 1 to 60, with a sanity check at 100, and no HP or damage
     formula may run away with level.
+
+Settled in a third round (2026-09-30):
+
+12. **HP: small numbers, by archetype (was open decision G).** HP grows
+    slowly: a veteran is tougher, but not a damage sponge, and level
+    shows mostly in gear, accuracy, defenses, and abilities. **Archetypes
+    differ in HP** (a fighter gains more per level than a wizard), D&D
+    style. Aim (tuned in 30g6): a level-60 has about 2–3× a level-10's
+    HP, not today's ~5×.
+13. **Stats grow in steps (replaces open decision E).** The owner found
+    a per-level Speed reference messy. Instead, **automatic stat growth
+    comes every few levels** (the owner offered 5 or 10; open decision I)
+    rather than every level, so stats, and with them Speed and tempo,
+    stay in a small range. Tempo then reads **raw Speed** against one
+    fixed reference, with no level term. A level advantage stays modest,
+    but **a level 30 beats a level 10 with relative ease**, through
+    better gear plus a small stat edge (a few steps) and more HP.
+14. **Balance baseline: the spread-out fight (was open decision H).**
+    The 10–15 round target applies to a fight with **no focus on either
+    side**. Tactics help but don't always work cleanly: **enemy tactics
+    (30c1's targeting personalities) can trouble the company too**, so
+    the player has to adapt. A focused company against a passive enemy
+    should win faster; an enemy focusing on the company should hurt.
 
 ## Prior-art check (against `master` at `66fc6dc`)
 
@@ -94,7 +119,7 @@ Settled in a second round (2026-09-30):
   with level; only the Strength-delta damage bonus (0–10) does.
 - **Cadence** (29f): `CombatEveryRounds: 2` of 4-second rounds; the 29f
   known issue (regeneration, survival, buff durations tick twice per
-  combat round) is due its Phase 30 retune, which 30g5 takes.
+  combat round) is due its Phase 30 retune, which 30g6 takes.
 - **Prior design** (`2026-09-22-combat-design-reference-external.md`,
   prototypes 1–2): Effective Speed = AGI × 100 / (100 + Weight × 0.75)
   filling an action meter to 100 made weight matter at once, but was too
@@ -119,7 +144,7 @@ Settled in a second round (2026-09-30):
 - It reports, per level and focus: rounds to the end (median, p10, p90),
   who won, damage and healing per side, landed strikes, defenses by
   outcome, and each fighter's actions per round. Output is a table
-  written to the test log; nothing is asserted until 30g5 (it only fails
+  written to the test log; nothing is asserted until 30g6 (it only fails
   on a fight that never ends within 100 rounds).
 - The baseline table goes in the 30g1 work-log entry. Each later slice
   records its new table, so every change is measured, not felt.
@@ -193,13 +218,58 @@ One **active defense** per strike, after a strike hits and before armor:
 - Burden is computed when needed from the live items, so nothing new is
   saved.
 
-### 30g4 — The action meter
+### 30g4 — Progression: stat steps, archetype HP, and the XP knee
+
+Structure first, with provisional numbers; 30g6 tunes them.
+
+- **Stat steps (decision 13).** `StatInfo.GainsForLevel`
+  (`internal/stats/stats.go`) counts **steps** instead of levels: a
+  character at level L has `1 + floor((L − 1) / StatStepLevels)` steps
+  (new progression key; 5 or 10, open decision I), and today's racial
+  formula runs on the step count instead of the level. Earned stat points
+  follow the same rhythm through the existing `StatPointsEveryNLevels`.
+  Players and mobs share `Recalculate`, so both change together.
+- **Each step is worth less than the levels it replaces:** the aim is a
+  small stat edge per step (the owner's "small stat advantage"), so a
+  level 30 is a few steps ahead of a level 10, not twenty levels of
+  growth. The step's size is 30g6's tuning.
+- **Levels between steps still count:** each gives HP (below), training
+  points (skills), and progress toward the next step, so no level is
+  empty. `status` and the level-up message say when the next stat step
+  comes.
+- **Archetype HP (decision 12).** `HealthMax = HPBase + the archetype's
+  per-level HP × levels up to HPFullLevels + a small fixed HP per level
+  after + Vitality × HPPerVitality + mods`. Per-archetype values sit
+  with the archetypes (the 22a seam, `internal/archetypes`; companions
+  through `company.CompanionArchetype`); enemies take one from their race
+  or template, defaulting to the middle archetype's. Proposed start
+  (tuned in 30g6): fighter 6, cleric and ranger 5, rogue 4, wizard 3 per
+  level to `HPFullLevels` 20, then 1 a level; `HPPerVitality` reduced so
+  Vitality matters less than archetype. The old `HPPerLevel` is retired.
+- **XP knee (decision 11).** `XPTL` (`internal/characters/character.go`)
+  keeps today's formula (`(XPBase + L^XPLevelPower × XPLevelFactor ×
+  XPBase) × TNLScale`) up to a new `XPKneeLevel` (proposed 60); past it,
+  each level's cost is the previous level's times a new `XPKneeGrowth`
+  (proposed 1.10, making level 100 about 45× a level-60 level). Clamped
+  to `MaxInt` as today. The admin progression editor
+  (`/admin/progression`) charts the steps, HP by archetype, and the knee;
+  `MaxLevel` stays a display value.
+- **Existing characters:** level, XP, trained stats, and spent points are
+  kept; the racial part of their stats and their max HP are recomputed
+  on load, as they are today on every level change, so nothing new is
+  saved. A character's racial stats may drop (fewer steps than levels);
+  30g4's plan checks the shipped companions and starter characters and
+  records the before/after in the work log.
+
+### 30g5 — The action meter
 
 - **Tempo** per combatant, recomputed each combat round: `speedTerm ×
   (1 − 0.35 × b)`, clamped to `TempoMin`–`TempoMax` (proposed 0.6–1.5).
-  `speedTerm` compares the character's Speed with a **level reference**
-  (open decision E), never with their target, so a fighter's tempo is the
-  same whoever they strike. Formation position plays no part (decision 7).
+  `speedTerm = 1 + (Speed − TempoSpeedRef) / TempoSpeedSpan`, from **raw
+  Speed** against one fixed reference (decision 13: with stats in steps,
+  Speed stays in a small range, so no level term is needed). Never
+  against the target, so a fighter's tempo is the same whoever they
+  strike. Formation position plays no part (decision 7).
 - **Meter:** each combat round the meter gains `100 × tempo`; each full
   100 is one **turn** (the whole of today's round for that character:
   their weapons, dual wield, and a weapon's own `attacks`). At most
@@ -211,7 +281,7 @@ One **active defense** per strike, after a strike hits and before armor:
   fighters average at most 15 turns a round and never exceed 20.
 - **Replaces** `extraAttackCount` (the target-relative Speed bonus for
   weaponless and claws); the `attacks` stat mod becomes a tempo bonus
-  (+0.1 each, open to 30g5). A weapon's own `attacks` dice are unchanged.
+  (+0.1 each, open to 30g6). A weapon's own `attacks` dice are unchanged.
 - **Chants** step once per combat round regardless of tempo (casters'
   slowness is in their chants, per the prior design); a chanting
   character's meter still fills but takes no weapon turn.
@@ -227,51 +297,47 @@ One **active defense** per strike, after a strike hits and before armor:
   already spaces them, and 30g1's harness reports lines per round so the
   8-second round stays readable.
 
-### 30g5 — HP, damage, and healing against the target
+### 30g6 — Tuning HP, damage, and healing against the target
 
-Gated on the owner's decisions F–H below. The anchor for it:
-
-- Let `e` be one fighter's expected damage per combat round after hit,
-  active defense, and armor, and `H` a fighter's health. When both sides
-  focus fire, wiping five takes about `(1 + ½ + ⅓ + ¼ + ⅕) × H / e ≈
-  2.28 H / e` rounds, so 10–15 rounds means **H ≈ 4.4–6.6 × e** (each
-  fighter survives about five average landed hits). When damage is spread
-  evenly, everyone falls at about `H / e`, so the same target means
-  **H ≈ 10–15 × e**. Real fights, with healing, sit between; 30g1's
-  harness says where.
+- **The anchor (decision 14: the spread-out fight).** Let `e` be one
+  fighter's expected damage per combat round after hit, active defense,
+  and armor, and `H` a fighter's health. With no focus on either side,
+  blows land evenly and everyone falls at about `H / e`, so 10–15 rounds
+  means **H ≈ 10–15 × e** before healing (each fighter survives about a
+  dozen average landed hits). When one side focuses, its first kill comes
+  after about `H / (5e)` and the other side loses damage early, which is
+  why focus fire wins faster.
 - Today `H` grows with level through both `HPPerLevel` and Vitality's
   own growth, while `e` grows only through the capped Strength bonus, so
-  fights lengthen with level. 30g5 fixes the ratio, not a raw number:
-  it keeps `H / e` inside the band at every level up to the cap.
-- **Scope:** the HP formula (`HPBase`, `HPPerLevel`, `HPPerVitality`,
-  possibly a per-archetype hit die), how damage grows (weapon tiers,
-  Strength bonus, tempo), healing (heal spells, 32d healer thresholds,
-  and 29f's doubled in-combat regeneration), and the 30g2–30g4 numbers,
-  all tuned together through the harness.
+  fights lengthen with level. 30g4's steps and archetype HP change the
+  shape; 30g6 sets the numbers so `H / e` stays in band at every level
+  from 1 to 60, with small numbers (decision 12).
+- **Scope:** the stat step size, archetype HP values, `HPFullLevels`,
+  how damage grows (weapon tiers, the Strength bonus, tempo), healing
+  (heal spells, 32d healer thresholds, and 29f's doubled in-combat
+  regeneration), and the 30g2–30g5 numbers, all tuned together through
+  the harness.
 - **Also retuned here:** 29f's known issue (regeneration and round-timed
   buffs ticking twice per combat round).
-- **No cap (decision 11):** the band must hold from level 1 to 60, so
-  30g5 extends the harness to levels 1, 5, 10, 30, and 60 (asserted) and
-  100 (reported only, a sanity check). With stats growing every level
-  (`StatInfo.Recalculate`, soft-capped) and no ceiling, HP and damage
-  must grow at the **same rate**, so `H / e` stays flat rather than being
-  held in place by a cap.
-- The harness then **asserts** the band: median rounds 10–15 at levels
-  1, 5, 10, 30, and 60, focus and no focus.
-
-### 30g6 — The XP knee (progression, decision 11)
-
-- `XPTL` (`internal/characters/character.go`) keeps today's formula
-  (`(XPBase + L^XPLevelPower × XPLevelFactor × XPBase) × TNLScale`) up to
-  a new `XPKneeLevel` (proposed 60); past it, each level's cost is the
-  previous level's times a new `XPKneeGrowth` (proposed 1.10, making
-  level 100 about 45× a level-60 level). Clamped to `MaxInt` as today.
-- The admin progression editor (`/admin/progression`) charts the knee;
-  `MaxLevel` stays a display value.
-- Existing characters keep their XP and level; only the cost of future
-  levels past the knee changes. Nothing new is saved.
-- Independent of 30g1–30g5 and can ship any time; `help experience`
-  (or the leveling page) says leveling slows sharply after 60.
+- **The harness grows** to cover:
+  - **even fights** at levels 1, 5, 10, 30, and 60 (asserted) and 100
+    (reported only);
+  - **tactics both ways** (decision 14): company focus none or weakest,
+    against enemies with no targeting or a 30c1 personality (weakest,
+    casters);
+  - **mismatches** (decision 13): a level-30 company against level-10
+    enemies, and level 15 against level 10.
+- **It asserts:**
+  - no focus on either side: median rounds 10–15 at every asserted
+    level;
+  - a focused company against passive enemies wins more often, and
+    sooner, than the no-focus fight;
+  - enemies focusing on a passive company take more of its health than
+    passive enemies do;
+  - level 30 against level 10: the company wins at least 95% of fights
+    and loses no member in most;
+  - level 15 against level 10: the higher side is clearly favored but can
+    lose.
 
 ## Open decisions (lead's recommendations)
 
@@ -288,22 +354,20 @@ Gated on the owner's decisions F–H below. The anchor for it:
 - **D. The armor suffix.** Today's `(5 damage, 2 blocked)` means armor,
   which will read wrongly once shields block. Recommend
   `(5 damage, 2 absorbed)`; `help narration` and 29c's tests follow.
-- **E. Tempo's Speed reference.** Recommend **the Speed an untrained
-  human has at the character's level** (`GainsForLevel`), with
-  `speedTerm = 1 + 0.5 × clamp((Speed − ref) / ref, −0.5, 1)` (0.75–1.5).
-  It is stable whoever the fighter faces. The alternative (the battle's
-  median Speed) keeps every battle averaging one turn a round but moves a
-  fighter's tempo with the enemy, which decision 1 set out to avoid.
+- **E. Tempo's Speed reference.** Replaced by decision 13 (stats in
+  steps; tempo from raw Speed against one fixed reference).
 - **F. Level cap.** Settled: decision 11 (no cap; an XP knee at ~60,
   ~100 practical).
-- **G. HP formula shape** (30g5). Options: keep today's formula and grow
-  damage to match; a D&D-like hit die per archetype with a small Vitality
-  term; or flatter HP growth. Recommend choosing after 30g1's baseline and
-  the cap, by whichever keeps `H / e` in band with the fewest moving parts.
-- **H. Whether focus fire should shorten fights** (30g5). With the band
-  above, a focused company wins faster than a spread one; recommend
-  keeping that (it rewards `tactics`) and tuning the no-focus fight to
-  the top of the band.
+- **G. HP formula shape.** Settled: decision 12 (small numbers, by
+  archetype).
+- **H. Which fight the target describes.** Settled: decision 14 (the
+  spread-out fight; enemy tactics cut both ways).
+- **I. Stat step size** (decision 13: every 5 or every 10 levels).
+  Recommend **5**. Every 10 gives only six steps by level 60, so each
+  step must be large to mean anything, and nine levels in a row pass with
+  no stat change. Every 5 gives twelve smaller steps, keeps the gap
+  between a level 30 and a level 10 at four steps, and makes a new step
+  a regular event.
 
 ## Durable model and invariants
 
@@ -318,13 +382,23 @@ Gated on the owner's decisions F–H below. The anchor for it:
 - **Config, not constants,** for every tuned number (new `Combat` keys:
   `BlockChanceMin/Max`, `ParryChanceMin/Max`, `BashChanceMin/Max`, `AgilityBaseKg`,
   `AgilityStrengthKg`, `AgilityFreeLoad`, `TempoMin/Max`,
-  `MaxTurnsPerRound`), so 30g5 tunes without code.
+  `TempoSpeedRef`, `TempoSpeedSpan`, `MaxTurnsPerRound`; new
+  `Progression` keys: `StatStepLevels`, `HPFullLevels`, `XPKneeLevel`,
+  `XPKneeGrowth`; archetype HP with the archetypes), so 30g6 tunes
+  without code.
+- **Restart/copyover:** stat steps, max HP, and XP cost are all derived
+  from saved level, archetype, and training on load, so they survive
+  restart without a save change.
 
 ## Constraints and deferrals
 
 - Spells stay undefended by block, parry, and dodge (a magic defense is
   a later idea from the prior design, not this phase).
 - 30d2's wind-ups are separate; the meter doesn't slow heavy attacks.
+- **Adaptive enemy tactics** (a later idea): enemies that change focus
+  mid-fight (turning on a healer who starts working, guarding their own
+  casters) would build on 30c1's personalities; this phase only measures
+  the personalities that exist.
 - **Fumbles** (a later idea, not this phase): the worst few percent of
   anyone's hit rolls could leave the attacker `exposed` (30a's status),
   for every fighter, not only against shields.
@@ -352,17 +426,23 @@ Gated on the owner's decisions F–H below. The anchor for it:
   free band and clamp, dodge falling with burden; **wiring:** a heavily
   burdened fighter's dodge chance through the real round; a mount or
   cargo change leaving burden unchanged; the burden word in `status`.
-- **30g4, unit:** tempo clamps, the level reference, meter fill, the
+- **30g4, unit:** `GainsForLevel` flat between steps and rising at each
+  (level 1–4 equal, 5 above them, with `StatStepLevels` 5); stat points
+  earned on the step rhythm; `HealthMax` by archetype (a fighter above a
+  wizard of the same level and Vitality; full gains to `HPFullLevels`,
+  then the small fixed gain); an enemy's HP from its race or template
+  default; `XPTL` unchanged up to the knee, growing by `XPKneeGrowth` a
+  level past it, clamped at `MaxInt`. **Wiring:** a character loaded
+  from a save before 30g4 keeps its level, XP, and training, with
+  recomputed stats and HP; a level-up to a step raises stats, and one
+  between steps raises only HP; a companion's HP follows its archetype.
+- **30g5, unit:** tempo from raw Speed and its clamps, meter fill, the
   two-turn cap, the 99 carry cap, the opening-round start; **wiring:** a
   fast fighter taking two turns in one round and never three, a slow one
   skipping a round, a stunned fighter losing both turns, a chant stepping
   once a round, a fresh meter after the fight ends.
-- **30g5:** the harness asserts median rounds 10–15 at levels 1, 5, 10,
-  30, and 60, focus and no focus, and reports 100; decisions G–H
-  recorded here.
-- **30g6, unit:** `XPTL` unchanged up to the knee, growing by
-  `XPKneeGrowth` a level past it, clamped at `MaxInt`; a character past
-  the knee keeps its level and XP.
+- **30g6:** the harness assertions listed under 30g6 pass; the tuned
+  values and the final harness table are recorded in its work-log entry.
 - **Player help (every slice that ships behavior):**
   - new `help defense` (block, parry, dodge, the one-attempt rule,
     armor after), aliases `block`, `parry`, `dodge`, `shield`,
@@ -372,7 +452,9 @@ Gated on the owner's decisions F–H below. The anchor for it:
     `help combat` and `help encumbrance`;
   - updated: `armor` (no 50% bonus), `interrupts` (counter on a block),
     `narration` (the armor suffix), `statuses` (stunned: no defense),
-    the leveling page (slower past 60, 30g6),
+    the leveling page (stat steps and when the next comes, HP by
+    archetype, slower past 60; 30g4), and the archetype choice text at
+    creation (each archetype's toughness),
     `cargo`/`encumbrance` (combat agility is personal, mounts don't help);
   - the Practice Yard hint (`modules/tutorial/stages.go`) points to
     `help defense` and `help tempo`;
