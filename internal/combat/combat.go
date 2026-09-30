@@ -425,7 +425,8 @@ func calculateCombat(sourceChar characters.Character, targetChar characters.Char
 				hit, byChemistry := hitRoll(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, penalty, chemistryBonus)
 				if hit {
 					// Check dodge before applying damage.
-					if Dodges(targetChar.Stats.Perception.ValueAdj, sourceChar.Stats.Perception.ValueAdj) {
+					// A stunned target can't dodge (owner, 2026-09-30).
+					if !targetChar.HasBuffFlag(status.FlagNoDodge) && Dodges(targetChar.Stats.Perception.ValueAdj, sourceChar.Stats.Perception.ValueAdj) {
 						dodger := targetChar.Name
 						if targetType == Mob {
 							dodger = util.CapitalizeFirst(util.Article(dodger))

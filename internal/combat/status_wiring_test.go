@@ -193,3 +193,45 @@ func TestEveryCritStrikeInARoundLeavesItsStatus(t *testing.T) {
 		t.Fatalf("two critical cuts leave two bleeds, got %v", result.BuffTarget)
 	}
 }
+
+// Owner, 2026-09-30: a stunned fighter can't dodge, and can't block with a
+// shield (its armor still takes its share).
+func TestStunnedCantDodgeOrBlock(t *testing.T) {
+	edgeSpecs(t)
+	buffs.LoadFlagDataFiles()
+	buffs.LoadDataFiles()
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.ToHitMin, gameplay.Combat.ToHitMax = 100, 100
+	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 100, 100
+	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 0, 0
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
+
+	source := edgeFighter(90231)
+	source.Equipment.Weapon = items.New(edgeSwordID)
+	target := edgeFighter(90231)
+	if r := calculateCombat(*source, *target, User, Mob, 0, 0); !strings.Contains(strings.Join(r.MessagesToTarget, "\n"), "twist aside") {
+		t.Fatalf("unstunned, a certain dodge: %+v", r.MessagesToTarget)
+	}
+	target.AddBuff(status.Stunned, false)
+	if r := calculateCombat(*source, *target, User, Mob, 0, 0); !r.Hit || strings.Contains(strings.Join(r.MessagesToTarget, "\n"), "twist aside") {
+		t.Fatalf("stunned, no dodge: hit %v, %q", r.Hit, r.MessagesToTarget)
+	}
+
+	const plateID, shieldID = 99313, 99314
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: plateID, Name: "test plate", Type: items.Body, DamageReduction: 40})
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: shieldID, Name: "test shield", Type: items.Offhand, DamageReduction: 20})
+	t.Cleanup(func() { items.RemoveTestItemSpec(plateID); items.RemoveTestItemSpec(shieldID) })
+	c := edgeFighter(90231)
+	c.Equipment.Body = items.New(plateID)
+	bare := c.GetDefense()
+	c.Equipment.Offhand = items.New(shieldID)
+	shielded := c.GetDefense()
+	if shielded <= bare {
+		t.Skip("the test gear rolled no defense")
+	}
+	c.AddBuff(status.Stunned, false)
+	armorOnly := bare + c.Equipment.Offhand.GetDefense() // the shield's own armor, no +50%
+	if got := c.GetDefense(); got != armorOnly {
+		t.Fatalf("stunned defense %d, want %d (armor without the shield's block; shielded %d)", got, armorOnly, shielded)
+	}
+}

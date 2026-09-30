@@ -1,0 +1,4 @@
+flag: no-block
+name: "No Block"
+description: "The holder can't block with a shield; its armor still counts (stunned)."
+locked: true

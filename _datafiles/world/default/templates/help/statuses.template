@@ -29,7 +29,8 @@ gets through also leaves a wound, from any weapon, fists and bites too:
   <ansi fg="yellow">Staggered</ansi>     loses its next action.
   <ansi fg="yellow">Knocked down</ansi>  loses its next action, and is easier to hit while it is
                   down (-4 speed) for 1 more round: 2 rounds in all.
-  <ansi fg="yellow">Stunned</ansi>       loses its next action: 1 round.
+  <ansi fg="yellow">Stunned</ansi>       loses its next two actions, and can't dodge or block with a
+                  shield while stunned (its armor still counts): 2 rounds.
   <ansi fg="yellow">Armor broken</ansi>  its armor gives half its protection for the rest of the
                   fight.
   <ansi fg="yellow">Exposed</ansi>       the chance of a critical hit against it rises by 25 points

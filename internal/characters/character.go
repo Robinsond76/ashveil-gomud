@@ -602,7 +602,8 @@ func (c *Character) GetDefense() int {
 	// If wearing an offhand item like a shield, defense gets a 50% boost
 	// Holdables are not considered "shield" type items.
 	// Anything held in the offhand that provides a damage reduction is considered a shield.
-	if c.Equipment.Offhand.ItemId != 0 && c.Equipment.Offhand.GetSpec().Type != items.Weapon && c.Equipment.Offhand.GetSpec().DamageReduction > 0 {
+	// A stunned holder can't raise it (no-block; its armor still counts).
+	if c.Equipment.Offhand.ItemId != 0 && c.Equipment.Offhand.GetSpec().Type != items.Weapon && c.Equipment.Offhand.GetSpec().DamageReduction > 0 && !c.HasBuffFlag("no-block") {
 		reduction = int(float64(reduction) * 1.5)
 	}
 

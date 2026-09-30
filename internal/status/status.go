@@ -32,6 +32,8 @@ const (
 	FlagLoseFirstAction = "lose-first-action" // loses its next action only
 	FlagArmorBroken     = "armor-broken"
 	FlagExposed         = "exposed"
+	FlagNoDodge         = "no-dodge" // can't dodge a blow (stunned)
+	FlagNoBlock         = "no-block" // can't block with a shield (stunned)
 )
 
 // ExposedCritBonus is the points added to the crit chance against an

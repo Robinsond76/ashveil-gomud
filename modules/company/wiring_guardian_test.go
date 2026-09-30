@@ -390,11 +390,11 @@ func TestGuardianAfterInterception(t *testing.T) {
 }
 
 // The owner's durations (2026-09-30): a knocked-down guardian is out for 2
-// rounds and a stunned one for 1, then steps in again, through the real
+// rounds and a stunned one for 2, then steps in again, through the real
 // combat round.
 func TestGuardianBackAfterKnockdown(t *testing.T) { guardianOutFor(t, status.KnockedDown, 2) }
 
-func TestGuardianBackAfterStun(t *testing.T) { guardianOutFor(t, status.Stunned, 1) }
+func TestGuardianBackAfterStun(t *testing.T) { guardianOutFor(t, status.Stunned, 2) }
 
 func guardianOutFor(t *testing.T, buff, out int) {
 	b := guardBrawl(t, "tamsin guard me")

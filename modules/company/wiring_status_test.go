@@ -151,9 +151,17 @@ func TestKnockedDownLeaderLosesTheNextActionAndStaysDown(t *testing.T) {
 	assert.NotContains(t, b.fight(), "lose your action")
 }
 
-func TestStunnedLosesOneAction(t *testing.T) {
+// Owner, 2026-09-30: stunned lasts 2 rounds (two lost actions), and a
+// stunned fighter can't dodge: with every dodge certain, the captain twists
+// aside only once the stun is over.
+func TestStunnedLosesTwoActionsAndCantDodge(t *testing.T) {
 	b := newBrawl(t)
 	loadStatusBuffs(t)
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 100, 100
+	gameplay.Combat.ToHitMin, gameplay.Combat.ToHitMax = 100, 100
+	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 0, 0
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	b.aimAt("bandit captain")
 	b.toughen() // the company must outlast the round, whatever the dice
 	captain := b.captain()
@@ -161,11 +169,17 @@ func TestStunnedLosesOneAction(t *testing.T) {
 	lost := 0
 	for i := 0; i < 4; i++ {
 		b.toughen()
-		if strings.Contains(b.fight(), "stands stunned, and loses the action") {
+		out := b.fight()
+		if strings.Contains(out, "stands stunned, and loses the action") {
 			lost++
 		}
+		if i < 2 { // its two stunned rounds; the third tick ends it
+			assert.NotContains(t, out, "captain twists aside", "round %d: stunned, no dodge", i+1)
+		} else {
+			assert.Contains(t, out, "captain twists aside", "round %d: the stun over, every dodge certain", i+1)
+		}
 	}
-	assert.Equal(t, 1, lost, "stunned lasts 1 round (owner, 2026-09-30)")
+	assert.Equal(t, 2, lost, "stunned lasts 2 rounds")
 }
 
 func TestStatusesEndWithTheFight(t *testing.T) {

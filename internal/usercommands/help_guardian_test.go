@@ -28,7 +28,7 @@ func TestGuardianHelp(t *testing.T) {
 	for _, want := range []string{
 		"Help for guardian",
 		"Tamsin Reed steps in front of you. (guard, 1 left)",
-		"2 guards", "2 combat rounds", "knocked down (2 rounds)", "stunned (1 round)",
+		"2 guards", "2 combat rounds", "knocked down (2 rounds)", "stunned (2 rounds)",
 		"most hurt", "column, or the next one",
 		"strategy [who] guard [other]", "strategy tamsin guard me",
 		"Only weapon blows are guarded",

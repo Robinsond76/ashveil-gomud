@@ -137,13 +137,17 @@ func TestLostActionRules(t *testing.T) {
 
 	stun := holder(t)
 	stun.AddBuff(Stunned, false)
+	assert.True(t, stun.HasBuffFlag(FlagNoDodge) && stun.HasBuffFlag(FlagNoBlock), "no dodging or blocking while stunned")
 	Tick(stun)
 	_, first := LostAction(stun)
 	assert.True(t, Grounded(stun))
 	Tick(stun)
 	_, second := LostAction(stun)
-	assert.True(t, first && !second, "stunned costs one action")
-	assert.False(t, Grounded(stun), "stunned lasts 1 round (owner, 2026-09-30)")
+	assert.True(t, Grounded(stun))
+	Tick(stun)
+	_, third := LostAction(stun)
+	assert.True(t, first && second && !third, "stunned costs two actions")
+	assert.False(t, Grounded(stun), "stunned lasts 2 rounds (owner, 2026-09-30)")
 }
 
 func TestClearEndsEveryStatus(t *testing.T) {

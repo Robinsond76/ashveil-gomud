@@ -239,26 +239,35 @@ docs/PROJECT_STATUS.md`.
   - **Accepted:** no test of another player hearing the guard line (it is
     the same room broadcast as every combat line).
 
-### Knockdown and stun shortened (2026-09-30, owner, not a phase)
+### Knockdown shortened, stun made heavier (2026-09-30, owner, not a phase)
 
-- **What:** knocked down now lasts 2 combat rounds (loses its next action,
-  then down one more round at -4 speed; buff 1102 count 4 -> 3) and
-  stunned 1 (loses its next action; buff 1107 count 3 -> 2, its
-  description too). A 30c2 guardian can't step in for exactly those
-  rounds. `help statuses` and `help guardian` updated; notes on 30a's
-  design and plan.
-- **Why:** the owner's call after 30c2 (the durations had been 3 and 2
-  rounds of effect, and 30c2's question had understated them).
-- **Verification:** status unit tests (`Grounded` per round, one action
-  for a stun, the knockdown's speed), `TestStunnedLosesOneAction`, and
-  `TestGuardianBackAfterKnockdown`/`...Stun` through `DoCombat` (the
-  old knockdown count fails it). Final: `make generate` (no diff),
-  `make validate`, `go test -race ./...`, `git diff --check` all passed.
-- **Review:** an independent reviewer found no bugs and confirmed the
-  counts give 2 and 1 rounds. Added the guardian-returns wiring tests and
-  the 30a doc notes it suggested. Noted for the owner: a stun now costs
-  one action, as a stagger does; it differs only in grounding a
-  guardian.
+- **What:**
+  - Knocked down lasts 2 combat rounds: it loses its next action, then
+    stays down one more round at -4 speed (buff 1102, count 4 -> 3).
+  - Stunned keeps 2 rounds (its next two actions; buff 1107, count 3).
+    While stunned the holder can't dodge (`no-dodge`, checked at the
+    dodge roll in `internal/combat`) or block with a shield (`no-block`:
+    the shield's +50% defense is lost in `Character.GetDefense`; armor,
+    the shield's own included, still counts).
+  - A 30c2 guardian can't step in while either status lasts.
+  - `help statuses`, `help guardian`, and the stun's description updated;
+    notes on 30a's design and plan and in 30c2's design.
+- **Why:** the owner's call after 30c2. A brief step (stun at 1 round)
+  made a stun no stronger than a stagger, so the owner chose 2 rounds
+  plus no dodging or blocking, over 3 rounds.
+- **Verification:**
+  - Unit: `Grounded` per round and the stun's two lost actions; a stunned
+    target never dodges at a certain dodge and loses only the shield's
+    bonus (`TestStunnedCantDodgeOrBlock`, real resolver).
+  - Wiring through `DoCombat`: `TestStunnedLosesTwoActionsAndCantDodge`
+    (with every dodge certain, the captain dodges only once the stun
+    ends; removing the dodge check fails it) and
+    `TestGuardianBackAfterKnockdown`/`...Stun`.
+  - Final: see the review line.
+- **Review:** an independent reviewer checked the first step (knockdown
+  2, stun 1): no bugs, tick counts confirmed; its points (the
+  guardian-returns tests, the 30a doc notes) were added. The stun
+  follow-up had its own review, below.
 
 ### Brawl test flakes fixed (2026-09-30, not a phase)
 

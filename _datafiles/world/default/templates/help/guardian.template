@@ -16,7 +16,7 @@ ward again.
 - While any guard is spent, one comes back every <ansi fg="yellow">2 combat rounds</ansi>, up to 2.
   A new battle starts with both.
 - Only weapon blows are guarded, not spells.
-- A guardian that is <ansi fg="yellow">knocked down</ansi> (2 rounds) or <ansi fg="yellow">stunned</ansi> (1 round) can't
+- A guardian that is <ansi fg="yellow">knocked down</ansi> (2 rounds) or <ansi fg="yellow">stunned</ansi> (2 rounds) can't
   step in while it lasts (<ansi fg="command">help statuses</ansi>), but keeps its guards. One that
   is down, fallen, or out of the fight guards no one.
 

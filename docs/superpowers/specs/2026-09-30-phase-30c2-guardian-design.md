@@ -30,9 +30,10 @@ standing "proceed with your recommendation" instruction.
     chosen). While either status lasts the guardian doesn't step in, but it
     keeps its unspent guards and refills as usual. (The question said the
     statuses last 1–2 rounds; the shipped data then had knocked down 4
-    combat rounds and stunned 3. Flagged to the owner, who set them to 2
-    and 1 afterwards: knocked down loses its next action and stays down one
-    more round, stunned loses its next action.)
+    combat rounds and stunned 3. Flagged to the owner, who set knocked
+    down to 2 rounds (its next action, then down one more round) and kept
+    stunned at 2 (its next two actions), with no dodging or shield block
+    while stunned.)
 
 ## Prior-art check (against `master` at `bc4e311`, 2026-09-30)
 
