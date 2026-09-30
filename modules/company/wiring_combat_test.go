@@ -214,6 +214,9 @@ func newBrawl(t *testing.T) *brawl {
 	t.Cleanup(combatstream.UseForTest(combatstream.New()))
 	battle.Reset() // and no battle (29b2)
 	t.Cleanup(battle.Reset)
+	// Phase 30c: no enemy personality's random re-aim here (the shipped
+	// human race has 10%), so the fights keep their targets.
+	t.Cleanup(hooks.UseAimRollForTest(func(n int) int { return n - 1 }))
 
 	b := &brawl{t: t, road: road, aria: aria, messages: captureCompanyMessages(t), bandits: map[string][]int{}}
 	for _, name := range []string{"tamsin reed", "brother oswin", "garrick vane", "ysolde"} {

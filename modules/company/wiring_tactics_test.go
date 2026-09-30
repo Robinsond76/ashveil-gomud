@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/stretchr/testify/assert"
@@ -163,4 +164,53 @@ func TestTacticsFocusTurnsAPlayerAlone(t *testing.T) {
 	b.fight()
 	assert.Equal(t, pair[0].InstanceId, aimOf(b.aria.Character), "alone, she turns by the focus at once")
 	assert.NotNil(t, mobs.GetInstance(pair[1].InstanceId), "from a foe still standing")
+}
+
+// Enemy personalities (Phase 30c): a bandit that re-aims picks by its
+// personality among the members it can reach.
+func TestEnemyPersonalities(t *testing.T) {
+	cases := []struct {
+		rule  string
+		noise int
+		roll  func(int) int
+		want  string // who it turns on
+	}{
+		{"", 0, nil, "Garrick Vane"},                          // the human race's weakest: the least health
+		{"wounded", 0, nil, "Tamsin Reed"},                    // the lowest fraction
+		{"casters", 0, nil, "Brother Oswin"},                  // a healer
+		{"strongest", 0, nil, "Aria"},                         // the most health left (first of equals)
+		{"weakest", 50, func(n int) int { return 0 }, "Aria"}, // noise: a random member (the first)
+	}
+	for _, c := range cases {
+		t.Run(c.rule+fmt.Sprint(c.noise), func(t *testing.T) {
+			b := newBrawl(t)
+			b.withArchetypes("")
+			b.unplaced()
+			captain, _, _, _, _ := b.shapeBandits()
+			b.cmd("attack", fmt.Sprintf("#%d", captain))
+			b.hold(nil)
+			b.toughen()
+			b.fight() // the battle begins; the bandits are hostile to Aria
+
+			if c.roll != nil {
+				t.Cleanup(hooks.UseAimRollForTest(c.roll))
+			}
+			b.hold(nil)
+			b.toughen()
+			tamsin, oswin, garrick := b.companion(1), b.companion(2), b.companion(3)
+			garrick.Character.HealthMax.Value, garrick.Character.Health = 200, 120 // 60%, 120
+			tamsin.Character.Health = 300                                          // 30%, 300
+			oswin.Character.HealthMax.Value, oswin.Character.Health = 200, 150     // 75%, 150
+			bandit := mobs.GetInstance(captain)
+			bandit.Targeting, bandit.TargetingNoise = c.rule, c.noise
+			bandit.Character.Aggro = nil // it re-aims at the upkeep
+			b.fight()
+			require.NotNil(t, bandit.Character.Aggro, "it rejoins the fight")
+			got := "Aria"
+			if bandit.Character.Aggro.UserId == 0 {
+				got = mobs.GetInstance(bandit.Character.Aggro.MobInstanceId).Character.Name
+			}
+			assert.Equal(t, c.want, got)
+		})
+	}
 }

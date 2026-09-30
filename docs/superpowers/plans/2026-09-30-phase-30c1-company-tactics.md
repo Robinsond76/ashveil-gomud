@@ -54,7 +54,7 @@ Each task writes its tests first and runs only its own packages.
       focus; `healing` and `strategy` are refused in the battle;
     - `TestTacticsFocusSoloPlayer`: a player alone turns by the focus
       (`turnAlone`).
-- [ ] **5. Enemy personalities (`internal/mobs`, `internal/races`,
+- [x] **5. Enemy personalities (`internal/mobs`, `internal/races`,
   `internal/hooks`).**
   - Tests first:
     - a mob template's `targeting` wins over its race's; none means

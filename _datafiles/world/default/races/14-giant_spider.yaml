@@ -24,3 +24,6 @@ damage:
   critbuffids: 
   - 13
 disabledslots: ['offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet']
+# Phase 30c: its personality as an enemy (help targeting).
+targeting: weakest
+targetingnoise: 25

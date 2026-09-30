@@ -46,6 +46,12 @@ type Race struct {
 	KnowsFirstAid    bool             // Whether they can apply aid to other players.
 	Stats            stats.Statistics // Base stats for this race.
 	DisabledSlots    []string         `yaml:"disabledslots,omitempty"`
+	// Ashveil (Phase 30c): the race's personality as an enemy, the target
+	// rule it re-aims by (internal/strategy's rule names) and the percent
+	// of re-aims that take a random foe instead. A mob template's own
+	// wins. Blank: today's weakest, no noise.
+	Targeting      string `yaml:"targeting,omitempty"`
+	TargetingNoise int    `yaml:"targetingnoise,omitempty"`
 }
 
 func GetRaces() []Race {
