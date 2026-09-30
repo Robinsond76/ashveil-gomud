@@ -92,6 +92,7 @@ help:
       - statuses
       - shoot
       - strategy
+      - tactics
       - targeting
       - wounds
     information:
@@ -220,6 +221,7 @@ help-aliases:
   targeting:        [target, targets, enemy-parties]
   scout:            [scouting, enemy-groups, groups]
   strategy:         [strategies, gambits, roles]
+  tactics:          [focus, company-tactics, personalities, personality]
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]

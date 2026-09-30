@@ -28,7 +28,8 @@ func TestStrategyHelp(t *testing.T) {
 	for _, want := range []string{
 		"Help for strategy", "fighter", "healer", "caster",
 		"weakest", "strongest", "wounded", "nearest", "furthest", "leader", "assist", "defend",
-		"below half health", "Magic Missile", "Minor Heal",
+		"below the healing threshold", "Magic Missile", "Minor Heal", "casters",
+		"help tactics",
 		"strategy [who] target [rule]", "strategy [who] default",
 		"can be read but not\nchanged",
 	} {

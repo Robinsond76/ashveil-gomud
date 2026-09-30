@@ -428,7 +428,7 @@ func (sd side) turnAlone(p mobparty.Party, room *rooms.Room) {
 			// Still has a foe. Phase 32d: a rule that follows something
 			// (defend) turns when its own choice is someone else.
 			att := enemyparty.PlayerAttacker(u)
-			if !att.Rule.ReaimsEachRound() {
+			if !att.Rule.ReaimsEachRound() && !refocusing[u.UserId] {
 				return
 			}
 			choice, ok := enemyparty.RuleChoice(enemyparty.Group{Party: p}, att, a.MobInstanceId)

@@ -1,0 +1,69 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">tactics</ansi>
+
+Company tactics are orders for your whole company: whom everyone goes for
+(the focus), and how hurt someone must be before your healers heal them
+(the healing threshold). They sit on top of each character's own strategy
+(<ansi fg="command">help strategy</ansi>), and are kept when you log out.
+
+<ansi fg="yellow-bold">The focus</ansi>
+
+  <ansi fg="command">none</ansi>       each character goes for the foe its own strategy picks (the default)
+  <ansi fg="command">leader</ansi>     their leader, the toughest of them
+  <ansi fg="command">casters</ansi>    their spell-casters: one chanting a spell first
+  <ansi fg="command">nearest</ansi>    the front-most foe
+  <ansi fg="command">weakest</ansi>    the foe with the least health left
+  <ansi fg="command">strongest</ansi>  the foe with the most health left
+  <ansi fg="command">wounded</ansi>    the most badly hurt foe, to finish it
+
+With a focus set, everyone in your company, you included, goes for the
+focus's choice instead of their own rule. Only whom they go for changes:
+a healer still heals and a caster still casts, at the focus's choice.
+Reach still counts: a fighter who can't reach the focus's choice goes for
+the nearest foe it can reach (<ansi fg="command">help formation</ansi>).
+
+<ansi fg="yellow-bold">Calling a focus in a battle</ansi>
+
+A battle plays out on its own, but the focus is the one thing you can
+change once it has begun. <ansi fg="command">company tactics focus [rule]</ansi> in a battle calls
+it for that battle only:
+
+  You call the company onto the bandit captain.
+
+At the start of the next combat round, everyone who can reach the new
+choice turns to it at once, even from a foe still standing; after that,
+each keeps their target as usual. You can give one order a round: until
+the company has turned, another is refused ("Your company is still
+turning; try again next round."). <ansi fg="command">company tactics focus default</ansi> returns
+to your saved focus. When the battle ends, the next one starts from your
+saved focus again, and an order not yet carried out ends with it. Right
+after <ansi fg="command">attack</ansi>, wait a round for the battle to begin before calling one. Nothing else about your tactics can change in a battle.
+
+<ansi fg="yellow-bold">The healing threshold</ansi>
+
+Healers heal anyone in your company below this share of their health
+(of what their wounds allow, <ansi fg="command">help wounds</ansi>): 10 to 90 percent, in steps
+of 10. It is 50, half health, until you change it. Someone down and
+bleeding out is always healed first.
+
+<ansi fg="yellow-bold">Enemies have personalities too</ansi>
+
+When an enemy picks a new target (it joins the fight, or its target falls
+or is out of reach), it picks the way its kind does: wolves go for the
+most badly hurt, the undead for the nearest, goblins for your healers and
+casters, spiders and insects for the weakest, and people for the weakest.
+Some are less predictable than others and now and then go for anyone
+they can reach. <ansi fg="command">help targeting</ansi> has more.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">company tactics</ansi>                  your tactics and each member's strategy
+  <ansi fg="command">company tactics focus [rule]</ansi>     set the focus (in a battle, for that battle)
+  <ansi fg="command">company tactics focus default</ansi>    in a battle, back to your saved focus
+  <ansi fg="command">company tactics healing [percent]</ansi> e.g. <ansi fg="command">company tactics healing 70</ansi>
+  <ansi fg="command">company tactics default</ansi>          focus none, healing 50
+
+<ansi fg="command">tactics</ansi> is short for <ansi fg="command">company tactics</ansi>. In the web client, the Combat tab
+has a button for each focus during a battle, and your tactics under Setup
+(<ansi fg="command">help webclient</ansi>).
+
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help formation</ansi>.

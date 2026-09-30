@@ -84,7 +84,7 @@ func TestBattlePayloadUnplacedAndNone(t *testing.T) {
 	assert.Equal(t, "{}", string(raw))
 
 	raw, _ = json.Marshal(buildBattle(battleFacts{InBattle: true, Enemies: []enemyFact{{Id: 5, Label: "the rat", Seen: true}}}))
-	assert.JSONEq(t, `{"group":"the enemy","enemies":[],"fallen":[{"id":"m:5","label":"the rat"}]}`, string(raw))
+	assert.JSONEq(t, `{"group":"the enemy","enemies":[],"fallen":[{"id":"m:5","label":"the rat"}],"focus":"none","saved_focus":"none","focus_ready":false}`, string(raw))
 }
 
 // TestBattleExtraSendsOnChange: through the feed, an unchanged battle
@@ -131,7 +131,8 @@ func TestBattlePayloadDark(t *testing.T) {
 	f := sampleBattle()
 	f.Dark = true
 	raw, _ := json.Marshal(buildBattle(f))
-	assert.JSONEq(t, `{"group":"the enemy","dark":true,"enemies":[]}`, string(raw))
+	// Phase 30c: the company's own focus is still shown (it names no enemy).
+	assert.JSONEq(t, `{"group":"the enemy","dark":true,"enemies":[],"focus":"none","saved_focus":"none","focus_ready":false}`, string(raw))
 }
 
 // TestSeenEnemies (32g2 review finding 2): whether each enemy was hidden
@@ -159,4 +160,21 @@ func TestSeenEnemies(t *testing.T) {
 	s.prune([]int{9})
 	assert.False(t, s.hiddenLast(7, a, 1))
 	assert.True(t, s.hiddenLast(9, a, 1))
+}
+
+// TestBattlePayloadFocus (30c): the focus the company aims by, the saved
+// one, and whether an order may be given, dark or not.
+func TestBattlePayloadFocus(t *testing.T) {
+	f := sampleBattle()
+	f.Focus, f.SavedFocus, f.FocusReady = "leader", "", true
+	raw, _ := json.Marshal(buildBattle(f))
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(raw, &got))
+	assert.Equal(t, "leader", got["focus"])
+	assert.Equal(t, "none", got["saved_focus"])
+	assert.Equal(t, true, got["focus_ready"])
+
+	f.Dark, f.FocusReady = true, false
+	raw, _ = json.Marshal(buildBattle(f))
+	assert.JSONEq(t, `{"group":"the enemy","dark":true,"enemies":[],"focus":"leader","saved_focus":"none","focus_ready":false}`, string(raw))
 }

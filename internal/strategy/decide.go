@@ -67,6 +67,9 @@ type Situation struct {
 	Spells []Spell // the automatic spells, in order, with costs
 	Allies []Ally  // the side's members here, the character included
 	Foes   int     // the battle's foes standing
+	// HealBelow is the healing threshold, a percent of each ally's wound
+	// limit (Phase 30c tactics); 0 means DefaultHealing.
+	HealBelow int
 }
 
 // ActionKind is what a character does this round.
@@ -89,8 +92,9 @@ type Action struct {
 }
 
 // Decide chooses what a character does this round by its role:
-//   - a healer heals anyone below half health (the group heal when two or
-//     more are, else the single heal on the most hurt), else swings;
+//   - a healer heals anyone below the healing threshold (HealBelow, half
+//     by default; the group heal when two or more are, else the single
+//     heal on the most hurt), else swings;
 //   - a caster casts its area spell when two or more foes stand, else its
 //     single-target spell, else swings;
 //   - a fighter swings.
@@ -106,9 +110,13 @@ func Decide(s Situation) Action {
 	}
 	switch s.Role {
 	case Healer:
+		below := s.HealBelow
+		if below <= 0 {
+			below = DefaultHealing
+		}
 		hurt, worst := 0, -1
 		for i, a := range s.Allies {
-			if (a.HP < 1 && !a.Downed) || a.HP*2 >= a.MaxHP {
+			if (a.HP < 1 && !a.Downed) || a.HP*100 >= below*a.MaxHP {
 				continue
 			}
 			hurt++

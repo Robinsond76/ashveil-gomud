@@ -23,6 +23,13 @@ type Battle struct {
 	Enemies    map[int]bool      // the group's mob instance ids seen in this battle
 	EnemyNames map[int]EnemyName // immutable enemy narration snapshots
 	FightID    uint64            // its fight on the combat event stream
+
+	// Phase 30c: the company focus ordered for this battle only, over the
+	// player's saved tactics (FocusSet), and whether the order waits for
+	// the next round's upkeep (one order a round).
+	Focus        string
+	FocusSet     bool
+	FocusPending bool
 }
 
 // Has reports whether instanceId is one of the battle's enemies.

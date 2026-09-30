@@ -23,3 +23,7 @@
 ## Documentation
 
 - Keep only durable mob-lifecycle rules here.
+
+## Ashveil Phase 30c: enemy personalities
+
+- `targeting`/`targetingnoise` on a mob template (overriding its race's, `internal/races`) set how it re-aims at a company (`Mob.Personality`). Only `internal/hooks`' enemy upkeep reads it, and only when the enemy re-aims (joins, loses, or can't reach its target). No personality keeps the old weakest pick unchanged.

@@ -56,6 +56,8 @@ type Mob struct {
 	SpawnGroup      string               `yaml:"-"`                        // Ashveil (Phase 29b2): the spawn group it fights in (runtime only), e.g. spawn:<room>:<n>
 	GroupNoun       string               `yaml:"groupnoun,omitempty"`      // Ashveil (Phase 32c): overrides its race's collective noun for its group ("patrol")
 	PainReactions   []races.PainReaction `yaml:"painreactions,omitempty"`  // Optional Phase 29e override for this NPC template.
+	Targeting       string               `yaml:"targeting,omitempty"`      // Ashveil (Phase 30c): the rule it re-aims by as an enemy; overrides its race's
+	TargetingNoise  int                  `yaml:"targetingnoise,omitempty"` // Ashveil (Phase 30c): percent of re-aims that take a random foe
 	GroupName       string               `yaml:"-"`                        // Ashveil (Phase 32c): its group's name, given when the group formed (runtime only)
 	GroupDesc       string               `yaml:"-"`                        // Ashveil (Phase 32c): an authored group's description (runtime only)
 	LastIdleCommand uint8                `yaml:"-"`                        // Track what hte last used idlecommand was

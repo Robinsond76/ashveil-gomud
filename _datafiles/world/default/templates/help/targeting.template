@@ -46,8 +46,10 @@ fighting:
 
 - any fighter on your side with no target, a fallen target, or a target
   they can't reach turns to the foe their strategy picks among those they
-  can reach (<ansi fg="command">help strategy</ansi>: the weakest, unless you set another rule);
-  an enemy turns toward the weakest of you it can reach;
+  can reach (<ansi fg="command">help strategy</ansi>: the weakest, unless you set another rule,
+  or your company's focus, <ansi fg="command">help tactics</ansi>);
+  an enemy turns toward whichever of you it can reach its kind prefers
+  (below);
 - a fighter whose target is still in reach keeps it (a companion on
   <ansi fg="command">assist</ansi> or <ansi fg="command">defend</ansi> turns with what it follows);
 - the enemy group's anger at you doesn't wear off while the fight lasts.
@@ -55,8 +57,26 @@ fighting:
 You're told when you turn (<ansi fg="command">You turn toward the bandit slinger.</ansi>), and see
 when others do (<ansi fg="command">Garrick Vane turns toward the bandit bruiser.</ansi>).
 
+A focus you call in a battle turns everyone at once at the next round,
+even from a foe still standing (<ansi fg="command">help tactics</ansi>).
+
 A fighter who can reach no one waits, and strikes as soon as someone comes
 into reach (when a front fighter falls, for example).
+
+<ansi fg="yellow-bold">Enemy personalities</ansi>
+
+An enemy keeps a target it can reach. When it picks a new one (it joins
+the fight, or its target falls or is out of reach), it picks the way its
+kind does, among those of you it can reach:
+
+  wolves and dogs      the most badly hurt (now and then, anyone)
+  the undead           the nearest, always
+  goblins and imps     your healers and casters: one chanting first
+  spiders and insects  the weakest (often, anyone)
+  people               the weakest (now and then, anyone)
+
+Anything else goes for the weakest of you, as it always has. "Now and
+then" is one pick in ten; "often" one in four; goblins about one in seven.
 
 <ansi fg="yellow-bold">Stepping out</ansi>
 
@@ -77,4 +97,4 @@ fixed throughout the battle, including after a death. They help you follow
 target changes; you still begin with attack [group]. See
 <ansi fg="command">help narration</ansi> for how names and pronouns read.
 
-See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help attack</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help attack</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

@@ -32,6 +32,16 @@
  *   - A company member's click opens Setup's menu. The Combat tab shows a
  *     marker while a battle runs and another tab is showing.
  *
+ * Phase 30c, company tactics:
+ *
+ *   - The Battle view's focus buttons (none and the six focus rules), the
+ *     current one pressed, all disabled while an order waits for the next
+ *     round; a click sends company tactics focus <rule>, for that battle
+ *     only. "Saved" (company tactics focus default) returns to the saved
+ *     focus. The live region says when the focus changes.
+ *   - Setup's tactics row: the saved focus and healing threshold, with a
+ *     menu sending company tactics focus / healing / default.
+ *
  * Every name is set with textContent, never innerHTML.
  *
  * Responds to GMCP namespaces:
@@ -50,7 +60,11 @@
     const ROLES = ['fighter', 'healer', 'caster'];
     // Target rules, in the order `help strategy` lists them; assist is for
     // companions only.
-    const RULES = ['weakest', 'strongest', 'wounded', 'nearest', 'furthest', 'leader', 'assist', 'defend'];
+    const RULES = ['weakest', 'strongest', 'wounded', 'nearest', 'furthest', 'leader', 'casters', 'assist', 'defend'];
+    // Phase 30c: the company focus values, in the order `help tactics`
+    // lists them, and the healing thresholds.
+    const FOCI = ['none', 'leader', 'casters', 'nearest', 'weakest', 'strongest', 'wounded'];
+    const HEALING = [10, 20, 30, 40, 50, 60, 70, 80, 90];
 
     injectStyles(`
         #combat-window {
@@ -178,6 +192,10 @@
         .cbt-lines.has-hl line.is-hl { opacity: 1; stroke-width: 2.5; }
         .cbt-aside { color: var(--t-text-secondary); overflow-wrap: anywhere; }
         .cbt-strikes { margin: 0; padding-left: 1.2em; color: var(--t-text-secondary); }
+        .cbt-focus { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+        .cbt-focus .cbt-btn { padding: 2px 6px; }
+        .cbt-focus .cbt-btn[aria-pressed="true"] { background: var(--t-accent-dim); color: var(--t-text-white); font-weight: bold; }
+        .cbt-focus .cbt-btn:disabled { opacity: 0.55; cursor: default; }
         .cbt-setup > summary { cursor: pointer; color: var(--t-text-secondary); }
         .cbt-setup[open] > summary { margin-bottom: 4px; }
     `);
@@ -299,7 +317,7 @@
 
     // Setup: the formation grid and a row per member, each opening the
     // member menu.
-    function renderSetup(root, data) {
+    function renderSetup(root, data, inBattle) {
         if (hostileHere()) {
             const actions = el('div', 'cbt-actions');
             const scout = el('button', 'cbt-btn', 'Scout');
@@ -332,6 +350,64 @@
             list.appendChild(li);
         });
         root.appendChild(list);
+        const t = data.company.tactics;
+        if (t && t.focus) {
+            const how = 'focus ' + t.focus + ', heal below ' + t.healing + '%';
+            if (inBattle) {
+                // The saved tactics are set between battles; in one, the
+                // Focus buttons above call this battle's focus.
+                root.appendChild(el('div', 'cbt-note', 'Company tactics: ' + how + ' (saved; set between battles, or use Focus above)'));
+                return;
+            }
+            const tb = el('button', 'cbt-member cbt-tactics');
+            tb.type = 'button';
+            tb.setAttribute('data-key', 'tactics');
+            tb.setAttribute('aria-haspopup', 'menu');
+            tb.appendChild(el('span', null, 'Company tactics'));
+            tb.appendChild(el('span', 'cbt-how', how));
+            tb.setAttribute('aria-label', 'Company tactics: ' + how);
+            tb.addEventListener('click', e => uiMenu(e, tacticsMenu(t)));
+            root.appendChild(tb);
+        }
+    }
+
+    // tacticsMenu sets the saved company tactics (Phase 30c).
+    function tacticsMenu(t) {
+        const items = [];
+        FOCI.filter(f => f !== t.focus).forEach(f => {
+            items.push({ label: 'Focus: ' + f, cmd: 'company tactics focus ' + f });
+        });
+        HEALING.filter(h => h !== t.healing).forEach(h => {
+            items.push({ label: 'Heal below ' + h + '%', cmd: 'company tactics healing ' + h });
+        });
+        items.push({ label: 'Back to the defaults', cmd: 'company tactics default' });
+        return items;
+    }
+
+    // focusBar is the Battle view's focus buttons (Phase 30c): one order a
+    // round, for this battle only.
+    function focusBar(battle) {
+        const bar = el('div', 'cbt-focus');
+        bar.setAttribute('role', 'group');
+        bar.setAttribute('aria-label', 'Company focus' + (battle.focus_ready ? '' : ', turning next round'));
+        bar.appendChild(el('span', 'cbt-aside', 'Focus:'));
+        const add = (label, value, pressed, title) => {
+            const b = el('button', 'cbt-btn', label);
+            b.type = 'button';
+            b.setAttribute('data-focus', value);
+            b.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+            b.title = title;
+            b.disabled = !battle.focus_ready;
+            b.addEventListener('click', () => Client.SendInput('company tactics focus ' + value));
+            bar.appendChild(b);
+        };
+        FOCI.forEach(f => add(f, f, battle.focus === f,
+            f === 'none' ? 'Each fights by their own strategy, this battle only' : 'Call the company onto their ' + f + ', this battle only'));
+        if (battle.saved_focus && battle.saved_focus !== battle.focus) {
+            add('saved (' + battle.saved_focus + ')', 'default', false, 'Back to your saved focus');
+        }
+        if (!battle.focus_ready) { bar.appendChild(el('span', 'cbt-aside', 'turning next round')); }
+        return bar;
     }
 
     // ---------------------------------------------------------------------
@@ -422,6 +498,7 @@
         flee.addEventListener('click', () => Client.SendInput('flee'));
         head.appendChild(flee);
         root.appendChild(head);
+        if (typeof battle.focus === 'string') { root.appendChild(focusBar(battle)); }
 
         lines = [];
         if (battle.dark) {
@@ -429,7 +506,7 @@
             root.appendChild(el('div', 'cbt-note', "It's too dark to make them out."));
             const setup = el('details', 'cbt-setup');
             setup.appendChild(el('summary', null, 'Setup: formation and strategies'));
-            renderSetup(setup, data);
+            renderSetup(setup, data, true);
             root.appendChild(setup);
             return;
         }
@@ -527,7 +604,7 @@
 
         const setup = el('details', 'cbt-setup');
         setup.appendChild(el('summary', null, 'Setup: formation and strategies'));
-        renderSetup(setup, data);
+        renderSetup(setup, data, true);
         root.appendChild(setup);
 
         requestAnimationFrame(drawLines);
@@ -616,8 +693,9 @@
             } else {
                 (battle.fallen || []).forEach(f => { if (!heard.fallen.has(f.id)) { said.push(f.label + ' falls.'); } });
                 battle.enemies.forEach(e => { if (onYou.has(e.id) && !heard.onYou.has(e.id)) { said.push(e.label + ' turns on you.'); } });
+                if (battle.focus && heard.focus && battle.focus !== heard.focus) { said.push('Focus: ' + battle.focus + '.'); }
             }
-            heard = { onYou, fallen };
+            heard = { onYou, fallen, focus: battle.focus };
         }
         if (said.length) { live.textContent = said.join(' '); }
     }

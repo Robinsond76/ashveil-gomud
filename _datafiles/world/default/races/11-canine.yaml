@@ -31,3 +31,6 @@ stats:
 damage:
   diceroll: 2@1d4
 disabledslots: ['weapon', 'offhand', 'head', 'belt', 'gloves', 'ring', 'legs', 'feet']
+# Phase 30c: its personality as an enemy (help targeting).
+targeting: wounded
+targetingnoise: 10

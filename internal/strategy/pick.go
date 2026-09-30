@@ -13,6 +13,10 @@ type Foe struct {
 	// StrikesPct is the health, in percent, of the member of our side it
 	// is striking, or -1 when it strikes none of us.
 	StrikesPct int
+	// Chanting is a foe chanting a spell now; Caster one that casts
+	// (knows spells, or, for a company member, a healer or caster role).
+	// The casters rule (Phase 30c).
+	Chanting, Caster bool
 }
 
 // Pick chooses a target by rule (the owner's rule 6). The rule chooses
@@ -99,6 +103,18 @@ func choose(rule Rule, pool []Foe, assistID int) (int, bool) {
 	case Leader:
 		for _, f := range pool {
 			if f.Leader {
+				return f.ID, true
+			}
+		}
+		return 0, false
+	case Casters:
+		for _, f := range pool {
+			if f.Chanting {
+				return f.ID, true
+			}
+		}
+		for _, f := range pool {
+			if f.Caster {
 				return f.ID, true
 			}
 		}

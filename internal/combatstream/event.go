@@ -21,6 +21,7 @@ const (
 	FightStart   Kind = "fight-start"
 	FightEnd     Kind = "fight-end"
 	TargetChange Kind = "target-change"
+	FocusChange  Kind = "focus-change" // Phase 30c: a company's focus changed mid-battle
 	// Attack is one weapon attack round (combat.AttackResult). Outcome is
 	// OutcomeHit, OutcomeMiss, or OutcomeCrit.
 	Attack Kind = "attack"
@@ -125,6 +126,7 @@ type Event struct {
 	HeldBack   int // Heal: kept back by a wound limit (Phase 30b)
 	BuffId     int
 	Status     string // StatusApplied/Expired: the buff's name
+	Rule       string // FocusChange: the focus now ("none": each by its own rule)
 
 	// Summary is set on FightEnd.
 	Summary *Summary
