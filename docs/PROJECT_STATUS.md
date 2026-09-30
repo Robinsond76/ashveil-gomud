@@ -206,7 +206,12 @@ docs/PROJECT_STATUS.md`.
   - Shipped targeting (everyone the weakest) is already focus fire; an
     enemy that focuses makes fights longer and closer (level 10: 80
     rounds and 54% against 68 and 84%), not shorter.
-- **Verification:** pending (the full run is in progress).
+- **Verification:** the harness tests looped 3 times while fixing; each
+  review fix's test was checked to fail without it
+  (`TestBalanceSidesStayEven`, `TestBalanceStatusesLand`). Final
+  (2026-09-30, after the review fixes): `make generate` (no diff),
+  `make validate`, and `go test -race ./...` all passed. The gated table
+  runs in about 2–3 minutes at 50 fights a cell.
 - **Review:** the independent default-agent reviewer checked fairness,
   the tally, the leader clamp, the real paths, and the invariants (clock,
   leaks, concurrency: all fine); each finding was checked.
