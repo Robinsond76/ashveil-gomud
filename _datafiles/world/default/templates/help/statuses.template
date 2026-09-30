@@ -46,6 +46,10 @@ gets through also leaves a wound, from any weapon, fists and bites too:
 A shield-bearer who turns a missed blow may stun its attacker with a
 shield bash (<ansi fg="command">help interrupts</ansi>).
 
+The forest ogre's Crushing Blow knocks down whoever it hits. A foe
+winding up a heavy blow loses it if it is staggered, knocked down, or
+stunned (<ansi fg="command">help interrupts</ansi>).
+
 A fighter who loses its action does nothing that round: no blow, no spell
 round, no flight. It is told so in the line, as in
 <ansi fg="command">The bandit captain reels, and loses the action. (staggered)</ansi>.

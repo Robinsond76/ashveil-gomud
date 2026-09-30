@@ -19,6 +19,8 @@ ward again.
   chant whole: the blow that might have broken it lands on the guardian
   (and may break the guardian's own chant, if it was chanting;
   <ansi fg="command">help interrupts</ansi>).
+- A guardian steps in front of a foe's wound-up blow too, such as the
+  forest ogre's Crushing Blow, and takes it (and its knockdown) itself.
 - A guardian that is <ansi fg="yellow">knocked down</ansi> (2 rounds) or <ansi fg="yellow">stunned</ansi> (2 rounds) can't
   step in while it lasts (<ansi fg="command">help statuses</ansi>), but keeps its guards. One that
   is down, fallen, or out of the fight guards no one.

@@ -3,7 +3,7 @@ package company
 // Phase 25b: companion death and the rescue allowance. A dead companion
 // stays on the roster, never spawns, and is charged the leader's online
 // time until it is resurrected (resurrect.go) or lost. See
-// docs/superpowers/specs/2026-09-24-phase-25b-companion-death-design.md.
+// docs/designs/2026-09-24-phase-25b-companion-death-design.md.
 
 import (
 	"fmt"

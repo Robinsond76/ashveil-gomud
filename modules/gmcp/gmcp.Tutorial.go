@@ -6,7 +6,7 @@ package gmcp
 // shows. It is built on each companyview refresh (every round and after
 // every command, on the game loop), sent only when it changes, and only to
 // that player; {} once for a player not in the course. See
-// docs/superpowers/specs/2026-09-25-phase-27d-tutorial-alignment-panel-design.md.
+// docs/designs/2026-09-25-phase-27d-tutorial-alignment-panel-design.md.
 
 import (
 	"encoding/json"

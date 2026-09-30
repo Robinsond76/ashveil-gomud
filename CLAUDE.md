@@ -1,129 +1,35 @@
 @AGENTS.md
 
-## Claude workflow
+## Project workflow
 
-Use the current task's default agent and reasoning settings, following
-`docs/AGENT_IMPLEMENTATION_WORKFLOW.md`. This project also uses the
-**Superpowers** plugin (`obra/superpowers`, nominally enabled via
-`.claude/settings.json` → `enabledPlugins["superpowers@claude-plugins-official"]`).
+Follow [Agent Implementation Workflow](docs/AGENT_IMPLEMENTATION_WORKFLOW.md).
+No plugin or external skill is required to work on this repository.
+Use the current task's default agent and reasoning settings; implement directly
+unless the owner requests delegation. Independent phase review remains required.
 
-**Check first:** the `settings.json` flag does not install the plugin. If the Superpowers
-skills (`brainstorming`, `writing-plans`, `executing-plans`, ...) are not in this session's
-available-skills listing, the plugin isn't installed — use the manual fallback below (a
-person can install it with `/plugin install superpowers@claude-plugins-official`).
+Read `docs/PROJECT_STATUS.md` first, then relevant designs in `docs/designs/`,
+plans in `docs/plans/`, and package-specific `AGENTS.md` instructions. The
+handoff document preserves design intent; current status and code describe
+shipped behavior. Retired documents are available in git history.
 
-Superpowers' `using-superpowers` skill is mandatory-invocation: before any response or
-action, check whether a Superpowers skill applies and use it if so. In practice that
-means its own workflow — `brainstorming` → `using-git-worktrees` → `writing-plans` →
-`executing-plans`/`subagent-driven-development` → `test-driven-development` →
-`requesting-code-review` → `finishing-a-development-branch` — now supersedes the manual
-worktree/plan steps this file used to spell out, and **is** what
-`docs/superpowers/plans/README.md` and the phase plans in `docs/superpowers/plans/`
-already assume; those references now resolve correctly under Claude Code, exactly as
-they do under Codex.
+## Testing and review gate
 
-**Manual fallback (use whenever the skills above are unavailable):** the same shape,
-by hand. Before implementing a phase: (1) write a design doc under
-`docs/superpowers/specs/<date>-phase-N-<name>-design.md` covering prior-art check, scope,
-durable model, module, integration/open decisions, constraints/deferrals, and acceptance
-criteria — mirroring the existing spec files; (2) get the open decisions confirmed (ask
-the user, or apply their standing "proceed with your recommendation" instruction if one is
-in force, and record which happened in the doc); (3) write a companion plan doc under
-`docs/superpowers/plans/<date>-phase-N-<name>.md`, task-by-task with checkboxes, each task
-naming its files and its tests-first step, and including a **player help and tutorial**
-task (see "Player help" below), mirroring `docs/superpowers/plans/2026-09-27-phase-29b2-battles-spawn-groups.md`'s
-format; (4) create the worktree/branch per "Branching & Worktrees" below and execute the
-plan task-by-task, checking boxes off as they land, running only the tests of the
-packages each task touches; (5) **independent review** (below) of the diff, with those
-focused tests green; (6) fix the findings, then run the full verification **once**
-(`go test -race ./...`, `make generate`, `make validate`; see "Verification"); (7) record the verification and review results in `docs/PROJECT_STATUS.md`;
-(8) merge and push. Do not implement first and backfill the plan doc after — write it
-before code, the same as the plugin would.
+- Write regression and integration tests for changed behavior, including the
+  real entry points a phase wires. Pure helper tests alone are insufficient.
+- Ship indexed player help and tutorial pointers with player-facing changes,
+  as specified in `AGENTS.md`.
+- Before merging a phase, have an independent reviewer subagent inspect its
+  complete diff for bugs, design gaps, missing coverage, and inaccurate help.
+  Use the task's default model; the reviewer reports findings without editing.
+- Verify each finding, fix real issues with regression tests, and record both
+  accepted and rejected findings in `docs/PROJECT_STATUS.md`.
+- Run focused checks during implementation. After review fixes, run the full
+  required checks once: `make generate`, `make validate`, and
+  `go test -race ./...`; run applicable JavaScript/Lua lint checks too. Repeat
+  only if code changes or a concrete unresolved concern requires it.
+- Documentation-only edits need link/reference and diff checks, not Go tests.
+  Help templates or world data read by tests require their relevant checks.
 
-**Player help (every phase, adopted 2026-09-27 at the user's request):** any phase that
-adds or changes something a player can do or see ships player-facing help with it, the
-same way Phase 29b did for combat: a help page per new command or mechanic (or an update
-to the existing page, including a stale GoMud one), listed in `keywords.yaml` with its
-aliases and linked from its hub (`help combat` for battles), a pointer from the tutorial
-lesson that covers it (or the Departure lesson), and tests that the page renders and the
-tutorial's pointers resolve. The full rule is in `AGENTS.md` ("Testing Guidelines"). The
-design doc's acceptance criteria name the pages; the reviewer checks them.
-
-**Testing and review gate (every phase, adopted 2026-09-23 at the user's request):**
-
-- **Tests first, including wiring.** Pure/domain logic gets unit tests, and every
-  integration point a phase touches (combat, `look`, module commands, other modules'
-  providers) gets at least one test that goes through the real entry point, not just the
-  helper underneath it. A plan's task list must name these wiring tests explicitly.
-- **Independent review before merge.** After the phase verifies green and before merging
-  to `master`, dispatch an independent reviewer subagent using the task's default
-  model over the full phase diff (`git diff <base>..HEAD`). Brief it with the
-  phase's design doc, the non-negotiable invariants (never advance the world clock,
-  survive restart/copyover, concurrency and lock ordering), and ask it to report bugs,
-  design gaps, missing test coverage, and missing or inaccurate player help — findings
-  only, no edits, no commits.
-- **Verify every finding yourself.** Treat the review like any subagent output: an
-  untrusted proposal. Reproduce each finding; fix the real ones with a regression test;
-  note the rejected ones and why. Test each fix in its own package; the phase's single
-full verification runs after the fixes, not before and after.
-- **Record it.** Each phase's `docs/PROJECT_STATUS.md` work-log entry gets a
-  **Review:** line (what the reviewer found, what was fixed, what was rejected). A phase
-  isn't done, and isn't merged, until that line exists.
-
-Use the current task's default agent for implementation; do not impose a
-Terra/Luna or Opus/Sonnet split. Execute the approved plan directly by default.
-When delegation is explicitly requested or required, follow
-`docs/AGENT_IMPLEMENTATION_WORKFLOW.md` with inherited model settings.
-The independent full-phase review remains mandatory before merge. Treat its
-findings as proposals, verify them, and record the review outcome.
-
-## Project context for Claude
-
-Ashveil is a multiplayer MUD being rebuilt on the GoMud Go engine
-(`github.com/GoMudEngine/GoMud`, forked to `Robinsond76/ashveil-gomud`). The original
-Python prototype is preserved read-only at `reference/ashveil-mud/` — research only,
-never edit, commit, or move it.
-
-**Non-negotiable invariant:** travel and rest run as durable, real-time, server-side
-sessions and must never fast-forward or locally advance GoMud's shared world
-clock/round count. Every migrated system must survive restart/copyover.
-
-**Before gameplay work, read in this order:**
-1. `docs/PROJECT_STATUS.md` — current phase, what's done, known issues/limitations.
-   Check this first; it's the freshest source of truth and gets stale fast.
-2. `docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md` — the authoritative design doc (world
-   structure, travel/survival mechanics, formation combat, the phased roadmap).
-   Section 50 ("Agent Working Rules") holds the hard constraints.
-3. The relevant `docs/superpowers/plans/*.md` and `docs/superpowers/specs/*.md` for
-   the phase being touched.
-4. Any nested `AGENTS.md` in the package being edited (`internal/<pkg>/AGENTS.md`,
-   `modules/<pkg>/AGENTS.md`, etc. — nearly every package has one).
-
-**Status:** see `docs/PROJECT_STATUS.md` ("Current position") and `git log`; this file
-deliberately carries no snapshot. Designs and plans of finished phases are removed from
-`docs/superpowers/` once shipped — find them in git history (all present at `d5ace46`).
-
-**Branching:** never commit directly to `master`, for any change — code, a design doc, or
-a `docs/PROJECT_STATUS.md` update alike. Create
-`git worktree add .worktrees/<branch-name> -b <branch-name>` before the *first* commit of
-any unit of work, do all of it there (design doc included), verify, then merge locally or
-PR back to `origin`, and remove the worktree when done. `master`'s own checkout is never a
-workspace — not even for a single docs file.
-
-**Verification:** `go test -race ./...`, `make generate`, and `make validate` before
-calling anything done — run **once**, at the end of a unit of work (after review fixes),
-and again only if code changed since that run. While working, run just the packages you
-touched (`go test ./internal/<pkg>`, plus the module whose wiring test covers it). Don't
-run a baseline full suite on a fresh branch (master was verified when it merged), don't
-repeat a green run to double-check, and loop a test (`-count=N`) only to diagnose a
-suspected flake. A docs-only change needs no Go tests unless it's shipped content a test
-reads (help templates → `go test ./internal/usercommands ./modules/tutorial`; world data
-→ that system's package). `make test`'s `js-lint` stage can stall on this host (it shells
-out to `npx jshint`) — that's environmental, not a code failure; `go test -race ./...`
-is the documented fallback. Never claim a check passed without running it.
-
-**Structure:** `internal/` = engine packages (mostly upstream GoMud plus Ashveil
-additions like `internal/company`, `internal/survival`, `internal/expedition`);
-`modules/` = auto-wired plugins that own persistence/commands (run `make generate`
-after adding one); `_datafiles/` = world/config/script content; `docs/` = all Ashveil
-planning docs. `upstream` remote is the read-only GoMud source; `origin` is the fork.
+Never commit directly to `master`; use the isolated feature workspace required
+by `AGENTS.md`. Preserve shared world time, durable state, concurrency safety,
+and the read-only Python reference and upstream remote.

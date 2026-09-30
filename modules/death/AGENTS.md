@@ -2,9 +2,9 @@
 
 Phase 25a: a player's death costs one level, and they wake at the church of
 the last city they visited, with their living companions. Design:
-`docs/superpowers/specs/2026-09-24-phase-25a-player-death-design.md`.
+`docs/designs/2026-09-24-phase-25a-player-death-design.md`.
 Phase 25b adds the `resurrect` command for dead companions (below); design:
-`docs/superpowers/specs/2026-09-24-phase-25b-companion-death-design.md`.
+`docs/designs/2026-09-24-phase-25b-companion-death-design.md`.
 
 - **The seam.** `internal/death` holds the settlement registry, the
   `Destination` rule, and the provider seam. `internal/usercommands/suicide.go`

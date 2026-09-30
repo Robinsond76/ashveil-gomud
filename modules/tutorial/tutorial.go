@@ -3,11 +3,11 @@
 // (inspections run, companions recruited, a formation set), with durable
 // progress on the character, resume after logout, restart, or copyover, a
 // skip, and a once-only graduation reward. See
-// docs/superpowers/specs/2026-09-25-phase-27a-tutorial-framework-design.md.
+// docs/designs/2026-09-25-phase-27a-tutorial-framework-design.md.
 // Phase 27b adds the Survival and Camp lessons:
-// docs/superpowers/specs/2026-09-25-phase-27b-tutorial-survival-camp-design.md.
+// docs/designs/2026-09-25-phase-27b-tutorial-survival-camp-design.md.
 // Phase 27c adds the practice fight:
-// docs/superpowers/specs/2026-09-25-phase-27c-tutorial-practice-fight-design.md.
+// docs/designs/2026-09-25-phase-27c-tutorial-practice-fight-design.md.
 package tutorial
 
 import (

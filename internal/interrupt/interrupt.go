@@ -4,9 +4,15 @@
 //
 // Only a weapon blow that does 1 or more damage can break a chant (the
 // owner's rule, 2026-09-30), and it does so by chance (Phase 30d1b): heavy
-// force (a crit, a stagger, a knockdown, a stun, a shield bash) always
-// breaks it; any other blow breaks it more often the harder it lands,
-// against the chanter's max health. There is no pressure meter.
+// force (a crit that lands, a stagger, a knockdown, a stun) always breaks
+// it; any other blow breaks it more often the harder it lands, against the
+// chanter's max health. There is no pressure meter.
+//
+// A physical wind-up (Phase 30d2, internal/windup) breaks only on heavy
+// force, never on an ordinary blow.
+//
+// A shield bash is a counter strike only (owner, 2026-09-30): it breaks
+// neither a chant nor a wind-up.
 //
 // A shield counter is a reaction: when an attack on a shield-bearer misses
 // (a dodge included), the bearer may slam its shield back into the
@@ -66,6 +72,13 @@ func RollBreak(chance int, roll func(int) int) bool {
 		return false
 	}
 	return roll(100) < chance
+}
+
+// BreaksWindUp reports whether a blow breaks the wind-up of the foe it
+// struck: it hit for at least 1 damage with heavy force (a crit that
+// landed, a stagger, a knockdown, a stun). An ordinary blow never does.
+func BreaksWindUp(hit bool, damage int, heavy bool) bool {
+	return hit && damage >= 1 && heavy
 }
 
 // Refund is the mana a company caster gets back when its spell is broken:

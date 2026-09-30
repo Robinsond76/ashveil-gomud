@@ -71,6 +71,7 @@ const (
 	OutcomeSucceeded     = "succeeded"   // interrupts, Phase 30d
 	OutcomeFailed        = "failed"      // interrupts, Phase 30d
 	OutcomeInterrupted   = "interrupted" // CastComplete: a blow broke the chant (30d1)
+	OutcomeWasted        = "wasted"      // WindUpLand: nothing was left to strike (30d2)
 
 	// Fight endings (FightEnd's Outcome).
 	OutcomeVictory   = "victory"

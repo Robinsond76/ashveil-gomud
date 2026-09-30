@@ -82,7 +82,7 @@ git worktree add .worktrees/<branch-name> -b <branch-name>
 ```
 
 `.worktrees/` is gitignored and is the project convention (for example
-`.worktrees/phase-5-travel`). Run the baseline checks in the worktree, make
+`.worktrees/phase-5-travel`). Run focused checks for changes in the worktree, make
 every commit for that unit of work — design doc included — on the feature
 branch, and only then integrate back to `master` (merge locally or open a PR
 against `origin`). Remove the worktree when the branch is finished. If a
