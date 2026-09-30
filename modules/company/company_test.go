@@ -228,6 +228,11 @@ func (f *fakeRuntime) Mana(instanceID int) (int, int, bool) {
 	return v[0], v[1], ok && f.live[instanceID]
 }
 
+func (f *fakeRuntime) HealthLimit(instanceID int) (int, bool) {
+	v, ok := f.vitals[instanceID]
+	return v[1], ok && f.live[instanceID]
+}
+
 func (f *fakeRuntime) Vitals(instanceID int) (int, int, bool) {
 	v, ok := f.vitals[instanceID]
 	return v[0], v[1], ok && f.live[instanceID]

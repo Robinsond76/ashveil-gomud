@@ -1,0 +1,11 @@
+itemid: 36
+name: linen bandage
+namesimple: bandage
+description: A rolled strip of clean linen. Bound over a cut or a puncture
+  after a fight, it closes some of the wound (heal wounds); wrapped round
+  plain hurts, it stops a little of the bleeding. Used up once applied.
+type: object
+subtype: mundane
+uses: 1
+value: 6
+weight: 40

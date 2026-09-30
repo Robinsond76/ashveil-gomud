@@ -51,14 +51,14 @@ Each task writes its tests first and runs only its own packages.
     `tend.yaml`/`tend.js`.
   - Add the cleric `GrantSpells`/`CompanionSpells` entries, with a test
     that the archetype config loads with `tend`.
-- [ ] **6. Companion durability (`modules/company`).**
+- [x] **6. Companion durability (`modules/company`).**
   - Tests first:
     - a snapshot carries wounds;
     - `applyState` restores them and caps health;
     - a companion's death clears them;
     - a save/load round trip.
   - Add `MemberState.Wounds` and `HPLimit` on `MemberView`.
-- [ ] **7. `heal` / `heal wounds` (`modules/company/wounds.go`).**
+- [x] **7. `heal` / `heal wounds` (`modules/company/wounds.go`).**
   - Wiring tests through the real command (`plugins.Load` world, with the
     usual `SnapshotLoadStateForTest` guard):
     - refused in a fight;

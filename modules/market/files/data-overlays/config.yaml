@@ -112,6 +112,23 @@ Markets:
         TargetStock: 4
         StartStock: 2
         DriftStep: 1
+      # Phase 30b: wound treatment (heal wounds).
+      - ItemId: 36 # linen bandage
+        BasePrice: 6
+        MinPrice: 3
+        MaxPrice: 14
+        MaxStock: 40
+        TargetStock: 20
+        StartStock: 20
+        DriftStep: 2
+      - ItemId: 37 # birch splint
+        BasePrice: 14
+        MinPrice: 8
+        MaxPrice: 30
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 10
+        DriftStep: 1
       - ItemId: 35 # riding saddle
         BasePrice: 50
         MinPrice: 32
@@ -145,6 +162,23 @@ Markets:
         MaxStock: 10
         TargetStock: 5
         StartStock: 3
+        DriftStep: 1
+      # Phase 30b: bandages and splints, dearer out on the road.
+      - ItemId: 36 # linen bandage
+        BasePrice: 8
+        MinPrice: 4
+        MaxPrice: 18
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 10
+        DriftStep: 1
+      - ItemId: 37 # birch splint
+        BasePrice: 18
+        MinPrice: 10
+        MaxPrice: 36
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 5
         DriftStep: 1
       # Phase 32f: the post keeps a little tack, dearer than in town.
       - ItemId: 32 # traveller's pack (+10 kg)

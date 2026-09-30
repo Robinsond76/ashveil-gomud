@@ -3,6 +3,7 @@ package company
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
 // MemberState is a companion's durable progression and gear (Phase 22b).
@@ -15,6 +16,9 @@ type MemberState struct {
 	Equipment  characters.Worn `yaml:"equipment,omitempty"`
 	Items      []items.Item    `yaml:"items,omitempty"`
 	Gold       int             `yaml:"gold,omitempty"`
+	// Wounds are the companion's wounds (Phase 30b), snapshotted from the
+	// live mob with its gear and put back on every spawn.
+	Wounds []wounds.Wound `yaml:"wounds,omitempty"`
 }
 
 func cloneItem(i items.Item) items.Item {
@@ -31,6 +35,7 @@ func cloneItem(i items.Item) items.Item {
 // Clone returns a deep copy.
 func (s MemberState) Clone() MemberState {
 	out := s
+	out.Wounds = append([]wounds.Wound(nil), s.Wounds...)
 	for _, slot := range characters.AllSlots() {
 		if itm := s.Equipment.Get(slot); itm != nil {
 			out.Equipment.Set(slot, cloneItem(*itm))
