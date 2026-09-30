@@ -308,6 +308,7 @@ func TestEnemyLabelsOnSecondarySurfaces(t *testing.T) {
 		require.NotNil(t, first)
 		first.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "missing-pronoun-test"})
 		first.Character.Aggro.RoundsWaiting = 0
+		forceBlows(t, false) // Phase 30d1: no blow breaks the chant first
 		seen := b.listen()
 		got := b.fight()
 		assert.Contains(t, got, "The first cutthroat falters")

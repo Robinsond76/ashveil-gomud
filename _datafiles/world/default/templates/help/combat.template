@@ -35,6 +35,8 @@ Once the battle starts:
 - healers heal the hurt and casters cast their spells, with real mana;
 - guardians step in front of their wards to take blows meant for them
   (<ansi fg="command">help guardian</ansi>);
+- a blow that draws blood breaks its target's chant, on either side, and
+  a shield-bearer may slam a missed blow back (<ansi fg="command">help interrupts</ansi>);
 - anyone left without a target, or with one they can't reach, turns to
   another by their strategy, and you're told about it
   (<ansi fg="command">You turn toward the bandit cutthroat.</ansi>);
@@ -116,6 +118,7 @@ and your company's health.
   <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
   <ansi fg="command">help guardian</ansi>     guardians and their guards
+  <ansi fg="command">help interrupts</ansi>   broken chants and shield counters
   <ansi fg="command">flee</ansi>              try to run out of the room (the only way out of a battle)
   <ansi fg="command">consider [target]</ansi> size up a foe
   <ansi fg="command">formation</ansi>         see and arrange your company's formation

@@ -12,6 +12,9 @@ The ~cast~ command attempts to cast a learned spell.
 Cast is for spells outside a fight: healing, light, and other help. A harmful
 spell doesn't start a fight; start one with ~attack [group]~. Once a battle is
 under way, nothing is cast by hand: healers and casters cast on their own, by
-their strategy, with real mana (see ~help strategy~).
+their strategy, with real mana (see ~help strategy~). A spell is chanted for
+a round or two first, and any weapon blow that draws blood on the caster
+breaks the chant: the spell is lost, with half its mana back (see
+~help interrupts~).
 
-**See also:** ~help spells~, ~help attack~, ~help strategy~
+**See also:** ~help spells~, ~help attack~, ~help strategy~, ~help interrupts~

@@ -6,7 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-30
-- **HEAD:** `master` 2026-09-30: Phase 30c2 (guardian role and guards),
+- **HEAD:** `master` 2026-09-30: Phase 30d1 (broken chants, shield
+  counters, and enemy casters), merged from `phase-30d-interrupts`. Before
+  it, Phase 30c2 (guardian role and guards),
   merged from `phase-30c2-guardian`. Before it, Phase 30c1 (company tactics and enemy
   personalities), merged from `phase-30c1-company-tactics`. Before it, the
   `modules/company` brawl test flakes fixed, merged from
@@ -34,7 +36,7 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29f, 30a, 30b, 30c (30c1, 30c2), 32g,
+- **Completed:** Phases 0–29f, 30a, 30b, 30c (30c1, 30c2), 30d1, 32g,
   and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
@@ -44,9 +46,10 @@ instead of duplicating them.
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 30c2 (guardian role and guards), merged
-  to `master` from `phase-30c2-guardian`; see its work-log entry below.
-  Before it, 30c1 (company tactics and enemy personalities), from
+- **Latest completed phase:** 30d1 (broken chants, shield counters, and
+  enemy casters), merged to `master` from `phase-30d-interrupts`; see its
+  work-log entry below. Before it, 30c2 (guardian role and guards), from
+  `phase-30c2-guardian`. Before it, 30c1 (company tactics and enemy personalities), from
   `phase-30c1-company-tactics`, and 30b (wounds, treatment, and
   `heal wounds`), merged from `phase-30b-wounds`, and 30a
   (status and critical-hit effects), merged as `2ef931c`, and 29f
@@ -71,13 +74,11 @@ instead of duplicating them.
   produces no room attack line. The fixture now disables dodging only within that test
   and restores settings afterward; 100 focused race-test repetitions passed.
   Independent follow-up review found no issues and passed 40 focused repetitions.
-- **Next:** the play-test roadmap (32a–32h, 32g2) is done, per the
-  [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
-  the combat roadmap's 29 series is done with 29f, and 30a, 30b, and 30c
-  (both slices) are done; next is 30d (wind-ups, telegraphs, and
-  interrupts). 30a's statuses count combat
-  rounds; the other balance shifts 29f's cadence brought are still to
-  retune (see Known issues).
+- **Next:** 30d2 (physical wind-ups and an ogre with Crushing Blow,
+  reusing 30d1's break; open: whether any blow breaks a wind-up or only
+  heavier force), then 30e (morale and mercy) and 30f (battlefield
+  conditions). 30a's statuses count combat rounds; the other balance
+  shifts 29f's cadence brought are still to retune (see Known issues).
   Also open: the "Future ideas" row; see Known issues.
 
 ## Phase progress
@@ -139,7 +140,7 @@ instead of duplicating them.
 | 30a | Status effects and critical-hit effects (weapons only) | Complete (merged as `2ef931c`): [design](superpowers/specs/2026-09-29-phase-30a-status-crit-effects-design.md), [plan](superpowers/plans/2026-09-29-phase-30a-status-crit-effects.md). Nine statuses (bleeding, staggered, knocked down, armor broken, exposed, burning, overloaded, stunned, hobbled) as combat-round buffs (`internal/status`); crit effects by weapon subtype; ticked, and actions lost, in the combat round; cleared at fight end; Sparks overloads; `help statuses` |
 | 30b | Wounds, treatment, and `heal wounds` | Complete: [design](superpowers/specs/2026-09-30-phase-30b-wounds-design.md), [plan](superpowers/plans/2026-09-30-phase-30b-wounds.md). Lasting wounds from damaging crits, light ones from crushing blows and finished bleeds; healing stops at the wound limit; `heal`/`heal wounds` (clerics' `tend` and heal, splints and bandages, the Waymark Inn physician); inn stay heals, camp rest one wound per splint or bandage (owner amendment); death clears; `status`, GMCP, web strip; `help wounds` |
 | 30c | Company tactics | 30c1 complete: [design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md), [plan](superpowers/plans/2026-09-30-phase-30c1-company-tactics.md). `company tactics` (`tactics`): a durable company focus (none, leader, casters, nearest, weakest, strongest, wounded) and healing threshold (10–90%); in a battle only the focus changes, for that battle, one order a round, turning everyone at the next upkeep; web focus buttons; the `casters` rule; enemy personalities by race or template (`targeting`, `targetingnoise`); `help tactics`. 30c2 complete: [design](superpowers/specs/2026-09-30-phase-30c2-guardian-design.md), [plan](superpowers/plans/2026-09-30-phase-30c2-guardian.md). A `guardian` role (`strategy <who> guard [other]`) steps in for its ward (set, else the most hurt in reach) within one column: 2 guards a battle, one back per 2 combat rounds, none while knocked down or stunned; `help guardian`. Rotate the wounded deferred |
-| 30d | Wind-ups, telegraphs, and interrupts | Proposed: [spec](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md). Wind-ups in whole rounds, interrupt thresholds with accumulated pressure, concentration, enemy casters |
+| 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](superpowers/specs/2026-09-30-phase-30d1-chant-interrupts-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1-chant-interrupts.md). Any weapon blow that draws blood breaks a chant (owner: no pressure meter); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 (wind-ups, the ogre) next: [proposal](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md) |
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
 | 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md), [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
@@ -160,84 +161,77 @@ Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
 
-### Phase 30c2: guardian role and guards (2026-09-30)
+### Phase 30d1: broken chants, shield counters, and enemy casters (2026-09-30)
 
 - **What:**
-  - `internal/strategy`: the `guardian` role (words `guardian`, `guard`,
-    `protector`; `guard` is no longer an alias of `defend`), never a
-    default, fighting as a fighter; `Strategy.Ward` (a member key, blank
-    for the most hurt); `GuardWard`. `internal/formationcombat.GuardReach`
-    (the ward's column or the next; unplaced fails open).
-    `status.Grounded` (knocked down or stunned).
-  - `modules/strategy`: `strategy <who> guard [<other>]`; a ward kept only
-    for a guardian (dropped on another role, `default`, load, or prune);
-    `target` followed only by a rule; listing, describe, and a warning
-    when a set ward stands more than a column away. Durable in the
-    strategy file.
-  - `internal/battle`: guard counts per battle (`GuardsLeft`,
-    `SpendGuard`, `TickGuards`; 2, one back per 2 combat rounds), runtime
-    only.
-  - `internal/hooks/combat_guard.go`: at both enemy-attack gates, after
-    11c's interception and legality, the first able guardian (formation
-    order) of the member struck takes the blow through 11c's own
-    resolutions; the attacker's aim is untouched; a line ("Tamsin Reed
-    steps in front of you. (guard, 1 left)") and `guard-used` /
-    `guard-exhausted` in the battle's fight. `guardPass` refills each
-    combat round; the strategy pass skips guardians.
-  - `formation` warns after a move, swap, or clear, and in its view.
-  - Web: `Company` strategies carry `ward`/`ward_reach`; `Company.Battle`
-    carries `guards`. The Combat tab offers the guardian role and "Guard:"
-    items, marks a ward out of reach, and shows each guardian's guards in
-    the battle view.
-  - Help: new `help guardian` (aliases guardians, guard, guards, ward,
-    wards). Updated `strategy`, `combat`, `tactics`, `formation`,
-    `webclient`, and `battle-summary`. A Practice Yard hint; the roles
-    hint names guardian.
-- **Why:** slice two of 30c (handoff §36 item 6). Owner decisions
-  (2026-09-30, asked this session):
-  - guards refill one per 2 rounds (recommended);
-  - `guard` means guardian; strategies are set before a battle (the
-    owner asked; recommended option taken after the answer);
-  - reach is the ward's column or the next (the owner's preference over
-    the recommended "anywhere"), with warnings in `strategy`,
-    `formation`, and Setup;
-  - no guarding while knocked down or stunned, guards kept
-    (recommended). The question said those last 1–2 rounds; the data has
-    4 and 3. Recorded in the design and flagged to the owner.
+  - `internal/interrupt` (pure): `Breaks`, `Refund`, `CanCounter`,
+    `RollCounter`. `Character.HasShield` (now also `GetDefense`'s block).
+    `combatstream.OutcomeInterrupted`; the summary's Interrupts line shows
+    "failed" only when non-zero.
+  - `internal/hooks/combat_interrupt.go`: `afterBlow` after the lines of
+    all six blow sites. A hit that did damage breaks the target's chant:
+    a player or companion loses the spell (`endCast`) with half its mana
+    back; an enemy restarts from the first word at its next turn
+    (`restartChant`, no mana). A missed melee blow (not a bow or sling,
+    same room) on a standing, unchanting shield-bearer may be countered
+    once a round: 1d4, a stun one time in four, credited to the bearer
+    (or a companion's leader), a fall resolved that round. Events:
+    `interrupt`, `cast-complete` (interrupted), `cast-start` on a restart,
+    an `attack` with weapon type `shield-bash`. Runtime maps only.
+  - Content: `hex` (Withering Hex, 2d6+2, a two-round chant); mob 70,
+    the goblin hexer (goblin race: aims by `casters`; practised, about 80%
+    to cast); Dark Forest rooms 402 and 531 spawn one beside the imp.
+  - Help: new `help interrupts` (aliases interrupt, interrupted, chant,
+    chants, concentration, shield-bash, shieldbash, counter, counters,
+    hexer); `combat`, `cast`, `strategy`, `tactics`, `statuses`,
+    `guardian`, `battle-summary`, `formation` updated; a Practice Yard
+    hint.
+- **Why:** slice one of 30d. Owner decisions (2026-09-30, asked this
+  session): two slices, chants first; **any physical damage breaks a
+  chant** (weapon blows that do 1+ damage; the owner's rule, replacing the
+  proposal's pressure, thresholds, and concentration); half mana back;
+  the shield bash as a **counter to a fumbled attack** (the owner's idea);
+  the hexer in the Dark Forest. The counter's limits and numbers are the
+  recommendation the owner asked for, flagged below.
 - **Verification:**
-  - Wiring tests through the real commands and `DoCombat` in the brawl
-    world (`wiring_guardian_test.go`): a companion guarding the player,
-    the player guarding a companion, companion for companion, exhaust
-    and refill, an unguarded ward, knocked down and stunned, the most
-    hurt, refused in a battle, out of reach and in reach when placed,
-    after 11c's interception, two guardians of one ward, a set ward away,
-    the summary's Guards line, and `Company.Battle` through the feed.
-  - A mutation check (the player gate's guard disabled) fails
-    `TestGuardianGuardsWard`.
+  - Wiring tests through the real `DoCombat` in the brawl world
+    (`wiring_interrupts_test.go`), covering every blow site
+    (player-vs-player, player-vs-mob, mob-vs-player, mob-vs-mob, both
+    11c/30c2 interception resolvers): a companion's heal broken, a
+    player's automatic chant broken, misses leave a chant whole, an enemy
+    restart and its full chant after, a guardian's chant broken by the
+    blow it took, counters (line, event, stun, once a round, none to a
+    sling or while stunned, an enemy countering the player, a kill, the
+    leader's credit), PvP, and the shipped hexer hexing the healer.
+  - Pre-30d tests that assumed an unbreakable chant: blows forced to miss
+    where a chant is the subject (fizzle labels, the wizard strategy
+    test); the stream test retries an interrupted cast as a fizzle; the
+    29d golden comparison turns 30d1 off (`hooks.DisableInterruptsForTest`),
+    its fixture's endless chant being a placeholder. `newBrawl` turns
+    counters off so brawls keep their seeded rolls. 12 consecutive full
+    `modules/company` runs passed; the hexer test 40 of 40.
   - Final (2026-09-30, after the review fixes; `origin/master` had
-    nothing new): all passed.
-    - `make generate` (no diff);
-    - `make validate`;
-    - `make js-lint`;
-    - `scripts/browser/dock-windows-check.mjs`;
-    - `go test -race ./...`;
-    - `git diff --check`.
-- **Review:** the independent default-agent reviewer found no blockers.
-  Each finding was checked.
-  - **Fixed, with regression tests:**
-    - a set ward away or fallen made the guardian guard the most hurt
-      instead (now it guards no one; `TestGuardianSetWardAwayGuardsNoOneElse`);
-    - the gates looked the guardian's mob up again after spending the
-      guard (now they redirect onto the guardian already found);
-    - tests added for a guard after 11c's interception and for two
-      guardians of one ward.
-  - **Help fixed:** the refill reads "while any guard is spent, one comes
-    back every 2 combat rounds" (a charge carries over a second spend,
-    as the design); an overlong line in `help strategy`; the tutorial
-    hint names the refill. The design now quotes the real self-guard
-    refusal.
-  - **Accepted:** no test of another player hearing the guard line (it is
-    the same room broadcast as every combat line).
+    nothing new): `make generate` (no diff), `make validate`,
+    `git diff --check`, and `go test -race ./...` all passed.
+- **Review:** the independent default-agent reviewer found no blockers;
+  each finding was checked.
+  - **Fixed, with tests:** no wiring test for the player-vs-player and
+    leader-intercept sites (`TestPlayerVsPlayerChantAndCounter`,
+    `TestPlayerGuardianChantAndCounter`); a companion's bash gave its
+    leader no kill credit (`TestCompanionCounterCreditsLeader`); `help
+    interrupts` read as if a guarded blow broke the ward's chant.
+  - **Design amended:** the restart line is generic (no "spits"); an
+    enemy whose targets are all gone gives the spell up and loses that
+    turn (the loop can't hand a mob with no aim to a swing), re-aimed at
+    the next upkeep; a mob waiting to restart may counter.
+  - **Accepted:** a hand `cast` (PvP only) ends with no aim, as a
+    finished one always has; "out of reach" and a 0-damage hit are
+    covered by unit tests and the all-miss test, not separate wiring
+    tests; a stun is announced before the buff queue could refuse it (as
+    every blow's status); a bash doesn't wound or run the wimpy check.
+    The reviewer's mana concern did not reproduce (the hexer has 115).
+    A fizzle flake it didn't name was found and removed (the practised
+    hexer).
 
 ### Knockdown shortened, stun made heavier (2026-09-30, owner, not a phase)
 
@@ -316,12 +310,19 @@ docs/PROJECT_STATUS.md`.
 
 ## Known issues / deferred items
 
+- **Broken chants and counters (30d1), for the owner:** the counter's
+  numbers (50% of fumbled melee blows, 1d4, a stun one time in four, once
+  a round per bearer) are a recommendation to tune. A bash leaves no
+  wound; an enemy restarts its chant for ever while hit (no mana spent); a
+  mob that runs out of mana wastes the turns it picks `cast` (GoMud's
+  combat commands). No casting on the battle view's grid yet (32g2). 30d2
+  must decide whether any blow breaks a physical wind-up.
+
 - **Company tactics (30c1), accepted:** an order given in the round its
   battle ends is dropped silently; a solo player has no web tactics row
   (the command works); enemy `wounded` weighs full health, not the wound
   limit; hunting the isolated (adjacency) and rotate-the-wounded are
-  deferred; the company `casters` focus falls to the nearest until 30d's
-  enemy casters.
+  deferred. (The `casters` focus now has enemy casters: 30d1's hexer.)
 
 - **Wounds (30b), deferred:**
   - Enemies take no wounds, and there are no monster abilities that

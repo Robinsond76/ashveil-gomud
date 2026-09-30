@@ -15,7 +15,10 @@ ward again.
   one.
 - While any guard is spent, one comes back every <ansi fg="yellow">2 combat rounds</ansi>, up to 2.
   A new battle starts with both.
-- Only weapon blows are guarded, not spells.
+- Only weapon blows are guarded, not spells. A guardian keeps a healer's
+  chant whole: the blow that would have broken it lands on the guardian
+  (and breaks the guardian's own chant, if it was chanting;
+  <ansi fg="command">help interrupts</ansi>).
 - A guardian that is <ansi fg="yellow">knocked down</ansi> (2 rounds) or <ansi fg="yellow">stunned</ansi> (2 rounds) can't
   step in while it lasts (<ansi fg="command">help statuses</ansi>), but keeps its guards. One that
   is down, fallen, or out of the fight guards no one.

@@ -28,10 +28,12 @@ companion knows its archetype's spells for its level (a cleric learns
 Minor Heal All at level 5, a wizard Shower of Sparks).
 
 Spells in a battle are real casts: they cost mana, take their chanting
-rounds, and can fizzle. After a spell, the caster turns back to the foe it
-was fighting. Mana comes back out of combat, not during a battle; your
-companions' comes back too, while you are online. A healer heals you even
-when you are down and bleeding out.
+rounds, and can fizzle. A weapon blow that draws blood on the caster
+breaks the chant, with half the mana back (<ansi fg="command">help interrupts</ansi>), so keep
+healers and casters out of reach. After a spell, the caster turns back to
+the foe it was fighting. Mana comes back out of combat, not during a
+battle; your companions' comes back too, while you are online. A healer
+heals you even when you are down and bleeding out.
 
 <ansi fg="yellow-bold">Target rules</ansi>
 

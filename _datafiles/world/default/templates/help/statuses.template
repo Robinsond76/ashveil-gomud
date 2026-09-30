@@ -43,6 +43,9 @@ gets through also leaves a wound, from any weapon, fists and bites too:
                   (-3 speed), for 3 rounds. Shower of Sparks overloads what
                   it sears.
 
+A shield-bearer who turns a missed blow may stun its attacker with a
+shield bash (<ansi fg="command">help interrupts</ansi>).
+
 A fighter who loses its action does nothing that round: no blow, no spell
 round, no flight. It is told so in the line, as in
 <ansi fg="command">The bandit captain reels, and loses the action. (staggered)</ansi>.

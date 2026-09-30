@@ -100,3 +100,9 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 
 - A guardian (a `strategy` role, `modules/strategy`) takes one blow aimed at its ward, decided in `internal/hooks` at the enemy-attack gates after 11c's interception; guard counts live on the battle (`internal/battle`). The `formation` view and every `move`/`swap`/`clear` warn (`guardWarnings`) when a guardian's set ward stands more than one column away, as `strategy` does.
 - `wiring_guardian_test.go` runs guards in the brawl world: `guardBrawl` opens the battle with the bandits holding their first blows, so the guards start full, and `strike` aims one blow a round at a ward.
+
+## Phase 30d1: broken chants and shield counters (`internal/hooks/combat_interrupt.go`)
+
+- After every weapon blow's lines, `afterBlow` breaks the target's chant on a hit that did damage (a player or companion: the spell ends with half its mana back; an enemy: it restarts at its next turn) and lets a shield-bearer counter a missed melee blow. Rules live in `internal/interrupt`.
+- `newBrawl` turns counters off (`hooks.UseCounterRollForTest`) so the brawls keep their seeded rolls; a test that wants a counter scripts its dice (`counterDice`). `forceBlows` makes every blow land or miss. `TestNarrationPreservesCombatOutcome` compares against a pre-30d1 golden and so turns 30d1 off (`hooks.DisableInterruptsForTest`).
+- `wiring_interrupts_test.go` covers broken chants, restarts, guarded blows, counters, and the shipped goblin hexer.
