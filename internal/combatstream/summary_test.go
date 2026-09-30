@@ -76,6 +76,18 @@ func TestSummaryStillStandingAndInterruptsAndGuards(t *testing.T) {
 	assert.Contains(t, lines, "Enemies        bandit captain still standing")
 }
 
+// Phase 30d1: with no failed interrupts (a chant breaks on any damaging
+// blow) the line leaves "failed" out.
+func TestSummaryInterruptsWithoutFailures(t *testing.T) {
+	s := New()
+	id := s.Open(1, 100, "bandits#0", aria, []Ref{tamsin}, []Ref{captain})
+	s.Emit(Event{Kind: Interrupt, Source: aria, Target: captain, Outcome: OutcomeSucceeded, Status: "Withering Hex"})
+	s.Emit(Event{Kind: Interrupt, Source: tamsin, Target: captain, Outcome: OutcomeSucceeded, Status: "Withering Hex"})
+	s.Emit(Event{Kind: Interrupt, Source: captain, Target: tamsin, Outcome: OutcomeSucceeded, Status: "Minor Heal"})
+	sum, _ := s.EndFight(id, 3, OutcomeBrokenOff, Final{})
+	assert.Contains(t, Render(*sum, 7), "Interrupts     dealt 2 (Withering Hex, Withering Hex) · taken 1")
+}
+
 func TestRender(t *testing.T) {
 	lines := Render(*skirmish(t), 7)
 	assert.Equal(t, []string{

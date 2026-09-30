@@ -589,6 +589,19 @@ func (c *Character) GetAllSkillRanks() map[string]int {
 	return retMap
 }
 
+// HasShield reports whether the character holds a shield it can raise.
+// Holdables are not considered "shield" type items: anything held in the
+// offhand that provides a damage reduction, and is not a weapon, is. A
+// stunned holder can't raise it (no-block; its armor still counts). Used
+// by GetDefense's block and Phase 30d1's shield counter.
+func (c *Character) HasShield() bool {
+	if c.Equipment.Offhand.ItemId == 0 || c.HasBuffFlag("no-block") {
+		return false
+	}
+	spec := c.Equipment.Offhand.GetSpec()
+	return spec.Type != items.Weapon && spec.DamageReduction > 0
+}
+
 // Returns an integer representing a % damage reduction
 func (c *Character) GetDefense() int {
 
@@ -600,10 +613,7 @@ func (c *Character) GetDefense() int {
 	//reduction = int(float64(reduction) / 9)
 
 	// If wearing an offhand item like a shield, defense gets a 50% boost
-	// Holdables are not considered "shield" type items.
-	// Anything held in the offhand that provides a damage reduction is considered a shield.
-	// A stunned holder can't raise it (no-block; its armor still counts).
-	if c.Equipment.Offhand.ItemId != 0 && c.Equipment.Offhand.GetSpec().Type != items.Weapon && c.Equipment.Offhand.GetSpec().DamageReduction > 0 && !c.HasBuffFlag("no-block") {
+	if c.HasShield() {
 		reduction = int(float64(reduction) * 1.5)
 	}
 

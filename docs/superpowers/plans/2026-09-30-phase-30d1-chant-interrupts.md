@@ -7,7 +7,7 @@ Branch: `phase-30d-interrupts`, worktree `.worktrees/phase-30d-interrupts`.
 
 Each task writes its tests first and runs only its own packages.
 
-- [ ] **1. `internal/interrupt` (pure).**
+- [x] **1. `internal/interrupt` (pure).**
   - Tests first (`interrupt_test.go`):
     - `Breaks`: a hit with 1+ damage on a chanter breaks; a miss, a hit
       of 0, or a target not chanting doesn't;
@@ -19,7 +19,7 @@ Each task writes its tests first and runs only its own packages.
       with 1d4 damage, a stun at <25 on the stun roll; chances as package
       values a test can set.
   - Add the package and its `AGENTS.md`.
-- [ ] **2. `Character.HasShield` (`internal/characters`) and the
+- [x] **2. `Character.HasShield` (`internal/characters`) and the
   stream's outcome and summary (`internal/combatstream`).**
   - Tests first: `HasShield` (a shield; a held weapon; a holdable with no
     reduction; stunned `no-block` → false); `GetDefense` unchanged

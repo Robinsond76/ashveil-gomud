@@ -235,3 +235,36 @@ func TestStunnedCantDodgeOrBlock(t *testing.T) {
 		t.Fatalf("stunned defense %d, want %d (armor without the shield's block; shielded %d)", got, armorOnly, shielded)
 	}
 }
+
+// Phase 30d1: HasShield is the one test of "a shield it can raise": a
+// non-weapon offhand item with damage reduction, not while stunned.
+func TestHasShield(t *testing.T) {
+	edgeSpecs(t)
+	buffs.LoadFlagDataFiles()
+	buffs.LoadDataFiles()
+	const shieldID, torchID = 99315, 99316
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: shieldID, Name: "test shield", Type: items.Offhand, DamageReduction: 20})
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: torchID, Name: "test torch", Type: items.Offhand})
+	t.Cleanup(func() { items.RemoveTestItemSpec(shieldID); items.RemoveTestItemSpec(torchID) })
+
+	c := edgeFighter(90231)
+	if c.HasShield() {
+		t.Fatal("an empty offhand is no shield")
+	}
+	c.Equipment.Offhand = items.New(torchID)
+	if c.HasShield() {
+		t.Fatal("a holdable with no reduction is no shield")
+	}
+	c.Equipment.Offhand = items.New(edgeSwordID)
+	if c.HasShield() {
+		t.Fatal("an offhand weapon is no shield")
+	}
+	c.Equipment.Offhand = items.New(shieldID)
+	if !c.HasShield() {
+		t.Fatal("a shield is a shield")
+	}
+	c.AddBuff(status.Stunned, false)
+	if c.HasShield() {
+		t.Fatal("a stunned bearer can't raise its shield")
+	}
+}

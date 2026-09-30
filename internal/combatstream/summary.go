@@ -301,7 +301,14 @@ func Render(s Summary, viewerUserId int) []string {
 		if len(s.InterruptsDealt) > 0 {
 			dealt += " (" + strings.Join(s.InterruptsDealt, ", ") + ")"
 		}
-		out = append(out, line("Interrupts", fmt.Sprintf("%s · failed %d · taken %d", dealt, s.InterruptsFailed, s.InterruptsTaken)))
+		// Phase 30d1: a chant breaks on any damaging blow, so an
+		// interrupt rarely fails; "failed" is shown only when one did.
+		parts := []string{dealt}
+		if s.InterruptsFailed > 0 {
+			parts = append(parts, fmt.Sprintf("failed %d", s.InterruptsFailed))
+		}
+		parts = append(parts, fmt.Sprintf("taken %d", s.InterruptsTaken))
+		out = append(out, line("Interrupts", strings.Join(parts, " · ")))
 	}
 	if len(s.Guards) > 0 {
 		out = append(out, line("Guards", joinAmounts(s.Guards)))

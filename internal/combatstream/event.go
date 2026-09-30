@@ -70,6 +70,7 @@ const (
 	OutcomeLostAction    = "lost-action" // a status cost the holder its action (30a)
 	OutcomeSucceeded     = "succeeded"   // interrupts, Phase 30d
 	OutcomeFailed        = "failed"      // interrupts, Phase 30d
+	OutcomeInterrupted   = "interrupted" // CastComplete: a blow broke the chant (30d1)
 
 	// Fight endings (FightEnd's Outcome).
 	OutcomeVictory   = "victory"
