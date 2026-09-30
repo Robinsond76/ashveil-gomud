@@ -351,6 +351,9 @@ func resolveInterceptedMobAttack(mob, interceptor *mobs.Mob, mobRoom, defRoom *r
 		defRoom.SendText(msg)
 	}
 
+	// Phase 30d1: a broken chant, or a shield's counter.
+	afterBlow(mobHolder(mob), mobHolder(interceptor), roundResult)
+
 	if !roundResult.Hit {
 		return
 	}
@@ -422,6 +425,9 @@ func resolveInterceptedAttackOnLeader(mob *mobs.Mob, leader *users.UserRecord, m
 	for _, msg := range roundResult.MessagesToTargetRoom {
 		defRoom.SendText(msg, leader.UserId)
 	}
+
+	// Phase 30d1: a broken chant, or a shield's counter.
+	afterBlow(mobHolder(mob), userHolder(leader), roundResult)
 
 	if roundResult.DamageToTarget != 0 {
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: leader.UserId})

@@ -348,7 +348,8 @@ func TestSpellEventsThroughTheRealRound(t *testing.T) {
 			if complete.Outcome == combatstream.OutcomeCast {
 				return complete
 			}
-			assert.Equal(t, combatstream.OutcomeFizzled, complete.Outcome)
+			// Phase 30d1: a bandit's blow may break the chant; try again.
+			assert.Contains(t, []string{combatstream.OutcomeFizzled, combatstream.OutcomeInterrupted}, complete.Outcome)
 		}
 		t.Fatalf("%s never went off", spellId)
 		return nil

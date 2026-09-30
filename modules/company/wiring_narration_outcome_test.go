@@ -11,6 +11,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/stretchr/testify/require"
 )
@@ -33,6 +34,10 @@ type narrationMechanic struct {
 func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	t.Setenv("GODEBUG", "randseednop=0")
 	b := newBrawl(t)
+	// The golden predates Phase 30d1, and its fixture keeps a cutthroat
+	// chanting for ever as a placeholder: blows breaking chants would
+	// change what it records.
+	t.Cleanup(hooks.DisableInterruptsForTest())
 	b.cmd("company", "dismiss all")
 	for name, ids := range b.bandits {
 		if name == "bandit cutthroat" {

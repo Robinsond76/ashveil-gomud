@@ -217,6 +217,9 @@ func newBrawl(t *testing.T) *brawl {
 	// Phase 30c: no enemy personality's random re-aim here (the shipped
 	// human race has 10%), so the fights keep their targets.
 	t.Cleanup(hooks.UseAimRollForTest(func(n int) int { return n - 1 }))
+	// Phase 30d1: nor a shield's counter (a test that wants one scripts
+	// its dice), so the brawls keep their seeded rolls.
+	t.Cleanup(hooks.UseCounterRollForTest(func(n int) int { return n - 1 }))
 	// Nor a grudge: an earlier fight leaves the bandits' group hostile to
 	// Aria (user 7) for many rounds, and they would open the next brawl.
 	mobs.ResetHostility()

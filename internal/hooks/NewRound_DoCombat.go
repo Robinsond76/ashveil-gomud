@@ -39,6 +39,10 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	combatRound.Store(evt.RoundNumber)
 	resetRoundExtras()
 
+	// Ashveil Phase 30d1: a new round of shield counters; restarts owed by
+	// mobs no longer chanting are dropped.
+	interruptRound()
+
 	// Ashveil Phase 29b2: each player fights one enemy group at a time.
 	// Decide every player's battle first; battles opening and ending open
 	// and end their fights on the combat event stream (29b).
@@ -506,6 +510,9 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				defRoom.SendText(msg, user.UserId, defUser.UserId)
 			}
 
+			// Ashveil Phase 30d1: a broken chant, or a shield's counter.
+			afterBlow(userHolder(user), userHolder(defUser), roundResult)
+
 			// If the attack connected, check for damage to equipment.
 			if roundResult.Hit {
 
@@ -694,6 +701,9 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				defRoom.SendText(msg, user.UserId)
 			}
 
+			// Ashveil Phase 30d1: a broken chant, or a shield's counter.
+			afterBlow(userHolder(user), mobHolder(defMob), roundResult)
+
 			// Handle any scripted behavior now.
 			if roundResult.Hit {
 				scripting.TryMobScriptEvent(`onHurt`, defMob.InstanceId, user.UserId, `user`, map[string]any{`damage`: roundResult.DamageToTarget, `crit`: roundResult.Crit})
@@ -801,6 +811,12 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		**************************/
 
 		if mob.Character.Aggro != nil && mob.Character.Aggro.Type == characters.SpellCast {
+
+			// Ashveil Phase 30d1: a chant a blow broke starts again from
+			// the first word, taking this turn.
+			if restartChant(mob) {
+				continue
+			}
 
 			if mob.Character.Aggro.RoundsWaiting > 0 {
 				mob.Character.Aggro.RoundsWaiting--
@@ -1058,6 +1074,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				defRoom.SendText(msg, defUser.UserId)
 			}
 
+			// Ashveil Phase 30d1: a broken chant, or a shield's counter.
+			afterBlow(mobHolder(mob), userHolder(defUser), roundResult)
+
 			// If the attack connected, check for damage to equipment.
 			if roundResult.Hit {
 
@@ -1201,6 +1220,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			for _, msg := range roundResult.MessagesToTargetRoom {
 				defRoom.SendText(msg)
 			}
+
+			// Ashveil Phase 30d1: a broken chant, or a shield's counter.
+			afterBlow(mobHolder(mob), mobHolder(defMob), roundResult)
 
 			// Handle any scripted behavior now.
 			if roundResult.Hit {

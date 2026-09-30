@@ -1,0 +1,9 @@
+# Ashveil Phase 30d1: the goblin hexer's chant, which a blow can break.
+spellid: hex
+name: Withering Hex
+description: Hurts for 2d6+2
+type: harmsingle
+school: conjuration
+cost: 8
+waitrounds: 1
+difficulty: 40

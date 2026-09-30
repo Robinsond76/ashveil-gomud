@@ -1,0 +1,30 @@
+# Ashveil Phase 30d1: an enemy caster. It chants Withering Hex at the
+# company's healers and casters first (its goblin race aims by "casters"),
+# and a blow that draws blood breaks the chant (help interrupts).
+mobid: 70
+zone: Dark Forest
+itemdropchance: 5
+hostile: true
+maxwander: 1
+groups:
+  - forest-creature
+idlecommands:
+  - 'emote mutters over a string of knucklebones.'
+  - 'emote sniffs the air and grins.'
+combatcommands:
+  - 'cast hex'
+activitylevel: 40
+character:
+  name: goblin hexer
+  description: 'A hunched goblin wrapped in a cloak of moss and crow feathers. Knucklebones rattle on a cord at her throat, and her yellow eyes never settle on the one holding a blade; they look past, to whoever is praying.'
+  raceid: 5
+  pronouns: she
+  level: 18
+  gold: 10
+  spellbook:
+    hex: 1
+  equipment:
+    head:
+      itemid: 20020
+    body:
+      itemid: 20030

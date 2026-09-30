@@ -292,6 +292,8 @@ func TestAWizardPlayerCastsWithNoCommand(t *testing.T) {
 
 	b.cmd("attack", fmt.Sprintf("#%d", bruiser))
 	require.Equal(t, bruiser, aimOf(b.aria.Character))
+	// Phase 30d1: no blow lands, so none breaks her chant.
+	forceBlows(t, false)
 	b.toughen()
 	out := b.fight()
 	require.NotNil(t, b.aria.Character.Aggro)

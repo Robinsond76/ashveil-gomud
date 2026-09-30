@@ -154,8 +154,8 @@ any blow or needs heavier force (see Deferrals).
 ### D. Player help and tutorial
 
 - **New `help interrupts`** (aliases `interrupt`, `interrupted`, `chant`,
-  `chanting`, `chants`, `concentration`, `shield-bash`, `shieldbash`,
-  `counter`, `counters`, `hexer`): chants break on a damaging blow; what
+  `chants`, `concentration`, `shield-bash`, `shieldbash`, `counter`,
+  `counters`, `hexer`; `chanting` stays `help narration`'s): chants break on a damaging blow; what
   a company caster loses (half mana back) and an enemy's restart; the
   shield counter's rules and numbers; tactics (keep casters in the back
   row, guard them, focus `casters`, bows and slings for a back-row

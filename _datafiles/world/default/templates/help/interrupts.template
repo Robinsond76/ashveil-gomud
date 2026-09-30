@@ -1,0 +1,54 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">interrupts</ansi>
+
+A spell takes time: its caster <ansi fg="yellow">chants</ansi> for a round or two before it goes
+off (<ansi fg="command">help cast</ansi>). A chant is fragile. <ansi fg="yellow">Any weapon blow that draws blood
+breaks it</ansi>, however light:
+
+  <ansi fg="command">The goblin hexer's chant breaks off under the blow. (Withering Hex interrupted)</ansi>
+
+A melee blow, a sling stone, or an arrow breaks it, and so does a blow a
+guardian steps in front of. A miss, a dodged blow, a hit that does no
+damage, bleeding or burning, and a spell do not.
+
+<ansi fg="yellow-bold">When your chant breaks</ansi>
+
+- The spell is lost, and <ansi fg="yellow">half its mana comes back</ansi> (rounded down):
+  <ansi fg="command">The blow breaks your chant, and Minor Heal is lost. (Minor Heal interrupted, 1 mana back)</ansi>
+- The same goes for your companions. A healer or caster tries again at its
+  next chance, as its strategy says (<ansi fg="command">help strategy</ansi>).
+
+<ansi fg="yellow-bold">When a foe's chant breaks</ansi>
+
+- An enemy caster, such as the <ansi fg="yellow">goblin hexer</ansi> of the Dark Forest, starts
+  the chant again from the first word at its next turn. It spends no more
+  mana, but must chant the whole spell again, and every blow that draws
+  blood breaks it again.
+
+<ansi fg="yellow-bold">Keeping your casters chanting</ansi>
+
+- Put healers and casters in the <ansi fg="yellow">back row</ansi>, where most foes' blows can't
+  reach them (<ansi fg="command">help formation</ansi>).
+- Give them a <ansi fg="yellow">guardian</ansi>: a guarded blow lands on the guardian instead
+  (<ansi fg="command">help guardian</ansi>).
+- Break the enemy's chants: the <ansi fg="command">casters</ansi> focus turns your whole company on
+  foes that chant (<ansi fg="command">help tactics</ansi>). A foe chanting from its back row can
+  still be reached with a bow or sling.
+
+<ansi fg="yellow-bold">Shield counters</ansi>
+
+When a melee blow misses someone holding a <ansi fg="yellow">shield</ansi>, they may slam it back
+into the attacker:
+
+  <ansi fg="command">Tamsin Reed turns the blow and drives her shield into the bandit captain. (shield bash, 3 damage, stunned)</ansi>
+
+- A miss or a dodge gives a <ansi fg="yellow">50%</ansi> chance. The bash does <ansi fg="yellow">1 to 4 damage</ansi>, and
+  one bash in four also <ansi fg="yellow">stuns</ansi> the attacker (<ansi fg="command">help statuses</ansi>).
+- At most <ansi fg="yellow">one counter a round</ansi> for each shield-bearer.
+- No counter against a bow or sling, and none while the bearer is knocked
+  down, stunned, or chanting.
+- It works both ways: a foe with a shield counters you. You choose nothing;
+  holding a shield is enough.
+
+The battle summary lists the chants each side broke (<ansi fg="command">help battle-summary</ansi>).
+
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help guardian</ansi>.

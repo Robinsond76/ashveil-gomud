@@ -21,6 +21,8 @@ band of ruffians</ansi>, or <ansi fg="yellow">The fight with a band of ruffians 
 - <ansi fg="yellow">Effects</ansi> (when there were any) counts effects the blows put on anyone.
 - <ansi fg="yellow">Guards</ansi> (when there were any) counts the blows each guardian took for
   its ward (<ansi fg="command">help guardian</ansi>).
+- <ansi fg="yellow">Interrupts</ansi> (when there were any) counts the chants your company broke,
+  naming each spell, and those of yours the enemy broke (<ansi fg="command">help interrupts</ansi>).
 - An enemy ends <ansi fg="yellow">slain</ansi>, <ansi fg="yellow">fled</ansi>, <ansi fg="yellow">left</ansi> (walked away), <ansi fg="yellow">beaten</ansi> (a
   practice foe), or <ansi fg="yellow">still standing</ansi>.
 

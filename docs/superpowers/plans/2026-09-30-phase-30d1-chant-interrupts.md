@@ -27,7 +27,7 @@ Each task writes its tests first and runs only its own packages.
     Interrupts line without "failed" when 0, with it when not.
   - Add `HasShield`, use it in `GetDefense`; `OutcomeInterrupted`; the
     summary line.
-- [ ] **3. Broken chants in the round (`internal/hooks`).**
+- [x] **3. Broken chants in the round (`internal/hooks`).**
   - `combat_interrupt.go`: `afterBlow(attacker, defender statusHolder,
     r, melee)` called after the lines at the six blow sites (four in
     `NewRound_DoCombat.go`, two in `combat_formation.go`); `breakChant`
@@ -45,7 +45,7 @@ Each task writes its tests first and runs only its own packages.
       lands after its full chant with no more blows);
     - `TestGuardedBlowBreaksGuardianChant` (30c2 redirect: the
       guardian's chant breaks, the ward's doesn't).
-- [ ] **4. Shield counters (`internal/hooks`).**
+- [x] **4. Shield counters (`internal/hooks`).**
   - In `afterBlow`: on a miss, `CanCounter`, `RollCounter`, damage,
     stun, lines, events, fall resolved this round; the round's counter
     set reset at the top of `DoCombat`.
@@ -58,7 +58,7 @@ Each task writes its tests first and runs only its own packages.
     - `TestNoShieldCounterAgainstBow`; `TestNoShieldCounterWhileStunned`;
     - `TestEnemyShieldCountersPlayer`;
     - `TestShieldCounterKills` (death resolved that round).
-- [ ] **5. Enemy caster content (`_datafiles`).**
+- [x] **5. Enemy caster content (`_datafiles`).**
   - Tests first: `hex` loads with its cost and chant; mob 70 loads
     (goblin, spellbook `hex`, `cast hex`); rooms 402 and 531 list it
     (`modules/company` or a data test beside other shipped-data tests);
@@ -66,7 +66,7 @@ Each task writes its tests first and runs only its own packages.
     healer (`casters`), its damage reported as a `spell-hit`.
   - Add `spells/hex.yaml`, `hex.js`, `mobs/dark_forest/70-goblin_hexer.yaml`,
     the spawn entries.
-- [ ] **6. Player help and tutorial.**
+- [x] **6. Player help and tutorial.**
   - Tests first: `help interrupts` and an alias render
     (`internal/usercommands/help_interrupts_test.go`, as
     `help_combat_test.go`); the tutorial pointer

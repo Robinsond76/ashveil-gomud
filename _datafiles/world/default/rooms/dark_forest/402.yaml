@@ -15,6 +15,9 @@ spawninfo:
 - mobid: 33
   message: A branch is pushed aside as an Imp enters the area.
   respawnrate: 4 real minutes
+- mobid: 70
+  message: A hunched goblin hexer slips out of the undergrowth, knucklebones rattling.
+  respawnrate: 6 real minutes
 mapx: 30
 mapy: -3
 mapz: 0
