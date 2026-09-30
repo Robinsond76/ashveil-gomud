@@ -19,6 +19,8 @@ band of ruffians</ansi>, or <ansi fg="yellow">The fight with a band of ruffians 
 - <ansi fg="yellow">Damage dealt</ansi> counts weapon blows and spells.
 - <ansi fg="yellow">Healing</ansi> (when there was any) counts healing your company received.
 - <ansi fg="yellow">Effects</ansi> (when there were any) counts effects the blows put on anyone.
+- <ansi fg="yellow">Guards</ansi> (when there were any) counts the blows each guardian took for
+  its ward (<ansi fg="command">help guardian</ansi>).
 - An enemy ends <ansi fg="yellow">slain</ansi>, <ansi fg="yellow">fled</ansi>, <ansi fg="yellow">left</ansi> (walked away), <ansi fg="yellow">beaten</ansi> (a
   practice foe), or <ansi fg="yellow">still standing</ansi>.
 
@@ -36,4 +38,4 @@ cutthroat stays second even after the first falls. A new battle, including
 one rebuilt after restart or copyover, starts its labels afresh
 (<ansi fg="command">help narration</ansi>).
 
-See also: <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help guardian</ansi>.

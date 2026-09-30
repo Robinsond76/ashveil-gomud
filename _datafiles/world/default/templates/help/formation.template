@@ -48,6 +48,13 @@ the front row of the same column, if that fighter is alive.
 Put your toughest in front to shield the rest. Your company does this for
 you, and the enemy does it to you.
 
+<ansi fg="yellow-bold">Guardians</ansi>
+
+A guardian steps in front of its ward to take a blow meant for them, but
+only from the ward's column or the next one (<ansi fg="command">help guardian</ansi>). <ansi fg="command">formation</ansi>
+warns you, after a move, when a guardian stands too far from its ward:
+"Out of reach: Tamsin Reed can't step in for you from there."
+
 <ansi fg="yellow-bold">Unplaced members</ansi>
 
 A member not placed in the formation has no place to shield or be shielded

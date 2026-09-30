@@ -1,0 +1,54 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">guardian</ansi>
+
+A guardian is a strategy role (<ansi fg="command">help strategy</ansi>): it fights as a fighter, and
+steps in front of its ward to take a blow meant for them.
+
+  <ansi fg="command">Tamsin Reed steps in front of you. (guard, 1 left)</ansi>
+
+The blow then lands on the guardian instead, hit or miss, just as if it
+had been aimed at them. The foe keeps its aim: its next blow comes at the
+ward again.
+
+<ansi fg="yellow-bold">Guards</ansi>
+
+- A guardian has <ansi fg="yellow">2 guards</ansi> in each battle. Each blow it steps in for spends
+  one.
+- A spent guard comes back after <ansi fg="yellow">2 combat rounds</ansi>, one at a time, up to 2.
+  A new battle starts with both.
+- Only weapon blows are guarded, not spells.
+- A guardian that is <ansi fg="yellow">knocked down</ansi> (4 rounds) or <ansi fg="yellow">stunned</ansi> (3 rounds) can't
+  step in while it lasts (<ansi fg="command">help statuses</ansi>), but keeps its guards. One that
+  is down, fallen, or out of the fight guards no one.
+
+<ansi fg="yellow-bold">The ward</ansi>
+
+- Name a ward, and the guardian guards only them. With none named, it
+  guards whoever in your company is <ansi fg="yellow">most hurt</ansi> (the smallest share of their
+  health left) and within its reach. Nobody hurt, nobody guarded: the
+  guards are kept.
+- A guardian must stand in its ward's <ansi fg="yellow">column, or the next one</ansi>, in the
+  formation (<ansi fg="command">help formation</ansi>). From further away it can't step in.
+  <ansi fg="command">strategy</ansi> and <ansi fg="command">formation</ansi> warn you when a guardian stands too far from
+  its ward. Someone not placed in the formation can guard, or be guarded,
+  from anywhere.
+- Several guardians may guard the same ward: the one nearest the front
+  (then the left) steps in first. A guarded blow is never guarded again.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">strategy [who] guard</ansi>          a guardian of whoever is most hurt
+  <ansi fg="command">strategy [who] guard [other]</ansi>  a guardian of [other]: <ansi fg="command">strategy tamsin guard me</ansi>
+  <ansi fg="command">strategy [who] fighter</ansi>        back to fighting, the ward forgotten
+
+[who] and [other] are <ansi fg="command">me</ansi>, or a companion by name (part of it will do) or
+number (<ansi fg="command">#2</ansi>). <ansi fg="command">guardian</ansi> works in place of <ansi fg="command">guard</ansi>. You can be a
+guardian yourself: <ansi fg="command">strategy me guard ysolde</ansi>.
+
+As every strategy, a guardian and its ward are set before a battle; during
+one they can be read but not changed. They are kept when you log out.
+
+The battle summary counts each guardian's guards (<ansi fg="command">help battle-summary</ansi>).
+In the web client, a guardian's menu in the Combat tab picks its ward, and
+the battle view shows each guardian's guards left (<ansi fg="command">help webclient</ansi>).
+
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

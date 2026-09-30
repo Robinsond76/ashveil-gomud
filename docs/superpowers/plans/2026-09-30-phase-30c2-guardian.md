@@ -66,7 +66,7 @@ Each task writes its tests first and runs only its own packages.
   - Add `guardian` to `ROLES`, "Guard: …" menu items, the Setup row note,
     the battle view's guard sub-line; extend
     `scripts/browser/dock-windows-check.mjs`.
-- [ ] **7. Player help and tutorial.**
+- [x] **7. Player help and tutorial.**
   - New `help guardian` (`guardian.template`), in `keywords.yaml` under
     combat with aliases `guardians`, `guard`, `guards`, `ward`, linked
     from `help combat`.
