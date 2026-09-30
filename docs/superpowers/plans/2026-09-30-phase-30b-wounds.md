@@ -70,13 +70,13 @@ Each task writes its tests first and runs only its own packages.
     - the round count is unchanged.
   - Add the `Physicians` config, the Waymark Inn entry, and items 36 and
     37 with their market goods.
-- [ ] **8. Rest and death.**
+- [x] **8. Rest and death.**
   - Wiring tests:
     - a camp rest's grant closes the leader's and a live companion's
       wounds, with lines;
     - an inn stay's grant does too (`modules/camping`);
     - the church wake clears the wounds (`modules/death`).
-- [ ] **9. Surfaces.**
+- [x] **9. Surfaces.**
   - Tests:
     - the `status` health line shows the limit;
     - the companyview `HPLimit`;

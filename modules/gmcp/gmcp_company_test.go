@@ -361,3 +361,20 @@ func TestCompanyStrategies(t *testing.T) {
 	require.Len(t, *out, 2)
 	assert.Equal(t, "Company", (*out)[1].module, "a strategy is structure")
 }
+
+// Phase 30b: hp_limit is sent only while a member's wound limit is below
+// their max.
+func TestCompanyVitalsWoundLimit(t *testing.T) {
+	s := sampleCompany()
+	s.Leader.HPLimit = 40
+	s.Companions[0].HPLimit = 20
+	p, ok := buildCompanyPayload(7, s, noChemistry)
+	require.True(t, ok)
+	data, err := json.Marshal(p)
+	require.NoError(t, err)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(data, &got))
+	vitals := got["vitals"].(map[string]any)
+	assert.NotContains(t, vitals["leader"].(map[string]any), "hp_limit", "unwounded: no limit sent")
+	assert.Equal(t, 20.0, vitals["companion:1"].(map[string]any)["hp_limit"])
+}

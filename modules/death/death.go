@@ -356,6 +356,8 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 		m.hold(user, firstAttempt, "the move to the church failed", err)
 		return
 	}
+	// Phase 30b: death clears wounds; the church wakes a whole body.
+	c.Wounds = nil
 	c.Health = max(1, c.HealthMax.Value*cfg.vitalsPct/100)
 	c.Mana = c.ManaMax.Value * cfg.vitalsPct / 100
 	moved := m.relocate(userID, dest)

@@ -12,6 +12,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
 // Phase 23a rest tiers. A completed camp rest owes the company Rested, a
@@ -195,6 +197,11 @@ func (m *CampingModule) grantPendingTiers() {
 		} else if granted {
 			user.SendText("Your company is Rested: the road will feel a little lighter for a while.")
 		}
+		// Phase 30b: a completed rest, camp or inn, knits every wound of
+		// the members present.
+		for _, line := range healRestWounds(user.Character, live) {
+			user.SendText(line)
+		}
 		// Phase 23b: a camp rest's end also sharpens the company for a
 		// leader with auto-sharpen on. campRest is whether this save
 		// cleared a camp rest's marker, read under the lock at the clear,
@@ -207,6 +214,27 @@ func (m *CampingModule) grantPendingTiers() {
 			}
 		}
 	}
+}
+
+// healRestWounds closes every wound of the leader and the live companions
+// (Phase 30b), with a line for each lasting wound it closes.
+func healRestWounds(leader *characters.Character, live map[int]*characters.Character) []string {
+	var lines []string
+	heal := func(c *characters.Character, owner string) {
+		for _, w := range wounds.Lasting(c.Wounds) {
+			verb := " has knit."
+			if w.Place == "ribs" {
+				verb = " have knit."
+			}
+			lines = append(lines, util.CapitalizeFirst(wounds.Possessive(owner, w))+verb+" (wound healed)")
+		}
+		c.Wounds = nil
+	}
+	heal(leader, "your")
+	for _, id := range sortedIDs(live) {
+		heal(live[id], `<ansi fg="username">`+live[id].Name+`</ansi>'s`)
+	}
+	return lines
 }
 
 func sortedIDs(live map[int]*characters.Character) []int {
