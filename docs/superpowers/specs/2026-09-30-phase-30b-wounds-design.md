@@ -171,7 +171,9 @@ companion has aggro, or the leader is in a battle. Otherwise:
    This is resolved at once. The spells' mana and dice are used, but not
    their chant rounds, and no clock moves.
 4. **Items.** Once no healer can act:
-   - a splint on each fracture, and a bandage on each cut or puncture;
+   - splints on each fracture, and bandages on each cut or puncture,
+     one after another until the wound closes or they run out (review:
+     kept, and the help says so);
    - then a bandage on a patient under half their limit, healing 3.
 
    Items come from the cargo, then the patient's pack, then the leader's
@@ -232,8 +234,13 @@ member gets a line: `Tamsin Reed's broken arm has knit. (wound healed)`.
   seams: autosave, copyover, shutdown, logout, and item changes. A crash
   can lose a wound taken since the last save; losing a wound is harmless.
   They respawn capped at the limit.
-- **Light wounds** can't outlive a fight: fight end and the stray pass
-  close them.
+- **Light wounds** can't outlive a fight: fight end, the stray pass, and
+  login (`HandleJoin`) close them.
+- **Healing is saved with the next seam.** A rest's or `heal wounds`'s
+  healing is in memory until the next user save or company snapshot
+  (the physician saves at once, as it takes gold). A crash in between
+  brings the wounds back, as a rest's buff grant already can. Accepted
+  at review.
 - **Locks.** No new locks. Combat and commands run on the game loop, and
   camping heals outside `m.mu` (as it grants buffs).
 

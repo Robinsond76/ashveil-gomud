@@ -47,6 +47,7 @@ declare interface ActorObject {
     SetHealth(amt: number): void;
     AddHealth(amt: number): number;
     GetHealthLimit(): number;
+    HasLastingWound(): boolean;
     WoundNote(rolled: number, healed: number): string;
     TendWound(points: number): { closed: number; wound: string; limit: number; max: number };
     GetMana(): number;

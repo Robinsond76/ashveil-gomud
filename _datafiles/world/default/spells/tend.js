@@ -19,6 +19,12 @@ function chanting(rounds) {
  */
 function onCast(sourceActor, targetActor) {
 
+    // Review fix: no mana spent on someone with nothing to tend.
+    if (!targetActor.HasLastingWound()) {
+        SendUserMessage(sourceActor.UserId(), 'You find no wound there to tend.');
+        return false;
+    }
+
     var rounds = chanting(WAIT_ROUNDS + 1);
     SendUserMessage(sourceActor.UserId(), 'You murmur a prayer of mending over clean linen.' + rounds);
     SendRoomMessage(sourceActor.GetRoomId(), sourceActor.GetCombatName(true) + ' murmurs a prayer of mending.' + rounds, sourceActor.UserId());

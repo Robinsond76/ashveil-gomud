@@ -725,6 +725,12 @@ func (a ScriptActor) WoundNote(rolled, healed int) string {
 	return fmt.Sprintf(`, wound limit %d of %d`, limit, c.HealthMax.Value)
 }
 
+// HasLastingWound reports whether the actor has a wound tend can close
+// (Phase 30b): a lasting one.
+func (a ScriptActor) HasLastingWound() bool {
+	return len(wounds.Lasting(a.characterRecord.Wounds)) > 0
+}
+
 // TendWound closes up to points of the actor's worst lasting wound (Phase
 // 30b, the tend spell). It returns {closed, wound, limit, max}: the points
 // closed (0 when there was no wound to tend), the wound as it was

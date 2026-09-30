@@ -54,7 +54,8 @@ func TestABleedThatRunsOutLeavesALightWound(t *testing.T) {
 	assert.Equal(t, 2, bled.Points, "one point a stack")
 }
 
-// Light wounds close at the fight's end; lasting ones stay.
+// Light wounds close at the fight's end, in the round that ends it (not by
+// the next round's stray pass); lasting ones stay.
 func TestLightWoundsCloseWithTheFight(t *testing.T) {
 	b := newBrawl(t)
 	b.aimAt("bandit captain")
@@ -62,18 +63,34 @@ func TestLightWoundsCloseWithTheFight(t *testing.T) {
 	b.fight()
 	for i := 0; i < 200 && len(b.livingBandits()) > 0; i++ {
 		b.toughen()
+		b.aria.Character.Wounds = []wounds.Wound{
+			{Kind: wounds.Bruise, Place: "ribs", Points: 2, Light: true},
+			{Kind: wounds.Fracture, Place: "arm", Points: 3},
+		}
 		b.fight()
 	}
 	require.Empty(t, b.livingBandits())
-	// The last bandit fell; add the wounds before the round that ends it.
-	b.aria.Character.Wounds = []wounds.Wound{
-		{Kind: wounds.Bruise, Place: "ribs", Points: 2, Light: true},
-		{Kind: wounds.Fracture, Place: "arm", Points: 3},
-	}
-	b.fight()
+	// The round that felled the last bandit ended the fight and closed the
+	// light wound; no later round has run.
 	assert.Equal(t, 0, lightWounds(b.aria.Character), "light wounds close with the fight")
 	require.Len(t, b.aria.Character.Wounds, 1)
 	assert.Equal(t, wounds.Fracture, b.aria.Character.Wounds[0].Kind, "the lasting wound stays")
+}
+
+// A bleed that runs out on an enemy leaves no wound.
+func TestAnEnemysBleedLeavesNoWound(t *testing.T) {
+	b := newBrawl(t)
+	loadStatusBuffs(t)
+	b.aimAt("bandit captain")
+	captain := b.captain()
+	require.NoError(t, captain.Character.AddBuff(status.Bleeding, false))
+	for i := 0; i < 3; i++ {
+		b.toughen()
+		captain.Character.HealthMax.Value, captain.Character.Health = 1000, 1000
+		b.fight()
+	}
+	require.False(t, status.Has(&captain.Character))
+	assert.Empty(t, captain.Character.Wounds)
 }
 
 // A light wound with no fight (a restart's leftover) closes quietly.

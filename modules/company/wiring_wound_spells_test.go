@@ -75,3 +75,18 @@ func TestTendClosesAWoundThroughARealCast(t *testing.T) {
 	assert.LessOrEqual(t, closed, 6)
 	assert.Equal(t, 40, c.Health, "tending heals no health itself")
 }
+
+// Review fix: tend on someone with no wound to tend spends no mana.
+func TestTendOnTheUnwoundedSpendsNothing(t *testing.T) {
+	b := newBrawl(t)
+	c := b.aria.Character
+	c.Aggro = nil
+	c.Wounds = nil
+	c.SetSkill(`cast`, 4)
+	c.SpellBook["tend"] = 5000
+	c.ManaMax.Value, c.Mana = 100, 50
+	out := b.cmd("cast", "tend aria")
+	assert.Contains(t, out, "You find no wound there to tend.")
+	assert.Equal(t, 50, c.Mana, "no mana spent")
+	assert.Nil(t, c.Aggro, "and no chant begun")
+}

@@ -3,6 +3,7 @@ package company
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -123,13 +124,87 @@ func TestHealWoundsPhysician(t *testing.T) {
 	assert.Equal(t, 70, b.aria.Character.Gold)
 	assert.Empty(t, tamsin.Character.Wounds)
 	assert.Empty(t, b.aria.Character.Wounds)
+	record, _ := module.registry.Get(7)
+	for _, c := range record.Companions {
+		if c.ID == 1 {
+			require.NotNil(t, c.State)
+			assert.Empty(t, c.State.Wounds, "the company record is refreshed with the payment")
+		}
+	}
 	assert.Equal(t, 1, *saves, "the user is saved with the payment")
 	assert.Nil(t, b.aria.GetPrompt())
 
+	// Review fix: too little gold, no question.
 	tamsin.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 3}}
 	b.aria.Character.Gold = 10
+	assert.Contains(t, b.cmd("heal", "wounds"), "You have only 10 gold.")
+	assert.Nil(t, b.aria.GetPrompt())
+
+	// Gold spent between the offer and the answer is checked again.
+	b.aria.Character.Gold = 100
 	b.cmd("heal", "wounds")
+	b.aria.Character.Gold = 10
 	assert.Contains(t, b.answer("yes"), "You don't have 15 gold.")
 	assert.Equal(t, 10, b.aria.Character.Gold)
 	assert.Len(t, tamsin.Character.Wounds, 1)
+
+	// Wounds that change between the offer and the answer are priced again.
+	b.aria.Character.Gold = 100
+	b.cmd("heal", "wounds")
+	b.aria.Character.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "hand", Points: 1}}
+	assert.Contains(t, b.answer("yes"), "wounds have changed since the price was named")
+	assert.Equal(t, 100, b.aria.Character.Gold)
+	assert.Nil(t, b.aria.GetPrompt())
+
+	// A fight begun between the offer and the answer refuses, and clears the
+	// question.
+	b.cmd("heal", "wounds")
+	b.aimAt("bandit captain")
+	assert.Contains(t, b.answer("yes"), "You can't tend wounds in the middle of a fight.")
+	assert.Equal(t, 100, b.aria.Character.Gold)
+	assert.Nil(t, b.aria.GetPrompt())
+}
+
+// A companion's fight alone refuses heal wounds.
+func TestHealWoundsIsRefusedWhileACompanionFights(t *testing.T) {
+	b := newBrawl(t)
+	b.aria.Character.Aggro = nil
+	b.aria.Character.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "arm", Points: 2}}
+	tamsin := b.companion(1)
+	tamsin.Character.Aggro = &characters.Aggro{MobInstanceId: b.captain().InstanceId}
+	assert.Contains(t, b.cmd("heal", "wounds"), "You can't tend wounds in the middle of a fight.")
+	assert.Len(t, b.aria.Character.Wounds, 1)
+}
+
+// A player cleric heals to the limit with Minor Heal, spending their own
+// mana; tending themselves reads in the second person.
+func TestHealWoundsALeaderClericHealsToTheLimit(t *testing.T) {
+	b := newBrawl(t)
+	for id := 1; id <= 4; id++ {
+		b.companion(id).Character.Mana = 0
+	}
+	c := b.aria.Character
+	c.SetSkill(`cast`, 1)
+	c.SpellBook["heal"] = 1
+	c.SpellBook["tend"] = 1
+	c.ManaMax.Value, c.Mana = 40, 40
+	c.HealthMax.Value, c.Health = 100, 50
+	c.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "hand", Points: 2}}
+	out := b.cmd("heal", "wounds")
+	assert.Contains(t, out, "You tend your own cut hand, and it draws closed.")
+	assert.NotContains(t, out, "first, the worst hurt", "a healer who starts on themselves is not 'first' beside anyone")
+	assert.Regexp(t, `You lay glowing hands on yourself\. \(\d+ healed\)`, out)
+	assert.Empty(t, c.Wounds)
+	assert.Less(t, c.Mana, 40, "the leader's own mana is spent")
+	assert.Greater(t, c.Health, 50)
+	assert.LessOrEqual(t, c.Health, c.HealthLimit())
+}
+
+// A cleric with no mana left is named as spent, not as missing.
+func TestHealWoundsSpentHealers(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	b.companion(2).Character.Mana = 0
+	b.aria.Character.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "arm", Points: 2}}
+	assert.Contains(t, b.cmd("heal", "wounds"), "Your healers have no mana left.")
 }

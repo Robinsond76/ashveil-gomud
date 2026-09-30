@@ -202,6 +202,8 @@ func (m *CampingModule) grantPendingTiers() {
 		for _, line := range healRestWounds(user.Character, live) {
 			user.SendText(line)
 		}
+		// Review fix: the leader's limit may have risen.
+		events.AddToQueue(events.CharacterVitalsChanged{UserId: leaderUserID})
 		// Phase 23b: a camp rest's end also sharpens the company for a
 		// leader with auto-sharpen on. campRest is whether this save
 		// cleared a camp rest's marker, read under the lock at the clear,

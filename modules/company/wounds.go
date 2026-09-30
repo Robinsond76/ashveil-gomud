@@ -359,6 +359,8 @@ func (m *CompanyModule) healWounds(user *users.UserRecord, room *rooms.Room) str
 	}
 
 	lines := m.treat(user, members)
+	// Review fix: the leader's health and mana may have changed.
+	events.AddToQueue(events.CharacterVitalsChanged{UserId: user.UserId})
 
 	// The physician, for what is still wounded.
 	if p, ok := m.physicianIn(room); ok {
@@ -373,6 +375,13 @@ func (m *CompanyModule) healWounds(user *users.UserRecord, room *rooms.Room) str
 				intro += ", " + p.Description + ","
 			}
 			lines = append(lines, fmt.Sprintf(`%s looks the company's wounds over. "%d gold, and they'll all be closed by morning."`, intro, price))
+			if user.Character.Gold < price {
+				// Review fix: no question the leader can't afford to answer.
+				user.ClearPrompt()
+				lines = append(lines, fmt.Sprintf("You have only %d gold.", user.Character.Gold))
+				lines = append(lines, m.stillHurt(members)...)
+				return strings.Join(lines, "\n")
+			}
 			cmdPrompt.Store("price", price)
 			cmdPrompt.Ask(fmt.Sprintf("Pay %d gold?", price), []string{"yes", "no"}, "no")
 			user.SendText(strings.Join(lines, "\n"))
@@ -392,8 +401,12 @@ func (m *CompanyModule) treat(user *users.UserRecord, members []woundMember) []s
 
 	// 1–3: the clerics.
 	var healers []wounds.Healer
+	knowers := 0
 	for _, w := range members {
 		tend, heal := w.knows("tend"), w.knows("heal")
+		if tend || heal {
+			knowers++
+		}
 		if (tend || heal) && w.char.Mana > 0 {
 			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal})
 		}
@@ -405,15 +418,22 @@ func (m *CompanyModule) treat(user *users.UserRecord, members []woundMember) []s
 	if !anyHurt {
 		return []string{"No one in your company is hurt."}
 	}
-	if len(healers) == 0 {
+	switch {
+	case knowers == 0:
 		lines = append(lines, "There's no one in the company who can heal. You open the packs instead.")
+	case len(healers) == 0:
+		lines = append(lines, "Your healers have no mana left. You open the packs instead.")
 	}
 	res := wounds.Plan(patientsOf(members), healers, wounds.Stock{}, rules, util.Rand)
 	m.applyPlan(who, res)
 	lines = append(lines, stepLines(who, res.Steps)...)
 	for _, h := range res.Healers {
 		w := who[h.Key]
-		if h.Mana < rules.HealCost && h.Mana < w.char.ManaMax.Value && len(res.Steps) > 0 && usedHealer(res.Steps, h.Key) {
+		cheapest := rules.TendCost
+		if h.Heal && (!h.Tend || rules.HealCost < cheapest) {
+			cheapest = rules.HealCost
+		}
+		if h.Mana < cheapest && h.Mana < w.char.ManaMax.Value && usedHealer(res.Steps, h.Key) {
 			if w.leader() {
 				lines = append(lines, fmt.Sprintf("You sway, spent. (mana %d of %d)", h.Mana, w.char.ManaMax.Value))
 			} else {
@@ -506,8 +526,9 @@ func stepLines(who map[string]woundMember, steps []wounds.Step) []string {
 		if p.leader() {
 			patient = "you"
 		}
-		if !first[s.Healer] && !(h.key == p.key) {
-			first[s.Healer] = true
+		isFirst := !first[s.Healer]
+		first[s.Healer] = true
+		if isFirst && h.key != p.key {
 			if h.leader() {
 				lines = append(lines, fmt.Sprintf("You kneel beside %s first, the worst hurt.", patient))
 			} else {
