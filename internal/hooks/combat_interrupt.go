@@ -253,15 +253,19 @@ func counterBlow(attacker, bearer statusHolder) {
 		}
 	}
 
-	// The damage counts toward the kill, and a fall is resolved this
-	// round.
+	// The damage counts toward the kill (a companion's for its leader, as
+	// its blows do), and a fall is resolved this round.
+	owner := bearer.char.GetCharmedUserId()
+	if bearer.user != nil {
+		owner = bearer.user.UserId
+	}
+	if owner > 0 {
+		attacker.char.TrackPlayerDamage(owner, dealt)
+	}
 	if attacker.user != nil {
 		roundExtraPlayers = append(roundExtraPlayers, attacker.user.UserId)
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: attacker.user.UserId})
 	} else {
-		if bearer.user != nil {
-			attacker.mob.Character.TrackPlayerDamage(bearer.user.UserId, dealt)
-		}
 		roundExtraMobs = append(roundExtraMobs, attacker.mob.InstanceId)
 	}
 

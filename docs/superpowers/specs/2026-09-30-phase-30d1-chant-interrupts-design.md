@@ -104,11 +104,15 @@ any blow or needs heavier force (see Deferrals).
   once), with the spell's full chant time:
   - the room, at the break: `The goblin hexer's chant breaks off under the
     blow. (Withering Hex interrupted)`;
-  - the room, at its next turn: `The goblin hexer spits, and starts the
-    chant again from the first word. (chanting: Withering Hex, 2 rounds)`.
-  A mob waiting to restart isn't chanting (a blow then breaks nothing),
-  though the `casters` rule still ranks it first (it is about to chant).
-  If its targets have all gone, or it lacks the spell, it swings instead.
+  - the room, at its next turn: `The goblin hexer starts the chant again
+    from the first word. (chanting: Withering Hex, 2 rounds)` (generic, so
+    it suits any enemy; amended after review).
+  A mob waiting to restart isn't chanting (a blow then breaks nothing, and
+  it may counter with a shield), though the `casters` rule still ranks it
+  first (it is about to chant). If none of its targets still stands (or
+  the spell is no longer loaded), it gives the spell up and loses that
+  turn; the next round's upkeep aims it again (amended after review: the
+  combat loop can't hand a mob with no aim on to a swing that turn).
 - **Events:** `Interrupt` (source the attacker, target the chanter,
   `SpellId`, `Status` the spell's name, outcome `succeeded`), and
   `CastComplete` with a new outcome `interrupted`; a restart emits

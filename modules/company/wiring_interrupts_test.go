@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/status"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -435,6 +436,101 @@ func TestShieldCounterKills(t *testing.T) {
 	assert.True(t, slain, "the bash killed the captain this round")
 }
 
+// Review finding 3: a companion's bash counts for its leader, as its blows
+// do.
+func TestCompanionCounterCreditsLeader(t *testing.T) {
+	b := guardBrawl(t)
+	forceBlows(t, false)
+	counterDice(t, 0, 3, 99)
+	captain := b.captain()
+	captain.Character.PlayerDamage = nil
+	b.strike(1, false) // the captain on Tamsin, who bashes
+	b.fight()
+	assert.Equal(t, 4, captain.Character.PlayerDamage[7], "Tamsin's bash is Aria's damage")
+}
+
+// The leader-intercept site (11c, and a player guardian): Aria steps in
+// for Oswin; the blow she takes breaks her chant, and a miss she takes
+// with a shield she counters.
+func TestPlayerGuardianChantAndCounter(t *testing.T) {
+	b := guardBrawl(t, "me guard oswin")
+	forceBlows(t, true)
+	noCounters(t)
+	stream := b.listen()
+	for try := 0; try < 8 && len(interruptsOf(*stream, "u:7")) == 0; try++ {
+		b.toughen()
+		b.hold(nil)
+		b.aria.Character.SetCast(3, characters.SpellAggroInfo{SpellId: "heal", TargetUserIds: []int{7}})
+		b.strike(2, false) // the captain on Oswin; Aria steps in
+		b.fight()
+	}
+	require.NotEmpty(t, interruptsOf(*stream, "u:7"), "the blow Aria took for Oswin broke her chant")
+	assert.NotEmpty(t, ofKind(*stream, combatstream.GuardUsed))
+
+	forceBlows(t, false)
+	counterDice(t, 0, 3, 99)
+	b.aria.Character.Aggro = nil
+	b.aria.Character.Equipment.Offhand = items.New(20019)
+	require.True(t, b.aria.Character.HasShield())
+	for try := 0; try < 4 && len(bashesBy(*stream, "u:7")) == 0; try++ {
+		b.toughen()
+		b.hold(nil)
+		b.strike(2, false)
+		b.fight()
+	}
+	assert.NotEmpty(t, bashesBy(*stream, "u:7"), "Aria countered the blow she took for Oswin")
+}
+
+// bashesBy lists the shield bashes a ref key struck.
+func bashesBy(stream []combatstream.Event, by string) []combatstream.Event {
+	var out []combatstream.Event
+	for _, e := range ofKind(stream, combatstream.Attack) {
+		if e.WeaponType == "shield-bash" && e.Source.Key() == by {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+// The player-vs-player site: Aria's blow breaks Brom's chant, and Brom,
+// with a shield, counters her miss.
+func TestPlayerVsPlayerChantAndCounter(t *testing.T) {
+	b := newBrawl(t)
+	brom := users.NewUserRecord(8, 2)
+	brom.Username = "brom"
+	brom.Password = "$2a$test"
+	brom.Character.Name = "Brom"
+	brom.Character.RaceId = 1
+	brom.Character.Level = 3
+	brom.Character.RoomId = b.road.RoomId
+	brom.Character.Validate()
+	users.SetTestUser(brom)
+	b.road.AddPlayer(brom.UserId)
+	t.Cleanup(func() { b.road.RemovePlayer(8) })
+	stream := b.listen()
+
+	forceBlows(t, true)
+	for try := 0; try < 8 && len(interruptsOf(*stream, "u:8")) == 0; try++ {
+		brom.Character.HealthMax.Value, brom.Character.Health = 1000, 1000
+		b.toughen()
+		brom.Character.SetCast(3, characters.SpellAggroInfo{SpellId: "heal", TargetUserIds: []int{8}})
+		b.aria.Character.SetAggro(8, 0, characters.DefaultAttack)
+		b.fight()
+	}
+	require.NotEmpty(t, interruptsOf(*stream, "u:8"), "Aria's blow broke Brom's chant")
+	assert.Nil(t, brom.Character.Aggro, "a hand cast ends with no aim, as a finished one does")
+
+	forceBlows(t, false)
+	counterDice(t, 0, 3, 99)
+	brom.Character.Equipment.Offhand = items.New(20019)
+	brom.Character.HealthMax.Value, brom.Character.Health = 1000, 1000
+	b.toughen()
+	b.aria.Character.SetAggro(8, 0, characters.DefaultAttack)
+	b.fight()
+	assert.Len(t, bashesBy(*stream, "u:8"), 1, "Brom countered Aria's miss")
+	assert.Equal(t, 4, b.aria.Character.PlayerDamage[8], "credited to Brom")
+}
+
 // The shipped goblin hexer, in a band with the bandits, chants Withering
 // Hex at the company's healer (its goblin race aims by casters) and it
 // lands when no blow breaks it.
@@ -457,7 +553,7 @@ func TestGoblinHexerHexesTheHealer(t *testing.T) {
 	b.cmd("attack", fmt.Sprintf("#%d", b.bandits["bandit captain"][0]))
 
 	var hit *combatstream.Event
-	for i := 0; i < 8 && hit == nil; i++ {
+	for i := 0; i < 15 && hit == nil; i++ { // a hex is three rounds; it may fizzle
 		b.toughen()
 		b.hold(nil)
 		b.fight()

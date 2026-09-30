@@ -34,10 +34,10 @@ const (
 	CastProgress Kind = "cast-progress"
 	// CastComplete ends a cast. Outcome is OutcomeCast, OutcomeFizzled, or
 	// OutcomeHeld.
-	CastComplete  Kind = "cast-complete"
-	WindUpStart   Kind = "windup-start" // Phase 30d
-	WindUpLand    Kind = "windup-land"  // Phase 30d
-	Interrupt     Kind = "interrupt"    // Phase 30d
+	CastComplete  Kind = "cast-complete" // outcome cast, fizzled, held, or interrupted (30d1)
+	WindUpStart   Kind = "windup-start"  // Phase 30d
+	WindUpLand    Kind = "windup-land"   // Phase 30d
+	Interrupt     Kind = "interrupt"     // Phase 30d
 	StatusApplied Kind = "status-applied"
 	StatusExpired Kind = "status-expired" // Phase 30a
 	// StatusTick is one combat round of a status (Phase 30a): Damage is what

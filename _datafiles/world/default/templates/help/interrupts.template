@@ -6,9 +6,10 @@ breaks it</ansi>, however light:
 
   <ansi fg="command">The goblin hexer's chant breaks off under the blow. (Withering Hex interrupted)</ansi>
 
-A melee blow, a sling stone, or an arrow breaks it, and so does a blow a
-guardian steps in front of. A miss, a dodged blow, a hit that does no
-damage, bleeding or burning, and a spell do not.
+A melee blow, a sling stone, or an arrow breaks it, and so does a blow
+you take in someone else's place (guarding them, or catching it in the
+front row). A miss, a dodged blow, a hit that does no damage, bleeding or
+burning, and a spell do not.
 
 <ansi fg="yellow-bold">When your chant breaks</ansi>
 

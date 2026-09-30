@@ -22,7 +22,7 @@ character:
   level: 18
   gold: 10
   spellbook:
-    hex: 1
+    hex: 750 # a practised hand: +15 to its chance to cast (about 80%)
   equipment:
     head:
       itemid: 20020
