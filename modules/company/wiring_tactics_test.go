@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
@@ -126,6 +127,9 @@ func TestTacticsFocusMidBattleTurnsEveryoneOnce(t *testing.T) {
 	for _, e := range *stream {
 		if e.Kind == combatstream.FocusChange {
 			focus++
+			cur, _ := battle.Current(7)
+			assert.NotZero(t, e.FightID, "review: the event is placed in the battle's fight")
+			assert.Equal(t, cur.FightID, e.FightID)
 			assert.Equal(t, "strongest", e.Rule)
 			assert.Equal(t, 7, e.Source.UserId)
 		}
@@ -244,13 +248,16 @@ func TestTacticsCommandMidBattle(t *testing.T) {
 	b.unplaced()
 	captain, bruiser, _, _, _ := b.shapeBandits()
 	b.cmd("attack", fmt.Sprintf("#%d", captain))
-	assert.Contains(t, b.cmd("company", "tactics focus strongest"), "still turning", "the battle begins at the next round")
+	// Review: before the battle has begun, the order is refused as such.
+	assert.Contains(t, b.cmd("company", "tactics focus strongest"), "The battle hasn't begun yet", "the battle begins at the next round")
 	b.hold(nil)
 	b.toughen()
 	b.fight()
 
 	b.hold(map[int]int{bruiser: 990})
-	assert.Contains(t, b.cmd("company", "tactics focus strongest"), "You call the company onto the bandit bruiser.")
+	order := b.cmd("company", "tactics focus strongest")
+	assert.Contains(t, order, "You call the company onto the bandit bruiser.")
+	assert.Regexp(t, `Aria calls \w+ company onto the bandit bruiser\.`, order, "the room hears the order")
 	assert.Contains(t, b.cmd("company", "tactics focus leader"), "Your company is still turning; try again next round.")
 	assert.Contains(t, b.cmd("company", "tactics"), "In this battle: focus strongest, until it ends (turning next round)")
 	for _, change := range []string{"tactics healing 70", "tactics default"} {
@@ -262,10 +269,19 @@ func TestTacticsCommandMidBattle(t *testing.T) {
 	b.toughen()
 	b.fight()
 	assert.Equal(t, bruiser, aimOf(b.aria.Character), "the order turned her at the upkeep")
+	for id := 1; id <= 4; id++ {
+		c := &b.companion(id).Character
+		if c.Aggro != nil && c.Aggro.Type == characters.SpellCast {
+			continue // a chant is kept
+		}
+		assert.Equal(t, bruiser, aimOf(c), "%s turned by the command's order", c.Name)
+	}
 	assert.Contains(t, b.cmd("company", "tactics"), "(ready for an order)")
 	assert.Equal(t, strategy.NoFocus, strategy.TacticsFor(7).Focus, "the saved focus is untouched")
 
-	assert.Contains(t, b.cmd("company", "tactics focus default"), "You let each of your company choose their own foe.")
+	back := b.cmd("company", "tactics focus default")
+	assert.Contains(t, back, "You let each of your company choose their own foe.")
+	assert.Regexp(t, `Aria lets each of \w+ company choose their own foe\.`, back, "the room hears it")
 	_, set := battle.Focus(7)
 	assert.False(t, set, "back to the saved focus")
 }
@@ -296,4 +312,46 @@ func TestBattleViewCarriesTheFocus(t *testing.T) {
 	assert.Equal(t, "leader", view["focus"])
 	assert.Equal(t, "wounded", view["saved_focus"])
 	assert.Equal(t, false, view["focus_ready"], "the order waits for the next round")
+}
+
+// Review: an order holds for its battle only; when the battle ends the
+// company aims by the saved focus again (through the real rounds).
+func TestTacticsFocusRevertsWhenTheBattleEnds(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	b.unplaced()
+	b.saveTactics(strategy.Tactics{Focus: strategy.Wounded})
+	captain, _, _, _, _ := b.shapeBandits()
+	b.cmd("attack", fmt.Sprintf("#%d", captain))
+	b.hold(nil)
+	b.toughen()
+	b.fight()
+	assert.Contains(t, b.cmd("company", "tactics focus leader"), "You call the company onto")
+	b.hold(nil)
+	b.toughen()
+	b.fight()
+	rule, _ := enemyparty.Focus(7)
+	require.Equal(t, strategy.Leader, rule, "the order holds in its battle")
+
+	for _, m := range b.livingBandits() { // the battle is won
+		m.Character.Health = 0
+		b.road.RemoveMob(m.InstanceId)
+		mobs.DestroyInstance(m.InstanceId)
+	}
+	b.toughen()
+	b.fight()
+	_, inBattle := battle.Current(7)
+	require.False(t, inBattle, "the battle is over")
+	rule, _ = enemyparty.Focus(7)
+	assert.Equal(t, strategy.Wounded, rule, "the next battle starts from the saved focus")
+	assert.Equal(t, strategy.Wounded, enemyparty.PlayerAttacker(b.aria).Rule)
+}
+
+// Review: tactics, like company, can't be given while downed.
+func TestTacticsRefusedWhileDowned(t *testing.T) {
+	b := newBrawl(t)
+	b.aria.Character.Health = -2
+	b.cmd("tactics", "focus leader")
+	b.cmd("company", "tactics focus leader")
+	assert.Equal(t, strategy.NoFocus, strategy.TacticsFor(7).Focus)
 }

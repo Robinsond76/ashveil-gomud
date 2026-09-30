@@ -317,7 +317,7 @@
 
     // Setup: the formation grid and a row per member, each opening the
     // member menu.
-    function renderSetup(root, data) {
+    function renderSetup(root, data, inBattle) {
         if (hostileHere()) {
             const actions = el('div', 'cbt-actions');
             const scout = el('button', 'cbt-btn', 'Scout');
@@ -352,11 +352,17 @@
         root.appendChild(list);
         const t = data.company.tactics;
         if (t && t.focus) {
+            const how = 'focus ' + t.focus + ', heal below ' + t.healing + '%';
+            if (inBattle) {
+                // The saved tactics are set between battles; in one, the
+                // Focus buttons above call this battle's focus.
+                root.appendChild(el('div', 'cbt-note', 'Company tactics: ' + how + ' (saved; set between battles, or use Focus above)'));
+                return;
+            }
             const tb = el('button', 'cbt-member cbt-tactics');
             tb.type = 'button';
             tb.setAttribute('data-key', 'tactics');
             tb.setAttribute('aria-haspopup', 'menu');
-            const how = 'focus ' + t.focus + ', heal below ' + t.healing + '%';
             tb.appendChild(el('span', null, 'Company tactics'));
             tb.appendChild(el('span', 'cbt-how', how));
             tb.setAttribute('aria-label', 'Company tactics: ' + how);
@@ -500,7 +506,7 @@
             root.appendChild(el('div', 'cbt-note', "It's too dark to make them out."));
             const setup = el('details', 'cbt-setup');
             setup.appendChild(el('summary', null, 'Setup: formation and strategies'));
-            renderSetup(setup, data);
+            renderSetup(setup, data, true);
             root.appendChild(setup);
             return;
         }
@@ -598,7 +604,7 @@
 
         const setup = el('details', 'cbt-setup');
         setup.appendChild(el('summary', null, 'Setup: formation and strategies'));
-        renderSetup(setup, data);
+        renderSetup(setup, data, true);
         root.appendChild(setup);
 
         requestAnimationFrame(drawLines);

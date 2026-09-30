@@ -69,7 +69,8 @@ Each task writes its tests first and runs only its own packages.
     `keepPartyEngaged`, and the race data. The brawl turns noise off
     so the existing fights keep their targets.
 - [x] **6. The command (`modules/company`).**
-  - Tests first (`tactics_test.go`, fakes for the provider): show;
+  - Tests first (through the real command and provider in the brawl,
+    `wiring_tactics_test.go`, rather than a separate fake-backed file): show;
     focus and healing set and saved; bad values; `default`; refusals in a
     battle; the "still turning" cooldown; the room line.
   - Add `tactics.go`, the `company tactics` case, and the `tactics`

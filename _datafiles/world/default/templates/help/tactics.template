@@ -35,7 +35,8 @@ each keeps their target as usual. You can give one order a round: until
 the company has turned, another is refused ("Your company is still
 turning; try again next round."). <ansi fg="command">company tactics focus default</ansi> returns
 to your saved focus. When the battle ends, the next one starts from your
-saved focus again. Nothing else about your tactics can change in a battle.
+saved focus again, and an order not yet carried out ends with it. Right
+after <ansi fg="command">attack</ansi>, wait a round for the battle to begin before calling one. Nothing else about your tactics can change in a battle.
 
 <ansi fg="yellow-bold">The healing threshold</ansi>
 

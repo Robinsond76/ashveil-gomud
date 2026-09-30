@@ -32,11 +32,16 @@ func beginRefocus() {
 		if u == nil || u.Character == nil {
 			continue
 		}
+		// The order's own fight, so the event lands on the right one.
+		fightID := uint64(0)
+		if b, ok := battle.Current(uid); ok {
+			fightID = b.FightID
+		}
 		rule := string(strategy.NoFocus)
 		if r, ok := enemyparty.Focus(uid); ok {
 			rule = string(r)
 		}
-		emitCombat(combatstream.Event{Kind: combatstream.FocusChange, RoomId: u.Character.RoomId, Source: userRef(u), Rule: rule})
+		emitCombat(combatstream.Event{Kind: combatstream.FocusChange, FightID: fightID, RoomId: u.Character.RoomId, Source: userRef(u), Rule: rule})
 	}
 }
 

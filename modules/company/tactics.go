@@ -29,6 +29,10 @@ const tacticsUsage = `Usage: company tactics | company tactics focus <none|leade
 // out, or one given before the battle has begun.
 const tacticsStillTurning = `Your company is still turning; try again next round.`
 
+// tacticsNotYet answers an order given after attack but before the battle
+// has begun (the next round begins it).
+const tacticsNotYet = `The battle hasn't begun yet; call a focus once it has, next round.`
+
 // tacticsOnlyFocus answers any other tactics change in a battle.
 const tacticsOnlyFocus = `In the middle of a battle you can only call a new focus (<ansi fg="command">company tactics focus [rule]</ansi>).`
 
@@ -117,7 +121,10 @@ func (m *CompanyModule) orderFocus(user *users.UserRecord, room *rooms.Room, val
 		rule = f
 		err = battle.SetFocus(user.UserId, string(f))
 	}
-	if errors.Is(err, battle.ErrFocusPending) || errors.Is(err, battle.ErrNoBattle) {
+	if errors.Is(err, battle.ErrNoBattle) {
+		return tacticsNotYet
+	}
+	if errors.Is(err, battle.ErrFocusPending) {
 		return tacticsStillTurning
 	}
 	if err != nil {

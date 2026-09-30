@@ -50,7 +50,8 @@ button in them just types a command for you.
 
   Combat: click a member to change their role or target rule (<ansi fg="command">strategy</ansi>)
   or where they stand (<ansi fg="command">formation</ansi>); click Company tactics to set the
-  focus or healing threshold (<ansi fg="command">company tactics</ansi>). Scout appears when
+  focus or healing threshold (<ansi fg="command">company tactics</ansi>; the row appears once you
+  have a company, and during a battle it only shows your saved tactics). Scout appears when
   enemies are here (<ansi fg="command">scout</ansi>).
 
 <ansi fg="yellow-bold">The Battle view</ansi>

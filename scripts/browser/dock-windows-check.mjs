@@ -432,6 +432,7 @@ focused.focus_ready = true;
 await page.evaluate(b => window.gmcp('Company.Battle', b), focused);
 got = await sentNow(async () => { await page.getByRole('button', { name: 'saved (none)' }).click(); });
 check(JSON.stringify(got) === '["company tactics focus default"]', 'saved returns to the saved focus');
+check(await page.getByRole('button', { name: /^Company tactics/ }).count() === 0 && (await cbt()).includes('Company tactics: focus none, heal below 50% (saved'), 'in a battle, Setup shows the saved tactics without a menu');
 
 // Narrow: the dock at 280px in a 360px window.
 await page.setViewportSize({ width: 360, height: 800 });

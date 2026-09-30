@@ -186,8 +186,8 @@ func init() {
 	m.saveUser = nativeSaveUser
 	m.plug.AddUserCommand("company", m.userCommand, false, false)
 	m.plug.AddUserCommand("formation", m.formationCommand, false, false)
-	m.plug.AddUserCommand("heal", m.healCommand, false, false)      // Phase 30b
-	m.plug.AddUserCommand("tactics", m.tacticsCommand, true, false) // Phase 30c: company tactics
+	m.plug.AddUserCommand("heal", m.healCommand, false, false)       // Phase 30b
+	m.plug.AddUserCommand("tactics", m.tacticsCommand, false, false) // Phase 30c: company tactics
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.

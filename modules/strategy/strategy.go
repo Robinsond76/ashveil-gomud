@@ -276,7 +276,7 @@ func lowerKeys(raw any) map[string]any {
 
 func (m *StrategyModule) persistenceAvailableLocked() error {
 	if m.loadErr != nil {
-		return fmt.Errorf("strategies can't be changed until they load again: %w", m.loadErr)
+		return fmt.Errorf("strategies and tactics can't be changed until they load again: %w", m.loadErr)
 	}
 	if m.store == nil {
 		return errors.New("strategies can't be saved right now")
