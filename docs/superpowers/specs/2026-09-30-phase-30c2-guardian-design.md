@@ -28,7 +28,10 @@ standing "proceed with your recommendation" instruction.
     ward set, the guardian guards the most hurt member within one column.
 12. **Knocked down or stunned: can't guard; guards kept** (recommended,
     chosen). While either status lasts the guardian doesn't step in, but it
-    keeps its unspent guards and refills as usual.
+    keeps its unspent guards and refills as usual. (The question said the
+    statuses last 1–2 rounds; the shipped data has knocked down 4 combat
+    rounds and stunned 3, so a guardian is out of it that long. Flagged to
+    the owner.)
 
 ## Prior-art check (against `master` at `bc4e311`, 2026-09-30)
 

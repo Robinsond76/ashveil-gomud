@@ -185,3 +185,23 @@ func TestKnockdownSpeedEndsWithIt(t *testing.T) {
 	assert.True(t, got[0].Expired)
 	assert.Equal(t, base, c.Stats.Speed.ValueAdj, "back up the round it ends")
 }
+
+func TestGrounded(t *testing.T) {
+	loadShipped(t)
+	for id, want := range map[int]bool{KnockedDown: true, Stunned: true, Staggered: false, Bleeding: false} {
+		c := holder(t)
+		if Grounded(c) {
+			t.Fatal("nothing on")
+		}
+		if err := c.AddBuff(id, false); err != nil {
+			t.Fatal(err)
+		}
+		if got := Grounded(c); got != want {
+			t.Errorf("%s: Grounded = %v", Word(id), got)
+		}
+		Clear(c)
+		if Grounded(c) {
+			t.Errorf("%s: cleared", Word(id))
+		}
+	}
+}

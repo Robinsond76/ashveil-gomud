@@ -160,6 +160,10 @@ func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leade
 	if !legalOk {
 		return nil, false, false
 	}
+	// Phase 30c2: a guardian of the member struck steps in.
+	if g, guarded := guardianFor(leader, f, finalKey); guarded {
+		finalKey = g.key
+	}
 	if finalKey == defenderKey {
 		return defMob, false, true
 	}
@@ -228,6 +232,10 @@ func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, de
 	finalKey, legalOk := resolveAttackTarget(attackerCol, f, company.LeaderMemberKey, alive, reach)
 	if !legalOk {
 		return false, false
+	}
+	// Phase 30c2: a guardian of the member struck steps in.
+	if g, guarded := guardianFor(defUser, f, finalKey); guarded {
+		finalKey = g.key
 	}
 	if finalKey == company.LeaderMemberKey {
 		return false, true

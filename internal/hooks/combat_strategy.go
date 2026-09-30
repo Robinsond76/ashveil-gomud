@@ -91,7 +91,8 @@ func strategyPass() {
 				continue
 			}
 			role := enemyparty.MemberStrategy(uid, a.key).Role
-			if role == strategy.Fighter {
+			// A guardian fights as a fighter (Phase 30c2).
+			if role == strategy.Fighter || role == strategy.Guardian {
 				continue
 			}
 			action := strategy.Decide(strategy.Situation{

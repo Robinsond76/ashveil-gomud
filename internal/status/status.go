@@ -244,3 +244,15 @@ func Words(buffIds []int) []string {
 	}
 	return out
 }
+
+// Grounded reports whether c is knocked down or stunned now (a live
+// status): a guardian so held can't step in (Phase 30c2).
+func Grounded(c *characters.Character) bool {
+	grounded := false
+	each(c, func(b *buffs.Buff, s *Spec) {
+		if !b.Expired() && (s.Id == KnockedDown || s.Id == Stunned) {
+			grounded = true
+		}
+	})
+	return grounded
+}

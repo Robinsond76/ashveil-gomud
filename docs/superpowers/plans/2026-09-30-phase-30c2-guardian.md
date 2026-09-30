@@ -7,7 +7,7 @@ Branch: `phase-30c2-guardian`, worktree `.worktrees/phase-30c2-guardian`.
 
 Each task writes its tests first and runs only its own packages.
 
-- [ ] **1. `internal/strategy` and `internal/formationcombat` (pure).**
+- [x] **1. `internal/strategy` and `internal/formationcombat` (pure).**
   - Tests first:
     - `ParseRole` reads `guardian`, `guard`, `protector`; `ParseRule`
       no longer reads `guard` (`protect`, `defend` still do);
@@ -18,7 +18,7 @@ Each task writes its tests first and runs only its own packages.
     - `formationcombat.GuardReach`: same column, next column, two away,
       unplaced (fails open).
   - Add them; update `internal/strategy/AGENTS.md`.
-- [ ] **2. Durable ward (`modules/strategy`).**
+- [x] **2. Durable ward (`modules/strategy`).**
   - Tests first (`guardian_test.go`, fake env as `strategy_test.go`):
     `strategy tamsin guard` (guardian, most hurt); `strategy tamsin guard
     me` and `guard oswin`; `guardian <other>`; self refused; unknown
@@ -28,13 +28,13 @@ Each task writes its tests first and runs only its own packages.
     non-guardian or a blank-key ward is dropped on load; prune drops a
     ward naming a companion no longer on the record.
   - Add the forms, warnings, listing, cleaning; update `AGENTS.md`.
-- [ ] **3. Guard counts (`internal/battle`).**
+- [x] **3. Guard counts (`internal/battle`).**
   - Tests first (`guard_test.go`): `GuardsLeft` starts at 2 for a key in
     a battle, 0 with no battle; `SpendGuard` to 0 and refused at 0;
     `TickGuards` refills one per 2 ticks, capped at 2, not when full;
     `End` and a new `Begin` reset; copies out (no shared maps).
   - Add `Battle.Guards`, the functions; update `AGENTS.md` if present.
-- [ ] **4. The guard in combat (`internal/hooks`).**
+- [x] **4. The guard in combat (`internal/hooks`).**
   - `combat_guard.go`: `guardFor(leader, struck key)` picks the guardian
     (formation order, able, not down or stunned, in reach, a guard left),
     spends it, narrates, emits `guard-used`/`guard-exhausted`; called in
@@ -54,7 +54,7 @@ Each task writes its tests first and runs only its own packages.
     - `TestGuardianKnockedDown`;
     - `TestGuardianMostHurt`;
     - `TestGuardianRefusedInBattle`.
-- [ ] **5. `formation` warning (`modules/company`).**
+- [x] **5. `formation` warning (`modules/company`).**
   - Tests first: a `formation move` that puts a guardian two columns from
     its ward prints the warning; moving back clears it (in
     `wiring_guardian_test.go`).
