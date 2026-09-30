@@ -244,9 +244,12 @@ func TestSparksOverloadsItsTargetsThroughARealCast(t *testing.T) {
 	c.SpellBook["sparks"] = 5000
 	c.Stats.Mysticism.ValueAdj = 1000
 
+	// Every cast can fizzle (a roll of 100 fails even a 100% chance), and a
+	// companion's crit can leave another status on the cutthroat, so recast
+	// until the sparks themselves have overloaded it.
 	target := mobs.GetInstance(cutthroat)
 	var transcript string
-	for attempt := 0; attempt < 30 && !status.Has(&target.Character); attempt++ {
+	for attempt := 0; attempt < 30 && !target.Character.HasBuff(status.Overloaded); attempt++ {
 		b.toughen()
 		target.Character.HealthMax.Value, target.Character.Health = 1000, 1000 // it must outlast the company
 		c.SetCast(0, characters.SpellAggroInfo{SpellId: "sparks", TargetMobInstanceIds: []int{cutthroat}})

@@ -6,7 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-30
-- **HEAD:** `master` 2026-09-30: Phase 30b (wounds, treatment, and
+- **HEAD:** `master` 2026-09-30: the `modules/company` brawl test flakes
+  fixed, merged from `fix-brawl-flakes` (test-only; see the work log).
+  Before it, Phase 30b (wounds, treatment, and
   `heal wounds`), merged from `phase-30b-wounds`.
   Before it, on `master` 2026-09-29: Phase 30a (status and critical-hit
   effects), merged as `2ef931c` from `claude/next-phase-7ekckc`. Before it,
@@ -152,6 +154,37 @@ Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
 
+### Brawl test flakes fixed (2026-09-30, not a phase)
+
+- **What:** the `modules/company` brawl wiring tests failed in about 1 of
+  3 full package runs (7 of 30 on `master` here). Each failure was
+  reproduced and root-caused; the fixes are test-only, and no game
+  behaviour changed.
+  - **Leaked grudges:** a fight makes the bandits' group hostile to Aria
+    (user 7) for many rounds in `mobs` package state, so the next brawl's
+    "non-hostile" bandits attacked at once (companions untracked or not
+    healing in `TestMinorHealCombatPronouns`). New test helper
+    `mobs.ResetHostility`; `newBrawl` resets before and after.
+  - **Companions levelling:** a level-1 mob spawns holding level 2's
+    experience (`NewMobById` sets `XPTL(0)`, which clamps to `XPTL(1)`),
+    so with kill XP off its first kill still levels it and refills its
+    health (`TestPacedCombatThroughTheRealRound`: the 1-HP companion
+    never fell). `newBrawl` starts level-1 companions at 0 experience.
+  - **Fizzles:** every cast has a 1% fizzle (a roll of 100 fails even a
+    100% chance), so no skill can guarantee one. The Minor Heal test
+    recasts after a fizzle; the Sparks test's loop now waits for
+    Overloaded itself (it stopped on any status, such as a companion's
+    stagger, after a fizzled cast).
+  - **Kill speed:** `TestBattleViewPerPlayer` toughens the waiting bandits
+    (a crit from Brom ended his battle in the round it began, before the
+    test looked), and `TestPronounsAndOrdinalsThroughRealRound` keeps the
+    second cutthroat standing until it has swung after the first's death.
+  - **A last-round crit:** `TestLightWoundsCloseWithTheFight` turns crits
+    off, so the final round can't add a lasting wound beside the fracture.
+- **Verification:** see below.
+- **Review:** no phase review gate (test-only fix); the diff was read for
+  weakened assertions (none: each still asserts the same text and events).
+
 ### Phase 30b: wounds, treatment, and `heal wounds` (2026-09-30)
 
 - **What:**
@@ -281,10 +314,13 @@ docs/PROJECT_STATUS.md`.
   one battle lands if the next battle has already begun against the same
   player (who is then in that fight). No sling-specific stagger, shield stun,
   or fire spell for Burning yet (a weapon override can burn). Mobs are not
-  held by `no-flee`, and natural (generic) attacks leave no status. The
-  `modules/company` brawl tests have a pre-existing intermittent failure
-  (about 2 of 16 full runs, on `master` too): an un-toughened companion
-  falls to a random crit.
+  held by `no-flee`, and natural (generic) attacks leave no status. (The
+  brawl tests' intermittent failures are fixed; see the work log.)
+
+- **Found fixing the brawl flakes, for the owner (behaviour, not fixed):**
+  a level-1 mob, companions included, spawns with level 2's experience, so
+  it levels on its first kill whatever the kill pays; and every cast
+  fizzles on a roll of 100, even at a 100% chance.
 
 - **Live battle view (32g2), deferred:** casting, statuses, wounds, and guards on the grid (Phase 30); the
   battle summary in the view; exact enemy numbers behind a skill. (29f
