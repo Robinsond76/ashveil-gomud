@@ -186,7 +186,8 @@ func init() {
 	m.saveUser = nativeSaveUser
 	m.plug.AddUserCommand("company", m.userCommand, false, false)
 	m.plug.AddUserCommand("formation", m.formationCommand, false, false)
-	m.plug.AddUserCommand("heal", m.healCommand, false, false) // Phase 30b
+	m.plug.AddUserCommand("heal", m.healCommand, false, false)      // Phase 30b
+	m.plug.AddUserCommand("tactics", m.tacticsCommand, true, false) // Phase 30c: company tactics
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.
@@ -261,7 +262,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company chemistry | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -751,6 +752,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(text)
 	case "status":
 		user.SendText(m.status(user.UserId))
+	case "tactics":
+		user.SendText(m.tactics(user, room, args[1:])) // Phase 30c
 	case "alignment":
 		user.SendText(m.alignmentView(user.UserId))
 	case "chemistry":

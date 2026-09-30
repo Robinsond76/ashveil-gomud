@@ -68,7 +68,7 @@ Each task writes its tests first and runs only its own packages.
   - Add the fields, `hooks.UseAimRollForTest`, the enemy path in
     `keepPartyEngaged`, and the race data. The brawl turns noise off
     so the existing fights keep their targets.
-- [ ] **6. The command (`modules/company`).**
+- [x] **6. The command (`modules/company`).**
   - Tests first (`tactics_test.go`, fakes for the provider): show;
     focus and healing set and saved; bad values; `default`; refusals in a
     battle; the "still turning" cooldown; the room line.

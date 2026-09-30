@@ -214,3 +214,58 @@ func TestEnemyPersonalities(t *testing.T) {
 		})
 	}
 }
+
+func TestTacticsCommand(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	out := b.cmd("company", "tactics")
+	assert.Contains(t, out, "Focus:   none (each member goes for the foe its own strategy picks)")
+	assert.Contains(t, out, "below 50% of their health")
+	assert.Regexp(t, `Brother Oswin\s+healer, weakest`, out)
+	assert.Equal(t, out, b.cmd("tactics", ""), "the shorthand")
+
+	assert.Contains(t, b.cmd("company", "tactics focus leader"), "Your company's focus is now leader: everyone goes for their leader")
+	assert.Equal(t, strategy.Leader, strategy.TacticsFor(7).Focus)
+	assert.Contains(t, b.cmd("company", "tactics"), "the focus overrides whom they go for; roles stay")
+	assert.Contains(t, b.cmd("company", "tactics focus assist"), `"assist" is no focus`)
+	assert.Contains(t, b.cmd("company", "tactics focus sideways"), "Choose one of: none, leader, casters")
+	assert.Contains(t, b.cmd("company", "tactics healing 70"), "below 70% of their health")
+	assert.Contains(t, b.cmd("company", "tactics healing 45"), "from 10 to 90, in tens")
+	assert.Equal(t, strategy.Tactics{Focus: strategy.Leader, Healing: 70}, strategy.TacticsFor(7))
+	assert.Contains(t, b.cmd("company", "tactics focus default"), "focus is now none")
+	assert.Contains(t, b.cmd("company", "tactics default"), "back to the defaults")
+	assert.Equal(t, strategy.Tactics{Focus: strategy.NoFocus, Healing: 50}, strategy.TacticsFor(7))
+	assert.Contains(t, b.cmd("company", "tactics sideways"), "Usage: company tactics")
+}
+
+func TestTacticsCommandMidBattle(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	b.unplaced()
+	captain, bruiser, _, _, _ := b.shapeBandits()
+	b.cmd("attack", fmt.Sprintf("#%d", captain))
+	assert.Contains(t, b.cmd("company", "tactics focus strongest"), "still turning", "the battle begins at the next round")
+	b.hold(nil)
+	b.toughen()
+	b.fight()
+
+	b.hold(map[int]int{bruiser: 990})
+	assert.Contains(t, b.cmd("company", "tactics focus strongest"), "You call the company onto the bandit bruiser.")
+	assert.Contains(t, b.cmd("company", "tactics focus leader"), "Your company is still turning; try again next round.")
+	assert.Contains(t, b.cmd("company", "tactics"), "In this battle: focus strongest, until it ends (turning next round)")
+	for _, change := range []string{"tactics healing 70", "tactics default"} {
+		assert.Contains(t, b.cmd("company", change), "only call a new focus", change)
+	}
+	assert.Contains(t, b.cmd("strategy", "me weakest"), "The battle is under way", "setup stays locked")
+	assert.Contains(t, b.cmd("formation", "move me 1 1"), "The battle is under way")
+
+	b.toughen()
+	b.fight()
+	assert.Equal(t, bruiser, aimOf(b.aria.Character), "the order turned her at the upkeep")
+	assert.Contains(t, b.cmd("company", "tactics"), "(ready for an order)")
+	assert.Equal(t, strategy.NoFocus, strategy.TacticsFor(7).Focus, "the saved focus is untouched")
+
+	assert.Contains(t, b.cmd("company", "tactics focus default"), "You let each of your company choose their own foe.")
+	_, set := battle.Focus(7)
+	assert.False(t, set, "back to the saved focus")
+}

@@ -74,3 +74,12 @@ func TestUserPurgedForgetsTactics(t *testing.T) {
 	_, kept := store.saved.Tactics[4401]
 	assert.False(t, kept)
 }
+
+func TestListNamesTheCompanyFocus(t *testing.T) {
+	m, _, u, _ := testModule(t)
+	domain.SetTacticsProvider(m)
+	t.Cleanup(func() { domain.SetTacticsProvider(module) })
+	assert.NotContains(t, run(m, u, ""), "Your company's focus")
+	require.NoError(t, m.SetTactics(4401, domain.Tactics{Focus: domain.Leader}))
+	assert.Contains(t, run(m, u, ""), "Your company's focus is leader (company tactics): instead of these rules, everyone goes for their leader, the toughest of them.")
+}

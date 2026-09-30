@@ -306,6 +306,10 @@ func (m *StrategyModule) list(userID int, members []member) string {
 		}
 		b.WriteString(strings.TrimRight(line, " ") + "\n")
 	}
+	// Phase 30c: a company focus overrides every target rule above.
+	if focus, ok := domain.TacticsFor(userID).FocusRule(); ok {
+		fmt.Fprintf(&b, "Your company's focus is %s (<ansi fg=\"command\">company tactics</ansi>): instead of these rules, everyone goes for %s.\n", focus, focus.Describe())
+	}
 	b.WriteString(usage)
 	return b.String()
 }

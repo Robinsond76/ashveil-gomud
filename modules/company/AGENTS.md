@@ -90,3 +90,8 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 - `MemberView.HPLimit` (via `Runtime.HealthLimit`) feeds `internal/companyview` and GMCP.
 - `heal` lists the hurt; `heal wounds` (refused while the leader is in a battle or anyone present has aggro) plans with `wounds.Plan`: clerics first (a player needs `cast` and the spell; a companion its archetype's spells at its level), then items spent before they are applied (cargo, the patient's pack, the leader's, the other companions'), then a configured physician (`Physicians` in the config overlay, matched by template room) asked through the user prompt; `yes` re-checks the price, takes the gold, clears every present member's wounds, saves the company and the user. Instant; never touches the clock.
 - `wiring_heal_wounds_test.go`, `wiring_wounds_test.go`, and `wiring_wound_spells_test.go` run in the brawl world.
+
+## Phase 30c1: company tactics (`tactics.go`)
+
+- `company tactics` (and the `tactics` shorthand) shows and sets the company focus and healing threshold, stored by `modules/strategy` through `strategy.SaveTactics` (never on the company record, so a solo player has them too). Out of a battle every change saves; in one only `focus` is open, as a battle-only order (`battle.SetFocus`/`ClearFocus`, one a round, "still turning" until the next upkeep applies it). The order's line names the focus's choice among every foe standing.
+- `wiring_tactics_test.go` covers the focus, the threshold, the mid-battle order, and enemy personalities in the brawl world. `newBrawl` turns off personality noise (`hooks.UseAimRollForTest`).
