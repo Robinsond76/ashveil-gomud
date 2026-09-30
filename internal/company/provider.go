@@ -133,6 +133,26 @@ type ChemistryStandingView struct {
 	Bonus    int
 }
 
+// SupplyProvider is optionally implemented by the registered
+// FormationProvider: a camp rest's use of the company's bandages
+// (Phase 30b follow-up). Game loop only.
+type SupplyProvider interface {
+	// SpendBandage uses up one bandage the leader's company can reach (the
+	// cargo, then the companions' packs and the leader's), reporting
+	// whether there was one.
+	SpendBandage(leaderUserID int) bool
+}
+
+// SpendBandage spends one of the company's bandages; false with no
+// provider or no bandage.
+func SpendBandage(leaderUserID int) bool {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	sp, ok := p.(SupplyProvider)
+	return ok && sp.SpendBandage(leaderUserID)
+}
+
 // ChemistryProvider is optionally implemented by the registered
 // FormationProvider (Phase 24). modules/company runs on the game loop, so
 // call these from the game loop only.

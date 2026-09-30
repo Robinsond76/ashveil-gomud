@@ -4,7 +4,9 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
@@ -85,7 +87,7 @@ func TestHealWoundsClericThenItems(t *testing.T) {
 	assert.Contains(t, cargo.consumed, bandageItemID, "under half her limit: bandaged")
 	assert.Contains(t, out, "You wrap Tamsin Reed's hurts.")
 	assert.Contains(t, out, "Still hurt: Tamsin Reed")
-	assert.Contains(t, out, "A camp rest or an inn will do the rest.")
+	assert.Contains(t, out, "An inn will do the rest, or a camp rest with a bandage for each wound.")
 	assert.Equal(t, turn, util.GetTurnCount(), "never advances the clock")
 	assert.Equal(t, round, util.GetRoundCount())
 }
@@ -207,4 +209,20 @@ func TestHealWoundsSpentHealers(t *testing.T) {
 	b.companion(2).Character.Mana = 0
 	b.aria.Character.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "arm", Points: 2}}
 	assert.Contains(t, b.cmd("heal", "wounds"), "Your healers have no mana left.")
+}
+
+// A camp rest spends bandages through company.SpendBandage: the cargo
+// first, then the packs; none left reports false.
+func TestSpendBandageThroughTheProvider(t *testing.T) {
+	b := newBrawl(t)
+	cargo := &fakeCargo{stacks: []encumbrance.CargoStack{{ItemId: bandageItemID, Count: 1}}}
+	useCargo(t, cargo)
+	b.aria.Character.StoreItem(items.New(bandageItemID))
+	assert.True(t, domain.SpendBandage(7))
+	assert.Equal(t, []int{bandageItemID}, cargo.consumed, "the cargo first")
+	assert.True(t, domain.SpendBandage(7), "then the leader's pack")
+	for _, itm := range b.aria.Character.Items {
+		assert.NotEqual(t, bandageItemID, itm.ItemId)
+	}
+	assert.False(t, domain.SpendBandage(7), "none left")
 }

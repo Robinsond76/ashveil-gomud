@@ -41,9 +41,11 @@ heal a wounded member only up to their limit.
   birch splint       closes 4 points of a broken bone; used up
   a physician        closes every wound, for gold (15 a wound at the
                      Waymark Inn in Dunmar)
-  a camp rest        a completed rest (<ansi fg="command">help camp</ansi>) knits every wound of
-                     the company with you
-  an inn stay        so does a completed night at an inn (<ansi fg="command">help inn</ansi>)
+  an inn stay        a completed night at an inn (<ansi fg="command">help inn</ansi>) knits every
+                     wound of the company with you
+  a camp rest        a completed rest (<ansi fg="command">help camp</ansi>) knits one wound for
+                     each linen bandage the company has, using it up;
+                     without bandages, a camp heals no wounds
 
 Bandages and splints are sold in the markets of Dunmar and the Old Kings
 Road (<ansi fg="command">help market</ansi>). Death clears your wounds, and a companion raised

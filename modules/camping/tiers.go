@@ -1,6 +1,7 @@
 package camping
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -197,9 +198,13 @@ func (m *CampingModule) grantPendingTiers() {
 		} else if granted {
 			user.SendText("Your company is Rested: the road will feel a little lighter for a while.")
 		}
-		// Phase 30b: a completed rest, camp or inn, knits every wound of
-		// the members present.
-		for _, line := range healRestWounds(user.Character, live) {
+		// Phase 30b: an inn stay knits every wound of the members present;
+		// a camp rest only those it has a bandage for (owner, 2026-09-30).
+		spend := m.bandage(leaderUserID)
+		if tier == camping.TierWellRested {
+			spend = nil
+		}
+		for _, line := range healRestWounds(user.Character, live, spend) {
 			user.SendText(line)
 		}
 		// Review fix: the leader's limit may have risen.
@@ -218,23 +223,53 @@ func (m *CampingModule) grantPendingTiers() {
 	}
 }
 
-// healRestWounds closes every wound of the leader and the live companions
-// (Phase 30b), with a line for each lasting wound it closes.
-func healRestWounds(leader *characters.Character, live map[int]*characters.Character) []string {
+// bandage is the seam a camp rest spends the company's bandages through.
+func (m *CampingModule) bandage(leaderUserID int) func() bool {
+	if m.spendBandage != nil {
+		return func() bool { return m.spendBandage(leaderUserID) }
+	}
+	return func() bool { return company.SpendBandage(leaderUserID) }
+}
+
+// healRestWounds closes the wounds of the leader and the live companions
+// at a rest's end (Phase 30b), with a line for each lasting wound it
+// closes. With spend nil (an inn stay) every wound closes. Otherwise (a
+// camp rest) each lasting wound closes only for a bandage spend can use
+// up; the rest stay open, and a line says what would help.
+func healRestWounds(leader *characters.Character, live map[int]*characters.Character, spend func() bool) []string {
 	var lines []string
+	open, outOfBandages := 0, false
 	heal := func(c *characters.Character, owner string) {
+		var kept []wounds.Wound
 		for _, w := range wounds.Lasting(c.Wounds) {
+			used := ""
+			if spend != nil {
+				if outOfBandages || !spend() {
+					outOfBandages = true
+					kept = append(kept, w)
+					open++
+					continue
+				}
+				used = "; a bandage used"
+			}
 			verb := " has knit."
 			if w.Place == "ribs" {
 				verb = " have knit."
 			}
-			lines = append(lines, util.CapitalizeFirst(wounds.Possessive(owner, w))+verb+" (wound healed)")
+			lines = append(lines, util.CapitalizeFirst(wounds.Possessive(owner, w))+verb+" (wound healed"+used+")")
 		}
-		c.Wounds = nil
+		c.Wounds = kept
 	}
 	heal(leader, "your")
 	for _, id := range sortedIDs(live) {
 		heal(live[id], `<ansi fg="username">`+live[id].Name+`</ansi>'s`)
+	}
+	if open > 0 {
+		noun := "wounds stay"
+		if open == 1 {
+			noun = "wound stays"
+		}
+		lines = append(lines, fmt.Sprintf("With no bandages left, %d %s open. Bandages, an inn, or a physician will close them (<ansi fg=\"command\">help wounds</ansi>).", open, noun))
 	}
 	return lines
 }

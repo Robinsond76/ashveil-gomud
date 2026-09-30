@@ -290,6 +290,8 @@ type CampingModule struct {
 	// companion ID, and every rostered companion ID.
 	companionsOf func(leaderUserID int) (map[int]*characters.Character, []int)
 	grantBuff    func(c *characters.Character, buffID, rounds int) error
+	// spendBandage overrides the company's bandages in tests (Phase 30b).
+	spendBandage func(leaderUserID int) bool
 	removeBuff   func(c *characters.Character, buffID int)
 	hasBuff      func(c *characters.Character, buffID int) bool
 	// buffRounds overrides a held buff's rounds left in tests (Phase 26a).
