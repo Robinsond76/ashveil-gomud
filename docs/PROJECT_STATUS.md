@@ -165,8 +165,9 @@ after the 30g slices. Other remaining limitations are listed below.
   review fix's test was checked to fail without it
   (`TestBalanceSidesStayEven`, `TestBalanceStatusesLand`). Final
   (2026-09-30, after the review fixes): `make generate` (no diff),
-  `make validate`, and `go test -race ./...` all passed. The gated table
-  runs in about 2–3 minutes at 50 fights a cell.
+  `make validate`, and `go test -race ./...` all passed, and passed again
+  after merging `master` (30d2 and the docs reorganisation) into the
+  branch. The gated table runs in about 2–3 minutes at 50 fights a cell.
 - **Review:** the independent default-agent reviewer checked fairness,
   the tally, the leader clamp, the real paths, and the invariants (clock,
   leaks, concurrency: all fine); each finding was checked.
