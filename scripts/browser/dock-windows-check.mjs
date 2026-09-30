@@ -272,6 +272,24 @@ got = await sentNow(async () => { await page.getByRole('button', { name: 'Oswin:
 check(JSON.stringify(got) === '["formation swap #1 me"]', 'swap two members');
 got = await sentNow(async () => { await page.getByRole('button', { name: 'Oswin: healer, weakest' }).click(); await page.getByText('Back to the default').click(); });
 check(JSON.stringify(got) === '["strategy #1 default"]', 'back to the default');
+// Phase 30c2: guardians.
+await page.getByRole('button', { name: /^Wren \(you\)/ }).click();
+const roleMenu = await page.evaluate(() => [...[...document.querySelectorAll('body > div')].pop().children].map(c => c.textContent));
+check(roleMenu.includes('Role: guardian') && !roleMenu.some(l => l.startsWith('Guard: ')), 'guardian is a role; no ward items for a non-guardian');
+await page.keyboard.press('Escape');
+await page.mouse.click(5, 5);
+await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].strategy = { role: 'guardian', target: 'weakest', ward: 'leader' }; window.gmcp('Company', g); }, company);
+check(await page.getByRole('button', { name: 'Oswin: guardian, weakest, guards you' }).count() === 1, 'a guardian\'s row says whom it guards');
+await page.getByRole('button', { name: 'Oswin: guardian, weakest, guards you' }).click();
+const gMenu = await page.evaluate(() => [...[...document.querySelectorAll('body > div')].pop().children].map(c => c.textContent));
+check(gMenu.includes('Guard: the most hurt') && !gMenu.includes('Guard: you') && !gMenu.includes('Guard: Ysolde') && !gMenu.includes('Guard: Oswin') && !gMenu.includes('Role: guardian'), 'a guardian\'s menu: other wards and the most hurt, not the fallen or itself (' + gMenu.filter(l => l.startsWith('Guard')).join(', ') + ')');
+got = await sentNow(async () => { await page.getByText('Guard: the most hurt').click(); });
+check(JSON.stringify(got) === '["strategy #1 guard"]', 'guard the most hurt');
+got = await sentNow(async () => { await page.getByRole('button', { name: /^Oswin: guardian/ }).click(); await page.getByText('Guard: Tamsin').click(); });
+check(JSON.stringify(got) === '["strategy #1 guard #3"]', 'guard another member');
+await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].strategy = { role: 'guardian', target: 'weakest', ward: 'leader', ward_reach: false }; window.gmcp('Company', g); }, company);
+check(await page.getByRole('button', { name: 'Oswin: guardian, weakest, guards you (out of reach)' }).count() === 1, 'a ward out of reach is marked');
+await page.evaluate(c => window.gmcp('Company', c), company);
 // Phase 30c: the tactics row.
 check(await page.getByRole('button', { name: 'Company tactics: focus none, heal below 50%' }).count() === 1, 'Setup shows the saved tactics');
 got = await sentNow(async () => { await page.getByRole('button', { name: /^Company tactics/ }).click(); await page.getByText('Heal below 70%').click(); });
@@ -361,6 +379,13 @@ await page.getByRole('button', { name: /^the slinger/ }).focus();
 check((await lit()) === 'm:414 u:9', 'keyboard focus lights a fighter too');
 got = await sentNow(async () => { await page.getByRole('button', { name: /^Oswin, health/ }).click(); await page.getByText('Role: caster').click(); });
 check(JSON.stringify(got) === '["strategy #1 caster"]', 'a member\'s click opens the Setup menu');
+// Phase 30c2: a guardian's ward and guards left in the battle view.
+await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.guards = [{ key: 'companion:1', left: 1, ward: 'leader' }]; window.gmcp('Company.Battle', x); }, battleFix);
+check(await page.getByRole('button', { name: /^Oswin, health .*, guards you, 1 guard left$/ }).count() === 1, 'a guardian: whom it guards and its guards left');
+check((await cbt()).includes('guards you, 1 guard left'), 'shown under its name');
+await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.guards = [{ key: 'companion:1', left: 0, ward: '' }]; window.gmcp('Company.Battle', x); }, battleFix);
+check(await page.getByRole('button', { name: /guards the most hurt, no guards left$/ }).count() === 1, 'none left, guarding the most hurt');
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
 got = await sentNow(async () => { await page.getByRole('button', { name: 'Flee' }).click(); });
 check(JSON.stringify(got) === '["flee"]', 'Flee sends flee');
 check(await page.locator('details.cbt-setup summary').count() === 1, 'Setup folds under the view');

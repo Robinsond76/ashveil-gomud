@@ -59,7 +59,7 @@ Each task writes its tests first and runs only its own packages.
     its ward prints the warning; moving back clears it (in
     `wiring_guardian_test.go`).
   - Add the warning to the formation command's output.
-- [ ] **6. Web (`modules/gmcp`, `window-combat.js`).**
+- [x] **6. Web (`modules/gmcp`, `window-combat.js`).**
   - Tests first: `Company` member `strategy.ward`/`ward_reach`
     (`gmcp_company_test.go`); `Company.Battle` `guards`
     (`gmcp_battle_test.go`).

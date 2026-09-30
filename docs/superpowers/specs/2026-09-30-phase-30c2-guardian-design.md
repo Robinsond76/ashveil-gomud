@@ -154,7 +154,7 @@ standing "proceed with your recommendation" instruction.
   none) for a guardian, and `ward_reach: false` when a set ward is out of
   reach.
 - `Company.Battle` gains `guards: [{key, left, ward}]`, one per guardian on
-  the player's side (`ward` the member it guards now; blank when none).
+  the player's side (`ward` its set ward; blank for the most hurt).
 - Setup: `guardian` joins the role menu, with "Guard: <member>" items for
   a guardian (and "Guard: the most hurt"), and the member's row shows
   "guards Aria", marked "(out of reach)" when so.

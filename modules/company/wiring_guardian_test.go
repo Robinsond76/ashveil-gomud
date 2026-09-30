@@ -318,3 +318,19 @@ func TestGuardianInTheSummary(t *testing.T) {
 	}
 	assert.True(t, found, "a Guards line: %s", out)
 }
+
+// Company.Battle carries each guardian's guards through the real feed.
+func TestGuardianInTheBattleView(t *testing.T) {
+	b := guardBrawl(t, "tamsin guard me")
+	views := battleViews(t)
+	b.refresh(7)
+	view := lastView(views, 7)
+	require.NotNil(t, view)
+	assert.Equal(t, []any{map[string]any{"key": "companion:1", "left": 2.0, "ward": "leader"}}, view["guards"])
+
+	b.strike(0, false)
+	b.fight()
+	b.refresh(7)
+	view = lastView(views, 7)
+	assert.Equal(t, []any{map[string]any{"key": "companion:1", "left": 1.0, "ward": "leader"}}, view["guards"])
+}
