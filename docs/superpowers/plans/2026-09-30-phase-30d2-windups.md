@@ -71,7 +71,7 @@ Each task writes its tests first and runs only its own packages.
 - [x] **7. Correct the docs on the shield bash (decision 2).** The 30d1 and
   30d1b designs (amendment notes); `docs/PROJECT_STATUS.md`'s Next line,
   30d table row, and Known issues.
-- [ ] **8. Review and verification.** Loop `modules/company`
+- [x] **8. Review and verification.** Loop `modules/company`
   (`-count=5`); independent reviewer over `git diff 66fc6dc..HEAD`;
   verify findings, fix with regression tests; then once:
   `go test -race ./...`, `make generate`, `make validate`;

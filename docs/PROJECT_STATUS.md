@@ -165,6 +165,73 @@ Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
 
+### Phase 30d2: physical wind-ups and the forest ogre (2026-09-30)
+
+- **What** ([design](superpowers/specs/2026-09-30-phase-30d2-windups-design.md),
+  [plan](superpowers/plans/2026-09-30-phase-30d2-windups.md)):
+  - `internal/windup` (pure): abilities (`crushing-blow`: 1 turn, x2,
+    knocks down, its lines), `RollStart`, `Cooldown` 2, `Render`.
+    `interrupt.BreaksWindUp` (a damaging hit with heavy force only).
+    `Mob.WindUps` (`windups:` id -> percent of turns).
+  - `internal/combat`: `Power` and `SetPowerProvider`; a wind-up's swing
+    (`AttackMobVsPlayer`/`AttackMobVsMob`) is one strike, its rolled
+    damage multiplied before armor, a knockdown when it gets through, the
+    name first in its parentheses.
+  - `internal/hooks/combat_windup.go`: at a mob's physical turn an enemy
+    may start (telegraph naming its target, "you" to a player; the turn
+    spent; the reach and battle-hold checks), then lands at its next turn
+    through the ordinary gates (so 11c's interception and 30c2's guards
+    take it), re-aimed at the one it named, else its aim, else wasted. A
+    swing that never happens is told as wasted. Heavy force breaks it
+    (`afterBlow`); a status that costs the turn loses it. Cooldown after
+    either; pruned at each round's start. Events `windup-start`,
+    `windup-land` (hit, miss, `wasted`), `interrupt`. `windUpRoll`
+    injectable, pinned in `newBrawl`. `counterBlow` no longer breaks a
+    chant (owner: a bash is a counter strike only).
+  - Content: race 22 ogre, item 10022 ogre's great club, mob 85 forest
+    ogre (solitary, level 22, `crushing-blow: 35`), spawned in Dark Forest
+    room 530.
+  - Help: `help interrupts` gains Wind-ups (aliases wind-up, wind-ups,
+    windup, windups, telegraph, telegraphs, crushing-blow, ogre); `combat`,
+    `statuses`, `guardian`, `battle-summary`, `formation`; the Practice
+    Yard hint. The 30d1/30d1b designs and this log no longer list the
+    shield bash as heavy force.
+- **Why:** slice two of 30d. Owner decisions (2026-09-30): heavier force
+  only (decided before), and asked this session: only a crit and statuses
+  break a wind-up, the shield bash is a counter strike only; 1 round, x2,
+  knockdown; lost then a cooldown; the ogre in the Dark Forest, solitary,
+  enemies only; ordinary blows on a wind-up are silent.
+- **Verification:** unit (`windup`, `BreaksWindUp`, the power blow incl.
+  armor taking it all, the hooks lifecycle: power once, wasted landings,
+  cooldown, pruning, the lost turn); wiring through `DoCombat`
+  (`wiring_windups_test.go`: wind up then land on the named target,
+  a crit breaks it with the cooldown and the summary, ordinary blows
+  silent, a guardian takes it, falls on the aim, a bash breaks nothing,
+  a status loses it, no start at the pinned roll, the shipped ogre);
+  content (`TestShippedForestOgre`, `TestShippedWindUpsAreRegistered`);
+  `TestInterruptsHelpWindUps`, `TestTutorialHelpPointersExist`.
+  `modules/company` looped 10 times before the review and 3 after, all
+  passing. Final (2026-09-30, after the review fixes): `make generate`
+  (no diff), `make validate`, `go test -race ./...`, and
+  `git diff --check` all passed.
+- **Review:** the independent default-agent reviewer found no bugs and no
+  invariant problems; each finding was checked.
+  - **Fixed, with tests:** a cooldown outlived its fight (now ends with
+    it); no test of a landing wasted for want of a target, of a blow the
+    armor takes entirely, or of a lost turn through the round; a blow the
+    armor took reported `hit` (now `miss`, as 29c reads it); a wind-up lost
+    to a status said "staggers" (a neutral `Lost` line); a shooter's
+    `windups` could never work (a content test refuses them); help missing
+    the aim fallback, the wasted line, statuses and spells, "that gets
+    through the armor", the knockdown in the tutorial hint, and the
+    summary's uncredited losses; this log still called the bash heavy
+    force; comments on the pinned roll and `DisableInterruptsForTest`; the
+    race's "its" line.
+  - **Partly rejected:** a wiring assertion of exact double damage (the
+    fixture's dice aren't fixed; the unit test now compares 3 to 6
+    directly). A wasted landing can't be staged in the brawl (upkeep
+    re-aims, battles regrow), so it is unit-tested in `internal/hooks`.
+
 ### Phase 30d1b: a blow breaks a chant only by chance (2026-09-30)
 
 - **What:** an amendment to 30d1 at the owner's request
