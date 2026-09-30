@@ -57,7 +57,7 @@ Each task writes its tests first and runs only its own packages.
     ogre, in a brawl, winds up and lands on a companion through the real
     round; a content check that every shipped mob's `windups` names a
     registered ability (`internal/mobs` or the wiring test).
-- [ ] **6. Player help and tutorial.**
+- [x] **6. Player help and tutorial.**
   - Tests first: `internal/usercommands/help_interrupts_test.go` checks the
     wind-up section (Crushing Blow, the numbers, what breaks it, the
     shield bash doesn't) and the new aliases.
