@@ -198,6 +198,10 @@ targetingnoise: 20        # percent of (re)aims that pick a random reachable foe
 
 ## E. Guardian and guards (30c2)
 
+Refined, with owner decisions 9–12, in the
+[30c2 design](2026-09-30-phase-30c2-guardian-design.md); that doc wins
+where they differ.
+
 - **Role `guardian`** added to `strategy` roles (never a default; set with
   `strategy <who> guardian`). Its **ward** is another company member
   (`strategy <who> guard <other>`); with no ward it guards the most

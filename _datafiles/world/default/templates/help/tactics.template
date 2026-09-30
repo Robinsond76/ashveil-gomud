@@ -45,6 +45,14 @@ Healers heal anyone in your company below this share of their health
 of 10. It is 50, half health, until you change it. Someone down and
 bleeding out is always healed first.
 
+<ansi fg="yellow-bold">Guardians</ansi>
+
+The focus decides whom your company strikes; a guardian decides who gets
+struck. A guardian (a strategy role, set before a battle) steps in front
+of its ward to take a blow meant for them, twice a battle, with a guard
+back every 2 rounds. A focus doesn't change whom a guardian guards
+(<ansi fg="command">help guardian</ansi>).
+
 <ansi fg="yellow-bold">Enemies have personalities too</ansi>
 
 When an enemy picks a new target (it joins the fight, or its target falls
@@ -66,4 +74,4 @@ they can reach. <ansi fg="command">help targeting</ansi> has more.
 has a button for each focus during a battle, and your tactics under Setup
 (<ansi fg="command">help webclient</ansi>).
 
-See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help formation</ansi>.
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help formation</ansi>.

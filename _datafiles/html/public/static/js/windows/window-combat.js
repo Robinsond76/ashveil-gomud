@@ -42,6 +42,15 @@
  *   - Setup's tactics row: the saved focus and healing threshold, with a
  *     menu sending company tactics focus / healing / default.
  *
+ * Phase 30c2, guardians:
+ *
+ *   - guardian is a role in the member menu; a guardian's menu adds
+ *     "Guard: <member>" (strategy <who> guard <other>) and "Guard: the
+ *     most hurt" (strategy <who> guard). Its row says whom it guards,
+ *     "(out of reach)" when the server marks the ward too far away.
+ *   - In the Battle view a guardian's button adds whom it guards and its
+ *     guards left (Company.Battle's guards).
+ *
  * Every name is set with textContent, never innerHTML.
  *
  * Responds to GMCP namespaces:
@@ -57,7 +66,7 @@
 
     const el = CompanyData.el;
 
-    const ROLES = ['fighter', 'healer', 'caster'];
+    const ROLES = ['fighter', 'healer', 'caster', 'guardian'];
     // Target rules, in the order `help strategy` lists them; assist is for
     // companions only.
     const RULES = ['weakest', 'strongest', 'wounded', 'nearest', 'furthest', 'leader', 'casters', 'assist', 'defend'];
@@ -249,9 +258,25 @@
         return m.key === 'leader' ? 'me' : '#' + m.id;
     }
 
-    function howText(m) {
+    // wardName names a guardian's ward among the members: "you" for the
+    // player; none (or one gone) is the most hurt (Phase 30c2).
+    function wardName(key, members) {
+        const w = key ? members.find(x => x.key === key) : null;
+        if (!w) { return 'the most hurt'; }
+        return w.key === 'leader' ? 'you' : w.name;
+    }
+
+    function guardText(m, members) {
         const s = m.strategy;
-        return s ? s.role + ', ' + s.target : '';
+        if (!s || s.role !== 'guardian') { return ''; }
+        return 'guards ' + wardName(s.ward, members) + (s.ward_reach === false ? ' (out of reach)' : '');
+    }
+
+    function howText(m, members) {
+        const s = m.strategy;
+        if (!s) { return ''; }
+        const g = guardText(m, members || []);
+        return s.role + ', ' + s.target + (g ? ', ' + g : '');
     }
 
     function memberMenu(m, members) {
@@ -260,6 +285,12 @@
         ROLES.filter(r => r !== s.role).forEach(r => {
             items.push({ label: 'Role: ' + r, cmd: 'strategy ' + who(m) + ' ' + r });
         });
+        if (s.role === 'guardian') {
+            members.filter(x => x !== m && x.key !== s.ward && x.status !== 'dead').forEach(x => {
+                items.push({ label: 'Guard: ' + wardName(x.key, members), cmd: 'strategy ' + who(m) + ' guard ' + who(x) });
+            });
+            if (s.ward) { items.push({ label: 'Guard: the most hurt', cmd: 'strategy ' + who(m) + ' guard' }); }
+        }
         RULES.filter(r => r !== s.target && !(r === 'assist' && m.key === 'leader')).forEach(r => {
             items.push({ label: 'Target: ' + r, cmd: 'strategy ' + who(m) + ' target ' + r });
         });
@@ -297,7 +328,7 @@
             row.forEach(m => {
                 const td = el('td', m ? (m.key === 'leader' ? 'is-leader' : '') : 'empty', m ? m.name : '·');
                 if (m) {
-                    td.title = m.name + (howText(m) ? ': ' + howText(m) : '');
+                    td.title = m.name + (howText(m, members) ? ': ' + howText(m, members) : '');
                     if (m.strategy) { td.appendChild(el('span', 'cbt-role', m.strategy.role)); }
                 } else {
                     td.setAttribute('aria-label', 'empty');
@@ -343,8 +374,9 @@
             b.setAttribute('data-key', m.key);
             b.setAttribute('aria-haspopup', 'menu');
             b.appendChild(el('span', null, m.name + (m.key === 'leader' ? ' (you)' : '')));
-            b.appendChild(el('span', 'cbt-how', howText(m) || '—'));
-            b.setAttribute('aria-label', m.name + (m.key === 'leader' ? ' (you)' : '') + (howText(m) ? ': ' + howText(m) : ''));
+            const how = howText(m, members);
+            b.appendChild(el('span', 'cbt-how', how || '—'));
+            b.setAttribute('aria-label', m.name + (m.key === 'leader' ? ' (you)' : '') + (how ? ': ' + how : ''));
             b.addEventListener('click', e => uiMenu(e, memberMenu(m, members)));
             li.appendChild(b);
             list.appendChild(li);
@@ -535,11 +567,16 @@
             const fallen = m.status === 'dead';
             let subText = '';
             if (fallen) { subText = 'fallen'; } else if (v.hp !== null && v.hp !== undefined) { subText = v.hp + ' / ' + v.hp_max; }
-            const sub = subText ? el('span', 'cbt-sub', subText) : null;
+            // Phase 30c2: a guardian's ward and guards left.
+            const g = fallen ? null : (battle.guards || []).find(x => x.key === m.key);
+            const guardNote = g ? 'guards ' + wardName(g.ward, members) + ', ' +
+                (g.left > 0 ? g.left + (g.left === 1 ? ' guard' : ' guards') + ' left' : 'no guards left') : '';
+            const subLine = [subText, guardNote].filter(Boolean).join(' · ');
+            const sub = subLine ? el('span', 'cbt-sub', subLine) : null;
             const you = m.key === 'leader';
             const target = aimsAt[m.key];
             const spoken = (you && data.company ? m.name + ' (you)' : m.name) + (subText ? ', ' + (fallen ? 'fallen' : 'health ' + subText.replace(' / ', ' of ')) : '') +
-                (target ? ', striking ' + nameOf(target, battle, data) : '');
+                (target ? ', striking ' + nameOf(target, battle, data) : '') + (guardNote ? ', ' + guardNote : '');
             const node = fighterButton(m.key, (you ? 'is-you' : '') + (fallen ? ' is-fallen' : ''), m.name, sub, spoken);
             if (data.company) {
                 node.setAttribute('aria-haspopup', 'menu');

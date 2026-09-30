@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
@@ -94,6 +95,7 @@ func decodeRegistry(data []byte, registry *Registry) error {
 		}
 		for key, s := range members {
 			clean, ok := cleanStrategy(s)
+			clean = cleanWard(key, clean)
 			if strings.TrimSpace(key) == "" || !ok {
 				mudlog.Warn("strategy: dropped a stored strategy", "user", id, "member", key, "role", s.Role, "rule", s.Rule)
 				continue
@@ -140,8 +142,23 @@ func cleanTactics(t domain.Tactics) (domain.Tactics, bool) {
 	return out, true
 }
 
+// cleanWard keeps a stored ward only for a guardian, naming another
+// member by a well-formed member key (Phase 30c2); anything else is
+// dropped, the rest of the strategy kept.
+func cleanWard(key string, s domain.Strategy) domain.Strategy {
+	if s.Ward == "" {
+		return s
+	}
+	_, companion := company.CompanionIDFromMemberKey(company.MemberKey(s.Ward))
+	if s.Role != domain.Guardian || s.Ward == key || (s.Ward != string(company.LeaderMemberKey) && !companion) {
+		mudlog.Warn("strategy: dropped a stored ward", "member", key, "role", s.Role, "ward", s.Ward)
+		s.Ward = ""
+	}
+	return s
+}
+
 func cleanStrategy(s domain.Strategy) (domain.Strategy, bool) {
-	var out domain.Strategy
+	out := domain.Strategy{Ward: strings.TrimSpace(s.Ward)}
 	if s.Role != "" {
 		r, ok := domain.ParseRole(string(s.Role))
 		if !ok {
@@ -387,9 +404,16 @@ func (m *StrategyModule) put(userID int, key string, s domain.Strategy) {
 func (m *StrategyModule) prune(userID int, keep map[string]bool) {
 	m.mu.Lock()
 	changed := false
-	for key := range m.registry.Players[userID] {
+	for key, s := range m.registry.Players[userID] {
 		if !keep[key] {
 			delete(m.registry.Players[userID], key)
+			changed = true
+			continue
+		}
+		// Phase 30c2: a ward no longer in the company reads as none.
+		if s.Ward != "" && !keep[s.Ward] {
+			s.Ward = ""
+			m.put(userID, key, s)
 			changed = true
 		}
 	}

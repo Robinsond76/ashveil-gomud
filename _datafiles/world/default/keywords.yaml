@@ -83,6 +83,7 @@ help:
       - consider
       - flee
       - formation
+      - guardian
       - heal
       - light
       - narration
@@ -222,6 +223,7 @@ help-aliases:
   scout:            [scouting, enemy-groups, groups]
   strategy:         [strategies, gambits, roles]
   tactics:          [focus, company-tactics, personalities, personality]
+  guardian:         [guardians, guard, guards, ward, wards]
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]

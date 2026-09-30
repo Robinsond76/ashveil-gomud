@@ -132,3 +132,16 @@ func LegalTargets(attackerCol int, f company.Formation, alive map[company.Member
 	}
 	return legal
 }
+
+// GuardReach reports whether a guardian can step in for its ward (Phase
+// 30c2, the owner's decision 11): the ward stands in the guardian's column
+// or the next, as InLateralRange. A member not placed in f fails open, as
+// everywhere in 11c.
+func GuardReach(f company.Formation, guardian, ward company.MemberKey) bool {
+	_, gc, gok := f.Find(guardian)
+	_, wc, wok := f.Find(ward)
+	if !gok || !wok {
+		return true
+	}
+	return InLateralRange(gc, wc)
+}

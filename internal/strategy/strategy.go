@@ -20,10 +20,13 @@ const (
 	Fighter Role = "fighter" // swings at its aim
 	Healer  Role = "healer"  // heals anyone below the healing threshold, else swings
 	Caster  Role = "caster"  // casts its attack spell while mana lasts, else swings
+	// Guardian swings as a fighter, and steps in to take a blow meant for
+	// its ward (Phase 30c2). Never a default.
+	Guardian Role = "guardian"
 )
 
 // Roles in the order they are listed.
-var Roles = []Role{Fighter, Healer, Caster}
+var Roles = []Role{Fighter, Healer, Caster, Guardian}
 
 // Rule is how a character picks its target.
 type Rule string
@@ -47,12 +50,15 @@ var roleAliases = map[string]Role{
 	"fight": Fighter, "fighter": Fighter, "melee": Fighter,
 	"heal": Healer, "healer": Healer,
 	"cast": Caster, "caster": Caster,
+	// Phase 30c2 (the owner's decision 10): "guard" is the guardian, no
+	// longer the defend rule.
+	"guard": Guardian, "guardian": Guardian, "protector": Guardian,
 }
 
 var ruleAliases = map[string]Rule{
 	"weak": Weakest, "strong": Strongest, "hurt": Wounded,
 	"near": Nearest, "front": Nearest, "far": Furthest, "back": Furthest,
-	"focus": Assist, "protect": Defend, "guard": Defend,
+	"focus": Assist, "protect": Defend,
 	"mages": Casters, "spellcasters": Casters,
 }
 
@@ -79,11 +85,14 @@ func ParseRule(s string) (Rule, bool) {
 type Strategy struct {
 	Role Role `yaml:"role,omitempty"`
 	Rule Rule `yaml:"rule,omitempty"`
+	// Ward is the member key a guardian guards (Phase 30c2); blank for
+	// the most hurt. Kept only for a guardian.
+	Ward string `yaml:"ward,omitempty"`
 }
 
 // IsZero reports whether nothing is set: the character fights by its
 // default.
-func (s Strategy) IsZero() bool { return s.Role == "" && s.Rule == "" }
+func (s Strategy) IsZero() bool { return s.Role == "" && s.Rule == "" && s.Ward == "" }
 
 // DefaultRole is an archetype's role: a cleric heals, a wizard casts,
 // everyone else fights.
@@ -167,6 +176,8 @@ func (r Role) Describe() string {
 		return "heals anyone below the healing threshold, else fights"
 	case Caster:
 		return "casts an attack spell while mana lasts, else fights"
+	case Guardian:
+		return "fights, and steps in to take a blow meant for its ward"
 	}
 	return string(r)
 }

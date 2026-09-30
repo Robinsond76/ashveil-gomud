@@ -95,3 +95,8 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 
 - `company tactics` (and the `tactics` shorthand) shows and sets the company focus and healing threshold, stored by `modules/strategy` through `strategy.SaveTactics` (never on the company record, so a solo player has them too). Out of a battle every change saves; in one only `focus` is open, as a battle-only order (`battle.SetFocus`/`ClearFocus`, one a round, "still turning" until the next upkeep applies it). The order's line names the focus's choice among every foe standing.
 - `wiring_tactics_test.go` covers the focus, the threshold, the mid-battle order, and enemy personalities in the brawl world. `newBrawl` turns off personality noise (`hooks.UseAimRollForTest`).
+
+## Phase 30c2: guardians (`formation.go`, `internal/hooks/combat_guard.go`)
+
+- A guardian (a `strategy` role, `modules/strategy`) takes one blow aimed at its ward, decided in `internal/hooks` at the enemy-attack gates after 11c's interception; guard counts live on the battle (`internal/battle`). The `formation` view and every `move`/`swap`/`clear` warn (`guardWarnings`) when a guardian's set ward stands more than one column away, as `strategy` does.
+- `wiring_guardian_test.go` runs guards in the brawl world: `guardBrawl` opens the battle with the bandits holding their first blows, so the guards start full, and `strike` aims one blow a round at a ward.

@@ -45,6 +45,16 @@ type battleFacts struct {
 	// whether an order may be given (none waiting for the next round).
 	Focus, SavedFocus string
 	FocusReady        bool
+	// Phase 30c2: each guardian on the player's side.
+	Guards []guardFact
+}
+
+// guardFact is one guardian's guards left and its set ward (blank: the
+// most hurt).
+type guardFact struct {
+	Key  string `json:"key"`
+	Left int    `json:"left"`
+	Ward string `json:"ward"`
 }
 
 // enemyFact is one enemy of the battle.
@@ -116,6 +126,8 @@ type battlePayload struct {
 	Focus      string `json:"focus"`
 	SavedFocus string `json:"saved_focus"`
 	FocusReady bool   `json:"focus_ready"`
+	// Phase 30c2: guardians' guards (the battle view's guard counts).
+	Guards []guardFact `json:"guards,omitempty"`
 }
 
 func mobID(instanceId int) string { return "m:" + strconv.Itoa(instanceId) }
@@ -133,9 +145,9 @@ func buildBattle(f battleFacts) any {
 		saved = "none"
 	}
 	if f.Dark {
-		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady}
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards}
 	}
-	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady}
+	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -213,6 +225,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	if rule, ok := enemyparty.Focus(user.UserId); ok {
 		f.Focus = string(rule)
 	}
+	f.Guards = gatherGuards(user, room)
 	if room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
 		f.Dark = true
 		return f
@@ -402,3 +415,29 @@ func (s *seenEnemies) prune(online []int) {
 }
 
 var battleSeen = newSeenEnemies()
+
+// gatherGuards lists the guardians on the player's side here (Phase 30c2),
+// the player first, then companions by instance: guards left in the
+// battle, and the set ward.
+func gatherGuards(user *users.UserRecord, room *rooms.Room) []guardFact {
+	var out []guardFact
+	add := func(key company.MemberKey) {
+		s := enemyparty.MemberStrategy(user.UserId, key)
+		if s.Role == strategy.Guardian {
+			out = append(out, guardFact{Key: string(key), Left: battle.GuardsLeft(user.UserId, string(key)), Ward: s.Ward})
+		}
+	}
+	if user.Character.Health > 0 {
+		add(company.LeaderMemberKey)
+	}
+	ids := room.GetMobs(rooms.FindCharmed)
+	sort.Ints(ids)
+	for _, instanceId := range ids {
+		leaderId, key, ok := company.LeaderAndKeyForInstance(instanceId)
+		m := mobs.GetInstance(instanceId)
+		if ok && leaderId == user.UserId && m != nil && m.Character.Health > 0 {
+			add(key)
+		}
+	}
+	return out
+}

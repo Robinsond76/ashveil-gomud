@@ -44,6 +44,10 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// and end their fights on the combat event stream (29b).
 	battlePass()
 
+	// Ashveil Phase 30c2: spent guards come back, one per two combat
+	// rounds.
+	guardPass()
+
 	// Ashveil Phase 30c: a focus ordered since the last round turns the
 	// company at this round's upkeep.
 	beginRefocus()

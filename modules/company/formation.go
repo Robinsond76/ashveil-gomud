@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -54,6 +55,7 @@ func (m *CompanyModule) renderFormation(leaderUserID int) string {
 	if len(unplaced) > 0 {
 		lines = append(lines, "Unplaced: "+strings.Join(unplaced, ", "))
 	}
+	lines = append(lines, m.guardWarnings(leaderUserID)...)
 	lines = append(lines, formationUsage)
 	return strings.Join(lines, "\n")
 }
@@ -171,7 +173,7 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 		if err := m.persistFormation(user.UserId, before, existed); err != nil {
 			return true, err
 		}
-		user.SendText(fmt.Sprintf("Placed %s at row %d, column %d.", m.memberName(user.UserId, key), row, col))
+		user.SendText(withGuardWarnings(fmt.Sprintf("Placed %s at row %d, column %d.", m.memberName(user.UserId, key), row, col), m.guardWarnings(user.UserId)))
 	case "swap":
 		if len(args) != 3 {
 			user.SendText(formationUsage)
@@ -192,7 +194,7 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 		if err := m.persistFormation(user.UserId, before, existed); err != nil {
 			return true, err
 		}
-		user.SendText("Formation positions swapped.")
+		user.SendText(withGuardWarnings("Formation positions swapped.", m.guardWarnings(user.UserId)))
 	case "clear":
 		if len(args) != 2 {
 			user.SendText(formationUsage)
@@ -209,7 +211,7 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 		if err := m.persistFormation(user.UserId, before, existed); err != nil {
 			return true, err
 		}
-		user.SendText(fmt.Sprintf("Removed %s from the formation.", m.memberName(user.UserId, key)))
+		user.SendText(withGuardWarnings(fmt.Sprintf("Removed %s from the formation.", m.memberName(user.UserId, key)), m.guardWarnings(user.UserId)))
 	case "reach":
 		if len(args) != 2 {
 			user.SendText(formationUsage)
@@ -367,4 +369,59 @@ func (m *CompanyModule) engagedParty(leader *users.UserRecord, room *rooms.Room)
 		}
 	}
 	return mobparty.Party{}, false
+}
+
+// guardWarnings says, for each guardian whose set ward stands more than
+// one column from it, that it can't step in from there (Phase 30c2, the
+// owner's decision 11), as the strategy command does. Unplaced members
+// fail open.
+func (m *CompanyModule) guardWarnings(leaderUserID int) []string {
+	record, ok := m.registry.Get(leaderUserID)
+	if !ok {
+		return nil
+	}
+	keys := []domain.MemberKey{domain.LeaderMemberKey}
+	for _, companion := range record.Companions {
+		keys = append(keys, domain.CompanionMemberKey(companion.ID))
+	}
+	var out []string
+	for _, key := range keys {
+		s := enemyparty.MemberStrategy(leaderUserID, key)
+		if s.Role != strategy.Guardian || s.Ward == "" {
+			continue
+		}
+		ward := domain.MemberKey(s.Ward)
+		_, gc, gok := record.Formation.Find(key)
+		_, wc, wok := record.Formation.Find(ward)
+		if !gok || !wok || formationcombat.InLateralRange(gc, wc) {
+			continue
+		}
+		guardian, wardName := m.plainName(leaderUserID, key), m.plainName(leaderUserID, ward)
+		if key == domain.LeaderMemberKey {
+			guardian = "You"
+		}
+		if ward == domain.LeaderMemberKey {
+			wardName = "you"
+		}
+		out = append(out, fmt.Sprintf(`Out of reach: %s can't step in for %s from there. A guardian must stand in its ward's column or the next (<ansi fg="command">help guardian</ansi>).`, guardian, wardName))
+	}
+	return out
+}
+
+// plainName is a member's name without its #id.
+func (m *CompanyModule) plainName(leaderUserID int, key domain.MemberKey) string {
+	record, _ := m.registry.Get(leaderUserID)
+	for _, companion := range record.Companions {
+		if domain.CompanionMemberKey(companion.ID) == key {
+			return nameOf(companion, strconv.Itoa(companion.MobTemplateID))
+		}
+	}
+	return m.memberName(leaderUserID, key)
+}
+
+func withGuardWarnings(line string, warnings []string) string {
+	if len(warnings) == 0 {
+		return line
+	}
+	return line + "\n" + strings.Join(warnings, "\n")
 }

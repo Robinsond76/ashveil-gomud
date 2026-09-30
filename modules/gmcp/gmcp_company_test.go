@@ -390,3 +390,31 @@ func TestCompanyPayloadTactics(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, string(raw), `"tactics":{"focus":"wounded","healing":70}`)
 }
+
+// TestCompanyGuardianWard (Phase 30c2): a guardian's ward travels in its
+// strategy; ward_reach is false only when both stand more than a column
+// apart; a ward no longer in the company isn't sent.
+func TestCompanyGuardianWard(t *testing.T) {
+	s := sampleCompany()
+	// Wren front left, Bran front middle: in reach.
+	s.Companions[0].Strategy = strategy.Strategy{Role: strategy.Guardian, Ward: "leader"}
+	s.Leader.Strategy = strategy.Strategy{Role: strategy.Guardian, Ward: "companion:9"}
+	got := companyJSON(t, s)
+	assert.Equal(t, map[string]any{"role": "guardian", "target": "", "ward": "leader"}, got["members"].([]any)[0].(map[string]any)["strategy"])
+	assert.Equal(t, map[string]any{"role": "guardian", "target": ""}, got["leader"].(map[string]any)["strategy"], "a gone ward: the most hurt")
+
+	// Bran moved to the right: two columns from Wren.
+	s.Companions[0].Col = 2
+	got = companyJSON(t, s)
+	assert.Equal(t, map[string]any{"role": "guardian", "target": "", "ward": "leader", "ward_reach": false}, got["members"].([]any)[0].(map[string]any)["strategy"])
+}
+
+func companyJSON(t *testing.T, s companyview.Summary) map[string]any {
+	t.Helper()
+	p, ok := buildCompanyPayload(7, s, noChemistry)
+	require.True(t, ok)
+	data, _ := json.Marshal(p)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(data, &got))
+	return got
+}

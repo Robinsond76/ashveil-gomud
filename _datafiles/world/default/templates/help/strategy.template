@@ -16,10 +16,14 @@ and each companion's. A strategy is a role (what they do) and a target rule
   <ansi fg="command">caster</ansi>    casts an attack spell every round it can pay for one: an area
             spell when two or more foes stand, else a single-target spell.
             Out of mana, fights.
+  <ansi fg="command">guardian</ansi>  fights, and steps in front of its ward to take a blow meant
+            for them: 2 guards a battle, one back every 2 rounds. Its
+            ward is a member you name, else whoever is most hurt, within
+            one column of it (<ansi fg="command">help guardian</ansi>).
 
 Each character starts with its archetype's role: clerics heal, wizards
-cast, everyone else fights. A healer or caster casts only the spells it
-knows. Wizards start with Magic Missile and clerics with Minor Heal; a
+cast, everyone else fights. Nobody starts as a guardian. A healer or
+caster casts only the spells it knows. Wizards start with Magic Missile and clerics with Minor Heal; a
 companion knows its archetype's spells for its level (a cleric learns
 Minor Heal All at level 5, a wizard Shower of Sparks).
 
@@ -63,10 +67,15 @@ the one thing you can change in a battle.
   <ansi fg="command">strategy [who] [role]</ansi>       set a role, e.g. <ansi fg="command">strategy dain healer</ansi>
   <ansi fg="command">strategy [who] target [rule]</ansi>
                               set a rule, e.g. <ansi fg="command">strategy tamsin target leader</ansi>
+  <ansi fg="command">strategy [who] guard [other]</ansi>
+                              a guardian of [other], e.g. <ansi fg="command">strategy tamsin guard me</ansi>;
+                              leave out [other] to guard the most hurt
   <ansi fg="command">strategy [who] default</ansi>      back to the archetype's default
 
 [who] is <ansi fg="command">me</ansi>, or a companion by name (part of it will do) or number
 (<ansi fg="command">#2</ansi>). The word target can be left out: <ansi fg="command">strategy tamsin leader</ansi>.
+The word guard makes a guardian; to go for the foe striking your most
+hurt, use <ansi fg="command">defend</ansi> (or protect).
 
 Set strategies before a battle: during one they can be read but not
 changed (only the company focus can be called: <ansi fg="command">help tactics</ansi>). Strategies are kept when you log out.
@@ -74,4 +83,4 @@ changed (only the company focus can be called: <ansi fg="command">help tactics</
 In the web client, the Combat tab shows how everyone fights; click a
 member to change it (<ansi fg="command">help webclient</ansi>).
 
-See also: <ansi fg="command">help tactics</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help mana</ansi>.
+See also: <ansi fg="command">help guardian</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help mana</ansi>.

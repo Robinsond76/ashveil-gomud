@@ -15,7 +15,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -52,6 +54,11 @@ type companyCell struct {
 type companyStrategy struct {
 	Role   string `json:"role"`
 	Target string `json:"target"`
+	// Ward is a guardian's ward, a member key (Phase 30c2); omitted for the
+	// most hurt. WardReach is false (else omitted) when guardian and ward
+	// stand more than one column apart.
+	Ward      string `json:"ward,omitempty"`
+	WardReach *bool  `json:"ward_reach,omitempty"`
 }
 
 type companyMember struct {
@@ -128,6 +135,7 @@ func wholeMinutes(seconds int) int {
 
 func strPtr(s string) *string { return &s }
 func intPtr(n int) *int       { return &n }
+func boolPtr(b bool) *bool    { return &b }
 
 func needOf(n companyview.Need) *companyNeed {
 	if !n.Known {
@@ -207,6 +215,7 @@ func buildCompanyPayload(leaderUserID int, s companyview.Summary, chemistry chem
 			p.Rescue[string(m.Key)] = wholeMinutes(int(m.RescueLeft.Seconds()))
 		}
 	}
+	markWards(&p, s)
 	p.Alive, p.Dead = s.Alive, s.Dead
 	if s.LoadKnown {
 		p.Load = &companyLoad{Label: s.LoadLabel, TotalG: s.Load.TotalGrams(), CapacityG: s.Load.CapacityGrams, CargoG: s.Load.CargoGrams, CompanionG: s.Load.CompanionGrams}
@@ -417,4 +426,32 @@ func init() {
 		}
 		return events.Continue
 	})
+}
+
+// markWards fills each guardian's ward (Phase 30c2): dropped when it names
+// no member, marked out of reach when both are placed more than one column
+// apart (formationcombat.InLateralRange; unplaced fails open).
+func markWards(p *companyPayload, s companyview.Summary) {
+	all := append([]companyview.Member{s.Leader}, s.Companions...)
+	byKey := map[string]companyview.Member{}
+	for _, m := range all {
+		byKey[string(m.Key)] = m
+	}
+	mark := func(out *companyMember, m companyview.Member) {
+		if out.Strategy == nil || m.Strategy.Role != strategy.Guardian || m.Strategy.Ward == "" {
+			return
+		}
+		ward, ok := byKey[m.Strategy.Ward]
+		if !ok || ward.Key == m.Key {
+			return
+		}
+		out.Strategy.Ward = m.Strategy.Ward
+		if m.Placed && ward.Placed && !formationcombat.InLateralRange(m.Col, ward.Col) {
+			out.Strategy.WardReach = boolPtr(false)
+		}
+	}
+	mark(&p.Leader, s.Leader)
+	for i, m := range s.Companions {
+		mark(&p.Members[i], m)
+	}
 }

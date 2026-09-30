@@ -178,3 +178,26 @@ func TestBattlePayloadFocus(t *testing.T) {
 	raw, _ = json.Marshal(buildBattle(f))
 	assert.JSONEq(t, `{"group":"the enemy","dark":true,"enemies":[],"focus":"leader","saved_focus":"none","focus_ready":false}`, string(raw))
 }
+
+// TestBattlePayloadGuards (30c2): each guardian's guards left and its set
+// ward (blank: the most hurt), dark or not.
+func TestBattlePayloadGuards(t *testing.T) {
+	f := sampleBattle()
+	f.Guards = []guardFact{{Key: "companion:1", Left: 2, Ward: "leader"}, {Key: "leader", Left: 0}}
+	raw, _ := json.Marshal(buildBattle(f))
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(raw, &got))
+	assert.Equal(t, []any{
+		map[string]any{"key": "companion:1", "left": 2.0, "ward": "leader"},
+		map[string]any{"key": "leader", "left": 0.0, "ward": ""},
+	}, got["guards"])
+
+	f.Dark = true
+	raw, _ = json.Marshal(buildBattle(f))
+	require.NoError(t, json.Unmarshal(raw, &got))
+	assert.Len(t, got["guards"], 2, "our own guards show in the dark")
+
+	f = sampleBattle()
+	raw, _ = json.Marshal(buildBattle(f))
+	assert.NotContains(t, string(raw), "guards", "none without a guardian")
+}

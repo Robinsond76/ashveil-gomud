@@ -49,7 +49,9 @@ button in them just types a command for you.
   Enter chooses, and Escape closes it.
 
   Combat: click a member to change their role or target rule (<ansi fg="command">strategy</ansi>)
-  or where they stand (<ansi fg="command">formation</ansi>); click Company tactics to set the
+  or where they stand (<ansi fg="command">formation</ansi>). A guardian's menu picks whom it
+  guards ("Guard: ..."), and its row says so, marked "(out of reach)" when
+  it stands too far from its ward (<ansi fg="command">help guardian</ansi>); click Company tactics to set the
   focus or healing threshold (<ansi fg="command">company tactics</ansi>; the row appears once you
   have a company, and during a battle it only shows your saved tactics). Scout appears when
   enemies are here (<ansi fg="command">scout</ansi>).
@@ -81,6 +83,9 @@ button in them just types a command for you.
   (<ansi fg="command">company tactics focus</ansi>, <ansi fg="command">help tactics</ansi>): the current one is marked,
   and all of them wait, greyed out, until your company has turned at the
   next round. "saved" goes back to your saved focus.
+
+  A guardian shows whom it guards and how many guards it has left under
+  its name ("guards you, 1 guard left").
 
 <ansi fg="yellow-bold">Arranging it</ansi>
 
