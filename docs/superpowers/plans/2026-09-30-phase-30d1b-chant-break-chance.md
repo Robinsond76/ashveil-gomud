@@ -37,7 +37,7 @@ Each task writes its tests first and runs only its own packages.
 - [x] **4. Record 30d2's decision.** The 30d1 design's Deferrals and
   `docs/PROJECT_STATUS.md`'s Next line: a physical wind-up breaks only on
   heavier force (crit, stagger, knockdown, stun, shield bash).
-- [ ] **5. Review and verification.** Loop `modules/company`
+- [x] **5. Review and verification.** Loop `modules/company`
   (`-count=5`); independent reviewer over `git diff 7306212..HEAD`;
   verify findings; `go test -race ./...`, `make generate`,
   `make validate`; `docs/PROJECT_STATUS.md` work-log entry with
