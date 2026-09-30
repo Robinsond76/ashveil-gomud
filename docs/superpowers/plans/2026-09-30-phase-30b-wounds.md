@@ -90,7 +90,7 @@ Each task writes its tests first and runs only its own packages.
   - `keywords.yaml` entries and aliases.
   - A Camp lesson pointer to `help wounds`.
   - Render tests, and `TestTutorialHelpPointersExist`.
-- [ ] **11. Review and verification.**
+- [x] **11. Review and verification.**
   - The independent reviewer goes over `git diff origin/master..HEAD`.
     Verify each finding, and fix the real ones with regression tests.
   - Then, once: `make generate`, `make validate`, `go test -race ./...`.

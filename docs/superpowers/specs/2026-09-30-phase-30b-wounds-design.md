@@ -1,7 +1,7 @@
 # Phase 30b: Wounds, Treatment, and `heal wounds` — Design
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md);
-refines the [2026-09-26 proposal](2026-09-26-wounds-treatment-design.md)
+refines the 2026-09-26 proposal (in git history at `3233a84`, removed once this shipped)
 (handoff §36 item 8), built on 30a's statuses. Written 2026-09-30. The open
 decisions were put to the owner the same day (answers below). No standing
 "proceed with your recommendation" instruction was in force.
