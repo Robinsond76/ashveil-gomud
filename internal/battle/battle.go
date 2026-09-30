@@ -30,6 +30,10 @@ type Battle struct {
 	Focus        string
 	FocusSet     bool
 	FocusPending bool
+
+	// Phase 30c2: guardians' guards by member key; one absent has spent
+	// none (MaxGuards left).
+	Guards map[string]Guard
 }
 
 // Has reports whether instanceId is one of the battle's enemies.
@@ -42,6 +46,12 @@ func (b Battle) clone() Battle {
 		c.Enemies[id] = true
 	}
 	c.EnemyNames = cloneEnemyNames(b.EnemyNames)
+	if b.Guards != nil {
+		c.Guards = make(map[string]Guard, len(b.Guards))
+		for k, g := range b.Guards {
+			c.Guards[k] = g
+		}
+	}
 	return c
 }
 
