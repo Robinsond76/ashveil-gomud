@@ -157,7 +157,7 @@ func TestRefusals(t *testing.T) {
 func TestDescribe(t *testing.T) {
 	m, _, u, _ := testModule(t)
 	out := run(m, u, "oswin")
-	assert.Contains(t, out, "Brother Oswin (cleric): healer, heals anyone below half health, else fights.")
+	assert.Contains(t, out, "Brother Oswin (cleric): healer, heals anyone below the healing threshold, else fights.")
 	assert.Contains(t, out, "Goes for the foe with the least health left; out of reach, the nearest foe in reach.")
 	assert.Contains(t, out, "Casts Minor Heal (3 mana).")
 	assert.Contains(t, out, "Mana 5 of 9.")

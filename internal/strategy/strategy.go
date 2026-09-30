@@ -18,7 +18,7 @@ type Role string
 
 const (
 	Fighter Role = "fighter" // swings at its aim
-	Healer  Role = "healer"  // heals anyone below half health, else swings
+	Healer  Role = "healer"  // heals anyone below the healing threshold, else swings
 	Caster  Role = "caster"  // casts its attack spell while mana lasts, else swings
 )
 
@@ -35,12 +35,13 @@ const (
 	Nearest   Rule = "nearest"   // the front-most (FF12's "nearest")
 	Furthest  Rule = "furthest"  // the back-most (FF12's "furthest")
 	Leader    Rule = "leader"    // the group's leader, its toughest (Ogre Battle's Leader)
+	Casters   Rule = "casters"   // spell-casters, one chanting first (Phase 30c)
 	Assist    Rule = "assist"    // the player's own target (FF12's "party leader's target")
 	Defend    Rule = "defend"    // the foe striking our most hurt (FF12's "foe targeting ally")
 )
 
 // Rules in the order they are listed.
-var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Assist, Defend}
+var Rules = []Rule{Weakest, Strongest, Wounded, Nearest, Furthest, Leader, Casters, Assist, Defend}
 
 var roleAliases = map[string]Role{
 	"fight": Fighter, "fighter": Fighter, "melee": Fighter,
@@ -52,6 +53,7 @@ var ruleAliases = map[string]Rule{
 	"weak": Weakest, "strong": Strongest, "hurt": Wounded,
 	"near": Nearest, "front": Nearest, "far": Furthest, "back": Furthest,
 	"focus": Assist, "protect": Defend, "guard": Defend,
+	"mages": Casters, "spellcasters": Casters,
 }
 
 // ParseRole reads a role or its alias.
@@ -146,6 +148,8 @@ func (r Rule) Describe() string {
 		return "the back-most foe"
 	case Leader:
 		return "their leader, the toughest of them"
+	case Casters:
+		return "their spell-casters, one chanting first"
 	case Assist:
 		return "whatever you are striking"
 	case Defend:
@@ -160,7 +164,7 @@ func (r Role) Describe() string {
 	case Fighter:
 		return "fights with weapon or fists"
 	case Healer:
-		return "heals anyone below half health, else fights"
+		return "heals anyone below the healing threshold, else fights"
 	case Caster:
 		return "casts an attack spell while mana lasts, else fights"
 	}

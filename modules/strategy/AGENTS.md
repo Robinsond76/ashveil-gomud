@@ -7,3 +7,4 @@ Phase 32d battle strategies. The registry (user id -> member key -> the role and
 - `m.mu` is a leaf lock: never call the engine (users, mobs, company) while holding it.
 - The command reads company members through `company.CompanyMembers` (game loop only). Changes are refused in a battle (`usercommands.InBattle`); reading is always allowed.
 - Tests replace `m.env` and `m.store`; they never write into `_datafiles`.
+- Phase 30c: the registry also holds each player's `Tactics` (company focus and healing threshold; only values that differ from the defaults), saved and rolled back like strategies (`SetTactics`), dropped on purge, and served to the engine as `internal/strategy`'s `TacticsProvider`. The `company tactics` command lives in `modules/company` and writes through `strategy.SaveTactics`.

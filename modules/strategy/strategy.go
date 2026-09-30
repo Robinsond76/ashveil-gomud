@@ -28,11 +28,14 @@ var files embed.FS
 // ("leader", "companion:<id>") -> the settings that differ from default.
 type Registry struct {
 	Players map[int]map[string]domain.Strategy `yaml:"players,omitempty"`
+	// Tactics is each player's company tactics (Phase 30c) that differ
+	// from the defaults.
+	Tactics map[int]domain.Tactics `yaml:"tactics,omitempty"`
 }
 
 // NewRegistry is an empty registry.
 func NewRegistry() *Registry {
-	return &Registry{Players: map[int]map[string]domain.Strategy{}}
+	return &Registry{Players: map[int]map[string]domain.Strategy{}, Tactics: map[int]domain.Tactics{}}
 }
 
 // Clone is a deep copy.
@@ -44,6 +47,10 @@ func (r Registry) Clone() Registry {
 			m[k] = v
 		}
 		out.Players[id] = m
+	}
+	out.Tactics = make(map[int]domain.Tactics, len(r.Tactics))
+	for id, t := range r.Tactics {
+		out.Tactics[id] = t
 	}
 	return out
 }
@@ -100,8 +107,37 @@ func decodeRegistry(data []byte, registry *Registry) error {
 			loaded.Players[id][key] = clean
 		}
 	}
+	for id, t := range wire.Tactics {
+		clean, ok := cleanTactics(t)
+		if id <= 0 || !ok {
+			mudlog.Warn("strategy: dropped stored tactics", "user", id, "focus", t.Focus, "healing", t.Healing)
+			continue
+		}
+		if !clean.IsZero() {
+			loaded.Tactics[id] = clean
+		}
+	}
 	*registry = *loaded
 	return nil
+}
+
+func cleanTactics(t domain.Tactics) (domain.Tactics, bool) {
+	var out domain.Tactics
+	if t.Focus != "" {
+		f, ok := domain.ParseFocus(string(t.Focus))
+		if !ok {
+			return out, false
+		}
+		out.Focus = f
+	}
+	if t.Healing != 0 {
+		h, ok := domain.ParseHealing(fmt.Sprint(t.Healing))
+		if !ok {
+			return out, false
+		}
+		out.Healing = h
+	}
+	return out, true
 }
 
 func cleanStrategy(s domain.Strategy) (domain.Strategy, bool) {
@@ -162,6 +198,7 @@ func init() {
 	})
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	domain.SetProvider(m)
+	domain.SetTacticsProvider(m)
 	module = m
 }
 
@@ -270,6 +307,46 @@ func (m *StrategyModule) AutoSpells() []domain.Spell {
 	return append([]domain.Spell(nil), m.autoSpells...)
 }
 
+// StoredTactics implements domain.TacticsProvider.
+func (m *StrategyModule) StoredTactics(userID int) domain.Tactics {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.registry.Tactics[userID]
+}
+
+// SetTactics implements domain.TacticsProvider: it stores the player's
+// tactics (the defaults clear them) and saves, rolling back if the save
+// fails.
+func (m *StrategyModule) SetTactics(userID int, t domain.Tactics) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.persistenceAvailableLocked(); err != nil {
+		return err
+	}
+	before, had := m.registry.Tactics[userID]
+	m.putTactics(userID, t)
+	if err := m.store.Save(m.registry.Clone()); err != nil {
+		if had {
+			m.registry.Tactics[userID] = before
+		} else {
+			delete(m.registry.Tactics, userID)
+		}
+		return fmt.Errorf("the tactics couldn't be saved; please try again: %w", err)
+	}
+	return nil
+}
+
+func (m *StrategyModule) putTactics(userID int, t domain.Tactics) {
+	if m.registry.Tactics == nil {
+		m.registry.Tactics = map[int]domain.Tactics{}
+	}
+	if t.IsZero() {
+		delete(m.registry.Tactics, userID)
+		return
+	}
+	m.registry.Tactics[userID] = t
+}
+
 // set stores a member's strategy (the zero value clears it) and saves,
 // rolling back if the save fails.
 func (m *StrategyModule) set(userID int, key string, s domain.Strategy) error {
@@ -335,7 +412,10 @@ func (m *StrategyModule) onUserPurged(e events.Event) events.ListenerReturn {
 	}
 	m.mu.Lock()
 	_, had := m.registry.Players[evt.UserId]
+	_, hadTactics := m.registry.Tactics[evt.UserId]
+	had = had || hadTactics
 	delete(m.registry.Players, evt.UserId)
+	delete(m.registry.Tactics, evt.UserId)
 	m.mu.Unlock()
 	if had {
 		if err := m.save(); err != nil {
