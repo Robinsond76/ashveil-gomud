@@ -6,9 +6,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-09-30
-- **HEAD:** `master` 2026-09-30: the `modules/company` brawl test flakes
-  fixed, merged from `fix-brawl-flakes` (test-only; see the work log).
-  Before it, Phase 30b (wounds, treatment, and
+- **HEAD:** `master` 2026-09-30: Phase 30c1 (company tactics and enemy
+  personalities), merged from `phase-30c1-company-tactics`. Before it, the
+  `modules/company` brawl test flakes fixed, merged from
+  `fix-brawl-flakes` (test-only; see the work log). Before it, Phase 30b (wounds, treatment, and
   `heal wounds`), merged from `phase-30b-wounds`.
   Before it, on `master` 2026-09-29: Phase 30a (status and critical-hit
   effects), merged as `2ef931c` from `claude/next-phase-7ekckc`. Before it,
@@ -32,7 +33,7 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29f, 30a, 30b, 32g,
+- **Completed:** Phases 0–29f, 30a, 30b, 30c1, 32g,
   and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
@@ -42,8 +43,10 @@ instead of duplicating them.
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 30b (wounds, treatment, and `heal wounds`),
-  merged to `master` from `phase-30b-wounds`; see its work-log entry below. Before it, 30a
+- **Latest completed phase:** 30c1 (company tactics and enemy
+  personalities), merged to `master` from `phase-30c1-company-tactics`;
+  see its work-log entry below. Before it, 30b (wounds, treatment, and
+  `heal wounds`), merged from `phase-30b-wounds`, and 30a
   (status and critical-hit effects), merged as `2ef931c`, and 29f
   (paced combat output), squash-merged to `master` as `fb28df3`, and before
   that 29e (pain reactions), from `codex/phase-29e-pain-reactions`, 32g2
@@ -68,8 +71,10 @@ instead of duplicating them.
   Independent follow-up review found no issues and passed 40 focused repetitions.
 - **Next:** the play-test roadmap (32a–32h, 32g2) is done, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
-  the combat roadmap's 29 series is done with 29f, and 30a and 30b are done;
-  next is 30c (company tactics). 30a's statuses count combat
+  the combat roadmap's 29 series is done with 29f, and 30a, 30b, and 30c1
+  are done; next is 30c2 (guardian role and guards, in the
+  [30c design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md)),
+  then 30d. 30a's statuses count combat
   rounds; the other balance shifts 29f's cadence brought are still to
   retune (see Known issues).
   Also open: the "Future ideas" row; see Known issues.
@@ -132,7 +137,7 @@ instead of duplicating them.
 | 29f | Paced combat output | Complete: [design](superpowers/specs/2026-09-29-phase-29f-paced-combat-design.md), [plan](superpowers/plans/2026-09-29-phase-29f-paced-combat.md). Combat resolves every `CombatEveryRounds` (2) game rounds, an 8-second combat round; everything a round causes is tagged (`events.WithCause`) and paced out per player (`internal/combatpace`), with `set combatpace fast|normal|slow|off` (off for screen readers); a pause before pain and death lines; typed output, tells, and says never wait; the prompt and the web client's vitals and battle view wait for the lines; flushes on move, quit, pace change, and copyover; `help combatpace` |
 | 30a | Status effects and critical-hit effects (weapons only) | Complete (merged as `2ef931c`): [design](superpowers/specs/2026-09-29-phase-30a-status-crit-effects-design.md), [plan](superpowers/plans/2026-09-29-phase-30a-status-crit-effects.md). Nine statuses (bleeding, staggered, knocked down, armor broken, exposed, burning, overloaded, stunned, hobbled) as combat-round buffs (`internal/status`); crit effects by weapon subtype; ticked, and actions lost, in the combat round; cleared at fight end; Sparks overloads; `help statuses` |
 | 30b | Wounds, treatment, and `heal wounds` | Complete: [design](superpowers/specs/2026-09-30-phase-30b-wounds-design.md), [plan](superpowers/plans/2026-09-30-phase-30b-wounds.md). Lasting wounds from damaging crits, light ones from crushing blows and finished bleeds; healing stops at the wound limit; `heal`/`heal wounds` (clerics' `tend` and heal, splints and bandages, the Waymark Inn physician); inn stay heals, camp rest one wound per splint or bandage (owner amendment); death clears; `status`, GMCP, web strip; `help wounds` |
-| 30c | Company tactics | Proposed, rescoped 2026-09-29: [design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md). 30c1: `company tactics` (company-wide focus, changeable mid-battle for that battle only, leader-only, one-round cooldown, with web Combat-tab buttons; healing threshold) and enemy personalities. 30c2: guardian role and guards. Rotate the wounded deferred |
+| 30c | Company tactics | 30c1 complete: [design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md), [plan](superpowers/plans/2026-09-30-phase-30c1-company-tactics.md). `company tactics` (`tactics`): a durable company focus (none, leader, casters, nearest, weakest, strongest, wounded) and healing threshold (10–90%); in a battle only the focus changes, for that battle, one order a round, turning everyone at the next upkeep; web focus buttons; the `casters` rule; enemy personalities by race or template (`targeting`, `targetingnoise`); `help tactics`. 30c2 (guardian role and guards) proposed. Rotate the wounded deferred |
 | 30d | Wind-ups, telegraphs, and interrupts | Proposed: [spec](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md). Wind-ups in whole rounds, interrupt thresholds with accumulated pressure, concentration, enemy casters |
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
 | 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
@@ -153,6 +158,98 @@ instead of duplicating them.
 Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
+
+### Phase 30c1: company tactics and enemy personalities (2026-09-30)
+
+- **What:**
+  - `internal/strategy`: the `casters` rule (chanting first, then those
+    who cast); `Tactics` (focus, healing threshold) with parsing and the
+    `TacticsProvider` seam; `Situation.HealBelow`; `EnemyPick` (rule plus
+    a seeded noise roll).
+  - `modules/strategy` stores each player's tactics in its own file beside
+    the strategies (save on change, rollback, purge). This departs from the
+    draft's "company record": a solo player has a healing threshold too.
+  - Combat: `enemyparty.AimRule` applies the focus in the attacker
+    builders, so the upkeep, a lone player's turn, the first aims at
+    `attack`, the reassignment on a kill, and caster spell targets all
+    follow it (roles stay). `internal/battle` holds a battle-only order
+    (`SetFocus`/`ClearFocus`, pending until the next upkeep, one a
+    round); in that round `beginRefocus` turns everyone at once and emits
+    `focus-change`. Healers read the threshold.
+  - Enemy personalities: `targeting`/`targetingnoise` on mob templates and
+    races (template wins); used only when an enemy re-aims. Shipped by race:
+    canine wounded 10%, undead nearest, goblin casters 15%, insect and giant
+    spider weakest 25%, human weakest 10%. No personality keeps the old pick.
+  - `company tactics` / `tactics` (`modules/company/tactics.go`); the
+    `strategy` listing names an active focus.
+  - Web: `Company.Battle` `focus`/`saved_focus`/`focus_ready` and
+    `Company.tactics`. The Combat tab has focus buttons (pressed, disabled
+    while an order waits, "saved"), a Setup tactics menu (read-only in a
+    battle), and a live-region line on a change.
+  - Help: new `help tactics` (aliases focus, company-tactics,
+    personalities, personality). Updated `strategy`, `targeting` (enemy
+    personalities), `combat`, `webclient`, `company`, and `attack`. A
+    Practice Yard hint.
+- **Why:** step 6 of the combat roadmap, slice one of 30c. Owner
+  decisions (2026-09-30, asked this session, all recommended options):
+  - a mid-battle order turns everyone at once;
+  - personalities act only on re-aim;
+  - personalities are shipped by race;
+  - an enemy's `casters` goes for anyone chanting, then healers and
+    casters.
+- **Verification:**
+  - Wiring tests through the real entry points (`modules/company`
+    brawl, real `DoCombat` and commands):
+    - a saved focus over every rule, with reach binding and the healer
+      healing;
+    - the healing threshold;
+    - a mid-battle order turning everyone once, the event in the
+      battle's fight, then sticky;
+    - a lone player refocusing;
+    - the command: refusals, the cooldown, the room line, and companions
+      turning;
+    - the revert at a battle's end;
+    - refused while downed;
+    - enemy personalities per rule and with noise;
+    - `Company.Battle` through the feed.
+  - Mutation checks confirmed the refocus, personality, and downed tests
+    each catch their bug.
+  - Final (2026-09-30, after the review fixes and a merge of
+    `origin/master`): all passed.
+    - `make generate` (no diff);
+    - `make validate`;
+    - `make js-lint`;
+    - `scripts/browser/dock-windows-check.mjs`;
+    - `go test -race ./...`;
+    - `git diff --check`.
+- **Review:** the independent default-agent reviewer found no blockers.
+  Each finding was checked.
+  - **Fixed, with regression tests:**
+    - `tactics` was allowed while downed but `company tactics` wasn't
+      (now both refused);
+    - an order before the battle began got "still turning" (now "The
+      battle hasn't begun yet");
+    - `focus-change` wasn't placed in the battle's fight;
+    - the web Setup tactics menu acted mid-battle (now read-only there);
+    - help wording (goblins "about one in seven"; an order ends with its
+      battle; waiting a round after `attack`).
+  - **Tests added for the gaps it named:** the room line, companions
+    turning by the real command, and the revert at a battle's end
+    through `DoCombat`.
+  - **Accepted:**
+    - an order given as its battle ends is dropped silently (documented
+      in `help tactics`);
+    - a wolf's `wounded` reads full health, not the wound limit;
+    - no tactics row in the web client without a company (the command
+      still works; documented);
+    - the refocus exemptions for a mid-chant member are asserted by
+      skipping, and `break` is refused in a battle anyway;
+    - an enemy picking a chanting member is unit-tested only.
+    - Recorded behaviour change: every shipped human, canine, goblin,
+      undead, and insect mob (town folk included) now re-aims by
+      `EnemyPick`: weakest ties break by formation, with the noise
+      above. Tests with shipped races against a company should seed
+      `hooks.UseAimRollForTest`, as `newBrawl` does.
 
 ### Brawl test flakes fixed (2026-09-30, not a phase)
 
@@ -188,105 +285,14 @@ docs/PROJECT_STATUS.md`.
 - **Review:** no phase review gate (test-only fix); the diff was read for
   weakened assertions (none: each still asserts the same text and events).
 
-### Phase 30b: wounds, treatment, and `heal wounds` (2026-09-30)
-
-- **What:**
-  - `internal/wounds` (pure): wounds, the wound limit (max less the
-    wounds, never under a quarter of max), wounds from crits, crushing
-    blows, and finished bleeds, treatment, and the `heal wounds` planner.
-  - `Character.Wounds`, persisted in the user file. `Heal`,
-    `ApplyHealthChange`, `SetHealth`, and the level-up refill stop at the
-    limit, and never lower health.
-  - Combat: a damaging crit on a player or a companion leaves a lasting
-    wound (`, wounded` in the hit line), and a crushing blow a light one.
-    A bleed that runs out leaves a light wound. Light wounds close at
-    fight end, in the stray pass, and at login. The strategy healer reads
-    the limit.
-  - Companions' wounds ride `MemberState`. They respawn at the limit, and
-    death clears the wounds.
-  - `heal` and `heal wounds` (`modules/company/wounds.go`): clerics tend
-    and heal, then splints and bandages, then a physician (config
-    `Physicians`, the Waymark Inn at 15 gold a wound). The physician asks
-    through the prompt. Items 36 (bandage) and 37 (splint) are in both
-    markets.
-  - The new `tend` spell (clerics, companions at level 1). Heal spells
-    note a held-back heal.
-  - An inn stay knits every wound. A camp rest knits a broken bone per
-    birch splint and a cut or puncture per linen bandage the company has,
-    using them up; without them it heals none (owner amendments,
-    2026-09-30, after merge, on branches `camp-wounds-bandages` and
-    `camp-splints`). The church wake clears wounds.
-  - `status` `(limit N)`, `companyview`/GMCP `hp_limit`, and the web
-    vitals strip.
-  - Help: `help wounds` (new, with aliases), and `help heal` rewritten
-    from GoMud's stale skill page. `statuses`, `combat`, `camp`, `inn`,
-    `death`, and `health` are updated. The Camp lesson has a pointer.
-- **Why:** step 6 of the combat roadmap. Owner decisions (2026-09-30):
-  - lasting and light wounds;
-  - camp rest and inn stay both heal. Amended the same day: a camp rest
-    heals only with bandages, one per wound, and a broken bone needs a
-    splint;
-  - `tend` is a castable spell;
-  - death clears wounds.
-- **Verification:**
-  - Wiring tests through the real entry points:
-    - crits through `Attack*`;
-    - `DoCombat` for bleeds, fight end, strays, and the strategy healer;
-    - real casts of heal and tend;
-    - the `heal` command and its physician prompt;
-    - the camping grant;
-    - the death module;
-    - the save/logout/restart/respawn seams (companion);
-    - user save and load (player);
-    - `HandleJoin`;
-    - the Playwright vitals strip.
-  - A mutation check confirmed the fight-end close is what the fight-end
-    test catches.
-  - Final (2026-09-30, after the review fixes): these all passed.
-    - `make generate` (no diff);
-    - `make validate`;
-    - `make js-lint`;
-    - `go test -race ./...`.
-  - A first full run caught two things:
-    - `internal/scripting`'s structured type list lacked the new actor
-      methods (fixed);
-    - two intermittent brawl tests.
-      - `TestMinorHealCombatPronouns` fails on a random fizzle, 2 in 60
-        runs on `master` too.
-      - `TestBattleViewPerPlayer` failed 2 in 180 here and 0 in 210 on
-        `master`. Nothing in 30b touches how waiting groups choose a
-        player, so it's recorded as the brawl's dice, not fixed.
-- **Review:** the independent default-agent reviewer found no blockers.
-  Each of its findings was checked.
-  - **Fixed, with regression tests:**
-    - no vitals refresh after `heal wounds` or rest healing;
-    - light wounds could carry into a fight begun in the first round after
-      login (now closed in `HandleJoin`);
-    - `tend` spent mana on a target with no wound;
-    - the physician asked a leader who couldn't pay;
-    - "first, the worst hurt" narration after self-treatment;
-    - spent-healer and no-mana messages;
-    - help wording (items go on "until it closes"; the physician only
-      through `heal wounds`);
-    - the physician is now in the Waymark Inn's room text.
-  - **Tests added for the gaps it named:**
-    - the physician's price re-check, a fight between the offer and the
-      answer, and the companion record after paying;
-    - companion-only aggro;
-    - a player cleric healing to the limit;
-    - an enemy's bleed leaving no wound;
-    - a real user save and load.
-
-    The fight-end test couldn't tell `fightSides.end` from the stray pass,
-    and was rewritten.
-  - **Accepted:**
-    - bandages and splints keep going until a wound closes (documented);
-    - healing from a rest or `heal wounds` reaches disk at the next save
-      seam, as rest buffs already do (documented);
-    - potion scripts are covered by the `ApplyHealthChange` unit tests,
-      not a buff-script test.
-
 ## Known issues / deferred items
+
+- **Company tactics (30c1), accepted:** an order given in the round its
+  battle ends is dropped silently; a solo player has no web tactics row
+  (the command works); enemy `wounded` weighs full health, not the wound
+  limit; hunting the isolated (adjacency) and rotate-the-wounded are
+  deferred; the company `casters` focus falls to the nearest until 30d's
+  enemy casters.
 
 - **Wounds (30b), deferred:**
   - Enemies take no wounds, and there are no monster abilities that
@@ -334,8 +340,7 @@ docs/PROJECT_STATUS.md`.
 - **Automatic combat (32d), for the owner and later phases:** Magic
   Missile's difficulty 75 gives a new wizard about a one-in-three chance
   to cast (GoMud's odds; spell balance not retuned); companion mana and
-  health aren't saved (a restart refills both); enemies still aim at the weakest they can reach (personalities are
-  30c's); companions following a flee is untested. 32c's two owner items
+  health aren't saved (a restart refills both); enemies aim by personality since 30c1; companions following a flee is untested. 32c's two owner items
   (peaceful tag groups; what's allowed mid-battle) are settled by 32d.
   32c's test gaps are in its work-log entry (git history, commit
   `ff1f663e`).

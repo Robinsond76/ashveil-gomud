@@ -94,7 +94,7 @@ Each task writes its tests first and runs only its own packages.
   - Tests: `help tactics` and the updated pages render through `help`
     (`internal/usercommands`, as `help_combat_test.go`);
     `TestTutorialHelpPointersExist`.
-- [ ] **9. Review, fixes, full verification, status, merge.**
+- [x] **9. Review, fixes, full verification, status, merge.**
   - Independent reviewer over `git diff master..HEAD`; verify each
     finding, fix with regression tests.
   - `go test -race ./...`, `make generate`, `make validate`,
