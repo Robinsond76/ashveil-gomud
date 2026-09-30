@@ -38,6 +38,8 @@ type Member struct {
 	ArchetypeKnown bool
 	HasHP          bool
 	HP, HPMax      int
+	// HPLimit is the wound limit (Phase 30b): HPMax when unwounded.
+	HPLimit int
 	// HasMP is false when the member has no mana to show: none at all, or
 	// not out (Phase 32g).
 	HasMP     bool
@@ -172,7 +174,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 	s := Summary{Alive: 1, Alignment: company.DisplayAlignment(int(c.Alignment))}
 
 	s.Leader = Member{Key: company.LeaderMemberKey, Leader: true, Name: c.Name, Status: company.MemberPresent,
-		Level: c.Level, HasHP: true, HP: c.Health, HPMax: c.HealthMax.Value,
+		Level: c.Level, HasHP: true, HP: c.Health, HPMax: c.HealthMax.Value, HPLimit: c.HealthLimit(),
 		HasMP: c.ManaMax.Value > 0, MP: c.Mana, MPMax: c.ManaMax.Value}
 	if f, ok := src.formation(uid); ok {
 		s.Leader.Row, s.Leader.Col, s.Leader.Placed = f.Find(company.LeaderMemberKey)
@@ -212,7 +214,10 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			default:
 				s.Alive++
 				if v.Status == company.MemberPresent {
-					m.HasHP, m.HP, m.HPMax = true, v.HP, v.HPMax
+					m.HasHP, m.HP, m.HPMax, m.HPLimit = true, v.HP, v.HPMax, v.HPLimit
+					if m.HPLimit <= 0 {
+						m.HPLimit = m.HPMax
+					}
 					m.HasMP, m.MP, m.MPMax = v.MPMax > 0, v.MP, v.MPMax
 				}
 				if n, ok := needs[m.Key]; ok {

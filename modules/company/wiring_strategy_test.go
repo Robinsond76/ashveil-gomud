@@ -40,9 +40,9 @@ func (fakeArchetypes) CompanionSpells(id string, level int) []string {
 	switch id {
 	case "cleric":
 		if level >= 5 {
-			return []string{"heal", "healall"}
+			return []string{"heal", "tend", "healall"}
 		}
-		return []string{"heal"}
+		return []string{"heal", "tend"} // Phase 30b: tend (never auto-cast)
 	case "wizard":
 		if level >= 5 {
 			return []string{"mm", "sparks"}

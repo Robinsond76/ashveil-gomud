@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -32,6 +33,11 @@ func HandleJoin(e events.Event) events.ListenerReturn {
 	user.EventLog.Add(`conn`, fmt.Sprintf(`<ansi fg="username">%s</ansi> entered the world`, user.Character.Name))
 
 	users.RemoveLinkDeadUser(evt.UserId)
+
+	// Phase 30b: no fight survives a logout or a restart, so neither does a
+	// light wound (the combat round's stray pass would close it too late if
+	// a new fight opened in the player's first round back).
+	user.Character.Wounds = wounds.CloseLight(user.Character.Wounds)
 
 	room := rooms.LoadRoom(user.Character.RoomId)
 	sendResetMessage := false

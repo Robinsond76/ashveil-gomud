@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
 type nativeRuntime struct{}
@@ -124,8 +125,11 @@ func applyState(mob *mobs.Mob, state domain.MemberState) {
 	if mob.Character.Items == nil {
 		mob.Character.Items = []items.Item{}
 	}
+	// Phase 30b: its lasting wounds come back with it (no fight survives a
+	// respawn, so light ones don't), and its health stops at the limit.
+	mob.Character.Wounds = wounds.CloseLight(saved.Wounds)
 	mob.Character.Validate(true)
-	mob.Character.Health = mob.Character.HealthMax.Value
+	mob.Character.Health = mob.Character.HealthLimit()
 	mob.Character.Mana = mob.Character.ManaMax.Value
 }
 
@@ -141,6 +145,7 @@ func (nativeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 		Equipment:  mob.Character.Equipment,
 		Items:      mob.Character.Items,
 		Gold:       mob.Character.Gold,
+		Wounds:     mob.Character.Wounds,
 	}
 	return state.Clone(), true
 }
@@ -240,6 +245,15 @@ func (nativeRuntime) Mana(instanceID int) (int, int, bool) {
 		return 0, 0, false
 	}
 	return mob.Character.Mana, mob.Character.ManaMax.Value, true
+}
+
+// HealthLimit reads a live mob's wound limit (Phase 30b).
+func (nativeRuntime) HealthLimit(instanceID int) (int, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return 0, false
+	}
+	return mob.Character.HealthLimit(), true
 }
 
 // Vitals reads a live mob's health.

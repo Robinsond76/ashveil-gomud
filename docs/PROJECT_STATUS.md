@@ -5,8 +5,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-29
-- **HEAD:** `master` 2026-09-29: Phase 30a (status and critical-hit
+- **Last updated:** 2026-09-30
+- **HEAD:** `master` 2026-09-30: Phase 30b (wounds, treatment, and
+  `heal wounds`), merged from `phase-30b-wounds`.
+  Before it, on `master` 2026-09-29: Phase 30a (status and critical-hit
   effects), merged as `2ef931c` from `claude/next-phase-7ekckc`. Before it,
   Phase 29f (paced combat output),
   squash-merged as `fb28df3` from `claude/next-phase-planning-9u98ae`
@@ -28,7 +30,7 @@ instead of duplicating them.
 
 ## Current position
 
-- **Completed:** Phases 0–29f, 30a, 32g,
+- **Completed:** Phases 0–29f, 30a, 30b, 32g,
   and 32g2; see the table below. The survival and
   expedition loop (travel, camping, weather, load, mounts), formation
   combat, the environment/skills/economy roadmap (13–21), the company-life
@@ -38,8 +40,9 @@ instead of duplicating them.
   logistics (32f), the web company dock (32g) and its live battle view
   (32g2), and character deletion
   (32h) are all done.
-- **Latest completed phase:** 30a (status and critical-hit effects),
-  merged to `master` as `2ef931c`; see its work-log entry below. Before it, 29f
+- **Latest completed phase:** 30b (wounds, treatment, and `heal wounds`),
+  merged to `master` from `phase-30b-wounds`; see its work-log entry below. Before it, 30a
+  (status and critical-hit effects), merged as `2ef931c`, and 29f
   (paced combat output), squash-merged to `master` as `fb28df3`, and before
   that 29e (pain reactions), from `codex/phase-29e-pain-reactions`, 32g2
   (live battle view), from `phase-32g2-battle-view`, and 32g (web company
@@ -63,8 +66,8 @@ instead of duplicating them.
   Independent follow-up review found no issues and passed 40 focused repetitions.
 - **Next:** the play-test roadmap (32a–32h, 32g2) is done, per the
   [play-test roadmap](superpowers/specs/2026-09-28-playtest-feedback-roadmap.md#build-order-recommended-accepted-2026-09-28);
-  the combat roadmap's 29 series is done with 29f, and 30a is done; next is
-  30b (wounds), built on 30a's statuses. 30a's statuses count combat
+  the combat roadmap's 29 series is done with 29f, and 30a and 30b are done;
+  next is 30c (company tactics). 30a's statuses count combat
   rounds; the other balance shifts 29f's cadence brought are still to
   retune (see Known issues).
   Also open: the "Future ideas" row; see Known issues.
@@ -126,7 +129,7 @@ instead of duplicating them.
 | 29e | Pain reactions | Complete: [design](superpowers/specs/2026-09-29-phase-29e-pain-reactions-design.md), [plan](superpowers/plans/2026-09-29-phase-29e-pain-reactions.md). A victim reacts after each damaging critical strike that leaves them standing; second person for the victim, third person for witnesses, distinct beast-race sets and NPC overrides, without changing combat mechanics |
 | 29f | Paced combat output | Complete: [design](superpowers/specs/2026-09-29-phase-29f-paced-combat-design.md), [plan](superpowers/plans/2026-09-29-phase-29f-paced-combat.md). Combat resolves every `CombatEveryRounds` (2) game rounds, an 8-second combat round; everything a round causes is tagged (`events.WithCause`) and paced out per player (`internal/combatpace`), with `set combatpace fast|normal|slow|off` (off for screen readers); a pause before pain and death lines; typed output, tells, and says never wait; the prompt and the web client's vitals and battle view wait for the lines; flushes on move, quit, pace change, and copyover; `help combatpace` |
 | 30a | Status effects and critical-hit effects (weapons only) | Complete (merged as `2ef931c`): [design](superpowers/specs/2026-09-29-phase-30a-status-crit-effects-design.md), [plan](superpowers/plans/2026-09-29-phase-30a-status-crit-effects.md). Nine statuses (bleeding, staggered, knocked down, armor broken, exposed, burning, overloaded, stunned, hobbled) as combat-round buffs (`internal/status`); crit effects by weapon subtype; ticked, and actions lost, in the combat round; cleared at fight end; Sparks overloads; `help statuses` |
-| 30b | Wounds, treatment, and `heal wounds` | Proposed: [spec](superpowers/specs/2026-09-26-wounds-treatment-design.md). Wound limits on healing; durable critical-hit wounds; one after-fight command using clerics, splints and bandages, or an inn physician; camp rest heals |
+| 30b | Wounds, treatment, and `heal wounds` | Complete: [design](superpowers/specs/2026-09-30-phase-30b-wounds-design.md), [plan](superpowers/plans/2026-09-30-phase-30b-wounds.md). Lasting wounds from damaging crits, light ones from crushing blows and finished bleeds; healing stops at the wound limit; `heal`/`heal wounds` (clerics' `tend` and heal, splints and bandages, the Waymark Inn physician); camp rest and inn stay heal; death clears; `status`, GMCP, web strip; `help wounds` |
 | 30c | Company tactics | Proposed, rescoped 2026-09-29: [design](superpowers/specs/2026-09-29-phase-30c-company-tactics-design.md). 30c1: `company tactics` (company-wide focus, changeable mid-battle for that battle only, leader-only, one-round cooldown, with web Combat-tab buttons; healing threshold) and enemy personalities. 30c2: guardian role and guards. Rotate the wounded deferred |
 | 30d | Wind-ups, telegraphs, and interrupts | Proposed: [spec](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md). Wind-ups in whole rounds, interrupt thresholds with accumulated pressure, concentration, enemy casters |
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
@@ -149,85 +152,109 @@ Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
 
-### Phase 30a: status effects and critical-hit effects (2026-09-29)
+### Phase 30b: wounds, treatment, and `heal wounds` (2026-09-30)
 
 - **What:**
-  - Nine statuses as buffs 1100–1108 with `combatrounds: true`. Their
-    count is combat rounds, ticked by the combat loop (`statusPass` in
-    `internal/hooks/combat_status.go`), never by game rounds.
-    - Bleeding stacks to 3 (`BuffSpec.MaxStacks`, `Buff.Stacks`) and
-      refreshes.
-    - Staggered and knocked down cost the next action, and stunned the next
-      two, in the player, mob, and strategy passes.
-    - Armor broken halves `GetDefense`, and exposed adds 25 points to the
-      crit chance against its holder.
-    - Hobbled carries `no-flee`, which `flee` and a pending flight now
-      enforce. The existing Hamstrung, Tackled, and Winded buffs carry that
-      flag too, so they now block fleeing as well.
-  - `internal/status` holds the rules, the text, and the crit table by
-    weapon subtype; a weapon's own `CritBuffIds` override the table.
-    `calculateCombat` adds each crit's effect to `BuffTarget` and names it
-    in the hit's parentheses.
-  - The stream gains `StatusTick`, and expiry emits `StatusExpired`. The
-    battle summary counts a status's damage to the sufferer's foes.
-  - Statuses clear at fight end. They land, and keep ticking, only on
-    members of an open fight (or a player in PvP); a leftover from a
-    restart is cleared silently.
-  - A bleed can fell someone. The fall is resolved that round and ends
-    their aim.
-  - Shower of Sparks overloads each target.
-  - `conditions`, GMCP, and item crit-buff text show combat-round lengths.
-  - Help: `help statuses` (listed under combat, with aliases), links from
-    `combat` and `narration`, an updated `flee`, and a Practice Yard hint.
-- **Why:** step 5 of the combat roadmap: a crit leaves a mark that matches
-  the weapon, as ordinary statuses that 30b–30d can read. Owner decisions
-  (2026-09-29):
-  - all eight proposed statuses, plus extras (Hobbled was added);
-  - bleeding stacks to 3;
-  - statuses end with the fight.
+  - `internal/wounds` (pure): wounds, the wound limit (max less the
+    wounds, never under a quarter of max), wounds from crits, crushing
+    blows, and finished bleeds, treatment, and the `heal wounds` planner.
+  - `Character.Wounds`, persisted in the user file. `Heal`,
+    `ApplyHealthChange`, `SetHealth`, and the level-up refill stop at the
+    limit, and never lower health.
+  - Combat: a damaging crit on a player or a companion leaves a lasting
+    wound (`, wounded` in the hit line), and a crushing blow a light one.
+    A bleed that runs out leaves a light wound. Light wounds close at
+    fight end, in the stray pass, and at login. The strategy healer reads
+    the limit.
+  - Companions' wounds ride `MemberState`. They respawn at the limit, and
+    death clears the wounds.
+  - `heal` and `heal wounds` (`modules/company/wounds.go`): clerics tend
+    and heal, then splints and bandages, then a physician (config
+    `Physicians`, the Waymark Inn at 15 gold a wound). The physician asks
+    through the prompt. Items 36 (bandage) and 37 (splint) are in both
+    markets.
+  - The new `tend` spell (clerics, companions at level 1). Heal spells
+    note a held-back heal.
+  - Camp rest and inn stay knit wounds. The church wake clears them.
+  - `status` `(limit N)`, `companyview`/GMCP `hp_limit`, and the web
+    vitals strip.
+  - Help: `help wounds` (new, with aliases), and `help heal` rewritten
+    from GoMud's stale skill page. `statuses`, `combat`, `camp`, `inn`,
+    `death`, and `health` are updated. The Camp lesson has a pointer.
+- **Why:** step 6 of the combat roadmap. Owner decisions (2026-09-30):
+  - lasting and light wounds;
+  - camp rest and inn stay both heal;
+  - `tend` is a castable spell;
+  - death clears wounds.
 - **Verification:**
-  - Focused package tests passed, including wiring tests through the real
-    round:
-    - a forced crit for each weapon subtype, and a crit in `DoCombat`;
-    - bleeding ticks, stacks, expires, and fells a foe that then strikes no
-      blow;
-    - the actions lost to stagger, knockdown, and stun;
-    - clearing at fight end and of strays;
-    - a status lands only in a fight;
-    - a pending flight is held;
-    - Sparks through a real cast.
-  - Mutation checks: disabling `statusPass`, or reverting the review's hook
-    fixes, fails the wiring tests.
-  - Final: `make generate` (no diff), `make validate`, and
-    `go test -race ./...` all passed (2026-09-29).
-- **Review:** the independent default-agent reviewer made 11 findings; each
-  was reproduced or checked.
+  - Wiring tests through the real entry points:
+    - crits through `Attack*`;
+    - `DoCombat` for bleeds, fight end, strays, and the strategy healer;
+    - real casts of heal and tend;
+    - the `heal` command and its physician prompt;
+    - the camping grant;
+    - the death module;
+    - the save/logout/restart/respawn seams (companion);
+    - user save and load (player);
+    - `HandleJoin`;
+    - the Playwright vitals strip.
+  - A mutation check confirmed the fight-end close is what the fight-end
+    test catches.
+  - Final (2026-09-30, after the review fixes): these all passed.
+    - `make generate` (no diff);
+    - `make validate`;
+    - `make js-lint`;
+    - `go test -race ./...`.
+  - A first full run caught two things:
+    - `internal/scripting`'s structured type list lacked the new actor
+      methods (fixed);
+    - two intermittent brawl tests.
+      - `TestMinorHealCombatPronouns` fails on a random fizzle, 2 in 60
+        runs on `master` too.
+      - `TestBattleViewPerPlayer` failed 2 in 180 here and 0 in 210 on
+        `master`. Nothing in 30b touches how waiting groups choose a
+        player, so it's recorded as the brawl's dice, not fixed.
+- **Review:** the independent default-agent reviewer found no blockers.
+  Each of its findings was checked.
   - **Fixed, with regression tests:**
-    - a foe felled by a status tick still struck that round (its aim now
-      ends);
-    - the `status` and `overloaded` aliases collided with the character
-      sheet and `cargo`, which gave a random help page per process and a
-      flaky test;
-    - a refresh revived an expired, unpruned bleed at its old stacks;
-    - a later crit overwrote an earlier strike's statuses in `BuffTarget`
-      (they are now appended, for pets too);
-    - statuses from a fight's last round landed after the fight ended, and
-      a holder kept ticking beside someone else's fight (the check is now
-      fight membership, not the room);
-    - a flight already begun escaped a hobble;
-    - an expired speed penalty outlasted its end line by a round. Stats are
-      now recalculated on expiry, and knocked down's count went from 3 to 4
-      to keep "down for 2 more rounds" true;
-    - a stab's two stacks counted twice in the summary;
-    - item crit-buff text for combat-round buffs;
-    - help wording (points, not %; blocked crits; claw weapons only), and
-      `flee.md`.
-  - **Accepted:** mobs ignore `no-flee` (GoMud's mob flight has no such
-    check), and natural (generic-subtype) attacks leave no status.
-  - The review's test gaps are closed by the tests above; the restart case
-    is covered by the stray-clear and lands-only-in-a-fight tests.
+    - no vitals refresh after `heal wounds` or rest healing;
+    - light wounds could carry into a fight begun in the first round after
+      login (now closed in `HandleJoin`);
+    - `tend` spent mana on a target with no wound;
+    - the physician asked a leader who couldn't pay;
+    - "first, the worst hurt" narration after self-treatment;
+    - spent-healer and no-mana messages;
+    - help wording (items go on "until it closes"; the physician only
+      through `heal wounds`);
+    - the physician is now in the Waymark Inn's room text.
+  - **Tests added for the gaps it named:**
+    - the physician's price re-check, a fight between the offer and the
+      answer, and the companion record after paying;
+    - companion-only aggro;
+    - a player cleric healing to the limit;
+    - an enemy's bleed leaving no wound;
+    - a real user save and load.
+
+    The fight-end test couldn't tell `fightSides.end` from the stray pass,
+    and was rewritten.
+  - **Accepted:**
+    - bandages and splints keep going until a wound closes (documented);
+    - healing from a rest or `heal wounds` reaches disk at the next save
+      seam, as rest buffs already do (documented);
+    - potion scripts are covered by the `ApplyHealthChange` unit tests,
+      not a buff-script test.
 
 ## Known issues / deferred items
+
+- **Wounds (30b), deferred:**
+  - Enemies take no wounds, and there are no monster abilities that
+    wound.
+  - No wounds on the battle-view grid or in the battle summary, and no
+    stream event for them.
+  - Pets' strikes don't wound.
+  - A companion not out when a rest completes keeps its wounds.
+  - The physician's price is flat, with no standing markup.
+  - Healing reaches disk at the next save seam.
 
 - **Paced combat (29f), for the owner and Phase 30:**
   - Game-round systems now tick twice per combat round:

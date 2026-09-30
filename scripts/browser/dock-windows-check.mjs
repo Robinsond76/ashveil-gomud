@@ -73,6 +73,14 @@ await page.evaluate(() => window.gmcp('Company.Vitals', { vitals: {
 const after = await page.evaluate(() => document.querySelector('.vitals-member[data-key="companion:1"]').getAttribute('aria-label'));
 check(after === 'Oswin, health 5 of 25, mana 2 of 20', 'a Company.Vitals updates the rows');
 check(await page.evaluate(() => document.getElementById('vitals-warn').textContent.includes('Load 92%') && !document.getElementById('vitals-warn').textContent.includes('Hungry')), 'the warnings follow the newest vitals');
+// Phase 30b: a wounded member's limit, shown, spoken, and warned of.
+await page.evaluate(() => window.gmcp('Company.Vitals', { vitals: {
+  leader: { hp: 30, hp_max: 40, mp: 6, mp_max: 14, needs: null, warmth: '' },
+  'companion:1': { hp: 5, hp_max: 25, hp_limit: 19, mp: 2, mp_max: 20, needs: null, warmth: '' },
+}, rescue: { 'companion:4': 60 } }));
+const wounded = await page.evaluate(() => { const r = document.querySelector('.vitals-member[data-key="companion:1"]'); return { label: r.getAttribute('aria-label'), text: r.textContent }; });
+check(wounded.label === 'Oswin, health 5 of 25, wound limit 19, mana 2 of 20' && wounded.text.includes('limit 19'), 'a wounded member shows and speaks the wound limit');
+check(await page.evaluate(() => document.getElementById('vitals-warn').textContent.includes('Oswin: wounded, limit 19')), 'and the warnings name it');
 await page.evaluate(() => window.gmcp('Company', {}));
 check(await page.evaluate(() => document.querySelectorAll('.vitals-member').length === 0 && document.getElementById('vitals-warn').hidden), 'no company: no rows and no warnings');
 await page.evaluate(c => window.gmcp('Company', c), company);

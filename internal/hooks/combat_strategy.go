@@ -82,7 +82,8 @@ func strategyPass() {
 		for i, a := range side {
 			// A player who is down (bleeding out, not yet dead) can still
 			// be healed (32d review).
-			allies[i] = strategy.Ally{HP: a.char.Health, MaxHP: a.char.HealthMax.Value, Downed: a.who.userId > 0 && a.char.Health < 1}
+			// Phase 30b: a wounded ally is healed only to its limit.
+			allies[i] = strategy.Ally{HP: a.char.Health, MaxHP: a.char.HealthLimit(), Downed: a.who.userId > 0 && a.char.Health < 1}
 		}
 		for _, a := range side {
 			if !readyToCast(a, u) {

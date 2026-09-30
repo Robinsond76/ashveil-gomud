@@ -22,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
@@ -206,6 +207,7 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 	fighting := mobs.GetInstance(companion)
 	require.NotNil(t, fighting)
 	fighting.Character.Aggro = &characters.Aggro{MobInstanceId: 999}
+	user.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "leg", Points: 3}}
 	out = run("suicide", "")
 	assert.Contains(t, out, "You lose a level (now level 4).")
 	assert.Contains(t, out, "You wake before the altar of The Chapel of the Wayfarer.")
@@ -216,6 +218,7 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, 5, c.PeakLevel)
 	assert.Equal(t, c.XPTL(3), c.Experience)
 	assert.Equal(t, max(1, c.HealthMax.Value/2), c.Health)
+	assert.Empty(t, c.Wounds, "Phase 30b: the church wakes a body with no wounds")
 	assert.False(t, module.Pending(user.UserId))
 	mob := mobs.GetInstance(companion)
 	require.NotNil(t, mob, "the companion lives")

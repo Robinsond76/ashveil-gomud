@@ -83,6 +83,7 @@ help:
       - consider
       - flee
       - formation
+      - heal
       - light
       - narration
       - resurrect
@@ -92,6 +93,7 @@ help:
       - shoot
       - strategy
       - targeting
+      - wounds
     information:
       - biome
       - exits
@@ -224,6 +226,7 @@ help-aliases:
   statuses:         [status-effects, statuseffects, bleeding, bleed, staggered, stagger, knockdown, knocked-down, stun, stunned, burning, exposed, armor-break, armor-broken, hobbled, overload, crit-effects]
   narration:        [critical, crit, healed, chanting, combat-text, pronouns, ordinals, pain, pain-reaction]
   resurrect:        [resurrection]
+  wounds:           [wound, wound-limit, woundlimit, heal-wounds, injury, injuries, bandage, bandages, splint, splints, physician, tend]
   light:            [darkness, dark]
   brawling:         [tackle, brawl, disarm, recover, throw]
   enchant:          [unenchant, uncurse]

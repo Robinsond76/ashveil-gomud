@@ -1,0 +1,10 @@
+itemid: 37
+name: birch splint
+namesimple: splint
+description: Two lengths of split birch and a coil of cord, for setting a
+  broken bone after a fight (heal wounds). Used up once applied.
+type: object
+subtype: mundane
+uses: 1
+value: 14
+weight: 250

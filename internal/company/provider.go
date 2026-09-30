@@ -293,8 +293,9 @@ type MemberView struct {
 	// the next, for a present companion only (Phase 32e); ExpKnown says so.
 	ExpInto, ExpTNL int
 	ExpKnown        bool
-	// HP and HPMax are set only for a present companion.
-	HP, HPMax int
+	// HP and HPMax are set only for a present companion; HPLimit is its
+	// wound limit (Phase 30b), HPMax when unwounded.
+	HP, HPMax, HPLimit int
 	// MP and MPMax are its live mana, set only for a present companion
 	// (Phase 32g); MPMax 0 means it has none.
 	MP, MPMax int

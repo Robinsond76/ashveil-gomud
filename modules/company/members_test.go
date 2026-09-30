@@ -23,7 +23,7 @@ func TestCompanyMembersStates(t *testing.T) {
 	require.True(t, ok)
 	require.Len(t, members, 3)
 	assert.Equal(t, domain.MemberView{ID: 1, Name: "#1", Status: domain.MemberDead, Level: 5, RescueSeconds: 3600}, members[0])
-	assert.Equal(t, domain.MemberView{ID: 2, Name: "#2", Status: domain.MemberPresent, Level: 2, HP: 17, HPMax: 30, Placed: true, Row: 1, Col: 2}, members[1])
+	assert.Equal(t, domain.MemberView{ID: 2, Name: "#2", Status: domain.MemberPresent, Level: 2, HP: 17, HPMax: 30, HPLimit: 30, Placed: true, Row: 1, Col: 2}, members[1])
 	assert.Equal(t, domain.MemberView{ID: 3, Name: "#3", Status: domain.MemberAwaiting, Level: 4, Archetype: "ranger"}, members[2])
 
 	none, ok := module.CompanyMembers(8)

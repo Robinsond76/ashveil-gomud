@@ -33,6 +33,10 @@ func buildStatusPanel(user *users.UserRecord) string {
 	hLevel := util.QuantizeTens(c.Health, c.HealthMax.Value)
 	hpValue := fmt.Sprintf(`<ansi fg="health-%d">%d</ansi>/<ansi fg="health-%d">%d</ansi>`,
 		hLevel, c.Health, hLevel, c.HealthMax.Value)
+	// Phase 30b: a wounded character's healing stops at the wound limit.
+	if limit := c.HealthLimit(); limit < c.HealthMax.Value {
+		hpValue += fmt.Sprintf(` (limit %d)`, limit) // "wound limit" wraps the panel
+	}
 
 	mLevel := util.QuantizeTens(c.Mana, c.ManaMax.Value)
 	mpValue := fmt.Sprintf(`<ansi fg="mana-%d">%d</ansi>/<ansi fg="mana-%d">%d</ansi>`,

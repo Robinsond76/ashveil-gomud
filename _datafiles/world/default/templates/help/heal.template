@@ -1,15 +1,39 @@
-<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">heal</ansi> (skill)
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">heal</ansi>
 
-The <ansi fg="skill">heal</ansi> spell bestow healing on the target. The healing takes place over 
-several rounds.
+<ansi fg="command">heal</ansi> shows who in your company is hurt: their health, their wound
+limit, their wounds, and what would help. It changes nothing.
 
-The cooldown for <ansi fg="skill">heal</ansi> is 12 rounds. With each level it up it can be used more 
-frequently.
+<ansi fg="command">heal wounds</ansi> tends the company after a fight. You never name a healer or
+a patient; it goes in this order:
+
+  1. <ansi fg="yellow">The clerics.</ansi> Every member with you who knows Tend Wounds or Minor
+     Heal and has mana, the most mana first, treats the most hurt first
+     (wounds before plain damage). Each tends every wound (4 mana, 2 to 6
+     points closed), then heals up to the wound limit (Minor Heal, 3 mana,
+     2 to 6 health), until the mana runs out. This takes no time: the mana
+     is spent, but there are no chants.
+  2. <ansi fg="yellow">The packs.</ansi> Then birch splints go on each broken bone (4 points
+     each) and linen bandages on each cut or puncture (3 points each),
+     one after another until the wound closes or they run out. A bandage is
+     also wrapped round anyone still under half their limit (3 health).
+     They come from the cargo first, then the patient's own pack, then yours,
+     then the others'.
+  3. <ansi fg="yellow">A physician.</ansi> Where there is one (the Waymark Inn in Dunmar), the
+     physician offers to close every wound left for a price per wound, and
+     asks <ansi fg="command">Pay 30 gold? [yes/no]</ansi>. Only yes pays; if you can't afford
+     it, you're told so instead.
+  4. The report: who is still hurt, and whether a rest would help.
+
+It can't be used in a fight: your healers heal during a fight by their
+strategy (<ansi fg="command">help strategy</ansi>). A camp rest or an inn stay closes whatever
+is left (<ansi fg="command">help wounds</ansi>).
+
+Clerics can also cast the spells by hand: <ansi fg="command">cast heal [who]</ansi> and
+<ansi fg="command">cast tend [who]</ansi> (<ansi fg="command">help cast</ansi>).
 
 <ansi fg="yellow">Usage: </ansi>
 
-(Lvl 1) <ansi fg="skill">heal [target]</ansi> Casts healing on the target, or yourself if omitted.
-(Lvl 2) <ansi fg="skill">heal [target]</ansi> Recovers in 10 rounds.
-(Lvl 3) <ansi fg="skill">heal [target]</ansi> Recovers in 8 rounds.
-(Lvl 4) <ansi fg="skill">heal [target]</ansi> Recovers in 6 rounds.
+  <ansi fg="command">heal</ansi>           who is hurt, and what would help
+  <ansi fg="command">heal wounds</ansi>    tend the company after a fight
 
+See also: <ansi fg="command">help wounds</ansi>, <ansi fg="command">help health</ansi>.

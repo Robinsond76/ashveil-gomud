@@ -372,12 +372,20 @@
             bars.appendChild(miniBar(v.hp, v.hp_max, 'hp', m.name + ' health ' + v.hp + ' of ' + v.hp_max));
             spoken.push('health ' + v.hp + ' of ' + v.hp_max);
             tip.push('HP ' + v.hp + '/' + v.hp_max);
+            // Phase 30b: a wounded member heals only to the wound limit.
+            if (typeof v.hp_limit === 'number') {
+                spoken.push('wound limit ' + v.hp_limit);
+                tip.push('limit ' + v.hp_limit);
+            }
             if (typeof v.mp === 'number' && v.mp_max > 0) {
                 bars.appendChild(miniBar(v.mp, v.mp_max, 'mp', m.name + ' mana ' + v.mp + ' of ' + v.mp_max));
                 spoken.push('mana ' + v.mp + ' of ' + v.mp_max);
                 tip.push('MP ' + v.mp + '/' + v.mp_max);
             }
             row.appendChild(bars);
+            if (typeof v.hp_limit === 'number') {
+                row.appendChild(CompanyData.el('span', 'vitals-member-note', 'limit ' + v.hp_limit));
+            }
         }
         row.title = tip.join(' \u00b7 ');
         row.setAttribute('aria-label', spoken.join(', '));
@@ -396,6 +404,7 @@
                 if (n && n.warn && n.label) { out.push(who + ': ' + n.label); }
             });
             if (v.warmth) { out.push(who + ': ' + v.warmth); }
+            if (typeof v.hp_limit === 'number') { out.push(who + ': wounded, limit ' + v.hp_limit); }
         });
         const load = data.company && data.company.load;
         if (load && load.capacity_g > 0 && load.total_g / load.capacity_g >= 0.9) {

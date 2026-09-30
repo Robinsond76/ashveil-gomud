@@ -21,6 +21,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -185,6 +186,13 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	assert.Equal(t, 17, stored().Equipment.Weapon.SharpStrikes)
 	assert.Equal(t, 1, stored().Equipment.Weapon.SharpBonus)
 
+	// Phase 30b: a lasting wound rides the same snapshot seams; a light one
+	// is recorded too but never outlives a respawn.
+	fracture := wounds.Wound{Kind: wounds.Fracture, Place: "arm", Points: 3}
+	live().Character.Wounds = []wounds.Wound{fracture, {Kind: wounds.Bruise, Place: "ribs", Points: 1, Light: true}}
+	plugins.Save()
+	assert.Len(t, stored().Wounds, 2)
+
 	// Leader logs out: recorded, and the mob leaves the world with it.
 	instanceID := live().InstanceId
 	events.AddToQueue(events.PlayerDespawn{UserId: 7})
@@ -208,6 +216,13 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	restored := live()
 	assert.Equal(t, []int{10002, 10004, 30004}, mobItemIDs(restored), "exactly the recorded gear")
 	assert.Equal(t, 17, restored.Character.Equipment.Weapon.SharpStrikes, "the edge survives logout and restart")
+	assert.Equal(t, []wounds.Wound{fracture}, restored.Character.Wounds, "the lasting wound survives logout and restart")
+	assert.Equal(t, restored.Character.HealthMax.Value-3, restored.Character.HealthLimit())
+	assert.Equal(t, restored.Character.HealthLimit(), restored.Character.Health, "respawned at the wound limit, not max")
+	view, ok := module.CompanyMembers(7)
+	require.True(t, ok)
+	require.Len(t, view, 1)
+	assert.Equal(t, restored.Character.HealthLimit(), view[0].HPLimit, "the member view shows the limit")
 	assert.Equal(t, 2, restored.Character.Level)
 	assert.Equal(t, 1, len(mobs.GetAllMobInstanceIds()))
 
@@ -222,6 +237,7 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	assert.False(t, mobs.MobInstanceExists(restored.InstanceId))
 	assert.Empty(t, stateItemIDs(stored()))
 	assert.Equal(t, 2, stored().Level)
+	assert.Empty(t, stored().Wounds, "Phase 30b: death clears wounds")
 	events.AddToQueue(events.PlayerSpawn{UserId: 7, RoomId: camp.RoomId})
 	events.ProcessEvents()
 	_, tracked = module.instance(7, 1)

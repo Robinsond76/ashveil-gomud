@@ -1,6 +1,7 @@
 package companyview
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"testing"
 	"time"
 
@@ -267,4 +268,21 @@ func TestSummaryStrategies(t *testing.T) {
 		assert.Equal(t, strategy.Strategy{Role: strategy.Healer, Rule: strategy.Defend}, c.Strategy, c.Name)
 	}
 	assert.True(t, noSources().summary(testUser()).Leader.Strategy.IsZero(), "no source: unknown")
+}
+
+// Phase 30b: the leader's and a present companion's wound limits.
+func TestSummaryWoundLimits(t *testing.T) {
+	user := testUser()
+	user.Character.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "arm", Points: 4}}
+	src := fullSources()
+	src.members = func(int) ([]company.MemberView, bool) {
+		return []company.MemberView{
+			{ID: 1, Name: "Tamsin", Status: company.MemberPresent, Level: 3, HP: 10, HPMax: 16, HPLimit: 13},
+			{ID: 2, Name: "Bran", Status: company.MemberPresent, Level: 3, HP: 10, HPMax: 16},
+		}, true
+	}
+	s := src.summary(user)
+	assert.Equal(t, 26, s.Leader.HPLimit)
+	assert.Equal(t, 13, s.Companions[0].HPLimit)
+	assert.Equal(t, 16, s.Companions[1].HPLimit, "a view with no limit reads as unwounded")
 }

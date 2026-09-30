@@ -59,6 +59,8 @@ type Runtime interface {
 	Relocate(instanceID, roomID int) bool
 	// Vitals reads a live mob's health (Phase 26a).
 	Vitals(instanceID int) (hp, hpMax int, ok bool)
+	// HealthLimit reads a live mob's wound limit (Phase 30b).
+	HealthLimit(instanceID int) (limit int, ok bool)
 	// Mana reads a live mob's mana (Phase 32g).
 	Mana(instanceID int) (mp, mpMax int, ok bool)
 	// Progress reads a live mob's level and experience into it and to its
@@ -153,6 +155,8 @@ type CompanyModule struct {
 	rulesForTest *domain.AlignmentRules
 	// recruitersForTest overrides the configured recruiters in tests.
 	recruitersForTest map[int]recruiter
+	// physiciansForTest overrides the configured physicians (Phase 30b).
+	physiciansForTest map[int]physician
 	// Phase 32a2 rosters: rosterRulesForTest overrides the configured
 	// rules; roundNow is nil for util.GetRoundCount; rng is the module's
 	// own source (game loop only), made on first use.
@@ -182,6 +186,7 @@ func init() {
 	m.saveUser = nativeSaveUser
 	m.plug.AddUserCommand("company", m.userCommand, false, false)
 	m.plug.AddUserCommand("formation", m.formationCommand, false, false)
+	m.plug.AddUserCommand("heal", m.healCommand, false, false) // Phase 30b
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.

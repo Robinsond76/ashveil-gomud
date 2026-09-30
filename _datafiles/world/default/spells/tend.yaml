@@ -1,0 +1,11 @@
+# Phase 30b: a cleric's tending. Closes part of the target's worst lasting
+# wound, raising their wound limit; it restores no health itself. Granted
+# to clerics (modules/archetype config); `heal wounds` uses it after a fight.
+spellid: tend
+name: Tend Wounds
+description: Closes 2d3 points of the target's worst wound
+type: helpsingle
+school: restoration
+cost: 4
+waitrounds: 1
+difficulty: 0

@@ -1,6 +1,7 @@
 package scripting
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -17,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
 func setActorFunctions(vm registrar) {
@@ -694,10 +696,60 @@ func (a ScriptActor) GetRaceKills(race string) int {
 }
 
 func (a ScriptActor) SetHealth(amt int) {
-	a.characterRecord.Health = amt
-	if a.characterRecord.Health > a.characterRecord.HealthMax.Value {
-		a.characterRecord.Health = a.characterRecord.HealthMax.Value
+	c := a.characterRecord
+	if amt > c.Health {
+		// Phase 30b: raising health stops at the wound limit.
+		amt = c.CapHealing(c.Health, amt)
 	}
+	c.Health = amt
+	if c.Health > c.HealthMax.Value {
+		c.Health = c.HealthMax.Value
+	}
+}
+
+// GetHealthLimit is how far healing can restore the actor: its max health
+// less what its wounds hold back (Phase 30b).
+func (a ScriptActor) GetHealthLimit() int {
+	return a.characterRecord.HealthLimit()
+}
+
+// WoundNote is the text a heal adds when the actor's wound limit held some
+// of it back (Phase 30b): ", wound limit 10 of 16", else "". rolled is what
+// the heal tried; healed what AddHealth returned.
+func (a ScriptActor) WoundNote(rolled, healed int) string {
+	c := a.characterRecord
+	limit := c.HealthLimit()
+	if rolled <= healed || limit >= c.HealthMax.Value || c.Health < limit {
+		return ``
+	}
+	return fmt.Sprintf(`, wound limit %d of %d`, limit, c.HealthMax.Value)
+}
+
+// HasLastingWound reports whether the actor has a wound tend can close
+// (Phase 30b): a lasting one.
+func (a ScriptActor) HasLastingWound() bool {
+	return len(wounds.Lasting(a.characterRecord.Wounds)) > 0
+}
+
+// TendWound closes up to points of the actor's worst lasting wound (Phase
+// 30b, the tend spell). It returns {closed, wound, limit, max}: the points
+// closed (0 when there was no wound to tend), the wound as it was
+// described ("a broken arm"), and the limit and max health after.
+func (a ScriptActor) TendWound(points int) map[string]any {
+	c := a.characterRecord
+	ws, was, closed, ok := wounds.Close(c.Wounds, points)
+	out := map[string]any{"closed": 0, "wound": ``, "limit": c.HealthLimit(), "max": c.HealthMax.Value}
+	if !ok {
+		return out
+	}
+	c.Wounds = ws
+	out["closed"] = closed
+	out["wound"] = wounds.Describe(was)
+	out["limit"] = c.HealthLimit()
+	if a.userId > 0 {
+		events.AddToQueue(events.CharacterVitalsChanged{UserId: a.userId})
+	}
+	return out
 }
 
 func (a ScriptActor) GetHealth() int {

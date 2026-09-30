@@ -63,6 +63,14 @@ RecruitMaxGap: 60
 # generated candidates (see RosterSize below); ArchetypeWeights, when set,
 # is its own archetype mix ([{Archetype, Weight}]; an archetype left out
 # never appears there).
+# Phase 30b physicians: `heal wounds` in one of these rooms offers to close
+# every lasting wound left, for PricePerWound gold each (a yes/no prompt).
+# Rooms are matched by their template room, as recruiters are.
+Physicians:
+  - RoomId: 2003 # the Waymark Inn, Dunmar
+    Name: the inn's physician
+    Description: a stooped figure with ink-stained cuffs
+    PricePerWound: 15
 Recruiters:
   - RoomId: 2003 # the Waymark Inn, Dunmar
     Name: the hiring slate by the hearth

@@ -5,12 +5,14 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
 // Phase 30a: the combat round's side of status effects (internal/status).
@@ -103,10 +105,27 @@ func statusBuffLands(buffId int, char *characters.Character, user *users.UserRec
 	return h.inFight(fightMembers())
 }
 
+// woundable reports whether the holder can be wounded (Phase 30b): a
+// player, or a company companion; never an enemy.
+func (h statusHolder) woundable() bool {
+	if h.user != nil {
+		return true
+	}
+	if h.mob == nil {
+		return false
+	}
+	_, _, ok := company.LeaderAndKeyForInstance(h.mob.InstanceId)
+	return ok
+}
+
 // tickStatuses moves the holder's statuses on one combat round, with the
 // lines and events each one earns.
 func tickStatuses(h statusHolder) {
 	for _, ch := range status.Tick(h.char) {
+		// Phase 30b: a bleed that runs its course leaves a light wound.
+		if ch.Expired && ch.Spec.Id == status.Bleeding && h.woundable() {
+			h.char.AddWound(wounds.Bled(ch.Stacks, util.Rand))
+		}
 		if ch.Damage > 0 {
 			h.say(ch.Spec.TickYou, ch.Spec.TickOther, fmt.Sprintf(" (%d damage, %s)", ch.Damage, ch.Spec.Word))
 			emitCombat(combatstream.Event{Kind: combatstream.StatusTick, RoomId: h.roomId, Target: h.ref, Damage: ch.Damage, BuffId: ch.Spec.Id, Status: ch.Spec.Word})
@@ -136,12 +155,20 @@ func statusPass() {
 
 	for _, userId := range users.GetOnlineUserIds() {
 		u := users.GetByUserId(userId)
-		if u == nil || u.Character == nil || !status.Has(u.Character) {
+		if u == nil || u.Character == nil {
+			continue
+		}
+		hasStatus := status.Has(u.Character)
+		if !hasStatus && !wounds.HasLight(u.Character.Wounds) {
 			continue
 		}
 		h := userHolder(u)
 		if !h.inFight(members) {
 			status.Clear(u.Character)
+			u.Character.Wounds = wounds.CloseLight(u.Character.Wounds)
+			continue
+		}
+		if !hasStatus {
 			continue
 		}
 		before := u.Character.Health
@@ -156,12 +183,20 @@ func statusPass() {
 
 	for _, instanceId := range mobs.GetAllMobInstanceIds() {
 		m := mobs.GetInstance(instanceId)
-		if m == nil || !status.Has(&m.Character) {
+		if m == nil {
+			continue
+		}
+		hasStatus := status.Has(&m.Character)
+		if !hasStatus && !wounds.HasLight(m.Character.Wounds) {
 			continue
 		}
 		h := mobHolder(m)
 		if !h.inFight(members) {
 			status.Clear(&m.Character)
+			m.Character.Wounds = wounds.CloseLight(m.Character.Wounds)
+			continue
+		}
+		if !hasStatus {
 			continue
 		}
 		before := m.Character.Health
@@ -190,17 +225,20 @@ func statusCostsAction(h statusHolder) bool {
 	return true
 }
 
-// clearFightStatuses ends the statuses of everyone in a fight that is ending.
+// clearFightStatuses ends the statuses of everyone in a fight that is
+// ending, and closes their light wounds (Phase 30b).
 func clearFightStatuses(fi combatstream.FightInfo) {
 	for _, r := range append(append([]combatstream.Ref{}, fi.Company...), fi.Enemies...) {
 		switch {
 		case r.UserId > 0:
 			if u := users.GetByUserId(r.UserId); u != nil && u.Character != nil {
 				status.Clear(u.Character)
+				u.Character.Wounds = wounds.CloseLight(u.Character.Wounds)
 			}
 		case r.MobInstanceId > 0:
 			if m := mobs.GetInstance(r.MobInstanceId); m != nil {
 				status.Clear(&m.Character)
+				m.Character.Wounds = wounds.CloseLight(m.Character.Wounds)
 			}
 		}
 	}

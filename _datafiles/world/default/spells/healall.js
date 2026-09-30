@@ -52,8 +52,10 @@ function onMagic(sourceActor, targetActors) {
     // Apply every heal first, and report what each mended.
     var healed = [];
     for (var i = 0; i < targetActors.length; i++) {
-        var amount = targetActors[i].AddHealth(UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES));
-        healed.push({ userId: targetActors[i].UserId(), name: targetActors[i].GetCombatName(false), amount: amount });
+        var rolled = UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES);
+        var amount = targetActors[i].AddHealth(rolled);
+        // Phase 30b: a wound limit holds some of it back, and says so.
+        healed.push({ userId: targetActors[i].UserId(), name: targetActors[i].GetCombatName(false), amount: amount, note: targetActors[i].WoundNote(rolled, amount) });
     }
 
     // listFor is the healed line as viewerUserId sees it (0: the room).
@@ -61,7 +63,7 @@ function onMagic(sourceActor, targetActors) {
         var entries = [];
         for (var i = 0; i < healed.length; i++) {
             var who = (viewerUserId != 0 && healed[i].userId == viewerUserId) ? 'you' : healed[i].name;
-            entries.push(who + ' (' + healed[i].amount + ' healed)');
+            entries.push(who + ' (' + healed[i].amount + ' healed' + healed[i].note + ')');
         }
         return '    ' + entries.join(' · ');
     }

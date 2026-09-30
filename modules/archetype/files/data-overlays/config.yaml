@@ -59,9 +59,10 @@ Archetypes:
     GrantSkills:
       - { Skill: cast, Level: 1 }
       - { Skill: protection, Level: 1 }
-    GrantSpells: [heal]
+    GrantSpells: [heal, tend]
     CompanionSpells:
       - { Spell: heal, Level: 1 }
+      - { Spell: tend, Level: 1 } # Phase 30b: used by heal wounds, never by battle strategy
       - { Spell: healall, Level: 5 }
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10015, 20004, 20008, 30004, 30015, 30001, 30001, 31]

@@ -1,6 +1,9 @@
 package combat
 
-import "github.com/GoMudEngine/GoMud/internal/items"
+import (
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
+)
 
 type AttackResult struct {
 	Hit                     bool  // defaults false
@@ -19,6 +22,9 @@ type AttackResult struct {
 	// EdgeSpent is how many strikes of each attacking weapon's Phase 23b
 	// edge the round spent, by equipment slot.
 	EdgeSpent map[items.ItemType]int
+	// WoundsToTarget is the wounds the round's strikes left on a woundable
+	// target (Phase 30b), applied with the damage.
+	WoundsToTarget []wounds.Wound
 }
 
 func (a *AttackResult) SendToSource(msg string) {

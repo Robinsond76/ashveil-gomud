@@ -34,6 +34,8 @@ type companyNeeds struct {
 type companyVitals struct {
 	HP    *int `json:"hp"`
 	HPMax *int `json:"hp_max"`
+	// HPLimit is the wound limit (Phase 30b), sent only while below max.
+	HPLimit *int `json:"hp_limit,omitempty"`
 	// MP and MPMax are omitted for a member with no mana to show (32g).
 	MP     *int          `json:"mp,omitempty"`
 	MPMax  *int          `json:"mp_max,omitempty"`
@@ -141,6 +143,9 @@ func vitalsOf(m companyview.Member) companyVitals {
 	v := companyVitals{}
 	if m.HasHP {
 		v.HP, v.HPMax = intPtr(m.HP), intPtr(m.HPMax)
+		if m.HPLimit > 0 && m.HPLimit < m.HPMax {
+			v.HPLimit = intPtr(m.HPLimit)
+		}
 	}
 	if m.HasMP {
 		v.MP, v.MPMax = intPtr(m.MP), intPtr(m.MPMax)
