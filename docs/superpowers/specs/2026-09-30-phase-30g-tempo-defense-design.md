@@ -1,7 +1,7 @@
 # Phase 30g: Combat Tempo, Personal Load, and Active Defense — Design
 
-A roadmap design for the next combat-balance work, in five slices
-(30g1–30g5). Written 2026-09-30 from a design conversation with the owner;
+A roadmap design for the next combat-balance work, in six slices
+(30g1–30g6). Written 2026-09-30 from a design conversation with the owner;
 each slice gets its own plan (and, where it settles an open decision
 below, a short amendment) before code.
 
@@ -38,6 +38,26 @@ Agreed in conversation; not to be re-asked:
    (30g1), then defenses (30g2), personal load (30g3), the action meter
    (30g4), and the HP/damage tuning pass (30g5), each measured against the
    30g1 baseline.
+
+Settled in a second round (2026-09-30):
+
+10. **Shield bash (was open decision C).** The owner didn't want a bash
+    on every blocked strike, and offered two options: a bash only when
+    an attacker **fumbles**, or **a small stat-based chance, automatic,
+    when a block happens**. The lead chose the second (the owner left it
+    open; easy to flip before 30g2's plan): on a **blocked melee strike**,
+    a bash chance of **5–20% from the bearer's Strength against the
+    attacker's**, once a round per bearer; 30d1's 1d4 and stun 25% are
+    kept. A plain miss no longer triggers a counter. Why not a fumble: it
+    depends only on the attacker's roll, not on the shield or its bearer,
+    and it would be a new idea better given to everyone (below).
+11. **Level cap (was open decision F).** **No hard cap.** Leveling slows
+    steeply past a knee: the XP curve stays as it is (quadratic) to about
+    **level 60**, which already takes a long time, then each level costs a
+    fixed percentage more than the last, so **about 100** is the
+    practical ceiling. The balance band (decision 8) must therefore hold
+    from level 1 to 60, with a sanity check at 100, and no HP or damage
+    formula may run away with level.
 
 ## Prior-art check (against `master` at `66fc6dc`)
 
@@ -134,9 +154,11 @@ One **active defense** per strike, after a strike hits and before armor:
 - **Armor:** `GetDefense()` loses the ×1.5; the shield's own
   `DamageReduction` still sums through the offhand slot. `armor_rank.go`
   and `help armor` drop it too.
-- **Shield counter** (30d1): moves from "a missed melee blow" to "a
-  **blocked** melee strike" (open decision C); chance, dice, stun, and
-  once-a-round unchanged.
+- **Shield bash** (30d1's counter, decision 10): moves from "a missed
+  melee blow" (50%) to "a **blocked** melee strike", with a chance of
+  5–20% from the Strength delta (new `BashChanceMin/Max`); once a round
+  per bearer, 1d4, stun 25%, and its chant break are unchanged. A plain
+  miss no longer triggers it.
 - **Lines** in the 29c/29d voice, pronoun-aware: block ("Tamsin catches
   the blow on her shield."), parry ("Garrick turns the blow aside with
   his longsword."), dodge as today. The armor suffix's word (open
@@ -228,8 +250,28 @@ Gated on the owner's decisions F–H below. The anchor for it:
   all tuned together through the harness.
 - **Also retuned here:** 29f's known issue (regeneration and round-timed
   buffs ticking twice per combat round).
+- **No cap (decision 11):** the band must hold from level 1 to 60, so
+  30g5 extends the harness to levels 1, 5, 10, 30, and 60 (asserted) and
+  100 (reported only, a sanity check). With stats growing every level
+  (`StatInfo.Recalculate`, soft-capped) and no ceiling, HP and damage
+  must grow at the **same rate**, so `H / e` stays flat rather than being
+  held in place by a cap.
 - The harness then **asserts** the band: median rounds 10–15 at levels
-  1, 5, 10, and the cap, focus and no focus.
+  1, 5, 10, 30, and 60, focus and no focus.
+
+### 30g6 — The XP knee (progression, decision 11)
+
+- `XPTL` (`internal/characters/character.go`) keeps today's formula
+  (`(XPBase + L^XPLevelPower × XPLevelFactor × XPBase) × TNLScale`) up to
+  a new `XPKneeLevel` (proposed 60); past it, each level's cost is the
+  previous level's times a new `XPKneeGrowth` (proposed 1.10, making
+  level 100 about 45× a level-60 level). Clamped to `MaxInt` as today.
+- The admin progression editor (`/admin/progression`) charts the knee;
+  `MaxLevel` stays a display value.
+- Existing characters keep their XP and level; only the cost of future
+  levels past the knee changes. Nothing new is saved.
+- Independent of 30g1–30g5 and can ship any time; `help experience`
+  (or the leveling page) says leveling slows sharply after 60.
 
 ## Open decisions (lead's recommendations)
 
@@ -242,9 +284,7 @@ Gated on the owner's decisions F–H below. The anchor for it:
   staves +5, axes and maces 0, daggers −5, two-handed polearms +5;
   unarmed and claws can't parry (they dodge). The owner may prefer no
   modifier at first.
-- **C. What triggers the shield counter.** Recommend **a blocked melee
-  strike** (a shield action should follow a shield move); a plain miss no
-  longer counts. Keeps 50% / 1d4 / stun 25% / once a round.
+- **C. What triggers the shield bash.** Settled: decision 10.
 - **D. The armor suffix.** Today's `(5 damage, 2 blocked)` means armor,
   which will read wrongly once shields block. Recommend
   `(5 damage, 2 absorbed)`; `help narration` and 29c's tests follow.
@@ -254,8 +294,8 @@ Gated on the owner's decisions F–H below. The anchor for it:
   It is stable whoever the fighter faces. The alternative (the battle's
   median Speed) keeps every battle averaging one turn a round but moves a
   fighter's tempo with the enemy, which decision 1 set out to avoid.
-- **F. Level cap** (30g5). Needed before an HP curve can be fixed;
-  recommend deciding it first (the prior-art curves assume one).
+- **F. Level cap.** Settled: decision 11 (no cap; an XP knee at ~60,
+  ~100 practical).
 - **G. HP formula shape** (30g5). Options: keep today's formula and grow
   damage to match; a D&D-like hit die per archetype with a small Vitality
   term; or flatter HP growth. Recommend choosing after 30g1's baseline and
@@ -276,7 +316,7 @@ Gated on the owner's decisions F–H below. The anchor for it:
 - **Game loop only; no new locks.** Everything runs inside `DoCombat` and
   the attack resolution it already calls.
 - **Config, not constants,** for every tuned number (new `Combat` keys:
-  `BlockChanceMin/Max`, `ParryChanceMin/Max`, `AgilityBaseKg`,
+  `BlockChanceMin/Max`, `ParryChanceMin/Max`, `BashChanceMin/Max`, `AgilityBaseKg`,
   `AgilityStrengthKg`, `AgilityFreeLoad`, `TempoMin/Max`,
   `MaxTurnsPerRound`), so 30g5 tunes without code.
 
@@ -285,6 +325,9 @@ Gated on the owner's decisions F–H below. The anchor for it:
 - Spells stay undefended by block, parry, and dodge (a magic defense is
   a later idea from the prior design, not this phase).
 - 30d2's wind-ups are separate; the meter doesn't slow heavy attacks.
+- **Fumbles** (a later idea, not this phase): the worst few percent of
+  anyone's hit rolls could leave the attacker `exposed` (30a's status),
+  for every fighter, not only against shields.
 - Guard reactions as a limited resource (the prior design's "Guard
   Reaction") are not built; 30c2's guardian stays as it is.
 - Mounted combat (30f) doesn't read burden yet.
@@ -302,7 +345,9 @@ Gated on the owner's decisions F–H below. The anchor for it:
   ×1.5 (a shield's own armor still counts, `armor-broken` still halves).
   **Wiring through `DoCombat`:** a blocked strike, a parried strike, a
   failed block that reaches armor, a shield-bearer never dodging, a
-  counter on a blocked melee strike only, the summary's defense line.
+  bash on a blocked melee strike only (roll forced; the chance from the
+  Strength delta, 5–20%) and never on a plain miss, the summary's
+  defense line.
 - **30g3, unit:** `PersonalGrams` (worn + carried, not cargo), burden's
   free band and clamp, dodge falling with burden; **wiring:** a heavily
   burdened fighter's dodge chance through the real round; a mount or
@@ -312,8 +357,12 @@ Gated on the owner's decisions F–H below. The anchor for it:
   fast fighter taking two turns in one round and never three, a slow one
   skipping a round, a stunned fighter losing both turns, a chant stepping
   once a round, a fresh meter after the fight ends.
-- **30g5:** the harness asserts median rounds 10–15 at every measured
-  level, focus and no focus; decisions F–H recorded here.
+- **30g5:** the harness asserts median rounds 10–15 at levels 1, 5, 10,
+  30, and 60, focus and no focus, and reports 100; decisions G–H
+  recorded here.
+- **30g6, unit:** `XPTL` unchanged up to the knee, growing by
+  `XPKneeGrowth` a level past it, clamped at `MaxInt`; a character past
+  the knee keeps its level and XP.
 - **Player help (every slice that ships behavior):**
   - new `help defense` (block, parry, dodge, the one-attempt rule,
     armor after), aliases `block`, `parry`, `dodge`, `shield`,
@@ -323,6 +372,7 @@ Gated on the owner's decisions F–H below. The anchor for it:
     `help combat` and `help encumbrance`;
   - updated: `armor` (no 50% bonus), `interrupts` (counter on a block),
     `narration` (the armor suffix), `statuses` (stunned: no defense),
+    the leveling page (slower past 60, 30g6),
     `cargo`/`encumbrance` (combat agility is personal, mounts don't help);
   - the Practice Yard hint (`modules/tutorial/stages.go`) points to
     `help defense` and `help tempo`;
