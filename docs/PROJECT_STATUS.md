@@ -82,7 +82,8 @@ instead of duplicating them.
   physical attack breaks only on heavier force — a crit, a stagger, a
   knockdown, a stun, or a shield bash — never on an ordinary blow), then 30e (morale and mercy) and 30f (battlefield
   conditions). Proposed alongside: 30g (combat tempo, personal load, and
-  active defense; all decisions settled, 30g1 in progress).
+  active defense; all decisions settled; 30g1, the balance harness,
+  done on `claude/blissful-ptolemy-2c76l0`, not yet merged; 30g2 next).
   30a's statuses count combat rounds; the other balance
   shifts 29f's cadence brought are still to retune (see Known issues).
   Also open: the "Future ideas" row; see Known issues.
@@ -149,7 +150,7 @@ instead of duplicating them.
 | 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](superpowers/specs/2026-09-30-phase-30d1-chant-interrupts-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1-chant-interrupts.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](superpowers/specs/2026-09-30-phase-30d1b-chant-break-chance-design.md), [plan](superpowers/plans/2026-09-30-phase-30d1b-chant-break-chance.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, stun, or bash always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 (wind-ups, the ogre) next: [proposal](superpowers/specs/2026-09-26-telegraphs-interrupts-design.md) |
 | 30e | Morale and mercy | Proposed: [spec](superpowers/specs/2026-09-26-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
 | 30f | Battlefield conditions | Proposed: [spec](superpowers/specs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat, mounted combat |
-| 30g | Combat tempo, personal load, and active defense | Proposed: [design](superpowers/specs/2026-09-30-phase-30g-tempo-defense-design.md). Owner-agreed direction (2026-09-30): an action meter from Speed and personal load (capped turns a round); block with a shield (no dodge), parry or dodge without; the shield's ×1.5 armor removed; a 10–15 round 5v5 target. Shield bash on a block (5–20% by Strength); no level cap, an XP knee at ~60; small HP numbers by archetype; stats grow in steps every few levels, and tempo reads raw Speed; the 10–15 rounds is the no-focus fight. Slices: 30g1 balance harness, 30g2 defenses, 30g3 personal load, 30g4 progression (stat steps, archetype HP, XP knee), 30g5 meter, 30g6 tuning. All decisions settled (A, B, D by the lead's recommendation; stat steps every 5 levels). 30g1 (balance harness) in progress |
+| 30g | Combat tempo, personal load, and active defense | In progress: [design](superpowers/specs/2026-09-30-phase-30g-tempo-defense-design.md). Owner-agreed direction (2026-09-30): an action meter from Speed and personal load (capped turns a round); block with a shield (no dodge), parry or dodge without; the shield's ×1.5 armor removed; a 10–15 round 5v5 target. Shield bash on a block (5–20% by Strength); no level cap, an XP knee at ~60; small HP numbers by archetype; stats grow in steps every few levels, and tempo reads raw Speed; the 10–15 rounds is the no-focus fight. Slices: 30g1 balance harness, 30g2 defenses, 30g3 personal load, 30g4 progression (stat steps, archetype HP, XP knee), 30g5 meter, 30g6 tuning. All decisions settled (A, B, D by the lead's recommendation; stat steps every 5 levels). 30g1 complete on `claude/blissful-ptolemy-2c76l0` ([plan](superpowers/plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10); 30g2 (defenses) next |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](superpowers/specs/2026-09-28-phase-32a-company-polish-design.md), [plan](superpowers/plans/2026-09-28-phase-32a-company-polish.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](superpowers/specs/2026-09-28-phase-32a2-recruit-rosters-design.md), [plan](superpowers/plans/2026-09-28-phase-32a2-recruit-rosters.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](superpowers/specs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](superpowers/plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
@@ -167,6 +168,66 @@ instead of duplicating them.
 Keep only the latest phase's entry here (What / Why / Verification /
 **Review:**). Older entries live in git history: `git log -p --
 docs/PROJECT_STATUS.md`.
+
+### Phase 30g1: balance harness and baseline (2026-09-30)
+
+- **What:** the first slice of Phase 30g
+  ([design](superpowers/specs/2026-09-30-phase-30g-tempo-defense-design.md),
+  [plan](superpowers/plans/2026-09-30-phase-30g1-balance-harness.md)),
+  test-only (no player-visible change, so no help).
+  - `modules/company/balance_test.go`: an even 5v5 through the real
+    `DoCombat` with real dice and 30a's statuses: Aria and four
+    companions against a mirror group with their kits, both levelled
+    alike (`levelTo`). `TestBalance5v5` (gated by `ASHVEIL_BALANCE=1`,
+    `ASHVEIL_BALANCE_FIGHTS`, default 50) logs a table over levels 1/5/10
+    × company modes spread/default/focus × enemy modes spread/default.
+  - Always on: `TestBalanceHarnessRunsAFight`, `TestBalanceSidesStayEven`,
+    `TestBalanceStatusesLand`, `TestBalanceTally`,
+    `TestBalancePercentile`.
+  - The design gained the owner's decisions 10–18 (shield bash on a
+    block, no level cap and an XP knee, small archetype HP, stats in
+    steps of 5 levels, the spread-out fight as the baseline, parry,
+    `absorbed`) and six slices; its 30g1 section is amended to the build.
+- **Why:** decision 9: measure before changing combat, so each later 30g
+  slice is judged against numbers.
+- **Baseline** (the full table is in the plan): the no-focus fight
+  (spread × spread) runs a median of **8 rounds at level 1, 32 at level
+  5, 68 at level 10** (p90 13 / 46 / 92), against the 10–15 target.
+  Fights lengthen about 4× by level 5 and 8.5× by level 10, because HP
+  grows with level and weapon damage doesn't: the owner's concern,
+  measured. Other readings:
+  - The company wins 60% / 66% / 84% of even fights at levels 1 / 5 /
+    10: its healer, first strike, and slightly more HP for the player
+    (recorded asymmetries).
+  - Fighters take a turn in about three rounds of four (0.72–0.85 turns
+    per standing fighter per round: casting, lost actions, and falls).
+    About 38% of turns land (dodges count as misses), and about 15% of
+    those are crits.
+  - Shipped targeting (everyone the weakest) is already focus fire; an
+    enemy that focuses makes fights longer and closer (level 10: 80
+    rounds and 54% against 68 and 84%), not shorter.
+- **Verification:** pending (the full run is in progress).
+- **Review:** the independent default-agent reviewer checked fairness,
+  the tally, the leader clamp, the real paths, and the invariants (clock,
+  leaks, concurrency: all fine); each finding was checked.
+  - **Fixed, with regression tests:** template experience levelled
+    Garrick and Ysolde on their first kill at level 1 (`levelTo` now
+    sets experience and peak level; `TestBalanceSidesStayEven`, which
+    failed before the fix, also pins the player HP quirk); shield bashes
+    were counted as turns and hits (now counted apart; `TestBalanceTally`);
+    status-tick damage wasn't counted (now for the other side). The lead
+    found, following the review's tick finding, that no status ever
+    landed in the brawl world (no buffs loaded, no `Buff` listener): the
+    harness now loads 30a's statuses and the game's listener
+    (`TestBalanceStatusesLand`, which fails without it).
+  - **Amended in the docs:** the baseline cell is spread × spread (the
+    shipped default already focuses); comments on enemy spread and
+    regeneration; the plan's modes, names, and cells; the design's 30g1
+    section (unseeded, 50 fights, stalls at 200, per-side counts).
+  - **Recorded, not fixed (they are the game as it is; 30g6 weighs
+    them):** no enemy healer; the players' pass strikes first; enemies
+    can't be wounded; a player's `HealthMax` `Base: 1` gives a little
+    more HP than a mob; both sides unplaced, so formation is inert here.
 
 ### Phase 30d1b: a blow breaks a chant only by chance (2026-09-30)
 

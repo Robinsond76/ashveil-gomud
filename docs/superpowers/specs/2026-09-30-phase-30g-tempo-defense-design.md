@@ -145,17 +145,27 @@ recommendations on the remaining open decisions ("Ok go"):
 
 ### 30g1 — Balance harness and baseline (measure first)
 
+As built (amended from this design's first draft by the 30g1 plan, the
+first run, and review; the plan holds the detail):
+
 - An opt-in test, `TestBalance5v5` in `modules/company`, skipped unless
   `ASHVEIL_BALANCE=1`, drives an evenly matched 5v5 through the real
-  `DoCombat`: a company of five (fighter, fighter, healer, caster,
-  archer by 32d strategy) against a five-member enemy group of the same
-  levels, at levels 1, 5, and 10, both with no focus and with a 30c1
-  focus, over N seeded fights (default 200) each.
-- It reports, per level and focus: rounds to the end (median, p10, p90),
-  who won, damage and healing per side, landed strikes, defenses by
-  outcome, and each fighter's actions per round. Output is a table
-  written to the test log; nothing is asserted until 30g6 (it only fails
-  on a fight that never ends within 100 rounds).
+  `DoCombat` with real dice and 30a's statuses: the company (Aria and
+  four companions: a shield fighter, a cleric who heals, a sellsword,
+  and a ranger, by 32d strategy) against a mirror group with the same
+  kits, both at levels 1, 5, and 10. Company modes: spread, default (the
+  shipped strategies, already focus fire), focus (30c1). Enemy modes:
+  spread (random aims), default (the shipped weakest). The baseline is
+  spread × spread (decision 14).
+- Fights are not seeded (`util.Rand` is the global `math/rand`); each
+  cell runs `ASHVEIL_BALANCE_FIGHTS` fights (default 50) and reports
+  distributions.
+- It reports, per cell and per side: company wins, rounds to the end
+  (p10, median, p90), stalls (still going at 200 rounds), fallen, damage
+  and healing, turns per standing fighter per round, hit and crit
+  rates, shield bashes, and status-tick damage. Output is a table in the
+  test log; nothing is asserted until 30g6. Per-defense outcomes arrive
+  with 30g2's `Defense` field.
 - The baseline table goes in the 30g1 work-log entry. Each later slice
   records its new table, so every change is measured, not felt.
 - Fixture mobs are in the test (like `banditMob`); no shipped content
@@ -421,8 +431,10 @@ Structure first, with provisional numbers; 30g6 tunes them.
 ## Acceptance criteria (per slice; each slice's plan repeats its own)
 
 - **30g1:** `ASHVEIL_BALANCE=1 go test ./modules/company -run
-  TestBalance5v5` prints the table for levels 1/5/10, focus and no
-  focus; the baseline is recorded; the test is skipped by default.
+  TestBalance5v5` prints the table for levels 1/5/10 and every pair of
+  modes; the baseline is recorded; the test is skipped by default; the
+  always-on harness tests keep it working (a fight ends, the sides stay
+  even, statuses land).
 - **30g2, unit (`internal/combat`):** `blockChance`, `parryChance` bounds
   and deltas; the defense-choice table above (shield → block only, ranged
   → no parry, unarmed → dodge, stunned → none); `GetDefense` without the
