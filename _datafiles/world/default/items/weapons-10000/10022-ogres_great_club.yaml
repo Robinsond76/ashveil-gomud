@@ -1,0 +1,14 @@
+# Ashveil Phase 30d2: the forest ogre's weapon.
+itemid: 10022
+name: ogre's great club
+namesimple: great club
+description: A knotted length of oak as long as a man, its head studded with iron nails and dark with old use.
+type: weapon
+hands: 2
+subtype: bludgeoning
+statmods:
+  strength: 2
+  speed: -4
+damage:
+  diceroll: 2d6+2
+weight: 9000

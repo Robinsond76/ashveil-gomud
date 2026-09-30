@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -313,4 +314,39 @@ func TestNoWindUpWithoutTheRoll(t *testing.T) {
 	}
 	assert.Empty(t, ofKind(*stream, combatstream.WindUpStart), "newBrawl's roll starts none")
 	assert.NotEmpty(t, attacksBy(*stream, key(ogre)), "it swings")
+}
+
+// The shipped forest ogre, in a band with the bandits, winds up Crushing
+// Blow at Aria with its great club and lands it through the real round.
+func TestShippedForestOgreCrushes(t *testing.T) {
+	b := newBrawl(t)
+	copyShipped(t, configs.GetFilePathsConfig().DataFiles.String(), "mobs/dark_forest/85-forest_ogre.yaml")
+	mobs.LoadDataFiles()
+	cut := b.bandits["bandit cutthroat"][1]
+	b.road.RemoveMob(cut)
+	mobs.DestroyInstance(cut)
+	b.bandits["bandit cutthroat"] = b.bandits["bandit cutthroat"][:1]
+	ogre := mobs.NewMobById(85, b.road.RoomId)
+	require.NotNil(t, ogre)
+	ogre.SpawnGroup = brawlBandits
+	b.road.AddMob(ogre.InstanceId)
+	b.bandits["forest ogre"] = []int{ogre.InstanceId}
+	b.unplaced()
+	forceBlows(t, true)
+	noCounters(t)
+	windUpDice(t, 0)
+	stream := b.listen()
+	b.cmd("attack", fmt.Sprintf("#%d", b.bandits["bandit captain"][0]))
+
+	var out string
+	for i := 0; i < 6 && len(windUpsOf(*stream, combatstream.WindUpLand, key(ogre))) == 0; i++ {
+		b.ogreOn(ogre, 0)
+		out += b.fight()
+	}
+	assert.Contains(t, out, "The forest ogre plants his feet and drags his great club up over his shoulder, eyes on you. (winding up: Crushing Blow, 1 round)")
+	assert.Contains(t, out, "The forest ogre brings his great club down with all his weight.")
+	lands := windUpsOf(*stream, combatstream.WindUpLand, key(ogre))
+	require.Len(t, lands, 1, out)
+	assert.Equal(t, 7, lands[0].Target.UserId)
+	assert.Equal(t, combatstream.OutcomeHit, lands[0].Outcome)
 }

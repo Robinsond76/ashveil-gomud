@@ -51,7 +51,7 @@ Each task writes its tests first and runs only its own packages.
     - `TestShieldBashBreaksNoWindUp` (a counter on the landing's miss
       breaks nothing; the ogre isn't winding);
     - `TestSummaryListsBrokenWindUp` (Interrupts dealt: Crushing Blow).
-- [ ] **5. Content.** Race 22 ogre, item 10022 great club, mob 85 forest
+- [x] **5. Content.** Race 22 ogre, item 10022 great club, mob 85 forest
   ogre (`windups: {crushing-blow: 35}`), room 530's spawn.
   - Tests first: `TestShippedForestOgre` (`modules/company`): the shipped
     ogre, in a brawl, winds up and lands on a companion through the real
