@@ -6,33 +6,36 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-10-01
-- **Latest completed phase:** 33a, company command rules and legacy action routes (2026-10-01).
+- **Latest completed phases:** 33a, company command rules and legacy action routes, and 30g3,
+  personal load and agility (merged from `claude/phase-30g3-load`), both 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
 
 The expedition/company loop, onboarding, combat presentation (29a–29f),
 status effects, wounds, tactics, guardians, interrupts, wind-ups, morale
-and mercy (30a–30e), and active defense (30g2) are shipped. The Phase 32
+and mercy (30a–30e), active defense (30g2), and personal load (30g3) are shipped. The Phase 32
 play-test improvements are implemented; 32b's status still carries an outstanding review note (see its retained plan).
 
 **Current owner priority:** finish Phase 33a–33i in order, choosing the lead's
 recommended defaults without further confirmation (2026-10-01). 33a is
-complete; **33b, friendly effects, is next**. Phase 30g3 remains queued.
+complete; **33b, friendly effects, is next**. Phase 30g3 is also complete;
+30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
 defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
 decisions the owner settled on 2026-09-30. 30g1 (the balance harness and
-baseline) and 30g2 are done; each later slice is measured against 30g1:
+baseline), 30g2, and 30g3 are done; each later slice is measured against 30g1:
 
 1. **30g2, active defense and armor:** complete (work log below): one
    defense per strike: block with a shield (no dodge), else parry a
    melee strike or dodge; the shield's ×1.5 armor removed; the shield
    bash moves to a blocked melee strike (5–20% by Strength); armor's
    suffix reads `absorbed`; `help defense`.
-2. **30g3, personal load:** worn and carried weight against a
-   Strength-based capacity (cargo and mounts never count); burden lowers
-   dodge; burden words in `status`.
+2. **30g3, personal load:** complete (work log below): worn and carried
+   weight against a Strength-based capacity (cargo and mounts never
+   count); burden lowers dodge only; burden words in `status`, `look`,
+   `scout`, and the web Overview; `help burden`.
 3. **30g4, progression:** automatic stats grow in steps every 5 levels;
    HP by archetype, in small numbers; an XP knee at level 60.
 4. **30g5, the action meter:** turns from raw Speed and burden, at most
@@ -116,7 +119,7 @@ delegated to the lead. 33a is complete; 33b follows.
 | 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](designs/2026-09-30-phase-30d1-chant-interrupts-design.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](designs/2026-09-30-phase-30d1b-chant-break-chance-design.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, or stun always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 complete: [design](designs/2026-09-30-phase-30d2-windups-design.md). Physical wind-ups (`internal/windup`, mob `windups`): the forest ogre (Dark Forest room 530) winds up Crushing Blow in plain view, then one swing of double damage that knocks down; only a crit that lands, a stagger, a knockdown, or a stun breaks it (owner); a broken or landed one is followed by 2 turns' cooldown; a shield bash is a counter strike only and breaks nothing (owner) |
 | 30e | Morale and mercy | Complete: enemy temperaments and shared break checks; protected surrender; paced mercy decisions, rewards and reactions; companion hesitation, flight and saved return |
 | 30f | Battlefield conditions | Proposed: [spec](designs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat |
-| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 (personal load) next |
+| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g3-personal-load.md)): personal load and burden (dodge × (1 − 0.6 b)); `help burden`. 30g4 (progression) next |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](designs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](designs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](designs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
@@ -280,6 +283,72 @@ delegated to the lead. 33a is complete; 33b follows.
     them):** no enemy healer; the players' pass strikes first; enemies
     can't be wounded; a player's `HealthMax` `Base: 1` gives a little
     more HP than a mob; both sides unplaced, so formation is inert here.
+
+### Phase 30g3: personal load and agility (2026-10-01)
+
+- **What:** the third slice of Phase 30g
+  ([design](designs/2026-09-30-phase-30g-tempo-defense-design.md),
+  [plan](plans/2026-10-01-phase-30g3-personal-load.md)), on
+  `claude/phase-30g3-load`. `Character.PersonalGrams` (worn and carried,
+  moved from the peep panel) against an agility capacity of
+  `AgilityBaseKg` 15 + `AgilityStrengthKg` 0.5 × Strength (new `Combat`
+  keys, with `AgilityFreeLoad` 0.35, in `config.yaml` and the admin
+  wizard) gives a burden 0–1; dodge becomes dodge × (1 − 0.6 b) in the
+  strike loop and the weapon rankings' estimate. Parry and block are
+  untouched; the parry-or-dodge choice compares parry with the burdened
+  dodge. Cargo, packs' bonus, and mounts never count. Words (unburdened,
+  lightly burdened, burdened, heavily burdened) in `status` (Vitals),
+  `look` at any character, `scout`/`look` of a group, and the web
+  Overview (`Char.Inventory.Backpack.Summary.burden`). Nothing saved.
+  Help: new `help burden` (indexed under combat, aliases), `defense`,
+  `perception`, `strength`, `cargo`, `encumbrance`, `scout`, `status`,
+  `look`, and the combat hub updated; a Combat-lesson hint.
+- **Why:** owner decisions 2 and 3.
+- **Balance** (30g1 table, 50 fights a cell): no-focus median **8 / 35 /
+  77** rounds at levels 1 / 5 / 10 (30g2: 9 / 38 / 71). Every harness
+  fighter is unburdened (kits 0.4–4.6 kg, under the 5.25 kg+ free share),
+  so 30g3 cannot move these fights: the differences are run-to-run noise.
+- **Calibration, for the owner (kept as proposed; 30g6 tunes):** Strength
+  stays small (0 at level 1, 2–3 at 5, 5–8 at 10, 10–16 at 20), so
+  capacity is 15–23 kg and the free share 5.3–8 kg. A new character's
+  starter kit (5.4–9 kg with food, water, and a satchel) starts lightly
+  burdened (cleric, rogue, warrior, wizard barely) and the ranger's
+  burdened (b ≈ 0.39, dodge −23%); real armor (a breastplate and an iron
+  shield, 15 kg) leaves anyone heavily burdened. The design hoped "a light
+  kit costs nothing". The company's travel `Load:` also uses the words
+  Burdened/Unburdened; the help separates the two.
+- **Review:** the independent default-agent reviewer found nothing
+  blocking; it checked the math, every dodge caller, the character
+  copies, game-loop safety, statistical bounds, hit-forcing helpers, help,
+  the web client, and the admin pages. Each finding was verified.
+  - **Fixed:** `cargo put`/`take` raised no `ItemOwnership`, so the web
+    Overview's burden (and 32g's weight) went stale until another event
+    (`TestCargoMovesRaiseItemOwnership`); an unvalidated test config with
+    `AgilityFreeLoad` ≥ 1 gave NaN, and the defender silently never dodged
+    (now no free share, and NaN burden is 0; regression cases in
+    `TestBurdenForUnvalidatedFreeShare` and `TestBurdenedDodge`); help
+    hard-coded "0.35 is about a third" beside the configured value, and
+    the Strength page now reads the per-Strength key; the plan's alias
+    list matched the shipped one.
+  - **Rejected/deferred:** scout's Burdened line names duplicates by name
+    only (the grid does the same; `look [group]` puts the word inline);
+    `look` shows burden for shopkeepers and horses too (harmless, one
+    rule for every character); no test looks at another player (same
+    helper as a mob) or drives GMCP through a live event (the summary
+    path and the event are tested apart); the armor rankings don't weigh
+    burden (for 30g6).
+  - **Found while reviewing:** `TestAClericCompanionHealsTheHurt`
+    (`modules/company`) failed once in a full run and passed 40/40 alone
+    on this branch and on master; every brawl member is unburdened, so it
+    is an existing flake, not this phase's.
+- **Verification** (2026-10-01, after the review fixes and merging
+  `origin/master` with Phase 33a): `make generate` (no diff), `make
+  validate`, `make js-lint`, and `go test -race ./...` pass (go test's own
+  exit status, 92 packages ok, no races). While working, `-count=3` on
+  `internal/combat`, `internal/characters`, the new brawl tests, and the
+  mount/cargo and encumbrance tests; each new combat test was checked to
+  fail with the burden change removed. The web Overview was not exercised
+  in a browser (JSHint and the GMCP payload test only).
 
 ### Phase 30g2: active defense and armor (2026-10-01)
 

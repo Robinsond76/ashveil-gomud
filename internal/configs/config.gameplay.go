@@ -75,6 +75,13 @@ type CombatConfig struct {
 	// Chance to bash when blocking (Strength delta drives this)
 	BashChanceMin ConfigInt `yaml:"BashChanceMin"` // Minimum bash chance (percent, 0-100)
 	BashChanceMax ConfigInt `yaml:"BashChanceMax"` // Maximum bash chance (percent, 0-100)
+
+	// Personal load and agility (Phase 30g3): what a character wears and
+	// carries against AgilityBaseKg + AgilityStrengthKg per Strength; the
+	// first AgilityFreeLoad of that is free, the rest burdens their dodge.
+	AgilityBaseKg     ConfigFloat `yaml:"AgilityBaseKg"`     // Agility capacity before Strength (kg)
+	AgilityStrengthKg ConfigFloat `yaml:"AgilityStrengthKg"` // Agility capacity per point of Strength (kg)
+	AgilityFreeLoad   ConfigFloat `yaml:"AgilityFreeLoad"`   // Share of capacity carried with no burden (above 0, at most 0.95)
 }
 
 type GameplayParty struct {
@@ -305,6 +312,17 @@ func (c *CombatConfig) validate() {
 	}
 	if c.BashChanceMin > c.BashChanceMax {
 		c.BashChanceMin = 5
+	}
+
+	// Agility (Phase 30g3)
+	if c.AgilityBaseKg <= 0 {
+		c.AgilityBaseKg = 15
+	}
+	if c.AgilityStrengthKg <= 0 {
+		c.AgilityStrengthKg = 0.5
+	}
+	if c.AgilityFreeLoad <= 0 || c.AgilityFreeLoad > 0.95 {
+		c.AgilityFreeLoad = 0.35
 	}
 }
 

@@ -184,7 +184,9 @@ func applyWounds(target *characters.Character, r AttackResult) {
 // (Phase 30g2) and returns what stopped it, DefenseNone if nothing did. A
 // stunned defender has none; a shield-bearer only blocks, any strike; a
 // melee strike on a defender whose weapon can parry meets the higher of
-// parry and dodge, rolled once; everything else meets a dodge.
+// parry and dodge, rolled once; everything else meets a dodge. The dodge
+// is lowered by the defender's burden (Phase 30g3) before the two are
+// compared; parry and block are not.
 func activeDefense(defender, attacker characters.Character, melee bool) string {
 	if defender.HasBuffFlag(status.FlagNoDodge) {
 		return DefenseNone
@@ -195,7 +197,7 @@ func activeDefense(defender, attacker characters.Character, melee bool) string {
 		}
 		return DefenseNone
 	}
-	dodge := dodgeChance(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj)
+	dodge := burdenedDodge(dodgeChance(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj), defender.Burden())
 	if mod, ok := parryModifier(defender.Equipment.Weapon); melee && ok {
 		if parry := parryChance(defender.Stats.Speed.ValueAdj, attacker.Stats.Speed.ValueAdj, mod); parry >= dodge {
 			if rollDefense(`Parries`, parry) {

@@ -374,6 +374,9 @@ func (m *EncumbranceModule) put(user *users.UserRecord, itemName string) string 
 		return err.Error()
 	}
 	user.Character.RemoveItem(matchItem)
+	// The item left the player's own load (Phase 30g3): its listeners
+	// refresh what shows it, such as the web client's burden and weight.
+	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: matchItem, Gained: false})
 	return fmt.Sprintf(`You stow the <ansi fg="item">%s</ansi> in the company cargo.`, matchItem.DisplayName())
 }
 
@@ -411,6 +414,7 @@ func (m *EncumbranceModule) take(user *users.UserRecord, itemName string) string
 		newItem.Uses = uses
 	}
 	user.Character.StoreItem(newItem)
+	events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: newItem, Gained: true})
 	return fmt.Sprintf(`You take the <ansi fg="item">%s</ansi> from the company cargo.`, newItem.DisplayName())
 }
 

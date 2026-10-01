@@ -981,12 +981,16 @@ type GMCPCharModule_Payload_Inventory_Backpack_Summary struct {
 	WeightG   int `json:"weight_g,omitempty"`
 	LoadG     int `json:"load_g,omitempty"`
 	CapacityG int `json:"capacity_g,omitempty"`
+	// Burden is how burdened the player's own load leaves them in a fight
+	// (Phase 30g3): unburdened, lightly burdened, burdened, or heavily
+	// burdened. A word only, never a ratio.
+	Burden string `json:"burden"`
 }
 
 // backpackSummary is the backpack's header: the item count (no Max: weight
-// is the only limit, Phase 32f) and the weights.
+// is the only limit, Phase 32f), the weights, and the burden word (30g3).
 func backpackSummary(user *users.UserRecord, load func(leaderUserID int) (encumbrance.Load, bool)) GMCPCharModule_Payload_Inventory_Backpack_Summary {
-	s := GMCPCharModule_Payload_Inventory_Backpack_Summary{Count: len(user.Character.Items)}
+	s := GMCPCharModule_Payload_Inventory_Backpack_Summary{Count: len(user.Character.Items), Burden: user.Character.BurdenWord()}
 	s.WeightG = company.InventoryMemberOf(company.LeaderMemberKey, "", company.MemberState{Items: user.Character.Items, Equipment: user.Character.Equipment}).Grams
 	if l, ok := load(user.UserId); ok {
 		s.LoadG, s.CapacityG = l.TotalGrams(), l.CapacityGrams

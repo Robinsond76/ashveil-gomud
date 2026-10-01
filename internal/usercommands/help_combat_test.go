@@ -216,3 +216,38 @@ func TestMoraleAndMercyHelp(t *testing.T) {
 		assert.Contains(t, text, word)
 	}
 }
+
+// Phase 30g3: help burden renders with its configured numbers, answers to
+// its aliases, and is linked from the combat hub and the pages burden
+// changes; the stale Strength line about item counts is gone.
+func TestBurdenHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	text, err := GetHelpContents("burden")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, want := range []string{"Help for burden", "15 kg, plus 0.5 kg for each point of Strength", "The first 0.35",
+		"unburdened", "lightly burdened", "burdened", "heavily burdened", "two fifths of your dodge",
+		"A shield's block and a weapon's parry are not", "never make you lighter", "status", "look [someone]", "scout [group]"} {
+		assert.Contains(t, plain, want)
+	}
+	assert.NotContains(t, plain, "{{", "every config number rendered")
+	for _, alias := range []string{"burdened", "agility", "unburdened", "personal-load"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, text, got, "help %s is help burden", alias)
+	}
+
+	for _, topic := range []string{"combat", "defense", "perception", "strength", "cargo", "encumbrance", "scout"} {
+		page, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, page, "help burden", "%s links to help burden", topic)
+	}
+	strength, err := GetHelpContents("strength")
+	require.NoError(t, err)
+	assert.NotContains(t, strength, "how many items you can carry")
+	status, err := GetHelpContents("status")
+	require.NoError(t, err)
+	assert.Contains(t, status, "burden")
+}

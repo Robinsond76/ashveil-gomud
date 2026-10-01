@@ -149,11 +149,36 @@ func TestBackpackSummaryWeights(t *testing.T) {
 	s := backpackSummary(u, func(int) (encumbrance.Load, bool) {
 		return encumbrance.Load{PersonalGrams: 1000, CargoGrams: 3000, CapacityGrams: 25000}, true
 	})
-	assert.Equal(t, GMCPCharModule_Payload_Inventory_Backpack_Summary{Count: 1, WeightG: 1000, LoadG: 4000, CapacityG: 25000}, s)
+	assert.Equal(t, GMCPCharModule_Payload_Inventory_Backpack_Summary{Count: 1, WeightG: 1000, LoadG: 4000, CapacityG: 25000, Burden: "unburdened"}, s)
 
 	unknown := backpackSummary(u, func(int) (encumbrance.Load, bool) { return encumbrance.Load{}, false })
 	assert.Equal(t, 1000, unknown.WeightG)
 	assert.Zero(t, unknown.CapacityG, "omitted when the load can't be read")
+}
+
+// TestBackpackSummaryBurden (Phase 30g3): the summary names how burdened
+// the player's own load leaves them, a word the web Overview shows; it
+// rides on every Char.Inventory, Char.Inventory.Backpack, and
+// Char.Inventory.Backpack.Summary update.
+func TestBackpackSummaryBurden(t *testing.T) {
+	u := inventoryUser(t)
+	testItemSpecs(t, items.ItemSpec{ItemId: 989203, Name: "anvil", Weight: 40000})
+	g := &GMCPCharModule{}
+	summary := func() GMCPCharModule_Payload_Inventory_Backpack_Summary {
+		t.Helper()
+		data, name := g.GetCharNode(u, `Char.Inventory.Backpack.Summary`)
+		require.Equal(t, `Char.Inventory.Backpack.Summary`, name)
+		s, ok := data.(GMCPCharModule_Payload_Inventory_Backpack_Summary)
+		require.True(t, ok)
+		return s
+	}
+	assert.Equal(t, "unburdened", summary().Burden)
+	u.Character.Items = append(u.Character.Items, items.New(989203))
+	assert.Equal(t, "heavily burdened", summary().Burden)
+	data, _ := g.GetCharNode(u, `Char.Inventory.Backpack`)
+	backpack, ok := data.(*GMCPCharModule_Payload_Inventory_Backpack)
+	require.True(t, ok)
+	assert.Equal(t, "heavily burdened", backpack.Summary.Burden)
 }
 
 // TestExtrasFollowASnapshot (32g review finding 1): the client stores the

@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -129,6 +130,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			if line := archetypeLookLine(u.UserId, 0); line != `` {
 				user.SendText(line)
 			}
+			user.SendText(burdenLookLine(u.Character))
 
 			itemNames := []string{}
 			for _, item := range u.Character.Items {
@@ -156,6 +158,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			if line := archetypeLookLine(0, mobId); line != `` {
 				user.SendText(line)
 			}
+			user.SendText(burdenLookLine(&m.Character))
 
 			itemNames := []string{}
 			for _, item := range m.Character.Items {
@@ -723,6 +726,12 @@ func archetypeLookLine(userId, mobInstanceId int) string {
 		name = id
 	}
 	return fmt.Sprintf(`  Archetype: <ansi fg="yellow">%s</ansi>`, name)
+}
+
+// burdenLookLine is how burdened a character's own load leaves them in a
+// fight (Phase 30g3), shown when looking at them: a word, never a weight.
+func burdenLookLine(c *characters.Character) string {
+	return fmt.Sprintf(`  Burden: %s`, burdenValue(c.BurdenWord()))
 }
 
 // namesAThing reports whether lookAt names a container, exit, item carried

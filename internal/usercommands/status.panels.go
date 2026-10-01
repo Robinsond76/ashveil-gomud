@@ -82,6 +82,7 @@ func buildStatusPanel(user *users.UserRecord) string {
 		Add(`<ansi fg="yellow">Mana:   </ansi>`, `<ansi fg="yellow">MP: </ansi>`, mpValue).
 		Add(`<ansi fg="yellow">Armor:  </ansi>`, `<ansi fg="yellow">Arm:</ansi>`, armorValue)
 	if ashveil {
+		addAshveilBurden(vitals, c)
 		addAshveilVitals(vitals, summary)
 	}
 	if layout.HasPanel("company") {

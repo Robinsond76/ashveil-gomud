@@ -292,6 +292,20 @@ func dodgeChance(defPerc, atkPerc int) int {
 	return actual
 }
 
+// burdenDodgeLoss is the share of dodge a fully burdened character loses
+// (Phase 30g3, decision 3).
+const burdenDodgeLoss = 0.6
+
+// burdenedDodge is a dodge chance after the defender's burden (Phase
+// 30g3): dodge × (1 − 0.6 × burden), rounded. A fully burdened fighter
+// keeps 40% of their dodge; parry and block are not touched.
+func burdenedDodge(dodge int, burden float64) int {
+	if math.IsNaN(burden) {
+		burden = 0
+	}
+	return int(math.Round(float64(dodge) * (1 - burdenDodgeLoss*max(0, min(1, burden)))))
+}
+
 // blockChance returns the percent chance in [BlockChanceMin, BlockChanceMax]
 // that a shield-bearer blocks a strike (Phase 30g2): the minimum, plus the
 // shield's own armor, moved up or down by the defender's share of the two
@@ -592,10 +606,10 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 
 	// A hit that lands is still negated if the defender dodges.
 	// Expected damage probability per attack = hitPct * (1 - dodgePct).
-	dodgePct := float64(dodgeChance(
+	dodgePct := float64(burdenedDodge(dodgeChance(
 		defChar.Stats.Perception.ValueAdj,
 		atkChar.Stats.Perception.ValueAdj,
-	)) / 100.0
+	), defChar.Burden())) / 100.0
 
 	// Defense reduces damage by an expected fraction of defenseRating/200
 	// (average of a uniform roll over [0, defenseRating) divided by 100).

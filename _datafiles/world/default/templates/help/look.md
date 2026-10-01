@@ -11,7 +11,7 @@ The ~look~ command looks at things in the room around you.
   This tries to peer into the room to the north exit.
 
   ~look dave~  
-  This looks at the user **dave** and tells you what you can see about him.
+  This looks at the user **dave** and tells you what you can see about them, including how burdened their own load leaves them in a fight (see ~help burden~).
 
   ~look sword#2~  
   This looks at the second *sword* in your backpack and gives you a description.

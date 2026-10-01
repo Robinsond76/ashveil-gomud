@@ -42,10 +42,13 @@ is no better than a dodge. Bows and slings can't parry.
 
   <ansi fg="command">The bandit captain twists aside from your blow.</ansi>
 
-Your Perception against the attacker's gives {{ config "GamePlay.Combat.DodgeChanceMin" }}% to {{ config "GamePlay.Combat.DodgeChanceMax" }}%.
+Your Perception against the attacker's gives {{ config "GamePlay.Combat.DodgeChanceMin" }}% to {{ config "GamePlay.Combat.DodgeChanceMax" }}%. Your
+burden then cuts it: a heavily burdened fighter keeps as little as two
+fifths of it (<ansi fg="command">help burden</ansi>). Burden never touches a block or a parry, and
+the better of parry and dodge is chosen after it.
 
 After a fight, the battle summary counts each side's blocks, parries, and
 dodges (<ansi fg="command">help battle-summary</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help strength</ansi>,
-<ansi fg="command">help speed</ansi>, <ansi fg="command">help perception</ansi>.
+<ansi fg="command">help speed</ansi>, <ansi fg="command">help perception</ansi>, <ansi fg="command">help burden</ansi>.

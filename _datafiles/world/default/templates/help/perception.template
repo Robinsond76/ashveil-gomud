@@ -10,7 +10,7 @@ A perceptive fighter strikes with precision and is difficult to catch off guard.
 * Increases your chance to dodge incoming attacks. The more perceptive you are
   compared to your attacker, the more often you slip out of harm's way
   (up to {{ config "GamePlay.Combat.DodgeChanceMax" }}% dodge chance). A shield-bearer blocks instead
-  (<ansi fg="command">help defense</ansi>).
+  (<ansi fg="command">help defense</ansi>), and a burdened fighter dodges less (<ansi fg="command">help burden</ansi>).
 * Adds a small flat damage bonus to unarmed attacks.
 
 <ansi fg="yellow">Economy</ansi>
