@@ -278,11 +278,11 @@ func TestWindUpFallsOnAimWhenNamedTargetGone(t *testing.T) {
 	assert.Equal(t, 7, lands[0].Target.UserId, "on its aim")
 }
 
-// A shield bash is a counter strike only: the Crushing Blow that misses
-// Tamsin is countered, and nothing is broken or interrupted.
+// A shield bash is a counter strike only: the Crushing Blow Tamsin blocks
+// is countered, and nothing is broken or interrupted.
 func TestShieldBashBreaksNoWindUp(t *testing.T) {
 	b, ogre := ogreBrawl(t)
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 0, 99) // every fumble countered, no stun
 	windUpDice(t, 0)
 	stream := b.listen()
