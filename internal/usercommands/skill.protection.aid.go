@@ -43,9 +43,6 @@ func Aid(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	if aidPlayerId > 0 {
 
-		// Fire an event that a skill has been used
-		events.AddToQueue(events.SkillUsed{UserId: user.UserId, Skill: `protection`, Details: `aid`})
-
 		p := users.GetByUserId(aidPlayerId)
 
 		if p != nil {
@@ -59,6 +56,15 @@ func Aid(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				user.SendText("You are too busy to aid anyone!")
 				return true, nil
 			}
+
+			// Phase 33b review: a bystander helps neither side of a battle.
+			if effecttargets.OtherBattle(user.UserId, 0, aidPlayerId, 0) {
+				user.SendText(OtherBattlePatient)
+				return true, nil
+			}
+
+			// Fire an event that a skill has been used
+			events.AddToQueue(events.SkillUsed{UserId: user.UserId, Skill: `protection`, Details: `aid`})
 
 			// Set spell Aid
 			spellAggro := characters.SpellAggroInfo{

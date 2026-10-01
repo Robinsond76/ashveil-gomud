@@ -32,9 +32,10 @@ const (
 	Heal         Kind = "heal"
 	CastStart    Kind = "cast-start" // Phase 30d
 	CastProgress Kind = "cast-progress"
-	// CastComplete ends a cast. Outcome is OutcomeCast, OutcomeFizzled, or
-	// OutcomeHeld.
-	CastComplete  Kind = "cast-complete" // outcome cast, fizzled, held, or interrupted (30d1)
+	// CastComplete ends a cast. Outcome is OutcomeCast, OutcomeFizzled,
+	// OutcomeHeld, OutcomeInterrupted, or OutcomeWasted (a helpful spell
+	// with no one left to help, Phase 33b review).
+	CastComplete  Kind = "cast-complete" // outcome cast, fizzled, held, interrupted (30d1), or wasted (33b)
 	WindUpStart   Kind = "windup-start"  // Phase 30d
 	WindUpLand    Kind = "windup-land"   // Phase 30d
 	Interrupt     Kind = "interrupt"     // Phase 30d
@@ -71,7 +72,7 @@ const (
 	OutcomeSucceeded     = "succeeded"   // interrupts, Phase 30d
 	OutcomeFailed        = "failed"      // interrupts, Phase 30d
 	OutcomeInterrupted   = "interrupted" // CastComplete: a blow broke the chant (30d1)
-	OutcomeWasted        = "wasted"      // WindUpLand: nothing was left to strike (30d2)
+	OutcomeWasted        = "wasted"      // WindUpLand: nothing was left to strike (30d2); CastComplete: no one left to help (33b)
 
 	// Fight endings (FightEnd's Outcome).
 	OutcomeVictory   = "victory"

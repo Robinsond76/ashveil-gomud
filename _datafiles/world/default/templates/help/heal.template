@@ -32,13 +32,13 @@ bandage, you carry (<ansi fg="command">help wounds</ansi>).
 Clerics can also cast the spells by hand: <ansi fg="command">cast heal [who]</ansi> and
 <ansi fg="command">cast tend [who]</ansi> (<ansi fg="command">help cast</ansi>).
 
+Group healing reaches your present company without a player party. A chant
+rechecks life, presence and ownership, and healing stops at wound limits
+(<ansi fg="command">help friendly-effects</ansi>).
+
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">heal</ansi>           who is hurt, and what would help
   <ansi fg="command">heal wounds</ansi>    tend the company after a fight
 
 See also: <ansi fg="command">help wounds</ansi>, <ansi fg="command">help health</ansi>.
-
-Group healing reaches your present company without a player party. A chant
-rechecks life, presence and ownership, and healing stops at wound limits
-(<ansi fg="command">help friendly-effects</ansi>).

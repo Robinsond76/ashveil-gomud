@@ -5,7 +5,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01
+- **Last updated:** 2026-10-01 (33b review follow-up)
 - **Latest completed phases:** 33c, company retreat; 33b, friendly effects;
   33a, command rules; and 30g3, personal load and agility, all 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
@@ -142,6 +142,37 @@ delegated to the lead. 33a–33c are complete; 33d follows.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### 33b owner review follow-up (2026-10-01)
+
+- **Owner review of 33b:** the owner kept one 33b choice. Minor Heal All
+  reaches only the caster's own company, not GoMud party members; 33d brings
+  cross-company help back with consent.
+- **Battle boundary (`phase-33b-review`):** a bystander could heal or aid
+  either side of another player's battle (e.g. keep that player's bandits
+  alive). `effecttargets.OtherBattle` now refuses a named patient fighting in a
+  battle the caster isn't part of (its foes, its player, and the companions or
+  charmed pets fighting for that player, as the battle counts them). `cast`
+  and `aid` refuse at start; `Resolve` drops such a patient at completion.
+  Group and area help stay narrowed to the caster's company, not refused.
+- **Silent chants:** a helpful chant that lost every patient ended in silence.
+  It now ends with "Your spell (or aid) finds no one left to help" and a
+  `CastComplete` with the `wasted` outcome; the mana stays spent.
+- **Help:** 33b paragraphs moved above the see-also lines of `cast`, `spells`
+  and `heal`; `friendly-effects`, `protection` and the tutorial hint describe
+  the boundary and the fade.
+- **Independent review:** no high findings. Accepted and fixed: area help was
+  refused beside another battle (pre-check now only for named patients);
+  charmed pets ignored (now counted like the battle does); per-round battle
+  cloning (cheap `battle.Involving`/`battle.RoomOf`); "spell" wording for
+  first aid; refused aid counted as a skill use; weak tests; a ragged help
+  line. Recorded, not changed: once 33d installs allied consent,
+  `OtherBattle` would drop an ally fighting the same group in their own
+  battle; 33d must count a caster sharing that enemy group as part of it.
+- **Checks:** the new tests cover each entry point (`cast`, `aid`, chant
+  completion, area help, pets); the probes that found the bugs ran against the
+  old code. `make generate`, `make validate`, `go test -race ./...` and
+  `git diff --check` passed. No JS or Lua changed, so no lint was needed.
 
 ### 33a owner review follow-up (2026-10-01)
 

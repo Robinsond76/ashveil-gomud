@@ -44,6 +44,12 @@ saves remain loadable, and every new durable field needs a migration/default.
 
 Define this contract before allied scopes in 33b, loot distribution in 33g, and shared assessment/enemies in 33i. Coordinate 33c retreat without forcing allies to flee.
 
+33b review constraint: `effecttargets.OtherBattle` treats a caster as part of
+a battle only as its player, its foes, or a mob fighting for its player. When
+the allied-leaders provider is installed, a consenting ally fighting the same
+enemy group in their own battle must count as part of that battle, or allied
+help will be dropped at cast start and completion.
+
 Before coding, inspect root/nested guidance, settle the decisions below,
 and write a focused execution plan with separate implementation,
 help/tutorial, integration tests, migration/recovery, and review tasks.
