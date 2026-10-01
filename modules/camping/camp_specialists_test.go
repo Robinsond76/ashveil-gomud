@@ -83,10 +83,12 @@ type loyaltyStub struct {
 	applied map[string]bool
 }
 
-func (l *loyaltyStub) FormationFor(int) (company.Formation, bool)                 { return company.Formation{}, false }
-func (l *loyaltyStub) InstanceFor(int, int) (int, bool)                            { return 0, false }
-func (l *loyaltyStub) LeaderAndKeyForInstance(int) (int, company.MemberKey, bool) { return 0, "", false }
-func (l *loyaltyStub) CompanionArchetype(int, int) (string, bool)                  { return "", false }
+func (l *loyaltyStub) FormationFor(int) (company.Formation, bool) { return company.Formation{}, false }
+func (l *loyaltyStub) InstanceFor(int, int) (int, bool)           { return 0, false }
+func (l *loyaltyStub) LeaderAndKeyForInstance(int) (int, company.MemberKey, bool) {
+	return 0, "", false
+}
+func (l *loyaltyStub) CompanionArchetype(int, int) (string, bool) { return "", false }
 func (l *loyaltyStub) RaiseLoyaltyOnce(_ int, op string, ids []int, delta, cap int) ([]string, error) {
 	if l.applied[op] {
 		return nil, nil
