@@ -47,12 +47,15 @@ func Hostile(command string) bool {
 // temporary follower can be managed, but charm alone cannot authorize a
 // tracked companion belonging to another company. All requested hostility
 // is refused; automatic battle upkeep remains the only combat controller.
+// A scripted order skips ask's short order list (see MemberOrder.Scripted).
 func Member(order events.MemberOrder, m *mobs.Mob, command string) string {
 	u := users.GetByUserId(order.UserID)
 	if u == nil || u.Character == nil || u.Character.Health < 1 || m == nil || m.Character.Health < 1 || m.Character.CombatWithdrawn {
 		return "That member is no longer available for orders."
 	}
-	if u.Character.RoomId != order.RoomID || m.Character.RoomId != order.RoomID {
+	// A typed order needs both present; a script only needs its member to
+	// stay where the script ran.
+	if (!order.Scripted && u.Character.RoomId != order.RoomID) || m.Character.RoomId != order.RoomID {
 		return "You and the member must still be in the same room."
 	}
 	leader, key, member := company.LeaderAndKeyForInstance(m.InstanceId)
@@ -64,6 +67,9 @@ func Member(order events.MemberOrder, m *mobs.Mob, command string) string {
 	}
 	if Management(command) && (InBattle(u) || m.Character.Aggro != nil) {
 		return BattleUnderWay
+	}
+	if order.Scripted {
+		return ""
 	}
 	switch command {
 	case "say", "look", "emote", "give", "get", "drop", "equip", "remove", "eat", "drink":

@@ -368,7 +368,7 @@ func (a ScriptActor) Command(cmd string, waitSeconds ...float64) {
 	if a.userId > 0 {
 		a.userRecord.Command(cmd, waitSeconds[0])
 	} else {
-		a.mobRecord.CommandRequested(events.Requester(), cmd, waitSeconds[0])
+		a.mobRecord.CommandScripted(events.Requester(), cmd, waitSeconds[0])
 	}
 }
 
@@ -379,7 +379,7 @@ func (a ScriptActor) CommandFlagged(cmd string, flags events.EventFlag, waitSeco
 	if a.userId > 0 {
 		a.userRecord.CommandFlagged(cmd, flags, waitSeconds[0])
 	} else {
-		a.mobRecord.CommandRequested(events.Requester(), cmd, waitSeconds[0])
+		a.mobRecord.CommandScripted(events.Requester(), cmd, waitSeconds[0])
 	}
 }
 

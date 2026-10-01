@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -103,21 +104,19 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			// If an alias was entered, conovert it
 			mobCmd = keywords.TryCommandAlias(mobCmd)
 
-			_, key, _ := company.LeaderAndKeyForInstance(mobId)
-			order := events.MemberOrder{UserID: user.UserId, RoomID: room.RoomId, MemberKey: string(key), CharmToken: mob.Character.Charmed}
-			if reason := actionpolicy.Member(order, mob, mobCmd); reason != "" {
-				user.SendText(reason)
-				return true, nil
-			}
-
-			// Check if actual command is allowed
-			for _, allowedCmd := range allowedCommands {
-				if mobCmd == allowedCmd {
-
-					mob.CommandRequested(user.UserId, fmt.Sprintf(`%s %s`, mobCmd, askRest))
-
+			// Orders and attempted hostility go through the member policy;
+			// anything else is conversation and falls through to onAsk.
+			if actionpolicy.Hostile(mobCmd) || slices.Contains(allowedCommands, mobCmd) {
+				_, key, _ := company.LeaderAndKeyForInstance(mobId)
+				order := events.MemberOrder{UserID: user.UserId, RoomID: room.RoomId, MemberKey: string(key), CharmToken: mob.Character.Charmed}
+				if reason := actionpolicy.Member(order, mob, mobCmd); reason != "" {
+					user.SendText(reason)
 					return true, nil
 				}
+
+				mob.CommandRequested(user.UserId, fmt.Sprintf(`%s %s`, mobCmd, askRest))
+
+				return true, nil
 			}
 		}
 

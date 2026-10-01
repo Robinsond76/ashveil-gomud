@@ -388,15 +388,28 @@ func (m *Mob) Command(inputTxt string, waitSeconds ...float64) {
 	m.command(inputTxt, nil, waitSeconds...)
 }
 
-// CommandRequested queues a player/script order with stable provenance.
+// CommandRequested queues a player's typed order with stable provenance.
 // Native AI and lifecycle hooks use Command and remain autonomous.
 func (m *Mob) CommandRequested(userID int, inputTxt string, waitSeconds ...float64) {
-	_, key, member := company.LeaderAndKeyForInstance(m.InstanceId)
-	var order *events.MemberOrder
-	if userID > 0 && (member || m.Character.IsCharmed()) {
-		order = &events.MemberOrder{UserID: userID, RoomID: m.Character.RoomId, MemberKey: string(key), CharmToken: m.Character.Charmed}
+	m.command(inputTxt, m.ownedOrder(userID, false), waitSeconds...)
+}
+
+// CommandScripted queues a script's command while userID's command runs.
+// Only the requester's own follower is ordered; for anyone else's follower
+// or a world NPC the script is the mob's own behaviour and runs autonomously.
+func (m *Mob) CommandScripted(userID int, inputTxt string, waitSeconds ...float64) {
+	m.command(inputTxt, m.ownedOrder(userID, true), waitSeconds...)
+}
+
+func (m *Mob) ownedOrder(userID int, scripted bool) *events.MemberOrder {
+	if userID < 1 || !m.Character.IsCharmed(userID) {
+		return nil
 	}
-	m.command(inputTxt, order, waitSeconds...)
+	leader, key, member := company.LeaderAndKeyForInstance(m.InstanceId)
+	if member && leader != userID {
+		return nil
+	}
+	return &events.MemberOrder{UserID: userID, RoomID: m.Character.RoomId, MemberKey: string(key), CharmToken: m.Character.Charmed, Scripted: scripted}
 }
 
 func (m *Mob) command(inputTxt string, order *events.MemberOrder, waitSeconds ...float64) {

@@ -21,4 +21,5 @@ func TestMemberOrderHelp(t *testing.T) {
 	assert.Contains(t, ask, "[member]")
 	assert.Contains(t, ask, "attack, throw and cast orders are refused")
 	assert.Contains(t, ask, "Temporary charmed")
+	assert.Contains(t, ask, "is\nconversation")
 }
