@@ -3,6 +3,7 @@ package encumbrance
 import (
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"sync"
 )
 
@@ -164,4 +165,107 @@ func WithdrawCargo(leaderUserID, itemId, count int) error {
 		return ErrNoCargo
 	}
 	return ck.WithdrawCargo(leaderUserID, itemId, count)
+}
+
+// SharedCargoProvider migrates the legacy container and activates shared cargo.
+type SharedCargoProvider interface{ UnifyCargo(int) error }
+
+func UnifyCargo(id int) error {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	if cp, ok := p.(SharedCargoProvider); ok {
+		return cp.UnifyCargo(id)
+	}
+	return nil
+}
+
+// EquipmentCapacityDelta is the capacity change from adjusted Strength when
+// assigning gear. Packs stay in cargo; only the member's Strength changes.
+func EquipmentCapacityDelta(before, after int) int {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	if cp, ok := p.(interface{ StrengthCapacityGrams() int }); ok {
+		return (max(0, after) - max(0, before)) * cp.StrengthCapacityGrams()
+	}
+	return 0
+}
+
+func ConsumeCargoItemUse(id int, itm items.Item) error {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	if cp, ok := p.(interface{ ConsumeCargoItemUse(int, items.Item) error }); ok {
+		return cp.ConsumeCargoItemUse(id, itm)
+	}
+	return ErrNoCargo
+}
+
+// AddedGrams accounts for the capacity a new pack creates in shared cargo.
+func AddedGrams(id int, carried []items.Item, itm items.Item) int {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	if cp, ok := p.(interface {
+		CargoAddedGrams(int, items.Item) (int, bool)
+	}); ok {
+		if grams, tracked := cp.CargoAddedGrams(id, itm); tracked {
+			return grams
+		}
+	}
+	largest := 0
+	for _, old := range carried {
+		largest = max(largest, old.CarryBonusGrams())
+	}
+	return itm.Weight() - max(0, itm.CarryBonusGrams()-largest)
+}
+
+// ExchangeGrams measures both weight and changed pack capacity for a trade-in.
+func ExchangeGrams(id int, carried, removed, added []items.Item) int {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	if cp, ok := p.(interface {
+		CargoExchangeGrams(int, []items.Item, []items.Item) (int, bool)
+	}); ok {
+		if grams, tracked := cp.CargoExchangeGrams(id, removed, added); tracked {
+			return grams
+		}
+	}
+	next := append([]items.Item(nil), carried...)
+	before, after, grams := 0, 0, 0
+	for _, itm := range carried {
+		before = max(before, itm.CarryBonusGrams())
+	}
+	for _, itm := range removed {
+		for i, old := range next {
+			if old.Equals(itm) {
+				next = append(next[:i], next[i+1:]...)
+				grams -= old.Weight()
+				break
+			}
+		}
+	}
+	for _, itm := range added {
+		next = append(next, itm)
+		grams += itm.Weight()
+	}
+	for _, itm := range next {
+		after = max(after, itm.CarryBonusGrams())
+	}
+	return grams - (after - before)
+}
+
+// TransformCargo atomically replaces exact cargo instances, for recipes.
+func TransformCargo(id int, inputs, outputs []items.Item) error {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	if cp, ok := p.(interface {
+		TransformCargo(int, []items.Item, []items.Item) error
+	}); ok {
+		return cp.TransformCargo(id, inputs, outputs)
+	}
+	return ErrNoCargo
 }

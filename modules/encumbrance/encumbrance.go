@@ -106,6 +106,7 @@ func decodeRegistry(data []byte, registry *Registry) error {
 type EncumbranceModule struct {
 	plug       *plugins.Plugin
 	store      Store
+	saveUser   func(*users.UserRecord) error
 	itemSpec   func(itemId int) (items.ItemSpec, bool)
 	userLookup func(userId int) *users.UserRecord
 	// companionGear is the living companions' gear weight (Phase 28); nil
@@ -211,6 +212,7 @@ func (m *EncumbranceModule) load() {
 		m.cargo = map[int]encumbrance.Cargo{}
 	}
 	m.loadErr = nil
+	encumbrance.SetProvider(m)
 	if m.plug != nil {
 		if m.plug.Config.Get("CapacityKg") != nil {
 			mudlog.Warn("encumbrance: CapacityKg is retired (Phase 32f); capacity comes from MemberBaseKg, StrengthKg, packs, and horses")
@@ -243,14 +245,32 @@ func (m *EncumbranceModule) CurrentLoad(leaderUserID int) (encumbrance.Load, boo
 		return encumbrance.Load{}, false
 	}
 	memberGrams := m.leaderCapacity(leaderUserID, baseGrams, strengthGrams)
+	shared := m.sharedUser(leaderUserID)
+	unified := shared != nil && shared.Character.CompanyCargo
+	members := 1
+	if unified {
+		memberGrams -= company.BestPackGrams(shared.Character.Items)
+	}
 	if m.companionCarry != nil {
 		for _, c := range m.companionCarry(leaderUserID) {
-			memberGrams += encumbrance.MemberCapacity(baseGrams, strengthGrams, c.Strength, c.PackGrams)
+			pack := c.PackGrams
+			if unified {
+				pack = 0
+			}
+			memberGrams += encumbrance.MemberCapacity(baseGrams, strengthGrams, c.Strength, pack)
+			members++
 		}
+	}
+	if unified {
+		memberGrams += sharedPackBonus(shared.Character.Items, members)
 	}
 	mountGrams := mount.CapacityBonus(leaderUserID)
 	cargoGrams := 0
-	if tracked {
+	if unified {
+		for _, itm := range shared.Character.Items {
+			cargoGrams += itm.Weight()
+		}
+	} else if tracked {
 		cargoGrams = m.cargoGramsOf(cargo)
 	}
 	companionGrams := 0
@@ -301,8 +321,10 @@ func (m *EncumbranceModule) personalGrams(leaderUserID int) int {
 	total := 0
 	// Weight reads the base data, so an item holding a stale spec copy
 	// (from cargo, an enchantment, an old save) is still weighed.
-	for i := range user.Character.Items {
-		total += user.Character.Items[i].Weight()
+	if !user.Character.CompanyCargo {
+		for i := range user.Character.Items {
+			total += user.Character.Items[i].Weight()
+		}
 	}
 	for _, item := range user.Character.Equipment.GetAllItems() {
 		total += item.Weight()
@@ -338,6 +360,9 @@ func (m *EncumbranceModule) bandsSnapshot() []encumbrance.LoadBand {
 // party weight, so no capacity check applies here — only obtaining more
 // items (looting, buying) increases total weight.
 func (m *EncumbranceModule) put(user *users.UserRecord, itemName string) string {
+	if user.Character.CompanyCargo {
+		return "All unworn items already belong to company cargo. Use company equip to assign gear."
+	}
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
@@ -383,6 +408,9 @@ func (m *EncumbranceModule) put(user *users.UserRecord, itemName string) string 
 // take moves one matching item from the company cargo into the leader's
 // backpack.
 func (m *EncumbranceModule) take(user *users.UserRecord, itemName string) string {
+	if user.Character.CompanyCargo {
+		return "Use items directly from company cargo, or company equip to assign gear."
+	}
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
@@ -431,6 +459,9 @@ func (m *EncumbranceModule) partialUses(itm items.Item) int {
 // CargoContents implements encumbrance.CargoProvider: a copy of the
 // leader's stacks.
 func (m *EncumbranceModule) CargoContents(leaderUserID int) []encumbrance.CargoStack {
+	if u := m.sharedUser(leaderUserID); u != nil && u.Character.CompanyCargo {
+		return m.sharedStacks(u)
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	cargo, ok := m.cargo[leaderUserID]
@@ -444,6 +475,9 @@ func (m *EncumbranceModule) CargoContents(leaderUserID int) []encumbrance.CargoS
 // item, a partly used one first, saved (and rolled back if the save
 // fails).
 func (m *EncumbranceModule) ConsumeCargoUse(leaderUserID, itemId int) error {
+	if u := m.sharedUser(leaderUserID); u != nil && u.Character.CompanyCargo {
+		return m.sharedConsume(u, itemId, 1, true)
+	}
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
@@ -475,6 +509,9 @@ var _ encumbrance.CargoKeeper = (*EncumbranceModule)(nil)
 // into the leader's cargo, the op remembered in the same record so a
 // repeat deposits nothing, saved and rolled back on a failed save.
 func (m *EncumbranceModule) DepositCargo(leaderUserID int, op string, deposits []encumbrance.CargoStack) error {
+	if u := m.sharedUser(leaderUserID); u != nil && u.Character.CompanyCargo {
+		return m.sharedDeposit(u, op, deposits)
+	}
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
@@ -516,6 +553,12 @@ func (m *EncumbranceModule) DepositCargo(leaderUserID int, op string, deposits [
 
 // WithdrawCargo implements encumbrance.CargoKeeper (Phase 33f3).
 func (m *EncumbranceModule) WithdrawCargo(leaderUserID, itemId, count int) error {
+	if count < 1 {
+		return encumbrance.ErrInvalidAmount
+	}
+	if u := m.sharedUser(leaderUserID); u != nil && u.Character.CompanyCargo {
+		return m.sharedConsume(u, itemId, count, false)
+	}
 	if err := m.persistenceAvailable(); err != nil {
 		return err
 	}
@@ -586,10 +629,8 @@ func (m *EncumbranceModule) status(leaderUserID int) string {
 	if band.TravelDurationPct != 100 || band.FatiguePct != 100 {
 		lines = append(lines, fmt.Sprintf("Travel duration modifier: %+d%%. Fatigue modifier: %+d%%.", band.TravelDurationPct-100, band.FatiguePct-100))
 	}
-	m.mu.Lock()
-	cargo, tracked := m.cargo[leaderUserID]
-	m.mu.Unlock()
-	if !tracked || len(cargo.Stacks) == 0 {
+	cargo := encumbrance.Cargo{Stacks: m.CargoContents(leaderUserID)}
+	if len(cargo.Stacks) == 0 {
 		lines = append(lines, "The company cargo is empty.")
 	} else {
 		lines = append(lines, "Cargo:")

@@ -38,7 +38,7 @@ func TestLogisticsHelpTopics(t *testing.T) {
 		"set-prompt":        {"Company capacity in kg"},
 		"company":           {"company inventory", "company meal"},
 		"company-inventory": {"waterskin (3 of 5)", "company inv"},
-		"company-meal":      {"cargo first", "smallest portion", "potion"},
+		"company-meal":      {"company cargo", "smallest portion", "potion"},
 	}
 	for topic, lines := range want {
 		text, err := GetHelpContents(topic)

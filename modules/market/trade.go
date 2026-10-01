@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
-	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -234,7 +233,7 @@ func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string
 	}
 	// Phase 32f: a full company can't buy more; refused before the ledger
 	// or gold changes.
-	if text, refuse := encumbrance.TooMuchToCarry(user.UserId, company.AddedGrams(user.Character.Items, newItem)); refuse {
+	if text, refuse := encumbrance.TooMuchToCarry(user.UserId, encumbrance.AddedGrams(user.UserId, user.Character.Items, newItem)); refuse {
 		user.SendText(text)
 		return
 	}

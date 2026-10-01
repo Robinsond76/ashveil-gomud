@@ -1,85 +1,118 @@
-# Phase 33g: Company Equipment, Loadouts, and Loot — Future Design
+# Phase 33g: Company Equipment and Loot
 
-Status: future design, 2026-10-01. The owner endorsed the gameplay-review
-recommendations and requested these planning documents. Detailed mechanics,
-command names, migrations, and balance defaults below remain proposals;
-implementation is not started or authorized by this documentation change.
-
-See the [company gameplay roadmap](2026-10-01-company-gameplay-roadmap.md)
-for sequencing, shared constraints, and the decision register. Code context
-was checked against origin master `626df427`; recheck before implementation.
+Status: management complete on `phase-33g-equipment`, 2026-10-01;
+independently reviewed and verified. Catalog/class delivery remains separate. The owner requested implementation,
+chose pooled gold, and removed equipment presets from this phase. Routine
+33-series defaults are delegated to the lead. See the
+[execution plan](../plans/2026-10-01-phase-33g-equipment.md) and
+[company gameplay roadmap](2026-10-01-company-gameplay-roadmap.md).
 
 ## Goal and scope
 
-Managing a band's equipment becomes a direct, reviewable company action rather than a chain of inherited give/ask commands. Tie recommendations to roles, defense, reach, and burden.
+Manage equipment directly by durable member key and exact item reference,
+using one company cargo and treasury. Compare actual defense, reach, burden,
+and capacity before deliberate assignment. Equipment and formation presets
+are excluded; no automatic whole-company upgrades are applied.
 
-The owner approved the complementary [equipment catalog, tiers, and
-Glaivewarden design](2026-10-01-equipment-tiers-glaivewarden-design.md) on
-2026-10-01: six tiers, parallel armor paths, weapon families including a
-two-handed reach glaive, and the Glaivewarden class with automatic Sweeping
-Cut. Use that catalog for role-aware comparisons and future content; numerical
-balance remains subject to verification. This approval does not settle the
-treasury, transfer, or loot-policy decisions below.
+The complementary [equipment catalog, tiers, and Glaivewarden
+design](2026-10-01-equipment-tiers-glaivewarden-design.md) is approved, but its
+catalog migration, balance verification, and class ability are separate
+remaining content/class slices. This management delivery does not ship them.
 
-## Current mechanics and prior art
+## Prior art and integration
 
-`modules/company/inventory.go` and gear/member providers show durable companion equipment. `internal/usercommands/give.go`, `ask.go`, and `internal/mobcommands/equip.go` provide transfer/equip routes; `internal/usercommands/gearup.go` evaluates only the player. 22b's save seams protect gear ownership, and 32f already supplies cargo/capacity.
+Company inventory and 22b snapshots own companion gear; encumbrance owns
+company capacity. Existing give/ask/equip routes used private backpacks and
+`gearup` ranked prices. Direct company operations replace that preparation
+workflow, while legacy leader equip/remove use the same backend. Ordinary
+pickup, purchase, sale, gifts, consumption, cooking, and camp rewards continue
+through existing entry points using the shared cargo source.
 
 Ogre Battle guides composition, formation, and automatic member behavior;
-Mount & Blade II guides company readiness, specialists, and broad orders.
-These are design inspirations, not promises to reproduce their mechanics.
+Mount & Blade II guides company readiness and specialists. They are design
+inspirations, not promises to reproduce their mechanics.
 
-## Proposed behavior
+## Owner decisions and behavior
 
-- Propose direct equip/remove/transfer operations by stable member and exact item reference, plus comparisons showing role eligibility, reach, shield defense, armor, burden, and resulting capacity.
-- Treat gold as a company-managed treasury through an explicit policy; retain ownership for trading and multiplayer transfer. Do not silently confiscate a companion's saved gold.
-- Let loot enter shared cargo when capacity permits, then assign it deliberately. Respect corpse/claim ownership, quest items, and other players' rights.
-- Save formation/equipment presets as desired arrangements, never duplicate item instances. Apply only outside battle and after validating members, ownership, required items, and capacity.
-- Automatic upgrade recommendations show tradeoffs and require deliberate application; raw damage/armor ranking must not override a healer's or guardian's role.
-- Preserve 33a's restrictions through every UI/command/legacy route. Use the same backend for browser and text.
-- Missing preset items or failed transfers produce an accurate result; avoid partial application without an approved rollback/recovery rule.
+- All unworn possessions, including living companions' carried items, become
+  company cargo. Preserve full instances: UUID, uses, enchantments, sharp
+  edges, binding, and quest metadata. Worn gear remains on its member.
+- Pool leader and living companions' carried gold into one treasury. The
+  leader's bank balance remains the bank balance. Fallen members' retained
+  body assets follow existing resurrection rules and are pooled on return.
+- `company equipment` lists exact references; `company equip [member] [item]`,
+  `company remove [member] [slot]`, and `company compare [member] [item]`
+  resolve a durable companion key (`#N`) or leader. Missing, ambiguous, stale,
+  foreign, dead, absent, or fighting targets are refused without moving gear.
+- Transfers simulate normal wear/remove checks, including curses, bound items,
+  eligibility, and two-handed displacement. Comparison shows role, weapon
+  dice/hands/reach, protection and shields, personal burden, and the resulting
+  Strength-based company capacity. It makes no automatic upgrade choice.
+- `company treasury` shows pooled carried gold. Purchases and multiplayer
+  gifts use it through existing gold semantics.
+- Shared cargo contributes expedition load once. Personal dodge burden counts
+  worn equipment (and existing pet burden), not cargo. One physical pack bonus
+  may serve each living member; assign the largest available bonuses first.
+- `loot` collects eligible corpse drops up to capacity. `loot own` collects
+  only this company's claims; optional `autoloot` queues that command outside
+  battle and starts off. Claimed spoils are private for two game hours, public
+  for two more, then inaccessible even before cleanup. Existing allied
+  rotation and unaffiliated damage-based claimant selection remain.
+- No local action advances global time. Battle policy applies to direct,
+  legacy, follower, and browser routes. No item use during battle.
 
 ## State ownership, persistence, and recovery
 
-Actual gear remains on player/live-member records and 22b snapshots; cargo stays with encumbrance. Presets store references/preferences, not copies of assets. Cross-record transfers must use existing valid save seams or durable operation IDs/applied markers. Never save a company gear snapshot independently in a way that can restore a transferred item twice.
+The leader's existing `Character.Items` and `Gold` fields back cargo and
+treasury, keeping item commands compatible. Encumbrance converts old stacks
+once: persist instances, applied operation IDs, and a migration marker in the
+user file before removing the legacy entry. A failed cleanup cannot import
+items twice. User writes use atomic replacement even when normal careful-save
+configuration is disabled. Item UUIDs now persist across saves; newly spawned
+mob gear receives fresh identity rather than copying template UUIDs.
 
-Preserve shared world time and existing game-loop ownership. Do not advance
-the world clock for a local action. Browser and text commands use the same
-validated backend; events and GMCP report state rather than own it. Existing
-saves remain loadable, and every new durable field needs a migration/default.
+Incoming gifts, pickups, shop proceeds, scripted rewards, and automatic cargo
+mutations first recover the recipient. Failed recovery refuses the mutation
+before source assets move; quest reward events retry. Successful shared writes
+emit a leader inventory refresh alongside actual equipment/ownership events.
 
-## Dependencies and delivery
+Equipment and pooling cross user/company files. First write the resulting
+companion states and a durable operation containing resulting leader assets
+into the company file; then apply the leader assets with the operation ID in
+an atomic user save. Only then clear the journal. Recovery runs before user
+commands and before/after login companion restoration. If the user already
+acknowledged an operation, retry only its company acknowledgement; never
+restore an old cargo snapshot over later changes. Failed writes retain a
+recoverable journal or roll back uncommitted state.
 
-Depends on 33a and 33d's multiplayer loot/claim contract. Uses 30g2 defense and 30g3 personal load; aligns role comparisons with 33e and growth with 33h.
-
-Before coding, inspect root/nested guidance, settle the decisions below,
-and write a focused execution plan with separate implementation,
-help/tutorial, integration tests, migration/recovery, and review tasks.
-Use an isolated feature worktree and the existing independent review gate.
-
-## Decisions to settle before implementation
-
-Treasury migration, loot claim/distribution policy, preset failure semantics, exact item references, command names, and whether upgrade application is single-member or whole-company. No auto-loot ownership bypass.
-
-The planning request approves documenting the direction, not unresolved
-formulas or behavior changes. Record final owner decisions in this design.
+GMCP and browser views report this state and invoke the same backend. They
+hold no asset ownership. Runtime corpses retain the engine's existing restart
+limitation: uncollected corpses disappear on restart.
 
 ## Acceptance criteria and verification
 
-Real transfers/equips across leader, companions, cargo, corpses, and players; exact duplicate-name items; full capacity; incompatible gear; missing presets; battle denial; stale browser requests; save failure/restart/copyover with neither duplication nor lost ownership; recommendation tradeoffs match actual combat/load calculations.
+Cover real leader/companion assignment, duplicate exact items, two hands,
+cursed/bound/incompatible gear, foreign/dead/absent members, battle refusals,
+capacity and physical pack counting. Verify user save failure, company journal
+failure, acknowledgement failure, restart/copyover recovery, and no replay of
+an acknowledged operation. Exercise legacy migration, meal/cooking consumers,
+camp deposits, pickups, gifts, and purchase entry points. Preserve item
+metadata and pool assets exactly once.
 
-Cover each wired real entry point and failure/recovery path, then perform
-independent phase review and the required code checks. Validate multiplayer
-ownership and no world-time advancement. Record actual checks and findings
-in Project Status. This planning change itself requires documentation checks
-only; the gameplay checks above are future acceptance requirements.
+Test loot private/public/expiry boundaries, same-name corpses, opt-in automatic
+collection through real commands, and no automatic collection of foreign
+public spoils. Browser controls must send durable member IDs and exact item
+references. No travel/rest/preparation action may advance shared time.
 
-## Player help and tutorial acceptance
+An independent reviewer checks the full diff for bugs, design gaps, missing
+coverage, and inaccurate help; fix confirmed findings with regressions. Run
+`make generate`, `make validate`, `go test -race ./...`, JavaScript lint, and
+the browser harness. Record actual outcomes in Project Status.
 
-Add `help loadouts` and company loot guidance; update `help equipment`, `help company`, `help inventory`, `help cargo`, `help gearup`, and webclient help. Tutorial preparation points to equipment assignment.
+## Player help and tutorial
 
-Ship player-facing pages as indexed `.template` help with useful aliases and
-hub links. Explain commands, costs, eligibility, and numbers that matter;
-use `[member]` placeholders. Rendering tests and
-`TestTutorialHelpPointersExist` must pass with the implementation. Do not
-publish help claiming these future mechanics already exist.
+Ship indexed `help equipment`, `equip`, `gearup`, `treasury`, and `loot`.
+Update cargo, inventory, company inventory, meals, burden, combat, and webclient
+help with their new ownership and commands. Preparation and departure tutorial
+hints point to equipment, treasury, and loot. Rendering and tutorial pointer
+tests must pass. No loadout/preset help or controls are shipped.

@@ -7,6 +7,7 @@ import (
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
@@ -24,6 +25,9 @@ import (
 
 func TestMain(m *testing.M) {
 	mudlog.SetupLogger(nil, "low", "", false)
+	// Pure company tests do not load optional modules. Wiring fixtures load
+	// and register the real shared cargo provider explicitly through plugins.Load.
+	encumbrance.SetProvider(nil)
 	os.Exit(m.Run())
 }
 

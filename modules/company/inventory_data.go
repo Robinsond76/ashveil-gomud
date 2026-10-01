@@ -2,6 +2,7 @@ package company
 
 import (
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
 var _ domain.InventoryProvider = (*CompanyModule)(nil)
@@ -52,11 +53,20 @@ func (m *CompanyModule) CompanyInventory(leaderUserID int) ([]domain.InventoryMe
 			continue
 		}
 		member := domain.InventoryMemberOf(key, name, *state)
+		if inst, ok := m.instance(leaderUserID, c.ID); ok {
+			member.Available = m.runtime.WithLeader(leaderUserID, inst) && m.runtime.IsAttached(leaderUserID, inst)
+		}
+		shared := false
+		if u := users.GetByUserId(leaderUserID); u != nil {
+			shared = u.Character.CompanyCargo
+		}
 		// A companion's items take no commands, so they carry no
 		// reference; a template's items get fresh UUIDs on every read,
 		// which would resend the payload every round (32g review finding 5).
-		for i := range member.Worn {
-			member.Worn[i].Ref = ""
+		if !shared {
+			for i := range member.Worn {
+				member.Worn[i].Ref = ""
+			}
 		}
 		for i := range member.Carried {
 			member.Carried[i].Ref = ""

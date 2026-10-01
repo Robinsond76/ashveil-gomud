@@ -36,7 +36,7 @@ const (
 // Instance properties that may change
 type Item struct {
 	ItemId            int       `yaml:"itemid,omitempty"`
-	UUID              uuid.UUID `yaml:"-"`                       // `yaml:"uuid,omitempty"`
+	UUID              uuid.UUID `yaml:"uuid,omitempty"`
 	Blob              string    `yaml:"blob,omitempty"`          // Does this item have a blob? Should be base64 encoded.
 	Uses              int       `yaml:"uses,omitempty"`          // How many uses it has left
 	LastUsedRound     uint64    `yaml:"lastusedround,omitempty"` // Last round this item was used

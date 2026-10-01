@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -19,6 +20,11 @@ func Get(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	if len(args) == 0 {
 		return true, nil
+	}
+	if leader, _, owned := company.LeaderAndKeyForInstance(mob.InstanceId); owned {
+		if err := company.PrepareAssets(leader); err != nil {
+			return true, nil
+		}
 	}
 
 	if args[0] == "all" {
@@ -47,7 +53,11 @@ func Get(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			mob.Character.CancelBuffsWithFlag("hidden") // No longer sneaking
 
 			goldAmt := room.Gold
-			mob.Character.Gold += goldAmt
+			if leader, _, owned := company.LeaderAndKeyForInstance(mob.InstanceId); owned && users.GetByUserId(leader) != nil && users.GetByUserId(leader).Character.CompanyCargo {
+				users.GetByUserId(leader).Character.Gold += goldAmt
+			} else {
+				mob.Character.Gold += goldAmt
+			}
 			room.Gold -= goldAmt
 
 			room.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> picks up <ansi fg="gold">%d gold</ansi>.`, mob.Character.Name, goldAmt))
@@ -88,7 +98,11 @@ func Get(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// Phase 32f: a companion carries for its company, so it can't pick
 		// up what would put the company over capacity.
 		if leaderID, _, isCompanion := company.LeaderAndKeyForInstance(mob.InstanceId); isCompanion {
-			if _, full := encumbrance.WouldExceed(leaderID, matchItem.Weight()); full {
+			grams := matchItem.Weight()
+			if u := users.GetByUserId(leaderID); u != nil && u.Character.CompanyCargo {
+				grams = encumbrance.AddedGrams(leaderID, u.Character.Items, matchItem)
+			}
+			if _, full := encumbrance.WouldExceed(leaderID, grams); full {
 				return true, nil
 			}
 		}
@@ -97,7 +111,12 @@ func Get(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		// Swap the item location
 		room.RemoveItem(matchItem, getFromStash)
-		mob.Character.StoreItem(matchItem)
+		if leader, _, owned := company.LeaderAndKeyForInstance(mob.InstanceId); owned && users.GetByUserId(leader) != nil && users.GetByUserId(leader).Character.CompanyCargo {
+			users.GetByUserId(leader).Character.StoreItem(matchItem)
+			events.AddToQueue(events.ItemOwnership{UserId: leader, Item: matchItem, Gained: true})
+		} else {
+			mob.Character.StoreItem(matchItem)
+		}
 
 		events.AddToQueue(events.ItemOwnership{
 			MobInstanceId: mob.InstanceId,

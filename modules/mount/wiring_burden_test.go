@@ -21,10 +21,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Phase 30g3, decision 2: personal load is what a character wears and
-// carries. A pack's carrying bonus, a horse, and the cargo raise the
-// company's capacity but never the agility capacity, and what is saddled
-// or stowed in the cargo no longer burdens the one who put it there.
+// Phase 33g: personal load is worn equipment; shared cargo, packs, and
+// horses affect company capacity without changing agility burden.
 // Driven through plugins.Load and the real commands, as the 32f test is.
 func TestMountsAndCargoNeverLightenBurden(t *testing.T) {
 	dataDir := t.TempDir()
@@ -84,8 +82,13 @@ func TestMountsAndCargoNeverLightenBurden(t *testing.T) {
 		return load.CapacityGrams
 	}
 	c := user.Character
+	run("cargo", "")
+	armor := items.ItemSpec{ItemId: 989751, Name: "burden armor", Type: items.Body, Weight: 10500}
+	items.SetTestItemSpec(&armor)
+	t.Cleanup(func() { items.RemoveTestItemSpec(armor.ItemId) })
+	c.Equipment.Body = items.New(armor.ItemId)
 
-	// A pack saddle and a waterskin: 10.5 kg on the leader.
+	// Worn armor burdens the leader; saddle and water remain cargo.
 	c.StoreItem(items.New(34))
 	c.StoreItem(items.New(30015))
 	require.Equal(t, 10500, c.PersonalGrams())
@@ -93,14 +96,12 @@ func TestMountsAndCargoNeverLightenBurden(t *testing.T) {
 	require.Greater(t, burden, 0.0, "10.5 kg burdens Brannoc (capacity %d g)", agility)
 	require.Less(t, burden, 1.0, "but not fully (capacity %d g)", agility)
 
-	// A satchel: 5 kg more company capacity, its own 0.6 kg on him, and
-	// no more agility capacity.
+	// A satchel adds company capacity and cargo weight, with no personal burden.
 	before := companyCapacity()
 	c.StoreItem(items.New(31))
 	assert.Equal(t, before+5000, companyCapacity())
 	assert.Equal(t, agility, c.AgilityCapacityGrams(), "a pack is company cargo room")
-	assert.Greater(t, c.Burden(), burden, "the satchel weighs on him")
-	burden = c.Burden()
+	assert.Equal(t, burden, c.Burden(), "the shared satchel does not burden the leader")
 
 	// A horse: much more company capacity, the same burden.
 	before = companyCapacity()
@@ -109,15 +110,15 @@ func TestMountsAndCargoNeverLightenBurden(t *testing.T) {
 	assert.Equal(t, agility, c.AgilityCapacityGrams())
 	assert.Equal(t, burden, c.Burden(), "a horse never lightens the rider")
 
-	// Saddling the horse takes the 9 kg pack saddle off him.
+	// Saddling moves 9 kg from cargo to the herd, preserving worn burden.
 	run("mount", "saddle pack pack saddle")
-	assert.Equal(t, 11100-9000, c.PersonalGrams())
-	assert.Less(t, c.Burden(), burden)
+	assert.Equal(t, 10500, c.PersonalGrams())
+	assert.Equal(t, burden, c.Burden())
 
-	// Cargo stowed is off his back too.
+	// The old stow command is guidance; shared cargo never affects worn burden.
 	grams := c.PersonalGrams()
-	assert.Contains(t, run("cargo", "put waterskin"), "You stow")
-	assert.Equal(t, grams-1500, c.PersonalGrams())
+	assert.Contains(t, run("cargo", "put waterskin"), "already belong")
+	assert.Equal(t, grams, c.PersonalGrams())
 	assert.NotEmpty(t, encumbrance.CargoContents(user.UserId))
 	assert.Equal(t, agility, c.AgilityCapacityGrams(), "cargo adds no agility capacity")
 	assert.Equal(t, characters.BurdenFor(c.PersonalGrams(), agility), c.Burden())

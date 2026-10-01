@@ -3,6 +3,7 @@ package usercommands
 import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"strings"
 	"time"
 
@@ -89,6 +90,8 @@ var (
 		`retreat`:     {Retreat, false, false},
 		`formset`:     {FormSet, false, true}, // Admin only
 		`gearup`:      {Gearup, false, false},
+		`loot`:        {Loot, false, false},
+		`autoloot`:    {AutoLoot, false, false},
 		`get`:         {Get, false, false},
 		`give`:        {Give, false, false},
 		`go`:          {Go, false, false},
@@ -257,6 +260,10 @@ var OnCommandDone util.Hook[CommandDone]
 func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bool, error) {
 	defer events.WithRequester(userId)()
 	if u := users.GetByUserId(userId); u != nil {
+		if err := company.PrepareAssets(userId); err != nil {
+			u.SendText(err.Error())
+			return true, nil
+		}
 		command, arguments := policyCommand(u, cmd, rest)
 		blocked := actionpolicy.Management(command) || (actionpolicy.Hostile(command) && !(command == "attack" && arguments == "")) || command == "aid"
 		if blocked && actionpolicy.InBattle(u) {

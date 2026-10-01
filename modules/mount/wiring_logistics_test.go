@@ -192,16 +192,19 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 	two := capacity()
 	assert.GreaterOrEqual(t, two-alone, 20000)
 
-	// A satchel adds 5 kg to whoever carries it; a second on the same
-	// member adds only its weight.
+	// Shared packs serve distinct living members; own-company gifts move nothing.
 	user.Character.StoreItem(items.New(31))
 	assert.Equal(t, two+5000, capacity(), "the leader's satchel")
 	run("give", "satchel dummy")
-	assert.Equal(t, two+5000, capacity(), "now the companion's")
+	assert.Equal(t, two+5000, capacity(), "own-company give leaves shared cargo unchanged")
 	user.Character.StoreItem(items.New(31))
 	assert.Equal(t, two+10000, capacity())
 	run("give", "satchel dummy")
-	assert.Equal(t, two+5000, capacity(), "one pack per member counts")
+	assert.Equal(t, two+10000, capacity(), "one physical pack per living member counts")
+	spare := items.New(31)
+	user.Character.StoreItem(spare)
+	assert.Equal(t, two+10000, capacity(), "a third pack adds no capacity to two members")
+	user.Character.RemoveItem(spare)
 	packed := capacity()
 
 	// Horses: bought at the stable, saddled from the pack.
@@ -256,19 +259,18 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 
 	// One screen for everything.
 	inv := run("company", "inventory")
-	for _, want := range []string{"Company load:", "Dain (you)", "training dummy", "pack: satchel (+5.0 kg)", "Horses: #1 pack horse (pack saddle, +100.0 kg)", "Cargo: empty"} {
+	for _, want := range []string{"Company load:", "Dain (you)", "training dummy", "satchel", "Horses: #1 pack horse (pack saddle, +100.0 kg)", "Company cargo:"} {
 		assert.Contains(t, inv, want)
 	}
 
-	// A meal: the cargo first, then each member's own pack, then the
-	// leader's.
+	// A shared meal uses each full instance once and pools old companion supplies.
 	_, err := survival.ApplyMemberDrain(user.UserId, survival.LeaderMemberKey, survival.Exertion{Hunger: 30, Thirst: 50})
 	require.NoError(t, err)
 	_, err = survival.ApplyMemberDrain(user.UserId, survival.CompanionMemberKey(1), survival.Exertion{Hunger: 50, Thirst: 70})
 	require.NoError(t, err)
 	meat := items.New(30021)
 	user.Character.StoreItem(meat)
-	require.Contains(t, run("cargo", "put seared"), "You stow")
+	require.Contains(t, run("cargo", "put seared"), "already belong")
 	user.Character.StoreItem(items.New(30004))
 	companion := liveCompanion(t)
 	companion.Character.StoreItem(items.New(30015))
@@ -282,22 +284,24 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 	})
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffListener) })
 	meal := run("company", "meal")
-	assert.Contains(t, meal, "training dummy eats a seared game meat (cargo)")
-	assert.Contains(t, meal, "cheese sandwich (your pack). Hunger: Well fed.")
-	assert.Contains(t, meal, "training dummy drinks from a waterskin (own pack)")
-	assert.Contains(t, meal, "Dain is still thirsty; there's nothing left to drink.")
-	assert.Empty(t, encumbrance.CargoContents(user.UserId), "the cargo meat was eaten")
+	assert.Contains(t, meal, "training dummy eats a seared game meat (company cargo)")
+	assert.Contains(t, meal, "cheese sandwich (company cargo). Hunger: Well fed.")
+	assert.Contains(t, meal, "training dummy drinks from a waterskin (company cargo)")
+	assert.Contains(t, meal, "You drink from the waterskin (company cargo)")
+	_, meatLeft := user.Character.FindInBackpack("seared")
+	assert.False(t, meatLeft, "the single cargo meat was eaten")
 	sandwich, found := user.Character.FindInBackpack("sandwich")
 	require.True(t, found)
 	assert.Equal(t, 2, sandwich.Uses)
-	assert.Equal(t, []int{17}, buffed, "the leader's sandwich makes them Well Fed; the companion gets no buff")
-	own, found := companion.Character.FindInBackpack("waterskin")
+	assert.Equal(t, []int{17, 34}, buffed, "leader food and water buffs apply; companions receive no buffs")
+	own, found := user.Character.FindInBackpack("waterskin")
 	require.True(t, found)
-	assert.Equal(t, 4, own.Uses)
+	assert.Equal(t, 3, own.Uses)
+	assert.Empty(t, companion.Character.Items, "companion supplies moved into shared cargo")
 	needs := survival.CompanyNeeds(user.UserId)
 	require.Len(t, needs, 2)
 	assert.Equal(t, 100, needs[0].Needs.Hunger, "70 + 35, capped")
-	assert.Equal(t, 50, needs[0].Needs.Thirst, "no water left for the leader")
+	assert.Equal(t, 90, needs[0].Needs.Thirst, "shared water serves the leader too")
 	assert.Equal(t, 50+40, needs[1].Needs.Hunger)
 	assert.Equal(t, 30+40, needs[1].Needs.Thirst)
 	assert.Contains(t, run("company", "eat"), "No one in your company is hungry.")
@@ -312,16 +316,25 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 
 	// Water only in the cargo: everyone thirsty drinks from it, and a
 	// restart keeps both the drink and what's left in the skin.
-	user.Character.StoreItem(items.New(30015))
-	require.Contains(t, run("cargo", "put waterskin"), "You stow")
+	require.Contains(t, run("cargo", "put waterskin"), "already belong")
 	drink := run("company", "drink")
-	assert.Contains(t, drink, "You drink from the waterskin (cargo)")
-	assert.Contains(t, drink, "training dummy drinks from a waterskin (cargo)")
+	assert.NotContains(t, drink, "You drink", "the leader is already in the hydrated band")
+	assert.Contains(t, drink, "training dummy drinks from a waterskin (company cargo)")
 	plugins.Save()
 	plugins.Load(dataDir)
-	assert.Equal(t, []encumbrance.CargoStack{{ItemId: 30015, Count: 1, Uses: 3}}, encumbrance.CargoContents(user.UserId))
+	remaining, found := user.Character.FindInBackpack("waterskin")
+	require.True(t, found)
+	assert.Equal(t, own.UUID, remaining.UUID)
+	assert.Equal(t, 2, remaining.Uses)
+	savedUser, err := users.LoadUserFile(user.UserId)
+	require.NoError(t, err)
+	savedSkin, found := savedUser.Character.FindInBackpack("waterskin")
+	require.True(t, found, "shared cargo is in the durable user file")
+	assert.True(t, savedUser.Character.CompanyCargo)
+	assert.Equal(t, own.UUID, savedSkin.UUID)
+	assert.Equal(t, 2, savedSkin.Uses, "persisted uses survive a real user-file load")
 	needs = survival.CompanyNeeds(user.UserId)
-	assert.Equal(t, 50+40, needs[0].Needs.Thirst)
+	assert.Equal(t, 90, needs[0].Needs.Thirst)
 	assert.Equal(t, 100, needs[1].Needs.Thirst)
 	assert.Contains(t, run("company", "drink"), "No one in your company is thirsty.", "the hydrated are skipped")
 

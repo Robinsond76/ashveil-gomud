@@ -32,6 +32,7 @@ type inventoryItem struct {
 }
 
 type inventoryMember struct {
+	Available  bool            `json:"available"`
 	Key        string          `json:"key"`
 	Name       string          `json:"name"`
 	Fallen     bool            `json:"fallen"`
@@ -62,8 +63,11 @@ type inventoryLoad struct {
 }
 
 type inventoryPayload struct {
-	Load    *inventoryLoad    `json:"load"`
-	Members []inventoryMember `json:"members"`
+	Shared   bool              `json:"shared"`
+	Treasury int               `json:"treasury"`
+	AutoLoot bool              `json:"autoloot"`
+	Load     *inventoryLoad    `json:"load"`
+	Members  []inventoryMember `json:"members"`
 	// CompanionsKnown is false when the company can't be read; Members
 	// then holds the player only.
 	CompanionsKnown bool             `json:"companions_known"`
@@ -103,7 +107,7 @@ func inventoryItems(in []company.InventoryItem) []inventoryItem {
 }
 
 func inventoryMemberOf(m company.InventoryMember) inventoryMember {
-	return inventoryMember{Key: string(m.Key), Name: m.Name, Fallen: m.Fallen, Unrecorded: m.Unrecorded, Grams: m.Grams,
+	return inventoryMember{Available: m.Available, Key: string(m.Key), Name: m.Name, Fallen: m.Fallen, Unrecorded: m.Unrecorded, Grams: m.Grams,
 		Pack: m.Pack, PackBonusG: m.PackBonusGrams, Worn: inventoryItems(m.Worn), Carried: inventoryItems(m.Carried)}
 }
 
@@ -125,7 +129,7 @@ func buildInventoryPayload(user *users.UserRecord, src inventorySources) invento
 	uid := user.UserId
 	leader := company.InventoryMemberOf(company.LeaderMemberKey, user.Character.Name,
 		company.MemberState{Items: user.Character.Items, Equipment: user.Character.Equipment})
-	p := inventoryPayload{Members: []inventoryMember{inventoryMemberOf(leader)}, Horses: []inventoryHorse{}, Cargo: []inventoryItem{}}
+	p := inventoryPayload{Shared: user.Character.CompanyCargo, Treasury: user.Character.Gold, AutoLoot: user.Character.AutoLoot, Members: []inventoryMember{inventoryMemberOf(leader)}, Horses: []inventoryHorse{}, Cargo: []inventoryItem{}}
 	if load, ok := src.load(uid); ok {
 		p.Load = &inventoryLoad{TotalG: load.TotalGrams(), CapacityG: load.CapacityGrams, MemberCapacityG: load.MemberCapacityGrams,
 			MountCapacityG: load.MountCapacityGrams, CargoG: load.CargoGrams}
@@ -140,8 +144,15 @@ func buildInventoryPayload(user *users.UserRecord, src inventorySources) invento
 		p.Horses = append(p.Horses, inventoryHorse{ID: h.ID, Name: h.Name, Kind: string(h.Kind), Saddle: h.Saddle,
 			CapacityG: h.CapacityGrams, Rides: h.Kind == mount.KindRiding && h.Saddle != ""})
 	}
-	for _, s := range src.cargo(uid) {
-		p.Cargo = append(p.Cargo, cargoItem(s))
+	if p.Shared {
+		p.Cargo = inventoryItems(leader.Carried)
+		leader.Carried = []company.InventoryItem{}
+		leader.Grams = user.Character.PersonalGrams()
+		p.Members[0] = inventoryMemberOf(leader)
+	} else {
+		for _, s := range src.cargo(uid) {
+			p.Cargo = append(p.Cargo, cargoItem(s))
+		}
 	}
 	return p
 }

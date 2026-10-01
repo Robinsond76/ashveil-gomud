@@ -197,7 +197,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	// Shared kills use a fixed claim, not the first pickup command. A corpse is
 	// used even in worlds configured for floor drops, so gold/items cannot leak
 	// through an unowned floor path. The corpse owns the physical loot once.
-	claimCorpse := len(contributors) > 1 && !permaGear
+	claimCorpse := len(contributors) > 0 && !permaGear
 	claimOwner := 0
 	if claimCorpse {
 		claimOwner = lootClaimant(mob, contributors)
@@ -287,6 +287,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		if bool(config.Death.CorpsesEnabled) || claimCorpse {
 			c := rooms.Corpse{
 				ClaimUserId:  claimOwner,
+				BattleSpoils: claimCorpse,
 				MobId:        int(mob.MobId),
 				Character:    mob.Character,
 				RoundCreated: currentRound,

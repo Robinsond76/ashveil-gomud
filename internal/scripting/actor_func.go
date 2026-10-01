@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -310,6 +311,9 @@ func (a ScriptActor) GetPartyMissing() ScriptParty {
 }
 
 func (a ScriptActor) AddGold(amt int, bankAmt ...int) {
+	if !a.prepareUserAssets() {
+		return
+	}
 	a.characterRecord.Gold += amt
 	if a.characterRecord.Gold < 0 {
 		a.characterRecord.Gold = 0
@@ -450,6 +454,9 @@ func (a ScriptActor) MoveRoom(destRoomId int) {
 }
 
 func (a ScriptActor) UpdateItem(itm ScriptItem) {
+	if !a.prepareUserAssets() {
+		return
+	}
 	a.userRecord.Character.UpdateItem(itm.originalItem, *itm.itemRecord)
 }
 
@@ -501,6 +508,9 @@ func (a ScriptActor) MarkVisitedZone(zoneName string) {
 }
 
 func (a ScriptActor) GiveItem(itm any) {
+	if !a.prepareUserAssets() {
+		return
+	}
 
 	var sItem *ScriptItem
 
@@ -534,6 +544,9 @@ func (a ScriptActor) GiveItem(itm any) {
 }
 
 func (a ScriptActor) TakeItem(itm ScriptItem) {
+	if !a.prepareUserAssets() {
+		return
+	}
 	if a.characterRecord.RemoveItem(*itm.itemRecord) {
 		if a.userId > 0 {
 
@@ -614,6 +627,9 @@ func (a ScriptActor) HasItemId(itemId int, excludeWorn ...bool) bool {
 }
 
 func (a ScriptActor) GetBackpackItems() []ScriptItem {
+	if !a.prepareUserAssets() {
+		return nil
+	}
 	itms := make([]ScriptItem, 0, 5)
 	for _, item := range a.characterRecord.GetAllBackpackItems() {
 		itms = append(itms, newScriptItem(item))
@@ -994,6 +1010,9 @@ func (a ScriptActor) GetDescription() string {
 }
 
 func (a ScriptActor) GetGold() int {
+	if !a.prepareUserAssets() {
+		return 0
+	}
 	return a.characterRecord.Gold
 }
 
@@ -1019,12 +1038,28 @@ func (a ScriptActor) GetWornItem(slot string) *ScriptItem {
 }
 
 func (a ScriptActor) FindInBackpack(itemName string) *ScriptItem {
+	if !a.prepareUserAssets() {
+		return nil
+	}
 	itm, found := a.characterRecord.FindInBackpack(itemName)
 	if !found {
 		return nil
 	}
 	si := newScriptItem(itm)
 	return &si
+}
+
+// Scripted rewards/transfers can target a player other than the command issuer.
+func (a ScriptActor) prepareUserAssets() bool {
+	if a.userId > 0 {
+		if err := company.PrepareAssets(a.userId); err != nil {
+			if a.userRecord != nil {
+				a.userRecord.SendText("Company assets await recovery; the asset action was refused.")
+			}
+			return false
+		}
+	}
+	return true
 }
 
 func (a ScriptActor) FindOnBody(itemName string) *ScriptItem {

@@ -75,7 +75,8 @@ type Store interface {
 }
 
 type wireRecord struct {
-	MercyPending []domain.MercyEffect `yaml:"mercy_pending,omitempty"`
+	AssetOperation *domain.AssetOperation `yaml:"asset_operation,omitempty"`
+	MercyPending   []domain.MercyEffect   `yaml:"mercy_pending,omitempty"`
 	// LeaderUserID is decoded for shape compatibility; the companies map key is authoritative.
 	LeaderUserID    int                    `yaml:"leader_user_id"`
 	Companions      []domain.Companion     `yaml:"companions"`
@@ -104,7 +105,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
+		record := domain.Record{AssetOperation: wr.AssetOperation, LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -732,6 +733,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		return true, nil
 	}
 	switch args[0] {
+	case "equipment", "equip", "remove", "compare", "treasury":
+		user.SendText(m.equipmentCommand(user, args))
 	case "summon":
 		if len(args) < 2 {
 			user.SendText(companyUsage)
@@ -986,10 +989,17 @@ func (m *CompanyModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if user == nil {
 		return events.Continue
 	}
+	if err := m.PrepareAssets(evt.UserId); err != nil {
+		mudlog.Warn("company: recover assets", "error", err)
+		return events.Continue
+	}
 	if err := m.restoreForLeader(evt.UserId, user.Character.RoomId); err != nil {
 		mudlog.Warn("company: restore", "error", err)
 	}
 	if m.persistenceAvailable() == nil {
+		if err := m.PrepareAssets(evt.UserId); err != nil {
+			mudlog.Warn("company: pool restored assets", "error", err)
+		}
 		m.deathOnSpawn(evt.UserId)
 	}
 	return events.Continue

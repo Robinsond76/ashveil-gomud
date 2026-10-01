@@ -14,3 +14,5 @@ You can search for a specific object by entering its full (or partial) name:
 
   ~inventory~  
   ~inventory [search term]~
+
+All unworn items are shared cargo. Use ~help equipment~ for assignments and comparisons.

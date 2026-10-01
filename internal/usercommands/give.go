@@ -70,12 +70,16 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		user.Character.CancelBuffsWithFlag("hidden")
 
 		targetUser := users.GetByUserId(playerId)
+		if err := company.PrepareAssets(playerId); err != nil {
+			user.SendText("That company's assets await recovery; nothing was given.")
+			return true, nil
+		}
 
 		// Swap the item location
 		if giveItem.ItemId > 0 {
 			// Phase 32f: another player's full company can't take it.
 			if targetUser.UserId != user.UserId {
-				if _, full := encumbrance.WouldExceed(targetUser.UserId, giveItem.Weight()); full {
+				if _, full := encumbrance.WouldExceed(targetUser.UserId, encumbrance.AddedGrams(targetUser.UserId, targetUser.Character.Items, giveItem)); full {
 					user.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi>'s company can't carry any more.`, targetUser.Character.Name))
 					return true, nil
 				}
@@ -160,6 +164,35 @@ func Give(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		m := mobs.GetInstance(mobId)
 
 		if m != nil {
+			if leader, _, owned := company.LeaderAndKeyForInstance(m.InstanceId); owned {
+				if target := users.GetByUserId(leader); target != nil && target.Character.CompanyCargo {
+					if err := company.PrepareAssets(leader); err != nil {
+						user.SendText("That company's assets await recovery; nothing was given.")
+						return true, nil
+					}
+					if leader == user.UserId {
+						user.SendText("Those assets already belong to your company. Use company equip to assign gear.")
+						return true, nil
+					}
+					if giveItem.ItemId > 0 {
+						if tooHeavy(target, giveItem) {
+							return true, nil
+						}
+						target.Character.StoreItem(giveItem)
+						user.Character.RemoveItem(giveItem)
+						events.AddToQueue(events.ItemOwnership{UserId: leader, Item: giveItem, Gained: true})
+						events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: giveItem, Gained: false})
+					} else if giveGoldAmount > 0 {
+						target.Character.Gold += giveGoldAmount
+						user.Character.Gold -= giveGoldAmount
+						events.AddToQueue(events.EquipmentChange{UserId: leader, GoldChange: giveGoldAmount})
+						events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -giveGoldAmount})
+					}
+					user.SendText("You give the assets to that member's company cargo and treasury.")
+					target.SendText("Your company received a gift.")
+					return true, nil
+				}
+			}
 
 			// Swap the item location
 			if giveItem.ItemId > 0 || giveGoldAmount > 0 {

@@ -41,9 +41,10 @@ type InventoryItem struct {
 
 // InventoryMember is one member's gear.
 type InventoryMember struct {
-	Key    MemberKey
-	Name   string
-	Fallen bool
+	Available bool // Alive, present and controlled; exact management is possible.
+	Key       MemberKey
+	Name      string
+	Fallen    bool
 	// Unrecorded is a companion whose gear isn't known yet.
 	Unrecorded     bool
 	Grams          int

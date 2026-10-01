@@ -1,0 +1,34 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">equipment</ansi>
+
+All unworn items belong to company cargo. Each member keeps their worn gear.
+Assign equipment before a fight; no gear changes or item use are allowed in battle.
+
+  company equipment
+  Lists cargo items and their exact references, such as !10004:[instance].
+  Copy the full reference when several items have the same name.
+
+  company compare [member] [item]
+  Shows hands, reach, price, protection, shield changes, worn weight,
+  personal burden and company capacity before you assign it. Check the
+  member's strategy role; higher price alone does not mean better gear.
+
+  company equip [member] [item]
+  Equips one cargo item and returns displaced equipment to shared cargo.
+  Use leader (or me) for yourself, #1 for companion 1, or a quoted member name.
+  The companion must be alive, present, and still yours.
+
+  company remove [member] [slot]
+  Returns worn gear to cargo. Slots include weapon, offhand, head, neck,
+  body, belt, gloves, ring, legs and feet.
+
+A two-handed weapon removes the offhand; a shield displaces a two-handed
+weapon. Disabled slots, bound gear and curses can prevent an assignment.
+Nothing is duplicated or automatically upgraded. There are no equipment presets.
+
+The legacy equip/wear/wield and remove commands manage the leader only.
+gearup directs you to deliberate assignment rather than choosing by price.
+In Company > Inventory, click cargo gear to compare or assign it to a member;
+click worn gear to return it to cargo. Text and browser use the same checks.
+
+See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help treasury</ansi>, <ansi fg="command">help loot</ansi>,
+<ansi fg="command">help defense</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help company</ansi>.

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -60,6 +61,9 @@ func Give(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		targetUser := users.GetByUserId(playerId)
 		if targetUser == nil {
+			return true, nil
+		}
+		if err := company.PrepareAssets(playerId); err != nil {
 			return true, nil
 		}
 

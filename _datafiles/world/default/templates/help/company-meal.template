@@ -20,8 +20,7 @@ drinks one portion per command.
 
 <ansi fg="yellow-bold">What they eat</ansi>
 
-Food and drink come from the company's cargo first, then from the
-member's own pack, then from yours. From the first of those with
+Food and drink come from shared company cargo; there are no personal packs. From the first of those with
 anything suitable, each member gets the smallest portion that fills
 them, or the biggest there is when nothing will. Food that also waters,
 like a stew, counts toward thirst, so no one drinks after it who
@@ -38,3 +37,6 @@ sees your company eat.
 
 See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help cargo</ansi>,
 <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help company</ansi>.
+
+Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
+Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.

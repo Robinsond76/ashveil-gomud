@@ -278,7 +278,7 @@ func (m *CompanyModule) supplies(user *users.UserRecord, members []woundMember, 
 		pack(patient)
 	}
 	for _, itm := range user.Character.Items {
-		if itm.ItemId == itemID {
+		if !user.Character.CompanyCargo && itm.ItemId == itemID {
 			out = append(out, supply{source: fromLeaderPack, item: itm})
 		}
 	}

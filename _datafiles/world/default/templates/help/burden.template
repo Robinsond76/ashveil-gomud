@@ -1,18 +1,17 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">burden</ansi>
 
-In a fight, what you wear and carry yourself weighs on you. The heavier
+In a fight, company members bear only their worn equipment. The heavier
 your own load against what your Strength lets you move in, the more
 <ansi fg="yellow">burdened</ansi> you are, and a burdened fighter dodges less.
 
 <ansi fg="yellow-bold">Your own load, not the company's</ansi>
 
-Your burden counts only your worn gear and the items you carry. The
+Your burden counts only your worn gear. All unworn items are shared cargo. The
 company's cargo, your pack's extra room, and the horses carry for the
 company on the road (<ansi fg="command">help cargo</ansi>), but never make you lighter on your
-feet. Stowing something in the cargo, or saddling a horse with it, takes
-it off your back.
+feet. Removing worn gear to cargo takes it off your back.
 
-The same rule holds for everyone: you, your companions, and your foes.
+Your company members carry no personal backpack. Foes still bear their own worn and carried gear.
 
 <ansi fg="yellow-bold">How much you can move in</ansi>
 

@@ -215,6 +215,7 @@ func TestHealWoundsSpentHealers(t *testing.T) {
 // the cargo first, then the packs; none left reports false.
 func TestSpendSupplyThroughTheProvider(t *testing.T) {
 	b := newBrawl(t)
+	b.aria.Character.CompanyCargo = false // the injected provider models legacy split containers
 	cargo := &fakeCargo{stacks: []encumbrance.CargoStack{{ItemId: bandageItemID, Count: 1}}}
 	useCargo(t, cargo)
 	b.aria.Character.StoreItem(items.New(bandageItemID))

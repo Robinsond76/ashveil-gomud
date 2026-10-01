@@ -723,20 +723,40 @@
     }
 
     function yourItemMenu(i, worn) {
-        const items = [{ label: 'look ' + i.name, cmd: 'look ' + i.name }];
+        const items = [{ label: 'look ' + i.name, cmd: 'look ' + i.ref }];
         if (worn) {
-            items.push({ label: 'remove ' + i.name, cmd: 'remove ' + i.name });
+            items.push({ label: 'remove ' + i.name, cmd: 'remove ' + i.ref });
             return items;
         }
         const type = (i.type || '').toLowerCase(), sub = (i.subtype || '').toLowerCase();
-        if (type === 'weapon' || sub === 'wearable') { items.push({ label: 'equip ' + i.name, cmd: 'equip ' + i.name }); }
-        if (sub === 'edible')    { items.push({ label: 'eat ' + i.name, cmd: 'eat ' + i.name }); }
-        if (sub === 'drinkable') { items.push({ label: 'drink ' + i.name, cmd: 'drink ' + i.name }); }
+        if (type === 'weapon' || sub === 'wearable') { items.push({ label: 'equip ' + i.name, cmd: 'equip ' + i.ref }); }
+        if (sub === 'edible')    { items.push({ label: 'eat ' + i.name, cmd: 'eat ' + i.ref }); }
+        if (sub === 'drinkable') { items.push({ label: 'drink ' + i.name, cmd: 'drink ' + i.ref }); }
         items.push({ label: 'Put in cargo', cmd: 'cargo put ' + i.ref });
         presentCompanions().forEach(m => {
             items.push({ label: 'Give to ' + m.name, cmd: 'give ' + i.ref + ' ' + quoted(m.name) });
         });
         return items;
+    }
+
+    function memberSelector(key) {
+        return key === 'leader' ? 'leader' : '#' + String(key).replace('companion:', '');
+    }
+
+    function sharedCargoMenu(i, inv) {
+        const menu = [{ label: 'Look', cmd: 'look ' + i.ref }];
+        const wearable = i.type === 'weapon' || i.subtype === 'wearable';
+        if (wearable) {
+            inv.members.filter(m => m.key === 'leader' || m.available).forEach(m => {
+                const member = memberSelector(m.key);
+                menu.push({ label: 'Compare for ' + m.name, cmd: 'company compare ' + member + ' ' + i.ref });
+                menu.push({ label: 'Equip ' + m.name, cmd: 'company equip ' + member + ' ' + i.ref });
+            });
+        }
+        if (i.subtype === 'edible') { menu.push({ label: 'Eat', cmd: 'eat ' + i.ref }); }
+        if (i.subtype === 'drinkable') { menu.push({ label: 'Drink', cmd: 'drink ' + i.ref }); }
+        if (i.subtype === 'usable') { menu.push({ label: 'Use', cmd: 'use ' + i.ref }); }
+        return menu;
     }
 
     function itemRow(i, menu) {
@@ -761,7 +781,7 @@
         return ul;
     }
 
-    function memberBlock(m, isYou) {
+    function memberBlock(m, isYou, shared) {
         const block = el('section', 'cmp-block');
         block.setAttribute('aria-label', isYou ? m.name + ' (you)' : m.name);
         const h = el('h4');
@@ -776,11 +796,11 @@
             block.appendChild(el('div', 'cmp-note', 'Gear not yet recorded.'));
             return block;
         }
-        block.appendChild(el('div', 'cmp-sub', m.pack ? 'Pack: ' + m.pack + ' (+' + CompanyData.kg(m.pack_bonus_g) + ')' : 'No pack'));
+        if (!shared) { block.appendChild(el('div', 'cmp-sub', m.pack ? 'Pack: ' + m.pack + ' (+' + CompanyData.kg(m.pack_bonus_g) + ')' : 'No pack')); }
         block.appendChild(el('div', 'cmp-sub', 'Wearing'));
-        block.appendChild(m.worn.length ? itemList(m.worn, isYou ? (i => yourItemMenu(i, true)) : null) : el('div', 'cmp-note', 'nothing'));
-        block.appendChild(el('div', 'cmp-sub', 'Carrying'));
-        block.appendChild(m.carried.length ? itemList(m.carried, isYou ? (i => yourItemMenu(i, false)) : null) : el('div', 'cmp-note', 'nothing'));
+        block.appendChild(m.worn.length ? itemList(m.worn, shared && (isYou || m.available) ? (i => [{ label: 'Remove to cargo', cmd: 'company remove ' + memberSelector(m.key) + ' ' + i.slot }]) : (isYou ? (i => yourItemMenu(i, true)) : null)) : el('div', 'cmp-note', 'nothing'));
+        if (!shared) { block.appendChild(el('div', 'cmp-sub', 'Carrying'));
+        block.appendChild(m.carried.length ? itemList(m.carried, isYou ? (i => yourItemMenu(i, false)) : null) : el('div', 'cmp-note', 'nothing')); }
         return block;
     }
 
@@ -858,17 +878,22 @@
         actions.appendChild(button('Meal', 'company meal', 'Everyone with you eats and drinks (company meal)'));
         actions.appendChild(button('Eat', 'company eat', 'Everyone hungry eats (company eat)'));
         actions.appendChild(button('Drink', 'company drink', 'Everyone thirsty drinks (company drink)'));
+        if (inv.shared) {
+            pad.appendChild(el('div', 'cmp-line', 'Company treasury: ' + inv.treasury + ' gold'));
+            actions.appendChild(button('Loot', 'loot', 'Collect eligible battle spoils'));
+            actions.appendChild(button(inv.autoloot ? 'Autoloot off' : 'Autoloot on', inv.autoloot ? 'autoloot off' : 'autoloot on', 'Toggle automatic loot after battle'));
+        }
         pad.appendChild(actions);
 
         const you = inv.members[0];
-        inv.members.forEach((m, idx) => pad.appendChild(memberBlock(m, idx === 0)));
+        inv.members.forEach((m, idx) => pad.appendChild(memberBlock(m, idx === 0, inv.shared)));
 
         const horses = el('section', 'cmp-block');
         horses.setAttribute('aria-label', 'Horses');
         horses.appendChild(el('h4', null, 'Horses'));
         if (inv.horses && inv.horses.length) {
             const ul = el('ul', 'cmp-items');
-            inv.horses.forEach(h => ul.appendChild(horseRow(h, (you && you.carried) || [])));
+            inv.horses.forEach(h => ul.appendChild(horseRow(h, (inv.shared ? inv.cargo : (you && you.carried)) || [])));
             horses.appendChild(ul);
         } else {
             horses.appendChild(el('div', 'cmp-note', 'none (help mount)'));
@@ -882,7 +907,7 @@
         if (inv.load) { ch.appendChild(el('span', 'cmp-weight', CompanyData.kg(inv.load.cargo_g))); }
         cargo.appendChild(ch);
         cargo.appendChild(inv.cargo && inv.cargo.length
-            ? itemList(inv.cargo, i => [{ label: 'Take one', cmd: 'cargo take ' + i.ref }])
+            ? itemList(inv.cargo, i => inv.shared ? sharedCargoMenu(i, inv) : [{ label: 'Take one', cmd: 'cargo take ' + i.ref }])
             : el('div', 'cmp-note', 'empty'));
         pad.appendChild(cargo);
     }

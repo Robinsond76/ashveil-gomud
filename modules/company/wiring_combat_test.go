@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
@@ -162,6 +163,7 @@ func newBrawl(t *testing.T) *brawl {
 	require.NotNil(t, module)
 	t.Cleanup(plugins.SnapshotLoadStateForTest())
 	plugins.Load(dataDir)
+	t.Cleanup(func() { encumbrance.SetProvider(nil) })
 	require.NoError(t, module.loadErr)
 	previous := configs.Flatten(configs.GetOverrides())
 	flat := configs.Flatten(configs.GetOverrides())

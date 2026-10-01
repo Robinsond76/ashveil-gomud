@@ -1,0 +1,28 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">loot</ansi>
+
+Battle spoils go into company cargo, with gold in the treasury.
+
+  loot
+  Collect eligible loot from corpses in your room, up to company capacity.
+  Items that are too heavy remain. Gold does not use carrying capacity.
+
+  loot own
+  Collect only corpses claimed by your company.
+
+  loot [corpse]
+  Collect from one named corpse. get all [corpse] uses the same checks.
+
+  autoloot on | autoloot off
+  Optional automatic pickup from your claimed spoils after your battle ends.
+  It starts off and never picks up another company's spoils automatically.
+  If you cannot carry an item, it remains for manual pickup or more capacity.
+
+Spoils are reserved for the winning company for 2 game hours, open to everyone
+for 2 more game hours, then gone. Allies keep the rotating claim; outside one
+alliance, the company doing the most damage wins it (ties: lowest player id).
+
+No pickup or item use during battle. Loot contains actual drops, not gear that
+stays with the body. Your allies' possessions and quest items retain the normal
+ownership and item rules. A restart does not preserve runtime corpses.
+
+See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help treasury</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help combat</ansi>.

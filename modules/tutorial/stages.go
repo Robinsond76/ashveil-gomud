@@ -80,6 +80,7 @@ func init() {
 				`<ansi fg="command">company recruit</ansi> shows who is hiring here. Recruit two: <ansi fg="command">company recruit tamsin</ansi> and <ansi fg="command">company recruit oswin</ansi>. Each is free, once.`,
 				`<ansi fg="command">company status</ansi> shows your companions. A company holds five at most, you included.`,
 				`Safe <ansi fg="command">ask</ansi> orders manage a present member outside battle; members fight automatically. Conversation and observation remain available (<ansi fg="command">help ask</ansi>).`,
+				`Use <ansi fg="command">help equipment</ansi> to compare and assign shared cargo gear, and <ansi fg="command">help treasury</ansi> for the pooled gold.`,
 				`Companions keep their own gear (<ansi fg="command">company gear</ansi>). <ansi fg="command">company dismiss</ansi> lets one go, with their gear.`,
 				`<ansi fg="command">help company</ansi> covers recruiting and your roster in full.`,
 			},
@@ -183,6 +184,7 @@ func init() {
 			Intro: "Your training is done. Look over your company and your pack before you go.",
 			Goal:  "When you're ready, go through the gate.",
 			Hints: []string{
+				`After a battle, <ansi fg="command">loot</ansi> collects eligible spoils into cargo. <ansi fg="command">help loot</ansi> explains claims and optional autoloot.`,
 				`<ansi fg="command">company status</ansi>, <ansi fg="command">inventory</ansi>, and <ansi fg="command">status</ansi> one last time.`,
 				`Go through the <ansi fg="exit">gate</ansi> to begin your journey.`,
 				`Settlements post recruits of your own, and the faces change over time: <ansi fg="command">look</ansi> at the Waymark Inn's hiring slate, and see <ansi fg="command">help company</ansi>.`,

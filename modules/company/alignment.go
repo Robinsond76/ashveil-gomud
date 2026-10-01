@@ -223,6 +223,7 @@ func (m *CompanyModule) onNewRound(e events.Event) events.ListenerReturn {
 	if m.persistenceAvailable() != nil {
 		return events.Continue
 	}
+	m.queueAutoLoot(evt.RoundNumber)
 	// Phase 24: charge this round to every eligible chemistry bond first,
 	// so a drift tick's rollback snapshot includes it.
 	m.retryReturns()

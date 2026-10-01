@@ -618,7 +618,12 @@ func UpdateOnlineUser(updated UserRecord) {
 	*u = updated
 }
 
-func SaveUser(u UserRecord, isAutoSave ...bool) error {
+func SaveUser(u UserRecord, isAutoSave ...bool) error { return saveUser(u, false, isAutoSave...) }
+
+// SaveUserAtomic always replaces the complete file, including when the legacy
+// careful-save setting is disabled. Asset journals require this property.
+func SaveUserAtomic(u UserRecord) error { return saveUser(u, true) }
+func saveUser(u UserRecord, forceAtomic bool, isAutoSave ...bool) error {
 
 	fileWritten := false
 	tmpSaved := false
@@ -634,7 +639,7 @@ func SaveUser(u UserRecord, isAutoSave ...bool) error {
 		return err
 	}
 
-	carefulSave := configs.GetFilePathsConfig().CarefulSaveFiles
+	carefulSave := forceAtomic || bool(configs.GetFilePathsConfig().CarefulSaveFiles)
 
 	path := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/`, `users`, `/`, strconv.Itoa(u.UserId)+`.yaml`)
 

@@ -29,6 +29,10 @@ func (m *CompanyModule) inventoryView(user *users.UserRecord) string {
 	}
 
 	leader := domain.MemberState{Items: user.Character.Items, Equipment: user.Character.Equipment}
+	if user.Character.CompanyCargo {
+		leader.Items = nil
+		lines = append(lines, fmt.Sprintf("Company treasury: %d gold.", user.Character.Gold))
+	}
 	lines = append(lines, memberBlock(user.Character.Name+" (you)", leader)...)
 
 	if m.persistenceAvailable() == nil {
@@ -73,7 +77,14 @@ func (m *CompanyModule) inventoryView(user *users.UserRecord) string {
 	} else {
 		lines = append(lines, "Horses: none")
 	}
-	lines = append(lines, cargoLine(encumbrance.CargoContents(leaderUserID)))
+	if user.Character.CompanyCargo {
+		lines = append(lines, "Company cargo:")
+		for _, itm := range user.Character.Items {
+			lines = append(lines, fmt.Sprintf("  %s  %s", itm.ShorthandId(), itemName(itm)))
+		}
+	} else {
+		lines = append(lines, cargoLine(encumbrance.CargoContents(leaderUserID)))
+	}
 	return strings.Join(lines, "\n")
 }
 

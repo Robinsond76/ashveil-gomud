@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -13,6 +14,10 @@ import (
 )
 
 func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if handled, text := company.ManageEquipment(user.UserId, "equip", rest); handled {
+		user.SendText(text)
+		return true, nil
+	}
 
 	// Ashveil Phase 32d: a battle plays out as it was set up.
 	if InBattle(user) {

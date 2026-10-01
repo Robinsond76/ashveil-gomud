@@ -149,16 +149,15 @@ func TestCompanyDockThroughPluginsLoad(t *testing.T) {
 		}
 		return "", nil
 	}
-	waterRef, waterItem := refOf(members[0].(map[string]any), "waterskin")
+	waterRef, waterItem := refOf(map[string]any{"carried": inv["cargo"]}, "waterskin")
 	require.NotEmpty(t, waterRef)
 	assert.EqualValues(t, 3, waterItem["uses"])
 	assert.NotNil(t, inv["load"], "the load split")
 
-	// The reference works in `cargo put`; the waterskin goes in with its
-	// uses, and the change is sent.
+	// Shared cargo has no second backpack: put/take are guidance only.
 	before := count("Company.Inventory")
 	run(aria, "cargo", "put "+waterRef)
-	assert.Greater(t, count("Company.Inventory"), before, "sent on change")
+	assert.Equal(t, before, count("Company.Inventory"), "guidance does not move assets")
 	inv = last("Company.Inventory")
 	_, left := refOf(inv["members"].([]any)[0].(map[string]any), "waterskin")
 	assert.Nil(t, left, "out of the pack")
@@ -171,10 +170,10 @@ func TestCompanyDockThroughPluginsLoad(t *testing.T) {
 	require.NotNil(t, stack, "in the cargo")
 	assert.EqualValues(t, 3, stack["uses"])
 
-	// The stack's reference works in `cargo take`: back with 3 uses.
+	// Take also leaves the exact cargo instance and uses unchanged.
 	run(aria, "cargo", "take "+stack["ref"].(string))
-	_, back := refOf(last("Company.Inventory")["members"].([]any)[0].(map[string]any), "waterskin")
-	require.NotNil(t, back, "back in the pack")
+	_, back := refOf(map[string]any{"carried": last("Company.Inventory")["cargo"]}, "waterskin")
+	require.NotNil(t, back, "still in shared cargo")
 	assert.EqualValues(t, 3, back["uses"])
 
 	// An unchanged inventory sends nothing.
@@ -182,12 +181,14 @@ func TestCompanyDockThroughPluginsLoad(t *testing.T) {
 	run(aria, "look", "")
 	assert.Equal(t, before, count("Company.Inventory"), "nothing changed")
 
-	// `give <ref> tamsin`: the ration is hers, read from her live mob.
-	rationRef, _ := refOf(last("Company.Inventory")["members"].([]any)[0].(map[string]any), ration.GetSpec().Name)
+	// Giving supplies to your own companion is a no-op: supplies stay shared.
+	rationRef, _ := refOf(map[string]any{"carried": last("Company.Inventory")["cargo"]}, ration.GetSpec().Name)
 	require.NotEmpty(t, rationRef)
 	run(aria, "give", rationRef+" tamsin")
 	_, hers := refOf(last("Company.Inventory")["members"].([]any)[1].(map[string]any), ration.GetSpec().Name)
-	assert.NotNil(t, hers, "Tamsin carries it")
+	assert.Nil(t, hers, "Tamsin has no separate personal inventory")
+	_, shared := refOf(map[string]any{"carried": last("Company.Inventory")["cargo"]}, ration.GetSpec().Name)
+	require.NotNil(t, shared, "the ration remains in cargo")
 
 	// A new Company snapshot (a formation change) replaces what the client
 	// stores under Company, so the unchanged Inventory follows it (32g

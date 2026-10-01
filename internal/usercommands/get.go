@@ -163,7 +163,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	// Handle getting from a corpse
 	if corpseRef != nil {
-		if corpseRef.ClaimUserId != 0 && corpseRef.ClaimUserId != user.UserId {
+		if !corpseRef.CanLoot(user.UserId, util.GetRoundCount()) {
 			user.SendText(`This battle loot is claimed by another company.`)
 			return true, nil
 		}
@@ -533,7 +533,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 // now: claimed loot for its claimant, or any loot in a CorpseItems world.
 func corpseLootable(c *rooms.Corpse, userId int) bool {
 	if c.ClaimUserId != 0 {
-		return c.ClaimUserId == userId && c.HasItems()
+		return c.CanLoot(userId, util.GetRoundCount()) && c.HasItems()
 	}
 	return bool(configs.GetGamePlayConfig().Death.CorpseItems) && (c.HasItems() || len(c.Character.GetAllWornItems()) > 0)
 }

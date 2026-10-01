@@ -440,8 +440,8 @@
     function _equipMenuItems(item) {
         if (!item || !item.name) { return null; }
         return [
-            { label: 'look '   + item.name, cmd: 'look '   + item.name },
-            { label: 'remove ' + item.name, cmd: 'remove ' + item.name },
+            { label: 'look '   + item.name, cmd: 'look '   + item.id },
+            { label: 'remove ' + item.name, cmd: 'remove ' + item.id },
         ];
     }
 
@@ -449,19 +449,19 @@
         if (!item || !item.name) { return null; }
         const type    = (item.type    || '').toLowerCase();
         const subtype = (item.subtype || '').toLowerCase();
-        const cmds = [{ label: 'look ' + item.name, cmd: 'look ' + item.name }];
+        const cmds = [{ label: 'look ' + item.name, cmd: 'look ' + item.id }];
         if (type === 'weapon' || subtype === 'wearable') {
-            cmds.push({ label: 'equip ' + item.name, cmd: 'equip ' + item.name });
+            cmds.push({ label: 'equip ' + item.name, cmd: 'equip ' + item.id });
         } else if (subtype === 'edible') {
-            cmds.push({ label: 'eat '   + item.name, cmd: 'eat '   + item.name });
+            cmds.push({ label: 'eat '   + item.name, cmd: 'eat '   + item.id });
         } else if (subtype === 'drinkable') {
-            cmds.push({ label: 'drink ' + item.name, cmd: 'drink ' + item.name });
+            cmds.push({ label: 'drink ' + item.name, cmd: 'drink ' + item.id });
         } else if (subtype === 'usable') {
-            cmds.push({ label: 'use '   + item.name, cmd: 'use '   + item.name });
+            cmds.push({ label: 'use '   + item.name, cmd: 'use '   + item.id });
         } else if (subtype === 'throwable') {
-            cmds.push({ label: 'throw ' + item.name, cmd: 'throw ' + item.name });
+            cmds.push({ label: 'throw ' + item.name, cmd: 'throw ' + item.id });
         } else if (type === 'readable') {
-            cmds.push({ label: 'read '  + item.name, cmd: 'read '  + item.name });
+            cmds.push({ label: 'read '  + item.name, cmd: 'read '  + item.id });
         }
         return cmds;
     }
@@ -696,6 +696,8 @@
         const inv     = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Inventory;
         const summary = (inv && inv.Backpack && inv.Backpack.Summary) || {};
         const company = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Inventory;
+        const cargoTab = document.querySelector('[data-panel="gw-backpack"]');
+        if (cargoTab) { cargoTab.textContent = (summary.shared || (company && company.shared)) ? 'Cargo' : 'Backpack'; }
         const you     = company && Array.isArray(company.members) && company.members[0];
         const load    = company && company.load;
         const mine    = you ? you.grams : summary.weight_g;

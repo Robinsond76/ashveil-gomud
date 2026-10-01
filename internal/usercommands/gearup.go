@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/company"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -10,6 +11,10 @@ import (
 )
 
 func Gearup(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if handled, text := company.ManageEquipment(user.UserId, "gearup", rest); handled {
+		user.SendText(text)
+		return true, nil
+	}
 
 	upgrades := user.Character.BestUpgrades()
 

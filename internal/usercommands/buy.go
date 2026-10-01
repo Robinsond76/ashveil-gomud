@@ -2,12 +2,12 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -102,6 +102,12 @@ func Buy(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 // TODO: This would sure be a lot more straightforward with an interface...
 func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopMob *mobs.Mob, shopUser *users.UserRecord) bool {
+	if shopUser != nil {
+		if err := company.PrepareAssets(shopUser.UserId); err != nil {
+			user.SendText("That company's assets await recovery; nothing was purchased.")
+			return false
+		}
+	}
 
 	nameToShopItem := map[string]characters.ShopItem{}
 
@@ -294,10 +300,10 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 	// difference counts.
 	if matchedShopItem.ItemId > 0 {
 		added := items.New(matchedShopItem.ItemId)
-		grams := company.AddedGrams(user.Character.Items, added)
+		grams := encumbrance.AddedGrams(user.UserId, user.Character.Items, added)
 		if matchedShopItem.TradeItemId > 0 {
-			traded := items.New(matchedShopItem.TradeItemId)
-			grams -= traded.Weight()
+			traded, _ := user.Character.FindInBackpack(tradeItemName)
+			grams = encumbrance.ExchangeGrams(user.UserId, user.Character.Items, []items.Item{traded}, []items.Item{added})
 		}
 		if text, refuse := encumbrance.TooMuchToCarry(user.UserId, grams); refuse {
 			user.SendText(text)

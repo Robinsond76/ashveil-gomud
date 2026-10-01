@@ -1031,6 +1031,13 @@ func (r *Room) FindCorpse(searchName string, prefer ...func(*Corpse) bool) (Corp
 // accepts first (Phase 33d review: a claimant's second bandit corpse must
 // be reachable after the first is emptied).
 func (r *Room) FindCorpseByRef(searchName string, prefer ...func(*Corpse) bool) (*Corpse, bool) {
+	if strings.HasPrefix(searchName, "corpse#") {
+		id, err := strconv.Atoi(strings.TrimPrefix(searchName, "corpse#"))
+		if err == nil && id > 0 && id <= len(r.Corpses) && !r.Corpses[id-1].Prunable {
+			return &r.Corpses[id-1], true
+		}
+		return nil, false
+	}
 
 	playerCorpseLookup := map[string]int{}
 	playerCorpses := []string{}
