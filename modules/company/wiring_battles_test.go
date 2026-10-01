@@ -430,8 +430,10 @@ func TestWaitingGroupsDontBlockFlight(t *testing.T) {
 	b.aria.Character.Stats.Speed.ValueAdj = 1
 
 	t.Cleanup(hooks.UseRetreatRollForTest(func(int) int { return 50 }))
-	b.cmd("flee", "")
+	b.unpin()
+	require.Contains(t, b.cmd("flee", ""), "begins an ordered retreat")
 	b.fight()
+	b.unpin()
 	got := b.fight()
 	assert.NotContains(t, got, "cuts off your withdrawal")
 	assert.Contains(t, got, "withdraws together")

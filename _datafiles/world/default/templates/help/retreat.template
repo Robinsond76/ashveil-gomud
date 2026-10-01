@@ -19,7 +19,8 @@ may order another retreat.
 The slowest member present, you included, sets the company's mobility:
 Speed, cut by personal burden (up to 60%) and lasting wounds (up to 30%).
 Every active foe of your battle pursues, whoever it is striking; the
-fastest sets the pursuit. Groups waiting their turn do not pursue.
+fastest sets the pursuit, and players fighting you pursue too. Groups
+waiting their turn do not pursue.
   chance = 30 + 70 x mobility / (mobility + pursuit), plus cover
 It stays between 30% and 95%. With no pursuer, the company gets away.
 A failed attempt names the foe who cut you off.
@@ -31,8 +32,8 @@ cannot cover, and cover is lost if that guardian falls or is pinned before
 the attempt. Other guards still stop blows as usual (<ansi fg="command">help guardian</ansi>).
 
 <ansi fg="yellow-bold">Nobody is left behind</ansi>
-A living member who cannot move (hobbled, hamstrung, tackled, winded, or
-held by magic) pins the whole company: the order is refused, or lapses at
+A living member who cannot move (hobbled, hamstrung, tackled, or winded)
+pins the whole company: the order is refused, or lapses at
 the next round, and names who is pinned. These hurts last a few rounds;
 order the retreat again when they pass. The same goes for you. Locks,
 missing exits and room permissions are checked again every round, and a

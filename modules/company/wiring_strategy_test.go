@@ -373,8 +373,10 @@ func TestInABattleOnlyFleeWorks(t *testing.T) {
 
 	// Flee still works: it is the retreat order (Phase 33c), made certain.
 	t.Cleanup(hooks.UseRetreatRollForTest(func(int) int { return 0 }))
-	b.cmd("flee", "east")
+	b.unpin()
+	require.Contains(t, b.cmd("flee", "east"), "begins an ordered retreat east")
 	b.fight()
+	b.unpin()
 	assert.Contains(t, b.fight(), "withdraws together east.")
 	_, inBattle := battle.Current(7)
 	assert.False(t, inBattle, "the flight ended her battle at once")

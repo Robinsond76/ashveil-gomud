@@ -34,12 +34,10 @@ func Retreat(rest string, u *users.UserRecord, r *rooms.Room, flags events.Event
 		u.SendText(err.Error())
 		return true, nil
 	}
-	old := u.Character.Aggro
-	u.Character.Aggro = &characters.Aggro{Type: characters.Retreat, RetreatInfo: req, RoundsWaiting: 1}
-	if old != nil {
-		u.Character.Aggro.UserId = old.UserId
-		u.Character.Aggro.MobInstanceId = old.MobInstanceId
+	if old := u.Character.Aggro; old != nil && old.Type != characters.SpellCast {
+		req.ResumeUserID, req.ResumeMobID = old.UserId, old.MobInstanceId
 	}
+	u.Character.Aggro = &characters.Aggro{Type: characters.Retreat, RetreatInfo: req, RoundsWaiting: 1}
 	who := "Your company begins"
 	if len(req.Members) == 0 {
 		who = "You begin"

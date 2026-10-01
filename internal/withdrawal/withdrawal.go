@@ -90,7 +90,7 @@ func Capture(u *users.UserRecord, r *rooms.Room, name string) *characters.Retrea
 // Present checks the original members. Fallen or removed flight instances do
 // not move; a living member's changed ownership or location cancels the order.
 func Present(u *users.UserRecord, req *characters.RetreatInfo) ([]*mobs.Mob, error) {
-	if req == nil || u.Character.RoomId != req.RoomID {
+	if req == nil || u.Character.RoomId != req.RoomID || u.Character.Health <= 0 {
 		return nil, fmt.Errorf("You cannot lead the company out of this.")
 	}
 	if !Eligible(u.Character) {

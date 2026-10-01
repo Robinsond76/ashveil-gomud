@@ -36,7 +36,7 @@ choose:
   <ansi fg="command">travel return</ansi>
   Give up and head back to where you started. This ends the journey.
 
-If the interruption is a fight, you must finish it (win, flee, or
+If the interruption is a fight, you must finish it (win, retreat, or
 otherwise end it) before you can resume or return.
 
 <ansi fg="yellow-bold">Arrival</ansi>

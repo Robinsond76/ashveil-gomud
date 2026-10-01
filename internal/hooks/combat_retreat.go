@@ -33,7 +33,14 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 	delete(castAims, caster{userId: u.UserId})
 	resume := func(reason string) {
 		u.SendText(reason)
-		u.Character.SetAggro(a.UserId, a.MobInstanceId, characters.DefaultAttack)
+		u.Character.Aggro = nil // nobody to resume fighting: the upkeep aims anew
+		if req == nil {
+			// fall through: nothing to resume
+		} else if m := mobs.GetInstance(req.ResumeMobID); m != nil && m.Character.Health > 0 && m.Character.RoomId == u.Character.RoomId {
+			u.Character.SetAggro(0, m.InstanceId, characters.DefaultAttack)
+		} else if other := users.GetByUserId(req.ResumeUserID); req.ResumeUserID > 0 && other != nil && other.Character.Health > 0 && other.Character.RoomId == u.Character.RoomId {
+			u.Character.SetAggro(other.UserId, 0, characters.DefaultAttack)
+		}
 		events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
 	}
 	members, err := withdrawal.Present(u, req)
@@ -87,8 +94,8 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 	}
 	// The fastest pursuer sets the pressure: every active foe of the
 	// leader's battle, whoever it is striking (Phase 33c owner review), and
-	// with no battle, a foe here aiming at the leader that isn't waiting its
-	// turn. Players fighting the leader pursue too.
+	// with no battle, a foe here aiming at the leader. Players fighting the
+	// leader pursue too.
 	pressure, pursuer := float64(0), ""
 	press := func(c *characters.Character, name string) {
 		if p := withdrawal.Mobility(c); p > pressure {
@@ -101,7 +108,7 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 		if m == nil || m.Character.Health <= 0 || m.Character.CombatWithdrawn {
 			continue
 		}
-		if inBattle && b.Has(id) || !inBattle && m.Character.Aggro != nil && m.Character.Aggro.UserId == u.UserId && !holdsAgainstPlayer(m, u.UserId) {
+		if inBattle && b.Has(id) || !inBattle && m.Character.Aggro != nil && m.Character.Aggro.UserId == u.UserId {
 			press(&m.Character, mobTag(mobName(id)))
 		}
 	}

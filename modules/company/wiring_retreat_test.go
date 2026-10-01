@@ -6,7 +6,9 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
@@ -401,4 +403,111 @@ func TestRetreatRelocationFailureRollsBackEveryMovedActor(t *testing.T) {
 	}
 	_, active := battle.Current(7)
 	assert.True(t, active)
+}
+
+// Phase 33c review: wimpy orders the retreat once a round, and not again
+// while the withdrawal is under way (it runs on every hit taken).
+func TestWimpyOrdersOneRetreat(t *testing.T) {
+	b := retreatBrawl(t)
+	var fled []string
+	listener := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
+		if in := e.(events.Input); in.UserId == 7 {
+			fled = append(fled, in.InputText)
+			return events.Cancel
+		}
+		return events.Continue
+	}, events.First)
+	t.Cleanup(func() { events.UnregisterListener(events.Input{}, listener) })
+	b.aria.SetConfigOption("wimpy", 50)
+	b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 100
+	for i := 0; i < 3; i++ {
+		b.aria.WimpyCheck() // three hits in one round
+	}
+	events.ProcessEvents()
+	require.Equal(t, []string{"flee"}, fled)
+	assert.Contains(t, b.cmd(fled[0], ""), "begins an ordered retreat")
+	fled = nil
+	util.IncrementRoundCount()
+	b.aria.WimpyCheck()
+	events.ProcessEvents()
+	assert.Empty(t, fled, "already withdrawing: no repeated order")
+}
+
+// Phase 33c owner review: a fight with another player is no battle, but
+// flee still leaves it by the retreat order. The attacker pursues and is
+// named; the defender, aiming at nobody, fights on aiming at nobody.
+func TestRetreatFromAPlayerFight(t *testing.T) {
+	b := newBrawl(t)
+	for _, m := range b.livingBandits() {
+		b.road.RemoveMob(m.InstanceId)
+		mobs.DestroyInstance(m.InstanceId)
+	}
+	rook := users.NewUserRecord(8, 1)
+	rook.Character.Name = "Rook"
+	rook.Character.RoomId = b.road.RoomId
+	rook.Character.HealthMax.Value, rook.Character.Health = 1000, 1000
+	rook.Character.Stats.Speed.ValueAdj = 20
+	users.SetTestUser(rook)
+	b.road.AddPlayer(8)
+	t.Cleanup(func() { b.road.RemovePlayer(8); users.RemoveTestUser(8) })
+	rook.Character.SetAggro(7, 0, characters.DefaultAttack)
+	_, inBattle := battle.Current(7)
+	require.False(t, inBattle)
+
+	t.Cleanup(hooks.UseRetreatRollForTest(func(int) int { return 99 }))
+	require.Contains(t, b.cmd("flee", ""), "begins an ordered retreat east")
+	b.toughen()
+	b.fight()
+	b.toughen()
+	assert.Contains(t, b.fight(), "Rook cuts off your withdrawal")
+	assert.Equal(t, b.road.RoomId, b.aria.Character.RoomId)
+	assert.Nil(t, b.aria.Character.Aggro, "a defender resumes aiming at nobody")
+
+	hooks.UseRetreatRollForTest(func(int) int { return 0 })
+	require.Contains(t, b.cmd("flee", ""), "begins an ordered retreat east")
+	b.toughen()
+	b.fight()
+	b.toughen()
+	assert.Contains(t, b.fight(), "withdraws together east")
+	assert.Equal(t, 920102, b.aria.Character.RoomId)
+	assert.Equal(t, 920102, b.companion(1).Character.RoomId)
+	assert.Nil(t, rook.Character.Aggro, "the attacker loses its aim at the departed leader")
+	assert.Equal(t, b.road.RoomId, rook.Character.RoomId)
+}
+
+// unpin lifts the hurts that hold a withdrawal (a random critical in a
+// real round may hobble someone), so a test of something else can retreat.
+func (b *brawl) unpin() {
+	chars := []*characters.Character{b.aria.Character}
+	for i := 1; i <= 4; i++ {
+		if id, ok := module.instance(7, i); ok {
+			if m := mobs.GetInstance(id); m != nil {
+				chars = append(chars, &m.Character)
+			}
+		}
+	}
+	for _, c := range chars {
+		c.CancelBuffsWithFlag("no-flee")
+		c.CancelBuffsWithFlag("no-go")
+	}
+}
+
+// Phase 33c review: the leader's target falling during the preparation
+// round (the real mob death, which clears every aim at it) doesn't cancel
+// the order; the withdrawal still goes next round.
+func TestRetreatSurvivesTheLeadersTargetFalling(t *testing.T) {
+	b := retreatBrawl(t)
+	require.NotNil(t, b.aria.Character.Aggro)
+	target := mobs.GetInstance(b.aria.Character.Aggro.MobInstanceId)
+	require.NotNil(t, target)
+	require.Contains(t, b.cmd("retreat", "east"), "begins an ordered retreat")
+	target.Character.PlayerDamage = map[int]int{7: 1}
+	_, err := mobcommands.TryCommand("suicide", "", target.InstanceId)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	require.NotNil(t, b.aria.Character.Aggro, "the fall left the order in place")
+	assert.Equal(t, characters.Retreat, b.aria.Character.Aggro.Type)
+	b.fight()
+	assert.Contains(t, b.fight(), "withdraws together east")
+	assert.Equal(t, 920102, b.aria.Character.RoomId)
 }

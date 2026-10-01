@@ -41,7 +41,8 @@ func TestFleeRefusedWhileHobbled(t *testing.T) {
 	out = heard(t, func() { Flee(``, user, room, 0) })
 	assert.Contains(t, out, "begin an ordered retreat north")
 	assert.Equal(t, characters.Retreat, user.Character.Aggro.Type)
-	assert.Equal(t, 501, user.Character.Aggro.MobInstanceId, "the aim is kept for a failed attempt")
+	assert.Equal(t, 501, user.Character.Aggro.RetreatInfo.ResumeMobID, "the aim is kept for a failed attempt")
+	assert.Zero(t, user.Character.Aggro.MobInstanceId, "the order itself aims at nobody, so a fallen target can't clear it")
 }
 
 // Phase 33c owner review: flee (the retreat order) still leaves a fight

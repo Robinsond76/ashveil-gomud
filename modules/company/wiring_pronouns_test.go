@@ -292,10 +292,12 @@ func TestEnemyLabelsOnSecondarySurfaces(t *testing.T) {
 		t.Cleanup(hooks.UseRetreatRollForTest(func(int) int { return 99 }))
 		first.Character.SetAggro(7, 0, characters.DefaultAttack)
 		b.aria.Character.SetAggro(0, first.InstanceId, characters.DefaultAttack)
-		b.cmd("flee", "")
+		b.unpin()
+		require.Contains(t, b.cmd("flee", ""), "begins an ordered retreat")
 		b.toughen()
 		b.fight()
 		b.toughen()
+		b.unpin()
 		var blocked string
 		if got := b.fight(); strings.Contains(got, "cuts off") {
 			blocked = got
