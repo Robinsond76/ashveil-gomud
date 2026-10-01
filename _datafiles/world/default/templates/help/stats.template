@@ -9,9 +9,11 @@ earned on level-up.
 <ansi fg="black-bold">+----------------------+------------------------------------------------------+</ansi>
 <ansi fg="black-bold">|</ansi> <ansi fg="cyan">Strength            </ansi> <ansi fg="black-bold">|</ansi> Flat damage bonus on every attack.                   <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">|</ansi>                      <ansi fg="black-bold">|</ansi> Larger unarmed damage dice.                          <ansi fg="black-bold">|</ansi>
+<ansi fg="black-bold">|</ansi>                      <ansi fg="black-bold">|</ansi> Better shield blocks and shield bashes.              <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">|</ansi>                      <ansi fg="black-bold">|</ansi> Increases carry capacity.                            <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">+----------------------+------------------------------------------------------+</ansi>
 <ansi fg="black-bold">|</ansi> <ansi fg="cyan">Speed               </ansi> <ansi fg="black-bold">|</ansi> Increases chance to hit.                             <ansi fg="black-bold">|</ansi>
+<ansi fg="black-bold">|</ansi>                      <ansi fg="black-bold">|</ansi> Increases chance to parry with a weapon.             <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">|</ansi>                      <ansi fg="black-bold">|</ansi> Extra attacks in unarmed/claw combat only.           <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">|</ansi>                      <ansi fg="black-bold">|</ansi> Reduces action-point cost of movement.               <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">+----------------------+------------------------------------------------------+</ansi>

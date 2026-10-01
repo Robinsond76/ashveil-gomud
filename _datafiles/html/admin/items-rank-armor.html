@@ -158,7 +158,7 @@
     </button>
     <button class="view-tab" id="tab-adjdefense" onclick="switchView('adjdefense')">
         <span class="tab-title">Adj. Defense</span>
-        <span class="tab-hint">Shield ×1.5 multiplier</span>
+        <span class="tab-hint">Same as defense since shields block</span>
     </button>
     <button class="view-tab" id="tab-value"      onclick="switchView('value')">
         <span class="tab-title">Score</span>
@@ -192,7 +192,7 @@
 
 <div class="legend">
     <span class="legend-item"><span class="cursed-badge">cursed</span> Cannot be removed once equipped</span>
-    <span class="legend-item"><span class="slot-pill slot-offhand">offhand</span> Shields receive ×1.5 defense bonus</span>
+    <span class="legend-item"><span class="slot-pill slot-offhand">offhand</span> Shields add their own defense, and block blows</span>
 </div>
 
 <div class="rank-table-wrap">
@@ -264,7 +264,7 @@
         document.getElementById('scoreLabel').textContent = labelMap[v];
         var tipMap = {
             defense:    'Raw DamageReduction value. A random fraction of this is subtracted from each incoming hit.',
-            adjdefense: 'Defense adjusted for slot multiplier. Offhand shields receive ×1.5 inside the defense calculation.',
+            adjdefense: 'Defense as the defense calculation counts it. No slot has a multiplier: a shield adds its own defense and blocks blows instead, so this equals Defense.',
             value:      'Unified eHP-equivalent score: (AdjDefense/200)×100 + per-stat weighted sum + BuffValue/10. Stat weights are derived from the combat engine range constants.'
         };
         header.dataset.tip = tipMap[v];
@@ -406,7 +406,7 @@
         var tip = document.getElementById('tooltip');
         var SCORE_TIPS = {
             defense:    'Raw DamageReduction value. A random fraction of this is subtracted from each incoming hit.',
-            adjdefense: 'Defense adjusted for slot multiplier. Offhand shields receive ×1.5 inside the defense calculation.',
+            adjdefense: 'Defense as the defense calculation counts it. No slot has a multiplier: a shield adds its own defense and blocks blows instead, so this equals Defense.',
             value:      'Unified eHP-equivalent score: (AdjDefense/200)×100 + per-stat weighted sum + BuffValue/10. Stat weights are derived from the combat engine range constants.'
         };
 

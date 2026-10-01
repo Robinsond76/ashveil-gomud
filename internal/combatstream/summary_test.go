@@ -106,6 +106,23 @@ func TestRender(t *testing.T) {
 	}, lines)
 }
 
+// Phase 30g2: every defended strike counts to the defender's side, a
+// round that also hit included; the line shows only what isn't zero.
+func TestSummaryCountsDefenses(t *testing.T) {
+	s := New()
+	id := s.Open(1, 100, "bandits#0", aria, []Ref{tamsin}, []Ref{captain})
+	s.Emit(Event{Kind: Attack, Source: captain, Target: tamsin, Outcome: OutcomeMiss, Defenses: []string{"blocked"}})
+	s.Emit(Event{Kind: Attack, Source: captain, Target: tamsin, Outcome: OutcomeHit, Damage: 3, Defenses: []string{"blocked"}})
+	s.Emit(Event{Kind: Attack, Source: captain, Target: aria, Outcome: OutcomeMiss, Defenses: []string{"parried"}})
+	s.Emit(Event{Kind: Attack, Source: aria, Target: captain, Outcome: OutcomeMiss, Defenses: []string{"dodged", "dodged"}})
+	s.Emit(Event{Kind: Attack, Source: aria, Target: captain, Outcome: OutcomeMiss})
+	sum, _ := s.EndFight(id, 3, OutcomeBrokenOff, Final{})
+	assert.Equal(t, DefenseCounts{Blocked: 2, Parried: 1}, sum.CompanyDefenses)
+	assert.Equal(t, DefenseCounts{Dodged: 2}, sum.EnemyDefenses)
+	assert.Equal(t, 3, sum.EnemyDamage, "a round with a defended strike still counts its damage")
+	assert.Contains(t, Render(*sum, 7), "Defenses       Company 2 blocked, 1 parried · Enemies 2 dodged")
+}
+
 func TestRenderLeavesOutEmptyLines(t *testing.T) {
 	s := New()
 	id := s.Open(1, 100, "bandits#0", aria, nil, []Ref{captain})

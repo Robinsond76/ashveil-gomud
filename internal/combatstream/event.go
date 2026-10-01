@@ -120,6 +120,7 @@ type Event struct {
 	Previous Ref // TargetChange: the target before
 
 	Outcome    string
+	Defenses   []string // Attack: what stopped each defended strike (Phase 30g2)
 	Damage     int
 	Crit       bool
 	WeaponType string

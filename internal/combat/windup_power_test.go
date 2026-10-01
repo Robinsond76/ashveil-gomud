@@ -29,6 +29,8 @@ func powerFight(t *testing.T, toHit int) *mobs.Mob {
 	gameplay.Combat.ToHitMin, gameplay.Combat.ToHitMax = configs.ConfigInt(toHit), configs.ConfigInt(toHit)
 	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 0, 0
 	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
+	gameplay.Combat.ParryChanceMin, gameplay.Combat.ParryChanceMax = 0, 0
+	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: powerClubID, Name: "test great club", Type: items.Weapon, Subtype: items.Bludgeoning, Hands: 2,
 		Damage: items.Damage{DiceRoll: "1d1+2", Attacks: 1, DiceCount: 1, SideCount: 1, BonusDamage: 2}})

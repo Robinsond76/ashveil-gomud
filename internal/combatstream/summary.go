@@ -60,6 +60,11 @@ type Summary struct {
 	MostDamage []Amount // company members, most first
 	HighestHit *Hit
 
+	// CompanyDefenses and EnemyDefenses are the strikes each side's
+	// active defenses stopped (Phase 30g2).
+	CompanyDefenses DefenseCounts
+	EnemyDefenses   DefenseCounts
+
 	InterruptsDealt  []string // what the company interrupted
 	InterruptsFailed int
 	InterruptsTaken  int
@@ -71,11 +76,44 @@ type Summary struct {
 	Company []MemberHealth
 }
 
+// DefenseCounts is how many strikes a side blocked, parried, and dodged.
+type DefenseCounts struct {
+	Blocked, Parried, Dodged int
+}
+
+// add counts one defended strike by its outcome (combat.Defense*).
+func (d *DefenseCounts) add(defense string) {
+	switch defense {
+	case "blocked":
+		d.Blocked++
+	case "parried":
+		d.Parried++
+	case "dodged":
+		d.Dodged++
+	}
+}
+
+// words is the counts that aren't zero, "3 blocked, 1 dodged".
+func (d DefenseCounts) words() string {
+	var parts []string
+	for _, c := range []struct {
+		n    int
+		word string
+	}{{d.Blocked, "blocked"}, {d.Parried, "parried"}, {d.Dodged, "dodged"}} {
+		if c.n > 0 {
+			parts = append(parts, fmt.Sprintf("%d %s", c.n, c.word))
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
 // tally is a fight's running totals, folded from its events as they
 // arrive so that the events themselves need not be kept.
 type tally struct {
 	companyDamage, enemyDamage int
 	healing, heldBack          int
+	companyDefenses            DefenseCounts
+	enemyDefenses              DefenseCounts
 	damage                     map[string]int
 	highest                    *Hit
 	interruptsDealt            []string
@@ -103,6 +141,14 @@ func (t *tally) add(f *fight, e Event) {
 
 	switch e.Kind {
 	case Attack, SpellHit:
+		for _, d := range e.Defenses {
+			switch {
+			case targetCompany:
+				t.companyDefenses.add(d)
+			case targetEnemy:
+				t.enemyDefenses.add(d)
+			}
+		}
 		if e.Damage <= 0 {
 			return
 		}
@@ -193,6 +239,8 @@ func (f *fight) summary(round uint64, outcome string, final Final) *Summary {
 		HeldBack:         t.heldBack,
 		MostDamage:       t.amounts(t.damage),
 		HighestHit:       t.highest,
+		CompanyDefenses:  t.companyDefenses,
+		EnemyDefenses:    t.enemyDefenses,
 		InterruptsDealt:  append([]string(nil), t.interruptsDealt...),
 		InterruptsFailed: t.interruptsFailed,
 		InterruptsTaken:  t.interruptsTaken,
@@ -298,6 +346,17 @@ func Render(s Summary, viewerUserId int) []string {
 			body += " (critical)"
 		}
 		out = append(out, line("Highest hit", body))
+	}
+	// Phase 30g2: each side's blocks, parries, and dodges, when any.
+	var defenses []string
+	if w := s.CompanyDefenses.words(); w != "" {
+		defenses = append(defenses, "Company "+w)
+	}
+	if w := s.EnemyDefenses.words(); w != "" {
+		defenses = append(defenses, "Enemies "+w)
+	}
+	if len(defenses) > 0 {
+		out = append(out, line("Defenses", strings.Join(defenses, " · ")))
 	}
 	if len(s.InterruptsDealt) > 0 || s.InterruptsFailed > 0 || s.InterruptsTaken > 0 {
 		dealt := fmt.Sprintf("dealt %d", len(s.InterruptsDealt))

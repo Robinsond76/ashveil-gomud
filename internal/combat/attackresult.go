@@ -1,6 +1,8 @@
 package combat
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
@@ -28,6 +30,23 @@ type AttackResult struct {
 	// WoundsToTarget is the wounds the round's strikes left on a woundable
 	// target (Phase 30b), applied with the damage.
 	WoundsToTarget []wounds.Wound
+	// Defenses is what stopped each of the round's strikes that a defense
+	// stopped (Phase 30g2), in order: DefenseBlocked, DefenseParried, or
+	// DefenseDodged.
+	Defenses []string
+}
+
+// Active defense outcomes (Phase 30g2).
+const (
+	DefenseNone    = ""
+	DefenseDodged  = "dodged"
+	DefenseParried = "parried"
+	DefenseBlocked = "blocked"
+)
+
+// Blocked reports whether a shield blocked any of the round's strikes.
+func (a AttackResult) Blocked() bool {
+	return slices.Contains(a.Defenses, DefenseBlocked)
 }
 
 func (a *AttackResult) SendToSource(msg string) {

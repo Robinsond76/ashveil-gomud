@@ -33,7 +33,20 @@ func forceBlows(t *testing.T, hit bool) {
 	}
 	gameplay.Combat.ToHitMin, gameplay.Combat.ToHitMax = configs.ConfigInt(chance), configs.ConfigInt(chance)
 	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
+	gameplay.Combat.ParryChanceMin, gameplay.Combat.ParryChanceMax = 0, 0
+	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 0, 0
 	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 0, 0
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
+}
+
+// forceBlocks makes every blow land on its target and every shield block
+// it (Phase 30g2), with no parries, dodges, or crits, for the rest of the
+// test.
+func forceBlocks(t *testing.T) {
+	t.Helper()
+	forceBlows(t, true)
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 100, 100
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 }
 
@@ -300,11 +313,12 @@ func TestGuardedBlowBreaksGuardianChant(t *testing.T) {
 	assert.Equal(t, characters.SpellCast, b.aria.Character.Aggro.Type)
 }
 
-// A missed blow on Tamsin (a wooden shield) is countered: the line, the
-// damage, an attack event for the bash.
-func TestShieldCounterOnMiss(t *testing.T) {
+// A blow Tamsin (a wooden shield) blocks is countered (Phase 30g2): the
+// block's line, the bash's line and damage, the blocked attack's event,
+// and an attack event for the bash.
+func TestShieldCounterOnBlock(t *testing.T) {
 	b := guardBrawl(t)
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 3, 99) // a bash, 4 damage, no stun
 	stream := b.listen()
 	captain := b.captain()
@@ -315,13 +329,20 @@ func TestShieldCounterOnMiss(t *testing.T) {
 	before := captain.Character.Health
 	out := b.fight()
 
-	assert.Regexp(t, `Tamsin Reed turns the blow and drives \w+ shield into the bandit captain\. \(shield bash, 4 damage\)`, out)
-	var bashes []combatstream.Event
+	assert.Regexp(t, `Tamsin Reed catches the bandit captain's blow on \w+ shield\.`, out)
+	assert.Regexp(t, `Tamsin Reed drives \w+ shield back into the bandit captain\. \(shield bash, 4 damage\)`, out)
+	var bashes, blocked []combatstream.Event
 	for _, e := range ofKind(*stream, combatstream.Attack) {
-		if e.WeaponType == "shield-bash" {
+		switch {
+		case e.WeaponType == "shield-bash":
 			bashes = append(bashes, e)
+		case e.Source.Key() == key(captain):
+			blocked = append(blocked, e)
 		}
 	}
+	require.Len(t, blocked, 1)
+	assert.Equal(t, []string{"blocked"}, blocked[0].Defenses, "the attack event names the block")
+	assert.Equal(t, combatstream.OutcomeMiss, blocked[0].Outcome)
 	require.Len(t, bashes, 1)
 	assert.Equal(t, key(tamsin), bashes[0].Source.Key())
 	assert.Equal(t, key(captain), bashes[0].Target.Key())
@@ -330,13 +351,35 @@ func TestShieldCounterOnMiss(t *testing.T) {
 	assert.False(t, captain.Character.HasBuff(status.Stunned))
 }
 
+// Phase 30g2: a plain miss, or a blow the shield didn't block, is never
+// countered, however certain the bash roll.
+func TestShieldCounterOnlyOnBlock(t *testing.T) {
+	for _, hit := range []bool{false, true} {
+		t.Run(fmt.Sprintf("hit=%v", hit), func(t *testing.T) {
+			b := guardBrawl(t)
+			forceBlows(t, hit) // blocks are 0%
+			counterDice(t, 0, 3, 99)
+			stream := b.listen()
+			require.True(t, b.companion(1).Character.HasShield())
+			b.toughen()
+			b.strike(1, false) // the captain on Tamsin
+			b.fight()
+			blows := strikesOn(*stream, key(b.captain()), key(b.companion(1)))
+			require.Len(t, blows, 1, "the captain struck Tamsin")
+			assert.Empty(t, blows[0].Defenses, "unblocked")
+			assert.Equal(t, hit, blows[0].Outcome == combatstream.OutcomeHit)
+			assert.Empty(t, bashesBy(*stream, key(b.companion(1))), "no block, no bash")
+		})
+	}
+}
+
 // A bash that stuns leaves the attacker stunned, with its event.
 func TestShieldCounterStuns(t *testing.T) {
 	b := guardBrawl(t)
 	loadStatusBuffs(t)
 	buffId := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffId) })
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 0, 0) // a bash, 1 damage, a stun
 	stream := b.listen()
 	b.strike(1, false)
@@ -353,24 +396,24 @@ func TestShieldCounterStuns(t *testing.T) {
 	assert.Equal(t, 1, stuns)
 }
 
-// Counters are once a round: every bandit misses Tamsin, one is bashed.
+// Counters are once a round: Tamsin blocks every bandit, one is bashed.
 func TestShieldCounterOncePerRound(t *testing.T) {
 	b := guardBrawl(t)
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 0, 99)
 	stream := b.listen()
 	b.strike(1, true) // every bandit on Tamsin
 	b.fight()
-	var bashes, missed int
+	var bashes, blocked int
 	for _, e := range ofKind(*stream, combatstream.Attack) {
 		switch {
 		case e.WeaponType == "shield-bash":
 			bashes++
-		case e.Target.Key() == key(b.companion(1)):
-			missed++
+		case e.Target.Key() == key(b.companion(1)) && len(e.Defenses) > 0:
+			blocked++
 		}
 	}
-	require.Greater(t, missed, 1, "more than one blow missed her")
+	require.Greater(t, blocked, 1, "she blocked more than one blow")
 	assert.Equal(t, 1, bashes, "one counter a round")
 
 	b.strike(1, true)
@@ -384,41 +427,56 @@ func TestShieldCounterOncePerRound(t *testing.T) {
 	assert.Equal(t, 2, bashes, "and one again the next round")
 }
 
-// A sling shot is not countered, nor is anything while the bearer is
-// stunned.
+// A blocked shot is not countered (the ranger's sling, on a bandit with a
+// shield), and a stunned bearer blocks nothing.
 func TestNoShieldCounterAgainstBowOrWhileStunned(t *testing.T) {
 	b := guardBrawl(t)
 	loadStatusBuffs(t)
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 0, 99)
 	stream := b.listen()
-	bashes := func() int {
-		n := 0
+
+	ranger := b.companion(4)
+	require.Equal(t, items.Shooting, ranger.Character.Equipment.Weapon.GetSpec().Subtype, "the ranger shoots")
+	for _, m := range b.livingBandits() {
+		m.Character.Equipment.Offhand = items.New(20019) // an iron shield
+	}
+	var shots int
+	for try := 0; try < 6 && shots == 0; try++ {
+		b.toughen()
+		for _, m := range b.livingBandits() {
+			m.Character.Aggro.RoundsWaiting = 1
+		}
+		b.fight()
+		shots = 0
 		for _, e := range ofKind(*stream, combatstream.Attack) {
+			if e.Source.Key() == key(ranger) && e.WeaponType == string(items.Shooting) {
+				shots++
+				assert.Equal(t, []string{"blocked"}, e.Defenses, "a shield blocks a shot")
+			}
 			if e.WeaponType == "shield-bash" {
-				n++
+				assert.NotEqual(t, key(ranger), e.Target.Key(), "no counter to a shot")
 			}
 		}
-		return n
 	}
+	require.Positive(t, shots, "the ranger shot")
 
-	b.captain().Character.Equipment.Weapon = items.New(10014) // a sling
-	b.strike(1, false)
-	b.fight()
-	assert.Zero(t, bashes(), "no counter to a sling shot")
-
-	b.captain().Character.Equipment.Weapon = items.Item{}
 	tamsin := b.companion(1)
 	require.NoError(t, tamsin.Character.AddBuff(status.Stunned, false))
+	b.toughen()
 	b.strike(1, false)
 	b.fight()
-	assert.Zero(t, bashes(), "no counter while stunned")
+	blows := strikesOn(*stream, key(b.captain()), key(tamsin))
+	require.Len(t, blows, 1, "the captain struck the stunned Tamsin")
+	assert.Equal(t, combatstream.OutcomeHit, blows[0].Outcome)
+	assert.Empty(t, blows[0].Defenses, "a stunned bearer blocks nothing")
+	assert.Empty(t, bashesBy(*stream, key(tamsin)), "and so never counters")
 }
 
 // An enemy with a shield counters the player.
 func TestEnemyShieldCountersPlayer(t *testing.T) {
 	b := guardBrawl(t)
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 3, 99)
 	stream := b.listen()
 	captain := b.captain()
@@ -427,7 +485,8 @@ func TestEnemyShieldCountersPlayer(t *testing.T) {
 	b.aria.Character.SetAggro(0, captain.InstanceId, characters.DefaultAttack)
 	b.strike(4, false)
 	out := b.fight()
-	assert.Regexp(t, `The bandit captain turns your blow and drives \w+ shield into you\. \(shield bash, 4 damage\)`, out)
+	assert.Regexp(t, `The bandit captain catches your blow on \w+ shield\.`, out)
+	assert.Regexp(t, `The bandit captain drives \w+ shield back into you\. \(shield bash, 4 damage\)`, out)
 	var onAria int
 	for _, e := range ofKind(*stream, combatstream.Attack) {
 		if e.WeaponType == "shield-bash" && e.Target.Key() == "u:7" {
@@ -440,7 +499,7 @@ func TestEnemyShieldCountersPlayer(t *testing.T) {
 // A counter that kills its attacker ends it this round.
 func TestShieldCounterKills(t *testing.T) {
 	b := guardBrawl(t)
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 3, 99)
 	stream := b.listen()
 	captain := b.captain()
@@ -460,7 +519,7 @@ func TestShieldCounterKills(t *testing.T) {
 // do.
 func TestCompanionCounterCreditsLeader(t *testing.T) {
 	b := guardBrawl(t)
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 3, 99)
 	captain := b.captain()
 	captain.Character.PlayerDamage = nil
@@ -470,8 +529,8 @@ func TestCompanionCounterCreditsLeader(t *testing.T) {
 }
 
 // The leader-intercept site (11c, and a player guardian): Aria steps in
-// for Oswin; the blow she takes breaks her chant, and a miss she takes
-// with a shield she counters.
+// for Oswin; the blow she takes breaks her chant, and a blow she takes
+// and blocks with a shield she counters.
 func TestPlayerGuardianChantAndCounter(t *testing.T) {
 	b := guardBrawl(t, "me guard oswin")
 	forceBlows(t, true)
@@ -488,7 +547,7 @@ func TestPlayerGuardianChantAndCounter(t *testing.T) {
 	require.NotEmpty(t, interruptsOf(*stream, "u:7"), "the blow Aria took for Oswin broke her chant")
 	assert.NotEmpty(t, ofKind(*stream, combatstream.GuardUsed))
 
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 3, 99)
 	b.aria.Character.Aggro = nil
 	b.aria.Character.Equipment.Offhand = items.New(20019)
@@ -500,6 +559,17 @@ func TestPlayerGuardianChantAndCounter(t *testing.T) {
 		b.fight()
 	}
 	assert.NotEmpty(t, bashesBy(*stream, "u:7"), "Aria countered the blow she took for Oswin")
+}
+
+// strikesOn lists the attack events (not bashes) from one ref key on another.
+func strikesOn(stream []combatstream.Event, from, on string) []combatstream.Event {
+	var out []combatstream.Event
+	for _, e := range ofKind(stream, combatstream.Attack) {
+		if e.WeaponType != "shield-bash" && e.Source.Key() == from && e.Target.Key() == on {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 // bashesBy lists the shield bashes a ref key struck.
@@ -514,7 +584,7 @@ func bashesBy(stream []combatstream.Event, by string) []combatstream.Event {
 }
 
 // The player-vs-player site: Aria's blow breaks Brom's chant, and Brom,
-// with a shield, counters her miss.
+// with a shield, blocks her blow and counters it.
 func TestPlayerVsPlayerChantAndCounter(t *testing.T) {
 	b := newBrawl(t)
 	brom := users.NewUserRecord(8, 2)
@@ -542,14 +612,14 @@ func TestPlayerVsPlayerChantAndCounter(t *testing.T) {
 	require.NotEmpty(t, interruptsOf(*stream, "u:8"), "Aria's blow broke Brom's chant")
 	assert.Nil(t, brom.Character.Aggro, "a hand cast ends with no aim, as a finished one does")
 
-	forceBlows(t, false)
+	forceBlocks(t)
 	counterDice(t, 0, 3, 99)
 	brom.Character.Equipment.Offhand = items.New(20019)
 	brom.Character.HealthMax.Value, brom.Character.Health = 1000, 1000
 	b.toughen()
 	b.aria.Character.SetAggro(8, 0, characters.DefaultAttack)
 	b.fight()
-	assert.Len(t, bashesBy(*stream, "u:8"), 1, "Brom countered Aria's miss")
+	assert.Len(t, bashesBy(*stream, "u:8"), 1, "Brom countered the blow he blocked")
 	assert.Equal(t, 4, b.aria.Character.PlayerDamage[8], "credited to Brom")
 }
 

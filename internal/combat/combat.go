@@ -180,6 +180,78 @@ func applyWounds(target *characters.Character, r AttackResult) {
 	}
 }
 
+// activeDefense rolls the one active defense a strike that hit meets
+// (Phase 30g2) and returns what stopped it, DefenseNone if nothing did. A
+// stunned defender has none; a shield-bearer only blocks, any strike; a
+// melee strike on a defender whose weapon can parry meets the higher of
+// parry and dodge, rolled once; everything else meets a dodge.
+func activeDefense(defender, attacker characters.Character, melee bool) string {
+	if defender.HasBuffFlag(status.FlagNoDodge) {
+		return DefenseNone
+	}
+	if defender.HasShield() {
+		if rollDefense(`Blocks`, blockChance(defender.Equipment.Offhand.GetDefense(), defender.Stats.Strength.ValueAdj, attacker.Stats.Strength.ValueAdj)) {
+			return DefenseBlocked
+		}
+		return DefenseNone
+	}
+	dodge := dodgeChance(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj)
+	if mod, ok := parryModifier(defender.Equipment.Weapon); melee && ok {
+		if parry := parryChance(defender.Stats.Speed.ValueAdj, attacker.Stats.Speed.ValueAdj, mod); parry >= dodge {
+			if rollDefense(`Parries`, parry) {
+				return DefenseParried
+			}
+			return DefenseNone
+		}
+	}
+	if rollDefense(`Dodges`, dodge) {
+		return DefenseDodged
+	}
+	return DefenseNone
+}
+
+// defenseLines are a defended strike's lines (Phase 30g2) in the 29c
+// voice, as buildCombatMessages templates: to the attacker, the defender,
+// and those watching. A parry names the defender's weapon.
+func defenseLines(defense, defenderWeapon string) (toAttacker, toDefender, toRoom items.ItemMessage) {
+	src := `<ansi fg="{sourcetype}">{source}</ansi>`
+	tgt := `<ansi fg="{targettype}">{target}</ansi>`
+	switch defense {
+	case DefenseBlocked:
+		return items.ItemMessage(tgt + ` catches your blow on {targethis} shield.`),
+			items.ItemMessage(`You catch ` + src + `'s blow on your shield.`),
+			items.ItemMessage(tgt + ` catches ` + src + `'s blow on {targethis} shield.`)
+	case DefenseParried:
+		weapon := `<ansi fg="item">` + defenderWeapon + `</ansi>`
+		return items.ItemMessage(tgt + ` turns your blow aside with {targethis} ` + weapon + `.`),
+			items.ItemMessage(`You turn ` + src + `'s blow aside with your ` + weapon + `.`),
+			items.ItemMessage(tgt + ` turns ` + src + `'s blow aside with {targethis} ` + weapon + `.`)
+	}
+	return items.ItemMessage(tgt + ` twists aside from your blow.`),
+		items.ItemMessage(`You twist aside from ` + src + `'s blow.`),
+		items.ItemMessage(tgt + ` twists aside from ` + src + `'s blow.`)
+}
+
+// sendDefenseLines sends a defended strike's lines (Phase 30g2).
+func sendDefenseLines(r *AttackResult, defense string, source, target *characters.Character, sourceType, targetType SourceTarget) {
+	toAttacker, toDefender, toRoom := defenseLines(defense, target.Equipment.Weapon.DisplayName())
+	one := func(m items.ItemMessage) items.MessageOptions { return items.MessageOptions{m} }
+	// Across rooms (a shot), the attacker's room sees only where it went.
+	across := items.ItemMessage(`<ansi fg="{sourcetype}">{source}</ansi> strikes toward the <ansi fg="exit">{exitname}</ansi>, and the blow is turned aside.`)
+	// A fixed seed: picking the only line must not spend a die.
+	a, d, ar, dr := buildCombatMessages(source, target, sourceType, targetType, ``, `0`, 1,
+		one(toAttacker), one(toDefender), one(toRoom), nil,
+		one(toAttacker), one(toDefender), one(across), one(toRoom))
+	r.SendToSource(string(a))
+	r.SendToTarget(string(d))
+	if ar != `` {
+		r.SendToSourceRoom(string(ar))
+	}
+	if dr != `` {
+		r.SendToTargetRoom(string(dr))
+	}
+}
+
 // mobCombatCharacter makes a narration-only copy for the combat calculation.
 // Damage, edge spending, and attribution keep using the live mob instance.
 func mobCombatCharacter(m *mobs.Mob) characters.Character {
@@ -342,14 +414,15 @@ func combatPronouns(character *characters.Character, actorType SourceTarget) cha
 
 // damageSuffix is what a hit did, in words at the end of its line (Phase
 // 29c): " (5 damage)", " (critical hit, 9 damage)", and on the
-// defender's line what their armor blocked, " (5 damage, 2 blocked)".
-func damageSuffix(damage int, crit bool, blocked int, statuses ...string) string {
+// defender's line what their armor absorbed, " (5 damage, 2 absorbed)"
+// (Phase 30g2: "blocked" is a shield's now).
+func damageSuffix(damage int, crit bool, absorbed int, statuses ...string) string {
 	out := fmt.Sprintf("%d damage", damage)
 	if crit {
 		out = "critical hit, " + out
 	}
-	if blocked > 0 {
-		out += fmt.Sprintf(", %d blocked", blocked)
+	if absorbed > 0 {
+		out += fmt.Sprintf(", %d absorbed", absorbed)
 	}
 	// Phase 30a: a critical hit names the status it leaves.
 	for _, word := range statuses {
@@ -493,15 +566,11 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				hit, byChemistry := hitRoll(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, penalty, chemistryBonus)
 				if hit {
-					// Check dodge before applying damage.
-					// A stunned target can't dodge (owner, 2026-09-30).
-					if !targetChar.HasBuffFlag(status.FlagNoDodge) && Dodges(targetChar.Stats.Perception.ValueAdj, sourceChar.Stats.Perception.ValueAdj) {
-						dodger := targetChar.Name
-						if targetType == Mob {
-							dodger = util.CapitalizeFirst(util.Article(dodger))
-						}
-						attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s twists aside from your blow.</ansi>`, dodger))
-						attackResult.SendToTarget(`<ansi fg="cyan">You twist aside from the blow.</ansi>`)
+					// Phase 30g2: one active defense, before armor; a
+					// defended strike does nothing and can't crit.
+					if defense := activeDefense(targetChar, sourceChar, weaponSubType != items.Shooting); defense != DefenseNone {
+						attackResult.Defenses = append(attackResult.Defenses, defense)
+						sendDefenseLines(&attackResult, defense, &sourceChar, &targetChar, sourceType, targetType)
 						continue
 					}
 					// Phase 24: say so, once a round, when only company

@@ -338,6 +338,18 @@ GamePlay:
     # Chance to dodge (percent) driven by Perception delta
     DodgeChanceMin: 5
     DodgeChanceMax: 30
+    # Chance a shield blocks a blow (percent): the minimum plus the shield's
+    # own armor, moved by the Strength delta, held to this range
+    BlockChanceMin: 15
+    BlockChanceMax: 45
+    # Chance a weapon parries a melee blow (percent) driven by Speed delta;
+    # the weapon's modifier (+5 sword, -5 dagger, ...) moves the range
+    ParryChanceMin: 5
+    ParryChanceMax: 30
+    # Chance a shield-bearer bashes back a blocked melee blow (percent)
+    # driven by Strength delta
+    BashChanceMin: 5
+    BashChanceMax: 20
   # PVP Restrictions
   PVP:
     # - Enabled -

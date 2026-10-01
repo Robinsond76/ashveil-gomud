@@ -95,6 +95,7 @@ func attackEvents(source, target combatstream.Ref, roomId int, attacker *charact
 		Source:     source,
 		Target:     target,
 		Outcome:    outcome,
+		Defenses:   r.Defenses,
 		Damage:     r.DamageToTarget,
 		Crit:       r.Hit && r.Crit,
 		WeaponType: weaponType(attacker),

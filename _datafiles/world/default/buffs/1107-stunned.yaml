@@ -1,6 +1,6 @@
 buffid: 1107
 name: Stunned
-description: You are stunned. You lose your next two actions, and can't dodge or block with a shield.
+description: You are stunned. You lose your next two actions, and can't block, parry, or dodge.
 secret: false
 # Phase 30a: ticked by the combat round (see internal/status), never by game
 # rounds; triggercount is the number of combat-round ticks.

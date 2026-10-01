@@ -292,12 +292,78 @@ func dodgeChance(defPerc, atkPerc int) int {
 	return actual
 }
 
-// Dodges returns true when the defender successfully dodges an attack.
-func Dodges(defPerc, atkPerc int) bool {
-	chance := dodgeChance(defPerc, atkPerc)
+// blockChance returns the percent chance in [BlockChanceMin, BlockChanceMax]
+// that a shield-bearer blocks a strike (Phase 30g2): the minimum, plus the
+// shield's own armor, moved up or down by the defender's share of the two
+// Strengths. Even Strength with a 5-armor shield blocks 20%.
+func blockChance(shieldArmor, defStr, atkStr int) int {
+	cfg := configs.GetCombatConfig()
+	minBlock := int(cfg.BlockChanceMin)
+	maxBlock := int(cfg.BlockChanceMax)
+	strength := (statDeltaProportional(defStr, atkStr) - 0.5) * float64(maxBlock-minBlock)
+	return max(minBlock, min(maxBlock, minBlock+shieldArmor+int(math.Round(strength))))
+}
+
+// parryModifier is a weapon's parry modifier in percent (Phase 30g2,
+// decision 16): swords +5, polearms (reach) +5, daggers −5, axes, maces
+// and whips 0, plus the item's own `parry` (a staff's +5). ok is false
+// for what can't parry: no weapon, claws, or a ranged weapon.
+func parryModifier(weapon items.Item) (mod int, ok bool) {
+	if weapon.ItemId == 0 {
+		return 0, false
+	}
+	spec := weapon.GetSpec()
+	if spec.Type != items.Weapon {
+		return 0, false
+	}
+	switch spec.Subtype {
+	case items.Claws, items.Shooting:
+		return 0, false
+	case items.Slashing:
+		mod = 5
+	case items.Stabbing:
+		mod = -5
+	}
+	if spec.Reach {
+		mod = 5
+	}
+	return mod + spec.Parry, true
+}
+
+// parryChance returns the percent chance that a melee strike is parried:
+// the Speed delta in [ParryChanceMin, ParryChanceMax], then the weapon's
+// modifier, which moves the whole range (a sword parries 10–35%, a dagger
+// 0–25%). A ParryChanceMax of 0 turns parrying off.
+func parryChance(defSpeed, atkSpeed, weaponMod int) int {
+	cfg := configs.GetCombatConfig()
+	minParry := int(cfg.ParryChanceMin)
+	maxParry := int(cfg.ParryChanceMax)
+	if maxParry <= 0 {
+		return 0
+	}
+	base := max(minParry, min(maxParry, int(math.Floor(statDelta(defSpeed, atkSpeed)*float64(maxParry)))))
+	return max(0, min(100, base+weaponMod))
+}
+
+// rollDefense rolls a defense's chance, logging it under name.
+func rollDefense(name string, chance int) bool {
 	roll := util.Rand(100)
-	util.LogRoll(`Dodges`, roll, chance)
+	util.LogRoll(name, roll, chance)
 	return roll < chance
+}
+
+// BashChance returns the probability in [BashChanceMin, BashChanceMax] that
+// a shield-bearer can bash when a melee strike is blocked (Phase 30g2).
+// Based on the defender's Strength advantage over the attacker.
+func BashChance(defStr, atkStr int) int {
+	cfg := configs.GetCombatConfig()
+	minBash := int(cfg.BashChanceMin)
+	maxBash := int(cfg.BashChanceMax)
+	actual := int(math.Floor(statDelta(defStr, atkStr) * float64(maxBash)))
+	if actual < minBash {
+		actual = minBash
+	}
+	return actual
 }
 
 // dualWieldHitPenalty returns the negative hit modifier applied to the offhand

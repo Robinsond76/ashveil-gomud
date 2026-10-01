@@ -23,6 +23,8 @@ func TestPainReactionsThroughCombatRound(t *testing.T) {
 	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 100, 100
 	gameplay.Combat.ToHitMin, gameplay.Combat.ToHitMax = 100, 100
 	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
+	gameplay.Combat.ParryChanceMin, gameplay.Combat.ParryChanceMax = 0, 0
+	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	b.aria.Character.Health, b.aria.Character.HealthMax.Value = 1000, 1000
 	for _, ids := range b.bandits {
@@ -60,6 +62,8 @@ func TestLiveMobPainOverrideWinsOverRace(t *testing.T) {
 	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 100, 100
 	gameplay.Combat.ToHitMin, gameplay.Combat.ToHitMax = 100, 100
 	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
+	gameplay.Combat.ParryChanceMin, gameplay.Combat.ParryChanceMax = 0, 0
+	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	victim := mobs.GetInstance(b.bandits["bandit cutthroat"][0])
 	victim.Character.Health = 1000

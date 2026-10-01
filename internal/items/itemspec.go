@@ -230,6 +230,7 @@ type ItemSpec struct {
 	Hydration       int               `yaml:"hydration,omitempty"`   // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
 	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
 	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
+	Parry           int               `yaml:"parry,omitempty"`       // Added to the subtype's parry modifier, in percent (Phase 30g2: a staff +5)
 	Warmth          int               `yaml:"warmth,omitempty"`      // Insulation when worn (Phase 15); 0 uses the exposure module's per-slot default, negative means none
 	CarryBonus      int               `yaml:"carrybonus,omitempty"`  // A pack's added carrying capacity in grams (Phase 32f); a member counts only their largest
 	Saddle          SaddleKind        `yaml:"saddle,omitempty"`      // A saddle's kind (Phase 32f): fits a horse of the same kind

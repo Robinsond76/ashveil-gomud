@@ -1,13 +1,16 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">armor</ansi>
 
-The <ansi fg="command">armor</ansi> stat measures your chances of avoiding damage.
+<ansi fg="command">Armor</ansi> takes a share of each blow that gets past your block, parry, or
+dodge (<ansi fg="command">help defense</ansi>).
 
-<ansi fg="yellow">Usage: </ansi>
+Each piece you wear adds its armor to your total, a shield's own armor
+included. Each blow that lands is reduced by a random amount up to your
+total, as a percentage, and the hit's line tells you how much was stopped:
 
-Armor is a maximum percentage of damage you can block ( random between 1 and {Armor} ).
-Each attack is calculated separately for how much it blocks.
+  <ansi fg="command">(5 damage, 2 absorbed)</ansi>   your armor absorbed 2 of the blow
 
-Each piece of equipment you wear can add or remove from your Armor total, just as it does other stats.
+A shield adds nothing beyond its own armor: it earns its place by blocking.
+Armor broken by a critical hit gives half its protection for the rest of
+the fight (<ansi fg="command">help statuses</ansi>).
 
-You get a 50% bonus to your armor if you have a non weapon (shield) in your offhand slot. (50 Armor becomes 75)
-
+See also: <ansi fg="command">help defense</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help narration</ansi>.

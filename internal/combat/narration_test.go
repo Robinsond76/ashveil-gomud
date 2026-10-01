@@ -15,8 +15,8 @@ import (
 func TestDamageSuffix(t *testing.T) {
 	assert.Equal(t, " (5 damage)", damageSuffix(5, false, 0))
 	assert.Equal(t, " (critical hit, 9 damage)", damageSuffix(9, true, 0))
-	assert.Equal(t, " (5 damage, 2 blocked)", damageSuffix(5, false, 2))
-	assert.Equal(t, " (critical hit, 9 damage, 1 blocked)", damageSuffix(9, true, 1))
+	assert.Equal(t, " (5 damage, 2 absorbed)", damageSuffix(5, false, 2))
+	assert.Equal(t, " (critical hit, 9 damage, 1 absorbed)", damageSuffix(9, true, 1))
 }
 
 // TestRoundLinesCarryTheirMechanics (Phase 29c): through the real attack

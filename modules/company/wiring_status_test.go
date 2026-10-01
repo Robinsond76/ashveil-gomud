@@ -223,6 +223,8 @@ func TestCritThroughTheRealRoundLeavesItsStatus(t *testing.T) {
 	gameplay.Combat.ToHitMin, gameplay.Combat.ToHitMax = 100, 100
 	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 100, 100
 	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
+	gameplay.Combat.ParryChanceMin, gameplay.Combat.ParryChanceMax = 0, 0
+	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	const maceID = 99401
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: maceID, Name: "test mace", Type: items.Weapon, Subtype: items.Bludgeoning, Hands: 1,

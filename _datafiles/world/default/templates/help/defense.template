@@ -1,0 +1,51 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">defense</ansi>
+
+A blow that would hit meets one active defense: a <ansi fg="yellow">block</ansi>, a <ansi fg="yellow">parry</ansi>,
+or a <ansi fg="yellow">dodge</ansi>. One that works stops the blow: no damage, no critical
+hit, no status. One that fails lets the blow through, and your armor takes
+its share (<ansi fg="command">help armor</ansi>). You choose nothing; what you hold decides.
+
+<ansi fg="yellow-bold">Which defense</ansi>
+
+  <ansi fg="yellow">Holding a shield</ansi>        block, any blow, arrows and sling stones too.
+                          No dodge if the block fails.
+  <ansi fg="yellow">A weapon, no shield</ansi>     parry or dodge a melee blow, whichever is the
+                          better chance (rolled once); dodge a shot.
+  <ansi fg="yellow">Claws or bare hands</ansi>     dodge.
+  <ansi fg="yellow">Stunned</ansi>                 no defense at all (<ansi fg="command">help statuses</ansi>).
+
+Spells are never blocked, parried, or dodged.
+
+<ansi fg="yellow-bold">Block</ansi>
+
+  <ansi fg="command">Tamsin Reed catches the bandit captain's blow on her shield.</ansi>
+
+The chance starts at {{ config "GamePlay.Combat.BlockChanceMin" }}%, adds the shield's own armor, and moves with your
+Strength against the attacker's, held between {{ config "GamePlay.Combat.BlockChanceMin" }}% and {{ config "GamePlay.Combat.BlockChanceMax" }}%. At even
+Strength a wooden shield blocks 20% of blows and an iron shield 25%. A blocked
+melee blow may be slammed back with a shield bash (<ansi fg="command">help interrupts</ansi>).
+
+<ansi fg="yellow-bold">Parry</ansi>
+
+  <ansi fg="command">Garrick Vane turns your blow aside with his longsword.</ansi>
+
+Your Speed against the attacker's gives {{ config "GamePlay.Combat.ParryChanceMin" }}% to {{ config "GamePlay.Combat.ParryChanceMax" }}%, and the weapon moves it:
+
+  <ansi fg="yellow">+5</ansi>   swords, staves, and long polearms
+  <ansi fg="yellow"> 0</ansi>   axes, maces, clubs, and whips
+  <ansi fg="yellow">-5</ansi>   daggers and other stabbing blades
+
+So a sword parries 10% to 35%, and a dagger 0% to 25%: at even Speed a dagger
+is no better than a dodge. Bows and slings can't parry.
+
+<ansi fg="yellow-bold">Dodge</ansi>
+
+  <ansi fg="command">The bandit captain twists aside from your blow.</ansi>
+
+Your Perception against the attacker's gives {{ config "GamePlay.Combat.DodgeChanceMin" }}% to {{ config "GamePlay.Combat.DodgeChanceMax" }}%.
+
+After a fight, the battle summary counts each side's blocks, parries, and
+dodges (<ansi fg="command">help battle-summary</ansi>).
+
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help strength</ansi>,
+<ansi fg="command">help speed</ansi>, <ansi fg="command">help perception</ansi>.

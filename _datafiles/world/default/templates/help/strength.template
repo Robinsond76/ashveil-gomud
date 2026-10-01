@@ -8,6 +8,8 @@ you hit and the more you can carry.
 * Adds a flat damage bonus to every attack. The stronger you are compared to
   your opponent, the larger this bonus becomes (up to +{{ config "GamePlay.Combat.DamageBonusMax" }} damage).
 * Increases the size of your unarmed damage dice when fighting without a weapon.
+* With a shield, raises your chance to block a blow, and to slam a blocked
+  melee blow back with a shield bash (<ansi fg="command">help defense</ansi>).
 
 <ansi fg="yellow">Carrying</ansi>
 

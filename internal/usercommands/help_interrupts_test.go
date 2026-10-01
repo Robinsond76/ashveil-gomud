@@ -39,7 +39,7 @@ func TestInterruptsHelp(t *testing.T) {
 		"from the first word",
 		"back row", "casters",
 		"(shield bash, 3 damage, stunned)",
-		"50%", "1 to 4 damage", "one counter a round",
+		"5% to 20%", "blocks a melee blow", "1 to 4 damage", "one counter a round",
 	} {
 		assert.Contains(t, plainText, want)
 	}

@@ -73,6 +73,7 @@ help:
       - ask
       - quests
     combat:
+      - armor
       - attack
       - battle-summary
       - break
@@ -81,6 +82,7 @@ help:
       - combat
       - combatpace
       - consider
+      - defense
       - flee
       - formation
       - guardian
@@ -233,6 +235,8 @@ help-aliases:
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]
+  defense:          [defence, defenses, block, blocks, blocking, parry, parries, parrying, dodge, dodges, dodging, shield, shields]
+  armor:            [armour, absorbed]
   statuses:         [status-effects, statuseffects, bleeding, bleed, staggered, stagger, knockdown, knocked-down, stun, stunned, burning, exposed, armor-break, armor-broken, hobbled, overload, crit-effects]
   narration:        [critical, crit, healed, chanting, combat-text, pronouns, ordinals, pain, pain-reaction]
   resurrect:        [resurrection]

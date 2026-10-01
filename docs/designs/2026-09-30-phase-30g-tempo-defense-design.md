@@ -215,6 +215,17 @@ One **active defense** per strike, after a strike hits and before armor:
 - **Unchanged:** spells are not dodged, parried, or blocked (as today);
   the hit roll; crits (a defended strike can't crit, as a dodged one
   can't today).
+- **As built** (amendments; the [30g2 plan](../plans/2026-10-01-phase-30g2-active-defense.md)
+  has the detail): the event and `AttackResult` carry a `Defenses` list,
+  one entry per defended strike, since one event covers a round's
+  strikes; parry modifiers come from the subtype plus reach and an item
+  `parry` field (a staff), and move the whole range; block is the
+  minimum plus the shield's armor plus the Strength share; defense lines
+  reach those watching too.
+- **Acceptance (help):** new `help defense`; `help armor`,
+  `help interrupts`, `help combat`, `help narration`, `help statuses`,
+  `help battle-summary`, and the stat pages updated; the Combat lesson's
+  hints corrected and pointed to `help defense`.
 
 ### 30g3 — Personal load and agility
 

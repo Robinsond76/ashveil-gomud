@@ -15,5 +15,5 @@ The <ansi fg="command">rankings</ansi> command displays balance rankings for pet
 <ansi fg="command">rankings armor [def/def-adj/score]</ansi>
   Show armor rankings. Default sort: <ansi fg="yellow">def</ansi>
   <ansi fg="command">def</ansi>      - Raw DamageReduction value
-  <ansi fg="command">def-adj</ansi>  - DamageReduction adjusted for slot multiplier (shields x1.5)
+  <ansi fg="command">def-adj</ansi>  - DamageReduction as GetDefense counts it (no multiplier: shields block)
   <ansi fg="command">score</ansi>    - Unified eHP-equivalent score (defense + stats + buffs)

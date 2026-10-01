@@ -6,26 +6,28 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-10-01
-- **Latest completed phase:** 30e, morale and mercy (2026-10-01).
+- **Latest completed phase:** 30g2, active defense and armor, merged
+  from `claude/phase-30g2-defense` on 2026-10-01 (after 30e, morale and
+  mercy, the same day).
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
 
 The expedition/company loop, onboarding, combat presentation (29a–29f),
-status effects, wounds, tactics, guardians, interrupts, and wind-ups
-(30a–30e) are shipped. The Phase 32 play-test improvements are implemented;
+status effects, wounds, tactics, guardians, interrupts, wind-ups, morale
+and mercy (30a–30e), and active defense (30g2) are shipped. The Phase 32 play-test improvements are implemented;
 32b's status still carries an outstanding review note (see its retained plan).
 
 **Next:** Phase 30g, [combat tempo, personal load, and active
 defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
 decisions the owner settled on 2026-09-30. 30g1 (the balance harness and
-baseline) is done; each later slice is measured against it:
+baseline) and 30g2 are done; each later slice is measured against 30g1:
 
-1. **30g2, active defense and armor:** one defense per strike: block
-   with a shield (no dodge), else parry a melee strike or dodge; the
-   shield's ×1.5 armor removed; the shield bash moves to a blocked melee
-   strike (5–20% by Strength); armor's suffix reads `absorbed`;
-   `help defense`.
+1. **30g2, active defense and armor:** complete (work log below): one
+   defense per strike: block with a shield (no dodge), else parry a
+   melee strike or dodge; the shield's ×1.5 armor removed; the shield
+   bash moves to a blocked melee strike (5–20% by Strength); armor's
+   suffix reads `absorbed`; `help defense`.
 2. **30g3, personal load:** worn and carried weight against a
    Strength-based capacity (cargo and mounts never count); burden lowers
    dodge; burden words in `status`.
@@ -104,7 +106,7 @@ Other remaining limitations are listed below.
 | 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](designs/2026-09-30-phase-30d1-chant-interrupts-design.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](designs/2026-09-30-phase-30d1b-chant-break-chance-design.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, or stun always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 complete: [design](designs/2026-09-30-phase-30d2-windups-design.md). Physical wind-ups (`internal/windup`, mob `windups`): the forest ogre (Dark Forest room 530) winds up Crushing Blow in plain view, then one swing of double damage that knocks down; only a crit that lands, a stagger, a knockdown, or a stun breaks it (owner); a broken or landed one is followed by 2 turns' cooldown; a shield bash is a counter strike only and breaks nothing (owner) |
 | 30e | Morale and mercy | Complete: enemy temperaments and shared break checks; protected surrender; paced mercy decisions, rewards and reactions; companion hesitation, flight and saved return |
 | 30f | Battlefield conditions | Proposed: [spec](designs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat |
-| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). Owner-agreed direction (2026-09-30): an action meter from Speed and personal load (capped turns a round); block with a shield (no dodge), parry or dodge without; the shield's ×1.5 armor removed; a 10–15 round 5v5 target. Shield bash on a block (5–20% by Strength); no level cap, an XP knee at ~60; small HP numbers by archetype; stats grow in steps every few levels, and tempo reads raw Speed; the 10–15 rounds is the no-focus fight. Slices: 30g1 balance harness, 30g2 defenses, 30g3 personal load, 30g4 progression (stat steps, archetype HP, XP knee), 30g5 meter, 30g6 tuning. All decisions settled (A, B, D by the lead's recommendation; stat steps every 5 levels). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10); 30g2 (defenses) next |
+| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 (personal load) next |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](designs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](designs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](designs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
@@ -212,6 +214,65 @@ Other remaining limitations are listed below.
     can't be wounded; a player's `HealthMax` `Base: 1` gives a little
     more HP than a mob; both sides unplaced, so formation is inert here.
 
+### Phase 30g2: active defense and armor (2026-10-01)
+
+- **What:** the second slice of Phase 30g
+  ([design](designs/2026-09-30-phase-30g-tempo-defense-design.md),
+  [plan](plans/2026-10-01-phase-30g2-active-defense.md)), on
+  `claude/phase-30g2-defense`. A blow that would hit meets one active
+  defense: a shield-bearer blocks any strike (no dodge fallback); with a
+  weapon and no shield, a melee strike meets the higher of parry and
+  dodge, rolled once; shots, claws, and bare hands meet a dodge; a stunned
+  fighter gets none. Block: 15% + the shield's armor + the Strength share,
+  held to 15–45% (wooden 20%, iron 25% at even Strength). Parry: Speed,
+  5–30%, moved by the weapon (swords, reach weapons, and the staff's new
+  item `parry` +5; daggers −5). The shield's ×1.5 is gone from
+  `GetDefense` and the armor rankings. The bash follows a blocked melee
+  strike, 5–20% by Strength (1d4, stun 25%, once a round, unchanged).
+  Attack events carry `Defenses`; the battle summary has a `Defenses`
+  line; the armor suffix reads `absorbed`; the 30g1 harness counts
+  defenses. Player help: new `help defense`, `help armor` rewritten and
+  indexed, nine pages updated, the Combat lesson's hints corrected.
+- **Why:** owner decisions 4–6, 10, and 15–17.
+- **A first attempt was not fit to merge.** It gave daggers +5 parry (the
+  design says −5), left the ×1.5 in `armor_rank.go`, emitted no defense
+  events, left help and the tutorial describing the old miss counter, and
+  its status entry here called the phase complete while ten
+  `modules/company` counter tests failed (a `go test ... | tail` exit code
+  was read as the test result). The owner asked for a review of the work;
+  it was rebuilt as the plan records.
+- **Balance** (30g1 table, 50 fights a cell; the 30g1 baseline re-run on
+  the same machine for comparison): the no-focus fight's median is now
+  9 / 38 / 71 rounds at levels 1 / 5 / 10, against 9 / 32 / 67 before.
+  Shield bashes fall from 4–14 a fight to under 0.3. Per fight at level
+  10, each side makes about 3–6 blocks, 2–2.5 parries, and 2 dodges.
+  The company's no-focus wins at level 1 fell from 58% to 48% (within the
+  noise of 50 fights). Defenses lengthen fights slightly; 30g6 tunes
+  against the 10–15 round target.
+- **Review:** the independent default-agent reviewer found no blocking
+  bug and confirmed the defense choice, numbers, strike loop, bash sites,
+  stream, summary, and help. Each finding was verified.
+  - **Fixed:** a parry range of 0 still let a sword parry 5% (the weapon's
+    modifier came after the clamp), so hit-forcing tests could flake
+    (`TestZeroParryRangeTurnsParryOff`); `TestShieldCounterOnlyOnBlock`
+    and the stunned-bearer case now require the blow they test; the new
+    keys added to `config.yaml` and the config wizard; admin armor pages,
+    the items API page, the rankings help, and the empty world's armor
+    page no longer describe the ×1.5; the Stunned buff and `help combat`
+    name parry; stale comments; `defend` removed from the defense
+    aliases (it is a strategy rule); a defended shot from another room
+    now gets a line in the shooter's room.
+  - **Rejected/deferred:** a reach weapon gets +5 one-handed or not (the
+    design said two-handed polearms; none ship yet); a defended shot
+    still reads "blow" (generic wording, kept).
+- **Found while testing, recorded:** a bandit given a sling in the brawl
+  world never attacks (the old bow-counter test passed without a blow);
+  the rebuilt test uses the company ranger's shot. Not investigated
+  further. `TestJoinsTheFight` (`internal/hooks`) fails under
+  `-count=3` on the 30g1 base too: a test-isolation issue, not this
+  phase's.
+- **Verification** (2026-10-01, after the review fixes): `make generate` (no diff), `make validate`, `make js-lint`, and `go test -race ./...` pass (the go test exit status itself, 91 packages ok, no races). No Lua changed. While working: `go test -count=3` on `internal/combat` and the counter, status, wind-up, and pain tests of `modules/company`; the reviewer ran `internal/combat` 20 times. After merging `origin/master` (Phase 30e) into the branch: `make generate` (no diff), `make validate`, `make js-lint`, and `go test -race ./...` pass again (go test's own exit status).
+
 ### Documentation maintenance and Phase 30e preparation (2026-09-30)
 
 - Removed mounted combat from the 30f proposal at the owner's request.
@@ -238,9 +299,10 @@ those results. This documentation change does not rerun or supersede them.
 
 ## Known issues / deferred items
 
-- **Broken chants and counters (30d1), for the owner:** the counter's
-  numbers (50% of fumbled melee blows, 1d4, a stun one time in four, once
-  a round per bearer) are a recommendation to tune. A bash leaves no
+- **Broken chants and counters (30d1, 30g2), for the owner:** the
+  counter's numbers (5–20% of blocked melee blows by Strength since 30g2,
+  1d4, a stun one time in four, once a round per bearer) are a
+  recommendation to tune. A bash leaves no
   wound; an enemy restarts its chant for ever while hit (no mana spent); a
   mob that runs out of mana wastes the turns it picks `cast` (GoMud's
   combat commands). No casting on the battle view's grid yet (32g2).
