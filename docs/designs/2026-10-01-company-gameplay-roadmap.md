@@ -128,6 +128,11 @@ not claims that future gameplay acceptance tests have already passed.
 
 ## Related records
 
+- [Phase 34 UI and container logistics](2026-10-01-phase-34-company-ui-logistics-design.md)
+  follows shipped 33g management with UI/formation fixes, packs/capacity,
+  an equipment editor, and effects/current capability presentation. Planning
+  only; does not renumber unfinished Phase 33 slices.
+
 - [Project Status](../PROJECT_STATUS.md) is the authority for shipped work.
 - [Combat roadmap](2026-09-26-combat-presentation-roadmap.md) tracks 30f/30g.
 - [30g design](2026-09-30-phase-30g-tempo-defense-design.md) owns the balance sequence.

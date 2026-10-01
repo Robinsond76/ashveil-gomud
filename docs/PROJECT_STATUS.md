@@ -86,6 +86,16 @@ delegated to the lead. 33a–33e are complete.
 
 ## Deferred preparation designs
 
+- Owner endorsed company UI/logistics improvements on 2026-10-01, including
+  automatic recruit formation placement. [Phase 34 design](designs/2026-10-01-phase-34-company-ui-logistics-design.md)
+  and [delivery plan](plans/2026-10-01-phase-34-company-ui-logistics-plan.md)
+  split delivery into 34a UI/formation, 34b assigned packs and cargo capacity,
+  34c equipment editor, and 34d effects/current capabilities. Design and delivery defaults approved by the owner;
+  planning complete. No gameplay
+  implemented and no gameplay verification claimed. Documentation verification:
+  independent review found no actionable issues; relative links and whitespace
+  checks passed.
+
 - Owner requested a [weapon poison design](designs/2026-10-01-weapon-poisons-design.md)
   for future implementation on 2026-10-01: shop-bought temporary blade coatings,
   explicit per-member/per-blade camp assignments, and later camp recipes.
