@@ -143,6 +143,14 @@ delegated to the lead. 33a–33c are complete; 33d follows.
 
 ## Recent work log
 
+### 33a owner review follow-up (2026-10-01)
+
+- Owner review of 33a kept the battle lock on players' own get/drop/give/put
+  and the removal of in-battle aid. Fixed `help company`: the 33a–33c sections
+  had been appended after its "See also" line; that line is last again.
+  Help and tutorial tests passed. The owner is still deciding on
+  script-driven member actions being attributed to the triggering player.
+
 ### Phase 33c: company retreat (2026-10-01)
 
 - Ordered `retreat [exit]`: one preparation round, one escape attempt, slowest
