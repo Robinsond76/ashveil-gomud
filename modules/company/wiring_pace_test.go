@@ -335,7 +335,7 @@ func TestWalkingAwayFlushesHeldLines(t *testing.T) {
 	events.AddTyped(events.Input{UserId: 7, InputText: "east"})
 	events.ProcessEvents()
 	require.Len(t, sent, 2)
-	assert.Contains(t, sent[1], "Only flee takes you out")
+	assert.Contains(t, sent[1], "Use retreat or flee to leave it")
 	require.True(t, combatpace.Default().Busy(7), "the round is still held")
 
 	// Her battle over (as for a bystander, or once it ends), she walks east.

@@ -370,8 +370,8 @@ func closeIdleBattles() {
 		if room == nil {
 			continue
 		}
-		if a := u.Character.Aggro; a != nil && a.Type == characters.SpellCast {
-			continue // mid-cast: still fighting
+		if a := u.Character.Aggro; a != nil && (a.Type == characters.SpellCast || a.Type == characters.Retreat) {
+			continue // mid-cast or withdrawal: still fighting
 		}
 		sd := loadSide(u, room)
 		parties := enemyparty.Parties(room)

@@ -336,7 +336,7 @@ const BattleUnderWay = `The battle is under way: it plays out as you set it up.`
 
 // BattleOnlyFlee is the answer to trying to step out of a battle (Ashveil
 // Phase 32d): only flee takes a player out.
-const BattleOnlyFlee = BattleUnderWay + ` Only <ansi fg="command">flee</ansi> takes you out of it.`
+const BattleOnlyFlee = BattleUnderWay + ` Use <ansi fg="command">retreat</ansi> or <ansi fg="command">flee</ansi> to leave it.`
 
 // InBattle reports whether the player is in a battle (Ashveil Phase 32c
 // and 32d): they have one, or are aimed at a mob (a battle about to

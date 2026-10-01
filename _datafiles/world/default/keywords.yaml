@@ -86,6 +86,7 @@ help:
       - consider
       - defense
       - flee
+      - retreat
       - formation
       - guardian
       - heal
@@ -205,6 +206,7 @@ help:
 # Key is the target keyword, value is the list of aliases
 help-aliases:
   morale: [nerve, hesitation, temperament]
+  retreat: [withdrawal, company-withdrawal, rout, separation]
   mercy: [surrender, surrendered, yield, yielding, execution]
   delete:           [deletion, delete-character, reroll]
   webclient:        [web client, web-client, dock, panels, tabs, layout]

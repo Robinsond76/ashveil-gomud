@@ -10,7 +10,7 @@ import (
 func Flee(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	// Phase 30a: a hobbled (or hamstrung) fighter cannot break away.
-	if user.Character.HasBuffFlag("no-flee") {
+	if user.Character.HasBuffFlag("no-flee") || user.Character.HasBuffFlag("no-go") {
 		user.SendText(`Your legs will not carry you out of this. You cannot flee.`)
 		return true, nil
 	}

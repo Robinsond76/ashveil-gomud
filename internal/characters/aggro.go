@@ -9,6 +9,7 @@ const (
 	BackStab
 	SpellCast
 	Flee
+	Retreat
 )
 
 type SpellAggroInfo struct {
@@ -19,7 +20,22 @@ type SpellAggroInfo struct {
 	TargetMobInstanceIds []int
 }
 
+// RetreatInfo is an ephemeral ordered withdrawal, never saved.
+type RetreatInfo struct {
+	RoomID   int
+	ExitName string
+	Members  []RetreatMember
+	CoverKey string
+	Cover    int
+}
+type RetreatMember struct {
+	InstanceID int
+	Key        string
+	Charm      *CharmInfo
+}
+
 type Aggro struct {
+	RetreatInfo   *RetreatInfo `yaml:"-"`
 	Type          AggroType
 	MobInstanceId int
 	UserId        int

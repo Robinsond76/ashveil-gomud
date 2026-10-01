@@ -22,6 +22,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/GoMudEngine/GoMud/internal/withdrawal"
 )
 
 // combatMobCharacter is a presentation-only copy for combat narration. It
@@ -71,6 +72,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// before any blow.
 	nervePass()
 	strategyPass()
+	retreatCover = map[int]bool{}
 
 	//
 	// Combat rounds
@@ -128,6 +130,11 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			continue
 		}
 
+		if user.Character.Aggro.Type == characters.Retreat {
+			handleRetreat(user, uRoom)
+			continue
+		}
+
 		if user.Character.Aggro.Type == characters.Flee {
 
 			// Revert to Default combat regardless of outcome
@@ -135,7 +142,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 
 			// Ashveil Phase 30a: a flight begun before a hobbling blow is
 			// held by it too.
-			if user.Character.HasBuffFlag("no-flee") {
+			if user.Character.HasBuffFlag("no-flee") || user.Character.HasBuffFlag("no-go") {
 				user.SendText(`Your legs will not carry you out of this. You cannot flee.`)
 				continue
 			}
@@ -169,8 +176,8 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 
 			blockedByPlayer := ``
 			blockedByPlayerId := 0
-			for _, userId := range uRoom.GetPlayers(rooms.FindFighting) {
-				if u := users.GetByUserId(userId); u != nil {
+			for _, otherUserID := range uRoom.GetPlayers(rooms.FindFighting) {
+				if u := users.GetByUserId(otherUserID); u != nil {
 					if u.Character.Aggro == nil || u.Character.Aggro.UserId != userId {
 						continue
 					}
@@ -211,17 +218,24 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				continue
 			}
 
-			if blocked, err := scripting.TryRoomTryExitEvent(exitName, user.UserId, user.Character.RoomId); err == nil && blocked {
-				user.SendText(`Something holds you here. You cannot flee.`)
+			if _, routeRoom, err := withdrawal.Route(user, uRoom, exitName); err != nil {
+				user.SendText(err.Error())
 				continue
+			} else {
+				exitRoomId = routeRoom
 			}
 
-			if blocked, err := scripting.TryRoomTryEnterEvent(user.UserId, exitRoomId); err == nil && blocked {
-				user.SendText(`Something holds you here. You cannot flee.`)
+			if err := prepareEmergencySeparation(user, uRoom); err != nil {
+				user.SendText("Your company cannot save the separation; you remain here. " + err.Error())
 				continue
 			}
-
-			emitCombat(combatstream.Event{Kind: combatstream.Flee, RoomId: user.Character.RoomId, Source: userRef(user)})
+			originRoomId := user.Character.RoomId
+			if err := rooms.MoveToRoom(user.UserId, exitRoomId); err != nil {
+				user.SendText("You cannot reach that exit.")
+				continue
+			}
+			exitRoomId = user.Character.RoomId
+			emitCombat(combatstream.Event{Kind: combatstream.Flee, RoomId: originRoomId, Source: userRef(user)})
 
 			user.SendText(fmt.Sprintf(`You break away and flee <ansi fg="exit">%s</ansi>.`, exitName))
 			uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> breaks away and flees <ansi fg="exit">%s</ansi>.`, user.Character.Name, exitName), user.UserId)
@@ -233,8 +247,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			// now, so the player isn't held to it for another round.
 			endBattle(user.UserId, combatstream.OutcomeBrokenOff)
 
-			originRoomId := user.Character.RoomId
-			if err := rooms.MoveToRoom(user.UserId, exitRoomId); err == nil {
+			{
 
 				scripting.TryRoomScriptEvent(`onExit`, user.UserId, originRoomId)
 
@@ -792,7 +805,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		}
 
 		// If has a buff that prevents combat, skip the player
-		if mob.Character.CombatWithdrawn || nerveSkip[mobId] || mob.Character.HasBuffFlag("no-combat") {
+		if mob.Character.CombatWithdrawn || retreatCover[mobId] || nerveSkip[mobId] || mob.Character.HasBuffFlag("no-combat") {
 			continue
 		}
 

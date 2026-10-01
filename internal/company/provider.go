@@ -497,3 +497,22 @@ func WalkingMembers(leaderUserID int) int {
 func CountedMembers(leaderUserID int) int {
 	return 1 + len(CompanionCarry(leaderUserID))
 }
+
+// WithdrawalProvider moves only the validated runtime members of an ordered
+// retreat. It never sweeps absent companions into the destination.
+type WithdrawalProvider interface {
+	RelocateWithdrawal(leaderUserID, originRoomID, destinationRoomID int, instanceIDs []int) error
+}
+
+func RelocateWithdrawal(uid, origin, destination int, ids []int) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	formationProviderMu.RLock()
+	p, ok := formationProvider.(WithdrawalProvider)
+	formationProviderMu.RUnlock()
+	if !ok {
+		return ErrUnknownMember
+	}
+	return p.RelocateWithdrawal(uid, origin, destination, ids)
+}

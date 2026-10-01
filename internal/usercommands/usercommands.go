@@ -89,6 +89,7 @@ var (
 		`equip`:       {Equip, false, false},
 		`feed`:        {Feed, false, false},
 		`flee`:        {Flee, false, false},
+		`retreat`:     {Retreat, false, false},
 		`formset`:     {FormSet, false, true}, // Admin only
 		`gearup`:      {Gearup, false, false},
 		`get`:         {Get, false, false},

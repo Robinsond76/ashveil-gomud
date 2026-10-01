@@ -197,7 +197,7 @@ func readyToCast(a actor, u *users.UserRecord) bool {
 	if _, lost := status.LostAction(a.char); lost {
 		return false
 	}
-	if agg := a.char.Aggro; agg != nil && (agg.Type == characters.SpellCast || agg.Type == characters.Flee) {
+	if agg := a.char.Aggro; agg != nil && (agg.Type == characters.SpellCast || agg.Type == characters.Flee || agg.Type == characters.Retreat) {
 		return false
 	}
 	if a.who.userId > 0 && a.char.Aggro == nil && engagement.StoodDown(u.UserId) {

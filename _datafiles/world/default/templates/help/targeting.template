@@ -80,7 +80,8 @@ then" is one pick in ten; "often" one in four; goblins about one in seven.
 
 <ansi fg="yellow-bold">Stepping out</ansi>
 
-Only <ansi fg="command">flee</ansi> takes you out of a battle: it tries to run out of the room,
+<ansi fg="command">retreat [exit]</ansi> withdraws the company (help retreat).
+<ansi fg="command">flee</ansi> is emergency escape: it tries to run out of the room,
 and your companions follow you. A flight that gets away ends your battle.
 (<ansi fg="command">break</ansi> still stops a fight with another player.) A fight that isn't a
 battle ends when nobody is fighting any more.

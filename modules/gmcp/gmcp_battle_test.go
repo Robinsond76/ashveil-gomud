@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -214,4 +217,39 @@ func TestSurrenderedFoeHasNoCellOrTargetAndDarkHidesIt(t *testing.T) {
 	p = buildBattle(f).(battlePayload)
 	assert.Empty(t, p.Surrendered)
 	assert.Empty(t, p.Enemies)
+}
+
+func TestBattleWithdrawalVisibleEvenInDark(t *testing.T) {
+	f := sampleBattle()
+	f.Retreat = &retreatFact{Exit: "east", Rounds: 2}
+	for _, dark := range []bool{false, true} {
+		f.Dark = dark
+		raw, err := json.Marshal(buildBattle(f))
+		require.NoError(t, err)
+		var view map[string]any
+		require.NoError(t, json.Unmarshal(raw, &view))
+		assert.Equal(t, map[string]any{"exit": "east", "rounds": float64(2)}, view["retreat"])
+	}
+	raw, _ := json.Marshal(buildBattle(battleFacts{Retreat: f.Retreat}))
+	assert.JSONEq(t, "{}", string(raw), "runtime order cannot create a battle view on its own")
+}
+
+func TestGatherWithdrawalCountdownFromRuntimeOrder(t *testing.T) {
+	r := &rooms.Room{RoomId: 929933, Title: "withdrawal fixture"}
+	rooms.SetTestRoom(r)
+	t.Cleanup(func() { rooms.RemoveTestRoom(r.RoomId) })
+	u := users.NewUserRecord(33, 1)
+	u.Character.RoomId = r.RoomId
+	battle.Begin(u.UserId, r.RoomId, 1, "retreat", nil)
+	t.Cleanup(func() { battle.End(u.UserId) })
+	u.Character.Aggro = &characters.Aggro{Type: characters.Retreat, RoundsWaiting: 1, RetreatInfo: &characters.RetreatInfo{RoomID: r.RoomId, ExitName: "east"}}
+	f := gatherBattle(u)
+	require.NotNil(t, f.Retreat)
+	assert.Equal(t, 2, f.Retreat.Rounds)
+	u.Character.Aggro.RoundsWaiting = 0
+	f = gatherBattle(u)
+	require.NotNil(t, f.Retreat)
+	assert.Equal(t, 1, f.Retreat.Rounds)
+	u.Character.RoomId++
+	assert.False(t, gatherBattle(u).InBattle, "departed company no longer publishes the old battle")
 }
