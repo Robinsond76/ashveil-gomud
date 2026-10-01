@@ -5,9 +5,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (33d review follow-up)
-- **Latest completed phases:** 33c, company retreat; 33b, friendly effects;
-  33a, command rules; and 30g3, personal load and agility, all 2026-10-01.
+- **Last updated:** 2026-10-01 (33e, automatic class abilities)
+- **Latest completed phases:** 33e, automatic class abilities; 33d, allied
+  companies; 33c, company retreat; 33b, friendly effects; 33a, command
+  rules; and 30g3, personal load and agility, all 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
@@ -18,8 +19,9 @@ and mercy (30a–30e), active defense (30g2), and personal load (30g3) are shipp
 play-test improvements are implemented; 32b's status still carries an outstanding review note (see its retained plan).
 
 **Current owner priority:** finish Phase 33a–33i in order, choosing the lead's
-recommended defaults without further confirmation (2026-10-01). 33a–33c are
-complete; **33d, allied companies, is complete**. Phase 30g3 is also complete;
+recommended defaults without further confirmation (2026-10-01). 33a–33d are
+complete; **33e, automatic class abilities, is complete**; 33f (company
+specialists) is next. Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
@@ -55,7 +57,7 @@ command consistency, friendly-effect scopes, retreat, allied companies,
 automatic class abilities, specialists, equipment/loot, progression/recovery/
 relocation, and group assessment/coordinated enemies. These are planning
 records now authorized for implementation by the owner, with open defaults
-delegated to the lead. 33a–33d are complete.
+delegated to the lead. 33a–33e are complete.
 
 ## Phase progress
 
@@ -134,7 +136,7 @@ delegated to the lead. 33a–33d are complete.
 | 33b | Friendly Effects and Company Membership | Complete: [design](designs/2026-10-01-phase-33b-friendly-effect-scopes-design.md), [plan](plans/2026-10-01-phase-33b-friendly-effects.md); shared target snapshots, eligibility, ownership and callback revalidation |
 | 33c | Company Retreat, Rout, and Separation | Complete: [design](designs/2026-10-01-phase-33c-company-retreat-design.md), [plan](plans/2026-10-01-phase-33c-company-retreat.md); ordered withdrawal, paid cover, legal escape and saved separation |
 | 33d | Multiplayer Parties and Allied Companies | Complete: [design](designs/2026-10-01-phase-33d-allied-companies-design.md), [plan](plans/2026-10-01-phase-33d-allied-companies.md); durable alliances, explicit consent, contribution-based XP, fixed shared loot claims and independent company authority |
-| 33e | Automatic Class Abilities and Combat Roles | Future design: [proposal](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md); implementation not started |
+| 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
 | 33f | Company Specialists and Group Exploration | Future design: [proposal](designs/2026-10-01-phase-33f-company-specialists-design.md); implementation not started |
 | 33g | Company Equipment, Loadouts, and Loot | Future design: [proposal](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); implementation not started |
 | 33h | Company Progression, Rewards, and Expedition Continuity | Future design: [proposal](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md); implementation not started |
@@ -142,6 +144,45 @@ delegated to the lead. 33a–33d are complete.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33e: automatic class abilities (2026-10-01)
+
+- **What:** warriors tackle (knocked down; breaks a foe's chant or
+  wind-up; the whole turn), rogues strike an opening on a downed,
+  stunned, staggered or exposed foe, and rangers aim a shot (both the
+  round's own swing, its first landed blow a critical hit), each on its
+  own by archetype (companions) or trained skill (players: brawling,
+  skulduggery, track), with cooldowns of 4/2/3 combat rounds. Healers no
+  longer double-heal one ally; `strategy [who] reserve [percent]` keeps
+  mana back from attack spells; `strategy [who] abilities on|off`. Durable
+  fields `no_abilities`/`reserve` (old saves load as on/0); cooldowns are
+  runtime only. GMCP `Company` strategies and the web Combat setup show
+  abilities. `help abilities` (new) and updated `strategy`, `combat`,
+  `company`, `tactics`, `archetype`, `brawling`, `skulduggery`, `track`;
+  a practice-fight tutorial hint. The backstab crit no longer reports a
+  crit on a round with no landed blow, and its shouted prefix is gone.
+  No ability uses an item (owner rule). Decisions: the design's "Final
+  implementation decisions"; balance is left to 30g6.
+- **Why:** owner priority to finish 33a–33i in order with the lead's
+  recommended defaults.
+- **Independent review** (report-only subagent) — accepted and fixed, each
+  with a regression test: (1) abilities skipped the formation gate, so a
+  reaching warrior could tackle a back-row caster the front row shields
+  (now the swing's interception rules apply, and a tackle needs
+  hand-to-hand reach); (2) companions still used abilities while the
+  company prepared to retreat (now none do); (3) a tackle skipped the
+  tackler's cancel-on-combat buff removal; (5) help said "rest 4 rounds"
+  where the ability is ready every 4th round (now "at most once every 4
+  combat rounds"); (6) the tutorial hint promised a "sure" crit; (8) added
+  tests for interception, retreat, a casting member, and a readied strike
+  set back, and removed an unused test seam. (4) a cooldown spent when the
+  foe falls first is accepted and now documented. (7) `help warrior` and
+  `help ranger` are GoMud job pages, not archetype pages: rejected as
+  stated; `help archetype` carries the change and the design text was
+  corrected. Ownership negatives (charms, allies, other companies) are
+  structural (the side list is the leader's own companions) and were
+  not given separate tests.
+- **Verification:** see below.
 
 ### 33d owner review follow-up (2026-10-01)
 
