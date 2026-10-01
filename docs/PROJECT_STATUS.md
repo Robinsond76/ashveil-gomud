@@ -5,8 +5,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (equipment catalog approval; 33i1, company encounter assessment; 33f3, camp specialists)
-- **Latest completed phases:** 33i1, company encounter assessment, and
+- **Last updated:** 2026-10-01 (33g cargo, treasury, equipment, and loot management)
+- **Latest completed slices:** 33g management (equipment catalog/class still pending),
+  33i1, company encounter assessment, and
   33f3, camp specialists (built in parallel); 33f2, expedition specialists; 33f1, skill
   and charm retirement; 33e,
   automatic class abilities; 33d, allied
@@ -15,6 +16,16 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**33g management complete:** pooled treasury (owner choice), shared
+instance-preserving cargo, explicit equipment assignment/removal/comparison,
+claimed/public loot windows and opt-in autoloot. Equipment presets removed at
+the owner's request. Durable equipment journals and cargo migration protect
+restart recovery. Browser controls, indexed help, and tutorial hints updated.
+See [design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md) and
+[plan](plans/2026-10-01-phase-33g-equipment.md). Independent review and
+required checks passed;
+equipment catalog, tiers, and Glaivewarden are not shipped by this slice.
 
 **Equipment design approved:** [weapon families, six tiers, armor paths, and
 Glaivewarden](designs/2026-10-01-equipment-tiers-glaivewarden-design.md) records
@@ -33,7 +44,9 @@ recommended defaults without further confirmation (2026-10-01). 33a–33d are
 complete; 33e (automatic class abilities) and **33f1 (skill and charm
 retirement)**, **33f2 (expedition specialists)**, and **33f3 (camp
 specialists)** are complete, so 33f is done; **33i1 (group assessment)**
-is complete too (33i2 remains); 33g and 33h await the cargo phase and 30g4. Phase 30g3 is also complete;
+is complete too (33i2 remains); 33g management and its cargo prerequisite are
+complete, reviewed and verified. Equipment
+catalog/Glaivewarden delivery and 33h remain. Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
@@ -207,12 +220,48 @@ delegated to the lead. 33a–33e are complete.
 | 33d | Multiplayer Parties and Allied Companies | Complete: [design](designs/2026-10-01-phase-33d-allied-companies-design.md), [plan](plans/2026-10-01-phase-33d-allied-companies.md); durable alliances, explicit consent, contribution-based XP, fixed shared loot claims and independent company authority |
 | 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
 | 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 complete ([plan](plans/2026-10-01-phase-33f3-camp-specialists.md)): camp raids and Camp Watch, Field Smith, Vigil, Forage, `camp cook` |
-| 33g | Company Equipment, Loadouts, and Loot | Future design: [proposal](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); implementation not started |
+| 33g | Company Equipment and Loot | Management/cargo/treasury complete; reviewed and verified. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); presets removed by owner. Catalog/Glaivewarden remain separate slices. |
 | 33h | Company Progression, Rewards, and Expedition Continuity | Future design: [proposal](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md); implementation not started |
 | 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles) not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33g: cargo, treasury, equipment, and loot management (2026-10-01)
+
+- **Integration:** owner authorized merging the reviewed management slice
+  (`cf8434f1`) to `master` and pushing to `origin`; no gameplay changes after
+  the final verification below.
+- **Owner choices:** pool carried gold into one treasury; exclude equipment
+  presets. Completed the required shared cargo prerequisite and deliberate
+  equipment management on `phase-33g-equipment`, based on origin/master
+  `022100ca`. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md)
+  and [plan](plans/2026-10-01-phase-33g-equipment.md). Equipment tiers/catalog
+  and Glaivewarden remain separate content/class delivery; 33g is not closed
+  as a whole by this management slice.
+- **Delivered:** instance-preserving shared cargo and pooled treasury, exact
+  member/item equipment assignment, removal and comparison, recoverable
+  company/user asset operations, idempotent legacy cargo migration, physical
+  pack counting, `loot` and opt-in `autoloot`, two-hour private/two-hour public
+  spoils, and battle/ownership checks. Updated real item/meal/cooking/camp
+  consumers, text and browser inventories, help and tutorial pointers.
+- **Independent full-diff review:** accepted and fixed pending-recovery incoming
+  asset loss, missing leader GMCP inventory updates, trade-in pack-capacity
+  loss, remaining name-based browser actions, and stale help/corpse claims.
+  Added shared cooking/meal coverage and a real saved-user cargo reload check.
+  Lead additionally fixed autoloot collecting foreign public spoils, stale
+  exact remove references, migration rollback markers, and spawn UUID identity.
+  Confirmed findings have regressions; no findings rejected. Follow-up reviews
+  found no production blockers. Cooking branch tests use a provider double;
+  atomic cargo replacement and the equipment/GMCP path use real implementations.
+- **Verification:** `make generate`, `make validate`, `go test -race ./...`,
+  `make js-lint JSHINT=/workspace/ashveil-env/js/node_modules/.bin/jshint`, and
+  the Chromium dock-window harness passed. Full-suite testing caught old mount
+  assertions for private inventory; updated them while preserving burden,
+  physical pack, saddle, meal, saved-cargo, reload and no-clock-advance checks.
+  Relative Markdown links and whitespace checked. No Lua changed.
+- **Retained limit:** uncollected runtime corpses disappear on restart, as the
+  engine already did; equipment and collected cargo retain their exact instances.
 
 ### Phase 33i1: company encounter assessment (2026-10-01)
 
@@ -1135,9 +1184,8 @@ keeps its own history.
   has no dedicated test. 29b2's accepted items (waiting-group order and
   `battle.Retain` unit-tested only) stand.
 
-- **Plugin persistence is a direct, non-atomic file write**
-  (`WriteStruct`/`WriteBytes`). Command state rolls back on a failed save,
-  but a partial low-level write can't be recovered.
+- **Plugin persistence uses atomic replacement** (`WriteStruct`/`WriteBytes`
+  through `util.SafeSave`). Cross-file operations still need recovery markers.
 - **Separate plugin files, no cross-file transaction.** Company, survival,
   expedition, camping, and encumbrance each persist separately. Durable
   operation IDs and applied-markers (expedition exertion, camp recovery,

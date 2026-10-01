@@ -46,6 +46,11 @@ const (
 )
 
 type Character struct {
+	CompanyCargo   bool     `yaml:"companycargo,omitempty"` // Items are shared cargo, excluded from personal burden.
+	CargoMigrated  bool     `yaml:"cargomigrated,omitempty"`
+	CompanyAssetOp string   `yaml:"companyassetop,omitempty"`
+	CargoApplied   []string `yaml:"cargoapplied,omitempty"`
+	AutoLoot       bool     `yaml:"autoloot,omitempty"`
 	// CombatWithdrawn is transient surrender/flight protection, never saved.
 	CombatWithdrawn bool `yaml:"-"`
 

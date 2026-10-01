@@ -283,7 +283,7 @@ func TestMercyExecutionAwardsAndDoesNotDoubleAlignment(t *testing.T) {
 	}
 	beforeXP := b.aria.Character.Experience
 	beforeAlign := b.aria.Character.Alignment
-	beforeGold := b.road.Gold
+	beforeGold := b.aria.Character.Gold
 	hooks.MercyTick(events.NewTurn{})
 	p := b.aria.GetPrompt()
 	require.NotNil(t, p)
@@ -292,7 +292,8 @@ func TestMercyExecutionAwardsAndDoesNotDoubleAlignment(t *testing.T) {
 	b.cmd("mercy", token)
 	assert.Greater(t, b.aria.Character.Experience, beforeXP)
 	assert.Equal(t, int(beforeAlign)-5, int(b.aria.Character.Alignment))
-	assert.Greater(t, b.road.Gold, beforeGold)
+	b.cmd("loot", "")
+	assert.Greater(t, b.aria.Character.Gold, beforeGold)
 	xp := b.aria.Character.Experience
 	gold := b.road.Gold
 	require.NoError(t, morale.AnswerMercy(7, token, "no"))

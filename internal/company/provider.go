@@ -516,3 +516,30 @@ func RelocateWithdrawal(uid, origin, destination int, ids []int) error {
 	}
 	return p.RelocateWithdrawal(uid, origin, destination, ids)
 }
+
+// AssetProvider recovers an interrupted company asset operation on the game loop.
+type AssetProvider interface{ PrepareAssets(int) error }
+
+func PrepareAssets(id int) error {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	if ap, ok := p.(AssetProvider); ok {
+		return ap.PrepareAssets(id)
+	}
+	return nil
+}
+
+type EquipmentControlProvider interface {
+	ManageEquipment(id int, verb, rest string) (bool, string)
+}
+
+func ManageEquipment(id int, verb, rest string) (bool, string) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	if ep, ok := p.(EquipmentControlProvider); ok {
+		return ep.ManageEquipment(id, verb, rest)
+	}
+	return false, ""
+}

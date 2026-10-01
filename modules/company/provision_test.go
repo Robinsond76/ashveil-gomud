@@ -15,6 +15,42 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type exactMealCargo struct {
+	*fakeCargo
+	user *users.UserRecord
+}
+
+func (c *exactMealCargo) ConsumeCargoItemUse(_ int, itm items.Item) error {
+	if c.err != nil {
+		return c.err
+	}
+	for _, current := range c.user.Character.Items {
+		if current.Equals(itm) {
+			c.user.Character.UseItem(current)
+			return nil
+		}
+	}
+	return encumbrance.ErrInsufficientCargo
+}
+
+func TestSharedMealUsesExactLarderOnceAndRefusesFailedSave(t *testing.T) {
+	m, prov, user := mealSetup(t)
+	user.Character.CompanyCargo = true
+	meal := spec(t, items.ItemSpec{ItemId: 989298, Name: "shared jerky", Uses: 1, Subtype: items.Edible, Nutrition: 90})
+	meal.UUID = uuid.New(items.UUIDItem)
+	user.Character.Items = []items.Item{meal}
+	cargo := &exactMealCargo{fakeCargo: &fakeCargo{err: assert.AnError}, user: user}
+	encumbrance.SetProvider(cargo)
+	t.Cleanup(func() { encumbrance.SetProvider(nil) })
+	assert.Contains(t, m.mealView(user, nil, mealEat), "couldn't get at")
+	assert.Empty(t, prov.fed)
+	assert.Len(t, user.Character.Items, 1)
+	cargo.err = nil
+	m.mealView(user, nil, mealEat)
+	assert.Len(t, prov.fed, 1, "only one physical serving")
+	assert.Empty(t, user.Character.Items)
+}
+
 func member(key survival.MemberKey, name string, hunger, thirst int) survival.MemberNeeds {
 	return survival.MemberNeeds{Key: key, Name: name, Needs: survival.Needs{Hunger: hunger, Thirst: thirst, Fatigue: 100}}
 }

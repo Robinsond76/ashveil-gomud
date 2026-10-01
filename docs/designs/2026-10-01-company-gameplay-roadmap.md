@@ -34,7 +34,7 @@ not reopen completed Phase 32 work. Every review recommendation maps here.
 | 33d | [Multiplayer Parties and Allied Companies](2026-10-01-phase-33d-allied-companies-design.md) | Complete (2026-10-01) |
 | 33e | [Automatic Class Abilities and Combat Roles](2026-10-01-phase-33e-automatic-class-abilities-design.md) | Complete (2026-10-01) |
 | 33f | [Company Specialists and Expedition Skills](2026-10-01-phase-33f-company-specialists-design.md) | Complete (2026-10-01): 33f1 skill and charm retirement, 33f2 expedition specialists, 33f3 camp specialists |
-| 33g | [Company Equipment, Loadouts, and Loot](2026-10-01-phase-33g-company-equipment-loot-design.md) | Future design; implementation not started |
+| 33g | [Company Equipment and Loot](2026-10-01-phase-33g-company-equipment-loot-design.md) | Management complete; reviewed and verified. Owner removed presets; catalog/class slices remain. |
 | 33h | [Company Progression, Rewards, and Expedition Continuity](2026-10-01-phase-33h-progression-recovery-continuity-design.md) | Future design; implementation not started |
 | 33i | [Company Encounter Assessment and Enemy Roles](2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) | 33i1 group assessment complete (2026-10-01); 33i2 coordinated enemies not started |
 
@@ -105,7 +105,7 @@ execution plan. Phase 32b's outstanding review is separate.
 | Shared encounters, eligibility, party ranks/following, loot claims | 33d |
 | Automatic skill repertoire, priorities, resource/action costs, refunds | 33e |
 | Retired skills and charm; specialist capabilities; no group stealth or solo scouting (owner, 2026-10-01) | 33f |
-| Treasury policy, exact item selection, presets and partial failures | 33g |
+| Pooled treasury and exact item selection settled; presets removed; durable transfer recovery | 33g |
 | Growth profiles, contracts, vitals migration, offline recovery, transports | 33h |
 | Intelligence limits, enemy roles/wounds, difficulty and balance coverage | 33i |
 

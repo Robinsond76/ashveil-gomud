@@ -141,9 +141,20 @@ func TestLegalOutOfBattleGearAndTemporaryFollower(t *testing.T) {
 	m := b.companion(1)
 	worn := len(m.Character.Equipment.GetAllItems())
 	require.Positive(t, worn)
+	original := m.Character.Equipment
 	b.cmd("ask", "Tamsin remove all")
-	assert.Empty(t, m.Character.Equipment.GetAllItems())
+	assert.Len(t, m.Character.Equipment.GetAllItems(), worn, "shared members use company commands")
 	b.cmd("ask", "Tamsin equip all")
+	assert.Len(t, m.Character.Equipment.GetAllItems(), worn)
+	for _, slot := range characters.AllSlots() {
+		if original.Get(slot).ItemId > 0 {
+			b.cmd("company", "remove #1 "+string(slot))
+		}
+	}
+	assert.Empty(t, m.Character.Equipment.GetAllItems())
+	for _, itm := range original.GetAllItems() {
+		b.cmd("company", "equip #1 "+itm.ShorthandId())
+	}
 	assert.Len(t, m.Character.Equipment.GetAllItems(), worn)
 
 	follower := mobs.NewMobById(9101, b.road.RoomId)

@@ -1,69 +1,42 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">cargo</ansi>
 
-Your company shares one pool of carrying capacity. Everything counts
-toward it by its actual weight: what you carry and wear, your pet's
-pouch, what every living companion carries and wears, and whatever sits
-in the company's shared cargo.
+All unworn items belong to company cargo, including companions' carried items.
+Buying, picking up and receiving items puts them there. Items keep their exact
+identity, enchantments, uses, quest marks and sharpened edges. A partly used
+item keeps its uses.
 
-<ansi fg="yellow-bold">How much you can carry</ansi>
+Your company has one weight limit: worn equipment, cargo and your pet's pouch.
+Living members contribute 20 kg each plus half a kilogram per adjusted Strength.
+An absent companion contributes their base share without live Strength.
 
-Every member of the company carries a share:
+The largest available packs add capacity, one physical pack per living member:
+a satchel adds 5 kg, a traveller's pack 10 kg, and a frame pack 15 kg.
+Extra packs add weight. A pack horse carries 40 kg, or 100 kg with a pack saddle
+(help mount).
+A fallen companion contributes nothing; recruiting and dismissal change capacity.
 
-  - 20 kg each, plus half a kilogram for every point of Strength
-    (a companion who isn't out with you right now carries the 20 kg
-    and their pack, without the Strength).
-  - One pack each: a satchel adds 5 kg, a traveller's pack 10 kg, and
-    a frame pack 15 kg. A second pack on the same member is only
-    weight. Every new character starts with a satchel; give a pack to
-    a companion to raise their share.
-  - Horses add their own (<ansi fg="command">help mount</ansi>): a pack horse carries 40 kg,
-    or 100 kg with a pack saddle.
+At full capacity you cannot obtain more weight. Selling, dropping and eating
+free space. Moving gear between worn slots and cargo does not add company weight.
+Walking is never blocked, even if you lose a member and become overloaded.
+Past 75% of capacity, route duration rises 10% and walking fatigue 8%; past 90%,
+25% and 15%; at full capacity, 50% and 30%.
 
-A fallen companion carries nothing.
-Recruiting raises your capacity; dismissing lowers it.
+In combat, shared cargo does not count against any member's personal burden.
+Only worn equipment weighs on company members' dodge (help burden).
+No items can be used or assigned during a fight.
 
-<ansi fg="yellow-bold">When you're full</ansi>
+  cargo
+  Shows weight, capacity, modifiers and contents.
+  company equipment
+  Shows exact item references; company equip assigns worn gear.
+  company inventory
+  Shows every member's worn gear, horses, cargo and treasury.
+  company meal
+  Feeds the company from shared supplies.
 
-At full capacity nobody can pick up, buy, or be handed anything more
-until something is dropped, sold, or eaten. Walking is never blocked:
-if a companion leaves and you're suddenly over, you can still walk,
-only slowly. Moving things between your pack and the cargo, and giving
-to your own companions, never changes the total, so they always work.
+cargo put/take are retained as guidance: there is no separate personal backpack
+to move items into or out of. In Company > Inventory, select cargo items directly
+for comparisons, assignments and use outside battle.
 
-<ansi fg="yellow-bold">In a fight</ansi>
-
-Capacity is for the road. In a fight only your own load counts: what
-you wear and carry yourself, against your Strength. Packs' extra room,
-horses, and the cargo never lighten it, though stowing something in the
-cargo takes it off your back (<ansi fg="command">help burden</ansi>).
-
-<ansi fg="yellow-bold">Being heavily loaded</ansi>
-
-Past three quarters of capacity, journeys along a route take a little
-longer and walking strains everyone a little more
-(<ansi fg="command">help strain</ansi>); past nine tenths, noticeably more; at or over full
-capacity, a lot more. A lightly loaded company never goes faster than
-its ordinary pace.
-
-<ansi fg="yellow-bold">Usage:</ansi>
-
-  <ansi fg="command">cargo</ansi>
-  Your load against capacity, split between you, your companions, and
-  the cargo; the capacity split between the members and the horses;
-  any travel or strain penalty in effect; and what's in the cargo.
-
-  <ansi fg="command">cargo put [item]</ansi>
-  Moves an item from your pack into the shared cargo.
-
-  <ansi fg="command">cargo take [item]</ansi>
-  Moves an item from the cargo back into your pack.
-
-A partly used item keeps its uses in the cargo: put in a waterskin with
-three drinks left and it comes back out with three. The company eats
-and drinks from the cargo first (<ansi fg="command">help company meal</ansi>).
-
-In the web client, Company > Inventory shows the cargo; click an item to
-put it in or take it out (<ansi fg="command">help webclient</ansi>).
-
-See also: <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help encumbrance</ansi>,
-<ansi fg="command">help strain</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help company</ansi>.
+See also: <ansi fg="command">help equipment</ansi>, <ansi fg="command">help company inventory</ansi>,
+<ansi fg="command">help treasury</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help webclient</ansi>.

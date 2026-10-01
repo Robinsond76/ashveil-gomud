@@ -225,6 +225,12 @@ type ItemOwnership struct {
 
 func (i ItemOwnership) Type() string { return `ItemOwnership` }
 
+// CompanyAssetsChanged reports a committed shared inventory/treasury change.
+// It refreshes the leader's view without pretending they equipped companion gear.
+type CompanyAssetsChanged struct{ UserId int }
+
+func (i CompanyAssetsChanged) Type() string { return `CompanyAssetsChanged` }
+
 // Triggered by a script
 type ScriptedEvent struct {
 	Name string

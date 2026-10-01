@@ -25,8 +25,10 @@ const (
 // PersonalGrams weighs everything the character wears and carries.
 func (c *Character) PersonalGrams() int {
 	total := 0
-	for i := range c.Items {
-		total += c.Items[i].Weight()
+	if !c.CompanyCargo {
+		for i := range c.Items {
+			total += c.Items[i].Weight()
+		}
 	}
 	for _, itm := range c.Equipment.GetAllItems() {
 		total += itm.Weight()

@@ -52,7 +52,11 @@ func buildInventoryPanel(user *users.UserRecord, itemList []items.Item, searchin
 		// The count "(n)" is right-aligned on the second line prefix; weight
 		// is the only limit (Phase 32f), shown in the load lines above.
 		count := fmt.Sprintf(`(%d)`, len(itemList))
-		sb.WriteString(` Carrying: `)
+		if c.CompanyCargo {
+			sb.WriteString(` Cargo: `)
+		} else {
+			sb.WriteString(` Carrying: `)
+		}
 		lineLen := 0
 		lineNum := 1
 		for i, item := range itemList {
@@ -87,7 +91,11 @@ func buildInventoryPanel(user *users.UserRecord, itemList []items.Item, searchin
 	} else {
 		// Searching: show "Found in your bag:" with each match on its own line.
 		sb.WriteString(term.CRLFStr)
-		sb.WriteString(` Found in your bag: `)
+		if c.CompanyCargo {
+			sb.WriteString(` Found in company cargo: `)
+		} else {
+			sb.WriteString(` Found in your bag: `)
+		}
 		for _, item := range itemList {
 			sb.WriteString(formatInventoryItemName(item))
 			sb.WriteString(term.CRLFStr)

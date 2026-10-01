@@ -83,7 +83,7 @@ players, <ansi fg="command">party</ansi> lists them as Company.
   good.
 
   <ansi fg="command">company gear [member]</ansi>
-  What a companion is wearing and carrying.
+  What a companion is wearing; unworn items are shared cargo.
 
   <ansi fg="command">company inventory</ansi>
   Everything the whole company carries, its horses, and the cargo
@@ -153,3 +153,6 @@ then attempts to move the company together. See <ansi fg="command">help retreat<
 
 For player alliances and opt-in following/support, see <ansi fg="command">help party</ansi>.
 See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help chemistry</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help resurrect</ansi>.
+
+Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
+Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.

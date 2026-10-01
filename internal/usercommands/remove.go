@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/company"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -11,6 +12,10 @@ import (
 )
 
 func Remove(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if handled, text := company.ManageEquipment(user.UserId, "remove", rest); handled {
+		user.SendText(text)
+		return true, nil
+	}
 
 	// Ashveil Phase 32d: a battle plays out as it was set up.
 	if InBattle(user) {

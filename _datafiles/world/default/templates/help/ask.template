@@ -7,13 +7,12 @@ For a living follower beside you, safe compatibility orders are:
   <ansi fg="command">ask [member] to say [words]</ansi>
   <ansi fg="command">ask [member] to look</ansi>
   <ansi fg="command">ask [member] to emote [words]</ansi>
-  <ansi fg="command">ask [member] to equip [item]</ansi>
-  <ansi fg="command">ask [member] to remove [item]</ansi>
   <ansi fg="command">ask [member] to get [item]</ansi>
-  <ansi fg="command">ask [member] to drop [item]</ansi>
-  <ansi fg="command">ask [member] to give [item] [recipient]</ansi>
-  <ansi fg="command">ask [member] to eat [item]</ansi>
-  <ansi fg="command">ask [member] to drink [item]</ansi>
+
+Company companions share cargo and treasury. Their pickup goes there.
+Use company equip/remove for equipment, company meal for provisions, and
+the leader's give/drop commands for transfers. Companion equip/remove,
+drop/give and eat/drink compatibility orders are refused in shared mode.
 
 Equipment, inventory changes and consumables are refused during a battle.
 Conversation and observation remain available. Orders check ownership,

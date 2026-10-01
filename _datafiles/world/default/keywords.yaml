@@ -34,6 +34,10 @@ help:
       - archetype
     company:
       - company
+      - equipment
+      - gearup
+      - loot
+      - treasury
       - company-inventory
       - company-meal
       - friendly-effects
@@ -203,6 +207,9 @@ help:
 # Aliases for keywords when typing: help <keyword>
 # Key is the target keyword, value is the list of aliases
 help-aliases:
+  equipment: [company-equipment, company equip, company remove, company compare]
+  treasury: [company-treasury, company treasury]
+  loot: [autoloot, company-loot]
   morale: [nerve, hesitation, temperament]
   retreat: [flee, withdrawal, company-withdrawal, escape]
   mercy: [surrender, surrendered, yield, yielding, execution]

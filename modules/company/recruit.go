@@ -305,7 +305,7 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 	return text + ` Place them with "formation move".`, nil
 }
 
-func nativeSaveUser(user *users.UserRecord) error { return users.SaveUser(*user) }
+func nativeSaveUser(user *users.UserRecord) error { return users.SaveUserAtomic(*user) }
 
 var _ domain.RecruiterViewProvider = (*CompanyModule)(nil)
 

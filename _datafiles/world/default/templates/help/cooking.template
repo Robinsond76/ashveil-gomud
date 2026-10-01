@@ -36,8 +36,8 @@ The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train
 
   <ansi fg="command">camp cook</ansi>
   At your own camp with its fire lit, cooks the same three meals, the
-  first your Cooking allows, from what your pack and the company cargo
-  hold (your pack first). The meal goes into the cargo. A ranger's forage
+  first your Cooking allows, from company cargo. The meal goes into the
+  same cargo. A ranger's forage
   fills the cargo with meat and thyme (<ansi fg="command">help forage</ansi>). You can't cook
   in a fight.
 

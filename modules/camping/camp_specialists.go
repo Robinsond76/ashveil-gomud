@@ -593,8 +593,10 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 	}
 	// The ingredients to hand: pack items, then cargo stacks.
 	have := map[int]int{}
-	for _, itm := range user.Character.Items {
-		have[itm.ItemId]++
+	if !user.Character.CompanyCargo {
+		for _, itm := range user.Character.Items {
+			have[itm.ItemId]++
+		}
 	}
 	cargo := map[int]int{}
 	for _, s := range encumbrance.CargoContents(user.UserId) {
@@ -663,6 +665,12 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 	}
 	if text, refuse := encumbrance.TooMuchToCarry(user.UserId, dishGrams-inputGrams); refuse {
 		return text
+	}
+	if user.Character.CompanyCargo {
+		if err := encumbrance.TransformCargo(user.UserId, fromPack, []items.Item{items.New(chosen.Output)}); err != nil {
+			return "The ingredients couldn't be saved; nothing was cooked."
+		}
+		return fmt.Sprintf("You cook %s over the campfire; it goes into company cargo.", itemName(chosen.Output))
 	}
 	// Take from the cargo first, putting back what was taken if any of it
 	// fails, so a failed save never eats ingredients (33f3 review).

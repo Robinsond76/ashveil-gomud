@@ -10,6 +10,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
@@ -99,6 +100,8 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	require.NotNil(t, module)
 	t.Cleanup(plugins.SnapshotLoadStateForTest())
 	plugins.Load(dataDir)
+	// Retain regression coverage for the optional-module-disabled legacy route.
+	encumbrance.SetProvider(nil)
 	require.NoError(t, module.loadErr)
 
 	users.ResetActiveUsers()

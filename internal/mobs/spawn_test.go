@@ -67,3 +67,24 @@ func TestNewMobByIdNoEliteNeverRollsElite(t *testing.T) {
 		assert.Equal(t, want, mob.Character.Level)
 	}
 }
+
+func TestSpawnedItemsHaveDistinctIdentityFromSavedTemplate(t *testing.T) {
+	loadShippedPronounData(t)
+	template := &Mob{MobId: 990003, Character: *characters.New()}
+	spec := &items.ItemSpec{ItemId: 989733, Name: "identity blade", Type: items.Weapon, Hands: 1}
+	items.SetTestItemSpec(spec)
+	t.Cleanup(func() { items.RemoveTestItemSpec(spec.ItemId) })
+	template.Character.Level = 1
+	template.Character.Items = []items.Item{items.New(spec.ItemId)}
+	template.Character.RaceId = 1
+	template.Character.Equipment.Weapon = items.New(spec.ItemId)
+	withTemplate(t, template)
+	a, b := NewMobById(990003, 1), NewMobById(990003, 1)
+	require.NotNil(t, a)
+	require.NotNil(t, b)
+	t.Cleanup(func() { DestroyInstance(a.InstanceId); DestroyInstance(b.InstanceId) })
+	assert.NotEqual(t, template.Character.Items[0].UUID, a.Character.Items[0].UUID)
+	assert.NotEqual(t, a.Character.Items[0].UUID, b.Character.Items[0].UUID)
+	assert.NotEqual(t, template.Character.Equipment.Weapon.UUID, a.Character.Equipment.Weapon.UUID)
+	assert.NotEqual(t, a.Character.Equipment.Weapon.UUID, b.Character.Equipment.Weapon.UUID)
+}

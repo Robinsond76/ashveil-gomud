@@ -29,7 +29,7 @@ func InBattle(u *users.UserRecord) bool {
 
 func Management(command string) bool {
 	switch command {
-	case "equip", "remove", "gearup", "eat", "drink", "use", "give", "get", "drop", "put", "alchemy":
+	case "equip", "remove", "gearup", "eat", "drink", "use", "give", "get", "drop", "put", "alchemy", "loot":
 		return true
 	}
 	return false
@@ -68,6 +68,9 @@ func Member(order events.MemberOrder, m *mobs.Mob, command string) string {
 	if Management(command) && (InBattle(u) || m.Character.Aggro != nil) {
 		return BattleUnderWay
 	}
+	if member && u.Character.CompanyCargo && (command == "equip" || command == "remove" || command == "eat" || command == "drink" || command == "give" || command == "drop") {
+		return "Use company equip/remove for gear and company meal for supplies from shared cargo."
+	}
 	switch command {
 	case "say", "look", "emote", "give", "get", "drop", "equip", "remove", "eat", "drink":
 		return ""
@@ -92,6 +95,9 @@ func scripted(order events.MemberOrder, m *mobs.Mob, command string) string {
 	}
 	if Management(command) && (InBattle(users.GetByUserId(order.UserID)) || m.Character.Aggro != nil) {
 		return BattleUnderWay
+	}
+	if u := users.GetByUserId(order.UserID); member && u != nil && u.Character.CompanyCargo && (command == "equip" || command == "remove" || command == "eat" || command == "drink" || command == "give" || command == "drop") {
+		return "Use company management for shared cargo and equipment."
 	}
 	return ""
 }

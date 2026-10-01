@@ -1,0 +1,7 @@
+<ansi fg="magenta">Help for </ansi><ansi fg="command">gearup</ansi>
+
+Equipment assignment is deliberate. gearup and equip all direct you to
+company compare [member] [item] and company equip [member] [item].
+Price alone cannot choose the right gear for a healer, guardian or reach fighter.
+No automatic company upgrades or equipment presets are available.
+See <ansi fg="command">help equipment</ansi>.

@@ -8,9 +8,9 @@ It shows:
 
   - The company's load against its capacity, and how much of that the
     horses carry (<ansi fg="command">help cargo</ansi>).
-  - Each member in turn, you first: the weight of what they wear and
-    carry, the pack that counts toward their share, what they're
-    wearing, and what they're carrying. A partly used item shows its
+  - Each member in turn, you first: the weight of their worn gear, and what they are
+    wearing. All unworn items appear once in shared cargo with exact item
+    references. A partly used item shows its
     uses left, like <ansi fg="yellow">waterskin (3 of 5)</ansi>.
   - A fallen companion, whose gear stays with the body until they're
     raised (<ansi fg="command">help resurrect</ansi>).
@@ -25,3 +25,6 @@ item sends these commands for you (<ansi fg="command">help webclient</ansi>).
 
 See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help company meal</ansi>,
 <ansi fg="command">help company</ansi>, <ansi fg="command">help inventory</ansi>.
+
+Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
+Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.

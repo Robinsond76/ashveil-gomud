@@ -3,6 +3,8 @@ package company
 
 import (
 	"errors"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"strings"
 )
 
@@ -71,7 +73,19 @@ func (c Companion) Identity() Identity {
 	return Identity{Name: c.Name, Description: c.Description}
 }
 
+// AssetOperation is a write-ahead record. Company gear is saved with this
+// resulting leader state before the user file is changed. The user stores ID
+// with its assets, making replay idempotent even if clearing this record fails.
+type AssetOperation struct {
+	ID        string          `yaml:"id"`
+	Items     []items.Item    `yaml:"items"`
+	Equipment characters.Worn `yaml:"equipment"`
+	Gold      int             `yaml:"gold"`
+}
+
 type Record struct {
+	AssetOperation *AssetOperation `yaml:"asset_operation,omitempty"`
+
 	MercyPending    []MercyEffect `yaml:"mercy_pending,omitempty"`
 	LeaderUserID    int           `yaml:"leader_user_id"`
 	Companions      []Companion   `yaml:"companions"`
@@ -145,6 +159,12 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	if !ok {
 		return Record{}, false
 	}
+	if record.AssetOperation != nil {
+		op := *record.AssetOperation
+		st := MemberState{Items: op.Items, Equipment: op.Equipment}.Clone()
+		op.Items, op.Equipment = st.Items, st.Equipment
+		record.AssetOperation = &op
+	}
 	record.Companions = append([]Companion(nil), record.Companions...)
 	record.MercyPending = append([]MercyEffect(nil), record.MercyPending...)
 	if record.AppliedOps != nil {
@@ -207,7 +227,7 @@ func (r *Registry) Put(record Record) {
 	valid := validMemberKeys(record)
 	record.Formation.Prune(valid)
 	record.Service = pruneService(record.Service, valid)
-	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 && len(record.Lost) == 0 && len(record.Rosters) == 0 && len(record.MercyPending) == 0 {
+	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 && len(record.Lost) == 0 && len(record.Rosters) == 0 && len(record.MercyPending) == 0 && record.AssetOperation == nil {
 		delete(r.Companies, record.LeaderUserID)
 		return
 	}

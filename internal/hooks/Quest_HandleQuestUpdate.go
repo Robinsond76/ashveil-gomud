@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -29,6 +30,9 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 	}
 
 	//mudlog.Debug(`Event`, `type`, evt.Type(), `UserId`, evt.UserId, `QuestToken`, evt.QuestToken)
+	if err := company.PrepareAssets(evt.UserId); err != nil {
+		return events.CancelAndRequeue
+	}
 
 	// Give them a token
 	remove := false

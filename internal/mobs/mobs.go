@@ -3,6 +3,7 @@ package mobs
 import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/uuid"
 	"math"
 	"os"
 	"path/filepath"
@@ -236,6 +237,7 @@ func newMobById(mobId MobId, homeRoomId int, allowElite bool, forceLevel ...int)
 		mob.Character.Buffs = buffs.New()
 
 		for idx, _ := range mob.Character.Items {
+			mob.Character.Items[idx].UUID = uuid.New(items.UUIDItem)
 			mob.Character.Items[idx].Validate()
 		}
 
@@ -248,6 +250,9 @@ func newMobById(mobId MobId, homeRoomId int, allowElite bool, forceLevel ...int)
 		}
 
 		for _, slot := range characters.AllSlots() {
+			if itm := mob.Character.Equipment.Get(slot); itm.ItemId > 0 {
+				itm.UUID = uuid.New(items.UUIDItem)
+			}
 			mob.Character.Equipment.Get(slot).Validate()
 		}
 

@@ -1,6 +1,7 @@
 package camping
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +20,64 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 )
+
+type sharedRecipeCargo struct {
+	*fakeCargo
+	user   *users.UserRecord
+	err    error
+	inputs []items.Item
+}
+
+func (c *sharedRecipeCargo) CargoContents(int) []encumbrance.CargoStack {
+	var out []encumbrance.CargoStack
+	for _, itm := range c.user.Character.Items {
+		out = append(out, encumbrance.CargoStack{ItemId: itm.ItemId, Count: 1})
+	}
+	return out
+}
+
+func (c *sharedRecipeCargo) TransformCargo(_ int, inputs, outputs []items.Item) error {
+	c.inputs = inputs
+	if c.err != nil {
+		return c.err
+	}
+	for _, itm := range inputs {
+		if !c.user.Character.RemoveItem(itm) {
+			return encumbrance.ErrInsufficientCargo
+		}
+	}
+	c.user.Character.Items = append(c.user.Character.Items, outputs...)
+	return nil
+}
+
+func TestSharedCampCookCountsRepeatedIngredientsOnceAndHandlesSaveFailure(t *testing.T) {
+	forageSpecs(t)
+	w := newRaidWorld(t, 0)
+	w.m.inBattle = func(int) bool { return false }
+	w.m.campCfg.Recipes = []campRecipe{{Output: 30020, Inputs: []int{29, 29, 30018}}}
+	w.user.Character.CompanyCargo = true
+	a, b, herb := items.New(29), items.New(29), items.New(30018)
+	cargo := &sharedRecipeCargo{fakeCargo: newFakeCargo(100000), user: w.user}
+	encumbrance.SetProvider(cargo)
+	t.Cleanup(func() { encumbrance.SetProvider(nil) })
+	w.user.Character.Items = []items.Item{a, herb}
+	assert.Contains(t, w.m.cook(w.user, w.room), "nothing to cook", "one meat isn't counted through two inventory paths")
+	assert.Len(t, w.user.Character.Items, 2)
+	w.user.Character.Items = []items.Item{a, b, herb}
+	cargo.err = errors.New("atomic save failed")
+	assert.Contains(t, w.m.cook(w.user, w.room), "nothing was cooked")
+	assert.Len(t, w.user.Character.Items, 3)
+	assert.Len(t, cargo.inputs, 3)
+	assert.NotEqual(t, cargo.inputs[0].UUID, cargo.inputs[1].UUID)
+	cargo.err = nil
+	messages := captureMessages(t)
+	_, err := w.m.userCommand("cook", w.user, w.room, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.Join(*messages, ""), "company cargo")
+	require.Len(t, w.user.Character.Items, 1)
+	assert.Equal(t, 30020, w.user.Character.Items[0].ItemId)
+}
 
 // fakeCargo is an encumbrance provider with a cargo and a capacity, keeping
 // deposit operations once, as the real module does.

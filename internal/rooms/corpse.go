@@ -7,7 +7,8 @@ import (
 )
 
 type Corpse struct {
-	ClaimUserId  int // Shared battle loot belongs to this deterministic claimant; 0 is unclaimed.
+	BattleSpoils bool // Two game hours reserved, two public, then expired.
+	ClaimUserId  int  // Shared battle loot belongs to this deterministic claimant; 0 is unclaimed.
 	UserId       int
 	MobId        int
 	Character    characters.Character
@@ -23,6 +24,9 @@ func (c *Corpse) Update(roundNow uint64, decayRate string) {
 		return
 	}
 
+	if c.BattleSpoils {
+		decayRate = "4 hours"
+	}
 	if decayRate == `` {
 		decayRate = `1 week`
 	}
@@ -63,4 +67,19 @@ func (c *Corpse) FindItem(itemName string) (items.Item, bool) {
 
 func (c *Corpse) HasItems() bool {
 	return len(c.Items) > 0 || c.Gold > 0
+}
+
+// CanLoot enforces claim and expiry at access time, without relying on cleanup.
+func (c *Corpse) CanLoot(userID int, round uint64) bool {
+	if c.Prunable {
+		return false
+	}
+	if !c.BattleSpoils {
+		return c.ClaimUserId == 0 || c.ClaimUserId == userID
+	}
+	date := gametime.GetDate(c.RoundCreated)
+	if round >= date.AddPeriod("4 hours") {
+		return false
+	}
+	return c.ClaimUserId == userID || round >= date.AddPeriod("2 hours")
 }

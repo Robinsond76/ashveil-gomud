@@ -35,12 +35,11 @@ button in them just types a command for you.
 
 <ansi fg="yellow-bold">What the buttons and menus send</ansi>
 
-  Inventory: click one of your items to look at it, put it in the cargo
-  (<ansi fg="command">cargo put</ansi>), give it to a companion with you (<ansi fg="command">give</ansi>), or eat, drink,
-  equip, or remove it; click a cargo stack to take one (<ansi fg="command">cargo take</ansi>,
-  a partly used one first); click a horse
-  to fit or take off a saddle, or release it (it asks first). Meal, Eat,
-  and Drink feed everyone with you (<ansi fg="command">company meal</ansi>).
+  Inventory: click cargo gear to compare or equip a living member.
+  Click worn gear to return it to cargo. Eat, drink and use items from
+  shared cargo outside battle. The treasury and optional autoloot control
+  are shown here. cargo put and cargo take now explain shared cargo;
+  company meal feeds the band. See help equipment and help loot.
 
   Camp: Make camp, Light fire, Rest, Break camp, and Inn appear only
   when they would work (<ansi fg="command">camp</ansi>, <ansi fg="command">inn</ansi>); Meal is always there.
@@ -100,3 +99,6 @@ button in them just types a command for you.
 
 See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help camp</ansi>,
 <ansi fg="command">help strategy</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help scout</ansi>.
+
+Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
+Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.

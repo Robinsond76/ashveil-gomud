@@ -116,7 +116,19 @@ await page.waitForTimeout(50);
 check(await page.evaluate(() => document.getElementById('gw-item-tooltip').textContent.includes('Weight1.0 kg')), 'an item\'s tooltip carries its weight');
 await page.click('.gw-bp-row');
 await page.getByText('drink waterskin').click();
-check((await page.evaluate(() => window.sent)).includes('drink waterskin'), 'the gear menus still send their commands');
+check((await page.evaluate(() => window.sent)).includes('drink !2:water'), 'the gear menus use the exact item reference');
+for (const [verb, type, subtype] of [['eat', 'food', 'edible'], ['use', 'object', 'usable'], ['read', 'readable', '']]) {
+  await page.evaluate(({type, subtype}) => {
+    window.sent = [];
+    window.gmcp('Char.Inventory', { Worn: {}, Backpack: { items: [
+      {id: '!3:first', name: 'same supply', type, subtype, details: []},
+      {id: '!3:second', name: 'same supply', type, subtype, details: []}
+    ], Summary: {count: 2, weight_g: 500} } });
+  }, {type, subtype});
+  await page.locator('.gw-bp-row').nth(1).click();
+  await page.getByText(verb + ' same supply', {exact: true}).click();
+  check(JSON.stringify(await page.evaluate(() => window.sent)) === JSON.stringify([verb + ' !3:second']), verb + ' selects the clicked duplicate instance');
+}
 await page.getByRole('tab', { name: 'Skills' }).click();
 check(await page.evaluate(() => document.getElementById('cw-skills-tab').textContent.includes('Jobs')), 'Jobs sit under Skills');
 await page.evaluate(() => window.gmcp('Char.Pets', [{ name: 'Rex', type: 'dog', level: 2, hunger: 'full', items: [], buffs: [] }]));
@@ -205,7 +217,7 @@ await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
 await page.evaluate(i => { const x = JSON.parse(JSON.stringify(i)); x.members[0].worn[0].label = 'iron sword (sharp: 3)'; window.gmcp('Company.Inventory', x); }, inventory);
 check((await invText()).includes('iron sword (sharp: 3)'), 'the label, with its edge, as text');
 got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'sharp' }).click(); await page.getByText('remove iron sword', { exact: true }).click(); });
-check(JSON.stringify(got) === '["remove iron sword"]', 'commands use the plain name');
+check(JSON.stringify(got) === '["remove !1:sword"]', 'commands use the exact item reference');
 // Review findings 4 and 8: a menu from the keyboard; focus kept across updates.
 await page.locator('#company-inventory button.cmp-item', { hasText: 'seared meat x6' }).focus();
 await page.evaluate(() => { window.gmcp('Company.Vitals', { vitals: {}, rescue: {} }); });
@@ -213,6 +225,25 @@ await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
 check(await page.evaluate(() => document.activeElement && document.activeElement.textContent.startsWith('seared meat x6')), 'focus stays on the same item across updates');
 got = await sentNow(async () => { await page.keyboard.press('Enter'); await page.keyboard.press('Enter'); });
 check(JSON.stringify(got) === '["cargo take !3"]', 'an item\'s menu works from the keyboard');
+
+// 33g: shared cargo, exact assignments, comparison and treasury.
+const sharedInventory = JSON.parse(JSON.stringify(inventory));
+sharedInventory.shared = true;
+sharedInventory.treasury = 123;
+sharedInventory.autoloot = false;
+sharedInventory.members[1].available = true;
+sharedInventory.cargo = [...sharedInventory.members[0].carried, ...sharedInventory.cargo,
+  { ref: '!8:glaive', name: 'steel glaive', grams: 2000, count: 1, type: 'weapon', subtype: 'slashing' }];
+sharedInventory.members[0].carried = [];
+await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
+check((await invText()).includes('Company treasury: 123 gold'), 'shared treasury is visible');
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'steel glaive' }).click(); await page.getByText('Compare for Brother Oswin', { exact: true }).click(); });
+check(JSON.stringify(got) === '["company compare #1 !8:glaive"]', 'comparison names the stable member and exact cargo instance');
+got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'steel glaive' }).click(); await page.getByText('Equip Brother Oswin', { exact: true }).click(); });
+check(JSON.stringify(got) === '["company equip #1 !8:glaive"]', 'equipment assignment uses the same backend command');
+got = await sentNow(async () => { await page.locator('#company-inventory').getByRole('button', { name: 'Autoloot on', exact: true }).click(); });
+check(JSON.stringify(got) === '["autoloot on"]', 'autoloot is an explicit opt-in');
+await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
 
 // Camp: each button only when it would work.
 await page.getByRole('tab', { name: 'Camp' }).click();

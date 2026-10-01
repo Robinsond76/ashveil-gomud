@@ -1,0 +1,13 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">treasury</ansi>
+
+Your company shares one treasury. Purchases, recruits, inn stays, treatment,
+trading and gold gifts spend the same pool. company treasury shows its balance.
+Your usual gold balance is this treasury; banked gold stays in your bank account.
+
+Living companions contribute their old carried gold when company assets are
+restored. Fallen companions' retained body assets follow resurrection rules;
+when they return alive, their gold joins the pool. No gold is discarded.
+Other players' companies retain their own treasury, even in an alliance.
+Giving gold to your own companion is unnecessary: it is already company money.
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help equipment</ansi>, <ansi fg="command">help market</ansi>.

@@ -209,6 +209,9 @@ func companionIDOf(key survival.MemberKey) (int, bool) {
 // larderFor gathers what the company could eat: the cargo, each living
 // companion's own pack (live, else recorded), and the leader's pack.
 func (m *CompanyModule) larderFor(user *users.UserRecord, needs []survival.MemberNeeds) []larderItem {
+	if user.Character.CompanyCargo {
+		return packLarder(user.Character.Items, fromLeaderPack, survival.LeaderMemberKey)
+	}
 	larder := []larderItem{}
 	for _, stack := range encumbrance.CargoContents(user.UserId) {
 		spec := items.GetItemSpec(stack.ItemId)
@@ -472,6 +475,9 @@ func (m *CompanyModule) useFood(user *users.UserRecord, food larderItem) bool {
 		ownerID, _ := companionIDOf(food.Owner)
 		return m.useCompanionItem(user.UserId, ownerID, food.Item)
 	}
+	if user.Character.CompanyCargo {
+		return encumbrance.ConsumeCargoItemUse(user.UserId, food.Item) == nil
+	}
 	// The leader's pack, the way `eat` uses it.
 	for i := range user.Character.Items {
 		if user.Character.Items[i].Equals(food.Item) {
@@ -491,7 +497,7 @@ func mealLine(step mealStep, food larderItem, result survival.ProvisionResult, i
 	case fromOwnPack:
 		where = "own pack"
 	case fromLeaderPack:
-		where = "your pack"
+		where = "company cargo"
 	}
 	subject, verb := fmt.Sprintf(`<ansi fg="username">%s</ansi>`, result.Name), "eats a"
 	if step.Drink {

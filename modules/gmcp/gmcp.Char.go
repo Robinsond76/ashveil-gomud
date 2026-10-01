@@ -7,7 +7,6 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -41,6 +40,7 @@ func init() {
 
 	events.RegisterListener(events.EquipmentChange{}, g.equipmentChangeHandler)
 	events.RegisterListener(events.ItemOwnership{}, g.ownershipChangeHandler)
+	events.RegisterListener(events.CompanyAssetsChanged{}, g.companyAssetsChangeHandler)
 
 	events.RegisterListener(events.PlayerSpawn{}, g.playerSpawnHandler)
 	events.RegisterListener(events.CharacterVitalsChanged{}, g.vitalsChangedHandler)
@@ -381,6 +381,13 @@ func (g *GMCPCharModule) equipmentChangeHandler(e events.Event) events.ListenerR
 		})
 	}
 
+	return events.Continue
+}
+
+func (g *GMCPCharModule) companyAssetsChangeHandler(e events.Event) events.ListenerReturn {
+	if evt, ok := e.(events.CompanyAssetsChanged); ok && evt.UserId > 0 {
+		events.AddToQueue(GMCPCharUpdate{UserId: evt.UserId, Identifier: `Char.Inventory, Char.Stats, Char.Vitals, Char.Affects, Char.Worth`})
+	}
 	return events.Continue
 }
 
@@ -973,8 +980,9 @@ type GMCPCharModule_Payload_Inventory_Backpack struct {
 }
 
 type GMCPCharModule_Payload_Inventory_Backpack_Summary struct {
-	Count int `json:"count,omitempty"`
-	Max   int `json:"max,omitempty"`
+	Shared bool `json:"shared,omitempty"`
+	Count  int  `json:"count,omitempty"`
+	Max    int  `json:"max,omitempty"`
 	// WeightG is the player's own worn and carried gear; LoadG and
 	// CapacityG are the company's load and capacity, omitted when unknown
 	// (Phase 32g).
@@ -990,8 +998,8 @@ type GMCPCharModule_Payload_Inventory_Backpack_Summary struct {
 // backpackSummary is the backpack's header: the item count (no Max: weight
 // is the only limit, Phase 32f), the weights, and the burden word (30g3).
 func backpackSummary(user *users.UserRecord, load func(leaderUserID int) (encumbrance.Load, bool)) GMCPCharModule_Payload_Inventory_Backpack_Summary {
-	s := GMCPCharModule_Payload_Inventory_Backpack_Summary{Count: len(user.Character.Items), Burden: user.Character.BurdenWord()}
-	s.WeightG = company.InventoryMemberOf(company.LeaderMemberKey, "", company.MemberState{Items: user.Character.Items, Equipment: user.Character.Equipment}).Grams
+	s := GMCPCharModule_Payload_Inventory_Backpack_Summary{Shared: user.Character.CompanyCargo, Count: len(user.Character.Items), Burden: user.Character.BurdenWord()}
+	s.WeightG = user.Character.PersonalGrams()
 	if l, ok := load(user.UserId); ok {
 		s.LoadG, s.CapacityG = l.TotalGrams(), l.CapacityGrams
 	}
