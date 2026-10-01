@@ -77,7 +77,8 @@ button in them just types a command for you.
   "Waiting their turn", and the same lines as a list
   ("Tamsin → the captain"). Click a companion to change their role,
   target rule, or place (the battle plays out by these); the full Setup
-  is folded under the view. Flee tries to get away (<ansi fg="command">flee</ansi>).
+  is folded under the view. Retreat orders the company out
+  (<ansi fg="command">retreat</ansi>, also typed as <ansi fg="command">flee</ansi>), and the view counts down the rounds.
 
   Above the grids, the Focus buttons call a new focus for this battle
   (<ansi fg="command">company tactics focus</ansi>, <ansi fg="command">help tactics</ansi>): the current one is marked,

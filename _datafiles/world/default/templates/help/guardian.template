@@ -56,7 +56,7 @@ The battle summary counts each guardian's guards (<ansi fg="command">help battle
 In the web client, a guardian's menu in the Combat tab picks its ward, and
 the battle view shows each guardian's guards left (<ansi fg="command">help webclient</ansi>).
 
-See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
-
-Ordered withdrawal: <ansi fg="command">retreat [exit]</ansi> prepares for one round,
+Leaving a battle: <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>) prepares for one round,
 then attempts to move the company together. See <ansi fg="command">help retreat</ansi>.
+
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

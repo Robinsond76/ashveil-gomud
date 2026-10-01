@@ -31,7 +31,7 @@ func heard(t *testing.T, fn func()) string {
 	return strings.Join(got, "\n")
 }
 
-// Phase 32d: in a battle only flee takes a player out, and nothing else
+// Phase 32d: in a battle only flee (since 33c, retreat) takes a player out, and nothing else
 // typed changes it: break, eat, drink, use, equip, remove, and walking out
 // are refused and change nothing.
 func TestBattleRefusesWhatWouldChangeIt(t *testing.T) {
@@ -42,6 +42,7 @@ func TestBattleRefusesWhatWouldChangeIt(t *testing.T) {
 	room.Exits = map[string]exit.RoomExit{"north": {RoomId: 2}}
 	battle.Reset()
 	t.Cleanup(battle.Reset)
+	user.Character.RoomId = room.RoomId
 	battle.Begin(18, room.RoomId, 1, "party", []int{501})
 	user.Character.SetAggro(0, 501, characters.DefaultAttack)
 	engagement.Resume(18)
@@ -77,10 +78,10 @@ func TestBattleRefusesWhatWouldChangeIt(t *testing.T) {
 	require.Len(t, user.Character.Items, 1)
 	assert.Equal(t, 2, user.Character.Items[0].Uses, "the potion is untouched")
 
-	// Flee still works: it sets the flight.
+	// Flee still works: it orders the retreat (Phase 33c).
 	_, err := Flee("", user, room, 0)
 	require.NoError(t, err)
-	assert.Equal(t, characters.Flee, user.Character.Aggro.Type)
+	assert.Equal(t, characters.Retreat, user.Character.Aggro.Type)
 }
 
 func TestOutOfBattleTheCommandsWork(t *testing.T) {

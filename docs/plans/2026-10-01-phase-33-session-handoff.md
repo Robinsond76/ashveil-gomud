@@ -48,8 +48,8 @@ recovery. Read design, settle defaults and plan before coding.
 33c adds characters.Retreat Aggro with runtime snapshot, internal/withdrawal
 route/member/mobility rules, hooks/combat_retreat.go, selected company relocation,
 paid guardian cover, GMCP/browser countdown, and real recovery/ownership tests.
-Emergency blocked-member escape uses BeginFlight before movement; failed save
-holds leader, endBattle returns debt exactly once. Ordered retreat never sweeps
+The owner review removed emergency flee: `flee` is the retreat order, and a
+pinned member holds the company (no withdrawal separation). Ordered retreat never sweeps
 late/foreign/pet instances. Browser harness supports CHROMIUM_EXECUTABLE_PATH
 and DOCK_HARNESS_URL; system Chromium plus localhost HTTP passed all checks.
 

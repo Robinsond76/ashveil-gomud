@@ -388,8 +388,14 @@ check((await cbt()).includes('guards you, 1 guard left'), 'shown under its name'
 await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.guards = [{ key: 'companion:1', left: 0, ward: '' }]; window.gmcp('Company.Battle', x); }, battleFix);
 check(await page.getByRole('button', { name: /guards the most hurt, no guards left$/ }).count() === 1, 'none left, guarding the most hurt');
 await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
-got = await sentNow(async () => { await page.getByRole('button', { name: 'Flee' }).click(); });
-check(JSON.stringify(got) === '["flee"]', 'Flee sends flee');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Retreat' }).click(); });
+check(JSON.stringify(got) === '["retreat"]', 'Retreat sends retreat');
+check(await page.getByRole('button', { name: 'Flee' }).count() === 0, 'one way out: no separate Flee button');
+await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.retreat = { exit: 'east', rounds: 1 }; window.gmcp('Company.Battle', x); }, battleFix);
+check((await cbt()).includes('Withdrawing east (1 round remaining)'), 'the withdrawal countdown, singular');
+await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.retreat = { exit: 'east', rounds: 2 }; window.gmcp('Company.Battle', x); }, battleFix);
+check((await cbt()).includes('Withdrawing east (2 rounds remaining)'), 'the withdrawal countdown, plural');
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
 check(await page.locator('details.cbt-setup summary').count() === 1, 'Setup folds under the view');
 
 // An update: the slinger falls, the first cutthroat turns on the player.

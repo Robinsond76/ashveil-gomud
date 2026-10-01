@@ -43,9 +43,9 @@ func TestStrategyHelp(t *testing.T) {
 
 	for topic, want := range map[string]string{
 		"combat":    "help strategy",
-		"targeting": "retreat [exit] withdraws the company",
+		"targeting": "Only retreat [exit] (or flee, the same order) takes you out",
 		"attack":    "Use retreat or flee to leave it.",
-		"flee":      "emergency personal escape",
+		"flee":      "flee [exit] works too",
 		"break":     "is refused",
 		"cast":      "by their strategy",
 		"mana":      "each of your companions",

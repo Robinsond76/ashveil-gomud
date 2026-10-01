@@ -36,8 +36,8 @@ gets through also leaves a wound, from any weapon, fists and bites too:
                   fight.
   <ansi fg="yellow">Exposed</ansi>       the chance of a critical hit against it rises by 25 points
                   (from 10% to 35%, say), for 2 rounds.
-  <ansi fg="yellow">Hobbled</ansi>       cannot <ansi fg="command">flee</ansi>, even a flight already begun, and moves
-                  slowly (-3 speed), for 3 rounds.
+  <ansi fg="yellow">Hobbled</ansi>       cannot <ansi fg="command">retreat</ansi> and pins the company, even mid-order;
+                  moves slowly (-3 speed), for 3 rounds.
   <ansi fg="yellow">Burning</ansi>       2 fire damage each combat round, for 4 rounds. Water puts
                   it out.
   <ansi fg="yellow">Overloaded</ansi>    casts poorly (-30 to its chance to cast) and moves slowly

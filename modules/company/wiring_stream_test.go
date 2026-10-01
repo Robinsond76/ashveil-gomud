@@ -225,7 +225,7 @@ func TestFleeBreaksTheFightOff(t *testing.T) {
 	for i := 0; i < 40 && !fled; i++ {
 		b.aria.Character.HealthMax.Value = 1000
 		b.aria.Character.Health = 1000
-		if b.aria.Character.RoomId == b.road.RoomId && (b.aria.Character.Aggro == nil || b.aria.Character.Aggro.Type != characters.Flee) {
+		if b.aria.Character.RoomId == b.road.RoomId && (b.aria.Character.Aggro == nil || b.aria.Character.Aggro.Type != characters.Retreat) {
 			b.cmd("flee", "")
 		}
 		seen = append(seen, b.fight())

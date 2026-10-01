@@ -1,7 +1,6 @@
 package company
 
 import (
-	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -129,7 +128,7 @@ func TestRetreatFailureResumesBattleAndMobilityUsesBurdenAndWounds(t *testing.T)
 	require.Contains(t, b.cmd("retreat", "east"), "begins an ordered retreat")
 	b.fight()
 	out := b.fight()
-	assert.Contains(t, out, "ordered retreat fails")
+	assert.Contains(t, out, "retreat fails")
 	assert.Equal(t, 100, observed)
 	assert.Equal(t, b.road.RoomId, b.aria.Character.RoomId)
 	_, active := battle.Current(7)
@@ -197,27 +196,55 @@ func TestRetreatRechecksRoomScriptsDuringWithdrawal(t *testing.T) {
 	assert.Equal(t, b.road.RoomId, b.aria.Character.RoomId)
 }
 
-func TestEmergencySeparationSaveFailureHoldsLeader(t *testing.T) {
+// Phase 33c owner review: flee is the retreat order. Every active foe of
+// the battle pursues, even with all of them striking a companion, so a
+// back-row leader no longer slips away for certain.
+func TestFleeIsTheRetreatOrderAndEveryBattleFoePursues(t *testing.T) {
 	b := retreatBrawl(t)
-	loadStatusBuffs(t)
-	m := b.companion(1)
-	require.NoError(t, m.Character.AddBuff(status.Hobbled, false))
-	previous := module.store
-	store := &fakeStore{saveErr: errors.New("disk full")}
-	module.store = store
-	t.Cleanup(func() { module.store = previous })
-	// Hold all pursuers' blows and avoid the emergency escape's random contest.
 	for _, foe := range b.livingBandits() {
 		foe.Character.SetAggro(0, b.companion(4).InstanceId, characters.DefaultAttack)
 	}
-	b.cmd("flee", "")
+	observed := 0
+	t.Cleanup(hooks.UseRetreatRollForTest(func(n int) int { observed = n; return 99 }))
+	assert.Contains(t, b.cmd("flee", ""), "begins an ordered retreat")
+	require.Equal(t, characters.Retreat, b.aria.Character.Aggro.Type)
+	assert.Contains(t, b.fight(), "gathers at the")
+	assert.Equal(t, b.road.RoomId, b.aria.Character.RoomId, "one round to prepare")
 	out := b.fight()
-	assert.Contains(t, out, "cannot save the separation")
+	assert.Equal(t, 100, observed, "the escape was contested")
+	assert.Contains(t, out, "cuts off your withdrawal")
 	assert.Equal(t, b.road.RoomId, b.aria.Character.RoomId)
-	assert.Same(t, m, mobs.GetInstance(m.InstanceId))
+	_, active := battle.Current(7)
+	assert.True(t, active)
+}
+
+// Phase 33c owner review: nobody is separated. A pinned companion holds
+// the whole company, flee included, and nobody loses loyalty or vanishes.
+func TestFleeWithPinnedMemberHoldsTheCompany(t *testing.T) {
+	b := retreatBrawl(t)
+	loadStatusBuffs(t)
+	m := b.companion(1)
 	record, _ := module.registry.Get(7)
 	member, _ := findCompanion(record, 1)
+	loyalty := member.Disposition.Loyalty
+	require.NoError(t, m.Character.AddBuff(status.Hobbled, false))
+	assert.Contains(t, b.cmd("flee", ""), "is pinned and cannot withdraw")
+	assert.NotEqual(t, characters.Retreat, b.aria.Character.Aggro.Type)
+
+	// Pinned after the order: the order lapses at the next round.
+	m.Character.RemoveBuff(status.Hobbled)
+	require.Contains(t, b.cmd("flee", ""), "begins an ordered retreat")
+	require.NoError(t, m.Character.AddBuff(status.Hobbled, false))
+	out := b.fight()
+	b.fight()
+	assert.Contains(t, out, "is pinned and cannot withdraw")
+	assert.Equal(t, b.road.RoomId, b.aria.Character.RoomId)
+	assert.Same(t, m, mobs.GetInstance(m.InstanceId), "the same companion, never separated")
+	assert.Equal(t, b.road.RoomId, m.Character.RoomId)
+	record, _ = module.registry.Get(7)
+	member, _ = findCompanion(record, 1)
 	assert.False(t, member.PendingReturn)
+	assert.Equal(t, loyalty, member.Disposition.Loyalty)
 }
 
 func TestRetreatRuntimeOrderNeverSurvivesSave(t *testing.T) {
@@ -251,32 +278,6 @@ func TestRetreatLeavesOutsidersAndTemporaryFollowersInPlace(t *testing.T) {
 	assert.Equal(t, 920102, b.aria.Character.RoomId)
 	assert.Equal(t, b.road.RoomId, other.Character.RoomId)
 	assert.Equal(t, b.road.RoomId, follower.Character.RoomId)
-}
-
-func TestEmergencyEscapeSeparatesAndRejoinsBlockedMemberOnce(t *testing.T) {
-	b := retreatBrawl(t)
-	loadStatusBuffs(t)
-	m := b.companion(1)
-	original := m.InstanceId
-	require.NoError(t, m.Character.AddBuff(status.Hobbled, false))
-	record, _ := module.registry.Get(7)
-	member, _ := findCompanion(record, 1)
-	loyalty := member.Disposition.Loyalty
-	for _, foe := range b.livingBandits() {
-		foe.Character.SetAggro(0, b.companion(4).InstanceId, characters.DefaultAttack)
-	}
-	b.cmd("flee", "")
-	out := b.fight()
-	assert.Contains(t, out, "separated in the escape")
-	assert.Equal(t, 920102, b.aria.Character.RoomId)
-	returned := b.companion(1)
-	assert.NotEqual(t, original, returned.InstanceId)
-	assert.Equal(t, 920102, returned.Character.RoomId)
-	record, _ = module.registry.Get(7)
-	member, _ = findCompanion(record, 1)
-	assert.Equal(t, loyalty-5, member.Disposition.Loyalty)
-	assert.False(t, member.PendingReturn)
-	assert.Len(t, b.aria.Character.GetCharmIds(), 4)
 }
 
 func TestWaitingGroupsDoNotAddRetreatPressure(t *testing.T) {

@@ -1,37 +1,53 @@
 <ansi fg="header">Help for retreat</ansi>
 
-retreat [exit] — withdraw your present company from its battle.
-retreat — choose the first legal visible exit in alphabetical order.
+<ansi fg="command">retreat [exit]</ansi>  withdraw your whole company from its fight through [exit].
+<ansi fg="command">retreat</ansi>         use the first open exit, in alphabetical order.
+<ansi fg="command">flee</ansi>            the same order; <ansi fg="command">flee [exit]</ansi> works too.
 
-One combat round prepares the withdrawal. The next attempts escape.
-Repeating the order keeps its countdown. A failed attempt resumes fighting.
-Your leader gives up those attacks. One available guardian can spend a guard
-and its preparation attack to cover the company: +15 percentage points.
-A chanting guardian cannot cover. Cover is lost if that guardian falls or
-leaves before the attempt. Existing guards still intercept incoming blows.
+Retreat is the only way out of a battle, and your company leaves together.
+It also ends a fight with another player. Without companions, you withdraw
+alone by the same rules. <ansi fg="command">set wimpy</ansi> orders it for you when your health
+runs low.
 
-The slowest present living member sets the company's mobility. Speed is
-reduced by personal burden (up to 60%) and lasting wounds (up to 30%).
-Against the fastest active pursuer, the chance is:
-30 + 70 × company mobility / (company mobility + pursuer mobility), plus cover.
-It stays between 30% and 95%; without pursuers the company escapes for sure.
-Waiting groups do not block your withdrawal.
+<ansi fg="yellow-bold">Two rounds</ansi>
+One combat round prepares the withdrawal; the next attempts the escape.
+Ordering it again keeps the countdown. Your own attacks stop meanwhile, but
+your companions fight on. If the attempt fails, the fight goes on, and you
+may order another retreat.
 
-A living member unable to move holds the company here. No-go/no-flee hurts,
-locks, missing exits and room permissions are rechecked each round.
-A member transferred or moved elsewhere cancels the order. Fallen companions
-stay subject to resurrection; retreat cannot revive them. Members who already
-lost nerve keep their saved return obligation, including the 5-loyalty debt.
-New arrivals, other companies, pets and temporary charms are not swept along.
+<ansi fg="yellow-bold">The chance</ansi>
+The slowest member present, you included, sets the company's mobility:
+Speed, cut by personal burden (up to 60%) and lasting wounds (up to 30%).
+Every active foe of your battle pursues, whoever it is striking; the
+fastest sets the pursuit. Groups waiting their turn do not pursue.
+  chance = 30 + 70 x mobility / (mobility + pursuit), plus cover
+It stays between 30% and 95%. With no pursuer, the company gets away.
+A failed attempt names the foe who cut you off.
 
-Successful withdrawal moves the same live members, ends your battle and clears
-its targets, casts and guards. Interrupted casts receive no retreat refund.
-Other players' battles continue. Company cargo and the herd remain the same
-owned records and follow their normal location rules; nothing is copied.
-A restart or copyover cancels the runtime order; it cannot move a saved company.
+<ansi fg="yellow-bold">Guardian cover</ansi>
+In the preparation round, one guardian with a guard left spends that guard
+and its attack to cover the withdrawal: +15 points. A chanting guardian
+cannot cover, and cover is lost if that guardian falls or is pinned before
+the attempt. Other guards still stop blows as usual (<ansi fg="command">help guardian</ansi>).
 
-flee remains emergency personal escape. Blocked living companions separate
-using the existing saved return system and rejoin when the battle ends, for
-5 loyalty. If that separation cannot be saved, you remain in the battle;
-already saved flights still rejoin once, when it ends. See help flee,
-help morale, help guardian, help burden and help company.
+<ansi fg="yellow-bold">Nobody is left behind</ansi>
+A living member who cannot move (hobbled, hamstrung, tackled, winded, or
+held by magic) pins the whole company: the order is refused, or lapses at
+the next round, and names who is pinned. These hurts last a few rounds;
+order the retreat again when they pass. The same goes for you. Locks,
+missing exits and room permissions are checked again every round, and a
+member transferred or moved elsewhere cancels the order.
+
+Fallen companions stay where they fell and keep the usual resurrection
+rules (<ansi fg="command">help resurrect</ansi>). A companion who lost nerve and fled keeps
+their saved return, as <ansi fg="command">help morale</ansi> describes. Companions who join after
+the order, other companies, and temporary charms do not come along.
+
+<ansi fg="yellow-bold">Getting away</ansi>
+A successful withdrawal moves the same companions with you, ends your
+battle, and clears its targets, chants, and guards. A chant cut short this
+way returns no mana. Other players' battles continue. Your horses and
+cargo are not in the room, so nothing about them changes. A restart or
+copyover cancels an order in progress; it never moves a saved company.
+
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help morale</ansi>, <ansi fg="command">help company</ansi>.

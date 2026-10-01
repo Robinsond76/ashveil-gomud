@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -284,20 +285,20 @@ func TestEnemyLabelsOnSecondarySurfaces(t *testing.T) {
 			m.Character.HealthMax.Value = 1000
 			m.Character.Health = 1000
 		}
-		first.Character.Stats.Speed.ValueAdj = 100000
+		first.Character.Stats.Speed.ValueAdj = 50 // the fastest pursuer
 		b.aria.Character.Stats.Speed.ValueAdj = 1
+		// Phase 33c: flee is the retreat order; the fastest pursuer is the
+		// one named when it cuts the withdrawal off.
+		t.Cleanup(hooks.UseRetreatRollForTest(func(int) int { return 99 }))
+		first.Character.SetAggro(7, 0, characters.DefaultAttack)
+		b.aria.Character.SetAggro(0, first.InstanceId, characters.DefaultAttack)
+		b.cmd("flee", "")
+		b.toughen()
+		b.fight()
+		b.toughen()
 		var blocked string
-		for i := 0; i < 30; i++ {
-			b.aria.Character.RoomId = b.road.RoomId
-			b.road.AddPlayer(7)
-			first.Character.SetAggro(7, 0, characters.DefaultAttack)
-			b.aria.Character.SetAggro(0, first.InstanceId, characters.Flee)
-			b.toughen()
-			got := b.fight()
-			if strings.Contains(got, "blocks") {
-				blocked = got
-				break
-			}
+		if got := b.fight(); strings.Contains(got, "cuts off") {
+			blocked = got
 		}
 		require.NotEmpty(t, blocked)
 		assert.Contains(t, blocked, "first cutthroat")

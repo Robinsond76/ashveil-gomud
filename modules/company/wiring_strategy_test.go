@@ -371,13 +371,11 @@ func TestInABattleOnlyFleeWorks(t *testing.T) {
 	}
 	assert.Contains(t, b.cmd("break", ""), "Use retreat or flee to leave it.")
 
-	// Flee still works (made certain: she is far quicker than they are).
-	for _, m := range b.livingBandits() {
-		m.Character.Stats.Speed.ValueAdj = 0
-	}
-	b.aria.Character.Stats.Speed.ValueAdj = 100000
-	b.cmd("flee", "")
-	assert.Contains(t, b.fight(), "You break away and flee east.")
+	// Flee still works: it is the retreat order (Phase 33c), made certain.
+	t.Cleanup(hooks.UseRetreatRollForTest(func(int) int { return 0 }))
+	b.cmd("flee", "east")
+	b.fight()
+	assert.Contains(t, b.fight(), "withdraws together east.")
 	_, inBattle := battle.Current(7)
 	assert.False(t, inBattle, "the flight ended her battle at once")
 

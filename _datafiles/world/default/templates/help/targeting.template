@@ -36,8 +36,7 @@ Once your battle starts, it plays out on its own: <ansi fg="command">attack</ans
 <ansi fg="command">backstab</ansi>, <ansi fg="command">shoot</ansi>, <ansi fg="command">break</ansi>, walking out, and changes to your
 <ansi fg="command">formation</ansi> or <ansi fg="command">strategy</ansi>, eating, drinking, <ansi fg="command">use</ansi>, <ansi fg="command">equip</ansi>, and
 <ansi fg="command">remove</ansi> are refused until it's over (type them again afterwards), and a
-waiting group's spells hold off you. When you <ansi fg="command">flee</ansi>, only your battle's group can block
-the way.
+waiting group's spells hold off you. When you <ansi fg="command">retreat</ansi>, only your battle's group pursues.
 
 <ansi fg="yellow-bold">Keeping everyone fighting</ansi>
 
@@ -80,9 +79,9 @@ then" is one pick in ten; "often" one in four; goblins about one in seven.
 
 <ansi fg="yellow-bold">Stepping out</ansi>
 
-<ansi fg="command">retreat [exit]</ansi> withdraws the company (help retreat).
-<ansi fg="command">flee</ansi> is emergency escape: it tries to run out of the room,
-and your companions follow you. A flight that gets away ends your battle.
+Only <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>, the same order) takes you out of a
+battle: one round to prepare, then the whole company tries to withdraw
+together. A withdrawal that gets away ends your battle (<ansi fg="command">help retreat</ansi>).
 (<ansi fg="command">break</ansi> still stops a fight with another player.) A fight that isn't a
 battle ends when nobody is fighting any more.
 
