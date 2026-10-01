@@ -15,8 +15,8 @@ instead of duplicating them.
 
 The expedition/company loop, onboarding, combat presentation (29a–29f),
 status effects, wounds, tactics, guardians, interrupts, wind-ups, morale
-and mercy (30a–30e), and active defense (30g2) are shipped. The Phase 32 play-test improvements are implemented;
-32b's status still carries an outstanding review note (see its retained plan).
+and mercy (30a–30e), and active defense (30g2) are shipped. The Phase 32
+play-test improvements are implemented; 32b's status still carries an outstanding review note (see its retained plan).
 
 **Next:** Phase 30g, [combat tempo, personal load, and active
 defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
@@ -50,7 +50,7 @@ command consistency, friendly-effect scopes, retreat, allied companies,
 automatic class abilities, specialists, equipment/loot, progression/recovery/
 relocation, and group assessment/coordinated enemies. These are planning
 records; implementation has not started. Proposed mechanics and defaults
-remain to be settled before coding. 30g2 remains next.
+remain to be settled before coding. 30g3 (personal load) is next.
 
 ## Phase progress
 
