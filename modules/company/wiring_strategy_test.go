@@ -252,6 +252,7 @@ func TestAClericCompanionHealsTheHurt(t *testing.T) {
 	require.NotNil(t, oswin.Character.Aggro)
 	assert.Equal(t, characters.SpellCast, oswin.Character.Aggro.Type, "Oswin chants")
 	assert.Equal(t, "heal", oswin.Character.Aggro.SpellInfo.SpellId)
+	require.NotNil(t, oswin.Character.Aggro.SpellInfo.FriendlyTargets, "automatic heals use the shared friendly-target snapshot")
 	assert.Equal(t, []int{7}, oswin.Character.Aggro.SpellInfo.TargetUserIds, "on Aria, the most hurt")
 	assert.Equal(t, 17, oswin.Character.Mana, "Minor Heal costs 3")
 	assert.Contains(t, out, "Brother Oswin begins a low prayer.", "the spell's own chant line")

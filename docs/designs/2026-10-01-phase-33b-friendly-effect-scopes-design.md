@@ -1,9 +1,6 @@
-# Phase 33b: Friendly Effects and Company Membership — Future Design
+# Phase 33b: Friendly Effects and Company Membership
 
-Status: future design, 2026-10-01. The owner endorsed the gameplay-review
-recommendations and requested these planning documents. Detailed mechanics,
-command names, migrations, and balance defaults below remain proposals;
-implementation is not started or authorized by this documentation change.
+Status: complete, 2026-10-01. The owner explicitly authorized implementation of all phase 33 slices and delegated routine choices. Adopted mechanics are recorded below and in the implementation plan.
 
 See the [company gameplay roadmap](2026-10-01-company-gameplay-roadmap.md)
 for sequencing, shared constraints, and the decision register. Code context
@@ -74,3 +71,12 @@ hub links. Explain commands, costs, eligibility, and numbers that matter;
 use `[member]` placeholders. Rendering tests and
 `TestTutorialHelpPointersExist` must pass with the implementation. Do not
 publish help claiming these future mechanics already exist.
+
+## Adopted implementation defaults (2026-10-01)
+
+The owner authorizes implementation and delegates defaults. The execution
+plan records single-member support, company group healing, fail-closed allied
+consent and helpful area membership, explicit downed-player eligibility, and
+exclusion of temporary charms/pets from company-wide effects. Helpful casts
+capture stable ownership and only prune their starting targets at completion.
+Harmful/neutral spells retain their old policies and costs.

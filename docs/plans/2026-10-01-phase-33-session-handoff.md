@@ -5,9 +5,9 @@ answers without routine confirmation. After confidence, merge to master,
 push origin, then start a new cloud session with context. If unavailable,
 compact/save context and continue here. Never claim phases not completed.
 
-33a is complete and verified; its plan/design and Project Status describe
+33a and 33b are complete and verified; its plan/design and Project Status describe
 behavior, integration tests, independent review findings/fixes and exact
-checks. Next is 33b (friendly effects), then remaining 33c–33i. Read each
+checks. Next is 33c (company retreat), then remaining 33d–33i. Read each
 design and choose scoped defaults before implementation. All designs are
 in docs/designs/2026-10-01-phase-33*. Use isolated phase worktrees, ship
 help/tutorial/integration coverage, obtain the independent reviewer required
@@ -34,5 +34,13 @@ cast and scripting/spell.go need the same membership/life/room/ownership
 resolver at start and completion, preserving wound caps. Company-only
 correctness can precede 33d consent. Do not broaden harmful/area spells or
 silently include pets/temporary charms; decide and document scope defaults.
-30g3–30g6 are not shipped; future burden/progression/action-budget changes
+30g3 is shipped (e58f20a1); 30g4–30g6 are not shipped; future burden/progression/action-budget changes
 must coordinate without claiming those phases implemented.
+
+33b uses internal/effecttargets shared target snapshots and an allied-leader
+provider seam; 33d must wire consent. Helpful area callbacks receive arrays.
+Void onCast proceeds, other successful void callbacks are recognized.
+33c can use Character.Burden and AgilityCapacityGrams from shipped30g3.
+Preserve flee as emergency escape; choose separate ordered retreat, legal exit
+checks, bounded round sequence, guard cost, and existing30e pending-return
+recovery. Read design, settle defaults and plan before coding.

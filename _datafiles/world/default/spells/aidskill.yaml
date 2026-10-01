@@ -6,3 +6,5 @@ type: helpsingle
 cost: 0
 waitrounds: 2
 difficulty: 0
+scope: member
+allowdowned: true

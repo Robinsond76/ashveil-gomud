@@ -15,7 +15,19 @@ import (
 type SpellType string
 type SpellSchool string
 
+type EffectScope string
+
+const (
+	ScopeMember  EffectScope = "member"
+	ScopeCompany EffectScope = "company"
+	ScopeAllied  EffectScope = "allied-companies"
+	ScopeArea    EffectScope = "area"
+)
+
 type SpellData struct {
+	Scope       EffectScope `yaml:"scope,omitempty"`
+	AllowDowned bool        `yaml:"allowdowned,omitempty"`
+	ExcludeSelf bool        `yaml:"excludeself,omitempty"`
 	SpellId     string      `yaml:"spellid,omitempty"`
 	Name        string      `yaml:"name,omitempty"`
 	Description string      `yaml:"description,omitempty"`
@@ -150,6 +162,22 @@ func (s *SpellData) Filepath() string {
 }
 
 func (s *SpellData) Validate() error {
+	if s.Scope != "" {
+		switch s.Scope {
+		case ScopeMember, ScopeCompany, ScopeAllied, ScopeArea:
+		default:
+			return fmt.Errorf("spell %s: unknown scope %q", s.SpellId, s.Scope)
+		}
+		if s.Type != HelpSingle && s.Type != HelpMulti && s.Type != HelpArea {
+			return fmt.Errorf("spell %s: scope is only valid for helpful effects", s.SpellId)
+		}
+		if s.Type == HelpSingle && s.Scope != ScopeMember {
+			return fmt.Errorf("spell %s: single helpful effects require member scope", s.SpellId)
+		}
+		if s.Type != HelpSingle && s.Scope == ScopeMember {
+			return fmt.Errorf("spell %s: member scope requires a single helpful effect", s.SpellId)
+		}
+	}
 
 	if s.Difficulty < 0 {
 		s.Difficulty = 0
@@ -196,4 +224,20 @@ func LoadSpellFiles() {
 
 	mudlog.Info("spells.loadAllSpells()", "loadedCount", len(allSpells), "Time Taken", time.Since(start))
 
+}
+
+// FriendlyScope maps existing content without scope metadata compatibly.
+func (s *SpellData) FriendlyScope() EffectScope {
+	if s.Scope != "" {
+		return s.Scope
+	}
+	switch s.Type {
+	case HelpSingle:
+		return ScopeMember
+	case HelpMulti:
+		return ScopeCompany
+	case HelpArea:
+		return ScopeArea
+	}
+	return ""
 }

@@ -1,0 +1,32 @@
+<ansi fg="magenta">Help for </ansi><ansi fg="command">friendly-effects</ansi>
+
+Helpful spells have a target scope. Single-target spells help the named
+member; if no name is given, they help the caster. Minor Heal All helps the
+caster's present company: its leader and attached living companions, even
+without a player party. Temporary charms and pets are not company targets.
+
+  <ansi fg="command">cast heal [member]</ansi>
+  Minor Heal costs 3 mana and restores 2 to 6 health to one patient.
+  <ansi fg="command">cast healall</ansi>
+  Minor Heal All costs 6 mana and restores 2 to 6 health to each patient.
+  Both take two rounds of chanting. Healers choose them automatically in
+  battle, with the same eligibility and costs; cast by hand outside battle.
+
+Healing stops at each patient's wound limit. Minor Heal, Minor Heal All
+and first aid can help a downed player above -10 health. A fallen companion
+needs resurrection, and cannot be healed back onto its feet. Other helpful
+spells require living targets.
+
+A chant holds its starting targets. Movement, death, dismissal, expired or
+transferred charms, and lost membership remove targets before the effect
+lands. A new arrival or newly revived member is not added during the chant.
+Moving the caster cancels that cast's target set. Mana is charged once at
+start; losing targets spends the cast, with no automatic refund.
+
+Company-wide support never automatically includes other players' companies.
+Single-target support can explicitly name another patient beside you.
+Allied/area group support requires a consent provider; absent that, it stays
+within the caster's company. Harmful spells keep their battle boundaries.
+
+See <ansi fg="command">help cast</ansi>, <ansi fg="command">help strategy</ansi>,
+<ansi fg="command">help wounds</ansi>, and <ansi fg="command">help resurrect</ansi>.

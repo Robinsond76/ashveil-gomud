@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"os"
@@ -60,6 +61,11 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 		return false, fmt.Errorf("spell %s not found", spellAggro.SpellId)
 	}
 
+	spellAggro = effecttargets.Resolve(sourceUserId, sourceMobInstanceId, spellAggro)
+	if effecttargets.Helpful(spellInfo) && len(spellAggro.TargetUserIds)+len(spellAggro.TargetMobInstanceIds) == 0 {
+		return eventName != "onCast", nil
+	}
+
 	timestart := time.Now()
 	defer func() {
 		mudlog.Debug("TrySpellScriptEvent()", "eventName", eventName, "spellId", spellAggro.SpellId, "spellRest", spellAggro.SpellRest, "TargetUsers", spellAggro.TargetUserIds, "TargetMobs", spellAggro.TargetMobInstanceIds, "time", time.Since(timestart))
@@ -104,7 +110,7 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 			return true, nil
 		}
 
-	} else if spellInfo.Type == spells.HelpMulti || spellInfo.Type == spells.HarmMulti {
+	} else if spellInfo.Type == spells.HelpMulti || spellInfo.Type == spells.HelpArea || spellInfo.Type == spells.HarmMulti {
 
 		// arg is a list of actors
 		multiTargetArg = []*ScriptActor{}
@@ -161,7 +167,8 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 		if boolVal, ok := res.Export().(bool); ok {
 			return boolVal, nil
 		}
-
+		// A void handler ran successfully; only an absent handler is missing.
+		return eventName == "onCast", nil
 	}
 
 	return false, ErrEventNotFound

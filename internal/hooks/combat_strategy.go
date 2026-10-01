@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -248,6 +249,10 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId int) {
 	sp := spells.GetSpell(spellId)
 	if sp == nil || a.char.Mana < sp.Cost {
+		return
+	}
+	info = effecttargets.Resolve(a.who.userId, a.who.mobId, info)
+	if effecttargets.Helpful(sp) && len(info.TargetUserIds)+len(info.TargetMobInstanceIds) == 0 {
 		return
 	}
 	proceed := true
