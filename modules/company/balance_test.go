@@ -11,6 +11,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -80,9 +81,12 @@ func mirrorMob(id int, name, equipment string) string {
 // attacker's round of blows (one Attack event); a hit is a turn whose blow
 // passed the to-hit roll and wasn't dodged (armor may still take all of
 // it). Damage includes overkill. Shield bashes (30d1) are counters, not
-// turns; status ticks count for the side that didn't take them.
+// turns; status ticks count for the side that didn't take them. Blocks,
+// parries, and dodges (30g2) count for the side that made them, one per
+// strike stopped.
 type balanceTally struct {
 	Turns, Hits, Crits, Misses [2]int
+	Blocks, Parries, Dodges    [2]int
 	Counters                   [2]int
 	Damage, TickDamage         [2]int
 	Healing                    [2]int
@@ -115,6 +119,16 @@ func (t *balanceTally) add(e combatstream.Event) {
 			return
 		}
 		t.Turns[s]++
+		for _, d := range e.Defenses {
+			switch d {
+			case combat.DefenseBlocked:
+				t.Blocks[1-s]++
+			case combat.DefenseParried:
+				t.Parries[1-s]++
+			case combat.DefenseDodged:
+				t.Dodges[1-s]++
+			}
+		}
 		switch e.Outcome {
 		case combatstream.OutcomeCrit:
 			t.Hits[s]++
@@ -355,7 +369,8 @@ func TestBalanceTally(t *testing.T) {
 	for _, e := range []combatstream.Event{
 		{Kind: combatstream.Attack, Source: aria, Target: blade, Outcome: combatstream.OutcomeHit, Damage: 4},
 		{Kind: combatstream.Attack, Source: tamsin, Target: blade, Outcome: combatstream.OutcomeCrit, Damage: 9},
-		{Kind: combatstream.Attack, Source: blade, Target: aria, Outcome: combatstream.OutcomeMiss},
+		{Kind: combatstream.Attack, Source: blade, Target: aria, Outcome: combatstream.OutcomeMiss, Defenses: []string{combat.DefenseParried}},
+		{Kind: combatstream.Attack, Source: aria, Target: blade, Outcome: combatstream.OutcomeMiss, Defenses: []string{combat.DefenseBlocked, combat.DefenseDodged}},
 		{Kind: combatstream.SpellHit, Source: blade, Target: tamsin, Damage: 3},
 		{Kind: combatstream.Heal, Source: tamsin, Target: aria, Amount: 5},
 		{Kind: combatstream.TargetChange, Source: blade, Target: tamsin},
@@ -365,12 +380,15 @@ func TestBalanceTally(t *testing.T) {
 	} {
 		tl.add(e)
 	}
-	assert.Equal(t, [2]int{2, 1}, tl.Turns, "a bash is no turn")
+	assert.Equal(t, [2]int{3, 1}, tl.Turns, "a bash is no turn")
+	assert.Equal(t, [2]int{0, 1}, tl.Blocks, "the blade blocked")
+	assert.Equal(t, [2]int{0, 1}, tl.Dodges)
+	assert.Equal(t, [2]int{1, 0}, tl.Parries, "Aria parried")
 	assert.Equal(t, [2]int{1, 0}, tl.Counters)
 	assert.Equal(t, [2]int{1, 0}, tl.TickDamage, "the blade's bleeding counts for the company")
 	assert.Equal(t, [2]int{2, 0}, tl.Hits)
 	assert.Equal(t, [2]int{1, 0}, tl.Crits)
-	assert.Equal(t, [2]int{0, 1}, tl.Misses)
+	assert.Equal(t, [2]int{1, 1}, tl.Misses)
 	assert.Equal(t, [2]int{16, 3}, tl.Damage, "blows, the bash, and the tick")
 	assert.Equal(t, [2]int{5, 0}, tl.Healing)
 }
@@ -420,17 +438,17 @@ func TestBalance5v5(t *testing.T) {
 	t.Logf("\n%s\n%s", balanceHeader, strings.Join(rows, "\n"))
 }
 
-const balanceHeader = "| level | company | enemy | fights | company wins | rounds p10/median/p90 | stalls | fallen company/enemy | damage company/enemy | healing company | turns per fighter-round company/enemy | hit% company/enemy | crit% company/enemy | bashes company/enemy | tick damage company/enemy |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
+const balanceHeader = "| level | company | enemy | fights | company wins | rounds p10/median/p90 | stalls | fallen company/enemy | damage company/enemy | healing company | turns per fighter-round company/enemy | hit% company/enemy | crit% company/enemy | blocks/parries/dodges company · enemy | bashes company/enemy | tick damage company/enemy |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
 
 // balanceRow is one cell's line of the table: averages are per fight.
 func balanceRow(level int, cm, em string, results []balanceResult) string {
 	n := len(results)
 	if n == 0 {
-		return fmt.Sprintf("| %d | %s | %s | 0 | | | | | | | | | | | |", level, cm, em)
+		return fmt.Sprintf("| %d | %s | %s | 0 | | | | | | | | | | | | |", level, cm, em)
 	}
 	var rounds []int
 	var wins, stalls int
-	var fallen, damage, turns, hits, crits, fighterRounds, counters, ticks [2]int
+	var fallen, damage, turns, hits, crits, fighterRounds, counters, ticks, blocks, parries, dodges [2]int
 	var healing int
 	for _, r := range results {
 		rounds = append(rounds, r.Rounds)
@@ -448,6 +466,9 @@ func balanceRow(level int, cm, em string, results []balanceResult) string {
 			crits[s] += r.Tally.Crits[s]
 			fighterRounds[s] += r.FighterRounds[s]
 			counters[s] += r.Tally.Counters[s]
+			blocks[s] += r.Tally.Blocks[s]
+			parries[s] += r.Tally.Parries[s]
+			dodges[s] += r.Tally.Dodges[s]
 			ticks[s] += r.Tally.TickDamage[s]
 		}
 		healing += r.Tally.Healing[sideCompany]
@@ -460,12 +481,13 @@ func balanceRow(level int, cm, em string, results []balanceResult) string {
 		return float64(a) / float64(b)
 	}
 	p10, p50, p90 := percentile(rounds, 10), percentile(rounds, 50), percentile(rounds, 90)
-	return fmt.Sprintf("| %d | %s | %s | %d | %.0f%% | %d/%d/%d | %d | %.1f/%.1f | %.0f/%.0f | %.0f | %.2f/%.2f | %.0f/%.0f | %.0f/%.0f | %.1f/%.1f | %.1f/%.1f |",
+	return fmt.Sprintf("| %d | %s | %s | %d | %.0f%% | %d/%d/%d | %d | %.1f/%.1f | %.0f/%.0f | %.0f | %.2f/%.2f | %.0f/%.0f | %.0f/%.0f | %.1f/%.1f/%.1f · %.1f/%.1f/%.1f | %.1f/%.1f | %.1f/%.1f |",
 		level, cm, em, n, 100*ratio(wins, n), p10, p50, p90, stalls,
 		per(fallen[0]), per(fallen[1]), per(damage[0]), per(damage[1]), per(healing),
 		ratio(turns[0], fighterRounds[0]), ratio(turns[1], fighterRounds[1]),
 		100*ratio(hits[0], turns[0]), 100*ratio(hits[1], turns[1]),
 		100*ratio(crits[0], hits[0]), 100*ratio(crits[1], hits[1]),
+		per(blocks[0]), per(parries[0]), per(dodges[0]), per(blocks[1]), per(parries[1]), per(dodges[1]),
 		per(counters[0]), per(counters[1]), per(ticks[0]), per(ticks[1]))
 }
 

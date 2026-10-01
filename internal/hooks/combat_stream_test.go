@@ -27,6 +27,7 @@ func TestAttackEvents(t *testing.T) {
 		{"a hit", combat.AttackResult{Hit: true, DamageToTarget: 4}, combatstream.OutcomeHit, false},
 		{"a critical hit", combat.AttackResult{Hit: true, Crit: true, DamageToTarget: 9}, combatstream.OutcomeCrit, true},
 		{"a backstab flag with no hit is a miss", combat.AttackResult{Crit: true}, combatstream.OutcomeMiss, false},
+		{"a blocked strike is a miss with its defense", combat.AttackResult{Defenses: []string{combat.DefenseBlocked}}, combatstream.OutcomeMiss, false},
 	}
 	for _, c := range cases {
 		got := attackEvents(src, tgt, 100, unarmed, c.result)
@@ -40,6 +41,7 @@ func TestAttackEvents(t *testing.T) {
 		assert.Equal(t, tgt, e.Target, c.name)
 		assert.Equal(t, 100, e.RoomId, c.name)
 		assert.Equal(t, "", e.WeaponType, c.name+": unarmed")
+		assert.Equal(t, c.result.Defenses, e.Defenses, c.name)
 	}
 
 	// Buffs the blow applies follow the attack, on the target, then on the

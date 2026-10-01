@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var damageSuffix = regexp.MustCompile(`\((critical hit, )?(\d+) damage(, \d+ blocked)?(, [a-z ]+)?\)`)
+var damageSuffix = regexp.MustCompile(`\((critical hit, )?(\d+) damage(, \d+ absorbed)?(, [a-z ]+)?\)`)
 
 // poolPattern matches any line of a pool of "%s" lines.
 func poolPattern(pool []string) *regexp.Regexp {

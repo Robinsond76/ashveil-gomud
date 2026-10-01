@@ -403,14 +403,15 @@ func combatPronouns(character *characters.Character, actorType SourceTarget) cha
 
 // damageSuffix is what a hit did, in words at the end of its line (Phase
 // 29c): " (5 damage)", " (critical hit, 9 damage)", and on the
-// defender's line what their armor blocked, " (5 damage, 2 blocked)".
-func damageSuffix(damage int, crit bool, blocked int, statuses ...string) string {
+// defender's line what their armor absorbed, " (5 damage, 2 absorbed)"
+// (Phase 30g2: "blocked" is a shield's now).
+func damageSuffix(damage int, crit bool, absorbed int, statuses ...string) string {
 	out := fmt.Sprintf("%d damage", damage)
 	if crit {
 		out = "critical hit, " + out
 	}
-	if blocked > 0 {
-		out += fmt.Sprintf(", %d blocked", blocked)
+	if absorbed > 0 {
+		out += fmt.Sprintf(", %d absorbed", absorbed)
 	}
 	// Phase 30a: a critical hit names the status it leaves.
 	for _, word := range statuses {

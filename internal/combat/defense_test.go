@@ -70,9 +70,9 @@ func defenseOdds(t *testing.T, block, parry, dodge int) {
 
 func TestBlockChance(t *testing.T) {
 	cases := []struct {
-		name                   string
+		name                  string
 		armor, defStr, atkStr int
-		want                   int
+		want                  int
 	}{
 		{"even Strength, buckler", 5, 50, 50, 20},
 		{"even Strength, tower shield", 10, 50, 50, 25},
