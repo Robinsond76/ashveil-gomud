@@ -248,7 +248,7 @@ after the 30g slices. Other remaining limitations are listed below.
   further. `TestJoinsTheFight` (`internal/hooks`) fails under
   `-count=3` on the 30g1 base too: a test-isolation issue, not this
   phase's.
-- **Verification:** `make generate` (no diff), `make validate`, and `make js-lint` pass; `go test -race ./...` running (recorded in the next commit).
+- **Verification** (2026-10-01, after the review fixes): `make generate` (no diff), `make validate`, `make js-lint`, and `go test -race ./...` pass (the go test exit status itself, 91 packages ok, no races). No Lua changed. While working: `go test -count=3` on `internal/combat` and the counter, status, wind-up, and pain tests of `modules/company`; the reviewer ran `internal/combat` 20 times.
 
 ### Documentation maintenance and Phase 30e preparation (2026-09-30)
 
