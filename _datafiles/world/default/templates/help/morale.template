@@ -26,3 +26,6 @@ keeps gear and wounds, returns after settlement, and loses 5 loyalty.
 At zero loyalty, the existing desertion rules apply.
 
 See also: help mercy, help chemistry, help alignment, help combat.
+
+Ordered withdrawal: <ansi fg="command">retreat [exit]</ansi> prepares for one round,
+then attempts to move the company together. See <ansi fg="command">help retreat</ansi>.

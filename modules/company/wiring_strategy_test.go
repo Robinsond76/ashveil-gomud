@@ -362,14 +362,14 @@ func TestInABattleOnlyFleeWorks(t *testing.T) {
 	assert.Contains(t, b.cmd("strategy", "tamsin leader"), "The battle is under way")
 	assert.NotContains(t, b.cmd("strategy", ""), "leader ", "unchanged")
 
-	assert.Contains(t, b.cmd("east", ""), "Only flee takes you out of it.")
+	assert.Contains(t, b.cmd("east", ""), "Use retreat or flee to leave it.")
 	assert.Equal(t, 920101, b.aria.Character.RoomId)
 	// Through the real dispatch, aliases included (32d review).
 	for _, c := range [][2]string{{"wear", "sword"}, {"wield", "sword"}, {"unequip", "all"}, {"drink", "water"}, {"eat", "bread"}, {"use", "whetstone"},
 		{"company", "eat"}, {"company", "drink"}, {"company", "meal"}} { // 32f's company meals too
 		assert.Contains(t, b.cmd(c[0], c[1]), "The battle is under way", c[0])
 	}
-	assert.Contains(t, b.cmd("break", ""), "Only flee takes you out of it.")
+	assert.Contains(t, b.cmd("break", ""), "Use retreat or flee to leave it.")
 
 	// Flee still works (made certain: she is far quicker than they are).
 	for _, m := range b.livingBandits() {

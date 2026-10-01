@@ -42,10 +42,10 @@ const company = {
   },
 };
 
-const browser = await chromium.launch();
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || undefined });
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
-await page.goto('file://' + path.join(here, 'dock-windows-harness.html'));
+await page.goto(process.env.DOCK_HARNESS_URL || 'file://' + path.join(here, 'dock-windows-harness.html'));
 await page.evaluate(() => localStorage.clear());
 await page.reload();
 
@@ -321,6 +321,7 @@ if (outdir) { await page.screenshot({ path: path.join(outdir, 'dock-full.png') }
 // --- Phase 32g2: the Battle view ---
 const battleFix = {
   group: 'a band of cutthroats',
+  retreat: { exit: 'east', rounds: 2 },
   enemies: [
     { id: 'm:412', label: 'the cutthroat captain', cell: { row: 0, col: 0 }, health: 'wounded', reach: true, target: 'leader' },
     { id: 'm:413', label: 'the first cutthroat', cell: { row: 0, col: 1 }, health: 'unhurt', reach: true, target: 'companion:1' },
@@ -341,6 +342,7 @@ check(await page.getByRole('tab', { name: 'Combat' }).count() === 1, 'opening Co
 await page.waitForFunction(() => document.querySelectorAll('#combat-window .cbt-lines line').length > 0);
 const cbt = () => page.evaluate(() => document.getElementById('combat-body').textContent);
 check(await page.getByRole('heading', { name: 'Battle: a band of cutthroats' }).count() === 1, 'the Battle view replaces Setup');
+check((await cbt()).includes('Withdrawing east (2 rounds remaining)'), 'ordered withdrawal appears in the battle view');
 const them = page.getByRole('group', { name: 'a band of cutthroats' });
 const usField = page.getByRole('group', { name: 'Your company' });
 check(await them.locator('.cbt-fighter').count() === 4, 'the enemy grid: each enemy');

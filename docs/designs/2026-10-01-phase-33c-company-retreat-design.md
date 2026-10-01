@@ -1,9 +1,8 @@
-# Phase 33c: Company Retreat, Rout, and Separation — Future Design
+# Phase 33c: Company Retreat, Rout, and Separation
 
-Status: future design, 2026-10-01. The owner endorsed the gameplay-review
-recommendations and requested these planning documents. Detailed mechanics,
-command names, migrations, and balance defaults below remain proposals;
-implementation is not started or authorized by this documentation change.
+Status: complete, 2026-10-01. The owner authorizes all
+phase 33 slices and delegates open choices. Adopted defaults and verification
+work are recorded in [the plan](../plans/2026-10-01-phase-33c-company-retreat.md).
 
 See the [company gameplay roadmap](2026-10-01-company-gameplay-roadmap.md)
 for sequencing, shared constraints, and the decision register. Code context
@@ -51,10 +50,10 @@ Use an isolated feature worktree and the existing independent review gate.
 
 ## Decisions to settle before implementation
 
-Whether flee becomes ordered retreat or emergency individual escape; exit choice; covering action cost; chances and duration; injured-member rescue rules; whether any rout can cause permanent loss. All numbers remain proposed.
+Whether flee becomes ordered retreat or emergency individual escape; exit choice; covering action cost; chances and duration; injured-member rescue rules; whether any rout can cause permanent loss. The execution plan records the adopted defaults.
 
-The planning request approves documenting the direction, not unresolved
-formulas or behavior changes. Record final owner decisions in this design.
+The owner explicitly authorizes implementation and delegates choices.
+Adopted formulas and behavior are in the execution plan and decisions below.
 
 ## Acceptance criteria and verification
 
@@ -63,8 +62,8 @@ Real rounds cover successful/blocked retreat, no exits, hobbled leader/member, d
 Cover each wired real entry point and failure/recovery path, then perform
 independent phase review and the required code checks. Validate multiplayer
 ownership and no world-time advancement. Record actual checks and findings
-in Project Status. This planning change itself requires documentation checks
-only; the gameplay checks above are future acceptance requirements.
+in Project Status. The implementation exercises the real command, round, recovery and view paths;
+actual verification and independent review are recorded in Project Status.
 
 ## Player help and tutorial acceptance
 
@@ -75,3 +74,12 @@ hub links. Explain commands, costs, eligibility, and numbers that matter;
 use `[member]` placeholders. Rendering tests and
 `TestTutorialHelpPointersExist` must pass with the implementation. Do not
 publish help claiming these future mechanics already exist.
+
+## Adopted decisions
+
+Preserve emergency flee; add ordered retreat with an explicit or deterministic
+legal exit, one preparation round and one attempt. Blocked living members
+hold the company, never automatic permanent losses. Use shipped30g3 personal
+burden and current wounds for slowest-member mobility, one paid guardian
+cover, and only active battle pursuers. Existing30e flight/return remains
+durable separation authority; runtime requests never survive as save authority.

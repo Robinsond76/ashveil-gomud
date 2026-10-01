@@ -5,9 +5,9 @@ answers without routine confirmation. After confidence, merge to master,
 push origin, then start a new cloud session with context. If unavailable,
 compact/save context and continue here. Never claim phases not completed.
 
-33a and 33b are complete and verified; its plan/design and Project Status describe
+33a–33c are complete and verified; its plan/design and Project Status describe
 behavior, integration tests, independent review findings/fixes and exact
-checks. Next is 33c (company retreat), then remaining 33d–33i. Read each
+checks. Next is 33d (allied companies), then remaining 33e–33i. Read each
 design and choose scoped defaults before implementation. All designs are
 in docs/designs/2026-10-01-phase-33*. Use isolated phase worktrees, ship
 help/tutorial/integration coverage, obtain the independent reviewer required
@@ -44,3 +44,21 @@ Void onCast proceeds, other successful void callbacks are recognized.
 Preserve flee as emergency escape; choose separate ordered retreat, legal exit
 checks, bounded round sequence, guard cost, and existing30e pending-return
 recovery. Read design, settle defaults and plan before coding.
+
+33c adds characters.Retreat Aggro with runtime snapshot, internal/withdrawal
+route/member/mobility rules, hooks/combat_retreat.go, selected company relocation,
+paid guardian cover, GMCP/browser countdown, and real recovery/ownership tests.
+Emergency blocked-member escape uses BeginFlight before movement; failed save
+holds leader, endBattle returns debt exactly once. Ordered retreat never sweeps
+late/foreign/pet instances. Browser harness supports CHROMIUM_EXECUTABLE_PATH
+and DOCK_HARNESS_URL; system Chromium plus localhost HTTP passed all checks.
+
+33d research: parties.Get returns invited as well as accepted players; require
+IsMember for authority/support/rewards. Leave/promote keeps pointer map but
+needs careful leadership validation and consent pruning. go.go currently makes
+all accepted party players follow without opt-in; suicide.go shares XP with all
+online party members regardless of location/contribution. Prefer independent
+company battles sharing one enemy life and existing30e single mercy settlement,
+explicit follow/support/autoattack consent, eligible encounter participants and
+single payouts. Party persistence needs a declared schema and safe save failure
+behavior; existing membership is runtime-only. Read33d design before coding.

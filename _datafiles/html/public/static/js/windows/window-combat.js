@@ -524,6 +524,9 @@
     function renderBattle(root, battle, data) {
         const head = el('div', 'cbt-battle-head');
         head.appendChild(el('h3', null, 'Battle: ' + battle.group));
+        if (battle.retreat) {
+            head.appendChild(el('div', null, 'Withdrawing ' + battle.retreat.exit + ' (' + battle.retreat.rounds + ' rounds remaining)'));
+        }
         const flee = el('button', 'cbt-btn', 'Flee');
         flee.type = 'button';
         flee.title = 'Try to get away (flee)';

@@ -470,7 +470,7 @@ func TestCombatFixesThroughTheRealRound(t *testing.T) {
 
 	// Phase 32d: `break` is refused in a battle (only flee takes her out),
 	// and she fights on.
-	assert.Contains(t, b.cmd("break", ""), "Only flee takes you out of it.")
+	assert.Contains(t, b.cmd("break", ""), "Use retreat or flee to leave it.")
 	assert.False(t, engagement.StoodDown(7), "nothing stood her down")
 	_, inBattle := battle.Current(7)
 	assert.True(t, inBattle, "her battle goes on")

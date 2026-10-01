@@ -1,6 +1,8 @@
 package company
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"slices"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
@@ -32,4 +34,30 @@ func (m *CompanyModule) RelocateCompany(leaderUserID, roomID int) int {
 		}
 	}
 	return moved
+}
+
+// RelocateWithdrawal preflights every selected member before moving any. It
+// owns no durable separation: dead and already-fled members are not selected.
+func (m *CompanyModule) RelocateWithdrawal(uid, origin, destination int, ids []int) error {
+	if rooms.LoadRoom(destination) == nil {
+		return domain.ErrUnknownMember
+	}
+	for _, id := range ids {
+		leader, _, ok := m.LeaderAndKeyForInstance(id)
+		mob := mobs.GetInstance(id)
+		if !ok || leader != uid || mob == nil || mob.Character.RoomId != origin || mob.Character.Health <= 0 || !m.runtime.IsAttached(uid, id) {
+			return domain.ErrUnknownMember
+		}
+	}
+	moved := []int{}
+	for _, id := range ids {
+		if !m.runtime.Relocate(id, destination) {
+			for _, previous := range moved {
+				m.runtime.Relocate(previous, origin)
+			}
+			return domain.ErrUnknownMember
+		}
+		moved = append(moved, id)
+	}
+	return nil
 }

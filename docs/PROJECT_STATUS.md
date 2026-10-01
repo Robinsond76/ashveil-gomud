@@ -6,8 +6,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-10-01
-- **Latest completed phases:** 33b, friendly effects and company membership; 33a, company command rules; and 30g3,
-  personal load and agility (merged from `claude/phase-30g3-load`), both 2026-10-01.
+- **Latest completed phases:** 33c, company retreat; 33b, friendly effects;
+  33a, command rules; and 30g3, personal load and agility, all 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
@@ -18,8 +18,8 @@ and mercy (30a–30e), active defense (30g2), and personal load (30g3) are shipp
 play-test improvements are implemented; 32b's status still carries an outstanding review note (see its retained plan).
 
 **Current owner priority:** finish Phase 33a–33i in order, choosing the lead's
-recommended defaults without further confirmation (2026-10-01). 33a and 33b are
-complete; **33c, company retreat, is next**. Phase 30g3 is also complete;
+recommended defaults without further confirmation (2026-10-01). 33a–33c are
+complete; **33d, allied companies, is next**. Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
@@ -55,7 +55,7 @@ command consistency, friendly-effect scopes, retreat, allied companies,
 automatic class abilities, specialists, equipment/loot, progression/recovery/
 relocation, and group assessment/coordinated enemies. These are planning
 records now authorized for implementation by the owner, with open defaults
-delegated to the lead. 33a and 33b are complete; 33c follows.
+delegated to the lead. 33a–33c are complete; 33d follows.
 
 ## Phase progress
 
@@ -132,7 +132,7 @@ delegated to the lead. 33a and 33b are complete; 33c follows.
 | 32g2 | Live battle view | Complete: [design](designs/2026-09-29-phase-32g2-battle-view-design.md). During a battle the Combat tab shows the enemy group's formation above the company's (fronts to the middle), scout's health words (never numbers), reach, target lines both ways, outsiders struck, the fallen, the waiting groups, a text list, a live region, Flee, and Setup's member menu; a marker on the tab; `Company.Battle` for every player in a battle; dark rooms show nothing, as scout |
 | 33a | Company Command Rules and Legacy Action Routes | Complete: [design](designs/2026-10-01-phase-33a-company-command-rules-design.md), [plan](plans/2026-10-01-phase-33a-company-command-rules.md); safe ask aliases, queued ownership checks, battle/script/skill policy |
 | 33b | Friendly Effects and Company Membership | Complete: [design](designs/2026-10-01-phase-33b-friendly-effect-scopes-design.md), [plan](plans/2026-10-01-phase-33b-friendly-effects.md); shared target snapshots, eligibility, ownership and callback revalidation |
-| 33c | Company Retreat, Rout, and Separation | Future design: [proposal](designs/2026-10-01-phase-33c-company-retreat-design.md); implementation not started |
+| 33c | Company Retreat, Rout, and Separation | Complete: [design](designs/2026-10-01-phase-33c-company-retreat-design.md), [plan](plans/2026-10-01-phase-33c-company-retreat.md); ordered withdrawal, paid cover, legal escape and saved separation |
 | 33d | Multiplayer Parties and Allied Companies | Future design: [proposal](designs/2026-10-01-phase-33d-allied-companies-design.md); implementation not started |
 | 33e | Automatic Class Abilities and Combat Roles | Future design: [proposal](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md); implementation not started |
 | 33f | Company Specialists and Group Exploration | Future design: [proposal](designs/2026-10-01-phase-33f-company-specialists-design.md); implementation not started |
@@ -142,6 +142,32 @@ delegated to the lead. 33a and 33b are complete; 33c follows.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33c: company retreat (2026-10-01)
+
+- Ordered `retreat [exit]`: one preparation round, one escape attempt, slowest
+  member's current speed/burden/lasting wounds against fastest active pursuer.
+  An eligible guardian spends a guard and preparation attack for cover. Stable
+  ownership and legal exits revalidate each round; blocked living members hold
+  the company, while dead members retain resurrection and morale flights retain
+  30e recovery. Only captured live members move; runtime orders never save.
+- Emergency flee remains individual escape, with 30e's saved separation for
+  blocked living companions. Failed separation save holds the leader; debt is
+  paid once on rejoin. End battle only after successful movement; respect
+  no-go, effective locks and room permissions. Departed casts/aims clear without
+  ending another company's battle. No cloned gear, cargo or herd; no clock jump.
+- Text, Company.Battle countdown and browser view; indexed retreat help,
+  corrected legacy flee/attack/targeting/break help and tutorial.
+- Independent full-diff review found no implementation blockers but six coverage
+  gaps. Added real checks for waiting groups, another active company battle,
+  late arrivals, departed spell targets, GMCP gather countdown and relocation
+  rollback. Reviewer rechecked all six; no remaining blockers, no rejections.
+  Stabilized the chant regression by making test blows miss before pruning.
+- Verification: focused touched packages and new coverage repeated ten times;
+  full browser dock harness with system Chromium/local HTTP passed. Final
+  `make generate`, `make validate`, `go test -race ./...`, installed JSHint via
+  `make js-lint`, `make lua-lint`, and `git diff --check` all passed.
+- Next: 33d. Cloud session creation unavailable; saved handoff, continue here.
 
 ### Phase 33b: friendly effects (2026-10-01)
 

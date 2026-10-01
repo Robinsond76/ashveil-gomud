@@ -1,0 +1,37 @@
+<ansi fg="header">Help for retreat</ansi>
+
+retreat [exit] — withdraw your present company from its battle.
+retreat — choose the first legal visible exit in alphabetical order.
+
+One combat round prepares the withdrawal. The next attempts escape.
+Repeating the order keeps its countdown. A failed attempt resumes fighting.
+Your leader gives up those attacks. One available guardian can spend a guard
+and its preparation attack to cover the company: +15 percentage points.
+A chanting guardian cannot cover. Cover is lost if that guardian falls or
+leaves before the attempt. Existing guards still intercept incoming blows.
+
+The slowest present living member sets the company's mobility. Speed is
+reduced by personal burden (up to 60%) and lasting wounds (up to 30%).
+Against the fastest active pursuer, the chance is:
+30 + 70 × company mobility / (company mobility + pursuer mobility), plus cover.
+It stays between 30% and 95%; without pursuers the company escapes for sure.
+Waiting groups do not block your withdrawal.
+
+A living member unable to move holds the company here. No-go/no-flee hurts,
+locks, missing exits and room permissions are rechecked each round.
+A member transferred or moved elsewhere cancels the order. Fallen companions
+stay subject to resurrection; retreat cannot revive them. Members who already
+lost nerve keep their saved return obligation, including the 5-loyalty debt.
+New arrivals, other companies, pets and temporary charms are not swept along.
+
+Successful withdrawal moves the same live members, ends your battle and clears
+its targets, casts and guards. Interrupted casts receive no retreat refund.
+Other players' battles continue. Company cargo and the herd remain the same
+owned records and follow their normal location rules; nothing is copied.
+A restart or copyover cancels the runtime order; it cannot move a saved company.
+
+flee remains emergency personal escape. Blocked living companions separate
+using the existing saved return system and rejoin when the battle ends, for
+5 loyalty. If that separation cannot be saved, you remain in the battle;
+already saved flights still rejoin once, when it ends. See help flee,
+help morale, help guardian, help burden and help company.

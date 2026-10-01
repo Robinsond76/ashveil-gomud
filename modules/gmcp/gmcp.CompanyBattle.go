@@ -16,6 +16,7 @@ package gmcp
 
 import (
 	"encoding/json"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"sort"
 	"strconv"
 	"sync"
@@ -34,6 +35,7 @@ import (
 
 // battleFacts is what the builder needs, read from the live game.
 type battleFacts struct {
+	Retreat  *retreatFact
 	InBattle bool
 	Dark     bool // too dark to make the enemy out, as scout says
 	Group    string
@@ -51,6 +53,11 @@ type battleFacts struct {
 
 // guardFact is one guardian's guards left and its set ward (blank: the
 // most hurt).
+type retreatFact struct {
+	Exit   string `json:"exit"`
+	Rounds int    `json:"rounds"`
+}
+
 type guardFact struct {
 	Key  string `json:"key"`
 	Left int    `json:"left"`
@@ -116,6 +123,7 @@ type battleOther struct {
 }
 
 type battlePayload struct {
+	Retreat     *retreatFact   `json:"retreat,omitempty"`
 	Group       string         `json:"group"`
 	Dark        bool           `json:"dark,omitempty"`
 	Enemies     []battleEnemy  `json:"enemies"`
@@ -147,9 +155,9 @@ func buildBattle(f battleFacts) any {
 		saved = "none"
 	}
 	if f.Dark {
-		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards}
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat}
 	}
-	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards}
+	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -230,6 +238,9 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		return battleFacts{}
 	}
 	f := battleFacts{InBattle: true, SavedFocus: string(strategy.TacticsFor(user.UserId).Focus), FocusReady: battle.FocusReady(user.UserId)}
+	if a := user.Character.Aggro; a != nil && a.Type == characters.Retreat && a.RetreatInfo != nil {
+		f.Retreat = &retreatFact{Exit: a.RetreatInfo.ExitName, Rounds: a.RoundsWaiting + 1}
+	}
 	if rule, ok := enemyparty.Focus(user.UserId); ok {
 		f.Focus = string(rule)
 	}

@@ -317,7 +317,7 @@ func TestALonePlayerWhoBrokeOffIsTurnedAgain(t *testing.T) {
 	b.fight()
 	_, ok := battle.Current(7)
 	require.True(t, ok)
-	assert.Contains(t, b.cmd("break", ""), "Only flee takes you out of it.")
+	assert.Contains(t, b.cmd("break", ""), "Use retreat or flee to leave it.")
 	b.fight()
 	assert.Contains(t, b.cmd("attack", ""), "The battle is under way")
 	require.NotNil(t, b.aria.Character.Aggro, "still fighting")
