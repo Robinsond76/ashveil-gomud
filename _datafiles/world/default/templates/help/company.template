@@ -107,8 +107,7 @@ anyone lost.
   Give a companion without one their archetype. This is permanent, the
   same as your own choice (<ansi fg="command">help archetype</ansi>). It sets
   what they can be trained to do and which utility skills they can use
-  for the company (<ansi fg="command">help autoskill</ansi>,
-  <ansi fg="command">help trap</ansi>).
+  for the company (<ansi fg="command">help specialists</ansi>).
 
 <ansi fg="yellow-bold">Tactics</ansi>
 
@@ -127,6 +126,13 @@ anyone lost.
   <ansi fg="command">company chemistry</ansi>
   How well your company fights together after time served side by side.
   See <ansi fg="command">help chemistry</ansi>.
+
+<ansi fg="yellow-bold">Specialists</ansi>
+
+  <ansi fg="command">company specialists</ansi>
+  Who in your company reads trails, spots secret exits, haggles,
+  forecasts the weather, and more, outside a fight. Recruit for the
+  skills an expedition needs. See <ansi fg="command">help specialists</ansi>.
 
 In the web client, the Company tab shows the same: its Status, Inventory,
 and Camp (<ansi fg="command">help webclient</ansi>).

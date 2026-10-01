@@ -1,0 +1,22 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">forecast</ansi>
+
+Weather Sense is a wizard's skill. With a forecaster in your company,
+<ansi fg="command">weather</ansi> also tells you what the sky will do next. The weather is
+settled a change ahead, so a forecast is never wrong; only the detail
+depends on the forecaster.
+
+<ansi fg="yellow-bold">What each level reads</ansi>
+
+  Level 1  which way it turns: colder, clouding over, harder going...
+  Level 2  what comes next: "a storm is coming"
+  Level 3  about when, in game hours
+  Level 4  also the neighbouring zones your exits lead into
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">weather</ansi>
+  The weather here, with the forecast after it.
+
+  <ansi fg="command">autoskill weather off</ansi> leaves the forecast out.
+
+See also: <ansi fg="command">help weather</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help travel</ansi>.

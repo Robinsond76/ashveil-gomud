@@ -153,12 +153,13 @@ in: enemy groups in adjacent rooms are reported per exit, once per room
 visit. Level 1: "fresh tracks of something, north"; level 2 names the
 group ("a band of ruffians"); level 3 adds how many; level 4 also reads
 rooms two steps away. Only hostile groups count; players, companions,
-and peaceful mobs leave no report. On an expedition route whose
-interruption can be an ambush, a tracker present at departure resolves the
-interruption kind at departure (saved in the travel session) and warns the
-leader; at the ambush, the tracker leads the company around it with a
-chance of 20% per level (the interruption becomes ordinary tracks), else
-the ambush happens as before.
+and peaceful mobs leave no report; groups of one name seen the same way
+are counted together. On an expedition route whose interruption can be an
+ambush, a tracker present at departure warns the leader (the kind is still
+rolled when the interruption fires, so the warning says "may"); when the
+ambush fires, the tracker leads the company around it with a chance of 20%
+per level: the saved interruption becomes ordinary tracks and nothing
+spawns. Otherwise the ambush happens as before. No new durable state.
 
 **Pathfinder (ranger).** The company's walking strain on terrain heavier
 than road is reduced by 5% per level (20% at level 4). It does not touch
@@ -166,10 +167,11 @@ time, travel durations, or exertion on expedition routes.
 
 **Keen Eye (rogue).** On entering a room with a secret exit the company
 has not yet noticed, the best spotter rolls `level × 20 + Perception/4`
-plus d100 against 100 (a company without a rogue rolls Perception/4 only).
-On success the leader learns the exit, which is remembered (durable, per
-player) and shown in that room's exits from then on. One roll per room per
-visit; no command needed.
+plus d100 against 100 (a company without a rogue rolls the leader's
+Perception/4 only; switching `keeneye` off stops both). On success the
+leader learns the exit, remembered on the character
+(`KnownSecretExits`, saved with the user) and shown in that room's text
+and GMCP exits from then on. One roll per room per visit; no command.
 
 **Weather Sense (wizard).** Each zone's weather pre-rolls its next
 condition when the current one is set (saved; old saves roll it on load),
@@ -180,15 +182,23 @@ wetter, drier, colder, or warmer; level 2 names the next condition; level
 neighbouring zones the room's exits lead into.
 
 **Haggle (rogue).** At a market, the best haggler present improves the
-price by 2% per level (8% at level 4): cheaper buying, dearer selling. A
-sale never pays more than the same good's buying price there, minus one
-gold, so a buy-and-sell loop can't make money. Inn and shop prices are
-unchanged.
+price by 2% per level (8% at level 4), after standing: cheaper buying
+(rounded up), dearer selling (rounded down). A sale never pays more than
+one gold below what buying the same good back would then cost (haggled),
+so a buy-and-sell loop can't make money. `market` lists the haggled
+prices. Inn and shop prices are unchanged.
 
-**Retirement of search and track.** The `search` command and skill go; the
-`track <name>` stock trail-following goes (bare `track` becomes Read the
-Trail). Help, keywords, the Frostfang trainer, and the ranger profession
+**Retirement of search and track.** The `search` command and skill go
+(refunded as in 33f1); the stock `track` command goes and the archetype
+module's bare `track` reads the trail (once a round, even with the
+automatic reading off). Help (`help search` opens Keen Eye, `help track`
+Read the Trail), keywords, the Frostfang trainer, and the professions
 change to match.
+
+**Who counts** (all 33f2 capabilities): the 17b member resolver: the
+leader and their own spawned companions standing in the room (or, on a
+step, the room just left), not downed; each capability's `autoskill`
+switch gates it, and none acts in the leader's own battle.
 
 ## 33f3: Camp specialists
 

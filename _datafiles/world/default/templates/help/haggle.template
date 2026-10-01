@@ -1,0 +1,21 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">haggle</ansi>
+
+Haggle is a rogue's skill. With a haggler at your side, the market
+gives your company better prices: cheaper to buy, dearer to sell.
+
+<ansi fg="yellow-bold">The numbers</ansi>
+
+  2% better per level, 8% at level 4, on top of your standing's prices
+  (<ansi fg="command">help standing</ansi>). A buying price rounds up. A sale is never paid
+  more than one gold below what buying the same good back would cost,
+  so buying and selling straight back still loses money.
+
+<ansi fg="command">market</ansi> lists the haggled prices and names who haggles; each trade
+names them too. Inns and shops keep their own prices.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  There is no command: it happens when you trade.
+  <ansi fg="command">autoskill haggle off</ansi> trades at the plain prices.
+
+See also: <ansi fg="command">help market</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help standing</ansi>.

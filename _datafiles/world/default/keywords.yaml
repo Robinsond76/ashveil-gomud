@@ -153,13 +153,17 @@ help:
       - inspect
       - map
       - rank
-      - search
       - skulduggery
-      - track
       - unenchant
       - uncurse
       - autoskill
       - trap
+      - specialists
+      - trail
+      - keeneye
+      - pathfinder
+      - forecast
+      - haggle
   admin:
     all:
       - badcommands
@@ -209,6 +213,12 @@ help-aliases:
   tutorial:         [replay]
   archetype:        [archetypes, class, classes]
   trap:             [traps]
+  specialists:      [specialist, company-specialists, expedition-skills, utilities]
+  trail:            [track, tracking, tracks, read-the-trail, tracker]
+  keeneye:          [keen-eye, secret-exits, secret-exit, hidden-exits, search]
+  pathfinder:       [pathfinding, rough-ground]
+  forecast:         [weather-sense, forecasting, forecasts]
+  haggle:           [haggling, bargain, bargaining]
   survival:         [needs, hunger, thirst, fatigue]
   strain:           [walking]
   temperature:      [warmth, exposure, cold, heat]
@@ -263,7 +273,7 @@ help-aliases:
   set-wimpy:        [wimpy]
   colors:           [color, ansi]
   killstats:        [kills, kd]
-  trading:          [haggle]
+  trading:          [auction, appraisal]
   pets:             [pet]
   feed:             [feed]
   macros:           [macro]

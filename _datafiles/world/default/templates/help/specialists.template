@@ -1,0 +1,43 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">specialists</ansi>
+
+Your companions' skills work outside a fight too. For each expedition
+skill, the one member of your company best at it does the work for
+everyone: you, or a living companion standing with you. Nobody adds to
+anyone else's roll, so two rangers read a trail no better than the
+better of them.
+
+<ansi fg="yellow-bold">Who does what</ansi>
+
+  <ansi fg="yellow">Read the Trail</ansi>  rangers  warns of enemies beyond the exits (<ansi fg="command">help trail</ansi>)
+  <ansi fg="yellow">Pathfinder</ansi>      rangers  eases walking on rough ground (<ansi fg="command">help pathfinder</ansi>)
+  <ansi fg="yellow">Keen Eye</ansi>        rogues   spots secret exits (<ansi fg="command">help keeneye</ansi>)
+  <ansi fg="yellow">Traps</ansi>           rogues   finds and disarms traps (<ansi fg="command">help trap</ansi>)
+  <ansi fg="yellow">Haggle</ansi>          rogues   better market prices (<ansi fg="command">help haggle</ansi>)
+  <ansi fg="yellow">Weather Sense</ansi>   wizards  forecasts the weather (<ansi fg="command">help forecast</ansi>)
+  <ansi fg="yellow">Light</ansi>           wizards  lights the dark (<ansi fg="command">help light</ansi>)
+
+<ansi fg="yellow-bold">Levels</ansi>
+
+Each skill has levels 1 to 4. A companion of the right archetype reaches
+them at character levels 1, 10, 20, and 30. For you, it is your level in
+your archetype's skill: <ansi fg="skill">track</ansi> for a ranger, <ansi fg="skill">skulduggery</ansi> for a
+rogue, <ansi fg="skill">cast</ansi> for a wizard. Recruit for the skills an expedition needs.
+
+<ansi fg="yellow-bold">Who counts</ansi>
+
+Only you and your own companions, alive, on their feet, and in the room
+with you (a companion following you through a door counts). Another
+player's company, a pet, or a companion left behind does no work for you.
+None of these skills works in your own battle.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">company specialists</ansi> (or <ansi fg="command">specialists</ansi>)
+  Who in your company would do each job right now, at what level, and
+  which ones you have switched off.
+
+  <ansi fg="command">autoskill [skill] on</ansi> | <ansi fg="command">autoskill [skill] off</ansi>
+  Switch one of these on or off (<ansi fg="command">help autoskill</ansi>). All are on
+  at first.
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help autoskill</ansi>.
