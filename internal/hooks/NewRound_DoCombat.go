@@ -71,6 +71,9 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// before any blow.
 	nervePass()
 	strategyPass()
+	// Ashveil Phase 33e: members about to swing may use a class ability.
+	abilityPass()
+	defer endAbilityStrikes()
 	retreatCover = map[int]bool{}
 
 	//
@@ -116,6 +119,11 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
 		// its action.
 		if status.Has(user.Character) && statusCostsAction(userHolder(user)) {
+			continue
+		}
+
+		// Ashveil Phase 33e: a tackle took this round's turn.
+		if abilityTurns[caster{userId: userId}] {
 			continue
 		}
 
@@ -689,7 +697,8 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		}
 
 		// If has a buff that prevents combat, skip the player
-		if mob.Character.CombatWithdrawn || retreatCover[mobId] || nerveSkip[mobId] || mob.Character.HasBuffFlag("no-combat") {
+		// Ashveil Phase 33e: nor one whose turn a tackle took.
+		if mob.Character.CombatWithdrawn || retreatCover[mobId] || nerveSkip[mobId] || abilityTurns[caster{mobId: mobId}] || mob.Character.HasBuffFlag("no-combat") {
 			continue
 		}
 

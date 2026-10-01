@@ -158,7 +158,15 @@ func cleanWard(key string, s domain.Strategy) domain.Strategy {
 }
 
 func cleanStrategy(s domain.Strategy) (domain.Strategy, bool) {
-	out := domain.Strategy{Ward: strings.TrimSpace(s.Ward)}
+	out := domain.Strategy{Ward: strings.TrimSpace(s.Ward), NoAbilities: s.NoAbilities}
+	// Phase 33e: a reserve out of range is dropped, the rest kept.
+	if s.Reserve != 0 {
+		if r, ok := domain.ParseReserve(fmt.Sprint(s.Reserve)); ok {
+			out.Reserve = r
+		} else {
+			mudlog.Warn("strategy: dropped a stored mana reserve", "reserve", s.Reserve)
+		}
+	}
 	if s.Role != "" {
 		r, ok := domain.ParseRole(string(s.Role))
 		if !ok {

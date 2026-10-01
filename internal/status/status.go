@@ -250,6 +250,17 @@ func Words(buffIds []int) []string {
 	return out
 }
 
+// Live reports whether c carries the status with buff id now.
+func Live(c *characters.Character, id int) bool {
+	live := false
+	each(c, func(b *buffs.Buff, s *Spec) {
+		if s.Id == id && !b.Expired() {
+			live = true
+		}
+	})
+	return live
+}
+
 // Grounded reports whether c is knocked down or stunned now (a live
 // status): a guardian so held can't step in (Phase 30c2).
 func Grounded(c *characters.Character) bool {

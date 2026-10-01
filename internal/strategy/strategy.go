@@ -88,11 +88,19 @@ type Strategy struct {
 	// Ward is the member key a guardian guards (Phase 30c2); blank for
 	// the most hurt. Kept only for a guardian.
 	Ward string `yaml:"ward,omitempty"`
+	// NoAbilities turns the member's automatic class abilities off (Phase
+	// 33e); they are on by default.
+	NoAbilities bool `yaml:"no_abilities,omitempty"`
+	// Reserve is the percent of its maximum mana an attack spell must
+	// leave (Phase 33e); heals ignore it. 0 by default.
+	Reserve int `yaml:"reserve,omitempty"`
 }
 
 // IsZero reports whether nothing is set: the character fights by its
 // default.
-func (s Strategy) IsZero() bool { return s.Role == "" && s.Rule == "" && s.Ward == "" }
+func (s Strategy) IsZero() bool {
+	return s.Role == "" && s.Rule == "" && s.Ward == "" && !s.NoAbilities && s.Reserve == 0
+}
 
 // DefaultRole is an archetype's role: a cleric heals, a wizard casts,
 // everyone else fights.

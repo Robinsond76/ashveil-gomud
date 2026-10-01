@@ -57,6 +57,10 @@ type Ally struct {
 	// Downed is a player at or below 0 health but not dead: still healed
 	// (the most hurt of all). A companion at 0 is dead and isn't.
 	Downed bool
+	// Pending is an ally a heal already covers (Phase 33e): a chant in
+	// progress, or another healer's choice this round. It is not healed
+	// again.
+	Pending bool
 }
 
 // Situation is what a character's role decides from, each round.
@@ -70,6 +74,9 @@ type Situation struct {
 	// HealBelow is the healing threshold, a percent of each ally's wound
 	// limit (Phase 30c tactics); 0 means DefaultHealing.
 	HealBelow int
+	// MaxMana and Reserve (a percent, Phase 33e): an attack spell is cast
+	// only while Reserve percent of MaxMana would remain. Heals ignore it.
+	MaxMana, Reserve int
 }
 
 // ActionKind is what a character does this round.
@@ -95,15 +102,20 @@ type Action struct {
 //   - a healer heals anyone below the healing threshold (HealBelow, half
 //     by default; the group heal when two or more are, else the single
 //     heal on the most hurt), else swings;
+//     An ally a heal already covers (Pending) is skipped (Phase 33e);
 //   - a caster casts its area spell when two or more foes stand, else its
 //     single-target spell, else swings;
 //   - a fighter swings.
 //
-// A spell is cast only when it is configured, known, and paid for.
+// A spell is cast only when it is configured, known, and paid for, and an
+// attack spell only while it leaves the member's mana reserve.
 func Decide(s Situation) Action {
 	affordable := func(use Use) (Spell, bool) {
 		sp, ok := SpellFor(s.Spells, use, s.Knows)
 		if !ok || s.Mana < sp.Cost {
+			return Spell{}, false
+		}
+		if (use == UseAttack || use == UseAttackAll) && s.Reserve > 0 && (s.Mana-sp.Cost)*100 < s.Reserve*s.MaxMana {
 			return Spell{}, false
 		}
 		return sp, true
@@ -116,7 +128,7 @@ func Decide(s Situation) Action {
 		}
 		hurt, worst := 0, -1
 		for i, a := range s.Allies {
-			if (a.HP < 1 && !a.Downed) || a.HP*100 >= below*a.MaxHP {
+			if (a.HP < 1 && !a.Downed) || a.Pending || a.HP*100 >= below*a.MaxHP {
 				continue
 			}
 			hurt++

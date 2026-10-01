@@ -32,6 +32,8 @@ type member struct {
 	// guardian's reach).
 	col    int
 	placed bool
+	// abilities are the class abilities it has (Phase 33e).
+	abilities []domain.Ability
 }
 
 // env is the engine the command reads. Tests replace it.
@@ -93,6 +95,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 		manaMax:   user.Character.ManaMax.Value,
 		present:   true,
 		knows:     PlayerKnows(user),
+		abilities: domain.PlayerAbilities(user.Character.GetSkillLevel),
 	}}
 	form, hasForm := company.FormationFor(user.UserId)
 	if hasForm {
@@ -105,6 +108,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 			name:      v.Name,
 			archetype: v.Archetype,
 			knows:     CompanionKnows(v.Archetype, v.Level),
+			abilities: domain.CompanionAbilities(v.Archetype),
 		}
 		if hasForm {
 			_, mb.col, mb.placed = form.Find(company.CompanionMemberKey(v.ID))
@@ -119,7 +123,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 	return out, ok
 }
 
-const usage = `Change one with <ansi fg="command">strategy [who] [role]</ansi>, <ansi fg="command">strategy [who] target [rule]</ansi>, or <ansi fg="command">strategy [who] guard [other]</ansi>. See <ansi fg="command">help strategy</ansi>.`
+const usage = `Change one with <ansi fg="command">strategy [who] [role]</ansi>, <ansi fg="command">strategy [who] target [rule]</ansi>, <ansi fg="command">strategy [who] guard [other]</ansi>, <ansi fg="command">strategy [who] abilities on|off</ansi>, or <ansi fg="command">strategy [who] reserve [percent]</ansi>. See <ansi fg="command">help strategy</ansi> and <ansi fg="command">help abilities</ansi>.`
 
 func (m *StrategyModule) userCommand(rest string, user *users.UserRecord, _ *rooms.Room, _ events.EventFlag) (bool, error) {
 	user.SendText(m.run(user, strings.Fields(strings.ToLower(rest))))
@@ -167,6 +171,13 @@ func (m *StrategyModule) run(user *users.UserRecord, args []string) string {
 	word := change[0]
 	var next domain.Strategy
 	var said string
+	// Phase 33e: abilities on|off and a mana reserve keep the rest.
+	if !targetOnly && (word == "abilities" || word == "ability") {
+		return m.setAbilities(user.UserId, mb, stored, change[1:])
+	}
+	if !targetOnly && word == "reserve" {
+		return m.setReserve(user.UserId, mb, stored, change[1:])
+	}
 	switch {
 	case word == "default" || word == "reset":
 		d := domain.Default(mb.archetype)
@@ -188,7 +199,7 @@ func (m *StrategyModule) run(user *users.UserRecord, args []string) string {
 					return `A guardian guards someone else: name another member of your company, or none for whoever is most hurt.`
 				}
 			}
-			next = domain.Strategy{Role: role, Rule: stored.Rule, Ward: ward.key}
+			next = domain.Strategy{Role: role, Rule: stored.Rule, Ward: ward.key, NoAbilities: stored.NoAbilities, Reserve: stored.Reserve}
 			if ward.key == "" {
 				said = fmt.Sprintf(`%s %s now a guardian, guarding whoever is most hurt within reach (<ansi fg="command">help guardian</ansi>).`, mb.name, verb(mb, "are", "is"))
 			} else {
@@ -198,13 +209,13 @@ func (m *StrategyModule) run(user *users.UserRecord, args []string) string {
 				}
 			}
 		} else if ok && !targetOnly {
-			next = domain.Strategy{Role: role, Rule: stored.Rule}
+			next = domain.Strategy{Role: role, Rule: stored.Rule, NoAbilities: stored.NoAbilities, Reserve: stored.Reserve}
 			said = fmt.Sprintf(`%s %s now a %s: %s.`, mb.name, verb(mb, "are", "is"), role, role.Describe())
 			if warn := m.cantYet(mb, role); warn != "" {
 				said = warn + "\n" + said
 			}
 		} else if rule, ok := domain.ParseRule(word); ok {
-			next = domain.Strategy{Role: stored.Role, Rule: rule, Ward: stored.Ward}
+			next = domain.Strategy{Role: stored.Role, Rule: rule, Ward: stored.Ward, NoAbilities: stored.NoAbilities, Reserve: stored.Reserve}
 			if err := next.ValidFor(mb.isPlayer); err != nil {
 				return `Only a companion can assist you: you are the one they assist.`
 			}
@@ -225,6 +236,60 @@ func (m *StrategyModule) run(user *users.UserRecord, args []string) string {
 		return err.Error()
 	}
 	return said
+}
+
+// setAbilities turns a member's automatic class abilities on or off
+// (Phase 33e).
+func (m *StrategyModule) setAbilities(userID int, mb member, stored domain.Strategy, args []string) string {
+	if len(args) == 0 || (args[0] != "on" && args[0] != "off") {
+		return `Abilities on or off? <ansi fg="command">strategy [who] abilities on|off</ansi>.`
+	}
+	next := stored
+	next.NoAbilities = args[0] == "off"
+	if err := m.set(userID, mb.key, next); err != nil {
+		return err.Error()
+	}
+	if next.NoAbilities {
+		return fmt.Sprintf(`%s will use no class abilities in battle, only plain blows and spells.`, mb.name)
+	}
+	names := domain.Names(mb.abilities)
+	if len(names) == 0 {
+		return fmt.Sprintf(`%s will use class abilities in battle, though %s none yet (<ansi fg="command">help abilities</ansi>).`, mb.name, verb(mb, "have", "has"))
+	}
+	return fmt.Sprintf(`%s will use %s in battle when the moment comes (<ansi fg="command">help abilities</ansi>).`, mb.name, strings.Join(names, " and "))
+}
+
+// setReserve sets the share of its mana a member keeps back from attack
+// spells (Phase 33e).
+func (m *StrategyModule) setReserve(userID int, mb member, stored domain.Strategy, args []string) string {
+	if len(args) == 0 {
+		return fmt.Sprintf(`Keep how much mana back? A percent from 0 to %d: <ansi fg="command">strategy [who] reserve 30</ansi>.`, domain.MaxReserve)
+	}
+	n, ok := domain.ParseReserve(args[0])
+	if !ok {
+		return fmt.Sprintf(`"%s" is not a reserve. Give a percent from 0 to %d.`, args[0], domain.MaxReserve)
+	}
+	next := stored
+	next.Reserve = n
+	if err := m.set(userID, mb.key, next); err != nil {
+		return err.Error()
+	}
+	if n == 0 {
+		return fmt.Sprintf(`%s will spend mana on attack spells down to the last drop.`, mb.name)
+	}
+	return fmt.Sprintf(`%s will cast attack spells only while %d%% of %s mana would be left; heals ignore the reserve.`, mb.name, n, verb(mb, "your", "their"))
+}
+
+// abilityLine says what a member's abilities are, for list and describe.
+func abilityLine(mb member, s domain.Strategy) string {
+	names := domain.Names(mb.abilities)
+	switch {
+	case s.NoAbilities:
+		return "abilities off"
+	case len(names) == 0:
+		return ""
+	}
+	return strings.Join(names, ", ")
 }
 
 // object names a member as the object of a sentence: "you" for the
@@ -388,6 +453,13 @@ func (m *StrategyModule) list(userID int, members []member) string {
 		} else if s.Role != domain.Fighter {
 			line += " (knows no spell for it: fights)"
 		}
+		// Phase 33e: its abilities and mana reserve.
+		if al := abilityLine(mb, s); al != "" {
+			line += "; " + al
+		}
+		if s.Reserve > 0 {
+			line += fmt.Sprintf("; keeps %d%% mana", s.Reserve)
+		}
 		b.WriteString(strings.TrimRight(line, " ") + "\n")
 	}
 	for _, w := range warnings {
@@ -425,6 +497,20 @@ func (m *StrategyModule) describe(userID int, mb member, members []member) strin
 		} else {
 			b.WriteString("  Knows no spell for it, so fights.\n")
 		}
+	}
+	// Phase 33e: its class abilities, each with its condition.
+	switch {
+	case s.NoAbilities:
+		b.WriteString("  Abilities off: uses none in battle.\n")
+	default:
+		for _, id := range mb.abilities {
+			if spec, ok := domain.SpecOf(id); ok {
+				fmt.Fprintf(&b, "  %s, when %s: %s (then %d rounds' rest).\n", spec.Name, spec.When, spec.Does, spec.Cooldown)
+			}
+		}
+	}
+	if s.Reserve > 0 {
+		fmt.Fprintf(&b, "  Keeps %d%% of %s mana back from attack spells.\n", s.Reserve, verb(mb, "your", "its"))
 	}
 	if mb.present && mb.manaMax > 0 {
 		fmt.Fprintf(&b, "  Mana %d of %d.\n", mb.mana, mb.manaMax)
