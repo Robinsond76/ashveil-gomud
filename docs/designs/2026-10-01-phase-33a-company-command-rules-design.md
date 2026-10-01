@@ -1,9 +1,8 @@
 # Phase 33a: Company Command Rules and Legacy Action Routes — Future Design
 
-Status: future design, 2026-10-01. The owner endorsed the gameplay-review
-recommendations and requested these planning documents. Detailed mechanics,
-command names, migrations, and balance defaults below remain proposals;
-implementation is not started or authorized by this documentation change.
+Status: complete, 2026-10-01. The owner endorsed the gameplay-review
+recommendations and requested these planning documents. The current implementation request authorizes the phase and delegates open
+decisions to the lead; the choices adopted below refine the original proposal.
 
 See the [company gameplay roadmap](2026-10-01-company-gameplay-roadmap.md)
 for sequencing, shared constraints, and the decision register. Code context
@@ -73,3 +72,13 @@ hub links. Explain commands, costs, eligibility, and numbers that matter;
 use `[member]` placeholders. Rendering tests and
 `TestTutorialHelpPointersExist` must pass with the implementation. Do not
 publish help claiming these future mechanics already exist.
+
+## Implementation decisions (2026-10-01)
+
+The owner authorized implementation and instructed the lead to choose defaults
+for all questions. Keep safe `ask [member] [order]` compatibility aliases for
+present owned companions and temporary charmed followers, alongside existing
+company management commands. Conversation/observation are available in battle;
+all manual follower hostility is refused. Use `attack [group]` for automatic
+battles. No additional mid-battle orders or persistent queue are introduced.
+See the [execution plan](../plans/2026-10-01-phase-33a-company-command-rules.md).

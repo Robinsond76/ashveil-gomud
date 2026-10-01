@@ -28,7 +28,7 @@ not reopen completed Phase 32 work. Every review recommendation maps here.
 
 | Phase | Scope/design | Status |
 |---|---|---|
-| 33a | [Company Command Rules and Legacy Action Routes](2026-10-01-phase-33a-company-command-rules-design.md) | Future design; implementation not started |
+| 33a | [Company Command Rules and Legacy Action Routes](2026-10-01-phase-33a-company-command-rules-design.md) | Complete (2026-10-01) |
 | 33b | [Friendly Effects and Company Membership](2026-10-01-phase-33b-friendly-effect-scopes-design.md) | Future design; implementation not started |
 | 33c | [Company Retreat, Rout, and Separation](2026-10-01-phase-33c-company-retreat-design.md) | Future design; implementation not started |
 | 33d | [Multiplayer Parties and Allied Companies](2026-10-01-phase-33d-allied-companies-design.md) | Future design; implementation not started |
@@ -44,8 +44,9 @@ These are delivery boundaries inside their parent phases, not shipped work.
 
 ## Suggested delivery order
 
-30g2 remains the next implementation phase in Project Status. Do not silently
-replace its approved sequence with this future roadmap. Recommend:
+30g2 is shipped. The owner now requests all Phase 33 slices in order and
+authorizes the lead to choose open defaults. Continue with 33b; 30g3–30g6
+remain queued. Dependencies below guide integration choices:
 
 1. Start 33a and company-only 33b as a compatibility pass after 30g2.
 2. Settle 33d's multiplayer participation and ownership contract before

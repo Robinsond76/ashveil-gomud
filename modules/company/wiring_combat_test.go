@@ -206,7 +206,7 @@ func newBrawl(t *testing.T) *brawl {
 	mid := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
 		if in, ok := e.(events.Input); ok && in.MobInstanceId > 0 {
 			c, rest, _ := strings.Cut(in.InputText, " ")
-			_, _ = mobcommands.TryCommand(strings.ToLower(c), rest, in.MobInstanceId)
+			_, _ = mobcommands.TryCommand(strings.ToLower(c), rest, in.MobInstanceId, in.MemberOrder)
 		}
 		return events.Continue
 	})

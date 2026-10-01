@@ -24,3 +24,5 @@ Hunger and Thirst mean and how they're spent.
 To feed your whole company at once, from the cargo and everyone's packs, type ~company eat~ or ~company meal~ (see ~help company meal~).
 
 Find out more about referring to items by name by typing ~help item-names~.
+
+Equipment and consumables cannot be changed during an automatic company battle, including through follower orders. See ~help ask~ and ~help combat~.

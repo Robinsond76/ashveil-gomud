@@ -17,6 +17,10 @@ Level 1 - Aid (revive) a player
 Level 3 - Aid (revive) a player, even during combat
 */
 func Aid(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if InBattle(user) {
+		user.SendText(BattleUnderWay)
+		return true, nil
+	}
 
 	skillLevel := user.Character.GetSkillLevel(`protection`)
 

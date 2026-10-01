@@ -1,0 +1,30 @@
+<ansi fg="magenta">Help for </ansi><ansi fg="command">ask</ansi>
+
+Ask an NPC about quests or other subjects:
+  <ansi fg="command">ask [NPC] about [subject]</ansi>
+
+For a living follower beside you, safe compatibility orders are:
+  <ansi fg="command">ask [member] to say [words]</ansi>
+  <ansi fg="command">ask [member] to look</ansi>
+  <ansi fg="command">ask [member] to emote [words]</ansi>
+  <ansi fg="command">ask [member] to equip [item]</ansi>
+  <ansi fg="command">ask [member] to remove [item]</ansi>
+  <ansi fg="command">ask [member] to get [item]</ansi>
+  <ansi fg="command">ask [member] to drop [item]</ansi>
+  <ansi fg="command">ask [member] to give [item] [recipient]</ansi>
+  <ansi fg="command">ask [member] to eat [item]</ansi>
+  <ansi fg="command">ask [member] to drink [item]</ansi>
+
+Equipment, inventory changes and consumables are refused during a battle.
+Conversation and observation remain available. Orders check ownership,
+presence and life state again when executed; a moved, dismissed, fallen or
+transferred member cannot complete an old order.
+
+Members fight automatically: attack, throw and cast orders are refused.
+Use <ansi fg="command">attack [group]</ansi> to begin a battle. Temporary charmed
+followers obey the same restrictions; they do not become company members.
+
+Use <ansi fg="command">company gear [member]</ansi> to inspect equipment,
+<ansi fg="command">company inventory</ansi> for the whole load, and
+<ansi fg="command">company meal</ansi> for provisions. See
+<ansi fg="command">help company</ansi> and <ansi fg="command">help combat</ansi>.

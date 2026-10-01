@@ -3,6 +3,7 @@ package usercommands
 import (
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"strconv"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -23,6 +24,10 @@ Level 3 - Tame up to 4 creatures
 Level 4 - Tame up to 5 creatures
 */
 func Tame(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	if InBattle(user) && rest != "" && rest != "list" {
+		user.SendText(BattleUnderWay)
+		return true, nil
+	}
 
 	skillLevel := user.Character.GetSkillLevel(`tame`)
 	if skillLevel == 0 {
@@ -72,9 +77,9 @@ func Tame(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		if mob := mobs.GetInstance(mobId); mob != nil {
 
-			if mob.Character.IsCharmed(user.UserId) {
-				user.SendText("They are already charmed.")
-				return true, errors.New(`they are already charmed`)
+			if !actionpolicy.TameTarget(mob) {
+				user.SendText("That target is not available for taming.")
+				return true, errors.New(`target is not available for taming`)
 			}
 
 			// Set spell Aid
