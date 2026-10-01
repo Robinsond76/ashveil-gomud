@@ -24,6 +24,9 @@ Level 2 - Become proficient in a spell at 125% rate
 Level 3 - Become proficient in a spell at 175% rate
 Level 4 - Become proficient in a spell at 250% rate
 */
+// OtherBattlePatient refuses help for someone fighting another's battle.
+const OtherBattlePatient = `That one is caught up in another battle; you can't help either side.`
+
 func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	skillLevel := user.Character.GetSkillLevel(`cast`)
@@ -267,6 +270,23 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		for _, id := range spellAggro.TargetMobInstanceIds {
 			if m := mobs.GetInstance(id); m != nil && !m.Character.IsCharmed() {
 				user.SendText(NotAnOpener(room, id, `A harmful spell`))
+				return true, nil
+			}
+		}
+	}
+
+	// Phase 33b review: a bystander helps neither side of someone else's
+	// battle (help friendly-effects).
+	if effecttargets.Helpful(spellInfo) {
+		for _, id := range spellAggro.TargetUserIds {
+			if effecttargets.OtherBattle(user.UserId, 0, id, 0) {
+				user.SendText(OtherBattlePatient)
+				return true, nil
+			}
+		}
+		for _, id := range spellAggro.TargetMobInstanceIds {
+			if effecttargets.OtherBattle(user.UserId, 0, 0, id) {
+				user.SendText(OtherBattlePatient)
 				return true, nil
 			}
 		}

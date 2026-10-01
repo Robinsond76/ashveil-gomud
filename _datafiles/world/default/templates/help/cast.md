@@ -17,6 +17,6 @@ a round or two first, and a weapon blow that draws blood on the caster
 may break the chant (a heavy blow always does): the spell is lost, with
 half its mana back (see ~help interrupts~).
 
-**See also:** ~help spells~, ~help attack~, ~help strategy~, ~help interrupts~
-
 Minor Heal All targets your present company even without a player party. Single-target help uses the named patient; other players are never automatically included. Targets are rechecked when the chant finishes. See ~help friendly-effects~ for scope, eligibility and costs.
+
+**See also:** ~help spells~, ~help attack~, ~help strategy~, ~help interrupts~

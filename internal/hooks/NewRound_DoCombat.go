@@ -298,6 +298,16 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 				continue
 			}
 
+			// Phase 33b review: a helpful chant whose patients all left,
+			// fell, or changed hands ends without effect, and says so.
+			if effecttargets.Unaided(user.Character.Aggro.SpellInfo) {
+				user.SendText(`<ansi fg="spell-text">Your spell finds no one left to help, and fades.</ansi>`)
+				emitCast(combatstream.CastComplete, userRef(user), user.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeWasted, roomId)
+				endCast(user.Character, caster{userId: user.UserId})
+				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+				continue
+			}
+
 			roll := util.RollDice(1, 100)
 			successChance := user.Character.GetBaseCastSuccessChance(user.Character.Aggro.SpellInfo.SpellId)
 			if roll >= successChance {
@@ -859,6 +869,15 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				if waitOn > 0 {
 					mob.Character.SetAggro(waitOn, 0, characters.DefaultAttack)
 				}
+				events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+				continue
+			}
+
+			// Phase 33b review: as for players, a helpful chant with no one
+			// left to help ends without effect.
+			if effecttargets.Unaided(mob.Character.Aggro.SpellInfo) {
+				emitCast(combatstream.CastComplete, mobRef(mob), mob.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeWasted, mob.Character.RoomId)
+				endCast(&mob.Character, caster{mobId: mob.InstanceId})
 				events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
 				continue
 			}

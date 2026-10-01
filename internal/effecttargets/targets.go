@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -99,6 +100,46 @@ func attached(m *mobs.Mob, leader int) bool {
 	return member && who == leader && u != nil && u.Character != nil && m.Character.IsCharmed(leader) && m.Character.Charmed.Companion && m.Character.Charmed.RoundsRemaining != 0 && slices.Contains(u.Character.GetCharmIds(), m.InstanceId)
 }
 
+// OtherBattle reports whether a patient (a player when targetUserID > 0,
+// otherwise the mob targetMobID) is fighting in a player's battle the caster
+// is not part of: its foes, its player, or that player's companions. A
+// bystander cannot help either side of someone else's battle.
+func OtherBattle(userID, mobID, targetUserID, targetMobID int) bool {
+	for _, uid := range battle.Players() {
+		b, ok := battle.Current(uid)
+		if !ok {
+			continue
+		}
+		in := false
+		if targetUserID > 0 {
+			in = targetUserID == uid
+		} else if targetMobID > 0 {
+			who, _, member := company.LeaderAndKeyForInstance(targetMobID)
+			m := mobs.GetInstance(targetMobID)
+			in = b.Has(targetMobID) || (member && who == uid && m != nil && m.Character.RoomId == b.RoomId)
+		}
+		if !in {
+			continue
+		}
+		if userID > 0 && userID == uid {
+			continue
+		}
+		if mobID > 0 {
+			who, _, member := company.LeaderAndKeyForInstance(mobID)
+			if b.Has(mobID) || (member && who == uid) {
+				continue
+			}
+		}
+		return true
+	}
+	return false
+}
+
+// Unaided reports a helpful cast left with no one to help.
+func Unaided(info characters.SpellAggroInfo) bool {
+	return Helpful(spells.GetSpell(info.SpellId)) && len(info.TargetUserIds)+len(info.TargetMobInstanceIds) == 0
+}
+
 // Resolve is used before spending mana, and before every script callback.
 // Initialized casts retain only their original eligible targets.
 func Resolve(userID, mobID int, info characters.SpellAggroInfo) characters.SpellAggroInfo {
@@ -149,14 +190,14 @@ func Resolve(userID, mobID int, info characters.SpellAggroInfo) characters.Spell
 	var keepUsers, keepMobs []int
 	for _, uid := range info.TargetUserIds {
 		u := users.GetByUserId(uid)
-		if u == nil || !eligiblePlayer(u.Character, c.RoomId, sp) || (sp.ExcludeSelf && uid == userID) || (scope != spells.ScopeMember && !slices.Contains(ls, uid)) || slices.Contains(keepUsers, uid) {
+		if u == nil || !eligiblePlayer(u.Character, c.RoomId, sp) || (sp.ExcludeSelf && uid == userID) || (scope != spells.ScopeMember && !slices.Contains(ls, uid)) || slices.Contains(keepUsers, uid) || OtherBattle(userID, mobID, uid, 0) {
 			continue
 		}
 		keepUsers = append(keepUsers, uid)
 	}
 	for _, id := range info.TargetMobInstanceIds {
 		m := mobs.GetInstance(id)
-		if !eligibleMob(m, c.RoomId) || (sp.ExcludeSelf && id == mobID) || slices.Contains(keepMobs, id) {
+		if !eligibleMob(m, c.RoomId) || (sp.ExcludeSelf && id == mobID) || slices.Contains(keepMobs, id) || OtherBattle(userID, mobID, 0, id) {
 			continue
 		}
 		captured, ok := snap.Mobs[id]

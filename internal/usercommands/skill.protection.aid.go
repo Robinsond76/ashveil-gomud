@@ -60,6 +60,12 @@ func Aid(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				return true, nil
 			}
 
+			// Phase 33b review: a bystander helps neither side of a battle.
+			if effecttargets.OtherBattle(user.UserId, 0, aidPlayerId, 0) {
+				user.SendText(OtherBattlePatient)
+				return true, nil
+			}
+
 			// Set spell Aid
 			spellAggro := characters.SpellAggroInfo{
 				SpellId:              `aidskill`,
