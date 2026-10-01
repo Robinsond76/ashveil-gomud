@@ -484,6 +484,11 @@ check(await page.getByRole('button', { name: 'You, striking the cutthroat captai
 check(await page.evaluate(() => [...document.querySelectorAll('#combat-window .cbt-lines line')].some(l => l.getAttribute('data-to') === 'leader')), 'alone: the enemy\'s line reaches You');
 await page.evaluate(() => window.gmcp('Company.Battle', {}));
 
+// Phase 30e: surrender is separate from the grid and exposes no target button.
+await page.evaluate(b => { const x=JSON.parse(JSON.stringify(b)); x.surrendered=[{id:'m:999',label:'the yielded goblin'}]; window.gmcp('Company.Battle',x); }, battleFix);
+check((await cbt()).includes('Surrendered: the yielded goblin'), 'surrendered foes are labelled off the grid');
+check(await page.getByRole('button', { name: /yielded goblin/ }).count() === 0, 'surrendered foe has no target button');
+
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all dock window checks passed');

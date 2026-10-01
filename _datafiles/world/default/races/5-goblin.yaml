@@ -21,3 +21,5 @@ disabledslots: ['neck']
 # Phase 30c: its personality as an enemy (help targeting).
 targeting: casters
 targetingnoise: 15
+
+temperament: wary

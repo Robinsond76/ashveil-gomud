@@ -41,11 +41,17 @@ func mobNameTag(mob *mobs.Mob) string {
 // 29c's combat deaths print it in the round, in order), or "vanish" (gone
 // without a trace or reward).
 func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
+	if mob.DeathProcessed {
+		return true, nil
+	}
+	if mob.Character.CombatWithdrawn && rest != "mercy" && rest != "vanish" {
+		return true, nil
+	}
 
 	currentRound := util.GetRoundCount()
 	config := configs.GetGamePlayConfig()
 
-	if rest != `vanish` && mob.Character.HasBuffFlag("revive-on-death") {
+	if rest != `vanish` && rest != "mercy" && mob.Character.HasBuffFlag("revive-on-death") {
 
 		mob.Character.Health = mob.Character.HealthMax.Value
 
@@ -55,6 +61,8 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		return true, nil
 	}
+
+	mob.DeathProcessed = true
 
 	// Useful to know sometimes
 	mobs.TrackRecentDeath(mob.InstanceId)
@@ -99,7 +107,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 	// Send a death msg to everyone in the room. Phase 29c: a combat death
 	// ("suicide quiet") has already printed it, in order, from the round.
-	if rest != `quiet` {
+	if rest != `quiet` && rest != "mercy" {
 		room.SendText(combat.DeathLine(mobNameTag(mob)))
 	}
 
@@ -219,6 +227,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					// Apply alignment changes
 					alignmentBefore := user.Character.AlignmentName()
 					alignmentAdj := combat.AlignmentChange(user.Character.Alignment, mob.Character.Alignment)
+					if rest == "mercy" {
+						alignmentAdj = 0
+					}
 					user.Character.UpdateAlignment(alignmentAdj)
 					alignmentAfter := user.Character.AlignmentName()
 
@@ -318,6 +329,9 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 						// Apply alignment changes
 						alignmentBefore := user.Character.AlignmentName()
 						alignmentAdj := combat.AlignmentChange(user.Character.Alignment, mob.Character.Alignment)
+						if rest == "mercy" {
+							alignmentAdj = 0
+						}
 						user.Character.UpdateAlignment(alignmentAdj)
 						alignmentAfter := user.Character.AlignmentName()
 

@@ -8,6 +8,7 @@ import (
 
 // Enemy endings in a Summary.
 const (
+	EndingYielded  = "yielded"
 	EndingSlain    = "slain"
 	EndingBeaten   = "beaten" // a practice foe (the tutorial's straw soldiers)
 	EndingFled     = "fled"
@@ -218,6 +219,8 @@ func (f *fight) summary(round uint64, outcome string, final Final) *Summary {
 			ending = EndingSlain
 		case f.down[k] == OutcomeBeaten:
 			ending = EndingBeaten
+		case f.yielded[k]:
+			ending = EndingYielded
 		case f.fled[k]:
 			ending = EndingFled
 		case gone[k]:

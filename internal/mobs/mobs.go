@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/conversations"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/morale"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"gopkg.in/yaml.v2"
 
@@ -41,6 +42,9 @@ type MobForHire struct {
 type MobId int // Creating a custom type to help prevent confusion over MobId and MobInstanceId
 
 type Mob struct {
+	DeathProcessed  bool   `yaml:"-"`
+	Temperament     string `yaml:"temperament,omitempty"`
+	NeverBreak      bool   `yaml:"neverbreak,omitempty"`
 	MobId           MobId
 	Zone            string               `yaml:"zone,omitempty"`
 	ItemDropChance  int                  `yaml:"itemdropchance,omitempty"` // chance in 100
@@ -661,6 +665,9 @@ func (r *Mob) Id() int {
 }
 
 func (r *Mob) Validate() error {
+	if err := morale.Validate(r.Temperament); err != nil {
+		return err
+	}
 	if err := races.ValidatePainReactions(r.PainReactions); err != nil {
 		return err
 	}

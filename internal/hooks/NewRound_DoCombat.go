@@ -68,6 +68,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 
 	// Ashveil Phase 32d: healers and casters cast by their strategies,
 	// before any blow.
+	nervePass()
 	strategyPass()
 
 	//
@@ -80,7 +81,9 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// Do any resolution or extra checks based on everyone that has been involved in combat this round.
 	affectedPlayers := append(append(affectedPlayers1, affectedPlayers2...), roundExtraPlayers...)
 	affectedMobs := append(append(affectedMobs1, affectedMobs2...), roundExtraMobs...)
+	noteMoraleDeaths()
 	handleAffected(affectedPlayers, affectedMobs)
+	moralePass()
 
 	// Ashveil Phase 29b2: end each battle one side of which has fallen, and
 	// begin the next at once.
@@ -787,7 +790,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		}
 
 		// If has a buff that prevents combat, skip the player
-		if mob.Character.HasBuffFlag("no-combat") {
+		if mob.Character.CombatWithdrawn || nerveSkip[mobId] || mob.Character.HasBuffFlag("no-combat") {
 			continue
 		}
 

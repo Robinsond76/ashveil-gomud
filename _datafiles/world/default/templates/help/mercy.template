@@ -1,0 +1,26 @@
+<ansi fg="magenta">Help for </ansi><ansi fg="command">mercy</ansi>
+
+After victory, each surrendered foe asks for mercy, after the battle's
+closing lines and summary. Answer yes to spare or no to execute.
+
+  yes: the foe leaves without a weapon. No experience or loot.
+       Your alignment rises by 5, within the -100 to 100 range.
+  no:  the foe is executed. Ordinary kill experience and loot apply,
+       using existing damage credit and company sharing.
+       Your alignment falls by 5 instead of ordinary kill alignment.
+
+Company alignment is the average of its living members, so its change
+may be smaller. Each living companion who witnessed the victory reacts:
+those at alignment +25 or above approve mercy; those at -25 or below
+approve execution. Approval gives 2 loyalty, disapproval costs 1; others
+have no loyalty change. Their beliefs do not change immediately.
+
+You have 30 seconds per displayed question. Invalid answers do not extend
+it. With no answer the foe escapes, giving no rewards or alignment change.
+Leaving, logout, death, tutorial handoff, restart/copyover, or another battle
+releases unanswered foes. Mercy never holds up waiting enemy groups.
+If another question is already open, the foes escape instead.
+When players share an enemy, only its first battle's owner decides its fate.
+
+The mercy command is used by the question; answer the displayed yes/no prompt.
+See also: help morale, help alignment, help combat.

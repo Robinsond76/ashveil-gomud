@@ -225,6 +225,7 @@ func (m *CompanyModule) onNewRound(e events.Event) events.ListenerReturn {
 	}
 	// Phase 24: charge this round to every eligible chemistry bond first,
 	// so a drift tick's rollback snapshot includes it.
+	m.retryReturns()
 	m.refreshChemistryRules()
 	m.accrueChemistry(evt.RoundNumber)
 	// Phase 25b: the dead are charged the leader's online time.
@@ -262,7 +263,7 @@ func (m *CompanyModule) driftTick() {
 		// Phase 25b: the dead neither drift, sway the others, nor desert.
 		var members []domain.MemberAlignment
 		for _, c := range record.Companions {
-			if c.Dead() {
+			if c.Dead() || c.MoraleDesert {
 				continue
 			}
 			loyalty := domain.MaxLoyalty

@@ -155,3 +155,18 @@ func TestCombatPaceHelp(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, tagPattern.ReplaceAllString(narration, ""), "A short pause comes before a pain reaction")
 }
+
+func TestMoraleAndMercyHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	for _, topic := range []string{"morale", "mercy", "surrender", "nerve"} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err)
+		assert.Contains(t, text, "Help for")
+	}
+	for topic, word := range map[string]string{"combat": "help morale", "alignment": "help mercy", "chemistry": "help morale"} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err)
+		assert.Contains(t, text, word)
+	}
+}

@@ -52,6 +52,7 @@ var (
 	functionExporters = []FunctionExporter{}
 
 	userCommands map[string]CommandAccess = map[string]CommandAccess{
+		`mercy`:       {Mercy, false, false},
 		`aid`:         {Aid, false, false},
 		`alias`:       {Alias, true, false},
 		`appraise`:    {Appraise, false, false},
