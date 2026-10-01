@@ -2,6 +2,7 @@ package camping
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"sort"
 	"strings"
 
@@ -253,17 +254,27 @@ func (m *CampingModule) sharpen(user *users.UserRecord, auto bool) string {
 		return "You have no whetstone."
 	}
 
+	// Phase 33f3 Field Smith: a warrior at the whetstone puts on a longer
+	// edge; the stone's uses are spent the same.
+	strikes := settings.SharpenedStrikes
+	smith, hasSmith := m.fieldSmith(user)
+	if hasSmith {
+		strikes += smith.Level * settings.FieldSmithStrikesPerLevel
+	}
 	for _, e := range plan.Entries {
 		if e.Outcome != camping.Sharpened {
 			continue
 		}
 		for _, blade := range blades(byID[e.Member.ID].char) {
-			blade.Sharpen(settings.SharpenedBonus, settings.SharpenedStrikes)
+			blade.Sharpen(settings.SharpenedBonus, strikes)
 		}
 	}
 	spent := spendWhetstones(user, stones, plan.UsesSpent)
 
 	lines := []string{fmt.Sprintf("You work a whetstone along your company's blades. Sharpened: %s.", strings.Join(plan.Names(camping.Sharpened), ", "))}
+	if hasSmith && strikes > settings.SharpenedStrikes {
+		lines = append(lines, fmt.Sprintf("%s %s the edges: they hold for %d strikes instead of %d.", smith.Subject(), smith.Verb("hone", "hones"), strikes, settings.SharpenedStrikes))
+	}
 	if names := plan.Names(camping.LeftOut); len(names) > 0 {
 		lines = append(lines, fmt.Sprintf("The whetstone ran out before %s.", strings.Join(names, ", ")))
 	}
@@ -355,4 +366,12 @@ func previewLine(e camping.SharpenEntry, c *characters.Character, fighting bool)
 		return gear + " (no whetstone use left for it)"
 	}
 	return "no blade"
+}
+
+// fieldSmith is the company's best field smith at the leader's side.
+func (m *CampingModule) fieldSmith(user *users.UserRecord) (archetypes.Specialist, bool) {
+	if m.specialist == nil {
+		return archetypes.Specialist{}, false
+	}
+	return m.specialist(user.UserId, archetypes.UtilityFieldSmith, user.Character.RoomId)
 }

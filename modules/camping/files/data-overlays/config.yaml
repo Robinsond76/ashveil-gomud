@@ -44,3 +44,39 @@ WellRestedDuration: 30m
 WhetstoneItemId: 30
 SharpenedBonus: 1
 SharpenedStrikes: 20
+# Phase 33f3 Field Smith: a warrior at the whetstone adds this many strikes
+# of edge per level (0 turns it off).
+FieldSmithStrikesPerLevel: 5
+
+# Phase 33f3 camp specialists.
+# CampRaids: a camp rest in a zone listed here may draw raiders of MobId
+# (ChancePct per rest, rolled when the rest starts), arriving between
+# RaidEarliestPct and RaidLatestPct of the way through the rest. A watch (a
+# warrior) spots them with WatchPctPerLevel% per level; unspotted, the rest
+# earns no Rested tier and no camp rewards.
+CampRaids:
+  - { Zone: Old Kings Road, MobId: 86, ChancePct: 15 }
+WatchPctPerLevel: 25
+RaidEarliestPct: 30
+RaidLatestPct: 70
+# Vigil: a cleric at a completed rest raises each present companion's
+# loyalty by its level, never above VigilCap.
+VigilCap: 60
+# Forage: a ranger at a completed rest finds ForageBase + level /
+# ForageLevelsPerOne items from the zone's weighted table, into cargo.
+ForageBase: 1
+ForageLevelsPerOne: 2
+Forage:
+  - Zone: Old Kings Road
+    Items:
+      - { ItemId: 29, Weight: 3 }    # raw game meat
+      - { ItemId: 30018, Weight: 2 } # wild thyme
+      - { ItemId: 30007, Weight: 1 } # mushroom
+# Camp cooking ("camp cook"): the Waymark Inn hearth's dishes, tried in
+# order; the first the cook has the ingredients and Cooking for is made.
+CampRecipes:
+  - { Output: 30019, Inputs: [29, 29, 30018], Skill: cooking, MinLevel: 3 } # hunter's stew
+  - { Output: 30020, Inputs: [29, 30018], Skill: cooking, MinLevel: 2 }     # thyme-roasted game
+  - { Output: 30021, Inputs: [29], Skill: cooking, MinLevel: 1 }            # seared game meat
+# Forage and Vigil come at most once per this real time, per company.
+CampRewardCooldown: 15m

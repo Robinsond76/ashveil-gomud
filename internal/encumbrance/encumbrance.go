@@ -30,6 +30,35 @@ type CargoStack struct {
 type Cargo struct {
 	LeaderUserID int
 	Stacks       []CargoStack
+	// Applied (Phase 33f3) lists the most recent operation IDs whose
+	// deposits this cargo already holds, saved with the stacks, so a
+	// retried deposit (a camp's forage after a restart) is never doubled.
+	Applied []string `yaml:"applied,omitempty"`
+}
+
+// MaxAppliedOps bounds Cargo.Applied: older operations are forgotten.
+const MaxAppliedOps = 32
+
+// HasApplied reports whether an operation's deposit is already in the
+// cargo.
+func (c Cargo) HasApplied(op string) bool {
+	for _, a := range c.Applied {
+		if a == op {
+			return true
+		}
+	}
+	return false
+}
+
+// MarkApplied returns a copy remembering op, keeping the last
+// MaxAppliedOps.
+func (c Cargo) MarkApplied(op string) Cargo {
+	applied := append(append([]string(nil), c.Applied...), op)
+	if len(applied) > MaxAppliedOps {
+		applied = applied[len(applied)-MaxAppliedOps:]
+	}
+	c.Applied = applied
+	return c
 }
 
 func (c Cargo) Validate() error {

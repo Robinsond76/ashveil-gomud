@@ -15,13 +15,18 @@ better of them.
   <ansi fg="yellow">Haggle</ansi>          rogues   better market prices (<ansi fg="command">help haggle</ansi>)
   <ansi fg="yellow">Weather Sense</ansi>   wizards  forecasts the weather (<ansi fg="command">help forecast</ansi>)
   <ansi fg="yellow">Light</ansi>           wizards  lights the dark (<ansi fg="command">help light</ansi>)
+  <ansi fg="yellow">Camp Watch</ansi>      warriors spots raiders at camp (<ansi fg="command">help campwatch</ansi>)
+  <ansi fg="yellow">Field Smith</ansi>     warriors longer edges from a whetstone (<ansi fg="command">help fieldsmith</ansi>)
+  <ansi fg="yellow">Vigil</ansi>           clerics  steadies loyalty at camp (<ansi fg="command">help vigil</ansi>)
+  <ansi fg="yellow">Forage</ansi>          rangers  finds food at camp (<ansi fg="command">help forage</ansi>)
 
 <ansi fg="yellow-bold">Levels</ansi>
 
 Each skill has levels 1 to 4. A companion of the right archetype reaches
 them at character levels 1, 10, 20, and 30. For you, it is your level in
 your archetype's skill: <ansi fg="skill">track</ansi> for a ranger, <ansi fg="skill">skulduggery</ansi> for a
-rogue, <ansi fg="skill">cast</ansi> for a wizard. Recruit for the skills an expedition needs.
+rogue, <ansi fg="skill">cast</ansi> for a wizard, <ansi fg="skill">brawling</ansi> for a warrior,
+<ansi fg="skill">protection</ansi> for a cleric. Recruit for the skills an expedition needs.
 
 <ansi fg="yellow-bold">Who counts</ansi>
 

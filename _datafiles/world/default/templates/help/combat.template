@@ -143,6 +143,7 @@ and your company's health.
   <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind
   <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
+  <ansi fg="command">help campwatch</ansi>    raiders at camp, and the watch that spots them
   <ansi fg="command">light</ansi>             how well you can see here
   <ansi fg="command">set combatpace</ansi>    how fast a round's lines come to you
 

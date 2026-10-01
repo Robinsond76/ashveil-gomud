@@ -1,0 +1,23 @@
+mobid: 86
+zone: Old Kings Road
+# Phase 33f3: camp raiders. They never spawn on their own; a camp rest at
+# the Fork at the Black Oak may draw a pair of them (camping CampRaids).
+itemdropchance: 2
+lootcategory: humanoid
+hostile: true
+maxwander: 0
+activitylevel: 10
+character:
+  name: road brigand
+  description: 'A hungry-eyed brigand in a mud-caked cloak, a cudgel in one fist and a sack for whatever a sleeping camp leaves lying about. Brigands like this shadow the Old Kings Road, waiting for travellers to bed down by a fire.'
+  roomid: 0
+  zone: Nowhere
+  raceid: 1
+  level: 3
+  alignment: -40
+  gold: 4
+  equipment:
+    weapon:
+      itemid: 10015
+    body:
+      itemid: 20008

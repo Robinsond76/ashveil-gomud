@@ -1,0 +1,14 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">forage</ansi>
+
+Forage is a ranger's skill. When a camp rest finishes in the wilds, the
+company's best forager brings back food: 1 find, plus 1 more for every
+2 levels (3 at level 4). On the Old Kings Road the finds are raw game
+meat, wild thyme, and mushrooms. They go into the company's cargo
+(<ansi fg="command">help cargo</ansi>); anything the company can't carry is left behind.
+
+Raw meat and thyme are what a cook needs (<ansi fg="command">help cooking</ansi>). A rest spoiled
+by raiders brings no forage, and a company forages (and keeps a vigil) at
+most once every 15 minutes of real time. You collect it at the camp, once
+any fight there is over; leave before then and it's lost.
+
+See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help cooking</ansi>.
