@@ -5,7 +5,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01
+- **Last updated:** 2026-10-01 (33b review follow-up)
 - **Latest completed phases:** 33c, company retreat; 33b, friendly effects;
   33a, command rules; and 30g3, personal load and agility, all 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
@@ -169,7 +169,10 @@ delegated to the lead. 33a–33c are complete; 33d follows.
   line. Recorded, not changed: once 33d installs allied consent,
   `OtherBattle` would drop an ally fighting the same group in their own
   battle; 33d must count a caster sharing that enemy group as part of it.
-- **Checks:** CHECKS_PLACEHOLDER
+- **Checks:** the new tests cover each entry point (`cast`, `aid`, chant
+  completion, area help, pets); the probes that found the bugs ran against the
+  old code. `make generate`, `make validate`, `go test -race ./...` and
+  `git diff --check` passed. No JS or Lua changed, so no lint was needed.
 
 ### 33a owner review follow-up (2026-10-01)
 
