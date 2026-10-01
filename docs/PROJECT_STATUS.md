@@ -62,6 +62,63 @@ relocation, and group assessment/coordinated enemies. These are planning
 records now authorized for implementation by the owner, with open defaults
 delegated to the lead. 33a–33e are complete.
 
+## Deferred preparation designs
+
+- Owner requested a [weapon poison design](designs/2026-10-01-weapon-poisons-design.md)
+  for future implementation on 2026-10-01: shop-bought temporary blade coatings,
+  explicit per-member/per-blade camp assignments, and later camp recipes.
+  Recorded only; no phase scheduled or gameplay implemented. Balance numbers
+  remain proposed defaults.
+
+- Owner requested the [camp consumables design](designs/2026-10-01-camp-consumables-design.md)
+  on 2026-10-01: fortifying broth, warming draught, cooling salve, scent-masking
+  paste, watch incense, weapon oil and antidote draught. Includes proposed
+  preparation limits, rest/route lifecycle, acquisition and later crafting.
+  Documentation only; no phase scheduled or gameplay implemented.
+
+## Planned zone encounters
+
+- Owner requested [zone room encounters and wandering parties](designs/2026-10-01-random-room-encounters-design.md)
+  on 2026-10-01, with an [implementation plan](plans/2026-10-01-random-room-encounters-plan.md).
+  Encounter-enabled rooms roll on entry using zone enemy tables; random battles
+  may become the main ordinary enemy source while public wandering parties remain.
+  Includes proposed grace, multiplayer ownership, durable recovery and zone
+  migration. Planned only; phase scheduling and proposed defaults remain open.
+
+## Planned branching class progression
+
+- Owner requested a [class progression review and branching design](designs/2026-10-01-branching-class-progression-design.md)
+  with an [implementation plan](plans/2026-10-01-branching-class-progression-plan.md)
+  on 2026-10-01. All five base lineages gain proposed advanced/elite paths,
+  individual alignment eligibility and explicit player promotion choices.
+  Includes current-mechanics audit, old-save migration, ability inheritance,
+  death retention and 30g4/33h dependencies. Planning only; levels, gates,
+  branch signatures and implementation scheduling remain proposed.
+
+- Owner expanded the class direction with an [extended companion catalogue](designs/2026-10-01-expanded-companion-classes-design.md):
+  twenty additional advanced/elite paths including Sorcerer, plus eventual
+  nonhuman humanoids and creature recruits such as Hellhounds and Golems.
+  Species, class and creature growth remain separate; staged delivery includes
+  complete upkeep/recovery/gear rules. Planning only; external reference pages
+  were blocked by network policy, so the proposed roster is not a verified
+  reproduction of Ogre Battle 64 or Unicorn Overlord.
+
+- Added [further class-reference extractions](designs/2026-10-01-class-reference-extractions.md)
+  from the owner's supplied Ogre Battle/Unicorn Overlord roster: seven new
+  humanoid candidate paths, commander/prestige direction, Cerberus, additional
+  creature families and dragon affinities. Includes consolidation of equivalent
+  names and explicit equipment/flight/form/aquatic dependencies. Planning only.
+
+## Planned skills and spell progression review
+
+- Owner requested a [skill/utility/spell progression review](designs/2026-10-01-skill-spell-progression-design.md)
+  and [implementation plan](plans/2026-10-01-skill-spell-progression-plan.md)
+  on 2026-10-01. Inventories twelve shipped skill definitions and eleven spell
+  definitions; separates trained ranks, class/level unlocks, field/camp specialists
+  and automatic combat. Preserves approved retirements and flags stale prose,
+  level/class inheritance and the no-battle-items conflict in earlier antidote
+  proposals. Proposed new milestones/capabilities only; no gameplay implemented.
+
 ## Phase progress
 
 | Phase | Scope | Status |
