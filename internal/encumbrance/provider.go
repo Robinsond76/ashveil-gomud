@@ -126,3 +126,42 @@ func ConsumeCargoUse(leaderUserID, itemId int) error {
 	}
 	return cp.ConsumeCargoUse(leaderUserID, itemId)
 }
+
+// CargoKeeper is optionally implemented by the registered Provider (Phase
+// 33f3): it adds to and takes from a company's cargo. Call it on the game
+// loop.
+type CargoKeeper interface {
+	// DepositCargo adds full items to the leader's cargo and saves. A
+	// non-empty op is applied once: a repeat of the same op deposits
+	// nothing and returns nil.
+	DepositCargo(leaderUserID int, op string, deposits []CargoStack) error
+	// WithdrawCargo removes count of an item (partly used ones first) and
+	// saves; ErrInsufficientCargo when there aren't that many.
+	WithdrawCargo(leaderUserID, itemId, count int) error
+}
+
+func cargoKeeper() (CargoKeeper, bool) {
+	providerMu.RLock()
+	p := provider
+	providerMu.RUnlock()
+	ck, ok := p.(CargoKeeper)
+	return ck, ok
+}
+
+// DepositCargo adds to a leader's cargo; ErrNoCargo without a keeper.
+func DepositCargo(leaderUserID int, op string, deposits []CargoStack) error {
+	ck, ok := cargoKeeper()
+	if !ok {
+		return ErrNoCargo
+	}
+	return ck.DepositCargo(leaderUserID, op, deposits)
+}
+
+// WithdrawCargo takes from a leader's cargo; ErrNoCargo without a keeper.
+func WithdrawCargo(leaderUserID, itemId, count int) error {
+	ck, ok := cargoKeeper()
+	if !ok {
+		return ErrNoCargo
+	}
+	return ck.WithdrawCargo(leaderUserID, itemId, count)
+}

@@ -38,11 +38,6 @@ colors:
   map-target: 9 # Bright red
   map-default: 8
   map-legend: 8
-  trail-dead: 8
-  trail-weak: 7
-  trail-good: 2
-  trail-warm: 1
-  trail-hot: 9
   item: 2
   itemname: 2
   itemdesc: 79

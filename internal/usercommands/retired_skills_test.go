@@ -16,7 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var retiredCommands = []string{"backstab", "bump", "changeform", "peep", "pickpocket", "portal", "pray", "scribe", "sneak", "tame"}
+var retiredCommands = []string{"backstab", "bump", "changeform", "peep", "pickpocket", "portal", "pray", "scribe", "search", "sneak", "tame", "track"}
 
 // TestRetiredSkillCommandsAreGone (33f1): the retired skill commands are no
 // longer commands, and their help topics and aliases are gone.
@@ -26,8 +26,9 @@ func TestRetiredSkillCommandsAreGone(t *testing.T) {
 	for _, cmd := range retiredCommands {
 		_, ok := userCommands[cmd]
 		assert.False(t, ok, cmd)
-		if cmd == "backstab" {
-			continue // "help backstab" opens skulduggery, which explains Opening Strike
+		switch cmd {
+		case "backstab", "search", "track":
+			continue // their help names open skulduggery, keeneye, and trail
 		}
 		_, err := GetHelpContents(cmd)
 		assert.Error(t, err, "help %s", cmd)
@@ -85,8 +86,8 @@ func TestMercenariesAreNotForHire(t *testing.T) {
 func TestWorldDataHasNoRetiredSkills(t *testing.T) {
 	_, thisFile, _, _ := runtime.Caller(0)
 	world := filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default")
-	retired := regexp.MustCompile(`\b(changeform|peep|portal|scribe|tame)\b`)
-	api := regexp.MustCompile(`\b(CharmSet|CharmRemove|CharmExpire|GetCharmCount|GetMaxCharmCount|IsTameable|GetTameMastery|SetTameMastery|GetChanceToTame|TrainSkill\("(changeform|peep|portal|scribe|tame)")`)
+	retired := regexp.MustCompile(`\b(changeform|peep|portal|scribe|search|tame)\b`)
+	api := regexp.MustCompile(`\b(CharmSet|CharmRemove|CharmExpire|GetCharmCount|GetMaxCharmCount|IsTameable|GetTameMastery|SetTameMastery|GetChanceToTame|TrainSkill\("(changeform|peep|portal|scribe|search|tame)")`)
 
 	walk := func(dir string, fn func(path string, data []byte)) {
 		require.NoError(t, filepath.Walk(filepath.Join(world, dir), func(path string, info os.FileInfo, err error) error {
@@ -136,7 +137,7 @@ func TestWorldDataHasNoRetiredSkills(t *testing.T) {
 				assert.NotRegexp(t, api, string(data), path)
 			}
 			if strings.HasSuffix(path, ".yaml") && strings.Contains(path, "quests") {
-				assert.NotRegexp(t, `skillinfo:\s*"?(changeform|peep|portal|scribe|tame)`, string(data), path)
+				assert.NotRegexp(t, `skillinfo:\s*"?(changeform|peep|portal|scribe|search|tame)`, string(data), path)
 			}
 		})
 	}

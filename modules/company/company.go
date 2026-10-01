@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -85,6 +86,7 @@ type wireRecord struct {
 	Service         []domain.Service       `yaml:"service,omitempty"`
 	Lost            []domain.LostCompanion `yaml:"lost,omitempty"`
 	Rosters         []domain.Roster        `yaml:"rosters,omitempty"`
+	AppliedOps      []string               `yaml:"applied_ops,omitempty"`
 }
 
 type wireRegistry struct {
@@ -102,7 +104,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending}
+		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -263,7 +265,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -762,6 +764,13 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.alignmentView(user.UserId))
 	case "chemistry":
 		user.SendText(m.chemistryView(user.UserId))
+	case "specialists", "specialist":
+		// Phase 33f2: who in the company performs each expedition skill.
+		if text := archetypes.SpecialistsView(user.UserId); text != "" {
+			user.SendText(text)
+		} else {
+			user.SendText("Your company's specialists can't be read right now.")
+		}
 	case "eat":
 		user.SendText(m.mealView(user, room, mealEat))
 	case "drink":

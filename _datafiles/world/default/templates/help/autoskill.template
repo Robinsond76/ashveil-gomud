@@ -11,6 +11,14 @@ handles it - you or a companion, whichever has the higher level in it.
            (<ansi fg="command">help trap</ansi>)
   <ansi fg="yellow">light</ansi>   conjuring a floating light when you step into the
            dark and nobody in your company is already carrying one
+  <ansi fg="yellow">trail</ansi>   reading the trail beyond the exits as you walk
+           (<ansi fg="command">help trail</ansi>)
+  <ansi fg="yellow">pathfinder</ansi>  easing rough ground (<ansi fg="command">help pathfinder</ansi>)
+  <ansi fg="yellow">keeneye</ansi> spotting secret exits (<ansi fg="command">help keeneye</ansi>)
+  <ansi fg="yellow">weather</ansi> the forecast in <ansi fg="command">weather</ansi> (<ansi fg="command">help forecast</ansi>)
+  <ansi fg="yellow">haggle</ansi>  better market prices (<ansi fg="command">help haggle</ansi>)
+  <ansi fg="yellow">watch</ansi>, <ansi fg="yellow">fieldsmith</ansi>, <ansi fg="yellow">vigil</ansi>, <ansi fg="yellow">forage</ansi>  camp specialists
+           (<ansi fg="command">help specialists</ansi>)
 
 A companion who is down is never considered. For a light, a companion
 who is fighting or out of mana is passed over too, so a busy companion
@@ -23,6 +31,6 @@ never blocks an able one from stepping in.
 
   <ansi fg="command">autoskill [skill] on</ansi>
   <ansi fg="command">autoskill [skill] off</ansi>
-  Turn one on or off. Both are on by default.
+  Turn one on or off. All are on by default.
 
-See also: <ansi fg="command">help trap</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help light</ansi>, <ansi fg="command">help picklock</ansi>.
+See also: <ansi fg="command">help specialists</ansi>, <ansi fg="command">help trap</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help light</ansi>, <ansi fg="command">help picklock</ansi>.

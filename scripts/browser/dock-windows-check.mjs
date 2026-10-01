@@ -405,6 +405,11 @@ await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.retreat = 
 check((await cbt()).includes('Withdrawing east (1 round remaining)'), 'the withdrawal countdown, singular');
 await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.retreat = { exit: 'east', rounds: 2 }; window.gmcp('Company.Battle', x); }, battleFix);
 check((await cbt()).includes('Withdrawing east (2 rounds remaining)'), 'the withdrawal countdown, plural');
+// Phase 33i1: the company's outlook, in words.
+check(!(await cbt()).includes('Outlook:'), 'no outlook line without one');
+await page.evaluate(b => { const x = JSON.parse(JSON.stringify(b)); x.outlook = { risk: 'hard', close: true, text: 'A hard fight for your company; it could go either way.' }; window.gmcp('Company.Battle', x); }, battleFix);
+check((await cbt()).includes('Outlook: A hard fight for your company; it could go either way.'), 'the outlook headline is shown');
+check(await page.locator('#combat-window .cbt-outlook.cbt-risk-hard').count() === 1, 'marked with its risk');
 await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
 check(await page.locator('details.cbt-setup summary').count() === 1, 'Setup folds under the view');
 

@@ -1,0 +1,33 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">trail</ansi>
+
+Read the Trail is a ranger's skill. Each time your company walks into a
+room, its best tracker reads the ground beyond the exits and tells you
+which enemy groups lie that way, before you blunder into them. Only
+hostile groups leave a report: players, companions, and peaceful folk
+don't.
+
+<ansi fg="yellow-bold">What each level reads</ansi>
+
+  Level 1  which way: "fresh tracks, east"
+  Level 2  who: "a band of ruffians, east"
+  Level 3  how many: "a band of ruffians (3), east"
+  Level 4  also two rooms away: "wolves (2), beyond north, then east"
+
+<ansi fg="yellow-bold">On the road</ansi>
+
+When you set out on a journey whose road can be ambushed, a tracker in
+your company warns you as you leave. If the ambush comes, the tracker
+leads the company off the road and around it, with a 20% chance per
+level (80% at level 4). Then the ambushers never appear; you only find
+their tracks. Otherwise the ambush happens as it would have.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">track</ansi>
+  Read the trail here now, once a round. It works even with the
+  automatic reading switched off.
+
+  <ansi fg="command">autoskill trail off</ansi>
+  Stop the reading on every step (<ansi fg="command">help autoskill</ansi>).
+
+See also: <ansi fg="command">help specialists</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help abilities</ansi>.

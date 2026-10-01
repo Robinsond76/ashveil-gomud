@@ -37,6 +37,9 @@ pays less to sell, and one that shuns your company won't trade with it
 at all; a black market may still deal with an outlaw company at
 ordinary prices when the regular market won't. See <ansi fg="command">help standing</ansi>.
 
+A rogue in your company haggles: up to 2% better prices per level, still
+never enough to profit by buying and selling back (<ansi fg="command">help haggle</ansi>).
+
 <ansi fg="yellow-bold">Where</ansi>
 
 Markets are found in a settlement's market square — Dunmar's Market

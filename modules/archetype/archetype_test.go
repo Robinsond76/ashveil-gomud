@@ -138,7 +138,7 @@ func TestShippedArchetypesLoad(t *testing.T) {
 	assert.Nil(t, m.CompanionSpells("nosuch", 1))
 	assert.True(t, wiz.HasUtility("light"))
 	assert.Equal(t, []string{"cleric", "wizard"}, m.table.SkillClaimants("cast"))
-	assert.False(t, m.table.SkillClaimed("search"), "search is a trade skill")
+	assert.False(t, m.table.SkillClaimed("map"), "map is a trade skill")
 	assert.Equal(t, "cast", m.config.UtilitySkills["light"])
 	assert.Equal(t, "skulduggery", m.config.UtilitySkills["traps"])
 }
@@ -267,7 +267,7 @@ func TestProviderDecisions(t *testing.T) {
 	ok, reason := m.CanTrain(20, "cast")
 	assert.False(t, ok)
 	assert.Contains(t, reason, "archetype")
-	ok, _ = m.CanTrain(20, "search")
+	ok, _ = m.CanTrain(20, "map")
 	assert.True(t, ok)
 
 	m.choose(newUser(20), "wizard", true)
@@ -399,7 +399,7 @@ func TestLoadFailureFailsClosedWithReason(t *testing.T) {
 	ok, reason := m.CanTrain(114, "cast")
 	assert.False(t, ok)
 	assert.Contains(t, reason, "unavailable")
-	ok, _ = m.CanTrain(114, "search")
+	ok, _ = m.CanTrain(114, "map")
 	assert.True(t, ok)
 	ok, reason = m.CanLearnSpell(114, "heal")
 	assert.False(t, ok)

@@ -52,6 +52,12 @@
  *   - In the Battle view a guardian's button adds whom it guards and its
  *     guards left (Company.Battle's guards).
  *
+ * Phase 33i1, the company's outlook:
+ *
+ *   - Below the focus buttons, scout's assessment headline for the battle's
+ *     group (Company.Battle's outlook: risk and closeness in words, never a
+ *     number). None in the dark.
+ *
  * Every name is set with textContent, never innerHTML.
  *
  * Responds to GMCP namespaces:
@@ -90,6 +96,9 @@
         }
 
         .cbt-note { color: var(--t-text-secondary); font-style: italic; }
+        .cbt-outlook { font-style: normal; margin: 4px 0; }
+        .cbt-outlook.cbt-risk-easy, .cbt-outlook.cbt-risk-fair { color: var(--t-success); }
+        .cbt-outlook.cbt-risk-grave, .cbt-outlook.cbt-risk-hopeless { color: var(--t-error); }
 
         .cbt-grid {
             border-collapse: collapse;
@@ -555,6 +564,12 @@
         head.appendChild(retreat);
         root.appendChild(head);
         if (typeof battle.focus === 'string') { root.appendChild(focusBar(battle)); }
+        if (battle.outlook && battle.outlook.text) {
+            const outlook = el('div', 'cbt-note cbt-outlook cbt-risk-' + String(battle.outlook.risk || '').replace(/[^a-z]/g, ''),
+                'Outlook: ' + battle.outlook.text);
+            outlook.title = 'Your company\'s assessment, as scout gives it (help assessment)';
+            root.appendChild(outlook);
+        }
 
         lines = [];
         if (battle.dark) {

@@ -59,6 +59,13 @@ type utilityConfig struct {
 	AutoLightCooldown      int
 	CompanionLightBuffID   int
 	CompanionLightManaCost int
+
+	// Phase 33f2.
+	TrailFarLevel       int
+	TrailCooldownRounds int
+	AmbushEvadePerLevel int
+	KeenEyePerLevel     int
+	KeenEyeTarget       int
 }
 
 func defaultUtilityConfig() utilityConfig {
@@ -77,6 +84,11 @@ func defaultUtilityConfig() utilityConfig {
 		AutoLightCooldown:      10,
 		CompanionLightBuffID:   1000,
 		CompanionLightManaCost: 10,
+		TrailFarLevel:          4,
+		TrailCooldownRounds:    1,
+		AmbushEvadePerLevel:    20,
+		KeenEyePerLevel:        20,
+		KeenEyeTarget:          100,
 	}
 }
 
@@ -102,6 +114,11 @@ func parseUtilityConfig(get func(string) any) utilityConfig {
 	positive("AutoLightCooldown", &cfg.AutoLightCooldown)
 	positive("CompanionLightBuffID", &cfg.CompanionLightBuffID)
 	positive("CompanionLightManaCost", &cfg.CompanionLightManaCost)
+	positive("TrailFarLevel", &cfg.TrailFarLevel)
+	positive("TrailCooldownRounds", &cfg.TrailCooldownRounds)
+	positive("AmbushEvadePerLevel", &cfg.AmbushEvadePerLevel)
+	positive("KeenEyePerLevel", &cfg.KeenEyePerLevel)
+	positive("KeenEyeTarget", &cfg.KeenEyeTarget)
 	if raw := get("AutoSensePenalty"); raw != nil {
 		if v := configInt(raw); v >= 0 {
 			cfg.AutoSensePenalty = v
@@ -315,7 +332,7 @@ func (m *ArchetypeModule) autoskillList(userID int) string {
 		if set && !on {
 			state = "off"
 		}
-		lines = append(lines, fmt.Sprintf("  %-8s %s", u, state))
+		lines = append(lines, fmt.Sprintf("  %-10s %s", u, state))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -651,6 +668,8 @@ func (m *ArchetypeModule) onStep(userID, fromRoomID, toRoomID int) {
 	}
 	m.autoSense(user, room, fromRoomID)
 	m.autoLight(user, room, fromRoomID)
+	m.autoKeenEye(user, room, fromRoomID)
+	m.autoTrail(user, room, fromRoomID)
 }
 
 // autoSense gives the company one passive roll per trapped lock when it

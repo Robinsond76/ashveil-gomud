@@ -987,3 +987,10 @@ func LoadDataFiles() {
 	}
 
 }
+
+// LoadedRoom returns a room only if it is already in memory, never loading
+// it from disk (Ashveil 33f2: Read the Trail must not pull a whole area
+// into memory on every step).
+func LoadedRoom(roomId int) *Room {
+	return getRoomFromMemory(roomId)
+}

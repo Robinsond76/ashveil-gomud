@@ -874,3 +874,16 @@ func TestAbandonForDeathNoProvider(t *testing.T) {
 	assert.ErrorIs(t, AbandonForDeath(7), assert.AnError)
 	assert.Equal(t, []int{7}, f.leaders)
 }
+
+// TestInterruptionCanFireAs (33f2 review): a paused journey's kind belongs to
+// its route when the route names it, lists it, or is an ambush route left
+// with tracks.
+func TestInterruptionCanFireAs(t *testing.T) {
+	single := InterruptionProfile{Kind: FallenTree, Checkpoint: 5}
+	assert.True(t, single.CanFireAs(FallenTree))
+	assert.False(t, single.CanFireAs(Tracks))
+	weighted := InterruptionProfile{Kinds: []WeightedInterruptionKind{{Kind: Discovery, Weight: 1}, {Kind: Combat, Weight: 1}}, CombatMobID: 3, Checkpoint: 5}
+	assert.True(t, weighted.CanFireAs(Discovery))
+	assert.True(t, weighted.CanFireAs(Tracks), "an evaded ambush")
+	assert.False(t, weighted.CanFireAs(FallenTree))
+}

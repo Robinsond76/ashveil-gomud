@@ -2,7 +2,7 @@
 
 The ~stash~ command hides an item in the room. Nobody will know it's there but you.
 
-Stashes can be searched for if someone has the ~search~ skill. To recover an item from a stash, type ~get [item_name] from stash~.
+To recover an item from a stash, type ~get [item_name] from stash~.
 
 ## Usage:
 

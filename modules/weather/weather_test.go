@@ -114,7 +114,7 @@ func TestRecoveryAdvancesOverdueZoneExactlyOnce(t *testing.T) {
 
 func TestRecoveryDoesNotAdvanceZoneNotYetDue(t *testing.T) {
 	saved := Registry{Zones: map[string]weather.ZoneWeather{
-		"dunmar": {Zone: "dunmar", Current: "storm", NextChangeRound: 2000},
+		"dunmar": {Zone: "dunmar", Current: "storm", NextChangeRound: 2000, Next: "clear"},
 	}}
 	store := &fakeStore{saved: saved}
 	module := newTestModule(store, func() uint64 { return 1000 }, zeroRNG)

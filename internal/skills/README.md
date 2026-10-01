@@ -45,4 +45,4 @@ Goal of skills design should be as follows:
   * Equipment can modify stat points, but cannot modify skill levels
 * Players who level an individual skill to level 4 shouldn't become somehow greatly more powerful, but instead get new capabilities that their stat points will drive
 * Synergies (skills that combine with other skills) should ideally occur at the highest level of one of the skills (level 4). 
-  * For example, the `track` skill at Level 4 combines with the `map` skill to mark enemy positions.
+  * For example, a ranger's `track` skill at Level 4 reads the trail two rooms out (Ashveil 33f2).

@@ -469,6 +469,74 @@ func (m *EncumbranceModule) ConsumeCargoUse(leaderUserID, itemId int) error {
 	return nil
 }
 
+var _ encumbrance.CargoKeeper = (*EncumbranceModule)(nil)
+
+// DepositCargo implements encumbrance.CargoKeeper (Phase 33f3): full items
+// into the leader's cargo, the op remembered in the same record so a
+// repeat deposits nothing, saved and rolled back on a failed save.
+func (m *EncumbranceModule) DepositCargo(leaderUserID int, op string, deposits []encumbrance.CargoStack) error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cargo, ok := m.cargo[leaderUserID]
+	if !ok {
+		established, err := encumbrance.Established(leaderUserID)
+		if err != nil {
+			return err
+		}
+		cargo = established
+	}
+	if op != "" && cargo.HasApplied(op) {
+		return nil
+	}
+	updated := cargo
+	for _, d := range deposits {
+		next, err := updated.Deposit(d.ItemId, d.Count)
+		if err != nil {
+			return err
+		}
+		updated = next
+	}
+	if op != "" {
+		updated = updated.MarkApplied(op)
+	}
+	m.cargo[leaderUserID] = updated
+	if err := m.saveLocked(); err != nil {
+		if ok {
+			m.cargo[leaderUserID] = cargo
+		} else {
+			delete(m.cargo, leaderUserID)
+		}
+		return err
+	}
+	return nil
+}
+
+// WithdrawCargo implements encumbrance.CargoKeeper (Phase 33f3).
+func (m *EncumbranceModule) WithdrawCargo(leaderUserID, itemId, count int) error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cargo, ok := m.cargo[leaderUserID]
+	if !ok {
+		return encumbrance.ErrInsufficientCargo
+	}
+	updated, err := cargo.Withdraw(itemId, count)
+	if err != nil {
+		return err
+	}
+	m.cargo[leaderUserID] = updated
+	if err := m.saveLocked(); err != nil {
+		m.cargo[leaderUserID] = cargo
+		return err
+	}
+	return nil
+}
+
 // newCargoItem builds a fresh Item instance for a cargo-stack's item ID,
 // via the module's item-spec lookup rather than items.New, so it resolves
 // correctly under an injected test lookup as well as the live registry.

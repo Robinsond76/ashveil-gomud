@@ -51,8 +51,8 @@ func captureText(t *testing.T, fn func()) string {
 func trainingRoom(t *testing.T, id int) *rooms.Room {
 	t.Helper()
 	r := &rooms.Room{RoomId: id, Zone: "ArchetypeTest", Title: "Training Hall", SkillTraining: map[string]rooms.TrainingRange{
-		"cast":   {Min: 1, Max: 4},
-		"search": {Min: 1, Max: 4},
+		"cast": {Min: 1, Max: 4},
+		"map":  {Min: 1, Max: 4},
 	}}
 	rooms.SetTestRoom(r)
 	t.Cleanup(func() { rooms.RemoveTestRoom(id) })
@@ -82,9 +82,9 @@ func TestWiringTrainRefusesClaimedSkillUntilChosen(t *testing.T) {
 	assert.Zero(t, u.Character.GetSkillLevel("cast"))
 	assert.Equal(t, 20, u.Character.TrainingPoints, "no points spent on a refusal")
 
-	_, err := usercommands.Train("search", u, room, 0)
+	_, err := usercommands.Train("map", u, room, 0)
 	require.NoError(t, err)
-	assert.Equal(t, 1, u.Character.GetSkillLevel("search"), "trade skills stay open")
+	assert.Equal(t, 1, u.Character.GetSkillLevel("map"), "trade skills stay open")
 
 	m.choose(u, "wizard", true)
 	before := u.Character.TrainingPoints

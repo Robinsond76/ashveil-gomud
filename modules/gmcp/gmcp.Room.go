@@ -442,7 +442,7 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 
 			if exitInfo.Secret {
 				if exitRoom := rooms.LoadRoom(exitInfo.RoomId); exitRoom != nil {
-					if !user.Character.HasVisitedRoom(exitInfo.RoomId, exitRoom.Zone) {
+					if !user.Character.SeesSecretExit(room.RoomId, exitName, exitInfo.RoomId, exitRoom.Zone) {
 						continue
 					}
 				}

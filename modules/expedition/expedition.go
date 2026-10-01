@@ -19,10 +19,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
-	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -169,47 +170,7 @@ type MobSpawner interface {
 type nativeMobSpawner struct{}
 
 func (nativeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUserID int) (int, error) {
-	room := rooms.LoadRoom(roomID)
-	if room == nil {
-		return 0, fmt.Errorf("expedition: room %d is unavailable", roomID)
-	}
-	mob := mobs.NewMobById(mobs.MobId(mobTemplateID), roomID)
-	if mob == nil {
-		return 0, fmt.Errorf("expedition: combat encounter mob template %d is unavailable", mobTemplateID)
-	}
-	// Phase 29b2: no lone enemies. Unless the foe is solitary, a second of
-	// its kind comes with it, and they fight as one group of their own.
-	foes := []*mobs.Mob{mob}
-	if !mob.Solitary {
-		if second := mobs.NewMobById(mobs.MobId(mobTemplateID), roomID); second != nil {
-			foes = append(foes, second)
-		}
-	}
-	group, groupName := "", ""
-	if len(foes) > 1 {
-		group = encounterGroup(roomID, mob.InstanceId)
-		// Phase 32c: the pair is named as it forms ("a band of ruffians")
-		// and keeps the name while it stands.
-		summaries := make([]mobparty.MobSummary, len(foes))
-		for i, foe := range foes {
-			summaries[i] = rooms.GroupSummary(foe)
-		}
-		groupName = mobparty.Generate(summaries).Name
-	}
-	for _, foe := range foes {
-		foe.Hostile = true
-		foe.MaxWander = 0
-		foe.SpawnGroup = group
-		foe.GroupName = groupName
-		room.AddMob(foe.InstanceId)
-		foe.Command(fmt.Sprintf("attack @%d", leaderUserID))
-	}
-	return mob.InstanceId, nil
-}
-
-// encounterGroup names a travel encounter's group after its first foe.
-func encounterGroup(roomID, firstInstanceID int) string {
-	return fmt.Sprintf("encounter:%d:%d", roomID, firstInstanceID)
+	return enemyparty.SpawnAmbush(roomID, mobTemplateID, leaderUserID)
 }
 
 // EncounterActive reports whether any foe of the encounter led by
@@ -225,7 +186,7 @@ func (nativeMobSpawner) EncounterActive(instanceID, roomID int) bool {
 	if room == nil {
 		return false
 	}
-	group := encounterGroup(roomID, instanceID)
+	group := enemyparty.EncounterGroup(roomID, instanceID)
 	for _, id := range room.GetMobs() {
 		if mob := mobs.GetInstance(id); standing(mob) && mob.SpawnGroup == group {
 			return true
@@ -274,6 +235,10 @@ type ExpeditionModule struct {
 	loadBand         func(leaderUserID int) (encumbrance.LoadBand, bool)
 	mountDurationPct func(leaderUserID int) int
 	roomZone         func(roomID int) string
+
+	// Phase 33f2 Read the Trail seams; nil uses internal/archetypes.
+	trailReader  func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool)
+	ambushEvader func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool)
 
 	profiles        map[string]expedition.TravelProfile
 	sessions        map[int]expedition.TravelSession
@@ -460,8 +425,31 @@ func parseInterruption(raw any) (*expedition.InterruptionProfile, bool) {
 		return nil, false
 	}
 	interruption := &expedition.InterruptionProfile{
-		Kind:       expedition.InterruptionKind(configString(fields["kind"])),
-		Checkpoint: uint8(checkpoint),
+		Kind:        expedition.InterruptionKind(configString(fields["kind"])),
+		Checkpoint:  uint8(checkpoint),
+		CombatMobID: configInt(fields["combatmobid"]),
+	}
+	if interruption.CombatMobID == 0 {
+		interruption.CombatMobID = configInt(fields["combat_mob_id"])
+	}
+	// Phase 33f2 review: a weighted table (12b) and an ambush's mob were
+	// documented but never read from config.
+	if raw, ok := fields["kinds"]; ok {
+		list, ok := raw.([]any)
+		if !ok {
+			return nil, false
+		}
+		for _, entry := range list {
+			kf := stringMap(entry)
+			weight := configInt(kf["weight"])
+			if kf == nil || weight <= 0 {
+				return nil, false
+			}
+			interruption.Kinds = append(interruption.Kinds, expedition.WeightedInterruptionKind{
+				Kind:   expedition.InterruptionKind(configString(kf["kind"])),
+				Weight: uint(weight),
+			})
+		}
 	}
 	if err := interruption.Validate(); err != nil {
 		return nil, false
@@ -636,7 +624,30 @@ func (m *ExpeditionModule) StartTravel(req expedition.StartRequest) (bool, error
 	if line := factors.line(); line != "" {
 		m.sendToLeader(session.LeaderUserID, line)
 	}
+	if line := m.trailWarningLocked(session); line != "" {
+		m.sendToLeader(session.LeaderUserID, line)
+	}
 	return true, nil
+}
+
+// trailWarningLocked (33f2) is a tracker's warning at departure that the
+// route can be ambushed; "" without a tracker or an ambush to fear.
+func (m *ExpeditionModule) trailWarningLocked(session expedition.TravelSession) string {
+	profile, ok := m.sessionProfile(session)
+	if !ok || profile.Interruption == nil || !profile.Interruption.ReachesCombat() {
+		return ""
+	}
+	read := m.trailReader
+	if read == nil {
+		read = func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool) {
+			return archetypes.BestSpecialist(leaderUserID, archetypes.UtilityTrail, roomIDs...)
+		}
+	}
+	sp, ok := read(session.LeaderUserID, session.OriginRoomID)
+	if !ok {
+		return ""
+	}
+	return fmt.Sprintf("%s %s the road ahead: fresh tracks of armed men cross it. There may be an ambush on the %s route.", sp.Subject(), sp.Verb("read", "reads"), profile.Name)
 }
 
 // departureFactors are the Phase 16 multipliers locked onto a journey at
@@ -963,6 +974,21 @@ func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) err
 		resolved.Kinds = nil
 		profile.Interruption = &resolved
 	}
+	// Phase 33f2: a tracker may lead the company around an ambush; the
+	// interruption becomes ordinary tracks and nothing spawns.
+	evadedBy := ""
+	if profile.Interruption != nil && profile.Interruption.Kind == expedition.Combat {
+		evade := m.ambushEvader
+		if evade == nil {
+			evade = archetypes.EvadeAmbush
+		}
+		if sp, evaded := evade(session.LeaderUserID, session.OriginRoomID); evaded {
+			resolved := *profile.Interruption
+			resolved.Kind = expedition.Tracks
+			profile.Interruption = &resolved
+			evadedBy = fmt.Sprintf("%s %s the company off the road and around an ambush.", sp.Subject(), sp.Verb("lead", "leads"))
+		}
+	}
 	now := m.clock().UTC()
 	candidate, err := session.Interrupt(now, profile)
 	if err != nil {
@@ -983,6 +1009,9 @@ func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) err
 		return err
 	}
 	m.stopTimerLocked(session.LeaderUserID)
+	if evadedBy != "" {
+		m.sendToLeader(session.LeaderUserID, evadedBy)
+	}
 	m.sendToLeader(session.LeaderUserID, m.interruptionTextLocked(candidate))
 	return nil
 }

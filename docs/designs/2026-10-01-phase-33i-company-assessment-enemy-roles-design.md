@@ -57,6 +57,47 @@ Assessment vocabulary and confidence, specialist knowledge limits, initial enemy
 The planning request approves documenting the direction, not unresolved
 formulas or behavior changes. Record final owner decisions in this design.
 
+## Final implementation decisions: 33i1 (owner, 2026-10-01)
+
+33i1, company encounter assessment, was settled with the owner on
+2026-10-01 ([plan](../plans/2026-10-01-phase-33i1-company-assessment.md)).
+33i2 (coordinated enemy roles) is separate and still open.
+
+1. **Surfaces.** `scout [group]` ends with the assessment, below the grid.
+   `consider [enemy]` gives the same assessment for that enemy's whole group
+   (a lone creature is a group of one), without the grid. The owner
+   retired the old one-on-one odds as misleading in a company game.
+   `consider` on a player refuses. The web Battle view shows the same
+   outlook (`Company.Battle.outlook`).
+2. **Risk words:** an easy fight, a fair fight, a hard fight, a grave
+   risk, hopeless. No numbers or percentages anywhere.
+3. **Confidence** depends only on how close the estimate is: "it could go
+   either way" near even or near the line between two words, else "the
+   odds look clear". It never depends on anything hidden.
+4. **Method.** Deterministic: each counted member's expected damage per
+   round (combat's existing no-dice formula: gear, stats, defense, dodge,
+   burden) against the visible foes it can reach from its place now,
+   averaged over them; staying power is current health. Ratio =
+   (company health / foes' damage) ÷ (foes' health / company damage);
+   bands at 2.5, 1.25, 0.8, 0.4. Reach uses `formationcombat.Legal` with
+   the alive map `scout`'s marks use; an unplaced member fails open, as in
+   combat. Reads only: no state, no RNG.
+5. **Counted:** the leader and living companions walking with them who
+   haven't surrendered. Listed as not with you: fled, awaiting, fallen,
+   and separated companions. Not counted: allied companies (a note when an
+   ally is here), pets (left out silently; they may be removed), spells,
+   healing and abilities on either side, hidden foes, waiting groups, and
+   reinforcements (always said).
+6. **Factors shown:** who is counted and missing, own members hurt
+   (wounded or worse) or burdened, own members who can reach none of them,
+   visible foes none of yours can reach.
+7. **No specialist bonus** in 33i1; Read the Trail is unchanged.
+8. **Visibility** follows scout: hidden foes are left out, darkness shows
+   nothing (no outlook in the Battle view either).
+9. **Help:** new `help assessment`; `help scout`, `help consider` (now a
+   template), `help combat`, and `help webclient` updated; the Combat
+   lesson's scout hint mentions the assessment.
+
 ## Acceptance criteria and verification
 
 Assessment changes with present members, burden, gear, wounds, and formation without exposing hidden values; darkness and hidden foes stay hidden; no state/RNG mutation; real enemy healing/guarding/abilities respect costs and targets; surrender/retreat cancel actions; placed/no-focus and focused multi-level harnesses report outcomes without false guarantees.

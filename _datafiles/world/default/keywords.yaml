@@ -75,6 +75,7 @@ help:
     combat:
       - abilities
       - armor
+      - assessment
       - attack
       - battle-summary
       - break
@@ -153,13 +154,21 @@ help:
       - inspect
       - map
       - rank
-      - search
       - skulduggery
-      - track
       - unenchant
       - uncurse
       - autoskill
       - trap
+      - specialists
+      - trail
+      - keeneye
+      - pathfinder
+      - forecast
+      - haggle
+      - campwatch
+      - fieldsmith
+      - vigil
+      - forage
   admin:
     all:
       - badcommands
@@ -209,6 +218,16 @@ help-aliases:
   tutorial:         [replay]
   archetype:        [archetypes, class, classes]
   trap:             [traps]
+  specialists:      [specialist, company-specialists, expedition-skills, utilities]
+  trail:            [track, tracking, tracks, read-the-trail, tracker]
+  keeneye:          [keen-eye, secret-exits, secret-exit, hidden-exits, search]
+  pathfinder:       [pathfinding, rough-ground]
+  forecast:         [weather-sense, forecasting, forecasts]
+  haggle:           [haggling, bargain, bargaining]
+  campwatch:        [camp-watch, watch, raid, raids, raiders, camp-raid, camp-raids, brigand, brigands]
+  fieldsmith:       [field-smith, smith]
+  vigil:            [vigils]
+  forage:           [foraging]
   survival:         [needs, hunger, thirst, fatigue]
   strain:           [walking]
   temperature:      [warmth, exposure, cold, heat]
@@ -223,6 +242,7 @@ help-aliases:
   formation:        [reach, interception, formations]
   targeting:        [target, targets, enemy-parties]
   scout:            [scouting, enemy-groups, groups]
+  assessment:       [assess, odds, chances, risk, outlook]
   strategy:         [strategies, gambits, roles]
   tactics:          [focus, company-tactics, personalities, personality]
   guardian:         [guardians, guard, guards, ward, wards]
@@ -263,7 +283,6 @@ help-aliases:
   set-wimpy:        [wimpy]
   colors:           [color, ansi]
   killstats:        [kills, kd]
-  trading:          [haggle]
   pets:             [pet]
   feed:             [feed]
   macros:           [macro]

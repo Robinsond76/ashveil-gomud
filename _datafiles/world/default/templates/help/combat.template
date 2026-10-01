@@ -66,7 +66,8 @@ front to the back. Where a fighter stands, and the reach of their weapon,
 decide who they can strike. A fighter in the front row shields the one
 behind them. <ansi fg="command">formation reach [member]</ansi> shows who a member can reach, and
 <ansi fg="command">scout [group]</ansi> (<ansi fg="command">help scout</ansi>) shows an enemy group's formation and which
-of them you can reach.
+of them you can reach, and ends with your company's assessment of the
+fight: a word for the risk, never numbers (<ansi fg="command">help assessment</ansi>).
 
 <ansi fg="yellow-bold">Hitting (</ansi><ansi fg="command">help attack</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help defense</ansi><ansi fg="yellow-bold">)</ansi>
 
@@ -128,7 +129,7 @@ and your company's health.
 <ansi fg="yellow-bold">Commands</ansi>
 
   <ansi fg="command">attack [group]</ansi>    start a fight with a group
-  <ansi fg="command">scout [group]</ansi>     see how a group stands
+  <ansi fg="command">scout [group]</ansi>     see how a group stands, and your chances
   <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
   <ansi fg="command">help abilities</ansi>    tackles, opening strikes, and aimed shots
@@ -137,12 +138,14 @@ and your company's health.
   <ansi fg="command">help burden</ansi>       how your own load cuts your dodge
   <ansi fg="command">help interrupts</ansi>   broken chants, wind-ups, and shield counters
   <ansi fg="command">retreat [exit]</ansi>    prepare one round, then withdraw the company (or <ansi fg="command">flee</ansi>)
-  <ansi fg="command">consider [target]</ansi> size up a foe
+  <ansi fg="command">consider [enemy]</ansi>  your company's chances against a group
+  <ansi fg="command">help assessment</ansi>   what scout and consider weigh
   <ansi fg="command">formation</ansi>         see and arrange your company's formation
   <ansi fg="command">company chemistry</ansi> your company's chemistry
   <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind
   <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
+  <ansi fg="command">help campwatch</ansi>    raiders at camp, and the watch that spots them
   <ansi fg="command">light</ansi>             how well you can see here
   <ansi fg="command">set combatpace</ansi>    how fast a round's lines come to you
 

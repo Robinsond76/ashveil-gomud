@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
@@ -137,6 +138,10 @@ type WeatherModule struct {
 	// the weather command; tests override them.
 	skyView   func(*rooms.Room) weather.SkyView
 	timeOfDay func() string
+	// Phase 33f2 Weather Sense: the leader's best present forecaster, and
+	// rounds per game hour.
+	forecaster    func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool)
+	roundsPerHour func() uint64
 
 	biomes  map[string]biomeTable
 	zones   map[string]weather.ZoneWeather
@@ -156,8 +161,12 @@ func init() {
 		zoneBiome: rooms.GetZoneBiome,
 		skyView:   (*rooms.Room).SkyView,
 		timeOfDay: func() string { return gametime.GetDate().String() },
-		biomes:    map[string]biomeTable{},
-		zones:     map[string]weather.ZoneWeather{},
+		forecaster: func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool) {
+			return archetypes.BestSpecialist(leaderUserID, archetypes.UtilityWeather, roomIDs...)
+		},
+		roundsPerHour: func() uint64 { return uint64(max(gametime.GetDate().RoundsPerDay/24, 1)) },
+		biomes:        map[string]biomeTable{},
+		zones:         map[string]weather.ZoneWeather{},
 	}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
@@ -272,13 +281,39 @@ func (m *WeatherModule) rollConditionLocked(table biomeTable) weather.Condition 
 func (m *WeatherModule) establishLocked(zone string, table biomeTable, currentRound uint64) (weather.ZoneWeather, error) {
 	condition := m.rollConditionLocked(table)
 	nextRound := currentRound + m.intervalLocked(table)
-	return weather.Established(zone, condition, nextRound, currentRound)
+	zw, err := weather.Established(zone, condition, nextRound, currentRound)
+	if err != nil {
+		return zw, err
+	}
+	zw.Next = m.rollConditionLocked(table).Name
+	return zw, nil
 }
 
+// advanceLocked moves a zone to its foretold next condition (Phase 33f2:
+// rolled when the current one began, so a forecast was true) and foretells
+// the one after. A zone with no usable foretold condition rolls one now.
 func (m *WeatherModule) advanceLocked(existing weather.ZoneWeather, table biomeTable, currentRound uint64) (weather.ZoneWeather, error) {
-	condition := m.rollConditionLocked(table)
+	condition, ok := conditionNamed(table, existing.Next)
+	if !ok {
+		condition = m.rollConditionLocked(table)
+	}
 	nextRound := currentRound + m.intervalLocked(table)
-	return existing.Advance(currentRound, condition, nextRound)
+	advanced, err := existing.Advance(currentRound, condition, nextRound)
+	if err != nil {
+		return advanced, err
+	}
+	advanced.Next = m.rollConditionLocked(table).Name
+	return advanced, nil
+}
+
+// conditionNamed finds a condition in a table by name.
+func conditionNamed(table biomeTable, name string) (weather.Condition, bool) {
+	for _, c := range table.Conditions {
+		if c.Name == name {
+			return c.Condition, true
+		}
+	}
+	return weather.Condition{}, false
 }
 
 // recoverLocked reconciles the persisted registry with the current round
@@ -321,6 +356,13 @@ func (m *WeatherModule) recoverLocked() {
 			continue
 		}
 		if !existing.Due(currentRound) {
+			// Phase 33f2: a zone saved before forecasts (or whose foretold
+			// condition left the table) foretells its next condition now.
+			if !conditionKnown(table, existing.Next) {
+				existing.Next = m.rollConditionLocked(table).Name
+				m.zones[zone] = existing
+				changed = true
+			}
 			continue
 		}
 		advanced, err := m.advanceLocked(existing, table, currentRound)
@@ -404,6 +446,25 @@ func (m *WeatherModule) CurrentCondition(zone string) (weather.Condition, bool) 
 	return weather.Condition{}, false
 }
 
+// Forecast (Phase 33f2) is a zone's current and foretold conditions and the
+// round the change comes; ok is false for an untracked zone or one with no
+// foretold condition yet.
+func (m *WeatherModule) Forecast(zone string) (current, next weather.Condition, changeRound uint64, ok bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	table, tracked := m.tableForZoneLocked(zone)
+	if !tracked {
+		return current, next, 0, false
+	}
+	zw, tracked := m.zones[zone]
+	if !tracked {
+		return current, next, 0, false
+	}
+	current, okCurrent := conditionNamed(table, zw.Current)
+	next, okNext := conditionNamed(table, zw.Next)
+	return current, next, zw.NextChangeRound, okCurrent && okNext
+}
+
 func (m *WeatherModule) userCommand(_ string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
 	view := m.skyView(room)
 	condition, tracked := m.CurrentCondition(view.WeatherZone)
@@ -412,6 +473,7 @@ func (m *WeatherModule) userCommand(_ string, user *users.UserRecord, room *room
 		lines = append(lines, fmt.Sprintf("Temperature here: %d°C (%s).", temp, climate.TemperatureName(temp)))
 	}
 	lines = append(lines, weather.RenderSky(view, condition, tracked, true)...)
+	lines = append(lines, m.forecastLines(user, room, view.WeatherZone)...)
 	user.SendText(strings.Join(lines, "\n"))
 	return true, nil
 }

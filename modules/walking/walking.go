@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/climate"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -66,6 +67,11 @@ type Settings struct {
 	Cold          walking.ColdSettings
 	WellRestedPct int
 	RestedPct     int
+	// Phase 33f2 Pathfinder: strain on terrain dearer than
+	// PathfinderAboveStrain is cut by PathfinderPctPerLevel% per level,
+	// never below PathfinderAboveStrain.
+	PathfinderPctPerLevel int
+	PathfinderAboveStrain int
 }
 
 // DefaultSettings mirrors files/data-overlays/config.yaml.
@@ -76,6 +82,9 @@ func DefaultSettings() Settings {
 		Cold:          walking.DefaultColdSettings(),
 		WellRestedPct: 50,
 		RestedPct:     75,
+
+		PathfinderPctPerLevel: 5,
+		PathfinderAboveStrain: 25,
 	}
 }
 
@@ -100,6 +109,8 @@ func parseSettings(get func(string) any) Settings {
 	positive("HypothermicPct", &s.Cold.HypothermicPct)
 	positive("WellRestedPct", &s.WellRestedPct)
 	positive("RestedPct", &s.RestedPct)
+	positive("PathfinderPctPerLevel", &s.PathfinderPctPerLevel)
+	nonNegative("PathfinderAboveStrain", &s.PathfinderAboveStrain)
 
 	if list, ok := get("Settlements").([]any); ok {
 		settlements := map[string]bool{}
@@ -232,6 +243,8 @@ type WalkingModule struct {
 	exposureOf   func(leaderUserID int, memberKey string) (int, bool)
 	drain        func(leaderUserID int, key survival.MemberKey, cost survival.Exertion) error
 	companyNeeds func(leaderUserID int) []survival.MemberNeeds
+	// pathfinder is the leader's best present pathfinder (33f2).
+	pathfinder func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool)
 
 	mu sync.Mutex
 }
@@ -270,6 +283,9 @@ func newModule() *WalkingModule {
 		mountRelief:  mount.Relief,
 		exposureOf:   climate.ExposureOf,
 		companyNeeds: survival.CompanyNeeds,
+		pathfinder: func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool) {
+			return archetypes.BestSpecialist(leaderUserID, archetypes.UtilityPathfinder, roomIDs...)
+		},
 		drain: func(leaderUserID int, key survival.MemberKey, cost survival.Exertion) error {
 			_, err := survival.ApplyMemberDrain(leaderUserID, key, cost)
 			return err
@@ -356,16 +372,19 @@ type stepMember struct {
 
 // stepPlan is a whole step: the terrain and each present member's cost.
 type stepPlan struct {
-	terrain     int
-	biome       string
-	loadPct     int
-	weatherName string
-	weatherPct  int
-	mountPct    int
-	riders      int
-	members     []stepMember
-	roster      []member
-	rosterKnown bool
+	terrain int
+	biome   string
+	// Phase 33f2: who found easier going, and the strain they saved.
+	pathfinder    archetypes.Specialist
+	pathfinderPct int
+	loadPct       int
+	weatherName   string
+	weatherPct    int
+	mountPct      int
+	riders        int
+	members       []stepMember
+	roster        []member
+	rosterKnown   bool
 }
 
 // planStep works out what stepping into dest costs each member walking with
@@ -381,6 +400,7 @@ func (m *WalkingModule) planStep(leader *users.UserRecord, dest *rooms.Room, fro
 	}
 	p.biome = terrain.Biome
 	p.terrain = walking.TerrainCost(terrain, m.settings.Terrain)
+	m.applyPathfinder(&p, leader.UserId, dest.RoomId, fromRoomID)
 
 	if band, ok := m.loadBand(leader.UserId); ok && band.FatiguePct > 0 {
 		p.loadPct = band.FatiguePct
@@ -436,6 +456,30 @@ func (m *WalkingModule) planStep(leader *users.UserRecord, dest *rooms.Room, fro
 		p.members = append(p.members, sm)
 	}
 	return p
+}
+
+// applyPathfinder (33f2) eases rough terrain when a pathfinder walks with
+// the leader: the strain is cut by PathfinderPctPerLevel% per level, but
+// never below road strain, so it never makes rough ground cheaper than road.
+func (m *WalkingModule) applyPathfinder(p *stepPlan, leaderUserID int, roomIDs ...int) {
+	floor := m.settings.PathfinderAboveStrain
+	if p.terrain <= floor || m.pathfinder == nil {
+		return
+	}
+	sp, ok := m.pathfinder(leaderUserID, roomIDs...)
+	if !ok {
+		return
+	}
+	pct := archetypes.PctByLevel(sp.Level, m.settings.PathfinderPctPerLevel, 90)
+	eased := p.terrain * (100 - pct) / 100
+	if eased < floor {
+		eased = floor
+	}
+	if eased >= p.terrain {
+		return
+	}
+	p.pathfinder, p.pathfinderPct = sp, pct
+	p.terrain = eased
 }
 
 // Stepped implements walking.StepProvider. The user Go command calls it
@@ -639,6 +683,9 @@ func (m *WalkingModule) report(user *users.UserRecord, room *rooms.Room) []strin
 	}
 	if len(factors) > 0 {
 		lines = append(lines, "Company factors: "+strings.Join(factors, ", ")+".")
+	}
+	if plan.pathfinderPct > 0 {
+		lines = append(lines, fmt.Sprintf("Pathfinder: %s %s easier going, %d%% less strain (included above).", plan.pathfinder.Subject(), plan.pathfinder.Verb("find", "finds"), plan.pathfinderPct))
 	}
 	for _, sm := range plan.members {
 		who := sm.Name

@@ -5,8 +5,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (equipment catalog and Glaivewarden design approval)
-- **Latest completed phases:** 33f1, skill and charm retirement; 33e,
+- **Last updated:** 2026-10-01 (equipment catalog approval; 33i1, company encounter assessment; 33f3, camp specialists)
+- **Latest completed phases:** 33i1, company encounter assessment, and
+  33f3, camp specialists (built in parallel); 33f2, expedition specialists; 33f1, skill
+  and charm retirement; 33e,
   automatic class abilities; 33d, allied
   companies; 33c, company retreat; 33b, friendly effects; 33a, command
   rules; and 30g3, personal load and agility, all 2026-10-01.
@@ -29,8 +31,9 @@ play-test improvements are implemented; 32b's status still carries an outstandin
 **Current owner priority:** finish Phase 33a–33i in order, choosing the lead's
 recommended defaults without further confirmation (2026-10-01). 33a–33d are
 complete; 33e (automatic class abilities) and **33f1 (skill and charm
-retirement)** are complete; 33f2 (expedition specialists) is next, then
-33f3 (camp specialists). Phase 30g3 is also complete;
+retirement)**, **33f2 (expedition specialists)**, and **33f3 (camp
+specialists)** are complete, so 33f is done; **33i1 (group assessment)**
+is complete too (33i2 remains); 33g and 33h await the cargo phase and 30g4. Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
@@ -67,6 +70,63 @@ automatic class abilities, specialists, equipment/loot, progression/recovery/
 relocation, and group assessment/coordinated enemies. These are planning
 records now authorized for implementation by the owner, with open defaults
 delegated to the lead. 33a–33e are complete.
+
+## Deferred preparation designs
+
+- Owner requested a [weapon poison design](designs/2026-10-01-weapon-poisons-design.md)
+  for future implementation on 2026-10-01: shop-bought temporary blade coatings,
+  explicit per-member/per-blade camp assignments, and later camp recipes.
+  Recorded only; no phase scheduled or gameplay implemented. Balance numbers
+  remain proposed defaults.
+
+- Owner requested the [camp consumables design](designs/2026-10-01-camp-consumables-design.md)
+  on 2026-10-01: fortifying broth, warming draught, cooling salve, scent-masking
+  paste, watch incense, weapon oil and antidote draught. Includes proposed
+  preparation limits, rest/route lifecycle, acquisition and later crafting.
+  Documentation only; no phase scheduled or gameplay implemented.
+
+## Planned zone encounters
+
+- Owner requested [zone room encounters and wandering parties](designs/2026-10-01-random-room-encounters-design.md)
+  on 2026-10-01, with an [implementation plan](plans/2026-10-01-random-room-encounters-plan.md).
+  Encounter-enabled rooms roll on entry using zone enemy tables; random battles
+  may become the main ordinary enemy source while public wandering parties remain.
+  Includes proposed grace, multiplayer ownership, durable recovery and zone
+  migration. Planned only; phase scheduling and proposed defaults remain open.
+
+## Planned branching class progression
+
+- Owner requested a [class progression review and branching design](designs/2026-10-01-branching-class-progression-design.md)
+  with an [implementation plan](plans/2026-10-01-branching-class-progression-plan.md)
+  on 2026-10-01. All five base lineages gain proposed advanced/elite paths,
+  individual alignment eligibility and explicit player promotion choices.
+  Includes current-mechanics audit, old-save migration, ability inheritance,
+  death retention and 30g4/33h dependencies. Planning only; levels, gates,
+  branch signatures and implementation scheduling remain proposed.
+
+- Owner expanded the class direction with an [extended companion catalogue](designs/2026-10-01-expanded-companion-classes-design.md):
+  twenty additional advanced/elite paths including Sorcerer, plus eventual
+  nonhuman humanoids and creature recruits such as Hellhounds and Golems.
+  Species, class and creature growth remain separate; staged delivery includes
+  complete upkeep/recovery/gear rules. Planning only; external reference pages
+  were blocked by network policy, so the proposed roster is not a verified
+  reproduction of Ogre Battle 64 or Unicorn Overlord.
+
+- Added [further class-reference extractions](designs/2026-10-01-class-reference-extractions.md)
+  from the owner's supplied Ogre Battle/Unicorn Overlord roster: seven new
+  humanoid candidate paths, commander/prestige direction, Cerberus, additional
+  creature families and dragon affinities. Includes consolidation of equivalent
+  names and explicit equipment/flight/form/aquatic dependencies. Planning only.
+
+## Planned skills and spell progression review
+
+- Owner requested a [skill/utility/spell progression review](designs/2026-10-01-skill-spell-progression-design.md)
+  and [implementation plan](plans/2026-10-01-skill-spell-progression-plan.md)
+  on 2026-10-01. Inventories twelve shipped skill definitions and eleven spell
+  definitions; separates trained ranks, class/level unlocks, field/camp specialists
+  and automatic combat. Preserves approved retirements and flags stale prose,
+  level/class inheritance and the no-battle-items conflict in earlier antidote
+  proposals. Proposed new milestones/capabilities only; no gameplay implemented.
 
 ## Phase progress
 
@@ -146,13 +206,175 @@ delegated to the lead. 33a–33e are complete.
 | 33c | Company Retreat, Rout, and Separation | Complete: [design](designs/2026-10-01-phase-33c-company-retreat-design.md), [plan](plans/2026-10-01-phase-33c-company-retreat.md); ordered withdrawal, paid cover, legal escape and saved separation |
 | 33d | Multiplayer Parties and Allied Companies | Complete: [design](designs/2026-10-01-phase-33d-allied-companies-design.md), [plan](plans/2026-10-01-phase-33d-allied-companies.md); durable alliances, explicit consent, contribution-based XP, fixed shared loot claims and independent company authority |
 | 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
-| 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 (expedition specialists) and 33f3 (camp specialists) next |
+| 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 complete ([plan](plans/2026-10-01-phase-33f3-camp-specialists.md)): camp raids and Camp Watch, Field Smith, Vigil, Forage, `camp cook` |
 | 33g | Company Equipment, Loadouts, and Loot | Future design: [proposal](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); implementation not started |
 | 33h | Company Progression, Rewards, and Expedition Continuity | Future design: [proposal](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md); implementation not started |
-| 33i | Company Encounter Assessment and Enemy Roles | Future design: [proposal](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md); implementation not started |
+| 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles) not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33i1: company encounter assessment (2026-10-01)
+
+**Why:** the owner asked for the early 33i slice, in parallel with 33f3:
+players couldn't judge whether their company could take a group; the old
+`consider` compared the leader alone with one creature
+([design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md),
+"Final implementation decisions: 33i1"; [plan](plans/2026-10-01-phase-33i1-company-assessment.md)).
+
+**What shipped:** `internal/assessment`, a read model: each counted
+member's dice-free expected damage (`combat.ExpectedDamage`) against the
+visible foes it can reach (formation reach, unplaced fails open), current
+health as staying power; five words (an easy fight … hopeless) and "it
+could go either way" near even or a band line; never numbers. Counted:
+the leader and companions with them who can fight; fled, fallen,
+awaiting, separated, down, and out-of-the-fight members named as not with
+you; pets left out; party allies noted, not counted. `scout [group]` ends
+with it; `consider [enemy]` gives it for the enemy's whole group (the
+owner retired the one-on-one odds) and refuses players, own companions,
+and harmless loners; `Company.Battle.outlook` and the web Battle view's
+"Outlook" line. Visibility as scout: hidden foes left out, nothing in the
+dark. No state, RNG, or world-time change; no durable state, so nothing to
+migrate. Help `assessment` (new), `consider` (template replacing GoMud's
+page), `scout`, `combat`, `webclient`; the Combat lesson's scout hint.
+
+**Tests:** pure estimate tables (bands, closeness, reach, fail-open, no
+one able to strike, no fighters); `ExpectedDamage` draws no dice (seeded
+global source unchanged); real `scout`/`consider` in the company brawl
+(counted and missing members, wounds, burden, a separated companion,
+formation reach agreeing with scout's marks, hidden foes, darkness,
+allies, refusals, no round/state change); the live `Company.Battle`
+outlook and its absence in the dark; payload test; help render and
+aliases; tutorial pointers; dock-windows browser check.
+
+**Independent review** (default model, report-only). Accepted and fixed
+with regression tests: (1, major) a company with nobody able to fight read
+"a hard fight, could go either way": now hopeless; (2) members standing
+here but down or withdrawn were labelled "away": now named with the
+reason, the leader too; (3) `consider` by name could land on a hidden
+namesake and miss the visible one: it matches visible group members only;
+(5) `consider` assessed shopkeepers and other harmless loners: refused, as
+scout doesn't list them; (6) an own companion now gets "travels with you";
+(7) "Allied companies" reworded "Allies". Accepted as is: (4) reach uses
+scout's alive map, so an unseen front-rank foe can put the one behind out
+of reach (the design's rule, matching scout's marks); (9) the outlook is
+recomputed on each Battle refresh (≤5×9 dice-free estimates on the game
+loop; acceptable). Rejected: (8) remove `combat.CombatOdds`: kept as
+engine API for upstream parity. Pre-existing, not changed: `scout`'s and
+`attack`'s lone-mob lookup (`enemyparty.FindGroup`) can still land on a
+hidden namesake.
+
+**Checks:** after the review fixes, `make generate`, `make validate`,
+`go test -race ./...` (all passing), and `make js-lint` once; the
+dock-windows Chromium check (all passing, outlook included).
+
+### Phase 33f3: camp specialists (2026-10-01)
+
+**Why:** the owner asked for the camp skills from the 33f review and
+approved the proposed raids and the simple camp cooking
+([design](designs/2026-10-01-phase-33f-company-specialists-design.md),
+[plan](plans/2026-10-01-phase-33f3-camp-specialists.md)).
+
+**What shipped:** camp raids (15% per Old Kings Road rest, rolled at rest
+start and saved; a pair of new level-3 road brigands, mob 86, through the
+shared `enemyparty.SpawnAmbush`); Camp Watch (warrior, 25%/level): spotted,
+the rest still counts; unspotted or with the leader logged out, no Rested
+and no rewards; raiders left standing when their leader falls or leaves
+are sent off. Field Smith (warrior): 20 + 5/level strikes of edge per
+whetstone use. Vigil (cleric): +level loyalty to present companions, cap
+60. Forage (ranger): 1 + level/2 finds into cargo, within capacity.
+Forage and Vigil come at most once per 15 minutes, are collected at the
+camp after any fight, and are paid exactly once through operation IDs
+saved with the cargo (`Cargo.Applied`) and the company record
+(`Record.AppliedOps`). `camp cook`: the hearth's three dishes from pack and
+cargo, into cargo. Help `campwatch`, `fieldsmith`, `vigil`, `forage`;
+`camp`, `cooking`, `sharpen`, `specialists`, `autoskill`, `combat`
+updated; a Camp lesson hint.
+
+**Tests:** raids planned, durable, resolved once through the round pass
+(unspotted, spotted, logged out, away, failed spawn), restart; raiders sent
+off when the leader falls; rewards through rest completion and the round
+pass (once on retry, after a fight, cooldown, forfeited away, capacity);
+`camp cook` through the camp command (skill gates, battle refusal,
+restore on a failed withdrawal, capacity); Field Smith through `sharpen`;
+cargo and loyalty operations in their modules, including the real YAML
+decoders; camping registry YAML round trip; shipped config; help render.
+
+**Independent review** (default model, report-only; a first run was cut
+off by an interrupted compaction and rerun). Accepted and fixed: (1,
+blocking) the company decoder dropped `AppliedOps`, so a vigil could be
+paid twice after a restart; (2, blocking) rewards owed while the leader
+still fought a spotted raid were dropped: they now wait; (3) free rests
+farmed rewards: once per 15 minutes; (4) raiders outlived their target and
+could turn on other campers: sent off; (5) logging out dodged raids: it
+now spoils the rest; (6) `camp cook` could lose ingredients on a failed
+save and skipped capacity: cargo first with restore, capacity checked,
+pack-full fallback; (7) rewards used the leader's room at payment: now
+the camp's, forfeited elsewhere; (8) the watch was looked up under the
+camping lock: moved out; (9) a failed spawn still spoiled the rest; (11)
+"food and water" and the `help combat` link; (12) coverage gaps. Rejected:
+(10) a retried forage message may name a re-rolled find (the deposit
+itself is deduplicated; cosmetic, rare); goimports grouping (gofmt is the
+repo's check). Known, unchanged: travel ambush raiders share finding 4's
+leftover-mob behaviour (33c/33h scope).
+
+**Verification (after review fixes):** `make generate`, `make validate`, `go test -race ./...` (all green). No JavaScript changed.
+
+### Phase 33f2: expedition specialists (2026-10-01)
+
+**Why:** the owner asked for the expedition skills proposed in the 33f
+review ([design](designs/2026-10-01-phase-33f-company-specialists-design.md),
+[plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)).
+
+**What shipped:** for each capability the best present, living member of
+the leader's own company acts (the 17b resolver, through
+`archetypes.BestSpecialist`), switched by `autoskill`, resting in the
+leader's battle. Read the Trail (ranger): reports hostile groups beyond
+the exits on each step and on a bare `track`, more detail per level, two
+rooms out at 4 (memory-loaded rooms only); warns of ambush routes at
+departure and leads the company around an ambush 20%/level (the pause
+becomes tracks). Keen Eye (rogue): spots secret exits on entry, remembered
+in `KnownSecretExits` and shown in room text, Room GMCP, the world map, and
+`map`. Pathfinder (ranger): 5%/level less strain on rough ground, never
+below road. Weather Sense (wizard): zones foretell their next condition
+(`ZoneWeather.Next`), so `weather` forecasts truly, more per level.
+Haggle (rogue): 2%/level better market prices; every sale stays below the
+cheapest possible buy-back. `company specialists`. The `search` command and
+skill, the stock `track` command, and the dead `trading` skill (and the
+Merchant profession) are retired with the 33f1 refund. Help pages
+`specialists`, `trail`, `keeneye`, `pathfinder`, `forecast`, `haggle`;
+updated company, weather, market, strain, autoskill, archetype, travel,
+and job pages; a Departure hint.
+
+**Tests:** real `go` steps (trail by a companion ranger and a level-1
+player, no tracker, autoskill off; Keen Eye spotting, memory, room details;
+no spotting without a rogue at a low roll); `track`, `specialists`,
+`company specialists`; resolver ownership (separated, downed, other player,
+switched off, in battle); walking strain and `strain`; market buys, sales,
+listing, and a sweep of every shipped good, stock, standing, and haggle
+pairing that no round trip profits; weather command at each level,
+neighbour zones, foretold weather on advance and on recovery of old saves;
+travel warning, evasion, and resume/return/recovery after it; Room GMCP;
+`KnownSecretExits` save/reload; refunds; help render and index.
+
+**Independent review** (default model, report-only). Accepted and fixed:
+(1, blocking) a haggled buy-and-sell loop profited on steep goods (and by
+toggling the haggler): the sale cap now always applies at the best
+possible haggle; (2, blocking) an evaded ambush left a pause the route
+validation rejected, stranding the journey: `CanFireAs` accepts it (and,
+pre-existing, a weighted table's kinds); (3) specialists acted in the
+leader's battle: gated in the resolver, `track`, and Keen Eye; (4) route
+config never read `Kinds` or the ambush mob: parsed and tested (no shipped
+route has an ambush yet: a content gap, not a code one); (5) coverage for
+durability, Room GMCP, and refunds added; (6) the world map and `map`
+still used the visited-only rule: fixed; (7) trail now reads only rooms
+already in memory; (8) neighbour forecasts use weather zones; (9)
+`autoskill` alignment; (10) the stale trading page (the skill is retired),
+README, and unused trail colours; (11) trade notes name the gold actually
+won. Not changed: Room GMCP needs no forced resend, since Keen Eye runs in
+the step before the move's queued room update is built.
+
+**Verification (after review fixes):** `make generate`, `make validate`, `go test -race ./...` (all green). No JavaScript changed.
 
 ### Phase 33f1: skill and charm retirement (2026-10-01)
 

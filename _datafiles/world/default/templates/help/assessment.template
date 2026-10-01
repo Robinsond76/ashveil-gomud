@@ -1,0 +1,59 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">assessment</ansi>
+
+Your company sizes up an enemy group: how the company, as it stands right
+now, measures up against the foes you can see. It works before a fight or
+during one, is free and instant, and changes nothing.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">scout [group]</ansi>
+  The group's formation, then the assessment below it.
+
+  <ansi fg="command">consider [enemy]</ansi>
+  The assessment alone, for that enemy's whole group (a lone creature is
+  a group of one): <ansi fg="command">consider ruffians</ansi>, or <ansi fg="command">consider ruffian</ansi>.
+
+  Assessment: A hard fight for your company; it could go either way.
+    Counted: you, Tamsin Reed and Brother Oswin. Not with you: Ysolde (fled).
+    Hurt: Tamsin Reed (badly wounded).
+    Can't reach any of them from where they stand: Brother Oswin.
+    Out of your company's reach: the bandit slinger.
+    Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.
+
+<ansi fg="yellow-bold">The words</ansi>
+
+  an easy fight   they should fall quickly
+  a fair fight    you should win, likely with some hurt
+  a hard fight    close: either side could win
+  a grave risk    they are likely to beat you
+  hopeless        don't
+
+"It could go either way" means the estimate sits close to even, or close to
+the line between two words. "The odds look clear" means it doesn't. There
+are never numbers or percentages: it is a judgment, not a promise.
+
+<ansi fg="yellow-bold">What it weighs</ansi>
+
+- Who is counted: you and the companions with you now who can fight.
+  Fled, fallen, awaiting, and separated companions, and anyone down or
+  out of the fight, are listed as not with you. Pets and allies aren't
+  counted (it says when an ally is here). With nobody able to fight, it
+  is hopeless.
+- Health as it is now: wounds (<ansi fg="command">help wounds</ansi>) and hurts lower it.
+- Each fighter's gear, stats, defense, and dodge, and burden, which cuts
+  dodge (<ansi fg="command">help burden</ansi>).
+- Reach, from where each fighter stands in the formation (<ansi fg="command">help formation</ansi>):
+  a member who can reach none of them adds nothing, and a foe out of
+  everyone's reach can't be hurt yet. Move members with <ansi fg="command">formation</ansi> and
+  look again.
+
+<ansi fg="yellow-bold">What it can't judge</ansi>
+
+Spells, healing, and class abilities on either side, foes you can't see,
+groups waiting their turn, and anyone yet to arrive. In the dark you can't
+make them out at all, so there is no assessment.
+
+In the web client, the Combat tab's Battle view shows the same headline as
+"Outlook" while you fight (<ansi fg="command">help webclient</ansi>).
+
+See also: <ansi fg="command">help scout</ansi>, <ansi fg="command">help consider</ansi>, <ansi fg="command">help combat</ansi>.

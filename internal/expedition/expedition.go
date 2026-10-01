@@ -127,6 +127,37 @@ func (i InterruptionProfile) Validate() error {
 	return nil
 }
 
+// ReachesCombat reports whether this interruption can fire as an ambush
+// (Combat as its Kind or anywhere in its Kinds table). Phase 33f2: a
+// tracker reads the warning at departure.
+func (i InterruptionProfile) ReachesCombat() bool {
+	if i.Kind == Combat {
+		return true
+	}
+	for _, wk := range i.Kinds {
+		if wk.Kind == Combat {
+			return true
+		}
+	}
+	return false
+}
+
+// CanFireAs reports whether a fired interruption of kind belongs to this
+// profile: its Kind, any kind in its Kinds table, or (Phase 33f2) Tracks on
+// a route that can be ambushed, which is what an ambush a tracker led the
+// company around becomes.
+func (i InterruptionProfile) CanFireAs(kind InterruptionKind) bool {
+	if kind == i.Kind {
+		return true
+	}
+	for _, wk := range i.Kinds {
+		if wk.Kind == kind {
+			return true
+		}
+	}
+	return kind == Tracks && i.ReachesCombat()
+}
+
 // ResolveKind picks which kind fires for this interruption. A singular-Kind
 // profile returns Kind unchanged and ignores roll entirely — today's exact,
 // deterministic behavior. A Kinds table selects proportionally to Weight:
@@ -401,7 +432,7 @@ func (s TravelSession) ValidateForProfile(profile TravelProfile) error {
 	}
 	if s.State == Interrupted {
 		if profile.Interruption == nil ||
-			s.Interruption.Kind != profile.Interruption.Kind ||
+			!profile.Interruption.CanFireAs(s.Interruption.Kind) ||
 			s.Interruption.Checkpoint != profile.Interruption.Checkpoint {
 			return ErrInvalidSession
 		}

@@ -33,14 +33,15 @@ not reopen completed Phase 32 work. Every review recommendation maps here.
 | 33c | [Company Retreat, Rout, and Separation](2026-10-01-phase-33c-company-retreat-design.md) | Complete (2026-10-01) |
 | 33d | [Multiplayer Parties and Allied Companies](2026-10-01-phase-33d-allied-companies-design.md) | Complete (2026-10-01) |
 | 33e | [Automatic Class Abilities and Combat Roles](2026-10-01-phase-33e-automatic-class-abilities-design.md) | Complete (2026-10-01) |
-| 33f | [Company Specialists and Expedition Skills](2026-10-01-phase-33f-company-specialists-design.md) | 33f1 skill and charm retirement complete (2026-10-01); 33f2 expedition specialists and 33f3 camp specialists next |
+| 33f | [Company Specialists and Expedition Skills](2026-10-01-phase-33f-company-specialists-design.md) | Complete (2026-10-01): 33f1 skill and charm retirement, 33f2 expedition specialists, 33f3 camp specialists |
 | 33g | [Company Equipment, Loadouts, and Loot](2026-10-01-phase-33g-company-equipment-loot-design.md) | Future design; implementation not started |
 | 33h | [Company Progression, Rewards, and Expedition Continuity](2026-10-01-phase-33h-progression-recovery-continuity-design.md) | Future design; implementation not started |
-| 33i | [Company Encounter Assessment and Enemy Roles](2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) | Future design; implementation not started |
+| 33i | [Company Encounter Assessment and Enemy Roles](2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) | 33i1 group assessment complete (2026-10-01); 33i2 coordinated enemies not started |
 
 33h has three delivery slices: growth/rewards, readiness/recovery, and
-relocation/separation. 33i has two: group assessment and coordinated enemies.
-These are delivery boundaries inside their parent phases, not shipped work.
+relocation/separation. 33i has two: group assessment (33i1, shipped) and
+coordinated enemies (33i2). Unshipped slices are delivery boundaries inside
+their parent phases, not shipped work.
 
 ## Suggested delivery order
 
