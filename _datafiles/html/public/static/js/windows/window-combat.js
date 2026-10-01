@@ -28,7 +28,8 @@
  *     its target and everyone striking it.
  *   - The fallen and the groups waiting their turn, a plain "who strikes
  *     whom" list for screen readers and narrow screens, a polite live
- *     region (a new foe on the player, a fall), and Flee (sends "flee").
+ *     region (a new foe on the player, a fall), and Retreat (sends "retreat",
+ *     the one way out of a battle; Phase 33c).
  *   - A company member's click opens Setup's menu. The Combat tab shows a
  *     marker while a battle runs and another tab is showing.
  *
@@ -525,13 +526,14 @@
         const head = el('div', 'cbt-battle-head');
         head.appendChild(el('h3', null, 'Battle: ' + battle.group));
         if (battle.retreat) {
-            head.appendChild(el('div', null, 'Withdrawing ' + battle.retreat.exit + ' (' + battle.retreat.rounds + ' rounds remaining)'));
+            const left = battle.retreat.rounds;
+            head.appendChild(el('div', null, 'Withdrawing ' + battle.retreat.exit + ' (' + left + (left === 1 ? ' round' : ' rounds') + ' remaining)'));
         }
-        const flee = el('button', 'cbt-btn', 'Flee');
-        flee.type = 'button';
-        flee.title = 'Try to get away (flee)';
-        flee.addEventListener('click', () => Client.SendInput('flee'));
-        head.appendChild(flee);
+        const retreat = el('button', 'cbt-btn', 'Retreat');
+        retreat.type = 'button';
+        retreat.title = 'Withdraw your company: one round to prepare, then the attempt (retreat)';
+        retreat.addEventListener('click', () => Client.SendInput('retreat'));
+        head.appendChild(retreat);
         root.appendChild(head);
         if (typeof battle.focus === 'string') { root.appendChild(focusBar(battle)); }
 

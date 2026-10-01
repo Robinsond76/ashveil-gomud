@@ -27,6 +27,10 @@ type RetreatInfo struct {
 	Members  []RetreatMember
 	CoverKey string
 	Cover    int
+	// The aim to resume after a failed attempt. Kept here, not on the
+	// Aggro, so a target falling mid-order can't clear the order with it.
+	ResumeUserID int
+	ResumeMobID  int
 }
 type RetreatMember struct {
 	InstanceID int

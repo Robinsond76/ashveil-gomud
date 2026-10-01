@@ -143,7 +143,7 @@ Group healing reaches your present company without a player party. A chant
 rechecks life, presence and ownership, and healing stops at wound limits
 (<ansi fg="command">help friendly-effects</ansi>).
 
-Ordered withdrawal: <ansi fg="command">retreat [exit]</ansi> prepares for one round,
+Leaving a battle: <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>) prepares for one round,
 then attempts to move the company together. See <ansi fg="command">help retreat</ansi>.
 
 For player alliances and opt-in following/support, see <ansi fg="command">help party</ansi>.

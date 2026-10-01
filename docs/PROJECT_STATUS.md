@@ -5,7 +5,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (33b review follow-up)
+- **Last updated:** 2026-10-01 (33c review follow-up)
 - **Latest completed phases:** 33c, company retreat; 33b, friendly effects;
   33a, command rules; and 30g3, personal load and agility, all 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
@@ -142,6 +142,48 @@ delegated to the lead. 33a–33d are complete.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### 33c owner review follow-up (2026-10-01)
+
+- **Owner decision (`phase-33c-one-retreat`):** one way out of a fight.
+  Review found emergency `flee` beat ordered retreat: it rolled only against
+  foes striking the leader (a back-row leader always escaped), and a pinned
+  companion was "separated" and rejoined the same round, because the flight
+  itself ended the battle. The owner chose: `flee` is another name for
+  `retreat [exit]` (wimpy and the web Battle view's button, now "Retreat",
+  issue the same order); no separation on withdrawal (a pinned leader or
+  member holds the company and is named); every active battle foe pursues;
+  the preparation round stays. 30e morale flight remains the only separation.
+  The emergency-flee path and `flee.md` are gone (`help flee` is `help
+  retreat`); retreat also leaves a fight with another player.
+- **Bug found while testing, fixed:** a retreat order carried the leader's old
+  target, so that target dying in the preparation round (mob death clears
+  every aim at it) silently cancelled the withdrawal; 33c had shipped with it.
+  The aim to resume now lives in the runtime `RetreatInfo`.
+- **Independent review:** no high findings. Accepted and fixed: wimpy
+  re-ordered (and repeated refusals) on every hit, now once a round and not
+  while withdrawing; missing wimpy and player-fight round tests (added); "held
+  by magic" in `help retreat` (no such status) and missing "players pursue";
+  `set wimpy` threshold wording ("below"); a dying leader told their legs were
+  pinned; dead `holdsAgainstPlayer` check; a defender kept an empty aim after
+  a failed attempt; stale "flee" in `help travel`. Kept: the leftover player
+  `Flee` aggro branch, as a harmless guard (nothing sets it).
+- **Help:** `retreat`, `combat`, `targeting`, `break`, `statuses`,
+  `webclient`, `set-wimpy`, `travel`, `company`, `guardian`, `morale` (retreat
+  notes above "See also"), aliases, and the tutorial hint.
+- **Checks:** new tests (flee is the order and every battle foe pursues;
+  pinned member holds the company with no loyalty loss or separation; wimpy
+  once; player fight; target falling mid-order) fail on the old code and pass.
+  `make generate`, `make validate`, `go test -race ./...`, `make js-lint` and
+  the browser dock check passed. One intermittent failure of
+  `TestSecondPlayerTakesTheNextGroup` (no retreat involved) appeared once in
+  an early package run and did not recur in 39 later runs, isolated or whole
+  package, on this branch or master; noted, not explained. After merging
+  33d into the branch, the full race suite was rerun: everything passed except
+  upstream `TestAttemptConversation_UsesPluginFile`, which fails about 2% of
+  runs (4/200 measured): `getConversation`'s random 2% maintenance purges
+  conversations older than 10 rounds, untouched by 33c or 33d; it passed on
+  rerun. Left for an upstream-code fix.
 
 ### Phase 33d: allied companies completed (2026-10-01)
 

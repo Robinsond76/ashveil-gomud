@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
@@ -32,7 +33,15 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 	delete(castAims, caster{userId: u.UserId})
 	resume := func(reason string) {
 		u.SendText(reason)
-		u.Character.SetAggro(a.UserId, a.MobInstanceId, characters.DefaultAttack)
+		u.Character.Aggro = nil // nobody to resume fighting: the upkeep aims anew
+		if req == nil {
+			// fall through: nothing to resume
+		} else if m := mobs.GetInstance(req.ResumeMobID); m != nil && m.Character.Health > 0 && m.Character.RoomId == u.Character.RoomId {
+			u.Character.SetAggro(0, m.InstanceId, characters.DefaultAttack)
+		} else if other := users.GetByUserId(req.ResumeUserID); req.ResumeUserID > 0 && other != nil && other.Character.Health > 0 && other.Character.RoomId == u.Character.RoomId {
+			u.Character.SetAggro(other.UserId, 0, characters.DefaultAttack)
+		}
+		events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: u.Character.RoomId})
 	}
 	members, err := withdrawal.Present(u, req)
 	if err != nil {
@@ -72,20 +81,35 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 			u.SendText(fmt.Sprintf("%s covers the withdrawal (one guard spent).", g.char.Name))
 			break
 		}
-		u.SendText("Your company gathers at the " + name + " exit. The escape attempt comes next round.")
+		if len(members) == 0 {
+			u.SendText("You edge toward the " + name + " exit. The escape attempt comes next round.")
+		} else {
+			u.SendText("Your company gathers at the " + name + " exit. The escape attempt comes next round.")
+		}
 		return
 	}
 	mobility := withdrawal.Mobility(u.Character)
 	for _, m := range members {
 		mobility = min(mobility, withdrawal.Mobility(&m.Character))
 	}
-	pressure := float64(0)
-	if b, ok := battle.Current(u.UserId); ok {
-		for id := range b.Enemies {
-			m := mobs.GetInstance(id)
-			if m != nil && m.Character.RoomId == r.RoomId && m.Character.Health > 0 && !m.Character.CombatWithdrawn {
-				pressure = max(pressure, withdrawal.Mobility(&m.Character))
-			}
+	// The fastest pursuer sets the pressure: every active foe of the
+	// leader's battle, whoever it is striking (Phase 33c owner review), and
+	// with no battle, a foe here aiming at the leader. Players fighting the
+	// leader pursue too.
+	pressure, pursuer := float64(0), ""
+	press := func(c *characters.Character, name string) {
+		if p := withdrawal.Mobility(c); p > pressure {
+			pressure, pursuer = p, name
+		}
+	}
+	b, inBattle := battle.Current(u.UserId)
+	for _, id := range r.GetMobs() {
+		m := mobs.GetInstance(id)
+		if m == nil || m.Character.Health <= 0 || m.Character.CombatWithdrawn {
+			continue
+		}
+		if inBattle && b.Has(id) || !inBattle && m.Character.Aggro != nil && m.Character.Aggro.UserId == u.UserId {
+			press(&m.Character, mobTag(mobName(id)))
 		}
 	}
 	// PvP pursuers retain their own battle and cannot be pulled into this company.
@@ -95,7 +119,7 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 		}
 		other := users.GetByUserId(uid)
 		if other != nil && other.Character.Health > 0 && other.Character.Aggro != nil && other.Character.Aggro.UserId == u.UserId {
-			pressure = max(pressure, withdrawal.Mobility(other.Character))
+			press(other.Character, userTag(other.Character.Name))
 		}
 	}
 	cover := 0
@@ -110,7 +134,7 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 	}
 	chance := withdrawal.Chance(mobility, pressure, cover)
 	if chance < 100 && retreatRoll(100) >= chance {
-		resume("The enemy holds your company here. The ordered retreat fails; your company resumes fighting.")
+		resume(util.CapitalizeFirst(named(pursuer)) + " cuts off your withdrawal. The retreat fails; the fight goes on.")
 		return
 	}
 	origin := u.Character.RoomId
@@ -130,6 +154,7 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 		return
 	}
 	u.Character.Aggro = nil
+	events.AddToQueue(events.AggroChanged{UserId: u.UserId, RoomId: destination})
 	delete(castAims, caster{userId: u.UserId})
 	for _, m := range members {
 		m.Character.Aggro = nil
@@ -152,36 +177,17 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 	}
 	emitCombat(combatstream.Event{Kind: combatstream.Flee, RoomId: origin, Source: userRef(u), Outcome: "ordered-retreat"})
 	endBattle(u.UserId, combatstream.OutcomeBrokenOff)
-	u.SendText("Your company withdraws together " + name + ".")
-	r.SendText(u.Character.Name+" leads the company out "+name+".", u.UserId)
+	if len(members) == 0 {
+		u.SendText("You break away and withdraw " + name + ".")
+		r.SendText(u.Character.Name+" breaks away and withdraws "+name+".", u.UserId)
+	} else {
+		u.SendText("Your company withdraws together " + name + ".")
+		r.SendText(u.Character.Name+" leads the company out "+name+".", u.UserId)
+	}
 	scripting.TryRoomScriptEvent("onExit", u.UserId, origin)
 	if show, err := scripting.TryRoomScriptEvent("onEnter", u.UserId, destination); err != nil || show {
 		usercommands.Look("", u, rooms.LoadRoom(destination), 0)
 	}
-}
-
-// Emergency escape may separate blocked living companions. Save 30e's return
-// obligation before removing their live instances; a save failure holds the
-// leader here. Already saved flights remain pending until this battle ends.
-func prepareEmergencySeparation(u *users.UserRecord, r *rooms.Room) error {
-	req := withdrawal.Capture(u, r, "")
-	for _, member := range req.Members {
-		m := mobs.GetInstance(member.InstanceID)
-		if m == nil || m.Character.Health <= 0 || withdrawal.Eligible(&m.Character) {
-			continue
-		}
-		cid, ok := company.CompanionIDFromMemberKey(company.MemberKey(member.Key))
-		if !ok {
-			return company.ErrUnknownMember
-		}
-		if err := company.BeginFlight(u.UserId, cid); err != nil {
-			return err
-		}
-		cancelNerveCast(m)
-		clearAimsAt(m.InstanceId)
-		u.SendText(m.Character.Name + " is separated in the escape and will rejoin after the battle (5 loyalty).")
-	}
-	return nil
 }
 
 func clearDepartedLeader(c *characters.Character, uid int) {

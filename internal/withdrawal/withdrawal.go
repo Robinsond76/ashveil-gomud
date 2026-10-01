@@ -15,6 +15,9 @@ import (
 	"sort"
 )
 
+// LeaderPinned answers a leader held by a hobbling or binding hurt.
+const LeaderPinned = "Your legs will not carry you out of this. Your company holds its ground."
+
 func Eligible(c *characters.Character) bool {
 	return c != nil && c.Health > 0 && !c.CombatWithdrawn && !c.HasBuffFlag("no-flee") && !c.HasBuffFlag("no-go")
 }
@@ -87,8 +90,11 @@ func Capture(u *users.UserRecord, r *rooms.Room, name string) *characters.Retrea
 // Present checks the original members. Fallen or removed flight instances do
 // not move; a living member's changed ownership or location cancels the order.
 func Present(u *users.UserRecord, req *characters.RetreatInfo) ([]*mobs.Mob, error) {
-	if req == nil || u.Character.RoomId != req.RoomID || !Eligible(u.Character) {
+	if req == nil || u.Character.RoomId != req.RoomID || u.Character.Health <= 0 {
 		return nil, fmt.Errorf("You cannot lead the company out of this.")
+	}
+	if !Eligible(u.Character) {
+		return nil, errors.New(LeaderPinned)
 	}
 	out := []*mobs.Mob{}
 	for _, member := range req.Members {
@@ -101,7 +107,7 @@ func Present(u *users.UserRecord, req *characters.RetreatInfo) ([]*mobs.Mob, err
 			return nil, fmt.Errorf("%s is no longer in place for the retreat.", m.Character.Name)
 		}
 		if !Eligible(&m.Character) {
-			return nil, fmt.Errorf("%s cannot withdraw; your company holds its ground.", m.Character.Name)
+			return nil, fmt.Errorf("%s is pinned and cannot withdraw. Your company holds its ground until %s can move.", m.Character.Name, m.Character.Name)
 		}
 		out = append(out, m)
 	}

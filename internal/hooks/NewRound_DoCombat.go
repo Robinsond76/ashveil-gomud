@@ -20,10 +20,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/status"
-	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
-	"github.com/GoMudEngine/GoMud/internal/withdrawal"
 )
 
 // combatMobCharacter is a presentation-only copy for combat narration. It
@@ -136,139 +134,10 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			continue
 		}
 
+		// Phase 33c owner review: flee is the retreat order now. A leftover
+		// flight (none is ever set) just fights on.
 		if user.Character.Aggro.Type == characters.Flee {
-
-			// Revert to Default combat regardless of outcome
 			user.Character.SetAggro(user.Character.Aggro.UserId, user.Character.Aggro.MobInstanceId, characters.DefaultAttack)
-
-			// Ashveil Phase 30a: a flight begun before a hobbling blow is
-			// held by it too.
-			if user.Character.HasBuffFlag("no-flee") || user.Character.HasBuffFlag("no-go") {
-				user.SendText(`Your legs will not carry you out of this. You cannot flee.`)
-				continue
-			}
-
-			blockedByMob := ``
-			for _, mobInstId := range uRoom.GetMobs(rooms.FindFighting) {
-				if mob := mobs.GetInstance(mobInstId); mob != nil {
-					if mob.Character.Aggro == nil || mob.Character.Aggro.UserId != userId {
-						continue
-					}
-					// Ashveil Phase 29b2: a group waiting its turn doesn't
-					// block a flight from the battle.
-					if holdsAgainstPlayer(mob, userId) {
-						continue
-					}
-
-					// Stat comparison accounts for up to 70% of chance to flee.
-					chanceIn100 := int(float64(user.Character.Stats.Speed.ValueAdj) / (float64(user.Character.Stats.Speed.ValueAdj) + float64(mob.Character.Stats.Speed.ValueAdj)) * 70)
-					chanceIn100 += 30
-
-					roll := util.Rand(100)
-
-					util.LogRoll(`Flee`, roll, chanceIn100)
-
-					if roll >= chanceIn100 {
-						blockedByMob = mobName(mob.InstanceId)
-						break
-					}
-				}
-			}
-
-			blockedByPlayer := ``
-			blockedByPlayerId := 0
-			for _, otherUserID := range uRoom.GetPlayers(rooms.FindFighting) {
-				if u := users.GetByUserId(otherUserID); u != nil {
-					if u.Character.Aggro == nil || u.Character.Aggro.UserId != userId {
-						continue
-					}
-
-					// if equal, 25% chance of fleeing... at best, 50% chance. Then add 50% on top.
-					chanceIn100 := int(float64(user.Character.Stats.Speed.ValueAdj) / (float64(user.Character.Stats.Speed.ValueAdj) + float64(u.Character.Stats.Speed.ValueAdj)) * 70)
-					chanceIn100 += 30
-
-					roll := util.Rand(100)
-
-					util.LogRoll(`Flee`, roll, chanceIn100)
-
-					if roll >= chanceIn100 {
-						blockedByPlayer = u.Character.Name
-						blockedByPlayerId = u.UserId
-						break
-					}
-				}
-			}
-
-			if blockedByMob != `` {
-				user.SendText(fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="mobname">%s</ansi> blocks your way out.</ansi>`, blockedByMob))
-				uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to flee, but <ansi fg="mobname">%s</ansi> blocks the way.`, user.Character.Name, blockedByMob), user.UserId)
-				continue
-			}
-
-			if blockedByPlayer != `` {
-				user.SendText(fmt.Sprintf(`<ansi fg="red-bold"><ansi fg="username">%s</ansi> blocks your way out.</ansi>`, blockedByPlayer))
-				uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> tries to flee, but <ansi fg="username">%s</ansi> blocks the way.`, user.Character.Name, blockedByPlayer), user.UserId, blockedByPlayerId)
-				continue
-			}
-
-			// Success!
-			exitName, exitRoomId := uRoom.GetRandomExit()
-
-			if exitName == `` {
-				user.SendText(`You look for a way out and find none.`)
-				continue
-			}
-
-			if _, routeRoom, err := withdrawal.Route(user, uRoom, exitName); err != nil {
-				user.SendText(err.Error())
-				continue
-			} else {
-				exitRoomId = routeRoom
-			}
-
-			if err := prepareEmergencySeparation(user, uRoom); err != nil {
-				user.SendText("Your company cannot save the separation; you remain here. " + err.Error())
-				continue
-			}
-			originRoomId := user.Character.RoomId
-			if err := rooms.MoveToRoom(user.UserId, exitRoomId); err != nil {
-				user.SendText("You cannot reach that exit.")
-				continue
-			}
-			exitRoomId = user.Character.RoomId
-			emitCombat(combatstream.Event{Kind: combatstream.Flee, RoomId: originRoomId, Source: userRef(user)})
-
-			user.SendText(fmt.Sprintf(`You break away and flee <ansi fg="exit">%s</ansi>.`, exitName))
-			uRoom.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> breaks away and flees <ansi fg="exit">%s</ansi>.`, user.Character.Name, exitName), user.UserId)
-
-			user.Character.Aggro = nil
-			events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
-
-			// Ashveil Phase 32d: a flight that gets away ends the battle
-			// now, so the player isn't held to it for another round.
-			endBattle(user.UserId, combatstream.OutcomeBrokenOff)
-
-			{
-
-				scripting.TryRoomScriptEvent(`onExit`, user.UserId, originRoomId)
-
-				for _, instId := range uRoom.GetMobs(rooms.FindCharmed) {
-					if mob := mobs.GetInstance(instId); mob != nil {
-						// Charmed mobs assist
-						if mob.Character.IsCharmed(userId) {
-							mob.Command(exitName)
-						}
-					}
-				}
-
-				newRoom := rooms.LoadRoom(exitRoomId)
-
-				if doLook, err := scripting.TryRoomScriptEvent(`onEnter`, user.UserId, exitRoomId); err != nil || doLook {
-					usercommands.Look(``, user, newRoom, events.CmdSecretly)
-				}
-
-			}
-
 			continue
 		}
 

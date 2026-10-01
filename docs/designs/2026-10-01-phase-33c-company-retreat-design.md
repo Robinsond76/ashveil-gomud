@@ -83,3 +83,15 @@ hold the company, never automatic permanent losses. Use shipped30g3 personal
 burden and current wounds for slowest-member mobility, one paid guardian
 cover, and only active battle pursuers. Existing30e flight/return remains
 durable separation authority; runtime requests never survive as save authority.
+
+**Owner review (2026-10-01) superseded "preserve emergency flee".** A
+company leader has no personal escape, and the shipped emergency flee beat
+ordered retreat (it rolled only against foes striking the leader, and a
+pinned companion "separated" and rejoined the same round, since the flight
+ended the battle). Now `retreat [exit]` is the one way out of any fight,
+including a fight with another player, and `flee` (with wimpy and the web
+Battle view's button) is the same order. Every active foe of the battle
+pursues; with no battle, a foe aiming at the leader that isn't waiting its
+turn. Nobody is separated by withdrawing: a pinned leader or member holds
+the company and is named. 30e morale flight stays the only separation.
+The owner kept the preparation round.

@@ -54,6 +54,7 @@ type UserRecord struct {
 	suggestText    string
 	connectionTime time.Time
 	lastInputRound uint64
+	wimpyRound     uint64 // Phase 33c: the round wimpy last ordered a retreat
 	tempDataStore  map[string]any
 	activePrompt   *prompt.Prompt
 	isLinkDead     bool // are they a link-dead connection currently?
@@ -688,10 +689,21 @@ func (u *UserRecord) GetOnlineInfo() OnlineInfo {
 	}
 }
 
+// WimpyCheck orders a retreat (flee) when health falls below the wimpy
+// setting. Phase 33c review: it runs on every hit, so it orders once a
+// round, and not at all while a withdrawal is already under way.
 func (u *UserRecord) WimpyCheck() {
 	if currentWimpy := u.GetConfigOption(`wimpy`); currentWimpy != nil {
 		healthPct := int(math.Floor(float64(u.Character.Health) / float64(u.Character.HealthMax.Value) * 100))
 		if healthPct < currentWimpy.(int) {
+			if a := u.Character.Aggro; a != nil && a.Type == characters.Retreat {
+				return
+			}
+			round := util.GetRoundCount()
+			if u.wimpyRound == round+1 {
+				return
+			}
+			u.wimpyRound = round + 1 // +1: round 0 is a real round
 			u.Command(`flee`, -1)
 		}
 	}

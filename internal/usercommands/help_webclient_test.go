@@ -55,7 +55,7 @@ func TestBattleViewHelp(t *testing.T) {
 	text, err := GetHelpContents("webclient")
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Battle view", "front row", "health reads", "Also fighting", "Fallen", "Waiting their turn", "Flee", "flee", "a marker on the Combat tab", "Setup"} {
+	for _, want := range []string{"Battle view", "front row", "health reads", "Also fighting", "Fallen", "Waiting their turn", "Retreat orders the company out", "flee", "a marker on the Combat tab", "Setup"} {
 		assert.Contains(t, plain, want)
 	}
 	for _, page := range []string{"combat", "scout"} {

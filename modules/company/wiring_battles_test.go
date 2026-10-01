@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -402,9 +403,10 @@ func TestBackstabAtAWaitingGroupIsCalledOff(t *testing.T) {
 	}
 }
 
-// TestWaitingGroupsDontBlockFlight: fleeing a battle, only the battle's
-// group can block the way; the groups waiting their turn don't. The
-// battle's foe is made too slow to block, the waiting ones quick.
+// TestWaitingGroupsDontBlockFlight: fleeing a battle (the retreat order,
+// Phase 33c), only the battle's group pursues; the groups waiting their
+// turn don't. The battle's foe is slow, the waiting ones quick: a roll of
+// 50 gets away only against the battle's foe (65%), not the quick (30%).
 func TestWaitingGroupsDontBlockFlight(t *testing.T) {
 	b := newBrawl(t)
 	b.looseBandits()
@@ -427,10 +429,14 @@ func TestWaitingGroupsDontBlockFlight(t *testing.T) {
 	require.Positive(t, waiting)
 	b.aria.Character.Stats.Speed.ValueAdj = 1
 
-	b.cmd("flee", "")
+	t.Cleanup(hooks.UseRetreatRollForTest(func(int) int { return 50 }))
+	b.unpin()
+	require.Contains(t, b.cmd("flee", ""), "begins an ordered retreat")
+	b.fight()
+	b.unpin()
 	got := b.fight()
-	assert.NotContains(t, got, "blocks you from fleeing")
-	assert.Contains(t, got, "You break away and flee")
+	assert.NotContains(t, got, "cuts off your withdrawal")
+	assert.Contains(t, got, "withdraws together")
 }
 
 // hostilesIn lists a room's living hostile mobs.

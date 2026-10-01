@@ -276,19 +276,23 @@ func TestSparksOverloadsItsTargetsThroughARealCast(t *testing.T) {
 	assert.True(t, target.Character.HasBuff(status.Overloaded))
 }
 
-// Phase 30a review: a flight begun before a hobbling blow is held by it.
+// Phase 30a review: a flight begun before a hobbling blow is held by it
+// (since Phase 33c, flee is the retreat order).
 func TestPendingFlightIsHeldByHobbled(t *testing.T) {
 	b := newBrawl(t)
 	loadStatusBuffs(t)
 	b.aimAt("bandit captain")
 	b.toughen()
 	b.fight()
+	t.Cleanup(hooks.UseRetreatRollForTest(func(int) int { return 0 }))
+	require.Contains(t, b.cmd("flee", ""), "begins an ordered retreat")
 	require.NoError(t, b.aria.Character.AddBuff(status.Hobbled, false))
-	b.aria.Character.Aggro.Type = characters.Flee
 	b.toughen()
 	out := b.fight()
-	assert.Contains(t, out, "You cannot flee.")
-	assert.NotContains(t, out, "You break away")
+	b.toughen()
+	out += b.fight()
+	assert.Contains(t, out, "Your legs will not carry you out of this.")
+	assert.NotContains(t, out, "withdraws")
 	assert.Equal(t, b.road.RoomId, b.aria.Character.RoomId)
 }
 

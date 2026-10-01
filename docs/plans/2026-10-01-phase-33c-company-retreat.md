@@ -42,3 +42,8 @@ Completed implementation, help/tutorial, browser and integration coverage.
 Independent review accepted six coverage gaps, added and rechecked; no remaining
 blockers. Runtime-only requests require no save schema migration; separation
 uses30e saved debt and snapshot seams. Final full verification in Project Status.
+
+Owner review follow-up (2026-10-01): `flee` became another name for
+`retreat`; the emergency flee path and its blocked-member separation were
+removed; pursuit counts every active battle foe; help, tutorial and the web
+Battle view now describe and send one retreat order. See Project Status.

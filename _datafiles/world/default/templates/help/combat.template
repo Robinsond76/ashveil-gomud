@@ -23,7 +23,7 @@ few seconds, so you watch the fight unfold. Choose how fast with
 Enemies come in named groups ("A band of ruffians (4)"), and you fight a
 whole group, never one member: <ansi fg="command">attack ruffians</ansi> starts the battle. From
 then on it plays out on its own, from how your company was set up.
-<ansi fg="command">retreat [exit]</ansi> orders a company withdrawal; <ansi fg="command">flee</ansi> is emergency escape.
+Only <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>) takes you out: the company withdraws together.
 You can still order a new focus for the whole company (<ansi fg="command">company tactics focus [rule]</ansi>, once a round,
 <ansi fg="command">help tactics</ansi>). Set your formation, everyone's strategy (<ansi fg="command">help strategy</ansi>),
 and your company tactics first, and <ansi fg="command">scout</ansi> the group to see how it stands. Your companions fight beside you.
@@ -47,7 +47,7 @@ Once the battle starts:
 - anyone left without a target, or with one they can't reach, turns to
   another by their strategy, and you're told about it
   (<ansi fg="command">You turn toward the bandit cutthroat.</ansi>);
-- this goes on until the fight is over, or until you <ansi fg="command">flee</ansi>.
+- this goes on until the fight is over, or until you <ansi fg="command">retreat</ansi>.
 
 Where several groups are in one place, you fight them one at a time. The
 others wait their turn without striking, and the next battle begins as
@@ -133,8 +133,7 @@ and your company's health.
   <ansi fg="command">help defense</ansi>      blocks, parries, and dodges
   <ansi fg="command">help burden</ansi>       how your own load cuts your dodge
   <ansi fg="command">help interrupts</ansi>   broken chants, wind-ups, and shield counters
-  <ansi fg="command">retreat [exit]</ansi>    prepare one round, then withdraw the company
-  <ansi fg="command">flee</ansi>              attempt emergency escape from the room
+  <ansi fg="command">retreat [exit]</ansi>    prepare one round, then withdraw the company (or <ansi fg="command">flee</ansi>)
   <ansi fg="command">consider [target]</ansi> size up a foe
   <ansi fg="command">formation</ansi>         see and arrange your company's formation
   <ansi fg="command">company chemistry</ansi> your company's chemistry
@@ -163,7 +162,7 @@ Group healing reaches your present company without a player party. A chant
 rechecks life, presence and ownership, and healing stops at wound limits
 (<ansi fg="command">help friendly-effects</ansi>).
 
-Ordered withdrawal: <ansi fg="command">retreat [exit]</ansi> prepares for one round,
+Leaving a battle: <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>) prepares for one round,
 then attempts to move the company together. See <ansi fg="command">help retreat</ansi>.
 
 For player alliances and opt-in following/support, see <ansi fg="command">help party</ansi>.
