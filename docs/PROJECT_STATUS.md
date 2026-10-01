@@ -182,7 +182,12 @@ delegated to the lead. 33a–33e are complete.
   corrected. Ownership negatives (charms, allies, other companies) are
   structural (the side list is the leader's own companions) and were
   not given separate tests.
-- **Verification:** see below.
+- **Verification:** after the review fixes, `make generate`, `make validate`
+  and `go test -race ./...` passed (94 packages ok); `make js-lint` passed
+  on the final `window-combat.js`; the Playwright dock check
+  (`scripts/browser/dock-windows-check.mjs`, system Chromium, localhost)
+  passed with the new ability checks. The new integration tests passed 20
+  repeated runs. No Lua changed.
 
 ### 33d owner review follow-up (2026-10-01)
 
