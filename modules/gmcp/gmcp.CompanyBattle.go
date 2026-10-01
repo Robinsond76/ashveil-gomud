@@ -21,6 +21,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/assessment"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -49,6 +50,17 @@ type battleFacts struct {
 	FocusReady        bool
 	// Phase 30c2: each guardian on the player's side.
 	Guards []guardFact
+	// Phase 33i1: the company's assessment of the battle's group, as scout
+	// ends with it; nil when the group can't be seen.
+	Outlook *battleOutlook
+}
+
+// battleOutlook is the assessment in words: the risk, whether it could go
+// either way, and scout's headline sentence. Never a number.
+type battleOutlook struct {
+	Risk  string `json:"risk"`
+	Close bool   `json:"close"`
+	Text  string `json:"text"`
 }
 
 // guardFact is one guardian's guards left and its set ward (blank: the
@@ -138,6 +150,8 @@ type battlePayload struct {
 	FocusReady bool   `json:"focus_ready"`
 	// Phase 30c2: guardians' guards (the battle view's guard counts).
 	Guards []guardFact `json:"guards,omitempty"`
+	// Phase 33i1: the company's outlook (the battle view's assessment).
+	Outlook *battleOutlook `json:"outlook,omitempty"`
 }
 
 func mobID(instanceId int) string { return "m:" + strconv.Itoa(instanceId) }
@@ -157,7 +171,7 @@ func buildBattle(f battleFacts) any {
 	if f.Dark {
 		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat}
 	}
-	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat}
+	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -261,6 +275,12 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 				f.Group = g.Name // a group wholly hidden goes unnamed, as scout lists it
 			}
 			break
+		}
+	}
+
+	if found {
+		if rep, ok := assessment.Gather(user, room, group); ok {
+			f.Outlook = &battleOutlook{Risk: string(rep.Risk), Close: rep.Close, Text: rep.Headline()}
 		}
 	}
 

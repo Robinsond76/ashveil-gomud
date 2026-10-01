@@ -253,3 +253,21 @@ func TestGatherWithdrawalCountdownFromRuntimeOrder(t *testing.T) {
 	u.Character.RoomId++
 	assert.False(t, gatherBattle(u).InBattle, "departed company no longer publishes the old battle")
 }
+
+// Phase 33i1: the outlook goes out as built, in words; never in the dark.
+func TestBattlePayloadOutlook(t *testing.T) {
+	f := sampleBattle()
+	raw, _ := json.Marshal(buildBattle(f))
+	assert.NotContains(t, string(raw), "outlook", "none without one")
+
+	f.Outlook = &battleOutlook{Risk: "grave", Close: true, Text: "A grave risk for your company; it could go either way."}
+	raw, err := json.Marshal(buildBattle(f))
+	require.NoError(t, err)
+	var view map[string]any
+	require.NoError(t, json.Unmarshal(raw, &view))
+	assert.Equal(t, map[string]any{"risk": "grave", "close": true, "text": "A grave risk for your company; it could go either way."}, view["outlook"])
+
+	f.Dark = true
+	raw, _ = json.Marshal(buildBattle(f))
+	assert.NotContains(t, string(raw), "outlook", "the dark hides it, as scout")
+}

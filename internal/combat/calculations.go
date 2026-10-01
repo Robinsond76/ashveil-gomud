@@ -590,6 +590,16 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 	return totalDPS
 }
 
+// ExpectedDamage is the attacker's average damage per round against the
+// defender, without dice (Ashveil Phase 33i1: the company assessment). It
+// reads only; no state changes and no random number is drawn.
+func ExpectedDamage(atk, def *characters.Character) float64 {
+	if atk == nil || def == nil {
+		return 0
+	}
+	return expectedDPS(*atk, *def)
+}
+
 // CombatOdds returns the ratio of rounds-for-attacker-to-kill-defender to
 // rounds-for-defender-to-kill-attacker. Values above 1.0 favor the attacker.
 func CombatOdds(atkChar characters.Character, defChar characters.Character) float64 {
