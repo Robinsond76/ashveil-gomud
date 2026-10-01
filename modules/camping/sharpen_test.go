@@ -3,6 +3,7 @@ package camping
 import (
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -386,4 +387,24 @@ func TestAutoSharpenWhenCampRestFinishesAfterSnapshot(t *testing.T) {
 	assert.True(t, user.Character.Equipment.Weapon.Sharpened())
 	assert.Equal(t, []int{9}, stoneUses(user.Character))
 	assert.False(t, module.restedPending[7])
+}
+
+// TestFieldSmithLengthensTheEdge (33f3): a level-4 field smith at the
+// whetstone gives 20 + 4 × 5 = 40 strikes for the same use.
+func TestFieldSmithLengthensTheEdge(t *testing.T) {
+	bran := member(t, "Bran", 100, testSwordID, 0)
+	module, user, _ := sharpenFixture(t, map[int]*characters.Character{1: bran})
+	module.specialist = func(leader int, utility string, roomIDs ...int) (archetypes.Specialist, bool) {
+		assert.Equal(t, archetypes.UtilityFieldSmith, utility)
+		assert.Equal(t, []int{user.Character.RoomId}, roomIDs)
+		return archetypes.Specialist{Name: "Bran", Level: 4}, true
+	}
+	armed(user.Character, testSwordID, 0)
+	user.Character.StoreItem(stone(10))
+
+	text := run(t, module, user, "")
+	assert.Contains(t, text, "Bran hones the edges: they hold for 40 strikes instead of 20.")
+	assert.Contains(t, text, "That took 2 uses; 8 uses left.", "the uses are the same")
+	assert.Equal(t, 40, user.Character.Equipment.Weapon.SharpStrikes)
+	assert.Equal(t, 40, bran.Equipment.Weapon.SharpStrikes)
 }

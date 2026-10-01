@@ -11,6 +11,12 @@ const (
 	UtilityKeenEye    = "keeneye"
 	UtilityWeather    = "weather"
 	UtilityHaggle     = "haggle"
+
+	// Phase 33f3 camp specialists.
+	UtilityWatch      = "watch"
+	UtilityFieldSmith = "fieldsmith"
+	UtilityVigil      = "vigil"
+	UtilityForage     = "forage"
 )
 
 // Specialist is the member of a leader's company best at a utility.

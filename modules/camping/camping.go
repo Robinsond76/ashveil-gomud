@@ -11,6 +11,10 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"os"
 	"slices"
@@ -36,7 +40,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp break | camp sharpen [status | auto on|off]"
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp break | camp sharpen [status | auto on|off]"
 const defaultRoomTag = "camping"
 
 // Registry is the durable, leader-keyed set of active camps plus which
@@ -58,6 +62,9 @@ type Registry struct {
 	// Phase 23b: leaders whose company sharpens its blades when a camp
 	// rest's Rested grant is made.
 	AutoSharpen map[int]bool `yaml:"auto_sharpen,omitempty"`
+	// Phase 33f3: a completed, unbroken camp rest whose Forage and Vigil
+	// are still owed, by leader, keyed by the rest's operation ID.
+	CampRewards map[int]string `yaml:"camp_rewards,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -71,6 +78,7 @@ func NewRegistry() *Registry {
 		RestedPending:      map[int]bool{},
 		Owed:               map[int]map[int]camping.OwedGrant{},
 		AutoSharpen:        map[int]bool{},
+		CampRewards:        map[int]string{},
 	}
 }
 
@@ -105,6 +113,10 @@ func (r Registry) Clone() Registry {
 		RestedPending:      cloneBools(r.RestedPending),
 		Owed:               cloneOwed(r.Owed),
 		AutoSharpen:        cloneBools(r.AutoSharpen),
+		CampRewards:        make(map[int]string, len(r.CampRewards)),
+	}
+	for leaderUserID, op := range r.CampRewards {
+		out.CampRewards[leaderUserID] = op
 	}
 	for leaderUserID, camp := range r.Camps {
 		out.Camps[leaderUserID] = camp
@@ -188,6 +200,11 @@ func decodeRegistry(data []byte, registry *Registry) error {
 	for leaderUserID, on := range wire.AutoSharpen {
 		if leaderUserID > 0 && on {
 			loaded.AutoSharpen[leaderUserID] = true
+		}
+	}
+	for leaderUserID, op := range wire.CampRewards {
+		if leaderUserID > 0 && op != "" {
+			loaded.CampRewards[leaderUserID] = op
 		}
 	}
 	for leaderUserID, byCompanion := range wire.Owed {
@@ -300,6 +317,17 @@ type CampingModule struct {
 	buffRounds   func(c *characters.Character, buffID int) int
 	roundSeconds func() int
 	travelling   func(leaderUserID int) bool
+	// specialist is the leader's best present company specialist at a
+	// utility (Phase 33f3; nil: none).
+	specialist func(leaderUserID int, utility string, roomIDs ...int) (archetypes.Specialist, bool)
+	// Phase 33f3: rolls (0..n-1), the raid spawner, the owed camp rewards,
+	// and camp-specialist config.
+	roll          func(n int) int
+	inBattle      func(userID int) bool
+	spawnRaid     func(roomID, mobTemplateID, leaderUserID int) (int, error)
+	campRewards   map[int]string
+	campCfg       campSettings
+	campCfgLoaded bool
 
 	mu sync.Mutex
 
@@ -326,6 +354,13 @@ func init() {
 		recoveryApplied: map[int]bool{},
 		timers:          map[int]Timer{},
 		timerGeneration: map[int]uint64{},
+		specialist:      archetypes.BestSpecialist,
+		roll:            util.Rand,
+		spawnRaid:       enemyparty.SpawnAmbush,
+		inBattle: func(userID int) bool {
+			_, busy := battle.Current(userID)
+			return busy
+		},
 	}
 	m.resetInnState()
 	if err := m.plug.AttachFileSystem(files); err != nil {
@@ -430,6 +465,7 @@ func (m *CampingModule) saveLocked() error {
 		RestedPending:      m.restedPending,
 		Owed:               m.owed,
 		AutoSharpen:        m.autoSharpen,
+		CampRewards:        m.campRewards,
 	}
 	if err := m.store.Save(registry); err != nil {
 		return fmt.Errorf("camping: save failed; please retry: %w", err)
@@ -479,7 +515,12 @@ func (m *CampingModule) load() {
 	if loaded.AutoSharpen != nil {
 		m.autoSharpen = loaded.AutoSharpen
 	}
+	if loaded.CampRewards != nil {
+		m.campRewards = loaded.CampRewards
+	}
 	if m.plug != nil {
+		m.campCfg = parseCampSettings(m.plug.Config.Get)
+		m.campCfgLoaded = true
 		m.innCfg = parseInnSettings(m.plug.Config.Get)
 		m.innCfgLoaded = true
 		m.registerBuffGroupsLocked()
@@ -622,6 +663,8 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	recovery, condition, scaled := m.campRecovery(room)
 	rest := *resting.Rest
 	rest.Recovery = recovery
+	// Phase 33f3: whether raiders come, and when, is settled now.
+	rest.Raid = m.planRaidLocked(room, rest.StartedAtUTC)
 	resting.Rest = &rest
 	m.camps[user.UserId] = resting
 	if err := m.saveLocked(); err != nil {
@@ -861,9 +904,25 @@ func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.C
 		return err
 	}
 	m.recoveryApplied[leaderUserID] = true
+	// Phase 33f3: a raid that caught the company asleep spoils the rest: no
+	// Rested tier and no camp rewards.
+	if camp.Rest.Broken {
+		if err := m.saveLocked(); err != nil {
+			return err
+		}
+		if announce {
+			m.sendToLeader(leaderUserID, "The rest is over, but after the raid nobody feels rested.")
+		}
+		return nil
+	}
 	// Phase 23a: the Rested tier is owed in the same save, and granted on
-	// the game loop (this can run on a timer goroutine).
+	// the game loop (this can run on a timer goroutine). Phase 33f3: so
+	// are the rest's Forage and Vigil.
 	m.restedPending[leaderUserID] = true
+	if m.campRewards == nil {
+		m.campRewards = map[int]string{}
+	}
+	m.campRewards[leaderUserID] = operationID
 	if err := m.saveLocked(); err != nil {
 		// The in-memory applied marker is kept so a same-process retry cannot
 		// call survival a second time; persistence retries on the next save.
@@ -1024,6 +1083,8 @@ func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.startRest(user, room))
 	case "break":
 		user.SendText(m.breakCamp(user, room))
+	case "cook":
+		user.SendText(m.cook(user, room)) // Phase 33f3
 	default:
 		user.SendText(campUsage)
 	}

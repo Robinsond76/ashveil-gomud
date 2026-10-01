@@ -69,14 +69,22 @@ round count; a rest takes real time, not game time.
 
 <ansi fg="yellow-bold">Usage:</ansi>
 
-  <ansi fg="command">camp</ansi> | <ansi fg="command">camp status</ansi> | <ansi fg="command">camp fire</ansi> | <ansi fg="command">camp rest</ansi> | <ansi fg="command">camp break</ansi>
+  <ansi fg="command">camp</ansi> | <ansi fg="command">camp status</ansi> | <ansi fg="command">camp fire</ansi> | <ansi fg="command">camp rest</ansi> | <ansi fg="command">camp cook</ansi> | <ansi fg="command">camp break</ansi>
   <ansi fg="command">camp sharpen</ansi> [<ansi fg="command">status</ansi> | <ansi fg="command">auto on</ansi>|<ansi fg="command">off</ansi>]
 
-Camping isn't cooking: a campfire is just a light, not a hearth, so you
-can't cook at camp (<ansi fg="command">help cooking</ansi> covers where you can).
+<ansi fg="yellow-bold">Cooking, raids, and camp specialists</ansi>
+
+  <ansi fg="command">camp cook</ansi>
+  With your camp's fire lit, cook a meal from what your pack and the
+  company cargo hold (<ansi fg="command">help cooking</ansi>).
+
+Camping in the wilds isn't always safe: raiders may come during a rest
+(<ansi fg="command">help campwatch</ansi>). A finished rest that raiders didn't spoil also
+brings a ranger's forage (<ansi fg="command">help forage</ansi>) and a cleric's vigil
+(<ansi fg="command">help vigil</ansi>).
 
 In the web client, Company > Camp shows your camp and a rest's progress,
 with buttons for what you can do right now (<ansi fg="command">help webclient</ansi>).
 
-See also: <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
+See also: <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
 <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>.

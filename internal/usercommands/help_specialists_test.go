@@ -49,3 +49,29 @@ func TestSpecialistsHelp(t *testing.T) {
 	assert.Contains(t, page("travel"), "help trail")
 	assert.NotContains(t, page("stash"), "search", "nothing searches stashes now")
 }
+
+// TestCampSpecialistsHelp (33f3): the camp-specialist pages render with
+// their numbers, by name and alias, and the pages they change point to
+// them.
+func TestCampSpecialistsHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	page := func(topic string) string {
+		t.Helper()
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		return text
+	}
+	watch := page("campwatch")
+	assert.Contains(t, watch, "15% chance")
+	assert.Contains(t, watch, "25% chance per")
+	assert.Equal(t, watch, page("raiders"))
+	assert.Contains(t, page("fieldsmith"), "20 +\n5 x level")
+	assert.Contains(t, page("vigil"), "up to a loyalty of 60")
+	assert.Contains(t, page("forage"), "1 find, plus 1 more for every\n2 levels")
+	assert.Contains(t, page("camp"), "camp cook")
+	assert.NotContains(t, page("camp"), "can't cook at camp")
+	assert.Contains(t, page("cooking"), "Cooking at camp")
+	assert.Contains(t, page("sharpen"), "help fieldsmith")
+	assert.Contains(t, page("specialists"), "help campwatch")
+}

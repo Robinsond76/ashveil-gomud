@@ -391,3 +391,39 @@ func TestCargoMovesRaiseItemOwnership(t *testing.T) {
 	require.Len(t, seen, 2)
 	assert.True(t, seen[1].Gained)
 }
+
+// TestDepositCargoAppliesAnOperationOnce (33f3): a deposit under an
+// operation ID lands once, survives a reload with its ID, and a failed save
+// leaves nothing behind.
+func TestDepositCargoAppliesAnOperationOnce(t *testing.T) {
+	store := &fakeStore{}
+	m := newTestModule(store, testUser(t, 7))
+	deposit := []encumbrance.CargoStack{{ItemId: rockId, Count: 2}}
+	require.NoError(t, m.DepositCargo(7, "rest-1:forage", deposit))
+	require.NoError(t, m.DepositCargo(7, "rest-1:forage", deposit))
+	assert.Equal(t, 2, m.cargo[7].CountOf(rockId))
+	assert.Equal(t, 2, store.saved.Cargo[7].CountOf(rockId))
+
+	reloaded := newTestModule(store, testUser(t, 7))
+	reloaded.load()
+	require.NoError(t, reloaded.DepositCargo(7, "rest-1:forage", deposit))
+	assert.Equal(t, 2, reloaded.cargo[7].CountOf(rockId), "the ID survives a restart")
+
+	require.NoError(t, reloaded.DepositCargo(7, "", deposit))
+	assert.Equal(t, 4, reloaded.cargo[7].CountOf(rockId), "no ID, no dedupe")
+
+	store.saveErr = assert.AnError
+	assert.Error(t, reloaded.DepositCargo(7, "rest-2:forage", deposit))
+	assert.Equal(t, 4, reloaded.cargo[7].CountOf(rockId), "rolled back")
+	assert.False(t, reloaded.cargo[7].HasApplied("rest-2:forage"))
+}
+
+// TestWithdrawCargo (33f3).
+func TestWithdrawCargo(t *testing.T) {
+	m := newTestModule(&fakeStore{}, testUser(t, 7))
+	require.NoError(t, m.DepositCargo(7, "", []encumbrance.CargoStack{{ItemId: rockId, Count: 2}}))
+	require.NoError(t, m.WithdrawCargo(7, rockId, 1))
+	assert.Equal(t, 1, m.cargo[7].CountOf(rockId))
+	assert.ErrorIs(t, m.WithdrawCargo(7, rockId, 2), encumbrance.ErrInsufficientCargo)
+	assert.Equal(t, 1, m.cargo[7].CountOf(rockId))
+}

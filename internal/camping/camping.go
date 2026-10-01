@@ -43,13 +43,37 @@ type RestSession struct {
 	// (Phase 16: a camp rest scaled by the weather, or an inn stay's
 	// amount). 0 means FatigueRecovery, so a pre-Phase 16 rest is unchanged.
 	Recovery int `yaml:"recovery,omitempty"`
+	// Raid (Phase 33f3) is the raid rolled when the rest began, if any.
+	Raid *Raid `yaml:"raid,omitempty"`
+	// Broken (Phase 33f3): an unspotted raid caught the company asleep, so
+	// the rest earns no Rested tier and no camp rewards.
+	Broken bool `yaml:"broken,omitempty"`
+}
+
+// Raid is a camp raid planned at rest start (Phase 33f3): raiders of MobID
+// come at AtUTC. Fired is set once it has been resolved, Spotted when a
+// watch saw them coming.
+type Raid struct {
+	AtUTC   time.Time `yaml:"at_utc"`
+	MobID   int       `yaml:"mob_id"`
+	Fired   bool      `yaml:"fired,omitempty"`
+	Spotted bool      `yaml:"spotted,omitempty"`
 }
 
 func (s RestSession) Validate() error {
 	if s.StartedAtUTC.IsZero() || !s.State.Valid() || s.Recovery < 0 {
 		return ErrInvalidCamp
 	}
+	if s.Raid != nil && (s.Raid.AtUTC.IsZero() || s.Raid.MobID <= 0) {
+		return ErrInvalidCamp
+	}
 	return nil
+}
+
+// RaidDue reports whether a resting session's raid has come and not been
+// resolved yet.
+func (s RestSession) RaidDue(now time.Time) bool {
+	return s.State == Resting && s.Raid != nil && !s.Raid.Fired && !now.UTC().Before(s.Raid.AtUTC)
 }
 
 // RecoveryAmount is the fatigue this rest restores.

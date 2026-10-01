@@ -26,6 +26,7 @@ Archetypes:
     Skills: [brawling, dual-wield]
     GrantSkills:
       - { Skill: brawling, Level: 1 }
+    Utility: [watch, fieldsmith]
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10002, 20004, 20020, 30004, 30015, 31]
   - ArchetypeId: rogue
@@ -64,6 +65,7 @@ Archetypes:
       - { Spell: heal, Level: 1 }
       - { Spell: tend, Level: 1 } # Phase 30b: used by heal wounds, never by battle strategy
       - { Spell: healall, Level: 5 }
+    Utility: [vigil]
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10015, 20004, 20008, 30004, 30015, 30001, 30001, 31]
   - ArchetypeId: ranger
@@ -72,7 +74,7 @@ Archetypes:
     Skills: [track]
     GrantSkills:
       - { Skill: track, Level: 1 }
-    Utility: [trail, pathfinder]
+    Utility: [trail, pathfinder, forage]
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10014, 20020, 20024, 20003, 30019, 30015, 23, 31]
 
@@ -88,6 +90,11 @@ Utilities:
   - { Utility: keeneye, Skill: skulduggery }
   - { Utility: weather, Skill: cast }
   - { Utility: haggle, Skill: skulduggery }
+  # Phase 33f3 camp specialists.
+  - { Utility: watch, Skill: brawling }
+  - { Utility: fieldsmith, Skill: brawling }
+  - { Utility: vigil, Skill: protection }
+  - { Utility: forage, Skill: track }
 
 # Trap sense: best member's level * SensePerLevel + perception/4 must beat
 # lock difficulty * SenseDifficultyFactor (a d100-style roll is added).

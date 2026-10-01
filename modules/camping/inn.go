@@ -36,6 +36,9 @@ type innSettings struct {
 	WhetstoneItemId  int
 	SharpenedBonus   int
 	SharpenedStrikes int
+	// Phase 33f3 Field Smith: extra strikes of edge per level of the
+	// company's best field smith (a warrior) present when sharpening.
+	FieldSmithStrikesPerLevel int
 }
 
 func defaultInnSettings() innSettings {
@@ -53,6 +56,8 @@ func defaultInnSettings() innSettings {
 		WhetstoneItemId:  30,
 		SharpenedBonus:   1,
 		SharpenedStrikes: 20,
+
+		FieldSmithStrikesPerLevel: 5,
 	}
 }
 
@@ -92,6 +97,9 @@ func parseInnSettings(get func(string) any) innSettings {
 	}
 	if n, ok := configInt(get("SharpenedStrikes")); ok && n > 0 {
 		s.SharpenedStrikes = n
+	}
+	if n, ok := configInt(get("FieldSmithStrikesPerLevel")); ok && n >= 0 {
+		s.FieldSmithStrikesPerLevel = n
 	}
 	return s
 }
@@ -139,6 +147,7 @@ func (m *CampingModule) resetInnState() {
 	m.restedPending = map[int]bool{}
 	m.owed = map[int]map[int]camping.OwedGrant{}
 	m.autoSharpen = map[int]bool{}
+	m.campRewards = map[int]string{}
 	m.innTimers = map[int]Timer{}
 	m.innTimerGeneration = map[int]uint64{}
 }

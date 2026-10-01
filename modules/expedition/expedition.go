@@ -21,9 +21,9 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
-	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -170,47 +170,7 @@ type MobSpawner interface {
 type nativeMobSpawner struct{}
 
 func (nativeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUserID int) (int, error) {
-	room := rooms.LoadRoom(roomID)
-	if room == nil {
-		return 0, fmt.Errorf("expedition: room %d is unavailable", roomID)
-	}
-	mob := mobs.NewMobById(mobs.MobId(mobTemplateID), roomID)
-	if mob == nil {
-		return 0, fmt.Errorf("expedition: combat encounter mob template %d is unavailable", mobTemplateID)
-	}
-	// Phase 29b2: no lone enemies. Unless the foe is solitary, a second of
-	// its kind comes with it, and they fight as one group of their own.
-	foes := []*mobs.Mob{mob}
-	if !mob.Solitary {
-		if second := mobs.NewMobById(mobs.MobId(mobTemplateID), roomID); second != nil {
-			foes = append(foes, second)
-		}
-	}
-	group, groupName := "", ""
-	if len(foes) > 1 {
-		group = encounterGroup(roomID, mob.InstanceId)
-		// Phase 32c: the pair is named as it forms ("a band of ruffians")
-		// and keeps the name while it stands.
-		summaries := make([]mobparty.MobSummary, len(foes))
-		for i, foe := range foes {
-			summaries[i] = rooms.GroupSummary(foe)
-		}
-		groupName = mobparty.Generate(summaries).Name
-	}
-	for _, foe := range foes {
-		foe.Hostile = true
-		foe.MaxWander = 0
-		foe.SpawnGroup = group
-		foe.GroupName = groupName
-		room.AddMob(foe.InstanceId)
-		foe.Command(fmt.Sprintf("attack @%d", leaderUserID))
-	}
-	return mob.InstanceId, nil
-}
-
-// encounterGroup names a travel encounter's group after its first foe.
-func encounterGroup(roomID, firstInstanceID int) string {
-	return fmt.Sprintf("encounter:%d:%d", roomID, firstInstanceID)
+	return enemyparty.SpawnAmbush(roomID, mobTemplateID, leaderUserID)
 }
 
 // EncounterActive reports whether any foe of the encounter led by
@@ -226,7 +186,7 @@ func (nativeMobSpawner) EncounterActive(instanceID, roomID int) bool {
 	if room == nil {
 		return false
 	}
-	group := encounterGroup(roomID, instanceID)
+	group := enemyparty.EncounterGroup(roomID, instanceID)
 	for _, id := range room.GetMobs() {
 		if mob := mobs.GetInstance(id); standing(mob) && mob.SpawnGroup == group {
 			return true
