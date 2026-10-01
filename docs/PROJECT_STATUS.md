@@ -5,7 +5,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (33f1, skill and charm retirement)
+- **Last updated:** 2026-10-01 (equipment catalog and Glaivewarden design approval)
 - **Latest completed phases:** 33f1, skill and charm retirement; 33e,
   automatic class abilities; 33d, allied
   companies; 33c, company retreat; 33b, friendly effects; 33a, command
@@ -13,6 +13,13 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**Equipment design approved:** [weapon families, six tiers, armor paths, and
+Glaivewarden](designs/2026-10-01-equipment-tiers-glaivewarden-design.md) records
+the owner's approved equipment direction and requested glaive class for 33g
+and later progression/content work. Design documentation is complete; gameplay
+is not implemented, and the phase order below is unchanged. Documentation
+verification: whitespace and relative Markdown links checked; no Go changes.
 
 The expedition/company loop, onboarding, combat presentation (29a–29f),
 status effects, wounds, tactics, guardians, interrupts, wind-ups, morale
