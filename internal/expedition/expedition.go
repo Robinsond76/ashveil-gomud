@@ -127,6 +127,21 @@ func (i InterruptionProfile) Validate() error {
 	return nil
 }
 
+// ReachesCombat reports whether this interruption can fire as an ambush
+// (Combat as its Kind or anywhere in its Kinds table). Phase 33f2: a
+// tracker reads the warning at departure.
+func (i InterruptionProfile) ReachesCombat() bool {
+	if i.Kind == Combat {
+		return true
+	}
+	for _, wk := range i.Kinds {
+		if wk.Kind == Combat {
+			return true
+		}
+	}
+	return false
+}
+
 // ResolveKind picks which kind fires for this interruption. A singular-Kind
 // profile returns Kind unchanged and ignores roll entirely — today's exact,
 // deterministic behavior. A Kinds table selects proportionally to Weight:

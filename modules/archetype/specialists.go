@@ -197,28 +197,35 @@ func signsBeyond(user *users.UserRecord, room *rooms.Room, far bool) []trailSign
 
 // describeSigns renders what a tracker of level reads: level 1 only the
 // direction, 2 the group, 3 its size, 4 also two rooms away (signsBeyond).
+// Groups of one name seen the same way are counted together.
 func describeSigns(signs []trailSign, level int) string {
-	var parts []string
-	seen := map[string]bool{}
+	type key struct{ where, name string }
+	var order []key
+	counts := map[key]int{}
 	for _, s := range signs {
 		where := s.path[0]
 		if len(s.path) > 1 {
 			where = fmt.Sprintf("beyond %s, then %s", s.path[0], s.path[1])
 		}
-		var text string
+		k := key{where, s.name}
+		if level <= 1 {
+			k.name = ""
+		}
+		if _, seen := counts[k]; !seen {
+			order = append(order, k)
+		}
+		counts[k] += s.count
+	}
+	parts := make([]string, 0, len(order))
+	for _, k := range order {
 		switch {
 		case level <= 1:
-			text = "fresh tracks, " + where
+			parts = append(parts, "fresh tracks, "+k.where)
 		case level == 2:
-			text = fmt.Sprintf("%s, %s", s.name, where)
+			parts = append(parts, fmt.Sprintf("%s, %s", k.name, k.where))
 		default:
-			text = fmt.Sprintf("%s (%d), %s", s.name, s.count, where)
+			parts = append(parts, fmt.Sprintf("%s (%d), %s", k.name, counts[k], k.where))
 		}
-		if seen[text] {
-			continue
-		}
-		seen[text] = true
-		parts = append(parts, text)
 	}
 	return strings.Join(parts, "; ")
 }

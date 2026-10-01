@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -77,7 +78,7 @@ func (m *MarketModule) matchGood(goods []market.Good, query string) (market.Good
 // commitBuy prices and removes one unit from the zone's stock in a single
 // critical section, refusing when sold out or when the price exceeds gold.
 // It returns the price paid, after the company's settlement standing.
-func (m *MarketModule) commitBuy(zone string, itemID, gold int, pricing standing.Standing) (int, error) {
+func (m *MarketModule) commitBuy(zone string, itemID, gold int, pricing standing.Standing, hagglePct int) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.commitLocked(zone, itemID, func(g market.Good, stock int) (int, int, error) {
@@ -85,7 +86,7 @@ func (m *MarketModule) commitBuy(zone string, itemID, gold int, pricing standing
 		if !ok {
 			return 0, 0, errSoldOut
 		}
-		price = pricing.BuyPrice(price)
+		price = haggledBuy(price, pricing, hagglePct)
 		if price > gold {
 			return price, 0, errNotAfford
 		}
@@ -96,7 +97,7 @@ func (m *MarketModule) commitBuy(zone string, itemID, gold int, pricing standing
 // commitSell prices and adds one unit to the zone's stock in a single
 // critical section, refusing when the market is full. It returns the
 // price paid to the seller, after the company's settlement standing.
-func (m *MarketModule) commitSell(zone string, itemID int, pricing standing.Standing) (int, error) {
+func (m *MarketModule) commitSell(zone string, itemID int, pricing standing.Standing, hagglePct int) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.commitLocked(zone, itemID, func(g market.Good, stock int) (int, int, error) {
@@ -104,8 +105,51 @@ func (m *MarketModule) commitSell(zone string, itemID int, pricing standing.Stan
 		if !ok {
 			return 0, 0, errMarketFull
 		}
-		return pricing.SellPrice(price), 1, nil
+		next, nextOK := g.AskForStock(stock + 1)
+		return haggledSell(price, next, nextOK, pricing, hagglePct), 1, nil
 	})
+}
+
+// haggledBuy is what the company pays for a good asked at ask: its
+// standing's price, then Phase 33f2's haggle.
+func haggledBuy(ask int, pricing standing.Standing, hagglePct int) int {
+	return market.HaggledBuy(pricing.BuyPrice(ask), hagglePct)
+}
+
+// haggledSell is what the company is paid for a good bid at bid: its
+// standing's price, raised by the haggle but kept one below what buying it
+// back would cost (next, the ask once it is sold), so no round trip
+// profits.
+func haggledSell(bid, next int, nextOK bool, pricing standing.Standing, hagglePct int) int {
+	sale := pricing.SellPrice(bid)
+	if hagglePct <= 0 || !nextOK {
+		return sale
+	}
+	return market.HaggledSell(sale, hagglePct, haggledBuy(next, pricing, hagglePct)-1)
+}
+
+// haggler is the company's best haggler at the leader's side and the
+// percentage they win; pct is 0 with none.
+func (m *MarketModule) haggler(user *users.UserRecord, room *rooms.Room) (archetypes.Specialist, int) {
+	sp, ok := archetypes.BestSpecialist(user.UserId, archetypes.UtilityHaggle, room.RoomId)
+	if !ok {
+		return archetypes.Specialist{}, 0
+	}
+	m.mu.Lock()
+	perLevel := m.hagglePerLevel
+	m.mu.Unlock()
+	return sp, archetypes.PctByLevel(sp.Level, perLevel, 50)
+}
+
+// haggleNote is the line naming who haggled, "" without a haggle.
+func haggleNote(sp archetypes.Specialist, pct int, buying bool) string {
+	if pct <= 0 {
+		return ""
+	}
+	if buying {
+		return fmt.Sprintf(" %s %s %d%% off the price.", sp.Subject(), sp.Verb("haggle", "haggles"), pct)
+	}
+	return fmt.Sprintf(" %s %s up to %d%% more out of the buyer.", sp.Subject(), sp.Verb("haggle", "haggles"), pct)
 }
 
 // commitLocked looks up the good and its stock, lets decide price the
@@ -176,7 +220,8 @@ func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string
 		user.SendText(text)
 		return
 	}
-	price, err := m.commitBuy(room.Zone, good.ItemID, user.Character.Gold, pricing)
+	haggler, pct := m.haggler(user, room)
+	price, err := m.commitBuy(room.Zone, good.ItemID, user.Character.Gold, pricing, pct)
 	switch {
 	case errors.Is(err, errSoldOut):
 		user.SendText(fmt.Sprintf(`No one at the market has any <ansi fg="itemname">%s</ansi> to sell right now.`, name))
@@ -199,7 +244,7 @@ func (m *MarketModule) buy(user *users.UserRecord, room *rooms.Room, what string
 	events.AddToQueue(events.Purchase{UserId: user.UserId, RoomId: room.RoomId, Cost: price, ItemId: good.ItemID})
 
 	user.EventLog.Add(`shop`, fmt.Sprintf(`Bought the <ansi fg="itemname">%s</ansi> at the %s market for <ansi fg="gold">%d gold</ansi>`, newItem.DisplayName(), room.Zone, price))
-	user.SendText(fmt.Sprintf(`You buy the <ansi fg="itemname">%s</ansi> at the market for <ansi fg="gold">%d gold</ansi>.`, newItem.DisplayName(), price))
+	user.SendText(fmt.Sprintf(`You buy the <ansi fg="itemname">%s</ansi> at the market for <ansi fg="gold">%d gold</ansi>.%s`, newItem.DisplayName(), price, haggleNote(haggler, pct, true)))
 	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> buys the <ansi fg="itemname">%s</ansi> at the market.`, user.Character.Name, newItem.DisplayName()), user.UserId)
 }
 
@@ -214,7 +259,8 @@ func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what strin
 		return
 	}
 
-	price, err := m.commitSell(room.Zone, item.ItemId, pricing)
+	haggler, pct := m.haggler(user, room)
+	price, err := m.commitSell(room.Zone, item.ItemId, pricing, pct)
 	switch {
 	case errors.Is(err, errMarketFull):
 		user.SendText(fmt.Sprintf(`The market is glutted with <ansi fg="itemname">%s</ansi>; no one will buy more right now.`, item.DisplayName()))
@@ -232,7 +278,7 @@ func (m *MarketModule) sell(user *users.UserRecord, room *rooms.Room, what strin
 	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: price})
 
 	user.EventLog.Add(`shop`, fmt.Sprintf(`Sold your <ansi fg="itemname">%s</ansi> at the %s market for <ansi fg="gold">%d gold</ansi>`, item.DisplayName(), room.Zone, price))
-	user.SendText(fmt.Sprintf(`You sell the <ansi fg="itemname">%s</ansi> at the market for <ansi fg="gold">%d gold</ansi>.`, item.DisplayName(), price))
+	user.SendText(fmt.Sprintf(`You sell the <ansi fg="itemname">%s</ansi> at the market for <ansi fg="gold">%d gold</ansi>.%s`, item.DisplayName(), price, haggleNote(haggler, pct, false)))
 	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> sells the <ansi fg="itemname">%s</ansi> at the market.`, user.Character.Name, item.DisplayName()), user.UserId)
 }
 

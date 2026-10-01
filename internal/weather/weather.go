@@ -75,6 +75,10 @@ type ZoneWeather struct {
 	Zone            string
 	Current         string
 	NextChangeRound uint64
+	// Next (Phase 33f2) is the condition already rolled to follow Current
+	// at NextChangeRound, so a forecast tells the truth. "" in a save
+	// from before 33f2; the module rolls it on load.
+	Next string `yaml:"next,omitempty"`
 }
 
 // Validate reports whether the record is structurally sound. It does not
