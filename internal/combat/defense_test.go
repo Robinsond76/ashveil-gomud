@@ -38,8 +38,8 @@ func TestBlockChanceRange(t *testing.T) {
 // TestBlockChanceIncreaseWithStrength verifies shield block improves with Strength advantage.
 func TestBlockChanceIncreaseWithStrength(t *testing.T) {
 	// Same armor, different strength
-	weak := blockChance(5, 50, 50)  // equal
-	stronger := blockChance(5, 75, 50)  // +25 strength
+	weak := blockChance(5, 50, 50)     // equal
+	stronger := blockChance(5, 75, 50) // +25 strength
 
 	if stronger <= weak {
 		t.Errorf("blockChance should increase with strength: weak=%d, stronger=%d", weak, stronger)
@@ -54,10 +54,10 @@ func TestParryChanceRange(t *testing.T) {
 
 	// Test various speed deltas and weapon types
 	tests := []struct {
-		name        string
-		defSpeed    int
-		atkSpeed    int
-		weaponType  items.ItemSubType
+		name       string
+		defSpeed   int
+		atkSpeed   int
+		weaponType items.ItemSubType
 	}{
 		{"equal stats, slashing", 50, 50, items.Slashing},
 		{"faster defender, slashing", 75, 50, items.Slashing},
@@ -79,8 +79,8 @@ func TestParryWeaponModifiers(t *testing.T) {
 	baseChance := 20
 
 	tests := []struct {
-		name        string
-		weaponType  items.ItemSubType
+		name         string
+		weaponType   items.ItemSubType
 		wantModifier int
 	}{
 		{"slashing gets +5", items.Slashing, 5},
@@ -124,4 +124,3 @@ func TestBashChanceRange(t *testing.T) {
 		}
 	}
 }
-

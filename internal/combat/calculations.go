@@ -310,7 +310,7 @@ func blockChance(shieldArmor, defStr, atkStr int) int {
 	// Shield's armor contributes to the chance, scaled into the stat delta range.
 	// Use Strength delta as the base, adjusted by shield armor value (1-10 range).
 	statAdvantage := statDelta(defStr, atkStr)
-	armorBoost := float64(shieldArmor) / 100.0 // Normalize armor to 0-1 range
+	armorBoost := float64(shieldArmor) / 100.0      // Normalize armor to 0-1 range
 	combined := statAdvantage + (armorBoost * 0.25) // armor contributes up to 25% extra
 	if combined > 1.0 {
 		combined = 1.0
@@ -355,7 +355,7 @@ func applyParryWeaponModifier(baseChance int, weaponSubtype items.ItemSubType) i
 		modifier = 5
 	case items.Generic:
 		modifier = -5
-	// Bludgeoning, Cleaving, Shooting, Claws, and everything else: 0
+		// Bludgeoning, Cleaving, Shooting, Claws, and everything else: 0
 	}
 	return baseChance + modifier
 }
