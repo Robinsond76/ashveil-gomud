@@ -21,13 +21,18 @@ A chant holds its starting targets. Movement, death, dismissal, expired or
 transferred charms, and lost membership remove targets before the effect
 lands. A new arrival or newly revived member is not added during the chant.
 Moving the caster cancels that cast's target set. Mana is charged once at
-start; losing targets spends the cast, with no automatic refund.
+start. If no one is left to help, the spell (or first aid) fades with
+"Your spell finds no one left to help", and the mana stays spent.
 
 Company-wide support never automatically includes other players' companies.
-Single-target support can explicitly name another patient beside you.
+Single-target support can explicitly name another patient beside you, but
+cannot aid either side of an unrelated battle. A patient drawn into another
+battle during a chant is dropped. Consenting allied owners fighting the same
+enemy group count as participants; idle or separately fighting allies do not.
 For allied/area group support, both accepted party owners must use
 <ansi fg="command">party support on</ansi>. It defaults off; revoking consent
-or leaving removes targets from a chant. See <ansi fg="command">help party</ansi>. Harmful spells keep their battle boundaries.
+or leaving removes targets from a chant. See <ansi fg="command">help party</ansi>.
+Harmful spells keep their battle boundaries.
 
 See <ansi fg="command">help cast</ansi>, <ansi fg="command">help strategy</ansi>,
 <ansi fg="command">help wounds</ansi>, and <ansi fg="command">help resurrect</ansi>.
