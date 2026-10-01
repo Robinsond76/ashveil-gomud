@@ -205,8 +205,8 @@ switch gates it, and none acts in the leader's own battle.
 
 ## 33f3: Camp specialists
 
-The owner did not answer the 33f3 questions before asking the work to go
-on; the lead's proposed defaults below were used and are open to change.
+Owner decisions (2026-10-01): the proposed camp raids are approved, and
+the simple version of camp cooking is approved.
 
 **Camp raids.** A camp rest in a zone with a `CampRaids` entry rolls once,
 at rest start, whether raiders come (15% on the Old Kings Road) and when
