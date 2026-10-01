@@ -16,7 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var retiredCommands = []string{"bump", "changeform", "peep", "pickpocket", "portal", "pray", "scribe", "sneak", "tame"}
+var retiredCommands = []string{"backstab", "bump", "changeform", "peep", "pickpocket", "portal", "pray", "scribe", "sneak", "tame"}
 
 // TestRetiredSkillCommandsAreGone (33f1): the retired skill commands are no
 // longer commands, and their help topics and aliases are gone.
@@ -26,6 +26,9 @@ func TestRetiredSkillCommandsAreGone(t *testing.T) {
 	for _, cmd := range retiredCommands {
 		_, ok := userCommands[cmd]
 		assert.False(t, ok, cmd)
+		if cmd == "backstab" {
+			continue // "help backstab" opens skulduggery, which explains Opening Strike
+		}
 		_, err := GetHelpContents(cmd)
 		assert.Error(t, err, "help %s", cmd)
 	}
@@ -36,7 +39,7 @@ func TestRetiredSkillCommandsAreGone(t *testing.T) {
 	for _, topic := range []string{"skulduggery", "protection", "jobs", "training-schools"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
-		for _, cmd := range []string{"sneak", "bump", "pickpocket", "pray", "portal", "scribe", "peep", "tame"} {
+		for _, cmd := range []string{"sneak", "bump", "pickpocket", "pray", "portal", "scribe", "peep", "tame", "backstab"} {
 			assert.NotRegexp(t, `\b`+cmd+`\b`, strings.ToLower(text), "help %s still names %s", topic, cmd)
 		}
 	}
@@ -136,5 +139,30 @@ func TestWorldDataHasNoRetiredSkills(t *testing.T) {
 				assert.NotRegexp(t, `skillinfo:\s*"?(changeform|peep|portal|scribe|tame)`, string(data), path)
 			}
 		})
+	}
+}
+
+// TestEveryIndexedHelpTopicResolves (33f1 review): every player topic the
+// help index lists, and every help alias, opens a page, so retiring a page
+// can't leave a dangling entry.
+func TestEveryIndexedHelpTopicResolves(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	// Gaps that predate 33f1 (GoMud topics with no page) and pages a
+	// module ships (the tutorial's, not loaded here).
+	known := map[string]bool{"bid": true, "bury": true, "help": true, "store": true, "trash": true, "unstore": true, "tutorial": true, "replay": true}
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.AdminOnly || known[topic.Command] {
+			continue
+		}
+		_, err := GetHelpContents(topic.Command)
+		assert.NoError(t, err, "help %s (%s)", topic.Command, topic.Category)
+	}
+	for alias := range keywords.GetAllHelpAliases() {
+		if known[alias] {
+			continue
+		}
+		_, err := GetHelpContents(alias)
+		assert.NoError(t, err, "help alias %s", alias)
 	}
 }

@@ -2345,25 +2345,43 @@ func (c *Character) Uncurse() []items.Item {
 	return uncursedList
 }
 
-// RetireSkills removes retired skills (Ashveil 33f1) from the character,
-// refunding the training points each cost. It returns the points refunded
-// and the retired skill ids removed, sorted; nothing when none is held. The
-// refund and the removal change the same record, so a save keeps both or
-// neither, and a second call finds nothing to refund.
+// RetireSkills removes retired skills (Ashveil 33f1) from the character
+// and lowers skills above a retirement level cap, refunding the training
+// points each cost. It returns the points refunded and what was retired, in
+// order ("peep", "protection level 4"); nothing when none applies. The
+// refund and the change are to the same record, so a save keeps both or
+// neither, and a second call finds nothing to refund. An entry already at
+// level 0 is dropped silently.
 func (c *Character) RetireSkills() (int, []string) {
 	refund := 0
-	removed := []string{}
+	retired := []string{}
 	for _, id := range skills.Retired() {
 		level, ok := c.Skills[id]
 		if !ok {
 			continue
 		}
-		refund += skills.TrainingCost(level)
-		removed = append(removed, id)
 		delete(c.Skills, id)
+		if level > 0 {
+			refund += skills.TrainingCost(level)
+			retired = append(retired, id)
+		}
+	}
+	for _, id := range skills.CappedSkills() {
+		cap, _ := skills.LevelCap(id)
+		level := c.Skills[id]
+		if level <= cap {
+			continue
+		}
+		refund += skills.TrainingCost(level) - skills.TrainingCost(cap)
+		c.Skills[id] = cap
+		if level == cap+1 {
+			retired = append(retired, fmt.Sprintf("%s level %d", id, level))
+		} else {
+			retired = append(retired, fmt.Sprintf("%s levels %d-%d", id, cap+1, level))
+		}
 	}
 	c.TrainingPoints += refund
-	return refund, removed
+	return refund, retired
 }
 
 // secretExitKey is a KnownSecretExits entry (Ashveil 33f2).

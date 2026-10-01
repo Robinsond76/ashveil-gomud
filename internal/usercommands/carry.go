@@ -20,16 +20,6 @@ func tooHeavy(user *users.UserRecord, itm items.Item) bool {
 	return refuse
 }
 
-// canCarryStolen reports whether a pickpocketed item fits the thief's
-// company (32f review finding 4); a full one leaves it where it was.
-func canCarryStolen(user *users.UserRecord, itm items.Item) bool {
-	if _, full := encumbrance.WouldExceed(user.UserId, company.AddedGrams(user.Character.Items, itm)); full {
-		user.SendText(fmt.Sprintf(`You feel a <ansi fg="itemname">%s</ansi>, but your company can't carry any more.`, itm.DisplayName()))
-		return false
-	}
-	return true
-}
-
 // fits reports, quietly, whether an item would fit the user's company;
 // `get all` counts what doesn't and says so once (leftBehind).
 func fits(user *users.UserRecord, itm items.Item) bool {

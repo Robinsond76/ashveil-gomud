@@ -67,14 +67,19 @@ replacements, so secret exits never become unfindable between slices.
 ## 33f1: Skill and charm retirement
 
 **Removed player commands:** `peep`, `portal`, `tame`, `changeform`,
-`scribe`, `sneak`, `bump`, `pickpocket`, `pray`. Typing one gets the
+`scribe`, `sneak`, `bump`, `pickpocket`, `pray`, and `backstab` (it needed
+the hidden state only `sneak` gave; in a battle 33e's automatic Opening
+Strike already plays the rogue's opening, so `help backstab` opens
+`help skulduggery`). Typing one gets the
 ordinary unknown-command answer. Mob-side `sneak`, `portal` (scripted room
 portals), and engine portal exits stay: they are world behavior, not skills.
 
 **Removed skills (data):** `peep`, `portal`, `tame`, `changeform`, `scribe`
-are deleted from `skills/`. Skulduggery keeps backstab, picklock, and traps
-(its pickpocket/bump/sneak abilities go); Protection keeps aid and rank
-(pray goes). Their descriptions are updated.
+are deleted from `skills/`. Skulduggery keeps picklock, traps, and the
+automatic Opening Strike (its levels still raise trap and utility checks,
+so no refund); Protection keeps aid and rank and is capped at level 3 (its
+level 4 granted only pray), refunding level 4's 4 points. Their
+descriptions are updated.
 
 **Archetypes and professions.** The rogue loses `peep`, the wizard
 `portal`, the ranger `tame`. Professions (job titles) drop retired skills:
@@ -108,7 +113,8 @@ conversations that teach or mention a retired skill are corrected.
 
 **Migration.** A character holding a retired skill is refunded the
 training points it cost (1 + 2 + … + level) at their next spawn, and the
-skill is removed from their sheet, with a one-line notice. The refund and
+skill is removed from their sheet (Protection above level 3 is lowered,
+refunding the difference), with a one-line notice. The refund and
 the removal change the same user record and are saved together, so the
 refund never repeats. Skill levels granted free (the
 Portal obelisk's level 1) are refunded as well, a small generosity

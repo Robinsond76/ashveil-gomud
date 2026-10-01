@@ -17,19 +17,20 @@ func TestRetiredSkillsRefundedOnceAtSpawn(t *testing.T) {
 	saves := 0
 	m.saveUser = func(*users.UserRecord) error { saves++; return nil }
 	u := trainee(t, 51, 96008)
-	u.Character.Skills = map[string]int{"peep": 2, "portal": 1, "tame": 4, "track": 1}
+	u.Character.Skills = map[string]int{"peep": 2, "portal": 1, "tame": 4, "scribe": 0, "track": 1, "protection": 4}
 
 	text := captureText(t, func() { m.onPlayerSpawn(events.PlayerSpawn{UserId: 51}) })
-	assert.Equal(t, 20+3+1+10, u.Character.TrainingPoints, "1+2 for peep, 1 for portal, 1+2+3+4 for tame")
-	assert.Equal(t, map[string]int{"track": 1}, u.Character.Skills, "kept skills stay")
+	assert.Equal(t, 20+3+1+10+4, u.Character.TrainingPoints, "1+2 for peep, 1 for portal, 1+2+3+4 for tame, 4 for protection's retired level 4")
+	assert.Equal(t, map[string]int{"track": 1, "protection": 3}, u.Character.Skills, "kept skills stay; protection drops to its cap; a level-0 entry goes silently")
 	assert.Equal(t, 1, saves, "the refund is saved")
-	assert.Contains(t, text, "peep, portal, tame skills are no longer part of the world")
-	assert.Contains(t, text, "14 training points")
+	assert.Contains(t, text, "No longer part of the world: peep, portal, tame, protection level 4.")
+	assert.Contains(t, text, "18 training points")
+	assert.NotContains(t, text, "scribe", "a level-0 entry is not refunded or named")
 
 	text = captureText(t, func() { m.onPlayerSpawn(events.PlayerSpawn{UserId: 51}) })
-	assert.Equal(t, 34, u.Character.TrainingPoints, "never refunded twice")
+	assert.Equal(t, 38, u.Character.TrainingPoints, "never refunded twice")
 	assert.Equal(t, 1, saves)
-	assert.NotContains(t, text, "no longer part of the world")
+	assert.NotContains(t, text, "No longer part of the world")
 }
 
 // TestShippedArchetypesClaimNoRetiredSkill (33f1): no archetype trains or

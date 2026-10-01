@@ -61,7 +61,6 @@ help:
       - bid
       - buy
       - deposit
-      - hire
       - list
       - offer
       - sell
@@ -145,7 +144,6 @@ help:
   skill:
     all:
       - aid
-      - backstab
       - brawling
       - dual-wield
       - tackle

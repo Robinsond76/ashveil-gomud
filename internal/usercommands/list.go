@@ -8,12 +8,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/colorpatterns"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/pets"
-	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -78,7 +76,6 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		})
 
 		itemsAvailable := characters.Shop{}
-		mercsAvailable := characters.Shop{}
 		buffsAvailable := characters.Shop{}
 		petsAvailable := characters.Shop{}
 
@@ -103,7 +100,7 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 		}
 
-		if len(itemsAvailable) == 0 && len(mercsAvailable) == 0 && len(buffsAvailable) == 0 && len(petsAvailable) == 0 {
+		if len(itemsAvailable) == 0 && len(buffsAvailable) == 0 && len(petsAvailable) == 0 {
 			mob.Command(`say I have nothing to sell right now, but check again later.`)
 			continue
 		}
@@ -180,92 +177,6 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			tplTxt, _ := templates.Process(shopTemplate, saleItemsData, user.UserId, user.UserId)
 			user.SendText(tplTxt)
 			user.SendText(fmt.Sprintf(`To buy something, type: <ansi fg="command">buy [name]</ansi>%s`, term.CRLFStr))
-		}
-
-		if len(mercsAvailable) > 0 {
-
-			hasGoldItems := false
-			hasTradeItems := false
-			for _, stockItm := range mercsAvailable {
-				if stockItm.TradeItemId > 0 {
-					hasTradeItems = true
-				}
-				if stockItm.Price >= 0 {
-					hasGoldItems = true
-				}
-			}
-
-			headers := []string{"Qty", "Name", "Level", "Race"}
-			if hasGoldItems {
-				headers = append(headers, "Price")
-			}
-			if hasTradeItems {
-				headers = append(headers, "Trade")
-			}
-
-			rows := [][]string{}
-
-			for _, stockMerc := range mercsAvailable {
-
-				mobInfo := mobs.GetMobSpec(mobs.MobId(stockMerc.MobId))
-				if mobInfo == nil {
-					continue
-				}
-				raceInfo := races.GetRace(mobInfo.Character.RaceId)
-				if raceInfo == nil {
-					continue
-				}
-
-				qtyStr := `N/A`
-				if stockMerc.QuantityMax != 0 {
-					qtyStr = strconv.Itoa(stockMerc.Quantity)
-				}
-
-				price := stockMerc.Price
-				if price == 0 {
-					price = int(configs.GetGamePlayConfig().MercHirePricePerLevel) * mobInfo.Character.Level
-				} else if price < 0 {
-					price = 0
-				}
-
-				entryRow := []string{
-					qtyStr,
-					`<ansi fg="mobname">` + mobInfo.Character.Name + `</ansi>`,
-					strconv.Itoa(mobInfo.Character.Level),
-					raceInfo.Name,
-				}
-
-				if hasGoldItems {
-					if price > 0 {
-						entryRow = append(entryRow, strconv.Itoa(price))
-					} else {
-						entryRow = append(entryRow, ``)
-					}
-				}
-
-				if hasTradeItems {
-					if stockMerc.TradeItemId > 0 {
-						tradeItm := items.New(stockMerc.TradeItemId)
-						entryRow = append(entryRow, tradeItm.DisplayName())
-					} else {
-						entryRow = append(entryRow, ``)
-					}
-				}
-
-				rows = append(rows, entryRow)
-
-			}
-
-			sort.Slice(rows, func(i, j int) bool {
-				num1, _ := strconv.Atoi(rows[i][4])
-				num2, _ := strconv.Atoi(rows[j][4])
-				return num1 < num2
-			})
-
-			saleItemsData := templates.GetTable(fmt.Sprintf(`%s by <ansi fg="mobname">%s</ansi>`, colorpatterns.ApplyColorPattern(`Mercenaries for hire`, `flame`), mob.Character.Name), headers, rows)
-			tplTxt, _ := templates.Process(shopTemplate, saleItemsData, user.UserId, user.UserId)
-			user.SendText(tplTxt)
-			user.SendText(fmt.Sprintf(`To Hire a merc, type: <ansi fg="command">hire [name]</ansi>%s`, term.CRLFStr))
 		}
 
 		if len(buffsAvailable) > 0 {
@@ -448,7 +359,6 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		})
 
 		itemsAvailable := characters.Shop{}
-		mercsAvailable := characters.Shop{}
 		buffsAvailable := characters.Shop{}
 		petsAvailable := characters.Shop{}
 
@@ -472,7 +382,7 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		}
 
-		if len(itemsAvailable) == 0 && len(mercsAvailable) == 0 && len(buffsAvailable) == 0 && len(petsAvailable) == 0 {
+		if len(itemsAvailable) == 0 && len(buffsAvailable) == 0 && len(petsAvailable) == 0 {
 			continue
 		}
 
@@ -552,93 +462,6 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			tplTxt, _ := templates.Process(shopTemplate, saleItemsData, user.UserId, user.UserId)
 			user.SendText(tplTxt)
 			user.SendText(fmt.Sprintf(`To buy something, type: <ansi fg="command">buy [name]</ansi>%s`, term.CRLFStr))
-		}
-
-		if len(mercsAvailable) > 0 {
-
-			hasGoldItems := false
-			hasTradeItems := false
-			for _, stockMerc := range itemsAvailable {
-				if stockMerc.TradeItemId > 0 {
-					hasTradeItems = true
-				}
-				if stockMerc.Price >= 0 { // 0 means auto-calculate a value
-					hasGoldItems = true
-				}
-			}
-
-			headers := []string{"Qty", "Name", "Level", "Race"}
-
-			if hasGoldItems {
-				headers = append(headers, `Price`)
-			}
-			if hasTradeItems {
-				headers = append(headers, `Trade`)
-			}
-
-			rows := [][]string{}
-
-			for _, stockMerc := range mercsAvailable {
-
-				mobInfo := mobs.GetMobSpec(mobs.MobId(stockMerc.MobId))
-				if mobInfo == nil {
-					continue
-				}
-				raceInfo := races.GetRace(mobInfo.Character.RaceId)
-				if raceInfo == nil {
-					continue
-				}
-
-				qtyStr := `N/A`
-				if stockMerc.QuantityMax != 0 {
-					qtyStr = strconv.Itoa(stockMerc.Quantity)
-				}
-
-				price := stockMerc.Price
-				if price == 0 {
-					price = int(configs.GetGamePlayConfig().MercHirePricePerLevel) * mobInfo.Character.Level
-				} else if price < 0 {
-					price = 0
-				}
-
-				entryRow := []string{
-					qtyStr,
-					`<ansi fg="mobname">` + mobInfo.Character.Name + `</ansi>`,
-					strconv.Itoa(mobInfo.Character.Level),
-					raceInfo.Name,
-				}
-
-				if hasGoldItems {
-					if price > 0 {
-						entryRow = append(entryRow, strconv.Itoa(price))
-					} else {
-						entryRow = append(entryRow, ``)
-					}
-				}
-
-				if hasTradeItems {
-					if stockMerc.TradeItemId > 0 {
-						tradeItm := items.New(stockMerc.TradeItemId)
-						entryRow = append(entryRow, tradeItm.DisplayName())
-					} else {
-						entryRow = append(entryRow, ``)
-					}
-				}
-
-				rows = append(rows, entryRow)
-
-			}
-
-			sort.Slice(rows, func(i, j int) bool {
-				num1, _ := strconv.Atoi(rows[i][4])
-				num2, _ := strconv.Atoi(rows[j][4])
-				return num1 < num2
-			})
-
-			saleItemsData := templates.GetTable(fmt.Sprintf(`%s by <ansi fg="username">%s</ansi>`, colorpatterns.ApplyColorPattern(`Mercenaries for hire`, `flame`), shopUser.Character.Name), headers, rows)
-			tplTxt, _ := templates.Process(shopTemplate, saleItemsData, user.UserId, user.UserId)
-			user.SendText(tplTxt)
-			user.SendText(fmt.Sprintf(`To Hire a merc, type: <ansi fg="command">hire [name]</ansi>%s`, term.CRLFStr))
 		}
 
 		if len(buffsAvailable) > 0 {
