@@ -302,3 +302,32 @@ func alwaysLand(t *testing.T) {
 	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 }
+
+// A tackle breaks a foe's wind-up, credited to the tackler.
+func TestATackleBreaksAWindUp(t *testing.T) {
+	b, ogre := ogreBrawl(t, "tamsin abilities off", "garrick abilities off", "ysolde abilities off")
+	hooks.ResetAbilitiesForTest()
+	t.Cleanup(hooks.ResetAbilitiesForTest)
+	t.Cleanup(hooks.UseAbilityRollForTest(func(int) int { return 0 }))
+	noCounters(t)
+	windUpDice(t, 0)
+	stream := b.listen()
+
+	b.ogreOn(ogre, 0)
+	b.aria.Character.SetAggro(0, b.captain().InstanceId, characters.DefaultAttack)
+	b.fight()
+	require.True(t, hooks.WindingUp(ogre.InstanceId))
+
+	// Now Aria can tackle, and goes for the ogre.
+	b.aria.Character.SetSkill("brawling", 1)
+	b.ogreOn(ogre, 0)
+	b.aria.Character.SetAggro(0, ogre.InstanceId, characters.DefaultAttack)
+	out := b.fight()
+	assert.Regexp(t, `You tackle the hill ogre to the ground\. \(knocked down\)`, out)
+	assert.Contains(t, out, "(Crushing Blow interrupted)")
+	broken := interruptsOf(*stream, key(ogre))
+	require.NotEmpty(t, broken)
+	assert.Equal(t, 7, broken[0].Source.UserId, "Aria's tackle")
+	assert.False(t, hooks.WindingUp(ogre.InstanceId))
+	assert.Empty(t, windUpsOf(*stream, combatstream.WindUpLand, key(ogre)), "no blow")
+}

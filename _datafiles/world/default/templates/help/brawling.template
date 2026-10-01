@@ -8,7 +8,8 @@ The <ansi fg="skill">brawling</ansi> skill gives you moves to use in combat.
 (Lvl 2) <ansi fg="skill">throw [object] [mob/direction]</ansi> You can throw objects at NPCs or other rooms.
 (Lvl 3) <ansi fg="skill">tackle [player/mob]</ansi> Attempt to tackle an opponent, making them miss a round.
 (Lvl 4) <ansi fg="skill">disarm [player/mob]</ansi> Attempt to disarm an opponent.
-Once a battle has started it plays out on its own, so <ansi fg="skill">tackle</ansi> and <ansi fg="skill">disarm</ansi> are held until it's over (see <ansi fg="command">help targeting</ansi>).
+Once a battle has started it plays out on its own, so you can't type <ansi fg="skill">tackle</ansi> or <ansi fg="skill">disarm</ansi> in one (see <ansi fg="command">help targeting</ansi>).
+Instead, any level of brawling lets you tackle on your own in a battle, by the same odds (<ansi fg="command">help abilities</ansi>); warrior companions do too.
 
 The odds of a successful tackle are: <ansi fg="red">clamp(AttackSpeed - DefendPerception + 20, 20, 80)</ansi>
 The chance to disarm is: <ansi fg="red">(attackSpeed+attackSmarts)-(defendStrength+defendPerception) + 5</ansi>
