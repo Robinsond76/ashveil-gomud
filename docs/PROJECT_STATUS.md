@@ -341,7 +341,14 @@ delegated to the lead. 33a is complete; 33b follows.
     (`modules/company`) failed once in a full run and passed 40/40 alone
     on this branch and on master; every brawl member is unburdened, so it
     is an existing flake, not this phase's.
-- **Verification:** see the entry's final line below.
+- **Verification** (2026-10-01, after the review fixes and merging
+  `origin/master` with Phase 33a): `make generate` (no diff), `make
+  validate`, `make js-lint`, and `go test -race ./...` pass (go test's own
+  exit status, 92 packages ok, no races). While working, `-count=3` on
+  `internal/combat`, `internal/characters`, the new brawl tests, and the
+  mount/cargo and encumbrance tests; each new combat test was checked to
+  fail with the burden change removed. The web Overview was not exercised
+  in a browser (JSHint and the GMCP payload test only).
 
 ### Phase 30g2: active defense and armor (2026-10-01)
 
