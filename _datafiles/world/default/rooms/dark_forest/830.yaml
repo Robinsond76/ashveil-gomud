@@ -17,10 +17,6 @@ spawninfo:
 - mobid: 43
   message: A small faerie enters the grove.
   respawnrate: 1 real minutes
-skilltraining:
-  tame:
-    min: 1
-    max: 4
 mapx: 40
 mapy: 0
 mapz: 0

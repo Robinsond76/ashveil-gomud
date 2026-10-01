@@ -10,9 +10,7 @@ Explorers:
   <ansi fg="skill">map</ansi>
   <ansi fg="skill">track</ansi>
 Scholars:
-  <ansi fg="skill">portal</ansi>
   <ansi fg="skill">inspect</ansi>
 Treasure Hunters:
-  <ansi fg="skill">scribe</ansi>
   <ansi fg="skill">search</ansi>
 

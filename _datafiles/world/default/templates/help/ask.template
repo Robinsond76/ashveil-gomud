@@ -24,8 +24,7 @@ subject that is not one of the orders above, such as
 conversation, and the follower answers in its own way.
 
 Members fight automatically: attack, cast and other combat orders are refused.
-Use <ansi fg="command">attack [group]</ansi> to begin a battle. Temporary charmed
-followers obey the same restrictions; they do not become company members.
+Use <ansi fg="command">attack [group]</ansi> to begin a battle.
 
 Use <ansi fg="command">company gear [member]</ansi> to inspect equipment,
 <ansi fg="command">company inventory</ansi> for the whole load, and

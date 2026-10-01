@@ -23,9 +23,6 @@ character:
   raceid: 1
   level: 10
   alignment: -20
-  shop:
-    - mobid: 15
-      quantitymax: 2
   equipment:
     weapon: 
       itemid: 10011

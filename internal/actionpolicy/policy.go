@@ -95,20 +95,3 @@ func scripted(order events.MemberOrder, m *mobs.Mob, command string) string {
 	}
 	return ""
 }
-
-// TameTarget keeps taming outside other players' battles and off followers,
-// corpses, surrendered enemies, and combatants waiting for a battle turn.
-func TameTarget(m *mobs.Mob) bool {
-	if m == nil || m.Character.Health < 1 || m.Character.CombatWithdrawn || m.Character.IsCharmed() || m.Character.Aggro != nil {
-		return false
-	}
-	if _, _, member := company.LeaderAndKeyForInstance(m.InstanceId); member {
-		return false
-	}
-	for _, uid := range battle.Players() {
-		if b, ok := battle.Current(uid); ok && b.Has(m.InstanceId) {
-			return false
-		}
-	}
-	return true
-}

@@ -8,7 +8,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -110,9 +109,6 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 	itemNamesFancy := []string{}
 	itemPrices := map[int]int{}
 
-	mercNames := []string{}
-	mercPrices := map[int]int{}
-
 	buffNames := []string{}
 	buffPrices := map[int]int{}
 
@@ -163,22 +159,7 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 		}
 
 		if saleItem.MobId > 0 {
-			mobInfo := mobs.GetMobSpec(mobs.MobId(saleItem.MobId))
-			if mobInfo == nil {
-				continue
-			}
-			mercNames = append(mercNames, mobInfo.Character.Name)
-			nameToShopItem[mobInfo.Character.Name] = saleItem
-
-			price := saleItem.Price
-			if price == 0 {
-				price = int(configs.GetGamePlayConfig().MercHirePricePerLevel) * mobInfo.Character.Level
-			} else if price < 0 {
-				price = 0
-			}
-			mercPrices[saleItem.MobId] = price
-
-			continue
+			continue // Ashveil 33f1: mercenaries are retired; companies recruit instead.
 		}
 
 		if saleItem.BuffId > 0 {
@@ -224,7 +205,6 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 
 	allNames := []string{}
 	allNames = append(allNames, itemNames...)
-	allNames = append(allNames, mercNames...)
 	allNames = append(allNames, buffNames...)
 	allNames = append(allNames, petNames...)
 
@@ -244,12 +224,9 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 			} else if len(buffNames) > 0 {
 				randSelection := util.Rand(len(buffNames))
 				extraSay = fmt.Sprintf(` Maybe you would enjoy this %s enchantment?`, buffNames[randSelection])
-			} else if len(mercNames) > 0 {
-				randSelection := util.Rand(len(mercNames))
-				extraSay = fmt.Sprintf(` <ansi fg="mobname">%s</ansi> is a loyal mercenary, if you're interested.`, mercNames[randSelection])
 			} else if len(petNames) > 0 {
 				randSelection := util.Rand(len(petNames))
-				extraSay = fmt.Sprintf(` <ansi fg="petname">%s</ansi> is a loyal mercenary, if you're interested.`, petNames[randSelection])
+				extraSay = fmt.Sprintf(` <ansi fg="petname">%s</ansi> would make a fine pet, if you're interested.`, petNames[randSelection])
 			}
 
 			shopMob.Command(`say Sorry, I can't offer that right now.` + extraSay)
@@ -271,8 +248,6 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 	price := 0
 	if matchedShopItem.ItemId > 0 {
 		price = itemPrices[matchedShopItem.ItemId]
-	} else if matchedShopItem.MobId > 0 {
-		price = mercPrices[matchedShopItem.MobId]
 	} else if matchedShopItem.BuffId > 0 {
 		price = buffPrices[matchedShopItem.BuffId]
 	} else if matchedShopItem.PetType != `` {
@@ -306,16 +281,6 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 			user.SendText(fmt.Sprintf(`You must have a <ansi fg="itemname">%s</ansi> to trade for that.`, tradeItm.DisplayName()))
 			return false
 		}
-	}
-
-	if matchedShopItem.MobId > 0 {
-
-		maxCharmed := user.Character.GetSkillLevel(`tame`) + 1
-		if len(user.Character.GetCharmIds()) >= maxCharmed {
-			user.SendText(fmt.Sprintf(`You can only have %d mobs following you at a time.`, maxCharmed))
-			return false
-		}
-
 	}
 
 	if matchedShopItem.ItemId > 0 {
@@ -462,67 +427,6 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 				SellerMobId:  sellerMobId,
 				SellerUserId: sellerUserId,
 				ItemId:       matchedShopItem.ItemId,
-			})
-		}
-
-		return true
-	}
-
-	if matchedShopItem.MobId > 0 {
-		// Give them the merc
-
-		newMob := mobs.NewMobById(mobs.MobId(matchedShopItem.MobId), user.Character.RoomId)
-		// Charm 'em
-		newMob.Character.Charm(user.UserId, -2, characters.CharmExpiredRevert)
-		user.Character.TrackCharmed(newMob.InstanceId, true)
-
-		room.AddMob(newMob.InstanceId)
-
-		if shopMob != nil {
-
-			user.EventLog.Add(`shop`, fmt.Sprintf(`Hired <ansi fg="mobname">%s</ansi> from <ansi fg="mobname">%s</ansi> for %s.`, newMob.Character.Name, shopMob.Character.Name, tradeInString))
-
-			user.SendText(
-				fmt.Sprintf(`You pay %s to <ansi fg="mobname">%s</ansi>.`, tradeInString, shopMob.Character.Name),
-			)
-
-			room.SendText(
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> pays %s to <ansi fg="mobname">%s</ansi>.`, user.Character.Name, tradeInString, shopMob.Character.Name),
-				user.UserId,
-			)
-		} else if shopUser != nil {
-
-			user.EventLog.Add(`shop`, fmt.Sprintf(`Hired <ansi fg="mobname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, newMob.Character.Name, shopUser.Character.Name, tradeInString))
-
-			user.SendText(
-				fmt.Sprintf(`You hire <ansi fg="mobname">%s</ansi> from <ansi fg="username">%s</ansi> for %s.`, newMob.Character.Name, shopUser.Character.Name, tradeInString),
-			)
-
-			shopUser.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> hired your <ansi fg="mobname">%s</ansi> you were selling for %s.`, user.Character.Name, newMob.Character.Name, tradeInString))
-
-			room.SendText(
-				fmt.Sprintf(`<ansi fg="username">%s</ansi> hires a <ansi fg="mobname">%s</ansi> from <ansi fg="username">%s</ansi>.`, user.Character.Name, newMob.Character.Name, shopUser.Character.Name),
-				user.UserId, shopUser.UserId)
-
-		}
-
-		newMob.Command(`emote is ready to serve.`)
-
-		if price > 0 {
-			sellerMobId := 0
-			sellerUserId := 0
-			if shopMob != nil {
-				sellerMobId = int(shopMob.MobId)
-			} else if shopUser != nil {
-				sellerUserId = shopUser.UserId
-			}
-			events.AddToQueue(events.Purchase{
-				UserId:       user.UserId,
-				RoomId:       room.RoomId,
-				Cost:         price,
-				SellerMobId:  sellerMobId,
-				SellerUserId: sellerUserId,
-				MobId:        matchedShopItem.MobId,
 			})
 		}
 

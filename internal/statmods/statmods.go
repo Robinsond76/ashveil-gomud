@@ -11,7 +11,6 @@ type StatName string
 var (
 	// specific skills
 	Picklock StatName = `picklock`
-	Tame     StatName = `tame`
 
 	// Not an exhaustive list, but ideally keep track of
 	RacialBonusPrefix StatName = `racial-bonus-`
@@ -47,7 +46,6 @@ func RegisterStatMod(name StatName, description string) {
 func GetStatMods() map[StatName]string {
 	result := map[StatName]string{
 		Picklock:          "Reduces the difficulty of a lock-picking attempt by this many pins.",
-		Tame:              "Increases the chance to successfully tame a creature.",
 		RacialBonusPrefix: "Flat bonus damage against a specific race in combat. Format: `racial-bonus-giant spider`.",
 		Casting:           "Increases spell casting success chance by this percentage.",
 		CastingPrefix:     "Increases casting success chance for a specific school of magic. Format: `casting-restoration`.",

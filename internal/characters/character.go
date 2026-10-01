@@ -91,7 +91,6 @@ type Character struct {
 	KD                  KDStats                        `yaml:"kd,omitempty"`             // Kill/Death stats
 	MiscData            map[string]any                 `yaml:"miscdata,omitempty"`       // Any random other data that needs to be stored
 	ExtraLives          int                            `yaml:"extralives,omitempty"`     // How many lives remain. If enabled, players can perma-die if they die at zero
-	MobMastery          MobMasteries                   `yaml:"mobmastery,omitempty"`     // Tracks particular masteries around a given mob
 	Pet                 pets.Pet                       `yaml:"pet,omitempty"`            // Do they have a pet?
 	Created             time.Time                      `yaml:"created"`                  // When this character was created
 	Timers              map[string]gametime.RoundTimer `yaml:"timers,omitempty"`         // any special timers added to this character
@@ -1022,11 +1021,6 @@ func (c *Character) GetSkillLevel(skillName string) int {
 
 func (c *Character) GetSkillLevelCost(currentLevel int) int {
 	return currentLevel
-}
-
-func (c *Character) GetMaxCharmedCreatures() int {
-	lvl := c.GetSkillLevel(`tame`)
-	return lvl + 1
 }
 
 func (c *Character) GetMemoryCapacity() int {
@@ -2348,4 +2342,43 @@ func (c *Character) Uncurse() []items.Item {
 	}
 
 	return uncursedList
+}
+
+// RetireSkills removes retired skills (Ashveil 33f1) from the character
+// and lowers skills above a retirement level cap, refunding the training
+// points each cost. It returns the points refunded and what was retired, in
+// order ("peep", "protection level 4"); nothing when none applies. The
+// refund and the change are to the same record, so a save keeps both or
+// neither, and a second call finds nothing to refund. An entry already at
+// level 0 is dropped silently.
+func (c *Character) RetireSkills() (int, []string) {
+	refund := 0
+	retired := []string{}
+	for _, id := range skills.Retired() {
+		level, ok := c.Skills[id]
+		if !ok {
+			continue
+		}
+		delete(c.Skills, id)
+		if level > 0 {
+			refund += skills.TrainingCost(level)
+			retired = append(retired, id)
+		}
+	}
+	for _, id := range skills.CappedSkills() {
+		cap, _ := skills.LevelCap(id)
+		level := c.Skills[id]
+		if level <= cap {
+			continue
+		}
+		refund += skills.TrainingCost(level) - skills.TrainingCost(cap)
+		c.Skills[id] = cap
+		if level == cap+1 {
+			retired = append(retired, fmt.Sprintf("%s level %d", id, level))
+		} else {
+			retired = append(retired, fmt.Sprintf("%s levels %d-%d", id, cap+1, level))
+		}
+	}
+	c.TrainingPoints += refund
+	return refund, retired
 }

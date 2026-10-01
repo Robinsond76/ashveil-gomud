@@ -61,7 +61,6 @@ help:
       - bid
       - buy
       - deposit
-      - hire
       - list
       - offer
       - sell
@@ -145,10 +144,7 @@ help:
   skill:
     all:
       - aid
-      - backstab
       - brawling
-      - bump
-      - changeform
       - dual-wield
       - tackle
       - disarm
@@ -156,16 +152,9 @@ help:
       - enchant
       - inspect
       - map
-      - peep
-      - pickpocket
-      - portal
-      - pray
       - rank
-      - scribe
       - search
       - skulduggery
-      - sneak
-      - tame
       - track
       - unenchant
       - uncurse
@@ -252,7 +241,7 @@ help-aliases:
   light:            [darkness, dark]
   brawling:         [tackle, brawl, disarm, recover, throw]
   enchant:          [unenchant, uncurse]
-  skulduggery:      [sneak, bump, backstab, pickpocket]
+  skulduggery:      [backstab, rogue-skills]
   bank:             [deposit, withdraw]
   dual-wield:       [dualwield, dual]
   strength:         [str]
@@ -299,7 +288,6 @@ command-aliases:
   map:                ['m']
   conditions:         ['c', 'cond', 'conds']
   skills:             ['sk', 'skill']
-  scribe:             ['scribble', 'write']
   equip:              ['wear', 'wield', 'hold']
   remove:             ['rem', 'unequip', 'unwear', 'unwield']
   strategy:           ['strategies']
@@ -308,7 +296,6 @@ command-aliases:
   get:                ['g', 'take']
   command:            ['cmd']
   macros:             ['=?', 'macro']
-  sneak:              ['sn']
   spells:             ['spellbook']
   backstab:           ['bs']
   killstats:          ['kills', 'kd', 'killstat']
@@ -318,7 +305,6 @@ command-aliases:
   keyring:            ['key', 'keys']
   whisper:            ['/w']
   unlock:             ['open']
-  buy:                ['hire']
   trash:              ['junk']
   put:                ['place']
   history:            ['log']

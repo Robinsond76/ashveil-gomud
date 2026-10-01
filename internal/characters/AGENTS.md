@@ -41,7 +41,6 @@ The `internal/characters` package is the core character system for GoMud, handli
 ### Combat and Interaction Systems
 - **Kill/Death statistics** (`kdstats.go`): PvP and PvE combat tracking
 - **Charm system** (`charminfo.go`): Mind control and pet mechanics
-- **Mob mastery** (`mobmastery.go`): Character proficiency with specific creature types
 - **Shop system** (`shop.go`): NPC merchant capabilities with restocking mechanics
 
 ### Character Presentation

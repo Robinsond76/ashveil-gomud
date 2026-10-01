@@ -20,10 +20,6 @@ spawninfo:
   message: A dark acolyte steps into the room.
   name: dark acolyte trainer
   respawnrate: 12 real minutes
-skilltraining:
-  scribe:
-    min: 1
-    max: 4
 mapx: -7
 mapy: 1
 mapz: -1

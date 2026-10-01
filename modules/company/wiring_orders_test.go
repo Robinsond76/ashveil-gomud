@@ -34,7 +34,7 @@ func TestMemberOrdersUseAutomaticBattlePolicy(t *testing.T) {
 	for _, cmd := range []string{"equip sword", "remove all", "eat bread", "drink water", "get sword", "drop sword", "give sword Aria"} {
 		assert.Contains(t, b.cmd("ask", "Tamsin to "+cmd), actionpolicy.BattleUnderWay)
 	}
-	for _, cmd := range []string{"aid Tamsin", "tame bandit"} {
+	for _, cmd := range []string{"aid Tamsin"} {
 		c, rest, _ := strings.Cut(cmd, " ")
 		assert.Contains(t, b.cmd(c, rest), actionpolicy.BattleUnderWay)
 	}
@@ -133,31 +133,7 @@ func TestLegacySkillsDoNotOverwriteBattleActions(t *testing.T) {
 	before := b.aria.Character.Aggro
 	_, err := usercommands.Aid("someone", b.aria, b.road, 0)
 	require.NoError(t, err)
-	_, err = usercommands.Tame("bandit", b.aria, b.road, 0)
-	require.NoError(t, err)
 	assert.Same(t, before, b.aria.Character.Aggro)
-	b.aria.Character.Aggro = nil
-	foe := mobs.NewMobById(9101, b.road.RoomId)
-	require.NotNil(t, foe)
-	b.road.AddMob(foe.InstanceId)
-	info := characters.SpellAggroInfo{SpellId: "tameskill", TargetMobInstanceIds: []int{foe.InstanceId}}
-	assert.True(t, actionpolicy.TameTarget(foe))
-	for _, change := range []string{"yield", "ally", "waiting"} {
-		foe.Character.CombatWithdrawn = change == "yield"
-		foe.Character.Charmed = nil
-		foe.Character.Aggro = nil
-		if change == "ally" {
-			foe.Character.Charm(8, -1, "")
-		}
-		if change == "waiting" {
-			foe.Character.SetAggro(8, 0, characters.DefaultAttack)
-		}
-		assert.False(t, actionpolicy.TameTarget(foe), change)
-		handled, err := scripting.TrySpellScriptEvent("onMagic", 7, 0, info)
-		require.NoError(t, err)
-		assert.True(t, handled, "invalid tame suppressed before script")
-		assert.False(t, foe.Character.IsCharmed(7))
-	}
 }
 
 func TestLegalOutOfBattleGearAndTemporaryFollower(t *testing.T) {
@@ -189,8 +165,8 @@ func TestMemberPolicyRunsBeforeScriptsAndExpandsAliases(t *testing.T) {
 	scripting.ClearUserVM()
 	t.Cleanup(func() { scripting.ClearUserVM() })
 	battle.Begin(7, b.road.RoomId, 1, "test", []int{99})
-	b.aria.Aliases = map[string]string{"dress": "wear sword", "tam": "tame bandit", "fightthem": "a bandit", "see": "look"}
-	for _, cmd := range []string{"dress", "wear", "tam", "fightthem", "aid"} {
+	b.aria.Aliases = map[string]string{"dress": "wear sword", "fightthem": "a bandit", "see": "look"}
+	for _, cmd := range []string{"dress", "wear", "fightthem", "aid"} {
 		*b.messages = nil
 		_, err := usercommands.TryCommand(cmd, "", 7, 0)
 		require.NoError(t, err)
@@ -214,15 +190,6 @@ func TestLegacySkillExecutionRechecksBattleAndOwnership(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, handled, "aid does not finish after a battle starts")
 	battle.End(7)
-	foe := mobs.NewMobById(9101, b.road.RoomId)
-	require.NotNil(t, foe)
-	b.road.AddMob(foe.InstanceId)
-	battle.Begin(8, b.road.RoomId, 1, "other player", []int{foe.InstanceId})
-	assert.False(t, actionpolicy.TameTarget(foe), "idle battle-owned foe cannot be tamed")
-	info := characters.SpellAggroInfo{SpellId: "tameskill", TargetMobInstanceIds: []int{foe.InstanceId}}
-	handled, err = scripting.TrySpellScriptEvent("onMagic", 7, 0, info)
-	require.NoError(t, err)
-	assert.True(t, handled)
 	follower := mobs.NewMobById(9101, b.road.RoomId)
 	require.NotNil(t, follower)
 	follower.Character.Name = "Follower"

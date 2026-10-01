@@ -5,8 +5,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (33e, automatic class abilities)
-- **Latest completed phases:** 33e, automatic class abilities; 33d, allied
+- **Last updated:** 2026-10-01 (33f1, skill and charm retirement)
+- **Latest completed phases:** 33f1, skill and charm retirement; 33e,
+  automatic class abilities; 33d, allied
   companies; 33c, company retreat; 33b, friendly effects; 33a, command
   rules; and 30g3, personal load and agility, all 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
@@ -20,8 +21,9 @@ play-test improvements are implemented; 32b's status still carries an outstandin
 
 **Current owner priority:** finish Phase 33a–33i in order, choosing the lead's
 recommended defaults without further confirmation (2026-10-01). 33a–33d are
-complete; **33e, automatic class abilities, is complete**; 33f (company
-specialists) is next. Phase 30g3 is also complete;
+complete; 33e (automatic class abilities) and **33f1 (skill and charm
+retirement)** are complete; 33f2 (expedition specialists) is next, then
+33f3 (camp specialists). Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
@@ -137,13 +139,64 @@ delegated to the lead. 33a–33e are complete.
 | 33c | Company Retreat, Rout, and Separation | Complete: [design](designs/2026-10-01-phase-33c-company-retreat-design.md), [plan](plans/2026-10-01-phase-33c-company-retreat.md); ordered withdrawal, paid cover, legal escape and saved separation |
 | 33d | Multiplayer Parties and Allied Companies | Complete: [design](designs/2026-10-01-phase-33d-allied-companies-design.md), [plan](plans/2026-10-01-phase-33d-allied-companies.md); durable alliances, explicit consent, contribution-based XP, fixed shared loot claims and independent company authority |
 | 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
-| 33f | Company Specialists and Group Exploration | Future design: [proposal](designs/2026-10-01-phase-33f-company-specialists-design.md); implementation not started |
+| 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 (expedition specialists) and 33f3 (camp specialists) next |
 | 33g | Company Equipment, Loadouts, and Loot | Future design: [proposal](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); implementation not started |
 | 33h | Company Progression, Rewards, and Expedition Continuity | Future design: [proposal](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md); implementation not started |
 | 33i | Company Encounter Assessment and Enemy Roles | Future design: [proposal](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md); implementation not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33f1: skill and charm retirement (2026-10-01)
+
+**Why:** the owner reviewed GoMud's stock skills against a game about
+leading a company on expeditions and asked to remove those built for a
+lone player or that clash with Ashveil, and all player-facing charm
+([33f design](designs/2026-10-01-phase-33f-company-specialists-design.md),
+[plan](plans/2026-10-01-phase-33f1-skill-retirement.md)).
+
+**What shipped:**
+- Player commands `peep`, `portal`, `tame`, `changeform`, `scribe`,
+  `sneak`, `bump`, `pickpocket`, `pray`, and `backstab` are gone; their
+  skills (peep, portal, tame, change form, scribe) are deleted; Protection
+  stops at level 3 (level 4 granted only pray). Mob-side sneak, portal, and
+  backstab stay.
+- Charm: no taming (skill, spell, tame mastery, stat mod), no mercenaries
+  for hire (shops skip `mobid` stock; the Bonecrafter's skeleton is gone),
+  no mob `befriend`, and the scripting API's charm setters and tame calls
+  are removed. Companions keep the internal charm link. Charms are
+  runtime-only, so none survive the deploy; pets stay.
+- A player still holding a retired skill (or Protection 4) gets the
+  training points back once, at their next spawn, saved with the change.
+- Archetypes (rogue, wizard, ranger), professions (Explorer and Monster
+  Hunter removed), trainers (rooms 830, 160), the Whispering Wastes
+  obelisk, the long whip, the shipped admin user, help pages, keywords,
+  and the admin scripting reference follow. `search` and `track` stay
+  until 33f2 replaces them.
+
+**Tests:** refund through the real spawn listener, once and saved; no
+archetype claims a retired skill; retired commands and help topics gone;
+a mercenary shop neither lists nor sells (fails on the old code); a
+world-data guard (trainers, professions, item stat mods, quests,
+scripts); every indexed help topic and alias opens a page (pre-existing
+GoMud gaps named). The 29d combat capture was regenerated: removing the
+tame-learning roll on each kill shifts the seeded RNG (a dummy roll
+reproduces the old capture exactly).
+
+**Independent review** (default model, report-only). Accepted and fixed:
+(1) backstab needed `sneak`'s hidden state, so it was retired too
+(Opening Strike covers battles); (2) `hire` still indexed under shops;
+(3) the skulduggery description named pockets; (4) Protection 4 granted
+nothing: capped at 3 with refund (skulduggery's levels still drive traps
+and utilities, so no refund); (5) stale admin scripting docs and
+AGENTS notes; (6) dead mercenary listing code, `canCarryStolen`, and the
+`backstab`/`pickpocket` autocomplete; (8) the admin user's tame mastery
+block and a level-0 entry's empty refund notice. Rejected: (7) syncing
+`world/empty` (unshipped upstream seed world, never loaded by Ashveil or
+its tests; its retired pages are inert); the `MercHirePricePerLevel`
+config key and its admin docs stay (engine config, now unused).
+
+**Verification (after review fixes):** `make generate`, `make validate`, `go test -race ./...` (all green), `make js-lint`, and `scripts/browser/dock-windows-check.mjs` in Chromium over localhost HTTP (all dock window checks passed).
 
 ### Phase 33e: automatic class abilities (2026-10-01)
 

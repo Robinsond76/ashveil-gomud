@@ -59,7 +59,6 @@ var (
 		`appraise`:    {Appraise, false, false},
 		`ask`:         {Ask, false, false},
 		`attack`:      {Attack, false, false},
-		`backstab`:    {Backstab, false, false},
 		`badcommands`: {BadCommands, true, true}, // Admin only
 		`biome`:       {Biome, true, false},
 		`broadcast`:   {Broadcast, true, false},
@@ -68,10 +67,8 @@ var (
 		`break`:       {Break, false, false},
 		`build`:       {Build, false, true}, // Admin only
 		`buff`:        {Buff, false, true},  // Admin only
-		`bump`:        {Bump, false, false},
 		`buy`:         {Buy, false, false},
 		`cast`:        {Cast, false, false},
-		`changeform`:  {ChangeForm, false, false},
 		`cooldowns`:   {Cooldowns, true, false},
 		`command`:     {Command, false, true}, // Admin only
 		`copyover`:    {Copyover, true, true}, // Admin only
@@ -121,13 +118,9 @@ var (
 		`password`:    {Password, true, false},
 		`delete`:      {Delete, false, false}, // Ashveil 32h
 		`paz`:         {Paz, true, true},      // Admin only
-		`peep`:        {Peep, false, false},
 		`pet`:         {Pet, false, false},
 		`picklock`:    {Picklock, false, false},
-		`pickpocket`:  {Pickpocket, false, false},
 		`prepare`:     {Prepare, true, true}, // Admin only
-		`portal`:      {Portal, false, false},
-		`pray`:        {Pray, false, false},
 		`print`:       {Print, true, false},
 		`printline`:   {PrintLine, true, false},
 		`put`:         {Put, false, false},
@@ -146,7 +139,6 @@ var (
 		`room`:        {Room, false, true},       // Admin only
 		`save`:        {Save, true, false},
 		`say`:         {Say, true, false},
-		`scribe`:      {Scribe, false, false},
 		`search`:      {Search, false, false},
 		`sell`:        {Sell, false, false},
 		`server`:      {Server, false, true}, // Admin only
@@ -157,9 +149,8 @@ var (
 		`show`:        {Show, true, false},
 		`skills`:      {Skills, true, false},
 		`skillset`:    {Skillset, false, true}, // Admin only
-		`sneak`:       {Sneak, false, false},
-		`spawn`:       {Spawn, false, true}, // Admin only
-		`spell`:       {Spell, true, true},  // Admin only
+		`spawn`:       {Spawn, false, true},    // Admin only
+		`spell`:       {Spell, true, true},     // Admin only
 		`spells`:      {Spells, true, false},
 		`stash`:       {Stash, false, false},
 		`status`:      {Status, true, false},
@@ -167,8 +158,7 @@ var (
 		`suicide`:    {Suicide, true, false},
 		`syslogs`:    {SysLogs, true, true},   // Admin only
 		`telemetry`:  {Telemetry, true, true}, // Admin only
-		`tame`:       {Tame, false, false},
-		`teleport`:   {Teleport, true, true}, // Admin only
+		`teleport`:   {Teleport, true, true},  // Admin only
 		`throw`:      {Throw, false, false},
 		`track`:      {Track, false, false},
 		`train`:      {Train, false, false},
@@ -270,7 +260,7 @@ func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bo
 	defer events.WithRequester(userId)()
 	if u := users.GetByUserId(userId); u != nil {
 		command, arguments := policyCommand(u, cmd, rest)
-		blocked := actionpolicy.Management(command) || (actionpolicy.Hostile(command) && !(command == "attack" && arguments == "")) || command == "aid" || (command == "tame" && arguments != "" && arguments != "list")
+		blocked := actionpolicy.Management(command) || (actionpolicy.Hostile(command) && !(command == "attack" && arguments == "")) || command == "aid"
 		if blocked && actionpolicy.InBattle(u) {
 			u.SendText(actionpolicy.BattleUnderWay)
 			return true, nil

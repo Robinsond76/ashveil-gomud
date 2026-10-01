@@ -26,11 +26,8 @@ function onCommand(cmd, rest, user, room) {
         SendUserMessage(user.UserId(), "You reach out and touch the obelisk.");
         SendRoomMessage(room.RoomId(), user.GetCharacterName(true)+" reaches out and touches the obelisk.", user.UserId());
 
-        if ( !user.TrainSkill("portal", 1) ) {
-            
-            SendUserMessage(user.UserId(), "Nothing happens.");
-
-        }
+        // Ashveil 33f1: the obelisk no longer teaches Portal.
+        SendUserMessage(user.UserId(), "The stone is cold. Whatever power it held has long since faded.");
         
         return true;
     }

@@ -1,6 +1,6 @@
 # Help for ~list~
 
-The ~list~ command lists items for sale at any merchants you are visiting. Some merchants may even offer help for hire!
+The ~list~ command lists items for sale at any merchants you are visiting.
 
 ## Usage:
 

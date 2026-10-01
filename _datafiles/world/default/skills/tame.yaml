@@ -1,5 +1,0 @@
-# [LVL 1-4] Give mushroom to fairie in ROOM 558, train in ROOM 830
-skillid: tame
-name: Tame
-description: Tame certain creatures for a time. Each level raises how many creatures you can have tamed at once.
-maxlevel: 4

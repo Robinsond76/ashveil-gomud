@@ -463,21 +463,6 @@ func (m *Mob) HasShop() bool {
 	return len(m.Character.Shop) > 0
 }
 
-func (m *Mob) IsTameable() bool {
-	if m.HasShop() {
-		return false
-	}
-	if len(m.ScriptTag) > 0 {
-		return false
-	}
-	if r := races.GetRace(m.Character.GetRaceId()); r != nil {
-		if !r.Tameable {
-			return false
-		}
-	}
-	return true
-}
-
 func (m *Mob) SetTempData(key string, value any) {
 
 	if m.tempDataStore == nil {

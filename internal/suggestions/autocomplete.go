@@ -298,7 +298,7 @@ func GetAutoComplete(userId int, inputText string) []string {
 				}
 			}
 
-		} else if cmd == `attack` || cmd == `consider` || cmd == `backstab` || cmd == `pickpocket` {
+		} else if cmd == `attack` || cmd == `consider` {
 
 			if room := rooms.LoadRoom(user.Character.RoomId); room != nil {
 

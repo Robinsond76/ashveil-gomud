@@ -238,10 +238,6 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 	}
 
 	nameFlags := []characters.NameRenderFlag{}
-	if user.Character.GetSkillLevel(`peep`) > 0 {
-		nameFlags = append(nameFlags, characters.RenderHealth)
-	}
-
 	if useShortAdjectives := user.GetConfigOption(`shortadjectives`); useShortAdjectives != nil && useShortAdjectives.(bool) {
 		nameFlags = append(nameFlags, characters.RenderShortAdjectives)
 	}

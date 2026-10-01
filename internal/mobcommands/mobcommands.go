@@ -30,7 +30,6 @@ var (
 		"alchemy":        {Alchemy, false},
 		"attack":         {Attack, false},
 		"backstab":       {Backstab, false},
-		"befriend":       {Befriend, false},
 		"break":          {Break, false},
 		"broadcast":      {Broadcast, false},
 		"cast":           {Cast, false},

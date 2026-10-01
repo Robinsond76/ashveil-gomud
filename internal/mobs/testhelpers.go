@@ -21,3 +21,15 @@ func RemoveTestInstance(instanceId int) {
 func ResetHostility() {
 	mobsHatePlayers = map[string]map[int]int{}
 }
+
+// SetTestSpec registers a mob template directly, so GetMobSpec resolves it
+// without loading data files. For testing only.
+func SetTestSpec(m *Mob) {
+	mobs[int(m.MobId)] = m
+}
+
+// RemoveTestSpec removes a template registered with SetTestSpec. For
+// testing only.
+func RemoveTestSpec(id MobId) {
+	delete(mobs, int(id))
+}

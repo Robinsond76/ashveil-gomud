@@ -484,7 +484,7 @@
         mysticism: 'MYS', perception: 'PER',
         healthmax: 'HP+', manamax: 'MP+', healthrecovery: 'HPR', manarecovery: 'MPR',
         attacks: 'ATK', damage: 'DMG', casting: 'CST', xpscale: 'XP%',
-        picklock: 'PLK', tame: 'TME',
+        picklock: 'PLK',
     };
 
     // -----------------------------------------------------------------------

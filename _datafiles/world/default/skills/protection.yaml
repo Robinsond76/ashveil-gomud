@@ -1,5 +1,5 @@
 # TODO
 skillid: protection
 name: Protection
-description: Protect your allies. Grants aid to revive downed teammates and rank to manage party positioning as it improves.
-maxlevel: 4
+description: Protect your allies. Grants aid to revive downed teammates, and at level 3 aid anywhere, as it improves.
+maxlevel: 3

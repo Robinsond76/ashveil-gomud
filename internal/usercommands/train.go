@@ -178,13 +178,6 @@ func Train(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				room.SendText(
 					fmt.Sprintf(`The trainer shakes <ansi fg="username">%ss</ansi> hand while congratulating them. Must be nice.`, user.Character.Name),
 					user.UserId)
-
-				if match == `tame` {
-					if newLevel == 1 {
-						user.Character.MobMastery.SetTame(1, 1)
-						user.SendText(`You've learned how to tame a <ansi fg="mobname">rat</ansi>!`)
-					}
-				}
 			}
 
 		}

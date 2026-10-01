@@ -31,7 +31,7 @@ Archetypes:
   - ArchetypeId: rogue
     Name: Rogue
     Description: Quiet hands that find traps and open locks.
-    Skills: [skulduggery, peep]
+    Skills: [skulduggery]
     GrantSkills:
       - { Skill: skulduggery, Level: 1 }
     Utility: [traps]
@@ -40,7 +40,7 @@ Archetypes:
   - ArchetypeId: wizard
     Name: Wizard
     Description: Scholars of the arcane who light the dark and bend illusion.
-    Skills: [cast, enchant, portal]
+    Skills: [cast, enchant]
     Schools: [illusion, conjuration]
     GrantSkills:
       - { Skill: cast, Level: 1 }
@@ -68,8 +68,8 @@ Archetypes:
     Kit: [10015, 20004, 20008, 30004, 30015, 30001, 30001, 31]
   - ArchetypeId: ranger
     Name: Ranger
-    Description: Trackers and beast-tamers at home in the wild.
-    Skills: [track, tame]
+    Description: Trackers and pathfinders at home in the wild.
+    Skills: [track]
     GrantSkills:
       - { Skill: track, Level: 1 }
     CompanionLevels: [1, 10, 20, 30]

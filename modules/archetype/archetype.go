@@ -614,6 +614,7 @@ func (m *ArchetypeModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if !ok {
 		return events.Continue
 	}
+	m.retireSkills(users.GetByUserId(evt.UserId))
 	m.mu.Lock()
 	id, chosen := m.registry.Players[evt.UserId]
 	a, known := m.table.Get(id)
