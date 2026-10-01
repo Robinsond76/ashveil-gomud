@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/assessment"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -124,6 +125,10 @@ func scoutGroup(room *rooms.Room, g enemyparty.Group, user *users.UserRecord) st
 		lines = append(lines, `You aren't placed in your company's formation: you can strike any of them, and any of them you.`)
 	}
 	lines = append(lines, `The front of each column takes the first blows: plain melee reaches only the front, a reach weapon one rank deeper, a bow anyone.`)
+	// Phase 33i1: the company's assessment of the group.
+	if rep, ok := assessment.Gather(user, room, g); ok {
+		lines = append(lines, rep.Lines()...)
+	}
 	return strings.Join(lines, "\n")
 }
 

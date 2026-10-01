@@ -75,6 +75,7 @@ help:
     combat:
       - abilities
       - armor
+      - assessment
       - attack
       - battle-summary
       - break
@@ -233,6 +234,7 @@ help-aliases:
   formation:        [reach, interception, formations]
   targeting:        [target, targets, enemy-parties]
   scout:            [scouting, enemy-groups, groups]
+  assessment:       [assess, odds, chances, risk, outlook]
   strategy:         [strategies, gambits, roles]
   tactics:          [focus, company-tactics, personalities, personality]
   guardian:         [guardians, guard, guards, ward, wards]

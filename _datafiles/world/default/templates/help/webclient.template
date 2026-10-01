@@ -67,6 +67,8 @@ button in them just types a command for you.
   draws them. Your company shows its health as numbers; each enemy's
   health reads unhurt, scratched, wounded, badly wounded, or near death,
   never numbers, and a dot marks the ones you can reach from your place.
+  Under the focus buttons, "Outlook" gives your company's assessment of
+  the fight, the same words scout ends with (<ansi fg="command">help assessment</ansi>).
   In the dark you see only that it's too dark to make them out.
   Lines run from each fighter to whom it strikes; someone outside your
   company that an enemy strikes shows under "Also fighting". Point at a

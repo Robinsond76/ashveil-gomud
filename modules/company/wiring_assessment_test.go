@@ -1,0 +1,257 @@
+package company
+
+import (
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/assessment"
+	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
+	"github.com/GoMudEngine/GoMud/internal/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// Phase 33i1 wiring: the company assessment through the real scout and
+// consider commands, and the battle view's outlook, on the brawl world
+// (Aria, her four companions, and the five bandits on the road).
+
+// bandits is the bandits' group on the road and what a player types for it.
+func (b *brawl) banditGroup() (enemyparty.Group, string) {
+	b.t.Helper()
+	groups := enemyparty.Groups(b.road)
+	for _, g := range groups {
+		if !g.Solo() {
+			return g, usercommands.GroupKeyword(b.road, g)
+		}
+	}
+	if len(groups) > 0 { // a lone bandit left
+		return groups[0], usercommands.GroupKeyword(b.road, groups[0])
+	}
+	b.t.Fatal("no bandit group on the road")
+	return enemyparty.Group{}, ""
+}
+
+func (b *brawl) report() assessment.Report {
+	b.t.Helper()
+	g, _ := b.banditGroup()
+	rep, ok := assessment.Gather(b.aria, b.road, g)
+	require.True(b.t, ok)
+	return rep
+}
+
+// snapshot is what an assessment must never change.
+type worldSnapshot struct {
+	round, turn uint64
+	health      map[int]int
+	aria        int
+	aggro       bool
+}
+
+func (b *brawl) snapshot() worldSnapshot {
+	s := worldSnapshot{round: util.GetRoundCount(), turn: util.GetTurnCount(), health: map[int]int{}, aria: b.aria.Character.Health, aggro: b.aria.Character.Aggro != nil}
+	for _, id := range mobs.GetAllMobInstanceIds() {
+		if m := mobs.GetInstance(id); m != nil {
+			s.health[id] = m.Character.Health
+		}
+	}
+	return s
+}
+
+func TestScoutAndConsiderAssessTheCompany(t *testing.T) {
+	b := newBrawl(t)
+	_, kw := b.banditGroup()
+	before := b.snapshot()
+
+	got := b.cmd("scout", kw)
+	assert.Contains(t, got, "as they stand")
+	assert.Contains(t, got, "Assessment: ")
+	assert.Contains(t, got, " for your company; ")
+	assert.Contains(t, got, "Counted: you, Tamsin Reed, Brother Oswin, Garrick Vane and Ysolde.")
+	assert.Contains(t, got, "Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.")
+	assert.NotRegexp(t, `\d+%`, got, "never a percentage")
+
+	con := b.cmd("consider", kw)
+	assert.Contains(t, con, "You consider ")
+	assert.Contains(t, con, "Counted: you, Tamsin Reed, Brother Oswin, Garrick Vane and Ysolde.")
+	assert.Contains(t, con, "Type scout "+kw+" to see how they stand.")
+	assert.NotContains(t, con, "front [", "consider draws no grid")
+	headline := b.report().Headline()
+	assert.Contains(t, got, headline)
+	assert.Contains(t, con, headline)
+
+	// One member's name considers its whole group.
+	assert.Contains(t, b.cmd("consider", "bandit captain"), headline)
+
+	after := b.snapshot()
+	assert.Equal(t, before, after, "assessing changes nothing and spends no time")
+	_, inBattle := battle.Current(7)
+	assert.False(t, inBattle, "and starts no fight")
+}
+
+func TestAssessmentFollowsTheCompanysState(t *testing.T) {
+	b := newBrawl(t)
+	whole := b.report()
+	require.Len(t, whole.Counted, 5)
+	assert.Empty(t, whole.Hurt)
+
+	// Wounds: everyone near death reads worse, and says who is hurt.
+	for id := 1; id <= 4; id++ {
+		b.companion(id).Character.Health = 1
+	}
+	b.aria.Character.Health = 1
+	hurt := b.report()
+	assert.Less(t, hurt.Ratio, whole.Ratio)
+	assert.Equal(t, assessment.Hopeless, hurt.Risk)
+	assert.Contains(t, hurt.Text(), "Hurt: you (near death), Tamsin Reed (near death)")
+	for id := 1; id <= 4; id++ {
+		c := b.companion(id)
+		c.Character.Health = c.Character.HealthMax.Value
+	}
+	b.aria.Character.Health = b.aria.Character.HealthMax.Value
+
+	// A companion who walked off isn't counted, and is named as away.
+	ysolde := b.companion(4)
+	b.road.RemoveMob(ysolde.InstanceId)
+	verge := rooms.LoadRoom(920102)
+	verge.AddMob(ysolde.InstanceId)
+	ysolde.Character.RoomId = verge.RoomId
+	apart := b.report()
+	assert.Len(t, apart.Counted, 4)
+	assert.Contains(t, apart.Text(), "Not with you: Ysolde (away).")
+	assert.Less(t, apart.Ratio, whole.Ratio, "one fewer fighter")
+	verge.RemoveMob(ysolde.InstanceId)
+	b.road.AddMob(ysolde.InstanceId)
+	ysolde.Character.RoomId = b.road.RoomId
+
+	// Burden lowers a member's dodge: the foes land more.
+	tamsin := b.companion(1)
+	tamsin.Character.StoreItem(items.New(10013))
+	tamsin.Character.StoreItem(items.New(10013))
+	laden := b.report()
+	assert.Contains(t, laden.Text(), "Burdened among you: Tamsin Reed (heavily burdened).")
+	assert.Less(t, laden.Ratio, whole.Ratio)
+
+	// A dismissed companion is no longer in the company at all.
+	b.cmd("company", "dismiss ysolde")
+	gone := b.report()
+	assert.Len(t, gone.Counted, 4)
+	assert.NotContains(t, gone.Text(), "Ysolde", "a dismissed companion is no longer in the company")
+}
+
+func TestAssessmentReachFollowsTheFormation(t *testing.T) {
+	b := newBrawl(t)
+	b.unplaced()
+	assert.Empty(t, b.report().NoReach, "no one placed: every blow lands, as in combat")
+	assert.Empty(t, b.report().OutOfReach)
+
+	// Aria alone, placed, bare-handed: the bruiser and the slinger stand in
+	// the bandits' second rank, out of her reach; scout's marks agree.
+	b.cmd("company", "dismiss all")
+	_, kw := b.banditGroup()
+	for _, spot := range []string{"me 1 1", "me 1 2", "me 3 3"} {
+		require.Contains(t, b.cmd("formation", "move "+spot), "Placed", spot)
+		scouted := b.cmd("scout", kw)
+		rep := b.report()
+		assert.Equal(t, []string{"you"}, rep.Counted)
+		assert.Equal(t, strings.Contains(scouted, "You can reach none of them from your place"), slices.Contains(rep.NoReach, "you"), spot)
+		assert.Contains(t, rep.OutOfReach, "the bandit bruiser", spot)
+		assert.Contains(t, rep.OutOfReach, "the bandit slinger", spot)
+		assert.Contains(t, scouted, "Out of your company's reach: ", spot)
+		assert.NotContains(t, scouted, "*bandit bruiser", "scout marks it out of reach too")
+	}
+	alone := b.report()
+
+	// Unplaced again, every blow lands: no one is out of reach, and the
+	// estimate changes with it.
+	_, _ = usercommands.TryCommand("formation", "clear me", b.aria.UserId, 0)
+	loose := b.report()
+	assert.Empty(t, loose.OutOfReach)
+	assert.NotEqual(t, alone.Ratio, loose.Ratio, "where she stands changes the estimate")
+}
+
+func TestAssessmentSeesWhatScoutSees(t *testing.T) {
+	b := newBrawl(t)
+	g, kw := b.banditGroup()
+	all := b.report()
+
+	// A hidden bandit isn't counted, named, or reached for.
+	buffs.SetTestFlag("hidden")
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 93301, Name: "hidden", TriggerCount: 1000, RoundInterval: 1, Flags: []string{"hidden"}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(93301) })
+	captain := mobs.GetInstance(b.bandits["bandit captain"][0])
+	require.NoError(t, captain.Character.AddBuff(93301, true))
+	captain.Character.Validate()
+	require.True(t, captain.Character.HasBuffFlag("hidden"))
+	require.Len(t, g.Visible(), 4)
+	veiled := b.report()
+	assert.Greater(t, veiled.Ratio, all.Ratio, "the hidden captain isn't weighed")
+	got := b.cmd("consider", kw)
+	assert.NotContains(t, got, "captain")
+	assert.Contains(t, b.cmd("consider", "bandit captain"), `You see no enemy called "bandit captain" here.`)
+
+	// In the dark, nothing.
+	biome := b.road.Biome
+	b.road.Biome = "cave"
+	t.Cleanup(func() { b.road.Biome = biome })
+	assert.Contains(t, b.cmd("consider", kw), "It's too dark to make them out.")
+	assert.NotContains(t, b.cmd("scout", kw), "Assessment")
+}
+
+func TestConsiderRefusesWhatIsNoEnemy(t *testing.T) {
+	b := newBrawl(t)
+	b.bystander()
+	assert.Contains(t, b.cmd("consider", "bystander"), "Bystander is no enemy of yours.")
+	assert.Contains(t, b.cmd("consider", "tamsin"), `You see no enemy called "tamsin" here.`, "a companion is no enemy")
+	assert.Contains(t, b.cmd("consider", "dragon"), `You see no enemy called "dragon" here.`)
+	assert.Contains(t, b.cmd("consider", ""), "Consider whom?")
+}
+
+func TestAssessmentNotesAnAlly(t *testing.T) {
+	b := newBrawl(t)
+	t.Cleanup(parties.UseMemoryForTest())
+	b.bystander()
+	assert.False(t, b.report().Allies)
+	p := parties.New(7)
+	require.NotNil(t, p)
+	p.InvitePlayer(8)
+	p.AcceptInvite(8)
+	rep := b.report()
+	assert.True(t, rep.Allies)
+	assert.Len(t, rep.Counted, 5, "the ally isn't counted")
+	assert.Contains(t, rep.Text(), "Allied companies here aren't counted.")
+}
+
+// TestBattleViewShowsTheOutlook: Company.Battle carries the same headline
+// scout gives, in words, and none in the dark.
+func TestBattleViewShowsTheOutlook(t *testing.T) {
+	b := newBrawl(t)
+	views := battleViews(t)
+	b.aimAt("bandit captain")
+	b.toughen()
+	b.fight()
+	b.refresh(7)
+	view := lastView(views, 7)
+	require.NotEmpty(t, view)
+	outlook, ok := view["outlook"].(map[string]any)
+	require.True(t, ok, "the outlook is sent: %v", view)
+	assert.Contains(t, []any{"easy", "fair", "hard", "grave", "hopeless"}, outlook["risk"])
+	assert.Contains(t, outlook["text"], " for your company; ")
+	_, kw := b.banditGroup()
+	assert.Contains(t, b.cmd("scout", kw), outlook["text"].(string), "the same words as scout")
+
+	biome := b.road.Biome
+	b.road.Biome = "cave"
+	t.Cleanup(func() { b.road.Biome = biome })
+	b.refresh(7)
+	view = lastView(views, 7)
+	assert.Equal(t, true, view["dark"])
+	assert.Nil(t, view["outlook"], "no outlook in the dark")
+}

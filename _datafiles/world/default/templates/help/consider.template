@@ -1,0 +1,27 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">consider</ansi>
+
+Size up an enemy before you fight it. Your company weighs itself, as it
+stands now, against the enemy's whole group: a company fights together,
+so there is no one-on-one guess. It is free and instant.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">consider [enemy]</ansi>
+  Name a group (<ansi fg="command">consider ruffians</ansi>) or any one of its members
+  (<ansi fg="command">consider ruffian</ansi>); a lone creature is a group of one.
+
+  You consider a band of ruffians...
+  Assessment: A fair fight for your company; the odds look clear.
+    Counted: you, Tamsin Reed and Brother Oswin.
+    Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.
+  Type scout ruffians to see how they stand.
+
+The words run from an easy fight, a fair fight, and a hard fight to a grave
+risk and hopeless, and never show numbers (<ansi fg="command">help assessment</ansi> explains
+them and what is weighed). <ansi fg="command">scout [group]</ansi> gives the same assessment
+under the group's formation.
+
+You see what <ansi fg="command">look</ansi> sees: hidden foes are left out, and in the dark you
+can't make them out. Other players aren't enemies to consider.
+
+See also: <ansi fg="command">help assessment</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help combat</ansi>.
