@@ -88,6 +88,31 @@ type Record struct {
 	// Rosters are the leader's generated recruit candidates, one per
 	// recruiter room (Phase 32a2).
 	Rosters []Roster `yaml:"rosters,omitempty"`
+	// AppliedOps (Phase 33f3) are the most recent operations already
+	// applied to this record (a camp's vigil), so a retry never repeats.
+	AppliedOps []string `yaml:"applied_ops,omitempty"`
+}
+
+// MaxAppliedOps bounds Record.AppliedOps.
+const MaxAppliedOps = 32
+
+// HasApplied reports whether an operation was already applied.
+func (r Record) HasApplied(op string) bool {
+	for _, a := range r.AppliedOps {
+		if a == op {
+			return true
+		}
+	}
+	return false
+}
+
+// MarkApplied remembers op on the record, keeping the last MaxAppliedOps.
+func (r *Record) MarkApplied(op string) {
+	applied := append(append([]string(nil), r.AppliedOps...), op)
+	if len(applied) > MaxAppliedOps {
+		applied = applied[len(applied)-MaxAppliedOps:]
+	}
+	r.AppliedOps = applied
 }
 
 // HasClaimed reports whether the tutorial recruit of this template has
@@ -122,6 +147,9 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 	}
 	record.Companions = append([]Companion(nil), record.Companions...)
 	record.MercyPending = append([]MercyEffect(nil), record.MercyPending...)
+	if record.AppliedOps != nil {
+		record.AppliedOps = append([]string(nil), record.AppliedOps...)
+	}
 	if record.Claimed != nil {
 		record.Claimed = append([]int(nil), record.Claimed...)
 	}

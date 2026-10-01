@@ -125,6 +125,7 @@ func init() {
 				`An inn stay (<ansi fg="command">inn</ansi>) costs gold but leaves you Well Rested, which is better than Rested.`,
 				`A finished camp rest knits a broken bone for each splint and a cut for each bandage you carry, and an inn stay every wound. After a fight, <ansi fg="command">heal wounds</ansi> has your clerics, bandages, and splints tend the hurt (<ansi fg="command">help wounds</ansi>).`,
 				`<ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>, and <ansi fg="command">help cooking</ansi> explain resting and cooking in full.`,
+				`Companions earn their keep at camp: a warrior keeps watch for raiders (<ansi fg="command">help campwatch</ansi>), a ranger forages, a cleric keeps a vigil, and <ansi fg="command">camp cook</ansi> cooks over your own fire.`,
 			},
 			Done: "Rested and ready.",
 		},

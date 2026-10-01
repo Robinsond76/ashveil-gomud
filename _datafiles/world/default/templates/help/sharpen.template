@@ -2,7 +2,8 @@
 
 A whetstone puts an edge on a bladed weapon (slashing, cleaving, or
 stabbing). A sharp blade does <ansi fg="yellow">+1 damage</ansi> on each strike that lands, for
-its next 20 strikes. Then it's dull again.
+its next 20 strikes. Then it's dull again. A warrior at the whetstone
+makes the edge last longer (<ansi fg="command">help fieldsmith</ansi>).
 
 A whetstone has 10 uses, and one use sharpens every blade one member has
 equipped. Your whetstones sharpen your whole company, you first, then your

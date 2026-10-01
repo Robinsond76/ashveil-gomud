@@ -205,38 +205,55 @@ switch gates it, and none acts in the leader's own battle.
 
 ## 33f3: Camp specialists
 
-**Camp raids.** A camp rest in a room configured for raids (a per-room or
-per-zone `CampRaids` table: mob template, chance) rolls once, at rest
-start, whether raiders come and when (saved on the camp, so restart and
-copyover keep it). Shared world time never moves; the rest is the existing
-real-time rest.
+Owner decisions (2026-10-01): the proposed camp raids are approved, and
+the simple version of camp cooking is approved.
 
-**Camp Watch (warrior).** When raiders come, the best watch (warrior
-level) spots them with a chance of 25% per level. Spotted: the company is
-roused, fights, and the rest resumes afterwards, so Rested is still earned.
-Unspotted: the raid catches the company asleep: the rest is broken (no
-Rested tier) and the fight begins. Raiders spawn in the camp room as an
-encounter of that company only (the expedition ambush spawner).
+**Camp raids.** A camp rest in a zone with a `CampRaids` entry rolls once,
+at rest start, whether raiders come (15% on the Old Kings Road) and when
+(30–70% of the rest), saved on the rest (`RestSession.Raid`), so restart
+and copyover keep it and nothing re-rolls. The raid is resolved on the
+game loop (the camping round pass), saved as resolved before the raiders
+spawn, so it never comes twice. A new low-level raider, the road brigand
+(mob 86, level 3), comes as a named pair through the shared ambush spawner
+(`enemyparty.SpawnAmbush`, moved from the expedition module). A raid on a
+leader who is offline spoils the rest (no fight); one away from the camp
+is not raided. Raiders still standing when their leader falls or leaves
+are sent off, so they never turn on other players camping there.
 
-**Field Smith (warrior).** When a field smith is present, each whetstone
-use gives an edge of 20 + 5 per level strikes (40 at level 4). Uses spent
-are unchanged; no free whetstones.
+**Camp Watch (warrior, brawling).** The best watch spots the raiders
+with 25% per level. Spotted: the fight comes, the rest still counts.
+Unspotted: the rest is broken (`RestSession.Broken`): Fatigue still
+recovers, but no Rested tier and no camp rewards.
 
-**Vigil (cleric).** A completed camp rest with a cleric present raises
-each present companion's loyalty by 1 per cleric level, up to a loyalty
-of 60, once per rest. Steadier loyalty feeds 30e nerve and 21a desertion.
+**Field Smith (warrior, brawling).** Each whetstone use gives 20 + 5 per
+level strikes of edge when a field smith is with the leader; uses are
+spent the same.
 
-**Forage (ranger).** A completed camp rest in a room whose zone has a
-forage table yields food and water by ranger level (0–2 + level/2 items,
-table-weighted), into company cargo under 32f capacity (what does not fit
-is left on the ground and named). Once per rest; no ranger, no forage.
+**Vigil (cleric, protection).** After an unbroken camp rest, each living
+companion in the leader's room gains loyalty equal to the cleric's level,
+never above 60 and never lowered.
 
-**Camp cooking.** A lit camp fire is a hearth for cooking: `camp cook`
-uses the existing recipe selection (18b), ingredients from the company's
-cargo, and the cooking level of the best cook present. Cooking remains a
-trade skill the leader trains; companions do not cook in this release.
-Exact recipes and buffs are settled in 33f3's plan with the owner's
-cargo-phase rules (no personal inventory, cargo-held supplies).
+**Forage (ranger, track).** After an unbroken camp rest in a zone with a
+forage table, the best forager finds 1 + level/2 items (Old Kings Road:
+raw game meat, wild thyme, mushrooms), into company cargo as far as
+capacity allows; the rest is left behind. Water is not foraged (no
+fresh-water item exists yet).
+
+**Rewards, at most once per 15 minutes, exactly once.** Forage and Vigil
+come at most once per `CampRewardCooldown` (15 minutes of real time) per
+company, are collected at the camp once any fight there is over, and are
+forfeited by leaving the camp first. A completed, unbroken rest owes its rewards
+(`CampRewards`, saved with the Rested debt, keyed by the rest's
+operation ID) and pays them on the game loop when the leader is online:
+the cargo deposit (`encumbrance.DepositCargo`) and the loyalty raise
+(`company.RaiseLoyaltyOnce`) each record the operation in their own
+saved record, so a retry after a restart never pays twice; the debt is
+cleared after both.
+
+**Camp cooking.** `camp cook` at the leader's own camp with the fire lit,
+out of battle: the Waymark Inn hearth's three dishes, the first the
+leader's Cooking allows, from ingredients in the pack (first) and the
+company cargo; the dish goes into the cargo. Companions do not cook.
 
 ## Acceptance criteria and verification
 
@@ -255,5 +272,5 @@ Project Status.
   `help company`, `help weather`, `help market`, `help autoskill` updated.
   Tutorial Departure points to `help specialists`.
 - 33f3: `help campwatch`, `help fieldsmith`, `help vigil`, `help forage`;
-  `help camp`, `help cooking`, `help sharpen` updated; the Camp lesson
-  points to them.
+  `help camp`, `help cooking`, `help sharpen`, `help specialists`,
+  `help autoskill` updated; the Camp lesson points to them.

@@ -86,6 +86,7 @@ type wireRecord struct {
 	Service         []domain.Service       `yaml:"service,omitempty"`
 	Lost            []domain.LostCompanion `yaml:"lost,omitempty"`
 	Rosters         []domain.Roster        `yaml:"rosters,omitempty"`
+	AppliedOps      []string               `yaml:"applied_ops,omitempty"`
 }
 
 type wireRegistry struct {
@@ -103,7 +104,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending}
+		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {

@@ -165,6 +165,10 @@ help:
       - pathfinder
       - forecast
       - haggle
+      - campwatch
+      - fieldsmith
+      - vigil
+      - forage
   admin:
     all:
       - badcommands
@@ -220,6 +224,10 @@ help-aliases:
   pathfinder:       [pathfinding, rough-ground]
   forecast:         [weather-sense, forecasting, forecasts]
   haggle:           [haggling, bargain, bargaining]
+  campwatch:        [camp-watch, watch, raid, raids, raiders, camp-raid, camp-raids, brigand, brigands]
+  fieldsmith:       [field-smith, smith]
+  vigil:            [vigils]
+  forage:           [foraging]
   survival:         [needs, hunger, thirst, fatigue]
   strain:           [walking]
   temperature:      [warmth, exposure, cold, heat]

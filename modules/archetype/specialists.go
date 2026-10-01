@@ -33,6 +33,10 @@ var specialistOrder = []struct{ utility, name, does string }{
 	{archetypes.UtilityHaggle, "Haggle", "better market prices"},
 	{archetypes.UtilityWeather, "Weather Sense", "forecasts the weather"},
 	{utilityLight, "Light", "lights the way in the dark"},
+	{archetypes.UtilityWatch, "Camp Watch", "spots raiders before they reach the camp"},
+	{archetypes.UtilityFieldSmith, "Field Smith", "puts a longer edge on sharpened blades"},
+	{archetypes.UtilityVigil, "Vigil", "steadies companions' loyalty at camp"},
+	{archetypes.UtilityForage, "Forage", "finds food at camp"},
 }
 
 // registerSpecialists wires 33f2's commands. The step listener is the 17b
