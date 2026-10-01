@@ -1,4 +1,4 @@
 professionid: treasure hunter
 name: Treasure Hunter
 description: Masters of finding what others have hidden.
-skills: [map, search, inspect, trading]
+skills: [map, inspect, trading]

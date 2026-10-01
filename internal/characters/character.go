@@ -60,42 +60,43 @@ type Character struct {
 	RaceId              int                            `yaml:"raceid,omitempty"`        // Character race
 	FormRaceId          int                            `yaml:"formraceid,omitempty"`    // Temporary race override (0 = not transformed)
 	Stats               stats.Statistics               // Character stats
-	Level               int                            `yaml:"level,omitempty"`          // The level of the character
-	Experience          int                            `yaml:"experience,omitempty"`     // The experience of the character
-	TrainingPoints      int                            `yaml:"trainingpoints,omitempty"` // The number of training points the character has
-	StatPoints          int                            `yaml:"statpoints,omitempty"`     // The number of skill points the character has
-	PeakLevel           int                            `yaml:"peaklevel,omitempty"`      // Ashveil Phase 25a: highest level ever reached; 0 means the current level
-	Health              int                            `yaml:"health,omitempty"`         // The health of the character
-	Mana                int                            `yaml:"mana,omitempty"`           // The mana of the character
-	ActionPoints        int                            `yaml:"actionpoints,omitempty"`   // The resevoir of action points the character has to spend on movement etc.
-	Alignment           int8                           `yaml:"alignment,omitempty"`      // The alignment of the character
-	Gold                int                            `yaml:"gold,omitempty"`           // The gold the character is holding
-	Bank                int                            `yaml:"bank,omitempty"`           // The gold the character has in the bank
-	Shop                Shop                           `yaml:"shop,omitempty"`           // Definition of shop services/items this character stocks (or just has at the moment)
-	SpellBook           map[string]int                 `yaml:"spellbook,omitempty"`      // The spells the character has learned
-	Charmed             *CharmInfo                     `yaml:"-"`                        // If they are charmed, this is the info
-	CharmedMobs         []int                          `yaml:"-"`                        // If they have charmed anyone, this is the list of mob instance ids
-	Items               []items.Item                   `yaml:"items,omitempty"`          // The items the character is holding
-	Buffs               buffs.Buffs                    `yaml:"buffs,omitempty"`          // The buffs the character has active
-	Equipment           Worn                           `yaml:"equipment,omitempty"`      // The equipment the character is wearing
-	TNLScale            float32                        `yaml:"-"`                        // The experience scale of the character. Don't write to yaml since is dynamically calculated.
-	HealthMax           stats.StatInfo                 `yaml:"-"`                        // The maximum health of the character. Don't write to yaml since is dynamically calculated.
-	ManaMax             stats.StatInfo                 `yaml:"-"`                        // The maximum mana of the character. Don't write to yaml since is dynamically calculated.
-	ActionPointsMax     stats.StatInfo                 `yaml:"-"`                        // The maximum actions of character. Don't write to yaml since is dynamically calculated.
-	Aggro               *Aggro                         `yaml:"-"`                        // Dont' store this. If they leave they break their aggro
-	Skills              map[string]int                 `yaml:"skills,omitempty"`         // The skills the character has, and what level they are at
-	Cooldowns           Cooldowns                      `yaml:"cooldowns,omitempty"`      // How many rounds until it is cooled down
-	Settings            map[string]string              `yaml:"settings,omitempty"`       // custom setting tracking, used for anything.
-	QuestProgress       map[int]string                 `yaml:"questprogress,omitempty"`  // quest progress tracking
-	KeyRing             map[string]string              `yaml:"keyring,omitempty"`        // key is the lock id, value is the sequence
-	KD                  KDStats                        `yaml:"kd,omitempty"`             // Kill/Death stats
-	MiscData            map[string]any                 `yaml:"miscdata,omitempty"`       // Any random other data that needs to be stored
-	ExtraLives          int                            `yaml:"extralives,omitempty"`     // How many lives remain. If enabled, players can perma-die if they die at zero
-	Pet                 pets.Pet                       `yaml:"pet,omitempty"`            // Do they have a pet?
-	Created             time.Time                      `yaml:"created"`                  // When this character was created
-	Timers              map[string]gametime.RoundTimer `yaml:"timers,omitempty"`         // any special timers added to this character
-	ZonesVisited        map[string]RoomBitset          `yaml:"zonesvisited,omitempty"`   // permanent record of every room visited, keyed by zone name
-	Wounds              []wounds.Wound                 `yaml:"wounds,omitempty"`         // Ashveil Phase 30b: wounds holding back health (the wound limit)
+	Level               int                            `yaml:"level,omitempty"`            // The level of the character
+	Experience          int                            `yaml:"experience,omitempty"`       // The experience of the character
+	TrainingPoints      int                            `yaml:"trainingpoints,omitempty"`   // The number of training points the character has
+	StatPoints          int                            `yaml:"statpoints,omitempty"`       // The number of skill points the character has
+	PeakLevel           int                            `yaml:"peaklevel,omitempty"`        // Ashveil Phase 25a: highest level ever reached; 0 means the current level
+	Health              int                            `yaml:"health,omitempty"`           // The health of the character
+	Mana                int                            `yaml:"mana,omitempty"`             // The mana of the character
+	ActionPoints        int                            `yaml:"actionpoints,omitempty"`     // The resevoir of action points the character has to spend on movement etc.
+	Alignment           int8                           `yaml:"alignment,omitempty"`        // The alignment of the character
+	Gold                int                            `yaml:"gold,omitempty"`             // The gold the character is holding
+	Bank                int                            `yaml:"bank,omitempty"`             // The gold the character has in the bank
+	Shop                Shop                           `yaml:"shop,omitempty"`             // Definition of shop services/items this character stocks (or just has at the moment)
+	SpellBook           map[string]int                 `yaml:"spellbook,omitempty"`        // The spells the character has learned
+	Charmed             *CharmInfo                     `yaml:"-"`                          // If they are charmed, this is the info
+	CharmedMobs         []int                          `yaml:"-"`                          // If they have charmed anyone, this is the list of mob instance ids
+	Items               []items.Item                   `yaml:"items,omitempty"`            // The items the character is holding
+	Buffs               buffs.Buffs                    `yaml:"buffs,omitempty"`            // The buffs the character has active
+	Equipment           Worn                           `yaml:"equipment,omitempty"`        // The equipment the character is wearing
+	TNLScale            float32                        `yaml:"-"`                          // The experience scale of the character. Don't write to yaml since is dynamically calculated.
+	HealthMax           stats.StatInfo                 `yaml:"-"`                          // The maximum health of the character. Don't write to yaml since is dynamically calculated.
+	ManaMax             stats.StatInfo                 `yaml:"-"`                          // The maximum mana of the character. Don't write to yaml since is dynamically calculated.
+	ActionPointsMax     stats.StatInfo                 `yaml:"-"`                          // The maximum actions of character. Don't write to yaml since is dynamically calculated.
+	Aggro               *Aggro                         `yaml:"-"`                          // Dont' store this. If they leave they break their aggro
+	Skills              map[string]int                 `yaml:"skills,omitempty"`           // The skills the character has, and what level they are at
+	Cooldowns           Cooldowns                      `yaml:"cooldowns,omitempty"`        // How many rounds until it is cooled down
+	Settings            map[string]string              `yaml:"settings,omitempty"`         // custom setting tracking, used for anything.
+	QuestProgress       map[int]string                 `yaml:"questprogress,omitempty"`    // quest progress tracking
+	KeyRing             map[string]string              `yaml:"keyring,omitempty"`          // key is the lock id, value is the sequence
+	KD                  KDStats                        `yaml:"kd,omitempty"`               // Kill/Death stats
+	MiscData            map[string]any                 `yaml:"miscdata,omitempty"`         // Any random other data that needs to be stored
+	ExtraLives          int                            `yaml:"extralives,omitempty"`       // How many lives remain. If enabled, players can perma-die if they die at zero
+	Pet                 pets.Pet                       `yaml:"pet,omitempty"`              // Do they have a pet?
+	Created             time.Time                      `yaml:"created"`                    // When this character was created
+	Timers              map[string]gametime.RoundTimer `yaml:"timers,omitempty"`           // any special timers added to this character
+	ZonesVisited        map[string]RoomBitset          `yaml:"zonesvisited,omitempty"`     // permanent record of every room visited, keyed by zone name
+	KnownSecretExits    []string                       `yaml:"knownsecretexits,omitempty"` // Ashveil 33f2: secret exits spotted by Keen Eye, "<roomId>:<exit>"
+	Wounds              []wounds.Wound                 `yaml:"wounds,omitempty"`           // Ashveil Phase 30b: wounds holding back health (the wound limit)
 	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
 	PlayerDamage        map[int]int                    `yaml:"-"` // key = who, value = how much
 	LastPlayerDamage    uint64                         `yaml:"-"` // last round a player damaged this character
@@ -2363,4 +2364,31 @@ func (c *Character) RetireSkills() (int, []string) {
 	}
 	c.TrainingPoints += refund
 	return refund, removed
+}
+
+// secretExitKey is a KnownSecretExits entry (Ashveil 33f2).
+func secretExitKey(roomID int, exitName string) string {
+	return strconv.Itoa(roomID) + ":" + strings.ToLower(exitName)
+}
+
+// KnowsSecretExit reports whether the character has spotted a room's
+// secret exit (Ashveil 33f2, Keen Eye).
+func (c *Character) KnowsSecretExit(roomID int, exitName string) bool {
+	return slices.Contains(c.KnownSecretExits, secretExitKey(roomID, exitName))
+}
+
+// LearnSecretExit remembers a spotted secret exit; false if already known.
+func (c *Character) LearnSecretExit(roomID int, exitName string) bool {
+	if c.KnowsSecretExit(roomID, exitName) {
+		return false
+	}
+	c.KnownSecretExits = append(c.KnownSecretExits, secretExitKey(roomID, exitName))
+	return true
+}
+
+// SeesSecretExit reports whether a secret exit shows in the character's
+// exits: they have been through to the room beyond (GoMud's rule), or
+// spotted it (Ashveil 33f2).
+func (c *Character) SeesSecretExit(roomID int, exitName string, targetRoomID int, targetZone string) bool {
+	return c.HasVisitedRoom(targetRoomID, targetZone) || c.KnowsSecretExit(roomID, exitName)
 }

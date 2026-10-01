@@ -1,5 +1,5 @@
 # [LVL 1-4] Frostwarden Rangers - ROOM 74
 skillid: track
 name: Track
-description: Find rooms a player or NPC has recently visited. At level 4 it combines with the map skill to mark their location.
+description: The ranger's skill. Read the trail for enemy groups beyond the exits, find easier going on rough ground, and take aimed shots in battle. Higher levels read more.
 maxlevel: 4

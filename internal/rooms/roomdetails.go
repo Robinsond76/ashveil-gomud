@@ -322,7 +322,7 @@ func GetDetails(r *Room, user *users.UserRecord, tinymap ...[]string) RoomTempla
 		// If it's a secret room we need to make sure the player has been there before including it in the exits
 		if exitInfo.Secret {
 			if targetRm := LoadRoom(exitInfo.RoomId); targetRm != nil {
-				if user.Character.HasVisitedRoom(exitInfo.RoomId, targetRm.Zone) {
+				if user.Character.SeesSecretExit(r.RoomId, exitStr, exitInfo.RoomId, targetRm.Zone) {
 					details.VisibleExits[exitStr] = exitInfo
 				}
 			}

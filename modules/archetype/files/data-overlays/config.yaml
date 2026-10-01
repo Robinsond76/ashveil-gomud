@@ -34,7 +34,7 @@ Archetypes:
     Skills: [skulduggery]
     GrantSkills:
       - { Skill: skulduggery, Level: 1 }
-    Utility: [traps]
+    Utility: [traps, keeneye, haggle]
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10004, 8, 20029, 20003, 23, 30004, 30015, 31]
   - ArchetypeId: wizard
@@ -48,7 +48,7 @@ Archetypes:
     CompanionSpells:
       - { Spell: mm, Level: 1 }
       - { Spell: sparks, Level: 5 }
-    Utility: [light]
+    Utility: [light, weather]
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 31]
   - ArchetypeId: cleric
@@ -72,6 +72,7 @@ Archetypes:
     Skills: [track]
     GrantSkills:
       - { Skill: track, Level: 1 }
+    Utility: [trail, pathfinder]
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10014, 20020, 20024, 20003, 30019, 30015, 23, 31]
 
@@ -81,6 +82,12 @@ Archetypes:
 Utilities:
   - { Utility: light, Skill: cast }
   - { Utility: traps, Skill: skulduggery }
+  # Phase 33f2 expedition specialists.
+  - { Utility: trail, Skill: track }
+  - { Utility: pathfinder, Skill: track }
+  - { Utility: keeneye, Skill: skulduggery }
+  - { Utility: weather, Skill: cast }
+  - { Utility: haggle, Skill: skulduggery }
 
 # Trap sense: best member's level * SensePerLevel + perception/4 must beat
 # lock difficulty * SenseDifficultyFactor (a d100-style roll is added).
@@ -101,3 +108,16 @@ AutoLightBelow: 1
 AutoLightCooldown: 10
 CompanionLightBuffID: 1000
 CompanionLightManaCost: 10
+
+# Phase 33f2 expedition specialists. Read the Trail reports enemy groups
+# beyond the exits (two steps away from TrailFarLevel); bare "track" reads
+# it on demand every TrailCooldownRounds. A tracker present when an ambush
+# comes leads the company around it with AmbushEvadePerLevel% per level.
+TrailFarLevel: 4
+TrailCooldownRounds: 1
+AmbushEvadePerLevel: 20
+# Keen Eye: on entering a room, each unseen secret exit is spotted when
+# level * KeenEyePerLevel + Perception/4 + d100 >= KeenEyeTarget.
+KeenEyePerLevel: 20
+KeenEyeTarget: 100
+# Pathfinder (walking) and Haggle (market) numbers live in those modules.

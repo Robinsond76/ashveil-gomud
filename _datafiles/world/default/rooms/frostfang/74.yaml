@@ -21,9 +21,6 @@ skilltraining:
   map:
     min: 1
     max: 4
-  search:
-    min: 1
-    max: 4
   track:
     min: 1
     max: 4

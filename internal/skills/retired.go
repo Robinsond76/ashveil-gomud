@@ -1,9 +1,9 @@
 package skills
 
-// Ashveil 33f1: skills retired from the game. A character still holding one
+// Ashveil 33f1 and 33f2 (search): skills retired from the game. A character still holding one
 // is refunded the training points it cost and the entry is removed
 // (characters.Character.RetireSkills, run at login).
-var retired = []string{`changeform`, `peep`, `portal`, `scribe`, `tame`}
+var retired = []string{`changeform`, `peep`, `portal`, `scribe`, `search`, `tame`}
 
 // Retired lists the retired skill ids.
 func Retired() []string {
