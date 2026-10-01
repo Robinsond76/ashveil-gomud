@@ -307,17 +307,20 @@ func blockChance(shieldArmor, defStr, atkStr int) int {
 	cfg := configs.GetCombatConfig()
 	minBlock := int(cfg.BlockChanceMin)
 	maxBlock := int(cfg.BlockChanceMax)
-	// Shield's armor contributes to the chance, scaled into the stat delta range.
-	// Use Strength delta as the base, adjusted by shield armor value (1-10 range).
-	statAdvantage := statDelta(defStr, atkStr)
-	armorBoost := float64(shieldArmor) / 100.0      // Normalize armor to 0-1 range
-	combined := statAdvantage + (armorBoost * 0.25) // armor contributes up to 25% extra
+	// Use proportional stat advantage (equal stats = 0.5) as the base.
+	// Armor value (1-10) adds a small bonus to the chance.
+	statAdvantage := statDeltaProportional(defStr, atkStr)
+	armorBoost := float64(shieldArmor) / 40.0 // Normalize armor (1-10) to 0-0.25 range
+	combined := statAdvantage + (armorBoost * 0.25)
 	if combined > 1.0 {
 		combined = 1.0
 	}
 	actual := int(math.Floor(combined * float64(maxBlock)))
 	if actual < minBlock {
 		actual = minBlock
+	}
+	if actual > maxBlock {
+		actual = maxBlock
 	}
 	return actual
 }
@@ -343,6 +346,13 @@ func parryChance(defSpeed, atkSpeed int, weaponSubtype items.ItemSubType) int {
 	}
 	// Apply weapon-specific modifiers
 	actual = applyParryWeaponModifier(actual, weaponSubtype)
+	// Re-clamp after modifier in case it pushed below minimum
+	if actual < minParry {
+		actual = minParry
+	}
+	if actual > maxParry {
+		actual = maxParry
+	}
 	return actual
 }
 
