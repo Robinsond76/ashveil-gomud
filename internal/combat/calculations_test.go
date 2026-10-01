@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
@@ -365,73 +364,6 @@ func TestDamagePercentOfMax(t *testing.T) {
 		if got != tt.want {
 			t.Errorf("damagePercentOfMax(%d, %d, %d, %d) = %d; want %d",
 				tt.damage, tt.dCount, tt.dSides, tt.dBonus, got, tt.want)
-		}
-	}
-}
-
-func TestTameSizeModifier(t *testing.T) {
-	tests := []struct {
-		size races.Size
-		want int
-	}{
-		{races.Large, -25},
-		{races.Small, 0},
-		{races.Medium, -10},
-		{races.Size("unknown"), -10},
-	}
-	for _, tt := range tests {
-		got := tameSizeModifier(tt.size)
-		if got != tt.want {
-			t.Errorf("tameSizeModifier(%q) = %d; want %d", tt.size, got, tt.want)
-		}
-	}
-}
-
-func TestTameHealthBonus(t *testing.T) {
-	correctTests := []struct {
-		currentHP, maxHP int
-		want             float64
-	}{
-		{100, 100, 0},
-		{50, 100, 25},
-		{1, 100, 49},
-		{0, 100, 50},
-	}
-	for _, tt := range correctTests {
-		got := tameHealthBonus(tt.currentHP, tt.maxHP)
-		if got != tt.want {
-			t.Errorf("tameHealthBonus(%d, %d) = %g; want %g", tt.currentHP, tt.maxHP, got, tt.want)
-		}
-	}
-}
-
-func TestChanceToTame(t *testing.T) {
-	tests := []struct {
-		proficiency   int
-		levelDiff     int
-		currentHP     int
-		maxHP         int
-		tamerSize     races.Size
-		targetIsAggro bool
-		wantMin       int
-		wantMax       int
-	}{
-		{100, 10, 100, 100, races.Medium, false, 100, 110},
-		{1, -25, 100, 100, races.Medium, false, -34, -33},
-		{50, 0, 100, 100, races.Medium, true, 20, 21},
-		{50, 0, 100, 100, races.Large, false, 25, 25},
-		{50, 0, 100, 100, races.Small, false, 50, 50},
-		{-10, 0, 100, 100, races.Medium, false, -9, -9},
-		{200, 0, 100, 100, races.Medium, false, 90, 90},
-		{50, 100, 100, 100, races.Medium, false, 65, 65},
-		{50, -100, 100, 100, races.Medium, false, 15, 15},
-	}
-	for _, tt := range tests {
-		got := chanceToTame(tt.proficiency, tt.levelDiff, tt.currentHP, tt.maxHP, tt.tamerSize, tt.targetIsAggro)
-		if got < tt.wantMin || got > tt.wantMax {
-			t.Errorf("chanceToTame(%d, %d, %d, %d, %q, %v) = %d; want [%d, %d]",
-				tt.proficiency, tt.levelDiff, tt.currentHP, tt.maxHP, tt.tamerSize, tt.targetIsAggro,
-				got, tt.wantMin, tt.wantMax)
 		}
 	}
 }

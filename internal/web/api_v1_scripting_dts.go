@@ -76,7 +76,6 @@ declare interface ActorObject {
     FindOnBody(itemName: string): ItemObject | null;
     HasItemId(itemId: number, excludeWorn?: boolean): boolean;
     UpdateItem(item: ItemObject): void;
-    IsTameable(): boolean;
     IsCharmed(userId?: number): boolean;
     IsInCombat(): boolean;
     IsHome(): boolean;
@@ -102,15 +101,7 @@ declare interface ActorObject {
     GetPartyMissing(): PartyObject;
     GetMobKills(mobId: number): number;
     GetRaceKills(race: string): number;
-    GetCharmCount(): number;
-    GetMaxCharmCount(): number;
     GetCharmedUserId(): number;
-    CharmSet(userId: number, charmRounds: number, onRevertCommand?: string): void;
-    CharmRemove(): void;
-    CharmExpire(): void;
-    GetTameMastery(): {[mobId: number]: number};
-    SetTameMastery(mobId: number, skillLevel: number): void;
-    GetChanceToTame(target: ActorObject): number;
     GetTrainingPoints(): number;
     GiveTrainingPoints(count: number): void;
     GetStatPoints(): number;

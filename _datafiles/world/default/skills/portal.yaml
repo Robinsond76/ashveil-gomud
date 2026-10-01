@@ -1,5 +1,0 @@
-# [LVL 1] Touch the obelisk in ROOM 871
-skillid: portal
-name: Portal
-description: Open a portal that transports you to a new location. Higher levels unlock additional capabilities.
-maxlevel: 4

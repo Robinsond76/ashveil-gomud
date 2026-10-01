@@ -14,9 +14,7 @@ Some skills overlap jobs such as Brawling. What Job you are classified by what w
 To find out about some specific jobs, try the following help commands:
   ~help arcane-scholar~  
   ~help assassin~  
-  ~help explorer~  
   ~help merchant~  
-  ~help monster-hunter~  
   ~help paladin~  
   ~help ranger~  
   ~help sorcerer~  

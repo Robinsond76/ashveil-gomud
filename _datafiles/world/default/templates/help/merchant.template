@@ -5,7 +5,7 @@ to train in.
 
 The following skills are required to become a Merchant:
 
-- <ansi fg="skill">Peep</ansi>
 - <ansi fg="skill">Trading</ansi>
+- <ansi fg="skill">Inspect</ansi>
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jobs</ansi>

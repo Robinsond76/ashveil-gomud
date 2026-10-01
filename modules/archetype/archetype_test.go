@@ -273,7 +273,7 @@ func TestProviderDecisions(t *testing.T) {
 	m.choose(newUser(20), "wizard", true)
 	ok, _ = m.CanTrain(20, "cast")
 	assert.True(t, ok)
-	ok, _ = m.CanTrain(20, "tame")
+	ok, _ = m.CanTrain(20, "track")
 	assert.False(t, ok)
 
 	ok, _ = m.CanLearnSpell(20, "illum")

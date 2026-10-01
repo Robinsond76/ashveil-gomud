@@ -310,7 +310,7 @@ func formatStatMods(mods map[string]int) string {
 		`healthrecovery`: `HP Rec`, `manarecovery`: `MP Rec`,
 		`attacks`: `Atk`, `damage`: `Dmg`,
 		`casting`: `Cast`, `xpscale`: `XP%`,
-		`picklock`: `Pick`, `tame`: `Tame`,
+		`picklock`: `Pick`,
 	}
 
 	keys := make([]string, 0, len(mods))

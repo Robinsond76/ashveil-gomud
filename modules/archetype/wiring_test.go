@@ -219,7 +219,7 @@ func TestWiringLookShowsArchetypes(t *testing.T) {
 	assert.NotContains(t, text, "Archetype:", "an unchosen player shows nothing")
 }
 
-// Review 17a finding 1: scripts (e.g. the Whispering Wastes obelisk) train
+// Review 17a finding 1: scripts train
 // skills through ScriptActor.TrainSkill, which must respect claims too.
 func TestWiringScriptTrainSkillIsGated(t *testing.T) {
 	m := registered(t)
@@ -229,9 +229,9 @@ func TestWiringScriptTrainSkillIsGated(t *testing.T) {
 	require.NotNil(t, actor)
 
 	var ok bool
-	text := captureText(t, func() { ok = actor.TrainSkill("portal", 1) })
-	assert.False(t, ok, "portal is a wizard skill")
-	assert.Zero(t, u.Character.GetSkillLevel("portal"))
+	text := captureText(t, func() { ok = actor.TrainSkill("enchant", 1) })
+	assert.False(t, ok, "enchant is a wizard skill")
+	assert.Zero(t, u.Character.GetSkillLevel("enchant"))
 	assert.Contains(t, text, "Wizard")
 
 	assert.True(t, actor.TrainSkill("map", 1), "trade skills stay open")
@@ -239,16 +239,16 @@ func TestWiringScriptTrainSkillIsGated(t *testing.T) {
 
 	wiz := trainee(t, 47, 96006)
 	m.choose(wiz, "wizard", true)
-	assert.True(t, scripting.GetActor(47, 0).TrainSkill("portal", 1))
-	assert.Equal(t, 1, wiz.Character.GetSkillLevel("portal"))
+	assert.True(t, scripting.GetActor(47, 0).TrainSkill("enchant", 1))
+	assert.Equal(t, 1, wiz.Character.GetSkillLevel("enchant"))
 }
 
 // Review 17a finding 1: quest skill rewards respect claims.
 func TestWiringQuestSkillRewardIsGated(t *testing.T) {
 	m := registered(t)
-	quests.SetTestQuest(&quests.Quest{QuestId: 9601, Name: "Obelisk Lore",
+	quests.SetTestQuest(&quests.Quest{QuestId: 9601, Name: "Arcane Lore",
 		Steps:   []quests.QuestStep{{Id: "start"}, {Id: "end"}},
-		Rewards: quests.QuestReward{SkillInfo: "portal:1"}})
+		Rewards: quests.QuestReward{SkillInfo: "enchant:1"}})
 	t.Cleanup(func() { quests.RemoveTestQuest(9601) })
 
 	warrior := trainee(t, 48, 96007)
@@ -257,12 +257,12 @@ func TestWiringQuestSkillRewardIsGated(t *testing.T) {
 	text := captureText(t, func() {
 		hooks.HandleQuestUpdate(events.Quest{UserId: 48, QuestToken: "9601-end"})
 	})
-	assert.Zero(t, warrior.Character.GetSkillLevel("portal"))
+	assert.Zero(t, warrior.Character.GetSkillLevel("enchant"))
 	assert.Contains(t, text, "Wizard")
 
 	wizard := trainee(t, 49, 96007)
 	m.choose(wizard, "wizard", true)
 	hooks.HandleQuestUpdate(events.Quest{UserId: 49, QuestToken: "9601-start"})
 	hooks.HandleQuestUpdate(events.Quest{UserId: 49, QuestToken: "9601-end"})
-	assert.Equal(t, 1, wizard.Character.GetSkillLevel("portal"))
+	assert.Equal(t, 1, wizard.Character.GetSkillLevel("enchant"))
 }

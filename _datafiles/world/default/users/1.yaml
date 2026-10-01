@@ -104,13 +104,9 @@ character:
     enchant: 4
     inspect: 4
     map: 4
-    peep: 4
-    portal: 4
     protection: 4
-    scribe: 4
     search: 4
     skulduggery: 4
-    tame: 4
     track: 4
     trading: 4
   keyring:

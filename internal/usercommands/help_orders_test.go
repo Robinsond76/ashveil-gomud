@@ -10,7 +10,7 @@ import (
 func TestMemberOrderHelp(t *testing.T) {
 	useWorld(t, "default")
 	keywords.LoadAliases()
-	for _, topic := range []string{"ask", "company", "combat", "equip", "remove", "eat", "drink", "use", "tame", "protection"} {
+	for _, topic := range []string{"ask", "company", "combat", "equip", "remove", "eat", "drink", "use", "protection"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, text, "Help for", topic)
@@ -20,6 +20,5 @@ func TestMemberOrderHelp(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, ask, "[member]")
 	assert.Contains(t, ask, "attack, cast and other combat orders are refused")
-	assert.Contains(t, ask, "Temporary charmed")
 	assert.Contains(t, ask, "is\nconversation")
 }

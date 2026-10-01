@@ -19,7 +19,7 @@ Every member of the company carries a share:
   - Horses add their own (<ansi fg="command">help mount</ansi>): a pack horse carries 40 kg,
     or 100 kg with a pack saddle.
 
-A fallen companion, or one charmed away from you, carries nothing.
+A fallen companion carries nothing.
 Recruiting raises your capacity; dismissing lowers it.
 
 <ansi fg="yellow-bold">When you're full</ansi>

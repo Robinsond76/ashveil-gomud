@@ -7,7 +7,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
-	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -179,18 +178,6 @@ func (a ScriptActor) GetTempData(key string) any {
 		}
 	}
 	return nil
-}
-
-func (a ScriptActor) GetTameMastery() map[int]int {
-	return a.characterRecord.MobMastery.GetAllTame()
-}
-
-func (a ScriptActor) SetTameMastery(mobId int, newSkillLevel int) {
-	a.characterRecord.MobMastery.SetTame(mobId, newSkillLevel)
-}
-
-func (a ScriptActor) GetChanceToTame(target ScriptActor) int {
-	return combat.ChanceToTame(a.userRecord, target.mobRecord)
 }
 
 func (a ScriptActor) SetMiscCharacterData(key string, value any) {
@@ -560,13 +547,6 @@ func (a ScriptActor) TakeItem(itm ScriptItem) {
 	}
 }
 
-func (a ScriptActor) IsTameable() bool {
-	if a.mobRecord == nil {
-		return false
-	}
-	return a.mobRecord.IsTameable()
-}
-
 func (a ScriptActor) HasBuff(buffId int) bool {
 	return a.characterRecord.HasBuff(buffId)
 }
@@ -790,14 +770,6 @@ func (a ScriptActor) IsHome() bool {
 	return false
 }
 
-func (a ScriptActor) GetCharmCount() int {
-	return len(a.characterRecord.GetCharmIds())
-}
-
-func (a ScriptActor) GetMaxCharmCount() int {
-	return a.characterRecord.GetMaxCharmedCreatures()
-}
-
 func (a ScriptActor) GetTrainingPoints() int {
 	return a.characterRecord.TrainingPoints
 }
@@ -882,39 +854,6 @@ func (a ScriptActor) IsCharmed(userId ...int) bool {
 
 func (a ScriptActor) GetCharmedUserId() int {
 	return a.characterRecord.GetCharmedUserId()
-}
-
-func (a ScriptActor) CharmSet(userId int, charmRounds int, onRevertCommand ...string) {
-
-	// If the player is in a party, add the mob to their party
-	if a.mobInstanceId < 1 {
-		return
-	}
-
-	if len(onRevertCommand) < 1 {
-		onRevertCommand = append(onRevertCommand, ``)
-	}
-	a.characterRecord.Charm(userId, charmRounds, onRevertCommand[0])
-
-	if user := users.GetByUserId(userId); user != nil {
-		user.Character.TrackCharmed(a.mobInstanceId, true)
-	}
-
-}
-
-func (a ScriptActor) CharmRemove() {
-	if a.characterRecord.Charmed == nil {
-		return
-	}
-	charmUserId := a.characterRecord.RemoveCharm()
-
-	if user := users.GetByUserId(charmUserId); user != nil {
-		user.Character.TrackCharmed(a.mobInstanceId, false)
-	}
-}
-
-func (a ScriptActor) CharmExpire() {
-	a.characterRecord.Charmed.Expire()
 }
 
 func (a ScriptActor) getScript() string {

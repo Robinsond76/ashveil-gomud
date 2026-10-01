@@ -71,9 +71,8 @@ Your companions follow you from room to room. You aren't told each one
 arriving; the rooms you leave and enter hear one line for the whole
 company ("Dain leads their company towards the east exit.", "Dain arrives
 from the west, their company behind."). Any other move (a companion on
-its own, or following you after a flight, a journey, or a sneak) still
-shows its own line. <ansi fg="command">look</ansi> lists your companions by name,
-without the ♥friend tag other charmed creatures carry; in a party of
+its own, or following you after a flight or a journey) still
+shows its own line. <ansi fg="command">look</ansi> lists your companions by name; in a party of
 players, <ansi fg="command">party</ansi> lists them as Company.
 
 <ansi fg="yellow-bold">Your roster</ansi>

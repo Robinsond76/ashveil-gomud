@@ -2,10 +2,8 @@ package scripting
 
 import (
 	"fmt"
-	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/effecttargets"
-	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"os"
 	"time"
@@ -40,13 +38,10 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 
 	// Legacy player skills must revalidate before running their scripts. The
 	// cast's own aggro is not a battle; a newly started battle is.
-	if sourceUserId > 0 && (spellAggro.SpellId == "tameskill" || spellAggro.SpellId == "aidskill") && (eventName == "onCast" || eventName == "onMagic" || eventName == "onWait") {
+	if sourceUserId > 0 && spellAggro.SpellId == "aidskill" && (eventName == "onCast" || eventName == "onMagic" || eventName == "onWait") {
 		u := users.GetByUserId(sourceUserId)
 		_, busy := battle.Current(sourceUserId)
 		valid := u != nil && u.Character != nil && u.Character.Health > 0 && !busy
-		if spellAggro.SpellId == "tameskill" {
-			valid = valid && len(spellAggro.TargetMobInstanceIds) == 1 && actionpolicy.TameTarget(mobs.GetInstance(spellAggro.TargetMobInstanceIds[0]))
-		}
 		if !valid {
 			if u != nil {
 				u.SendText("That skill action is no longer available.")

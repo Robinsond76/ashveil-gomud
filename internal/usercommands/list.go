@@ -90,8 +90,7 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 
 			if saleItem.MobId > 0 {
-				mercsAvailable = append(mercsAvailable, saleItem)
-				continue
+				continue // Ashveil 33f1: mercenaries are retired; companies recruit instead.
 			}
 
 			if saleItem.BuffId > 0 {
@@ -461,8 +460,7 @@ func List(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 
 			if saleItem.MobId > 0 {
-				mercsAvailable = append(mercsAvailable, saleItem)
-				continue
+				continue // Ashveil 33f1: mercenaries are retired; companies recruit instead.
 			}
 
 			if saleItem.BuffId > 0 {

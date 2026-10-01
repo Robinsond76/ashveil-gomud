@@ -91,7 +91,6 @@ type Character struct {
 	KD                  KDStats                        `yaml:"kd,omitempty"`             // Kill/Death stats
 	MiscData            map[string]any                 `yaml:"miscdata,omitempty"`       // Any random other data that needs to be stored
 	ExtraLives          int                            `yaml:"extralives,omitempty"`     // How many lives remain. If enabled, players can perma-die if they die at zero
-	MobMastery          MobMasteries                   `yaml:"mobmastery,omitempty"`     // Tracks particular masteries around a given mob
 	Pet                 pets.Pet                       `yaml:"pet,omitempty"`            // Do they have a pet?
 	Created             time.Time                      `yaml:"created"`                  // When this character was created
 	Timers              map[string]gametime.RoundTimer `yaml:"timers,omitempty"`         // any special timers added to this character
@@ -1022,11 +1021,6 @@ func (c *Character) GetSkillLevel(skillName string) int {
 
 func (c *Character) GetSkillLevelCost(currentLevel int) int {
 	return currentLevel
-}
-
-func (c *Character) GetMaxCharmedCreatures() int {
-	lvl := c.GetSkillLevel(`tame`)
-	return lvl + 1
 }
 
 func (c *Character) GetMemoryCapacity() int {
@@ -2348,4 +2342,25 @@ func (c *Character) Uncurse() []items.Item {
 	}
 
 	return uncursedList
+}
+
+// RetireSkills removes retired skills (Ashveil 33f1) from the character,
+// refunding the training points each cost. It returns the points refunded
+// and the retired skill ids removed, sorted; nothing when none is held. The
+// refund and the removal change the same record, so a save keeps both or
+// neither, and a second call finds nothing to refund.
+func (c *Character) RetireSkills() (int, []string) {
+	refund := 0
+	removed := []string{}
+	for _, id := range skills.Retired() {
+		level, ok := c.Skills[id]
+		if !ok {
+			continue
+		}
+		refund += skills.TrainingCost(level)
+		removed = append(removed, id)
+		delete(c.Skills, id)
+	}
+	c.TrainingPoints += refund
+	return refund, removed
 }
