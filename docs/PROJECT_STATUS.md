@@ -42,6 +42,14 @@ conditions; the owner removed mounted combat from it on 2026-09-30)
 remains queued; the owner chooses where it falls among the 30g slices.
 Other remaining limitations are listed below.
 
+**Future company gameplay:** the owner endorsed the 2026-10-01 gameplay review
+and requested [Phase 33a–33i designs](designs/2026-10-01-company-gameplay-roadmap.md):
+command consistency, friendly-effect scopes, retreat, allied companies,
+automatic class abilities, specialists, equipment/loot, progression/recovery/
+relocation, and group assessment/coordinated enemies. These are planning
+records; implementation has not started. Proposed mechanics and defaults
+remain to be settled before coding. 30g2 remains next.
+
 ## Phase progress
 
 | Phase | Scope | Status |
@@ -115,9 +123,39 @@ Other remaining limitations are listed below.
 | 32d | Automatic combat by strategy | Complete: [design](designs/2026-09-28-phase-32d-auto-combat-design.md). `strategy`: each character's role (fighter, healer, caster) and target rule (weakest, strongest, wounded, nearest, furthest, leader, assist, defend), durable; healers and casters cast real spells with mana; companions know spells by archetype and level and regain mana; wizards/clerics granted Magic Missile/Minor Heal; in a battle only `flee`; only hostile mobs group by tag |
 | 32g | Web company dock | Complete: [design](designs/2026-09-29-phase-32g-company-dock-design.md). Left column the world (time, map, room, tutorial); right a tabbed dock: a vitals strip for every member above Character (Overview with worth, Gear with weights, Skills and jobs, Quests, Effects, Pet), Company (Status, Inventory with menus by exact item reference, Camp), Combat (setup: roles, targets, formation, Scout), Comm (unread count), and Who/Kills when enabled; `Company.Inventory`, `Company.Camp`, members' mana and strategies; `help webclient` |
 | 32g2 | Live battle view | Complete: [design](designs/2026-09-29-phase-32g2-battle-view-design.md). During a battle the Combat tab shows the enemy group's formation above the company's (fronts to the middle), scout's health words (never numbers), reach, target lines both ways, outsiders struck, the fallen, the waiting groups, a text list, a live region, Flee, and Setup's member menu; a marker on the tab; `Company.Battle` for every player in a battle; dark rooms show nothing, as scout |
+| 33a | Company Command Rules and Legacy Action Routes | Future design: [proposal](designs/2026-10-01-phase-33a-company-command-rules-design.md); implementation not started |
+| 33b | Friendly Effects and Company Membership | Future design: [proposal](designs/2026-10-01-phase-33b-friendly-effect-scopes-design.md); implementation not started |
+| 33c | Company Retreat, Rout, and Separation | Future design: [proposal](designs/2026-10-01-phase-33c-company-retreat-design.md); implementation not started |
+| 33d | Multiplayer Parties and Allied Companies | Future design: [proposal](designs/2026-10-01-phase-33d-allied-companies-design.md); implementation not started |
+| 33e | Automatic Class Abilities and Combat Roles | Future design: [proposal](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md); implementation not started |
+| 33f | Company Specialists and Group Exploration | Future design: [proposal](designs/2026-10-01-phase-33f-company-specialists-design.md); implementation not started |
+| 33g | Company Equipment, Loadouts, and Loot | Future design: [proposal](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); implementation not started |
+| 33h | Company Progression, Rewards, and Expedition Continuity | Future design: [proposal](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md); implementation not started |
+| 33i | Company Encounter Assessment and Enemy Roles | Future design: [proposal](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md); implementation not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Company gameplay roadmap and future Phase 33 designs (2026-10-01)
+
+- **What/why:** recorded all nine owner-endorsed review recommendations as
+  [33a–33i future designs](designs/2026-10-01-company-gameplay-roadmap.md),
+  with code evidence, dependencies, owner decisions, state/recovery rules,
+  player help, and real integration acceptance requirements. The guides
+  are Ogre Battle for composition/automatic roles and Mount & Blade II for
+  readiness/specialists/company control. Updated the design index and combat
+  roadmap; corrected its stale next-phase instruction to 30g2.
+- **Baseline:** fetched origin master at `626df427`, incorporating shipped
+  30e before planning retreat/return extensions. No gameplay changed and
+  no future Phase 33 implementation is claimed.
+- **Review:** independent default-agent reviewer checked the complete
+  documentation diff and relevant code; no actionable findings, accepted
+  or rejected findings, or unresolved review blockers.
+- **Verification:** 74 local Markdown links and 29 explicit repository
+  path references resolve; all nine designs contain scope, evidence,
+  ownership/recovery, dependencies, decisions, verification, and help
+  requirements. Staged whitespace checks pass. No gameplay tests run for
+  this documentation-only change.
 
 ### Phase 30e: morale and mercy (2026-10-01)
 

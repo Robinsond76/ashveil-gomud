@@ -1,7 +1,9 @@
 # Design Records
 
 Start with [Project Status](../PROJECT_STATUS.md) for what is implemented and
-what remains open. The combat roadmap points to the next phases.
+what remains open. The [combat roadmap](2026-09-26-combat-presentation-roadmap.md)
+tracks 30f/30g; the [company gameplay roadmap](2026-10-01-company-gameplay-roadmap.md)
+indexes future phases 33a–33i, their dependencies, and unresolved decisions.
 
 Retained shipped designs explain interfaces, invariants, and owner decisions.
 Their original prior-art sections describe the code at the time of design;
