@@ -21,7 +21,7 @@ func TestSpecialistsHelp(t *testing.T) {
 		return text
 	}
 	specialists := page("specialists")
-	for _, want := range []string{"company specialists", "1, 10, 20, and 30", "help trail", "help keeneye", "help pathfinder", "help forecast", "help haggle", "own battle"} {
+	for _, want := range []string{"company specialists", "1, 10, 20, and 30", "help trail", "help keeneye", "help pathfinder", "help forecast", "help haggle", "while you are in a battle"} {
 		assert.Contains(t, specialists, want)
 	}
 	assert.Equal(t, specialists, page("company-specialists"))

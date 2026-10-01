@@ -19,9 +19,9 @@ type haggleProvider struct {
 
 func (haggleProvider) CanTrain(int, string) (bool, string)      { return true, "" }
 func (haggleProvider) CanLearnSpell(int, string) (bool, string) { return true, "" }
-func (haggleProvider) Exists(string) bool                        { return false }
-func (haggleProvider) ArchetypeName(string) (string, bool)       { return "", false }
-func (haggleProvider) PlayerArchetype(int) (string, bool)        { return "", false }
+func (haggleProvider) Exists(string) bool                       { return false }
+func (haggleProvider) ArchetypeName(string) (string, bool)      { return "", false }
+func (haggleProvider) PlayerArchetype(int) (string, bool)       { return "", false }
 func (p haggleProvider) BestSpecialist(leader int, utility string, roomIDs ...int) (archetypes.Specialist, bool) {
 	if p.asked != nil {
 		*p.asked = roomIDs
@@ -47,7 +47,7 @@ func TestHagglerLowersTheBuyingPrice(t *testing.T) {
 	withHaggler(t, 4, &asked)
 
 	out := w.run(t, "buy hide")
-	assert.Contains(t, out, "You buy the wolf hide at the market for 25 gold. Mira haggles 8% off the price.", "27 less 8% is 24.84, rounded up")
+	assert.Contains(t, out, "You buy the wolf hide at the market for 25 gold. Mira haggles 2 gold off the price.", "27 less 8% is 24.84, rounded up")
 	assert.Equal(t, 75, w.user.Character.Gold)
 	assert.Equal(t, []int{marketRoom().RoomId}, asked)
 }
@@ -61,7 +61,7 @@ func TestHaggledRoundTripNeverProfits(t *testing.T) {
 		w.run(t, "buy hide")
 		require.Equal(t, 1, countItem(w.user.Character.Items, 28))
 		out := w.run(t, "sell hide")
-		assert.Contains(t, out, "Mira haggles up to", "level %d", level)
+		assert.NotContains(t, out, "haggles 0", "level %d: no claim without a gain", level)
 		assert.Less(t, w.user.Character.Gold, 100, "level %d: a haggled round trip loses gold", level)
 	}
 }

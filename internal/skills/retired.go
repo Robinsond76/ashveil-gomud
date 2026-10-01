@@ -1,9 +1,9 @@
 package skills
 
-// Ashveil 33f1 and 33f2 (search): skills retired from the game. A
+// Ashveil 33f1 and 33f2 (search, trading): skills retired from the game. A
 // character still holding one is refunded the training points it cost and the entry is removed
 // (characters.Character.RetireSkills, run at login).
-var retired = []string{`changeform`, `peep`, `portal`, `scribe`, `search`, `tame`}
+var retired = []string{`changeform`, `peep`, `portal`, `scribe`, `search`, `tame`, `trading`}
 
 // cappedLevels are skills whose top levels were retired with the ability
 // they granted (protection 4 granted pray): a higher level is refunded down

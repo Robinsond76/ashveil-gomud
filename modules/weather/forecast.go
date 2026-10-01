@@ -32,7 +32,7 @@ func (m *WeatherModule) forecastLines(user *users.UserRecord, room *rooms.Room, 
 	}
 	lines := []string{fmt.Sprintf(`<ansi fg="yellow">%s %s the sky: %s.</ansi>`, sp.Subject(), sp.Verb("read", "reads"), reading)}
 	if sp.Level >= 4 {
-		for _, other := range neighbourZones(room) {
+		for _, other := range m.neighbourZones(room) {
 			if r, ok := m.reading(other, sp.Level); ok {
 				lines = append(lines, fmt.Sprintf(`<ansi fg="yellow">  Over in <ansi fg="zone">%s</ansi>: %s.</ansi>`, other, r))
 			}
@@ -109,17 +109,22 @@ func (m *WeatherModule) whenText(at uint64) string {
 	}
 }
 
-// neighbourZones lists the other zones a room's ordinary exits lead into.
-func neighbourZones(room *rooms.Room) []string {
-	seen := map[string]bool{room.Zone: true}
+// neighbourZones lists the other weather zones a room's ordinary exits lead
+// into (by each room's sky, as the weather command reads it; 33f2 review).
+func (m *WeatherModule) neighbourZones(room *rooms.Room) []string {
+	seen := map[string]bool{m.skyView(room).WeatherZone: true}
 	var out []string
 	for _, ex := range room.Exits {
 		if ex.Secret {
 			continue
 		}
-		if target := rooms.LoadRoom(ex.RoomId); target != nil && !seen[target.Zone] {
-			seen[target.Zone] = true
-			out = append(out, target.Zone)
+		target := rooms.LoadRoom(ex.RoomId)
+		if target == nil {
+			continue
+		}
+		if zone := m.skyView(target).WeatherZone; zone != "" && !seen[zone] {
+			seen[zone] = true
+			out = append(out, zone)
 		}
 	}
 	sort.Strings(out)

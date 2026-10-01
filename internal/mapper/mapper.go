@@ -658,7 +658,7 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 
 		// Now process it
 		skip := false
-		for _, exitInfo := range node.Exits {
+		for exitName, exitInfo := range node.Exits {
 			if _, ok := tmpCrawledTracker[exitInfo.RoomId]; ok {
 				continue
 			}
@@ -692,7 +692,7 @@ func (r *mapper) GetLimitedMap(centerRoomId int, c Config) mapRender {
 
 				if c.UserId >= 0 {
 					user := users.GetByUserId(c.UserId)
-					if user == nil || !user.Character.HasVisitedRoom(exitInfo.RoomId, targetRoom.Zone) {
+					if user == nil || !user.Character.SeesSecretExit(node.RoomId, exitName, exitInfo.RoomId, targetRoom.Zone) {
 						continue
 					}
 				}

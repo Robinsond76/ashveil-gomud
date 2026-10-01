@@ -48,6 +48,9 @@ func (m *ArchetypeModule) BestSpecialist(leaderUserID int, utility string, roomI
 	if user == nil || user.Character == nil || !m.autoskillOn(leaderUserID, utility) {
 		return archetypes.Specialist{}, false
 	}
+	if _, busy := battle.Current(leaderUserID); busy {
+		return archetypes.Specialist{}, false // none acts in the leader's own battle
+	}
 	if len(roomIDs) == 0 {
 		roomIDs = []int{user.Character.RoomId}
 	}
@@ -141,7 +144,7 @@ func readableExits(user *users.UserRecord, room *rooms.Room) []string {
 	var out []string
 	for name, ex := range room.Exits {
 		if ex.Secret {
-			target := rooms.LoadRoom(ex.RoomId)
+			target := rooms.LoadedRoom(ex.RoomId)
 			if target == nil || !user.Character.SeesSecretExit(room.RoomId, name, ex.RoomId, target.Zone) {
 				continue
 			}
@@ -153,7 +156,8 @@ func readableExits(user *users.UserRecord, room *rooms.Room) []string {
 }
 
 // signsBeyond lists the enemy groups in the rooms beyond room's exits, and
-// beyond those when far, never counting room itself.
+// beyond those when far, never counting room itself. Only rooms already in
+// memory are read (a room nobody is near holds no live mobs anyway).
 func signsBeyond(user *users.UserRecord, room *rooms.Room, far bool) []trailSign {
 	var out []trailSign
 	seen := map[int]bool{room.RoomId: true}
@@ -163,7 +167,7 @@ func signsBeyond(user *users.UserRecord, room *rooms.Room, far bool) []trailSign
 	}
 	var next []step
 	for _, exitName := range readableExits(user, room) {
-		target := rooms.LoadRoom(room.Exits[exitName].RoomId)
+		target := rooms.LoadedRoom(room.Exits[exitName].RoomId)
 		if target == nil || seen[target.RoomId] {
 			continue
 		}
@@ -183,7 +187,7 @@ func signsBeyond(user *users.UserRecord, room *rooms.Room, far bool) []trailSign
 	if far {
 		for _, s := range next {
 			for _, exitName := range readableExits(user, s.room) {
-				target := rooms.LoadRoom(s.room.Exits[exitName].RoomId)
+				target := rooms.LoadedRoom(s.room.Exits[exitName].RoomId)
 				if target == nil || seen[target.RoomId] {
 					continue
 				}
@@ -270,6 +274,10 @@ func (m *ArchetypeModule) trackCommand(rest string, user *users.UserRecord, room
 		user.SendText(trackUsage)
 		return true, nil
 	}
+	if _, busy := battle.Current(user.UserId); busy {
+		user.SendText("You can't read the trail in the middle of a battle.")
+		return true, nil
+	}
 	if _, ok := m.bestMember(user, archetypes.UtilityTrail, room.RoomId); !ok {
 		user.SendText(fmt.Sprintf("Nobody here in your company can read a trail (%s).", m.performers(archetypes.UtilityTrail)))
 		return true, nil
@@ -312,6 +320,9 @@ func (m *ArchetypeModule) EvadeAmbush(leaderUserID int, roomIDs ...int) (archety
 // walks into a room. Without a rogue, the leader's own eye rolls at level 0.
 func (m *ArchetypeModule) autoKeenEye(user *users.UserRecord, room *rooms.Room, fromRoomID int) {
 	if !m.autoskillOn(user.UserId, archetypes.UtilityKeenEye) {
+		return
+	}
+	if _, busy := battle.Current(user.UserId); busy {
 		return
 	}
 	var hidden []string

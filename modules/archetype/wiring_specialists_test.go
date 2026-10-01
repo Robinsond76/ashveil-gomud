@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -251,4 +252,41 @@ func TestSpecialistsViewNamesWhoDoesWhat(t *testing.T) {
 	assert.Contains(t, find("Haggle"), "Bran, level 3")
 	assert.Contains(t, find("Weather Sense"), "you, level 2")
 	assert.Contains(t, find("Read the Trail"), "nobody here (a ranger's skill)")
+}
+
+// TestSpecialistsRestInTheLeadersBattle (33f2 review finding 3): in the
+// leader's own battle no specialist acts, and track is refused.
+func TestSpecialistsRestInTheLeadersBattle(t *testing.T) {
+	testBiomes(t)
+	m := wired(t, 100)
+	from := trailRooms(t, 97690)
+	u := walker(t, 132, 97690)
+	m.choose(u, "ranger", true)
+	u.Character.Skills = map[string]int{"track": 4}
+	_, ok := archetypes.BestSpecialist(132, archetypes.UtilityPathfinder)
+	require.True(t, ok)
+
+	battle.Begin(132, from.RoomId, 1, "test", []int{1})
+	t.Cleanup(func() { battle.End(132) })
+	_, ok = archetypes.BestSpecialist(132, archetypes.UtilityPathfinder)
+	assert.False(t, ok)
+	text := captureText(t, func() {
+		_, err := m.trackCommand("", u, from, 0)
+		require.NoError(t, err)
+	})
+	assert.Contains(t, text, "in the middle of a battle")
+}
+
+// TestKeenEyeRestsInBattle (33f2 review finding 3).
+func TestKeenEyeRestsInBattle(t *testing.T) {
+	testBiomes(t)
+	m := wired(t, 100)
+	secretRooms(t, 97695)
+	u := walker(t, 133, 97696)
+	m.choose(u, "rogue", true)
+	u.Character.Skills = map[string]int{"skulduggery": 4}
+	battle.Begin(133, 97696, 1, "test", []int{1})
+	t.Cleanup(func() { battle.End(133) })
+	m.autoKeenEye(u, rooms.LoadRoom(97696), 97695)
+	assert.Empty(t, u.Character.KnownSecretExits)
 }

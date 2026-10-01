@@ -6,12 +6,13 @@ gives your company better prices: cheaper to buy, dearer to sell.
 <ansi fg="yellow-bold">The numbers</ansi>
 
   2% better per level, 8% at level 4, on top of your standing's prices
-  (<ansi fg="command">help standing</ansi>). A buying price rounds up. A sale is never paid
-  more than one gold below what buying the same good back would cost,
-  so buying and selling straight back still loses money.
+  (<ansi fg="command">help standing</ansi>). A buying price rounds up, so a cheap good may
+  not come down at all. A sale always pays less than the cheapest price
+  anyone could buy the good back for, so buying and selling straight back
+  never makes money, whoever haggles.
 
 <ansi fg="command">market</ansi> lists the haggled prices and names who haggles; each trade
-names them too. Inns and shops keep their own prices.
+says how much gold the haggling won. Inns and shops keep their own prices.
 
 <ansi fg="yellow-bold">Usage:</ansi>
 

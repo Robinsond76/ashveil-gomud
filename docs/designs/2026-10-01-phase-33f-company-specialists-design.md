@@ -188,8 +188,11 @@ one gold below what buying the same good back would then cost (haggled),
 so a buy-and-sell loop can't make money. `market` lists the haggled
 prices. Inn and shop prices are unchanged.
 
-**Retirement of search and track.** The `search` command and skill go
-(refunded as in 33f1); the stock `track` command goes and the archetype
+**Retirement of search, track, and trading.** The `search` command and
+skill go (refunded as in 33f1), and so does the `trading` skill (review
+found it granted nothing in Ashveil: its auction and stock commands never
+existed here, and haggling is now the rogue's); the Merchant profession
+goes with it; the stock `track` command goes and the archetype
 module's bare `track` reads the trail (once a round, even with the
 automatic reading off). Help (`help search` opens Keen Eye, `help track`
 Read the Trail), keywords, the Frostfang trainer, and the professions

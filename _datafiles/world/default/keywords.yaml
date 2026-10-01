@@ -273,7 +273,6 @@ help-aliases:
   set-wimpy:        [wimpy]
   colors:           [color, ansi]
   killstats:        [kills, kd]
-  trading:          [auction, appraisal]
   pets:             [pet]
   feed:             [feed]
   macros:           [macro]

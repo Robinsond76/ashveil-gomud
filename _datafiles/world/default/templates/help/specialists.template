@@ -28,7 +28,8 @@ rogue, <ansi fg="skill">cast</ansi> for a wizard. Recruit for the skills an expe
 Only you and your own companions, alive, on their feet, and in the room
 with you (a companion following you through a door counts). Another
 player's company, a pet, or a companion left behind does no work for you.
-None of these skills works in your own battle.
+Read the Trail, Keen Eye, Pathfinder, Haggle, and Weather Sense rest
+while you are in a battle.
 
 <ansi fg="yellow-bold">Usage:</ansi>
 

@@ -332,7 +332,7 @@ func (m *ArchetypeModule) autoskillList(userID int) string {
 		if set && !on {
 			state = "off"
 		}
-		lines = append(lines, fmt.Sprintf("  %-8s %s", u, state))
+		lines = append(lines, fmt.Sprintf("  %-10s %s", u, state))
 	}
 	return strings.Join(lines, "\n")
 }

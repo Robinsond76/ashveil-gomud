@@ -5,6 +5,8 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/exit"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/weather"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -76,4 +78,34 @@ func TestWeatherCommandForecastsByLevel(t *testing.T) {
 	assert.NotContains(t, two, "hours")
 	assert.Contains(t, read(3, true), "storm is coming (harder going ahead), in about 3 hours.")
 	require.NotContains(t, read(4, true), "Over in", "a room with no exits has no neighbours to read")
+}
+
+// TestNeighbourForecastsUseWeatherZones (33f2 review finding 8): a level-4
+// forecaster reads the weather zones the exits lead into, by each room's
+// sky, never repeating its own.
+func TestNeighbourForecastsUseWeatherZones(t *testing.T) {
+	module := newTestModule(&fakeStore{}, func() uint64 { return 1000 }, zeroRNG)
+	module.zones["dunmar"] = weather.ZoneWeather{Zone: "dunmar", Current: "clear", NextChangeRound: 1060, Next: "storm"}
+	module.forecaster = func(int, ...int) (archetypes.Specialist, bool) {
+		return archetypes.Specialist{Name: "Mira", Level: 4}, true
+	}
+	// The yard's own zone has no weather; its sky is Dunmar's.
+	module.skyView = func(r *rooms.Room) weather.SkyView {
+		if r.Zone == "Yard" {
+			return weather.SkyView{WeatherZone: "dunmar"}
+		}
+		return weather.SkyView{WeatherZone: r.Zone}
+	}
+	gate := &rooms.Room{RoomId: 98101, Zone: "Yard", Exits: map[string]exit.RoomExit{"north": {RoomId: 98102}}}
+	street := &rooms.Room{RoomId: 98102, Zone: "dunmar"}
+	rooms.SetTestRoom(gate)
+	rooms.SetTestRoom(street)
+	t.Cleanup(func() { rooms.RemoveTestRoom(98101); rooms.RemoveTestRoom(98102) })
+	user := weatherUser(t, 7)
+	messages := captureMessages(t)
+	module.userCommand("", user, gate, 0)
+	events.ProcessEvents()
+	text := joinMessages(*messages)
+	assert.Contains(t, text, "storm is coming")
+	assert.NotContains(t, text, "Over in", "the street shares the yard's weather zone")
 }
