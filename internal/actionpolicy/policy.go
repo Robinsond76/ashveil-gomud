@@ -48,6 +48,9 @@ func Hostile(command string) bool {
 // tracked companion belonging to another company. All requested hostility
 // is refused; automatic battle upkeep remains the only combat controller.
 func Member(order events.MemberOrder, m *mobs.Mob, command string) string {
+	if order.Scripted {
+		return scripted(order, m, command)
+	}
 	u := users.GetByUserId(order.UserID)
 	if u == nil || u.Character == nil || u.Character.Health < 1 || m == nil || m.Character.Health < 1 || m.Character.CombatWithdrawn {
 		return "That member is no longer available for orders."
@@ -70,6 +73,27 @@ func Member(order events.MemberOrder, m *mobs.Mob, command string) string {
 		return ""
 	}
 	return "That member order is not available. Use company to manage your band."
+}
+
+// scripted checks a follower's own script (see MemberOrder.Scripted). Its
+// owner need not be present or the one whose command ran the script, and
+// the script may move the member, but it never fights or changes gear in
+// battle and stops once the charm or membership behind it changes.
+func scripted(order events.MemberOrder, m *mobs.Mob, command string) string {
+	if m == nil || m.Character.Health < 1 || m.Character.CombatWithdrawn {
+		return "That member is no longer available for orders."
+	}
+	leader, key, member := company.LeaderAndKeyForInstance(m.InstanceId)
+	if !m.Character.IsCharmed(order.UserID) || m.Character.Charmed.RoundsRemaining == 0 || order.CharmToken != m.Character.Charmed || (member && leader != order.UserID) || string(key) != order.MemberKey {
+		return "You no longer command that member."
+	}
+	if Hostile(command) {
+		return "Members fight automatically."
+	}
+	if Management(command) && (InBattle(users.GetByUserId(order.UserID)) || m.Character.Aggro != nil) {
+		return BattleUnderWay
+	}
+	return ""
 }
 
 // TameTarget keeps taming outside other players' battles and off followers,

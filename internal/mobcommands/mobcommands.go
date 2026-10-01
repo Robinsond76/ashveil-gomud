@@ -92,7 +92,7 @@ func TryCommand(cmd string, rest string, mobId int, orders ...*events.MemberOrde
 		return true, nil
 	}
 	if mob == nil && len(orders) > 0 && orders[0] != nil {
-		if u := users.GetByUserId(orders[0].UserID); u != nil {
+		if u := users.GetByUserId(orders[0].UserID); u != nil && !orders[0].Scripted {
 			u.SendText("That member is no longer available for orders.")
 		}
 		return true, nil
@@ -140,7 +140,7 @@ func TryCommand(cmd string, rest string, mobId int, orders ...*events.MemberOrde
 	if len(orders) > 0 && orders[0] != nil {
 		order := *orders[0]
 		if reason := actionpolicy.Member(order, mob, cmd); reason != "" {
-			if u := users.GetByUserId(order.UserID); u != nil {
+			if u := users.GetByUserId(order.UserID); u != nil && !order.Scripted {
 				u.SendText(reason)
 			}
 			return true, nil

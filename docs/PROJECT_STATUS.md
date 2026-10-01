@@ -171,6 +171,23 @@ delegated to the lead. 33a–33c are complete; 33d is in progress.
   runtime-only. Encounter participation/XP, deterministic loot, durable alliance
   recovery and rank replacement remain the next tasks in the plan.
 
+### 33a owner review follow-up (2026-10-01)
+
+- **Owner review of 33a:** the owner kept two 33a choices. Players can't get, drop, give or put items during their own battle. Aid is refused during the aider's battle.
+- **Help fix:** the 33a–33c sections of `help company` had been added after its "See also" line. That line is last again.
+- **Script fix (`fix/33a-company-help`):** 33a treated a follower's own script replies (onAsk/onGive/item/room scripts) as orders from whoever's command triggered them.
+  - Another player's follower therefore went silent and showed "You no longer command that member." The owner's follower could not whisper, emote or leave.
+  - Script commands on a follower now count as its owner's (`MemberOrder.Scripted`). They are still refused, silently, if they would fight, or change gear during a battle, or if the charm or membership behind them has changed. They skip `ask`'s order list and the room checks.
+  - Asking your own follower about a subject reaches its onAsk script again. An unanswered subject points to `help ask`.
+  - `help ask` updated.
+- **Independent review:** nothing blocking. All six findings accepted:
+  - Another player's trigger could make a follower's script attack. Closed by attributing follower scripts to the owner.
+  - Delayed replies were dropped after the follower moved. Room check removed for script commands.
+  - Typed non-orders lost the pointer to `company`. Restored.
+  - Missing tests for battle gear, emote shortcuts, hostile aliases, moving and typed attacks. Added in `modules/company/wiring_order_scripts_test.go`.
+  - Inaccurate help wording. Fixed.
+  - Status not yet recorded. Done here.
+- **Checks:** the new tests fail on the old code and pass now. `make generate`, `make validate` and `go test -race ./...` passed. No JS or Lua files changed, so lint was not needed.
 
 ### Phase 33c: company retreat (2026-10-01)
 

@@ -19,6 +19,7 @@ func TestMemberOrderHelp(t *testing.T) {
 	ask, err := GetHelpContents("ask")
 	require.NoError(t, err)
 	assert.Contains(t, ask, "[member]")
-	assert.Contains(t, ask, "attack, throw and cast orders are refused")
+	assert.Contains(t, ask, "attack, cast and other combat orders are refused")
 	assert.Contains(t, ask, "Temporary charmed")
+	assert.Contains(t, ask, "is\nconversation")
 }
