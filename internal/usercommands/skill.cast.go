@@ -277,7 +277,9 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 	// Phase 33b review: a bystander helps neither side of someone else's
 	// battle (help friendly-effects).
-	if effecttargets.Helpful(spellInfo) {
+	// Group and area help is narrowed to the caster's company by Resolve;
+	// only an explicitly named patient is refused here.
+	if effecttargets.Helpful(spellInfo) && spellInfo.FriendlyScope() == spells.ScopeMember {
 		for _, id := range spellAggro.TargetUserIds {
 			if effecttargets.OtherBattle(user.UserId, 0, id, 0) {
 				user.SendText(OtherBattlePatient)

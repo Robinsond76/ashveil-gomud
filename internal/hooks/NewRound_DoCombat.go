@@ -301,7 +301,11 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			// Phase 33b review: a helpful chant whose patients all left,
 			// fell, or changed hands ends without effect, and says so.
 			if effecttargets.Unaided(user.Character.Aggro.SpellInfo) {
-				user.SendText(`<ansi fg="spell-text">Your spell finds no one left to help, and fades.</ansi>`)
+				what := `spell`
+				if user.Character.Aggro.SpellInfo.SpellId == `aidskill` {
+					what = `aid`
+				}
+				user.SendText(fmt.Sprintf(`<ansi fg="spell-text">Your %s finds no one left to help, and fades.</ansi>`, what))
 				emitCast(combatstream.CastComplete, userRef(user), user.Character.Aggro.SpellInfo.SpellId, combatstream.OutcomeWasted, roomId)
 				endCast(user.Character, caster{userId: user.UserId})
 				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})

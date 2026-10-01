@@ -253,6 +253,31 @@ func Engaged(instanceId int) bool {
 	return false
 }
 
+// Involving lists the players whose battles count instanceId among their
+// enemies, without copying any battle.
+func Involving(instanceId int) []int {
+	mu.Lock()
+	defer mu.Unlock()
+	var out []int
+	for id, b := range battles {
+		if b.Enemies[instanceId] {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// RoomOf returns the room of the player's battle, if they have one.
+func RoomOf(userId int) (int, bool) {
+	mu.Lock()
+	defer mu.Unlock()
+	b, ok := battles[userId]
+	if !ok {
+		return 0, false
+	}
+	return b.RoomId, true
+}
+
 // Retain drops everything held for players not named: those who left the
 // game.
 func Retain(userIds map[int]bool) {

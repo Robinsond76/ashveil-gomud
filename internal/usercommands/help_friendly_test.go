@@ -33,6 +33,8 @@ func TestFriendlyEffectHelp(t *testing.T) {
 	for _, topic := range []string{"cast", "spells", "heal"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err)
-		assert.Less(t, strings.Index(text, "help friendly-effects"), strings.LastIndex(text, "ee also"), topic)
+		link := strings.Index(text, "help friendly-effects")
+		require.GreaterOrEqual(t, link, 0, topic)
+		assert.Less(t, link, strings.LastIndex(text, "ee also"), topic)
 	}
 }

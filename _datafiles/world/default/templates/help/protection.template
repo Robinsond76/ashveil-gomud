@@ -11,5 +11,5 @@ The <ansi fg="skill">protection</ansi> skill gives you a way to protect your fri
 
 The higher your mysticism, the more blessings you will receive from the gods.
 
-Aid cannot replace your action in an automatic battle. An aid cast checks again if a battle starts before it finishes. You
-cannot aid someone fighting in another player's battle (<ansi fg="command">help friendly-effects</ansi>). See <ansi fg="command">help combat</ansi>.
+Aid cannot replace your action in an automatic battle. An aid cast checks again if a battle starts before it finishes.
+You cannot aid someone fighting in another player's battle (<ansi fg="command">help friendly-effects</ansi>). See <ansi fg="command">help combat</ansi>.

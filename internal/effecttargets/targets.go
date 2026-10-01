@@ -102,37 +102,58 @@ func attached(m *mobs.Mob, leader int) bool {
 
 // OtherBattle reports whether a patient (a player when targetUserID > 0,
 // otherwise the mob targetMobID) is fighting in a player's battle the caster
-// is not part of: its foes, its player, or that player's companions. A
-// bystander cannot help either side of someone else's battle.
+// is not part of. A battle's sides are its foes, its player, and the mobs
+// fighting for that player in the battle room (companions or charmed pets,
+// as the battle itself counts them). A bystander helps neither side.
 func OtherBattle(userID, mobID, targetUserID, targetMobID int) bool {
-	for _, uid := range battle.Players() {
-		b, ok := battle.Current(uid)
-		if !ok {
-			continue
+	var patientIn []int
+	if targetUserID > 0 {
+		if _, ok := battle.RoomOf(targetUserID); ok {
+			patientIn = append(patientIn, targetUserID)
 		}
-		in := false
-		if targetUserID > 0 {
-			in = targetUserID == uid
-		} else if targetMobID > 0 {
-			who, _, member := company.LeaderAndKeyForInstance(targetMobID)
-			m := mobs.GetInstance(targetMobID)
-			in = b.Has(targetMobID) || (member && who == uid && m != nil && m.Character.RoomId == b.RoomId)
+	} else if targetMobID > 0 {
+		patientIn = append(patientIn, battle.Involving(targetMobID)...)
+		if uid, ok := fightsFor(targetMobID); ok && !slices.Contains(patientIn, uid) {
+			patientIn = append(patientIn, uid)
 		}
-		if !in {
-			continue
+	}
+	if len(patientIn) == 0 {
+		return false
+	}
+	var casterIn []int
+	if userID > 0 {
+		casterIn = append(casterIn, userID)
+	}
+	if mobID > 0 {
+		casterIn = append(casterIn, battle.Involving(mobID)...)
+		if uid, ok := fightsFor(mobID); ok {
+			casterIn = append(casterIn, uid)
 		}
-		if userID > 0 && userID == uid {
-			continue
+	}
+	for _, uid := range patientIn {
+		if !slices.Contains(casterIn, uid) {
+			return true
 		}
-		if mobID > 0 {
-			who, _, member := company.LeaderAndKeyForInstance(mobID)
-			if b.Has(mobID) || (member && who == uid) {
-				continue
-			}
-		}
-		return true
 	}
 	return false
+}
+
+// fightsFor is the player whose battle a mob fights in as an ally: its
+// company leader or charmer, while that player has a battle in its room.
+func fightsFor(instanceID int) (int, bool) {
+	m := mobs.GetInstance(instanceID)
+	if m == nil {
+		return 0, false
+	}
+	uid, _, member := company.LeaderAndKeyForInstance(instanceID)
+	if !member {
+		if m.Character.Charmed == nil || m.Character.Charmed.UserId <= 0 {
+			return 0, false
+		}
+		uid = m.Character.Charmed.UserId
+	}
+	room, ok := battle.RoomOf(uid)
+	return uid, ok && room == m.Character.RoomId
 }
 
 // Unaided reports a helpful cast left with no one to help.

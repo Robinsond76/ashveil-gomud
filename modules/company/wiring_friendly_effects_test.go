@@ -327,18 +327,80 @@ func TestBystanderChantDropsPatientDrawnIntoABattle(t *testing.T) {
 	tamsin.Character.Health = 500
 	b.as(8, "cast", "heal #"+strconv.Itoa(tamsin.InstanceId))
 	require.NotNil(t, other.Character.Aggro, "outside a battle, another company's companion can be helped")
+	b.toughen()
 	b.aimAt(b.livingBandits()[0].Character.Name)
 	stream := b.listen()
-	healed := false
+	var out string
 	for i := 0; i < 4 && other.Character.Aggro != nil; i++ {
-		b.fight()
+		out += b.fight()
 	}
+	assert.Nil(t, other.Character.Aggro, "the chant ended")
+	assert.Contains(t, out, "Your spell finds no one left to help")
+	wasted := false
 	for _, e := range *stream {
-		if e.Kind == combatstream.Heal && e.Source.UserId == 8 {
-			healed = true
+		assert.False(t, e.Kind == combatstream.Heal && e.Source.UserId == 8, "a patient drawn into another battle mid-chant is dropped")
+		if e.Kind == combatstream.CastComplete && e.Source.UserId == 8 {
+			assert.Equal(t, combatstream.OutcomeWasted, e.Outcome)
+			wasted = true
 		}
 	}
-	assert.False(t, healed, "a patient drawn into another battle mid-chant is dropped")
+	assert.True(t, wasted)
+}
+
+// Review: the battle counts charmed pets as fighting for their player, so
+// the boundary does too.
+func TestBystanderCannotHealAnotherPlayersPetInBattle(t *testing.T) {
+	b := newBrawl(t)
+	b.bystander()
+	pet := mobs.NewMobById(9107, b.road.RoomId)
+	require.NotNil(t, pet)
+	pet.Character.Charm(7, 20, "")
+	b.road.AddMob(pet.InstanceId)
+	b.aria.Character.TrackCharmed(pet.InstanceId, true)
+	assert.False(t, effecttargets.OtherBattle(8, 0, 0, pet.InstanceId), "no battle yet")
+	b.toughen()
+	b.aimAt(b.livingBandits()[0].Character.Name)
+	b.fight()
+	assert.True(t, effecttargets.OtherBattle(8, 0, 0, pet.InstanceId))
+	assert.False(t, effecttargets.OtherBattle(0, pet.InstanceId, 7, 0), "the pet's side includes its player")
+	out := b.as(8, "cast", "heal #"+strconv.Itoa(pet.InstanceId))
+	assert.Contains(t, out, usercommands.OtherBattlePatient)
+}
+
+// Review: group/area help is narrowed by Resolve, not refused because the
+// room also holds someone else's battle.
+func TestBystanderAreaHelpKeepsToOwnCompanyBesideABattle(t *testing.T) {
+	b := newBrawl(t)
+	other := b.bystander()
+	sp := spells.GetSpell("healall")
+	originalType, originalScope := sp.Type, sp.Scope
+	sp.Type, sp.Scope = spells.HelpArea, spells.ScopeArea
+	t.Cleanup(func() { sp.Type, sp.Scope = originalType, originalScope })
+	other.Character.SpellBook["healall"] = 1000
+	b.toughen()
+	b.aimAt(b.livingBandits()[0].Character.Name)
+	b.fight()
+	out := b.as(8, "cast", "healall")
+	assert.NotContains(t, out, usercommands.OtherBattlePatient)
+	require.NotNil(t, other.Character.Aggro)
+	assert.Equal(t, []int{8}, other.Character.Aggro.SpellInfo.TargetUserIds)
+	assert.Empty(t, other.Character.Aggro.SpellInfo.TargetMobInstanceIds)
+}
+
+// Review: first aid that loses its patient says "aid", not "spell".
+func TestUnaidedFirstAidFadesAsAid(t *testing.T) {
+	b := newBrawl(t)
+	other := b.bystander()
+	b.aria.Character.Health = -3
+	b.as(8, "aid", "aria")
+	require.NotNil(t, other.Character.Aggro)
+	b.aria.Character.RoomId = 920102 // carried off before the aid lands
+	b.road.RemovePlayer(7)
+	var out string
+	for i := 0; i < 4 && other.Character.Aggro != nil; i++ {
+		out += b.fight()
+	}
+	assert.Contains(t, out, "Your aid finds no one left to help")
 }
 
 // 33b review: a chant that lost every patient ended in silence.

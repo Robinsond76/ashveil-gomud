@@ -43,9 +43,6 @@ func Aid(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	if aidPlayerId > 0 {
 
-		// Fire an event that a skill has been used
-		events.AddToQueue(events.SkillUsed{UserId: user.UserId, Skill: `protection`, Details: `aid`})
-
 		p := users.GetByUserId(aidPlayerId)
 
 		if p != nil {
@@ -65,6 +62,9 @@ func Aid(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				user.SendText(OtherBattlePatient)
 				return true, nil
 			}
+
+			// Fire an event that a skill has been used
+			events.AddToQueue(events.SkillUsed{UserId: user.UserId, Skill: `protection`, Details: `aid`})
 
 			// Set spell Aid
 			spellAggro := characters.SpellAggroInfo{
