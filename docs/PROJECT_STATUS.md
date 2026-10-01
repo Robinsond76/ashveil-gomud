@@ -5,8 +5,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (33f2, expedition specialists)
-- **Latest completed phases:** 33f2, expedition specialists; 33f1, skill
+- **Last updated:** 2026-10-01 (33i1, company encounter assessment)
+- **Latest completed phases:** 33i1, company encounter assessment
+  (built in parallel with 33f3); 33f2, expedition specialists; 33f1, skill
   and charm retirement; 33e,
   automatic class abilities; 33d, allied
   companies; 33c, company retreat; 33b, friendly effects; 33a, command
@@ -143,10 +144,64 @@ delegated to the lead. 33a–33e are complete.
 | 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 (camp specialists) next |
 | 33g | Company Equipment, Loadouts, and Loot | Future design: [proposal](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); implementation not started |
 | 33h | Company Progression, Rewards, and Expedition Continuity | Future design: [proposal](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md); implementation not started |
-| 33i | Company Encounter Assessment and Enemy Roles | Future design: [proposal](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md); implementation not started |
+| 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles) not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33i1: company encounter assessment (2026-10-01)
+
+**Why:** the owner asked for the early 33i slice, in parallel with 33f3:
+players couldn't judge whether their company could take a group; the old
+`consider` compared the leader alone with one creature
+([design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md),
+"Final implementation decisions: 33i1"; [plan](plans/2026-10-01-phase-33i1-company-assessment.md)).
+
+**What shipped:** `internal/assessment`, a read model: each counted
+member's dice-free expected damage (`combat.ExpectedDamage`) against the
+visible foes it can reach (formation reach, unplaced fails open), current
+health as staying power; five words (an easy fight … hopeless) and "it
+could go either way" near even or a band line; never numbers. Counted:
+the leader and companions with them who can fight; fled, fallen,
+awaiting, separated, down, and out-of-the-fight members named as not with
+you; pets left out; party allies noted, not counted. `scout [group]` ends
+with it; `consider [enemy]` gives it for the enemy's whole group (the
+owner retired the one-on-one odds) and refuses players, own companions,
+and harmless loners; `Company.Battle.outlook` and the web Battle view's
+"Outlook" line. Visibility as scout: hidden foes left out, nothing in the
+dark. No state, RNG, or world-time change; no durable state, so nothing to
+migrate. Help `assessment` (new), `consider` (template replacing GoMud's
+page), `scout`, `combat`, `webclient`; the Combat lesson's scout hint.
+
+**Tests:** pure estimate tables (bands, closeness, reach, fail-open, no
+one able to strike, no fighters); `ExpectedDamage` draws no dice (seeded
+global source unchanged); real `scout`/`consider` in the company brawl
+(counted and missing members, wounds, burden, a separated companion,
+formation reach agreeing with scout's marks, hidden foes, darkness,
+allies, refusals, no round/state change); the live `Company.Battle`
+outlook and its absence in the dark; payload test; help render and
+aliases; tutorial pointers; dock-windows browser check.
+
+**Independent review** (default model, report-only). Accepted and fixed
+with regression tests: (1, major) a company with nobody able to fight read
+"a hard fight, could go either way": now hopeless; (2) members standing
+here but down or withdrawn were labelled "away": now named with the
+reason, the leader too; (3) `consider` by name could land on a hidden
+namesake and miss the visible one: it matches visible group members only;
+(5) `consider` assessed shopkeepers and other harmless loners: refused, as
+scout doesn't list them; (6) an own companion now gets "travels with you";
+(7) "Allied companies" reworded "Allies". Accepted as is: (4) reach uses
+scout's alive map, so an unseen front-rank foe can put the one behind out
+of reach (the design's rule, matching scout's marks); (9) the outlook is
+recomputed on each Battle refresh (≤5×9 dice-free estimates on the game
+loop; acceptable). Rejected: (8) remove `combat.CombatOdds`: kept as
+engine API for upstream parity. Pre-existing, not changed: `scout`'s and
+`attack`'s lone-mob lookup (`enemyparty.FindGroup`) can still land on a
+hidden namesake.
+
+**Checks:** after the review fixes, `make generate`, `make validate`,
+`go test -race ./...` (all passing), and `make js-lint` once; the
+dock-windows Chromium check (all passing, outlook included).
 
 ### Phase 33f2: expedition specialists (2026-10-01)
 

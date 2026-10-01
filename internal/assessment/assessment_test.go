@@ -120,6 +120,11 @@ func TestEstimateWhenNoOneCanStrike(t *testing.T) {
 	assert.Equal(t, Hopeless, Estimate(ownSide, foeSide, byLevel).Risk, "they strike, you can't")
 
 	assert.Equal(t, Easy, Estimate(ownSide, Side{}, byLevel).Risk, "no foes")
+
+	// 33i1 review finding 1: nobody of the company can fight.
+	res = Estimate(Side{}, foeSide, byLevel)
+	assert.Equal(t, Hopeless, res.Risk)
+	assert.False(t, res.Close)
 }
 
 func TestHeadlineAndLines(t *testing.T) {
@@ -132,7 +137,7 @@ func TestHeadlineAndLines(t *testing.T) {
 		"Hurt: Tamsin (badly wounded).",
 		"Can't reach any of them from where they stand: Tamsin.",
 		"Out of your company's reach: the slinger.",
-		"Allied companies here aren't counted.",
+		"Allies here aren't counted.",
 		"Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.",
 	} {
 		assert.Contains(t, text, want)

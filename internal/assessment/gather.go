@@ -25,7 +25,7 @@ type Report struct {
 	Burdened   []string // "you (burdened)"
 	NoReach    []string // own members who can reach none of them
 	OutOfReach []string // foes none of the company can reach
-	Allies     bool     // an allied company is here, and isn't counted
+	Allies     bool     // a party ally is here, and isn't counted
 }
 
 // Gather assesses group g for user from the live game. Call it on the game
@@ -62,17 +62,24 @@ func Gather(user *users.UserRecord, room *rooms.Room, g enemyparty.Group) (Repor
 			rep.Burdened = append(rep.Burdened, fmt.Sprintf("%s (%s)", name, word))
 		}
 	}
-	if user.Character.Health > 0 && !user.Character.CombatWithdrawn {
+	if why := outOfFight(user.Character); why == "" {
 		add(company.LeaderMemberKey, "you", user.Character, false)
+	} else {
+		rep.Missing = append(rep.Missing, "you ("+why+")")
 	}
 	present := map[int]bool{}
+	here := map[int]string{} // in the room, but not fighting: why
 	for _, id := range company.CompanionsWithLeader(user.UserId) {
 		instanceId, ok := company.InstanceFor(user.UserId, id)
 		if !ok {
 			continue
 		}
 		m := mobs.GetInstance(instanceId)
-		if m == nil || m.Character.Health < 1 || m.Character.CombatWithdrawn || m.Character.RoomId != room.RoomId {
+		if m == nil || m.Character.RoomId != room.RoomId {
+			continue
+		}
+		if why := outOfFight(&m.Character); why != "" {
+			here[id] = why
 			continue
 		}
 		present[id] = true
@@ -80,9 +87,14 @@ func Gather(user *users.UserRecord, room *rooms.Room, g enemyparty.Group) (Repor
 	}
 	if views, ok := company.CompanyMembers(user.UserId); ok {
 		for _, v := range views {
-			if !present[v.ID] {
-				rep.Missing = append(rep.Missing, fmt.Sprintf("%s (%s)", v.Name, absence(v.Status)))
+			if present[v.ID] {
+				continue
 			}
+			why, ok := here[v.ID]
+			if !ok {
+				why = absence(v.Status)
+			}
+			rep.Missing = append(rep.Missing, fmt.Sprintf("%s (%s)", v.Name, why))
 		}
 	}
 
@@ -97,7 +109,20 @@ func Gather(user *users.UserRecord, room *rooms.Room, g enemyparty.Group) (Repor
 	return rep, true
 }
 
-// absence says why a companion isn't counted.
+// outOfFight says why a member standing here can't fight ("" when it can):
+// down, or out of the fight (surrendered or withdrawing). 33i1 review
+// finding 2.
+func outOfFight(c *characters.Character) string {
+	switch {
+	case c.Health < 1:
+		return "down"
+	case c.CombatWithdrawn:
+		return "out of the fight"
+	}
+	return ""
+}
+
+// absence says why a companion who isn't here isn't counted.
 func absence(s company.MemberStatus) string {
 	switch s {
 	case company.MemberFled:
@@ -160,7 +185,7 @@ func (r Report) Lines() []string {
 		lines = append(lines, "  Out of your company's reach: "+list(r.OutOfReach)+".")
 	}
 	if r.Allies {
-		lines = append(lines, "  Allied companies here aren't counted.")
+		lines = append(lines, "  Allies here aren't counted.")
 	}
 	lines = append(lines, "  Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.")
 	return lines

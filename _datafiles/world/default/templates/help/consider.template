@@ -22,6 +22,7 @@ them and what is weighed). <ansi fg="command">scout [group]</ansi> gives the sam
 under the group's formation.
 
 You see what <ansi fg="command">look</ansi> sees: hidden foes are left out, and in the dark you
-can't make them out. Other players aren't enemies to consider.
+can't make them out. Other players, your own companions, and a lone
+creature that means no harm (a shopkeeper) aren't enemies to consider.
 
 See also: <ansi fg="command">help assessment</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help combat</ansi>.

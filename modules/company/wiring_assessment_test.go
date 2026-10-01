@@ -1,6 +1,7 @@
 package company
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -209,7 +210,7 @@ func TestConsiderRefusesWhatIsNoEnemy(t *testing.T) {
 	b := newBrawl(t)
 	b.bystander()
 	assert.Contains(t, b.cmd("consider", "bystander"), "Bystander is no enemy of yours.")
-	assert.Contains(t, b.cmd("consider", "tamsin"), `You see no enemy called "tamsin" here.`, "a companion is no enemy")
+	assert.Contains(t, b.cmd("consider", "tamsin"), "Tamsin Reed travels with you.", "a companion is no enemy")
 	assert.Contains(t, b.cmd("consider", "dragon"), `You see no enemy called "dragon" here.`)
 	assert.Contains(t, b.cmd("consider", ""), "Consider whom?")
 }
@@ -226,7 +227,7 @@ func TestAssessmentNotesAnAlly(t *testing.T) {
 	rep := b.report()
 	assert.True(t, rep.Allies)
 	assert.Len(t, rep.Counted, 5, "the ally isn't counted")
-	assert.Contains(t, rep.Text(), "Allied companies here aren't counted.")
+	assert.Contains(t, rep.Text(), "Allies here aren't counted.")
 }
 
 // TestBattleViewShowsTheOutlook: Company.Battle carries the same headline
@@ -254,4 +255,59 @@ func TestBattleViewShowsTheOutlook(t *testing.T) {
 	view = lastView(views, 7)
 	assert.Equal(t, true, view["dark"])
 	assert.Nil(t, view["outlook"], "no outlook in the dark")
+}
+
+// 33i1 review findings 1 and 2: members standing here who can't fight are
+// named with the reason, and a company with nobody able to fight reads as
+// hopeless, not as a coin toss.
+func TestAssessmentOfACompanyThatCantFight(t *testing.T) {
+	b := newBrawl(t)
+	tamsin := b.companion(1)
+	tamsin.Character.CombatWithdrawn = true
+	t.Cleanup(func() { tamsin.Character.CombatWithdrawn = false })
+	rep := b.report()
+	assert.Len(t, rep.Counted, 4)
+	assert.Contains(t, rep.Text(), "Not with you: Tamsin Reed (out of the fight).")
+	assert.NotContains(t, rep.Text(), "(away)", "she stands here")
+
+	b.cmd("company", "dismiss all")
+	b.aria.Character.CombatWithdrawn = true
+	t.Cleanup(func() { b.aria.Character.CombatWithdrawn = false })
+	_, kw := b.banditGroup()
+	got := b.cmd("consider", kw)
+	assert.Contains(t, got, "Hopeless for your company; the odds look clear.")
+	assert.Contains(t, got, "Counted: nobody who can fight. Not with you: you (out of the fight).")
+}
+
+// 33i1 review finding 3: a hidden namesake never shadows a visible enemy.
+func TestConsiderFindsTheVisibleNamesake(t *testing.T) {
+	b := newBrawl(t)
+	cutthroats := b.bandits["bandit cutthroat"]
+	require.Len(t, cutthroats, 2)
+	buffs.SetTestFlag("hidden")
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 93302, Name: "hidden", TriggerCount: 1000, RoundInterval: 1, Flags: []string{"hidden"}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(93302) })
+	first := mobs.GetInstance(cutthroats[0])
+	require.NoError(t, first.Character.AddBuff(93302, true))
+	first.Character.Validate()
+	_, mobId := b.road.FindByName("bandit cutthroat")
+	require.Equal(t, cutthroats[0], mobId, "the room's own lookup lands on the hidden one first")
+
+	got := b.cmd("consider", "bandit cutthroat")
+	assert.Contains(t, got, "Assessment:", "the visible cutthroat is found")
+	assert.Contains(t, b.cmd("consider", fmt.Sprintf("#%d", cutthroats[0])), "You see no enemy called", "nor by its number")
+	assert.Contains(t, b.cmd("consider", fmt.Sprintf("#%d", cutthroats[1])), "Assessment:")
+}
+
+// 33i1 review finding 5: a lone creature that means no harm is no enemy.
+func TestConsiderRefusesAHarmlessLoner(t *testing.T) {
+	b := newBrawl(t)
+	fence := mobs.NewMobById(mobs.MobId(9105), b.road.RoomId)
+	require.NotNil(t, fence)
+	b.road.AddMob(fence.InstanceId)
+	t.Cleanup(func() { b.road.RemoveMob(fence.InstanceId); mobs.DestroyInstance(fence.InstanceId) })
+	g, ok := enemyparty.GroupOf(b.road, fence.InstanceId)
+	require.True(t, ok)
+	require.True(t, g.Solo(), "on its own, not in the bandits' spawn group")
+	assert.Contains(t, b.cmd("consider", "bandit fence"), "The bandit fence is no enemy of yours.")
 }

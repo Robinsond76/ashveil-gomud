@@ -34,9 +34,11 @@ are never numbers or percentages: it is a judgment, not a promise.
 
 <ansi fg="yellow-bold">What it weighs</ansi>
 
-- Who is counted: you and the companions with you now. Fled, fallen,
-  awaiting, and separated companions are listed as not with you. Pets
-  and allied companies aren't counted (it says when an ally is here).
+- Who is counted: you and the companions with you now who can fight.
+  Fled, fallen, awaiting, and separated companions, and anyone down or
+  out of the fight, are listed as not with you. Pets and allies aren't
+  counted (it says when an ally is here). With nobody able to fight, it
+  is hopeless.
 - Health as it is now: wounds (<ansi fg="command">help wounds</ansi>) and hurts lower it.
 - Each fighter's gear, stats, defense, and dodge, and burden, which cuts
   dodge (<ansi fg="command">help burden</ansi>).

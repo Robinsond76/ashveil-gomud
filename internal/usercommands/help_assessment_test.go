@@ -35,7 +35,7 @@ func TestAssessmentHelpPages(t *testing.T) {
 	a := page("assessment")
 	for _, want := range []string{"Help for assessment", "scout [group]", "consider [enemy]",
 		"an easy fight", "a fair fight", "a hard fight", "a grave risk", "hopeless",
-		"could go either way", "never numbers", "Pets", "allied companies", "Outlook"} {
+		"could go either way", "never numbers", "Pets", "allies", "down or", "Outlook"} {
 		assert.Contains(t, a, want)
 	}
 	for _, alias := range []string{"assess", "odds", "chances", "risk", "outlook"} {
@@ -47,6 +47,7 @@ func TestAssessmentHelpPages(t *testing.T) {
 	assert.Contains(t, c, "consider [enemy]")
 	assert.Contains(t, c, "whole group")
 	assert.NotContains(t, c, "YOU WILL DIE", "the one-on-one odds are retired")
+	assert.Contains(t, c, "shopkeeper")
 
 	for _, topic := range []string{"scout", "combat", "webclient"} {
 		assert.Contains(t, page(topic), "help assessment", topic)

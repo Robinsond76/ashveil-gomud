@@ -103,6 +103,10 @@ func Estimate(own, foes Side, damage DamageFunc) Result {
 
 	ownHealth, foeHealth := health(own), health(foes)
 	switch {
+	case len(own.Members) == 0:
+		// Nobody of the company can fight (33i1 review finding 1).
+		res.Risk, res.Ratio = Hopeless, 0
+		return res
 	case len(foes.Members) == 0:
 		res.Risk, res.Ratio = Easy, easyAt*10
 		return res
