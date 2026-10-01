@@ -125,7 +125,11 @@ func (p *Party) GetAutoAttackUserIds() []int {
 	return result
 }
 
-func (p *Party) Leave(userId int) bool {
+func (p *Party) Leave(userId int) bool { return p.LeaveFor(userId, nil) }
+
+// LeaveFor is Leave whose new leader, when the leader leaves, is the first
+// other member online reports (Phase 33d review), else the first other.
+func (p *Party) LeaveFor(userId int, online func(int) bool) bool {
 	storageErr = nil
 	undo := checkpoint()
 	if p.Invited(userId) {
@@ -146,12 +150,13 @@ func (p *Party) Leave(userId int) bool {
 			return p.TryDisband()
 		}
 
+		successor := 0
 		for _, id := range p.UserIds {
-			if id != userId {
-				p.setLeader(id)
-				break
+			if id != userId && (successor == 0 || online != nil && online(id) && !online(successor)) {
+				successor = id
 			}
 		}
+		p.setLeader(successor)
 	}
 
 	for i, id := range p.UserIds {

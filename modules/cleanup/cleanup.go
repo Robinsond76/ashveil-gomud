@@ -152,7 +152,14 @@ func (c *CleanupModule) userBuryCommand(rest string, user *users.UserRecord, roo
 		return true, nil
 	}
 
-	if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
+	if corpse, corpseFound := room.FindCorpse(rest, func(c *rooms.Corpse) bool { return buryable(c, user.UserId) }); corpseFound {
+
+		// Claimed battle loot is the claimant's until the corpse decays
+		// (Phase 33d review): nobody else may bury it away.
+		if corpse.ClaimUserId != 0 && corpse.ClaimUserId != user.UserId && corpse.HasItems() {
+			user.SendText(`That corpse still holds battle loot claimed by another company.`)
+			return true, nil
+		}
 
 		if room.RemoveCorpse(corpse) {
 
@@ -183,7 +190,11 @@ func (c *CleanupModule) mobBuryCommand(rest string, mob *mobs.Mob, room *rooms.R
 		return true, nil
 	}
 
-	if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
+	if corpse, corpseFound := room.FindCorpse(rest, func(c *rooms.Corpse) bool { return buryable(c, 0) }); corpseFound {
+
+		if corpse.ClaimUserId != 0 && corpse.HasItems() {
+			return true, nil // a player's claimed battle loot
+		}
 
 		if room.RemoveCorpse(corpse) {
 
@@ -201,4 +212,10 @@ func (c *CleanupModule) mobBuryCommand(rest string, mob *mobs.Mob, room *rooms.R
 	}
 
 	return true, nil
+}
+
+// buryable reports whether userId (0 for a mob) may bury the corpse: any
+// corpse but one holding another player's claimed battle loot.
+func buryable(c *rooms.Corpse, userId int) bool {
+	return c.ClaimUserId == 0 || c.ClaimUserId == userId || !c.HasItems()
 }

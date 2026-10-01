@@ -62,7 +62,7 @@ func HandleLeave(e events.Event) events.ListenerReturn {
 					if currentParty.IsLeader(uid) {
 						u.SendText(`You are now the leader of the party. Following is off for everyone.`)
 					} else {
-						u.SendText(fmt.Sprintf(`Player #%d is now the party leader. Following is off; use party follow on to consent.`, currentParty.LeaderUserId))
+						u.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is now the party leader. Following is off; use party follow on to consent.`, users.CharacterName(currentParty.LeaderUserId)))
 					}
 				}
 			}

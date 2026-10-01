@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -104,9 +105,12 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 		}
 
-		// Look for a corpse as the source when CorpseItems is enabled
+		// Look for a corpse as the source when CorpseItems is enabled, or
+		// for a claimed shared-battle corpse (Phase 33d) in any world.
 		if containerName == `` && petUserId == 0 {
-			if c, ok := room.FindCorpseByRef(args[len(args)-1]); ok {
+			// In floor-drop worlds only a claimed corpse is a loot source; an
+			// unclaimed one must not shadow a floor item ("leather cap").
+			if c, ok := room.FindCorpseByRef(args[len(args)-1], func(c *rooms.Corpse) bool { return corpseLootable(c, user.UserId) }); ok && (bool(configs.GetGamePlayConfig().Death.CorpseItems) || c.ClaimUserId != 0) {
 				corpseRef = c
 				if len(args) >= 2 && args[len(args)-2] == "from" {
 					rest = strings.Join(args[0:len(args)-2], " ")
@@ -163,6 +167,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			user.SendText(`This battle loot is claimed by another company.`)
 			return true, nil
 		}
+		// Gear still worn on the body is loot only in CorpseItems worlds:
+		// elsewhere it failed its drop roll (or is perma-gear) and stays.
+		wornLoot := bool(configs.GetGamePlayConfig().Death.CorpseItems)
 
 		corpseColor := `mob-corpse`
 		if corpseRef.UserId > 0 {
@@ -213,7 +220,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			}
 
 			// Worn items on corpse character
-			allWorn := corpseRef.Character.GetAllWornItems()
+			var allWorn []items.Item
+			if wornLoot {
+				allWorn = corpseRef.Character.GetAllWornItems()
+			}
 			for _, item := range allWorn {
 				if !fits(user, item) {
 					left++
@@ -267,7 +277,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		// "get <item> <corpse>" - search backpack items first, then worn items
 		matchItem, found := corpseRef.FindItem(rest)
-		if !found {
+		if !found && wornLoot {
 			// Also search worn equipment on the corpse character
 			wornItems := corpseRef.Character.GetAllWornItems()
 			closeMatch, exactMatch := items.FindMatchIn(rest, wornItems...)
@@ -517,4 +527,13 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	return true, nil
+}
+
+// corpseLootable reports whether userId may take something from the corpse
+// now: claimed loot for its claimant, or any loot in a CorpseItems world.
+func corpseLootable(c *rooms.Corpse, userId int) bool {
+	if c.ClaimUserId != 0 {
+		return c.ClaimUserId == userId && c.HasItems()
+	}
+	return bool(configs.GetGamePlayConfig().Death.CorpseItems) && (c.HasItems() || len(c.Character.GetAllWornItems()) > 0)
 }

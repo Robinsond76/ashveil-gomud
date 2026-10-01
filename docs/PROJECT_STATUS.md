@@ -5,7 +5,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (33c review follow-up)
+- **Last updated:** 2026-10-01 (33d review follow-up)
 - **Latest completed phases:** 33c, company retreat; 33b, friendly effects;
   33a, command rules; and 30g3, personal load and agility, all 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
@@ -142,6 +142,45 @@ delegated to the lead. 33a–33d are complete.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### 33d owner review follow-up (2026-10-01)
+
+- **Owner review of 33d** found, and the owner approved fixing, with a
+  regression test each (all fail on the old code):
+  - A last enemy killed by a round-tick or immediate buff (poison) paid
+    no XP: its queued death ran after the same round's battle pass ended
+    the battle. Contributors are now frozen at those death sites too
+    (not for revive-on-death mobs).
+  - 33d dropped `get`'s CorpseItems gate, so in the default world anyone
+    looted the gear a body keeps (failed drop rolls, perma-gear). Only a
+    claimed corpse is a loot source there, never its worn gear; an
+    unclaimed corpse name no longer shadows a floor item.
+  - Claimed loot could be buried by anyone or any mob, and never decayed
+    with corpses disabled. `bury` now refuses another player's claimed
+    loot; claimed corpses decay regardless. `RemoveCorpse` no longer
+    confuses look-alike corpses (one group, one round) and deleted a
+    claimed twin. `get`, `look` and `bury` prefer the right same-named corpse.
+  - Owner decision: outside one alliance the loot claim goes to the most
+    damage (companions count; ties to the lowest id); allies keep the
+    rotating claim.
+  - `party leave` hands leadership to an online member when there is one;
+    messages name players instead of `player #id`; `alliances.json` is
+    gitignored. `help party` and `help bury` updated and render-tested.
+  - The intermittent `TestBystanderCannotHelpAnotherPlayersBattle` was a
+    test bug (its enemy patient could die in the opening round); fixed.
+- **Independent review** of the fix diff: accepted a get shadowing bug,
+  first-corpse-only `bury`/`look`, and an unrendered `bury` help test; all
+  fixed with tests (it also exposed the `RemoveCorpse` twin bug). Rejected:
+  `look` reading an offline claimant's saved name from disk, accepted as a
+  rare, player-driven read during a claim's ~2½ minutes.
+- **Owner decisions for a future cargo phase (before 33g):** no personal
+  inventory besides worn equipment; everything carried, companions' carried
+  items included, lives in company cargo, and spoils go there (`loot`,
+  optional `autoloot`, reserved to the winners for 2 game hours, open for
+  2 more, then gone). No item may be used during a fight.
+- Verification: `make generate`, `make validate` and `go test -race ./...`
+  passed after the review fixes; focused package runs passed throughout.
+  No JavaScript or Lua changed, so their lint was not run.
 
 ### 33c owner review follow-up (2026-10-01)
 

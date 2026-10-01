@@ -182,6 +182,11 @@ func (r *Room) RemoveCorpse(c Corpse) bool {
 		if corpse.RoundCreated != c.RoundCreated {
 			continue
 		}
+		// A group slain in one round leaves look-alike corpses: never
+		// remove one holding claimed loot for its empty twin (33d review).
+		if corpse.ClaimUserId != c.ClaimUserId || corpse.Gold != c.Gold || len(corpse.Items) != len(c.Items) {
+			continue
+		}
 
 		r.Corpses = append(r.Corpses[:idx], r.Corpses[idx+1:]...)
 
@@ -194,7 +199,9 @@ func (r *Room) UpdateCorpses(roundNow uint64) {
 
 	c := configs.GetGamePlayConfig()
 
-	if !c.Death.CorpsesEnabled {
+	// With corpses disabled, the only corpses are claimed shared-battle loot
+	// (Phase 33d); they still decay, so they never pile up.
+	if !c.Death.CorpsesEnabled && len(r.Corpses) == 0 {
 		return
 	}
 
@@ -965,7 +972,9 @@ func (r *Room) GetAllFloorItems(stash bool) []items.Item {
 	return found
 }
 
-func (r *Room) FindCorpse(searchName string) (Corpse, bool) {
+// An optional prefer function picks, among same-named corpses, one it
+// accepts first, as FindCorpseByRef does.
+func (r *Room) FindCorpse(searchName string, prefer ...func(*Corpse) bool) (Corpse, bool) {
 
 	// First search for player corpses that match
 
@@ -975,7 +984,8 @@ func (r *Room) FindCorpse(searchName string) (Corpse, bool) {
 	mobCorpseLookup := map[string]int{}
 	mobCorpses := []string{}
 
-	for idx, c := range r.Corpses {
+	for _, idx := range r.corpseOrder(prefer...) {
+		c := r.Corpses[idx]
 
 		if c.Prunable {
 			continue
@@ -1017,7 +1027,10 @@ func (r *Room) FindCorpse(searchName string) (Corpse, bool) {
 	return Corpse{}, false
 }
 
-func (r *Room) FindCorpseByRef(searchName string) (*Corpse, bool) {
+// An optional prefer function picks, among same-named corpses, one it
+// accepts first (Phase 33d review: a claimant's second bandit corpse must
+// be reachable after the first is emptied).
+func (r *Room) FindCorpseByRef(searchName string, prefer ...func(*Corpse) bool) (*Corpse, bool) {
 
 	playerCorpseLookup := map[string]int{}
 	playerCorpses := []string{}
@@ -1025,7 +1038,8 @@ func (r *Room) FindCorpseByRef(searchName string) (*Corpse, bool) {
 	mobCorpseLookup := map[string]int{}
 	mobCorpses := []string{}
 
-	for idx, c := range r.Corpses {
+	for _, idx := range r.corpseOrder(prefer...) {
+		c := r.Corpses[idx]
 
 		if c.Prunable {
 			continue
@@ -2403,4 +2417,24 @@ func (r *Room) CanPvp(attUser *users.UserRecord, defUser *users.UserRecord) erro
 	}
 
 	return nil
+}
+
+// corpseOrder lists corpse indexes, those prefer accepts first, each group
+// in room order.
+func (r *Room) corpseOrder(prefer ...func(*Corpse) bool) []int {
+	order := make([]int, 0, len(r.Corpses))
+	if len(prefer) == 0 || prefer[0] == nil {
+		for idx := range r.Corpses {
+			order = append(order, idx)
+		}
+		return order
+	}
+	for _, want := range []bool{true, false} {
+		for idx := range r.Corpses {
+			if prefer[0](&r.Corpses[idx]) == want {
+				order = append(order, idx)
+			}
+		}
+	}
+	return order
 }

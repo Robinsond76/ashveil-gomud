@@ -241,10 +241,7 @@ func partyCommand(rest string, user *users.UserRecord, room *rooms.Room, flags e
 
 				u := users.GetByUserId(uid)
 				if u == nil {
-					name := fmt.Sprintf("Player #%d", uid)
-					if saved, err := users.LoadUserFile(uid); err == nil && saved != nil {
-						name = saved.Character.Name
-					}
+					name := users.CharacterName(uid)
 					rows = append(rows, []string{name, uStatus + " (offline)", "-", "-", "-", "-"})
 					formatting = append(formatting, []string{"%s", "%s", "%s", "%s", "%s", "%s"})
 					continue
@@ -452,7 +449,7 @@ func partyCommand(rest string, user *users.UserRecord, room *rooms.Room, flags e
 				return true, nil
 			}
 
-			if !currentParty.Leave(user.UserId) {
+			if !currentParty.LeaveFor(user.UserId, users.IsOnline) {
 				return true, parties.LastError()
 			}
 			for _, uid := range currentParty.GetMembers() {
@@ -461,7 +458,7 @@ func partyCommand(rest string, user *users.UserRecord, room *rooms.Room, flags e
 						u.EventLog.Add(`party`, `Promoted to party leader`)
 						u.SendText(`You are now the leader of the party. Following is off for everyone.`)
 					} else {
-						u.SendText(fmt.Sprintf(`Player #%d is now the party leader. Following is off; use party follow on to consent.`, currentParty.LeaderUserId))
+						u.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is now the party leader. Following is off; use party follow on to consent.`, users.CharacterName(currentParty.LeaderUserId)))
 					}
 				}
 			}

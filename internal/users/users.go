@@ -760,3 +760,19 @@ func FindUserId(username string) int {
 	userid, _ := idx.FindByUsername(username)
 	return userid
 }
+
+// CharacterName is a player's character name for messages: the online
+// character's, else the saved one's, else a neutral stand-in. Players never
+// see raw user ids (Phase 33d review).
+func CharacterName(userId int) string {
+	if u := GetByUserId(userId); u != nil && u.Character != nil {
+		return u.Character.Name
+	}
+	if saved, err := LoadUserFile(userId); err == nil && saved != nil && saved.Character != nil {
+		return saved.Character.Name
+	}
+	return `an absent player`
+}
+
+// IsOnline reports whether the player is logged in.
+func IsOnline(userId int) bool { return GetByUserId(userId) != nil }
