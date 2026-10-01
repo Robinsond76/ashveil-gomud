@@ -101,6 +101,9 @@ func (m *CompanyModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 	if !ok || m.persistenceAvailable() != nil {
 		return events.Continue
 	}
+	if err := m.ReturnFlight(evt.UserId); err != nil {
+		mudlog.Error("company: return on leave", "error", err)
+	}
 	// Phase 25b: the dead are charged up to the logout, and saved with it.
 	charged := m.deathOnDespawn(evt.UserId)
 	if len(m.instances[evt.UserId]) == 0 {

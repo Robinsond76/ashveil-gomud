@@ -467,7 +467,7 @@
     // alone, as "You", without a company).
     function ourFighters(data) {
         if (!data.company) { return [{ key: 'leader', name: 'You', cell: null, status: 'present' }]; }
-        return data.members.filter(m => m && m.key && m.status !== 'awaiting');
+        return data.members.filter(m => m && m.key && m.status !== 'awaiting' && m.status !== 'fled');
     }
 
     function fighterButton(id, cls, name, sub, spoken) {
@@ -621,7 +621,10 @@
             arenaObserver.observe(arena);
         }
 
-        if (battle.fallen && battle.fallen.length) {
+        if (battle.surrendered && battle.surrendered.length) {
+ root.appendChild(el('div', 'cbt-aside', 'Surrendered: ' + battle.surrendered.map(f => f.label).join(', ')));
+ }
+ if (battle.fallen && battle.fallen.length) {
             root.appendChild(el('div', 'cbt-aside', 'Fallen: ' + battle.fallen.map(f => f.label).join(', ')));
         }
         if (battle.waiting && battle.waiting.length) {

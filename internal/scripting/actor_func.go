@@ -697,6 +697,9 @@ func (a ScriptActor) GetRaceKills(race string) int {
 
 func (a ScriptActor) SetHealth(amt int) {
 	c := a.characterRecord
+	if c.CombatWithdrawn && amt < c.Health {
+		return
+	}
 	if amt > c.Health {
 		// Phase 30b: raising health stops at the wound limit.
 		amt = c.CapHealing(c.Health, amt)

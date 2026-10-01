@@ -45,3 +45,5 @@ from your company's average won't take service with you at all;
 would join, and whether they'd join uneasy.
 
 See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help standing</ansi>.
+
+Sparing a surrendered foe raises your alignment by 5; execution lowers it by 5 instead of ordinary kill alignment. Company alignment remains its living members’ average. Companions react with loyalty by their own beliefs (help mercy).

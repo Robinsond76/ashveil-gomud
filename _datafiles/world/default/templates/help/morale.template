@@ -1,0 +1,28 @@
+<ansi fg="magenta">Help for </ansi><ansi fg="command">morale</ansi>
+
+Enemies may lose nerve when their original leader or first caster/healer
+falls, half their original group dies, or their last fighter has 25% health
+or less. Each trigger checks once; simultaneous triggers share one roll.
+
+                    Hold   Yield   Flee
+  Steadfast          85%     10%     5%
+  Wary               65%     25%    10%
+  Craven             40%     40%    20%
+  Skittish beast     65%      0%    35%
+
+Undead, constructs, some bosses, and foes without a breaking temperament
+never break. Practice foes and charmed companions do not surrender.
+A surrendered enemy stands aside: nobody attacks it and it attacks nobody.
+A fleeing enemy leaves this encounter and gives no experience or loot.
+
+Company nerve checks once when at least half your starting company falls
+or the surviving members have at most 25% of their combined maximum health.
+You never roll. Companions below 25 loyalty have a 20% chance to hesitate
+and a 5% chance to flee. With loyalty 25 or higher but chemistry below
+Familiar, they have a 10% chance to hesitate and never flee.
+Hesitation costs one action and does not add a lost action to a blocking
+status. A cancelled companion chant returns half its mana. A fled companion
+keeps gear and wounds, returns after settlement, and loses 5 loyalty.
+At zero loyalty, the existing desertion rules apply.
+
+See also: help mercy, help chemistry, help alignment, help combat.

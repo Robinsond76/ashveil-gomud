@@ -12,3 +12,5 @@ character:
   equipment:
     neck:
       itemid: 20041
+
+temperament: skittish

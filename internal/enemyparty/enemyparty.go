@@ -42,7 +42,7 @@ func Alive(p mobparty.Party) map[company.MemberKey]bool {
 	alive := make(map[company.MemberKey]bool, len(p.Members))
 	for _, id := range p.Members {
 		mob := mobs.GetInstance(id)
-		alive[mobparty.MemberKeyFor(id)] = mob != nil && mob.Character.Health > 0
+		alive[mobparty.MemberKeyFor(id)] = mob != nil && mob.Character.Health > 0 && !mob.Character.CombatWithdrawn
 	}
 	return alive
 }
@@ -65,7 +65,7 @@ func summaries(room *rooms.Room) []mobparty.MobSummary {
 	var out []mobparty.MobSummary
 	for _, instanceId := range room.GetMobs() {
 		mob := mobs.GetInstance(instanceId)
-		if mob == nil || mob.Character.IsCharmed() {
+		if mob == nil || mob.Character.IsCharmed() || mob.Character.CombatWithdrawn {
 			continue
 		}
 		s := rooms.GroupSummary(mob)

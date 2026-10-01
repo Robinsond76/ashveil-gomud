@@ -1,9 +1,8 @@
 # Phase 30e: Morale and Mercy — Design for Review
 
-Status: proposed implementation design, 2026-09-30. The owner selected 30e;
-the direction in [the original proposal](2026-09-26-morale-mercy-design.md)
-is approved. The defaults and lifecycle choices below are recommendations,
-not yet approved gameplay decisions. No gameplay code has been changed.
+Status: owner approved, 2026-09-30. The owner approved the two-slice delivery,
+probabilities, thresholds, prompt lifecycle, alignment/loyalty consequences,
+temporary companion flight, and restart policy in this design.
 
 ## Goal and scope
 
@@ -221,8 +220,6 @@ would require separate scope approval.
 - Each slice gets independent review and the final project checks described
   in [the workflow](../AGENT_IMPLEMENTATION_WORKFLOW.md). No world-time advance.
 
-## Review requested
+## Approval
 
-Approve or amend the two-slice delivery, temperament probabilities, 30-second
-prompt expiry, alignment/loyalty defaults, temporary flight behavior, and the
-explicit unanswered-on-restart policy before the implementation plan and code.
+The owner approved the detailed gameplay choices on 2026-09-30 ("Looks good approved").

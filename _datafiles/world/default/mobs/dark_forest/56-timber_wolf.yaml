@@ -13,3 +13,5 @@ character:
   equipment:
     body:
       itemid: 20042
+
+temperament: skittish

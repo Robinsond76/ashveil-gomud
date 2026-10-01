@@ -86,6 +86,9 @@ func TryCommand(cmd string, rest string, mobId int) (bool, error) {
 	mobDisabled := false
 
 	mob := mobs.GetInstance(mobId)
+	if mob != nil && mob.Character.CombatWithdrawn {
+		return true, nil
+	}
 	if mob == nil {
 		return false, errors.New(`mob instance doesn't exist`)
 	}

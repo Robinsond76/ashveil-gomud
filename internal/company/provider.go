@@ -304,6 +304,8 @@ const (
 	MemberAwaiting
 	// MemberDead is dead, awaiting resurrection (Phase 25b).
 	MemberDead
+	// MemberFled is temporarily out of combat, with a saved return debt.
+	MemberFled
 )
 
 // MemberView is one companion as the information surfaces show it.

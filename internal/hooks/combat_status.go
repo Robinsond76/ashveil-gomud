@@ -92,6 +92,9 @@ func (h statusHolder) inFight(members map[string]bool) bool {
 // in a fight. A blow struck in a fight's last round is applied after the
 // fight has ended and cleared its statuses; it lands on nobody.
 func statusBuffLands(buffId int, char *characters.Character, user *users.UserRecord, mob *mobs.Mob) bool {
+	if char.CombatWithdrawn {
+		return false
+	}
 	if status.Get(buffId) == nil {
 		return true
 	}

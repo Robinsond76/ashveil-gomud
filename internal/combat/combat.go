@@ -64,6 +64,9 @@ func mobPower(m *mobs.Mob) *Power {
 
 // Performs a combat round from a player to a mob
 func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
+	if mob.Character.CombatWithdrawn {
+		return AttackResult{}
+	}
 
 	penalty := darknessPenalty(rooms.LoadRoom(user.Character.RoomId), &mob.Character, func(r *rooms.Room) int { return r.VisibilityForUser(user) })
 	targetChar := mobCombatCharacter(mob)
@@ -120,6 +123,9 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) 
 
 // Performs a combat round from a mob to a player
 func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
+	if mob.Character.CombatWithdrawn {
+		return AttackResult{}
+	}
 
 	penalty := darknessPenalty(rooms.LoadRoom(mob.Character.RoomId), user.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mob) })
 	sourceChar := mobCombatCharacter(mob)
@@ -143,6 +149,9 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 
 // Performs a combat round from a mob to a mob
 func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
+	if mobAtk.Character.CombatWithdrawn || mobDef.Character.CombatWithdrawn {
+		return AttackResult{}
+	}
 
 	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
 	sourceChar := mobCombatCharacter(mobAtk)

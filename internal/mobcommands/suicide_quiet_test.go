@@ -57,3 +57,19 @@ func TestSuicideQuietPracticeFoe(t *testing.T) {
 	assert.Contains(t, roomLines(t, "", true), "is beaten and yields the field.")
 	assert.NotContains(t, roomLines(t, "quiet", true), "is beaten")
 }
+
+func TestSuicideDoesNotRepeatDeath(t *testing.T) {
+	room := rooms.NewEmptyRoom()
+	mob := &mobs.Mob{MobId: 998, InstanceId: 434344}
+	room.AddMob(mob.InstanceId)
+	var count int
+	id := events.RegisterListener(events.MobDeath{}, func(events.Event) events.ListenerReturn { count++; return events.Continue })
+	t.Cleanup(func() { events.UnregisterListener(events.MobDeath{}, id) })
+	_, err := Suicide("quiet", mob, room)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	_, err = Suicide("quiet", mob, room)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Equal(t, 1, count)
+}

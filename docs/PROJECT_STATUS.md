@@ -5,21 +5,19 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-09-30
-- **Latest completed phase:** 30d2, physical wind-ups and the forest ogre's
-  Crushing Blow, merged at `792455ea` on 2026-09-30.
+- **Last updated:** 2026-10-01
+- **Latest completed phase:** 30e, morale and mercy (2026-10-01).
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
 
 The expedition/company loop, onboarding, combat presentation (29a–29f),
 status effects, wounds, tactics, guardians, interrupts, and wind-ups
-(30a–30d2) are shipped. The Phase 32 play-test improvements are implemented;
+(30a–30e) are shipped. The Phase 32 play-test improvements are implemented;
 32b's status still carries an outstanding review note (see its retained plan).
 
-**Next:** Phase 30e (morale and mercy), then 30f (battlefield conditions).
-The [detailed 30e design](designs/2026-09-30-phase-30e-morale-mercy-design.md)
-is ready for owner review; implementation has not begun.
+**Next:** Phase 30f (battlefield conditions).
+Phase 30e implements the [approved design](designs/2026-09-30-phase-30e-morale-mercy-design.md).
 The owner removed mounted combat from 30f on 2026-09-30. Combat-cadence
 balance tuning and other remaining limitations are listed below.
 
@@ -83,7 +81,7 @@ balance tuning and other remaining limitations are listed below.
 | 30b | Wounds, treatment, and `heal wounds` | Complete: [design](designs/2026-09-30-phase-30b-wounds-design.md). Lasting wounds from damaging crits, light ones from crushing blows and finished bleeds; healing stops at the wound limit; `heal`/`heal wounds` (clerics' `tend` and heal, splints and bandages, the Waymark Inn physician); inn stay heals, camp rest one wound per splint or bandage (owner amendment); death clears; `status`, GMCP, web strip; `help wounds` |
 | 30c | Company tactics | 30c1 complete: [design](designs/2026-09-29-phase-30c-company-tactics-design.md). `company tactics` (`tactics`): a durable company focus (none, leader, casters, nearest, weakest, strongest, wounded) and healing threshold (10–90%); in a battle only the focus changes, for that battle, one order a round, turning everyone at the next upkeep; web focus buttons; the `casters` rule; enemy personalities by race or template (`targeting`, `targetingnoise`); `help tactics`. 30c2 complete: [design](designs/2026-09-30-phase-30c2-guardian-design.md). A `guardian` role (`strategy <who> guard [other]`) steps in for its ward (set, else the most hurt in reach) within one column: 2 guards a battle, one back per 2 combat rounds, none while knocked down or stunned; `help guardian`. Rotate the wounded deferred |
 | 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](designs/2026-09-30-phase-30d1-chant-interrupts-design.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](designs/2026-09-30-phase-30d1b-chant-break-chance-design.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, or stun always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 complete: [design](designs/2026-09-30-phase-30d2-windups-design.md). Physical wind-ups (`internal/windup`, mob `windups`): the forest ogre (Dark Forest room 530) winds up Crushing Blow in plain view, then one swing of double damage that knocks down; only a crit that lands, a stagger, a knockdown, or a stun breaks it (owner); a broken or landed one is followed by 2 turns' cooldown; a shield bash is a counter strike only and breaks nothing (owner) |
-| 30e | Morale and mercy | Detailed design for review: [spec](designs/2026-09-30-phase-30e-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
+| 30e | Morale and mercy | Complete: enemy temperaments and shared break checks; protected surrender; paced mercy decisions, rewards and reactions; companion hesitation, flight and saved return |
 | 30f | Battlefield conditions | Proposed: [spec](designs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](designs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](designs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
@@ -98,6 +96,30 @@ balance tuning and other remaining limitations are listed below.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 30e: morale and mercy (2026-10-01)
+
+- Shipped original-group morale checks, race/template temperaments, protected
+  surrender and fleeing, and stable shared ownership across player battles.
+  Mercy questions wait for the paced summary, expire after 30 seconds, and
+  release unresolved prisoners on departure. Spare/execution use exact ±5
+  alignment, witnessed loyalty reactions, and execution's ordinary rewards.
+- Shipped one-check companion nerve, one-action hesitation and chant refunds,
+  durable flight/gear/return with one loyalty penalty, and zero-loyalty departure.
+  Mercy recovery saves effect receipts without restoring prisoners or replaying
+  rewards; offline retries load the latest saved character.
+- Added GMCP/browser presentation, indexed morale/mercy help and tutorial hints.
+  [Implementation record](plans/2026-09-30-phase-30e-implementation.md).
+- **Review:** independent full-diff review and follow-up found failed-save
+  prisoner abandonment, shared-owner transfer, same-round ownership ordering,
+  zero-loyalty departure, and stale offline character saves. Fixed all with
+  regression coverage; final reviewer found no remaining blocker. The pacing
+  concern was withdrawn after checking queued delivery and its regression.
+- **Verification:** `make generate`, `make validate`, `go test -race ./...`,
+  focused mobcommands/company regressions, JS/Lua lint and Chromium dock checks
+  all pass. JSHint used the installed executable instead of fetching with npx. Browser checks used the unchanged harness over local HTTP because this
+  environment blocks file URLs. The first full race run exposed death-guard
+  compatibility failures; the guard now uses a transient per-instance marker.
 
 ### Documentation maintenance and Phase 30e preparation (2026-09-30)
 

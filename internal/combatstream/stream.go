@@ -54,6 +54,7 @@ type fight struct {
 	enemyParty   map[string]string // enemy key -> its party id
 	lastDamager  map[string]Ref
 	down         map[string]string // key -> death outcome recorded
+	yielded      map[string]bool
 	fled         map[string]bool
 	tally        tally
 }
@@ -173,7 +174,9 @@ func (s *Stream) Emit(e Event) (Event, bool) {
 			return e, false
 		}
 	} else {
-		e.FightID, e.PartyID = 0, ""
+		if e.Kind != Mercy {
+			e.FightID, e.PartyID = 0, ""
+		}
 		s.noteOutsideDamage(e)
 	}
 	e, sinks := s.stampLocked(e)
@@ -280,6 +283,8 @@ func (s *Stream) place(f *fight, e *Event) bool {
 		if e.Damage > 0 && !e.Source.Zero() {
 			f.lastDamager[e.Target.Key()] = e.Source
 		}
+	case Yield:
+		f.yielded[e.Source.Key()] = true
 	case Flee:
 		f.fled[e.Source.Key()] = true
 	}
@@ -305,6 +310,7 @@ func (s *Stream) Open(round uint64, roomId int, partyID string, leader Ref, comp
 		enemyParty:   map[string]string{},
 		lastDamager:  map[string]Ref{},
 		down:         map[string]string{},
+		yielded:      map[string]bool{},
 		fled:         map[string]bool{},
 		tally:        newTally(),
 	}

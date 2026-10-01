@@ -189,7 +189,7 @@ func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 // alive, able to fight, not already chanting or fleeing, and (for the
 // player) not stood down.
 func readyToCast(a actor, u *users.UserRecord) bool {
-	if !canFight(a.char) {
+	if !canFight(a.char) || nerveSkip[a.who.mobId] {
 		return false
 	}
 	// Phase 30a: a status that costs its holder the action costs the cast.

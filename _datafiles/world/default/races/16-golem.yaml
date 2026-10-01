@@ -28,3 +28,5 @@ damage:
   attacks: 1
   diceroll: 2d5
 disabledslots: ['weapon', 'offhand', 'head', 'neck', 'belt', 'gloves', 'ring', 'legs', 'feet']
+
+neverbreak: true
