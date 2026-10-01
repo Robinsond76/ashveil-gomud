@@ -474,6 +474,9 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 		_, _, woundable = company.LeaderAndKeyForInstance(targetMob[0].InstanceId)
 	}
 
+	// backstabCrit makes the first blow that lands a critical hit.
+	backstabCrit := false
+
 	// Statmods can add a damage bonus plus the stat-driven damage bonus.
 	statModDBonus := sourceChar.StatMod(`damage`) + damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
 
@@ -502,11 +505,12 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 			}
 		}
 
-		attackMessagePrefix := ``
-		// If they are backstabbing it's a free crit
-		if sourceChar.Aggro.Type == characters.BackStab {
-			attackResult.Crit = true
-			attackMessagePrefix = `<ansi fg="magenta-bold">*[BACKSTAB]*</ansi> `
+		// If they are backstabbing it's a free crit: the first blow that
+		// lands. Phase 33e: held apart from attackResult.Crit, so a round
+		// whose every blow missed reports no crit; and no shouted prefix
+		// (the 29c voice: the hit line says "critical hit").
+		if sourceChar.Aggro != nil && sourceChar.Aggro.Type == characters.BackStab {
+			backstabCrit = true
 			// Failover to the default attack
 			sourceChar.SetAggro(sourceChar.Aggro.UserId, sourceChar.Aggro.MobInstanceId, characters.DefaultAttack)
 		}
@@ -599,10 +603,10 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						attackResult.EdgeSpent[slot]++
 					}
 
-					// Backstab sets attackResult.Crit for the first hit only; subsequent
-					// hits use a fresh per-attack roll so crits don't cascade.
-					isCrit = attackResult.Crit || Crits(sourceChar, targetChar)
-					attackResult.Crit = false // consume the backstab flag after one use
+					// Backstab crits the first hit only; subsequent hits use a
+					// fresh per-attack roll so crits don't cascade.
+					isCrit = backstabCrit || Crits(sourceChar, targetChar)
+					backstabCrit = false // consume the backstab flag after one use
 					if isCrit {
 						attackResult.Crit = true // record that at least one crit occurred this round
 						// Phase 30a review: added, so a later crit never drops an
@@ -669,15 +673,6 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					toAttackerRoomMsg = items.ItemMessage(string(toAttackerRoomMsg) + suffix)
 					if len(string(toDefenderRoomMsg)) > 0 {
 						toDefenderRoomMsg = items.ItemMessage(string(toDefenderRoomMsg) + suffix)
-					}
-				}
-
-				if len(attackMessagePrefix) > 0 {
-					toAttackerMsg = items.ItemMessage(attackMessagePrefix + string(toAttackerMsg))
-					toDefenderMsg = items.ItemMessage(attackMessagePrefix + string(toDefenderMsg))
-					toAttackerRoomMsg = items.ItemMessage(attackMessagePrefix + string(toAttackerRoomMsg))
-					if len(string(toDefenderRoomMsg)) > 0 {
-						toDefenderRoomMsg = items.ItemMessage(attackMessagePrefix + string(toDefenderRoomMsg))
 					}
 				}
 

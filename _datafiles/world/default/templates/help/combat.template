@@ -33,6 +33,8 @@ Once the battle starts:
   strategy picks (the weakest you can reach, unless you set another rule
   or a company focus), and each enemy on the one its kind prefers;
 - healers heal the hurt and casters cast their spells, with real mana;
+- warriors tackle, rogues strike an opening, and rangers aim a shot, each
+  on its own when the moment comes (<ansi fg="command">help abilities</ansi>);
 - guardians step in front of their wards to take blows meant for them
   (<ansi fg="command">help guardian</ansi>);
 - a blow that draws blood may break its target's chant (a heavy one
@@ -129,6 +131,7 @@ and your company's health.
   <ansi fg="command">scout [group]</ansi>     see how a group stands
   <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
+  <ansi fg="command">help abilities</ansi>    tackles, opening strikes, and aimed shots
   <ansi fg="command">help guardian</ansi>     guardians and their guards
   <ansi fg="command">help defense</ansi>      blocks, parries, and dodges
   <ansi fg="command">help burden</ansi>       how your own load cuts your dodge

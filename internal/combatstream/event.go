@@ -55,6 +55,11 @@ const (
 	// Source is filled with the victim's last damager in the fight.
 	Death Kind = "death"
 	Mercy Kind = "mercy" // Phase 30e
+	// Ability is an automatic class ability used (Phase 33e): Status is
+	// its name, Target the foe. A tackle's Outcome is OutcomeSucceeded or
+	// OutcomeFailed; a strike readied (Opening Strike, Aimed Shot) has
+	// none, its blow being the round's Attack.
+	Ability Kind = "ability"
 )
 
 // Outcomes.

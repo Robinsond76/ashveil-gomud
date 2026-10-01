@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -52,6 +54,10 @@ type actor struct {
 	key   company.MemberKey
 	knows func(spellId string) bool
 	att   enemyparty.Attacker
+	// holder is the actor for the status, interrupt, and narration
+	// helpers; archetype a companion's (Phase 33e: its abilities).
+	holder    statusHolder
+	archetype string
 }
 
 // strategyPass lets every healer and caster in a battle cast, by its
@@ -87,11 +93,15 @@ func strategyPass() {
 			// Phase 30b: a wounded ally is healed only to its limit.
 			allies[i] = strategy.Ally{HP: a.char.Health, MaxHP: a.char.HealthLimit(), Downed: a.who.userId > 0 && a.char.Health < 1}
 		}
+		// Phase 33e: a heal already chanting covers its patients, so a
+		// second healer turns to someone else.
+		markPendingHeals(allies, side, autoSpells)
 		for _, a := range side {
 			if !readyToCast(a, u) {
 				continue
 			}
-			role := enemyparty.MemberStrategy(uid, a.key).Role
+			st := enemyparty.MemberStrategy(uid, a.key)
+			role := st.Role
 			// A guardian fights as a fighter (Phase 30c2).
 			if role == strategy.Fighter || role == strategy.Guardian {
 				continue
@@ -105,12 +115,17 @@ func strategyPass() {
 				Foes:   len(foes),
 				// Phase 30c: the company's healing threshold.
 				HealBelow: healBelow,
+				// Phase 33e: the member's mana reserve.
+				MaxMana: a.char.ManaMax.Value,
+				Reserve: st.Reserve,
 			})
 			info, ok := autoSpellTargets(action, a, side, g, foes)
 			if !ok {
 				continue
 			}
-			startCast(a, action.Spell, info, room.RoomId)
+			if startCast(a, action.Spell, info, room.RoomId) {
+				coverHeal(allies, action)
+			}
 		}
 	}
 }
@@ -153,7 +168,8 @@ func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 			knows: func(id string) bool {
 				return u.Character.GetSkillLevel(`cast`) > 0 && u.Character.HasSpell(id)
 			},
-			att: enemyparty.PlayerAttacker(u),
+			att:    enemyparty.PlayerAttacker(u),
+			holder: userHolder(u),
 		})
 	}
 	assist := 0
@@ -175,12 +191,14 @@ func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 			known[id] = true
 		}
 		out = append(out, actor{
-			who:   caster{mobId: instanceId},
-			char:  &m.Character,
-			ref:   mobRef(m),
-			key:   key,
-			knows: func(id string) bool { return known[id] },
-			att:   enemyparty.CompanionAttacker(u.UserId, key, m, assist),
+			who:       caster{mobId: instanceId},
+			char:      &m.Character,
+			ref:       mobRef(m),
+			key:       key,
+			knows:     func(id string) bool { return known[id] },
+			att:       enemyparty.CompanionAttacker(u.UserId, key, m, assist),
+			holder:    mobHolder(m),
+			archetype: arch,
 		})
 	}
 	return out
@@ -246,21 +264,21 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 // startCast begins a spell as the cast command does: the spell's onCast
 // (its chant line; a script may refuse), the mana, the chant rounds, and
 // the cast-start event. The caster's aim is remembered, to turn back to.
-func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId int) {
+func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId int) bool {
 	sp := spells.GetSpell(spellId)
 	if sp == nil || a.char.Mana < sp.Cost {
-		return
+		return false
 	}
 	info = effecttargets.Resolve(a.who.userId, a.who.mobId, info)
 	if effecttargets.Helpful(sp) && len(info.TargetUserIds)+len(info.TargetMobInstanceIds) == 0 {
-		return
+		return false
 	}
 	proceed := true
 	if ok, err := scripting.TrySpellScriptEvent(`onCast`, a.who.userId, a.who.mobId, info); err == nil {
 		proceed = ok
 	}
 	if !proceed {
-		return
+		return false
 	}
 	if agg := a.char.Aggro; plainAttack(agg) && agg.MobInstanceId > 0 {
 		castAims[a.who] = agg.MobInstanceId
@@ -272,9 +290,50 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 		events.AddToQueue(events.SkillUsed{UserId: a.who.userId, Skill: `cast`, Details: spellId})
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: a.who.userId})
 		events.AddToQueue(events.AggroChanged{UserId: a.who.userId, RoomId: roomId})
-		return
+		return true
 	}
 	events.AddToQueue(events.AggroChanged{MobInstanceId: a.who.mobId, RoomId: roomId})
+	return true
+}
+
+// markPendingHeals marks the allies an automatic heal already chanting on
+// the side covers (Phase 33e): its patients, or everyone for a group heal.
+func markPendingHeals(allies []strategy.Ally, side []actor, autoSpells []strategy.Spell) {
+	uses := map[string]strategy.Use{}
+	for _, sp := range autoSpells {
+		uses[sp.ID] = sp.Use
+	}
+	for _, a := range side {
+		agg := a.char.Aggro
+		if agg == nil || agg.Type != characters.SpellCast {
+			continue
+		}
+		switch uses[agg.SpellInfo.SpellId] {
+		case strategy.UseHealAll:
+			coverHeal(allies, strategy.Action{Kind: strategy.HealAll})
+		case strategy.UseHeal:
+			for i, t := range side {
+				if (t.who.userId > 0 && slices.Contains(agg.SpellInfo.TargetUserIds, t.who.userId)) ||
+					(t.who.mobId > 0 && slices.Contains(agg.SpellInfo.TargetMobInstanceIds, t.who.mobId)) {
+					allies[i].Pending = true
+				}
+			}
+		}
+	}
+}
+
+// coverHeal marks the allies a heal just started covers.
+func coverHeal(allies []strategy.Ally, action strategy.Action) {
+	switch action.Kind {
+	case strategy.Heal:
+		if action.Ally >= 0 && action.Ally < len(allies) {
+			allies[action.Ally].Pending = true
+		}
+	case strategy.HealAll:
+		for i := range allies {
+			allies[i].Pending = true
+		}
+	}
 }
 
 // endCast ends a character's spell (cast, fizzled, or held): it turns

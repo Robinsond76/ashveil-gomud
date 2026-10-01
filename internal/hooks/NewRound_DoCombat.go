@@ -71,6 +71,9 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// before any blow.
 	nervePass()
 	strategyPass()
+	// Ashveil Phase 33e: members about to swing may use a class ability.
+	abilityPass()
+	defer endAbilityStrikes()
 	retreatCover = map[int]bool{}
 
 	//
@@ -121,6 +124,11 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 
 		// Disable any buffs that are cancelled by combat
 		user.Character.CancelBuffsWithFlag("cancel-on-combat")
+
+		// Ashveil Phase 33e: a tackle took this round's turn.
+		if abilityTurns[caster{userId: userId}] {
+			continue
+		}
 
 		roomId := user.Character.RoomId
 
@@ -710,6 +718,11 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 		// Disable any buffs that are cancelled by combat
 		mob.Character.CancelBuffsWithFlag("cancel-on-combat")
+
+		// Ashveil Phase 33e: a tackle took this round's turn.
+		if abilityTurns[caster{mobId: mobId}] {
+			continue
+		}
 
 		/**************************
 		*

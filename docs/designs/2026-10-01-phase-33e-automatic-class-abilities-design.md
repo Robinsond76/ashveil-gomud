@@ -75,3 +75,77 @@ hub links. Explain commands, costs, eligibility, and numbers that matter;
 use `[member]` placeholders. Rendering tests and
 `TestTutorialHelpPointersExist` must pass with the implementation. Do not
 publish help claiming these future mechanics already exist.
+
+## Final implementation decisions (2026-10-01)
+
+The owner delegated open defaults to the lead and authorized merge/push after
+the review gate. These decisions replace the open proposals above; the
+"future design" wording at the top is historical.
+
+**Roster (first release).** One automatic ability per weapon archetype; the
+cleric and wizard keep their spell roles and gain coordination and a reserve.
+
+| Archetype | Ability | Player unlock | Companion unlock | Used when | Effect | Cooldown |
+|---|---|---|---|---|---|---|
+| Warrior | Tackle | brawling ≥ 1 | warrior | no shooting weapon; its foe is on its feet (not knocked down or stunned) | chance Speed − foe Perception + 20, held to 20–80%: the foe is knocked down (30a status); a chanting foe's chant breaks (an enemy starts again), a wind-up breaks. Hit or miss, it is the warrior's turn: no swing that round | 4 combat rounds |
+| Rogue | Opening Strike | skulduggery ≥ 1 | rogue | wielding a weapon, every wielded weapon a backstab kind (slashing, stabbing, cleaving, claws); its foe knocked down, stunned, staggered, or exposed | that round's swing: its first blow that lands is a critical hit. It still rolls to hit, meets block/parry/dodge and armor, and leaves its weapon's crit status and wound as any crit | 2 combat rounds |
+| Ranger | Aimed Shot | track ≥ 1 | ranger | a shooting weapon; its foe not already exposed | that round's shot: its first blow that lands is a critical hit (a shooting crit leaves the foe exposed, opening it for a rogue) | 3 combat rounds |
+| Cleric | coordinated healing | | | | healers skip allies a heal already in progress (or chosen this round by another healer of the same company) covers; a group heal in progress covers everyone | |
+| Wizard (any caster) | mana reserve | | | | `strategy [who] reserve [percent]` (0–90, default 0): attack spells are cast only while that share of maximum mana would remain; heals ignore it | |
+
+- **Ownership and scope.** Abilities are chosen per actor from the same
+  side list as automatic spells: the player and their own living,
+  present company companions (by `company.LeaderAndKeyForInstance`), never
+  pets, temporary charms, another player's company, allies, the dead, the
+  downed, or withdrawn/retreating members. The target is always the actor's
+  current aim, a standing, visible foe of that player's own battle group,
+  which the upkeep keeps legal for reach, so no ability reaches another
+  battle or bystander. The formation gate applies as for a swing: an aim
+  the enemy front row would intercept gets no ability (review fix), and a
+  tackle needs the foe within hand-to-hand reach. No one in a company
+  preparing to retreat uses an ability (review fix).
+- **Turn and action budget.** An ability is the actor's whole turn this
+  combat round (Tackle) or this round's swing itself (Opening Strike, Aimed
+  Shot); it never adds an attack. A member that casts this round uses no
+  ability. A member whose weapon is still waiting (`RoundsWaiting`), who is
+  chanting, retreating, stood down, nerve-shaken, or loses the action to a
+  status uses none. 30g5's meter will charge abilities like any action.
+- **Resolution.** Shared rules apply: Opening Strike and Aimed Shot use the
+  existing backstab crit (fixed so a crit never reports on a round with no
+  landed blow), so hit, defense, armor, crit status and 30b wounds follow;
+  Tackle applies the 30a knocked-down status and reuses the 30d1/30d2
+  break paths. No ability uses, moves, or consumes an item (owner rule: no
+  item may be used in a fight).
+- **Controls.** `strategy [who] abilities on|off` (default on) and
+  `strategy [who] reserve [percent]`. Both are durable fields of the
+  member's strategy (`no_abilities`, `reserve`); old saves load as on/0.
+  `default` clears them. Changes are refused in a battle like every
+  strategy change. Abilities need no new role: ranged behavior follows the
+  weapon, not a role.
+- **Runtime state.** Cooldowns count combat rounds in a game-loop map keyed
+  by actor and ability ("at most once every N rounds"; spent when tried,
+  even if the foe falls before the blow); they are not saved, so a restart or copyover (which
+  ends every battle anyway) makes every ability ready. Opening/aimed strike
+  marks are cleared after the round's blows.
+- **Skill audit.** brawling: Tackle automatic; disarm, throw, recover stay
+  manual commands for fights outside company battles (player duels).
+  skulduggery: backstab adapted as Opening Strike in battles (manual
+  backstab unchanged outside them); sneak, pickpocket, bump, traps unchanged.
+  track: utility, and unlocks Aimed Shot. dual-wield: passive. cast: the
+  healer/caster roles. protection, tame, peep, enchant, portal: utility,
+  unchanged. Nothing is retired, so no refund is owed. Pets get no
+  abilities (pet assistance unchanged). Disarm is not automatic in this
+  release (it moves an enemy's weapon; deferred to 33i/33g).
+- **Presentation.** `strategy` lists each member's abilities and shows
+  `abilities off` and a reserve; `strategy [who]` explains each ability's
+  condition and cooldown. GMCP `Company` member strategies carry
+  `abilities`, `abilities_off`, and `reserve`, and the web Combat setup
+  shows them. Ability lines follow the 29c voice, and an `ability` event
+  goes on the combat stream. `help abilities` is new; `help strategy`,
+  `help tactics`, `help combat`, `help company`, `help archetype` (the
+  archetype page; `help warrior`/`help ranger` are GoMud's job pages and
+  stay as they are), `help brawling`, `help skulduggery`, and `help track`
+  are updated; the practice-fight lesson points to `help abilities`.
+- **Balance.** Not retuned here; 30g6 (or a later tuning pass) measures it.
+
+Verification and independent review results are recorded in Project Status.

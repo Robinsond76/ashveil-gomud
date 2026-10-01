@@ -31,8 +31,8 @@ not reopen completed Phase 32 work. Every review recommendation maps here.
 | 33a | [Company Command Rules and Legacy Action Routes](2026-10-01-phase-33a-company-command-rules-design.md) | Complete (2026-10-01) |
 | 33b | [Friendly Effects and Company Membership](2026-10-01-phase-33b-friendly-effect-scopes-design.md) | Complete (2026-10-01) |
 | 33c | [Company Retreat, Rout, and Separation](2026-10-01-phase-33c-company-retreat-design.md) | Complete (2026-10-01) |
-| 33d | [Multiplayer Parties and Allied Companies](2026-10-01-phase-33d-allied-companies-design.md) | Future design; implementation not started |
-| 33e | [Automatic Class Abilities and Combat Roles](2026-10-01-phase-33e-automatic-class-abilities-design.md) | Future design; implementation not started |
+| 33d | [Multiplayer Parties and Allied Companies](2026-10-01-phase-33d-allied-companies-design.md) | Complete (2026-10-01) |
+| 33e | [Automatic Class Abilities and Combat Roles](2026-10-01-phase-33e-automatic-class-abilities-design.md) | Complete (2026-10-01) |
 | 33f | [Company Specialists and Group Exploration](2026-10-01-phase-33f-company-specialists-design.md) | Future design; implementation not started |
 | 33g | [Company Equipment, Loadouts, and Loot](2026-10-01-phase-33g-company-equipment-loot-design.md) | Future design; implementation not started |
 | 33h | [Company Progression, Rewards, and Expedition Continuity](2026-10-01-phase-33h-progression-recovery-continuity-design.md) | Future design; implementation not started |
@@ -45,7 +45,7 @@ These are delivery boundaries inside their parent phases, not shipped work.
 ## Suggested delivery order
 
 30g2 is shipped. The owner now requests all Phase 33 slices in order and
-authorizes the lead to choose open defaults. 33a–33c are complete. Continue with 33d; 30g3 is shipped and 30g4–30g6
+authorizes the lead to choose open defaults. 33a–33e are complete. Continue with 33f; 30g3 is shipped and 30g4–30g6
 remain queued. Dependencies below guide integration choices:
 
 1. Start 33a and company-only 33b as a compatibility pass after 30g2.

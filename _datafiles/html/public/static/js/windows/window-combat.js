@@ -273,11 +273,25 @@
         return 'guards ' + wardName(s.ward, members) + (s.ward_reach === false ? ' (out of reach)' : '');
     }
 
+    // abilityText is a member's class abilities, or that they are off, and
+    // its mana reserve (Phase 33e).
+    function abilityText(s) {
+        const parts = [];
+        if (s.abilities_off) {
+            parts.push('abilities off');
+        } else if (Array.isArray(s.abilities) && s.abilities.length) {
+            parts.push(s.abilities.join(', '));
+        }
+        if (s.reserve) { parts.push('keeps ' + s.reserve + '% mana'); }
+        return parts.join(', ');
+    }
+
     function howText(m, members) {
         const s = m.strategy;
         if (!s) { return ''; }
         const g = guardText(m, members || []);
-        return s.role + ', ' + s.target + (g ? ', ' + g : '');
+        const a = abilityText(s);
+        return s.role + ', ' + s.target + (g ? ', ' + g : '') + (a ? ', ' + a : '');
     }
 
     function memberMenu(m, members) {
@@ -295,6 +309,11 @@
         RULES.filter(r => r !== s.target && !(r === 'assist' && m.key === 'leader')).forEach(r => {
             items.push({ label: 'Target: ' + r, cmd: 'strategy ' + who(m) + ' target ' + r });
         });
+        if (s.abilities_off) {
+            items.push({ label: 'Abilities: on', cmd: 'strategy ' + who(m) + ' abilities on' });
+        } else if (Array.isArray(s.abilities) && s.abilities.length) {
+            items.push({ label: 'Abilities: off', cmd: 'strategy ' + who(m) + ' abilities off' });
+        }
         items.push({ label: 'Back to the default', cmd: 'strategy ' + who(m) + ' default' });
         const taken = {};
         members.forEach(x => { if (x.cell) { taken[x.cell.row + ',' + x.cell.col] = x; } });

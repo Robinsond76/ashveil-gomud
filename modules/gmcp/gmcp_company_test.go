@@ -418,3 +418,24 @@ func companyJSON(t *testing.T, s companyview.Summary) map[string]any {
 	require.NoError(t, json.Unmarshal(data, &got))
 	return got
 }
+
+// TestCompanyAbilities (Phase 33e): a member's class abilities, a strategy
+// turning them off, and a mana reserve travel in its strategy, and a
+// change resends the snapshot.
+func TestCompanyAbilities(t *testing.T) {
+	s := sampleCompany()
+	s.Leader.Strategy = strategy.Strategy{Role: strategy.Caster, Rule: strategy.Weakest, Reserve: 30}
+	s.Companions[0].Strategy = strategy.Strategy{Role: strategy.Fighter, Rule: strategy.Weakest, NoAbilities: true}
+	s.Companions[0].Abilities = []strategy.Ability{strategy.Tackle}
+	got := companyJSON(t, s)
+	assert.Equal(t, map[string]any{"role": "caster", "target": "weakest", "reserve": 30.0}, got["leader"].(map[string]any)["strategy"])
+	assert.Equal(t, map[string]any{"role": "fighter", "target": "weakest", "abilities": []any{"Tackle"}, "abilities_off": true},
+		got["members"].([]any)[0].(map[string]any)["strategy"])
+
+	f, out := testFeed()
+	f.update(7, s)
+	s.Companions[0].Strategy.NoAbilities = false
+	f.update(7, s)
+	require.Len(t, *out, 2)
+	assert.Equal(t, "Company", (*out)[1].module)
+}

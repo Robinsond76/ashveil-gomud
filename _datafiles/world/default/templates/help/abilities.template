@@ -1,0 +1,70 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">abilities</ansi>
+
+Warriors, rogues, and rangers each have a class ability they use on their
+own in a battle, when the moment comes. Nobody types it: like a healer's
+heal, it follows from how your company is set up. Who has which:
+
+  a companion   by its archetype, from level 1
+  you           by the skill you have trained (level 1 or more)
+
+<ansi fg="yellow-bold">The abilities</ansi>
+
+  <ansi fg="command">Tackle</ansi>           warriors; for you, the <ansi fg="skill">brawling</ansi> skill
+    When: its foe is on its feet and within hand-to-hand reach (not a
+    rank deeper with a long weapon), and it has no bow or sling.
+    Does: knocks the foe to the ground, with a chance of Speed against
+    the foe's Perception, plus 20, held between 20% and 80%. A knocked-
+    down foe loses its next action and is slower for 3 rounds. A tackle
+    also breaks a foe's chant (it must start again) or wind-up. Hit or
+    miss, the tackle is the warrior's whole turn: no swing that round.
+    At most once every 4 combat rounds.
+
+  <ansi fg="command">Opening Strike</ansi>   rogues; for you, the <ansi fg="skill">skulduggery</ansi> skill
+    When: its foe is knocked down, stunned, staggered, or exposed, and it
+    wields a blade or claws (slashing, stabbing, cleaving), every weapon
+    it holds.
+    Does: its first blow that lands this round is a critical hit.
+    At most once every 2 combat rounds.
+
+  <ansi fg="command">Aimed Shot</ansi>       rangers; for you, the <ansi fg="skill">track</ansi> skill
+    When: it has a bow or sling, and its foe is not already exposed.
+    Does: its first shot that lands this round is a critical hit; if it
+    gets through the armor, the foe is left exposed (<ansi fg="command">help statuses</ansi>),
+    an opening for a rogue.
+    At most once every 3 combat rounds.
+
+An opening strike or aimed shot is the round's swing itself, never an
+extra one: it still has to hit, can still be blocked, parried, or dodged,
+and armor still takes its share (<ansi fg="command">help defense</ansi>). Its critical hit
+leaves the weapon's status, like any other.
+A member uses an ability only on its own foe in your battle, and only on
+a turn it would swing: not while it chants a spell, waits for a slow
+weapon, or has lost the action to a status, and nobody uses one while the
+company prepares to retreat. The formation rules a swing as usual: a foe
+the front row shields is out of an ability's reach. An ability counts as
+used when it is tried, even if its foe falls before the blow. Abilities use no
+items. Pets, and anyone outside your company, have none.
+
+<ansi fg="yellow-bold">Healers and casters</ansi>
+
+Clerics and wizards fight by their spells (<ansi fg="command">help strategy</ansi>). Two
+healers don't heal the same member at once: while one heal is being
+chanted on someone, the other healer heals someone else, or fights. A
+member's mana reserve keeps a share of its mana back from attack spells,
+for heals or the next fight; heals ignore it.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">strategy</ansi>                       everyone's abilities, after their role and rule
+  <ansi fg="command">strategy [who]</ansi>                 one member's abilities, when each is used
+  <ansi fg="command">strategy [who] abilities off</ansi>   use none in battle (<ansi fg="command">on</ansi> to use them again)
+  <ansi fg="command">strategy [who] reserve [percent]</ansi>
+                                 keep that much mana back from attack spells
+                                 (0 to 90; 0 by default)
+
+Like every strategy, these are set before a battle and kept when you log
+out. <ansi fg="command">strategy [who] default</ansi> turns abilities back on and clears the
+reserve. In the web client, the Combat tab shows each member's abilities;
+click a member to turn them off or on (<ansi fg="command">help webclient</ansi>).
+
+See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help statuses</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help brawling</ansi>.
