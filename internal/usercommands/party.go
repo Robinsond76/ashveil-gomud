@@ -3,6 +3,7 @@ package usercommands
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -340,6 +341,9 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			partyTxt, _ := templates.Process("tables/generic", partyTableData, user.UserId)
 			user.SendText(partyTxt)
 
+			if !isInvited {
+				user.SendText(fmt.Sprintf(`Your consent: follow=%t, support=%t, autoattack=%t. Each owner commands their own company.`, currentParty.Follows(user.UserId), currentParty.Supports(user.UserId), slices.Contains(currentParty.GetAutoAttackUserIds(), user.UserId)))
+			}
 			if isInvited {
 				user.SendText(`Type <ansi fg="command">party accept/decline</ansi> to finalize your party membership.`)
 			}
@@ -354,6 +358,21 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 	//
 	// Everything after this point you must be in a party
 	//
+	if partyCommand == `follow` || partyCommand == `support` {
+		if rest != `on` && rest != `off` {
+			user.SendText(fmt.Sprintf(`Usage: party %s [on/off]`, partyCommand))
+			return true, nil
+		}
+		if partyCommand == `follow` {
+			currentParty.SetFollow(user.UserId, rest == `on`)
+		} else {
+			currentParty.SetSupport(user.UserId, rest == `on`)
+		}
+		user.SendText(fmt.Sprintf(`Party %s is %s for your company.`, partyCommand, rest))
+		events.AddToQueue(events.PartyUpdated{Action: `behavior`, UserIds: currentParty.GetMembers()})
+		return true, nil
+	}
+
 	if partyCommand == `autoattack` {
 		autoAttackOn := false
 		if rest == `on` {
@@ -411,48 +430,22 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				return true, nil
 			}
 
-			currentParty.LeaderUserId = 0
-
-			// promote someone else to leader
-			for _, uid := range currentParty.UserIds {
-				if uid == user.UserId {
-					continue
-				}
-
-				newLeaderUser := users.GetByUserId(uid)
-
-				if newLeaderUser == nil {
-					continue
-				}
-
-				currentParty.LeaderUserId = uid
-
-				break
-			}
-
-			if currentParty.LeaderUserId > 0 {
-				newLeaderUser := users.GetByUserId(currentParty.LeaderUserId)
-				for _, uid := range currentParty.UserIds {
-					if u := users.GetByUserId(uid); u != nil {
-						if currentParty.LeaderUserId == uid {
-							u.EventLog.Add(`party`, `Promoted to party leader`)
-							u.SendText(`You are now the leader of the party.`)
-						} else {
-							u.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is now the leader of the party.`, newLeaderUser.Character.Name))
-						}
+			currentParty.Leave(user.UserId)
+			for _, uid := range currentParty.GetMembers() {
+				if u := users.GetByUserId(uid); u != nil {
+					if currentParty.IsLeader(uid) {
+						u.EventLog.Add(`party`, `Promoted to party leader`)
+						u.SendText(`You are now the leader of the party. Following is off for everyone.`)
+					} else {
+						u.SendText(fmt.Sprintf(`Player #%d is now the party leader. Following is off; use party follow on to consent.`, currentParty.LeaderUserId))
 					}
 				}
-
-				//
-				// New user is promoted to leader
-				//
-				events.AddToQueue(events.PartyUpdated{
-					Action:  `promotion`,
-					UserIds: append(currentParty.GetMembers(), currentParty.GetInvited()...),
-				})
 			}
+			events.AddToQueue(events.PartyUpdated{
+				Action:  `promotion`,
+				UserIds: append(append(currentParty.GetMembers(), currentParty.GetInvited()...), user.UserId),
+			})
 
-			currentParty.Leave(user.UserId)
 			user.EventLog.Add(`party`, `Left the party`)
 			user.SendText(`You left the party.`)
 
@@ -607,17 +600,17 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 		promoteUserId := memberIds[matchUser]
 
-		currentParty.LeaderUserId = promoteUserId
+		currentParty.Promote(promoteUserId)
 
 		if u := users.GetByUserId(promoteUserId); u != nil {
 			u.EventLog.Add(`party`, `Promoted to party leader`)
-			u.SendText(`You have been promoted to party leader.`)
+			u.SendText(`You have been promoted to party leader. Following consent has been cleared.`)
 		}
 
 		for _, uid := range currentParty.UserIds {
 			if uid != promoteUserId {
 				if u := users.GetByUserId(uid); u != nil {
-					u.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is now the party leader.`, matchUser))
+					u.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is now the party leader. Following is off; use party follow on to consent.`, matchUser))
 				}
 			}
 		}

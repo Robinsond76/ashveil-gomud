@@ -1,0 +1,37 @@
+<ansi fg="magenta">Help for </ansi><ansi fg="command">party</ansi>
+
+A player party coordinates companies. Each owner keeps authority over their
+own companions, formation, equipment and retreat. An invitation is not membership.
+
+  party create                    Start a party you lead.
+  party invite [name]             Invite a player.
+  party accept / party decline    Answer an invitation.
+  party list                      See members, leader and your consent.
+  party leave                     Leave; another member becomes leader.
+  party disband                   Disband a party you lead.
+  party kick [name]               Remove a member (leader only).
+  party promote [name]            Transfer leadership (leader only).
+  party chat [message]            Speak to accepted members.
+  party autoattack on / off       Join your leader's attacks automatically.
+  party follow on / off           Follow your current leader on ordinary exits.
+  party support on / off          Consent to allied group helpful effects.
+
+All three consents default off. Leaving or being kicked clears them. A new
+leader clears following for everyone: use party follow on again if desired.
+Following queues your own movement command, with your own movement checks.
+It does not start shared journeys or camps, and cannot move a distant company.
+A separated follower receives a notice when the leader takes an ordinary exit.
+
+Allied/area support requires both owners to turn support on and be present.
+A chant loses targets if consent or membership is revoked. Company-scoped
+spells, including Minor Heal All, still help only the caster's own company.
+Single-target support can name a patient beside you without this consent.
+
+Parties and consent last only for the current session: logout removes membership,
+and restart or copyover resets it. Company records remain saved independently.
+Party experience sharing still uses the existing party rules; membership alone
+is not a promise of contribution-based rewards or shared loot distribution.
+Legacy party ranks affect initial targeting; each company keeps its own grid.
+
+See <ansi fg="command">help company</ansi>, <ansi fg="command">help combat</ansi>,
+<ansi fg="command">help friendly-effects</ansi>, and <ansi fg="command">help travel</ansi>.

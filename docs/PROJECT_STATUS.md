@@ -19,7 +19,7 @@ play-test improvements are implemented; 32b's status still carries an outstandin
 
 **Current owner priority:** finish Phase 33a–33i in order, choosing the lead's
 recommended defaults without further confirmation (2026-10-01). 33a–33c are
-complete; **33d, allied companies, is next**. Phase 30g3 is also complete;
+complete; **33d, allied companies, has started with its consent slice**. Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
@@ -55,7 +55,7 @@ command consistency, friendly-effect scopes, retreat, allied companies,
 automatic class abilities, specialists, equipment/loot, progression/recovery/
 relocation, and group assessment/coordinated enemies. These are planning
 records now authorized for implementation by the owner, with open defaults
-delegated to the lead. 33a–33c are complete; 33d follows.
+delegated to the lead. 33a–33c are complete; 33d is in progress.
 
 ## Phase progress
 
@@ -133,7 +133,7 @@ delegated to the lead. 33a–33c are complete; 33d follows.
 | 33a | Company Command Rules and Legacy Action Routes | Complete: [design](designs/2026-10-01-phase-33a-company-command-rules-design.md), [plan](plans/2026-10-01-phase-33a-company-command-rules.md); safe ask aliases, queued ownership checks, battle/script/skill policy |
 | 33b | Friendly Effects and Company Membership | Complete: [design](designs/2026-10-01-phase-33b-friendly-effect-scopes-design.md), [plan](plans/2026-10-01-phase-33b-friendly-effects.md); shared target snapshots, eligibility, ownership and callback revalidation |
 | 33c | Company Retreat, Rout, and Separation | Complete: [design](designs/2026-10-01-phase-33c-company-retreat-design.md), [plan](plans/2026-10-01-phase-33c-company-retreat.md); ordered withdrawal, paid cover, legal escape and saved separation |
-| 33d | Multiplayer Parties and Allied Companies | Future design: [proposal](designs/2026-10-01-phase-33d-allied-companies-design.md); implementation not started |
+| 33d | Multiplayer Parties and Allied Companies | In progress: [design](designs/2026-10-01-phase-33d-allied-companies-design.md), [plan](plans/2026-10-01-phase-33d-allied-companies.md); initial membership/follow/support consent slice verified on feature branch; encounter rewards, loot and durable alliance recovery pending |
 | 33e | Automatic Class Abilities and Combat Roles | Future design: [proposal](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md); implementation not started |
 | 33f | Company Specialists and Group Exploration | Future design: [proposal](designs/2026-10-01-phase-33f-company-specialists-design.md); implementation not started |
 | 33g | Company Equipment, Loadouts, and Loot | Future design: [proposal](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); implementation not started |
@@ -142,6 +142,35 @@ delegated to the lead. 33a–33c are complete; 33d follows.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33d: initial alliance consent slice (2026-10-01)
+
+- Pulled origin master `4b4db05e` and confirmed 33d was not implemented;
+  isolated branch/worktree `phase-33d-allied-companies` retains this initial unit.
+- Reused runtime parties and 33b's helpful-target resolver: accepted members
+  opt into following and mutual allied/area support; joining grants neither.
+  Company-only spells and companion command/formation/asset authority stay per
+  owner. Autoattack consent rejects invitations; leaving/kicking/disbanding
+  prune consent. Promotion resets following; logout reports the successor.
+- Queued follows capture current leader, origin and a unique consent token,
+  checked at actual execution after requeue. Off/on, leaving/rejoining,
+  recreated parties, movement, promotion and active prompts invalidate them.
+- Shipped indexed `help party`, aliases, company/combat/support links and a
+  Departure hint. Tests exercise actual party commands, ordinary movement,
+  production hook registration, cast completion and logout/recovery paths.
+- Independent review accepted and fixed delayed-follow authority, production
+  provider coverage, successor feedback and contradictory design status;
+  re-review found solo logout notification, also fixed with regression coverage.
+  No rejected findings or unresolved blockers for this initial unit.
+- Verification passed: touched-package tests; `go test -race .
+  ./internal/hooks -count=1`; `make generate`; `make validate`; final
+  `go test -race ./...`; `git diff --check`. Initial race/test failures in the
+  new fixture (redundant logger reset and capturing unrelated queued input)
+  were corrected before the green final suite. No JS/Lua source changed.
+- **33d is not complete and has not been merged/pushed.** Party state remains
+  runtime-only. Encounter participation/XP, deterministic loot, durable alliance
+  recovery and rank replacement remain the next tasks in the plan.
+
 
 ### Phase 33c: company retreat (2026-10-01)
 

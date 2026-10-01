@@ -1,15 +1,21 @@
 package parties
 
+import "slices"
+
 type Party struct {
 	LeaderUserId  int
 	UserIds       []int
 	InviteUserIds []int
 	AutoAttackers []int
 	Position      map[int]string
+	Followers     []int
+	Supporters    []int
+	followTokens  map[int]uint64
 }
 
 var (
-	partyMap = map[int]*Party{} // key is leader user id, value is party
+	followSequence uint64
+	partyMap       = map[int]*Party{} // key is leader user id, value is party
 )
 
 func New(userId int) *Party {
@@ -76,6 +82,9 @@ func (p *Party) New(userId int) *Party {
 }
 
 func (p *Party) SetAutoAttack(userId int, on bool) bool {
+	if !p.IsMember(userId) {
+		return false
+	}
 
 	if on {
 		for _, id := range p.AutoAttackers {
@@ -97,10 +106,26 @@ func (p *Party) SetAutoAttack(userId int, on bool) bool {
 }
 
 func (p *Party) GetAutoAttackUserIds() []int {
-	return append([]int{}, p.AutoAttackers...)
+	var result []int
+	for _, id := range p.AutoAttackers {
+		if p.IsMember(id) {
+			result = append(result, id)
+		}
+	}
+	return result
 }
 
 func (p *Party) Leave(userId int) bool {
+	if p.Invited(userId) {
+		return p.DeclineInvite(userId)
+	}
+	if !p.IsMember(userId) {
+		return false
+	}
+	p.SetAutoAttack(userId, false)
+	p.SetFollow(userId, false)
+	p.SetSupport(userId, false)
+	delete(p.Position, userId)
 	if p.IsLeader(userId) {
 		if len(p.UserIds) == 1 {
 			p.Disband()
@@ -109,7 +134,7 @@ func (p *Party) Leave(userId int) bool {
 
 		for _, id := range p.UserIds {
 			if id != userId {
-				p.LeaderUserId = id
+				p.Promote(id)
 				break
 			}
 		}
@@ -189,6 +214,10 @@ func (p *Party) DeclineInvite(userId int) bool {
 }
 
 func (p *Party) Disband() {
+	p.AutoAttackers = nil
+	p.Followers = nil
+	p.followTokens = nil
+	p.Supporters = nil
 	for _, userId := range p.UserIds {
 		delete(partyMap, userId)
 	}
@@ -203,4 +232,90 @@ func (p *Party) GetMembers() []int {
 
 func (p *Party) GetInvited() []int {
 	return append([]int{}, p.InviteUserIds...)
+}
+
+// Consent is runtime-only, like party membership. Joining grants no movement,
+// combat or support authority. These methods run on the owning game loop.
+func (p *Party) SetFollow(userId int, on bool) bool {
+	if !p.IsMember(userId) {
+		return false
+	}
+	wasOn := p.setConsent(&p.Followers, userId, on)
+	if on && !wasOn {
+		followSequence++
+		if p.followTokens == nil {
+			p.followTokens = map[int]uint64{}
+		}
+		p.followTokens[userId] = followSequence
+	}
+	if !on {
+		delete(p.followTokens, userId)
+	}
+	return wasOn
+}
+
+func (p *Party) SetSupport(userId int, on bool) bool {
+	return p.setConsent(&p.Supporters, userId, on)
+}
+
+func (p *Party) setConsent(ids *[]int, userId int, on bool) bool {
+	if !p.IsMember(userId) {
+		return false
+	}
+	wasOn := slices.Contains(*ids, userId)
+	if on && !wasOn {
+		*ids = append(*ids, userId)
+	}
+	if !on {
+		*ids = slices.DeleteFunc(*ids, func(id int) bool { return id == userId })
+	}
+	return wasOn
+}
+
+func (p *Party) Follows(userId int) bool {
+	return p.IsMember(userId) && !p.IsLeader(userId) && slices.Contains(p.Followers, userId)
+}
+
+func (p *Party) Supports(userId int) bool {
+	return p.IsMember(userId) && slices.Contains(p.Supporters, userId)
+}
+
+// Promote validates membership and clears follow consent: consent to follow
+// one leader is never inherited by their replacement.
+func (p *Party) Promote(userId int) bool {
+	if !p.IsMember(userId) {
+		return false
+	}
+	if p.LeaderUserId != userId {
+		p.Followers = nil
+		p.followTokens = nil
+	}
+	p.LeaderUserId = userId
+	return true
+}
+
+// AlliedLeaders is the helpful-effect provider. Both owners must opt in;
+// invitations and stale consent cannot broaden a company's target scope.
+// The effect resolver checks room, life, company ownership and chant snapshots.
+func AlliedLeaders(userId int) []int {
+	p := Get(userId)
+	if p == nil || !p.Supports(userId) {
+		return nil
+	}
+	var result []int
+	for _, id := range p.GetMembers() {
+		if id != userId && p.Supports(id) {
+			result = append(result, id)
+		}
+	}
+	return result
+}
+
+// FollowToken identifies this specific consent, invalidating queued moves even
+// if a player leaves/rejoins or turns following off and back on before execution.
+func (p *Party) FollowToken(userId int) uint64 {
+	if !p.Follows(userId) {
+		return 0
+	}
+	return p.followTokens[userId]
 }

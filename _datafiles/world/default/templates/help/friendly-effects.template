@@ -25,8 +25,9 @@ start; losing targets spends the cast, with no automatic refund.
 
 Company-wide support never automatically includes other players' companies.
 Single-target support can explicitly name another patient beside you.
-Allied/area group support requires a consent provider; absent that, it stays
-within the caster's company. Harmful spells keep their battle boundaries.
+For allied/area group support, both accepted party owners must use
+<ansi fg="command">party support on</ansi>. It defaults off; revoking consent
+or leaving removes targets from a chant. See <ansi fg="command">help party</ansi>. Harmful spells keep their battle boundaries.
 
 See <ansi fg="command">help cast</ansi>, <ansi fg="command">help strategy</ansi>,
 <ansi fg="command">help wounds</ansi>, and <ansi fg="command">help resurrect</ansi>.

@@ -146,3 +146,5 @@ rechecks life, presence and ownership, and healing stops at wound limits
 
 Ordered withdrawal: <ansi fg="command">retreat [exit]</ansi> prepares for one round,
 then attempts to move the company together. See <ansi fg="command">help retreat</ansi>.
+
+For player alliances and opt-in following/support, see <ansi fg="command">help party</ansi>.

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -248,4 +249,92 @@ func TestHelpfulCastPrunesBeforeRoundCompletion(t *testing.T) {
 			assert.NotEqual(t, patient.InstanceId, event.Target.MobInstanceId)
 		}
 	}
+}
+
+// Exercise the real cast and completion callbacks with 33d's production
+// consent provider, rather than a test function that invents allied owners.
+func TestAlliedPartyConsentRecheckedAtCastCompletion(t *testing.T) {
+	for _, change := range []string{"revoke", "leave", "move", "invited", "late-consent"} {
+		t.Run(change, func(t *testing.T) {
+			b := newBrawl(t)
+			other := users.NewUserRecord(93321, 0)
+			other.Character.Name = "Ally"
+			other.Character.RoomId = b.road.RoomId
+			other.Character.HealthMax.Value = 100
+			other.Character.Health = 1
+			users.SetTestUser(other)
+			b.road.AddPlayer(other.UserId)
+			t.Cleanup(func() { b.road.RemovePlayer(other.UserId); users.RemoveTestUser(other.UserId) })
+			p := parties.New(b.aria.UserId)
+			require.NotNil(t, p)
+			t.Cleanup(p.Disband)
+			require.True(t, p.InvitePlayer(other.UserId))
+			if change != "invited" {
+				require.True(t, p.AcceptInvite(other.UserId))
+			}
+			p.SetSupport(b.aria.UserId, true)
+			if change != "late-consent" {
+				p.SetSupport(other.UserId, true)
+			}
+			previous := effecttargets.SetAlliedLeaders(parties.AlliedLeaders)
+			t.Cleanup(func() { effecttargets.SetAlliedLeaders(previous) })
+			sp := spells.GetSpell("healall")
+			original := sp.Scope
+			sp.Scope = spells.ScopeAllied
+			t.Cleanup(func() { sp.Scope = original })
+			info := friendlyCast(t, b)
+			if change != "invited" && change != "late-consent" {
+				assert.Contains(t, info.TargetUserIds, other.UserId)
+			} else {
+				assert.NotContains(t, info.TargetUserIds, other.UserId)
+			}
+			switch change {
+			case "revoke":
+				p.SetSupport(other.UserId, false)
+			case "leave":
+				p.Leave(other.UserId)
+			case "move":
+				other.Character.RoomId++
+			case "late-consent":
+				p.SetSupport(other.UserId, true)
+			}
+			_, err := scripting.TrySpellScriptEvent("onMagic", b.aria.UserId, 0, info)
+			require.NoError(t, err)
+			assert.Equal(t, 1, other.Character.Health, "revoked, absent, invited and late targets receive no heal")
+		})
+	}
+}
+
+func TestAlliedPartySupportRequiresBothOwnersAndKeepsCompanyScope(t *testing.T) {
+	b := newBrawl(t)
+	other := users.NewUserRecord(93322, 0)
+	other.Character.RoomId = b.road.RoomId
+	other.Character.HealthMax.Value = 100
+	other.Character.Health = 1
+	users.SetTestUser(other)
+	b.road.AddPlayer(other.UserId)
+	t.Cleanup(func() { b.road.RemovePlayer(other.UserId); users.RemoveTestUser(other.UserId) })
+	p := parties.New(b.aria.UserId)
+	require.NotNil(t, p)
+	t.Cleanup(p.Disband)
+	p.InvitePlayer(other.UserId)
+	p.AcceptInvite(other.UserId)
+	previous := effecttargets.SetAlliedLeaders(parties.AlliedLeaders)
+	t.Cleanup(func() { effecttargets.SetAlliedLeaders(previous) })
+	p.SetSupport(other.UserId, true)
+	sp := spells.GetSpell("healall")
+	original := sp.Scope
+	t.Cleanup(func() { sp.Scope = original })
+	sp.Scope = spells.ScopeAllied
+	info := effecttargets.Resolve(b.aria.UserId, 0, characters.SpellAggroInfo{SpellId: "healall"})
+	assert.NotContains(t, info.TargetUserIds, other.UserId, "one-sided consent grants nothing")
+	p.SetSupport(b.aria.UserId, true)
+	info = friendlyCast(t, b)
+	assert.Contains(t, info.TargetUserIds, other.UserId)
+	_, err := scripting.TrySpellScriptEvent("onMagic", b.aria.UserId, 0, info)
+	require.NoError(t, err)
+	assert.Greater(t, other.Character.Health, 1)
+	sp.Scope = spells.ScopeCompany
+	info = effecttargets.Resolve(b.aria.UserId, 0, characters.SpellAggroInfo{SpellId: "healall"})
+	assert.NotContains(t, info.TargetUserIds, other.UserId, "company scope never broadens")
 }

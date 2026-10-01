@@ -1,9 +1,9 @@
 # Phase 33d: Multiplayer Parties and Allied Companies — Future Design
 
-Status: future design, 2026-10-01. The owner endorsed the gameplay-review
-recommendations and requested these planning documents. Detailed mechanics,
-command names, migrations, and balance defaults below remain proposals;
-implementation is not started or authorized by this documentation change.
+Status: implementation started, 2026-10-01. The owner endorsed the gameplay-review
+recommendations and requested these planning documents. The original planning request approved direction; the later owner priority
+authorizes implementation and delegates defaults. The implementation decisions
+below settle the first slice; remaining mechanics are proposals.
 
 See the [company gameplay roadmap](2026-10-01-company-gameplay-roadmap.md)
 for sequencing, shared constraints, and the decision register. Code context
@@ -75,3 +75,29 @@ hub links. Explain commands, costs, eligibility, and numbers that matter;
 use `[member]` placeholders. Rendering tests and
 `TestTutorialHelpPointersExist` must pass with the implementation. Do not
 publish help claiming these future mechanics already exist.
+
+## Implementation decisions and first slice (2026-10-01)
+
+The current owner priority in Project Status and the phase handoff authorizes
+implementation and delegates defaults to the lead. The first slice establishes
+accepted membership and per-owner consent before changing encounter rewards.
+
+- Keep independent per-company battles over shared enemy instances. Joining an
+  alliance does not transfer company commands, formation, assets or retreat.
+- `party follow on|off` consents to ordinary, instant-exit following of the
+  current leader. It defaults off, is cleared on leadership changes, and never
+  starts a shared expedition or camp. A separated follower receives feedback.
+- `party support on|off` is mutual opt-in to helpful allied/area group scopes.
+  The 33b resolver still requires presence, life and valid company attachment,
+  and prunes revoked consent at completion. Company-scoped spells (including
+  shipped Minor Heal All) remain company-only; single-target support is unchanged.
+- Autoattack remains explicit opt-in and only accepted members can consent.
+  Leaving/kicking/disbanding clears consent; rejoining starts with it off.
+- This slice retains runtime-only party membership/consent, reset on logout,
+  restart and copyover. No new save fields or migration are introduced. Durable
+  alliance membership and safe save failures belong to the recovery task below.
+
+The full phase is not complete. Encounter contribution/XP split, deterministic
+loot claims, durable alliance schema, targeting-rank replacement and multiplayer
+settlement/recovery tests remain follow-up work. Existing party XP sharing is
+still legacy behavior; these changes make no claim to fixing reward eligibility.

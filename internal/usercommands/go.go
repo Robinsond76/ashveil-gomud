@@ -217,13 +217,20 @@ func Go(rest string, user *users.UserRecord, room *rooms.Room, flags events.Even
 				if currentParty.IsLeader(user.UserId) {
 
 					for _, partyMemberId := range currentParty.UserIds {
-						if partyMemberId == user.UserId {
+						if !currentParty.Follows(partyMemberId) {
 							continue
 						}
 						if partyUser := users.GetByUserId(partyMemberId); partyUser != nil {
 							if partyUser.Character.RoomId == room.RoomId {
 								partyUser.SendText(`You follow the party leader.`)
-								partyUser.Command(rest)
+								events.AddToQueue(events.Input{
+									UserId:      partyMemberId,
+									InputText:   "go " + rest,
+									ReadyTurn:   util.GetTurnCount(),
+									PartyFollow: &events.PartyFollowOrder{LeaderUserId: user.UserId, OriginRoomId: room.RoomId, ConsentToken: currentParty.FollowToken(partyMemberId)},
+								})
+							} else {
+								partyUser.SendText(`You are separated from the party leader and cannot follow this move.`)
 							}
 						}
 					}

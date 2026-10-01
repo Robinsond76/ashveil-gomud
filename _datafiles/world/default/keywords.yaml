@@ -214,6 +214,7 @@ help-aliases:
   company:          [recruit, recruiting, roster, companions, companion]
   company-inventory: [company inventory, company inv, company-inv]
   friendly-effects: [friendly-scopes, company-healing, support-scopes]
+  party: [alliance, allied-companies, party-follow, party-support]
   company-meal:     [company meal, company eat, company drink, meal, meals, company-eat, company-drink]
   standing:         [reputation, blackmarket, black-market]
   tutorial:         [replay]
