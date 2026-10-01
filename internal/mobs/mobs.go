@@ -391,17 +391,29 @@ func (m *Mob) Command(inputTxt string, waitSeconds ...float64) {
 // CommandRequested queues a player's typed order with stable provenance.
 // Native AI and lifecycle hooks use Command and remain autonomous.
 func (m *Mob) CommandRequested(userID int, inputTxt string, waitSeconds ...float64) {
-	m.command(inputTxt, m.ownedOrder(userID, false), waitSeconds...)
+	m.command(inputTxt, m.ownedOrder(userID), waitSeconds...)
 }
 
-// CommandScripted queues a script's command while userID's command runs.
-// Only the requester's own follower is ordered; for anyone else's follower
-// or a world NPC the script is the mob's own behaviour and runs autonomously.
-func (m *Mob) CommandScripted(userID int, inputTxt string, waitSeconds ...float64) {
-	m.command(inputTxt, m.ownedOrder(userID, true), waitSeconds...)
+// CommandScripted queues a script's command while requester's command runs.
+// A follower's script answers to the follower's owner, whoever triggered it,
+// so it cannot fight or change gear in battle; a world NPC's script, or one
+// outside any player's command, runs autonomously.
+func (m *Mob) CommandScripted(requester int, inputTxt string, waitSeconds ...float64) {
+	var order *events.MemberOrder
+	leader, key, member := company.LeaderAndKeyForInstance(m.InstanceId)
+	if requester > 0 && (member || m.Character.Charmed != nil) {
+		// Built even if the charm and membership disagree: the policy then
+		// refuses it rather than letting it run autonomously.
+		owner := leader
+		if m.Character.Charmed != nil {
+			owner = m.Character.Charmed.UserId
+		}
+		order = &events.MemberOrder{UserID: owner, RoomID: m.Character.RoomId, MemberKey: string(key), CharmToken: m.Character.Charmed, Scripted: true}
+	}
+	m.command(inputTxt, order, waitSeconds...)
 }
 
-func (m *Mob) ownedOrder(userID int, scripted bool) *events.MemberOrder {
+func (m *Mob) ownedOrder(userID int) *events.MemberOrder {
 	if userID < 1 || !m.Character.IsCharmed(userID) {
 		return nil
 	}
@@ -409,7 +421,7 @@ func (m *Mob) ownedOrder(userID int, scripted bool) *events.MemberOrder {
 	if member && leader != userID {
 		return nil
 	}
-	return &events.MemberOrder{UserID: userID, RoomID: m.Character.RoomId, MemberKey: string(key), CharmToken: m.Character.Charmed, Scripted: scripted}
+	return &events.MemberOrder{UserID: userID, RoomID: m.Character.RoomId, MemberKey: string(key), CharmToken: m.Character.Charmed}
 }
 
 func (m *Mob) command(inputTxt string, order *events.MemberOrder, waitSeconds ...float64) {

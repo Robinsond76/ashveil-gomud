@@ -124,6 +124,9 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		if handled, err := scripting.TryMobScriptEvent(`onAsk`, mobId, user.UserId, `user`, map[string]any{"askText": rest}); err == nil {
 			if !handled {
 				mob.Command(`emote shakes their head.`)
+				if mob.Character.IsCharmed(user.UserId) {
+					user.SendText(`Members take only the orders in <ansi fg="command">help ask</ansi>. Use <ansi fg="command">company</ansi> to manage your band.`)
+				}
 			}
 		}
 

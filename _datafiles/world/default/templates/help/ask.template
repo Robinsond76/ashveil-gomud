@@ -18,11 +18,12 @@ For a living follower beside you, safe compatibility orders are:
 Equipment, inventory changes and consumables are refused during a battle.
 Conversation and observation remain available. Orders check ownership,
 presence and life state again when executed; a moved, dismissed, fallen or
-transferred member cannot complete an old order. Anything else you ask a
-follower, such as <ansi fg="command">ask [member] about [subject]</ansi>, is
+transferred member cannot complete an old order. Asking a follower about a
+subject that is not one of the orders above, such as
+<ansi fg="command">ask [member] about home</ansi>, is
 conversation, and the follower answers in its own way.
 
-Members fight automatically: attack, throw and cast orders are refused.
+Members fight automatically: attack, cast and other combat orders are refused.
 Use <ansi fg="command">attack [group]</ansi> to begin a battle. Temporary charmed
 followers obey the same restrictions; they do not become company members.
 
