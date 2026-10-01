@@ -178,7 +178,12 @@ delegated to the lead. 33a–33d are complete.
   the browser dock check passed. One intermittent failure of
   `TestSecondPlayerTakesTheNextGroup` (no retreat involved) appeared once in
   an early package run and did not recur in 39 later runs, isolated or whole
-  package, on this branch or master; noted, not explained.
+  package, on this branch or master; noted, not explained. After merging
+  33d into the branch, the full race suite was rerun: everything passed except
+  upstream `TestAttemptConversation_UsesPluginFile`, which fails about 2% of
+  runs (4/200 measured): `getConversation`'s random 2% maintenance purges
+  conversations older than 10 rounds, untouched by 33c or 33d; it passed on
+  rerun. Left for an upstream-code fix.
 
 ### Phase 33d: allied companies completed (2026-10-01)
 
