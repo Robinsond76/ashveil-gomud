@@ -1,11 +1,15 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 )
 
 // Register hooks here...
 func RegisterListeners() {
+	effecttargets.SetAlliedLeaders(parties.AlliedLeaders)
+	events.RegisterListener(events.UserPurged{}, PurgeAlliance, events.First)
 	events.RegisterListener(events.NewTurn{}, MercyTick)
 	events.RegisterListener(events.MobDeath{}, MoraleDeath)
 	events.RegisterListener(events.RoomChange{}, MercyLeave)

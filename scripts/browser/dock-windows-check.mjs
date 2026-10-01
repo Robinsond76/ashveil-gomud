@@ -139,8 +139,9 @@ check((await status()).includes('4 alive, 1 fallen') && (await status()).include
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
 check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, Health 12 of 25/ }).count() === 1, 'a member card has a spoken summary');
 check(!(await status()).includes('Travelling with'), 'no human party: no Travelling with');
-await page.evaluate(() => window.gmcp('Party', { Leader: 'Wren', Members: [{ Name: 'Wren', Position: 'leader' }, { Name: '<b>Tamsin</b>', Position: 'member' }], Invited: [], Vitals: { Wren: { health: 80, level: 5, location: 'Dunmar' }, '<b>Tamsin</b>': { health: 40, level: 4, location: 'Dunmar' } } }));
+await page.evaluate(() => window.gmcp('Party', { Leader: 'Wren', Members: [{ Name: 'Wren', Position: 'leader', owner_user_id: 7, online: true, follow: false, support: true, autoattack: false }, { Name: '<b>Tamsin</b>', Position: 'member', owner_user_id: 8, online: false, follow: false, support: false, autoattack: false }], Invited: [], Vitals: { Wren: { health: 80, level: 5, location: 'Dunmar' }, '<b>Tamsin</b>': { health: 40, level: 4, location: 'Dunmar' } } }));
 check((await status()).includes('Travelling with') && (await status()).includes('<b>Tamsin</b>') && await page.locator('#party-panel b').count() === 0, 'a human party under Travelling with, names as text');
+check((await status()).includes('each owner commands their own company') && (await status()).includes('(offline)'), 'alliance authority and offline status appear');
 await page.locator('.company-member[data-key="companion:1"]').focus();
 await page.evaluate(() => window.gmcp('Company.Vitals', { vitals: { 'companion:1': { hp: 5, hp_max: 25, needs: null, warmth: null } }, rescue: { 'companion:4': 5340 } }));
 check((await status()).includes('5/25') && await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-key')) === 'companion:1', 'a vitals update applies, keeping focus on the card');

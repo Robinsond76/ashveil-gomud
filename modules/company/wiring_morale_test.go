@@ -408,20 +408,11 @@ func TestMercyAtZeroLoyaltyDesertsAndRetryDoesNotRecover(t *testing.T) {
 	assert.Empty(t, saved.Companions)
 }
 func TestSharedMoraleOwnerDepartureAndSameRoundTie(t *testing.T) {
-	b := newBrawl(t)
+	b, other, _ := alliedBrawl(t)
 	forceBlows(t, false)
 	b.toughen()
-	other := users.NewUserRecord(8, 2)
-	other.Username = "brom"
-	other.Character.Name = "Brom"
-	other.Character.RaceId = 1
-	other.Character.Level = 3
-	other.Character.RoomId = b.road.RoomId
-	other.Character.Validate()
-	other.Character.Health = other.Character.HealthMax.Value
-	users.SetTestUser(other)
-	b.road.AddPlayer(8)
-	t.Cleanup(func() { b.road.RemovePlayer(8) })
+	other.Character.HealthMax.Value = 10000
+	other.Character.Health = 10000
 	for _, m := range b.livingBandits() {
 		m.Temperament = "craven"
 	}

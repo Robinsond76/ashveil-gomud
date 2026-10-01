@@ -7,6 +7,7 @@ import (
 )
 
 type Corpse struct {
+	ClaimUserId  int // Shared battle loot belongs to this deterministic claimant; 0 is unclaimed.
 	UserId       int
 	MobId        int
 	Character    characters.Character

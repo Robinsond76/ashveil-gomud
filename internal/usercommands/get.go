@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -21,7 +20,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		return true, nil
 	}
 
-	if args[0] == "all" {
+	if args[0] == "all" && len(args) == 1 {
 		if room.Gold > 0 {
 			Get(`gold`, user, room, flags)
 		}
@@ -106,7 +105,7 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		}
 
 		// Look for a corpse as the source when CorpseItems is enabled
-		if containerName == `` && petUserId == 0 && configs.GetGamePlayConfig().Death.CorpseItems {
+		if containerName == `` && petUserId == 0 {
 			if c, ok := room.FindCorpseByRef(args[len(args)-1]); ok {
 				corpseRef = c
 				if len(args) >= 2 && args[len(args)-2] == "from" {
@@ -160,6 +159,10 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	// Handle getting from a corpse
 	if corpseRef != nil {
+		if corpseRef.ClaimUserId != 0 && corpseRef.ClaimUserId != user.UserId {
+			user.SendText(`This battle loot is claimed by another company.`)
+			return true, nil
+		}
 
 		corpseColor := `mob-corpse`
 		if corpseRef.UserId > 0 {

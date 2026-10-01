@@ -2,7 +2,6 @@ package mobcommands
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -13,7 +12,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
-	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -146,248 +144,96 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		KeptGold:      body.keptGold,
 	})
 
-	xpVal := mobXP / 90
-
-	xpVariation := xpVal / 100
-	if xpVariation < 1 {
-		xpVariation = 1
-	}
-
-	partyTracker := map[int]int{} // key is party leader ID, value is how much will be shared.
-
-	if len(mob.Character.PlayerDamage) > 0 {
-
-		xpVal = xpVal / len(mob.Character.PlayerDamage) // Div by number of players that beat him up
-		xpVal += ((util.Rand(3) - 1) * xpVariation)     // a little bit of variation
-
-		totalPlayerLevels := 0
-		for uId, _ := range mob.Character.PlayerDamage {
-			if user := users.GetByUserId(uId); user != nil {
-				totalPlayerLevels += user.Character.Level
+	contributors := eligibleContributors(mob, room.RoomId, rest == "mercy")
+	shares := rewardShares(mob, mobXP, contributors)
+	for _, uid := range contributors {
+		user := users.GetByUserId(uid)
+		if user == nil {
+			continue
+		}
+		share := shares[uid]
+		if user.Character.Aggro != nil && user.Character.Aggro.MobInstanceId == mob.InstanceId {
+			user.Character.Aggro = nil
+			events.AddToQueue(events.AggroChanged{UserId: uid, RoomId: room.RoomId})
+		}
+		scripting.TryMobScriptEvent("onDie", mob.InstanceId, uid, "user", map[string]any{"attackerCount": len(contributors)})
+		if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
+			user.Character.KD.AddMobKill(int(mob.MobId))
+			if mob.IsElite {
+				user.Character.KD.AddEliteKill(int(mob.MobId), mob.Character.Name)
 			}
 		}
 
-		attackerCt := len(mob.Character.PlayerDamage)
+		user.GrantXP(share, `combat`)
+		for _, line := range awardCompanyXP(user.UserId, user.Character, share, room.RoomId) {
+			user.SendText(line)
+		}
 
-		for uId, _ := range mob.Character.PlayerDamage {
-			if user := users.GetByUserId(uId); user != nil {
+		// Apply alignment changes
+		alignmentBefore := user.Character.AlignmentName()
+		alignmentAdj := combat.AlignmentChange(user.Character.Alignment, mob.Character.Alignment)
+		if rest == "mercy" {
+			alignmentAdj = 0
+		}
+		user.Character.UpdateAlignment(alignmentAdj)
+		alignmentAfter := user.Character.AlignmentName()
 
-				if user.Character.Aggro != nil {
-					if user.Character.Aggro.MobInstanceId == mob.InstanceId {
-						user.Character.Aggro = nil
-						events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+		mudlog.Debug("Alignment", "user Alignment", user.Character.Alignment, "mob Alignment", mob.Character.Alignment, `alignmentAdj`, alignmentAdj, `alignmentBefore`, alignmentBefore, `alignmentAfter`, alignmentAfter)
+
+		if alignmentBefore != alignmentAfter {
+			before := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, alignmentBefore, alignmentBefore)
+			after := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, alignmentAfter, alignmentAfter)
+			updateTxt := fmt.Sprintf(`<ansi fg="231">Your alignment has shifted from %s to %s!</ansi>`, before, after)
+			user.SendText(updateTxt)
+			events.AddToQueue(events.AlignmentChanged{
+				UserId:       user.UserId,
+				AlignmentOld: alignmentBefore,
+				AlignmentNew: alignmentAfter,
+			})
+		}
+
+		// Chance to learn to tame the creature.
+		levelDelta := user.Character.Level - mob.Character.Level
+		if levelDelta < 0 {
+			levelDelta = 0
+		}
+		skillsDelta := int((float64(user.Character.Stats.Perception.ValueAdj-mob.Character.Stats.Perception.ValueAdj) + float64(user.Character.Stats.Smarts.ValueAdj-mob.Character.Stats.Smarts.ValueAdj)) / 2)
+		if skillsDelta < 0 {
+			skillsDelta = 0
+		}
+		targetNumber := levelDelta + skillsDelta
+		if targetNumber < 1 {
+			targetNumber = 1
+		}
+
+		mudlog.Debug("Tame Chance", "levelDelta", levelDelta, "skillsDelta", skillsDelta, "targetNumber", targetNumber)
+
+		if util.Rand(1000) < targetNumber {
+			if mob.IsTameable() && user.Character.GetSkillLevel(`tame`) > 0 {
+
+				currentSkill := user.Character.MobMastery.GetTame(int(mob.MobId))
+				if currentSkill < 50 {
+					user.Character.MobMastery.SetTame(int(mob.MobId), currentSkill+1)
+					if currentSkill == -1 {
+						user.SendText(fmt.Sprintf(`<ansi fg="magenta">***</ansi> You've learned how to tame a <ansi fg="mobname">%s</ansi>! <ansi fg="magenta">***</ansi>`, mob.Character.Name))
+					} else {
+						user.SendText(fmt.Sprintf(`<ansi fg="magenta">***</ansi> Your <ansi fg="mobname">%s</ansi> taming skills get a little better! <ansi fg="magenta">***</ansi>`, mob.Character.Name))
 					}
 				}
-
-				scripting.TryMobScriptEvent(`onDie`, mob.InstanceId, uId, `user`, map[string]any{`attackerCount`: attackerCt})
-
-				p := parties.Get(user.UserId)
-
-				// Not in a party? Great give them the xp.
-				if p == nil {
-
-					if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
-						user.Character.KD.AddMobKill(int(mob.MobId))
-						if mob.IsElite {
-							user.Character.KD.AddEliteKill(int(mob.MobId), mob.Character.Name)
-						}
-					}
-
-					xpScaler := 1.0
-
-					// If there's a level delta of more than 5, apply a scaler
-					if math.Abs(float64(mob.Character.Level)-float64(totalPlayerLevels)) > 5 {
-
-						xpScaler = float64(mob.Character.Level) / float64(totalPlayerLevels) // How much of the mobs level is the player?
-						if xpScaler > 1.5 {
-							xpScaler = 1.5
-						} else if xpScaler < 0.25 {
-							xpScaler = 0.25
-						}
-
-					}
-
-					finalXPVal := int(math.Ceil(float64(xpVal) * xpScaler))
-
-					if mob.IsElite {
-						eliteBonus := int(configs.GetGamePlayConfig().EliteXPBonus)
-						if eliteBonus <= 0 {
-							eliteBonus = 10
-						}
-						finalXPVal = finalXPVal + int(math.Ceil(float64(finalXPVal)*float64(eliteBonus)/100.0))
-					}
-
-					mudlog.Debug("XP Calculation", "MobLevel", mob.Character.Level, "XPBase", mobXP, "xpVal", xpVal, "xpVariation", xpVariation, "xpScaler", xpScaler, "finalXPVal", finalXPVal)
-
-					user.GrantXP(finalXPVal, `combat`)
-					for _, line := range awardCompanyXP(user.UserId, user.Character, finalXPVal, room.RoomId) {
-						user.SendText(line)
-					}
-
-					// Apply alignment changes
-					alignmentBefore := user.Character.AlignmentName()
-					alignmentAdj := combat.AlignmentChange(user.Character.Alignment, mob.Character.Alignment)
-					if rest == "mercy" {
-						alignmentAdj = 0
-					}
-					user.Character.UpdateAlignment(alignmentAdj)
-					alignmentAfter := user.Character.AlignmentName()
-
-					mudlog.Debug("Alignment", "user Alignment", user.Character.Alignment, "mob Alignment", mob.Character.Alignment, `alignmentAdj`, alignmentAdj, `alignmentBefore`, alignmentBefore, `alignmentAfter`, alignmentAfter)
-
-					if alignmentBefore != alignmentAfter {
-						before := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, alignmentBefore, alignmentBefore)
-						after := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, alignmentAfter, alignmentAfter)
-						updateTxt := fmt.Sprintf(`<ansi fg="231">Your alignment has shifted from %s to %s!</ansi>`, before, after)
-						user.SendText(updateTxt)
-						events.AddToQueue(events.AlignmentChanged{
-							UserId:       user.UserId,
-							AlignmentOld: alignmentBefore,
-							AlignmentNew: alignmentAfter,
-						})
-					}
-
-					// Chance to learn to tame the creature.
-					levelDelta := user.Character.Level - mob.Character.Level
-					if levelDelta < 0 {
-						levelDelta = 0
-					}
-					skillsDelta := int((float64(user.Character.Stats.Perception.ValueAdj-mob.Character.Stats.Perception.ValueAdj) + float64(user.Character.Stats.Smarts.ValueAdj-mob.Character.Stats.Smarts.ValueAdj)) / 2)
-					if skillsDelta < 0 {
-						skillsDelta = 0
-					}
-					targetNumber := levelDelta + skillsDelta
-					if targetNumber < 1 {
-						targetNumber = 1
-					}
-
-					mudlog.Debug("Tame Chance", "levelDelta", levelDelta, "skillsDelta", skillsDelta, "targetNumber", targetNumber)
-
-					if util.Rand(1000) < targetNumber {
-						if mob.IsTameable() && user.Character.GetSkillLevel(`tame`) > 0 {
-
-							currentSkill := user.Character.MobMastery.GetTame(int(mob.MobId))
-							if currentSkill < 50 {
-								user.Character.MobMastery.SetTame(int(mob.MobId), currentSkill+1)
-								if currentSkill == -1 {
-									user.SendText(fmt.Sprintf(`<ansi fg="magenta">***</ansi> You've learned how to tame a <ansi fg="mobname">%s</ansi>! <ansi fg="magenta">***</ansi>`, mob.Character.Name))
-								} else {
-									user.SendText(fmt.Sprintf(`<ansi fg="magenta">***</ansi> Your <ansi fg="mobname">%s</ansi> taming skills get a little better! <ansi fg="magenta">***</ansi>`, mob.Character.Name))
-								}
-							}
-
-						}
-					}
-
-					continue
-				}
-
-				if _, ok := partyTracker[p.LeaderUserId]; !ok {
-					partyTracker[p.LeaderUserId] = 0
-				}
-				partyTracker[p.LeaderUserId] += xpVal
 
 			}
 		}
 
 	}
 
-	if len(partyTracker) > 0 {
-
-		for leaderId, xp := range partyTracker {
-			if p := parties.Get(leaderId); p != nil {
-
-				allMembers := p.GetMembers()
-				xpSplit := xp / len(allMembers)
-
-				if mob.IsElite {
-					eliteBonus := int(configs.GetGamePlayConfig().EliteXPBonus)
-					if eliteBonus <= 0 {
-						eliteBonus = 10
-					}
-					xpSplit = xpSplit + int(math.Ceil(float64(xpSplit)*float64(eliteBonus)/100.0))
-				}
-
-				mudlog.Info(`Party XP`, `totalXP`, xp, `splitXP`, xpSplit, `memberCt`, len(allMembers))
-
-				for _, memberId := range allMembers {
-
-					if user := users.GetByUserId(memberId); user != nil {
-
-						if mob.Character.Zone != `Training` { // Don't track any kills in the training zone
-							user.Character.KD.AddMobKill(int(mob.MobId))
-							if mob.IsElite {
-								user.Character.KD.AddEliteKill(int(mob.MobId), mob.Character.Name)
-							}
-						}
-
-						user.GrantXP(xpSplit, `combat`)
-						for _, line := range awardCompanyXP(user.UserId, user.Character, xpSplit, room.RoomId) {
-							user.SendText(line)
-						}
-
-						// Apply alignment changes
-						alignmentBefore := user.Character.AlignmentName()
-						alignmentAdj := combat.AlignmentChange(user.Character.Alignment, mob.Character.Alignment)
-						if rest == "mercy" {
-							alignmentAdj = 0
-						}
-						user.Character.UpdateAlignment(alignmentAdj)
-						alignmentAfter := user.Character.AlignmentName()
-
-						mudlog.Debug("Alignment", "user Alignment", user.Character.Alignment, "mob Alignment", mob.Character.Alignment, `alignmentAdj`, alignmentAdj, `alignmentBefore`, alignmentBefore, `alignmentAfter`, alignmentAfter)
-
-						if alignmentBefore != alignmentAfter {
-							before := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, alignmentBefore, alignmentBefore)
-							after := fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, alignmentAfter, alignmentAfter)
-							updateTxt := fmt.Sprintf(`<ansi fg="231">Your alignment has shifted from %s to %s!</ansi>`, before, after)
-							user.SendText(updateTxt)
-							events.AddToQueue(events.AlignmentChanged{
-								UserId:       user.UserId,
-								AlignmentOld: alignmentBefore,
-								AlignmentNew: alignmentAfter,
-							})
-						}
-
-						// Chance to learn to tame the creature.
-						levelDelta := user.Character.Level - mob.Character.Level
-						if levelDelta < 0 {
-							levelDelta = 0
-						}
-						skillsDelta := int((float64(user.Character.Stats.Perception.ValueAdj-mob.Character.Stats.Perception.ValueAdj) + float64(user.Character.Stats.Smarts.ValueAdj-mob.Character.Stats.Smarts.ValueAdj)) / 2)
-						if skillsDelta < 0 {
-							skillsDelta = 0
-						}
-						targetNumber := levelDelta + skillsDelta
-						if targetNumber < 1 {
-							targetNumber = 1
-						}
-
-						mudlog.Debug("Tame Chance", "levelDelta", levelDelta, "skillsDelta", skillsDelta, "targetNumber", targetNumber)
-
-						if util.Rand(1000) < targetNumber {
-							if mob.IsTameable() && user.Character.GetSkillLevel(`tame`) > 0 {
-
-								currentSkill := user.Character.MobMastery.GetTame(int(mob.MobId))
-								if currentSkill < 50 {
-									user.Character.MobMastery.SetTame(int(mob.MobId), currentSkill+1)
-
-									if currentSkill == -1 {
-										user.SendText(fmt.Sprintf(`<ansi fg="magenta">***</ansi> You've learned how to tame a <ansi fg="mobname">%s</ansi>! <ansi fg="magenta">***</ansi>`, mob.Character.Name))
-									} else {
-										user.SendText(fmt.Sprintf(`<ansi fg="magenta">***</ansi> Your <ansi fg="mobname">%s</ansi> taming skills get a little better! <ansi fg="magenta">***</ansi>`, mob.Character.Name))
-									}
-								}
-
-							}
-						}
-					}
-
-				}
-
-			}
-		}
-
+	// Shared kills use a fixed claim, not the first pickup command. A corpse is
+	// used even in worlds configured for floor drops, so gold/items cannot leak
+	// through an unowned floor path. The corpse owns the physical loot once.
+	claimCorpse := len(contributors) > 1 && !permaGear
+	claimOwner := 0
+	if claimCorpse {
+		claimOwner = contributors[mob.InstanceId%len(contributors)]
+		room.SendText(fmt.Sprintf("Battle loot from %s is claimed by player #%d.", mob.Character.Name, claimOwner))
 	}
 
 	if !permaGear {
@@ -397,7 +243,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		// Check for any dropped loot...
 		for _, item := range mob.Character.Items {
-			if config.Death.CorpseItems && config.Death.CorpsesEnabled {
+			if bool(config.Death.CorpseItems && config.Death.CorpsesEnabled) || claimCorpse {
 				corpseItems = append(corpseItems, item)
 			} else {
 				msg := fmt.Sprintf(`<ansi fg="item">%s</ansi> drops to the ground.`, item.DisplayName())
@@ -414,7 +260,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 
 		for _, item := range body.dropWorn {
 
-			if config.Death.CorpseItems && config.Death.CorpsesEnabled {
+			if bool(config.Death.CorpseItems && config.Death.CorpsesEnabled) || claimCorpse {
 				corpseItems = append(corpseItems, item)
 			} else {
 				msg := fmt.Sprintf(`<ansi fg="item">%s</ansi> drops to the ground.`, item.DisplayName())
@@ -437,7 +283,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 					mudlog.Debug("Category Loot Roll", "category", mob.LootCategory, "roll", roll, "itemID", entry.ItemID, "count", count)
 					for i := 0; i < count; i++ {
 						item := items.New(entry.ItemID)
-						if config.Death.CorpseItems && config.Death.CorpsesEnabled {
+						if bool(config.Death.CorpseItems && config.Death.CorpsesEnabled) || claimCorpse {
 							corpseItems = append(corpseItems, item)
 						} else {
 							room.SendText(fmt.Sprintf(`<ansi fg="item">%s</ansi> drops to the ground.`, item.DisplayName()))
@@ -450,7 +296,7 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 
 		if mob.Character.Gold > 0 {
-			if config.Death.CorpseItems && config.Death.CorpsesEnabled {
+			if bool(config.Death.CorpseItems && config.Death.CorpsesEnabled) || claimCorpse {
 				corpseGold = mob.Character.Gold
 			} else {
 				msg := fmt.Sprintf(`<ansi fg="yellow-bold">%d gold</ansi> drops to the ground.`, mob.Character.Gold)
@@ -470,15 +316,21 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		// Remove from current room
 		room.RemoveMob(mob.InstanceId)
 
-		if config.Death.CorpsesEnabled {
+		if bool(config.Death.CorpsesEnabled) || claimCorpse {
 			c := rooms.Corpse{
+				ClaimUserId:  claimOwner,
 				MobId:        int(mob.MobId),
 				Character:    mob.Character,
 				RoundCreated: currentRound,
 			}
-			if config.Death.CorpseItems {
+			if bool(config.Death.CorpseItems) || claimCorpse {
 				c.Items = corpseItems
 				c.Gold = corpseGold
+			}
+			// Rolled drops already live in c.Items (or on the floor); remove
+			// them from the corpse's worn view so one item never has two owners.
+			for _, item := range body.dropWorn {
+				c.Character.RemoveFromBody(item)
 			}
 			room.AddCorpse(c)
 		}

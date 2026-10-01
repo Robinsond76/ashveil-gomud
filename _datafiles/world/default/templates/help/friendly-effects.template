@@ -25,14 +25,15 @@ start. If no one is left to help, the spell (or first aid) fades with
 "Your spell finds no one left to help", and the mana stays spent.
 
 Company-wide support never automatically includes other players' companies.
-Single-target support can explicitly name another patient beside you,
-but not anyone fighting in someone else's battle: its foes, its player,
-or the companions and charmed pets fighting for that player. Neither spells nor first aid help either side
-of a battle you are not part of. You are told the patient is
-"caught up in another battle", and one drawn into a battle mid-chant is
-dropped.
-Allied/area group support requires a consent provider; absent that, it stays
-within the caster's company. Harmful spells keep their battle boundaries.
+Single-target support can explicitly name another patient beside you, but
+cannot aid either side of an unrelated battle. A patient is "caught up in
+another battle" when that boundary applies. A patient drawn into another
+battle during a chant is dropped. Consenting allied owners fighting the same
+enemy group count as participants; idle or separately fighting allies do not.
+For allied/area group support, both accepted party owners must use
+<ansi fg="command">party support on</ansi>. It defaults off; revoking consent
+or leaving removes targets from a chant. See <ansi fg="command">help party</ansi>.
+Harmful spells keep their battle boundaries.
 
 See <ansi fg="command">help cast</ansi>, <ansi fg="command">help strategy</ansi>,
 <ansi fg="command">help wounds</ansi>, and <ansi fg="command">help resurrect</ansi>.

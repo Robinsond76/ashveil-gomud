@@ -24,7 +24,7 @@ func awardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 			continue
 		}
 		mob := mobs.GetInstance(instanceID)
-		if mob == nil || mob.Character.RoomId != roomID || mob.Character.Health <= 0 || !mob.Character.IsCharmed(leaderUserID) {
+		if mob == nil || mob.Character.RoomId != roomID || mob.Character.Health <= 0 || mob.Character.CombatWithdrawn || !mob.Character.IsCharmed(leaderUserID) {
 			continue
 		}
 		mob.Character.GrantXP(amount)

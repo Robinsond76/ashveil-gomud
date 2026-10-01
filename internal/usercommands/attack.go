@@ -230,7 +230,7 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 						if partyUser := users.GetByUserId(id); partyUser != nil {
 							if partyUser.Character.RoomId == user.Character.RoomId {
 
-								partyUser.Command(fmt.Sprintf(`attack #%d`, attackMobInstanceId)) // # denotes a specific mob instanceId
+								events.AddToQueue(events.Input{UserId: id, InputText: fmt.Sprintf("attack #%d", attackMobInstanceId), ReadyTurn: util.GetTurnCount(), PartyAttack: &events.PartyAttackOrder{LeaderUserId: user.UserId, OriginRoomId: room.RoomId, ConsentToken: party.AutoAttackToken(id), TargetMobInstanceId: attackMobInstanceId}})
 
 							}
 						}
@@ -282,21 +282,6 @@ func Attack(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 				if partyInfo.IsMember(attackPlayerId) {
 					user.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is in your party!`, p.Character.Name))
 					return true, nil
-				}
-			}
-
-			if party := parties.Get(user.UserId); party != nil {
-				if party.IsLeader(user.UserId) {
-					for _, id := range party.GetAutoAttackUserIds() {
-						if id == user.UserId {
-							continue
-						}
-						if partyUser := users.GetByUserId(id); partyUser != nil {
-							if partyUser.Character.RoomId == user.Character.RoomId {
-								partyUser.Command(fmt.Sprintf(`attack @%d`, attackPlayerId)) // # denotes a specific mob instanceId
-							}
-						}
-					}
 				}
 			}
 

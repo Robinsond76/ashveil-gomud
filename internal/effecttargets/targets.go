@@ -131,8 +131,37 @@ func OtherBattle(userID, mobID, targetUserID, targetMobID int) bool {
 		}
 	}
 	for _, uid := range patientIn {
-		if !slices.Contains(casterIn, uid) {
+		if !slices.Contains(casterIn, uid) && !consentingSharedBattle(owner(userID, mobID), uid) {
 			return true
+		}
+	}
+	return false
+}
+
+// consentingSharedBattle expands participation only for mutual allies actually
+// fighting a common living enemy in the same room, never idle alliance members.
+func consentingSharedBattle(caster, patient int) bool {
+	if caster <= 0 || !slices.Contains(leaders(caster, spells.ScopeAllied), patient) {
+		return false
+	}
+	a, ok := battle.Current(caster)
+	if !ok {
+		return false
+	}
+	b, ok := battle.Current(patient)
+	if !ok || a.RoomId != b.RoomId {
+		return false
+	}
+	cu, pu := users.GetByUserId(caster), users.GetByUserId(patient)
+	if cu == nil || pu == nil || cu.Character == nil || pu.Character == nil || cu.Character.RoomId != a.RoomId || pu.Character.RoomId != a.RoomId || cu.Character.Health <= 0 || pu.Character.Health <= 0 || cu.Character.CombatWithdrawn || pu.Character.CombatWithdrawn {
+		return false
+	}
+	for id := range a.Enemies {
+		if b.Has(id) {
+			m := mobs.GetInstance(id)
+			if eligibleMob(m, a.RoomId) {
+				return true
+			}
 		}
 	}
 	return false
