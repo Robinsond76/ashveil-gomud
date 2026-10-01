@@ -2,6 +2,7 @@ package mobs
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"math"
 	"os"
 	"path/filepath"
@@ -384,6 +385,21 @@ func (m *Mob) Sleep(seconds int) {
 }
 
 func (m *Mob) Command(inputTxt string, waitSeconds ...float64) {
+	m.command(inputTxt, nil, waitSeconds...)
+}
+
+// CommandRequested queues a player/script order with stable provenance.
+// Native AI and lifecycle hooks use Command and remain autonomous.
+func (m *Mob) CommandRequested(userID int, inputTxt string, waitSeconds ...float64) {
+	_, key, member := company.LeaderAndKeyForInstance(m.InstanceId)
+	var order *events.MemberOrder
+	if userID > 0 && (member || m.Character.IsCharmed()) {
+		order = &events.MemberOrder{UserID: userID, RoomID: m.Character.RoomId, MemberKey: string(key), CharmToken: m.Character.Charmed}
+	}
+	m.command(inputTxt, order, waitSeconds...)
+}
+
+func (m *Mob) command(inputTxt string, order *events.MemberOrder, waitSeconds ...float64) {
 
 	readyTurn := util.GetTurnCount()
 	turnDelay := uint64(0)
@@ -408,6 +424,7 @@ func (m *Mob) Command(inputTxt string, waitSeconds ...float64) {
 
 		events.AddToQueue(events.Input{
 			MobInstanceId: m.InstanceId,
+			MemberOrder:   order,
 			InputText:     cmd,
 			ReadyTurn:     m.lastCommandTurn,
 		})

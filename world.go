@@ -101,7 +101,7 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 		// 0 and below, process immediately and don't count towards limit
 		if input.ReadyTurn <= 0 {
-			w.processMobInput(input.MobInstanceId, input.InputText)
+			w.processMobInput(input.MobInstanceId, input.InputText, input.MemberOrder)
 			return events.Continue
 		}
 
@@ -114,7 +114,7 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 			return events.CancelAndRequeue
 		}
 
-		w.processMobInput(input.MobInstanceId, input.InputText)
+		w.processMobInput(input.MobInstanceId, input.InputText, input.MemberOrder)
 
 		return events.Continue
 	}
@@ -657,11 +657,11 @@ func (w *World) processInput(userId int, inputText string, flags events.EventFla
 
 }
 
-func (w *World) processMobInput(mobInstanceId int, inputText string) {
+func (w *World) processMobInput(mobInstanceId int, inputText string, order *events.MemberOrder) {
 	// No need to select the channel this way
 
 	mob := mobs.GetInstance(mobInstanceId)
-	if mob == nil { // Something went wrong. User not found.
+	if mob == nil && order == nil { // Autonomous input for a removed mob.
 		if !mobs.RecentlyDied(mobInstanceId) {
 			mudlog.Error("Mob not found", "mobId", mobInstanceId, "where", "processMobInput()")
 		}
@@ -684,7 +684,7 @@ func (w *World) processMobInput(mobInstanceId int, inputText string) {
 
 		//mudlog.Info("World received mob input", "InputText", (inputText))
 
-		handled, err = mobcommands.TryCommand(command, remains, mobInstanceId)
+		handled, err = mobcommands.TryCommand(command, remains, mobInstanceId, order)
 		if err != nil {
 			mudlog.Warn("mob-TryCommand", "command", command, "remains", remains, "error", err.Error())
 		}

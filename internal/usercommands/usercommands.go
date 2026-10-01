@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"strings"
 	"time"
 
@@ -265,6 +266,15 @@ type CommandDone struct {
 var OnCommandDone util.Hook[CommandDone]
 
 func TryCommand(cmd string, rest string, userId int, flags events.EventFlag) (bool, error) {
+	defer events.WithRequester(userId)()
+	if u := users.GetByUserId(userId); u != nil {
+		command, arguments := policyCommand(u, cmd, rest)
+		blocked := actionpolicy.Management(command) || (actionpolicy.Hostile(command) && !(command == "attack" && arguments == "")) || command == "aid" || (command == "tame" && arguments != "" && arguments != "list")
+		if blocked && actionpolicy.InBattle(u) {
+			u.SendText(actionpolicy.BattleUnderWay)
+			return true, nil
+		}
+	}
 
 	// Ashveil (Phase 26a): recompute the prompt's company tokens once the
 	// command has changed whatever it changes.
@@ -518,4 +528,20 @@ func TryRoomScripts(input, alias, rest string, userId int) (bool, error) {
 	}
 
 	return cmdHandled, err
+}
+
+// policyCommand follows the parser's personal-then-global alias expansion,
+// including arguments embedded in either alias, before any script runs.
+func policyCommand(user *users.UserRecord, command, rest string) (string, string) {
+	expand := func(alias string) {
+		parts := strings.Fields(alias)
+		if len(parts) == 0 {
+			return
+		}
+		command = strings.ToLower(parts[0])
+		rest = strings.TrimSpace(strings.Join(parts[1:], " ") + " " + rest)
+	}
+	expand(user.TryCommandAlias(strings.ToLower(command)))
+	expand(keywords.TryCommandAlias(command))
+	return command, rest
 }

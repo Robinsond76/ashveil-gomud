@@ -3,6 +3,10 @@ package mobcommands
 import (
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"strings"
 	"time"
 
@@ -76,17 +80,21 @@ func GetAllMobCommands() []string {
 	return result
 }
 
-func TryCommand(cmd string, rest string, mobId int) (bool, error) {
+func TryCommand(cmd string, rest string, mobId int, orders ...*events.MemberOrder) (bool, error) {
 
 	cmd = strings.ToLower(cmd)
 	rest = strings.TrimSpace(rest)
 
-	cmd = keywords.TryCommandAlias(cmd)
-
 	mobDisabled := false
 
 	mob := mobs.GetInstance(mobId)
-	if mob != nil && mob.Character.CombatWithdrawn {
+	if mob != nil && mob.Character.CombatWithdrawn && (len(orders) == 0 || orders[0] == nil) {
+		return true, nil
+	}
+	if mob == nil && len(orders) > 0 && orders[0] != nil {
+		if u := users.GetByUserId(orders[0].UserID); u != nil {
+			u.SendText("That member is no longer available for orders.")
+		}
 		return true, nil
 	}
 	if mob == nil {
@@ -126,6 +134,27 @@ func TryCommand(cmd string, rest string, mobId int) (bool, error) {
 			}
 		} else {
 			cmd = alias
+		}
+	}
+
+	if len(orders) > 0 && orders[0] != nil {
+		order := *orders[0]
+		if reason := actionpolicy.Member(order, mob, cmd); reason != "" {
+			if u := users.GetByUserId(order.UserID); u != nil {
+				u.SendText(reason)
+			}
+			return true, nil
+		}
+		defer events.WithRequester(order.UserID)()
+	} else if actionpolicy.Management(cmd) {
+		// Scripted/autonomous gear and consumables on followers are also locked
+		// during their owner's battle. World NPCs retain their own AI policy.
+		owner, _, member := company.LeaderAndKeyForInstance(mobId)
+		if !member && mob.Character.Charmed != nil {
+			owner = mob.Character.Charmed.UserId
+		}
+		if owner > 0 && (actionpolicy.InBattle(users.GetByUserId(owner)) || mob.Character.Aggro != nil) {
+			return true, nil
 		}
 	}
 

@@ -6,9 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-10-01
-- **Latest completed phase:** 30g2, active defense and armor, merged
-  from `claude/phase-30g2-defense` on 2026-10-01 (after 30e, morale and
-  mercy, the same day).
+- **Latest completed phase:** 33a, company command rules and legacy action routes (2026-10-01).
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
@@ -18,7 +16,11 @@ status effects, wounds, tactics, guardians, interrupts, wind-ups, morale
 and mercy (30a–30e), and active defense (30g2) are shipped. The Phase 32
 play-test improvements are implemented; 32b's status still carries an outstanding review note (see its retained plan).
 
-**Next:** Phase 30g, [combat tempo, personal load, and active
+**Current owner priority:** finish Phase 33a–33i in order, choosing the lead's
+recommended defaults without further confirmation (2026-10-01). 33a is
+complete; **33b, friendly effects, is next**. Phase 30g3 remains queued.
+
+**Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
 defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
 decisions the owner settled on 2026-09-30. 30g1 (the balance harness and
 baseline) and 30g2 are done; each later slice is measured against 30g1:
@@ -49,8 +51,8 @@ and requested [Phase 33a–33i designs](designs/2026-10-01-company-gameplay-road
 command consistency, friendly-effect scopes, retreat, allied companies,
 automatic class abilities, specialists, equipment/loot, progression/recovery/
 relocation, and group assessment/coordinated enemies. These are planning
-records; implementation has not started. Proposed mechanics and defaults
-remain to be settled before coding. 30g3 (personal load) is next.
+records now authorized for implementation by the owner, with open defaults
+delegated to the lead. 33a is complete; 33b follows.
 
 ## Phase progress
 
@@ -125,7 +127,7 @@ remain to be settled before coding. 30g3 (personal load) is next.
 | 32d | Automatic combat by strategy | Complete: [design](designs/2026-09-28-phase-32d-auto-combat-design.md). `strategy`: each character's role (fighter, healer, caster) and target rule (weakest, strongest, wounded, nearest, furthest, leader, assist, defend), durable; healers and casters cast real spells with mana; companions know spells by archetype and level and regain mana; wizards/clerics granted Magic Missile/Minor Heal; in a battle only `flee`; only hostile mobs group by tag |
 | 32g | Web company dock | Complete: [design](designs/2026-09-29-phase-32g-company-dock-design.md). Left column the world (time, map, room, tutorial); right a tabbed dock: a vitals strip for every member above Character (Overview with worth, Gear with weights, Skills and jobs, Quests, Effects, Pet), Company (Status, Inventory with menus by exact item reference, Camp), Combat (setup: roles, targets, formation, Scout), Comm (unread count), and Who/Kills when enabled; `Company.Inventory`, `Company.Camp`, members' mana and strategies; `help webclient` |
 | 32g2 | Live battle view | Complete: [design](designs/2026-09-29-phase-32g2-battle-view-design.md). During a battle the Combat tab shows the enemy group's formation above the company's (fronts to the middle), scout's health words (never numbers), reach, target lines both ways, outsiders struck, the fallen, the waiting groups, a text list, a live region, Flee, and Setup's member menu; a marker on the tab; `Company.Battle` for every player in a battle; dark rooms show nothing, as scout |
-| 33a | Company Command Rules and Legacy Action Routes | Future design: [proposal](designs/2026-10-01-phase-33a-company-command-rules-design.md); implementation not started |
+| 33a | Company Command Rules and Legacy Action Routes | Complete: [design](designs/2026-10-01-phase-33a-company-command-rules-design.md), [plan](plans/2026-10-01-phase-33a-company-command-rules.md); safe ask aliases, queued ownership checks, battle/script/skill policy |
 | 33b | Friendly Effects and Company Membership | Future design: [proposal](designs/2026-10-01-phase-33b-friendly-effect-scopes-design.md); implementation not started |
 | 33c | Company Retreat, Rout, and Separation | Future design: [proposal](designs/2026-10-01-phase-33c-company-retreat-design.md); implementation not started |
 | 33d | Multiplayer Parties and Allied Companies | Future design: [proposal](designs/2026-10-01-phase-33d-allied-companies-design.md); implementation not started |
@@ -137,6 +139,33 @@ remain to be settled before coding. 30g3 (personal load) is next.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33a: company command rules (2026-10-01)
+
+- Safe `ask` management aliases for living present companions and temporary
+  followers; all requested follower hostility is refused. Automatic battles,
+  native NPC/lifecycle commands, and administrative input remain distinct.
+- Queued orders carry requester, room, stable member key and runtime charm
+  identity; execution rechecks battle, presence, ownership, dismissal, death,
+  expiry and transfer-back. No persistent fields or migrations were added.
+- The player dispatcher checks battle restrictions before scripts, including
+  personal/global aliases; aid/tame cannot replace battle actions. Skill
+  execution rechecks new battles and protected/owned tame targets.
+- Indexed `help ask`, updated company/combat/equipment/consumable/skill pages,
+  tutorial pointer and help rendering tests shipped with the implementation.
+- Independent review: accepted and fixed both findings (multiword alias
+  interception bypass and obsolete aggressive-taming help). Added requested
+  aid/battle-owned target/temporary follower coverage. Reviewer rechecked the
+  fixes and regressions: no remaining blockers; no findings rejected.
+- Verification: focused dispatcher/queue/script/lifecycle tests; `make
+  generate`, `make validate`, `go test -race ./...`, `make js-lint` using the
+  installed JSHint binary, and `make lua-lint` all passed. `git diff --check`
+  passed. Native follow regression caught during implementation was fixed
+  by separating `CommandRequested` from autonomous `Command`.
+- Next: 33b, company-only friendly-effect correctness first, then allied
+  scopes once 33d defines consent. The current tooling has no cloud-session
+  creation operation; continue here using the saved phase handoff.
+
 
 ### Company gameplay roadmap and future Phase 33 designs (2026-10-01)
 
