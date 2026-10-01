@@ -299,12 +299,12 @@
             </div>
         </details>
 
-        <details class="fn-card" data-search="GetStatMod statmod modifier worn buff equipment tame">
+        <details class="fn-card" data-search="GetStatMod statmod modifier worn buff equipment">
             <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetStatMod</span><span class="fn-p">(</span><span class="fn-a">statModName</span> <span class="fn-t">string</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-int">int</span></summary>
             <div class="fn-body">
                 <p class="fn-desc">Returns the total value of a special stat modifier from worn items and buffs combined.</p>
                 <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
-                    <tr><td class="an">statModName</td><td class="at">string</td><td>Modifier name, e.g. <code>"strength"</code> or <code>"tame"</code>.</td></tr>
+                    <tr><td class="an">statModName</td><td class="at">string</td><td>Modifier name, e.g. <code>"strength"</code> or <code>"picklock"</code>.</td></tr>
                 </tbody></table>
             </div>
         </details>
@@ -649,37 +649,10 @@ mob:Command("pathto 150", 2) -- move after 2 turns</code></pre></div>
             <div class="fn-body"><p class="fn-desc">Returns the userId that charmed this actor, or 0 if not charmed.</p></div>
         </details>
 
-        <details class="fn-card" data-search="CharmSet charm set userId rounds revert commands">
-            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.CharmSet</span><span class="fn-p">(</span><span class="fn-a">userId</span> <span class="fn-t">int</span>, <span class="fn-a">charmRounds</span> <span class="fn-t">int</span><span class="fn-p"> [, </span><span class="fn-a">onRevertCmd…</span><span class="fn-p">])</span></span><span class="fn-ret-badge ret-void">void</span></summary>
-            <div class="fn-body">
-                <p class="fn-desc">Charms the mob to a user for a set number of rounds (-1 for unlimited). Optional revert commands run when charm expires.</p>
-                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
-                    <tr><td class="an">userId</td><td class="at">int</td><td>The user to charm the mob to.</td></tr>
-                    <tr><td class="an">charmRounds</td><td class="at">int</td><td>Duration in rounds, or -1 for unlimited.</td></tr>
-                    <tr><td class="an">onRevertCmd</td><td class="at">string (optional, repeatable)</td><td>Commands to execute when charm expires.</td></tr>
-                </tbody></table>
-            </div>
-        </details>
 
-        <details class="fn-card" data-search="CharmRemove charm remove discard no expiry">
-            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.CharmRemove</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-void">void</span></summary>
-            <div class="fn-body"><p class="fn-desc">Immediately removes any charm effect without triggering expiration commands.</p></div>
-        </details>
 
-        <details class="fn-card" data-search="CharmExpire charm expire force end">
-            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.CharmExpire</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-void">void</span></summary>
-            <div class="fn-body"><p class="fn-desc">Forces the current charm to expire (runs expiration commands).</p></div>
-        </details>
 
-        <details class="fn-card" data-search="GetCharmCount charm count int controlled">
-            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetCharmCount</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
-            <div class="fn-body"><p class="fn-desc">Returns the number of creatures currently charmed by this actor.</p></div>
-        </details>
 
-        <details class="fn-card" data-search="GetMaxCharmCount max charm count int allowed">
-            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetMaxCharmCount</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-int">int</span></summary>
-            <div class="fn-body"><p class="fn-desc">Returns the maximum number of creatures this actor can charm simultaneously.</p></div>
-        </details>
 
         <!-- Party -->
         <details class="fn-card" data-search="GetParty party PartyObject all members charmed">
@@ -705,10 +678,6 @@ mob:Command("pathto 150", 2) -- move after 2 turns</code></pre></div>
         </details>
 
         <!-- Tame / Pet -->
-        <details class="fn-card" data-search="IsTameable tameable bool tame pet">
-            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.IsTameable</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-bool">bool</span></summary>
-            <div class="fn-body"><p class="fn-desc">Returns true if this actor can be tamed as a pet.</p></div>
-        </details>
 
         <details class="fn-card" data-search="GetPet pet PetObject actor user companion">
             <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetPet</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-object">PetObject | null</span></summary>
@@ -725,31 +694,8 @@ end</code></pre></div>
             </div>
         </details>
 
-        <details class="fn-card" data-search="GetTameMastery tame mastery mob level object">
-            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetTameMastery</span><span class="fn-p">()</span></span><span class="fn-ret-badge ret-object">object</span></summary>
-            <div class="fn-body"><p class="fn-desc">Returns an object where keys are mob IDs and values are tame mastery levels.</p></div>
-        </details>
 
-        <details class="fn-card" data-search="SetTameMastery set tame mastery mob id level">
-            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.SetTameMastery</span><span class="fn-p">(</span><span class="fn-a">mobId</span> <span class="fn-t">int</span>, <span class="fn-a">newSkillLevel</span> <span class="fn-t">int</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-void">void</span></summary>
-            <div class="fn-body">
-                <p class="fn-desc">Sets the tame mastery level for a specific mob type.</p>
-                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
-                    <tr><td class="an">mobId</td><td class="at">int</td><td>The mob type ID.</td></tr>
-                    <tr><td class="an">newSkillLevel</td><td class="at">int</td><td>New mastery level.</td></tr>
-                </tbody></table>
-            </div>
-        </details>
 
-        <details class="fn-card" data-search="GetChanceToTame chance tame int target percent">
-            <summary><span class="fn-name-sig"><span class="fn-n">ActorObject.GetChanceToTame</span><span class="fn-p">(</span><span class="fn-a">target</span> <span class="fn-t">ActorObject</span><span class="fn-p">)</span></span><span class="fn-ret-badge ret-int">int</span></summary>
-            <div class="fn-body">
-                <p class="fn-desc">Returns the chance (0–100) this actor has to tame the target.</p>
-                <table class="arg-table"><thead><tr><th>Argument</th><th>Type</th><th>Description</th></tr></thead><tbody>
-                    <tr><td class="an">target</td><td class="at"><a href="#actor">ActorObject</a></td><td>The mob to attempt taming.</td></tr>
-                </tbody></table>
-            </div>
-        </details>
 
         <!-- XP / Points -->
         <details class="fn-card" data-search="GrantXP xp experience grant give reason">

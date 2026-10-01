@@ -355,7 +355,7 @@ func GroupKeyword(room *rooms.Room, g enemyparty.Group) string {
 }
 
 // NotAnOpener refuses a move that isn't how a fight starts (Ashveil Phase
-// 32c, the owner's rule 5): "A backstab doesn't start a fight. Type attack
+// 32c, the owner's rule 5): "A shot doesn't start a fight. Type attack
 // ruffians to fight a band of ruffians."
 func NotAnOpener(room *rooms.Room, mobInstanceId int, what string) string {
 	if room != nil {

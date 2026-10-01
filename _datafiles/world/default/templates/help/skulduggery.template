@@ -1,0 +1,14 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="skill">skulduggery</ansi> (skill)
+
+Skulduggery is the rogue's skill. Each level makes these surer:
+
+  Finding and disarming traps (<ansi fg="command">help trap</ansi>).
+  Picking locks (<ansi fg="command">help picklock</ansi>).
+  In a battle, striking an opening on its own: a rogue's first blow that
+  lands on a downed, stunned, staggered, or exposed foe is a critical hit
+  (<ansi fg="command">help abilities</ansi>).
+
+A rogue companion uses skulduggery for your company as it levels up
+(<ansi fg="command">help autoskill</ansi>).
+
+See also: <ansi fg="command">help archetype</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help trap</ansi>, <ansi fg="command">help picklock</ansi>.

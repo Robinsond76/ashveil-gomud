@@ -79,7 +79,6 @@ Physical size classification affecting combat, equipment, and interactions.
 - **GetStats() stats.Statistics**: Returns base racial statistics
 - **GetBuffs() []int**: Returns permanent racial buff IDs
 - **IsSelectable() bool**: Determines if race is available for player selection
-- **IsTameable() bool**: Determines if race can be tamed as pet/mount
 
 ## Race Features
 

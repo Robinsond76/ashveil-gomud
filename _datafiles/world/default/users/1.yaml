@@ -104,7 +104,7 @@ character:
     enchant: 4
     inspect: 4
     map: 4
-    protection: 4
+    protection: 3
     search: 4
     skulduggery: 4
     track: 4
@@ -128,11 +128,6 @@ character:
     elitekills: {}
     elitedeaths: {}
   extralives: 3
-  mobmastery:
-    tame:
-      1: 87
-      54: 50
-      55: 40
   pet:
     name: fisher
     type: mule

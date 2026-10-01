@@ -50,6 +50,5 @@ func TestEnemyGroupHelpPages(t *testing.T) {
 	assert.Contains(t, page("combat"), "help scout")
 	assert.Contains(t, page("cast"), "outside a fight")
 	assert.Contains(t, page("shoot"), "doesn't start a fight")
-	assert.Contains(t, page("backstab"), "doesn't start a fight")
 	assert.Contains(t, page("battle-summary"), "The fight with a band of ruffians is over")
 }

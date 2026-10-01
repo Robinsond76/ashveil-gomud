@@ -6,9 +6,11 @@ Design: [33f design](../designs/2026-10-01-phase-33f-company-specialists-design.
 
 ## Task 1: commands and code
 
-- Unregister and delete the player commands `bump`, `changeform`, `peep`,
+- Unregister and delete the player commands `backstab` (review finding:
+  it needed `sneak`'s hidden state), `bump`, `changeform`, `peep`,
   `pickpocket`, `portal`, `pray`, `scribe`, `sneak`, `tame` (and their
-  `.md` notes); delete the mob `befriend` command. Keep mob `sneak`/`portal`.
+  `.md` notes); delete the mob `befriend` command. Keep mob `sneak`,
+  `portal`, and `backstab`.
 - Remove peep's passive health display in room details, the tame-learning
   roll on kills, the tame training hook, Tame mastery (`MobMasteries`,
   `Character.MobMastery`), `GetMaxCharmedCreatures`, the `tame` stat mod,
@@ -37,7 +39,8 @@ Design: [33f design](../designs/2026-10-01-phase-33f-company-specialists-design.
 
 - `skills.Retired`/`TrainingCost`, `Character.RetireSkills`, and the
   archetype module's `retireSkills` on `PlayerSpawn`: refund 1+…+level per
-  retired skill, remove it, notify, save. Idempotent by construction.
+  retired skill, remove it, notify, save; Protection above its new cap of
+  3 is lowered with the difference refunded. Idempotent by construction.
 - Charms are runtime-only; nothing creates a non-companion charm, so a
   restart/copyover leaves none. No sweep.
 

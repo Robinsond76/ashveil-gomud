@@ -180,7 +180,7 @@ func TestNothingTypedChangesABattle(t *testing.T) {
 	b.aria.Character.ManaMax.Value, b.aria.Character.Mana = 100, 100
 	for _, c := range [][2]string{
 		{"attack", ""}, {"attack", "ruffians"}, {"attack", "ruffians#2"}, {"attack", "ruffian"},
-		{"cast", "mm ruffian"}, {"cast", "heal"}, {"backstab", "ruffian"}, {"shoot", "ruffian east"},
+		{"cast", "mm ruffian"}, {"cast", "heal"}, {"shoot", "ruffian east"},
 	} {
 		got := b.cmd(c[0], c[1])
 		assert.Contains(t, got, "The battle is under way", "%s %s", c[0], c[1])

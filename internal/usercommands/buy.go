@@ -226,7 +226,7 @@ func tryPurchase(request string, user *users.UserRecord, room *rooms.Room, shopM
 				extraSay = fmt.Sprintf(` Maybe you would enjoy this %s enchantment?`, buffNames[randSelection])
 			} else if len(petNames) > 0 {
 				randSelection := util.Rand(len(petNames))
-				extraSay = fmt.Sprintf(` <ansi fg="petname">%s</ansi> is a loyal mercenary, if you're interested.`, petNames[randSelection])
+				extraSay = fmt.Sprintf(` <ansi fg="petname">%s</ansi> would make a fine pet, if you're interested.`, petNames[randSelection])
 			}
 
 			shopMob.Command(`say Sorry, I can't offer that right now.` + extraSay)
