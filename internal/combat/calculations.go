@@ -333,11 +333,14 @@ func parryModifier(weapon items.Item) (mod int, ok bool) {
 // parryChance returns the percent chance that a melee strike is parried:
 // the Speed delta in [ParryChanceMin, ParryChanceMax], then the weapon's
 // modifier, which moves the whole range (a sword parries 10–35%, a dagger
-// 0–25%).
+// 0–25%). A ParryChanceMax of 0 turns parrying off.
 func parryChance(defSpeed, atkSpeed, weaponMod int) int {
 	cfg := configs.GetCombatConfig()
 	minParry := int(cfg.ParryChanceMin)
 	maxParry := int(cfg.ParryChanceMax)
+	if maxParry <= 0 {
+		return 0
+	}
 	base := max(minParry, min(maxParry, int(math.Floor(statDelta(defSpeed, atkSpeed)*float64(maxParry)))))
 	return max(0, min(100, base+weaponMod))
 }

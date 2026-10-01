@@ -227,10 +227,12 @@ func defenseLines(defense, defenderWeapon string) (toAttacker, toDefender, toRoo
 func sendDefenseLines(r *AttackResult, defense string, source, target *characters.Character, sourceType, targetType SourceTarget) {
 	toAttacker, toDefender, toRoom := defenseLines(defense, target.Equipment.Weapon.DisplayName())
 	one := func(m items.ItemMessage) items.MessageOptions { return items.MessageOptions{m} }
+	// Across rooms (a shot), the attacker's room sees only where it went.
+	across := items.ItemMessage(`<ansi fg="{sourcetype}">{source}</ansi> strikes toward the <ansi fg="exit">{exitname}</ansi>, and the blow is turned aside.`)
 	// A fixed seed: picking the only line must not spend a die.
 	a, d, ar, dr := buildCombatMessages(source, target, sourceType, targetType, ``, `0`, 1,
 		one(toAttacker), one(toDefender), one(toRoom), nil,
-		one(toAttacker), one(toDefender), nil, one(toRoom))
+		one(toAttacker), one(toDefender), one(across), one(toRoom))
 	r.SendToSource(string(a))
 	r.SendToTarget(string(d))
 	if ar != `` {

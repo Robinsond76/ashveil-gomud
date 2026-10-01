@@ -93,10 +93,11 @@ roster for a while, and can be raised at a church or a village shaman.
 
 Every blow gets a line, and its numbers sit in brackets at the end:
 <ansi fg="command">(5 damage)</ansi>, or <ansi fg="command">(critical hit, 9 damage, bleeding)</ansi> for a critical hit, which
-also names the status it leaves. A line with no brackets is a miss. A
-damaging critical hit that leaves someone standing gets a pain reaction
-right after the blow; a fatal one gets a death line instead. The reactions
-are only text (<ansi fg="command">help narration</ansi>). One line opens a fight and one closes it.
+also names the status it leaves. A line with no brackets is a miss, a
+block, a parry, or a dodge. A damaging critical hit that leaves someone
+standing gets a pain reaction right after the blow; a fatal one gets a
+death line instead. The reactions are only text (<ansi fg="command">help narration</ansi>). One
+line opens a fight and one closes it.
 
 <ansi fg="yellow-bold">Statuses (</ansi><ansi fg="command">help statuses</ansi><ansi fg="yellow-bold">)</ansi>
 

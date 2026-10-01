@@ -593,7 +593,7 @@ func (c *Character) GetAllSkillRanks() map[string]int {
 // Holdables are not considered "shield" type items: anything held in the
 // offhand that provides a damage reduction, and is not a weapon, is. A
 // stunned holder can't raise it (no-block; its armor still counts). Used
-// by GetDefense's block and Phase 30d1's shield counter.
+// by the Phase 30g2 block and the shield counter.
 func (c *Character) HasShield() bool {
 	if c.Equipment.Offhand.ItemId == 0 || c.HasBuffFlag("no-block") {
 		return false

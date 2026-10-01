@@ -1346,6 +1346,48 @@ var FIELD_META = {
         inputType: 'slider',
         min: 1, max: 100, step: 1,
     },
+    'GamePlay.Combat.BlockChanceMin': {
+        label: 'Min Block Chance (%)',
+        description: 'Starting block chance for a shield-bearer, before the shield\'s own armor and the Strength delta are added.',
+        implications: 'Higher minimum makes every shield a reliable wall. Lower minimum leaves weak shield-bearers blocking rarely.',
+        inputType: 'slider',
+        min: 1, max: 100, step: 1,
+    },
+    'GamePlay.Combat.BlockChanceMax': {
+        label: 'Max Block Chance (%)',
+        description: 'Maximum block chance for a strong shield-bearer with a heavy shield.',
+        implications: 'Higher maximum lets shield fighters shrug off most blows. Lower maximum keeps armor and healing in play.',
+        inputType: 'slider',
+        min: 1, max: 100, step: 1,
+    },
+    'GamePlay.Combat.ParryChanceMin': {
+        label: 'Min Parry Chance (%)',
+        description: 'Minimum parry chance for a weapon-holder without a shield, before the weapon\'s modifier (+5 swords and staves, -5 daggers).',
+        implications: 'Higher minimum makes armed fighters harder to hit in melee. Lower minimum leaves parrying to the fast.',
+        inputType: 'slider',
+        min: 1, max: 100, step: 1,
+    },
+    'GamePlay.Combat.ParryChanceMax': {
+        label: 'Max Parry Chance (%)',
+        description: 'Maximum parry chance for a fast weapon-holder, before the weapon\'s modifier.',
+        implications: 'Higher maximum lets fast duelists turn most melee blows. Lower maximum keeps parry a small edge.',
+        inputType: 'slider',
+        min: 1, max: 100, step: 1,
+    },
+    'GamePlay.Combat.BashChanceMin': {
+        label: 'Min Shield Bash Chance (%)',
+        description: 'Minimum chance a shield-bearer slams a blocked melee blow back (once a round), regardless of Strength.',
+        implications: 'Higher minimum makes shield bashes (and their stuns) common. Lower minimum keeps them rare.',
+        inputType: 'slider',
+        min: 1, max: 100, step: 1,
+    },
+    'GamePlay.Combat.BashChanceMax': {
+        label: 'Max Shield Bash Chance (%)',
+        description: 'Maximum shield bash chance for a bearer much stronger than the attacker.',
+        implications: 'Higher maximum lets strong shield fighters stun often. Lower maximum keeps the bash a bonus.',
+        inputType: 'slider',
+        min: 1, max: 100, step: 1,
+    },
 
     // --- Memory ---
     'Memory.MaxMobBoredom': {
@@ -1659,11 +1701,11 @@ var SECTIONS = [
     {
         key: 'GamePlay.Combat',
         name: 'Gameplay: Combat',
-        desc: 'Hit chance, damage bonus, crit chance and multiplier, dodge chance, and extra attack bounds.',
+        desc: 'Hit chance, damage bonus, crit chance and multiplier, dodge, block, parry, and shield bash chances, and extra attack bounds.',
         color: '#8b2500',
         iconBg: '#f9ece8',
         icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M2 2l20 20"/><path d="M20 2l2 2-9.5 9.5"/><path d="M3 12l4 4"/></svg>',
-        fields: ['GamePlay.Combat.ConsistentAttackMessages','GamePlay.Combat.DamageBonusMin','GamePlay.Combat.DamageBonusMax','GamePlay.Combat.ToHitMin','GamePlay.Combat.ToHitMax','GamePlay.Combat.CritChanceMin','GamePlay.Combat.CritChanceMax','GamePlay.Combat.CritMultMin','GamePlay.Combat.CritMultMax','GamePlay.Combat.DodgeChanceMin','GamePlay.Combat.DodgeChanceMax'],
+        fields: ['GamePlay.Combat.ConsistentAttackMessages','GamePlay.Combat.DamageBonusMin','GamePlay.Combat.DamageBonusMax','GamePlay.Combat.ToHitMin','GamePlay.Combat.ToHitMax','GamePlay.Combat.CritChanceMin','GamePlay.Combat.CritChanceMax','GamePlay.Combat.CritMultMin','GamePlay.Combat.CritMultMax','GamePlay.Combat.DodgeChanceMin','GamePlay.Combat.DodgeChanceMax','GamePlay.Combat.BlockChanceMin','GamePlay.Combat.BlockChanceMax','GamePlay.Combat.ParryChanceMin','GamePlay.Combat.ParryChanceMax','GamePlay.Combat.BashChanceMin','GamePlay.Combat.BashChanceMax'],
     },
     {
         key: 'Memory',

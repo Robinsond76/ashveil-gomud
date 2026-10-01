@@ -32,7 +32,7 @@ const (
 	FlagLoseFirstAction = "lose-first-action" // loses its next action only
 	FlagArmorBroken     = "armor-broken"
 	FlagExposed         = "exposed"
-	FlagNoDodge         = "no-dodge" // can't dodge a blow (stunned)
+	FlagNoDodge         = "no-dodge" // no active defense at all: block, parry, or dodge (stunned)
 	FlagNoBlock         = "no-block" // can't block with a shield (stunned)
 )
 

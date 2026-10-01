@@ -15,8 +15,8 @@ import (
 
 func TestAttackEntryPointsUseEnemyLabels(t *testing.T) {
 	edgeSpecs(t)
-	// A dodge intentionally emits only source/target messages. Exercise the
-	// room narration path deterministically without changing gameplay defaults.
+	// Force hits (no block, parry, or dodge) so the room narration path is
+	// exercised deterministically without changing gameplay defaults.
 	gameplay := configs.GetGamePlayConfig()
 	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
 	gameplay.Combat.ParryChanceMin, gameplay.Combat.ParryChanceMax = 0, 0

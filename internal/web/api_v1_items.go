@@ -29,7 +29,7 @@ func apiV1GetItemRanksWeapons(w http.ResponseWriter, r *http.Request) {
 
 // GET /admin/api/v1/items/ranks/armor
 // Returns armor rankings. Three sorted views are returned: by defense rating,
-// by adjusted defense (accounting for shield multiplier), and by unified
+// by adjusted defense (equal to defense: no slot multiplier), and by unified
 // eHP-equivalent score (defense + stat weights + buffs).
 func apiV1GetItemRanksArmor(w http.ResponseWriter, r *http.Request) {
 	byDefense, byAdjDefense, byScore := combat.RankArmor()

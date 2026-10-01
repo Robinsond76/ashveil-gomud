@@ -126,6 +126,21 @@ func TestParryChance(t *testing.T) {
 	assert.Greater(t, parryChance(90, 50, 0), parryChance(50, 50, 0), "more Speed parries more")
 }
 
+// Review: a parry range of 0 is no parry, whatever the weapon adds, so
+// tests that zero it to force hits get them.
+func TestZeroParryRangeTurnsParryOff(t *testing.T) {
+	defenseSpecs(t)
+	defenseOdds(t, 0, 0, 0)
+	assert.Zero(t, parryChance(150, 50, 5), "a sword")
+	assert.Zero(t, parryChance(150, 50, 10), "a reach weapon with its own parry")
+	for _, weaponID := range []int{edgeSwordID, defStaffID, defPikeID} {
+		for i := 0; i < 200; i++ {
+			r := strikeAt(armed(edgeSwordID), armed(weaponID))
+			require.True(t, r.Hit, "weapon %d parried with parry off", weaponID)
+		}
+	}
+}
+
 func TestBashChance(t *testing.T) {
 	assert.Equal(t, 5, BashChance(50, 50), "even Strength: the minimum")
 	assert.Equal(t, 20, BashChance(150, 50), "a great Strength edge: the maximum")

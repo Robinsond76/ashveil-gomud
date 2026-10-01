@@ -364,6 +364,10 @@ func TestShieldCounterOnlyOnBlock(t *testing.T) {
 			b.toughen()
 			b.strike(1, false) // the captain on Tamsin
 			b.fight()
+			blows := strikesOn(*stream, key(b.captain()), key(b.companion(1)))
+			require.Len(t, blows, 1, "the captain struck Tamsin")
+			assert.Empty(t, blows[0].Defenses, "unblocked")
+			assert.Equal(t, hit, blows[0].Outcome == combatstream.OutcomeHit)
 			assert.Empty(t, bashesBy(*stream, key(b.companion(1))), "no block, no bash")
 		})
 	}
@@ -462,7 +466,11 @@ func TestNoShieldCounterAgainstBowOrWhileStunned(t *testing.T) {
 	b.toughen()
 	b.strike(1, false)
 	b.fight()
-	assert.Empty(t, bashesBy(*stream, key(tamsin)), "a stunned bearer blocks nothing, and so never counters")
+	blows := strikesOn(*stream, key(b.captain()), key(tamsin))
+	require.Len(t, blows, 1, "the captain struck the stunned Tamsin")
+	assert.Equal(t, combatstream.OutcomeHit, blows[0].Outcome)
+	assert.Empty(t, blows[0].Defenses, "a stunned bearer blocks nothing")
+	assert.Empty(t, bashesBy(*stream, key(tamsin)), "and so never counters")
 }
 
 // An enemy with a shield counters the player.
@@ -551,6 +559,17 @@ func TestPlayerGuardianChantAndCounter(t *testing.T) {
 		b.fight()
 	}
 	assert.NotEmpty(t, bashesBy(*stream, "u:7"), "Aria countered the blow she took for Oswin")
+}
+
+// strikesOn lists the attack events (not bashes) from one ref key on another.
+func strikesOn(stream []combatstream.Event, from, on string) []combatstream.Event {
+	var out []combatstream.Event
+	for _, e := range ofKind(stream, combatstream.Attack) {
+		if e.WeaponType != "shield-bash" && e.Source.Key() == from && e.Target.Key() == on {
+			out = append(out, e)
+		}
+	}
+	return out
 }
 
 // bashesBy lists the shield bashes a ref key struck.

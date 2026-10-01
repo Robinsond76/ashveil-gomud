@@ -122,7 +122,7 @@
             <p>Runs the combat engine's <code>RankArmor()</code> function and returns three sorted views of every loaded armor and wearable item:</p>
             <ul style="margin:0.4rem 0 0.6rem 1.2rem;font-size:0.85rem;color:var(--color-text-tertiary);line-height:1.7">
                 <li><strong>by_defense</strong> - raw <code>DamageReduction</code> value from the item spec</li>
-                <li><strong>by_adj_defense</strong> - defense adjusted for slot multiplier (offhand shields receive &times;1.5 inside <code>Character.GetDefense()</code>)</li>
+                <li><strong>by_adj_defense</strong> - defense as <code>Character.GetDefense()</code> counts it; no slot has a multiplier (shields block instead), so it equals by_defense</li>
                 <li><strong>by_score</strong> - unified eHP-equivalent score: <code>(AdjDefense/200)&times;100 + statValue + BuffValue/10</code>, where stat weights are derived from the combat engine's configured range constants</li>
             </ul>
             <p>Each entry contains <code>ItemId</code>, <code>Name</code>, <code>Slot</code>, <code>Cursed</code>, <code>Defense</code>, <code>AdjDefense</code>, <code>StatBonus</code>, <code>BuffCount</code>, <code>BuffValue</code>, and <code>Score</code>. This endpoint is read-only and has no side effects.</p>
