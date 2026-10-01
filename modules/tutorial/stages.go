@@ -185,6 +185,7 @@ func init() {
 				`<ansi fg="command">company status</ansi>, <ansi fg="command">inventory</ansi>, and <ansi fg="command">status</ansi> one last time.`,
 				`Go through the <ansi fg="exit">gate</ansi> to begin your journey.`,
 				`Settlements post recruits of your own, and the faces change over time: <ansi fg="command">look</ansi> at the Waymark Inn's hiring slate, and see <ansi fg="command">help company</ansi>.`,
+				`Recruit for the road, too: a ranger reads the trail and eases rough ground, a rogue spots secret ways and haggles, a wizard forecasts the weather. <ansi fg="command">company specialists</ansi> shows who does what; see <ansi fg="command">help specialists</ansi>.`,
 				`<ansi fg="command">help adventure</ansi> lists every part of the game. <ansi fg="command">help combat</ansi> covers battles, and <ansi fg="command">help death</ansi> and <ansi fg="command">help resurrect</ansi> what happens when someone falls.`,
 				`<ansi fg="command">help party</ansi> explains player alliances. Following and allied group support require your consent; each owner commands their own company.`,
 				`To start over with a new character on the same login, see <ansi fg="command">help delete</ansi>.`,

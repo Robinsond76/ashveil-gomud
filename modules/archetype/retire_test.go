@@ -43,3 +43,16 @@ func TestShippedArchetypesClaimNoRetiredSkill(t *testing.T) {
 		}
 	}
 }
+
+// TestSearchAndTradingAreRefunded (33f2): the skills 33f2 retires join the
+// one-time refund.
+func TestSearchAndTradingAreRefunded(t *testing.T) {
+	m := registered(t)
+	m.saveUser = func(*users.UserRecord) error { return nil }
+	u := trainee(t, 52, 96008)
+	u.Character.Skills = map[string]int{"search": 3, "trading": 2, "track": 1}
+	text := captureText(t, func() { m.onPlayerSpawn(events.PlayerSpawn{UserId: 52}) })
+	assert.Equal(t, 20+6+3, u.Character.TrainingPoints)
+	assert.Equal(t, map[string]int{"track": 1}, u.Character.Skills)
+	assert.Contains(t, text, "search, trading")
+}

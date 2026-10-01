@@ -242,36 +242,6 @@ func buffDurationString(spec *buffs.BuffSpec) string {
 	return fmt.Sprintf(`Activates every %s (%dx total)`, roundCt, spec.TriggerCount)
 }
 
-func buildTrackPanel(visitors []trackingInfo) string {
-	layout, err := templates.LoadPanelLayout("room/track")
-	if err != nil {
-		layout = templates.NewPanelLayout("open", "single", 1, 1)
-		layout.AddPanelsToSlot(layout.AddSlot(), "track")
-		layout.Panel("track").SetTitle(` <ansi fg="black-bold">.:</ansi><ansi fg="20">Recent Visitors</ansi> `).SetWidth(78)
-	}
-
-	p := layout.Panel("track")
-	if len(visitors) == 0 {
-		p.Add(``, ``, `None`)
-	} else {
-		for _, v := range visitors {
-			name := v.Name
-			if name == `` {
-				name = `None`
-			}
-			strength := strings.ToLower(v.Strength)
-			label := fmt.Sprintf(`[<ansi fg="trail-%s">%s</ansi>]`, strength, v.Strength)
-			value := fmt.Sprintf(`<ansi fg="username">%s</ansi>`, name)
-			if v.ExitName != `` {
-				value += fmt.Sprintf(` - It seems like they went <ansi fg="exit">%s</ansi>`, v.ExitName)
-			}
-			p.Add(label, label, value)
-		}
-	}
-
-	return layout.Render() + term.CRLFStr
-}
-
 const (
 	alertBorderDashes = 69
 	alertContentWidth = alertBorderDashes - 2 // one space padding on each side inside the border

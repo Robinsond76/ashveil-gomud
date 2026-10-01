@@ -39,3 +39,8 @@ FrostbittenPct: 150
 HypothermicPct: 200
 WellRestedPct: 50
 RestedPct: 75
+# Phase 33f2 Pathfinder: a ranger walking with the company cuts strain on
+# terrain dearer than PathfinderAboveStrain (road) by PathfinderPctPerLevel%
+# per level, never below road strain.
+PathfinderPctPerLevel: 5
+PathfinderAboveStrain: 25

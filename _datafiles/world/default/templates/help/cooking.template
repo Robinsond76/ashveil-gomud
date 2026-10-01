@@ -34,8 +34,8 @@ The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train
 
 <ansi fg="yellow-bold">The Cook profession</ansi>
 
-The <ansi fg="skill">Cook</ansi> profession pairs Cooking with Track and Search, for hunting and
-foraging the ingredients a hearth wants.
+The <ansi fg="skill">Cook</ansi> profession pairs Cooking with Track, for hunting the ingredients
+a hearth wants.
 
 See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help use</ansi>, <ansi fg="command">help look</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help train</ansi>,
 <ansi fg="command">help skills</ansi>.

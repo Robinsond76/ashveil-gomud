@@ -149,3 +149,27 @@ func (g Good) BidForStock(stock, spreadPct int) (int, bool) {
 	}
 	return bid, true
 }
+
+// HaggledBuy (Phase 33f2) is a buying price lowered by pct percent, rounded
+// up, never below 1. pct is clamped to 0..99.
+func HaggledBuy(price, pct int) int {
+	pct = min(max(pct, 0), 99)
+	if price <= 0 || pct == 0 {
+		return price
+	}
+	return max((price*(100-pct)+99)/100, 1)
+}
+
+// HaggledSell (Phase 33f2) is a selling price raised by pct percent,
+// rounded down, then held to ceiling: one below the cheapest price anyone
+// could pay to buy the good back (the best possible haggle), so no
+// buy-and-sell loop profits, with or without a haggler. The ceiling holds
+// even below the plain sale; a sale worth anything still pays at least 1.
+// pct is clamped to 0..99.
+func HaggledSell(sale, pct, ceiling int) int {
+	pct = min(max(pct, 0), 99)
+	if sale <= 0 {
+		return sale
+	}
+	return max(min(sale*(100+pct)/100, ceiling), 1)
+}

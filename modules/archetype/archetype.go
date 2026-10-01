@@ -200,6 +200,7 @@ func init() {
 	m.plug.AddUserCommand("archetype", m.userCommand, true, false)
 	m.plug.AddUserCommand("archetypereset", m.adminResetCommand, true, true)
 	m.registerUtility()
+	m.registerSpecialists()
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {

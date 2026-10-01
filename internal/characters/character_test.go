@@ -11,6 +11,8 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 func TestMain(m *testing.M) {
@@ -2122,4 +2124,25 @@ func TestHealRestoresManaByTheManaAmount(t *testing.T) {
 	if c.Health != 15 || c.Mana != 50 {
 		t.Fatalf("Heal(5, 100): health %d, mana %d", c.Health, c.Mana)
 	}
+}
+
+// TestKnownSecretExitsAreDurable (33f2): a spotted secret exit survives a
+// save and reload, a save from before 33f2 loads with none, and either a
+// visit or a spot shows the exit.
+func TestKnownSecretExitsAreDurable(t *testing.T) {
+	c := New()
+	assert.True(t, c.LearnSecretExit(12, "West"))
+	assert.False(t, c.LearnSecretExit(12, "west"), "already known")
+	data, err := yaml.Marshal(c)
+	require.NoError(t, err)
+	loaded := &Character{}
+	require.NoError(t, yaml.Unmarshal(data, loaded))
+	assert.True(t, loaded.KnowsSecretExit(12, "west"))
+	assert.True(t, loaded.SeesSecretExit(12, "west", 13, "Zone"))
+	assert.False(t, loaded.SeesSecretExit(12, "east", 14, "Zone"))
+
+	old := &Character{}
+	require.NoError(t, yaml.Unmarshal([]byte("name: Old\n"), old))
+	assert.Empty(t, old.KnownSecretExits)
+	assert.False(t, old.SeesSecretExit(12, "west", 13, "Zone"))
 }

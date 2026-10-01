@@ -210,6 +210,9 @@ type MarketModule struct {
 
 	roomTag   string
 	spreadPct int
+	// hagglePerLevel is Phase 33f2's Haggle: prices improve this many
+	// percent per level of the company's best haggler.
+	hagglePerLevel int
 	// roomTitles caches marketRooms per zone; load clears it.
 	roomTitles map[string][]string
 
@@ -244,21 +247,22 @@ var module *MarketModule
 
 func init() {
 	m := &MarketModule{
-		plug:         plugins.New("market", "1.0"),
-		roll:         rand.Uint64,
-		itemExists:   func(itemID int) bool { return items.GetItemSpec(itemID) != nil },
-		itemNames:    itemNames,
-		zoneExists:   zoneExists,
-		marketRooms:  marketRooms,
-		roomTag:      defaultRoomTag,
-		spreadPct:    defaultSpreadPct,
-		rumorTag:     defaultRumorTag,
-		rumorRefresh: defaultRumorRefresh,
-		rumorsPerAsk: defaultRumorsPerAsk,
-		markets:      map[string][]market.Good{},
-		zones:        map[string]ZoneMarket{},
-		news:         map[string]ZoneMarket{},
-		loadErr:      errNotLoaded,
+		plug:           plugins.New("market", "1.0"),
+		roll:           rand.Uint64,
+		itemExists:     func(itemID int) bool { return items.GetItemSpec(itemID) != nil },
+		itemNames:      itemNames,
+		zoneExists:     zoneExists,
+		marketRooms:    marketRooms,
+		roomTag:        defaultRoomTag,
+		spreadPct:      defaultSpreadPct,
+		hagglePerLevel: defaultHagglePerLevel,
+		rumorTag:       defaultRumorTag,
+		rumorRefresh:   defaultRumorRefresh,
+		rumorsPerAsk:   defaultRumorsPerAsk,
+		markets:        map[string][]market.Good{},
+		zones:          map[string]ZoneMarket{},
+		news:           map[string]ZoneMarket{},
+		loadErr:        errNotLoaded,
 	}
 	if err := m.plug.AttachFileSystem(files); err != nil {
 		panic(err)
@@ -282,6 +286,8 @@ func init() {
 const (
 	defaultRoomTag   = "market"
 	defaultSpreadPct = 20
+	// defaultHagglePerLevel is Phase 33f2's Haggle, percent per level.
+	defaultHagglePerLevel = 2
 )
 
 func itemNames(itemID int) []string {
@@ -357,12 +363,13 @@ func (m *MarketModule) load() {
 		return
 	}
 	var markets map[string][]market.Good
-	roomTag, spreadPct := m.roomTag, m.spreadPct
+	roomTag, spreadPct, haggle := m.roomTag, m.spreadPct, m.hagglePerLevel
 	rumorTag, rumorRefresh, rumorsPerAsk := m.rumorTag, m.rumorRefresh, m.rumorsPerAsk
 	if m.plug != nil {
 		markets = parseMarkets(m.plug.Config.Get("Markets"), m.itemExists, m.zoneExists)
 		roomTag = parseRoomTag(m.plug.Config.Get("RoomTag"))
 		spreadPct = parseSpreadPct(m.plug.Config.Get("SpreadPct"))
+		haggle = parseHagglePerLevel(m.plug.Config.Get("HagglePctPerLevel"))
 		rumorTag = parseRumorTag(m.plug.Config.Get("RumorRoomTag"))
 		rumorRefresh = parseRumorRefresh(m.plug.Config.Get("RumorRefreshRounds"))
 		rumorsPerAsk = parseRumorsPerAsk(m.plug.Config.Get("RumorsPerAsk"))
@@ -375,7 +382,7 @@ func (m *MarketModule) load() {
 	if markets != nil {
 		m.markets = markets
 	}
-	m.roomTag, m.spreadPct = roomTag, spreadPct
+	m.roomTag, m.spreadPct, m.hagglePerLevel = roomTag, spreadPct, haggle
 	m.rumorTag, m.rumorRefresh, m.rumorsPerAsk = rumorTag, rumorRefresh, rumorsPerAsk
 	m.roomTitles = nil
 	if err != nil {
@@ -482,12 +489,19 @@ type Quote struct {
 	Sell   int
 	SellOK bool
 	Level  string
+	// Next is the buying price of the next unit once one more is sold
+	// (33f2: it caps a haggled sale).
+	Next   int
+	NextOK bool
 }
 
 func (m *MarketModule) quoteLocked(g market.Good, stock int) Quote {
 	q := Quote{ItemID: g.ItemID, Level: g.StockLevel(stock)}
 	q.Buy, q.BuyOK = g.AskForStock(stock)
 	q.Sell, q.SellOK = g.BidForStock(stock, m.spreadPct)
+	if q.SellOK {
+		q.Next, q.NextOK = g.AskForStock(stock + 1)
+	}
 	return q
 }
 
@@ -607,9 +621,13 @@ func (m *MarketModule) marketRoomTitles(zone, tag string) []string {
 }
 
 func (m *MarketModule) sendListing(user *users.UserRecord, room *rooms.Room, quotes []Quote, pricing standing.Standing, black bool) {
+	haggler, pct := m.haggler(user, room)
+	m.mu.Lock()
+	maxPct := m.maxHagglePctLocked()
+	m.mu.Unlock()
 	for i := range quotes {
-		quotes[i].Buy = pricing.BuyPrice(quotes[i].Buy)
-		quotes[i].Sell = pricing.SellPrice(quotes[i].Sell)
+		quotes[i].Buy = haggledBuy(quotes[i].Buy, pricing, pct)
+		quotes[i].Sell = haggledSell(quotes[i].Sell, quotes[i].Next, quotes[i].NextOK, pricing, pct, maxPct)
 	}
 	names := make([]string, len(quotes))
 	width := len("Good")
@@ -636,6 +654,9 @@ func (m *MarketModule) sendListing(user *users.UserRecord, room *rooms.Room, quo
 	}
 	if pricing.MarkupPct > 0 {
 		lines = append(lines, fmt.Sprintf("Your company is %s here: you pay %d%% more and are paid %d%% less.", pricing.Tier, pricing.MarkupPct, pricing.MarkupPct))
+	}
+	if pct > 0 {
+		lines = append(lines, fmt.Sprintf("%s %s for your company: these prices are up to %d%% better (included above).", haggler.Subject(), haggler.Verb("haggle", "haggles"), pct))
 	}
 	lines = append(lines, "Trade with: market buy <good>, market sell <good>.")
 	user.SendText(strings.Join(lines, "\n"))
@@ -754,6 +775,20 @@ func parseSpreadPct(raw any) int {
 	if pct < 1 || pct > 90 {
 		mudlog.Warn("market: SpreadPct must be 1..90; using default", "value", raw, "default", defaultSpreadPct)
 		return defaultSpreadPct
+	}
+	return pct
+}
+
+// parseHagglePerLevel reads Phase 33f2's HagglePctPerLevel (0..10; 0
+// turns haggling off).
+func parseHagglePerLevel(raw any) int {
+	if raw == nil {
+		return defaultHagglePerLevel
+	}
+	pct := configInt(raw)
+	if pct < 0 || pct > 10 {
+		mudlog.Warn("market: HagglePctPerLevel must be 0..10; using default", "value", raw, "default", defaultHagglePerLevel)
+		return defaultHagglePerLevel
 	}
 	return pct
 }

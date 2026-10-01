@@ -5,8 +5,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (33f1, skill and charm retirement)
-- **Latest completed phases:** 33f1, skill and charm retirement; 33e,
+- **Last updated:** 2026-10-01 (33f2, expedition specialists)
+- **Latest completed phases:** 33f2, expedition specialists; 33f1, skill
+  and charm retirement; 33e,
   automatic class abilities; 33d, allied
   companies; 33c, company retreat; 33b, friendly effects; 33a, command
   rules; and 30g3, personal load and agility, all 2026-10-01.
@@ -22,8 +23,8 @@ play-test improvements are implemented; 32b's status still carries an outstandin
 **Current owner priority:** finish Phase 33a–33i in order, choosing the lead's
 recommended defaults without further confirmation (2026-10-01). 33a–33d are
 complete; 33e (automatic class abilities) and **33f1 (skill and charm
-retirement)** are complete; 33f2 (expedition specialists) is next, then
-33f3 (camp specialists). Phase 30g3 is also complete;
+retirement)** and **33f2 (expedition specialists)** are complete; 33f3
+(camp specialists) is next. Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
@@ -139,13 +140,69 @@ delegated to the lead. 33a–33e are complete.
 | 33c | Company Retreat, Rout, and Separation | Complete: [design](designs/2026-10-01-phase-33c-company-retreat-design.md), [plan](plans/2026-10-01-phase-33c-company-retreat.md); ordered withdrawal, paid cover, legal escape and saved separation |
 | 33d | Multiplayer Parties and Allied Companies | Complete: [design](designs/2026-10-01-phase-33d-allied-companies-design.md), [plan](plans/2026-10-01-phase-33d-allied-companies.md); durable alliances, explicit consent, contribution-based XP, fixed shared loot claims and independent company authority |
 | 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
-| 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 (expedition specialists) and 33f3 (camp specialists) next |
+| 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 (camp specialists) next |
 | 33g | Company Equipment, Loadouts, and Loot | Future design: [proposal](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); implementation not started |
 | 33h | Company Progression, Rewards, and Expedition Continuity | Future design: [proposal](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md); implementation not started |
 | 33i | Company Encounter Assessment and Enemy Roles | Future design: [proposal](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md); implementation not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33f2: expedition specialists (2026-10-01)
+
+**Why:** the owner asked for the expedition skills proposed in the 33f
+review ([design](designs/2026-10-01-phase-33f-company-specialists-design.md),
+[plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)).
+
+**What shipped:** for each capability the best present, living member of
+the leader's own company acts (the 17b resolver, through
+`archetypes.BestSpecialist`), switched by `autoskill`, resting in the
+leader's battle. Read the Trail (ranger): reports hostile groups beyond
+the exits on each step and on a bare `track`, more detail per level, two
+rooms out at 4 (memory-loaded rooms only); warns of ambush routes at
+departure and leads the company around an ambush 20%/level (the pause
+becomes tracks). Keen Eye (rogue): spots secret exits on entry, remembered
+in `KnownSecretExits` and shown in room text, Room GMCP, the world map, and
+`map`. Pathfinder (ranger): 5%/level less strain on rough ground, never
+below road. Weather Sense (wizard): zones foretell their next condition
+(`ZoneWeather.Next`), so `weather` forecasts truly, more per level.
+Haggle (rogue): 2%/level better market prices; every sale stays below the
+cheapest possible buy-back. `company specialists`. The `search` command and
+skill, the stock `track` command, and the dead `trading` skill (and the
+Merchant profession) are retired with the 33f1 refund. Help pages
+`specialists`, `trail`, `keeneye`, `pathfinder`, `forecast`, `haggle`;
+updated company, weather, market, strain, autoskill, archetype, travel,
+and job pages; a Departure hint.
+
+**Tests:** real `go` steps (trail by a companion ranger and a level-1
+player, no tracker, autoskill off; Keen Eye spotting, memory, room details;
+no spotting without a rogue at a low roll); `track`, `specialists`,
+`company specialists`; resolver ownership (separated, downed, other player,
+switched off, in battle); walking strain and `strain`; market buys, sales,
+listing, and a sweep of every shipped good, stock, standing, and haggle
+pairing that no round trip profits; weather command at each level,
+neighbour zones, foretold weather on advance and on recovery of old saves;
+travel warning, evasion, and resume/return/recovery after it; Room GMCP;
+`KnownSecretExits` save/reload; refunds; help render and index.
+
+**Independent review** (default model, report-only). Accepted and fixed:
+(1, blocking) a haggled buy-and-sell loop profited on steep goods (and by
+toggling the haggler): the sale cap now always applies at the best
+possible haggle; (2, blocking) an evaded ambush left a pause the route
+validation rejected, stranding the journey: `CanFireAs` accepts it (and,
+pre-existing, a weighted table's kinds); (3) specialists acted in the
+leader's battle: gated in the resolver, `track`, and Keen Eye; (4) route
+config never read `Kinds` or the ambush mob: parsed and tested (no shipped
+route has an ambush yet: a content gap, not a code one); (5) coverage for
+durability, Room GMCP, and refunds added; (6) the world map and `map`
+still used the visited-only rule: fixed; (7) trail now reads only rooms
+already in memory; (8) neighbour forecasts use weather zones; (9)
+`autoskill` alignment; (10) the stale trading page (the skill is retired),
+README, and unused trail colours; (11) trade notes name the gold actually
+won. Not changed: Room GMCP needs no forced resend, since Keen Eye runs in
+the step before the move's queued room update is built.
+
+**Verification (after review fixes):** `make generate`, `make validate`, `go test -race ./...` (all green). No JavaScript changed.
 
 ### Phase 33f1: skill and charm retirement (2026-10-01)
 

@@ -139,7 +139,6 @@ var (
 		`room`:        {Room, false, true},       // Admin only
 		`save`:        {Save, true, false},
 		`say`:         {Say, true, false},
-		`search`:      {Search, false, false},
 		`sell`:        {Sell, false, false},
 		`server`:      {Server, false, true}, // Admin only
 		`set`:         {Set, true, false},
@@ -160,7 +159,6 @@ var (
 		`telemetry`:  {Telemetry, true, true}, // Admin only
 		`teleport`:   {Teleport, true, true},  // Admin only
 		`throw`:      {Throw, false, false},
-		`track`:      {Track, false, false},
 		`train`:      {Train, false, false},
 		`unenchant`:  {Unenchant, false, false},
 		`uncurse`:    {Uncurse, false, false},

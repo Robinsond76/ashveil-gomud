@@ -20,6 +20,8 @@ Several things scale a step's strain up or down:
   - <ansi fg="yellow">Rest:</ansi> the Rested and Well Rested buffs from camping or an inn
     stay cut strain, Well Rested more than Rested (<ansi fg="command">help camp</ansi>,
     <ansi fg="command">help inn</ansi>).
+  - <ansi fg="yellow">A pathfinder:</ansi> a ranger walking with you cuts the strain of
+    rough ground for everyone, 5% per level (<ansi fg="command">help pathfinder</ansi>).
 
 Only members actually walking with you take a share of the strain at
 all; a companion left behind takes none. Beyond how many a mount

@@ -40,6 +40,10 @@
 # never quote prices, and they are only as fresh as the last snapshot.
 RoomTag: market
 SpreadPct: 20 # 1..90
+# Phase 33f2 Haggle: the company's best haggler (a rogue) improves market
+# prices by this many percent per level (0..10; 0 turns it off). A sale is
+# never paid more than one below what buying it back would cost.
+HagglePctPerLevel: 2
 RumorRoomTag: inn
 RumorRefreshRounds: 150 # 1..100000; 150 rounds is 10 minutes at 4-second rounds
 RumorsPerAsk: 3 # 1..10

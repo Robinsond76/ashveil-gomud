@@ -70,13 +70,14 @@ func newTestModule(store Store) *MarketModule {
 			}
 			return nil
 		},
-		roomTag:      "market",
-		spreadPct:    20,
-		rumorTag:     "inn",
-		rumorRefresh: 150,
-		rumorsPerAsk: 3,
-		markets:      map[string][]market.Good{"Dunmar": {hide(), meat()}},
-		zones:        map[string]ZoneMarket{},
+		roomTag:        "market",
+		spreadPct:      20,
+		hagglePerLevel: defaultHagglePerLevel,
+		rumorTag:       "inn",
+		rumorRefresh:   150,
+		rumorsPerAsk:   3,
+		markets:        map[string][]market.Good{"Dunmar": {hide(), meat()}},
+		zones:          map[string]ZoneMarket{},
 	}
 }
 

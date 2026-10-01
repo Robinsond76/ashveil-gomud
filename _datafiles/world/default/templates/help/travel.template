@@ -27,7 +27,9 @@ A route can pause you partway with something to deal with: a fallen
 tree blocking the way, something that catches your eye, tracks worth
 looking over, or an ambush you have to fight off (on a route that has
 them: a pair of foes, unless the foe is one of the few great beasts that
-hunt alone). While paused, you
+hunt alone). A ranger in your company warns you of an ambush road as
+you set out, and may lead you around the ambush (<ansi fg="command">help trail</ansi>).
+While paused, you
 choose:
 
   <ansi fg="command">travel resume</ansi>

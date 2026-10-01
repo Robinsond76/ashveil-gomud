@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
@@ -275,6 +276,10 @@ type ExpeditionModule struct {
 	mountDurationPct func(leaderUserID int) int
 	roomZone         func(roomID int) string
 
+	// Phase 33f2 Read the Trail seams; nil uses internal/archetypes.
+	trailReader  func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool)
+	ambushEvader func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool)
+
 	profiles        map[string]expedition.TravelProfile
 	sessions        map[int]expedition.TravelSession
 	timers          map[int]Timer
@@ -460,8 +465,31 @@ func parseInterruption(raw any) (*expedition.InterruptionProfile, bool) {
 		return nil, false
 	}
 	interruption := &expedition.InterruptionProfile{
-		Kind:       expedition.InterruptionKind(configString(fields["kind"])),
-		Checkpoint: uint8(checkpoint),
+		Kind:        expedition.InterruptionKind(configString(fields["kind"])),
+		Checkpoint:  uint8(checkpoint),
+		CombatMobID: configInt(fields["combatmobid"]),
+	}
+	if interruption.CombatMobID == 0 {
+		interruption.CombatMobID = configInt(fields["combat_mob_id"])
+	}
+	// Phase 33f2 review: a weighted table (12b) and an ambush's mob were
+	// documented but never read from config.
+	if raw, ok := fields["kinds"]; ok {
+		list, ok := raw.([]any)
+		if !ok {
+			return nil, false
+		}
+		for _, entry := range list {
+			kf := stringMap(entry)
+			weight := configInt(kf["weight"])
+			if kf == nil || weight <= 0 {
+				return nil, false
+			}
+			interruption.Kinds = append(interruption.Kinds, expedition.WeightedInterruptionKind{
+				Kind:   expedition.InterruptionKind(configString(kf["kind"])),
+				Weight: uint(weight),
+			})
+		}
 	}
 	if err := interruption.Validate(); err != nil {
 		return nil, false
@@ -636,7 +664,30 @@ func (m *ExpeditionModule) StartTravel(req expedition.StartRequest) (bool, error
 	if line := factors.line(); line != "" {
 		m.sendToLeader(session.LeaderUserID, line)
 	}
+	if line := m.trailWarningLocked(session); line != "" {
+		m.sendToLeader(session.LeaderUserID, line)
+	}
 	return true, nil
+}
+
+// trailWarningLocked (33f2) is a tracker's warning at departure that the
+// route can be ambushed; "" without a tracker or an ambush to fear.
+func (m *ExpeditionModule) trailWarningLocked(session expedition.TravelSession) string {
+	profile, ok := m.sessionProfile(session)
+	if !ok || profile.Interruption == nil || !profile.Interruption.ReachesCombat() {
+		return ""
+	}
+	read := m.trailReader
+	if read == nil {
+		read = func(leaderUserID int, roomIDs ...int) (archetypes.Specialist, bool) {
+			return archetypes.BestSpecialist(leaderUserID, archetypes.UtilityTrail, roomIDs...)
+		}
+	}
+	sp, ok := read(session.LeaderUserID, session.OriginRoomID)
+	if !ok {
+		return ""
+	}
+	return fmt.Sprintf("%s %s the road ahead: fresh tracks of armed men cross it. There may be an ambush on the %s route.", sp.Subject(), sp.Verb("read", "reads"), profile.Name)
 }
 
 // departureFactors are the Phase 16 multipliers locked onto a journey at
@@ -963,6 +1014,21 @@ func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) err
 		resolved.Kinds = nil
 		profile.Interruption = &resolved
 	}
+	// Phase 33f2: a tracker may lead the company around an ambush; the
+	// interruption becomes ordinary tracks and nothing spawns.
+	evadedBy := ""
+	if profile.Interruption != nil && profile.Interruption.Kind == expedition.Combat {
+		evade := m.ambushEvader
+		if evade == nil {
+			evade = archetypes.EvadeAmbush
+		}
+		if sp, evaded := evade(session.LeaderUserID, session.OriginRoomID); evaded {
+			resolved := *profile.Interruption
+			resolved.Kind = expedition.Tracks
+			profile.Interruption = &resolved
+			evadedBy = fmt.Sprintf("%s %s the company off the road and around an ambush.", sp.Subject(), sp.Verb("lead", "leads"))
+		}
+	}
 	now := m.clock().UTC()
 	candidate, err := session.Interrupt(now, profile)
 	if err != nil {
@@ -983,6 +1049,9 @@ func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) err
 		return err
 	}
 	m.stopTimerLocked(session.LeaderUserID)
+	if evadedBy != "" {
+		m.sendToLeader(session.LeaderUserID, evadedBy)
+	}
 	m.sendToLeader(session.LeaderUserID, m.interruptionTextLocked(candidate))
 	return nil
 }

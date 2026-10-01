@@ -11,6 +11,4 @@ Explorers:
   <ansi fg="skill">track</ansi>
 Scholars:
   <ansi fg="skill">inspect</ansi>
-Treasure Hunters:
-  <ansi fg="skill">search</ansi>
 
