@@ -100,7 +100,10 @@ cleric and wizard keep their spell roles and gain coordination and a reserve.
   downed, or withdrawn/retreating members. The target is always the actor's
   current aim, a standing, visible foe of that player's own battle group,
   which the upkeep keeps legal for reach, so no ability reaches another
-  battle or bystander.
+  battle or bystander. The formation gate applies as for a swing: an aim
+  the enemy front row would intercept gets no ability (review fix), and a
+  tackle needs the foe within hand-to-hand reach. No one in a company
+  preparing to retreat uses an ability (review fix).
 - **Turn and action budget.** An ability is the actor's whole turn this
   combat round (Tackle) or this round's swing itself (Opening Strike, Aimed
   Shot); it never adds an attack. A member that casts this round uses no
@@ -120,7 +123,8 @@ cleric and wizard keep their spell roles and gain coordination and a reserve.
   strategy change. Abilities need no new role: ranged behavior follows the
   weapon, not a role.
 - **Runtime state.** Cooldowns count combat rounds in a game-loop map keyed
-  by actor and ability; they are not saved, so a restart or copyover (which
+  by actor and ability ("at most once every N rounds"; spent when tried,
+  even if the foe falls before the blow); they are not saved, so a restart or copyover (which
   ends every battle anyway) makes every ability ready. Opening/aimed strike
   marks are cleared after the round's blows.
 - **Skill audit.** brawling: Tackle automatic; disarm, throw, recover stay
@@ -138,9 +142,10 @@ cleric and wizard keep their spell roles and gain coordination and a reserve.
   `abilities`, `abilities_off`, and `reserve`, and the web Combat setup
   shows them. Ability lines follow the 29c voice, and an `ability` event
   goes on the combat stream. `help abilities` is new; `help strategy`,
-  `help tactics`, `help combat`, `help warrior`, `help rogue`,
-  `help ranger`, `help brawling`, `help skulduggery`, and `help track` are
-  updated; the practice-fight lesson points to `help abilities`.
+  `help tactics`, `help combat`, `help company`, `help archetype` (the
+  archetype page; `help warrior`/`help ranger` are GoMud's job pages and
+  stay as they are), `help brawling`, `help skulduggery`, and `help track`
+  are updated; the practice-fight lesson points to `help abilities`.
 - **Balance.** Not retuned here; 30g6 (or a later tuning pass) measures it.
 
 Verification and independent review results are recorded in Project Status.

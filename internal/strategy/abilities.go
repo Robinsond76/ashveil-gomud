@@ -38,7 +38,7 @@ type AbilitySpec struct {
 // Abilities is every ability, in the order a member tries them.
 var Abilities = []AbilitySpec{
 	{ID: Tackle, Name: "Tackle", Archetype: "warrior", Skill: "brawling", Cooldown: 4,
-		When: "its foe is on its feet and it fights hand to hand",
+		When: "its foe is on its feet and within hand-to-hand reach, and it has no bow or sling",
 		Does: "knocks the foe down (it loses its next action), breaking a chant or wind-up; the whole turn"},
 	{ID: OpeningStrike, Name: "Opening Strike", Archetype: "rogue", Skill: "skulduggery", Cooldown: 2,
 		When: "its foe is knocked down, stunned, staggered, or exposed, and it wields a blade or claws",
@@ -115,6 +115,9 @@ type AbilitySituation struct {
 	// weapon and every wielded weapon is a backstab kind.
 	Weapon   WeaponKind
 	Backstab bool
+	// Close is true when the foe is within hand-to-hand reach (no
+	// reaching weapon needed), for a tackle.
+	Close bool
 	// The foe's live statuses.
 	FoeDown, FoeStunned, FoeStaggered, FoeExposed bool
 }
@@ -131,7 +134,7 @@ func DecideAbility(s AbilitySituation) (Ability, bool) {
 		}
 		switch id {
 		case Tackle:
-			if s.Weapon != Shooting && !s.FoeDown && !s.FoeStunned {
+			if s.Weapon != Shooting && s.Close && !s.FoeDown && !s.FoeStunned {
 				return id, true
 			}
 		case OpeningStrike:

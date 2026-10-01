@@ -33,8 +33,8 @@ func TestAbilitiesAndReserveControls(t *testing.T) {
 
 	assert.Regexp(t, `Dain\s+warrior\s+fighter\s+weakest\s*; Tackle`, run(m, u, ""))
 	out := run(m, u, "dain")
-	assert.Contains(t, out, "Tackle, when its foe is on its feet and it fights hand to hand: knocks the foe down")
-	assert.Contains(t, out, "(then 4 rounds' rest)")
+	assert.Contains(t, out, "Tackle, when its foe is on its feet and within hand-to-hand reach, and it has no bow or sling: knocks the foe down")
+	assert.Contains(t, out, "(at most once every 4 combat rounds)")
 
 	out = run(m, u, "dain abilities off")
 	assert.Contains(t, out, "Dain will use no class abilities in battle")

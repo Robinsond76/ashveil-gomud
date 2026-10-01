@@ -10,28 +10,28 @@ heal, it follows from how your company is set up. Who has which:
 <ansi fg="yellow-bold">The abilities</ansi>
 
   <ansi fg="command">Tackle</ansi>           warriors; for you, the <ansi fg="skill">brawling</ansi> skill
-    When: its foe is on its feet, and it fights hand to hand (not with a
-    bow or sling).
+    When: its foe is on its feet and within hand-to-hand reach (not a
+    rank deeper with a long weapon), and it has no bow or sling.
     Does: knocks the foe to the ground, with a chance of Speed against
     the foe's Perception, plus 20, held between 20% and 80%. A knocked-
     down foe loses its next action and is slower for 3 rounds. A tackle
     also breaks a foe's chant (it must start again) or wind-up. Hit or
     miss, the tackle is the warrior's whole turn: no swing that round.
-    Rest: 4 combat rounds.
+    At most once every 4 combat rounds.
 
   <ansi fg="command">Opening Strike</ansi>   rogues; for you, the <ansi fg="skill">skulduggery</ansi> skill
     When: its foe is knocked down, stunned, staggered, or exposed, and it
     wields a blade or claws (slashing, stabbing, cleaving), every weapon
     it holds.
     Does: its first blow that lands this round is a critical hit.
-    Rest: 2 combat rounds.
+    At most once every 2 combat rounds.
 
   <ansi fg="command">Aimed Shot</ansi>       rangers; for you, the <ansi fg="skill">track</ansi> skill
     When: it has a bow or sling, and its foe is not already exposed.
     Does: its first shot that lands this round is a critical hit; if it
     gets through the armor, the foe is left exposed (<ansi fg="command">help statuses</ansi>),
     an opening for a rogue.
-    Rest: 3 combat rounds.
+    At most once every 3 combat rounds.
 
 An opening strike or aimed shot is the round's swing itself, never an
 extra one: it still has to hit, can still be blocked, parried, or dodged,
@@ -39,7 +39,10 @@ and armor still takes its share (<ansi fg="command">help defense</ansi>). Its cr
 leaves the weapon's status, like any other.
 A member uses an ability only on its own foe in your battle, and only on
 a turn it would swing: not while it chants a spell, waits for a slow
-weapon, retreats, or has lost the action to a status. Abilities use no
+weapon, or has lost the action to a status, and nobody uses one while the
+company prepares to retreat. The formation rules a swing as usual: a foe
+the front row shields is out of an ability's reach. An ability counts as
+used when it is tried, even if its foe falls before the blow. Abilities use no
 items. Pets, and anyone outside your company, have none.
 
 <ansi fg="yellow-bold">Healers and casters</ansi>

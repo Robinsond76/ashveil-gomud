@@ -6,10 +6,13 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/stretchr/testify/assert"
@@ -330,4 +333,92 @@ func TestATackleBreaksAWindUp(t *testing.T) {
 	assert.Equal(t, 7, broken[0].Source.UserId, "Aria's tackle")
 	assert.False(t, hooks.WindingUp(ogre.InstanceId))
 	assert.Empty(t, windUpsOf(*stream, combatstream.WindUpLand, key(ogre)), "no blow")
+}
+
+// 33e review: an ability follows the formation as a swing does. A foe the
+// enemy front row shields gets none (the front-row foe would take the
+// blow), and a tackle needs hand-to-hand reach; the front-row foe itself
+// is tackled.
+func TestAbilitiesFollowTheFormation(t *testing.T) {
+	b, stream := abilityBrawl(t, map[int]string{1: "warrior", 2: "cleric", 3: "cleric", 4: "cleric"})
+	b.start()
+	party, ok := enemyparty.PartyOf(b.road, b.captain().InstanceId)
+	require.True(t, ok)
+	var back, front *mobs.Mob
+	for row := 1; row < domain.FormationRows && back == nil; row++ {
+		for col := 0; col < domain.FormationCols && back == nil; col++ {
+			bk, ok1 := mobparty.InstanceIdFromMemberKey(party.Formation.At(row, col))
+			fr, ok2 := mobparty.InstanceIdFromMemberKey(party.Formation.At(0, col))
+			if ok1 && ok2 {
+				back, front = mobs.GetInstance(bk), mobs.GetInstance(fr)
+			}
+		}
+	}
+	require.NotNil(t, back, "a foe behind a front-row foe")
+	require.NotNil(t, front)
+	_, col, _ := party.Formation.Find(mobparty.MemberKeyFor(back.InstanceId))
+
+	// Tamsin in the front row of that column, with a spear's reach.
+	record, ok := module.registry.Get(7)
+	require.True(t, ok)
+	record.Formation = domain.Formation{}
+	require.NoError(t, record.Formation.Place(domain.CompanionMemberKey(1), 0, col))
+	module.registry.Put(record)
+	const spearID = 99331
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: spearID, Name: "test spear", Type: items.Weapon, Subtype: items.Stabbing, Hands: 2, Reach: true,
+		Damage: items.Damage{DiceRoll: "1d2", Attacks: 1, DiceCount: 1, SideCount: 2}})
+	t.Cleanup(func() { items.RemoveTestItemSpec(spearID) })
+	tamsin := b.companion(1)
+	tamsin.Character.Equipment.Weapon = items.New(spearID)
+	tamsin.Character.Equipment.Offhand = items.Item{}
+
+	tamsin.Character.SetAggro(0, back.InstanceId, characters.DefaultAttack, 0)
+	b.toughen()
+	b.hardenBandits()
+	n := len(*stream)
+	b.fight()
+	round := since(*stream, n)
+	assert.Empty(t, abilityEvents(round, "Tamsin Reed"), "no tackle past the front row")
+	assert.False(t, status.Live(&back.Character, status.KnockedDown))
+
+	tamsin.Character.SetAggro(0, front.InstanceId, characters.DefaultAttack, 0)
+	b.toughen()
+	b.hardenBandits()
+	n = len(*stream)
+	b.fight()
+	tackles := abilityEvents(since(*stream, n), "Tamsin Reed")
+	require.Len(t, tackles, 1, "the front-row foe is within reach")
+	assert.Equal(t, front.InstanceId, tackles[0].Target.MobInstanceId)
+}
+
+// 33e review: nobody uses an ability while the company prepares to
+// retreat.
+func TestNoAbilitiesWhileTheCompanyPreparesToRetreat(t *testing.T) {
+	b, stream := abilityBrawl(t, map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"})
+	b.aria.Character.SetSkill("brawling", 1)
+	b.start()
+	t.Cleanup(hooks.UseRetreatRollForTest(func(int) int { return 99 }))
+	assert.Contains(t, b.cmd("retreat", "east"), "begins an ordered retreat")
+	n := len(*stream)
+	b.fight()
+	for _, e := range since(*stream, n) {
+		assert.NotEqual(t, combatstream.Ability, e.Kind, "no ability while withdrawing: %s %s", e.Source.Name, e.Status)
+	}
+}
+
+// A member casting this round uses no ability: Aria, a caster who can
+// also tackle, chants her spell instead.
+func TestACasterCastingUsesNoAbility(t *testing.T) {
+	b, stream := abilityBrawl(t, map[int]string{1: "cleric", 2: "cleric", 3: "cleric", 4: "cleric"})
+	b.aria.Character.SetSkill("brawling", 1)
+	b.aria.Character.SetSkill("cast", 1)
+	b.aria.Character.LearnSpell("mm")
+	b.aria.Character.ManaMax.Value, b.aria.Character.Mana = 40, 40
+	b.cmd("strategy", "me caster")
+	b.start()
+	n := len(*stream)
+	b.fight()
+	round := since(*stream, n)
+	assert.Equal(t, 1, castEvents(round, combatstream.CastStart, "Aria"))
+	assert.Empty(t, abilityEvents(round, "Aria"))
 }

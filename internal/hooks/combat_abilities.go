@@ -6,8 +6,11 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -51,9 +54,6 @@ var (
 	abilityStrikes = map[caster]bool{}
 	// abilityRoll rolls a tackle; tests replace it.
 	abilityRoll = util.Rand
-	// abilitiesOff turns the pass off, for a test whose seeded fight
-	// predates Phase 33e.
-	abilitiesOff bool
 )
 
 // UseAbilityRollForTest replaces the tackle's dice until the returned
@@ -62,15 +62,6 @@ func UseAbilityRollForTest(roll func(int) int) (restore func()) {
 	prev := abilityRoll
 	abilityRoll = roll
 	return func() { abilityRoll = prev }
-}
-
-// DisableAbilitiesForTest turns automatic abilities off until the returned
-// restore is called: only for a test that replays a fight seeded before
-// Phase 33e.
-func DisableAbilitiesForTest() (restore func()) {
-	prev := abilitiesOff
-	abilitiesOff = true
-	return func() { abilitiesOff = prev }
 }
 
 // ResetAbilitiesForTest forgets every cooldown.
@@ -91,9 +82,6 @@ func abilityPass() {
 			delete(abilityReady, k)
 		}
 	}
-	if abilitiesOff {
-		return
-	}
 	for _, uid := range battle.Players() {
 		b, ok := battle.Current(uid)
 		u := users.GetByUserId(uid)
@@ -108,6 +96,11 @@ func abilityPass() {
 		if !found {
 			continue
 		}
+		// 33e review: a company preparing to withdraw uses no abilities
+		// (its members only hold the line until it goes).
+		if a := u.Character.Aggro; a != nil && a.Type == characters.Retreat {
+			continue
+		}
 		foes := map[int]bool{}
 		for _, id := range standingFoes(enemyparty.Group{Party: p}, room) {
 			foes[id] = true
@@ -117,7 +110,16 @@ func abilityPass() {
 			if !ok {
 				continue
 			}
-			id, use := strategy.DecideAbility(abilitySituation(a, u, foe))
+			// 33e review: the formation decides, as for a swing: a foe
+			// the front row would shield is not reached by an ability,
+			// and a tackle needs the foe within hand-to-hand reach.
+			reached, close := abilityReach(a, u, foe, room)
+			if !reached {
+				continue
+			}
+			sit := abilitySituation(a, u, foe)
+			sit.Close = close
+			id, use := strategy.DecideAbility(sit)
 			if !use {
 				continue
 			}
@@ -141,6 +143,35 @@ func abilityFoe(a actor, u *users.UserRecord, foes map[int]bool) (*mobs.Mob, boo
 	// A foe that surrendered (withdrawn) is no longer fought.
 	foe := mobs.GetInstance(agg.MobInstanceId)
 	return foe, foe != nil && !foe.Character.CombatWithdrawn
+}
+
+// abilityReach reports whether an actor's blow at foe would land on foe
+// itself, by the same formation rules as its swing (no front-row foe takes
+// it instead), and whether it would with no reach at all (hand to hand,
+// for a tackle). An attacker or foe outside any formation fails open, as
+// the swing does.
+func abilityReach(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) (reached, close bool) {
+	var col int
+	var placed bool
+	innate := false
+	if a.who.userId > 0 {
+		col, placed = resolvePlayerColumn(u.UserId)
+	} else {
+		if f, ok := company.FormationFor(u.UserId); ok {
+			_, col, placed = f.Find(a.key)
+		}
+		if a.holder.mob != nil {
+			innate = a.holder.mob.Reach
+		}
+	}
+	if !placed {
+		return true, true
+	}
+	lands := func(reach formationcombat.Reach) bool {
+		t, ok := resolveEnemyAttack(col, foe.InstanceId, room, reach)
+		return ok && t != nil && t.InstanceId == foe.InstanceId
+	}
+	return lands(combat.ResolveReach(a.char, innate)), lands(formationcombat.ReachNone)
 }
 
 // abilitySituation is what an actor's ability is chosen from.

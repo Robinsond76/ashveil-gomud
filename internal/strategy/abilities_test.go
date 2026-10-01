@@ -26,13 +26,14 @@ func TestDecideAbility(t *testing.T) {
 		s    AbilitySituation
 		want Ability
 	}{
-		{"tackle a standing foe", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Weapon: Melee}, Tackle},
-		{"tackle with fists", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Weapon: Unarmed}, Tackle},
-		{"no tackle with a bow", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Weapon: Shooting}, ""},
-		{"no tackle on a downed foe", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, FoeDown: true}, ""},
-		{"no tackle on a stunned foe", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, FoeStunned: true}, ""},
-		{"no tackle on cooldown", AbilitySituation{Known: []Ability{Tackle}, Ready: func(Ability) bool { return false }}, ""},
-		{"abilities off", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Off: true}, ""},
+		{"tackle a standing foe", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Weapon: Melee, Close: true}, Tackle},
+		{"tackle with fists", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Weapon: Unarmed, Close: true}, Tackle},
+		{"no tackle at a spear's length", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Weapon: Melee}, ""},
+		{"no tackle with a bow", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Weapon: Shooting, Close: true}, ""},
+		{"no tackle on a downed foe", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Close: true, FoeDown: true}, ""},
+		{"no tackle on a stunned foe", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Close: true, FoeStunned: true}, ""},
+		{"no tackle on cooldown", AbilitySituation{Known: []Ability{Tackle}, Ready: func(Ability) bool { return false }, Close: true}, ""},
+		{"abilities off", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Close: true, Off: true}, ""},
 		{"opening on a downed foe", AbilitySituation{Known: []Ability{OpeningStrike}, Ready: ready, Backstab: true, FoeDown: true}, OpeningStrike},
 		{"opening on an exposed foe", AbilitySituation{Known: []Ability{OpeningStrike}, Ready: ready, Backstab: true, FoeExposed: true}, OpeningStrike},
 		{"opening on a staggered foe", AbilitySituation{Known: []Ability{OpeningStrike}, Ready: ready, Backstab: true, FoeStaggered: true}, OpeningStrike},

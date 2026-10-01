@@ -122,13 +122,13 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			continue
 		}
 
+		// Disable any buffs that are cancelled by combat
+		user.Character.CancelBuffsWithFlag("cancel-on-combat")
+
 		// Ashveil Phase 33e: a tackle took this round's turn.
 		if abilityTurns[caster{userId: userId}] {
 			continue
 		}
-
-		// Disable any buffs that are cancelled by combat
-		user.Character.CancelBuffsWithFlag("cancel-on-combat")
 
 		roomId := user.Character.RoomId
 
@@ -697,8 +697,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		}
 
 		// If has a buff that prevents combat, skip the player
-		// Ashveil Phase 33e: nor one whose turn a tackle took.
-		if mob.Character.CombatWithdrawn || retreatCover[mobId] || nerveSkip[mobId] || abilityTurns[caster{mobId: mobId}] || mob.Character.HasBuffFlag("no-combat") {
+		if mob.Character.CombatWithdrawn || retreatCover[mobId] || nerveSkip[mobId] || mob.Character.HasBuffFlag("no-combat") {
 			continue
 		}
 
@@ -719,6 +718,11 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 		// Disable any buffs that are cancelled by combat
 		mob.Character.CancelBuffsWithFlag("cancel-on-combat")
+
+		// Ashveil Phase 33e: a tackle took this round's turn.
+		if abilityTurns[caster{mobId: mobId}] {
+			continue
+		}
 
 		/**************************
 		*

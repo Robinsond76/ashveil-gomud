@@ -19,7 +19,7 @@ func TestAbilitiesHelp(t *testing.T) {
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(text, "")
 	for _, want := range []string{"Help for abilities", "Tackle", "Opening Strike", "Aimed Shot",
-		"between 20% and 80%", "Rest: 4 combat rounds", "Rest: 2 combat rounds", "Rest: 3 combat rounds",
+		"between 20% and 80%", "once every 4 combat rounds", "once every 2 combat rounds", "once every 3 combat rounds",
 		"strategy [who] abilities off", "strategy [who] reserve [percent]", "Abilities use no", "items"} {
 		assert.Contains(t, plain, want)
 	}

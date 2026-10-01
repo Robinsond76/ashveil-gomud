@@ -505,7 +505,7 @@ func (m *StrategyModule) describe(userID int, mb member, members []member) strin
 	default:
 		for _, id := range mb.abilities {
 			if spec, ok := domain.SpecOf(id); ok {
-				fmt.Fprintf(&b, "  %s, when %s: %s (then %d rounds' rest).\n", spec.Name, spec.When, spec.Does, spec.Cooldown)
+				fmt.Fprintf(&b, "  %s, when %s: %s (at most once every %d combat rounds).\n", spec.Name, spec.When, spec.Does, spec.Cooldown)
 			}
 		}
 	}
