@@ -114,7 +114,8 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 			holdChant(attacker, defender)
 		}
 	}
-	if !r.Hit {
+	// Phase 30g2: shield bash on blocked melee strike, not on miss
+	if r.Defense == combat.DefenseBlocked {
 		counterBlow(attacker, defender)
 	}
 }
@@ -263,8 +264,10 @@ func counterBlow(attacker, bearer statusHolder) {
 	if bearer.char.Health < 1 || attacker.char.Health < 1 {
 		return
 	}
+	// Phase 30g2: shield bash triggers on blocked strikes, not misses.
+	// Check if it's a blocked melee strike (Melee flag set via weaponType).
 	c := interrupt.Counter{
-		Missed:    true,
+		Missed:    false, // Phase 30g2: bash on block, not miss
 		Melee:     weaponType(attacker.char) != string(items.Shooting),
 		SameRoom:  attacker.char.RoomId == bearer.char.RoomId,
 		Shield:    bearer.char.HasShield(),
@@ -275,7 +278,9 @@ func counterBlow(attacker, bearer statusHolder) {
 	if !interrupt.CanCounter(c) {
 		return
 	}
-	bash, ok := interrupt.RollCounter(counterRoll)
+	// Phase 30g2: bash chance based on Strength delta
+	bashChance := combat.BashChance(bearer.char.Stats.Strength.ValueAdj, attacker.char.Stats.Strength.ValueAdj)
+	bash, ok := interrupt.RollCounter(bashChance, counterRoll)
 	if !ok {
 		return
 	}

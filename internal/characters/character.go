@@ -603,18 +603,13 @@ func (c *Character) HasShield() bool {
 }
 
 // Returns an integer representing a % damage reduction
+// Phase 30g2: no longer includes the shield's 1.5x bonus; the shield's own
+// DamageReduction still sums through the offhand slot.
 func (c *Character) GetDefense() int {
 
 	reduction := 0
 	for _, slot := range AllSlots() {
 		reduction += c.Equipment.Get(slot).GetDefense()
-	}
-
-	//reduction = int(float64(reduction) / 9)
-
-	// If wearing an offhand item like a shield, defense gets a 50% boost
-	if c.HasShield() {
-		reduction = int(float64(reduction) * 1.5)
 	}
 
 	// Phase 30a: a broken armor gives half its protection.
@@ -627,6 +622,37 @@ func (c *Character) GetDefense() int {
 	}
 
 	return reduction
+}
+
+// GetShieldArmor returns the shield's damage reduction value (Phase 30g2).
+// Used by blockChance to determine blocking effectiveness.
+func (c *Character) GetShieldArmor() int {
+	if !c.HasShield() {
+		return 0
+	}
+	return c.Equipment.Offhand.GetDefense()
+}
+
+// CanBlock returns whether the character can attempt a block defense.
+// Only shield-bearers can block (Phase 30g2).
+func (c *Character) CanBlock() bool {
+	return c.HasShield() && !c.HasBuffFlag("no-dodge")
+}
+
+// CanParry returns whether the character can attempt a parry defense.
+// Melee weapon users (no shield) can parry (Phase 30g2).
+func (c *Character) CanParry() bool {
+	if c.HasShield() || c.HasBuffFlag("no-dodge") {
+		return false
+	}
+	// Check if wielding a melee weapon
+	if c.Equipment.Weapon.ItemId > 0 {
+		spec := c.Equipment.Weapon.GetSpec()
+		if spec.Type == items.Weapon && spec.Subtype != items.Claws {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Character) GetMobName(viewingUserId int, renderFlags ...NameRenderFlag) FormattedName {

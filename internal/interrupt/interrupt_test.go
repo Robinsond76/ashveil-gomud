@@ -83,15 +83,17 @@ func TestRefund(t *testing.T) {
 }
 
 func TestCanCounter(t *testing.T) {
-	able := Counter{Missed: true, Melee: true, SameRoom: true, Shield: true, Able: true}
+	// Phase 30g2: bash triggers on blocked strikes, not misses.
+	// CanCounter checks basic conditions (melee, same room, shield, able).
+	// The blocked-strike condition is checked in afterBlow().
+	able := Counter{Missed: false, Melee: true, SameRoom: true, Shield: true, Able: true}
 	if !CanCounter(able) {
-		t.Fatal("an able bearer of a shield counters a missed melee blow")
+		t.Fatal("an able bearer of a shield can counter (blocked strike checked in afterBlow)")
 	}
 	cases := []struct {
 		name string
 		edit func(*Counter)
 	}{
-		{"the blow landed", func(c *Counter) { c.Missed = false }},
 		{"a shot from a bow", func(c *Counter) { c.Melee = false }},
 		{"from another room", func(c *Counter) { c.SameRoom = false }},
 		{"no shield", func(c *Counter) { c.Shield = false }},
@@ -119,32 +121,33 @@ func script(values ...int) func(int) int {
 
 func TestRollCounter(t *testing.T) {
 	// Rolls are 0..n-1: the bash, then the damage face, then the stun.
-	if _, ok := RollCounter(script(BashChance)); ok {
+	// Phase 30g2: bash chance is now passed as parameter
+	if _, ok := RollCounter(50, script(50)); ok {
 		t.Error("a roll at the bash chance bashes, want none")
 	}
-	b, ok := RollCounter(script(BashChance-1, 2, StunChance))
+	b, ok := RollCounter(50, script(49, 2, 25))
 	if !ok || b.Damage != 3 || b.Stun {
 		t.Errorf("bash = %+v %v, want 3 damage, no stun", b, ok)
 	}
-	b, ok = RollCounter(script(0, 0, StunChance-1))
+	b, ok = RollCounter(50, script(0, 0, 24))
 	if !ok || b.Damage != 1 || !b.Stun {
 		t.Errorf("bash = %+v %v, want 1 damage and a stun", b, ok)
 	}
-	b, _ = RollCounter(script(0, BashDamage-1, 99))
+	b, _ = RollCounter(50, script(0, 3, 99))
 	if b.Damage != BashDamage {
 		t.Errorf("top damage = %d, want %d", b.Damage, BashDamage)
 	}
 }
 
 func TestRollCounterChancesAdjustable(t *testing.T) {
-	defer func(b, s int) { BashChance, StunChance = b, s }(BashChance, StunChance)
-	BashChance, StunChance = 100, 100
-	b, ok := RollCounter(script(99, 0, 99))
+	// Phase 30g2: bash chance is now passed as parameter
+	defer func(s int) { StunChance = s }(StunChance)
+	StunChance = 100
+	b, ok := RollCounter(100, script(99, 0, 99))
 	if !ok || !b.Stun {
 		t.Errorf("certain chances: bash = %+v %v, want a stunning bash", b, ok)
 	}
-	BashChance = 0
-	if _, ok := RollCounter(script(0)); ok {
+	if _, ok := RollCounter(0, script(0)); ok {
 		t.Error("a bash chance of 0 never bashes")
 	}
 }

@@ -63,6 +63,18 @@ type CombatConfig struct {
 	// Chance to dodge (Perception delta drives this)
 	DodgeChanceMin ConfigInt `yaml:"DodgeChanceMin"` // Minimum dodge chance (percent, 0-100)
 	DodgeChanceMax ConfigInt `yaml:"DodgeChanceMax"` // Maximum dodge chance (percent, 0-100)
+
+	// Chance to block with a shield (Strength delta + shield armor drives this)
+	BlockChanceMin ConfigInt `yaml:"BlockChanceMin"` // Minimum block chance (percent, 0-100)
+	BlockChanceMax ConfigInt `yaml:"BlockChanceMax"` // Maximum block chance (percent, 0-100)
+
+	// Chance to parry (Speed delta drives this)
+	ParryChanceMin ConfigInt `yaml:"ParryChanceMin"` // Minimum parry chance (percent, 0-100)
+	ParryChanceMax ConfigInt `yaml:"ParryChanceMax"` // Maximum parry chance (percent, 0-100)
+
+	// Chance to bash when blocking (Strength delta drives this)
+	BashChanceMin ConfigInt `yaml:"BashChanceMin"` // Minimum bash chance (percent, 0-100)
+	BashChanceMax ConfigInt `yaml:"BashChanceMax"` // Maximum bash chance (percent, 0-100)
 }
 
 type GameplayParty struct {
@@ -260,6 +272,39 @@ func (c *CombatConfig) validate() {
 	}
 	if c.DodgeChanceMin > c.DodgeChanceMax {
 		c.DodgeChanceMin = 5
+	}
+
+	// Block chance (Phase 30g2)
+	if c.BlockChanceMax < 1 || c.BlockChanceMax > 100 {
+		c.BlockChanceMax = 45
+	}
+	if c.BlockChanceMin < 1 {
+		c.BlockChanceMin = 15
+	}
+	if c.BlockChanceMin > c.BlockChanceMax {
+		c.BlockChanceMin = 15
+	}
+
+	// Parry chance (Phase 30g2)
+	if c.ParryChanceMax < 1 || c.ParryChanceMax > 100 {
+		c.ParryChanceMax = 30
+	}
+	if c.ParryChanceMin < 1 {
+		c.ParryChanceMin = 5
+	}
+	if c.ParryChanceMin > c.ParryChanceMax {
+		c.ParryChanceMin = 5
+	}
+
+	// Bash chance (Phase 30g2)
+	if c.BashChanceMax < 1 || c.BashChanceMax > 100 {
+		c.BashChanceMax = 20
+	}
+	if c.BashChanceMin < 1 {
+		c.BashChanceMin = 5
+	}
+	if c.BashChanceMin > c.BashChanceMax {
+		c.BashChanceMin = 5
 	}
 }
 

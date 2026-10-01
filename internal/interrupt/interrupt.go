@@ -102,8 +102,10 @@ type Counter struct {
 }
 
 // CanCounter reports whether the bearer may counter the blow.
+// Phase 30g2: Missed field is deprecated (was used before Phase 30g2 for "blow that missed").
+// Now bashes trigger on blocked melee strikes, not misses.
 func CanCounter(c Counter) bool {
-	return c.Missed && c.Melee && c.SameRoom && c.Shield && c.Able && !c.Chanting && !c.Countered
+	return c.Melee && c.SameRoom && c.Shield && c.Able && !c.Chanting && !c.Countered
 }
 
 // Bash is a counter that landed.
@@ -114,8 +116,10 @@ type Bash struct {
 
 // RollCounter rolls a counter: whether the bearer bashes, its damage, and
 // whether it stuns. roll(n) returns 0..n-1 (util.Rand).
-func RollCounter(roll func(int) int) (Bash, bool) {
-	if roll(100) >= BashChance {
+// Phase 30g2: bashChance is now passed in (calculated from Strength delta),
+// instead of using the hardcoded BashChance.
+func RollCounter(bashChance int, roll func(int) int) (Bash, bool) {
+	if roll(100) >= bashChance {
 		return Bash{}, false
 	}
 	b := Bash{Damage: roll(BashDamage) + 1}

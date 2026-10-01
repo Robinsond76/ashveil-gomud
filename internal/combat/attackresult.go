@@ -28,7 +28,17 @@ type AttackResult struct {
 	// WoundsToTarget is the wounds the round's strikes left on a woundable
 	// target (Phase 30b), applied with the damage.
 	WoundsToTarget []wounds.Wound
+	// Defense (Phase 30g2): outcome of the active defense attempt, one of
+	// DefenseDodged, DefenseParried, DefenseBlocked, or DefenseNone.
+	Defense string
 }
+
+const (
+	DefenseNone    = ""
+	DefenseDodged  = "dodged"
+	DefenseParried = "parried"
+	DefenseBlocked = "blocked"
+)
 
 func (a *AttackResult) SendToSource(msg string) {
 	a.MessagesToSource = append(a.MessagesToSource, msg)

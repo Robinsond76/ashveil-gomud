@@ -171,6 +171,50 @@ func applyWounds(target *characters.Character, r AttackResult) {
 	}
 }
 
+// AttemptActiveDefense tries to defend against a hit using block, parry, or dodge
+// (Phase 30g2). Returns the Defense outcome (DefenseDodged, DefenseParried,
+// DefenseBlocked, or DefenseNone) and whether the defense succeeded.
+func AttemptActiveDefense(defender, attacker characters.Character, isMeleeStrike bool) (string, bool) {
+	// Phase 30g2: stunned targets (no-dodge flag) cannot defend
+	if defender.HasBuffFlag("no-dodge") {
+		return DefenseNone, false
+	}
+
+	if defender.HasShield() {
+		// Shield-bearer: block only
+		if Blocks(defender.GetShieldArmor(), defender.Stats.Strength.ValueAdj, attacker.Stats.Strength.ValueAdj) {
+			return DefenseBlocked, true
+		}
+		return DefenseNone, false
+	}
+
+	if isMeleeStrike && defender.CanParry() {
+		// Melee weapon user: try parry or dodge (whichever is higher)
+		weapon := defender.Equipment.Weapon
+		parryChance := parryChance(defender.Stats.Speed.ValueAdj, attacker.Stats.Speed.ValueAdj, weapon.GetSpec().Subtype)
+		dodgeChance := dodgeChance(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj)
+
+		if parryChance >= dodgeChance {
+			// Parry is better or equal
+			if Parries(defender.Stats.Speed.ValueAdj, attacker.Stats.Speed.ValueAdj, weapon.GetSpec().Subtype) {
+				return DefenseParried, true
+			}
+		} else {
+			// Dodge is better
+			if Dodges(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj) {
+				return DefenseDodged, true
+			}
+		}
+		return DefenseNone, false
+	}
+
+	// Ranged, unarmed, or no weapon: dodge only
+	if Dodges(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj) {
+		return DefenseDodged, true
+	}
+	return DefenseNone, false
+}
+
 // mobCombatCharacter makes a narration-only copy for the combat calculation.
 // Damage, edge spending, and attribution keep using the live mob instance.
 func mobCombatCharacter(m *mobs.Mob) characters.Character {
@@ -483,16 +527,37 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				isCrit := false
 
 				hit, byChemistry := hitRoll(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, penalty, chemistryBonus)
+				isMeleeStrike := weaponSubType != items.Shooting
 				if hit {
-					// Check dodge before applying damage.
-					// A stunned target can't dodge (owner, 2026-09-30).
-					if !targetChar.HasBuffFlag(status.FlagNoDodge) && Dodges(targetChar.Stats.Perception.ValueAdj, sourceChar.Stats.Perception.ValueAdj) {
-						dodger := targetChar.Name
+					// Phase 30g2: Check active defense (block, parry, or dodge)
+					defenseType, defended := AttemptActiveDefense(targetChar, sourceChar, isMeleeStrike)
+					if defended {
+						attackResult.Defense = defenseType
+						attacker := targetChar.Name
 						if targetType == Mob {
-							dodger = util.CapitalizeFirst(util.Article(dodger))
+							attacker = util.CapitalizeFirst(util.Article(attacker))
 						}
-						attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s twists aside from your blow.</ansi>`, dodger))
-						attackResult.SendToTarget(`<ansi fg="cyan">You twist aside from the blow.</ansi>`)
+						switch defenseType {
+						case DefenseDodged:
+							attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s twists aside from your blow.</ansi>`, attacker))
+							attackResult.SendToTarget(`<ansi fg="cyan">You twist aside from the blow.</ansi>`)
+						case DefenseParried:
+							parrier := targetChar.Name
+							if targetType == Mob {
+								parrier = util.CapitalizeFirst(util.Article(parrier))
+							}
+							his := targetChar.CombatPronouns().Possessive
+							attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s turns the blow aside with %s weapon.</ansi>`, parrier, his))
+							attackResult.SendToTarget(`<ansi fg="cyan">You turn the blow aside with your weapon.</ansi>`)
+						case DefenseBlocked:
+							blocker := targetChar.Name
+							if targetType == Mob {
+								blocker = util.CapitalizeFirst(util.Article(blocker))
+							}
+							his := targetChar.CombatPronouns().Possessive
+							attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s catches the blow on %s shield.</ansi>`, blocker, his))
+							attackResult.SendToTarget(`<ansi fg="cyan">You catch the blow on your shield.</ansi>`)
+						}
 						continue
 					}
 					// Phase 24: say so, once a round, when only company
