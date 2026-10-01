@@ -138,8 +138,9 @@ func abilityFoe(a actor, u *users.UserRecord, foes map[int]bool) (*mobs.Mob, boo
 	if !plainAttack(agg) || agg.MobInstanceId <= 0 || !foes[agg.MobInstanceId] || agg.RoundsWaiting > 0 {
 		return nil, false
 	}
+	// A foe that surrendered (withdrawn) is no longer fought.
 	foe := mobs.GetInstance(agg.MobInstanceId)
-	return foe, foe != nil
+	return foe, foe != nil && !foe.Character.CombatWithdrawn
 }
 
 // abilitySituation is what an actor's ability is chosen from.
