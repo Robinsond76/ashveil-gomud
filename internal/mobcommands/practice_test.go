@@ -3,6 +3,7 @@ package mobcommands
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -55,6 +56,10 @@ func practiceFight(t *testing.T, practice bool) (xp int, room *rooms.Room, death
 	events.ProcessEvents()
 	practiceBeaten = nil
 
+	user.Character.RoomId = room.RoomId
+	user.Character.Health = 10
+	battle.Begin(user.UserId, room.RoomId, 1, "practice", []int{mob.InstanceId})
+	t.Cleanup(battle.Reset)
 	before := user.Character.Experience
 	handled, err := Suicide("", mob, room)
 	require.NoError(t, err)

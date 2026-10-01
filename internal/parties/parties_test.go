@@ -169,8 +169,8 @@ func TestParty_ChanceToBeTargetted(t *testing.T) {
 	p.SetRank(2, "back")
 	// user 3 is middle (default)
 
-	assert.Equal(t, 2, p.ChanceToBeTargetted(1))
-	assert.Equal(t, 0, p.ChanceToBeTargetted(2))
+	assert.Equal(t, 1, p.ChanceToBeTargetted(1))
+	assert.Equal(t, 1, p.ChanceToBeTargetted(2))
 	assert.Equal(t, 1, p.ChanceToBeTargetted(3))
 }
 

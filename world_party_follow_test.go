@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/effecttargets"
@@ -12,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -161,4 +164,80 @@ func TestProductionHooksInstallAlliedSupportProvider(t *testing.T) {
 	p.SetSupport(93412, false)
 	info = effecttargets.Resolve(93411, 0, info)
 	assert.NotContains(t, info.TargetUserIds, 93412)
+}
+
+func TestQueuedPartyAttackRevalidatesAtWorldExecution(t *testing.T) {
+	partyWorldData(t)
+	for _, immediate := range []bool{false, true} {
+		for _, scenario := range []string{"valid", "off-on", "leave-rejoin", "promote", "separated", "gone", "withdrawn", "prompt", "different-battle"} {
+			t.Run(fmt.Sprintf("%s/%t", scenario, immediate), func(t *testing.T) {
+				t.Cleanup(parties.UseMemoryForTest())
+				battle.Reset()
+				t.Cleanup(battle.Reset)
+				room := &rooms.Room{RoomId: 934101, Title: "Battle", Exits: map[string]exit.RoomExit{}}
+				rooms.SetTestRoom(room)
+				t.Cleanup(func() { rooms.RemoveTestRoom(room.RoomId) })
+				u := users.NewUserRecord(93412, 0)
+				u.Password = "$2a$fixture"
+				u.Character.Name = "Follower"
+				u.Character.RoomId = room.RoomId
+				u.Character.Health = 20
+				users.SetTestUser(u)
+				room.AddPlayer(u.UserId)
+				t.Cleanup(func() { users.RemoveTestUser(u.UserId) })
+				p := parties.New(93411)
+				p.InvitePlayer(u.UserId)
+				require.True(t, p.AcceptInvite(u.UserId))
+				p.SetAutoAttack(u.UserId, true)
+				m := &mobs.Mob{InstanceId: 934121, Character: *characters.New()}
+				m.Character.Name = "foe"
+				m.Character.Health = 100
+				m.Character.RoomId = room.RoomId
+				mobs.SetTestInstance(m)
+				room.AddMob(m.InstanceId)
+				t.Cleanup(func() { mobs.RemoveTestInstance(m.InstanceId) })
+				in := events.Input{UserId: u.UserId, InputText: fmt.Sprintf("attack #%d", m.InstanceId), PartyAttack: &events.PartyAttackOrder{LeaderUserId: 93411, OriginRoomId: room.RoomId, ConsentToken: p.AutoAttackToken(u.UserId), TargetMobInstanceId: m.InstanceId}}
+				w := &World{ignoreInput: map[int]uint64{}, userInputEventTracker: map[int]struct{}{u.UserId: {}}, mobInputEventTracker: map[int]struct{}{}}
+				in.ReadyTurn = util.GetTurnCount() + 1
+				require.Equal(t, events.CancelAndRequeue, w.HandleInputEvents(in))
+				switch scenario {
+				case "off-on":
+					p.SetAutoAttack(u.UserId, false)
+					p.SetAutoAttack(u.UserId, true)
+				case "leave-rejoin":
+					p.Leave(u.UserId)
+					p.InvitePlayer(u.UserId)
+					p.AcceptInvite(u.UserId)
+					p.SetAutoAttack(u.UserId, true)
+				case "promote":
+					p.Promote(u.UserId)
+				case "separated":
+					u.Character.RoomId++
+				case "gone":
+					mobs.RemoveTestInstance(m.InstanceId)
+				case "withdrawn":
+					m.Character.CombatWithdrawn = true
+				case "prompt":
+					u.StartPrompt("delete", "character")
+				case "different-battle":
+					battle.Begin(u.UserId, room.RoomId, 1, "other", []int{99999})
+				}
+				delete(w.userInputEventTracker, u.UserId)
+				util.IncrementTurnCount()
+				in.ReadyTurn = util.GetTurnCount()
+				if immediate {
+					in.ReadyTurn = 0
+				}
+				result := w.HandleInputEvents(in)
+				if scenario == "valid" {
+					assert.Equal(t, events.Continue, result)
+					require.NotNil(t, u.Character.Aggro)
+					assert.Equal(t, m.InstanceId, u.Character.Aggro.MobInstanceId)
+				} else {
+					assert.Equal(t, events.Cancel, result)
+					assert.Nil(t, u.Character.Aggro)
+				}
+			})
+		}
+	}
 }

@@ -13,7 +13,7 @@ import (
 
 func TestPartyLogoutConsentAndSuccessorFeedback(t *testing.T) {
 	for _, withSuccessor := range []bool{false, true} {
-		t.Run(map[bool]string{false: "solo disbands", true: "promotes member"}[withSuccessor], func(t *testing.T) {
+		t.Run(map[bool]string{false: "solo stays durable", true: "promotes member"}[withSuccessor], func(t *testing.T) {
 			newHandOffWorld(t)
 			conn, _ := connect(t)
 			leader := saveUser(t, 93501, "PartyLeader")
@@ -46,7 +46,8 @@ func TestPartyLogoutConsentAndSuccessorFeedback(t *testing.T) {
 			t.Cleanup(func() { events.UnregisterListener(events.PartyUpdated{}, pid) })
 			events.AddToQueue(events.PlayerDespawn{UserId: leader.UserId, RoomId: 932001, HandOff: true})
 			events.ProcessEvents()
-			assert.Nil(t, parties.Get(leader.UserId))
+			assert.Same(t, p, parties.Get(leader.UserId))
+			assert.True(t, p.IsMember(leader.UserId))
 			require.Len(t, updates, 1)
 			assert.Contains(t, updates[0].UserIds, leader.UserId)
 			if withSuccessor {

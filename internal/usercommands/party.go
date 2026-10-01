@@ -17,6 +17,16 @@ import (
 )
 
 func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	parties.ClearError()
+	handled, err := partyCommand(rest, user, room, flags)
+	if storageErr := parties.LastError(); storageErr != nil {
+		user.SendText(storageErr.Error())
+		return true, storageErr
+	}
+	return handled, err
+}
+
+func partyCommand(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	args := util.SplitButRespectQuotes(rest)
 
@@ -77,6 +87,9 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		// Not in a party? Create one.
 		if currentParty == nil {
 			currentParty = parties.New(user.UserId)
+			if currentParty == nil {
+				return true, parties.LastError()
+			}
 		}
 
 		if !currentParty.IsLeader(user.UserId) {
@@ -228,6 +241,12 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 				u := users.GetByUserId(uid)
 				if u == nil {
+					name := fmt.Sprintf("Player #%d", uid)
+					if saved, err := users.LoadUserFile(uid); err == nil && saved != nil {
+						name = saved.Character.Name
+					}
+					rows = append(rows, []string{name, uStatus + " (offline)", "-", "-", "-", "-"})
+					formatting = append(formatting, []string{"%s", "%s", "%s", "%s", "%s", "%s"})
 					continue
 				}
 				uLevel := fmt.Sprintf(`%d`, u.Character.Level)
@@ -415,22 +434,27 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 			if len(currentParty.UserIds) <= 1 {
 
+				affected := append(currentParty.GetMembers(), currentParty.GetInvited()...)
+				if !currentParty.TryDisband() {
+					return true, parties.LastError()
+				}
 				//
 				// Party is disbanded
 				//
 				events.AddToQueue(events.PartyUpdated{
 					Action:  `disbanded`,
-					UserIds: append(currentParty.GetMembers(), currentParty.GetInvited()...),
+					UserIds: affected,
 				})
 
 				user.EventLog.Add(`party`, `Disbanded your party`)
 				user.SendText(`You disbanded the party.`)
-				currentParty.Disband()
 
 				return true, nil
 			}
 
-			currentParty.Leave(user.UserId)
+			if !currentParty.Leave(user.UserId) {
+				return true, parties.LastError()
+			}
 			for _, uid := range currentParty.GetMembers() {
 				if u := users.GetByUserId(uid); u != nil {
 					if currentParty.IsLeader(uid) {
@@ -460,7 +484,9 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			UserIds: append(currentParty.GetMembers(), currentParty.GetInvited()...),
 		})
 
-		currentParty.Leave(user.UserId)
+		if !currentParty.Leave(user.UserId) {
+			return true, parties.LastError()
+		}
 		user.EventLog.Add(`party`, `Left the party`)
 		user.SendText(`You left the party.`)
 
@@ -482,7 +508,11 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 			return true, nil
 		}
 
-		for _, uid := range currentParty.UserIds {
+		members, invited := currentParty.GetMembers(), currentParty.GetInvited()
+		if !currentParty.TryDisband() {
+			return true, parties.LastError()
+		}
+		for _, uid := range members {
 			if uid == user.UserId {
 				continue
 			}
@@ -490,7 +520,7 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				u.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> disbanded the party.`, user.Character.Name))
 			}
 		}
-		for _, uid := range currentParty.InviteUserIds {
+		for _, uid := range invited {
 			if u := users.GetByUserId(uid); u != nil {
 				u.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> disbanded the party.`, user.Character.Name))
 			}
@@ -501,10 +531,9 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		//
 		events.AddToQueue(events.PartyUpdated{
 			Action:  `disbanded`,
-			UserIds: append(currentParty.GetMembers(), currentParty.GetInvited()...),
+			UserIds: append(members, invited...),
 		})
 
-		currentParty.Disband()
 		user.EventLog.Add(`party`, `Disbanded the party`)
 		user.SendText(`You disbanded the party.`)
 
@@ -523,6 +552,11 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		for _, uid := range currentParty.GetMembers() {
 			u := users.GetByUserId(uid)
 			if u == nil {
+				u, _ = users.LoadUserFile(uid)
+			}
+			if u == nil {
+				allMembers = append(allMembers, fmt.Sprintf("@%d", uid))
+				memberIds[fmt.Sprintf("@%d", uid)] = uid
 				continue
 			}
 			allMembers = append(allMembers, u.Character.Name)
@@ -549,7 +583,9 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 		kickUserId := memberIds[matchUser]
 
-		currentParty.Leave(kickUserId)
+		if !currentParty.Leave(kickUserId) {
+			return true, parties.LastError()
+		}
 
 		if u := users.GetByUserId(kickUserId); u != nil {
 			u.SendText(`You were kicked from the party.`)
@@ -574,6 +610,11 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 		for _, uid := range currentParty.GetMembers() {
 			u := users.GetByUserId(uid)
 			if u == nil {
+				u, _ = users.LoadUserFile(uid)
+			}
+			if u == nil {
+				allMembers = append(allMembers, fmt.Sprintf("@%d", uid))
+				memberIds[fmt.Sprintf("@%d", uid)] = uid
 				continue
 			}
 			allMembers = append(allMembers, u.Character.Name)
@@ -600,7 +641,9 @@ func Party(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 
 		promoteUserId := memberIds[matchUser]
 
-		currentParty.Promote(promoteUserId)
+		if !currentParty.Promote(promoteUserId) {
+			return true, parties.LastError()
+		}
 
 		if u := users.GetByUserId(promoteUserId); u != nil {
 			u.EventLog.Add(`party`, `Promoted to party leader`)

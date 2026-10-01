@@ -39,3 +39,13 @@ Independent review findings were fixed and re-reviewed; no initial-unit blockers
 remain. Passed touched-package tests, affected root/hooks race tests, generate,
 validate, final full race suite and diff checks. Project Status records findings
 and the initial fixture failures/fixes. No JavaScript/Lua source changes.
+
+## Full-phase delivery
+
+Completed participation and one-pool rewards; fixed deterministic corpse claims;
+versioned durable membership with rollback/recovery; runtime-only consent;
+legacy rank reconciliation; shared morale ownership; GMCP/browser/text authority;
+updated party/protection help. Tests exercise real two-company combat entry,
+independent formations/tactics/retreat, idle/nonparticipant exclusions, reward
+and loot idempotence, persistence recovery/write failure and command gates.
+Final independent review/checks and integration results live in Project Status.

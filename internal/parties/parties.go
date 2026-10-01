@@ -11,6 +11,7 @@ type Party struct {
 	Followers     []int
 	Supporters    []int
 	followTokens  map[int]uint64
+	autoTokens    map[int]uint64
 }
 
 var (
@@ -19,6 +20,11 @@ var (
 )
 
 func New(userId int) *Party {
+	storageErr = nil
+	if userId <= 0 {
+		return nil
+	}
+	undo := checkpoint()
 	if _, ok := partyMap[userId]; ok {
 		return nil
 	}
@@ -30,6 +36,9 @@ func New(userId int) *Party {
 		Position:      map[int]string{},
 	}
 	partyMap[userId] = p
+	if !persist(undo) {
+		return nil
+	}
 	return p
 }
 
@@ -41,16 +50,8 @@ func Get(userId int) *Party {
 }
 
 func (p *Party) ChanceToBeTargetted(userId int) int {
-
-	rank := p.GetRank(userId)
-	if rank == `front` {
-		return 2
-	}
-
-	if rank == `back` {
-		return 0
-	}
-	// middle rank
+	// Legacy ranks are display-only: independently formed companies have
+	// equal initial targeting weight. Formation governs interception.
 	return 1
 }
 
@@ -62,6 +63,9 @@ func (p *Party) GetRank(userId int) string {
 }
 
 func (p *Party) SetRank(userId int, rank string) {
+	if !p.IsMember(userId) {
+		return
+	}
 	if rank == `front` || rank == `back` {
 		p.Position[userId] = rank
 		return
@@ -93,12 +97,18 @@ func (p *Party) SetAutoAttack(userId int, on bool) bool {
 			}
 		}
 		p.AutoAttackers = append(p.AutoAttackers, userId)
+		if p.autoTokens == nil {
+			p.autoTokens = map[int]uint64{}
+		}
+		followSequence++
+		p.autoTokens[userId] = followSequence
 		return false
 	}
 
 	for i, id := range p.AutoAttackers {
 		if id == userId {
 			p.AutoAttackers = append(p.AutoAttackers[:i], p.AutoAttackers[i+1:]...)
+			delete(p.autoTokens, userId)
 			return true
 		}
 	}
@@ -116,11 +126,16 @@ func (p *Party) GetAutoAttackUserIds() []int {
 }
 
 func (p *Party) Leave(userId int) bool {
+	storageErr = nil
+	undo := checkpoint()
 	if p.Invited(userId) {
 		return p.DeclineInvite(userId)
 	}
 	if !p.IsMember(userId) {
 		return false
+	}
+	if p.IsLeader(userId) && len(p.UserIds) == 1 {
+		return p.TryDisband()
 	}
 	p.SetAutoAttack(userId, false)
 	p.SetFollow(userId, false)
@@ -128,13 +143,12 @@ func (p *Party) Leave(userId int) bool {
 	delete(p.Position, userId)
 	if p.IsLeader(userId) {
 		if len(p.UserIds) == 1 {
-			p.Disband()
-			return true
+			return p.TryDisband()
 		}
 
 		for _, id := range p.UserIds {
 			if id != userId {
-				p.Promote(id)
+				p.setLeader(id)
 				break
 			}
 		}
@@ -149,7 +163,7 @@ func (p *Party) Leave(userId int) bool {
 
 	delete(partyMap, userId)
 
-	return true
+	return persist(undo)
 }
 
 func (p *Party) IsMember(userId int) bool {
@@ -181,6 +195,8 @@ func (p *Party) InvitePlayer(userId int) bool {
 }
 
 func (p *Party) AcceptInvite(userId int) bool {
+	storageErr = nil
+	undo := checkpoint()
 	if !p.Invited(userId) {
 		return false
 	}
@@ -193,7 +209,7 @@ func (p *Party) AcceptInvite(userId int) bool {
 			break
 		}
 	}
-	return true
+	return persist(undo)
 }
 
 func (p *Party) DeclineInvite(userId int) bool {
@@ -213,8 +229,13 @@ func (p *Party) DeclineInvite(userId int) bool {
 	return true
 }
 
-func (p *Party) Disband() {
+func (p *Party) Disband() { p.TryDisband() }
+
+func (p *Party) TryDisband() bool {
+	storageErr = nil
+	undo := checkpoint()
 	p.AutoAttackers = nil
+	p.autoTokens = nil
 	p.Followers = nil
 	p.followTokens = nil
 	p.Supporters = nil
@@ -224,6 +245,9 @@ func (p *Party) Disband() {
 	for _, userId := range p.InviteUserIds {
 		delete(partyMap, userId)
 	}
+	p.UserIds = nil
+	p.InviteUserIds = nil
+	return persist(undo)
 }
 
 func (p *Party) GetMembers() []int {
@@ -234,7 +258,7 @@ func (p *Party) GetInvited() []int {
 	return append([]int{}, p.InviteUserIds...)
 }
 
-// Consent is runtime-only, like party membership. Joining grants no movement,
+// Consent is runtime-only; accepted membership is durable. Joining grants no movement,
 // combat or support authority. These methods run on the owning game loop.
 func (p *Party) SetFollow(userId int, on bool) bool {
 	if !p.IsMember(userId) {
@@ -283,12 +307,23 @@ func (p *Party) Supports(userId int) bool {
 // Promote validates membership and clears follow consent: consent to follow
 // one leader is never inherited by their replacement.
 func (p *Party) Promote(userId int) bool {
+	storageErr = nil
+	undo := checkpoint()
+	if !p.setLeader(userId) {
+		return false
+	}
+	return persist(undo)
+}
+
+func (p *Party) setLeader(userId int) bool {
 	if !p.IsMember(userId) {
 		return false
 	}
 	if p.LeaderUserId != userId {
 		p.Followers = nil
 		p.followTokens = nil
+		p.AutoAttackers = nil
+		p.autoTokens = nil
 	}
 	p.LeaderUserId = userId
 	return true
@@ -318,4 +353,24 @@ func (p *Party) FollowToken(userId int) uint64 {
 		return 0
 	}
 	return p.followTokens[userId]
+}
+
+// Suspend removes session-only consent without removing durable membership.
+func Suspend(userId int) {
+	if p := Get(userId); p != nil {
+		if p.Invited(userId) {
+			p.DeclineInvite(userId)
+			return
+		}
+		p.SetFollow(userId, false)
+		p.SetSupport(userId, false)
+		p.SetAutoAttack(userId, false)
+	}
+}
+
+func (p *Party) AutoAttackToken(userId int) uint64 {
+	if !p.IsMember(userId) || !slices.Contains(p.AutoAttackers, userId) {
+		return 0
+	}
+	return p.autoTokens[userId]
 }

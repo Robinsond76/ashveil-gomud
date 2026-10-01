@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -1392,6 +1393,7 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 				if mob.Character.HasBuffFlag("revive-on-death") {
 					mob.Command(`suicide`)
 				} else {
+					mobcommands.CaptureRewardContributors(mob)
 					mobDeathNotice(mob)
 					mob.Command(`suicide quiet`)
 				}

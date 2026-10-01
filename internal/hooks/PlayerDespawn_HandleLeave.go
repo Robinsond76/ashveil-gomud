@@ -45,7 +45,17 @@ func HandleLeave(e events.Event) events.ListenerReturn {
 	if currentParty := parties.Get(evt.UserId); currentParty != nil {
 		affected := append(currentParty.GetMembers(), currentParty.GetInvited()...)
 		wasLeader := currentParty.IsLeader(evt.UserId)
-		currentParty.Leave(evt.UserId)
+		parties.Suspend(evt.UserId)
+		if wasLeader {
+			for _, uid := range currentParty.GetMembers() {
+				if uid != evt.UserId && users.GetByUserId(uid) != nil {
+					if !currentParty.Promote(uid) {
+						user.SendText(parties.LastError().Error())
+					}
+					break
+				}
+			}
+		}
 		if wasLeader && currentParty.LeaderUserId != evt.UserId {
 			for _, uid := range currentParty.GetMembers() {
 				if u := users.GetByUserId(uid); u != nil {

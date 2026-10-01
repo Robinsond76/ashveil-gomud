@@ -460,7 +460,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 			user.SendText(buildCorpseDescriptionPanel(&corpse.Character))
 
-			if configs.GetGamePlayConfig().Death.CorpseItems {
+			if configs.GetGamePlayConfig().Death.CorpseItems || corpse.ClaimUserId > 0 {
 				user.SendText(buildCorpseInventoryPanel(&corpse))
 			}
 

@@ -138,7 +138,7 @@ func moralePass() {
 	for _, fid := range fights {
 		f := moraleFights[fid]
 		b, ok := battle.Current(f.owner)
-		if !ok || b.FightID != fid || f.shared {
+		if !ok || b.FightID != fid || !primaryMoraleFight(fid, f) {
 			continue
 		}
 		var ms []morale.Member
@@ -609,4 +609,28 @@ func SetMercySaveForTest(save func(*users.UserRecord) error) func() {
 	old := mercySaveUser
 	mercySaveUser = save
 	return func() { mercySaveUser = old }
+}
+
+// Allied companies keep independent battles over the same enemies. The first
+// still-active company evaluates a shared enemy group, owning mercy once;
+// allies neither repeat the morale roll nor inherit a yielded enemy's decision.
+func primaryMoraleFight(fid uint64, f *moraleFight) bool {
+	for otherID, other := range moraleFights {
+		if otherID >= fid || other.room != f.room {
+			continue
+		}
+		b, active := battle.Current(other.owner)
+		u := users.GetByUserId(other.owner)
+		if !active || b.FightID != otherID || u == nil || u.Character.Health <= 0 || u.Character.RoomId != f.room {
+			continue
+		}
+		for _, id := range other.ids {
+			for _, mine := range f.ids {
+				if id == mine {
+					return false
+				}
+			}
+		}
+	}
+	return true
 }

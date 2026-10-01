@@ -9,6 +9,7 @@ import (
 // Register hooks here...
 func RegisterListeners() {
 	effecttargets.SetAlliedLeaders(parties.AlliedLeaders)
+	events.RegisterListener(events.UserPurged{}, PurgeAlliance, events.First)
 	events.RegisterListener(events.NewTurn{}, MercyTick)
 	events.RegisterListener(events.MobDeath{}, MoraleDeath)
 	events.RegisterListener(events.RoomChange{}, MercyLeave)

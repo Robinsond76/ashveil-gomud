@@ -79,7 +79,15 @@ type PartyFollowOrder struct {
 	ConsentToken uint64
 }
 
+type PartyAttackOrder struct {
+	LeaderUserId        int
+	OriginRoomId        int
+	ConsentToken        uint64
+	TargetMobInstanceId int
+}
+
 type Input struct {
+	PartyAttack   *PartyAttackOrder
 	PartyFollow   *PartyFollowOrder
 	MemberOrder   *MemberOrder
 	UserId        int

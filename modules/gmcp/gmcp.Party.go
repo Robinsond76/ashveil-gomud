@@ -1,7 +1,9 @@
 package gmcp
 
 import (
+	"fmt"
 	"math"
+	"slices"
 	"strconv"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -30,6 +32,7 @@ func init() {
 		plug: plugins.New(`gmcp.Comm`, `1.0`),
 	}
 
+	events.RegisterListener(events.PlayerSpawn{}, g.playerSpawnHandler)
 	events.RegisterListener(events.RoomChange{}, g.roomChangeHandler)
 	events.RegisterListener(events.PartyUpdated{}, g.onPartyChange)
 	events.RegisterListener(PartyUpdateVitals{}, g.onUpdateVitals)
@@ -49,6 +52,14 @@ type PartyUpdateVitals struct {
 
 func (g PartyUpdateVitals) Type() string     { return `PartyUpdateVitals` }
 func (g PartyUpdateVitals) UniqueID() string { return `PartyVitals-` + strconv.Itoa(g.LeaderId) }
+
+func (g *GMCPPartyModule) playerSpawnHandler(e events.Event) events.ListenerReturn {
+	evt := e.(events.PlayerSpawn)
+	if p := parties.Get(evt.UserId); p != nil {
+		events.AddToQueue(events.PartyUpdated{Action: "recovered", UserIds: p.GetMembers()})
+	}
+	return events.Continue
+}
 
 func (g *GMCPPartyModule) aggroChangedHandler(e events.Event) events.ListenerReturn {
 
@@ -203,7 +214,18 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 	charmedMobInstanceIds := []int{}
 
 	for _, uId := range party.GetMembers() {
-
+		if users.GetByUserId(uId) == nil && all {
+			name := fmt.Sprintf("Player #%d", uId)
+			if saved, err := users.LoadUserFile(uId); err == nil && saved != nil {
+				name = saved.Character.Name
+			}
+			status := "Offline"
+			if party.IsLeader(uId) {
+				partyPayload.Leader = name
+				status = "Leader (offline)"
+			}
+			partyPayload.Members = append(partyPayload.Members, GMCPPartyModule_Payload_User{Name: name, Status: status, OwnerUserId: uId})
+		}
 		if user := users.GetByUserId(uId); user != nil {
 
 			hPct := int(math.Floor((float64(user.Character.Health) / float64(user.Character.HealthMax.Value)) * 100))
@@ -246,9 +268,14 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 
 			partyPayload.Members = append(partyPayload.Members,
 				GMCPPartyModule_Payload_User{
-					Name:     user.Character.Name,
-					Status:   `In Party`,
-					Position: party.GetRank(user.UserId),
+					Name:        user.Character.Name,
+					OwnerUserId: uId,
+					Online:      true,
+					Follow:      party.Follows(uId),
+					Support:     party.Supports(uId),
+					AutoAttack:  slices.Contains(party.GetAutoAttackUserIds(), uId),
+					Status:      `In Party`,
+					Position:    party.GetRank(user.UserId),
 				},
 			)
 
@@ -300,9 +327,11 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 		}
 		partyPayload.Members = append(partyPayload.Members,
 			GMCPPartyModule_Payload_User{
-				Name:     m.Character.Name,
-				Status:   mStatus,
-				Position: `-`,
+				Name:        m.Character.Name,
+				OwnerUserId: m.Character.GetCharmedUserId(),
+				Online:      true,
+				Status:      mStatus,
+				Position:    `-`,
 			},
 		)
 	}
@@ -355,9 +384,14 @@ type GMCPPartyModule_Payload struct {
 }
 
 type GMCPPartyModule_Payload_User struct {
-	Name     string `json:"name"`
-	Status   string `json:"status"`   // party/leader/invited
-	Position string `json:"position"` // frontrank/middle/backrank
+	OwnerUserId int    `json:"owner_user_id"`
+	Online      bool   `json:"online"`
+	Follow      bool   `json:"follow"`
+	Support     bool   `json:"support"`
+	AutoAttack  bool   `json:"autoattack"`
+	Name        string `json:"name"`
+	Status      string `json:"status"`   // party/leader/invited
+	Position    string `json:"position"` // frontrank/middle/backrank
 }
 
 type GMCPPartyModule_Payload_Vitals struct {

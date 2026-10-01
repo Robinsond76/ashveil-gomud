@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -154,6 +155,10 @@ func TestKillPaysTheCompanyThroughSuicide(t *testing.T) {
 	foe.InstanceId = 424243
 	room.AddMob(foe.InstanceId)
 
+	user.Character.RoomId = room.RoomId
+	user.Character.Health = 10
+	battle.Begin(user.UserId, room.RoomId, 1, "xp", []int{foe.InstanceId})
+	t.Cleanup(battle.Reset)
 	userBefore, hereBefore, awayBefore := user.Character.Experience, here.Character.Experience, away.Character.Experience
 	ok, err := Suicide("", foe, room)
 	require.NoError(t, err)
@@ -210,6 +215,10 @@ func TestPartyKillPaysTheMembersCompany(t *testing.T) {
 	foe.InstanceId = 424244
 	room.AddMob(foe.InstanceId)
 
+	user.Character.RoomId = room.RoomId
+	user.Character.Health = 10
+	battle.Begin(user.UserId, room.RoomId, 1, "xp", []int{foe.InstanceId})
+	t.Cleanup(battle.Reset)
 	userBefore, hereBefore := user.Character.Experience, here.Character.Experience
 	ok, err := Suicide("", foe, room)
 	require.NoError(t, err)
