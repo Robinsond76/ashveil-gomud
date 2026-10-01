@@ -1,6 +1,6 @@
 # Phase 33g: Company Equipment and Loot
 
-Status: management complete on `phase-33g-equipment`, 2026-10-01;
+Status: management complete, 2026-10-01;
 independently reviewed and verified. Catalog/class delivery remains separate. The owner requested implementation,
 chose pooled gold, and removed equipment presets from this phase. Routine
 33-series defaults are delegated to the lead. See the

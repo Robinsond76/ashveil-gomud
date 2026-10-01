@@ -17,7 +17,7 @@ instead of duplicating them.
 
 ## Current position
 
-**33g management complete on `phase-33g-equipment`:** pooled treasury (owner choice), shared
+**33g management complete:** pooled treasury (owner choice), shared
 instance-preserving cargo, explicit equipment assignment/removal/comparison,
 claimed/public loot windows and opt-in autoloot. Equipment presets removed at
 the owner's request. Durable equipment journals and cargo migration protect
@@ -45,7 +45,7 @@ complete; 33e (automatic class abilities) and **33f1 (skill and charm
 retirement)**, **33f2 (expedition specialists)**, and **33f3 (camp
 specialists)** are complete, so 33f is done; **33i1 (group assessment)**
 is complete too (33i2 remains); 33g management and its cargo prerequisite are
-complete on the feature branch, reviewed and verified. Equipment
+complete, reviewed and verified. Equipment
 catalog/Glaivewarden delivery and 33h remain. Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
@@ -220,7 +220,7 @@ delegated to the lead. 33a–33e are complete.
 | 33d | Multiplayer Parties and Allied Companies | Complete: [design](designs/2026-10-01-phase-33d-allied-companies-design.md), [plan](plans/2026-10-01-phase-33d-allied-companies.md); durable alliances, explicit consent, contribution-based XP, fixed shared loot claims and independent company authority |
 | 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
 | 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 complete ([plan](plans/2026-10-01-phase-33f3-camp-specialists.md)): camp raids and Camp Watch, Field Smith, Vigil, Forage, `camp cook` |
-| 33g | Company Equipment and Loot | Management/cargo/treasury complete on feature branch; reviewed and verified. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); presets removed by owner. Catalog/Glaivewarden remain separate slices. |
+| 33g | Company Equipment and Loot | Management/cargo/treasury complete; reviewed and verified. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); presets removed by owner. Catalog/Glaivewarden remain separate slices. |
 | 33h | Company Progression, Rewards, and Expedition Continuity | Future design: [proposal](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md); implementation not started |
 | 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles) not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
@@ -229,6 +229,9 @@ delegated to the lead. 33a–33e are complete.
 
 ### Phase 33g: cargo, treasury, equipment, and loot management (2026-10-01)
 
+- **Integration:** owner authorized merging the reviewed management slice
+  (`cf8434f1`) to `master` and pushing to `origin`; no gameplay changes after
+  the final verification below.
 - **Owner choices:** pool carried gold into one treasury; exclude equipment
   presets. Completed the required shared cargo prerequisite and deliberate
   equipment management on `phase-33g-equipment`, based on origin/master

@@ -52,6 +52,6 @@ management. Record their remaining delivery explicitly.
 ## Completion
 
 Management, cargo migration, treasury, loot, browser/help, integration tests,
-and independent review completed on the feature branch. Review findings and
+and independent review completed. Review findings and
 exact final verification are recorded in [Project Status](../PROJECT_STATUS.md).
 Presets are excluded; catalog/tier migration and Glaivewarden remain separate.
