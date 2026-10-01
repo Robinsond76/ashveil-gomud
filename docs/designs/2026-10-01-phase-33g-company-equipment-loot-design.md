@@ -13,6 +13,14 @@ was checked against origin master `626df427`; recheck before implementation.
 
 Managing a band's equipment becomes a direct, reviewable company action rather than a chain of inherited give/ask commands. Tie recommendations to roles, defense, reach, and burden.
 
+The owner approved the complementary [equipment catalog, tiers, and
+Glaivewarden design](2026-10-01-equipment-tiers-glaivewarden-design.md) on
+2026-10-01: six tiers, parallel armor paths, weapon families including a
+two-handed reach glaive, and the Glaivewarden class with automatic Sweeping
+Cut. Use that catalog for role-aware comparisons and future content; numerical
+balance remains subject to verification. This approval does not settle the
+treasury, transfer, or loot-policy decisions below.
+
 ## Current mechanics and prior art
 
 `modules/company/inventory.go` and gear/member providers show durable companion equipment. `internal/usercommands/give.go`, `ask.go`, and `internal/mobcommands/equip.go` provide transfer/equip routes; `internal/usercommands/gearup.go` evaluates only the player. 22b's save seams protect gear ownership, and 32f already supplies cargo/capacity.
