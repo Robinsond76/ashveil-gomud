@@ -28,6 +28,9 @@ turn, or on one that hasn't noticed you.
 - The front of each column takes the first blows: plain melee reaches only
   the front, a reach weapon one rank deeper, and a bow anyone.
 - Health reads unhurt, scratched, wounded, badly wounded, or near death.
+- Below the grid, a Burdened line names the members whose own load
+  burdens them (lightly burdened, burdened, or heavily burdened): they
+  dodge less (<ansi fg="command">help burden</ansi>). The unburdened aren't listed.
 - The formation changes as members fall: the one behind steps up.
 
 In the web client, the Combat tab's Battle view shows your battle's group

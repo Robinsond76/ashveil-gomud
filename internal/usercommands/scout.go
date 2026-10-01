@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
@@ -111,6 +112,9 @@ func scoutGroup(room *rooms.Room, g enemyparty.Group, user *users.UserRecord) st
 		}
 		lines = append(lines, fmt.Sprintf(`%s [ %s ]`, rowLabels[r], strings.Join(cells, ` | `)))
 	}
+	if line := burdenedLine(g.Visible()); line != `` {
+		lines = append(lines, line)
+	}
 	switch {
 	case marked:
 		lines = append(lines, `* you can reach them from your place in the formation.`)
@@ -135,10 +139,30 @@ func describeGroup(room *rooms.Room, g enemyparty.Group, user *users.UserRecord)
 		mobparty.Capitalize(g.Name), mobparty.CountWord(len(vis)), rooms.DoingPhrase(rooms.GroupDoing(user.UserId, g.Party.Members))))
 	parts := make([]string, len(vis))
 	for i, m := range vis {
-		parts[i] = fmt.Sprintf(`%s %s (%s)`, mobparty.Article(m.Character.Name), m.Character.Name, enemyparty.HealthWord(m.Character.Health, m.Character.HealthMax.Value))
+		state := enemyparty.HealthWord(m.Character.Health, m.Character.HealthMax.Value)
+		if word := m.Character.BurdenWord(); word != characters.BurdenNone {
+			state += `, ` + word
+		}
+		parts[i] = fmt.Sprintf(`%s %s (%s)`, mobparty.Article(m.Character.Name), m.Character.Name, state)
 	}
 	lines = append(lines, `  `+strings.Join(parts, `, `))
 	kw := GroupKeyword(room, g)
 	lines = append(lines, fmt.Sprintf(`  Type <ansi fg="command">scout %s</ansi> to see how they stand, or <ansi fg="command">attack %s</ansi> to fight them.`, kw, kw))
 	return strings.Join(lines, "\n")
+}
+
+// burdenedLine names the group's members whose own load burdens them in a
+// fight (Phase 30g3), each with its word; "" when none is. The grid stays
+// narrow: the unburdened are left out.
+func burdenedLine(members []*mobs.Mob) string {
+	var parts []string
+	for _, m := range members {
+		if word := m.Character.BurdenWord(); word != characters.BurdenNone {
+			parts = append(parts, fmt.Sprintf(`%s (%s)`, m.Character.Name, word))
+		}
+	}
+	if len(parts) == 0 {
+		return ``
+	}
+	return `Burdened: ` + strings.Join(parts, `, `) + `. A burdened fighter dodges less.`
 }

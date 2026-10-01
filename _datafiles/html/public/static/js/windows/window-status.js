@@ -4,14 +4,17 @@
  * Worth - shown in the Character tab's Overview (Phase 32g; hosted
  * through window.CharacterTabs).
  *
- * Displays XP progress bar, gold (carried + bank).
+ * Displays XP progress bar, gold (carried + bank), and how burdened the
+ * player's own load leaves them in a fight (Phase 30g3, a word only).
  *
  * Responds to GMCP namespaces:
  *   Char.Worth  - XP, gold
+ *   Char.Inventory.Backpack.Summary - burden
  *   Char        - full character update
  *
  * Reads:
  *   Client.GMCPStructs.Char.Worth
+ *   Client.GMCPStructs.Char.Inventory.Backpack.Summary.burden
  */
 
 'use strict';
@@ -89,6 +92,11 @@
             font-size: 0.85em;
             color: var(--t-text);
         }
+
+        .sw-burden-link {
+            cursor: pointer;
+            text-decoration: underline dotted;
+        }
     `);
 
     // -----------------------------------------------------------------------
@@ -105,7 +113,16 @@
             '<div class="sw-worth-grid">' +
                 '<div class="sw-worth-cell"><span class="sw-worth-cell-label">Gold (on hand)</span><span class="sw-worth-cell-value" id="sw-gold">\u2014</span></div>' +
                 '<div class="sw-worth-cell"><span class="sw-worth-cell-label">Gold (bank)</span><span class="sw-worth-cell-value" id="sw-bank">\u2014</span></div>' +
+                '<div class="sw-worth-cell"><span class="sw-worth-cell-label">Burden</span>' +
+                    '<span class="sw-worth-cell-value sw-burden-link" id="sw-burden" role="button" tabindex="0" title="Your own worn and carried load in a fight. Type help burden.">\u2014</span></div>' +
             '</div>';
+
+        const burden = el.querySelector('#sw-burden');
+        const openHelp = () => Client.GMCPRequest('Help', 'burden');
+        burden.addEventListener('click', openHelp);
+        burden.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openHelp(); }
+        });
 
         document.body.appendChild(el);
         return el;
@@ -134,12 +151,22 @@
         document.getElementById('sw-bank').textContent    = fmt(worth.gold_bank);
     }
 
+    // updateBurden shows the burden word (Phase 30g3), capitalised.
+    function updateBurden() {
+        const inv     = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Inventory;
+        const summary = inv && inv.Backpack && inv.Backpack.Summary;
+        const el      = document.getElementById('sw-burden');
+        if (!el || !summary || typeof summary.burden !== 'string' || summary.burden === '') { return; }
+        el.textContent = summary.burden.charAt(0).toUpperCase() + summary.burden.slice(1);
+    }
+
     // -----------------------------------------------------------------------
     // Update
     // -----------------------------------------------------------------------
     function update() {
         if (!document.getElementById('sw-xp-fill')) { return; }
         updateWorth();
+        updateBurden();
     }
 
     // -----------------------------------------------------------------------

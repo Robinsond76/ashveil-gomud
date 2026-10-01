@@ -8,9 +8,11 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/templates"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // summaryFor builds the read model; tests swap it.
@@ -40,6 +42,25 @@ func addAshveilIdentity(p *templates.Panel, s companyview.Summary) {
 
 func addAshveilAlignment(p *templates.Panel, s companyview.Summary) {
 	addRow(p, `Align:  `, `Aln:`, fmt.Sprintf(`%d (%s)`, s.Alignment, company.AlignmentBand(s.Alignment)))
+}
+
+// addAshveilBurden shows how burdened the character's own load leaves
+// them in a fight (Phase 30g3): a word, never a ratio.
+func addAshveilBurden(p *templates.Panel, c *characters.Character) {
+	addRow(p, `Burden: `, `Bdn:`, burdenValue(c.BurdenWord()))
+}
+
+// burdenValue colours a burden word: green when unburdened, yellow when
+// light, red otherwise.
+func burdenValue(word string) string {
+	colour := `red`
+	switch word {
+	case characters.BurdenNone:
+		colour = `green`
+	case characters.BurdenLight:
+		colour = `yellow`
+	}
+	return fmt.Sprintf(`<ansi fg="%s">%s</ansi>`, colour, util.CapitalizeFirst(word))
 }
 
 // needValue renders a need, in warning colour when Low or worse.

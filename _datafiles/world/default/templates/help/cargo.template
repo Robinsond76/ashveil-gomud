@@ -30,6 +30,13 @@ if a companion leaves and you're suddenly over, you can still walk,
 only slowly. Moving things between your pack and the cargo, and giving
 to your own companions, never changes the total, so they always work.
 
+<ansi fg="yellow-bold">In a fight</ansi>
+
+Capacity is for the road. In a fight only your own load counts: what
+you wear and carry yourself, against your Strength. Packs' extra room,
+horses, and the cargo never lighten it, though stowing something in the
+cargo takes it off your back (<ansi fg="command">help burden</ansi>).
+
 <ansi fg="yellow-bold">Being heavily loaded</ansi>
 
 Past three quarters of capacity, journeys along a route take a little

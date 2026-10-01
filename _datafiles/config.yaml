@@ -350,6 +350,13 @@ GamePlay:
     # driven by Strength delta
     BashChanceMin: 5
     BashChanceMax: 20
+    # Personal load (worn and carried, never cargo or mounts) against an
+    # agility capacity of AgilityBaseKg + AgilityStrengthKg per Strength.
+    # The first AgilityFreeLoad (a share) of it is free; past that the
+    # character is burdened and dodges less (up to 60% less when full).
+    AgilityBaseKg: 15
+    AgilityStrengthKg: 0.5
+    AgilityFreeLoad: 0.35
   # PVP Restrictions
   PVP:
     # - Enabled -

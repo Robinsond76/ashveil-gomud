@@ -77,6 +77,7 @@ help:
       - attack
       - battle-summary
       - break
+      - burden
       - cast
       - chemistry
       - combat
@@ -235,6 +236,7 @@ help-aliases:
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]
+  burden:           [burdened, unburdened, burdens, agility, personal-load, nimble]
   defense:          [defence, defenses, block, blocks, blocking, parry, parries, parrying, dodge, dodges, dodging, shield, shields]
   armor:            [armour, absorbed]
   statuses:         [status-effects, statuseffects, bleeding, bleed, staggered, stagger, knockdown, knocked-down, stun, stunned, burning, exposed, armor-break, armor-broken, hobbled, overload, crit-effects]

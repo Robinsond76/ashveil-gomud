@@ -13,5 +13,8 @@ you hit and the more you can carry.
 
 <ansi fg="yellow">Carrying</ansi>
 
-* Determines how many items you can carry before becoming encumbered.
+* Adds half a kilogram per point to your share of the company's carrying
+  capacity (<ansi fg="command">help cargo</ansi>).
+* Lets you fight in a heavier load before it burdens you and cuts your
+  dodge (<ansi fg="command">help burden</ansi>).
 </ansi>

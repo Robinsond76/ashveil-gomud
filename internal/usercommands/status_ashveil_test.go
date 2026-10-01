@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,4 +126,27 @@ func TestStatusTrainUnchanged(t *testing.T) {
 	useWorld(t, "default")
 	useSummary(t, sampleSummary())
 	assert.Contains(t, statusText(t, users.NewUserRecord(7, 1), "train"), "points left to spend")
+}
+
+// TestStatusShowsBurden (Phase 30g3): the Vitals panel names how burdened
+// the character's own worn and carried load leaves them, as a word.
+func TestStatusShowsBurden(t *testing.T) {
+	useWorld(t, "default")
+	useSummary(t, sampleSummary())
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.AgilityBaseKg, gameplay.Combat.AgilityStrengthKg, gameplay.Combat.AgilityFreeLoad = 15, 0.5, 0.35
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
+	const anvilID = 99611
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: anvilID, Name: "test anvil", Type: items.Object, Weight: 40000})
+	t.Cleanup(func() { items.RemoveTestItemSpec(anvilID) })
+
+	user := users.NewUserRecord(7, 1)
+	user.Character.Name = "Wren"
+	text := statusText(t, user, "")
+	assert.Regexp(t, `Burden: +Unburdened`, text)
+
+	user.Character.Items = append(user.Character.Items, items.New(anvilID))
+	text = statusText(t, user, "")
+	assert.Regexp(t, `Burden: +Heavily burdened`, text)
+	assert.NotContains(t, text, "40.0", "a word, never the weight or a ratio")
 }
