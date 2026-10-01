@@ -16,10 +16,31 @@ status effects, wounds, tactics, guardians, interrupts, and wind-ups
 (30a–30e) are shipped. The Phase 32 play-test improvements are implemented;
 32b's status still carries an outstanding review note (see its retained plan).
 
-**Next:** Phase 30f (battlefield conditions).
-Phase 30e implements the [approved design](designs/2026-09-30-phase-30e-morale-mercy-design.md).
-The owner removed mounted combat from 30f on 2026-09-30. Combat-cadence
-balance tuning and other remaining limitations are listed below.
+**Next:** Phase 30g, [combat tempo, personal load, and active
+defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
+decisions the owner settled on 2026-09-30. 30g1 (the balance harness and
+baseline) is done; each later slice is measured against it:
+
+1. **30g2, active defense and armor:** one defense per strike: block
+   with a shield (no dodge), else parry a melee strike or dodge; the
+   shield's ×1.5 armor removed; the shield bash moves to a blocked melee
+   strike (5–20% by Strength); armor's suffix reads `absorbed`;
+   `help defense`.
+2. **30g3, personal load:** worn and carried weight against a
+   Strength-based capacity (cargo and mounts never count); burden lowers
+   dodge; burden words in `status`.
+3. **30g4, progression:** automatic stats grow in steps every 5 levels;
+   HP by archetype, in small numbers; an XP knee at level 60.
+4. **30g5, the action meter:** turns from raw Speed and burden, at most
+   two a round, no banking.
+5. **30g6, tuning:** HP, damage, and healing set so a no-focus even 5v5
+   lasts 10–15 rounds at levels 1–60; the harness asserts it. It also
+   takes 29f's cadence retune.
+
+Phase 30e (morale and mercy) is complete. Phase 30f (battlefield
+conditions; the owner removed mounted combat from it on 2026-09-30)
+remains queued; the owner chooses where it falls among the 30g slices.
+Other remaining limitations are listed below.
 
 ## Phase progress
 
@@ -83,6 +104,7 @@ balance tuning and other remaining limitations are listed below.
 | 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](designs/2026-09-30-phase-30d1-chant-interrupts-design.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](designs/2026-09-30-phase-30d1b-chant-break-chance-design.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, or stun always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 complete: [design](designs/2026-09-30-phase-30d2-windups-design.md). Physical wind-ups (`internal/windup`, mob `windups`): the forest ogre (Dark Forest room 530) winds up Crushing Blow in plain view, then one swing of double damage that knocks down; only a crit that lands, a stagger, a knockdown, or a stun breaks it (owner); a broken or landed one is followed by 2 turns' cooldown; a shield bash is a counter strike only and breaks nothing (owner) |
 | 30e | Morale and mercy | Complete: enemy temperaments and shared break checks; protected surrender; paced mercy decisions, rewards and reactions; companion hesitation, flight and saved return |
 | 30f | Battlefield conditions | Proposed: [spec](designs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat |
+| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). Owner-agreed direction (2026-09-30): an action meter from Speed and personal load (capped turns a round); block with a shield (no dodge), parry or dodge without; the shield's ×1.5 armor removed; a 10–15 round 5v5 target. Shield bash on a block (5–20% by Strength); no level cap, an XP knee at ~60; small HP numbers by archetype; stats grow in steps every few levels, and tempo reads raw Speed; the 10–15 rounds is the no-focus fight. Slices: 30g1 balance harness, 30g2 defenses, 30g3 personal load, 30g4 progression (stat steps, archetype HP, XP knee), 30g5 meter, 30g6 tuning. All decisions settled (A, B, D by the lead's recommendation; stat steps every 5 levels). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10); 30g2 (defenses) next |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](designs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](designs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](designs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
@@ -115,11 +137,80 @@ balance tuning and other remaining limitations are listed below.
   zero-loyalty departure, and stale offline character saves. Fixed all with
   regression coverage; final reviewer found no remaining blocker. The pacing
   concern was withdrawn after checking queued delivery and its regression.
+- **Integration:** preserved incoming Phase 30g1 balance-harness work when
+  merging `origin/master`; independent integration review found no blocker.
+  Generation, validation and the full race suite pass on the combined tree.
 - **Verification:** `make generate`, `make validate`, `go test -race ./...`,
   focused mobcommands/company regressions, JS/Lua lint and Chromium dock checks
   all pass. JSHint used the installed executable instead of fetching with npx. Browser checks used the unchanged harness over local HTTP because this
   environment blocks file URLs. The first full race run exposed death-guard
   compatibility failures; the guard now uses a transient per-instance marker.
+
+### Phase 30g1: balance harness and baseline (2026-09-30)
+
+- **What:** the first slice of Phase 30g
+  ([design](designs/2026-09-30-phase-30g-tempo-defense-design.md),
+  [plan](plans/2026-09-30-phase-30g1-balance-harness.md)),
+  test-only (no player-visible change, so no help).
+  - `modules/company/balance_test.go`: an even 5v5 through the real
+    `DoCombat` with real dice and 30a's statuses: Aria and four
+    companions against a mirror group with their kits, both levelled
+    alike (`levelTo`). `TestBalance5v5` (gated by `ASHVEIL_BALANCE=1`,
+    `ASHVEIL_BALANCE_FIGHTS`, default 50) logs a table over levels 1/5/10
+    × company modes spread/default/focus × enemy modes spread/default.
+  - Always on: `TestBalanceHarnessRunsAFight`, `TestBalanceSidesStayEven`,
+    `TestBalanceStatusesLand`, `TestBalanceTally`,
+    `TestBalancePercentile`.
+  - The design gained the owner's decisions 10–18 (shield bash on a
+    block, no level cap and an XP knee, small archetype HP, stats in
+    steps of 5 levels, the spread-out fight as the baseline, parry,
+    `absorbed`) and six slices; its 30g1 section is amended to the build.
+- **Why:** decision 9: measure before changing combat, so each later 30g
+  slice is judged against numbers.
+- **Baseline** (the full table is in the plan): the no-focus fight
+  (spread × spread) runs a median of **8 rounds at level 1, 32 at level
+  5, 68 at level 10** (p90 13 / 46 / 92), against the 10–15 target.
+  Fights lengthen about 4× by level 5 and 8.5× by level 10, because HP
+  grows with level and weapon damage doesn't: the owner's concern,
+  measured. Other readings:
+  - The company wins 60% / 66% / 84% of even fights at levels 1 / 5 /
+    10: its healer, first strike, and slightly more HP for the player
+    (recorded asymmetries).
+  - Fighters take a turn in about three rounds of four (0.72–0.85 turns
+    per standing fighter per round: casting, lost actions, and falls).
+    About 38% of turns land (dodges count as misses), and about 15% of
+    those are crits.
+  - Shipped targeting (everyone the weakest) is already focus fire; an
+    enemy that focuses makes fights longer and closer (level 10: 80
+    rounds and 54% against 68 and 84%), not shorter.
+- **Verification:** the harness tests looped 3 times while fixing; each
+  review fix's test was checked to fail without it
+  (`TestBalanceSidesStayEven`, `TestBalanceStatusesLand`). Final
+  (2026-09-30, after the review fixes): `make generate` (no diff),
+  `make validate`, and `go test -race ./...` all passed, and passed again
+  after merging `master` (30d2 and the docs reorganisation) into the
+  branch. The gated table runs in about 2–3 minutes at 50 fights a cell.
+- **Review:** the independent default-agent reviewer checked fairness,
+  the tally, the leader clamp, the real paths, and the invariants (clock,
+  leaks, concurrency: all fine); each finding was checked.
+  - **Fixed, with regression tests:** template experience levelled
+    Garrick and Ysolde on their first kill at level 1 (`levelTo` now
+    sets experience and peak level; `TestBalanceSidesStayEven`, which
+    failed before the fix, also pins the player HP quirk); shield bashes
+    were counted as turns and hits (now counted apart; `TestBalanceTally`);
+    status-tick damage wasn't counted (now for the other side). The lead
+    found, following the review's tick finding, that no status ever
+    landed in the brawl world (no buffs loaded, no `Buff` listener): the
+    harness now loads 30a's statuses and the game's listener
+    (`TestBalanceStatusesLand`, which fails without it).
+  - **Amended in the docs:** the baseline cell is spread × spread (the
+    shipped default already focuses); comments on enemy spread and
+    regeneration; the plan's modes, names, and cells; the design's 30g1
+    section (unseeded, 50 fights, stalls at 200, per-side counts).
+  - **Recorded, not fixed (they are the game as it is; 30g6 weighs
+    them):** no enemy healer; the players' pass strikes first; enemies
+    can't be wounded; a player's `HealthMax` `Base: 1` gives a little
+    more HP than a mob; both sides unplaced, so formation is inert here.
 
 ### Documentation maintenance and Phase 30e preparation (2026-09-30)
 
@@ -160,6 +251,13 @@ those results. This documentation change does not rerun or supersede them.
   30d2: a counter strike only). A weapon's own
   crit statuses still land on a crit the armor took (30a), so they make
   that round's other blows heavy.
+
+- **Balance baseline (30g1), recorded for 30g6:** the harness's even
+  5v5 keeps the game's asymmetries: no enemy healer, the players' pass
+  strikes first, enemies take no wounds, a player's `HealthMax` starts
+  at `Base: 1` (a mob's at 0, so a player gains a little more HP per
+  level), and both sides fight unplaced (formation inert). The table
+  runs only with `ASHVEIL_BALANCE=1`.
 
 - **Wind-ups (30d2), for the owner:** the numbers (35% of the ogre's
   turns, x2 damage, 2 turns' cooldown) are the recommendation to tune.
