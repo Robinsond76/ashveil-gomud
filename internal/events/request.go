@@ -22,4 +22,10 @@ type MemberOrder struct {
 	RoomID     int
 	MemberKey  string // empty for a temporary charmed follower
 	CharmToken any    // opaque runtime charm identity; never persisted
+	// Scripted marks a follower's script reacting during a player's command
+	// (onAsk, onGive, item or room scripts) rather than a typed ask order.
+	// UserID is then the follower's owner, whoever's command ran. It keeps
+	// the ownership, hostility and battle checks but not ask's order list or
+	// the room checks, and a refusal is silent: nobody typed it.
+	Scripted bool
 }
