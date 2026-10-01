@@ -37,7 +37,9 @@ Once the battle starts:
   (<ansi fg="command">help guardian</ansi>);
 - a blow that draws blood may break its target's chant (a heavy one
   always does), on either side, and
-  a shield-bearer may slam a missed blow back (<ansi fg="command">help interrupts</ansi>);
+  a blow that would hit meets one defense: a shield blocks it, a weapon
+  parries it, or the target dodges (<ansi fg="command">help defense</ansi>), and a
+  shield-bearer may slam a blocked blow back (<ansi fg="command">help interrupts</ansi>);
 - a big foe, such as the forest ogre, may wind up a heavy blow in plain
   view, and only a critical hit that gets through the armor, or a
   stagger, knockdown, or stun, breaks it (<ansi fg="command">help interrupts</ansi>);
@@ -63,7 +65,7 @@ behind them. <ansi fg="command">formation reach [member]</ansi> shows who a memb
 <ansi fg="command">scout [group]</ansi> (<ansi fg="command">help scout</ansi>) shows an enemy group's formation and which
 of them you can reach.
 
-<ansi fg="yellow-bold">Hitting (</ansi><ansi fg="command">help attack</ansi><ansi fg="yellow-bold">)</ansi>
+<ansi fg="yellow-bold">Hitting (</ansi><ansi fg="command">help attack</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help defense</ansi><ansi fg="yellow-bold">)</ansi>
 
 Your chance to hit comes from your speed against your target's. Several
 things add to it or take it away:
@@ -74,6 +76,9 @@ things add to it or take it away:
   dim light -10%.
 - <ansi fg="yellow">Dual wielding</ansi> (<ansi fg="command">help dual-wield</ansi>): an off-hand weapon swings with a
   penalty.
+
+A blow that would hit then meets the target's block, parry, or dodge, and
+what gets through is cut by their armor (<ansi fg="command">help defense</ansi>, <ansi fg="command">help armor</ansi>).
 
 A sharpened blade (<ansi fg="command">help sharpen</ansi>) does +1 damage on each strike while its
 edge lasts.
@@ -98,7 +103,7 @@ are only text (<ansi fg="command">help narration</ansi>). One line opens a fight
 A critical hit leaves a mark that matches the weapon: swords and claws make
 you bleed, maces stagger, hammers and axes knock down or break armor, bows
 leave you exposed. Staggered and knocked-down fighters lose an action,
-stunned ones two, and can't dodge or raise a shield meanwhile (<ansi fg="command">help statuses</ansi>).
+stunned ones two, and can't block, parry, or dodge meanwhile (<ansi fg="command">help statuses</ansi>).
 Statuses last a few combat rounds and end with the fight.
 
 <ansi fg="yellow-bold">Wounds (</ansi><ansi fg="command">help wounds</ansi><ansi fg="yellow-bold">)</ansi>
@@ -112,7 +117,8 @@ bandage.
 <ansi fg="yellow-bold">After the fight (</ansi><ansi fg="command">help battle-summary</ansi><ansi fg="yellow-bold">)</ansi>
 
 When your company's fight ends, you see a summary. It shows the damage each
-side did, who did the most, the highest hit, kills, how each enemy ended,
+side did, who did the most, the highest hit, each side's blocks, parries,
+and dodges, kills, how each enemy ended,
 and your company's health.
 
 <ansi fg="yellow-bold">Commands</ansi>
@@ -122,6 +128,7 @@ and your company's health.
   <ansi fg="command">strategy</ansi>          how each of you fights: roles and targets
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
   <ansi fg="command">help guardian</ansi>     guardians and their guards
+  <ansi fg="command">help defense</ansi>      blocks, parries, and dodges
   <ansi fg="command">help interrupts</ansi>   broken chants, wind-ups, and shield counters
   <ansi fg="command">flee</ansi>              try to run out of the room (the only way out of a battle)
   <ansi fg="command">consider [target]</ansi> size up a foe

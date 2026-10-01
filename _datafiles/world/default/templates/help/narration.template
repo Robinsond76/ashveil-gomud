@@ -9,14 +9,15 @@ numbers that matter sit in brackets at the end of the line.
   <ansi fg="command">(critical hit, 9 damage)</ansi>  a critical hit: it lands harder
   <ansi fg="command">(critical hit, 9 damage, bleeding)</ansi>  and it left a status (<ansi fg="command">help statuses</ansi>)
   <ansi fg="command">(1 damage, bleeding)</ansi>  a status doing its damage, on the victim's turn
-  <ansi fg="command">(5 damage, 2 blocked)</ansi>     a hit on you; your armor stopped 2 of it
+  <ansi fg="command">(5 damage, 2 absorbed)</ansi>    a hit on you; your armor absorbed 2 of it
   <ansi fg="command">(4 healed)</ansi>                health a spell gave back
   <ansi fg="command">(chanting: Magic Missile, 2 rounds)</ansi>
                             a spell being cast, and the rounds left
                             before it is released
 
-A line with nothing in brackets is a miss, a dodge, or someone getting
-ready. Every miss is shown, yours and theirs.
+A line with nothing in brackets is a miss, a block, a parry, a dodge, or
+someone getting ready (<ansi fg="command">help defense</ansi>). Every miss is shown, yours and
+theirs.
 
 <ansi fg="yellow-bold">A critical hit</ansi>
 
@@ -27,7 +28,7 @@ from your perception (<ansi fg="command">help perception</ansi>).
 
 When a critical hit does damage and the victim stays standing, a pain reaction
 follows the hit line. You read your own pain as "you"; everyone else sees the
-victim react by name. A normal hit, a fully blocked critical hit, or a dodge
+victim react by name. A normal hit, a critical hit the armor absorbed whole, or a defended blow
 has no pain reaction. When a critical hit drops the victim, the death line
 follows instead. Pain reactions are words only: they add no damage or status.
 A short pause comes before a pain reaction or a death line, so the blow lands

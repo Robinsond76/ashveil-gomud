@@ -20,8 +20,8 @@ may break it</ansi>:
 
 A melee blow, a sling stone, or an arrow can break it, and so can a blow
 you take in someone else's place (guarding them, or catching it in the
-front row). A miss, a dodged blow, a hit that does no damage, bleeding or
-burning, and a spell never do.
+front row). A miss, a blow blocked, parried, or dodged, a hit that does no
+damage, bleeding or burning, and a spell never do.
 
 <ansi fg="yellow-bold">When your chant breaks</ansi>
 
@@ -59,7 +59,8 @@ Some big foes wind up a heavy blow in plain view before they swing. The
 - Winding up takes the foe's whole turn. At its <ansi fg="yellow">next turn</ansi> it swings once
   at the one it named, with <ansi fg="yellow">double damage</ansi> before armor, and a blow that
   gets through the armor <ansi fg="yellow">knocks the target down</ansi> (they lose their next
-  action; <ansi fg="command">help statuses</ansi>). It can still miss or be dodged.
+  action; <ansi fg="command">help statuses</ansi>). It can still miss, or be blocked, parried,
+  or dodged (<ansi fg="command">help defense</ansi>).
 - Only <ansi fg="yellow">heavy force</ansi> breaks a wind-up: a <ansi fg="yellow">critical hit</ansi> that gets through the
   armor, or a blow that <ansi fg="yellow">staggers</ansi>, <ansi fg="yellow">knocks down</ansi>, or <ansi fg="yellow">stuns</ansi> the foe:
   <ansi fg="command">The forest ogre staggers, and the blow dies before it can fall. (Crushing Blow interrupted)</ansi>
@@ -79,16 +80,19 @@ Some big foes wind up a heavy blow in plain view before they swing. The
 
 <ansi fg="yellow-bold">Shield counters</ansi>
 
-When a melee blow misses someone holding a <ansi fg="yellow">shield</ansi>, they may slam it back
-into the attacker:
+When someone holding a <ansi fg="yellow">shield</ansi> blocks a melee blow (<ansi fg="command">help defense</ansi>), they
+may slam the shield back into the attacker:
 
-  <ansi fg="command">Tamsin Reed turns the blow and drives her shield into the bandit captain. (shield bash, 3 damage, stunned)</ansi>
+  <ansi fg="command">Tamsin Reed catches the bandit captain's blow on her shield.</ansi>
+  <ansi fg="command">Tamsin Reed drives her shield back into the bandit captain. (shield bash, 3 damage, stunned)</ansi>
 
-- A miss or a dodge gives a <ansi fg="yellow">50%</ansi> chance. The bash does <ansi fg="yellow">1 to 4 damage</ansi>, and
-  one bash in four also <ansi fg="yellow">stuns</ansi> the attacker (<ansi fg="command">help statuses</ansi>).
+- A blocked blow gives a <ansi fg="yellow">{{ config "GamePlay.Combat.BashChanceMin" }}% to {{ config "GamePlay.Combat.BashChanceMax" }}%</ansi> chance, more the stronger the
+  bearer is than the attacker. A plain miss is never countered. The bash
+  does <ansi fg="yellow">1 to 4 damage</ansi>, and one bash in four also <ansi fg="yellow">stuns</ansi> the attacker
+  (<ansi fg="command">help statuses</ansi>).
 - At most <ansi fg="yellow">one counter a round</ansi> for each shield-bearer.
 - No counter against a bow or sling, and none while the bearer is knocked
-  down, stunned, or chanting.
+  down, stunned, or chanting (a stunned bearer can't block at all).
 - It works both ways: a foe with a shield counters you. You choose nothing;
   holding a shield is enough.
 - A bash is a counter strike only: it breaks no chant and no wind-up.

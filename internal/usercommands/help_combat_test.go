@@ -50,7 +50,7 @@ func TestCombatHelpTopics(t *testing.T) {
 	// pages that quoted combat lines quote the new voice.
 	text, err := GetHelpContents("narration")
 	require.NoError(t, err)
-	for _, want := range []string{"(5 damage)", "(critical hit, 9 damage)", "blocked", "healed)", "(chanting: "} {
+	for _, want := range []string{"(5 damage)", "(critical hit, 9 damage)", "absorbed)", "healed)", "(chanting: "} {
 		assert.Contains(t, text, want)
 	}
 	for _, topic := range []string{"combat", "targeting", "formation", "attack"} {
@@ -70,6 +70,52 @@ func TestCombatHelpTopics(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, text, "one level")
 	assert.Contains(t, text, "church")
+}
+
+// Phase 30g2: help defense renders with its configured numbers, answers
+// to its aliases, and is linked from the combat hub; the pages the phase
+// changed no longer describe the old rules.
+func TestDefenseHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	text, err := GetHelpContents("defense")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, want := range []string{"Help for defense", "block", "parry", "dodge", "15% and 45%", "5% to 30%",
+		"swords, staves, and long polearms", "daggers", "Bows and slings can't parry", "No dodge if the block fails", "no defense at all"} {
+		assert.Contains(t, plain, want)
+	}
+	assert.NotContains(t, plain, "{{", "every config number rendered")
+	for _, alias := range []string{"block", "parry", "dodge", "parrying", "defence", "shield"} {
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, text, got, "help %s is help defense", alias)
+	}
+
+	for _, topic := range []string{"combat", "armor", "interrupts", "statuses", "battle-summary"} {
+		page, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, page, "help defense", "%s links to help defense", topic)
+	}
+
+	armor, err := GetHelpContents("armor")
+	require.NoError(t, err)
+	assert.Contains(t, armor, "(5 damage, 2 absorbed)")
+	assert.NotContains(t, armor, "Phase", "no phase numbers in player help")
+	assert.NotContains(t, armor, "50%")
+
+	interrupts, err := GetHelpContents("interrupts")
+	require.NoError(t, err)
+	plain = tagPattern.ReplaceAllString(interrupts, "")
+	assert.Contains(t, plain, "5% to 20%")
+	assert.Contains(t, plain, "A plain miss is never countered")
+	assert.NotContains(t, plain, "50%")
+	assert.NotContains(t, plain, "{{")
+
+	narration, err := GetHelpContents("narration")
+	require.NoError(t, err)
+	assert.NotContains(t, narration, "2 blocked)")
 }
 
 func TestCombatHelpPronounsAndOrdinals(t *testing.T) {
