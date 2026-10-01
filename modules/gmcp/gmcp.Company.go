@@ -59,6 +59,12 @@ type companyStrategy struct {
 	// stand more than one column apart.
 	Ward      string `json:"ward,omitempty"`
 	WardReach *bool  `json:"ward_reach,omitempty"`
+	// Abilities are the member's automatic class abilities by name;
+	// AbilitiesOff is true when its strategy turns them off; Reserve is
+	// its mana reserve in percent (Phase 33e). Each omitted when empty.
+	Abilities    []string `json:"abilities,omitempty"`
+	AbilitiesOff bool     `json:"abilities_off,omitempty"`
+	Reserve      int      `json:"reserve,omitempty"`
 }
 
 type companyMember struct {
@@ -188,7 +194,8 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}
 	}
 	if !m.Strategy.IsZero() {
-		out.Strategy = &companyStrategy{Role: string(m.Strategy.Role), Target: string(m.Strategy.Rule)}
+		out.Strategy = &companyStrategy{Role: string(m.Strategy.Role), Target: string(m.Strategy.Rule),
+			Abilities: strategy.Names(m.Abilities), AbilitiesOff: m.Strategy.NoAbilities, Reserve: m.Strategy.Reserve}
 	}
 	// Chemistry is shown only for a member standing with a band; alone or
 	// dead there is none (not "Strangers" on everyone).

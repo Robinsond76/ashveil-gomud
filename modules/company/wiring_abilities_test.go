@@ -112,10 +112,13 @@ func TestAWarriorCompanionTacklesInTheRealRound(t *testing.T) {
 	// Four rounds on, with her foe back on its feet, she tackles again; a
 	// miss still takes her turn.
 	t.Cleanup(hooks.UseAbilityRollForTest(func(int) int { return 99 }))
+	// (No status left from the dice: nobody down, stunned, or staggered.)
 	for _, m := range b.livingBandits() {
-		m.Character.RemoveBuff(status.KnockedDown)
+		status.Clear(&m.Character)
 	}
+	status.Clear(&tamsin.Character)
 	b.toughen()
+	b.hardenBandits()
 	n = len(*stream)
 	out = b.fight()
 	round = since(*stream, n)

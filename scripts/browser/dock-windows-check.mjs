@@ -291,6 +291,15 @@ check(JSON.stringify(got) === '["strategy #1 guard #3"]', 'guard another member'
 await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].strategy = { role: 'guardian', target: 'weakest', ward: 'leader', ward_reach: false }; window.gmcp('Company', g); }, company);
 check(await page.getByRole('button', { name: 'Oswin: guardian, weakest, guards you (out of reach)' }).count() === 1, 'a ward out of reach is marked');
 await page.evaluate(c => window.gmcp('Company', c), company);
+// Phase 33e: class abilities, abilities off, and a mana reserve.
+await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].strategy = { role: 'fighter', target: 'weakest', abilities: ['Tackle'] }; g.members[1].strategy = { role: 'caster', target: 'weakest', abilities_off: true, reserve: 30 }; window.gmcp('Company', g); }, company);
+check(await page.getByRole('button', { name: 'Oswin: fighter, weakest, Tackle' }).count() === 1, 'a member\'s row names its abilities');
+check(await page.getByRole('button', { name: /: caster, weakest, abilities off, keeps 30% mana$/ }).count() === 1, 'abilities off and a reserve are shown');
+got = await sentNow(async () => { await page.getByRole('button', { name: 'Oswin: fighter, weakest, Tackle' }).click(); await page.getByText('Abilities: off').click(); });
+check(JSON.stringify(got) === '["strategy #1 abilities off"]', 'the member menu turns abilities off');
+got = await sentNow(async () => { await page.getByRole('button', { name: /abilities off, keeps 30% mana$/ }).click(); await page.getByText('Abilities: on').click(); });
+check(JSON.stringify(got) === '["strategy #2 abilities on"]', 'and back on');
+await page.evaluate(c => window.gmcp('Company', c), company);
 // Phase 30c: the tactics row.
 check(await page.getByRole('button', { name: 'Company tactics: focus none, heal below 50%' }).count() === 1, 'Setup shows the saved tactics');
 got = await sentNow(async () => { await page.getByRole('button', { name: /^Company tactics/ }).click(); await page.getByText('Heal below 70%').click(); });

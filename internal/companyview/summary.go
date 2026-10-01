@@ -58,6 +58,9 @@ type Member struct {
 	// Strategy is the role and target rule a battle would use for this
 	// member (Phase 32g); zero when no source can say.
 	Strategy strategy.Strategy
+	// Abilities are its automatic class abilities (Phase 33e): by trained
+	// skill for the player, by archetype for a companion.
+	Abilities []strategy.Ability
 }
 
 // Summary is a player and their company, as every surface shows them.
@@ -189,6 +192,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		}
 	}
 	s.Leader.Strategy = src.strategy(uid, company.LeaderMemberKey)
+	s.Leader.Abilities = strategy.PlayerAbilities(c.GetSkillLevel)
 	s.Tactics = strategy.Tactics{}.Resolve()
 	if src.tactics != nil {
 		s.Tactics = src.tactics(uid)
@@ -217,6 +221,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
 				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col}
 			m.Strategy = src.strategy(uid, m.Key)
+			m.Abilities = strategy.CompanionAbilities(v.Archetype)
 			switch v.Status {
 			case company.MemberDead:
 				s.Dead++
