@@ -25,7 +25,9 @@ A separated follower receives a notice when the leader takes an ordinary exit.
 Allied/area support requires both owners to turn support on and be present.
 A chant loses targets if consent or membership is revoked. Company-scoped
 spells, including Minor Heal All, still help only the caster's own company.
-Single-target support can name a patient beside you without this consent.
+Single-target support can name a patient beside you outside a battle. In
+a shared battle, cross-company support requires mutual consent and both
+companies fighting a common living enemy; unrelated battles block support.
 
 Accepted membership and leadership survive logout, restart and copyover.
 Invitations and all three consents reset on recovery; logout clears your consent.

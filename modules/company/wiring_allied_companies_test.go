@@ -9,10 +9,13 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/parties"
+	"github.com/GoMudEngine/GoMud/internal/scripting"
+	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -192,4 +195,56 @@ func TestAlliedFinalEnemyPaysAfterCombatClosesBattle(t *testing.T) {
 	assert.Greater(t, ally.Character.Experience, before8)
 	require.Len(t, b.road.Corpses, 1)
 	assert.Contains(t, []int{7, 8}, b.road.Corpses[0].ClaimUserId)
+}
+
+func TestAlliedSupportRespectsIntegratedBattleBoundary(t *testing.T) {
+	for _, change := range []string{"shared", "revoked", "separate", "idle"} {
+		t.Run(change, func(t *testing.T) {
+			b, ally, companion := alliedBrawl(t)
+			p := parties.Get(7)
+			p.SetAutoAttack(8, true)
+			p.SetSupport(7, true)
+			p.SetSupport(8, true)
+			previous := effecttargets.SetAlliedLeaders(parties.AlliedLeaders)
+			t.Cleanup(func() { effecttargets.SetAlliedLeaders(previous) })
+			b.toughen()
+			for _, m := range b.livingBandits() {
+				m.Character.Health = 1000
+				m.Character.HealthMax.Value = 1000
+			}
+			ally.Character.Health = 1000
+			ally.Character.HealthMax.Value = 1000
+			companion.Character.Health = 1000
+			companion.Character.HealthMax.Value = 1000
+			sp := spells.GetSpell("healall")
+			original := sp.Scope
+			sp.Scope = spells.ScopeAllied
+			t.Cleanup(func() { sp.Scope = original })
+			info := friendlyCast(t, b)
+			require.Contains(t, info.TargetUserIds, 8)
+			require.Contains(t, info.TargetMobInstanceIds, companion.InstanceId)
+			b.aimAt("bandit captain")
+			b.fight()
+			require.False(t, effecttargets.OtherBattle(7, 0, 8, 0), "consenting companies share the same enemies")
+			ally.Character.Health = 1
+			companion.Character.Health = 1
+			switch change {
+			case "revoked":
+				p.SetSupport(8, false)
+			case "separate":
+				battle.Begin(8, b.road.RoomId, b.round, "other", []int{999999})
+			case "idle":
+				battle.End(7)
+			}
+			_, err := scripting.TrySpellScriptEvent("onMagic", 7, 0, info)
+			require.NoError(t, err)
+			if change == "shared" {
+				assert.Greater(t, ally.Character.Health, 1)
+				assert.Greater(t, companion.Character.Health, 1)
+			} else {
+				assert.Equal(t, 1, ally.Character.Health)
+				assert.Equal(t, 1, companion.Character.Health)
+			}
+		})
+	}
 }

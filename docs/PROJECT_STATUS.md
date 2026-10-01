@@ -181,7 +181,12 @@ delegated to the lead. 33a–33d are complete.
   Focused checks passed before the final suite. Earlier fixture checks exposed
   XP-disabled combat setup and an overly broad final-enemy assertion; corrected
   both before the final integrated run. No remaining failed checks.
-- Full-phase and master-integration independent re-review found no remaining
+- The final 33b merge requires mutual consent and overlapping live enemies
+  to broaden battle participation for allied support; separate battles and idle
+  allies remain blocked. Real cast-start/battle-entry/completion regression covers
+  both ally owners and companions, including revoked consent. Manual battle casts
+  remain prohibited; the fixture starts its chant before entering battle.
+- Full-phase and both master-integration independent re-reviews found no remaining
   blockers. Owner explicitly authorized merge to master and push when confident.
 
 ### Phase 33d: initial alliance consent slice (historical) (2026-10-01)

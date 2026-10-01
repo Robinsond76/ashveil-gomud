@@ -26,7 +26,8 @@ start. If no one is left to help, the spell (or first aid) fades with
 
 Company-wide support never automatically includes other players' companies.
 Single-target support can explicitly name another patient beside you, but
-cannot aid either side of an unrelated battle. A patient drawn into another
+cannot aid either side of an unrelated battle. A patient is "caught up in
+another battle" when that boundary applies. A patient drawn into another
 battle during a chant is dropped. Consenting allied owners fighting the same
 enemy group count as participants; idle or separately fighting allies do not.
 For allied/area group support, both accepted party owners must use
