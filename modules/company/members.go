@@ -29,6 +29,8 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 			view.Row, view.Col = 0, 0
 		}
 		switch {
+		case c.PendingReturn && !c.Dead():
+			view.Status = domain.MemberFled
 		case c.Dead():
 			view.Status = domain.MemberDead
 			view.RescueSeconds = c.Death.Remaining

@@ -50,6 +50,9 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 	}
 
 	sourceActor := GetActor(sourceUserId, sourceMobInstanceId)
+	if sourceActor == nil || sourceActor.characterRecord.CombatWithdrawn {
+		return true, nil
+	}
 
 	if eventName != `onCast` && eventName != `onWait` && eventName != `onMagic` && eventName != `onFail` {
 		return false, err
@@ -74,7 +77,7 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 		}
 
 		// If no longer in the same room, notify the user
-		if singleTargetArg == nil || (sourceActor.GetRoomId() != singleTargetArg.GetRoomId()) {
+		if singleTargetArg == nil || singleTargetArg.characterRecord.CombatWithdrawn || (sourceActor.GetRoomId() != singleTargetArg.GetRoomId()) {
 			sourceActor.SendText(`Your target cannot be found.`)
 			return true, nil
 		}
@@ -92,7 +95,7 @@ func TrySpellScriptEvent(eventName string, sourceUserId int, sourceMobInstanceId
 		}
 		for _, targetMobInstanceId := range spellAggro.TargetMobInstanceIds {
 			if mActor := GetActor(0, targetMobInstanceId); mActor != nil {
-				if mActor.GetRoomId() == sourceActor.GetRoomId() {
+				if !mActor.characterRecord.CombatWithdrawn && mActor.GetRoomId() == sourceActor.GetRoomId() {
 					multiTargetArg = append(multiTargetArg, mActor)
 				}
 			}

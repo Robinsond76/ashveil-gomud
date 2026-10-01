@@ -33,8 +33,13 @@ var (
 )
 
 type Companion struct {
-	ID            int `yaml:"id"`
-	MobTemplateID int `yaml:"mob_template_id"`
+	// PendingReturn marks temporary morale flight; gear remains in State.
+	PendingReturn bool `yaml:"pending_return,omitempty"`
+	MoraleDesert  bool `yaml:"morale_desert,omitempty"`
+	ReturnHP      int  `yaml:"return_hp,omitempty"`
+	ReturnMana    int  `yaml:"return_mana,omitempty"`
+	ID            int  `yaml:"id"`
+	MobTemplateID int  `yaml:"mob_template_id"`
 	// Archetype is the companion's Phase 17 archetype id. Empty for
 	// companions recruited before archetypes existed, until the leader sets
 	// one. It is set at most once.
@@ -67,10 +72,11 @@ func (c Companion) Identity() Identity {
 }
 
 type Record struct {
-	LeaderUserID    int         `yaml:"leader_user_id"`
-	Companions      []Companion `yaml:"companions"`
-	Formation       Formation   `yaml:"formation"`
-	NextCompanionID int         `yaml:"next_companion_id,omitempty"`
+	MercyPending    []MercyEffect `yaml:"mercy_pending,omitempty"`
+	LeaderUserID    int           `yaml:"leader_user_id"`
+	Companions      []Companion   `yaml:"companions"`
+	Formation       Formation     `yaml:"formation"`
+	NextCompanionID int           `yaml:"next_companion_id,omitempty"`
 	// Claimed lists the mob template IDs of free tutorial recruits this
 	// leader has claimed (Phase 22c). A claim is permanent: it outlives
 	// dismissal, desertion, and death.
@@ -115,6 +121,7 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		return Record{}, false
 	}
 	record.Companions = append([]Companion(nil), record.Companions...)
+	record.MercyPending = append([]MercyEffect(nil), record.MercyPending...)
 	if record.Claimed != nil {
 		record.Claimed = append([]int(nil), record.Claimed...)
 	}
@@ -172,7 +179,7 @@ func (r *Registry) Put(record Record) {
 	valid := validMemberKeys(record)
 	record.Formation.Prune(valid)
 	record.Service = pruneService(record.Service, valid)
-	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 && len(record.Lost) == 0 && len(record.Rosters) == 0 {
+	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 && len(record.Lost) == 0 && len(record.Rosters) == 0 && len(record.MercyPending) == 0 {
 		delete(r.Companies, record.LeaderUserID)
 		return
 	}

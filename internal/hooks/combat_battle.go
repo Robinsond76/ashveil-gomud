@@ -164,6 +164,7 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	}
 	battle.SetFight(sd.user.UserId, id)
 	b.FightID = id
+	startMorale(b)
 	// Phase 29c: the fight's opener, unless another player is already
 	// fighting this group here (one fight to the room, one opener).
 	if !groupInOtherBattle(sd.user.UserId, room.RoomId, p.ID) {
@@ -286,6 +287,12 @@ func endBattle(userId int, outcome string) {
 		fs.end(outcome)
 	}
 	battle.End(userId)
+	finishMorale(b, outcome)
+	if err := company.ReturnFlight(userId); err != nil {
+		if u := users.GetByUserId(userId); u != nil {
+			u.SendText(err.Error())
+		}
+	}
 }
 
 // battlePass decides every player's battle at the top of the round,
@@ -294,8 +301,10 @@ func endBattle(userId int, outcome string) {
 // turns on a free player in its room.
 func battlePass() {
 	round := combatRound.Load()
+	onlineIDs := users.GetOnlineUserIds()
+	sort.Ints(onlineIDs)
 	online := map[int]bool{}
-	for _, uid := range users.GetOnlineUserIds() {
+	for _, uid := range onlineIDs {
 		online[uid] = true
 	}
 	for _, uid := range battle.Players() {
@@ -305,7 +314,7 @@ func battlePass() {
 	}
 	battle.Retain(online) // a player who left waits in no line
 
-	for _, uid := range users.GetOnlineUserIds() {
+	for _, uid := range onlineIDs {
 		u := users.GetByUserId(uid)
 		if u == nil || u.Character == nil {
 			continue

@@ -246,7 +246,7 @@ func joinsTheFight(mob *mobs.Mob, leaderId int) bool {
 
 // canFight reports whether c can act in combat this round at all.
 func canFight(c *characters.Character) bool {
-	return c.Health > 0 && !c.HasBuffFlag("no-combat")
+	return c.Health > 0 && !c.CombatWithdrawn && !c.HasBuffFlag("no-combat")
 }
 
 // keepCompanyEngaged gives each living company member in the room a legal

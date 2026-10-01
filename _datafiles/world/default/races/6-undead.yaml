@@ -25,3 +25,5 @@ damage:
 disabledslots: []
 # Phase 30c: its personality as an enemy (help targeting).
 targeting: nearest
+
+neverbreak: true

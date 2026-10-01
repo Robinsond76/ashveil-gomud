@@ -1,4 +1,9 @@
-# Next Cloud Task: Phase 30e — Morale and Mercy
+# Phase 30e preparation handoff (historical)
+
+Superseded on 2026-10-01 by the completed
+[implementation record](2026-09-30-phase-30e-implementation.md) and
+[project status](../PROJECT_STATUS.md). The instructions below record the
+pre-approval preparation state; they are not current work instructions.
 
 Requested model: **6.1 Sol** (`gpt-6.1-sol`). Use the ashveil-gomud cloud
 environment and the latest `master` of `Robinsond76/ashveil-gomud`.

@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/morale"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/stats"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -28,6 +29,8 @@ const (
 )
 
 type Race struct {
+	Temperament      string `yaml:"temperament,omitempty"`
+	NeverBreak       bool   `yaml:"neverbreak,omitempty"`
 	RaceId           int
 	Name             string
 	Description      string
@@ -92,6 +95,9 @@ func (r *Race) Id() int {
 }
 
 func (r *Race) Validate() error {
+	if err := morale.Validate(r.Temperament); err != nil {
+		return err
+	}
 	if r.Name == "" {
 		return errors.New("race has no name")
 	}

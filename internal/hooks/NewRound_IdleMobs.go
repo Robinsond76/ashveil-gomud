@@ -37,6 +37,9 @@ func IdleMobs(e events.Event) events.ListenerReturn {
 	for _, mobId := range allMobInstances {
 
 		mob := mobs.GetInstance(mobId)
+		if mob != nil && mob.Character.CombatWithdrawn {
+			continue
+		}
 		if mob == nil {
 			allowedUnloadCt--
 			continue

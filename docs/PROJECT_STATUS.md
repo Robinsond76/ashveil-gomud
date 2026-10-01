@@ -6,26 +6,24 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-10-01
-- **Latest completed phase:** 30g1, the balance harness and baseline
-  (test-only), merged from `claude/blissful-ptolemy-2c76l0` on
-  2026-09-30. The latest gameplay phase is 30d2, physical wind-ups and
-  the forest ogre's Crushing Blow, merged at `792455ea`.
+- **Latest completed phase:** 30g2, active defense and armor, merged
+  from `claude/phase-30g2-defense` on 2026-10-01 (after 30e, morale and
+  mercy, the same day).
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
 
 The expedition/company loop, onboarding, combat presentation (29a–29f),
-status effects, wounds, tactics, guardians, interrupts, and wind-ups
-(30a–30d2) are shipped. The Phase 32 play-test improvements are implemented;
+status effects, wounds, tactics, guardians, interrupts, wind-ups, morale
+and mercy (30a–30e), and active defense (30g2) are shipped. The Phase 32 play-test improvements are implemented;
 32b's status still carries an outstanding review note (see its retained plan).
 
 **Next:** Phase 30g, [combat tempo, personal load, and active
 defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
 decisions the owner settled on 2026-09-30. 30g1 (the balance harness and
-baseline) is done; each later slice is measured against it:
+baseline) and 30g2 are done; each later slice is measured against 30g1:
 
-1. **30g2, active defense and armor:** implemented and reviewed on
-   `claude/phase-30g2-defense`, awaiting merge (work log below): one
+1. **30g2, active defense and armor:** complete (work log below): one
    defense per strike: block with a shield (no dodge), else parry a
    melee strike or dodge; the shield's ×1.5 armor removed; the shield
    bash moves to a blocked melee strike (5–20% by Strength); armor's
@@ -41,12 +39,10 @@ baseline) is done; each later slice is measured against it:
    lasts 10–15 rounds at levels 1–60; the harness asserts it. It also
    takes 29f's cadence retune.
 
-Phase 30e (morale and mercy; its
-[detailed design](designs/2026-09-30-phase-30e-morale-mercy-design.md)
-awaits owner review, implementation not begun) and 30f (battlefield
+Phase 30e (morale and mercy) is complete. Phase 30f (battlefield
 conditions; the owner removed mounted combat from it on 2026-09-30)
-remain queued; the owner chooses whether they come before, between, or
-after the 30g slices. Other remaining limitations are listed below.
+remains queued; the owner chooses where it falls among the 30g slices.
+Other remaining limitations are listed below.
 
 ## Phase progress
 
@@ -108,9 +104,9 @@ after the 30g slices. Other remaining limitations are listed below.
 | 30b | Wounds, treatment, and `heal wounds` | Complete: [design](designs/2026-09-30-phase-30b-wounds-design.md). Lasting wounds from damaging crits, light ones from crushing blows and finished bleeds; healing stops at the wound limit; `heal`/`heal wounds` (clerics' `tend` and heal, splints and bandages, the Waymark Inn physician); inn stay heals, camp rest one wound per splint or bandage (owner amendment); death clears; `status`, GMCP, web strip; `help wounds` |
 | 30c | Company tactics | 30c1 complete: [design](designs/2026-09-29-phase-30c-company-tactics-design.md). `company tactics` (`tactics`): a durable company focus (none, leader, casters, nearest, weakest, strongest, wounded) and healing threshold (10–90%); in a battle only the focus changes, for that battle, one order a round, turning everyone at the next upkeep; web focus buttons; the `casters` rule; enemy personalities by race or template (`targeting`, `targetingnoise`); `help tactics`. 30c2 complete: [design](designs/2026-09-30-phase-30c2-guardian-design.md). A `guardian` role (`strategy <who> guard [other]`) steps in for its ward (set, else the most hurt in reach) within one column: 2 guards a battle, one back per 2 combat rounds, none while knocked down or stunned; `help guardian`. Rotate the wounded deferred |
 | 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](designs/2026-09-30-phase-30d1-chant-interrupts-design.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](designs/2026-09-30-phase-30d1b-chant-break-chance-design.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, or stun always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 complete: [design](designs/2026-09-30-phase-30d2-windups-design.md). Physical wind-ups (`internal/windup`, mob `windups`): the forest ogre (Dark Forest room 530) winds up Crushing Blow in plain view, then one swing of double damage that knocks down; only a crit that lands, a stagger, a knockdown, or a stun breaks it (owner); a broken or landed one is followed by 2 turns' cooldown; a shield bash is a counter strike only and breaks nothing (owner) |
-| 30e | Morale and mercy | Detailed design for review: [spec](designs/2026-09-30-phase-30e-morale-mercy-design.md). Temperaments (the undead never yield); yielded foes leave the fight; a spare/kill prompt at fight end; alignment and loyalty reactions; company nerve |
+| 30e | Morale and mercy | Complete: enemy temperaments and shared break checks; protected surrender; paced mercy decisions, rewards and reactions; companion hesitation, flight and saved return |
 | 30f | Battlefield conditions | Proposed: [spec](designs/2026-09-26-battlefield-conditions-design.md). Ambush and surprise, area attacks on clusters, leaping and flanking, narrow ground, fatigue and cold in combat |
-| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 implemented, reviewed, and verified on `claude/phase-30g2-defense`, awaiting merge ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 (personal load) next |
+| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 (personal load) next |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](designs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](designs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](designs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |
@@ -124,6 +120,33 @@ after the 30g slices. Other remaining limitations are listed below.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 30e: morale and mercy (2026-10-01)
+
+- Shipped original-group morale checks, race/template temperaments, protected
+  surrender and fleeing, and stable shared ownership across player battles.
+  Mercy questions wait for the paced summary, expire after 30 seconds, and
+  release unresolved prisoners on departure. Spare/execution use exact ±5
+  alignment, witnessed loyalty reactions, and execution's ordinary rewards.
+- Shipped one-check companion nerve, one-action hesitation and chant refunds,
+  durable flight/gear/return with one loyalty penalty, and zero-loyalty departure.
+  Mercy recovery saves effect receipts without restoring prisoners or replaying
+  rewards; offline retries load the latest saved character.
+- Added GMCP/browser presentation, indexed morale/mercy help and tutorial hints.
+  [Implementation record](plans/2026-09-30-phase-30e-implementation.md).
+- **Review:** independent full-diff review and follow-up found failed-save
+  prisoner abandonment, shared-owner transfer, same-round ownership ordering,
+  zero-loyalty departure, and stale offline character saves. Fixed all with
+  regression coverage; final reviewer found no remaining blocker. The pacing
+  concern was withdrawn after checking queued delivery and its regression.
+- **Integration:** preserved incoming Phase 30g1 balance-harness work when
+  merging `origin/master`; independent integration review found no blocker.
+  Generation, validation and the full race suite pass on the combined tree.
+- **Verification:** `make generate`, `make validate`, `go test -race ./...`,
+  focused mobcommands/company regressions, JS/Lua lint and Chromium dock checks
+  all pass. JSHint used the installed executable instead of fetching with npx. Browser checks used the unchanged harness over local HTTP because this
+  environment blocks file URLs. The first full race run exposed death-guard
+  compatibility failures; the guard now uses a transient per-instance marker.
 
 ### Phase 30g1: balance harness and baseline (2026-09-30)
 

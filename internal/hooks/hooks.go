@@ -6,6 +6,11 @@ import (
 
 // Register hooks here...
 func RegisterListeners() {
+	events.RegisterListener(events.NewTurn{}, MercyTick)
+	events.RegisterListener(events.MobDeath{}, MoraleDeath)
+	events.RegisterListener(events.RoomChange{}, MercyLeave)
+	events.RegisterListener(events.PlayerDespawn{}, MercyLeave)
+	events.RegisterListener(events.UserPurged{}, MercyLeave)
 
 	// Buffs
 	events.RegisterListener(events.Buff{}, ApplyBuffs)

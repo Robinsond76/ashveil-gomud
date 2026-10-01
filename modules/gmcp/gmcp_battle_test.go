@@ -201,3 +201,17 @@ func TestBattlePayloadGuards(t *testing.T) {
 	raw, _ = json.Marshal(buildBattle(f))
 	assert.NotContains(t, string(raw), "guards", "none without a guardian")
 }
+
+func TestSurrenderedFoeHasNoCellOrTargetAndDarkHidesIt(t *testing.T) {
+	f := battleFacts{InBattle: true, Placed: true, Enemies: []enemyFact{{Id: 1, Label: "first bandit", Surrendered: true, Seen: true}, {Id: 2, Label: "second bandit", Standing: true, Health: 50, HealthMax: 100}}, Company: []aimFact{{Key: "leader", Target: 1}}}
+	p := buildBattle(f).(battlePayload)
+	require.Len(t, p.Surrendered, 1)
+	assert.Equal(t, "first bandit", p.Surrendered[0].Label)
+	require.Len(t, p.Enemies, 1)
+	assert.Empty(t, p.Company)
+	assert.Empty(t, p.Fallen)
+	f.Dark = true
+	p = buildBattle(f).(battlePayload)
+	assert.Empty(t, p.Surrendered)
+	assert.Empty(t, p.Enemies)
+}

@@ -207,3 +207,18 @@ func TestSummaryCountsStatusDamage(t *testing.T) {
 	assert.Equal(t, 2, sum.EnemyDamage, "Tamsin's burning counts to the enemies")
 	assert.Empty(t, sum.MostDamage, "no attacker is credited")
 }
+
+func TestYieldedSummaryAndMercyKeepsFinishedFight(t *testing.T) {
+	s := New()
+	id := s.Open(1, 100, "bandits", aria, nil, []Ref{captain})
+	s.Emit(Event{Kind: Yield, FightID: id, Source: captain})
+	sum, ok := s.EndFight(id, 2, OutcomeVictory, Final{Gone: []Ref{captain}})
+	require.True(t, ok)
+	require.Len(t, sum.Enemies, 1)
+	assert.Equal(t, EndingYielded, sum.Enemies[0].Ending)
+	next := s.Open(3, 100, "next", aria, nil, []Ref{captain})
+	e, ok := s.Emit(Event{Kind: Mercy, FightID: id, Source: aria, Target: captain, Outcome: "spared"})
+	require.True(t, ok)
+	assert.Equal(t, id, e.FightID)
+	assert.NotEqual(t, next, e.FightID)
+}

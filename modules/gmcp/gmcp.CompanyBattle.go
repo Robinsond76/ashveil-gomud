@@ -61,7 +61,8 @@ type guardFact struct {
 type enemyFact struct {
 	Id                int
 	Label             string // its 29d battle label
-	Standing          bool   // alive, here, and still in the battle's group
+	Surrendered       bool
+	Standing          bool // alive, here, and still in the battle's group
 	Hidden            bool
 	Seen              bool // a fallen one may be named: not last seen hidden
 	Row, Col          int
@@ -115,13 +116,14 @@ type battleOther struct {
 }
 
 type battlePayload struct {
-	Group   string         `json:"group"`
-	Dark    bool           `json:"dark,omitempty"`
-	Enemies []battleEnemy  `json:"enemies"`
-	Fallen  []battleFallen `json:"fallen,omitempty"`
-	Company []battleAim    `json:"company,omitempty"`
-	Others  []battleOther  `json:"others,omitempty"`
-	Waiting []string       `json:"waiting,omitempty"`
+	Group       string         `json:"group"`
+	Dark        bool           `json:"dark,omitempty"`
+	Enemies     []battleEnemy  `json:"enemies"`
+	Fallen      []battleFallen `json:"fallen,omitempty"`
+	Surrendered []battleFallen `json:"surrendered,omitempty"`
+	Company     []battleAim    `json:"company,omitempty"`
+	Others      []battleOther  `json:"others,omitempty"`
+	Waiting     []string       `json:"waiting,omitempty"`
 	// Phase 30c: the company focus (the Combat tab's focus buttons).
 	Focus      string `json:"focus"`
 	SavedFocus string `json:"saved_focus"`
@@ -154,6 +156,12 @@ func buildBattle(f battleFacts) any {
 	listed := map[int]bool{}
 	others := map[string]bool{}
 	for _, e := range f.Enemies {
+		if e.Surrendered {
+			if !e.Hidden {
+				p.Surrendered = append(p.Surrendered, battleFallen{ID: mobID(e.Id), Label: e.Label})
+			}
+			continue
+		}
 		if !e.Standing {
 			if e.Seen {
 				p.Fallen = append(p.Fallen, battleFallen{ID: mobID(e.Id), Label: e.Label})
@@ -275,6 +283,10 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 			continue
 		}
 		e := enemyFact{Id: id, Label: label}
+		if m != nil && m.Character.Health > 0 && m.Character.RoomId == room.RoomId && m.Character.CombatWithdrawn {
+			e.Surrendered = true
+			e.Hidden = m.Character.HasBuffFlag("hidden")
+		}
 		if m != nil && m.Character.Health > 0 && m.Character.RoomId == room.RoomId && inGroup[id] {
 			key := mobparty.MemberKeyFor(id)
 			e.Standing = true

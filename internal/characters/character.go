@@ -46,6 +46,9 @@ const (
 )
 
 type Character struct {
+	// CombatWithdrawn is transient surrender/flight protection, never saved.
+	CombatWithdrawn bool `yaml:"-"`
+
 	Name                string                         // The name of the character
 	Description         string                         // A description of the character.
 	Pronouns            string                         `yaml:"pronouns,omitempty"`      // Authored third-person combat pronouns.
@@ -655,6 +658,9 @@ func (c *Character) SetAdjective(adj string, addToList bool) {
 }
 
 func (c *Character) GetAdjectives() []string {
+	if c.CombatWithdrawn {
+		return []string{"surrendered"}
+	}
 
 	retAdjectives := []string{}
 
@@ -1197,6 +1203,9 @@ func (c *Character) SetAggroRemote(exitName string, userId int, mobInstanceId in
 }
 
 func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType, roundsWaitTime ...int) {
+	if c.CombatWithdrawn {
+		return
+	}
 
 	var combatAddlWaitRounds int = 0
 
@@ -1224,6 +1233,9 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 }
 
 func (c *Character) SetCast(roundsWaitTime int, sInfo SpellAggroInfo) {
+	if c.CombatWithdrawn {
+		return
+	}
 
 	c.Aggro = &Aggro{
 		Type:          SpellCast,
@@ -1353,6 +1365,9 @@ func (c *Character) TimerExists(name string) bool {
 }
 
 func (c *Character) ApplyHealthChange(healthChange int) int {
+	if c.CombatWithdrawn && healthChange < 0 {
+		return 0
+	}
 	oldHealth := c.Health
 	newHealth := c.Health + healthChange
 	if newHealth < 0 {

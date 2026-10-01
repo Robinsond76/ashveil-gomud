@@ -74,6 +74,7 @@ type Store interface {
 }
 
 type wireRecord struct {
+	MercyPending []domain.MercyEffect `yaml:"mercy_pending,omitempty"`
 	// LeaderUserID is decoded for shape compatibility; the companies map key is authoritative.
 	LeaderUserID    int                    `yaml:"leader_user_id"`
 	Companions      []domain.Companion     `yaml:"companions"`
@@ -101,7 +102,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters}
+		record := domain.Record{LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -561,6 +562,9 @@ func (m *CompanyModule) status(leaderUserID int) string {
 	}
 	for _, c := range record.Companions {
 		state := "awaiting restoration"
+		if c.PendingReturn {
+			state = "fled; awaiting battle settlement"
+		}
 		if c.Dead() {
 			state = deadStatus(c)
 		} else if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked {
@@ -814,8 +818,17 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 	}
 	var firstErr error
 	for _, companion := range record.Companions {
-		if companion.Dead() {
-			continue // Phase 25b: the dead wait for resurrection
+		if companion.ReturnHP > 0 && companion.Disposition != nil && companion.Disposition.Loyalty == 0 && !companion.Dead() {
+			current, _ := m.registry.Get(leaderUserID)
+			if err := m.removeCompanion(leaderUserID, current, companion); err != nil {
+				if firstErr == nil {
+					firstErr = err
+				}
+			}
+			continue
+		}
+		if companion.Dead() || companion.PendingReturn {
+			continue // dead await resurrection; fled await settlement
 		}
 		if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
 			if m.runtime.IsAttached(leaderUserID, instanceID) {
@@ -855,6 +868,22 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 				firstErr = fmt.Errorf("company: restore leader %d companion %d: %w", leaderUserID, companion.ID, err)
 			}
 			continue
+		}
+		if companion.ReturnHP > 0 {
+			if mob := mobs.GetInstance(instanceID); mob != nil {
+				mob.Character.Health = min(companion.ReturnHP, mob.Character.HealthLimit())
+				mob.Character.Mana = min(companion.ReturnMana, mob.Character.ManaMax.Value)
+			}
+		}
+		if companion.ReturnHP > 0 {
+			current, _ := m.registry.Get(leaderUserID)
+			for i, c := range current.Companions {
+				if c.ID == companion.ID {
+					current.Companions[i].ReturnHP = 0
+					current.Companions[i].ReturnMana = 0
+				}
+			}
+			m.registry.Put(current)
 		}
 		m.setInstance(leaderUserID, companion.ID, instanceID)
 		m.applyInstanceAlignment(leaderUserID, companion.ID, instanceID)
@@ -934,6 +963,12 @@ func (m *CompanyModule) rosterRefs() map[int][]survival.MemberRef {
 }
 
 func (m *CompanyModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
+	if evt, ok := e.(events.PlayerSpawn); ok {
+		if err := m.ReturnFlight(evt.UserId); err != nil {
+			mudlog.Error("company: pending return on login", "error", err)
+			return events.Continue
+		}
+	}
 	evt, ok := e.(events.PlayerSpawn)
 	if !ok {
 		return events.Cancel

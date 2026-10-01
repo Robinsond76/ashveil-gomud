@@ -244,7 +244,7 @@ func loadFightSides(fi combatstream.FightInfo) fightSides {
 // standingMob is a living mob in the fight's room.
 func (fs fightSides) standingMob(instanceId int) *mobs.Mob {
 	m := mobs.GetInstance(instanceId)
-	if m == nil || m.Character.RoomId != fs.info.RoomId || m.Character.Health < 1 {
+	if m == nil || m.Character.RoomId != fs.info.RoomId || m.Character.Health < 1 || m.Character.CombatWithdrawn {
 		return nil
 	}
 	return m
@@ -267,7 +267,7 @@ func (fs fightSides) companyAlive() bool {
 		return true
 	}
 	for instanceId := range fs.companyMobs {
-		if m := mobs.GetInstance(instanceId); m != nil && m.Character.Health > 0 {
+		if m := mobs.GetInstance(instanceId); m != nil && m.Character.Health > 0 && !m.Character.CombatWithdrawn {
 			return true
 		}
 	}
@@ -304,7 +304,7 @@ func (fs fightSides) companyHealth() []combatstream.MemberHealth {
 			out = append(out, combatstream.MemberHealth{Ref: r, Health: u.Character.Health, Max: u.Character.HealthMax.Value, Fallen: u.Character.Health <= -10})
 		default:
 			m := mobs.GetInstance(r.MobInstanceId)
-			if m == nil || m.Character.Health < 1 {
+			if m == nil || m.Character.Health < 1 || m.Character.CombatWithdrawn {
 				out = append(out, combatstream.MemberHealth{Ref: r, Fallen: true})
 				continue
 			}
@@ -318,7 +318,7 @@ func (fs fightSides) companyHealth() []combatstream.MemberHealth {
 func (fs fightSides) gone() []combatstream.Ref {
 	var out []combatstream.Ref
 	for _, r := range fs.info.Enemies {
-		if m := mobs.GetInstance(r.MobInstanceId); m != nil && m.Character.Health > 0 && m.Character.RoomId != fs.info.RoomId {
+		if m := mobs.GetInstance(r.MobInstanceId); m != nil && m.Character.Health > 0 && !m.Character.CombatWithdrawn && m.Character.RoomId != fs.info.RoomId {
 			out = append(out, r)
 		}
 	}

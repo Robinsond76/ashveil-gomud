@@ -7,10 +7,10 @@ current implementation status is in [Project Status](../PROJECT_STATUS.md).
 
 | Phase | Scope | Design status |
 |---|---|---|
-| 30e | Enemy morale, surrender, mercy decisions, alignment/loyalty reactions, company nerve | [Detailed design](2026-09-30-phase-30e-morale-mercy-design.md) under review |
+| 30e | Enemy morale, surrender, mercy decisions, alignment/loyalty reactions, company nerve | Complete: [approved design](2026-09-30-phase-30e-morale-mercy-design.md) |
 | 30f | Ambush/surprise, cluster attacks, leaping/flanking, narrow ground, fatigue and cold | [Proposal](2026-09-26-battlefield-conditions-design.md); needs detailed design |
 
-Work on 30e next, then 30f. Mounted combat was removed from 30f by the owner
+Work on 30f next. Mounted combat was removed from 30f by the owner
 on 2026-09-30. No replacement mounted-combat phase is scheduled.
 
 ## Shipped foundations

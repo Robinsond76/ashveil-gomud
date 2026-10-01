@@ -124,6 +124,9 @@ func stacks(b *buffs.Buff) int {
 // by one and its damage (per stack) comes off c's health. A status whose
 // count reaches zero is reported Expired and left for the buff pruner.
 func Tick(c *characters.Character) []Change {
+	if c.CombatWithdrawn {
+		return nil
+	}
 	var out []Change
 	each(c, func(b *buffs.Buff, s *Spec) {
 		if b.Expired() {

@@ -23,6 +23,9 @@ func MobRoundTick(e events.Event) events.ListenerReturn {
 
 		mob := mobs.GetInstance(mobInstanceId)
 
+		if mob != nil && mob.Character.CombatWithdrawn {
+			continue
+		}
 		if mob == nil {
 			continue
 		}

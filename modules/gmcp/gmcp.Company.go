@@ -150,6 +150,8 @@ func statusName(s company.MemberStatus) string {
 		return "dead"
 	case company.MemberAwaiting:
 		return "awaiting"
+	case company.MemberFled:
+		return "fled"
 	}
 	return "present"
 }

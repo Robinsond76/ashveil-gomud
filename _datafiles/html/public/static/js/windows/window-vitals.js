@@ -363,7 +363,11 @@
             const note = typeof rescue === 'number' ? 'fallen, ' + CompanyData.formatSeconds(rescue) + ' to raise' : 'fallen';
             row.appendChild(CompanyData.el('span', 'vitals-member-note', note));
             spoken.push(note);
-        } else if (m.status === 'awaiting' || typeof v.hp !== 'number') {
+        } else if (m.status === 'fled') {
+ row.classList.add('is-away');
+ row.appendChild(CompanyData.el('span', 'vitals-member-note', 'fled; returns after battle'));
+ spoken.push('fled; returns after battle');
+ } else if (m.status === 'awaiting' || typeof v.hp !== 'number') {
             row.classList.add('is-away');
             row.appendChild(CompanyData.el('span', 'vitals-member-note', 'not with you'));
             spoken.push('not with you');
