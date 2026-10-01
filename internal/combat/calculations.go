@@ -300,6 +300,9 @@ const burdenDodgeLoss = 0.6
 // 30g3): dodge × (1 − 0.6 × burden), rounded. A fully burdened fighter
 // keeps 40% of their dodge; parry and block are not touched.
 func burdenedDodge(dodge int, burden float64) int {
+	if math.IsNaN(burden) {
+		burden = 0
+	}
 	return int(math.Round(float64(dodge) * (1 - burdenDodgeLoss*max(0, min(1, burden)))))
 }
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mount"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -360,4 +361,33 @@ func TestCargoMovesAtCapacity(t *testing.T) {
 	assert.Len(t, user.Character.Items, 2)
 	assert.Contains(t, module.put(user, "rock"), "stow")
 	assert.Len(t, user.Character.Items, 1)
+}
+
+// Phase 30g3 review: stowing or taking raises ItemOwnership, so the web
+// client's burden and weight refresh (they read the player's own load).
+func TestCargoMovesRaiseItemOwnership(t *testing.T) {
+	user := testUser(t, 7)
+	user.Character.Items = []items.Item{testItem(rockId)}
+	module := newTestModule(&fakeStore{}, user)
+	events.ProcessEvents() // earlier tests' queued events aren't this test's
+	var seen []events.ItemOwnership
+	id := events.RegisterListener(events.ItemOwnership{}, func(e events.Event) events.ListenerReturn {
+		if evt, ok := e.(events.ItemOwnership); ok {
+			seen = append(seen, evt)
+		}
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.ItemOwnership{}, id) })
+
+	require.Contains(t, module.put(user, "rock"), "stow")
+	events.ProcessEvents()
+	require.Len(t, seen, 1)
+	assert.Equal(t, 7, seen[0].UserId)
+	assert.False(t, seen[0].Gained)
+	assert.Equal(t, rockId, seen[0].Item.ItemId)
+
+	require.Contains(t, module.take(user, "rock"), "take")
+	events.ProcessEvents()
+	require.Len(t, seen, 2)
+	assert.True(t, seen[1].Gained)
 }

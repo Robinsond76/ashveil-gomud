@@ -54,8 +54,9 @@ slice 30g3 (owner decisions 2 and 3). Branch: `claude/phase-30g3-load`.
 3. **Surfaces:** `status`, `look`, `scout`, GMCP backpack summary, the
    web Overview. Tests: the status row, look of a burdened mob, scout's
    burden line, the GMCP field.
-4. **Help and tutorial:** new `help burden` (aliases load, agility,
-   weight, burdened, encumbered), indexed in `keywords.yaml` under
+4. **Help and tutorial:** new `help burden` (aliases burdened,
+   unburdened, burdens, agility, personal-load, nimble; `load` stays
+   `help cargo`'s), indexed in `keywords.yaml` under
    combat and linked from `help combat`; `help defense`, `help
    perception`, `help status`, `help cargo`/encumbrance, `help scout`,
    and `help strength` updated where burden appears; a Combat-lesson hint

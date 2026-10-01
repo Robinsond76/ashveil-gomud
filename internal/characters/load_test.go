@@ -121,3 +121,13 @@ func TestStrengthEasesBurden(t *testing.T) {
 	assert.InDelta(t, (14.5/40-0.35)/0.65, strong.Burden(), 0.0001)
 	assert.Equal(t, BurdenLight, strong.BurdenWord())
 }
+
+// Review finding: a test config that skips validation (a free share of 1
+// or more) gives no NaN; the free share is treated as none.
+func TestBurdenForUnvalidatedFreeShare(t *testing.T) {
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.AgilityFreeLoad = 1
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
+	assert.Equal(t, 1.0, BurdenFor(20000, 20000))
+	assert.InDelta(t, 0.5, BurdenFor(10000, 20000), 0.0001)
+}

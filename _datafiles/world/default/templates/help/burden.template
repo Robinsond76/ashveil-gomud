@@ -18,7 +18,7 @@ The same rule holds for everyone: you, your companions, and your foes.
 
   {{ config "GamePlay.Combat.AgilityBaseKg" }} kg, plus {{ config "GamePlay.Combat.AgilityStrengthKg" }} kg for each point of Strength.
 
-The first {{ config "GamePlay.Combat.AgilityFreeLoad" }} of that (a share: 0.35 is about a third) costs
+The first {{ config "GamePlay.Combat.AgilityFreeLoad" }} of that (a share of the whole: 0.35 means 35%) costs
 nothing. Past it your burden grows until you reach the full amount, and
 stays at its worst beyond it. Because it is a share of what you can move
 in, a strong fighter wears the same armor more lightly than a weak one.

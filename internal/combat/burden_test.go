@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"math"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -42,6 +43,7 @@ func TestBurdenedDodge(t *testing.T) {
 		{0, 1, 0},
 		{30, 2, 12}, // held at full
 		{30, -1, 30},
+		{30, math.NaN(), 30},
 	}
 	for _, tc := range cases {
 		assert.Equal(t, tc.want, burdenedDodge(tc.dodge, tc.burden), "dodge %d, burden %v", tc.dodge, tc.burden)

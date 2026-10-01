@@ -56,6 +56,9 @@ func BurdenFor(loadGrams, capacityGrams int) float64 {
 		return 0
 	}
 	free := float64(configs.GetCombatConfig().AgilityFreeLoad)
+	if !(free >= 0 && free < 1) { // unvalidated (test) config: no free share
+		free = 0
+	}
 	b := (float64(loadGrams)/float64(capacityGrams) - free) / (1 - free)
 	return max(0, min(1, b))
 }
