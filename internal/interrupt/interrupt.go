@@ -14,18 +14,14 @@
 // A shield bash is a counter strike only (owner, 2026-09-30): it breaks
 // neither a chant nor a wind-up.
 //
-// A shield counter is a reaction: when an attack on a shield-bearer misses
-// (a dodge included), the bearer may slam its shield back into the
-// attacker, and the bash may stun.
+// A shield counter is a reaction: when a shield blocks a melee strike
+// (Phase 30g2; before it, a miss), the bearer may slam its shield back
+// into the attacker, by a chance from the two Strengths, and the bash may
+// stun.
 package interrupt
 
-// The counter's odds, as package values so tests can make them certain.
-var (
-	// BashChance is the percent of fumbled blows a bearer counters.
-	BashChance = 50
-	// StunChance is the percent of bashes that stun.
-	StunChance = 25
-)
+// StunChance is the percent of bashes that stun.
+var StunChance = 25
 
 // BashDamage is the bash's damage die: 1 to BashDamage.
 const BashDamage = 4
@@ -90,9 +86,9 @@ func Refund(cost int) int {
 	return cost / 2
 }
 
-// Counter is what decides whether a blow's target can counter it.
+// Counter is what decides whether the bearer of a shield that blocked a
+// strike can counter it.
 type Counter struct {
-	Missed    bool // the blow missed or was dodged
 	Melee     bool // not a bow or sling
 	SameRoom  bool // the attacker stands in the bearer's room
 	Shield    bool // the bearer holds a shield it can raise
@@ -101,9 +97,7 @@ type Counter struct {
 	Countered bool // the bearer has countered this combat round already
 }
 
-// CanCounter reports whether the bearer may counter the blow.
-// Phase 30g2: Missed field is deprecated (was used before Phase 30g2 for "blow that missed").
-// Now bashes trigger on blocked melee strikes, not misses.
+// CanCounter reports whether the bearer may counter the blocked blow.
 func CanCounter(c Counter) bool {
 	return c.Melee && c.SameRoom && c.Shield && c.Able && !c.Chanting && !c.Countered
 }
@@ -114,10 +108,9 @@ type Bash struct {
 	Stun   bool
 }
 
-// RollCounter rolls a counter: whether the bearer bashes, its damage, and
-// whether it stuns. roll(n) returns 0..n-1 (util.Rand).
-// Phase 30g2: bashChance is now passed in (calculated from Strength delta),
-// instead of using the hardcoded BashChance.
+// RollCounter rolls a counter at bashChance percent: whether the bearer
+// bashes, its damage, and whether it stuns. roll(n) returns 0..n-1
+// (util.Rand).
 func RollCounter(bashChance int, roll func(int) int) (Bash, bool) {
 	if roll(100) >= bashChance {
 		return Bash{}, false

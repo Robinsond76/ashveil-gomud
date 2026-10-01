@@ -83,12 +83,11 @@ func TestRefund(t *testing.T) {
 }
 
 func TestCanCounter(t *testing.T) {
-	// Phase 30g2: bash triggers on blocked strikes, not misses.
-	// CanCounter checks basic conditions (melee, same room, shield, able).
-	// The blocked-strike condition is checked in afterBlow().
-	able := Counter{Missed: false, Melee: true, SameRoom: true, Shield: true, Able: true}
+	// Phase 30g2: only a blocked strike reaches CanCounter (afterBlow
+	// checks the block); these are the rest of the conditions.
+	able := Counter{Melee: true, SameRoom: true, Shield: true, Able: true}
 	if !CanCounter(able) {
-		t.Fatal("an able bearer of a shield can counter (blocked strike checked in afterBlow)")
+		t.Fatal("an able bearer of a shield can counter")
 	}
 	cases := []struct {
 		name string

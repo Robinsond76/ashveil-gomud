@@ -26,9 +26,9 @@ type ArmorRank struct {
 	// Defense is the raw DamageReduction value from the item spec.
 	Defense int
 
-	// AdjDefense is Defense adjusted for the slot's inherent multiplier.
-	// Offhand items with DamageReduction > 0 (shields) receive a ×1.5
-	// multiplier inside Character.GetDefense(), so we reflect that here.
+	// AdjDefense is Defense as Character.GetDefense() counts it. Since
+	// Phase 30g2 no slot has a multiplier (a shield blocks instead), so it
+	// equals Defense; it stays for the rankings' API.
 	AdjDefense float64
 
 	// StatBonus is the sum of all raw stat mod values on the item (signed).
@@ -165,12 +165,7 @@ func RankArmor() (byDefense, byAdjDefense, byScore []ArmorRank) {
 
 		defense := spec.DamageReduction
 
-		// Shields (offhand items with DamageReduction > 0) receive ×1.5 inside
-		// Character.GetDefense(). Reflect that opportunity in the adjusted score.
 		adjDefense := float64(defense)
-		if spec.Type == items.Offhand && defense > 0 {
-			adjDefense *= 1.5
-		}
 
 		// defenseEHP: expected HP-equivalent from damage reduction.
 		// applyDefenseReduction draws uniform [0, DamageReduction), so the
@@ -255,7 +250,7 @@ func FormatArmorRankings() string {
 	writeTable("Ranked by Defense (DamageReduction)", byDefense, "Defense", func(r ArmorRank) string {
 		return fmt.Sprintf("%d", r.Defense)
 	})
-	writeTable("Ranked by Adjusted Defense (shield ×1.5)", byAdjDefense, "AdjDefense", func(r ArmorRank) string {
+	writeTable("Ranked by Adjusted Defense", byAdjDefense, "AdjDefense", func(r ArmorRank) string {
 		return fmt.Sprintf("%.1f", r.AdjDefense)
 	})
 	writeTable("Ranked by Score (eHP-equivalent)", byScore, "Score", func(r ArmorRank) string {

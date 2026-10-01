@@ -33,6 +33,8 @@ func forceBlows(t *testing.T, hit bool) {
 	}
 	gameplay.Combat.ToHitMin, gameplay.Combat.ToHitMax = configs.ConfigInt(chance), configs.ConfigInt(chance)
 	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
+	gameplay.Combat.ParryChanceMin, gameplay.Combat.ParryChanceMax = 0, 0
+	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 0, 0
 	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 }

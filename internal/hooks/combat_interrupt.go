@@ -25,9 +25,10 @@ import (
 //     its damage). A player or a company companion loses the spell with
 //     half its mana back; any other mob (an enemy) starts the chant again
 //     from the first word at its next turn. A chant that holds is told;
-//   - a blow that missed a shield-bearer may be countered: the bearer
-//     slams its shield back into the attacker, and the bash may stun. A
-//     bash is a counter strike only: it breaks no chant or wind-up.
+//   - a melee blow a shield blocked may be countered (Phase 30g2; before
+//     it, a miss): the bearer slams its shield back into the attacker, by
+//     a chance from the two Strengths, and the bash may stun. A bash is a
+//     counter strike only: it breaks no chant or wind-up.
 //
 // Phase 30d2's wind-ups (combat_windup.go) are handled from afterBlow too.
 //
@@ -114,8 +115,7 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 			holdChant(attacker, defender)
 		}
 	}
-	// Phase 30g2: shield bash on blocked melee strike, not on miss
-	if r.Defense == combat.DefenseBlocked {
+	if r.Blocked() {
 		counterBlow(attacker, defender)
 	}
 }
@@ -258,16 +258,12 @@ func spellTargetStands(info characters.SpellAggroInfo, roomId int) bool {
 	return false
 }
 
-// counterBlow lets the target of a missed blow counter it with its
-// shield.
+// counterBlow lets the bearer of a shield that blocked a blow counter it.
 func counterBlow(attacker, bearer statusHolder) {
 	if bearer.char.Health < 1 || attacker.char.Health < 1 {
 		return
 	}
-	// Phase 30g2: shield bash triggers on blocked strikes, not misses.
-	// Check if it's a blocked melee strike (Melee flag set via weaponType).
 	c := interrupt.Counter{
-		Missed:    false, // Phase 30g2: bash on block, not miss
 		Melee:     weaponType(attacker.char) != string(items.Shooting),
 		SameRoom:  attacker.char.RoomId == bearer.char.RoomId,
 		Shield:    bearer.char.HasShield(),
@@ -278,7 +274,6 @@ func counterBlow(attacker, bearer statusHolder) {
 	if !interrupt.CanCounter(c) {
 		return
 	}
-	// Phase 30g2: bash chance based on Strength delta
 	bashChance := combat.BashChance(bearer.char.Stats.Strength.ValueAdj, attacker.char.Stats.Strength.ValueAdj)
 	bash, ok := interrupt.RollCounter(bashChance, counterRoll)
 	if !ok {
@@ -337,14 +332,14 @@ func counterBlow(attacker, bearer statusHolder) {
 func counterLines(bearer, attacker statusHolder, suffix string) {
 	room := rooms.LoadRoom(bearer.char.RoomId)
 	his := bearer.char.CombatPronouns().Possessive
-	roomLine := util.CapitalizeFirst(fmt.Sprintf(`%s turns the blow and drives %s shield into %s.`, bearer.tag(), his, attacker.tag())) + suffix
+	roomLine := util.CapitalizeFirst(fmt.Sprintf(`%s drives %s shield back into %s.`, bearer.tag(), his, attacker.tag())) + suffix
 	var exclude []int
 	if bearer.user != nil {
-		bearer.user.SendText(fmt.Sprintf(`You turn the blow and drive your shield into %s.`, attacker.tag()) + suffix)
+		bearer.user.SendText(fmt.Sprintf(`You drive your shield back into %s.`, attacker.tag()) + suffix)
 		exclude = append(exclude, bearer.user.UserId)
 	}
 	if attacker.user != nil {
-		attacker.user.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s turns your blow and drives %s shield into you.`, bearer.tag(), his)) + suffix)
+		attacker.user.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s drives %s shield back into you.`, bearer.tag(), his)) + suffix)
 		exclude = append(exclude, attacker.user.UserId)
 	}
 	if room != nil {

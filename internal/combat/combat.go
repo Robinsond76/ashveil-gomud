@@ -171,48 +171,74 @@ func applyWounds(target *characters.Character, r AttackResult) {
 	}
 }
 
-// AttemptActiveDefense tries to defend against a hit using block, parry, or dodge
-// (Phase 30g2). Returns the Defense outcome (DefenseDodged, DefenseParried,
-// DefenseBlocked, or DefenseNone) and whether the defense succeeded.
-func AttemptActiveDefense(defender, attacker characters.Character, isMeleeStrike bool) (string, bool) {
-	// Phase 30g2: stunned targets (no-dodge flag) cannot defend
-	if defender.HasBuffFlag("no-dodge") {
-		return DefenseNone, false
+// activeDefense rolls the one active defense a strike that hit meets
+// (Phase 30g2) and returns what stopped it, DefenseNone if nothing did. A
+// stunned defender has none; a shield-bearer only blocks, any strike; a
+// melee strike on a defender whose weapon can parry meets the higher of
+// parry and dodge, rolled once; everything else meets a dodge.
+func activeDefense(defender, attacker characters.Character, melee bool) string {
+	if defender.HasBuffFlag(status.FlagNoDodge) {
+		return DefenseNone
 	}
-
 	if defender.HasShield() {
-		// Shield-bearer: block only
-		if Blocks(defender.GetShieldArmor(), defender.Stats.Strength.ValueAdj, attacker.Stats.Strength.ValueAdj) {
-			return DefenseBlocked, true
+		if rollDefense(`Blocks`, blockChance(defender.Equipment.Offhand.GetDefense(), defender.Stats.Strength.ValueAdj, attacker.Stats.Strength.ValueAdj)) {
+			return DefenseBlocked
 		}
-		return DefenseNone, false
+		return DefenseNone
 	}
-
-	if isMeleeStrike && defender.CanParry() {
-		// Melee weapon user: try parry or dodge (whichever is higher)
-		weapon := defender.Equipment.Weapon
-		parryChance := parryChance(defender.Stats.Speed.ValueAdj, attacker.Stats.Speed.ValueAdj, weapon.GetSpec().Subtype)
-		dodgeChance := dodgeChance(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj)
-
-		if parryChance >= dodgeChance {
-			// Parry is better or equal
-			if Parries(defender.Stats.Speed.ValueAdj, attacker.Stats.Speed.ValueAdj, weapon.GetSpec().Subtype) {
-				return DefenseParried, true
+	dodge := dodgeChance(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj)
+	if mod, ok := parryModifier(defender.Equipment.Weapon); melee && ok {
+		if parry := parryChance(defender.Stats.Speed.ValueAdj, attacker.Stats.Speed.ValueAdj, mod); parry >= dodge {
+			if rollDefense(`Parries`, parry) {
+				return DefenseParried
 			}
-		} else {
-			// Dodge is better
-			if Dodges(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj) {
-				return DefenseDodged, true
-			}
+			return DefenseNone
 		}
-		return DefenseNone, false
 	}
+	if rollDefense(`Dodges`, dodge) {
+		return DefenseDodged
+	}
+	return DefenseNone
+}
 
-	// Ranged, unarmed, or no weapon: dodge only
-	if Dodges(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj) {
-		return DefenseDodged, true
+// defenseLines are a defended strike's lines (Phase 30g2) in the 29c
+// voice, as buildCombatMessages templates: to the attacker, the defender,
+// and those watching. A parry names the defender's weapon.
+func defenseLines(defense, defenderWeapon string) (toAttacker, toDefender, toRoom items.ItemMessage) {
+	src := `<ansi fg="{sourcetype}">{source}</ansi>`
+	tgt := `<ansi fg="{targettype}">{target}</ansi>`
+	switch defense {
+	case DefenseBlocked:
+		return items.ItemMessage(tgt + ` catches your blow on {targethis} shield.`),
+			items.ItemMessage(`You catch ` + src + `'s blow on your shield.`),
+			items.ItemMessage(tgt + ` catches ` + src + `'s blow on {targethis} shield.`)
+	case DefenseParried:
+		weapon := `<ansi fg="item">` + defenderWeapon + `</ansi>`
+		return items.ItemMessage(tgt + ` turns your blow aside with {targethis} ` + weapon + `.`),
+			items.ItemMessage(`You turn ` + src + `'s blow aside with your ` + weapon + `.`),
+			items.ItemMessage(tgt + ` turns ` + src + `'s blow aside with {targethis} ` + weapon + `.`)
 	}
-	return DefenseNone, false
+	return items.ItemMessage(tgt + ` twists aside from your blow.`),
+		items.ItemMessage(`You twist aside from ` + src + `'s blow.`),
+		items.ItemMessage(tgt + ` twists aside from ` + src + `'s blow.`)
+}
+
+// sendDefenseLines sends a defended strike's lines (Phase 30g2).
+func sendDefenseLines(r *AttackResult, defense string, source, target *characters.Character, sourceType, targetType SourceTarget) {
+	toAttacker, toDefender, toRoom := defenseLines(defense, target.Equipment.Weapon.DisplayName())
+	one := func(m items.ItemMessage) items.MessageOptions { return items.MessageOptions{m} }
+	// A fixed seed: picking the only line must not spend a die.
+	a, d, ar, dr := buildCombatMessages(source, target, sourceType, targetType, ``, `0`, 1,
+		one(toAttacker), one(toDefender), one(toRoom), nil,
+		one(toAttacker), one(toDefender), nil, one(toRoom))
+	r.SendToSource(string(a))
+	r.SendToTarget(string(d))
+	if ar != `` {
+		r.SendToSourceRoom(string(ar))
+	}
+	if dr != `` {
+		r.SendToTargetRoom(string(dr))
+	}
 }
 
 // mobCombatCharacter makes a narration-only copy for the combat calculation.
@@ -527,37 +553,12 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				isCrit := false
 
 				hit, byChemistry := hitRoll(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, penalty, chemistryBonus)
-				isMeleeStrike := weaponSubType != items.Shooting
 				if hit {
-					// Phase 30g2: Check active defense (block, parry, or dodge)
-					defenseType, defended := AttemptActiveDefense(targetChar, sourceChar, isMeleeStrike)
-					if defended {
-						attackResult.Defense = defenseType
-						attacker := targetChar.Name
-						if targetType == Mob {
-							attacker = util.CapitalizeFirst(util.Article(attacker))
-						}
-						switch defenseType {
-						case DefenseDodged:
-							attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s twists aside from your blow.</ansi>`, attacker))
-							attackResult.SendToTarget(`<ansi fg="cyan">You twist aside from the blow.</ansi>`)
-						case DefenseParried:
-							parrier := targetChar.Name
-							if targetType == Mob {
-								parrier = util.CapitalizeFirst(util.Article(parrier))
-							}
-							his := targetChar.CombatPronouns().Possessive
-							attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s turns the blow aside with %s weapon.</ansi>`, parrier, his))
-							attackResult.SendToTarget(`<ansi fg="cyan">You turn the blow aside with your weapon.</ansi>`)
-						case DefenseBlocked:
-							blocker := targetChar.Name
-							if targetType == Mob {
-								blocker = util.CapitalizeFirst(util.Article(blocker))
-							}
-							his := targetChar.CombatPronouns().Possessive
-							attackResult.SendToSource(fmt.Sprintf(`<ansi fg="cyan">%s catches the blow on %s shield.</ansi>`, blocker, his))
-							attackResult.SendToTarget(`<ansi fg="cyan">You catch the blow on your shield.</ansi>`)
-						}
+					// Phase 30g2: one active defense, before armor; a
+					// defended strike does nothing and can't crit.
+					if defense := activeDefense(targetChar, sourceChar, weaponSubType != items.Shooting); defense != DefenseNone {
+						attackResult.Defenses = append(attackResult.Defenses, defense)
+						sendDefenseLines(&attackResult, defense, &sourceChar, &targetChar, sourceType, targetType)
 						continue
 					}
 					// Phase 24: say so, once a round, when only company

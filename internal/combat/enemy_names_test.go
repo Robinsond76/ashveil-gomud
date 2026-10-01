@@ -19,6 +19,8 @@ func TestAttackEntryPointsUseEnemyLabels(t *testing.T) {
 	// room narration path deterministically without changing gameplay defaults.
 	gameplay := configs.GetGamePlayConfig()
 	gameplay.Combat.DodgeChanceMin, gameplay.Combat.DodgeChanceMax = 0, 0
+	gameplay.Combat.ParryChanceMin, gameplay.Combat.ParryChanceMax = 0, 0
+	gameplay.Combat.BlockChanceMin, gameplay.Combat.BlockChanceMax = 0, 0
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	battle.Reset()
 	t.Cleanup(battle.Reset)

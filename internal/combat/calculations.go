@@ -292,89 +292,60 @@ func dodgeChance(defPerc, atkPerc int) int {
 	return actual
 }
 
-// Dodges returns true when the defender successfully dodges an attack.
-func Dodges(defPerc, atkPerc int) bool {
-	chance := dodgeChance(defPerc, atkPerc)
-	roll := util.Rand(100)
-	util.LogRoll(`Dodges`, roll, chance)
-	return roll < chance
-}
-
-// blockChance returns the probability in [BlockChanceMin, BlockChanceMax] that
-// the shield-bearer blocks an incoming hit, based on the defender's Strength
-// advantage over the attacker and the shield's armor value.
+// blockChance returns the percent chance in [BlockChanceMin, BlockChanceMax]
+// that a shield-bearer blocks a strike (Phase 30g2): the minimum, plus the
+// shield's own armor, moved up or down by the defender's share of the two
+// Strengths. Even Strength with a 5-armor shield blocks 20%.
 func blockChance(shieldArmor, defStr, atkStr int) int {
 	cfg := configs.GetCombatConfig()
 	minBlock := int(cfg.BlockChanceMin)
 	maxBlock := int(cfg.BlockChanceMax)
-	// Use proportional stat advantage (equal stats = 0.5) as the base.
-	// Armor value (1-10) adds a small bonus to the chance.
-	statAdvantage := statDeltaProportional(defStr, atkStr)
-	armorBoost := float64(shieldArmor) / 40.0 // Normalize armor (1-10) to 0-0.25 range
-	combined := statAdvantage + (armorBoost * 0.25)
-	if combined > 1.0 {
-		combined = 1.0
-	}
-	actual := int(math.Floor(combined * float64(maxBlock)))
-	if actual < minBlock {
-		actual = minBlock
-	}
-	if actual > maxBlock {
-		actual = maxBlock
-	}
-	return actual
+	strength := (statDeltaProportional(defStr, atkStr) - 0.5) * float64(maxBlock-minBlock)
+	return max(minBlock, min(maxBlock, minBlock+shieldArmor+int(math.Round(strength))))
 }
 
-// Blocks returns true when the defender successfully blocks an attack with a shield.
-func Blocks(shieldArmor, defStr, atkStr int) bool {
-	chance := blockChance(shieldArmor, defStr, atkStr)
-	roll := util.Rand(100)
-	util.LogRoll(`Blocks`, roll, chance)
-	return roll < chance
+// parryModifier is a weapon's parry modifier in percent (Phase 30g2,
+// decision 16): swords +5, polearms (reach) +5, daggers −5, axes, maces
+// and whips 0, plus the item's own `parry` (a staff's +5). ok is false
+// for what can't parry: no weapon, claws, or a ranged weapon.
+func parryModifier(weapon items.Item) (mod int, ok bool) {
+	if weapon.ItemId == 0 {
+		return 0, false
+	}
+	spec := weapon.GetSpec()
+	if spec.Type != items.Weapon {
+		return 0, false
+	}
+	switch spec.Subtype {
+	case items.Claws, items.Shooting:
+		return 0, false
+	case items.Slashing:
+		mod = 5
+	case items.Stabbing:
+		mod = -5
+	}
+	if spec.Reach {
+		mod = 5
+	}
+	return mod + spec.Parry, true
 }
 
-// parryChance returns the probability in [ParryChanceMin, ParryChanceMax] that
-// the defender parries an incoming melee hit, based on the defender's Speed
-// advantage over the attacker, adjusted for weapon type.
-func parryChance(defSpeed, atkSpeed int, weaponSubtype items.ItemSubType) int {
+// parryChance returns the percent chance that a melee strike is parried:
+// the Speed delta in [ParryChanceMin, ParryChanceMax], then the weapon's
+// modifier, which moves the whole range (a sword parries 10–35%, a dagger
+// 0–25%).
+func parryChance(defSpeed, atkSpeed, weaponMod int) int {
 	cfg := configs.GetCombatConfig()
 	minParry := int(cfg.ParryChanceMin)
 	maxParry := int(cfg.ParryChanceMax)
-	actual := int(math.Floor(statDelta(defSpeed, atkSpeed) * float64(maxParry)))
-	if actual < minParry {
-		actual = minParry
-	}
-	// Apply weapon-specific modifiers
-	actual = applyParryWeaponModifier(actual, weaponSubtype)
-	// Re-clamp after modifier in case it pushed below minimum
-	if actual < minParry {
-		actual = minParry
-	}
-	if actual > maxParry {
-		actual = maxParry
-	}
-	return actual
+	base := max(minParry, min(maxParry, int(math.Floor(statDelta(defSpeed, atkSpeed)*float64(maxParry)))))
+	return max(0, min(100, base+weaponMod))
 }
 
-// applyParryWeaponModifier applies the per-subtype modifier for parry (Phase 30g2).
-// Slashing/Stabbing/Whipping +5%, Bludgeoning +0%, Generic (staggers) -5%.
-func applyParryWeaponModifier(baseChance int, weaponSubtype items.ItemSubType) int {
-	modifier := 0
-	switch weaponSubtype {
-	case items.Slashing, items.Stabbing, items.Whipping:
-		modifier = 5
-	case items.Generic:
-		modifier = -5
-		// Bludgeoning, Cleaving, Shooting, Claws, and everything else: 0
-	}
-	return baseChance + modifier
-}
-
-// Parries returns true when the defender successfully parries an incoming melee attack.
-func Parries(defSpeed, atkSpeed int, weaponSubtype items.ItemSubType) bool {
-	chance := parryChance(defSpeed, atkSpeed, weaponSubtype)
+// rollDefense rolls a defense's chance, logging it under name.
+func rollDefense(name string, chance int) bool {
 	roll := util.Rand(100)
-	util.LogRoll(`Parries`, roll, chance)
+	util.LogRoll(name, roll, chance)
 	return roll < chance
 }
 

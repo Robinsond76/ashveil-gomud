@@ -6,6 +6,7 @@ description: A long staff of seasoned ash, shod in iron at both ends. Scholars l
 type: weapon
 hands: 2
 subtype: bludgeoning
+parry: 5
 damage:
   diceroll: 1d6
 weight: 1800
