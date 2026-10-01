@@ -133,3 +133,9 @@ In the web client, the Company tab shows the same: its Status, Inventory,
 and Camp (<ansi fg="command">help webclient</ansi>).
 
 See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help chemistry</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help resurrect</ansi>.
+<ansi fg="yellow-bold">Member orders</ansi>
+
+Members fight automatically. Safe <ansi fg="command">ask [member]</ansi> orders
+manage gear and provisions outside battles; conversation and observation
+remain available in battle. Old queued orders recheck ownership and presence.
+See <ansi fg="command">help ask</ansi> for the compatibility commands.

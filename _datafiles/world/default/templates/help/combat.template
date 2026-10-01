@@ -148,3 +148,10 @@ the second cutthroat. A survivor keeps its label when another falls; see
 <ansi fg="command">help narration</ansi> for pronouns and names.
 
 Some enemies surrender or flee when their group breaks (help morale). After victory, answer each surrendered foe’s mercy question (help mercy).
+
+<ansi fg="yellow-bold">Member orders</ansi>
+
+Members fight automatically. Safe <ansi fg="command">ask [member]</ansi> orders
+manage gear and provisions outside battles; conversation and observation
+remain available in battle. Old queued orders recheck ownership and presence.
+See <ansi fg="command">help ask</ansi> for the compatibility commands.

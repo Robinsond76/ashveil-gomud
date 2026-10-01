@@ -24,4 +24,5 @@ Your chances of tame success are calculated from the following factors:
   2. The size of your target (the bigger the more difficult)
   3. The number of successes you have for this mob type - increases each 10
   4. The targets health % - the lower their HP the easier it is.
-  5. Whether the target is aggro'ed towards you. A 50% penalty if so.
+
+Taming cannot replace an action during an automatic battle. Allied, surrendered and fighting creatures are unavailable, including enemies participating in another player's battle. Taming checks eligibility again when the dance finishes. Temporary followers obey the member-order rules in ~help ask~.

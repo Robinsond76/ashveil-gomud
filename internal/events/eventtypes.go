@@ -72,6 +72,7 @@ func (r RoomAction) Type() string { return `RoomAction` }
 
 // Used for Input from players/mobs
 type Input struct {
+	MemberOrder   *MemberOrder
 	UserId        int
 	MobInstanceId int
 	InputText     string

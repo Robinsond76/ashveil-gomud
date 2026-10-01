@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -341,13 +342,7 @@ const BattleOnlyFlee = BattleUnderWay + ` Only <ansi fg="command">flee</ansi> ta
 // and 32d): they have one, or are aimed at a mob (a battle about to
 // begin). Once one has started, nothing typed changes it; only flee takes
 // them out.
-func InBattle(user *users.UserRecord) bool {
-	if user == nil {
-		return false
-	}
-	_, inBattle := battle.Current(user.UserId)
-	return inBattle || fightingMob(user)
-}
+func InBattle(user *users.UserRecord) bool { return actionpolicy.InBattle(user) }
 
 // fightingMob reports whether the player is already aimed at a mob, a
 // battle about to begin.

@@ -1,0 +1,90 @@
+// Package actionpolicy holds the shared player/follower command restrictions.
+// It reads authoritative runtime state on the game loop and owns no saves.
+package actionpolicy
+
+import (
+	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/users"
+)
+
+const BattleUnderWay = "The battle is under way: it plays out as you set it up."
+
+func InBattle(u *users.UserRecord) bool {
+	if u == nil || u.Character == nil {
+		return false
+	}
+	if _, ok := battle.Current(u.UserId); ok {
+		return true
+	}
+	a := u.Character.Aggro
+	if a != nil && a.MobInstanceId > 0 && a.ExitName == "" {
+		return true
+	}
+
+	return false
+}
+
+func Management(command string) bool {
+	switch command {
+	case "equip", "remove", "gearup", "eat", "drink", "use", "give", "get", "drop", "put", "alchemy":
+		return true
+	}
+	return false
+}
+
+func Hostile(command string) bool {
+	switch command {
+	case "attack", "backstab", "shoot", "throw", "cast", "tackle", "disarm":
+		return true
+	}
+	return false
+}
+
+// Member validates an order both before queueing and when it executes. A
+// temporary follower can be managed, but charm alone cannot authorize a
+// tracked companion belonging to another company. All requested hostility
+// is refused; automatic battle upkeep remains the only combat controller.
+func Member(order events.MemberOrder, m *mobs.Mob, command string) string {
+	u := users.GetByUserId(order.UserID)
+	if u == nil || u.Character == nil || u.Character.Health < 1 || m == nil || m.Character.Health < 1 || m.Character.CombatWithdrawn {
+		return "That member is no longer available for orders."
+	}
+	if u.Character.RoomId != order.RoomID || m.Character.RoomId != order.RoomID {
+		return "You and the member must still be in the same room."
+	}
+	leader, key, member := company.LeaderAndKeyForInstance(m.InstanceId)
+	if !m.Character.IsCharmed(order.UserID) || m.Character.Charmed.RoundsRemaining == 0 || order.CharmToken != m.Character.Charmed || (member && leader != order.UserID) || string(key) != order.MemberKey {
+		return "You no longer command that member."
+	}
+	if Hostile(command) {
+		return "Members fight automatically. Use attack [group] to begin a battle."
+	}
+	if Management(command) && (InBattle(u) || m.Character.Aggro != nil) {
+		return BattleUnderWay
+	}
+	switch command {
+	case "say", "look", "emote", "give", "get", "drop", "equip", "remove", "eat", "drink":
+		return ""
+	}
+	return "That member order is not available. Use company to manage your band."
+}
+
+// TameTarget keeps taming outside other players' battles and off followers,
+// corpses, surrendered enemies, and combatants waiting for a battle turn.
+func TameTarget(m *mobs.Mob) bool {
+	if m == nil || m.Character.Health < 1 || m.Character.CombatWithdrawn || m.Character.IsCharmed() || m.Character.Aggro != nil {
+		return false
+	}
+	if _, _, member := company.LeaderAndKeyForInstance(m.InstanceId); member {
+		return false
+	}
+	for _, uid := range battle.Players() {
+		if b, ok := battle.Current(uid); ok && b.Has(m.InstanceId) {
+			return false
+		}
+	}
+	return true
+}

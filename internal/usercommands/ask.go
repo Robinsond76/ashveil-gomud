@@ -2,9 +2,10 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"strings"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -16,10 +17,10 @@ import (
 )
 
 func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
+	defer events.WithRequester(user.UserId)()
 
 	// Core "useful" commands
 	usefulCommands := []string{
-		`attack`,
 		`give`,
 		`get`,
 		`drop`,
@@ -32,7 +33,6 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		`say`,
 		`look`,
 		`emote`,
-		`throw`,
 		`eat`,
 		`drink`,
 	}
@@ -97,30 +97,24 @@ func Ask(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 		if mob.Character.IsCharmed(user.UserId) {
 
-			mobCmd := args[0]
+			mobCmd := strings.ToLower(args[0])
 			askRest := strings.Join(args[1:], ` `)
 
 			// If an alias was entered, conovert it
 			mobCmd = keywords.TryCommandAlias(mobCmd)
 
-			if mobCmd == `attack` {
-				if pid, _ := room.FindByName(askRest); pid > 0 {
-
-					if configs.GetPVPConfig().Enabled != `enabled` {
-
-						mob.Command(`emote shakes their head.`)
-						mob.Command(`say PVP is currently disabled.`)
-
-						return true, nil
-					}
-				}
+			_, key, _ := company.LeaderAndKeyForInstance(mobId)
+			order := events.MemberOrder{UserID: user.UserId, RoomID: room.RoomId, MemberKey: string(key), CharmToken: mob.Character.Charmed}
+			if reason := actionpolicy.Member(order, mob, mobCmd); reason != "" {
+				user.SendText(reason)
+				return true, nil
 			}
 
 			// Check if actual command is allowed
 			for _, allowedCmd := range allowedCommands {
 				if mobCmd == allowedCmd {
 
-					mob.Command(fmt.Sprintf(`%s %s`, mobCmd, askRest))
+					mob.CommandRequested(user.UserId, fmt.Sprintf(`%s %s`, mobCmd, askRest))
 
 					return true, nil
 				}
