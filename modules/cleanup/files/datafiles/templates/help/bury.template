@@ -2,6 +2,10 @@
 
 The <ansi fg="command">bury</ansi> command cleans up corpses from the room.
 
+A corpse still holding battle loot claimed by another player can't be
+buried until that player empties it or it crumbles to dust on its own
+(see <ansi fg="command">help party</ansi>).
+
 <ansi fg="yellow">Usage: </ansi>
 
   <ansi fg="command">bury rat corpse</ansi>

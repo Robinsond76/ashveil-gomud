@@ -376,6 +376,12 @@ func TestBystanderCannotHelpAnotherPlayersBattle(t *testing.T) {
 	b := newBrawl(t)
 	other := b.bystander()
 	bandits := b.livingBandits()
+	// Bandits must survive the opening round: the enemy patient below is
+	// named by instance (an intermittent failure before the 33d review).
+	for _, m := range bandits {
+		m.Character.HealthMax.Value = 1000
+		m.Character.Health = 1000
+	}
 	oswin := b.companion(2)
 	b.toughen()
 	b.aimAt(bandits[0].Character.Name)

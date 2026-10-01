@@ -232,8 +232,8 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	claimCorpse := len(contributors) > 1 && !permaGear
 	claimOwner := 0
 	if claimCorpse {
-		claimOwner = contributors[mob.InstanceId%len(contributors)]
-		room.SendText(fmt.Sprintf("Battle loot from %s is claimed by player #%d.", mob.Character.Name, claimOwner))
+		claimOwner = lootClaimant(mob, contributors)
+		room.SendText(fmt.Sprintf(`Battle loot from %s is claimed by <ansi fg="username">%s</ansi>.`, mobNameTag(mob), users.CharacterName(claimOwner)))
 	}
 
 	if !permaGear {

@@ -460,8 +460,16 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 
 			user.SendText(buildCorpseDescriptionPanel(&corpse.Character))
 
-			if configs.GetGamePlayConfig().Death.CorpseItems || corpse.ClaimUserId > 0 {
-				user.SendText(buildCorpseInventoryPanel(&corpse))
+			corpseItems := bool(configs.GetGamePlayConfig().Death.CorpseItems)
+			if corpseItems || corpse.ClaimUserId > 0 {
+				user.SendText(buildCorpseInventoryPanel(&corpse, corpseItems))
+			}
+			if corpse.ClaimUserId > 0 && corpse.HasItems() {
+				if corpse.ClaimUserId == user.UserId {
+					user.SendText(`Its battle loot is claimed by you. Take it with <ansi fg="command">get all corpse</ansi> before the corpse decays.`)
+				} else {
+					user.SendText(fmt.Sprintf(`Its battle loot is claimed by <ansi fg="username">%s</ansi>.`, users.CharacterName(corpse.ClaimUserId)))
+				}
 			}
 
 			return true, nil

@@ -124,7 +124,7 @@ func TestPartyConsentHelp(t *testing.T) {
 	keywords.LoadAliases()
 	page, err := GetHelpContents("party")
 	require.NoError(t, err)
-	for _, want := range []string{"party follow on", "party support on", "default off", "Each owner", "copyover", "Minor Heal All"} {
+	for _, want := range []string{"party follow on", "party support on", "default off", "Each owner", "copyover", "Minor Heal All", "most damage", "bury", "online member"} {
 		assert.Contains(t, page, want)
 	}
 	for _, alias := range []string{"alliance", "allied-companies", "party-follow", "party-support"} {

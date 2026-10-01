@@ -154,6 +154,13 @@ func (c *CleanupModule) userBuryCommand(rest string, user *users.UserRecord, roo
 
 	if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
 
+		// Claimed battle loot is the claimant's until the corpse decays
+		// (Phase 33d review): nobody else may bury it away.
+		if corpse.ClaimUserId != 0 && corpse.ClaimUserId != user.UserId && corpse.HasItems() {
+			user.SendText(`That corpse still holds battle loot claimed by another company.`)
+			return true, nil
+		}
+
 		if room.RemoveCorpse(corpse) {
 
 			corpseColor := `mob-corpse`
@@ -184,6 +191,10 @@ func (c *CleanupModule) mobBuryCommand(rest string, mob *mobs.Mob, room *rooms.R
 	}
 
 	if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
+
+		if corpse.ClaimUserId != 0 && corpse.HasItems() {
+			return true, nil // a player's claimed battle loot
+		}
 
 		if room.RemoveCorpse(corpse) {
 

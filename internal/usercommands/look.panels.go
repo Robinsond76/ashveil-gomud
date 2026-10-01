@@ -107,8 +107,9 @@ func buildInventoryLookPanel(equipment *characters.Worn, itemNames []string) str
 	return layout.Render() + term.CRLFStr + ` Carrying: ` + sb.String() + term.CRLFStr
 }
 
-// buildCorpseInventoryPanel renders the lootable contents of a corpse when CorpseItems is enabled.
-func buildCorpseInventoryPanel(c *rooms.Corpse) string {
+// buildCorpseInventoryPanel renders the lootable contents of a corpse: its
+// held loot, and its worn gear only when that is loot too (CorpseItems).
+func buildCorpseInventoryPanel(c *rooms.Corpse, wornLoot bool) string {
 	layout, err := templates.LoadPanelLayout("character/equipment-look")
 	if err != nil {
 		layout = templates.NewPanelLayout("open", "single", 1, 1)
@@ -123,6 +124,9 @@ func buildCorpseInventoryPanel(c *rooms.Corpse) string {
 	hasContent := false
 
 	for _, slot := range characters.AllSlots() {
+		if !wornLoot {
+			break
+		}
 		itm := c.Character.Equipment.Get(slot)
 		if itm == nil || itm.ItemId == 0 {
 			continue

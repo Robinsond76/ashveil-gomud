@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -74,7 +75,11 @@ func MobRoundTick(e events.Event) events.ListenerReturn {
 		mob.Character.Validate()
 
 		if mob.Character.Health <= 0 {
-			// Mob died
+			// Mob died. Freeze its reward contributors now: this round's
+			// battle pass may end the battle before the queued death runs.
+			if !mob.Character.HasBuffFlag("revive-on-death") {
+				mobcommands.CaptureRewardContributors(mob)
+			}
 			mob.Command(`suicide`)
 		}
 

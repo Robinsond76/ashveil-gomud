@@ -31,8 +31,9 @@ companies fighting a common living enemy; unrelated battles block support.
 
 Accepted membership and leadership survive logout, restart and copyover.
 Invitations and all three consents reset on recovery; logout clears your consent.
-An online accepted member succeeds a departing leader. Each company saves its
-own roster and assets. A failed alliance save cancels the membership change.
+A departing leader is succeeded by an online member when there is one.
+Each company saves its own roster and assets. A failed alliance save
+cancels the membership change.
 
 Each enemy pays one XP pool, split equally among living, connected company
 owners beside it who dealt positive damage and still fight that enemy. An
@@ -41,10 +42,14 @@ Withdrawn, distant and fallen owners receive none. Living companions still
 attached in the room receive their owner's share. Integer leftovers go to
 ascending player IDs. Elite XP bonuses apply once before splitting.
 
-When several companies qualify, ordinary loot and gold go into one corpse.
-Its claimant is chosen from sorted qualifying player IDs using the enemy's
-instance number; only that player may take it, then give items to allies.
-The claim lasts until normal corpse decay. Repeating a kill cannot pay again.
+When several companies qualify, the enemy's carried loot and gold go into
+its corpse, claimed by one of them; only the claimant may take it (get all
+corpse), then give items to allies. If every qualifying owner is in one
+party, the claim rotates among them from enemy to enemy. If not, it goes to
+whoever dealt the enemy the most damage. Gear still worn by the body stays
+on it. Nobody else may bury a corpse holding claimed loot. The claim ends
+when the corpse crumbles (about 2 1/2 minutes); loot left in it is lost.
+A kill pays only once.
 Battle and corpse state are temporary and are not replayed after restart.
 Mercy retains one settlement owner and its existing durable recovery rules.
 

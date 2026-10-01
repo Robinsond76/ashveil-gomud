@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"math"
@@ -76,4 +77,38 @@ func CaptureRewardContributors(m *mobs.Mob) {
 	if m.RewardContributors == nil {
 		m.RewardContributors = append([]int{}, eligibleContributors(m, m.Character.RoomId, false)...)
 	}
+}
+
+// lootClaimant picks the one contributor who may take a shared kill's loot.
+// Contributors who are all accepted members of one alliance rotate the claim
+// by enemy instance. Otherwise someone fought without the others' consent,
+// so the claim goes to the most damage, ties to the lowest player id: a
+// stranger's single blow cannot win the whole kill (Phase 33d review).
+func lootClaimant(m *mobs.Mob, contributors []int) int {
+	if len(contributors) == 0 {
+		return 0
+	}
+	if oneAlliance(contributors) {
+		return contributors[m.InstanceId%len(contributors)]
+	}
+	best := contributors[0]
+	for _, uid := range contributors[1:] {
+		if m.Character.PlayerDamage[uid] > m.Character.PlayerDamage[best] {
+			best = uid
+		}
+	}
+	return best
+}
+
+func oneAlliance(ids []int) bool {
+	p := parties.Get(ids[0])
+	if p == nil {
+		return false
+	}
+	for _, uid := range ids {
+		if parties.Get(uid) != p || !p.IsMember(uid) {
+			return false
+		}
+	}
+	return true
 }

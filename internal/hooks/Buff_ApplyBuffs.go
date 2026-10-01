@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
@@ -80,7 +81,11 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 		scripting.TryBuffScriptEvent(`onTrigger`, evt.UserId, evt.MobInstanceId, evt.BuffId)
 
 		if evt.MobInstanceId > 0 && targetChar.Health <= 0 {
-			// Mob died
+			// Mob died: freeze its reward contributors before the queued
+			// death, as a combat round's battle pass may end the battle first.
+			if mob := mobs.GetInstance(evt.MobInstanceId); mob != nil && !mob.Character.HasBuffFlag("revive-on-death") {
+				mobcommands.CaptureRewardContributors(mob)
+			}
 			events.AddToQueue(events.Input{
 				MobInstanceId: evt.MobInstanceId,
 				InputText:     `suicide`,

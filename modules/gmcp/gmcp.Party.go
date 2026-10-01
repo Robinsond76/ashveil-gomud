@@ -1,7 +1,6 @@
 package gmcp
 
 import (
-	"fmt"
 	"math"
 	"slices"
 	"strconv"
@@ -215,10 +214,7 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 
 	for _, uId := range party.GetMembers() {
 		if users.GetByUserId(uId) == nil && all {
-			name := fmt.Sprintf("Player #%d", uId)
-			if saved, err := users.LoadUserFile(uId); err == nil && saved != nil {
-				name = saved.Character.Name
-			}
+			name := users.CharacterName(uId)
 			status := "Offline"
 			if party.IsLeader(uId) {
 				partyPayload.Leader = name
