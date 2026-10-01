@@ -161,13 +161,15 @@ func HaggledBuy(price, pct int) int {
 }
 
 // HaggledSell (Phase 33f2) is a selling price raised by pct percent,
-// rounded down, but never above ceiling (one below what buying the good
-// back would cost, so no buy-and-sell loop profits) and never below the
-// unhaggled sale. pct is clamped to 0..99.
+// rounded down, then held to ceiling: one below the cheapest price anyone
+// could pay to buy the good back (the best possible haggle), so no
+// buy-and-sell loop profits, with or without a haggler. The ceiling holds
+// even below the plain sale; a sale worth anything still pays at least 1.
+// pct is clamped to 0..99.
 func HaggledSell(sale, pct, ceiling int) int {
 	pct = min(max(pct, 0), 99)
-	if sale <= 0 || pct == 0 {
+	if sale <= 0 {
 		return sale
 	}
-	return max(min(sale*(100+pct)/100, ceiling), sale)
+	return max(min(sale*(100+pct)/100, ceiling), 1)
 }

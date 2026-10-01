@@ -465,8 +465,31 @@ func parseInterruption(raw any) (*expedition.InterruptionProfile, bool) {
 		return nil, false
 	}
 	interruption := &expedition.InterruptionProfile{
-		Kind:       expedition.InterruptionKind(configString(fields["kind"])),
-		Checkpoint: uint8(checkpoint),
+		Kind:        expedition.InterruptionKind(configString(fields["kind"])),
+		Checkpoint:  uint8(checkpoint),
+		CombatMobID: configInt(fields["combatmobid"]),
+	}
+	if interruption.CombatMobID == 0 {
+		interruption.CombatMobID = configInt(fields["combat_mob_id"])
+	}
+	// Phase 33f2 review: a weighted table (12b) and an ambush's mob were
+	// documented but never read from config.
+	if raw, ok := fields["kinds"]; ok {
+		list, ok := raw.([]any)
+		if !ok {
+			return nil, false
+		}
+		for _, entry := range list {
+			kf := stringMap(entry)
+			weight := configInt(kf["weight"])
+			if kf == nil || weight <= 0 {
+				return nil, false
+			}
+			interruption.Kinds = append(interruption.Kinds, expedition.WeightedInterruptionKind{
+				Kind:   expedition.InterruptionKind(configString(kf["kind"])),
+				Weight: uint(weight),
+			})
+		}
 	}
 	if err := interruption.Validate(); err != nil {
 		return nil, false

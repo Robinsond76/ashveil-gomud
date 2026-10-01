@@ -289,14 +289,14 @@ func TestBidForStockAvoidsOverflow(t *testing.T) {
 }
 
 // TestHaggledPrices (33f2): a haggled buy rounds up and never falls below
-// 1; a haggled sale rounds down, stops below what buying back costs, and
-// never drops below the unhaggled sale.
+// 1; a haggled sale rounds down and stops below the cheapest buy-back.
 func TestHaggledPrices(t *testing.T) {
 	assert.Equal(t, 25, HaggledBuy(27, 8))
 	assert.Equal(t, 27, HaggledBuy(27, 0))
 	assert.Equal(t, 1, HaggledBuy(1, 50))
 	assert.Equal(t, 21, HaggledSell(20, 8, 100))
 	assert.Equal(t, 20, HaggledSell(20, 8, 20), "the cap wins")
-	assert.Equal(t, 20, HaggledSell(20, 8, 5), "never below the plain sale")
+	assert.Equal(t, 5, HaggledSell(20, 8, 5), "the cap holds even below the plain sale")
 	assert.Equal(t, 20, HaggledSell(20, 0, 100))
+	assert.Equal(t, 1, HaggledSell(3, 0, 0), "a sale worth anything pays at least 1")
 }

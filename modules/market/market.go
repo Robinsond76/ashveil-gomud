@@ -622,9 +622,12 @@ func (m *MarketModule) marketRoomTitles(zone, tag string) []string {
 
 func (m *MarketModule) sendListing(user *users.UserRecord, room *rooms.Room, quotes []Quote, pricing standing.Standing, black bool) {
 	haggler, pct := m.haggler(user, room)
+	m.mu.Lock()
+	maxPct := m.maxHagglePctLocked()
+	m.mu.Unlock()
 	for i := range quotes {
 		quotes[i].Buy = haggledBuy(quotes[i].Buy, pricing, pct)
-		quotes[i].Sell = haggledSell(quotes[i].Sell, quotes[i].Next, quotes[i].NextOK, pricing, pct)
+		quotes[i].Sell = haggledSell(quotes[i].Sell, quotes[i].Next, quotes[i].NextOK, pricing, pct, maxPct)
 	}
 	names := make([]string, len(quotes))
 	width := len("Good")

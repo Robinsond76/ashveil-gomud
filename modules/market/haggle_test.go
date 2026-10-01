@@ -4,8 +4,10 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/standing"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // haggleProvider is an archetypes provider whose only specialist is a
@@ -77,4 +79,51 @@ func TestHaggledListingShowsTheBetterPrices(t *testing.T) {
 	out = w.run(t, "")
 	assert.Regexp(t, `wolf hide\s+27 gold`, out)
 	assert.NotContains(t, out, "haggles")
+}
+
+// TestNoHaggledRoundTripProfitsOnShippedGoods (33f2 review finding 1):
+// for every shipped good, stock level, standing, and haggle level on each
+// side (a haggler on one side only, or the switch flipped between), buying
+// one unit and selling it straight back never pays more than it cost.
+func TestNoHaggledRoundTripProfitsOnShippedGoods(t *testing.T) {
+	data, err := files.ReadFile("files/data-overlays/config.yaml")
+	require.NoError(t, err)
+	var cfg map[string]any
+	require.NoError(t, yaml.Unmarshal(data, &cfg))
+	markets := parseMarkets(cfg["Markets"], func(int) bool { return true }, func(string) bool { return true })
+	require.NotEmpty(t, markets)
+	spread := parseSpreadPct(cfg["SpreadPct"])
+	per := parseHagglePerLevel(cfg["HagglePctPerLevel"])
+	maxPct := archetypes.PctByLevel(archetypes.MaxUtilityLevel, per, 50)
+	checked := 0
+	for zone, goods := range markets {
+		for _, g := range goods {
+			for _, st := range []standing.Standing{{}, {MarkupPct: 10}, {MarkupPct: 25}} {
+				for s := 1; s <= g.MaxStock; s++ {
+					ask, ok := g.AskForStock(s)
+					if !ok {
+						continue
+					}
+					bid, ok := g.BidForStock(s-1, spread)
+					if !ok {
+						continue
+					}
+					next, nextOK := g.AskForStock(s)
+					for buyLevel := 0; buyLevel <= 4; buyLevel++ {
+						for sellLevel := 0; sellLevel <= 4; sellLevel++ {
+							paid := haggledBuy(ask, st, buyLevel*per)
+							got := haggledSell(bid, next, nextOK, st, sellLevel*per, maxPct)
+							checked++
+							if paid > 1 {
+								assert.Less(t, got, paid, "%s item %d stock %d markup %d: buy at haggle %d, sell at %d", zone, g.ItemID, s, st.MarkupPct, buyLevel, sellLevel)
+							} else {
+								assert.LessOrEqual(t, got, paid)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	assert.Positive(t, checked)
 }

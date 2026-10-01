@@ -106,7 +106,7 @@ func (m *MarketModule) commitSell(zone string, itemID int, pricing standing.Stan
 			return 0, 0, errMarketFull
 		}
 		next, nextOK := g.AskForStock(stock + 1)
-		return haggledSell(price, next, nextOK, pricing, hagglePct), 1, nil
+		return haggledSell(price, next, nextOK, pricing, hagglePct, m.maxHagglePctLocked()), 1, nil
 	})
 }
 
@@ -117,15 +117,22 @@ func haggledBuy(ask int, pricing standing.Standing, hagglePct int) int {
 }
 
 // haggledSell is what the company is paid for a good bid at bid: its
-// standing's price, raised by the haggle but kept one below what buying it
-// back would cost (next, the ask once it is sold), so no round trip
-// profits.
-func haggledSell(bid, next int, nextOK bool, pricing standing.Standing, hagglePct int) int {
+// standing's price, raised by its haggle, but kept one below the cheapest
+// buy-back anyone could get (next, the ask once it is sold, at the best
+// haggle there is, maxPct), so no round trip profits, whoever haggles which
+// side, with or without a haggler (33f2 review finding 1).
+func haggledSell(bid, next int, nextOK bool, pricing standing.Standing, hagglePct, maxPct int) int {
 	sale := pricing.SellPrice(bid)
-	if hagglePct <= 0 || !nextOK {
+	if !nextOK {
 		return sale
 	}
-	return market.HaggledSell(sale, hagglePct, haggledBuy(next, pricing, hagglePct)-1)
+	return market.HaggledSell(sale, hagglePct, haggledBuy(next, pricing, maxPct)-1)
+}
+
+// maxHagglePctLocked is the best haggle there is: a level-4 haggler's.
+// Caller holds m.mu.
+func (m *MarketModule) maxHagglePctLocked() int {
+	return archetypes.PctByLevel(archetypes.MaxUtilityLevel, m.hagglePerLevel, 50)
 }
 
 // haggler is the company's best haggler at the leader's side and the

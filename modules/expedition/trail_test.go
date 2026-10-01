@@ -110,3 +110,63 @@ func TestFailedEvasionStillSpawnsTheAmbush(t *testing.T) {
 	require.Len(t, spawner.spawnCalls, 1)
 	assert.Equal(t, expedition.Combat, module.sessions[7].Interruption.Kind)
 }
+
+// evadedJourney starts a combat route whose ambush a tracker evades.
+func evadedJourney(t *testing.T) (*ExpeditionModule, *fakeStore) {
+	t.Helper()
+	trailMessages(t)
+	scheduler := &fakeScheduler{}
+	now := baseTime()
+	store := &fakeStore{}
+	module := newTestModule(store, scheduler, &fakeMover{}, &fakeSurvival{}, func() time.Time { return now }, combatInterruptionProfiles())
+	module.mobSpawner = &fakeMobSpawner{}
+	module.ambushEvader = func(int, ...int) (archetypes.Specialist, bool) {
+		return archetypes.Specialist{Name: "Mira", Level: 4}, true
+	}
+	_, err := module.StartTravel(startRequest())
+	require.NoError(t, err)
+	now = baseTime().Add(5 * time.Second)
+	scheduler.fire(0)
+	require.Equal(t, expedition.Tracks, module.sessions[7].Interruption.Kind)
+	return module, store
+}
+
+// TestEvadedAmbushCanBeResumedReturnedAndRecovered (33f2 review finding
+// 2): the tracks an evaded ambush leaves are a valid pause on that route.
+func TestEvadedAmbushCanBeResumedReturnedAndRecovered(t *testing.T) {
+	module, _ := evadedJourney(t)
+	assert.Equal(t, "You resume travel along the oak-road route.", module.resume(7))
+	assert.Equal(t, expedition.Traveling, module.sessions[7].State)
+
+	module, _ = evadedJourney(t)
+	assert.NotContains(t, module.returnToOrigin(7), "invalid")
+	_, still := module.sessions[7]
+	assert.False(t, still, "the company turned back")
+
+	_, store := evadedJourney(t)
+	reloaded := newTestModule(store, &fakeScheduler{}, &fakeMover{}, &fakeSurvival{}, baseTime, combatInterruptionProfiles())
+	reloaded.mobSpawner = &fakeMobSpawner{}
+	reloaded.load()
+	require.Contains(t, reloaded.sessions, 7, "recovery keeps the paused journey")
+	assert.Equal(t, "You resume travel along the oak-road route.", reloaded.resume(7))
+}
+
+// TestParseInterruptionReadsAmbushAndWeightedRoutes (33f2 review finding
+// 4): a route's ambush mob and weighted kinds are read from config.
+func TestParseInterruptionReadsAmbushAndWeightedRoutes(t *testing.T) {
+	profiles := parseProfiles([]any{
+		map[string]any{"Name": "ambush-road", "Duration": "30s", "Interruption": map[string]any{"Kind": "combat", "CombatMobId": 12, "Checkpoint": 4}},
+		map[string]any{"Name": "mixed-road", "Duration": "30s", "Interruption": map[string]any{"Checkpoint": 6, "CombatMobId": 12,
+			"Kinds": []any{map[string]any{"Kind": "fallen-tree", "Weight": 3}, map[string]any{"Kind": "combat", "Weight": 1}}}},
+		map[string]any{"Name": "no-mob", "Duration": "30s", "Interruption": map[string]any{"Kind": "combat", "Checkpoint": 4}},
+		map[string]any{"Name": "bad-weight", "Duration": "30s", "Interruption": map[string]any{"Checkpoint": 4, "Kinds": []any{map[string]any{"Kind": "tracks", "Weight": 0}}}},
+	})
+	require.Contains(t, profiles, "ambush-road")
+	assert.Equal(t, 12, profiles["ambush-road"].Interruption.CombatMobID)
+	assert.True(t, profiles["ambush-road"].Interruption.ReachesCombat())
+	require.Contains(t, profiles, "mixed-road")
+	assert.Len(t, profiles["mixed-road"].Interruption.Kinds, 2)
+	assert.True(t, profiles["mixed-road"].Interruption.ReachesCombat())
+	assert.NotContains(t, profiles, "no-mob", "an ambush needs its mob")
+	assert.NotContains(t, profiles, "bad-weight")
+}
