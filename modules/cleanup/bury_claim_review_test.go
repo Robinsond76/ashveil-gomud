@@ -1,11 +1,19 @@
 package cleanup
 
 import (
+	"path/filepath"
+	"runtime"
 	"testing"
+
+	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/plugins"
+	"github.com/GoMudEngine/GoMud/internal/templates"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,11 +53,38 @@ func TestBuryLeavesAnotherCompanysClaimedLoot(t *testing.T) {
 	_, err = c.userBuryCommand("bandit corpse", stranger, room, 0)
 	require.NoError(t, err)
 	assert.Empty(t, room.Corpses)
+
+	// Among same-named corpses, bury reaches one it may bury (independent
+	// review: it only ever tried the first).
+	corpse(room)
+	empty := rooms.Corpse{MobId: 94950, Character: *characters.New()}
+	empty.Character.Name = "bandit"
+	room.AddCorpse(empty)
+	_, err = c.userBuryCommand("bandit corpse", stranger, room, 0)
+	require.NoError(t, err)
+	require.Len(t, room.Corpses, 1)
+	assert.Equal(t, 94951, room.Corpses[0].ClaimUserId, "the claimed loot stays")
+	_, err = c.mobBuryCommand("bandit corpse", scavenger, room)
+	require.NoError(t, err)
+	assert.Len(t, room.Corpses, 1)
 }
 
 func TestBuryHelpExplainsClaimedLoot(t *testing.T) {
-	page, err := files.ReadFile("files/datafiles/templates/help/bury.template")
+	_, thisFile, _, _ := runtime.Caller(0)
+	world := filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default")
+	flat := configs.Flatten(configs.GetOverrides())
+	previous := flat["FilePaths.DataFiles"]
+	flat["FilePaths.DataFiles"] = world
+	require.NoError(t, configs.RestoreOverrides(flat))
+	t.Cleanup(func() {
+		flat := configs.Flatten(configs.GetOverrides())
+		flat["FilePaths.DataFiles"] = previous
+		require.NoError(t, configs.RestoreOverrides(flat))
+	})
+	keywords.LoadAliases()
+	templates.RegisterFS(plugins.GetPluginRegistry())
+	page, err := usercommands.GetHelpContents("bury")
 	require.NoError(t, err)
-	assert.Contains(t, string(page), "battle loot claimed by another player")
-	assert.Contains(t, string(page), "help party")
+	assert.Contains(t, page, "battle loot claimed by another player")
+	assert.Contains(t, page, "help party")
 }

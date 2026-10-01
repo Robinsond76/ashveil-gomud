@@ -108,7 +108,9 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 		// Look for a corpse as the source when CorpseItems is enabled, or
 		// for a claimed shared-battle corpse (Phase 33d) in any world.
 		if containerName == `` && petUserId == 0 {
-			if c, ok := room.FindCorpseByRef(args[len(args)-1], func(c *rooms.Corpse) bool { return corpseLootable(c, user.UserId) }); ok {
+			// In floor-drop worlds only a claimed corpse is a loot source; an
+			// unclaimed one must not shadow a floor item ("leather cap").
+			if c, ok := room.FindCorpseByRef(args[len(args)-1], func(c *rooms.Corpse) bool { return corpseLootable(c, user.UserId) }); ok && (bool(configs.GetGamePlayConfig().Death.CorpseItems) || c.ClaimUserId != 0) {
 				corpseRef = c
 				if len(args) >= 2 && args[len(args)-2] == "from" {
 					rest = strings.Join(args[0:len(args)-2], " ")
@@ -161,12 +163,6 @@ func Get(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 	// Handle getting from a corpse
 	if corpseRef != nil {
-		if !configs.GetGamePlayConfig().Death.CorpseItems && corpseRef.ClaimUserId == 0 {
-			// Only a claimed corpse holds loot in a floor-drop world; the
-			// body's own gear stays on it (Phase 33d review).
-			user.SendText(`There is nothing to take from the corpse. Loot falls to the ground.`)
-			return true, nil
-		}
 		if corpseRef.ClaimUserId != 0 && corpseRef.ClaimUserId != user.UserId {
 			user.SendText(`This battle loot is claimed by another company.`)
 			return true, nil

@@ -126,3 +126,54 @@ func TestLookNamesTheLootClaimant(t *testing.T) {
 	assert.Contains(t, out, "Borin")
 	assert.NotContains(t, out, "#94904")
 }
+
+// 33d review (independent): an unclaimed corpse matched get's last word and
+// returned early, so "get leather cap" beside a "captain of the guard" corpse
+// never searched the floor.
+func TestUnclaimedCorpseNameNeverShadowsAFloorItem(t *testing.T) {
+	floorDropWorld(t)
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: 94916, Name: "leather cap", Type: items.Head, Weight: 1})
+	t.Cleanup(func() { items.RemoveTestItemSpec(94916) })
+	room := rooms.NewEmptyRoom()
+	user := users.NewUserRecord(94906, 0)
+	user.Character.RoomId = room.RoomId
+	room.AddCorpse(reviewCorpse("captain of the guard", 0, nil, nil))
+	room.AddItem(items.New(94916), false)
+	_, err := Get("leather cap", user, room, 0)
+	require.NoError(t, err)
+	require.Len(t, user.Character.Items, 1)
+	assert.Empty(t, room.Items)
+}
+
+// 33d review (independent): look reached only the first same-named corpse.
+func TestLookPrefersTheViewersOwnClaim(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	floorDropWorld(t)
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: 94917, Name: "bandit token", Weight: 1})
+	t.Cleanup(func() { items.RemoveTestItemSpec(94917) })
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	room := rooms.NewEmptyRoom()
+	ally := users.NewUserRecord(94907, 0)
+	ally.Character.Name = "Aria"
+	users.SetTestUser(ally)
+	viewer := users.NewUserRecord(94908, 0)
+	viewer.Character.Name = "Bob"
+	viewer.Character.RoomId = room.RoomId
+	users.SetTestUser(viewer)
+	room.AddCorpse(reviewCorpse("bandit", ally.UserId, []items.Item{items.New(94917)}, nil))
+	room.AddCorpse(reviewCorpse("bandit", viewer.UserId, []items.Item{items.New(94917)}, nil))
+	var text []string
+	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+		if m := e.(events.Message); m.UserId == viewer.UserId {
+			text = append(text, m.Text)
+		}
+		return events.Cancel
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.Message{}, id) })
+	_, err := Look("bandit corpse", viewer, room, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.Join(text, "\n"), "claimed by you")
+}

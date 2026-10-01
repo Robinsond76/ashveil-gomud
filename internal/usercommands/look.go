@@ -448,7 +448,8 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		}
 
-		if corpse, corpseFound := room.FindCorpse(rest); corpseFound {
+		// Among same-named corpses, the viewer's own claimed loot first.
+		if corpse, corpseFound := room.FindCorpse(rest, func(c *rooms.Corpse) bool { return c.ClaimUserId == user.UserId && c.HasItems() }); corpseFound {
 
 			corpseColor := `mob-corpse`
 			if corpse.UserId > 0 {
