@@ -249,6 +249,16 @@ One **active defense** per strike, after a strike hits and before armor:
   of a member; never raw ratios.
 - Burden is computed when needed from the live items, so nothing new is
   saved.
+- **As built** (the [30g3 plan](../plans/2026-10-01-phase-30g3-personal-load.md)
+  has the detail): `characters.Character.PersonalGrams`, `Burden`, and
+  `BurdenWord`; words by thirds (lightly below 1/3, burdened below 2/3);
+  the 0.6 is a constant (`burdenDodgeLoss`), not a key; the weapon
+  rankings' `expectedDPS` uses the burdened dodge too. The words show in
+  `status` (a `Burden:` row in Vitals), `look` at any character, `scout`
+  and `look` of a group (burdened members only), and the web Overview
+  (`Char.Inventory.Backpack.Summary.burden`). Burden got its own page,
+  `help burden` (aliases `burdened`, `agility`, ...), rather than waiting
+  for 30g5's `help tempo`, which should link to it.
 
 ### 30g4 — Progression: stat steps, archetype HP, and the XP knee
 
@@ -481,8 +491,13 @@ Structure first, with provisional numbers; 30g6 tunes them.
   - new `help defense` (block, parry, dodge, the one-attempt rule,
     armor after), aliases `block`, `parry`, `dodge`, `shield`,
     `shields`; linked from `help combat`;
-  - new `help tempo` (the meter, turns, burden, the cap), aliases
-    `speed`, `actions`, `turns`, `burden`, `agility`; linked from
+  - new `help burden` (30g3: personal load, capacity, the words, dodge
+    only), aliases `burdened`, `unburdened`, `agility`, `personal-load`;
+    linked from `help combat`, `help defense`, `help cargo`, and
+    `help encumbrance`;
+  - new `help tempo` (30g5: the meter, turns, the cap; links
+    `help burden`), aliases `actions`, `turns` (`speed` is the stat's
+    page, and `burden` and `agility` are `help burden`'s); linked from
     `help combat` and `help encumbrance`;
   - updated: `armor` (no 50% bonus), `interrupts` (counter on a block),
     `narration` (the armor suffix), `statuses` (stunned: no defense),
