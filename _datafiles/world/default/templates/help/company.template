@@ -146,4 +146,5 @@ rechecks life, presence and ownership, and healing stops at wound limits
 Leaving a battle: <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>) prepares for one round,
 then attempts to move the company together. See <ansi fg="command">help retreat</ansi>.
 
+For player alliances and opt-in following/support, see <ansi fg="command">help party</ansi>.
 See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help chemistry</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help resurrect</ansi>.

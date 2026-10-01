@@ -604,6 +604,7 @@
         const section = el('section', 'players-section');
         section.setAttribute('aria-label', 'Travelling with');
         section.appendChild(el('h3', 'panel-heading', 'Travelling with'));
+        section.appendChild(el('div', 'company-summary', 'Allied companies: party leadership coordinates players; each owner commands their own company.'));
 
         // When we only have vitals data, synthesise member entries from it.
         const allMembers = members.length > 0 ? members : Object.keys(vitals).map(name => ({ Name: name, Status: 'In Party', Position: '' }));
@@ -624,6 +625,10 @@
             if (rank)  { header.appendChild(el('span', 'party-member-rank', rank)); }
             div.appendChild(header);
             if (location) { div.appendChild(el('div', 'party-member-location', location)); }
+            if (m.owner_user_id) {
+                const consent = 'Follow ' + (m.follow ? 'on' : 'off') + ', support ' + (m.support ? 'on' : 'off') + ', autoattack ' + (m.autoattack ? 'on' : 'off');
+                div.appendChild(el('div', 'party-member-location', consent + (m.online === false ? ' (offline)' : '')));
+            }
             div.appendChild(hpBar(hpPct, 100, 'Health ' + hpPct + ' percent'));
             section.appendChild(div);
         });

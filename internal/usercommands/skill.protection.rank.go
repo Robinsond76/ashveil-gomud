@@ -23,7 +23,7 @@ func Rank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	}
 
 	party := parties.Get(user.UserId)
-	if party == nil {
+	if party == nil || !party.IsMember(user.UserId) {
 		user.SendText("You must be in a party to change your combat rank.")
 		return true, fmt.Errorf("you must be in a party to change your combat rank.")
 	}
@@ -39,7 +39,8 @@ func Rank(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 	// Fire an event that a skill has been used
 	events.AddToQueue(events.SkillUsed{UserId: user.UserId, Skill: `protection`, Details: `rank`})
 
-	user.SendText(fmt.Sprintf(`You are now fighting from the <ansi fg="magenta">%s</ansi> rank.`, party.GetRank(user.UserId)))
+	user.SendText(fmt.Sprintf(`Your legacy party display rank is now <ansi fg="magenta">%s</ansi> rank.`, party.GetRank(user.UserId)))
+	user.SendText(`Party ranks do not affect targeting. Use formation for your company grid.`)
 	room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is now fighting from the <ansi fg="magenta">%s</ansi> rank.`, user.Character.Name, party.GetRank(user.UserId)), user.UserId)
 
 	return true, nil

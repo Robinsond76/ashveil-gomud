@@ -1,9 +1,9 @@
-# Phase 33d: Multiplayer Parties and Allied Companies — Future Design
+# Phase 33d: Multiplayer Parties and Allied Companies — Design
 
-Status: future design, 2026-10-01. The owner endorsed the gameplay-review
-recommendations and requested these planning documents. Detailed mechanics,
-command names, migrations, and balance defaults below remain proposals;
-implementation is not started or authorized by this documentation change.
+Status: implementation started, 2026-10-01. The owner endorsed the gameplay-review
+recommendations and requested these planning documents. The original planning request approved direction; the later owner priority
+authorizes implementation and delegates defaults. The implementation decisions
+below settle the final implementation.
 
 See the [company gameplay roadmap](2026-10-01-company-gameplay-roadmap.md)
 for sequencing, shared constraints, and the decision register. Code context
@@ -81,3 +81,41 @@ hub links. Explain commands, costs, eligibility, and numbers that matter;
 use `[member]` placeholders. Rendering tests and
 `TestTutorialHelpPointersExist` must pass with the implementation. Do not
 publish help claiming these future mechanics already exist.
+
+## Final implementation decisions (2026-10-01)
+
+The owner explicitly delegates defaults and authorizes merge/push after review.
+These decisions replace the preliminary proposals above.
+
+- Independent company battles share the actual enemy instances. Each owner keeps
+  formation, focus, equipment and retreat authority; no shared formation grid.
+- Accepted membership and leadership save atomically to version-1 alliances.json.
+  Missing files migrate to empty membership; corrupt files fail startup closed.
+  Failed writes restore the previous registry and suppress success notices.
+  Logout preserves membership, clears consent and promotes an online successor.
+  Purging a character removes membership before the purge can proceed.
+- Follow, mutual allied support and mob autoattack default off. Invitations,
+  ranks and consent do not save. Leadership changes revoke follow/autoattack.
+  Queued movement/attacks revalidate owner, origin, target and consent generation.
+  Existing company/single-target helpful scopes retain their contracts.
+- Positive damage attributed to a company is required for that enemy's rewards.
+  The owner must be alive, connected, present, not withdrawn and in its battle.
+  Mercy can use the contribution snapshot after battle end. One original enemy
+  XP pool (including variation/level scaling/elite bonus) is divided equally,
+  with integer remainder in ascending user-ID order. Eligible living, attached,
+  present companions receive their owner's share through the existing XP seam.
+- Multiple qualifying companies force one shared corpse regardless of ordinary
+  floor-loot settings. Sorted contributor IDs and enemy instance modulo count
+  select one fixed claimant for all ordinary items/gold until corpse decay.
+  The claimant distributes through existing give commands. No claim reassignment.
+- One living shared-battle primary evaluates group morale and owns mercy;
+  departure can transfer primary evaluation without commanding allies to retreat.
+- Legacy party ranks are display only, with equal initial targeting weight.
+  Browser/GMCP and text distinguish alliance leadership and company ownership.
+- Enemy DeathProcessed guards ordinary settlement once per runtime enemy life.
+  Runtime enemies/corpses/battles are not restored or replayed on restart, so
+  there is no ordinary pending-payout replay ledger. Existing durable mercy
+  settlement tokens and player/company save paths remain authoritative. This
+  does not introduce atomic transactions across independent character saves.
+
+Verification and independent review results are recorded in Project Status.

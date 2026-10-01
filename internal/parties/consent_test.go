@@ -1,0 +1,66 @@
+package parties
+
+import (
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"testing"
+)
+
+func TestAllianceConsentLifecycle(t *testing.T) {
+	resetPartyMap()
+	p := New(1)
+	require.True(t, p.InvitePlayer(2))
+	p.SetAutoAttack(2, true)
+	p.SetFollow(2, true)
+	p.SetSupport(2, true)
+	assert.Empty(t, p.GetAutoAttackUserIds())
+	assert.False(t, p.Follows(2))
+	assert.False(t, p.Supports(2))
+	require.True(t, p.AcceptInvite(2))
+	assert.False(t, p.Follows(2))
+	p.SetSupport(1, true)
+	assert.Empty(t, AlliedLeaders(1))
+	p.SetSupport(2, true)
+	assert.Equal(t, []int{2}, AlliedLeaders(1))
+	assert.Equal(t, []int{1}, AlliedLeaders(2))
+	p.SetAutoAttack(2, true)
+	p.SetFollow(2, true)
+	p.SetRank(2, "back")
+	require.True(t, p.Leave(2))
+	assert.Nil(t, Get(2))
+	assert.Empty(t, p.GetAutoAttackUserIds())
+	assert.Empty(t, p.Followers)
+	assert.False(t, p.Supports(2))
+	assert.Empty(t, AlliedLeaders(1))
+	assert.Equal(t, "middle", p.GetRank(2))
+	require.True(t, p.InvitePlayer(2))
+	require.True(t, p.AcceptInvite(2))
+	assert.False(t, p.Follows(2))
+	assert.False(t, p.Supports(2))
+	assert.Empty(t, p.GetAutoAttackUserIds())
+	p.Disband()
+}
+
+func TestAlliancePromotionAndInvitedLeave(t *testing.T) {
+	resetPartyMap()
+	p := New(1)
+	p.InvitePlayer(2)
+	p.AcceptInvite(2)
+	p.InvitePlayer(3)
+	p.SetFollow(2, true)
+	assert.False(t, p.Promote(3))
+	assert.True(t, p.Follows(2))
+	require.True(t, p.Leave(3))
+	assert.Nil(t, Get(3))
+	assert.False(t, p.Invited(3))
+	assert.False(t, p.Leave(99))
+	require.True(t, p.Promote(2))
+	assert.Empty(t, p.Followers)
+	p.SetFollow(1, true)
+	require.True(t, p.Leave(2))
+	assert.Equal(t, 1, p.LeaderUserId)
+	assert.Same(t, p, Get(1))
+	assert.Empty(t, p.Followers)
+	p.Disband()
+	assert.Empty(t, p.Supporters)
+}

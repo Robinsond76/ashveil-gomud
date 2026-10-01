@@ -34,6 +34,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/loot"
 	"github.com/GoMudEngine/GoMud/internal/migration"
 	"github.com/GoMudEngine/GoMud/internal/modmanager"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/version"
 	"github.com/gorilla/websocket"
@@ -230,6 +231,10 @@ func main() {
 		LanguagePaths:   c.Translation.LanguagePaths,
 	})
 
+	if err := parties.ConfigureStorage(util.FilePath(c.FilePaths.DataFiles.String() + "/alliances.json")); err != nil {
+		mudlog.Error("Alliance recovery", "error", err)
+		os.Exit(1)
+	}
 	hooks.RegisterListeners()
 
 	telemetry.Load(configs.GetFilePathsConfig().DataFiles.String())

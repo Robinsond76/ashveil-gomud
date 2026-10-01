@@ -71,7 +71,24 @@ type RoomAction struct {
 func (r RoomAction) Type() string { return `RoomAction` }
 
 // Used for Input from players/mobs
+// PartyFollowOrder captures authority for a queued ordinary movement. The
+// input consumer rechecks it when the command is ready, after any requeues.
+type PartyFollowOrder struct {
+	LeaderUserId int
+	OriginRoomId int
+	ConsentToken uint64
+}
+
+type PartyAttackOrder struct {
+	LeaderUserId        int
+	OriginRoomId        int
+	ConsentToken        uint64
+	TargetMobInstanceId int
+}
+
 type Input struct {
+	PartyAttack   *PartyAttackOrder
+	PartyFollow   *PartyFollowOrder
 	MemberOrder   *MemberOrder
 	UserId        int
 	MobInstanceId int

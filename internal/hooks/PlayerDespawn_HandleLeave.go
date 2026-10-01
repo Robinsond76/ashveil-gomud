@@ -43,7 +43,31 @@ func HandleLeave(e events.Event) events.ListenerReturn {
 	room := rooms.LoadRoom(user.Character.RoomId)
 
 	if currentParty := parties.Get(evt.UserId); currentParty != nil {
-		currentParty.Leave(evt.UserId)
+		affected := append(currentParty.GetMembers(), currentParty.GetInvited()...)
+		wasLeader := currentParty.IsLeader(evt.UserId)
+		parties.Suspend(evt.UserId)
+		if wasLeader {
+			for _, uid := range currentParty.GetMembers() {
+				if uid != evt.UserId && users.GetByUserId(uid) != nil {
+					if !currentParty.Promote(uid) {
+						user.SendText(parties.LastError().Error())
+					}
+					break
+				}
+			}
+		}
+		if wasLeader && currentParty.LeaderUserId != evt.UserId {
+			for _, uid := range currentParty.GetMembers() {
+				if u := users.GetByUserId(uid); u != nil {
+					if currentParty.IsLeader(uid) {
+						u.SendText(`You are now the leader of the party. Following is off for everyone.`)
+					} else {
+						u.SendText(fmt.Sprintf(`Player #%d is now the party leader. Following is off; use party follow on to consent.`, currentParty.LeaderUserId))
+					}
+				}
+			}
+		}
+		events.AddToQueue(events.PartyUpdated{Action: `left`, UserIds: affected})
 	}
 
 	for _, mobInstId := range room.GetMobs(rooms.FindCharmed) {

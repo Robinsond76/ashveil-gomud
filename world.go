@@ -134,6 +134,9 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 		}
 
+		if !usercommands.ValidPartyFollow(input) {
+			return events.Cancel
+		}
 		w.processInput(input.UserId, input.InputText, input.Flags)
 
 		return events.Continue
@@ -177,6 +180,9 @@ func (w *World) HandleInputEvents(e events.Event) events.ListenerReturn {
 
 	}
 
+	if !usercommands.ValidPartyFollow(input) {
+		return events.Cancel
+	}
 	w.processInput(input.UserId, input.InputText, events.EventFlag(input.Flags))
 
 	w.userInputEventTracker[input.UserId] = struct{}{}

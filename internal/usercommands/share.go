@@ -16,7 +16,7 @@ import (
 func Share(rest string, user *users.UserRecord, room *rooms.Room, flags events.EventFlag) (bool, error) {
 
 	party := parties.Get(user.UserId)
-	if party == nil {
+	if party == nil || !party.IsMember(user.UserId) {
 		user.SendText("You can only share in a party.")
 		return true, nil
 	}
