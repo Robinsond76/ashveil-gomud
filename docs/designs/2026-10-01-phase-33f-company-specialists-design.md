@@ -216,7 +216,9 @@ game loop (the camping round pass), saved as resolved before the raiders
 spawn, so it never comes twice. A new low-level raider, the road brigand
 (mob 86, level 3), comes as a named pair through the shared ambush spawner
 (`enemyparty.SpawnAmbush`, moved from the expedition module). A raid on a
-leader who is offline or away from the camp lapses.
+leader who is offline spoils the rest (no fight); one away from the camp
+is not raided. Raiders still standing when their leader falls or leaves
+are sent off, so they never turn on other players camping there.
 
 **Camp Watch (warrior, brawling).** The best watch spots the raiders
 with 25% per level. Spotted: the fight comes, the rest still counts.
@@ -237,7 +239,10 @@ raw game meat, wild thyme, mushrooms), into company cargo as far as
 capacity allows; the rest is left behind. Water is not foraged (no
 fresh-water item exists yet).
 
-**Rewards, exactly once.** A completed, unbroken rest owes its rewards
+**Rewards, at most once per 15 minutes, exactly once.** Forage and Vigil
+come at most once per `CampRewardCooldown` (15 minutes of real time) per
+company, are collected at the camp once any fight there is over, and are
+forfeited by leaving the camp first. A completed, unbroken rest owes its rewards
 (`CampRewards`, saved with the Rested debt, keyed by the rest's
 operation ID) and pays them on the game loop when the leader is online:
 the cargo deposit (`encumbrance.DepositCargo`) and the loyalty raise

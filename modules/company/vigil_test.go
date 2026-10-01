@@ -6,6 +6,7 @@ import (
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // TestRaiseLoyaltyOnceForAVigil (33f3): a vigil raises the named living
@@ -46,4 +47,21 @@ func TestRaiseLoyaltyOnceForAVigil(t *testing.T) {
 	_, err = module.RaiseLoyaltyOnce(7, "rest-2:vigil", []int{1}, 3, 60)
 	assert.Error(t, err)
 	assert.Equal(t, 43, loyalty(1), "rolled back")
+}
+
+// TestAppliedOpsSurviveTheRealDecoder (33f3 review finding 1): a vigil's
+// operation round-trips through the company save format, so a retry after
+// a restart still finds it.
+func TestAppliedOpsSurviveTheRealDecoder(t *testing.T) {
+	registry := domain.NewRegistry()
+	record := domain.Record{LeaderUserID: 7, Companions: []domain.Companion{withDisposition(domain.Companion{ID: 1, Name: "Bran", MobTemplateID: 58}, 0, 40)}}
+	record.MarkApplied("rest-1:vigil")
+	registry.Put(record)
+	data, err := yaml.Marshal(registry)
+	require.NoError(t, err)
+	loaded := domain.NewRegistry()
+	require.NoError(t, decodeCompanies(data, loaded))
+	got, ok := loaded.Get(7)
+	require.True(t, ok)
+	assert.True(t, got.HasApplied("rest-1:vigil"))
 }

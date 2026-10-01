@@ -49,5 +49,7 @@ func (m *CampingModule) purgeLocked(leaderUserID int) bool {
 	delete(m.owed, leaderUserID)
 	delete(m.autoSharpen, leaderUserID)
 	delete(m.campRewards, leaderUserID)
+	delete(m.lastRewards, leaderUserID)
+	delete(m.raiders, leaderUserID)
 	return camp || applied || stay || innApplied || wellRested || rested || owed || sharpen || rewards
 }

@@ -7,6 +7,8 @@ never lowers anyone's loyalty.
 
 Steadier loyalty matters: a companion with low loyalty may hesitate or
 flee when a battle goes badly (<ansi fg="command">help morale</ansi>), and one at zero deserts
-(<ansi fg="command">help alignment</ansi>). A rest spoiled by raiders brings no vigil.
+(<ansi fg="command">help alignment</ansi>). A rest spoiled by raiders brings no vigil, and a
+company keeps a vigil (and forages) at most once every 15 minutes of real
+time.
 
 See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help morale</ansi>.

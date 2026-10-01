@@ -147,7 +147,8 @@ func (m *CampingModule) resetInnState() {
 	m.restedPending = map[int]bool{}
 	m.owed = map[int]map[int]camping.OwedGrant{}
 	m.autoSharpen = map[int]bool{}
-	m.campRewards = map[int]string{}
+	m.campRewards = map[int]campReward{}
+	m.lastRewards = map[int]time.Time{}
 	m.innTimers = map[int]Timer{}
 	m.innTimerGeneration = map[int]uint64{}
 }

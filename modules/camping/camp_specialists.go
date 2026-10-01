@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -56,6 +57,8 @@ type campSettings struct {
 	ForageBase         int
 	ForageLevelsPerOne int
 	Recipes            []campRecipe
+	// RewardCooldown is how often a company may earn Forage and Vigil.
+	RewardCooldown time.Duration
 }
 
 func defaultCampSettings() campSettings {
@@ -68,6 +71,7 @@ func defaultCampSettings() campSettings {
 		Forage:             map[string][]forageFind{},
 		ForageBase:         1,
 		ForageLevelsPerOne: 2,
+		RewardCooldown:     15 * time.Minute,
 	}
 }
 
@@ -134,6 +138,11 @@ func parseCampSettings(get func(string) any) campSettings {
 	pct("VigilCap", &s.VigilCap, 0, company.MaxLoyalty)
 	pct("ForageBase", &s.ForageBase, 0, 10)
 	pct("ForageLevelsPerOne", &s.ForageLevelsPerOne, 1, 10)
+	if raw := configString(get("CampRewardCooldown")); raw != "" {
+		if d, err := time.ParseDuration(raw); err == nil && d >= 0 {
+			s.RewardCooldown = d
+		}
+	}
 	for _, entry := range listOf(get("Forage")) {
 		f := fieldsOf(entry)
 		zone := configString(f["zone"])
@@ -207,46 +216,56 @@ type raidOutcome struct {
 	watch   archetypes.Specialist
 }
 
-// fireDueRaids resolves every raid whose time has come (game loop). A raid
-// on a leader who is offline or away from the camp lapses. Otherwise the
-// company's watch may spot it; unspotted, it breaks the rest. The raid is
-// saved as resolved before the raiders spawn, so it can never come twice.
+// fireDueRaids resolves every raid whose time has come (game loop). With
+// the leader at the camp, the company's watch may spot it; unspotted, it
+// breaks the rest. A leader offline when the raiders come is robbed of
+// the rest (33f3 review: logging out must not dodge a raid); one who is
+// away from the camp (moved by an admin or a death) is not raided. The raid
+// is saved as resolved before the raiders spawn, so it never comes twice.
+// The watch is looked up outside the module lock.
 func (m *CampingModule) fireDueRaids() {
 	now := m.clock().UTC()
 	cfg := m.campSettings()
 	m.mu.Lock()
-	var due []int
+	due := map[int]int{} // leader -> camp room
 	for leaderUserID, camp := range m.camps {
 		if camp.Rest != nil && camp.Rest.RaidDue(now) {
-			due = append(due, leaderUserID)
+			due[leaderUserID] = camp.RoomID
 		}
 	}
 	m.mu.Unlock()
 	if len(due) == 0 {
 		return
 	}
-	sort.Ints(due)
+	leaders := make([]int, 0, len(due))
+	for id := range due {
+		leaders = append(leaders, id)
+	}
+	sort.Ints(leaders)
 	var outcomes []raidOutcome
-	for _, leaderUserID := range due {
+	for _, leaderUserID := range leaders {
+		roomID := due[leaderUserID]
 		leader := m.userByID(leaderUserID)
+		online := leader != nil && leader.Character != nil
+		present := online && leader.Character.RoomId == roomID
+		var watch archetypes.Specialist
+		hasWatch := false
+		if present && m.specialist != nil {
+			watch, hasWatch = m.specialist(leaderUserID, archetypes.UtilityWatch, roomID)
+		}
+		spotted := hasWatch && m.rollPct() < archetypes.PctByLevel(watch.Level, cfg.WatchPctPerLevel, 100)
+
 		m.mu.Lock()
 		camp, ok := m.camps[leaderUserID]
-		if !ok || camp.Rest == nil || !camp.Rest.RaidDue(now) {
+		if !ok || camp.Rest == nil || !camp.Rest.RaidDue(now) || camp.RoomID != roomID {
 			m.mu.Unlock()
 			continue
 		}
 		rest := *camp.Rest
 		raid := *rest.Raid
 		raid.Fired = true
-		present := leader != nil && leader.Character != nil && leader.Character.RoomId == camp.RoomID
-		var watch archetypes.Specialist
-		if present {
-			if m.specialist != nil {
-				if sp, ok := m.specialist(leaderUserID, archetypes.UtilityWatch, camp.RoomID); ok {
-					watch = sp
-					raid.Spotted = m.rollPct() < archetypes.PctByLevel(sp.Level, cfg.WatchPctPerLevel, 100)
-				}
-			}
+		raid.Spotted = present && spotted
+		if !online || present {
 			rest.Broken = !raid.Spotted
 		}
 		rest.Raid = &raid
@@ -261,35 +280,128 @@ func (m *CampingModule) fireDueRaids() {
 		}
 		m.mu.Unlock()
 		if present {
-			outcomes = append(outcomes, raidOutcome{leader: leader, roomID: camp.RoomID, mobID: raid.MobID, spotted: raid.Spotted, watch: watch})
+			outcomes = append(outcomes, raidOutcome{leader: leader, roomID: roomID, mobID: raid.MobID, spotted: raid.Spotted, watch: watch})
 		}
 	}
 	for _, o := range outcomes {
+		spawn := m.spawnRaid
+		if spawn == nil {
+			continue
+		}
+		first, err := spawn(o.roomID, o.mobID, o.leader.UserId)
+		if err != nil {
+			// No raiders after all: the rest is not spoiled.
+			mudlog.Warn("camping: raid spawn", "leader", o.leader.UserId, "error", err)
+			m.unbreakRest(o.leader.UserId)
+			continue
+		}
+		m.trackRaiders(o.leader.UserId, o.roomID, first)
 		if o.spotted {
 			o.leader.SendText(fmt.Sprintf(`<ansi fg="yellow-bold">%s %s raiders creeping toward the fire and %s the company! Your rest can go on once they're dealt with.</ansi>`, o.watch.Subject(), o.watch.Verb("spot", "spots"), o.watch.Verb("rouse", "rouses")))
 		} else {
 			o.leader.SendText(`<ansi fg="red-bold">Raiders fall on your sleeping camp! Nobody saw them coming, and the rest is spoiled.</ansi>`)
 		}
-		spawn := m.spawnRaid
-		if spawn == nil {
-			continue
+	}
+}
+
+// unbreakRest clears a raid's broken mark when its raiders never came.
+func (m *CampingModule) unbreakRest(leaderUserID int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[leaderUserID]
+	if !ok || camp.Rest == nil || !camp.Rest.Broken {
+		return
+	}
+	rest := *camp.Rest
+	rest.Broken = false
+	updated := camp
+	updated.Rest = &rest
+	m.camps[leaderUserID] = updated
+	if err := m.saveLocked(); err != nil {
+		m.camps[leaderUserID] = camp
+		mudlog.Error("camping: raid unbreak save", "leader", leaderUserID, "error", err)
+	}
+}
+
+// raiders are a leader's live raid group (runtime only: mobs never outlive
+// a restart).
+type raiders struct {
+	roomID    int
+	instances []int
+}
+
+// trackRaiders remembers the raid group that just spawned in roomID, led
+// by first, so it can be sent off once its leader is gone.
+func (m *CampingModule) trackRaiders(leaderUserID, roomID, first int) {
+	ids := []int{first}
+	if m.raidGroup != nil {
+		ids = m.raidGroup(roomID, first)
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.raiders == nil {
+		m.raiders = map[int]raiders{}
+	}
+	m.raiders[leaderUserID] = raiders{roomID: roomID, instances: ids}
+}
+
+// clearRaiders (game loop, 33f3 review: no bystander may be drawn into
+// another company's raid) sends off a raid group whose leader is offline,
+// fallen, or gone from the camp room, so it never turns on other players
+// there. A group whose members have all fallen is forgotten.
+func (m *CampingModule) clearRaiders() {
+	m.mu.Lock()
+	tracked := map[int]raiders{}
+	for leaderUserID, r := range m.raiders {
+		tracked[leaderUserID] = r
+	}
+	m.mu.Unlock()
+	for leaderUserID, r := range tracked {
+		alive := m.liveRaiders(r)
+		leader := m.userByID(leaderUserID)
+		gone := leader == nil || leader.Character == nil || leader.Character.Health <= 0 || leader.Character.RoomId != r.roomID
+		if len(alive) > 0 && gone && m.despawnRaider != nil {
+			for _, id := range alive {
+				m.despawnRaider(id)
+			}
+			alive = nil
 		}
-		if _, err := spawn(o.roomID, o.mobID, o.leader.UserId); err != nil {
-			mudlog.Warn("camping: raid spawn", "leader", o.leader.UserId, "error", err)
+		if len(alive) == 0 {
+			m.mu.Lock()
+			delete(m.raiders, leaderUserID)
+			m.mu.Unlock()
 		}
 	}
 }
 
+func (m *CampingModule) liveRaiders(r raiders) []int {
+	var alive []int
+	for _, id := range r.instances {
+		if m.raiderAlive != nil && m.raiderAlive(id) {
+			alive = append(alive, id)
+		}
+	}
+	return alive
+}
+
 // --- rewards of a completed rest: Forage and Vigil ---
 
-// grantCampRewards applies each owed camp reward (game loop) for leaders
-// online: Forage into cargo and Vigil on loyalty, each once by its
-// operation ID, then clears the debt.
+// campReward is a completed, unbroken rest's owed Forage and Vigil: the
+// rest's operation ID and the camp's room.
+type campReward struct {
+	Op     string `yaml:"op"`
+	RoomID int    `yaml:"room_id"`
+}
+
+// grantCampRewards applies each owed camp reward (game loop) once the
+// leader is online, out of battle, and at the camp: Forage into cargo and
+// Vigil on loyalty, each once by its operation ID, then clears the debt.
+// A leader who left the camp's room before collecting forfeits them.
 func (m *CampingModule) grantCampRewards() {
 	m.mu.Lock()
-	owed := map[int]string{}
-	for leaderUserID, op := range m.campRewards {
-		owed[leaderUserID] = op
+	owed := map[int]campReward{}
+	for leaderUserID, r := range m.campRewards {
+		owed[leaderUserID] = r
 	}
 	m.mu.Unlock()
 	leaders := make([]int, 0, len(owed))
@@ -302,26 +414,35 @@ func (m *CampingModule) grantCampRewards() {
 		if leader == nil || leader.Character == nil {
 			continue // owed until the leader is back online
 		}
-		op := owed[leaderUserID]
-		room := rooms.LoadRoom(leader.Character.RoomId)
-		var lines []string
-		if text, err := m.forage(leader, room, op+":forage"); err != nil {
-			mudlog.Warn("camping: forage", "leader", leaderUserID, "error", err)
-			continue // retried next round; the op keeps it once
-		} else if text != "" {
-			lines = append(lines, text)
+		if m.inBattle != nil && m.inBattle(leaderUserID) {
+			continue // owed until the fight (a spotted raid's, say) is over
 		}
-		if text, err := m.vigil(leader, op+":vigil"); err != nil {
-			mudlog.Warn("camping: vigil", "leader", leaderUserID, "error", err)
-			continue
-		} else if text != "" {
-			lines = append(lines, text)
+		reward := owed[leaderUserID]
+		var lines []string
+		if leader.Character.RoomId == reward.RoomID {
+			room := rooms.LoadRoom(reward.RoomID)
+			text, err := m.forage(leader, room, reward.Op+":forage")
+			if err != nil {
+				mudlog.Warn("camping: forage", "leader", leaderUserID, "error", err)
+				continue // retried next round; the op keeps it once
+			}
+			if text != "" {
+				lines = append(lines, text)
+			}
+			text, err = m.vigil(leader, reward.RoomID, reward.Op+":vigil")
+			if err != nil {
+				mudlog.Warn("camping: vigil", "leader", leaderUserID, "error", err)
+				continue
+			}
+			if text != "" {
+				lines = append(lines, text)
+			}
 		}
 		m.mu.Lock()
-		if m.campRewards[leaderUserID] == op {
+		if current, ok := m.campRewards[leaderUserID]; ok && current == reward {
 			delete(m.campRewards, leaderUserID)
 			if err := m.saveLocked(); err != nil {
-				m.campRewards[leaderUserID] = op
+				m.campRewards[leaderUserID] = reward
 				mudlog.Error("camping: camp rewards save", "leader", leaderUserID, "error", err)
 			}
 		}
@@ -418,11 +539,10 @@ func (m *CampingModule) forage(leader *users.UserRecord, room *rooms.Room, op st
 
 // vigil: the company's best cleric keeps a vigil; each present living
 // companion gains loyalty equal to the cleric's level, up to VigilCap.
-func (m *CampingModule) vigil(leader *users.UserRecord, op string) (string, error) {
+func (m *CampingModule) vigil(leader *users.UserRecord, roomID int, op string) (string, error) {
 	if m.specialist == nil {
 		return "", nil
 	}
-	roomID := leader.Character.RoomId
 	sp, ok := m.specialist(leader.UserId, archetypes.UtilityVigil, roomID)
 	if !ok {
 		return "", nil
@@ -514,23 +634,72 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 		}
 		return "You have nothing to cook: see help cooking for what each dish needs."
 	}
-	// Take the ingredients: the pack first, then the cargo.
+	// Plan where each ingredient comes from: the pack first, then cargo.
+	var fromPack []items.Item
+	fromCargo := map[int]int{}
+	taken := map[string]bool{}
+	inputGrams := 0
 	for _, id := range chosen.Inputs {
-		if itm, ok := packItem(user, id); ok {
-			user.Character.RemoveItem(itm)
-			continue
+		if spec := items.GetItemSpec(id); spec != nil {
+			inputGrams += spec.Weight
 		}
-		if err := encumbrance.WithdrawCargo(user.UserId, id, 1); err != nil {
+		picked := false
+		for _, itm := range user.Character.Items {
+			if itm.ItemId == id && !taken[itm.UUID.String()] {
+				taken[itm.UUID.String()] = true
+				fromPack = append(fromPack, itm)
+				picked = true
+				break
+			}
+		}
+		if !picked {
+			fromCargo[id]++
+		}
+	}
+	// The dish may weigh more than what went into it (33f3 review).
+	dishGrams := 0
+	if spec := items.GetItemSpec(chosen.Output); spec != nil {
+		dishGrams = spec.Weight
+	}
+	if text, refuse := encumbrance.TooMuchToCarry(user.UserId, dishGrams-inputGrams); refuse {
+		return text
+	}
+	// Take from the cargo first, putting back what was taken if any of it
+	// fails, so a failed save never eats ingredients (33f3 review).
+	var withdrawn []encumbrance.CargoStack
+	for _, id := range sortedKeys(fromCargo) {
+		if err := encumbrance.WithdrawCargo(user.UserId, id, fromCargo[id]); err != nil {
 			mudlog.Warn("camping: cook withdraw", "leader", user.UserId, "item", id, "error", err)
+			if len(withdrawn) > 0 {
+				if err := encumbrance.DepositCargo(user.UserId, "", withdrawn); err != nil {
+					mudlog.Error("camping: cook restore", "leader", user.UserId, "error", err)
+				}
+			}
 			return "The ingredients couldn't be gathered right now."
 		}
+		withdrawn = append(withdrawn, encumbrance.CargoStack{ItemId: id, Count: fromCargo[id]})
+	}
+	for _, itm := range fromPack {
+		user.Character.RemoveItem(itm)
 	}
 	dish := itemName(chosen.Output)
 	if err := encumbrance.DepositCargo(user.UserId, "", []encumbrance.CargoStack{{ItemId: chosen.Output, Count: 1}}); err != nil {
-		user.Character.StoreItem(items.New(chosen.Output))
+		if !user.Character.StoreItem(items.New(chosen.Output)) {
+			room.AddItem(items.New(chosen.Output), false)
+			return fmt.Sprintf(`You cook <ansi fg="itemname">%s</ansi> over the campfire and set it down by the fire.`, dish)
+		}
 		return fmt.Sprintf(`You cook <ansi fg="itemname">%s</ansi> over the campfire.`, dish)
 	}
 	return fmt.Sprintf(`You cook <ansi fg="itemname">%s</ansi> over the campfire; it goes into the company's cargo.`, dish)
+}
+
+func sortedKeys(m map[int]int) []int {
+	out := make([]int, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	sort.Ints(out)
+	return out
 }
 
 func packItem(user *users.UserRecord, itemID int) (items.Item, bool) {
@@ -547,4 +716,23 @@ func itemName(itemID int) string {
 		return spec.Name
 	}
 	return fmt.Sprintf("item %d", itemID)
+}
+
+// raidGroupOf lists the instances of the raid group led by first in roomID.
+func raidGroupOf(roomID, first int) []int {
+	ids := []int{first}
+	room := rooms.LoadRoom(roomID)
+	lead := mobs.GetInstance(first)
+	if room == nil || lead == nil || lead.SpawnGroup == "" {
+		return ids
+	}
+	for _, id := range room.GetMobs() {
+		if id == first {
+			continue
+		}
+		if mob := mobs.GetInstance(id); mob != nil && mob.SpawnGroup == lead.SpawnGroup {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }

@@ -23,10 +23,11 @@ import (
 // fakeCargo is an encumbrance provider with a cargo and a capacity, keeping
 // deposit operations once, as the real module does.
 type fakeCargo struct {
-	capacity int
-	stacks   map[int]int
-	applied  map[string]bool
-	grams    int
+	failWithdraw map[int]bool
+	capacity     int
+	stacks       map[int]int
+	applied      map[string]bool
+	grams        int
 }
 
 func newFakeCargo(capacity int) *fakeCargo {
@@ -62,7 +63,7 @@ func (f *fakeCargo) DepositCargo(_ int, op string, deposits []encumbrance.CargoS
 	return nil
 }
 func (f *fakeCargo) WithdrawCargo(_ int, itemID, count int) error {
-	if f.stacks[itemID] < count {
+	if f.failWithdraw[itemID] || f.stacks[itemID] < count {
 		return encumbrance.ErrInsufficientCargo
 	}
 	f.stacks[itemID] -= count
@@ -390,4 +391,210 @@ func shippedCampSettings(t *testing.T) campSettings {
 	var cfg map[string]any
 	require.NoError(t, yaml.Unmarshal(data, &cfg))
 	return parseCampSettings(func(k string) any { return cfg[k] })
+}
+
+// rewardWorld is a raid-free camp whose rest pays a level-4 forage.
+func rewardWorld(t *testing.T) (*raidWorld, *fakeCargo) {
+	t.Helper()
+	forageSpecs(t)
+	w := newRaidWorld(t, 0)
+	w.m.campCfg.Forage["Road"] = []forageFind{{ItemID: 29, Weight: 1}}
+	w.m.specialist = specialistsAt(t, 100, map[string]archetypes.Specialist{archetypes.UtilityForage: {Name: "Mira", Level: 4}})
+	w.m.inBattle = func(int) bool { return false }
+	cargo := newFakeCargo(100000)
+	useCargo(t, cargo)
+	return w, cargo
+}
+
+// TestCampRewardsWaitForTheFightToEnd (33f3 review finding 2): rewards owed
+// while the company still fights a spotted raid are paid after the fight.
+func TestCampRewardsWaitForTheFightToEnd(t *testing.T) {
+	w, cargo := rewardWorld(t)
+	w.rest(t)
+	w.at(camping.RestDuration + time.Second)
+	w.sched.fireLatest()
+	w.m.inBattle = func(int) bool { return true }
+	w.m.onNewRound(events.NewRound{})
+	assert.Zero(t, cargo.stacks[29], "not during the fight")
+	assert.NotEmpty(t, w.m.campRewards[7], "still owed")
+	w.m.inBattle = func(int) bool { return false }
+	w.m.onNewRound(events.NewRound{})
+	assert.Equal(t, 3, cargo.stacks[29])
+}
+
+// TestCampRewardsComeOncePerCooldown (33f3 review finding 3): a second
+// rest inside 15 minutes is still a rest, but forages nothing.
+func TestCampRewardsComeOncePerCooldown(t *testing.T) {
+	w, cargo := rewardWorld(t)
+	w.rest(t)
+	w.at(camping.RestDuration + time.Second)
+	w.sched.fireLatest()
+	w.m.onNewRound(events.NewRound{})
+	require.Equal(t, 3, cargo.stacks[29])
+
+	w.m.breakCamp(w.user, w.room)
+	w.at(5 * time.Minute)
+	w.m.establish(w.user, w.room)
+	w.m.lightFire(w.user, w.room)
+	w.rest(t)
+	w.at(5*time.Minute + camping.RestDuration + time.Second)
+	w.sched.fireLatest()
+	assert.True(t, w.m.restedPending[7], "Rested still comes")
+	assert.Empty(t, w.m.campRewards, "no rewards inside the cooldown")
+
+	w.m.onNewRound(events.NewRound{})
+	w.m.breakCamp(w.user, w.room)
+	w.at(16 * time.Minute)
+	w.m.establish(w.user, w.room)
+	w.m.lightFire(w.user, w.room)
+	w.rest(t)
+	w.at(16*time.Minute + camping.RestDuration + time.Second)
+	w.sched.fireLatest()
+	w.m.onNewRound(events.NewRound{})
+	assert.Equal(t, 6, cargo.stacks[29], "after the cooldown, again")
+	assert.Equal(t, baseTime().Add(16*time.Minute), w.store.saved.LastCampRewards[7], "durable")
+}
+
+// TestLeavingTheCampForfeitsItsRewards (33f3 review finding 7): rewards are
+// collected at the camp, against its forage and its company.
+func TestLeavingTheCampForfeitsItsRewards(t *testing.T) {
+	w, cargo := rewardWorld(t)
+	w.rest(t)
+	w.at(camping.RestDuration + time.Second)
+	w.sched.fireLatest()
+	w.user.Character.RoomId = 555
+	w.m.onNewRound(events.NewRound{})
+	assert.Zero(t, cargo.stacks[29])
+	assert.Empty(t, w.m.campRewards, "the debt is dropped, not kept forever")
+}
+
+// TestLoggingOutDoesNotDodgeARaid (33f3 review finding 5).
+func TestLoggingOutDoesNotDodgeARaid(t *testing.T) {
+	w := newRaidWorld(t, 100, 0, 0)
+	w.rest(t)
+	users.RemoveTestUser(7)
+	w.at(camping.RestDuration / 2)
+	w.m.onNewRound(events.NewRound{})
+	assert.Empty(t, *w.spawns, "nobody there to fight")
+	assert.True(t, w.camp().Rest.Broken, "but the rest is spoiled")
+}
+
+// TestFailedRaidSpawnLeavesTheRestWhole (33f3 review finding 9).
+func TestFailedRaidSpawnLeavesTheRestWhole(t *testing.T) {
+	w := newRaidWorld(t, 100, 0, 0)
+	w.m.spawnRaid = func(int, int, int) (int, error) { return 0, assert.AnError }
+	w.rest(t)
+	messages := captureMessages(t)
+	w.at(camping.RestDuration / 2)
+	w.m.onNewRound(events.NewRound{})
+	events.ProcessEvents()
+	assert.False(t, w.camp().Rest.Broken)
+	assert.False(t, w.store.saved.Camps[7].Rest.Broken, "durably")
+	assert.NotContains(t, strings.Join(*messages, ""), "Raiders fall")
+}
+
+// TestRaidersLeaveWhenTheirTargetIsGone (33f3 review finding 4): raiders
+// still standing when the leader falls or leaves are sent off, so they
+// never turn on other players camping in the room.
+func TestRaidersLeaveWhenTheirTargetIsGone(t *testing.T) {
+	w := newRaidWorld(t, 100, 0, 0)
+	alive := map[int]bool{41: true, 42: true}
+	var despawned []int
+	w.m.raidGroup = func(room, first int) []int {
+		assert.Equal(t, 100, room)
+		return []int{41, 42}
+	}
+	w.m.spawnRaid = func(int, int, int) (int, error) { return 41, nil }
+	w.m.raiderAlive = func(id int) bool { return alive[id] }
+	w.m.despawnRaider = func(id int) { despawned = append(despawned, id); alive[id] = false }
+	w.rest(t)
+	w.at(camping.RestDuration / 2)
+	w.m.onNewRound(events.NewRound{})
+	w.m.onNewRound(events.NewRound{})
+	assert.Empty(t, despawned, "the leader is still there to fight them")
+
+	w.user.Character.Health = 0
+	w.m.onNewRound(events.NewRound{})
+	assert.ElementsMatch(t, []int{41, 42}, despawned)
+	assert.Empty(t, w.m.raiders, "forgotten")
+}
+
+// TestCampCookCommandAndItsSafety (33f3 review findings 6 and 12): through
+// "camp cook"; a failed cargo withdrawal puts back what was taken; a dish
+// heavier than its makings is refused when the company is full.
+func TestCampCookCommandAndItsSafety(t *testing.T) {
+	forageSpecs(t)
+	w := newRaidWorld(t, 0)
+	w.m.campCfg.Recipes = []campRecipe{{Output: 30021, Inputs: []int{29}, Skill: "cooking", MinLevel: 1}}
+	w.m.inBattle = func(int) bool { return false }
+	skills.SetTestData([]*skills.Skill{{SkillId: "cooking", Name: "Cooking", MaxLevel: 4}}, nil)
+	t.Cleanup(func() { skills.SetTestData(nil, nil) })
+	w.user.Character.Skills = map[string]int{"cooking": 1}
+	cargo := newFakeCargo(100000)
+	useCargo(t, cargo)
+	cargo.stacks[29] = 1
+
+	messages := captureMessages(t)
+	_, err := w.m.userCommand("cook", w.user, w.room, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.Join(*messages, ""), "seared game meat")
+	assert.Equal(t, 1, cargo.stacks[30021])
+
+	// A dish heavier than its makings, in a full company.
+	items.SetTestItemSpec(&items.ItemSpec{ItemId: 30021, Name: "seared game meat", Type: items.Food, Weight: 900})
+	cargo.stacks[29] = 1
+	cargo.capacity, cargo.grams = 100, 100
+	assert.Contains(t, w.m.cook(w.user, w.room), "too much for your company to carry")
+	assert.Equal(t, 1, cargo.stacks[29], "nothing taken")
+}
+
+// TestCampCookPutsBackWhatAFailedWithdrawalTook (33f3 review finding 6).
+func TestCampCookPutsBackWhatAFailedWithdrawalTook(t *testing.T) {
+	forageSpecs(t)
+	w := newRaidWorld(t, 0)
+	w.m.campCfg.Recipes = []campRecipe{{Output: 30020, Inputs: []int{29, 30018}}}
+	w.m.inBattle = func(int) bool { return false }
+	cargo := newFakeCargo(100000)
+	useCargo(t, cargo)
+	cargo.stacks[29], cargo.stacks[30018] = 1, 1
+	cargo.failWithdraw = map[int]bool{30018: true}
+	assert.Contains(t, w.m.cook(w.user, w.room), "couldn't be gathered")
+	assert.Equal(t, 1, cargo.stacks[29], "the meat was put back")
+	assert.Equal(t, 1, cargo.stacks[30018])
+	assert.Zero(t, cargo.stacks[30020])
+}
+
+// TestCampRegistryRoundTripsThroughYAML (33f3 review finding 12): a raid,
+// a broken rest, owed rewards, and the reward clock survive the real
+// save format.
+func TestCampRegistryRoundTripsThroughYAML(t *testing.T) {
+	at := baseTime()
+	reg := NewRegistry()
+	reg.Camps[7] = camping.Camp{LeaderUserID: 7, RoomID: 100, FireLit: true, Rest: &camping.RestSession{
+		StartedAtUTC: at, Broken: true, Raid: &camping.Raid{AtUTC: at.Add(time.Second), MobID: 86, Fired: true},
+	}}
+	reg.CampRewards[8] = campReward{Op: "rest-8", RoomID: 100}
+	reg.LastCampRewards[8] = at
+	data, err := yaml.Marshal(reg)
+	require.NoError(t, err)
+	var loaded Registry
+	require.NoError(t, decodeRegistry(data, &loaded))
+	rest := loaded.Camps[7].Rest
+	require.NotNil(t, rest)
+	assert.True(t, rest.Broken)
+	require.NotNil(t, rest.Raid)
+	assert.Equal(t, 86, rest.Raid.MobID)
+	assert.True(t, rest.Raid.Fired)
+	assert.Equal(t, campReward{Op: "rest-8", RoomID: 100}, loaded.CampRewards[8])
+	assert.True(t, at.Equal(loaded.LastCampRewards[8]))
+}
+
+// TestTutorialCampsAreNeverRaided (33f3 review finding 12).
+func TestTutorialCampsAreNeverRaided(t *testing.T) {
+	cfg := shippedCampSettings(t)
+	_, raided := cfg.Raids["Tutorial"]
+	assert.False(t, raided)
+	assert.Len(t, cfg.Raids, 1, "only the Old Kings Road")
+	assert.Equal(t, 15*time.Minute, cfg.RewardCooldown)
 }

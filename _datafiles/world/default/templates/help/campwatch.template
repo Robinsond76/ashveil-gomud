@@ -14,8 +14,10 @@ and 70% of it).
   Fatigue still recovers, but nobody is Rested and there is no Forage
   or Vigil from that rest.
 
-Raiders only come while you are at your camp. Whether they come, and
-when, is settled as the rest begins, so logging out or a server restart
-never rolls it again.
+Whether raiders come, and when, is settled as the rest begins, so a server
+restart never rolls it again. Logging out doesn't dodge them: raiders
+who find a camp with its leader gone spoil the rest the same way. If
+the leader falls or leaves, any raiders still standing slip away rather
+than turn on other travellers.
 
 See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help combat</ansi>.
