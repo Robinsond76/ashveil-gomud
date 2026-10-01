@@ -38,3 +38,7 @@ Clerics can also cast the spells by hand: <ansi fg="command">cast heal [who]</an
   <ansi fg="command">heal wounds</ansi>    tend the company after a fight
 
 See also: <ansi fg="command">help wounds</ansi>, <ansi fg="command">help health</ansi>.
+
+Group healing reaches your present company without a player party. A chant
+rechecks life, presence and ownership, and healing stops at wound limits
+(<ansi fg="command">help friendly-effects</ansi>).

@@ -36,6 +36,7 @@ help:
       - company
       - company-inventory
       - company-meal
+      - friendly-effects
       - standing
     road:
       - travel
@@ -210,6 +211,7 @@ help-aliases:
   adventure:        [ashveil, basics]
   company:          [recruit, recruiting, roster, companions, companion]
   company-inventory: [company inventory, company inv, company-inv]
+  friendly-effects: [friendly-scopes, company-healing, support-scopes]
   company-meal:     [company meal, company eat, company drink, meal, meals, company-eat, company-drink]
   standing:         [reputation, blackmarket, black-market]
   tutorial:         [replay]

@@ -3,13 +3,13 @@ package usercommands
 import (
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -174,26 +174,7 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 		}
 
 	} else if spellInfo.Type == spells.HelpMulti {
-
-		spellAggro.TargetUserIds = append(spellAggro.TargetUserIds, user.UserId)
-
-		// Targets self and all in party
-		if p := parties.Get(user.UserId); p != nil {
-
-			for _, partyUserId := range p.GetMembers() {
-
-				if partyUserId == user.UserId {
-					continue
-				}
-
-				if partyUser := users.GetByUserId(partyUserId); partyUser != nil {
-					spellAggro.TargetUserIds = append(spellAggro.TargetUserIds, partyUserId)
-					spellAggro.TargetMobInstanceIds = append(spellAggro.TargetMobInstanceIds, partyUser.Character.GetCharmIds()...)
-				}
-
-			}
-
-		}
+		// The shared resolver below selects the present company.
 
 	} else if spellInfo.Type == spells.HarmMulti {
 
@@ -290,6 +271,8 @@ func Cast(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			}
 		}
 	}
+
+	spellAggro = effecttargets.Resolve(user.UserId, 0, spellAggro)
 
 	if len(spellAggro.TargetUserIds) > 0 || len(spellAggro.TargetMobInstanceIds) > 0 || len(spellAggro.SpellRest) > 0 {
 

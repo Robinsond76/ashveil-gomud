@@ -7,3 +7,5 @@ school: illusion
 cost: 10
 waitrounds: 3
 difficulty: 0
+
+scope: member

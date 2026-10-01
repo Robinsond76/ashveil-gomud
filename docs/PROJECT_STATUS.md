@@ -6,7 +6,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-10-01
-- **Latest completed phases:** 33a, company command rules and legacy action routes, and 30g3,
+- **Latest completed phases:** 33b, friendly effects and company membership; 33a, company command rules; and 30g3,
   personal load and agility (merged from `claude/phase-30g3-load`), both 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
@@ -18,8 +18,8 @@ and mercy (30a–30e), active defense (30g2), and personal load (30g3) are shipp
 play-test improvements are implemented; 32b's status still carries an outstanding review note (see its retained plan).
 
 **Current owner priority:** finish Phase 33a–33i in order, choosing the lead's
-recommended defaults without further confirmation (2026-10-01). 33a is
-complete; **33b, friendly effects, is next**. Phase 30g3 is also complete;
+recommended defaults without further confirmation (2026-10-01). 33a and 33b are
+complete; **33c, company retreat, is next**. Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
@@ -55,7 +55,7 @@ command consistency, friendly-effect scopes, retreat, allied companies,
 automatic class abilities, specialists, equipment/loot, progression/recovery/
 relocation, and group assessment/coordinated enemies. These are planning
 records now authorized for implementation by the owner, with open defaults
-delegated to the lead. 33a is complete; 33b follows.
+delegated to the lead. 33a and 33b are complete; 33c follows.
 
 ## Phase progress
 
@@ -131,7 +131,7 @@ delegated to the lead. 33a is complete; 33b follows.
 | 32g | Web company dock | Complete: [design](designs/2026-09-29-phase-32g-company-dock-design.md). Left column the world (time, map, room, tutorial); right a tabbed dock: a vitals strip for every member above Character (Overview with worth, Gear with weights, Skills and jobs, Quests, Effects, Pet), Company (Status, Inventory with menus by exact item reference, Camp), Combat (setup: roles, targets, formation, Scout), Comm (unread count), and Who/Kills when enabled; `Company.Inventory`, `Company.Camp`, members' mana and strategies; `help webclient` |
 | 32g2 | Live battle view | Complete: [design](designs/2026-09-29-phase-32g2-battle-view-design.md). During a battle the Combat tab shows the enemy group's formation above the company's (fronts to the middle), scout's health words (never numbers), reach, target lines both ways, outsiders struck, the fallen, the waiting groups, a text list, a live region, Flee, and Setup's member menu; a marker on the tab; `Company.Battle` for every player in a battle; dark rooms show nothing, as scout |
 | 33a | Company Command Rules and Legacy Action Routes | Complete: [design](designs/2026-10-01-phase-33a-company-command-rules-design.md), [plan](plans/2026-10-01-phase-33a-company-command-rules.md); safe ask aliases, queued ownership checks, battle/script/skill policy |
-| 33b | Friendly Effects and Company Membership | Future design: [proposal](designs/2026-10-01-phase-33b-friendly-effect-scopes-design.md); implementation not started |
+| 33b | Friendly Effects and Company Membership | Complete: [design](designs/2026-10-01-phase-33b-friendly-effect-scopes-design.md), [plan](plans/2026-10-01-phase-33b-friendly-effects.md); shared target snapshots, eligibility, ownership and callback revalidation |
 | 33c | Company Retreat, Rout, and Separation | Future design: [proposal](designs/2026-10-01-phase-33c-company-retreat-design.md); implementation not started |
 | 33d | Multiplayer Parties and Allied Companies | Future design: [proposal](designs/2026-10-01-phase-33d-allied-companies-design.md); implementation not started |
 | 33e | Automatic Class Abilities and Combat Roles | Future design: [proposal](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md); implementation not started |
@@ -142,6 +142,29 @@ delegated to the lead. 33a is complete; 33b follows.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33b: friendly effects (2026-10-01)
+
+- Shared resolver for player, mob, automatic and script cast paths. Group help
+  includes present attached company members; single help retains explicit
+  patients. Runtime snapshots only prune, checking rooms, life, stable company
+  identity and charm identity/expiry. Temporary followers stay outside group
+  effects; allied expansion waits for 33d consent. Healing allows downed living
+  players above -10, never revives fallen companions, and retains wound caps.
+- Validated scope metadata and shipped spell mappings; costs and durations
+  preserved. Indexed friendly-effects help, hub links, tutorial and render tests.
+- Independent full-diff review accepted two P2 findings: HelpArea lacked actor
+  arrays, and the void callback fix changed onCast's proceed default. Fixed both
+  with actual JS/Lua cast regressions; other successful void handlers no longer
+  report a missing handler. Reviewer rechecked against latest master (30g3),
+  including actual round completion/pruned healing narration and stream; no
+  remaining blockers. No findings rejected.
+- Verification: focused spell/script/usercommand/company/tutorial tests;
+  make generate, make validate, full go test -race ./..., installed JSHint via
+  make js-lint, make lua-lint, and git diff --check. Full checks recorded after
+  final review fixes. No save migration: cast snapshots and Aggro are runtime.
+- Next: 33c. No cloud-session creation tool is available; continuation context
+  is in the phase 33 session handoff and work continues in this session.
 
 ### Phase 33a: company command rules (2026-10-01)
 

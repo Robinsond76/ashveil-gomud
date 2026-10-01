@@ -157,3 +157,7 @@ Members fight automatically. Safe <ansi fg="command">ask [member]</ansi> orders
 manage gear and provisions outside battles; conversation and observation
 remain available in battle. Old queued orders recheck ownership and presence.
 See <ansi fg="command">help ask</ansi> for the compatibility commands.
+
+Group healing reaches your present company without a player party. A chant
+rechecks life, presence and ownership, and healing stops at wound limits
+(<ansi fg="command">help friendly-effects</ansi>).

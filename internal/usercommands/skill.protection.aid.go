@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -67,6 +68,7 @@ func Aid(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				TargetMobInstanceIds: []int{},
 			}
 
+			spellAggro = effecttargets.Resolve(user.UserId, 0, spellAggro)
 			continueCasting := true
 			if handled, err := scripting.TrySpellScriptEvent(`onCast`, user.UserId, 0, spellAggro); err == nil {
 				continueCasting = handled

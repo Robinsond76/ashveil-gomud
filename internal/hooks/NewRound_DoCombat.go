@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 	"strings"
 	"time"
 
@@ -264,6 +265,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 		**************************/
 
 		if user.Character.Aggro != nil && user.Character.Aggro.Type == characters.SpellCast {
+			user.Character.Aggro.SpellInfo = effecttargets.Resolve(user.UserId, 0, user.Character.Aggro.SpellInfo)
 
 			if user.Character.Aggro.RoundsWaiting > 0 {
 				user.Character.Aggro.RoundsWaiting--
@@ -819,6 +821,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		**************************/
 
 		if mob.Character.Aggro != nil && mob.Character.Aggro.Type == characters.SpellCast {
+			mob.Character.Aggro.SpellInfo = effecttargets.Resolve(0, mob.InstanceId, mob.Character.Aggro.SpellInfo)
 
 			// Ashveil Phase 30d1: a chant a blow broke starts again from
 			// the first word, taking this turn.

@@ -1,12 +1,12 @@
 package mobcommands
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/effecttargets"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/spells"
@@ -137,44 +137,7 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 
 	} else if spellInfo.Type == spells.HelpMulti {
-
-		spellAggro.TargetMobInstanceIds = append(spellAggro.TargetMobInstanceIds, mob.InstanceId)
-
-		if !mob.Character.IsCharmed() {
-
-			for _, mobInstId := range room.GetMobs() {
-
-				if m := mobs.GetInstance(mobInstId); m != nil {
-					// Cast on same kind
-					if m.MobId == mob.MobId {
-						spellAggro.TargetMobInstanceIds = append(spellAggro.TargetMobInstanceIds, mobInstId)
-					}
-				}
-			}
-
-		} else {
-
-			spellAggro.TargetUserIds = append(spellAggro.TargetUserIds, mob.Character.Charmed.UserId)
-
-			// Targets self and all in party
-			if p := parties.Get(mob.Character.Charmed.UserId); p != nil {
-
-				for _, partyUserId := range p.GetMembers() {
-
-					if partyUserId == mob.Character.Charmed.UserId {
-						continue
-					}
-
-					if partyUser := users.GetByUserId(partyUserId); partyUser != nil {
-						spellAggro.TargetUserIds = append(spellAggro.TargetUserIds, partyUserId)
-						spellAggro.TargetMobInstanceIds = append(spellAggro.TargetMobInstanceIds, partyUser.Character.GetCharmIds()...)
-					}
-
-				}
-
-			}
-
-		}
+		// The shared resolver below selects the present company.
 
 	} else if spellInfo.Type == spells.HarmMulti {
 
@@ -243,6 +206,8 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 			return true, nil
 		}
 	}
+
+	spellAggro = effecttargets.Resolve(0, mob.InstanceId, spellAggro)
 
 	if len(spellAggro.TargetUserIds) > 0 || len(spellAggro.TargetMobInstanceIds) > 0 || len(spellAggro.SpellRest) > 0 {
 
