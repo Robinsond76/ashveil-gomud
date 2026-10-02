@@ -15,6 +15,7 @@ by archetype and focus (<ansi fg="command">help growth</ansi>).
 
 The shipped rates through level {{ config "GamePlay.Progression.HPFullLevels" }} are:
   Warrior 6 HP per level; cleric and ranger 5; rogue 4; wizard 3.
+<ansi fg="command">archetype</ansi> lists each archetype's current rate.
 After that, every archetype gains {{ config "GamePlay.Progression.HPAfterFull" }} HP per level.
 Add {{ config "GamePlay.Progression.HPBase" }} base HP, {{ config "GamePlay.Progression.HPPerVitality" }} HP per adjusted Vitality, and your health bonuses.
 Without a known archetype, the early rate is {{ config "GamePlay.Progression.DefaultHPPerLevel" }} HP per level.

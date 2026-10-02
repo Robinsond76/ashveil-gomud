@@ -524,7 +524,7 @@ func (m *ArchetypeModule) chooseResult(user *users.UserRecord, name string, conf
 	}
 	if !confirm {
 		m.mu.Unlock()
-		preview := fmt.Sprintf("%s: %s", a.Name, a.Description)
+		preview := fmt.Sprintf("%s: %s %s", a.Name, a.Description, healthLine(a))
 		if line := m.kitLine(a); line != "" {
 			preview += "\n" + line
 		}
@@ -682,7 +682,7 @@ func (m *ArchetypeModule) list(userID int) string {
 	}
 	lines = append(lines, "Archetypes:")
 	for _, a := range table.List() {
-		line := fmt.Sprintf("  %-8s %s Skills: %s.", a.Name, a.Description, strings.Join(a.Skills, ", "))
+		line := fmt.Sprintf("  %-8s %s %s Skills: %s.", a.Name, a.Description, healthLine(a), strings.Join(a.Skills, ", "))
 		if len(a.Schools) > 0 {
 			line += " Spell schools: " + strings.Join(a.Schools, ", ") + "."
 		}

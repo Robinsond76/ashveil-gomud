@@ -80,6 +80,7 @@ func NewUserRecord(userId int, connectionId uint64) *UserRecord {
 		EventLog:       UserLog{},
 	}
 
+	u.Character.SetUserId(userId)
 	if c.Death.PermaDeath {
 		u.Character.ExtraLives = int(c.LivesStart)
 	}

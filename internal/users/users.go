@@ -417,6 +417,7 @@ func CreateUser(u *UserRecord) error {
 	}
 
 	u.UserId = GetUniqueUserId()
+	u.Character.SetUserId(u.UserId)
 	u.Role = RoleUser
 
 	idx := GetUserIndex()

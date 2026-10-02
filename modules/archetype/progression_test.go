@@ -43,3 +43,13 @@ func TestProgressionShippedHPAndCreationChoice(t *testing.T) {
 	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, float64(cfg.DefaultHPPerLevel)), u.Character.HealthMax.Value)
 	assert.Equal(t, 2, u.Character.Health, "reset cannot refill health")
 }
+
+func TestProgressionListShowsLiveHPRates(t *testing.T) {
+	m, _ := testModule(t)
+	text := m.list(12)
+	assert.Contains(t, text, "Warrior")
+	assert.Contains(t, text, "HP: 6 per level through level 20, then 1 per level.")
+	assert.Contains(t, text, "HP: 3 per level through level 20, then 1 per level.")
+	preview, _ := m.chooseResult(newUser(12), "rogue", false)
+	assert.Contains(t, preview, "HP: 4 per level through level 20, then 1 per level.")
+}

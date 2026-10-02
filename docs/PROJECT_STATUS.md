@@ -60,6 +60,16 @@ full race suite passed. An existing retreat assertion failed on the first
 post-fix run; three focused reruns passed, new test provider cleanup was
 corrected, and the final full suite passed. See PR #13.
 
+PR #13 pre-merge review (2026-10-02) found no blockers and accepted three
+minor findings, fixed with regressions: player characters made by
+`NewUserRecord`, `CreateUser`, deletion reset and permadeath reset now carry
+their user id, so their HP uses the player's archetype path rather than the
+enemy race/template override path; `ValidateActiveCharacters` skips a
+missing user; and `archetype` and its choose preview show each live HP rate, which the
+progression and stat-train help now point to instead of fixed numbers alone.
+No findings were rejected. Lower early HP from Vitality 4 → 1 is noted as
+balance for 30g6, not a defect.
+
 **On-demand Gear editor and refresh load benchmark (2026-10-02):** at the
 owner's request, to keep the game loop light with many players. The server
 builds `Company.Equipment` only while a client shows the Gear editor, and

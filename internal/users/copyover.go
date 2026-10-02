@@ -119,6 +119,9 @@ func CopyoverContributor() copyover.Contributor {
 func ValidateActiveCharacters() {
 	for _, id := range GetOnlineUserIds() {
 		user := GetByUserId(id)
+		if user == nil {
+			continue
+		}
 		user.Character.SetUserId(user.UserId)
 		user.Character.Validate(true)
 	}

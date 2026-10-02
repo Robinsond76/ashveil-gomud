@@ -39,3 +39,13 @@ func TestProgressionCopyoverDefersVitalsUntilClassLoads(t *testing.T) {
 	assert.Equal(t, min(110, restored.Character.HealthMax.Value), restored.Character.Health)
 	assert.Equal(t, min(3, restored.Character.ManaMax.Value), restored.Character.Mana)
 }
+
+// A player's character carries its user id from creation, so its HP uses the
+// player's archetype rather than the enemy path (race/template overrides).
+func TestProgressionNewPlayerCharactersUseTheirArchetype(t *testing.T) {
+	replayDataDir(t)
+	archetypes.SetProvider(warriorHP{})
+	t.Cleanup(func() { archetypes.SetProvider(nil) })
+	assert.Equal(t, 6.0, NewUserRecord(7, 0).Character.HealthGainPerLevel())
+	assert.Equal(t, float64(configs.GetProgressionConfig().DefaultHPPerLevel), NewUserRecord(0, 0).Character.HealthGainPerLevel(), "before an id, the default")
+}

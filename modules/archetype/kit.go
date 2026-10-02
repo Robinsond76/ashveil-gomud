@@ -206,7 +206,7 @@ func (m *ArchetypeModule) CreationChoices() []archetypes.Choice {
 		out = append(out, archetypes.Choice{
 			ID:          a.ID,
 			Name:        a.Name,
-			Description: a.Description + fmt.Sprintf(" HP: %g per level through level %d, then %g per level.", healthRate(a), configs.GetProgressionConfig().HPFullLevels, configs.GetProgressionConfig().HPAfterFull),
+			Description: a.Description + " " + healthLine(a),
 			Skills:      append([]string(nil), a.Skills...),
 			Kit:         m.kitNames(a),
 		})
@@ -221,6 +221,12 @@ func (m *ArchetypeModule) ChooseAtCreation(userID int, archetypeID string) (stri
 		return "", false
 	}
 	return m.chooseResult(user, archetypeID, true)
+}
+
+// healthLine states an archetype's live HP rates for creation and listing.
+func healthLine(a archetypes.Archetype) string {
+	cfg := configs.GetProgressionConfig()
+	return fmt.Sprintf("HP: %g per level through level %d, then %g per level.", healthRate(a), cfg.HPFullLevels, cfg.HPAfterFull)
 }
 
 func healthRate(a archetypes.Archetype) float64 {
