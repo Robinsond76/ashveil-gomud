@@ -567,30 +567,9 @@ func (m *CampingModule) vigil(leader *users.UserRecord, roomID int, op string) (
 
 // --- camp cooking ---
 
-// cook is "camp cook": at the leader's own camp with its fire lit, out of
-// battle, the leader cooks the first recipe their Cooking allows from
-// ingredients in their pack and the company cargo (the pack first). The
-// dish goes into the cargo (into the pack when there is no cargo).
-func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
-	if user == nil || room == nil {
-		return "You can't cook here."
-	}
-	m.mu.Lock()
-	camp, ok := m.camps[user.UserId]
-	m.mu.Unlock()
-	switch {
-	case !ok || camp.RoomID != room.RoomId:
-		return `You need your own camp here to cook. Use "camp" to make one.`
-	case !camp.FireLit:
-		return `You need a lit campfire to cook. Use "camp fire" first.`
-	}
-	if m.inBattle != nil && m.inBattle(user.UserId) {
-		return "You can't cook in the middle of a fight."
-	}
-	recipes := m.campSettings().Recipes
-	if len(recipes) == 0 {
-		return "There is nothing to cook over a campfire."
-	}
+// selectCampRecipe is shared by the command and the capability read model.
+// It neither consumes ingredients nor chooses a recipe the player's ranks forbid.
+func selectCampRecipe(user *users.UserRecord, recipes []campRecipe) (chosen, blocked *campRecipe) {
 	// The ingredients to hand: pack items, then cargo stacks.
 	have := map[int]int{}
 	if !user.Character.CompanyCargo {
@@ -603,8 +582,6 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 		cargo[s.ItemId] += s.Count
 		have[s.ItemId] += s.Count
 	}
-	var chosen *campRecipe
-	var blocked *campRecipe
 	for i := range recipes {
 		r := &recipes[i]
 		need := map[int]int{}
@@ -630,6 +607,34 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 		chosen = r
 		break
 	}
+	return chosen, blocked
+}
+
+// cook is "camp cook": at the leader's own camp with its fire lit, out of
+// battle, the leader cooks the first recipe their Cooking allows from
+// ingredients in their pack and the company cargo (the pack first). The
+// dish goes into the cargo (into the pack when there is no cargo).
+func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
+	if user == nil || room == nil {
+		return "You can't cook here."
+	}
+	m.mu.Lock()
+	camp, ok := m.camps[user.UserId]
+	m.mu.Unlock()
+	switch {
+	case !ok || camp.RoomID != room.RoomId:
+		return `You need your own camp here to cook. Use "camp" to make one.`
+	case !camp.FireLit:
+		return `You need a lit campfire to cook. Use "camp fire" first.`
+	}
+	if m.inBattle != nil && m.inBattle(user.UserId) {
+		return "You can't cook in the middle of a fight."
+	}
+	recipes := m.campSettings().Recipes
+	if len(recipes) == 0 {
+		return "There is nothing to cook over a campfire."
+	}
+	chosen, blocked := selectCampRecipe(user, recipes)
 	if chosen == nil {
 		if blocked != nil {
 			return fmt.Sprintf("You have the makings of %s, but it needs %s %d.", itemName(blocked.Output), blocked.Skill, blocked.MinLevel)

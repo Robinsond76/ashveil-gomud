@@ -189,6 +189,7 @@ func init() {
 			Hints: []string{
 				`After a battle, <ansi fg="command">loot</ansi> collects eligible spoils into cargo. <ansi fg="command">help loot</ansi> explains claims and optional autoloot.`,
 				`<ansi fg="command">company status</ansi>, <ansi fg="command">inventory</ansi>, and <ansi fg="command">status</ansi> one last time.`,
+				`In the browser, Company Status shows effects and wounds apart from persistent bonuses; Character Skills shows trained ranks and current combat, field and camp capabilities. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.`,
 				`Your companions keep their health and wounds when you log out: a hurt company is still hurt when you come back. Rest at an inn before a long road (<ansi fg="command">help readiness</ansi>).`,
 				`Go through the <ansi fg="exit">gate</ansi> to begin your journey.`,
 				`Settlements post recruits of your own, and the faces change over time: <ansi fg="command">look</ansi> at the Waymark Inn's hiring slate, and see <ansi fg="command">help company</ansi>.`,

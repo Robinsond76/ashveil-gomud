@@ -273,6 +273,7 @@
         }
 
         /* Phase 26b: the Company and Players sections */
+        .company-condition { font-size: 0.8em; overflow-wrap: anywhere; color: var(--t-text); }
         .company-section, .players-section {
             display: flex;
             flex-direction: column;
@@ -575,8 +576,33 @@
             spoken.push(v.warmth);
         }
         if (m.chemistry) {
-            card.appendChild(el('div', 'company-chemistry', 'Chemistry: ' + m.chemistry));
+            card.appendChild(el('div', 'company-chemistry', 'Persistent bonus — Chemistry: ' + m.chemistry));
             spoken.push('chemistry ' + m.chemistry);
+        }
+        const conditions = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Conditions;
+        const state = conditions && (conditions[m.key] || { state: 'unknown' });
+        if (state) {
+            const states = { away: 'Away: live effects unknown; wounds last recorded',
+                'away-live': 'Away: owned member live conditions', dead: 'Fallen: no active member effects',
+                unavailable: 'Conditions unavailable', unknown: 'Conditions unknown' };
+            if (states[state.state]) {
+                card.appendChild(el('div', 'company-status', states[state.state]));
+                spoken.push(states[state.state]);
+            }
+            [['effects', 'Active effects'], ['wounds', 'Wounds'], ['bonuses', 'Persistent bonuses']].forEach(group => {
+                const entries = state[group[0]] || [];
+                if (!entries.length) { return; }
+                card.appendChild(el('h4', 'panel-heading', group[1]));
+                entries.forEach(effect => {
+                    const mods = Object.keys(effect.mods || {}).sort().map(k => k + ' ' + (effect.mods[k] > 0 ? '+' : '') + effect.mods[k]).join(', ');
+                    const line = effect.name + (effect.stacks > 1 ? ' (×' + effect.stacks + ')' : '') + ': ' + effect.duration + '. ' + effect.description + (mods ? ' (' + mods + ')' : '');
+                    card.appendChild(el('div', 'company-condition', line));
+                    spoken.push(line);
+                });
+            });
+            if (state.state === 'live' && !(state.effects || []).length && !(state.wounds || []).length) {
+                card.appendChild(el('div', 'company-status', 'No active effects or wounds'));
+            }
         }
         card.setAttribute('aria-label', spoken.filter(Boolean).join(', '));
         return card;

@@ -5,8 +5,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (34c equipment editor; integrated 33h2)
-- **Latest completed slices:** 34c, equipment editor; 33h2, company readiness and recovery; 34a,
+- **Last updated:** 2026-10-02 (34d effects and current capabilities)
+- **Latest completed slices:** 34d, effects and current capabilities; 34c, equipment editor; 33h2, company readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
   33g management (equipment catalog/class still pending),
@@ -19,6 +19,23 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**34d complete:** Company Status now shows owned members' active effects and
+wounds with authoritative duration and mechanical meaning, separate from
+persistent bonuses. Away/live, recorded-away, fallen and unavailable states
+preserve privacy. Character Skills keeps trained ranks and adds automatic
+abilities/spells plus actual field/camp eligibility, including strategy, mana,
+autoskill and retirement rules. Camp Cooking is explicitly manual and uses
+its owner's configured recipe selector. Character Effects uses safe text and
+includes wounds. Existing persistence, readiness and global time are untouched.
+Help/tutorial and responsive keyboard/focus checks updated. Independent review
+accepted and resolved missing camp cooking with real command/GMCP regressions;
+follow-up found no further blockers. A test fixture's stale room membership was
+fixed and its paired regression passed three runs. All affected packages, all
+three browser suites, generate/validate, JS/Lua lint and the full race suite
+passed. [Verification](plans/2026-10-02-phase-34d-verification.md).
+Phase 34 is complete; stop here and hand over for the owner's next session.
+
 
 **34c complete:** Character Gear now edits main-character equipment by slot,
 including Pack, with exact-instance compatible cargo choices, unavailable reasons,
@@ -35,7 +52,7 @@ make generate/validate, JS/Lua lint and go test -race ./... passed.
 Integration with 33h2 (63f79b32) passed independent review, browser checks,
 generate/validate, JS/Lua lint and the full race suite; companion readiness
 snapshots and recovery remain intact.
-34d remains unstarted. [Next-session context](plans/2026-10-02-phase-34-session-handoff.md).
+34d is complete. [Session handoff](plans/2026-10-02-phase-34-session-handoff.md).
 
 **33h2 readiness and recovery complete (2026-10-02):** companions keep
 their health and mana across logout, restart, copyover, and crash (as of
@@ -80,7 +97,7 @@ focused packages, help/tutorial pointers, all dock browser checks including
 JS/Lua lint, and go test -race ./... passed. Initial race run hit the existing
 random-hit edge test; targeted rerun and final full run passed. Integration against 33h1 (ecd3255e)
 passed independent review, focused checks, browser checks, generate/validate,
-JS/Lua lint and the full race suite. 34d remains.
+JS/Lua lint and the full race suite. 34d is complete.
 
 
 **33h1 growth and contracts complete (2026-10-02):** the owner asked to
@@ -168,7 +185,7 @@ delegated to the lead. 33a–33e are complete.
   and [delivery plan](plans/2026-10-01-phase-34-company-ui-logistics-plan.md)
   split delivery into 34a UI/formation, 34b assigned packs and cargo capacity,
   34c equipment editor, and 34d effects/current capabilities. Design and delivery defaults approved by the owner;
-  34a and 34b implemented and verified as recorded above; 34c and 34d remain.
+  34a–34d implemented and verified as recorded above.
 
 - Owner requested a [weapon poison design](designs/2026-10-01-weapon-poisons-design.md)
   for future implementation on 2026-10-01: shop-bought temporary blade coatings,

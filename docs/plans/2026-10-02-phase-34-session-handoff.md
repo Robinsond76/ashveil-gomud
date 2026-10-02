@@ -5,48 +5,26 @@ then hand over before starting the next slice so the owner can use a new
 session. The design and concrete defaults are already approved; no new approval
 is needed for the approved scope. Do not implement later phases in this session.
 
-## Next session: 34d — Effects and current capabilities
+## Phase 34 complete — hand back to the owner
 
-34a, 34b and 34c are complete, independently reviewed, verified and integrated.
-34d remains unstarted. Fetch current master and create a new isolated feature
-worktree for 34d. Read root/nested guidance, `docs/PROJECT_STATUS.md`,
-`docs/ASHVEIL_GOMUD_AGENT_HANDOFF.md`, the approved
-[design](../designs/2026-10-01-phase-34-company-ui-logistics-design.md), and
-[delivery plan](2026-10-01-phase-34-company-ui-logistics-plan.md).
-Do not redo completed slices or discard retained worktrees.
+34a–34d are complete. Do not begin another slice in this session. The owner
+chooses the next phase in a new session. Fetch master and read Project Status
+and current nested guidance before any new work; retain existing worktrees.
 
-34d delivers owned-member active effects and wounds in Company Status, showing
-actual duration and mechanical meaning separately from persistent bonuses.
-Represent away/dead/unavailable members honestly, without exposing another
-company's private state. Extend Character Skills with trained ranks, automatic
-combat abilities and field/camp capabilities derived from the shipped 33e/33f
-eligibility, strategy toggles and retirement rules. Do not invent unlocks or
-add a class catalogue, progression curve or companion equipment editor.
+34d adds Company.Conditions, an owned-member changed-only/reconnect feed for
+live effects, recorded wounds, and persistent buffs with honest unavailable
+state. Char.Capabilities adds current automatic class abilities and spells,
+field/camp specialists and class-independent manual Camp Cooking. Char.Skills
+keeps its array shape with real max_level, suppressing retired/orphaned ranks.
+The views are read-only: no new persistence, readiness saves or world-time
+changes. Player help, tutorial, safe text, narrow layout and keyboard/focus
+checks ship with the slice.
 
-Useful starting points:
-- `modules/gmcp/gmcp.Char.go`: existing Char.Affects and Char.Skills feeds;
-  effect labels/descriptions and durations already have authoritative sources.
-- `modules/gmcp/gmcp.Company.go`: changed-only extras and reconnect behavior;
-  `modules/company/inventory_data.go`: owned-member presence/read-model pattern.
-- `internal/company/state.go`, `internal/wounds/wounds.go` and
-  `modules/company/wounds.go`: persisted wounds versus live character/mob buffs.
-  Do not assume persisted wounds are represented in the ordinary buff list.
-- `internal/strategy/abilities.go`: actual automatic ability specs and
-  `NoAbilities` strategy toggle.
-- `internal/archetypes/specialists.go`, `modules/archetype/specialists.go`,
-  `modules/archetype/utility.go`, `modules/camping/camp_specialists.go`:
-  actual field/camp eligibility and unlocks.
-- `_datafiles/html/public/static/js/windows/window-company.js` Status and
-  `window-character.js` Skills/Effects: existing browser presentation.
-
-Test real entrypoints for effect apply/remove/expiry, wound duration, dead/away
-members, private ownership and changed-only/reconnect updates. Cover class/rank
-changes, retired skills, disabled automatic strategies and real field/camp
-eligibility. Include responsive rendering, safe text, keyboard/focus, player
-help rendering and tutorial pointer coverage. Obtain independent full-diff
-review, resolve findings with meaningful regressions, then run required final
-checks and record actual results before committing/integrating/pushing.
-Hand over again when 34d completes.
+Independent review resolved missing manual cooking and verified the follow-up.
+The cooking owner shares recipe selection with camp cook; the view consumes
+nothing. A new away-member fixture was corrected to restore room bookkeeping
+before teardown. See [34d verification](2026-10-02-phase-34d-verification.md)
+for actual checks and integration results.
 
 ## Completed invariants
 
@@ -76,6 +54,16 @@ company cargo mode; companion equipment remains command-managed. Focus and
 stale choices survive updates safely. Independent review and follow-up passed,
 as did real command/GMCP/recovery/help tests, all dock browser checks,
 make generate/validate, JS/Lua lint and go test -race ./....
+
+34d: wounds remain separate from ordinary buffs. Light wounds last to fight
+end; lasting wounds need treatment/rest. Combat effects retain combat-round
+units; timed buffs use actual remaining seconds. Owned away live state is
+labelled away; saved wounds are labelled recorded and no saved temporary buffs
+are invented. Foreign charm state is unavailable. Capabilities use actual
+skill/class configuration and strategy/autoskill switches; automatic spells
+honour role, mana and attack reserve independently of NoAbilities. Cooking is
+manual, class-independent, and derives recipes/ranks/ingredients/camp/capacity
+from camping's existing selector.
 
 ## Environment
 

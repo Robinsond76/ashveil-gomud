@@ -274,7 +274,7 @@ type companyFeed struct {
 func newCompanyFeed() *companyFeed {
 	return &companyFeed{
 		last:      map[int]companySent{},
-		extras:    []companyExtra{inventoryExtra(), equipmentExtra(), campExtra(camping.CampStateOf), battleExtra(gatherBattle)},
+		extras:    []companyExtra{inventoryExtra(), equipmentExtra(), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf), battleExtra(gatherBattle)},
 		lastExtra: map[int]map[string]string{},
 		chemistry: company.ChemistryStanding,
 		send: func(userID int, module string, payload []byte) {

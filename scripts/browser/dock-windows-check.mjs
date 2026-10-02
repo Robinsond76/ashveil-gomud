@@ -643,6 +643,54 @@ check(await page.evaluate(() => { const p = document.getElementById('gw-worn'); 
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'gear-editor-narrow.png') }); }
 await page.setViewportSize({ width: 1280, height: 900 });
 
+// Phase 34d: current effects/wounds and capabilities, safe text and focus.
+await page.evaluate(c => window.gmcp('Company', c), company);
+await page.getByRole('tab', { name: 'Company' }).first().click();
+await page.getByRole('tab', { name: 'Status', exact: true }).click();
+const conditions = {
+  leader: { state: 'live', effects: [{ name: xss, description: 'Loses its next action', duration: '2 combat rounds remaining' }],
+    wounds: [{ name: 'a cut to the arm', description: 'Holds back 3 health', duration: 'Until treated or rested away' }],
+    bonuses: [{ name: 'Vigor', description: 'Strength +2', duration: 'Persistent' }] },
+  'companion:1': { state: 'live', effects: [], wounds: [{ name: 'a deep bruise', description: 'Holds back 2 health', duration: 'Until fight ends' }], bonuses: [] },
+  'companion:3': { state: 'away', effects: [], wounds: [], bonuses: [] },
+  'companion:4': { state: 'dead', effects: [], wounds: [], bonuses: [] }
+};
+await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
+check((await status()).includes('2 combat rounds remaining') && (await status()).includes('Until fight ends') && (await status()).includes('Persistent bonuses'), 'Status separates effect duration, wounds and persistent bonuses');
+check((await status()).includes('live effects unknown') && (await status()).includes('Fallen: no active member effects'), 'Status states away and dead conditions honestly');
+check(await page.locator('#party-panel img').count() === 0, 'effect labels render as safe text');
+await page.locator('#party-panel [data-key=leader]').focus();
+conditions.leader.effects = [];
+await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
+check(!(await status()).includes('2 combat rounds remaining') && await page.evaluate(() => document.activeElement.dataset.key === 'leader'), 'removed effect disappears while the member card keeps keyboard focus');
+await page.setViewportSize({ width: 360, height: 760 });
+check(await page.evaluate(() => { const p = document.getElementById('party-panel'); return p.scrollWidth <= p.clientWidth + 1; }), 'conditions fit a narrow Company Status');
+await page.getByRole('tab', { name: 'Character', exact: true }).first().click();
+await page.getByRole('tab', { name: 'Skills', exact: true }).click();
+await page.evaluate(() => window.gmcp('Char.Skills', [{ name: 'protection', level: 3, max_level: 3, maximum: true }]));
+const capabilities = { automatic: [{ name: xss, skill: 'brawling', description: 'Knocks down its foe', when: 'within reach', cooldown: 4, enabled: false, reason: 'Automatic abilities disabled by strategy' }],
+  utility: [{ name: 'Camp Watch', group: 'camp', skill: 'brawling', rank: 2, description: 'spots raiders', enabled: false, reason: 'Autoskill off' },
+    { name: 'Camp Cooking', group: 'camp', mode: 'manual', skill: 'cooking', rank: 2, description: 'seared game meat requires cooking rank 1', enabled: true }] };
+await page.evaluate(c => window.gmcp('Char.Capabilities', c), capabilities);
+const skillsText = () => page.locator('#cw-skills-tab').textContent();
+check((await skillsText()).includes('Trained ranks') && (await skillsText()).includes('Automatic combat abilities') && (await skillsText()).includes('Field capabilities') && (await skillsText()).includes('Camp capabilities'), 'Skills groups ranks, combat, field and camp capabilities');
+check((await skillsText()).includes('Camp Cooking (Manual)') && (await skillsText()).includes('seared game meat requires cooking rank 1'), 'Skills shows manual camp cooking independently of class specialists');
+check((await skillsText()).includes('disabled by strategy') && (await skillsText()).includes('Autoskill off'), 'Skills explains disabled strategies and autoskills');
+check(await page.locator('#cw-capabilities img').count() === 0 && await page.locator('#cw-skills .csk-pip').count() === 3, 'safe capability text and actual trained-rank maximum');
+await page.getByRole('button', { name: 'protection, rank 3 of 3, help' }).focus();
+await page.evaluate(c => window.gmcp('Char.Capabilities', c), capabilities);
+check(await page.evaluate(() => document.activeElement.dataset.skill === 'protection'), 'Skills keeps focus through capability refresh');
+await page.evaluate(() => { window.helpRequests = []; Client.GMCPRequest = (...args) => window.helpRequests.push(args); });
+await page.keyboard.press('Enter');
+check(JSON.stringify(await page.evaluate(() => window.helpRequests)) === '[[' + '"Help","protection"' + ']]', 'trained-rank help works with the keyboard');
+check(await page.evaluate(() => { const p = document.getElementById('cw-skills-tab'); return p.scrollWidth <= p.clientWidth + 1; }), 'Skills fits a narrow viewport');
+await page.getByRole('tab', { name: 'Effects', exact: true }).click();
+check((await page.locator('#cw-effects').textContent()).includes('Wounds') && (await page.locator('#cw-effects').textContent()).includes('Holds back 3 health'), 'Character Effects includes wound mechanics apart from persistent bonuses');
+await page.evaluate(markup => window.gmcp('Char.Affects', {test: {name: markup, description: markup, duration_max: 30, duration_left: 20}}), xss);
+check(await page.locator('#cw-effects img').count() === 0, 'Character Effects never interprets server labels as HTML');
+if (outdir) { await page.screenshot({ path: path.join(outdir, 'phase34d-effects-narrow.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
+
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all dock window checks passed');
