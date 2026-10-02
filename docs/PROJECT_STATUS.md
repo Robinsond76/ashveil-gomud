@@ -12,7 +12,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (34d effects/capabilities; integrated 33h3)
+- **Last updated:** 2026-10-02 (33i2 decisions recorded; 34d effects/capabilities; integrated 33h3)
 - **Latest completed slices:** 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -27,6 +27,16 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**33i2 decisions settled (2026-10-02), not started:** the owner chose
+level-based enemy coordination (low-level groups loosely coordinated),
+light-only enemy wounds unless a template opts out, and 5-game-hour
+recovery for surviving enemies; the assessment names a group's
+coordination. The lead set the tier table, kept the 33i1 risk bands, and
+added harness bounds ahead of 30g6. See the
+[33i design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md)
+("Final implementation decisions: 33i2") and
+[plan](plans/2026-10-02-phase-33i2-coordinated-enemies.md).
 
 **34d complete:** Company Status now shows owned members' active effects and
 wounds with authoritative duration and mechanical meaning, separate from
@@ -368,8 +378,8 @@ delegated to the lead. 33a–33e are complete.
 | 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
 | 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 complete ([plan](plans/2026-10-01-phase-33f3-camp-specialists.md)): camp raids and Camp Watch, Field Smith, Vigil, Forage, `camp cook` |
 | 33g | Company Equipment and Loot | Management/cargo/treasury complete; reviewed and verified. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); presets removed by owner. Catalog delivery remains a separate slice. |
-| 33h | Company Progression, Rewards, and Expedition Continuity | [Design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md) in three slices. 33h1 complete ([plan](plans/2026-10-02-phase-33h1-growth-rewards.md)): derived archetype growth, `company growth` focus, contract quests; `help growth`, `help contracts`. 33h2 complete ([plan](plans/2026-10-02-phase-33h2-readiness-recovery.md)): durable companion vitals, online-only recovery, inn restore, half-vitals resurrection; `help readiness`. 33h3 (relocation) not started |
-| 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles) not started |
+| 33h | Company Progression, Rewards, and Expedition Continuity | [Design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md) in three slices. 33h1 complete ([plan](plans/2026-10-02-phase-33h1-growth-rewards.md)): derived archetype growth, `company growth` focus, contract quests; `help growth`, `help contracts`. 33h2 complete ([plan](plans/2026-10-02-phase-33h2-readiness-recovery.md)): durable companion vitals, online-only recovery, inn restore, half-vitals resurrection; `help readiness`. 33h3 complete ([plan](plans/2026-10-02-phase-33h3-relocation.md)): relocation and separation; `help separation` |
+| 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles): decisions settled 2026-10-02 ([plan](plans/2026-10-02-phase-33i2-coordinated-enemies.md)), not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
