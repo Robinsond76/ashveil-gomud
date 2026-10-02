@@ -244,6 +244,10 @@ func newBrawl(t *testing.T) *brawl {
 	for _, name := range []string{"tamsin reed", "brother oswin", "garrick vane", "ysolde"} {
 		require.Contains(t, b.cmd("company", "summon "+name), "Companion summoned")
 	}
+	// These legacy combat scenarios choose their own placement (or deliberately none).
+	for _, member := range []string{"me", "#1", "#2", "#3", "#4"} {
+		b.cmd("formation", "clear "+member)
+	}
 	// A level-1 mob spawns holding level 2's experience (mobs.NewMobById
 	// sets XPTL(0), which clamps to XPTL(1)), so without kill XP its first
 	// kill still levels it and refills its health. Start the level-1

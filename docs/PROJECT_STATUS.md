@@ -5,8 +5,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (33h1 companion growth and contracts)
-- **Latest completed slices:** 33h1, companion growth and contracts (2026-10-02);
+- **Last updated:** 2026-10-02 (34a integration with 33h1)
+- **Latest completed slices:** 34a, UI/formation; 33h1, companion growth and contracts (2026-10-02);
   33g management (equipment catalog/class still pending),
   33i1, company encounter assessment, and
   33f3, camp specialists (built in parallel); 33f2, expedition specialists; 33f1, skill
@@ -17,6 +17,24 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**34a complete:** shared browser Inventory shows cargo without member worn or
+personal blocks; panel foreground inheritance and two light-theme secondary
+colors corrected. Solo leaders stay at 2,2; recruitment uses deterministic
+vacancies; old formations receive a durable one-time backfill. Last-member loss
+recenters the leader and failed enlistment/migration restores placement.
+[Phase 34 design](designs/2026-10-01-phase-34-company-ui-logistics-design.md)
+and [plan](plans/2026-10-01-phase-34-company-ui-logistics-plan.md).
+Independent review found one integration-coverage gap; resolved with real
+PlayerSpawn, persisted reload, GMCP/text/combat checks, and repeat-login manual
+clear preservation. Follow-up review found no further issues. Verification:
+focused packages, help/tutorial pointers, all dock browser checks including
+4.5:1 load/label contrast in every shipped theme, make generate, make validate,
+JS/Lua lint, and go test -race ./... passed. Initial race run hit the existing
+random-hit edge test; targeted rerun and final full run passed. Integration against 33h1 (ecd3255e)
+passed independent review, focused checks, browser checks, generate/validate,
+JS/Lua lint and the full race suite. 34b–34d remain.
+
 
 **33h1 growth and contracts complete (2026-10-02):** the owner asked to
 continue with 33h ahead of 33g's catalog/Glaivewarden slices. Companion
@@ -103,10 +121,7 @@ delegated to the lead. 33a–33e are complete.
   and [delivery plan](plans/2026-10-01-phase-34-company-ui-logistics-plan.md)
   split delivery into 34a UI/formation, 34b assigned packs and cargo capacity,
   34c equipment editor, and 34d effects/current capabilities. Design and delivery defaults approved by the owner;
-  planning complete. No gameplay
-  implemented and no gameplay verification claimed. Documentation verification:
-  independent review found no actionable issues; relative links and whitespace
-  checks passed.
+  34a implemented and verified as recorded above; 34b–34d remain.
 
 - Owner requested a [weapon poison design](designs/2026-10-01-weapon-poisons-design.md)
   for future implementation on 2026-10-01: shop-bought temporary blade coatings,

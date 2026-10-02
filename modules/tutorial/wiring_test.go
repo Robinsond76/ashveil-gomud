@@ -412,7 +412,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	run(aria, "east", "")
 	assert.Equal(t, 902, template(aria))
 
-	got = run(aria, "formation", "move #2 2 2")
+	got = run(aria, "formation", "move #2 2 3")
 	assert.Equal(t, StageSurvival, stageOf(aria))
 
 	// Survival (27b): walking into the Weather Yard hands over what the

@@ -102,3 +102,5 @@ See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help compan
 
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
+
+Company Inventory shows shared cargo once. Worn gear is in Character Gear.

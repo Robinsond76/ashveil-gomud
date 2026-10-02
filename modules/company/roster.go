@@ -272,7 +272,7 @@ func (m *CompanyModule) hireGenerated(user *users.UserRecord, roomID int, roster
 		m.chargeGold(user, c.Price)
 		text = fmt.Sprintf("You pay %d gold. %s", c.Price, text)
 	}
-	return text + ` Place them with "formation move".`, nil
+	return text + m.placementNotice(user.UserId, companion.ID), nil
 }
 
 // chargeGold takes a paid recruit's price after the company save, then
