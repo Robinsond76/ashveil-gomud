@@ -62,8 +62,8 @@ func TestRegistryDismissRemovesOneAndPrunesItsFormationCells(t *testing.T) {
 	require.NoError(t, err)
 	second, err := registry.Summon(7, 58, allowed58(), 4)
 	require.NoError(t, err)
+	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(second.ID), 1, 2))
 	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(first.ID), 0, 0))
-	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(second.ID), 1, 1))
 
 	assert.True(t, registry.Dismiss(7, first.ID))
 	record, ok := registry.Get(7)
@@ -71,11 +71,11 @@ func TestRegistryDismissRemovesOneAndPrunesItsFormationCells(t *testing.T) {
 	require.Len(t, record.Companions, 1)
 	assert.Equal(t, second.ID, record.Companions[0].ID)
 	assert.Equal(t, company.MemberKey(""), record.Formation.At(0, 0))
-	assert.Equal(t, company.CompanionMemberKey(second.ID), record.Formation.At(1, 1))
+	assert.Equal(t, company.CompanionMemberKey(second.ID), record.Formation.At(1, 2))
 	assert.False(t, registry.Dismiss(7, first.ID), "dismiss is idempotent")
 }
 
-func TestRegistryDismissLastCompanionKeepsLeaderPlacement(t *testing.T) {
+func TestRegistryDismissLastCompanionCentersLeader(t *testing.T) {
 	registry := company.NewRegistry()
 	first, err := registry.Summon(7, 58, allowed58(), 4)
 	require.NoError(t, err)
@@ -85,7 +85,7 @@ func TestRegistryDismissLastCompanionKeepsLeaderPlacement(t *testing.T) {
 	record, ok := registry.Get(7)
 	require.True(t, ok, "a leader placement keeps the record alive")
 	assert.Empty(t, record.Companions)
-	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(2, 1))
+	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(1, 1))
 }
 
 func TestRegistryDismissLastCompanionKeepsHighWaterMark(t *testing.T) {
@@ -156,12 +156,13 @@ func TestRegistryPutPreservesExplicitHighWaterMark(t *testing.T) {
 	assert.Equal(t, 9, record.NextCompanionID)
 }
 
-func TestRegistryDismissAllKeepsLeaderPlacement(t *testing.T) {
+func TestRegistryDismissAllCentersLeader(t *testing.T) {
 	registry := company.NewRegistry()
 	first, err := registry.Summon(7, 58, allowed58(), 4)
 	require.NoError(t, err)
 	second, err := registry.Summon(7, 58, allowed58(), 4)
 	require.NoError(t, err)
+	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(second.ID), 2, 2))
 	require.NoError(t, registry.PlaceMember(7, company.LeaderMemberKey, 0, 0))
 	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(first.ID), 0, 1))
 	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(second.ID), 0, 2))
@@ -170,7 +171,7 @@ func TestRegistryDismissAllKeepsLeaderPlacement(t *testing.T) {
 	record, ok := registry.Get(7)
 	require.True(t, ok)
 	assert.Empty(t, record.Companions)
-	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(0, 0))
+	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(1, 1))
 	assert.Equal(t, company.MemberKey(""), record.Formation.At(0, 1))
 	assert.Equal(t, company.MemberKey(""), record.Formation.At(0, 2))
 }
@@ -224,13 +225,13 @@ func TestRegistrySummonClampsCapToOne(t *testing.T) {
 
 func TestRegistryPutPrunesStaleFormationKeys(t *testing.T) {
 	registry := company.NewRegistry()
-	require.NoError(t, registry.PlaceMember(7, company.LeaderMemberKey, 0, 0))
+	require.NoError(t, registry.PlaceMember(7, company.LeaderMemberKey, 1, 1))
 	record, _ := registry.Get(7)
-	record.Formation[1][1] = company.CompanionMemberKey(99)
+	record.Formation[0][0] = company.CompanionMemberKey(99)
 	registry.Put(record)
 	got, _ := registry.Get(7)
-	assert.Equal(t, company.MemberKey(""), got.Formation.At(1, 1), "Put prunes keys with no matching member")
-	assert.Equal(t, company.LeaderMemberKey, got.Formation.At(0, 0))
+	assert.Equal(t, company.MemberKey(""), got.Formation.At(0, 0), "Put prunes keys with no matching member")
+	assert.Equal(t, company.LeaderMemberKey, got.Formation.At(1, 1))
 }
 
 func TestRegistrySwapAndClearMembers(t *testing.T) {
@@ -263,7 +264,7 @@ func TestRegistrySummonClampsCapToPartyMaximum(t *testing.T) {
 
 func TestRegistryPutKeepsFirstDuplicateFormationOccupant(t *testing.T) {
 	registry := company.NewRegistry()
-	record := company.Record{LeaderUserID: 7}
+	record := company.Record{LeaderUserID: 7, Companions: []company.Companion{{ID: 1}}}
 	record.Formation[0][0] = company.LeaderMemberKey
 	record.Formation[1][1] = company.LeaderMemberKey
 	registry.Put(record)

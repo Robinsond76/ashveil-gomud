@@ -302,7 +302,7 @@ func (m *CompanyModule) recruit(user *users.UserRecord, roomID int, selector str
 		m.chargeGold(user, price)
 		text = fmt.Sprintf("You pay %d gold. %s", price, text)
 	}
-	return text + ` Place them with "formation move".`, nil
+	return text + m.placementNotice(user.UserId, companion.ID), nil
 }
 
 func nativeSaveUser(user *users.UserRecord) error { return users.SaveUserAtomic(*user) }

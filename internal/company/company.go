@@ -84,7 +84,8 @@ type AssetOperation struct {
 }
 
 type Record struct {
-	AssetOperation *AssetOperation `yaml:"asset_operation,omitempty"`
+	FormationVersion int             `yaml:"formation_version,omitempty"`
+	AssetOperation   *AssetOperation `yaml:"asset_operation,omitempty"`
 
 	MercyPending    []MercyEffect `yaml:"mercy_pending,omitempty"`
 	LeaderUserID    int           `yaml:"leader_user_id"`
@@ -226,6 +227,9 @@ func (r *Registry) Put(record Record) {
 	record.NextCompanionID = normalizeNextCompanionID(record)
 	valid := validMemberKeys(record)
 	record.Formation.Prune(valid)
+	if len(record.Companions) == 0 {
+		_ = record.Formation.Place(LeaderMemberKey, 1, 1)
+	}
 	record.Service = pruneService(record.Service, valid)
 	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 && len(record.Lost) == 0 && len(record.Rosters) == 0 && len(record.MercyPending) == 0 && record.AssetOperation == nil {
 		delete(r.Companies, record.LeaderUserID)
@@ -243,7 +247,10 @@ func (r *Registry) ReserveNextCompanionID(leaderUserID, nextID int) error {
 	if nextID < 1 {
 		return ErrInvalidCompanionID
 	}
-	record, _ := r.Get(leaderUserID)
+	record, exists := r.Get(leaderUserID)
+	if !exists && nextID == 1 {
+		return nil
+	}
 	record.LeaderUserID = leaderUserID
 	if record.NextCompanionID < nextID {
 		record.NextCompanionID = nextID
@@ -290,6 +297,9 @@ func (r *Registry) Summon(leaderUserID, mobTemplateID int, allowed map[int]struc
 	companion := Companion{ID: record.NextCompanionID, MobTemplateID: mobTemplateID}
 	record.NextCompanionID++
 	record.Companions = append(record.Companions, companion)
+	record.BackfillFormation()
+	record.Formation.PlaceVacant(LeaderMemberKey)
+	record.Formation.PlaceVacant(CompanionMemberKey(companion.ID))
 	r.Put(record)
 	return companion, nil
 }
@@ -397,6 +407,9 @@ func (r *Registry) PlaceMember(leaderUserID int, key MemberKey, row, col int) er
 	if !validMemberKeys(record)[key] {
 		return ErrUnknownMember
 	}
+	if len(record.Companions) == 0 && key == LeaderMemberKey && (row != 1 || col != 1) {
+		return ErrSoloFormation
+	}
 	if record.isDead(key) {
 		return ErrMemberDead
 	}
@@ -432,6 +445,9 @@ func (r *Registry) ClearMember(leaderUserID int, key MemberKey) error {
 	record, ok := r.Get(leaderUserID)
 	if !ok || !validMemberKeys(record)[key] {
 		return ErrUnknownMember
+	}
+	if len(record.Companions) == 0 && key == LeaderMemberKey {
+		return ErrSoloFormation
 	}
 	if _, _, found := record.Formation.Find(key); !found {
 		return ErrUnknownMember

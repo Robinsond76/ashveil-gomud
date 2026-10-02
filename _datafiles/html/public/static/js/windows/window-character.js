@@ -41,6 +41,7 @@
     injectStyles(`
         /* ---- shared tab chrome ---- */
         #character-window {
+            color: var(--t-text);
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -290,7 +291,7 @@
         }
 
         #cw-quests .cq-empty {
-            color: var(--t-text-dim);
+            color: var(--t-text-secondary);
             font-size: 0.78em;
             font-style: italic;
             text-align: center;
@@ -419,7 +420,7 @@
         }
 
         #cw-skills .csk-empty {
-            color: var(--t-text-dim);
+            color: var(--t-text-secondary);
             font-size: 0.78em;
             font-style: italic;
             text-align: center;
@@ -486,7 +487,7 @@
         }
 
         #cw-jobs .cjb-empty {
-            color: var(--t-text-dim);
+            color: var(--t-text-secondary);
             font-size: 0.78em;
             font-style: italic;
             text-align: center;
@@ -579,7 +580,7 @@
 
         .cw-affect-empty {
             grid-column: 1 / -1;
-            color: var(--t-text-dim);
+            color: var(--t-text-secondary);
             font-size: 0.76em;
             font-style: italic;
             text-align: center;

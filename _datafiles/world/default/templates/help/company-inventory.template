@@ -20,7 +20,9 @@ It shows:
 For one companion in full, type <ansi fg="command">company gear [member]</ansi>; for the load and
 capacity split, <ansi fg="command">cargo</ansi>.
 
-In the web client, this is the Company tab's Inventory, where clicking an
+In the web client, Company Inventory shows shared Cargo, treasury, supplies
+and horses. Worn equipment lives in Character Gear; use company gear for
+a companion. Clicking a cargo
 item sends these commands for you (<ansi fg="command">help webclient</ansi>).
 
 See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help company meal</ansi>,

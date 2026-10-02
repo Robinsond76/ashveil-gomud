@@ -210,6 +210,7 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 	status := run(user, "company", "status")
 	assert.Contains(t, status, "#1 Hild Marrow, level 3,")
 	assert.Contains(t, status, "#2 Wren, level 1,")
+	run(user, "formation", "move wren 2 3")
 	run(user, "formation", "move hild 1 1")
 	run(user, "formation", "move wren 1 2")
 	formation := run(user, "formation", "")
