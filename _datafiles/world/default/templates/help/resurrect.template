@@ -6,7 +6,9 @@ them raised. Only the time you're logged in counts, and you're warned
 when half an hour is left.
 
 A church (in a city) or a village shaman can raise them, if the keeper is
-there. Coming back costs the companion one level (never below 1). If time
+there. Coming back costs the companion one level (never below 1), and
+they wake with no wounds, at half their health and half their mana
+(<ansi fg="command">help readiness</ansi>). If time
 runs out, the companion is lost for good.
 
 <ansi fg="yellow">Usage:</ansi>

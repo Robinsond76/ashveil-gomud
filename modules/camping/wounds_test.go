@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"github.com/stretchr/testify/assert"
@@ -103,4 +104,52 @@ func TestUnsavedRestHealsNoWounds(t *testing.T) {
 	e.store.saveErr = nil
 	e.module.onNewRound(events.NewRound{RoundNumber: 2})
 	assert.Empty(t, user.Character.Wounds)
+}
+
+// Phase 33h2: an inn stay restores the leader and the companions to their
+// wound limit and full mana, after the wounds knit; a camp rest doesn't.
+func TestInnStayRestoresVitals(t *testing.T) {
+	e, user := heroEnv(t)
+	supplies(e, 0, 0)
+	for _, c := range []*characters.Character{user.Character, e.companion} {
+		c.Validate()
+		c.Health, c.Mana = 1, 0
+	}
+	e.companion.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "leg", Points: 4}}
+	e.completeInn(t, user)
+	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	for _, c := range []*characters.Character{user.Character, e.companion} {
+		assert.Equal(t, c.HealthMax.Value, c.Health, "%s is restored to full: the wound knit first", c.Name)
+		assert.Equal(t, c.ManaMax.Value, c.Mana, c.Name)
+	}
+}
+
+func TestCampRestRestoresNoVitals(t *testing.T) {
+	e, user := heroEnv(t)
+	supplies(e, 0, 0)
+	for _, c := range []*characters.Character{user.Character, e.companion} {
+		c.Validate()
+		c.Health, c.Mana = 1, 0
+	}
+	e.completeCamp(t, user)
+	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	for _, c := range []*characters.Character{user.Character, e.companion} {
+		assert.Equal(t, 1, c.Health, c.Name)
+		assert.Equal(t, 0, c.Mana, c.Name)
+	}
+}
+
+// A stay that couldn't be saved restores nothing yet: it retries.
+func TestUnsavedInnStayRestoresNoVitals(t *testing.T) {
+	e, user := heroEnv(t)
+	supplies(e, 0, 0)
+	e.companion.Validate()
+	e.companion.Health = 1
+	e.completeInn(t, user)
+	e.store.saveErr = assert.AnError
+	e.module.onNewRound(events.NewRound{RoundNumber: 1})
+	assert.Equal(t, 1, e.companion.Health)
+	e.store.saveErr = nil
+	e.module.onNewRound(events.NewRound{RoundNumber: 2})
+	assert.Equal(t, e.companion.HealthMax.Value, e.companion.Health)
 }

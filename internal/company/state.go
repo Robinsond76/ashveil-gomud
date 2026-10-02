@@ -19,6 +19,35 @@ type MemberState struct {
 	// Wounds are the companion's wounds (Phase 30b), snapshotted from the
 	// live mob with its gear and put back on every spawn.
 	Wounds []wounds.Wound `yaml:"wounds,omitempty"`
+	// Vitals are its health and mana (Phase 33h2), snapshotted with its
+	// gear so a respawn doesn't refill it. Nil (a record from before 33h2)
+	// spawns full once.
+	Vitals *Vitals `yaml:"vitals,omitempty"`
+}
+
+// Vitals are a companion's saved health and mana (Phase 33h2). Percent,
+// when set, stands for that share of the limits instead (a resurrection),
+// resolved at the next spawn so a crash before it can't refill anyone.
+type Vitals struct {
+	Health  int `yaml:"health"`
+	Mana    int `yaml:"mana"`
+	Percent int `yaml:"percent,omitempty"`
+}
+
+// Resolve is the health and mana a companion spawns with, against its
+// current wound limit and mana maximum. Saved points are kept as points,
+// never rescaled, so a raised maximum grants nothing; a lowered one clamps.
+// A living companion never spawns below 1 health.
+func (v *Vitals) Resolve(limit, manaMax int) (health, mana int) {
+	limit, manaMax = max(limit, 1), max(manaMax, 0)
+	switch {
+	case v == nil:
+		return limit, manaMax
+	case v.Percent > 0:
+		pct := min(v.Percent, 100)
+		return max(1, limit*pct/100), manaMax * pct / 100
+	}
+	return min(max(v.Health, 1), limit), min(max(v.Mana, 0), manaMax)
 }
 
 func cloneItem(i items.Item) items.Item {
@@ -36,6 +65,10 @@ func cloneItem(i items.Item) items.Item {
 func (s MemberState) Clone() MemberState {
 	out := s
 	out.Wounds = append([]wounds.Wound(nil), s.Wounds...)
+	if s.Vitals != nil {
+		v := *s.Vitals
+		out.Vitals = &v
+	}
 	for _, slot := range characters.AllSlots() {
 		if itm := s.Equipment.Get(slot); itm != nil {
 			out.Equipment.Set(slot, cloneItem(*itm))

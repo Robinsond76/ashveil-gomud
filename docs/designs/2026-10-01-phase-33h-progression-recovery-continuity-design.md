@@ -90,6 +90,40 @@ the standing 2026-10-01 authority to take the lead's recommended defaults.
 - **Migration:** none needed. Old companions take their archetype's
   weights at their next spawn; old quests without the field are personal.
 
+## Final implementation decisions: 33h2 (2026-10-02)
+
+The lead explained the defaults below in plain language and the owner
+approved them on 2026-10-02 ("All this looks good carry on").
+
+- **Durable vitals.** A companion's health and mana join its saved state
+  (`MemberState.Vitals`), captured by the same 22b snapshot seams as gear
+  and wounds (autosave, shutdown, copyover, the leader's logout, a stale
+  mob's replacement). Every respawn (login, copyover, crash recovery,
+  re-attachment) puts them back. A crash restores the last saved values,
+  the same accepted window gear already has.
+- **Old saves:** a record with no vitals spawns full (to its wound limit)
+  once, as it would have before, and is tracked from its next snapshot.
+- **Changed maxima:** saved values are absolute points, clamped to the
+  new wound limit and mana maximum, and a living companion never spawns
+  below 1 health. Never scaled by a percentage. A companion's live level-up
+  keeps its health and mana (GoMud's level-up refill no longer applies to
+  companions; players are unchanged).
+- **Online recovery:** out of a battle and with the leader online, a
+  living companion regains health on the players' beat (every third round,
+  `HealthPerRound`), stopping at its wound limit, beside 32d's mana.
+  Exposure's lethal damage now outpaces a companion's regeneration too.
+- **No offline recovery:** elapsed real time restores nothing, and no
+  world time advances.
+- **Inn stay:** when a finished stay's Well Rested is granted, after its
+  wounds knit, the leader and every live companion with them are restored
+  to their wound limit and full mana. Camp rests are unchanged.
+- **Resurrection:** a resurrected companion returns at half its health
+  limit (at least 1) and half its mana, matching a player's church waking.
+  Stored as a percentage until the first spawn resolves it, so a crash in
+  between cannot refill it.
+- **Unchanged:** light wounds and battle-only effects still end on a
+  respawn; morale flight's return keeps its own saved health and mana.
+
 ## Acceptance criteria and verification
 
 Real combat/quest rewards cover personal versus contract cases and absent members; level/death/regain loops do not mint points; logout/login, re-summon, crash/save failure, and copyover preserve readiness; changed maxima/missing old-save fields migrate safely; portals, quest moves, travel, death, and tutorial relocation preserve exact member/item/cargo ownership and pending returns.
