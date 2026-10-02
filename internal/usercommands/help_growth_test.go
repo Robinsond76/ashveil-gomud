@@ -15,7 +15,7 @@ func TestGrowthAndContractsHelp(t *testing.T) {
 	keywords.LoadAliases()
 	expected := map[string][]string{
 		"growth":     {"company growth [member] [stat]", "balanced", "strength 4, vitality 3, speed 2, perception 1", "adds 2", "never an extra one", "help contracts"},
-		"contracts":  {"Rodric's Rats", "15000", "standing in your room", "pays once", "help growth"},
+		"contracts":  {"Rodric's Rats", "15000", "standing in your room", "experience scale", "help growth"},
 		"company":    {"help growth", "help contracts", "company growth"},
 		"experience": {"help growth", "help contracts"},
 		"quests":     {"help contracts"},

@@ -110,5 +110,5 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 ## Phase 33h1: growth and contracts (`growth.go`, `runtime.go`)
 
 - A companion's training is **derived, never saved**: the template's training plus `characters.StatPointsAtLevel(level)` dealt by `domain.Deal` over its archetype's `Growth` weights (`archetypes.CompanionGrowth`) and its `GrowthFocus` (+2). `Runtime.Spawn` takes the weights and retrains before vitals are set; `Runtime.Retrain` re-deals a live mob and only clamps health and mana. Every level change must re-derive (spawn, `RetrainCompanion` after a live level-up in `mobcommands.AwardCompanyXP`, `company archetype`, `company growth`); never call `AutoTrain` on a tracked companion, or the stats change at the next respawn.
-- `company growth [member stat|balanced]` saves the focus first, then retrains; refused in a battle.
+- `company growth [member stat|balanced]` sets the focus in memory only (it reaches disk at the next 22b seam; never add a save here), then retrains; refused in a battle. The stat is the last word, so member names may have spaces.
 - Contracts: `rewards.companyexperience` on a quest; the quest hook pays through `mobcommands.AwardCompanyXP` (the 32e presence rule). `wiring_growth_test.go` covers both in the brawl world.

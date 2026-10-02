@@ -65,9 +65,12 @@ func (m *CompanyModule) growth(user *users.UserRecord, args []string) string {
 	if len(args) == 0 {
 		return m.growthView(user.UserId)
 	}
-	if len(args) != 2 {
+	if len(args) < 2 {
 		return growthUsage
 	}
+	// The stat is the last word, so a member's full name may have spaces.
+	member, stat := strings.Join(args[:len(args)-1], " "), args[len(args)-1]
+	args = []string{member, stat}
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
@@ -102,11 +105,11 @@ func (m *CompanyModule) growth(user *users.UserRecord, args []string) string {
 			record.Companions[i].GrowthFocus = focus
 		}
 	}
+	// In memory only: the company file also carries in-memory gear
+	// snapshots, so it is written only at the 22b seams. The focus reaches
+	// disk with the next save; a crash before then only loses the focus,
+	// and training is re-derived from whatever focus is on disk.
 	m.registry.Put(record)
-	if err := m.save(); err != nil {
-		m.registry.Put(before)
-		return err.Error()
-	}
 	m.retrain(user.UserId, companion.ID)
 	if focus == "" {
 		return fmt.Sprintf("%s grows by %s training alone now; their points are dealt again at once.", name, archetypeLabel(companion.Archetype))

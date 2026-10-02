@@ -11,12 +11,16 @@ your company, and standing in your room when you turn it in, the same as
 for experience from a kill. A companion who is away, fallen, or fled
 earns nothing, even if they helped along the way, so bring everyone back
 before you finish. The quest stays in your own journal
-(<ansi fg="command">quests</ansi>), and it pays once.
+(<ansi fg="command">quests</ansi>), and pays when you complete it, like
+its other rewards.
 
 <ansi fg="yellow-bold">Contracts as the world ships</ansi>
 
   Rodric's Rats         1000 experience for each companion
   The King's Shadow     15000 experience for each companion
+
+These are the rewards before the world's experience scale, which
+applies to companions as it does to you.
 
 Enough experience is a new level, and the companion's points are dealt
 by their archetype (<ansi fg="command">help growth</ansi>). See also

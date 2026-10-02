@@ -91,7 +91,7 @@ func TestCompanyGrowthCommandSetsAFocusAndRetrains(t *testing.T) {
 	assert.Contains(t, view, "weights: strength 4, speed 2, vitality 3, perception 1")
 	assert.Contains(t, view, "focus balanced")
 
-	assert.Contains(t, b.cmd("company", "growth tamsin vit"), "Tamsin Reed favours vitality now")
+	assert.Contains(t, b.cmd("company", "growth tamsin reed vit"), "Tamsin Reed favours vitality now", "a full name with a space")
 	record, _ := module.registry.Get(7)
 	assert.Equal(t, "vitality", record.Companions[0].GrowthFocus)
 	tamsin := b.companion(1)
@@ -221,7 +221,7 @@ func TestAContractPaysTheCompanionsWithTheLeader(t *testing.T) {
 	assert.Equal(t, leaderBefore+50, b.aria.Character.Experience)
 
 	out = completeQuest(b, "9301")
-	assert.Contains(t, out, "Your company shares the contract: 300 experience for each companion with you.")
+	assert.Contains(t, out, "Your company shares the contract: 300 experience (before scaling) for each companion with you.")
 	for id := 1; id <= 3; id++ {
 		assert.Equal(t, xp[id]+300, b.companion(id).Character.Experience, "#%d with the leader earns the contract in full", id)
 	}
@@ -232,4 +232,16 @@ func TestAContractPaysTheCompanionsWithTheLeader(t *testing.T) {
 	again := b.companion(1).Character.Experience
 	assert.NotContains(t, completeQuest(b, "9301"), "shares the contract")
 	assert.Equal(t, again, b.companion(1).Character.Experience)
+}
+
+// TestCompanyArchetypeRetrainsTheLiveCompanion: giving a companion its
+// archetype deals its points by that archetype at once.
+func TestCompanyArchetypeRetrainsTheLiveCompanion(t *testing.T) {
+	b := growthBrawl(t)
+	garrick := b.companion(3)
+	garrick.Character.Level = 8
+	require.True(t, module.RetrainCompanion(garrick.InstanceId))
+	require.Equal(t, wantTraining(t, garrick, domain.EvenGrowth), trainingOf(&garrick.Character))
+	assert.Contains(t, b.cmd("company", "archetype garrick warrior"), "is now a Warrior")
+	assert.Equal(t, wantTraining(t, garrick, warriorGrowth), trainingOf(&garrick.Character))
 }

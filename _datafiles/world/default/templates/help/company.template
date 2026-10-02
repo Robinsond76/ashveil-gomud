@@ -112,6 +112,11 @@ anyone lost.
   what they can be trained to do and which utility skills they can use
   for the company (<ansi fg="command">help specialists</ansi>).
 
+  <ansi fg="command">company growth [member] [stat]</ansi>
+  Favour one stat as their level's points are dealt, or
+  <ansi fg="command">balanced</ansi> to clear it; <ansi fg="command">company growth</ansi> alone
+  shows everyone's (<ansi fg="command">help growth</ansi>).
+
 <ansi fg="yellow-bold">Tactics</ansi>
 
   <ansi fg="command">company tactics</ansi>

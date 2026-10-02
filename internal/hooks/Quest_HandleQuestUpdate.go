@@ -139,7 +139,7 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		if questInfo.Rewards.CompanyExperience > 0 {
 			paid, lines := mobcommands.AwardCompanyXP(questUser.UserId, questUser.Character, questInfo.Rewards.CompanyExperience, questUser.Character.RoomId)
 			if paid > 0 {
-				questUser.SendText(fmt.Sprintf(`Your company shares the contract: <ansi fg="yellow-bold">%d experience</ansi> for each companion with you.`, questInfo.Rewards.CompanyExperience))
+				questUser.SendText(fmt.Sprintf(`Your company shares the contract: <ansi fg="yellow-bold">%d experience</ansi> (before scaling) for each companion with you.`, questInfo.Rewards.CompanyExperience))
 			}
 			for _, line := range lines {
 				questUser.SendText(line)

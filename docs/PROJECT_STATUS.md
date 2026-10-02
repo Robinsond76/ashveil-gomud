@@ -5,8 +5,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (33g cargo, treasury, equipment, and loot management)
-- **Latest completed slices:** 33g management (equipment catalog/class still pending),
+- **Last updated:** 2026-10-02 (33h1 companion growth and contracts)
+- **Latest completed slices:** 33h1, companion growth and contracts (2026-10-02);
+  33g management (equipment catalog/class still pending),
   33i1, company encounter assessment, and
   33f3, camp specialists (built in parallel); 33f2, expedition specialists; 33f1, skill
   and charm retirement; 33e,
@@ -16,6 +17,17 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**33h1 growth and contracts complete (2026-10-02):** the owner asked to
+continue with 33h ahead of 33g's catalog/Glaivewarden slices. Companion
+training is now derived from level by archetype growth weights plus an
+optional focus (`company growth`), re-derived on every spawn and level
+change so no level loop mints points; quests with `companyexperience` are
+contracts paying every companion with the leader. `help growth`,
+`help contracts`. See the [33h design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md)
+("Final implementation decisions: 33h1") and
+[plan](plans/2026-10-02-phase-33h1-growth-rewards.md). 33h2 (readiness and
+recovery) is next, then 33h3 (relocation).
 
 **33g management complete:** pooled treasury (owner choice), shared
 instance-preserving cargo, explicit equipment assignment/removal/comparison,
@@ -231,11 +243,35 @@ delegated to the lead. 33a–33e are complete.
 | 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
 | 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 complete ([plan](plans/2026-10-01-phase-33f3-camp-specialists.md)): camp raids and Camp Watch, Field Smith, Vigil, Forage, `camp cook` |
 | 33g | Company Equipment and Loot | Management/cargo/treasury complete; reviewed and verified. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); presets removed by owner. Catalog/Glaivewarden remain separate slices. |
-| 33h | Company Progression, Rewards, and Expedition Continuity | Future design: [proposal](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md); implementation not started |
+| 33h | Company Progression, Rewards, and Expedition Continuity | [Design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md) in three slices. 33h1 complete ([plan](plans/2026-10-02-phase-33h1-growth-rewards.md)): derived archetype growth, `company growth` focus, contract quests; `help growth`, `help contracts`. 33h2 (readiness/recovery) and 33h3 (relocation) not started |
 | 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles) not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33h1: companion growth and contracts (2026-10-02)
+
+- **Why:** owner requested 33h next; open defaults chosen by the lead under
+  the 2026-10-01 standing authority and recorded in the design.
+- **Delivered:** `domain.Deal` (prefix-stable weighted rotation) over
+  per-archetype `Growth` weights in the archetype config; training derived
+  from `characters.StatPointsAtLevel` on spawn, live level-up
+  (`company.RetrainCompanion` replaces `AutoTrain` for tracked companions),
+  `company archetype`, and `company growth [member] [stat|balanced]`
+  (+2 focus, in memory until the next save seam, refused in battle).
+  `rewards.companyexperience` makes a quest a contract; Rodric's Rats and
+  The King's Shadow ship as contracts. Also fixed the 32e award retraining
+  every later companion once any companion levelled. No save migration:
+  training is never saved.
+- **Independent full-diff review:** no blocking findings. Accepted and
+  fixed: `company growth` saved the company file outside the 22b seams
+  (now in memory only, regression test); missing real-entry coverage for
+  `company archetype` retraining and resurrection weights (tests added);
+  contract message and help ignored the experience scale (now say "before
+  scaling"); member names with spaces refused (stat is the last word);
+  `company growth` missing from the company page's command list; "pays
+  once" overstated (reworded). Rejected: none.
+- **Verification:** see the 33h1 check line below.
 
 ### Phase 33g: cargo, treasury, equipment, and loot management (2026-10-01)
 
