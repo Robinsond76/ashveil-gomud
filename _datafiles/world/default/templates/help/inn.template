@@ -36,7 +36,8 @@ the world clock, and weather never spoils it.
   whatever time is left. A finished stay also knits every wound of you
   and the companions with you (<ansi fg="command">help wounds</ansi>). Outside a fight, the
   Waymark Inn's physician offers to close whatever wounds <ansi fg="command">heal wounds</ansi>
-  leaves, for gold.
+  leaves, for gold. Then you and every companion with you are restored
+  to full health and mana (<ansi fg="command">help readiness</ansi>).
 
 Only one room is bought per stay, for your whole company; there's
 nothing to strike or break afterward.

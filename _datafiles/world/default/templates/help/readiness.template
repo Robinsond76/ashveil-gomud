@@ -1,0 +1,48 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">readiness</ansi>
+
+Your companions keep their condition, just as you do. A companion who
+ends a fight on 8 of 60 health is still on 8 when you next log in.
+Nothing refills them for free: not logging out, not a server restart, not
+a level.
+
+<ansi fg="yellow-bold">What they keep</ansi>
+
+  Health and mana, lasting wounds (<ansi fg="command">help wounds</ansi>), level, and gear all
+  carry over when you log out and back in, and across a server restart.
+  If the server crashes, they come back as they were at the last
+  automatic save, a few minutes before. Light wounds and the effects of a
+  fight end with it.
+
+  A companion who earns a level keeps the health and mana it had. A
+  higher maximum just gives it more room to recover into. Whenever a
+  companion's maximum, or its wound limit, falls below its health, its
+  health falls to fit. A living companion never comes back below 1 health.
+
+  A companion you had before this rule came in starts full once, then
+  keeps its condition from then on.
+
+<ansi fg="yellow-bold">How they recover</ansi>
+
+  <ansi fg="yellow">On the move.</ansi> Out of a fight, while you're logged in, companions regain
+  health and mana just as you do: a little every few seconds, up to their
+  wound limit. Nobody recovers while you're logged out, and no game time
+  passes for it.
+
+  <ansi fg="yellow">Healers and packs.</ansi> <ansi fg="command">heal wounds</ansi> spends your clerics' mana and your
+  bandages and splints (<ansi fg="command">help heal</ansi>).
+
+  <ansi fg="yellow">An inn.</ansi> A finished night at an inn knits every wound and restores you
+  and every companion with you to full health and mana (<ansi fg="command">help inn</ansi>).
+
+  <ansi fg="yellow">A camp.</ansi> A camp rest knits wounds with your splints and bandages, but
+  doesn't restore health or mana itself: the company recovers on the
+  move while it rests (<ansi fg="command">help camp</ansi>).
+
+<ansi fg="yellow-bold">Death and flight</ansi>
+
+  A companion raised by <ansi fg="command">resurrect</ansi> comes back with no wounds, at half its
+  health and half its mana (<ansi fg="command">help resurrect</ansi>). One who fled a battle
+  comes back as hurt as when it ran (<ansi fg="command">help morale</ansi>).
+
+<ansi fg="command">status</ansi>, <ansi fg="command">company status</ansi>, and <ansi fg="command">heal</ansi> show each member's health. See also:
+<ansi fg="command">help company</ansi>, <ansi fg="command">help health</ansi>.

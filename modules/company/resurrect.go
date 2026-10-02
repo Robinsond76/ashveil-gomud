@@ -13,6 +13,11 @@ import (
 
 var _ domain.ResurrectionProvider = (*CompanyModule)(nil)
 
+// resurrectVitalsPct is the share of its health limit and mana a
+// resurrected companion wakes with (Phase 33h2), matching modules/death's
+// church waking for players.
+const resurrectVitalsPct = 50
+
 // DeadCompanions implements company.ResurrectionProvider.
 func (m *CompanyModule) DeadCompanions(leaderUserID int) []domain.DeadCompanionView {
 	if m.persistenceAvailable() != nil {
@@ -122,6 +127,9 @@ func (m *CompanyModule) ResurrectCompanion(leaderUserID int, selector string, ro
 	}
 	state.Level = max(state.Level-1, 1)
 	state.Experience = 0
+	// Phase 33h2: it wakes at half its health and mana, as a player does
+	// in the church; the share resolves at the spawn.
+	state.Vitals = &domain.Vitals{Percent: resurrectVitalsPct}
 	op := c.Death.OpID
 	if err := m.registry.SetState(leaderUserID, c.ID, state); err != nil {
 		return domain.ResurrectionResult{}, err

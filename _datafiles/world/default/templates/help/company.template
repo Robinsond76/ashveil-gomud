@@ -12,13 +12,20 @@ Companions grow. When a kill earns you experience, every companion who is
 alive and standing in the room where the enemy fell earns the same amount,
 in full: nothing is split, so a bigger company never shrinks your share.
 A companion who is away, fallen, or still waiting to rejoin earns
-nothing. Enough experience is a new level: the companion is healed and
-you're told. Companions have no level cap, and no points for you to
+nothing. Enough experience is a new level, and you're told; the
+companion keeps the health and mana it had (<ansi fg="command">help readiness</ansi>). Companions have no level cap, and no points for you to
 spend: their archetype deals each level's stat points, and
 <ansi fg="command">company growth</ansi> sets a focus (<ansi fg="command">help growth</ansi>).
 A contract quest also pays every companion with you when you turn it in
 (<ansi fg="command">help contracts</ansi>). <ansi fg="command">experience</ansi> lists each companion's level and
 progress below your own (<ansi fg="command">help experience</ansi>).
+
+<ansi fg="yellow-bold">Readiness</ansi>
+
+Companions keep their health, mana, and wounds when you log out, across a
+restart, and through a crash (as of the last save): nothing refills them
+for free. Out of a fight they recover as you do while you're logged in,
+and a night at an inn restores everyone (<ansi fg="command">help readiness</ansi>).
 
 <ansi fg="yellow-bold">Finding companions</ansi>
 

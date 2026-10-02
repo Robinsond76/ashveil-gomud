@@ -165,7 +165,8 @@ func trainingOf(c *characters.Character) [6]int {
 }
 
 // applyState puts a saved state on a freshly spawned mob: its level,
-// experience, gold, and copies of its gear in place of the template's.
+// experience, gold, copies of its gear in place of the template's, its
+// lasting wounds, and its health and mana.
 func applyState(mob *mobs.Mob, state domain.MemberState) {
 	saved := state.Clone()
 	if saved.Level > 0 {
@@ -184,11 +185,11 @@ func applyState(mob *mobs.Mob, state domain.MemberState) {
 	// respawn, so light ones don't), and its health stops at the limit.
 	mob.Character.Wounds = wounds.CloseLight(saved.Wounds)
 	mob.Character.Validate(true)
-	mob.Character.Health = mob.Character.HealthLimit()
-	mob.Character.Mana = mob.Character.ManaMax.Value
+	// Phase 33h2: its saved health and mana, held to today's limits.
+	mob.Character.Health, mob.Character.Mana = saved.Vitals.Resolve(mob.Character.HealthLimit(), mob.Character.ManaMax.Value)
 }
 
-// Snapshot reads a live mob's level and gear.
+// Snapshot reads a live mob's level, gear, wounds, and vitals.
 func (nativeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 	mob := mobs.GetInstance(instanceID)
 	if mob == nil {
@@ -201,6 +202,7 @@ func (nativeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 		Items:      mob.Character.Items,
 		Gold:       mob.Character.Gold,
 		Wounds:     mob.Character.Wounds,
+		Vitals:     &domain.Vitals{Health: mob.Character.Health, Mana: mob.Character.Mana},
 	}
 	return state.Clone(), true
 }

@@ -29,6 +29,10 @@ strategy (<ansi fg="command">help strategy</ansi>). An inn stay closes whatever 
 rest closes a broken bone for each splint, and a cut or puncture for each
 bandage, you carry (<ansi fg="command">help wounds</ansi>).
 
+Out of a fight, everyone also recovers slowly on their own while you're
+logged in; companions keep their health between sessions
+(<ansi fg="command">help readiness</ansi>).
+
 Clerics can also cast the spells by hand: <ansi fg="command">cast heal [who]</ansi> and
 <ansi fg="command">cast tend [who]</ansi> (<ansi fg="command">help cast</ansi>).
 

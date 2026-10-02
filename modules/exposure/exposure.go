@@ -579,12 +579,10 @@ func (m *ExposureModule) tickMemberLocked(leader *users.UserRecord, mb member) {
 	}
 }
 
-// regenPerTick is the health a player regenerates between ticks, which
-// lethal exposure must outpace. Companions don't regenerate out of combat.
+// regenPerTick is the health a member regenerates between ticks, which
+// lethal exposure must outpace. Companions regenerate out of combat as
+// players do (Phase 33h2).
 func (m *ExposureModule) regenPerTick(mb member) int {
-	if mb.Key != survival.LeaderMemberKey {
-		return 0
-	}
 	return mb.Character.HealthPerRound() * m.settings.TickRounds
 }
 

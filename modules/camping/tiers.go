@@ -212,6 +212,11 @@ func (m *CampingModule) grantPendingTiers() {
 		for _, line := range healRestWounds(user.Character, live, spend) {
 			user.SendText(line)
 		}
+		// Phase 33h2: a night at the inn restores everyone with the leader
+		// to their (now raised) wound limit and full mana.
+		if tier == camping.TierWellRested {
+			restoreVitals(user.Character, live)
+		}
 		// Review fix: the leader's limit may have risen.
 		events.AddToQueue(events.CharacterVitalsChanged{UserId: leaderUserID})
 		// Phase 23b: a camp rest's end also sharpens the company for a
@@ -225,6 +230,22 @@ func (m *CampingModule) grantPendingTiers() {
 				user.SendText(text)
 			}
 		}
+	}
+}
+
+// restoreVitals brings the leader and the live companions to their wound
+// limit and full mana (Phase 33h2, an inn stay). It never lowers anyone.
+func restoreVitals(leader *characters.Character, live map[int]*characters.Character) {
+	restore := func(c *characters.Character) {
+		if c == nil || c.Health < 1 {
+			return
+		}
+		c.Health = max(c.Health, c.HealthLimit())
+		c.Mana = max(c.Mana, c.ManaMax.Value)
+	}
+	restore(leader)
+	for _, id := range sortedIDs(live) {
+		restore(live[id])
 	}
 }
 
