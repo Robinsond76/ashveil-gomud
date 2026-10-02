@@ -40,6 +40,7 @@ type Battle struct {
 	// guardians have spent in it, all together.
 	Coordination int
 	EnemyGuards  int
+	EnemyFocus   string // the member key the group's leader last aimed it at
 }
 
 // Has reports whether instanceId is one of the battle's enemies.

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/coordination"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -448,12 +449,34 @@ func mobName(instanceId int) string {
 // when it has none, or its target is dead, gone, or out of reach. A party
 // member fighting someone else (another player, a mob outside this
 // company) is left alone.
+//
+// Phase 33i2: the group fights by its coordination tier (fixed when the
+// battle began). Its leader (the highest level) aims first, and its aim
+// is the group's focus: a share of the group's fighters turn onto it
+// whenever they can reach it, the leader of a drilled company picks it by
+// the casters rule while the company has a caster, and a veteran
+// company's leader turns onto a member chanting a heal. Everyone else
+// re-aims as before, with at least the tier's targeting noise.
 func (s companySide) keepPartyEngaged(party mobparty.Party, room *rooms.Room) {
 	candidates, keys := s.combatants()
 	if len(candidates) == 0 {
 		return
 	}
-	for _, instanceId := range party.Members {
+	tier, _ := enemyparty.BattleTier(s.leader.UserId)
+	spec := coordination.SpecOf(tier)
+	leaderId := groupLeader(party)
+	order := make([]int, 0, len(party.Members))
+	if leaderId > 0 {
+		order = append(order, leaderId)
+	}
+	for _, id := range party.Members {
+		if id != leaderId {
+			order = append(order, id)
+		}
+	}
+	var followers map[int]bool
+	focus := company.MemberKey("")
+	for _, instanceId := range order {
 		mob := mobs.GetInstance(instanceId)
 		if mob == nil || !canFight(&mob.Character) || !retargetable(mob.Character.Aggro) {
 			continue
@@ -470,20 +493,49 @@ func (s companySide) keepPartyEngaged(party mobparty.Party, room *rooms.Room) {
 			continue
 		}
 		reach := combat.ResolveReach(&mob.Character, mob.Reach)
-		if keep && !s.memberHidden(current) && gateLetsThrough(attackerCol, true, s.formation, current, s.alive, reach) {
+		standing := keep && !s.memberHidden(current) && gateLetsThrough(attackerCol, true, s.formation, current, s.alive, reach)
+		foes := s.memberFoes(candidates, keys, attackerCol, reach)
+
+		if instanceId == leaderId {
+			// The leader breaks a heal (veteran), else keeps a standing aim,
+			// else re-aims, by casters first when drilled.
+			if spec.BreakHeals {
+				if key, ok := s.healChanter(attackerCol, reach); ok && key != current {
+					s.aimPartyMember(mob, key, room)
+					current, standing = key, true
+				}
+			}
+			if !standing {
+				rule, noise := enemyRule(mob, tier)
+				if spec.CastersFirst && anyCaster(foes) {
+					rule = strategy.Casters
+				}
+				if idx, ok := s.enemyPick(mob, rule, noise, foes, candidates, attackerCol, reach); ok && keys[idx] != current {
+					s.aimPartyMember(mob, keys[idx], room)
+					current, standing = keys[idx], true
+				} else if ok {
+					standing = true
+				}
+			}
+			if standing {
+				focus = current
+				followers = focusFollowers(party, leaderId, tier)
+				s.announceFocus(party, room, leaderId, focus, tier)
+			}
 			continue
 		}
-		legal := func(_, defender engagement.Combatant) bool {
-			return s.legalAgainstCompany(attackerCol, keys[defender.ID], reach)
+
+		// A follower turns onto the focus whenever it can reach it.
+		if followers[instanceId] && focus != "" && focus != current && !s.memberHidden(focus) &&
+			gateLetsThrough(attackerCol, true, s.formation, focus, s.alive, reach) {
+			s.aimPartyMember(mob, focus, room)
+			continue
 		}
-		var idx int
-		var ok bool
-		if rule, noise, has := mob.Personality(); has {
-			// Phase 30c: an enemy with a personality re-aims by its rule.
-			idx, ok = strategy.EnemyPick(strategy.Rule(rule), s.memberFoes(candidates, keys, attackerCol, reach), noise, aimRoll)
-		} else {
-			idx, ok = engagement.AssignTarget(engagement.Combatant{Col: attackerCol}, candidates, engagement.Weakest, legal)
+		if standing {
+			continue
 		}
+		rule, noise := enemyRule(mob, tier)
+		idx, ok := s.enemyPick(mob, rule, noise, foes, candidates, attackerCol, reach)
 		if !ok || keys[idx] == current {
 			continue
 		}

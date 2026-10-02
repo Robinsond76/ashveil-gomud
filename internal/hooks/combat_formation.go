@@ -50,12 +50,24 @@ func resolveAttackTarget(attackerCol int, f company.Formation, originalTarget co
 // resolveAttackTarget for a player attacking a mob. See resolveEnemyAttack
 // for the fail-open contract shared with gateCompanionAttacksEnemy.
 func gateFormationAttack(user *users.UserRecord, defMob *mobs.Mob, room *rooms.Room) (*mobs.Mob, bool) {
-	attackerCol, ok := resolvePlayerColumn(user.UserId)
-	if !ok {
-		return defMob, true
+	target, ok := defMob, true
+	if attackerCol, placed := resolvePlayerColumn(user.UserId); placed {
+		reach := combat.ResolveReach(user.Character, false)
+		target, ok = resolveEnemyAttack(attackerCol, defMob.InstanceId, room, reach)
 	}
-	reach := combat.ResolveReach(user.Character, false)
-	return resolveEnemyAttack(attackerCol, defMob.InstanceId, room, reach)
+	return guardedTarget(user.UserId, room, target, ok)
+}
+
+// guardedTarget is the enemy a blow lands on once an enemy guardian has
+// had its chance to step in for it (Phase 33i2).
+func guardedTarget(userId int, room *rooms.Room, target *mobs.Mob, ok bool) (*mobs.Mob, bool) {
+	if !ok || target == nil {
+		return target, ok
+	}
+	if g, guarded := enemyGuardianFor(userId, room, target); guarded {
+		return g, true
+	}
+	return target, true
 }
 
 // resolveEnemyAttack applies 11c legality/interception when a combatant in
@@ -121,16 +133,14 @@ func gateMobVsMobAttack(mob, defMob *mobs.Mob, mobRoom *rooms.Room) (target *mob
 // the mob-vs-mob analog of gateFormationAttack, sharing its core via
 // resolveEnemyAttack.
 func gateCompanionAttacksEnemy(mob *mobs.Mob, leaderUserID int, attackerKey company.MemberKey, defMob *mobs.Mob, mobRoom *rooms.Room) (*mobs.Mob, bool) {
-	f, ok := company.FormationFor(leaderUserID)
-	if !ok {
-		return defMob, true
+	target, ok := defMob, true
+	if f, formed := company.FormationFor(leaderUserID); formed {
+		if _, col, found := f.Find(attackerKey); found {
+			reach := combat.ResolveReach(&mob.Character, mob.Reach)
+			target, ok = resolveEnemyAttack(col, defMob.InstanceId, mobRoom, reach)
+		}
 	}
-	_, col, found := f.Find(attackerKey)
-	if !found {
-		return defMob, true
-	}
-	reach := combat.ResolveReach(&mob.Character, mob.Reach)
-	return resolveEnemyAttack(col, defMob.InstanceId, mobRoom, reach)
+	return guardedTarget(leaderUserID, mobRoom, target, ok)
 }
 
 // gateEnemyAttacksCompanion gates "the enemy attacks my companion" — the

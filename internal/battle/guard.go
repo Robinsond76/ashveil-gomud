@@ -111,3 +111,17 @@ func SpendEnemyGuard(userId, limit int) (left int, ok bool) {
 	b.EnemyGuards++
 	return limit - b.EnemyGuards, true
 }
+
+// SetEnemyFocus records the enemy group's focus (a company member key) on
+// the player's battle and reports whether it changed (Phase 33i2: a
+// coordinated group says its focus aloud once per change).
+func SetEnemyFocus(userId int, key string) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	b, ok := battles[userId]
+	if !ok || b.EnemyFocus == key {
+		return false
+	}
+	b.EnemyFocus = key
+	return true
+}
