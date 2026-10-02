@@ -30,7 +30,7 @@ function onCommand(cmd, rest, user, room) {
         return false;
     }
     if ( user.InBattle() ) {
-        SendUserMessage(user.UserId(), "Not while your company is fighting.");
+        SendUserMessage(user.UserId(), "Not while you are fighting.");
         return true;
     }
     SendUserMessage(user.UserId(), "A hidden door swings open and you step through.");
@@ -122,7 +122,7 @@ func TestScriptedPassageIsRefusedInABattle(t *testing.T) {
 
 	out := b.pull()
 
-	assert.Contains(t, out, "Not while your company is fighting.")
+	assert.Contains(t, out, "Not while you are fighting.")
 	assert.Equal(t, 920101, b.aria.Character.RoomId)
 	for id := 1; id <= 4; id++ {
 		assert.Equal(t, 920101, b.companion(id).Character.RoomId)
@@ -267,4 +267,24 @@ func TestShippedPassagesRefuseInABattle(t *testing.T) {
 		require.GreaterOrEqual(t, guard, 0, "%s refuses in a battle", rel)
 		assert.Less(t, guard, move, "%s refuses before it moves anyone", rel)
 	}
+}
+
+// Review finding (33h3): an admin teleport through the real command brings
+// the company standing with the player and separates the one elsewhere.
+func TestAdminTeleportTakesTheCompany(t *testing.T) {
+	b := relocationBrawl(t)
+	b.aria.Role = "admin"
+	t.Cleanup(func() { b.aria.Role = "user" })
+	ysolde := b.companion(4)
+	require.True(t, nativeRuntime{}.Relocate(ysolde.InstanceId, 920103))
+
+	out := b.cmd("teleport", "920102")
+
+	assert.Equal(t, 920102, b.aria.Character.RoomId)
+	assert.Contains(t, out, domain.CompanyFollows)
+	for id := 1; id <= 3; id++ {
+		assert.Equal(t, 920102, b.companion(id).Character.RoomId, "#%d came along", id)
+	}
+	assert.Contains(t, out, "Ysolde was not with you and is separated")
+	require.NotNil(t, separation(t, 4))
 }

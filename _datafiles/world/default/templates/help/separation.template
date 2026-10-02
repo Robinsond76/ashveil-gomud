@@ -16,7 +16,7 @@ after you die, or the training grounds.
 
   A move you ask for yourself (pressing a hidden catch, climbing down a
   rope, springing a trap) waits until the battle is over:
-  "Not while your company is fighting." A move done to you (dying,
+  "Not while you are fighting." A move done to you (dying,
   being dragged off to a cell, a trap someone else springs) still
   happens, and takes your company with you.
 
@@ -33,8 +33,9 @@ after you die, or the training grounds.
   A separated companion is off the map. Nothing can hurt or rob it, and
   it keeps its health, mana, wounds, gear, level, and place in your
   formation exactly as they were. While it's away it doesn't recover,
-  eat, tire, earn experience, or carry anything for the company, and its
-  pack doesn't count toward your cargo room.
+  eat, tire, rest, earn experience, or carry anything for the company:
+  it takes no bed at an inn, earns no camp rest, and its pack doesn't
+  count toward your cargo room.
 
 <ansi fg="yellow-bold">Finding the way back</ansi>
 

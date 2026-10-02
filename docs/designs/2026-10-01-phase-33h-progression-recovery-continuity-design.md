@@ -141,7 +141,7 @@ what "dead companions stay where they fell" meant, the lead clarified it
   unchanged.
 - **Refusal:** a move the player triggers themselves (the raven, the
   lantern, the sarcophagus, the chasm rope) is refused while they are in
-  a battle ("Not while your company is fighting."; scripts ask the new
+  a battle ("Not while you are fighting."; scripts ask the new
   `ActorObject.InBattle()`). Moves done to them (death, jail, a trap
   sprung by another player, a quest reward) still happen. The faerie's
   portal needs a `give`, already refused in a battle. Renting an inn bed
@@ -160,9 +160,11 @@ what "dead companions stay where they fell" meant, the lead clarified it
   battle, on a journey, or resting at camp. Never into a fight. Logout
   pauses the count; a crash can only lengthen it (the count reaches disk
   with each company save). No world time advances.
-- **While separated:** no recovery (33h2), no load, carrying room,
-  meals, chemistry, contract or combat experience; it keeps its formation
-  cell and can be dismissed. `company status`, the prompt surfaces, GMCP
+- **While separated:** no recovery (33h2), no survival spend or
+  recovery, no feeding, no inn bed or camp rest tier, no load, carrying
+  room, meals, chemistry, contract or combat experience; it keeps its
+  formation cell and can be dismissed. A rejoin whose spawn fails stays
+  separated and due, and is retried on the next free round. `company status`, the prompt surfaces, GMCP
   (`separated`) and the browser show it.
 - **Herd and cargo** are the leader's and always go with them; a
   separated companion's pack and gear are away until it returns.

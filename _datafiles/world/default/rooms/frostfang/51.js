@@ -24,7 +24,7 @@ function onCommand(cmd, rest, user, room) {
 
     // Ashveil Phase 33h3: a move the player asks for waits until the fight is over.
     if ( user.InBattle() ) {
-        SendUserMessage(user.UserId(), "Not while your company is fighting.");
+        SendUserMessage(user.UserId(), "Not while you are fighting.");
         return true;
     }
 

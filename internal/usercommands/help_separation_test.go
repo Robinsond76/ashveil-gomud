@@ -14,8 +14,8 @@ func TestSeparationHelp(t *testing.T) {
 	useWorld(t, "default")
 	keywords.LoadAliases()
 	expected := map[string][]string{
-		"separation": {"Your company comes with you.", "Not while your company is fighting.", "was not with you and is separated",
-			"for two rounds", "off the map", "about a", "15 rounds", "logging out pauses it", "never walks into a fight",
+		"separation": {"Your company comes with you.", "Not while you are fighting.", "was not with you and is separated",
+			"for two rounds", "off the map", "takes no bed at an inn", "about a", "15 rounds", "logging out pauses it", "never walks into a fight",
 			"never touches a fallen companion", "wherever you are once the", "always go with you", "company status"},
 		"company":   {"help separation", "separated (and how"},
 		"travel":    {"is separated", "help separation", "horses"},
@@ -24,6 +24,7 @@ func TestSeparationHelp(t *testing.T) {
 		"mount":     {"never left", "help separation"},
 		"cargo":     {"separated", "always goes with you"},
 		"readiness": {"without recovering while away", "help separation"},
+		"retreat":   {"is separated once its fight is", "help separation"},
 	}
 	for topic, wants := range expected {
 		text, err := GetHelpContents(topic)
@@ -37,7 +38,7 @@ func TestSeparationHelp(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotContains(t, tagPattern.ReplaceAllString(travel, ""), "exactly as if you'd\nwalked there", "arrival no longer walks the last exit")
 
-	for _, alias := range []string{"separated", "left behind", "rejoin", "portal", "relocation"} {
+	for _, alias := range []string{"separated", "left behind", "rejoin", "relocation"} {
 		text, err := GetHelpContents(alias)
 		require.NoError(t, err, alias)
 		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "Help for separation", alias)

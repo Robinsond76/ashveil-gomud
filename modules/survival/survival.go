@@ -606,6 +606,8 @@ func (m *SurvivalModule) Provision(leaderUserID int, selector string, benefit do
 	}
 	if ref, ok := currentRosterMember(leaderUserID, key); ok && ref.Dead {
 		return domain.ProvisionResult{}, domain.ErrDeadMember
+	} else if ok && ref.Away {
+		return domain.ProvisionResult{}, domain.ErrAwayMember
 	}
 	snapshot := m.registry.Clone()
 	if err := m.registry.Ensure(leaderUserID, key); err != nil {

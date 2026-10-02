@@ -236,22 +236,24 @@ func (m *CompanyModule) tickSeparations() {
 }
 
 // rejoin clears every due separation in one save and only then spawns the
-// returning companions beside the leader. A failed save changes nothing; a
-// failed spawn leaves the companion awaiting restoration.
+// returning companions beside the leader. A failed save changes nothing.
+// One whose spawn fails is put back as separated and due (saved with the
+// next company save), so the next free round tries again; only those who
+// arrive are announced.
 func (m *CompanyModule) rejoin(leaderUserID, roomID int) error {
 	before, ok := m.registry.Get(leaderUserID)
 	if !ok {
 		return nil
 	}
 	record, _ := m.registry.Get(leaderUserID)
-	var names []string
+	var due []domain.Companion
 	for i, c := range record.Companions {
 		if c.Separated() && c.Separation.RoundsLeft == 0 {
+			due = append(due, c)
 			record.Companions[i].Separation = nil
-			names = append(names, nameOf(c, m.companionLabel(leaderUserID, c.ID)))
 		}
 	}
-	if len(names) == 0 {
+	if len(due) == 0 {
 		return nil
 	}
 	m.registry.Put(record)
@@ -260,8 +262,22 @@ func (m *CompanyModule) rejoin(leaderUserID, roomID int) error {
 		return err
 	}
 	err := m.restoreForLeader(leaderUserID, roomID)
-	for _, name := range names {
-		m.chemistryWorld().Tell(leaderUserID, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> finds the way back and rejoins you.`, name))
+	current, _ := m.registry.Get(leaderUserID)
+	retry := false
+	for _, c := range due {
+		if _, tracked := m.instance(leaderUserID, c.ID); tracked {
+			m.chemistryWorld().Tell(leaderUserID, fmt.Sprintf(`<ansi fg="mobname">%s</ansi> finds the way back and rejoins you.`, nameOf(c, m.companionLabel(leaderUserID, c.ID))))
+			continue
+		}
+		for i := range current.Companions {
+			if current.Companions[i].ID == c.ID && !current.Companions[i].Dead() {
+				current.Companions[i].Separation = &domain.Separation{Reason: c.Separation.Reason}
+				retry = true
+			}
+		}
+	}
+	if retry {
+		m.registry.Put(current)
 	}
 	return err
 }

@@ -360,9 +360,6 @@ type MemberView struct {
 	Row, Col int
 	// RescueSeconds is a dead companion's rescue allowance left.
 	RescueSeconds int
-	// RejoinSeconds is a separated companion's catch-up time left (Phase
-	// 33h3); 0 means it rejoins as soon as the leader is free.
-	RejoinSeconds int
 }
 
 // MemberViewProvider is optionally implemented by the registered

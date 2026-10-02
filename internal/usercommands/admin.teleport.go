@@ -101,7 +101,9 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 			scripting.TryRoomScriptEvent(`onExit`, user.UserId, previousRoomId)
 
 			// Ashveil Phase 33h3: the moved player's company comes along.
-			company.RelocateCompany(targetUser.UserId, previousRoomId, targetUser.Character.RoomId)
+			if company.RelocateCompany(targetUser.UserId, previousRoomId, targetUser.Character.RoomId) > 0 {
+				targetUser.SendText(company.CompanyFollows)
+			}
 
 			user.SendText(fmt.Sprintf("Moved to room %d.", gotoRoomId))
 
@@ -134,7 +136,9 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 							partyOrigin := partyUser.Character.RoomId
 							rooms.MoveToRoom(partyUser.UserId, gotoRoomId)
-							company.RelocateCompany(partyUser.UserId, partyOrigin, partyUser.Character.RoomId)
+							if company.RelocateCompany(partyUser.UserId, partyOrigin, partyUser.Character.RoomId) > 0 {
+								partyUser.SendText(company.CompanyFollows)
+							}
 							partyUser.SendText(fmt.Sprintf("Moved to room %d.", gotoRoomId))
 							room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, partyUser.Character.Name), partyUser.UserId)
 

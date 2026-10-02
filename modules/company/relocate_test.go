@@ -258,7 +258,6 @@ func TestSeparatedViewsAndLoad(t *testing.T) {
 		}
 	}
 	assert.Equal(t, domain.MemberSeparated, sep.Status)
-	assert.Positive(t, sep.RejoinSeconds)
 	assert.Contains(t, module.status(7), "separated; back in")
 	for _, ref := range module.Roster(7) {
 		if ref.Key == domain.CompanionMemberKey(3) {
@@ -269,4 +268,28 @@ func TestSeparatedViewsAndLoad(t *testing.T) {
 		assert.Zero(t, carry.PackGrams)
 	}
 	assert.Len(t, module.CompanionCarry(7), 3, "its pack is away with it")
+}
+
+// Review finding (33h3): a rejoin whose spawn fails is not announced and
+// stays separated and due, so the next free round tries again.
+func TestRejoinFailedSpawnRetries(t *testing.T) {
+	module, runtime := separatedModule(t, 0)
+	module.leaderFree = func(int) (int, bool) { return 18, true }
+	runtime.spawnErr = errors.New("no room")
+	world := module.chem.(*fakeChemWorld)
+	world.told[7] = nil
+
+	module.tickSeparations()
+
+	sep := separationOf(t, module, 3)
+	require.NotNil(t, sep, "still separated")
+	assert.Zero(t, sep.RoundsLeft, "and due")
+	assert.NotContains(t, strings.Join(world.told[7], "\n"), "rejoins you")
+
+	runtime.spawnErr = nil
+	module.tickSeparations()
+	assert.Nil(t, separationOf(t, module, 3))
+	_, tracked := module.instance(7, 3)
+	assert.True(t, tracked)
+	assert.Contains(t, strings.Join(world.told[7], "\n"), "rejoins you")
 }

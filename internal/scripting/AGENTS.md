@@ -42,7 +42,7 @@
 - Be careful with timeout, VM reuse, and wrapper behavior. goja uses `Interrupt`; Lua uses a per-call `context` deadline. Small runtime changes here can affect all scripted content.
 - Prefer extending existing script helpers and wrapper methods rather than adding one-off special cases in individual call paths.
 - When changing what scripts can do, consider both engines and content compatibility with existing world scripts.
-- Ashveil Phase 33h3: a player's `MoveRoom` brings their company through `company.RelocateCompany` (or separates those not with them); a companion's own `MoveRoom` does nothing. A script moving a player at their own request checks `InBattle()` first and refuses ("Not while your company is fighting.").
+- Ashveil Phase 33h3: a player's `MoveRoom` brings their company through `company.RelocateCompany` (or separates those not with them); a companion's own `MoveRoom` does nothing. A script moving a player at their own request checks `InBattle()` first and refuses ("Not while you are fighting.").
 
 ## Verification
 

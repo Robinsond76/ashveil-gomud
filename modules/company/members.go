@@ -6,7 +6,6 @@ package company
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -38,7 +37,6 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 			view.RescueSeconds = c.Death.Remaining
 		case c.Separated():
 			view.Status = domain.MemberSeparated
-			view.RejoinSeconds = c.Separation.RoundsLeft * int(configs.GetTimingConfig().RoundSeconds)
 		default:
 			if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsAttached(leaderUserID, instanceID) {
 				view.Status = domain.MemberPresent
