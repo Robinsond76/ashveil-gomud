@@ -2,3 +2,4 @@ flag: no-combat
 name: "No Combat"
 description: "Prevents the character from initiating or participating in combat."
 locked: true
+harmful: true

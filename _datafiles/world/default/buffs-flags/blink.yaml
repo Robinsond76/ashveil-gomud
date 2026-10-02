@@ -2,3 +2,4 @@ flag: blink
 name: "Blink"
 description: "Grants the character a chance to dodge incoming attacks."
 locked: true
+helpful: true

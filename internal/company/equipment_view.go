@@ -38,6 +38,9 @@ type EquipmentSlot struct {
 	Equipped *EquipmentChoice  `json:"equipped,omitempty"`
 	Remove   *EquipmentChoice  `json:"remove,omitempty"`
 	Choices  []EquipmentChoice `json:"choices"`
+	// Pending marks a slot outside the view's focus: its choices and
+	// removal preview are not built until it is selected (Phase 34 review).
+	Pending bool `json:"pending,omitempty"`
 }
 type EquipmentView struct {
 	Available bool            `json:"available"`
@@ -45,14 +48,23 @@ type EquipmentView struct {
 	Current   EquipmentStats  `json:"current"`
 	Slots     []EquipmentSlot `json:"slots"`
 }
-type EquipmentViewProvider interface{ EquipmentView(int) EquipmentView }
+type EquipmentViewProvider interface {
+	// EquipmentViewFor previews only the focus slot's choices; "" previews
+	// every slot.
+	EquipmentViewFor(id int, focus string) EquipmentView
+}
 
-func EquipmentViewOf(id int) EquipmentView {
+// EquipmentViewOf previews every slot.
+func EquipmentViewOf(id int) EquipmentView { return EquipmentViewFocused(id, "") }
+
+// EquipmentViewFocused previews only the focus slot (the one the Gear
+// editor shows); the others list what they hold and are Pending.
+func EquipmentViewFocused(id int, focus string) EquipmentView {
 	formationProviderMu.RLock()
 	p := formationProvider
 	formationProviderMu.RUnlock()
 	if ep, ok := p.(EquipmentViewProvider); ok {
-		return ep.EquipmentView(id)
+		return ep.EquipmentViewFor(id, focus)
 	}
 	return EquipmentView{Reason: "Equipment service unavailable.", Slots: []EquipmentSlot{}}
 }

@@ -203,7 +203,12 @@ func TestEquipmentEditorJournalRecoveryAndPrivateFeed(t *testing.T) {
 	t.Cleanup(func() { events.UnregisterListener(gmcp.GMCPOut{}, listener) })
 	companyview.RefreshUser(7)
 	events.ProcessEvents()
-	require.Positive(t, count)
+	assert.Zero(t, count, "nothing is built for a client not showing the editor")
+	events.AddToQueue(gmcp.GMCPGearWatch{UserId: 7, Open: true, Slot: "weapon"})
+	events.ProcessEvents()
+	require.Positive(t, count, "opening the editor sends it at once")
+	assert.False(t, editorSlot(t, received, "weapon").Pending)
+	assert.True(t, editorSlot(t, received, "body").Pending, "only the shown slot is previewed")
 	assert.Equal(t, weapon.ShorthandId(), editorSlot(t, received, "weapon").Equipped.Ref)
 	beforeCount := count
 	companyview.RefreshUser(7)
@@ -212,6 +217,13 @@ func TestEquipmentEditorJournalRecoveryAndPrivateFeed(t *testing.T) {
 	events.AddToQueue(gmcp.GMCPCompanyRequest{UserId: 7})
 	events.ProcessEvents()
 	assert.Greater(t, count, beforeCount, "reconnect/full request resends equipment after the Company snapshot")
+	events.AddToQueue(gmcp.GMCPGearWatch{UserId: 7, Open: false})
+	events.ProcessEvents()
+	closedCount := count
+	b.aria.Character.Items = append(b.aria.Character.Items, items.New(10004))
+	companyview.RefreshUser(7)
+	events.ProcessEvents()
+	assert.Equal(t, closedCount, count, "a closed editor is not rebuilt or sent")
 	assert.Empty(t, module.EquipmentView(99999).Slots)
 }
 
@@ -234,4 +246,127 @@ func TestExplicitOffhandRetainsOtherHandPermanentBuff(t *testing.T) {
 	require.True(t, success, reason)
 	assert.True(t, c.HasBuff(buffSpec.BuffId), "main hand still supplies the permanent buff")
 	assert.Equal(t, beforeHealth, c.Health, "no temporary buff removal may clamp health")
+}
+
+// The company feed asks for the editor every round: an unchanged leader must
+// reuse the last view, and any change to equipment, cargo, availability or
+// the round budget must rebuild it (review of Phase 34c).
+func TestEquipmentViewReusedUntilLeaderChanges(t *testing.T) {
+	b := equipmentBrawl(t)
+	c := b.aria.Character
+	spec := items.ItemSpec{ItemId: 989804, Name: "quilted coat", Type: items.Body, Subtype: items.Wearable, Weight: 3000, DamageReduction: 2}
+	items.SetTestItemSpec(&spec)
+	t.Cleanup(func() { items.RemoveTestItemSpec(spec.ItemId) })
+	round := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCount(round) })
+	coat := items.New(spec.ItemId)
+	c.Items = []items.Item{coat}
+	require.NoError(t, c.Validate(true))
+	builds := func() int {
+		module.equipmentViews.mu.Lock()
+		defer module.equipmentViews.mu.Unlock()
+		return module.equipmentViews.builds
+	}
+
+	start := builds()
+	first := module.EquipmentView(7)
+	require.True(t, first.Available, first.Reason)
+	assert.Equal(t, first, module.EquipmentView(7))
+	assert.Equal(t, start+1, builds(), "an unchanged leader reuses the last view")
+
+	second := items.New(spec.ItemId)
+	c.Items = append(c.Items, second)
+	assert.Len(t, editorSlot(t, module.EquipmentView(7), "body").Choices, 2, "new cargo rebuilds the view")
+	assert.Equal(t, start+2, builds())
+
+	choice := editorChoice(t, editorSlot(t, module.EquipmentView(7), "body"), coat.ShorthandId())
+	require.Contains(t, applyEditorChoice(t, b, choice), "equipment updated")
+	view := module.EquipmentView(7)
+	require.NotNil(t, editorSlot(t, view, "body").Equipped)
+	assert.Equal(t, coat.ShorthandId(), editorSlot(t, view, "body").Equipped.Ref, "equipping rebuilds the view")
+	assert.Equal(t, choice.After.Defense, view.Current.Defense)
+
+	rebuilt := builds()
+	module.EquipmentView(7)
+	assert.Equal(t, rebuilt, builds())
+	util.SetRoundCount(round + equipmentViewRefreshRounds)
+	module.EquipmentView(7)
+	assert.Equal(t, rebuilt+1, builds(), "a cached view is rebuilt after its round budget")
+
+	c.SetAggro(0, b.companion(1).InstanceId, characters.DefaultAttack)
+	assert.False(t, module.EquipmentView(7).Available, "entering battle rebuilds the view")
+	c.Aggro = nil
+
+	module.forgetEquipmentView(7)
+	module.EquipmentView(7)
+	assert.Equal(t, rebuilt+3, builds(), "a forgotten leader is rebuilt")
+}
+
+// What ticks every round without changing a preview (vitals, cooldowns, a
+// buff's counters) must not rebuild the view through the provider the GMCP
+// feed calls; a new buff must. A rebuild also drops offline leaders' views
+// (review of the Phase 34 follow-up).
+func TestEquipmentViewIgnoresRoundTicksAndPrunesOffline(t *testing.T) {
+	b := equipmentBrawl(t)
+	c := b.aria.Character
+	spec := buffs.BuffSpec{BuffId: 989905, Name: "Keen", Description: "Sharp eyes.", RoundInterval: 2, TriggerCount: 1000000000}
+	buffs.SetTestBuffSpec(&spec)
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(spec.BuffId) })
+	round := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCount(round) })
+	c.Items = []items.Item{items.New(10004)}
+	c.Buffs.List = []*buffs.Buff{{BuffId: spec.BuffId, PermaBuff: true, TriggersLeft: buffs.TriggersLeftUnlimited}}
+	builds := func() int {
+		module.equipmentViews.mu.Lock()
+		defer module.equipmentViews.mu.Unlock()
+		return module.equipmentViews.builds
+	}
+	module.equipmentViews.mu.Lock()
+	module.equipmentViews.byUser[424242] = equipmentViewEntry{}
+	module.equipmentViews.mu.Unlock()
+
+	module.forgetEquipmentView(7)
+	require.True(t, domain.EquipmentViewOf(7).Available)
+	start := builds()
+	module.equipmentViews.mu.Lock()
+	_, stale := module.equipmentViews.byUser[424242]
+	module.equipmentViews.mu.Unlock()
+	assert.False(t, stale, "a rebuild prunes offline leaders")
+
+	for i := 0; i < 3; i++ {
+		util.SetRoundCount(util.GetRoundCount() + 1)
+		c.Buffs.List[0].RoundCounter++
+		c.Health, c.Mana = c.Health-1, c.Mana+1
+		c.Cooldowns = characters.Cooldowns{"bash": 3 - i}
+		domain.EquipmentViewOf(7)
+	}
+	assert.Equal(t, start, builds(), "round ticks reuse the view")
+
+	c.Buffs.List = append(c.Buffs.List, &buffs.Buff{BuffId: spec.BuffId, TriggersLeft: 3})
+	domain.EquipmentViewOf(7)
+	assert.Equal(t, start+1, builds(), "a new effect rebuilds the view")
+}
+
+// The feed previews only the slot the editor shows: other slots list what
+// they hold and are pending, and their previews match the full view once
+// selected (Phase 34 review).
+func TestEquipmentViewFocusPreviewsOnlyTheShownSlot(t *testing.T) {
+	b := equipmentBrawl(t)
+	c := b.aria.Character
+	c.Items = []items.Item{items.New(10004), items.New(20001)}
+	full := module.EquipmentView(7)
+	focused := domain.EquipmentViewFocused(7, "weapon")
+	for _, slot := range focused.Slots {
+		if slot.Slot == "weapon" {
+			assert.False(t, slot.Pending)
+			assert.Equal(t, editorSlot(t, full, "weapon"), slot, "the shown slot matches the full view")
+			continue
+		}
+		assert.True(t, slot.Pending, slot.Slot)
+		assert.Empty(t, slot.Choices, slot.Slot)
+		assert.Nil(t, slot.Remove, slot.Slot)
+		assert.Equal(t, editorSlot(t, full, slot.Slot).Equipped, slot.Equipped, "a pending slot still shows what it holds")
+	}
+	offhand := domain.EquipmentViewFocused(7, "offhand")
+	assert.Equal(t, editorSlot(t, full, "offhand"), editorSlot(t, offhand, "offhand"))
 }

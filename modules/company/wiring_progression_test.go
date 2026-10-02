@@ -5,6 +5,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -207,4 +208,48 @@ func TestProgressionLiveCompanionChoiceRecalculatesHP(t *testing.T) {
 	assert.Equal(t, "wizard", c.HPArchetype)
 	assert.Equal(t, 3.0, c.HealthGainPerLevel())
 	assert.Equal(t, c.HealthMax.Value, c.Health, "choice clamps to the new maximum")
+}
+
+func TestProgressionEquipmentClonePreservesHP(t *testing.T) {
+	t.Cleanup(func() { archetypes.SetProvider(nil) })
+	b := equipmentBrawl(t)
+	for _, class := range []string{"warrior", "wizard"} {
+		archetypes.SetProvider(hpArchetypes{fakeArchetypes{player: class}})
+		for _, companion := range []bool{false, true} {
+			c := characters.New()
+			c.Level = 10
+			if companion {
+				c.HPArchetype = class
+			} else {
+				c.SetUserId(b.aria.UserId)
+			}
+			require.NoError(t, c.Validate(true))
+			clone, err := cloneCharacter(c)
+			require.NoError(t, err)
+			assert.Equal(t, c.HealthGainPerLevel(), clone.HealthGainPerLevel())
+			assert.Equal(t, c.HealthMax.Value, clone.HealthMax.Value)
+		}
+	}
+}
+
+func TestProgressionEquipmentPreviewClassChangeAndApply(t *testing.T) {
+	t.Cleanup(func() { archetypes.SetProvider(nil) })
+	b := equipmentBrawl(t)
+	c := b.aria.Character
+	c.Level = 10
+	weapon := items.New(10004)
+	c.Items = []items.Item{weapon}
+	for _, class := range []string{"warrior", "wizard"} {
+		archetypes.SetProvider(hpArchetypes{fakeArchetypes{player: class}})
+		require.NoError(t, c.Validate(true))
+		view := module.EquipmentViewFor(b.aria.UserId, "weapon")
+		choice := editorChoice(t, editorSlot(t, view, "weapon"), weapon.ShorthandId())
+		require.True(t, choice.Allowed, choice.Reason)
+		require.NotNil(t, choice.After)
+		assert.Equal(t, c.HealthMax.Value, choice.After.HealthMax, "class change invalidates cached previews")
+	}
+	view := module.EquipmentViewFor(b.aria.UserId, "weapon")
+	choice := editorChoice(t, editorSlot(t, view, "weapon"), weapon.ShorthandId())
+	require.Contains(t, applyEditorChoice(t, b, choice), "equipment updated")
+	assert.Equal(t, c.HealthMax.Value, choice.After.HealthMax)
 }

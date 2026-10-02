@@ -2,3 +2,4 @@ flag: see-hidden
 name: "See Hidden"
 description: "Allows the character to detect hidden or stealthed entities."
 locked: true
+helpful: true

@@ -98,7 +98,11 @@ func (m *CompanyModule) onItemOwnership(e events.Event) events.ListenerReturn {
 // that its record would restore again.
 func (m *CompanyModule) onPlayerDespawn(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.PlayerDespawn)
-	if !ok || m.persistenceAvailable() != nil {
+	if !ok {
+		return events.Continue
+	}
+	m.forgetEquipmentView(evt.UserId)
+	if m.persistenceAvailable() != nil {
 		return events.Continue
 	}
 	if err := m.ReturnFlight(evt.UserId); err != nil {

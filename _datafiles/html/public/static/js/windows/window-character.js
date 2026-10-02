@@ -282,8 +282,6 @@
             text-align: right;
         }
 
-        .cw-affect-item { cursor: default; }
-
         /* ---- Quests tab ---- */
         #cw-quests {
             padding: 4px 6px;
@@ -587,83 +585,7 @@
             padding: 14px 0;
         }
 
-        .cw-affect-item {
-            background: var(--t-bg-surface-alt);
-            border: 1px solid var(--t-accent-dim);
-            border-radius: 4px;
-            padding: 4px 6px;
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            min-width: 0;
-            box-sizing: border-box;
-        }
-
-        .cw-affect-item.debuff {
-            border-color: var(--t-debuff-border);
-            background: var(--t-debuff-bg);
-        }
-
-        .cw-affect-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 4px;
-        }
-
-        .cw-affect-name {
-            font-size: 0.5em;
-            color: var(--t-text);
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .cw-affect-item.debuff .cw-affect-name { color: var(--t-debuff-text); }
-
-        .cw-affect-source {
-            font-size: 0.63em;
-            color: var(--t-text-secondary);
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .cw-affect-item.debuff .cw-affect-source { color: var(--t-debuff-secondary); }
-
-        .cw-affect-mods {
-            font-size: 0.66em;
-            color: var(--t-text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .cw-affect-item.debuff .cw-affect-mods { color: var(--t-debuff-secondary); }
-
-        .cw-affect-dur-track {
-            width: 100%;
-            height: 4px;
-            background: var(--t-bg-row);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .cw-affect-dur-fill {
-            height: 100%;
-            border-radius: 2px;
-            background: var(--t-accent-dim);
-            transition: width 1s linear;
-        }
-
-        .cw-affect-item.debuff .cw-affect-dur-fill { background: var(--t-debuff-border); }
-
-        .cw-affect-dur-fill.permanent {
-            background: var(--t-accent);
-            width: 100% !important;
-        }
-
-        .cw-affect-item.debuff .cw-affect-dur-fill.permanent { background: var(--t-debuff-perm); }
+        #cw-effects .cw-subhead, #cw-effects .cw-capability { grid-column: 1 / -1; }
     `);
 
     // -----------------------------------------------------------------------
@@ -1070,16 +992,16 @@
         if (!caps) { capabilityText(panel, 'Current capabilities unavailable'); return; }
         capabilityText(panel, 'Automatic combat abilities', true);
         (caps.automatic || []).forEach(c => {
-            capabilityText(panel, c.name + ' — ' + (c.enabled ? 'Enabled' : c.reason || 'Disabled') +
-                '. Uses ' + c.skill + '. ' + c.description + '. When ' + c.when +
-                (c.cooldown > 0 ? '. Cooldown: ' + c.cooldown + ' combat rounds.' : '.'));
+            capabilityText(panel, [c.name + ' — ' + (c.enabled ? 'Enabled' : c.reason || 'Disabled') + '.',
+                'Uses ' + c.skill + '.', CompanyData.sentence(c.description), CompanyData.sentence(c.when ? 'When ' + c.when : ''),
+                c.cooldown > 0 ? 'Cooldown: ' + c.cooldown + ' combat rounds.' : ''].filter(Boolean).join(' '));
         });
         if (!(caps.automatic || []).length) { capabilityText(panel, 'No trained automatic combat abilities'); }
         ['field', 'camp'].forEach(group => {
             capabilityText(panel, group === 'field' ? 'Field capabilities' : 'Camp capabilities', true);
             const list = (caps.utility || []).filter(c => c.group === group);
-            list.forEach(c => capabilityText(panel, c.name + (c.mode === 'manual' ? ' (Manual)' : ' (Automatic)') + ' — ' + (c.enabled ? 'Eligible' : c.reason || 'Unavailable') +
-                '. ' + c.skill + ' rank ' + c.rank + ': ' + c.description + '.'));
+            list.forEach(c => capabilityText(panel, [c.name + (c.mode === 'manual' ? ' (Manual)' : ' (Automatic)') + ' — ' + (c.enabled ? 'Eligible' : c.reason || 'Unavailable') + '.',
+                c.skill + ' rank ' + c.rank + (c.description ? ':' : '.'), CompanyData.sentence(c.description)].filter(Boolean).join(' ')));
             if (!list.length) { capabilityText(panel, 'No current capabilities'); }
         });
         capabilityText(panel, 'The best eligible company specialist performs automatic field and camp work when its conditions hold. Camp Cooking is manual: camp cook. See help specialists and help cooking.');
@@ -1190,11 +1112,10 @@
         const state = all && all.leader;
         panel.textContent = '';
         if (state) {
-            [['effects', 'Active effects'], ['wounds', 'Wounds'], ['bonuses', 'Persistent bonuses']].forEach(group => {
+            [['effects', 'Active effects', 'effect'], ['wounds', 'Wounds', 'wound'], ['bonuses', 'Persistent bonuses', 'bonus']].forEach(group => {
                 capabilityText(panel, group[1], true);
                 const entries = state[group[0]] || [];
-                entries.forEach(c => capabilityText(panel, c.name + (c.stacks > 1 ? ' (×' + c.stacks + ')' : '') +
-                    ' — ' + c.duration + '. ' + c.description + '. ' + _formatMods(c.mods || {})));
+                entries.forEach(c => panel.appendChild(CompanyData.condition(c, group[2])));
                 if (!entries.length) { capabilityText(panel, 'None'); }
             });
             return;
@@ -1203,8 +1124,8 @@
         const affects = (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Affects) || {};
         Object.keys(affects).sort().forEach(key => {
             const c = affects[key];
-            capabilityText(panel, (c.name || key) + ' — ' + (c.duration_max === -1 ? 'Persistent' : c.duration_left + ' seconds remaining') +
-                '. ' + (c.description || '') + '. ' + _formatMods(c.affects || {}));
+            capabilityText(panel, [(c.name || key) + ' — ' + (c.duration_max === -1 ? 'Persistent' : c.duration_left + ' seconds remaining') + '.',
+                CompanyData.sentence(c.description), _formatMods(c.affects || {})].filter(Boolean).join(' '));
         });
         if (!Object.keys(affects).length) { capabilityText(panel, 'No active effects'); }
     }

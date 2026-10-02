@@ -195,10 +195,19 @@ func cloneCharacter(c *characters.Character) (*characters.Character, error) {
 	if err != nil {
 		return nil, err
 	}
+	return characterFrom(raw, c.HealthGainPerLevel())
+}
+
+// characterFrom decodes one independent copy of a marshalled character, so
+// a caller previewing many changes marshals the original only once.
+func characterFrom(raw []byte, hpPerLevel float64) (*characters.Character, error) {
 	var out characters.Character
-	if err = yaml.Unmarshal(raw, &out); err != nil {
+	if err := yaml.Unmarshal(raw, &out); err != nil {
 		return nil, err
 	}
+	// YAML excludes runtime class identity; preserve its resolved HP rate for
+	// this isolated proposal without associating it with a live user.
+	out.HPPerLevel = hpPerLevel
 	out.Validate(true)
 	return &out, nil
 }
@@ -389,7 +398,12 @@ func (m *CompanyModule) queueAutoLoot(round uint64) {
 
 // equipmentProposal is shared by command execution and read-only previews.
 func equipmentProposal(u *users.UserRecord, actor *characters.Character, args []string) (*characters.Character, []items.Item, items.Item, []items.Item, error) {
-	proposed, err := cloneCharacter(actor)
+	return proposalFrom(u, actor, args, func() (*characters.Character, error) { return cloneCharacter(actor) })
+}
+
+// proposalFrom is equipmentProposal with the actor's copy supplied by clone.
+func proposalFrom(u *users.UserRecord, actor *characters.Character, args []string, clone func() (*characters.Character, error)) (*characters.Character, []items.Item, items.Item, []items.Item, error) {
+	proposed, err := clone()
 	if err != nil {
 		return nil, nil, items.Item{}, nil, err
 	}

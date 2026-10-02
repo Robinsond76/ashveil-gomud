@@ -578,6 +578,35 @@ await page.evaluate(b => { const x=JSON.parse(JSON.stringify(b)); x.surrendered=
 check((await cbt()).includes('Surrendered: the yielded goblin'), 'surrendered foes are labelled off the grid');
 check(await page.getByRole('button', { name: /yielded goblin/ }).count() === 0, 'surrendered foe has no target button');
 
+// Phase 34 review: the server builds the editor only while it is shown, so
+// the client says when it opens and closes, and again after a snapshot.
+await page.evaluate(() => { window.gearRequests = []; Client.GMCPRequest = (...args) => { if (args[0] === 'Company.Equipment') { window.gearRequests.push(args[1]); } }; });
+const gearSaid = () => page.evaluate(() => window.gearRequests.slice(-1)[0]);
+await page.getByRole('tab', { name: 'Character', exact: true }).click();
+await page.getByRole('tab', { name: 'Skills', exact: true }).click();
+await page.waitForTimeout(1200);
+check(!String(await gearSaid() || '').startsWith('open'), 'a hidden Gear editor is not announced as open');
+await page.getByRole('tab', { name: 'Gear', exact: true }).click();
+await page.waitForTimeout(300);
+check(await gearSaid() === 'open weapon', 'opening Gear asks the server for the editor and its selected slot');
+await page.getByRole('tab', { name: 'Skills', exact: true }).click();
+await page.waitForTimeout(300);
+check(await gearSaid() === 'closed', 'leaving Gear tells the server to stop building it');
+await page.getByRole('tab', { name: 'Gear', exact: true }).click();
+await page.waitForTimeout(300);
+const saidBefore = await page.evaluate(() => window.gearRequests.length);
+await page.evaluate(c => window.gmcp('Company', c), company);
+check(await page.evaluate(n => window.gearRequests.length > n && window.gearRequests.slice(-1)[0] === 'open weapon', saidBefore), 'a Company snapshot (login, reconnect) re-announces the open editor');
+const pendingView = { available: true, current: {}, slots: [
+  { slot: 'weapon', label: 'Weapon', choices: [] },
+  { slot: 'body', label: 'Body', choices: [], pending: true, equipped: { ref: '!3:coat', label: 'quilted coat' } }] };
+await page.evaluate(view => window.gmcp('Company.Equipment', view), pendingView);
+await page.locator('#gw-worn').getByRole('button', { name: /^Body:/ }).click();
+await page.waitForTimeout(100);
+check(await gearSaid() === 'open body' && (await page.locator('#gw-worn').textContent()).includes('Loading choices'), 'selecting a slot asks for its choices and says they are loading');
+await page.locator('#gw-worn').getByRole('button', { name: /^Weapon:/ }).click();
+await page.evaluate(() => { Client.GMCPRequest = function() {}; });
+
 // Phase 34c: authoritative, exact-instance slot editor.
 await page.getByRole('tab', { name: 'Character', exact: true }).click();
 await page.getByRole('tab', { name: 'Gear', exact: true }).click();
@@ -690,6 +719,50 @@ await page.evaluate(markup => window.gmcp('Char.Affects', {test: {name: markup, 
 check(await page.locator('#cw-effects img').count() === 0, 'Character Effects never interprets server labels as HTML');
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'phase34d-effects-narrow.png') }); }
 await page.setViewportSize({ width: 1280, height: 900 });
+
+// Phase 34 review: the server sends a timed effect once; the client counts it
+// down with a meter, labels harm in words, and never doubles a full stop.
+conditions.leader.effects = [{ name: 'Slowed', description: 'Moves slowly.', duration: '30 seconds remaining', seconds_left: 30, seconds_total: 60, harmful: true, mods: { speed: -2 } },
+  { name: 'Blessed', description: 'Guided by light.', duration: 'Until removed', helpful: true, mods: { perception: 1 } },
+  { name: 'Sleepy', description: 'Drowsing.', duration: 'Until removed' }];
+conditions['companion:1'].state = 'away-live';
+await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
+const effectsText = () => page.locator('#cw-effects').textContent();
+check((await effectsText()).includes('Harmful') && (await effectsText()).includes('Helpful'), 'effects say Harmful or Helpful in words, not colour alone');
+check(await page.locator('#cw-effects .cmp-condition', { hasText: 'Sleepy' }).locator('.cmp-condition-tag').count() === 0, 'an effect neither known to harm nor help has no tag');
+check(!/\.\./.test(await effectsText()), 'effect text never doubles a full stop');
+const meter = page.locator('#cw-effects [role=meter]');
+check(await meter.count() === 1 && await meter.getAttribute('aria-valuemax') === '60', 'a timed effect has a duration meter');
+const leftBefore = await meter.getAttribute('aria-valuenow');
+await page.waitForTimeout(3200);
+const leftAfter = await meter.getAttribute('aria-valuenow');
+check(Number(leftBefore) - Number(leftAfter) >= 2 && (await effectsText()).includes(leftAfter + 's remaining'), 'the countdown runs without a new message');
+check(!/\.\./.test(await page.locator('#cw-skills-tab').textContent()), 'capability text never doubles a full stop');
+await page.getByRole('tab', { name: 'Company' }).first().click();
+await page.getByRole('tab', { name: 'Status', exact: true }).click();
+check((await status()).includes('Away from you: current effects and wounds') && (await status()).includes('Harmful'), 'Status shows an away member and the shared effect cards');
+for (const theme of readdirSync(path.join(here, '../../_datafiles/html/public/static/css')).filter(n => /^theme-.*\.css$/.test(n))) {
+    await page.evaluate(theme => new Promise(resolve => {
+        const link = document.getElementById('theme-css');
+        link.onload = resolve;
+        link.href = '../../_datafiles/html/public/static/css/' + theme;
+    }), theme);
+    const ratios = await page.evaluate(() => {
+        function luminance(color) {
+            const v = color.match(/[\d.]+/g).slice(0, 3).map(n => Number(n) / 255).map(n => n <= 0.04045 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4));
+            return v[0] * 0.2126 + v[1] * 0.7152 + v[2] * 0.0722;
+        }
+        function ratio(fg, bg) {
+            const a = luminance(fg), b = luminance(bg);
+            return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        }
+        return [...document.querySelectorAll('#party-panel .cmp-condition')].flatMap(card => {
+            const bg = getComputedStyle(card).backgroundColor;
+            return [...card.querySelectorAll('span, .cmp-condition-duration, .cmp-condition-text')].map(e => ratio(getComputedStyle(e).color, bg));
+        });
+    });
+    check(ratios.length > 0 && ratios.every(n => n >= 4.5), theme + ': effect card text contrast >= 4.5 (' + Math.min(...ratios).toFixed(2) + ')');
+}
 
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }

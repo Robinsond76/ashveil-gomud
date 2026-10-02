@@ -116,3 +116,14 @@ remain overrides: review them if adopting these default balance numbers.
 
 The seeded narration outcome fixture was recaptured because stepped stats
 change real hit/damage rolls; it remains a lock for later narration-only work.
+
+Phase 30g4 PR integration with the Phase 34 review follow-up (`0a2facb7`)
+preserved both status records. Independent integration review found a Gear
+preview clone dropped class HP, and its cache could retain the old rate after
+a class change. Both paths now preserve the resolved HP rate and key the cache
+on it. Warrior/wizard player and companion clone regressions, plus cached
+preview/class-change/applied HP parity, passed; follow-up accepted the fix with
+no remaining blockers. Merged generation, validation, JS/Lua lint and the
+full race suite passed. An existing retreat assertion failed on the first
+post-fix run; three focused reruns passed, new test provider cleanup was
+corrected, and the final full suite passed. See PR #13.
