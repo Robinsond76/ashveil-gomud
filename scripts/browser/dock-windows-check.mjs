@@ -694,11 +694,13 @@ await page.setViewportSize({ width: 1280, height: 900 });
 // Phase 34 review: the server sends a timed effect once; the client counts it
 // down with a meter, labels harm in words, and never doubles a full stop.
 conditions.leader.effects = [{ name: 'Slowed', description: 'Moves slowly.', duration: '30 seconds remaining', seconds_left: 30, seconds_total: 60, harmful: true, mods: { speed: -2 } },
-  { name: 'Blessed', description: 'Guided by light.', duration: 'Until removed', mods: { perception: 1 } }];
+  { name: 'Blessed', description: 'Guided by light.', duration: 'Until removed', helpful: true, mods: { perception: 1 } },
+  { name: 'Sleepy', description: 'Drowsing.', duration: 'Until removed' }];
 conditions['companion:1'].state = 'away-live';
 await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
 const effectsText = () => page.locator('#cw-effects').textContent();
 check((await effectsText()).includes('Harmful') && (await effectsText()).includes('Helpful'), 'effects say Harmful or Helpful in words, not colour alone');
+check(await page.locator('#cw-effects .cmp-condition', { hasText: 'Sleepy' }).locator('.cmp-condition-tag').count() === 0, 'an effect neither known to harm nor help has no tag');
 check(!/\.\./.test(await effectsText()), 'effect text never doubles a full stop');
 const meter = page.locator('#cw-effects [role=meter]');
 check(await meter.count() === 1 && await meter.getAttribute('aria-valuemax') === '60', 'a timed effect has a duration meter');

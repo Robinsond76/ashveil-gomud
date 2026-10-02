@@ -2,3 +2,4 @@ flag: remove-curse
 name: "Remove Curse"
 description: "Allows cursed items to be removed as if they were not cursed."
 locked: true
+helpful: true

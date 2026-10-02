@@ -73,14 +73,25 @@ func TestConditionsExtraIgnoresTickingCountdown(t *testing.T) {
 	assert.Equal(t, seconds, effect.SecondsLeft)
 	assert.Equal(t, seconds, effect.SecondsTotal)
 	assert.True(t, effect.Harmful)
+	assert.False(t, effect.Helpful)
 	assert.Zero(t, effect.ExpiresRound, "the change key's expiry is not sent")
 
 	for i := 0; i < 3; i++ {
 		util.SetRoundCount(util.GetRoundCount() + 1)
-		slowed.RoundCounter++
+		u.Character.Buffs.Trigger()
 		f.updateExtras(u)
 	}
 	require.Len(t, *out, 1, "a passing second resends nothing")
+
+	// A command's refresh runs after that round's buffs tick, the round's
+	// own refresh before them: the end round they compute differs by one.
+	for i := 0; i < 3; i++ {
+		util.SetRoundCount(util.GetRoundCount() + 1)
+		f.updateExtras(u) // the round refresh, before the tick
+		u.Character.Buffs.Trigger()
+		f.updateExtras(u) // a command's refresh, after it
+	}
+	require.Len(t, *out, 1, "refreshes on either side of the tick resend nothing")
 
 	slowed.RoundCounter, slowed.TriggersLeft = 0, 3
 	f.updateExtras(u)

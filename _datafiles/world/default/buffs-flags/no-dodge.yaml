@@ -2,3 +2,4 @@ flag: no-dodge
 name: "No Dodge"
 description: "The holder can't dodge a blow (stunned)."
 locked: true
+harmful: true

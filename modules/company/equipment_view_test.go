@@ -289,3 +289,48 @@ func TestEquipmentViewReusedUntilLeaderChanges(t *testing.T) {
 	module.EquipmentView(7)
 	assert.Equal(t, rebuilt+3, builds(), "a forgotten leader is rebuilt")
 }
+
+// What ticks every round without changing a preview (vitals, cooldowns, a
+// buff's counters) must not rebuild the view through the provider the GMCP
+// feed calls; a new buff must. A rebuild also drops offline leaders' views
+// (review of the Phase 34 follow-up).
+func TestEquipmentViewIgnoresRoundTicksAndPrunesOffline(t *testing.T) {
+	b := equipmentBrawl(t)
+	c := b.aria.Character
+	spec := buffs.BuffSpec{BuffId: 989905, Name: "Keen", Description: "Sharp eyes.", RoundInterval: 2, TriggerCount: 1000000000}
+	buffs.SetTestBuffSpec(&spec)
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(spec.BuffId) })
+	round := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCount(round) })
+	c.Items = []items.Item{items.New(10004)}
+	c.Buffs.List = []*buffs.Buff{{BuffId: spec.BuffId, PermaBuff: true, TriggersLeft: buffs.TriggersLeftUnlimited}}
+	builds := func() int {
+		module.equipmentViews.mu.Lock()
+		defer module.equipmentViews.mu.Unlock()
+		return module.equipmentViews.builds
+	}
+	module.equipmentViews.mu.Lock()
+	module.equipmentViews.byUser[424242] = equipmentViewEntry{}
+	module.equipmentViews.mu.Unlock()
+
+	module.forgetEquipmentView(7)
+	require.True(t, domain.EquipmentViewOf(7).Available)
+	start := builds()
+	module.equipmentViews.mu.Lock()
+	_, stale := module.equipmentViews.byUser[424242]
+	module.equipmentViews.mu.Unlock()
+	assert.False(t, stale, "a rebuild prunes offline leaders")
+
+	for i := 0; i < 3; i++ {
+		util.SetRoundCount(util.GetRoundCount() + 1)
+		c.Buffs.List[0].RoundCounter++
+		c.Health, c.Mana = c.Health-1, c.Mana+1
+		c.Cooldowns = characters.Cooldowns{"bash": 3 - i}
+		domain.EquipmentViewOf(7)
+	}
+	assert.Equal(t, start, builds(), "round ticks reuse the view")
+
+	c.Buffs.List = append(c.Buffs.List, &buffs.Buff{BuffId: spec.BuffId, TriggersLeft: 3})
+	domain.EquipmentViewOf(7)
+	assert.Equal(t, start+1, builds(), "a new effect rebuilds the view")
+}

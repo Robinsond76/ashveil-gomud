@@ -17,7 +17,7 @@
  *   CompanyData.kg(grams)          "12.4 kg"
  *   CompanyData.sentence(text)     text ending in one full stop ('' if blank)
  *   CompanyData.condition(c, kind) a Company.Conditions entry as an element:
- *                                  name, Harmful/Helpful, a live countdown and
+ *                                  name, Harmful/Helpful when known, a live countdown and
  *                                  duration meter, description and modifiers.
  *                                  The server resends a condition only when it
  *                                  starts, is refreshed or ends (Phase 34
@@ -119,15 +119,20 @@ window.CompanyData = (function() {
         document.querySelectorAll('[data-cd-deadline]').forEach(node => paint(node, now));
     }, 1000);
 
+    // effectTag names an effect known to harm or help; others get none.
+    function effectTag(c, kind) {
+        if (kind !== 'effect') { return ''; }
+        return c.harmful ? 'Harmful' : (c.helpful ? 'Helpful' : '');
+    }
+
     // condition renders one entry; kind is 'effect', 'wound' or 'bonus'.
     function condition(c, kind) {
         const harmful = kind === 'wound' || !!c.harmful;
         const card = el('div', 'cmp-condition' + (harmful ? ' harmful' : ''));
         const head = el('div', 'cmp-condition-head');
         head.appendChild(el('span', 'cmp-condition-name', (c.name || '') + (c.stacks > 1 ? ' (×' + c.stacks + ')' : '')));
-        if (kind === 'effect') {
-            head.appendChild(el('span', 'cmp-condition-tag', harmful ? 'Harmful' : 'Helpful'));
-        }
+        const tag = effectTag(c, kind);
+        if (tag) { head.appendChild(el('span', 'cmp-condition-tag', tag)); }
         card.appendChild(head);
         const timed = c.seconds_left > 0;
         const deadline = conditionsAt + (c.seconds_left || 0) * 1000;
@@ -158,10 +163,10 @@ window.CompanyData = (function() {
 
     // conditionLabel is the condition as one line, for accessible names.
     function conditionLabel(c, kind) {
-        const harmful = kind === 'wound' || !!c.harmful;
+        const tag = effectTag(c, kind);
         // A countdown would go stale in a label: the card's meter carries it.
         return [
-            (c.name || '') + (c.stacks > 1 ? ' (×' + c.stacks + ')' : '') + (kind === 'effect' ? (harmful ? ', harmful' : ', helpful') : ''),
+            (c.name || '') + (c.stacks > 1 ? ' (×' + c.stacks + ')' : '') + (tag ? ', ' + tag.toLowerCase() : ''),
             c.seconds_left > 0 ? 'timed' : String(c.duration || ''),
             sentence(c.description).replace(/\.$/, ''),
             modsText(c.mods),

@@ -259,8 +259,9 @@ type companyExtra struct {
 	build  func(user *users.UserRecord) []byte
 	// buildKeyed, when set, replaces build: key decides whether the body
 	// changed, so a value that ticks every round (a countdown the client
-	// runs itself) does not resend an otherwise unchanged message.
-	buildKeyed func(user *users.UserRecord) (body, key []byte)
+	// runs itself) does not resend an otherwise unchanged message. prev is
+	// the key last stored for this user (nil after a forget).
+	buildKeyed func(user *users.UserRecord, prev []byte) (body, key []byte)
 }
 
 // companyFeed decides what to send. It runs on the game loop; mu only
@@ -351,7 +352,13 @@ func (f *companyFeed) updateExtras(user *users.UserRecord) {
 	for _, extra := range f.extras {
 		var body, key []byte
 		if extra.buildKeyed != nil {
-			body, key = extra.buildKeyed(user)
+			f.mu.Lock()
+			var prev []byte
+			if last, ok := f.lastExtra[user.UserId][extra.module]; ok {
+				prev = []byte(last)
+			}
+			f.mu.Unlock()
+			body, key = extra.buildKeyed(user, prev)
 		} else {
 			body = extra.build(user)
 			key = body

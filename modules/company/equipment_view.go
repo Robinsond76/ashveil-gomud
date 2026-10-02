@@ -6,11 +6,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/pets"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"gopkg.in/yaml.v2"
@@ -33,6 +35,35 @@ func equipmentStats(c *characters.Character, load encumbrance.Load) domain.Equip
 	}
 	return domain.EquipmentStats{EdgeBonus: edgeBonus, EdgeStrikes: edgeStrikes, OffhandEdgeBonus: offhandEdgeBonus, OffhandEdgeStrikes: offhandEdgeStrikes, Hands: c.HandsRequired(c.Equipment.Weapon), Reach: c.Equipment.Weapon.GetSpec().Reach, Shield: c.HasShield(), HealthMax: c.HealthMax.Value, ManaMax: c.ManaMax.Value, Damage: weapon.DiceRoll, OffhandDamage: offhandDamage, Defense: c.GetDefense(), WornG: c.PersonalGrams(), Burden: c.BurdenWord(), DodgePct: combat.DodgeRetentionPct(c), PackCapacityG: c.Equipment.Pack.CarryBonusGrams(), CapacityG: load.CapacityGrams, CargoG: load.TotalGrams(), Stats: map[string]int{
 		"strength": c.Stats.Strength.ValueAdj, "speed": c.Stats.Speed.ValueAdj, "smarts": c.Stats.Smarts.ValueAdj, "vitality": c.Stats.Vitality.ValueAdj, "mysticism": c.Stats.Mysticism.ValueAdj, "perception": c.Stats.Perception.ValueAdj}}
+}
+
+// previewKey is c without what changes as rounds pass but no preview reads:
+// vitals (availability is keyed separately), cooldowns, timers, the record
+// of play, and each buff's tick counters (its presence, stacks and
+// permanence remain). The pet is keyed by its buffs and presence instead.
+// A ticking field missed here costs a rebuild, never a stale preview.
+func previewKey(c *characters.Character) characters.Character {
+	k := *c
+	k.Health, k.Mana, k.ActionPoints = 0, 0, 0
+	k.Experience, k.Gold, k.Bank = 0, 0, 0
+	k.RoomId, k.Zone = 0, ""
+	k.Cooldowns, k.Timers, k.KD = nil, nil, characters.KDStats{}
+	k.MiscData, k.QuestProgress, k.ZonesVisited, k.Settings = nil, nil, nil, nil
+	k.Pet = pets.Pet{}
+	list := make([]*buffs.Buff, 0, len(c.Buffs.List))
+	for _, b := range c.Buffs.List {
+		if b == nil {
+			continue
+		}
+		kb := *b
+		kb.RoundCounter = 0
+		if !kb.Expired() {
+			kb.TriggersLeft = 0
+		}
+		list = append(list, &kb)
+	}
+	k.Buffs.List = list
+	return k
 }
 
 func equipmentFits(loadBefore, loadAfter encumbrance.Load) bool {
@@ -68,7 +99,8 @@ func (m *CompanyModule) forgetEquipmentView(id int) {
 // EquipmentView never prepares assets, saves or mutates an item. Catalogue
 // choices are exact instances owned by this leader; commands re-resolve them.
 // The result is reused while the leader's character (equipment, cargo,
-// stats and effects), company load and availability are unchanged.
+// stats and effects), company load and availability are unchanged, and is
+// shared with the cache: callers must not mutate it.
 func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 	out := domain.EquipmentView{Slots: []domain.EquipmentSlot{}}
 	u := users.GetByUserId(id)
@@ -106,12 +138,14 @@ func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 	bare := *actor
 	bare.Items = nil
 	raw, err := yaml.Marshal(&bare)
+	keyed := previewKey(&bare)
+	keyRaw, keyErr := yaml.Marshal(&keyed)
 	cargoRaw, cargoErr := yaml.Marshal(u.Character.Items)
-	if err != nil || cargoErr != nil {
+	if err != nil || keyErr != nil || cargoErr != nil {
 		out.Available, out.Reason = false, "Equipment preview unavailable."
 		return out
 	}
-	key := sha256.Sum256(append(append(raw, cargoRaw...), fmt.Sprintf("|%+v|%t|%t|%s", load, known, out.Available, out.Reason)...))
+	key := sha256.Sum256(append(append(keyRaw, cargoRaw...), fmt.Sprintf("|%+v|%t|%t|%s|%t|%v", load, known, out.Available, out.Reason, bare.Pet.Exists() && !bare.Pet.IsMissing(), bare.Pet.GetBuffs())...))
 	round := util.GetRoundCount()
 	m.equipmentViews.mu.Lock()
 	cached, hit := m.equipmentViews.byUser[id]
@@ -169,9 +203,20 @@ func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 		}
 		out.Slots = append(out.Slots, entry)
 	}
+	online := map[int]bool{id: true}
+	for _, uid := range users.GetOnlineUserIds() {
+		online[uid] = true
+	}
 	m.equipmentViews.mu.Lock()
 	if m.equipmentViews.byUser == nil {
 		m.equipmentViews.byUser = map[int]equipmentViewEntry{}
+	}
+	// A missed despawn must not keep an offline leader's view: prune on
+	// every rebuild, as the GMCP feed prunes each round.
+	for uid := range m.equipmentViews.byUser {
+		if !online[uid] {
+			delete(m.equipmentViews.byUser, uid)
+		}
 	}
 	m.equipmentViews.byUser[id] = equipmentViewEntry{key: key, round: round, view: out}
 	m.equipmentViews.builds++

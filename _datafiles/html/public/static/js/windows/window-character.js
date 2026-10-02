@@ -1001,7 +1001,7 @@
             capabilityText(panel, group === 'field' ? 'Field capabilities' : 'Camp capabilities', true);
             const list = (caps.utility || []).filter(c => c.group === group);
             list.forEach(c => capabilityText(panel, [c.name + (c.mode === 'manual' ? ' (Manual)' : ' (Automatic)') + ' — ' + (c.enabled ? 'Eligible' : c.reason || 'Unavailable') + '.',
-                c.skill + ' rank ' + c.rank + ':', CompanyData.sentence(c.description)].filter(Boolean).join(' ')));
+                c.skill + ' rank ' + c.rank + (c.description ? ':' : '.'), CompanyData.sentence(c.description)].filter(Boolean).join(' ')));
             if (!list.length) { capabilityText(panel, 'No current capabilities'); }
         });
         capabilityText(panel, 'The best eligible company specialist performs automatic field and camp work when its conditions hold. Camp Cooking is manual: camp cook. See help specialists and help cooking.');

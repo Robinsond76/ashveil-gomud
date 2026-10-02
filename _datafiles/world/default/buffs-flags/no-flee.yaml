@@ -2,3 +2,4 @@ flag: no-flee
 name: "No Flee"
 description: "Prevents the character from fleeing an active combat encounter."
 locked: true
+harmful: true

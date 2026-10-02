@@ -12,7 +12,7 @@ func TestPhase34dPlayerHelpRenders(t *testing.T) {
 	keywords.LoadAliases()
 	for topic, expected := range map[string]string{
 		"cooking": "manual camp capability",
-		"skills":  "Automatic combat abilities", "conditions": "labelled Harmful",
+		"skills":  "Automatic combat abilities", "conditions": "labelled Harmful; one known to help",
 		"company": "active effects and wounds", "specialists": "field and camp eligibility", "webclient": "persistent bonuses",
 	} {
 		text, err := GetHelpContents(topic)

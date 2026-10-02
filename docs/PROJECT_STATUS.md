@@ -21,21 +21,41 @@ instead of duplicating them.
 
 ## Current position
 
-**Phase 34 review follow-up (2026-10-02, in review):** an owner-requested
+**Phase 34 review follow-up complete (2026-10-02):** an owner-requested
 review of the finished Phase 34 found the Gear editor's read model rebuilt
 every round per player at about 26 ms with 30 armour pieces in cargo (each
 preview YAML-cloned the character). `Company.Equipment` now comes from a
-cached view keyed on the leader's character, cargo, load and availability
-(rebuilt at least every 15 rounds); previews share one marshal without the
-cargo: about 0.9 ms per unchanged round, 6 ms per rebuild. Also fixed:
-`Registry.Put`'s unreachable empty-record deletion removed (since 34a every
-leader keeps a record, which also holds the 34b pack grant);
-`Company.Conditions` no longer resends every round for a ticking countdown
-(the client counts down from `seconds_left`; the change key uses the expiry
-round); effects say Harmful/Helpful in words with a duration meter; no doubled
-full stops in effect and capability text; clearer pack, burden, conditions
-help and away-member wording. Regression tests and browser checks added.
-Independent review and full checks pending.
+cached view keyed on what its previews read: the leader's character less what
+ticks each round (vitals, cooldowns, buff counters, play records), cargo, load
+and availability; rebuilt at least every 15 rounds, pruned of offline leaders
+on rebuild. Previews share one marshal without the cargo: about 0.9 ms per
+unchanged round, 6 ms per rebuild. Also: `Registry.Put`'s unreachable
+empty-record deletion removed (every leader keeps a record since 34a, which
+holds the 34b pack grant); `Company.Conditions` no longer resends every round
+for a ticking countdown (the client counts `seconds_left` down; the change key
+uses the end round); effects are tagged Harmful or Helpful when known, from
+stat modifiers and new `harmful`/`helpful` markers in `buffs-flags` data
+(`BuffSpec.Effect()`), with a duration meter; no doubled full stops in effect
+and capability text; clearer pack, burden, conditions and away-member wording.
+
+Independent review: seven findings. Accepted and fixed with regression tests:
+(1) effects with only a flag (Bleeding, Poisoned, Stunned) or secret were
+labelled Helpful; now three-way from data, tested on the default world's
+buffs; (2) the cache key included per-round ticks (buff counters, regen,
+cooldowns), so ordinary play rebuilt every round; the key now omits them;
+(3) refreshes before and after a round's buff tick keyed end rounds one apart,
+resending Conditions after each command; ends within one round now match;
+(4) no backstop cleared offline leaders' cached views; pruned on rebuild;
+(5) the cached view is now documented as read-only to callers; (6) a
+capability line with no description ended in a colon; (7) tests now go
+through the provider (`EquipmentViewOf`) and simulate real `Buffs.Trigger`
+ticks on both sides of the refresh. Accepted limits: a withdrawn companion
+skips buff ticks, so its end round moves and Conditions resends every other
+round while withdrawn; `seconds_left` sent from the round refresh can read
+one round long. Verification: focused packages, all three browser suites
+(effect-card contrast >= 4.5 in every theme), JS lint, make generate, make
+validate and go test -race ./... (95 packages) passed. Lua lint not run (no Lua
+changed; no Docker or luacheck here).
 
 **34d complete:** Company Status now shows owned members' active effects and
 wounds with authoritative duration and mechanical meaning, separate from

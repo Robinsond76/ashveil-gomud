@@ -2,3 +2,4 @@ flag: superhearing
 name: "Super Hearing"
 description: "Grants the character the ability to detect sounds and events in adjacent rooms."
 locked: true
+helpful: true
