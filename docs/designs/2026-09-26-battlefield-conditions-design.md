@@ -2,8 +2,10 @@
 
 Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap.md).
 Status: owner-approved direction (2026-09-26), from the "new combat
-suggestions" list; needs a design pass and plan. The slices are separable
-if the design pass prefers.
+suggestions" list. The owner approved the
+[detailed design](2026-10-02-phase-30f-battlefield-design.md) on 2026-10-02;
+implementation is on `phase-30f-battlefield`, unmerged, with PR publication
+and **Opus 5.5** review pending. This file preserves the original proposal.
 
 ## Scope
 

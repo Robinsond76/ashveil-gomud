@@ -42,3 +42,5 @@ The deeper your exposure, the more it costs you:
 
 See also: <ansi fg="command">help weather</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help strain</ansi>,
 <ansi fg="command">help camp</ansi>, <ansi fg="command">help conditions</ansi>.
+
+Frostbitten or worse adds one round to new chants and sling shots, in addition to existing cold stat penalties. See help battlefield.

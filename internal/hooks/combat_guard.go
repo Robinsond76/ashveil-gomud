@@ -128,7 +128,7 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		for _, m := range members {
 			guarded = append(guarded, strategy.Guarded{
 				Key: string(m.key), HP: m.char.Health, MaxHP: m.char.HealthMax.Value,
-				InReach: formationcombat.GuardReach(f, g.key, m.key),
+				InReach: formationcombat.GuardGround(f, g.key, m.key, enemyparty.Narrow(rooms.LoadRoom(leader.Character.RoomId))),
 			})
 		}
 		if w, ok := strategy.GuardWard(string(g.key), s.Ward, guarded); !ok || w != string(struck) {

@@ -14,6 +14,8 @@ const (
 
 type SpellAggroInfo struct {
 	FriendlyTargets      *FriendlyCastTargets `yaml:"-"`
+	ClusterUserID        int                  `yaml:"-"`
+	ClusterMobID         int                  `yaml:"-"`
 	SpellId              string
 	SpellRest            string
 	TargetUserIds        []int
@@ -39,6 +41,8 @@ type RetreatMember struct {
 }
 
 type Aggro struct {
+	ColdDelayed   bool         `yaml:"-"`
+	ColdNotice    bool         `yaml:"-"`
 	RetreatInfo   *RetreatInfo `yaml:"-"`
 	Type          AggroType
 	MobInstanceId int

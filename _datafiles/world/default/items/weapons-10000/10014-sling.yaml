@@ -5,6 +5,7 @@ description: A couple of leather straps and a pouch to hold a rock.  What more c
 type: weapon
 hands: 2
 subtype: shooting
+sling: true
 waitrounds: 1
 damage:
   diceroll: 1d4

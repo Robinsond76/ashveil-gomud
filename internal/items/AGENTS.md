@@ -23,3 +23,5 @@
 
 - Keep this file about item-package guardrails, not a full item-system reference.
 - Add local rules here only when they prevent repeated mistakes in item persistence or editing.
+
+Phase 30f `sling: true` is an explicit capability, valid only on a shooting weapon. Cold timing must not infer this capability from item names or delay all shooting weapons.

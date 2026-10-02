@@ -38,6 +38,7 @@ func Groups(room *rooms.Room) []Group {
 	seen := map[string]int{}
 	var out []Group
 	for _, p := range mobparty.Assemble(sums) {
+		p = groundParty(room, p)
 		members := make([]mobparty.MobSummary, len(p.Members))
 		for i, id := range p.Members {
 			members[i] = byId[id]

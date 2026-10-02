@@ -184,6 +184,7 @@ type fakeMobSpawner struct {
 	nextID      int
 	activeIDs   map[int]bool
 	activeCalls []int
+	cancelCalls []int
 }
 
 func (f *fakeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUserID int) (int, error) {
@@ -193,6 +194,11 @@ func (f *fakeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUser
 	}
 	f.nextID++
 	return f.nextID, nil
+}
+
+func (f *fakeMobSpawner) CancelEncounter(instanceID, roomID int) {
+	f.cancelCalls = append(f.cancelCalls, instanceID)
+	delete(f.activeIDs, instanceID)
 }
 
 func (f *fakeMobSpawner) EncounterActive(instanceID, roomID int) bool {
@@ -1130,4 +1136,24 @@ func TestMovementBlockedWhileTravelling(t *testing.T) {
 	assert.True(t, blocked)
 	assert.Contains(t, message, "40%")
 	assert.Contains(t, message, "travelling")
+}
+
+func TestCombatInterruptionSaveFailureCancelsSpawnAndRetryMakesOneEncounter(t *testing.T) {
+	store := &fakeStore{}
+	scheduler := &fakeScheduler{}
+	now := baseTime()
+	m := newTestModule(store, scheduler, &fakeMover{}, &fakeSurvival{}, func() time.Time { return now }, combatInterruptionProfiles())
+	spawner := &fakeMobSpawner{}
+	m.mobSpawner = spawner
+	_, err := m.StartTravel(startRequest())
+	require.NoError(t, err)
+	original := m.sessions[7]
+	now = baseTime().Add(5 * time.Second)
+	store.failNextSave = true
+	require.Error(t, m.interruptLocked(original))
+	assert.Equal(t, original, m.sessions[7])
+	assert.Equal(t, []int{1}, spawner.cancelCalls)
+	require.NoError(t, m.interruptLocked(original))
+	assert.Equal(t, 2, m.sessions[7].Interruption.CombatMobInstanceId)
+	assert.Equal(t, []int{1}, spawner.cancelCalls, "successful retry keeps its encounter")
 }

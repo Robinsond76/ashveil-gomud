@@ -8,7 +8,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
-	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -106,6 +105,9 @@ func abilityPass() {
 			foes[id] = true
 		}
 		for _, a := range sideActors(u, room) {
+			if surprised(a.who.userId, a.who.mobId) {
+				continue
+			}
 			foe, ok := abilityFoe(a, u, foes)
 			if !ok {
 				continue
@@ -157,7 +159,7 @@ func abilityReach(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room)
 	if a.who.userId > 0 {
 		col, placed = resolvePlayerColumn(u.UserId)
 	} else {
-		if f, ok := company.FormationFor(u.UserId); ok {
+		if f, ok := enemyparty.CompanyFormation(u.UserId); ok {
 			_, col, placed = f.Find(a.key)
 		}
 		if a.holder.mob != nil {

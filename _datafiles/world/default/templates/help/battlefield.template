@@ -1,0 +1,51 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">battlefield</ansi>
+
+The ground, your formation, and your condition shape a battle.
+
+<ansi fg="yellow-bold">Clusters and sweeping blows</ansi>
+
+Shower of Sparks hits its chosen enemy's cell and the cells immediately
+above, below, left, and right (orthogonal neighbors). It does not hit diagonals or chain through
+neighbors. Targets must still be alive, visible, and in that battle when
+the chant finishes. A fallen primary target stops the spell; it does not
+move to another cluster. Spread out to reduce the damage to your company.
+
+Some enemies, including forest ogres, sweep the whole front row. A sweep
+takes one action, strikes each living front-row opponent once, and is
+available again after three combat rounds. Shields, armor, and guardians
+still protect against each strike. It never hits spectators or waiting bands.
+
+<ansi fg="yellow-bold">Leaping and open flanks</ansi>
+
+Some beasts, including timber wolves, leap past a missing, fallen, or
+knocked-down front-line protector to strike the middle or back row. A
+standing protector blocks the leap. A leap replaces a normal attack and
+is available again after three combat rounds; guardians can still step in.
+
+A rear member is exposed to melee when their own front column and an
+adjacent front column are both open. Keep a standing front line: a
+knocked-down member no longer closes a flank.
+
+<ansi fg="yellow-bold">Narrow ground</ansi>
+
+On narrow ground, such as the ruined Forest bridge, both lines fold into
+two columns. Your saved formation is unchanged. Members keep their row
+when possible, then spill backward, then forward into a vacancy. Any
+overflow stands in reserve: it cannot make melee attacks or guard, but
+can use ranged attacks or spells and can be targeted at range. Reserves
+fill vacancies as members fall. The browser Battle view shows the current
+positions; formation shows your saved arrangement.
+
+<ansi fg="yellow-bold">Fatigue and numb hands</ansi>
+
+Remaining Fatigue 51-100 has no hit penalty. Tired (26-50) lowers physical
+hit chance by 5 percentage points; Exhausted (1-25) by 10; Collapsed (0)
+by 20. The usual minimum hit chance still applies. Strikes name the penalty.
+Rest before fighting; combat itself adds no new fatigue drain.
+
+Frostbitten, Hypothermic, or Freezing to Death adds one combat round to
+each new spell chant or sling shot. Chilled alone adds no extra round.
+The cold's existing stat penalties still apply. Warming up helps your next
+action; it never resets a chant already underway. Bows are not delayed.
+
+See help ambush, help formation, help survival, help temperature, and help combat.

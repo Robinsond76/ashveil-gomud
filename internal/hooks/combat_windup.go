@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -81,6 +82,9 @@ func WindingUp(mobInstanceId int) bool {
 // windUpPower hands internal/combat the power of a landing foe's swing,
 // once: the swing (or the guard's, 30c2) is the Crushing Blow.
 func windUpPower(mobInstanceId int) (combat.Power, bool) {
+	if p, ok := battlefieldPowers[mobInstanceId]; ok {
+		return p, true
+	}
 	if landing == nil || landing.mobId != mobInstanceId || landing.struck {
 		return combat.Power{}, false
 	}
@@ -261,7 +265,7 @@ func windUpAim(mob *mobs.Mob) (statusHolder, bool) {
 // reachesMember reports whether the mob may strike a company member now
 // (11c's legality, failing open as the gates do).
 func reachesMember(mob *mobs.Mob, room *rooms.Room, leader *users.UserRecord, key company.MemberKey, reach formationcombat.Reach) bool {
-	f, ok := company.FormationFor(leader.UserId)
+	f, ok := enemyparty.CompanyFormation(leader.UserId)
 	if !ok {
 		return true
 	}
@@ -269,7 +273,7 @@ func reachesMember(mob *mobs.Mob, room *rooms.Room, leader *users.UserRecord, ke
 	if !ok {
 		return true
 	}
-	_, legal := resolveAttackTarget(col, f, key, aliveMapForCompany(leader, f), reach)
+	_, legal := resolveAttackTarget(col, f, key, aliveMapForCompany(leader, f), reach, groundForMob(mob, leader.UserId))
 	return legal
 }
 

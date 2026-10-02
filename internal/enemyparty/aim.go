@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -96,12 +97,16 @@ func MemberStrategy(leaderId int, key company.MemberKey) strategy.Strategy {
 func Foes(g Group, a Attacker) []strategy.Foe {
 	alive := Alive(g.Party)
 	col, placed := 0, false
-	if f, ok := company.FormationFor(a.LeaderId); ok {
+	if f, ok := CompanyFormation(a.LeaderId); ok {
 		_, col, placed = f.Find(a.Key)
 	}
 	reach := formationcombat.Reach(0)
 	if a.Char != nil {
 		reach = combat.ResolveReach(a.Char, a.MobReach)
+	}
+	var room *rooms.Room
+	if a.Char != nil {
+		room = rooms.LoadRoom(a.Char.RoomId)
 	}
 	leaderFound := false
 	var out []strategy.Foe
@@ -118,7 +123,7 @@ func Foes(g Group, a Attacker) []strategy.Foe {
 			MaxHP:      m.Character.HealthMax.Value,
 			Row:        row,
 			Col:        mcol,
-			Reachable:  a.Spell || !placed || formationcombat.Legal(col, g.Party.Formation, key, alive, reach),
+			Reachable:  a.Spell || !placed || Legal(room, a.LeaderId, col, g.Party.Formation, key, alive, reach),
 			StrikesPct: StrikesPct(m.Character.Aggro, a.LeaderId),
 			Chanting:   m.Character.Aggro != nil && m.Character.Aggro.Type == characters.SpellCast,
 			Caster:     len(m.Character.SpellBook) > 0,

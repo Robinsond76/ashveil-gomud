@@ -222,7 +222,8 @@ func (m *CompanyModule) formationCommand(rest string, user *users.UserRecord, _ 
 			return true, err
 		}
 		record, _ := m.registry.Get(user.UserId)
-		_, col, placed := record.Formation.Find(key)
+		effective, _ := enemyparty.CompanyFormation(user.UserId)
+		_, col, placed := effective.Find(key)
 
 		// Phase 29a: in a fight, answer against the enemy the member is
 		// fighting, with its own reach. An unplaced member fails open, as
@@ -311,7 +312,14 @@ func (m *CompanyModule) reachInFight(leader *users.UserRecord, key domain.Member
 	name := m.memberName(leader.UserId, key)
 	alive := enemyparty.Alive(party)
 	names := []string{}
-	targets := formationcombat.LegalTargets(col, party.Formation, alive, reach)
+	targets := []domain.MemberKey{}
+	for _, row := range party.Formation {
+		for _, target := range row {
+			if enemyparty.Legal(room, leader.UserId, col, party.Formation, target, alive, reach) {
+				targets = append(targets, target)
+			}
+		}
+	}
 	if !placed {
 		targets = targets[:0]
 		for _, instanceID := range party.Members {
