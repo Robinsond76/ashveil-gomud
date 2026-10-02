@@ -166,12 +166,29 @@ type MobSpawner interface {
 	// roomID. False (including "no such instance," e.g. after a restart
 	// that didn't persist it) means the encounter is resolved.
 	EncounterActive(instanceID, roomID int) bool
+	// CancelEncounter removes the entire freshly spawned group if saving its interruption fails.
+	CancelEncounter(instanceID, roomID int)
 }
 
 type nativeMobSpawner struct{}
 
 func (nativeMobSpawner) SpawnHostileEncounter(roomID, mobTemplateID, leaderUserID int) (int, error) {
 	return enemyparty.SpawnAmbush(roomID, mobTemplateID, leaderUserID)
+}
+
+// CancelEncounter rolls back a fresh spawn before the loop can run its commands.
+func (nativeMobSpawner) CancelEncounter(instanceID, roomID int) {
+	room := rooms.LoadRoom(roomID)
+	if room == nil {
+		return
+	}
+	group := enemyparty.EncounterGroup(roomID, instanceID)
+	for _, id := range room.GetMobs() {
+		if mob := mobs.GetInstance(id); mob != nil && (id == instanceID || mob.SpawnGroup == group) {
+			room.RemoveMob(id)
+			mobs.DestroyInstance(id)
+		}
+	}
 }
 
 // EncounterActive reports whether any foe of the encounter led by
@@ -1007,6 +1024,9 @@ func (m *ExpeditionModule) interruptLocked(session expedition.TravelSession) err
 	m.sessions[session.LeaderUserID] = candidate
 	if err := m.saveLocked(); err != nil {
 		m.sessions[session.LeaderUserID] = original
+		if candidate.Interruption != nil && candidate.Interruption.CombatMobInstanceId > 0 {
+			m.mobSpawner.CancelEncounter(candidate.Interruption.CombatMobInstanceId, candidate.OriginRoomID)
+		}
 		return err
 	}
 	m.stopTimerLocked(session.LeaderUserID)

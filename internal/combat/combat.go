@@ -69,8 +69,11 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 	}
 
 	penalty := darknessPenalty(rooms.LoadRoom(user.Character.RoomId), &mob.Character, func(r *rooms.Room) int { return r.VisibilityForUser(user) })
+	fatigue := fatigueFor(user.UserId, company.LeaderMemberKey)
+	penalty += fatigue
 	targetChar := mobCombatCharacter(mob)
 	attackResult := calculateCombat(*user.Character, targetChar, User, Mob, penalty, company.ChemistryBonusForUser(user.UserId), mob)
+	fatigueText(&attackResult, fatigue, fmt.Sprintf("u%d", user.UserId))
 	spendEdges(user.Character, attackResult.EdgeSpent)
 
 	if attackResult.DamageToSource != 0 {
@@ -97,7 +100,10 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) AttackResult {
 
 	penalty := darknessPenalty(rooms.LoadRoom(userAtk.Character.RoomId), userDef.Character, func(r *rooms.Room) int { return r.VisibilityForUser(userAtk) })
+	fatigue := fatigueFor(userAtk.UserId, company.LeaderMemberKey)
+	penalty += fatigue
 	attackResult := calculateCombat(*userAtk.Character, *userDef.Character, User, User, penalty, company.ChemistryBonusForUser(userAtk.UserId))
+	fatigueText(&attackResult, fatigue, fmt.Sprintf("u%d", userAtk.UserId))
 	spendEdges(userAtk.Character, attackResult.EdgeSpent)
 
 	if attackResult.DamageToSource != 0 {
@@ -128,8 +134,11 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 	}
 
 	penalty := darknessPenalty(rooms.LoadRoom(mob.Character.RoomId), user.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mob) })
+	fatigue := mobFatigue(mob.InstanceId)
+	penalty += fatigue
 	sourceChar := mobCombatCharacter(mob)
 	attackResult := calculateCombatPower(sourceChar, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId), mobPower(mob))
+	fatigueText(&attackResult, fatigue, fmt.Sprintf("m%d", mob.InstanceId))
 	spendEdges(&mob.Character, attackResult.EdgeSpent)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -154,9 +163,12 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 	}
 
 	penalty := darknessPenalty(rooms.LoadRoom(mobAtk.Character.RoomId), &mobDef.Character, func(r *rooms.Room) int { return r.VisibilityForMob(mobAtk) })
+	fatigue := mobFatigue(mobAtk.InstanceId)
+	penalty += fatigue
 	sourceChar := mobCombatCharacter(mobAtk)
 	targetChar := mobCombatCharacter(mobDef)
 	attackResult := calculateCombatPower(sourceChar, targetChar, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId), mobPower(mobAtk), mobDef)
+	fatigueText(&attackResult, fatigue, fmt.Sprintf("m%d", mobAtk.InstanceId))
 	spendEdges(&mobAtk.Character, attackResult.EdgeSpent)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)

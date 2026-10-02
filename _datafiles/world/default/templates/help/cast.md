@@ -20,3 +20,4 @@ half its mana back (see ~help interrupts~).
 Minor Heal All targets your present company even without a player party. Single-target help uses the named patient; other players are never automatically included. Targets are rechecked when the chant finishes. See ~help friendly-effects~ for scope, eligibility and costs.
 
 **See also:** ~help spells~, ~help attack~, ~help strategy~, ~help interrupts~
+Frostbitten or worse adds one round to new chants and sling shots, in addition to existing cold stat penalties. See help battlefield.

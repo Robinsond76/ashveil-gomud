@@ -29,7 +29,7 @@ import (
 // becomes legal again automatically once whatever blocks it dies (11c's
 // self-healing model; see internal/formationcombat's own package doc).
 // A target not placed in f fails open (ok=true, no redirect).
-func resolveAttackTarget(attackerCol int, f company.Formation, originalTarget company.MemberKey, alive map[company.MemberKey]bool, reach formationcombat.Reach) (finalTarget company.MemberKey, ok bool) {
+func resolveAttackTarget(attackerCol int, f company.Formation, originalTarget company.MemberKey, alive map[company.MemberKey]bool, reach formationcombat.Reach, context ...groundContext) (finalTarget company.MemberKey, ok bool) {
 	if _, _, placed := f.Find(originalTarget); !placed {
 		// A member not placed in the formation has no position to shield
 		// or block it: the attack proceeds directly (Phase 29a; before, an
@@ -37,10 +37,28 @@ func resolveAttackTarget(attackerCol int, f company.Formation, originalTarget co
 		return originalTarget, true
 	}
 	target := originalTarget
+	if len(context) > 0 {
+		g := context[0]
+		standing := enemyparty.Standing(f, alive, g.uid)
+		r, c, _ := f.Find(originalTarget)
+		front := f.At(0, c)
+		jump := g.leap && r > 0 && !(enemyparty.Narrow(g.room) && (attackerCol == 2 || c == 2)) && (front == "" || !standing[front])
+		if jump || formationcombat.Flanked(f, originalTarget, standing, enemyparty.Narrow(g.room)) {
+			if jump {
+				reach = formationcombat.ReachAny
+			}
+			return originalTarget, enemyparty.Legal(g.room, g.uid, attackerCol, f, originalTarget, alive, reach)
+		}
+	}
 	if interceptor, intercepted := formationcombat.InterceptFrontRow(f, originalTarget, alive); intercepted {
 		target = interceptor
 	}
-	if !formationcombat.Legal(attackerCol, f, target, alive, reach) {
+	legal := formationcombat.Legal(attackerCol, f, target, alive, reach)
+	if len(context) > 0 {
+		g := context[0]
+		legal = enemyparty.Legal(g.room, g.uid, attackerCol, f, target, alive, reach)
+	}
+	if !legal {
 		return "", false
 	}
 	return target, true
@@ -87,7 +105,7 @@ func resolveEnemyAttack(attackerCol int, defenderInstanceId int, room *rooms.Roo
 	alive := enemyparty.Alive(party)
 	targetKey := mobparty.MemberKeyFor(defenderInstanceId)
 
-	finalKey, ok := resolveAttackTarget(attackerCol, party.Formation, targetKey, alive, reach)
+	finalKey, ok := resolveAttackTarget(attackerCol, party.Formation, targetKey, alive, reach, groundContext{room: room})
 	if !ok {
 		return nil, false
 	}
@@ -134,7 +152,7 @@ func gateMobVsMobAttack(mob, defMob *mobs.Mob, mobRoom *rooms.Room) (target *mob
 // resolveEnemyAttack.
 func gateCompanionAttacksEnemy(mob *mobs.Mob, leaderUserID int, attackerKey company.MemberKey, defMob *mobs.Mob, mobRoom *rooms.Room) (*mobs.Mob, bool) {
 	target, ok := defMob, true
-	if f, formed := company.FormationFor(leaderUserID); formed {
+	if f, formed := enemyparty.CompanyFormation(leaderUserID); formed {
 		if _, col, found := f.Find(attackerKey); found {
 			reach := combat.ResolveReach(&mob.Character, mob.Reach)
 			target, ok = resolveEnemyAttack(col, defMob.InstanceId, mobRoom, reach)
@@ -151,7 +169,7 @@ func gateCompanionAttacksEnemy(mob *mobs.Mob, leaderUserID int, attackerKey comp
 // the opposite direction: it resolves the attack itself via
 // resolveInterceptedAttackOnLeader and reports handled=true.
 func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leaderUserID int, defenderKey company.MemberKey) (target *mobs.Mob, handled bool, ok bool) {
-	f, formationOk := company.FormationFor(leaderUserID)
+	f, formationOk := enemyparty.CompanyFormation(leaderUserID)
 	if !formationOk {
 		return defMob, false, true
 	}
@@ -166,7 +184,10 @@ func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leade
 	alive := aliveMapForCompany(leader, f)
 	reach := combat.ResolveReach(&mob.Character, mob.Reach)
 
-	finalKey, legalOk := resolveAttackTarget(attackerCol, f, defenderKey, alive, reach)
+	finalKey, legalOk := resolveAttackTarget(attackerCol, f, defenderKey, alive, reach, groundForMob(mob, leaderUserID))
+	if legalOk {
+		noteLeap(mob, attackerCol, f, defenderKey, finalKey, alive, reach, leaderUserID)
+	}
 	if !legalOk {
 		return nil, false, false
 	}
@@ -208,7 +229,7 @@ func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leade
 // LeaderMemberKey within their company formation. ok is false when they
 // have no company record, or (defensively) aren't placed in it.
 func resolvePlayerColumn(leaderUserID int) (int, bool) {
-	f, ok := company.FormationFor(leaderUserID)
+	f, ok := enemyparty.CompanyFormation(leaderUserID)
 	if !ok {
 		return 0, false
 	}
@@ -232,7 +253,7 @@ func resolvePlayerColumn(leaderUserID int) (int, bool) {
 // the round entirely; mob.Character.Aggro is left untouched in every case,
 // so the engagement resumes automatically once whatever blocks it changes.
 func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, defRoom *rooms.Room) (handled bool, ok bool) {
-	f, formationOk := company.FormationFor(defUser.UserId)
+	f, formationOk := enemyparty.CompanyFormation(defUser.UserId)
 	if !formationOk {
 		return false, true
 	}
@@ -245,7 +266,10 @@ func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, de
 	alive := aliveMapForCompany(defUser, f)
 	reach := combat.ResolveReach(&mob.Character, mob.Reach)
 
-	finalKey, legalOk := resolveAttackTarget(attackerCol, f, company.LeaderMemberKey, alive, reach)
+	finalKey, legalOk := resolveAttackTarget(attackerCol, f, company.LeaderMemberKey, alive, reach, groundForMob(mob, defUser.UserId))
+	if legalOk {
+		noteLeap(mob, attackerCol, f, company.LeaderMemberKey, finalKey, alive, reach, defUser.UserId)
+	}
 	if !legalOk {
 		return false, false
 	}
@@ -298,29 +322,7 @@ func resolveHostileAttackerColumn(room *rooms.Room, attackerInstanceId int) (int
 // companion, whether they're currently alive (the leader) or currently
 // spawned, attached, and alive (a companion).
 func aliveMapForCompany(leader *users.UserRecord, f company.Formation) map[company.MemberKey]bool {
-	alive := map[company.MemberKey]bool{
-		company.LeaderMemberKey: leader.Character.Health > 0,
-	}
-	for row := 0; row < company.FormationRows; row++ {
-		for col := 0; col < company.FormationCols; col++ {
-			key := f.At(row, col)
-			if key == "" || key == company.LeaderMemberKey {
-				continue
-			}
-			companionID, ok := company.CompanionIDFromMemberKey(key)
-			if !ok {
-				continue
-			}
-			instanceId, ok := company.InstanceFor(leader.UserId, companionID)
-			if !ok {
-				alive[key] = false
-				continue
-			}
-			mob := mobs.GetInstance(instanceId)
-			alive[key] = mob != nil && mob.Character.Health > 0
-		}
-	}
-	return alive
+	return enemyparty.CompanyAlive(leader.UserId, f)
 }
 
 // resolveInterceptedMobAttack resolves one round of an attack 11c's
@@ -585,7 +587,7 @@ func hostileTo(party mobparty.Party, leaderId int) bool {
 // new target. false means unchanged pre-existing behavior: no company, or
 // no living legal replacement in the lost target's party.
 func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {
-	f, ok := company.FormationFor(user.UserId)
+	f, ok := enemyparty.CompanyFormation(user.UserId)
 	if !ok || user.Character.Aggro == nil {
 		return false
 	}
@@ -612,7 +614,7 @@ func reassignCompanionTarget(mob *mobs.Mob, room *rooms.Room) bool {
 	if !isCompanion || mob.Character.Aggro == nil {
 		return false
 	}
-	f, ok := company.FormationFor(leaderUserID)
+	f, ok := enemyparty.CompanyFormation(leaderUserID)
 	if !ok {
 		return false
 	}

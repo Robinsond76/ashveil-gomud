@@ -83,6 +83,8 @@ help:
       - ask
       - quests
     combat:
+      - battlefield
+      - ambush
       - abilities
       - armor
       - assessment
@@ -215,6 +217,8 @@ help:
 # Key is the target keyword, value is the list of aliases
 help-aliases:
   progression: [stat-steps, stat steps, leveling]
+  battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
+  ambush: [surprise, surprised]
   equipment: [company-equipment, company equip, company remove, company compare]
   treasury: [company-treasury, company treasury]
   loot: [autoloot, company-loot]

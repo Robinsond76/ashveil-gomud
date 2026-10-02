@@ -10,8 +10,10 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -39,6 +41,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// Ashveil Phase 29b: every event this round reports is stamped with it.
 	combatRound.Store(evt.RoundNumber)
 	resetRoundExtras()
+	beginBattlefieldRound()
 
 	// Ashveil Phase 30d1: a new round of shield counters; restarts owed by
 	// mobs no longer chanting are dropped.
@@ -119,6 +122,10 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			continue
 		}
 
+		if surprised(user.UserId, 0) && user.Character.Aggro.Type != characters.Retreat {
+			continue
+		}
+
 		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
 		// its action.
 		if status.Has(user.Character) && statusCostsAction(userHolder(user)) {
@@ -140,6 +147,9 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			continue
 		}
 
+		if user.Character.Aggro.Type != characters.SpellCast && user.Character.Aggro.Type != characters.Retreat && combat.ResolveReach(user.Character, false) != formationcombat.ReachAny && physicalReserve(userId, nil) {
+			continue
+		}
 		if user.Character.Aggro.Type == characters.Retreat {
 			handleRetreat(user, uRoom)
 			continue
@@ -162,6 +172,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			user.Character.Aggro.SpellInfo = effecttargets.Resolve(user.UserId, 0, user.Character.Aggro.SpellInfo)
 
 			if user.Character.Aggro.RoundsWaiting > 0 {
+				coldWait(userHolder(user))
 				user.Character.Aggro.RoundsWaiting--
 
 				scripting.TrySpellScriptEvent(`onWait`, user.UserId, 0, user.Character.Aggro.SpellInfo)
@@ -344,6 +355,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			if user.Character.Aggro.RoundsWaiting > 0 {
 				mudlog.Debug(`RoundsWaiting`, `User`, user.Character.Name, `Rounds`, user.Character.Aggro.RoundsWaiting)
 
+				coldWait(userHolder(user))
 				user.Character.Aggro.RoundsWaiting--
 
 				roundResult := combat.GetWaitMessages(items.Wait, user.Character, defUser.Character, combat.User, combat.User)
@@ -542,6 +554,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			if user.Character.Aggro.RoundsWaiting > 0 {
 				mudlog.Debug(`RoundsWaiting`, `User`, user.Character.Name, `Rounds`, user.Character.Aggro.RoundsWaiting)
 
+				coldWait(userHolder(user))
 				user.Character.Aggro.RoundsWaiting--
 
 				defCharacter := combatMobCharacter(defMob)
@@ -704,6 +717,10 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			continue
 		}
 
+		if surprised(0, mobId) {
+			continue
+		}
+
 		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
 		// its action (and Phase 30d2: a wind-up with it).
 		if status.Has(&mob.Character) && statusCostsAction(mobHolder(mob)) {
@@ -719,6 +736,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			continue
 		}
 
+		if mob.Character.Aggro.Type != characters.SpellCast && combat.ResolveReach(&mob.Character, mob.Reach) != formationcombat.ReachAny && physicalReserve(0, mob) {
+			continue
+		}
 		// Disable any buffs that are cancelled by combat
 		mob.Character.CancelBuffsWithFlag("cancel-on-combat")
 
@@ -743,6 +763,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			}
 
 			if mob.Character.Aggro.RoundsWaiting > 0 {
+				coldWait(mobHolder(mob))
 				mob.Character.Aggro.RoundsWaiting--
 
 				scripting.TrySpellScriptEvent(`onWait`, 0, mob.InstanceId, mob.Character.Aggro.SpellInfo)
@@ -942,6 +963,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			if mob.Character.Aggro.RoundsWaiting > 0 {
 				mudlog.Debug(`RoundsWaiting`, `User`, mob.Character.Name, `Rounds`, mob.Character.Aggro.RoundsWaiting)
 
+				coldWait(mobHolder(mob))
 				mob.Character.Aggro.RoundsWaiting--
 
 				mobCharacter := combatMobCharacter(mob)
@@ -967,6 +989,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				continue
 			}
 
+			if trySweep(mob, defUser.UserId, mobRoom) {
+				continue
+			}
 			if handled, gateOk := gateMobVsPlayerAttack(mob, defUser, mobRoom, defRoom); !gateOk {
 				continue
 			} else if handled {
@@ -1105,6 +1130,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			if mob.Character.Aggro.RoundsWaiting > 0 {
 				mudlog.Debug(`RoundsWaiting`, `User`, mob.Character.Name, `Rounds`, mob.Character.Aggro.RoundsWaiting)
 
+				coldWait(mobHolder(mob))
 				mob.Character.Aggro.RoundsWaiting--
 
 				mobCharacter := combatMobCharacter(mob)
@@ -1132,6 +1158,9 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 				continue
 			}
 
+			if owner, _, ok := company.LeaderAndKeyForInstance(defMob.InstanceId); ok && trySweep(mob, owner, mobRoom) {
+				continue
+			}
 			if gated, handled, gateOk := gateMobVsMobAttack(mob, defMob, mobRoom); !gateOk {
 				continue
 			} else if handled {

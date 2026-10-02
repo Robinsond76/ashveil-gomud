@@ -94,7 +94,9 @@ func ableToGuard(m guardMember) bool {
 
 // guardianFor finds the guardian who steps in for a blow about to land on
 // struck, spends its guard, and says so. ok is false when no one does.
-func guardianFor(leader *users.UserRecord, f company.Formation, struck company.MemberKey) (guardMember, bool) {
+// struckAlready (a sweep's) names members already hit by this action, who
+// don't step in again.
+func guardianFor(leader *users.UserRecord, f company.Formation, struck company.MemberKey, struckAlready ...map[company.MemberKey]bool) (guardMember, bool) {
 	b, inBattle := battle.Current(leader.UserId)
 	if !inBattle || leader.Character.RoomId != b.RoomId {
 		return guardMember{}, false
@@ -111,7 +113,7 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		return guardMember{}, false
 	}
 	for _, g := range members {
-		if g.key == struck {
+		if g.key == struck || (len(struckAlready) > 0 && struckAlready[0][g.key]) {
 			continue
 		}
 		s := enemyparty.MemberStrategy(leader.UserId, g.key)
@@ -128,7 +130,7 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		for _, m := range members {
 			guarded = append(guarded, strategy.Guarded{
 				Key: string(m.key), HP: m.char.Health, MaxHP: m.char.HealthMax.Value,
-				InReach: formationcombat.GuardReach(f, g.key, m.key),
+				InReach: formationcombat.GuardGround(f, g.key, m.key, enemyparty.Narrow(rooms.LoadRoom(leader.Character.RoomId))),
 			})
 		}
 		if w, ok := strategy.GuardWard(string(g.key), s.Ward, guarded); !ok || w != string(struck) {

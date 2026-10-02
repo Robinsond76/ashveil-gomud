@@ -116,9 +116,13 @@ func (s companySide) enemyPick(m *mobs.Mob, rule strategy.Rule, noise int, foes 
 			return pool[aimRoll(len(pool))], true
 		}
 	}
-	_, keys := s.combatants()
 	legal := func(_, defender engagement.Combatant) bool {
-		return s.legalAgainstCompany(attackerCol, keys[defender.ID], reach)
+		for _, foe := range foes {
+			if foe.ID == defender.ID {
+				return foe.Reachable
+			}
+		}
+		return false
 	}
 	return engagement.AssignTarget(engagement.Combatant{Col: attackerCol}, candidates, engagement.Weakest, legal)
 }
@@ -246,7 +250,7 @@ func enemyGuardianFor(userId int, room *rooms.Room, struck *mobs.Mob) (*mobs.Mob
 			mKey := mobparty.MemberKeyFor(m.InstanceId)
 			guarded = append(guarded, strategy.Guarded{
 				Key: string(mKey), HP: m.Character.Health, MaxHP: m.Character.HealthMax.Value,
-				InReach: formationcombat.GuardReach(party.Formation, gKey, mKey),
+				InReach: formationcombat.GuardGround(party.Formation, gKey, mKey, enemyparty.Narrow(room)),
 			})
 		}
 		if w, ok := strategy.GuardWard(string(gKey), "", guarded); !ok || w != struckKey {

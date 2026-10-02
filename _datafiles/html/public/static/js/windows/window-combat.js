@@ -519,10 +519,11 @@
     // from the front row to the deepest row anyone stands in (empty rows
     // behind them would only take room). The enemy's is drawn back row
     // first, so both front rows face the middle.
-    function field(fighters, flip, label) {
+    function field(fighters, flip, label, narrow) {
         const g = el('div', 'cbt-field');
         g.setAttribute('role', 'group');
         g.setAttribute('aria-label', label);
+        if (narrow) { g.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))'; }
         const at = {};
         let deepest = 0;
         fighters.forEach(f => {
@@ -534,10 +535,19 @@
         });
         for (let i = 0; i <= deepest; i++) {
             const r = flip ? deepest - i : i;
-            for (let c = 0; c < 3; c++) {
+            for (let c = 0; c < (narrow ? 2 : 3); c++) {
                 const f = at[r + ',' + c];
                 g.appendChild(f ? f.node : el('div', 'cbt-spot'));
             }
+        }
+        if (narrow) {
+            fighters.filter(f => f.cell && f.cell.col === 2).forEach(f => {
+                const reserve = el('div', 'cbt-reserve');
+                reserve.style.gridColumn = '1 / -1';
+                reserve.appendChild(el('span', 'cbt-note', 'Reserve: '));
+                reserve.appendChild(f.node);
+                g.appendChild(reserve);
+            });
         }
         return g;
     }
@@ -604,7 +614,7 @@
         enemies.forEach(f => f.node.addEventListener('click', () => pin(f.node.getAttribute('data-fid'))));
         const them = el('div');
         them.appendChild(el('div', 'cbt-side-label', battle.group + ' (front row nearest you)'));
-        them.appendChild(field(enemies, true, battle.group));
+        them.appendChild(field(enemies, true, battle.group, battle.narrow));
         arena.appendChild(them);
 
         const members = data.members.filter(m => m && m.key);
@@ -630,12 +640,12 @@
             } else {
                 node.addEventListener('click', () => pin(m.key));
             }
-            return { cell: m.cell, node };
+            return { cell: battle.positions ? battle.positions[m.key] || null : m.cell, node };
         });
         const us = el('div');
         const placed = ours.filter(f => f.cell);
         const loose = ours.filter(f => !f.cell);
-        us.appendChild(field(placed, false, data.company ? 'Your company' : 'You'));
+        us.appendChild(field(placed, false, data.company ? 'Your company' : 'You', battle.narrow));
         const others = (battle.others || []).map(o =>
             fighterButton(o.id, '', o.name, el('span', 'cbt-sub', 'not in your company'), o.name + ', not in your company'));
         others.forEach(n => n.addEventListener('click', () => pin(n.getAttribute('data-fid'))));

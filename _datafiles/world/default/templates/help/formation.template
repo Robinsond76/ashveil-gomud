@@ -82,3 +82,5 @@ blows begin, and it can't be changed during a battle (reading it, and
 
 In the web client, the Combat tab draws your formation; click a member
 to move them (<ansi fg="command">help webclient</ansi>).
+
+On narrow ground your combat formation folds into two columns without changing saved placements. Open adjacent front columns expose rear members; some enemies leap past a downed protector. Shower of Sparks hits orthogonal neighbors of its primary target. See help battlefield.

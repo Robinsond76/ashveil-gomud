@@ -113,3 +113,5 @@ Character Skills separates trained ranks, automatic combat abilities,
 field and camp capabilities, including disabled settings and conditions.
 Character Effects shows your effects and wounds with their true duration
 and meaning. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.
+
+The Battle view uses current combat positions on narrow ground, with two active columns and any overflow marked Reserve. Setup continues to show your saved formation. See help battlefield.

@@ -90,3 +90,5 @@ with buttons for what you can do right now (<ansi fg="command">help webclient</a
 
 See also: <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
 <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>.
+
+A successful Camp Watch also prevents enemy surprise in a raid. Perception can still prevent surprise after a missed watch, but does not restore spoiled rest. See help ambush.

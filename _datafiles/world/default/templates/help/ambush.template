@@ -1,0 +1,30 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">ambush</ansi>
+
+Travel encounters and camp raids may catch a company off guard. Your best
+living, present observer uses Perception and their own light to spot it.
+Dim light costs 10 points of detection chance; darkness costs 25. Concealed
+ground costs another 10. Enemy stealth opposes your observer. Detection
+chance is limited to 5-95 percent.
+
+  Failed detection: the enemy gets the opening combat round.
+  Ordinary detection: neither side loses its opening round.
+  Detection by a margin of at least 30 points: your company gets the
+    opening round instead.
+
+The surprised side cannot attack, begin an automatic chant, advance an
+existing chant, use an ability, or wind up in that round. Orders can be
+queued. Passive defenses and guardians still work, and you can order a
+retreat. Normal fighting resumes on the following combat round; world
+time and ongoing effects keep moving normally.
+
+Camp Watch keeps its usual chance to detect a raid and preserve your
+rest. A successful watch also prevents enemy combat surprise. If the
+watch misses, Perception may still prevent surprise, but does not save
+the broken rest. A tracker who evades a travel ambush prevents the fight
+altogether, as before.
+
+The opening advantage is decided once for the encounter. Ordinary room
+fights do not roll surprise, and another company joining a group already
+fighting cannot give it a new opening round.
+
+See help battlefield, help travel, help camp, and help retreat.

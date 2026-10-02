@@ -103,7 +103,7 @@ func (s companySide) anyAggro(room *rooms.Room) bool {
 }
 
 func loadCompanySide(leader *users.UserRecord, room *rooms.Room) (companySide, bool) {
-	f, ok := company.FormationFor(leader.UserId)
+	f, ok := enemyparty.CompanyFormation(leader.UserId)
 	if !ok {
 		return companySide{}, false
 	}
@@ -320,7 +320,7 @@ func (s companySide) retarget(a *characters.Aggro, att enemyparty.Attacker, col 
 	case targetInParty:
 		// A hidden target can't be fought ("You can't seem to find your
 		// target"), so it is moved off like an unreachable one.
-		if !mobHidden(current) && gateLetsThrough(col, placed, party.Formation, mobparty.MemberKeyFor(current), alive, reach) {
+		if !mobHidden(current) && gateLetsThrough(col, placed, party.Formation, mobparty.MemberKeyFor(current), alive, reach, groundContext{room: room}) {
 			if att.Rule.ReaimsEachRound() || refocus {
 				if choice, ok := enemyparty.RuleChoice(g, att, current); ok && choice != current {
 					return current, choice, true, true
@@ -404,11 +404,11 @@ func (s companySide) column(key company.MemberKey) (int, bool) {
 // catches it on a legal member in front (resolveAttackTarget). The upkeep
 // only moves an aim the gates would skip ("You can't reach that target"),
 // so interception works exactly as before. An unplaced attacker fails open.
-func gateLetsThrough(col int, placed bool, f company.Formation, target company.MemberKey, alive map[company.MemberKey]bool, reach formationcombat.Reach) bool {
+func gateLetsThrough(col int, placed bool, f company.Formation, target company.MemberKey, alive map[company.MemberKey]bool, reach formationcombat.Reach, context ...groundContext) bool {
 	if !placed {
 		return alive[target]
 	}
-	_, ok := resolveAttackTarget(col, f, target, alive, reach)
+	_, ok := resolveAttackTarget(col, f, target, alive, reach, context...)
 	return ok
 }
 
@@ -422,7 +422,11 @@ func legalAgainstParty(col int, placed bool, party mobparty.Party, target int, a
 	if !placed {
 		return alive[mobparty.MemberKeyFor(target)]
 	}
-	return formationcombat.Legal(col, party.Formation, mobparty.MemberKeyFor(target), alive, reach)
+	m := mobs.GetInstance(target)
+	if m == nil {
+		return formationcombat.Legal(col, party.Formation, mobparty.MemberKeyFor(target), alive, reach)
+	}
+	return enemyparty.Legal(rooms.LoadRoom(m.Character.RoomId), 0, col, party.Formation, mobparty.MemberKeyFor(target), alive, reach)
 }
 
 func leaderTurnText(previous, newId int, alive map[company.MemberKey]bool) string {
@@ -500,8 +504,18 @@ func (s companySide) keepPartyEngaged(party mobparty.Party, room *rooms.Room) {
 			continue
 		}
 		reach := combat.ResolveReach(&mob.Character, mob.Reach)
-		standing := keep && !s.memberHidden(current) && gateLetsThrough(attackerCol, true, s.formation, current, s.alive, reach)
+		standing := keep && !s.memberHidden(current) && gateLetsThrough(attackerCol, true, s.formation, current, s.alive, reach, groundForMob(mob, s.leader.UserId))
 		foes := s.memberFoes(candidates, keys, attackerCol, reach)
+		if leapReady(mob) {
+			cover := enemyparty.Standing(s.formation, s.alive, s.leader.UserId)
+			for i := range foes {
+				key := keys[foes[i].ID]
+				r, c, ok := s.formation.Find(key)
+				if ok && r > 0 && openLeapColumn(s.formation, cover, c) && formationcombat.InLateralRange(attackerCol, c) && !(enemyparty.Narrow(room) && (attackerCol == 2 || c == 2)) {
+					foes[i].Reachable = true
+				}
+			}
+		}
 
 		if instanceId == leaderId {
 			// The leader breaks a heal (veteran), else keeps a standing aim,
@@ -534,7 +548,7 @@ func (s companySide) keepPartyEngaged(party mobparty.Party, room *rooms.Room) {
 
 		// A follower turns onto the focus whenever it can reach it.
 		if followers[instanceId] && focus != "" && focus != current && !s.memberHidden(focus) &&
-			gateLetsThrough(attackerCol, true, s.formation, focus, s.alive, reach) {
+			gateLetsThrough(attackerCol, true, s.formation, focus, s.alive, reach, groundForMob(mob, s.leader.UserId)) {
 			s.aimPartyMember(mob, focus, room)
 			continue
 		}
@@ -659,7 +673,7 @@ func (s companySide) legalAgainstCompany(attackerCol int, key company.MemberKey,
 	if _, _, placed := s.formation.Find(key); !placed {
 		return s.alive[key]
 	}
-	return formationcombat.Legal(attackerCol, s.formation, key, s.alive, reach)
+	return enemyparty.Legal(rooms.LoadRoom(s.leader.Character.RoomId), s.leader.UserId, attackerCol, s.formation, key, s.alive, reach)
 }
 
 // memberHidden reports whether a company member is hidden (sneaking), which

@@ -178,3 +178,5 @@ For player alliances and opt-in following/support, see <ansi fg="command">help p
 
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
+
+Ambushes, clusters, leaping enemies, narrow ground, fatigue, and cold affect battles: help battlefield and help ambush.

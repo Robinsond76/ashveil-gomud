@@ -1,6 +1,6 @@
 # Combat Presentation and Tactics — Current Roadmap
 
-Updated 2026-10-01. The owner approved the overall direction on 2026-09-26;
+Updated 2026-10-02. The owner approved the overall direction on 2026-09-26;
 current implementation status is in [Project Status](../PROJECT_STATUS.md).
 
 ## Remaining phases
@@ -8,11 +8,11 @@ current implementation status is in [Project Status](../PROJECT_STATUS.md).
 | Phase | Scope | Design status |
 |---|---|---|
 | 30e | Enemy morale, surrender, mercy decisions, alignment/loyalty reactions, company nerve | Complete: [approved design](2026-09-30-phase-30e-morale-mercy-design.md) |
-| 30f | Ambush/surprise, cluster attacks, leaping/flanking, narrow ground, fatigue and cold | [Proposal](2026-09-26-battlefield-conditions-design.md); needs detailed design |
+| 30f | Ambush/surprise, cluster attacks, leaping/flanking, narrow ground, fatigue and cold | Complete: [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12), reviewed and merged 2026-10-02. [Approved design](2026-10-02-phase-30f-battlefield-design.md) |
 | 30g2–30g6 | Active defense, personal load, progression, action meter, balance tuning | [Owner-agreed design](2026-09-30-phase-30g-tempo-defense-design.md); 30g1 complete, 30g2 next |
 
-Project Status puts 30g2 next; the owner chooses where 30f fits among the 30g
-slices. [Future company gameplay phases 33a–33i](2026-10-01-company-gameplay-roadmap.md)
+Project Status tracks the 30g sequence. The owner requested 30f implementation
+on 2026-10-02; it was reviewed and merged the same day. [Future company gameplay phases 33a–33i](2026-10-01-company-gameplay-roadmap.md)
 address inherited single-character mechanics and coordinate with that sequence.
 Mounted combat was removed from 30f by the owner
 on 2026-09-30. No replacement mounted-combat phase is scheduled.
