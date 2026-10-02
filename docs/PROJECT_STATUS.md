@@ -332,6 +332,10 @@ delegated to the lead. 33a–33e are complete.
   `make validate`, and `go test -race ./...` (95 packages) passed with no
   failures. No JavaScript or Lua changed, so those lints were not
   applicable.
+- **Integration:** owner approved merge and push. `origin/master` had moved
+  to 34a/34b (`eb21ae3`); merged it into the branch (status log conflict
+  only), then `make generate` (no diff), `make validate`, and
+  `go test -race ./...` (95 packages) passed again before merging.
 
 ### Phase 33h1: companion growth and contracts (2026-10-02)
 
