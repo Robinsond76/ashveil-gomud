@@ -93,7 +93,7 @@ func newCourse(t *testing.T) *course {
 		return nil
 	}
 	m.look = func(_ *users.UserRecord, roomID int) { c.looked = append(c.looked, roomID) }
-	m.relocate = func(_, roomID int) int { c.relocated = append(c.relocated, roomID); return 0 }
+	m.relocate = func(_, _, roomID int) int { c.relocated = append(c.relocated, roomID); return 0 }
 	m.lookupUser = func(id int) *users.UserRecord {
 		if c.user != nil && c.user.UserId == id {
 			return c.user

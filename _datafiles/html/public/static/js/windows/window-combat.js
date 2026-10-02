@@ -496,7 +496,7 @@
     // alone, as "You", without a company).
     function ourFighters(data) {
         if (!data.company) { return [{ key: 'leader', name: 'You', cell: null, status: 'present' }]; }
-        return data.members.filter(m => m && m.key && m.status !== 'awaiting' && m.status !== 'fled');
+        return data.members.filter(m => m && m.key && m.status !== 'awaiting' && m.status !== 'fled' && m.status !== 'separated');
     }
 
     function fighterButton(id, cls, name, sub, spoken) {

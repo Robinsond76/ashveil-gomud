@@ -61,8 +61,10 @@ new character walks through in their own ephemeral copies. See the
   opened by the module. The room files have no forward exits and no
   scripts; don't add them back, and never block commands in the course.
 - **Moves** go through `travel`, which also relocates the company
-  (`company.RelocateCompany`) and shows the room: companions only follow on
-  foot. Leaving the course relocates them too.
+  (`company.RelocateCompany`, from the room left) and shows the room:
+  companions only follow on foot. Leaving the course relocates those in the
+  room left too (Phase 33h3: companions elsewhere are separated, never
+  recalled).
 - **Rewards:** the graduation item (`GraduationItemId`) is given only on
   the transition to `graduated`. Skipping gives nothing. Recruits and kits
   stay with the company claims and the archetype claim marker; the

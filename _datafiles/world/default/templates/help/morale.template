@@ -22,10 +22,11 @@ and a 5% chance to flee. With loyalty 25 or higher but chemistry below
 Familiar, they have a 10% chance to hesitate and never flee.
 Hesitation costs one action and does not add a lost action to a blocking
 status. A cancelled companion chant returns half its mana. A fled companion
-keeps gear and wounds, returns after settlement, and loses 5 loyalty.
+keeps gear and wounds, returns after settlement wherever you are (even
+if you've been moved since), and loses 5 loyalty.
 At zero loyalty, the existing desertion rules apply.
 
 Leaving a battle: <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command">flee</ansi>) prepares for one round,
 then attempts to move the company together. See <ansi fg="command">help retreat</ansi>.
 
-See also: help mercy, help chemistry, help alignment, help combat.
+See also: help mercy, help chemistry, help alignment, help combat, help separation.

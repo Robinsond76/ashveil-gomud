@@ -61,6 +61,9 @@ type Runtime interface {
 	// (Phase 25a). It reports false when the mob is gone or dead, or the
 	// room doesn't load.
 	Relocate(instanceID, roomID int) bool
+	// Standing reads where a live mob stands and whether it is fighting
+	// (Phase 33h3); ok is false when it is gone or has no health left.
+	Standing(instanceID int) (roomID int, fighting, ok bool)
 	// Vitals reads a live mob's health (Phase 26a).
 	Vitals(instanceID int) (hp, hpMax int, ok bool)
 	// HealthLimit reads a live mob's wound limit (Phase 30b).
@@ -181,6 +184,11 @@ type CompanyModule struct {
 	anchors          map[int]time.Time
 	clock            func() time.Time
 	allowanceForTest int
+	// Phase 33h3: strays counts the rounds each live companion has stood
+	// away from its leader (in memory only); leaderFree is nil for the
+	// native check of where, and whether, a separated companion may rejoin.
+	strays     map[int]map[int]int
+	leaderFree func(leaderUserID int) (roomID int, free bool)
 }
 
 // module is the registered instance, for wiring tests.
@@ -232,6 +240,7 @@ func (m *CompanyModule) Roster(leaderUserID int) []survival.MemberRef {
 			Key:  survival.CompanionMemberKey(companion.ID),
 			Name: nameOf(companion, strconv.Itoa(companion.MobTemplateID)),
 			Dead: companion.Dead(),
+			Away: companion.Separated(),
 		})
 	}
 	return refs
@@ -596,6 +605,12 @@ func (m *CompanyModule) status(leaderUserID int) string {
 		if c.PendingReturn {
 			state = "fled; awaiting battle settlement"
 		}
+		if c.Separated() {
+			state = "separated; back in " + roundsText(c.Separation.RoundsLeft)
+			if c.Separation.RoundsLeft == 0 {
+				state = "separated; back once you are out of any fight, journey, or camp"
+			}
+		}
 		if c.Dead() {
 			state = deadStatus(c)
 		} else if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked {
@@ -869,8 +884,8 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 			}
 			continue
 		}
-		if companion.Dead() || companion.PendingReturn {
-			continue // dead await resurrection; fled await settlement
+		if companion.Dead() || companion.PendingReturn || companion.Separated() {
+			continue // dead await resurrection; fled await settlement; the separated their way back (33h3)
 		}
 		if instanceID, tracked := m.instance(leaderUserID, companion.ID); tracked {
 			if m.runtime.IsAttached(leaderUserID, instanceID) {

@@ -779,6 +779,10 @@ func (m *SurvivalModule) status(leaderUserID int) string {
 			lines = append(lines, fmt.Sprintf("  %s: fallen", ref.Name))
 			continue
 		}
+		if ref.Away {
+			lines = append(lines, fmt.Sprintf("  %s: separated", ref.Name))
+			continue
+		}
 		needs, ok := m.registry.NeedsFor(leaderUserID, ref.Key)
 		if !ok {
 			needs = domain.FullNeeds()
@@ -799,11 +803,13 @@ func (m *SurvivalModule) memberRefs(leaderUserID int) []domain.MemberRef {
 	keys := []domain.MemberKey{}
 	names := map[domain.MemberKey]string{}
 	dead := map[domain.MemberKey]bool{}
+	away := map[domain.MemberKey]bool{}
 	if roster := domain.CurrentRoster(leaderUserID); len(roster) > 0 {
 		for _, ref := range roster {
 			keys = append(keys, ref.Key)
 			names[ref.Key] = ref.Name
 			dead[ref.Key] = ref.Dead
+			away[ref.Key] = ref.Away
 		}
 	} else {
 		keys = m.registry.Members(leaderUserID)
@@ -818,17 +824,17 @@ func (m *SurvivalModule) memberRefs(leaderUserID int) []domain.MemberRef {
 				name = m.displayName(key)
 			}
 		}
-		refs = append(refs, domain.MemberRef{Key: key, Name: name, Dead: dead[key]})
+		refs = append(refs, domain.MemberRef{Key: key, Name: name, Dead: dead[key], Away: away[key]})
 	}
 	return refs
 }
 
-// livingRefs is memberRefs without the dead (Phase 25b): they spend and
-// recover nothing.
+// livingRefs is memberRefs without the dead (Phase 25b) and the separated
+// (Phase 33h3): they spend and recover nothing.
 func (m *SurvivalModule) livingRefs(leaderUserID int) []domain.MemberRef {
 	var out []domain.MemberRef
 	for _, ref := range m.memberRefs(leaderUserID) {
-		if !ref.Dead {
+		if !ref.Dead && !ref.Away {
 			out = append(out, ref)
 		}
 	}

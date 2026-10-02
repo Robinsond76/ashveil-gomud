@@ -523,6 +523,9 @@ type MemberRef struct {
 	// Dead marks a dead companion awaiting resurrection (Phase 25b). It
 	// stays on the roster, but spends and recovers nothing.
 	Dead bool
+	// Away marks a companion separated from its leader (Phase 33h3): like
+	// the dead, it spends and recovers nothing until it rejoins.
+	Away bool
 }
 
 // MemberSnapshot is the exact durable survival state for one companion at a

@@ -233,18 +233,21 @@ func ChemistryStanding(leaderUserID int, key MemberKey) (ChemistryStandingView, 
 }
 
 // RelocationProvider is optionally implemented by the registered
-// FormationProvider (Phase 25a). modules/company runs on the game loop, so
-// call it from the game loop only.
+// FormationProvider (Phase 25a; 33h3). modules/company runs on the game
+// loop, so call it from the game loop only.
 type RelocationProvider interface {
-	// RelocateCompany moves every companion of the leader whose mob is live,
-	// attached, and alive into roomID, out of any fight, and reports how many
-	// moved. Records, formation, and gear are unchanged.
-	RelocateCompany(leaderUserID, roomID int) int
+	// RelocateCompany settles the company after its leader was moved from
+	// originRoomID into roomID by anything but an ordinary exit: every
+	// living companion whose mob stands in either room moves into roomID,
+	// out of any fight; every other living one out in the world is
+	// separated (and told). It reports how many moved. The dead and the
+	// fled are untouched.
+	RelocateCompany(leaderUserID, originRoomID, roomID int) int
 }
 
-// RelocateCompany moves a leader's living companions into roomID. It moves
-// none without a provider.
-func RelocateCompany(leaderUserID, roomID int) int {
+// RelocateCompany brings a leader's company after a move from
+// originRoomID into roomID (Phase 33h3). It moves none without a provider.
+func RelocateCompany(leaderUserID, originRoomID, roomID int) int {
 	formationProviderMu.RLock()
 	p := formationProvider
 	formationProviderMu.RUnlock()
@@ -252,8 +255,12 @@ func RelocateCompany(leaderUserID, roomID int) int {
 	if !ok {
 		return 0
 	}
-	return rp.RelocateCompany(leaderUserID, roomID)
+	return rp.RelocateCompany(leaderUserID, originRoomID, roomID)
 }
+
+// CompanyFollows is the line a leader sees when their company is brought
+// along by a move that is not an ordinary exit (Phase 33h3).
+const CompanyFollows = "Your company comes with you."
 
 // DeadCompanionView is a dead companion for display (Phase 25b).
 type DeadCompanionView struct {
@@ -327,6 +334,8 @@ const (
 	MemberDead
 	// MemberFled is temporarily out of combat, with a saved return debt.
 	MemberFled
+	// MemberSeparated is off the map, finding its way back (Phase 33h3).
+	MemberSeparated
 )
 
 // MemberView is one companion as the information surfaces show it.
@@ -351,6 +360,9 @@ type MemberView struct {
 	Row, Col int
 	// RescueSeconds is a dead companion's rescue allowance left.
 	RescueSeconds int
+	// RejoinSeconds is a separated companion's catch-up time left (Phase
+	// 33h3); 0 means it rejoins as soon as the leader is free.
+	RejoinSeconds int
 }
 
 // MemberViewProvider is optionally implemented by the registered

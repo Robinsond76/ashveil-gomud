@@ -74,7 +74,7 @@ func newTestWorld(t *testing.T) *testWorld {
 		*w.calls = append(*w.calls, "camp")
 		return w.campErr
 	}
-	m.relocate = func(_, roomID int) int {
+	m.relocate = func(_, _, roomID int) int {
 		*w.calls = append(*w.calls, "company")
 		return w.companion
 	}

@@ -173,3 +173,8 @@ ChemistrySwornBonus: 6
 # companion is lost and its roster slot freed. Changing this affects only
 # later deaths.
 ResurrectionAllowanceDays: 3
+# Phase 33h3: a companion separated from its leader (left behind by a
+# move, or away for two rounds) rejoins after this many rounds (1..10000)
+# of the leader's online time, once the leader is out of any fight,
+# journey, or camp rest. 15 rounds is about a minute.
+SeparationRounds: 15

@@ -190,6 +190,12 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, run("company", "summon training dummy"), "Companion summoned: training dummy (#1).")
 	companion, ok := company.InstanceFor(user.UserId, 1)
 	require.True(t, ok)
+	// Phase 33h3: a second companion waits in another room.
+	assert.Contains(t, run("company", "summon training dummy"), "Companion summoned: training dummy (#2).")
+	elsewhere, ok := company.InstanceFor(user.UserId, 2)
+	require.True(t, ok)
+	rooms.LoadRoom(2001).RemoveMob(elsewhere)
+	rooms.LoadRoom(2004).AddMob(elsewhere)
 	assert.Contains(t, run("north", ""), "step onto the Old King's Road")
 	// The exit message requeues the command with input blocked; the game
 	// loop runs it next and unblocks input.
@@ -231,7 +237,14 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 	assert.False(t, blocked, "the journey is over")
 	assert.Contains(t, run("travel", "status"), "You are not travelling.")
 
-	assert.Contains(t, run("company", "status"), "(present)", "still attached")
+	status := run("company", "status")
+	assert.Contains(t, status, "(present)", "still attached")
+	// Phase 33h3: the one waiting elsewhere is separated, not recalled.
+	assert.Contains(t, out, "was not with you and is separated")
+	assert.Nil(t, mobs.GetInstance(elsewhere), "off the map")
+	_, tracked := company.InstanceFor(user.UserId, 2)
+	assert.False(t, tracked)
+	assert.Contains(t, status, "separated; back in about 60 seconds")
 
 	// A second suicide in the same round (the combat loop and AutoHeal can
 	// both queue one for a death) finds the player already back: ignored.

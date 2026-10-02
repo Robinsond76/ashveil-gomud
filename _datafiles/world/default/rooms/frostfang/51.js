@@ -22,6 +22,12 @@ function onCommand(cmd, rest, user, room) {
         return false;
     }
 
+    // Ashveil Phase 33h3: a move the player asks for waits until the fight is over.
+    if ( user.InBattle() ) {
+        SendUserMessage(user.UserId(), "Not while your company is fighting.");
+        return true;
+    }
+
     SendUserMessage(user.UserId(), "You adjust the latern, and a passage way reveals itself in the wall. Just as you step through the passage, it closes behind you.");
     SendRoomMessage(room.RoomId(), user.GetCharacterName(true)+" does something with the lantern, and a secret passage opens! He disappears through the passage just as it closes.", user.UserId());
     user.MoveRoom(50);

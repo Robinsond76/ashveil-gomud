@@ -23,6 +23,12 @@ function onCommand(cmd, rest, user, room) {
         return false;
     }
 
+    // Ashveil Phase 33h3: a move the player asks for waits until the fight is over.
+    if ( user.InBattle() ) {
+        SendUserMessage(user.UserId(), "Not while your company is fighting.");
+        return true;
+    }
+
     SendUserMessage(user.UserId(), "The room begins to tremble, and a trap door opens beneath your feet! You fall into the room below!");
     SendRoomMessage(room.RoomId(), user.GetCharacterName(true)+" has triggered some sort of trap! the room begins to tremble and a trap door opens beneath your feet. You fall into the darkness below.", user.UserId());
 

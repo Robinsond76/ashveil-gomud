@@ -78,6 +78,7 @@ declare interface ActorObject {
     UpdateItem(item: ItemObject): void;
     IsCharmed(userId?: number): boolean;
     IsInCombat(): boolean;
+    InBattle(): boolean;
     IsHome(): boolean;
     IsDowned(): boolean;
     IsAggro(actor: ActorObject): boolean;

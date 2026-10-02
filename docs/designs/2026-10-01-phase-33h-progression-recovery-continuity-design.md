@@ -124,6 +124,57 @@ approved them on 2026-10-02 ("All this looks good carry on").
 - **Unchanged:** light wounds and battle-only effects still end on a
   respawn; morale flight's return keeps its own saved health and mana.
 
+## Final implementation decisions: 33h3 (2026-10-02)
+
+The lead explained the defaults below in plain language; the owner asked
+what "dead companions stay where they fell" meant, the lead clarified it
+(below), and the owner approved on 2026-10-02 ("Yes go ahead").
+
+- **Every non-exit move takes the company.** After a scripted move
+  (passages, traps, ropes, the faerie portal, an inn bed, jail), a quest
+  `roomid` reward, a journey's arrival (and its crash recovery), a death
+  return, a tutorial move, or an admin teleport, every living companion
+  whose mob stood in the leader's old room (or already stands in the new
+  one) moves with the leader, its part in any fight ended, as death did.
+  One shared step (`company.RelocateCompany(leader, origin, room)`) does
+  it; the old `portal` spell was retired in 33f1. Ordinary walking is
+  unchanged.
+- **Refusal:** a move the player triggers themselves (the raven, the
+  lantern, the sarcophagus, the chasm rope) is refused while they are in
+  a battle ("Not while your company is fighting."; scripts ask the new
+  `ActorObject.InBattle()`). Moves done to them (death, jail, a trap
+  sprung by another player, a quest reward) still happen. The faerie's
+  portal needs a `give`, already refused in a battle. Renting an inn bed
+  is not refused: the shop takes the gold before the item's script runs,
+  so a refusal there would charge for nothing; it takes the company.
+- **Separation:** a living companion who was not with the leader when
+  they were moved is separated, with a line naming it and why. A
+  companion away from its leader for two rounds for any other reason (a
+  door it could not pass, an admin move) is separated too. Separation
+  takes the live mob off the map after a snapshot (gear, wounds, vitals)
+  and a save (`Companion.Separation`: reason and rounds left), as morale
+  flight does; a failed save leaves it where it is, retried later.
+- **Return:** after `SeparationRounds` (default 15, about a minute)
+  counted only while the leader is online, a separated companion rejoins
+  the leader wherever they are, once the leader is alive and not in a
+  battle, on a journey, or resting at camp. Never into a fight. Logout
+  pauses the count; a crash can only lengthen it (the count reaches disk
+  with each company save). No world time advances.
+- **While separated:** no recovery (33h2), no load, carrying room,
+  meals, chemistry, contract or combat experience; it keeps its formation
+  cell and can be dismissed. `company status`, the prompt surfaces, GMCP
+  (`separated`) and the browser show it.
+- **Herd and cargo** are the leader's and always go with them; a
+  separated companion's pack and gear are away until it returns.
+- **Dead companions:** a move does not affect them. They have no body in
+  the world, stay on the roster awaiting resurrection at any church or
+  shaman with the usual three-game-day window (charged online only), and
+  wake beside the leader when raised. They are never separated, revived,
+  or moved by a relocation.
+- **Fled companions (30e):** unchanged; they rejoin wherever the leader
+  is once the battle settles, never during it.
+- **Migration:** none; old records have no separation.
+
 ## Acceptance criteria and verification
 
 Real combat/quest rewards cover personal versus contract cases and absent members; level/death/regain loops do not mint points; logout/login, re-summon, crash/save failure, and copyover preserve readiness; changed maxima/missing old-save fields migrate safely; portals, quest moves, travel, death, and tutorial relocation preserve exact member/item/cargo ownership and pending returns.
