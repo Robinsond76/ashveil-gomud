@@ -89,6 +89,11 @@ func TestLightWoundsCloseWithTheFight(t *testing.T) {
 func TestAnEnemysBleedLeavesALightWound(t *testing.T) {
 	b := newBrawl(t)
 	loadStatusBuffs(t)
+	// Only the bleed may wound the captain: a critical blow in the same
+	// round would add a wound of its own.
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.CritChanceMin, gameplay.Combat.CritChanceMax = 0, 0
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	b.aimAt("bandit captain")
 	captain := b.captain()
 	require.NoError(t, captain.Character.AddBuff(status.Bleeding, false))

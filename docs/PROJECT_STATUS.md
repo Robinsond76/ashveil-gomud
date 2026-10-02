@@ -79,6 +79,11 @@ the `hpperlevel` and ambush-stealth checks. The merge also fixes a 30f flake in
 `TestTutorialThroughPluginsLoad` (about 60% of runs on master): its own-line
 matcher read the new dodge line "You sway aside, and the straw archer's blow"
 as Aria aiming at the archer; it now skips lines naming the foe as attacker.
+The merged suite also exposed two company test flakes: with 30g4's lower
+enemy HP, `TestWaitingGroupsDontBlockFlight`'s battle foe could fall before
+the retreat (a third of runs), letting a quick waiting group pursue; the
+test now toughens it. `TestAnEnemysBleedLeavesALightWound` (flaky on master
+too) now disables crits so only the bleed wounds the captain.
 
 **30f battlefield conditions complete (2026-10-02):** ambush opening
 rounds, formation clusters and sweeps, leaps/open flanks, narrow-ground
