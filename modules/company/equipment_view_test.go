@@ -235,3 +235,57 @@ func TestExplicitOffhandRetainsOtherHandPermanentBuff(t *testing.T) {
 	assert.True(t, c.HasBuff(buffSpec.BuffId), "main hand still supplies the permanent buff")
 	assert.Equal(t, beforeHealth, c.Health, "no temporary buff removal may clamp health")
 }
+
+// The company feed asks for the editor every round: an unchanged leader must
+// reuse the last view, and any change to equipment, cargo, availability or
+// the round budget must rebuild it (review of Phase 34c).
+func TestEquipmentViewReusedUntilLeaderChanges(t *testing.T) {
+	b := equipmentBrawl(t)
+	c := b.aria.Character
+	spec := items.ItemSpec{ItemId: 989804, Name: "quilted coat", Type: items.Body, Subtype: items.Wearable, Weight: 3000, DamageReduction: 2}
+	items.SetTestItemSpec(&spec)
+	t.Cleanup(func() { items.RemoveTestItemSpec(spec.ItemId) })
+	round := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCount(round) })
+	coat := items.New(spec.ItemId)
+	c.Items = []items.Item{coat}
+	require.NoError(t, c.Validate(true))
+	builds := func() int {
+		module.equipmentViews.mu.Lock()
+		defer module.equipmentViews.mu.Unlock()
+		return module.equipmentViews.builds
+	}
+
+	start := builds()
+	first := module.EquipmentView(7)
+	require.True(t, first.Available, first.Reason)
+	assert.Equal(t, first, module.EquipmentView(7))
+	assert.Equal(t, start+1, builds(), "an unchanged leader reuses the last view")
+
+	second := items.New(spec.ItemId)
+	c.Items = append(c.Items, second)
+	assert.Len(t, editorSlot(t, module.EquipmentView(7), "body").Choices, 2, "new cargo rebuilds the view")
+	assert.Equal(t, start+2, builds())
+
+	choice := editorChoice(t, editorSlot(t, module.EquipmentView(7), "body"), coat.ShorthandId())
+	require.Contains(t, applyEditorChoice(t, b, choice), "equipment updated")
+	view := module.EquipmentView(7)
+	require.NotNil(t, editorSlot(t, view, "body").Equipped)
+	assert.Equal(t, coat.ShorthandId(), editorSlot(t, view, "body").Equipped.Ref, "equipping rebuilds the view")
+	assert.Equal(t, choice.After.Defense, view.Current.Defense)
+
+	rebuilt := builds()
+	module.EquipmentView(7)
+	assert.Equal(t, rebuilt, builds())
+	util.SetRoundCount(round + equipmentViewRefreshRounds)
+	module.EquipmentView(7)
+	assert.Equal(t, rebuilt+1, builds(), "a cached view is rebuilt after its round budget")
+
+	c.SetAggro(0, b.companion(1).InstanceId, characters.DefaultAttack)
+	assert.False(t, module.EquipmentView(7).Available, "entering battle rebuilds the view")
+	c.Aggro = nil
+
+	module.forgetEquipmentView(7)
+	module.EquipmentView(7)
+	assert.Equal(t, rebuilt+3, builds(), "a forgotten leader is rebuilt")
+}

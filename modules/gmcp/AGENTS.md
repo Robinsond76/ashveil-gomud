@@ -42,3 +42,11 @@
   archetype provider's current specialist eligibility and camping's manual
   cooking view (configured recipes, ranks, ingredients, camp and capacity); no progression catalogue.
   `Char.Skills` retains its array contract and adds each skill's `max_level`.
+- Phase 34 review: an extra may set `buildKeyed` to compare a change key
+  instead of its body. `Company.Conditions` uses it: a timed effect carries
+  `seconds_left`/`seconds_total` (and `harmful`), the key holds the round it
+  ends instead, and `company-data.js` counts it down from the message's
+  arrival, so the message resends when an effect starts, is refreshed or ends,
+  not every round. `Company.Equipment` comes from a cached view in the company
+  module, rebuilt only when the leader's character, cargo, load or
+  availability changes (or every 15 rounds); its previews share one marshal.

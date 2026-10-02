@@ -228,10 +228,10 @@ func (r *Registry) Remove(leaderUserID int) bool {
 }
 
 // Put stores a record after pruning stale formation cells and normalizing the
-// next companion ID. A record with no companions and an empty formation is
-// removed entirely unless it carries a companion-ID high-water mark above 1,
-// which must survive dismissal so IDs are never reused, a tutorial claim, a
-// lost companion, or a recruit roster.
+// next companion ID. A record with no companions keeps its leader at the
+// centre cell (Phase 34a), so Put never drops a record: every leader who has
+// played keeps one, which also holds durable markers such as the starter
+// pack grant (34b). Remove is the only way to drop a record.
 func (r *Registry) Put(record Record) {
 	if r.Companies == nil {
 		r.Companies = make(map[int]Record)
@@ -243,10 +243,6 @@ func (r *Registry) Put(record Record) {
 		_ = record.Formation.Place(LeaderMemberKey, 1, 1)
 	}
 	record.Service = pruneService(record.Service, valid)
-	if len(record.Companions) == 0 && record.Formation.empty() && record.NextCompanionID <= 1 && len(record.Claimed) == 0 && len(record.Lost) == 0 && len(record.Rosters) == 0 && len(record.MercyPending) == 0 && record.AssetOperation == nil {
-		delete(r.Companies, record.LeaderUserID)
-		return
-	}
 	r.Companies[record.LeaderUserID] = record
 }
 

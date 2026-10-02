@@ -147,6 +147,8 @@ func (s pluginStore) Save(registry domain.Registry) error {
 }
 
 type CompanyModule struct {
+	// equipmentViews caches the Gear editor's read model (Phase 34c).
+	equipmentViews     equipmentViewCache
 	starterPackForTest int
 	plug               *plugins.Plugin
 	store              Store

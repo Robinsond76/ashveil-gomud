@@ -16,8 +16,10 @@ Horses add their eligible capacity. There is no base or Strength cargo allowance
 
 Satchels provide 5 kg, traveller's packs 10 kg, and frame packs 15 kg.
 Spare packs provide no capacity and count as cargo weight. Assigned pack tare
-does not consume its usable capacity. Packs and their contents are dropped for
-combat; they add no combat burden.
+does not consume its usable capacity. Packs hold no items of their own: the
+company carries one shared cargo list, and packs only set its capacity. An
+assigned pack is set down for combat, so neither it nor the cargo adds to
+anyone's combat burden.
 
 Losing capacity never deletes cargo. An overloaded company can walk, sell,
 drop or consume cargo, remove packs, or assign a larger pack to recover.

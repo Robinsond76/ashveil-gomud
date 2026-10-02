@@ -1,7 +1,10 @@
 package company
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
@@ -9,6 +12,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
+	"gopkg.in/yaml.v2"
 )
 
 func equipmentEdge(itm items.Item) (int, int) {
@@ -34,8 +39,36 @@ func equipmentFits(loadBefore, loadAfter encumbrance.Load) bool {
 	return max(0, loadAfter.TotalGrams()-loadAfter.CapacityGrams) <= max(0, loadBefore.TotalGrams()-loadBefore.CapacityGrams)
 }
 
+// equipmentViewRefreshRounds bounds how long a cached view may be reused,
+// so a change outside its key (such as reloaded item data) still shows.
+const equipmentViewRefreshRounds = 15
+
+type equipmentViewEntry struct {
+	key   [sha256.Size]byte
+	round uint64
+	view  domain.EquipmentView
+}
+
+// equipmentViewCache holds each leader's last view. The company feed asks
+// for one every round, and every preview copies the character, so an
+// unchanged leader reuses the last result instead of rebuilding every
+// preview. builds counts rebuilds for tests.
+type equipmentViewCache struct {
+	mu     sync.Mutex
+	byUser map[int]equipmentViewEntry
+	builds int
+}
+
+func (m *CompanyModule) forgetEquipmentView(id int) {
+	m.equipmentViews.mu.Lock()
+	delete(m.equipmentViews.byUser, id)
+	m.equipmentViews.mu.Unlock()
+}
+
 // EquipmentView never prepares assets, saves or mutates an item. Catalogue
 // choices are exact instances owned by this leader; commands re-resolve them.
+// The result is reused while the leader's character (equipment, cargo,
+// stats and effects), company load and availability are unchanged.
 func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 	out := domain.EquipmentView{Slots: []domain.EquipmentSlot{}}
 	u := users.GetByUserId(id)
@@ -66,6 +99,27 @@ func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 	if actor == nil {
 		actor = u.Character
 	}
+	// The view covers the leader only, so the actor is the leader and its
+	// items are the shared cargo, which every proposal takes from u instead.
+	// The character is marshalled once without them: that copy is the source
+	// of every preview's clone, and with the cargo it keys the cache.
+	bare := *actor
+	bare.Items = nil
+	raw, err := yaml.Marshal(&bare)
+	cargoRaw, cargoErr := yaml.Marshal(u.Character.Items)
+	if err != nil || cargoErr != nil {
+		out.Available, out.Reason = false, "Equipment preview unavailable."
+		return out
+	}
+	key := sha256.Sum256(append(append(raw, cargoRaw...), fmt.Sprintf("|%+v|%t|%t|%s", load, known, out.Available, out.Reason)...))
+	round := util.GetRoundCount()
+	m.equipmentViews.mu.Lock()
+	cached, hit := m.equipmentViews.byUser[id]
+	m.equipmentViews.mu.Unlock()
+	if hit && cached.key == key && round-cached.round < equipmentViewRefreshRounds {
+		return cached.view
+	}
+	clone := func() (*characters.Character, error) { return characterFrom(raw) }
 	preview := func(verb, slot string, itm items.Item) domain.EquipmentChoice {
 		choice := domain.EquipmentChoice{Ref: itm.ShorthandId(), Label: domain.PlainLabel(itm)}
 		args := []string{verb, "me", itm.ShorthandId(), slot}
@@ -73,7 +127,7 @@ func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 			args = []string{verb, "me", slot, itm.ShorthandId()}
 		}
 		choice.Command = "company " + strings.Join(args, " ")
-		proposed, cargo, _, displaced, err := equipmentProposal(u, actor, args)
+		proposed, cargo, _, displaced, err := proposalFrom(u, actor, args, clone)
 		if err != nil {
 			choice.Reason = err.Error()
 			return choice
@@ -115,5 +169,12 @@ func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 		}
 		out.Slots = append(out.Slots, entry)
 	}
+	m.equipmentViews.mu.Lock()
+	if m.equipmentViews.byUser == nil {
+		m.equipmentViews.byUser = map[int]equipmentViewEntry{}
+	}
+	m.equipmentViews.byUser[id] = equipmentViewEntry{key: key, round: round, view: out}
+	m.equipmentViews.builds++
+	m.equipmentViews.mu.Unlock()
 	return out
 }

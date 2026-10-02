@@ -5,7 +5,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (34d effects/capabilities; integrated 33h3)
+- **Last updated:** 2026-10-02 (Phase 34 review follow-up)
 - **Latest completed slices:** 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -20,6 +20,22 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**Phase 34 review follow-up (2026-10-02, in review):** an owner-requested
+review of the finished Phase 34 found the Gear editor's read model rebuilt
+every round per player at about 26 ms with 30 armour pieces in cargo (each
+preview YAML-cloned the character). `Company.Equipment` now comes from a
+cached view keyed on the leader's character, cargo, load and availability
+(rebuilt at least every 15 rounds); previews share one marshal without the
+cargo: about 0.9 ms per unchanged round, 6 ms per rebuild. Also fixed:
+`Registry.Put`'s unreachable empty-record deletion removed (since 34a every
+leader keeps a record, which also holds the 34b pack grant);
+`Company.Conditions` no longer resends every round for a ticking countdown
+(the client counts down from `seconds_left`; the change key uses the expiry
+round); effects say Harmful/Helpful in words with a duration meter; no doubled
+full stops in effect and capability text; clearer pack, burden, conditions
+help and away-member wording. Regression tests and browser checks added.
+Independent review and full checks pending.
 
 **34d complete:** Company Status now shows owned members' active effects and
 wounds with authoritative duration and mechanical meaning, separate from

@@ -1,10 +1,13 @@
 package gmcp
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,4 +44,52 @@ func TestConditionDurationsAndMechanicalMeaning(t *testing.T) {
 	assert.Contains(t, out.Wounds[0].Description, "3 health")
 	assert.Equal(t, "Until treated or rested away", out.Wounds[0].Duration)
 	assert.Equal(t, "Until fight ends", out.Wounds[1].Duration)
+}
+
+// A timed effect's countdown ticks every round, but the client runs it
+// itself: the feed resends Company.Conditions only when an effect starts,
+// is refreshed or ends, not each round (review of Phase 34d).
+func TestConditionsExtraIgnoresTickingCountdown(t *testing.T) {
+	spec := buffs.BuffSpec{BuffId: 989904, Name: "Slowed", Description: "Moves slowly.", RoundInterval: 5, TriggerCount: 3, StatMods: map[string]int{"speed": -2}}
+	buffs.SetTestBuffSpec(&spec)
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(spec.BuffId) })
+	round := util.GetRoundCount()
+	t.Cleanup(func() { util.SetRoundCount(round) })
+
+	f, out := testFeed()
+	f.extras = []companyExtra{conditionsExtra()}
+	u := users.NewUserRecord(7, 1)
+	slowed := &buffs.Buff{BuffId: spec.BuffId, TriggersLeft: 3, TriggersInitial: 3}
+	u.Character.Buffs.List = []*buffs.Buff{slowed}
+
+	f.updateExtras(u)
+	require.Len(t, *out, 1)
+	var first map[string]memberConditions
+	raw, err := json.Marshal((*out)[0].body)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(raw, &first))
+	effect := first["leader"].Effects[0]
+	seconds := configs.GetTimingConfig().RoundsToSeconds(15)
+	assert.Equal(t, seconds, effect.SecondsLeft)
+	assert.Equal(t, seconds, effect.SecondsTotal)
+	assert.True(t, effect.Harmful)
+	assert.Zero(t, effect.ExpiresRound, "the change key's expiry is not sent")
+
+	for i := 0; i < 3; i++ {
+		util.SetRoundCount(util.GetRoundCount() + 1)
+		slowed.RoundCounter++
+		f.updateExtras(u)
+	}
+	require.Len(t, *out, 1, "a passing second resends nothing")
+
+	slowed.RoundCounter, slowed.TriggersLeft = 0, 3
+	f.updateExtras(u)
+	require.Len(t, *out, 2, "a refreshed effect resends its new countdown")
+
+	u.Character.Buffs.List = nil
+	f.updateExtras(u)
+	require.Len(t, *out, 3, "an ended effect resends")
+	raw, err = json.Marshal((*out)[2].body)
+	require.NoError(t, err)
+	assert.NotContains(t, string(raw), "Slowed")
 }
