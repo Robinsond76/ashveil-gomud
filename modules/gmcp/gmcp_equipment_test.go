@@ -1,8 +1,10 @@
 package gmcp
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,4 +57,50 @@ func TestEquipmentExtraBuiltOnlyWhileGearOpen(t *testing.T) {
 	f.prune([]int{})
 	_, open = f.watchingGear(u.UserId)
 	assert.False(t, open, "a user gone offline is pruned")
+}
+
+// The web client's "!!GMCP(Company.Equipment ...)" reaches the feed for the
+// connection's own user: open with a slot, open with none or an unknown
+// slot (the weapon), and closed; a login clears it until the client says
+// again. A repeated or rapid open asks for no extra refresh (review).
+func TestGearWatchWebRequestAndSpawn(t *testing.T) {
+	users.ResetActiveUsers()
+	t.Cleanup(users.ResetActiveUsers)
+	u := users.NewUserRecord(43, 4343)
+	users.SetTestUser(u)
+	t.Cleanup(func() { companyFeeds.setGearOpen(43, false, "") })
+	say := func(msg string) (string, bool) {
+		require.True(t, gmcpModule.HandleWebGMCP(u.ConnectionId(), []byte("!!GMCP(Company.Equipment"+msg+")")))
+		events.ProcessEvents()
+		return companyFeeds.watchingGear(43)
+	}
+	slot, open := say(" open body")
+	assert.True(t, open)
+	assert.Equal(t, "body", slot)
+	slot, open = say(" open")
+	assert.True(t, open)
+	assert.Equal(t, "weapon", slot)
+	slot, _ = say(" open " + strings.Repeat("x", 500))
+	assert.Equal(t, "weapon", slot, "an unknown slot is the weapon, never stored")
+	_, open = say(" closed")
+	assert.False(t, open)
+
+	say(" open feet")
+	events.AddToQueue(events.PlayerSpawn{UserId: 43})
+	events.ProcessEvents()
+	_, open = companyFeeds.watchingGear(43)
+	assert.False(t, open, "a login clears the editor until the client says again")
+
+	f, _ := testFeed()
+	assert.True(t, f.setGearOpen(9, true, "body"), "opening refreshes at once")
+	assert.False(t, f.setGearOpen(9, true, "body"), "the same slot again refreshes nothing")
+	assert.False(t, f.setGearOpen(9, true, "head"), "another slot within the gap waits for the round")
+	slot, _ = f.watchingGear(9)
+	assert.Equal(t, "head", slot, "but the slot is still recorded")
+	f.mu.Lock()
+	w := f.gearOpen[9]
+	w.refreshed = w.refreshed.Add(-gearRefreshGap)
+	f.gearOpen[9] = w
+	f.mu.Unlock()
+	assert.True(t, f.setGearOpen(9, true, "feet"), "after the gap a new slot refreshes at once")
 }

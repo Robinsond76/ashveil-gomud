@@ -19,3 +19,8 @@ func RemoveTestBuffSpec(buffId int) {
 func SetTestFlag(flag string) {
 	flagSpecs[flag] = &FlagSpec{Flag: flag, Name: flag}
 }
+
+// RemoveTestFlag removes a flag registered with SetTestFlag. For testing only.
+func RemoveTestFlag(flag string) {
+	delete(flagSpecs, flag)
+}

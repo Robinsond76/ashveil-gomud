@@ -34,6 +34,14 @@ ticking effects. Before → after, per player per round: Gear closed 0.78 →
 round 15.1 → 2.3 ms. At 200 players with Gear closed that is about 74 ms of
 each 4 s round. Combat, mob AI and movement are not in this measure. The
 largest remaining parts are the inventory payload and the summary.
+Independent review: no blockers or majors. Accepted and fixed with tests:
+an open message refreshes only when the editor opens or changes slot, and
+not within 200 ms of the last (a repeating client can't force rebuilds);
+an unknown slot name falls back to the weapon; the web request parsing and
+login clearing are now tested through `HandleWebGMCP` and `PlayerSpawn`; a
+reset selection is announced at once; the benchmark removes the flags it
+registers. Not fixed (cosmetic): a reopened editor shows its last view for
+the moment before the fresh one arrives; commands revalidate regardless.
 
 **Phase 34 review follow-up complete (2026-10-02):** an owner-requested
 review of the finished Phase 34 found the Gear editor's read model rebuilt

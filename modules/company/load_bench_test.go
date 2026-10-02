@@ -42,7 +42,11 @@ func TestCompanyRefreshLoad(t *testing.T) {
 		"cancel-on-water", "combat-status", "drunk", "exposed", "hidden", "hydrated", "lightsource", "lose-actions", "lose-first-action",
 		"nightvision", "no-block", "no-combat", "no-dodge", "no-flee", "no-go", "perma-gear", "poison", "remove-curse", "revive-on-death",
 		"see-hidden", "see-nouns", "superhearing", "thirsty", "tripping", "warmed", "partylight", "rested", "well-rested"} {
-		buffs.SetTestFlag(flag)
+		if !buffs.IsValidFlag(flag) {
+			buffs.SetTestFlag(flag)
+			f := flag
+			t.Cleanup(func() { buffs.RemoveTestFlag(f) })
+		}
 	}
 	round := util.GetRoundCount()
 	t.Cleanup(func() { util.SetRoundCount(round) })

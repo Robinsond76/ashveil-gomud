@@ -746,7 +746,7 @@
         const slots = editorNode('div', undefined, panel);
         slots.className = 'gw-editor-slots';
         const list = view.slots || [];
-        if (!list.some(s => s.slot === editorSlot) && list.length) { editorSlot = list[0].slot; editorChoice = ''; }
+        if (!list.some(s => s.slot === editorSlot) && list.length) { editorSlot = list[0].slot; editorChoice = ''; announceGear(); }
         list.forEach(slot => {
             const button = editorNode('button', slot.label + ': ' + (slot.equipped ? slot.equipped.label : 'empty'), slots);
             button.type = 'button';

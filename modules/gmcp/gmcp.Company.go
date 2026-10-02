@@ -10,12 +10,14 @@ package gmcp
 import (
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -279,7 +281,7 @@ type companyFeed struct {
 	// gearOpen holds the users whose client shows the Gear editor
 	// (Company.Equipment open <slot>/closed), with the slot it shows; only
 	// they get it built, previewing only that slot.
-	gearOpen map[int]string
+	gearOpen map[int]gearWatch
 }
 
 func newCompanyFeed() *companyFeed {
@@ -291,33 +293,61 @@ func newCompanyFeed() *companyFeed {
 			events.AddToQueue(GMCPOut{UserId: userID, Module: module, Payload: payload})
 		},
 		accepting: nativeAccepting,
-		gearOpen:  map[int]string{},
+		gearOpen:  map[int]gearWatch{},
 	}
 	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf), battleExtra(gatherBattle)}
 	return f
 }
 
+type gearWatch struct {
+	slot      string
+	refreshed time.Time // when an open last asked for a refresh
+}
+
+// gearRefreshGap is the least time between the refreshes a user's Gear
+// editor may ask for: quick for a person choosing slots, but a client
+// repeating itself cannot make the game loop rebuild without pause.
+const gearRefreshGap = 200 * time.Millisecond
+
 // setGearOpen records whether a user's client shows the Gear editor and
-// which slot it shows (the weapon slot when it doesn't say).
-func (f *companyFeed) setGearOpen(userID int, open bool, slot string) {
-	f.mu.Lock()
-	if open {
-		if slot == "" {
-			slot = "weapon"
-		}
-		f.gearOpen[userID] = slot
-	} else {
-		delete(f.gearOpen, userID)
+// which slot it shows; an unknown slot (the client's word) is the weapon.
+// It reports whether to refresh the user now: only when the editor opened
+// or changed slot, and not within gearRefreshGap of the last (the next
+// round's refresh then brings the slot).
+func (f *companyFeed) setGearOpen(userID int, open bool, slot string) bool {
+	known := false
+	for _, s := range items.AllEquipSlots() {
+		known = known || string(s) == slot
 	}
-	f.mu.Unlock()
+	if !known {
+		slot = string(items.Weapon)
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if !open {
+		delete(f.gearOpen, userID)
+		return false
+	}
+	before, was := f.gearOpen[userID]
+	if was && before.slot == slot {
+		return false
+	}
+	now := time.Now()
+	refresh := !was || now.Sub(before.refreshed) >= gearRefreshGap
+	next := gearWatch{slot: slot, refreshed: before.refreshed}
+	if refresh {
+		next.refreshed = now
+	}
+	f.gearOpen[userID] = next
+	return refresh
 }
 
 // watchingGear reports the slot a user's Gear editor shows, if open.
 func (f *companyFeed) watchingGear(userID int) (string, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	slot, ok := f.gearOpen[userID]
-	return slot, ok
+	w, ok := f.gearOpen[userID]
+	return w.slot, ok
 }
 
 // nativeAccepting is false only for a connection known to the GMCP module
@@ -482,8 +512,7 @@ func init() {
 	})
 	events.RegisterListener(GMCPGearWatch{}, func(e events.Event) events.ListenerReturn {
 		if evt, ok := e.(GMCPGearWatch); ok {
-			companyFeeds.setGearOpen(evt.UserId, evt.Open, evt.Slot)
-			if evt.Open {
+			if companyFeeds.setGearOpen(evt.UserId, evt.Open, evt.Slot) {
 				companyview.RefreshUser(evt.UserId)
 			}
 		}
