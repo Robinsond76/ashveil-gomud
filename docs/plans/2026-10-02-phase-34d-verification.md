@@ -34,5 +34,16 @@ Verified after fixes:
 - `go test -race ./...`: passed; `git diff --check`: passed.
 
 Integration recheck discovered master `f4e28dda` (33h3 relocation/separation).
-Integration compatibility and its final verification are recorded below before
-pushing. No later phase is implemented by this session.
+Merged the shipped 33h3 work into the feature branch, resolving only the status
+log conflict and retaining both phase records. Added explicit separated state:
+only recorded lasting wounds are shown while separated, no temporary buffs;
+rejoin returns to live owned conditions. A real scripted passage, persisted
+reload, GMCP refresh and online rejoin regression passed. Independent full-diff
+integration review against `f4e28dda` found no blockers.
+
+Final integrated checks passed: focused relocation/conditions/capability/cooking/
+help/tutorial tests; all three Chromium browser suites; make generate/validate;
+JS and Lua lint (zero Lua warnings/errors); go test -race ./...; documentation
+relative links and git diff --check. No source changed after these checks.
+
+Phase 34 is complete. No later phase was implemented in this session.

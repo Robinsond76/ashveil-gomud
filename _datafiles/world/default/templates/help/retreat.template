@@ -42,7 +42,9 @@ member transferred or moved elsewhere cancels the order.
 Fallen companions stay where they fell and keep the usual resurrection
 rules (<ansi fg="command">help resurrect</ansi>). A companion who lost nerve and fled keeps
 their saved return, as <ansi fg="command">help morale</ansi> describes. Companions who join after
-the order, other companies, and temporary charms do not come along.
+the order, other companies, and temporary charms do not come along. A
+companion of yours left behind this way is separated once its fight is
+over, and finds its way back to you (<ansi fg="command">help separation</ansi>).
 
 <ansi fg="yellow-bold">Getting away</ansi>
 A successful withdrawal moves the same companions with you, ends your
@@ -51,4 +53,5 @@ way returns no mana. Other players' battles continue. Your horses and
 cargo are not in the room, so nothing about them changes. A restart or
 copyover cancels an order in progress; it never moves a saved company.
 
-See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help morale</ansi>, <ansi fg="command">help company</ansi>.
+See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help morale</ansi>, <ansi fg="command">help company</ansi>,
+<ansi fg="command">help separation</ansi>.

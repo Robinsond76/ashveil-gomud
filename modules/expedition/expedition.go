@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -1077,8 +1078,13 @@ func (m *ExpeditionModule) moveAndFinishLocked(session expedition.TravelSession,
 		// Retain the Completed record so recovery can verify or retry later.
 		return
 	}
-	m.commandCompanionsToFollow(session)
+	// Phase 33h3: the company arrives with its leader (or is separated,
+	// and told), rather than walking the last exit after them.
+	followed := company.RelocateCompany(session.LeaderUserID, session.OriginRoomID, session.DestinationRoomID)
 	m.sendToLeader(session.LeaderUserID, m.arrivalTextLocked(session))
+	if followed > 0 {
+		m.sendToLeader(session.LeaderUserID, company.CompanyFollows)
+	}
 	delete(m.sessions, session.LeaderUserID)
 	m.stopTimerLocked(session.LeaderUserID)
 	if err := m.saveLocked(); err != nil {
@@ -1141,27 +1147,6 @@ func (m *ExpeditionModule) recoverCompletedLocked(session expedition.TravelSessi
 		m.moveAndFinishLocked(session, profile)
 	default:
 		mudlog.Warn("expedition: completed session at unexpected room", "leader", session.LeaderUserID, "room", user.Character.RoomId)
-	}
-}
-
-// commandCompanionsToFollow uses native charm movement so current company
-// companions follow the leader through the completion move.
-func (m *ExpeditionModule) commandCompanionsToFollow(session expedition.TravelSession) {
-	origin := rooms.LoadRoom(session.OriginRoomID)
-	if origin == nil {
-		return
-	}
-	for _, instanceID := range origin.GetMobs(rooms.FindCharmed) {
-		mob := mobs.GetInstance(instanceID)
-		if mob == nil {
-			continue
-		}
-		if mob.Character.RoomId != session.OriginRoomID {
-			continue
-		}
-		if mob.Character.IsCharmed(session.LeaderUserID) {
-			mob.Command(session.ExitName)
-		}
 	}
 }
 

@@ -5,8 +5,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (34d effects and current capabilities)
-- **Latest completed slices:** 34d, effects and current capabilities; 34c, equipment editor; 33h2, company readiness and recovery; 34a,
+- **Last updated:** 2026-10-02 (34d effects/capabilities; integrated 33h3)
+- **Latest completed slices:** 34d, effects and current capabilities; 33h3,
+  relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
   33g management (equipment catalog/class still pending),
@@ -22,7 +23,7 @@ instead of duplicating them.
 
 **34d complete:** Company Status now shows owned members' active effects and
 wounds with authoritative duration and mechanical meaning, separate from
-persistent bonuses. Away/live, recorded-away, fallen and unavailable states
+persistent bonuses. Away/live, recorded-away/separated, fallen and unavailable states
 preserve privacy. Character Skills keeps trained ranks and adds automatic
 abilities/spells plus actual field/camp eligibility, including strategy, mana,
 autoskill and retirement rules. Camp Cooking is explicitly manual and uses
@@ -34,8 +35,46 @@ follow-up found no further blockers. A test fixture's stale room membership was
 fixed and its paired regression passed three runs. All affected packages, all
 three browser suites, generate/validate, JS/Lua lint and the full race suite
 passed. [Verification](plans/2026-10-02-phase-34d-verification.md).
-Phase 34 is complete; stop here and hand over for the owner's next session.
+Integration with 33h3 (`f4e28dda`) preserved relocation/separation and adds
+explicit recorded separated wounds. Independent integration review found no
+blockers; real passage/reload/rejoin GMCP regression, all browser suites,
+generate/validate, JS/Lua lint and the full race suite passed on the integrated
+code. Phase 34 is complete; stop here and hand over for the owner's next session.
 
+**33h3 relocation and separation complete (2026-10-02):** every move that
+isn't an exit (scripted passages, traps, ropes, portals, an inn room, jail,
+a quest `roomid` reward, a journey's arrival and its crash recovery, death,
+the tutorial, admin teleport) now brings the living companions standing
+with the leader through one step, `company.RelocateCompany(leader, origin,
+room)`. A living companion elsewhere, or one away from its leader for two
+rounds, is saved and taken off the map as separated, and rejoins beside the
+leader after `SeparationRounds` (15, about a minute) of online time once the
+leader is out of any fight, journey, or camp rest; a relog never brings it
+back early, and no world time advances. Player-requested passages refuse in
+a battle (`ActorObject.InBattle()`). The dead, the fled, the herd, and cargo
+are unaffected. `help separation`, Departure hint; company, travel, death,
+morale, mount, cargo, readiness and retreat pages updated. Owner approved
+the defaults (with a clarification on dead companions); see the
+[33h design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md)
+("Final implementation decisions: 33h3") and
+[plan](plans/2026-10-02-phase-33h3-relocation.md). 33h is complete.
+
+Independent review: ten findings, all accepted and fixed with regression
+tests. They were: the `portal` help alias broke 33f1's retired-skill check
+(dropped); a failed rejoin spawn was announced and never retried (it now
+stays separated and due); inn beds and camp rest tiers counted the separated
+(skipped); a separated companion could be fed (`ErrAwayMember`); admin
+teleport was untested and silent (test, line added); `help retreat` was
+stale (updated); the unused `RejoinSeconds` was removed; JS indentation; and
+the refusal line now reads "Not while you are fighting." Speculative findings:
+S1 (the sweep firing on ordinary follow) was rejected, because a follower
+trails by one turn and the sweep needs two round boundaries (about eight
+seconds) away and out of a fight; S2 (separation saves gear early) was
+accepted as the same window `BeginFlight` already has; S3 (the tutorial
+gate) is as intended, and its wiring test now walks the companions instead
+of relying on the old recall. Lua lint can't run in this container (no
+Docker or luacheck) and no Lua changed. Verification after the fixes:
+make generate, make validate, JS lint, and go test -race ./... passed.
 
 **34c complete:** Character Gear now edits main-character equipment by slot,
 including Pack, with exact-instance compatible cargo choices, unavailable reasons,
@@ -62,7 +101,7 @@ level-up no longer refills a companion, and resurrection wakes it at half.
 `help readiness`. See the [33h design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md)
 ("Final implementation decisions: 33h2", owner-approved) and
 [plan](plans/2026-10-02-phase-33h2-readiness-recovery.md). 33h3
-(relocation and separation) is next.
+(relocation and separation) followed (above).
 
 **34b complete:** each member has one assigned Pack slot; new leaders and recruits
 receive a 10 kg cloth knapsack. Shared cargo capacity now comes from packs on

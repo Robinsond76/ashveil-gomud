@@ -36,8 +36,8 @@ func (m *CampingModule) companions(leaderUserID int) (map[int]*characters.Charac
 	var roster []int
 	for _, ref := range survival.CurrentRoster(leaderUserID) {
 		companionID, ok := company.CompanionIDFromMemberKey(ref.Key)
-		if !ok || ref.Dead {
-			continue // a dead companion (Phase 25b) earns no rest
+		if !ok || ref.Dead || ref.Away {
+			continue // a dead (Phase 25b) or separated (33h3) companion earns no rest
 		}
 		roster = append(roster, companionID)
 		instanceID, ok := company.InstanceFor(leaderUserID, companionID)

@@ -186,7 +186,14 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 				room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is suddenly moved to a new place!`, questUser.Character.Name), questUser.UserId)
 			}
 
-			rooms.MoveToRoom(questUser.UserId, questInfo.Rewards.RoomId)
+			// Ashveil Phase 33h3: the company comes along, or is separated
+			// and told, as with any move that isn't an exit.
+			origin := questUser.Character.RoomId
+			if err := rooms.MoveToRoom(questUser.UserId, questInfo.Rewards.RoomId); err == nil {
+				if company.RelocateCompany(questUser.UserId, origin, questUser.Character.RoomId) > 0 {
+					questUser.SendText(company.CompanyFollows)
+				}
+			}
 		}
 	} else {
 		if !questInfo.Secret {

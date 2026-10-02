@@ -21,6 +21,12 @@ function onCommand(cmd, rest, user, room) {
         return false;
     }
 
+    // Ashveil Phase 33h3: a move the player asks for waits until the fight is over.
+    if ( user.InBattle() ) {
+        SendUserMessage(user.UserId(), "Not while you are fighting.");
+        return true;
+    }
+
     SendUserMessage(user.UserId(), "You press the eyes of the raven, and follow a secret entrance to the west!");
     SendRoomMessage(room.RoomId(), user.GetCharacterName(true)+" presses in the eyes of the raven, and falls through into a room to the west!", user.UserId());
 

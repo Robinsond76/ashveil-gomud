@@ -1,0 +1,63 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">separation</ansi>
+
+Your company goes where you go. Walking through an exit, your companions
+follow on foot. Any other way you are moved takes them too: a secret
+passage, a trapdoor, a rope down a chasm, a portal, an inn room, a
+journey's arrival, a quest that sends you somewhere, waking at a church
+after you die, or the training grounds.
+
+<ansi fg="yellow-bold">Who comes with you</ansi>
+
+  Every living companion standing in the room you leave goes with you,
+  and you see "Your company comes with you." A companion fighting beside
+  you is taken out of that fight with you.
+
+<ansi fg="yellow-bold">Not while you're fighting</ansi>
+
+  A move you ask for yourself (pressing a hidden catch, climbing down a
+  rope, springing a trap) waits until the battle is over:
+  "Not while you are fighting." A move done to you (dying,
+  being dragged off to a cell, a trap someone else springs) still
+  happens, and takes your company with you.
+
+<ansi fg="yellow-bold">Separated companions</ansi>
+
+  A living companion who isn't with you when you are moved is separated,
+  and you're told who and why:
+
+    Bryn was not with you and is separated from the company.
+
+  A companion left behind for two rounds for any other reason (a door it
+  couldn't pass, say) is separated the same way.
+
+  A separated companion is off the map. Nothing can hurt or rob it, and
+  it keeps its health, mana, wounds, gear, level, and place in your
+  formation exactly as they were. While it's away it doesn't recover,
+  eat, tire, rest, earn experience, or carry anything for the company:
+  it takes no bed at an inn, earns no camp rest, and its pack doesn't
+  count toward your cargo room.
+
+<ansi fg="yellow-bold">Finding the way back</ansi>
+
+  A separated companion rejoins you wherever you are after about a
+  minute (15 rounds, as the world ships). The minute only counts while
+  you're logged in: logging out pauses it, and logging back in doesn't
+  bring anyone back early. If the time is up while you're in a battle,
+  on a journey, or resting at camp, it waits and rejoins when that's
+  over. It never walks into a fight.
+
+<ansi fg="yellow-bold">The fallen, the fled, and your herd</ansi>
+
+  A move never touches a fallen companion: it stays on your roster,
+  waiting to be raised at any church or village shaman within its time
+  (<ansi fg="command">help resurrect</ansi>), and wakes beside you when raised.
+  A companion who fled a battle rejoins you wherever you are once the
+  battle is settled (<ansi fg="command">help morale</ansi>).
+  Your horses and your company's cargo always go with you
+  (<ansi fg="command">help mount</ansi>, <ansi fg="command">help cargo</ansi>).
+
+<ansi fg="command">company status</ansi> shows a separated companion and how long until it's
+back; the web client's Company and Vitals panels mark it as separated.
+
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help death</ansi>,
+<ansi fg="command">help readiness</ansi>, <ansi fg="command">help retreat</ansi>.

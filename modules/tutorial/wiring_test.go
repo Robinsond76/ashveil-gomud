@@ -637,6 +637,18 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, got, "Head east for the next lesson: Departure")
 
 	// Departure: out through the gate, with one cap.
+	// This harness ran no mob turns before the fight, so the companions
+	// never walked after Aria; stand them beside her, as following on foot
+	// would have. From here the listener above lets them follow, and the
+	// gate takes the ones walking with her (Phase 33h3: a move no longer
+	// recalls companions left rooms behind).
+	for _, key := range []int{1, 2} {
+		instanceID, ok := company.InstanceFor(aria.UserId, key)
+		require.True(t, ok)
+		mob := mobs.GetInstance(instanceID)
+		rooms.LoadRoom(mob.Character.RoomId).RemoveMob(instanceID)
+		rooms.LoadRoom(aria.Character.RoomId).AddMob(instanceID)
+	}
 	run(aria, "east", "")
 	require.Equal(t, 903, template(aria))
 	assert.Zero(t, caps(aria))

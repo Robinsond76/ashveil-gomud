@@ -63,6 +63,9 @@ type Companion struct {
 	// GrowthFocus is the stat the leader chose to favour in the
 	// companion's growth (Phase 33h1); empty grows by archetype alone.
 	GrowthFocus string `yaml:"growth_focus,omitempty"`
+	// Separation is set while the companion is separated from its leader
+	// (Phase 33h3): off the map, its State the last snapshot.
+	Separation *Separation `yaml:"separation,omitempty"`
 }
 
 // Identity is what a companion's live mob is called and looks like, over
@@ -204,6 +207,10 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 		if c.Death != nil {
 			d := *c.Death
 			record.Companions[i].Death = &d
+		}
+		if c.Separation != nil {
+			sep := *c.Separation
+			record.Companions[i].Separation = &sep
 		}
 	}
 	return record, true

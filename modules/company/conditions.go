@@ -19,6 +19,11 @@ func (m *CompanyModule) CompanyConditions(leaderUserID int) ([]domain.MemberCond
 		switch {
 		case c.Dead():
 			v.State = "dead"
+		case c.Separated():
+			v.State = "separated"
+			if c.State != nil {
+				v.Wounds = wounds.Lasting(c.State.Wounds)
+			}
 		default:
 			inst, tracked := m.instance(leaderUserID, c.ID)
 			if tracked && m.runtime.CharmedByOther(leaderUserID, inst) {

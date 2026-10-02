@@ -115,6 +115,14 @@ func (nativeRuntime) Relocate(instanceID, roomID int) bool {
 	return true
 }
 
+func (nativeRuntime) Standing(instanceID int) (int, bool, bool) {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil || mob.Character.Health < 1 {
+		return 0, false, false
+	}
+	return mob.Character.RoomId, mob.Character.Aggro != nil, true
+}
+
 // Retrain re-deals a live mob's stat points by its growth weights (Phase
 // 33h1). Health and mana are only held to their new maxima, never raised.
 func (nativeRuntime) Retrain(instanceID int, growth domain.GrowthWeights) bool {

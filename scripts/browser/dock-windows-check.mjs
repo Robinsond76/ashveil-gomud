@@ -652,12 +652,12 @@ const conditions = {
     wounds: [{ name: 'a cut to the arm', description: 'Holds back 3 health', duration: 'Until treated or rested away' }],
     bonuses: [{ name: 'Vigor', description: 'Strength +2', duration: 'Persistent' }] },
   'companion:1': { state: 'live', effects: [], wounds: [{ name: 'a deep bruise', description: 'Holds back 2 health', duration: 'Until fight ends' }], bonuses: [] },
-  'companion:3': { state: 'away', effects: [], wounds: [], bonuses: [] },
+  'companion:3': { state: 'separated', effects: [], wounds: [], bonuses: [] },
   'companion:4': { state: 'dead', effects: [], wounds: [], bonuses: [] }
 };
 await page.evaluate(c => window.gmcp('Company.Conditions', c), conditions);
 check((await status()).includes('2 combat rounds remaining') && (await status()).includes('Until fight ends') && (await status()).includes('Persistent bonuses'), 'Status separates effect duration, wounds and persistent bonuses');
-check((await status()).includes('live effects unknown') && (await status()).includes('Fallen: no active member effects'), 'Status states away and dead conditions honestly');
+check((await status()).includes('Separated: live effects unknown') && (await status()).includes('Fallen: no active member effects'), 'Status states away and dead conditions honestly');
 check(await page.locator('#party-panel img').count() === 0, 'effect labels render as safe text');
 await page.locator('#party-panel [data-key=leader]').focus();
 conditions.leader.effects = [];

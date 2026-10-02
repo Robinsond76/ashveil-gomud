@@ -43,8 +43,10 @@ otherwise end it) before you can resume or return.
 
 <ansi fg="yellow-bold">Arrival</ansi>
 
-When the route's time is up, your company arrives, exactly as if you'd
-walked there. There's no way to cancel or turn back once you're moving
+When the route's time is up, you arrive, and the companions with you
+arrive beside you. One who wasn't with you when you arrived is separated
+and catches up about a minute later (<ansi fg="command">help separation</ansi>). Your horses
+and cargo always arrive with you. There's no way to cancel or turn back once you're moving
 and nothing has interrupted you; only an interruption gives you the
 chance to return early.
 

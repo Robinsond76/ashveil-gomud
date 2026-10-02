@@ -6,6 +6,7 @@ import (
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 	"github.com/GoMudEngine/GoMud/modules/gmcp"
@@ -95,4 +96,48 @@ func TestConditionsSavedWoundsAndFallenMembers(t *testing.T) {
 	m.loadErr = assert.AnError
 	_, ok = m.CompanyConditions(7)
 	assert.False(t, ok)
+}
+
+// Integration with shipped 33h3: a passage persists wounds when separating
+// the absent, and rejoin returns live owned state through the same GMCP seam.
+func TestSeparatedConditionsFollowRealRelocationAndRejoin(t *testing.T) {
+	b := relocationBrawl(t)
+	loadStatusBuffs(t)
+	gmcp.AcceptGMCPForTest(b.aria.ConnectionId())
+	mob := b.companion(4)
+	mob.Character.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "arm", Points: 3}, {Kind: wounds.Bruise, Place: "side", Points: 2, Light: true}}
+	require.NoError(t, mob.Character.AddBuff(status.Stunned, false))
+	require.True(t, nativeRuntime{}.Relocate(mob.InstanceId, 920103))
+	var received map[string]struct {
+		State   string
+		Wounds  []struct{ Name, Duration string }
+		Effects []struct{ Name string }
+	}
+	listener := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
+		out := e.(gmcp.GMCPOut)
+		if out.Module == "Company.Conditions" {
+			require.NoError(t, json.Unmarshal(out.Payload.([]byte), &received))
+		}
+		return events.Cancel
+	}, events.First)
+	t.Cleanup(func() { events.UnregisterListener(gmcp.GMCPOut{}, listener) })
+	b.pull()
+	companyview.RefreshUser(7)
+	events.ProcessEvents()
+	assert.Equal(t, "separated", received["companion:4"].State)
+	require.Len(t, received["companion:4"].Wounds, 1, "only lasting recorded wounds are shown")
+	assert.Empty(t, received["companion:4"].Effects, "no invented saved temporary buffs")
+	assert.Equal(t, "Until treated or rested away", received["companion:4"].Wounds[0].Duration)
+	module.load()
+	require.NoError(t, module.loadErr)
+	companyview.RefreshUser(7)
+	events.ProcessEvents()
+	assert.Equal(t, "separated", received["companion:4"].State, "durable separated record survives reload")
+	b.rounds(domain.DefaultSeparationRounds)
+	companyview.RefreshUser(7)
+	events.ProcessEvents()
+	assert.Equal(t, "live", received["companion:4"].State)
+	require.Len(t, received["companion:4"].Wounds, 1)
+	assert.Equal(t, b.aria.Character.RoomId, b.companion(4).Character.RoomId)
+	assert.Contains(t, rooms.LoadRoom(b.aria.Character.RoomId).GetMobs(rooms.FindCharmed), b.companion(4).InstanceId)
 }

@@ -35,6 +35,8 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 		case c.Dead():
 			view.Status = domain.MemberDead
 			view.RescueSeconds = c.Death.Remaining
+		case c.Separated():
+			view.Status = domain.MemberSeparated
 		default:
 			if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsAttached(leaderUserID, instanceID) {
 				view.Status = domain.MemberPresent
@@ -88,7 +90,8 @@ func (m *CompanyModule) CompanionGearGrams(leaderUserID int) int {
 	}
 	total := 0
 	for _, c := range record.Companions {
-		if c.Dead() {
+		// Phase 33h3: a separated companion's gear is away with it.
+		if c.Dead() || c.Separated() {
 			continue
 		}
 		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {
@@ -143,7 +146,7 @@ func (m *CompanyModule) CompanionCarry(leaderUserID int) []domain.MemberCarry {
 		return out
 	}
 	for _, c := range record.Companions {
-		if c.Dead() {
+		if c.Dead() || c.Separated() {
 			continue
 		}
 		if instanceID, tracked := m.instance(leaderUserID, c.ID); tracked && m.runtime.IsLive(instanceID) {

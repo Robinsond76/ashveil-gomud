@@ -116,10 +116,12 @@ type MemberNeeds struct {
 
 // Errors returned by the survival domain and provider seam.
 var (
-	ErrInvalidMember          = errors.New("survival: invalid company member")
-	ErrUnknownMember          = errors.New("survival: unknown company member")
-	ErrAmbiguousMember        = errors.New("survival: ambiguous company member")
-	ErrDeadMember             = errors.New("survival: that companion is dead")
+	ErrInvalidMember   = errors.New("survival: invalid company member")
+	ErrUnknownMember   = errors.New("survival: unknown company member")
+	ErrAmbiguousMember = errors.New("survival: ambiguous company member")
+	ErrDeadMember      = errors.New("survival: that companion is dead")
+	// ErrAwayMember: a separated companion (Phase 33h3) is not here to feed.
+	ErrAwayMember             = errors.New("survival: that companion is separated from you")
 	ErrInvalidAmount          = errors.New("survival: amount must be positive")
 	ErrPersistenceUnavailable = errors.New("survival: persistence unavailable")
 	ErrProvisionUnavailable   = errors.New("survival: provisioning unavailable")
@@ -523,6 +525,9 @@ type MemberRef struct {
 	// Dead marks a dead companion awaiting resurrection (Phase 25b). It
 	// stays on the roster, but spends and recovers nothing.
 	Dead bool
+	// Away marks a companion separated from its leader (Phase 33h3): like
+	// the dead, it spends and recovers nothing until it rejoins.
+	Away bool
 }
 
 // MemberSnapshot is the exact durable survival state for one companion at a

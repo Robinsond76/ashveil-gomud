@@ -13,7 +13,9 @@ horses. Each member has one Pack slot. Cloth knapsacks and traveller's packs
 provide 10 kg, satchels 5 kg, and frame packs 15 kg. Spare packs weigh something
 but add no capacity. Assigned pack tare does not consume usable capacity.
 A pack horse carries 40 kg, or 100 kg with a pack saddle (help mount).
-Fallen or away carriers contribute no pack capacity (help pack).
+Fallen or away carriers contribute no pack capacity (help pack); a separated
+companion's pack counts again once it rejoins (help separation). The cargo
+itself always goes with you.
 
 At full capacity you cannot obtain more weight. Selling, dropping and eating
 free space. Returning worn gear to cargo adds cargo weight and must fit. Removing a pack

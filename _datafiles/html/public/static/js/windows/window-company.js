@@ -554,6 +554,9 @@
         } else if (m.status === 'awaiting') {
             card.appendChild(el('div', 'company-status', 'Away: rejoins when you return'));
             spoken.push('away');
+        } else if (m.status === 'separated') {
+            card.appendChild(el('div', 'company-status', 'Separated: finding the way back'));
+            spoken.push('separated');
         }
         if (m.status !== 'dead' && typeof v.hp === 'number' && typeof v.hp_max === 'number') {
             const label = 'Health ' + v.hp + ' of ' + v.hp_max;
@@ -583,6 +586,7 @@
         const state = conditions && (conditions[m.key] || { state: 'unknown' });
         if (state) {
             const states = { away: 'Away: live effects unknown; wounds last recorded',
+                separated: 'Separated: live effects unknown; wounds last recorded',
                 'away-live': 'Away: owned member live conditions', dead: 'Fallen: no active member effects',
                 unavailable: 'Conditions unavailable', unknown: 'Conditions unknown' };
             if (states[state.state]) {

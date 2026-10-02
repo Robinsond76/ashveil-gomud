@@ -425,15 +425,33 @@ func (a ScriptActor) MoveRoom(destRoomId int) {
 
 	if a.userRecord != nil {
 
-		rmNow := rooms.LoadRoom(a.characterRecord.RoomId)
+		originRoomId := a.characterRecord.RoomId
+		rmNow := rooms.LoadRoom(originRoomId)
 
 		if rmNext := rooms.LoadRoom(destRoomId); rmNext != nil {
 
-			rooms.MoveToRoom(a.userId, destRoomId)
+			if err := rooms.MoveToRoom(a.userId, destRoomId); err != nil {
+				return
+			}
+			// MoveToRoom can map a special room into the player's own copy.
+			destRoomId = a.characterRecord.RoomId
+			rmNext = rooms.LoadRoom(destRoomId)
 
+			// Ashveil Phase 33h3: the company comes along (or is separated,
+			// and told) through the one shared step; other charmed mobs
+			// standing with the player follow as before.
 			for _, mobInstId := range a.characterRecord.GetCharmIds() {
+				if _, _, companion := company.LeaderAndKeyForInstance(mobInstId); companion {
+					continue
+				}
+				if mob := mobs.GetInstance(mobInstId); mob == nil || rmNow == nil || rmNext == nil || mob.Character.RoomId != originRoomId {
+					continue
+				}
 				rmNow.RemoveMob(mobInstId)
 				rmNext.AddMob(mobInstId)
+			}
+			if company.RelocateCompany(a.userId, originRoomId, destRoomId) > 0 {
+				a.userRecord.SendText(company.CompanyFollows)
 			}
 
 			if doLook, err := TryRoomScriptEvent(`onEnter`, a.userRecord.UserId, destRoomId); err != nil || doLook {
@@ -442,6 +460,11 @@ func (a ScriptActor) MoveRoom(destRoomId int) {
 		}
 
 	} else if a.mobRecord != nil {
+
+		// Ashveil Phase 33h3: a companion moves only with its leader.
+		if _, _, companion := company.LeaderAndKeyForInstance(a.mobInstanceId); companion {
+			return
+		}
 
 		if mobRoom := rooms.LoadRoom(a.characterRecord.RoomId); mobRoom != nil {
 			if destRoom := rooms.LoadRoom(destRoomId); destRoom != nil {
@@ -1124,6 +1147,18 @@ func (a ScriptActor) GetExtraLives() int {
 }
 
 func (a ScriptActor) IsInCombat() bool {
+	return a.characterRecord.Aggro != nil
+}
+
+// InBattle reports whether the actor is fighting: in a battle of their
+// own company's, or with aggro (Ashveil Phase 33h3). Scripts that move a
+// player at the player's own request refuse while it is true.
+func (a ScriptActor) InBattle() bool {
+	if a.userRecord != nil {
+		if _, ok := battle.Current(a.userId); ok {
+			return true
+		}
+	}
 	return a.characterRecord.Aggro != nil
 }
 

@@ -21,6 +21,9 @@ changes. Player help, tutorial, safe text, narrow layout and keyboard/focus
 checks ship with the slice.
 
 Independent review resolved missing manual cooking and verified the follow-up.
+Integration with shipped 33h3 (`f4e28dda`) passed independent review and all
+final checks, including real passage/reload/rejoin conditions coverage.
+Separated members show recorded lasting wounds, no saved temporary effects.
 The cooking owner shares recipe selection with camp cook; the view consumes
 nothing. A new away-member fixture was corrected to restore room bookkeeping
 before teardown. See [34d verification](2026-10-02-phase-34d-verification.md)

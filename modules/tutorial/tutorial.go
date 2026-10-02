@@ -74,7 +74,7 @@ type TutorialModule struct {
 	loadRoom     func(roomID int) *rooms.Room
 	moveTo       func(userID, roomID int) error
 	look         func(user *users.UserRecord, roomID int)
-	relocate     func(leaderUserID, roomID int) int
+	relocate     func(leaderUserID, originRoomID, roomID int) int
 	originalRoom func(roomID int) int
 	members      func(leaderUserID int) ([]company.MemberView, bool)
 	formation    func(leaderUserID int) (company.Formation, bool)
@@ -334,10 +334,11 @@ func (m *TutorialModule) closedCourse(user *users.UserRecord) {
 // travel moves a player (and their living companions, which only follow
 // on foot) into a room and shows it.
 func (m *TutorialModule) travel(user *users.UserRecord, roomID int) error {
+	origin := user.Character.RoomId
 	if err := m.moveTo(user.UserId, roomID); err != nil {
 		return err
 	}
-	m.relocate(user.UserId, user.Character.RoomId)
+	m.relocate(user.UserId, origin, user.Character.RoomId)
 	m.look(user, user.Character.RoomId)
 	return nil
 }
@@ -770,7 +771,7 @@ func (m *TutorialModule) onRoomChange(e events.Event) events.ListenerReturn {
 	from, to := m.inCourse(evt.FromRoomId), m.inCourse(evt.ToRoomId)
 	switch {
 	case from && !to:
-		m.leave(user, p)
+		m.leave(user, p, evt.FromRoomId)
 	case to:
 		if at := stageIndex(p.Stage); at >= 0 && m.copyOf(user.UserId, stages[at].Room) == evt.ToRoomId && evt.FromRoomId != evt.ToRoomId && from {
 			m.sendStage(user, at)
@@ -787,15 +788,15 @@ func (m *TutorialModule) onRoomChange(e events.Event) events.ListenerReturn {
 // teleport also ends the course, as a skip without confirmation. No 27a
 // room can kill a player (the rooms spawn nothing); 27c's practice fight
 // must decide this before death is reachable here.
-func (m *TutorialModule) leave(user *users.UserRecord, p progress) {
+func (m *TutorialModule) leave(user *users.UserRecord, p progress, fromRoomID int) {
 	defer domain.Changed(user.UserId) // 27d: the panel resends at once
 	delete(m.copies, user.UserId)
 	user.Character.RoomIdOnReset = 0
 	m.strikeCamp(user)
 	m.clearSquad(user.UserId)
-	// Companions follow on foot a moment later; bring them now, so none
-	// is left behind in the course's copies.
-	m.relocate(user.UserId, user.Character.RoomId)
+	// Companions follow on foot a moment later; bring those from the room
+	// left now, so none is left behind in the course's copies.
+	m.relocate(user.UserId, fromRoomID, user.Character.RoomId)
 	if p.Stage != StageDeparture {
 		p.State = stateSkipped
 		p.save(user.Character)
