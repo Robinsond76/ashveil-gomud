@@ -1,6 +1,7 @@
 # Phase 34 — Company UI and Container Logistics
 
-Status: owner-approved design and delivery plan; gameplay implementation not started.
+Status: owner-approved design; 34a–34d implemented, reviewed and verified.
+See [Project Status](../PROJECT_STATUS.md) for integration and verification records.
 Baseline: `f4dd180c`. Owner endorsed the UI/logistics direction on 2026-10-01
 and added automatic formation placement on recruitment. The owner approved
 this concrete design and its proposed delivery defaults on 2026-10-01.

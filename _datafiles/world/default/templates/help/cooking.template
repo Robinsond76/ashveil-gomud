@@ -2,7 +2,7 @@
 
 Raw game meat needs a hearth before it's worth eating. The <ansi fg="skill">Cooking</ansi> skill
 turns meat and gathered herbs into proper meals at a hearth, a fixture
-found in some rooms (not a campfire — see <ansi fg="command">help camp</ansi>).
+found in some rooms. You can also cook at a lit campfire (see below).
 
 <ansi fg="yellow-bold">How to cook</ansi>
 
@@ -48,3 +48,9 @@ a hearth wants.
 
 See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help use</ansi>, <ansi fg="command">help look</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help train</ansi>,
 <ansi fg="command">help skills</ansi>.
+
+Character > Skills lists Camp Cooking as a manual camp capability for
+every archetype. It shows configured recipe ranks and reasons such as
+missing ingredients, a higher rank, no lit camp here, battle or capacity.
+It uses your trained ranks, not autoskill or a companion specialist.
+The view consumes nothing; only camp cook prepares the meal.

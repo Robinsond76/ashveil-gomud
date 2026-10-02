@@ -33,3 +33,12 @@
 - The web client's company dock renders all of this: `window-company.js` (Status, Inventory, Camp), `window-combat.js`, `window-vitals.js`'s rows, with `textContent` only, reading `Client.GMCPStructs` on each render and keeping keyboard focus across a rebuild. `scripts/browser/dock-windows-check.mjs` checks them in Chromium: `NODE_PATH=$(npm root -g) node scripts/browser/dock-windows-check.mjs`.
 - Phase 32g2: `Company.Battle` (`gmcp.CompanyBattle.go`) is a third extra: the player's battle from `battle.Current` and the live room (never the combat event stream): the group's living, visible enemies with their 29d label, cell, `enemyparty.HealthWord` (never numbers), `reach` (only when the player is placed, as `scout`'s `*`), and target (a member key, or an `others` id); `fallen` (fallen or gone, in instance order); `company` (members' targets by key, only on listed enemies); `others` (outsiders an enemy strikes, by name); `waiting` (`battle.Waiting`). `{}` out of battle; in the dark only `dark: true`. A fallen enemy is named unless last seen hidden (`battleSeen`, runtime, per player and battle, pruned each round). `buildBattle` is pure over `battleFacts`; `gatherBattle` reads the game. The client carries the battle over a `Company` snapshot until it is re-sent. `window-combat.js` renders it; `dock-windows-check.mjs` checks it.
 - Phase 30c2: a guardian's `strategy` in `Company` carries `ward` (a member key, dropped when it names no member) and `ward_reach: false` when both are placed more than one column apart (`markWards`). `Company.Battle` carries `guards: [{key, left, ward}]` for each guardian on the player's side (`gatherGuards`, from `battle.GuardsLeft` and the stored ward; blank ward: the most hurt), in the dark too. `window-combat.js` shows both; `dock-windows-check.mjs` checks them.
+
+- Phase 34d: `Company.Conditions` is a changed-only extra by owned member key,
+  distinguishing live/away-live, recorded away wounds, fallen and unavailable
+  state. Temporary buffs, wound durations and persistent buffs are separate.
+  `Char.Capabilities` is another changed-only extra, also included in full Char
+  responses. It uses shipped ability specs, automatic spell settings and the
+  archetype provider's current specialist eligibility and camping's manual
+  cooking view (configured recipes, ranks, ingredients, camp and capacity); no progression catalogue.
+  `Char.Skills` retains its array contract and adds each skill's `max_level`.
