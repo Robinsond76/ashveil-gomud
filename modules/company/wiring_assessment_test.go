@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"slices"
 	"strings"
 	"testing"
@@ -157,7 +158,7 @@ func TestAssessmentReachFollowsTheFormation(t *testing.T) {
 	// the bandits' second rank, out of her reach; scout's marks agree.
 	b.cmd("company", "dismiss all")
 	_, kw := b.banditGroup()
-	for _, spot := range []string{"me 1 1", "me 1 2", "me 3 3"} {
+	for _, spot := range []string{"me 2 2"} {
 		require.Contains(t, b.cmd("formation", "move "+spot), "Placed", spot)
 		scouted := b.cmd("scout", kw)
 		rep := b.report()
@@ -170,12 +171,11 @@ func TestAssessmentReachFollowsTheFormation(t *testing.T) {
 	}
 	alone := b.report()
 
-	// Unplaced again, every blow lands: no one is out of reach, and the
-	// estimate changes with it.
-	_, _ = usercommands.TryCommand("formation", "clear me", b.aria.UserId, 0)
-	loose := b.report()
-	assert.Empty(t, loose.OutOfReach)
-	assert.NotEqual(t, alone.Ratio, loose.Ratio, "where she stands changes the estimate")
+	// Solo clear is refused and assessment still uses the authoritative center.
+	_, err := usercommands.TryCommand("formation", "clear me", b.aria.UserId, 0)
+	assert.ErrorIs(t, err, domain.ErrSoloFormation)
+	assert.Equal(t, alone.Ratio, b.report().Ratio)
+
 }
 
 func TestAssessmentSeesWhatScoutSees(t *testing.T) {

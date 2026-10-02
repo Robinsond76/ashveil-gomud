@@ -6,6 +6,11 @@ stand in a formation too, arranged for them: their toughest stand in front.
 
 Where everyone stands decides who can strike whom.
 
+A solo leader always stands at row 2, column 2. New recruits take a vacant
+cell automatically, without moving anyone already placed. With companions,
+you can rearrange or clear members; a deliberate clear stays clear.
+Older formations receive missing placements once when you sign in.
+
 <ansi fg="yellow">Usage:</ansi>
 
   <ansi fg="command">formation</ansi>

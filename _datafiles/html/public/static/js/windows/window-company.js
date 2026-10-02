@@ -42,6 +42,7 @@
     injectStyles(`
         /* Phase 32g: the Company tab and its sub-tabs */
         #company-window {
+            color: var(--t-text);
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -173,7 +174,7 @@
         #party-panel::-webkit-scrollbar-thumb  { background: var(--t-scrollbar-thumb); border-radius: 2px; }
 
         .party-empty {
-            color: var(--t-text-dim);
+            color: var(--t-text-secondary);
             font-size: 0.78em;
             font-style: italic;
             text-align: center;
@@ -327,7 +328,7 @@
             line-height: 1.25;
         }
 
-        .company-formation td.empty { color: var(--t-text-dim); }
+        .company-formation td.empty { color: var(--t-text-secondary); }
         .company-formation td.is-leader { color: var(--t-party-leader); font-weight: bold; }
 
         .company-members {
@@ -861,7 +862,7 @@
         if (inv.load) {
             const l = inv.load;
             const pct = l.capacity_g > 0 ? Math.round(l.total_g * 100 / l.capacity_g) : 0;
-            pad.appendChild(el('div', null, 'Load ' + CompanyData.kg(l.total_g) + ' / ' + CompanyData.kg(l.capacity_g) + ' (' + pct + '%)'));
+            pad.appendChild(el('div', null, 'Load ' + CompanyData.kg(l.total_g) + ' / ' + CompanyData.kg(l.capacity_g) + ' (' + pct + '%) — ' + (l.total_g > l.capacity_g ? 'Overloaded' : (l.label || 'Within capacity'))));
             const meter = el('div', 'cmp-meter' + (pct >= 100 ? ' full' : ''));
             meter.setAttribute('role', 'meter');
             meter.setAttribute('aria-label', 'Load ' + pct + ' percent of capacity');
@@ -886,7 +887,7 @@
         pad.appendChild(actions);
 
         const you = inv.members[0];
-        inv.members.forEach((m, idx) => pad.appendChild(memberBlock(m, idx === 0, inv.shared)));
+        if (!inv.shared) { inv.members.forEach((m, idx) => pad.appendChild(memberBlock(m, idx === 0, false))); }
 
         const horses = el('section', 'cmp-block');
         horses.setAttribute('aria-label', 'Horses');

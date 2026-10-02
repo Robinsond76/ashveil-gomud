@@ -267,12 +267,12 @@ func TestScoutAGroup(t *testing.T) {
 	assert.Contains(t, got, mobparty.Capitalize(name)+", as they stand (front row nearest you):")
 	assert.Contains(t, got, "front [")
 	assert.Contains(t, got, "(unhurt)")
-	assert.Contains(t, got, "You aren't placed in your company's formation")
+	assert.Contains(t, got, "* you can reach them from your place in the formation.")
 	assert.Equal(t, round, util.GetRoundCount(), "scouting spends no round")
 	assert.Nil(t, b.aria.Character.Aggro, "and starts nothing")
 
 	// Placed at the front, left: Aria can reach the front of columns 1 and 2.
-	require.Contains(t, b.cmd("formation", "move me 1 1"), "Placed")
+	require.Contains(t, b.cmd("formation", "move me 2 2"), "Placed")
 	got = b.cmd("scout", kind)
 	assert.Contains(t, got, "* you can reach them from your place in the formation.")
 	assert.Contains(t, got, "*")

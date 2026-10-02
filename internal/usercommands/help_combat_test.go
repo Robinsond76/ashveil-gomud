@@ -251,3 +251,17 @@ func TestBurdenHelp(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, status, "burden")
 }
+
+func TestFormationDefaultsHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	text, err := GetHelpContents("formation")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(text, "")
+	for _, want := range []string{"row 2, column 2", "vacant", "deliberate clear", "once"} {
+		assert.Contains(t, plain, want)
+	}
+	text, err = GetHelpContents("company-inventory")
+	require.NoError(t, err)
+	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "Worn equipment lives in Character Gear")
+}

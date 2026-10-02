@@ -194,7 +194,7 @@ func TestCompanyDockThroughPluginsLoad(t *testing.T) {
 	// stores under Company, so the unchanged Inventory follows it (32g
 	// review finding 1).
 	snapshots, invs := count("Company"), count("Company.Inventory")
-	run(aria, "formation", "move #1 2 2")
+	run(aria, "formation", "move #1 2 3")
 	assert.Greater(t, count("Company"), snapshots, "the formation change sends a snapshot")
 	assert.Greater(t, count("Company.Inventory"), invs, "and the Inventory follows it")
 

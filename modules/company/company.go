@@ -75,8 +75,9 @@ type Store interface {
 }
 
 type wireRecord struct {
-	AssetOperation *domain.AssetOperation `yaml:"asset_operation,omitempty"`
-	MercyPending   []domain.MercyEffect   `yaml:"mercy_pending,omitempty"`
+	FormationVersion int                    `yaml:"formation_version,omitempty"`
+	AssetOperation   *domain.AssetOperation `yaml:"asset_operation,omitempty"`
+	MercyPending     []domain.MercyEffect   `yaml:"mercy_pending,omitempty"`
 	// LeaderUserID is decoded for shape compatibility; the companies map key is authoritative.
 	LeaderUserID    int                    `yaml:"leader_user_id"`
 	Companions      []domain.Companion     `yaml:"companions"`
@@ -105,7 +106,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{AssetOperation: wr.AssetOperation, LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
+		record := domain.Record{FormationVersion: wr.FormationVersion, AssetOperation: wr.AssetOperation, LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -399,7 +400,7 @@ func (m *CompanyModule) summon(leaderUserID, roomID int, selector string) (strin
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("Companion summoned: %s (#%d).", templateName(templateID, selector), companion.ID), nil
+	return fmt.Sprintf("Companion summoned: %s (#%d).", templateName(templateID, selector), companion.ID) + m.placementNotice(leaderUserID, companion.ID), nil
 }
 
 // enlist adds a companion of templateID to the company and spawns it: the
@@ -435,7 +436,7 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 		if existed {
 			m.registry.Put(before)
 		} else {
-			m.registry.Put(domain.Record{LeaderUserID: leaderUserID})
+			m.registry.Remove(leaderUserID)
 		}
 	}
 	m.assignConfiguredArchetype(leaderUserID, companion)
@@ -516,6 +517,8 @@ func (m *CompanyModule) rollbackSummon(leaderUserID, companionID int, before dom
 		}
 	}
 	record.Companions = companions
+	record.Formation = before.Formation
+	record.FormationVersion = before.FormationVersion
 	record.Claimed = append([]int(nil), before.Claimed...)
 	record.Rosters = before.Rosters
 	m.registry.Put(record)
@@ -987,6 +990,10 @@ func (m *CompanyModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	}
 	user := users.GetByUserId(evt.UserId)
 	if user == nil {
+		return events.Continue
+	}
+	if err := m.prepareFormation(evt.UserId); err != nil {
+		mudlog.Warn("company: formation migration", "error", err)
 		return events.Continue
 	}
 	if err := m.PrepareAssets(evt.UserId); err != nil {

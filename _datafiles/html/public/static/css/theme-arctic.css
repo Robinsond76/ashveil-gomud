@@ -13,7 +13,7 @@
     --p-bg-deep:     #08101a;  /* deepest surface: input fields, scrollbar track, modal terminal bg */
     --p-bg-dark:     #e4ecf4;  /* panel chrome: sidebar panel bg, cmd bar, input bg */
     --p-text:        #0c1e30;  /* primary readable text; input text, online name, modal terminal fg | Theme Swatch 5 */
-    --p-text-sub:    #4878a0;  /* secondary / label text; button text, online align, map hover | Theme Swatch 4 */
+    --p-text-sub:    #305d80;  /* secondary / label text; button text, online align, map hover | Theme Swatch 4 */
     --p-accent:      #0890d8;  /* bright accent: tab underline, active toggle, progress bar end, glow | Theme Swatch 3 */
     --p-accent-mid:  #0660a0;  /* mid accent: borders, scrollbar thumb, hover bg, titlebar bg | Theme Swatch 2 */
     --p-accent-dark: #d8ecf8;  /* darkest accent tint: accent-bg, exit-open bg */
