@@ -33,9 +33,11 @@ func (m *CompanyModule) inventoryView(user *users.UserRecord) string {
 		leader.Items = nil
 		lines = append(lines, fmt.Sprintf("Company treasury: %d gold.", user.Character.Gold))
 	}
-	lines = append(lines, memberBlock(user.Character.Name+" (you)", leader)...)
+	if !user.Character.CompanyCargo {
+		lines = append(lines, memberBlock(user.Character.Name+" (you)", leader)...)
+	}
 
-	if m.persistenceAvailable() == nil {
+	if !user.Character.CompanyCargo && m.persistenceAvailable() == nil {
 		if record, ok := m.registry.Get(leaderUserID); ok {
 			for _, c := range record.Companions {
 				name := fmt.Sprintf("#%d %s", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)))
@@ -78,6 +80,15 @@ func (m *CompanyModule) inventoryView(user *users.UserRecord) string {
 		lines = append(lines, "Horses: none")
 	}
 	if user.Character.CompanyCargo {
+		lines = append(lines, "Assigned containers:")
+		lines = append(lines, packLine(user.Character.Name, user.Character.Equipment.Pack, user.Character.Health > 0))
+		if members, ok := m.CompanyInventory(leaderUserID); ok {
+			for _, member := range members {
+				if member.Pack != "" {
+					lines = append(lines, fmt.Sprintf("  %s (%s): %.1f kg — %s", member.Pack, member.Name, float64(member.PackBonusGrams)/1000, availableWord(member.Available && !member.Fallen)))
+				}
+			}
+		}
 		lines = append(lines, "Company cargo:")
 		for _, itm := range user.Character.Items {
 			lines = append(lines, fmt.Sprintf("  %s  %s", itm.ShorthandId(), itemName(itm)))
@@ -182,4 +193,17 @@ func listOrNothing(names []string) string {
 
 func kg(grams int) string {
 	return fmt.Sprintf("%.1f kg", float64(grams)/1000)
+}
+
+func availableWord(ok bool) string {
+	if ok {
+		return "available"
+	}
+	return "unavailable"
+}
+func packLine(name string, pack items.Item, available bool) string {
+	if pack.ItemId < 1 {
+		return "  " + name + ": no assigned pack"
+	}
+	return fmt.Sprintf("  %s (%s): %.1f kg — %s", domain.PlainLabel(pack), name, float64(pack.CarryBonusGrams())/1000, availableWord(available))
 }

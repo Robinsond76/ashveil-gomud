@@ -232,12 +232,18 @@ const sharedInventory = JSON.parse(JSON.stringify(inventory));
 sharedInventory.shared = true;
 sharedInventory.treasury = 123;
 sharedInventory.autoloot = false;
+sharedInventory.containers = [
+ { key: 'leader', name: 'cloth knapsack', carrier: 'Dain', ref: '!38:pack', capacity_g: 10000, available: true },
+ { key: 'companion:2', name: '<img src=x onerror=alert(1)> frame pack', carrier: 'Away companion', capacity_g: 15000, available: false }
+];
 sharedInventory.members[1].available = true;
 sharedInventory.cargo = [...sharedInventory.members[0].carried, ...sharedInventory.cargo,
   { ref: '!8:glaive', name: 'steel glaive', grams: 2000, count: 1, type: 'weapon', subtype: 'slashing' }];
 sharedInventory.members[0].carried = [];
 await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
 check((await invText()).includes('Company treasury: 123 gold'), 'shared treasury is visible');
+check((await invText()).includes('cloth knapsack (Dain)') && (await invText()).includes('15.0 kg unavailable'), 'assigned container cards show capacity and unavailable carriers');
+check(await page.locator('#company-inventory img').count() === 0, 'container names render as text');
 check(!/Wearing|Carrying|No pack/.test(await invText()), 'shared inventory contains no personal or worn blocks');
 got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'steel glaive' }).click(); await page.getByText('Compare for Brother Oswin', { exact: true }).click(); });
 check(JSON.stringify(got) === '["company compare #1 !8:glaive"]', 'comparison names the stable member and exact cargo instance');

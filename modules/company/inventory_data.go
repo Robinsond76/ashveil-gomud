@@ -25,7 +25,12 @@ func (m *CompanyModule) CompanyInventory(leaderUserID int) ([]domain.InventoryMe
 		key := domain.CompanionMemberKey(c.ID)
 		name := nameOf(c, "")
 		if c.Dead() {
-			out = append(out, domain.InventoryMember{Key: key, Name: name, Fallen: true, Worn: []domain.InventoryItem{}, Carried: []domain.InventoryItem{}})
+			fallen := domain.InventoryMember{Key: key, Name: name, Fallen: true, Worn: []domain.InventoryItem{}, Carried: []domain.InventoryItem{}}
+			if c.State != nil && c.State.Equipment.Pack.ItemId > 0 {
+				fallen = domain.InventoryMemberOf(key, name, *c.State)
+				fallen.Fallen = true
+			}
+			out = append(out, fallen)
 			continue
 		}
 		var state *domain.MemberState
@@ -54,11 +59,15 @@ func (m *CompanyModule) CompanyInventory(leaderUserID int) ([]domain.InventoryMe
 		}
 		member := domain.InventoryMemberOf(key, name, *state)
 		if inst, ok := m.instance(leaderUserID, c.ID); ok {
-			member.Available = m.runtime.WithLeader(leaderUserID, inst) && m.runtime.IsAttached(leaderUserID, inst)
+			hp, _, aliveKnown := m.runtime.Vitals(inst)
+			member.Available = aliveKnown && hp > 0 && !c.PendingReturn && m.runtime.IsLive(inst) && m.runtime.WithLeader(leaderUserID, inst) && m.runtime.IsAttached(leaderUserID, inst)
 		}
 		shared := false
 		if u := users.GetByUserId(leaderUserID); u != nil {
 			shared = u.Character.CompanyCargo
+		}
+		if shared && state.Equipment.Pack.ItemId <= 0 {
+			member.Pack, member.PackBonusGrams = "", 0
 		}
 		// A companion's items take no commands, so they carry no
 		// reference; a template's items get fresh UUIDs on every read,

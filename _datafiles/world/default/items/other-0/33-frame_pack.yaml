@@ -1,11 +1,9 @@
 itemid: 33
 name: frame pack
 namesimple: pack
-description: A tall pack lashed to an ash-wood frame that rides on the hips.
-  Whoever carries it can manage about fifteen kilograms more (help cargo).
-  Only a member's largest pack counts.
-type: object
-subtype: mundane
+description: A framed pack providing 15 kg of shared capacity when assigned to a Pack slot. See help pack.
+type: pack
+subtype: wearable
 value: 90
 weight: 3000
 carrybonus: 15000

@@ -256,10 +256,12 @@ func (l Load) TotalGrams() int {
 	return l.PersonalGrams + l.CompanionGrams + l.CargoGrams
 }
 
-// Ratio is TotalGrams/CapacityGrams, or 0 when capacity is non-positive
-// (an unconfigured or misconfigured capacity never divides by zero or
-// reports an infinite/negative ratio).
+// Ratio is TotalGrams/CapacityGrams. Cargo with no container uses the full
+// load band (1), without division by zero; an empty company uses 0.
 func (l Load) Ratio() float64 {
+	if l.CapacityGrams == 0 && l.TotalGrams() > 0 {
+		return 1
+	}
 	if l.CapacityGrams <= 0 {
 		return 0
 	}

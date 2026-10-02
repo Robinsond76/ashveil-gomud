@@ -5,8 +5,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (34a integration with 33h1)
-- **Latest completed slices:** 34a, UI/formation; 33h1, companion growth and contracts (2026-10-02);
+- **Last updated:** 2026-10-02 (34b integration with 33h1)
+- **Latest completed slices:** 34a, UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts (2026-10-02);
   33g management (equipment catalog/class still pending),
   33i1, company encounter assessment, and
   33f3, camp specialists (built in parallel); 33f2, expedition specialists; 33f1, skill
@@ -17,6 +17,24 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**34b complete:** each member has one assigned Pack slot; new leaders and recruits
+receive a 10 kg cloth knapsack. Shared cargo capacity now comes from packs on
+living present carriers plus eligible horses, with no base/Strength allowance.
+Only unequipped cargo consumes that capacity; Pack contributes no combat burden,
+stats, defense or worn buffs. Migration preserves exact instances and journals
+once-only grants; capacity loss preserves overloaded cargo and recovery actions.
+Inventory shows assigned container availability and one shared cargo list.
+Help, tutorial pointers and migration release notes updated. Independent review
+resolved four findings (combat modifiers, 10 kg creation kits, armor-removal
+coverage, stale help) and a follow-up weapon-defense regression. Final focused
+checks, browser checks, make generate/validate, JS/Lua lint and go test -race ./...
+passed. Existing creation, death and mount fixtures now exercise the new rules;
+formation integration permits valid upkeep retargeting after clearing a rear foe.
+Integration with 33h1 passed independent review, focused command/module checks,
+browser checks, generate/validate, JS/Lua lint and the full race suite. Owner
+requests a new session between slices; unfinished 34c is preserved locally.
+[Next-session context](plans/2026-10-02-phase-34-session-handoff.md).
 
 **34a complete:** shared browser Inventory shows cargo without member worn or
 personal blocks; panel foreground inheritance and two light-theme secondary
@@ -33,7 +51,7 @@ focused packages, help/tutorial pointers, all dock browser checks including
 JS/Lua lint, and go test -race ./... passed. Initial race run hit the existing
 random-hit edge test; targeted rerun and final full run passed. Integration against 33h1 (ecd3255e)
 passed independent review, focused checks, browser checks, generate/validate,
-JS/Lua lint and the full race suite. 34b–34d remain.
+JS/Lua lint and the full race suite. 34c–34d remain.
 
 
 **33h1 growth and contracts complete (2026-10-02):** the owner asked to
@@ -121,7 +139,7 @@ delegated to the lead. 33a–33e are complete.
   and [delivery plan](plans/2026-10-01-phase-34-company-ui-logistics-plan.md)
   split delivery into 34a UI/formation, 34b assigned packs and cargo capacity,
   34c equipment editor, and 34d effects/current capabilities. Design and delivery defaults approved by the owner;
-  34a implemented and verified as recorded above; 34b–34d remain.
+  34a and 34b implemented and verified as recorded above; 34c and 34d remain.
 
 - Owner requested a [weapon poison design](designs/2026-10-01-weapon-poisons-design.md)
   for future implementation on 2026-10-01: shop-bought temporary blade coatings,

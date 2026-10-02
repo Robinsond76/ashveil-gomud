@@ -64,6 +64,7 @@ func writeLogisticsWorld(t *testing.T, dataDir string) {
 		"rooms/dunmar/2001.yaml",
 		"rooms/dunmar/2004.yaml",
 		"items/other-0/31-satchel.yaml",
+		"items/other-0/38-cloth_knapsack.yaml",
 		"items/other-0/34-pack_saddle.yaml",
 		"items/other-0/35-riding_saddle.yaml",
 		"items/consumables-30000/30004-cheese_sandwich.yaml",
@@ -181,29 +182,29 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 	}
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
 
-	// Alone: a little over 20 kg, not the old flat 200.
+	// Alone: the command prepares the once-only assigned starter pack.
+	run("cargo", "")
 	alone := capacity()
-	assert.GreaterOrEqual(t, alone, 20000)
-	assert.Less(t, alone, 40000)
+	assert.Equal(t, 10000, alone)
 	assert.Contains(t, run("cargo", ""), "Capacity: members")
 
 	// A recruit carries a share of their own.
 	assert.Contains(t, run("company", "summon training dummy"), "Companion summoned")
 	two := capacity()
-	assert.GreaterOrEqual(t, two-alone, 20000)
+	assert.Equal(t, 10000, two-alone)
 
 	// Shared packs serve distinct living members; own-company gifts move nothing.
 	user.Character.StoreItem(items.New(31))
-	assert.Equal(t, two+5000, capacity(), "the leader's satchel")
+	assert.Equal(t, two, capacity(), "loose satchel adds no capacity")
 	run("give", "satchel dummy")
-	assert.Equal(t, two+5000, capacity(), "own-company give leaves shared cargo unchanged")
+	assert.Equal(t, two, capacity(), "own-company give leaves shared cargo unchanged")
 	user.Character.StoreItem(items.New(31))
-	assert.Equal(t, two+10000, capacity())
+	assert.Equal(t, two, capacity())
 	run("give", "satchel dummy")
-	assert.Equal(t, two+10000, capacity(), "one physical pack per living member counts")
+	assert.Equal(t, two, capacity(), "loose packs add no capacity")
 	spare := items.New(31)
 	user.Character.StoreItem(spare)
-	assert.Equal(t, two+10000, capacity(), "a third pack adds no capacity to two members")
+	assert.Equal(t, two, capacity(), "a third pack adds no capacity to two members")
 	user.Character.RemoveItem(spare)
 	packed := capacity()
 
@@ -259,7 +260,7 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 
 	// One screen for everything.
 	inv := run("company", "inventory")
-	for _, want := range []string{"Company load:", "Dain (you)", "training dummy", "satchel", "Horses: #1 pack horse (pack saddle, +100.0 kg)", "Company cargo:"} {
+	for _, want := range []string{"Company load:", "cloth knapsack (Dain)", "training dummy", "satchel", "Horses: #1 pack horse (pack saddle, +100.0 kg)", "Company cargo:"} {
 		assert.Contains(t, inv, want)
 	}
 

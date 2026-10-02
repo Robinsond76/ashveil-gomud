@@ -25,7 +25,7 @@ func TestLogisticsHelpTopics(t *testing.T) {
 	assert.Contains(t, company, "company-meal")
 
 	want := map[string][]string{
-		"cargo":             {"pet's", "20 kg each", "satchel adds 5 kg", "pack horse carries 40 kg", "keeps its uses"},
+		"cargo":             {"pet's", "assigned packs", "satchels 5 kg", "pack horse carries 40 kg", "keeps its uses"},
 		"mount":             {"one riding horse and one pack horse", "120 gold", "mount saddle [horse] [saddle]", "Dunmar West Gate"},
 		"encumbrance":       {"one carrying limit", "never blocked"},
 		"inventory":         {"company inventory", "no limit on how many"},
@@ -52,7 +52,7 @@ func TestLogisticsHelpTopics(t *testing.T) {
 	aliases := map[string]string{
 		"company inventory": "company-inventory", "company inv": "company-inventory",
 		"company meal": "company-meal", "company eat": "company-meal", "company drink": "company-meal",
-		"horse": "mount", "saddle": "mount", "satchel": "cargo", "capacity": "cargo",
+		"horse": "mount", "saddle": "mount", "satchel": "pack", "capacity": "cargo",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)

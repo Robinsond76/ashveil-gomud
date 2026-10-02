@@ -116,3 +116,7 @@ Update cargo, inventory, company inventory, meals, burden, combat, and webclient
 help with their new ownership and commands. Preparation and departure tutorial
 hints point to equipment, treasury, and loot. Rendering and tutorial pointer
 tests must pass. No loadout/preset help or controls are shipped.
+
+Phase 34b update: shared cargo load excludes worn equipment. Assigned packs
+provide cargo capacity and are excluded from personal combat burden. See
+[container logistics](2026-10-01-phase-34-company-ui-logistics-design.md).

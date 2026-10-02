@@ -68,12 +68,12 @@ func TestBuildTableDropsUnknownKitItems(t *testing.T) {
 func TestShippedKitsResolveAndBalance(t *testing.T) {
 	m, _ := testModule(t)
 	want := map[string][]int{
-		// Phase 32f: every kit ends with a satchel (31).
-		"warrior": {10002, 20004, 20020, 30004, 30015, 31},
-		"rogue":   {10004, 8, 20029, 20003, 23, 30004, 30015, 31},
-		"wizard":  {10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 31},
-		"cleric":  {10015, 20004, 20008, 30004, 30015, 30001, 30001, 31},
-		"ranger":  {10014, 20020, 20024, 20003, 30019, 30015, 23, 31},
+		// Phase 32f: every kit includes a cloth knapsack (38).
+		"warrior": {10002, 20004, 20020, 30004, 30015, 38},
+		"rogue":   {10004, 8, 20029, 20003, 23, 30004, 30015, 38},
+		"wizard":  {10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 38},
+		"cleric":  {10015, 20004, 20008, 30004, 30015, 30001, 30001, 38},
+		"ranger":  {10014, 20020, 20024, 20003, 30019, 30015, 23, 38},
 	}
 	lowest, highest := 0, 0
 	for id, kit := range want {
@@ -110,7 +110,7 @@ func TestChooseOwesKitInSameSave(t *testing.T) {
 	assert.Equal(t, 1, store.saves, "the choice and the owed kit are one save")
 	assert.Equal(t, "warrior", store.saved.Players[201])
 	assert.Equal(t, "warrior", store.saved.Kits[201])
-	assert.Equal(t, kitOf(t, m, "warrior"), backpackIDs(u))
+	assert.ElementsMatch(t, kitOf(t, m, "warrior"), ownedIDs(u))
 	assert.Equal(t, "warrior", u.Character.GetMiscData(kitMarkerKey))
 }
 
@@ -136,14 +136,14 @@ func TestGrantKitExactlyOnce(t *testing.T) {
 	m.choose(u, "cleric", true)
 	assert.Equal(t, 1, saves, "the user is saved right after the grant")
 	kit := kitOf(t, m, "cleric")
-	assert.Equal(t, kit, backpackIDs(u))
+	assert.ElementsMatch(t, kit, ownedIDs(u))
 
 	assert.Empty(t, m.grantKit(u), "a repeat grant gives nothing")
 	users.SetTestUser(u)
 	t.Cleanup(func() { users.RemoveTestUser(203) })
 	m.onPlayerSpawn(eventsPlayerSpawn(203))
 	m.onPlayerSpawn(eventsPlayerSpawn(203))
-	assert.Equal(t, kit, backpackIDs(u), "spawns never grant a second kit")
+	assert.ElementsMatch(t, kit, ownedIDs(u), "spawns never grant a second kit")
 	assert.Equal(t, 1, saves)
 }
 
@@ -152,7 +152,7 @@ func TestGrantKitSaveFailureKeepsGrantInMemory(t *testing.T) {
 	m.saveUser = func(*users.UserRecord) error { return errors.New("disk full") }
 	u := newUser(204)
 	m.choose(u, "ranger", true)
-	assert.Equal(t, kitOf(t, m, "ranger"), backpackIDs(u), "items stay for the next user save")
+	assert.ElementsMatch(t, kitOf(t, m, "ranger"), ownedIDs(u), "items stay for the next user save")
 	assert.Equal(t, "ranger", u.Character.GetMiscData(kitMarkerKey), "and so does the marker")
 	assert.Empty(t, m.grantKit(u))
 }
@@ -181,7 +181,7 @@ func TestResetAndRechooseNoSecondKit(t *testing.T) {
 	text := m.choose(u, "rogue", true)
 	assert.Contains(t, text, "You are now a Rogue.")
 	assert.NotContains(t, text, "starter kit")
-	assert.Equal(t, kitOf(t, m, "warrior"), backpackIDs(u), "the character keeps only its first kit")
+	assert.ElementsMatch(t, kitOf(t, m, "warrior"), ownedIDs(u), "the character keeps only its first kit")
 }
 
 func TestResetSaveFailureRestoresOwedKit(t *testing.T) {
@@ -206,9 +206,9 @@ func TestLostGrantRecoveredOnSpawn(t *testing.T) {
 	users.SetTestUser(fresh)
 	t.Cleanup(func() { users.RemoveTestUser(208) })
 	m.onPlayerSpawn(eventsPlayerSpawn(208))
-	assert.Equal(t, kitOf(t, m, "wizard"), backpackIDs(fresh))
+	assert.ElementsMatch(t, kitOf(t, m, "wizard"), ownedIDs(fresh))
 	m.onPlayerSpawn(eventsPlayerSpawn(208))
-	assert.Equal(t, kitOf(t, m, "wizard"), backpackIDs(fresh), "recovered exactly once")
+	assert.ElementsMatch(t, kitOf(t, m, "wizard"), ownedIDs(fresh), "recovered exactly once")
 }
 
 func TestPermadeathClearsOwedKit(t *testing.T) {
@@ -222,7 +222,7 @@ func TestPermadeathClearsOwedKit(t *testing.T) {
 	// The replacement character (no marker) earns its own kit.
 	next := newUser(209)
 	m.choose(next, "cleric", true)
-	assert.Equal(t, kitOf(t, m, "cleric"), backpackIDs(next))
+	assert.ElementsMatch(t, kitOf(t, m, "cleric"), ownedIDs(next))
 }
 
 func TestClearCharacterWithOnlyOwedKit(t *testing.T) {
@@ -245,7 +245,7 @@ func TestKitMarkerSurvivesUserYAML(t *testing.T) {
 	loaded := users.NewUserRecord(211, 211)
 	require.NoError(t, yaml.Unmarshal(data, loaded))
 	assert.Equal(t, "rogue", loaded.Character.GetMiscData(kitMarkerKey))
-	assert.Equal(t, kitOf(t, m, "rogue"), backpackIDs(loaded))
+	assert.ElementsMatch(t, kitOf(t, m, "rogue"), ownedIDs(loaded))
 	assert.Empty(t, m.grantKit(loaded), "a reloaded character isn't granted again")
 }
 
@@ -287,7 +287,7 @@ func TestCreationChoicesAndChooseAtCreation(t *testing.T) {
 	text, ok := m.ChooseAtCreation(213, "wizard")
 	assert.True(t, ok)
 	assert.Contains(t, text, "Wizard")
-	assert.Equal(t, kitOf(t, m, "wizard"), backpackIDs(u))
+	assert.ElementsMatch(t, kitOf(t, m, "wizard"), ownedIDs(u))
 
 	_, ok = m.ChooseAtCreation(213, "rogue")
 	assert.False(t, ok, "the choice is permanent")

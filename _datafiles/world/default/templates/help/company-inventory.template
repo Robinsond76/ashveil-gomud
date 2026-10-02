@@ -8,12 +8,11 @@ It shows:
 
   - The company's load against its capacity, and how much of that the
     horses carry (<ansi fg="command">help cargo</ansi>).
-  - Each member in turn, you first: the weight of their worn gear, and what they are
-    wearing. All unworn items appear once in shared cargo with exact item
-    references. A partly used item shows its
-    uses left, like <ansi fg="yellow">waterskin (3 of 5)</ansi>.
-  - A fallen companion, whose gear stays with the body until they're
-    raised (<ansi fg="command">help resurrect</ansi>).
+  - Assigned packs: carrier, capacity and availability. Fallen and away
+    carriers contribute no capacity (<ansi fg="command">help pack</ansi>).
+  - All unworn items once in shared cargo with exact item references.
+    A partly used item shows its uses left, like
+    <ansi fg="yellow">waterskin (3 of 5)</ansi>.
   - Your horses and their saddles (<ansi fg="command">help mount</ansi>).
   - The shared cargo and its weight.
 
@@ -21,7 +20,7 @@ For one companion in full, type <ansi fg="command">company gear [member]</ansi>;
 capacity split, <ansi fg="command">cargo</ansi>.
 
 In the web client, Company Inventory shows shared Cargo, treasury, supplies
-and horses. Worn equipment lives in Character Gear; use company gear for
+and containers. Worn equipment lives in Character Gear; use company gear for
 a companion. Clicking a cargo
 item sends these commands for you (<ansi fg="command">help webclient</ansi>).
 
