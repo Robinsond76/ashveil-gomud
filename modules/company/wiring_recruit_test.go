@@ -170,9 +170,11 @@ func TestRecruitThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, 150, user.Character.Gold)
 	record := stored()
 	assert.True(t, record.HasClaimed(61))
+	assert.Equal(t, domain.LeaderMemberKey, record.Formation.At(1, 1))
+	assert.Equal(t, domain.CompanionMemberKey(1), record.Formation.At(0, 1))
 	require.Len(t, record.Companions, 1)
 	require.NotNil(t, record.Companions[0].State)
-	assert.Equal(t, []int{10015, 20004}, stateItemIDs(record.Companions[0].State))
+	assert.Equal(t, []int{38, 10015, 20004}, stateItemIDs(record.Companions[0].State))
 
 	// A paid candidate costs exactly its price, and the user is saved.
 	assert.Contains(t, run("company", "recruit garrick"), "You pay 120 gold. Garrick Vane joins your company (#2).")

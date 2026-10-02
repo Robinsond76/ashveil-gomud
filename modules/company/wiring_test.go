@@ -99,8 +99,9 @@ func TestCompanyAlignmentThroughPluginsLoad(t *testing.T) {
 	assert.Contains(t, run("inspect paladin"), "paladin isn't available to recruit.", "not on the shipped allow list")
 	out = run("summon training dummy")
 	assert.Contains(t, out, "training dummy (alignment -20, misguided) won't join a company of alignment 100, holy.", "gap 120")
-	_, exists := module.registry.Get(7)
-	assert.False(t, exists, "the refused recruit isn't recruited")
+	solo, exists := module.registry.Get(7)
+	assert.True(t, exists, "the leader owns a once-only pack grant record")
+	assert.Empty(t, solo.Companions, "the refused recruit is not enlisted")
 
 	user.Character.Alignment = 40
 	assert.Contains(t, run("inspect training dummy"), "They would join.")

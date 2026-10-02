@@ -512,3 +512,7 @@ Structure first, with provisional numbers; 30g6 tunes them.
 - Each slice: `go test -race ./...`, `make generate`, `make validate`,
   the independent review, and its **Review:** line in
   `docs/PROJECT_STATUS.md`.
+
+Phase 34b update: shared cargo load excludes worn equipment. Assigned packs
+provide cargo capacity and are excluded from personal combat burden. See
+[container logistics](2026-10-01-phase-34-company-ui-logistics-design.md).

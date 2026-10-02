@@ -182,7 +182,7 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 	record := stored()
 	require.True(t, record.Companions[0].Dead(), "saved dead")
 	assert.Equal(t, 10800, record.Companions[0].Death.Remaining)
-	assert.Equal(t, []int{10002}, stateItemIDs(record.Companions[0].State))
+	assert.Equal(t, []int{38, 10002}, stateItemIDs(record.Companions[0].State))
 	assert.Contains(t, run("company", "status"), "fallen, 3h 0m left to raise")
 
 	// Logout, five hours away, login: the dead companion isn't restored and
@@ -237,7 +237,7 @@ func TestCompanionDeathAndResurrectionThroughPluginsLoad(t *testing.T) {
 	require.NotNil(t, raised)
 	assert.Equal(t, 2007, raised.Character.RoomId)
 	assert.Equal(t, 2, raised.Character.Level)
-	assert.Equal(t, []int{10002}, mobItemIDs(raised), "the kept broadsword returns")
+	assert.Equal(t, []int{38, 10002}, mobItemIDs(raised), "the kept broadsword returns")
 	assert.True(t, raised.Character.IsCharmed(7))
 	assert.False(t, stored().Companions[0].Dead(), "saved alive")
 	assert.Contains(t, run("resurrect", "#1"), "is not dead", "raised once")

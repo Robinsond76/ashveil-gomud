@@ -1,0 +1,10 @@
+itemid: 38
+name: cloth knapsack
+namesimple: knapsack
+description: A simple cloth knapsack. Assigned to your Pack slot, it provides
+  10 kg of shared company cargo capacity. It is dropped before combat.
+type: pack
+subtype: wearable
+weight: 400
+value: 10
+carrybonus: 10000

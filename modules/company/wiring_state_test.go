@@ -158,7 +158,7 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 
 	// Summon: the template gear is minted once and recorded in the real store.
 	assert.Contains(t, run("company", "summon training dummy"), "Companion summoned: training dummy (#1).")
-	assert.Equal(t, []int{10002, 30004}, stateItemIDs(stored()))
+	assert.Equal(t, []int{38, 10002, 30004}, stateItemIDs(stored()))
 	assert.Equal(t, 2, stored().Level)
 	assert.Contains(t, run("company", "status"), "level 2")
 
@@ -169,12 +169,12 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	// the user and room files, never on its own.
 	run("give", "dagger dummy")
 	assert.Empty(t, user.Character.Items, "the dagger left the leader")
-	assert.Equal(t, []int{10002, 10004, 30004}, mobItemIDs(live()))
+	assert.Equal(t, []int{38, 10002, 10004, 30004}, mobItemIDs(live()))
 	record, _ := module.registry.Get(7)
-	assert.Equal(t, []int{10002, 10004, 30004}, stateItemIDs(record.Companions[0].State))
-	assert.Equal(t, []int{10002, 30004}, stateItemIDs(stored()), "not written on the gear change")
+	assert.Equal(t, []int{38, 10002, 10004, 30004}, stateItemIDs(record.Companions[0].State))
+	assert.Equal(t, []int{38, 10002, 30004}, stateItemIDs(stored()), "not written on the gear change")
 	plugins.Save()
-	assert.Equal(t, []int{10002, 10004, 30004}, stateItemIDs(stored()))
+	assert.Equal(t, []int{38, 10002, 10004, 30004}, stateItemIDs(stored()))
 	gear := run("company", "gear dummy")
 	assert.Contains(t, gear, "dagger")
 	assert.Contains(t, gear, "broadsword")
@@ -217,7 +217,7 @@ func TestCompanionGearSurvivesLogoutRestartAndDeath(t *testing.T) {
 	assert.Equal(t, turn, util.GetTurnCount(), "never advances the clock")
 	assert.Equal(t, round, util.GetRoundCount())
 	restored := live()
-	assert.Equal(t, []int{10002, 10004, 30004}, mobItemIDs(restored), "exactly the recorded gear")
+	assert.Equal(t, []int{38, 10002, 10004, 30004}, mobItemIDs(restored), "exactly the recorded gear")
 	assert.Equal(t, 17, restored.Character.Equipment.Weapon.SharpStrikes, "the edge survives logout and restart")
 	assert.Equal(t, []wounds.Wound{fracture}, restored.Character.Wounds, "the lasting wound survives logout and restart")
 	assert.Equal(t, restored.Character.HealthMax.Value-3, restored.Character.HealthLimit())

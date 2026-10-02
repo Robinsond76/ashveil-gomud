@@ -61,7 +61,7 @@ func TestPlayerShopRecoversSellerBeforeCreditingTreasury(t *testing.T) {
 	assert.Equal(t, gold+5, b.aria.Character.Gold)
 }
 
-func TestPurchaseRefusesTradeThatLosesSharedPackCapacity(t *testing.T) {
+func TestPurchaseTradesLoosePackWithoutCapacityChange(t *testing.T) {
 	b := equipmentBrawl(t)
 	packSpec := items.ItemSpec{ItemId: 989741, Name: "trade pack", Weight: 500, CarryBonus: 5000}
 	tokenSpec := items.ItemSpec{ItemId: 989742, Name: "trade token", Weight: 500}
@@ -83,11 +83,11 @@ func TestPurchaseRefusesTradeThatLosesSharedPackCapacity(t *testing.T) {
 	b.road.AddMob(merchant.InstanceId)
 	merchant.Character.Shop = characters.Shop{{ItemId: tokenSpec.ItemId, TradeItemId: packSpec.ItemId, Quantity: 10, QuantityMax: 10, Price: 1}}
 	b.aria.Character.Gold = 50
-	assert.Contains(t, b.cmd("buy", "trade token"), "too much")
-	assert.Equal(t, 50, b.aria.Character.Gold)
+	assert.Contains(t, b.cmd("buy", "trade token"), "purchase")
+	assert.Equal(t, 49, b.aria.Character.Gold)
 	assert.Len(t, b.aria.Character.Items, 3)
-	assert.Equal(t, pack.UUID, b.aria.Character.Items[0].UUID)
-	assert.Equal(t, 10, merchant.Character.Shop[0].Quantity)
+	assert.NotEqual(t, pack.UUID, b.aria.Character.Items[0].UUID)
+	assert.Equal(t, 9, merchant.Character.Shop[0].Quantity)
 }
 
 func TestPendingAssetsGuardIncomingGiftsPickupAndAutomaticConsumption(t *testing.T) {

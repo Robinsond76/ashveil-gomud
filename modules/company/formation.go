@@ -115,7 +115,7 @@ func (m *CompanyModule) persistFormation(leaderUserID int, before domain.Record,
 		if existed {
 			m.registry.Put(before)
 		} else {
-			m.registry.Put(domain.Record{LeaderUserID: leaderUserID})
+			m.registry.Remove(leaderUserID)
 		}
 		return err
 	}
@@ -424,4 +424,37 @@ func withGuardWarnings(line string, warnings []string) string {
 		return line
 	}
 	return line + "\n" + strings.Join(warnings, "\n")
+}
+
+// prepareFormation persists placement before the restored company enters play.
+// Failed writes restore the exact previous registry entry so login retries.
+func (m *CompanyModule) prepareFormation(leaderID int) error {
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	before, existed := m.registry.Get(leaderID)
+	record := before
+	record.LeaderUserID = leaderID
+	if !record.BackfillFormation() {
+		return nil
+	}
+	m.registry.Put(record)
+	if err := m.save(); err != nil {
+		if existed {
+			m.registry.Companies[leaderID] = before
+		} else {
+			m.registry.Remove(leaderID)
+		}
+		return err
+	}
+	return nil
+}
+
+func (m *CompanyModule) placementNotice(leaderID, companionID int) string {
+	record, _ := m.registry.Get(leaderID)
+	row, col, ok := record.Formation.Find(domain.CompanionMemberKey(companionID))
+	if !ok {
+		return ""
+	}
+	return fmt.Sprintf(" Placed at row %d, column %d. Rearrange with \"formation move\".", row+1, col+1)
 }

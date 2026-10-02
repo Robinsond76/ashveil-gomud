@@ -3,6 +3,7 @@ package characters
 import "github.com/GoMudEngine/GoMud/internal/items"
 
 type Worn struct {
+	Pack    items.Item `yaml:"pack,omitempty"`
 	Weapon  items.Item `yaml:"weapon,omitempty"`
 	Offhand items.Item `yaml:"offhand,omitempty"`
 	Head    items.Item `yaml:"head,omitempty"`
@@ -20,6 +21,8 @@ type Worn struct {
 // Worn struct field; add new slots here and nowhere else.
 func (w *Worn) Get(slot items.ItemType) *items.Item {
 	switch slot {
+	case items.Pack:
+		return &w.Pack
 	case items.Weapon:
 		return &w.Weapon
 	case items.Offhand:
@@ -47,6 +50,8 @@ func (w *Worn) Get(slot items.ItemType) *items.Item {
 // Set places item into the given slot. Does nothing for an unrecognized slot.
 func (w *Worn) Set(slot items.ItemType, item items.Item) {
 	switch slot {
+	case items.Pack:
+		w.Pack = item
 	case items.Weapon:
 		w.Weapon = item
 	case items.Offhand:
@@ -92,6 +97,8 @@ func ArmorSlots() []items.ItemType {
 // scattered across rendering packages.
 func SlotLabel(slot items.ItemType) string {
 	switch slot {
+	case items.Pack:
+		return "Pack:"
 	case items.Weapon:
 		return "Weapon:"
 	case items.Offhand:
@@ -130,7 +137,9 @@ func GetAllSlotTypes() []string {
 func (w *Worn) StatMod(stat ...string) int {
 	total := 0
 	for _, slot := range AllSlots() {
-		total += w.Get(slot).StatMod(stat...)
+		if slot != items.Pack {
+			total += w.Get(slot).StatMod(stat...)
+		}
 	}
 	return total
 }

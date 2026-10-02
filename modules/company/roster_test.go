@@ -122,7 +122,7 @@ func TestRecruitGeneratedCandidate(t *testing.T) {
 
 	text, err := m.recruit(user, hiringRoom, hire.Key)
 	require.NoError(t, err)
-	assert.Equal(t, "You pay "+strconv.Itoa(hire.Price)+" gold. "+hire.Name+` joins your company (#1). Place them with "formation move".`, text)
+	assert.Equal(t, "You pay "+strconv.Itoa(hire.Price)+" gold. "+hire.Name+` joins your company (#1). Placed at row 1, column 2. Rearrange with "formation move".`, text)
 	assert.Equal(t, 500-hire.Price, user.Character.Gold)
 
 	record, _ := m.registry.Get(7)

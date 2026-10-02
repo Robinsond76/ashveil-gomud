@@ -84,7 +84,10 @@ func InventoryMemberOf(key MemberKey, name string, s MemberState) InventoryMembe
 			m.Grams += itm.Weight()
 		}
 	}
-	if pack, grams := BestPack(s.Items); grams > 0 {
+	pack := s.Equipment.Pack
+	if grams := pack.CarryBonusGrams(); pack.ItemId > 0 && grams > 0 {
+		m.Pack, m.PackBonusGrams = PlainLabel(pack), grams
+	} else if pack, grams := BestPack(s.Items); grams > 0 {
 		m.Pack, m.PackBonusGrams = PlainLabel(pack), grams
 	}
 	return m

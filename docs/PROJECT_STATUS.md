@@ -6,8 +6,9 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 instead of duplicating them.
 
 - **Last updated:** 2026-10-02 (33h2 company readiness and recovery)
-- **Latest completed slices:** 33h2, company readiness and recovery, and
-  33h1, companion growth and contracts (2026-10-02);
+- **Latest completed slices:** 33h2, company readiness and recovery; 34a,
+  UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
+  (2026-10-02);
   33g management (equipment catalog/class still pending),
   33i1, company encounter assessment, and
   33f3, camp specialists (built in parallel); 33f2, expedition specialists; 33f1, skill
@@ -28,6 +29,42 @@ level-up no longer refills a companion, and resurrection wakes it at half.
 ("Final implementation decisions: 33h2", owner-approved) and
 [plan](plans/2026-10-02-phase-33h2-readiness-recovery.md). 33h3
 (relocation and separation) is next.
+
+**34b complete:** each member has one assigned Pack slot; new leaders and recruits
+receive a 10 kg cloth knapsack. Shared cargo capacity now comes from packs on
+living present carriers plus eligible horses, with no base/Strength allowance.
+Only unequipped cargo consumes that capacity; Pack contributes no combat burden,
+stats, defense or worn buffs. Migration preserves exact instances and journals
+once-only grants; capacity loss preserves overloaded cargo and recovery actions.
+Inventory shows assigned container availability and one shared cargo list.
+Help, tutorial pointers and migration release notes updated. Independent review
+resolved four findings (combat modifiers, 10 kg creation kits, armor-removal
+coverage, stale help) and a follow-up weapon-defense regression. Final focused
+checks, browser checks, make generate/validate, JS/Lua lint and go test -race ./...
+passed. Existing creation, death and mount fixtures now exercise the new rules;
+formation integration permits valid upkeep retargeting after clearing a rear foe.
+Integration with 33h1 passed independent review, focused command/module checks,
+browser checks, generate/validate, JS/Lua lint and the full race suite. Owner
+requests a new session between slices; unfinished 34c is preserved locally.
+[Next-session context](plans/2026-10-02-phase-34-session-handoff.md).
+
+**34a complete:** shared browser Inventory shows cargo without member worn or
+personal blocks; panel foreground inheritance and two light-theme secondary
+colors corrected. Solo leaders stay at 2,2; recruitment uses deterministic
+vacancies; old formations receive a durable one-time backfill. Last-member loss
+recenters the leader and failed enlistment/migration restores placement.
+[Phase 34 design](designs/2026-10-01-phase-34-company-ui-logistics-design.md)
+and [plan](plans/2026-10-01-phase-34-company-ui-logistics-plan.md).
+Independent review found one integration-coverage gap; resolved with real
+PlayerSpawn, persisted reload, GMCP/text/combat checks, and repeat-login manual
+clear preservation. Follow-up review found no further issues. Verification:
+focused packages, help/tutorial pointers, all dock browser checks including
+4.5:1 load/label contrast in every shipped theme, make generate, make validate,
+JS/Lua lint, and go test -race ./... passed. Initial race run hit the existing
+random-hit edge test; targeted rerun and final full run passed. Integration against 33h1 (ecd3255e)
+passed independent review, focused checks, browser checks, generate/validate,
+JS/Lua lint and the full race suite. 34c–34d remain.
+
 
 **33h1 growth and contracts complete (2026-10-02):** the owner asked to
 continue with 33h ahead of 33g's catalog/Glaivewarden slices. Companion
@@ -114,10 +151,7 @@ delegated to the lead. 33a–33e are complete.
   and [delivery plan](plans/2026-10-01-phase-34-company-ui-logistics-plan.md)
   split delivery into 34a UI/formation, 34b assigned packs and cargo capacity,
   34c equipment editor, and 34d effects/current capabilities. Design and delivery defaults approved by the owner;
-  planning complete. No gameplay
-  implemented and no gameplay verification claimed. Documentation verification:
-  independent review found no actionable issues; relative links and whitespace
-  checks passed.
+  34a and 34b implemented and verified as recorded above; 34c and 34d remain.
 
 - Owner requested a [weapon poison design](designs/2026-10-01-weapon-poisons-design.md)
   for future implementation on 2026-10-01: shop-bought temporary blade coatings,

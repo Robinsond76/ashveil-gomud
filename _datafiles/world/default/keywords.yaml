@@ -52,6 +52,7 @@ help:
       - weather
       - temperature
       - cargo
+      - pack
       - mount
       - camp
       - inn
@@ -244,7 +245,8 @@ help-aliases:
   survival:         [needs, hunger, thirst, fatigue]
   strain:           [walking]
   temperature:      [warmth, exposure, cold, heat]
-  cargo:            [load, overloaded, capacity, pack, packs, satchel]
+  cargo:            [load, overloaded, capacity]
+  pack:             [packs, satchel, knapsack, backpack, container, containers]
   mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
   camp:             [camping, campfire]

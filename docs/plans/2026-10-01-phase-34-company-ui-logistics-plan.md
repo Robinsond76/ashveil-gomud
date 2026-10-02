@@ -1,6 +1,6 @@
 # Phase 34 — Company UI and Logistics Delivery Plan
 
-Status: owner-approved plan; implementation not started. Follow the
+Status: owner-approved plan; 34a–34b complete and verified; 34c–34d pending. Follow the
 [design](../designs/2026-10-01-phase-34-company-ui-logistics-design.md).
 Owner approved the concrete design and delivery defaults on 2026-10-01. No gameplay checks are claimed by this documentation change.
 
@@ -9,7 +9,9 @@ Owner approved the concrete design and delivery defaults on 2026-10-01. No gamep
 Implement 34a, 34b, 34c, then 34d in separate feature worktrees. Recheck current
 master and nested guidance before each phase. Complete each phase's acceptance
 checks, independent review, help/tutorial work, and required final checks before
-integration. Use current task model settings; implement directly, with an
+integration. The owner now requests a new session after each completed slice:
+commit and push it to master, then hand over before starting the next.
+Use current task model settings; implement directly, with an
 independent reviewer at the required gate. Record real results in Project Status.
 
 ## 34a — Presentation and automatic placement

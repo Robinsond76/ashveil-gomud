@@ -42,6 +42,7 @@
     injectStyles(`
         /* Phase 32g: the Company tab and its sub-tabs */
         #company-window {
+            color: var(--t-text);
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -173,7 +174,7 @@
         #party-panel::-webkit-scrollbar-thumb  { background: var(--t-scrollbar-thumb); border-radius: 2px; }
 
         .party-empty {
-            color: var(--t-text-dim);
+            color: var(--t-text-secondary);
             font-size: 0.78em;
             font-style: italic;
             text-align: center;
@@ -327,7 +328,7 @@
             line-height: 1.25;
         }
 
-        .company-formation td.empty { color: var(--t-text-dim); }
+        .company-formation td.empty { color: var(--t-text-secondary); }
         .company-formation td.is-leader { color: var(--t-party-leader); font-weight: bold; }
 
         .company-members {
@@ -860,8 +861,8 @@
         }
         if (inv.load) {
             const l = inv.load;
-            const pct = l.capacity_g > 0 ? Math.round(l.total_g * 100 / l.capacity_g) : 0;
-            pad.appendChild(el('div', null, 'Load ' + CompanyData.kg(l.total_g) + ' / ' + CompanyData.kg(l.capacity_g) + ' (' + pct + '%)'));
+            const pct = l.capacity_g > 0 ? Math.round(l.total_g * 100 / l.capacity_g) : (l.total_g > 0 ? 100 : 0);
+            pad.appendChild(el('div', null, 'Load ' + CompanyData.kg(l.total_g) + ' / ' + CompanyData.kg(l.capacity_g) + ' (' + pct + '%) — ' + (l.total_g > l.capacity_g ? 'Overloaded' : (l.label || 'Within capacity'))));
             const meter = el('div', 'cmp-meter' + (pct >= 100 ? ' full' : ''));
             meter.setAttribute('role', 'meter');
             meter.setAttribute('aria-label', 'Load ' + pct + ' percent of capacity');
@@ -872,7 +873,7 @@
             fill.style.width = Math.min(pct, 100) + '%';
             meter.appendChild(fill);
             pad.appendChild(meter);
-            pad.appendChild(el('div', 'cmp-line', 'Capacity: members ' + CompanyData.kg(l.member_capacity_g) + ', horses ' + CompanyData.kg(l.mount_capacity_g) + '. Cargo ' + CompanyData.kg(l.cargo_g) + '.'));
+            pad.appendChild(el('div', 'cmp-line', 'Capacity: assigned packs ' + CompanyData.kg(l.member_capacity_g) + ', horses ' + CompanyData.kg(l.mount_capacity_g) + '. Cargo ' + CompanyData.kg(l.cargo_g) + '.'));
         }
         const actions = el('div', 'cmp-actions');
         actions.appendChild(button('Meal', 'company meal', 'Everyone with you eats and drinks (company meal)'));
@@ -885,8 +886,19 @@
         }
         pad.appendChild(actions);
 
+        if (inv.shared) {
+            const containers = el('section', 'cmp-block');
+            containers.setAttribute('aria-label', 'Assigned packs');
+            containers.appendChild(el('h4', null, 'Containers'));
+            (inv.containers || []).forEach(c => {
+                const card = el('div', 'cmp-line', c.name + ' (' + c.carrier + ') — ' + CompanyData.kg(c.capacity_g) + (c.available ? ' available' : ' unavailable'));
+                containers.appendChild(card);
+            });
+            if (!(inv.containers || []).length) { containers.appendChild(el('div', 'cmp-note', 'No assigned packs. Equip a pack from shared cargo (help pack).')); }
+            pad.appendChild(containers);
+        }
         const you = inv.members[0];
-        inv.members.forEach((m, idx) => pad.appendChild(memberBlock(m, idx === 0, inv.shared)));
+        if (!inv.shared) { inv.members.forEach((m, idx) => pad.appendChild(memberBlock(m, idx === 0, false))); }
 
         const horses = el('section', 'cmp-block');
         horses.setAttribute('aria-label', 'Horses');

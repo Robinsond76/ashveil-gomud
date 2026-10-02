@@ -1,6 +1,7 @@
 package characters
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -30,8 +31,11 @@ func (c *Character) PersonalGrams() int {
 			total += c.Items[i].Weight()
 		}
 	}
-	for _, itm := range c.Equipment.GetAllItems() {
-		total += itm.Weight()
+	for _, slot := range AllSlots() {
+		if slot == items.Pack {
+			continue
+		}
+		total += c.Equipment.Get(slot).Weight()
 	}
 	return total
 }

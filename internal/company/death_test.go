@@ -36,7 +36,7 @@ func TestMarkDeadClearsCell(t *testing.T) {
 	assert.ErrorIs(t, registry.MarkDead(7, 1, company.CompanionDeath{}), company.ErrMemberDead, "dies once")
 	assert.ErrorIs(t, registry.MarkDead(7, 9, company.CompanionDeath{}), company.ErrUnknownMember)
 	assert.ErrorIs(t, registry.PlaceMember(7, company.CompanionMemberKey(1), 1, 1), company.ErrMemberDead, "the dead aren't placed")
-	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(2), 1, 1))
+	require.NoError(t, registry.PlaceMember(7, company.CompanionMemberKey(2), 1, 2))
 	assert.ErrorIs(t, registry.SwapMembers(7, company.CompanionMemberKey(1), company.CompanionMemberKey(2)), company.ErrMemberDead)
 }
 

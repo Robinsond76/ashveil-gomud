@@ -96,10 +96,10 @@ func TestMountsAndCargoNeverLightenBurden(t *testing.T) {
 	require.Greater(t, burden, 0.0, "10.5 kg burdens Brannoc (capacity %d g)", agility)
 	require.Less(t, burden, 1.0, "but not fully (capacity %d g)", agility)
 
-	// A satchel adds company capacity and cargo weight, with no personal burden.
+	// A loose satchel adds cargo weight, with no capacity or personal burden.
 	before := companyCapacity()
 	c.StoreItem(items.New(31))
-	assert.Equal(t, before+5000, companyCapacity())
+	assert.Equal(t, before, companyCapacity())
 	assert.Equal(t, agility, c.AgilityCapacityGrams(), "a pack is company cargo room")
 	assert.Equal(t, burden, c.Burden(), "the shared satchel does not burden the leader")
 

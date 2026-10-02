@@ -6,6 +6,7 @@
 //   NODE_PATH=$(npm root -g) node scripts/browser/dock-windows-check.mjs [outdir]
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
@@ -231,18 +232,52 @@ const sharedInventory = JSON.parse(JSON.stringify(inventory));
 sharedInventory.shared = true;
 sharedInventory.treasury = 123;
 sharedInventory.autoloot = false;
+sharedInventory.containers = [
+ { key: 'leader', name: 'cloth knapsack', carrier: 'Dain', ref: '!38:pack', capacity_g: 10000, available: true },
+ { key: 'companion:2', name: '<img src=x onerror=alert(1)> frame pack', carrier: 'Away companion', capacity_g: 15000, available: false }
+];
 sharedInventory.members[1].available = true;
 sharedInventory.cargo = [...sharedInventory.members[0].carried, ...sharedInventory.cargo,
   { ref: '!8:glaive', name: 'steel glaive', grams: 2000, count: 1, type: 'weapon', subtype: 'slashing' }];
 sharedInventory.members[0].carried = [];
 await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
 check((await invText()).includes('Company treasury: 123 gold'), 'shared treasury is visible');
+check((await invText()).includes('cloth knapsack (Dain)') && (await invText()).includes('15.0 kg unavailable'), 'assigned container cards show capacity and unavailable carriers');
+check(await page.locator('#company-inventory img').count() === 0, 'container names render as text');
+check(!/Wearing|Carrying|No pack/.test(await invText()), 'shared inventory contains no personal or worn blocks');
 got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'steel glaive' }).click(); await page.getByText('Compare for Brother Oswin', { exact: true }).click(); });
 check(JSON.stringify(got) === '["company compare #1 !8:glaive"]', 'comparison names the stable member and exact cargo instance');
 got = await sentNow(async () => { await page.locator('#company-inventory button.cmp-item', { hasText: 'steel glaive' }).click(); await page.getByText('Equip Brother Oswin', { exact: true }).click(); });
 check(JSON.stringify(got) === '["company equip #1 !8:glaive"]', 'equipment assignment uses the same backend command');
 got = await sentNow(async () => { await page.locator('#company-inventory').getByRole('button', { name: 'Autoloot on', exact: true }).click(); });
 check(JSON.stringify(got) === '["autoloot on"]', 'autoloot is an explicit opt-in');
+
+// Phase 34a: inherited black text is visible even under a dark theme.
+// Check primary load text and secondary labels in every shipped theme.
+for (const theme of readdirSync(path.join(here, '../../_datafiles/html/public/static/css')).filter(n => /^theme-.*\.css$/.test(n))) {
+    await page.evaluate(theme => new Promise(resolve => {
+        const link = document.getElementById('theme-css');
+        link.onload = resolve;
+        link.href = '../../_datafiles/html/public/static/css/' + theme;
+    }), theme);
+    const ratios = await page.evaluate(() => {
+        function luminance(color) {
+            const v = color.match(/[\d.]+/g).slice(0, 3).map(n => Number(n) / 255).map(n => n <= 0.04045 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4));
+            return v[0] * 0.2126 + v[1] * 0.7152 + v[2] * 0.0722;
+        }
+        function ratio(fg, bg) {
+            const a = luminance(fg), b = luminance(bg);
+            return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+        }
+        // Simulate the actual window parent, which need not inherit body color.
+        document.getElementById('company-window').parentElement.style.color = 'black';
+        const bg = getComputedStyle(document.getElementById('company-window')).backgroundColor;
+        return [...document.querySelectorAll('#company-inventory .cmp-pad > div:not(.cmp-meter):not(.cmp-actions)')].map(e => ratio(getComputedStyle(e).color, bg));
+    });
+    check(ratios.length > 0 && ratios.every(n => n >= 4.5), theme + ': load and capacity text contrast >= 4.5');
+}
+await page.evaluate(() => new Promise(resolve => { const link = document.getElementById('theme-css'); link.onload = resolve; link.href = '../../_datafiles/html/public/static/css/theme-brooding.css'; }));
+
 await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
 
 // Camp: each button only when it would work.

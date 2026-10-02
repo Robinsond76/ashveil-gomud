@@ -28,6 +28,7 @@
     injectStyles(`
         /* ---- shell ---- */
         #gear-window {
+            color: var(--t-text);
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -122,7 +123,7 @@
             text-overflow: ellipsis;
         }
 
-        .gw-equip-name.empty     { color: var(--t-text-dim); font-style: italic; }
+        .gw-equip-name.empty     { color: var(--t-text-secondary); font-style: italic; }
         .gw-equip-row.empty       { cursor: default; }
         .gw-equip-row.empty:hover { background: transparent; }
         .gw-equip-name.cursed { color: var(--t-cursed-text); }
@@ -179,7 +180,7 @@
         }
 
         .gw-bp-empty {
-            color: var(--t-text-dim);
+            color: var(--t-text-secondary);
             font-size: 0.78em;
             font-style: italic;
             text-align: center;

@@ -173,7 +173,7 @@ func TestFormationCommandSaveFailureRollsBackNewRecord(t *testing.T) {
 	store := module.store.(*fakeStore)
 	store.saveErr = errors.New("disk full")
 
-	_, err := module.formationCommand("move leader 1 1", user, nil, 0)
+	_, err := module.formationCommand("move leader 2 2", user, nil, 0)
 	assert.ErrorIs(t, err, store.saveErr)
 	_, ok := module.registry.Get(7)
 	assert.False(t, ok, "a failed first move must not leave a company record")
@@ -240,6 +240,6 @@ func TestDecodeCompaniesKeepsFirstDuplicateFormationOccupant(t *testing.T) {
 
 	record, ok := registry.Get(2)
 	require.True(t, ok)
-	assert.Equal(t, domain.LeaderMemberKey, record.Formation.At(0, 0))
+	assert.Equal(t, domain.MemberKey(""), record.Formation.At(0, 0))
 	assert.Equal(t, domain.MemberKey(""), record.Formation.At(0, 1))
 }

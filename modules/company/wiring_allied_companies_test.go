@@ -68,7 +68,9 @@ func TestAlliedCompaniesSharedBattleAuthorityAndReward(t *testing.T) {
 	p.SetAutoAttack(8, true)
 	// Both companies may place their own first companion in the same grid cell.
 	b.cmd("formation", "move tamsin 1 1")
-	_, err := usercommands.TryCommand("formation", "move tamsin 1 1", 8, events.CmdSkipScripts)
+	_, err := usercommands.TryCommand("formation", "clear me", 8, events.CmdSkipScripts)
+	require.NoError(t, err)
+	_, err = usercommands.TryCommand("formation", "move tamsin 1 1", 8, events.CmdSkipScripts)
 	require.NoError(t, err)
 	before7, _ := module.registry.Get(7)
 	before8, _ := module.registry.Get(8)

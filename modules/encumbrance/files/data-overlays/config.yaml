@@ -1,6 +1,8 @@
 # Phase 9 encumbrance capacity and load-modifier bands.
 #
-# Phase 32f: capacity comes from the members. Each member (the leader and
+# Legacy 32f configuration retained for worlds without shared cargo.
+# Phase 34b shared cargo uses assigned packs and eligible horses only.
+# Former 32f: capacity comes from the members. Each member (the leader and
 # every living companion not charmed away) carries MemberBaseKg, plus
 # StrengthKg per point of Strength, plus their largest pack's carrybonus
 # (item data). The horses add theirs (modules/mount). A full company takes

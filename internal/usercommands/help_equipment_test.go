@@ -31,3 +31,18 @@ func TestEquipmentTreasuryAndLootHelp(t *testing.T) {
 		assert.NotEmpty(t, text)
 	}
 }
+
+func TestPackHelpAndAliases(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	text, err := GetHelpContents("pack")
+	require.NoError(t, err)
+	for _, want := range []string{"10 kg", "no base or Strength", "fallen or away", "remove packs", "never repeats", "company remove"} {
+		assert.Contains(t, text, want)
+	}
+	for _, topic := range []string{"knapsack", "packs", "containers"} {
+		got, err := GetHelpContents(topic)
+		require.NoError(t, err)
+		assert.Equal(t, text, got)
+	}
+}

@@ -87,6 +87,7 @@ func writeTutorialWorld(t *testing.T, dataDir string) {
 		"mobs/dunmar/61-tamsin_reed.yaml",
 		"mobs/dunmar/62-brother_oswin.yaml",
 		"items/armor-20000/head/20043-graduation_cap.yaml",
+		"items/other-0/38-cloth_knapsack.yaml",
 		// Phase 32a: the waterskin's Hydrated buff, to show drink has no
 		// flourish.
 		"buffs/34-hydrated.yaml",
@@ -356,18 +357,12 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	assert.True(t, company.HasClaimed(aria.UserId, 61))
 	assert.True(t, company.HasClaimed(aria.UserId, 62))
 
-	// Phase 28: the recruits' gear is part of the company's load.
-	gear := 0
-	for _, id := range []int{10015, 20004, 10015, 20008} { // Tamsin's and Oswin's
-		spec := items.GetItemSpec(id)
-		require.NotNil(t, spec)
-		require.Positive(t, spec.Weight, "item %d is weighed", id)
-		gear += spec.Weight
-	}
+	// Assigned packs provide capacity; worn recruit gear is not cargo.
 	load, ok := encumbrance.CurrentLoad(aria.UserId)
 	require.True(t, ok)
-	assert.Equal(t, gear, load.CompanionGrams, "the companions' gear, through the real modules")
-	assert.Contains(t, run(aria, "cargo", ""), "companions 5.")
+	assert.Zero(t, load.CompanionGrams)
+	assert.Equal(t, 30000, load.MemberCapacityGrams)
+	assert.Contains(t, run(aria, "cargo", ""), "members 30.0 kg")
 
 	// Formation: one in the front row, one behind.
 	got = run(aria, "east", "")
@@ -412,7 +407,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	run(aria, "east", "")
 	assert.Equal(t, 902, template(aria))
 
-	got = run(aria, "formation", "move #2 2 2")
+	got = run(aria, "formation", "move #2 2 3")
 	assert.Equal(t, StageSurvival, stageOf(aria))
 
 	// Survival (27b): walking into the Weather Yard hands over what the

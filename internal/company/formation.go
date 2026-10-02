@@ -153,3 +153,39 @@ func (f *Formation) empty() bool {
 func validSlot(row, col int) bool {
 	return row >= 0 && row < FormationRows && col >= 0 && col < FormationCols
 }
+
+// ErrSoloFormation explains the fixed placement of a company with no companions.
+var ErrSoloFormation = errors.New("a solo leader stays at row 2, column 2; recruit a companion to rearrange the formation")
+
+// PlaceVacant supplies a default only for an unplaced member.
+func (f *Formation) PlaceVacant(key MemberKey) {
+	if _, _, placed := f.Find(key); placed {
+		return
+	}
+	for _, cell := range [][2]int{{1, 1}, {0, 1}, {0, 0}, {0, 2}, {1, 0}, {1, 2}, {2, 1}, {2, 0}, {2, 2}} {
+		if f.At(cell[0], cell[1]) == "" {
+			_ = f.Place(key, cell[0], cell[1])
+			return
+		}
+	}
+}
+
+// BackfillFormation upgrades old records once, preserving player placements.
+// Multi-member clears made after this version are deliberate and remain clear.
+func (r *Record) BackfillFormation() bool {
+	if r.FormationVersion >= 1 {
+		return false
+	}
+	r.Formation.Prune(validMemberKeys(*r))
+	r.Formation.PlaceVacant(LeaderMemberKey)
+	for _, c := range r.Companions {
+		if !c.Dead() {
+			r.Formation.PlaceVacant(CompanionMemberKey(c.ID))
+		}
+	}
+	if len(r.Companions) == 0 {
+		_ = r.Formation.Place(LeaderMemberKey, 1, 1)
+	}
+	r.FormationVersion = 1
+	return true
+}

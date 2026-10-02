@@ -56,6 +56,7 @@ func writeWiringWorld(t *testing.T, dataDir string) {
 	t.Helper()
 	shipped := shippedWorld()
 	copies := []string{
+		"items/other-0/38-cloth_knapsack.yaml",
 		"races/1-human.yaml",
 		"rooms/dunmar/zone-config.yaml",
 		"rooms/dunmar/2001.yaml",

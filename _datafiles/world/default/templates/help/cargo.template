@@ -5,24 +5,26 @@ Buying, picking up and receiving items puts them there. Items keep their exact
 identity, enchantments, uses, quest marks and sharpened edges. A partly used
 item keeps its uses.
 
-Your company has one weight limit: worn equipment, cargo and your pet's pouch.
-Living members contribute 20 kg each plus half a kilogram per adjusted Strength.
-An absent companion contributes their base share without live Strength.
+Cargo load is the weight of unequipped shared items and your pet's pouch.
+Worn weapons and armor do not consume cargo capacity.
 
-The largest available packs add capacity, one physical pack per living member:
-a satchel adds 5 kg, a traveller's pack 10 kg, and a frame pack 15 kg.
-Extra packs add weight. A pack horse carries 40 kg, or 100 kg with a pack saddle
-(help mount).
-A fallen companion contributes nothing; recruiting and dismissal change capacity.
+Capacity comes only from assigned packs on living, present members and eligible
+horses. Each member has one Pack slot. Cloth knapsacks and traveller's packs
+provide 10 kg, satchels 5 kg, and frame packs 15 kg. Spare packs weigh something
+but add no capacity. Assigned pack tare does not consume usable capacity.
+A pack horse carries 40 kg, or 100 kg with a pack saddle (help mount).
+Fallen or away carriers contribute no pack capacity (help pack).
 
 At full capacity you cannot obtain more weight. Selling, dropping and eating
-free space. Moving gear between worn slots and cargo does not add company weight.
+free space. Returning worn gear to cargo adds cargo weight and must fit. Removing a pack
+is allowed even if it leaves you overloaded; all items remain yours.
 Walking is never blocked, even if you lose a member and become overloaded.
 Past 75% of capacity, route duration rises 10% and walking fatigue 8%; past 90%,
 25% and 15%; at full capacity, 50% and 30%.
 
 In combat, shared cargo does not count against any member's personal burden.
-Only worn equipment weighs on company members' dodge (help burden).
+Worn weapons and armor affect dodge; assigned packs are dropped before
+combat and do not count against burden (help burden).
 No items can be used or assigned during a fight.
 
   cargo
@@ -30,7 +32,7 @@ No items can be used or assigned during a fight.
   company equipment
   Shows exact item references; company equip assigns worn gear.
   company inventory
-  Shows every member's worn gear, horses, cargo and treasury.
+  Shows assigned containers, horses, cargo and treasury.
   company meal
   Feeds the company from shared supplies.
 
@@ -38,5 +40,5 @@ cargo put/take are retained as guidance: there is no separate personal backpack
 to move items into or out of. In Company > Inventory, select cargo items directly
 for comparisons, assignments and use outside battle.
 
-See also: <ansi fg="command">help equipment</ansi>, <ansi fg="command">help company inventory</ansi>,
+See also: <ansi fg="command">help pack</ansi>, <ansi fg="command">help equipment</ansi>, <ansi fg="command">help company inventory</ansi>,
 <ansi fg="command">help treasury</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help mount</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help webclient</ansi>.
