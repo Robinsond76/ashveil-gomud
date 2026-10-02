@@ -1,0 +1,25 @@
+# Ashveil Phase 33i2: a rabble's healer (help coordination). She heals a
+# poacher below 30% of his health, and the gang starts one heal a round.
+mobid: 88
+zone: Frost Lake
+itemdropchance: 3
+lootcategory: humanoid
+hostile: true
+maxwander: 0
+groups:
+  - lake-poachers
+role: healer
+activitylevel: 10
+character:
+  name: poacher bonesetter
+  description: 'A weathered woman with a satchel of splints and dried herbs, her knuckles cracked from setting the gang''s bones in the cold. She keeps to the back, muttering the old words of mending.'
+  raceid: 1
+  pronouns: she
+  level: 4
+  alignment: -20
+  gold: 3
+  spellbook:
+    heal: 250 # some practice: +5 to its chance to cast
+  equipment:
+    body:
+      itemid: 20008

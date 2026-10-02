@@ -6,7 +6,9 @@ part of your health: while you're wounded, healing stops at your
 With 16 health and a 3-point wound, regeneration, potions, and spells heal
 you only to 13, until the wound is treated.
 
-Only you and your companions are wounded. Enemies are not.
+You and your companions take both kinds. Enemies take only light wounds,
+which close when the fight ends, and a few creatures take none
+(<ansi fg="command">help coordination</ansi>).
 
 <ansi fg="yellow-bold">Where wounds come from</ansi>
 

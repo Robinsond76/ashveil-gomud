@@ -15,10 +15,11 @@ during one, is free and instant, and changes nothing.
 
   Assessment: A hard fight for your company; it could go either way.
     Counted: you, Tamsin Reed and Brother Oswin. Not with you: Ysolde (fled).
+    They fight as a band: a healer among them.
     Hurt: Tamsin Reed (badly wounded).
     Can't reach any of them from where they stand: Brother Oswin.
     Out of your company's reach: the bandit slinger.
-    Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.
+    Not judged: spells, healing, guards and abilities, hidden foes, and anyone yet to come.
 
 <ansi fg="yellow-bold">The words</ansi>
 
@@ -47,13 +48,21 @@ are never numbers or percentages: it is a judgment, not a promise.
   everyone's reach can't be hurt yet. Move members with <ansi fg="command">formation</ansi> and
   look again.
 
+<ansi fg="yellow-bold">How they fight together</ansi>
+
+A group of two or more is named for its coordination (a rabble, a band, a
+drilled company, or a veteran company), with the healers, casters, and
+guardians you can see among them (<ansi fg="command">help coordination</ansi>). Once you are
+fighting it, that is the battle's, fixed when it began. It is said in
+words; it doesn't change the risk words above.
+
 <ansi fg="yellow-bold">What it can't judge</ansi>
 
-Spells, healing, and class abilities on either side, foes you can't see,
+Spells, healing, guards, and class abilities on either side, foes you can't see,
 groups waiting their turn, and anyone yet to arrive. In the dark you can't
 make them out at all, so there is no assessment.
 
 In the web client, the Combat tab's Battle view shows the same headline as
 "Outlook" while you fight (<ansi fg="command">help webclient</ansi>).
 
-See also: <ansi fg="command">help scout</ansi>, <ansi fg="command">help consider</ansi>, <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help scout</ansi>, <ansi fg="command">help consider</ansi>, <ansi fg="command">help coordination</ansi>, <ansi fg="command">help combat</ansi>.

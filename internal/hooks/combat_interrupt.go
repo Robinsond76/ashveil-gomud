@@ -157,7 +157,7 @@ func breakChant(by, chanter statusHolder) {
 	room := rooms.LoadRoom(roomId)
 	other := util.CapitalizeFirst(fmt.Sprintf(`%s's chant breaks off under the blow. (%s interrupted)`, chanter.tag(), name))
 
-	if chanter.user == nil && !chanter.woundable() {
+	if chanter.enemy() {
 		// An enemy: it starts again at its next turn.
 		chantRestarts[chanter.mob.InstanceId] = true
 		if room != nil {

@@ -138,7 +138,7 @@ func TestHeadlineAndLines(t *testing.T) {
 		"Can't reach any of them from where they stand: Tamsin.",
 		"Out of your company's reach: the slinger.",
 		"Allies here aren't counted.",
-		"Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.",
+		"Not judged: spells, healing, guards and abilities, hidden foes, and anyone yet to come.",
 	} {
 		assert.Contains(t, text, want)
 	}
@@ -146,4 +146,14 @@ func TestHeadlineAndLines(t *testing.T) {
 	r.Burdened = []string{"you (burdened)"}
 	assert.Contains(t, r.Text(), "Burdened among you: you (burdened).")
 	assert.Equal(t, "Hopeless for your company; the odds look clear.", Report{Result: Result{Risk: Hopeless}}.Headline())
+}
+
+// Phase 33i2: the coordination line, with and without roles, and none for
+// a lone foe.
+func TestCoordinationLine(t *testing.T) {
+	assert.Equal(t, "", Report{}.CoordinationLine())
+	assert.Equal(t, "They fight as a band.", Report{Coordination: "a band"}.CoordinationLine())
+	r := Report{Coordination: "a drilled company", Roles: []string{"two healers", "a guardian"}}
+	assert.Equal(t, "They fight as a drilled company: two healers and a guardian among them.", r.CoordinationLine())
+	assert.Contains(t, r.Text(), "\n  They fight as a drilled company")
 }

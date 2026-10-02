@@ -34,6 +34,13 @@ type Battle struct {
 	// Phase 30c2: guardians' guards by member key; one absent has spent
 	// none (MaxGuards left).
 	Guards map[string]Guard
+
+	// Phase 33i2: the enemy group's coordination tier, fixed when the
+	// battle began (0: none given, read as a rabble), and the guards its
+	// guardians have spent in it, all together.
+	Coordination int
+	EnemyGuards  int
+	EnemyFocus   string // the member key the group's leader last aimed it at
 }
 
 // Has reports whether instanceId is one of the battle's enemies.
@@ -79,6 +86,13 @@ func Begin(userId, roomId int, round uint64, partyID string, enemies []int) Batt
 	b := &Battle{UserId: userId, RoomId: roomId, PartyID: partyID, StartRound: round, Enemies: map[int]bool{}, EnemyNames: map[int]EnemyName{}}
 	for _, id := range enemies {
 		b.Enemies[id] = true
+	}
+	// Phase 33i2: a group already fighting another player has already
+	// spent its guards there.
+	for _, other := range battles {
+		if other.PartyID == partyID && partyID != "" {
+			b.EnemyGuards = max(b.EnemyGuards, other.EnemyGuards)
+		}
 	}
 	battles[userId] = b
 	return b.clone()

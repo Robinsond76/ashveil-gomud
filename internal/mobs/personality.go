@@ -25,3 +25,20 @@ func (m *Mob) Personality() (rule string, noise int, ok bool) {
 	}
 	return rule, min(max(noise, 0), 100), true
 }
+
+// EnemyRole is the mob's role as an enemy (Ashveil Phase 33i2): its
+// template's role, lower case, or "fighter" when it gives none.
+func (m *Mob) EnemyRole() string {
+	r := strings.ToLower(strings.TrimSpace(m.Role))
+	if r == "" {
+		return "fighter"
+	}
+	return r
+}
+
+// TakesWounds reports whether the mob takes wounds as an enemy (Ashveil
+// Phase 33i2): all do, light ones only, unless its template says
+// `wounds: none`.
+func (m *Mob) TakesWounds() bool {
+	return !strings.EqualFold(strings.TrimSpace(m.WoundsRule), "none")
+}

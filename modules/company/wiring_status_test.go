@@ -238,7 +238,8 @@ func TestCritThroughTheRealRoundLeavesItsStatus(t *testing.T) {
 	captain.Character.HealthMax.Value, captain.Character.Health = 1000, 1000
 
 	out := b.fight()
-	assert.Regexp(t, `critical hit, \d+ damage, staggered\)`, out)
+	// Phase 33i2: the crit's light wound is named after its status.
+	assert.Regexp(t, `critical hit, \d+ damage, staggered, wounded\)`, out)
 	assert.True(t, captain.Character.HasBuff(status.Staggered), "the mace's crit staggered it")
 	var seen bool
 	for _, e := range *applied {

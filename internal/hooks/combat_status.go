@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -108,16 +109,24 @@ func statusBuffLands(buffId int, char *characters.Character, user *users.UserRec
 	return h.inFight(fightMembers())
 }
 
+// enemy reports whether the holder is a mob outside every company (an
+// enemy, or a charmed pet): not a player or a company companion.
+func (h statusHolder) enemy() bool {
+	if h.user != nil || h.mob == nil {
+		return false
+	}
+	_, _, companion := company.LeaderAndKeyForInstance(h.mob.InstanceId)
+	return !companion
+}
+
 // woundable reports whether the holder can be wounded (Phase 30b): a
-// player, or a company companion; never an enemy.
+// player, a company companion, or (Phase 33i2) an enemy whose template
+// allows it. A bleed's wound is light for everyone.
 func (h statusHolder) woundable() bool {
 	if h.user != nil {
 		return true
 	}
-	if h.mob == nil {
-		return false
-	}
-	_, _, ok := company.LeaderAndKeyForInstance(h.mob.InstanceId)
+	ok, _ := combat.MobWounds(h.mob)
 	return ok
 }
 

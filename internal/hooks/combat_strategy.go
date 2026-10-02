@@ -46,6 +46,10 @@ const playerDeathHealth = -10
 // spell, to turn back to when the spell ends. Game loop only.
 var castAims = map[caster]int{}
 
+// enemyCastAims holds the player each enemy caster (by instance id) was
+// aimed at before its automatic spell (Phase 33i2). Game loop only.
+var enemyCastAims = map[int]int{}
+
 // actor is one character on a player's side in a battle.
 type actor struct {
 	who   caster
@@ -282,6 +286,9 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 	}
 	if agg := a.char.Aggro; plainAttack(agg) && agg.MobInstanceId > 0 {
 		castAims[a.who] = agg.MobInstanceId
+	} else if plainAttack(agg) && agg.UserId > 0 && a.who.mobId > 0 {
+		// Phase 33i2: an enemy aimed at a player turns back to them.
+		enemyCastAims[a.who.mobId] = agg.UserId
 	}
 	a.char.Mana -= sp.Cost
 	a.char.SetCast(sp.WaitRounds, info)
@@ -344,7 +351,16 @@ func endCast(c *characters.Character, who caster) {
 	c.Aggro = nil
 	foe, ok := castAims[who]
 	delete(castAims, who)
+	player, aimedAtPlayer := enemyCastAims[who.mobId]
+	if who.mobId > 0 {
+		delete(enemyCastAims, who.mobId)
+	}
 	if !ok {
+		if aimedAtPlayer {
+			if u := users.GetByUserId(player); u != nil && u.Character.Health > 0 && u.Character.RoomId == c.RoomId && !u.Character.HasBuffFlag("hidden") {
+				c.SetAggro(player, 0, characters.DefaultAttack)
+			}
+		}
 		return
 	}
 	if m := mobs.GetInstance(foe); m != nil && m.Character.Health > 0 && m.Character.RoomId == c.RoomId && !m.Character.HasBuffFlag("hidden") {
@@ -355,6 +371,11 @@ func endCast(c *characters.Character, who caster) {
 // pruneCastAims forgets remembered aims of characters no longer chanting
 // (gone, or their spell was cut short some other way).
 func pruneCastAims() {
+	for id := range enemyCastAims {
+		if m := mobs.GetInstance(id); m == nil || m.Character.Aggro == nil || m.Character.Aggro.Type != characters.SpellCast {
+			delete(enemyCastAims, id)
+		}
+	}
 	for who := range castAims {
 		var c *characters.Character
 		if who.userId > 0 {

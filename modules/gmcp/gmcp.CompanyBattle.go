@@ -61,6 +61,8 @@ type battleOutlook struct {
 	Risk  string `json:"risk"`
 	Close bool   `json:"close"`
 	Text  string `json:"text"`
+	// Phase 33i2: how the group fights together, as scout says it.
+	Coordination string `json:"coordination,omitempty"`
 }
 
 // guardFact is one guardian's guards left and its set ward (blank: the
@@ -280,7 +282,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 
 	if found {
 		if rep, ok := assessment.Gather(user, room, group); ok {
-			f.Outlook = &battleOutlook{Risk: string(rep.Risk), Close: rep.Close, Text: rep.Headline()}
+			f.Outlook = &battleOutlook{Risk: string(rep.Risk), Close: rep.Close, Text: rep.Headline(), Coordination: rep.CoordinationLine()}
 		}
 	}
 

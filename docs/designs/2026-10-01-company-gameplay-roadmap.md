@@ -35,8 +35,8 @@ not reopen completed Phase 32 work. Every review recommendation maps here.
 | 33e | [Automatic Class Abilities and Combat Roles](2026-10-01-phase-33e-automatic-class-abilities-design.md) | Complete (2026-10-01) |
 | 33f | [Company Specialists and Expedition Skills](2026-10-01-phase-33f-company-specialists-design.md) | Complete (2026-10-01): 33f1 skill and charm retirement, 33f2 expedition specialists, 33f3 camp specialists |
 | 33g | [Company Equipment and Loot](2026-10-01-phase-33g-company-equipment-loot-design.md) | Management complete; reviewed and verified. Owner removed presets; catalog/class slices remain. |
-| 33h | [Company Progression, Rewards, and Expedition Continuity](2026-10-01-phase-33h-progression-recovery-continuity-design.md) | Future design; implementation not started |
-| 33i | [Company Encounter Assessment and Enemy Roles](2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) | 33i1 group assessment complete (2026-10-01); 33i2 coordinated enemies not started |
+| 33h | [Company Progression, Rewards, and Expedition Continuity](2026-10-01-phase-33h-progression-recovery-continuity-design.md) | Complete: 33h1 growth/rewards, 33h2 readiness/recovery, 33h3 relocation/separation (2026-10-02) |
+| 33i | [Company Encounter Assessment and Enemy Roles](2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) | 33i1 group assessment complete (2026-10-01); 33i2 coordinated enemies: decisions settled 2026-10-02, not started |
 
 33h has three delivery slices: growth/rewards, readiness/recovery, and
 relocation/separation. 33i has two: group assessment (33i1, shipped) and

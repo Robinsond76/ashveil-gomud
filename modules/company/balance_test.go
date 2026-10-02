@@ -54,6 +54,10 @@ const (
 const (
 	enemySpread  = "spread"
 	enemyDefault = "default"
+	// Phase 33i2: the default personality, with the hedge priest a
+	// healer (Minor Heal) and the hired blade a guardian, at a tier
+	// (enemyRoles + the tier's number: "roles1" to "roles4").
+	enemyRoles = "roles"
 )
 
 // balanceMirror is the enemy side: the company's kits on five humans.
@@ -227,10 +231,21 @@ func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string) *ba
 		b.road.AddMob(mob.InstanceId)
 		f.enemies = append(f.enemies, mob.InstanceId)
 		levelTo(&mob.Character, level)
-		switch enemyMode {
-		case enemySpread:
+		switch {
+		case enemyMode == enemySpread:
 			mob.Targeting, mob.TargetingNoise = string(strategy.Nearest), 100
-		case enemyDefault:
+		case enemyMode == enemyDefault:
+		case strings.HasPrefix(enemyMode, enemyRoles):
+			tier, err := strconv.Atoi(strings.TrimPrefix(enemyMode, enemyRoles))
+			require.NoError(t, err, enemyMode)
+			mob.Coordination = tier
+			switch m.id {
+			case 9201:
+				mob.Role = "guardian"
+			case 9202:
+				mob.Role = "healer"
+				mob.Character.SpellBook["heal"] = 250
+			}
 		default:
 			t.Fatalf("enemy mode %q", enemyMode)
 		}
@@ -436,6 +451,76 @@ func TestBalance5v5(t *testing.T) {
 		}
 	}
 	t.Logf("\n%s\n%s", balanceHeader, strings.Join(rows, "\n"))
+}
+
+// TestBalanceHarnessRunsACoordinatedFight (Phase 33i2): a level-5 fight
+// against a band with a healer and a guardian runs through the real round
+// in the ordinary suite.
+func TestBalanceHarnessRunsACoordinatedFight(t *testing.T) {
+	f := newBalanceFight(t, 5, companyDefault, enemyRoles+"2")
+	res := f.run()
+	assert.Positive(t, res.Rounds)
+	assert.Positive(t, res.Tally.Turns[sideEnemy], "the band fought")
+	assert.True(t, res.Won || res.Fallen[sideCompany] == 5 || res.Stalled)
+}
+
+// TestBalanceCoordinated (Phase 33i2) measures coordinated groups against
+// the original no-focus baseline (default company, default enemy): at each
+// level, a group with a healer and a guardian at tiers 1 to 3 may lengthen
+// the median battle by at most a quarter, and must not flip a clear
+// winner (one winning 60% or more keeps winning at least half the time).
+// ASHVEIL_BALANCE=1 runs it; ASHVEIL_BALANCE_FIGHTS sets the fights per
+// cell (default 50).
+func TestBalanceCoordinated(t *testing.T) {
+	if os.Getenv("ASHVEIL_BALANCE") != "1" {
+		t.Skip("set ASHVEIL_BALANCE=1 to run the balance table")
+	}
+	fights := 50
+	if v, err := strconv.Atoi(os.Getenv("ASHVEIL_BALANCE_FIGHTS")); err == nil && v > 0 {
+		fights = v
+	}
+	var rows []string
+	for _, level := range []int{1, 5, 10} {
+		cell := func(em string) []balanceResult {
+			var results []balanceResult
+			for i := 0; i < fights; i++ {
+				t.Run(fmt.Sprintf("L%d-%s-%d", level, em, i), func(t *testing.T) {
+					results = append(results, newBalanceFight(t, level, companyDefault, em).run())
+				})
+			}
+			rows = append(rows, balanceRow(level, companyDefault, em, results))
+			return results
+		}
+		base := cell(enemyDefault)
+		baseMedian, baseWins := balanceMedianAndWins(base)
+		for tier := 1; tier <= 3; tier++ {
+			median, wins := balanceMedianAndWins(cell(fmt.Sprintf("%s%d", enemyRoles, tier)))
+			assert.LessOrEqual(t, median*4, baseMedian*5, "L%d tier %d: median %d against %d", level, tier, median, baseMedian)
+			if baseWins >= 60 {
+				assert.GreaterOrEqual(t, wins, 50, "L%d tier %d: the company kept winning", level, tier)
+			}
+			if baseWins <= 40 {
+				assert.LessOrEqual(t, wins, 50, "L%d tier %d: the enemy kept winning", level, tier)
+			}
+		}
+	}
+	t.Logf("\n%s\n%s", balanceHeader, strings.Join(rows, "\n"))
+}
+
+// balanceMedianAndWins is a cell's median rounds and company win percent.
+func balanceMedianAndWins(results []balanceResult) (median, winPct int) {
+	var rounds []int
+	wins := 0
+	for _, r := range results {
+		rounds = append(rounds, r.Rounds)
+		if r.Won {
+			wins++
+		}
+	}
+	if len(results) == 0 {
+		return 0, 0
+	}
+	return percentile(rounds, 50), 100 * wins / len(results)
 }
 
 const balanceHeader = "| level | company | enemy | fights | company wins | rounds p10/median/p90 | stalls | fallen company/enemy | damage company/enemy | healing company | turns per fighter-round company/enemy | hit% company/enemy | crit% company/enemy | blocks/parries/dodges company · enemy | bashes company/enemy | tick damage company/enemy |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
