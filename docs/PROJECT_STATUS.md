@@ -32,6 +32,9 @@ coverage, and follow-up review found no further issues. Additional regressions
 cover permanent buffs retained by the other hand and legacy-feed availability.
 Real command, save/recovery, private GMCP/reconnect, help and browser checks passed;
 make generate/validate, JS/Lua lint and go test -race ./... passed.
+Integration with 33h2 (63f79b32) passed independent review, browser checks,
+generate/validate, JS/Lua lint and the full race suite; companion readiness
+snapshots and recovery remain intact.
 34d remains unstarted. [Next-session context](plans/2026-10-02-phase-34-session-handoff.md).
 
 **33h2 readiness and recovery complete (2026-10-02):** companions keep
