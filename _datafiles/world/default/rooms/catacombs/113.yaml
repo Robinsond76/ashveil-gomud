@@ -15,6 +15,12 @@ exits:
   west:
     roomid: 112
 spawninfo:
+- mobid: 92
+  message: A bone warden steps out of an alcove, its shield raised.
+  respawnrate: 6 real minutes
+- mobid: 93
+  message: A grave chanter drifts in, droning names.
+  respawnrate: 6 real minutes
 - mobid: 18
   message: A dark acolyte steps into the room.
   respawnrate: 6 real minutes

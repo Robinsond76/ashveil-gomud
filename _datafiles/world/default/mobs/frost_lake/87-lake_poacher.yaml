@@ -1,0 +1,25 @@
+# Ashveil Phase 33i2: a rabble (help coordination). Lake poachers fight
+# together, but loosely: each keeps its own aim and a third of their turns
+# go astray. Their bonesetter heals only the badly hurt, one at a time.
+mobid: 87
+zone: Frost Lake
+itemdropchance: 3
+lootcategory: humanoid
+hostile: true
+maxwander: 0
+groups:
+  - lake-poachers
+groupnoun: gang
+activitylevel: 10
+character:
+  name: lake poacher
+  description: 'A gaunt poacher in a fur-trimmed coat, a gutting knife on his belt and a net slung over one shoulder. He watches the shore for anyone who might report the traps strung under the ice.'
+  raceid: 1
+  level: 4
+  alignment: -30
+  gold: 3
+  equipment:
+    weapon:
+      itemid: 10015
+    body:
+      itemid: 20008

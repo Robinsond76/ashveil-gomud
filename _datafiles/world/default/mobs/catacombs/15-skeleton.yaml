@@ -7,6 +7,8 @@ groups:
   - catacomb-denizen
 idlecommands:
   - 'wander'
+# Ashveil Phase 33i2: takes no wounds (help coordination).
+wounds: none
 activitylevel: 10
 character:
   name: skeleton
