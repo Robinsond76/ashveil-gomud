@@ -1,8 +1,8 @@
 # Phase 30f verification
 
 Implementation branch: `phase-30f-battlefield`, based on master `f79995a5`.
-The owner approved the design defaults on 2026-10-02. The phase is unmerged;
-independent review by **Opus 5.5** is pending.
+The owner approved the design defaults on 2026-10-02. [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12)
+is **awaiting review by Opus 5.5**, unmerged. Implementation commit: `1dbd0114`.
 
 ## Delivered behavior
 
