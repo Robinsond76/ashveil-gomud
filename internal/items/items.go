@@ -302,7 +302,13 @@ func (i *Item) IsBetterThan(otherItm Item) bool {
 
 func (i *Item) GetSpec() ItemSpec {
 	if i.Spec != nil {
-		return *i.Spec
+		spec := *i.Spec
+		// Old enchanted pack instances retain their identity and custom fields,
+		// while their shipped container type follows the current base data.
+		if base := GetItemSpec(i.ItemId); base != nil && base.Type == Pack {
+			spec.Type, spec.Subtype = Pack, Wearable
+		}
+		return spec
 	}
 	iSpec := GetItemSpec(i.ItemId)
 	if iSpec == nil {

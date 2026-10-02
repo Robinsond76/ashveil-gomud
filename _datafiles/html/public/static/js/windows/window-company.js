@@ -861,7 +861,7 @@
         }
         if (inv.load) {
             const l = inv.load;
-            const pct = l.capacity_g > 0 ? Math.round(l.total_g * 100 / l.capacity_g) : 0;
+            const pct = l.capacity_g > 0 ? Math.round(l.total_g * 100 / l.capacity_g) : (l.total_g > 0 ? 100 : 0);
             pad.appendChild(el('div', null, 'Load ' + CompanyData.kg(l.total_g) + ' / ' + CompanyData.kg(l.capacity_g) + ' (' + pct + '%) — ' + (l.total_g > l.capacity_g ? 'Overloaded' : (l.label || 'Within capacity'))));
             const meter = el('div', 'cmp-meter' + (pct >= 100 ? ' full' : ''));
             meter.setAttribute('role', 'meter');
@@ -873,7 +873,7 @@
             fill.style.width = Math.min(pct, 100) + '%';
             meter.appendChild(fill);
             pad.appendChild(meter);
-            pad.appendChild(el('div', 'cmp-line', 'Capacity: members ' + CompanyData.kg(l.member_capacity_g) + ', horses ' + CompanyData.kg(l.mount_capacity_g) + '. Cargo ' + CompanyData.kg(l.cargo_g) + '.'));
+            pad.appendChild(el('div', 'cmp-line', 'Capacity: assigned packs ' + CompanyData.kg(l.member_capacity_g) + ', horses ' + CompanyData.kg(l.mount_capacity_g) + '. Cargo ' + CompanyData.kg(l.cargo_g) + '.'));
         }
         const actions = el('div', 'cmp-actions');
         actions.appendChild(button('Meal', 'company meal', 'Everyone with you eats and drinks (company meal)'));
@@ -886,6 +886,17 @@
         }
         pad.appendChild(actions);
 
+        if (inv.shared) {
+            const containers = el('section', 'cmp-block');
+            containers.setAttribute('aria-label', 'Assigned packs');
+            containers.appendChild(el('h4', null, 'Containers'));
+            (inv.containers || []).forEach(c => {
+                const card = el('div', 'cmp-line', c.name + ' (' + c.carrier + ') — ' + CompanyData.kg(c.capacity_g) + (c.available ? ' available' : ' unavailable'));
+                containers.appendChild(card);
+            });
+            if (!(inv.containers || []).length) { containers.appendChild(el('div', 'cmp-note', 'No assigned packs. Equip a pack from shared cargo (help pack).')); }
+            pad.appendChild(containers);
+        }
         const you = inv.members[0];
         if (!inv.shared) { inv.members.forEach((m, idx) => pad.appendChild(memberBlock(m, idx === 0, false))); }
 

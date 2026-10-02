@@ -35,6 +35,7 @@ var (
 )
 
 type Companion struct {
+	PackGranted bool `yaml:"pack_granted,omitempty"`
 	// PendingReturn marks temporary morale flight; gear remains in State.
 	PendingReturn bool `yaml:"pending_return,omitempty"`
 	MoraleDesert  bool `yaml:"morale_desert,omitempty"`
@@ -84,8 +85,9 @@ type AssetOperation struct {
 }
 
 type Record struct {
-	FormationVersion int             `yaml:"formation_version,omitempty"`
-	AssetOperation   *AssetOperation `yaml:"asset_operation,omitempty"`
+	LeaderPackGranted bool            `yaml:"leader_pack_granted,omitempty"`
+	FormationVersion  int             `yaml:"formation_version,omitempty"`
+	AssetOperation    *AssetOperation `yaml:"asset_operation,omitempty"`
 
 	MercyPending    []MercyEffect `yaml:"mercy_pending,omitempty"`
 	LeaderUserID    int           `yaml:"leader_user_id"`

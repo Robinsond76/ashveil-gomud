@@ -1,0 +1,32 @@
+<ansi fg="magenta">Help for </ansi><ansi fg="command">pack</ansi>
+
+Each character has one Pack equipment slot. Your cloth knapsack provides 10 kg
+of shared cargo space. Recruits bring a starter knapsack too. Assigned packs on
+living, present carriers add capacity; fallen or away carriers add none.
+Horses add their eligible capacity. There is no base or Strength cargo allowance.
+
+  company equip [member] [exact-item-reference]
+  Assign a pack from shared cargo.
+  company remove [member] pack
+  Return that exact pack to shared cargo.
+  company compare [member] [exact-item-reference]
+  Preview cargo and capacity changes.
+  company inventory
+  See container availability and the single shared item list.
+
+Satchels provide 5 kg, traveller's packs 10 kg, and frame packs 15 kg.
+Spare packs provide no capacity and count as cargo weight. Assigned pack tare
+does not consume its usable capacity. Packs and their contents are dropped for
+combat; they add no combat burden.
+
+Losing capacity never deletes cargo. An overloaded company can walk, sell,
+drop or consume cargo, remove packs, or assign a larger pack to recover.
+Ordinary additions and gear changes that worsen an excess are refused.
+At full load, travel takes 50% longer and walking fatigue increases 30%.
+
+Older saves assign existing suitable packs once, then grant a starter to each
+member lacking one. All exact items are kept; excess cargo remains overloaded.
+A spent starter grant never repeats on login, removal or resurrection.
+
+See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help equipment</ansi>,
+<ansi fg="command">help burden</ansi>, <ansi fg="command">help mount</ansi>.

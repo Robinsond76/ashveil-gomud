@@ -73,10 +73,18 @@ func (m *CompanyModule) PrepareAssets(id int) error {
 		rec.Companions[i].State = &st
 		changed = true
 	}
+	worn := u.Character.Equipment
+	if id := m.starterPackID(); id > 0 {
+		packChanged, err := m.migratePacks(&rec, &cargo, &worn, id)
+		if err != nil {
+			return err
+		}
+		changed = changed || packChanged
+	}
 	if !changed {
 		return nil
 	}
-	return m.commitAssets(u, before, rec, cargo, u.Character.Equipment, gold)
+	return m.commitAssets(u, before, rec, cargo, worn, gold)
 }
 
 // commitAssets writes the company gear and resulting leader assets together.
@@ -299,6 +307,11 @@ func (m *CompanyModule) equipmentCommand(u *users.UserRecord, args []string) str
 		}
 	}
 	proposed.Validate(true)
+	loadBefore, loadAfter, hasLoad := equipmentLoad(u.UserId, actor, proposed, u.Character.Items, cargo)
+	lossAllowed := args[0] == "remove" && itm.GetSpec().Type == items.Pack
+	if args[0] != "compare" && hasLoad && !lossAllowed && max(0, loadAfter.TotalGrams()-loadAfter.CapacityGrams) > max(0, loadBefore.TotalGrams()-loadBefore.CapacityGrams) {
+		return "That change would exceed company cargo capacity. Drop or sell cargo, or assign a larger pack first."
+	}
 	if args[0] == "compare" {
 		w := itm.GetSpec()
 		shield := func(c *characters.Character) bool {
@@ -309,10 +322,9 @@ func (m *CompanyModule) equipmentCommand(u *users.UserRecord, args []string) str
 			role = st
 		}
 		lines := []string{fmt.Sprintf("%s: %s; role %s.", actor.Name, itemName(itm), role), fmt.Sprintf("Weapon: %s, %d hands, reach %t; price %d gold.", w.Damage.DiceRoll, proposed.HandsRequired(itm), w.Reach, w.Value), fmt.Sprintf("Protection: %d -> %d. Shield: %t -> %t.", actor.GetDefense(), proposed.GetDefense(), shield(actor), shield(proposed)), fmt.Sprintf("Worn load: %.1f -> %.1f kg; burden: %s -> %s.", float64(actor.PersonalGrams())/1000, float64(proposed.PersonalGrams())/1000, actor.BurdenWord(), proposed.BurdenWord())}
-		if load, ok := encumbrance.CurrentLoad(u.UserId); ok {
-			afterCapacity := load.CapacityGrams + encumbrance.EquipmentCapacityDelta(actor.Stats.Strength.ValueAdj, proposed.Stats.Strength.ValueAdj)
-			lines = append(lines, fmt.Sprintf("Company capacity: %.1f -> %.1f kg; total company weight stays %.1f kg.", float64(load.CapacityGrams)/1000, float64(afterCapacity)/1000, float64(load.TotalGrams())/1000))
-			if load.TotalGrams() > afterCapacity {
+		if hasLoad {
+			lines = append(lines, fmt.Sprintf("Company capacity: %.1f -> %.1f kg; cargo: %.1f -> %.1f kg.", float64(loadBefore.CapacityGrams)/1000, float64(loadAfter.CapacityGrams)/1000, float64(loadBefore.TotalGrams())/1000, float64(loadAfter.TotalGrams())/1000))
+			if loadAfter.TotalGrams() > loadAfter.CapacityGrams {
 				lines = append(lines, "This would leave the company over capacity; walking remains possible.")
 			}
 		}

@@ -123,6 +123,8 @@ func TestFriendlyEligibilityConsentAndWoundCaps(t *testing.T) {
 	other.Character.RoomId = b.road.RoomId
 	other.Character.Health = 10
 	users.SetTestUser(other)
+	require.NoError(b.t, module.PrepareAssets(8))
+	other.Character.ManaMax.Value, other.Character.Mana = 100, 100
 	b.road.AddPlayer(8)
 	t.Cleanup(func() { b.road.RemovePlayer(8) })
 	temporary := mobs.NewMobById(9101, b.road.RoomId)
@@ -357,6 +359,9 @@ func (b *brawl) bystander() *users.UserRecord {
 	other.Character.ManaMax.Value = 100
 	other.Character.Mana = 100
 	users.SetTestUser(other)
+	require.NoError(b.t, module.PrepareAssets(8))
+	events.ProcessEvents()
+	other.Character.ManaMax.Value, other.Character.Mana = 100, 100
 	b.road.AddPlayer(8)
 	b.t.Cleanup(func() { b.road.RemovePlayer(8) })
 	return other

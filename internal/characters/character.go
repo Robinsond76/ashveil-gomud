@@ -616,6 +616,9 @@ func (c *Character) GetDefense() int {
 
 	reduction := 0
 	for _, slot := range AllSlots() {
+		if slot == items.Pack {
+			continue
+		}
 		reduction += c.Equipment.Get(slot).GetDefense()
 	}
 
@@ -2173,6 +2176,15 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 		}
 		returnItems = append(returnItems, c.Equipment.Offhand)
 		c.Equipment.Offhand = i
+	case items.Pack:
+		if c.Equipment.Pack.IsDisabled() {
+			return returnItems, false, "You cannot assign a pack."
+		}
+		if c.Equipment.Pack.IsRemoveLocked() && c.Health > 0 {
+			return returnItems, false, "Your pack is bound and cannot be removed."
+		}
+		returnItems = append(returnItems, c.Equipment.Pack)
+		c.Equipment.Pack = i
 	case items.Head:
 		if c.Equipment.Head.IsDisabled() { // Don't allow equipping on a disabled slot
 			return returnItems, false, `You can't wear things on your head.`
@@ -2309,7 +2321,11 @@ func (c *Character) reapplyPermabuffs(removedItems ...items.Item) {
 	}
 
 	// Make a list of all item buffs provided by existing worn items
-	for _, itm := range c.GetAllWornItems() {
+	for _, slot := range AllSlots() {
+		if slot == items.Pack {
+			continue
+		}
+		itm := c.Equipment.Get(slot)
 		spec := itm.GetSpec()
 		for _, buffId := range spec.WornBuffIds {
 			buffIdCount[buffId] = buffIdCount[buffId] + 1
@@ -2319,6 +2335,9 @@ func (c *Character) reapplyPermabuffs(removedItems ...items.Item) {
 	// Remove any buffs that come specifically from item
 	for _, removedItem := range removedItems {
 		iSpec := removedItem.GetSpec()
+		if iSpec.Type == items.Pack {
+			continue
+		}
 		if len(iSpec.WornBuffIds) > 0 {
 			for _, buffId := range iSpec.WornBuffIds {
 				buffIdCount[buffId] = buffIdCount[buffId] - 1

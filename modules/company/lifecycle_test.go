@@ -160,6 +160,7 @@ func TestCompanyNormalLogoutLoginRestoresNativeFollowing(t *testing.T) {
 // using it is silently ignored.
 func useDataDir(t *testing.T, dir string) {
 	t.Helper()
+	copyShipped(t, dir, "items/other-0/38-cloth_knapsack.yaml")
 	previous := configs.GetFilePathsConfig().DataFiles.String()
 	set := func(value string) error {
 		flat := map[string]any{}

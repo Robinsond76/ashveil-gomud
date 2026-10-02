@@ -75,9 +75,10 @@ type Store interface {
 }
 
 type wireRecord struct {
-	FormationVersion int                    `yaml:"formation_version,omitempty"`
-	AssetOperation   *domain.AssetOperation `yaml:"asset_operation,omitempty"`
-	MercyPending     []domain.MercyEffect   `yaml:"mercy_pending,omitempty"`
+	LeaderPackGranted bool                   `yaml:"leader_pack_granted,omitempty"`
+	FormationVersion  int                    `yaml:"formation_version,omitempty"`
+	AssetOperation    *domain.AssetOperation `yaml:"asset_operation,omitempty"`
+	MercyPending      []domain.MercyEffect   `yaml:"mercy_pending,omitempty"`
 	// LeaderUserID is decoded for shape compatibility; the companies map key is authoritative.
 	LeaderUserID    int                    `yaml:"leader_user_id"`
 	Companions      []domain.Companion     `yaml:"companions"`
@@ -106,7 +107,7 @@ func decodeCompanies(data []byte, registry *domain.Registry) error {
 	loaded := domain.NewRegistry()
 	loaded.DriftIn = wire.DriftIn
 	for leaderID, wr := range wire.Companies {
-		record := domain.Record{FormationVersion: wr.FormationVersion, AssetOperation: wr.AssetOperation, LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
+		record := domain.Record{LeaderPackGranted: wr.LeaderPackGranted, FormationVersion: wr.FormationVersion, AssetOperation: wr.AssetOperation, LeaderUserID: leaderID, Companions: wr.Companions, Formation: wr.Formation, NextCompanionID: wr.NextCompanionID, Claimed: wr.Claimed, Service: wr.Service, Lost: wr.Lost, Rosters: wr.Rosters, MercyPending: wr.MercyPending, AppliedOps: wr.AppliedOps}
 		if len(record.Companions) == 0 && wr.Companion != nil {
 			legacy := *wr.Companion
 			if legacy.ID == 0 {
@@ -140,14 +141,15 @@ func (s pluginStore) Save(registry domain.Registry) error {
 }
 
 type CompanyModule struct {
-	plug      *plugins.Plugin
-	store     Store
-	registry  domain.Registry
-	instances map[int]map[int]int
-	runtime   Runtime
-	loadErr   error
-	world     alignmentWorld // nil means the native world
-	chem      chemistryWorld // nil means the native world
+	starterPackForTest int
+	plug               *plugins.Plugin
+	store              Store
+	registry           domain.Registry
+	instances          map[int]map[int]int
+	runtime            Runtime
+	loadErr            error
+	world              alignmentWorld // nil means the native world
+	chem               chemistryWorld // nil means the native world
 	// chemRules caches the parsed chemistry knobs; chemConfigWarned is set
 	// while they are out of order and have been warned about.
 	chemRules        *domain.ChemistryRules
@@ -485,6 +487,19 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 	// Phase 22b: the template gear minted by this spawn becomes the
 	// companion's durable gear in the summon's own save.
 	if state, ok := m.runtime.Snapshot(instanceID); ok {
+		if id := m.starterPackID(); id > 0 {
+			if err := m.giveRecruitPack(&state, id); err != nil {
+				m.runtime.Detach(leaderUserID, instanceID)
+				return domain.Companion{}, errors.Join(err, survival.RemoveCompanyMember(leaderUserID, companion.ID), m.rollbackSummon(leaderUserID, companion.ID, before))
+			}
+			rec, _ := m.registry.Get(leaderUserID)
+			for i := range rec.Companions {
+				if rec.Companions[i].ID == companion.ID {
+					rec.Companions[i].PackGranted = true
+				}
+			}
+			m.registry.Put(rec)
+		}
 		_ = m.registry.SetState(leaderUserID, companion.ID, state)
 	}
 	if err := m.save(); err != nil {
@@ -494,6 +509,13 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 		return domain.Companion{}, errors.Join(err, removeErr, persistErr)
 	}
 	m.setInstance(leaderUserID, companion.ID, instanceID)
+	if rec, ok := m.registry.Get(leaderUserID); ok {
+		for _, c := range rec.Companions {
+			if c.ID == companion.ID {
+				m.installLiveGear(leaderUserID, domain.Record{Companions: []domain.Companion{c}})
+			}
+		}
+	}
 	m.applyInstanceAlignment(leaderUserID, companion.ID, instanceID)
 	return companion, nil
 }
