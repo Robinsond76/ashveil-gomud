@@ -1,11 +1,16 @@
 package usercommands
 
 import (
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // TestReadinessHelp: Phase 33h2's page renders, answers to its aliases,
@@ -53,4 +58,39 @@ func TestReadinessHelp(t *testing.T) {
 		}
 	}
 	assert.Contains(t, category, "readiness")
+}
+
+// Review finding (33h2): "recover" is the brawling skill's topic; a second
+// topic claiming the alias made `help recover` depend on map order.
+func TestHelpRecoverStaysBrawling(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	for i := 0; i < 5; i++ {
+		keywords.LoadAliases()
+		text, err := GetHelpContents("recover")
+		require.NoError(t, err)
+		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "Help for brawling")
+	}
+}
+
+// Every help alias names one topic: the alias table is built from a map,
+// so an alias under two topics resolves at random.
+func TestHelpAliasesAreUnique(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "..", "..", "_datafiles", "world", "default", "keywords.yaml"))
+	require.NoError(t, err)
+	var parsed struct {
+		HelpAliases map[string][]string `yaml:"help-aliases"`
+	}
+	require.NoError(t, yaml.Unmarshal(data, &parsed))
+	owner := map[string]string{}
+	for topic, aliases := range parsed.HelpAliases {
+		for _, alias := range aliases {
+			alias = strings.ToLower(alias)
+			if prior, ok := owner[alias]; ok && prior != topic {
+				t.Errorf("help alias %q names both %q and %q", alias, prior, topic)
+			}
+			owner[alias] = topic
+		}
+	}
 }

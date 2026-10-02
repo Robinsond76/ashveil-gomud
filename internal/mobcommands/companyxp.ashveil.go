@@ -31,7 +31,8 @@ func AwardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 		mob.Character.GrantXP(amount)
 		paid++
 		// Phase 33h2: a companion's level-up keeps its health and mana
-		// (GoMud's level-up refills them), so a level is no free rest.
+		// (GoMud's level-up refills them), so a level is no free rest. It
+		// never lowers them either: a level never lowers the maximum.
 		health, mana := mob.Character.Health, mob.Character.Mana
 		levelled := false
 		for {
@@ -49,7 +50,7 @@ func AwardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 			if !company.RetrainCompanion(instanceID) {
 				mob.Character.AutoTrain()
 			}
-			mob.Character.Health = min(health, mob.Character.HealthLimit())
+			mob.Character.Health = min(health, mob.Character.HealthMax.Value)
 			mob.Character.Mana = min(mana, mob.Character.ManaMax.Value)
 		}
 	}

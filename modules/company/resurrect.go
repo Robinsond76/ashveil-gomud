@@ -14,8 +14,9 @@ import (
 var _ domain.ResurrectionProvider = (*CompanyModule)(nil)
 
 // resurrectVitalsPct is the share of its health limit and mana a
-// resurrected companion wakes with (Phase 33h2), matching modules/death's
-// church waking for players.
+// resurrected companion wakes with (Phase 33h2). It is deliberately fixed:
+// it matches modules/death's shipped RespawnVitalsPct for players, but a
+// change to that knob doesn't reach companions.
 const resurrectVitalsPct = 50
 
 // DeadCompanions implements company.ResurrectionProvider.

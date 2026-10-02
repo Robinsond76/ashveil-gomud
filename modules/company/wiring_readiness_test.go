@@ -312,3 +312,47 @@ func TestResurrectedCompanionWakesAtHalf(t *testing.T) {
 	mob = w.login()
 	assert.Equal(t, max(1, mob.Character.HealthLimit()/2), mob.Character.Health, "still half, never full")
 }
+
+// Review finding (33h2): a level never lowers a companion's health, even
+// one standing above a fresh wound's limit.
+func TestCompanionLevelUpAboveWoundLimitKeepsHealth(t *testing.T) {
+	w := newReadinessWorld(t)
+	health := w.live().Character.HealthMax.Value - 1
+	mob := w.hurt(health, 1)
+	// A wound deep enough to hold the limit at its floor (a quarter of the
+	// maximum) even after the level raises the maximum.
+	mob.Character.Wounds = []wounds.Wound{{Kind: wounds.Fracture, Place: "arm", Points: 100000}}
+	level := mob.Character.Level
+	mobcommands.AwardCompanyXP(7, w.user.Character, mob.Character.XPTL(level+1), w.camp.RoomId)
+	require.Greater(t, mob.Character.Level, level)
+	require.Less(t, mob.Character.HealthLimit(), health, "standing above its wound limit")
+	assert.Equal(t, health, mob.Character.Health, "a level never lowers health")
+}
+
+// Review coverage (33h2): a companion that fled at low health is saved by
+// BeginFlight and comes back by ReturnFlight as hurt as it ran.
+func TestFledCompanionReturnsAsHurt(t *testing.T) {
+	w := newReadinessWorld(t)
+	w.hurt(6, 2)
+	require.NoError(t, module.BeginFlight(7, 1))
+	_, tracked := module.instance(7, 1)
+	require.False(t, tracked, "fled")
+	w.restart() // the flight's save is what a restart finds
+	require.NoError(t, module.ReturnFlight(7))
+	mob := w.live()
+	assert.Equal(t, 6, mob.Character.Health, "no refill on the return")
+	assert.Equal(t, 2, mob.Character.Mana)
+	record, _ := module.registry.Get(7)
+	assert.Zero(t, record.Companions[0].ReturnHP, "the return debt is settled")
+}
+
+// Review coverage (33h2): a snapshot taken on the brink (health 0, not
+// yet dead) comes back at 1 through the real save seam, never full.
+func TestCompanionSnapshotAtZeroReturnsAtOne(t *testing.T) {
+	w := newReadinessWorld(t)
+	w.live().Character.Health = 0
+	plugins.Save()
+	w.restart()
+	mob := w.login()
+	assert.Equal(t, 1, mob.Character.Health)
+}
