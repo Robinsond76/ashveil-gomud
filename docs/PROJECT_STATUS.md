@@ -39,7 +39,8 @@ Integration with 33h3 (`f4e28dda`) preserved relocation/separation and adds
 explicit recorded separated wounds. Independent integration review found no
 blockers; real passage/reload/rejoin GMCP regression, all browser suites,
 generate/validate, JS/Lua lint and the full race suite passed on the integrated
-code. Phase 34 is complete; stop here and hand over for the owner's next session.
+code. The design, delivery plan and handoff now mark all four slices complete.
+Phase 34 is complete; stop here and hand over for the owner's next session.
 
 **33h3 relocation and separation complete (2026-10-02):** every move that
 isn't an exit (scripted passages, traps, ropes, portals, an inn room, jail,
