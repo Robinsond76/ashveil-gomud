@@ -6,6 +6,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -106,6 +107,16 @@ func statusBuffLands(buffId int, char *characters.Character, user *users.UserRec
 		h.ref = mobRef(mob)
 	}
 	return h.inFight(fightMembers())
+}
+
+// enemy reports whether the holder is a mob outside every company (an
+// enemy, or a charmed pet): not a player or a company companion.
+func (h statusHolder) enemy() bool {
+	if h.user != nil || h.mob == nil {
+		return false
+	}
+	_, _, companion := company.LeaderAndKeyForInstance(h.mob.InstanceId)
+	return !companion
 }
 
 // woundable reports whether the holder can be wounded (Phase 30b): a

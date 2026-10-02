@@ -258,7 +258,6 @@ func TestEnemyChantBreaksAndRestarts(t *testing.T) {
 		out = b.fight()
 	}
 	broken := interruptsOf(*stream, key(captain))
-	t.Logf("DEBUG captain hp=%d/%d wounds=%+v aggro=%+v buffs=%v", captain.Character.Health, captain.Character.HealthMax.Value, captain.Character.Wounds, captain.Character.Aggro, captain.Character.GetBuffs())
 	require.NotEmpty(t, broken, "a company blow broke the captain's chant:\n%s", out)
 	assert.Equal(t, "Magic Missile", broken[0].Status)
 	assert.Contains(t, out, "The bandit captain's chant breaks off under the blow. (Magic Missile interrupted)")
