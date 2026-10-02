@@ -555,11 +555,16 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	var r uint64
 	// Attack messages vary ("You hit", "Your fists connect", ...). A line
 	// of Aria's own naming a foe, and not a miss, is a blow that landed; any
-	// line of hers naming the archer means it was struck at.
+	// line of hers naming the archer means it was struck at. A dodge ("You
+	// sway aside, and the straw archer's blow ...") names the foe as the
+	// attacker, so lines with the foe's possessive are not hers.
 	ownLine := regexp.MustCompile(`(?m)^Your? [^\n]*`)
+	hers := func(line, foe string) bool {
+		return strings.Contains(line, foe) && !strings.Contains(line, foe+"'s")
+	}
 	landed := func(seen, foe string) bool {
 		for _, line := range ownLine.FindAllString(seen, -1) {
-			if strings.Contains(line, foe) && !strings.Contains(strings.ToLower(line), "miss") {
+			if hers(line, foe) && !strings.Contains(strings.ToLower(line), "miss") {
 				return true
 			}
 		}
@@ -567,7 +572,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 	}
 	aimedAt := func(seen, foe string) bool {
 		for _, line := range ownLine.FindAllString(seen, -1) {
-			if strings.Contains(line, foe) {
+			if hers(line, foe) {
 				return true
 			}
 		}
