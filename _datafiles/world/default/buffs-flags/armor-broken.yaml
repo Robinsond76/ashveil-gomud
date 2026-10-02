@@ -2,3 +2,4 @@ flag: armor-broken
 name: "Armor Broken"
 description: "Halves the holder's armor defense."
 locked: true
+harmful: true

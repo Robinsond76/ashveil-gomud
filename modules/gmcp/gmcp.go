@@ -293,6 +293,22 @@ func (g *GMCPModule) HandleWebGMCP(connectionId uint64, webGMCP []byte) bool {
 			return true
 		}
 
+		if identifier == `Company.Equipment` {
+			// Phase 34 review: the Gear editor says when it is shown.
+			for _, user := range users.GetAllActiveUsers() {
+				if user.ConnectionId() == connectionId {
+					words := strings.Fields(extraData)
+					watch := GMCPGearWatch{UserId: user.UserId, Open: len(words) == 0 || words[0] != `closed`}
+					if watch.Open && len(words) > 1 {
+						watch.Slot = words[1]
+					}
+					events.AddToQueue(watch)
+					break
+				}
+			}
+			return true
+		}
+
 		if identifier == `Company` {
 			// Phase 26b: the Ashveil company panel asks for a full snapshot.
 			for _, user := range users.GetAllActiveUsers() {

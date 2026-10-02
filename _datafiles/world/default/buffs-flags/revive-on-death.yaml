@@ -2,3 +2,4 @@ flag: revive-on-death
 name: "Revive On Death"
 description: "Prevents the character from dying once, consuming the buff instead."
 locked: true
+helpful: true

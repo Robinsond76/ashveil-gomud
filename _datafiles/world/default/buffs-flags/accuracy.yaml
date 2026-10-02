@@ -2,3 +2,4 @@ flag: accuracy
 name: "Accuracy"
 description: "Increases the character's chance to hit and land critical strikes in combat."
 locked: true
+helpful: true

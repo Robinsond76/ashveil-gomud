@@ -2,3 +2,4 @@ flag: exposed
 name: "Exposed"
 description: "Attacks against the holder are more likely to critically hit."
 locked: true
+harmful: true

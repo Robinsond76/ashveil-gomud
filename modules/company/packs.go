@@ -85,6 +85,12 @@ func (m *CompanyModule) migratePacks(rec *domain.Record, cargo *[]items.Item, wo
 // comparison so the read model and mutation guard cannot disagree.
 func equipmentLoad(id int, actor, proposed *characters.Character, before, after []items.Item) (encumbrance.Load, encumbrance.Load, bool) {
 	load, ok := encumbrance.CurrentLoad(id)
+	return equipmentLoadFrom(load, ok, actor, proposed, before, after)
+}
+
+// equipmentLoadFrom is equipmentLoad from a load already read, so a view
+// previewing many changes reads the company's load once.
+func equipmentLoadFrom(load encumbrance.Load, ok bool, actor, proposed *characters.Character, before, after []items.Item) (encumbrance.Load, encumbrance.Load, bool) {
 	next := load
 	for _, itm := range before {
 		next.CargoGrams -= itm.Weight()

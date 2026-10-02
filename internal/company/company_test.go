@@ -368,3 +368,17 @@ func TestClaimsYAMLRoundTrip(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []int{61}, record.Claimed)
 }
+
+// A solo leader is always placed (Phase 34a), so Put keeps every record and
+// only Remove drops one; durable markers on a solo record must survive.
+func TestRegistryPutKeepsSoloRecordWithItsMarkers(t *testing.T) {
+	registry := company.NewRegistry()
+	registry.Put(company.Record{LeaderUserID: 9, LeaderPackGranted: true})
+	record, ok := registry.Get(9)
+	require.True(t, ok)
+	assert.True(t, record.LeaderPackGranted)
+	assert.Equal(t, company.LeaderMemberKey, record.Formation.At(1, 1))
+	assert.True(t, registry.Remove(9))
+	_, ok = registry.Get(9)
+	assert.False(t, ok)
+}

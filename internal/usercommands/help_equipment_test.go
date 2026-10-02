@@ -37,7 +37,7 @@ func TestPackHelpAndAliases(t *testing.T) {
 	keywords.LoadAliases()
 	text, err := GetHelpContents("pack")
 	require.NoError(t, err)
-	for _, want := range []string{"10 kg", "no base or Strength", "fallen or away", "remove packs", "never repeats", "company remove"} {
+	for _, want := range []string{"10 kg", "no base or Strength", "fallen or away", "remove packs", "never repeats", "company remove", "one shared cargo list"} {
 		assert.Contains(t, text, want)
 	}
 	for _, topic := range []string{"knapsack", "packs", "containers"} {

@@ -2,3 +2,4 @@ flag: lightsource
 name: "Emits Light"
 description: "Causes the character to emit light, illuminating dark rooms."
 locked: true
+helpful: true
