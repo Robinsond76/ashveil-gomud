@@ -127,6 +127,8 @@ func keptState(c domain.Companion, evt events.MobDeath) domain.MemberState {
 	state.Gold = evt.KeptGold
 	// Phase 30b: death clears wounds; resurrection raises it whole.
 	state.Wounds = nil
+	// Phase 33h2: resurrection sets its vitals.
+	state.Vitals = nil
 	return state.Clone()
 }
 

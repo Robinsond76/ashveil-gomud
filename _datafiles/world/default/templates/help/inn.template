@@ -34,8 +34,9 @@ the world clock, and weather never spoils it.
   downgrade it back. A companion who wasn't with you when the stay
   finished still gets its share of Well Rested once it rejoins, for
   whatever time is left. A finished stay also knits every wound of you
-  and the companions with you (<ansi fg="command">help wounds</ansi>). Outside a fight, the
-  Waymark Inn's physician offers to close whatever wounds <ansi fg="command">heal wounds</ansi>
+  and the companions with you (<ansi fg="command">help wounds</ansi>), then restores you
+  all to full health and mana (<ansi fg="command">help readiness</ansi>). Outside a fight,
+  the Waymark Inn's physician offers to close whatever wounds <ansi fg="command">heal wounds</ansi>
   leaves, for gold.
 
 Only one room is bought per stay, for your whole company; there's

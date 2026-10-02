@@ -5,8 +5,10 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (34c equipment editor)
-- **Latest completed slices:** 34c, equipment editor; 34a, UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts (2026-10-02);
+- **Last updated:** 2026-10-02 (34c equipment editor; integrated 33h2)
+- **Latest completed slices:** 34c, equipment editor; 33h2, company readiness and recovery; 34a,
+  UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
+  (2026-10-02);
   33g management (equipment catalog/class still pending),
   33i1, company encounter assessment, and
   33f3, camp specialists (built in parallel); 33f2, expedition specialists; 33f1, skill
@@ -31,6 +33,16 @@ cover permanent buffs retained by the other hand and legacy-feed availability.
 Real command, save/recovery, private GMCP/reconnect, help and browser checks passed;
 make generate/validate, JS/Lua lint and go test -race ./... passed.
 34d remains unstarted. [Next-session context](plans/2026-10-02-phase-34-session-handoff.md).
+
+**33h2 readiness and recovery complete (2026-10-02):** companions keep
+their health and mana across logout, restart, copyover, and crash (as of
+the last save) instead of refilling; they recover online out of battle as
+players do, never offline; an inn stay restores the company, a live
+level-up no longer refills a companion, and resurrection wakes it at half.
+`help readiness`. See the [33h design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md)
+("Final implementation decisions: 33h2", owner-approved) and
+[plan](plans/2026-10-02-phase-33h2-readiness-recovery.md). 33h3
+(relocation and separation) is next.
 
 **34b complete:** each member has one assigned Pack slot; new leaders and recruits
 receive a 10 kg cloth knapsack. Shared cargo capacity now comes from packs on
@@ -290,11 +302,54 @@ delegated to the lead. 33a–33e are complete.
 | 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
 | 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 complete ([plan](plans/2026-10-01-phase-33f3-camp-specialists.md)): camp raids and Camp Watch, Field Smith, Vigil, Forage, `camp cook` |
 | 33g | Company Equipment and Loot | Management/cargo/treasury complete; reviewed and verified. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); presets removed by owner. Catalog/Glaivewarden remain separate slices. |
-| 33h | Company Progression, Rewards, and Expedition Continuity | [Design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md) in three slices. 33h1 complete ([plan](plans/2026-10-02-phase-33h1-growth-rewards.md)): derived archetype growth, `company growth` focus, contract quests; `help growth`, `help contracts`. 33h2 (readiness/recovery) and 33h3 (relocation) not started |
+| 33h | Company Progression, Rewards, and Expedition Continuity | [Design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md) in three slices. 33h1 complete ([plan](plans/2026-10-02-phase-33h1-growth-rewards.md)): derived archetype growth, `company growth` focus, contract quests; `help growth`, `help contracts`. 33h2 complete ([plan](plans/2026-10-02-phase-33h2-readiness-recovery.md)): durable companion vitals, online-only recovery, inn restore, half-vitals resurrection; `help readiness`. 33h3 (relocation) not started |
 | 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles) not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### Phase 33h2: company readiness and recovery (2026-10-02)
+
+- **Why:** logout, restart, copyover, a crash, a level-up, and resurrection
+  all refilled a companion for free, and companions never regained health
+  on their own. The lead explained the plan and defaults in plain language
+  first, as the owner asked; the owner approved them unchanged.
+- **Delivered:** `MemberState.Vitals` on the 22b snapshot seams, resolved
+  at every spawn by `Vitals.Resolve` (points clamped to the wound limit and
+  mana maximum, never below 1; nil, an old record, spawns full once;
+  `Percent` for resurrection's half). Online health regeneration for
+  companions beside 32d's mana (`internal/hooks`), counted by exposure; a
+  live level-up keeps a companion's vitals; an inn's Well Rested grant
+  restores the leader and live companions. New `help readiness`; company,
+  health, inn, camp, resurrect, wounds, heal, and quit pages updated; rest
+  lesson and Departure hints.
+- **Independent full-diff review:** no blockers and no remaining free
+  refill path. Accepted and fixed: the `recover` alias collided with the
+  brawling topic, so `help recover` resolved at random (removed; regression
+  test plus a guard that no help alias names two topics); a level-up
+  lowered health above a fresh wound's limit (now never lowers; regression
+  test); help wording on when a lowered limit applies, the crash window
+  (up to about a quarter of an hour), the inn sentence's placement, and an
+  over-long line; the resurrection share's comment now says it is fixed
+  apart from death's `RespawnVitalsPct`; coverage added for a morale-flight
+  return and a snapshot taken at 0 health. Accepted as known risks, not
+  changed: an inn restore reaches disk only at the next save seam, so a
+  crash in between loses it (the same window as gear, wounds, and the
+  leader's own file); and a Well Rested grant handled before a returning
+  leader's companions respawn would miss their restore (plausible, not
+  reproduced; the same ordering the 30b wound knitting already has).
+  Not added: separate tests for the in-battle regen skip (shared with 32d's
+  tested mana path) and the stale-mob replacement branch (unchanged 22b
+  code; it now carries vitals through the same `Snapshot` call the logout
+  and save tests exercise).
+- **Verification (after review fixes):** `make generate` (no diff),
+  `make validate`, and `go test -race ./...` (95 packages) passed with no
+  failures. No JavaScript or Lua changed, so those lints were not
+  applicable.
+- **Integration:** owner approved merge and push. `origin/master` had moved
+  to 34a/34b (`eb21ae3`); merged it into the branch (status log conflict
+  only), then `make generate` (no diff), `make validate`, and
+  `go test -race ./...` (95 packages) passed again before merging.
 
 ### Phase 33h1: companion growth and contracts (2026-10-02)
 

@@ -61,7 +61,9 @@ weight, stats, defense or worn buffs. Exact-instance migration uses durable
 asset journals and once-only markers. Capacity loss preserves cargo and
 recovery; ordinary changes cannot worsen excess. Inventory shows assigned
 pack availability and one cargo list. Integration preserves 33h1 growth,
-retraining and contract rewards.
+retraining and contract rewards, and 33h2 saved companion health/mana and
+online recovery. Readiness vitals must ride existing snapshot seams; equipment
+changes must not refill or independently save companion readiness.
 
 34c: `Company.Equipment` is an owned-leader read-only authoritative proposal
 catalogue. Character Gear uses exact-instance commands and explicit slots,

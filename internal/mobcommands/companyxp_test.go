@@ -82,7 +82,8 @@ func TestAwardCompanyXPPaysPresentLivingCompanions(t *testing.T) {
 }
 
 // TestAwardCompanyXPLevelsUp: a big award can cross several thresholds; the
-// leader gets a line per level and the companion is refilled.
+// leader gets a line per level, and the companion keeps its health and mana
+// (Phase 33h2: a level is no free rest).
 func TestAwardCompanyXPLevelsUp(t *testing.T) {
 	mudlog.SetupLogger(nil, "low", "", false)
 	const room = 7002
@@ -92,6 +93,7 @@ func TestAwardCompanyXPLevelsUp(t *testing.T) {
 	company.SetFormationProvider(xpProvider{attached: map[int]bool{880011: true}})
 	t.Cleanup(func() { company.SetFormationProvider(nil) })
 
+	health, mana := m.Character.Health, m.Character.Mana
 	_, lines := AwardCompanyXP(xpLeader, leader, m.Character.XPTL(3), room)
 
 	if m.Character.Level < 3 {
@@ -103,8 +105,12 @@ func TestAwardCompanyXPLevelsUp(t *testing.T) {
 	if m.Character.StatPoints != 0 {
 		t.Errorf("level points left unspent: %d", m.Character.StatPoints)
 	}
-	if m.Character.Health != m.Character.HealthMax.Value {
-		t.Errorf("not refilled: %d/%d", m.Character.Health, m.Character.HealthMax.Value)
+	if m.Character.Health != health || m.Character.Mana != mana {
+		t.Errorf("vitals changed by the level: %d/%d health, %d/%d mana, want %d and %d",
+			m.Character.Health, m.Character.HealthMax.Value, m.Character.Mana, m.Character.ManaMax.Value, health, mana)
+	}
+	if m.Character.Health >= m.Character.HealthMax.Value {
+		t.Fatalf("fixture: the companion must start below its new maximum (%d/%d)", m.Character.Health, m.Character.HealthMax.Value)
 	}
 	if !strings.Contains(lines[len(lines)-1], "reached level") {
 		t.Errorf("line = %q", lines[len(lines)-1])

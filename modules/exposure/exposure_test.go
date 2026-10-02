@@ -599,3 +599,14 @@ func TestExposureOfThroughClimateSeam(t *testing.T) {
 	_, ok = climate.ExposureOf(7, string(survival.LeaderMemberKey))
 	assert.False(t, ok, "unreadable data: unknown")
 }
+
+// Phase 33h2: companions regenerate out of combat as players do, so lethal
+// exposure must outpace a companion's regeneration too.
+func TestRegenPerTickCountsCompanions(t *testing.T) {
+	m := &ExposureModule{settings: DefaultSettings()}
+	c := characters.New()
+	leader := m.regenPerTick(member{Key: survival.LeaderMemberKey, Character: c})
+	companion := m.regenPerTick(member{Key: "companion:1", Character: c})
+	assert.Positive(t, leader)
+	assert.Equal(t, leader, companion)
+}

@@ -36,6 +36,7 @@ help:
       - company
       - growth
       - contracts
+      - readiness
       - equipment
       - gearup
       - loot
@@ -222,6 +223,7 @@ help-aliases:
   company:          [recruit, recruiting, roster, companions, companion]
   growth:           [company growth, company-growth, specialize, specialization, companion growth, focus stat]
   contracts:        [contract, company contracts, company-contracts]
+  readiness:        [recovery, vitals, regeneration, regen, companion health, companion-health, company readiness]
   company-inventory: [company inventory, company inv, company-inv]
   friendly-effects: [friendly-scopes, company-healing, support-scopes]
   party: [alliance, allied-companies, party-follow, party-support]
