@@ -102,6 +102,13 @@ func (m *CompanyModule) forgetEquipmentView(id int) {
 // stats and effects), company load and availability are unchanged, and is
 // shared with the cache: callers must not mutate it.
 func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
+	return m.EquipmentViewFor(id, "")
+}
+
+// EquipmentViewFor builds previews only for the focus slot, or for every
+// slot when focus is "": a rebuild costs a copy of the character per
+// preview, and the editor shows one slot's choices at a time.
+func (m *CompanyModule) EquipmentViewFor(id int, focus string) domain.EquipmentView {
 	out := domain.EquipmentView{Slots: []domain.EquipmentSlot{}}
 	u := users.GetByUserId(id)
 	if u == nil || u.Character == nil {
@@ -133,25 +140,31 @@ func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 	}
 	// The view covers the leader only, so the actor is the leader and its
 	// items are the shared cargo, which every proposal takes from u instead.
-	// The character is marshalled once without them: that copy is the source
-	// of every preview's clone, and with the cargo it keys the cache.
+	// The cache is keyed on the character without them or its round ticks,
+	// plus the cargo; a rebuild marshals it once more, in full, as the source
+	// of every preview's clone.
 	bare := *actor
 	bare.Items = nil
-	raw, err := yaml.Marshal(&bare)
 	keyed := previewKey(&bare)
 	keyRaw, keyErr := yaml.Marshal(&keyed)
 	cargoRaw, cargoErr := yaml.Marshal(u.Character.Items)
-	if err != nil || keyErr != nil || cargoErr != nil {
+	if keyErr != nil || cargoErr != nil {
 		out.Available, out.Reason = false, "Equipment preview unavailable."
 		return out
 	}
-	key := sha256.Sum256(append(append(keyRaw, cargoRaw...), fmt.Sprintf("|%+v|%t|%t|%s|%t|%v", load, known, out.Available, out.Reason, bare.Pet.Exists() && !bare.Pet.IsMissing(), bare.Pet.GetBuffs())...))
+	key := sha256.Sum256(append(append(keyRaw, cargoRaw...), fmt.Sprintf("|%+v|%t|%t|%s|%t|%v|%s", load, known, out.Available, out.Reason, bare.Pet.Exists() && !bare.Pet.IsMissing(), bare.Pet.GetBuffs(), focus)...))
 	round := util.GetRoundCount()
 	m.equipmentViews.mu.Lock()
 	cached, hit := m.equipmentViews.byUser[id]
 	m.equipmentViews.mu.Unlock()
 	if hit && cached.key == key && round-cached.round < equipmentViewRefreshRounds {
 		return cached.view
+	}
+	// Only a rebuild needs the full character, as every preview's source.
+	raw, err := yaml.Marshal(&bare)
+	if err != nil {
+		out.Available, out.Reason = false, "Equipment preview unavailable."
+		return out
 	}
 	clone := func() (*characters.Character, error) { return characterFrom(raw) }
 	preview := func(verb, slot string, itm items.Item) domain.EquipmentChoice {
@@ -166,7 +179,7 @@ func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 			choice.Reason = err.Error()
 			return choice
 		}
-		before, after, ok := equipmentLoad(id, actor, proposed, u.Character.Items, cargo)
+		before, after, ok := equipmentLoadFrom(load, known, actor, proposed, u.Character.Items, cargo)
 		for _, old := range displaced {
 			if old.ItemId > 0 {
 				choice.Returned = append(choice.Returned, domain.PlainLabel(old))
@@ -190,10 +203,18 @@ func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 	}
 	for _, slot := range characters.AllSlots() {
 		entry := domain.EquipmentSlot{Slot: string(slot), Label: strings.TrimSuffix(characters.SlotLabel(slot), ":"), Choices: []domain.EquipmentChoice{}}
+		entry.Pending = focus != "" && focus != string(slot)
 		if itm := actor.Equipment.Get(slot); itm != nil && itm.ItemId > 0 {
 			equipped := domain.EquipmentChoice{Ref: itm.ShorthandId(), Label: domain.PlainLabel(*itm)}
-			removal := preview("remove", string(slot), *itm)
-			entry.Equipped, entry.Remove = &equipped, &removal
+			entry.Equipped = &equipped
+			if !entry.Pending {
+				removal := preview("remove", string(slot), *itm)
+				entry.Remove = &removal
+			}
+		}
+		if entry.Pending {
+			out.Slots = append(out.Slots, entry)
+			continue
 		}
 		for _, itm := range u.Character.Items {
 			spec := itm.GetSpec()

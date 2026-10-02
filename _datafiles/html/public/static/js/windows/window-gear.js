@@ -752,12 +752,17 @@
             button.type = 'button';
             button.dataset.gearFocus = 'slot:' + slot.slot;
             button.setAttribute('aria-pressed', String(slot.slot === editorSlot));
-            button.addEventListener('click', () => { editorSlot = slot.slot; editorChoice = ''; updateEditor(view); });
+            button.addEventListener('click', () => { editorSlot = slot.slot; editorChoice = ''; announceGear(); updateEditor(view); });
         });
         const slot = list.find(s => s.slot === editorSlot);
         if (!slot) { return; }
         editorNode('h4', slot.label, panel);
         editorNode('p', slot.equipped ? 'Equipped: ' + slot.equipped.label : 'This slot is empty.', panel);
+        if (slot.pending) {
+            // The server previews only the selected slot; it is on its way.
+            editorNode('p', 'Loading choices…', panel).setAttribute('role', 'status');
+            return;
+        }
         const candidates = (slot.choices || []).map(c => ({ key: c.ref, choice: c }));
         if (slot.remove) { candidates.unshift({ key: 'remove:' + slot.slot + ':' + slot.remove.ref, choice: slot.remove }); }
         let selected = candidates.find(c => c.key === editorChoice);
@@ -852,9 +857,29 @@
         },
     });
 
+    // The server builds the Gear editor's previews only while this view is
+    // shown (Phase 34 review): say "open" or "closed" when that changes. A
+    // Company snapshot follows a login or reconnect, when the server has
+    // forgotten, so it is said again then.
+    let gearSaid = null;
+    function announceGear() {
+        const el = document.getElementById('gear-window');
+        const shown = !!el && el.getClientRects().length > 0 && document.visibilityState === 'visible';
+        // The open message names the selected slot: only its choices are
+        // previewed, so a newly selected slot is announced too.
+        const say = shown ? 'open ' + editorSlot : 'closed';
+        if (say === gearSaid) { return; }
+        gearSaid = say;
+        Client.GMCPRequest('Company.Equipment', say);
+    }
+    setInterval(announceGear, 1000);
+    document.addEventListener('visibilitychange', announceGear);
+    document.addEventListener('click', () => setTimeout(announceGear, 0));
+
     VirtualWindows.register({
         gmcpHandlers: ['Char', 'Company'],
         onGMCP(namespace) {
+            if (namespace === 'Company') { gearSaid = null; announceGear(); }
             if (namespace === 'Company.Equipment' || namespace === 'Company') { update(); return; }
             if (namespace === 'Company.Inventory') {
                 updateWeights();

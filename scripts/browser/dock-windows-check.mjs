@@ -578,6 +578,35 @@ await page.evaluate(b => { const x=JSON.parse(JSON.stringify(b)); x.surrendered=
 check((await cbt()).includes('Surrendered: the yielded goblin'), 'surrendered foes are labelled off the grid');
 check(await page.getByRole('button', { name: /yielded goblin/ }).count() === 0, 'surrendered foe has no target button');
 
+// Phase 34 review: the server builds the editor only while it is shown, so
+// the client says when it opens and closes, and again after a snapshot.
+await page.evaluate(() => { window.gearRequests = []; Client.GMCPRequest = (...args) => { if (args[0] === 'Company.Equipment') { window.gearRequests.push(args[1]); } }; });
+const gearSaid = () => page.evaluate(() => window.gearRequests.slice(-1)[0]);
+await page.getByRole('tab', { name: 'Character', exact: true }).click();
+await page.getByRole('tab', { name: 'Skills', exact: true }).click();
+await page.waitForTimeout(1200);
+check(!String(await gearSaid() || '').startsWith('open'), 'a hidden Gear editor is not announced as open');
+await page.getByRole('tab', { name: 'Gear', exact: true }).click();
+await page.waitForTimeout(300);
+check(await gearSaid() === 'open weapon', 'opening Gear asks the server for the editor and its selected slot');
+await page.getByRole('tab', { name: 'Skills', exact: true }).click();
+await page.waitForTimeout(300);
+check(await gearSaid() === 'closed', 'leaving Gear tells the server to stop building it');
+await page.getByRole('tab', { name: 'Gear', exact: true }).click();
+await page.waitForTimeout(300);
+const saidBefore = await page.evaluate(() => window.gearRequests.length);
+await page.evaluate(c => window.gmcp('Company', c), company);
+check(await page.evaluate(n => window.gearRequests.length > n && window.gearRequests.slice(-1)[0] === 'open weapon', saidBefore), 'a Company snapshot (login, reconnect) re-announces the open editor');
+const pendingView = { available: true, current: {}, slots: [
+  { slot: 'weapon', label: 'Weapon', choices: [] },
+  { slot: 'body', label: 'Body', choices: [], pending: true, equipped: { ref: '!3:coat', label: 'quilted coat' } }] };
+await page.evaluate(view => window.gmcp('Company.Equipment', view), pendingView);
+await page.locator('#gw-worn').getByRole('button', { name: /^Body:/ }).click();
+await page.waitForTimeout(100);
+check(await gearSaid() === 'open body' && (await page.locator('#gw-worn').textContent()).includes('Loading choices'), 'selecting a slot asks for its choices and says they are loading');
+await page.locator('#gw-worn').getByRole('button', { name: /^Weapon:/ }).click();
+await page.evaluate(() => { Client.GMCPRequest = function() {}; });
+
 // Phase 34c: authoritative, exact-instance slot editor.
 await page.getByRole('tab', { name: 'Character', exact: true }).click();
 await page.getByRole('tab', { name: 'Gear', exact: true }).click();

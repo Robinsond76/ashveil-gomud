@@ -203,7 +203,12 @@ func TestEquipmentEditorJournalRecoveryAndPrivateFeed(t *testing.T) {
 	t.Cleanup(func() { events.UnregisterListener(gmcp.GMCPOut{}, listener) })
 	companyview.RefreshUser(7)
 	events.ProcessEvents()
-	require.Positive(t, count)
+	assert.Zero(t, count, "nothing is built for a client not showing the editor")
+	events.AddToQueue(gmcp.GMCPGearWatch{UserId: 7, Open: true, Slot: "weapon"})
+	events.ProcessEvents()
+	require.Positive(t, count, "opening the editor sends it at once")
+	assert.False(t, editorSlot(t, received, "weapon").Pending)
+	assert.True(t, editorSlot(t, received, "body").Pending, "only the shown slot is previewed")
 	assert.Equal(t, weapon.ShorthandId(), editorSlot(t, received, "weapon").Equipped.Ref)
 	beforeCount := count
 	companyview.RefreshUser(7)
@@ -212,6 +217,13 @@ func TestEquipmentEditorJournalRecoveryAndPrivateFeed(t *testing.T) {
 	events.AddToQueue(gmcp.GMCPCompanyRequest{UserId: 7})
 	events.ProcessEvents()
 	assert.Greater(t, count, beforeCount, "reconnect/full request resends equipment after the Company snapshot")
+	events.AddToQueue(gmcp.GMCPGearWatch{UserId: 7, Open: false})
+	events.ProcessEvents()
+	closedCount := count
+	b.aria.Character.Items = append(b.aria.Character.Items, items.New(10004))
+	companyview.RefreshUser(7)
+	events.ProcessEvents()
+	assert.Equal(t, closedCount, count, "a closed editor is not rebuilt or sent")
 	assert.Empty(t, module.EquipmentView(99999).Slots)
 }
 
@@ -333,4 +345,28 @@ func TestEquipmentViewIgnoresRoundTicksAndPrunesOffline(t *testing.T) {
 	c.Buffs.List = append(c.Buffs.List, &buffs.Buff{BuffId: spec.BuffId, TriggersLeft: 3})
 	domain.EquipmentViewOf(7)
 	assert.Equal(t, start+1, builds(), "a new effect rebuilds the view")
+}
+
+// The feed previews only the slot the editor shows: other slots list what
+// they hold and are pending, and their previews match the full view once
+// selected (Phase 34 review).
+func TestEquipmentViewFocusPreviewsOnlyTheShownSlot(t *testing.T) {
+	b := equipmentBrawl(t)
+	c := b.aria.Character
+	c.Items = []items.Item{items.New(10004), items.New(20001)}
+	full := module.EquipmentView(7)
+	focused := domain.EquipmentViewFocused(7, "weapon")
+	for _, slot := range focused.Slots {
+		if slot.Slot == "weapon" {
+			assert.False(t, slot.Pending)
+			assert.Equal(t, editorSlot(t, full, "weapon"), slot, "the shown slot matches the full view")
+			continue
+		}
+		assert.True(t, slot.Pending, slot.Slot)
+		assert.Empty(t, slot.Choices, slot.Slot)
+		assert.Nil(t, slot.Remove, slot.Slot)
+		assert.Equal(t, editorSlot(t, full, slot.Slot).Equipped, slot.Equipped, "a pending slot still shows what it holds")
+	}
+	offhand := domain.EquipmentViewFocused(7, "offhand")
+	assert.Equal(t, editorSlot(t, full, "offhand"), editorSlot(t, offhand, "offhand"))
 }

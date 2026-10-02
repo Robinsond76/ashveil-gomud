@@ -5,7 +5,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (Phase 34 review follow-up)
+- **Last updated:** 2026-10-02 (Phase 34 review follow-up; on-demand Gear editor)
 - **Latest completed slices:** 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -20,6 +20,20 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**On-demand Gear editor and refresh load benchmark (2026-10-02):** at the
+owner's request, to keep the game loop light with many players. The server
+builds `Company.Equipment` only while a client shows the Gear editor, and
+previews only the selected slot's choices; the client announces open/closed
+and the slot. A cache hit no longer marshals the full character, and a
+rebuild reads the company load once. New `TestCompanyRefreshLoad`
+(`ASHVEIL_LOAD_BENCH=1`) times one player's whole company refresh per round
+(summary, snapshot and every extra) with companions, 36 cargo items and
+ticking effects. Before → after, per player per round: Gear closed 0.78 →
+0.37 ms; open and unchanged 2.77 → 1.09 ms; open while cargo changes every
+round 15.1 → 2.3 ms. At 200 players with Gear closed that is about 74 ms of
+each 4 s round. Combat, mob AI and movement are not in this measure. The
+largest remaining parts are the inventory payload and the summary.
 
 **Phase 34 review follow-up complete (2026-10-02):** an owner-requested
 review of the finished Phase 34 found the Gear editor's read model rebuilt

@@ -276,19 +276,48 @@ type companyFeed struct {
 	// accepting reports whether the user's connection may take GMCP; a
 	// telnet client that hasn't accepted it gets nothing built.
 	accepting func(userID int) bool
+	// gearOpen holds the users whose client shows the Gear editor
+	// (Company.Equipment open <slot>/closed), with the slot it shows; only
+	// they get it built, previewing only that slot.
+	gearOpen map[int]string
 }
 
 func newCompanyFeed() *companyFeed {
-	return &companyFeed{
+	f := &companyFeed{
 		last:      map[int]companySent{},
-		extras:    []companyExtra{inventoryExtra(), equipmentExtra(), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf), battleExtra(gatherBattle)},
 		lastExtra: map[int]map[string]string{},
 		chemistry: company.ChemistryStanding,
 		send: func(userID int, module string, payload []byte) {
 			events.AddToQueue(GMCPOut{UserId: userID, Module: module, Payload: payload})
 		},
 		accepting: nativeAccepting,
+		gearOpen:  map[int]string{},
 	}
+	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf), battleExtra(gatherBattle)}
+	return f
+}
+
+// setGearOpen records whether a user's client shows the Gear editor and
+// which slot it shows (the weapon slot when it doesn't say).
+func (f *companyFeed) setGearOpen(userID int, open bool, slot string) {
+	f.mu.Lock()
+	if open {
+		if slot == "" {
+			slot = "weapon"
+		}
+		f.gearOpen[userID] = slot
+	} else {
+		delete(f.gearOpen, userID)
+	}
+	f.mu.Unlock()
+}
+
+// watchingGear reports the slot a user's Gear editor shows, if open.
+func (f *companyFeed) watchingGear(userID int) (string, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	slot, ok := f.gearOpen[userID]
+	return slot, ok
 }
 
 // nativeAccepting is false only for a connection known to the GMCP module
@@ -401,6 +430,11 @@ func (f *companyFeed) prune(online []int) {
 			delete(f.last, id)
 		}
 	}
+	for id := range f.gearOpen {
+		if !live[id] {
+			delete(f.gearOpen, id)
+		}
+	}
 	for id := range f.lastExtra {
 		if !live[id] {
 			delete(f.lastExtra, id)
@@ -408,6 +442,17 @@ func (f *companyFeed) prune(online []int) {
 	}
 	f.mu.Unlock()
 }
+
+// GMCPGearWatch says whether a user's client shows the Gear editor, whose
+// Company.Equipment previews are built only while it does (Phase 34
+// review): "!!GMCP(Company.Equipment open weapon)" or "... closed".
+type GMCPGearWatch struct {
+	UserId int
+	Open   bool
+	Slot   string // the slot the editor shows
+}
+
+func (g GMCPGearWatch) Type() string { return `GMCPGearWatch` }
 
 // GMCPCompanyRequest asks for a user's full Company snapshot now.
 type GMCPCompanyRequest struct {
@@ -431,12 +476,23 @@ func init() {
 	events.RegisterListener(events.PlayerSpawn{}, func(e events.Event) events.ListenerReturn {
 		if evt, ok := e.(events.PlayerSpawn); ok {
 			companyFeeds.forget(evt.UserId)
+			companyFeeds.setGearOpen(evt.UserId, false, "") // the client says again
+		}
+		return events.Continue
+	})
+	events.RegisterListener(GMCPGearWatch{}, func(e events.Event) events.ListenerReturn {
+		if evt, ok := e.(GMCPGearWatch); ok {
+			companyFeeds.setGearOpen(evt.UserId, evt.Open, evt.Slot)
+			if evt.Open {
+				companyview.RefreshUser(evt.UserId)
+			}
 		}
 		return events.Continue
 	})
 	events.RegisterListener(events.PlayerDespawn{}, func(e events.Event) events.ListenerReturn {
 		if evt, ok := e.(events.PlayerDespawn); ok {
 			companyFeeds.forget(evt.UserId)
+			companyFeeds.setGearOpen(evt.UserId, false, "")
 			battleSeen.forget(evt.UserId)
 		}
 		return events.Continue

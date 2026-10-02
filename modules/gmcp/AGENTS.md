@@ -51,7 +51,13 @@
   message resends when an effect starts, is refreshed or ends, not every
   round. `harmful`/`helpful` come from `BuffSpec.Effect()` (stat modifiers and
   the `harmful`/`helpful` markers in `buffs-flags` data); neither is set when
-  unknown or secret. `Company.Equipment` comes from a cached view in the company
-  module, rebuilt only when the leader's character (less what ticks each
-  round: vitals, cooldowns, buff counters), cargo, load or availability
-  changes, or every 15 rounds; its previews share one marshal.
+  unknown or secret. `Company.Equipment` is built only for a client showing the
+  Gear editor: `window-gear.js` sends `!!GMCP(Company.Equipment open <slot>)`
+  or `... closed` when that changes (and again after a `Company` snapshot,
+  since `PlayerSpawn` clears it; `prune` drops the offline), and only the
+  named slot's choices are previewed (`EquipmentViewFocused`; other slots are
+  `pending`). The view is cached in the company module, rebuilt only when the
+  leader's character (less what ticks each round: vitals, cooldowns, buff
+  counters), cargo, load, availability or the slot changes, or every 15
+  rounds. `ASHVEIL_LOAD_BENCH=1 go test ./modules/company -run
+  TestCompanyRefreshLoad -v` measures a player's whole company refresh.
