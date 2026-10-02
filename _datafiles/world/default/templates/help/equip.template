@@ -9,4 +9,6 @@ Equip one item from shared company cargo on the leader.
 Use an exact reference from company equipment for duplicate names.
 To equip a companion, use company equip [member] [item].
 Two-handed weapons displace the offhand. Bound or cursed items can block changes.
+Character > Gear lets you select a slot, preview Current → After, and equip
+an exact cargo item. Pack appears alongside weapon and armor slots.
 Gear changes are refused in battle. See <ansi fg="command">help equipment</ansi>.

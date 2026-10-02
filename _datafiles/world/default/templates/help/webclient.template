@@ -36,7 +36,9 @@ button in them just types a command for you.
 <ansi fg="yellow-bold">What the buttons and menus send</ansi>
 
   Inventory: click cargo gear to compare or equip a living member.
-  Click worn gear to return it to cargo. Eat, drink and use items from
+  Character > Gear: select a slot, choose a compatible cargo item, review
+  Current → After and Equip item. Preview removal then Remove equipment
+  returns the exact worn item to cargo. Unavailable choices explain why. Eat, drink and use items from
   shared cargo outside battle. The treasury and optional autoloot control
   are shown here. cargo put and cargo take now explain shared cargo;
   company meal feeds the band. See help equipment and help loot.

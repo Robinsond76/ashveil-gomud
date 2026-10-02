@@ -2077,7 +2077,7 @@ func (c *Character) GetGearValue() int {
 	return value
 }
 
-func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bool, failureReason string) {
+func (c *Character) Wear(i items.Item, targetSlots ...items.ItemType) (returnItems []items.Item, newItemWorn bool, failureReason string) {
 
 	i.Validate()
 
@@ -2100,9 +2100,28 @@ func (c *Character) Wear(i items.Item) (returnItems []items.Item, newItemWorn bo
 
 	canDualWield := c.CanDualWield()
 
+	var target items.ItemType
+	if len(targetSlots) > 0 {
+		target = targetSlots[0]
+		if target != spec.Type && !(target == items.Offhand && spec.Type == items.Weapon) {
+			return returnItems, false, "That item does not fit this slot."
+		}
+		if target == items.Offhand && spec.Type == items.Weapon {
+			if iHandsRequired != 1 || !(canDualWield || bothMartial) || (c.Equipment.Weapon.ItemId > 0 && c.HandsRequired(c.Equipment.Weapon) != 1) {
+				return returnItems, false, "An offhand weapon requires dual wielding and one-handed weapons."
+			}
+			old := c.Equipment.Offhand
+			if old.IsDisabled() || old.IsRemoveLocked() || old.IsCursed() {
+				return returnItems, false, "Your offhand is unavailable, bound or cursed."
+			}
+			c.Equipment.Offhand = i
+			c.reapplyPermabuffs()
+			return []items.Item{old}, true, ""
+		}
+	}
 	// Weapons can go in either hand.
 	// Only do this if this is a 1 handed weapon
-	if spec.Type == items.Weapon && iHandsRequired < 2 {
+	if target == "" && spec.Type == items.Weapon && iHandsRequired < 2 {
 
 		// If they can dual wield
 		if canDualWield || bothMartial {
