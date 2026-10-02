@@ -540,6 +540,7 @@ func (u *UserRecord) GetUnsentText() (unsent string, suggestion string) {
 // Replace a characters information with another.
 func (u *UserRecord) ReplaceCharacter(replacement *characters.Character) {
 	u.Character = replacement
+	u.Character.SetUserId(u.UserId)
 }
 
 func (u *UserRecord) SetUsername(un string) error {

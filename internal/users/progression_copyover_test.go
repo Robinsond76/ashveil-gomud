@@ -48,4 +48,14 @@ func TestProgressionNewPlayerCharactersUseTheirArchetype(t *testing.T) {
 	t.Cleanup(func() { archetypes.SetProvider(nil) })
 	assert.Equal(t, 6.0, NewUserRecord(7, 0).Character.HealthGainPerLevel())
 	assert.Equal(t, float64(configs.GetProgressionConfig().DefaultHPPerLevel), NewUserRecord(0, 0).Character.HealthGainPerLevel(), "before an id, the default")
+
+	u := NewUserRecord(8, 0)
+	u.ReplaceCharacter(NewUserRecord(0, 0).Character)
+	assert.Equal(t, 6.0, u.Character.HealthGainPerLevel(), "a replacement character joins its user")
+
+	real := veteran()
+	require.NoError(t, SaveUser(*real))
+	replay, err := NewReplayUser(real)
+	require.NoError(t, err)
+	assert.Equal(t, 6.0, replay.Character.HealthGainPerLevel(), "a replay character keeps its own id")
 }
