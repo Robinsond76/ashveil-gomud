@@ -34,6 +34,8 @@ help:
       - archetype
     company:
       - company
+      - growth
+      - contracts
       - equipment
       - gearup
       - loot
@@ -217,6 +219,8 @@ help-aliases:
   webclient:        [web client, web-client, dock, panels, tabs, layout]
   adventure:        [ashveil, basics]
   company:          [recruit, recruiting, roster, companions, companion]
+  growth:           [company growth, company-growth, specialize, specialization, companion growth, focus stat]
+  contracts:        [contract, company contracts, company-contracts]
   company-inventory: [company inventory, company inv, company-inv]
   friendly-effects: [friendly-scopes, company-healing, support-scopes]
   party: [alliance, allied-companies, party-follow, party-support]

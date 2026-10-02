@@ -56,6 +56,40 @@ Growth weights/specializations; training and quest reward migration; contract XP
 The planning request approves documenting the direction, not unresolved
 formulas or behavior changes. Record final owner decisions in this design.
 
+## Final implementation decisions: 33h1 (2026-10-02)
+
+The owner asked to continue with 33h after 33g's management slice, under
+the standing 2026-10-01 authority to take the lead's recommended defaults.
+33h2 and 33h3 settle their own decisions in their plans.
+
+- **Derived training, not spent points.** A companion's trained stats are
+  always its template's training plus its level's stat points
+  (`StatPointsPerLevel`/`StatPointsEveryNLevels`, the same count a spawn
+  uses), dealt by its growth weights. They are recomputed on every spawn,
+  live level-up, resurrection, and focus change, never accumulated, so a
+  level/death/regain loop cannot mint points and nothing new is saved.
+  30g4's stat steps change the racial part only and leave this intact.
+- **Growth weights (proposed, tunable in the archetype config):** warrior
+  Strength 4, Vitality 3, Speed 2, Perception 1; rogue Speed 4,
+  Perception 3, Strength 2, Smarts 1; wizard Mysticism 4, Smarts 3,
+  Perception 2, Speed 1; cleric Mysticism 3, Vitality 3, Smarts 2,
+  Strength 2; ranger Perception 4, Speed 3, Strength 2, Vitality 1. A
+  companion without an archetype keeps the even spread. Points are dealt
+  in a fixed weighted rotation, so each new point adds to a stat and none
+  is ever taken back by a level-up.
+- **Specialization:** one optional focus stat per companion
+  (`company growth <member> <stat>`, `balanced` to clear) adds weight 2.
+  Free to change out of battle; it re-deals the same points at once.
+  Stored on the companion record (`growth_focus`, empty by default).
+- **Contracts:** a quest whose rewards set `companyexperience` is a
+  contract. When the leader turns it in, every companion alive, attached,
+  not withdrawn, and in the leader's room earns that figure in full, as
+  combat experience does (32e). Absent, dead, or fled members earn none.
+  Quest experience, gold, items, buffs, and skill grants stay personal.
+  Shipped contracts: Rodric's Rats (1000) and The King's Shadow (15000).
+- **Migration:** none needed. Old companions take their archetype's
+  weights at their next spawn; old quests without the field are personal.
+
 ## Acceptance criteria and verification
 
 Real combat/quest rewards cover personal versus contract cases and absent members; level/death/regain loops do not mint points; logout/login, re-summon, crash/save failure, and copyover preserve readiness; changed maxima/missing old-save fields migrate safely; portals, quest moves, travel, death, and tutorial relocation preserve exact member/item/cargo ownership and pending returns.

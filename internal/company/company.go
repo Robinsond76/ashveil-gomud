@@ -59,6 +59,9 @@ type Companion struct {
 	// Blank for an authored companion, which uses its template's.
 	Name        string `yaml:"name,omitempty"`
 	Description string `yaml:"description,omitempty"`
+	// GrowthFocus is the stat the leader chose to favour in the
+	// companion's growth (Phase 33h1); empty grows by archetype alone.
+	GrowthFocus string `yaml:"growth_focus,omitempty"`
 }
 
 // Identity is what a companion's live mob is called and looks like, over

@@ -210,15 +210,7 @@ func newMobById(mobId MobId, homeRoomId int, allowElite bool, forceLevel ...int)
 			}
 		}
 
-		mob.Character.StatPoints = 0
-		{
-			cfgProg := configs.GetProgressionConfig()
-			for lvl := 1; lvl <= mob.Character.Level; lvl++ {
-				if int(cfgProg.StatPointsEveryNLevels) <= 1 || lvl%int(cfgProg.StatPointsEveryNLevels) == 0 {
-					mob.Character.StatPoints += int(cfgProg.StatPointsPerLevel)
-				}
-			}
-		}
+		mob.Character.StatPoints = characters.StatPointsAtLevel(mob.Character.Level)
 		mob.Character.Level--
 		mob.Character.Experience = mob.Character.XPTNL()
 		mob.Character.Level++

@@ -165,7 +165,8 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 
 		user.GrantXP(share, `combat`)
-		for _, line := range awardCompanyXP(user.UserId, user.Character, share, room.RoomId) {
+		_, companyLines := AwardCompanyXP(user.UserId, user.Character, share, room.RoomId)
+		for _, line := range companyLines {
 			user.SendText(line)
 		}
 

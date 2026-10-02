@@ -82,6 +82,7 @@ func init() {
 				`Safe <ansi fg="command">ask</ansi> orders manage a present member outside battle; members fight automatically. Conversation and observation remain available (<ansi fg="command">help ask</ansi>).`,
 				`Use <ansi fg="command">help equipment</ansi> to compare and assign shared cargo gear, and <ansi fg="command">help treasury</ansi> for the pooled gold.`,
 				`Companions keep their own gear (<ansi fg="command">company gear</ansi>). <ansi fg="command">company dismiss</ansi> lets one go, with their gear.`,
+				`Companions grow by their archetype: each level's stat points go where the archetype needs them, and <ansi fg="command">company growth</ansi> can favour one stat. Contract quests pay every companion with you when you turn them in (<ansi fg="command">help growth</ansi>, <ansi fg="command">help contracts</ansi>).`,
 				`<ansi fg="command">help company</ansi> covers recruiting and your roster in full.`,
 			},
 			Done: "Your company is gathered.",

@@ -1,0 +1,27 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">contracts</ansi>
+
+Most quests are your own: their experience, gold, items, and skills go
+to you alone, and your companions earn nothing from them. A contract is
+a quest that hires your whole company.
+
+When you complete a contract, every companion with you earns its company
+reward, in full, on top of your own reward: nothing is split, so a bigger
+company never shrinks anyone's share. "With you" means alive, still in
+your company, and standing in your room when you turn it in, the same as
+for experience from a kill. A companion who is away, fallen, or fled
+earns nothing, even if they helped along the way, so bring everyone back
+before you finish. The quest stays in your own journal
+(<ansi fg="command">quests</ansi>), and pays when you complete it, like
+its other rewards.
+
+<ansi fg="yellow-bold">Contracts as the world ships</ansi>
+
+  Rodric's Rats         1000 experience for each companion
+  The King's Shadow     15000 experience for each companion
+
+These are the rewards before the world's experience scale, which
+applies to companions as it does to you.
+
+Enough experience is a new level, and the companion's points are dealt
+by their archetype (<ansi fg="command">help growth</ansi>). See also
+<ansi fg="command">help quests</ansi> and <ansi fg="command">help company</ansi>.

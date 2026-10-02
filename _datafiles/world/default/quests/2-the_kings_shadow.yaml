@@ -20,5 +20,7 @@ rewards:
   playermessage: 'The King finally has some peace!'
   roommessage: 'The King seems a little bit more at ease.'
   experience: 15000
+  # Phase 33h1 contract: each companion with you at turn-in earns this too.
+  companyexperience: 15000
   gold: 1000
   

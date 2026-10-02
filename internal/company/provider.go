@@ -104,6 +104,27 @@ func CompanionArchetype(leaderUserID, companionID int) (string, bool) {
 	return ap.CompanionArchetype(leaderUserID, companionID)
 }
 
+// GrowthProvider is optionally implemented by the registered
+// FormationProvider (Phase 33h1): it re-deals a live companion's stat
+// points by its growth weights after its level changes.
+type GrowthProvider interface {
+	RetrainCompanion(instanceID int) bool
+}
+
+// RetrainCompanion re-deals a live companion's training. It is false when
+// no provider is registered or the instance is not a tracked companion;
+// the caller then keeps GoMud's own AutoTrain. Game loop only.
+func RetrainCompanion(instanceID int) bool {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	gp, ok := p.(GrowthProvider)
+	if !ok {
+		return false
+	}
+	return gp.RetrainCompanion(instanceID)
+}
+
 // AlignmentProvider is optionally implemented by the registered
 // FormationProvider (Phase 21b): the company's average alignment (the
 // online leader and every companion, engine scale −100..100), as Phase 21a

@@ -2,6 +2,7 @@ package company
 
 import (
 	"errors"
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"testing"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
@@ -47,6 +48,23 @@ func TestResurrectCostsLevelAndSpawns(t *testing.T) {
 }
 
 // TestResurrectLevelOneFloor: a level 1 companion stays level 1.
+// TestResurrectSpawnsWithGrowth (Phase 33h1): the raised companion is
+// spawned with its archetype's weights and focus, so its lower level deals
+// fewer points by the same rule.
+func TestResurrectSpawnsWithGrowth(t *testing.T) {
+	archetypes.SetProvider(growthArchetypes{})
+	t.Cleanup(func() { archetypes.SetProvider(nil) })
+	module, _, runtime, _ := newDeathModule(t)
+	record, _ := module.registry.Get(7)
+	record.Companions[0].Archetype = "warrior"
+	record.Companions[0].GrowthFocus = "speed"
+	module.registry.Put(record)
+	killOne(module)
+	_, err := module.ResurrectCompanion(7, "#1", 2007)
+	require.NoError(t, err)
+	assert.Equal(t, domain.GrowthWeights{4, 4, 0, 3, 0, 1}, runtime.spawnedGrowth[len(runtime.spawnedGrowth)-1])
+}
+
 func TestResurrectLevelOneFloor(t *testing.T) {
 	module, _, _, _ := newDeathModule(t)
 	module.onMobDeath(events.MobDeath{InstanceId: 102, Level: 1})

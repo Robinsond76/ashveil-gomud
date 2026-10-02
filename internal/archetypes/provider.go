@@ -36,6 +36,21 @@ func CompanionSpells(archetypeID string, level int) []string {
 	return nil
 }
 
+// CompanionGrowthProvider is optionally implemented by the provider (Phase
+// 33h1): an archetype's companion growth weights by stat name.
+type CompanionGrowthProvider interface {
+	CompanionGrowth(archetypeID string) (map[string]int, bool)
+}
+
+// CompanionGrowth is an archetype's growth weights by stat name; ok is false
+// without a provider, for an unknown archetype, or one with no weights.
+func CompanionGrowth(archetypeID string) (map[string]int, bool) {
+	if gp, ok := current().(CompanionGrowthProvider); ok {
+		return gp.CompanionGrowth(archetypeID)
+	}
+	return nil, false
+}
+
 // TrapProvider is optionally implemented by the provider (Phase 17b). A
 // trapped lock stays armed unless it reports otherwise.
 type TrapProvider interface {

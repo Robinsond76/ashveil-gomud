@@ -66,7 +66,7 @@ func TestAwardCompanyXPPaysPresentLivingCompanions(t *testing.T) {
 	t.Cleanup(func() { company.SetFormationProvider(nil) })
 
 	before := present.Character.Experience
-	awardCompanyXP(xpLeader, leader, 40, room)
+	AwardCompanyXP(xpLeader, leader, 40, room)
 
 	if got := present.Character.Experience - before; got != 40 {
 		t.Errorf("present companion gained %d, want the full 40 (no split)", got)
@@ -92,7 +92,7 @@ func TestAwardCompanyXPLevelsUp(t *testing.T) {
 	company.SetFormationProvider(xpProvider{attached: map[int]bool{880011: true}})
 	t.Cleanup(func() { company.SetFormationProvider(nil) })
 
-	lines := awardCompanyXP(xpLeader, leader, m.Character.XPTL(3), room)
+	_, lines := AwardCompanyXP(xpLeader, leader, m.Character.XPTL(3), room)
 
 	if m.Character.Level < 3 {
 		t.Fatalf("level = %d, want at least 3", m.Character.Level)
@@ -111,6 +111,39 @@ func TestAwardCompanyXPLevelsUp(t *testing.T) {
 	}
 }
 
+// growthXPProvider also re-deals training (Phase 33h1) and records whom.
+type growthXPProvider struct {
+	xpProvider
+	retrained *[]int
+}
+
+func (p growthXPProvider) RetrainCompanion(id int) bool {
+	*p.retrained = append(*p.retrained, id)
+	return true
+}
+
+// TestAwardCompanyXPRetrainsOnlyCompanionsThatLevelled: the company's
+// growth deals a levelled companion's points instead of AutoTrain, and a
+// companion that did not level is left alone.
+func TestAwardCompanyXPRetrainsOnlyCompanionsThatLevelled(t *testing.T) {
+	mudlog.SetupLogger(nil, "low", "", false)
+	const room = 7004
+	low := xpMob(t, 880031, room, 5)
+	high := xpMob(t, 880032, room, 5)
+	high.Character.Level = 30
+	leader := characters.New()
+	leader.TrackCharmed(low.InstanceId, true)
+	leader.TrackCharmed(high.InstanceId, true)
+	var retrained []int
+	company.SetFormationProvider(growthXPProvider{xpProvider{attached: map[int]bool{880031: true, 880032: true}}, &retrained})
+	t.Cleanup(func() { company.SetFormationProvider(nil) })
+
+	paid, lines := AwardCompanyXP(xpLeader, leader, low.Character.XPTL(2), room)
+	assert.Equal(t, 2, paid)
+	require.NotEmpty(t, lines)
+	assert.Equal(t, []int{880031}, retrained)
+}
+
 // TestAwardCompanyXPIgnoresForeignLeader: a mob attached to another leader
 // is never paid by this leader's kill.
 func TestAwardCompanyXPIgnoresForeignLeader(t *testing.T) {
@@ -121,7 +154,7 @@ func TestAwardCompanyXPIgnoresForeignLeader(t *testing.T) {
 	company.SetFormationProvider(xpProvider{attached: map[int]bool{880021: true}})
 	t.Cleanup(func() { company.SetFormationProvider(nil) })
 
-	awardCompanyXP(xpLeader+1, leader, 40, room)
+	AwardCompanyXP(xpLeader+1, leader, 40, room)
 	if m.Character.Experience > 1 {
 		t.Fatalf("gained xp: %d", m.Character.Experience)
 	}
@@ -182,7 +215,7 @@ func TestAwardCompanyXPSkipsBefriendedAway(t *testing.T) {
 	company.SetFormationProvider(xpProvider{attached: map[int]bool{880041: true}})
 	t.Cleanup(func() { company.SetFormationProvider(nil) })
 
-	awardCompanyXP(xpLeader, leader, 40, room)
+	AwardCompanyXP(xpLeader, leader, 40, room)
 	if m.Character.Experience > 1 {
 		t.Fatalf("gained xp: %d", m.Character.Experience)
 	}

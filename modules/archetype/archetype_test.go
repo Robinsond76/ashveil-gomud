@@ -143,6 +143,34 @@ func TestShippedArchetypesLoad(t *testing.T) {
 	assert.Equal(t, "skulduggery", m.config.UtilitySkills["traps"])
 }
 
+// TestShippedCompanionGrowth: Phase 33h1's growth weights parse for every
+// shipped archetype, each summing to 10.
+func TestShippedCompanionGrowth(t *testing.T) {
+	m, _ := testModule(t)
+	want := map[string]map[string]int{
+		"warrior": {"strength": 4, "vitality": 3, "speed": 2, "perception": 1},
+		"rogue":   {"speed": 4, "perception": 3, "strength": 2, "smarts": 1},
+		"wizard":  {"mysticism": 4, "smarts": 3, "perception": 2, "speed": 1},
+		"cleric":  {"mysticism": 3, "vitality": 3, "smarts": 2, "strength": 2},
+		"ranger":  {"perception": 4, "speed": 3, "strength": 2, "vitality": 1},
+	}
+	for id, weights := range want {
+		got, ok := m.CompanionGrowth(id)
+		require.True(t, ok, id)
+		assert.Equal(t, weights, got, id)
+	}
+	_, ok := m.CompanionGrowth("nosuch")
+	assert.False(t, ok)
+}
+
+func TestArchetypeGrowthRejectsUnknownStats(t *testing.T) {
+	a := archetypes.Archetype{ID: "x", Name: "X", Skills: []string{"brawling"}, CompanionLevels: []int{1, 2, 3, 4}, Growth: map[string]int{"luck": 2}}
+	assert.ErrorIs(t, a.Validate(), archetypes.ErrInvalidArchetype)
+	a.Growth = map[string]int{" Strength ": 2}
+	require.NoError(t, a.Validate())
+	assert.Equal(t, map[string]int{"strength": 2}, a.Growth)
+}
+
 func TestEveryShippedSpellSchoolIsClaimed(t *testing.T) {
 	m, _ := testModule(t)
 	for _, s := range spells.GetAllSpells() {
