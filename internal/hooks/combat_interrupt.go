@@ -228,8 +228,9 @@ func restartChant(m *mobs.Mob) bool {
 		events.AddToQueue(events.AggroChanged{MobInstanceId: m.InstanceId, RoomId: m.Character.RoomId})
 		return true
 	}
-	agg.RoundsWaiting = sp.WaitRounds
-	rounds := sp.WaitRounds + 1
+	agg.RoundsWaiting = sp.WaitRounds + m.Character.ColdDelay()
+	agg.ColdDelayed, agg.ColdNotice = m.Character.ColdDelay() > 0, false
+	rounds := agg.RoundsWaiting + 1
 	plural := `rounds`
 	if rounds == 1 {
 		plural = `round`

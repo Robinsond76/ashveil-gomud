@@ -56,8 +56,14 @@ type Mob struct {
 	ActivityLevel      int                  `yaml:"activitylevel,omitempty"`  // 1-100%
 	InstanceId         int                  `yaml:"-"`
 	HomeRoomId         int                  `yaml:"-"`
-	Hostile            bool                 `yaml:"hostile,omitempty"`        // whether they attack on sight
-	Reach              bool                 `yaml:"reach,omitempty"`          // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
+	Hostile            bool                 `yaml:"hostile,omitempty"` // whether they attack on sight
+	Reach              bool                 `yaml:"reach,omitempty"`   // innate melee reach (e.g. a large/long-limbed monster), independent of any weapon (see Phase 11c)
+	AmbushOwner        int                  `yaml:"-"`
+	AmbushAdvantage    int                  `yaml:"-"`
+	AmbushObserver     string               `yaml:"-"`
+	Leap               bool                 `yaml:"leap,omitempty"`
+	Sweep              bool                 `yaml:"sweep,omitempty"`
+	Stealth            *int                 `yaml:"stealth,omitempty"`
 	Practice           bool                 `yaml:"practice,omitempty"`       // Ashveil (Phase 27c): a practice foe, beaten without any reward (see mobcommands.Suicide)
 	Solitary           bool                 `yaml:"solitary,omitempty"`       // Ashveil (Phase 29b2): stands alone; never grouped or topped up by spawning
 	CompanyMoveTo      int                  `yaml:"-"`                        // Ashveil (Phase 32a): the room its leader's one company line announced it moving to (runtime only)
@@ -694,6 +700,9 @@ func (r *Mob) Id() int {
 }
 
 func (r *Mob) Validate() error {
+	if r.Stealth != nil && *r.Stealth < 0 {
+		return fmt.Errorf("negative ambush stealth")
+	}
 	if err := morale.Validate(r.Temperament); err != nil {
 		return err
 	}

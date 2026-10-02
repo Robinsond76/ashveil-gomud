@@ -3,6 +3,7 @@ package camping
 import (
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"sort"
 	"strings"
 	"time"
@@ -297,6 +298,7 @@ func (m *CampingModule) fireDueRaids() {
 		}
 		m.trackRaiders(o.leader.UserId, o.roomID, first)
 		if o.spotted {
+			enemyparty.WatchAmbush(o.roomID, first, o.leader.UserId)
 			o.leader.SendText(fmt.Sprintf(`<ansi fg="yellow-bold">%s %s raiders creeping toward the fire and %s the company! Your rest can go on once they're dealt with.</ansi>`, o.watch.Subject(), o.watch.Verb("spot", "spots"), o.watch.Verb("rouse", "rouses")))
 		} else {
 			o.leader.SendText(`<ansi fg="red-bold">Raiders fall on your sleeping camp! Nobody saw them coming, and the rest is spoiled.</ansi>`)

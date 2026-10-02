@@ -412,10 +412,38 @@ const battleFix = {
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.getByRole('tab', { name: 'Character' }).click();
 await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+// Phase 30f: effective combat cells and reserve presentation are separate
+// from the saved Setup formation.
+await page.evaluate(b => {
+  const x = JSON.parse(JSON.stringify(b));
+  x.narrow = true;
+  x.positions = { leader: {row: 2, col: 1}, 'companion:1': {row: 1, col: 0}, 'companion:2': {row: 0, col: 1} };
+  x.enemies[3].cell = {row: 1, col: 2};
+  window.gmcp('Company.Battle', x);
+}, battleFix);
+check(await page.evaluate(() => [...document.querySelectorAll('#combat-window .cbt-field')].every(g => g.style.gridTemplateColumns === 'repeat(2, minmax(0px, 1fr))' || g.style.gridTemplateColumns === 'repeat(2, minmax(0, 1fr))')), 'narrow ground displays two active columns');
+check(await page.locator('#combat-window .cbt-reserve').count() === 1, 'enemy overflow is visibly marked Reserve');
+check(await page.evaluate(() => {
+  const g = [...document.querySelectorAll('#combat-window .cbt-field')].find(g => g.getAttribute('aria-label') === 'Your company');
+  return g && [...g.children].findIndex(n => n.dataset && n.dataset.fid === 'leader') === 5;
+}), 'Battle uses the effective leader cell, while Setup stays saved');
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+
 check(await page.getByRole('tab', { name: 'Combat, a battle is under way' }).count() === 1, 'a battle while another tab shows: a marker on Combat');
 await page.getByRole('tab', { name: /^Combat/ }).click();
 check(await page.getByRole('tab', { name: 'Combat' }).count() === 1, 'opening Combat clears the marker');
 await page.waitForFunction(() => document.querySelectorAll('#combat-window .cbt-lines line').length > 0);
+await page.evaluate(b => {
+  const x = JSON.parse(JSON.stringify(b));
+  x.narrow = true;
+  x.positions = { leader: {row: 2, col: 1}, 'companion:1': {row: 1, col: 0}, 'companion:2': {row: 0, col: 1} };
+  x.enemies[3].cell = {row: 1, col: 2};
+  window.gmcp('Company.Battle', x);
+}, battleFix);
+check(await page.evaluate(() => [...document.querySelectorAll('#combat-window .cbt-field')].every(g => getComputedStyle(g).gridTemplateColumns.split(' ').length === 2)), 'visible narrow battlefield has two rendered columns');
+if (outdir) { await page.locator('#combat-window').screenshot({ path: path.join(outdir, 'battlefield-two-columns.png') }); }
+await page.evaluate(b => window.gmcp('Company.Battle', b), battleFix);
+
 const cbt = () => page.evaluate(() => document.getElementById('combat-body').textContent);
 check(await page.getByRole('heading', { name: 'Battle: a band of cutthroats' }).count() === 1, 'the Battle view replaces Setup');
 check((await cbt()).includes('Withdrawing east (2 rounds remaining)'), 'ordered withdrawal appears in the battle view');

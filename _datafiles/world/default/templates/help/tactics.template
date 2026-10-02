@@ -81,3 +81,5 @@ has a button for each focus during a battle, and your tactics under Setup
 (<ansi fg="command">help webclient</ansi>).
 
 See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help guardian</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help formation</ansi>.
+
+Clusters, open flanks, leaping enemies, and narrow ground change what your saved tactics can reach. See help battlefield.

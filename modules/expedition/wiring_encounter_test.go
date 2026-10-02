@@ -135,3 +135,24 @@ func TestTravelTimerRunsOnTheGameLoop(t *testing.T) {
 	events.ProcessEvents()
 	assert.Equal(t, int32(1), ran.Load(), "run once, on the loop")
 }
+
+func TestCancelEncounterRemovesWholeGroupAndPendingSurprise(t *testing.T) {
+	dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
+	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
+	races.LoadDataFiles()
+	items.LoadDataFiles()
+	rooms.LoadDataFiles()
+	mobs.LoadDataFiles()
+	room := rooms.LoadRoom(2002)
+	require.NotNil(t, room)
+	s := nativeMobSpawner{}
+	lead, err := s.SpawnHostileEncounter(2002, 28, 7)
+	require.NoError(t, err)
+	foes := encounterFoes(t, room, lead)
+	require.Len(t, foes, 2)
+	s.CancelEncounter(lead, 2002)
+	for _, foe := range foes {
+		assert.Nil(t, mobs.GetInstance(foe.InstanceId))
+	}
+	assert.False(t, s.EncounterActive(lead, 2002))
+}

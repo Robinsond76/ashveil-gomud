@@ -232,6 +232,7 @@ type ItemSpec struct {
 	Hydration       int               `yaml:"hydration,omitempty"`   // Survival thirst benefit when eaten or drunk; zero keeps ordinary drink behavior
 	Weight          int               `yaml:"weight,omitempty"`      // Encumbrance weight in grams; zero means unweighted (no load contribution)
 	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
+	Sling           bool              `yaml:"sling,omitempty"`       // cold delays this weapon, never inferred from its name
 	Parry           int               `yaml:"parry,omitempty"`       // Added to the subtype's parry modifier, in percent (Phase 30g2: a staff +5)
 	Warmth          int               `yaml:"warmth,omitempty"`      // Insulation when worn (Phase 15); 0 uses the exposure module's per-slot default, negative means none
 	CarryBonus      int               `yaml:"carrybonus,omitempty"`  // A pack's added carrying capacity in grams (Phase 32f); a member counts only their largest
@@ -495,6 +496,9 @@ func (i *ItemSpec) Filepath() string {
 
 // Presumably to ensure the datafile hasn't messed something up.
 func (i *ItemSpec) Validate() error {
+	if i.Sling && (i.Type != Weapon || i.Subtype != Shooting) {
+		return fmt.Errorf("sling capability requires a shooting weapon")
+	}
 
 	if i.Name == `` {
 		return fmt.Errorf("item has no name")

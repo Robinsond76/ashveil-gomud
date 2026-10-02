@@ -26,7 +26,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
-	"github.com/GoMudEngine/GoMud/internal/formationcombat"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -36,14 +35,16 @@ import (
 
 // battleFacts is what the builder needs, read from the live game.
 type battleFacts struct {
-	Retreat  *retreatFact
-	InBattle bool
-	Dark     bool // too dark to make the enemy out, as scout says
-	Group    string
-	Placed   bool        // the player stands in their company's formation
-	Enemies  []enemyFact // every enemy seen in the battle, in instance order
-	Company  []aimFact
-	Waiting  []string // the waiting groups' names, in the order they come
+	Narrow    bool
+	Positions map[string]battleCell
+	Retreat   *retreatFact
+	InBattle  bool
+	Dark      bool // too dark to make the enemy out, as scout says
+	Group     string
+	Placed    bool        // the player stands in their company's formation
+	Enemies   []enemyFact // every enemy seen in the battle, in instance order
+	Company   []aimFact
+	Waiting   []string // the waiting groups' names, in the order they come
 	// Phase 30c: the focus the company aims by now, the saved one, and
 	// whether an order may be given (none waiting for the next round).
 	Focus, SavedFocus string
@@ -137,15 +138,17 @@ type battleOther struct {
 }
 
 type battlePayload struct {
-	Retreat     *retreatFact   `json:"retreat,omitempty"`
-	Group       string         `json:"group"`
-	Dark        bool           `json:"dark,omitempty"`
-	Enemies     []battleEnemy  `json:"enemies"`
-	Fallen      []battleFallen `json:"fallen,omitempty"`
-	Surrendered []battleFallen `json:"surrendered,omitempty"`
-	Company     []battleAim    `json:"company,omitempty"`
-	Others      []battleOther  `json:"others,omitempty"`
-	Waiting     []string       `json:"waiting,omitempty"`
+	Narrow      bool                  `json:"narrow,omitempty"`
+	Positions   map[string]battleCell `json:"positions,omitempty"`
+	Retreat     *retreatFact          `json:"retreat,omitempty"`
+	Group       string                `json:"group"`
+	Dark        bool                  `json:"dark,omitempty"`
+	Enemies     []battleEnemy         `json:"enemies"`
+	Fallen      []battleFallen        `json:"fallen,omitempty"`
+	Surrendered []battleFallen        `json:"surrendered,omitempty"`
+	Company     []battleAim           `json:"company,omitempty"`
+	Others      []battleOther         `json:"others,omitempty"`
+	Waiting     []string              `json:"waiting,omitempty"`
 	// Phase 30c: the company focus (the Combat tab's focus buttons).
 	Focus      string `json:"focus"`
 	SavedFocus string `json:"saved_focus"`
@@ -173,7 +176,7 @@ func buildBattle(f battleFacts) any {
 	if f.Dark {
 		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat}
 	}
-	p := battlePayload{Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook}
+	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -253,7 +256,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	if room == nil {
 		return battleFacts{}
 	}
-	f := battleFacts{InBattle: true, SavedFocus: string(strategy.TacticsFor(user.UserId).Focus), FocusReady: battle.FocusReady(user.UserId)}
+	f := battleFacts{Narrow: enemyparty.Narrow(room), InBattle: true, SavedFocus: string(strategy.TacticsFor(user.UserId).Focus), FocusReady: battle.FocusReady(user.UserId)}
 	if a := user.Character.Aggro; a != nil && a.Type == characters.Retreat && a.RetreatInfo != nil {
 		f.Retreat = &retreatFact{Exit: a.RetreatInfo.ExitName, Rounds: a.RoundsWaiting + 1}
 	}
@@ -287,7 +290,15 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	}
 
 	col := 0
-	if form, ok := company.FormationFor(user.UserId); ok {
+	if form, ok := enemyparty.CompanyFormation(user.UserId); ok {
+		f.Positions = map[string]battleCell{}
+		for r, row := range form {
+			for c, key := range row {
+				if key != "" {
+					f.Positions[string(key)] = battleCell{Row: r, Col: c}
+				}
+			}
+		}
 		_, col, f.Placed = form.Find(company.LeaderMemberKey)
 	}
 	reach := combat.ResolveReach(user.Character, false)
@@ -326,7 +337,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 			e.Hidden = m.Character.HasBuffFlag("hidden")
 			e.Row, e.Col, _ = group.Party.Formation.Find(key)
 			e.Health, e.HealthMax = m.Character.Health, m.Character.HealthMax.Value
-			e.Reach = f.Placed && formationcombat.Legal(col, group.Party.Formation, key, alive, reach)
+			e.Reach = f.Placed && enemyparty.Legal(room, user.UserId, col, group.Party.Formation, key, alive, reach)
 			e.Target = targetOf(user.UserId, room.RoomId, m)
 			battleSeen.note(user.UserId, fight, id, e.Hidden)
 		} else if m != nil {

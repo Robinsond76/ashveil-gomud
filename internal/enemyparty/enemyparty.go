@@ -21,7 +21,11 @@ func Parties(room *rooms.Room) []mobparty.Party {
 	if room == nil {
 		return nil
 	}
-	return mobparty.Assemble(summaries(room))
+	parties := mobparty.Assemble(summaries(room))
+	for i := range parties {
+		parties[i] = groundParty(room, parties[i])
+	}
+	return parties
 }
 
 // PartyOf returns the party within room that contains instanceId.

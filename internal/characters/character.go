@@ -1226,11 +1226,15 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 		}
 	}
 
+	if aggroType == Shooting && c.Equipment.Weapon.GetSpec().Sling {
+		combatAddlWaitRounds += c.ColdDelay()
+	}
 	c.Aggro = &Aggro{
 		UserId:        userId,
 		MobInstanceId: mobInstanceId,
 		Type:          aggroType,
 		RoundsWaiting: combatAddlWaitRounds,
+		ColdDelayed:   aggroType == Shooting && c.Equipment.Weapon.GetSpec().Sling && c.ColdDelay() > 0,
 	}
 
 }
@@ -1240,9 +1244,29 @@ func (c *Character) SetCast(roundsWaitTime int, sInfo SpellAggroInfo) {
 		return
 	}
 
+	if sInfo.SpellId == "sparks" {
+		if len(sInfo.TargetUserIds) > 0 {
+			sInfo.ClusterUserID = sInfo.TargetUserIds[0]
+		} else if len(sInfo.TargetMobInstanceIds) > 0 {
+			sInfo.ClusterMobID = sInfo.TargetMobInstanceIds[0]
+		}
+		if c.Aggro != nil {
+			for _, id := range sInfo.TargetUserIds {
+				if id == c.Aggro.UserId {
+					sInfo.ClusterUserID, sInfo.ClusterMobID = id, 0
+				}
+			}
+			for _, id := range sInfo.TargetMobInstanceIds {
+				if id == c.Aggro.MobInstanceId {
+					sInfo.ClusterMobID, sInfo.ClusterUserID = id, 0
+				}
+			}
+		}
+	}
 	c.Aggro = &Aggro{
 		Type:          SpellCast,
-		RoundsWaiting: roundsWaitTime,
+		RoundsWaiting: roundsWaitTime + c.ColdDelay(),
+		ColdDelayed:   c.ColdDelay() > 0,
 		SpellInfo:     sInfo,
 	}
 

@@ -40,6 +40,7 @@ type Battle struct {
 	// guardians have spent in it, all together.
 	Coordination int
 	EnemyGuards  int
+	Opening      int    // -1: company surprised; +1: enemy surprised; opening round only
 	EnemyFocus   string // the member key the group's leader last aimed it at
 }
 
@@ -316,4 +317,13 @@ func Allows(userId, instanceId int) bool {
 	defer mu.Unlock()
 	b, ok := battles[userId]
 	return !ok || b.Enemies[instanceId]
+}
+
+// SetOpening records a consumed encounter advantage, never durable state.
+func SetOpening(uid, advantage int) {
+	mu.Lock()
+	defer mu.Unlock()
+	if b := battles[uid]; b != nil {
+		b.Opening = advantage
+	}
 }

@@ -128,3 +128,4 @@ Comprehensive test coverage in `*_test.go` files covering:
 - **Data persistence**: Room changes are automatically saved to maintain world state
 
 This package serves as the foundation for the entire game world, providing a rich and dynamic environment system that supports complex gameplay mechanics while maintaining optimal performance through intelligent memory management.
+Phase 30f reserves `narrow` (two active combat columns) and `ambush-cover` (10-point detection concealment). Effective formations are runtime projections; never write them to saved company placements.

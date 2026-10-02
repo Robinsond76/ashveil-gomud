@@ -6,6 +6,7 @@
 mobid: 85
 zone: Dark Forest
 itemdropchance: 10
+sweep: true
 hostile: true
 solitary: true
 maxwander: 1

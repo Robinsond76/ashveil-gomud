@@ -47,3 +47,5 @@ yourself or a named companion. See <ansi fg="command">help eat</ansi> and <ansi 
 
 See also: <ansi fg="command">help eat</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>,
 <ansi fg="command">help temperature</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help company</ansi>.
+
+Fatigue affects physical hit chance: Tired (26-50) -5 percentage points, Exhausted (1-25) -10, Collapsed (0) -20. Ready and Rested have no penalty. See help battlefield.

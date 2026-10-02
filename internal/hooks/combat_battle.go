@@ -168,6 +168,10 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	battle.SetFight(sd.user.UserId, id)
 	b.FightID = id
 	startMorale(b)
+	consumeAmbush(sd.user, p, room)
+	if enemyparty.Narrow(room) {
+		sd.user.SendText("The narrow ground folds both lines into two columns.")
+	}
 	// Phase 29c: the fight's opener, unless another player is already
 	// fighting this group here (one fight to the room, one opener).
 	if !groupInOtherBattle(sd.user.UserId, room.RoomId, p.ID) {
@@ -674,6 +678,9 @@ func harmful(spellId string) bool {
 // outside it are dropped. held is true when it had targets and none are
 // left.
 func holdPlayerSpell(userId int, info *characters.SpellAggroInfo) (held bool) {
+	if !clusterSpell(userId, 0, info) {
+		return true
+	}
 	if info == nil || len(info.TargetMobInstanceIds) == 0 || !harmful(info.SpellId) {
 		return false
 	}
@@ -693,6 +700,9 @@ func holdPlayerSpell(userId int, info *characters.SpellAggroInfo) (held bool) {
 // are left; waitOn is then a player it held back from, whose line it keeps
 // its place in (0 when none).
 func holdMobSpell(mob *mobs.Mob, info *characters.SpellAggroInfo) (held bool, waitOn int) {
+	if !clusterSpell(0, mob.InstanceId, info) {
+		return true, 0
+	}
 	if info == nil || !harmful(info.SpellId) {
 		return false, 0
 	}
