@@ -1,8 +1,10 @@
 # Phase 34 — Company UI and Logistics Delivery Plan
 
-Status: owner-approved plan; 34a–34c complete and verified; 34d pending. Follow the
+Status: owner-approved plan; 34a–34d complete, reviewed and verified. Follow the
 [design](../designs/2026-10-01-phase-34-company-ui-logistics-design.md).
-Owner approved the concrete design and delivery defaults on 2026-10-01. No gameplay checks are claimed by this documentation change.
+Owner approved the concrete design and delivery defaults on 2026-10-01.
+See [Project Status](../PROJECT_STATUS.md) and
+[34d verification](2026-10-02-phase-34d-verification.md) for actual results.
 
 ## Delivery procedure
 
