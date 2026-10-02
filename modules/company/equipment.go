@@ -195,16 +195,19 @@ func cloneCharacter(c *characters.Character) (*characters.Character, error) {
 	if err != nil {
 		return nil, err
 	}
-	return characterFrom(raw)
+	return characterFrom(raw, c.HealthGainPerLevel())
 }
 
 // characterFrom decodes one independent copy of a marshalled character, so
 // a caller previewing many changes marshals the original only once.
-func characterFrom(raw []byte) (*characters.Character, error) {
+func characterFrom(raw []byte, hpPerLevel float64) (*characters.Character, error) {
 	var out characters.Character
 	if err := yaml.Unmarshal(raw, &out); err != nil {
 		return nil, err
 	}
+	// YAML excludes runtime class identity; preserve its resolved HP rate for
+	// this isolated proposal without associating it with a live user.
+	out.HPPerLevel = hpPerLevel
 	out.Validate(true)
 	return &out, nil
 }

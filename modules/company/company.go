@@ -456,6 +456,7 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 		}
 	}
 	m.assignConfiguredArchetype(leaderUserID, companion)
+	companion.Archetype, _ = m.CompanionArchetype(leaderUserID, companion.ID)
 	m.seedDisposition(leaderUserID, companion)
 	var spawnState *domain.MemberState
 	if hire != nil {

@@ -45,10 +45,11 @@ type MobForHire struct {
 type MobId int // Creating a custom type to help prevent confusion over MobId and MobInstanceId
 
 type Mob struct {
-	RewardContributors []int  `yaml:"-"` // Death-time battle eligibility, nil until captured.
-	DeathProcessed     bool   `yaml:"-"`
-	Temperament        string `yaml:"temperament,omitempty"`
-	NeverBreak         bool   `yaml:"neverbreak,omitempty"`
+	HPPerLevel         float64 `yaml:"hpperlevel,omitempty"` // Overrides race/default enemy HP gain.
+	RewardContributors []int   `yaml:"-"`                    // Death-time battle eligibility, nil until captured.
+	DeathProcessed     bool    `yaml:"-"`
+	Temperament        string  `yaml:"temperament,omitempty"`
+	NeverBreak         bool    `yaml:"neverbreak,omitempty"`
 	MobId              MobId
 	Zone               string               `yaml:"zone,omitempty"`
 	ItemDropChance     int                  `yaml:"itemdropchance,omitempty"` // chance in 100
@@ -196,6 +197,7 @@ func newMobById(mobId MobId, homeRoomId int, allowElite bool, forceLevel ...int)
 		// rewrite the template (Ashveil Phase 22b).
 		mob.Character.Items = append([]items.Item(nil), m.Character.Items...)
 
+		mob.Character.HPPerLevel = mob.HPPerLevel
 		mob.HomeRoomId = homeRoomId
 		mob.Character.RoomId = homeRoomId
 		mob.InstanceId = instanceCounter
@@ -700,6 +702,9 @@ func (r *Mob) Id() int {
 }
 
 func (r *Mob) Validate() error {
+	if r.HPPerLevel < 0 || math.IsNaN(r.HPPerLevel) || math.IsInf(r.HPPerLevel, 0) {
+		return fmt.Errorf("invalid hpperlevel")
+	}
 	if r.Stealth != nil && *r.Stealth < 0 {
 		return fmt.Errorf("negative ambush stealth")
 	}

@@ -60,7 +60,7 @@ func (u *usersCopyoverContributor) CopyoverRestore(dec *copyover.Decoder) error 
 	}
 
 	for _, entry := range state.Entries {
-		user, err := loadUserById(entry.UserId)
+		user, err := loadUserById(entry.UserId, true)
 		if err != nil {
 			mudlog.Error("copyover: restore user", "userId", entry.UserId, "error", err)
 			continue
@@ -84,7 +84,7 @@ func (u *usersCopyoverContributor) CopyoverRestore(dec *copyover.Decoder) error 
 }
 
 // loadUserById loads a user record directly from disk by userId.
-func loadUserById(userId int) (*UserRecord, error) {
+func loadUserById(userId int, deferVitals ...bool) (*UserRecord, error) {
 	userFilePath := util.FilePath(string(configs.GetFilePathsConfig().DataFiles), `/`, `users`, `/`, strconv.Itoa(userId)+`.yaml`)
 
 	data, err := util.ReadFile(userFilePath)
@@ -97,7 +97,14 @@ func loadUserById(userId int) (*UserRecord, error) {
 		return nil, err
 	}
 
+	user.Character.SetUserId(user.UserId)
+	health, mana := user.Character.Health, user.Character.Mana
 	user.Character.Validate()
+	// Boot restores users before module tables and class choices are loaded.
+	// Keep saved vitals until ValidateActiveCharacters runs after plugins.Load.
+	if len(deferVitals) > 0 && deferVitals[0] {
+		user.Character.Health, user.Character.Mana = health, mana
+	}
 
 	return user, nil
 }
@@ -105,4 +112,17 @@ func loadUserById(userId int) (*UserRecord, error) {
 // CopyoverContributor returns the users contributor for registration.
 func CopyoverContributor() copyover.Contributor {
 	return &usersCopyoverContributor{}
+}
+
+// ValidateActiveCharacters settles derived stats after module tables load,
+// including copyover's users restored before their archetype registry.
+func ValidateActiveCharacters() {
+	for _, id := range GetOnlineUserIds() {
+		user := GetByUserId(id)
+		if user == nil {
+			continue
+		}
+		user.Character.SetUserId(user.UserId)
+		user.Character.Validate(true)
+	}
 }

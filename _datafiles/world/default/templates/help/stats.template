@@ -25,7 +25,7 @@ earned on level-up.
 <ansi fg="black-bold">|</ansi>                      <ansi fg="black-bold">|</ansi> Improves spellcasting success.                       <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">|</ansi>                      <ansi fg="black-bold">|</ansi> Expands map memory capacity.                         <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">+----------------------+------------------------------------------------------+</ansi>
-<ansi fg="black-bold">|</ansi> <ansi fg="cyan">Vitality            </ansi> <ansi fg="black-bold">|</ansi> Each point adds <ansi fg="cyan">+4 maximum HP</ansi>.                       <ansi fg="black-bold">|</ansi>
+<ansi fg="black-bold">|</ansi> <ansi fg="cyan">Vitality            </ansi> <ansi fg="black-bold">|</ansi> Each point adds <ansi fg="cyan">+{{ config "GamePlay.Progression.HPPerVitality" }} maximum HP</ansi>.                       <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">|</ansi>                      <ansi fg="black-bold">|</ansi> Improves health regeneration between fights.         <ansi fg="black-bold">|</ansi>
 <ansi fg="black-bold">+----------------------+------------------------------------------------------+</ansi>
 <ansi fg="black-bold">|</ansi> <ansi fg="cyan">Mysticism           </ansi> <ansi fg="black-bold">|</ansi> Each point adds <ansi fg="cyan">+3 maximum MP</ansi>.                       <ansi fg="black-bold">|</ansi>
@@ -34,4 +34,4 @@ earned on level-up.
 <ansi fg="black-bold">+----------------------+------------------------------------------------------+</ansi>
 
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help strength</ansi>, <ansi fg="command">help speed</ansi>, <ansi fg="command">help perception</ansi>, <ansi fg="command">help smarts</ansi>,
-          <ansi fg="command">help vitality</ansi>, <ansi fg="command">help mysticism</ansi>, <ansi fg="command">help stat-train</ansi>
+          <ansi fg="command">help progression</ansi>, <ansi fg="command">help vitality</ansi>, <ansi fg="command">help mysticism</ansi>, <ansi fg="command">help stat-train</ansi>

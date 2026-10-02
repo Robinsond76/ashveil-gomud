@@ -96,6 +96,7 @@ func NewReplayUser(real *UserRecord) (*UserRecord, error) {
 	// Placed by the tutorial once it spawns; the Void until then.
 	c.RoomId = -1
 	c.Zone = real.Character.Zone
+	c.SetUserId(id)
 	c.Validate()
 	u.Character = c
 

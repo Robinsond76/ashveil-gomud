@@ -34,8 +34,8 @@ type narrationMechanic struct {
 func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	t.Setenv("GODEBUG", "randseednop=0")
 	b := newBrawl(t)
-	// Recaptured for Phase 33i2: an enemy's crit now rolls its (light)
-	// wound's place, one more draw that shifts the seeded dice after it.
+	// Recaptured for Phase 30g4: stepped stats change hit and damage rolls.
+	// This remains an outcome lock for subsequent narration-only changes.
 	// The golden predates Phase 30d1, and its fixture keeps a cutthroat
 	// chanting for ever as a placeholder: blows breaking chants would
 	// change what it records.

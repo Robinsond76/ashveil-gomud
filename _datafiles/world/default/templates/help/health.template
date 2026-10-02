@@ -29,9 +29,7 @@ At <ansi fg="red">0 HP</ansi>, you will drop to the floor and slowly bleed out.
 
 At <ansi fg="red">-10 HP</ansi>, you will die. When you die, all gear you posess drops to the ground.
 
-Health is calculated based on: 
- - Level
- - Vitality * 4
- 
-Plus some bonuses every so many levels.
+Maximum health comes from a base, your archetype's gains through level
+{{ config "GamePlay.Progression.HPFullLevels" }}, then {{ config "GamePlay.Progression.HPAfterFull" }} HP per later level, plus
+{{ config "GamePlay.Progression.HPPerVitality" }} HP per adjusted Vitality and health bonuses. See <ansi fg="command">help progression</ansi>.
 

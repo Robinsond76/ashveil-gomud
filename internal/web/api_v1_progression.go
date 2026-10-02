@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 )
 
@@ -31,6 +32,16 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 
 	// Override config from query params when provided.
 	q := r.URL.Query()
+	for key, target := range map[string]*configs.ConfigInt{"StatStepLevels": &cfg.StatStepLevels, "HPFullLevels": &cfg.HPFullLevels, "XPKneeLevel": &cfg.XPKneeLevel} {
+		if v, err := strconv.Atoi(q.Get(key)); err == nil {
+			*target = configs.ConfigInt(v)
+		}
+	}
+	for key, target := range map[string]*configs.ConfigFloat{"DefaultHPPerLevel": &cfg.DefaultHPPerLevel, "HPAfterFull": &cfg.HPAfterFull, "XPKneeGrowth": &cfg.XPKneeGrowth} {
+		if v, err := strconv.ParseFloat(q.Get(key), 64); err == nil {
+			*target = configs.ConfigFloat(v)
+		}
+	}
 	if v := q.Get("BaseModFactor"); v != "" {
 		if f, err := strconv.ParseFloat(v, 64); err == nil {
 			cfg.BaseModFactor = configs.ConfigFloat(f)
@@ -54,11 +65,6 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 	if v := q.Get("HPBase"); v != "" {
 		if i, err := strconv.Atoi(v); err == nil {
 			cfg.HPBase = configs.ConfigInt(i)
-		}
-	}
-	if v := q.Get("HPPerLevel"); v != "" {
-		if f, err := strconv.ParseFloat(v, 64); err == nil {
-			cfg.HPPerLevel = configs.ConfigFloat(f)
 		}
 	}
 	if v := q.Get("HPPerVitality"); v != "" {
@@ -180,16 +186,12 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 		for i, lvl := range levels {
 			rawStat := gainsForLevelWithCfg(lvl, base, cfg)
 			adjStat := applyCapWithCfg(rawStat, cfg)
-			hpSeries[i] = int(cfg.HPBase) +
-				int(float64(lvl)*float64(cfg.HPPerLevel)) +
-				int(float64(adjStat)*float64(cfg.HPPerVitality))
-			hpRawSeries[i] = int(cfg.HPBase) +
-				int(float64(lvl)*float64(cfg.HPPerLevel)) +
-				int(float64(rawStat)*float64(cfg.HPPerVitality))
-			manaSeries[i] = int(cfg.ManaBase) +
+			hpSeries[i] = cfg.HealthAtLevel(lvl, adjStat, float64(cfg.DefaultHPPerLevel))
+			hpRawSeries[i] = cfg.HealthAtLevel(lvl, rawStat, float64(cfg.DefaultHPPerLevel))
+			manaSeries[i] = cfg.RacialForLevel(lvl, 1) + int(cfg.ManaBase) +
 				int(float64(lvl)*float64(cfg.ManaPerLevel)) +
 				int(float64(adjStat)*float64(cfg.ManaPerMysticism))
-			manaRawSeries[i] = int(cfg.ManaBase) +
+			manaRawSeries[i] = cfg.RacialForLevel(lvl, 1) + int(cfg.ManaBase) +
 				int(float64(lvl)*float64(cfg.ManaPerLevel)) +
 				int(float64(rawStat)*float64(cfg.ManaPerMysticism))
 		}
@@ -197,6 +199,14 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 		hpRaw[label] = hpRawSeries
 		mana[label] = manaSeries
 		manaRaw[label] = manaRawSeries
+	}
+
+	for id, rate := range archetypes.HealthArchetypes() {
+		series := make([]int, n)
+		for i, lvl := range levels {
+			series[i] = cfg.HealthAtLevel(lvl, applyCapWithCfg(gainsForLevelWithCfg(lvl, 3, cfg), cfg), rate)
+		}
+		hp[id] = series
 	}
 
 	// XP curve (TNLScale = 1.0 for display purposes).
@@ -209,15 +219,10 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 			xpPrev = xpTLWithCfg(lvl-1, cfg)
 		}
 		delta := xpForLevel - xpPrev
-		if lvl == 1 {
-			delta = 0
-		}
 		xpPerLevel[i] = delta
-		if i == 0 {
-			xpCumulative[i] = delta
-		} else {
-			xpCumulative[i] = xpCumulative[i-1] + delta
-		}
+		// Cumulative thresholds are absolute, even for downsampled chart levels.
+		xpCumulative[i] = xpForLevel
+
 	}
 
 	writeJSON(w, http.StatusOK, APIResponse[progressionPreviewData]{
@@ -239,39 +244,17 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 // gainsForLevelWithCfg mirrors stats.StatInfo.GainsForLevel using a local cfg
 // snapshot so the preview does not touch global config.
 func gainsForLevelWithCfg(level, base int, cfg configs.ProgressionConfig) int {
-	if level < 1 {
-		level = 1
-	}
-	basePoints := int(math.Pow(float64(level-1), float64(cfg.BaseModExponent)) *
-		float64(cfg.BaseModFactor) * float64(base))
-	freePoints := int(math.Pow(float64(level), float64(cfg.NaturalGainsExponent)) *
-		float64(cfg.NaturalGainsModFactor))
-	return basePoints + freePoints
+	return cfg.RacialForLevel(level, base)
 }
 
 // applyCapWithCfg mirrors stats.StatInfo.Recalculate's compression step using a
 // local cfg snapshot so the preview does not touch global config.
 // value is treated as racial-only (no training/mods) matching the chart series.
 func applyCapWithCfg(value int, cfg configs.ProgressionConfig) int {
-	if value < int(cfg.StatCapThreshold) {
-		return value
-	}
-	overage := value - int(cfg.StatCapAnchor)
-	if overage < 0 {
-		overage = 0
-	}
-	return int(cfg.StatCapAnchor) + int(math.Round(math.Pow(float64(overage), float64(cfg.StatCapExponent))*float64(cfg.StatCapScale)))
+	return cfg.CompressStat(value)
 }
 
 // xpTLWithCfg mirrors Character.XPTL using a local cfg snapshot (TNLScale=1.0).
 func xpTLWithCfg(lvl int, cfg configs.ProgressionConfig) int {
-	if lvl < 1 {
-		lvl = 1
-	}
-	base := float64(cfg.XPBase)
-	xp := base + math.Pow(float64(lvl), float64(cfg.XPLevelPower))*float64(cfg.XPLevelFactor)*base
-	if xp > math.MaxInt {
-		return math.MaxInt
-	}
-	return int(xp)
+	return cfg.XPThreshold(lvl, 1)
 }

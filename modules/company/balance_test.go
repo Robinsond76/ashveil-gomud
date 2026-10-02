@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
@@ -17,7 +18,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
-	"github.com/GoMudEngine/GoMud/internal/stats"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -195,6 +195,11 @@ func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string) *ba
 	t.Helper()
 	b := newBrawl(t)
 	b.withArchetypes("")
+	// 30g4: configured classes supply HP on both sides of the even mirror.
+	archetypes.SetProvider(hpArchetypes{})
+	for id := 1; id <= 4; id++ {
+		b.companion(id).Character.HPArchetype, _ = module.CompanionArchetype(7, id)
+	}
 	// 30a's statuses, which the brawl world leaves out (review: no bleed
 	// or stagger ever landed, so tick damage read 0).
 	loadStatusBuffs(t)
@@ -228,6 +233,7 @@ func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string) *ba
 		mob := mobs.NewMobById(mobs.MobId(m.id), b.road.RoomId)
 		require.NotNil(t, mob, m.name)
 		mob.SpawnGroup = balanceGroup
+		mob.Character.HPPerLevel = map[int]float64{9201: 6, 9202: 5, 9203: 6, 9204: 5, 9205: 5}[m.id]
 		b.road.AddMob(mob.InstanceId)
 		f.enemies = append(f.enemies, mob.InstanceId)
 		levelTo(&mob.Character, level)
@@ -603,15 +609,8 @@ func TestBalanceSidesStayEven(t *testing.T) {
 				} {
 					assert.Equal(t, s[1], s[0], "%s vs %s: a stat", c.Name, m.Name)
 				}
-				// A player's HealthMax starts with Base 1 (characters.New), a
-				// mob's with 0, so a player gains racial HP growth a mob
-				// doesn't: an engine quirk the harness keeps (30g4 replaces
-				// the HP formula).
-				playerHP := 0
-				if c == f.aria.Character {
-					playerHP = (&stats.StatInfo{Base: 1}).GainsForLevel(level) - (&stats.StatInfo{}).GainsForLevel(level)
-				}
-				assert.Equal(t, m.HealthMax.Value+playerHP, c.HealthMax.Value, "%s vs %s: health", c.Name, m.Name)
+				// 30g4 removes the player's hidden racial HealthMax growth.
+				assert.Equal(t, m.HealthMax.Value, c.HealthMax.Value, "%s vs %s: health", c.Name, m.Name)
 				assert.Equal(t, m.GetDefense(), c.GetDefense(), "%s vs %s: armor", c.Name, m.Name)
 			}
 			f.run()

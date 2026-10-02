@@ -5,7 +5,7 @@ absorbs punishment that would fell a weaker soul.
 
 <ansi fg="yellow">Health</ansi>
 
-* Each point of Vitality adds <ansi fg="cyan">4 maximum HP</ansi>. It is the single most
-  important stat for staying alive in a long fight.
+* Each point of Vitality adds <ansi fg="cyan">{{ config "GamePlay.Progression.HPPerVitality" }} maximum HP</ansi>. Your archetype
+  also contributes health by level (<ansi fg="command">help progression</ansi>).
 * Improves the rate at which you recover health between fights.
 </ansi>

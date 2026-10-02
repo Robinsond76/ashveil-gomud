@@ -1,9 +1,19 @@
 package configs
 
+import "math"
+
 type ProgressionConfig struct {
+	// StatStepLevels sets the racial growth interval (levels 5, 10, ... by default).
+	StatStepLevels ConfigInt `yaml:"StatStepLevels"`
+	// DefaultHPPerLevel applies when no archetype or enemy override is available.
+	DefaultHPPerLevel ConfigFloat `yaml:"DefaultHPPerLevel"`
+	HPFullLevels      ConfigInt   `yaml:"HPFullLevels"`
+	HPAfterFull       ConfigFloat `yaml:"HPAfterFull"`
+	XPKneeLevel       ConfigInt   `yaml:"XPKneeLevel"`
+	XPKneeGrowth      ConfigFloat `yaml:"XPKneeGrowth"`
 	// Stat gain formula: GainsForLevel
-	//   racial_value = floor(base * BaseModFactor * (level-1)^BaseModExponent)
-	//                + floor(NaturalGainsModFactor * level^NaturalGainsExponent)
+	//   racial_value = floor(base * BaseModFactor * (step-1)^BaseModExponent)
+	//                + floor(NaturalGainsModFactor * step^NaturalGainsExponent)
 	//
 	// BaseModFactor controls how much a racial base stat matters at high levels.
 	// Higher values cause races with strong bases to diverge more from weak-base races.
@@ -12,15 +22,14 @@ type ProgressionConfig struct {
 	// 1.0 = linear growth, <1.0 = diminishing returns, >1.0 = accelerating returns.
 	BaseModExponent ConfigFloat `yaml:"BaseModExponent"`
 	// NaturalGainsModFactor controls the universal flat gains every character receives
-	// per level, regardless of race. Higher values raise the floor for weak-base races.
+	// per stat step, regardless of race. Higher values raise the floor for weak-base races.
 	NaturalGainsModFactor ConfigFloat `yaml:"NaturalGainsModFactor"`
 	// NaturalGainsExponent controls the shape of the flat gains component.
 	// 1.0 = linear, <1.0 = diminishing returns, >1.0 = accelerating.
 	NaturalGainsExponent ConfigFloat `yaml:"NaturalGainsExponent"`
 
-	// HP formula: HealthMax = HPBase + level*HPPerLevel + Vitality_adj*HPPerVitality + mods
+	// HP formula: base + archetype gains through HPFullLevels + HPAfterFull thereafter + Vitality and bonuses
 	HPBase        ConfigInt   `yaml:"HPBase"`
-	HPPerLevel    ConfigFloat `yaml:"HPPerLevel"`
 	HPPerVitality ConfigFloat `yaml:"HPPerVitality"`
 
 	// Mana formula: ManaMax = ManaBase + level*ManaPerLevel + Mysticism_adj*ManaPerMysticism + mods
@@ -42,7 +51,7 @@ type ProgressionConfig struct {
 	// XPLevelPower is the exponent. 2.0 = quadratic, 1.5 = gentler, 3.0 = steeper.
 	XPLevelPower ConfigFloat `yaml:"XPLevelPower"`
 
-	// MaxLevel is the soft display cap used in admin charts and any future level-cap enforcement.
+	// MaxLevel is the admin chart display range; it never caps character levels.
 	MaxLevel ConfigInt `yaml:"MaxLevel"`
 
 	// Stat value compression (applied in Recalculate).
@@ -67,6 +76,25 @@ type ProgressionConfig struct {
 }
 
 func (p *ProgressionConfig) Validate() {
+	if p.StatStepLevels < 1 {
+		p.StatStepLevels = 5
+	}
+	if p.DefaultHPPerLevel <= 0 || math.IsNaN(float64(p.DefaultHPPerLevel)) || math.IsInf(float64(p.DefaultHPPerLevel), 0) {
+		p.DefaultHPPerLevel = 5
+	}
+	if p.HPFullLevels < 1 {
+		p.HPFullLevels = 20
+	}
+	if p.HPAfterFull <= 0 || math.IsNaN(float64(p.HPAfterFull)) || math.IsInf(float64(p.HPAfterFull), 0) {
+		p.HPAfterFull = 1
+	}
+	if p.XPKneeLevel < 2 {
+		p.XPKneeLevel = 60
+	}
+	if p.XPKneeGrowth <= 1 || math.IsNaN(float64(p.XPKneeGrowth)) || math.IsInf(float64(p.XPKneeGrowth), 0) {
+		p.XPKneeGrowth = 1.1
+	}
+
 	if p.BaseModFactor <= 0 {
 		p.BaseModFactor = 0.3333333334
 	}
@@ -83,11 +111,8 @@ func (p *ProgressionConfig) Validate() {
 	if p.HPBase < 0 {
 		p.HPBase = 5
 	}
-	if p.HPPerLevel <= 0 {
-		p.HPPerLevel = 1.0
-	}
 	if p.HPPerVitality <= 0 {
-		p.HPPerVitality = 4.0
+		p.HPPerVitality = 1.0
 	}
 
 	if p.ManaBase < 0 {
@@ -110,7 +135,7 @@ func (p *ProgressionConfig) Validate() {
 		p.StatPointsPerLevel = 1
 	}
 	if p.StatPointsEveryNLevels < 1 {
-		p.StatPointsEveryNLevels = 1
+		p.StatPointsEveryNLevels = 5
 	}
 
 	if p.XPBase < 1 {
@@ -152,4 +177,92 @@ func GetProgressionConfig() ProgressionConfig {
 		configData.Validate()
 	}
 	return configData.GamePlay.Progression
+}
+
+// StatStep returns the progression input, retaining the original formula for
+// an interval of one. Other intervals advance at their level multiples.
+func (p ProgressionConfig) StatStep(level int) int {
+	level = max(level, 1)
+	every := max(int(p.StatStepLevels), 1)
+	if every == 1 {
+		return level
+	}
+	return 1 + level/every
+}
+
+// NextStatStep saturates at MaxInt rather than wrapping for extreme levels.
+func (p ProgressionConfig) NextStatStep(level int) int {
+	level = max(level, 1)
+	every := max(int(p.StatStepLevels), 1)
+	delta := every - level%every
+	if level > math.MaxInt-delta {
+		return math.MaxInt
+	}
+	return level + delta
+}
+
+// HealthAtLevel is the HP formula without equipment, buffs or explicit training.
+func (p ProgressionConfig) HealthAtLevel(level, vitality int, perLevel float64) int {
+	level = max(level, 1)
+	if perLevel <= 0 {
+		perLevel = float64(p.DefaultHPPerLevel)
+	}
+	full := min(level, int(p.HPFullLevels))
+	return boundedProgressionInt(float64(p.HPBase) + math.Trunc(float64(full)*perLevel) +
+		math.Trunc(float64(level-full)*float64(p.HPAfterFull)) + math.Trunc(float64(vitality)*float64(p.HPPerVitality)))
+}
+
+// XPThreshold preserves cumulative thresholds through the knee. After it,
+// incremental costs grow geometrically. A closed form avoids level-sized loops.
+func (p ProgressionConfig) XPThreshold(level int, scale float64) int {
+	level = max(level, 1)
+	polynomial := func(l int) float64 {
+		return float64(p.XPBase) + math.Pow(float64(l), float64(p.XPLevelPower))*float64(p.XPLevelFactor)*float64(p.XPBase)
+	}
+	knee := max(int(p.XPKneeLevel), 2)
+	xp := polynomial(min(level, knee))
+	if level > knee {
+		growth := float64(p.XPKneeGrowth)
+		cost := polynomial(knee) - polynomial(knee-1)
+		// expm1 avoids cancellation when an administrator sets growth near 1.
+		xp += cost * growth * math.Expm1(float64(level-knee)*math.Log(growth)) / (growth - 1)
+	}
+	xp *= scale
+	if math.IsInf(xp, 1) || xp >= float64(math.MaxInt) {
+		return math.MaxInt
+	}
+	if math.IsNaN(xp) || xp < 0 {
+		return 0
+	}
+	return int(xp)
+}
+
+// RacialForLevel is shared with the editor so its step previews cannot drift.
+func (p ProgressionConfig) RacialForLevel(level, base int) int {
+	step := p.StatStep(level)
+	racial := math.Trunc(math.Pow(float64(step-1), float64(p.BaseModExponent)) * float64(p.BaseModFactor) * float64(base))
+	free := math.Trunc(math.Pow(float64(step), float64(p.NaturalGainsExponent)) * float64(p.NaturalGainsModFactor))
+	return boundedProgressionInt(racial + free)
+}
+
+func boundedProgressionInt(value float64) int {
+	if value >= float64(math.MaxInt) {
+		return math.MaxInt
+	}
+	if value <= float64(math.MinInt) {
+		return math.MinInt
+	}
+	if math.IsNaN(value) {
+		return 0
+	}
+	return int(value)
+}
+
+// CompressStat applies the configured soft cap to a racial or total stat value.
+func (p ProgressionConfig) CompressStat(value int) int {
+	if value < int(p.StatCapThreshold) {
+		return value
+	}
+	overage := max(value-int(p.StatCapAnchor), 0)
+	return boundedProgressionInt(float64(p.StatCapAnchor) + math.Round(math.Pow(float64(overage), float64(p.StatCapExponent))*float64(p.StatCapScale)))
 }

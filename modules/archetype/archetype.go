@@ -475,6 +475,8 @@ func applyGrants(user *users.UserRecord, a archetypes.Archetype) {
 	if user == nil {
 		return
 	}
+	user.Character.SetUserId(user.UserId)
+	user.Character.Validate(true)
 	skillIDs := make([]string, 0, len(a.GrantSkills))
 	for id := range a.GrantSkills {
 		skillIDs = append(skillIDs, id)
@@ -522,7 +524,7 @@ func (m *ArchetypeModule) chooseResult(user *users.UserRecord, name string, conf
 	}
 	if !confirm {
 		m.mu.Unlock()
-		preview := fmt.Sprintf("%s: %s", a.Name, a.Description)
+		preview := fmt.Sprintf("%s: %s %s", a.Name, a.Description, healthLine(a))
 		if line := m.kitLine(a); line != "" {
 			preview += "\n" + line
 		}
@@ -557,6 +559,16 @@ func (m *ArchetypeModule) chooseResult(user *users.UserRecord, name string, conf
 // reset clears a player's choice (admin only). Granted skills and spells
 // are kept: nothing already known is ever removed.
 func (m *ArchetypeModule) reset(userID int) (string, error) {
+	text, err := m.resetChoice(userID)
+	if err == nil {
+		if user := users.GetByUserId(userID); user != nil {
+			user.Character.Validate(true)
+		}
+	}
+	return text, err
+}
+
+func (m *ArchetypeModule) resetChoice(userID int) (string, error) {
 	if err := m.persistenceAvailable(); err != nil {
 		return "", err
 	}
@@ -670,7 +682,7 @@ func (m *ArchetypeModule) list(userID int) string {
 	}
 	lines = append(lines, "Archetypes:")
 	for _, a := range table.List() {
-		line := fmt.Sprintf("  %-8s %s Skills: %s.", a.Name, a.Description, strings.Join(a.Skills, ", "))
+		line := fmt.Sprintf("  %-8s %s %s Skills: %s.", a.Name, a.Description, healthLine(a), strings.Join(a.Skills, ", "))
 		if len(a.Schools) > 0 {
 			line += " Spell schools: " + strings.Join(a.Schools, ", ") + "."
 		}
@@ -738,7 +750,9 @@ func parseArchetypes(raw any) []archetypes.Archetype {
 		if fields == nil {
 			continue
 		}
+		hp, _ := strconv.ParseFloat(fmt.Sprint(fields["hpperlevel"]), 64)
 		a := archetypes.Archetype{
+			HPPerLevel:      hp,
 			ID:              configString(fields["archetypeid"]),
 			Name:            configString(fields["name"]),
 			Description:     configString(fields["description"]),
@@ -851,4 +865,21 @@ func configInt(raw any) int {
 func configString(raw any) string {
 	value, _ := raw.(string)
 	return strings.TrimSpace(value)
+}
+
+func (m *ArchetypeModule) HealthPerLevel(id string) (float64, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	a, ok := m.table.Get(id)
+	return a.HPPerLevel, ok && a.HPPerLevel > 0
+}
+
+func (m *ArchetypeModule) HealthArchetypes() map[string]float64 {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := map[string]float64{}
+	for _, a := range m.table.List() {
+		out[a.ID] = a.HPPerLevel
+	}
+	return out
 }

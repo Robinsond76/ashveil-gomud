@@ -71,13 +71,14 @@ type Companion struct {
 // Identity is what a companion's live mob is called and looks like, over
 // its template's (Phase 32a2). Blank fields keep the template's.
 type Identity struct {
+	Archetype   string // Derived from the durable companion record, not separately saved.
 	Name        string
 	Description string
 }
 
 // Identity is the companion's own name and description.
 func (c Companion) Identity() Identity {
-	return Identity{Name: c.Name, Description: c.Description}
+	return Identity{Name: c.Name, Description: c.Description, Archetype: c.Archetype}
 }
 
 // AssetOperation is a write-ahead record. Company gear is saved with this

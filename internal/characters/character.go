@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -46,6 +47,9 @@ const (
 )
 
 type Character struct {
+	// Runtime inputs copied from authored mob templates or the companion record.
+	HPPerLevel     float64  `yaml:"-"`
+	HPArchetype    string   `yaml:"-"`
 	CompanyCargo   bool     `yaml:"companycargo,omitempty"` // Items are shared cargo, excluded from personal burden.
 	CargoMigrated  bool     `yaml:"cargomigrated,omitempty"`
 	CompanyAssetOp string   `yaml:"companyassetop,omitempty"`
@@ -1444,16 +1448,7 @@ func (c *Character) XPTNL() int {
 
 // Amt TNL for a specific level
 func (c *Character) XPTL(lvl int) int {
-	if lvl < 1 {
-		lvl = 1
-	}
-	cfg := configs.GetProgressionConfig()
-	base := float64(cfg.XPBase)
-	xp := (base + math.Pow(float64(lvl), float64(cfg.XPLevelPower))*float64(cfg.XPLevelFactor)*base) * float64(c.TNLScale)
-	if xp > math.MaxInt {
-		return math.MaxInt
-	}
-	return int(xp)
+	return configs.GetProgressionConfig().XPThreshold(lvl, float64(c.TNLScale))
 }
 
 // Returns the actual xp in regards to the current level/next level
@@ -1474,7 +1469,9 @@ func (c *Character) XPTNLActual() (xpPastCurrentLevel int, tnlXP int) {
 
 func (c *Character) LevelUp() (bool, stats.Statistics) {
 
-	if c.XPTNL() > c.Experience {
+	// No representable higher threshold remains after integer saturation.
+	// Refuse rather than granting levels forever at exactly MaxInt XP.
+	if c.XPTNL() == math.MaxInt || c.Level == math.MaxInt || c.XPTNL() > c.Experience {
 		return false, stats.Statistics{}
 	}
 
@@ -1667,10 +1664,7 @@ func (c *Character) RecalculateStats() {
 	// This relies on the above stats so has to be calculated afterwards
 	cfgProg := configs.GetProgressionConfig()
 	c.HealthMax.NoCap = true
-	c.HealthMax.Mods = int(cfgProg.HPBase) +
-		c.StatMod(string(statmods.HealthMax)) +
-		int(float64(c.Level)*float64(cfgProg.HPPerLevel)) +
-		int(float64(c.Stats.Vitality.ValueAdj)*float64(cfgProg.HPPerVitality))
+	c.HealthMax.Mods = stats.SaturatingSum(cfgProg.HealthAtLevel(c.Level, c.Stats.Vitality.ValueAdj, c.HealthGainPerLevel()), c.StatMod(string(statmods.HealthMax)))
 
 	c.ManaMax.NoCap = true
 	c.ManaMax.Mods = int(cfgProg.ManaBase) +
@@ -1682,7 +1676,10 @@ func (c *Character) RecalculateStats() {
 	c.ActionPointsMax.Mods = 200 // hard coded for now
 
 	// Recalculate HP/MP stats
-	c.HealthMax.Recalculate(c.Level)
+	// HP is derived by its own formula, not the racial stat growth formula.
+	c.HealthMax.Racial = 0
+	c.HealthMax.Value = stats.SaturatingSum(c.HealthMax.Training, c.HealthMax.Mods)
+	c.HealthMax.ValueAdj = c.HealthMax.Value
 	c.ManaMax.Recalculate(c.Level)
 	c.ActionPointsMax.Recalculate(c.Level)
 
@@ -1692,6 +1689,7 @@ func (c *Character) RecalculateStats() {
 	}
 	if c.HealthMax.Value < 1 {
 		c.HealthMax.Value = 1
+		c.HealthMax.ValueAdj = 1
 	}
 	if c.ActionPointsMax.Value < 50 {
 		c.ActionPointsMax.Value = 50
@@ -2484,11 +2482,30 @@ func (c *Character) SeesSecretExit(roomID int, exitName string, targetRoomID int
 func StatPointsAtLevel(level int) int {
 	cfgProg := configs.GetProgressionConfig()
 	every, per := int(cfgProg.StatPointsEveryNLevels), int(cfgProg.StatPointsPerLevel)
-	points := 0
-	for lvl := 1; lvl <= level; lvl++ {
-		if every <= 1 || lvl%every == 0 {
-			points += per
+	return max(level, 0) / max(every, 1) * per
+}
+
+// HealthGainPerLevel resolves a player's durable class, a companion's runtime
+// class, or an enemy template/race override. Unchosen/unknown uses the default.
+func (c *Character) HealthGainPerLevel() float64 {
+	cfg := configs.GetProgressionConfig()
+	id := c.HPArchetype
+	if c.userId > 0 {
+		id, _ = archetypes.PlayerArchetype(c.userId)
+	}
+	if id != "" {
+		if hp, ok := archetypes.HealthPerLevel(id); ok {
+			return hp
+		}
+		return float64(cfg.DefaultHPPerLevel)
+	}
+	if c.userId == 0 {
+		if c.HPPerLevel > 0 {
+			return c.HPPerLevel
+		}
+		if r := races.GetRace(c.RaceId); r != nil && r.HPPerLevel > 0 {
+			return r.HPPerLevel
 		}
 	}
-	return points
+	return float64(cfg.DefaultHPPerLevel)
 }

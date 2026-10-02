@@ -152,7 +152,8 @@ func (m *CompanyModule) EquipmentViewFor(id int, focus string) domain.EquipmentV
 		out.Available, out.Reason = false, "Equipment preview unavailable."
 		return out
 	}
-	key := sha256.Sum256(append(append(keyRaw, cargoRaw...), fmt.Sprintf("|%+v|%t|%t|%s|%t|%v|%s", load, known, out.Available, out.Reason, bare.Pet.Exists() && !bare.Pet.IsMissing(), bare.Pet.GetBuffs(), focus)...))
+	hpPerLevel := bare.HealthGainPerLevel()
+	key := sha256.Sum256(append(append(keyRaw, cargoRaw...), fmt.Sprintf("|%+v|%t|%t|%s|%t|%v|%s|%g", load, known, out.Available, out.Reason, bare.Pet.Exists() && !bare.Pet.IsMissing(), bare.Pet.GetBuffs(), focus, hpPerLevel)...))
 	round := util.GetRoundCount()
 	m.equipmentViews.mu.Lock()
 	cached, hit := m.equipmentViews.byUser[id]
@@ -166,7 +167,7 @@ func (m *CompanyModule) EquipmentViewFor(id int, focus string) domain.EquipmentV
 		out.Available, out.Reason = false, "Equipment preview unavailable."
 		return out
 	}
-	clone := func() (*characters.Character, error) { return characterFrom(raw) }
+	clone := func() (*characters.Character, error) { return characterFrom(raw, hpPerLevel) }
 	preview := func(verb, slot string, itm items.Item) domain.EquipmentChoice {
 		choice := domain.EquipmentChoice{Ref: itm.ShorthandId(), Label: domain.PlainLabel(itm)}
 		args := []string{verb, "me", itm.ShorthandId(), slot}

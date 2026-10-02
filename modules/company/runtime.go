@@ -45,6 +45,7 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 	}
 	// Phase 33h1: the level's points dealt by the companion's growth, in
 	// place of the template's even spread, before its vitals are set.
+	mob.Character.HPArchetype = identity.Archetype
 	retrainMob(mob, growth)
 	if state != nil {
 		applyState(mob, *state)
@@ -129,6 +130,11 @@ func (nativeRuntime) Retrain(instanceID int, growth domain.GrowthWeights) bool {
 	mob := mobs.GetInstance(instanceID)
 	if mob == nil {
 		return false
+	}
+	if leader, key, ok := domain.LeaderAndKeyForInstance(instanceID); ok {
+		if id, valid := domain.CompanionIDFromMemberKey(key); valid {
+			mob.Character.HPArchetype, _ = domain.CompanionArchetype(leader, id)
+		}
 	}
 	retrainMob(mob, growth)
 	mob.Character.Health = min(mob.Character.Health, mob.Character.HealthLimit())

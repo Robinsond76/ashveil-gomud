@@ -80,6 +80,7 @@ func NewUserRecord(userId int, connectionId uint64) *UserRecord {
 		EventLog:       UserLog{},
 	}
 
+	u.Character.SetUserId(userId)
 	if c.Death.PermaDeath {
 		u.Character.ExtraLives = int(c.LivesStart)
 	}
@@ -539,6 +540,7 @@ func (u *UserRecord) GetUnsentText() (unsent string, suggestion string) {
 // Replace a characters information with another.
 func (u *UserRecord) ReplaceCharacter(replacement *characters.Character) {
 	u.Character = replacement
+	u.Character.SetUserId(u.UserId)
 }
 
 func (u *UserRecord) SetUsername(un string) error {

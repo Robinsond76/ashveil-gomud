@@ -12,8 +12,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (30f battlefield conditions reviewed and merged; Phase 34 review follow-up and on-demand Gear editor; integrated 33i2)
-- **Latest completed slices:** 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
+- **Last updated:** 2026-10-02 (30g4 progression merged after 30f; 30f battlefield conditions reviewed and merged; Phase 34 review follow-up and on-demand Gear editor)
+- **Latest completed slices:** 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
@@ -27,6 +27,63 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**30g4 progression complete (2026-10-02):** automatic stats and stat-point
+awards step at levels 5, 10, 15, …; skill training remains every level.
+HP uses configured archetype rates through level 20, then one per level,
+with race/template overrides for enemies. XP retains its thresholds through
+level 60, then grows incremental costs by 1.10 without a level cap.
+Existing player investment and saved vitals survive load/copyover; maxima
+clamp vitals without refilling. Companion class HP uses its durable identity.
+Admin controls/charts share live formulas; creation, status, level-up,
+indexed help and tutorial explain the new progression.
+
+Independent review accepted and fixed two P2 findings with regressions:
+saturated HP/stat additions could overflow, and Mana previews omitted an
+intrinsic racial term. Follow-up accepted both fixes with no remaining
+blockers or rejected findings. Generate, validate, JS/Lua lint and editor
+browser checks and the full `go test -race ./...` suite passed.
+The 900-fight balance table had no stalls; no-focus medians at levels 1/5/10
+are 14/44/87 rounds. These remain provisional; 30g5 adds the action meter,
+and 30g6 owns the 10–15-round target. See the
+[plan](plans/2026-10-02-phase-30g4-progression.md) and
+[verification/upgrade notes](plans/2026-10-02-phase-30g4-verification.md).
+
+Phase 30g4 PR integration with the Phase 34 review follow-up (`0a2facb7`)
+preserved both status records. Independent integration review found a Gear
+preview clone dropped class HP, and its cache could retain the old rate after
+a class change. Both paths now preserve the resolved HP rate and key the cache
+on it. Warrior/wizard player and companion clone regressions, plus cached
+preview/class-change/applied HP parity, passed; follow-up accepted the fix with
+no remaining blockers. Merged generation, validation, JS/Lua lint and the
+full race suite passed. An existing retreat assertion failed on the first
+post-fix run; three focused reruns passed, new test provider cleanup was
+corrected, and the final full suite passed. See PR #13.
+
+PR #13 pre-merge review (2026-10-02) found no blockers and accepted three
+minor findings, fixed with regressions: player characters made by
+`NewUserRecord`, `CreateUser`, deletion reset and permadeath reset now carry
+their user id, so their HP uses the player's archetype path rather than the
+enemy race/template override path; `ValidateActiveCharacters` skips a
+missing user; and `archetype` and its choose preview show each live HP rate, which the
+progression and stat-train help now point to instead of fixed numbers alone.
+A follow-up review of those fixes found the replay character and
+`ReplaceCharacter` also missed the id (fixed with regressions) and that
+stat-train's "stat-step" wording conflated two settings (reworded). Rejected:
+permadeath keeps the archetype registry entry, so the fresh character keeps
+the old class rate; this predates 30g4 and Ashveil deaths are never
+permanent. Lower early HP from Vitality 4 → 1 is noted as
+balance for 30g6, not a defect.
+Merged after 30f (#12); the only code conflict, `Mob.Validate`, keeps both
+the `hpperlevel` and ambush-stealth checks. The merge also fixes a 30f flake in
+`TestTutorialThroughPluginsLoad` (about 60% of runs on master): its own-line
+matcher read the new dodge line "You sway aside, and the straw archer's blow"
+as Aria aiming at the archer; it now skips lines naming the foe as attacker.
+The merged suite also exposed two company test flakes: with 30g4's lower
+enemy HP, `TestWaitingGroupsDontBlockFlight`'s battle foe could fall before
+the retreat (a third of runs), letting a quick waiting group pursue; the
+test now toughens it. `TestAnEnemysBleedLeavesALightWound` (flaky on master
+too) now disables crits so only the bleed wounds the captain.
 
 **30f battlefield conditions complete (2026-10-02):** ambush opening
 rounds, formation clusters and sweeps, leaps/open flanks, narrow-ground
@@ -317,12 +374,12 @@ specialists)** are complete, so 33f is done; **33i1 (group assessment)**
 is complete too (33i2 remains); 33g management and its cargo prerequisite are
 complete, reviewed and verified. Equipment
 catalog delivery and 33h remain. Phase 30g3 is also complete;
-30g4 (progression) is the next combat-tempo slice, after the 33 series.
+30g4 (progression) is complete; 30g5 (the action meter) is the next combat-tempo slice.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
 defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
 decisions the owner settled on 2026-09-30. 30g1 (the balance harness and
-baseline), 30g2, and 30g3 are done; each later slice is measured against 30g1:
+baseline), 30g2, 30g3, and 30g4 are done; each later slice is measured against 30g1:
 
 1. **30g2, active defense and armor:** complete (work log below): one
    defense per strike: block with a shield (no dodge), else parry a
@@ -333,7 +390,7 @@ baseline), 30g2, and 30g3 are done; each later slice is measured against 30g1:
    weight against a Strength-based capacity (cargo and mounts never
    count); burden lowers dodge only; burden words in `status`, `look`,
    `scout`, and the web Overview; `help burden`.
-3. **30g4, progression:** automatic stats grow in steps every 5 levels;
+3. **30g4, progression:** complete (verification above): automatic stats grow in steps every 5 levels;
    HP by archetype, in small numbers; an XP knee at level 60.
 4. **30g5, the action meter:** turns from raw Speed and burden, at most
    two a round, no banking.

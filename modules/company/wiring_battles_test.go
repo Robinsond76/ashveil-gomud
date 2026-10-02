@@ -420,6 +420,10 @@ func TestWaitingGroupsDontBlockFlight(t *testing.T) {
 	for _, m := range b.livingBandits() {
 		if cur.Has(m.InstanceId) {
 			m.Character.Stats.Speed.ValueAdj = 0
+			// The battle's foe must outlast the retreat's rounds, or a quick
+			// waiting group becomes the battle (30g4 lowered enemy HP).
+			m.Character.HealthMax.Value = 1000
+			m.Character.Health = 1000
 			continue
 		}
 		m.Character.Stats.Speed.ValueAdj = 100000

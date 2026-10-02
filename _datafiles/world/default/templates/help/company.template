@@ -15,7 +15,7 @@ A companion who is away, fallen, or still waiting to rejoin earns
 nothing. Enough experience is a new level, and you're told; the
 companion keeps the health and mana it had
 (<ansi fg="command">help readiness</ansi>). Companions have no level cap, and no points for you to
-spend: their archetype deals each level's stat points, and
+spend: their archetype deals each stat step's points, and
 <ansi fg="command">company growth</ansi> sets a focus (<ansi fg="command">help growth</ansi>).
 A contract quest also pays every companion with you when you turn it in
 (<ansi fg="command">help contracts</ansi>). <ansi fg="command">experience</ansi> lists each companion's level and

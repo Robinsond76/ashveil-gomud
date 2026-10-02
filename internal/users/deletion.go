@@ -49,6 +49,7 @@ func ResetDeletedCharacter(userId int) error {
 		}
 	}
 	u.Character = characters.New()
+	u.Character.SetUserId(u.UserId)
 	u.Character.Validate()
 	u.Deleting = false
 	return SaveUser(*u)

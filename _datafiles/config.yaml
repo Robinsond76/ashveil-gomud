@@ -403,9 +403,15 @@ GamePlay:
   # It is NOT recommended to attempt to adjust these values manually, since they have complex relationships
   # Instead, visit /admin/progression for a live visual editor with charts.
   Progression:
+    StatStepLevels: 5
+    DefaultHPPerLevel: 5
+    HPFullLevels: 20
+    HPAfterFull: 1
+    XPKneeLevel: 60
+    XPKneeGrowth: 1.10
     # --- Stat gain formula ---
-    # racial_value(level) = floor(base * BaseModFactor * (level-1)^BaseModExponent)
-    #                     + floor(NaturalGainsModFactor * level^NaturalGainsExponent)
+    # racial_value(step) = floor(base * BaseModFactor * (step-1)^BaseModExponent)
+    #                     + floor(NaturalGainsModFactor * step^NaturalGainsExponent)
     #
     # - BaseModFactor -
     #   Scales how much a racial base stat contributes to growth per level.
@@ -416,17 +422,16 @@ GamePlay:
     #   >1.0 = accelerating returns. Valid range: 0.1 to 5.0.
     BaseModExponent: 1.0
     # - NaturalGainsModFactor -
-    #   Flat gains every character receives per level regardless of race.
+    #   Flat gains every character receives per stat step regardless of race.
     #   Higher values raise the floor for weak-base races.
     NaturalGainsModFactor: 0.5
     # - NaturalGainsExponent -
     #   Shape of the flat gains component. 1.0 = linear. <1.0 = diminishing returns.
     #   >1.0 = accelerating. Valid range: 0.1 to 5.0.
     NaturalGainsExponent: 1.0
-    # --- HP formula: HealthMax = HPBase + level*HPPerLevel + Vitality_adj*HPPerVitality + mods ---
+    # --- HP: archetype gains through HPFullLevels, then HPAfterFull, plus Vitality and bonuses ---
     HPBase: 5
-    HPPerLevel: 1.0
-    HPPerVitality: 4.0
+    HPPerVitality: 1.0
     # --- Mana formula: ManaMax = ManaBase + level*ManaPerLevel + Mysticism_adj*ManaPerMysticism + mods ---
     ManaBase: 4
     ManaPerLevel: 1.0
@@ -438,7 +443,7 @@ GamePlay:
     TrainingPointsPerLevel: 1
     TrainingPointsEveryNLevels: 1
     StatPointsPerLevel: 1
-    StatPointsEveryNLevels: 1
+    StatPointsEveryNLevels: 5
     # --- XP curve ---
     # XP_to_level(L) = (XPBase + L^XPLevelPower * XPLevelFactor * XPBase) * TNLScale
     # - XPBase -

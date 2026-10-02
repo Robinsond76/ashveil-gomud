@@ -8,10 +8,10 @@ gear, and is permanent for that character.
 
   <ansi fg="command">archetype</ansi>
   Show your archetype (or that you haven't chosen one yet), and the full
-  list with what each one offers.
+  list with what each one offers, including its health per level.
 
   <ansi fg="command">archetype choose [name]</ansi>
-  Preview an archetype: its description and starter kit.
+  Preview an archetype: its description, health per level and starter kit.
 
   <ansi fg="command">archetype choose [name] confirm</ansi>
   Commit to it. This cannot be undone.
