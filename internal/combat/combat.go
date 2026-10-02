@@ -172,6 +172,23 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 	return attackResult
 }
 
+// MobWounds reports whether a mob can be wounded and whether only lightly
+// (Phase 33i2): a company companion takes wounds as a player does; a
+// charmed pet takes none; any other mob, an enemy, takes light wounds
+// only, unless its template says `wounds: none`.
+func MobWounds(m *mobs.Mob) (woundable, lightOnly bool) {
+	if m == nil {
+		return false, false
+	}
+	if _, _, companion := company.LeaderAndKeyForInstance(m.InstanceId); companion {
+		return true, false
+	}
+	if m.Character.IsCharmed() {
+		return false, false
+	}
+	return m.TakesWounds(), true
+}
+
 // applyWounds gives the target the wounds its round's strikes left
 // (Phase 30b); calculateCombat only puts them on a woundable target.
 func applyWounds(target *characters.Character, r AttackResult) {
@@ -468,10 +485,11 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 		atkCount = 1
 	}
 
-	// Phase 30b: only players and company companions are wounded.
-	woundable := targetType == User
+	// Phase 30b: players and company companions are wounded; Phase 33i2:
+	// enemies too, lightly (MobWounds).
+	woundable, lightOnly := targetType == User, false
 	if targetType == Mob && len(targetMob) > 0 && targetMob[0] != nil {
-		_, _, woundable = company.LeaderAndKeyForInstance(targetMob[0].InstanceId)
+		woundable, lightOnly = MobWounds(targetMob[0])
 	}
 
 	// backstabCrit makes the first blow that lands a critical hit.
@@ -644,7 +662,9 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				// named in the hit's parentheses; a crushing blow a light one.
 				if woundable && attackTargetDamage > 0 {
 					if isCrit {
-						attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, wounds.FromCrit(weaponSubType, attackTargetDamage, util.Rand))
+						w := wounds.FromCrit(weaponSubType, attackTargetDamage, util.Rand)
+						w.Light = lightOnly // Phase 33i2: an enemy's closes at fight end
+						attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, w)
 						critStatuses = append(critStatuses, "wounded")
 					} else if w, ok := wounds.Crushing(attackTargetDamage, targetChar.HealthMax.Value, util.Rand); ok {
 						attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, w)

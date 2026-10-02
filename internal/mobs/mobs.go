@@ -3,6 +3,7 @@ package mobs
 import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/coordination"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
 	"math"
 	"os"
@@ -66,6 +67,9 @@ type Mob struct {
 	Targeting          string               `yaml:"targeting,omitempty"`      // Ashveil (Phase 30c): the rule it re-aims by as an enemy; overrides its race's
 	TargetingNoise     int                  `yaml:"targetingnoise,omitempty"` // Ashveil (Phase 30c): percent of re-aims that take a random foe
 	WindUps            map[string]int       `yaml:"windups,omitempty"`        // Ashveil (Phase 30d2): wind-up ability id -> percent of its turns it starts one (enemies only)
+	Role               string               `yaml:"role,omitempty"`           // Ashveil (Phase 33i2): its role as an enemy: fighter (default), healer, caster, guardian
+	Coordination       int                  `yaml:"coordination,omitempty"`   // Ashveil (Phase 33i2): sets its group's coordination tier (1-4) outright; 0 is by level
+	WoundsRule         string               `yaml:"wounds,omitempty"`         // Ashveil (Phase 33i2): "none" takes no wounds as an enemy; else light wounds
 	GroupName          string               `yaml:"-"`                        // Ashveil (Phase 32c): its group's name, given when the group formed (runtime only)
 	GroupDesc          string               `yaml:"-"`                        // Ashveil (Phase 32c): an authored group's description (runtime only)
 	LastIdleCommand    uint8                `yaml:"-"`                        // Track what hte last used idlecommand was
@@ -694,6 +698,15 @@ func (r *Mob) Validate() error {
 		return err
 	}
 	if err := races.ValidatePainReactions(r.PainReactions); err != nil {
+		return err
+	}
+	if err := coordination.ValidateRole(r.Role); err != nil {
+		return err
+	}
+	if err := coordination.ValidateTier(r.Coordination); err != nil {
+		return err
+	}
+	if err := coordination.ValidateWounds(r.WoundsRule); err != nil {
 		return err
 	}
 

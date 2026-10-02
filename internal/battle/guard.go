@@ -86,3 +86,28 @@ func TickGuards() {
 		}
 	}
 }
+
+// SetCoordination records the enemy group's coordination tier on the
+// player's battle (Phase 33i2).
+func SetCoordination(userId, tier int) {
+	mu.Lock()
+	defer mu.Unlock()
+	if b, ok := battles[userId]; ok {
+		b.Coordination = tier
+	}
+}
+
+// SpendEnemyGuard spends one of the enemy group's guards in the player's
+// battle, when it has spent fewer than limit (Phase 33i2: a tier's guards
+// are a battle's, all told, and never come back). ok is false with no
+// battle or none left.
+func SpendEnemyGuard(userId, limit int) (left int, ok bool) {
+	mu.Lock()
+	defer mu.Unlock()
+	b, found := battles[userId]
+	if !found || b.EnemyGuards >= limit {
+		return 0, false
+	}
+	b.EnemyGuards++
+	return limit - b.EnemyGuards, true
+}

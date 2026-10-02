@@ -30,6 +30,8 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 
 	// Ashveil Phase 32d/33h2: companions regain mana and health as players do.
 	regenCompanionVitals(company.LeaderAndKeyForInstance)
+	// Ashveil Phase 33i2: an enemy that lived through a fight recovers.
+	regenEnemyVitals(company.LeaderAndKeyForInstance, battle.Engaged)
 
 	onlineIds := users.GetOnlineUserIds()
 	for _, userId := range onlineIds {
@@ -114,6 +116,50 @@ func regenCompanionVitals(leaderOf func(instanceId int) (int, company.MemberKey,
 		}
 		if mob.Character.Mana < mob.Character.ManaMax.Value {
 			mana = mob.Character.ManaPerRound()
+		}
+		if hp > 0 || mana > 0 {
+			mob.Character.Heal(hp, mana)
+		}
+	}
+}
+
+// EnemyRecoveryRounds is the rounds an enemy takes to recover from nothing
+// to full health and mana out of a fight (Phase 33i2): 5 game hours at
+// the shipped 900-round day, about 12½ real minutes.
+const EnemyRecoveryRounds = 188
+
+// enemyRecovery is what an enemy of max health or mana recovers on one
+// pass: a 1/EnemyRecoveryRounds share a round, rounded up, for the three
+// rounds between passes.
+func enemyRecovery(max int) int {
+	if max < 1 {
+		return 0
+	}
+	return 3 * ((max + EnemyRecoveryRounds - 1) / EnemyRecoveryRounds)
+}
+
+// regenEnemyVitals gives each living mob outside a company (an enemy, or
+// any creature a fight left hurt) its share of health and mana while it is
+// out of every battle and not fighting (Phase 33i2). Before, a mob that
+// survived a fight stayed hurt until it died. It runs on rounds, so world
+// time never advances for it; a charmed pet is left to its owner's rules.
+// Health stops at the wound limit (Heal), though an enemy's light wounds
+// have closed by the time its fight is over.
+func regenEnemyVitals(leaderOf func(instanceId int) (int, company.MemberKey, bool), engaged func(instanceId int) bool) {
+	for _, instanceId := range mobs.GetAllMobInstanceIds() {
+		mob := mobs.GetInstance(instanceId)
+		if mob == nil || mob.Character.Aggro != nil || mob.Character.Health < 1 || mob.Character.IsCharmed() {
+			continue
+		}
+		if _, _, companion := leaderOf(instanceId); companion || engaged(instanceId) {
+			continue
+		}
+		hp, mana := 0, 0
+		if mob.Character.Health < mob.Character.HealthLimit() {
+			hp = enemyRecovery(mob.Character.HealthMax.Value)
+		}
+		if mob.Character.Mana < mob.Character.ManaMax.Value {
+			mana = enemyRecovery(mob.Character.ManaMax.Value)
 		}
 		if hp > 0 || mana > 0 {
 			mob.Character.Heal(hp, mana)

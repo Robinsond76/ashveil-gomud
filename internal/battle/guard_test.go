@@ -73,3 +73,30 @@ func TestGuardCounts(t *testing.T) {
 		t.Errorf("a new battle: %d", got)
 	}
 }
+
+func TestEnemyGuardsAreTheBattles(t *testing.T) {
+	Reset()
+	defer Reset()
+	if _, ok := SpendEnemyGuard(7, 2); ok {
+		t.Fatal("no battle, no guard")
+	}
+	Begin(7, 1, 1, "p", []int{1})
+	SetCoordination(7, 3)
+	if b, _ := Current(7); b.Coordination != 3 {
+		t.Fatalf("tier %d", b.Coordination)
+	}
+	if left, ok := SpendEnemyGuard(7, 2); !ok || left != 1 {
+		t.Fatalf("first: %d %v", left, ok)
+	}
+	TickGuards() // a company's refill never touches the enemy's
+	if left, ok := SpendEnemyGuard(7, 2); !ok || left != 0 {
+		t.Fatalf("second: %d %v", left, ok)
+	}
+	if _, ok := SpendEnemyGuard(7, 2); ok {
+		t.Fatal("a third guard")
+	}
+	Begin(7, 1, 2, "q", []int{2})
+	if b, _ := Current(7); b.Coordination != 0 || b.EnemyGuards != 0 {
+		t.Fatal("a new battle starts fresh")
+	}
+}

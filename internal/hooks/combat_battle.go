@@ -155,6 +155,9 @@ func assignPartyEnemyNames(userId int, p mobparty.Party) {
 // fight on the stream.
 func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) battle.Battle {
 	b := battle.Begin(sd.user.UserId, room.RoomId, round, p.ID, p.Members)
+	// Phase 33i2: the group's coordination, fixed for the battle.
+	b.Coordination = int(enemyparty.Coordination(p))
+	battle.SetCoordination(sd.user.UserId, b.Coordination)
 	assignPartyEnemyNames(sd.user.UserId, p)
 	id := combatstream.Default().Open(round, room.RoomId, p.ID, userRef(sd.user), sd.allyRefs(), partyRefs(p))
 	if len(p.Members) > 0 {
