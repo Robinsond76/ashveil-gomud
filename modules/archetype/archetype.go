@@ -452,6 +452,21 @@ func (m *ArchetypeModule) CompanionSpells(archetypeID string, level int) []strin
 	return a.SpellsAtLevel(level)
 }
 
+// CompanionGrowth implements archetypes.CompanionGrowthProvider (Phase 33h1).
+func (m *ArchetypeModule) CompanionGrowth(archetypeID string) (map[string]int, bool) {
+	m.mu.Lock()
+	a, ok := m.table.Get(archetypeID)
+	m.mu.Unlock()
+	if !ok || len(a.Growth) == 0 {
+		return nil, false
+	}
+	out := make(map[string]int, len(a.Growth))
+	for k, v := range a.Growth {
+		out[k] = v
+	}
+	return out, true
+}
+
 // applyGrants gives the user the archetype's starting skills and spells. It
 // never lowers a higher existing skill level and is idempotent, so it is
 // safe to re-apply on every login (crash recovery). It runs on the game
@@ -742,6 +757,16 @@ func parseArchetypes(raw any) []archetypes.Archetype {
 					continue
 				}
 				a.CompanionSpells = append(a.CompanionSpells, archetypes.LevelSpell{Spell: configString(sf["spell"]), Level: configInt(sf["level"])})
+			}
+		}
+		if growth, ok := fields["growth"].([]any); ok {
+			a.Growth = map[string]int{}
+			for _, g := range growth {
+				gf := stringMap(g)
+				if gf == nil {
+					continue
+				}
+				a.Growth[configString(gf["stat"])] += configInt(gf["weight"])
 			}
 		}
 		if grants, ok := fields["grantskills"].([]any); ok {

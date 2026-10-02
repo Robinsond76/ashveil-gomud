@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -132,6 +133,17 @@ func HandleQuestUpdate(e events.Event) events.ListenerReturn {
 		// Experience reward?
 		if questInfo.Rewards.Experience > 0 {
 			questUser.GrantXP(questInfo.Rewards.Experience, `quest progress`)
+		}
+		// Contract (Ashveil Phase 33h1): the companions with the leader
+		// share it, in full, by the same rule as combat experience.
+		if questInfo.Rewards.CompanyExperience > 0 {
+			paid, lines := mobcommands.AwardCompanyXP(questUser.UserId, questUser.Character, questInfo.Rewards.CompanyExperience, questUser.Character.RoomId)
+			if paid > 0 {
+				questUser.SendText(fmt.Sprintf(`Your company shares the contract: <ansi fg="yellow-bold">%d experience</ansi> for each companion with you.`, questInfo.Rewards.CompanyExperience))
+			}
+			for _, line := range lines {
+				questUser.SendText(line)
+			}
 		}
 		// Skill reward?
 		if questInfo.Rewards.SkillInfo != `` {

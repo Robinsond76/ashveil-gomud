@@ -216,6 +216,9 @@ type fakeRuntime struct {
 	strength map[int]int
 	// away marks live instances not in their leader's room (32f review).
 	away map[int]bool
+	// Phase 33h1: the growth each spawn received and each live retrain.
+	spawnedGrowth []domain.GrowthWeights
+	retrained     map[int]domain.GrowthWeights
 }
 
 func (f *fakeRuntime) Progress(instanceID int) (int, int, int, bool) {
@@ -242,8 +245,20 @@ func (f *fakeRuntime) ResolveTemplate(name string) (int, bool) {
 	id, ok := f.resolved[name]
 	return id, ok
 }
-func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int, state *domain.MemberState, identity domain.Identity) (int, error) {
+func (f *fakeRuntime) Retrain(instanceID int, growth domain.GrowthWeights) bool {
+	if !f.live[instanceID] {
+		return false
+	}
+	if f.retrained == nil {
+		f.retrained = map[int]domain.GrowthWeights{}
+	}
+	f.retrained[instanceID] = growth
+	return true
+}
+
+func (f *fakeRuntime) Spawn(_ int, roomID int, templateID int, state *domain.MemberState, identity domain.Identity, growth domain.GrowthWeights) (int, error) {
 	f.spawnCalls++
+	f.spawnedGrowth = append(f.spawnedGrowth, growth)
 	f.spawnedIdentities = append(f.spawnedIdentities, identity)
 	if state != nil {
 		s := state.Clone()

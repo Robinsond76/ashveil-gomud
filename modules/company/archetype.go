@@ -136,5 +136,6 @@ func (m *CompanyModule) setArchetype(leaderUserID int, selector, archetype strin
 		m.registry.Put(before)
 		return err.Error()
 	}
+	m.retrain(leaderUserID, companion.ID) // Phase 33h1: it now grows as one
 	return fmt.Sprintf("#%d %s is now a %s.", companion.ID, nameOf(companion, "companion"), archetypeLabel(archetype))
 }

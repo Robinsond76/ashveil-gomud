@@ -106,3 +106,9 @@ Phase 26a (`members.go`): the module implements `company.MemberViewProvider` (`C
 - After every weapon blow's lines, `afterBlow` breaks the target's chant on a hit that did damage (a player or companion: the spell ends with half its mana back; an enemy: it restarts at its next turn) and lets a shield-bearer counter a missed melee blow. Rules live in `internal/interrupt`.
 - `newBrawl` turns counters off (`hooks.UseCounterRollForTest`) so the brawls keep their seeded rolls; a test that wants a counter scripts its dice (`counterDice`). `forceBlows` makes every blow land or miss. `TestNarrationPreservesCombatOutcome` compares against a pre-30d1 golden and so turns 30d1 off (`hooks.DisableInterruptsForTest`).
 - `wiring_interrupts_test.go` covers broken chants, restarts, guarded blows, counters, and the shipped goblin hexer.
+
+## Phase 33h1: growth and contracts (`growth.go`, `runtime.go`)
+
+- A companion's training is **derived, never saved**: the template's training plus `characters.StatPointsAtLevel(level)` dealt by `domain.Deal` over its archetype's `Growth` weights (`archetypes.CompanionGrowth`) and its `GrowthFocus` (+2). `Runtime.Spawn` takes the weights and retrains before vitals are set; `Runtime.Retrain` re-deals a live mob and only clamps health and mana. Every level change must re-derive (spawn, `RetrainCompanion` after a live level-up in `mobcommands.AwardCompanyXP`, `company archetype`, `company growth`); never call `AutoTrain` on a tracked companion, or the stats change at the next respawn.
+- `company growth [member stat|balanced]` saves the focus first, then retrains; refused in a battle.
+- Contracts: `rewards.companyexperience` on a quest; the quest hook pays through `mobcommands.AwardCompanyXP` (the 32e presence rule). `wiring_growth_test.go` covers both in the brawl world.

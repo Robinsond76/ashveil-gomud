@@ -18,6 +18,9 @@
 # knows from a character level, cast in battle by its strategy; each must
 # be in the archetype's Schools (else it is dropped at load with a warning).
 # GrantSpells reach existing characters too: they are applied at every login.
+# Growth (Phase 33h1) weights a companion's stat points by stat (strength,
+# speed, smarts, vitality, mysticism, perception); its training is always
+# its level's points dealt by these weights, plus its own growth focus.
 # (Lists, not maps: module config maps are flattened by the loader.)
 Archetypes:
   - ArchetypeId: warrior
@@ -27,6 +30,11 @@ Archetypes:
     GrantSkills:
       - { Skill: brawling, Level: 1 }
     Utility: [watch, fieldsmith]
+    Growth:
+      - { Stat: strength, Weight: 4 }
+      - { Stat: vitality, Weight: 3 }
+      - { Stat: speed, Weight: 2 }
+      - { Stat: perception, Weight: 1 }
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10002, 20004, 20020, 30004, 30015, 31]
   - ArchetypeId: rogue
@@ -36,6 +44,11 @@ Archetypes:
     GrantSkills:
       - { Skill: skulduggery, Level: 1 }
     Utility: [traps, keeneye, haggle]
+    Growth:
+      - { Stat: speed, Weight: 4 }
+      - { Stat: perception, Weight: 3 }
+      - { Stat: strength, Weight: 2 }
+      - { Stat: smarts, Weight: 1 }
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10004, 8, 20029, 20003, 23, 30004, 30015, 31]
   - ArchetypeId: wizard
@@ -50,6 +63,11 @@ Archetypes:
       - { Spell: mm, Level: 1 }
       - { Spell: sparks, Level: 5 }
     Utility: [light, weather]
+    Growth:
+      - { Stat: mysticism, Weight: 4 }
+      - { Stat: smarts, Weight: 3 }
+      - { Stat: perception, Weight: 2 }
+      - { Stat: speed, Weight: 1 }
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 31]
   - ArchetypeId: cleric
@@ -66,6 +84,11 @@ Archetypes:
       - { Spell: tend, Level: 1 } # Phase 30b: used by heal wounds, never by battle strategy
       - { Spell: healall, Level: 5 }
     Utility: [vigil]
+    Growth:
+      - { Stat: mysticism, Weight: 3 }
+      - { Stat: vitality, Weight: 3 }
+      - { Stat: smarts, Weight: 2 }
+      - { Stat: strength, Weight: 2 }
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10015, 20004, 20008, 30004, 30015, 30001, 30001, 31]
   - ArchetypeId: ranger
@@ -75,6 +98,11 @@ Archetypes:
     GrantSkills:
       - { Skill: track, Level: 1 }
     Utility: [trail, pathfinder, forage]
+    Growth:
+      - { Stat: perception, Weight: 4 }
+      - { Stat: speed, Weight: 3 }
+      - { Stat: strength, Weight: 2 }
+      - { Stat: vitality, Weight: 1 }
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10014, 20020, 20024, 20003, 30019, 30015, 23, 31]
 

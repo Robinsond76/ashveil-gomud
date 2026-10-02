@@ -2415,3 +2415,18 @@ func (c *Character) LearnSecretExit(roomID int, exitName string) bool {
 func (c *Character) SeesSecretExit(roomID int, exitName string, targetRoomID int, targetZone string) bool {
 	return c.HasVisitedRoom(targetRoomID, targetZone) || c.KnowsSecretExit(roomID, exitName)
 }
+
+// StatPointsAtLevel is how many stat points a character earns from level 1
+// through level, by the progression config. Mob spawns and Ashveil
+// companion growth (Phase 33h1) both derive training from it.
+func StatPointsAtLevel(level int) int {
+	cfgProg := configs.GetProgressionConfig()
+	every, per := int(cfgProg.StatPointsEveryNLevels), int(cfgProg.StatPointsPerLevel)
+	points := 0
+	for lvl := 1; lvl <= level; lvl++ {
+		if every <= 1 || lvl%every == 0 {
+			points += per
+		}
+	}
+	return points
+}

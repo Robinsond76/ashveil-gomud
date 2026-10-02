@@ -13,8 +13,11 @@ alive and standing in the room where the enemy fell earns the same amount,
 in full: nothing is split, so a bigger company never shrinks your share.
 A companion who is away, fallen, or still waiting to rejoin earns
 nothing. Enough experience is a new level: the companion is healed and
-you're told. Companions have no level cap, and no training or stat points
-to spend. <ansi fg="command">experience</ansi> lists each companion's level and
+you're told. Companions have no level cap, and no points for you to
+spend: their archetype deals each level's stat points, and
+<ansi fg="command">company growth</ansi> sets a focus (<ansi fg="command">help growth</ansi>).
+A contract quest also pays every companion with you when you turn it in
+(<ansi fg="command">help contracts</ansi>). <ansi fg="command">experience</ansi> lists each companion's level and
 progress below your own (<ansi fg="command">help experience</ansi>).
 
 <ansi fg="yellow-bold">Finding companions</ansi>
@@ -152,7 +155,7 @@ Leaving a battle: <ansi fg="command">retreat [exit]</ansi> (or <ansi fg="command
 then attempts to move the company together. See <ansi fg="command">help retreat</ansi>.
 
 For player alliances and opt-in following/support, see <ansi fg="command">help party</ansi>.
-See also: <ansi fg="command">help formation</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help chemistry</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help resurrect</ansi>.
+See also: <ansi fg="command">help growth</ansi>, <ansi fg="command">help contracts</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help alignment</ansi>, <ansi fg="command">help chemistry</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help standing</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help resurrect</ansi>.
 
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.

@@ -24,7 +24,7 @@ func (nativeRuntime) ResolveTemplate(name string) (int, bool) {
 // Spawn creates the companion's live mob. With a state (Phase 22b), the mob
 // is spawned at the saved level and the template's minted gear is replaced
 // by copies of the saved gear.
-func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState, identity domain.Identity) (int, error) {
+func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState, identity domain.Identity, growth domain.GrowthWeights) (int, error) {
 	leader := users.GetByUserId(leaderUserID)
 	if leader == nil {
 		return 0, fmt.Errorf("company: leader %d is unavailable", leaderUserID)
@@ -43,8 +43,14 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 	if mob == nil {
 		return 0, fmt.Errorf("company: mob template %d is unavailable", mobTemplateID)
 	}
+	// Phase 33h1: the level's points dealt by the companion's growth, in
+	// place of the template's even spread, before its vitals are set.
+	retrainMob(mob, growth)
 	if state != nil {
 		applyState(mob, *state)
+	} else {
+		mob.Character.Health = mob.Character.HealthMax.Value
+		mob.Character.Mana = mob.Character.ManaMax.Value
 	}
 	// Phase 32a2: a generated recruit's own name and description.
 	if identity.Name != "" {
@@ -107,6 +113,55 @@ func (nativeRuntime) Relocate(instanceID, roomID int) bool {
 	}
 	to.AddMob(instanceID)
 	return true
+}
+
+// Retrain re-deals a live mob's stat points by its growth weights (Phase
+// 33h1). Health and mana are only held to their new maxima, never raised.
+func (nativeRuntime) Retrain(instanceID int, growth domain.GrowthWeights) bool {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return false
+	}
+	retrainMob(mob, growth)
+	mob.Character.Health = min(mob.Character.Health, mob.Character.HealthLimit())
+	mob.Character.Mana = min(mob.Character.Mana, mob.Character.ManaMax.Value)
+	return true
+}
+
+// retrainMob sets each stat's training to the template's own plus the
+// level's stat points dealt by the weights. Training is derived, never
+// saved, so the same level and weights always give the same stats.
+func retrainMob(mob *mobs.Mob, growth domain.GrowthWeights) {
+	var base [6]int
+	if spec := mobs.GetMobSpec(mob.MobId); spec != nil {
+		base = trainingOf(&spec.Character)
+	}
+	dealt := domain.Deal(characters.StatPointsAtLevel(mob.Character.Level), growth)
+	c := &mob.Character
+	for i, training := range []*int{
+		&c.Stats.Strength.Training,
+		&c.Stats.Speed.Training,
+		&c.Stats.Smarts.Training,
+		&c.Stats.Vitality.Training,
+		&c.Stats.Mysticism.Training,
+		&c.Stats.Perception.Training,
+	} {
+		*training = base[i] + dealt[i]
+	}
+	c.StatPoints = 0
+	c.Validate()
+}
+
+// trainingOf reads a character's training in domain.GrowthStats order.
+func trainingOf(c *characters.Character) [6]int {
+	return [6]int{
+		c.Stats.Strength.Training,
+		c.Stats.Speed.Training,
+		c.Stats.Smarts.Training,
+		c.Stats.Vitality.Training,
+		c.Stats.Mysticism.Training,
+		c.Stats.Perception.Training,
+	}
 }
 
 // applyState puts a saved state on a freshly spawned mob: its level,

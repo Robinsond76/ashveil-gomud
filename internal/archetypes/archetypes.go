@@ -51,7 +51,14 @@ type Archetype struct {
 	// each from a character level (Phase 32d). Nothing is written to the
 	// companion: the list is read when it acts in a battle.
 	CompanionSpells []LevelSpell
+	// Growth weights a companion's stat points by stat name (Phase 33h1):
+	// strength, speed, smarts, vitality, mysticism, perception. Empty
+	// deals them evenly.
+	Growth map[string]int
 }
+
+// GrowthStatNames are the stats a Growth weight may name.
+var GrowthStatNames = []string{"strength", "speed", "smarts", "vitality", "mysticism", "perception"}
 
 // LevelSpell is a spell known from a character level.
 type LevelSpell struct {
@@ -131,6 +138,15 @@ func (a *Archetype) Validate() error {
 		spells = append(spells, ls)
 	}
 	a.CompanionSpells = spells
+	growth := make(map[string]int, len(a.Growth))
+	for stat, weight := range a.Growth {
+		stat = strings.ToLower(strings.TrimSpace(stat))
+		if !contains(GrowthStatNames, stat) || weight < 1 {
+			return fmt.Errorf("%w: %q has growth %q weight %d", ErrInvalidArchetype, a.ID, stat, weight)
+		}
+		growth[stat] += weight
+	}
+	a.Growth = growth
 	if len(a.CompanionLevels) != SkillLevels {
 		return fmt.Errorf("%w: %q needs %d companion levels", ErrInvalidArchetype, a.ID, SkillLevels)
 	}

@@ -136,7 +136,7 @@ func (m *CompanyModule) ResurrectCompanion(leaderUserID int, selector string, ro
 	}
 	result := domain.ResurrectionResult{ID: c.ID, Name: companionName(c), Level: state.Level}
 	mudlog.Info("company: companion resurrected", "leader", leaderUserID, "companion", c.ID, "op", op, "level", state.Level, "room", roomID)
-	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, c.MobTemplateID, &state, c.Identity())
+	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, c.MobTemplateID, &state, c.Identity(), growthWeightsOf(c))
 	if err != nil {
 		mudlog.Warn("company: resurrected companion awaits restoration", "leader", leaderUserID, "companion", c.ID, "error", err)
 		return result, nil

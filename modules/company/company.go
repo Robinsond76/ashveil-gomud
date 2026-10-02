@@ -31,7 +31,10 @@ type Runtime interface {
 	// Spawn creates a companion's live mob, from its saved state when it
 	// has one (Phase 22b).
 	// A set identity names the mob over its template (Phase 32a2).
-	Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState, identity domain.Identity) (int, error)
+	// growth deals the level's stat points (Phase 33h1).
+	Spawn(leaderUserID, roomID, mobTemplateID int, state *domain.MemberState, identity domain.Identity, growth domain.GrowthWeights) (int, error)
+	// Retrain re-deals a live mob's stat points by growth (Phase 33h1).
+	Retrain(instanceID int, growth domain.GrowthWeights) bool
 	// Snapshot reads a live mob's level and gear.
 	Snapshot(instanceID int) (domain.MemberState, bool)
 	// GearGrams weighs a live instance's worn and carried items (Phase
@@ -266,7 +269,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype>"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat]"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -475,7 +478,7 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 	// Survival has now committed a durable identity for this companion ID, so
 	// the ID is spent even if the summon cannot complete. Cleanup removes the
 	// transient companion but retains the advanced high-water mark.
-	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, templateID, spawnState, companion.Identity())
+	instanceID, err := m.runtime.Spawn(leaderUserID, roomID, templateID, spawnState, companion.Identity(), m.growthWeights(leaderUserID, companion.ID))
 	if err != nil {
 		removeErr := survival.RemoveCompanyMember(leaderUserID, companion.ID)
 		persistErr := m.rollbackSummon(leaderUserID, companion.ID, before)
@@ -798,6 +801,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 			roomID = room.RoomId
 		}
 		user.SendText(m.inspectAt(user.UserId, roomID, strings.Join(args[1:], " ")))
+	case "growth", "specialize", "specialise":
+		user.SendText(m.growth(user, args[1:])) // Phase 33h1
 	case "archetype":
 		if len(args) < 3 {
 			user.SendText(companyUsage)
@@ -873,7 +878,7 @@ func (m *CompanyModule) restoreForLeader(leaderUserID, roomID int) error {
 			}
 			continue
 		}
-		instanceID, err := m.runtime.Spawn(leaderUserID, roomID, companion.MobTemplateID, state, companion.Identity())
+		instanceID, err := m.runtime.Spawn(leaderUserID, roomID, companion.MobTemplateID, state, companion.Identity(), growthWeightsOf(companion))
 		if err != nil {
 			m.clearInstance(leaderUserID, companion.ID)
 			if firstErr == nil {

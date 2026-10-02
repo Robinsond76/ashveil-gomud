@@ -26,4 +26,6 @@ steps:
     description: You helped Rodric get back to work.
 rewards:
   experience: 1000
+  # Phase 33h1 contract: each companion with you at turn-in earns this too.
+  companyexperience: 1000
 
