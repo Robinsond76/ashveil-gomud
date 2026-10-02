@@ -5,8 +5,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (33h2 company readiness and recovery)
-- **Latest completed slices:** 33h2, company readiness and recovery; 34a,
+- **Last updated:** 2026-10-02 (34c equipment editor; integrated 33h2)
+- **Latest completed slices:** 34c, equipment editor; 33h2, company readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
   33g management (equipment catalog/class still pending),
@@ -19,6 +19,23 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**34c complete:** Character Gear now edits main-character equipment by slot,
+including Pack, with exact-instance compatible cargo choices, unavailable reasons,
+and authoritative current/after comparisons. Previews and commands share the same
+hand, curse, capacity and asset-journal rules; stale actions revalidate server-side.
+Comparisons include active edge bonuses/strikes for both hands, core modifiers,
+worn burden/dodge and company capacity. Legacy Gear and companion commands remain
+available. Help, tutorial pointers and keyboard/focus/narrow browser checks updated.
+Independent review found missing sharpening information; fixed with regression
+coverage, and follow-up review found no further issues. Additional regressions
+cover permanent buffs retained by the other hand and legacy-feed availability.
+Real command, save/recovery, private GMCP/reconnect, help and browser checks passed;
+make generate/validate, JS/Lua lint and go test -race ./... passed.
+Integration with 33h2 (63f79b32) passed independent review, browser checks,
+generate/validate, JS/Lua lint and the full race suite; companion readiness
+snapshots and recovery remain intact.
+34d remains unstarted. [Next-session context](plans/2026-10-02-phase-34-session-handoff.md).
 
 **33h2 readiness and recovery complete (2026-10-02):** companions keep
 their health and mana across logout, restart, copyover, and crash (as of
@@ -45,7 +62,7 @@ passed. Existing creation, death and mount fixtures now exercise the new rules;
 formation integration permits valid upkeep retargeting after clearing a rear foe.
 Integration with 33h1 passed independent review, focused command/module checks,
 browser checks, generate/validate, JS/Lua lint and the full race suite. Owner
-requests a new session between slices; unfinished 34c is preserved locally.
+requests a new session between slices; 34c is now complete.
 [Next-session context](plans/2026-10-02-phase-34-session-handoff.md).
 
 **34a complete:** shared browser Inventory shows cargo without member worn or
@@ -63,7 +80,7 @@ focused packages, help/tutorial pointers, all dock browser checks including
 JS/Lua lint, and go test -race ./... passed. Initial race run hit the existing
 random-hit edge test; targeted rerun and final full run passed. Integration against 33h1 (ecd3255e)
 passed independent review, focused checks, browser checks, generate/validate,
-JS/Lua lint and the full race suite. 34c–34d remain.
+JS/Lua lint and the full race suite. 34d remains.
 
 
 **33h1 growth and contracts complete (2026-10-02):** the owner asked to

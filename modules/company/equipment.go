@@ -20,7 +20,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const equipmentUsage = "Usage: company equipment | company treasury | company equip [member] [item] | company remove [member] [slot] | company compare [member] [item]"
+const equipmentUsage = "Usage: company equipment | company treasury | company equip [member] [item] | company remove [member] [slot] [optional-exact-reference] | company compare [member] [item]"
 
 // PrepareAssets finishes an interrupted write before any further player command.
 // It also pools a living companion's old carried items/gold exactly once.
@@ -162,7 +162,10 @@ func (m *CompanyModule) equipmentActor(u *users.UserRecord, selector string) (do
 	if err != nil {
 		return "", nil, err
 	}
-	if u.Character.Health < 1 || actionpolicy.InBattle(u) {
+	if u.Character.Health < 1 {
+		return "", nil, fmt.Errorf("That member must be alive to change equipment.")
+	}
+	if actionpolicy.InBattle(u) {
 		return "", nil, fmt.Errorf(actionpolicy.BattleUnderWay)
 	}
 	if key == domain.LeaderMemberKey {
@@ -224,92 +227,13 @@ func (m *CompanyModule) equipmentCommand(u *users.UserRecord, args []string) str
 	if err != nil {
 		return err.Error()
 	}
-	proposed, err := cloneCharacter(actor)
+	proposed, cargo, itm, displaced, err := equipmentProposal(u, actor, args)
 	if err != nil {
 		return err.Error()
 	}
-	cargo := append([]items.Item(nil), u.Character.Items...)
-	var itm items.Item
-	var displaced []items.Item
-	if args[0] == "remove" {
-		slot := items.ItemType(args[2])
-		ptr := proposed.Equipment.Get(slot)
-		if ptr == nil || ptr.ItemId < 1 {
-			return "That member has no equipment in that slot."
-		}
-		itm = *ptr
-		if itm.IsRemoveLocked() || itm.IsCursed() {
-			return "That equipment is bound or cursed and cannot be removed."
-		}
-		if !proposed.RemoveFromBody(itm) {
-			return "That equipment cannot be removed."
-		}
-		cargo = append(cargo, itm)
-	} else {
-		ref := strings.Join(args[2:], " ")
-		close, exact := items.FindMatchIn(ref, cargo...)
-		itm = exact
-		if itm.ItemId < 1 {
-			itm = close
-		}
-		if itm.ItemId < 1 {
-			return "That item is no longer in your company cargo."
-		}
-		// Refuse ambiguous names rather than silently assign the wrong enchanted copy.
-		if strings.Contains(ref, ":") && strings.HasPrefix(ref, "!") && ref != itm.ShorthandId() {
-			return "That exact cargo item is no longer available."
-		}
-		if !strings.Contains(ref, ":") {
-			matches := 0
-			for _, item := range cargo {
-				a, b := items.FindMatchIn(ref, item)
-				if a.ItemId > 0 || b.ItemId > 0 {
-					matches++
-				}
-			}
-			if matches > 1 {
-				return "Several cargo items match. Use the exact reference from company equipment."
-			}
-		}
-		// Cursed offhands must not be displaced through the two-hand path.
-		for _, slot := range characters.AllSlots() {
-			old := proposed.Equipment.Get(slot)
-			if old.ItemId > 0 && old.IsCursed() {
-				// Wear's ordinary guards handle other slots; guard displaced offhands too.
-				if slot == items.Offhand && itm.GetSpec().Type == items.Weapon && proposed.HandsRequired(itm) == 2 {
-					return "The offhand is cursed and cannot be removed."
-				}
-			}
-		}
-		var success bool
-		var reason string
-		displaced, success, reason = proposed.Wear(itm)
-		if success {
-			for _, old := range displaced {
-				if old.ItemId > 0 && old.IsCursed() {
-					return "That equipment is cursed and cannot be removed."
-				}
-			}
-		}
-		if !success {
-			return reason
-		}
-		for i, item := range cargo {
-			if item.Equals(itm) {
-				cargo = append(cargo[:i], cargo[i+1:]...)
-				break
-			}
-		}
-		for _, old := range displaced {
-			if old.ItemId > 0 {
-				cargo = append(cargo, old)
-			}
-		}
-	}
-	proposed.Validate(true)
 	loadBefore, loadAfter, hasLoad := equipmentLoad(u.UserId, actor, proposed, u.Character.Items, cargo)
 	lossAllowed := args[0] == "remove" && itm.GetSpec().Type == items.Pack
-	if args[0] != "compare" && hasLoad && !lossAllowed && max(0, loadAfter.TotalGrams()-loadAfter.CapacityGrams) > max(0, loadBefore.TotalGrams()-loadBefore.CapacityGrams) {
+	if args[0] != "compare" && hasLoad && !lossAllowed && !equipmentFits(loadBefore, loadAfter) {
 		return "That change would exceed company cargo capacity. Drop or sell cargo, or assign a larger pack first."
 	}
 	if args[0] == "compare" {
@@ -461,4 +385,104 @@ func (m *CompanyModule) queueAutoLoot(round uint64) {
 			u.Command("loot own", -1)
 		}
 	}
+}
+
+// equipmentProposal is shared by command execution and read-only previews.
+func equipmentProposal(u *users.UserRecord, actor *characters.Character, args []string) (*characters.Character, []items.Item, items.Item, []items.Item, error) {
+	proposed, err := cloneCharacter(actor)
+	if err != nil {
+		return nil, nil, items.Item{}, nil, err
+	}
+	cargo := append([]items.Item(nil), u.Character.Items...)
+	var itm items.Item
+	var displaced []items.Item
+	if args[0] == "remove" {
+		slot := items.ItemType(args[2])
+		ptr := proposed.Equipment.Get(slot)
+		if ptr == nil || ptr.ItemId < 1 {
+			return nil, nil, items.Item{}, nil, fmt.Errorf("%s", "That member has no equipment in that slot.")
+		}
+		itm = *ptr
+		if len(args) > 3 && args[3] != itm.ShorthandId() {
+			return nil, nil, items.Item{}, nil, fmt.Errorf("That exact worn item is no longer available.")
+		}
+		if itm.IsRemoveLocked() || itm.IsCursed() {
+			return nil, nil, items.Item{}, nil, fmt.Errorf("%s", "That equipment is bound or cursed and cannot be removed.")
+		}
+		if !proposed.RemoveFromBody(itm) {
+			return nil, nil, items.Item{}, nil, fmt.Errorf("%s", "That equipment cannot be removed.")
+		}
+		cargo = append(cargo, itm)
+	} else {
+		ref := strings.Join(args[2:], " ")
+		var target []items.ItemType
+		if len(args) == 4 && strings.HasPrefix(args[2], "!") && strings.Contains(args[2], ":") {
+			slot := items.ItemType(args[3])
+			if actor.Equipment.Get(slot) == nil {
+				return nil, nil, items.Item{}, nil, fmt.Errorf("Unknown equipment slot.")
+			}
+			ref, target = args[2], []items.ItemType{slot}
+		}
+		close, exact := items.FindMatchIn(ref, cargo...)
+		itm = exact
+		if itm.ItemId < 1 {
+			itm = close
+		}
+		if itm.ItemId < 1 {
+			return nil, nil, items.Item{}, nil, fmt.Errorf("%s", "That item is no longer in your company cargo.")
+		}
+		// Refuse ambiguous names rather than silently assign the wrong enchanted copy.
+		if strings.Contains(ref, ":") && strings.HasPrefix(ref, "!") && ref != itm.ShorthandId() {
+			return nil, nil, items.Item{}, nil, fmt.Errorf("%s", "That exact cargo item is no longer available.")
+		}
+		if !strings.Contains(ref, ":") {
+			matches := 0
+			for _, item := range cargo {
+				a, b := items.FindMatchIn(ref, item)
+				if a.ItemId > 0 || b.ItemId > 0 {
+					matches++
+				}
+			}
+			if matches > 1 {
+				return nil, nil, items.Item{}, nil, fmt.Errorf("%s", "Several cargo items match. Use the exact reference from company equipment.")
+			}
+		}
+		// Cursed offhands must not be displaced through the two-hand path.
+		for _, slot := range characters.AllSlots() {
+			old := proposed.Equipment.Get(slot)
+			if old.ItemId > 0 && old.IsCursed() {
+				// Wear's ordinary guards handle other slots; guard displaced offhands too.
+				if slot == items.Offhand && itm.GetSpec().Type == items.Weapon && proposed.HandsRequired(itm) == 2 {
+					return nil, nil, items.Item{}, nil, fmt.Errorf("%s", "The offhand is cursed and cannot be removed.")
+				}
+			}
+		}
+		var success bool
+		var reason string
+		displaced, success, reason = proposed.Wear(itm, target...)
+		if success {
+			for _, old := range displaced {
+				if old.ItemId > 0 && old.IsCursed() {
+					return nil, nil, items.Item{}, nil, fmt.Errorf("%s", "That equipment is cursed and cannot be removed.")
+				}
+			}
+		}
+		if !success {
+			return nil, nil, items.Item{}, nil, fmt.Errorf("%s", reason)
+		}
+		for i, item := range cargo {
+			if item.Equals(itm) {
+				cargo = append(cargo[:i], cargo[i+1:]...)
+				break
+			}
+		}
+		for _, old := range displaced {
+			if old.ItemId > 0 {
+				cargo = append(cargo, old)
+			}
+		}
+	}
+	proposed.CancelBuffsWithFlag("hidden")
+	proposed.Validate(true)
+	return proposed, cargo, itm, displaced, nil
 }

@@ -578,6 +578,71 @@ await page.evaluate(b => { const x=JSON.parse(JSON.stringify(b)); x.surrendered=
 check((await cbt()).includes('Surrendered: the yielded goblin'), 'surrendered foes are labelled off the grid');
 check(await page.getByRole('button', { name: /yielded goblin/ }).count() === 0, 'surrendered foe has no target button');
 
+// Phase 34c: authoritative, exact-instance slot editor.
+await page.getByRole('tab', { name: 'Character', exact: true }).click();
+await page.getByRole('tab', { name: 'Gear', exact: true }).click();
+const editorStats = { damage: '1d6+1', offhand_damage: '', hands: 1, reach: false, shield: true,
+  edge_bonus: 0, edge_strikes: 0, offhand_edge_bonus: 0, offhand_edge_strikes: 0, defense: 13, worn_g: 1234, burden: 'unburdened', dodge_pct: 100,
+  health_max: 44, mana_max: 20, pack_capacity_g: 10000, capacity_g: 50000, cargo_g: 2000,
+  stats: { strength: 15, speed: 16 } };
+const afterStats = { ...editorStats, damage: '2d9+3', defense: 19, worn_g: 11100,
+  edge_bonus: 2, edge_strikes: 9, burden: 'burdened', dodge_pct: 73, cargo_g: 750, stats: { strength: 21, speed: 11 } };
+const gearView = { available: true, current: editorStats, slots: [
+  { slot: 'weapon', label: 'Weapon', equipped: { ref: '!1:current', label: 'iron sword' },
+    remove: { ref: '!1:current', label: 'iron sword', allowed: true, after: editorStats,
+      command: 'company remove me weapon !1:current' },
+    choices: [
+      { ref: '!8:first', label: 'same blade', allowed: true, after: afterStats, returned: ['iron sword'], command: 'company equip me !8:first weapon' },
+      { ref: '!8:second', label: 'same blade', allowed: true, after: afterStats, returned: ['iron sword'], command: 'company equip me !8:second weapon' },
+      { ref: '!8:bound', label: xss, allowed: false, reason: 'Your weapon is bound.', command: 'company equip me !8:bound weapon' }
+    ] },
+  { slot: 'body', label: 'Body', choices: [] },
+  { slot: 'pack', label: 'Pack', equipped: { ref: '!38:oldpack', label: 'cloth knapsack' }, choices: [
+    { ref: '!33:frame', label: 'frame pack', allowed: true, after: { ...editorStats, pack_capacity_g: 15000, capacity_g: 55000, cargo_g: 1400 }, command: 'company equip me !33:frame pack' }
+  ] }
+] };
+await page.evaluate(view => window.gmcp('Company.Equipment', view), gearView);
+const gearText = () => page.locator('#gw-worn').textContent();
+check((await gearText()).includes('Body: empty') && (await gearText()).includes('Pack: cloth knapsack'), 'Gear shows equipped and empty slots including Pack');
+check(await page.locator('#gear-window .gw-tab-btn[data-panel=gw-backpack]').isHidden(), 'shared Gear uses slot-specific choices, leaving the cargo list in Company');
+await page.locator('#gw-worn').getByRole('button', { name: 'same blade', exact: true }).nth(1).click();
+check((await gearText()).includes('Current → After') && (await gearText()).includes('Returns to cargo: iron sword'), 'Gear previews displaced items before assignment');
+check(await page.locator('.gw-editor-stats thead').textContent() === 'StatCurrentAfter', 'comparison columns have accessible Current and After headings');
+check(await page.locator('.gw-editor-stats tr', { hasText: 'Dodge retained (%)' }).textContent() === 'Dodge retained (%)10073', 'Gear displays server dodge values without recalculating');
+check(await page.locator('.gw-editor-stats tr', { hasText: 'Weapon damage' }).textContent() === 'Weapon damage1d6+12d9+3', 'Gear displays authoritative damage dice before and after');
+check(await page.locator('.gw-editor-stats tr', { hasText: 'Weapon edge bonus' }).textContent() === 'Weapon edge bonus02' && await page.locator('.gw-editor-stats tr', { hasText: 'Weapon edge strikes' }).textContent() === 'Weapon edge strikes09', 'Gear includes the active edge damage and remaining strikes');
+await page.keyboard.press('Tab');
+await page.locator('#gw-worn').getByRole('button', { name: 'Equip item', exact: true }).focus();
+await page.evaluate(view => window.gmcp('Company.Equipment', view), gearView);
+check(await page.evaluate(() => document.activeElement.dataset.gearFocus === 'apply'), 'Gear preserves keyboard focus across live updates');
+let editorSent = await sentNow(async () => { await page.keyboard.press('Enter'); });
+check(JSON.stringify(editorSent) === '["company equip me !8:second weapon"]', 'Gear executes the selected duplicate and explicit slot');
+const staleView = JSON.parse(JSON.stringify(gearView));
+staleView.slots[0].choices = staleView.slots[0].choices.filter(c => c.ref !== '!8:second');
+await page.evaluate(view => window.gmcp('Company.Equipment', view), staleView);
+check((await gearText()).includes('no longer available') && await page.locator('#gw-worn').getByRole('button', { name: 'Equip item', exact: true }).count() === 0, 'stale cargo selection clears the action and explains why');
+check(await page.evaluate(() => document.activeElement.dataset.gearFocus === 'slot:weapon'), 'stale selection returns keyboard focus to the selected slot');
+await page.locator('#gw-worn').getByRole('button', { name: 'Preview removal', exact: true }).click();
+editorSent = await sentNow(async () => { await page.locator('#gw-worn').getByRole('button', { name: 'Remove equipment', exact: true }).click(); });
+check(JSON.stringify(editorSent) === '["company remove me weapon !1:current"]', 'Gear removal names the exact worn instance');
+const replacedView = JSON.parse(JSON.stringify(gearView));
+replacedView.slots[0].remove.ref = '!1:replacement';
+replacedView.slots[0].remove.command = 'company remove me weapon !1:replacement';
+await page.evaluate(view => window.gmcp('Company.Equipment', view), replacedView);
+check((await gearText()).includes('no longer available') && await page.locator('#gw-worn').getByRole('button', { name: 'Remove equipment', exact: true }).count() === 0, 'a changed worn instance also invalidates removal selection');
+await page.locator('#gw-worn').getByRole('button', { name: xss, exact: true }).click();
+check(await page.locator('#gw-worn').getByRole('button', { name: 'Equip item', exact: true }).isDisabled() && (await gearText()).includes('weapon is bound'), 'unavailable equipment shows its reason and disables assignment');
+check(await page.locator('#gw-worn img').count() === 0, 'Gear labels render safely as text');
+await page.locator('#gw-worn').getByRole('button', { name: 'Body: empty', exact: true }).click();
+check((await gearText()).includes('No compatible items in shared cargo'), 'an empty compatible list has a useful explanation');
+await page.locator('#gw-worn').getByRole('button', { name: 'Pack: cloth knapsack', exact: true }).click();
+await page.locator('#gw-worn').getByRole('button', { name: 'frame pack', exact: true }).click();
+check(await page.locator('.gw-editor-stats tr', { hasText: 'Company capacity (g)' }).textContent() === 'Company capacity (g)5000055000', 'Pack preview shows the final server capacity');
+await page.setViewportSize({ width: 360, height: 760 });
+check(await page.evaluate(() => { const p = document.getElementById('gw-worn'); return p.scrollWidth <= p.clientWidth + 1; }), 'Gear editor fits a narrow viewport');
+if (outdir) { await page.screenshot({ path: path.join(outdir, 'gear-editor-narrow.png') }); }
+await page.setViewportSize({ width: 1280, height: 900 });
+
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }
 console.log('all dock window checks passed');

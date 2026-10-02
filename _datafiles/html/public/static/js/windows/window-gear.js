@@ -35,6 +35,14 @@
             background: var(--t-bg);
         }
 
+        .gw-editor-slots, .gw-editor-choices { display: flex; flex-wrap: wrap; gap: 4px; }
+        #gw-worn button { font: inherit; color: var(--t-text); background: var(--t-bg-surface); border: 1px solid var(--t-border); padding: 5px; text-align: left; overflow-wrap: anywhere; }
+        #gw-worn button[aria-pressed="true"] { border-color: var(--t-accent); }
+        #gw-worn button:focus-visible { outline: 2px solid var(--t-accent); }
+        #gw-worn p, #gw-worn h4 { margin: 4px 0; overflow-wrap: anywhere; }
+        .gw-editor-stats { width: 100%; font-size: 0.8em; border-collapse: collapse; }
+        .gw-editor-stats th { text-align: left; font-weight: normal; color: var(--t-text-secondary); }
+        .gw-editor-stats td { text-align: right; }
         /* ---- tab chrome ---- */
         #gear-window .gw-tab-bar {
             display: flex;
@@ -711,8 +719,121 @@
         out.classList.toggle('full', cap > 0 && total >= cap);
     }
 
+    // The server supplies every compatible exact item and before/after value.
+    // This view never calculates combat or capacity rules.
+    let editorSlot = 'weapon';
+    let editorChoice = '';
+    function editorNode(tag, text, parent) {
+        const node = document.createElement(tag);
+        if (text !== undefined) { node.textContent = text; }
+        if (parent) { parent.appendChild(node); }
+        return node;
+    }
+    function updateEditor(view) {
+        const panel = document.getElementById('gw-worn');
+        if (!panel) { return; }
+        const active = document.activeElement;
+        const focusKey = active && panel.contains(active) && active.dataset.gearFocus;
+        panel.replaceChildren();
+        const tabs = document.querySelectorAll('#gear-window .gw-tab-btn');
+        tabs[0].textContent = 'Equipment';
+        tabs[1].hidden = true;
+        document.getElementById('gw-backpack').classList.remove('active');
+        panel.classList.add('active');
+        tabs[0].classList.add('active');
+        const note = editorNode('p', view.available ? 'Select a slot, then an exact cargo item to preview.' : view.reason, panel);
+        note.className = 'gw-editor-note';
+        const slots = editorNode('div', undefined, panel);
+        slots.className = 'gw-editor-slots';
+        const list = view.slots || [];
+        if (!list.some(s => s.slot === editorSlot) && list.length) { editorSlot = list[0].slot; editorChoice = ''; }
+        list.forEach(slot => {
+            const button = editorNode('button', slot.label + ': ' + (slot.equipped ? slot.equipped.label : 'empty'), slots);
+            button.type = 'button';
+            button.dataset.gearFocus = 'slot:' + slot.slot;
+            button.setAttribute('aria-pressed', String(slot.slot === editorSlot));
+            button.addEventListener('click', () => { editorSlot = slot.slot; editorChoice = ''; updateEditor(view); });
+        });
+        const slot = list.find(s => s.slot === editorSlot);
+        if (!slot) { return; }
+        editorNode('h4', slot.label, panel);
+        editorNode('p', slot.equipped ? 'Equipped: ' + slot.equipped.label : 'This slot is empty.', panel);
+        const candidates = (slot.choices || []).map(c => ({ key: c.ref, choice: c }));
+        if (slot.remove) { candidates.unshift({ key: 'remove:' + slot.slot + ':' + slot.remove.ref, choice: slot.remove }); }
+        let selected = candidates.find(c => c.key === editorChoice);
+        if (editorChoice && !selected) {
+            const stale = editorNode('p', 'The selected item is no longer available. Choose again.', panel);
+            stale.setAttribute('role', 'status');
+            editorChoice = '';
+        }
+        if (!(slot.choices || []).length) { editorNode('p', 'No compatible items in shared cargo.', panel); }
+        const choices = editorNode('div', undefined, panel);
+        choices.className = 'gw-editor-choices';
+        candidates.forEach(entry => {
+            const c = entry.choice;
+            const removal = entry.key.startsWith('remove:');
+            const button = editorNode('button', removal ? 'Preview removal' : c.label, choices);
+            button.type = 'button';
+            button.dataset.gearFocus = 'choice:' + entry.key;
+            button.setAttribute('aria-pressed', String(entry.key === editorChoice));
+            button.addEventListener('click', () => { editorChoice = entry.key; updateEditor(view); });
+            if (!c.allowed) { editorNode('p', c.reason || 'Unavailable', choices); }
+        });
+        selected = candidates.find(c => c.key === editorChoice);
+        const candidate = selected && selected.choice;
+        const after = candidate && candidate.after;
+        editorNode('h4', after ? 'Current → After' : 'Current stats', panel);
+        const table = editorNode('table', undefined, panel);
+        table.className = 'gw-editor-stats';
+        table.setAttribute('aria-label', after ? 'Current and proposed equipment stats' : 'Current equipment stats');
+        const headings = editorNode('tr', undefined, editorNode('thead', undefined, table));
+        ['Stat', 'Current'].concat(after ? ['After'] : []).forEach(label => {
+            editorNode('th', label, headings).scope = 'col';
+        });
+        const body = editorNode('tbody', undefined, table);
+        function valueText(value) {
+            if (value === undefined || value === '') { return '—'; }
+            if (typeof value === 'boolean') { return value ? 'Yes' : 'No'; }
+            return String(value);
+        }
+        const rows = [
+            ['Weapon damage', 'damage'], ['Offhand damage', 'offhand_damage'], ['Weapon edge bonus', 'edge_bonus'], ['Weapon edge strikes', 'edge_strikes'], ['Offhand edge bonus', 'offhand_edge_bonus'], ['Offhand edge strikes', 'offhand_edge_strikes'], ['Hands', 'hands'], ['Reach', 'reach'], ['Shield', 'shield'], ['Protection (%)', 'defense'], ['Maximum health', 'health_max'], ['Maximum mana', 'mana_max'],
+            ['Worn weight (g)', 'worn_g'], ['Burden', 'burden'], ['Dodge retained (%)', 'dodge_pct'],
+            ['Pack capacity (g)', 'pack_capacity_g'], ['Company capacity (g)', 'capacity_g'], ['Cargo weight (g)', 'cargo_g']
+        ];
+        rows.forEach(([label, key]) => {
+            const row = editorNode('tr', undefined, body);
+            editorNode('th', label, row).scope = 'row';
+            editorNode('td', valueText(view.current[key]), row);
+            if (after) { editorNode('td', valueText(after[key]), row); }
+        });
+        Object.keys(view.current.stats || {}).forEach(key => {
+            const row = editorNode('tr', undefined, body);
+            editorNode('th', key, row).scope = 'row';
+            editorNode('td', String(view.current.stats[key]), row);
+            if (after) { editorNode('td', String(after.stats[key]), row); }
+        });
+        editorNode('p', 'Burden reduces dodge. Weapon damage is its dice roll; an active edge adds damage on successful strikes until its strikes run out. The foe and combat conditions affect actual damage.', panel);
+        if (candidate) {
+            if (candidate.returned && candidate.returned.length) { editorNode('p', 'Returns to cargo: ' + candidate.returned.join(', '), panel); }
+            if (!candidate.allowed) { const reason = editorNode('p', candidate.reason, panel); reason.setAttribute('role', 'status'); }
+            const apply = editorNode('button', selected.key.startsWith('remove:') ? 'Remove equipment' : 'Equip item', panel);
+            apply.type = 'button';
+            apply.disabled = !candidate.allowed;
+            apply.dataset.gearFocus = 'apply';
+            apply.addEventListener('click', () => Client.SendInput(candidate.command));
+        }
+        if (focusKey) {
+            const next = [...panel.querySelectorAll('[data-gear-focus]')].find(n => n.dataset.gearFocus === focusKey);
+            const fallback = [...panel.querySelectorAll('[data-gear-focus]')].find(n => n.dataset.gearFocus === 'slot:' + editorSlot);
+            if (next || fallback) { (next || fallback).focus(); }
+        }
+    }
+
     function update() {
         if (!document.getElementById('gear-window')) { return; }
+        const company = Client.GMCPStructs.Company;
+        if (company && company.Equipment) { updateEditor(company.Equipment); return; }
         updateWorn();
         updateBackpack();
     }
@@ -734,6 +855,7 @@
     VirtualWindows.register({
         gmcpHandlers: ['Char', 'Company'],
         onGMCP(namespace) {
+            if (namespace === 'Company.Equipment' || namespace === 'Company') { update(); return; }
             if (namespace === 'Company.Inventory') {
                 updateWeights();
                 return;

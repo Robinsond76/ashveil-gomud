@@ -629,3 +629,12 @@ func CombatOdds(atkChar characters.Character, defChar characters.Character) floa
 
 	return defRoundsToKill / atkRoundsToKill
 }
+
+// DodgeRetentionPct is the share of dodge retained under personal burden.
+// The preview uses the same rounding and rule as combat.
+func DodgeRetentionPct(c *characters.Character) int {
+	if c == nil {
+		return 100
+	}
+	return burdenedDodge(100, c.Burden())
+}

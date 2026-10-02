@@ -46,3 +46,20 @@ func TestPackHelpAndAliases(t *testing.T) {
 		assert.Equal(t, text, got)
 	}
 }
+
+func TestGearEditorHelpRenders(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+	for topic, wants := range map[string][]string{
+		"equipment":         {"Current → After", "Preview removal", "dodge", "not combat speed", "[exact-reference] [slot]", "Companion gear"},
+		"equip":             {"select a slot", "Pack"},
+		"company-inventory": {"compatible item", "preview removal"},
+		"webclient":         {"Unavailable choices", "Remove equipment"},
+	} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err)
+		for _, want := range wants {
+			assert.Contains(t, text, want, topic)
+		}
+	}
+}
