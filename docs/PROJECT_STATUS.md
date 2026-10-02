@@ -41,10 +41,10 @@ combat, wounds, guardian, tactics, webclient pages and the Combat lesson
 hint updated. Design decisions are on branch `phase-33i2-design` (merge it
 first; its status paragraph and this one both belong).
 
-Balance (30 fights a cell, default company vs default/roles groups):
-median rounds L1 11 → 11/11/11 (tiers 1–3), L5 37 → 36/39/43, L10
-88 → 94/96/84, all within the 125% bound; no clear winner flipped (L1 tier 3
-won by the enemy 97%, L1 baseline already enemy-favoured at 70%).
+Balance (30 fights a cell, default company vs default/roles groups, on the
+final code): median rounds L1 11 → 10/11/12 (tiers 1–3), L5 42 → 39/37/46,
+L10 95 → 92/98/94, all within the 125% bound; no clear winner flipped
+(company wins L1 13% → 43/23/23%, L5 70% → 70/63/73%, L10 53% → 77/53/53%).
 `TestBalanceCoordinated` (ASHVEIL_BALANCE=1) asserts the bounds.
 
 Deviations from the plan: recovery applies to any mob outside a company and
@@ -64,7 +64,9 @@ focus, now kept; (5) a hidden member's level could lift the assessed tier.
 (7) Coverage added: an enemy caster returns to its player aim, enemy healers
 against a solo player, shared guards across two battles. Rejected (6): the
 focus line's "closes in" stays singular, as group names are "a band of …";
-the band's no-double-heal is kept. Lua lint can't run here (no Docker or
+the band's no-double-heal is kept. Verification after the fixes: make
+generate, make validate, make js-lint, and go test -race ./... (96 packages)
+passed; the balance table passed its bounds. Lua lint can't run here (no Docker or
 luacheck) and no Lua changed.
 
 **34d complete:** Company Status now shows owned members' active effects and
