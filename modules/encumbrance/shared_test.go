@@ -71,7 +71,7 @@ func TestSharedTradeMeasuresLossOfCountedPackCapacity(t *testing.T) {
 	u.Character.Items = []items.Item{pack, other}
 	grams, ok := m.CargoExchangeGrams(7, []items.Item{pack}, []items.Item{testItem(rockId)})
 	assert.True(t, ok)
-	assert.Equal(t, 5000, grams, "equal weight trade still loses one pack's capacity")
+	assert.Zero(t, grams, "loose packs provide no capacity; trade measures cargo weight only")
 	u.Character.Items = append(u.Character.Items, items.New(packSpec.ItemId))
 	grams, _ = m.CargoExchangeGrams(7, []items.Item{pack}, []items.Item{testItem(rockId)})
 	assert.Zero(t, grams, "a spare pack replaces the removed physical pack")
@@ -105,10 +105,10 @@ func TestSharedCargoWeightAndPacksCountOnce(t *testing.T) {
 	u.Character.Items = []items.Item{items.New(989611), items.New(989611), items.New(989611)}
 	load, ok := m.CurrentLoad(7)
 	require.True(t, ok)
-	assert.Equal(t, 2000, load.PersonalGrams)
+	assert.Zero(t, load.PersonalGrams)
 	assert.Equal(t, 1500, load.CargoGrams)
 	assert.Equal(t, 2000, u.Character.PersonalGrams(), "cargo is not the leader's burden")
-	assert.Equal(t, 10000+500*u.Character.Stats.Strength.ValueAdj+10000+1000+10000, load.CapacityGrams, "one physical pack per member")
+	assert.Zero(t, load.CapacityGrams, "only assigned packs add capacity")
 }
 
 func TestSharedRecipeReplacesInstancesAtomically(t *testing.T) {

@@ -51,3 +51,6 @@ on, take it off, pick it up, or stow it.
 
 See also: <ansi fg="command">help defense</ansi>, <ansi fg="command">help perception</ansi>, <ansi fg="command">help strength</ansi>, <ansi fg="command">help cargo</ansi>,
 <ansi fg="command">help combat</ansi>.
+
+Assigned packs and shared contents are dropped before combat. Pack weight does
+not affect personal burden; spare packs still weigh something in cargo (help pack).

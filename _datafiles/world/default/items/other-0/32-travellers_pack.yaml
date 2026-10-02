@@ -1,11 +1,9 @@
 itemid: 32
 name: traveller's pack
 namesimple: pack
-description: A canvas pack with broad straps and a bedroll loop. Whoever
-  carries it can manage about ten kilograms more (help cargo). Only a
-  member's largest pack counts.
-type: object
-subtype: mundane
+description: A canvas pack providing 10 kg of shared capacity when assigned to a Pack slot. See help pack.
+type: pack
+subtype: wearable
 value: 40
 weight: 1500
 carrybonus: 10000

@@ -87,6 +87,8 @@ func TestWiringStartArchetypeStepGrantsEachKit(t *testing.T) {
 			id, chosen := archetypes.PlayerArchetype(u.UserId)
 			assert.True(t, chosen)
 			assert.Equal(t, choice.ID, id)
+			require.Equal(t, 38, u.Character.Equipment.Pack.ItemId)
+			assert.Equal(t, 10000, u.Character.Equipment.Pack.CarryBonusGrams())
 			assert.ElementsMatch(t, kitOf(t, m, choice.ID), ownedIDs(u))
 			assert.NotZero(t, u.Character.Equipment.Weapon.ItemId, "the kit weapon is in hand")
 			assert.LessOrEqual(t, len(u.Character.Items), u.Character.CarryCapacity(), "not encumbered")

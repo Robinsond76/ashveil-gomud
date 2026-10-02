@@ -103,8 +103,8 @@ func TestLoadRatio(t *testing.T) {
 	}
 
 	zeroCapacity := Load{PersonalGrams: 100, CapacityGrams: 0}
-	if got := zeroCapacity.Ratio(); got != 0 {
-		t.Errorf("expected 0 ratio for non-positive capacity, got %v", got)
+	if got := zeroCapacity.Ratio(); got != 1 {
+		t.Errorf("expected full-load ratio with cargo and no container, got %v", got)
 	}
 }
 

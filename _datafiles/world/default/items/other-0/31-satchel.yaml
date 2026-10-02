@@ -1,11 +1,9 @@
 itemid: 31
 name: satchel
 namesimple: satchel
-description: A leather satchel on a shoulder strap. Whoever carries it can
-  manage about five kilograms more (help cargo). Only a member's largest
-  pack counts.
-type: object
-subtype: mundane
+description: A leather satchel providing 5 kg of shared capacity when assigned to a Pack slot. See help pack.
+type: pack
+subtype: wearable
 value: 15
 weight: 600
 carrybonus: 5000

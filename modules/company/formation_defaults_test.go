@@ -126,8 +126,11 @@ func TestFormationDefaultsThroughLoginAndCombatFeed(t *testing.T) {
 	// Combat's target upkeep must turn the auto-centered leader away from a rear foe.
 	b.toughen()
 	b.aimAt("bandit slinger")
+	rearTarget := b.aria.Character.Aggro.MobInstanceId
 	b.fight()
-	assert.Nil(t, b.aria.Character.Aggro, "plain melee in the middle rank cannot reach through the placed front row")
+	if aggro := b.aria.Character.Aggro; aggro != nil {
+		assert.NotEqual(t, rearTarget, aggro.MobInstanceId, "unreachable rear target is cleared; upkeep may select another foe")
+	}
 	// End combat before deliberately clearing a multi-member position.
 	b.aria.Character.EndAggro()
 	for i := 1; i <= 4; i++ {

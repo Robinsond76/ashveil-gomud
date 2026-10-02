@@ -52,6 +52,7 @@ func ItemTypes() []ItemTypeInfo {
 		{string(Ring), `This can be worn in the players ring equipment slot.`, 0, 20000, 29999},
 		{string(Legs), `This can be worn in the players legs equipment slot.`, 0, 20000, 29999},
 		{string(Feet), `This can be worn in the players feet equipment slot.`, 0, 20000, 29999},
+		{string(Pack), `Assigned container supplying company cargo capacity.`, 0, 0, 9999},
 		// Consumables
 		{string(Potion), `This is a magic potion.`, 0, 30000, 39999},
 		{string(Food), `This is food.`, 0, 30000, 39999},
@@ -108,6 +109,7 @@ const (
 	Ring    ItemType = "ring"
 	Legs    ItemType = "legs"
 	Feet    ItemType = "feet"
+	Pack    ItemType = "pack"
 	// Consumables
 	Potion  ItemType = "potion"
 	Food    ItemType = "food"
@@ -259,6 +261,7 @@ func AllEquipSlots() []ItemType {
 		Ring,
 		Legs,
 		Feet,
+		Pack,
 	}
 }
 
@@ -495,6 +498,10 @@ func (i *ItemSpec) Validate() error {
 
 	if i.Name == `` {
 		return fmt.Errorf("item has no name")
+	}
+
+	if i.CarryBonus < 0 || (i.Type == Pack && (i.CarryBonus <= 0 || i.Subtype != Wearable || len(i.StatMods) > 0 || len(i.WornBuffIds) > 0 || i.DamageReduction != 0)) {
+		return fmt.Errorf("pack must be wearable with positive capacity and no combat modifiers")
 	}
 
 	if i.Nutrition < 0 {

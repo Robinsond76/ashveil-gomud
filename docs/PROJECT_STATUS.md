@@ -5,8 +5,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-01 (34a shared inventory UI and formation defaults)
-- **Latest completed slices:** 33g management (equipment catalog/class still pending),
+- **Last updated:** 2026-10-01 (34b assigned packs and cargo capacity)
+- **Latest completed slices:** 34a, UI/formation; 34b, packs/capacity; 33g management (equipment catalog/class still pending),
   33i1, company encounter assessment, and
   33f3, camp specialists (built in parallel); 33f2, expedition specialists; 33f1, skill
   and charm retirement; 33e,
@@ -16,6 +16,20 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**34b complete:** each member has one assigned Pack slot; new leaders and recruits
+receive a 10 kg cloth knapsack. Shared cargo capacity now comes from packs on
+living present carriers plus eligible horses, with no base/Strength allowance.
+Only unequipped cargo consumes that capacity; Pack contributes no combat burden,
+stats, defense or worn buffs. Migration preserves exact instances and journals
+once-only grants; capacity loss preserves overloaded cargo and recovery actions.
+Inventory shows assigned container availability and one shared cargo list.
+Help, tutorial pointers and migration release notes updated. Independent review
+resolved four findings (combat modifiers, 10 kg creation kits, armor-removal
+coverage, stale help) and a follow-up weapon-defense regression. Final focused
+checks, browser checks, make generate/validate, JS/Lua lint and go test -race ./...
+passed. Existing creation, death and mount fixtures now exercise the new rules;
+formation integration permits valid upkeep retargeting after clearing a rear foe.
 
 **34a complete:** shared browser Inventory shows cargo without member worn or
 personal blocks; panel foreground inheritance and two light-theme secondary
@@ -30,7 +44,7 @@ clear preservation. Follow-up review found no further issues. Verification:
 focused packages, help/tutorial pointers, all dock browser checks including
 4.5:1 load/label contrast in every shipped theme, make generate, make validate,
 JS/Lua lint, and go test -race ./... passed. Initial race run hit the existing
-random-hit edge test; targeted rerun and final full run passed. 34b–34d remain.
+random-hit edge test; targeted rerun and final full run passed. 34c–34d remain.
 
 
 
@@ -108,10 +122,7 @@ delegated to the lead. 33a–33e are complete.
   and [delivery plan](plans/2026-10-01-phase-34-company-ui-logistics-plan.md)
   split delivery into 34a UI/formation, 34b assigned packs and cargo capacity,
   34c equipment editor, and 34d effects/current capabilities. Design and delivery defaults approved by the owner;
-  planning complete. No gameplay
-  implemented and no gameplay verification claimed. Documentation verification:
-  independent review found no actionable issues; relative links and whitespace
-  checks passed.
+  34a and 34b implemented and verified as recorded above; 34c and 34d remain.
 
 - Owner requested a [weapon poison design](designs/2026-10-01-weapon-poisons-design.md)
   for future implementation on 2026-10-01: shop-bought temporary blade coatings,

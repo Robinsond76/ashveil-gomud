@@ -161,6 +161,18 @@ func (m *EncumbranceModule) sharedDeposit(u *users.UserRecord, op string, stacks
 			cargo = append(cargo, itm)
 		}
 	}
+	if load, ok := m.CurrentLoad(u.UserId); ok {
+		delta := 0
+		for _, itm := range cargo {
+			delta += itm.Weight()
+		}
+		for _, itm := range u.Character.Items {
+			delta -= itm.Weight()
+		}
+		if load.WouldExceed(delta) {
+			return fmt.Errorf("cargo: additions would exceed assigned container capacity")
+		}
+	}
 	oldItems, oldOps := u.Character.Items, u.Character.CargoApplied
 	u.Character.Items = cargo
 	if op != "" {
@@ -234,11 +246,6 @@ func (m *EncumbranceModule) CargoExchangeGrams(id int, removed, added []items.It
 	if u == nil || !u.Character.CompanyCargo {
 		return 0, false
 	}
-	members := 1
-	if m.companionCarry != nil {
-		members += len(m.companionCarry(id))
-	}
-	before := sharedPackBonus(u.Character.Items, members)
 	next := append([]items.Item(nil), u.Character.Items...)
 	grams := 0
 	for _, itm := range removed {
@@ -254,8 +261,7 @@ func (m *EncumbranceModule) CargoExchangeGrams(id int, removed, added []items.It
 		next = append(next, itm)
 		grams += itm.Weight()
 	}
-	after := sharedPackBonus(next, members)
-	return grams - (after - before), true
+	return grams, true
 }
 
 func (m *EncumbranceModule) TransformCargo(id int, inputs, outputs []items.Item) error {
@@ -284,6 +290,11 @@ func (m *EncumbranceModule) TransformCargo(id int, inputs, outputs []items.Item)
 		}
 	}
 	next = append(next, outputs...)
+	if delta, known := m.CargoExchangeGrams(id, inputs, outputs); known {
+		if load, ok := m.CurrentLoad(id); ok && load.WouldExceed(delta) {
+			return fmt.Errorf("cargo: recipe would exceed assigned container capacity")
+		}
+	}
 	before := u.Character.Items
 	u.Character.Items = next
 	if err := m.writeShared(u); err != nil {

@@ -62,12 +62,22 @@ type inventoryLoad struct {
 	CargoG          int `json:"cargo_g"`
 }
 
+type inventoryContainer struct {
+	Key       string `json:"key"`
+	Name      string `json:"name"`
+	Carrier   string `json:"carrier"`
+	Ref       string `json:"ref,omitempty"`
+	CapacityG int    `json:"capacity_g"`
+	Available bool   `json:"available"`
+}
+
 type inventoryPayload struct {
-	Shared   bool              `json:"shared"`
-	Treasury int               `json:"treasury"`
-	AutoLoot bool              `json:"autoloot"`
-	Load     *inventoryLoad    `json:"load"`
-	Members  []inventoryMember `json:"members"`
+	Containers []inventoryContainer `json:"containers"`
+	Shared     bool                 `json:"shared"`
+	Treasury   int                  `json:"treasury"`
+	AutoLoot   bool                 `json:"autoloot"`
+	Load       *inventoryLoad       `json:"load"`
+	Members    []inventoryMember    `json:"members"`
 	// CompanionsKnown is false when the company can't be read; Members
 	// then holds the player only.
 	CompanionsKnown bool             `json:"companions_known"`
@@ -129,6 +139,7 @@ func buildInventoryPayload(user *users.UserRecord, src inventorySources) invento
 	uid := user.UserId
 	leader := company.InventoryMemberOf(company.LeaderMemberKey, user.Character.Name,
 		company.MemberState{Items: user.Character.Items, Equipment: user.Character.Equipment})
+	leader.Available = user.Character.Health > 0
 	p := inventoryPayload{Shared: user.Character.CompanyCargo, Treasury: user.Character.Gold, AutoLoot: user.Character.AutoLoot, Members: []inventoryMember{inventoryMemberOf(leader)}, Horses: []inventoryHorse{}, Cargo: []inventoryItem{}}
 	if load, ok := src.load(uid); ok {
 		p.Load = &inventoryLoad{TotalG: load.TotalGrams(), CapacityG: load.CapacityGrams, MemberCapacityG: load.MemberCapacityGrams,
@@ -145,9 +156,20 @@ func buildInventoryPayload(user *users.UserRecord, src inventorySources) invento
 			CapacityG: h.CapacityGrams, Rides: h.Kind == mount.KindRiding && h.Saddle != ""})
 	}
 	if p.Shared {
+		p.Containers = []inventoryContainer{}
+		for _, member := range p.Members {
+			for _, itm := range member.Worn {
+				if itm.Slot == string(items.Pack) {
+					p.Containers = append(p.Containers, inventoryContainer{Key: member.Key, Name: itm.Label, Carrier: member.Name, Ref: itm.Ref, CapacityG: member.PackBonusG, Available: member.Available && !member.Fallen})
+				}
+			}
+		}
 		p.Cargo = inventoryItems(leader.Carried)
 		leader.Carried = []company.InventoryItem{}
 		leader.Grams = user.Character.PersonalGrams()
+		if user.Character.Equipment.Pack.ItemId <= 0 {
+			leader.Pack, leader.PackBonusGrams = "", 0
+		}
 		p.Members[0] = inventoryMemberOf(leader)
 	} else {
 		for _, s := range src.cargo(uid) {

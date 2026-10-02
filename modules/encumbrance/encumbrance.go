@@ -241,28 +241,28 @@ func (m *EncumbranceModule) CurrentLoad(leaderUserID int) (encumbrance.Load, boo
 	baseGrams, strengthGrams := m.memberBaseGrams, m.strengthGrams
 	cargo, tracked := m.cargo[leaderUserID]
 	m.mu.Unlock()
-	if baseGrams <= 0 {
-		return encumbrance.Load{}, false
-	}
-	memberGrams := m.leaderCapacity(leaderUserID, baseGrams, strengthGrams)
 	shared := m.sharedUser(leaderUserID)
 	unified := shared != nil && shared.Character.CompanyCargo
-	members := 1
-	if unified {
-		memberGrams -= company.BestPackGrams(shared.Character.Items)
+	if !unified && baseGrams <= 0 {
+		return encumbrance.Load{}, false
 	}
-	if m.companionCarry != nil {
-		for _, c := range m.companionCarry(leaderUserID) {
-			pack := c.PackGrams
-			if unified {
-				pack = 0
-			}
-			memberGrams += encumbrance.MemberCapacity(baseGrams, strengthGrams, c.Strength, pack)
-			members++
+	memberGrams := 0
+	if unified {
+		if shared.Character.Health > 0 {
+			memberGrams = shared.Character.Equipment.Pack.CarryBonusGrams()
 		}
-	}
-	if unified {
-		memberGrams += sharedPackBonus(shared.Character.Items, members)
+		if m.companionCarry != nil {
+			for _, c := range m.companionCarry(leaderUserID) {
+				memberGrams += c.PackGrams
+			}
+		}
+	} else {
+		memberGrams = m.leaderCapacity(leaderUserID, baseGrams, strengthGrams)
+		if m.companionCarry != nil {
+			for _, c := range m.companionCarry(leaderUserID) {
+				memberGrams += encumbrance.MemberCapacity(baseGrams, strengthGrams, c.Strength, c.PackGrams)
+			}
+		}
 	}
 	mountGrams := mount.CapacityBonus(leaderUserID)
 	cargoGrams := 0
@@ -277,8 +277,17 @@ func (m *EncumbranceModule) CurrentLoad(leaderUserID int) (encumbrance.Load, boo
 	if m.companionGear != nil {
 		companionGrams = m.companionGear(leaderUserID)
 	}
+	personalGrams := m.personalGrams(leaderUserID)
+	if unified {
+		personalGrams, companionGrams = 0, 0
+		if shared.Character.Pet.Exists() {
+			for _, itm := range shared.Character.Pet.Items {
+				cargoGrams += itm.Weight()
+			}
+		}
+	}
 	return encumbrance.Load{
-		PersonalGrams:       m.personalGrams(leaderUserID),
+		PersonalGrams:       personalGrams,
 		CompanionGrams:      companionGrams,
 		CargoGrams:          cargoGrams,
 		CapacityGrams:       memberGrams + mountGrams,

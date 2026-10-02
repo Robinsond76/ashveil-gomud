@@ -53,6 +53,7 @@ func TestWorn_EnableAll(t *testing.T) {
 				Ring:    items.Item{ItemId: 8},
 				Legs:    items.Item{ItemId: 9},
 				Feet:    items.Item{ItemId: 10},
+				Pack:    items.Item{ItemId: 11},
 			},
 			expected: Worn{
 				Weapon:  items.Item{ItemId: 1},
@@ -65,6 +66,7 @@ func TestWorn_EnableAll(t *testing.T) {
 				Ring:    items.Item{ItemId: 8},
 				Legs:    items.Item{ItemId: 9},
 				Feet:    items.Item{ItemId: 10},
+				Pack:    items.Item{ItemId: 11},
 			},
 		},
 		{
@@ -80,6 +82,7 @@ func TestWorn_EnableAll(t *testing.T) {
 				Ring:    items.Item{ItemId: 8},
 				Legs:    items.Item{ItemId: -9},
 				Feet:    items.Item{ItemId: 10},
+				Pack:    items.Item{ItemId: 11},
 			},
 			expected: Worn{
 				Weapon:  items.Item{},
@@ -92,6 +95,7 @@ func TestWorn_EnableAll(t *testing.T) {
 				Ring:    items.Item{ItemId: 8},
 				Legs:    items.Item{},
 				Feet:    items.Item{ItemId: 10},
+				Pack:    items.Item{ItemId: 11},
 			},
 		},
 		{
@@ -155,6 +159,7 @@ func TestWorn_GetAllItems(t *testing.T) {
 				Ring:    items.Item{ItemId: 8},
 				Legs:    items.Item{ItemId: 9},
 				Feet:    items.Item{ItemId: 10},
+				Pack:    items.Item{ItemId: 11},
 			},
 			expected: []items.Item{
 				{ItemId: 1},
@@ -167,6 +172,7 @@ func TestWorn_GetAllItems(t *testing.T) {
 				{ItemId: 8},
 				{ItemId: 9},
 				{ItemId: 10},
+				{ItemId: 11},
 			},
 		},
 		{
@@ -182,6 +188,7 @@ func TestWorn_GetAllItems(t *testing.T) {
 				Ring:    items.Item{ItemId: 8},
 				Legs:    items.Item{ItemId: 0},
 				Feet:    items.Item{ItemId: 10},
+				Pack:    items.Item{ItemId: 11},
 			},
 			expected: []items.Item{
 				{ItemId: 1},
@@ -189,6 +196,7 @@ func TestWorn_GetAllItems(t *testing.T) {
 				{ItemId: 6},
 				{ItemId: 8},
 				{ItemId: 10},
+				{ItemId: 11},
 			},
 		},
 		{
@@ -249,6 +257,7 @@ func TestGetAllSlotTypes(t *testing.T) {
 		string(items.Ring),
 		string(items.Legs),
 		string(items.Feet),
+		string(items.Pack),
 	}
 
 	got := GetAllSlotTypes()
@@ -258,7 +267,7 @@ func TestGetAllSlotTypes(t *testing.T) {
 func TestAllSlots(t *testing.T) {
 	expected := []items.ItemType{
 		items.Weapon, items.Offhand, items.Head, items.Neck, items.Body,
-		items.Belt, items.Gloves, items.Ring, items.Legs, items.Feet,
+		items.Belt, items.Gloves, items.Ring, items.Legs, items.Feet, items.Pack,
 	}
 	assert.Equal(t, expected, AllSlots())
 }
@@ -315,6 +324,7 @@ func TestWorn_Get(t *testing.T) {
 		Ring:    items.Item{ItemId: 8},
 		Legs:    items.Item{ItemId: 9},
 		Feet:    items.Item{ItemId: 10},
+		Pack:    items.Item{ItemId: 11},
 	}
 	for i, slot := range AllSlots() {
 		got := w.Get(slot)
