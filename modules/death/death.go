@@ -56,7 +56,7 @@ type DeathModule struct {
 	moveToRoom    func(userID, roomID int) error
 	abandonTravel func(leaderUserID int) error
 	abandonCamp   func(leaderUserID int) error
-	relocate      func(leaderUserID, roomID int) int
+	relocate      func(leaderUserID, originRoomID, roomID int) int
 	round         func() uint64
 	// Phase 25b resurrection seams.
 	keeper         func(room *rooms.Room, mobID int) (name string, ok bool)
@@ -352,6 +352,7 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 		return
 	}
 	c.Aggro = nil
+	fell := c.RoomId
 	if err := m.moveToRoom(userID, dest); err != nil || c.RoomId != dest {
 		m.hold(user, firstAttempt, "the move to the church failed", err)
 		return
@@ -360,7 +361,7 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 	c.Wounds = nil
 	c.Health = max(1, c.HealthMax.Value*cfg.vitalsPct/100)
 	c.Mana = c.ManaMax.Value * cfg.vitalsPct / 100
-	moved := m.relocate(userID, dest)
+	moved := m.relocate(userID, fell, dest)
 	op := pendingOp(c)
 	c.SetMiscData(domain.PendingKey, nil)
 	m.mu.Lock()

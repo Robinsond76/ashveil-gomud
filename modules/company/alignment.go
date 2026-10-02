@@ -231,6 +231,9 @@ func (m *CompanyModule) onNewRound(e events.Event) events.ListenerReturn {
 	m.accrueChemistry(evt.RoundNumber)
 	// Phase 25b: the dead are charged the leader's online time.
 	m.chargeAllowances()
+	// Phase 33h3: separate strays, then count the separated home.
+	m.sweepStrays()
+	m.tickSeparations()
 	_, every := m.alignmentConfig()
 	if m.registry.DriftIn <= 0 || m.registry.DriftIn > every {
 		m.registry.DriftIn = every

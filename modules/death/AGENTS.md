@@ -29,7 +29,9 @@ Phase 25b adds the `resurrect` command for dead companions (below); design:
   from this module.
 - **Order.** Destination first (so nothing is ended for nothing), then
   `expedition.AbandonForDeath`, `camping.AbandonForDeath`, the move, vitals,
-  `company.RelocateCompany`, then the mark is cleared. The abandons take
+  `company.RelocateCompany` (with the room the player fell in, so only
+  companions who were with them come; Phase 33h3 separates the rest), then
+  the mark is cleared. The abandons take
   their module's own mutex inside the world lock (the same order as the
   `travel` and `camp` commands).
 - **Checkpoint.** `MiscData["death-checkpoint"]` is set on `RoomChange` and

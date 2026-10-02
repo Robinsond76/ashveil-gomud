@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -99,6 +100,11 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 			scripting.TryRoomScriptEvent(`onExit`, user.UserId, previousRoomId)
 
+			// Ashveil Phase 33h3: the moved player's company comes along.
+			if company.RelocateCompany(targetUser.UserId, previousRoomId, targetUser.Character.RoomId) > 0 {
+				targetUser.SendText(company.CompanyFollows)
+			}
+
 			user.SendText(fmt.Sprintf("Moved to room %d.", gotoRoomId))
 
 			gotoRoom := rooms.LoadRoom(gotoRoomId)
@@ -128,7 +134,11 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 								continue
 							}
 
+							partyOrigin := partyUser.Character.RoomId
 							rooms.MoveToRoom(partyUser.UserId, gotoRoomId)
+							if company.RelocateCompany(partyUser.UserId, partyOrigin, partyUser.Character.RoomId) > 0 {
+								partyUser.SendText(company.CompanyFollows)
+							}
 							partyUser.SendText(fmt.Sprintf("Moved to room %d.", gotoRoomId))
 							room.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> appears in a flash of light!`, partyUser.Character.Name), partyUser.UserId)
 
@@ -136,6 +146,9 @@ func Teleport(rest string, user *users.UserRecord, room *rooms.Room, flags event
 
 							for _, mInstanceId := range room.GetMobs(rooms.FindCharmed) {
 								if mob := mobs.GetInstance(mInstanceId); mob != nil {
+									if _, _, member := company.LeaderAndKeyForInstance(mob.InstanceId); member {
+										continue // moved with its company above
+									}
 									if mob.Character.IsCharmed(partyUser.UserId) {
 										room.RemoveMob(mob.InstanceId)
 										newRoom.AddMob(mob.InstanceId)

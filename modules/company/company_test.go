@@ -204,6 +204,10 @@ type fakeRuntime struct {
 	// each instance moved and where.
 	dying     map[int]bool
 	relocated map[int]int
+	// Phase 33h3: rooms is where each live instance stands (0 when
+	// unset); fighting marks instances with aggro.
+	rooms    map[int]int
+	fighting map[int]bool
 	// Phase 26a: vitals per instance, {hp, max}.
 	vitals map[int][2]int
 	// mana is each live instance's mana and max (Phase 32g).
@@ -349,6 +353,12 @@ func (f *fakeRuntime) IsAttached(_ int, instanceID int) bool {
 func (f *fakeRuntime) Detach(_ int, instanceID int) {
 	f.detachCalls++
 	delete(f.live, instanceID)
+}
+func (f *fakeRuntime) Standing(instanceID int) (int, bool, bool) {
+	if !f.live[instanceID] || f.dying[instanceID] {
+		return 0, false, false
+	}
+	return f.rooms[instanceID], f.fighting[instanceID], true
 }
 func (f *fakeRuntime) Relocate(instanceID, roomID int) bool {
 	if !f.live[instanceID] || f.dying[instanceID] {

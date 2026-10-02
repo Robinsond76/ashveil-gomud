@@ -43,5 +43,9 @@ Post on the Old King's Road. Saddles are sold in the markets there.
 If companions leave, you keep the horses you have, but can't buy more
 of a kind until you're back under one per member.
 
+Your horses go wherever you go: through a passage, a portal, a
+journey's arrival, or to the church when you die. They are never left
+behind (<ansi fg="command">help separation</ansi>).
+
 See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help strain</ansi>,
 <ansi fg="command">help travel</ansi>, <ansi fg="command">help company</ansi>.

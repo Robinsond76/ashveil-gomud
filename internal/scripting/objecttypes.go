@@ -128,6 +128,7 @@ func actorObjectType() ObjectTypeDef {
 			m("UpdateItem", "void", "Persists changes made to an item the actor holds.", p("item", "ItemObject")),
 			m("IsCharmed", "boolean", "Returns true if the actor is charmed.", p("userId?", "number")),
 			m("IsInCombat", "boolean", "Returns true if the actor is in combat."),
+			m("InBattle", "boolean", "Returns true if the actor is in a battle or has aggro; refuse player-requested moves while it is."),
 			m("IsHome", "boolean", "Returns true if a mob is in its home room."),
 			m("IsDowned", "boolean", "Returns true if the actor is downed."),
 			m("IsAggro", "boolean", "Returns true if aggressive toward the given actor.", p("actor", "ActorObject")),

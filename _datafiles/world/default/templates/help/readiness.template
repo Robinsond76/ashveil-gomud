@@ -39,11 +39,13 @@ a level.
   doesn't restore health or mana itself: the company recovers on the
   move while it rests (<ansi fg="command">help camp</ansi>).
 
-<ansi fg="yellow-bold">Death and flight</ansi>
+<ansi fg="yellow-bold">Death, flight, and separation</ansi>
 
   A companion raised by <ansi fg="command">resurrect</ansi> comes back with no wounds, at half its
   health and half its mana (<ansi fg="command">help resurrect</ansi>). One who fled a battle
-  comes back as hurt as when it ran (<ansi fg="command">help morale</ansi>).
+  comes back as hurt as when it ran (<ansi fg="command">help morale</ansi>). One separated from
+  you comes back as it left, without recovering while away
+  (<ansi fg="command">help separation</ansi>).
 
 <ansi fg="command">status</ansi>, <ansi fg="command">company status</ansi>, and <ansi fg="command">heal</ansi> show each member's health. See also:
 <ansi fg="command">help company</ansi>, <ansi fg="command">help health</ansi>.

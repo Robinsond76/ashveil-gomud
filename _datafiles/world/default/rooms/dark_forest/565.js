@@ -53,6 +53,12 @@ function onCommand(cmd, rest, user, room) {
         return false;
     }
 
+    // Ashveil Phase 33h3: a move the player asks for waits until the fight is over.
+    if ( user.InBattle() ) {
+        SendUserMessage(user.UserId(), "Not while you are fighting.");
+        return true;
+    }
+
     roundNow = UtilGetRoundNumber();
 
     climbDown = false;
