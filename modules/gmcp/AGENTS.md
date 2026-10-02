@@ -42,3 +42,22 @@
   archetype provider's current specialist eligibility and camping's manual
   cooking view (configured recipes, ranks, ingredients, camp and capacity); no progression catalogue.
   `Char.Skills` retains its array contract and adds each skill's `max_level`.
+- Phase 34 review: an extra may set `buildKeyed` to compare a change key
+  instead of its body (it receives the key last stored). `Company.Conditions`
+  uses it: a timed effect carries `seconds_left`/`seconds_total`, the key holds
+  the round it ends instead (an end within one round of the last keyed one is
+  kept, since refreshes before and after the round's buff tick differ by one),
+  and `company-data.js` counts it down from the message's arrival, so the
+  message resends when an effect starts, is refreshed or ends, not every
+  round. `harmful`/`helpful` come from `BuffSpec.Effect()` (stat modifiers and
+  the `harmful`/`helpful` markers in `buffs-flags` data); neither is set when
+  unknown or secret. `Company.Equipment` is built only for a client showing the
+  Gear editor: `window-gear.js` sends `!!GMCP(Company.Equipment open <slot>)`
+  or `... closed` when that changes (and again after a `Company` snapshot,
+  since `PlayerSpawn` clears it; `prune` drops the offline), and only the
+  named slot's choices are previewed (`EquipmentViewFocused`; other slots are
+  `pending`). The view is cached in the company module, rebuilt only when the
+  leader's character (less what ticks each round: vitals, cooldowns, buff
+  counters), cargo, load, availability or the slot changes, or every 15
+  rounds. `ASHVEIL_LOAD_BENCH=1 go test ./modules/company -run
+  TestCompanyRefreshLoad -v` measures a player's whole company refresh.

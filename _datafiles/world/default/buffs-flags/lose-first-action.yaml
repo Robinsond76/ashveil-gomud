@@ -2,3 +2,4 @@ flag: lose-first-action
 name: "Loses First Action"
 description: "The holder loses its next combat action only."
 locked: true
+harmful: true

@@ -79,6 +79,27 @@ func (b *BuffSpec) VisibleNameDesc() (name, description string) {
 	return b.Name, b.Description
 }
 
+// Effect says whether the buff is known to harm or to help its bearer: a
+// negative stat modifier or a harmful flag harms; otherwise a positive
+// modifier or a helpful flag helps. Neither is known for a buff with no such
+// sign, and a secret buff reveals neither.
+func (b *BuffSpec) Effect() (harmful, helpful bool) {
+	if b.Secret {
+		return false, false
+	}
+	for _, value := range b.StatMods {
+		harmful = harmful || value < 0
+		helpful = helpful || value > 0
+	}
+	for _, flag := range b.Flags {
+		if f := GetFlagSpec(flag); f != nil {
+			harmful = harmful || f.Harmful
+			helpful = helpful || f.Helpful
+		}
+	}
+	return harmful, helpful && !harmful
+}
+
 type BuffMessage struct {
 	User string
 	Room string

@@ -2,3 +2,4 @@ flag: no-go
 name: "No Movement"
 description: "Prevents the character from moving between rooms."
 locked: true
+harmful: true

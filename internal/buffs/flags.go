@@ -31,6 +31,11 @@ type FlagSpec struct {
 	Name        string `yaml:"name"`        // Plain text name, e.g. "Unremovable Gear"
 	Description string `yaml:"description"` // One sentence describing what the flag represents
 	Locked      bool   `yaml:"locked"`      // If true, the flag cannot be edited or removed
+	// Harmful and Helpful say what the flag does to its bearer, for player
+	// displays; a flag that is neither (a marker such as combat-status) says
+	// nothing. Phase 34 review.
+	Harmful bool `yaml:"harmful,omitempty"`
+	Helpful bool `yaml:"helpful,omitempty"`
 }
 
 // Id implements the fileloader.Loadable interface.

@@ -2,3 +2,4 @@ flag: thirsty
 name: "Thirsty"
 description: "Marks the character as dehydrated, potentially causing penalties."
 locked: true
+harmful: true

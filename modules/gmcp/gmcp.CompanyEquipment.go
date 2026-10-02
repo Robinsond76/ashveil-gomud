@@ -7,13 +7,17 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-func equipmentExtra() companyExtra {
+// equipmentExtra builds the Gear editor only for a client showing it
+// (watching): its previews are the costliest extra, and most players are
+// not looking at them (Phase 34 review).
+func equipmentExtra(watching func(userID int) (string, bool)) companyExtra {
 	return companyExtra{module: "Company.Equipment", build: func(u *users.UserRecord) []byte {
 		// Legacy worlds retain their Char.Inventory Gear view.
-		if !u.Character.CompanyCargo {
+		slot, open := watching(u.UserId)
+		if !u.Character.CompanyCargo || !open {
 			return nil
 		}
-		data, _ := json.Marshal(company.EquipmentViewOf(u.UserId))
+		data, _ := json.Marshal(company.EquipmentViewFocused(u.UserId, slot))
 		return data
 	}}
 }

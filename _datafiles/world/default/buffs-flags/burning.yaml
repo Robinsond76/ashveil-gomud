@@ -2,3 +2,4 @@ flag: burning
 name: "Burning"
 description: "Fire damage each combat round."
 locked: true
+harmful: true

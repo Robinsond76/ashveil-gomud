@@ -139,17 +139,6 @@ func (f *Formation) Prune(valid map[MemberKey]bool) {
 	}
 }
 
-func (f *Formation) empty() bool {
-	for r := 0; r < FormationRows; r++ {
-		for c := 0; c < FormationCols; c++ {
-			if f[r][c] != "" {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func validSlot(row, col int) bool {
 	return row >= 0 && row < FormationRows && col >= 0 && col < FormationCols
 }
