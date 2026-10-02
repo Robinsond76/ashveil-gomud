@@ -271,7 +271,9 @@ delegated to the lead. 33a–33e are complete.
   scaling"); member names with spaces refused (stat is the last word);
   `company growth` missing from the company page's command list; "pays
   once" overstated (reworded). Rejected: none.
-- **Verification:** see the 33h1 check line below.
+- **Verification (after review fixes):** `make generate`, `make validate`,
+  and `go test -race ./...` passed with no failures. No JavaScript or Lua
+  changed, so those lints were not applicable.
 
 ### Phase 33g: cargo, treasury, equipment, and loot management (2026-10-01)
 
