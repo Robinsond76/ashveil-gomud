@@ -28,13 +28,24 @@ instead of duplicating them.
 
 ## Current position
 
-**30f battlefield conditions — PR waiting for review (2026-10-02):**
-ambush opening rounds, formation clusters and sweeps, leaps/open flanks,
-narrow-ground projections, fatigue hit penalties, and cold chant/sling delays
-are implemented with indexed player help, representative content, and Battle
-view updates. Branch `phase-30f-battlefield`; full validation, race tests,
-JS/Lua lint, and all 219 browser checks passed. [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12)
-is **awaiting review by Opus 5.5**; nothing is merged.
+**30f battlefield conditions complete (2026-10-02):** ambush opening
+rounds, formation clusters and sweeps, leaps/open flanks, narrow-ground
+projections, fatigue hit penalties, and cold chant/sling delays, with indexed
+player help, representative content, and Battle view updates; merged via
+[PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12) after independent review. Accepted and fixed with regression tests:
+(1) a leap was narrated and its 3-round cooldown spent on a strike ordinary
+reach already allowed (front cell empty or fallen), leaving it unavailable
+over a knocked-down protector; it is now spent only when needed; (2) the
+fatigue suffix was appended to every strike; it now appears when a penalty
+starts or changes; (3) a sweep could strike a front-row guardian twice (its
+ward's blow, then its own); each member is now struck at most once, and the
+help says so. Rejected: (4) silent melee turns in the narrow reserve, as
+both sides are capped at five members and six cells are active, so no
+reserve forms in play; (5) an opening recorded for a battle begun at
+end-of-round settlement, as encounter groups begin at the top of a round
+(travel and camp spawns never wait behind another battle).
+After the fixes: make generate, make validate, JS lint, and go test -race
+./... (96 packages) passed; Lua lint not run here (no Docker; no Lua changed).
 [Approved design](designs/2026-10-02-phase-30f-battlefield-design.md),
 [plan](plans/2026-10-02-phase-30f-battlefield-plan.md), and
 [verification](verification/phase-30f/verification.md).
@@ -332,8 +343,7 @@ baseline), 30g2, and 30g3 are done; each later slice is measured against 30g1:
 
 Phase 30e (morale and mercy) is complete. Phase 30f (battlefield
 conditions; mounted combat remains excluded) is implemented on
-`phase-30f-battlefield`: [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12) is
-**awaiting review by Opus 5.5**, unmerged.
+`phase-30f-battlefield` and merged via [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12).
 Other remaining limitations are listed below.
 
 **Future company gameplay:** the owner endorsed the 2026-10-01 gameplay review
@@ -469,7 +479,7 @@ delegated to the lead. 33a–33e are complete.
 | 30c | Company tactics | 30c1 complete: [design](designs/2026-09-29-phase-30c-company-tactics-design.md). `company tactics` (`tactics`): a durable company focus (none, leader, casters, nearest, weakest, strongest, wounded) and healing threshold (10–90%); in a battle only the focus changes, for that battle, one order a round, turning everyone at the next upkeep; web focus buttons; the `casters` rule; enemy personalities by race or template (`targeting`, `targetingnoise`); `help tactics`. 30c2 complete: [design](designs/2026-09-30-phase-30c2-guardian-design.md). A `guardian` role (`strategy <who> guard [other]`) steps in for its ward (set, else the most hurt in reach) within one column: 2 guards a battle, one back per 2 combat rounds, none while knocked down or stunned; `help guardian`. Rotate the wounded deferred |
 | 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](designs/2026-09-30-phase-30d1-chant-interrupts-design.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](designs/2026-09-30-phase-30d1b-chant-break-chance-design.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, or stun always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 complete: [design](designs/2026-09-30-phase-30d2-windups-design.md). Physical wind-ups (`internal/windup`, mob `windups`): the forest ogre (Dark Forest room 530) winds up Crushing Blow in plain view, then one swing of double damage that knocks down; only a crit that lands, a stagger, a knockdown, or a stun breaks it (owner); a broken or landed one is followed by 2 turns' cooldown; a shield bash is a counter strike only and breaks nothing (owner) |
 | 30e | Morale and mercy | Complete: enemy temperaments and shared break checks; protected surrender; paced mercy decisions, rewards and reactions; companion hesitation, flight and saved return |
-| 30f | Battlefield conditions | [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12) **awaiting review by Opus 5.5**. [Approved design](designs/2026-10-02-phase-30f-battlefield-design.md), [verification](verification/phase-30f/verification.md). Unmerged; mounted combat excluded |
+| 30f | Battlefield conditions | Complete: [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12), reviewed and merged 2026-10-02. [Approved design](designs/2026-10-02-phase-30f-battlefield-design.md), [verification](verification/phase-30f/verification.md). Mounted combat excluded |
 | 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g3-personal-load.md)): personal load and burden (dodge × (1 − 0.6 b)); `help burden`. 30g4 (progression) next |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](designs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](designs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |

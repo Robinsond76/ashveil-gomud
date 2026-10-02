@@ -31,6 +31,9 @@ func TestFatigueReducesRealAttackHitChanceAndReportsPenalty(t *testing.T) {
 	buffs.LoadFlagDataFiles()
 	buffs.LoadDataFiles()
 	rooms.LoadBiomeDataFiles()
+	fatigueNoted.Lock()
+	clear(fatigueNoted.by)
+	fatigueNoted.Unlock()
 	service := &fatigueService{rest: 100}
 	survival.SetCompanyService(service)
 	t.Cleanup(func() { survival.SetCompanyService(nil) })
@@ -50,6 +53,16 @@ func TestFatigueReducesRealAttackHitChanceAndReportsPenalty(t *testing.T) {
 	m.Character.HealthMax.Value = 1000000
 	r := AttackPlayerVsMob(u, m)
 	assert.Contains(t, r.MessagesToSource[0], "fatigue: hit -20%")
+	// Named when it starts or changes, not on every strike (review fix).
+	for _, line := range AttackPlayerVsMob(u, m).MessagesToSource {
+		assert.NotContains(t, line, "fatigue:")
+	}
+	service.rest = 30
+	assert.Contains(t, AttackPlayerVsMob(u, m).MessagesToSource[0], "fatigue: hit -5%")
+	service.rest = 100
+	AttackPlayerVsMob(u, m)
+	service.rest = 30
+	assert.Contains(t, AttackPlayerVsMob(u, m).MessagesToSource[0], "fatigue: hit -5%", "renamed after recovering")
 	survival.SetCompanyService(nil)
 	assert.Zero(t, fatigueFor(u.UserId, company.LeaderMemberKey), "unavailable survival is neutral")
 }

@@ -511,3 +511,69 @@ func TestBattlefieldDisabledProtectorLeavesColumnOpen(t *testing.T) {
 	standing = enemyparty.Standing(f, alive, 7)
 	assert.False(t, standing[domain.LeaderMemberKey])
 }
+
+// Review fix: a front-row guardian is struck at most once by one sweep,
+// whether it guards first or is struck first.
+func TestBattlefieldSweepStrikesFrontRowGuardianOnce(t *testing.T) {
+	for name, front := range map[string][3]domain.MemberKey{
+		"ward first":     {domain.LeaderMemberKey, domain.CompanionMemberKey(1), ""},
+		"guardian first": {domain.CompanionMemberKey(1), domain.LeaderMemberKey, ""},
+	} {
+		t.Run(name, func(t *testing.T) {
+			b := battlefieldBrawl(t)
+			rec, _ := module.registry.Get(7)
+			rec.Formation = domain.Formation{front, {"", domain.CompanionMemberKey(2), ""}, {domain.CompanionMemberKey(3), domain.CompanionMemberKey(4), ""}}
+			module.registry.Put(rec)
+			b.cmd("strategy", "tamsin guard me")
+			captain := b.bandit("bandit captain")
+			captain.Sweep = true
+			b.aimAt("bandit captain")
+			for _, m := range b.livingBandits() {
+				m.Character.SetAggro(7, 0, characters.DefaultAttack, 20)
+			}
+			captain.Character.SetAggro(7, 0, characters.DefaultAttack, 0)
+			stream := b.listen()
+			assert.Contains(t, b.fight(), "sweeps a heavy blow")
+			hits := map[string]int{}
+			for _, e := range *stream {
+				if e.Kind == combatstream.Attack && e.Source.MobInstanceId == captain.InstanceId {
+					hits[e.Target.Key()]++
+				}
+			}
+			guardian := "m:" + strconv.Itoa(b.companion(1).InstanceId)
+			assert.Equal(t, 1, hits[guardian], "guardian struck once: %v", hits)
+			if name == "ward first" {
+				assert.Zero(t, hits["u:7"], "the guardian took the leader's blow")
+			} else {
+				assert.Equal(t, 1, hits["u:7"], "a struck guardian doesn't step in again")
+			}
+		})
+	}
+}
+
+// Review fix: with no front-row member in its column, the middle row is
+// already in ordinary reach, so striking it is no leap: no narration and
+// no cooldown spent.
+func TestBattlefieldLeapNotSpentOnOrdinaryReach(t *testing.T) {
+	b := battlefieldBrawl(t)
+	rec, _ := module.registry.Get(7)
+	rec.Formation = domain.Formation{{domain.CompanionMemberKey(3), "", domain.CompanionMemberKey(4)}, {"", domain.LeaderMemberKey, ""}, {"", domain.CompanionMemberKey(2), domain.CompanionMemberKey(1)}}
+	module.registry.Put(rec)
+	captain := b.bandit("bandit captain")
+	captain.Leap = true
+	b.aimAt("bandit captain")
+	for _, m := range b.livingBandits() {
+		m.Character.SetAggro(7, 0, characters.DefaultAttack, 20)
+	}
+	captain.Character.SetAggro(7, 0, characters.DefaultAttack, 0)
+	stream := b.listen()
+	assert.NotContains(t, b.fight(), "leaps past")
+	struck := false
+	for _, e := range *stream {
+		assert.False(t, e.Kind == combatstream.Ability && e.Status == "leap", "no leap event")
+		if e.Kind == combatstream.Attack && e.Source.MobInstanceId == captain.InstanceId && e.Target.UserId == 7 {
+			struck = true
+		}
+	}
+	assert.True(t, struck, "an ordinary strike still lands")
+}

@@ -1,7 +1,7 @@
 # Phase 30f delivery plan
 
 Status: implementation, verification, and delivery complete.
-[PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12) is **awaiting review by Opus 5.5**, unmerged.
+[PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12) was independently reviewed and merged to `master` on 2026-10-02.
 The owner approved the
 [design](../designs/2026-10-02-phase-30f-battlefield-design.md).
 Branch: `phase-30f-battlefield`; base `f79995a5`.
@@ -30,7 +30,7 @@ Branch: `phase-30f-battlefield`; base `f79995a5`.
 Tasks 1–8 are complete: the verified implementation was committed as
 `1dbd0114`, pushed, and opened as [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12).
 Project Status, the combat roadmap, and the phase records link the PR and
-record **awaiting review by Opus 5.5**. See the
+record the review. See the
 [verification record](../verification/phase-30f/verification.md) for behavior,
-coverage, checks, and the browser screenshot. Independent review remains
-pending; the branch is unmerged.
+coverage, checks, the browser screenshot, and the review outcome. Independent
+review found three bugs, fixed with regression tests before the merge.

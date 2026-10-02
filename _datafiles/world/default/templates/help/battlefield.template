@@ -13,7 +13,9 @@ move to another cluster. Spread out to reduce the damage to your company.
 Some enemies, including forest ogres, sweep the whole front row. A sweep
 takes one action, strikes each living front-row opponent once, and is
 available again after three combat rounds. Shields, armor, and guardians
-still protect against each strike. It never hits spectators or waiting bands.
+still protect against each strike, and nobody is struck twice: a guardian
+who takes a blow for a neighbor is not struck again. It never hits
+spectators or waiting bands.
 
 <ansi fg="yellow-bold">Leaping and open flanks</ansi>
 
@@ -21,6 +23,7 @@ Some beasts, including timber wolves, leap past a missing, fallen, or
 knocked-down front-line protector to strike the middle or back row. A
 standing protector blocks the leap. A leap replaces a normal attack and
 is available again after three combat rounds; guardians can still step in.
+A strike that could reach its target anyway is not a leap and costs none.
 
 A rear member is exposed to melee when their own front column and an
 adjacent front column are both open. Keep a standing front line: a
@@ -40,7 +43,8 @@ positions; formation shows your saved arrangement.
 
 Remaining Fatigue 51-100 has no hit penalty. Tired (26-50) lowers physical
 hit chance by 5 percentage points; Exhausted (1-25) by 10; Collapsed (0)
-by 20. The usual minimum hit chance still applies. Strikes name the penalty.
+by 20. The usual minimum hit chance still applies. A strike names the
+penalty when it first applies or changes, not every round.
 Rest before fighting; combat itself adds no new fatigue drain.
 
 Frostbitten, Hypothermic, or Freezing to Death adds one combat round to

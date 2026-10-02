@@ -1,11 +1,11 @@
 # Phase 30f: Battlefield Conditions
 
-Status: owner approved all proposed defaults, 2026-10-02; implemented and verified; [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12)
-is **awaiting review by Opus 5.5**, unmerged. Implementation branch:
+Status: owner approved all proposed defaults, 2026-10-02; implemented, verified,
+independently reviewed, and merged in [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12) (2026-10-02). Implementation branch:
 `phase-30f-battlefield`. This develops the
 [original proposal](2026-09-26-battlefield-conditions-design.md).
-The owner requested implementation and an unmerged GitHub PR awaiting
-**Opus 5.5** review. The phase remains unmerged and awaits independent review.
+The review outcome is recorded in Project Status and the
+[verification record](../verification/phase-30f/verification.md).
 
 ## Scope and existing foundations
 

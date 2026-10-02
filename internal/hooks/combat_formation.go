@@ -186,7 +186,7 @@ func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leade
 
 	finalKey, legalOk := resolveAttackTarget(attackerCol, f, defenderKey, alive, reach, groundForMob(mob, leaderUserID))
 	if legalOk {
-		noteLeap(mob, f, defenderKey, finalKey, alive, leaderUserID)
+		noteLeap(mob, attackerCol, f, defenderKey, finalKey, alive, reach, leaderUserID)
 	}
 	if !legalOk {
 		return nil, false, false
@@ -268,7 +268,7 @@ func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, de
 
 	finalKey, legalOk := resolveAttackTarget(attackerCol, f, company.LeaderMemberKey, alive, reach, groundForMob(mob, defUser.UserId))
 	if legalOk {
-		noteLeap(mob, f, company.LeaderMemberKey, finalKey, alive, defUser.UserId)
+		noteLeap(mob, attackerCol, f, company.LeaderMemberKey, finalKey, alive, reach, defUser.UserId)
 	}
 	if !legalOk {
 		return false, false

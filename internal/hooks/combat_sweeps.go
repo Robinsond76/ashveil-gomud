@@ -45,8 +45,15 @@ func openLeapColumn(f company.Formation, standing map[company.MemberKey]bool, co
 	return key == "" || !standing[key]
 }
 
-func noteLeap(m *mobs.Mob, f company.Formation, intended, final company.MemberKey, alive map[company.MemberKey]bool, owner int) {
+// noteLeap spends the leap only when the strike needed it: a target an
+// ordinary strike (or an open flank) already reaches is a plain attack.
+func noteLeap(m *mobs.Mob, attackerCol int, f company.Formation, intended, final company.MemberKey, alive map[company.MemberKey]bool, reach formationcombat.Reach, owner int) {
 	if !leapReady(m) || intended != final {
+		return
+	}
+	plain := groundForMob(m, owner)
+	plain.leap = false
+	if target, ok := resolveAttackTarget(attackerCol, f, intended, alive, reach, plain); ok && target == final {
 		return
 	}
 	r, c, ok := f.Find(final)
@@ -63,8 +70,8 @@ func noteLeap(m *mobs.Mob, f company.Formation, intended, final company.MemberKe
 	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: m.Character.RoomId, Source: mobRef(m), Status: "leap"})
 }
 
-// trySweep is one turn, one ordinary weapon strike per living front-row
-// opponent. Existing attack helpers preserve scripts, counters, wounds,
+// trySweep is one turn, at most one ordinary weapon strike per living
+// front-row opponent. Existing attack helpers preserve scripts, counters, wounds,
 // attribution, and affected-member resolution. It cannot recurse.
 func trySweep(m *mobs.Mob, owner int, room *rooms.Room) bool {
 	if !enemySpecial(m) || !m.Sweep || surprised(0, m.InstanceId) || sweepCooldown[m.InstanceId] > battlefieldRound || physicalReserve(0, m) {
@@ -97,14 +104,19 @@ func trySweep(m *mobs.Mob, owner int, room *rooms.Room) bool {
 	defer delete(battlefieldPowers, m.InstanceId)
 	mobHolder(m).say("", "%s sweeps a heavy blow across the front line.", " (sweep)")
 	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: mobRef(m), Status: "sweep"})
+	// Each member is struck at most once: a guardian who took a ward's blow
+	// isn't struck again, and one already struck doesn't step in again.
+	struck := map[company.MemberKey]bool{}
 	for _, key := range keys {
 		if !canFight(&m.Character) {
 			break
 		}
-		if !enemyparty.CompanyAlive(owner, f)[key] || sweepHidden(u, key) {
+		if struck[key] || !enemyparty.CompanyAlive(owner, f)[key] || sweepHidden(u, key) {
 			continue
 		}
-		if guard, ok := guardianFor(u, f, key); ok {
+		struck[key] = true
+		if guard, ok := guardianFor(u, f, key, struck); ok {
+			struck[guard.key] = true
 			if guard.user != nil {
 				resolveInterceptedAttackOnLeader(m, guard.user, room, room)
 			} else if guard.mob != nil {

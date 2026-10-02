@@ -12,7 +12,7 @@ func TestBattlefieldHelpRendersAndIsLinked(t *testing.T) {
 	keywords.LoadAliases()
 	text, err := GetHelpContents("battlefield")
 	require.NoError(t, err)
-	for _, want := range []string{"orthogonal", "two columns", "26-50", "1-25", "three combat rounds", "Frostbitten"} {
+	for _, want := range []string{"orthogonal", "two columns", "26-50", "1-25", "three combat rounds", "Frostbitten", "nobody is struck twice", "costs none", "first applies or changes"} {
 		assert.Contains(t, text, want)
 	}
 	for _, alias := range []string{"battlefield-conditions", "clusters", "flanking", "narrow-ground"} {

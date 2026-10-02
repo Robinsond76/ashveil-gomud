@@ -4,8 +4,8 @@ Part of the [combat presentation roadmap](2026-09-26-combat-presentation-roadmap
 Status: owner-approved direction (2026-09-26), from the "new combat
 suggestions" list. The owner approved the
 [detailed design](2026-10-02-phase-30f-battlefield-design.md) on 2026-10-02;
-implementation is in [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12),
-**awaiting review by Opus 5.5**, unmerged. This file preserves the original proposal.
+implementation shipped in [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12),
+merged 2026-10-02. This file preserves the original proposal.
 
 ## Scope
 

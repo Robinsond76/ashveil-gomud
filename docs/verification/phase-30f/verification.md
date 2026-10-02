@@ -2,7 +2,8 @@
 
 Implementation branch: `phase-30f-battlefield`, based on master `f79995a5`.
 The owner approved the design defaults on 2026-10-02. [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12)
-is **awaiting review by Opus 5.5**, unmerged. Implementation commit: `1dbd0114`.
+was independently reviewed and merged on 2026-10-02. Implementation commit: `1dbd0114`;
+review fixes follow it on the branch (see Independent review below).
 
 ## Delivered behavior
 
@@ -77,3 +78,16 @@ tags; the affected tests pass together with all new battlefield tests.
 No independent review has happened in this implementation session. The
 requested Opus 5.5 review and the repository's pre-merge review gate remain
 outstanding. No merge or auto-merge is authorized by this delivery.
+
+## Independent review
+
+Review of the full PR diff on 2026-10-02 (outcome also in Project Status):
+
+- Fixed: leap spent and narrated on an ordinarily reachable target
+  (`TestBattlefieldLeapNotSpentOnOrdinaryReach`).
+- Fixed: fatigue suffix on every strike; now on start or change
+  (`TestFatigueReducesRealAttackHitChanceAndReportsPenalty`).
+- Fixed: sweep could strike a front-row guardian twice
+  (`TestBattlefieldSweepStrikesFrontRowGuardianOnce`, both orders).
+- Rejected: reserve-turn notice (unreachable with five-member caps) and
+  opening at end-of-round settlement (no encounter path begins there).
