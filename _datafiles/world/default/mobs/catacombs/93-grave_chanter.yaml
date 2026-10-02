@@ -1,0 +1,21 @@
+# Ashveil Phase 33i2: a drilled company's healer (help coordination). It
+# mends its fellows below 60% of their health; break the chant to stop it.
+mobid: 93
+zone: Catacombs
+itemdropchance: 2
+lootcategory: humanoid
+hostile: true
+maxwander: 0
+groups:
+  - catacomb-denizen
+role: healer
+activitylevel: 10
+character:
+  name: grave chanter
+  description: 'A hooded cultist whose voice never stops: a low drone of names read from the walls, and under it, the words that knit dead flesh and broken bone.'
+  raceid: 1
+  level: 30
+  alignment: -70
+  gold: 15
+  spellbook:
+    heal: 250 # some practice: +5 to its chance to cast

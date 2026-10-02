@@ -1,0 +1,27 @@
+# Ashveil Phase 33i2: a band's healer (help coordination). She heals a
+# ruffian below half his health.
+mobid: 90
+zone: Frostfang Slums
+itemdropchance: 2
+lootcategory: humanoid
+hostile: true
+maxwander: 0
+groups:
+  - slum-ruffians
+role: healer
+activitylevel: 10
+character:
+  name: back-alley bonesetter
+  description: 'A sharp-eyed woman in a stained apron, her sleeves rolled to the elbow. The ruffians of the slums pay her in coin and silence, and she keeps them on their feet.'
+  raceid: 1
+  pronouns: she
+  level: 18
+  alignment: -40
+  gold: 12
+  spellbook:
+    heal: 250 # some practice: +5 to its chance to cast
+  equipment:
+    weapon:
+      itemid: 10008
+    body:
+      itemid: 20008

@@ -13,12 +13,13 @@ so there is no one-on-one guess. It is free and instant.
   You consider a band of ruffians...
   Assessment: A fair fight for your company; the odds look clear.
     Counted: you, Tamsin Reed and Brother Oswin.
-    Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.
+    They fight as a band: a healer among them.
+    Not judged: spells, healing, guards and abilities, hidden foes, and anyone yet to come.
   Type scout ruffians to see how they stand.
 
 The words run from an easy fight, a fair fight, and a hard fight to a grave
 risk and hopeless, and never show numbers (<ansi fg="command">help assessment</ansi> explains
-them and what is weighed). <ansi fg="command">scout [group]</ansi> gives the same assessment
+them and what is weighed; <ansi fg="command">help coordination</ansi> how groups fight together). <ansi fg="command">scout [group]</ansi> gives the same assessment
 under the group's formation.
 
 You see what <ansi fg="command">look</ansi> sees: hidden foes are left out, and in the dark you

@@ -15,6 +15,19 @@ exits:
     roomid: 309
   southwest:
     roomid: 311
+spawninfo:
+- mobid: 87
+  message: A poacher climbs up from the ice, a net over one shoulder.
+  respawnrate: 5 real minutes
+- mobid: 87
+  message: A poacher climbs up from the ice, a net over one shoulder.
+  respawnrate: 5 real minutes
+- mobid: 88
+  message: A bonesetter picks her way down the bank after the poachers.
+  respawnrate: 5 real minutes
+- mobid: 89
+  message: A shieldman shoulders through the reeds.
+  respawnrate: 5 real minutes
 idlemessages:
 - "304"
 tags:

@@ -52,6 +52,10 @@ guardian yourself: <ansi fg="command">strategy me guard ysolde</ansi>.
 As every strategy, a guardian and its ward are set before a battle; during
 one they can be read but not changed. They are kept when you log out.
 
+Enemies have guardians too: a band's step in once a battle, all told, and
+a drilled or veteran company's twice; a rabble's never do
+(<ansi fg="command">help coordination</ansi>).
+
 The battle summary counts each guardian's guards (<ansi fg="command">help battle-summary</ansi>).
 In the web client, a guardian's menu in the Combat tab picks its ward, and
 the battle view shows each guardian's guards left (<ansi fg="command">help webclient</ansi>).

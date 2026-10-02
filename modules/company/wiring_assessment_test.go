@@ -77,7 +77,7 @@ func TestScoutAndConsiderAssessTheCompany(t *testing.T) {
 	assert.Contains(t, got, "Assessment: ")
 	assert.Contains(t, got, " for your company; ")
 	assert.Contains(t, got, "Counted: you, Tamsin Reed, Brother Oswin, Garrick Vane and Ysolde.")
-	assert.Contains(t, got, "Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.")
+	assert.Contains(t, got, "Not judged: spells, healing, guards and abilities, hidden foes, and anyone yet to come.")
 	assert.NotRegexp(t, `\d+%`, got, "never a percentage")
 
 	con := b.cmd("consider", kw)
@@ -310,4 +310,64 @@ func TestConsiderRefusesAHarmlessLoner(t *testing.T) {
 	require.True(t, ok)
 	require.True(t, g.Solo(), "on its own, not in the bandits' spawn group")
 	assert.Contains(t, b.cmd("consider", "bandit fence"), "The bandit fence is no enemy of yours.")
+}
+
+// Phase 33i2: the assessment says how the group fights together and the
+// roles its visible members show: by level (the bandits, level 1 to 4,
+// are a rabble), by a template's coordination, or, once fighting it, by
+// the battle's tier. A hidden member's role isn't named.
+func TestAssessmentNamesTheGroupsCoordination(t *testing.T) {
+	b := newBrawl(t)
+	_, kw := b.banditGroup()
+	assert.Contains(t, b.cmd("scout", kw), "They fight as a rabble.")
+	assert.Contains(t, b.cmd("consider", kw), "They fight as a rabble.")
+
+	captain := mobs.GetInstance(b.bandits["bandit captain"][0])
+	slinger := mobs.GetInstance(b.bandits["bandit slinger"][0])
+	captain.Coordination = 3
+	captain.Role = "guardian"
+	slinger.Role = "healer"
+	assert.Contains(t, b.cmd("scout", kw), "They fight as a drilled company: a healer and a guardian among them.")
+
+	buffs.SetTestFlag("hidden")
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 93303, Name: "hidden", TriggerCount: 1000, RoundInterval: 1, Flags: []string{"hidden"}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(93303) })
+	require.NoError(t, slinger.Character.AddBuff(93303, true))
+	slinger.Character.Validate()
+	got := b.cmd("consider", kw)
+	assert.Contains(t, got, "They fight as a drilled company: a guardian among them.")
+	assert.NotContains(t, got, "healer", "a hidden healer isn't named")
+}
+
+// Phase 33i2: in a battle the assessment and the battle view's outlook
+// give the battle's tier, fixed when it began.
+func TestBattleViewShowsTheCoordination(t *testing.T) {
+	b := newBrawl(t)
+	views := battleViews(t)
+	b.aimAt("bandit captain")
+	b.toughen()
+	b.fight()
+	battle.SetCoordination(7, 4)
+	b.refresh(7)
+	outlook, ok := lastView(views, 7)["outlook"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "They fight as a veteran company.", outlook["coordination"])
+	_, kw := b.banditGroup()
+	assert.Contains(t, b.cmd("scout", kw), "They fight as a veteran company.")
+}
+
+// 33i2 review finding 5: a hidden member's level doesn't lift the tier
+// the assessment names.
+func TestAssessmentTierIgnoresHiddenMembers(t *testing.T) {
+	b := newBrawl(t)
+	_, kw := b.banditGroup()
+	captain := mobs.GetInstance(b.bandits["bandit captain"][0])
+	captain.Character.Level = 60 // (60+1+1+1+1)/5 = 12: a band
+	assert.Contains(t, b.cmd("scout", kw), "They fight as a band.")
+	buffs.SetTestFlag("hidden")
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 93305, Name: "hidden", TriggerCount: 1000, RoundInterval: 1, Flags: []string{"hidden"}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(93305) })
+	require.NoError(t, captain.Character.AddBuff(93305, true))
+	captain.Character.Validate()
+	assert.Contains(t, b.cmd("scout", kw), "They fight as a rabble.")
 }

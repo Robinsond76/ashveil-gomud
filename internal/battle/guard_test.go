@@ -73,3 +73,54 @@ func TestGuardCounts(t *testing.T) {
 		t.Errorf("a new battle: %d", got)
 	}
 }
+
+func TestEnemyGuardsAreTheBattles(t *testing.T) {
+	Reset()
+	defer Reset()
+	if _, ok := SpendEnemyGuard(7, 2); ok {
+		t.Fatal("no battle, no guard")
+	}
+	Begin(7, 1, 1, "p", []int{1})
+	SetCoordination(7, 3)
+	if b, _ := Current(7); b.Coordination != 3 {
+		t.Fatalf("tier %d", b.Coordination)
+	}
+	if left, ok := SpendEnemyGuard(7, 2); !ok || left != 1 {
+		t.Fatalf("first: %d %v", left, ok)
+	}
+	TickGuards() // a company's refill never touches the enemy's
+	if left, ok := SpendEnemyGuard(7, 2); !ok || left != 0 {
+		t.Fatalf("second: %d %v", left, ok)
+	}
+	if _, ok := SpendEnemyGuard(7, 2); ok {
+		t.Fatal("a third guard")
+	}
+	Begin(7, 1, 2, "q", []int{2})
+	if b, _ := Current(7); b.Coordination != 0 || b.EnemyGuards != 0 {
+		t.Fatal("a new battle starts fresh")
+	}
+}
+
+// 33i2 review finding 2: a group fighting two players spends its guards
+// from one count, and a later battle against it starts with them spent.
+func TestEnemyGuardsAreTheGroups(t *testing.T) {
+	Reset()
+	defer Reset()
+	Begin(1, 5, 1, "band", []int{9})
+	Begin(2, 5, 1, "band", []int{9})
+	Begin(3, 5, 1, "other", []int{8})
+	if _, ok := SpendEnemyGuard(1, 1); !ok {
+		t.Fatal("the band's one guard")
+	}
+	if _, ok := SpendEnemyGuard(2, 1); ok {
+		t.Fatal("spent in the other battle against the same band")
+	}
+	if _, ok := SpendEnemyGuard(3, 1); !ok {
+		t.Fatal("another group has its own")
+	}
+	End(2)
+	Begin(2, 5, 3, "band", []int{9})
+	if b, _ := Current(2); b.EnemyGuards != 1 {
+		t.Fatalf("a new battle against the band starts spent: %d", b.EnemyGuards)
+	}
+}

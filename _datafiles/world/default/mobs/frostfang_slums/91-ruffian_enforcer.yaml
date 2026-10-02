@@ -1,0 +1,24 @@
+# Ashveil Phase 33i2: a band's guardian (help coordination). He steps in
+# front of a hurt ruffian beside him, once a battle.
+mobid: 91
+zone: Frostfang Slums
+itemdropchance: 2
+lootcategory: humanoid
+hostile: true
+maxwander: 0
+groups:
+  - slum-ruffians
+role: guardian
+activitylevel: 10
+character:
+  name: ruffian enforcer
+  description: 'A slab of a man with a cudgel and a tower of a shield nailed together from a tavern door. He stands where the trouble is thickest and lets it land on him.'
+  raceid: 1
+  level: 20
+  alignment: -50
+  gold: 10
+  equipment:
+    weapon:
+      itemid: 10008
+    body:
+      itemid: 20008

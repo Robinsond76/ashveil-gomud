@@ -15,6 +15,14 @@ exits:
   west:
     roomid: 488
 spawninfo:
+- mobid: 90
+  message: A bonesetter slips out of a doorway, wiping her hands.
+  forcehostile: true
+  respawnrate: 5 real minutes
+- mobid: 91
+  message: An enforcer steps out of the shadows, shield first.
+  forcehostile: true
+  respawnrate: 5 real minutes
 - mobid: 29
   message: A dangerous figure appears from the shadows.
   forcehostile: true

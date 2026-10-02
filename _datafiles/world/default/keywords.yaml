@@ -94,6 +94,7 @@ help:
       - combat
       - combatpace
       - consider
+      - coordination
       - defense
       - retreat
       - formation
@@ -260,6 +261,7 @@ help-aliases:
   targeting:        [target, targets, enemy-parties]
   scout:            [scouting, enemy-groups, groups]
   assessment:       [assess, odds, chances, risk, outlook]
+  coordination:     [coordinated, enemy-roles, rabble, drilled, enemy-wounds, enemy-recovery]
   strategy:         [strategies, gambits, roles]
   tactics:          [focus, company-tactics, personalities, personality]
   guardian:         [guardians, guard, guards, ward, wards]

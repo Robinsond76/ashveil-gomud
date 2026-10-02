@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -45,9 +46,11 @@ func TestCritWoundsAPlayer(t *testing.T) {
 	}
 }
 
-// TestCritWoundsACompanionNotAnEnemy: a companion (4344) is wounded through
-// AttackMobVsMob; an enemy mob struck by a player is not.
-func TestCritWoundsACompanionNotAnEnemy(t *testing.T) {
+// TestCritWoundsACompanionLastingAndAnEnemyLightly: a companion (4344) is
+// wounded lastingly through AttackMobVsMob; an enemy mob struck by a
+// player takes the same crit's wound light (Phase 33i2), and the hit line
+// names it.
+func TestCritWoundsACompanionLastingAndAnEnemyLightly(t *testing.T) {
 	foe := woundFight(t)
 	withChemistry(t, 0)
 	companion := &mobs.Mob{InstanceId: 4344, Character: *edgeFighter(90231)}
@@ -60,11 +63,31 @@ func TestCritWoundsACompanionNotAnEnemy(t *testing.T) {
 	*user.Character = *edgeFighter(90231)
 	user.Character.Equipment.Weapon = items.New(edgeSwordID)
 	result := AttackPlayerVsMob(user, foe)
-	if !result.Crit || len(foe.Character.Wounds) != 0 || len(result.WoundsToTarget) != 0 {
-		t.Fatalf("an enemy is never wounded: %+v", foe.Character.Wounds)
+	if !result.Crit || len(foe.Character.Wounds) != 1 || !foe.Character.Wounds[0].Light {
+		t.Fatalf("an enemy's crit wound is light: %+v", foe.Character.Wounds)
 	}
-	if strings.Contains(strings.Join(result.MessagesToSource, "\n"), "wounded") {
-		t.Fatalf("an enemy's hit line names no wound: %q", result.MessagesToSource)
+	if !strings.Contains(strings.Join(result.MessagesToSource, "\n"), "wounded") {
+		t.Fatalf("an enemy's hit line names its wound: %q", result.MessagesToSource)
+	}
+}
+
+// TestUnwoundableEnemyAndPetTakeNoWounds: a template's `wounds: none`
+// keeps an enemy unwounded (Phase 33i2), and a charmed pet that isn't a
+// companion is never wounded.
+func TestUnwoundableEnemyAndPetTakeNoWounds(t *testing.T) {
+	woundFight(t)
+	user := users.NewUserRecord(90322, 90322)
+	*user.Character = *edgeFighter(90231)
+	user.Character.Equipment.Weapon = items.New(edgeSwordID)
+
+	golem := &mobs.Mob{InstanceId: 4345, WoundsRule: "none", Character: *edgeFighter(90231)}
+	if result := AttackPlayerVsMob(user, golem); !result.Crit || len(golem.Character.Wounds) != 0 {
+		t.Fatalf("wounds: none: %+v", golem.Character.Wounds)
+	}
+	pet := &mobs.Mob{InstanceId: 4346, Character: *edgeFighter(90231)}
+	pet.Character.Charmed = &characters.CharmInfo{UserId: 90322, RoundsRemaining: -1}
+	if ok, _ := MobWounds(pet); ok {
+		t.Fatal("a charmed pet is not wounded")
 	}
 }
 

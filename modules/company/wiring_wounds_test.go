@@ -83,20 +83,35 @@ func TestLightWoundsCloseWithTheFight(t *testing.T) {
 	assert.Equal(t, wounds.Fracture, b.aria.Character.Wounds[0].Kind, "the lasting wound stays")
 }
 
-// A bleed that runs out on an enemy leaves no wound.
-func TestAnEnemysBleedLeavesNoWound(t *testing.T) {
+// Phase 33i2: a bleed that runs out on an enemy leaves it a light wound,
+// as it does a company member; one whose template says `wounds: none`
+// takes none.
+func TestAnEnemysBleedLeavesALightWound(t *testing.T) {
 	b := newBrawl(t)
 	loadStatusBuffs(t)
 	b.aimAt("bandit captain")
 	captain := b.captain()
 	require.NoError(t, captain.Character.AddBuff(status.Bleeding, false))
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 3 && status.Has(&captain.Character); i++ {
+		b.toughen()
+		captain.Character.HealthMax.Value, captain.Character.Health = 1000, 1000
+		captain.Character.Wounds = nil
+		b.fight()
+	}
+	require.False(t, status.Has(&captain.Character))
+	require.Len(t, captain.Character.Wounds, 1, "the fight goes on, so the wound is still open")
+	assert.True(t, captain.Character.Wounds[0].Light)
+
+	captain.WoundsRule = "none"
+	captain.Character.Wounds = nil
+	require.NoError(t, captain.Character.AddBuff(status.Bleeding, false))
+	for i := 0; i < 3 && status.Has(&captain.Character); i++ {
 		b.toughen()
 		captain.Character.HealthMax.Value, captain.Character.Health = 1000, 1000
 		b.fight()
 	}
 	require.False(t, status.Has(&captain.Character))
-	assert.Empty(t, captain.Character.Wounds)
+	assert.Empty(t, captain.Character.Wounds, "wounds: none")
 }
 
 // A light wound with no fight (a restart's leftover) closes quietly.

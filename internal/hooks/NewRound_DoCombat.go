@@ -71,6 +71,9 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// before any blow.
 	nervePass()
 	strategyPass()
+	// Ashveil Phase 33i2: enemy healers and casters, by their group's
+	// coordination.
+	enemyStrategyPass()
 	// Ashveil Phase 33e: members about to swing may use a class ability.
 	abilityPass()
 	defer endAbilityStrikes()

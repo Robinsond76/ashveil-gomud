@@ -39,8 +39,10 @@ Below the grid, your company's assessment of the group: a word for the
 risk (an easy fight, a fair fight, a hard fight, a grave risk, or
 hopeless), whether it could go either way, who is counted, and what
 weighs on it: your hurt and burdened members, members who can reach none
-of them, and foes out of your reach. Spells, hidden foes, and anyone yet
-to come aren't judged. <ansi fg="command">consider [enemy]</ansi> gives the assessment alone
+of them, and foes out of your reach. It names how the group fights
+together, and the healers, casters, and guardians you can see among them
+(<ansi fg="command">help coordination</ansi>). Spells, healing, guards, hidden foes, and anyone
+yet to come aren't judged. <ansi fg="command">consider [enemy]</ansi> gives the assessment alone
 (<ansi fg="command">help assessment</ansi>).
 
 In the web client, the Combat tab's Battle view shows your battle's group

@@ -86,3 +86,49 @@ func TickGuards() {
 		}
 	}
 }
+
+// SetCoordination records the enemy group's coordination tier on the
+// player's battle (Phase 33i2).
+func SetCoordination(userId, tier int) {
+	mu.Lock()
+	defer mu.Unlock()
+	if b, ok := battles[userId]; ok {
+		b.Coordination = tier
+	}
+}
+
+// SpendEnemyGuard spends one of the enemy group's guards in the player's
+// battle, when it has spent fewer than limit (Phase 33i2: a tier's guards
+// are the group's for its battle, all told, and never come back). A group
+// fighting several players spends from one count: every battle against
+// it is charged (33i2 review finding 2). ok is false with no battle or
+// none left.
+func SpendEnemyGuard(userId, limit int) (left int, ok bool) {
+	mu.Lock()
+	defer mu.Unlock()
+	b, found := battles[userId]
+	if !found || b.EnemyGuards >= limit {
+		return 0, false
+	}
+	spent := b.EnemyGuards + 1
+	for _, other := range battles {
+		if other.PartyID == b.PartyID {
+			other.EnemyGuards = max(other.EnemyGuards, spent)
+		}
+	}
+	return limit - spent, true
+}
+
+// SetEnemyFocus records the enemy group's focus (a company member key) on
+// the player's battle and reports whether it changed (Phase 33i2: a
+// coordinated group says its focus aloud once per change).
+func SetEnemyFocus(userId int, key string) bool {
+	mu.Lock()
+	defer mu.Unlock()
+	b, ok := battles[userId]
+	if !ok || b.EnemyFocus == key {
+		return false
+	}
+	b.EnemyFocus = key
+	return true
+}

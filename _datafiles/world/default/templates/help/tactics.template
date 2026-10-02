@@ -63,7 +63,10 @@ Some foes chant spells: the goblin hexer croaks a Withering Hex at your
 healers. A blow that draws blood may break a chant, so the <ansi fg="command">casters</ansi> focus
 is how to stop them (<ansi fg="command">help interrupts</ansi>).
 Some are less predictable than others and now and then go for anyone
-they can reach. <ansi fg="command">help targeting</ansi> has more.
+they can reach. How well a group fights together also counts: a rabble
+picks wildly, a band or better turns on its leader's target, and a
+drilled company goes for your casters first (<ansi fg="command">help coordination</ansi>).
+<ansi fg="command">help targeting</ansi> has more.
 
 <ansi fg="yellow-bold">Commands</ansi>
 

@@ -12,8 +12,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (33i2 decisions recorded; 34d effects/capabilities; integrated 33h3)
-- **Latest completed slices:** 34d, effects and current capabilities; 33h3,
+- **Last updated:** 2026-10-02 (33i2 coordinated enemies; 34d effects/capabilities; integrated 33h3)
+- **Latest completed slices:** 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
@@ -28,15 +28,55 @@ instead of duplicating them.
 
 ## Current position
 
-**33i2 decisions settled (2026-10-02), not started:** the owner chose
-level-based enemy coordination (low-level groups loosely coordinated),
-light-only enemy wounds unless a template opts out, and 5-game-hour
-recovery for surviving enemies; the assessment names a group's
-coordination. The lead set the tier table, kept the 33i1 risk bands, and
-added harness bounds ahead of 30g6. See the
+**33i2 coordinated enemies complete (2026-10-02):** enemy groups
+fight by a coordination tier from their average level when the battle
+begins (rabble 1–9, band 10–24, drilled company 25–44, veteran 45+; a
+template's `coordination` overrides). Higher tiers follow their leader's
+focus, go for casters, break heals, and say their focus aloud; a rabble
+keeps its own aims with at least 30% noise. Templates may give `role:`
+healer, caster, or guardian: enemy healers and casters run the companions'
+`strategy.Decide`/`startCast` path (mana, chants, interrupts; single-target
+heals only, as a group heal's scope reaches only a company), at 30/50/60/70%
+thresholds, a rabble one heal a round; enemy guardians step in through the
+attack gates, 0/1/2/2 guards a battle per group. Enemies take light wounds
+only (`wounds: none` opts out: skeleton, fungus, bone warden) and recover
+out of battle over 188 rounds (5 game hours), prorated by round. `scout`,
+`consider`, and the Battle view name the tier and visible roles. Six new
+templates (87–93) give tiers 1–3 a healer and a guardian (Frost Lake 310,
+Slums 489, Catacombs 113). `help coordination`; assessment, scout, consider,
+combat, wounds, guardian, tactics, webclient pages and the Combat lesson
+hint updated. See the
 [33i design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md)
 ("Final implementation decisions: 33i2") and
 [plan](plans/2026-10-02-phase-33i2-coordinated-enemies.md).
+
+Balance (30 fights a cell, default company vs default/roles groups, on the
+final code): median rounds L1 11 → 10/11/12 (tiers 1–3), L5 42 → 39/37/46,
+L10 95 → 92/98/94, all within the 125% bound; no clear winner flipped
+(company wins L1 13% → 43/23/23%, L5 70% → 70/63/73%, L10 53% → 77/53/53%).
+`TestBalanceCoordinated` (ASHVEIL_BALANCE=1) asserts the bounds.
+
+Deviations from the plan: recovery applies to any mob outside a company and
+not charmed (not only template-hostile ones); a band also avoids doubling
+heals (harmless, as companions do); enemies with no personality keep the old
+deterministic weakest pick apart from the tier's noise. The phase 29d
+outcome golden was recaptured (an enemy crit's wound rolls its place) and
+`breakChant` now asks `enemy()` instead of `!woundable()`.
+
+Independent review: no blocking findings; seven raised. Accepted and fixed
+with regression tests: (1) recovery rounded up per round healed small
+enemies in ~40 rounds, now prorated so any max takes 188 rounds, and the help
+no longer claims fled foes recover; (2) guards and a rabble's heal cap were
+counted per player's battle, now per group across battles; (3) a hidden or
+not-yet-fighting guardian could step in; (4) a busy leader dropped the
+focus, now kept; (5) a hidden member's level could lift the assessed tier.
+(7) Coverage added: an enemy caster returns to its player aim, enemy healers
+against a solo player, shared guards across two battles. Rejected (6): the
+focus line's "closes in" stays singular, as group names are "a band of …";
+the band's no-double-heal is kept. Verification after the fixes: make
+generate, make validate, make js-lint, and go test -race ./... (96 packages)
+passed; the balance table passed its bounds. Lua lint can't run here (no Docker or
+luacheck) and no Lua changed.
 
 **34d complete:** Company Status now shows owned members' active effects and
 wounds with authoritative duration and mechanical meaning, separate from
@@ -379,7 +419,7 @@ delegated to the lead. 33a–33e are complete.
 | 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 complete ([plan](plans/2026-10-01-phase-33f3-camp-specialists.md)): camp raids and Camp Watch, Field Smith, Vigil, Forage, `camp cook` |
 | 33g | Company Equipment and Loot | Management/cargo/treasury complete; reviewed and verified. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); presets removed by owner. Catalog delivery remains a separate slice. |
 | 33h | Company Progression, Rewards, and Expedition Continuity | [Design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md) in three slices. 33h1 complete ([plan](plans/2026-10-02-phase-33h1-growth-rewards.md)): derived archetype growth, `company growth` focus, contract quests; `help growth`, `help contracts`. 33h2 complete ([plan](plans/2026-10-02-phase-33h2-readiness-recovery.md)): durable companion vitals, online-only recovery, inn restore, half-vitals resurrection; `help readiness`. 33h3 complete ([plan](plans/2026-10-02-phase-33h3-relocation.md)): relocation and separation; `help separation` |
-| 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles): decisions settled 2026-10-02 ([plan](plans/2026-10-02-phase-33i2-coordinated-enemies.md)), not started |
+| 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 complete 2026-10-02: coordination tiers, enemy roles, light enemy wounds and recovery; `help coordination` |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
