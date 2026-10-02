@@ -31,8 +31,10 @@ Once the battle starts:
 
 - the whole enemy group fights, and each of you starts on the foe your
   strategy picks (the weakest you can reach, unless you set another rule
-  or a company focus), and each enemy on the one its kind prefers;
-- healers heal the hurt and casters cast their spells, with real mana;
+  or a company focus), and each enemy on the one its kind prefers, or
+  its leader's, as well as its group is coordinated (<ansi fg="command">help coordination</ansi>);
+- healers heal the hurt and casters cast their spells, with real mana,
+  on both sides;
 - warriors tackle, rogues strike an opening, and rangers aim a shot, each
   on its own when the moment comes (<ansi fg="command">help abilities</ansi>);
 - guardians step in front of their wards to take blows meant for them
@@ -140,6 +142,7 @@ and your company's health.
   <ansi fg="command">retreat [exit]</ansi>    prepare one round, then withdraw the company (or <ansi fg="command">flee</ansi>)
   <ansi fg="command">consider [enemy]</ansi>  your company's chances against a group
   <ansi fg="command">help assessment</ansi>   what scout and consider weigh
+  <ansi fg="command">help coordination</ansi> how enemy groups fight together, heal, and recover
   <ansi fg="command">formation</ansi>         see and arrange your company's formation
   <ansi fg="command">company chemistry</ansi> your company's chemistry
   <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind

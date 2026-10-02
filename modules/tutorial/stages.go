@@ -137,7 +137,7 @@ func init() {
 			Goal:  "Beat all four straw soldiers, with your company's help.",
 			Hints: []string{
 				`Take your own place in the grid first, e.g. <ansi fg="command">formation move me 3 2</ansi>: where you stand decides what you can reach.`,
-				`The squad is one group, "the straw squad": you fight a whole group, never one soldier. <ansi fg="command">scout squad</ansi> shows how it stands, with a * on the ones you can reach from your place (<ansi fg="command">help scout</ansi>), and ends with your company's assessment: how risky the fight looks, in words, and what it can't judge (<ansi fg="command">help assessment</ansi>).`,
+				`The squad is one group, "the straw squad": you fight a whole group, never one soldier. <ansi fg="command">scout squad</ansi> shows how it stands, with a * on the ones you can reach from your place (<ansi fg="command">help scout</ansi>), and ends with your company's assessment: how risky the fight looks, in words, how well the group fights together, and what it can't judge (<ansi fg="command">help assessment</ansi>, <ansi fg="command">help coordination</ansi>).`,
 				`<ansi fg="command">attack squad</ansi> starts the fight; your companions join in. From then on the battle plays out on its own, from how you set your company up: set your formation before you attack.`,
 				`Group healing helps the present company even without a player party; it cannot revive a fallen companion. Targets are checked again when the chant finishes, and no one can heal either side of a battle they aren't part of (<ansi fg="command">help friendly-effects</ansi>).`,
 				`The archer stands behind the footmen: once you stand in the grid, a blow aimed at it is caught by the footman in front of it (interception).`,

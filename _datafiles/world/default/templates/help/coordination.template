@@ -1,0 +1,55 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">coordination</ansi>
+
+Enemy groups fight together, and the stronger they are, the better they do
+it. Every group has a coordination, from its members' average level when
+your battle with it begins. A few groups are drilled beyond their level, or
+wilder than it. <ansi fg="command">scout [group]</ansi> and <ansi fg="command">consider [enemy]</ansi> name it:
+
+  They fight as a drilled company: a healer and a guardian among them.
+
+<ansi fg="yellow-bold">The four kinds</ansi>
+
+  a rabble            levels 1-9
+  a band              levels 10-24
+  a drilled company   levels 25-44
+  a veteran company   levels 45 and up
+
+- <ansi fg="yellow">A rabble</ansi> fights together but not smartly. Each member keeps its own
+  target, and about a third of the time it picks a new one, it picks one at
+  random. Its healers heal only someone below 30% of their health, and the
+  rabble starts at most one heal a round. It has no guards.
+- <ansi fg="yellow">A band</ansi> follows its leader (its highest level member): half its
+  fighters turn on whoever the leader strikes, and it says so ("The band
+  of ruffians closes in on Tamsin Reed."). Its healers heal below 50%. Its
+  guardians step in once a battle, all told.
+- <ansi fg="yellow">A drilled company</ansi>: every fighter turns on the leader's target, and the
+  leader goes for your healers and casters first. Its casters cast at that
+  target, and its healers heal below 60%. Two guards a battle.
+- <ansi fg="yellow">A veteran company</ansi> does all of that, without wasted aim, and turns on
+  anyone of yours chanting a heal. Its healers heal below 70%.
+
+Coordination only changes their choices: never their health, damage, or how
+often they act.
+
+<ansi fg="yellow-bold">Enemy roles</ansi>
+
+Some enemies are healers, casters, or guardians, as your companions can be
+(<ansi fg="command">help strategy</ansi>). They pay mana, chant, and can be interrupted like anyone
+(<ansi fg="command">help interrupts</ansi>): a blow that draws blood may break an enemy healer's
+chant. A guardian steps in front of the most hurt member beside it and
+takes the blow, until its group's guards for the battle are spent
+(<ansi fg="command">help guardian</ansi>). One who surrenders or flees stops casting.
+
+<ansi fg="yellow-bold">Enemy wounds</ansi>
+
+Enemies take wounds too, but only light ones (<ansi fg="command">help wounds</ansi>): a critical hit
+or a crushing blow holds back some of their health from healing until the
+fight ends. A few creatures take no wounds at all (bone, fungus).
+
+<ansi fg="yellow-bold">Enemies recover</ansi>
+
+An enemy that lives through a fight recovers out of it: from nothing to
+full health in 5 game hours (about 12 real minutes). One you drove off
+will be back on its feet if you leave it long.
+
+See also: <ansi fg="command">help assessment</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help tactics</ansi>.
