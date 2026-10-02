@@ -57,6 +57,8 @@
  *   - Below the focus buttons, scout's assessment headline for the battle's
  *     group (Company.Battle's outlook: risk and closeness in words, never a
  *     number). None in the dark.
+ *   - Phase 33i2: under it, how the group fights together and the roles it
+ *     shows (the outlook's coordination), as scout says it.
  *
  * Every name is set with textContent, never innerHTML.
  *
@@ -569,6 +571,11 @@
                 'Outlook: ' + battle.outlook.text);
             outlook.title = 'Your company\'s assessment, as scout gives it (help assessment)';
             root.appendChild(outlook);
+            if (battle.outlook.coordination) {
+                const coord = el('div', 'cbt-note cbt-coordination', battle.outlook.coordination);
+                coord.title = 'How the enemy fights together (help coordination)';
+                root.appendChild(coord);
+            }
         }
 
         lines = [];

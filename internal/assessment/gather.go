@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/coordination"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -26,6 +28,10 @@ type Report struct {
 	NoReach    []string // own members who can reach none of them
 	OutOfReach []string // foes none of the company can reach
 	Allies     bool     // a party ally is here, and isn't counted
+	// Phase 33i2: how the group fights together ("a drilled company"; ""
+	// for a lone foe), and the roles its visible members show ("a healer").
+	Coordination string
+	Roles        []string
 }
 
 // Gather assesses group g for user from the live game. Call it on the game
@@ -106,7 +112,62 @@ func Gather(user *users.UserRecord, room *rooms.Room, g enemyparty.Group) (Repor
 		rep.OutOfReach = append(rep.OutOfReach, "the "+foeNames[key])
 	}
 	rep.Allies = alliesHere(user, room)
+	if len(g.Party.Members) > 1 && !g.Solo() {
+		rep.Coordination = coordination.SpecOf(groupTier(user.UserId, g)).Word
+		rep.Roles = roleWords(visible)
+	}
 	return rep, true
+}
+
+// groupTier is the group's coordination: its battle's, fixed when the
+// battle began, when the user is fighting it; else its tier now.
+func groupTier(userId int, g enemyparty.Group) coordination.Tier {
+	if b, ok := battle.Current(userId); ok {
+		if _, mine := enemyparty.BattleParty(b, []mobparty.Party{g.Party}); mine {
+			if tier, ok := enemyparty.BattleTier(userId); ok {
+				return tier
+			}
+		}
+	}
+	return enemyparty.Coordination(g.Party)
+}
+
+// roleWords names the roles the visible members show, beyond fighting:
+// "a healer", "two guardians".
+func roleWords(visible []*mobs.Mob) []string {
+	count := map[string]int{}
+	for _, m := range visible {
+		count[m.EnemyRole()]++
+	}
+	var out []string
+	for _, role := range []string{"healer", "caster", "guardian"} {
+		switch n := count[role]; {
+		case n == 1:
+			out = append(out, "a "+role)
+		case n > 1:
+			out = append(out, numberWord(n)+" "+role+"s")
+		}
+	}
+	return out
+}
+
+func numberWord(n int) string {
+	if words := []string{"", "one", "two", "three", "four", "five"}; n < len(words) {
+		return words[n]
+	}
+	return fmt.Sprint(n)
+}
+
+// CoordinationLine says how the group fights together: "They fight as a
+// drilled company: a healer and a guardian among them." "" for a lone foe.
+func (r Report) CoordinationLine() string {
+	if r.Coordination == "" {
+		return ""
+	}
+	if len(r.Roles) == 0 {
+		return fmt.Sprintf("They fight as %s.", r.Coordination)
+	}
+	return fmt.Sprintf("They fight as %s: %s among them.", r.Coordination, list(r.Roles))
 }
 
 // outOfFight says why a member standing here can't fight ("" when it can):
@@ -174,6 +235,9 @@ func (r Report) Lines() []string {
 		counted += " Not with you: " + list(r.Missing) + "."
 	}
 	lines = append(lines, "  "+counted)
+	if line := r.CoordinationLine(); line != "" {
+		lines = append(lines, "  "+line)
+	}
 	if len(r.Hurt) > 0 {
 		lines = append(lines, "  Hurt: "+list(r.Hurt)+".")
 	}
@@ -189,7 +253,7 @@ func (r Report) Lines() []string {
 	if r.Allies {
 		lines = append(lines, "  Allies here aren't counted.")
 	}
-	lines = append(lines, "  Not judged: spells, healing and abilities, hidden foes, and anyone yet to come.")
+	lines = append(lines, "  Not judged: spells, healing, guards and abilities, hidden foes, and anyone yet to come.")
 	return lines
 }
 
