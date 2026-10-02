@@ -14,10 +14,10 @@ using one company cargo and treasury. Compare actual defense, reach, burden,
 and capacity before deliberate assignment. Equipment and formation presets
 are excluded; no automatic whole-company upgrades are applied.
 
-The complementary [equipment catalog, tiers, and Glaivewarden
-design](2026-10-01-equipment-tiers-glaivewarden-design.md) is approved, but its
-catalog migration, balance verification, and class ability are separate
-remaining content/class slices. This management delivery does not ship them.
+The complementary [equipment catalog and tiers
+design](2026-10-01-equipment-tiers-design.md) is approved, but its
+catalog migration and balance verification are separate
+remaining content slices. This management delivery does not ship them.
 
 ## Prior art and integration
 

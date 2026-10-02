@@ -5,8 +5,8 @@ what remains open. The [combat roadmap](2026-09-26-combat-presentation-roadmap.m
 tracks 30f/30g; the [company gameplay roadmap](2026-10-01-company-gameplay-roadmap.md)
 indexes future phases 33a–33i, their dependencies, and unresolved decisions.
 
-[Equipment families, tiers, and Glaivewarden](2026-10-01-equipment-tiers-glaivewarden-design.md)
-records the owner-approved equipment catalog and glaive class for future
+[Equipment families and tiers](2026-10-01-equipment-tiers-design.md)
+records the owner-approved equipment catalog for future
 equipment/progression work; it is not implemented gameplay.
 
 Retained shipped designs explain interfaces, invariants, and owner decisions.

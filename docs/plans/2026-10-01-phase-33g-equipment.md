@@ -30,7 +30,7 @@ treasury; remove equipment/formation presets from this phase. The standing
 - No item use or gear management in battle; enforce through real commands,
   follower orders and stale browser requests.
 
-The approved equipment catalog and Glaivewarden are separate content/class
+The approved equipment catalog and tiers are separate content
 slices of the equipment roadmap; do not claim their gameplay has shipped with
 management. Record their remaining delivery explicitly.
 
@@ -54,4 +54,4 @@ management. Record their remaining delivery explicitly.
 Management, cargo migration, treasury, loot, browser/help, integration tests,
 and independent review completed. Review findings and
 exact final verification are recorded in [Project Status](../PROJECT_STATUS.md).
-Presets are excluded; catalog/tier migration and Glaivewarden remain separate.
+Presets are excluded; catalog/tier migration remains separate.

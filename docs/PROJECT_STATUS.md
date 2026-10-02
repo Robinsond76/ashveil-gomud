@@ -1,5 +1,12 @@
 # Ashveil Project Status
 
+**Equipment documentation updated (2026-10-02):** removed the proposed new
+class and its ability, kit, recruitment, help, and delivery requirements at the
+owner's request. Retained glaive weapons, equipment families, tiers, and armor
+paths; renamed the equipment design and updated its links and roadmap scope.
+Verification: documentation diff, residual-reference search, and relative
+Markdown links checked; no gameplay changes or Go tests required.
+
 Living status log for the Ashveil-on-GoMud migration. Update this file whenever a
 commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
@@ -141,7 +148,7 @@ JS/Lua lint and the full race suite. 34d is complete.
 
 
 **33h1 growth and contracts complete (2026-10-02):** the owner asked to
-continue with 33h ahead of 33g's catalog/Glaivewarden slices. Companion
+continue with 33h ahead of 33g's catalog slices. Companion
 training is now derived from level by archetype growth weights plus an
 optional focus (`company growth`), re-derived on every spawn and level
 change so no level loop mints points; quests with `companyexperience` are
@@ -159,11 +166,10 @@ restart recovery. Browser controls, indexed help, and tutorial hints updated.
 See [design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md) and
 [plan](plans/2026-10-01-phase-33g-equipment.md). Independent review and
 required checks passed;
-equipment catalog, tiers, and Glaivewarden are not shipped by this slice.
+equipment catalog and tiers are not shipped by this slice.
 
-**Equipment design approved:** [weapon families, six tiers, armor paths, and
-Glaivewarden](designs/2026-10-01-equipment-tiers-glaivewarden-design.md) records
-the owner's approved equipment direction and requested glaive class for 33g
+**Equipment design approved:** [weapon families, six tiers, and armor paths](designs/2026-10-01-equipment-tiers-design.md) records
+the owner's approved equipment direction for 33g
 and later progression/content work. Design documentation is complete; gameplay
 is not implemented, and the phase order below is unchanged. Documentation
 verification: whitespace and relative Markdown links checked; no Go changes.
@@ -180,7 +186,7 @@ retirement)**, **33f2 (expedition specialists)**, and **33f3 (camp
 specialists)** are complete, so 33f is done; **33i1 (group assessment)**
 is complete too (33i2 remains); 33g management and its cargo prerequisite are
 complete, reviewed and verified. Equipment
-catalog/Glaivewarden delivery and 33h remain. Phase 30g3 is also complete;
+catalog delivery and 33h remain. Phase 30g3 is also complete;
 30g4 (progression) is the next combat-tempo slice, after the 33 series.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
@@ -361,7 +367,7 @@ delegated to the lead. 33a–33e are complete.
 | 33d | Multiplayer Parties and Allied Companies | Complete: [design](designs/2026-10-01-phase-33d-allied-companies-design.md), [plan](plans/2026-10-01-phase-33d-allied-companies.md); durable alliances, explicit consent, contribution-based XP, fixed shared loot claims and independent company authority |
 | 33e | Automatic Class Abilities and Combat Roles | Complete: [design](designs/2026-10-01-phase-33e-automatic-class-abilities-design.md), [plan](plans/2026-10-01-phase-33e-class-abilities.md); automatic Tackle, Opening Strike and Aimed Shot, coordinated healing, mana reserve, `strategy [who] abilities on\|off` and `reserve`, `help abilities` |
 | 33f | Company Specialists and Expedition Skills | [Design](designs/2026-10-01-phase-33f-company-specialists-design.md) rewritten with the owner (2026-10-01) in three slices. 33f1 complete ([plan](plans/2026-10-01-phase-33f1-skill-retirement.md)): retired peep, portal, tame, change form, scribe, sneak, bump, pickpocket, pray, and backstab; mercenary hiring, mob befriend, and the charm scripting API; one-time training-point refund; Protection capped at 3. 33f2 complete ([plan](plans/2026-10-01-phase-33f2-expedition-specialists.md)): Read the Trail, Keen Eye, Pathfinder, Weather Sense, Haggle, `company specialists`; `search`, stock `track`, and `trading` retired. 33f3 complete ([plan](plans/2026-10-01-phase-33f3-camp-specialists.md)): camp raids and Camp Watch, Field Smith, Vigil, Forage, `camp cook` |
-| 33g | Company Equipment and Loot | Management/cargo/treasury complete; reviewed and verified. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); presets removed by owner. Catalog/Glaivewarden remain separate slices. |
+| 33g | Company Equipment and Loot | Management/cargo/treasury complete; reviewed and verified. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md); presets removed by owner. Catalog delivery remains a separate slice. |
 | 33h | Company Progression, Rewards, and Expedition Continuity | [Design](designs/2026-10-01-phase-33h-progression-recovery-continuity-design.md) in three slices. 33h1 complete ([plan](plans/2026-10-02-phase-33h1-growth-rewards.md)): derived archetype growth, `company growth` focus, contract quests; `help growth`, `help contracts`. 33h2 complete ([plan](plans/2026-10-02-phase-33h2-readiness-recovery.md)): durable companion vitals, online-only recovery, inn restore, half-vitals resurrection; `help readiness`. 33h3 (relocation) not started |
 | 33i | Company Encounter Assessment and Enemy Roles | [Design](designs/2026-10-01-phase-33i-company-assessment-enemy-roles-design.md) in two slices. 33i1 complete ([plan](plans/2026-10-01-phase-33i1-company-assessment.md)): the company's assessment of a visible enemy group in `scout [group]`, `consider [enemy]` (one-on-one odds retired), and the Battle view's outlook; `help assessment`. 33i2 (coordinated enemy roles) not started |
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
@@ -447,7 +453,7 @@ delegated to the lead. 33a–33e are complete.
   equipment management on `phase-33g-equipment`, based on origin/master
   `022100ca`. [Design](designs/2026-10-01-phase-33g-company-equipment-loot-design.md)
   and [plan](plans/2026-10-01-phase-33g-equipment.md). Equipment tiers/catalog
-  and Glaivewarden remain separate content/class delivery; 33g is not closed
+  remain separate content delivery; 33g is not closed
   as a whole by this management slice.
 - **Delivered:** instance-preserving shared cargo and pooled treasury, exact
   member/item equipment assignment, removal and comparison, recoverable
