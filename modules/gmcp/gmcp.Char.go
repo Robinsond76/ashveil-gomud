@@ -803,15 +803,38 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 		payload.Skills = []GMCPCharModule_Payload_Skill{}
 
 		for skillName, skillLevel := range user.Character.GetSkills() {
+			if skills.GetSkill(skillName) == nil || skillLevel <= 0 {
+				continue
+			}
+			retired := false
+			for _, id := range skills.Retired() {
+				if id == skillName {
+					retired = true
+				}
+			}
+			if retired {
+				continue
+			}
+			if cap, ok := skills.LevelCap(skillName); ok {
+				skillLevel = min(skillLevel, cap)
+			}
 			payload.Skills = append(payload.Skills, GMCPCharModule_Payload_Skill{
-				Name:    skillName,
-				Level:   skillLevel,
-				Maximum: skillLevel >= skills.MaxSkillLevel(skillName),
+				Name:     skillName,
+				Level:    skillLevel,
+				Maximum:  skillLevel >= skills.MaxSkillLevel(skillName),
+				MaxLevel: skills.MaxSkillLevel(skillName),
 			})
 		}
 
 		if !all {
 			return payload.Skills, `Char.Skills`
+		}
+	}
+
+	if all || g.wantsGMCPPayload(`Char.Capabilities`, gmcpModule) {
+		payload.Capabilities = buildCapabilities(user)
+		if !all {
+			return payload.Capabilities, `Char.Capabilities`
 		}
 	}
 
@@ -925,18 +948,19 @@ func (g *GMCPCharModule) wantsGMCPPayload(packageToConsider string, packageReque
 }
 
 type GMCPCharModule_Payload struct {
-	Info      *GMCPCharModule_Payload_Info             `json:"Info,omitempty"`
-	Affects   map[string]GMCPCharModule_Payload_Affect `json:"Affects,omitempty"`
-	Enemies   []GMCPCharModule_Enemy                   `json:"Enemies,omitempty"`
-	Inventory *GMCPCharModule_Payload_Inventory        `json:"Inventory,omitempty"`
-	Stats     *GMCPCharModule_Payload_Stats            `json:"Stats,omitempty"`
-	Vitals    *GMCPCharModule_Payload_Vitals           `json:"Vitals,omitempty"`
-	Worth     *GMCPCharModule_Payload_Worth            `json:"Worth,omitempty"`
-	Quests    []GMCPCharModule_Payload_Quest           `json:"Quests,omitempty"`
-	Pets      []GMCPCharModule_Payload_Pet             `json:"Pets,omitempty"`
-	Skills    []GMCPCharModule_Payload_Skill           `json:"Skills,omitempty"`
-	Jobs      []GMCPCharModule_Payload_Job             `json:"Jobs,omitempty"`
-	Kills     *GMCPCharModule_Payload_Kills            `json:"Kills,omitempty"`
+	Info         *GMCPCharModule_Payload_Info             `json:"Info,omitempty"`
+	Affects      map[string]GMCPCharModule_Payload_Affect `json:"Affects,omitempty"`
+	Enemies      []GMCPCharModule_Enemy                   `json:"Enemies,omitempty"`
+	Inventory    *GMCPCharModule_Payload_Inventory        `json:"Inventory,omitempty"`
+	Stats        *GMCPCharModule_Payload_Stats            `json:"Stats,omitempty"`
+	Vitals       *GMCPCharModule_Payload_Vitals           `json:"Vitals,omitempty"`
+	Worth        *GMCPCharModule_Payload_Worth            `json:"Worth,omitempty"`
+	Quests       []GMCPCharModule_Payload_Quest           `json:"Quests,omitempty"`
+	Pets         []GMCPCharModule_Payload_Pet             `json:"Pets,omitempty"`
+	Capabilities charCapabilities                         `json:"Capabilities"`
+	Skills       []GMCPCharModule_Payload_Skill           `json:"Skills,omitempty"`
+	Jobs         []GMCPCharModule_Payload_Job             `json:"Jobs,omitempty"`
+	Kills        *GMCPCharModule_Payload_Kills            `json:"Kills,omitempty"`
 }
 
 // /////////////////
@@ -1151,9 +1175,10 @@ type GMCPCharModule_Payload_Pet_Ability struct {
 // Char.Skills
 // /////////////////
 type GMCPCharModule_Payload_Skill struct {
-	Name    string `json:"name"`
-	Level   int    `json:"level"`
-	Maximum bool   `json:"maximum,omitempty"`
+	MaxLevel int    `json:"max_level"`
+	Name     string `json:"name"`
+	Level    int    `json:"level"`
+	Maximum  bool   `json:"maximum,omitempty"`
 }
 
 // /////////////////

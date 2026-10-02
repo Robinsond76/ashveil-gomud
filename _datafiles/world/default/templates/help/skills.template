@@ -1,0 +1,31 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">skills</ansi>
+
+skills lists your trained skill ranks. train [skill] raises one rank;
+these ranks are the inputs to your abilities, not separate unlocks for
+every capability they support.
+
+In the web client, Character > Skills groups trained ranks, automatic
+combat abilities, field capabilities and camp capabilities. Trained
+ranks show their actual maximum. Retired skills are no longer listed.
+
+Automatic combat abilities act when their conditions hold, rather than
+waiting for a manual command. The panel shows their mechanical effect,
+conditions and cooldown in combat rounds. strategy [member] abilities
+on|off controls class abilities. Automatic spells instead depend on the
+strategy role, learned spell, cast rank, mana and attack mana reserve.
+See <ansi fg="command">help abilities</ansi> and <ansi fg="command">help strategy</ansi>.
+
+Field and camp capabilities use your current archetype and its trained
+skill rank. One rank can support several capabilities; do not train each
+capability separately. autoskill [utility] on|off controls these jobs.
+Your company's best eligible member here does the work when the job's
+conditions hold. Eligible does not mean a job has already happened:
+light needs darkness, camp rewards need a completed rest, and forage
+needs a configured local food table and cargo space.
+See <ansi fg="command">help specialists</ansi> and <ansi fg="command">help autoskill</ansi>.
+Camp Cooking is manual and class-independent: camp cook uses configured
+recipe ranks and ingredients at your lit campfire outside battle.
+It is separate from autoskills (<ansi fg="command">help cooking</ansi>).
+
+Usage: <ansi fg="command">skills</ansi>, <ansi fg="command">train [skill]</ansi>
+See also: <ansi fg="command">help archetype</ansi>, <ansi fg="command">help webclient</ansi>.

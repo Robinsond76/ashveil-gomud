@@ -47,3 +47,11 @@ while you are in a battle.
   at first.
 
 See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help autoskill</ansi>.
+
+Character > Skills shows your own current field and camp eligibility,
+using the same archetype, trained rank and autoskill settings. Reasons
+explain missing training, disabled autoskills, inability to act, and
+light's spell or mana requirements. Eligibility is not a completed job:
+the company uses its best member when the job's conditions hold.
+Cooking still uses its own recipes, ingredients and a lit campfire
+(<ansi fg="command">help cooking</ansi>). See <ansi fg="command">help skills</ansi>.

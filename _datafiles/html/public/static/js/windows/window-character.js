@@ -6,10 +6,10 @@
  *   Overview - name, race/class, level, alignment, stats grid, point
  *              badges, then Worth (window-status.js: XP, gold)
  *   Gear     - worn and carried items (window-gear.js)
- *   Skills   - learned skills with levels and max indicator, then jobs
+ *   Skills   - trained ranks, automatic and field/camp capabilities, then jobs
  *              (profession completion and proficiency)
  *   Quests   - in-progress quest log, click to expand
- *   Effects  - active buffs/debuffs with duration bars
+ *   Effects  - active effects, wounds and persistent bonuses with durations
  *   Pet      - only while the player has a pet (window-pet.js)
  *
  * Other windows' scripts host their content here through
@@ -851,9 +851,11 @@
             '</div>' +
 
             '<div class="cw-tab-panel" id="cw-skills-tab">' +
+                '<h4 class="cw-subhead">Trained ranks</h4>' +
                 '<div class="cw-sub" id="cw-skills">' +
                     '<div class="csk-empty">No skills learned</div>' +
                 '</div>' +
+                '<div class="cw-sub" id="cw-capabilities"></div>' +
                 '<h4 class="cw-subhead">Jobs</h4>' +
                 '<div class="cw-sub" id="cw-jobs">' +
                     '<div class="cjb-empty">No job progress</div>' +
@@ -1002,16 +1004,23 @@
             return;
         }
 
+        const focusedSkill = panel.contains(document.activeElement) ? document.activeElement.dataset.skill : null;
         const sorted = [...skillList].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         panel.innerHTML = '';
 
         sorted.forEach(function(skill) {
             const level   = skill.level   || 0;
             const isMax   = skill.maximum || false;
-            const MAX_LVL = 4;
+            const MAX_LVL = Math.max(1, Math.min(20, skill.max_level || 4));
 
-            const row = document.createElement('div');
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.dataset.skill = skill.name || '';
+            row.style.color = 'var(--t-text)';
+            row.style.background = 'transparent';
+            row.style.width = '100%';
             row.className = 'csk-row';
+            row.setAttribute('aria-label', (skill.name || '') + ', rank ' + level + ' of ' + MAX_LVL + ', help');
             row.style.cursor = 'help';
 
             const nameEl = document.createElement('span');
@@ -1040,7 +1049,40 @@
                 Client.GMCPRequest('Help', (skill.name || '').toLowerCase().replace(/\s+/g, '-'));
             });
             panel.appendChild(row);
+            if (focusedSkill === skill.name) { row.focus(); }
         });
+    }
+
+    function capabilityText(panel, text, heading) {
+        const node = document.createElement(heading ? 'h4' : 'div');
+        node.className = heading ? 'cw-subhead' : 'cw-capability';
+        node.style.overflowWrap = 'anywhere';
+        node.style.color = 'var(--t-text)';
+        node.textContent = text;
+        panel.appendChild(node);
+    }
+
+    function updateCapabilities() {
+        const panel = document.getElementById('cw-capabilities');
+        if (!panel) { return; }
+        panel.textContent = '';
+        const caps = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Capabilities;
+        if (!caps) { capabilityText(panel, 'Current capabilities unavailable'); return; }
+        capabilityText(panel, 'Automatic combat abilities', true);
+        (caps.automatic || []).forEach(c => {
+            capabilityText(panel, c.name + ' — ' + (c.enabled ? 'Enabled' : c.reason || 'Disabled') +
+                '. Uses ' + c.skill + '. ' + c.description + '. When ' + c.when +
+                (c.cooldown > 0 ? '. Cooldown: ' + c.cooldown + ' combat rounds.' : '.'));
+        });
+        if (!(caps.automatic || []).length) { capabilityText(panel, 'No trained automatic combat abilities'); }
+        ['field', 'camp'].forEach(group => {
+            capabilityText(panel, group === 'field' ? 'Field capabilities' : 'Camp capabilities', true);
+            const list = (caps.utility || []).filter(c => c.group === group);
+            list.forEach(c => capabilityText(panel, c.name + (c.mode === 'manual' ? ' (Manual)' : ' (Automatic)') + ' — ' + (c.enabled ? 'Eligible' : c.reason || 'Unavailable') +
+                '. ' + c.skill + ' rank ' + c.rank + ': ' + c.description + '.'));
+            if (!list.length) { capabilityText(panel, 'No current capabilities'); }
+        });
+        capabilityText(panel, 'The best eligible company specialist performs automatic field and camp work when its conditions hold. Camp Cooking is manual: camp cook. See help specialists and help cooking.');
     }
 
     function updateJobs() {
@@ -1134,11 +1176,6 @@
         });
     }
 
-    function _isDebuff(mods) {
-        if (!mods) { return false; }
-        return Object.values(mods).some(v => v < 0);
-    }
-
     function _formatMods(mods) {
         if (!mods || Object.keys(mods).length === 0) { return ''; }
         return Object.entries(mods)
@@ -1147,87 +1184,29 @@
     }
 
     function updateEffects() {
-        const affects = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Affects;
-        const panel   = document.getElementById('cw-effects');
-        if (!panel || !affects) { return; }
-
-        panel.innerHTML = '';
-
-        const keys = Object.keys(affects);
-        if (keys.length === 0) {
-            panel.innerHTML = '<div class="cw-affect-empty">No active effects</div>';
+        const panel = document.getElementById('cw-effects');
+        if (!panel) { return; }
+        const all = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Conditions;
+        const state = all && all.leader;
+        panel.textContent = '';
+        if (state) {
+            [['effects', 'Active effects'], ['wounds', 'Wounds'], ['bonuses', 'Persistent bonuses']].forEach(group => {
+                capabilityText(panel, group[1], true);
+                const entries = state[group[0]] || [];
+                entries.forEach(c => capabilityText(panel, c.name + (c.stacks > 1 ? ' (×' + c.stacks + ')' : '') +
+                    ' — ' + c.duration + '. ' + c.description + '. ' + _formatMods(c.mods || {})));
+                if (!entries.length) { capabilityText(panel, 'None'); }
+            });
             return;
         }
-
-        keys.sort((a, b) => {
-            const da = _isDebuff(affects[a].affects);
-            const db = _isDebuff(affects[b].affects);
-            if (da !== db) { return da ? 1 : -1; }
-            const pa = affects[a].duration_max === -1;
-            const pb = affects[b].duration_max === -1;
-            if (pa !== pb) { return pa ? 1 : -1; }
-            return a.localeCompare(b);
+        // Legacy Char.Affects remains usable without a Company provider.
+        const affects = (Client.GMCPStructs.Char && Client.GMCPStructs.Char.Affects) || {};
+        Object.keys(affects).sort().forEach(key => {
+            const c = affects[key];
+            capabilityText(panel, (c.name || key) + ' — ' + (c.duration_max === -1 ? 'Persistent' : c.duration_left + ' seconds remaining') +
+                '. ' + (c.description || '') + '. ' + _formatMods(c.affects || {}));
         });
-
-        keys.forEach(key => {
-            const aff     = affects[key];
-            const debuff  = _isDebuff(aff.affects);
-            const perma   = aff.duration_max === -1;
-            const modText = _formatMods(aff.affects);
-
-            let durPct = 100;
-            if (!perma && aff.duration_max > 0) {
-                durPct = Math.max(0, Math.min(100, Math.round((aff.duration_left / aff.duration_max) * 100)));
-            }
-
-            let timeLabel;
-            if (perma) {
-                timeLabel = 'Unlimited';
-            } else {
-                const secs = aff.duration_left;
-                if (secs <= 0) {
-                    timeLabel = 'Expiring';
-                } else if (secs < 60) {
-                    timeLabel = secs + 's remaining';
-                } else if (secs < 3600) {
-                    timeLabel = Math.ceil(secs / 60) + 'm remaining';
-                } else {
-                    timeLabel = Math.ceil(secs / 3600) + 'h remaining';
-                }
-            }
-
-            const tooltipHtml = (() => {
-                let h = '<div class="cw-tt-name">' + (aff.name || key) + '</div>';
-                if (aff.description) {
-                    h += '<hr class="cw-tt-divider">' +
-                         '<div>' + aff.description + '</div>';
-                }
-                h += '<hr class="cw-tt-divider">' +
-                     '<div class="cw-tt-row">' +
-                         '<span class="cw-tt-row-label">Time left</span>' +
-                         '<span class="cw-tt-row-value">' + timeLabel + '</span>' +
-                     '</div>';
-                return h;
-            })();
-
-            const item = document.createElement('div');
-            item.className = 'cw-affect-item' + (debuff ? ' debuff' : '');
-            item.innerHTML =
-                '<div class="cw-affect-header">' +
-                    '<span class="cw-affect-name">' + (aff.name || key) + '</span>' +
-                    '<span class="cw-affect-source">' + (aff.type || '') + '</span>' +
-                '</div>' +
-                (modText ? '<div class="cw-affect-mods">' + modText + '</div>' : '') +
-                '<div class="cw-affect-dur-track">' +
-                    '<div class="cw-affect-dur-fill' + (perma ? ' permanent' : '') + '" style="width:' + durPct + '%"></div>' +
-                '</div>';
-
-            item.addEventListener('mouseenter', () => showStatTooltip(item, tooltipHtml));
-            item.addEventListener('mouseleave', hideStatTooltip);
-            item.addEventListener('mousemove', () => { if (statTooltip && statTooltip.style.display === 'block') { _positionStatTooltip(item); } });
-
-            panel.appendChild(item);
-        });
+        if (!Object.keys(affects).length) { capabilityText(panel, 'No active effects'); }
     }
 
     function update() {
@@ -1237,6 +1216,7 @@
         updateStats();
         updateQuests();
         updateSkills();
+        updateCapabilities();
         updateJobs();
         updateEffects();
     }
@@ -1246,7 +1226,7 @@
     // -----------------------------------------------------------------------
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Char.Info', 'Char.Stats', 'Char.Quests', 'Char.Skills', 'Char.Jobs', 'Char.Affects', 'Char'],
+        gmcpHandlers: ['Char', 'Company.Conditions'],
         onGMCP() { update(); },
     });
 

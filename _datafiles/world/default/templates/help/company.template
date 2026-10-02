@@ -177,3 +177,8 @@ See also: <ansi fg="command">help growth</ansi>, <ansi fg="command">help contrac
 
 Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipment</ansi>.
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
+
+Browser Company Status shows owned members' active effects and wounds,
+with duration and mechanical meaning, apart from persistent bonuses.
+Away, fallen and unavailable conditions are labelled explicitly.
+See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help wounds</ansi>.

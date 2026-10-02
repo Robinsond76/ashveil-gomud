@@ -19,3 +19,13 @@ A group with nothing in it is left out. If you have none of the above,
 See also: <ansi fg="command">help status</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help camp</ansi>,
 <ansi fg="command">help inn</ansi>.
 
+
+In the web client, Company > Status shows each owned member's active
+effects and wounds separately from persistent bonuses. Character >
+Effects shows the same details for you. Effect durations use actual
+seconds or combat rounds. Light wounds last until fight end; lasting
+wounds remain until treatment or rest, rather than having a countdown.
+Wounds hold back health and lower the healing limit (help wounds).
+Away members with live state are marked away; otherwise effects are
+unknown and wounds are only last recorded. Fallen members have no active
+member effects. Another company's private conditions are never shown.
