@@ -355,3 +355,19 @@ func TestBattleViewShowsTheCoordination(t *testing.T) {
 	_, kw := b.banditGroup()
 	assert.Contains(t, b.cmd("scout", kw), "They fight as a veteran company.")
 }
+
+// 33i2 review finding 5: a hidden member's level doesn't lift the tier
+// the assessment names.
+func TestAssessmentTierIgnoresHiddenMembers(t *testing.T) {
+	b := newBrawl(t)
+	_, kw := b.banditGroup()
+	captain := mobs.GetInstance(b.bandits["bandit captain"][0])
+	captain.Character.Level = 60 // (60+1+1+1+1)/5 = 12: a band
+	assert.Contains(t, b.cmd("scout", kw), "They fight as a band.")
+	buffs.SetTestFlag("hidden")
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 93305, Name: "hidden", TriggerCount: 1000, RoundInterval: 1, Flags: []string{"hidden"}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(93305) })
+	require.NoError(t, captain.Character.AddBuff(93305, true))
+	captain.Character.Validate()
+	assert.Contains(t, b.cmd("scout", kw), "They fight as a rabble.")
+}

@@ -232,6 +232,11 @@ func enemyGuardianFor(userId int, room *rooms.Room, struck *mobs.Mob) (*mobs.Mob
 		if g.InstanceId == struck.InstanceId || g.EnemyRole() != string(strategy.Guardian) {
 			continue
 		}
+		// One that hasn't joined this battle, or is hidden, never steps in
+		// (33i2 review finding 3).
+		if !b.Has(g.InstanceId) || g.Character.HasBuffFlag("hidden") {
+			continue
+		}
 		if !ableToGuard(guardMember{char: &g.Character, mob: g}) {
 			continue
 		}
@@ -272,6 +277,7 @@ func enemyGuardianFor(userId int, room *rooms.Room, struck *mobs.Mob) (*mobs.Mob
 func enemyStrategyPass() {
 	autoSpells := costedAutoSpells()
 	decided := map[int]bool{}
+	healsBy := map[string]int{} // heals started this round, by group (33i2 review finding 2)
 	for _, uid := range battle.Players() {
 		b, ok := battle.Current(uid)
 		u := users.GetByUserId(uid)
@@ -298,7 +304,6 @@ func enemyStrategyPass() {
 			allies[i] = strategy.Ally{HP: a.char.Health, MaxHP: a.char.HealthLimit()}
 		}
 		markPendingHeals(allies, side, autoSpells)
-		heals := 0
 		for _, a := range side {
 			role := strategy.Role(a.holder.mob.EnemyRole())
 			if decided[a.who.mobId] || (role != strategy.Healer && role != strategy.Caster) {
@@ -319,7 +324,7 @@ func enemyStrategyPass() {
 				MaxMana:   a.char.ManaMax.Value,
 			})
 			heal := action.Kind == strategy.Heal || action.Kind == strategy.HealAll
-			if heal && spec.HealsPerRound > 0 && heals >= spec.HealsPerRound {
+			if heal && spec.HealsPerRound > 0 && healsBy[p.ID] >= spec.HealsPerRound {
 				continue
 			}
 			info, ok := enemySpellTargets(action, a, side, b, targets, spec)
@@ -329,7 +334,7 @@ func enemyStrategyPass() {
 			if startCast(a, action.Spell, info, room.RoomId) {
 				coverHeal(allies, action)
 				if heal {
-					heals++
+					healsBy[p.ID]++
 				}
 			}
 		}

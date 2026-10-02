@@ -100,3 +100,27 @@ func TestEnemyGuardsAreTheBattles(t *testing.T) {
 		t.Fatal("a new battle starts fresh")
 	}
 }
+
+// 33i2 review finding 2: a group fighting two players spends its guards
+// from one count, and a later battle against it starts with them spent.
+func TestEnemyGuardsAreTheGroups(t *testing.T) {
+	Reset()
+	defer Reset()
+	Begin(1, 5, 1, "band", []int{9})
+	Begin(2, 5, 1, "band", []int{9})
+	Begin(3, 5, 1, "other", []int{8})
+	if _, ok := SpendEnemyGuard(1, 1); !ok {
+		t.Fatal("the band's one guard")
+	}
+	if _, ok := SpendEnemyGuard(2, 1); ok {
+		t.Fatal("spent in the other battle against the same band")
+	}
+	if _, ok := SpendEnemyGuard(3, 1); !ok {
+		t.Fatal("another group has its own")
+	}
+	End(2)
+	Begin(2, 5, 3, "band", []int{9})
+	if b, _ := Current(2); b.EnemyGuards != 1 {
+		t.Fatalf("a new battle against the band starts spent: %d", b.EnemyGuards)
+	}
+}

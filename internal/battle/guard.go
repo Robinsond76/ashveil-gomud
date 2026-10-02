@@ -99,8 +99,10 @@ func SetCoordination(userId, tier int) {
 
 // SpendEnemyGuard spends one of the enemy group's guards in the player's
 // battle, when it has spent fewer than limit (Phase 33i2: a tier's guards
-// are a battle's, all told, and never come back). ok is false with no
-// battle or none left.
+// are the group's for its battle, all told, and never come back). A group
+// fighting several players spends from one count: every battle against
+// it is charged (33i2 review finding 2). ok is false with no battle or
+// none left.
 func SpendEnemyGuard(userId, limit int) (left int, ok bool) {
 	mu.Lock()
 	defer mu.Unlock()
@@ -108,8 +110,13 @@ func SpendEnemyGuard(userId, limit int) (left int, ok bool) {
 	if !found || b.EnemyGuards >= limit {
 		return 0, false
 	}
-	b.EnemyGuards++
-	return limit - b.EnemyGuards, true
+	spent := b.EnemyGuards + 1
+	for _, other := range battles {
+		if other.PartyID == b.PartyID {
+			other.EnemyGuards = max(other.EnemyGuards, spent)
+		}
+	}
+	return limit - spent, true
 }
 
 // SetEnemyFocus records the enemy group's focus (a company member key) on

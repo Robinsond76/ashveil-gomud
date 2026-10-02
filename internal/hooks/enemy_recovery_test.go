@@ -37,7 +37,8 @@ func TestRegenEnemyVitals(t *testing.T) {
 	}
 	inBattle := func(id int) bool { return id == 9333 }
 
-	regenEnemyVitals(leaderOf, inBattle)
+	round := uint64(3)
+	regenEnemyVitals(round, leaderOf, inBattle)
 	assert.Equal(t, 1+3, idle.Character.Health, "1/188 of max a round, three rounds a pass")
 	assert.Equal(t, 6, idle.Character.Mana, "mana too, by its own max")
 	for name, m := range map[string]*characters.Character{"fighting": &fighting.Character, "in a battle": &engaged.Character, "a companion": &companion.Character, "a pet": &pet.Character, "downed": &downed.Character} {
@@ -48,13 +49,15 @@ func TestRegenEnemyVitals(t *testing.T) {
 	// From 1 health to full takes 63 passes (189 rounds): 5 game hours.
 	passes := 1
 	for idle.Character.Health < 188 {
-		regenEnemyVitals(leaderOf, inBattle)
+		round += 3
+		regenEnemyVitals(round, leaderOf, inBattle)
 		passes++
 	}
 	assert.Equal(t, 63, passes)
 	assert.Equal(t, 188, idle.Character.Health, "capped at its maximum")
 	for i := 0; i < 70; i++ {
-		regenEnemyVitals(leaderOf, inBattle)
+		round += 3
+		regenEnemyVitals(round, leaderOf, inBattle)
 	}
 	assert.Equal(t, 88, wounded.Character.Health, "stops at the wound limit")
 }
@@ -79,9 +82,27 @@ func TestAutoHealRecoversEnemiesOutOfBattle(t *testing.T) {
 	assert.Equal(t, 10, held.Character.Health, "not while in a battle")
 }
 
+// Any enemy, however small or large, recovers its whole max over 188
+// rounds (33i2 review finding 1: a 40-health enemy no longer heals in 40).
 func TestEnemyRecovery(t *testing.T) {
-	assert.Equal(t, 0, enemyRecovery(0))
-	assert.Equal(t, 3, enemyRecovery(1), "at least one a round")
-	assert.Equal(t, 3, enemyRecovery(188))
-	assert.Equal(t, 6, enemyRecovery(189))
+	assert.Equal(t, 0, enemyRecovery(0, 3))
+	for _, max := range []int{1, 40, 187, 188, 189, 500} {
+		total, firstWindow := 0, 0
+		for round := uint64(3); round <= 3*EnemyRecoveryRounds; round += 3 {
+			got := enemyRecovery(max, round)
+			assert.GreaterOrEqual(t, got, 0)
+			total += got
+			if round <= EnemyRecoveryRounds+1 {
+				firstWindow += got
+			}
+		}
+		assert.Equal(t, 3*max, total, "max %d: three windows of 188 rounds", max)
+		assert.GreaterOrEqual(t, firstWindow, max, "max %d: full within 189 rounds", max)
+		assert.LessOrEqual(t, firstWindow, max+3, "max %d: and no sooner than 188", max)
+	}
+	small := 0
+	for round := uint64(3); round <= 60; round += 3 {
+		small += enemyRecovery(40, round)
+	}
+	assert.Less(t, small, 15, "a 40-health enemy is far from full after 60 rounds")
 }

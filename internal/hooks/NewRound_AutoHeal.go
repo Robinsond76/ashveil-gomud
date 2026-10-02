@@ -31,7 +31,7 @@ func AutoHeal(e events.Event) events.ListenerReturn {
 	// Ashveil Phase 32d/33h2: companions regain mana and health as players do.
 	regenCompanionVitals(company.LeaderAndKeyForInstance)
 	// Ashveil Phase 33i2: an enemy that lived through a fight recovers.
-	regenEnemyVitals(company.LeaderAndKeyForInstance, battle.Engaged)
+	regenEnemyVitals(evt.RoundNumber, company.LeaderAndKeyForInstance, battle.Engaged)
 
 	onlineIds := users.GetOnlineUserIds()
 	for _, userId := range onlineIds {
@@ -128,14 +128,22 @@ func regenCompanionVitals(leaderOf func(instanceId int) (int, company.MemberKey,
 // the shipped 900-round day, about 12½ real minutes.
 const EnemyRecoveryRounds = 188
 
-// enemyRecovery is what an enemy of max health or mana recovers on one
-// pass: a 1/EnemyRecoveryRounds share a round, rounded up, for the three
-// rounds between passes.
-func enemyRecovery(max int) int {
+// enemyRecovery is what an enemy of max health or mana recovers on the
+// pass at round: its share of the three rounds since the last pass, so
+// that any 188 rounds in a row add up to max, however small max is (33i2
+// review finding 1: rounding each round's share up healed a 40-health
+// enemy in 40 rounds). No state is kept: the share comes from the round.
+func enemyRecovery(max int, round uint64) int {
 	if max < 1 {
 		return 0
 	}
-	return 3 * ((max + EnemyRecoveryRounds - 1) / EnemyRecoveryRounds)
+	r := round % EnemyRecoveryRounds
+	m := uint64(max)
+	if r >= 3 {
+		return int(m*r/EnemyRecoveryRounds - m*(r-3)/EnemyRecoveryRounds)
+	}
+	// The window wraps past a multiple of EnemyRecoveryRounds.
+	return int(m - m*(r+EnemyRecoveryRounds-3)/EnemyRecoveryRounds + m*r/EnemyRecoveryRounds)
 }
 
 // regenEnemyVitals gives each living mob outside a company (an enemy, or
@@ -145,7 +153,7 @@ func enemyRecovery(max int) int {
 // time never advances for it; a charmed pet is left to its owner's rules.
 // Health stops at the wound limit (Heal), though an enemy's light wounds
 // have closed by the time its fight is over.
-func regenEnemyVitals(leaderOf func(instanceId int) (int, company.MemberKey, bool), engaged func(instanceId int) bool) {
+func regenEnemyVitals(round uint64, leaderOf func(instanceId int) (int, company.MemberKey, bool), engaged func(instanceId int) bool) {
 	for _, instanceId := range mobs.GetAllMobInstanceIds() {
 		mob := mobs.GetInstance(instanceId)
 		if mob == nil || mob.Character.Aggro != nil || mob.Character.Health < 1 || mob.Character.IsCharmed() {
@@ -156,10 +164,10 @@ func regenEnemyVitals(leaderOf func(instanceId int) (int, company.MemberKey, boo
 		}
 		hp, mana := 0, 0
 		if mob.Character.Health < mob.Character.HealthLimit() {
-			hp = enemyRecovery(mob.Character.HealthMax.Value)
+			hp = enemyRecovery(mob.Character.HealthMax.Value, round)
 		}
 		if mob.Character.Mana < mob.Character.ManaMax.Value {
-			mana = enemyRecovery(mob.Character.ManaMax.Value)
+			mana = enemyRecovery(mob.Character.ManaMax.Value, round)
 		}
 		if hp > 0 || mana > 0 {
 			mob.Character.Heal(hp, mana)

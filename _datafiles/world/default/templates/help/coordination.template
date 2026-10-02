@@ -49,7 +49,8 @@ fight ends. A few creatures take no wounds at all (bone, fungus).
 <ansi fg="yellow-bold">Enemies recover</ansi>
 
 An enemy that lives through a fight recovers out of it: from nothing to
-full health in 5 game hours (about 12 real minutes). One you drove off
-will be back on its feet if you leave it long.
+full health in 5 game hours (about 12 real minutes), however large it is.
+One you walk away from will be back on its feet if you leave it long.
+(One that flees or surrenders is gone for good.)
 
 See also: <ansi fg="command">help assessment</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help tactics</ansi>.

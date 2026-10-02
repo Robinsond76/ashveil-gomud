@@ -474,8 +474,15 @@ func (s companySide) keepPartyEngaged(party mobparty.Party, room *rooms.Room) {
 			order = append(order, id)
 		}
 	}
+	// While the leader is busy (chanting, winding up) the group keeps the
+	// focus it last had, if that member still stands (33i2 review finding
+	// 4); the leader's own aim replaces it when it has one.
 	var followers map[int]bool
 	focus := company.MemberKey("")
+	if b, ok := battle.Current(s.leader.UserId); ok && b.EnemyFocus != "" && s.alive[company.MemberKey(b.EnemyFocus)] {
+		focus = company.MemberKey(b.EnemyFocus)
+		followers = focusFollowers(party, leaderId, tier)
+	}
 	for _, instanceId := range order {
 		mob := mobs.GetInstance(instanceId)
 		if mob == nil || !canFight(&mob.Character) || !retargetable(mob.Character.Aggro) {

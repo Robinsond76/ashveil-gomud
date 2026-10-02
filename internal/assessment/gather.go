@@ -113,15 +113,17 @@ func Gather(user *users.UserRecord, room *rooms.Room, g enemyparty.Group) (Repor
 	}
 	rep.Allies = alliesHere(user, room)
 	if len(g.Party.Members) > 1 && !g.Solo() {
-		rep.Coordination = coordination.SpecOf(groupTier(user.UserId, g)).Word
+		rep.Coordination = coordination.SpecOf(groupTier(user.UserId, g, visible)).Word
 		rep.Roles = roleWords(visible)
 	}
 	return rep, true
 }
 
 // groupTier is the group's coordination: its battle's, fixed when the
-// battle began, when the user is fighting it; else its tier now.
-func groupTier(userId int, g enemyparty.Group) coordination.Tier {
+// battle began, when the user is fighting it; else the tier of the members
+// the user can see (33i2 review finding 5: a hidden member's level never
+// shows).
+func groupTier(userId int, g enemyparty.Group, visible []*mobs.Mob) coordination.Tier {
 	if b, ok := battle.Current(userId); ok {
 		if _, mine := enemyparty.BattleParty(b, []mobparty.Party{g.Party}); mine {
 			if tier, ok := enemyparty.BattleTier(userId); ok {
@@ -129,7 +131,12 @@ func groupTier(userId int, g enemyparty.Group) coordination.Tier {
 			}
 		}
 	}
-	return enemyparty.Coordination(g.Party)
+	var levels, explicit []int
+	for _, m := range visible {
+		levels = append(levels, m.Character.Level)
+		explicit = append(explicit, m.Coordination)
+	}
+	return coordination.Of(levels, explicit)
 }
 
 // roleWords names the roles the visible members show, beyond fighting:

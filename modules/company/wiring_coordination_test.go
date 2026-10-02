@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/coordination"
@@ -318,3 +319,88 @@ func TestAVeteranLeaderBreaksAHeal(t *testing.T) {
 }
 
 func itoa(n int) string { return strconv.Itoa(n) }
+
+// 33i2 review finding 3: a hidden guardian never steps in.
+func TestAHiddenEnemyGuardianDoesNotStepIn(t *testing.T) {
+	b := coordBrawl(t, coordination.Drilled)
+	stream := b.listen()
+	captain := b.bandit("bandit captain")
+	guard := b.guardianNextTo(captain)
+	buffs.SetTestFlag("hidden")
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 93304, Name: "hidden", TriggerCount: 1000, RoundInterval: 1, Flags: []string{"hidden"}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(93304) })
+	require.NoError(t, guard.Character.AddBuff(93304, true))
+	guard.Character.Validate()
+	b.toughen()
+	b.hold(map[int]int{captain.InstanceId: 300})
+	b.quiet()
+	b.aria.Character.SetAggro(0, captain.InstanceId, characters.DefaultAttack)
+	b.fight()
+	for _, e := range *stream {
+		assert.False(t, e.Kind == combatstream.GuardUsed && e.Source.MobInstanceId == guard.InstanceId, "the hidden guardian stepped in")
+	}
+}
+
+// 33i2 review finding 4: while the leader is busy chanting, the band
+// keeps the focus it had.
+func TestABandKeepsItsFocusWhileTheLeaderChants(t *testing.T) {
+	b := coordBrawl(t, coordination.Band)
+	captain := b.bandit("bandit captain")
+	tamsin := b.companion(1)
+	require.True(t, battle.SetEnemyFocus(7, "companion:1"))
+	b.toughen()
+	b.hold(nil)
+	b.quiet()
+	b.mobCasts(captain, "mm #"+itoa(b.companion(4).InstanceId))
+	captain.Character.Aggro.RoundsWaiting = 5
+	b.fight()
+	onTamsin := 0
+	for _, m := range b.livingBandits() {
+		if m.Character.Aggro != nil && m.Character.Aggro.MobInstanceId == tamsin.InstanceId {
+			onTamsin++
+		}
+	}
+	assert.Equal(t, coordination.FocusCount(coordination.Band, 5)-1, onTamsin, "the followers, without their chanting leader")
+}
+
+// An enemy caster aimed at the player turns back to them when its spell
+// ends.
+func TestAnEnemyCasterTurnsBackToThePlayer(t *testing.T) {
+	b := coordBrawl(t, coordination.Band)
+	slinger := b.bandit("bandit slinger")
+	slinger.Role = "caster"
+	slinger.Character.SpellBook["mm"] = 250
+	slinger.Character.ManaMax.Value, slinger.Character.Mana = 100, 100
+	b.toughen()
+	b.hold(nil)
+	b.quiet()
+	slinger.Character.SetAggro(7, 0, characters.DefaultAttack)
+	slinger.Character.Aggro.RoundsWaiting = 1
+	b.fight()
+	require.Equal(t, characters.SpellCast, slinger.Character.Aggro.Type, "the slinger chants")
+	for i := 0; i < 4 && slinger.Character.Aggro != nil && slinger.Character.Aggro.Type == characters.SpellCast; i++ {
+		b.toughen()
+		b.hold(nil)
+		slinger.Character.Mana = 0 // no second spell
+		b.fight()
+	}
+	require.NotNil(t, slinger.Character.Aggro)
+	assert.Equal(t, characters.DefaultAttack, slinger.Character.Aggro.Type)
+	assert.Equal(t, 7, slinger.Character.Aggro.UserId, "back on Aria")
+}
+
+// Enemy healers heal against a player fighting alone, too.
+func TestAnEnemyHealerHealsAgainstASoloPlayer(t *testing.T) {
+	b := newBrawl(t)
+	b.cmd("company", "dismiss all")
+	stream := b.listen()
+	slinger, bruiser := b.bandit("bandit slinger"), b.bandit("bandit bruiser")
+	healerRole(slinger)
+	b.aimAt("bandit captain")
+	for i := 0; i < 3 && castStarts(*stream, slinger, "heal") == 0; i++ {
+		b.aria.Character.HealthMax.Value, b.aria.Character.Health = 1000, 1000
+		b.hold(map[int]int{bruiser.InstanceId: 100})
+		b.fight()
+	}
+	assert.Equal(t, 1, castStarts(*stream, slinger, "heal"))
+}

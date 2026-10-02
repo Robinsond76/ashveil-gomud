@@ -87,6 +87,13 @@ func Begin(userId, roomId int, round uint64, partyID string, enemies []int) Batt
 	for _, id := range enemies {
 		b.Enemies[id] = true
 	}
+	// Phase 33i2: a group already fighting another player has already
+	// spent its guards there.
+	for _, other := range battles {
+		if other.PartyID == partyID && partyID != "" {
+			b.EnemyGuards = max(b.EnemyGuards, other.EnemyGuards)
+		}
+	}
 	battles[userId] = b
 	return b.clone()
 }
