@@ -75,7 +75,10 @@ the old class rate; this predates 30g4 and Ashveil deaths are never
 permanent. Lower early HP from Vitality 4 → 1 is noted as
 balance for 30g6, not a defect.
 Merged after 30f (#12); the only code conflict, `Mob.Validate`, keeps both
-the `hpperlevel` and ambush-stealth checks.
+the `hpperlevel` and ambush-stealth checks. The merge also fixes a 30f flake in
+`TestTutorialThroughPluginsLoad` (about 60% of runs on master): its own-line
+matcher read the new dodge line "You sway aside, and the straw archer's blow"
+as Aria aiming at the archer; it now skips lines naming the foe as attacker.
 
 **30f battlefield conditions complete (2026-10-02):** ambush opening
 rounds, formation clusters and sweeps, leaps/open flanks, narrow-ground
