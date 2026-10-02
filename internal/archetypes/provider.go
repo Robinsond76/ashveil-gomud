@@ -201,3 +201,23 @@ func ChooseAtCreation(userID int, archetypeID string) (string, bool) {
 	}
 	return "", false
 }
+
+// HealthProvider optionally supplies configured HP gains without engine imports.
+type HealthProvider interface {
+	HealthPerLevel(archetypeID string) (float64, bool)
+	HealthArchetypes() map[string]float64
+}
+
+func HealthPerLevel(id string) (float64, bool) {
+	if p, ok := current().(HealthProvider); ok {
+		return p.HealthPerLevel(id)
+	}
+	return 0, false
+}
+
+func HealthArchetypes() map[string]float64 {
+	if p, ok := current().(HealthProvider); ok {
+		return p.HealthArchetypes()
+	}
+	return nil
+}

@@ -4,6 +4,8 @@
 
  <ansi fg="yellow-bold">You have gained {{ if gt .levelsGained 1 }}{{ .levelsGained }} levels{{ else }}a level{{ end }}!</ansi> You are now <ansi fg="magenta-bold">level {{ .level }}</ansi>!
 
+ Next automatic stat step: <ansi fg="yellow-bold">level {{ .nextStatStep }}</ansi>. See <ansi fg="command">help progression</ansi>.
+
  <ansi fg="yellow">Stat Gains:</ansi>
 
  Strength: <ansi fg="{{ if gt .statsDelta.Strength.Value 0 }}yellow{{ else }}black{{ end }}-bold">{{ .statsDelta.Strength.Value }}</ansi>    Speed:     <ansi fg="{{ if gt .statsDelta.Speed.Value 0     }}yellow{{ else }}black{{ end }}-bold">{{ .statsDelta.Speed.Value     }}</ansi>    Smarts:   <ansi fg="{{ if gt .statsDelta.Smarts.Value 0   }}yellow{{ else }}black{{ end }}-bold">{{ .statsDelta.Smarts.Value   }}</ansi> 

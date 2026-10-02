@@ -319,6 +319,9 @@ func main() {
 		configs.GetFilePathsConfig().DataFiles.String(),
 	)
 
+	// Settle restored player maxima after archetype tables and choices load.
+	users.ValidateActiveCharacters()
+
 	// Ashveil 32h: finish any character deletion a restart interrupted.
 	hooks.SweepDeletions()
 

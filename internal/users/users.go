@@ -468,6 +468,7 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 		mudlog.Error("LoadUser", "error", err.Error())
 	}
 
+	loadedUser.Character.SetUserId(loadedUser.UserId)
 	if len(skipValidation) == 0 || !skipValidation[0] {
 		if err := loadedUser.Character.Validate(true); err == nil {
 			SaveUser(*loadedUser)

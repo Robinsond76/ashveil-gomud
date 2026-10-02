@@ -24,6 +24,7 @@
 # (Lists, not maps: module config maps are flattened by the loader.)
 Archetypes:
   - ArchetypeId: warrior
+    HPPerLevel: 6
     Name: Warrior
     Description: Frontline fighters who trust steel and grit.
     Skills: [brawling, dual-wield]
@@ -38,6 +39,7 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10002, 20004, 20020, 30004, 30015, 38]
   - ArchetypeId: rogue
+    HPPerLevel: 4
     Name: Rogue
     Description: Quiet hands that find traps and open locks.
     Skills: [skulduggery]
@@ -52,6 +54,7 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10004, 8, 20029, 20003, 23, 30004, 30015, 38]
   - ArchetypeId: wizard
+    HPPerLevel: 3
     Name: Wizard
     Description: Scholars of the arcane who light the dark and bend illusion.
     Skills: [cast, enchant]
@@ -71,6 +74,7 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 38]
   - ArchetypeId: cleric
+    HPPerLevel: 5
     Name: Cleric
     Description: Healers and protectors sworn to keep the company standing.
     Skills: [cast, protection]
@@ -92,6 +96,7 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10015, 20004, 20008, 30004, 30015, 30001, 30001, 38]
   - ArchetypeId: ranger
+    HPPerLevel: 5
     Name: Ranger
     Description: Trackers and pathfinders at home in the wild.
     Skills: [track]

@@ -17,6 +17,7 @@ help:
       - conditions
       - cooldowns
       - experience
+      - progression
       - inventory
       - jobs
       - keyring
@@ -213,6 +214,7 @@ help:
 # Aliases for keywords when typing: help <keyword>
 # Key is the target keyword, value is the list of aliases
 help-aliases:
+  progression: [stat-steps, stat steps, leveling]
   equipment: [company-equipment, company equip, company remove, company compare]
   treasury: [company-treasury, company treasury]
   loot: [autoloot, company-loot]

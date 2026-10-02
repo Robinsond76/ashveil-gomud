@@ -62,6 +62,7 @@ func init() {
 			Hints: []string{
 				`<ansi fg="command">status</ansi> is your character sheet: your path, vitals, hunger, thirst, fatigue, and company.`,
 				`<ansi fg="command">inventory</ansi> shows your gear and your company's load.`,
+				`Automatic stats and stat points grow every five levels; health grows every level by archetype. <ansi fg="command">status</ansi> shows the next step (<ansi fg="command">help progression</ansi>).`,
 				`<ansi fg="command">experience</ansi> shows your level and progress, and each companion's (<ansi fg="command">help company</ansi> explains how they earn it).`,
 				`<ansi fg="command">conditions</ansi> lists what is affecting you, and for how long.`,
 				`Playing in the web client? The dock on the right shows your character, your company, and how it fights at a glance (<ansi fg="command">help webclient</ansi>).`,
@@ -82,7 +83,7 @@ func init() {
 				`Safe <ansi fg="command">ask</ansi> orders manage a present member outside battle; members fight automatically. Conversation and observation remain available (<ansi fg="command">help ask</ansi>).`,
 				`In Character > Gear, select a slot and a compatible cargo item to preview Current → After before equipping; Preview removal returns worn gear to cargo (<ansi fg="command">help equipment</ansi>, <ansi fg="command">help equip</ansi>). <ansi fg="command">help treasury</ansi> covers pooled gold.`,
 				`Companions keep their own gear (<ansi fg="command">company gear</ansi>). <ansi fg="command">company dismiss</ansi> lets one go, with their gear.`,
-				`Companions grow by their archetype: each level's stat points go where the archetype needs them, and <ansi fg="command">company growth</ansi> can favour one stat. Contract quests pay every companion with you when you turn them in (<ansi fg="command">help growth</ansi>, <ansi fg="command">help contracts</ansi>).`,
+				`Companions grow by their archetype: each stat step's points go where the archetype needs them, and <ansi fg="command">company growth</ansi> can favour one stat. Contract quests pay every companion with you when you turn them in (<ansi fg="command">help growth</ansi>, <ansi fg="command">help contracts</ansi>).`,
 				`<ansi fg="command">help company</ansi> covers recruiting and your roster in full.`,
 			},
 			Done: "Your company is gathered.",

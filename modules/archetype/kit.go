@@ -15,6 +15,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/races"
@@ -205,7 +206,7 @@ func (m *ArchetypeModule) CreationChoices() []archetypes.Choice {
 		out = append(out, archetypes.Choice{
 			ID:          a.ID,
 			Name:        a.Name,
-			Description: a.Description,
+			Description: a.Description + fmt.Sprintf(" HP: %g per level through level %d, then %g per level.", healthRate(a), configs.GetProgressionConfig().HPFullLevels, configs.GetProgressionConfig().HPAfterFull),
 			Skills:      append([]string(nil), a.Skills...),
 			Kit:         m.kitNames(a),
 		})
@@ -220,4 +221,11 @@ func (m *ArchetypeModule) ChooseAtCreation(userID int, archetypeID string) (stri
 		return "", false
 	}
 	return m.chooseResult(user, archetypeID, true)
+}
+
+func healthRate(a archetypes.Archetype) float64 {
+	if a.HPPerLevel > 0 {
+		return a.HPPerLevel
+	}
+	return float64(configs.GetProgressionConfig().DefaultHPPerLevel)
 }

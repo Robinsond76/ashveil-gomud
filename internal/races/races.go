@@ -3,6 +3,7 @@ package races
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -29,8 +30,9 @@ const (
 )
 
 type Race struct {
-	Temperament      string `yaml:"temperament,omitempty"`
-	NeverBreak       bool   `yaml:"neverbreak,omitempty"`
+	HPPerLevel       float64 `yaml:"hpperlevel,omitempty"` // Enemy HP gain; zero uses the progression default.
+	Temperament      string  `yaml:"temperament,omitempty"`
+	NeverBreak       bool    `yaml:"neverbreak,omitempty"`
 	RaceId           int
 	Name             string
 	Description      string
@@ -95,6 +97,9 @@ func (r *Race) Id() int {
 }
 
 func (r *Race) Validate() error {
+	if r.HPPerLevel < 0 || math.IsNaN(r.HPPerLevel) || math.IsInf(r.HPPerLevel, 0) {
+		return fmt.Errorf("invalid hpperlevel")
+	}
 	if err := morale.Validate(r.Temperament); err != nil {
 		return err
 	}

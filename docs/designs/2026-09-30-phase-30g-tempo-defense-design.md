@@ -266,8 +266,8 @@ Structure first, with provisional numbers; 30g6 tunes them.
 
 - **Stat steps (decision 13).** `StatInfo.GainsForLevel`
   (`internal/stats/stats.go`) counts **steps** instead of levels: a
-  character at level L has `1 + floor((L − 1) / StatStepLevels)` steps
-  (new progression key; 5 or 10, open decision I), and today's racial
+  character at level L has `1 + floor(L / StatStepLevels)` (level 1 starts at one; interval 1 uses L) steps
+  (new progression key; 5, settled decision 18), and today's racial
   formula runs on the step count instead of the level. Earned stat points
   follow the same rhythm through the existing `StatPointsEveryNLevels`.
   Players and mobs share `Recalculate`, so both change together.
@@ -302,6 +302,20 @@ Structure first, with provisional numbers; 30g6 tunes them.
   saved. A character's racial stats may drop (fewer steps than levels);
   30g4's plan checks the shipped companions and starter characters and
   records the before/after in the work log.
+
+**30g4 implementation amendment (2026-10-02):** The acceptance-test rhythm
+wins over the draft's `(L-1)` offset: stat steps occur at 5, 10, … with a
+starting step at level 1. The interval-one setting retains the old formula.
+Defaults are 6/5/5/4/3 class HP through level 20, then 1; Vitality contributes
+1 per point. Default/unknown HP uses 5, overridden for enemies by template
+then race `hpperlevel`. The player's hidden racial HealthMax growth is
+removed. Cumulative XP stays unchanged through 60; *incremental* costs
+then grow 10% each level, rather than multiplying cumulative thresholds.
+Player investment is preserved, and 33h1's companion training remains derived.
+Copyover restores saved vitals before module loading and clamps after it.
+See the [plan](../plans/2026-10-02-phase-30g4-progression.md) and
+[measurements](../plans/2026-10-02-phase-30g4-verification.md). Numbers remain
+provisional for 30g6, with no tempo changes in this slice.
 
 ### 30g5 — The action meter
 

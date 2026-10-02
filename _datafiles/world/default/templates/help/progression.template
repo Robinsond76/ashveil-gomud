@@ -1,0 +1,44 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">progression</ansi>
+
+Your level measures experience. You gain health on every level, and skill
+training points every {{ config "GamePlay.Progression.TrainingPointsEveryNLevels" }} level(s).
+Automatic racial stats rise at multiples of {{ config "GamePlay.Progression.StatStepLevels" }} levels:
+with the shipped interval, levels 5, 10, 15, and so on. Between those steps,
+your racial stats stay the same. Gear, training and effects still matter.
+<ansi fg="command">status</ansi> and the level-up message show your next automatic step.
+
+You earn {{ config "GamePlay.Progression.StatPointsPerLevel" }} stat point(s) every {{ config "GamePlay.Progression.StatPointsEveryNLevels" }} levels.
+Spend yours with <ansi fg="command">status train</ansi>. Companions automatically deal theirs
+by archetype and focus (<ansi fg="command">help growth</ansi>).
+
+<ansi fg="yellow-bold">Health by archetype</ansi>
+
+The shipped rates through level {{ config "GamePlay.Progression.HPFullLevels" }} are:
+  Warrior 6 HP per level; cleric and ranger 5; rogue 4; wizard 3.
+After that, every archetype gains {{ config "GamePlay.Progression.HPAfterFull" }} HP per level.
+Add {{ config "GamePlay.Progression.HPBase" }} base HP, {{ config "GamePlay.Progression.HPPerVitality" }} HP per adjusted Vitality, and your health bonuses.
+Without a known archetype, the early rate is {{ config "GamePlay.Progression.DefaultHPPerLevel" }} HP per level.
+Wounds reduce how far healing can restore you (<ansi fg="command">help wounds</ansi>).
+
+<ansi fg="yellow-bold">Experience and death</ansi>
+
+There is no level cap. Through level {{ config "GamePlay.Progression.XPKneeLevel" }}, experience thresholds keep their
+usual curve. Each next-level cost beyond that is multiplied by
+{{ config "GamePlay.Progression.XPKneeGrowth" }} compared with the previous cost. Your race's
+experience scale still applies. Level 100 is a practical ceiling, not a cap.
+
+Death can cost a level. Your own trained stats and unspent points stay;
+earning a lost level again never awards extra points. Companions' training
+is derived from their current level, so a lost stat step takes its points
+back and regaining it restores the same allocation. See <ansi fg="command">help death</ansi>.
+
+Older characters keep their level, experience and your invested training.
+Their racial stats and maximum health use these rules on loading; health
+and mana above a new maximum are lowered to fit, without a free refill.
+
+<ansi fg="yellow-bold">Commands</ansi>
+  <ansi fg="command">experience</ansi>       your level and the company's progress
+  <ansi fg="command">experience chart</ansi> experience thresholds for your race
+  <ansi fg="command">status</ansi>           your stats and the next automatic step
+  <ansi fg="command">status train</ansi>     spend your stat points
+  <ansi fg="command">company growth</ansi>   companions' derived stat training

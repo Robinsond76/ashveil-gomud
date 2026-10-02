@@ -12,8 +12,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (33i2 coordinated enemies; 34d effects/capabilities; integrated 33h3)
-- **Latest completed slices:** 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
+- **Last updated:** 2026-10-02 (30g4 progression; 33i2 coordinated enemies; 34d effects/capabilities)
+- **Latest completed slices:** 30g4, progression; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
@@ -27,6 +27,27 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**30g4 progression complete (2026-10-02):** automatic stats and stat-point
+awards step at levels 5, 10, 15, …; skill training remains every level.
+HP uses configured archetype rates through level 20, then one per level,
+with race/template overrides for enemies. XP retains its thresholds through
+level 60, then grows incremental costs by 1.10 without a level cap.
+Existing player investment and saved vitals survive load/copyover; maxima
+clamp vitals without refilling. Companion class HP uses its durable identity.
+Admin controls/charts share live formulas; creation, status, level-up,
+indexed help and tutorial explain the new progression.
+
+Independent review accepted and fixed two P2 findings with regressions:
+saturated HP/stat additions could overflow, and Mana previews omitted an
+intrinsic racial term. Follow-up accepted both fixes with no remaining
+blockers or rejected findings. Generate, validate, JS/Lua lint and editor
+browser checks and the full `go test -race ./...` suite passed.
+The 900-fight balance table had no stalls; no-focus medians at levels 1/5/10
+are 14/44/87 rounds. These remain provisional; 30g5 adds the action meter,
+and 30g6 owns the 10–15-round target. See the
+[plan](plans/2026-10-02-phase-30g4-progression.md) and
+[verification/upgrade notes](plans/2026-10-02-phase-30g4-verification.md).
 
 **33i2 coordinated enemies complete (2026-10-02):** enemy groups
 fight by a coordination tier from their average level when the battle
@@ -237,12 +258,12 @@ specialists)** are complete, so 33f is done; **33i1 (group assessment)**
 is complete too (33i2 remains); 33g management and its cargo prerequisite are
 complete, reviewed and verified. Equipment
 catalog delivery and 33h remain. Phase 30g3 is also complete;
-30g4 (progression) is the next combat-tempo slice, after the 33 series.
+30g4 (progression) is complete; 30g5 (the action meter) is the next combat-tempo slice.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
 defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
 decisions the owner settled on 2026-09-30. 30g1 (the balance harness and
-baseline), 30g2, and 30g3 are done; each later slice is measured against 30g1:
+baseline), 30g2, 30g3, and 30g4 are done; each later slice is measured against 30g1:
 
 1. **30g2, active defense and armor:** complete (work log below): one
    defense per strike: block with a shield (no dodge), else parry a
@@ -253,7 +274,7 @@ baseline), 30g2, and 30g3 are done; each later slice is measured against 30g1:
    weight against a Strength-based capacity (cargo and mounts never
    count); burden lowers dodge only; burden words in `status`, `look`,
    `scout`, and the web Overview; `help burden`.
-3. **30g4, progression:** automatic stats grow in steps every 5 levels;
+3. **30g4, progression:** complete (verification above): automatic stats grow in steps every 5 levels;
    HP by archetype, in small numbers; an XP knee at level 60.
 4. **30g5, the action meter:** turns from raw Speed and burden, at most
    two a round, no banking.

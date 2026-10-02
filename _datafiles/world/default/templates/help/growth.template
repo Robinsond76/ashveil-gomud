@@ -1,7 +1,7 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">growth</ansi>
 
-Companions grow on their own. Each level gives a companion stat points
-(1 a level, as the world ships), and their archetype decides where the
+Companions grow on their own. Stat steps give a companion stat points
+(1 every 5 levels, as the world ships), and their archetype decides where the
 points go. You never spend a companion's points, and they never pile up
 unspent.
 
@@ -20,9 +20,10 @@ warrior puts 4 in strength, 3 in vitality, 2 in speed, and 1 in
 perception. A companion without an archetype spreads them evenly
 (<ansi fg="command">help archetype</ansi>).
 
-A companion's points always come from their level alone. A level lost
-when they are raised from the dead takes its point back, and earning the
-level again gives the same point again, never an extra one.
+A companion's points always come from their level alone. A stat step lost
+when they are raised from the dead takes its point back, and earning that
+step again gives the same point again, never an extra one. Automatic racial
+stats follow the same five-level rhythm (<ansi fg="command">help progression</ansi>).
 
 <ansi fg="yellow-bold">A focus</ansi>
 

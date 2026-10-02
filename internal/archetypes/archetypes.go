@@ -11,6 +11,7 @@ package archetypes
 import (
 	"errors"
 	"fmt"
+	"math"
 	"regexp"
 	"sort"
 	"strings"
@@ -27,6 +28,7 @@ var (
 
 // Archetype is one configured, exclusive archetype.
 type Archetype struct {
+	HPPerLevel  float64 // HP per level through the configured HPFullLevels. Zero uses the progression default.
 	ID          string
 	Name        string
 	Description string
@@ -96,6 +98,9 @@ func contains(list []string, v string) bool {
 // Validate normalizes ids to lowercase and rejects a malformed archetype
 // rather than guessing at it.
 func (a *Archetype) Validate() error {
+	if a.HPPerLevel < 0 || math.IsNaN(a.HPPerLevel) || math.IsInf(a.HPPerLevel, 0) {
+		return fmt.Errorf("%w: invalid HPPerLevel", ErrInvalidArchetype)
+	}
 	a.ID = strings.ToLower(strings.TrimSpace(a.ID))
 	if !idRegex.MatchString(a.ID) {
 		return fmt.Errorf("%w: id %q", ErrInvalidArchetype, a.ID)
