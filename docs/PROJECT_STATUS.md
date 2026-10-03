@@ -44,7 +44,11 @@ verified, fixed and regression-tested; follow-up review found no blockers.
 `make generate`, `make validate`, `go test -race ./...` and focused regressions
 passed. Final measurements: 540 fights, no stalls, no-focus
 medians 16/60/95 rounds at levels 1/5/10; narration cell means 7.3–9.6 lines,
-peak 26. **30g6 tuning is next**, including the 10–15-round duration target.
+peak 26. Pre-merge PR review follow-up: withdrawn fighters no longer bump the
+combat generation, a redundant wait flag and single-pass DPS loop were
+removed, and a regression confirms a foe felled in the company's pass makes no
+blow (unchanged from master; the suspected behavior change was rejected).
+Legacy `ExtraAttacks*` keys stay for old overrides. **30g6 tuning is next**, including the 10–15-round duration target.
 See [amendment](designs/2026-10-02-phase-30g5-action-meter-amendment.md),
 [plan](plans/2026-10-02-phase-30g5-action-meter.md) and
 [verification](plans/2026-10-03-phase-30g5-verification.md).

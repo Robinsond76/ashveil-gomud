@@ -1211,11 +1211,11 @@ func (c *Character) SetAggroRemote(exitName string, userId int, mobInstanceId in
 }
 
 func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType, roundsWaitTime ...int) {
-	if c.Aggro == nil {
-		c.CombatEpoch++
-	}
 	if c.CombatWithdrawn {
 		return
+	}
+	if c.Aggro == nil {
+		c.CombatEpoch++
 	}
 
 	var combatAddlWaitRounds int = 0
@@ -1248,11 +1248,11 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 }
 
 func (c *Character) SetCast(roundsWaitTime int, sInfo SpellAggroInfo) {
-	if c.Aggro == nil {
-		c.CombatEpoch++
-	}
 	if c.CombatWithdrawn {
 		return
+	}
+	if c.Aggro == nil {
+		c.CombatEpoch++
 	}
 
 	if sInfo.SpellId == "sparks" {

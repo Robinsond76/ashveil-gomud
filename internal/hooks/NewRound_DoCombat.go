@@ -200,7 +200,6 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 			user.Character.Aggro.SpellInfo = effecttargets.Resolve(user.UserId, 0, user.Character.Aggro.SpellInfo)
 
 			if user.Character.Aggro.RoundsWaiting > 0 {
-				tempoBlocked[who] = true
 				coldWait(userHolder(user))
 				user.Character.Aggro.RoundsWaiting--
 

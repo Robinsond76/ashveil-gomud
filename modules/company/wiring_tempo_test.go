@@ -402,3 +402,28 @@ func TestTempoAimedShotRestoresOrdinarySecondTurn(t *testing.T) {
 	assert.False(t, swings[1].Crit)
 	assert.Len(t, abilityEvents(since(*seen, n), ranger.Character.Name), 1)
 }
+
+// A foe felled in the company's pass makes no blow in the enemies' pass.
+func TestTempoFoeFelledByThePlayerPassDoesNotStrikeBack(t *testing.T) {
+	b, seen := tempoBrawl(t, 10)
+	var captain *mobs.Mob
+	for _, m := range b.livingBandits() {
+		if m.Character.Name == "bandit captain" {
+			captain = m
+		}
+	}
+	require.NotNil(t, captain)
+	captain.Character.Aggro = nil
+	captain.Character.SetAggro(7, 0, characters.DefaultAttack)
+	b.fight()
+	require.NotEmpty(t, swingsBy(*seen, captain.Character.Name), "the captain swings while standing")
+	t.Cleanup(combatstream.Default().Subscribe(func(e combatstream.Event) {
+		if e.Kind == combatstream.Attack && e.Source.UserId == 7 {
+			captain.Character.Health = 0
+		}
+	}))
+	n := len(*seen)
+	b.fight()
+	require.NotEmpty(t, swingsBy(since(*seen, n), b.aria.Character.Name))
+	assert.Empty(t, swingsBy(since(*seen, n), captain.Character.Name))
+}

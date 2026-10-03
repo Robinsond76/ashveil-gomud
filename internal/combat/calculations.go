@@ -510,44 +510,42 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 
 	totalDPS := 0.0
 
-	for roundIdx := 0; roundIdx < 1; roundIdx++ {
-		for wIdx, weapon := range attackWeapons {
-			wWeight := weaponWeight[wIdx]
-			if wWeight <= 0 {
-				continue
-			}
+	for wIdx, weapon := range attackWeapons {
+		wWeight := weaponWeight[wIdx]
+		if wWeight <= 0 {
+			continue
+		}
 
-			var attacks, dCount, dSides, dBonus int
-			if weapon.ItemId > 0 {
-				attacks, dCount, dSides, dBonus, _ = weapon.GetDiceRoll()
-			} else {
-				attacks, dCount, dSides, dBonus, _ = atkChar.GetDefaultDiceRoll()
-			}
-			dBonus += statDmgBonus
+		var attacks, dCount, dSides, dBonus int
+		if weapon.ItemId > 0 {
+			attacks, dCount, dSides, dBonus, _ = weapon.GetDiceRoll()
+		} else {
+			attacks, dCount, dSides, dBonus, _ = atkChar.GetDefaultDiceRoll()
+		}
+		dBonus += statDmgBonus
 
-			avgRoll := float64(dCount) * float64(dSides+1) / 2.0
-			avgDmg := avgRoll + float64(dBonus)
-			if avgDmg < 0 {
-				avgDmg = 0
-			}
+		avgRoll := float64(dCount) * float64(dSides+1) / 2.0
+		avgDmg := avgRoll + float64(dBonus)
+		if avgDmg < 0 {
+			avgDmg = 0
+		}
 
-			critBonusAmt := float64(critDamageBonus(dCount, dSides, dBonus,
-				atkChar.Stats.Perception.ValueAdj, defChar.Stats.Perception.ValueAdj))
-			critBonus := critBonusAmt * critPct
+		critBonusAmt := float64(critDamageBonus(dCount, dSides, dBonus,
+			atkChar.Stats.Perception.ValueAdj, defChar.Stats.Perception.ValueAdj))
+		critBonus := critBonusAmt * critPct
 
-			effHit := hitPct
-			if wIdx > 0 {
-				effHit = math.Max(minHitPct, hitPct-dwPenalty)
-			}
-			// Subtract the expected fraction of hits that get dodged.
-			effHit *= (1.0 - dodgePct)
+		effHit := hitPct
+		if wIdx > 0 {
+			effHit = math.Max(minHitPct, hitPct-dwPenalty)
+		}
+		// Subtract the expected fraction of hits that get dodged.
+		effHit *= (1.0 - dodgePct)
 
-			rawDmg := (avgDmg + critBonus) * effHit
-			netDmg := rawDmg * (1.0 - defenseFraction)
+		rawDmg := (avgDmg + critBonus) * effHit
+		netDmg := rawDmg * (1.0 - defenseFraction)
 
-			for atkIdx := 0; atkIdx < attacks; atkIdx++ {
-				totalDPS += netDmg * wWeight
-			}
+		for atkIdx := 0; atkIdx < attacks; atkIdx++ {
+			totalDPS += netDmg * wWeight
 		}
 	}
 
