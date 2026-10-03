@@ -180,3 +180,5 @@ Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipm
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
 
 Ambushes, clusters, leaping enemies, narrow ground, fatigue, and cold affect battles: help battlefield and help ambush.
+
+Speed and personal burden set your turns each round: <ansi fg="command">help tempo</ansi>.

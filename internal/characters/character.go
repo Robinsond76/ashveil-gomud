@@ -91,6 +91,7 @@ type Character struct {
 	HealthMax           stats.StatInfo                 `yaml:"-"`                          // The maximum health of the character. Don't write to yaml since is dynamically calculated.
 	ManaMax             stats.StatInfo                 `yaml:"-"`                          // The maximum mana of the character. Don't write to yaml since is dynamically calculated.
 	ActionPointsMax     stats.StatInfo                 `yaml:"-"`                          // The maximum actions of character. Don't write to yaml since is dynamically calculated.
+	CombatEpoch         uint64                         `yaml:"-" json:"-"`                 // Runtime generation for combat without a managed battle.
 	Aggro               *Aggro                         `yaml:"-"`                          // Dont' store this. If they leave they break their aggro
 	Skills              map[string]int                 `yaml:"skills,omitempty"`           // The skills the character has, and what level they are at
 	Cooldowns           Cooldowns                      `yaml:"cooldowns,omitempty"`        // How many rounds until it is cooled down
@@ -1213,6 +1214,9 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 	if c.CombatWithdrawn {
 		return
 	}
+	if c.Aggro == nil {
+		c.CombatEpoch++
+	}
 
 	var combatAddlWaitRounds int = 0
 
@@ -1246,6 +1250,9 @@ func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType,
 func (c *Character) SetCast(roundsWaitTime int, sInfo SpellAggroInfo) {
 	if c.CombatWithdrawn {
 		return
+	}
+	if c.Aggro == nil {
+		c.CombatEpoch++
 	}
 
 	if sInfo.SpellId == "sparks" {

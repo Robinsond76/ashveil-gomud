@@ -327,6 +327,7 @@ GamePlay:
     ToHitMin: 25
     ToHitMax: 100
     # Extra attacks for weaponless/claws combat driven by Speed delta
+    # Legacy keys, unused by the action meter.
     ExtraAttacksMin: 0
     ExtraAttacksMax: 3
     # Critical hit chance (percent) driven by Smarts delta
@@ -357,6 +358,12 @@ GamePlay:
     AgilityBaseKg: 15
     AgilityStrengthKg: 0.5
     AgilityFreeLoad: 0.35
+    # Tempo is turns per combat round, from effective Speed and personal burden.
+    TempoMin: 0.6
+    TempoMax: 1.5
+    TempoSpeedRef: 10
+    TempoSpeedSpan: 40
+    MaxTurnsPerRound: 2
   # PVP Restrictions
   PVP:
     # - Enabled -

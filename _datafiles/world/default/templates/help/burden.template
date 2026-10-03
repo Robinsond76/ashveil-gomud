@@ -2,7 +2,7 @@
 
 In a fight, company members bear only their worn equipment. The heavier
 your own load against what your Strength lets you move in, the more
-<ansi fg="yellow">burdened</ansi> you are, and a burdened fighter dodges less.
+<ansi fg="yellow">burdened</ansi> you are, and a burdened fighter dodges less and acts more slowly.
 
 <ansi fg="yellow-bold">Your own load, not the company's</ansi>
 
@@ -32,7 +32,8 @@ With the usual settings and Strength 10, you move in 20 kg: the first
   <ansi fg="yellow">burdened</ansi>            noticeably less
   <ansi fg="yellow">heavily burdened</ansi>    as little as two fifths of your dodge
 
-Only the dodge suffers. A shield's block and a weapon's parry are not
+Burden also slows your action tempo (<ansi fg="command">help tempo</ansi>).
+A shield's block and a weapon's parry are not
 touched, so an armored fighter with a shield or a blade still defends
 well. When you could parry or dodge a blow, the better chance is rolled,
 so a burdened swordsman parries more often than they dodge

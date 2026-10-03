@@ -16,3 +16,5 @@ packs, horses, and cargo never lighten it (<ansi fg="command">help burden</ansi>
 
 See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help company inventory</ansi>, <ansi fg="command">help mount</ansi>,
 <ansi fg="command">help strain</ansi>, <ansi fg="command">help inventory</ansi>, <ansi fg="command">help burden</ansi>.
+
+Speed and personal burden set your turns each round: <ansi fg="command">help tempo</ansi>.

@@ -124,38 +124,32 @@ func SimulateCombat(mobIdA, mobIdB mobs.MobId, levelA, levelB int, maxRounds int
 		LevelB: charB.Level,
 	}
 
+	var meterA, meterB Meter
 	for round := 1; round <= maxRounds; round++ {
 		roundDmgA, roundDmgB := 0, 0
 
-		// A attacks B
-		atkResult := calculateCombat(*charA, *charB, Mob, Mob, 0, 0)
-		charB.ApplyHealthChange(atkResult.DamageToTarget * -1)
-		charA.ApplyHealthChange(atkResult.DamageToSource * -1)
-		result.DamageByA += atkResult.DamageToTarget
-		roundDmgA = atkResult.DamageToTarget
-		applySimBuffs(charA, atkResult.BuffSource)
-		applySimBuffs(charB, atkResult.BuffTarget)
-
+		turnsA := meterA.Fill(Tempo(charA), int(configs.GetCombatConfig().MaxTurnsPerRound))
+		turnsB := meterB.Fill(Tempo(charB), int(configs.GetCombatConfig().MaxTurnsPerRound))
+		resolveSimTurns(charA, charB, turnsA, turnsB, func(source, target *characters.Character) {
+			atk := calculateCombat(*source, *target, Mob, Mob, 0, 0)
+			target.ApplyHealthChange(-atk.DamageToTarget)
+			source.ApplyHealthChange(-atk.DamageToSource)
+			applySimBuffs(source, atk.BuffSource)
+			applySimBuffs(target, atk.BuffTarget)
+			if source == charA {
+				result.DamageByA += atk.DamageToTarget
+				roundDmgA += atk.DamageToTarget
+			} else {
+				result.DamageByB += atk.DamageToTarget
+				roundDmgB += atk.DamageToTarget
+			}
+		})
 		if charB.Health <= 0 {
-			result.Winner = charA.Name
-			result.WinnerSide = 1
-			result.Rounds = round
-			result.HealthRemainingA = charA.Health
-			result.HealthRemainingB = charB.Health
-			result.Log = append(result.Log, fmt.Sprintf(
-				"Round %d: %s deals %d → %s falls (%d hp)",
-				round, charA.Name, roundDmgA, charB.Name, charB.Health))
+			result.Winner, result.WinnerSide, result.Rounds = charA.Name, 1, round
+			result.HealthRemainingA, result.HealthRemainingB = charA.Health, charB.Health
+			result.Log = append(result.Log, fmt.Sprintf("Round %d: %s deals %d, %s deals %d → %s falls (%d hp)", round, charA.Name, roundDmgA, charB.Name, roundDmgB, charB.Name, charB.Health))
 			return result, nil
 		}
-
-		// B attacks A
-		defResult := calculateCombat(*charB, *charA, Mob, Mob, 0, 0)
-		charA.ApplyHealthChange(defResult.DamageToTarget * -1)
-		charB.ApplyHealthChange(defResult.DamageToSource * -1)
-		result.DamageByB += defResult.DamageToTarget
-		roundDmgB = defResult.DamageToTarget
-		applySimBuffs(charB, defResult.BuffSource)
-		applySimBuffs(charA, defResult.BuffTarget)
 
 		if charA.Health <= 0 {
 			result.Winner = charB.Name
@@ -187,5 +181,23 @@ func SimulateCombat(mobIdA, mobIdB mobs.MobId, levelA, levelB int, maxRounds int
 func applySimBuffs(char *characters.Character, buffIds []int) {
 	for _, buffId := range buffIds {
 		char.AddBuff(buffId, false)
+	}
+}
+
+// Match the live loop: primary actions precede either actor's extra action.
+func resolveSimTurns(a, b *characters.Character, turnsA, turnsB int, strike func(*characters.Character, *characters.Character)) {
+	for pass := 0; pass < max(turnsA, turnsB); pass++ {
+		if a.Health <= 0 || b.Health <= 0 {
+			return
+		}
+		if pass < turnsA {
+			strike(a, b)
+		}
+		if a.Health <= 0 || b.Health <= 0 {
+			return
+		}
+		if pass < turnsB {
+			strike(b, a)
+		}
 	}
 }

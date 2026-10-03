@@ -2146,3 +2146,13 @@ func TestKnownSecretExitsAreDurable(t *testing.T) {
 	assert.Empty(t, old.KnownSecretExits)
 	assert.False(t, old.SeesSecretExit(12, "west", 13, "Zone"))
 }
+
+func TestWithdrawnAggroKeepsCombatEpoch(t *testing.T) {
+	c := &Character{CombatWithdrawn: true}
+	c.SetAggro(1, 0, DefaultAttack)
+	c.SetCast(1, SpellAggroInfo{SpellId: "mm"})
+	assert.Zero(t, c.CombatEpoch)
+	c.CombatWithdrawn = false
+	c.SetAggro(1, 0, DefaultAttack)
+	assert.Equal(t, uint64(1), c.CombatEpoch)
+}

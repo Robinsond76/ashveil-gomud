@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"math"
 	"strconv"
 	"strings"
 )
@@ -48,7 +49,7 @@ type CombatConfig struct {
 	ToHitMin ConfigInt `yaml:"ToHitMin"` // Minimum hit chance (percent, 0-100)
 	ToHitMax ConfigInt `yaml:"ToHitMax"` // Maximum hit chance (percent, 0-100)
 
-	// Extra attacks - weaponless/claws only (Speed delta drives this)
+	// Legacy extra-attack keys: readable for old overrides, unused since 30g5.
 	ExtraAttacksMin ConfigInt `yaml:"ExtraAttacksMin"` // Minimum extra attacks
 	ExtraAttacksMax ConfigInt `yaml:"ExtraAttacksMax"` // Maximum extra attacks
 
@@ -82,6 +83,12 @@ type CombatConfig struct {
 	AgilityBaseKg     ConfigFloat `yaml:"AgilityBaseKg"`     // Agility capacity before Strength (kg)
 	AgilityStrengthKg ConfigFloat `yaml:"AgilityStrengthKg"` // Agility capacity per point of Strength (kg)
 	AgilityFreeLoad   ConfigFloat `yaml:"AgilityFreeLoad"`   // Share of capacity carried with no burden (above 0, at most 0.95)
+	// Action meter (Phase 30g5); no fighter exceeds two turns a round.
+	TempoMin         ConfigFloat `yaml:"TempoMin"`
+	TempoMax         ConfigFloat `yaml:"TempoMax"`
+	TempoSpeedRef    ConfigFloat `yaml:"TempoSpeedRef"`
+	TempoSpeedSpan   ConfigFloat `yaml:"TempoSpeedSpan"`
+	MaxTurnsPerRound ConfigInt   `yaml:"MaxTurnsPerRound"`
 }
 
 type GameplayParty struct {
@@ -312,6 +319,23 @@ func (c *CombatConfig) validate() {
 	}
 	if c.BashChanceMin > c.BashChanceMax {
 		c.BashChanceMin = 5
+	}
+
+	// Invalid/missing tempo values fall back; enforce the gameplay rate cap.
+	if math.IsNaN(float64(c.TempoMin)) || math.IsInf(float64(c.TempoMin), 0) || c.TempoMin <= 0 || c.TempoMin > 1 {
+		c.TempoMin = 0.6
+	}
+	if math.IsNaN(float64(c.TempoMax)) || math.IsInf(float64(c.TempoMax), 0) || c.TempoMax < 1 || c.TempoMax > 1.5 {
+		c.TempoMax = 1.5
+	}
+	if math.IsNaN(float64(c.TempoSpeedRef)) || math.IsInf(float64(c.TempoSpeedRef), 0) || c.TempoSpeedRef <= 0 {
+		c.TempoSpeedRef = 10
+	}
+	if math.IsNaN(float64(c.TempoSpeedSpan)) || math.IsInf(float64(c.TempoSpeedSpan), 0) || c.TempoSpeedSpan <= 0 {
+		c.TempoSpeedSpan = 40
+	}
+	if c.MaxTurnsPerRound < 1 || c.MaxTurnsPerRound > 2 {
+		c.MaxTurnsPerRound = 2
 	}
 
 	// Agility (Phase 30g3)

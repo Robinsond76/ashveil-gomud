@@ -1,0 +1,38 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">tempo</ansi>
+
+Speed and your personal burden set how often you act in combat. Everyone
+gets one opening turn. After that a slow fighter sometimes skips a round;
+a fast fighter sometimes gets two turns. Formation and your target's Speed
+do not set your tempo. Cargo and horses never make your worn gear lighter
+(<ansi fg="command">help burden</ansi>).
+
+<ansi fg="yellow-bold">The action meter</ansi>
+
+Each combat round fills your meter by 100 times your tempo. Each full 100
+pays for one turn. Tempo is between {{ config "GamePlay.Combat.TempoMin" }} and {{ config "GamePlay.Combat.TempoMax" }} turns per round,
+with at most {{ config "GamePlay.Combat.MaxTurnsPerRound" }} turns in any round. Afterward at most 99 points carry
+forward. You cannot bank whole turns for a burst. The meter ends with the
+fight and starts fresh in the next one, including after a server restart.
+
+At Speed {{ config "GamePlay.Combat.TempoSpeedRef" }}, without burden, your tempo is one. Each {{ config "GamePlay.Combat.TempoSpeedSpan" }} extra Speed
+adds one before the cap. Full personal burden reduces this rate by 35%.
+An attacks bonus adds 0.1 tempo per point before burden and the cap.
+
+<ansi fg="yellow-bold">What a turn contains</ansi>
+
+One turn is your normal weapon attack: both eligible hands and each
+weapon's own strikes. Unarmed attacks and claws use the same tempo rules.
+A tackle spends one turn, hit or miss. An opening strike or aimed shot
+replaces one attack turn; a second earned turn is an ordinary attack.
+
+Chants advance once per combat round, regardless of tempo. While chanting
+you make no weapon attack, including the round the chant ends or breaks.
+Weapon waits decrement once per round. Physical wind-ups prepare and
+release on separate rounds and occupy the whole round. Statuses that
+cost your actions cost all earned turns for that round. Those turns are
+lost; the meter retains only fractional progress.
+
+Guards and shield counters are reactions and spend no meter. Their existing
+limits still apply. Tempo never advances the world's clock.
+
+See also: <ansi fg="command">help speed</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help combat</ansi>.

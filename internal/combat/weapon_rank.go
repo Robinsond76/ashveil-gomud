@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/stats"
 )
@@ -120,7 +121,7 @@ func RankWeapons() (byDPS, byAdjDPS, byMaxDmg []WeaponRank) {
 		// DPR: raw average damage per round if every attack connects -
 		// no hit-chance, dodge, or defense reduction applied.
 		// Uses the same attack count the combat engine would use.
-		atkCount := combatAttackCount(attacker, defender)
+		atkCount := min(Tempo(&attacker), float64(configs.GetCombatConfig().MaxTurnsPerRound))
 		avgPerHit := float64(dmg.DiceCount)*float64(dmg.SideCount+1)/2.0 + float64(dmg.BonusDamage)
 		if avgPerHit < 0 {
 			avgPerHit = 0

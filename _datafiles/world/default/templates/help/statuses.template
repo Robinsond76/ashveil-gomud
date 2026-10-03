@@ -69,3 +69,6 @@ what ails you with <ansi fg="command">conditions</ansi>.
 The battle summary counts the damage they do (<ansi fg="command">help battle-summary</ansi>), and
 the rest of a fight is explained in <ansi fg="command">help combat</ansi> and
 <ansi fg="command">help narration</ansi>.
+
+A status that costs your action costs every turn you earned that combat
+round. Lost turns never build up for a later burst (<ansi fg="command">help tempo</ansi>).

@@ -66,3 +66,21 @@ func TestFormatWeaponRankings_Output(t *testing.T) {
 	fmt.Println(FormatWeaponRankings())
 }
 */
+
+func TestWeaponRankingRespectsSingleTurnCap(t *testing.T) {
+	loadTestData(t)
+	gameplay := configs.GetGamePlayConfig()
+	gameplay.Combat.MaxTurnsPerRound = 1
+	gameplay.Combat.TempoMin = 1
+	gameplay.Combat.TempoMax = 1.5
+	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
+	ranked, _, _ := RankWeapons()
+	if len(ranked) == 0 {
+		t.Fatal("no weapons ranked")
+	}
+	for _, r := range ranked {
+		if r.DPR > r.AvgDmg+1e-9 {
+			t.Errorf("%s DPR=%v, want single-turn average %v", r.Name, r.DPR, r.AvgDmg)
+		}
+	}
+}

@@ -103,6 +103,9 @@ func copyShipped(t *testing.T, dataDir string, rels ...string) {
 // slinger, and a captain, who stands front-left as the toughest). Aria
 // (level 3) summons Tamsin, Oswin, Garrick, and Ysolde.
 func newBrawl(t *testing.T) *brawl {
+	hooks.ResetTempoForTest()
+	t.Cleanup(hooks.ResetTempoForTest)
+	t.Cleanup(hooks.UseTempoForTest(func(*characters.Character) float64 { return 1 }))
 	t.Cleanup(hooks.UseMoraleStateForTest(nil, nil))
 	t.Cleanup(hooks.UseMoraleRollForTest(func(int) int { return 99 }))
 	t.Helper()
