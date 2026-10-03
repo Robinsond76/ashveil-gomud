@@ -72,7 +72,7 @@ Some big foes wind up a heavy blow in plain view before they swing. The
   now. With no one left in reach it is wasted:
   <ansi fg="command">The forest ogre lets his great club fall, with nothing left to strike. (Crushing Blow wasted)</ansi>
 - A broken wind-up is lost. After a wind-up lands or breaks, the foe
-  swings normally for <ansi fg="yellow">two of its turns</ansi> before it can wind up again.
+  swings normally for <ansi fg="yellow">two combat rounds</ansi> before it can wind up again.
 - To weather it: hit the foe with everything while it winds up (every
   blow is a chance at a critical hit), keep your frail members out of its
   reach (<ansi fg="command">help formation</ansi>), and give its target a <ansi fg="yellow">guardian</ansi>, who steps
@@ -101,3 +101,6 @@ The battle summary lists the chants and wind-ups each side broke, and how
 many of your blows a foe's chant withstood ("failed") (<ansi fg="command">help battle-summary</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help cast</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help guardian</ansi>.
+
+Wind-up preparation and release each occupy a whole combat round; tempo
+cannot prepare and release a blow in the same round (<ansi fg="command">help tempo</ansi>).

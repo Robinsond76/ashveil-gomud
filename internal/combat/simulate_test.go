@@ -1,5 +1,11 @@
 package combat
 
+import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
+
 /*
 func loadSimTestData(t *testing.T) {
 	t.Helper()
@@ -91,3 +97,24 @@ func TestSimulateCombat_Output(t *testing.T) {
 	fmt.Println(result.String())
 }
 */
+
+func TestSimulatorInterleavesTurnsAndStopsOnDeath(t *testing.T) {
+	for _, lethal := range []int{1, 2} {
+		a, b := &characters.Character{Health: 2}, &characters.Character{Health: 2}
+		var order []string
+		resolveSimTurns(a, b, 2, 2, func(source, target *characters.Character) {
+			if source == a {
+				order = append(order, "A")
+				target.Health -= lethal
+			} else {
+				order = append(order, "B")
+				target.Health--
+			}
+		})
+		if lethal == 1 {
+			assert.Equal(t, []string{"A", "B", "A"}, order)
+		} else {
+			assert.Equal(t, []string{"A"}, order)
+		}
+	}
+}

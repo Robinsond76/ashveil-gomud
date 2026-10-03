@@ -284,6 +284,7 @@ func TestRetreatLeavesOutsidersAndTemporaryFollowersInPlace(t *testing.T) {
 
 func TestWaitingGroupsDoNotAddRetreatPressure(t *testing.T) {
 	b := newBrawl(t)
+	b.hardenBandits() // This tests escape pressure, not killing the first group.
 	b.looseBandits()
 	b.aimAt("bandit captain")
 	b.toughen()

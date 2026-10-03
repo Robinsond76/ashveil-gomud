@@ -171,9 +171,10 @@ func percentile(values []int, p int) int {
 
 // balanceResult is one fight's outcome.
 type balanceResult struct {
-	Rounds       int
-	Won, Stalled bool
-	Fallen       [2]int
+	Lines, PeakLines int // Text lines delivered to the leader, including round aftermath.
+	Rounds           int
+	Won, Stalled     bool
+	Fallen           [2]int
 	// FighterRounds is, per side, the sum over rounds of the fighters
 	// standing at the round's start: turns per fighter per round divides
 	// by it.
@@ -194,6 +195,7 @@ type balanceFight struct {
 func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string) *balanceFight {
 	t.Helper()
 	b := newBrawl(t)
+	t.Cleanup(hooks.UseTempoForTest(nil))
 	b.withArchetypes("")
 	// 30g4: configured classes supply HP on both sides of the even mirror.
 	archetypes.SetProvider(hpArchetypes{})
@@ -346,6 +348,14 @@ func (f *balanceFight) run() balanceResult {
 		res.FighterRounds[sideEnemy] += enemy
 		res.Rounds++
 		f.step()
+		lines := 0
+		for _, msg := range *f.messages {
+			if strings.TrimSpace(msg) != "" {
+				lines += strings.Count(strings.TrimSpace(msg), "\n") + 1
+			}
+		}
+		res.Lines += lines
+		res.PeakLines = max(res.PeakLines, lines)
 	}
 	company, enemy := f.standing()
 	res.Won = enemy == 0 && company > 0
@@ -529,7 +539,7 @@ func balanceMedianAndWins(results []balanceResult) (median, winPct int) {
 	return percentile(rounds, 50), 100 * wins / len(results)
 }
 
-const balanceHeader = "| level | company | enemy | fights | company wins | rounds p10/median/p90 | stalls | fallen company/enemy | damage company/enemy | healing company | turns per fighter-round company/enemy | hit% company/enemy | crit% company/enemy | blocks/parries/dodges company · enemy | bashes company/enemy | tick damage company/enemy |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
+const balanceHeader = "| level | company | enemy | fights | company wins | rounds p10/median/p90 | stalls | fallen company/enemy | damage company/enemy | healing company | turns per fighter-round company/enemy | hit% company/enemy | crit% company/enemy | blocks/parries/dodges company · enemy | bashes company/enemy | tick damage company/enemy | lines/round mean/peak |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
 
 // balanceRow is one cell's line of the table: averages are per fight.
 func balanceRow(level int, cm, em string, results []balanceResult) string {
@@ -540,8 +550,11 @@ func balanceRow(level int, cm, em string, results []balanceResult) string {
 	var rounds []int
 	var wins, stalls int
 	var fallen, damage, turns, hits, crits, fighterRounds, counters, ticks, blocks, parries, dodges [2]int
-	var healing int
+	var healing, lines, totalRounds, peakLines int
 	for _, r := range results {
+		lines += r.Lines
+		totalRounds += r.Rounds
+		peakLines = max(peakLines, r.PeakLines)
 		rounds = append(rounds, r.Rounds)
 		if r.Won {
 			wins++
@@ -572,14 +585,14 @@ func balanceRow(level int, cm, em string, results []balanceResult) string {
 		return float64(a) / float64(b)
 	}
 	p10, p50, p90 := percentile(rounds, 10), percentile(rounds, 50), percentile(rounds, 90)
-	return fmt.Sprintf("| %d | %s | %s | %d | %.0f%% | %d/%d/%d | %d | %.1f/%.1f | %.0f/%.0f | %.0f | %.2f/%.2f | %.0f/%.0f | %.0f/%.0f | %.1f/%.1f/%.1f · %.1f/%.1f/%.1f | %.1f/%.1f | %.1f/%.1f |",
+	return fmt.Sprintf("| %d | %s | %s | %d | %.0f%% | %d/%d/%d | %d | %.1f/%.1f | %.0f/%.0f | %.0f | %.2f/%.2f | %.0f/%.0f | %.0f/%.0f | %.1f/%.1f/%.1f · %.1f/%.1f/%.1f | %.1f/%.1f | %.1f/%.1f | %.1f/%d |",
 		level, cm, em, n, 100*ratio(wins, n), p10, p50, p90, stalls,
 		per(fallen[0]), per(fallen[1]), per(damage[0]), per(damage[1]), per(healing),
 		ratio(turns[0], fighterRounds[0]), ratio(turns[1], fighterRounds[1]),
 		100*ratio(hits[0], turns[0]), 100*ratio(hits[1], turns[1]),
 		100*ratio(crits[0], hits[0]), 100*ratio(crits[1], hits[1]),
 		per(blocks[0]), per(parries[0]), per(dodges[0]), per(blocks[1]), per(parries[1]), per(dodges[1]),
-		per(counters[0]), per(counters[1]), per(ticks[0]), per(ticks[1]))
+		per(counters[0]), per(counters[1]), per(ticks[0]), per(ticks[1]), ratio(lines, totalRounds), peakLines)
 }
 
 // TestBalanceSidesStayEven: each member matches its mirror on everything

@@ -81,7 +81,7 @@ func TestInterruptsHelpWindUps(t *testing.T) {
 		"double damage",
 		"(Crushing Blow interrupted)",
 		"An ordinary blow never breaks a wind-up",
-		"two of its turns",
+		"two combat rounds",
 		"A bash is a counter strike only",
 		// review fixes: the fallback, the wasted blow, statuses, spells
 		"(Crushing Blow wasted)",

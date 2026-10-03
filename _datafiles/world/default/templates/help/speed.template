@@ -9,8 +9,8 @@ blows and is harder to pin down.
   the more reliably your attacks connect (up to {{ config "GamePlay.Combat.ToHitMax" }}% hit chance).
 * Increases your chance to parry a melee blow with your weapon, against the
   attacker's speed (<ansi fg="command">help defense</ansi>).
-* When fighting unarmed or with claws, speed lets you strike multiple times per
-  round - up to {{ config "GamePlay.Combat.ExtraAttacksMax" }} extra attacks beyond your base attack.
+* Speed and your own burden set your action tempo for every weapon type,
+  with at most {{ config "GamePlay.Combat.MaxTurnsPerRound" }} turns per combat round (<ansi fg="command">help tempo</ansi>).
 * Increases the number of your unarmed damage dice when fighting without a weapon.
 
 <ansi fg="yellow">Movement</ansi>

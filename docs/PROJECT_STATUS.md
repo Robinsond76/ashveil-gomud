@@ -12,8 +12,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-02 (30g4 progression merged after 30f; 30f battlefield conditions reviewed and merged; Phase 34 review follow-up and on-demand Gear editor)
-- **Latest completed slices:** 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
+- **Last updated:** 2026-10-03 (30g5 action meter implemented and reviewed; 30g6 tuning next)
+- **Latest completed slices:** 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
@@ -27,6 +27,27 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**30g5 action meter complete (2026-10-03):** effective Speed and personal
+burden now determine fractional turns, with one opening turn, at most two
+physical turns per combat round, and no whole-turn banking. Shared enemies
+fill once; fight replacement, separation, unmanaged restarts and death clear
+stale progress. Chants, waits, wind-ups and upkeep retain their round cadence;
+abilities consume one earned turn and reactions retain their existing budgets.
+Target-relative unarmed/claw extra attacks are retired. Simulator and weapon
+estimates use tempo. Indexed `help tempo`, related help, and the Practice Yard
+hint explain the mechanic. No pet proposal remains in this slice.
+
+Independent full-phase review found five issues (zero-turn waits, separated
+companions, simulation ordering, ranking cap and help indexing). All were
+verified, fixed and regression-tested; follow-up review found no blockers.
+`make generate`, `make validate`, `go test -race ./...` and focused regressions
+passed. Final measurements: 540 fights, no stalls, no-focus
+medians 16/60/95 rounds at levels 1/5/10; narration cell means 7.3–9.6 lines,
+peak 26. **30g6 tuning is next**, including the 10–15-round duration target.
+See [amendment](designs/2026-10-02-phase-30g5-action-meter-amendment.md),
+[plan](plans/2026-10-02-phase-30g5-action-meter.md) and
+[verification](plans/2026-10-03-phase-30g5-verification.md).
 
 **30g4 progression complete (2026-10-02):** automatic stats and stat-point
 awards step at levels 5, 10, 15, …; skill training remains every level.
@@ -374,12 +395,12 @@ specialists)** are complete, so 33f is done; **33i1 (group assessment)**
 is complete too (33i2 remains); 33g management and its cargo prerequisite are
 complete, reviewed and verified. Equipment
 catalog delivery and 33h remain. Phase 30g3 is also complete;
-30g4 (progression) is complete; 30g5 (the action meter) is the next combat-tempo slice.
+30g4 (progression) and 30g5 (the action meter) are complete; 30g6 tuning is next.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
 defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
 decisions the owner settled on 2026-09-30. 30g1 (the balance harness and
-baseline), 30g2, 30g3, and 30g4 are done; each later slice is measured against 30g1:
+baseline), 30g2, 30g3, 30g4, and 30g5 are done; each later slice is measured against 30g1:
 
 1. **30g2, active defense and armor:** complete (work log below): one
    defense per strike: block with a shield (no dodge), else parry a
@@ -392,8 +413,8 @@ baseline), 30g2, 30g3, and 30g4 are done; each later slice is measured against 3
    `scout`, and the web Overview; `help burden`.
 3. **30g4, progression:** complete (verification above): automatic stats grow in steps every 5 levels;
    HP by archetype, in small numbers; an XP knee at level 60.
-4. **30g5, the action meter:** turns from raw Speed and burden, at most
-   two a round, no banking.
+4. **30g5, the action meter:** complete: turns from effective Speed and burden,
+   one opening turn, at most two a round, no whole-turn banking.
 5. **30g6, tuning:** HP, damage, and healing set so a no-focus even 5v5
    lasts 10–15 rounds at levels 1–60; the harness asserts it. It also
    takes 29f's cadence retune.
@@ -537,7 +558,7 @@ delegated to the lead. 33a–33e are complete.
 | 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](designs/2026-09-30-phase-30d1-chant-interrupts-design.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](designs/2026-09-30-phase-30d1b-chant-break-chance-design.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, or stun always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 complete: [design](designs/2026-09-30-phase-30d2-windups-design.md). Physical wind-ups (`internal/windup`, mob `windups`): the forest ogre (Dark Forest room 530) winds up Crushing Blow in plain view, then one swing of double damage that knocks down; only a crit that lands, a stagger, a knockdown, or a stun breaks it (owner); a broken or landed one is followed by 2 turns' cooldown; a shield bash is a counter strike only and breaks nothing (owner) |
 | 30e | Morale and mercy | Complete: enemy temperaments and shared break checks; protected surrender; paced mercy decisions, rewards and reactions; companion hesitation, flight and saved return |
 | 30f | Battlefield conditions | Complete: [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12), reviewed and merged 2026-10-02. [Approved design](designs/2026-10-02-phase-30f-battlefield-design.md), [verification](verification/phase-30f/verification.md). Mounted combat excluded |
-| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g3-personal-load.md)): personal load and burden (dodge × (1 − 0.6 b)); `help burden`. 30g4 (progression) next |
+| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g3-personal-load.md)): personal load and burden (dodge × (1 − 0.6 b)); `help burden`. 30g4 progression and 30g5 action meter complete; 30g6 tuning next |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](designs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](designs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](designs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |

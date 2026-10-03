@@ -123,48 +123,6 @@ func TestHitChance(t *testing.T) {
 	}
 }
 
-// TestExtraAttackCount verifies extra attacks use Speed delta and config bounds.
-// Default config: min=0, max=3.
-func TestExtraAttackCount(t *testing.T) {
-	tests := []struct {
-		atkSpd, defSpd int
-		wantMin        int
-		wantMax        int
-	}{
-		{0, 0, 0, 0},   // equal -> 0
-		{100, 0, 3, 3}, // full delta -> 3
-		{50, 0, 1, 2},  // half delta -> floor(0.5*3)=1
-		{0, 100, 0, 0}, // no advantage -> 0
-	}
-	for _, tt := range tests {
-		got := extraAttackCount(tt.atkSpd, tt.defSpd)
-		if got < tt.wantMin || got > tt.wantMax {
-			t.Errorf("extraAttackCount(%d, %d) = %d; want [%d, %d]", tt.atkSpd, tt.defSpd, got, tt.wantMin, tt.wantMax)
-		}
-	}
-}
-
-// TestWeaponlessAttackCount verifies total weaponless attack count.
-func TestWeaponlessAttackCount(t *testing.T) {
-	tests := []struct {
-		atkSpd, defSpd, mod int
-		wantMin             int
-		wantMax             int
-	}{
-		{0, 0, 0, 1, 1},   // 1 base + 0 extra
-		{100, 0, 0, 4, 4}, // 1 base + 3 extra
-		{0, 0, -5, 1, 1},  // floored to 1
-		{100, 0, 1, 5, 5}, // 1 + 3 + 1 mod
-	}
-	for _, tt := range tests {
-		got := weaponlessAttackCount(tt.atkSpd, tt.defSpd, tt.mod)
-		if got < tt.wantMin || got > tt.wantMax {
-			t.Errorf("weaponlessAttackCount(%d, %d, %d) = %d; want [%d, %d]",
-				tt.atkSpd, tt.defSpd, tt.mod, got, tt.wantMin, tt.wantMax)
-		}
-	}
-}
-
 // TestCritChance verifies crit chance uses Smarts proportional delta and config bounds.
 // Default config: min=5, max=30.
 func TestCritChance(t *testing.T) {

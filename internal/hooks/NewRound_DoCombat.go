@@ -72,6 +72,8 @@ func DoCombat(e events.Event) events.ListenerReturn {
 
 	// Ashveil Phase 32d: healers and casters cast by their strategies,
 	// before any blow.
+	beginTempoRound()
+	defer func() { tempoActive = false }()
 	nervePass()
 	strategyPass()
 	// Ashveil Phase 33i2: enemy healers and casters, by their group's
@@ -85,9 +87,18 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	//
 	// Combat rounds
 	//
-	affectedPlayers1, affectedMobs1 := handlePlayerCombat(evt)
+	affectedPlayers1, affectedMobs1 := handlePlayerCombat(evt, false)
 
-	affectedPlayers2, affectedMobs2 := handleMobCombat(evt)
+	affectedPlayers2, affectedMobs2 := handleMobCombat(evt, false)
+
+	// Earned second physical turns reuse the same gates and attribution. Round
+	// upkeep, chants and waits were already processed in the first pass.
+	endAbilityStrikes()
+	clear(battlefieldPowers)
+	p3, m3 := handlePlayerCombat(evt, true)
+	p4, m4 := handleMobCombat(evt, true)
+	affectedPlayers1 = append(affectedPlayers1, append(p3, p4...)...)
+	affectedMobs1 = append(affectedMobs1, append(m3, m4...)...)
 
 	// Do any resolution or extra checks based on everyone that has been involved in combat this round.
 	affectedPlayers := append(append(affectedPlayers1, affectedPlayers2...), roundExtraPlayers...)
@@ -99,11 +110,13 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// Ashveil Phase 29b2: end each battle one side of which has fallen, and
 	// begin the next at once.
 	settleBattles()
+	snapshotTempoFights()
+	pruneTempo()
 
 	return events.Continue
 }
 
-func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
+func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
 
 	c := configs.GetConfig()
 
@@ -113,6 +126,20 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 
 		user := users.GetByUserId(userId)
 
+		if user == nil || user.Character == nil || user.Character.Aggro == nil {
+			continue
+		}
+		if user.Character.Health < 1 {
+			affectedPlayerIds = append(affectedPlayerIds, userId)
+			continue
+		}
+		who := caster{userId: userId}
+		if extra && !extraTempoTurn(who, user.Character) {
+			continue
+		}
+		if !extra {
+			fillTempo(who, user.Character)
+		}
 		// If has a buff that prevents combat, skip the player
 		if user.Character.HasBuffFlag("no-combat") {
 			continue
@@ -128,7 +155,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 
 		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
 		// its action.
-		if status.Has(user.Character) && statusCostsAction(userHolder(user)) {
+		if status.Has(user.Character) && tempoStatusCostsAction(userHolder(user)) {
 			continue
 		}
 
@@ -136,7 +163,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 		user.Character.CancelBuffsWithFlag("cancel-on-combat")
 
 		// Ashveil Phase 33e: a tackle took this round's turn.
-		if abilityTurns[caster{userId: userId}] {
+		if !extra && abilityTurns[caster{userId: userId}] {
 			continue
 		}
 
@@ -169,9 +196,11 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 		**************************/
 
 		if user.Character.Aggro != nil && user.Character.Aggro.Type == characters.SpellCast {
+			tempoBlocked[who] = true
 			user.Character.Aggro.SpellInfo = effecttargets.Resolve(user.UserId, 0, user.Character.Aggro.SpellInfo)
 
 			if user.Character.Aggro.RoundsWaiting > 0 {
+				tempoBlocked[who] = true
 				coldWait(userHolder(user))
 				user.Character.Aggro.RoundsWaiting--
 
@@ -301,6 +330,10 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 		*
 		**************************/
 
+		if tempoTurns[who] == 0 && user.Character.Aggro.RoundsWaiting == 0 || tempoChanted[who] {
+			continue
+		}
+
 		// In combat with another player
 		if user.Character.Aggro != nil && user.Character.Aggro.UserId > 0 {
 
@@ -353,6 +386,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			}
 
 			if user.Character.Aggro.RoundsWaiting > 0 {
+				tempoBlocked[who] = true
 				mudlog.Debug(`RoundsWaiting`, `User`, user.Character.Name, `Rounds`, user.Character.Aggro.RoundsWaiting)
 
 				coldWait(userHolder(user))
@@ -552,6 +586,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 			}
 
 			if user.Character.Aggro.RoundsWaiting > 0 {
+				tempoBlocked[who] = true
 				mudlog.Debug(`RoundsWaiting`, `User`, user.Character.Name, `Rounds`, user.Character.Aggro.RoundsWaiting)
 
 				coldWait(userHolder(user))
@@ -694,7 +729,7 @@ func handlePlayerCombat(evt events.NewRound) (affectedPlayerIds []int, affectedM
 	return affectedPlayerIds, affectedMobInstanceIds
 }
 
-func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
+func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, affectedMobInstanceIds []int) {
 
 	tStart := time.Now()
 
@@ -712,6 +747,17 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			continue
 		}
 
+		who := caster{mobId: mobId}
+		if mob.Character.Health < 1 {
+			affectedMobInstanceIds = append(affectedMobInstanceIds, mobId)
+			continue
+		}
+		if extra && !extraTempoTurn(who, &mob.Character) {
+			continue
+		}
+		if !extra {
+			fillTempo(who, &mob.Character)
+		}
 		// If has a buff that prevents combat, skip the player
 		if mob.Character.CombatWithdrawn || retreatCover[mobId] || nerveSkip[mobId] || mob.Character.HasBuffFlag("no-combat") {
 			continue
@@ -723,7 +769,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 		// Ashveil Phase 30a: a staggered, downed, or stunned fighter loses
 		// its action (and Phase 30d2: a wind-up with it).
-		if status.Has(&mob.Character) && statusCostsAction(mobHolder(mob)) {
+		if status.Has(&mob.Character) && tempoStatusCostsAction(mobHolder(mob)) {
 			windUpLostTurn(mob)
 			continue
 		}
@@ -743,7 +789,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		mob.Character.CancelBuffsWithFlag("cancel-on-combat")
 
 		// Ashveil Phase 33e: a tackle took this round's turn.
-		if abilityTurns[caster{mobId: mobId}] {
+		if !extra && abilityTurns[caster{mobId: mobId}] {
 			continue
 		}
 
@@ -754,6 +800,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 		**************************/
 
 		if mob.Character.Aggro != nil && mob.Character.Aggro.Type == characters.SpellCast {
+			tempoBlocked[who] = true
 			mob.Character.Aggro.SpellInfo = effecttargets.Resolve(0, mob.InstanceId, mob.Character.Aggro.SpellInfo)
 
 			// Ashveil Phase 30d1: a chant a blow broke starts again from
@@ -763,6 +810,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			}
 
 			if mob.Character.Aggro.RoundsWaiting > 0 {
+				tempoBlocked[who] = true
 				coldWait(mobHolder(mob))
 				mob.Character.Aggro.RoundsWaiting--
 
@@ -866,13 +914,22 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 
 		// Ashveil Phase 30d2: a wind-up takes the turn, or makes this
 		// turn's swing its blow.
-		if mob.Character.Aggro.Type == characters.DefaultAttack && windUpTurn(mob) {
+		if !extra && mob.Character.Aggro.Type == characters.DefaultAttack {
+			if windUpTurn(mob) {
+				tempoBlocked[who] = true
+				continue
+			}
+			if isLanding(mob.InstanceId) {
+				tempoBlocked[who] = true
+			}
+		}
+		if tempoChanted[who] || tempoTurns[who] == 0 && mob.Character.Aggro.RoundsWaiting == 0 && !isLanding(mob.InstanceId) {
 			continue
 		}
 
 		// H2H is the base level combat, can do combat commands then
 		// (not while a wind-up's blow lands, Phase 30d2)
-		if mob.Character.Aggro.Type == characters.DefaultAttack && !isLanding(mob.InstanceId) {
+		if !extra && mob.Character.Aggro.Type == characters.DefaultAttack && !isLanding(mob.InstanceId) {
 
 			// If they have idle commands, maybe do one of them?
 			cmdCt := len(mob.CombatCommands)
@@ -961,6 +1018,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			}
 
 			if mob.Character.Aggro.RoundsWaiting > 0 {
+				tempoBlocked[who] = true
 				mudlog.Debug(`RoundsWaiting`, `User`, mob.Character.Name, `Rounds`, mob.Character.Aggro.RoundsWaiting)
 
 				coldWait(mobHolder(mob))
@@ -1128,6 +1186,7 @@ func handleMobCombat(evt events.NewRound) (affectedPlayerIds []int, affectedMobI
 			}
 
 			if mob.Character.Aggro.RoundsWaiting > 0 {
+				tempoBlocked[who] = true
 				mudlog.Debug(`RoundsWaiting`, `User`, mob.Character.Name, `Rounds`, mob.Character.Aggro.RoundsWaiting)
 
 				coldWait(mobHolder(mob))

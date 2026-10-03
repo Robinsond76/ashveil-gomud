@@ -164,45 +164,9 @@ func hitRoll(atkSpd, defSpd, hitModifier, bonus int) (hit, byBonus bool) {
 	return hit, hit && roll >= without
 }
 
-// extraAttackCount returns the number of bonus attacks for weaponless/claws
-// combat based on the Speed stat delta and the configured bounds.
-// equal stats will result in 0% of max
-func extraAttackCount(atkSpd, defSpd int) int {
-	cfg := configs.GetCombatConfig()
-	minExtra := int(cfg.ExtraAttacksMin)
-	maxExtra := int(cfg.ExtraAttacksMax)
-	actual := int(math.Floor(statDelta(atkSpd, defSpd) * float64(maxExtra)))
-	if actual < minExtra {
-		actual = minExtra
-	}
-	return actual
-}
-
-// weaponlessAttackCount returns the total attack count (1 base + extra) for
-// unarmed or claws combat.
-func weaponlessAttackCount(atkSpd, defSpd, attacksMod int) int {
-	count := 1 + extraAttackCount(atkSpd, defSpd)
-	count += attacksMod
-	if count < 1 {
-		count = 1
-	}
-	return count
-}
-
-// combatAttackCount returns the attack count for the round. For weaponless or
-// claws attacks the extra-attack formula applies; armed attacks always yield 1.
+// combatAttackCount resolves one complete weapon turn. Frequency is owned
+// by the action meter, never by the current target or weapon category.
 func combatAttackCount(sourceChar characters.Character, targetChar characters.Character) int {
-	weapons := resolveAttackWeapons(sourceChar)
-	isWeaponless := len(weapons) == 1 && weapons[0].ItemId == 0
-	isClaws := len(weapons) == 1 && weapons[0].ItemId > 0 && weapons[0].GetSpec().Subtype == items.Claws
-
-	if isWeaponless || isClaws {
-		return weaponlessAttackCount(
-			sourceChar.Stats.Speed.ValueAdj,
-			targetChar.Stats.Speed.ValueAdj,
-			sourceChar.StatMod(`attacks`),
-		)
-	}
 	return 1
 }
 
@@ -485,7 +449,7 @@ func AlignmentChange(killerAlignment int8, killedAlignment int8) int {
 // expectedDPS estimates average damage per round without randomness.
 func expectedDPS(atkChar characters.Character, defChar characters.Character) float64 {
 
-	atkCount := combatAttackCount(atkChar, defChar)
+	rate := math.Min(Tempo(&atkChar), float64(configs.GetCombatConfig().MaxTurnsPerRound))
 
 	statDmgBonus := damageBonus(atkChar.Stats.Strength.ValueAdj, defChar.Stats.Strength.ValueAdj)
 
@@ -546,7 +510,7 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 
 	totalDPS := 0.0
 
-	for roundIdx := 0; roundIdx < atkCount; roundIdx++ {
+	for roundIdx := 0; roundIdx < 1; roundIdx++ {
 		for wIdx, weapon := range attackWeapons {
 			wWeight := weaponWeight[wIdx]
 			if wWeight <= 0 {
@@ -587,7 +551,7 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 		}
 	}
 
-	return totalDPS
+	return totalDPS * rate
 }
 
 // ExpectedDamage is the attacker's average damage per round against the

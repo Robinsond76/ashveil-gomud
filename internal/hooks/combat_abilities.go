@@ -135,6 +135,9 @@ func abilityPass() {
 // its weapon not still waiting, and aimed by a plain attack at a standing
 // foe of its own battle.
 func abilityFoe(a actor, u *users.UserRecord, foes map[int]bool) (*mobs.Mob, bool) {
+	if tempoActive && tempoTurns[a.who] == 0 {
+		return nil, false
+	}
 	if a.char.Health < 1 || !readyToCast(a, u) {
 		return nil, false
 	}

@@ -83,6 +83,7 @@ help:
       - ask
       - quests
     combat:
+      - tempo
       - battlefield
       - ambush
       - abilities
@@ -276,6 +277,7 @@ help-aliases:
   sharpen:          [whetstone, whetstones, edge]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]
+  tempo:            [actions, turns]
   burden:           [burdened, unburdened, burdens, agility, personal-load, nimble]
   defense:          [defence, defenses, block, blocks, blocking, parry, parries, parrying, dodge, dodges, dodging, shield, shields]
   armor:            [armour, absorbed]

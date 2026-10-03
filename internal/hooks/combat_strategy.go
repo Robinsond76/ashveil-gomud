@@ -292,6 +292,9 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 	}
 	a.char.Mana -= sp.Cost
 	a.char.SetCast(sp.WaitRounds, info)
+	if tempoActive {
+		tempoChanted[a.who], tempoBlocked[a.who] = true, true
+	}
 	emitCast(combatstream.CastStart, a.ref, spellId, ``, roomId)
 	if a.who.userId > 0 {
 		events.AddToQueue(events.SkillUsed{UserId: a.who.userId, Skill: `cast`, Details: spellId})
