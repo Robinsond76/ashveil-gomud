@@ -100,18 +100,21 @@ func spendEdges(char *characters.Character, spent map[items.ItemType]int) {
 	}
 }
 
-// damageBonus returns the flat bonus damage an attacker earns over a defender
-// based on the Strength stat delta and the configured bounds.
-// equal stats will result in 0% of max
+// damageBonus adds bounded Strength growth to the Strength advantage.
+// Both components share the configured cap, including at extreme levels.
 func damageBonus(atkStr, defStr int) int {
 	cfg := configs.GetCombatConfig()
-	minBonus := int(cfg.DamageBonusMin)
-	maxBonus := int(cfg.DamageBonusMax)
-	actual := int(math.Floor(statDelta(atkStr, defStr) * float64(maxBonus)))
-	if actual < minBonus {
-		actual = minBonus
+	lo, hi := int(cfg.DamageBonusMin), int(cfg.DamageBonusMax)
+	strength := math.Max(float64(atkStr), 0) * float64(cfg.DamagePerStrength)
+	advantage := math.Max(0, math.Min(100, float64(atkStr)-float64(defStr))) / 100
+	bonus := math.Floor(float64(lo) + strength + advantage*float64(hi-lo))
+	if bonus >= float64(hi) {
+		return hi
 	}
-	return actual
+	if bonus <= float64(lo) {
+		return lo
+	}
+	return int(bonus)
 }
 
 // hitChance returns a hit probability in [ToHitMin, ToHitMax] based on the

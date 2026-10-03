@@ -41,9 +41,10 @@ type GamePlay struct {
 type CombatConfig struct {
 	ConsistentAttackMessages ConfigBool `yaml:"ConsistentAttackMessages"` // Whether each weapon has consistent attack messages
 
-	// Damage bonus (Strength delta drives this)
-	DamageBonusMin ConfigInt `yaml:"DamageBonusMin"` // Minimum flat damage bonus
-	DamageBonusMax ConfigInt `yaml:"DamageBonusMax"` // Maximum flat damage bonus
+	// Damage bonus: absolute Strength growth plus the Strength advantage.
+	DamageBonusMin    ConfigInt   `yaml:"DamageBonusMin"`    // Minimum flat damage bonus
+	DamageBonusMax    ConfigInt   `yaml:"DamageBonusMax"`    // Maximum flat damage bonus
+	DamagePerStrength ConfigFloat `yaml:"DamagePerStrength"` // Flat damage per effective Strength (0 disables absolute Strength growth)
 
 	// Chance to hit (Speed delta drives this)
 	ToHitMin ConfigInt `yaml:"ToHitMin"` // Minimum hit chance (percent, 0-100)
@@ -224,6 +225,9 @@ func (g *GamePlay) Validate() {
 
 func (c *CombatConfig) validate() {
 	// Damage bonus
+	if c.DamagePerStrength < 0 || math.IsNaN(float64(c.DamagePerStrength)) || math.IsInf(float64(c.DamagePerStrength), 0) {
+		c.DamagePerStrength = 0
+	}
 	if c.DamageBonusMax < 1 {
 		c.DamageBonusMax = 10
 	}

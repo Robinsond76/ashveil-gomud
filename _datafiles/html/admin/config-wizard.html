@@ -1276,17 +1276,24 @@ var FIELD_META = {
     },
     'GamePlay.Combat.DamageBonusMin': {
         label: 'Min Damage Bonus',
-        description: 'Minimum flat damage bonus applied in combat, driven by the Strength stat difference between attacker and defender.',
+        description: 'Base flat damage bonus, before adding damage per effective Strength and Strength advantage.',
         implications: 'Higher minimum ensures even weak attackers deal some bonus damage. Lower minimum makes Strength more impactful at the extremes.',
         inputType: 'number',
         min: 0, max: 100, step: 1,
     },
     'GamePlay.Combat.DamageBonusMax': {
         label: 'Max Damage Bonus',
-        description: 'Maximum flat damage bonus applied in combat from Strength advantage.',
+        description: 'Combined cap on the base, damage per effective Strength, and Strength advantage.',
         implications: 'Higher maximum makes high-Strength characters dramatically more powerful. Lower maximum keeps combat more balanced regardless of Strength.',
         inputType: 'number',
         min: 1, max: 500, step: 1,
+    },
+    'GamePlay.Combat.DamagePerStrength': {
+        label: 'Damage per Strength',
+        description: 'Flat damage per effective Strength, including against equally strong foes. The total bonus rounds down and stops at Max Damage Bonus.',
+        implications: 'Raises damage as Strength grows. Zero disables absolute Strength growth.',
+        inputType: 'number',
+        min: 0, max: 100, step: 0.05,
     },
     'GamePlay.Combat.ToHitMin': {
         label: 'Min Hit Chance (%)',
@@ -1729,7 +1736,7 @@ var SECTIONS = [
         color: '#8b2500',
         iconBg: '#f9ece8',
         icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M2 2l20 20"/><path d="M20 2l2 2-9.5 9.5"/><path d="M3 12l4 4"/></svg>',
-        fields: ['GamePlay.Combat.ConsistentAttackMessages','GamePlay.Combat.DamageBonusMin','GamePlay.Combat.DamageBonusMax','GamePlay.Combat.ToHitMin','GamePlay.Combat.ToHitMax','GamePlay.Combat.CritChanceMin','GamePlay.Combat.CritChanceMax','GamePlay.Combat.CritMultMin','GamePlay.Combat.CritMultMax','GamePlay.Combat.DodgeChanceMin','GamePlay.Combat.DodgeChanceMax','GamePlay.Combat.BlockChanceMin','GamePlay.Combat.BlockChanceMax','GamePlay.Combat.ParryChanceMin','GamePlay.Combat.ParryChanceMax','GamePlay.Combat.BashChanceMin','GamePlay.Combat.BashChanceMax','GamePlay.Combat.AgilityBaseKg','GamePlay.Combat.AgilityStrengthKg','GamePlay.Combat.AgilityFreeLoad'],
+        fields: ['GamePlay.Combat.ConsistentAttackMessages','GamePlay.Combat.DamageBonusMin','GamePlay.Combat.DamageBonusMax','GamePlay.Combat.DamagePerStrength','GamePlay.Combat.ToHitMin','GamePlay.Combat.ToHitMax','GamePlay.Combat.CritChanceMin','GamePlay.Combat.CritChanceMax','GamePlay.Combat.CritMultMin','GamePlay.Combat.CritMultMax','GamePlay.Combat.DodgeChanceMin','GamePlay.Combat.DodgeChanceMax','GamePlay.Combat.BlockChanceMin','GamePlay.Combat.BlockChanceMax','GamePlay.Combat.ParryChanceMin','GamePlay.Combat.ParryChanceMax','GamePlay.Combat.BashChanceMin','GamePlay.Combat.BashChanceMax','GamePlay.Combat.AgilityBaseKg','GamePlay.Combat.AgilityStrengthKg','GamePlay.Combat.AgilityFreeLoad'],
     },
     {
         key: 'Memory',

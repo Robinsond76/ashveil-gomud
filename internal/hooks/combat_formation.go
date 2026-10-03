@@ -487,6 +487,8 @@ func chooseFromParty(leaderId, col int, placed bool, party mobparty.Party, alive
 		foes = append(foes, strategy.Foe{
 			ID: id, HP: m.Character.Health, MaxHP: m.Character.HealthMax.Value, Row: row, Col: mcol,
 			Reachable: legal, Leader: leader, StrikesPct: enemyparty.StrikesPct(m.Character.Aggro, leaderId),
+			Caster:   len(m.Character.SpellBook) > 0,
+			Chanting: m.Character.Aggro != nil && m.Character.Aggro.Type == characters.SpellCast,
 		})
 		leader = false
 	}
@@ -583,7 +585,7 @@ func hostileTo(party mobparty.Party, leaderId int) bool {
 // reassignPlayerTarget attempts 11b's reassignment-on-target-loss for a
 // player whose current mob target just became invalid. On success it sets
 // a new Aggro target and returns true — the caller skips its own "target
-// lost" message/clear, and combat resumes normally next round against the
+// lost" message/clear, and an earned blow can continue against the
 // new target. false means unchanged pre-existing behavior: no company, or
 // no living legal replacement in the lost target's party.
 func reassignPlayerTarget(user *users.UserRecord, room *rooms.Room) bool {

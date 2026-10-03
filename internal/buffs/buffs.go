@@ -259,6 +259,11 @@ func (bs *Buffs) Trigger(buffId ...int) (triggeredBuffs []*Buff) {
 
 		if buffInfo := GetBuffSpec(b.BuffId); buffInfo != nil {
 
+			// Combat statuses are advanced only by the combat pass.
+			if buffInfo.CombatRounds {
+				continue
+			}
+
 			// If there's no more life left to it, prune it
 			// We do this first so that it's the first thing that happens AFTER a full round has already passed.
 			if b.TriggersLeft > 0 {

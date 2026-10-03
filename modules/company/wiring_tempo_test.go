@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -17,6 +18,9 @@ import (
 
 func tempoBrawl(t *testing.T, speed int) (*brawl, *[]combatstream.Event) {
 	b := newBrawl(t)
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.TempoSpeedRef = 10 // fixed rates for these meter integration fixtures
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
 	t.Cleanup(hooks.UseTempoForTest(nil))
 	b.toughen()
 	b.cmd("company", "dismiss all")

@@ -15,7 +15,7 @@ func TestProgressionHelp(t *testing.T) {
 	text, err := GetHelpContents("progression")
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"levels 5, 10, 15", "Warrior 6 HP", "wizard 3", "no level cap", "training", "60", "1.1"} {
+	for _, want := range []string{"levels 5, 10, 15", "Warrior 3 HP", "wizard 1.5", "Fractional gains accumulate", "no level cap", "training", "60", "1.1"} {
 		assert.Contains(t, plain, want)
 	}
 	assert.NotContains(t, plain, "{{")

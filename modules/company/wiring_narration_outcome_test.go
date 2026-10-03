@@ -11,6 +11,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/stretchr/testify/require"
@@ -34,8 +35,22 @@ type narrationMechanic struct {
 func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	t.Setenv("GODEBUG", "randseednop=0")
 	b := newBrawl(t)
+	// Pin the captured 30g4 combat knobs: this test guards narration, not balance.
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.DamageBonusMin, cfg.Combat.DamageBonusMax, cfg.Combat.DamagePerStrength = 0, 10, 0
+	cfg.Combat.TempoSpeedRef = 10
+	cfg.Progression.DefaultHPPerLevel, cfg.Progression.HPBase, cfg.Progression.HPPerVitality = 5, 5, 1
+	cfg.Progression.HPFullLevels, cfg.Progression.HPAfterFull = 20, 1
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
+	for _, m := range b.livingBandits() {
+		m.Character.HealthMax.Value = cfg.Progression.HealthAtLevel(m.Character.Level, m.Character.Stats.Vitality.ValueAdj, m.Character.HealthGainPerLevel())
+		m.Character.Health = m.Character.HealthMax.Value
+	}
 	// Recaptured for Phase 30g4: stepped stats change hit and damage rolls.
-	// This remains an outcome lock for subsequent narration-only changes.
+	// 30g6 updates one target-change event: the next foe is selected on
+	// the kill round, retaining the previous foe reference. All attacks,
+	// casts, rewards and ending values are unchanged. This remains an
+	// outcome lock for subsequent narration-only changes.
 	// The golden predates Phase 30d1, and its fixture keeps a cutthroat
 	// chanting for ever as a placeholder: blows breaking chants would
 	// change what it records.
@@ -101,5 +116,5 @@ func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	require.NoError(t, err)
 	var before narrationOutcome
 	require.NoError(t, json.Unmarshal(data, &before))
-	require.Equal(t, before, result, "Phase 29d must only change narration and ref names")
+	require.Equal(t, before, result, "Narration-only changes must preserve the captured mechanics")
 }

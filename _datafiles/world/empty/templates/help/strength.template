@@ -5,8 +5,9 @@ you hit and the more you can carry.
 
 <ansi fg="yellow">Combat</ansi>
 
-* Adds a flat damage bonus to every attack. The stronger you are compared to
-  your opponent, the larger this bonus becomes (up to +{{ config "GamePlay.Combat.DamageBonusMax" }} damage).
+* Adds {{ config "GamePlay.Combat.DamageBonusMin" }} plus Strength × {{ config "GamePlay.Combat.DamagePerStrength" }}
+  and a bonus for Strength advantage to each hit. The total rounds down and
+  is capped at +{{ config "GamePlay.Combat.DamageBonusMax" }} damage.
 * Increases the size of your unarmed damage dice when fighting without a weapon.
 
 <ansi fg="yellow">Carrying</ansi>

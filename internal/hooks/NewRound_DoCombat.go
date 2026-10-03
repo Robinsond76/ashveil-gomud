@@ -535,6 +535,19 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 			affectedMobInstanceIds = append(affectedMobInstanceIds, user.Character.Aggro.MobInstanceId)
 
 			defMob := mobs.GetInstance(user.Character.Aggro.MobInstanceId)
+			// A kill earlier in this round did not spend this fighter's turn.
+			// Select a legal replacement before resolving the earned blow.
+			if defMob != nil && defMob.Character.Health < 1 {
+				previous := user.Character.Aggro
+				if reassignPlayerTarget(user, uRoom) {
+					// Replacement did not fire the weapon: retain its readiness.
+					user.Character.Aggro.RoundsWaiting = previous.RoundsWaiting
+					user.Character.Aggro.ColdDelayed = previous.ColdDelayed
+					user.Character.Aggro.ColdNotice = previous.ColdNotice
+					defMob = mobs.GetInstance(user.Character.Aggro.MobInstanceId)
+					affectedMobInstanceIds = append(affectedMobInstanceIds, user.Character.Aggro.MobInstanceId)
+				}
+			}
 
 			targetFound := true
 			if defMob == nil {
@@ -706,8 +719,10 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 			if user.Character.Health <= 0 || defMob.Character.Health <= 0 {
 				defMob.Character.EndAggro()
 				events.AddToQueue(events.AggroChanged{MobInstanceId: defMob.InstanceId, RoomId: defMob.Character.RoomId})
-				user.Character.EndAggro()
-				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+				if user.Character.Health <= 0 || !reassignPlayerTarget(user, uRoom) {
+					user.Character.EndAggro()
+					events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+				}
 			} else {
 				user.Character.SetAggro(0, defMob.InstanceId, characters.DefaultAttack)
 				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
@@ -1161,6 +1176,16 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 			affectedMobInstanceIds = append(affectedMobInstanceIds, mob.Character.Aggro.MobInstanceId)
 
 			defMob := mobs.GetInstance(mob.Character.Aggro.MobInstanceId)
+			if defMob != nil && defMob.Character.Health < 1 {
+				previous := mob.Character.Aggro
+				if reassignCompanionTarget(mob, mobRoom) {
+					mob.Character.Aggro.RoundsWaiting = previous.RoundsWaiting
+					mob.Character.Aggro.ColdDelayed = previous.ColdDelayed
+					mob.Character.Aggro.ColdNotice = previous.ColdNotice
+					defMob = mobs.GetInstance(mob.Character.Aggro.MobInstanceId)
+					affectedMobInstanceIds = append(affectedMobInstanceIds, mob.Character.Aggro.MobInstanceId)
+				}
+			}
 
 			if defMob == nil || mob.Character.RoomId != defMob.Character.RoomId {
 				if reassignCompanionTarget(mob, mobRoom) {
@@ -1305,8 +1330,10 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 			}
 
 			if mob.Character.Health <= 0 || defMob.Character.Health <= 0 {
-				mob.Character.EndAggro()
-				events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+				if mob.Character.Health <= 0 || !reassignCompanionTarget(mob, mobRoom) {
+					mob.Character.EndAggro()
+					events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+				}
 				defMob.Character.EndAggro()
 				events.AddToQueue(events.AggroChanged{MobInstanceId: defMob.InstanceId, RoomId: defMob.Character.RoomId})
 			} else {

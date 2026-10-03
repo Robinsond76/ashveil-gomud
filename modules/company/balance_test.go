@@ -15,14 +15,17 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 )
 
 // Phase 30g1: the balance harness. An evenly matched 5v5 (the company
@@ -49,11 +52,12 @@ const (
 )
 
 // Enemy modes: spread makes each new aim a random foe (an aim sticks until
-// its target falls or can't be reached); default keeps the shipped human
-// personality (the weakest, 10% random).
+// its target falls or can't be reached); default chooses weakest and casters chooses spell users, both at the
+// rabble tier (which imposes at least 30% targeting noise).
 const (
 	enemySpread  = "spread"
 	enemyDefault = "default"
+	enemyCasters = "casters"
 	// Phase 33i2: the default personality, with the hedge priest a
 	// healer (Minor Heal) and the hired blade a guardian, at a tier
 	// (enemyRoles + the tier's number: "roles1" to "roles4").
@@ -174,6 +178,7 @@ type balanceResult struct {
 	Lines, PeakLines int // Text lines delivered to the leader, including round aftermath.
 	Rounds           int
 	Won, Stalled     bool
+	HPRemoved        [2]int // Starting minus remaining health, by victim side; excludes overkill.
 	Fallen           [2]int
 	// FighterRounds is, per side, the sum over rounds of the fighters
 	// standing at the round's start: turns per fighter per round divides
@@ -192,13 +197,48 @@ type balanceFight struct {
 // newBalanceFight is a brawl world with the bandits gone, the mirror group
 // in the road, both sides at level, the modes set, real dice, and the
 // fight begun.
-func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string) *balanceFight {
+
+// Balance uses the shipped archetype rates rather than provisional test constants.
+type balanceHPArchetypes struct {
+	fakeArchetypes
+	rates map[string]float64
+}
+
+func (p balanceHPArchetypes) HealthPerLevel(id string) (float64, bool) {
+	v, ok := p.rates[id]
+	return v, ok
+}
+func (p balanceHPArchetypes) HealthArchetypes() map[string]float64 { return p.rates }
+func balanceHPProvider(t *testing.T) balanceHPArchetypes {
+	t.Helper()
+	data, err := os.ReadFile("modules/archetype/files/data-overlays/config.yaml")
+	require.NoError(t, err)
+	var cfg struct {
+		Archetypes []struct {
+			ID string  `yaml:"ArchetypeId"`
+			HP float64 `yaml:"HPPerLevel"`
+		} `yaml:"Archetypes"`
+	}
+	require.NoError(t, yaml.Unmarshal(data, &cfg))
+	p := balanceHPArchetypes{rates: map[string]float64{}}
+	for _, c := range cfg.Archetypes {
+		p.rates[c.ID] = c.HP
+	}
+	require.NotEmpty(t, p.rates, "shipped archetypes must load")
+	for _, id := range []string{"warrior", "cleric", "ranger", "rogue", "wizard"} {
+		require.Positive(t, p.rates[id], id+" HP rate must load")
+	}
+	return p
+}
+
+func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, enemyLevels ...int) *balanceFight {
 	t.Helper()
 	b := newBrawl(t)
+	mudlog.SetLogLevel("LOW") // report the table, without a log line for every fixture buff
 	t.Cleanup(hooks.UseTempoForTest(nil))
 	b.withArchetypes("")
 	// 30g4: configured classes supply HP on both sides of the even mirror.
-	archetypes.SetProvider(hpArchetypes{})
+	archetypes.SetProvider(balanceHPProvider(t))
 	for id := 1; id <= 4; id++ {
 		b.companion(id).Character.HPArchetype, _ = module.CompanionArchetype(7, id)
 	}
@@ -230,19 +270,34 @@ func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string) *ba
 	}
 	mobs.LoadDataFiles()
 
+	enemyLevel := level
+	if len(enemyLevels) > 0 {
+		enemyLevel = enemyLevels[0]
+	}
 	f := &balanceFight{brawl: b, tally: &balanceTally{}}
 	for _, m := range balanceMirror {
 		mob := mobs.NewMobById(mobs.MobId(m.id), b.road.RoomId)
 		require.NotNil(t, mob, m.name)
 		mob.SpawnGroup = balanceGroup
-		mob.Character.HPPerLevel = map[int]float64{9201: 6, 9202: 5, 9203: 6, 9204: 5, 9205: 5}[m.id]
+		// Passive and personality controls do not acquire group focus merely
+		// by crossing a level tier. Enhanced coordination has its own cells.
+		mob.Coordination = 1
+		class := map[int]string{9201: "warrior", 9202: "cleric", 9203: "warrior", 9204: "ranger"}[m.id]
+		if class != "" {
+			mob.Character.HPPerLevel, _ = archetypes.HealthPerLevel(class)
+		} else {
+			mob.Character.HPPerLevel = float64(configs.GetProgressionConfig().DefaultHPPerLevel)
+		}
 		b.road.AddMob(mob.InstanceId)
 		f.enemies = append(f.enemies, mob.InstanceId)
-		levelTo(&mob.Character, level)
+		levelTo(&mob.Character, enemyLevel)
 		switch {
 		case enemyMode == enemySpread:
 			mob.Targeting, mob.TargetingNoise = string(strategy.Nearest), 100
 		case enemyMode == enemyDefault:
+			mob.Targeting, mob.TargetingNoise = string(strategy.Weakest), 0
+		case enemyMode == enemyCasters:
+			mob.Targeting, mob.TargetingNoise = string(strategy.Casters), 0
 		case strings.HasPrefix(enemyMode, enemyRoles):
 			tier, err := strconv.Atoi(strings.TrimPrefix(enemyMode, enemyRoles))
 			require.NoError(t, err, enemyMode)
@@ -279,7 +334,48 @@ func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string) *ba
 	s.Subscribe(func(e combatstream.Event) { f.tally.add(e) })
 	t.Cleanup(combatstream.UseForTest(s))
 
-	b.cmd("attack", fmt.Sprintf("#%d", f.enemies[0]))
+	opening := f.enemies[0]
+	if companyMode == companyFocus {
+		for _, g := range enemyparty.Groups(b.road) {
+			if aim, ok := enemyparty.Aim(g, enemyparty.PlayerAttacker(b.aria)); ok {
+				opening = aim
+				break
+			}
+		}
+	}
+	b.cmd("attack", fmt.Sprintf("#%d", opening))
+	// Spread starts with one distinct opponent per fighter. Strategies keep
+	// a reachable aim until it falls; a list of different rules alone does
+	// not spread initial blows when all foes begin at full health.
+	members := []*characters.Character{b.aria.Character}
+	for id := 1; id <= 4; id++ {
+		members = append(members, &b.companion(id).Character)
+	}
+	mirrors := []int{f.enemies[4], f.enemies[0], f.enemies[1], f.enemies[2], f.enemies[3]}
+	for i, c := range members {
+		if companyMode == companySpread {
+			c.SetAggro(0, mirrors[i], characters.DefaultAttack)
+		}
+		if enemyMode == enemySpread {
+			m := mobs.GetInstance(mirrors[i])
+			uid, mid := 0, 0
+			if i == 0 {
+				uid = 7
+			} else {
+				mid = b.companion(i).InstanceId
+			}
+			m.Character.SetAggro(uid, mid, characters.DefaultAttack)
+		}
+	}
+	// Personalities must choose an opening target through upkeep, rather
+	// than inherit the attack command's retaliation aim at the leader.
+	if enemyMode != enemySpread {
+		require.NotNil(t, b.aria.Character.Aggro, "attack command opened combat")
+		require.Contains(t, f.enemies, b.aria.Character.Aggro.MobInstanceId)
+		for _, id := range f.enemies {
+			mobs.GetInstance(id).Character.EndAggro()
+		}
+	}
 	return f
 }
 
@@ -331,6 +427,24 @@ func (f *balanceFight) standing() (company, enemy int) {
 	return company, enemy
 }
 
+// healthRemaining totals live, present health. Removed/fallen mobs contribute zero.
+func (f *balanceFight) healthRemaining() (hp [2]int) {
+	hp[sideCompany] = max(0, f.aria.Character.Health)
+	for id := 1; id <= 4; id++ {
+		if instance, ok := module.instance(7, id); ok {
+			if m := mobs.GetInstance(instance); m != nil && m.Character.RoomId == f.road.RoomId {
+				hp[sideCompany] += max(0, m.Character.Health)
+			}
+		}
+	}
+	for _, id := range f.enemies {
+		if m := mobs.GetInstance(id); m != nil && m.Character.RoomId == f.road.RoomId {
+			hp[sideEnemy] += max(0, m.Character.Health)
+		}
+	}
+	return hp
+}
+
 // run fights until one side is down or the fight stalls. Each combat
 // round is two game rounds (29f), so regeneration's pass runs for both,
 // as the game does (it skips anyone in a battle, and tops up companions'
@@ -339,6 +453,7 @@ func (f *balanceFight) standing() (company, enemy int) {
 // player's death would cost her a level and move her to a church).
 func (f *balanceFight) run() balanceResult {
 	var res balanceResult
+	startHP := f.healthRemaining()
 	for res.Rounds < balanceMaxRounds {
 		company, enemy := f.standing()
 		if company == 0 || enemy == 0 {
@@ -362,6 +477,10 @@ func (f *balanceFight) run() balanceResult {
 	res.Stalled = company > 0 && enemy > 0
 	res.Fallen = [2]int{5 - company, len(f.enemies) - enemy}
 	res.Tally = *f.tally
+	endHP := f.healthRemaining()
+	for side := range startHP {
+		res.HPRemoved[side] = startHP[side] - endHP[side]
+	}
 	return res
 }
 
@@ -443,19 +562,20 @@ func TestBalanceHarnessRunsAFight(t *testing.T) {
 
 // TestBalance5v5 is the table: every level and pair of modes, many fights
 // each. ASHVEIL_BALANCE=1 runs it; ASHVEIL_BALANCE_FIGHTS sets the fights
-// per cell (default 50).
+// per cell (default 100).
 func TestBalance5v5(t *testing.T) {
 	if os.Getenv("ASHVEIL_BALANCE") != "1" {
 		t.Skip("set ASHVEIL_BALANCE=1 to run the balance table")
 	}
-	fights := 50
+	fights := 100
 	if v, err := strconv.Atoi(os.Getenv("ASHVEIL_BALANCE_FIGHTS")); err == nil && v > 0 {
 		fights = v
 	}
 	var rows []string
-	for _, level := range []int{1, 5, 10} {
+	for _, level := range []int{1, 5, 10, 30, 60, 100} {
+		cells := map[string][]balanceResult{}
 		for _, cm := range []string{companySpread, companyDefault, companyFocus} {
-			for _, em := range []string{enemySpread, enemyDefault} {
+			for _, em := range []string{enemySpread, enemyDefault, enemyCasters} {
 				var results []balanceResult
 				for i := 0; i < fights; i++ {
 					t.Run(fmt.Sprintf("L%d-%s-%s-%d", level, cm, em, i), func(t *testing.T) {
@@ -463,6 +583,19 @@ func TestBalance5v5(t *testing.T) {
 					})
 				}
 				rows = append(rows, balanceRow(level, cm, em, results))
+				cells[cm+"/"+em] = results
+			}
+		}
+		if level <= 60 {
+			passive := cells[companySpread+"/"+enemySpread]
+			baselineMedian, baselineWins := balanceMedianAndWins(passive)
+			focusMedian, focusWins := balanceMedianAndWins(cells[companyFocus+"/"+enemySpread])
+			assert.GreaterOrEqual(t, baselineMedian, 10, "L%d spread median", level)
+			assert.LessOrEqual(t, baselineMedian, 15, "L%d spread median", level)
+			assert.Greater(t, focusWins, baselineWins, "L%d focus wins more often", level)
+			assert.Less(t, focusMedian, baselineMedian, "L%d focus wins sooner", level)
+			for _, em := range []string{enemyDefault, enemyCasters} {
+				assert.Greater(t, balanceMeanHPLost(cells[companySpread+"/"+em], sideCompany), balanceMeanHPLost(passive, sideCompany), "L%d %s takes more company health", level, em)
 			}
 		}
 	}
@@ -486,12 +619,12 @@ func TestBalanceHarnessRunsACoordinatedFight(t *testing.T) {
 // the median battle by at most a quarter, and must not flip a clear
 // winner (one winning 60% or more keeps winning at least half the time).
 // ASHVEIL_BALANCE=1 runs it; ASHVEIL_BALANCE_FIGHTS sets the fights per
-// cell (default 50).
+// cell (default 100).
 func TestBalanceCoordinated(t *testing.T) {
 	if os.Getenv("ASHVEIL_BALANCE") != "1" {
 		t.Skip("set ASHVEIL_BALANCE=1 to run the balance table")
 	}
-	fights := 50
+	fights := 100
 	if v, err := strconv.Atoi(os.Getenv("ASHVEIL_BALANCE_FIGHTS")); err == nil && v > 0 {
 		fights = v
 	}
@@ -539,7 +672,19 @@ func balanceMedianAndWins(results []balanceResult) (median, winPct int) {
 	return percentile(rounds, 50), 100 * wins / len(results)
 }
 
-const balanceHeader = "| level | company | enemy | fights | company wins | rounds p10/median/p90 | stalls | fallen company/enemy | damage company/enemy | healing company | turns per fighter-round company/enemy | hit% company/enemy | crit% company/enemy | blocks/parries/dodges company · enemy | bashes company/enemy | tick damage company/enemy | lines/round mean/peak |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
+// balanceMeanHPLost measures remaining health, rather than damage including overkill.
+func balanceMeanHPLost(results []balanceResult, side int) float64 {
+	if len(results) == 0 {
+		return 0
+	}
+	total := 0
+	for _, r := range results {
+		total += r.HPRemoved[side]
+	}
+	return float64(total) / float64(len(results))
+}
+
+const balanceHeader = "| level | company | enemy | fights | company wins | rounds p10/median/p90 | stalls | fallen company/enemy | damage company/enemy | net HP lost company/enemy | healing company | turns per fighter-round company/enemy | hit% company/enemy | crit% company/enemy | blocks/parries/dodges company · enemy | bashes company/enemy | tick damage company/enemy | lines/round mean/peak |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"
 
 // balanceRow is one cell's line of the table: averages are per fight.
 func balanceRow(level int, cm, em string, results []balanceResult) string {
@@ -549,7 +694,7 @@ func balanceRow(level int, cm, em string, results []balanceResult) string {
 	}
 	var rounds []int
 	var wins, stalls int
-	var fallen, damage, turns, hits, crits, fighterRounds, counters, ticks, blocks, parries, dodges [2]int
+	var fallen, damage, hpLost, turns, hits, crits, fighterRounds, counters, ticks, blocks, parries, dodges [2]int
 	var healing, lines, totalRounds, peakLines int
 	for _, r := range results {
 		lines += r.Lines
@@ -565,6 +710,7 @@ func balanceRow(level int, cm, em string, results []balanceResult) string {
 		for s := 0; s < 2; s++ {
 			fallen[s] += r.Fallen[s]
 			damage[s] += r.Tally.Damage[s]
+			hpLost[s] += r.HPRemoved[s]
 			turns[s] += r.Tally.Turns[s]
 			hits[s] += r.Tally.Hits[s]
 			crits[s] += r.Tally.Crits[s]
@@ -585,9 +731,9 @@ func balanceRow(level int, cm, em string, results []balanceResult) string {
 		return float64(a) / float64(b)
 	}
 	p10, p50, p90 := percentile(rounds, 10), percentile(rounds, 50), percentile(rounds, 90)
-	return fmt.Sprintf("| %d | %s | %s | %d | %.0f%% | %d/%d/%d | %d | %.1f/%.1f | %.0f/%.0f | %.0f | %.2f/%.2f | %.0f/%.0f | %.0f/%.0f | %.1f/%.1f/%.1f · %.1f/%.1f/%.1f | %.1f/%.1f | %.1f/%.1f | %.1f/%d |",
+	return fmt.Sprintf("| %d | %s | %s | %d | %.0f%% | %d/%d/%d | %d | %.1f/%.1f | %.0f/%.0f | %.0f/%.0f | %.0f | %.2f/%.2f | %.0f/%.0f | %.0f/%.0f | %.1f/%.1f/%.1f · %.1f/%.1f/%.1f | %.1f/%.1f | %.1f/%.1f | %.1f/%d |",
 		level, cm, em, n, 100*ratio(wins, n), p10, p50, p90, stalls,
-		per(fallen[0]), per(fallen[1]), per(damage[0]), per(damage[1]), per(healing),
+		per(fallen[0]), per(fallen[1]), per(damage[0]), per(damage[1]), per(hpLost[0]), per(hpLost[1]), per(healing),
 		ratio(turns[0], fighterRounds[0]), ratio(turns[1], fighterRounds[1]),
 		100*ratio(hits[0], turns[0]), 100*ratio(hits[1], turns[1]),
 		100*ratio(crits[0], hits[0]), 100*ratio(crits[1], hits[1]),
@@ -600,7 +746,7 @@ func balanceRow(level int, cm, em string, results []balanceResult) string {
 // companions' template experience levelled Garrick and Ysolde on their
 // first kill at level 1).
 func TestBalanceSidesStayEven(t *testing.T) {
-	for _, level := range []int{1, 5, 10} {
+	for _, level := range []int{1, 5, 10, 30, 60, 100} {
 		t.Run(fmt.Sprintf("L%d", level), func(t *testing.T) {
 			f := newBalanceFight(t, level, companyDefault, enemySpread)
 			members := []*characters.Character{f.aria.Character}
@@ -623,6 +769,16 @@ func TestBalanceSidesStayEven(t *testing.T) {
 					assert.Equal(t, s[1], s[0], "%s vs %s: a stat", c.Name, m.Name)
 				}
 				// 30g4 removes the player's hidden racial HealthMax growth.
+				rate := float64(configs.GetProgressionConfig().DefaultHPPerLevel)
+				if i > 0 {
+					class, _ := module.CompanionArchetype(7, i)
+					var ok bool
+					rate, ok = archetypes.HealthPerLevel(class)
+					require.True(t, ok, class)
+				}
+				assert.Equal(t, rate, c.HealthGainPerLevel(), c.Name+" configured class rate")
+				assert.Equal(t, rate, m.HealthGainPerLevel(), m.Name+" mirrored class rate")
+				assert.Equal(t, configs.GetProgressionConfig().HealthAtLevel(level, c.Stats.Vitality.ValueAdj, rate)+c.StatMod("healthmax"), c.HealthMax.Value, c.Name+" configured HP")
 				assert.Equal(t, m.HealthMax.Value, c.HealthMax.Value, "%s vs %s: health", c.Name, m.Name)
 				assert.Equal(t, m.GetDefense(), c.GetDefense(), "%s vs %s: armor", c.Name, m.Name)
 			}
@@ -664,4 +820,37 @@ func TestBalanceStatusesLand(t *testing.T) {
 	require.True(t, target.Character.HasBuff(status.Bleeding), "the bleed landed")
 	res := f.run()
 	assert.Positive(t, res.Tally.TickDamage[sideCompany], "the enemy's bleed ticked for the company")
+}
+
+func TestBalanceMismatches(t *testing.T) {
+	if os.Getenv("ASHVEIL_BALANCE") != "1" {
+		t.Skip("set ASHVEIL_BALANCE=1 to run mismatches")
+	}
+	fights := 100
+	if n, err := strconv.Atoi(os.Getenv("ASHVEIL_BALANCE_FIGHTS")); err == nil && n > 0 {
+		fights = n
+	}
+	for _, level := range []int{15, 30} {
+		var results []balanceResult
+		for i := 0; i < fights; i++ {
+			t.Run(fmt.Sprintf("L%d-v10-%d", level, i), func(t *testing.T) {
+				results = append(results, newBalanceFight(t, level, companySpread, enemySpread, 10).run())
+			})
+		}
+		t.Log(balanceRow(level, companySpread, "L10-spread", results))
+		_, winPct := balanceMedianAndWins(results)
+		if level == 30 {
+			assert.GreaterOrEqual(t, winPct, 95, "L30 against L10 wins at least 95%%")
+			intact := 0
+			for _, r := range results {
+				if r.Fallen[sideCompany] == 0 {
+					intact++
+				}
+			}
+			assert.Greater(t, intact*2, len(results), "L30 against L10 loses no member in most fights")
+		} else {
+			assert.Greater(t, winPct, 50, "L15 against L10 is favored")
+			assert.Less(t, winPct, 100, "L15 against L10 can lose")
+		}
+	}
 }

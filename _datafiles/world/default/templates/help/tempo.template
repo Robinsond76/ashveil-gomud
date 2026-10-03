@@ -36,3 +36,7 @@ Guards and shield counters are reactions and spend no meter. Their existing
 limits still apply. Tempo never advances the world's clock.
 
 See also: <ansi fg="command">help speed</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help combat</ansi>.
+
+If your foe falls before your earned physical turn, you choose another reachable
+foe in that battle and use the turn. A kill can also leave a second earned turn
+available against the next foe.

@@ -535,3 +535,24 @@ func TestGetDurationsForCombatRoundBuffs(t *testing.T) {
 	left, _ = GetDurations(&Buff{TriggersLeft: 0, TriggersInitial: 3}, spec)
 	assert.Equal(t, 0, left)
 }
+
+// Combat-round specs must never advance through the ordinary game-round hook,
+// even if their interval was configured to one (or an old save has a counter).
+func TestGameTriggerExcludesCombatRoundBuffs(t *testing.T) {
+	old := buffs
+	buffs = map[int]*BuffSpec{9901: {BuffId: 9901, CombatRounds: true, RoundInterval: 1, TriggerCount: 3}, 9902: {BuffId: 9902, RoundInterval: 1, TriggerCount: 3}}
+	t.Cleanup(func() { buffs = old })
+	bs := New()
+	bs.AddBuff(9901, false)
+	bs.AddBuff(9902, false)
+	for i := 0; i < 2; i++ {
+		got := bs.Trigger()
+		assert.Len(t, got, 1)
+		if len(got) > 0 {
+			assert.Equal(t, 9902, got[0].BuffId)
+		}
+	}
+	assert.Equal(t, 3, bs.TriggersLeft(9901))
+	assert.Equal(t, 0, bs.GetBuffs(9901)[0].RoundCounter)
+	assert.Equal(t, 1, bs.TriggersLeft(9902))
+}

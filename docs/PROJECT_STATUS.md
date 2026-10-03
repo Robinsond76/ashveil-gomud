@@ -12,7 +12,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-03 (30g5 action meter implemented and reviewed; 30g6 tuning next)
+- **Last updated:** 2026-10-03 (30g6 candidate implemented and reviewed; balance acceptance incomplete)
 - **Latest completed slices:** 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -27,6 +27,29 @@ instead of duplicating them.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
 
 ## Current position
+
+**30g6 candidate in progress (2026-10-03):** configurable bounded Strength
+damage, smaller class HP and early HP knee, and tempo defaults are calibrated
+through the actual combat round. The harness now loads/asserts shipped class
+rates, verifies distinct passive/weakest-focus openings, reports L30/60/100 and
+level mismatches, measures net health removed, and asserts every approved
+acceptance outcome. Regeneration and buff-cadence integration, indexed help,
+tutorial pointers and admin controls are covered. Earned physical turns survive
+an earlier target kill; successful queued tackles are not duplicated.
+
+The candidate is **not ready to merge**. Spread duration and HP scaling are in
+range, but the strict focus-duration and mismatch/targeting comparisons still
+need calibration; no acceptance criterion was relaxed. Independent full-diff
+review found two P2 replacement bugs (ranged readiness and caster metadata),
+both fixed with real-round regressions and accepted on follow-up, plus a
+wording correction. Final fixture follow-up confirmed ordinal names and
+isolated bleed wounds retain their coverage. Generate, validate and full race
+checks passed. The post-fix 6,800-fight run had no stalls; spread medians are
+12/13/14/13/11 at L1/5/10/30/60 and HP ratios 2.29–2.86. Focus duration fails
+at all five levels, L30 caster targeting fails the net-health comparison, and
+L15 versus L10 has no observed loss (100/100 wins); L30 versus L10 passes
+with 100/100 wins and no member lost. The opt-in balance suite therefore fails; see the [plan](plans/2026-10-03-phase-30g6-tuning.md)
+and [verification](plans/2026-10-03-phase-30g6-verification.md).
 
 **30g5 action meter complete (2026-10-03):** effective Speed and personal
 burden now determine fractional turns, with one opening turn, at most two
@@ -48,7 +71,7 @@ peak 26. Pre-merge PR review follow-up: withdrawn fighters no longer bump the
 combat generation, a redundant wait flag and single-pass DPS loop were
 removed, and a regression confirms a foe felled in the company's pass makes no
 blow (unchanged from master; the suspected behavior change was rejected).
-Legacy `ExtraAttacks*` keys stay for old overrides. **30g6 tuning is next**, including the 10–15-round duration target.
+Legacy `ExtraAttacks*` keys stay for old overrides. **30g6 tuning is under way**, including the 10–15-round duration target.
 See [amendment](designs/2026-10-02-phase-30g5-action-meter-amendment.md),
 [plan](plans/2026-10-02-phase-30g5-action-meter.md) and
 [verification](plans/2026-10-03-phase-30g5-verification.md).
@@ -399,7 +422,7 @@ specialists)** are complete, so 33f is done; **33i1 (group assessment)**
 is complete too (33i2 remains); 33g management and its cargo prerequisite are
 complete, reviewed and verified. Equipment
 catalog delivery and 33h remain. Phase 30g3 is also complete;
-30g4 (progression) and 30g5 (the action meter) are complete; 30g6 tuning is next.
+30g4 (progression) and 30g5 (the action meter) are complete; 30g6 has a reviewed candidate with acceptance gaps.
 
 **Combat tempo queue:** Phase 30g, [combat tempo, personal load, and active
 defense](designs/2026-09-30-phase-30g-tempo-defense-design.md), whose
@@ -562,7 +585,7 @@ delegated to the lead. 33a–33e are complete.
 | 30d | Wind-ups, telegraphs, and interrupts | 30d1 complete: [design](designs/2026-09-30-phase-30d1-chant-interrupts-design.md). A weapon blow that draws blood breaks a chant (owner: no pressure meter); 30d1b ([design](designs/2026-09-30-phase-30d1b-chant-break-chance-design.md)) made that a chance (40–90% by damage against max health; a crit, stagger, knockdown, or stun always); a company caster loses the spell with half its mana back, an enemy restarts from the first word; shield counters on a missed melee blow (50%, 1d4, stun 25%, once a round); the goblin hexer and Withering Hex in the Dark Forest; `help interrupts`. 30d2 complete: [design](designs/2026-09-30-phase-30d2-windups-design.md). Physical wind-ups (`internal/windup`, mob `windups`): the forest ogre (Dark Forest room 530) winds up Crushing Blow in plain view, then one swing of double damage that knocks down; only a crit that lands, a stagger, a knockdown, or a stun breaks it (owner); a broken or landed one is followed by 2 turns' cooldown; a shield bash is a counter strike only and breaks nothing (owner) |
 | 30e | Morale and mercy | Complete: enemy temperaments and shared break checks; protected surrender; paced mercy decisions, rewards and reactions; companion hesitation, flight and saved return |
 | 30f | Battlefield conditions | Complete: [PR #12](https://github.com/Robinsond76/ashveil-gomud/pull/12), reviewed and merged 2026-10-02. [Approved design](designs/2026-10-02-phase-30f-battlefield-design.md), [verification](verification/phase-30f/verification.md). Mounted combat excluded |
-| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g3-personal-load.md)): personal load and burden (dodge × (1 − 0.6 b)); `help burden`. 30g4 progression and 30g5 action meter complete; 30g6 tuning next |
+| 30g | Combat tempo, personal load, and active defense | In progress: [design](designs/2026-09-30-phase-30g-tempo-defense-design.md). 30g1 complete ([plan](plans/2026-09-30-phase-30g1-balance-harness.md)): the balance harness and baseline (no-focus 5v5: median 8 / 32 / 68 rounds at levels 1 / 5 / 10). 30g2 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g2-active-defense.md)): block, parry, or dodge, one per strike; the shield's ×1.5 removed; the bash on a blocked melee strike (5–20%); `absorbed`; `help defense`. 30g3 complete, merged 2026-10-01 ([plan](plans/2026-10-01-phase-30g3-personal-load.md)): personal load and burden (dodge × (1 − 0.6 b)); `help burden`. 30g4 progression and 30g5 action meter complete; 30g6 candidate reviewed, acceptance incomplete |
 | 32a | Company polish | Complete (PR from `claude/project-thread-1buera`): [spec](designs/2026-09-28-phase-32a-company-polish-design.md). No `♥friend` on companions; one arrival/departure line per company; no drink flourish; camp and fire in `look`; recruiters listed in the room; a readable formation grid |
 | 32a2 | Per-player recruit rosters | Complete (PR #4 from `claude/project-thread-btmgj8`): [spec](designs/2026-09-28-phase-32a2-recruit-rosters-design.md). Generated candidates on each player's own notice, coming and going; companions get their own names |
 | 32b | Tutorial replay | Complete, in review: [spec](designs/2026-09-28-phase-32b-tutorial-replay-design.md), [plan](plans/2026-09-28-phase-32b-tutorial-replay.md). `tutorial replay yes` hands the connection to a throwaway level-1 copy (id from 900,000,000, unindexed) that runs the course; any way out hands it back to the real character, exactly as it was; `UserPurged` drops the copy from every module and removes its file; a restart sweeps leftovers |

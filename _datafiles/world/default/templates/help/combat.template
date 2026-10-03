@@ -182,3 +182,8 @@ Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="c
 Ambushes, clusters, leaping enemies, narrow ground, fatigue, and cold affect battles: help battlefield and help ambush.
 
 Speed and personal burden set your turns each round: <ansi fg="command">help tempo</ansi>.
+
+Strength adds bounded damage even against an equal opponent (<ansi fg="command">help strength</ansi>).
+Maximum health grows slowly after the early class gains (<ansi fg="command">help progression</ansi>).
+Natural health and mana recovery pauses throughout a battle, including between blows.
+Healers still heal by spells; ordinary buffs keep their real-time durations.

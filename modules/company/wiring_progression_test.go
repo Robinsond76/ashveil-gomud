@@ -69,7 +69,7 @@ func TestProgressionEnemyHPTemplateRaceAndDefault(t *testing.T) {
 	old := r.HPPerLevel
 	t.Cleanup(func() { r.HPPerLevel = old; spec.HPPerLevel = 0 })
 	cfg := configs.GetProgressionConfig()
-	for _, tc := range []struct{ template, race, want float64 }{{0, 0, 5}, {0, 7, 7}, {8, 7, 8}} {
+	for _, tc := range []struct{ template, race, want float64 }{{0, 0, float64(cfg.DefaultHPPerLevel)}, {0, 7, 7}, {8, 7, 8}} {
 		r.HPPerLevel = tc.race
 		path := filepath.Join(configs.GetFilePathsConfig().DataFiles.String(), "mobs", "brawl", "9101-bandit_cutthroat.yaml")
 		data, err := os.ReadFile(path)
@@ -204,10 +204,11 @@ func TestProgressionLiveCompanionChoiceRecalculatesHP(t *testing.T) {
 	c.Level = 10
 	require.True(t, module.RetrainCompanion(b.companion(1).InstanceId))
 	c.Health = c.HealthMax.Value
+	beforeHealth := c.Health
 	assert.Contains(t, module.setArchetype(7, "1", "wizard"), "now a")
 	assert.Equal(t, "wizard", c.HPArchetype)
 	assert.Equal(t, 3.0, c.HealthGainPerLevel())
-	assert.Equal(t, c.HealthMax.Value, c.Health, "choice clamps to the new maximum")
+	assert.Equal(t, min(beforeHealth, c.HealthMax.Value), c.Health, "choice clamps without refilling")
 }
 
 func TestProgressionEquipmentClonePreservesHP(t *testing.T) {

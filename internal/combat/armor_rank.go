@@ -56,7 +56,7 @@ type ArmorRank struct {
 	//
 	//   statValue   = per-stat weighted sum using weights derived from the
 	//                 combat engine's own range constants:
-	//                   strength   (DamageBonusMax-DamageBonusMin)/100  – damage output
+	//                   strength   DamagePerStrength + (DamageBonusMax-DamageBonusMin)/100 – damage output (below cap)
 	//                   speed      (ToHitMax-ToHitMin)/100              – hit chance
 	//                   perception (CritMultMax-CritMultMin)/100 * base – crit/dodge
 	//                   smarts     (CritChanceMax-CritChanceMin)/100    – crit chance
@@ -110,8 +110,8 @@ func statWeight(statName string) float64 {
 	cfg := configs.GetCombatConfig()
 	switch statName {
 	case string(statmods.Strength):
-		// +1 strength shifts damageBonus by (DamageBonusMax-DamageBonusMin)/100
-		return float64(int(cfg.DamageBonusMax)-int(cfg.DamageBonusMin)) / 100.0
+		// Approximate marginal damage below the cap; rankings use no attacker stats.
+		return float64(cfg.DamagePerStrength) + float64(int(cfg.DamageBonusMax)-int(cfg.DamageBonusMin))/100.0
 	case string(statmods.Speed):
 		// +1 speed shifts hitChance by (ToHitMax-ToHitMin)/100
 		return float64(int(cfg.ToHitMax)-int(cfg.ToHitMin)) / 100.0

@@ -320,9 +320,11 @@ GamePlay:
     #   varied.
     #   Note: see _datafiles/combat-messages/*
     ConsistentAttackMessages: true
-    # Flat damage bonus driven by Strength delta
-    DamageBonusMin: 0
-    DamageBonusMax: 10
+    # Flat damage: floor(minimum + Strength * DamagePerStrength + advantage), capped.
+    DamageBonusMin: 2
+    DamageBonusMax: 20
+    # Bounded growth even against an equally strong opponent.
+    DamagePerStrength: 1.75
     # Chance to hit (percent) driven by Speed delta
     ToHitMin: 25
     ToHitMax: 100
@@ -361,7 +363,7 @@ GamePlay:
     # Tempo is turns per combat round, from effective Speed and personal burden.
     TempoMin: 0.6
     TempoMax: 1.5
-    TempoSpeedRef: 10
+    TempoSpeedRef: 2
     TempoSpeedSpan: 40
     MaxTurnsPerRound: 2
   # PVP Restrictions
@@ -411,9 +413,9 @@ GamePlay:
   # Instead, visit /admin/progression for a live visual editor with charts.
   Progression:
     StatStepLevels: 5
-    DefaultHPPerLevel: 5
-    HPFullLevels: 20
-    HPAfterFull: 1
+    DefaultHPPerLevel: 1.5
+    HPFullLevels: 5
+    HPAfterFull: 0.7
     XPKneeLevel: 60
     XPKneeGrowth: 1.10
     # --- Stat gain formula ---
@@ -437,8 +439,8 @@ GamePlay:
     #   >1.0 = accelerating. Valid range: 0.1 to 5.0.
     NaturalGainsExponent: 1.0
     # --- HP: archetype gains through HPFullLevels, then HPAfterFull, plus Vitality and bonuses ---
-    HPBase: 5
-    HPPerVitality: 1.0
+    HPBase: 12
+    HPPerVitality: 0.5
     # --- Mana formula: ManaMax = ManaBase + level*ManaPerLevel + Mysticism_adj*ManaPerMysticism + mods ---
     ManaBase: 4
     ManaPerLevel: 1.0

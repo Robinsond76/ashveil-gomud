@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 )
 
@@ -84,6 +85,11 @@ func TestStatDelta(t *testing.T) {
 // TestDamageBonus verifies damage bonus uses Strength delta and config bounds.
 // Default config: min=0, max=10.
 func TestDamageBonus(t *testing.T) {
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.DamageBonusMin = 0
+	cfg.Combat.DamageBonusMax = 10
+	cfg.Combat.DamagePerStrength = 0
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
 	tests := []struct {
 		atkStr, defStr int
 		wantMin        int

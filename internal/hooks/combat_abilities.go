@@ -51,6 +51,8 @@ var (
 	// abilityStrikes are the actors whose swing this round is an opening
 	// strike or aimed shot, set back to a plain attack after the blows.
 	abilityStrikes = map[caster]bool{}
+	// Successful tackles queued in this pass are not live buffs yet.
+	abilityDown = map[int]bool{}
 	// abilityRoll rolls a tackle; tests replace it.
 	abilityRoll = util.Rand
 )
@@ -68,6 +70,7 @@ func ResetAbilitiesForTest() {
 	clear(abilityReady)
 	clear(abilityTurns)
 	clear(abilityStrikes)
+	clear(abilityDown)
 }
 
 // abilityPass lets every member of every battle that is about to swing use
@@ -76,6 +79,7 @@ func abilityPass() {
 	abilityRounds++
 	clear(abilityTurns)
 	clear(abilityStrikes)
+	clear(abilityDown)
 	for k, round := range abilityReady {
 		if round <= abilityRounds {
 			delete(abilityReady, k)
@@ -197,7 +201,7 @@ func abilitySituation(a actor, u *users.UserRecord, foe *mobs.Mob) strategy.Abil
 		},
 		Weapon:       weapon,
 		Backstab:     backstab,
-		FoeDown:      status.Live(&foe.Character, status.KnockedDown),
+		FoeDown:      abilityDown[foe.InstanceId] || status.Live(&foe.Character, status.KnockedDown),
 		FoeStunned:   status.Live(&foe.Character, status.Stunned),
 		FoeStaggered: status.Live(&foe.Character, status.Staggered),
 		FoeExposed:   status.Live(&foe.Character, status.Exposed),
@@ -251,6 +255,7 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 		emitCombat(event)
 		a.holder.say(fmt.Sprintf(`You tackle %s to the ground.`, target.tag()),
 			`%s tackles `+verbatim(target.tag())+` to the ground.`, ` (knocked down)`)
+		abilityDown[foe.InstanceId] = true
 		foe.AddBuff(status.KnockedDown, `combat`)
 		// A tackle is heavy force: it breaks a chant (an enemy starts
 		// again) and a wind-up, as a knockdown blow would.
@@ -299,4 +304,5 @@ func endAbilityStrikes() {
 		}
 	}
 	clear(abilityStrikes)
+	clear(abilityDown)
 }
