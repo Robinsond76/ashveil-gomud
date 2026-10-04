@@ -320,35 +320,46 @@ GamePlay:
     #   varied.
     #   Note: see _datafiles/combat-messages/*
     ConsistentAttackMessages: true
-    # Flat damage bonus driven by Strength delta
-    DamageBonusMin: 0
-    DamageBonusMax: 10
-    # Chance to hit (percent) driven by Speed delta
+    # Flat damage: floor(DamageBonusMin + Strength * DamagePerStrength +
+    # Strength edge * DamageEdgeMax), held to DamageBonusMin-DamageBonusMax.
+    DamageBonusMin: 8
+    DamageBonusMax: 20
+    # Bounded growth even against an equally strong opponent.
+    DamagePerStrength: 1.25
+    # Extra damage at a full Strength edge (StatEdgeSpan points stronger).
+    DamageEdgeMax: 4
+    # Stat edge (30g6): every opposed chance reads the difference of two
+    # stats over this span. A lead of StatEdgeSpan points reaches a bound;
+    # each point moves a chance 1/StatEdgeSpan of the way.
+    StatEdgeSpan: 40
+    # Chance to hit (percent): ToHitEven at equal Speed, moved by the Speed edge
     ToHitMin: 25
     ToHitMax: 100
+    ToHitEven: 60
     # Extra attacks for weaponless/claws combat driven by Speed delta
     # Legacy keys, unused by the action meter.
     ExtraAttacksMin: 0
     ExtraAttacksMax: 3
-    # Critical hit chance (percent) driven by Smarts delta
+    # Critical hit chance (percent): CritChanceEven at equal Smarts, moved by the Smarts edge
     CritChanceMin: 5
     CritChanceMax: 30
-    # Critical hit damage multiplier driven by Perception delta
+    CritChanceEven: 15
+    # Critical hit damage multiplier, grown by the Perception advantage
     CritMultMin: 1.5
     CritMultMax: 3.0
-    # Chance to dodge (percent) driven by Perception delta
+    # Chance to dodge (percent), grown by the Perception advantage
     DodgeChanceMin: 5
     DodgeChanceMax: 30
     # Chance a shield blocks a blow (percent): the minimum plus the shield's
-    # own armor, moved by the Strength delta, held to this range
+    # own armor, moved by the Strength edge, held to this range
     BlockChanceMin: 15
     BlockChanceMax: 45
-    # Chance a weapon parries a melee blow (percent) driven by Speed delta;
+    # Chance a weapon parries a melee blow (percent), grown by the Speed advantage;
     # the weapon's modifier (+5 sword, -5 dagger, ...) moves the range
     ParryChanceMin: 5
     ParryChanceMax: 30
     # Chance a shield-bearer bashes back a blocked melee blow (percent)
-    # driven by Strength delta
+    # grown by the Strength advantage
     BashChanceMin: 5
     BashChanceMax: 20
     # Personal load (worn and carried, never cargo or mounts) against an
@@ -361,8 +372,8 @@ GamePlay:
     # Tempo is turns per combat round, from effective Speed and personal burden.
     TempoMin: 0.6
     TempoMax: 1.5
-    TempoSpeedRef: 10
-    TempoSpeedSpan: 40
+    TempoSpeedRef: 2
+    TempoSpeedSpan: 20
     MaxTurnsPerRound: 2
   # PVP Restrictions
   PVP:
@@ -411,9 +422,9 @@ GamePlay:
   # Instead, visit /admin/progression for a live visual editor with charts.
   Progression:
     StatStepLevels: 5
-    DefaultHPPerLevel: 5
-    HPFullLevels: 20
-    HPAfterFull: 1
+    DefaultHPPerLevel: 2.5
+    HPFullLevels: 10
+    HPAfterFull: 1.3
     XPKneeLevel: 60
     XPKneeGrowth: 1.10
     # --- Stat gain formula ---
@@ -437,8 +448,8 @@ GamePlay:
     #   >1.0 = accelerating. Valid range: 0.1 to 5.0.
     NaturalGainsExponent: 1.0
     # --- HP: archetype gains through HPFullLevels, then HPAfterFull, plus Vitality and bonuses ---
-    HPBase: 5
-    HPPerVitality: 1.0
+    HPBase: 40
+    HPPerVitality: 0.5
     # --- Mana formula: ManaMax = ManaBase + level*ManaPerLevel + Mysticism_adj*ManaPerMysticism + mods ---
     ManaBase: 4
     ManaPerLevel: 1.0

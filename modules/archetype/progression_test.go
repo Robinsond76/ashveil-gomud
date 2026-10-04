@@ -1,12 +1,14 @@
 package archetype
 
 import (
+	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"math"
 	"testing"
 )
 
@@ -14,12 +16,16 @@ func TestProgressionShippedHPAndCreationChoice(t *testing.T) {
 	m, _ := testModule(t)
 	archetypes.SetProvider(m)
 	t.Cleanup(func() { archetypes.SetProvider(nil) })
-	want := map[string]float64{"warrior": 6, "cleric": 5, "ranger": 5, "rogue": 4, "wizard": 3}
+	want := map[string]float64{"warrior": 3, "cleric": 2.5, "ranger": 2.5, "rogue": 2, "wizard": 1.5}
 	assert.Equal(t, want, m.HealthArchetypes())
 	for _, choice := range m.CreationChoices() {
 		assert.Contains(t, choice.Description, "HP:")
-		assert.Contains(t, choice.Description, "then 1 per level")
+		assert.Contains(t, choice.Description, "per level through level")
 	}
+	// 30g6: later gains keep each archetype's proportion of the middle rate.
+	cfg0 := configs.GetProgressionConfig()
+	assert.Greater(t, cfg0.HealthAfterFull(3), cfg0.HealthAfterFull(1.5), "a warrior out-gains a wizard after the full levels")
+	assert.InDelta(t, float64(cfg0.HPAfterFull), cfg0.HealthAfterFull(float64(cfg0.DefaultHPPerLevel)), 1e-9)
 	u := newUser(11)
 	users.SetTestUser(u)
 	t.Cleanup(func() { users.RemoveTestUser(11) })
@@ -28,15 +34,15 @@ func TestProgressionShippedHPAndCreationChoice(t *testing.T) {
 	u.Character.Health = 2
 	m.choose(u, "wizard", true)
 	cfg := configs.GetProgressionConfig()
-	assert.Equal(t, 3.0, u.Character.HealthGainPerLevel())
-	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, 3), u.Character.HealthMax.Value)
+	assert.Equal(t, 1.5, u.Character.HealthGainPerLevel())
+	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, 1.5), u.Character.HealthMax.Value)
 	assert.Equal(t, 2, u.Character.Health)
 	u.Character.HealthMax.Value = 9999
 	m.onPlayerSpawn(events.PlayerSpawn{UserId: 11})
-	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, 3), u.Character.HealthMax.Value)
+	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, 1.5), u.Character.HealthMax.Value)
 	hp, ok := m.HealthPerLevel("warrior")
 	require.True(t, ok)
-	assert.Equal(t, 6.0, hp)
+	assert.Equal(t, 3.0, hp)
 	_, err := m.reset(11)
 	require.NoError(t, err)
 	assert.Equal(t, float64(cfg.DefaultHPPerLevel), u.Character.HealthGainPerLevel())
@@ -48,8 +54,12 @@ func TestProgressionListShowsLiveHPRates(t *testing.T) {
 	m, _ := testModule(t)
 	text := m.list(12)
 	assert.Contains(t, text, "Warrior")
-	assert.Contains(t, text, "HP: 6 per level through level 20, then 1 per level.")
-	assert.Contains(t, text, "HP: 3 per level through level 20, then 1 per level.")
+	cfg := configs.GetProgressionConfig()
+	line := func(rate float64) string {
+		return fmt.Sprintf("HP: %g per level through level %d, then %g per level.", rate, cfg.HPFullLevels, math.Round(cfg.HealthAfterFull(rate)*100)/100)
+	}
+	assert.Contains(t, text, line(3))
+	assert.Contains(t, text, line(1.5))
 	preview, _ := m.chooseResult(newUser(12), "rogue", false)
-	assert.Contains(t, preview, "HP: 4 per level through level 20, then 1 per level.")
+	assert.Contains(t, preview, line(2))
 }

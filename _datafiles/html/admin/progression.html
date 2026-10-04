@@ -334,28 +334,28 @@
         <div class="panel-section">
             <div class="section-label">HP, stat steps &amp; XP knee</div>
 <div class="ctrl-row"><label class="ctrl-label" for="StatStepLevels">Stat step interval</label><input type="number" id="StatStepLevels" min="1" step="1" value="5" oninput="schedulePreview()"></div>
-<div class="ctrl-row"><label class="ctrl-label" for="HPFullLevels">Full HP levels</label><input type="number" id="HPFullLevels" min="1" step="1" value="20" oninput="schedulePreview()"></div>
-<div class="ctrl-row"><label class="ctrl-label" for="HPAfterFull">HP per level after full gains</label><input type="number" id="HPAfterFull" min="0.25" step="0.25" value="1" oninput="schedulePreview()"></div>
+<div class="ctrl-row"><label class="ctrl-label" for="HPFullLevels">Full HP levels</label><input type="number" id="HPFullLevels" min="1" step="1" value="10" oninput="schedulePreview()"></div>
+<div class="ctrl-row"><label class="ctrl-label" for="HPAfterFull">HP per later level (middle archetype)</label><input type="number" id="HPAfterFull" min="0.05" step="0.05" value="1.3" oninput="schedulePreview()"></div>
 <div class="ctrl-row"><label class="ctrl-label" for="XPKneeLevel">XP knee level</label><input type="number" id="XPKneeLevel" min="2" step="1" value="60" oninput="schedulePreview()"></div>
 <div class="ctrl-row"><label class="ctrl-label" for="XPKneeGrowth">XP cost multiplier past knee</label><input type="number" id="XPKneeGrowth" min="1.01" step="0.01" value="1.1" oninput="schedulePreview()"></div>
 
 
             <div class="ctrl-row">
                 <span class="ctrl-label">HP Base <span class="tip-icon" data-tip="Flat HP every character starts with at level 1, before level or stat bonuses. Acts as a minimum floor. Raise this if you want all characters to feel more durable from the start.">?</span></span>
-                <input type="number" id="HPBase" min="0" max="200" step="1" value="5"
+                <input type="number" id="HPBase" min="0" max="200" step="1" value="40"
                        oninput="schedulePreview()">
             </div>
             <div class="ctrl-row">
                 <span class="ctrl-label">Default HP per Level <span class="tip-icon" data-tip="HP per level through Full HP Levels for characters without a configured archetype and enemies without a template or race override. Archetype rates are configured under Modules.archetype.Archetypes.">?</span></span>
-                <input type="range" id="DefaultHPPerLevel" min="0.25" max="10" step="0.25" value="5.0"
+                <input type="range" id="DefaultHPPerLevel" min="0.25" max="10" step="0.25" value="2.5"
                        oninput="syncValue(this,'DefaultHPPerLevel_v'); schedulePreview()">
-                <span class="ctrl-value" id="DefaultHPPerLevel_v">5.00</span>
+                <span class="ctrl-value" id="DefaultHPPerLevel_v">2.50</span>
             </div>
             <div class="ctrl-row">
-                <span class="ctrl-label">HP per Vitality <span class="tip-icon" data-tip="HP added per point of adjusted Vitality (ValueAdj). This is the main lever for making Vitality matter. Default 1 means 50 Vitality contributes 50 HP. Raise this to make tanky builds much tankier.">?</span></span>
-                <input type="range" id="HPPerVitality" min="0.25" max="20" step="0.25" value="1.0"
+                <span class="ctrl-label">HP per Vitality <span class="tip-icon" data-tip="HP added per point of adjusted Vitality (ValueAdj). This is the main lever for making Vitality matter. Default 0.5 means 50 Vitality contributes 25 HP. Raise this to make tanky builds much tankier.">?</span></span>
+                <input type="range" id="HPPerVitality" min="0.25" max="20" step="0.25" value="0.5"
                        oninput="syncValue(this,'HPPerVitality_v'); schedulePreview()">
-                <span class="ctrl-value" id="HPPerVitality_v">1.00</span>
+                <span class="ctrl-value" id="HPPerVitality_v">0.50</span>
             </div>
 
             <div class="ctrl-row">
@@ -637,7 +637,7 @@ async function loadServerConfig() {
             NaturalGainsModFactor: '0.5', NaturalGainsExponent: '1.0',
             StatCapThreshold: '105', StatCapAnchor: '100',
             StatCapExponent: '0.5', StatCapScale: '2.0', StatCapExemptBonus: 'false',
-            HPBase: '5', DefaultHPPerLevel: '5.0', HPPerVitality: '1.0', StatStepLevels: '5', HPFullLevels: '20', HPAfterFull: '1', XPKneeLevel: '60', XPKneeGrowth: '1.10',
+            HPBase: '40', DefaultHPPerLevel: '2.5', HPPerVitality: '0.5', StatStepLevels: '5', HPFullLevels: '10', HPAfterFull: '1.3', XPKneeLevel: '60', XPKneeGrowth: '1.10',
             ManaBase: '4', ManaPerLevel: '1.0', ManaPerMysticism: '3.0',
             TrainingPointsPerLevel: '1', TrainingPointsEveryNLevels: '1',
             StatPointsPerLevel: '1', StatPointsEveryNLevels: '5',
@@ -693,7 +693,7 @@ async function restoreDefaults() {
         NaturalGainsModFactor: '0.5', NaturalGainsExponent: '1.0',
         StatCapThreshold: '105', StatCapAnchor: '100',
         StatCapExponent: '0.5', StatCapScale: '2.0', StatCapExemptBonus: 'false',
-        HPBase: '5', DefaultHPPerLevel: '5.0', HPPerVitality: '1.0', StatStepLevels: '5', HPFullLevels: '20', HPAfterFull: '1', XPKneeLevel: '60', XPKneeGrowth: '1.10',
+        HPBase: '40', DefaultHPPerLevel: '2.5', HPPerVitality: '0.5', StatStepLevels: '5', HPFullLevels: '10', HPAfterFull: '1.3', XPKneeLevel: '60', XPKneeGrowth: '1.10',
         ManaBase: '4', ManaPerLevel: '1.0', ManaPerMysticism: '3.0',
         TrainingPointsPerLevel: '1', TrainingPointsEveryNLevels: '1',
         StatPointsPerLevel: '1', StatPointsEveryNLevels: '5',

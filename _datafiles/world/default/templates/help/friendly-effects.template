@@ -6,9 +6,11 @@ caster's present company: its leader and attached living companions, even
 without a player party. Temporary charms and pets are not company targets.
 
   <ansi fg="command">cast heal [member]</ansi>
-  Minor Heal costs 3 mana and restores 2 to 6 health to one patient.
+  Minor Heal costs 3 mana and restores 2 to 6 health to one patient, plus
+  1 per level of the caster: 32 to 36 from a level-30 cleric.
   <ansi fg="command">cast healall</ansi>
-  Minor Heal All costs 6 mana and restores 2 to 6 health to each patient.
+  Minor Heal All costs 6 mana and restores 2 to 6 health to each patient,
+  plus 1 for every 2 levels of the caster.
   Both take two rounds of chanting. Healers choose them automatically in
   battle, with the same eligibility and costs; cast by hand outside battle.
 

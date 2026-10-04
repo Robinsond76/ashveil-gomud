@@ -5,11 +5,11 @@ A perceptive fighter strikes with precision and is difficult to catch off guard.
 
 <ansi fg="yellow">Combat</ansi>
 
-* Increases your critical hit damage. When you land a critical blow, higher
-  perception means it hits harder (up to {{ config "GamePlay.Combat.CritMultMax" }}x damage on a crit).
-* Increases your chance to dodge incoming attacks. The more perceptive you are
-  compared to your attacker, the more often you slip out of harm's way
-  (up to {{ config "GamePlay.Combat.DodgeChanceMax" }}% dodge chance). A shield-bearer blocks instead
+* Increases your critical hit damage. A critical blow does {{ config "GamePlay.Combat.CritMultMin" }}x damage, and
+  each point of Perception over your target's adds 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to
+  {{ config "GamePlay.Combat.CritMultMax" }}x (<ansi fg="command">help stat-edge</ansi>).
+* Increases your chance to dodge incoming attacks: {{ config "GamePlay.Combat.DodgeChanceMin" }}%, plus 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of
+  the way to {{ config "GamePlay.Combat.DodgeChanceMax" }}% for each point of Perception over your attacker's. A shield-bearer blocks instead
   (<ansi fg="command">help defense</ansi>), and a burdened fighter dodges less (<ansi fg="command">help burden</ansi>).
 * Adds a small flat damage bonus to unarmed attacks.
 

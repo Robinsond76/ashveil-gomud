@@ -35,10 +35,11 @@ func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	t.Setenv("GODEBUG", "randseednop=0")
 	b := newBrawl(t)
 	// Recaptured for Phase 30g4: stepped stats change hit and damage rolls.
-	// 30g6 updates one target-change event: the next foe is selected on
-	// the kill round, retaining the previous foe reference. All attacks,
-	// casts, rewards and ending values are unchanged. This remains an
-	// outcome lock for subsequent narration-only changes.
+	// 30g6a updated one target-change event (the next foe is selected on
+	// the kill round). Recaptured for 30g6: stat edges, Strength damage and
+	// the HP shape change every roll and the fight's length; the same kinds
+	// of events, deaths and rewards remain. This remains an outcome lock
+	// for subsequent narration-only changes.
 	// The golden predates Phase 30d1, and its fixture keeps a cutthroat
 	// chanting for ever as a placeholder: blows breaking chants would
 	// change what it records.

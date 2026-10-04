@@ -12,8 +12,9 @@ heal, it follows from how your company is set up. Who has which:
   <ansi fg="command">Tackle</ansi>           warriors; for you, the <ansi fg="skill">brawling</ansi> skill
     When: its foe is on its feet and within hand-to-hand reach (not a
     rank deeper with a long weapon), and it has no bow or sling.
-    Does: knocks the foe to the ground, with a chance of Speed against
-    the foe's Perception, plus 20, held between 20% and 80%. A knocked-
+    Does: knocks the foe to the ground: 40% when your Speed equals the
+    foe's Perception, up to 80% ahead or down to 20% behind, a
+    1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way per point (<ansi fg="command">help stat-edge</ansi>). A knocked-
     down foe loses its next action and is slower for 3 rounds. A tackle
     also breaks a foe's chant (it must start again) or wind-up. Hit or
     miss, the tackle is the warrior's whole turn: no swing that round.

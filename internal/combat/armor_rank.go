@@ -56,10 +56,11 @@ type ArmorRank struct {
 	//
 	//   statValue   = per-stat weighted sum using weights derived from the
 	//                 combat engine's own range constants:
-	//                   strength   (DamageBonusMax-DamageBonusMin)/100  – damage output
-	//                   speed      (ToHitMax-ToHitMin)/100              – hit chance
-	//                   perception (CritMultMax-CritMultMin)/100 * base – crit/dodge
-	//                   smarts     (CritChanceMax-CritChanceMin)/100    – crit chance
+	//                   strength   DamagePerStrength + DamageEdgeMax/span  – damage output (below cap)
+	//                   speed      (ToHitMax-ToHitEven)/span           – hit chance
+	//                   perception (CritMultMax-CritMultMin)/span * base – crit/dodge
+	//                   smarts     (CritChanceMax-CritChanceEven)/span – crit chance
+	//                 (span is StatEdgeSpan, the 30g6 stat edge)
 	//                   vitality / healthmax / manamax / healthrecovery / manarecovery: 1.0
 	//                   damage (flat per-hit bonus): 1.0
 	//                   attacks (extra attack/round): avgWeaponDPS proxy = 3.0
@@ -108,21 +109,25 @@ var armorSlotSet = func() map[items.ItemType]bool {
 // mod name, derived from the combat engine's configured range constants.
 func statWeight(statName string) float64 {
 	cfg := configs.GetCombatConfig()
+	span := float64(cfg.StatEdgeSpan)
+	if span <= 0 {
+		span = 10
+	}
 	switch statName {
 	case string(statmods.Strength):
-		// +1 strength shifts damageBonus by (DamageBonusMax-DamageBonusMin)/100
-		return float64(int(cfg.DamageBonusMax)-int(cfg.DamageBonusMin)) / 100.0
+		// Approximate marginal damage below the cap; rankings use no attacker stats.
+		return float64(cfg.DamagePerStrength) + float64(cfg.DamageEdgeMax)/span
 	case string(statmods.Speed):
-		// +1 speed shifts hitChance by (ToHitMax-ToHitMin)/100
-		return float64(int(cfg.ToHitMax)-int(cfg.ToHitMin)) / 100.0
+		// +1 speed moves hitChance by about (ToHitMax-ToHitEven)/span
+		return float64(int(cfg.ToHitMax)-int(cfg.ToHitEven)) / span
 	case string(statmods.Smarts):
-		// +1 smarts shifts critChance by (CritChanceMax-CritChanceMin)/100
-		return float64(int(cfg.CritChanceMax)-int(cfg.CritChanceMin)) / 100.0
+		// +1 smarts moves critChance by about (CritChanceMax-CritChanceEven)/span
+		return float64(int(cfg.CritChanceMax)-int(cfg.CritChanceEven)) / span
 	case string(statmods.Perception):
-		// +1 perception shifts critMultiplier by (CritMultMax-CritMultMin)/100
-		// and dodgeChance by (DodgeChanceMax-DodgeChanceMin)/100; use the larger
-		multRange := float64(cfg.CritMultMax-cfg.CritMultMin) / 100.0
-		dodgeRange := float64(int(cfg.DodgeChanceMax)-int(cfg.DodgeChanceMin)) / 100.0
+		// +1 perception moves critMultiplier by (CritMultMax-CritMultMin)/span
+		// and dodgeChance by (DodgeChanceMax-DodgeChanceMin)/span; use the larger
+		multRange := float64(cfg.CritMultMax-cfg.CritMultMin) / span
+		dodgeRange := float64(int(cfg.DodgeChanceMax)-int(cfg.DodgeChanceMin)) / span
 		if multRange > dodgeRange {
 			return multRange
 		}

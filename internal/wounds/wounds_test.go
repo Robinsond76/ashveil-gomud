@@ -218,3 +218,17 @@ func TestOrder(t *testing.T) {
 		t.Fatalf("order %s %s %s", ps[0].Key, ps[1].Key, ps[2].Key)
 	}
 }
+
+// 30g6: a healer's heal adds its HealBonus (the caster's level), as the
+// heal spell does in battle, still capped at the wound limit.
+func TestPlanHealAddsTheHealersBonus(t *testing.T) {
+	patients := []Patient{{Key: "a", Health: 10, Max: 100}}
+	res := Plan(patients, []Healer{{Key: "h", Mana: 3, Heal: true, HealBonus: 30}}, Stock{}, DefaultRules, zero)
+	if got := res.Patients[0].Health; got != 10+2+30 {
+		t.Fatalf("one heal of 2d3 (lowest roll) plus 30, health %d", got)
+	}
+	res = Plan([]Patient{{Key: "a", Health: 10, Max: 20}}, []Healer{{Key: "h", Mana: 3, Heal: true, HealBonus: 30}}, Stock{}, DefaultRules, zero)
+	if got := res.Patients[0].Health; got != 20 {
+		t.Fatalf("capped at the limit, health %d", got)
+	}
+}

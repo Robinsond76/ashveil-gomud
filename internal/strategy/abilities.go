@@ -1,8 +1,11 @@
 package strategy
 
 import (
+	"math"
 	"strconv"
 	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/configs"
 )
 
 // Phase 33e: automatic class abilities. A member's archetype (a companion)
@@ -154,18 +157,30 @@ func DecideAbility(s AbilitySituation) (Ability, bool) {
 	return "", false
 }
 
-// TackleChance is a tackle's chance in 100: the tackler's Speed against
-// the foe's Perception, plus 20, held to 20–80 (the manual command's
-// formula).
+// Tackle chance bounds, in 100 (30g6 amendment): even Speed and Perception
+// give TackleEven; a full stat edge moves it to a bound.
+const (
+	TackleMin  = 20
+	TackleEven = 40
+	TackleMax  = 80
+)
+
+// TackleChance is a tackle's chance in 100: the tackler's Speed edge over
+// the foe's Perception (the combat StatEdgeSpan) moves TackleEven toward
+// TackleMin or TackleMax. The manual command and automatic tackles share it.
 func TackleChance(speed, foePerception int) int {
-	c := speed - foePerception + 20
-	if c < 20 {
-		return 20
+	span := float64(configs.GetCombatConfig().StatEdgeSpan)
+	if span <= 0 || math.IsNaN(span) || math.IsInf(span, 0) {
+		span = 10
 	}
-	if c > 80 {
-		return 80
+	edge := max(-1, min(1, (float64(speed)-float64(foePerception))/span))
+	c := float64(TackleEven)
+	if edge >= 0 {
+		c += edge * (TackleMax - TackleEven)
+	} else {
+		c += edge * (TackleEven - TackleMin)
 	}
-	return c
+	return max(TackleMin, min(TackleMax, int(math.Floor(c+1e-9))))
 }
 
 // MaxReserve is the highest mana reserve, in percent.

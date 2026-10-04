@@ -31,6 +31,10 @@ help:
       - train
       - stat-train
       - stats
+      - strength
+      - speed
+      - smarts
+      - perception
       - bury
       - archetype
     company:
@@ -113,6 +117,7 @@ help:
       - scout
       - sharpen
       - statuses
+      - stat-edge
       - shoot
       - strategy
       - tactics
@@ -278,6 +283,7 @@ help-aliases:
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]
   tempo:            [actions, turns]
+  stat-edge:        [stat-edges, hit-chance, to-hit, crit-chance, critical-chance]
   burden:           [burdened, unburdened, burdens, agility, personal-load, nimble]
   defense:          [defence, defenses, block, blocks, blocking, parry, parries, parrying, dodge, dodges, dodging, shield, shields]
   armor:            [armour, absorbed]

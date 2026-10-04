@@ -209,7 +209,17 @@ func (p ProgressionConfig) HealthAtLevel(level, vitality int, perLevel float64) 
 	}
 	full := min(level, int(p.HPFullLevels))
 	return boundedProgressionInt(float64(p.HPBase) + math.Trunc(float64(full)*perLevel) +
-		math.Trunc(float64(level-full)*float64(p.HPAfterFull)) + math.Trunc(float64(vitality)*float64(p.HPPerVitality)))
+		math.Trunc(float64(level-full)*p.HealthAfterFull(perLevel)) + math.Trunc(float64(vitality)*float64(p.HPPerVitality)))
+}
+
+// HealthAfterFull is an archetype's HP per level after HPFullLevels (30g6
+// amendment E): HPAfterFull for the default (middle) rate, scaled by the
+// archetype's own rate, so a warrior keeps out-gaining a wizard.
+func (p ProgressionConfig) HealthAfterFull(perLevel float64) float64 {
+	if perLevel <= 0 || p.DefaultHPPerLevel <= 0 {
+		return float64(p.HPAfterFull)
+	}
+	return float64(p.HPAfterFull) * perLevel / float64(p.DefaultHPPerLevel)
 }
 
 // XPThreshold preserves cumulative thresholds through the knee. After it,

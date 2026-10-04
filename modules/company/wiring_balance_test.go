@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
@@ -190,6 +191,92 @@ func TestBalanceEarnedTurnsSurviveAnEarlierKill(t *testing.T) {
 			assert.NotEqual(t, opening, e.Target.MobInstanceId)
 		}
 	}
+}
+
+func TestBalanceStrengthDamageThroughDoCombat(t *testing.T) {
+	f := newBalanceFight(t, 10, companySpread, enemySpread)
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.ToHitMin, cfg.Combat.ToHitMax = 100, 100
+	cfg.Combat.CritChanceMin, cfg.Combat.CritChanceMax = 0, 0
+	cfg.Combat.BlockChanceMin, cfg.Combat.BlockChanceMax = 0, 0
+	cfg.Combat.ParryChanceMin, cfg.Combat.ParryChanceMax = 0, 0
+	cfg.Combat.DodgeChanceMin, cfg.Combat.DodgeChanceMax = 0, 0
+	// Pin the damage knobs: equal Strength 12 gives 2 + 21, capped at 20.
+	cfg.Combat.DamageBonusMin, cfg.Combat.DamageBonusMax, cfg.Combat.DamagePerStrength = 2, 20, 1.75
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
+	c := f.aria.Character
+	c.Equipment.Weapon = items.New(10002)
+	c.Stats.Strength.ValueAdj = 12
+	target := mobs.GetInstance(c.Aggro.MobInstanceId)
+	target.Character.Equipment = characters.Worn{}
+	target.Character.Stats.Strength.ValueAdj = 12
+	target.Character.HealthMax.Value, target.Character.Health = 1000, 1000
+	var blows []combatstream.Event
+	combatstream.Default().Subscribe(func(e combatstream.Event) {
+		if e.Kind == combatstream.Attack && e.Source.UserId == 7 {
+			blows = append(blows, e)
+		}
+	})
+	f.step()
+	require.NotEmpty(t, blows)
+	for _, e := range blows {
+		assert.GreaterOrEqual(t, e.Damage, 21)
+		assert.LessOrEqual(t, e.Damage, 26, fmt.Sprint(e))
+	}
+}
+
+// Compare actual configured maxima at the two envelope levels, keeping the
+// same stat investment for the pre-tuning and current formulas.
+func TestBalanceHPEnvelope(t *testing.T) {
+	type pair struct{ before, after [2]int }
+	values := map[string]pair{}
+	for at, level := range []int{10, 60} {
+		t.Run(fmt.Sprintf("L%d", level), func(t *testing.T) {
+			f := newBalanceFight(t, level, companySpread, enemySpread)
+			// 30g4's shipped formula: 5 base, 6/5/4/3 per class level to 20,
+			// then a flat 1, and 1 per Vitality.
+			oldHP := func(level, vitality int, rate float64) int {
+				full := min(level, 20)
+				return 5 + int(float64(full)*rate) + (level - full) + vitality
+			}
+			for id, c := range f.members() {
+				rate := 5.0
+				if id > 0 {
+					rate = c.HealthGainPerLevel() * 2
+				}
+				v := values[c.Name]
+				v.before[at] = oldHP(level, c.Stats.Vitality.ValueAdj, rate) + c.StatMod("healthmax")
+				v.after[at] = c.HealthMax.Value
+				values[c.Name] = v
+			}
+		})
+	}
+	for name, v := range values {
+		require.Positive(t, v.after[0], name)
+		ratio := float64(v.after[1]) / float64(v.after[0])
+		assert.GreaterOrEqual(t, ratio, 2.0, name)
+		assert.LessOrEqual(t, ratio, 3.0, name)
+		t.Logf("%s: old HP L10/L60 %d/%d; tuned %d/%d (%.2fx)", name, v.before[0], v.before[1], v.after[0], v.after[1], ratio)
+	}
+}
+
+// 30g6 amendment E: class HP still differs at level 60, and enemies with
+// no class take the middle archetypes' rate.
+func TestBalanceClassHPShape(t *testing.T) {
+	f := newBalanceFight(t, 60, companySpread, enemySpread)
+	cfg := configs.GetProgressionConfig()
+	warrior, ok := archetypes.HealthPerLevel("warrior")
+	require.True(t, ok)
+	wizard, ok := archetypes.HealthPerLevel("wizard")
+	require.True(t, ok)
+	cleric, _ := archetypes.HealthPerLevel("cleric")
+	ranger, _ := archetypes.HealthPerLevel("ranger")
+	require.Equal(t, cleric, ranger, "cleric and ranger are the middle archetypes")
+	assert.Equal(t, cleric, float64(cfg.DefaultHPPerLevel), "unknown archetypes take the middle rate")
+	vitality := f.aria.Character.Stats.Vitality.ValueAdj
+	strong, weak := cfg.HealthAtLevel(60, vitality, warrior), cfg.HealthAtLevel(60, vitality, wizard)
+	assert.GreaterOrEqual(t, float64(strong), 1.25*float64(weak), "warrior %d against wizard %d at level 60", strong, weak)
+	assert.GreaterOrEqual(t, int(cfg.HPFullLevels), 10, "class rates carry the early levels")
 }
 
 func retargetBrawl(t *testing.T) *brawl {

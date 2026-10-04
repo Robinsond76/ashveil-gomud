@@ -41,21 +41,29 @@ type GamePlay struct {
 type CombatConfig struct {
 	ConsistentAttackMessages ConfigBool `yaml:"ConsistentAttackMessages"` // Whether each weapon has consistent attack messages
 
-	// Damage bonus (Strength delta drives this)
-	DamageBonusMin ConfigInt `yaml:"DamageBonusMin"` // Minimum flat damage bonus
-	DamageBonusMax ConfigInt `yaml:"DamageBonusMax"` // Maximum flat damage bonus
+	// Damage bonus: absolute Strength growth plus the Strength advantage.
+	DamageBonusMin    ConfigInt   `yaml:"DamageBonusMin"`    // Minimum flat damage bonus
+	DamageBonusMax    ConfigInt   `yaml:"DamageBonusMax"`    // Maximum flat damage bonus
+	DamagePerStrength ConfigFloat `yaml:"DamagePerStrength"` // Flat damage per effective Strength (0 disables absolute Strength growth)
+	DamageEdgeMax     ConfigInt   `yaml:"DamageEdgeMax"`     // Extra damage at a full Strength edge over the defender (30g6)
 
-	// Chance to hit (Speed delta drives this)
-	ToHitMin ConfigInt `yaml:"ToHitMin"` // Minimum hit chance (percent, 0-100)
-	ToHitMax ConfigInt `yaml:"ToHitMax"` // Maximum hit chance (percent, 0-100)
+	// Stat edge (30g6 amendment): a stat difference of StatEdgeSpan moves an
+	// opposed chance all the way to a bound; one point moves 1/span of it.
+	StatEdgeSpan ConfigFloat `yaml:"StatEdgeSpan"`
+
+	// Chance to hit (Speed edge drives this)
+	ToHitMin  ConfigInt `yaml:"ToHitMin"`  // Minimum hit chance (percent, 0-100)
+	ToHitMax  ConfigInt `yaml:"ToHitMax"`  // Maximum hit chance (percent, 0-100)
+	ToHitEven ConfigInt `yaml:"ToHitEven"` // Hit chance at equal Speed (percent, within the bounds)
 
 	// Legacy extra-attack keys: readable for old overrides, unused since 30g5.
 	ExtraAttacksMin ConfigInt `yaml:"ExtraAttacksMin"` // Minimum extra attacks
 	ExtraAttacksMax ConfigInt `yaml:"ExtraAttacksMax"` // Maximum extra attacks
 
 	// Chance to crit (Smarts delta drives this)
-	CritChanceMin ConfigInt `yaml:"CritChanceMin"` // Minimum crit chance (percent, 0-100)
-	CritChanceMax ConfigInt `yaml:"CritChanceMax"` // Maximum crit chance (percent, 0-100)
+	CritChanceMin  ConfigInt `yaml:"CritChanceMin"`  // Minimum crit chance (percent, 0-100)
+	CritChanceMax  ConfigInt `yaml:"CritChanceMax"`  // Maximum crit chance (percent, 0-100)
+	CritChanceEven ConfigInt `yaml:"CritChanceEven"` // Crit chance at equal Smarts (percent, within the bounds)
 
 	// Crit damage multiplier (Perception delta drives this)
 	CritMultMin ConfigFloat `yaml:"CritMultMin"` // Minimum crit damage multiplier
@@ -224,8 +232,14 @@ func (g *GamePlay) Validate() {
 
 func (c *CombatConfig) validate() {
 	// Damage bonus
+	if c.DamagePerStrength < 0 || math.IsNaN(float64(c.DamagePerStrength)) || math.IsInf(float64(c.DamagePerStrength), 0) {
+		c.DamagePerStrength = 0
+	}
 	if c.DamageBonusMax < 1 {
 		c.DamageBonusMax = 10
+	}
+	if c.DamageEdgeMax < 0 {
+		c.DamageEdgeMax = 0
 	}
 	if c.DamageBonusMin < 0 {
 		c.DamageBonusMin = 0
@@ -243,6 +257,15 @@ func (c *CombatConfig) validate() {
 	}
 	if c.ToHitMin > c.ToHitMax {
 		c.ToHitMin = 25
+	}
+	if c.ToHitEven == 0 {
+		c.ToHitEven = 50
+	}
+	c.ToHitEven = max(c.ToHitMin, min(c.ToHitMax, c.ToHitEven))
+
+	// Stat edge
+	if math.IsNaN(float64(c.StatEdgeSpan)) || math.IsInf(float64(c.StatEdgeSpan), 0) || c.StatEdgeSpan <= 0 {
+		c.StatEdgeSpan = 10
 	}
 
 	// Extra attacks (weaponless/claws)
@@ -268,6 +291,10 @@ func (c *CombatConfig) validate() {
 	if c.CritChanceMin > c.CritChanceMax {
 		c.CritChanceMin = 5
 	}
+	if c.CritChanceEven == 0 {
+		c.CritChanceEven = 15
+	}
+	c.CritChanceEven = max(c.CritChanceMin, min(c.CritChanceMax, c.CritChanceEven))
 
 	// Crit multiplier
 	if c.CritMultMin < 1.0 {

@@ -10,54 +10,44 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
-// statDelta returns the fraction of the configured range that the attacker
-// earns over the defender, clamped to [0, 1].
-// Formula: clamp(max(0, atkStat - defStat), 0, 100) / 100
-// AKA "how much does the attacker exceed the defender"
-/*
- atkSpd │ defSpd │ formula result │ hitChance (min=25, max=100)
-────────┼────────┼────────────────┼─────────────────────────────
- 50     │ 50     │ 0.0            │ 25 (floor)
- 75     │ 50     │ 0.25           │ 25
- 100    │ 50     │ 0.5            │ 50
- 150    │ 50     │ 1.0            │ 100
- 50     │ 100    │ 0.0            │ 25 (floor)
- 0      │ 100    │ 0.0            │ 25 (floor)
-*/
-func statDelta(atkStat, defStat int) float64 {
-	delta := float64(atkStat - defStat)
-	if delta < 0 {
-		delta = 0
+// StatEdge is the attacker's edge over the defender in one stat (30g6
+// amendment): the difference over the configured StatEdgeSpan, held to
+// −1..1. Stats grow in small steps (30g4), so a ratio of the two stats
+// would swing a chance far too much for one point; a span keeps each point
+// a fixed share of the way to a bound.
+func StatEdge(atkStat, defStat int) float64 {
+	span := float64(configs.GetCombatConfig().StatEdgeSpan)
+	if span <= 0 || math.IsNaN(span) || math.IsInf(span, 0) {
+		span = 10
 	}
-	if delta > 100 {
-		delta = 100
-	}
-	return delta / 100.0
+	return max(-1, min(1, (float64(atkStat)-float64(defStat))/span))
 }
 
-// statDeltaProportional returns the fraction of the configured range that the attacker
-// earns over the defender
-// AKA "what fraction of the combined pool does the attacker hold"
-/*
- atkSpd │ defSpd │ formula result │ hitChance (min=25, max=100)
-────────┼────────┼────────────────┼─────────────────────────────
- 50     │ 50     │ 0.5            │ 50
- 75     │ 50     │ 0.6            │ 60
- 100    │ 50     │ 0.667          │ 66
- 150    │ 50     │ 0.75           │ 75
- 50     │ 100    │ 0.333          │ 33
- 0      │ 100    │ 0.0            │ 25 (floor)
-*/
-func statDeltaProportional(atkStat, defStat int) float64 {
+// statAdvantage is StatEdge, never below 0: one-sided chances start at
+// their minimum and only grow with an advantage.
+func statAdvantage(atkStat, defStat int) float64 {
+	return max(0, StatEdge(atkStat, defStat))
+}
 
-	if atkStat == 0 && defStat == 0 {
-		return 0.5
+// edgeChance moves an even value toward the upper bound when edge is
+// positive and toward the lower bound when it is negative.
+func edgeChance(even, lo, hi float64, edge float64) float64 {
+	even = max(lo, min(hi, even))
+	if edge >= 0 {
+		return even + edge*(hi-even)
 	}
-	if atkStat+defStat == 0 {
-		return 0.5
-	}
+	return even + edge*(even-lo)
+}
 
-	return float64(atkStat) / float64(atkStat+defStat)
+// floorChance rounds a chance down, forgiving float error just below a
+// whole number (0.7 × 50 is 34.99… in binary).
+func floorChance(v float64) int {
+	return int(math.Floor(v + 1e-9))
+}
+
+// advantageChance grows from lo to hi with an advantage in 0..1.
+func advantageChance(lo, hi, advantage float64) float64 {
+	return lo + advantage*(hi-lo)
 }
 
 // resolveAttackWeapons returns the candidate weapon list for a character,
@@ -100,32 +90,29 @@ func spendEdges(char *characters.Character, spent map[items.ItemType]int) {
 	}
 }
 
-// damageBonus returns the flat bonus damage an attacker earns over a defender
-// based on the Strength stat delta and the configured bounds.
-// equal stats will result in 0% of max
+// damageBonus is the flat bonus a blow adds: the minimum, plus Strength ×
+// DamagePerStrength, plus DamageEdgeMax scaled by the Strength advantage,
+// rounded down and held to DamageBonusMin–DamageBonusMax.
 func damageBonus(atkStr, defStr int) int {
 	cfg := configs.GetCombatConfig()
-	minBonus := int(cfg.DamageBonusMin)
-	maxBonus := int(cfg.DamageBonusMax)
-	actual := int(math.Floor(statDelta(atkStr, defStr) * float64(maxBonus)))
-	if actual < minBonus {
-		actual = minBonus
+	lo, hi := int(cfg.DamageBonusMin), int(cfg.DamageBonusMax)
+	strength := math.Max(float64(atkStr), 0) * float64(cfg.DamagePerStrength)
+	bonus := math.Floor(float64(lo) + strength + statAdvantage(atkStr, defStr)*float64(cfg.DamageEdgeMax) + 1e-9)
+	if bonus >= float64(hi) {
+		return hi
 	}
-	return actual
+	if bonus <= float64(lo) {
+		return lo
+	}
+	return int(bonus)
 }
 
-// hitChance returns a hit probability in [ToHitMin, ToHitMax] based on the
-// Speed stat delta between attacker and defender.
-// equal stats will result in 50% of max
+// hitChance returns a hit probability in [ToHitMin, ToHitMax]: ToHitEven
+// at equal Speed, moved toward a bound by the Speed edge.
 func hitChance(atkSpd, defSpd int) int {
 	cfg := configs.GetCombatConfig()
-	minHit := int(cfg.ToHitMin)
-	maxHit := int(cfg.ToHitMax)
-	actual := int(math.Floor(statDeltaProportional(atkSpd, defSpd) * float64(maxHit)))
-	if actual < minHit {
-		actual = minHit
-	}
-	return actual
+	chance := edgeChance(float64(cfg.ToHitEven), float64(cfg.ToHitMin), float64(cfg.ToHitMax), StatEdge(atkSpd, defSpd))
+	return clampToHit(floorChance(chance))
 }
 
 // Hits returns whether an attack connects, incorporating an optional modifier.
@@ -171,16 +158,12 @@ func combatAttackCount(sourceChar characters.Character, targetChar characters.Ch
 }
 
 // critChance returns the integer crit probability in [CritChanceMin,
-// CritChanceMax] based on the Smarts stat delta. Buff flags are applied after.
-// equal stats will result in 50%
+// CritChanceMax]: CritChanceEven at equal Smarts, moved by the Smarts edge.
+// Buff flags are applied after.
 func critChance(atkSmarts, defSmarts int, hasAccuracy, targetHasBlink bool) int {
 	cfg := configs.GetCombatConfig()
 	minChance := int(cfg.CritChanceMin)
-	maxChance := int(cfg.CritChanceMax)
-	actual := int(math.Floor(statDeltaProportional(atkSmarts, defSmarts) * float64(maxChance)))
-	if actual < minChance {
-		actual = minChance
-	}
+	actual := floorChance(edgeChance(float64(cfg.CritChanceEven), float64(minChance), float64(cfg.CritChanceMax), StatEdge(atkSmarts, defSmarts)))
 	if hasAccuracy {
 		actual *= 2
 	}
@@ -214,17 +197,10 @@ func Crits(sourceChar characters.Character, targetChar characters.Character) boo
 }
 
 // critMultiplier returns the damage multiplier for a critical hit in
-// [CritMultMin, CritMultMax] based on the Perception stat proportional delta.
-// equal stats will result in 50% of max
+// [CritMultMin, CritMultMax]: the minimum, grown by the Perception advantage.
 func critMultiplier(atkPerc, defPerc int) float64 {
 	cfg := configs.GetCombatConfig()
-	minMult := float64(cfg.CritMultMin)
-	maxMult := float64(cfg.CritMultMax)
-	actual := statDeltaProportional(atkPerc, defPerc) * maxMult
-	if actual < minMult {
-		actual = minMult
-	}
-	return actual
+	return advantageChance(float64(cfg.CritMultMin), float64(cfg.CritMultMax), statAdvantage(atkPerc, defPerc))
 }
 
 // critDamageBonus returns the extra damage added to a hit that is a critical,
@@ -239,18 +215,11 @@ func critDamageBonus(dCount, dSides, dBonus, atkPerc, defPerc int) int {
 }
 
 // dodgeChance returns the probability in [DodgeChanceMin, DodgeChanceMax] that
-// the defender dodges an incoming hit, based on the defender's Perception
-// advantage over the attacker.
-// equal stats will result in 0% of max
+// the defender dodges an incoming hit: the minimum, grown by the defender's
+// Perception advantage over the attacker.
 func dodgeChance(defPerc, atkPerc int) int {
 	cfg := configs.GetCombatConfig()
-	minDodge := int(cfg.DodgeChanceMin)
-	maxDodge := int(cfg.DodgeChanceMax)
-	actual := int(math.Floor(statDelta(defPerc, atkPerc) * float64(maxDodge)))
-	if actual < minDodge {
-		actual = minDodge
-	}
-	return actual
+	return floorChance(advantageChance(float64(cfg.DodgeChanceMin), float64(cfg.DodgeChanceMax), statAdvantage(defPerc, atkPerc)))
 }
 
 // burdenDodgeLoss is the share of dodge a fully burdened character loses
@@ -269,13 +238,13 @@ func burdenedDodge(dodge int, burden float64) int {
 
 // blockChance returns the percent chance in [BlockChanceMin, BlockChanceMax]
 // that a shield-bearer blocks a strike (Phase 30g2): the minimum, plus the
-// shield's own armor, moved up or down by the defender's share of the two
-// Strengths. Even Strength with a 5-armor shield blocks 20%.
+// shield's own armor, moved up or down by half the range at a full Strength
+// edge. Even Strength with a 5-armor shield blocks 20%.
 func blockChance(shieldArmor, defStr, atkStr int) int {
 	cfg := configs.GetCombatConfig()
 	minBlock := int(cfg.BlockChanceMin)
 	maxBlock := int(cfg.BlockChanceMax)
-	strength := (statDeltaProportional(defStr, atkStr) - 0.5) * float64(maxBlock-minBlock)
+	strength := StatEdge(defStr, atkStr) * float64(maxBlock-minBlock) / 2
 	return max(minBlock, min(maxBlock, minBlock+shieldArmor+int(math.Round(strength))))
 }
 
@@ -306,9 +275,9 @@ func parryModifier(weapon items.Item) (mod int, ok bool) {
 }
 
 // parryChance returns the percent chance that a melee strike is parried:
-// the Speed delta in [ParryChanceMin, ParryChanceMax], then the weapon's
-// modifier, which moves the whole range (a sword parries 10–35%, a dagger
-// 0–25%). A ParryChanceMax of 0 turns parrying off.
+// the minimum grown by the Speed advantage up to ParryChanceMax, then the
+// weapon's modifier, which moves the whole range (a sword parries 10–35%,
+// a dagger 0–25%). A ParryChanceMax of 0 turns parrying off.
 func parryChance(defSpeed, atkSpeed, weaponMod int) int {
 	cfg := configs.GetCombatConfig()
 	minParry := int(cfg.ParryChanceMin)
@@ -316,7 +285,8 @@ func parryChance(defSpeed, atkSpeed, weaponMod int) int {
 	if maxParry <= 0 {
 		return 0
 	}
-	base := max(minParry, min(maxParry, int(math.Floor(statDelta(defSpeed, atkSpeed)*float64(maxParry)))))
+	base := floorChance(advantageChance(float64(minParry), float64(maxParry), statAdvantage(defSpeed, atkSpeed)))
+	base = max(minParry, min(maxParry, base))
 	return max(0, min(100, base+weaponMod))
 }
 
@@ -328,17 +298,11 @@ func rollDefense(name string, chance int) bool {
 }
 
 // BashChance returns the probability in [BashChanceMin, BashChanceMax] that
-// a shield-bearer can bash when a melee strike is blocked (Phase 30g2).
-// Based on the defender's Strength advantage over the attacker.
+// a shield-bearer can bash when a melee strike is blocked (Phase 30g2): the
+// minimum, grown by the bearer's Strength advantage over the attacker.
 func BashChance(defStr, atkStr int) int {
 	cfg := configs.GetCombatConfig()
-	minBash := int(cfg.BashChanceMin)
-	maxBash := int(cfg.BashChanceMax)
-	actual := int(math.Floor(statDelta(defStr, atkStr) * float64(maxBash)))
-	if actual < minBash {
-		actual = minBash
-	}
-	return actual
+	return floorChance(advantageChance(float64(cfg.BashChanceMin), float64(cfg.BashChanceMax), statAdvantage(defStr, atkStr)))
 }
 
 // dualWieldHitPenalty returns the negative hit modifier applied to the offhand

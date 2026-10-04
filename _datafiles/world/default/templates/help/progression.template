@@ -1,6 +1,6 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">progression</ansi>
 
-Your level measures experience. You gain health on every level, and skill
+Your level measures experience. Your maximum health grows with levels, and you gain skill
 training points every {{ config "GamePlay.Progression.TrainingPointsEveryNLevels" }} level(s).
 Automatic racial stats rise at multiples of {{ config "GamePlay.Progression.StatStepLevels" }} levels:
 with the shipped interval, levels 5, 10, 15, and so on. Between those steps,
@@ -14,9 +14,11 @@ by archetype and focus (<ansi fg="command">help growth</ansi>).
 <ansi fg="yellow-bold">Health by archetype</ansi>
 
 The shipped rates through level {{ config "GamePlay.Progression.HPFullLevels" }} are:
-  Warrior 6 HP per level; cleric and ranger 5; rogue 4; wizard 3.
+  Warrior 3 HP per level; cleric and ranger 2.5; rogue 2; wizard 1.5.
 <ansi fg="command">archetype</ansi> lists each archetype's current rate.
-After that, every archetype gains {{ config "GamePlay.Progression.HPAfterFull" }} HP per level.
+After that, a cleric or ranger gains {{ config "GamePlay.Progression.HPAfterFull" }} HP per level, and each other archetype
+gains in proportion to its rate: a warrior more, a wizard less.
+Fractional gains accumulate across levels; each part of the total rounds down.
 Add {{ config "GamePlay.Progression.HPBase" }} base HP, {{ config "GamePlay.Progression.HPPerVitality" }} HP per adjusted Vitality, and your health bonuses.
 Without a known archetype, the early rate is {{ config "GamePlay.Progression.DefaultHPPerLevel" }} HP per level.
 Wounds reduce how far healing can restore you (<ansi fg="command">help wounds</ansi>).

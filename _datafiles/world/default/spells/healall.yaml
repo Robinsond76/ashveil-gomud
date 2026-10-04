@@ -1,7 +1,7 @@
 # Learned at the Sanctuary of the Benevolent Heart (ROOM 18)
 spellid: healall
 name: Minor Heal All
-description: Heals the present company for 2d3
+description: Heals the present company for 2d3 each, plus 1 per 2 caster levels
 type: helpmulti
 school: restoration
 cost: 6

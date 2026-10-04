@@ -11,6 +11,7 @@ The <ansi fg="skill">brawling</ansi> skill gives you moves to use in combat.
 Once a battle has started it plays out on its own, so you can't type <ansi fg="skill">tackle</ansi> or <ansi fg="skill">disarm</ansi> in one (see <ansi fg="command">help targeting</ansi>).
 Instead, any level of brawling lets you tackle on your own in a battle, by the same odds (<ansi fg="command">help abilities</ansi>); warrior companions do too.
 
-The odds of a successful tackle are: <ansi fg="red">clamp(AttackSpeed - DefendPerception + 20, 20, 80)</ansi>
+The odds of a successful tackle are 40% when your Speed equals the target's Perception,
+moving 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to 80% for each point ahead, or to 20% for each point behind.
 The chance to disarm is: <ansi fg="red">(attackSpeed+attackSmarts)-(defendStrength+defendPerception) + 5</ansi>
 

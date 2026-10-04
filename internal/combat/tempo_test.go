@@ -2,6 +2,7 @@ package combat
 
 import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
 	"github.com/stretchr/testify/assert"
@@ -34,11 +35,11 @@ func TestTempoOwnSpeedAndClamp(t *testing.T) {
 	for _, tc := range []struct {
 		speed int
 		want  float64
-	}{{-100, 0.6}, {10, 1}, {30, 1.5}, {1000, 1.5}} {
+	}{{-100, 0.6}, {int(configs.GetCombatConfig().TempoSpeedRef), 1}, {int(configs.GetCombatConfig().TempoSpeedRef + configs.GetCombatConfig().TempoSpeedSpan), 1.5}, {1000, 1.5}} {
 		c.Stats.Speed.ValueAdj = tc.speed
 		assert.InDelta(t, tc.want, Tempo(&c), 1e-9)
 	}
-	c.Stats.Speed.ValueAdj = 10
+	c.Stats.Speed.ValueAdj = int(configs.GetCombatConfig().TempoSpeedRef)
 	target := characters.Character{}
 	target.Stats.Speed.ValueAdj = 1000
 	assert.Equal(t, 1, combatAttackCount(c, target), "one unarmed turn regardless of target Speed")
@@ -47,7 +48,7 @@ func TestTempoOwnSpeedAndClamp(t *testing.T) {
 func TestTempoBurdenAndAttackModifiers(t *testing.T) {
 	burdenSpecs(t)
 	c := characters.Character{}
-	c.Stats.Speed.ValueAdj = 10
+	c.Stats.Speed.ValueAdj = int(configs.GetCombatConfig().TempoSpeedRef)
 	assert.InDelta(t, 1, Tempo(&c), 1e-9)
 	heavy(&c)
 	assert.InDelta(t, 0.65, Tempo(&c), 1e-9, "full burden reduces tempo by 35 percent")

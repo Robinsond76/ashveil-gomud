@@ -5,8 +5,11 @@ you hit and the more you can carry.
 
 <ansi fg="yellow">Combat</ansi>
 
-* Adds a flat damage bonus to every attack. The stronger you are compared to
-  your opponent, the larger this bonus becomes (up to +{{ config "GamePlay.Combat.DamageBonusMax" }} damage).
+* Every strike adds {{ config "GamePlay.Combat.DamageBonusMin" }} damage plus {{ config "GamePlay.Combat.DamagePerStrength" }} per effective Strength,
+  with an extra bonus when you are stronger than your opponent: up to
+  +{{ config "GamePlay.Combat.DamageEdgeMax" }} at a {{ config "GamePlay.Combat.StatEdgeSpan" }}-point lead, 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of that per point (<ansi fg="command">help stat-edge</ansi>). The combined
+  bonus rounds down and stops at +{{ config "GamePlay.Combat.DamageBonusMax" }} damage, before critical hits and armor.
+  Your Strength helps even against an equally strong opponent.
 * Increases the size of your unarmed damage dice when fighting without a weapon.
 * With a shield, raises your chance to block a blow, and to slam a blocked
   melee blow back with a shield bash (<ansi fg="command">help defense</ansi>).

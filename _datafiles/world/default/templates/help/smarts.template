@@ -5,8 +5,9 @@ weaknesses others miss.
 
 <ansi fg="yellow">Combat</ansi>
 
-* Increases your critical hit chance. The smarter you are compared to your
-  opponent, the more often you land a decisive blow (up to {{ config "GamePlay.Combat.CritChanceMax" }}% crit chance).
+* Sets your critical hit chance: {{ config "GamePlay.Combat.CritChanceEven" }}% at equal Smarts, rising toward
+  {{ config "GamePlay.Combat.CritChanceMax" }}% when you are smarter than your opponent and falling toward
+  {{ config "GamePlay.Combat.CritChanceMin" }}% when you are not, 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way per point (<ansi fg="command">help stat-edge</ansi>).
 
 <ansi fg="yellow">Magic</ansi>
 

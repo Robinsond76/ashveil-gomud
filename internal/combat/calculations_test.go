@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAlignmentChange(t *testing.T) {
@@ -59,121 +61,89 @@ func TestAlignmentChange(t *testing.T) {
 	}
 }
 
-// TestStatDelta verifies the clamped fractional delta helper.
-func TestStatDelta(t *testing.T) {
-	tests := []struct {
+// edgeConfig pins the stat-edge formulas' knobs to their shipped defaults.
+func edgeConfig(t *testing.T) {
+	t.Helper()
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.StatEdgeSpan = 10
+	cfg.Combat.ToHitMin, cfg.Combat.ToHitEven, cfg.Combat.ToHitMax = 25, 50, 100
+	cfg.Combat.CritChanceMin, cfg.Combat.CritChanceEven, cfg.Combat.CritChanceMax = 5, 15, 30
+	cfg.Combat.CritMultMin, cfg.Combat.CritMultMax = 1.5, 3.0
+	cfg.Combat.DodgeChanceMin, cfg.Combat.DodgeChanceMax = 5, 30
+	cfg.Combat.DamageBonusMin, cfg.Combat.DamageBonusMax, cfg.Combat.DamagePerStrength = 0, 10, 0
+	cfg.Combat.DamageEdgeMax = 10
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
+}
+
+// TestStatEdge: the difference over the span, held to −1..1.
+func TestStatEdge(t *testing.T) {
+	edgeConfig(t)
+	for _, tt := range []struct {
 		atk, def int
 		want     float64
-	}{
-		{100, 0, 1.0}, // full advantage
-		{0, 100, 0.0}, // no advantage
-		{50, 0, 0.5},  // half
-		{0, 0, 0.0},   // equal
-		{200, 0, 1.0}, // clamped at 1
-		{50, 50, 0.0}, // equal stats
-		{75, 25, 0.5}, // 50 delta
+	}{{0, 0, 0}, {3, 2, 0.1}, {2, 3, -0.1}, {7, 2, 0.5}, {12, 2, 1}, {40, 0, 1}, {0, 40, -1}, {math.MaxInt, math.MinInt, 1}} {
+		assert.InDelta(t, tt.want, StatEdge(tt.atk, tt.def), 1e-9, "%d against %d", tt.atk, tt.def)
 	}
-	for _, tt := range tests {
-		got := statDelta(tt.atk, tt.def)
-		if math.Abs(got-tt.want) > 1e-9 {
-			t.Errorf("statDelta(%d, %d) = %g; want %g", tt.atk, tt.def, got, tt.want)
-		}
-	}
+	assert.Zero(t, statAdvantage(2, 3), "a deficit is no advantage")
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.StatEdgeSpan = 5
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
+	assert.InDelta(t, 0.2, StatEdge(3, 2), 1e-9, "a smaller span makes each point count more")
 }
 
-// TestDamageBonus verifies damage bonus uses Strength delta and config bounds.
-// Default config: min=0, max=10.
+// TestDamageBonus: with no absolute growth, the Strength advantage alone
+// adds up to DamageEdgeMax (here the whole 0–10 range) over one span.
 func TestDamageBonus(t *testing.T) {
-	tests := []struct {
-		atkStr, defStr int
-		wantMin        int
-		wantMax        int
-	}{
-		{0, 0, 0, 0},     // equal -> 0
-		{100, 0, 10, 10}, // full delta -> max (10)
-		{50, 0, 5, 5},    // half delta -> 5
-		{0, 100, 0, 0},   // no advantage -> min (0)
-	}
-	for _, tt := range tests {
-		got := damageBonus(tt.atkStr, tt.defStr)
-		if got < tt.wantMin || got > tt.wantMax {
-			t.Errorf("damageBonus(%d, %d) = %d; want [%d, %d]", tt.atkStr, tt.defStr, got, tt.wantMin, tt.wantMax)
-		}
+	edgeConfig(t)
+	for _, tt := range []struct{ atk, def, want int }{
+		{0, 0, 0}, {5, 0, 5}, {10, 0, 10}, {100, 0, 10}, {0, 100, 0}, {3, 2, 1},
+	} {
+		assert.Equal(t, tt.want, damageBonus(tt.atk, tt.def), "%d against %d", tt.atk, tt.def)
 	}
 }
 
-// TestHitChance verifies hit chance uses Speed proportional delta and config bounds.
-// Default config: min=25, max=100.
+// TestHitChance: ToHitEven at equal Speed, toward 100 when faster and 25
+// when slower; one point is a tenth of the way.
 func TestHitChance(t *testing.T) {
-	tests := []struct {
-		atkSpd, defSpd int
-		wantMin        int
-		wantMax        int
-	}{
-		{0, 0, 50, 50},     // equal -> proportional 0.5 -> 50
-		{100, 0, 100, 100}, // full proportional advantage -> 100
-		{50, 0, 100, 100},  // 50/(50+0)=1.0 -> 100
-		{0, 100, 25, 25},   // no advantage -> 0, clamped to min (25)
-	}
-	for _, tt := range tests {
-		got := hitChance(tt.atkSpd, tt.defSpd)
-		if got < tt.wantMin || got > tt.wantMax {
-			t.Errorf("hitChance(%d, %d) = %d; want [%d, %d]", tt.atkSpd, tt.defSpd, got, tt.wantMin, tt.wantMax)
-		}
+	edgeConfig(t)
+	for _, tt := range []struct{ atk, def, want int }{
+		{0, 0, 50}, {50, 50, 50}, {3, 2, 55}, {2, 3, 47}, {7, 2, 75}, {12, 2, 100}, {2, 12, 25}, {100, 0, 100}, {0, 100, 25},
+	} {
+		assert.Equal(t, tt.want, hitChance(tt.atk, tt.def), "%d against %d", tt.atk, tt.def)
 	}
 }
 
-// TestCritChance verifies crit chance uses Smarts proportional delta and config bounds.
-// Default config: min=5, max=30.
+// TestCritChance: CritChanceEven at equal Smarts, then the buff flags.
 func TestCritChance(t *testing.T) {
-	tests := []struct {
-		atkSmarts, defSmarts int
-		hasAccuracy          bool
-		targetHasBlink       bool
-		wantMin              int
-		wantMax              int
+	edgeConfig(t)
+	for _, tt := range []struct {
+		atk, def        int
+		accuracy, blink bool
+		want            int
 	}{
-		{0, 0, false, false, 15, 15},   // equal -> proportional 0.5 -> 15
-		{100, 0, false, false, 30, 30}, // full proportional advantage -> 30
-		{50, 0, false, false, 30, 30},  // 50/(50+0)=1.0 -> 30
-		{0, 100, false, false, 5, 5},   // no advantage -> 0, clamped to min (5)
-		// accuracy doubles, capped at 100
-		{100, 0, true, false, 60, 60},
-		// blink halves
-		{100, 0, false, true, 15, 15},
-		// both: 30*2/2 = 30
-		{100, 0, true, true, 30, 30},
-		// blink halves: 15/2=7, min enforced (max(5,7)=7)
-		{0, 0, false, true, 7, 7},
-	}
-	for _, tt := range tests {
-		got := critChance(tt.atkSmarts, tt.defSmarts, tt.hasAccuracy, tt.targetHasBlink)
-		if got < tt.wantMin || got > tt.wantMax {
-			t.Errorf("critChance(%d, %d, %v, %v) = %d; want [%d, %d]",
-				tt.atkSmarts, tt.defSmarts, tt.hasAccuracy, tt.targetHasBlink, got, tt.wantMin, tt.wantMax)
-		}
+		{0, 0, false, false, 15},
+		{10, 0, false, false, 30},
+		{0, 10, false, false, 5},
+		{5, 0, false, false, 22},
+		{10, 0, true, false, 60},   // accuracy doubles
+		{10, 0, false, true, 15},   // blink halves
+		{10, 0, true, true, 30},    // both
+		{0, 0, false, true, 7},     // 15/2, above the minimum
+		{0, 10, false, true, 5},    // the minimum holds
+		{100, 0, false, false, 30}, // capped
+	} {
+		assert.Equal(t, tt.want, critChance(tt.atk, tt.def, tt.accuracy, tt.blink), "%+v", tt)
 	}
 }
 
-// TestCritMultiplier verifies crit multiplier uses Perception proportional delta.
-// Default config: min=1.5, max=3.0.
+// TestCritMultiplier: the minimum, grown by the Perception advantage.
 func TestCritMultiplier(t *testing.T) {
-	tests := []struct {
-		atkPerc, defPerc int
-		wantMin          float64
-		wantMax          float64
-	}{
-		{0, 0, 1.5, 1.5},   // equal -> proportional 0.5 -> 1.5 (equals min)
-		{100, 0, 3.0, 3.0}, // full proportional advantage -> max (3.0)
-		{50, 0, 3.0, 3.0},  // 50/(50+0)=1.0 -> 3.0
-		{0, 100, 1.5, 1.5}, // no advantage -> 0, clamped to min (1.5)
-	}
-	for _, tt := range tests {
-		got := critMultiplier(tt.atkPerc, tt.defPerc)
-		if got < tt.wantMin-1e-9 || got > tt.wantMax+1e-9 {
-			t.Errorf("critMultiplier(%d, %d) = %g; want [%g, %g]",
-				tt.atkPerc, tt.defPerc, got, tt.wantMin, tt.wantMax)
-		}
+	edgeConfig(t)
+	for _, tt := range []struct {
+		atk, def int
+		want     float64
+	}{{0, 0, 1.5}, {10, 0, 3.0}, {5, 0, 2.25}, {0, 10, 1.5}, {100, 0, 3.0}} {
+		assert.InDelta(t, tt.want, critMultiplier(tt.atk, tt.def), 1e-9, "%d against %d", tt.atk, tt.def)
 	}
 }
 
@@ -187,7 +157,7 @@ func TestCritDamageBonus(t *testing.T) {
 	}{
 		// base=12, mult=1.5 -> bonus = floor(12*(1.5-1)) = floor(6) = 6
 		{2, 6, 0, 0, 0, 6, 6},
-		// base=12, mult=3.0 -> bonus = floor(12*(3.0-1)) = floor(24) = 24
+		// base=12, mult=3.0 (a full Perception edge) -> floor(12*(3.0-1)) = 24
 		{2, 6, 0, 100, 0, 24, 24},
 		// base=0, any -> 0
 		{0, 0, 0, 100, 0, 0, 0},
@@ -203,24 +173,13 @@ func TestCritDamageBonus(t *testing.T) {
 	}
 }
 
-// TestDodgeChance verifies dodge chance uses Perception delta and config bounds.
-// Default config: min=5, max=30.
+// TestDodgeChance: the minimum, grown by the defender's Perception advantage.
 func TestDodgeChance(t *testing.T) {
-	tests := []struct {
-		defPerc, atkPerc int
-		wantMin          int
-		wantMax          int
-	}{
-		{0, 0, 5, 5},     // equal -> min (5)
-		{100, 0, 30, 30}, // full advantage -> max (30)
-		{0, 100, 5, 5},   // no advantage -> min (5)
-		{50, 0, 15, 15},  // half delta -> floor(0.5*30)=15
-	}
-	for _, tt := range tests {
-		got := dodgeChance(tt.defPerc, tt.atkPerc)
-		if got < tt.wantMin || got > tt.wantMax {
-			t.Errorf("dodgeChance(%d, %d) = %d; want [%d, %d]", tt.defPerc, tt.atkPerc, got, tt.wantMin, tt.wantMax)
-		}
+	edgeConfig(t)
+	for _, tt := range []struct{ def, atk, want int }{
+		{0, 0, 5}, {10, 0, 30}, {0, 10, 5}, {5, 0, 17}, {3, 2, 7}, {100, 0, 30},
+	} {
+		assert.Equal(t, tt.want, dodgeChance(tt.def, tt.atk), "%d against %d", tt.def, tt.atk)
 	}
 }
 

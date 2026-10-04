@@ -1,7 +1,7 @@
 # Learned at the Sanctuary of the Benevolent Heart (ROOM 18)
 spellid: heal
 name: Minor Heal
-description: Heals for 2d3
+description: Heals for 2d3, plus 1 per caster level
 type: helpsingle
 school: restoration
 cost: 3

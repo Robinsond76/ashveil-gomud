@@ -11,6 +11,7 @@ package archetype
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -226,7 +227,9 @@ func (m *ArchetypeModule) ChooseAtCreation(userID int, archetypeID string) (stri
 // healthLine states an archetype's live HP rates for creation and listing.
 func healthLine(a archetypes.Archetype) string {
 	cfg := configs.GetProgressionConfig()
-	return fmt.Sprintf("HP: %g per level through level %d, then %g per level.", healthRate(a), cfg.HPFullLevels, cfg.HPAfterFull)
+	rate := healthRate(a)
+	after := math.Round(cfg.HealthAfterFull(rate)*100) / 100
+	return fmt.Sprintf("HP: %g per level through level %d, then %g per level.", rate, cfg.HPFullLevels, after)
 }
 
 func healthRate(a archetypes.Archetype) float64 {

@@ -119,7 +119,8 @@ func TestSpellNarrationThroughTheRealCast(t *testing.T) {
 	}
 	require.NotNil(t, list, "Oswin's heal lands")
 	healed, _ := strconv.Atoi(list[1])
-	assert.True(t, healed >= 2 && healed <= 6, "2d3 healed, got %d", healed)
+	bonus := oswin.Character.Level / 2 // 30g6: 1 per 2 caster levels
+	assert.True(t, healed >= 2+bonus && healed <= 6+bonus, "2d3+%d healed, got %d", bonus, healed)
 
 	for _, line := range strings.Split(all+strings.Join(*heard, ""), "\n") {
 		if spellLine.MatchString(line) {
