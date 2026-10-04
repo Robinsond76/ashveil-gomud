@@ -3,9 +3,10 @@
 Amends slice 30g6 of the [30g design](2026-09-30-phase-30g-tempo-defense-design.md).
 Written 2026-10-04 from a review of the first 30g6 candidate (branch
 `phase-30g6-tuning`, commit `5b36efd`); the owner approved every
-recommendation ("Yes let's do everything you're suggesting", 2026-10-04).
-Decisions 8 and 11–14 are unchanged; this changes how they are met and
-measured.
+recommendation ("Yes let's do everything you're suggesting", 2026-10-04),
+then settled how company focus is judged (decision D). Decisions 8, 11–13
+are unchanged; decision 14's company-focus clause is relaxed by D. This
+changes how they are met and measured.
 
 ## Why
 
@@ -70,10 +71,11 @@ one point moves a tenth of the way.
 ### B. Strength damage grows with Strength (30g6)
 
 Keep the candidate's `DamagePerStrength`: the bonus is `DamageBonusMin +
-Strength × DamagePerStrength + advantage × (DamageBonusMax −
-DamageBonusMin)`, rounded down and capped at `DamageBonusMax`, so `e`
-grows with level as decision 8 needs. The advantage term uses decision
-A's edge.
+Strength × DamagePerStrength + advantage × DamageEdgeMax`, rounded down
+and held to `DamageBonusMin`–`DamageBonusMax`, so `e` grows with level as
+decision 8 needs. The advantage term uses decision A's edge, with its own
+small range (new `DamageEdgeMax`): spanning the whole bonus range made a
+two-point Strength lead worth more than a third of a blow.
 
 ### C. The asserted fights are a true mirror (30g6a)
 
@@ -89,18 +91,29 @@ A's edge.
 
 ### D. Tactics are measured as tactics (30g6a)
 
-- **Focus wins sooner** compares mean rounds of **won fights** (focus
-  against spread), with the focus win rate still higher over all fights.
-- **Tactics claims need significance:** "focus wins sooner" and "enemy
-  targeting takes more health" each need a one-sided Welch statistic of
-  at least 1.645 (95%) over the cell's fights, not a bare `>` on two
-  noisy means. Every fight stays in the sample; nothing is discarded.
+- **Company focus is reported, not asserted** (owner, 2026-10-04: "focus
+  may win some battles and some it might not, it's ok. It depends on the
+  strategy of the player... It's just a strategy we offer to the
+  player."). Measurement showed why "focus wins faster" could not hold:
+  killing five foes takes the same total damage either way, so focus
+  keeps the company standing (level 10: 83% wins against 58%) without
+  ending won fights sooner. The focus cells stay in the table.
+- **Enemy targeting must hurt** (decision 14): weakest and caster
+  targeting against a passive company remove more company health, with a
+  one-sided Welch statistic of at least 1.645 (95%) over the cell's
+  fights, not a bare `>` on two noisy means. Every fight stays in the
+  sample; nothing is discarded.
 - The table gains a won-fight mean-rounds column.
 
 ### E. HP keeps class differences (30g6)
 
-- `HPFullLevels` at least 10, so the class rates carry the early levels;
-  `HPAfterFull` small enough that a level 60 has 2–3× a level 10's HP.
+- `HPFullLevels` at least 10, so the class rates carry the early levels.
+- **After `HPFullLevels`, each archetype keeps its proportion:** a level
+  gives `HPAfterFull × the archetype's rate ÷ DefaultHPPerLevel`, so
+  `HPAfterFull` is the middle archetype's later gain and a warrior still
+  gains more than a wizard. A flat later gain shrank the warrior's lead
+  to a few percent by level 60.
+- `HPAfterFull` large enough that a level 60 has 2–3× a level 10's HP.
 - **New assertions:** at level 60 a warrior has at least 1.25× a
   wizard's HP with the same Vitality, and `DefaultHPPerLevel` equals the
   middle archetypes' rate (cleric and ranger).
@@ -126,8 +139,7 @@ With `ASHVEIL_BALANCE=1` and 100 fights a cell:
 - spread mirror: median 10–15 rounds at levels 1, 5, 10, 30 and 60
   (reported at 100), and company wins 35–65%;
 - kit not significantly worse than the spread mirror;
-- focus against passive enemies: wins more often, and its won fights end
-  significantly sooner;
+- company focus: reported only (decision D);
 - weakest and caster targeting against a passive company: significantly
   more company health removed;
 - level 30 against level 10: wins at least 95%, no member lost in most;

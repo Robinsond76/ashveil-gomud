@@ -612,7 +612,6 @@ func TestBalance5v5(t *testing.T) {
 		if level <= 60 {
 			passive := cells[companySpread+"/"+enemySpread]
 			baselineMedian, baselineWins := balanceMedianAndWins(passive)
-			_, focusWins := balanceMedianAndWins(cells[companyFocus+"/"+enemySpread])
 			// The mirror is even: neither side should be clearly favored.
 			assert.GreaterOrEqual(t, baselineWins, 35, "L%d mirror parity", level)
 			assert.LessOrEqual(t, baselineWins, 65, "L%d mirror parity", level)
@@ -621,12 +620,9 @@ func TestBalance5v5(t *testing.T) {
 			assert.Greater(t, balanceWelchZ(kitWins, balanceWins(passive)), -balanceSignificantZ, "L%d kit is no worse than the mirror", level)
 			assert.GreaterOrEqual(t, baselineMedian, 10, "L%d spread median", level)
 			assert.LessOrEqual(t, baselineMedian, 15, "L%d spread median", level)
-			assert.Greater(t, focusWins, baselineWins, "L%d focus wins more often", level)
-			// "Sooner" compares rounds to victory: a lost fight's length is
-			// set by the enemy's damage, which company focus cannot shorten.
-			focusWon, baselineWon := balanceWonRounds(cells[companyFocus+"/"+enemySpread]), balanceWonRounds(passive)
-			z := balanceWelchZ(baselineWon, focusWon)
-			assert.GreaterOrEqual(t, z, balanceSignificantZ, "L%d focus wins sooner (won-fight rounds %.1f vs %.1f)", level, balanceMean(focusWon), balanceMean(baselineWon))
+			// Company focus is reported, not asserted (owner, 2026-10-04): it is
+			// a strategy the player may choose, not a guaranteed advantage.
+			// Enemy targeting must still trouble a passive company (decision 14).
 			for _, em := range []string{enemyDefault, enemyCasters} {
 				lost, base := balanceHPLost(cells[companySpread+"/"+em], sideCompany), balanceHPLost(passive, sideCompany)
 				z := balanceWelchZ(lost, base)
