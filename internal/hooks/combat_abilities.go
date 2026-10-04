@@ -199,12 +199,13 @@ func abilitySituation(a actor, u *users.UserRecord, foe *mobs.Mob) strategy.Abil
 			_, waiting := abilityReady[abilityKey{who: a.who, id: id}]
 			return !waiting
 		},
-		Weapon:       weapon,
-		Backstab:     backstab,
-		FoeDown:      abilityDown[foe.InstanceId] || status.Live(&foe.Character, status.KnockedDown),
-		FoeStunned:   status.Live(&foe.Character, status.Stunned),
-		FoeStaggered: status.Live(&foe.Character, status.Staggered),
-		FoeExposed:   status.Live(&foe.Character, status.Exposed),
+		Weapon:        weapon,
+		Backstab:      backstab,
+		FoeDown:       status.Live(&foe.Character, status.KnockedDown),
+		FoeDownQueued: abilityDown[foe.InstanceId],
+		FoeStunned:    status.Live(&foe.Character, status.Stunned),
+		FoeStaggered:  status.Live(&foe.Character, status.Staggered),
+		FoeExposed:    status.Live(&foe.Character, status.Exposed),
 	}
 }
 

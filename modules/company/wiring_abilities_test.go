@@ -440,3 +440,33 @@ func TestWarriorsDoNotDuplicateASuccessfulTackle(t *testing.T) {
 	assert.Equal(t, 1, tackles, "one foe can be knocked down once in the ability pass")
 	assert.NotEmpty(t, swingsBy(*stream, "Garrick Vane"), "the second warrior swings")
 }
+
+// Review (30g6a): a tackle queued earlier in the same ability pass stops a
+// second tackle only. A rogue on the same foe gets no opening until the
+// knockdown is live, the next round.
+func TestAQueuedTackleOpensNoStrikeThisPass(t *testing.T) {
+	b, stream := abilityBrawl(t, map[int]string{1: "warrior", 2: "cleric", 3: "rogue", 4: "ranger"})
+	b.cmd("strategy", "ysolde abilities off")
+	garrick := b.companion(3)
+	garrick.Character.Equipment.Weapon = items.New(10004) // a dagger
+	garrick.Character.Equipment.Offhand = items.Item{}
+	b.start()
+	foe := aimOf(&b.companion(1).Character)
+	garrick.Character.SetAggro(0, foe, characters.DefaultAttack)
+	n := len(*stream)
+	b.fight()
+	round := since(*stream, n)
+	tackles := abilityEvents(round, "Tamsin Reed")
+	require.Len(t, tackles, 1)
+	require.Equal(t, combatstream.OutcomeSucceeded, tackles[0].Outcome)
+	assert.Empty(t, abilityEvents(round, "Garrick Vane"), "no opening on a knockdown that is only queued")
+	// Next round the knockdown is live: the opening is taken.
+	b.toughen()
+	b.hardenBandits()
+	garrick.Character.SetAggro(0, foe, characters.DefaultAttack)
+	n = len(*stream)
+	b.fight()
+	opening := abilityEvents(since(*stream, n), "Garrick Vane")
+	require.Len(t, opening, 1)
+	assert.Equal(t, "Opening Strike", opening[0].Status)
+}

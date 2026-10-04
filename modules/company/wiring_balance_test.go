@@ -300,3 +300,79 @@ func TestBalanceReadyArcherRetainsEarnedTurn(t *testing.T) {
 		})
 	}
 }
+
+// Review (30g6a): enemies keep an earned turn too. A bandit whose company
+// target fell earlier in the round re-aims at a living member and swings,
+// as company members do, so the mirror stays symmetric.
+func TestBalanceEnemyEarnedTurnSurvivesAnEarlierKill(t *testing.T) {
+	b := retargetBrawl(t)
+	opening := b.bandits["bandit cutthroat"][0]
+	b.cmd("attack", fmt.Sprintf("#%d", opening))
+	b.fight()
+	b.toughen()
+	b.hardenBandits()
+	fallen := b.companion(2)
+	var attacker *mobs.Mob
+	for _, m := range b.livingBandits() {
+		if m.Character.Aggro != nil && m.Character.Aggro.Type == characters.DefaultAttack {
+			attacker = m
+			break
+		}
+	}
+	require.NotNil(t, attacker, "a bandit fighting")
+	attacker.Character.SetAggro(0, fallen.InstanceId, characters.DefaultAttack)
+	seen := b.listen()
+	// The member falls to an earlier blow this round: after upkeep has
+	// kept the bandit's aim, during the player's pass (players act first).
+	felled := false
+	t.Cleanup(combatstream.Default().Subscribe(func(e combatstream.Event) {
+		if !felled && e.Kind == combatstream.Attack && e.Source.UserId == 7 {
+			felled = true
+			require.Equal(t, fallen.InstanceId, attacker.Character.Aggro.MobInstanceId, "upkeep kept the aim")
+			fallen.Character.Health = 0
+		}
+	}))
+	b.fight()
+	require.True(t, felled)
+	var blows []combatstream.Event
+	for _, e := range *seen {
+		if e.Kind == combatstream.Attack && e.Source.MobInstanceId == attacker.InstanceId {
+			blows = append(blows, e)
+		}
+	}
+	require.NotEmpty(t, blows, "the bandit still swings")
+	for _, e := range blows {
+		assert.NotEqual(t, fallen.InstanceId, e.Target.MobInstanceId, "not at the fallen member")
+	}
+}
+
+// Review (30g6a): the mirror's cleric casts nothing, yet caster-targeting
+// enemies still find him: the casters cell measures caster targeting.
+func TestBalanceMirrorClericIsACasterWhoCastsNothing(t *testing.T) {
+	t.Cleanup(hooks.UseAimRollForTest(func(n int) int { return n - 1 })) // never the noise
+	f := newBalanceFight(t, 10, companySpread, enemyCasters)
+	casts := 0
+	t.Cleanup(combatstream.Default().Subscribe(func(e combatstream.Event) {
+		if e.Kind == combatstream.CastStart && sideOf(e.Source) == sideCompany {
+			casts++
+		}
+	}))
+	f.toughen()
+	for _, id := range f.enemies {
+		m := mobs.GetInstance(id)
+		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+	}
+	f.step() // upkeep chooses the opening aims
+	oswin := f.companion(2).InstanceId
+	aimed := 0
+	for _, id := range f.enemies {
+		if a := mobs.GetInstance(id).Character.Aggro; a != nil && a.MobInstanceId == oswin {
+			aimed++
+		}
+	}
+	assert.GreaterOrEqual(t, aimed, 2, "caster targeting finds the cleric (%d of 5; a fighter draws none)", aimed)
+	for i := 0; i < 3; i++ {
+		f.step()
+	}
+	assert.Zero(t, casts, "the mirror's cleric casts nothing")
+}

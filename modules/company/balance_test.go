@@ -49,8 +49,8 @@ const balanceGroup = "brawl:mirror"
 //
 // Spread and focus are the true mirror (30g6 amendment): the mirror group
 // has no class abilities and no healer, so the company fights with its
-// abilities off and its cleric as a fighter, and the tactic is the only
-// difference between the cells. Kit is spread with the company's shipped
+// abilities off and its cleric without mana (still a healer by role, the
+// caster enemies aim at), and the tactic is the only difference. Kit is spread with the company's shipped
 // abilities and healing, measured against that mirror; default keeps them
 // too.
 const (
@@ -336,7 +336,12 @@ func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, ene
 		for _, who := range []string{"me", "tamsin", "oswin", "garrick", "ysolde"} {
 			require.Contains(t, b.cmd("strategy", who+" abilities off"), "class abilities", who)
 		}
-		require.Contains(t, b.cmd("strategy", "oswin fighter"), "now a fighter")
+		// Oswin stays a healer, so caster-targeting enemies still see a
+		// caster, but with no mana he casts nothing and swings like the
+		// mirror's hedge priest (review: a "fighter" Oswin left the casters
+		// cell measuring nearest-foe targeting).
+		oswin := &b.companion(2).Character
+		oswin.Mana, oswin.ManaMax.Value = 0, 0
 	}
 	switch companyMode {
 	case companySpread, companyKit:
@@ -447,18 +452,20 @@ func (f *balanceFight) standing() (company, enemy int) {
 	return company, enemy
 }
 
-// healthRemaining totals live, present health. Removed/fallen mobs contribute zero.
+// healthRemaining totals live health on each side. A member who fled or
+// was routed keeps its health (it was not removed); a fallen or destroyed
+// one counts zero.
 func (f *balanceFight) healthRemaining() (hp [2]int) {
 	hp[sideCompany] = max(0, f.aria.Character.Health)
 	for id := 1; id <= 4; id++ {
 		if instance, ok := module.instance(7, id); ok {
-			if m := mobs.GetInstance(instance); m != nil && m.Character.RoomId == f.road.RoomId {
+			if m := mobs.GetInstance(instance); m != nil {
 				hp[sideCompany] += max(0, m.Character.Health)
 			}
 		}
 	}
 	for _, id := range f.enemies {
-		if m := mobs.GetInstance(id); m != nil && m.Character.RoomId == f.road.RoomId {
+		if m := mobs.GetInstance(id); m != nil {
 			hp[sideEnemy] += max(0, m.Character.Health)
 		}
 	}
