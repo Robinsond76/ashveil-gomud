@@ -535,6 +535,19 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 			affectedMobInstanceIds = append(affectedMobInstanceIds, user.Character.Aggro.MobInstanceId)
 
 			defMob := mobs.GetInstance(user.Character.Aggro.MobInstanceId)
+			// A kill earlier in this round did not spend this fighter's turn.
+			// Select a legal replacement before resolving the earned blow.
+			if defMob != nil && defMob.Character.Health < 1 {
+				previous := user.Character.Aggro
+				if reassignPlayerTarget(user, uRoom) {
+					// Replacement did not fire the weapon: retain its readiness.
+					user.Character.Aggro.RoundsWaiting = previous.RoundsWaiting
+					user.Character.Aggro.ColdDelayed = previous.ColdDelayed
+					user.Character.Aggro.ColdNotice = previous.ColdNotice
+					defMob = mobs.GetInstance(user.Character.Aggro.MobInstanceId)
+					affectedMobInstanceIds = append(affectedMobInstanceIds, user.Character.Aggro.MobInstanceId)
+				}
+			}
 
 			targetFound := true
 			if defMob == nil {
@@ -706,8 +719,10 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 			if user.Character.Health <= 0 || defMob.Character.Health <= 0 {
 				defMob.Character.EndAggro()
 				events.AddToQueue(events.AggroChanged{MobInstanceId: defMob.InstanceId, RoomId: defMob.Character.RoomId})
-				user.Character.EndAggro()
-				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+				if user.Character.Health <= 0 || !reassignPlayerTarget(user, uRoom) {
+					user.Character.EndAggro()
+					events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
+				}
 			} else {
 				user.Character.SetAggro(0, defMob.InstanceId, characters.DefaultAttack)
 				events.AddToQueue(events.AggroChanged{UserId: user.UserId, RoomId: user.Character.RoomId})
@@ -962,6 +977,17 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 
 		affectedMobInstanceIds = append(affectedMobInstanceIds, mob.InstanceId)
 
+		// A kill earlier in this round did not spend this fighter's turn
+		// (30g6a): a companion or an enemy group member picks a legal
+		// replacement, keeping its weapon's readiness, before its blow.
+		if a := mob.Character.Aggro; a != nil && aggroTargetDown(a) {
+			if reassignCompanionTarget(mob, mobRoom) || reassignEnemyTarget(mob, mobRoom) {
+				mob.Character.Aggro.RoundsWaiting = a.RoundsWaiting
+				mob.Character.Aggro.ColdDelayed = a.ColdDelayed
+				mob.Character.Aggro.ColdNotice = a.ColdNotice
+			}
+		}
+
 		// mob attacks player
 		if mob.Character.Aggro != nil && mob.Character.Aggro.UserId > 0 {
 
@@ -1145,8 +1171,10 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 			}
 
 			if mob.Character.Health <= 0 || defUser.Character.Health <= 0 {
-				mob.Character.EndAggro()
-				events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+				if mob.Character.Health <= 0 || !reassignEnemyTarget(mob, mobRoom) {
+					mob.Character.EndAggro()
+					events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+				}
 				defUser.Character.EndAggro()
 				events.AddToQueue(events.AggroChanged{UserId: defUser.UserId, RoomId: defUser.Character.RoomId})
 			} else {
@@ -1305,8 +1333,10 @@ func handleMobCombat(evt events.NewRound, extra bool) (affectedPlayerIds []int, 
 			}
 
 			if mob.Character.Health <= 0 || defMob.Character.Health <= 0 {
-				mob.Character.EndAggro()
-				events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+				if mob.Character.Health <= 0 || !(reassignCompanionTarget(mob, mobRoom) || reassignEnemyTarget(mob, mobRoom)) {
+					mob.Character.EndAggro()
+					events.AddToQueue(events.AggroChanged{MobInstanceId: mob.InstanceId, RoomId: mob.Character.RoomId})
+				}
 				defMob.Character.EndAggro()
 				events.AddToQueue(events.AggroChanged{MobInstanceId: defMob.InstanceId, RoomId: defMob.Character.RoomId})
 			} else {
@@ -1398,4 +1428,18 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 
 	}
 
+}
+
+// aggroTargetDown reports whether an Aggro's player or mob target is still
+// present but has fallen (health below 1).
+func aggroTargetDown(a *characters.Aggro) bool {
+	if a.UserId > 0 {
+		u := users.GetByUserId(a.UserId)
+		return u != nil && u.Character.Health < 1
+	}
+	if a.MobInstanceId > 0 {
+		m := mobs.GetInstance(a.MobInstanceId)
+		return m != nil && m.Character.Health < 1
+	}
+	return false
 }

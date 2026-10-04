@@ -114,7 +114,7 @@ func TestPronounsAndOrdinalsThroughRealRound(t *testing.T) {
 				laterAttack = i
 			}
 		}
-		if firstDeathAt >= 0 && e.Kind == combatstream.TargetChange && e.Target.MobInstanceId == second {
+		if e.Kind == combatstream.TargetChange && e.Previous.MobInstanceId == first && e.Target.MobInstanceId == second {
 			laterTarget = i
 		}
 		if e.Kind == combatstream.FightEnd {
@@ -133,7 +133,8 @@ func TestPronounsAndOrdinalsThroughRealRound(t *testing.T) {
 	require.Equal(t, 1, deaths[first])
 	require.Equal(t, 1, deaths[second])
 	require.Greater(t, laterAttack, firstDeathAt)
-	require.Greater(t, laterTarget, firstDeathAt)
+	// Replacement now happens on the kill round, before queued death resolution.
+	require.GreaterOrEqual(t, laterTarget, 0, "a replacement from first to second kept both ordinals")
 	require.Greater(t, secondDeathAt, laterAttack)
 	assert.Contains(t, transcript, "first cutthroat")
 	assert.Contains(t, transcript, "second cutthroat")

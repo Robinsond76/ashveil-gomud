@@ -386,6 +386,9 @@ func TestDownedPlayerIsNotDrawnIntoNewBattles(t *testing.T) {
 // off, and the player told why.
 func TestBackstabAtAWaitingGroupIsCalledOff(t *testing.T) {
 	b := newBrawl(t)
+	for _, m := range b.livingBandits() {
+		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+	}
 	b.looseBandits()
 	b.aimAt("bandit captain")
 	b.toughen()
@@ -559,6 +562,9 @@ func TestASpawnedPairIsOneBattle(t *testing.T) {
 // spent, for Aria and for a waiting bandit casting at her.
 func TestCastAtAWaitingGroupIsRefused(t *testing.T) {
 	b := newBrawl(t)
+	for _, m := range b.livingBandits() {
+		m.Character.HealthMax.Value, m.Character.Health = 1000, 1000
+	}
 	b.looseBandits()
 	b.aimAt("bandit captain")
 	b.toughen()

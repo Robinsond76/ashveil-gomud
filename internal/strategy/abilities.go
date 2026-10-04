@@ -120,6 +120,10 @@ type AbilitySituation struct {
 	Close bool
 	// The foe's live statuses.
 	FoeDown, FoeStunned, FoeStaggered, FoeExposed bool
+	// FoeDownQueued: another member's tackle in this ability pass has just
+	// succeeded, but the knockdown is not live yet. It stops a second
+	// tackle and opens nothing else (30g6a).
+	FoeDownQueued bool
 }
 
 // DecideAbility is the ability a member uses this turn, if any: the first
@@ -134,7 +138,7 @@ func DecideAbility(s AbilitySituation) (Ability, bool) {
 		}
 		switch id {
 		case Tackle:
-			if s.Weapon != Shooting && s.Close && !s.FoeDown && !s.FoeStunned {
+			if s.Weapon != Shooting && s.Close && !s.FoeDown && !s.FoeDownQueued && !s.FoeStunned {
 				return id, true
 			}
 		case OpeningStrike:

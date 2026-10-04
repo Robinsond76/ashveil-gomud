@@ -385,6 +385,18 @@
       "Crit": false
     },
     {
+      "Round": 10,
+      "Kind": "target-change",
+      "Source": "user-7",
+      "Target": "bandit cutthroat-2",
+      "Previous": "bandit cutthroat-1",
+      "Outcome": "",
+      "Spell": "",
+      "Damage": 0,
+      "Amount": 0,
+      "Crit": false
+    },
+    {
       "Round": 11,
       "Kind": "attack",
       "Source": "user-7",
@@ -404,18 +416,6 @@
       "Previous": "",
       "Outcome": "",
       "Spell": "mm",
-      "Damage": 0,
-      "Amount": 0,
-      "Crit": false
-    },
-    {
-      "Round": 11,
-      "Kind": "target-change",
-      "Source": "user-7",
-      "Target": "bandit cutthroat-2",
-      "Previous": "",
-      "Outcome": "",
-      "Spell": "",
       "Damage": 0,
       "Amount": 0,
       "Crit": false

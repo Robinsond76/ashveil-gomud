@@ -88,6 +88,9 @@ func TestLightWoundsCloseWithTheFight(t *testing.T) {
 // takes none.
 func TestAnEnemysBleedLeavesALightWound(t *testing.T) {
 	b := newBrawl(t)
+	// Aimed Shot guarantees a critical regardless of the ordinary crit bounds.
+	// Keep this bleed-only fixture free of that independent wound source.
+	b.cmd("strategy", "ysolde abilities off")
 	loadStatusBuffs(t)
 	// Only the bleed may wound the captain: a critical blow in the same
 	// round would add a wound of its own.

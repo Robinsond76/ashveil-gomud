@@ -35,6 +35,8 @@ func TestDecideAbility(t *testing.T) {
 		{"no tackle on cooldown", AbilitySituation{Known: []Ability{Tackle}, Ready: func(Ability) bool { return false }, Close: true}, ""},
 		{"abilities off", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Close: true, Off: true}, ""},
 		{"opening on a downed foe", AbilitySituation{Known: []Ability{OpeningStrike}, Ready: ready, Backstab: true, FoeDown: true}, OpeningStrike},
+		{"no second tackle on a queued knockdown", AbilitySituation{Known: []Ability{Tackle}, Ready: ready, Close: true, FoeDownQueued: true}, ""},
+		{"no opening on a queued knockdown", AbilitySituation{Known: []Ability{OpeningStrike}, Ready: ready, Backstab: true, FoeDownQueued: true}, ""},
 		{"opening on an exposed foe", AbilitySituation{Known: []Ability{OpeningStrike}, Ready: ready, Backstab: true, FoeExposed: true}, OpeningStrike},
 		{"opening on a staggered foe", AbilitySituation{Known: []Ability{OpeningStrike}, Ready: ready, Backstab: true, FoeStaggered: true}, OpeningStrike},
 		{"no opening on a steady foe", AbilitySituation{Known: []Ability{OpeningStrike}, Ready: ready, Backstab: true}, ""},

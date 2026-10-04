@@ -729,3 +729,56 @@ func (s companySide) aimRef(a *characters.Aggro) combatstream.Ref {
 	}
 	return mobRefById(a.MobInstanceId)
 }
+
+// reassignEnemyTarget is the enemy side of an earned turn surviving an
+// earlier kill (30g6a): a group member fighting a company whose company
+// target has just fallen re-aims by its own rule and tier, as upkeep would
+// next round, without the group's focus. It returns false when the mob is
+// in no company battle in the room or no member can be reached.
+func reassignEnemyTarget(mob *mobs.Mob, room *rooms.Room) bool {
+	if mob == nil || room == nil || mob.Character.Aggro == nil || mob.Character.Health <= 0 {
+		return false
+	}
+	if _, _, isCompanion := company.LeaderAndKeyForInstance(mob.InstanceId); isCompanion {
+		return false
+	}
+	for _, userId := range room.GetPlayers() {
+		leader := users.GetByUserId(userId)
+		if leader == nil || leader.Character == nil {
+			continue
+		}
+		side, ok := loadCompanySide(leader, room)
+		if !ok {
+			continue
+		}
+		for _, party := range enemyparty.Parties(room) {
+			if partyMemberSet(party)[mob.InstanceId] && inBattleWith(leader.UserId, party) {
+				return side.reaimEnemy(party, mob, room)
+			}
+		}
+	}
+	return false
+}
+
+// reaimEnemy aims one enemy group member at a living, reachable company
+// member by its rule and tier noise.
+func (s companySide) reaimEnemy(party mobparty.Party, mob *mobs.Mob, room *rooms.Room) bool {
+	candidates, keys := s.combatants()
+	if len(candidates) == 0 {
+		return false
+	}
+	_, attackerCol, found := party.Formation.Find(mobparty.MemberKeyFor(mob.InstanceId))
+	if !found {
+		return false
+	}
+	reach := combat.ResolveReach(&mob.Character, mob.Reach)
+	foes := s.memberFoes(candidates, keys, attackerCol, reach)
+	tier, _ := enemyparty.BattleTier(s.leader.UserId)
+	rule, noise := enemyRule(mob, tier)
+	idx, ok := s.enemyPick(mob, rule, noise, foes, candidates, attackerCol, reach)
+	if !ok || !s.alive[keys[idx]] {
+		return false
+	}
+	s.aimPartyMember(mob, keys[idx], room)
+	return true
+}
