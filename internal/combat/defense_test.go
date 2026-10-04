@@ -68,16 +68,28 @@ func defenseOdds(t *testing.T, block, parry, dodge int) {
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 }
 
+// stockDefenses pins the shipped defense bounds and the stat edge's span.
+func stockDefenses(t *testing.T) {
+	t.Helper()
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.StatEdgeSpan = 10
+	cfg.Combat.BlockChanceMin, cfg.Combat.BlockChanceMax = 15, 45
+	cfg.Combat.ParryChanceMin, cfg.Combat.ParryChanceMax = 5, 30
+	cfg.Combat.BashChanceMin, cfg.Combat.BashChanceMax = 5, 20
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
+}
+
 func TestBlockChance(t *testing.T) {
+	stockDefenses(t)
 	cases := []struct {
 		name                  string
 		armor, defStr, atkStr int
 		want                  int
 	}{
-		{"even Strength, buckler", 5, 50, 50, 20},
-		{"even Strength, tower shield", 10, 50, 50, 25},
-		{"twice the Strength", 5, 100, 50, 25},
-		{"half the Strength", 5, 50, 100, 15},
+		{"even Strength, buckler", 5, 5, 5, 20},
+		{"even Strength, tower shield", 10, 5, 5, 25},
+		{"two points stronger", 5, 6, 4, 23},
+		{"two points weaker", 5, 4, 6, 17},
 		{"held to the maximum", 40, 100, 0, 45},
 		{"held to the minimum", 0, 0, 100, 15},
 	}
@@ -119,11 +131,13 @@ func TestParryModifier(t *testing.T) {
 }
 
 func TestParryChance(t *testing.T) {
+	stockDefenses(t)
 	assert.Equal(t, 10, parryChance(50, 50, 5), "even Speed, a sword: the 5% floor plus 5")
 	assert.Equal(t, 0, parryChance(50, 50, -5), "even Speed, a dagger: the floor less 5")
 	assert.Equal(t, 5, parryChance(50, 50, 0), "even Speed, an axe")
 	assert.Equal(t, 35, parryChance(150, 50, 5), "the 30% cap plus a sword's 5")
 	assert.Greater(t, parryChance(90, 50, 0), parryChance(50, 50, 0), "more Speed parries more")
+	assert.Equal(t, 7, parryChance(3, 2, 0), "one point of Speed: a tenth of the 5–30 range")
 }
 
 // Review: a parry range of 0 is no parry, whatever the weapon adds, so
@@ -142,6 +156,8 @@ func TestZeroParryRangeTurnsParryOff(t *testing.T) {
 }
 
 func TestBashChance(t *testing.T) {
+	stockDefenses(t)
+	assert.Equal(t, 8, BashChance(4, 2), "two points of Strength: a fifth of the 5–20 range")
 	assert.Equal(t, 5, BashChance(50, 50), "even Strength: the minimum")
 	assert.Equal(t, 20, BashChance(150, 50), "a great Strength edge: the maximum")
 	assert.Equal(t, 5, BashChance(20, 90), "a weaker bearer: the minimum")

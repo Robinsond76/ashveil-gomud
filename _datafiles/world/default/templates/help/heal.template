@@ -10,7 +10,7 @@ a patient; it goes in this order:
      Heal and has mana, the most mana first, treats the most hurt first
      (wounds before plain damage). Each tends every wound (4 mana, 2 to 6
      points closed), then heals up to the wound limit (Minor Heal, 3 mana,
-     2 to 6 health), until the mana runs out. This takes no time: the mana
+     2 to 6 health plus 1 per level of the healer), until the mana runs out. This takes no time: the mana
      is spent, but there are no chants.
   2. <ansi fg="yellow">The packs.</ansi> Then birch splints go on each broken bone (4 points
      each) and linen bandages on each cut or puncture (3 points each),

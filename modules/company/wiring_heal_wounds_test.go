@@ -1,6 +1,8 @@
 package company
 
 import (
+	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -189,6 +191,7 @@ func TestHealWoundsALeaderClericHealsToTheLimit(t *testing.T) {
 	c.SetSkill(`cast`, 1)
 	c.SpellBook["heal"] = 1
 	c.SpellBook["tend"] = 1
+	c.Level = 20 // the heal's level bonus outweighs any dice roll
 	c.ManaMax.Value, c.Mana = 40, 40
 	c.HealthMax.Value, c.Health = 100, 50
 	c.Wounds = []wounds.Wound{{Kind: wounds.Cut, Place: "hand", Points: 2}}
@@ -196,6 +199,11 @@ func TestHealWoundsALeaderClericHealsToTheLimit(t *testing.T) {
 	assert.Contains(t, out, "You tend your own cut hand, and it draws closed.")
 	assert.NotContains(t, out, "first, the worst hurt", "a healer who starts on themselves is not 'first' beside anyone")
 	assert.Regexp(t, `You lay glowing hands on yourself\. \(\d+ healed\)`, out)
+	// 30g6: each heal adds the healer's level, as Minor Heal does in battle.
+	m := regexp.MustCompile(`You lay glowing hands on yourself\. \((\d+) healed\)`).FindStringSubmatch(out)
+	require.NotNil(t, m)
+	healed, _ := strconv.Atoi(m[1])
+	assert.GreaterOrEqual(t, healed, min(2+c.Level, c.HealthLimit()-50), "2d3 plus the healer's level %d", c.Level)
 	assert.Empty(t, c.Wounds)
 	assert.Less(t, c.Mana, 40, "the leader's own mana is spent")
 	assert.Greater(t, c.Health, 50)

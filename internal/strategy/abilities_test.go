@@ -58,7 +58,10 @@ func TestDecideAbility(t *testing.T) {
 func TestTackleChanceAndReserveParse(t *testing.T) {
 	assert.Equal(t, 20, TackleChance(0, 50))
 	assert.Equal(t, 80, TackleChance(90, 0))
-	assert.Equal(t, 35, TackleChance(20, 5))
+	assert.Equal(t, 80, TackleChance(20, 5), "a full span ahead")
+	assert.Equal(t, 40, TackleChance(3, 3), "even Speed and Perception")
+	assert.Equal(t, 44, TackleChance(3, 2), "one point ahead: a tenth of the way to 80")
+	assert.Equal(t, 38, TackleChance(2, 3), "one point behind: a tenth of the way to 20")
 
 	for in, want := range map[string]int{"0": 0, "30": 30, "90%": 90} {
 		got, ok := ParseReserve(in)

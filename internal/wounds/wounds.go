@@ -272,6 +272,9 @@ type Healer struct {
 	Key        string
 	Mana       int
 	Tend, Heal bool
+	// HealBonus is added to each heal's dice: the caster's level, as
+	// heal.js adds it in battle (30g6).
+	HealBonus int
 }
 
 // Stock is the treatment items the company can reach.
@@ -417,7 +420,7 @@ func Plan(patients []Patient, healers []Healer, stock Stock, rules Rules, roll R
 				break
 			}
 			h.Mana -= rules.HealCost
-			amt := min(dice(rules.HealDice, roll), p.Limit()-p.Health)
+			amt := min(dice(rules.HealDice, roll)+h.HealBonus, p.Limit()-p.Health)
 			p.Health += amt
 			res.Steps = append(res.Steps, after(Step{Kind: StepHeal, Healed: amt}, *p, h))
 		}

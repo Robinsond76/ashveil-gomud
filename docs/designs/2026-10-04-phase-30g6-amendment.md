@@ -118,6 +118,15 @@ two-point Strength lead worth more than a third of a blow.
   wizard's HP with the same Vitality, and `DefaultHPPerLevel` equals the
   middle archetypes' rate (cleric and ranger).
 
+### F. Healing keeps pace (30g6, added in tuning)
+
+Found in tuning: with HP tens of points larger, a flat 2d3 Minor Heal
+after a three-round chant cost a cleric more swings than it restored, and
+the kit cell lost to the mirror. Heals now add the caster's level: Minor
+Heal 2d3 + 1 per level, Minor Heal All 2d3 + 1 per 2 levels to each
+patient (spell scripts; costs, chants and wound limits unchanged). With
+it, kit is level with the mirror at every asserted level.
+
 ## Slices
 
 - **30g6a — combat fixes and harness** (from the candidate, on master's
@@ -128,7 +137,7 @@ two-point Strength lead worth more than a third of a blow.
   health removed, distinct opening aims and the shipped class rates; C
   and D above. Help: `tempo`, `abilities`, `combat`. The opt-in suite is
   expected to fail acceptance on master's numbers; its table is recorded.
-- **30g6 — stat edges and tuning:** A, B and E, then tune the configured
+- **30g6 — stat edges and tuning:** A, B, E and F, then tune the configured
   numbers until the whole opt-in suite passes. Help for every changed
   formula and the tutorial pointer.
 

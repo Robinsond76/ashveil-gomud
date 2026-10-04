@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/races"
@@ -24,6 +25,13 @@ const (
 func edgeSpecs(t *testing.T) {
 	t.Helper()
 	loadTestData(t)
+	// Fixed-damage fixtures isolate edge/status behavior from balance defaults.
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.DamageBonusMin = 0
+	cfg.Combat.DamageBonusMax = 10
+	cfg.Combat.DamagePerStrength = 0
+	cfg.Combat.DamageEdgeMax = 0
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
 	races.LoadDataFiles()
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: edgeSwordID, Name: "test sword", Type: items.Weapon, Subtype: items.Slashing, Hands: 1, Damage: items.Damage{DiceRoll: "1d1", Attacks: 1, DiceCount: 1, SideCount: 1}})
 	items.SetTestItemSpec(&items.ItemSpec{ItemId: edgeDaggerID, Name: "test dagger", Type: items.Weapon, Subtype: items.Stabbing, Hands: 1, Damage: items.Damage{DiceRoll: "1d1", Attacks: 1, DiceCount: 1, SideCount: 1}})

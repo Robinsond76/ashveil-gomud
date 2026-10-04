@@ -1,6 +1,14 @@
 
 HEAL_DICE_QTY = 2;
 HEAL_DICE_SIDES = 3;
+// Phase 30g6: each caster level adds a point of health, so healing keeps
+// pace with damage and health as levels grow.
+HEAL_PER_LEVEL = 1.0;
+
+// healRoll is one patient's heal before any wound limit.
+function healRoll(sourceActor) {
+    return UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES) + Math.floor(sourceActor.GetLevel() * HEAL_PER_LEVEL);
+}
 
 SPELL_NAME = 'Minor Heal';
 WAIT_ROUNDS = 2; // heal.yaml's waitrounds
@@ -51,7 +59,7 @@ function onMagic(sourceActor, targetActor) {
 
     // Apply the heal first, and report what it mended.
     // Phase 30b: a wound limit holds some of it back, and says so.
-    var rolled = UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES);
+    var rolled = healRoll(sourceActor);
     var healed = targetActor.AddHealth(rolled);
     var suffix = ' (' + healed + ' healed' + targetActor.WoundNote(rolled, healed) + ')';
 

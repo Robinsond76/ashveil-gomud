@@ -185,3 +185,7 @@ Speed and personal burden set your turns each round: <ansi fg="command">help tem
 
 Natural health and mana recovery pauses throughout a battle, including between blows.
 Healers still heal by spells; ordinary buffs keep their real-time durations.
+
+Strength adds bounded damage even against an equal opponent (<ansi fg="command">help strength</ansi>).
+Maximum health grows slowly after the early class gains (<ansi fg="command">help progression</ansi>).
+Each point of a stat over your opponent's counts the same at every level (<ansi fg="command">help stat-edge</ansi>).
