@@ -29,7 +29,9 @@ and D and its "Slices" section. Split from the first 30g6 candidate
 
 `ASHVEIL_BALANCE=1 ASHVEIL_BALANCE_FIGHTS=100 go test ./modules/company -run
 '^TestBalance(5v5|Mismatches|Coordinated)$' -v` (100 fights a cell, every
-fight kept). As expected, master's numbers fail acceptance; 30g6 tunes them.
+fight kept), measured before the review follow-up below (enemy earned
+turns, the mirror's cleric). As expected, master's numbers fail acceptance;
+30g6 tunes them.
 
 | level | company | wins | rounds p10/median/p90 | won-fight mean | stalls |
 |---|---|---|---|---|---|
@@ -54,4 +56,8 @@ fight kept). As expected, master's numbers fail acceptance; 30g6 tunes them.
 
 ## Checks
 
-Recorded with the review outcome in `docs/PROJECT_STATUS.md`.
+After the review follow-up: `make generate` and `make validate` passed;
+`go test -race ./...` passed. New regressions fail without their fixes
+(checked by reverting each fix locally): the queued-tackle opening, the
+enemy earned turn, and the mirror cleric as a caster target. The review
+outcome is in `docs/PROJECT_STATUS.md`.
