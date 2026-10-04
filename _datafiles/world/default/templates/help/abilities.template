@@ -72,3 +72,6 @@ See also: <ansi fg="command">help strategy</ansi>, <ansi fg="command">help comba
 A tackle spends one earned turn, even on a miss. If you earn two turns,
 your other turn can be an ordinary attack. No earned turn means no physical
 ability that round (<ansi fg="command">help tempo</ansi>).
+
+Warriors see a successful tackle earlier in the same ability pass and avoid
+tackling that foe again. A missed tackle still spends its turn.

@@ -35,7 +35,10 @@ func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	t.Setenv("GODEBUG", "randseednop=0")
 	b := newBrawl(t)
 	// Recaptured for Phase 30g4: stepped stats change hit and damage rolls.
-	// This remains an outcome lock for subsequent narration-only changes.
+	// 30g6 updates one target-change event: the next foe is selected on
+	// the kill round, retaining the previous foe reference. All attacks,
+	// casts, rewards and ending values are unchanged. This remains an
+	// outcome lock for subsequent narration-only changes.
 	// The golden predates Phase 30d1, and its fixture keeps a cutthroat
 	// chanting for ever as a placeholder: blows breaking chants would
 	// change what it records.
@@ -101,5 +104,5 @@ func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	require.NoError(t, err)
 	var before narrationOutcome
 	require.NoError(t, json.Unmarshal(data, &before))
-	require.Equal(t, before, result, "Phase 29d must only change narration and ref names")
+	require.Equal(t, before, result, "Narration-only changes must preserve the captured mechanics")
 }

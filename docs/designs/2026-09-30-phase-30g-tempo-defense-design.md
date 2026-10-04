@@ -355,6 +355,13 @@ provisional for 30g6, with no tempo changes in this slice.
 
 ### 30g6 — Tuning HP, damage, and healing against the target
 
+**Amended 2026-10-04** ([amendment](2026-10-04-phase-30g6-amendment.md)):
+opposed chances use one stat edge sized for stepped stats, the asserted
+fights are a true mirror, tactics are judged on won fights with a
+significance test, and HP keeps class differences. 30g6a ships the combat
+fixes and harness; 30g6 the formulas and tuning. Its acceptance list
+replaces the one below.
+
 - **The anchor (decision 14: the spread-out fight).** Let `e` be one
   fighter's expected damage per combat round after hit, active defense,
   and armor, and `H` a fighter's health. With no focus on either side,

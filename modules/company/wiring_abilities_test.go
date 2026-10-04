@@ -422,3 +422,21 @@ func TestACasterCastingUsesNoAbility(t *testing.T) {
 	assert.Equal(t, 1, castEvents(round, combatstream.CastStart, "Aria"))
 	assert.Empty(t, abilityEvents(round, "Aria"))
 }
+
+// A successful tackle is queued as a buff. The next warrior in the same
+// ability pass must see that pending knockdown and retain its physical turn.
+func TestWarriorsDoNotDuplicateASuccessfulTackle(t *testing.T) {
+	b, stream := abilityBrawl(t, map[int]string{1: "warrior", 2: "cleric", 3: "warrior", 4: "ranger"})
+	b.cmd("strategy", "ysolde abilities off")
+	b.start()
+	b.fight()
+	var tackles int
+	for _, e := range *stream {
+		if e.Kind == combatstream.Ability && e.Status == "Tackle" {
+			tackles++
+			assert.Equal(t, combatstream.OutcomeSucceeded, e.Outcome)
+		}
+	}
+	assert.Equal(t, 1, tackles, "one foe can be knocked down once in the ability pass")
+	assert.NotEmpty(t, swingsBy(*stream, "Garrick Vane"), "the second warrior swings")
+}
