@@ -375,6 +375,10 @@ func (m *CompanyModule) inspect(leaderUserID int, selector string) string {
 		return which
 	}
 	if templateID == 0 {
+		// Phase 35c: a partial name of one of the leader's companions.
+		if text, ok := m.inspectMember(leaderUserID, selector, false); ok {
+			return text
+		}
 		return fmt.Sprintf("There's no one called %q to recruit.", selector)
 	}
 	name := templateName(templateID, selector)

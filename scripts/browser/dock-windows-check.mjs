@@ -741,6 +741,11 @@ await page.evaluate(() => { window.helpRequests = []; Client.GMCPRequest = (...a
 await page.keyboard.press('Enter');
 check(JSON.stringify(await page.evaluate(() => window.helpRequests)) === '[[' + '"Help","protection"' + ']]', 'trained-rank help works with the keyboard');
 check(await page.evaluate(() => { const p = document.getElementById('cw-skills-tab'); return p.scrollWidth <= p.clientWidth + 1; }), 'Skills fits a narrow viewport');
+// Phase 35c: the companions' optional skills and training points, read only.
+await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].skills = { cooking: 2 }; g.members[0].training_points = 3; g.members[1].training_points = 1; g.members[1].name = '<img src=x onerror="window.__xss35c=1">'; window.gmcp('Company', g); }, company);
+check((await skillsText()).includes('Company training') && (await skillsText()).includes('Cooking rank 2; 3 training points.') && (await skillsText()).includes('no optional skills; 1 training point.'), 'Skills lists the companions\' optional skills and training points (35c)');
+check(await page.locator('#cw-company-skills img').count() === 0 && await page.locator('#cw-company-skills button').count() === 0 && !(await page.evaluate(() => window.__xss35c)), 'company training text is plain and has no train button');
+check(await page.evaluate(() => { const p = document.getElementById('cw-skills-tab'); return p.scrollWidth <= p.clientWidth + 1; }), 'company training fits a narrow viewport');
 await page.getByRole('tab', { name: 'Effects', exact: true }).click();
 check((await page.locator('#cw-effects').textContent()).includes('Wounds') && (await page.locator('#cw-effects').textContent()).includes('Holds back 3 health'), 'Character Effects includes wound mechanics apart from persistent bonuses');
 await page.evaluate(markup => window.gmcp('Char.Affects', {test: {name: markup, description: markup, duration_max: 30, duration_left: 20}}), xss);

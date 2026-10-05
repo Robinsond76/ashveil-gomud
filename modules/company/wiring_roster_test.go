@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -39,6 +40,7 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 	fixtures := map[string]string{
 		"biomes/default.yaml":                                  "biomeid: default\nname: Test\nsymbol: '.'\n",
 		"keywords.yaml":                                        "direction-aliases: {}\n",
+		"skills/cooking.yaml":                                  shipped("skills/cooking.yaml"),
 		"races/1-human.yaml":                                   shipped("races/1-human.yaml"),
 		"rooms/dunmar/zone-config.yaml":                        "name: Dunmar\nroomid: 2003\n",
 		"rooms/dunmar/2003.yaml":                               "roomid: 2003\nzone: Dunmar\ntitle: The Waymark Inn\ndescription: A hiring slate hangs by the hearth.\n",
@@ -64,6 +66,7 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 	require.NoError(t, os.MkdirAll(filepath.Join(dataDir, "users"), 0755))
 	require.NoError(t, os.MkdirAll(filepath.Join(dataDir, "combat-messages"), 0755))
 	races.LoadDataFiles()
+	skills.LoadDataFiles()
 	items.LoadDataFiles()
 	rooms.LoadDataFiles()
 	rooms.LoadBiomeDataFiles()
@@ -163,13 +166,17 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 	// from the company's ways.
 	far := uint64(500000 + 100000)
 	myRoster.Candidates = []domain.Candidate{
-		{Key: "hild", Name: "Hild Marrow", Archetype: "warrior", MobTemplateID: 80, Level: 3, Alignment: 10, Price: 120, Trait: "A scarred former caravan guard.", Arrived: 499000, Leaves: far},
+		// Phase 35c: Hild arrives knowing Cooking 2.
+		{Key: "hild", Name: "Hild Marrow", Archetype: "warrior", MobTemplateID: 80, Level: 3, Alignment: 10, Price: 120, Trait: "A scarred former caravan guard.", Skill: "cooking", SkillRank: 2, Arrived: 499000, Leaves: far},
 		{Key: "wren", Name: "Wren", Archetype: "warrior", MobTemplateID: 80, Level: 1, Alignment: -10, Price: 60, Trait: "Quiet, and quick with a sling.", Arrived: 499500, Leaves: far + 1},
 		{Key: "morrow", Name: "Morrow Black", Archetype: "ranger", MobTemplateID: 84, Level: 2, Alignment: -90, Price: 90, Arrived: 499900, Leaves: 500000 + 900},
 	}
 	require.NoError(t, module.registry.PutRoster(7, myRoster))
 
 	assert.Contains(t, run(user, "look", "hild"), "You read about Hild Marrow on the hiring slate by the hearth: warrior, level 3, asking 120 gold.")
+	assert.Contains(t, run(user, "look", "hild"), "Trained: Cooking rank 2.", "Phase 35c: the head start on the notice")
+	assert.Contains(t, run(user, "company", "recruit"), "    Trained: Cooking rank 2")
+	assert.Contains(t, run(user, "company", "inspect hild"), "They already know Cooking rank 2, a head start that costs them no training points.")
 	assert.Contains(t, run(user, "company", "inspect morrow"), "They won't join a company so far from their ways.")
 	assert.Contains(t, run(user, "company", "recruit morrow"), "Morrow Black (alignment -90, ")
 	assert.Equal(t, 500, user.Character.Gold)
@@ -188,6 +195,10 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 	assert.Equal(t, 80, record.Companions[0].MobTemplateID)
 	assert.Equal(t, 80, record.Companions[1].MobTemplateID)
 	assert.Equal(t, 3, record.Companions[0].State.Level)
+	// Phase 35c: the head start rides the hire's save as both maps.
+	assert.Equal(t, map[string]int{"cooking": 2}, record.Companions[0].Skills)
+	assert.Equal(t, map[string]int{"cooking": 2}, record.Companions[0].GrantedSkills)
+	assert.Nil(t, record.Companions[1].Skills)
 	savedRoster, _ := record.Roster(2003)
 	assert.Len(t, savedRoster.Candidates, 1, "the hires rode in the same save")
 	liveNames := func() map[string]*mobs.Mob {
@@ -206,6 +217,8 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 	require.Contains(t, live, "Wren")
 	assert.Equal(t, 3, live["Hild Marrow"].Character.Level)
 	assert.Equal(t, "A scarred former caravan guard.", live["Hild Marrow"].Character.Description)
+	assert.Equal(t, 2, live["Hild Marrow"].Character.GetSkillLevel("cooking"), "Phase 35c: the live recruit cooks")
+	assert.Zero(t, live["Wren"].Character.GetSkillLevel("cooking"))
 
 	status := run(user, "company", "status")
 	assert.Contains(t, status, "#1 Hild Marrow, level 3,")
@@ -244,6 +257,7 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 	require.Contains(t, live, "Hild Marrow")
 	require.Contains(t, live, "Wren")
 	assert.Equal(t, 3, live["Hild Marrow"].Character.Level)
+	assert.Equal(t, 2, live["Hild Marrow"].Character.GetSkillLevel("cooking"), "Phase 35c: the rank survives a restart")
 	assert.Equal(t, "Hild Marrow", stored().Companions[0].Name)
 	assert.Contains(t, run(user, "company", "status"), "#2 Wren, level 1,")
 

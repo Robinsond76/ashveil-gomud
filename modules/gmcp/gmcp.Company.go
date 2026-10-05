@@ -80,6 +80,11 @@ type companyMember struct {
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
 	Strategy *companyStrategy `json:"strategy"`
+	// Skills are a companion's optional-skill ranks by skill id and
+	// TrainingPoints its points left to spend (Phase 35c); both omitted
+	// for the leader, and Skills when it has none.
+	Skills         map[string]int `json:"skills,omitempty"`
+	TrainingPoints *int           `json:"training_points,omitempty"`
 }
 
 type companyLoad struct {
@@ -200,6 +205,13 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	if !m.Strategy.IsZero() {
 		out.Strategy = &companyStrategy{Role: string(m.Strategy.Role), Target: string(m.Strategy.Rule),
 			Abilities: strategy.Names(m.Abilities), AbilitiesOff: m.Strategy.NoAbilities, Reserve: m.Strategy.Reserve}
+	}
+	if !m.Leader {
+		points := m.TrainingPoints
+		out.TrainingPoints = &points
+		if len(m.Skills) > 0 {
+			out.Skills = m.Skills
+		}
 	}
 	// Chemistry is shown only for a member standing with a band; alone or
 	// dead there is none (not "Strangers" on everyone).

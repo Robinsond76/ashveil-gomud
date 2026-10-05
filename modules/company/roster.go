@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -33,7 +34,11 @@ const (
 	defaultAlignmentMin  = -80
 	defaultAlignmentMax  = 80
 	defaultBynamePercent = 60
-	maxRosterSize        = 8
+	// Phase 35c skilled recruits.
+	defaultSkilledPercent    = 20
+	defaultSkillRank2Percent = 20
+	defaultSkillPricePercent = 15
+	maxRosterSize            = 8
 )
 
 // parseRosterRules reads the roster knobs, falling back to the default for
@@ -60,6 +65,10 @@ func parseRosterRules(get func(string) any, archetypeOf map[int]string) domain.R
 		GivenNames:    configStrings(get("RecruitGivenNames")),
 		Bynames:       configStrings(get("RecruitBynames")),
 		Traits:        configStrings(get("RecruitTraits")),
+		// Phase 35c: some recruits arrive already trained.
+		SkilledPercent:    num("RecruitSkilledPercent", defaultSkilledPercent, 0, 100),
+		SkillRank2Percent: num("RecruitSkillRank2Percent", defaultSkillRank2Percent, 0, 100),
+		SkillPricePercent: num("RecruitSkillPricePercent", defaultSkillPricePercent, 0, 1000),
 	}
 	rules.StayMin = min(rules.StayMin, rules.StayMax)
 	rules.RefillMin = min(rules.RefillMin, rules.RefillMax)
@@ -205,7 +214,7 @@ func (m *CompanyModule) rosterFor(leaderUserID int, rec recruiter) (domain.Roste
 			taken[givenKey(templateName(c.MobTemplateID, ""))] = true
 		}
 	}
-	ctx := domain.RosterContext{Now: m.round(), LeaderLevel: leaderLevel(leaderUserID), Taken: taken, Weights: rec.Weights}
+	ctx := domain.RosterContext{Now: m.round(), LeaderLevel: leaderLevel(leaderUserID), Taken: taken, Weights: rec.Weights, Learnable: archetypes.LearnableSkills}
 	next, changed := domain.RefreshRoster(current, m.rosterRules(), ctx, m.random())
 	if changed {
 		if err := m.registry.PutRoster(leaderUserID, next); err != nil {
@@ -235,6 +244,9 @@ func (m *CompanyModule) generatedListing(c domain.Candidate) []string {
 		c.Name, c.Key, archetypeLabel(c.Archetype), c.Level, alignmentLabel(c.Alignment))}
 	if c.Trait != "" {
 		lines = append(lines, "    "+c.Trait)
+	}
+	if skill := candidateSkillText(c); skill != "" {
+		lines = append(lines, "    Trained: "+skill)
 	}
 	if state, ok := m.runtime.TemplateState(c.MobTemplateID); ok {
 		lines = append(lines, "    Gear: "+gearSummary(state))
@@ -294,6 +306,9 @@ func (m *CompanyModule) inspectGenerated(leaderUserID int, c domain.Candidate) s
 	if c.Trait != "" {
 		lines = append(lines, c.Trait)
 	}
+	if skill := candidateSkillText(c); skill != "" {
+		lines = append(lines, fmt.Sprintf("They already know %s, a head start that costs them no training points.", skill))
+	}
 	if average, ok := m.companyAverage(leaderUserID); ok {
 		lines = append(lines, fmt.Sprintf("Your company: %s.", alignmentLabel(average)))
 		switch {
@@ -316,6 +331,9 @@ func lookGenerated(noticeName string, c domain.Candidate) string {
 	if c.Trait != "" {
 		lines = append(lines, c.Trait)
 	}
+	if skill := candidateSkillText(c); skill != "" {
+		lines = append(lines, "Trained: "+skill+".")
+	}
 	lines = append(lines, fmt.Sprintf(`Type <ansi fg="command">company inspect %s</ansi> to weigh them against your company.`, c.Key))
 	return strings.Join(lines, "\n")
 }
@@ -325,6 +343,10 @@ func lookGenerated(noticeName string, c domain.Candidate) string {
 func (m *CompanyModule) inspectAt(leaderUserID, roomID int, selector string) string {
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
+	}
+	// Phase 35c: one of the leader's own companions, by #N or full name.
+	if text, ok := m.inspectMember(leaderUserID, selector, true); ok {
+		return text
 	}
 	rec, ok := m.recruiters()[rooms.GetOriginalRoom(roomID)]
 	if !ok {
@@ -353,4 +375,12 @@ func (m *CompanyModule) summonableName(selector string) bool {
 	}
 	_, allowed := m.allowedTemplates()[templateID]
 	return allowed
+}
+
+// candidateSkillText is a candidate's head start ("Cooking rank 2"), or "".
+func candidateSkillText(c domain.Candidate) string {
+	if c.Skill == "" || c.SkillRank <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("%s rank %d", skillName(c.Skill), c.SkillRank)
 }

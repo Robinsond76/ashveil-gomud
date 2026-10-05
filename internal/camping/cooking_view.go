@@ -3,6 +3,8 @@ package camping
 // CookingView is the manual camp cook capability, supplied by its owner.
 // Ready refers to camp, battle, recipe ingredients/ranks and final load.
 type CookingView struct {
+	// Rank is the best cook's (Phase 35c): the leader or a companion
+	// present, named in Description.
 	Rank        int
 	Ready       bool
 	Description string

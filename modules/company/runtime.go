@@ -75,6 +75,9 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 		leader.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> puts away %s %s. %s`, mob.Character.Name,
 			mob.Character.CombatPronouns().Possessive, strings.Join(names, ` and `), reason))
 	}
+	// Phase 35c: its trained optional skills, from the record, so the
+	// ordinary skill checks (camp cooking) see them.
+	applySkills(mob, identity.Skills)
 	mob.Character.CharmAsCompanion(leaderUserID, -2, characters.CharmExpiredRevert)
 	leader.Character.TrackCharmed(mob.InstanceId, true)
 	room.AddMob(mob.InstanceId)

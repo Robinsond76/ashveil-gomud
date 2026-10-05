@@ -569,9 +569,89 @@ func (m *CampingModule) vigil(leader *users.UserRecord, roomID int, op string) (
 
 // --- camp cooking ---
 
+// campCook is who cooks at camp (Phase 35c): the leader or a companion,
+// with their rank in each skill a recipe needs.
+type campCook struct {
+	Name     string
+	IsLeader bool
+	ID       int // companion ID; 0 for the leader
+	Ranks    map[string]int
+}
+
+// rank is the cook's rank in a skill.
+func (c campCook) rank(skill string) int { return c.Ranks[skill] }
+
+// subject names the cook at the start of a sentence.
+func (c campCook) subject() string {
+	if c.IsLeader {
+		return "You"
+	}
+	return c.Name
+}
+
+// verb agrees with subject: "you cook", "Brannoc cooks".
+func (c campCook) verb(you, other string) string {
+	if c.IsLeader {
+		return you
+	}
+	return other
+}
+
+// campCookSkill is the skill that picks the best cook.
+const campCookSkill = "cooking"
+
+// skillsOf reads a character's ranks in the recipes' skills.
+func skillsOf(ranks func(string) int, recipes []campRecipe) map[string]int {
+	out := map[string]int{campCookSkill: ranks(campCookSkill)}
+	for _, r := range recipes {
+		if r.Skill != "" {
+			out[r.Skill] = ranks(r.Skill)
+		}
+	}
+	return out
+}
+
+// bestCook is the highest Cooking rank among the leader and the living
+// companions in the leader's room (the camp: cooking needs the leader's own
+// camp here); ties go to the leader, then the lowest companion ID.
+func (m *CampingModule) bestCook(user *users.UserRecord, recipes []campRecipe) campCook {
+	best := campCook{Name: user.Character.Name, IsLeader: true, Ranks: skillsOf(user.Character.GetSkillLevel, recipes)}
+	var cooks []campCook
+	if m.companionCooks != nil {
+		cooks = m.companionCooks(user.UserId, recipes)
+	} else {
+		cooks = nativeCompanionCooks(user.UserId, recipes)
+	}
+	sort.Slice(cooks, func(i, j int) bool { return cooks[i].ID < cooks[j].ID })
+	for _, c := range cooks {
+		if c.rank(campCookSkill) > best.rank(campCookSkill) {
+			best = c
+		}
+	}
+	return best
+}
+
+// nativeCompanionCooks reads the living companions with the leader from
+// their live mobs, which carry their trained ranks.
+func nativeCompanionCooks(leaderUserID int, recipes []campRecipe) []campCook {
+	var out []campCook
+	for _, id := range company.CompanionsWithLeader(leaderUserID) {
+		instanceID, ok := company.InstanceFor(leaderUserID, id)
+		if !ok {
+			continue
+		}
+		mob := mobs.GetInstance(instanceID)
+		if mob == nil || mob.Character.Health < 1 {
+			continue
+		}
+		out = append(out, campCook{Name: mob.Character.Name, ID: id, Ranks: skillsOf(mob.Character.GetSkillLevel, recipes)})
+	}
+	return out
+}
+
 // selectCampRecipe is shared by the command and the capability read model.
-// It neither consumes ingredients nor chooses a recipe the player's ranks forbid.
-func selectCampRecipe(user *users.UserRecord, recipes []campRecipe) (chosen, blocked *campRecipe) {
+// It neither consumes ingredients nor chooses a recipe the cook's ranks forbid.
+func selectCampRecipe(user *users.UserRecord, cook campCook, recipes []campRecipe) (chosen, blocked *campRecipe) {
 	// The ingredients to hand: pack items, then cargo stacks.
 	have := map[int]int{}
 	if !user.Character.CompanyCargo {
@@ -600,7 +680,7 @@ func selectCampRecipe(user *users.UserRecord, recipes []campRecipe) (chosen, blo
 		if !ready {
 			continue
 		}
-		if r.Skill != "" && user.Character.GetSkillLevel(r.Skill) < r.MinLevel {
+		if r.Skill != "" && cook.rank(r.Skill) < r.MinLevel {
 			if blocked == nil || r.MinLevel < blocked.MinLevel {
 				blocked = r
 			}
@@ -613,7 +693,8 @@ func selectCampRecipe(user *users.UserRecord, recipes []campRecipe) (chosen, blo
 }
 
 // cook is "camp cook": at the leader's own camp with its fire lit, out of
-// battle, the leader cooks the first recipe their Cooking allows from
+// battle, the company's best cook present (Phase 35c) cooks the first
+// recipe their Cooking allows from
 // ingredients in their pack and the company cargo (the pack first). The
 // dish goes into the cargo (into the pack when there is no cargo).
 func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
@@ -636,10 +717,11 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 	if len(recipes) == 0 {
 		return "There is nothing to cook over a campfire."
 	}
-	chosen, blocked := selectCampRecipe(user, recipes)
+	cook := m.bestCook(user, recipes)
+	chosen, blocked := selectCampRecipe(user, cook, recipes)
 	if chosen == nil {
 		if blocked != nil {
-			return fmt.Sprintf("You have the makings of %s, but it needs %s %d.", itemName(blocked.Output), blocked.Skill, blocked.MinLevel)
+			return fmt.Sprintf("You have the makings of %s, but it needs %s %d, and %s.", itemName(blocked.Output), blocked.Skill, blocked.MinLevel, bestRankText(cook, blocked.Skill))
 		}
 		return "You have nothing to cook: see help cooking for what each dish needs."
 	}
@@ -677,7 +759,7 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 		if err := encumbrance.TransformCargo(user.UserId, fromPack, []items.Item{items.New(chosen.Output)}); err != nil {
 			return "The ingredients couldn't be saved; nothing was cooked."
 		}
-		return fmt.Sprintf("You cook %s over the campfire; it goes into company cargo.", itemName(chosen.Output))
+		return fmt.Sprintf("%s %s %s over the campfire; it goes into company cargo.", cook.subject(), cook.verb("cook", "cooks"), itemName(chosen.Output))
 	}
 	// Take from the cargo first, putting back what was taken if any of it
 	// fails, so a failed save never eats ingredients (33f3 review).
@@ -701,11 +783,20 @@ func (m *CampingModule) cook(user *users.UserRecord, room *rooms.Room) string {
 	if err := encumbrance.DepositCargo(user.UserId, "", []encumbrance.CargoStack{{ItemId: chosen.Output, Count: 1}}); err != nil {
 		if !user.Character.StoreItem(items.New(chosen.Output)) {
 			room.AddItem(items.New(chosen.Output), false)
-			return fmt.Sprintf(`You cook <ansi fg="itemname">%s</ansi> over the campfire and set it down by the fire.`, dish)
+			return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire and %s it down by the fire.`, cook.subject(), cook.verb("cook", "cooks"), dish, cook.verb("set", "sets"))
 		}
-		return fmt.Sprintf(`You cook <ansi fg="itemname">%s</ansi> over the campfire.`, dish)
+		return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire.`, cook.subject(), cook.verb("cook", "cooks"), dish)
 	}
-	return fmt.Sprintf(`You cook <ansi fg="itemname">%s</ansi> over the campfire; it goes into the company's cargo.`, dish)
+	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> over the campfire; it goes into the company's cargo.`, cook.subject(), cook.verb("cook", "cooks"), dish)
+}
+
+// bestRankText names the best rank present in a skill: "the best in your
+// company here is Brannoc, with cooking 1".
+func bestRankText(cook campCook, skill string) string {
+	if cook.IsLeader {
+		return fmt.Sprintf("the best in your company here is you, with %s %d", skill, cook.rank(skill))
+	}
+	return fmt.Sprintf("the best in your company here is %s, with %s %d", cook.Name, skill, cook.rank(skill))
 }
 
 func sortedKeys(m map[int]int) []int {

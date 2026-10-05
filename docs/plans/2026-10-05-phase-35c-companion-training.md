@@ -125,7 +125,7 @@ joins the optional list in 36a.
 
 ## Tasks
 
-- [ ] **Tests first:**
+- [x] **Tests first:**
   - registry load and validation;
   - `CanLearn`;
   - the derived-points table across levels, including negative after a lost
@@ -140,19 +140,19 @@ joins the optional list in 36a.
   - candidate generation (deterministic rng): skill, rank, price, and hire
     copying both maps;
   - GMCP payload fields.
-- [ ] **`internal/archetypes`** optional skills, `configs.TrainingPointsAt`,
+- [x] **`internal/archetypes`** optional skills, `configs.TrainingPointsAt`,
   and the overlay data.
-- [ ] **`internal/company`** state fields and the derived-points helpers;
+- [x] **`internal/company`** state fields and the derived-points helpers;
   `modules/company` `applyState` and `Snapshot`.
-- [ ] **The `company train` subcommand** with its save transaction (the
+- [x] **The `company train` subcommand** with its save transaction (the
   existing company save path; no new cross-file journal is needed, since
   only the company file changes).
-- [ ] **The camping best cook** in `camp_specialists.go`, `cooking_view.go`
+- [x] **The camping best cook** in `camp_specialists.go`, `cooking_view.go`
   and the GMCP capabilities.
-- [ ] **Roster generation and hire,** with the candidate display.
-- [ ] **Views:** inspect, GMCP, the web Skills tab and `experience`.
+- [x] **Roster generation and hire,** with the candidate display.
+- [x] **Views:** inspect, GMCP, the web Skills tab and `experience`.
   Browser check with the Playwright harness.
-- [ ] **Help and tutorial:**
+- [x] **Help and tutorial:**
   - new `help company-train`, keywords `company train` and `train companion`,
     linked from `help company` and `help skills`;
   - update `help skills` (the class/optional split, companion points),
@@ -163,9 +163,9 @@ joins the optional list in 36a.
   - a Campground lesson hint (`modules/tutorial/stages.go`) that companions
     can learn Cooking with `company train`;
   - render tests and `TestTutorialHelpPointersExist`.
-- [ ] **Independent full-diff reviewer.** Verify and fix findings with
+- [x] **Independent full-diff reviewer.** Verify and fix findings with
   regressions; record them in Project Status.
-- [ ] **Final checks:** `make generate`, `make validate`, JS and Lua lint,
+- [x] **Final checks:** `make generate`, `make validate`, JS and Lua lint,
   `go test -race ./...`. Flip no milestone. Project Status entry, commit and
   merge.
 

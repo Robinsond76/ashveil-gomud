@@ -117,8 +117,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-05 (35a merged via PR #15; 35a2 skill-over-HP design approved and planned, faith routes design drafted; visual client milestone and sprite specification added; roadmap reprioritized; 35b/35c pending implementation)
-- **Latest completed slices:** 35a, level impact; 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
+- **Last updated:** 2026-10-05 (35c companion training merged via PR #16; 35a merged via PR #15; 35a2 skill-over-HP design approved and planned, faith routes design drafted; visual client milestone and sprite specification added; roadmap reprioritized; 35b pending implementation)
+- **Latest completed slices:** 35c, companion training; 35a, level impact; 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
@@ -193,7 +193,7 @@ implemented (handoff rule 20).
 | 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells. [Plan](plans/2026-10-05-phase-35a-level-impact.md), complete (PR #15) | Level impact §1, §4.1 | — |
 | 35a2 | Skill over hit points: derived Attack and Evasion ratings by level and class, one skill edge added to every opposed chance (block included), small HP growth with a 15–25% landed hit, a smaller Strength damage bonus, armor bulk with a significant untrained penalty (warriors the tanks), shields for warriors and rangers (bucklers) only, cleric staffs/rods/maces, spell and heal numbers sized to a weapon hit. [Design](designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md), owner-approved 2026-10-05; [plan](plans/2026-10-05-phase-35a2-skill-over-hit-points.md) written; implementation not started (begins at the owner's request) | Owner direction 2026-10-05 | 35a |
 | 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), pending implementation; spell, heal and HP numbers wait on 35a2 | Level impact §2, §4 | 35a, 35a2 |
-| 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), pending implementation | Level impact §5 | 35a |
+| 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), complete, merged via [PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16) | Level impact §5 | 35a |
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
@@ -231,11 +231,50 @@ the resource list, tile-ready world building, race variants, and a store
 app.
 
 **Phase 35 delivery (2026-10-05):** 35a is complete and merged
-([PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15)). 35b and 35c
-remain pending implementation. Plans and approved scope are in
+([PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15)). 35c is
+complete and merged ([PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16)). 35b remains pending implementation. Plans and approved scope are in
 [the phase 35 handoff](plans/2026-10-05-phase-35-handoff.md).
 
 ## Current position
+
+**35c companion training (2026-10-05), complete, merged via [PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16):** companions
+earn training points from level (`ProgressionConfig.TrainingPointsAt`, level 1
+counts), never banked: points = earned minus the cost of trained ranks (a rank
+costs its own number, so rank 4 costs 1+2+3+4). A lost level can leave a
+companion owing points; views show 0 and the debt. `company train [member]
+[skill]` previews and `... confirm` (idempotent when it carries the rank)
+trains: ranks 1-2 at the leader's own camp or a trainer, 3-4 only at a room
+whose `SkillTraining` covers the rank. It refuses in battle, while travelling
+or resting, and for dead, separated, absent or fighting members. Optional
+skills live in the archetype overlay (`OptionalSkills`; Cooking for everyone
+first). Some recruits arrive already trained (20%, one in five of those at
+rank 2, price +15% per rank). `camp cook` uses the best cook present among the
+leader and living companions in the camp room (ties: leader, then lowest ID)
+and names them. GMCP `Company` members carry `skills` and `training_points`;
+the web client's Skills tab shows a Company training section. Help:
+`company-train` (new) plus `company`, `growth`, `skills`, `cooking`,
+`specialists`, `webclient`; Camp tutorial hint. No game time advances.
+Deviations from the plan: trained ranks are stored on `company.Companion`
+(`Skills`, `GrantedSkills`) rather than `MemberState`, so gear and level
+snapshots can never drop them; confirm accepts an explicit rank; `company
+inspect` matches your own companions by exact name before recruits and
+templates. See the [plan](plans/2026-10-05-phase-35c-companion-training.md).
+
+**Review:** independent full-diff reviewer found no P1. Accepted and fixed:
+P2 no command-path best-cook test (added `TestCampCookCommandUsesTheBestCook`
+through `camp cook`; presence still uses the test seam); P2 `company train
+[member] confirm` without a skill said "no companion like that" (now asks for
+a skill); P3 help overstated confirm idempotence (only the rank-bearing line
+is); P3 confirm could spend points from a live level not yet saved (confirm
+now writes the live level and experience into the record in the same save);
+P3 unused `CookingView.Cook`/`CookIsLeader` removed; P3 cooking help example
+corrected; P3 eligibility and max-rank refusals now come before battle,
+travel, rest and presence. Rejected or noted: a mob template that defines
+`cooking` would cook above its trained rank (no shipped recruit template does;
+noted); `company inspect [name]` now prefers your own companion (intended; tested by
+name and by `#N`); the client capitalises skill ids rather than
+display names (fine for Cooking; revisit with multi-word skills). Also fixed
+an order-dependent expectation in `TestCompanyMembersStates`.
 
 **35a level impact (2026-10-05), complete, merged via [PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15):**
 fractional racial growth preserves the fifth-level boundary values; keep

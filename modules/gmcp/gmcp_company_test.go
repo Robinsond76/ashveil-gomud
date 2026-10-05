@@ -439,3 +439,27 @@ func TestCompanyAbilities(t *testing.T) {
 	require.Len(t, *out, 2)
 	assert.Equal(t, "Company", (*out)[1].module)
 }
+
+// Phase 35c: each companion's optional skills and training points ride the
+// snapshot; the leader carries neither.
+func TestCompanyPayloadTrainingFields(t *testing.T) {
+	s := sampleCompany()
+	s.Companions[0].Skills = map[string]int{"cooking": 2}
+	s.Companions[0].TrainingPoints = 3
+	p, ok := buildCompanyPayload(7, s, noChemistry)
+	require.True(t, ok)
+	data, err := json.Marshal(p)
+	require.NoError(t, err)
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(data, &got))
+	leader := got["leader"].(map[string]any)
+	assert.NotContains(t, leader, "skills")
+	assert.NotContains(t, leader, "training_points")
+	members := got["members"].([]any)
+	bran := members[0].(map[string]any)
+	assert.Equal(t, map[string]any{"cooking": 2.0}, bran["skills"])
+	assert.Equal(t, 3.0, bran["training_points"])
+	awaiting := members[1].(map[string]any)
+	assert.NotContains(t, awaiting, "skills", "none trained")
+	assert.Equal(t, 0.0, awaiting["training_points"], "known, and zero")
+}

@@ -283,7 +283,7 @@ func (m *CompanyModule) leaderDisplayName(leaderUserID int) string {
 	return "leader"
 }
 
-const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat]"
+const companyUsage = "Usage: company recruit [candidate] | company summon <mob-id-or-name> | company inspect <mob-id-or-name> | company status | company tactics | company chemistry | company specialists | company gear <member> | company inventory | company eat | company drink | company meal | company alignment | company dismiss <member|all> | company archetype <member> <archetype> | company growth [member stat] | company train [member skill]"
 
 // defaultAllowedTemplates is the summon allow list when the module has no
 // plugin config (tests).
@@ -474,6 +474,14 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 		if err := m.registry.PutRoster(leaderUserID, hire.rosterAfter); err != nil {
 			restoreBefore()
 			return domain.Companion{}, err
+		}
+		// Phase 35c: a recruit's head start, granted so it costs no points.
+		if ranks := g.Skills(); ranks != nil {
+			if err := m.registry.GrantSkills(leaderUserID, companion.ID, ranks); err != nil {
+				restoreBefore()
+				return domain.Companion{}, err
+			}
+			companion.Skills, companion.GrantedSkills = ranks, ranks
 		}
 		if state, ok := m.runtime.TemplateState(templateID); ok {
 			state.Level = max(g.Level, 1)
@@ -846,6 +854,8 @@ func (m *CompanyModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.inspectAt(user.UserId, roomID, strings.Join(args[1:], " ")))
 	case "growth", "specialize", "specialise":
 		user.SendText(m.growth(user, args[1:])) // Phase 33h1
+	case "train", "training":
+		user.SendText(m.train(user, room, args[1:])) // Phase 35c
 	case "archetype":
 		if len(args) < 3 {
 			user.SendText(companyUsage)

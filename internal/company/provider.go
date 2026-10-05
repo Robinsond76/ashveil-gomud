@@ -360,6 +360,10 @@ type MemberView struct {
 	Row, Col int
 	// RescueSeconds is a dead companion's rescue allowance left.
 	RescueSeconds int
+	// Skills are its optional-skill ranks and TrainingPoints the points it
+	// has left to spend on them, never below 0 (Phase 35c).
+	Skills         map[string]int
+	TrainingPoints int
 }
 
 // MemberViewProvider is optionally implemented by the registered
