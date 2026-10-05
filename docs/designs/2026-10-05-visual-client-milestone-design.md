@@ -64,18 +64,20 @@ every fact the visuals show is also available as text.
 
 | Phase | Scope | Art set | Depends on |
 |---|---|---|---|
-| 40a | **Room resources.** A `resources:` list on rooms (proposed: water, forage, herbs, firewood, shelter, fishing, game). Resources appear in the GMCP `Room` payload and a `look` line. Map icons and a legend. Water wired into survival (drink and fill), and the room's forage feeds camp Forage. | S1 (resource icons) | Current sequence done |
-| 40b | **Map unit and camp sprites.** The player's class sprite on the current room, walking between tiles and facing the exit direction. The company shown as one leader sprite with a member-count badge. Your own camp, and allied camps, with tent, fire, smoke and resting states. Class information reaches the client. Classic marker as a fallback. | S0, S1 | 40a (shared map changes), 38b (classes) |
-| 40c | **Terrain and landmark tiles.** Biome tiles replace colored squares, with deterministic variants and animated water. Landmark overlays replace letter symbols. Unexplored rooms stay hidden. A toggle back to classic squares. | S2 | 40b |
-| 40d | **Tile-ready pilot region and click-to-walk.** Rebuild one region as a dense tile area with hand-placed coordinates and resources. Tap or click a visited tile to walk there, step by step through ordinary moves (no global time advance). | S2 (reuse) | 40c |
-| 40e | **Structured combat events.** A GMCP battle-event message for each action: actor, action kind, target, result, damage, status changes, chants and wind-ups. It is released in step with paced combat output. No visuals; tested against the text narration. | — | Current sequence done |
-| 40f | **Battle screen, static.** A view that opens when a battle starts and closes when it ends. A background chosen by biome, both formations in their cells, idle sprites, health bars, status, role and morale icons, and battlefield condition banners. Narration stays beside it. | S3 | 40e |
-| 40g | **Battle animation and effects.** Units step forward, attack, cast, defend, get hurt, fall, yield and flee. Hit sparks, projectiles, spell effects, status overlays and damage numbers, all driven by 40e events. A reduced-motion setting. | S4 | 40f |
+| [40a](2026-10-05-phase-40a-room-resources-design.md) | **Room resources.** A `resources:` list on rooms (proposed: water, forage, herbs, firewood, shelter, fishing, game). Resources appear in the GMCP `Room` payload and a `look` line. Map icons and a legend. Water wired into survival (drink and fill), and the room's forage feeds camp Forage. | S1 (resource icons) | Current sequence done |
+| [40b](2026-10-05-phase-40b-map-sprites-design.md) | **Map unit and camp sprites.** The player's class sprite on the current room, walking between tiles and facing the exit direction. The company shown as one leader sprite with a member-count badge. Your own camp, and allied camps, with tent, fire, smoke and resting states. Class information reaches the client. Classic marker as a fallback. | S0, S1 | 40a (shared map changes), 38b (classes) |
+| [40c](2026-10-05-phase-40c-terrain-tiles-design.md) | **Terrain and landmark tiles.** Biome tiles replace colored squares, with deterministic variants and animated water. Landmark overlays replace letter symbols. Unexplored rooms stay hidden. A toggle back to classic squares. | S2 | 40b |
+| [40d](2026-10-05-phase-40d-tile-region-travel-design.md) | **Tile-ready pilot region and click-to-walk.** Rebuild one region as a dense tile area with hand-placed coordinates and resources. Tap or click a visited tile to walk there, step by step through ordinary moves (no global time advance). | S2 (reuse) | 40c |
+| [40e](2026-10-05-phase-40e-combat-event-messages-design.md) | **Structured combat events.** A GMCP battle-event message for each action: actor, action kind, target, result, damage, status changes, chants and wind-ups. It is released in step with paced combat output. No visuals; tested against the text narration. | — | Current sequence done |
+| [40f](2026-10-05-phase-40f-battle-screen-design.md) | **Battle screen, static.** A view that opens when a battle starts and closes when it ends. A background chosen by biome, both formations in their cells, idle sprites, health bars, status, role and morale icons, and battlefield condition banners. Narration stays beside it. | S3 | 40e |
+| [40g](2026-10-05-phase-40g-battle-animation-design.md) | **Battle animation and effects.** Units step forward, attack, cast, defend, get hurt, fall, yield and flee. Hit sparks, projectiles, spell effects, status overlays and damage numbers, all driven by 40e events. A reduced-motion setting. | S4 | 40f |
 | 40h | **Promoted class art.** Map and battle sprites for the 18 advanced classes from 38b. Until a class's art lands, a promoted character uses its lineage sprite. | S5 | 40b, 40g |
 | 40i | **Touch and installable client.** A phone layout for the map, dock and battle screen. Tap-to-walk and touch command buttons. A web app manifest and icons so the client can be installed. | S1 (app icons) | 40d, 40f |
 | Later | Elite and expanded-catalogue classes, creature recruits, race variants, other players on the map, and PvP camp visibility | S6, S7 | 38c+, owner decisions |
 
-40e can be built in parallel with 40a–40d.
+40e can be built in parallel with 40a–40d. Phases 40a–40g have design
+drafts awaiting owner approval (linked above); 40h and 40i get theirs
+later.
 
 ## Design constraints for every phase
 

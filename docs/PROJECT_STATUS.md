@@ -1,5 +1,22 @@
 # Ashveil Project Status
 
+**Phase 40a–40g designs drafted (2026-10-05):** at the owner's request,
+added a design for each item of the visual roadmap. These are drafts
+awaiting owner approval; no code has changed.
+- 40a: room resources, with water wired into survival (`drink water`,
+  `fill`), forage and shelter.
+- 40b: class sprites, the company badge and camp markers (party camps
+  only).
+- 40c: terrain and landmark tiles.
+- 40d: a tile-ready pilot region and `travel` (click-to-walk).
+- 40e: structured combat-event messages released with paced narration.
+- 40f: a static OB64-style battle screen.
+- 40g: battle animations and effects.
+
+The drafts are linked from the Phase 40 table below. Documentation only.
+Verification: relative Markdown links and the diff checked; no Go tests
+required.
+
 **Visual client milestone planned (2026-10-05):** the owner chose to keep
 the browser client and add a visual layer:
 - a colorful tile map with class sprites, camps and room resource icons,
@@ -153,13 +170,13 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 
 | Phase | Scope | Art set |
 |---|---|---|
-| 40a | Room resources: data, `look` line, GMCP, map icons, water in survival | S1 |
-| 40b | Class sprite on the map, company badge, own and allied camps | S0, S1 |
-| 40c | Terrain and landmark tiles, fog, classic toggle | S2 |
-| 40d | Tile-ready pilot region and click-to-walk | S2 |
-| 40e | Structured combat events (can run in parallel with 40a–40d) | — |
-| 40f | Static OB64-style battle screen | S3 |
-| 40g | Battle animation and effects | S4 |
+| [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival | S1 |
+| [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |
+| [40c](designs/2026-10-05-phase-40c-terrain-tiles-design.md) | Terrain and landmark tiles, fog, classic toggle | S2 |
+| [40d](designs/2026-10-05-phase-40d-tile-region-travel-design.md) | Tile-ready pilot region and click-to-walk | S2 |
+| [40e](designs/2026-10-05-phase-40e-combat-event-messages-design.md) | Structured combat events (can run in parallel with 40a–40d) | — |
+| [40f](designs/2026-10-05-phase-40f-battle-screen-design.md) | Static OB64-style battle screen | S3 |
+| [40g](designs/2026-10-05-phase-40g-battle-animation-design.md) | Battle animation and effects | S4 |
 | 40h | Advanced class art (after 38b) | S5 |
 | 40i | Touch layout and installable web app | S1 |
 
