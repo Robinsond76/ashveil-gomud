@@ -153,6 +153,10 @@ func TestLiveLevelUpDealsTheSamePointsAsARespawn(t *testing.T) {
 	require.Equal(t, 1, count, "one line spans a multi-level gain")
 	assert.Contains(t, report, fmt.Sprintf("Health %d -> %d", before.HealthMax.Value, tamsin.Character.HealthMax.Value))
 	assert.Contains(t, report, fmt.Sprintf("Mana %d -> %d", before.ManaMax.Value, tamsin.Character.ManaMax.Value))
+	// Phase 35a2: the report names what the levels made it better at.
+	require.Greater(t, tamsin.Character.AttackSkill(), before.AttackSkill())
+	assert.Contains(t, report, fmt.Sprintf("Attack %d -> %d", before.AttackSkill(), tamsin.Character.AttackSkill()))
+	assert.Contains(t, report, fmt.Sprintf("Evasion %d -> %d", before.Evasion(), tamsin.Character.Evasion()))
 	require.NotEqual(t, before.Stats.Strength.ValueAdj, tamsin.Character.Stats.Strength.ValueAdj)
 	assert.Contains(t, report, fmt.Sprintf("Strength %d -> %d", before.Stats.Strength.ValueAdj, tamsin.Character.Stats.Strength.ValueAdj))
 

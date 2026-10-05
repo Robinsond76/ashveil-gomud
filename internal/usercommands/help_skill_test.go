@@ -29,7 +29,7 @@ func TestSkillOverHPHelp(t *testing.T) {
 			"staffs, rods and maces", "may carry a holy", "an iron shield blocks 30% and a buckler 23%", "between 8% and 55%"},
 		"armor": {"(5 damage, 2 absorbed)", "8% fewer turns, 20% less dodge", "20% fewer turns, 50% less dodge",
 			"Warrior                    heavy", "Ranger                     medium", "lose 10 Attack and 10 Evasion",
-			"1 more round to chant", "help shields"},
+			"1 more round to chant", "help shields", "Bulk is not weight", "(a breastplate, a tower shield)"},
 		"health":            {"base of 48", "Warrior     10           1               59        88", "help evasion"},
 		"tempo":             {"Medium armor then takes", "8% of it and heavy armor 20%", "help armor"},
 		"attack":            {"Attack against your target's Evasion", "help evasion"},
@@ -44,6 +44,9 @@ func TestSkillOverHPHelp(t *testing.T) {
 		"archetype":         {"How each class fights", "staffs, rods and maces; a holy symbol"},
 		"heal":              {"10 to 16 health", "holy symbol"},
 		"experience":        {"Attack and Evasion"},
+		"stat-edge": {"Dodge        Perception against Perception: 12% even, 3% to 40%", "Block        Strength against Strength: 20% + shield even",
+			"is added to the stat edge of", "every chance here except critical hits", "help evasion"},
+		"interrupts": {"more skilled the bearer is than the attacker"},
 	}
 	for topic, wants := range pages {
 		text, err := GetHelpContents(topic)

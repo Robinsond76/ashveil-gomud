@@ -242,8 +242,33 @@ func healthLine(a archetypes.Archetype) string {
 	if evasion <= 0 {
 		evasion = float64(combat.DefaultEvasionRate)
 	}
-	return fmt.Sprintf("HP: %s%g per level through level %d, then %g per level. Attack %g and Evasion %g a level; trained for %s armor.",
-		start, rate, cfg.HPFullLevels, after, attack, evasion, a.ArmorTraining)
+	return fmt.Sprintf("HP: %s%g per level through level %d, then %g per level. Attack %g and Evasion %g a level; trained for %s armor; %s; %s.",
+		start, rate, cfg.HPFullLevels, after, attack, evasion, a.ArmorTraining, shieldRule(a.ShieldSizes), weaponRule(a.WeaponClasses))
+}
+
+// shieldRule and weaponRule state an archetype's gear rules (Phase 35a2).
+func shieldRule(sizes []string) string {
+	switch {
+	case len(sizes) == 0 || len(sizes) >= 3:
+		return "any shield"
+	case len(sizes) == 1 && sizes[0] == "none":
+		return "no shield"
+	}
+	return "shields: " + joinOr(sizes)
+}
+
+func weaponRule(classes []string) string {
+	if len(classes) == 0 {
+		return "any weapon"
+	}
+	return "weapons: " + joinOr(classes)
+}
+
+func joinOr(words []string) string {
+	if len(words) < 2 {
+		return strings.Join(words, "")
+	}
+	return strings.Join(words[:len(words)-1], ", ") + " or " + words[len(words)-1]
 }
 
 func healthRate(a archetypes.Archetype) float64 {

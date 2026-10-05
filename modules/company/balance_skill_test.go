@@ -105,20 +105,11 @@ func TestBalanceWarriorsAreTheTanks(t *testing.T) {
 		even(a)
 		even(&mob.Character)
 		require.False(t, a.UntrainedArmor(), class)
-		total, landed, defended, crits := 0, 0, 0, 0
+		total := 0
 		for i := 0; i < swings; i++ {
 			a.Health, a.HealthMax.Value = 10000, 10000
-			r := combat.AttackMobVsPlayer(mob, b.aria)
-			total += r.DamageToTarget
-			if r.DamageToTarget > 0 {
-				landed++
-			}
-			if r.Crit {
-				crits++
-			}
-			defended += len(r.Defenses)
+			total += combat.AttackMobVsPlayer(mob, b.aria).DamageToTarget
 		}
-		t.Logf("DEBUG %s: landed %d defended %d crits %d shield %v", class, landed, defended, crits, a.HasShield())
 		perSwing[class] = float64(total) / float64(swings)
 		t.Logf("%s: defense %d, Evasion %d, bulk %s: %.2f damage per swing", class, a.GetDefense(), a.Evasion(), a.ArmorBulk(), perSwing[class])
 	}

@@ -418,11 +418,14 @@ func (c *CombatConfig) validate() {
 		c.AgilityFreeLoad = 0.35
 	}
 
-	// Armor bulk (Phase 35a2): shares in 0..1; a doubled share past 1
-	// leaves nothing, never a negative tempo or dodge.
+	// Armor bulk (Phase 35a2): shares held to 0..1 (0 turns a cost off);
+	// a doubled share past 1 leaves nothing, never a negative tempo or dodge.
 	for _, b := range []*ConfigFloat{&c.BulkTempoMedium, &c.BulkTempoHeavy, &c.BulkDodgeMedium, &c.BulkDodgeHeavy} {
-		if math.IsNaN(float64(*b)) || math.IsInf(float64(*b), 0) || *b < 0 || *b > 1 {
+		switch {
+		case math.IsNaN(float64(*b)) || *b < 0:
 			*b = 0
+		case *b > 1:
+			*b = 1
 		}
 	}
 	if c.UntrainedSkillLoss < 0 {

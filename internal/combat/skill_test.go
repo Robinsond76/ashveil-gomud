@@ -4,12 +4,16 @@ import (
 	"math"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/items"
+
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/stretchr/testify/assert"
 )
 
-// skillConfig pins the 35a2 shipped combat numbers.
+// skillConfig pins the 35a2 design's reference numbers, so the tables
+// below match the design's: SkillEdgeSpan 20 and BlockChanceEven 15. The
+// shipped config tunes them to 16 and 20 (see the phase's measurements).
 func skillConfig(t *testing.T) {
 	t.Helper()
 	cfg := configs.GetGamePlayConfig()
@@ -92,4 +96,43 @@ func TestSkillOverHPHitSize(t *testing.T) {
 		assert.InDelta(t, 0.20, avg, 0.03, "level %d: average hit %.3f", level, avg)
 		t.Logf("level %d: bonus %d, HP %.0f, middle 80%% %.0f–%.0f%%, average %.1f%%", level, bonus, hp, low*100, high*100, avg*100)
 	}
+}
+
+// TestPredictionsFollowSkill (35a2 review): the assessment's prediction
+// picks the same active defense as a real blow (block for a shield-bearer,
+// else the better of parry and dodge, dodge only against a shot), and
+// ExpectedDamage and CombatOdds move with a level gap and a shield.
+func TestPredictionsFollowSkill(t *testing.T) {
+	defenseSpecs(t)
+	skillConfig(t)
+	at := func(level, weapon int) *characters.Character {
+		c := armed(weapon)
+		c.Level = level
+		return c
+	}
+	shielded := at(20, defAxeID)
+	shielded.Equipment.Offhand = items.New(defTowerID)
+	for _, tc := range []struct {
+		name     string
+		def, atk *characters.Character
+		want     func(def, atk *characters.Character) int
+	}{
+		{"shield", shielded, at(30, defAxeID), blockChance},
+		{"parry", at(30, defStaffID), at(20, defAxeID), func(d, a *characters.Character) int { return parryChance(d, a, 5) }},
+		{"shot", at(30, defStaffID), at(20, defSlingID), effectiveDodge},
+		{"unarmed", at(20, 0), at(30, defAxeID), effectiveDodge},
+	} {
+		assert.Equal(t, tc.want(tc.def, tc.atk), expectedDefense(tc.def, tc.atk), tc.name)
+	}
+	assert.Equal(t, 25, expectedDefense(shielded, at(20, defAxeID)), "an even block: 15 + the shield's 10 armor")
+
+	even := ExpectedDamage(at(20, defAxeID), at(20, defAxeID))
+	ahead := ExpectedDamage(at(30, defAxeID), at(20, defAxeID))
+	behind := ExpectedDamage(at(20, defAxeID), at(30, defAxeID))
+	assert.Greater(t, ahead, even, "a 10-level lead lands more")
+	assert.Less(t, behind, even, "a 10-level deficit lands less")
+	assert.Less(t, ExpectedDamage(at(20, defAxeID), shielded), even, "a shield stops more than a parry")
+
+	assert.Greater(t, CombatOdds(*at(30, defAxeID), *at(20, defAxeID)), 1.0, "the skilled side is favored")
+	assert.Less(t, CombatOdds(*at(20, defAxeID), *at(30, defAxeID)), 1.0)
 }

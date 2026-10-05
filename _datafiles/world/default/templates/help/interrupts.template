@@ -86,10 +86,10 @@ may slam the shield back into the attacker:
   <ansi fg="command">Tamsin Reed catches the bandit captain's blow on her shield.</ansi>
   <ansi fg="command">Tamsin Reed drives her shield back into the bandit captain. (shield bash, 3 damage, stunned)</ansi>
 
-- A blocked blow gives a <ansi fg="yellow">{{ config "GamePlay.Combat.BashChanceMin" }}% to {{ config "GamePlay.Combat.BashChanceMax" }}%</ansi> chance, more the stronger the
-  bearer is than the attacker. A plain miss is never countered. The bash
-  does <ansi fg="yellow">1 to 4 damage</ansi>, and one bash in four also <ansi fg="yellow">stuns</ansi> the attacker
-  (<ansi fg="command">help statuses</ansi>).
+- A blocked blow gives a <ansi fg="yellow">{{ config "GamePlay.Combat.BashChanceMin" }}% to {{ config "GamePlay.Combat.BashChanceMax" }}%</ansi> chance, more the stronger and
+  more skilled the bearer is than the attacker (<ansi fg="command">help evasion</ansi>).
+  A plain miss is never countered. The bash does <ansi fg="yellow">1 to 4 damage</ansi>, and one
+  bash in four also <ansi fg="yellow">stuns</ansi> the attacker (<ansi fg="command">help statuses</ansi>).
 - At most <ansi fg="yellow">one counter a round</ansi> for each shield-bearer.
 - No counter against a bow or sling, and none while the bearer is knocked
   down, stunned, or chanting (a stunned bearer can't block at all).

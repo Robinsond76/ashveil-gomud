@@ -18,12 +18,13 @@ the fight (<ansi fg="command">help statuses</ansi>).
 Every piece of armor is <ansi fg="yellow">light</ansi>, <ansi fg="yellow">medium</ansi> or <ansi fg="yellow">heavy</ansi>, and your bulk is the
 heaviest piece you wear. Toughness costs quickness, however strong you are:
 
-  <ansi fg="yellow">Light</ansi>    no cost (robes, a cloak, a buckler)
-  <ansi fg="yellow">Medium</ansi>   {{ configpct "GamePlay.Combat.BulkTempoMedium" }}% fewer turns, {{ configpct "GamePlay.Combat.BulkDodgeMedium" }}% less dodge (leather, a shield)
-  <ansi fg="yellow">Heavy</ansi>    {{ configpct "GamePlay.Combat.BulkTempoHeavy" }}% fewer turns, {{ configpct "GamePlay.Combat.BulkDodgeHeavy" }}% less dodge (mail, plate, a tower shield)
+  <ansi fg="yellow">Light</ansi>    no cost (cloth, a cape, a buckler)
+  <ansi fg="yellow">Medium</ansi>   {{ configpct "GamePlay.Combat.BulkTempoMedium" }}% fewer turns, {{ configpct "GamePlay.Combat.BulkDodgeMedium" }}% less dodge (a leather vest or robe, chain, a shield)
+  <ansi fg="yellow">Heavy</ansi>    {{ configpct "GamePlay.Combat.BulkTempoHeavy" }}% fewer turns, {{ configpct "GamePlay.Combat.BulkDodgeHeavy" }}% less dodge (a breastplate, a tower shield)
 
 Bulk never touches a parry or a block, so a heavy warrior defends with
-sword and shield, not footwork. It adds to your burden (<ansi fg="command">help burden</ansi>).
+sword and shield, not footwork. Bulk is not weight: a piece's weight
+adds to your burden (<ansi fg="command">help burden</ansi>), and the bulk costs come on top.
 <ansi fg="command">status</ansi> shows your bulk, and <ansi fg="command">company compare</ansi> a companion's.
 
 <ansi fg="yellow-bold">Training</ansi>

@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,4 +32,15 @@ func TestSkillOverHPHealthTable(t *testing.T) {
 	}
 	assert.Equal(t, p.HealthAtLevel(10, 0, 1, 0), p.HealthAtLevel(10, 0, 1, -5), "a negative head start counts as none")
 	assert.Equal(t, p.HealthAtLevel(10, 0, 1, 10)+5, p.HealthAtLevel(10, 10, 1, 10), "Vitality adds on top")
+}
+
+// TestBulkSharesHeldInRange (35a2 review): a bulk share past 1 is held at
+// 1 (all of it), not dropped to 0; a negative or NaN share turns it off.
+func TestBulkSharesHeldInRange(t *testing.T) {
+	c := CombatConfig{BulkTempoMedium: 1.5, BulkTempoHeavy: -0.2, BulkDodgeMedium: ConfigFloat(math.NaN()), BulkDodgeHeavy: 0.5}
+	c.validate()
+	assert.Equal(t, ConfigFloat(1), c.BulkTempoMedium)
+	assert.Zero(t, c.BulkTempoHeavy)
+	assert.Zero(t, c.BulkDodgeMedium)
+	assert.Equal(t, ConfigFloat(0.5), c.BulkDodgeHeavy)
 }

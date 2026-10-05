@@ -104,7 +104,7 @@ Archetypes:
     ShieldSizes: [none]
     WeaponClasses: [staff, rod, mace]
     Name: Cleric
-    Description: Healers and protectors sworn to keep the company standing.
+    Description: Healers and protectors sworn to keep the company standing, with staff, rod or mace.
     Skills: [cast, protection]
     Schools: [restoration]
     GrantSkills:

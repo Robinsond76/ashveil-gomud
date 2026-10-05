@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
@@ -300,6 +301,19 @@ func TestEquipmentViewReusedUntilLeaderChanges(t *testing.T) {
 	module.forgetEquipmentView(7)
 	module.EquipmentView(7)
 	assert.Equal(t, rebuilt+3, builds(), "a forgotten leader is rebuilt")
+
+	// 35a2 review: choosing a class changes the gear rules, so it rebuilds
+	// the view even when the class's health rate matches (ranger and no
+	// class both gain 0.8 a level).
+	p := balanceHPProvider(t)
+	archetypes.SetProvider(p)
+	t.Cleanup(func() { archetypes.SetProvider(nil) })
+	module.EquipmentView(7)
+	unchosen := builds()
+	p.fakeArchetypes.player = "ranger"
+	archetypes.SetProvider(p)
+	module.EquipmentView(7)
+	assert.Equal(t, unchosen+1, builds(), "a class choice rebuilds the view")
 }
 
 // What ticks every round without changing a preview (vitals, cooldowns, a

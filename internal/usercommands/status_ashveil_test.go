@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
@@ -15,6 +16,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/races"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -173,4 +176,58 @@ func TestStatusShowsSkillAndBulk(t *testing.T) {
 	text = statusText(t, user, "")
 	assert.Regexp(t, `Bulk: +Heavy`, text)
 	assert.NotContains(t, text, "untrained", "no class: trained for anything")
+}
+
+// rogueGear is a provider with a rogue's 35a2 profile: trained for light
+// armor only.
+type rogueGear struct{}
+
+func (rogueGear) CanTrain(int, string) (bool, string)      { return true, "" }
+func (rogueGear) CanLearnSpell(int, string) (bool, string) { return true, "" }
+func (rogueGear) Exists(string) bool                       { return true }
+func (rogueGear) ArchetypeName(string) (string, bool)      { return "Rogue", true }
+func (rogueGear) PlayerArchetype(int) (string, bool)       { return "rogue", true }
+func (rogueGear) CombatProfile(id string) (archetypes.Profile, bool) {
+	return archetypes.Profile{Name: "Rogue", AttackRate: 0.9, EvasionRate: 1.1, ArmorTraining: items.BulkLight,
+		ShieldSizes: []string{"none"}}, id == "rogue"
+}
+
+// TestUntrainedArmorThroughEquipAndStatus (35a2 review): a rogue who
+// puts on heavy armor with plain equip (no company) is warned, and status
+// marks the bulk untrained and shows Attack and Evasion 10 lower.
+func TestUntrainedArmorThroughEquipAndStatus(t *testing.T) {
+	useWorld(t, "default")
+	useSummary(t, sampleSummary())
+	races.LoadDataFiles()
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.UntrainedSkillLoss, cfg.Combat.UntrainedChantRounds = 10, 1
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
+	const plateID = 99613
+	plate := &items.ItemSpec{ItemId: plateID, Name: "test plate", Type: items.Body, Subtype: items.Wearable, Weight: 12000, DamageReduction: 10, Bulk: items.BulkHeavy}
+	require.NoError(t, plate.Validate())
+	items.SetTestItemSpec(plate)
+	t.Cleanup(func() { items.RemoveTestItemSpec(plateID) })
+	archetypes.SetProvider(rogueGear{})
+	t.Cleanup(func() { archetypes.SetProvider(nil) })
+
+	user := users.NewUserRecord(7, 1)
+	user.Character.Name = "Wren"
+	user.Character.Level = 20
+	user.Character.RaceId = 1 // human: every armor slot
+	require.True(t, user.Character.StoreItem(items.New(plateID)))
+	text := statusText(t, user, "")
+	assert.Regexp(t, `Attack: +18 +Evasion: 22`, text, "a rogue's rates at level 20")
+
+	messages := captureLookMessages(t)
+	_, err := Equip("test plate", user, &rooms.Room{RoomId: 1}, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	said := tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
+	assert.Contains(t, said, "You wear your test plate.")
+	assert.Contains(t, said, "You are trained for light armor, not heavy.")
+	assert.Equal(t, plateID, user.Character.Equipment.Body.ItemId, "allowed, with a warning")
+
+	text = statusText(t, user, "")
+	assert.Regexp(t, `Bulk: +Heavy, untrained`, text)
+	assert.Regexp(t, `Attack: +8 +Evasion: 12`, text, "10 lower in untrained armor")
 }

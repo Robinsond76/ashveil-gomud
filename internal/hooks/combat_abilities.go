@@ -275,6 +275,7 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 			a.holder.say(fmt.Sprintf(`You see an opening on %s.`, target.tag()),
 				`%s sees an opening on `+verbatim(target.tag())+`.`, ` (opening strike)`)
 		} else {
+			a.char.Aggro.StrikeBonus = 0
 			a.holder.say(fmt.Sprintf(`You take careful aim at %s.`, target.tag()),
 				`%s takes careful aim at `+verbatim(target.tag())+`.`, ` (aimed shot)`)
 		}
@@ -301,6 +302,7 @@ func endAbilityStrikes() {
 			continue
 		}
 		c.Aggro.Type = characters.DefaultAttack
+		c.Aggro.StrikeBonus = 0 // a later plain backstab must not inherit it
 		if c.Equipment.Weapon.GetSpec().Subtype == items.Shooting {
 			c.Aggro.Type = characters.Shooting
 		}

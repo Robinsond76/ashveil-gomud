@@ -90,6 +90,11 @@ func TestCompanionSpawnPutsAwayDisallowedGear(t *testing.T) {
 		carried[itm.ItemId] = true
 	}
 	assert.True(t, carried[10015] && carried[20004], "moved to its pack")
+	// The spawn gives it its class's head start in health (the cleric's 2).
+	c := &spawned.Character
+	require.Equal(t, 2, c.HPStart())
+	base := configs.GetProgressionConfig().HealthAtLevel(c.Level, c.Stats.Vitality.ValueAdj, c.HealthGainPerLevel(), 0)
+	assert.Equal(t, base+2+c.StatMod("healthmax"), c.HealthMax.Value, "HPStart counts")
 	told := companyTagPattern.ReplaceAllString(strings.Join(*b.messages, "\n"), "")
 	assert.Contains(t, told, "Brother Oswin puts away")
 	assert.Contains(t, told, "Clerics")

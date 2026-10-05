@@ -61,7 +61,11 @@ func TestProgressionListShowsLiveHPRates(t *testing.T) {
 	}
 	assert.Contains(t, text, line("10 extra to start, ", 1))
 	assert.Contains(t, text, line("", 0.5))
-	assert.Contains(t, text, "Attack 0.7 and Evasion 0.75 a level; trained for light armor.", "a caster's skill rates")
+	assert.Contains(t, text, "Attack 0.7 and Evasion 0.75 a level; trained for light armor; no shield; any weapon.", "a caster's skill rates")
+	// Phase 35a2 review: each class's gear rules are in its listing.
+	assert.Contains(t, text, "trained for heavy armor; any shield; any weapon.")
+	assert.Contains(t, text, "trained for medium armor; shields: buckler; any weapon.")
+	assert.Contains(t, text, "trained for light armor; no shield; weapons: staff, rod or mace.")
 	preview, _ := m.chooseResult(newUser(12), "rogue", false)
 	assert.Contains(t, preview, line("4 extra to start, ", 0.7))
 }
