@@ -7,6 +7,20 @@ the main source of ordinary enemy encounters while some wandering parties remain
 Numeric defaults and rules below are proposals. Implementation follows design
 approval and the existing roadmap rather than silently reordering Phase 33.
 
+**Owner update (2026-10-05):** random room encounters are now a roadmap
+priority (see Project Status, "Roadmap priorities"). The owner set the
+encounter contract:
+- ordinary groups are **2–3 enemies below the company's level**, with an
+  occasional group of 4, still below;
+- a boss group has **up to 5** (the boss and 4 escorts) and **no strategy**
+  (coordination tier 0).
+
+Encounter tables use these sizes instead of the "parties of 2–5" default
+below. Groups take their rewards from the
+[loot system](2026-10-05-loot-system-design.md): a cache roll for each won
+encounter. Difficulty targets are in the
+[level impact design](2026-10-05-level-impact-class-power-design.md).
+
 ## Player experience
 
 Entering an encounter-enabled room sometimes reveals an enemy party and begins

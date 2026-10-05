@@ -1,5 +1,23 @@
 # Ashveil Project Status
 
+**Roadmap and designs (2026-10-05):** the owner reviewed the game's
+progression, balance, loot and activities. Recorded the owner's decisions:
+- the encounter contract (2–3 under-level foes, occasionally 4; bosses of up
+  to 5 with no strategy);
+- every level should matter;
+- casters with less fizzling and more mana;
+- stronger healing;
+- a Witch class with hexes;
+- a loot-heavy game;
+- the first promotion at level 10;
+- a new roadmap order.
+
+Added the [level impact and class power](designs/2026-10-05-level-impact-class-power-design.md)
+and [loot system](designs/2026-10-05-loot-system-design.md) designs. Owner
+updates went into the branching class, random encounter and expanded class
+designs. Documentation only. Verification: relative Markdown links and the
+diff checked; no Go tests required.
+
 **Equipment documentation updated (2026-10-02):** removed the proposed new
 class and its ability, kit, recruitment, help, and delivery requirements at the
 owner's request. Retained glaive weapons, equipment families, tiers, and armor
@@ -12,7 +30,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-04 (30g6 stat edges and tuning reviewed; acceptance suite passes)
+- **Last updated:** 2026-10-05 (roadmap reprioritized; level impact, class power and loot designs drafted)
 - **Latest completed slices:** 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -25,6 +43,44 @@ instead of duplicating them.
   companies; 33c, company retreat; 33b, friendly effects; 33a, command
   rules; and 30g3, personal load and agility, all 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
+
+## Roadmap priorities (owner, 2026-10-05)
+
+After a general game review, the owner reordered the next work. World
+building waits until these ship. Each item is a design awaiting owner
+review; no gameplay is implemented yet.
+
+1. **Level impact and caster power.** [Design](designs/2026-10-05-level-impact-class-power-design.md)
+   (slices 1–2):
+   - every level counts: smooth stat growth, a stat point every 2 levels, and
+     HP growth through level 20;
+   - spells and abilities scale with level;
+   - owned spells never fizzle in battle, and the roll-100 bug is fixed;
+   - larger caster mana pools with in-battle and out-of-battle sustain;
+   - stronger healing and faster after-battle recovery;
+   - harness cells for the owner's encounter contract: groups of 2–3 below
+     the company's level, occasionally 4, and bosses of up to 5 with no
+     strategy.
+2. **Loot system and gear catalog.** [Design](designs/2026-10-05-loot-system-design.md):
+   - tiers, quality, rarity, item level and affixes;
+   - legendaries and sets;
+   - sellable goods for horse hauling, with salvage;
+   - zone and boss drop tables.
+   Absorbs the approved [equipment tiers](designs/2026-10-01-equipment-tiers-design.md)
+   catalog slice. Moved up by the owner.
+3. **Random room encounters.** [Design](designs/2026-10-01-random-room-encounters-design.md),
+   updated with the encounter contract. Moved up by the owner. Its drop tables
+   come from item 2.
+4. **Class promotion at level 10 and class routes.** [Branching design](designs/2026-10-01-branching-class-progression-design.md):
+   - level 10 is now an owner decision;
+   - talents at levels 5, 15 and 25;
+   - the proposed **Witch** base lineage, with level-scaling hexes (sleep,
+     trip, paralysis) and its Hedge Witch, Coven Sage and Hag routes, from the
+     level impact design (slice 3).
+
+Items 1 and 2 can be designed in parallel. Item 1 ships first because the
+loot and encounter tuning depend on its numbers. Earlier items, including the
+30g mirror target, remain as stress checks, not the tuning goal.
 
 ## Current position
 

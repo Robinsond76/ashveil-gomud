@@ -118,7 +118,7 @@ unlimited cleanse is granted by these names.
 | Advanced | Gate | Elite | Distinct role and proposed signature |
 |---|---|---|---|
 | Sorcerer | Unrestricted | High Sorcerer | High-power, costly magical burst; longer chants/mana commitments create interrupt risk |
-| Witch | Unrestricted | Coven Sage | Status manipulation and affliction setup; trades direct damage for control, distinct from Warlock life drain |
+| Witch (2026-10-05 proposal: renamed Hexweaver, elite Malison; the Witch and Coven Sage names move to the new Witch lineage) | Unrestricted | Coven Sage | Status manipulation and affliction setup; trades direct damage for control, distinct from Warlock life drain |
 | Elementalist | Unrestricted | Elemental Savant | Fire/frost/lightning specialization; picks one affinity with strengths and resisted matchups |
 | Illusionist | Unrestricted | Mirage Weaver | Misdirection and defensive interference; finite effects, no unhittable illusion loop |
 
