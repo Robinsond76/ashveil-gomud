@@ -1,5 +1,13 @@
 # Ashveil Project Status
 
+**Camps need firewood; camp gear designed (2026-10-05):** the owner
+approved the 40a2 rule that a camp fire needs firewood. They asked for camp
+items that boost camping. Added the [40a3 camp gear](designs/2026-10-05-phase-40a3-camp-gear-design.md)
+design: one bundle per rest, with embers between rests, and six durable,
+weighted items. These complement the single-use camp consumables design.
+Documentation only. Verification: relative Markdown links and the diff
+checked; no Go tests required.
+
 **Visual milestone decisions (2026-10-05):** the owner answered the
 milestone's questions.
 - **Sprite art direction:** mature, grounded high fantasy in the Lord of
@@ -195,6 +203,7 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 |---|---|---|
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
+| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit | S1 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |
 | [40c](designs/2026-10-05-phase-40c-terrain-tiles-design.md) | Terrain and landmark tiles, fog, classic toggle | S2 |
 | [40d](designs/2026-10-05-phase-40d-tile-region-travel-design.md) | Tile-ready pilot region and click-to-walk | S2 |
