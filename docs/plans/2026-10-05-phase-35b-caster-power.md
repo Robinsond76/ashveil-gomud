@@ -1,9 +1,9 @@
 # Phase 35b — caster power, mana and recovery
 
-> **Pending 35a2 (2026-10-05):** the draft [skill over hit points design](../designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md)
-> lowers HP growth and resizes Magic Missile, Minor Heal and Opening Strike
-> (its decision 6). If the owner approves it, update this plan's numbers before
-> implementing.
+> **Updated for 35a2 (2026-10-05):** phase 35a2 ([skill over hit points](../designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md),
+> decision 6) shipped the spell sizes below, the skill-edge spell factor and
+> Opening Strike's bonus. This plan moves those formulas into `spellpower`
+> without changing their numbers.
 
 Implements section 2 and sections 4.2–4.5 of the owner-approved
 [level impact and class power design](../designs/2026-10-05-level-impact-class-power-design.md),
@@ -40,17 +40,20 @@ Out of scope:
   - Mobs (companions and enemies): ~L859 checks
     `util.RollDice(1,100) >= successChance`.
   - Both fail on 100 even at a 100% chance.
-- **Spell formulas live in JS:**
-  - `heal.js`: 2d3 + level;
-  - `healall.js`: 2d3 + level×0.5;
-  - `mm.js`: 1d6+2;
-  - `sparks.js`: 1d3+1 per target;
-  - `hex.js`: 2d6+2;
+- **Spell formulas live in JS** (35a2's sizes; damage spells are multiplied
+  by `SpellFactor(target)`, 0.5–1.5 from the caster's Attack against the
+  target's Evasion, and heals by `HealFactor()`, the holy symbol's +5%):
+  - `heal.js`: 8 + 2d4 + level/6;
+  - `healall.js`: 55% of Minor Heal per patient;
+  - `mm.js`: 7 + 1d6 + level/10 + Mysticism/15;
+  - `sparks.js`: 4 + 1d4 + level/15 + Mysticism/25 per target;
+  - `hex.js`: 8 + 2d4 + level/8 + Mysticism/12;
   - `tend.js`: 2d3 wound tending.
   - The script actor API has `GetLevel()`, `GetStat(name)`, `AddMana`,
     `GetManaMax`.
 - **Go duplicates of the heal formula:** `internal/wounds/wounds.go`
-  `DefaultRules` (HealDice 2d3, HealCost 3) and `Healer.HealBonus` (level),
+  `DefaultRules` (HealDice 2d4, HealCost 3), `HealBonusFor(level)` (8 +
+  level/6) and `Healer.HealPct` (the holy symbol),
   used by `heal wounds` in `modules/company/wounds.go` (~L428).
 - **Chant breaks:** `internal/interrupt.BreakChance(damage, maxHP, heavy)`,
   40–90%, 100 for heavy force; called from `internal/hooks/combat_interrupt.go`.
@@ -105,7 +108,7 @@ Out of scope:
      These are validated on load.
    - New pure package `internal/spellpower`:
      - `Roll(spell, level, mysticismAdj, roll)` returns
-       `base + dice + floor(perlevel × level) + floor(mysticism / mysticismdiv)`;
+       `base + dice + floor(level / leveldiv) + floor(mysticism / mysticismdiv)`;
      - `Range(...)` returns the min and max for display.
    - Expose `SpellPower(actor, spellId)` to scripts (`internal/scripting`, plus
      the DTS file `api_v1_scripting_dts.go`).
@@ -113,16 +116,19 @@ Out of scope:
      place of their own dice. Spells without `power` keep their scripts.
    - `wounds.Rules` and `Healer` read the same helper, so `heal wounds`, the
      level-up report and the harness can't drift.
-2. **Shipped values** (design section 2b; verify with the harness and adjust
-   within ±25% if a band misses):
+2. **Shipped values** (35a2 decision 6, which replaces design section 2b's
+   larger numbers: a spell lands about one weapon hit; verify with the
+   harness and adjust within ±25% if a band misses). `perlevel` is a
+   divisor here, as 35a2 ships it; `Roll` keeps the skill-edge
+   `SpellFactor` for damage spells and `HealFactor` for heals:
 
-   | Spell | base | dice | perlevel | mysticismdiv | cost |
+   | Spell | base | dice | level divisor | mysticism divisor | cost |
    |---|---|---|---|---|---|
-   | mm | 5 | 1d6 | 1.25 | 4 | 6 |
-   | sparks (per target) | 3 | 1d4 | 0.75 | 6 | 10 |
-   | hex (Withering Hex, direct for now) | 6 | 2d4 | 1.5 | 4 | 8 |
-   | heal | 8 | 2d4 | 1.5 | 3 | 3 |
-   | healall (per patient) | 4 | 1d4 | 0.8 | 6 | 6 |
+   | mm | 7 | 1d6 | 10 | 15 | 6 |
+   | sparks (per target) | 4 | 1d4 | 15 | 25 | 10 |
+   | hex (Withering Hex, direct for now) | 8 | 2d4 | 8 | 12 | 8 |
+   | heal | 8 | 2d4 | 6 | — | 3 |
+   | healall (per patient) | 55% of heal | | | | 6 |
 
    Costs stay as shipped. `tend` is unchanged.
 3. **No fizzle for owned spells in battle.**
@@ -194,11 +200,11 @@ Out of scope:
       of battle; it is refused in battle, travel and rest.
     - Allied companies (33d) patch only their own members.
 11. **Ability scaling.**
-    - Opening Strike's forced crit adds `4 + level/2` damage.
+    - Opening Strike's forced crit adds `2 + level/6` damage (shipped by
+      35a2 through `Aggro.StrikeBonus`; keep it).
     - Aimed Shot's adds `2 + level/3` (it is already a guaranteed crit, so the
       design's "+crit chance" is replaced by damage).
-    - Tackle's chance stays on the stat edge, which smooth stats already raise
-      each level. Its knockdown lasts 1 more round from level 20.
+    - Tackle's chance stays on the stat edge plus 35a2's skill edge. Its knockdown lasts 1 more round from level 20.
     - Guardian: `MaxGuards` becomes `2 + guardianLevel/10`, captured when the
       battle's guard state starts. The refill cadence is unchanged.
 12. **Second option at level 3.**
