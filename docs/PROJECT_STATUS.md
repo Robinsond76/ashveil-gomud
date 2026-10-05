@@ -1,5 +1,19 @@
 # Ashveil Project Status
 
+**Visual client milestone planned (2026-10-05):** the owner chose to keep
+the browser client and add a visual layer:
+- a colorful tile map with class sprites, camps and room resource icons,
+  inspired by MUME's mapper;
+- an Ogre Battle 64–style battle screen.
+
+Added the [milestone design](designs/2026-10-05-visual-client-milestone-design.md)
+(phases 40a–40i) and a [sprite specification](designs/2026-10-05-sprite-specification.md)
+listing every sprite in art sets S0–S7, for another agent to generate. The
+milestone starts after the current phase sequence. Other companies' camps
+stay hidden; PvP camp visibility is deferred. Documentation only.
+Verification: relative Markdown links and the diff checked; no Go tests
+required.
+
 **Roadmap and designs (2026-10-05):** the owner reviewed the game's
 progression, balance, loot and activities. Recorded the owner's decisions:
 - the encounter contract (2–3 under-level foes, occasionally 4; bosses of up
@@ -46,7 +60,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-05 (roadmap reprioritized; level impact, class power and loot designs drafted)
+- **Last updated:** 2026-10-05 (visual client milestone and sprite specification added; roadmap reprioritized; level impact, class power and loot designs drafted)
 - **Latest completed slices:** 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -130,6 +144,28 @@ implemented (handoff rule 20).
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
 
 World building (zones for levels 1–15) follows once 37 and 38b ship.
+
+### Next milestone: visual client (Phase 40, owner 2026-10-05)
+
+Starts once the phase sequence above is finished. Art can be produced
+earlier, because it touches no code. See the [milestone design](designs/2026-10-05-visual-client-milestone-design.md)
+and the [sprite specification](designs/2026-10-05-sprite-specification.md).
+
+| Phase | Scope | Art set |
+|---|---|---|
+| 40a | Room resources: data, `look` line, GMCP, map icons, water in survival | S1 |
+| 40b | Class sprite on the map, company badge, own and allied camps | S0, S1 |
+| 40c | Terrain and landmark tiles, fog, classic toggle | S2 |
+| 40d | Tile-ready pilot region and click-to-walk | S2 |
+| 40e | Structured combat events (can run in parallel with 40a–40d) | — |
+| 40f | Static OB64-style battle screen | S3 |
+| 40g | Battle animation and effects | S4 |
+| 40h | Advanced class art (after 38b) | S5 |
+| 40i | Touch layout and installable web app | S1 |
+
+Open owner questions are listed in the design: other players on the map,
+the resource list, tile-ready world building, race variants, and a store
+app.
 
 **Phase 35 is ready to implement (2026-10-05).** The owner approved the level
 impact design. Execution plans and an implementer brief are in
@@ -1665,6 +1701,10 @@ those results. This documentation change does not rerun or supersede them.
 
 ## Known issues / deferred items
 
+- **PvP camp visibility (owner, 2026-10-05):** the visual map shows only
+  your own camp and allied camps. Revisit for PvP: visibility should depend
+  on lighting, terrain, and the company's skill at concealing its camp.
+  See the [visual client milestone](designs/2026-10-05-visual-client-milestone-design.md).
 - **Broken chants and counters (30d1, 30g2), for the owner:** the
   counter's numbers (5–20% of blocked melee blows by Strength since 30g2,
   1d4, a stun one time in four, once a round per bearer) are a
@@ -1854,6 +1894,7 @@ keeps its own history.
 - [Agent workflow](AGENT_IMPLEMENTATION_WORKFLOW.md) — implementation and review.
 - [Handoff](ASHVEIL_GOMUD_AGENT_HANDOFF.md) — design direction and invariants.
 - [Combat roadmap](designs/2026-09-26-combat-presentation-roadmap.md) — remaining phases and decisions.
+- [Visual client milestone](designs/2026-10-05-visual-client-milestone-design.md) and [sprite specification](designs/2026-10-05-sprite-specification.md) — Phase 40 map and battle screen.
 - `docs/designs/` — active proposals and useful shipped design records.
 - `docs/plans/` — execution guidance and work still requiring follow-up.
 - Nested `AGENTS.md` files — package-specific constraints.
