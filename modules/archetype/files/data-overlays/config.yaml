@@ -111,6 +111,13 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10014, 20020, 20024, 20003, 30019, 30015, 23, 38]
 
+# Phase 35c optional skills: the only skills a companion can be trained in
+# ("company train"), with training points earned by level. Class skills and
+# specialists stay automatic. Archetypes lists who may learn one ("*" is
+# everyone); MaxRank caps a companion's rank (1..4). Scribe joins in 36a.
+OptionalSkills:
+  - { Skill: cooking, Archetypes: ["*"], MaxRank: 4 }
+
 # Phase 17b utility skills. A player's utility level is their level in the
 # mapped skill (only if their archetype performs the utility); a
 # companion's comes from its archetype's CompanionLevels.

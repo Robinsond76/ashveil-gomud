@@ -220,6 +220,22 @@ func (p ProgressionConfig) StatPointsAt(level int) int {
 	return awards * per
 }
 
+// TrainingPointsAt is the training points a companion has earned by a level
+// (Phase 35c): TrainingPointsPerLevel for every TrainingPointsEveryNLevels
+// levels, counting level 1, so a level-6 companion has earned 6 at the
+// shipped rate. Companions spend them on optional skills; nothing is banked.
+func (p ProgressionConfig) TrainingPointsAt(level int) int {
+	if level < 1 {
+		return 0
+	}
+	every, per := max(int(p.TrainingPointsEveryNLevels), 1), max(int(p.TrainingPointsPerLevel), 0)
+	awards := level / every
+	if per > 0 && awards > math.MaxInt/per {
+		return math.MaxInt
+	}
+	return awards * per
+}
+
 // HealthAtLevel is the HP formula without equipment, buffs or explicit training.
 func (p ProgressionConfig) HealthAtLevel(level, vitality int, perLevel float64) int {
 	level = max(level, 1)

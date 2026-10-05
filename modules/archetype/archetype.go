@@ -147,6 +147,7 @@ type ArchetypeModule struct {
 	// spellSchools lists every loaded spell's school, for load-time checks.
 	spellSchools func() map[string]string
 	skillExists  func(skillID string) bool
+	skillMax     func(skillID string) int
 	roll         func() int    // 1..100
 	now          func() uint64 // current round
 	cast         func(user *users.UserRecord, room *rooms.Room, spellID string)
@@ -158,6 +159,7 @@ type ArchetypeModule struct {
 	pickSensed map[string]struct{}
 
 	table    archetypes.Table
+	optional []archetypes.OptionalSkill // Phase 35c
 	registry *Registry
 	loadErr  error
 	config   utilityConfig
@@ -180,6 +182,7 @@ func newModule() *ArchetypeModule {
 		schoolOf:     nativeSchoolOf,
 		spellSchools: nativeSpellSchools,
 		skillExists:  skills.SkillExists,
+		skillMax:     skills.MaxSkillLevel,
 		roll:         nativeRoll,
 		now:          nativeNow,
 		cast:         nativeCast,
@@ -258,6 +261,11 @@ func (m *ArchetypeModule) load() {
 		cfg = defaultUtilityConfig()
 	}
 	table := m.buildTable(parseArchetypes(rawTable))
+	var rawOptional any
+	if m.plug != nil {
+		rawOptional = m.plug.Config.Get("OptionalSkills")
+	}
+	optional := m.buildOptional(parseOptionalSkills(rawOptional))
 	cfg.UtilitySkills = parseUtilitySkills(rawUtilities, cfg.UtilitySkills)
 
 	loaded := NewRegistry()
@@ -277,6 +285,7 @@ func (m *ArchetypeModule) load() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.table = table
+	m.optional = optional
 	m.config = cfg
 	m.loadErr = loadErr
 	if loadErr != nil {
@@ -450,6 +459,63 @@ func (m *ArchetypeModule) CompanionSpells(archetypeID string, level int) []strin
 		return nil
 	}
 	return a.SpellsAtLevel(level)
+}
+
+// OptionalSkills implements archetypes.OptionalSkillProvider (Phase 35c).
+func (m *ArchetypeModule) OptionalSkills() []archetypes.OptionalSkill {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([]archetypes.OptionalSkill, len(m.optional))
+	for i, o := range m.optional {
+		o.Archetypes = append([]string(nil), o.Archetypes...)
+		out[i] = o
+	}
+	return out
+}
+
+// buildOptional validates the optional skills, dropping (with a warning)
+// any whose skill isn't loaded or whose max rank is past the skill's own.
+func (m *ArchetypeModule) buildOptional(list []archetypes.OptionalSkill) []archetypes.OptionalSkill {
+	valid, errs := archetypes.NewOptionalSkills(list)
+	for _, err := range errs {
+		mudlog.Warn("archetype: invalid optional skill", "error", err)
+	}
+	out := valid[:0:0]
+	for _, o := range valid {
+		if m.skillExists != nil && !m.skillExists(o.Skill) {
+			mudlog.Warn("archetype: unknown optional skill", "skill", o.Skill)
+			continue
+		}
+		if m.skillMax != nil {
+			if top := m.skillMax(o.Skill); top > 0 && o.MaxRank > top {
+				mudlog.Warn("archetype: optional skill max rank clamped", "skill", o.Skill, "max", top)
+				o.MaxRank = top
+			}
+		}
+		out = append(out, o)
+	}
+	return out
+}
+
+// parseOptionalSkills reads OptionalSkills ([{Skill, Archetypes, MaxRank}]).
+func parseOptionalSkills(raw any) []archetypes.OptionalSkill {
+	list, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	out := make([]archetypes.OptionalSkill, 0, len(list))
+	for _, entry := range list {
+		fields := stringMap(entry)
+		if fields == nil {
+			continue
+		}
+		out = append(out, archetypes.OptionalSkill{
+			Skill:      configString(fields["skill"]),
+			Archetypes: stringList(fields["archetypes"]),
+			MaxRank:    configInt(fields["maxrank"]),
+		})
+	}
+	return out
 }
 
 // CompanionGrowth implements archetypes.CompanionGrowthProvider (Phase 33h1).

@@ -66,6 +66,12 @@ type Companion struct {
 	// Separation is set while the companion is separated from its leader
 	// (Phase 33h3): off the map, its State the last snapshot.
 	Separation *Separation `yaml:"separation,omitempty"`
+	// Skills are its ranks in optional skills (Phase 35c), trained with
+	// "company train" or brought by a recruit. GrantedSkills are the ranks
+	// it arrived with, which cost no points. Both live on the record, not
+	// in State, so no gear snapshot can drop them; nil means none.
+	Skills        map[string]int `yaml:"skills,omitempty"`
+	GrantedSkills map[string]int `yaml:"granted_skills,omitempty"`
 }
 
 // Identity is what a companion's live mob is called and looks like, over
@@ -74,11 +80,14 @@ type Identity struct {
 	Archetype   string // Derived from the durable companion record, not separately saved.
 	Name        string
 	Description string
+	// Skills are its optional-skill ranks (Phase 35c), from the record,
+	// written onto the live mob at every spawn.
+	Skills map[string]int
 }
 
 // Identity is the companion's own name and description.
 func (c Companion) Identity() Identity {
-	return Identity{Name: c.Name, Description: c.Description, Archetype: c.Archetype}
+	return Identity{Name: c.Name, Description: c.Description, Archetype: c.Archetype, Skills: cloneRanks(c.Skills)}
 }
 
 // AssetOperation is a write-ahead record. Company gear is saved with this
@@ -213,6 +222,8 @@ func (r *Registry) Get(leaderUserID int) (Record, bool) {
 			sep := *c.Separation
 			record.Companions[i].Separation = &sep
 		}
+		record.Companions[i].Skills = cloneRanks(c.Skills)
+		record.Companions[i].GrantedSkills = cloneRanks(c.GrantedSkills)
 	}
 	return record, true
 }

@@ -21,6 +21,10 @@ type Candidate struct {
 	Alignment int    `yaml:"alignment"`
 	Price     int    `yaml:"price"`
 	Trait     string `yaml:"trait,omitempty"`
+	// Skill and SkillRank are an optional skill the candidate already knows
+	// (Phase 35c): a head start that raises the price and costs no points.
+	Skill     string `yaml:"skill,omitempty"`
+	SkillRank int    `yaml:"skill_rank,omitempty"`
 	// Arrived and Leaves are world rounds.
 	Arrived uint64 `yaml:"arrived"`
 	Leaves  uint64 `yaml:"leaves"`
@@ -88,6 +92,12 @@ type RosterRules struct {
 	GivenNames    []string
 	Bynames       []string
 	Traits        []string
+	// Phase 35c: SkilledPercent of candidates arrive with one optional
+	// skill they may learn, at rank 2 SkillRank2Percent of the time (else
+	// rank 1); each rank adds SkillPricePercent to the price.
+	SkilledPercent    int
+	SkillRank2Percent int
+	SkillPricePercent int
 }
 
 // RosterContext is what a refresh needs from the world.
@@ -100,6 +110,9 @@ type RosterContext struct {
 	// Weights overrides the rules' archetype weights by archetype, when
 	// set (a recruiter's own mix).
 	Weights map[string]int
+	// Learnable lists the optional skills a candidate of an archetype may
+	// arrive with (Phase 35c); nil means none do.
+	Learnable func(archetype string) []string
 }
 
 // Rand is the randomness a roster uses: Intn returns [0, n).
@@ -254,7 +267,7 @@ func generateCandidate(rules RosterRules, ctx RosterContext, taken map[string]bo
 	if len(rules.Traits) > 0 {
 		trait = strings.TrimSpace(rules.Traits[rng.Intn(len(rules.Traits))])
 	}
-	return Candidate{
+	c := Candidate{
 		Key:           strings.ToLower(given),
 		Name:          name,
 		Archetype:     archetype.Archetype,
@@ -263,7 +276,30 @@ func generateCandidate(rules RosterRules, ctx RosterContext, taken map[string]bo
 		Alignment:     ClampAlignment(alignment),
 		Price:         CandidatePrice(rules, archetype, level),
 		Trait:         trait,
-	}, true
+	}
+	// Phase 35c: the skill roll comes last and only when skills are on, so
+	// the rolls above (and the seeded rosters built on them) are unchanged.
+	if ctx.Learnable != nil && rules.SkilledPercent > 0 {
+		if rng.Intn(100) < rules.SkilledPercent {
+			if learnable := ctx.Learnable(c.Archetype); len(learnable) > 0 {
+				c.Skill = learnable[rng.Intn(len(learnable))]
+				c.SkillRank = 1
+				if rng.Intn(100) < rules.SkillRank2Percent {
+					c.SkillRank = 2
+				}
+				c.Price = c.Price * (100 + rules.SkillPricePercent*c.SkillRank) / 100
+			}
+		}
+	}
+	return c, true
+}
+
+// Skills is the ranks a hire of this candidate arrives with; nil for none.
+func (c Candidate) Skills() map[string]int {
+	if c.Skill == "" || c.SkillRank <= 0 {
+		return nil
+	}
+	return map[string]int{c.Skill: c.SkillRank}
 }
 
 func pickArchetype(rules RosterRules, ctx RosterContext, rng Rand) (RosterArchetype, bool) {

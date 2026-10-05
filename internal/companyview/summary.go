@@ -61,6 +61,10 @@ type Member struct {
 	// Abilities are its automatic class abilities (Phase 33e): by trained
 	// skill for the player, by archetype for a companion.
 	Abilities []strategy.Ability
+	// Skills are a companion's optional-skill ranks and TrainingPoints the
+	// points it has left to spend on them (Phase 35c).
+	Skills         map[string]int
+	TrainingPoints int
 }
 
 // Summary is a player and their company, as every surface shows them.
@@ -219,7 +223,8 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		s.CompanyKnown = true
 		for _, v := range views {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
-				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col}
+				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col,
+				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
 			m.Strategy = src.strategy(uid, m.Key)
 			m.Abilities = strategy.CompanionAbilities(v.Archetype)
 			switch v.Status {

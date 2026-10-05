@@ -336,11 +336,14 @@ type CampingModule struct {
 	specialist func(leaderUserID int, utility string, roomIDs ...int) (archetypes.Specialist, bool)
 	// Phase 33f3: rolls (0..n-1), the raid spawner, the owed camp rewards,
 	// and camp-specialist config.
-	roll        func(n int) int
-	inBattle    func(userID int) bool
-	spawnRaid   func(roomID, mobTemplateID, leaderUserID int) (int, error)
-	campRewards map[int]campReward
-	lastRewards map[int]time.Time
+	roll     func(n int) int
+	inBattle func(userID int) bool
+	// companionCooks stands in for the live companions' cooking ranks
+	// in tests (Phase 35c); nil reads the live mobs.
+	companionCooks func(leaderUserID int, recipes []campRecipe) []campCook
+	spawnRaid      func(roomID, mobTemplateID, leaderUserID int) (int, error)
+	campRewards    map[int]campReward
+	lastRewards    map[int]time.Time
 	// raiders, and the seams that find, check, and send off raid groups.
 	raiders       map[int]raiders
 	raidGroup     func(roomID, first int) []int
