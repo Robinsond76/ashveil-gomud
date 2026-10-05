@@ -118,9 +118,9 @@ implemented (handoff rule 20).
 
 | Phase | Scope | Source | Depends on |
 |---|---|---|---|
-| 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells | Level impact §1, §4.1 | — |
-| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change | Level impact §2, §4 | 35a |
-| 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first) | Level impact §5 | 35a |
+| 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells. [Plan](plans/2026-10-05-phase-35a-level-impact.md), ready | Level impact §1, §4.1 | — |
+| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), ready | Level impact §2, §4 | 35a |
+| 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), ready | Level impact §5 | 35a |
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
@@ -130,6 +130,11 @@ implemented (handoff rule 20).
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
 
 World building (zones for levels 1–15) follows once 37 and 38b ship.
+
+**Phase 35 is ready to implement (2026-10-05).** The owner approved the level
+impact design. Execution plans and an implementer brief are in
+[the phase 35 handoff](plans/2026-10-05-phase-35-handoff.md); another agent
+will implement them.
 
 ## Current position
 
