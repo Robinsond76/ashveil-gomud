@@ -1,5 +1,39 @@
 # Ashveil Project Status
 
+**Roadmap and designs (2026-10-05):** the owner reviewed the game's
+progression, balance, loot and activities. Recorded the owner's decisions:
+- the encounter contract (2–3 under-level foes, occasionally 4; bosses of up
+  to 5 with no strategy);
+- every level should matter;
+- casters with less fizzling and more mana;
+- stronger healing;
+- a Witch class with hexes;
+- a loot-heavy game;
+- the first promotion at level 10;
+- a new roadmap order.
+
+Added the [level impact and class power](designs/2026-10-05-level-impact-class-power-design.md)
+and [loot system](designs/2026-10-05-loot-system-design.md) designs.
+Follow-up owner decisions:
+- the Witch is a starting class;
+- item level requirements;
+- personal loot per allied company;
+- unidentified Rare+ items with a caster Scribe;
+- a stat point every 2 levels, kept in balance;
+- mana refills only by rest or costly draughts, and healers patch the company
+  up until they must camp;
+- enemy levels set by zone bands, with strategy rising with enemy level;
+- hex spell names, including a Miasma poison cloud;
+- passive HP recovery trickles only up to 50% of max HP;
+- Scribe reuses the retired `scribe` skill. Casters train it, including
+  companions after joining, and some recruits already know it. It identifies
+  automatically at camp and costs mana on command in the field;
+- companions earn training points for optional skills; class specialist
+  skills stay automatic by level. Owner
+updates went into the branching class, random encounter and expanded class
+designs. Documentation only. Verification: relative Markdown links and the
+diff checked; no Go tests required.
+
 **Equipment documentation updated (2026-10-02):** removed the proposed new
 class and its ability, kit, recruitment, help, and delivery requirements at the
 owner's request. Retained glaive weapons, equipment families, tiers, and armor
@@ -12,7 +46,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-04 (30g6 stat edges and tuning reviewed; acceptance suite passes)
+- **Last updated:** 2026-10-05 (roadmap reprioritized; level impact, class power and loot designs drafted)
 - **Latest completed slices:** 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -25,6 +59,77 @@ instead of duplicating them.
   companies; 33c, company retreat; 33b, friendly effects; 33a, command
   rules; and 30g3, personal load and agility, all 2026-10-01.
 - **Upstream baseline:** `39e44013` (GoMud Telnet input-masking fix).
+
+## Roadmap priorities (owner, 2026-10-05)
+
+After a general game review, the owner reordered the next work. World
+building waits until these ship. Each item is a design awaiting owner
+review; no gameplay is implemented yet.
+
+1. **Level impact and caster power.** [Design](designs/2026-10-05-level-impact-class-power-design.md)
+   (slices 1–2):
+   - every level counts: smooth stat growth, a stat point every 2 levels, and
+     HP growth through level 20;
+   - spells and abilities scale with level;
+   - owned spells never fizzle in battle, and the roll-100 bug is fixed;
+   - large caster mana pools that refill only through rest or costly mana
+     draughts;
+   - stronger healing, with healers patching the company up after battle
+     from their mana until they must camp;
+   - passive HP recovery outside rest only trickles up to 50% of max HP;
+   - companions earn derived training points to learn optional skills
+     (Scribe, Cooking, later Alchemy) with `company train`; class specialist
+     skills stay automatic;
+   - harness cells for the owner's encounter contract: groups of 2–3,
+     occasionally 4, and bosses of up to 5, with levels set by the zone's
+     band (not the player) and strategy growing with enemy level.
+2. **Loot system and gear catalog.** [Design](designs/2026-10-05-loot-system-design.md):
+   - tiers, quality, rarity, item level and affixes;
+   - level requirements on Uncommon and better items, personal loot for each
+     allied company, and unidentified Rare+ items read by **Scribe**, a
+     trainable caster skill: automatic at camp, and mana-costing on command in
+     the field;
+   - legendaries and sets;
+   - sellable goods for horse hauling, with salvage;
+   - zone and boss drop tables.
+   Absorbs the approved [equipment tiers](designs/2026-10-01-equipment-tiers-design.md)
+   catalog slice. Moved up by the owner.
+3. **Random room encounters.** [Design](designs/2026-10-01-random-room-encounters-design.md),
+   updated with the encounter contract. Moved up by the owner. Its drop tables
+   come from item 2.
+4. **Class promotion at level 10 and class routes.** [Branching design](designs/2026-10-01-branching-class-progression-design.md):
+   - level 10 is now an owner decision;
+   - talents at levels 5, 15 and 25;
+   - the **Witch** as a sixth base class (owner decision), with
+     level-scaling hexes: Slumber, Earthbind, Leaden Curse, Miasma (a poison
+     cloud), Binding Hex, Curse of Frailty, Dread Whisper and Blight;
+   - its proposed Hedge Witch, Coven Sage and Hag routes, from the level
+     impact design (slice 3).
+
+Items 1 and 2 can be designed in parallel. Item 1 ships first because the
+loot and encounter tuning depend on its numbers. Earlier items, including the
+30g mirror target, remain as stress checks, not the tuning goal.
+
+### Phase sequence (proposed, 2026-10-05)
+
+Each phase gets its execution plan in `docs/plans/` and the usual
+review gate. Each design needs the owner's approval before its first phase is
+implemented (handoff rule 20).
+
+| Phase | Scope | Source | Depends on |
+|---|---|---|---|
+| 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells | Level impact §1, §4.1 | — |
+| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change | Level impact §2, §4 | 35a |
+| 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first) | Level impact §5 | 35a |
+| 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
+| 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
+| 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
+| 38a | Witch base class: hexes, three new statuses, controller role | Level impact §3 | 35b |
+| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages | Branching design; level impact §1e | 35a, 38a |
+| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
+| 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
+
+World building (zones for levels 1–15) follows once 37 and 38b ship.
 
 ## Current position
 
