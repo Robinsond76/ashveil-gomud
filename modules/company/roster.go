@@ -38,7 +38,7 @@ const (
 	defaultSkilledPercent    = 20
 	defaultSkillRank2Percent = 20
 	defaultSkillPricePercent = 15
-	maxRosterSize        = 8
+	maxRosterSize            = 8
 )
 
 // parseRosterRules reads the roster knobs, falling back to the default for

@@ -23,7 +23,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
-const trainUsage = "Usage: company train | company train <member> | company train <member> <skill> [rank] [confirm]"
+const trainUsage = "Usage: company train | company train [member] | company train [member] [skill] [rank] [confirm]"
 
 // campTrainMaxRank is the highest rank a companion can learn at its
 // leader's own camp; higher ranks need a trainer.
@@ -199,14 +199,14 @@ func (m *CompanyModule) trainView(leaderUserID int) string {
 	}
 	lines = append(lines,
 		"Ranks 1-2 train at your own camp or a trainer; ranks 3-4 only at a trainer who teaches that rank.",
-		"Preview with company train <member> <skill>, then add confirm. See help company-train.")
+		"Preview with company train [member] [skill], then add confirm. See help company-train.")
 	return strings.Join(lines, "\n")
 }
 
 // trainMemberView is "company train <member>".
 func (m *CompanyModule) trainMemberView(leaderUserID int, c domain.Companion) string {
 	lines := m.trainLines(leaderUserID, c)
-	return strings.Join(append(lines, fmt.Sprintf("Preview with company train %s <skill>, then add confirm.", trainSelector(c))), "\n")
+	return strings.Join(append(lines, fmt.Sprintf("Preview with company train %s [skill], then add confirm.", trainSelector(c))), "\n")
 }
 
 // trainLines is one companion's heading and its optional skills.
