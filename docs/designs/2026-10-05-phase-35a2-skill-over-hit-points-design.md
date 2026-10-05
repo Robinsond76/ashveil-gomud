@@ -1,7 +1,8 @@
 # Phase 35a2: skill over hit points
 
-Status: **design draft; all of the owner's answers are recorded under
-Owner decisions (2026-10-05)** (handoff rule 20). Execution plan:
+Status: **owner-approved design, 2026-10-05** (handoff rule 20); the
+owner's answers are recorded under Owner decisions. Implementation has
+not started. Execution plan:
 [phase 35a2 plan](../plans/2026-10-05-phase-35a2-skill-over-hit-points.md). It
 follows [35a level impact](../plans/2026-10-05-phase-35a-level-impact.md)
 (merged in PR #15) and comes **before** [35b caster power](../plans/2026-10-05-phase-35b-caster-power.md),

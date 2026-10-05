@@ -3,9 +3,9 @@
 Implements the [35a2 skill over hit points design](../designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md).
 Branch and worktree: `phase-35a2-skill-over-hp`.
 
-Status: plan written 2026-10-05. **Implementation starts only after the
-owner approves the design** (handoff rule 20); its open questions are all
-answered. 35b waits on this phase.
+Status: plan written 2026-10-05; the design is **owner-approved
+(2026-10-05)**. Implementation has not started and begins only when the
+owner asks for it. 35b waits on this phase.
 
 ## Goal
 
@@ -131,7 +131,7 @@ Out of scope: no-fizzle, mana pools and potions, after-battle patching
 
 ## Tasks
 
-- [ ] **Owner approval** of the design recorded in Project Status.
+- [x] **Owner approval** of the design recorded in Project Status (2026-10-05).
 - [ ] **Tests first**, red before the code:
   - `SkillEdge`/`combinedEdge` bounds; every chance at even, ±10 and ±20
     rating gaps with equal stats; crit chance unchanged by skill;
