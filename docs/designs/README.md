@@ -8,7 +8,8 @@ indexes future phases 33a–33i, their dependencies, and unresolved decisions.
 The [visual client milestone](2026-10-05-visual-client-milestone-design.md)
 (Phase 40: tile map, class sprites, OB64-style battle screen) follows the
 current phase sequence. Its [sprite specification](2026-10-05-sprite-specification.md)
-lists every sprite to generate.
+lists every sprite to generate. Phase designs 40a–40g are linked from the
+milestone's phase table.
 
 [Equipment families and tiers](2026-10-01-equipment-tiers-design.md)
 records the owner-approved equipment catalog for future
