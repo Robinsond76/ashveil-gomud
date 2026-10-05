@@ -157,24 +157,33 @@ Rare and above drop **unidentified** (owner decision, 2026-10-05). They show
 their base type, tier, quality and rarity, but not their affixes. Unidentified
 items sell for their base value only.
 
-The main way to identify them is a **Scribe** in the company (owner direction).
-Scribe is a new company specialist capability in the 33f pattern:
+The main way to identify them is **Scribe**, a caster skill (owner decision,
+2026-10-05).
 
-- **Who can be a Scribe:** the Wizard, Witch and Cleric lineages and their
-  promoted classes. It uses the best eligible living member present, with the
-  leader and then member-ID tie-breaks, and names that member.
-- **Ranks:** companions gain ranks at levels 1/10/20/30. Players take theirs
-  from their Cast rank, like the other caster specialists.
+- **The skill:** `scribe`, ranks 1–4. It reuses the ID and command 33f1
+  retired, with new behaviour. There is no player base yet, so the owner
+  accepts reusing it. Old saved `scribe` ranks and 33f1 refund markers are
+  cleared once at migration, so no one keeps a rank they didn't train.
+- **Who has it:**
+  - Caster classes (Wizard, Witch, Cleric and their promoted classes) can
+    train it with training points at a trainer.
+  - A companion has it only if it was **hired knowing it**: some caster
+    recruit candidates come with Scribe at a rank, priced higher and shown on
+    the candidate's card. They can't learn it after joining.
+  - The company uses its best living Scribe present, with the leader and then
+    member-ID tie-breaks, and names that member.
 - **What each rank identifies:** rank 1 Rare, rank 2 Epic, rank 3 Legendary
   and Set. Rank 4 also shows each affix's tier and range, and where the item
   comes from.
-- **When it happens:** automatically, as an item enters the company's cargo
-  or a member's hands (loot, pickup, contract reward). There's no command,
-  and a company with a Scribe never sees an unidentified item it can read.
-  `autoskill` can turn this off.
-- **Not the retired skill:** GoMud's old `scribe` skill was retired in 33f1.
-  The new capability uses a distinct ID (proposed `lore`), so old saved
-  `scribe` ranks or refunds can't revive it.
+- **At camp, automatically:** when a camp rest completes, the Scribe
+  identifies every unidentified item in the company's cargo and on its members
+  that its rank covers. This costs no mana, since the rest refills it anyway.
+  `autoskill scribe` turns it off.
+- **In the field, on command:** `scribe [item]` (or `scribe [member] [item]`
+  for a companion Scribe) identifies one item outside battle. It costs mana:
+  about 8 for Rare, 15 for Epic and 25 for Legendary or Set. With no passive
+  mana regeneration, identifying in the field competes with healing and
+  spells.
 
 Without a Scribe of the needed rank, items are identified:
 
@@ -309,7 +318,9 @@ group roll, with these outcomes:
 Settled 2026-10-05:
 1. Level requirements: Rare and above at ilvl − 5, Uncommon at ilvl − 10.
 2. Personal loot: each allied company gets its own roll.
-3. Rare and above drop unidentified; a caster Scribe identifies them.
+3. Rare and above drop unidentified. `scribe` is a trainable caster skill
+   (companions are hired knowing it): automatic at camp, and a mana-costing
+   command in the field. It reuses the retired `scribe` ID.
 
 Still open (proposed defaults stand until the owner decides):
 4. Bad-luck protection counter N = 20 per boss per leader.
@@ -341,7 +352,10 @@ Acceptance:
 - **Gear in play:** compare and equip use the rolled numbers in real combat,
   and level requirements refuse through real equip routes.
 - **Identification:** Scribe rank boundaries identify on real pickup and loot
-  with named attribution, and the retired `scribe` ID never revives. Fee,
+  at camp rest completion, and `scribe [item]` in the field spends the
+  right mana and is refused in battle. Training is refused for non-casters,
+  companions can't learn it after hiring, and old saved ranks are cleared
+  once. Fee,
   scroll and camp-rest paths and autoloot filters work through the real
   command,
   and selling, saturation, salvage and Haggle interact correctly.

@@ -329,9 +329,13 @@ Changes that shorten the loop of one fight, then a long rest:
    - `company patch` repeats it on demand outside battle.
    - When healers run dry, the company rests in camp (owner). Healing still
      stops at the wound limit.
-   - **Owner decision needed:** whether passive HP regeneration outside rest
-     also stops. Recommended: keep a slow trickle up to 50% of max HP, so a
-     company with no healer can still limp to camp, and nothing above that.
+   - **Passive HP regeneration outside rest** (owner decision, 2026-10-05):
+     - a slow trickle that stops at 50% of max HP, so a company with no
+       healer can still limp to camp;
+     - nothing above 50% without a healer, a potion, an inn or a camp rest;
+     - nothing in battle;
+     - applies to players and companions, using 33h2's online-only recovery,
+       capped at 50%.
 3. **Fewer wounds from easy fights.** A crit from a foe 3 or more levels below
    leaves a light wound only, and only on a crit that would knock the member
    below 50% HP. Lasting wounds stay for boss and even-level fights.
@@ -397,6 +401,8 @@ Acceptance tests:
 - a full pool carries a 3–4-encounter run, mana never regenerates outside
   rest or draughts, and rest and draughts restore exactly their amount;
 - after-battle patching up stops at the mana reserve;
+- passive HP recovery stops at 50% of max HP, never runs in battle, and
+  rest, inns and potions still heal above it;
 - hex target counts at each level boundary, resists and immunity windows;
 - Slumber's wake on damage, Miasma's row coverage, and Blight halving real
   heals;

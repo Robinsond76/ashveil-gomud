@@ -23,7 +23,11 @@ Follow-up owner decisions:
 - mana refills only by rest or costly draughts, and healers patch the company
   up until they must camp;
 - enemy levels set by zone bands, with strategy rising with enemy level;
-- hex spell names, including a Miasma poison cloud. Owner
+- hex spell names, including a Miasma poison cloud;
+- passive HP recovery trickles only up to 50% of max HP;
+- Scribe reuses the retired `scribe` skill. Casters train it and companions
+  are hired with it. It identifies automatically at camp and costs mana on
+  command in the field. Owner
 updates went into the branching class, random encounter and expanded class
 designs. Documentation only. Verification: relative Markdown links and the
 diff checked; no Go tests required.
@@ -70,14 +74,16 @@ review; no gameplay is implemented yet.
      draughts;
    - stronger healing, with healers patching the company up after battle
      from their mana until they must camp;
+   - passive HP recovery outside rest only trickles up to 50% of max HP;
    - harness cells for the owner's encounter contract: groups of 2–3,
      occasionally 4, and bosses of up to 5, with levels set by the zone's
      band (not the player) and strategy growing with enemy level.
 2. **Loot system and gear catalog.** [Design](designs/2026-10-05-loot-system-design.md):
    - tiers, quality, rarity, item level and affixes;
    - level requirements on Uncommon and better items, personal loot for each
-     allied company, and unidentified Rare+ items read by a caster **Scribe**
-     specialist;
+     allied company, and unidentified Rare+ items read by **Scribe**, a
+     trainable caster skill (companions are hired knowing it): automatic at
+     camp, and mana-costing on command in the field;
    - legendaries and sets;
    - sellable goods for horse hauling, with salvage;
    - zone and boss drop tables.
