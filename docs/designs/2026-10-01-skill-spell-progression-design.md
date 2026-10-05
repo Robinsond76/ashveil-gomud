@@ -1,6 +1,13 @@
 # Skill, utility and spell progression review
 
 Status: owner-requested review/design/plan, 2026-10-01. Documentation only.
+
+**Owner update (2026-10-05):** companions earn derived training points and
+learn optional skills (Scribe, Cooking, later Alchemy) with `company train`.
+Class specialist capabilities stay automatic by level. Scribe returns as a
+trainable caster skill. See the [level impact design](2026-10-05-level-impact-class-power-design.md)
+(section 5) and [loot design](2026-10-05-loot-system-design.md)
+(identification).
 New unlocks, balance, loadout choices and costs below are proposed defaults.
 Do not override previously settled 33f retirement/specialist decisions.
 

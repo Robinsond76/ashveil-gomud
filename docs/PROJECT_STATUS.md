@@ -25,9 +25,11 @@ Follow-up owner decisions:
 - enemy levels set by zone bands, with strategy rising with enemy level;
 - hex spell names, including a Miasma poison cloud;
 - passive HP recovery trickles only up to 50% of max HP;
-- Scribe reuses the retired `scribe` skill. Casters train it and companions
-  are hired with it. It identifies automatically at camp and costs mana on
-  command in the field. Owner
+- Scribe reuses the retired `scribe` skill. Casters train it, including
+  companions after joining, and some recruits already know it. It identifies
+  automatically at camp and costs mana on command in the field;
+- companions earn training points for optional skills; class specialist
+  skills stay automatic by level. Owner
 updates went into the branching class, random encounter and expanded class
 designs. Documentation only. Verification: relative Markdown links and the
 diff checked; no Go tests required.
@@ -75,6 +77,9 @@ review; no gameplay is implemented yet.
    - stronger healing, with healers patching the company up after battle
      from their mana until they must camp;
    - passive HP recovery outside rest only trickles up to 50% of max HP;
+   - companions earn derived training points to learn optional skills
+     (Scribe, Cooking, later Alchemy) with `company train`; class specialist
+     skills stay automatic;
    - harness cells for the owner's encounter contract: groups of 2–3,
      occasionally 4, and bosses of up to 5, with levels set by the zone's
      band (not the player) and strategy growing with enemy level.
@@ -82,8 +87,8 @@ review; no gameplay is implemented yet.
    - tiers, quality, rarity, item level and affixes;
    - level requirements on Uncommon and better items, personal loot for each
      allied company, and unidentified Rare+ items read by **Scribe**, a
-     trainable caster skill (companions are hired knowing it): automatic at
-     camp, and mana-costing on command in the field;
+     trainable caster skill: automatic at camp, and mana-costing on command in
+     the field;
    - legendaries and sets;
    - sellable goods for horse hauling, with salvage;
    - zone and boss drop tables.
@@ -104,6 +109,27 @@ review; no gameplay is implemented yet.
 Items 1 and 2 can be designed in parallel. Item 1 ships first because the
 loot and encounter tuning depend on its numbers. Earlier items, including the
 30g mirror target, remain as stress checks, not the tuning goal.
+
+### Phase sequence (proposed, 2026-10-05)
+
+Each phase gets its execution plan in `docs/plans/` and the usual
+review gate. Each design needs the owner's approval before its first phase is
+implemented (handoff rule 20).
+
+| Phase | Scope | Source | Depends on |
+|---|---|---|---|
+| 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells | Level impact §1, §4.1 | — |
+| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change | Level impact §2, §4 | 35a |
+| 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first) | Level impact §5 | 35a |
+| 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
+| 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
+| 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
+| 38a | Witch base class: hexes, three new statuses, controller role | Level impact §3 | 35b |
+| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages | Branching design; level impact §1e | 35a, 38a |
+| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
+| 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
+
+World building (zones for levels 1–15) follows once 37 and 38b ship.
 
 ## Current position
 

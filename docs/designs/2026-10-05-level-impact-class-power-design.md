@@ -345,6 +345,44 @@ Changes that shorten the loop of one fight, then a long rest:
 5. **Keep the risk in bosses and travel ambushes.** Mercy, morale and retreat
    remain the tools for fights that go badly.
 
+## 5. Companion training and optional skills
+
+Owner decision (2026-10-05): companions can learn utility skills after
+joining, so the player shapes each member. Companion skills split into two
+kinds:
+
+- **Class skills stay automatic.** These are the 33f specialist capabilities
+  that define a class: Read the Trail, Pathfinder, Forage, Keen Eye, Haggle,
+  Camp Watch, Field Smith, Vigil and Weather Sense. Their ranks keep coming
+  from the class at levels 1/10/20/30. A ranger never has to be told to
+  track.
+- **Optional skills are trained.** These are Scribe, Cooking, and later
+  Alchemy and other crafts. A companion learns them with training points the
+  player directs.
+
+**Training points for companions.**
+- A companion earns training points per level at the player's rate
+  (`TrainingPointsPerLevel`).
+- The points are **derived, not banked**: points available = points earned
+  by level, minus ranks bought. That matches 33h's derived training, so
+  death, level regain, re-summon and copyover can't mint extra points.
+- Trained ranks persist on the companion's company record. A death that drops
+  a companion below a rank's cost keeps the rank, and the next points go to
+  repaying the shortfall first.
+- Stat points stay automatic, as 33h's archetype-weighted growth.
+
+**Training rules.**
+- **Command:** `company train [member] [skill]`, at a trainer offering that
+  skill and rank, or in an established camp for ranks 1–2.
+- **Cost:** the same 1+2+3+4 point cost as a player.
+- **Eligibility:** the companion's class must be allowed the skill. Scribe is
+  for casters, Cooking for anyone, and Alchemy per its design.
+- **Preview:** shows the cost and the points left.
+- **Recruits:** candidates may come with optional skills already trained, at
+  a higher price, as a head start.
+- **Browser view:** the member's Skills tab shows trained ranks and points
+  available.
+
 ## State, persistence and integration points
 
 - Progression config: `_datafiles/config.yaml` (`Progression`, the new
@@ -375,7 +413,10 @@ Changes that shorten the loop of one fight, then a long rest:
    - after-battle patching up and the wound changes.
 3. **Witch base class:** the hexes, the two new statuses, the controller role,
    recruit candidates and help.
-4. **Talents and milestones** with class promotion (see the roadmap order in
+4. **Companion training** (section 5): derived companion training points,
+   `company train`, and trained optional skills, starting with Cooking.
+   Scribe arrives with the loot model.
+5. **Talents and milestones** with class promotion (see the roadmap order in
    Project Status).
 
 ## Player help and acceptance
@@ -383,6 +424,7 @@ Changes that shorten the loop of one fight, then a long rest:
 Ship indexed help in the same delivery as its mechanics:
 
 - `help witch`, `help hexes`, `help talents`, `help mana`;
+- `help company train` and the companion section of `help skills`;
 - `help draughts` and `help patch`;
 - the `asleep`, `paralyzed` and `blighted` entries in `help statuses`;
 - updates to `help progression`, `help stat-edge`, `help spellbook`,
@@ -408,6 +450,9 @@ Acceptance tests:
   heals;
 - boss halving and the lock-loop cap;
 - copyover keeps current mana, HP, statuses and talents;
+- companion training through the real command at trainers and camps: class
+  eligibility, derived points across death, regain and copyover with no
+  minting, and recruits arriving with skills;
 - the balance cells above pass.
 
 An independent full-diff review runs before each merge.

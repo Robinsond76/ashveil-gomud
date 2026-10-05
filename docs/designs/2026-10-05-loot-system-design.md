@@ -167,9 +167,11 @@ The main way to identify them is **Scribe**, a caster skill (owner decision,
 - **Who has it:**
   - Caster classes (Wizard, Witch, Cleric and their promoted classes) can
     train it with training points at a trainer.
-  - A companion has it only if it was **hired knowing it**: some caster
-    recruit candidates come with Scribe at a rank, priced higher and shown on
-    the candidate's card. They can't learn it after joining.
+  - Caster companions can **learn it after joining** with their own training
+    points (owner decision; see [companion training](2026-10-05-level-impact-class-power-design.md#5-companion-training-and-optional-skills)).
+  - Some caster recruit candidates come **already knowing it** at a rank.
+    They're priced higher and show it on the candidate's card: a head start,
+    not the only way in.
   - The company uses its best living Scribe present, with the leader and then
     member-ID tie-breaks, and names that member.
 - **What each rank identifies:** rank 1 Rare, rank 2 Epic, rank 3 Legendary
@@ -319,8 +321,9 @@ Settled 2026-10-05:
 1. Level requirements: Rare and above at ilvl − 5, Uncommon at ilvl − 10.
 2. Personal loot: each allied company gets its own roll.
 3. Rare and above drop unidentified. `scribe` is a trainable caster skill
-   (companions are hired knowing it): automatic at camp, and a mana-costing
-   command in the field. It reuses the retired `scribe` ID.
+   that companions can learn after joining or be hired knowing: automatic at
+   camp, and a mana-costing command in the field. It reuses the retired
+   `scribe` ID.
 
 Still open (proposed defaults stand until the owner decides):
 4. Bad-luck protection counter N = 20 per boss per leader.
@@ -353,9 +356,9 @@ Acceptance:
   and level requirements refuse through real equip routes.
 - **Identification:** Scribe rank boundaries identify on real pickup and loot
   at camp rest completion, and `scribe [item]` in the field spends the
-  right mana and is refused in battle. Training is refused for non-casters,
-  companions can't learn it after hiring, and old saved ranks are cleared
-  once. Fee,
+  right mana and is refused in battle. Training is refused for non-casters
+  (player or companion), companion training spends the companion's own
+  points, and old saved ranks are cleared once. Fee,
   scroll and camp-rest paths and autoloot filters work through the real
   command,
   and selling, saturation, salvage and Haggle interact correctly.
