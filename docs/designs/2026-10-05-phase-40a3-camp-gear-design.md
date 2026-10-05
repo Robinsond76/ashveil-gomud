@@ -48,6 +48,10 @@ consumables are spent.
 - **Camps need firewood** (2026-10-05). Approved from 40a2.
 - **Camp items that boost camping effects** (2026-10-05). The design is
   left to the lead; this document is the proposal.
+- **Bedrolls are a bonus only** (2026-10-05). Members without one recover
+  normally.
+- **Camp theft is a future feature** (2026-10-05, deferred). See
+  "Deferred: camp theft" below.
 
 ## Proposed for approval
 
@@ -87,8 +91,8 @@ restock). These are balance defaults.
   today. Losing gear mid-rest changes nothing until the next rest.
 - **No stacking of the same item:** one tent, one cookpot and one set of
   bells count. Bedrolls count one per member.
-- **Raids:** gear is never stolen in this phase. That is a candidate for a
-  later, harsher raid design.
+- **Raids:** nothing is stolen in this phase. Camp theft is a deferred
+  feature (below).
 - **Text first:**
   - `camp` (the camp view) lists the gear in use and its effect in one
     line each;
@@ -101,6 +105,30 @@ restock). These are balance defaults.
 - **Without one:** the new **`camp-rough`** sprite, bedrolls around a fire
   ring, added to S1.
 - Fire, smoke and resting overlays are unchanged (40b).
+
+### Deferred: camp theft (owner, 2026-10-05)
+
+A future camp event, not part of 40a3:
+
+- **Only happens without bells and trip lines.** A company that has strung
+  bells and trip lines is never robbed. Their pitch becomes: protect your
+  sleep and your goods.
+- **The theft is silent.** Thieves slip in during the rest, unseen. There
+  is no fight and no warning.
+- **The company notices on waking:** the rest report says what is missing,
+  for example "When you wake, the cargo has been rifled. Missing: 2 raw
+  game meat, a firewood bundle."
+- **What can be taken:** some of the company's loot and supplies, from the
+  cargo and unattended packs.
+
+Details to decide when it is designed:
+- the chance per rest, and the zones it happens in;
+- what can be taken: never equipped items, and maybe never bound or quest
+  items;
+- caps on how much;
+- whether a posted watch also protects;
+- whether stolen goods can be tracked down;
+- multiplayer fairness and the persisted rest record.
 
 ## State and persistence
 
@@ -172,9 +200,6 @@ restock). These are balance defaults.
 ## Open questions
 
 1. Confirm the six items and their numbers as balance defaults.
-2. Should raiders steal or damage camp gear in a later, harsher raid
-   design? The proposal is to defer.
-3. Should members without bedrolls instead suffer a penalty (the harsher
-   option), rather than those with one getting a bonus? The proposal is a
-   bonus only, so today's camping isn't made worse twice (firewood is
-   already a new cost).
+
+Resolved: bedrolls are a bonus only. Camp theft is deferred as a future
+feature.

@@ -1,5 +1,11 @@
 # Ashveil Project Status
 
+**Camp gear decisions (2026-10-05):** bedrolls are a bonus only. Camp
+theft is deferred as a future feature: a silent camp event when a company
+rests without bells and trip lines, noticed as missing loot on waking.
+Recorded in the 40a3 design and the deferred items. Documentation only.
+Verification: links and the diff checked.
+
 **Camps need firewood; camp gear designed (2026-10-05):** the owner
 approved the 40a2 rule that a camp fire needs firewood. They asked for camp
 items that boost camping. Added the [40a3 camp gear](designs/2026-10-05-phase-40a3-camp-gear-design.md)
@@ -1814,6 +1820,11 @@ those results. This documentation change does not rerun or supersede them.
   visibility.
 - **Race and gender sprite variants (owner, 2026-10-05):** not for now.
   Revisit with the races review.
+- **Camp theft (owner, 2026-10-05):** a future camp event. A company
+  resting **without camp bells and trip lines** may wake to find some loot
+  and supplies missing, with no fight and no warning. Details are in the
+  [40a3 camp gear](designs/2026-10-05-phase-40a3-camp-gear-design.md)
+  design.
 - **PvP camp visibility (owner, 2026-10-05):** the visual map shows only
   your own camp and allied camps. Revisit for PvP: visibility should depend
   on lighting, terrain, and the company's skill at concealing its camp.
