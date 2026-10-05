@@ -46,7 +46,12 @@ show up as **longer fights**, the opposite of the goal.
 - **Crits stay Smarts:** the skill edge does not touch crit chance.
 - **Gear adds toughness,** but only warriors should be highly tanky, and
   very tanky armor makes its wearer slow.
-- **Block counts as evasion** for a shield-bearer of any class.
+- **Block counts as evasion** for a shield-bearer.
+- **Untrained armor is allowed, with a significant penalty** (not
+  forbidden).
+- **Shields:** warriors may use any shield; rangers only small shields
+  (bucklers); no other class uses shields. **Clerics** fight with staffs,
+  rods or maces only.
 
 ## Decisions
 
@@ -111,12 +116,13 @@ warriors.
 | Block (shield) | 15 + shield armor, ±Strength edge, 15–45 | **15 + shield armor / 8 / 55**, skill + Strength edge |
 | Crit chance | 5–30, even 15, Smarts edge | **unchanged** (owner: crits stay Smarts) |
 
-- **Shields.** Any class may carry a shield. A shield-bearer blocks
-  instead of dodging or parrying (today's rule, kept): one block roll per
-  blow, with the shield's own armor added to the chance. Block grows with
-  Evasion like the other defenses, and its range is the widest (8–55), so
-  a shield is the steadiest defense and a warrior with a good shield is the
-  hardest target. Bash (a counter after a block) keeps its Strength edge
+- **Shields.** Only warriors and rangers carry them (decision 5b). A
+  shield-bearer blocks instead of dodging or parrying (today's rule,
+  kept): one block roll per blow, with the shield's own armor added to the
+  chance. Block grows with Evasion like the other defenses, and its range
+  is the widest (8–55), so a shield is the steadiest defense and a warrior
+  with a good shield is the hardest target. A buckler's small armor keeps
+  a ranger's block well below a warrior's. Bash (a counter after a block) keeps its Strength edge
   and adds the skill edge.
 - Dodge and parry become **two-sided** (an even value that a lead raises
   and a deficit lowers), so a novice facing a master defends less than
@@ -222,12 +228,52 @@ very tanky armor makes its wearer slow. Today the only cost is weight
   however strong you are. Parry and block are unaffected, so a heavy
   warrior defends with sword and shield, not footwork.
 - **Armor training** per archetype: warrior heavy; cleric and ranger
-  medium; rogue, wizard and Witch light. Wearing bulk above your training
-  **doubles** its tempo and dodge penalties, and a caster in armor above
-  its training takes +1 round on every chant.
+  medium; rogue, wizard and Witch light. Untrained armor can be worn, with
+  a **significant penalty** (owner): its tempo and dodge penalties are
+  doubled, the wearer loses **10 Attack and 10 Evasion** (half a full skill
+  edge, about ten levels' worth), and a caster takes +1 round on every
+  chant. `equip` warns before an untrained piece goes on.
 - Result: a warrior in plate with a shield is the hardest target in the
-  game and a little slow; a rogue in plate is a slow rogue who dodges
+  game and a little slow; a ranger in leather with a buckler is quick and
+  fairly hard to pin down; a rogue in plate is a slow rogue who dodges
   nothing; a wizard in plate barely casts.
+
+### 5b. Shields and cleric weapons
+
+Owner: warriors and rangers may use shields if they want; rangers only
+small shields (bucklers); clerics no shields, and only staffs, rods or
+maces. These are **hard rules**, unlike armor's penalty.
+
+- **Shield size:** a new item field `shieldsize: buckler | shield |
+  tower` (a load-time default of `shield` for existing shields). A tower
+  shield is also heavy bulk.
+
+  | Class | Shields allowed |
+  |---|---|
+  | Warrior | Buckler, shield, tower |
+  | Ranger | Buckler only |
+  | Cleric, Rogue, Wizard, Witch | None |
+  | Enemies | Any (unchanged) |
+
+- **Cleric weapons:** bludgeoning weapons only (maces, staffs, rods,
+  cudgels, scepters). A new item field `weaponclass` (`mace`, `staff`,
+  `rod`, `club`, …) lets the rule name them; until it is tagged, any
+  bludgeoning weapon qualifies.
+- **Enforcement:** `equip` (and companion gear, `company equip`) refuses
+  a disallowed shield or weapon with a reason ("Clerics fight with staffs,
+  rods and maces."). Archetype data holds the rules (`ShieldSizes`,
+  `WeaponClasses`), so later classes set their own.
+- **Existing characters:** on load, a disallowed shield or weapon is moved
+  from the hand to carried items and the player is told once; it counts
+  toward burden like any carried item. Companions do the same.
+- **Starting kits:** the cleric's wooden shield (20004) is replaced (by a
+  holy symbol or a second healing potion, chosen in the plan). The ranger's
+  kit is unchanged (its sling is two-handed); a new **leather buckler**
+  (light, armor 3) is sold where shields are, for a ranger fighting with a
+  one-handed weapon.
+- The two shipped shields are `shield` size (wooden 5, iron 10). A
+  buckler (3) and a tower shield (14, heavy bulk) are added to shops in
+  the plan.
 
 ### 6. Spells and healing sized to a weapon hit (revises 35b §2b)
 
@@ -268,8 +314,10 @@ deciding how well they land.**
 ## Persistence and invariants
 
 - Ratings are derived from level, archetype and template offset; HP stays
-  derived (30g4). The only new saved data is the item `bulk` field on item
-  specs (world data, not player records).
+  derived (30g4). New item fields (`bulk`, `shieldsize`, `weaponclass`)
+  are world data. Player and companion records change only when a
+  disallowed shield or weapon is moved from the hand on load (decision 5b),
+  which happens once and is saved with the record's normal atomic save.
 - No change to game time, rest or travel.
 - Companions use their archetype's rates and armor training, the same as
   players.
@@ -285,10 +333,15 @@ deciding how well they land.**
   helper beside `StatEdge`; `critChance` unchanged.
 - `internal/combat/tempo.go` and `burdenedDodge`: bulk penalties.
 - `internal/characters`: `AttackSkill()`, `Evasion()` and `ArmorBulk()`.
-- `internal/items`: the `bulk` field, its load-time default and
-  validation.
+- `internal/items`: the `bulk`, `shieldsize` and `weaponclass` fields,
+  their load-time defaults and validation; new buckler and tower shield
+  items.
+- `internal/usercommands/equip.go` and company gear: shield and weapon
+  rules, the untrained-armor warning; a load-time unequip for disallowed
+  items.
 - `modules/archetype/files/data-overlays/config.yaml`: `AttackRate`,
-  `EvasionRate`, `HPStart`, new `HPPerLevel`, `ArmorTraining`.
+  `EvasionRate`, `HPStart`, new `HPPerLevel`, `ArmorTraining`,
+  `ShieldSizes`, `WeaponClasses`, and the cleric kit.
 - `internal/mobs`: optional `attackskill` and `evasion` template offsets,
   validated to ±5.
 - `_datafiles/config.yaml` and `internal/configs`: `SkillEdgeSpan`,
@@ -306,13 +359,17 @@ deciding how well they land.**
   chances, and an example of a 10-level gap.
 - **Existing page** `help armor` gains bulk, its tempo and dodge costs, and
   each class's armor training (new aliases `bulk`, `heavy armor`).
+- **New page** `help shields` (aliases `shield`, `buckler`, `block`):
+  sizes, who may use them, and how block works; `help warrior`, `help
+  ranger`, `help archetype` and the cleric's class text list their shields
+  and the cleric's weapons; `help equip` mentions the refusals.
 - **Updated pages:** `attack` (links to `evasion`), `defense` (block,
   armor and bulk), `speed`, `perception`, `strength` (smaller damage
   bonus), `health` (new HP), `progression` (what a level gives),
   `combatpace` (bulk and tempo), `combat` (hub links), `abilities`
   (Tackle, bash, Opening Strike), `experience` (report line).
-- `keywords.yaml` lists `evasion` under combat with its aliases and adds
-  the new `armor` aliases.
+- `keywords.yaml` lists `evasion` and `shields` under combat with their
+  aliases and adds the new `armor` aliases.
 - **Tutorial:** the combat lesson points to `help evasion`, and the gear
   lesson (or Departure) to `help armor` (`modules/tutorial/stages.go`);
   stale hints about HP growth corrected.
@@ -343,8 +400,10 @@ acceptance's HP row and add to its mismatch rows:
    target, measured with these rules.
 8. **Unit and wiring:** rating derivation (archetype, default, template
    offset, lost level); combined-edge bounds for every chance, with crit
-   chance unchanged; block used for any shield-bearer; bulk defaults and
-   penalties, doubled when untrained; a real `AttackPlayerVsMob` and
+   chance unchanged; block used for a shield-bearer; bulk defaults and
+   penalties, doubled with −10 Attack and Evasion when untrained; shield
+   and cleric weapon refusals through the real `equip` and company gear
+   paths; disallowed items unequipped once on load; the new cleric kit; a real `AttackPlayerVsMob` and
    `AttackMobVsPlayer` pass showing the skill edge changing hit and
    defense outcomes; the simulator matching real fights; the level-up
    report, `status` and `consider` lines; HP clamping on load without
@@ -364,7 +423,8 @@ ones, and the owner approves any change to the shape of the system.
 
 ## Open questions for the owner
 
-1. **Untrained armor.** Doubled penalties are proposed. Should untrained
-   bulk instead be forbidden (a cleric can't wear plate at all)?
-2. **Shields.** Any class may carry one today. Should shields also need
-   training (warriors and clerics only), or is the weight enough?
+1. **Cleric weapons:** do clubs, cudgels and scepters count as maces, or
+   only items tagged mace, staff or rod (which would mean retagging and
+   adding a few items)?
+2. **Cleric kit:** a holy symbol (new item, no combat effect yet) or a
+   second healing potion in place of the shield?
