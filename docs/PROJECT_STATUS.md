@@ -1,5 +1,17 @@
 # Ashveil Project Status
 
+**Sprite set S0 drafted for owner review (2026-10-05):** at the owner's
+request, generated the S0 style foundation from the
+[sprite specification](designs/2026-10-05-sprite-specification.md) into
+`_datafiles/html/public/static/sprites/style/`: the 64-colour master palette
+(`palette.png`, `palette.gpl`), the map and battle style frames, both
+proportion sheets and the icon sample, plus `sprites/contact/s0.png`. The
+art is drawn in code by `scripts/sprites/` (`python3 scripts/sprites/s0.py`,
+needs Pillow and NumPy), which checks every pixel against the palette.
+Deviations: the style map joins road and river tiles to their neighbours,
+which 40c's tile rules must confirm. S1 waits for owner approval of S0.
+Art only; no Go tests required.
+
 **Phase 40a3 design approved (2026-10-05):** the owner approved the camp
 gear design as written: the fuel rule, the six items, and their weights,
 effects and prices. The execution plan comes when the visual milestone

@@ -1,0 +1,68 @@
+GIMP Palette
+Name: Ashveil Master
+Columns: 8
+#
+ 20  16  14	W0 Ink
+ 36  29  26	W1 Soot
+ 58  48  43	W2 Peat
+ 85  72  64	W3 Old Stone
+116 102  92	W4 Weathered Stone
+151 138 125	W5 Lichen Grey
+190 179 163	W6 Dry Bone
+ 26  29  34	C0 Pitch
+ 42  47  54	C1 Gunmetal
+ 61  67  75	C2 Dark Iron
+ 84  91  99	C3 Iron
+111 119 126	C4 Worn Steel
+147 155 160	C5 Steel
+195 201 203	C6 Edge Light
+ 42  26  18	E0 Loam
+ 63  39  23	E1 Bark
+ 88  55  31	E2 Old Leather
+116  73  42	E3 Leather
+143  95  56	E4 Saddle
+171 122  76	E5 Tan
+198 154 104	E6 Straw
+223 192 146	E7 Parchment
+ 16  26  18	G0 Deep Wood
+ 26  42  26	G1 Pine Shadow
+ 38  60  35	G2 Pine
+ 52  79  44	G3 Moss
+ 70 100  52	G4 Fern
+ 93 122  62	G5 Meadow
+122 148  79	G6 Sunlit Grass
+159 176 108	G7 Pale Grass
+ 18  26  38	B0 Night Water
+ 29  43  59	B1 Deep River
+ 43  64  84	B2 River
+ 60  86 107	B3 Slate
+ 84 112 134	B4 Shallows
+114 141 159	B5 Mist
+157 180 194	B6 Pale Light
+ 38  14  12	R0 Dried Blood
+ 61  20  16	R1 Oxblood Shadow
+ 90  29  21	R2 Oxblood
+122  41  27	R3 Rust
+156  58  34	R4 Brick
+192  88  44	R5 Ember
+222 138  68	R6 Flame
+ 46  36  16	O0 Umber
+ 74  58  25	O1 Tarnish
+107  84  36	O2 Old Brass
+140 111  47	O3 Ochre
+173 140  61	O4 Brass
+204 174  90	O5 Wheat
+234 214 142	O6 Candlelight
+ 31  22  37	V0 Bruise
+ 48  34  58	V1 Dusk
+ 68  49  79	V2 Plum
+ 90  68 102	V3 Heather
+118  92 128	V4 Thistle
+154 131 161	V5 Pale Heather
+107  66  50	S0 Weathered Skin Shadow
+140  90  67	S1 Tanned Skin
+173 118  87	S2 Skin
+201 150 119	S3 Fair Skin
+224 184 152	S4 Skin Light
+233 220 195	S5 Undyed Wool
+244 239 226	S6 Highlight
