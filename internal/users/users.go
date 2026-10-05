@@ -470,6 +470,9 @@ func LoadUser(username string, skipValidation ...bool) (*UserRecord, error) {
 	}
 
 	loadedUser.Character.SetUserId(loadedUser.UserId)
+	if err := migrateStatPointRhythm(loadedUser); err != nil {
+		return nil, err
+	}
 	if len(skipValidation) == 0 || !skipValidation[0] {
 		if err := loadedUser.Character.Validate(true); err == nil {
 			SaveUser(*loadedUser)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/milestones"
 	"github.com/GoMudEngine/GoMud/internal/stats"
 )
 
@@ -314,16 +315,20 @@ type GainExperience struct {
 func (l GainExperience) Type() string { return `GainExperience` }
 
 type LevelUp struct {
-	UserId         int
-	RoomId         int
-	Username       string
-	CharacterName  string
-	LevelsGained   int
-	NewLevel       int
-	StatsDelta     stats.Statistics
-	TrainingPoints int
-	StatPoints     int
-	LivesGained    int
+	UserId                          int
+	RoomId                          int
+	Username                        string
+	CharacterName                   string
+	LevelsGained                    int
+	NewLevel                        int
+	HealthMaxBefore, HealthMaxAfter int
+	ManaMaxBefore, ManaMaxAfter     int
+	StatsBefore, StatsAfter         stats.Statistics
+	NextMilestone                   milestones.Milestone
+	StatsDelta                      stats.Statistics
+	TrainingPoints                  int
+	StatPoints                      int
+	LivesGained                     int
 }
 
 func (l LevelUp) Type() string { return `LevelUp` }

@@ -46,8 +46,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-05 (roadmap reprioritized; level impact, class power and loot designs drafted)
-- **Latest completed slices:** 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
+- **Last updated:** 2026-10-05 (35a implemented, pending PR integration; 35b/35c pending implementation)
+- **Latest completed slices:** 35a (pending integration), 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
@@ -63,8 +63,9 @@ instead of duplicating them.
 ## Roadmap priorities (owner, 2026-10-05)
 
 After a general game review, the owner reordered the next work. World
-building waits until these ship. Each item is a design awaiting owner
-review; no gameplay is implemented yet.
+building waits until these ship. The level-impact design is owner-approved;
+35a is implemented on its feature branch and pending PR integration. The
+remaining slices are pending implementation or design review as listed below.
 
 1. **Level impact and caster power.** [Design](designs/2026-10-05-level-impact-class-power-design.md)
    (slices 1–2):
@@ -118,9 +119,9 @@ implemented (handoff rule 20).
 
 | Phase | Scope | Source | Depends on |
 |---|---|---|---|
-| 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells. [Plan](plans/2026-10-05-phase-35a-level-impact.md), ready | Level impact §1, §4.1 | — |
-| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), ready | Level impact §2, §4 | 35a |
-| 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), ready | Level impact §5 | 35a |
+| 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells. [Plan](plans/2026-10-05-phase-35a-level-impact.md), implemented; pending PR integration | Level impact §1, §4.1 | — |
+| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), pending implementation | Level impact §2, §4 | 35a |
+| 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), pending implementation | Level impact §5 | 35a |
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
@@ -131,12 +132,42 @@ implemented (handoff rule 20).
 
 World building (zones for levels 1–15) follows once 37 and 38b ship.
 
-**Phase 35 is ready to implement (2026-10-05).** The owner approved the level
-impact design. Execution plans and an implementer brief are in
-[the phase 35 handoff](plans/2026-10-05-phase-35-handoff.md); another agent
-will implement them.
+**Phase 35 delivery (2026-10-05):** 35a is implemented on
+`phase-35a-level-impact`, pending PR integration. 35b and 35c remain pending
+implementation after 35a lands. Plans and approved scope are in
+[the phase 35 handoff](plans/2026-10-05-phase-35-handoff.md).
 
 ## Current position
+
+**35a level impact (2026-10-05), implementation complete, pending PR integration:**
+fractional racial growth preserves the fifth-level boundary values; keep
+`StatStepLevels: 5` per the approved plan instead of the design draft's 1,
+which would multiply the curve. Shared point awards now give one every two
+levels, with an atomic, once-only peak-level migration on normal load and
+copyover. HP grows at the full class rate through 20, then 60%. Player and
+companion reports show final before/after values; experience/status announce
+planned milestones as `(coming)`. Admin previews, save/reload, help and tutorial
+follow the same rules. No milestone is shipped by 35a. 35b/35c remain pending.
+See the [plan](plans/2026-10-05-phase-35a-level-impact.md),
+[measurements and limitations](plans/2026-10-05-phase-35a-measurements.md), and
+[admin screenshot](verification/phase-35a/progression-editor.png).
+
+**Review:** independent full-diff reviewer found no P1 production blocker.
+Accepted: P2 shipped human automatic adjusted stats change on only 8/59
+level-ups (levels 5, 15, 25, 30, 35, 45, 55, 60), so the "most level-ups"
+acceptance criterion is **unmet** despite faithfully implementing the approved
+fractional formula. Recorded as a design limitation; no race or curve retuning
+in 35a. Accepted and fixed: P2 missing real rendered stat-line, companion
+post-retraining report, and experience milestone/no-future coverage. Also
+isolated two pre-existing battle fixtures from automatic Tackle and captain
+mortality. No findings rejected. The focused report/migration/fixture checks
+passed ten repeated runs. Verification: 8,200 zone fights (100 per cell), zero
+stalls; unchanged mismatch assertions pass (97% L15 vs L10, 100% L30 vs L10).
+Chromium checked smoothing, cadence preview/save/reload, level-200 downsampling,
+API reference and console errors. Final verification passed: `make generate`,
+`make validate`, `make js-lint` with installed JSHint, local `make lua-lint`,
+`go test -race ./...`, inline admin JavaScript syntax and relative Markdown
+links. Gameplay implementation complete; PR integration remains pending.
 
 **30g6 stat edges and tuning (2026-10-04):** on top of 30g6a, per the
 [amendment](designs/2026-10-04-phase-30g6-amendment.md) A, B, E and F. Every

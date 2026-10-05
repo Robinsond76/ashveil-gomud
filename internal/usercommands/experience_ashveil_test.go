@@ -65,3 +65,20 @@ func TestExperienceListsTheCompany(t *testing.T) {
 	assert.Contains(t, text, "Mira Lvl: 2")
 	assert.Contains(t, text, "Tobb level 3, fallen")
 }
+
+// Phase 35a: exercise the actual command and shipped template, including the
+// end of the announced milestone schedule. Companion lines remain unchanged.
+func TestExperienceShowsNextMilestone(t *testing.T) {
+	useWorld(t, "default")
+	user := users.NewUserRecord(7, 1)
+	for _, tc := range []struct {
+		level int
+		text  string
+	}{{1, "level 3: second class option (coming)"}, {9, "level 10: class promotion (coming)"}, {30, "No upcoming milestone announced."}, {60, "No upcoming milestone announced."}} {
+		user.Character.Level = tc.level
+		user.Character.Validate()
+		text := experienceText(t, user, "")
+		assert.Contains(t, text, "Next: "+tc.text)
+		assert.NotContains(t, text, "<no value>")
+	}
+}

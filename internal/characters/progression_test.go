@@ -13,6 +13,8 @@ func TestProgressionLevelUpStepPointsAndDeath(t *testing.T) {
 	previous := configs.Flatten(configs.GetOverrides())
 	t.Cleanup(func() { require.NoError(t, configs.RestoreOverrides(previous)) })
 	flat := configs.Flatten(configs.GetOverrides())
+	flat["GamePlay.Progression.SmoothStatGrowth"] = false
+	flat["GamePlay.Progression.StatPointsEveryNLevels"] = 5
 	flat["GamePlay.Progression.TrainingPointsPerLevel"] = 1
 	flat["GamePlay.Progression.StatPointsPerLevel"] = 1
 	require.NoError(t, configs.RestoreOverrides(flat))
@@ -95,4 +97,25 @@ func TestProgressionSaturatedHPWithTraining(t *testing.T) {
 	c.RecalculateStats()
 	assert.Equal(t, 1, c.HealthMax.Value)
 	assert.Equal(t, 1, c.HealthMax.ValueAdj)
+}
+
+func TestPhase35LevelUpPeakProtectsStatPoints(t *testing.T) {
+	g := configs.GetGamePlayConfig()
+	g.Progression.StatPointsEveryNLevels = 2
+	g.Progression.StatPointsPerLevel = 1
+	g.Progression.SmoothStatGrowth = true
+	t.Cleanup(configs.SetTestGamePlayConfig(g))
+	c := levelledCharacter(1)
+	for level := 2; level <= 10; level++ {
+		c.Experience = c.XPTNL()
+		ok, _ := c.LevelUp()
+		require.True(t, ok)
+		assert.Equal(t, g.Progression.StatPointsAt(level), c.StatPoints)
+	}
+	c.LoseLevel()
+	c.Experience = c.XPTNL()
+	ok, _ := c.LevelUp()
+	require.True(t, ok)
+	assert.Equal(t, 5, c.StatPoints)
+	assert.Equal(t, 5, StatPointsAtLevel(10))
 }

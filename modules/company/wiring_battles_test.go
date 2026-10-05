@@ -316,10 +316,14 @@ func (b *brawl) waitingBandit() *mobs.Mob {
 func TestSpellAtAWaitingGroupIsHeld(t *testing.T) {
 	b := newBrawl(t)
 	b.looseBandits()
+	// Keep the active group alive while testing waiting-group admission.
+	b.hold(nil)
 	b.aimAt("bandit captain")
 	b.toughen()
+	b.hold(nil)
 	b.fight()
 	b.toughen()
+	b.hold(nil)
 
 	waiting := b.waitingBandit()
 	health := waiting.Character.Health
@@ -330,6 +334,7 @@ func TestSpellAtAWaitingGroupIsHeld(t *testing.T) {
 	assert.Equal(t, health, waiting.Character.Health, "the waiting bandit is untouched")
 
 	b.toughen()
+	b.hold(nil)
 	caster := b.waitingBandit()
 	caster.Character.SetCast(0, characters.SpellAggroInfo{SpellId: "mm", TargetUserIds: []int{7}})
 	var mm bool

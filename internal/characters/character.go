@@ -73,6 +73,7 @@ type Character struct {
 	Experience          int                            `yaml:"experience,omitempty"`       // The experience of the character
 	TrainingPoints      int                            `yaml:"trainingpoints,omitempty"`   // The number of training points the character has
 	StatPoints          int                            `yaml:"statpoints,omitempty"`       // The number of skill points the character has
+	StatPointRhythm     int                            `yaml:"statpointrhythm,omitempty"`  // Phase 35a migration version.
 	PeakLevel           int                            `yaml:"peaklevel,omitempty"`        // Ashveil Phase 25a: highest level ever reached; 0 means the current level
 	Health              int                            `yaml:"health,omitempty"`           // The health of the character
 	Mana                int                            `yaml:"mana,omitempty"`             // The mana of the character
@@ -132,29 +133,30 @@ func New() *Character {
 			Mysticism:  stats.StatInfo{Base: 1},
 			Perception: stats.StatInfo{Base: 1},
 		},
-		Level:          1,
-		Experience:     1,
-		TrainingPoints: 0,
-		StatPoints:     0,
-		TNLScale:       1.0,
-		Health:         startingHealth,
-		HealthMax:      stats.StatInfo{Base: 1},
-		Mana:           startingMana,
-		ManaMax:        stats.StatInfo{Base: 1},
-		Skills:         make(map[string]int),
-		Gold:           25,
-		Bank:           100,
-		SpellBook:      make(map[string]int),
-		CharmedMobs:    []int{},
-		Items:          []items.Item{},
-		Buffs:          buffs.New(),
-		Equipment:      Worn{},
-		MiscData:       make(map[string]any),
-		roomHistory:    make([]int, 0, 10),
-		KeyRing:        make(map[string]string),
-		Created:        time.Now(),
-		PlayerDamage:   map[int]int{},
-		Timers:         map[string]gametime.RoundTimer{},
+		Level:           1,
+		Experience:      1,
+		TrainingPoints:  0,
+		StatPoints:      0,
+		StatPointRhythm: 2,
+		TNLScale:        1.0,
+		Health:          startingHealth,
+		HealthMax:       stats.StatInfo{Base: 1},
+		Mana:            startingMana,
+		ManaMax:         stats.StatInfo{Base: 1},
+		Skills:          make(map[string]int),
+		Gold:            25,
+		Bank:            100,
+		SpellBook:       make(map[string]int),
+		CharmedMobs:     []int{},
+		Items:           []items.Item{},
+		Buffs:           buffs.New(),
+		Equipment:       Worn{},
+		MiscData:        make(map[string]any),
+		roomHistory:     make([]int, 0, 10),
+		KeyRing:         make(map[string]string),
+		Created:         time.Now(),
+		PlayerDamage:    map[int]int{},
+		Timers:          map[string]gametime.RoundTimer{},
 	}
 }
 
@@ -1494,9 +1496,7 @@ func (c *Character) LevelUp() (bool, stats.Statistics) {
 		if int(cfgProg.TrainingPointsEveryNLevels) <= 1 || c.Level%int(cfgProg.TrainingPointsEveryNLevels) == 0 {
 			c.TrainingPoints += int(cfgProg.TrainingPointsPerLevel)
 		}
-		if int(cfgProg.StatPointsEveryNLevels) <= 1 || c.Level%int(cfgProg.StatPointsEveryNLevels) == 0 {
-			c.StatPoints += int(cfgProg.StatPointsPerLevel)
-		}
+		c.StatPoints = stats.SaturatingSum(c.StatPoints, cfgProg.StatPointsAt(c.Level)-cfgProg.StatPointsAt(c.Level-1))
 	}
 	c.PeakLevel = max(peak, c.Level)
 
@@ -2488,8 +2488,7 @@ func (c *Character) SeesSecretExit(roomID int, exitName string, targetRoomID int
 // companion growth (Phase 33h1) both derive training from it.
 func StatPointsAtLevel(level int) int {
 	cfgProg := configs.GetProgressionConfig()
-	every, per := int(cfgProg.StatPointsEveryNLevels), int(cfgProg.StatPointsPerLevel)
-	return max(level, 0) / max(every, 1) * per
+	return cfgProg.StatPointsAt(level)
 }
 
 // HealthGainPerLevel resolves a player's durable class, a companion's runtime

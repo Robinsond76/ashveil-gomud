@@ -128,4 +128,11 @@ function toggleTestMode(blockId, enabled) {
 }
 </script>
 
+<section id="progression-preview">
+  <h2>Progression preview</h2>
+  <p><code>GET /admin/api/v1/progression/preview</code> computes charts without saving. Query parameters include <code>SmoothStatGrowth=true|false</code>, <code>StatStepLevels</code>, <code>StatPointsEveryNLevels</code>, <code>StatPointsPerLevel</code> and the other progression controls.</p>
+  <p>The response's <code>data.levels</code> indexes every series. <code>stat_gains</code> and <code>stat_gains_adj</code> use the live racial growth and compression helpers; <code>stat_points</code> contains cumulative earned stat points through each sampled level. Creation grants no points. This also holds when charts sample fewer levels than the display range.</p>
+  <p>Persist settings through <code>PATCH /admin/api/v1/config</code> using <code>GamePlay.Progression.SmoothStatGrowth</code> and <code>GamePlay.Progression.StatPointsEveryNLevels</code>. <a href="/admin/progression">Open the editor</a>.</p>
+</section>
+
 {{template "footer" .}}

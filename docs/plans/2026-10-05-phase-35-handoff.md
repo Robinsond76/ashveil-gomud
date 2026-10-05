@@ -18,6 +18,12 @@ Ship 35a first. 35b and 35c both depend on it but not on each other. Do them
 one at a time unless you use separate worktrees; never two writers in one
 worktree. 35b's harness assertions are the phase's balance gate.
 
+## Delivery status
+
+35a is implemented on `phase-35a-level-impact` and pending PR integration;
+35b and 35c are pending implementation. See [35a measurements](2026-10-05-phase-35a-measurements.md)
+and Project Status for verification and review.
+
 ## Before you start
 
 1. Read `AGENTS.md`, `CLAUDE.md`, `docs/AGENT_IMPLEMENTATION_WORKFLOW.md`,

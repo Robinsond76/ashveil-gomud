@@ -3,7 +3,6 @@ package hooks
 import (
 	"fmt"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -25,7 +24,10 @@ func SendLevelNotifications(e events.Event) events.ListenerReturn {
 	}
 
 	levelUpData := map[string]interface{}{
-		"nextStatStep":   configs.GetProgressionConfig().NextStatStep(evt.NewLevel),
+		"nextMilestone": evt.NextMilestone,
+		"healthBefore":  evt.HealthMaxBefore, "healthAfter": evt.HealthMaxAfter,
+		"manaBefore": evt.ManaMaxBefore, "manaAfter": evt.ManaMaxAfter,
+		"statsBefore": evt.StatsBefore, "statsAfter": evt.StatsAfter,
 		"levelsGained":   evt.LevelsGained,
 		"level":          evt.NewLevel,
 		"statsDelta":     evt.StatsDelta,

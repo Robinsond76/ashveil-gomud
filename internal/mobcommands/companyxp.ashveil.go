@@ -1,15 +1,17 @@
 package mobcommands
 
 import (
+	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"strings"
 )
 
 // AwardCompanyXP is Phase 32e: when a kill pays a company's leader, every
 // companion of that company that is alive, attached (still charmed by this leader), and in the room where
 // the mob died earns the same figure, in full (no split). It returns one
-// notice per level a companion gained, for the leader, and how many
+// notice per companion that gained levels, for the leader, and how many
 // companions it paid. Companions are
 // found through the leader's charmed instances and confirmed against the
 // company provider, so a mob charmed some other way is never paid. The
@@ -33,6 +35,7 @@ func AwardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 		// Phase 33h2: a companion's level-up keeps its health and mana
 		// (GoMud's level-up refills them), so a level is no free rest. It
 		// never lowers them either: a level never lowers the maximum.
+		before := mob.Character
 		health, mana := mob.Character.Health, mob.Character.Mana
 		levelled := false
 		for {
@@ -41,7 +44,6 @@ func AwardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 				break
 			}
 			levelled = true
-			lines = append(lines, company.LevelLine(mob.Character.Name, mob.Character.Level))
 		}
 		if levelled {
 			// A respawn at this level deals the level's points by the
@@ -52,7 +54,21 @@ func AwardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 			}
 			mob.Character.Health = min(health, mob.Character.HealthMax.Value)
 			mob.Character.Mana = min(mana, mob.Character.ManaMax.Value)
+			lines = append(lines, companionLevelLine(before, mob.Character))
 		}
 	}
 	return paid, lines
+}
+
+// One report spans all gained levels and the final derived companion training.
+func companionLevelLine(before, after characters.Character) string {
+	changes := []string{fmt.Sprintf("Health %d -> %d", before.HealthMax.Value, after.HealthMax.Value), fmt.Sprintf("Mana %d -> %d", before.ManaMax.Value, after.ManaMax.Value)}
+	old := []int{before.Stats.Strength.ValueAdj, before.Stats.Speed.ValueAdj, before.Stats.Smarts.ValueAdj, before.Stats.Vitality.ValueAdj, before.Stats.Mysticism.ValueAdj, before.Stats.Perception.ValueAdj}
+	now := []int{after.Stats.Strength.ValueAdj, after.Stats.Speed.ValueAdj, after.Stats.Smarts.ValueAdj, after.Stats.Vitality.ValueAdj, after.Stats.Mysticism.ValueAdj, after.Stats.Perception.ValueAdj}
+	for i, name := range []string{"Strength", "Speed", "Smarts", "Vitality", "Mysticism", "Perception"} {
+		if old[i] != now[i] {
+			changes = append(changes, fmt.Sprintf("%s %d -> %d", name, old[i], now[i]))
+		}
+	}
+	return fmt.Sprintf("%s reaches level %d (%s).", after.Name, after.Level, strings.Join(changes, ", "))
 }

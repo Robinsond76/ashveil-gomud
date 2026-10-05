@@ -1,10 +1,13 @@
 # Level Impact, Class Power, and the Witch
 
 Status: owner-approved design, 2026-10-05. Execution plans for 35a–35c are in
-the [phase 35 handoff](../plans/2026-10-05-phase-35-handoff.md); no gameplay
-is implemented yet. The owner's direction (listed under **Owner decisions**) is
-settled; every number below is a proposed default to verify with the balance
-harness before it ships.
+the [phase 35 handoff](../plans/2026-10-05-phase-35-handoff.md). 35a level impact
+is implemented on its feature branch and pending PR integration; 35b and 35c
+remain pending implementation. The [35a measurements](../plans/2026-10-05-phase-35a-measurements.md)
+record the sparse human automatic-stat limitation against the "most levels"
+goal. The owner's direction (listed under **Owner decisions**) is settled;
+every number below is a proposed default to verify with the balance harness
+before it ships.
 
 Related: [30g6 amendment](2026-10-04-phase-30g6-amendment.md),
 [branching class progression](2026-10-01-branching-class-progression-design.md),

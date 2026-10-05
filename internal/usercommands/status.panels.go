@@ -10,6 +10,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/milestones"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
@@ -73,7 +74,7 @@ func buildStatusPanel(user *users.UserRecord) string {
 	}
 	layout.Panel("info").
 		Add(`<ansi fg="yellow">Level:  </ansi>`, `<ansi fg="yellow">Lvl:</ansi>`, fmt.Sprintf(`%d`, c.Level)).
-		Add(`<ansi fg="yellow">Next stat step: </ansi>`, `<ansi fg="yellow">Step:</ansi>`, fmt.Sprintf(`level %d`, configs.GetProgressionConfig().NextStatStep(c.Level))).
+		Add(`<ansi fg="yellow">Next milestone: </ansi>`, `<ansi fg="yellow">Next:</ansi>`, milestones.Next(c.Level).String()).
 		Add(`<ansi fg="yellow">Exp:    </ansi>`, `<ansi fg="yellow">XP: </ansi>`, xpValue)
 	if ashveil {
 		addAshveilAlignment(layout.Panel("info"), summary)

@@ -249,7 +249,7 @@
 </style>
 
 <h1>Character Progression</h1>
-<p class="subtitle">Adjust progression formulas and see live charts. Click <strong>Save</strong> to apply changes to the server.</p>
+<p class="subtitle">Adjust progression formulas and see live charts. Click <strong>Save</strong> to apply changes to the server. <a href="/admin/config-api#progression-preview">API reference</a>.</p>
 
 <div class="warning-banner">
     <span class="warning-icon">&#9888;</span>
@@ -332,10 +332,11 @@
         </div>
 
         <div class="panel-section">
-            <div class="section-label">HP, stat steps &amp; XP knee</div>
+            <div class="section-label">HP, stat growth &amp; XP knee</div>
+<div class="ctrl-row"><label class="ctrl-label" for="SmoothStatGrowth">Smooth stat growth</label><input type="checkbox" id="SmoothStatGrowth" onchange="schedulePreview()" style="width:auto; cursor:pointer"></div>
 <div class="ctrl-row"><label class="ctrl-label" for="StatStepLevels">Stat step interval</label><input type="number" id="StatStepLevels" min="1" step="1" value="5" oninput="schedulePreview()"></div>
-<div class="ctrl-row"><label class="ctrl-label" for="HPFullLevels">Full HP levels</label><input type="number" id="HPFullLevels" min="1" step="1" value="10" oninput="schedulePreview()"></div>
-<div class="ctrl-row"><label class="ctrl-label" for="HPAfterFull">HP per later level (middle archetype)</label><input type="number" id="HPAfterFull" min="0.05" step="0.05" value="1.3" oninput="schedulePreview()"></div>
+<div class="ctrl-row"><label class="ctrl-label" for="HPFullLevels">Full HP levels</label><input type="number" id="HPFullLevels" min="1" step="1" value="20" oninput="schedulePreview()"></div>
+<div class="ctrl-row"><label class="ctrl-label" for="HPAfterFull">HP per later level (middle archetype)</label><input type="number" id="HPAfterFull" min="0.05" step="0.05" value="1.5" oninput="schedulePreview()"></div>
 <div class="ctrl-row"><label class="ctrl-label" for="XPKneeLevel">XP knee level</label><input type="number" id="XPKneeLevel" min="2" step="1" value="60" oninput="schedulePreview()"></div>
 <div class="ctrl-row"><label class="ctrl-label" for="XPKneeGrowth">XP cost multiplier past knee</label><input type="number" id="XPKneeGrowth" min="1.01" step="0.01" value="1.1" oninput="schedulePreview()"></div>
 
@@ -423,7 +424,7 @@
                         <input type="number" id="StatPointsPerLevel" min="0" max="10" step="1" value="1"
                                oninput="updateRewardSummary(); schedulePreview()">
                         point(s) every
-                        <input type="number" id="StatPointsEveryNLevels" min="1" max="20" step="1" value="1"
+                        <input type="number" id="StatPointsEveryNLevels" min="1" max="20" step="1" value="2"
                                oninput="updateRewardSummary(); schedulePreview()">
                         level(s)
                     </div>
@@ -576,7 +577,7 @@ function getParams() {
         'BaseModFactor','BaseModExponent',
         'NaturalGainsModFactor','NaturalGainsExponent',
         'StatCapThreshold','StatCapAnchor','StatCapExponent','StatCapScale','StatCapExemptBonus',
-        'HPBase','DefaultHPPerLevel','HPPerVitality','StatStepLevels','HPFullLevels','HPAfterFull','XPKneeLevel','XPKneeGrowth',
+        'HPBase','DefaultHPPerLevel','HPPerVitality','StatStepLevels','SmoothStatGrowth','HPFullLevels','HPAfterFull','XPKneeLevel','XPKneeGrowth',
         'ManaBase','ManaPerLevel','ManaPerMysticism',
         'TrainingPointsPerLevel','TrainingPointsEveryNLevels',
         'StatPointsPerLevel','StatPointsEveryNLevels',
@@ -627,7 +628,9 @@ function showStatus(msg, type) {
 // ─── load current config from server ─────────────────────────────────────────
 async function loadServerConfig() {
     try {
-        const json = await AdminAPI.get('/admin/api/v1/config', true);
+        const result = await AdminAPI.get('/admin/api/v1/config', true);
+        const json = result.data || {};
+        if (!result.ok) throw new Error(result.error);
         if (!json.success) return;
         const d = json.data;
         const prog = (d['GamePlay'] || {})['Progression'] || {};
@@ -637,16 +640,17 @@ async function loadServerConfig() {
             NaturalGainsModFactor: '0.5', NaturalGainsExponent: '1.0',
             StatCapThreshold: '105', StatCapAnchor: '100',
             StatCapExponent: '0.5', StatCapScale: '2.0', StatCapExemptBonus: 'false',
-            HPBase: '40', DefaultHPPerLevel: '2.5', HPPerVitality: '0.5', StatStepLevels: '5', HPFullLevels: '10', HPAfterFull: '1.3', XPKneeLevel: '60', XPKneeGrowth: '1.10',
+            HPBase: '40', DefaultHPPerLevel: '2.5', HPPerVitality: '0.5', StatStepLevels: '5', SmoothStatGrowth: 'true', HPFullLevels: '20', HPAfterFull: '1.5', XPKneeLevel: '60', XPKneeGrowth: '1.10',
             ManaBase: '4', ManaPerLevel: '1.0', ManaPerMysticism: '3.0',
             TrainingPointsPerLevel: '1', TrainingPointsEveryNLevels: '1',
-            StatPointsPerLevel: '1', StatPointsEveryNLevels: '5',
+            StatPointsPerLevel: '1', StatPointsEveryNLevels: '2',
             XPBase: '1000', XPLevelFactor: '0.75', XPLevelPower: '2.0'
         };
 
         serverValues = {};
         Object.keys(defaults).forEach(k => {
-            serverValues[k] = prog[k] !== undefined ? String(prog[k]) : defaults[k];
+            const value = d['GamePlay.Progression.' + k] !== undefined ? d['GamePlay.Progression.' + k] : prog[k];
+            serverValues[k] = value !== undefined ? String(value) : defaults[k];
         });
 
         applyValues(serverValues);
@@ -693,10 +697,10 @@ async function restoreDefaults() {
         NaturalGainsModFactor: '0.5', NaturalGainsExponent: '1.0',
         StatCapThreshold: '105', StatCapAnchor: '100',
         StatCapExponent: '0.5', StatCapScale: '2.0', StatCapExemptBonus: 'false',
-        HPBase: '40', DefaultHPPerLevel: '2.5', HPPerVitality: '0.5', StatStepLevels: '5', HPFullLevels: '10', HPAfterFull: '1.3', XPKneeLevel: '60', XPKneeGrowth: '1.10',
+        HPBase: '40', DefaultHPPerLevel: '2.5', HPPerVitality: '0.5', StatStepLevels: '5', SmoothStatGrowth: 'true', HPFullLevels: '20', HPAfterFull: '1.5', XPKneeLevel: '60', XPKneeGrowth: '1.10',
         ManaBase: '4', ManaPerLevel: '1.0', ManaPerMysticism: '3.0',
         TrainingPointsPerLevel: '1', TrainingPointsEveryNLevels: '1',
-        StatPointsPerLevel: '1', StatPointsEveryNLevels: '5',
+        StatPointsPerLevel: '1', StatPointsEveryNLevels: '2',
         XPBase: '1000', XPLevelFactor: '0.75', XPLevelPower: '2.0'
     };
 
@@ -706,9 +710,10 @@ async function restoreDefaults() {
     });
 
     try {
-        const json = await AdminAPI.patch('/admin/api/v1/config', patch);
+        const result = await AdminAPI.patch('/admin/api/v1/config', patch);
+        const json = result.data || {};
         closeRestoreModal();
-        if (json.success) {
+        if (result.ok && json.success) {
             applyValues(defaults);
             serverValues = Object.assign({}, defaults);
             schedulePreview();
@@ -733,7 +738,7 @@ async function saveConfig() {
         'BaseModFactor','BaseModExponent',
         'NaturalGainsModFactor','NaturalGainsExponent',
         'StatCapThreshold','StatCapAnchor','StatCapExponent','StatCapScale','StatCapExemptBonus',
-        'HPBase','DefaultHPPerLevel','HPPerVitality','StatStepLevels','HPFullLevels','HPAfterFull','XPKneeLevel','XPKneeGrowth',
+        'HPBase','DefaultHPPerLevel','HPPerVitality','StatStepLevels','SmoothStatGrowth','HPFullLevels','HPAfterFull','XPKneeLevel','XPKneeGrowth',
         'ManaBase','ManaPerLevel','ManaPerMysticism',
         'TrainingPointsPerLevel','TrainingPointsEveryNLevels',
         'StatPointsPerLevel','StatPointsEveryNLevels',
@@ -745,13 +750,14 @@ async function saveConfig() {
         patch['GamePlay.Progression.' + k] = el.type === 'checkbox' ? (el.checked ? 'true' : 'false') : el.value;
     });
     try {
-        const json = await AdminAPI.patch('/admin/api/v1/config', patch);
-        if (json.success) {
+        const result = await AdminAPI.patch('/admin/api/v1/config', patch);
+        const json = result.data || {};
+        if (result.ok && json.success) {
             showStatus('Saved successfully.', 'success');
             serverValues = {};
             ids.forEach(k => {
                 const el = document.getElementById(k);
-                if (el) serverValues[k] = el.value;
+                if (el) serverValues[k] = el.type === 'checkbox' ? String(el.checked) : el.value;
             });        } else {
             showStatus('Save failed: ' + (json.error || 'unknown error'), 'error');
         }
@@ -1255,7 +1261,9 @@ function drawCapCurve(canvasId) {
 async function loadPreview() {
     const params = getParams();
     try {
-        const json = await AdminAPI.get('/admin/api/v1/progression/preview?' + params.toString(), true);
+        const result = await AdminAPI.get('/admin/api/v1/progression/preview?' + params.toString(), true);
+        const json = result.data || {};
+        if (!result.ok) throw new Error(result.error);
         if (!json.success) return;
         const d = json.data;
         const labels = d.levels.map(String);
@@ -1302,19 +1310,11 @@ async function loadPreview() {
             labels
         );
 
-        // Points awarded per level — computed client-side from form values.
-        const tpPerLevel  = parseInt(document.getElementById('TrainingPointsPerLevel').value)  || 0;
-        const tpEveryN    = parseInt(document.getElementById('TrainingPointsEveryNLevels').value) || 1;
-        const spPerLevel  = parseInt(document.getElementById('StatPointsPerLevel').value)      || 0;
-        const spEveryN    = parseInt(document.getElementById('StatPointsEveryNLevels').value)  || 1;
-        let tpCum = 0, spCum = 0;
-        const tpData = [], spData = [];
-        d.levels.forEach(lvl => {
-            if (tpEveryN <= 1 || lvl % tpEveryN === 0) tpCum += tpPerLevel;
-            if (spEveryN <= 1 || lvl % spEveryN === 0) spCum += spPerLevel;
-            tpData.push(tpCum);
-            spData.push(spCum);
-        });
+        // Cumulative stat points use the server's shared progression helper.
+        const tpPerLevel = parseInt(document.getElementById('TrainingPointsPerLevel').value) || 0;
+        const tpEveryN = parseInt(document.getElementById('TrainingPointsEveryNLevels').value) || 1;
+        const tpData = d.levels.map(lvl => Math.max(0, Math.floor(lvl / tpEveryN) - (tpEveryN === 1 ? 1 : 0)) * tpPerLevel);
+        const spData = d.stat_points;
         drawLineChart('chart-points', [
             { data: spData, color: COLORS.statPts,  label: 'Stat points',     unit: 'pts' },
             { data: tpData, color: COLORS.trainPts, label: 'Training points', unit: 'pts' }

@@ -245,7 +245,19 @@ func balanceHPProvider(t *testing.T) balanceHPArchetypes {
 	return p
 }
 
+type balanceFightOptions struct {
+	EnemyCount   int
+	EnemyLevels  []int
+	Coordination int // Zero leaves live group-level coordination in force.
+	Boss         bool
+	LegacyMirror bool // The original five-member mirror remains a stress test.
+}
+
 func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, enemyLevels ...int) *balanceFight {
+	return newBalanceFightWithOptions(t, level, companyMode, enemyMode, balanceFightOptions{EnemyCount: 5, EnemyLevels: enemyLevels, Coordination: 1, LegacyMirror: true})
+}
+
+func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode string, opts balanceFightOptions) *balanceFight {
 	t.Helper()
 	b := newBrawl(t)
 	mudlog.SetLogLevel("LOW") // report the table, without a log line for every fixture buff
@@ -277,26 +289,41 @@ func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, ene
 	}
 	b.bandits = map[string][]int{}
 
+	require.GreaterOrEqual(t, opts.EnemyCount, 2)
+	require.LessOrEqual(t, opts.EnemyCount, 5)
+	roster := append(balanceMirror[:0:0], balanceMirror...)
+	if !opts.LegacyMirror {
+		roster[4].name = "brute"
+		roster[4].equipment = roster[0].equipment
+	}
+	roster = roster[:opts.EnemyCount]
 	dataDir := configs.GetFilePathsConfig().DataFiles.String()
-	for _, m := range balanceMirror {
+	for _, m := range roster {
 		path := filepath.Join(dataDir, "mobs", "brawl", fmt.Sprintf("%d-%s.yaml", m.id, strings.ReplaceAll(m.name, " ", "_")))
 		require.NoError(t, os.WriteFile(path, []byte(mirrorMob(m.id, m.name, m.equipment)), 0600))
 	}
 	mobs.LoadDataFiles()
 
-	enemyLevel := level
-	if len(enemyLevels) > 0 {
-		enemyLevel = enemyLevels[0]
-	}
 	f := &balanceFight{brawl: b, tally: &balanceTally{}}
-	for _, m := range balanceMirror {
+	for i, m := range roster {
+		enemyLevel := level
+		if len(opts.EnemyLevels) > 0 {
+			enemyLevel = opts.EnemyLevels[min(i, len(opts.EnemyLevels)-1)]
+		}
+		enemyLevel = max(enemyLevel, 1)
+		if opts.Boss && i == 0 {
+			enemyLevel += 2
+		}
 		mob := mobs.NewMobById(mobs.MobId(m.id), b.road.RoomId)
 		require.NotNil(t, mob, m.name)
 		mob.SpawnGroup = balanceGroup
 		// Passive and personality controls do not acquire group focus merely
 		// by crossing a level tier. Enhanced coordination has its own cells.
-		mob.Coordination = 1
+		mob.Coordination = opts.Coordination
 		class := map[int]string{9201: "warrior", 9202: "cleric", 9203: "warrior", 9204: "ranger"}[m.id]
+		if !opts.LegacyMirror && i == 4 {
+			class = "warrior"
+		}
 		if class != "" {
 			mob.Character.HPPerLevel, _ = archetypes.HealthPerLevel(class)
 		} else {
@@ -305,6 +332,11 @@ func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, ene
 		b.road.AddMob(mob.InstanceId)
 		f.enemies = append(f.enemies, mob.InstanceId)
 		levelTo(&mob.Character, enemyLevel)
+		if opts.Boss && i == 0 {
+			mob.Character.HealthMax.Training += int(float64(mob.Character.HealthMax.Value) * 1.5)
+			mob.Character.RecalculateStats()
+			mob.Character.Health = mob.Character.HealthMax.Value
+		}
 		switch {
 		case enemyMode == enemySpread:
 			mob.Targeting, mob.TargetingNoise = string(strategy.Nearest), 100
@@ -376,7 +408,10 @@ func newBalanceFight(t *testing.T, level int, companyMode, enemyMode string, ene
 	for id := 1; id <= 4; id++ {
 		members = append(members, &b.companion(id).Character)
 	}
-	mirrors := []int{f.enemies[4], f.enemies[0], f.enemies[1], f.enemies[2], f.enemies[3]}
+	mirrors := make([]int, len(members))
+	for i := range mirrors {
+		mirrors[i] = f.enemies[(i+len(f.enemies)-1)%len(f.enemies)]
+	}
 	for i, c := range members {
 		if companyMode == companySpread {
 			c.SetAggro(0, mirrors[i], characters.DefaultAttack)
@@ -421,12 +456,7 @@ func levelTo(c *characters.Character, level int) {
 		*s = 0
 	}
 	cfg := configs.GetProgressionConfig()
-	c.StatPoints = 0
-	for lvl := 1; lvl <= level; lvl++ {
-		if int(cfg.StatPointsEveryNLevels) <= 1 || lvl%int(cfg.StatPointsEveryNLevels) == 0 {
-			c.StatPoints += int(cfg.StatPointsPerLevel)
-		}
-	}
+	c.StatPoints = cfg.StatPointsAt(level)
 	c.AutoTrain()
 	c.Health = c.HealthMax.Value
 	c.Mana = c.ManaMax.Value
@@ -972,4 +1002,115 @@ func TestBalanceWelchZ(t *testing.T) {
 	assert.Less(t, balanceWelchZ(b, a), -balanceSignificantZ)
 	won := balanceWonRounds([]balanceResult{{Rounds: 9, Won: true}, {Rounds: 4}, {Rounds: 11, Won: true}})
 	assert.Equal(t, []float64{9, 11}, won)
+}
+
+func TestBalanceZoneOptions(t *testing.T) {
+	for _, n := range []int{2, 3, 4, 5} {
+		t.Run(fmt.Sprint(n), func(t *testing.T) {
+			f := newBalanceFightWithOptions(t, 10, companyDefault, enemyDefault, balanceFightOptions{EnemyCount: n, EnemyLevels: []int{9, 8}, Boss: n == 5})
+			require.Len(t, f.enemies, n)
+			for i, id := range f.enemies {
+				m := mobs.GetInstance(id)
+				assert.Zero(t, m.Coordination, "live tier comes from group level")
+				want := 8
+				if i == 0 {
+					want = 9
+					if n == 5 {
+						want += 2
+					}
+				}
+				assert.Equal(t, want, m.Character.Level)
+				if i == 0 && n == 5 {
+					assert.Positive(t, m.Character.HealthMax.Training, "boss adds 1.5 times ordinary HP")
+				}
+			}
+			assert.False(t, f.run().Stalled)
+		})
+	}
+}
+
+// Phase 35a only measures the encounter contract. Phase 35b adds its targets.
+func TestBalanceZoneBands(t *testing.T) {
+	if os.Getenv("ASHVEIL_BALANCE") != "1" {
+		t.Skip("set ASHVEIL_BALANCE=1 to measure zone bands")
+	}
+	fights := 100
+	if n, err := strconv.Atoi(os.Getenv("ASHVEIL_BALANCE_FIGHTS")); err == nil && n > 0 {
+		fights = n
+	}
+	for _, band := range [][2]int{{1, 3}, {8, 10}, {18, 20}, {28, 30}} {
+		for level := band[0]; level <= band[1]; level++ {
+			cells := []balanceFightOptions{}
+			for _, count := range []int{2, 3} {
+				for enemy := max(1, band[0]-1); enemy <= band[1]-1; enemy++ {
+					cells = append(cells, balanceFightOptions{EnemyCount: count, EnemyLevels: []int{enemy}})
+				}
+			}
+			cells = append(cells, balanceFightOptions{EnemyCount: 4, EnemyLevels: []int{band[1] - 1}})
+			if level == band[1] {
+				cells = append(cells, balanceFightOptions{EnemyCount: 5, EnemyLevels: []int{band[1]}, Boss: true})
+			}
+			for _, opts := range cells {
+				label := fmt.Sprintf("band%d-%d/L%d/%dvL%d/boss%t", band[0], band[1], level, opts.EnemyCount, opts.EnemyLevels[0], opts.Boss)
+				var results []balanceResult
+				var hpLostPct float64
+				for i := 0; i < fights; i++ {
+					t.Run(fmt.Sprintf("%s/%d", label, i), func(t *testing.T) {
+						f := newBalanceFightWithOptions(t, level, companyDefault, enemyDefault, opts)
+						start := f.healthRemaining()[sideCompany]
+						res := f.run()
+						results = append(results, res)
+						hpLostPct += 100 * float64(res.HPRemoved[sideCompany]) / float64(start)
+					})
+				}
+				t.Log(balanceRow(level, companyDefault, label, results))
+				t.Logf("ZONE %s mean HP lost %.1f%%", label, hpLostPct/float64(fights))
+			}
+		}
+	}
+}
+
+func TestPhase35StartingClassMeasurements(t *testing.T) {
+	if os.Getenv("ASHVEIL_BALANCE") != "1" {
+		t.Skip("opt-in measurements")
+	}
+	newBrawl(t)
+	archetypes.SetProvider(balanceHPProvider(t))
+	now := configs.GetGamePlayConfig()
+	old := now
+	old.Progression.SmoothStatGrowth = false
+	old.Progression.StatPointsEveryNLevels = 5
+	old.Progression.HPFullLevels = 10
+	old.Progression.HPAfterFull = 1.3
+	for _, arch := range []string{"warrior", "rogue", "wizard", "cleric", "ranger"} {
+		for _, level := range []int{1, 5, 10, 20, 30} {
+			snapshot := func(g configs.GamePlay) (int, []int) {
+				undo := configs.SetTestGamePlayConfig(g)
+				defer undo()
+				c := characters.New()
+				c.RaceId = 1
+				c.HPArchetype = arch
+				c.Level = level
+				c.Validate()
+				return c.HealthMax.Value, []int{c.Stats.Strength.ValueAdj, c.Stats.Speed.ValueAdj, c.Stats.Smarts.ValueAdj, c.Stats.Vitality.ValueAdj, c.Stats.Mysticism.ValueAdj, c.Stats.Perception.ValueAdj}
+			}
+			oldHP, oldStats := snapshot(old)
+			hp, stats := snapshot(now)
+			t.Logf("CLASS | %s | %d | %d -> %d | %v -> %v |", arch, level, oldHP, hp, oldStats, stats)
+		}
+	}
+	c := characters.New()
+	c.RaceId, c.HPArchetype = 1, "warrior"
+	var previous [6]int
+	var changedLevels []int
+	for level := 1; level <= 60; level++ {
+		c.Level = level
+		c.Validate()
+		current := [6]int{c.Stats.Strength.ValueAdj, c.Stats.Speed.ValueAdj, c.Stats.Smarts.ValueAdj, c.Stats.Vitality.ValueAdj, c.Stats.Mysticism.ValueAdj, c.Stats.Perception.ValueAdj}
+		if level > 1 && current != previous {
+			changedLevels = append(changedLevels, level)
+		}
+		previous = current
+	}
+	t.Logf("HUMAN automatic adjusted stats change on %d/59 level-ups: %v", len(changedLevels), changedLevels)
 }

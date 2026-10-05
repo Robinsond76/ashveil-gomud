@@ -1,6 +1,7 @@
 package mobcommands
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -82,7 +83,7 @@ func TestAwardCompanyXPPaysPresentLivingCompanions(t *testing.T) {
 }
 
 // TestAwardCompanyXPLevelsUp: a big award can cross several thresholds; the
-// leader gets a line per level, and the companion keeps its health and mana
+// leader gets one line for all gained levels, and the companion keeps its health and mana
 // (Phase 33h2: a level is no free rest).
 func TestAwardCompanyXPLevelsUp(t *testing.T) {
 	mudlog.SetupLogger(nil, "low", "", false)
@@ -93,15 +94,18 @@ func TestAwardCompanyXPLevelsUp(t *testing.T) {
 	company.SetFormationProvider(xpProvider{attached: map[int]bool{880011: true}})
 	t.Cleanup(func() { company.SetFormationProvider(nil) })
 
+	before := m.Character
 	health, mana := m.Character.Health, m.Character.Mana
 	_, lines := AwardCompanyXP(xpLeader, leader, m.Character.XPTL(3), room)
 
 	if m.Character.Level < 3 {
 		t.Fatalf("level = %d, want at least 3", m.Character.Level)
 	}
-	if len(lines) != m.Character.Level-1 {
-		t.Fatalf("lines = %d, want one per level gained (%d)", len(lines), m.Character.Level-1)
+	if len(lines) != 1 {
+		t.Fatalf("lines = %d, want one aggregate report (%d)", len(lines), m.Character.Level-1)
 	}
+	assert.Contains(t, lines[0], fmt.Sprintf("Health %d -> %d", before.HealthMax.Value, m.Character.HealthMax.Value))
+	assert.Contains(t, lines[0], fmt.Sprintf("Mana %d -> %d", before.ManaMax.Value, m.Character.ManaMax.Value))
 	if m.Character.StatPoints != 0 {
 		t.Errorf("level points left unspent: %d", m.Character.StatPoints)
 	}
@@ -112,7 +116,7 @@ func TestAwardCompanyXPLevelsUp(t *testing.T) {
 	if m.Character.Health >= m.Character.HealthMax.Value {
 		t.Fatalf("fixture: the companion must start below its new maximum (%d/%d)", m.Character.Health, m.Character.HealthMax.Value)
 	}
-	if !strings.Contains(lines[len(lines)-1], "reached level") {
+	if !strings.Contains(lines[len(lines)-1], "reaches level") {
 		t.Errorf("line = %q", lines[len(lines)-1])
 	}
 }

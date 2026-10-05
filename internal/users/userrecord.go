@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/milestones"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/stats"
@@ -215,6 +216,7 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 
 	tpBefore := u.Character.TrainingPoints
 	spBefore := u.Character.StatPoints
+	healthBefore, manaBefore, statsBefore := u.Character.HealthMax.Value, u.Character.ManaMax.Value, u.Character.Stats
 
 	if newLevel, statsDelta := u.Character.LevelUp(); newLevel {
 
@@ -223,16 +225,19 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 		livesBefore := u.Character.ExtraLives
 
 		levelUpEvent := events.LevelUp{
-			UserId:         u.UserId,
-			RoomId:         u.Character.RoomId,
-			Username:       u.Username,
-			CharacterName:  u.Character.Name,
-			LevelsGained:   0,
-			NewLevel:       u.Character.Level,
-			StatsDelta:     stats.Statistics{},
-			TrainingPoints: 0,
-			StatPoints:     0,
-			LivesGained:    0,
+			UserId:          u.UserId,
+			RoomId:          u.Character.RoomId,
+			Username:        u.Username,
+			CharacterName:   u.Character.Name,
+			LevelsGained:    0,
+			NewLevel:        u.Character.Level,
+			HealthMaxBefore: healthBefore,
+			ManaMaxBefore:   manaBefore,
+			StatsBefore:     statsBefore,
+			StatsDelta:      stats.Statistics{},
+			TrainingPoints:  0,
+			StatPoints:      0,
+			LivesGained:     0,
 		}
 
 		for newLevel {
@@ -251,14 +256,8 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 			levelUpEvent.StatsDelta.Mysticism.Value += statsDelta.Mysticism.Value
 			levelUpEvent.StatsDelta.Perception.Value += statsDelta.Perception.Value
 
-			// Snapshot before the next LevelUp call so we can measure what was actually granted.
-			tpBefore = u.Character.TrainingPoints
-			spBefore = u.Character.StatPoints
-
 			newLevel, statsDelta = u.Character.LevelUp()
 
-			levelUpEvent.TrainingPoints += u.Character.TrainingPoints - tpBefore
-			levelUpEvent.StatPoints += u.Character.StatPoints - spBefore
 		}
 
 		if u.Character.ExtraLives > int(c.LivesMax) {
@@ -267,6 +266,12 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 
 		levelUpEvent.LivesGained = u.Character.ExtraLives - livesBefore
 		levelUpEvent.NewLevel = u.Character.Level
+		levelUpEvent.HealthMaxAfter = u.Character.HealthMax.Value
+		levelUpEvent.ManaMaxAfter = u.Character.ManaMax.Value
+		levelUpEvent.StatsAfter = u.Character.Stats
+		levelUpEvent.NextMilestone = milestones.Next(u.Character.Level)
+		levelUpEvent.TrainingPoints = u.Character.TrainingPoints - tpBefore
+		levelUpEvent.StatPoints = u.Character.StatPoints - spBefore
 
 		events.AddToQueue(levelUpEvent)
 

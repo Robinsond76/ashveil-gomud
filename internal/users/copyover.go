@@ -98,6 +98,9 @@ func loadUserById(userId int, deferVitals ...bool) (*UserRecord, error) {
 	}
 
 	user.Character.SetUserId(user.UserId)
+	if err := migrateStatPointRhythm(user); err != nil {
+		return nil, err
+	}
 	health, mana := user.Character.Health, user.Character.Mana
 	user.Character.Validate()
 	// Boot restores users before module tables and class choices are loaded.

@@ -5,6 +5,8 @@ import "math"
 type ProgressionConfig struct {
 	// StatStepLevels sets the racial growth interval (levels 5, 10, ... by default).
 	StatStepLevels ConfigInt `yaml:"StatStepLevels"`
+	// SmoothStatGrowth interpolates the step while keeping level-multiple values.
+	SmoothStatGrowth ConfigBool `yaml:"SmoothStatGrowth"`
 	// DefaultHPPerLevel applies when no archetype or enemy override is available.
 	DefaultHPPerLevel ConfigFloat `yaml:"DefaultHPPerLevel"`
 	HPFullLevels      ConfigInt   `yaml:"HPFullLevels"`
@@ -201,6 +203,23 @@ func (p ProgressionConfig) NextStatStep(level int) int {
 	return level + delta
 }
 
+// StatPointsAt is the cumulative award from level 2 through level. Creation
+// grants no level-up reward; callers take differences to award new levels.
+func (p ProgressionConfig) StatPointsAt(level int) int {
+	if level <= 1 {
+		return 0
+	}
+	every, per := max(int(p.StatPointsEveryNLevels), 1), max(int(p.StatPointsPerLevel), 0)
+	awards := level / every
+	if every == 1 {
+		awards--
+	}
+	if per > 0 && awards > math.MaxInt/per {
+		return math.MaxInt
+	}
+	return awards * per
+}
+
 // HealthAtLevel is the HP formula without equipment, buffs or explicit training.
 func (p ProgressionConfig) HealthAtLevel(level, vitality int, perLevel float64) int {
 	level = max(level, 1)
@@ -249,7 +268,10 @@ func (p ProgressionConfig) XPThreshold(level int, scale float64) int {
 
 // RacialForLevel is shared with the editor so its step previews cannot drift.
 func (p ProgressionConfig) RacialForLevel(level, base int) int {
-	step := p.StatStep(level)
+	step := float64(p.StatStep(level))
+	if p.SmoothStatGrowth && p.StatStepLevels > 1 {
+		step = 1 + float64(max(level, 1))/float64(p.StatStepLevels)
+	}
 	racial := math.Trunc(math.Pow(float64(step-1), float64(p.BaseModExponent)) * float64(p.BaseModFactor) * float64(base))
 	free := math.Trunc(math.Pow(float64(step), float64(p.NaturalGainsExponent)) * float64(p.NaturalGainsModFactor))
 	return boundedProgressionInt(racial + free)
