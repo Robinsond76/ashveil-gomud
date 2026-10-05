@@ -1,5 +1,65 @@
 # Ashveil Project Status
 
+**Camps need firewood; camp gear designed (2026-10-05):** the owner
+approved the 40a2 rule that a camp fire needs firewood. They asked for camp
+items that boost camping. Added the [40a3 camp gear](designs/2026-10-05-phase-40a3-camp-gear-design.md)
+design: one bundle per rest, with embers between rests, and six durable,
+weighted items. These complement the single-use camp consumables design.
+Documentation only. Verification: relative Markdown links and the diff
+checked; no Go tests required.
+
+**Visual milestone decisions (2026-10-05):** the owner answered the
+milestone's questions.
+- **Sprite art direction:** mature, grounded high fantasy in the Lord of
+  the Rings tradition, for a dangerous, unforgiving world. Not anime in
+  any way. OB64 sprites are the reference. Recorded in the
+  [sprite specification](designs/2026-10-05-sprite-specification.md).
+- **Other players** are not on the map for now (deferred).
+- **Every room resource is wanted.** The new [40a2 gathering](designs/2026-10-05-phase-40a2-gathering-design.md)
+  design covers herbs, firewood, fishing and game, with room pools and
+  firewood for the camp fire.
+- **A showcase area** may be built for the new features (40d now
+  recommends a new zone). World building moves after the milestone.
+- **No race variants** for now.
+- **An installable web app** is enough.
+- **Travel and battle-screen auto-open** are approved.
+- **Allied companies on the battle screen:** 40f recommends half-scale
+  reserve formations with a read-only swap view, pending approval.
+
+Documentation only. Verification: relative Markdown links and the diff
+checked; no Go tests required.
+
+**Phase 40a–40g designs drafted (2026-10-05):** at the owner's request,
+added a design for each item of the visual roadmap. These are drafts
+awaiting owner approval; no code has changed.
+- 40a: room resources, with water wired into survival (`drink water`,
+  `fill`), forage and shelter.
+- 40b: class sprites, the company badge and camp markers (party camps
+  only).
+- 40c: terrain and landmark tiles.
+- 40d: a tile-ready pilot region and `travel` (click-to-walk).
+- 40e: structured combat-event messages released with paced narration.
+- 40f: a static OB64-style battle screen.
+- 40g: battle animations and effects.
+
+The drafts are linked from the Phase 40 table below. Documentation only.
+Verification: relative Markdown links and the diff checked; no Go tests
+required.
+
+**Visual client milestone planned (2026-10-05):** the owner chose to keep
+the browser client and add a visual layer:
+- a colorful tile map with class sprites, camps and room resource icons,
+  inspired by MUME's mapper;
+- an Ogre Battle 64–style battle screen.
+
+Added the [milestone design](designs/2026-10-05-visual-client-milestone-design.md)
+(phases 40a–40i) and a [sprite specification](designs/2026-10-05-sprite-specification.md)
+listing every sprite in art sets S0–S7, for another agent to generate. The
+milestone starts after the current phase sequence. Other companies' camps
+stay hidden; PvP camp visibility is deferred. Documentation only.
+Verification: relative Markdown links and the diff checked; no Go tests
+required.
+
 **Roadmap and designs (2026-10-05):** the owner reviewed the game's
 progression, balance, loot and activities. Recorded the owner's decisions:
 - the encounter contract (2–3 under-level foes, occasionally 4; bosses of up
@@ -46,8 +106,8 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-05 (35a implemented, pending PR integration; 35b/35c pending implementation)
-- **Latest completed slices:** 35a (pending integration), 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
+- **Last updated:** 2026-10-05 (35a merged via PR #15; visual client milestone and sprite specification added; roadmap reprioritized; 35b/35c pending implementation)
+- **Latest completed slices:** 35a, level impact; 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
   (2026-10-02);
@@ -64,7 +124,7 @@ instead of duplicating them.
 
 After a general game review, the owner reordered the next work. World
 building waits until these ship. The level-impact design is owner-approved;
-35a is implemented on its feature branch and pending PR integration. The
+35a is complete and merged (PR #15). The
 remaining slices are pending implementation or design review as listed below.
 
 1. **Level impact and caster power.** [Design](designs/2026-10-05-level-impact-class-power-design.md)
@@ -119,7 +179,7 @@ implemented (handoff rule 20).
 
 | Phase | Scope | Source | Depends on |
 |---|---|---|---|
-| 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells. [Plan](plans/2026-10-05-phase-35a-level-impact.md), implemented; pending PR integration | Level impact §1, §4.1 | — |
+| 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells. [Plan](plans/2026-10-05-phase-35a-level-impact.md), complete (PR #15) | Level impact §1, §4.1 | — |
 | 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), pending implementation | Level impact §2, §4 | 35a |
 | 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), pending implementation | Level impact §5 | 35a |
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
@@ -130,16 +190,42 @@ implemented (handoff rule 20).
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
 
-World building (zones for levels 1–15) follows once 37 and 38b ship.
+World building (zones for levels 1–15) now waits until the visual client
+milestone below is in place (owner, 2026-10-05). A small showcase area for
+the new map features may be built in 40d.
 
-**Phase 35 delivery (2026-10-05):** 35a is implemented on
-`phase-35a-level-impact`, pending PR integration. 35b and 35c remain pending
-implementation after 35a lands. Plans and approved scope are in
+### Next milestone: visual client (Phase 40, owner 2026-10-05)
+
+Starts once the phase sequence above is finished. Art can be produced
+earlier, because it touches no code. See the [milestone design](designs/2026-10-05-visual-client-milestone-design.md)
+and the [sprite specification](designs/2026-10-05-sprite-specification.md).
+
+| Phase | Scope | Art set |
+|---|---|---|
+| [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
+| [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
+| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit | S1 |
+| [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |
+| [40c](designs/2026-10-05-phase-40c-terrain-tiles-design.md) | Terrain and landmark tiles, fog, classic toggle | S2 |
+| [40d](designs/2026-10-05-phase-40d-tile-region-travel-design.md) | Tile-ready pilot region and click-to-walk | S2 |
+| [40e](designs/2026-10-05-phase-40e-combat-event-messages-design.md) | Structured combat events (can run in parallel with 40a–40d) | — |
+| [40f](designs/2026-10-05-phase-40f-battle-screen-design.md) | Static OB64-style battle screen | S3 |
+| [40g](designs/2026-10-05-phase-40g-battle-animation-design.md) | Battle animation and effects | S4 |
+| 40h | Advanced class art (after 38b) | S5 |
+| 40i | Touch layout and installable web app | S1 |
+
+Open owner questions are listed in the design: other players on the map,
+the resource list, tile-ready world building, race variants, and a store
+app.
+
+**Phase 35 delivery (2026-10-05):** 35a is complete and merged
+([PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15)). 35b and 35c
+remain pending implementation. Plans and approved scope are in
 [the phase 35 handoff](plans/2026-10-05-phase-35-handoff.md).
 
 ## Current position
 
-**35a level impact (2026-10-05), implementation complete, [PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15) pending integration:**
+**35a level impact (2026-10-05), complete, merged via [PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15):**
 fractional racial growth preserves the fifth-level boundary values; keep
 `StatStepLevels: 5` per the approved plan instead of the design draft's 1,
 which would multiply the curve. Shared point awards now give one every two
@@ -167,7 +253,7 @@ Chromium checked smoothing, cadence preview/save/reload, level-200 downsampling,
 API reference and console errors. Final verification passed: `make generate`,
 `make validate`, `make js-lint` with installed JSHint, local `make lua-lint`,
 `go test -race ./...`, inline admin JavaScript syntax and relative Markdown
-links. Gameplay implementation complete; PR integration remains pending.
+links. Gameplay implementation complete; merged via PR #15.
 
 **35a PR review follow-up (2026-10-05):** a PR code review found the
 once-only migration marked characters migrated even while the server still
@@ -1722,6 +1808,15 @@ those results. This documentation change does not rerun or supersede them.
 
 ## Known issues / deferred items
 
+- **Other players on the map (owner, 2026-10-05):** not shown for now,
+  apart from your own party members. Revisit later, alongside camp
+  visibility.
+- **Race and gender sprite variants (owner, 2026-10-05):** not for now.
+  Revisit with the races review.
+- **PvP camp visibility (owner, 2026-10-05):** the visual map shows only
+  your own camp and allied camps. Revisit for PvP: visibility should depend
+  on lighting, terrain, and the company's skill at concealing its camp.
+  See the [visual client milestone](designs/2026-10-05-visual-client-milestone-design.md).
 - **Broken chants and counters (30d1, 30g2), for the owner:** the
   counter's numbers (5–20% of blocked melee blows by Strength since 30g2,
   1d4, a stun one time in four, once a round per bearer) are a
@@ -1911,6 +2006,7 @@ keeps its own history.
 - [Agent workflow](AGENT_IMPLEMENTATION_WORKFLOW.md) — implementation and review.
 - [Handoff](ASHVEIL_GOMUD_AGENT_HANDOFF.md) — design direction and invariants.
 - [Combat roadmap](designs/2026-09-26-combat-presentation-roadmap.md) — remaining phases and decisions.
+- [Visual client milestone](designs/2026-10-05-visual-client-milestone-design.md) and [sprite specification](designs/2026-10-05-sprite-specification.md) — Phase 40 map and battle screen.
 - `docs/designs/` — active proposals and useful shipped design records.
 - `docs/plans/` — execution guidance and work still requiring follow-up.
 - Nested `AGENTS.md` files — package-specific constraints.
