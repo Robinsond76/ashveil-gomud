@@ -49,6 +49,9 @@ only bought.
 - Ashveil is a dangerous, unforgiving world (2026-10-05).
 - Never advance shared world time for travel or rest (standing invariant).
   Gathering is treated the same way.
+- **Camps need firewood** (2026-10-05). The fuel rule below is approved.
+  [40a3 camp gear](2026-10-05-phase-40a3-camp-gear-design.md) refines it
+  (one bundle per rest; embers) and adds the fire steel for damp wood.
 
 ## Proposed for approval
 
@@ -129,8 +132,8 @@ shape as today's forage tables, so content can grow without code.
   cargo.
   - With neither, the fire cannot be lit, and so the company cannot rest
     at camp. Inns are unaffected.
-  - This is a behavior change that suits the harsh world. It needs your
-    approval.
+  - This is a behavior change that suits the harsh world. Approved by the
+    owner (2026-10-05).
 - **Damp bundles** light only on a second try and give no warmth bonus.
 - **Prepared kit:** a bundle is light enough to carry two or three.
   Provisioners sell bundles, so you can prepare before an expedition.
@@ -225,9 +228,7 @@ icon set, and the text works without them.
 
 ## Open questions
 
-1. **Approve the fire-fuel rule** (no fire without firewood), or keep fire
-   free and make firewood a warmth or duration bonus instead.
-2. Confirm the times, pools, regrowth rates and success chances as balance
+1. Confirm the times, pools, regrowth rates and success chances as balance
    defaults.
-3. Should pelts and hides wait for the loot goods (36a/36b)? The proposal
+2. Should pelts and hides wait for the loot goods (36a/36b)? The proposal
    is yes: until then, `hunt` gives meat only.

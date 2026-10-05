@@ -218,6 +218,9 @@ shown.
 |---|---|---|---|
 | tent | 32×32 | 1 | A small canvas tent, pegged, with a bedroll in front |
 | tent-ally | 32×32 | 1 | The same tent with a small ally pennant (`ally-banner` colors) |
+| camp-rough | 32×32 | 1 | A camp without a tent (40a3): two bedrolls on the ground around a stone fire ring, a pack leaning on a log |
+| camp-rough-ally | 32×32 | 1 | The same, with a small ally pennant |
+| embers | 16×16 | 3 | A banked fire glowing low after a rest (40a3), looping |
 | fire-unlit | 16×16 | 1 | A ring of stones with unlit wood |
 | fire-lit | 16×16 | 4 | A crackling campfire loop |
 | smoke | 16×16 | 4 | A thin smoke curl loop, drawn above a lit fire |

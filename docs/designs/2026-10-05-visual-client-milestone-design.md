@@ -83,6 +83,7 @@ every fact the visuals show is also available as text.
 |---|---|---|---|
 | [40a](2026-10-05-phase-40a-room-resources-design.md) | **Room resources.** A `resources:` list on rooms: water, forage, shelter, herbs, firewood, fishing, game. Resources appear in the GMCP `Room` payload and a `look` line. Map icons and a legend. Water wired into survival (drink and fill), forage feeds camp Forage, and shelter eases weather on rest. | S1 (resource icons) | Current sequence done |
 | [40a2](2026-10-05-phase-40a2-gathering-design.md) | **Gathering.** `gather herbs`, `gather firewood`, `fish` and `hunt` take real time, cost effort and carry risk. Rooms deplete and regrow (persisted). The camp fire needs firewood. New items, including fish and firewood bundles. | S1 (`depleted`) | 40a |
+| [40a3](2026-10-05-phase-40a3-camp-gear-design.md) | **Camp gear.** One firewood bundle per camp rest, with embers between rests. Durable gear: bedroll (+25% fatigue recovery), tent (shelter, no rest-time cold), fire steel (damp wood lights), cookpot (an extra portion), bells and trip lines (raid warning), field surgeon's kit (treats a lasting wound). | S1 (`camp-rough`, `embers`) | 40a2 |
 | [40b](2026-10-05-phase-40b-map-sprites-design.md) | **Map unit and camp sprites.** The player's class sprite on the current room, walking between tiles and facing the exit direction. The company shown as one leader sprite with a member-count badge. Your own camp, and allied camps, with tent, fire, smoke and resting states. Class information reaches the client. Classic marker as a fallback. | S0, S1 | 40a (shared map changes), 38b (classes) |
 | [40c](2026-10-05-phase-40c-terrain-tiles-design.md) | **Terrain and landmark tiles.** Biome tiles replace colored squares, with deterministic variants and animated water. Landmark overlays replace letter symbols. Unexplored rooms stay hidden. A toggle back to classic squares. | S2 | 40b |
 | [40d](2026-10-05-phase-40d-tile-region-travel-design.md) | **Tile-ready pilot region and click-to-walk.** Rebuild one region as a dense tile area with hand-placed coordinates and resources. Tap or click a visited tile to walk there, step by step through ordinary moves (no global time advance). | S2 (reuse) | 40c |
@@ -93,8 +94,8 @@ every fact the visuals show is also available as text.
 | 40i | **Touch and installable client.** A phone layout for the map, dock and battle screen. Tap-to-walk and touch command buttons. A web app manifest and icons so the client can be installed. | S1 (app icons) | 40d, 40f |
 | Later | Elite and expanded-catalogue classes, creature recruits, race variants (after the races review), other players on the map, and PvP camp visibility (both deferred by the owner) | S6, S7 | 38c+, owner decisions |
 
-40e can be built in parallel with 40a–40d. Phases 40a–40g and 40a2 have
-design drafts awaiting owner approval (linked above); 40h and 40i get theirs
+40e can be built in parallel with 40a–40d. Phases 40a–40g, 40a2 and 40a3
+have design drafts awaiting owner approval (linked above); 40h and 40i get theirs
 later.
 
 ## Design constraints for every phase
@@ -117,6 +118,7 @@ later.
     from GoMud's `help map`;
   - `help resources` (40a);
   - `help gathering` (40a2);
+  - `help camp gear` (40a3);
   - `help camp` (updated in 40b);
   - `help battlescreen` (40f–40g, linked from `help combat`);
   - `help travel` (40d).
