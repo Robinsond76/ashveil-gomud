@@ -19,6 +19,7 @@ heal, it follows from how your company is set up. Who has which:
     down foe loses its next action and is slower for 3 rounds. A tackle
     also breaks a foe's chant (it must start again) or wind-up. Hit or
     miss, the tackle is the warrior's whole turn: no swing that round.
+    From level 20 the foe stays down a round longer.
     At most once every 4 combat rounds.
 
   <ansi fg="command">Opening Strike</ansi>   rogues; for you, the <ansi fg="skill">skulduggery</ansi> skill
@@ -33,7 +34,8 @@ heal, it follows from how your company is set up. Who has which:
     When: it has a bow or sling, and its foe is not already exposed.
     Does: its first shot that lands this round is a critical hit; if it
     gets through the armor, the foe is left exposed (<ansi fg="command">help statuses</ansi>),
-    an opening for a rogue.
+    an opening for a rogue. The shot does 2 more damage, and 1 more for
+    every 3 levels.
     At most once every 3 combat rounds.
 
 An opening strike or aimed shot replaces one turn's swing, never an
@@ -54,7 +56,8 @@ Clerics and wizards fight by their spells (<ansi fg="command">help strategy</ans
 healers don't heal the same member at once: while one heal is being
 chanted on someone, the other healer heals someone else, or fights. A
 member's mana reserve keeps a share of its mana back from attack spells,
-for heals or the next fight; heals ignore it.
+for heals or the next fight; heals in a battle ignore it, but the healing
+after a battle stops at it (<ansi fg="command">help patch</ansi>).
 
 <ansi fg="yellow-bold">Commands</ansi>
 

@@ -1,9 +1,22 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">mana</ansi>
 
 The <ansi fg="command">mana</ansi> (Magic/MP) stat represents how much magic you can channel.
-Every spell costs mana. Out of combat you, and each of your companions,
-regain a little every few seconds; in a fight, none comes back. In a
-battle, healers and casters spend it on their own (<ansi fg="command">help strategy</ansi>).
+Every spell costs mana. Mana does not come back on its own, in a fight or
+out of one, for you or your companions. It returns only through:
+
+  a finished camp rest (<ansi fg="command">help camp</ansi>), which fills it for the company;
+  a finished night at an inn (<ansi fg="command">help inn</ansi>), which does the same;
+  a mana draught (<ansi fg="command">help draughts</ansi>), 25%, 40% or 60% of your mana at once;
+  half the mana of a chant a blow breaks (<ansi fg="command">help interrupts</ansi>).
+
+Gaining a level raises your maximum but doesn't refill what you have.
+
+Wizards and clerics have deep pools: a wizard has 40 mana plus 10 a level,
+a cleric 36 plus 9 a level. Everyone else has 4 plus 1 a level. Every
+point of Mysticism adds 3 more. In a battle, healers and casters
+spend it on their own (<ansi fg="command">help strategy</ansi>), and after one your healers
+patch the company up with what they have left (<ansi fg="command">help patch</ansi>). An item's
+mana recovery bonus helps only enemies now.
 
 Mana will change color to reflect how much you have left:
 

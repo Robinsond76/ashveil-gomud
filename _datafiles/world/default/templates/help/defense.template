@@ -26,8 +26,8 @@ evenly matched, and moves with your Evasion against their Attack
 
 The chance is {{ config "GamePlay.Combat.BlockChanceEven" }}% plus the shield's own armor, moved by your Evasion and
 your Strength against the attacker's, held between {{ config "GamePlay.Combat.BlockChanceMin" }}% and {{ config "GamePlay.Combat.BlockChanceMax" }}%.
-When evenly matched a wooden shield blocks 25% of blows and an iron shield
-30%. Only warriors and rangers carry shields (<ansi fg="command">help shields</ansi>). A blocked
+When evenly matched a wooden shield blocks 33% of blows and an iron shield
+38%. Only warriors and rangers carry shields (<ansi fg="command">help shields</ansi>). A blocked
 melee blow may be slammed back with a shield bash (<ansi fg="command">help interrupts</ansi>).
 
 <ansi fg="yellow-bold">Parry</ansi>
@@ -41,7 +41,7 @@ the attacker's, from {{ config "GamePlay.Combat.ParryChanceMin" }}% to {{ config
   <ansi fg="yellow"> 0</ansi>   axes, maces, clubs, and whips
   <ansi fg="yellow">-5</ansi>   daggers and other stabbing blades
 
-So at an even match a sword parries 17% and a dagger 7%.
+So at an even match a sword parries 13% and a dagger 3%.
 Bows and slings can't parry.
 
 <ansi fg="yellow-bold">Dodge</ansi>

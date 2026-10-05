@@ -35,7 +35,7 @@ the world clock, and weather never spoils it.
   finished still gets its share of Well Rested once it rejoins, for
   whatever time is left. A finished stay also knits every wound of you
   and the companions with you (<ansi fg="command">help wounds</ansi>), then restores you
-  all to full health and mana (<ansi fg="command">help readiness</ansi>). Outside a fight,
+  all to full health and mana, as a camp rest does (<ansi fg="command">help readiness</ansi>). Outside a fight,
   the Waymark Inn's physician offers to close whatever wounds <ansi fg="command">heal wounds</ansi>
   leaves, for gold.
 

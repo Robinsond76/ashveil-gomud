@@ -1,0 +1,36 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">patch</ansi>
+
+When a battle ends, your company's healers patch everyone up on their own:
+
+  <ansi fg="command">Your company patches itself up.</ansi>
+  <ansi fg="command">Brother Oswin heals Garrick Vane: 13 health.</ansi>
+
+<ansi fg="yellow-bold">How it works</ansi>
+
+- Every member with you who knows <ansi fg="yellow">Minor Heal</ansi> heals, the one with the most
+  mana to spare first, the most hurt member first.
+- Each member is healed up to your company's <ansi fg="yellow">healing threshold</ansi> (50% of
+  their wound limit unless you change it; <ansi fg="command">help tactics</ansi>), and no
+  further. Someone bleeding out is healed too.
+- Each heal costs the usual mana (3) and heals the usual amount: 10 to 16
+  health, plus 1 for every 6 levels of the healer, 5% more with a holy
+  symbol.
+- A healer stops at its <ansi fg="yellow">mana reserve</ansi> (<ansi fg="command">strategy [who] reserve [percent]</ansi>,
+  <ansi fg="command">help abilities</ansi>), so it keeps that share for the next battle.
+- Only heals: no wounds are tended, no bandages or splints used, and only
+  your own company is healed, never an allied player's.
+- It takes no game time. If a waiting group starts the next battle at
+  once, there is no time to patch.
+
+<ansi fg="yellow-bold">On demand</ansi>
+
+  <ansi fg="command">company patch</ansi>    (or just <ansi fg="command">patch</ansi>) runs the same healing now
+
+It can't be used in a battle, while travelling, or while resting. For a
+full tending that goes past the threshold, uses bandages and splints and
+spends every drop of mana, use <ansi fg="command">heal wounds</ansi> (<ansi fg="command">help heal</ansi>).
+
+Mana doesn't come back on its own: when your healers run dry, rest in a
+camp or an inn, or drink a mana draught (<ansi fg="command">help mana</ansi>, <ansi fg="command">help draughts</ansi>).
+
+See also: <ansi fg="command">help heal</ansi>, <ansi fg="command">help tactics</ansi>, <ansi fg="command">help wounds</ansi>, <ansi fg="command">help combat</ansi>.

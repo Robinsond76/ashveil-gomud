@@ -43,14 +43,15 @@ after <ansi fg="command">attack</ansi>, wait a round for the battle to begin bef
 Healers heal anyone in your company below this share of their health
 (of what their wounds allow, <ansi fg="command">help wounds</ansi>): 10 to 90 percent, in steps
 of 10. It is 50, half health, until you change it. Someone down and
-bleeding out is always healed first.
+bleeding out is always healed first. After a battle, your healers heal
+everyone up to the same threshold (<ansi fg="command">help patch</ansi>).
 
 <ansi fg="yellow-bold">Guardians</ansi>
 
 The focus decides whom your company strikes; a guardian decides who gets
 struck. A guardian (a strategy role, set before a battle) steps in front
-of its ward to take a blow meant for them, twice a battle, with a guard
-back every 2 rounds. A focus doesn't change whom a guardian guards
+of its ward to take a blow meant for them, twice a battle (once more
+every 10 levels), with a guard back every 2 rounds. A focus doesn't change whom a guardian guards
 (<ansi fg="command">help guardian</ansi>).
 
 <ansi fg="yellow-bold">Enemies have personalities too</ansi>

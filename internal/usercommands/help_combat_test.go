@@ -1,8 +1,10 @@
 package usercommands
 
 import (
+	"path/filepath"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -76,13 +78,19 @@ func TestCombatHelpTopics(t *testing.T) {
 // to its aliases, and is linked from the combat hub; the pages the phase
 // changed no longer describe the old rules.
 func TestDefenseHelp(t *testing.T) {
+	// The shipped numbers (Phase 35b retuned them), as the page's own
+	// examples use.
+	t.Chdir(filepath.Join("..", ".."))
+	old := configs.GetGamePlayConfig()
+	t.Cleanup(configs.SetTestGamePlayConfig(old))
+	require.NoError(t, configs.ReloadConfig())
 	useWorld(t, "default")
 	keywords.LoadAliases()
 
 	text, err := GetHelpContents("defense")
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Help for defense", "block", "parry", "dodge", "20% plus the shield's own armor", "between 8% and 55%", "12% when evenly matched", "from 3% to 40%", "sword parries 17%", "help evasion", "help shields",
+	for _, want := range []string{"Help for defense", "block", "parry", "dodge", "28% plus the shield's own armor", "between 8% and 55%", "8% when evenly matched", "from 3% to 40%", "sword parries 13%", "an iron shield\n38%", "help evasion", "help shields",
 		"swords, staves, and long polearms", "daggers", "Bows and slings can't parry", "No dodge if the block fails", "no defense at all"} {
 		assert.Contains(t, plain, want)
 	}
@@ -92,6 +100,7 @@ func TestDefenseHelp(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, text, got, "help %s is help defense", alias)
 	}
+	configs.SetTestGamePlayConfig(old) // the rest reads the code's defaults
 
 	for _, topic := range []string{"combat", "armor", "interrupts", "statuses", "battle-summary"} {
 		page, err := GetHelpContents(topic)

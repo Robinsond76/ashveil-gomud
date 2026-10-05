@@ -5,7 +5,7 @@ description: Heals for 8+2d4, plus 1 per 6 caster levels
 type: helpsingle
 school: restoration
 cost: 3
-waitrounds: 2
+waitrounds: 1
 difficulty: 0
 scope: member
 allowdowned: true

@@ -20,10 +20,12 @@ Health will change color to reflect how good/bad your health state is:
 While you are wounded, healing stops at your wound limit, below your
 maximum: <ansi fg="command">status</ansi> shows it as <ansi fg="command">12/16 (limit 13)</ansi> (<ansi fg="command">help wounds</ansi>).
 
-Out of a fight you slowly regain health and mana; so do your companions,
-while you're logged in. A finished night at an inn restores you all to
-full. Companions keep their health when you log out, so it's the same
-when you come back (<ansi fg="command">help readiness</ansi>).
+Out of a fight you slowly regain health, but only up to half your
+maximum; so do your companions, while you're logged in. Above half, health
+comes from your healers (<ansi fg="command">help patch</ansi>), a camp rest or a night at an inn,
+which restore you all to full (up to the wound limit). Companions keep
+their health when you log out, so it's the same when you come back
+(<ansi fg="command">help readiness</ansi>).
 
 At <ansi fg="red">0 HP</ansi>, you will drop to the floor and slowly bleed out.
 

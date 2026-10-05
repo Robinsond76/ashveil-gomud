@@ -21,11 +21,11 @@ func TestReadinessHelp(t *testing.T) {
 	keywords.LoadAliases()
 	expected := map[string][]string{
 		"readiness": {"still on 8 when you next log in", "last", "automatic save", "keeps the health and mana it had", "never comes back below 1", "starts full once",
-			"Nobody recovers while you're logged out", "full health and mana", "doesn't restore health or mana itself", "half its", "as hurt as when it ran"},
+			"Nobody recovers while you're logged out", "full health and mana", "Nobody regains mana this way", "up to half their", "help patch", "half its", "as hurt as when it ran"},
 		"company":   {"Readiness", "help readiness", "keeps the health and mana it had"},
-		"health":    {"help readiness", "inn restores you all to"},
+		"health":    {"help readiness", "only up to half your", "restore you all to full"},
 		"inn":       {"full health and mana", "help readiness"},
-		"camp":      {"doesn't restore health or mana itself", "help readiness"},
+		"camp":      {"full mana, once per rest", "help readiness"},
 		"resurrect": {"half their health and half their mana", "help readiness"},
 		"wounds":    {"at half health", "help readiness"},
 		"heal":      {"help readiness"},

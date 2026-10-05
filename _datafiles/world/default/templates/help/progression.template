@@ -29,6 +29,18 @@ no head start. A level 60 warrior has about 88 HP before Vitality, half
 again a level 1 warrior's 59 (<ansi fg="command">help health</ansi>).
 Wounds reduce how far healing can restore you (<ansi fg="command">help wounds</ansi>).
 
+<ansi fg="yellow-bold">Spells and abilities grow</ansi>
+
+Damage and healing spells grow with your level and Mysticism: Magic
+Missile does 8 to 13 damage plus 1 every 10 levels and 1 every 15
+Mysticism, Minor Heal 10 to 16 health plus 1 every 6 levels
+(<ansi fg="command">help spell mm</ansi> shows any spell's numbers). Opening Strike adds 2 damage
+and 1 every 6 levels, Aimed Shot 2 and 1 every 3 levels, a guardian gets
+a guard more every 10 levels, and from level 20 a tackle keeps its foe
+down a round longer (<ansi fg="command">help abilities</ansi>). The level-up report names each
+spell and ability that grew. A level raises your maximum mana but
+doesn't refill it (<ansi fg="command">help mana</ansi>).
+
 <ansi fg="yellow-bold">Experience and death</ansi>
 
 There is no level cap. Through level {{ config "GamePlay.Progression.XPKneeLevel" }}, experience thresholds keep their
@@ -47,9 +59,11 @@ once, based on their highest level, including levels since lost to death.
 Their racial stats and maximum health use these rules on loading; health
 and mana above a new maximum are lowered to fit, without a free refill.
 
-<ansi fg="yellow-bold">Upcoming milestones</ansi>
-These choices are planned, and are not unlocked yet:
-  Level 3: second class option (coming)
+<ansi fg="yellow-bold">Milestones</ansi>
+Wizards learn Shower of Sparks and clerics Minor Heal All at level 3,
+kept for good once learned. The other choices are planned, and are not
+unlocked yet:
+  Level 3: second class option (coming) for warriors, rogues and rangers
   Level 5: talent (coming)
   Level 10: class promotion (coming)
   Level 15: talent (coming)

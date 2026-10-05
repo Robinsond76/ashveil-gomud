@@ -9,10 +9,13 @@ The ~cast~ command attempts to cast a learned spell.
 
   Spells can also be cast by using their shorthand/ID directly, such as: ~illum~
 
-Cast is for spells outside a fight: healing, light, and other help. A harmful
+Cast is for spells outside a fight: healing, light, and other help. Out of a
+fight a hard spell can still fizzle (a 100% chance never does). A harmful
 spell doesn't start a fight; start one with ~attack [group]~. Once a battle is
 under way, nothing is cast by hand: healers and casters cast on their own, by
-their strategy, with real mana (see ~help strategy~). A spell is chanted for
+their strategy, with real mana, and a spell its caster knows never fizzles
+there (see ~help strategy~). Mana comes back only through a rest, an inn or
+a draught (see ~help mana~). A spell is chanted for
 a round or two first, and a weapon blow that draws blood on the caster
 may break the chant (a heavy blow always does): the spell is lost, with
 half its mana back (see ~help interrupts~).

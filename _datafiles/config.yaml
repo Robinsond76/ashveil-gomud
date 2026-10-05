@@ -344,7 +344,7 @@ GamePlay:
     # Chance to hit (percent): ToHitEven when even, moved by the skill and Speed edge
     ToHitMin: 10
     ToHitMax: 95
-    ToHitEven: 60
+    ToHitEven: 75
     # Extra attacks for weaponless/claws combat driven by Speed delta
     # Legacy keys, unused by the action meter.
     ExtraAttacksMin: 0
@@ -360,19 +360,19 @@ GamePlay:
     # skill and Perception edge
     DodgeChanceMin: 3
     DodgeChanceMax: 40
-    DodgeChanceEven: 12
+    DodgeChanceEven: 8
     # Chance a shield blocks a blow (percent): BlockChanceEven plus the
     # shield's own armor when even, moved by the skill and Strength edge,
     # held to this range
     BlockChanceMin: 8
     BlockChanceMax: 55
-    BlockChanceEven: 20
+    BlockChanceEven: 28
     # Chance a weapon parries a melee blow (percent): ParryChanceEven when
     # even, moved by the skill and Speed edge; the weapon's modifier (+5
     # sword, -5 dagger, ...) moves the range
     ParryChanceMin: 3
     ParryChanceMax: 40
-    ParryChanceEven: 12
+    ParryChanceEven: 8
     # Chance a shield-bearer bashes back a blocked melee blow (percent)
     # grown by the Strength advantage
     BashChanceMin: 5
