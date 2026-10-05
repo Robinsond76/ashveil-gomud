@@ -1,7 +1,8 @@
 # Level Impact, Class Power, and the Witch
 
-Status: owner-requested design, 2026-10-05. Documentation only; no gameplay
-implemented. The owner's direction (listed under **Owner decisions**) is
+Status: owner-approved design, 2026-10-05. Execution plans for 35a–35c are in
+the [phase 35 handoff](../plans/2026-10-05-phase-35-handoff.md); no gameplay
+is implemented yet. The owner's direction (listed under **Owner decisions**) is
 settled; every number below is a proposed default to verify with the balance
 harness before it ships.
 

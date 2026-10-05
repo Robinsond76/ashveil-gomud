@@ -119,7 +119,7 @@ Affixes are data in `_datafiles/world/default/loot/affixes/*.yaml`.
 | Group | Examples (tier 1 → tier 5 ranges) | Uses |
 |---|---|---|
 | Stats | +Strength, Speed, Smarts, Vitality, Mysticism, Perception (1–2 → 7–9) | `statmods` |
-| Vitals | +max HP (5 → 40), +max mana (5 → 50), mana per round (1 → 3) | `statmods`, 2d sustain |
+| Vitals | +max HP (5 → 40), +max mana (5 → 50), +draught potency % (5 → 25) | `statmods`; no mana-per-round affix, since mana comes only from rest and draughts (owner) |
 | Offense | +flat damage (1 → 6), +hit % (2 → 8), +crit % (1 → 5) | Combat formulas |
 | Defense | +protection, +block/parry/dodge % (1 → 5) | 30g2 defense |
 | Status on crit | Bleed, stagger, burning, armor-break chance on crit | 30a crit statuses |
