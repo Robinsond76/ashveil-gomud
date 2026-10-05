@@ -169,6 +169,32 @@ API reference and console errors. Final verification passed: `make generate`,
 `go test -race ./...`, inline admin JavaScript syntax and relative Markdown
 links. Gameplay implementation complete; PR integration remains pending.
 
+**35a PR review follow-up (2026-10-05):** a PR code review found the
+once-only migration marked characters migrated even while the server still
+ran the 5-level rhythm (for example through a saved
+`StatPointsEveryNLevels: 5` override), so a later switch to 2 never paid them,
+and assumed every character earned on 5. Accepted and fixed:
+`Character.CatchUpStatPoints` tops a character up to the current rhythm's
+total at its peak level, counting points it already holds (unspent plus stat
+training), so pre-30g4 characters who earned a point every level, and players
+given points, are not paid twice; nothing is taken away. It leaves
+characters, new ones included, unmarked while the rhythm is still 5, and runs
+on load (atomic save) or before a live level-up, so a mid-session change is
+neither skipped nor counted in the level-up report. An independent review of
+the fix found no P1. Accepted: P2 new characters were pre-marked (fixed, they
+now start unmarked); P2 pre-30g4 characters (rhythm 1) would be overpaid
+(fixed by the held-points top-up; the cost is that a stat coupon spent before
+the catch-up reduces it). Rejected: P3 announce catch-up points (silent like
+the original migration); P3 save the live catch-up at once (points and marker
+share one record, so a crash reverts both and the next load repays); P3
+display lookups of offline users can run the migration save (pre-existing,
+once per character, main-loop only). Regression tests cover the load, live
+level-up, held-points, lost-level and new-character paths. Full checks
+passed (`make generate`, `make validate`, `go test -race ./...`), except one
+run where `TestAClericCompanionHealsTheHurt` (company, untouched) failed once;
+it passed 100 isolated runs (40 with `-race`) and two full `-race` package
+runs, so it is noted as an unreproduced intermittent failure to investigate.
+
 **30g6 stat edges and tuning (2026-10-04):** on top of 30g6a, per the
 [amendment](designs/2026-10-04-phase-30g6-amendment.md) A, B, E and F. Every
 opposed chance (hit, crit, dodge, parry, block, bash, crit damage, the

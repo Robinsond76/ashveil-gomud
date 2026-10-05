@@ -84,3 +84,41 @@ func TestGrantXPLevelReport(t *testing.T) {
 		})
 	}
 }
+
+// A rhythm changed while an unmigrated player is online is paid before the
+// level-up: the report counts only the new levels' points, and a later load
+// pays nothing twice.
+func TestGrantXPPaysStatPointCatchUpBeforeLevelReport(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "users"), 0755))
+	old := configs.Flatten(configs.GetOverrides())
+	flat := configs.Flatten(configs.GetOverrides())
+	flat["FilePaths.DataFiles"] = dir
+	require.NoError(t, configs.RestoreOverrides(flat))
+	t.Cleanup(func() { require.NoError(t, configs.RestoreOverrides(old)) })
+	g := configs.GetGamePlayConfig()
+	g.XPScale = 100
+	g.Progression.StatPointsEveryNLevels = 2
+	g.Progression.StatPointsPerLevel = 1
+	t.Cleanup(configs.SetTestGamePlayConfig(g))
+	u := users.NewUserRecord(35002, 0)
+	u.Character.Level = 10
+	u.Character.PeakLevel = 10
+	u.Character.Experience = u.Character.XPTL(9)
+	u.Character.StatPointRhythm = 0
+	u.Character.StatPoints = 2
+	u.Character.Validate()
+	users.SetTestUser(u)
+	t.Cleanup(func() { users.RemoveTestUser(u.UserId) })
+	var ev events.LevelUp
+	id := events.RegisterListener(events.LevelUp{}, func(e events.Event) events.ListenerReturn { ev = e.(events.LevelUp); return events.Continue })
+	t.Cleanup(func() { events.UnregisterListener(events.LevelUp{}, id) })
+
+	u.GrantXP(u.Character.XPTL(11)-u.Character.Experience, "test")
+	events.ProcessEvents()
+	require.Equal(t, 12, u.Character.Level)
+	assert.Equal(t, 1, ev.StatPoints, "levels 11 and 12 pay one point")
+	assert.Equal(t, 2+3+1, u.Character.StatPoints, "catch-up (5 - 2) at peak 10, then level 12")
+	assert.Equal(t, 2, u.Character.StatPointRhythm)
+	assert.False(t, u.Character.CatchUpStatPoints(), "never paid twice")
+}

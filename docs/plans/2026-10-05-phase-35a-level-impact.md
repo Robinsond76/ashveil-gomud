@@ -87,12 +87,17 @@ Out of scope here:
    received points on the 5-level rhythm. On load, if
    `Character.StatPointRhythm` (new `int`, yaml `statpointrhythm,omitempty`)
    is below 2:
-   - grant `StatPointsAt(PeakLevel)` under the new rule minus the same under
-     the old 5-level rule (never negative);
+   - grant `StatPointsAt(PeakLevel)` under the new rule minus the points the
+     character already holds (never negative; see the follow-up below);
    - set the field to 2;
    - save through the user's normal atomic save.
    This runs exactly once, also across copyover and replay copies (32b
-   replays start at level 1 and owe nothing). Companions need no migration,
+   replays start at level 1 and owe nothing). While the server still runs
+   the 5-level rhythm nothing is owed and the character stays unmarked; a
+   player online when the rhythm changes is caught up before their next
+   level-up. Points the character already holds (unspent plus stat training)
+   count toward the new total, so characters who earned every level before
+   30g4 are not paid again (PR review follow-up). Companions need no migration,
    since 33h1 derives their training.
 5. **HP shape.** Set `HPFullLevels: 20` and `HPAfterFull: 1.5`, so
    `HealthAfterFull` gives 60% of each archetype's rate (1.5 / 2.5). Validate

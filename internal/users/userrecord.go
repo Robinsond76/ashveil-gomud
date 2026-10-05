@@ -214,6 +214,11 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 		Scale:      xpScale,
 	})
 
+	// Phase 35a: a rhythm changed while this player was online is paid
+	// before the level-up, so the report counts only this level's points
+	// and the new level is not paid twice by a later load.
+	u.Character.CatchUpStatPoints()
+
 	tpBefore := u.Character.TrainingPoints
 	spBefore := u.Character.StatPoints
 	healthBefore, manaBefore, statsBefore := u.Character.HealthMax.Value, u.Character.ManaMax.Value, u.Character.Stats
