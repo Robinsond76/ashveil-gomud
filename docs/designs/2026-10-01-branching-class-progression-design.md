@@ -20,7 +20,9 @@ and fighting healers are warriors, with good and evil routes. The draft
 table's cleric rows (Priest → Hierarch with an Angel, Druid → Elder Druid,
 Blood Priest → Demonologist with a Demon) and the warrior's evil route
 (Blackguard → Dread Knight instead of Reaver), and adds Lay on Hands to
-Knight → Paladin.
+Knight → Paladin. Every route gains a **rank every 5 levels** from
+promotion to level 60 (10–25 advanced, 30–60 elite), so a signature grows
+one benefit at a time (level impact design §1e).
 
 ## Review of current progression
 

@@ -121,13 +121,24 @@ Opening Strike's bonus.
 | 1 | Base class role and first ability or spell (as today) |
 | 3 | Second base ability or spell (moved down from 5) |
 | 5 | Talent choice: pick 1 of 3 small passives from the class list |
-| 10 | **Class promotion** (advanced class and its signature) |
-| 15 | Talent choice |
-| 20 | Advanced signature improves; a new ability for the advanced class |
-| 25 | Talent choice |
-| 30 | **Elite promotion** |
-| 35, 45, 55 | Talent choices |
-| 40, 50 | Signature modifiers (from the skill and spell progression design) |
+| 10 | **Class promotion**: advanced class, signature at rank 1 |
+| 15, 25 | Talent choice **and** an advanced rank |
+| 20 | Advanced rank (a new ability for the advanced class) |
+| 30 | **Elite promotion**: elite signature at rank 1 |
+| 35, 45, 55 | Talent choice **and** an elite rank |
+| 40, 50, 60 | Elite rank |
+
+**Route ranks (owner, 2026-10-05):** progression continues all the way to
+level 60. From promotion on, **every route gains a rank every 5 levels**:
+advanced ranks at 10, 15, 20 and 25, elite ranks at 30, 35, 40, 45, 50, 55
+and 60. A rank is one new benefit (a new effect, a stronger number or
+another use), never the whole package at once, so a signature such as the
+Hierarch's Angel starts modest at 30 and is complete only at 60. Talents
+still come at 5, 15, 25, 35, 45 and 55. Each route's rank table is part of
+its design; the [faith routes design](2026-10-05-faith-routes-design.md)
+gives the cleric and warrior tables, and the other lineages' tables are
+written when their routes are planned (38b). This replaces the earlier
+"signature modifiers at 40 and 50".
 
 Talents are small, explicit passives with caps, such as +10% Minor Heal, one
 extra hex target at a lower rank, or +1 parry. They are one-time choices saved

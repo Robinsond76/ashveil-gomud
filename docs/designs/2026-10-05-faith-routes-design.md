@@ -23,9 +23,9 @@ of [35a2 skill over hit points](2026-10-05-phase-35a2-skill-over-hit-points-desi
 
 | Lineage | Gate | Advanced (level 10) | Elite (level 30) | Role |
 |---|---|---|---|---|
-| Cleric | Good (+30) | **Priest** | **Hierarch** | Strongest direct healing and wards; at 30 calls an **Angel** |
+| Cleric | Good (+30) | **Priest** | **Hierarch** | Strongest direct healing and wards; from 30 calls an **Angel** that grows every 5 levels |
 | Cleric | Any | **Druid** | **Elder Druid** | Healing over time and nature protection |
-| Cleric | Evil (−30) | **Blood Priest** | **Demonologist** | Heals by draining foes; at 30 binds a **Demon** |
+| Cleric | Evil (−30) | **Blood Priest** | **Demonologist** | Heals by draining foes; from 30 binds a **Demon** that grows every 5 levels |
 | Warrior | Good (+30) | **Knight** | **Paladin** | Armored protector who heals by laying on hands |
 | Warrior | Any | Mercenary | Warlord | Unchanged |
 | Warrior | Evil (−30) | **Blackguard** | **Dread Knight** | Armored protector who heals by spilling blood |
@@ -73,86 +73,87 @@ block. It adds +5% to the cleric's healing and **+25% to a summon's
 health** (sections 2 and 4). A cleric chooses between a two-handed staff
 (better parry) and mace with symbol (better healing and summons).
 
+## Ranks: something new every 5 levels to 60
+
+Owner (2026-10-05): a route's benefits arrive one at a time, **one rank
+every 5 levels**, so progression continues all the way to level 60 (level
+impact design §1e). Advanced routes have ranks at 10, 15, 20 and 25; elite
+routes at 30, 35, 40, 45, 50, 55 and 60. Talents still come at 5, 15, 25,
+35, 45 and 55. The tables below are the cleric and warrior ranks; every
+number is a starting value for the balance tests.
+
 ## 2. Good route: Priest → Hierarch
 
-**Priest (level 10, alignment +30 or higher).** The best direct healer.
+**Priest** (alignment +30 or higher). The best direct healer.
 
-- **Signature: Ward.** Places a ward on one ally that absorbs the next
-  blow's damage, up to about one average hit of the cleric's level (15–20%
-  of a warrior's HP). Chant 1, cost 10, one ward per ally. At level 20 a
-  ward absorbs two blows.
-- **Greater Heal:** about two average hits; chant 2, cost 14.
-- Priests heal at the standard after-battle patching cost.
-
-**Hierarch (level 30).**
-
-- **Signature: Call the Host.** Summons an **Angel** for the rest of the
-  battle (summoning rules, section 4).
-- Heals also remove one harmful status (bleeding, poisoned) from their
-  target, once per patient per battle.
-- **Level 40:** the Angel arrives one chant round sooner. **Level 50:**
-  Mercy heals the two most hurt allies.
-
-**The Angel** (a guardian of the Host). Owner: angels must be clearly
-useful, a second protector and healer the whole company feels:
-
-| | |
+| Rank | Gains |
 |---|---|
-| Level | The Hierarch's level; Attack rate 1.0, Evasion rate 1.1 |
-| HP and armor | A warrior's HP of that level (+25% with a holy symbol), and armor like a warrior's heavy kit (defense 40), with none of heavy armor's slowness |
-| Weapon | Radiant blade, 1d10; +50% against undead and demons |
-| Guard | Steps in for the most hurt ally in reach, up to 3 times a battle (the 30c2 Guardian rule, with more uses) |
-| Mercy | Every 2 rounds, heals the most hurt ally for a full Minor Heal of the Hierarch's level |
-| Wings of the Host | Allies in the Angel's row gain +5 Evasion while it stands |
-| Cleansing light | On arrival, removes one harmful status (bleeding, poisoned, knocked down) from every ally |
+| 10 | **Ward** (signature): one ally's next blow is absorbed, up to one average hit of the Priest's level (15–20% of a warrior's HP). Chant 1, cost 10, one ward per ally |
+| 15 | **Greater Heal:** about two average hits; chant 2, cost 14 |
+| 20 | A ward absorbs two blows |
+| 25 | **Prayer of Mending:** after-battle patching costs 20% less mana |
+
+**Hierarch.** Calls an **Angel** that grows with every rank (summoning
+rules below).
+
+| Rank | Gains |
+|---|---|
+| 30 | **Call the Host** (signature): the Angel arrives with a warrior's HP of the Hierarch's level (+25% with a holy symbol), Attack 1.0 and Evasion 1.1 rates, a radiant blade (1d8), **Guard** once a battle (steps in for the most hurt ally, the 30c2 rule) and **Mercy** (every 3 rounds, half a Minor Heal to the most hurt ally). The Hierarch's own heals also remove one harmful status, once per patient per battle |
+| 35 | **Armor of the Host:** the Angel gains armor like a warrior's heavy kit (defense 40), without heavy armor's slowness |
+| 40 | **Mercy** becomes a full Minor Heal every 2 rounds |
+| 45 | **Wings of the Host:** allies in the Angel's row gain +5 Evasion while it stands |
+| 50 | **Sword of the Host:** Guard up to 3 times a battle; the blade becomes 1d10, +50% against undead and demons |
+| 55 | **Cleansing light:** on arrival, the Angel removes one harmful status (bleeding, poisoned, knocked down) from every ally |
+| 60 | **Swift Host:** the Angel arrives one chant round sooner, and Mercy heals the two most hurt allies |
 
 ## 3. Unrestricted route: Druid → Elder Druid
 
-For any alignment; healing that works slowly.
+For any alignment; healing that works slowly. No summon (a later
+spirit-beast companion belongs in the catalogue's Beastkeeper rules).
 
-- **Druid (level 10). Signature: Rejuvenation.** Heals one ally over 3
-  rounds for a total of 130% of a Minor Heal, at a Minor Heal's cost.
-  **Barkskin:** one ally +10 armor for the battle.
-- **Elder Druid (level 30). Signature: Grove.** Rejuvenation on a whole
-  formation row at 60% strength each.
-- No summon. A later spirit-beast companion for this route belongs in the
-  expanded catalogue's Beastkeeper rules, not here.
+| Rank | Gains |
+|---|---|
+| 10 | **Rejuvenation** (signature): one ally heals over 3 rounds for 130% of a Minor Heal, at a Minor Heal's cost |
+| 15 | **Barkskin:** one ally +10 armor for the battle |
+| 20 | Rejuvenation lasts 4 rounds (160%) |
+| 25 | **Thornhide:** a foe that strikes a Barkskinned ally takes 2 damage |
+| 30 | **Grove** (elite signature): Rejuvenation on a whole formation row at 60% each |
+| 35 | **Nature's patience:** after-battle patching costs 20% less mana |
+| 40 | Grove at 80% |
+| 45 | **Entangle:** one foe is hobbled for 2 rounds; chant 1, cost 10 |
+| 50 | Barkskin covers a whole row |
+| 55 | **Wild growth:** Rejuvenation also cures poison |
+| 60 | Grove covers two rows |
 
 ## 4. Evil route: Blood Priest → Demonologist
 
-**Blood Priest (level 10, alignment −30 or lower).** Heals by taking life.
+**Blood Priest** (alignment −30 or lower). Heals by taking life. **Dark
+healing is hungry:** its ordinary heals and after-battle patching cost 25%
+more mana.
 
-- **Signature: Siphon.** Damages one foe for a Magic Missile's worth
-  (scaled by the 35a2 skill edge) and heals the most hurt ally for the
-  damage dealt. Chant 1, cost 10. A strong fighter's tool, useless out of
-  battle.
-- **Dark healing is hungry:** the Blood Priest's ordinary heals and
-  after-battle patching cost 25% more mana.
-- **Level 20:** Siphon also strikes a second foe and heals a second ally,
-  at 60%.
-
-**Demonologist (level 30).**
-
-- **Signature: Bind the Fiend.** Summons a **Demon** for the rest of the
-  battle (summoning rules below).
-- **Level 40:** the Demon's arrival forces a morale check on every enemy
-  group, not only its target's. **Level 50:** the Demon's claws hit
-  harder (2d8).
-
-**The Demon** (a bound fiend):
-
-| | |
+| Rank | Gains |
 |---|---|
-| Level | The Demonologist's level; Attack rate 1.1, Evasion rate 0.9 |
-| HP | 80% of a warrior's of that level (+25% with a holy symbol) |
-| Weapon | Claws, 2d6, which hits harder than the Angel |
-| Dread | On arrival, one morale check against its target's group (30e) |
-| Broken binding | If the Demonologist falls, the Demon breaks free: its next turn attacks the nearest creature, friend or foe, then it vanishes |
+| 10 | **Siphon** (signature): damages one foe for a Magic Missile's worth (scaled by the 35a2 skill edge) and heals the most hurt ally for the damage dealt. Chant 1, cost 10; useless out of battle |
+| 15 | Siphon costs 8 |
+| 20 | Siphon also strikes a second foe and heals a second ally, at 60% |
+| 25 | **Blood ward:** Siphon healing beyond an ally's full health becomes a ward of up to half a hit |
 
-The broken binding is the evil route's price: a Demonologist the company
-fails to protect becomes a danger to the company.
+**Demonologist.** Binds a **Demon** that grows with every rank. The
+**broken binding** is the evil route's price until it is mastered: if the
+Demonologist falls, the Demon breaks free, its next turn attacks the
+nearest creature, friend or foe, then it vanishes.
 
-### Summoning rules (Angel and Demon)
+| Rank | Gains |
+|---|---|
+| 30 | **Bind the Fiend** (signature): the Demon arrives with 80% of a warrior's HP of the Demonologist's level (+25% with a holy symbol), Attack 1.1 and Evasion 0.9 rates, claws (2d6) and **Dread**: on arrival, one morale check against its target's group (30e) |
+| 35 | **Infernal hide:** the Demon gains armor (defense 30) |
+| 40 | **Terror:** Dread checks every enemy group, not only its target's |
+| 45 | **Hellfire:** foes within the Demon's reach take 2 damage each round |
+| 50 | **Rending claws:** 2d8, +50% against holy creatures |
+| 55 | **Soul feast:** when the Demon kills, the most hurt ally heals half a Minor Heal and the Demonologist regains 5% of its mana |
+| 60 | **Mastered binding:** the Demon arrives one chant round sooner, and a falling Demonologist's Demon simply vanishes |
+
+## Summoning rules (Angel and Demon)
 
 - **Casting:** a 3-round chant (a blow can break it, as with any chant),
   costing **10%** of the caster's maximum mana (owner). Battle only;
@@ -160,7 +161,10 @@ fails to protect becomes a danger to the company.
   summoner calls in most battles; the once-per-battle limit and the
   protected chant are what hold it back.
 - **Duration:** until the battle ends, the summon dies, or the summoner
-  falls (the Angel departs; the Demon breaks free).
+  falls (the Angel departs; the Demon breaks free until the rank-60
+  mastered binding).
+- **Ranks:** a summon has every rank its summoner has reached, read when
+  it arrives.
 - **Not a company member:** it takes no company slot (the company stays
   leader + 4) and is **never saved**. A copyover during the battle
   banishes it.
@@ -182,46 +186,43 @@ fails to protect becomes a danger to the company.
 ## 5. Good fighting healer: Knight → Paladin
 
 Warrior route, alignment +30 or higher. Heavy armor and any shield (35a2),
-so the Paladin can stand in the front row and heal there.
+so the Paladin can stand in the front row and heal there. Paladins heal
+**reliably**: no need to land a blow, but a fixed number of times per rest.
 
-**Knight (level 10).** Already planned to brace for its ward (guardian).
-
-- **Signature: Lay on Hands.** A touch that heals itself or an adjacent
-  ally for half a Minor Heal of the Knight's level. It takes the Knight's
-  turn, has no chant and costs no mana: **2 uses per rest**, 3 at level 20.
-
-**Paladin (level 30).**
-
-- Lay on Hands heals a full Minor Heal and removes one harmful status;
-  3 uses per rest, 4 at level 40.
-- **Aura of Resolve:** allies in the Paladin's row take 10% less damage.
-  Auras don't stack within a row.
-
-Paladins heal **reliably**: no need to land a blow, but a fixed number of
-times per rest.
+| Rank | Gains |
+|---|---|
+| 10 | **Lay on Hands** (signature): heals itself or an adjacent ally for half a Minor Heal of its level; takes its turn, no chant or mana; 2 uses per rest. Braces for its ward (guardian, already planned) |
+| 15 | Lay on Hands: 3 uses per rest |
+| 20 | **Shield of faith:** +5 block chance while guarding a ward |
+| 25 | Lay on Hands also stops bleeding |
+| 30 | **Paladin** (elite signature): Lay on Hands heals a full Minor Heal and removes one harmful status |
+| 35 | **Aura of Resolve:** allies in the Paladin's row take 10% less damage (auras don't stack within a row) |
+| 40 | Lay on Hands: 4 uses per rest |
+| 45 | **Smite:** the Paladin's blows deal +50% against undead and demons |
+| 50 | Aura of Resolve also gives the rest of the company 5% |
+| 55 | Lay on Hands reaches any ally in the Paladin's reach, not only adjacent ones |
+| 60 | **Divine shield:** once a battle, the Paladin ignores the next blow; Lay on Hands 5 uses per rest |
 
 ## 6. Evil fighting healer: Blackguard → Dread Knight
 
 Warrior route, alignment −30 or lower. Heavy armor and any shield.
-
-**Blackguard (level 10).**
-
-- **Signature: Blood Oath.** When the Blackguard lands a melee blow, half
-  the damage dealt heals **the most hurt ally** in the company (owner: any
-  hurt ally), or the Blackguard itself if no ally is hurt. It works on up
-  to 3 blows per battle, 4 at level 20, and renews every battle.
-- Keeps the Reaver's intimidation: a foe the Blackguard has wounded this
-  round has −3 Attack against the Blackguard's allies.
-
-**Dread Knight (level 30).**
-
-- Blood Oath heals the most hurt ally for 75% of the damage, and the next
-  most hurt for half that again; 5 blows per battle.
-- **Aura of Dread:** foes in reach of the Dread Knight have −5 Attack.
-
 Blackguards heal **by hurting**: renewable every battle with no rest
 needed, but only while they land blows. A missed or defended swing heals
 no one.
+
+| Rank | Gains |
+|---|---|
+| 10 | **Blood Oath** (signature): when it lands a melee blow, half the damage dealt heals the most hurt ally in the company (owner: any hurt ally), or itself if no one is hurt; up to 3 blows per battle, renewed every battle. **Intimidation:** a foe it wounded this round has −3 Attack against its allies |
+| 15 | Blood Oath: 4 blows per battle |
+| 20 | Intimidation: −5 Attack |
+| 25 | Blood Oath: 5 blows per battle |
+| 30 | **Dread Knight** (elite signature): Blood Oath heals 75% of the damage |
+| 35 | **Aura of Dread:** foes within its reach have −5 Attack |
+| 40 | Blood Oath also heals the next most hurt ally for half as much |
+| 45 | Blood Oath: 6 blows per battle |
+| 50 | **Terror:** its critical hits force a morale check on the target's group |
+| 55 | Blood Oath: 7 blows per battle |
+| 60 | **Unholy vigor:** Blood Oath heals 100% of the damage dealt |
 
 ## Balance and acceptance (with 38b)
 
@@ -242,10 +243,13 @@ With `ASHVEIL_BALANCE=1`:
    level, and neither heals as much as a Priest.
 4. **Priests stay protected:** with no warrior in front, a cleric loses
    more fights than with one (the class needs protecting, as intended).
-5. **Wiring:** promotion gates by alignment; each signature through its
+5. **Ranks:** each rank applies from its level, never earlier, for players
+   and companions; a level lost to death removes the rank until it is
+   regained (ranks are derived from level, never saved).
+6. **Wiring:** promotion gates by alignment; each signature through its
    real cast or attack path; companion strategy rules for Ward, Siphon,
    Lay on Hands, Blood Oath and the summons; the holy symbol's bonuses.
-6. **Help:** a page per route (`help priest`, `help hierarch`, `help
+7. **Help:** a page per route, each listing its rank table (`help priest`, `help hierarch`, `help
    druid`, `help blood priest`, `help demonologist`, `help knight`, `help
    paladin`, `help blackguard`, `help dread knight`), `help summoning`,
    updates to `help cleric` and `help warrior`, and tutorial pointers from
@@ -263,5 +267,9 @@ All numbers are starting values for the balance tests.
    of maximum mana, not 40%; the Angel is strengthened to be clearly
    useful (armor, more guards, a full Mercy heal every 2 rounds, an
    Evasion aura and a cleanse on arrival).
+
+5. **Ranks every 5 levels** (later the same day): the Angel's benefits,
+   and every route's, arrive one rank every 5 levels up to 60 instead of
+   all at the elite promotion; the Demon follows the same ladder.
 
 No questions are open. Delivery is planned with class promotions (38b).
