@@ -54,7 +54,10 @@ show up as **longer fights**, the opposite of the goal.
   rods or maces only.
 - **Clerics are priests,** a healer that can't fight well and needs
   protecting, as weak in a fight as the wizard. A fighting healer belongs to
-  the warrior's promotion routes, not the cleric's.
+  the warrior's promotion routes, good and evil, not the cleric's
+  ([faith routes design](2026-10-05-faith-routes-design.md)).
+- **Cleric weapons are maces, staffs and rods;** the cleric kit gets a
+  **holy symbol**.
 
 ## Decisions
 
@@ -258,10 +261,12 @@ maces. These are **hard rules**, unlike armor's penalty.
   | Cleric, Rogue, Wizard, Witch | None |
   | Enemies | Any (unchanged) |
 
-- **Cleric weapons:** bludgeoning weapons only (maces, staffs, rods,
-  cudgels, scepters). A new item field `weaponclass` (`mace`, `staff`,
-  `rod`, `club`, …) lets the rule name them; until it is tagged, any
-  bludgeoning weapon qualifies.
+- **Cleric weapons:** **maces, staffs and rods only** (owner). A new
+  weapon field `weaponclass` names them; clubs, cudgels and improvised
+  weapons don't qualify. Shipped weapons are tagged: ash quarterstaff
+  `staff`; ancient royal scepter `rod`; cudgel, crude cudgel, ogre's great
+  club and tree trunk `club`; sharp stick, crowbar and boat oar
+  `improvised`. An untagged weapon is never a cleric weapon.
 - **Enforcement:** `equip` (and companion gear, `company equip`) refuses
   a disallowed shield or weapon with a reason ("Clerics fight with staffs,
   rods and maces."). Archetype data holds the rules (`ShieldSizes`,
@@ -269,9 +274,13 @@ maces. These are **hard rules**, unlike armor's penalty.
 - **Existing characters:** on load, a disallowed shield or weapon is moved
   from the hand to carried items and the player is told once; it counts
   toward burden like any carried item. Companions do the same.
-- **Starting kits:** the cleric's wooden shield (20004) is replaced (by a
-  holy symbol or a second healing potion, chosen in the plan). The ranger's
-  kit is unchanged (its sling is two-handed); a new **leather buckler**
+- **Starting kits:** the cleric's crude cudgel (10015) and wooden shield
+  (20004) are replaced by a new **acolyte's mace** (one-handed, 1d6,
+  `mace`) and a new **holy symbol** (owner). The holy symbol is a light
+  off-hand focus: it can't block, adds **+5% to the cleric's healing**,
+  and is the focus the faith routes' rites use ([faith routes design](2026-10-05-faith-routes-design.md)).
+  A cleric chooses between a two-handed staff (better parry) and mace and
+  symbol (better healing). The ranger's kit is unchanged (its sling is two-handed); a new **leather buckler**
   (light, armor 3) is sold where shields are, for a ranger fighting with a
   one-handed weapon.
 - The two shipped shields are `shield` size (wooden 5, iron 10). A
@@ -426,13 +435,8 @@ ones, and the owner approves any change to the shape of the system.
 
 ## Open questions for the owner
 
-1. **Cleric weapons:** do clubs, cudgels and scepters count as maces, or
-   only items tagged mace, staff or rod (which would mean retagging and
-   adding a few items)?
-2. **Cleric kit:** a holy symbol (new item, no combat effect yet) or a
-   second healing potion in place of the shield?
-3. **Fighter-healer:** the [branching class design](2026-10-01-branching-class-progression-design.md)
-   gives limited restoration to the warrior's Knight → Paladin route and a
-   frontline Chaplain → War Priest route to the cleric. With clerics as
-   protected priests, the fighting healer moves to the Knight/Paladin
-   route (owner to confirm; recorded in that design when 38b is planned).
+None open. Resolved 2026-10-05: untrained armor is penalized, not
+forbidden; shields for warriors (any) and rangers (bucklers); cleric
+weapons are maces, staffs and rods; the cleric kit gets a holy symbol; the
+fighting healer belongs to warrior routes, good and evil, with the cleric
+routes redesigned in the [faith routes design](2026-10-05-faith-routes-design.md).

@@ -14,6 +14,14 @@ Hedge Witch, Coven Sage and Hag routes. It also proposes talent choices at level
 promotions. The rest of this document's proposals stand until reviewed with
 that design.
 
+**Owner update (2026-10-05, faith routes):** clerics are protected priests
+and fighting healers are warriors, with good and evil routes. The draft
+[faith routes design](2026-10-05-faith-routes-design.md) replaces this
+table's cleric rows (Priest → Hierarch with an Angel, Druid → Elder Druid,
+Blood Priest → Demonologist with a Demon) and the warrior's evil route
+(Blackguard → Dread Knight instead of Reaver), and adds Lay on Hands to
+Knight → Paladin.
+
 ## Review of current progression
 
 The inspected local checkout is based on 54c11ac8 (33f1), plus recent planning

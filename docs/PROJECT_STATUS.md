@@ -106,7 +106,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-05 (35a merged via PR #15; 35a2 skill-over-HP design drafted; visual client milestone and sprite specification added; roadmap reprioritized; 35b/35c pending implementation)
+- **Last updated:** 2026-10-05 (35a merged via PR #15; 35a2 skill-over-HP and faith routes designs drafted; visual client milestone and sprite specification added; roadmap reprioritized; 35b/35c pending implementation)
 - **Latest completed slices:** 35a, level impact; 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -187,7 +187,7 @@ implemented (handoff rule 20).
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role | Level impact §3 | 35b |
-| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages | Branching design; level impact §1e | 35a, 38a |
+| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the draft [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 38a |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
 
