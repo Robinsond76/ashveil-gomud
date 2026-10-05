@@ -1,0 +1,55 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">evasion</ansi>
+
+Every fighter, you, your companions and every enemy, has two combat
+ratings that grow with level. Skill, not a pile of hit points, decides
+who wins a fight between fighters of different levels.
+
+  <ansi fg="yellow">Attack</ansi>    your skill at landing blows
+  <ansi fg="yellow">Evasion</ansi>   your skill at not being hurt by them: dodging,
+            parrying, or blocking
+
+<ansi fg="command">status</ansi> shows both, and every level-up reports what they gained:
+
+  <ansi fg="command">Attack 12 -> 13   Evasion 11 -> 12</ansi>
+
+<ansi fg="yellow-bold">What each class gains a level</ansi>
+
+  <ansi fg="yellow">Warrior</ansi>            Attack 1     Evasion 1      (level 30: 30 / 30)
+  <ansi fg="yellow">Rogue</ansi>              Attack 0.9   Evasion 1.1    (level 30: 27 / 33)
+  <ansi fg="yellow">Ranger</ansi>             Attack 1     Evasion 0.9    (level 30: 30 / 27)
+  <ansi fg="yellow">Cleric, Wizard</ansi>     Attack 0.7   Evasion 0.75   (level 30: 21 / 22)
+  <ansi fg="yellow">Enemies</ansi>            Attack {{ config "GamePlay.Combat.DefaultAttackRate" }}     Evasion {{ config "GamePlay.Combat.DefaultEvasionRate" }}
+
+Fractions round down. A trained enemy captain or a clumsy brute may be a
+few points above or below that. Casters are easier to hit than fighters:
+their strength is their spells. Losing a level on death lowers both.
+
+<ansi fg="yellow-bold">How a gap changes a fight</ansi>
+
+Your Attack against your target's Evasion gives a skill edge: each point
+of difference is 1/{{ config "GamePlay.Combat.SkillEdgeSpan" }} of a full edge, so a {{ config "GamePlay.Combat.SkillEdgeSpan" }}-point lead is the most
+there is. The edge is added to the stat edge each chance already uses
+(<ansi fg="command">help stat-edge</ansi>), so a quick fighter is still harder to hit.
+
+  <ansi fg="yellow">Chance</ansi>        <ansi fg="yellow">even</ansi>      <ansi fg="yellow">worst</ansi>   <ansi fg="yellow">best</ansi>
+  To hit        {{ config "GamePlay.Combat.ToHitEven" }}%       {{ config "GamePlay.Combat.ToHitMin" }}%     {{ config "GamePlay.Combat.ToHitMax" }}%
+  Dodge         {{ config "GamePlay.Combat.DodgeChanceEven" }}%       {{ config "GamePlay.Combat.DodgeChanceMin" }}%      {{ config "GamePlay.Combat.DodgeChanceMax" }}%
+  Parry         {{ config "GamePlay.Combat.ParryChanceEven" }}%       {{ config "GamePlay.Combat.ParryChanceMin" }}%      {{ config "GamePlay.Combat.ParryChanceMax" }}%, plus the weapon's modifier
+  Block         {{ config "GamePlay.Combat.BlockChanceEven" }}% + shield  {{ config "GamePlay.Combat.BlockChanceMin" }}%      {{ config "GamePlay.Combat.BlockChanceMax" }}%
+
+For example, a level 20 warrior swinging at a level 10 warrior (a 10-point
+lead) hits 81% of the time and meets a 6% dodge. The level 10 warrior
+swinging back hits only 28% of the time and meets a 29% dodge.
+A {{ config "GamePlay.Combat.ToHitMin" }}% floor keeps a lucky blow possible, so a pack of weaker foes is
+still a threat. Critical hits stay with Smarts (<ansi fg="command">help smarts</ansi>).
+
+Spells use the same gap: a damage spell lands half to one and a half
+times its listed damage, by the caster's Attack against the target's
+Evasion (<ansi fg="command">help spells</ansi>).
+
+Armor heavier than your training costs {{ config "GamePlay.Combat.UntrainedSkillLoss" }} Attack and {{ config "GamePlay.Combat.UntrainedSkillLoss" }} Evasion
+(<ansi fg="command">help armor</ansi>). <ansi fg="command">consider</ansi> tells you in words how a foe's skill compares
+with yours.
+
+See also: <ansi fg="command">help attack</ansi>, <ansi fg="command">help defense</ansi>, <ansi fg="command">help shields</ansi>, <ansi fg="command">help progression</ansi>,
+<ansi fg="command">help combat</ansi>.

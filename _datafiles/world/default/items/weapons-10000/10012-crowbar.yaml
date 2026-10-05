@@ -6,6 +6,7 @@ type: weapon
 hands: 1
 questtoken: 5-usecrowbar
 subtype: bludgeoning
+weaponclass: improvised
 damage:
   diceroll: 1d2
 weight: 1500

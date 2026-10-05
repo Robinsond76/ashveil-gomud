@@ -1,6 +1,6 @@
 spellid: sparks
 name: Shower of Sparks
-description: Hurts for 1d3+1
+description: Hurts for 4+1d4, plus 1 per 15 caster levels and 1 per 25 Mysticism, scaled by skill
 type: harmmulti
 school: conjuration
 cost: 10

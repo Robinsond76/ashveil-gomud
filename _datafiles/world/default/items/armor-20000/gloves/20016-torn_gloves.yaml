@@ -4,6 +4,7 @@ namesimple: gloves
 description: The gloves are in terrible shape.
 type: gloves
 subtype: wearable
+bulk: light
 damagereduction: 2
 statmods:
   strength: 1

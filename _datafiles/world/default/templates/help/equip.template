@@ -12,3 +12,8 @@ Two-handed weapons displace the offhand. Bound or cursed items can block changes
 Character > Gear lets you select a slot, preview Current → After, and equip
 an exact cargo item. Pack appears alongside weapon and armor slots.
 Gear changes are refused in battle. See <ansi fg="command">help equipment</ansi>.
+
+A class refuses gear it isn't taught: only warriors carry any shield,
+rangers only bucklers, and clerics fight with staffs, rods and maces
+(<ansi fg="command">help shields</ansi>). Armor heavier than your class's training goes on with a
+warning, and costs you turns, dodge, Attack and Evasion (<ansi fg="command">help armor</ansi>).

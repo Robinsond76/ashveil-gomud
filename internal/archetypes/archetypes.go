@@ -57,6 +57,17 @@ type Archetype struct {
 	// strength, speed, smarts, vitality, mysticism, perception. Empty
 	// deals them evenly.
 	Growth map[string]int
+	// Phase 35a2: Attack and Evasion gained a level (zero uses the combat
+	// defaults), the head start in health, the heaviest armor bulk worn
+	// without penalty (empty: heavy), the shield sizes it may carry (empty:
+	// any; "none": no shield) and the weapon classes it may wield (empty:
+	// any).
+	AttackRate    float64
+	EvasionRate   float64
+	HPStart       int
+	ArmorTraining string
+	ShieldSizes   []string
+	WeaponClasses []string
 }
 
 // GrowthStatNames are the stats a Growth weight may name.
@@ -152,6 +163,9 @@ func (a *Archetype) Validate() error {
 		growth[stat] += weight
 	}
 	a.Growth = growth
+	if err := a.validateCombat(); err != nil {
+		return err
+	}
 	if len(a.CompanionLevels) != SkillLevels {
 		return fmt.Errorf("%w: %q needs %d companion levels", ErrInvalidArchetype, a.ID, SkillLevels)
 	}

@@ -4,6 +4,7 @@ namesimple: shoes
 description: Hand cobbled shoes made for traversing a forest.
 type: feet
 subtype: wearable
+bulk: light
 damagereduction: 2
 statmods:
   speed: 3

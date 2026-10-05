@@ -62,7 +62,9 @@ func AwardCompanyXP(leaderUserID int, leader *characters.Character, amount int, 
 
 // One report spans all gained levels and the final derived companion training.
 func companionLevelLine(before, after characters.Character) string {
-	changes := []string{fmt.Sprintf("Health %d -> %d", before.HealthMax.Value, after.HealthMax.Value), fmt.Sprintf("Mana %d -> %d", before.ManaMax.Value, after.ManaMax.Value)}
+	changes := []string{fmt.Sprintf("Health %d -> %d", before.HealthMax.Value, after.HealthMax.Value), fmt.Sprintf("Mana %d -> %d", before.ManaMax.Value, after.ManaMax.Value),
+		// Phase 35a2: what the level made it better at.
+		fmt.Sprintf("Attack %d -> %d", before.AttackSkill(), after.AttackSkill()), fmt.Sprintf("Evasion %d -> %d", before.Evasion(), after.Evasion())}
 	old := []int{before.Stats.Strength.ValueAdj, before.Stats.Speed.ValueAdj, before.Stats.Smarts.ValueAdj, before.Stats.Vitality.ValueAdj, before.Stats.Mysticism.ValueAdj, before.Stats.Perception.ValueAdj}
 	now := []int{after.Stats.Strength.ValueAdj, after.Stats.Speed.ValueAdj, after.Stats.Smarts.ValueAdj, after.Stats.Vitality.ValueAdj, after.Stats.Mysticism.ValueAdj, after.Stats.Perception.ValueAdj}
 	for i, name := range []string{"Strength", "Speed", "Smarts", "Vitality", "Mysticism", "Perception"} {

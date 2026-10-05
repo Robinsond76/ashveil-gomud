@@ -22,9 +22,21 @@
 # speed, smarts, vitality, mysticism, perception); its training is always
 # its level's points dealt by these weights, plus its own growth focus.
 # (Lists, not maps: module config maps are flattened by the loader.)
+# Phase 35a2 (skill over hit points): HPPerLevel is the health a level
+# through HPFullLevels (a quarter of it after), from HPBase plus HPStart,
+# a head start. AttackRate and EvasionRate are the Attack and Evasion
+# gained a level. ArmorTraining is the heaviest armor bulk worn without
+# penalty (light, medium, heavy). ShieldSizes are the shields it may carry
+# (buckler, shield, tower; none for no shield; omitted for any).
+# WeaponClasses are the weapon classes it may wield (omitted for any).
 Archetypes:
   - ArchetypeId: warrior
-    HPPerLevel: 3
+    HPPerLevel: 1.0
+    HPStart: 10
+    AttackRate: 1.0
+    EvasionRate: 1.0
+    ArmorTraining: heavy
+    ShieldSizes: [buckler, shield, tower]
     Name: Warrior
     Description: Frontline fighters who trust steel and grit.
     Skills: [brawling, dual-wield]
@@ -39,7 +51,12 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10002, 20004, 20020, 30004, 30015, 38]
   - ArchetypeId: rogue
-    HPPerLevel: 2
+    HPPerLevel: 0.7
+    HPStart: 4
+    AttackRate: 0.9
+    EvasionRate: 1.1
+    ArmorTraining: light
+    ShieldSizes: [none]
     Name: Rogue
     Description: Quiet hands that find traps and open locks.
     Skills: [skulduggery]
@@ -54,7 +71,12 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10004, 8, 20029, 20003, 23, 30004, 30015, 38]
   - ArchetypeId: wizard
-    HPPerLevel: 1.5
+    HPPerLevel: 0.5
+    HPStart: 0
+    AttackRate: 0.7
+    EvasionRate: 0.75
+    ArmorTraining: light
+    ShieldSizes: [none]
     Name: Wizard
     Description: Scholars of the arcane who light the dark and bend illusion.
     Skills: [cast, enchant]
@@ -74,9 +96,15 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 38]
   - ArchetypeId: cleric
-    HPPerLevel: 2.5
+    HPPerLevel: 0.6
+    HPStart: 2
+    AttackRate: 0.7
+    EvasionRate: 0.75
+    ArmorTraining: light
+    ShieldSizes: [none]
+    WeaponClasses: [staff, rod, mace]
     Name: Cleric
-    Description: Healers and protectors sworn to keep the company standing.
+    Description: Healers and protectors sworn to keep the company standing, with staff, rod or mace.
     Skills: [cast, protection]
     Schools: [restoration]
     GrantSkills:
@@ -94,9 +122,15 @@ Archetypes:
       - { Stat: smarts, Weight: 2 }
       - { Stat: strength, Weight: 2 }
     CompanionLevels: [1, 10, 20, 30]
-    Kit: [10015, 20004, 20008, 30004, 30015, 30001, 30001, 38]
+    # Phase 35a2: an acolyte's mace and a holy symbol (+5% healing).
+    Kit: [10023, 20046, 20008, 30004, 30015, 30001, 30001, 38]
   - ArchetypeId: ranger
-    HPPerLevel: 2.5
+    HPPerLevel: 0.8
+    HPStart: 6
+    AttackRate: 1.0
+    EvasionRate: 0.9
+    ArmorTraining: medium
+    ShieldSizes: [buckler]
     Name: Ranger
     Description: Trackers and pathfinders at home in the wild.
     Skills: [track]

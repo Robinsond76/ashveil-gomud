@@ -9,10 +9,13 @@ you hit and the more you can carry.
   with an extra bonus when you are stronger than your opponent: up to
   +{{ config "GamePlay.Combat.DamageEdgeMax" }} at a {{ config "GamePlay.Combat.StatEdgeSpan" }}-point lead, 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of that per point (<ansi fg="command">help stat-edge</ansi>). The combined
   bonus rounds down and stops at +{{ config "GamePlay.Combat.DamageBonusMax" }} damage, before critical hits and armor.
-  Your Strength helps even against an equally strong opponent.
+  Your Strength helps even against an equally strong opponent, but the
+  weapon's own dice matter most: a greatsword hits far harder than a dagger.
 * Increases the size of your unarmed damage dice when fighting without a weapon.
 * With a shield, raises your chance to block a blow, and to slam a blocked
-  melee blow back with a shield bash (<ansi fg="command">help defense</ansi>).
+  melee blow back with a shield bash (<ansi fg="command">help shields</ansi>).
+* Strength doesn't offset armor bulk: plate slows the strong too
+  (<ansi fg="command">help armor</ansi>).
 
 <ansi fg="yellow">Carrying</ansi>
 

@@ -616,6 +616,11 @@ func (m *ArchetypeModule) chooseResult(user *users.UserRecord, name string, conf
 	m.mu.Unlock()
 	applyGrants(user, a)
 	text := fmt.Sprintf("You are now a %s.", a.Name)
+	// Phase 35a2: a shield or weapon the new class can't use is put away
+	// before the kit fills the empty hands.
+	if note := users.SettleClassGear(user, m.saveUser); note != "" {
+		text += "\n" + note
+	}
 	if kit := m.grantKit(user); kit != "" {
 		text += "\n" + kit
 	}
@@ -716,6 +721,10 @@ func (m *ArchetypeModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	if chosen && known {
 		user := users.GetByUserId(evt.UserId)
 		applyGrants(user, a)
+		// Phase 35a2: existing characters are fixed once, on load.
+		if note := users.SettleClassGear(user, m.saveUser); note != "" {
+			user.SendText(note)
+		}
 		// Recovery: a kit owed but lost before any user save is granted
 		// now, exactly once.
 		if text := m.grantKit(user); text != "" {
@@ -829,6 +838,12 @@ func parseArchetypes(raw any) []archetypes.Archetype {
 			CompanionLevels: intList(fields["companionlevels"]),
 			Kit:             intList(fields["kit"]),
 			GrantSkills:     map[string]int{},
+			AttackRate:      configFloat(fields["attackrate"]),
+			EvasionRate:     configFloat(fields["evasionrate"]),
+			HPStart:         configInt(fields["hpstart"]),
+			ArmorTraining:   configString(fields["armortraining"]),
+			ShieldSizes:     stringList(fields["shieldsizes"]),
+			WeaponClasses:   stringList(fields["weaponclasses"]),
 		}
 		if spells, ok := fields["companionspells"].([]any); ok {
 			for _, sp := range spells {
@@ -928,6 +943,14 @@ func configInt(raw any) int {
 	return 0
 }
 
+func configFloat(raw any) float64 {
+	if raw == nil {
+		return 0
+	}
+	f, _ := strconv.ParseFloat(strings.TrimSpace(fmt.Sprint(raw)), 64)
+	return f
+}
+
 func configString(raw any) string {
 	value, _ := raw.(string)
 	return strings.TrimSpace(value)
@@ -948,4 +971,15 @@ func (m *ArchetypeModule) HealthArchetypes() map[string]float64 {
 		out[a.ID] = a.HPPerLevel
 	}
 	return out
+}
+
+// CombatProfile is an archetype's Phase 35a2 fighting profile.
+func (m *ArchetypeModule) CombatProfile(id string) (archetypes.Profile, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	a, ok := m.table.Get(id)
+	if !ok {
+		return archetypes.Profile{}, false
+	}
+	return a.Profile(), true
 }

@@ -1,0 +1,11 @@
+itemid: 10023
+name: acolyte's mace
+namesimple: mace
+description: A short iron mace with a flanged head, the plain weapon a temple gives its acolytes. It is meant for warding off, not for war.
+type: weapon
+hands: 1
+subtype: bludgeoning
+weaponclass: mace
+damage:
+  diceroll: 1d6
+weight: 1400

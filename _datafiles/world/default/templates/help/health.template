@@ -29,8 +29,20 @@ At <ansi fg="red">0 HP</ansi>, you will drop to the floor and slowly bleed out.
 
 At <ansi fg="red">-10 HP</ansi>, you will die. When you die, all gear you posess drops to the ground.
 
-The shipped class rate applies through level 20, then grows at 60% of that rate.
-Maximum health comes from a base, your archetype's gains through level
-{{ config "GamePlay.Progression.HPFullLevels" }}, then a smaller gain per later level in proportion to your archetype, plus
-{{ config "GamePlay.Progression.HPPerVitality" }} HP per adjusted Vitality and health bonuses. See <ansi fg="command">help progression</ansi>.
+Health grows only a little with level: a level 60 fighter has about half
+again the health of a level 1 one. Skill, not health, is what levels buy
+(<ansi fg="command">help evasion</ansi>).
+
+Maximum health is a base of {{ config "GamePlay.Progression.HPBase" }}, your class's head start, your class's gain
+for each level through {{ config "GamePlay.Progression.HPFullLevels" }}, a quarter of that gain for each later level,
+{{ config "GamePlay.Progression.HPPerVitality" }} HP per adjusted Vitality, and health bonuses:
+
+  <ansi fg="yellow">Class</ansi>       <ansi fg="yellow">head start</ansi>   <ansi fg="yellow">a level to 20</ansi>   <ansi fg="yellow">level 1</ansi>   <ansi fg="yellow">level 60</ansi>
+  Warrior     10           1               59        88
+  Ranger      6            0.8             54        78
+  Rogue       4            0.7             52        73
+  Cleric      2            0.6             50        68
+  Wizard      0            0.5             48        63
+
+Those are before Vitality. Fractions accumulate. See <ansi fg="command">help progression</ansi>.
 

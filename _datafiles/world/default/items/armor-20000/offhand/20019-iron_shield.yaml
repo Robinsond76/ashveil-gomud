@@ -4,7 +4,9 @@ namesimple: shield
 description: A heavy, decorative iron shield.
 type: offhand
 subtype: wearable
+bulk: medium
 damagereduction: 10
+shieldsize: shield
 statmods:
   speed: -15
 cursed: true

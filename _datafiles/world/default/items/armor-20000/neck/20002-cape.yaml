@@ -3,6 +3,7 @@ name: cape
 description: A plain cape that protects (poorly) from the elements.
 type: neck
 subtype: wearable
+bulk: light
 damagereduction: 1
 warmth: 4
 weight: 1000

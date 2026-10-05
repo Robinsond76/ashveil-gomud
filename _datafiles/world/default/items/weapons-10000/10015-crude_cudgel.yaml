@@ -5,6 +5,7 @@ description: A crudely fashioned cudgel, with large nails haphazardly hammered i
 type: weapon
 hands: 1
 subtype: bludgeoning
+weaponclass: club
 damage:
   diceroll: 2d2
 weight: 1000

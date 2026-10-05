@@ -8,9 +8,11 @@ A perceptive fighter strikes with precision and is difficult to catch off guard.
 * Increases your critical hit damage. A critical blow does {{ config "GamePlay.Combat.CritMultMin" }}x damage, and
   each point of Perception over your target's adds 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to
   {{ config "GamePlay.Combat.CritMultMax" }}x (<ansi fg="command">help stat-edge</ansi>).
-* Increases your chance to dodge incoming attacks: {{ config "GamePlay.Combat.DodgeChanceMin" }}%, plus 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of
-  the way to {{ config "GamePlay.Combat.DodgeChanceMax" }}% for each point of Perception over your attacker's. A shield-bearer blocks instead
-  (<ansi fg="command">help defense</ansi>), and a burdened fighter dodges less (<ansi fg="command">help burden</ansi>).
+* Moves your chance to dodge incoming attacks: {{ config "GamePlay.Combat.DodgeChanceEven" }}% at an even match, and
+  each point of Perception over your attacker's adds 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to {{ config "GamePlay.Combat.DodgeChanceMax" }}%
+  (each point under takes it toward {{ config "GamePlay.Combat.DodgeChanceMin" }}%), on top of your Evasion against their
+  Attack (<ansi fg="command">help evasion</ansi>). A shield-bearer blocks instead (<ansi fg="command">help defense</ansi>), and
+  a burdened or heavily armored fighter dodges less (<ansi fg="command">help burden</ansi>, <ansi fg="command">help armor</ansi>).
 * Adds a small flat damage bonus to unarmed attacks.
 
 <ansi fg="yellow">Economy</ansi>

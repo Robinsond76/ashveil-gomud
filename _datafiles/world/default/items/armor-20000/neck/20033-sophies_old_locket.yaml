@@ -4,6 +4,7 @@ namesimple: locket
 description: An old locket
 type: neck
 subtype: wearable
+bulk: light
 damagereduction: 3
 statmods:
   mysticism: 4

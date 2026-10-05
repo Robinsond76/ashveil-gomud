@@ -5,6 +5,7 @@ namesimple: cape
 description: A patchwork cape made up of many rat hides.
 type: neck
 subtype: wearable
+bulk: light
 damagereduction: 5
 wornbuffids:
   - 3 # Cold Tolerant

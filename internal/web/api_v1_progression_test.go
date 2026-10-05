@@ -40,7 +40,7 @@ func TestProgressionPreviewSmoothStatsAndPoints(t *testing.T) {
 		for i, level := range got.Data.Levels {
 			assert.Equal(t, cfg.RacialForLevel(level, 3), got.Data.StatGains["base3"][i])
 			assert.Equal(t, cfg.StatPointsAt(level), got.Data.StatPoints[i], "downsampled charts use cumulative rule")
-			assert.Equal(t, cfg.HealthAtLevel(level, cfg.CompressStat(cfg.RacialForLevel(level, 3)), float64(cfg.DefaultHPPerLevel)), got.Data.HP["base3"][i])
+			assert.Equal(t, cfg.HealthAtLevel(level, cfg.CompressStat(cfg.RacialForLevel(level, 3)), float64(cfg.DefaultHPPerLevel), 0), got.Data.HP["base3"][i])
 		}
 	}
 }

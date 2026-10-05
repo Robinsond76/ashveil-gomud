@@ -5,6 +5,7 @@ description: A massive wooden trunk.
 type: weapon
 hands: 2
 subtype: bludgeoning
+weaponclass: club
 damagereduction: 3
 statmods:
   strength: 5

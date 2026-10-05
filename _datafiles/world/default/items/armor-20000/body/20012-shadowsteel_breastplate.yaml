@@ -4,6 +4,7 @@ namesimple: breastplate
 description: The Shadowsteel breastplate is a marvel of craftsmanship and arcane engineering, meticulously forged from a rare and enigmatic alloy known only to a select few master smiths.
 type: body
 subtype: wearable
+bulk: heavy
 damagereduction: 10
 statmods:
   speed: 1

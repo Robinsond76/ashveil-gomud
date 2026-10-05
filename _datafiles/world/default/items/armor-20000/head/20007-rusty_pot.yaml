@@ -4,6 +4,7 @@ namesimple: pot
 description: It just barely works as a helmet.
 type: head
 subtype: wearable
+bulk: light
 damagereduction: 1
 warmth: 1
 weight: 1500

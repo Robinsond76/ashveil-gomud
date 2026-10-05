@@ -1,6 +1,7 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">tempo</ansi>
 
-Speed and your personal burden set how often you act in combat. Everyone
+Speed, your personal burden and your armor's bulk set how often you act in
+combat. Everyone
 gets one opening turn. After that a slow fighter sometimes skips a round;
 a fast fighter sometimes gets two turns. Formation and your target's Speed
 do not set your tempo. Cargo and horses never make your worn gear lighter
@@ -15,7 +16,9 @@ forward. You cannot bank whole turns for a burst. The meter ends with the
 fight and starts fresh in the next one, including after a server restart.
 
 At Speed {{ config "GamePlay.Combat.TempoSpeedRef" }}, without burden, your tempo is one. Each {{ config "GamePlay.Combat.TempoSpeedSpan" }} extra Speed
-adds one before the cap. Full personal burden reduces this rate by 35%.
+adds one before the cap. Full personal burden reduces this rate by 35%. Medium armor then takes
+{{ configpct "GamePlay.Combat.BulkTempoMedium" }}% of it and heavy armor {{ configpct "GamePlay.Combat.BulkTempoHeavy" }}%, twice that in armor heavier than your
+training (<ansi fg="command">help armor</ansi>).
 An attacks bonus adds 0.1 tempo per point before burden and the cap.
 
 <ansi fg="yellow-bold">What a turn contains</ansi>
@@ -35,7 +38,7 @@ lost; the meter retains only fractional progress.
 Guards and shield counters are reactions and spend no meter. Their existing
 limits still apply. Tempo never advances the world's clock.
 
-See also: <ansi fg="command">help speed</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help speed</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help combat</ansi>.
 
 If your foe falls before your earned physical turn, you (and each companion)
 turn to another reachable member of that enemy group and use the turn; enemies

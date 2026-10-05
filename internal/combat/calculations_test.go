@@ -69,7 +69,7 @@ func edgeConfig(t *testing.T) {
 	cfg.Combat.ToHitMin, cfg.Combat.ToHitEven, cfg.Combat.ToHitMax = 25, 50, 100
 	cfg.Combat.CritChanceMin, cfg.Combat.CritChanceEven, cfg.Combat.CritChanceMax = 5, 15, 30
 	cfg.Combat.CritMultMin, cfg.Combat.CritMultMax = 1.5, 3.0
-	cfg.Combat.DodgeChanceMin, cfg.Combat.DodgeChanceMax = 5, 30
+	cfg.Combat.DodgeChanceMin, cfg.Combat.DodgeChanceEven, cfg.Combat.DodgeChanceMax = 5, 12, 30
 	cfg.Combat.DamageBonusMin, cfg.Combat.DamageBonusMax, cfg.Combat.DamagePerStrength = 0, 10, 0
 	cfg.Combat.DamageEdgeMax = 10
 	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
@@ -102,14 +102,14 @@ func TestDamageBonus(t *testing.T) {
 	}
 }
 
-// TestHitChance: ToHitEven at equal Speed, toward 100 when faster and 25
+// TestHitChance: ToHitEven when even, toward 100 when faster and 25
 // when slower; one point is a tenth of the way.
 func TestHitChance(t *testing.T) {
 	edgeConfig(t)
 	for _, tt := range []struct{ atk, def, want int }{
 		{0, 0, 50}, {50, 50, 50}, {3, 2, 55}, {2, 3, 47}, {7, 2, 75}, {12, 2, 100}, {2, 12, 25}, {100, 0, 100}, {0, 100, 25},
 	} {
-		assert.Equal(t, tt.want, hitChance(tt.atk, tt.def), "%d against %d", tt.atk, tt.def)
+		assert.Equal(t, tt.want, hitChanceForEdge(StatEdge(tt.atk, tt.def)), "%d against %d", tt.atk, tt.def)
 	}
 }
 
@@ -173,13 +173,14 @@ func TestCritDamageBonus(t *testing.T) {
 	}
 }
 
-// TestDodgeChance: the minimum, grown by the defender's Perception advantage.
+// TestDodgeChance: two-sided since 35a2: DodgeChanceEven when even, moved
+// toward a bound by the defender's edge.
 func TestDodgeChance(t *testing.T) {
 	edgeConfig(t)
 	for _, tt := range []struct{ def, atk, want int }{
-		{0, 0, 5}, {10, 0, 30}, {0, 10, 5}, {5, 0, 17}, {3, 2, 7}, {100, 0, 30},
+		{0, 0, 12}, {10, 0, 30}, {0, 10, 5}, {5, 0, 21}, {3, 2, 13}, {2, 3, 11}, {100, 0, 30},
 	} {
-		assert.Equal(t, tt.want, dodgeChance(tt.def, tt.atk), "%d against %d", tt.def, tt.atk)
+		assert.Equal(t, tt.want, dodgeChanceForEdge(StatEdge(tt.def, tt.atk)), "%d against %d", tt.def, tt.atk)
 	}
 }
 

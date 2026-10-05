@@ -2,7 +2,7 @@
 
 The ~experience~ command gives you your current level, current experience points, what you need to reach for your next level, and how many unspent training points you have. If death has cost you a level (or progress toward one) recently, it also shows your most recent loss. Below your own line it lists your company: each companion's level and progress, or just the level for one who is away (a fallen one is marked as such) (`help company` explains how companions earn experience, `help growth` how their stats grow with each level, and `help contracts` which quests pay them too).
 
-It also names the next milestone, with planned choices marked (coming). See ~help progression~ for smooth automatic stats and the next milestone, health by archetype, and the experience curve past level 60.
+It also names the next milestone, with planned choices marked (coming). Each level-up report shows what the level gave, including your Attack and Evasion (`help evasion`). See ~help progression~ for smooth automatic stats and the next milestone, health by archetype, and the experience curve past level 60.
 
 ## Usage:
 

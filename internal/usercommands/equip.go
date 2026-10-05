@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -95,6 +96,10 @@ func Equip(rest string, user *users.UserRecord, room *rooms.Room, flags events.E
 				user.SendText(
 					fmt.Sprintf(`You wear your <ansi fg="item">%s</ansi>.%s`, matchItem.DisplayName(), statDiff),
 				)
+				// Phase 35a2: untrained armor is allowed, with a warning.
+				if user.Character.WouldBeUntrained(matchItem) {
+					user.SendText(UntrainedArmorWarning(user.Character.ArmorTraining(), iSpec.Bulk))
+				}
 				room.SendText(
 					fmt.Sprintf(`<ansi fg="username">%s</ansi> puts on their <ansi fg="item">%s</ansi>.`, user.Character.Name, matchItem.DisplayName()),
 					user.UserId,
@@ -190,4 +195,12 @@ func formatStatChanges(before, after statSnapshot) string {
 		return ""
 	}
 	return " ( " + strings.Join(parts, ", ") + " )"
+}
+
+// UntrainedArmorWarning is what wearing armor past a class's training
+// costs (Phase 35a2).
+func UntrainedArmorWarning(training, bulk string) string {
+	cfg := configs.GetCombatConfig()
+	return fmt.Sprintf(`<ansi fg="yellow">You are trained for %s armor, not %s.</ansi> Until you take it off you lose %d Attack and %d Evasion, twice the usual turns and dodge for its bulk, and %d round on every chant. See <ansi fg="command">help armor</ansi>.`,
+		training, bulk, cfg.UntrainedSkillLoss, cfg.UntrainedSkillLoss, cfg.UntrainedChantRounds)
 }

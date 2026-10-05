@@ -73,8 +73,9 @@ fight: a word for the risk, never numbers (<ansi fg="command">help assessment</a
 
 <ansi fg="yellow-bold">Hitting (</ansi><ansi fg="command">help attack</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help defense</ansi><ansi fg="yellow-bold">)</ansi>
 
-Your chance to hit comes from your speed against your target's. Several
-things add to it or take it away:
+Your chance to hit comes from your Attack against your target's Evasion,
+the skill each level brings (<ansi fg="command">help evasion</ansi>), and your Speed against theirs.
+Several things add to it or take it away:
 
 - <ansi fg="yellow">Chemistry</ansi> (<ansi fg="command">help chemistry</ansi>): a company that has served together
   a long time gets up to +6% to hit.
@@ -136,7 +137,10 @@ and your company's health.
   <ansi fg="command">company tactics</ansi>   the company's focus and healing threshold
   <ansi fg="command">help abilities</ansi>    tackles, opening strikes, and aimed shots
   <ansi fg="command">help guardian</ansi>     guardians and their guards
+  <ansi fg="command">help evasion</ansi>      Attack and Evasion: the skill each level brings
   <ansi fg="command">help defense</ansi>      blocks, parries, and dodges
+  <ansi fg="command">help shields</ansi>      shield sizes, and who may carry them
+  <ansi fg="command">help armor</ansi>        armor, its bulk, and each class's training
   <ansi fg="command">help burden</ansi>       how your own load cuts your dodge
   <ansi fg="command">help interrupts</ansi>   broken chants, wind-ups, and shield counters
   <ansi fg="command">retreat [exit]</ansi>    prepare one round, then withdraw the company (or <ansi fg="command">flee</ansi>)
@@ -181,11 +185,11 @@ Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="c
 
 Ambushes, clusters, leaping enemies, narrow ground, fatigue, and cold affect battles: help battlefield and help ambush.
 
-Speed and personal burden set your turns each round: <ansi fg="command">help tempo</ansi>.
+Speed, personal burden and armor bulk set your turns each round: <ansi fg="command">help tempo</ansi>.
 
 Natural health and mana recovery pauses throughout a battle, including between blows.
 Healers still heal by spells; ordinary buffs keep their real-time durations.
 
 Strength adds bounded damage even against an equal opponent (<ansi fg="command">help strength</ansi>).
-Maximum health grows slowly after the early class gains (<ansi fg="command">help progression</ansi>).
+Maximum health grows only a little with level; skill decides fights (<ansi fg="command">help progression</ansi>).
 Each point of a stat over your opponent's counts the same at every level (<ansi fg="command">help stat-edge</ansi>).

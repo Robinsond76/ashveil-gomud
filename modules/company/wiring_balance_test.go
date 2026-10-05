@@ -225,12 +225,17 @@ func TestBalanceStrengthDamageThroughDoCombat(t *testing.T) {
 	}
 }
 
-// Compare actual configured maxima at the two envelope levels, keeping the
-// same stat investment for the pre-tuning and current formulas.
+// Phase 35a2 acceptance 2 (small HP): every member's configured maximum at
+// level 60 is at most 1.6x its level-1 maximum, with the same stat
+// investment the harness gives each level. (30g6's 2-3x L10-to-L60
+// envelope is retired: a level makes a character better, not thicker.)
 func TestBalanceHPEnvelope(t *testing.T) {
-	type pair struct{ before, after [2]int }
+	// The design measures the envelope before Vitality (its "HP before
+	// Vitality" table): stat growth is a player's choice, so the class
+	// curve is what must stay flat. Live HP is logged beside it.
+	type pair struct{ before, after, live [2]int }
 	values := map[string]pair{}
-	for at, level := range []int{10, 60} {
+	for at, level := range []int{1, 60} {
 		t.Run(fmt.Sprintf("L%d", level), func(t *testing.T) {
 			f := newBalanceFight(t, level, companySpread, enemySpread)
 			// 30g4's shipped formula: 5 base, 6/5/4/3 per class level to 20,
@@ -246,7 +251,8 @@ func TestBalanceHPEnvelope(t *testing.T) {
 				}
 				v := values[c.Name]
 				v.before[at] = oldHP(level, c.Stats.Vitality.ValueAdj, rate) + c.StatMod("healthmax")
-				v.after[at] = c.HealthMax.Value
+				v.after[at] = configs.GetProgressionConfig().HealthAtLevel(level, 0, c.HealthGainPerLevel(), c.HPStart())
+				v.live[at] = c.HealthMax.Value
 				values[c.Name] = v
 			}
 		})
@@ -254,14 +260,15 @@ func TestBalanceHPEnvelope(t *testing.T) {
 	for name, v := range values {
 		require.Positive(t, v.after[0], name)
 		ratio := float64(v.after[1]) / float64(v.after[0])
-		assert.GreaterOrEqual(t, ratio, 2.0, name)
-		assert.LessOrEqual(t, ratio, 3.0, name)
-		t.Logf("%s: old HP L10/L60 %d/%d; tuned %d/%d (%.2fx)", name, v.before[0], v.before[1], v.after[0], v.after[1], ratio)
+		assert.GreaterOrEqual(t, ratio, 1.0, name)
+		assert.LessOrEqual(t, ratio, 1.6, name)
+		t.Logf("%s: 30g4 HP L1/L60 %d/%d; 35a2 before Vitality %d/%d (%.2fx), live %d/%d", name, v.before[0], v.before[1], v.after[0], v.after[1], ratio, v.live[0], v.live[1])
 	}
 }
 
-// 30g6 amendment E: class HP still differs at level 60, and enemies with
-// no class take the middle archetypes' rate.
+// 30g6 amendment E, as 35a2 reshapes it: class HP still differs at level
+// 60 (warrior, ranger, rogue, cleric, wizard, the cleric a caster now), and
+// enemies with no class take the ranger's middle rate.
 func TestBalanceClassHPShape(t *testing.T) {
 	f := newBalanceFight(t, 60, companySpread, enemySpread)
 	cfg := configs.GetProgressionConfig()
@@ -271,10 +278,14 @@ func TestBalanceClassHPShape(t *testing.T) {
 	require.True(t, ok)
 	cleric, _ := archetypes.HealthPerLevel("cleric")
 	ranger, _ := archetypes.HealthPerLevel("ranger")
-	require.Equal(t, cleric, ranger, "cleric and ranger are the middle archetypes")
-	assert.Equal(t, cleric, float64(cfg.DefaultHPPerLevel), "unknown archetypes take the middle rate")
-	vitality := f.aria.Character.Stats.Vitality.ValueAdj
-	strong, weak := cfg.HealthAtLevel(60, vitality, warrior), cfg.HealthAtLevel(60, vitality, wizard)
+	rogue, _ := archetypes.HealthPerLevel("rogue")
+	assert.True(t, warrior > ranger && ranger > rogue && rogue > cleric && cleric > wizard, "warrior %g, ranger %g, rogue %g, cleric %g, wizard %g", warrior, ranger, rogue, cleric, wizard)
+	assert.Equal(t, ranger, float64(cfg.DefaultHPPerLevel), "unknown archetypes take the middle rate")
+	require.NotNil(t, f)
+	vitality := 0 // the design compares classes before Vitality
+	warriorProfile, _ := archetypes.CombatProfile("warrior")
+	wizardProfile, _ := archetypes.CombatProfile("wizard")
+	strong, weak := cfg.HealthAtLevel(60, vitality, warrior, warriorProfile.HPStart), cfg.HealthAtLevel(60, vitality, wizard, wizardProfile.HPStart)
 	assert.GreaterOrEqual(t, float64(strong), 1.25*float64(weak), "warrior %d against wizard %d at level 60", strong, weak)
 	assert.GreaterOrEqual(t, int(cfg.HPFullLevels), 10, "class rates carry the early levels")
 }

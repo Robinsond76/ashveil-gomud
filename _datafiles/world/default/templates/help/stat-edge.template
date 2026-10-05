@@ -8,16 +8,23 @@ Each opposed chance has a value at equal stats. Every point you are ahead
 moves it 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to its best value; every point behind, 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to its worst. A lead of {{ config "GamePlay.Combat.StatEdgeSpan" }} points reaches the bound.
 
   <ansi fg="yellow">Hit</ansi>          Speed against Speed: {{ config "GamePlay.Combat.ToHitEven" }}% even, {{ config "GamePlay.Combat.ToHitMin" }}% to {{ config "GamePlay.Combat.ToHitMax" }}%.
+  <ansi fg="yellow">Dodge</ansi>        Perception against Perception: {{ config "GamePlay.Combat.DodgeChanceEven" }}% even, {{ config "GamePlay.Combat.DodgeChanceMin" }}% to {{ config "GamePlay.Combat.DodgeChanceMax" }}%.
+  <ansi fg="yellow">Parry</ansi>        Speed against Speed: {{ config "GamePlay.Combat.ParryChanceEven" }}% even, {{ config "GamePlay.Combat.ParryChanceMin" }}% to {{ config "GamePlay.Combat.ParryChanceMax" }}%.
+  <ansi fg="yellow">Block</ansi>        Strength against Strength: {{ config "GamePlay.Combat.BlockChanceEven" }}% + shield even, {{ config "GamePlay.Combat.BlockChanceMin" }}% to {{ config "GamePlay.Combat.BlockChanceMax" }}%.
   <ansi fg="yellow">Critical</ansi>     Smarts against Smarts: {{ config "GamePlay.Combat.CritChanceEven" }}% even, {{ config "GamePlay.Combat.CritChanceMin" }}% to {{ config "GamePlay.Combat.CritChanceMax" }}%.
   <ansi fg="yellow">Tackle</ansi>       Speed against Perception: 40% even, 20% to 80%.
 
+Your <ansi fg="yellow">skill edge</ansi>, Attack against Evasion, is added to the stat edge of
+every chance here except critical hits, so a fighter of higher level is
+ahead even at equal stats (<ansi fg="command">help evasion</ansi>). The two together never go
+past the bound.
+
 Some chances only grow when you are ahead, starting from their minimum:
-dodge and critical damage (Perception), parry (Speed), shield bash and the
-Strength part of your damage bonus (Strength). A block moves either way
-with Strength.
+critical damage (Perception), shield bash (Strength and skill) and the
+Strength part of your damage bonus.
 
 For example, with Speed 4 against a foe's 3, you hit 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way
 from {{ config "GamePlay.Combat.ToHitEven" }}% toward {{ config "GamePlay.Combat.ToHitMax" }}%.
 
 See also: <ansi fg="command">help speed</ansi>, <ansi fg="command">help smarts</ansi>, <ansi fg="command">help perception</ansi>, <ansi fg="command">help strength</ansi>,
-<ansi fg="command">help defense</ansi>, <ansi fg="command">help combat</ansi>.
+<ansi fg="command">help evasion</ansi>, <ansi fg="command">help defense</ansi>, <ansi fg="command">help combat</ansi>.

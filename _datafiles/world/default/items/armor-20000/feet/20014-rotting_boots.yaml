@@ -4,6 +4,7 @@ namesimple: boots
 description: The boots of a king. A dead one, anyways.
 type: feet
 subtype: wearable
+bulk: light
 damagereduction: 2
 statmods:
   speed: 1

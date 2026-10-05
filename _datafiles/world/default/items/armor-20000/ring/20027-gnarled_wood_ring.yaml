@@ -4,6 +4,7 @@ namesimple: ring
 description: A hand crafted ring from an unidenfiable wood.
 type: ring
 subtype: wearable
+bulk: light
 damagereduction: 2
 statmods:
   speed: 5

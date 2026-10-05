@@ -4,5 +4,6 @@ namesimple: ring
 description: A cheap ring.
 type: ring
 subtype: wearable
+bulk: light
 damagereduction: 1
 weight: 10

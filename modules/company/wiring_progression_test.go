@@ -39,7 +39,7 @@ func TestProgressionCompanionSpawnAndSavedVitals(t *testing.T) {
 	for id, rate := range map[int]float64{1: 6, 2: 5, 3: 6, 4: 5} {
 		m := b.companion(id)
 		assert.Equal(t, rate, m.Character.HealthGainPerLevel())
-		assert.Equal(t, cfg.HealthAtLevel(m.Character.Level, m.Character.Stats.Vitality.ValueAdj, rate), m.Character.HealthMax.Value)
+		assert.Equal(t, cfg.HealthAtLevel(m.Character.Level, m.Character.Stats.Vitality.ValueAdj, rate, 0), m.Character.HealthMax.Value)
 		m.Character.Level = 20
 		require.True(t, module.RetrainCompanion(m.InstanceId))
 		hp := m.Character.HealthMax.Value
@@ -50,7 +50,7 @@ func TestProgressionCompanionSpawnAndSavedVitals(t *testing.T) {
 		// class-scaled gain applies (30g6 amendment E).
 		require.Greater(t, 21, int(cfg.HPFullLevels))
 		vit := m.Character.Stats.Vitality.ValueAdj
-		gain := cfg.HealthAtLevel(21, vit, rate) - cfg.HealthAtLevel(20, oldVit, rate)
+		gain := cfg.HealthAtLevel(21, vit, rate, 0) - cfg.HealthAtLevel(20, oldVit, rate, 0)
 		assert.Positive(t, gain)
 		assert.Equal(t, hp+gain, m.Character.HealthMax.Value, "post-full gain including smooth Vitality growth")
 		m.Character.Health = 3
@@ -62,7 +62,7 @@ func TestProgressionCompanionSpawnAndSavedVitals(t *testing.T) {
 		assert.Equal(t, 21, m.Character.Level)
 		assert.Equal(t, 3, m.Character.Health)
 		assert.Zero(t, m.Character.Mana)
-		assert.Equal(t, cfg.HealthAtLevel(21, m.Character.Stats.Vitality.ValueAdj, m.Character.HealthGainPerLevel()), m.Character.HealthMax.Value)
+		assert.Equal(t, cfg.HealthAtLevel(21, m.Character.Stats.Vitality.ValueAdj, m.Character.HealthGainPerLevel(), 0), m.Character.HealthMax.Value)
 	}
 	assert.Equal(t, turn, util.GetTurnCount())
 	assert.Equal(t, round, util.GetRoundCount())
@@ -91,7 +91,7 @@ func TestProgressionEnemyHPTemplateRaceAndDefault(t *testing.T) {
 		m := mobs.NewMobByIdNoElite(9101, b.road.RoomId, 10)
 		require.NotNil(t, m)
 		assert.Equal(t, tc.want, m.Character.HealthGainPerLevel())
-		assert.Equal(t, cfg.HealthAtLevel(10, m.Character.Stats.Vitality.ValueAdj, tc.want), m.Character.HealthMax.Value)
+		assert.Equal(t, cfg.HealthAtLevel(10, m.Character.Stats.Vitality.ValueAdj, tc.want, 0), m.Character.HealthMax.Value)
 		assert.Equal(t, m.Character.HealthMax.Value, m.Character.Health)
 		mobs.DestroyInstance(m.InstanceId)
 	}
@@ -118,7 +118,7 @@ func TestProgressionPlayerFileLoadsClassHPAndKeepsTraining(t *testing.T) {
 	assert.Equal(t, 7, loaded.Character.Stats.Speed.Training)
 	assert.Equal(t, 8, loaded.Character.StatPoints)
 	assert.Equal(t, 9, loaded.Character.TrainingPoints)
-	assert.Equal(t, cfg.HealthAtLevel(17, loaded.Character.Stats.Vitality.ValueAdj, 3), loaded.Character.HealthMax.Value)
+	assert.Equal(t, cfg.HealthAtLevel(17, loaded.Character.Stats.Vitality.ValueAdj, 3, 0), loaded.Character.HealthMax.Value)
 	assert.Equal(t, loaded.Character.HealthMax.Value, loaded.Character.Health)
 	c.Health = 2
 	require.NoError(t, users.SaveUser(*b.aria))

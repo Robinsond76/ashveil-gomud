@@ -13,9 +13,9 @@ func TestProgressionStepsAndHP(t *testing.T) {
 		assert.Equal(t, tc.step, p.StatStep(tc.level))
 		assert.Equal(t, tc.next, p.NextStatStep(tc.level))
 	}
-	assert.Equal(t, 135, p.HealthAtLevel(20, 10, 6))
-	assert.Equal(t, 136, p.HealthAtLevel(21, 10, 6))
-	assert.Equal(t, 75, p.HealthAtLevel(20, 10, 3))
+	assert.Equal(t, 135, p.HealthAtLevel(20, 10, 6, 0))
+	assert.Equal(t, 136, p.HealthAtLevel(21, 10, 6, 0))
+	assert.Equal(t, 75, p.HealthAtLevel(20, 10, 3, 0))
 }
 
 func TestProgressionXPIncrementalKnee(t *testing.T) {
@@ -36,7 +36,7 @@ func TestProgressionXPIncrementalKnee(t *testing.T) {
 func TestProgressionDerivedValuesSaturate(t *testing.T) {
 	p := ProgressionConfig{}
 	p.Validate()
-	assert.Equal(t, math.MaxInt, p.HealthAtLevel(math.MaxInt, math.MaxInt, 6))
+	assert.Equal(t, math.MaxInt, p.HealthAtLevel(math.MaxInt, math.MaxInt, 6, 0))
 	p.BaseModExponent = 5
 	assert.Equal(t, math.MaxInt, p.RacialForLevel(math.MaxInt, 10))
 }

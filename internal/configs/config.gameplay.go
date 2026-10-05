@@ -51,10 +51,17 @@ type CombatConfig struct {
 	// opposed chance all the way to a bound; one point moves 1/span of it.
 	StatEdgeSpan ConfigFloat `yaml:"StatEdgeSpan"`
 
+	// Skill edge (Phase 35a2): the attacker's Attack less the defender's
+	// Evasion over SkillEdgeSpan, added to every opposed chance's stat edge
+	// but crits. Characters without a class gain the default ratings a level.
+	SkillEdgeSpan      ConfigFloat `yaml:"SkillEdgeSpan"`
+	DefaultAttackRate  ConfigFloat `yaml:"DefaultAttackRate"`
+	DefaultEvasionRate ConfigFloat `yaml:"DefaultEvasionRate"`
+
 	// Chance to hit (Speed edge drives this)
 	ToHitMin  ConfigInt `yaml:"ToHitMin"`  // Minimum hit chance (percent, 0-100)
 	ToHitMax  ConfigInt `yaml:"ToHitMax"`  // Maximum hit chance (percent, 0-100)
-	ToHitEven ConfigInt `yaml:"ToHitEven"` // Hit chance at equal Speed (percent, within the bounds)
+	ToHitEven ConfigInt `yaml:"ToHitEven"` // Hit chance when even (percent, within the bounds)
 
 	// Legacy extra-attack keys: readable for old overrides, unused since 30g5.
 	ExtraAttacksMin ConfigInt `yaml:"ExtraAttacksMin"` // Minimum extra attacks
@@ -70,16 +77,19 @@ type CombatConfig struct {
 	CritMultMax ConfigFloat `yaml:"CritMultMax"` // Maximum crit damage multiplier
 
 	// Chance to dodge (Perception delta drives this)
-	DodgeChanceMin ConfigInt `yaml:"DodgeChanceMin"` // Minimum dodge chance (percent, 0-100)
-	DodgeChanceMax ConfigInt `yaml:"DodgeChanceMax"` // Maximum dodge chance (percent, 0-100)
+	DodgeChanceMin  ConfigInt `yaml:"DodgeChanceMin"`  // Minimum dodge chance (percent, 0-100)
+	DodgeChanceMax  ConfigInt `yaml:"DodgeChanceMax"`  // Maximum dodge chance (percent, 0-100)
+	DodgeChanceEven ConfigInt `yaml:"DodgeChanceEven"` // Dodge chance when even (percent, within the bounds)
 
 	// Chance to block with a shield (Strength delta + shield armor drives this)
-	BlockChanceMin ConfigInt `yaml:"BlockChanceMin"` // Minimum block chance (percent, 0-100)
-	BlockChanceMax ConfigInt `yaml:"BlockChanceMax"` // Maximum block chance (percent, 0-100)
+	BlockChanceMin  ConfigInt `yaml:"BlockChanceMin"`  // Minimum block chance (percent, 0-100)
+	BlockChanceMax  ConfigInt `yaml:"BlockChanceMax"`  // Maximum block chance (percent, 0-100)
+	BlockChanceEven ConfigInt `yaml:"BlockChanceEven"` // Block chance when even, before the shield's armor (percent)
 
 	// Chance to parry (Speed delta drives this)
-	ParryChanceMin ConfigInt `yaml:"ParryChanceMin"` // Minimum parry chance (percent, 0-100)
-	ParryChanceMax ConfigInt `yaml:"ParryChanceMax"` // Maximum parry chance (percent, 0-100)
+	ParryChanceMin  ConfigInt `yaml:"ParryChanceMin"`  // Minimum parry chance (percent, 0-100)
+	ParryChanceMax  ConfigInt `yaml:"ParryChanceMax"`  // Maximum parry chance (percent, 0-100)
+	ParryChanceEven ConfigInt `yaml:"ParryChanceEven"` // Parry chance when even, before the weapon's modifier (percent)
 
 	// Chance to bash when blocking (Strength delta drives this)
 	BashChanceMin ConfigInt `yaml:"BashChanceMin"` // Minimum bash chance (percent, 0-100)
@@ -91,6 +101,15 @@ type CombatConfig struct {
 	AgilityBaseKg     ConfigFloat `yaml:"AgilityBaseKg"`     // Agility capacity before Strength (kg)
 	AgilityStrengthKg ConfigFloat `yaml:"AgilityStrengthKg"` // Agility capacity per point of Strength (kg)
 	AgilityFreeLoad   ConfigFloat `yaml:"AgilityFreeLoad"`   // Share of capacity carried with no burden (above 0, at most 0.95)
+	// Armor bulk (Phase 35a2): the share of tempo and of dodge lost in the
+	// heaviest piece worn; doubled, with UntrainedSkillLoss Attack and
+	// Evasion and UntrainedChantRounds a chant, when the class isn't trained.
+	BulkTempoMedium      ConfigFloat `yaml:"BulkTempoMedium"`
+	BulkTempoHeavy       ConfigFloat `yaml:"BulkTempoHeavy"`
+	BulkDodgeMedium      ConfigFloat `yaml:"BulkDodgeMedium"`
+	BulkDodgeHeavy       ConfigFloat `yaml:"BulkDodgeHeavy"`
+	UntrainedSkillLoss   ConfigInt   `yaml:"UntrainedSkillLoss"`
+	UntrainedChantRounds ConfigInt   `yaml:"UntrainedChantRounds"`
 	// Action meter (Phase 30g5); no fighter exceeds two turns a round.
 	TempoMin         ConfigFloat `yaml:"TempoMin"`
 	TempoMax         ConfigFloat `yaml:"TempoMax"`
@@ -253,19 +272,30 @@ func (c *CombatConfig) validate() {
 		c.ToHitMax = 100
 	}
 	if c.ToHitMin < 1 {
-		c.ToHitMin = 25
+		c.ToHitMin = 10
 	}
 	if c.ToHitMin > c.ToHitMax {
-		c.ToHitMin = 25
+		c.ToHitMin = 10
 	}
 	if c.ToHitEven == 0 {
-		c.ToHitEven = 50
+		c.ToHitEven = 60
 	}
 	c.ToHitEven = max(c.ToHitMin, min(c.ToHitMax, c.ToHitEven))
 
 	// Stat edge
 	if math.IsNaN(float64(c.StatEdgeSpan)) || math.IsInf(float64(c.StatEdgeSpan), 0) || c.StatEdgeSpan <= 0 {
 		c.StatEdgeSpan = 10
+	}
+
+	// Skill edge (Phase 35a2)
+	if !finitePositive(float64(c.SkillEdgeSpan)) {
+		c.SkillEdgeSpan = 16
+	}
+	if !finitePositive(float64(c.DefaultAttackRate)) {
+		c.DefaultAttackRate = 1
+	}
+	if !finitePositive(float64(c.DefaultEvasionRate)) {
+		c.DefaultEvasionRate = 1
 	}
 
 	// Extra attacks (weaponless/claws)
@@ -306,36 +336,48 @@ func (c *CombatConfig) validate() {
 
 	// Dodge chance
 	if c.DodgeChanceMax < 1 || c.DodgeChanceMax > 100 {
-		c.DodgeChanceMax = 30
+		c.DodgeChanceMax = 40
 	}
 	if c.DodgeChanceMin < 1 {
-		c.DodgeChanceMin = 5
+		c.DodgeChanceMin = 3
 	}
 	if c.DodgeChanceMin > c.DodgeChanceMax {
-		c.DodgeChanceMin = 5
+		c.DodgeChanceMin = 3
 	}
+	if c.DodgeChanceEven == 0 {
+		c.DodgeChanceEven = 12
+	}
+	c.DodgeChanceEven = max(c.DodgeChanceMin, min(c.DodgeChanceMax, c.DodgeChanceEven))
 
 	// Block chance (Phase 30g2)
 	if c.BlockChanceMax < 1 || c.BlockChanceMax > 100 {
-		c.BlockChanceMax = 45
+		c.BlockChanceMax = 55
 	}
 	if c.BlockChanceMin < 1 {
-		c.BlockChanceMin = 15
+		c.BlockChanceMin = 8
 	}
 	if c.BlockChanceMin > c.BlockChanceMax {
-		c.BlockChanceMin = 15
+		c.BlockChanceMin = 8
 	}
+	if c.BlockChanceEven == 0 {
+		c.BlockChanceEven = 20
+	}
+	c.BlockChanceEven = max(c.BlockChanceMin, min(c.BlockChanceMax, c.BlockChanceEven))
 
 	// Parry chance (Phase 30g2)
 	if c.ParryChanceMax < 1 || c.ParryChanceMax > 100 {
-		c.ParryChanceMax = 30
+		c.ParryChanceMax = 40
 	}
 	if c.ParryChanceMin < 1 {
-		c.ParryChanceMin = 5
+		c.ParryChanceMin = 3
 	}
 	if c.ParryChanceMin > c.ParryChanceMax {
-		c.ParryChanceMin = 5
+		c.ParryChanceMin = 3
 	}
+	if c.ParryChanceEven == 0 {
+		c.ParryChanceEven = 12
+	}
+	c.ParryChanceEven = max(c.ParryChanceMin, min(c.ParryChanceMax, c.ParryChanceEven))
 
 	// Bash chance (Phase 30g2)
 	if c.BashChanceMax < 1 || c.BashChanceMax > 100 {
@@ -375,6 +417,27 @@ func (c *CombatConfig) validate() {
 	if c.AgilityFreeLoad <= 0 || c.AgilityFreeLoad > 0.95 {
 		c.AgilityFreeLoad = 0.35
 	}
+
+	// Armor bulk (Phase 35a2): shares held to 0..1 (0 turns a cost off);
+	// a doubled share past 1 leaves nothing, never a negative tempo or dodge.
+	for _, b := range []*ConfigFloat{&c.BulkTempoMedium, &c.BulkTempoHeavy, &c.BulkDodgeMedium, &c.BulkDodgeHeavy} {
+		switch {
+		case math.IsNaN(float64(*b)) || *b < 0:
+			*b = 0
+		case *b > 1:
+			*b = 1
+		}
+	}
+	if c.UntrainedSkillLoss < 0 {
+		c.UntrainedSkillLoss = 0
+	}
+	if c.UntrainedChantRounds < 0 {
+		c.UntrainedChantRounds = 0
+	}
+}
+
+func finitePositive(v float64) bool {
+	return v > 0 && !math.IsNaN(v) && !math.IsInf(v, 0)
 }
 
 func GetGamePlayConfig() GamePlay {

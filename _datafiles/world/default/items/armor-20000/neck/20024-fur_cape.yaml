@@ -4,6 +4,7 @@ namesimple: cape
 description: An elegant fur cape.
 type: neck
 subtype: wearable
+bulk: light
 damagereduction: 2
 warmth: 10
 weight: 2500

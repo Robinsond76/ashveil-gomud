@@ -275,7 +275,7 @@ func counterBlow(attacker, bearer statusHolder) {
 	if !interrupt.CanCounter(c) {
 		return
 	}
-	bashChance := combat.BashChance(bearer.char.Stats.Strength.ValueAdj, attacker.char.Stats.Strength.ValueAdj)
+	bashChance := combat.BashChance(bearer.char, attacker.char)
 	bash, ok := interrupt.RollCounter(bashChance, counterRoll)
 	if !ok {
 		return

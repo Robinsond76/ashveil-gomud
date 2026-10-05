@@ -236,15 +236,20 @@ func (p ProgressionConfig) TrainingPointsAt(level int) int {
 	return awards * per
 }
 
-// HealthAtLevel is the HP formula without equipment, buffs or explicit training.
-func (p ProgressionConfig) HealthAtLevel(level, vitality int, perLevel float64) int {
+// HealthAtLevel is the HP formula without equipment, buffs or explicit
+// training. start is the archetype's head start (Phase 35a2 HPStart; 0 for
+// enemies and characters without a class).
+func (p ProgressionConfig) HealthAtLevel(level, vitality int, perLevel float64, start int) int {
 	level = max(level, 1)
 	if perLevel <= 0 {
 		perLevel = float64(p.DefaultHPPerLevel)
 	}
 	full := min(level, int(p.HPFullLevels))
-	return boundedProgressionInt(float64(p.HPBase) + math.Trunc(float64(full)*perLevel) +
-		math.Trunc(float64(level-full)*p.HealthAfterFull(perLevel)) + math.Trunc(float64(vitality)*float64(p.HPPerVitality)))
+	// A hair over each product forgives binary error (0.2 × 0.7 / 0.8 × 40
+	// is 6.99…), so a rate's whole points land on the level they should.
+	const eps = 1e-9
+	return boundedProgressionInt(float64(p.HPBase) + float64(max(start, 0)) + math.Trunc(float64(full)*perLevel+eps) +
+		math.Trunc(float64(level-full)*p.HealthAfterFull(perLevel)+eps) + math.Trunc(float64(vitality)*float64(p.HPPerVitality)+eps))
 }
 
 // HealthAfterFull is an archetype's HP per level after HPFullLevels (30g6

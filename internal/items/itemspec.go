@@ -237,6 +237,48 @@ type ItemSpec struct {
 	Warmth          int               `yaml:"warmth,omitempty"`      // Insulation when worn (Phase 15); 0 uses the exposure module's per-slot default, negative means none
 	CarryBonus      int               `yaml:"carrybonus,omitempty"`  // A pack's added carrying capacity in grams (Phase 32f); a member counts only their largest
 	Saddle          SaddleKind        `yaml:"saddle,omitempty"`      // A saddle's kind (Phase 32f): fits a horse of the same kind
+	Bulk            string            `yaml:"bulk,omitempty"`        // Armor bulk (Phase 35a2): light, medium or heavy; defaulted from weight at load
+	ShieldSize      string            `yaml:"shieldsize,omitempty"`  // A shield's size (Phase 35a2): buckler, shield or tower; defaulted to shield
+	WeaponClass     string            `yaml:"weaponclass,omitempty"` // A weapon's class (Phase 35a2), e.g. mace, staff, rod, club, improvised
+}
+
+// Armor bulk (Phase 35a2) and the weights that set it when an item names
+// none.
+const (
+	BulkLight  = "light"
+	BulkMedium = "medium"
+	BulkHeavy  = "heavy"
+
+	BulkHeavyGrams  = 6000
+	BulkMediumGrams = 2500
+
+	ShieldBuckler = "buckler"
+	ShieldNormal  = "shield"
+	ShieldTower   = "tower"
+)
+
+// IsArmor reports whether the spec is worn armor: a wearable that is not
+// a pack. Weapons have no bulk.
+func (i ItemSpec) IsArmor() bool {
+	return i.Type != Weapon && i.Type != Pack && i.Subtype == Wearable
+}
+
+// IsShield reports whether the spec is a shield: an off-hand wearable that
+// reduces damage (a lantern or holy symbol, with no armor, is not).
+func (i ItemSpec) IsShield() bool {
+	return i.Type == Offhand && i.Subtype == Wearable && i.DamageReduction > 0
+}
+
+// BulkForWeight is the bulk of armor that names none: 6 kg or more is
+// heavy, 2.5 kg or more medium, else light.
+func BulkForWeight(grams int) string {
+	switch {
+	case grams >= BulkHeavyGrams:
+		return BulkHeavy
+	case grams >= BulkMediumGrams:
+		return BulkMedium
+	}
+	return BulkLight
 }
 
 // SaddleKind is the kind of horse a saddle fits (Phase 32f).
@@ -502,6 +544,37 @@ func (i *ItemSpec) Validate() error {
 
 	if i.Name == `` {
 		return fmt.Errorf("item has no name")
+	}
+
+	// Phase 35a2: bulk and shield size, checked and defaulted.
+	i.Bulk = strings.ToLower(strings.TrimSpace(i.Bulk))
+	i.ShieldSize = strings.ToLower(strings.TrimSpace(i.ShieldSize))
+	i.WeaponClass = strings.ToLower(strings.TrimSpace(i.WeaponClass))
+	switch i.Bulk {
+	case ``, BulkLight, BulkMedium, BulkHeavy:
+	default:
+		return fmt.Errorf("unknown bulk %q", i.Bulk)
+	}
+	if i.Bulk != `` && !i.IsArmor() {
+		return fmt.Errorf("bulk requires wearable armor")
+	}
+	if i.IsArmor() && i.Bulk == `` {
+		i.Bulk = BulkForWeight(i.Weight)
+	}
+	switch i.ShieldSize {
+	case ``:
+		if i.IsShield() {
+			i.ShieldSize = ShieldNormal
+		}
+	case ShieldBuckler, ShieldNormal, ShieldTower:
+		if !i.IsShield() {
+			return fmt.Errorf("shield size requires a shield")
+		}
+	default:
+		return fmt.Errorf("unknown shield size %q", i.ShieldSize)
+	}
+	if i.WeaponClass != `` && i.Type != Weapon {
+		return fmt.Errorf("weapon class requires a weapon")
 	}
 
 	if i.CarryBonus < 0 || (i.Type == Pack && (i.CarryBonus <= 0 || i.Subtype != Wearable || len(i.StatMods) > 0 || len(i.WornBuffIds) > 0 || i.DamageReduction != 0)) {

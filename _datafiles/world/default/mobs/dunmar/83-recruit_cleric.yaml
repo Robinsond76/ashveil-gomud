@@ -13,8 +13,8 @@ character:
   alignment: 0
   equipment:
     weapon:
-      itemid: 10015
+      itemid: 10023
     offhand:
-      itemid: 20004
+      itemid: 20046
     body:
       itemid: 20008

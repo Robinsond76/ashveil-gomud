@@ -1,13 +1,16 @@
 
+// Phase 35a2: one average weapon hit, 8 + 2d4 + level/6 (about 13 / 15 /
+// 18 at levels 1 / 10 / 30), times the healer's HealFactor (a holy
+// symbol's +5%).
+HEAL_BASE = 8;
 HEAL_DICE_QTY = 2;
-HEAL_DICE_SIDES = 3;
-// Phase 30g6: each caster level adds a point of health, so healing keeps
-// pace with damage and health as levels grow.
-HEAL_PER_LEVEL = 1.0;
+HEAL_DICE_SIDES = 4;
+HEAL_LEVEL_DIV = 6;
 
 // healRoll is one patient's heal before any wound limit.
 function healRoll(sourceActor) {
-    return UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES) + Math.floor(sourceActor.GetLevel() * HEAL_PER_LEVEL);
+    var roll = HEAL_BASE + UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES) + Math.floor(sourceActor.GetLevel() / HEAL_LEVEL_DIV);
+    return Math.floor(roll * sourceActor.HealFactor());
 }
 
 SPELL_NAME = 'Minor Heal';

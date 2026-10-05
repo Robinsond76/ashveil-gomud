@@ -127,5 +127,10 @@ func ValidateActiveCharacters() {
 		}
 		user.Character.SetUserId(user.UserId)
 		user.Character.Validate(true)
+		// Phase 35a2: class gear rules need the archetype table, which
+		// copyover's early restore can't see.
+		if note := SettleClassGear(user, nil); note != "" {
+			user.SendText(note)
+		}
 	}
 }

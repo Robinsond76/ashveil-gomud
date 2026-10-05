@@ -222,6 +222,7 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 	tpBefore := u.Character.TrainingPoints
 	spBefore := u.Character.StatPoints
 	healthBefore, manaBefore, statsBefore := u.Character.HealthMax.Value, u.Character.ManaMax.Value, u.Character.Stats
+	attackBefore, evasionBefore := u.Character.AttackSkill(), u.Character.Evasion()
 
 	if newLevel, statsDelta := u.Character.LevelUp(); newLevel {
 
@@ -238,6 +239,8 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 			NewLevel:        u.Character.Level,
 			HealthMaxBefore: healthBefore,
 			ManaMaxBefore:   manaBefore,
+			AttackBefore:    attackBefore,
+			EvasionBefore:   evasionBefore,
 			StatsBefore:     statsBefore,
 			StatsDelta:      stats.Statistics{},
 			TrainingPoints:  0,
@@ -273,6 +276,7 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 		levelUpEvent.NewLevel = u.Character.Level
 		levelUpEvent.HealthMaxAfter = u.Character.HealthMax.Value
 		levelUpEvent.ManaMaxAfter = u.Character.ManaMax.Value
+		levelUpEvent.AttackAfter, levelUpEvent.EvasionAfter = u.Character.AttackSkill(), u.Character.Evasion()
 		levelUpEvent.StatsAfter = u.Character.Stats
 		levelUpEvent.NextMilestone = milestones.Next(u.Character.Level)
 		levelUpEvent.TrainingPoints = u.Character.TrainingPoints - tpBefore

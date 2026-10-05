@@ -73,8 +73,8 @@ func stockDefenses(t *testing.T) {
 	t.Helper()
 	cfg := configs.GetGamePlayConfig()
 	cfg.Combat.StatEdgeSpan = 10
-	cfg.Combat.BlockChanceMin, cfg.Combat.BlockChanceMax = 15, 45
-	cfg.Combat.ParryChanceMin, cfg.Combat.ParryChanceMax = 5, 30
+	cfg.Combat.BlockChanceMin, cfg.Combat.BlockChanceEven, cfg.Combat.BlockChanceMax = 8, 15, 55
+	cfg.Combat.ParryChanceMin, cfg.Combat.ParryChanceEven, cfg.Combat.ParryChanceMax = 3, 12, 40
 	cfg.Combat.BashChanceMin, cfg.Combat.BashChanceMax = 5, 20
 	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
 }
@@ -86,17 +86,17 @@ func TestBlockChance(t *testing.T) {
 		armor, defStr, atkStr int
 		want                  int
 	}{
-		{"even Strength, buckler", 5, 5, 5, 20},
-		{"even Strength, tower shield", 10, 5, 5, 25},
-		{"two points stronger", 5, 6, 4, 23},
+		{"even Strength, wooden shield", 5, 5, 5, 20},
+		{"even Strength, iron shield", 10, 5, 5, 25},
+		{"two points stronger", 5, 6, 4, 27},
 		{"two points weaker", 5, 4, 6, 17},
-		{"held to the maximum", 40, 100, 0, 45},
-		{"held to the minimum", 0, 0, 100, 15},
+		{"held to the maximum", 40, 100, 0, 55},
+		{"held to the minimum", 0, 0, 100, 8},
 	}
 	for _, c := range cases {
-		assert.Equal(t, c.want, blockChance(c.armor, c.defStr, c.atkStr), c.name)
+		assert.Equal(t, c.want, blockChanceForEdge(c.armor, StatEdge(c.defStr, c.atkStr)), c.name)
 	}
-	assert.Greater(t, blockChance(10, 50, 50), blockChance(5, 50, 50), "a heavier shield blocks more")
+	assert.Greater(t, blockChanceForEdge(10, 0), blockChanceForEdge(5, 0), "a heavier shield blocks more")
 }
 
 func TestParryModifier(t *testing.T) {
@@ -132,12 +132,14 @@ func TestParryModifier(t *testing.T) {
 
 func TestParryChance(t *testing.T) {
 	stockDefenses(t)
-	assert.Equal(t, 10, parryChance(50, 50, 5), "even Speed, a sword: the 5% floor plus 5")
-	assert.Equal(t, 0, parryChance(50, 50, -5), "even Speed, a dagger: the floor less 5")
-	assert.Equal(t, 5, parryChance(50, 50, 0), "even Speed, an axe")
-	assert.Equal(t, 35, parryChance(150, 50, 5), "the 30% cap plus a sword's 5")
-	assert.Greater(t, parryChance(90, 50, 0), parryChance(50, 50, 0), "more Speed parries more")
-	assert.Equal(t, 7, parryChance(3, 2, 0), "one point of Speed: a tenth of the 5–30 range")
+	parry := func(def, atk, mod int) int { return parryChanceForEdge(StatEdge(def, atk), mod) }
+	assert.Equal(t, 17, parry(50, 50, 5), "even, a sword: the 12% even plus 5")
+	assert.Equal(t, 7, parry(50, 50, -5), "even, a dagger: 12 less 5")
+	assert.Equal(t, 12, parry(50, 50, 0), "even, an axe")
+	assert.Equal(t, 45, parry(150, 50, 5), "the 40% cap plus a sword's 5")
+	assert.Equal(t, 3, parry(50, 150, 0), "a full edge behind: the 3% floor")
+	assert.Greater(t, parry(90, 50, 0), parry(50, 50, 0), "more Speed parries more")
+	assert.Equal(t, 14, parry(3, 2, 0), "one point of Speed: a tenth of the way from 12 to 40")
 }
 
 // Review: a parry range of 0 is no parry, whatever the weapon adds, so
@@ -145,8 +147,8 @@ func TestParryChance(t *testing.T) {
 func TestZeroParryRangeTurnsParryOff(t *testing.T) {
 	defenseSpecs(t)
 	defenseOdds(t, 0, 0, 0)
-	assert.Zero(t, parryChance(150, 50, 5), "a sword")
-	assert.Zero(t, parryChance(150, 50, 10), "a reach weapon with its own parry")
+	assert.Zero(t, parryChanceForEdge(1, 5), "a sword")
+	assert.Zero(t, parryChanceForEdge(1, 10), "a reach weapon with its own parry")
 	for _, weaponID := range []int{edgeSwordID, defStaffID, defPikeID} {
 		for i := 0; i < 200; i++ {
 			r := strikeAt(armed(edgeSwordID), armed(weaponID))
@@ -157,11 +159,11 @@ func TestZeroParryRangeTurnsParryOff(t *testing.T) {
 
 func TestBashChance(t *testing.T) {
 	stockDefenses(t)
-	assert.Equal(t, 8, BashChance(4, 2), "two points of Strength: a fifth of the 5–20 range")
-	assert.Equal(t, 5, BashChance(50, 50), "even Strength: the minimum")
-	assert.Equal(t, 20, BashChance(150, 50), "a great Strength edge: the maximum")
-	assert.Equal(t, 5, BashChance(20, 90), "a weaker bearer: the minimum")
-	assert.Greater(t, BashChance(100, 50), BashChance(50, 50))
+	assert.Equal(t, 8, bashChanceForEdge(StatEdge(4, 2)), "two points of Strength: a fifth of the 5–20 range")
+	assert.Equal(t, 5, bashChanceForEdge(StatEdge(50, 50)), "even Strength: the minimum")
+	assert.Equal(t, 20, bashChanceForEdge(StatEdge(150, 50)), "a great Strength edge: the maximum")
+	assert.Equal(t, 5, bashChanceForEdge(StatEdge(20, 90)), "a weaker bearer: the minimum")
+	assert.Greater(t, bashChanceForEdge(StatEdge(100, 50)), bashChanceForEdge(StatEdge(50, 50)))
 }
 
 // strikeAt resolves one round of source on target through the real strike

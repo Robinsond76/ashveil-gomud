@@ -1,0 +1,10 @@
+itemid: 20047
+name: leather buckler
+namesimple: buckler
+description: A small round shield of boiled leather over a wooden frame, gripped in the fist. It turns a blow without slowing the hand that holds it.
+type: offhand
+subtype: wearable
+damagereduction: 3
+shieldsize: buckler
+bulk: light
+weight: 1500

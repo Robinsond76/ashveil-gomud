@@ -1,0 +1,10 @@
+itemid: 20046
+name: holy symbol
+namesimple: symbol
+description: A worn wooden sun disc on a leather loop, carried in the off hand. A priest's prayers come easier with it to hold.
+type: offhand
+subtype: wearable
+bulk: light
+statmods:
+  healing: 5
+weight: 300

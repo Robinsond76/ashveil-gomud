@@ -3,6 +3,7 @@ package usercommands
 import (
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -53,7 +54,7 @@ func Tackle(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		if m != nil {
 
-			chanceIn100 := strategy.TackleChance(user.Character.Stats.Speed.ValueAdj, m.Character.Stats.Perception.ValueAdj)
+			chanceIn100 := strategy.TackleChance(user.Character.Stats.Speed.ValueAdj, m.Character.Stats.Perception.ValueAdj, characters.SkillEdge(user.Character.AttackSkill(), m.Character.Evasion()))
 			roll := util.Rand(100)
 
 			util.LogRoll(`Tackle`, roll, chanceIn100)
@@ -96,7 +97,7 @@ func Tackle(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 
 		if u != nil {
 
-			chanceIn100 := strategy.TackleChance(user.Character.Stats.Speed.ValueAdj, u.Character.Stats.Perception.ValueAdj)
+			chanceIn100 := strategy.TackleChance(user.Character.Stats.Speed.ValueAdj, u.Character.Stats.Perception.ValueAdj, characters.SkillEdge(user.Character.AttackSkill(), u.Character.Evasion()))
 			roll := util.Rand(100)
 
 			util.LogRoll(`Tackle`, roll, chanceIn100)

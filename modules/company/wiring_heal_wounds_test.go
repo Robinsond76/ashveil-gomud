@@ -199,11 +199,11 @@ func TestHealWoundsALeaderClericHealsToTheLimit(t *testing.T) {
 	assert.Contains(t, out, "You tend your own cut hand, and it draws closed.")
 	assert.NotContains(t, out, "first, the worst hurt", "a healer who starts on themselves is not 'first' beside anyone")
 	assert.Regexp(t, `You lay glowing hands on yourself\. \(\d+ healed\)`, out)
-	// 30g6: each heal adds the healer's level, as Minor Heal does in battle.
+	// 35a2: each heal is 8 + 2d4 + level/6, as Minor Heal is in battle.
 	m := regexp.MustCompile(`You lay glowing hands on yourself\. \((\d+) healed\)`).FindStringSubmatch(out)
 	require.NotNil(t, m)
 	healed, _ := strconv.Atoi(m[1])
-	assert.GreaterOrEqual(t, healed, min(2+c.Level, c.HealthLimit()-50), "2d3 plus the healer's level %d", c.Level)
+	assert.GreaterOrEqual(t, healed, min(8+2+c.Level/6, c.HealthLimit()-50), "8 + 2d4 + level/6 at level %d", c.Level)
 	assert.Empty(t, c.Wounds)
 	assert.Less(t, c.Mana, 40, "the leader's own mana is spent")
 	assert.Greater(t, c.Health, 50)

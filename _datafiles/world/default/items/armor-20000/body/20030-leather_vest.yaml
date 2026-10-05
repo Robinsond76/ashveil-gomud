@@ -4,6 +4,7 @@ namesimple: vest
 description: A crudely fashioned leather vest.
 type: body
 subtype: wearable
+bulk: medium
 damagereduction: 8
 statmods:
   speed: 4

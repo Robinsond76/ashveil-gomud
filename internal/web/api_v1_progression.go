@@ -20,6 +20,10 @@ type progressionPreviewData struct {
 	ManaRaw      map[string][]int `json:"mana_raw"`
 	XPPerLevel   []int            `json:"xp_per_level"`
 	XPCumulative []int            `json:"xp_cumulative"`
+	// Phase 35a2: Attack and Evasion by level for each archetype and for
+	// characters without one ("default").
+	Attack  map[string][]int `json:"attack"`
+	Evasion map[string][]int `json:"evasion"`
 }
 
 // GET /admin/api/v1/progression/preview
@@ -194,8 +198,8 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 		for i, lvl := range levels {
 			rawStat := gainsForLevelWithCfg(lvl, base, cfg)
 			adjStat := applyCapWithCfg(rawStat, cfg)
-			hpSeries[i] = cfg.HealthAtLevel(lvl, adjStat, float64(cfg.DefaultHPPerLevel))
-			hpRawSeries[i] = cfg.HealthAtLevel(lvl, rawStat, float64(cfg.DefaultHPPerLevel))
+			hpSeries[i] = cfg.HealthAtLevel(lvl, adjStat, float64(cfg.DefaultHPPerLevel), 0)
+			hpRawSeries[i] = cfg.HealthAtLevel(lvl, rawStat, float64(cfg.DefaultHPPerLevel), 0)
 			manaSeries[i] = cfg.RacialForLevel(lvl, 1) + int(cfg.ManaBase) +
 				int(float64(lvl)*float64(cfg.ManaPerLevel)) +
 				int(float64(adjStat)*float64(cfg.ManaPerMysticism))
@@ -209,12 +213,25 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 		manaRaw[label] = manaRawSeries
 	}
 
+	combat := configs.GetCombatConfig()
+	attack := map[string][]int{"default": ratingSeries(levels, float64(combat.DefaultAttackRate))}
+	evasion := map[string][]int{"default": ratingSeries(levels, float64(combat.DefaultEvasionRate))}
 	for id, rate := range archetypes.HealthArchetypes() {
+		profile, _ := archetypes.CombatProfile(id)
 		series := make([]int, n)
 		for i, lvl := range levels {
-			series[i] = cfg.HealthAtLevel(lvl, applyCapWithCfg(gainsForLevelWithCfg(lvl, 3, cfg), cfg), rate)
+			series[i] = cfg.HealthAtLevel(lvl, applyCapWithCfg(gainsForLevelWithCfg(lvl, 3, cfg), cfg), rate, profile.HPStart)
 		}
 		hp[id] = series
+		attackRate, evasionRate := profile.AttackRate, profile.EvasionRate
+		if attackRate <= 0 {
+			attackRate = float64(combat.DefaultAttackRate)
+		}
+		if evasionRate <= 0 {
+			evasionRate = float64(combat.DefaultEvasionRate)
+		}
+		attack[id] = ratingSeries(levels, attackRate)
+		evasion[id] = ratingSeries(levels, evasionRate)
 	}
 
 	// XP curve (TNLScale = 1.0 for display purposes).
@@ -246,8 +263,20 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 			ManaRaw:      manaRaw,
 			XPPerLevel:   xpPerLevel,
 			XPCumulative: xpCumulative,
+			Attack:       attack,
+			Evasion:      evasion,
 		},
 	})
+}
+
+// ratingSeries is floor(level × rate) for each level, as
+// characters.AttackSkill and Evasion derive them (Phase 35a2).
+func ratingSeries(levels []int, rate float64) []int {
+	out := make([]int, len(levels))
+	for i, lvl := range levels {
+		out[i] = int(math.Floor(float64(max(lvl, 0))*rate + 1e-9))
+	}
+	return out
 }
 
 // gainsForLevelWithCfg mirrors stats.StatInfo.GainsForLevel using a local cfg

@@ -4,6 +4,7 @@ namesimple: cape
 description: A cape eaten by moths and rats.
 type: neck
 subtype: wearable
+bulk: light
 damagereduction: 2
 statmods:
   perception: -1

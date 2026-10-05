@@ -1,6 +1,6 @@
 spellid: mm
 name: Magic Missile
-description: Hurts for 1d6+2
+description: Hurts for 7+1d6, plus 1 per 10 caster levels and 1 per 15 Mysticism, scaled by skill
 type: harmsingle
 school: conjuration
 cost: 6

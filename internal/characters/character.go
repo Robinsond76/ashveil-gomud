@@ -48,8 +48,11 @@ const (
 
 type Character struct {
 	// Runtime inputs copied from authored mob templates or the companion record.
-	HPPerLevel     float64  `yaml:"-"`
-	HPArchetype    string   `yaml:"-"`
+	HPPerLevel  float64 `yaml:"-"`
+	HPArchetype string  `yaml:"-"`
+	// Phase 35a2: an enemy template's Attack and Evasion offsets (±5).
+	AttackOffset   int      `yaml:"-"`
+	EvasionOffset  int      `yaml:"-"`
 	CompanyCargo   bool     `yaml:"companycargo,omitempty"` // Items are shared cargo, excluded from personal burden.
 	CargoMigrated  bool     `yaml:"cargomigrated,omitempty"`
 	CompanyAssetOp string   `yaml:"companyassetop,omitempty"`
@@ -1277,7 +1280,7 @@ func (c *Character) SetCast(roundsWaitTime int, sInfo SpellAggroInfo) {
 	}
 	c.Aggro = &Aggro{
 		Type:          SpellCast,
-		RoundsWaiting: roundsWaitTime + c.ColdDelay(),
+		RoundsWaiting: roundsWaitTime + c.ColdDelay() + c.ArmorChantDelay(),
 		ColdDelayed:   c.ColdDelay() > 0,
 		SpellInfo:     sInfo,
 	}
@@ -1670,7 +1673,7 @@ func (c *Character) RecalculateStats() {
 	// This relies on the above stats so has to be calculated afterwards
 	cfgProg := configs.GetProgressionConfig()
 	c.HealthMax.NoCap = true
-	c.HealthMax.Mods = stats.SaturatingSum(cfgProg.HealthAtLevel(c.Level, c.Stats.Vitality.ValueAdj, c.HealthGainPerLevel()), c.StatMod(string(statmods.HealthMax)))
+	c.HealthMax.Mods = stats.SaturatingSum(cfgProg.HealthAtLevel(c.Level, c.Stats.Vitality.ValueAdj, c.HealthGainPerLevel(), c.HPStart()), c.StatMod(string(statmods.HealthMax)))
 
 	c.ManaMax.NoCap = true
 	c.ManaMax.Mods = int(cfgProg.ManaBase) +
@@ -2113,6 +2116,11 @@ func (c *Character) Wear(i items.Item, targetSlots ...items.ItemType) (returnIte
 
 	if spec.Type != items.Weapon && spec.Subtype != items.Wearable {
 		return returnItems, false, `That item cannot be equipped.`
+	}
+
+	// Phase 35a2: a class's shield and weapon rules are hard rules.
+	if ok, reason := c.CanWield(i); !ok {
+		return returnItems, false, reason
 	}
 
 	iHandsRequired := c.HandsRequired(i)

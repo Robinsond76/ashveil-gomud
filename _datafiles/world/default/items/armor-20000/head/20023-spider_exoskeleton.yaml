@@ -3,6 +3,7 @@ name: spider exoskeleton
 description: The empty husk of a spider.
 type: head
 subtype: wearable
+bulk: medium
 damagereduction: 9
 statmods:
   speed: 7

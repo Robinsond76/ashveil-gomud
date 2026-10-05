@@ -3,5 +3,6 @@ name: chain coif
 description: The chain coif is a little rusty, but still in good shape.
 type: neck
 subtype: wearable
+bulk: medium
 damagereduction: 8
 weight: 2500

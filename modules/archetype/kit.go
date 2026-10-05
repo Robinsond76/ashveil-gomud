@@ -224,12 +224,51 @@ func (m *ArchetypeModule) ChooseAtCreation(userID int, archetypeID string) (stri
 	return m.chooseResult(user, archetypeID, true)
 }
 
-// healthLine states an archetype's live HP rates for creation and listing.
+// healthLine states an archetype's live HP rates, head start and skill
+// rates (Phase 35a2) for creation and listing.
 func healthLine(a archetypes.Archetype) string {
 	cfg := configs.GetProgressionConfig()
 	rate := healthRate(a)
 	after := math.Round(cfg.HealthAfterFull(rate)*100) / 100
-	return fmt.Sprintf("HP: %g per level through level %d, then %g per level.", rate, cfg.HPFullLevels, after)
+	start := ""
+	if a.HPStart > 0 {
+		start = fmt.Sprintf("%d extra to start, ", a.HPStart)
+	}
+	combat := configs.GetCombatConfig()
+	attack, evasion := a.AttackRate, a.EvasionRate
+	if attack <= 0 {
+		attack = float64(combat.DefaultAttackRate)
+	}
+	if evasion <= 0 {
+		evasion = float64(combat.DefaultEvasionRate)
+	}
+	return fmt.Sprintf("HP: %s%g per level through level %d, then %g per level. Attack %g and Evasion %g a level; trained for %s armor; %s; %s.",
+		start, rate, cfg.HPFullLevels, after, attack, evasion, a.ArmorTraining, shieldRule(a.ShieldSizes), weaponRule(a.WeaponClasses))
+}
+
+// shieldRule and weaponRule state an archetype's gear rules (Phase 35a2).
+func shieldRule(sizes []string) string {
+	switch {
+	case len(sizes) == 0 || len(sizes) >= 3:
+		return "any shield"
+	case len(sizes) == 1 && sizes[0] == "none":
+		return "no shield"
+	}
+	return "shields: " + joinOr(sizes)
+}
+
+func weaponRule(classes []string) string {
+	if len(classes) == 0 {
+		return "any weapon"
+	}
+	return "weapons: " + joinOr(classes)
+}
+
+func joinOr(words []string) string {
+	if len(words) < 2 {
+		return strings.Join(words, "")
+	}
+	return strings.Join(words[:len(words)-1], ", ") + " or " + words[len(words)-1]
 }
 
 func healthRate(a archetypes.Archetype) float64 {

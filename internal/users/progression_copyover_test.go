@@ -35,7 +35,7 @@ func TestProgressionCopyoverDefersVitalsUntilClassLoads(t *testing.T) {
 	archetypes.SetProvider(warriorHP{})
 	ValidateActiveCharacters()
 	cfg := configs.GetProgressionConfig()
-	assert.Equal(t, cfg.HealthAtLevel(20, restored.Character.Stats.Vitality.ValueAdj, 6), restored.Character.HealthMax.Value)
+	assert.Equal(t, cfg.HealthAtLevel(20, restored.Character.Stats.Vitality.ValueAdj, 6, 0), restored.Character.HealthMax.Value)
 	assert.Equal(t, min(110, restored.Character.HealthMax.Value), restored.Character.Health)
 	assert.Equal(t, min(3, restored.Character.ManaMax.Value), restored.Character.Mana)
 }

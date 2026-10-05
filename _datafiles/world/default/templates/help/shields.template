@@ -1,0 +1,37 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">shields</ansi>
+
+A shield-bearer <ansi fg="yellow">blocks</ansi> instead of dodging or parrying: one block roll
+for every blow, arrows and sling stones too. It is the steadiest defense
+there is, and only warriors and rangers are taught it.
+
+<ansi fg="yellow-bold">Sizes</ansi>
+
+  <ansi fg="yellow">Buckler</ansi>   small and light (a leather buckler: armor 3)
+  <ansi fg="yellow">Shield</ansi>    the common kind (wooden: armor 5, iron: armor 10)
+  <ansi fg="yellow">Tower</ansi>     a wall to hide behind (armor 14), heavy bulk (<ansi fg="command">help armor</ansi>)
+
+<ansi fg="yellow-bold">Who may carry one</ansi>
+
+  <ansi fg="yellow">Warrior</ansi>                    any shield
+  <ansi fg="yellow">Ranger</ansi>                     bucklers only
+  <ansi fg="yellow">Cleric, Rogue, Wizard</ansi>      none
+
+<ansi fg="command">equip</ansi> and <ansi fg="command">company equip</ansi> refuse a shield the class can't use, and say why.
+A cleric fights with staffs, rods and maces only, and may carry a holy
+symbol in the off hand instead: it can't block, but adds 5% to every heal.
+
+If you or a companion already held a shield or weapon the class may not
+use, it was moved from the hand to your carried items, and you were told.
+
+<ansi fg="yellow-bold">How a block works</ansi>
+
+The chance is {{ config "GamePlay.Combat.BlockChanceEven" }}% plus the shield's own armor when you and the
+attacker are even, so an iron shield blocks 30% and a buckler 23%. Your
+Evasion against the attacker's Attack, and your Strength against theirs,
+move it between {{ config "GamePlay.Combat.BlockChanceMin" }}% and {{ config "GamePlay.Combat.BlockChanceMax" }}% (<ansi fg="command">help evasion</ansi>). A blocked blow does no
+damage, and a blocked melee blow may be slammed back with a shield bash
+(<ansi fg="command">help interrupts</ansi>). If the block fails, there is no dodge: the blow lands
+and your armor takes its share.
+
+See also: <ansi fg="command">help defense</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help evasion</ansi>, <ansi fg="command">help warrior</ansi>,
+<ansi fg="command">help ranger</ansi>, <ansi fg="command">help equip</ansi>.

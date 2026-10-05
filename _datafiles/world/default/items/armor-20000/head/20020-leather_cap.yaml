@@ -3,6 +3,7 @@ name: leather cap
 description: A leather cap that provides minimal protection.
 type: head
 subtype: wearable
+bulk: light
 damagereduction: 3
 warmth: 3
 weight: 400

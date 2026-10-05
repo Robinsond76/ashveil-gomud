@@ -23,7 +23,7 @@ func TestStatEdgeConfigValidation(t *testing.T) {
 	c := CombatConfig{StatEdgeSpan: ConfigFloat(math.NaN()), DamageEdgeMax: -3}
 	c.validate()
 	assert.Equal(t, ConfigFloat(10), c.StatEdgeSpan)
-	assert.Equal(t, ConfigInt(50), c.ToHitEven)
+	assert.Equal(t, ConfigInt(60), c.ToHitEven)
 	assert.Equal(t, ConfigInt(15), c.CritChanceEven)
 	assert.Zero(t, c.DamageEdgeMax)
 	c = CombatConfig{StatEdgeSpan: -1, ToHitMin: 40, ToHitMax: 90, ToHitEven: 95, CritChanceMin: 10, CritChanceMax: 20, CritChanceEven: 3}
@@ -40,7 +40,7 @@ func TestHealthAfterFullKeepsClassProportion(t *testing.T) {
 	assert.Equal(t, 1.0, p.HealthAfterFull(2))
 	assert.Equal(t, 2.0, p.HealthAfterFull(4))
 	assert.Equal(t, 0.5, p.HealthAfterFull(1))
-	assert.Equal(t, 10+40+40, p.HealthAtLevel(30, 0, 4), "a double-rate class doubles its later gains too")
-	assert.Equal(t, 10+10+10, p.HealthAtLevel(30, 0, 1))
-	assert.Equal(t, 10+20+10, p.HealthAtLevel(20, 0, 0), "no rate takes the default")
+	assert.Equal(t, 10+40+40, p.HealthAtLevel(30, 0, 4, 0), "a double-rate class doubles its later gains too")
+	assert.Equal(t, 10+10+10, p.HealthAtLevel(30, 0, 1, 0))
+	assert.Equal(t, 10+20+10, p.HealthAtLevel(20, 0, 0, 0), "no rate takes the default")
 }

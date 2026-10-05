@@ -5,6 +5,7 @@ description: It looks kinda sticky.
 type: weapon
 hands: 1
 subtype: bludgeoning
+weaponclass: improvised
 uses: 0
 damage:
   diceroll: 1d2

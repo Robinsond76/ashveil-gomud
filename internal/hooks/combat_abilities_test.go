@@ -23,6 +23,7 @@ func TestReadiedStrikeIsSetBack(t *testing.T) {
 	rogue := users.NewUserRecord(8801, 1)
 	users.SetTestUser(rogue)
 	rogue.Character.SetAggro(0, 5, characters.BackStab, 0)
+	rogue.Character.Aggro.StrikeBonus = 4 // an Opening Strike that never swung
 	ranger := users.NewUserRecord(8802, 1)
 	users.SetTestUser(ranger)
 	ranger.Character.Equipment.Weapon = items.New(slingID)
@@ -34,6 +35,7 @@ func TestReadiedStrikeIsSetBack(t *testing.T) {
 	abilityStrikes[caster{userId: 8803}] = true // gone: nothing to do
 	endAbilityStrikes()
 	assert.Equal(t, characters.DefaultAttack, rogue.Character.Aggro.Type)
+	assert.Zero(t, rogue.Character.Aggro.StrikeBonus, "35a2 review: a later plain backstab on this Aggro gets no Opening Strike bonus")
 	assert.Equal(t, characters.Shooting, ranger.Character.Aggro.Type)
 	assert.Equal(t, 5, ranger.Character.Aggro.MobInstanceId, "the same foe")
 	assert.Empty(t, abilityStrikes)

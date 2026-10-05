@@ -157,6 +157,12 @@ func DecideAbility(s AbilitySituation) (Ability, bool) {
 	return "", false
 }
 
+// OpeningStrikeBonus is the damage an Opening Strike adds to its blow
+// (Phase 35a2): 2 + level/6, about half an ordinary hit.
+func OpeningStrikeBonus(level int) int {
+	return 2 + max(level, 0)/6
+}
+
 // Tackle chance bounds, in 100 (30g6 amendment): even Speed and Perception
 // give TackleEven; a full stat edge moves it to a bound.
 const (
@@ -166,14 +172,19 @@ const (
 )
 
 // TackleChance is a tackle's chance in 100: the tackler's Speed edge over
-// the foe's Perception (the combat StatEdgeSpan) moves TackleEven toward
-// TackleMin or TackleMax. The manual command and automatic tackles share it.
-func TackleChance(speed, foePerception int) int {
+// the foe's Perception (the combat StatEdgeSpan), plus its skill edge
+// (Attack against the foe's Evasion, Phase 35a2), held to −1..1, moves
+// TackleEven toward TackleMin or TackleMax. The manual command and
+// automatic tackles share it.
+func TackleChance(speed, foePerception int, skillEdge float64) int {
 	span := float64(configs.GetCombatConfig().StatEdgeSpan)
 	if span <= 0 || math.IsNaN(span) || math.IsInf(span, 0) {
 		span = 10
 	}
-	edge := max(-1, min(1, (float64(speed)-float64(foePerception))/span))
+	if math.IsNaN(skillEdge) {
+		skillEdge = 0
+	}
+	edge := max(-1, min(1, (float64(speed)-float64(foePerception))/span+skillEdge))
 	c := float64(TackleEven)
 	if edge >= 0 {
 		c += edge * (TackleMax - TackleEven)
