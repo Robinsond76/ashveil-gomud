@@ -1,16 +1,9 @@
-
-// Phase 35a2: 55% of a Minor Heal (8 + 2d4 + level/6) for each patient,
-// times the healer's HealFactor (a holy symbol's +5%).
-HEAL_BASE = 8;
-HEAL_DICE_QTY = 2;
-HEAL_DICE_SIDES = 4;
-HEAL_LEVEL_DIV = 6;
-HEAL_SHARE = 0.55;
-
+// Phase 35b: the heal's size is its power block (healall.yaml, read through
+// SpellPower): 55% of a Minor Heal for each patient, times the healer's
+// HealFactor (a holy symbol's +5%).
 // healRoll is one patient's heal before any wound limit.
 function healRoll(sourceActor) {
-    var roll = HEAL_BASE + UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES) + Math.floor(sourceActor.GetLevel() / HEAL_LEVEL_DIV);
-    return Math.max(1, Math.floor(roll * HEAL_SHARE * sourceActor.HealFactor()));
+    return Math.max(1, Math.floor(sourceActor.SpellPower('healall') * sourceActor.HealFactor()));
 }
 
 SPELL_NAME = 'Minor Heal All';

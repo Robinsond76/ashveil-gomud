@@ -74,7 +74,7 @@ func buildStatusPanel(user *users.UserRecord) string {
 	}
 	layout.Panel("info").
 		Add(`<ansi fg="yellow">Level:  </ansi>`, `<ansi fg="yellow">Lvl:</ansi>`, fmt.Sprintf(`%d`, c.Level)).
-		Add(`<ansi fg="yellow">Next milestone: </ansi>`, `<ansi fg="yellow">Next:</ansi>`, milestones.Next(c.Level).String()).
+		Add(`<ansi fg="yellow">Next milestone: </ansi>`, `<ansi fg="yellow">Next:</ansi>`, milestones.Next(c.Level, c.ArchetypeID()).String()).
 		Add(`<ansi fg="yellow">Exp:    </ansi>`, `<ansi fg="yellow">XP: </ansi>`, xpValue)
 	if ashveil {
 		addAshveilAlignment(layout.Panel("info"), summary)

@@ -227,3 +227,29 @@ func (c *Character) UnequipDisallowed() []items.Item {
 	}
 	return moved
 }
+
+// ManaRates is the character's mana pool base and gain a level (Phase
+// 35b): its class's (a player's archetype, else a companion's), else an
+// enemy template's override, else the progression defaults.
+func (c *Character) ManaRates() (base int, perLevel float64) {
+	cfg := configs.GetProgressionConfig()
+	base, perLevel = int(cfg.ManaBase), float64(cfg.ManaPerLevel)
+	if p, ok := c.combatProfile(); ok {
+		if p.ManaBase > 0 {
+			base = p.ManaBase
+		}
+		if p.ManaPerLevel > 0 {
+			perLevel = p.ManaPerLevel
+		}
+		return base, perLevel
+	}
+	if c.userId == 0 {
+		if c.ManaBaseOverride > 0 {
+			base = c.ManaBaseOverride
+		}
+		if c.ManaPerLevelOverride > 0 {
+			perLevel = c.ManaPerLevelOverride
+		}
+	}
+	return base, perLevel
+}

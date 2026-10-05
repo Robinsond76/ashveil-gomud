@@ -108,7 +108,7 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 		return
 	}
 	if defender.char.Health >= 1 && interrupt.CanBreak(r.Hit, r.DamageToTarget, defender.chanting()) {
-		chance := interrupt.BreakChance(r.DamageToTarget, defender.char.HealthMax.Value, heavyBlow(r))
+		chance := interrupt.BreakChance(r.DamageToTarget, defender.char.HealthMax.Value, heavyBlow(r), chantDifficulty(defender))
 		if interrupt.RollBreak(chance, breakRoll) {
 			breakChant(attacker, defender)
 		} else {
@@ -118,6 +118,18 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	if r.Blocked() {
 		counterBlow(attacker, defender)
 	}
+}
+
+// chantDifficulty is the difficulty of the spell the holder is chanting
+// (Phase 35b: harder spells break more easily).
+func chantDifficulty(h statusHolder) int {
+	if h.char.Aggro == nil {
+		return 0
+	}
+	if sp := spells.GetSpell(h.char.Aggro.SpellInfo.SpellId); sp != nil {
+		return sp.Difficulty
+	}
+	return 0
 }
 
 // heavyBlow reports whether a blow lands with heavy force, which always

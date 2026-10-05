@@ -34,6 +34,9 @@ type Battle struct {
 	// Phase 30c2: guardians' guards by member key; one absent has spent
 	// none (MaxGuards left).
 	Guards map[string]Guard
+	// Phase 35b: each guardian's most guards, captured from its level
+	// the first time its guards are read in the battle (MaxGuardsFor).
+	GuardMax map[string]int
 
 	// Phase 33i2: the enemy group's coordination tier, fixed when the
 	// battle began (0: none given, read as a rabble), and the guards its
@@ -54,6 +57,12 @@ func (b Battle) clone() Battle {
 		c.Enemies[id] = true
 	}
 	c.EnemyNames = cloneEnemyNames(b.EnemyNames)
+	if b.GuardMax != nil {
+		c.GuardMax = make(map[string]int, len(b.GuardMax))
+		for k, n := range b.GuardMax {
+			c.GuardMax[k] = n
+		}
+	}
 	if b.Guards != nil {
 		c.Guards = make(map[string]Guard, len(b.Guards))
 		for k, g := range b.Guards {

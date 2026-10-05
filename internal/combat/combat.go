@@ -683,8 +683,17 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					if isCrit {
 						w := wounds.FromCrit(weaponSubType, attackTargetDamage, util.Rand)
 						w.Light = lightOnly // Phase 33i2: an enemy's closes at fight end
-						attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, w)
-						critStatuses = append(critStatuses, "wounded")
+						keep := true
+						// Phase 35b: a much weaker foe's crit wounds the
+						// company lightly, or not at all.
+						if !lightOnly && wounds.EasyFight(sourceChar.Level, targetChar.Level) {
+							after := targetChar.Health - attackResult.DamageToTarget - attackTargetDamage
+							w, keep = wounds.EasyCrit(w, attackTargetDamage, after, targetChar.HealthMax.Value)
+						}
+						if keep {
+							attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, w)
+							critStatuses = append(critStatuses, "wounded")
+						}
 					} else if w, ok := wounds.Crushing(attackTargetDamage, targetChar.HealthMax.Value, util.Rand); ok {
 						attackResult.WoundsToTarget = append(attackResult.WoundsToTarget, w)
 					}

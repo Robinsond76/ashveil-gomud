@@ -1,0 +1,11 @@
+itemid: 30014
+name: minor mana draught
+namesimple: draught
+description: A small stoppered vial of pale blue draught. It smells faintly of cold iron. Drinking it restores 25% of your mana (help draughts).
+type: potion
+subtype: drinkable
+uses: 1
+value: 50
+buffids:
+- 27
+weight: 250

@@ -16,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -167,6 +168,7 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	}
 	battle.SetFight(sd.user.UserId, id)
 	b.FightID = id
+	sd.captureGuards()
 	startMorale(b)
 	consumeAmbush(sd.user, p, room)
 	if enemyparty.Narrow(room) {
@@ -179,6 +181,24 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	}
 	sd.keepOnBattle(b, room)
 	return b
+}
+
+// captureGuards fixes each guardian's most guards for the battle from its
+// level as the battle begins (Phase 35b).
+func (sd side) captureGuards() {
+	if enemyparty.MemberStrategy(sd.user.UserId, company.LeaderMemberKey).Role == strategy.Guardian {
+		battle.CaptureGuards(sd.user.UserId, string(company.LeaderMemberKey), sd.user.Character.Level)
+	}
+	for _, instanceId := range sortedKeys(sd.allies) {
+		leaderId, key, ok := company.LeaderAndKeyForInstance(instanceId)
+		m := mobs.GetInstance(instanceId)
+		if !ok || m == nil || leaderId != sd.user.UserId {
+			continue
+		}
+		if enemyparty.MemberStrategy(sd.user.UserId, key).Role == strategy.Guardian {
+			battle.CaptureGuards(sd.user.UserId, string(key), m.Character.Level)
+		}
+	}
 }
 
 // beginNext starts the player's next battle, with the group set on them
@@ -295,6 +315,9 @@ func endBattle(userId int, outcome string) {
 	}
 	battle.End(userId)
 	finishMorale(b, outcome)
+	// Phase 35b: the company patches itself up, if the player is still
+	// out of battle when the event runs.
+	events.AddToQueue(events.BattleEnded{UserId: userId, Outcome: outcome})
 	if err := company.ReturnFlight(userId); err != nil {
 		if u := users.GetByUserId(userId); u != nil {
 			u.SendText(err.Error())

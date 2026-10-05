@@ -6,3 +6,9 @@ school: conjuration
 cost: 10
 waitrounds: 1
 difficulty: 50
+# Phase 35b: the spell's size (internal/spellpower), read by its script.
+power:
+  base: 4
+  dice: 1d4
+  leveldiv: 15
+  mysticismdiv: 25

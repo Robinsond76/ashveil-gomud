@@ -1,0 +1,8 @@
+# Phase 35b: a lesser mana draught restores 40% of the drinker's mana
+# pool at once (help draughts). Mana returns only through a rest, an inn
+# or a draught.
+buffid: 43
+name: Lesser Mana Draught
+description: A lesser mana draught is settling in you
+triggerrate: 1 rounds
+triggercount: 1

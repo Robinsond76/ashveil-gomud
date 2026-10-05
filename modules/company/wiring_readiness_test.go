@@ -269,13 +269,15 @@ func TestCompanionLevelUpKeepsVitals(t *testing.T) {
 }
 
 // Online recovery through the real round listener: out of a battle, with
-// the leader online, a companion regains health; logged out, it doesn't.
+// the leader online, a companion regains health (Phase 35b: up to half,
+// and no mana); logged out, it doesn't.
 func TestCompanionRecoversOnlineOnly(t *testing.T) {
 	w := newReadinessWorld(t)
 	mob := w.hurt(5, 1)
+	require.Less(t, 5+mob.Character.HealthPerRound(), mob.Character.HealthMax.Value/2)
 	hooks.AutoHeal(events.NewRound{RoundNumber: 3})
 	assert.Equal(t, 5+mob.Character.HealthPerRound(), mob.Character.Health, "regains health on the players' beat")
-	assert.Equal(t, 1+mob.Character.ManaPerRound(), mob.Character.Mana)
+	assert.Equal(t, 1, mob.Character.Mana, "Phase 35b: no passive mana")
 	hooks.AutoHeal(events.NewRound{RoundNumber: 4})
 	assert.Equal(t, 5+mob.Character.HealthPerRound(), mob.Character.Health, "only every third round")
 

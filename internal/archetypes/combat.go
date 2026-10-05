@@ -59,6 +59,9 @@ type Profile struct {
 	ArmorTraining string
 	ShieldSizes   []string
 	WeaponClasses []string
+	// Phase 35b: the mana pool (zero: the progression default).
+	ManaBase     int
+	ManaPerLevel float64
 }
 
 // Gear is what CanWield needs to know about an item, without the engine's
@@ -77,6 +80,9 @@ func (a *Archetype) validateCombat() error {
 		if v < 0 || math.IsNaN(v) || math.IsInf(v, 0) {
 			return fmt.Errorf("%w: %q has an invalid attack or evasion rate", ErrInvalidArchetype, a.ID)
 		}
+	}
+	if a.ManaBase < 0 || a.ManaPerLevel < 0 || math.IsNaN(a.ManaPerLevel) || math.IsInf(a.ManaPerLevel, 0) {
+		return fmt.Errorf("%w: %q has an invalid mana pool", ErrInvalidArchetype, a.ID)
 	}
 	if a.HPStart < 0 {
 		return fmt.Errorf("%w: %q has a negative HPStart", ErrInvalidArchetype, a.ID)
@@ -114,6 +120,8 @@ func (a Archetype) Profile() Profile {
 		ArmorTraining: a.ArmorTraining,
 		ShieldSizes:   append([]string(nil), a.ShieldSizes...),
 		WeaponClasses: append([]string(nil), a.WeaponClasses...),
+		ManaBase:      a.ManaBase,
+		ManaPerLevel:  a.ManaPerLevel,
 	}
 }
 

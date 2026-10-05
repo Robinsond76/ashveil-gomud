@@ -1,0 +1,8 @@
+# Phase 35b: a greater mana draught restores 60% of the drinker's mana
+# pool at once (help draughts). Mana returns only through a rest, an inn
+# or a draught.
+buffid: 44
+name: Greater Mana Draught
+description: A greater mana draught is settling in you
+triggerrate: 1 rounds
+triggercount: 1

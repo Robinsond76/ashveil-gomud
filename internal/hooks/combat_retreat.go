@@ -70,6 +70,7 @@ func handleRetreat(u *users.UserRecord, r *rooms.Room) {
 			if enemyparty.MemberStrategy(u.UserId, g.key).Role != strategy.Guardian || !ableToGuard(g) || !withdrawal.Eligible(g.char) {
 				continue
 			}
+			battle.CaptureGuards(u.UserId, string(g.key), g.char.Level) // Phase 35b
 			if _, ok := battle.SpendGuard(u.UserId, string(g.key)); !ok {
 				continue
 			}

@@ -41,10 +41,11 @@ func CanBreak(hit bool, damage int, chanting bool) bool {
 
 // BreakChance is the percent chance a blow of damage breaks the chant of
 // a chanter with maxHP: 100 for heavy force, otherwise 40 plus 2 for each
-// percent of the chanter's max health the blow took, held to 40-90. A
-// nick is about 40%; a quarter of the chanter's health is 90%. A blow of
-// no damage never breaks.
-func BreakChance(damage, maxHP int, heavy bool) int {
+// percent of the chanter's max health the blow took, plus a fifth of the
+// spell's difficulty (Phase 35b: Magic Missile's 75 adds 15), held to
+// 40-90. A nick on an easy spell is about 40%; a quarter of the chanter's
+// health is 90%. A blow of no damage never breaks.
+func BreakChance(damage, maxHP int, heavy bool, difficulty int) int {
 	if damage < 1 {
 		return 0
 	}
@@ -54,7 +55,7 @@ func BreakChance(damage, maxHP int, heavy bool) int {
 	if maxHP < 1 {
 		maxHP = 1
 	}
-	chance := BreakChanceMin + 2*(damage*100/maxHP)
+	chance := BreakChanceMin + 2*(damage*100/maxHP) + max(difficulty, 0)/5
 	return min(max(chance, BreakChanceMin), BreakChanceMax)
 }
 

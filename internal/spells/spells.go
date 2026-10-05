@@ -9,6 +9,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/fileloader"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/spellpower"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
@@ -36,6 +37,10 @@ type SpellData struct {
 	Cost        int         `yaml:"cost,omitempty"`
 	WaitRounds  int         `yaml:"waitrounds,omitempty"`
 	Difficulty  int         `yaml:"difficulty,omitempty"` // Augments final success chance by this %
+	// Power is the spell's size (Phase 35b): its scripts, heal wounds and
+	// the level-up report all read it through internal/spellpower. Spells
+	// without one size themselves in their scripts.
+	Power *spellpower.Power `yaml:"power,omitempty"`
 }
 
 const (
@@ -176,6 +181,12 @@ func (s *SpellData) Validate() error {
 		}
 		if s.Type != HelpSingle && s.Scope == ScopeMember {
 			return fmt.Errorf("spell %s: member scope requires a single helpful effect", s.SpellId)
+		}
+	}
+
+	if s.Power != nil {
+		if err := s.Power.Validate(); err != nil {
+			return fmt.Errorf("spell %s: %w", s.SpellId, err)
 		}
 	}
 

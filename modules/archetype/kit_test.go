@@ -72,7 +72,8 @@ func TestShippedKitsResolveAndBalance(t *testing.T) {
 		// Phase 32f: every kit includes a cloth knapsack (38).
 		"warrior": {10002, 20004, 20020, 30004, 30015, 38},
 		"rogue":   {10004, 8, 20029, 20003, 23, 30004, 30015, 38},
-		"wizard":  {10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 38},
+		// Phase 35b: one minor mana draught.
+		"wizard": {10021, 20020, 20008, 20039, 30004, 30015, 30014, 38},
 		// Phase 35a2: an acolyte's mace and a holy symbol, not a cudgel
 		// and a shield.
 		"cleric": {10023, 20046, 20008, 30004, 30015, 30001, 30001, 38},
@@ -267,7 +268,7 @@ func TestListAndPreviewShowKit(t *testing.T) {
 	m, _ := testModule(t)
 	list := m.list(212)
 	assert.Contains(t, list, "Starter kit: guardsman's broadsword")
-	assert.Contains(t, list, "small blue potion (x2)")
+	assert.Contains(t, list, "minor mana draught")
 
 	preview := m.choose(newUser(212), "wizard", false)
 	assert.Contains(t, preview, "Starter kit: ash quarterstaff")

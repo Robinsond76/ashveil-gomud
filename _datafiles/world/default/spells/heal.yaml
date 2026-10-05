@@ -9,3 +9,8 @@ waitrounds: 2
 difficulty: 0
 scope: member
 allowdowned: true
+# Phase 35b: the spell's size (internal/spellpower), read by its script.
+power:
+  base: 8
+  dice: 2d4
+  leveldiv: 6

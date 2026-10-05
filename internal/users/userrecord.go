@@ -223,6 +223,7 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 	spBefore := u.Character.StatPoints
 	healthBefore, manaBefore, statsBefore := u.Character.HealthMax.Value, u.Character.ManaMax.Value, u.Character.Stats
 	attackBefore, evasionBefore := u.Character.AttackSkill(), u.Character.Evasion()
+	powerBefore := powerSnapshot(u.Character) // Phase 35b
 
 	if newLevel, statsDelta := u.Character.LevelUp(); newLevel {
 
@@ -278,9 +279,10 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 		levelUpEvent.ManaMaxAfter = u.Character.ManaMax.Value
 		levelUpEvent.AttackAfter, levelUpEvent.EvasionAfter = u.Character.AttackSkill(), u.Character.Evasion()
 		levelUpEvent.StatsAfter = u.Character.Stats
-		levelUpEvent.NextMilestone = milestones.Next(u.Character.Level)
+		levelUpEvent.NextMilestone = milestones.Next(u.Character.Level, u.Character.ArchetypeID())
 		levelUpEvent.TrainingPoints = u.Character.TrainingPoints - tpBefore
 		levelUpEvent.StatPoints = u.Character.StatPoints - spBefore
+		levelUpEvent.PowerLines = powerLines(powerBefore, powerSnapshot(u.Character))
 
 		events.AddToQueue(levelUpEvent)
 

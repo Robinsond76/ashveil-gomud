@@ -28,21 +28,29 @@ func TestBreakChance(t *testing.T) {
 		name          string
 		damage, maxHP int
 		heavy         bool
+		difficulty    int
 		want          int
 	}{
-		{"heavy force always breaks", 1, 100, true, 100},
-		{"a nick", 1, 100, false, 42},
-		{"a scratch on a giant", 1, 1000, false, BreakChanceMin},
-		{"a tenth of their health", 10, 100, false, 60},
-		{"a quarter of their health", 25, 100, false, BreakChanceMax},
-		{"more than a quarter is capped", 80, 100, false, BreakChanceMax},
-		{"no damage never breaks", 0, 100, false, 0},
-		{"no damage, even heavy", 0, 100, true, 0},
-		{"no max health counts as 1", 1, 0, false, BreakChanceMax},
+		{"heavy force always breaks", 1, 100, true, 0, 100},
+		{"a nick", 1, 100, false, 0, 42},
+		{"a scratch on a giant", 1, 1000, false, 0, BreakChanceMin},
+		{"a tenth of their health", 10, 100, false, 0, 60},
+		{"a quarter of their health", 25, 100, false, 0, BreakChanceMax},
+		{"more than a quarter is capped", 80, 100, false, 0, BreakChanceMax},
+		{"no damage never breaks", 0, 100, false, 0, 0},
+		{"no damage, even heavy", 0, 100, true, 0, 0},
+		{"no max health counts as 1", 1, 0, false, 0, BreakChanceMax},
+		// Phase 35b: a fifth of the spell's difficulty.
+		{"Magic Missile adds 15", 1, 100, false, 75, 57},
+		{"Withering Hex adds 8", 10, 100, false, 40, 68},
+		{"difficulty under 5 adds nothing", 1, 1000, false, 4, BreakChanceMin},
+		{"difficulty still caps at 90", 20, 100, false, 100, BreakChanceMax},
+		{"difficulty never breaks a blow of no damage", 0, 100, false, 100, 0},
+		{"heavy force stays 100 at any difficulty", 1, 100, true, 75, 100},
 	}
 	for _, c := range cases {
-		if got := BreakChance(c.damage, c.maxHP, c.heavy); got != c.want {
-			t.Errorf("%s: BreakChance(%d, %d, %v) = %d, want %d", c.name, c.damage, c.maxHP, c.heavy, got, c.want)
+		if got := BreakChance(c.damage, c.maxHP, c.heavy, c.difficulty); got != c.want {
+			t.Errorf("%s: BreakChance(%d, %d, %v, %d) = %d, want %d", c.name, c.damage, c.maxHP, c.heavy, c.difficulty, got, c.want)
 		}
 	}
 }
@@ -50,7 +58,7 @@ func TestBreakChance(t *testing.T) {
 func TestBreakChanceScalesWithDamage(t *testing.T) {
 	prev := 0
 	for damage := 1; damage <= 30; damage++ {
-		got := BreakChance(damage, 100, false)
+		got := BreakChance(damage, 100, false, 0)
 		if got < prev || got < BreakChanceMin || got > BreakChanceMax {
 			t.Fatalf("BreakChance(%d, 100) = %d after %d: want rising within %d-%d", damage, got, prev, BreakChanceMin, BreakChanceMax)
 		}

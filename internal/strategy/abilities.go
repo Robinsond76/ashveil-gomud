@@ -163,6 +163,22 @@ func OpeningStrikeBonus(level int) int {
 	return 2 + max(level, 0)/6
 }
 
+// AimedShotBonus is the damage an Aimed Shot adds to its blow (Phase 35b):
+// 2 + level/3. The shot is already a sure critical hit, so it grows in
+// damage rather than crit chance.
+func AimedShotBonus(level int) int {
+	return 2 + max(level, 0)/3
+}
+
+// TackleExtraRounds is the rounds a tackle's knockdown lasts beyond its
+// own (Phase 35b): 1 from level 20.
+func TackleExtraRounds(level int) int {
+	if level >= 20 {
+		return 1
+	}
+	return 0
+}
+
 // Tackle chance bounds, in 100 (30g6 amendment): even Speed and Perception
 // give TackleEven; a full stat edge moves it to a bound.
 const (

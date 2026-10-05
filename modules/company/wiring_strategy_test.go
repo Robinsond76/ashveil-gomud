@@ -328,20 +328,24 @@ func TestAWizardPlayerCastsWithNoCommand(t *testing.T) {
 	assert.Equal(t, 20, b.aria.Character.Mana)
 }
 
-func TestCompanionManaComesBackOutOfCombat(t *testing.T) {
+// Phase 35b: mana never comes back on its own, for the player or a
+// companion, through the real round listener; health trickles back only to
+// half of max.
+func TestNoPassiveManaThroughAutoHeal(t *testing.T) {
 	b := newBrawl(t)
 	oswin := b.companion(2)
 	oswin.Character.ManaMax.Value, oswin.Character.Mana = 20, 5
-	hooks.AutoHeal(events.NewRound{RoundNumber: 3})
-	assert.Equal(t, 5+oswin.Character.ManaPerRound(), oswin.Character.Mana, "out of combat, every third round")
-
-	oswin.Character.Mana = 5
-	hooks.AutoHeal(events.NewRound{RoundNumber: 4})
-	assert.Equal(t, 5, oswin.Character.Mana, "only every third round")
-
-	oswin.Character.SetAggro(0, b.bandits["bandit captain"][0], characters.DefaultAttack)
-	hooks.AutoHeal(events.NewRound{RoundNumber: 6})
-	assert.Equal(t, 5, oswin.Character.Mana, "not in combat")
+	b.aria.Character.Mana = 2
+	b.aria.Character.Health = 1
+	oswin.Character.Health = 1
+	for round := uint64(3); round <= 600; round += 3 {
+		hooks.AutoHeal(events.NewRound{RoundNumber: round})
+	}
+	assert.Equal(t, 5, oswin.Character.Mana, "a companion regains no mana")
+	assert.Equal(t, 2, b.aria.Character.Mana, "nor does the player")
+	assert.Equal(t, b.aria.Character.TrickleLimit(), b.aria.Character.Health, "the player's health stops at half")
+	assert.Equal(t, b.aria.Character.HealthMax.Value/2, b.aria.Character.Health)
+	assert.Equal(t, oswin.Character.HealthMax.Value/2, oswin.Character.Health, "so does the companion's")
 }
 
 // Phase 32d: in a battle only flee takes her out; the setup can't change.

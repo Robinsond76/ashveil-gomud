@@ -15,6 +15,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/spellpower"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -240,7 +241,27 @@ func spellRules() wounds.Rules {
 	if sp := spells.GetSpell("heal"); sp != nil && sp.Cost > 0 {
 		r.HealCost = sp.Cost
 	}
+	// Phase 35b: the heal's dice come from its power block, the one source
+	// heal.js reads too.
+	if q, sd := healPower().DiceQS(); q > 0 {
+		r.HealDice = [2]int{q, sd}
+	}
 	return r
+}
+
+// healPower is Minor Heal's size (heal.yaml's power block), or its shipped
+// numbers when the spell file has none.
+func healPower() spellpower.Power {
+	if sp := spells.GetSpell("heal"); sp != nil && sp.Power != nil {
+		return *sp.Power
+	}
+	return spellpower.Power{Base: 8, Dice: "2d4", LevelDiv: 6}
+}
+
+// healBonus is a healer's flat heal bonus: Minor Heal's base plus its level
+// and Mysticism bonuses.
+func healBonus(c *characters.Character) int {
+	return healPower().Flat(c.Level, c.Stats.Mysticism.ValueAdj)
 }
 
 // supply is one treatment item the company can reach: the cargo, a
@@ -425,7 +446,7 @@ func (m *CompanyModule) treat(user *users.UserRecord, members []woundMember) []s
 			knowers++
 		}
 		if (tend || heal) && w.char.Mana > 0 {
-			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: wounds.HealBonusFor(w.char.Level), HealPct: w.char.HealingBonusPct()})
+			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: healBonus(w.char), HealPct: w.char.HealingBonusPct()})
 		}
 	}
 	anyHurt := false

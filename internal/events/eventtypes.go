@@ -23,6 +23,9 @@ type Buff struct {
 	MobInstanceId int
 	BuffId        int
 	Source        string // optional source such as spell,
+	// ExtraTriggers lengthens the buff by this many triggers (Ashveil
+	// Phase 35b: a level-20 tackle's knockdown lasts a round longer).
+	ExtraTriggers int
 }
 
 func (b Buff) Type() string { return `Buff` }
@@ -326,12 +329,15 @@ type LevelUp struct {
 	// Phase 35a2: the Attack and Evasion ratings before and after.
 	AttackBefore, AttackAfter   int
 	EvasionBefore, EvasionAfter int
-	StatsBefore, StatsAfter     stats.Statistics
-	NextMilestone               milestones.Milestone
-	StatsDelta                  stats.Statistics
-	TrainingPoints              int
-	StatPoints                  int
-	LivesGained                 int
+	// Phase 35b: each owned scaling spell's and ability's growth, as
+	// "Magic Missile 8-13 -> 9-14".
+	PowerLines              []string
+	StatsBefore, StatsAfter stats.Statistics
+	NextMilestone           milestones.Milestone
+	StatsDelta              stats.Statistics
+	TrainingPoints          int
+	StatPoints              int
+	LivesGained             int
 }
 
 func (l LevelUp) Type() string { return `LevelUp` }
@@ -441,6 +447,16 @@ type UserSettingChanged struct {
 }
 
 func (i UserSettingChanged) Type() string { return `UserSettingChanged` }
+
+// BattleEnded is a player's battle ending (Ashveil Phase 35b), with its
+// combat stream outcome (won, lost, fled, broken off). The company module
+// patches the company up after it.
+type BattleEnded struct {
+	UserId  int
+	Outcome string
+}
+
+func (b BattleEnded) Type() string { return `BattleEnded` }
 
 // Health, mana, etc.
 type CharacterVitalsChanged struct {
