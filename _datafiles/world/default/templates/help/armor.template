@@ -13,4 +13,31 @@ A shield adds nothing beyond its own armor: it earns its place by blocking.
 Armor broken by a critical hit gives half its protection for the rest of
 the fight (<ansi fg="command">help statuses</ansi>).
 
-See also: <ansi fg="command">help defense</ansi>, <ansi fg="command">help combat</ansi>, <ansi fg="command">help narration</ansi>.
+<ansi fg="yellow-bold">Bulk</ansi>
+
+Every piece of armor is <ansi fg="yellow">light</ansi>, <ansi fg="yellow">medium</ansi> or <ansi fg="yellow">heavy</ansi>, and your bulk is the
+heaviest piece you wear. Toughness costs quickness, however strong you are:
+
+  <ansi fg="yellow">Light</ansi>    no cost (robes, a cloak, a buckler)
+  <ansi fg="yellow">Medium</ansi>   {{ configpct "GamePlay.Combat.BulkTempoMedium" }}% fewer turns, {{ configpct "GamePlay.Combat.BulkDodgeMedium" }}% less dodge (leather, a shield)
+  <ansi fg="yellow">Heavy</ansi>    {{ configpct "GamePlay.Combat.BulkTempoHeavy" }}% fewer turns, {{ configpct "GamePlay.Combat.BulkDodgeHeavy" }}% less dodge (mail, plate, a tower shield)
+
+Bulk never touches a parry or a block, so a heavy warrior defends with
+sword and shield, not footwork. It adds to your burden (<ansi fg="command">help burden</ansi>).
+<ansi fg="command">status</ansi> shows your bulk, and <ansi fg="command">company compare</ansi> a companion's.
+
+<ansi fg="yellow-bold">Training</ansi>
+
+Each class is trained for armor up to a bulk:
+
+  <ansi fg="yellow">Warrior</ansi>                    heavy
+  <ansi fg="yellow">Ranger</ansi>                     medium
+  <ansi fg="yellow">Rogue, Cleric, Wizard</ansi>      light
+
+You may wear heavier armor, at a real cost: its turn and dodge costs are
+doubled, you lose {{ config "GamePlay.Combat.UntrainedSkillLoss" }} Attack and {{ config "GamePlay.Combat.UntrainedSkillLoss" }} Evasion (<ansi fg="command">help evasion</ansi>), and every
+spell takes {{ config "GamePlay.Combat.UntrainedChantRounds" }} more round to chant. <ansi fg="command">equip</ansi> warns you when a piece is heavier
+than your training.
+
+See also: <ansi fg="command">help defense</ansi>, <ansi fg="command">help shields</ansi>, <ansi fg="command">help tempo</ansi>, <ansi fg="command">help combat</ansi>,
+<ansi fg="command">help narration</ansi>.

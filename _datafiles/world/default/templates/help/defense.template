@@ -16,41 +16,48 @@ its share (<ansi fg="command">help armor</ansi>). You choose nothing; what you h
 
 Spells are never blocked, parried, or dodged.
 
+Every chance below starts at an even value when you and the attacker are
+evenly matched, and moves with your Evasion against their Attack
+(<ansi fg="command">help evasion</ansi>) plus the stat that chance uses (<ansi fg="command">help stat-edge</ansi>).
+
 <ansi fg="yellow-bold">Block</ansi>
 
   <ansi fg="command">Tamsin Reed catches the bandit captain's blow on her shield.</ansi>
 
-The chance starts at {{ config "GamePlay.Combat.BlockChanceMin" }}%, adds the shield's own armor, and moves with your
-Strength against the attacker's (each point is 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of half the range),
-held between {{ config "GamePlay.Combat.BlockChanceMin" }}% and {{ config "GamePlay.Combat.BlockChanceMax" }}%. At even
-Strength a wooden shield blocks 20% of blows and an iron shield 25%. A blocked
+The chance is {{ config "GamePlay.Combat.BlockChanceEven" }}% plus the shield's own armor, moved by your Evasion and
+your Strength against the attacker's, held between {{ config "GamePlay.Combat.BlockChanceMin" }}% and {{ config "GamePlay.Combat.BlockChanceMax" }}%.
+When evenly matched a wooden shield blocks 25% of blows and an iron shield
+30%. Only warriors and rangers carry shields (<ansi fg="command">help shields</ansi>). A blocked
 melee blow may be slammed back with a shield bash (<ansi fg="command">help interrupts</ansi>).
 
 <ansi fg="yellow-bold">Parry</ansi>
 
   <ansi fg="command">Garrick Vane turns your blow aside with his longsword.</ansi>
 
-Your Speed against the attacker's gives {{ config "GamePlay.Combat.ParryChanceMin" }}% to {{ config "GamePlay.Combat.ParryChanceMax" }}% (each point faster adds 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way), and the weapon moves it:
+{{ config "GamePlay.Combat.ParryChanceEven" }}% when evenly matched, moved by your Evasion and your Speed against
+the attacker's, from {{ config "GamePlay.Combat.ParryChanceMin" }}% to {{ config "GamePlay.Combat.ParryChanceMax" }}%. The weapon moves it:
 
   <ansi fg="yellow">+5</ansi>   swords, staves, and long polearms
   <ansi fg="yellow"> 0</ansi>   axes, maces, clubs, and whips
   <ansi fg="yellow">-5</ansi>   daggers and other stabbing blades
 
-So a sword parries 10% to 35%, and a dagger 0% to 25%: at even Speed a dagger
-is no better than a dodge. Bows and slings can't parry.
+So at an even match a sword parries 17% and a dagger 7%.
+Bows and slings can't parry.
 
 <ansi fg="yellow-bold">Dodge</ansi>
 
   <ansi fg="command">The bandit captain twists aside from your blow.</ansi>
 
-Your Perception against the attacker's gives {{ config "GamePlay.Combat.DodgeChanceMin" }}% to {{ config "GamePlay.Combat.DodgeChanceMax" }}%, the same
-way. Your
-burden then cuts it: a heavily burdened fighter keeps as little as two
-fifths of it (<ansi fg="command">help burden</ansi>). Burden never touches a block or a parry, and
-the better of parry and dodge is chosen after it.
+{{ config "GamePlay.Combat.DodgeChanceEven" }}% when evenly matched, moved by your Evasion and your Perception
+against the attacker's, from {{ config "GamePlay.Combat.DodgeChanceMin" }}% to {{ config "GamePlay.Combat.DodgeChanceMax" }}%. Your burden then cuts it: a
+heavily burdened fighter keeps as little as two fifths of it (<ansi fg="command">help burden</ansi>).
+Medium and heavy armor cut it further (<ansi fg="command">help armor</ansi>). Burden and armor never
+touch a block or a parry, and the better of parry and dodge is chosen
+after them.
 
 After a fight, the battle summary counts each side's blocks, parries, and
 dodges (<ansi fg="command">help battle-summary</ansi>).
 
 See also: <ansi fg="command">help combat</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help strength</ansi>,
-<ansi fg="command">help speed</ansi>, <ansi fg="command">help perception</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help stat-edge</ansi>.
+<ansi fg="command">help speed</ansi>, <ansi fg="command">help perception</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help stat-edge</ansi>,
+<ansi fg="command">help evasion</ansi>, <ansi fg="command">help shields</ansi>.

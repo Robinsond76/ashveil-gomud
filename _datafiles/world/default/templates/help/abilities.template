@@ -14,7 +14,8 @@ heal, it follows from how your company is set up. Who has which:
     rank deeper with a long weapon), and it has no bow or sling.
     Does: knocks the foe to the ground: 40% when your Speed equals the
     foe's Perception, up to 80% ahead or down to 20% behind, a
-    1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way per point (<ansi fg="command">help stat-edge</ansi>). A knocked-
+    1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way per point (<ansi fg="command">help stat-edge</ansi>), and moved the same
+    way by its Attack against the foe's Evasion (<ansi fg="command">help evasion</ansi>). A knocked-
     down foe loses its next action and is slower for 3 rounds. A tackle
     also breaks a foe's chant (it must start again) or wind-up. Hit or
     miss, the tackle is the warrior's whole turn: no swing that round.
@@ -24,7 +25,8 @@ heal, it follows from how your company is set up. Who has which:
     When: its foe is knocked down, stunned, staggered, or exposed, and it
     wields a blade or claws (slashing, stabbing, cleaving), every weapon
     it holds.
-    Does: its first blow that lands this round is a critical hit.
+    Does: its first blow that lands this round is a critical hit, with
+    2 more damage, and 1 more for every 6 levels.
     At most once every 2 combat rounds.
 
   <ansi fg="command">Aimed Shot</ansi>       rangers; for you, the <ansi fg="skill">track</ansi> skill

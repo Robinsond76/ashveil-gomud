@@ -22,7 +22,7 @@ func TestProgressionHelp(t *testing.T) {
 	text, err := GetHelpContents("progression")
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Smooth automatic stats", "every 2 levels", "through level 20", "60%", "class promotion (coming)", "second class option (coming)", "Warrior 3 HP", "wizard 1.5", "Fractional gains accumulate", "no level cap", "training", "60", "1.1"} {
+	for _, want := range []string{"Smooth automatic stats", "every 2 levels", "through level 20", "class promotion (coming)", "second class option (coming)", "Warrior 10 to start, 1 HP per level", "wizard none and 0.5", "help evasion", "Fractional gains accumulate", "no level cap", "training", "60", "1.1"} {
 		assert.Contains(t, plain, want)
 	}
 	assert.NotContains(t, plain, "{{")

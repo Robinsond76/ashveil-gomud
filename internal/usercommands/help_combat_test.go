@@ -82,12 +82,12 @@ func TestDefenseHelp(t *testing.T) {
 	text, err := GetHelpContents("defense")
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Help for defense", "block", "parry", "dodge", "15% and 45%", "5% to 30%",
+	for _, want := range []string{"Help for defense", "block", "parry", "dodge", "20% plus the shield's own armor", "between 8% and 55%", "12% when evenly matched", "from 3% to 40%", "sword parries 17%", "help evasion", "help shields",
 		"swords, staves, and long polearms", "daggers", "Bows and slings can't parry", "No dodge if the block fails", "no defense at all"} {
 		assert.Contains(t, plain, want)
 	}
 	assert.NotContains(t, plain, "{{", "every config number rendered")
-	for _, alias := range []string{"block", "parry", "dodge", "parrying", "defence", "shield"} {
+	for _, alias := range []string{"parry", "dodge", "parrying", "defence"} {
 		got, err := GetHelpContents(alias)
 		require.NoError(t, err, alias)
 		assert.Equal(t, text, got, "help %s is help defense", alias)

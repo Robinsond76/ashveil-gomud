@@ -42,9 +42,10 @@ Spells, backstabs, and shots don't start fights: begin with <ansi fg="command">a
 
 <ansi fg="yellow-bold">Hitting</ansi>
 
-Your chance to hit is {{ config "GamePlay.Combat.ToHitEven" }}% at equal Speed, moving toward {{ config "GamePlay.Combat.ToHitMax" }}% or {{ config "GamePlay.Combat.ToHitMin" }}%
-by your Speed against your target's (<ansi fg="command">help speed</ansi>). Your chance of a critical
+Your chance to hit is {{ config "GamePlay.Combat.ToHitEven" }}% against an even match, moving toward {{ config "GamePlay.Combat.ToHitMax" }}% or
+{{ config "GamePlay.Combat.ToHitMin" }}% by your Attack against your target's Evasion (<ansi fg="command">help evasion</ansi>) and your
+Speed against theirs (<ansi fg="command">help speed</ansi>). Your chance of a critical
 hit comes from your Smarts against theirs (<ansi fg="command">help smarts</ansi>). Your company's
 chemistry adds to your chance to hit, and darkness takes from it.
 
-See also: <ansi fg="command">help scout</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
+See also: <ansi fg="command">help evasion</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

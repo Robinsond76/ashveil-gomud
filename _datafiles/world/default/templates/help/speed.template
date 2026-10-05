@@ -5,15 +5,17 @@ blows and is harder to pin down.
 
 <ansi fg="yellow">Combat</ansi>
 
-* Sets your chance to hit. At equal Speed you hit {{ config "GamePlay.Combat.ToHitEven" }}% of the time. Each
-  point you are faster moves that 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to {{ config "GamePlay.Combat.ToHitMax" }}%, and each point
-  slower 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way down to {{ config "GamePlay.Combat.ToHitMin" }}%. Stats grow slowly, so one
-  point matters (<ansi fg="command">help stat-edge</ansi>).
+* Moves your chance to hit. At equal Speed and skill you hit {{ config "GamePlay.Combat.ToHitEven" }}% of the
+  time. Each point you are faster moves that 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way to {{ config "GamePlay.Combat.ToHitMax" }}%, and
+  each point slower 1/{{ config "GamePlay.Combat.StatEdgeSpan" }} of the way down to {{ config "GamePlay.Combat.ToHitMin" }}%, added to your Attack
+  against their Evasion (<ansi fg="command">help evasion</ansi>). Stats grow slowly, so one point
+  matters (<ansi fg="command">help stat-edge</ansi>).
 * Increases your chance to parry a melee blow with your weapon, against the
   attacker's speed (<ansi fg="command">help defense</ansi>).
-* Each point of Speed over a foe's Perception makes your tackles likelier
-  (<ansi fg="command">help abilities</ansi>).
-* Speed and your own burden set your action tempo for every weapon type,
+* Each point of Speed over a foe's Perception makes your tackles likelier,
+  and so does your skill over theirs (<ansi fg="command">help abilities</ansi>).
+* Speed, your own burden and your armor's bulk set your action tempo for
+  every weapon type,
   with at most {{ config "GamePlay.Combat.MaxTurnsPerRound" }} turns per combat round (<ansi fg="command">help tempo</ansi>).
 * Increases the number of your unarmed damage dice when fighting without a weapon.
 

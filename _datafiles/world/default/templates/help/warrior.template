@@ -8,4 +8,9 @@ The following skills are required to become a Warrior:
 - <ansi fg="skill">Brawling</ansi>
 - <ansi fg="skill">Dual Wield</ansi>
 
-<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jobs</ansi>
+In a fight a warrior is the company's tank: trained for heavy armor, the
+only class that may carry any shield (buckler, shield or tower), the most
+health (10 more to start, 1 a level), and Attack and Evasion 1 a level
+(<ansi fg="command">help shields</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help evasion</ansi>).
+
+<ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jobs</ansi>, <ansi fg="command">help archetype</ansi>

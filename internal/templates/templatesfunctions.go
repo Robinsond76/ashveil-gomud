@@ -217,6 +217,20 @@ var (
 			}
 			return ""
 		},
+		// configpct renders a fractional config value as a whole percent
+		// (0.08 as 8), so help can quote shares like armor bulk's.
+		"configpct": func(key string) string {
+			data := configs.GetConfig().AllConfigData()
+			val, ok := data[key]
+			if !ok {
+				return ""
+			}
+			f, err := strconv.ParseFloat(fmt.Sprint(val), 64)
+			if err != nil {
+				return ""
+			}
+			return strconv.Itoa(int(math.Round(f * 100)))
+		},
 	}
 )
 

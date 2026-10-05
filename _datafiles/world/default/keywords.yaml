@@ -104,6 +104,7 @@ help:
       - consider
       - coordination
       - defense
+      - evasion
       - retreat
       - formation
       - guardian
@@ -118,6 +119,7 @@ help:
       - sharpen
       - statuses
       - stat-edge
+      - shields
       - shoot
       - strategy
       - tactics
@@ -285,8 +287,10 @@ help-aliases:
   tempo:            [actions, turns]
   stat-edge:        [stat-edges, hit-chance, to-hit, crit-chance, critical-chance]
   burden:           [burdened, unburdened, burdens, agility, personal-load, nimble]
-  defense:          [defence, defenses, block, blocks, blocking, parry, parries, parrying, dodge, dodges, dodging, shield, shields]
-  armor:            [armour, absorbed]
+  defense:          [defence, defenses, parry, parries, parrying, dodge, dodges, dodging]
+  shields:          [shield, buckler, bucklers, tower-shield, block, blocks, blocking]
+  evasion:          [attack skill, combat skill, attack-skill, combat-skill, skill-edge, skill edge]
+  armor:            [armour, absorbed, bulk, heavy armor, heavy-armor, armor-training, armor training]
   statuses:         [status-effects, statuseffects, bleeding, bleed, staggered, stagger, knockdown, knocked-down, stun, stunned, burning, exposed, armor-break, armor-broken, hobbled, overload, crit-effects]
   narration:        [critical, crit, healed, chanting, combat-text, pronouns, ordinals, pain, pain-reaction]
   resurrect:        [resurrection]

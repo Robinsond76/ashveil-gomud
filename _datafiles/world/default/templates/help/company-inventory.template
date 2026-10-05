@@ -17,7 +17,9 @@ It shows:
   - The shared cargo and its weight.
 
 For one companion in full, type <ansi fg="command">company gear [member]</ansi>; for the load and
-capacity split, <ansi fg="command">cargo</ansi>.
+capacity split, <ansi fg="command">cargo</ansi>. <ansi fg="command">company equip</ansi> follows each companion's class: it
+refuses a shield or weapon the class isn't taught (<ansi fg="command">help shields</ansi>) and warns
+about armor heavier than its training (<ansi fg="command">help armor</ansi>).
 
 In the web client, Company Inventory shows shared Cargo, treasury, supplies
 and containers. Worn equipment lives in Character Gear; use company gear for
