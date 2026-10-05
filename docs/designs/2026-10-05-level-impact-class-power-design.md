@@ -5,7 +5,9 @@ the [phase 35 handoff](../plans/2026-10-05-phase-35-handoff.md). 35a level impac
 is implemented on its feature branch and pending PR integration; 35b and 35c
 remain pending implementation. The [35a measurements](../plans/2026-10-05-phase-35a-measurements.md)
 record the sparse human automatic-stat limitation against the "most levels"
-goal. The owner's direction (listed under **Owner decisions**) is settled;
+goal. The draft [35a2 skill over hit points design](2026-10-05-phase-35a2-skill-over-hit-points-design.md)
+proposes replacing §1c's HP growth and §2b's spell numbers. The owner's
+direction (listed under **Owner decisions**) is settled;
 every number below is a proposed default to verify with the balance harness
 before it ships.
 
