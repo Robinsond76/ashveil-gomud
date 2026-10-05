@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/stretchr/testify/assert"
@@ -97,8 +98,27 @@ func TestCookingViewNamesTheBestCook(t *testing.T) {
 
 	v, ok := w.m.CookingCapability(w.user.UserId)
 	require.True(t, ok)
-	assert.Equal(t, camping.CookingView{Rank: 3, Cook: "Brannoc", Ready: true, Description: v.Description}, v)
+	assert.Equal(t, camping.CookingView{Rank: 3, Ready: true, Description: v.Description}, v)
 	assert.Contains(t, v.Description, "Brannoc is the best cook here (cooking rank 3)")
+}
+
+// TestCampCookCommandUsesTheBestCook: the real "camp cook" entry point
+// cooks with the best companion present and names them.
+func TestCampCookCommandUsesTheBestCook(t *testing.T) {
+	w, cargo := bestCookWorld(t)
+	mira := testMob(t, 97302, "Mira", 100)
+	mira.Character.Health = 10
+	mira.Character.SetSkill("cooking", 2)
+	setPresence(t, presentCompanions{formationMap: formationMap{1: 97302}, present: []int{1}})
+
+	messages := captureMessages(t)
+	_, err := w.m.userCommand("cook", w.user, w.room, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	out := strings.Join(*messages, "")
+	assert.Contains(t, out, "Mira cooks")
+	assert.Contains(t, out, "thyme-roasted game")
+	assert.Equal(t, 1, cargo.stacks[30020])
 }
 
 func setPresence(t *testing.T, p presentCompanions) {

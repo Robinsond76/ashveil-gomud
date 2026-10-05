@@ -19,8 +19,8 @@ func TestNewOptionalSkillsValidates(t *testing.T) {
 		{Skill: " Cooking ", Archetypes: []string{"*"}, MaxRank: 4},
 		{Skill: "scribe", Archetypes: []string{"Wizard", "cleric", "wizard"}, MaxRank: 4},
 		{Skill: "cooking", Archetypes: []string{"*"}, MaxRank: 2}, // duplicate
-		{Skill: "alchemy", MaxRank: 2},                             // nobody
-		{Skill: "brewing", Archetypes: []string{"*"}, MaxRank: 5},  // too high
+		{Skill: "alchemy", MaxRank: 2},                            // nobody
+		{Skill: "brewing", Archetypes: []string{"*"}, MaxRank: 5}, // too high
 		{Skill: "Bad Id", Archetypes: []string{"*"}, MaxRank: 1},
 		{Skill: "tanning", Archetypes: []string{"Not An Id"}, MaxRank: 1},
 	})

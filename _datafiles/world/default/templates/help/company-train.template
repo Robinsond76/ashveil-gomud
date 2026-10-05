@@ -46,8 +46,9 @@ during a battle, a journey, or a rest.
   the skill does. It changes nothing.
 
   <ansi fg="command">company train [member] [skill] [rank] confirm</ansi>
-  Train it. The preview shows the exact line to type. Typing it twice
-  trains nothing more: the companion already has that rank.
+  Train it. The preview shows the exact line to type, with the rank, and
+  typing that line twice trains nothing more: the companion already has
+  that rank. Without a rank, confirm trains the next one.
 
   <ansi fg="command">company inspect [member]</ansi>
   A companion's level, optional skills, and training points.

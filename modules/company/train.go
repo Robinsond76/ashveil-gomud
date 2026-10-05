@@ -123,6 +123,9 @@ func (m *CompanyModule) train(user *users.UserRecord, room *rooms.Room, args []s
 		}
 	}
 	if len(args) < 2 {
+		if _, ok := resolveCompanion(record, strings.Join(args, " ")); ok {
+			return "Name a skill to train: " + trainUsage
+		}
 		if _, ambiguous := ambiguousCompanion(record, strings.Join(args, " ")); ambiguous {
 			return "More than one companion answers to that; use their number (#N)."
 		}
@@ -294,7 +297,13 @@ func (m *CompanyModule) trainSkill(user *users.UserRecord, room *rooms.Room, rec
 		return fmt.Sprintf("%s must learn %s rank %d first.", name, label, target)
 	}
 
-	// The company's state first, then the member's.
+	// The skill first, then the company's state, then the member's.
+	if !o.Allows(c.Archetype) {
+		return fmt.Sprintf("A %s can't learn %s.", archetypeLabel(c.Archetype), label)
+	}
+	if rank >= o.MaxRank {
+		return fmt.Sprintf("%s already has %s rank %d, the most a companion can learn.", name, label, rank)
+	}
 	if usercommands.InBattle(user) {
 		return "Not in the middle of a battle. Train your company once the fighting is done."
 	}
@@ -316,12 +325,6 @@ func (m *CompanyModule) trainSkill(user *users.UserRecord, room *rooms.Room, rec
 	}
 	if _, fighting, ok := m.runtime.Standing(instanceID); !ok || fighting {
 		return fmt.Sprintf("%s is busy fighting.", name)
-	}
-	if !o.Allows(c.Archetype) {
-		return fmt.Sprintf("A %s can't learn %s.", archetypeLabel(c.Archetype), label)
-	}
-	if rank >= o.MaxRank {
-		return fmt.Sprintf("%s already has %s rank %d, the most a companion can learn.", name, label, rank)
 	}
 	cost := domain.SkillRankCost(target)
 	points := m.trainingPoints(leader, c)
@@ -345,6 +348,18 @@ func (m *CompanyModule) trainSkill(user *users.UserRecord, room *rooms.Room, rec
 	}
 
 	before, _ := m.registry.Get(leader)
+	// The points came from the live level; record it in the same save, so
+	// a crash can't leave the ranks above a lower saved level.
+	if c.State != nil {
+		if level, _, _, ok := m.runtime.Progress(instanceID); ok && level > c.State.Level {
+			state := c.State.Clone()
+			state.Level = level
+			if live, ok := m.runtime.Snapshot(instanceID); ok {
+				state.Experience = live.Experience
+			}
+			_ = m.registry.SetState(leader, c.ID, state)
+		}
+	}
 	if err := m.registry.SetSkillRank(leader, c.ID, skill, target); err != nil {
 		return "Your company can't be changed right now."
 	}

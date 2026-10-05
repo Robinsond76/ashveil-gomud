@@ -17,7 +17,7 @@ func (m *CampingModule) CookingCapability(userID int) (camping.CookingView, bool
 	recipes := m.campSettings().Recipes
 	// Phase 35c: the company's best cook present, not only the leader.
 	cook := m.bestCook(u, recipes)
-	v := camping.CookingView{Rank: cook.rank(campCookSkill), Cook: cook.Name, CookIsLeader: cook.IsLeader}
+	v := camping.CookingView{Rank: cook.rank(campCookSkill)}
 	descriptions := []string{}
 	for _, r := range recipes {
 		need := "no trained skill required"

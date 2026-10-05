@@ -44,7 +44,7 @@ The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train
 The best cook is whoever has the highest Cooking among you and the living
 companions at the camp; you win a tie, then the companion with the lowest
 number. The message names them ("Brannoc cooks hunter's stew over the
-campfire."), and
+campfire; it goes into the company's cargo."), and
 if nobody can make a dish, it says the best Cooking you have there.
 Companions learn Cooking with <ansi fg="command">company train</ansi> (<ansi fg="command">help company train</ansi>),
 and some recruits arrive knowing it. An inn hearth (<ansi fg="command">use hearth</ansi>) uses

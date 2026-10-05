@@ -4,13 +4,11 @@ package camping
 // Ready refers to camp, battle, recipe ingredients/ranks and final load.
 type CookingView struct {
 	// Rank is the best cook's (Phase 35c): the leader or a companion
-	// present, named by Cook.
-	Rank         int
-	Cook         string
-	CookIsLeader bool
-	Ready        bool
-	Description  string
-	Reason       string
+	// present, named in Description.
+	Rank        int
+	Ready       bool
+	Description string
+	Reason      string
 }
 
 type CookingProvider interface {
