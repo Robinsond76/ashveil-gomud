@@ -1109,7 +1109,15 @@ func TestBalanceZoneOptions(t *testing.T) {
 	}
 }
 
-// Phase 35a only measures the encounter contract. Phase 35b adds its targets.
+// zoneMiddleRounds is the median rounds a band-middle company takes over its
+// zone's 2 and 3 foe groups. The design's 4–8 can't hold while a landed blow
+// is a fifth of a fighter's health (35a2), so 35b relaxes it.
+const zoneMiddleRounds = 12
+
+// TestBalanceZoneBands runs a company at each level of a zone band against
+// the zone's groups (35a) and asserts the level impact design's section 4
+// table (35b). Rows and their changed targets are explained in the 35b
+// measurements.
 func TestBalanceZoneBands(t *testing.T) {
 	if os.Getenv("ASHVEIL_BALANCE") != "1" {
 		t.Skip("set ASHVEIL_BALANCE=1 to measure zone bands")
@@ -1118,33 +1126,102 @@ func TestBalanceZoneBands(t *testing.T) {
 	if n, err := strconv.Atoi(os.Getenv("ASHVEIL_BALANCE_FIGHTS")); err == nil && n > 0 {
 		fights = n
 	}
+	type zoneCell struct {
+		level int
+		cm    string
+		row   string // the design row the cell counts toward, or "" to only report it
+		opts  balanceFightOptions
+	}
 	for _, band := range [][2]int{{1, 3}, {8, 10}, {18, 20}, {28, 30}} {
-		for level := band[0]; level <= band[1]; level++ {
-			cells := []balanceFightOptions{}
+		middle := (band[0] + band[1]) / 2
+		var cells []zoneCell
+		groups := func(level int, row string) {
 			for _, count := range []int{2, 3} {
 				for enemy := max(1, band[0]-1); enemy <= band[1]-1; enemy++ {
-					cells = append(cells, balanceFightOptions{EnemyCount: count, EnemyLevels: []int{enemy}})
+					cells = append(cells, zoneCell{level, companyDefault, row, balanceFightOptions{EnemyCount: count, EnemyLevels: []int{enemy}}})
 				}
 			}
-			cells = append(cells, balanceFightOptions{EnemyCount: 4, EnemyLevels: []int{band[1] - 1}})
-			if level == band[1] {
-				cells = append(cells, balanceFightOptions{EnemyCount: 5, EnemyLevels: []int{band[1]}, Boss: true})
+		}
+		for level := band[0]; level <= band[1]; level++ {
+			row := map[int]string{band[0]: "low", middle: "middle"}[level]
+			groups(level, row)
+			four := ""
+			if level == middle {
+				four = "middle4"
 			}
-			for _, opts := range cells {
-				label := fmt.Sprintf("band%d-%d/L%d/%dvL%d/boss%t", band[0], band[1], level, opts.EnemyCount, opts.EnemyLevels[0], opts.Boss)
-				var results []balanceResult
-				var hpLostPct float64
-				for i := 0; i < fights; i++ {
-					t.Run(fmt.Sprintf("%s/%d", label, i), func(t *testing.T) {
-						f := newBalanceFightWithOptions(t, level, companyDefault, enemyDefault, opts)
-						start := f.healthRemaining()[sideCompany]
-						res := f.run()
-						results = append(results, res)
-						hpLostPct += 100 * float64(res.HPRemoved[sideCompany]) / float64(start)
-					})
+			cells = append(cells, zoneCell{level, companyDefault, four, balanceFightOptions{EnemyCount: 4, EnemyLevels: []int{band[1] - 1}}})
+		}
+		// A boss and 4 escorts from the zone's levels, against a company at
+		// the band's top: once as it comes, once with the tactics a player
+		// brings to a boss.
+		for _, cm := range []string{companyDefault, companyTactics} {
+			row := ""
+			if cm == companyTactics {
+				row = "boss"
+			}
+			cells = append(cells, zoneCell{band[1], cm, row, balanceFightOptions{EnemyCount: 5, EnemyLevels: []int{band[1] - 1}, Boss: true}})
+		}
+		if under := band[0] - 3; under >= 1 {
+			groups(under, "under")
+		}
+
+		rows := map[string][]balanceResult{}
+		lost := map[string]float64{}
+		for _, c := range cells {
+			label := fmt.Sprintf("band%d-%d/L%d/%dvL%d/boss%t", band[0], band[1], c.level, c.opts.EnemyCount, c.opts.EnemyLevels[0], c.opts.Boss)
+			var results []balanceResult
+			var hpLostPct float64
+			for i := 0; i < fights; i++ {
+				t.Run(fmt.Sprintf("%s/%s/%d", label, c.cm, i), func(t *testing.T) {
+					f := newBalanceFightWithOptions(t, c.level, c.cm, enemyDefault, c.opts)
+					start := f.healthRemaining()[sideCompany]
+					res := f.run()
+					results = append(results, res)
+					hpLostPct += 100 * float64(res.HPRemoved[sideCompany]) / float64(start)
+				})
+			}
+			if len(results) == 0 {
+				continue
+			}
+			t.Log(balanceRow(c.level, c.cm, label, results))
+			t.Logf("ZONE %s %s mean HP lost %.1f%%", label, c.cm, hpLostPct/float64(len(results)))
+			if c.row != "" {
+				rows[c.row] = append(rows[c.row], results...)
+				lost[c.row] += hpLostPct
+			}
+		}
+
+		for _, row := range []string{"middle", "low", "middle4", "boss", "under"} {
+			results := rows[row]
+			if len(results) == 0 {
+				continue
+			}
+			median, wins := balanceMedianAndWins(results)
+			clean, fallen := 0, 0
+			for _, r := range results {
+				fallen += r.Fallen[sideCompany]
+				if r.Fallen[sideCompany] == 0 {
+					clean++
 				}
-				t.Log(balanceRow(level, companyDefault, label, results))
-				t.Logf("ZONE %s mean HP lost %.1f%%", label, hpLostPct/float64(fights))
+			}
+			n := float64(len(results))
+			meanFallen, cleanPct, meanLost := float64(fallen)/n, 100*float64(clean)/n, lost[row]/n
+			t.Logf("ZONEROW | %d-%d | %s | %d | %d%% | %.0f%% | %.2f | %.1f%% | %d |", band[0], band[1], row, len(results), wins, cleanPct, meanFallen, meanLost, median)
+			name := fmt.Sprintf("band %d-%d %s", band[0], band[1], row)
+			switch row {
+			case "middle":
+				assert.GreaterOrEqual(t, wins, 97, name)
+				assert.GreaterOrEqual(t, cleanPct, 85.0, name+": no member falls")
+				assert.LessOrEqual(t, meanLost, 30.0, name)
+				assert.LessOrEqual(t, median, zoneMiddleRounds, name)
+			case "low":
+				assert.GreaterOrEqual(t, wins, 85, name)
+				assert.LessOrEqual(t, meanFallen, 1.0, name)
+				assert.LessOrEqual(t, meanLost, 45.0, name)
+			case "middle4":
+				assert.GreaterOrEqual(t, wins, 90, name)
+				assert.LessOrEqual(t, meanFallen, 1.0, name)
+				assert.LessOrEqual(t, meanLost, 45.0, name)
 			}
 		}
 	}
