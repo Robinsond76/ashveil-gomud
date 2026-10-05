@@ -91,17 +91,20 @@ health** (sections 2 and 4). A cleric chooses between a two-handed staff
 - Heals also remove one harmful status (bleeding, poisoned) from their
   target, once per patient per battle.
 - **Level 40:** the Angel arrives one chant round sooner. **Level 50:**
-  the Angel's Mercy heals every 2 rounds instead of 3.
+  Mercy heals the two most hurt allies.
 
-**The Angel** (a guardian of the Host):
+**The Angel** (a guardian of the Host). Owner: angels must be clearly
+useful, a second protector and healer the whole company feels:
 
 | | |
 |---|---|
-| Level | The Hierarch's level; Attack and Evasion rates 1.0 |
-| HP | A warrior's of that level (+25% with a holy symbol) |
-| Weapon | Radiant blade, 1d8; +50% against undead and demons |
-| Guard | Steps in for the most hurt ally in reach (the 30c2 Guardian rule) |
-| Mercy | Every 3 rounds, heals the most hurt ally for half a Minor Heal |
+| Level | The Hierarch's level; Attack rate 1.0, Evasion rate 1.1 |
+| HP and armor | A warrior's HP of that level (+25% with a holy symbol), and armor like a warrior's heavy kit (defense 40), with none of heavy armor's slowness |
+| Weapon | Radiant blade, 1d10; +50% against undead and demons |
+| Guard | Steps in for the most hurt ally in reach, up to 3 times a battle (the 30c2 Guardian rule, with more uses) |
+| Mercy | Every 2 rounds, heals the most hurt ally for a full Minor Heal of the Hierarch's level |
+| Wings of the Host | Allies in the Angel's row gain +5 Evasion while it stands |
+| Cleansing light | On arrival, removes one harmful status (bleeding, poisoned, knocked down) from every ally |
 
 ## 3. Unrestricted route: Druid → Elder Druid
 
@@ -152,9 +155,10 @@ fails to protect becomes a danger to the company.
 ### Summoning rules (Angel and Demon)
 
 - **Casting:** a 3-round chant (a blow can break it, as with any chant),
-  costing 40% of the caster's maximum mana. Battle only; **once per
-  battle** from level 30 (owner). The mana cost is what limits it: a full
-  pool pays for about two summons before the company must rest.
+  costing **10%** of the caster's maximum mana (owner). Battle only;
+  **once per battle** from level 30 (owner). The cost is light, so a
+  summoner calls in most battles; the once-per-battle limit and the
+  protected chant are what hold it back.
 - **Duration:** until the battle ends, the summon dies, or the summoner
   falls (the Angel departs; the Demon breaks free).
 - **Not a company member:** it takes no company slot (the company stays
@@ -225,8 +229,12 @@ With `ASHVEIL_BALANCE=1`:
 
 1. **Summons:** a Hierarch or Demonologist company against a boss band wins
    10–20 points more often than the same company with a Priest or Blood
-   Priest, and spends most of its caster's mana doing it. A summon is
-   never present after the battle, after a copyover or in a save.
+   Priest. Because summons are cheap (10% mana) and routine, the band
+   tables for ordinary groups are also measured with a summon present,
+   and stay within the level impact design's §4 targets (the summon makes
+   fights easier, not trivial). The Angel and Demon companies stay within
+   5 points of each other. A summon is never present after the battle,
+   after a copyover or in a save.
 2. **Broken binding:** a Demonologist that falls makes its Demon attack the
    nearest creature once, then vanish; tested through a real battle.
 3. **Fighting healers:** a Paladin company and a Blackguard company each
@@ -250,5 +258,10 @@ All numbers are starting values for the balance tests.
 1. **Summon frequency:** once per battle from level 30; mana limits it.
 2. **Unrestricted cleric:** Druid.
 3. **Blood Oath:** heals any hurt ally (the most hurt), not only a ward.
+
+4. **Summon cost and the Angel** (later the same day): summons cost 10%
+   of maximum mana, not 40%; the Angel is strengthened to be clearly
+   useful (armor, more guards, a full Mercy heal every 2 rounds, an
+   Evasion aura and a cleanse on arrival).
 
 No questions are open. Delivery is planned with class promotions (38b).
