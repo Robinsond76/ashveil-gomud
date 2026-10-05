@@ -32,6 +32,28 @@ consistent style.
 
 These apply to every sprite unless a row says otherwise.
 
+### Owner revision: pre-rendered style (2026-10-05)
+
+The owner asked for Ogre Battle 64 as direct inspiration and lifted the
+limits below that stood in its way. **This revision overrides the craft,
+palette and size rules that follow.**
+
+- **Pre-rendered look.** Figures are modelled in 3D and rendered to hard-edged
+  pixels (`scripts/sprites/`), lit from the top-left, in three-quarter view.
+  Battle units face right and toward the camera; map units face the camera.
+- **No black outline on units, terrain or scenes.** Edges are darkened in each
+  material's own colours. Icons keep a dark outline for UI legibility.
+- **Many tones per material.** Shading uses 6–12 steps per ramp with light
+  ordered dithering.
+- **Palette.** The master palette is the union of the generated material and
+  scene ramps (363 colours in S0), not a fixed 64. Every sprite still uses only
+  palette colours; the generator checks this.
+- **Sizes.** Battle M is **80×80** (an adult about 58 px tall), Battle L
+  **128×128**, and battle backgrounds **384×216** (scaled 5x to 1920×1080).
+  Keep the ground band clear from y 120 to 212. Other sizes stand.
+- Ogre Battle 64 remains inspiration only: never copy, trace or closely
+  imitate its sprites.
+
 ### Art direction (owner, 2026-10-05)
 
 Ashveil is a **mature high fantasy**: a dangerous, unforgiving world. The

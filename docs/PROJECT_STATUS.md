@@ -1,5 +1,14 @@
 # Ashveil Project Status
 
+**Sprite set S0 redone in the pre-rendered style (2026-10-05):** the owner
+asked for Ogre Battle 64 as inspiration and lifted the spec limits that
+blocked it. S0 is now rendered from 3D models in three-quarter view, with
+soft many-tone shading, colour-tinted edges instead of black outlines, a
+363-colour palette, 80×80 battle frames and a 384×216 battle background.
+Recorded as an owner revision in the [sprite specification](designs/2026-10-05-sprite-specification.md).
+Generator: `python3 scripts/sprites/s0.py`. S1 still waits for owner
+approval of S0. Art and docs only; no Go tests required.
+
 **Sprite set S0 drafted for owner review (2026-10-05):** at the owner's
 request, generated the S0 style foundation from the
 [sprite specification](designs/2026-10-05-sprite-specification.md) into

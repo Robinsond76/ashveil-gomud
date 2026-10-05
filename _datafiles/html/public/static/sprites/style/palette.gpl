@@ -1,68 +1,367 @@
 GIMP Palette
 Name: Ashveil Master
-Columns: 8
+Columns: 16
 #
- 20  16  14	W0 Ink
- 36  29  26	W1 Soot
- 58  48  43	W2 Peat
- 85  72  64	W3 Old Stone
-116 102  92	W4 Weathered Stone
-151 138 125	W5 Lichen Grey
-190 179 163	W6 Dry Bone
- 26  29  34	C0 Pitch
- 42  47  54	C1 Gunmetal
- 61  67  75	C2 Dark Iron
- 84  91  99	C3 Iron
-111 119 126	C4 Worn Steel
-147 155 160	C5 Steel
-195 201 203	C6 Edge Light
- 42  26  18	E0 Loam
- 63  39  23	E1 Bark
- 88  55  31	E2 Old Leather
-116  73  42	E3 Leather
-143  95  56	E4 Saddle
-171 122  76	E5 Tan
-198 154 104	E6 Straw
-223 192 146	E7 Parchment
- 16  26  18	G0 Deep Wood
- 26  42  26	G1 Pine Shadow
- 38  60  35	G2 Pine
- 52  79  44	G3 Moss
- 70 100  52	G4 Fern
- 93 122  62	G5 Meadow
-122 148  79	G6 Sunlit Grass
-159 176 108	G7 Pale Grass
- 18  26  38	B0 Night Water
- 29  43  59	B1 Deep River
- 43  64  84	B2 River
- 60  86 107	B3 Slate
- 84 112 134	B4 Shallows
-114 141 159	B5 Mist
-157 180 194	B6 Pale Light
- 38  14  12	R0 Dried Blood
- 61  20  16	R1 Oxblood Shadow
- 90  29  21	R2 Oxblood
-122  41  27	R3 Rust
-156  58  34	R4 Brick
-192  88  44	R5 Ember
-222 138  68	R6 Flame
- 46  36  16	O0 Umber
- 74  58  25	O1 Tarnish
-107  84  36	O2 Old Brass
-140 111  47	O3 Ochre
-173 140  61	O4 Brass
-204 174  90	O5 Wheat
-234 214 142	O6 Candlelight
- 31  22  37	V0 Bruise
- 48  34  58	V1 Dusk
- 68  49  79	V2 Plum
- 90  68 102	V3 Heather
-118  92 128	V4 Thistle
-154 131 161	V5 Pale Heather
-107  66  50	S0 Weathered Skin Shadow
-140  90  67	S1 Tanned Skin
-173 118  87	S2 Skin
-201 150 119	S3 Fair Skin
-224 184 152	S4 Skin Light
-233 220 195	S5 Undyed Wool
-244 239 226	S6 Highlight
+ 64  47  55	skin 0
+ 92  66  64	skin 1
+120  84  73	skin 2
+148 103  82	skin 3
+175 122  92	skin 4
+190 143 113	skin 5
+205 165 135	skin 6
+219 187 157	skin 7
+ 68  54  62	skin_pale 0
+ 99  77  76	skin_pale 1
+129 100  91	skin_pale 2
+160 124 105	skin_pale 3
+190 147 120	skin_pale 4
+203 165 136	skin_pale 5
+214 182 153	skin_pale 6
+226 199 170	skin_pale 7
+ 41  31  40	hair 0
+ 51  37  39	hair 1
+ 60  42  38	hair 2
+ 70  48  37	hair 3
+ 92  69  53	hair 4
+124 103  84	hair 5
+155 136 114	hair 6
+ 59  54  65	beard_grey 0
+ 79  74  80	beard_grey 1
+100  94  94	beard_grey 2
+120 114 109	beard_grey 3
+140 134 124	beard_grey 4
+163 156 141	beard_grey 5
+186 177 158	beard_grey 6
+209 198 176	beard_grey 7
+ 44  41  58	iron 0
+ 56  56  70	iron 1
+ 69  71  82	iron 2
+ 81  85  95	iron 3
+ 94 100 107	iron 4
+131 132 131	iron 5
+169 165 155	iron 6
+207 198 179	iron 7
+ 56  55  71	steel 0
+ 73  75  88	steel 1
+ 90  94 105	steel 2
+108 113 123	steel 3
+125 133 140	steel 4
+161 163 160	steel 5
+198 193 179	steel 6
+235 224 200	steel 7
+ 43  41  58	mail 0
+ 55  55  69	mail 1
+ 67  69  81	mail 2
+ 79  83  92	mail 3
+ 91  97 104	mail 4
+129 130 128	mail 5
+167 163 153	mail 6
+206 197 178	mail 7
+ 48  25  38	oxblood 0
+ 63  27  35	oxblood 1
+ 79  29  31	oxblood 2
+ 94  32  28	oxblood 3
+110  34  25	oxblood 4
+131  64  52	oxblood 5
+153  96  80	oxblood 6
+175 127 108	oxblood 7
+ 47  33  42	leather 0
+ 61  41  41	leather 1
+ 76  49  41	leather 2
+ 91  58  40	leather 3
+106  66  40	leather 4
+130  95  68	leather 5
+155 124  96	leather 6
+180 153 125	leather 7
+ 59  44  48	tan 0
+ 79  58  52	tan 1
+100  72  56	tan 2
+120  86  60	tan 3
+140 100  64	tan 4
+162 125  90	tan 5
+183 151 117	tan 6
+204 177 144	tan 7
+ 44  32  41	wood 0
+ 57  40  40	wood 1
+ 69  48  39	wood 2
+ 82  55  38	wood 3
+ 95  63  37	wood 4
+121  92  65	wood 5
+148 122  94	wood 6
+175 152 124	wood 7
+ 71  64  72	wool 0
+ 99  90  91	wool 1
+126 117 110	wool 2
+154 144 129	wool 3
+182 170 149	wool 4
+196 183 160	wool 5
+209 196 171	wool 6
+223 209 183	wool 7
+ 59  47  45	brass 0
+ 82  66  47	brass 1
+106  84  49	brass 2
+130 103  51	brass 3
+153 122  53	brass 4
+180 153  94	brass 5
+208 185 136	brass 6
+235 216 179	brass 7
+ 36  38  58	slate 0
+ 43  50  70	slate 1
+ 49  62  82	slate 2
+ 56  74  95	slate 3
+ 63  86 107	slate 4
+ 94 111 124	slate 5
+127 137 141	slate 6
+159 163 158	slate 7
+ 37  31  43	charcoal 0
+ 41  35  44	charcoal 1
+ 46  39  44	charcoal 2
+ 50  44  45	charcoal 3
+ 55  48  45	charcoal 4
+ 84  76  69	charcoal 5
+115 105  94	charcoal 6
+145 134 119	charcoal 7
+ 42  30  53	plum 0
+ 51  34  60	plum 1
+ 60  38  66	plum 2
+ 69  43  72	plum 3
+ 78  47  79	plum 4
+104  75  98	plum 5
+131 105 118	plum 6
+158 134 138	plum 7
+ 36  38  44	moss 0
+ 42  49  45	moss 1
+ 48  61  46	moss 2
+ 55  73  47	moss 3
+ 61  85  48	moss 4
+ 90 108  72	moss 5
+119 131  96	moss 6
+148 155 121	moss 7
+ 43  34  57	heather 0
+ 53  41  66	heather 1
+ 63  49  76	heather 2
+ 74  56  85	heather 3
+ 84  64  95	heather 4
+112  93 114	heather 5
+141 122 133	heather 6
+170 152 152	heather 7
+ 42  40  49	ashmoss 0
+ 51  51  53	ashmoss 1
+ 60  63  57	ashmoss 2
+ 69  74  62	ashmoss 3
+ 79  86  66	ashmoss 4
+105 109  87	ashmoss 5
+132 132 109	ashmoss 6
+158 155 131	ashmoss 7
+ 76  68  75	bone 0
+104  95  94	bone 1
+132 122 113	bone 2
+160 149 132	bone 3
+188 176 151	bone 4
+201 188 162	bone 5
+213 200 173	bone 6
+225 212 183	bone 7
+ 41  36  47	ogre 0
+ 52  48  52	ogre 1
+ 64  60  57	ogre 2
+ 76  73  61	ogre 3
+ 88  85  66	ogre 4
+103  99  76	ogre 5
+123 118  93	ogre 6
+142 136 111	ogre 7
+162 154 128	ogre 8
+ 44  43  49	goblin 0
+ 56  59  54	goblin 1
+ 68  74  59	goblin 2
+ 80  90  65	goblin 3
+ 93 106  70	goblin 4
+120 128  93	goblin 5
+147 150 116	goblin 6
+174 173 140	goblin 7
+ 47  35  43	hide 0
+ 62  45  44	hide 1
+ 77  54  44	hide 2
+ 92  64  45	hide 3
+107  74  46	hide 4
+129  98  70	hide 5
+151 124  95	hide 6
+174 149 120	hide 7
+ 26  20  20	eye 0
+144  66  42	ember_eye 0
+187  83  42	ember_eye 1
+224 162 126	ember_eye 2
+ 93 107 127	glow 0
+116 137 157	glow 1
+139 166 186	glow 2
+164 195 212	glow 3
+205 215 211	glow 4
+245 235 210	glow 5
+ 60  52  60	canvas 0
+ 85  75  73	canvas 1
+110  97  87	canvas 2
+135 120 100	canvas 3
+159 142 114	canvas 4
+176 159 130	canvas 5
+192 175 146	canvas 6
+208 192 162	canvas 7
+ 48  43  56	stone_m 0
+ 63  59  66	stone_m 1
+ 78  74  77	stone_m 2
+ 93  90  87	stone_m 3
+109 106  98	stone_m 4
+133 128 116	stone_m 5
+157 150 135	stone_m 6
+182 173 154	stone_m 7
+ 97 117  80	heal_glow 0
+117 144  92	heal_glow 1
+137 172 103	heal_glow 2
+175 197 136	heal_glow 3
+221 222 179	heal_glow 4
+ 69  62  70	plaster 0
+100  91  91	plaster 1
+131 121 112	plaster 2
+162 151 133	plaster 3
+193 180 153	plaster 4
+203 190 162	plaster 5
+212 199 171	plaster 6
+221 208 179	plaster 7
+105 116 106	gravemist 0
+124 139 122	gravemist 1
+148 163 141	gravemist 2
+185 190 164	gravemist 3
+149 121  55	yellow_eye 0
+194 158  59	yellow_eye 1
+228 202 135	yellow_eye 2
+ 66  52  54	paleWood 0
+ 92  72  62	paleWood 1
+118  93  70	paleWood 2
+144 113  78	paleWood 3
+167 135  96	paleWood 4
+186 158 121	paleWood 5
+206 181 146	paleWood 6
+ 59  47  47	thatch_m 0
+ 82  66  51	thatch_m 1
+106  84  54	thatch_m 2
+130 103  58	thatch_m 3
+153 122  62	thatch_m 4
+171 141  86	thatch_m 5
+188 161 111	thatch_m 6
+204 181 136	thatch_m 7
+ 40  47  69	water_m 0
+ 49  66  89	water_m 1
+ 58  85 109	water_m 2
+ 67 104 129	water_m 3
+ 77 123 149	water_m 4
+121 152 165	water_m 5
+166 181 180	water_m 6
+210 211 195	water_m 7
+ 52  24  37	blood 0
+ 70  25  33	blood 1
+ 89  26  30	blood 2
+107  28  26	blood 3
+126  29  22	blood 4
+149  67  56	blood 5
+173 106  91	blood 6
+197 145 125	blood 7
+ 56  27  42	berry 0
+ 77  31  42	berry 1
+ 99  34  42	berry 2
+120  38  42	berry 3
+141  42  42	berry 4
+164  81  75	berry 5
+187 121 109	berry 6
+210 161 143	berry 7
+ 40  44  44	leaf 0
+ 49  61  46	leaf 1
+ 59  78  48	leaf 2
+ 68  95  50	leaf 3
+ 78 112  52	leaf 4
+110 135  80	leaf 5
+143 159 110	leaf 6
+175 182 139	leaf 7
+ 74  69  78	cloth_white 0
+101  96  99	cloth_white 1
+129 123 120	cloth_white 2
+156 150 141	cloth_white 3
+183 177 161	cloth_white 4
+198 190 171	cloth_white 5
+212 203 181	cloth_white 6
+227 215 191	cloth_white 7
+ 32  32  43	canopy 0
+ 37  43  45	canopy 1
+ 43  55  46	canopy 2
+ 48  66  48	canopy 3
+ 54  77  49	canopy 4
+ 59  88  51	canopy 5
+ 79 105  66	canopy 6
+102 122  85	canopy 7
+125 140 104	canopy 8
+148 158 123	canopy 9
+ 34  35  49	farwood 0
+ 42  48  56	farwood 1
+ 49  60  63	farwood 2
+ 56  73  70	farwood 3
+ 64  86  77	farwood 4
+ 86 104  92	farwood 5
+108 122 108	farwood 6
+131 140 124	farwood 7
+ 39  41  45	grass 0
+ 46  53  47	grass 1
+ 53  65  49	grass 2
+ 61  76  51	grass 3
+ 68  88  53	grass 4
+ 75 100  55	grass 5
+ 83 112  57	grass 6
+ 97 125  69	grass 7
+115 138  85	grass 8
+134 151 101	grass 9
+152 165 118	grass 10
+170 178 134	grass 11
+ 47  36  44	earth 0
+ 62  46  45	earth 1
+ 77  56  46	earth 2
+ 92  66  47	earth 3
+107  76  48	earth 4
+129 100  72	earth 5
+151 125  96	earth 6
+174 150 121	earth 7
+ 36  28  43	bark 0
+ 46  36  43	bark 1
+ 57  44  44	bark 2
+ 67  52  45	bark 3
+ 78  59  46	bark 4
+ 92  72  54	bark 5
+112  93  73	bark 6
+132 114  92	bark 7
+152 134 112	bark 8
+ 97 110 116	sky 0
+113 131 134	sky 1
+129 151 151	sky 2
+146 171 167	sky 3
+173 188 178	sky 4
+199 204 188	sky 5
+ 31  32  52	water 0
+ 35  42  63	water 1
+ 38  53  74	water 2
+ 42  63  84	water 3
+ 46  74  95	water 4
+ 50  84 106	water 5
+ 75 104 120	water 6
+105 126 135	water 7
+134 149 149	water 8
+163 171 164	water 9
+ 60  47  50	road 0
+ 80  62  55	road 1
+ 99  76  59	road 2
+118  91  64	road 3
+138 106  69	road 4
+155 126  90	road 5
+173 146 111	road 6
+191 166 132	road 7
+169 139  84	thatch 5
+184 157 106	thatch 6
+199 175 129	thatch 7
+ 28  28  46	night 0
+ 28  32  49	night 1
+ 44  49  61	night 2
+ 97  97  99	night 3
