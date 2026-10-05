@@ -57,8 +57,9 @@ wolf mane (20041) and spider exoskeleton (20023).
   more turns; heals are now sized against small HP pools. 35b reworks heals,
   mana and spell power and is the natural place to retune this.
 
-These are open owner questions (see `docs/PROJECT_STATUS.md`); no further
-tuning is in 35a2.
+**Owner decision (2026-10-05):** merge 35a2 as is. The fight-length, tank
+and coordination targets move to 35b's acceptance; the "L15 can lose" row is
+retired.
 
 ## 5v5 table (TestBalance5v5)
 

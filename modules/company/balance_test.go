@@ -1005,8 +1005,9 @@ func TestBalanceMismatches(t *testing.T) {
 			}
 			assert.Greater(t, intact*2, len(results), "L30 against L10 loses no member in most fights")
 		} else {
+			// Phase 35a2 (owner, 2026-10-05): five levels of skill decide the
+			// fight, so the 30g6 "can lose" row is retired.
 			assert.Greater(t, winPct, 50, "L15 against L10 is favored")
-			assert.Less(t, winPct, 100, "L15 against L10 can lose")
 		}
 	}
 }

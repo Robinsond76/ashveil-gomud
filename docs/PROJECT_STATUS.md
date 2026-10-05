@@ -117,7 +117,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-05 (35a2 skill over hit points built, in review as PR #18 with four balance rows for the owner; 35c companion training merged via PR #16; 35a merged via PR #15; 35a2 skill-over-HP design approved and planned, faith routes design drafted; visual client milestone and sprite specification added; roadmap reprioritized; 35b pending implementation)
+- **Last updated:** 2026-10-05 (35a2 skill over hit points built, in review as PR #18, owner chose to merge and retune balance in 35b; 35c companion training merged via PR #16; 35a merged via PR #15; 35a2 skill-over-HP design approved and planned, faith routes design drafted; visual client milestone and sprite specification added; roadmap reprioritized; 35b pending implementation)
 - **Latest completed slices:** 35c, companion training; 35a, level impact; 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -191,7 +191,7 @@ implemented (handoff rule 20).
 | Phase | Scope | Source | Depends on |
 |---|---|---|---|
 | 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells. [Plan](plans/2026-10-05-phase-35a-level-impact.md), complete (PR #15) | Level impact §1, §4.1 | — |
-| 35a2 | Skill over hit points: derived Attack and Evasion ratings by level and class, one skill edge added to every opposed chance (block included), small HP growth with a 15–25% landed hit, a smaller Strength damage bonus, armor bulk with a significant untrained penalty (warriors the tanks), shields for warriors and rangers (bucklers) only, cleric staffs/rods/maces, spell and heal numbers sized to a weapon hit. [Design](designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md), owner-approved 2026-10-05; [plan](plans/2026-10-05-phase-35a2-skill-over-hit-points.md); built, in review as [PR #18](https://github.com/Robinsond76/ashveil-gomud/pull/18) ([measurements](plans/2026-10-05-phase-35a2-measurements.md)); four balance rows wait on the owner | Owner direction 2026-10-05 | 35a |
+| 35a2 | Skill over hit points: derived Attack and Evasion ratings by level and class, one skill edge added to every opposed chance (block included), small HP growth with a 15–25% landed hit, a smaller Strength damage bonus, armor bulk with a significant untrained penalty (warriors the tanks), shields for warriors and rangers (bucklers) only, cleric staffs/rods/maces, spell and heal numbers sized to a weapon hit. [Design](designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md), owner-approved 2026-10-05; [plan](plans/2026-10-05-phase-35a2-skill-over-hit-points.md); built, in review as [PR #18](https://github.com/Robinsond76/ashveil-gomud/pull/18) ([measurements](plans/2026-10-05-phase-35a2-measurements.md)); owner chose to merge and retune three balance rows in 35b | Owner direction 2026-10-05 | 35a |
 | 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), pending implementation; spell, heal and HP numbers wait on 35a2 | Level impact §2, §4 | 35a, 35a2 |
 | 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), complete, merged via [PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16) | Level impact §5 | 35a |
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
@@ -261,8 +261,10 @@ questions:** equal 5v5 fights run a median of 14–20 rounds (target 8–12;
 meet it; a warrior takes 0.84× a rogue's damage per swing (target 0.7×);
 L15 now always beats L10 (the 30g6 row wants it to lose sometimes); enemy
 coordination tiers 2–3 drop a level-10 company to 37% and 26% wins (33i2
-wants ≥ 50%). No further tuning in 35a2; 35b's heal and spell rework is the
-natural place for the last.
+wants ≥ 50%). **Owner decision (2026-10-05):** merge 35a2 as is; the
+fight-length, tank and coordination targets move to the
+[35b plan](plans/2026-10-05-phase-35b-caster-power.md)'s acceptance, and the
+"L15 can lose" row is retired (its assertion removed).
 
 **Review:** an independent full-diff reviewer found no blocking bug.
 Accepted and fixed with regression tests: `help stat-edge` contradicted the

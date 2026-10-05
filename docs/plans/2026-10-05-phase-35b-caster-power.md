@@ -306,5 +306,13 @@ Out of scope:
 - HP recovers passively only to 50% of max.
 - All zone-band assertions and the mana run pass, or the owner has the table
   and a decision.
+- **Carried from 35a2** (owner, 2026-10-05: merge 35a2 and retune here; see
+  the [35a2 measurements](2026-10-05-phase-35a2-measurements.md)): with
+  `ASHVEIL_BALANCE=1`, the spread mirror's median falls toward 8–12 rounds
+  (35a2: 14–20); a warrior with a shield takes at most 0.7× a rogue's damage
+  per swing (35a2: 0.84×); and coordinated tiers 2–3 keep a level-10
+  company's wins at 50% or more (35a2: 37% and 26%). Each passes, or the
+  owner has the table and a decision. The 30g6 "level 15 can lose to level
+  10" row is retired.
 - Help pages are accurate and indexed, and tutorial pointers resolve.
 - No world-time change; save, copyover and allied ownership are intact.
