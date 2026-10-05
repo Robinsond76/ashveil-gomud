@@ -1,5 +1,13 @@
 # Ashveil Project Status
 
+**Neutral classes design drafted (2026-10-05):** the owner asked for a
+glaive class and classes with no good or evil path, inspired by Ogre Battle
+and Unicorn Overlord. Added the [neutral classes design](designs/2026-10-05-neutral-classes-design.md):
+eight new base lineages (Halberdier, Doll Master, Beast Tamer, Gryphon
+Rider, Samurai, Shaman, Alchemist, Arbalist) with unrestricted routes,
+proposed as phases 39a–39h after 38b. Draft with five open questions.
+Documentation only. Verification: links and the diff checked.
+
 **Phase 40a3 design approved (2026-10-05):** the owner approved the camp
 gear design as written: the fuel rule, the six items, and their weights,
 effects and prices. The execution plan comes when the visual milestone
