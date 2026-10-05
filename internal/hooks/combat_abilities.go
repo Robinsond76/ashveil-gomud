@@ -242,7 +242,7 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 	switch id {
 	case strategy.Tackle:
 		abilityTurns[a.who] = true
-		chance := strategy.TackleChance(a.char.Stats.Speed.ValueAdj, foe.Character.Stats.Perception.ValueAdj)
+		chance := strategy.TackleChance(a.char.Stats.Speed.ValueAdj, foe.Character.Stats.Perception.ValueAdj, characters.SkillEdge(a.char.AttackSkill(), foe.Character.Evasion()))
 		roll := abilityRoll(100)
 		util.LogRoll(`Tackle`, roll, chance)
 		if roll >= chance {
@@ -271,6 +271,7 @@ func useAbility(a actor, foe *mobs.Mob, id strategy.Ability, room *rooms.Room) {
 		a.char.Aggro.Type = characters.BackStab
 		emitCombat(event)
 		if id == strategy.OpeningStrike {
+			a.char.Aggro.StrikeBonus = strategy.OpeningStrikeBonus(a.char.Level)
 			a.holder.say(fmt.Sprintf(`You see an opening on %s.`, target.tag()),
 				`%s sees an opening on `+verbatim(target.tag())+`.`, ` (opening strike)`)
 		} else {

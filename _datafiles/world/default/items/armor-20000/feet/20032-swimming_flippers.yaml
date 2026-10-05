@@ -4,6 +4,7 @@ namesimple: flippers
 description: Specially crated shoes that allow you to swim in deep water.
 type: feet
 subtype: wearable
+bulk: light
 damagereduction: 4
 statmods:
   speed: -1

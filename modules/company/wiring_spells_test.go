@@ -82,7 +82,13 @@ func TestSpellNarrationThroughTheRealCast(t *testing.T) {
 	}
 	require.NotNil(t, dealt, "a missile lands:\n%s", strings.Join(*heard, ""))
 	n, _ := strconv.Atoi(dealt[1])
-	assert.True(t, n >= 3 && n <= 8, "1d6+2 damage, got %d", n)
+	// 35a2: 7 + 1d6 + level/10 + Mysticism/15, times the caster's spell
+	// factor (its Attack against the captain's Evasion).
+	o := &oswin.Character
+	flat := 7 + o.Level/10 + o.Stats.Mysticism.ValueAdj/15
+	factor := 1 + 0.5*characters.SkillEdge(o.AttackSkill(), captain.Character.Evasion())
+	low, high := max(1, int(float64(flat+1)*factor)), max(1, int(float64(flat+6)*factor))
+	assert.True(t, n >= low && n <= high, "(%d+1d6)×%.2f damage, got %d", flat, factor, n)
 	all := strings.Join(*heard, "")
 	assert.Contains(t, all, "(chanting: Magic Missile, 2 rounds)", "the chant names the spell and its rounds")
 	assert.Contains(t, all, "(chanting: Magic Missile, 1 round)")
@@ -119,8 +125,10 @@ func TestSpellNarrationThroughTheRealCast(t *testing.T) {
 	}
 	require.NotNil(t, list, "Oswin's heal lands")
 	healed, _ := strconv.Atoi(list[1])
-	bonus := oswin.Character.Level / 2 // 30g6: 1 per 2 caster levels
-	assert.True(t, healed >= 2+bonus && healed <= 6+bonus, "2d3+%d healed, got %d", bonus, healed)
+	// 35a2: 55% of 8 + 2d4 + level/6, times the healer's heal factor.
+	base := 8 + oswin.Character.Level/6
+	heal := 0.55 * (1 + float64(oswin.Character.HealingBonusPct())/100)
+	assert.True(t, healed >= int(float64(base+2)*heal) && healed <= int(float64(base+8)*heal), "(%d+2d4)×%.3f healed, got %d", base, heal, healed)
 
 	for _, line := range strings.Split(all+strings.Join(*heard, ""), "\n") {
 		if spellLine.MatchString(line) {

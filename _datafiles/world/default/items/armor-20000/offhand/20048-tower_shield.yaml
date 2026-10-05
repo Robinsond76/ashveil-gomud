@@ -1,0 +1,10 @@
+itemid: 20048
+name: tower shield
+namesimple: shield
+description: A tall shield of banded oak, nearly as high as its bearer. Behind it a soldier is a wall, and walks like one.
+type: offhand
+subtype: wearable
+damagereduction: 14
+shieldsize: tower
+bulk: heavy
+weight: 9000

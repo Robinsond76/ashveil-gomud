@@ -167,7 +167,8 @@ func (m *CompanyModule) EquipmentViewFor(id int, focus string) domain.EquipmentV
 		out.Available, out.Reason = false, "Equipment preview unavailable."
 		return out
 	}
-	clone := func() (*characters.Character, error) { return characterFrom(raw, hpPerLevel) }
+	archetype := bare.ArchetypeID()
+	clone := func() (*characters.Character, error) { return characterFrom(raw, hpPerLevel, archetype) }
 	preview := func(verb, slot string, itm items.Item) domain.EquipmentChoice {
 		choice := domain.EquipmentChoice{Ref: itm.ShorthandId(), Label: domain.PlainLabel(itm)}
 		args := []string{verb, "me", itm.ShorthandId(), slot}

@@ -4,6 +4,7 @@ namesimple: pants
 description: A pair of poorly held together pants.
 type: legs
 subtype: wearable
+bulk: light
 damagereduction: 1
 warmth: 2
 weight: 400

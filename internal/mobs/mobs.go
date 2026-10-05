@@ -45,8 +45,10 @@ type MobForHire struct {
 type MobId int // Creating a custom type to help prevent confusion over MobId and MobInstanceId
 
 type Mob struct {
-	HPPerLevel         float64 `yaml:"hpperlevel,omitempty"` // Overrides race/default enemy HP gain.
-	RewardContributors []int   `yaml:"-"`                    // Death-time battle eligibility, nil until captured.
+	HPPerLevel         float64 `yaml:"hpperlevel,omitempty"`  // Overrides race/default enemy HP gain.
+	AttackSkill        int     `yaml:"attackskill,omitempty"` // Phase 35a2: Attack offset (±5), a trained captain or a lumbering brute
+	EvasionSkill       int     `yaml:"evasion,omitempty"`     // Phase 35a2: Evasion offset (±5)
+	RewardContributors []int   `yaml:"-"`                     // Death-time battle eligibility, nil until captured.
 	DeathProcessed     bool    `yaml:"-"`
 	Temperament        string  `yaml:"temperament,omitempty"`
 	NeverBreak         bool    `yaml:"neverbreak,omitempty"`
@@ -198,6 +200,7 @@ func newMobById(mobId MobId, homeRoomId int, allowElite bool, forceLevel ...int)
 		mob.Character.Items = append([]items.Item(nil), m.Character.Items...)
 
 		mob.Character.HPPerLevel = mob.HPPerLevel
+		mob.Character.AttackOffset, mob.Character.EvasionOffset = mob.AttackSkill, mob.EvasionSkill
 		mob.HomeRoomId = homeRoomId
 		mob.Character.RoomId = homeRoomId
 		mob.InstanceId = instanceCounter
@@ -705,6 +708,9 @@ func (r *Mob) Validate() error {
 	if r.HPPerLevel < 0 || math.IsNaN(r.HPPerLevel) || math.IsInf(r.HPPerLevel, 0) {
 		return fmt.Errorf("invalid hpperlevel")
 	}
+	if abs(r.AttackSkill) > characters.MaxSkillOffset || abs(r.EvasionSkill) > characters.MaxSkillOffset {
+		return fmt.Errorf("attackskill and evasion must be within ±%d", characters.MaxSkillOffset)
+	}
 	if r.Stealth != nil && *r.Stealth < 0 {
 		return fmt.Errorf("negative ambush stealth")
 	}
@@ -994,4 +1000,11 @@ func (m *Mob) CollectiveNoun() string {
 		return r.GroupNoun
 	}
 	return ``
+}
+
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }

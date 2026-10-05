@@ -4,6 +4,7 @@ namesimple: pelt
 description: The shiny pelt of a timber wolf.
 type: body
 subtype: wearable
+bulk: medium
 damagereduction: 18
 statmods:
   strength: 8

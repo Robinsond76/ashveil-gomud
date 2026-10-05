@@ -12,7 +12,9 @@ import (
 func Tempo(c *characters.Character) float64 {
 	cfg := configs.GetCombatConfig()
 	speed := 1 + (float64(c.Stats.Speed.ValueAdj)-float64(cfg.TempoSpeedRef))/float64(cfg.TempoSpeedSpan)
-	rate := (speed + 0.1*float64(c.StatMod("attacks"))) * (1 - 0.35*c.Burden())
+	// Phase 35a2: armor bulk costs turns on top of burden; Strength never
+	// offsets it.
+	rate := (speed + 0.1*float64(c.StatMod("attacks"))) * (1 - 0.35*c.Burden()) * c.BulkTempoFactor()
 	return math.Max(float64(cfg.TempoMin), math.Min(float64(cfg.TempoMax), rate))
 }
 

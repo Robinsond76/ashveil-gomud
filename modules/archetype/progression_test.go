@@ -16,7 +16,8 @@ func TestProgressionShippedHPAndCreationChoice(t *testing.T) {
 	m, _ := testModule(t)
 	archetypes.SetProvider(m)
 	t.Cleanup(func() { archetypes.SetProvider(nil) })
-	want := map[string]float64{"warrior": 3, "cleric": 2.5, "ranger": 2.5, "rogue": 2, "wizard": 1.5}
+	// Phase 35a2: small growth from a higher floor.
+	want := map[string]float64{"warrior": 1, "cleric": 0.6, "ranger": 0.8, "rogue": 0.7, "wizard": 0.5}
 	assert.Equal(t, want, m.HealthArchetypes())
 	for _, choice := range m.CreationChoices() {
 		assert.Contains(t, choice.Description, "HP:")
@@ -24,7 +25,7 @@ func TestProgressionShippedHPAndCreationChoice(t *testing.T) {
 	}
 	// 30g6: later gains keep each archetype's proportion of the middle rate.
 	cfg0 := configs.GetProgressionConfig()
-	assert.Greater(t, cfg0.HealthAfterFull(3), cfg0.HealthAfterFull(1.5), "a warrior out-gains a wizard after the full levels")
+	assert.Greater(t, cfg0.HealthAfterFull(1), cfg0.HealthAfterFull(0.5), "a warrior out-gains a wizard after the full levels")
 	assert.InDelta(t, float64(cfg0.HPAfterFull), cfg0.HealthAfterFull(float64(cfg0.DefaultHPPerLevel)), 1e-9)
 	u := newUser(11)
 	users.SetTestUser(u)
@@ -34,19 +35,19 @@ func TestProgressionShippedHPAndCreationChoice(t *testing.T) {
 	u.Character.Health = 2
 	m.choose(u, "wizard", true)
 	cfg := configs.GetProgressionConfig()
-	assert.Equal(t, 1.5, u.Character.HealthGainPerLevel())
-	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, 1.5), u.Character.HealthMax.Value)
+	assert.Equal(t, 0.5, u.Character.HealthGainPerLevel())
+	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, 0.5, 0), u.Character.HealthMax.Value)
 	assert.Equal(t, 2, u.Character.Health)
 	u.Character.HealthMax.Value = 9999
 	m.onPlayerSpawn(events.PlayerSpawn{UserId: 11})
-	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, 1.5), u.Character.HealthMax.Value)
+	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, 0.5, 0), u.Character.HealthMax.Value)
 	hp, ok := m.HealthPerLevel("warrior")
 	require.True(t, ok)
-	assert.Equal(t, 3.0, hp)
+	assert.Equal(t, 1.0, hp)
 	_, err := m.reset(11)
 	require.NoError(t, err)
 	assert.Equal(t, float64(cfg.DefaultHPPerLevel), u.Character.HealthGainPerLevel())
-	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, float64(cfg.DefaultHPPerLevel)), u.Character.HealthMax.Value)
+	assert.Equal(t, cfg.HealthAtLevel(10, u.Character.Stats.Vitality.ValueAdj, float64(cfg.DefaultHPPerLevel), 0), u.Character.HealthMax.Value)
 	assert.Equal(t, 2, u.Character.Health, "reset cannot refill health")
 }
 
@@ -55,11 +56,12 @@ func TestProgressionListShowsLiveHPRates(t *testing.T) {
 	text := m.list(12)
 	assert.Contains(t, text, "Warrior")
 	cfg := configs.GetProgressionConfig()
-	line := func(rate float64) string {
-		return fmt.Sprintf("HP: %g per level through level %d, then %g per level.", rate, cfg.HPFullLevels, math.Round(cfg.HealthAfterFull(rate)*100)/100)
+	line := func(start string, rate float64) string {
+		return fmt.Sprintf("HP: %s%g per level through level %d, then %g per level.", start, rate, cfg.HPFullLevels, math.Round(cfg.HealthAfterFull(rate)*100)/100)
 	}
-	assert.Contains(t, text, line(3))
-	assert.Contains(t, text, line(1.5))
+	assert.Contains(t, text, line("10 extra to start, ", 1))
+	assert.Contains(t, text, line("", 0.5))
+	assert.Contains(t, text, "Attack 0.7 and Evasion 0.75 a level; trained for light armor.", "a caster's skill rates")
 	preview, _ := m.chooseResult(newUser(12), "rogue", false)
-	assert.Contains(t, preview, line(2))
+	assert.Contains(t, preview, line("4 extra to start, ", 0.7))
 }

@@ -5,6 +5,7 @@ description: It's old and crude, but was once the symbol of a king.
 type: weapon
 hands: 1
 subtype: bludgeoning
+weaponclass: rod
 damage:
   diceroll: 2d8+2
   critbuffids: 

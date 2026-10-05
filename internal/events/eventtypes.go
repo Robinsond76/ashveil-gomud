@@ -323,12 +323,15 @@ type LevelUp struct {
 	NewLevel                        int
 	HealthMaxBefore, HealthMaxAfter int
 	ManaMaxBefore, ManaMaxAfter     int
-	StatsBefore, StatsAfter         stats.Statistics
-	NextMilestone                   milestones.Milestone
-	StatsDelta                      stats.Statistics
-	TrainingPoints                  int
-	StatPoints                      int
-	LivesGained                     int
+	// Phase 35a2: the Attack and Evasion ratings before and after.
+	AttackBefore, AttackAfter   int
+	EvasionBefore, EvasionAfter int
+	StatsBefore, StatsAfter     stats.Statistics
+	NextMilestone               milestones.Milestone
+	StatsDelta                  stats.Statistics
+	TrainingPoints              int
+	StatPoints                  int
+	LivesGained                 int
 }
 
 func (l LevelUp) Type() string { return `LevelUp` }

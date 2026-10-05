@@ -27,6 +27,10 @@ character:
       quantitymax: 1
     - itemid: 20004
       quantitymax: 2
+    - itemid: 20047
+      quantitymax: 2
+    - itemid: 20048
+      quantitymax: 1
     - itemid: 20006
       quantitymax: 2
     - itemid: 20007

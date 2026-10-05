@@ -3,6 +3,7 @@ name: rotting belt
 description: The belt, once an item of great craftsmanship, is now decayed and rotting.
 type: belt
 subtype: wearable
+bulk: light
 damagereduction: 3
 statmods:
   speed: 2

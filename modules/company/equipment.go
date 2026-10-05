@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -195,19 +196,21 @@ func cloneCharacter(c *characters.Character) (*characters.Character, error) {
 	if err != nil {
 		return nil, err
 	}
-	return characterFrom(raw, c.HealthGainPerLevel())
+	return characterFrom(raw, c.HealthGainPerLevel(), c.ArchetypeID())
 }
 
 // characterFrom decodes one independent copy of a marshalled character, so
 // a caller previewing many changes marshals the original only once.
-func characterFrom(raw []byte, hpPerLevel float64) (*characters.Character, error) {
+func characterFrom(raw []byte, hpPerLevel float64, archetype string) (*characters.Character, error) {
 	var out characters.Character
 	if err := yaml.Unmarshal(raw, &out); err != nil {
 		return nil, err
 	}
-	// YAML excludes runtime class identity; preserve its resolved HP rate for
+	// YAML excludes runtime class identity; preserve its resolved HP rate
+	// and class (Phase 35a2: ratings, armor training and gear rules) for
 	// this isolated proposal without associating it with a live user.
 	out.HPPerLevel = hpPerLevel
+	out.HPArchetype = archetype
 	out.Validate(true)
 	return &out, nil
 }
@@ -254,7 +257,7 @@ func (m *CompanyModule) equipmentCommand(u *users.UserRecord, args []string) str
 		if st, ok := m.strategyForEquipment(u.UserId, key); ok {
 			role = st
 		}
-		lines := []string{fmt.Sprintf("%s: %s; role %s.", actor.Name, itemName(itm), role), fmt.Sprintf("Weapon: %s, %d hands, reach %t; price %d gold.", w.Damage.DiceRoll, proposed.HandsRequired(itm), w.Reach, w.Value), fmt.Sprintf("Protection: %d -> %d. Shield: %t -> %t.", actor.GetDefense(), proposed.GetDefense(), shield(actor), shield(proposed)), fmt.Sprintf("Worn load: %.1f -> %.1f kg; burden: %s -> %s.", float64(actor.PersonalGrams())/1000, float64(proposed.PersonalGrams())/1000, actor.BurdenWord(), proposed.BurdenWord())}
+		lines := []string{fmt.Sprintf("%s: %s; role %s.", actor.Name, itemName(itm), role), fmt.Sprintf("Weapon: %s, %d hands, reach %t; price %d gold.", w.Damage.DiceRoll, proposed.HandsRequired(itm), w.Reach, w.Value), fmt.Sprintf("Protection: %d -> %d. Shield: %t -> %t.", actor.GetDefense(), proposed.GetDefense(), shield(actor), shield(proposed)), fmt.Sprintf("Worn load: %.1f -> %.1f kg; burden: %s -> %s.", float64(actor.PersonalGrams())/1000, float64(proposed.PersonalGrams())/1000, actor.BurdenWord(), proposed.BurdenWord()), fmt.Sprintf("Armor bulk: %s -> %s (trained for %s).", actor.ArmorBulk(), proposed.ArmorBulk(), proposed.ArmorTraining())}
 		if hasLoad {
 			lines = append(lines, fmt.Sprintf("Company capacity: %.1f -> %.1f kg; cargo: %.1f -> %.1f kg.", float64(loadBefore.CapacityGrams)/1000, float64(loadAfter.CapacityGrams)/1000, float64(loadBefore.TotalGrams())/1000, float64(loadAfter.TotalGrams())/1000))
 			if loadAfter.TotalGrams() > loadAfter.CapacityGrams {
@@ -315,7 +318,14 @@ func (m *CompanyModule) equipmentCommand(u *users.UserRecord, args []string) str
 		}
 	}
 	events.AddToQueue(evt)
-	return fmt.Sprintf("%s's equipment updated. Shared cargo retains every displaced item.", actor.Name)
+	msg := fmt.Sprintf("%s's equipment updated. Shared cargo retains every displaced item.", actor.Name)
+	// Phase 35a2: untrained armor is allowed, with a warning.
+	if args[0] != "remove" && proposed.WouldBeUntrained(itm) {
+		cfg := configs.GetCombatConfig()
+		msg += fmt.Sprintf(" %s is trained for %s armor, not %s: it costs %d Attack and %d Evasion, twice the usual turns and dodge for its bulk, and %d round on every chant (help armor).",
+			actor.Name, proposed.ArmorTraining(), itm.GetSpec().Bulk, cfg.UntrainedSkillLoss, cfg.UntrainedSkillLoss, cfg.UntrainedChantRounds)
+	}
+	return msg
 }
 
 // strategyForEquipment keeps the comparison's role tied to the saved strategy.

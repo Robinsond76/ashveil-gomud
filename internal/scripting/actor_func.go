@@ -735,6 +735,25 @@ func (a ScriptActor) GetHealthLimit() int {
 	return a.characterRecord.HealthLimit()
 }
 
+// SpellFactor is what a damage spell's roll is multiplied by against the
+// target (Phase 35a2): 1 + 0.5 × the caster's skill edge (its Attack
+// against the target's Evasion), from 0.5 to 1.5.
+func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
+	if a.characterRecord == nil || target.characterRecord == nil {
+		return 1
+	}
+	return 1 + 0.5*characters.SkillEdge(a.characterRecord.AttackSkill(), target.characterRecord.Evasion())
+}
+
+// HealFactor is what the actor's heals are multiplied by (Phase 35a2): 1
+// plus its gear's healing percent (a holy symbol's 5).
+func (a ScriptActor) HealFactor() float64 {
+	if a.characterRecord == nil {
+		return 1
+	}
+	return 1 + float64(a.characterRecord.HealingBonusPct())/100
+}
+
 // WoundNote is the text a heal adds when the actor's wound limit held some
 // of it back (Phase 30b): ", wound limit 10 of 16", else "". rolled is what
 // the heal tried; healed what AddHealth returned.

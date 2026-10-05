@@ -41,8 +41,11 @@ type RetreatMember struct {
 }
 
 type Aggro struct {
-	ColdDelayed   bool         `yaml:"-"`
-	ColdNotice    bool         `yaml:"-"`
+	ColdDelayed bool `yaml:"-"`
+	ColdNotice  bool `yaml:"-"`
+	// StrikeBonus is damage a readied strike (Phase 35a2 Opening Strike)
+	// adds to its first landed blow.
+	StrikeBonus   int          `yaml:"-"`
 	RetreatInfo   *RetreatInfo `yaml:"-"`
 	Type          AggroType
 	MobInstanceId int

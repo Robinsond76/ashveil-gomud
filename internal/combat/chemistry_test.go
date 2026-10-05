@@ -1,6 +1,7 @@
 package combat
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -42,7 +43,7 @@ func withChemistry(t *testing.T, bonus int) {
 func TestHitRollNoBonusNeverByBonus(t *testing.T) {
 	loadTestData(t)
 	for i := 0; i < 500; i++ {
-		if _, byBonus := hitRoll(10, 10, 0, 0); byBonus {
+		if _, byBonus := hitRoll(0, 0, 0); byBonus {
 			t.Fatal("no bonus can't decide a hit")
 		}
 	}
@@ -50,10 +51,13 @@ func TestHitRollNoBonusNeverByBonus(t *testing.T) {
 
 func TestHitRollBonusDecides(t *testing.T) {
 	loadTestData(t)
+	cfg := configs.GetGamePlayConfig()
+	cfg.Combat.ToHitMin, cfg.Combat.ToHitMax = 25, 100
+	t.Cleanup(configs.SetTestGamePlayConfig(cfg))
 	byBonus := 0
 	for i := 0; i < 500; i++ {
-		// The chance without the bonus is the floor (25); with it, 100.
-		hit, decided := hitRoll(10, 10, -1000, 2000)
+		// The chance without the bonus is the floor (ToHitMin); with it, the cap.
+		hit, decided := hitRoll(0, -1000, 2000)
 		if !hit {
 			t.Fatal("a bonus to 100% must always hit")
 		}

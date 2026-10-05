@@ -4,6 +4,7 @@ namesimple: ice armor
 description: Armor chiseled from solid ice, it is cold to the touch and shimmers with a faint blue light.
 type: body
 subtype: wearable
+bulk: heavy
 damagereduction: 20
 statmods:
   strength: 11

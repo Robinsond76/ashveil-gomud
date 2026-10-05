@@ -85,7 +85,7 @@ var balanceMirror = []struct {
 	equipment string
 }{
 	{9201, "hired blade", "    weapon:\n      itemid: 10015\n    offhand:\n      itemid: 20004\n"},                                                            // Tamsin
-	{9202, "hedge priest", "    weapon:\n      itemid: 10015\n    body:\n      itemid: 20008\n"},                                                              // Oswin
+	{9202, "hedge priest", "    weapon:\n      itemid: 10023\n    body:\n      itemid: 20008\n"},                                                              // Oswin (35a2: a mace)
 	{9203, "sellsword", "    weapon:\n      itemid: 10002\n    head:\n      itemid: 20020\n    legs:\n      itemid: 20029\n    feet:\n      itemid: 20003\n"}, // Garrick
 	{9204, "poacher", "    weapon:\n      itemid: 10014\n    neck:\n      itemid: 20024\n    feet:\n      itemid: 20003\n"},                                   // Ysolde
 	{9205, "brawler", ""}, // Aria, bare-handed
@@ -193,6 +193,7 @@ type balanceResult struct {
 	Rounds           int
 	Won, Stalled     bool
 	HPRemoved        [2]int // Starting minus remaining health, by victim side; excludes overkill.
+	StartHP          [2]int // Each side's health when the fight began (35a2's share-lost rows).
 	Fallen           [2]int
 	// FighterRounds is, per side, the sum over rounds of the fighters
 	// standing at the round's start: turns per fighter per round divides
@@ -215,7 +216,15 @@ type balanceFight struct {
 // Balance uses the shipped archetype rates rather than provisional test constants.
 type balanceHPArchetypes struct {
 	fakeArchetypes
-	rates map[string]float64
+	rates    map[string]float64
+	profiles map[string]archetypes.Profile
+}
+
+// CombatProfile serves the shipped classes' 35a2 profiles (HPStart,
+// Attack and Evasion rates, armor training, gear rules).
+func (p balanceHPArchetypes) CombatProfile(id string) (archetypes.Profile, bool) {
+	v, ok := p.profiles[id]
+	return v, ok
 }
 
 func (p balanceHPArchetypes) HealthPerLevel(id string) (float64, bool) {
@@ -229,14 +238,22 @@ func balanceHPProvider(t *testing.T) balanceHPArchetypes {
 	require.NoError(t, err)
 	var cfg struct {
 		Archetypes []struct {
-			ID string  `yaml:"ArchetypeId"`
-			HP float64 `yaml:"HPPerLevel"`
+			ID            string   `yaml:"ArchetypeId"`
+			Name          string   `yaml:"Name"`
+			HP            float64  `yaml:"HPPerLevel"`
+			HPStart       int      `yaml:"HPStart"`
+			AttackRate    float64  `yaml:"AttackRate"`
+			EvasionRate   float64  `yaml:"EvasionRate"`
+			ArmorTraining string   `yaml:"ArmorTraining"`
+			ShieldSizes   []string `yaml:"ShieldSizes"`
+			WeaponClasses []string `yaml:"WeaponClasses"`
 		} `yaml:"Archetypes"`
 	}
 	require.NoError(t, yaml.Unmarshal(data, &cfg))
-	p := balanceHPArchetypes{rates: map[string]float64{}}
+	p := balanceHPArchetypes{rates: map[string]float64{}, profiles: map[string]archetypes.Profile{}}
 	for _, c := range cfg.Archetypes {
 		p.rates[c.ID] = c.HP
+		p.profiles[c.ID] = archetypes.Profile{Name: c.Name, AttackRate: c.AttackRate, EvasionRate: c.EvasionRate, HPStart: c.HPStart, ArmorTraining: c.ArmorTraining, ShieldSizes: c.ShieldSizes, WeaponClasses: c.WeaponClasses}
 	}
 	require.NotEmpty(t, p.rates, "shipped archetypes must load")
 	for _, id := range []string{"warrior", "cleric", "ranger", "rogue", "wizard"} {
@@ -326,6 +343,9 @@ func newBalanceFightWithOptions(t *testing.T, level int, companyMode, enemyMode 
 		}
 		if class != "" {
 			mob.Character.HPPerLevel, _ = archetypes.HealthPerLevel(class)
+			// 35a2: the mirror fights as its class too (HP head start,
+			// Attack and Evasion rates, armor training).
+			mob.Character.HPArchetype = class
 		} else {
 			mob.Character.HPPerLevel = float64(configs.GetProgressionConfig().DefaultHPPerLevel)
 		}
@@ -511,6 +531,7 @@ func (f *balanceFight) healthRemaining() (hp [2]int) {
 func (f *balanceFight) run() balanceResult {
 	var res balanceResult
 	startHP := f.healthRemaining()
+	res.StartHP = startHP
 	for res.Rounds < balanceMaxRounds {
 		company, enemy := f.standing()
 		if company == 0 || enemy == 0 {
@@ -655,8 +676,9 @@ func TestBalance5v5(t *testing.T) {
 			// Class abilities and healing must not be a handicap.
 			kitWins := balanceWins(cells[companyKit+"/"+enemySpread])
 			assert.Greater(t, balanceWelchZ(kitWins, balanceWins(passive)), -balanceSignificantZ, "L%d kit is no worse than the mirror", level)
-			assert.GreaterOrEqual(t, baselineMedian, 10, "L%d spread median", level)
-			assert.LessOrEqual(t, baselineMedian, 15, "L%d spread median", level)
+			// 35a2 acceptance 4: equal fights stay short (30g6 targeted 10–15).
+			assert.GreaterOrEqual(t, baselineMedian, 8, "L%d spread median", level)
+			assert.LessOrEqual(t, baselineMedian, 12, "L%d spread median", level)
 			// Company focus is reported, not asserted (owner, 2026-10-04): it is
 			// a strategy the player may choose, not a guaranteed advantage.
 			// Enemy targeting must still trouble a passive company (decision 14).
@@ -912,7 +934,7 @@ func TestBalanceSidesStayEven(t *testing.T) {
 				}
 				assert.Equal(t, rate, c.HealthGainPerLevel(), c.Name+" configured class rate")
 				assert.Equal(t, rate, m.HealthGainPerLevel(), m.Name+" mirrored class rate")
-				assert.Equal(t, configs.GetProgressionConfig().HealthAtLevel(level, c.Stats.Vitality.ValueAdj, rate)+c.StatMod("healthmax"), c.HealthMax.Value, c.Name+" configured HP")
+				assert.Equal(t, configs.GetProgressionConfig().HealthAtLevel(level, c.Stats.Vitality.ValueAdj, rate, c.HPStart())+c.StatMod("healthmax"), c.HealthMax.Value, c.Name+" configured HP")
 				assert.Equal(t, m.HealthMax.Value, c.HealthMax.Value, "%s vs %s: health", c.Name, m.Name)
 				assert.Equal(t, m.GetDefense(), c.GetDefense(), "%s vs %s: armor", c.Name, m.Name)
 			}

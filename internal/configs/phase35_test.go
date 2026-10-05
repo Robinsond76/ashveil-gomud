@@ -44,7 +44,7 @@ func TestPhase35HealthShape(t *testing.T) {
 		assert.InDelta(t, rate*0.6, p.HealthAfterFull(rate), 1e-12)
 		for _, level := range []int{10, 20, 21, 60} {
 			want := 40 + int(float64(min(level, 20))*rate) + int(float64(max(level-20, 0))*rate*0.6) + 5
-			assert.Equal(t, want, p.HealthAtLevel(level, 10, rate))
+			assert.Equal(t, want, p.HealthAtLevel(level, 10, rate, 0))
 		}
 	}
 }

@@ -150,3 +150,27 @@ func TestStatusShowsBurden(t *testing.T) {
 	assert.Regexp(t, `Burden: +Heavily burdened`, text)
 	assert.NotContains(t, text, "40.0", "a word, never the weight or a ratio")
 }
+
+// TestStatusShowsSkillAndBulk (Phase 35a2): status shows Attack, Evasion
+// and the armor bulk, marked when heavier than the class's training.
+func TestStatusShowsSkillAndBulk(t *testing.T) {
+	useWorld(t, "default")
+	useSummary(t, sampleSummary())
+	const plateID = 99612
+	plate := &items.ItemSpec{ItemId: plateID, Name: "test plate", Type: items.Body, Subtype: items.Wearable, Weight: 12000, DamageReduction: 10}
+	require.NoError(t, plate.Validate())
+	items.SetTestItemSpec(plate)
+	t.Cleanup(func() { items.RemoveTestItemSpec(plateID) })
+
+	user := users.NewUserRecord(7, 1)
+	user.Character.Name = "Wren"
+	user.Character.Level = 12
+	text := statusText(t, user, "")
+	assert.Regexp(t, `Attack: +12 +Evasion: 12`, text, "enemies' default rates without a class")
+	assert.Regexp(t, `Bulk: +Light`, text)
+
+	user.Character.Equipment.Body = items.New(plateID)
+	text = statusText(t, user, "")
+	assert.Regexp(t, `Bulk: +Heavy`, text)
+	assert.NotContains(t, text, "untrained", "no class: trained for anything")
+}

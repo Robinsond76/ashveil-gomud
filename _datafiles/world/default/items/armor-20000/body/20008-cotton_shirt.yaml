@@ -4,6 +4,7 @@ namesimple: shirt
 description: Surprisingly clean.
 type: body
 subtype: wearable
+bulk: light
 damagereduction: 1
 warmth: 3
 weight: 250

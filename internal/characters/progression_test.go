@@ -62,7 +62,7 @@ func TestProgressionLegacyCharacterKeepsEarnedState(t *testing.T) {
 	assert.Equal(t, 4, c.TrainingPoints)
 	assert.Equal(t, 11, c.Stats.Strength.Training)
 	assert.Equal(t, c.Stats.Strength.GainsForLevel(17), c.Stats.Strength.Racial)
-	assert.Equal(t, configs.GetProgressionConfig().HealthAtLevel(17, c.Stats.Vitality.ValueAdj, 5), c.HealthMax.Value)
+	assert.Equal(t, configs.GetProgressionConfig().HealthAtLevel(17, c.Stats.Vitality.ValueAdj, 5, 0), c.HealthMax.Value)
 	assert.Equal(t, c.HealthMax.Value, c.Health)
 	assert.Equal(t, c.ManaMax.Value, c.Mana)
 	c.Health = 3

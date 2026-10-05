@@ -77,6 +77,10 @@ func TestGrantXPLevelReport(t *testing.T) {
 			assert.Contains(t, messages, fmt.Sprintf("You reach level %d", target))
 			assert.Contains(t, messages, fmt.Sprintf("Health %d -> %d", ev.HealthMaxBefore, ev.HealthMaxAfter))
 			assert.Contains(t, messages, fmt.Sprintf("Mana %d -> %d", ev.ManaMaxBefore, ev.ManaMaxAfter))
+			// Phase 35a2: the report shows the skill the levels brought.
+			assert.Equal(t, [2]int{1, target}, [2]int{ev.AttackBefore, ev.AttackAfter})
+			assert.Equal(t, [2]int{1, target}, [2]int{ev.EvasionBefore, ev.EvasionAfter})
+			assert.Contains(t, messages, fmt.Sprintf("Attack 1 -> %d   Evasion 1 -> %d", target, target))
 			assert.Contains(t, messages, "(coming)")
 			assert.Contains(t, messages, "stat train")
 			assert.NotContains(t, messages, "stat step")

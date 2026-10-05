@@ -3,6 +3,7 @@ name: circlet
 description: The circlet of an ancient king.
 type: head
 subtype: wearable
+bulk: light
 damagereduction: 1
 questtoken: 2-inform
 statmods:

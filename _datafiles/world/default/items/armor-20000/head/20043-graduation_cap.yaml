@@ -3,6 +3,7 @@ name: graduation cap
 description: A special hat signifying that you've completed the tutorial.
 type: head
 subtype: wearable
+bulk: light
 damagereduction: 1
 statmods:
   perception: 1

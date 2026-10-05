@@ -56,12 +56,17 @@ func TestDecideAbility(t *testing.T) {
 }
 
 func TestTackleChanceAndReserveParse(t *testing.T) {
-	assert.Equal(t, 20, TackleChance(0, 50))
-	assert.Equal(t, 80, TackleChance(90, 0))
-	assert.Equal(t, 80, TackleChance(20, 5), "a full span ahead")
-	assert.Equal(t, 40, TackleChance(3, 3), "even Speed and Perception")
-	assert.Equal(t, 44, TackleChance(3, 2), "one point ahead: a tenth of the way to 80")
-	assert.Equal(t, 38, TackleChance(2, 3), "one point behind: a tenth of the way to 20")
+	assert.Equal(t, 20, TackleChance(0, 50, 0))
+	assert.Equal(t, 80, TackleChance(90, 0, 0))
+	assert.Equal(t, 80, TackleChance(20, 5, 0), "a full span ahead")
+	assert.Equal(t, 40, TackleChance(3, 3, 0), "even Speed and Perception")
+	assert.Equal(t, 44, TackleChance(3, 2, 0), "one point ahead: a tenth of the way to 80")
+	assert.Equal(t, 38, TackleChance(2, 3, 0), "one point behind: a tenth of the way to 20")
+	// Phase 35a2: the skill edge adds to the stat edge, held to a full edge.
+	assert.Equal(t, 60, TackleChance(3, 3, 0.5), "half a skill edge ahead")
+	assert.Equal(t, 30, TackleChance(3, 3, -0.5), "half a skill edge behind")
+	assert.Equal(t, 80, TackleChance(20, 5, 0.5), "held to the maximum")
+	assert.Equal(t, 40, TackleChance(13, 3, -1), "a full stat edge cancels a full skill deficit")
 
 	for in, want := range map[string]int{"0": 0, "30": 30, "90%": 90} {
 		got, ok := ParseReserve(in)

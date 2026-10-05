@@ -221,14 +221,14 @@ func activeDefense(defender, attacker characters.Character, melee bool) string {
 		return DefenseNone
 	}
 	if defender.HasShield() {
-		if rollDefense(`Blocks`, blockChance(defender.Equipment.Offhand.GetDefense(), defender.Stats.Strength.ValueAdj, attacker.Stats.Strength.ValueAdj)) {
+		if rollDefense(`Blocks`, blockChance(&defender, &attacker)) {
 			return DefenseBlocked
 		}
 		return DefenseNone
 	}
-	dodge := burdenedDodge(dodgeChance(defender.Stats.Perception.ValueAdj, attacker.Stats.Perception.ValueAdj), defender.Burden())
+	dodge := effectiveDodge(&defender, &attacker)
 	if mod, ok := parryModifier(defender.Equipment.Weapon); melee && ok {
-		if parry := parryChance(defender.Stats.Speed.ValueAdj, attacker.Stats.Speed.ValueAdj, mod); parry >= dodge {
+		if parry := parryChance(&defender, &attacker, mod); parry >= dodge {
 			if rollDefense(`Parries`, parry) {
 				return DefenseParried
 			}
@@ -506,6 +506,8 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 	// backstabCrit makes the first blow that lands a critical hit.
 	backstabCrit := false
+	// strikeBonus is a readied strike's extra damage (Opening Strike).
+	strikeBonus := 0
 
 	// Statmods can add a damage bonus plus the stat-driven damage bonus.
 	statModDBonus := sourceChar.StatMod(`damage`) + damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
@@ -541,6 +543,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 		// (the 29c voice: the hit line says "critical hit").
 		if sourceChar.Aggro != nil && sourceChar.Aggro.Type == characters.BackStab {
 			backstabCrit = true
+			strikeBonus = sourceChar.Aggro.StrikeBonus
 			// Failover to the default attack
 			sourceChar.SetAggro(sourceChar.Aggro.UserId, sourceChar.Aggro.MobInstanceId, characters.DefaultAttack)
 		}
@@ -600,7 +603,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				edgeBonus := 0
 				isCrit := false
 
-				hit, byChemistry := hitRoll(sourceChar.Stats.Speed.ValueAdj, targetChar.Stats.Speed.ValueAdj, penalty, chemistryBonus)
+				hit, byChemistry := hitRoll(hitEdge(&sourceChar, &targetChar), penalty, chemistryBonus)
 				if hit {
 					// Phase 30g2: one active defense, before armor; a
 					// defended strike does nothing and can't crit.
@@ -635,6 +638,10 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 					// Backstab crits the first hit only; subsequent hits use a
 					// fresh per-attack roll so crits don't cascade.
+					if backstabCrit {
+						attackTargetDamage += strikeBonus
+						strikeBonus = 0
+					}
 					isCrit = backstabCrit || Crits(sourceChar, targetChar)
 					backstabCrit = false // consume the backstab flag after one use
 					if isCrit {
@@ -763,7 +770,9 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 						for p := 0; p < pAttacks; p++ {
 
-							if !Hits(0, targetChar.Stats.Speed.ValueAdj, 0) {
+							// A pet fights at its owner's skill.
+							petEdge := combinedEdge(SkillEdge(sourceChar.AttackSkill(), targetChar.Evasion()), StatEdge(0, targetChar.Stats.Speed.ValueAdj))
+							if !Hits(petEdge, 0) {
 								targetDisplayName := fmt.Sprintf(`<ansi fg="%sname">%s</ansi>`, string(targetType), targetChar.Name)
 								toAttackerMsg := combatMsgs.ApplyTokens(combatMsgs.Miss, sourceChar.Pet.DisplayName(), 0, targetDisplayName)
 								attackResult.SendToSource(toAttackerMsg)

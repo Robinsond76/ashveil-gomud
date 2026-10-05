@@ -425,7 +425,7 @@ func (m *CompanyModule) treat(user *users.UserRecord, members []woundMember) []s
 			knowers++
 		}
 		if (tend || heal) && w.char.Mana > 0 {
-			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: max(w.char.Level, 0)})
+			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: wounds.HealBonusFor(w.char.Level), HealPct: w.char.HealingBonusPct()})
 		}
 	}
 	anyHurt := false

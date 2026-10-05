@@ -6,6 +6,7 @@ description: A knotted length of oak as long as a man, its head studded with iro
 type: weapon
 hands: 2
 subtype: bludgeoning
+weaponclass: club
 statmods:
   strength: 2
   speed: -4

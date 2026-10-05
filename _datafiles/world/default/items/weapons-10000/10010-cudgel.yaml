@@ -5,6 +5,7 @@ description: The cudgel is a robust, unassuming weapon, fashioned from sturdy oa
 type: weapon
 hands: 1
 subtype: bludgeoning
+weaponclass: club
 damage:
   diceroll: 1d8
 statmods:

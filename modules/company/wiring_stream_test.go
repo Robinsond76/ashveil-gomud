@@ -364,9 +364,9 @@ func TestSpellEventsThroughTheRealRound(t *testing.T) {
 		}
 	}
 	require.NotNil(t, heal, "the heal is reported")
-	bonus := b.aria.Character.Level // 30g6: 1 per caster level
-	assert.GreaterOrEqual(t, heal.Amount, 2+bonus, "Minor Heal is 2d3 plus the caster's level")
-	assert.LessOrEqual(t, heal.Amount, 6+bonus)
+	bonus := 8 + b.aria.Character.Level/6 // 35a2: 8 + 2d4 + level/6
+	assert.GreaterOrEqual(t, heal.Amount, 2+bonus, "Minor Heal is 8 + 2d4 + level/6")
+	assert.LessOrEqual(t, heal.Amount, 8+bonus)
 	assert.NotZero(t, heal.FightID, "healing the leader mid-fight is in the fight")
 
 	living := b.livingBandits()

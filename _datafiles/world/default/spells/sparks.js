@@ -1,6 +1,21 @@
 
-DMG_DICE_QTY = 1;
-DMG_DICE_SIDES = 3;
+// Phase 35a2: 4 + 1d4 + level/15 + Mysticism/25 a target, about 0.6x
+// Magic Missile (35b's ratio).
+HARM_BASE = 4;
+HARM_DICE_QTY = 1;
+HARM_DICE_SIDES = 4;
+HARM_LEVEL_DIV = 15;
+HARM_MYSTICISM_DIV = 25;
+
+// Phase 35a2: a spell lands about one weapon hit, and skill decides how
+// well: the roll is multiplied by the caster's SpellFactor against the
+// target (0.5 to 1.5, its Attack against the target's Evasion).
+function harmRoll(sourceActor, targetActor) {
+    var roll = HARM_BASE + UtilDiceRoll(HARM_DICE_QTY, HARM_DICE_SIDES) +
+        Math.floor(sourceActor.GetLevel() / HARM_LEVEL_DIV) +
+        Math.floor(sourceActor.GetStat('mysticism') / HARM_MYSTICISM_DIV);
+    return Math.max(1, Math.floor(roll * sourceActor.SpellFactor(targetActor)));
+}
 
 SPELL_NAME = 'Shower of Sparks';
 OVERLOADED_BUFF = 1106; // Phase 30a: the sparks scramble whatever they sear
@@ -59,7 +74,7 @@ function onMagic(sourceActor, targetActors) {
         var targetUserId = target.UserId();
 
         // Apply the harm first, and report what it took.
-        var dealt = -target.AddHealth(-(UtilDiceRoll(DMG_DICE_QTY, DMG_DICE_SIDES) + 1));
+        var dealt = -target.AddHealth(-harmRoll(sourceActor, target));
         // Phase 30a: the charge leaves its target overloaded.
         target.GiveBuff(OVERLOADED_BUFF, 'spell');
         var suffix = ' (' + dealt + ' damage, overloaded)';

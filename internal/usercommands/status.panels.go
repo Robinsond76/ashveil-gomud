@@ -82,7 +82,10 @@ func buildStatusPanel(user *users.UserRecord) string {
 	vitals.
 		Add(`<ansi fg="yellow">Health: </ansi>`, `<ansi fg="yellow">HP: </ansi>`, hpValue).
 		Add(`<ansi fg="yellow">Mana:   </ansi>`, `<ansi fg="yellow">MP: </ansi>`, mpValue).
-		Add(`<ansi fg="yellow">Armor:  </ansi>`, `<ansi fg="yellow">Arm:</ansi>`, armorValue)
+		Add(`<ansi fg="yellow">Armor:  </ansi>`, `<ansi fg="yellow">Arm:</ansi>`, armorValue).
+		// Phase 35a2: the two skill ratings and the armor's bulk.
+		Add(`<ansi fg="yellow">Attack: </ansi>`, `<ansi fg="yellow">Atk:</ansi>`, fmt.Sprintf(`%d  <ansi fg="yellow">Evasion:</ansi> %d`, c.AttackSkill(), c.Evasion())).
+		Add(`<ansi fg="yellow">Bulk:   </ansi>`, `<ansi fg="yellow">Blk:</ansi>`, bulkValue(c))
 	if ashveil {
 		addAshveilBurden(vitals, c)
 		addAshveilVitals(vitals, summary)
@@ -361,4 +364,13 @@ func chemistryBonusLine(userID int) string {
 		now = fmt.Sprintf(`<ansi fg="green">+%d%%</ansi> to hit`, standing.Bonus)
 	}
 	return fmt.Sprintf(`<ansi fg="yellow-bold">%s</ansi> band, %d together: %s`, company.TierName(standing.Tier), standing.Together, now)
+}
+
+// bulkValue is the heaviest armor worn, in warning colour (and marked)
+// when the class isn't trained for it (Phase 35a2).
+func bulkValue(c *characters.Character) string {
+	if c.UntrainedArmor() {
+		return fmt.Sprintf(`<ansi fg="red">%s, untrained</ansi>`, util.CapitalizeFirst(c.ArmorBulk()))
+	}
+	return util.CapitalizeFirst(c.ArmorBulk())
 }

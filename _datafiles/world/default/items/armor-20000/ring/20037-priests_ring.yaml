@@ -4,6 +4,7 @@ namesimple: ring
 description: A hand crafted ring with a priestly insignia.
 type: ring
 subtype: wearable
+bulk: light
 damagereduction: 1
 statmods:
   casting-restoration: 5

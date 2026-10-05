@@ -23,6 +23,34 @@ func StatEdge(atkStat, defStat int) float64 {
 	return max(-1, min(1, (float64(atkStat)-float64(defStat))/span))
 }
 
+// SkillEdge is the Phase 35a2 skill edge: an Attack and Evasion gap over
+// the configured SkillEdgeSpan, held to −1..1.
+func SkillEdge(attack, evasion int) float64 {
+	return characters.SkillEdge(attack, evasion)
+}
+
+// combinedEdge is the one edge an opposed chance reads (Phase 35a2): the
+// skill edge plus the chance's own stat edge, held to −1..1.
+func combinedEdge(skill, stat float64) float64 {
+	if math.IsNaN(skill) {
+		skill = 0
+	}
+	if math.IsNaN(stat) {
+		stat = 0
+	}
+	return max(-1, min(1, skill+stat))
+}
+
+// attackEdge is the attacker's skill edge over the defender.
+func attackEdge(atk, def *characters.Character) float64 {
+	return SkillEdge(atk.AttackSkill(), def.Evasion())
+}
+
+// defenseEdge is the defender's skill edge over the attacker.
+func defenseEdge(def, atk *characters.Character) float64 {
+	return SkillEdge(def.Evasion(), atk.AttackSkill())
+}
+
 // statAdvantage is StatEdge, never below 0: one-sided chances start at
 // their minimum and only grow with an advantage.
 func statAdvantage(atkStat, defStat int) float64 {
@@ -107,18 +135,38 @@ func damageBonus(atkStr, defStr int) int {
 	return int(bonus)
 }
 
-// hitChance returns a hit probability in [ToHitMin, ToHitMax]: ToHitEven
-// at equal Speed, moved toward a bound by the Speed edge.
-func hitChance(atkSpd, defSpd int) int {
+// hitChanceForEdge returns a hit probability in [ToHitMin, ToHitMax]:
+// ToHitEven when even, moved toward a bound by the combined edge.
+func hitChanceForEdge(edge float64) int {
 	cfg := configs.GetCombatConfig()
-	chance := edgeChance(float64(cfg.ToHitEven), float64(cfg.ToHitMin), float64(cfg.ToHitMax), StatEdge(atkSpd, defSpd))
+	chance := edgeChance(float64(cfg.ToHitEven), float64(cfg.ToHitMin), float64(cfg.ToHitMax), edge)
 	return clampToHit(floorChance(chance))
 }
 
-// Hits returns whether an attack connects, incorporating an optional modifier.
-// equal stats will result in 0% of max
-func Hits(atkSpd, defSpd, hitModifier int) bool {
-	hit, _ := hitRoll(atkSpd, defSpd, hitModifier, 0)
+// hitEdge is a blow's combined edge: the attacker's Attack against the
+// defender's Evasion, plus the Speed edge (Phase 35a2).
+func hitEdge(atk, def *characters.Character) float64 {
+	return combinedEdge(attackEdge(atk, def), StatEdge(atk.Stats.Speed.ValueAdj, def.Stats.Speed.ValueAdj))
+}
+
+// hitChance is the attacker's chance to hit the defender.
+func hitChance(atk, def *characters.Character) int {
+	return hitChanceForEdge(hitEdge(atk, def))
+}
+
+// HitChance is the attacker's chance in 100 to hit the defender before
+// darkness, dual wielding or chemistry move it (Phase 35a2).
+func HitChance(atk, def *characters.Character) int {
+	if atk == nil || def == nil {
+		return 0
+	}
+	return hitChance(atk, def)
+}
+
+// Hits returns whether an attack with the given combined edge connects,
+// incorporating an optional modifier.
+func Hits(edge float64, hitModifier int) bool {
+	hit, _ := hitRoll(edge, hitModifier, 0)
 	return hit
 }
 
@@ -140,8 +188,8 @@ func clampToHit(toHit int) int {
 // to the modifier before the chance is bounded. byBonus reports a hit that
 // only the bonus made: the roll fell between the chance without it and the
 // chance with it. It rolls once, as Hits always has.
-func hitRoll(atkSpd, defSpd, hitModifier, bonus int) (hit, byBonus bool) {
-	base := hitChance(atkSpd, defSpd) + hitModifier
+func hitRoll(edge float64, hitModifier, bonus int) (hit, byBonus bool) {
+	base := hitChanceForEdge(edge) + hitModifier
 	without := clampToHit(base)
 	toHit := clampToHit(base + bonus)
 
@@ -214,12 +262,33 @@ func critDamageBonus(dCount, dSides, dBonus, atkPerc, defPerc int) int {
 	return int(math.Floor(float64(base) * (mult - 1.0)))
 }
 
-// dodgeChance returns the probability in [DodgeChanceMin, DodgeChanceMax] that
-// the defender dodges an incoming hit: the minimum, grown by the defender's
-// Perception advantage over the attacker.
-func dodgeChance(defPerc, atkPerc int) int {
+// dodgeChanceForEdge returns the probability in [DodgeChanceMin,
+// DodgeChanceMax] that the defender dodges an incoming hit: DodgeChanceEven
+// when even, moved by the defender's combined edge (Phase 35a2: two-sided).
+func dodgeChanceForEdge(edge float64) int {
 	cfg := configs.GetCombatConfig()
-	return floorChance(advantageChance(float64(cfg.DodgeChanceMin), float64(cfg.DodgeChanceMax), statAdvantage(defPerc, atkPerc)))
+	return floorChance(edgeChance(float64(cfg.DodgeChanceEven), float64(cfg.DodgeChanceMin), float64(cfg.DodgeChanceMax), edge))
+}
+
+// dodgeChance is the defender's dodge before burden and bulk: its Evasion
+// against the attacker's Attack, plus the Perception edge.
+func dodgeChance(def, atk *characters.Character) int {
+	return dodgeChanceForEdge(combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Perception.ValueAdj, atk.Stats.Perception.ValueAdj)))
+}
+
+// effectiveDodge is the dodge a blow meets: dodgeChance after the
+// defender's burden (30g3), then its armor bulk (35a2).
+func effectiveDodge(def, atk *characters.Character) int {
+	return bulkDodge(burdenedDodge(dodgeChance(def, atk), def.Burden()), def.BulkDodgeFactor())
+}
+
+// bulkDodge is a dodge after armor bulk: dodge × the share bulk leaves,
+// rounded.
+func bulkDodge(dodge int, factor float64) int {
+	if math.IsNaN(factor) {
+		factor = 1
+	}
+	return int(math.Round(float64(dodge) * max(0, min(1, factor))))
 }
 
 // burdenDodgeLoss is the share of dodge a fully burdened character loses
@@ -236,16 +305,22 @@ func burdenedDodge(dodge int, burden float64) int {
 	return int(math.Round(float64(dodge) * (1 - burdenDodgeLoss*max(0, min(1, burden)))))
 }
 
-// blockChance returns the percent chance in [BlockChanceMin, BlockChanceMax]
-// that a shield-bearer blocks a strike (Phase 30g2): the minimum, plus the
-// shield's own armor, moved up or down by half the range at a full Strength
-// edge. Even Strength with a 5-armor shield blocks 20%.
-func blockChance(shieldArmor, defStr, atkStr int) int {
+// blockChanceForEdge returns the percent chance in [BlockChanceMin,
+// BlockChanceMax] that a shield-bearer blocks a strike (Phase 35a2):
+// BlockChanceEven plus the shield's own armor when even, moved toward a
+// bound by the bearer's combined edge. Even with a 5-armor shield blocks 20%.
+func blockChanceForEdge(shieldArmor int, edge float64) int {
 	cfg := configs.GetCombatConfig()
-	minBlock := int(cfg.BlockChanceMin)
-	maxBlock := int(cfg.BlockChanceMax)
-	strength := StatEdge(defStr, atkStr) * float64(maxBlock-minBlock) / 2
-	return max(minBlock, min(maxBlock, minBlock+shieldArmor+int(math.Round(strength))))
+	minBlock, maxBlock := float64(cfg.BlockChanceMin), float64(cfg.BlockChanceMax)
+	even := float64(cfg.BlockChanceEven) + float64(max(shieldArmor, 0))
+	return max(int(minBlock), min(int(maxBlock), floorChance(edgeChance(even, minBlock, maxBlock, edge))))
+}
+
+// blockChance is the bearer's block: its Evasion against the attacker's
+// Attack, plus the Strength edge, with its shield's armor.
+func blockChance(def, atk *characters.Character) int {
+	edge := combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Strength.ValueAdj, atk.Stats.Strength.ValueAdj))
+	return blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge)
 }
 
 // parryModifier is a weapon's parry modifier in percent (Phase 30g2,
@@ -274,20 +349,28 @@ func parryModifier(weapon items.Item) (mod int, ok bool) {
 	return mod + spec.Parry, true
 }
 
-// parryChance returns the percent chance that a melee strike is parried:
-// the minimum grown by the Speed advantage up to ParryChanceMax, then the
-// weapon's modifier, which moves the whole range (a sword parries 10–35%,
-// a dagger 0–25%). A ParryChanceMax of 0 turns parrying off.
-func parryChance(defSpeed, atkSpeed, weaponMod int) int {
+// parryChanceForEdge returns the percent chance that a melee strike is
+// parried: ParryChanceEven when even, moved toward ParryChanceMin or
+// ParryChanceMax by the defender's combined edge (Phase 35a2), then the
+// weapon's modifier, which moves the whole range (a sword parries 8–45%,
+// a dagger 0–35%). A ParryChanceMax of 0 turns parrying off.
+func parryChanceForEdge(edge float64, weaponMod int) int {
 	cfg := configs.GetCombatConfig()
 	minParry := int(cfg.ParryChanceMin)
 	maxParry := int(cfg.ParryChanceMax)
 	if maxParry <= 0 {
 		return 0
 	}
-	base := floorChance(advantageChance(float64(minParry), float64(maxParry), statAdvantage(defSpeed, atkSpeed)))
+	base := floorChance(edgeChance(float64(cfg.ParryChanceEven), float64(minParry), float64(maxParry), edge))
 	base = max(minParry, min(maxParry, base))
 	return max(0, min(100, base+weaponMod))
+}
+
+// parryChance is the defender's parry: its Evasion against the attacker's
+// Attack, plus the Speed edge, with its weapon's modifier.
+func parryChance(def, atk *characters.Character, weaponMod int) int {
+	edge := combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Speed.ValueAdj, atk.Stats.Speed.ValueAdj))
+	return parryChanceForEdge(edge, weaponMod)
 }
 
 // rollDefense rolls a defense's chance, logging it under name.
@@ -297,12 +380,22 @@ func rollDefense(name string, chance int) bool {
 	return roll < chance
 }
 
-// BashChance returns the probability in [BashChanceMin, BashChanceMax] that
-// a shield-bearer can bash when a melee strike is blocked (Phase 30g2): the
-// minimum, grown by the bearer's Strength advantage over the attacker.
-func BashChance(defStr, atkStr int) int {
+// bashChanceForEdge returns the probability in [BashChanceMin,
+// BashChanceMax] that a shield-bearer can bash when a melee strike is
+// blocked (Phase 30g2): the minimum, grown by the bearer's advantage.
+func bashChanceForEdge(edge float64) int {
 	cfg := configs.GetCombatConfig()
-	return floorChance(advantageChance(float64(cfg.BashChanceMin), float64(cfg.BashChanceMax), statAdvantage(defStr, atkStr)))
+	return floorChance(advantageChance(float64(cfg.BashChanceMin), float64(cfg.BashChanceMax), max(0, edge)))
+}
+
+// BashChance is the bearer's bash after a block: its Strength edge over
+// the attacker plus its skill edge (Evasion against Attack, Phase 35a2).
+func BashChance(bearer, attacker *characters.Character) int {
+	if bearer == nil || attacker == nil {
+		return 0
+	}
+	edge := combinedEdge(defenseEdge(bearer, attacker), StatEdge(bearer.Stats.Strength.ValueAdj, attacker.Stats.Strength.ValueAdj))
+	return bashChanceForEdge(edge)
 }
 
 // dualWieldHitPenalty returns the negative hit modifier applied to the offhand
@@ -440,7 +533,7 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 	}
 
 	// hitChance already enforces [ToHitMin, ToHitMax].
-	hitPct := float64(hitChance(atkChar.Stats.Speed.ValueAdj, defChar.Stats.Speed.ValueAdj)) / 100.0
+	hitPct := float64(hitChance(&atkChar, &defChar)) / 100.0
 
 	dwLevel := atkChar.GetSkillLevel(`dual-wield`)
 	dwPenalty := 0.0
@@ -458,12 +551,10 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 		false,
 	)) / 100.0
 
-	// A hit that lands is still negated if the defender dodges.
-	// Expected damage probability per attack = hitPct * (1 - dodgePct).
-	dodgePct := float64(burdenedDodge(dodgeChance(
-		defChar.Stats.Perception.ValueAdj,
-		atkChar.Stats.Perception.ValueAdj,
-	), defChar.Burden())) / 100.0
+	// A hit that lands is still negated by the one active defense it
+	// meets, as activeDefense rolls it (block for a shield-bearer, else
+	// the better of parry and dodge for melee).
+	dodgePct := float64(expectedDefense(&defChar, &atkChar)) / 100.0
 
 	// Defense reduces damage by an expected fraction of defenseRating/200
 	// (average of a uniform roll over [0, defenseRating) divided by 100).
@@ -556,11 +647,30 @@ func CombatOdds(atkChar characters.Character, defChar characters.Character) floa
 	return defRoundsToKill / atkRoundsToKill
 }
 
+// expectedDefense is the chance the active defense a melee blow meets
+// stops it, the same choice activeDefense makes, without a roll.
+func expectedDefense(def, atk *characters.Character) int {
+	if def.HasBuffFlag(status.FlagNoDodge) {
+		return 0
+	}
+	if def.HasShield() {
+		return blockChance(def, atk)
+	}
+	dodge := effectiveDodge(def, atk)
+	melee := atk.Equipment.Weapon.GetSpec().Subtype != items.Shooting
+	if mod, ok := parryModifier(def.Equipment.Weapon); melee && ok {
+		if parry := parryChance(def, atk, mod); parry >= dodge {
+			return parry
+		}
+	}
+	return dodge
+}
+
 // DodgeRetentionPct is the share of dodge retained under personal burden.
 // The preview uses the same rounding and rule as combat.
 func DodgeRetentionPct(c *characters.Character) int {
 	if c == nil {
 		return 100
 	}
-	return burdenedDodge(100, c.Burden())
+	return bulkDodge(burdenedDodge(100, c.Burden()), c.BulkDodgeFactor())
 }

@@ -4,6 +4,7 @@ namesimple: dog collar
 description: A leather collar with metal spikes.
 type: neck
 subtype: wearable
+bulk: light
 damagereduction: 3
 statmods:
   strength: 3

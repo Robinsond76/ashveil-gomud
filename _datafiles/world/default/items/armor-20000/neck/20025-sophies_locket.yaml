@@ -4,6 +4,7 @@ namesimple: locket
 description: A locket with a drawing inside.
 type: neck
 subtype: wearable
+bulk: light
 damagereduction: 3
 statmods:
   mysticism: 5

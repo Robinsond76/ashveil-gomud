@@ -4,5 +4,6 @@ namesimple: belt
 description: Just enough to hold your pants up.
 type: belt
 subtype: wearable
+bulk: light
 damagereduction: 1
 weight: 150

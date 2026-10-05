@@ -3,6 +3,7 @@ package company
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
@@ -61,6 +62,18 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 	}
 	if identity.Description != "" {
 		mob.Character.Description = identity.Description
+	}
+	// Phase 35a2 (after its own name and pronouns are set): a shield or weapon its class can't use goes from its
+	// hands to its pack; the next company save keeps it there, so the
+	// leader hears of it once.
+	if moved := mob.Character.UnequipDisallowed(); len(moved) > 0 {
+		_, reason := mob.Character.CanWield(moved[0])
+		names := make([]string, len(moved))
+		for i, itm := range moved {
+			names[i] = fmt.Sprintf(`<ansi fg="item">%s</ansi>`, itm.DisplayName())
+		}
+		leader.SendText(fmt.Sprintf(`<ansi fg="mobname">%s</ansi> puts away %s %s. %s`, mob.Character.Name,
+			mob.Character.CombatPronouns().Possessive, strings.Join(names, ` and `), reason))
 	}
 	mob.Character.CharmAsCompanion(leaderUserID, -2, characters.CharmExpiredRevert)
 	leader.Character.TrackCharmed(mob.InstanceId, true)

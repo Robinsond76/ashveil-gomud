@@ -1,13 +1,16 @@
 
+// Phase 35a2: 55% of a Minor Heal (8 + 2d4 + level/6) for each patient,
+// times the healer's HealFactor (a holy symbol's +5%).
+HEAL_BASE = 8;
 HEAL_DICE_QTY = 2;
-HEAL_DICE_SIDES = 3;
-// Phase 30g6: every two caster levels add a point of health to each
-// patient, rounded down, so healing keeps pace as levels grow.
-HEAL_PER_LEVEL = 0.5;
+HEAL_DICE_SIDES = 4;
+HEAL_LEVEL_DIV = 6;
+HEAL_SHARE = 0.55;
 
 // healRoll is one patient's heal before any wound limit.
 function healRoll(sourceActor) {
-    return UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES) + Math.floor(sourceActor.GetLevel() * HEAL_PER_LEVEL);
+    var roll = HEAL_BASE + UtilDiceRoll(HEAL_DICE_QTY, HEAL_DICE_SIDES) + Math.floor(sourceActor.GetLevel() / HEAL_LEVEL_DIV);
+    return Math.max(1, Math.floor(roll * HEAL_SHARE * sourceActor.HealFactor()));
 }
 
 SPELL_NAME = 'Minor Heal All';

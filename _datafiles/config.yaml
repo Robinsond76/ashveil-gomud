@@ -322,19 +322,28 @@ GamePlay:
     ConsistentAttackMessages: true
     # Flat damage: floor(DamageBonusMin + Strength * DamagePerStrength +
     # Strength edge * DamageEdgeMax), held to DamageBonusMin-DamageBonusMax.
-    DamageBonusMin: 8
-    DamageBonusMax: 20
+    # Phase 35a2: small and flat, so the weapon's dice decide a blow and a
+    # landed hit stays 15-25% of a same-level warrior's health.
+    DamageBonusMin: 6
+    DamageBonusMax: 12
     # Bounded growth even against an equally strong opponent.
-    DamagePerStrength: 1.25
+    DamagePerStrength: 0.375
     # Extra damage at a full Strength edge (StatEdgeSpan points stronger).
-    DamageEdgeMax: 4
+    DamageEdgeMax: 2
     # Stat edge (30g6): every opposed chance reads the difference of two
     # stats over this span. A lead of StatEdgeSpan points reaches a bound;
     # each point moves a chance 1/StatEdgeSpan of the way.
     StatEdgeSpan: 40
-    # Chance to hit (percent): ToHitEven at equal Speed, moved by the Speed edge
-    ToHitMin: 25
-    ToHitMax: 100
+    # Skill edge (35a2): the gap between the attacker's Attack and the
+    # defender's Evasion over this span. It is added to the stat edge of
+    # every opposed chance except crits, and the sum is held to -1..1.
+    SkillEdgeSpan: 16
+    # Rating per level for characters without a class (enemies).
+    DefaultAttackRate: 1.0
+    DefaultEvasionRate: 1.0
+    # Chance to hit (percent): ToHitEven when even, moved by the skill and Speed edge
+    ToHitMin: 10
+    ToHitMax: 95
     ToHitEven: 60
     # Extra attacks for weaponless/claws combat driven by Speed delta
     # Legacy keys, unused by the action meter.
@@ -347,17 +356,23 @@ GamePlay:
     # Critical hit damage multiplier, grown by the Perception advantage
     CritMultMin: 1.5
     CritMultMax: 3.0
-    # Chance to dodge (percent), grown by the Perception advantage
-    DodgeChanceMin: 5
-    DodgeChanceMax: 30
-    # Chance a shield blocks a blow (percent): the minimum plus the shield's
-    # own armor, moved by the Strength edge, held to this range
-    BlockChanceMin: 15
-    BlockChanceMax: 45
-    # Chance a weapon parries a melee blow (percent), grown by the Speed advantage;
-    # the weapon's modifier (+5 sword, -5 dagger, ...) moves the range
-    ParryChanceMin: 5
-    ParryChanceMax: 30
+    # Chance to dodge (percent): DodgeChanceEven when even, moved by the
+    # skill and Perception edge
+    DodgeChanceMin: 3
+    DodgeChanceMax: 40
+    DodgeChanceEven: 12
+    # Chance a shield blocks a blow (percent): BlockChanceEven plus the
+    # shield's own armor when even, moved by the skill and Strength edge,
+    # held to this range
+    BlockChanceMin: 8
+    BlockChanceMax: 55
+    BlockChanceEven: 20
+    # Chance a weapon parries a melee blow (percent): ParryChanceEven when
+    # even, moved by the skill and Speed edge; the weapon's modifier (+5
+    # sword, -5 dagger, ...) moves the range
+    ParryChanceMin: 3
+    ParryChanceMax: 40
+    ParryChanceEven: 12
     # Chance a shield-bearer bashes back a blocked melee blow (percent)
     # grown by the Strength advantage
     BashChanceMin: 5
@@ -369,6 +384,17 @@ GamePlay:
     AgilityBaseKg: 15
     AgilityStrengthKg: 0.5
     AgilityFreeLoad: 0.35
+    # Armor bulk (35a2): the share of tempo and of dodge lost in medium and
+    # heavy armor (the heaviest piece worn). Strength never offsets it.
+    # Armor heavier than the class is trained for doubles both, and costs
+    # UntrainedSkillLoss Attack and Evasion and UntrainedChantRounds on
+    # every chant.
+    BulkTempoMedium: 0.08
+    BulkTempoHeavy: 0.20
+    BulkDodgeMedium: 0.2
+    BulkDodgeHeavy: 0.5
+    UntrainedSkillLoss: 10
+    UntrainedChantRounds: 1
     # Tempo is turns per combat round, from effective Speed and personal burden.
     TempoMin: 0.6
     TempoMax: 1.5
@@ -424,10 +450,13 @@ GamePlay:
     # Fractional growth keeps the old values at each fifth level.
     SmoothStatGrowth: true
     StatStepLevels: 5
-    DefaultHPPerLevel: 2.5
+    # Phase 35a2: a level makes a character better at fighting, not
+    # thicker. Small growth from a higher floor (HPBase plus the class's
+    # HPStart), so a landed blow stays a large share of health.
+    DefaultHPPerLevel: 0.8
     HPFullLevels: 20
-    # 60% of each archetype rate after level 20 (1.5 / 2.5).
-    HPAfterFull: 1.5
+    # A quarter of each archetype rate after level 20 (0.2 / 0.8).
+    HPAfterFull: 0.2
     XPKneeLevel: 60
     XPKneeGrowth: 1.10
     # --- Stat gain formula ---
@@ -451,7 +480,7 @@ GamePlay:
     #   >1.0 = accelerating. Valid range: 0.1 to 5.0.
     NaturalGainsExponent: 1.0
     # --- HP: archetype gains through HPFullLevels, then HPAfterFull, plus Vitality and bonuses ---
-    HPBase: 40
+    HPBase: 48
     HPPerVitality: 0.5
     # --- Mana formula: ManaMax = ManaBase + level*ManaPerLevel + Mysticism_adj*ManaPerMysticism + mods ---
     ManaBase: 4

@@ -5,6 +5,7 @@ description: An oar used to paddle a small boat.
 type: weapon
 hands: 1
 subtype: bludgeoning
+weaponclass: improvised
 uses: 0
 damage:
   diceroll: 1d3

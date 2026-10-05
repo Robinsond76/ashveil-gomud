@@ -17,6 +17,6 @@ character:
   alignment: 50
   equipment:
     weapon:
-      itemid: 10015
+      itemid: 10023
     body:
       itemid: 20008

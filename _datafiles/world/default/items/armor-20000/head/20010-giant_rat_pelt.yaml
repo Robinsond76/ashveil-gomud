@@ -4,6 +4,7 @@ namesimple: animal skin
 description: The skin of a dead giant rat. It's just big enough to wear over your head.
 type: head
 subtype: wearable
+bulk: light
 damagereduction: 1
 statmods:
   speed: 1

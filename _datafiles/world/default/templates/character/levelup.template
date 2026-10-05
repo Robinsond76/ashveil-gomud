@@ -1,5 +1,6 @@
 <ansi fg="yellow-bold">You reach level {{ .level }}.</ansi>
  Health {{ .healthBefore }} -> {{ .healthAfter }}   Mana {{ .manaBefore }} -> {{ .manaAfter }}
+ Attack {{ .attackBefore }} -> {{ .attackAfter }}   Evasion {{ .evasionBefore }} -> {{ .evasionAfter }}
 {{ if ne .statsBefore.Strength.ValueAdj .statsAfter.Strength.ValueAdj }} Strength {{ .statsBefore.Strength.ValueAdj }} -> {{ .statsAfter.Strength.ValueAdj }}
 {{ end }}{{ if ne .statsBefore.Speed.ValueAdj .statsAfter.Speed.ValueAdj }} Speed {{ .statsBefore.Speed.ValueAdj }} -> {{ .statsAfter.Speed.ValueAdj }}
 {{ end }}{{ if ne .statsBefore.Smarts.ValueAdj .statsAfter.Smarts.ValueAdj }} Smarts {{ .statsBefore.Smarts.ValueAdj }} -> {{ .statsAfter.Smarts.ValueAdj }}
@@ -9,4 +10,4 @@
 {{ end }} Training Points: +{{ .trainingPoints }}   Stat Points: +{{ .statPoints }}{{ if .livesUp }}   Extra Lives: +{{ .livesUp }}{{ end }}
  Next: {{ .nextMilestone }}
  Type <ansi fg="command">stat train</ansi> to spend your extra Stat Points.
- See <ansi fg="command">help progression</ansi>.
+ See <ansi fg="command">help progression</ansi> and <ansi fg="command">help evasion</ansi>.

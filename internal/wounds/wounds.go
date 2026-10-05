@@ -272,9 +272,24 @@ type Healer struct {
 	Key        string
 	Mana       int
 	Tend, Heal bool
-	// HealBonus is added to each heal's dice: the caster's level, as
-	// heal.js adds it in battle (30g6).
+	// HealBonus is added to each heal's dice: HealBase plus level/6, as
+	// heal.js adds it (Phase 35a2; HealBonusFor).
 	HealBonus int
+	// HealPct is the percent the healer's gear adds to each heal (a holy
+	// symbol's 5), as heal.js's HealFactor.
+	HealPct int
+}
+
+// HealBase and HealLevelDiv are heal.js's flat part (Phase 35a2): 8 +
+// level/6 on top of its 2d4.
+const (
+	HealBase     = 8
+	HealLevelDiv = 6
+)
+
+// HealBonusFor is a healer's flat heal bonus at a level, as heal.js adds it.
+func HealBonusFor(level int) int {
+	return HealBase + max(level, 0)/HealLevelDiv
 }
 
 // Stock is the treatment items the company can reach.
@@ -289,7 +304,7 @@ type Rules struct {
 }
 
 // DefaultRules match tend.yaml/tend.js and heal.yaml/heal.js.
-var DefaultRules = Rules{TendCost: 4, HealCost: 3, TendDice: [2]int{2, 3}, HealDice: [2]int{2, 3}}
+var DefaultRules = Rules{TendCost: 4, HealCost: 3, TendDice: [2]int{2, 3}, HealDice: [2]int{2, 4}}
 
 // StepKind is one kind of treatment.
 type StepKind string
@@ -420,7 +435,7 @@ func Plan(patients []Patient, healers []Healer, stock Stock, rules Rules, roll R
 				break
 			}
 			h.Mana -= rules.HealCost
-			amt := min(dice(rules.HealDice, roll)+h.HealBonus, p.Limit()-p.Health)
+			amt := min((dice(rules.HealDice, roll)+h.HealBonus)*(100+max(h.HealPct, 0))/100, p.Limit()-p.Health)
 			p.Health += amt
 			res.Steps = append(res.Steps, after(Step{Kind: StepHeal, Healed: amt}, *p, h))
 		}

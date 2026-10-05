@@ -25,6 +25,7 @@ var (
 	// Combat
 	Attacks StatName = `attacks` // Additional attacks per combat round
 	Damage  StatName = `damage`  // Flat bonus damage added to every hit
+	Healing StatName = `healing` // Phase 35a2: percent added to the wearer's heals (a holy symbol's 5)
 
 	// Stat based
 	Strength   StatName = `strength`
@@ -54,6 +55,7 @@ func GetStatMods() map[StatName]string {
 		ManaRecovery:      "Extra MP recovered each round during natural regeneration.",
 		Attacks:           "Additional attacks granted per combat round.",
 		Damage:            "Flat bonus damage added to every successful hit.",
+		Healing:           "Percent added to every heal the wearer casts (a holy symbol adds 5).",
 		Strength:          "Increases the Strength stat, affecting melee damage and carrying capacity.",
 		Speed:             "Increases the Speed stat, affecting hit chance, dodge, and attack frequency.",
 		Smarts:            "Increases the Smarts stat, affecting spell power and skill learning.",

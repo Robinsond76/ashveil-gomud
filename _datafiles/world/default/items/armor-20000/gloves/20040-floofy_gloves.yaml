@@ -4,6 +4,7 @@ namesimple: animal skin
 description: The skin of a dead snow floof. Floofskin is known to keep you warm in extreme weather.
 type: gloves
 subtype: wearable
+bulk: light
 damagereduction: 2
 wornbuffids:
   - 3 # Cold Tolerant

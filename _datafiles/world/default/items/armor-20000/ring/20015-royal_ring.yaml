@@ -4,6 +4,7 @@ namesimple: ring
 description: Though ancient, the ring is in terrific shape.
 type: ring
 subtype: wearable
+bulk: light
 damagereduction: 2
 statmods:
   strength: 1

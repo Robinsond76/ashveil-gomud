@@ -59,8 +59,8 @@ func TestProgressionPreviewParityAndDownsampledXP(t *testing.T) {
 			}
 			assert.Equal(t, local.XPThreshold(level, 1)-prev, d.XPPerLevel[i])
 			v := applyCapWithCfg(gainsForLevelWithCfg(level, 3, local), local)
-			assert.Equal(t, local.HealthAtLevel(level, v, 6), d.HP["warrior"][i])
-			assert.Equal(t, local.HealthAtLevel(level, v, 3), d.HP["wizard"][i])
+			assert.Equal(t, local.HealthAtLevel(level, v, 6, 0), d.HP["warrior"][i])
+			assert.Equal(t, local.HealthAtLevel(level, v, 3, 0), d.HP["wizard"][i])
 			gameplay := configs.GetGamePlayConfig()
 			gameplay.Progression = local
 			restore := configs.SetTestGamePlayConfig(gameplay)

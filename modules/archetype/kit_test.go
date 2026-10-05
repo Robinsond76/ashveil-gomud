@@ -2,6 +2,7 @@ package archetype
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -72,8 +73,10 @@ func TestShippedKitsResolveAndBalance(t *testing.T) {
 		"warrior": {10002, 20004, 20020, 30004, 30015, 38},
 		"rogue":   {10004, 8, 20029, 20003, 23, 30004, 30015, 38},
 		"wizard":  {10021, 20020, 20008, 20039, 30004, 30015, 30014, 30014, 38},
-		"cleric":  {10015, 20004, 20008, 30004, 30015, 30001, 30001, 38},
-		"ranger":  {10014, 20020, 20024, 20003, 30019, 30015, 23, 38},
+		// Phase 35a2: an acolyte's mace and a holy symbol, not a cudgel
+		// and a shield.
+		"cleric": {10023, 20046, 20008, 30004, 30015, 30001, 30001, 38},
+		"ranger": {10014, 20020, 20024, 20003, 30019, 30015, 23, 38},
 	}
 	lowest, highest := 0, 0
 	for id, kit := range want {
@@ -346,4 +349,40 @@ func TestGrantKitAllOrNothing(t *testing.T) {
 	assert.Empty(t, m.grantKit(u))
 	assert.Empty(t, ownedIDs(u))
 	assert.Nil(t, u.Character.GetMiscData(kitMarkerKey), "still owed")
+}
+
+// TestSpawnPutsAwayClassGearOnce (Phase 35a2): a rogue who logs in holding
+// a shield has it put with carried items, is told and saved once, and a
+// second login changes and says nothing.
+func TestSpawnPutsAwayClassGearOnce(t *testing.T) {
+	m, _ := testModule(t)
+	archetypes.SetProvider(m)
+	t.Cleanup(func() { archetypes.SetProvider(nil) })
+	saves := 0
+	m.saveUser = func(*users.UserRecord) error { saves++; return nil }
+	m.registry.Players[209] = "rogue"
+	u := newUser(209)
+	u.Character.RaceId = 1 // a human: both hands free
+	u.Character.Equipment.Offhand = items.New(20004)
+	users.SetTestUser(u)
+	t.Cleanup(func() { users.RemoveTestUser(209) })
+	heard := []string{}
+	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
+		heard = append(heard, e.(events.Message).Text)
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.Message{}, id) })
+
+	m.onPlayerSpawn(eventsPlayerSpawn(209))
+	events.ProcessEvents()
+	assert.Zero(t, u.Character.Equipment.Offhand.ItemId)
+	assert.Contains(t, ownedIDs(u), 20004, "the shield is carried")
+	assert.Equal(t, 1, saves)
+	assert.Contains(t, strings.Join(heard, "\n"), "Rogues don't carry shields.")
+
+	heard = nil
+	m.onPlayerSpawn(eventsPlayerSpawn(209))
+	events.ProcessEvents()
+	assert.Equal(t, 1, saves, "nothing to save the second time")
+	assert.NotContains(t, strings.Join(heard, "\n"), "shields")
 }

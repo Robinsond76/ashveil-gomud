@@ -2,6 +2,7 @@ package usercommands
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/assessment"
@@ -69,6 +70,9 @@ func Consider(rest string, user *users.UserRecord, room *rooms.Room, flags event
 	}
 	lines := []string{fmt.Sprintf(`You consider <ansi fg="mobname">%s</ansi>...`, g.Name)}
 	lines = append(lines, rep.Lines()...)
+	if line := skillGapLine(user, g.Visible()); line != `` {
+		lines = append(lines, line)
+	}
 	lines = append(lines, fmt.Sprintf(`Type <ansi fg="command">scout %s</ansi> to see how they stand.`, GroupKeyword(room, g)))
 	user.SendText(strings.Join(lines, "\n"))
 	return true, nil
@@ -110,4 +114,37 @@ func considerGroup(room *rooms.Room, search string) (enemyparty.Group, bool) {
 		return enemyparty.Group{}, false
 	}
 	return groupOf[byName[fullMatch]], true
+}
+
+// skillGapLine describes, in words, how the enemies' Attack and Evasion
+// compare with the player's (Phase 35a2): the gap between the group's
+// average rating and the player's.
+func skillGapLine(user *users.UserRecord, foes []*mobs.Mob) string {
+	if len(foes) == 0 {
+		return ``
+	}
+	sum := 0
+	for _, m := range foes {
+		sum += m.Character.AttackSkill() + m.Character.Evasion()
+	}
+	theirs := float64(sum) / float64(2*len(foes))
+	mine := float64(user.Character.AttackSkill()+user.Character.Evasion()) / 2
+	return `  They are ` + SkillGapWords(int(math.Round(theirs-mine))) + `.`
+}
+
+// SkillGapWords names a rating gap (theirs less yours) without numbers:
+// 10 or more far more skilled, 4-9 more skilled, within 3 evenly matched,
+// and the mirror phrases behind.
+func SkillGapWords(gap int) string {
+	switch {
+	case gap >= 10:
+		return `far more skilled than you`
+	case gap >= 4:
+		return `more skilled than you`
+	case gap > -4:
+		return `evenly matched with you`
+	case gap > -10:
+		return `less skilled than you`
+	}
+	return `novices next to you`
 }

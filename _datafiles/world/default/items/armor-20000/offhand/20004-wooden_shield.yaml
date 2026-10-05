@@ -4,5 +4,7 @@ namesimple: shield
 description: A simple wooden shield.
 type: offhand
 subtype: wearable
+bulk: medium
 damagereduction: 5
+shieldsize: shield
 weight: 3000
