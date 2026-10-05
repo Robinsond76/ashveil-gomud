@@ -106,7 +106,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-05 (35a merged via PR #15; visual client milestone and sprite specification added; roadmap reprioritized; 35b/35c pending implementation)
+- **Last updated:** 2026-10-05 (35a merged via PR #15; 35a2 skill-over-HP and faith routes designs drafted; visual client milestone and sprite specification added; roadmap reprioritized; 35b/35c pending implementation)
 - **Latest completed slices:** 35a, level impact; 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -180,13 +180,14 @@ implemented (handoff rule 20).
 | Phase | Scope | Source | Depends on |
 |---|---|---|---|
 | 35a | Level impact: smooth stats, stat point every 2 levels, HP to level 20, level-up report, zone-band harness cells. [Plan](plans/2026-10-05-phase-35a-level-impact.md), complete (PR #15) | Level impact §1, §4.1 | — |
-| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), pending implementation | Level impact §2, §4 | 35a |
+| 35a2 | Skill over hit points: derived Attack and Evasion ratings by level and class, one skill edge added to every opposed chance (block included), small HP growth with a 15–25% landed hit, a smaller Strength damage bonus, armor bulk with a significant untrained penalty (warriors the tanks), shields for warriors and rangers (bucklers) only, cleric staffs/rods/maces, spell and heal numbers sized to a weapon hit. [Design](designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md), owner decisions recorded; plan next | Owner direction 2026-10-05 | 35a |
+| 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), pending implementation; spell, heal and HP numbers wait on 35a2 | Level impact §2, §4 | 35a, 35a2 |
 | 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), pending implementation | Level impact §5 | 35a |
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role | Level impact §3 | 35b |
-| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages | Branching design; level impact §1e | 35a, 38a |
+| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the draft [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 38a |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
 
