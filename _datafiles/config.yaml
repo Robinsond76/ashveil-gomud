@@ -421,10 +421,13 @@ GamePlay:
   # It is NOT recommended to attempt to adjust these values manually, since they have complex relationships
   # Instead, visit /admin/progression for a live visual editor with charts.
   Progression:
+    # Fractional growth keeps the old values at each fifth level.
+    SmoothStatGrowth: true
     StatStepLevels: 5
     DefaultHPPerLevel: 2.5
-    HPFullLevels: 10
-    HPAfterFull: 1.3
+    HPFullLevels: 20
+    # 60% of each archetype rate after level 20 (1.5 / 2.5).
+    HPAfterFull: 1.5
     XPKneeLevel: 60
     XPKneeGrowth: 1.10
     # --- Stat gain formula ---
@@ -461,7 +464,7 @@ GamePlay:
     TrainingPointsPerLevel: 1
     TrainingPointsEveryNLevels: 1
     StatPointsPerLevel: 1
-    StatPointsEveryNLevels: 5
+    StatPointsEveryNLevels: 2
     # --- XP curve ---
     # XP_to_level(L) = (XPBase + L^XPLevelPower * XPLevelFactor * XPBase) * TNLScale
     # - XPBase -

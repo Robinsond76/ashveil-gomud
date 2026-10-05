@@ -5,6 +5,11 @@ Implements section 1 and section 4.1 of the owner-approved
 (approved 2026-10-05). Branch and worktree: `phase-35a-level-impact`.
 Read the [phase 35 handoff](2026-10-05-phase-35-handoff.md) first.
 
+Status: implementation complete on `phase-35a-level-impact`; independent review and final
+verification passed; [PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15)
+is open and pending integration. 35b and 35c remain pending
+implementation. [Measurements](2026-10-05-phase-35a-measurements.md).
+
 ## Goal
 
 Every level-up changes numbers the player can see:
@@ -51,7 +56,7 @@ Out of scope here:
 - Harness: `modules/company/balance_test.go`:
   - opt-in (`ASHVEIL_BALANCE=1`);
   - `newBalanceFight(t, level, companyMode, enemyMode, enemyLevels...)`
-    always fields the 4-member `balanceMirror` group and forces
+    always fields the 5-member `balanceMirror` group and forces
     `mob.Coordination = 1`.
 - Coordination tiers come from `internal/coordination.ForLevel`: tier 1
   below level 10, tier 2 at 10–24, tier 3 at 25–44, tier 4 at 45+.
@@ -82,12 +87,17 @@ Out of scope here:
    received points on the 5-level rhythm. On load, if
    `Character.StatPointRhythm` (new `int`, yaml `statpointrhythm,omitempty`)
    is below 2:
-   - grant `StatPointsAt(PeakLevel)` under the new rule minus the same under
-     the old 5-level rule (never negative);
+   - grant `StatPointsAt(PeakLevel)` under the new rule minus the points the
+     character already holds (never negative; see the follow-up below);
    - set the field to 2;
    - save through the user's normal atomic save.
    This runs exactly once, also across copyover and replay copies (32b
-   replays start at level 1 and owe nothing). Companions need no migration,
+   replays start at level 1 and owe nothing). While the server still runs
+   the 5-level rhythm nothing is owed and the character stays unmarked; a
+   player online when the rhythm changes is caught up before their next
+   level-up. Points the character already holds (unspent plus stat training)
+   count toward the new total, so characters who earned every level before
+   30g4 are not paid again (PR review follow-up). Companions need no migration,
    since 33h1 derives their training.
 5. **HP shape.** Set `HPFullLevels: 20` and `HPAfterFull: 1.5`, so
    `HealthAfterFull` gives 60% of each archetype's rate (1.5 / 2.5). Validate
@@ -138,7 +148,7 @@ Out of scope here:
 
 ## Tasks
 
-- [ ] **Tests first**, red before the code:
+- [x] **Tests first**, red before the code:
   - `RacialForLevel` equals today's values at levels 5, 10, 15, 20, 60,
     rises monotonically between them, and stays unchanged when the flag is
     off;
@@ -150,24 +160,24 @@ Out of scope here:
     survives copyover;
   - `events.LevelUp` carries correct before/after values for one-level and
     multi-level gains.
-- [ ] **Config and formulas:**
+- [x] **Config and formulas:**
   - `config.progression.go` (field, Validate default, helpers);
   - `_datafiles/config.yaml` values and comments;
   - replace the modulo rule in `LevelUp`, `StatPointsAtLevel` and
     `simulate.go` with `StatPointsAt`.
-- [ ] **Migration** on user load (`internal/users` load path, alongside the
+- [x] **Migration** on user load (`internal/users` load path, alongside the
   existing 30g4 vitals clamp). Test with a saved level-12 fixture: owed 6 − 2 = 4.
-- [ ] **Level-up report:** event fields, `GrantXP` capture, `internal/milestones`,
+- [x] **Level-up report:** event fields, `GrantXP` capture, `internal/milestones`,
   the template rewrite, the companion line and the experience template.
   Integration test through the real `GrantXP` → listener → rendered text.
-- [ ] **Admin editor** fields, preview parity test and browser check
+- [x] **Admin editor** fields, preview parity test and browser check
   (Playwright harness as 30g4 did).
-- [ ] **Harness** options refactor, the fifth mirror template and
+- [x] **Harness** options refactor, a brute for new five-enemy zone cells (retain the existing five-member mirror) and
   `TestBalanceZoneBands` (report only). Run it at 100 fights a cell. Record
   the table in `docs/plans/2026-10-05-phase-35a-measurements.md` with
   before/after values for each starting class at levels 1, 5, 10, 20 and 30
   (stats, HP).
-- [ ] **Help and tutorial:**
+- [x] **Help and tutorial:**
   - update `help progression`, `help stat-train`, `help stats`,
     `help experience` and `help health`. Remove the 5-level stat-step
     wording; explain smooth growth, a point every 2 levels, HP through 20,
@@ -178,17 +188,23 @@ Out of scope here:
     `modules/tutorial/stages.go` if they quote the old rhythm.
   - Render tests in the `help_combat_test.go` pattern;
     `TestTutorialHelpPointersExist` passes.
-- [ ] **Independent full-diff reviewer** (default model, reports only). Verify
+- [x] **Independent full-diff reviewer** (default model, reports only). Verify
   and fix findings with regressions, and record accepted and rejected
   findings in Project Status.
-- [ ] **Final checks:** `make generate`, `make validate`, the JS lint (and Lua
+- [x] **Final checks:** `make generate`, `make validate`, the JS lint (and Lua
   lint if available), `go test -race ./...`. Project Status entry;
-  milestone entry flip (none flip in 35a); commit and merge.
+  milestone entry flip (none flip in 35a); commit and open a PR per the owner's
+  request. Integration is pending; do not merge in this task.
 
 ## Acceptance
 
 - At levels 5, 10, 15, … every race and class has today's automatic stats; in
-  between, at least one stat rises on most level-ups.
+  between, at least one stat rises on most level-ups. **Partially unmet:** the
+  approved fractional formula preserves boundaries, but shipped human bases
+  and truncation yield changed automatic adjusted stats on only 8/59 level-ups
+  from 2–60. See [measurements](2026-10-05-phase-35a-measurements.md). The
+  implementation preserves the approved curve; resolving this needs a design
+  follow-up, not an unreviewed stat/race retune.
 - Stat points: 1 at level 2, 5 at level 10, 30 at level 60. Regained levels
   grant nothing; existing characters receive their difference exactly once.
 - HP after level 20 grows at 60% of the class rate.

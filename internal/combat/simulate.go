@@ -49,15 +49,7 @@ func newSimMob(mobId mobs.MobId, forceLevel int) (*mobs.Mob, error) {
 	}
 
 	mob.Character.PlayerDamage = make(map[int]int)
-	mob.Character.StatPoints = 0
-	{
-		cfgProg := configs.GetProgressionConfig()
-		for lvl := 1; lvl <= mob.Character.Level; lvl++ {
-			if int(cfgProg.StatPointsEveryNLevels) <= 1 || lvl%int(cfgProg.StatPointsEveryNLevels) == 0 {
-				mob.Character.StatPoints += int(cfgProg.StatPointsPerLevel)
-			}
-		}
-	}
+	mob.Character.StatPoints = configs.GetProgressionConfig().StatPointsAt(mob.Character.Level)
 	mob.Character.Level--
 	mob.Character.Experience = mob.Character.XPTNL()
 	mob.Character.Level++

@@ -10,6 +10,7 @@ import (
 )
 
 type progressionPreviewData struct {
+	StatPoints   []int            `json:"stat_points"`
 	Levels       []int            `json:"levels"`
 	StatGains    map[string][]int `json:"stat_gains"`
 	StatGainsAdj map[string][]int `json:"stat_gains_adj"`
@@ -32,7 +33,7 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 
 	// Override config from query params when provided.
 	q := r.URL.Query()
-	for key, target := range map[string]*configs.ConfigInt{"StatStepLevels": &cfg.StatStepLevels, "HPFullLevels": &cfg.HPFullLevels, "XPKneeLevel": &cfg.XPKneeLevel} {
+	for key, target := range map[string]*configs.ConfigInt{"StatStepLevels": &cfg.StatStepLevels, "StatPointsEveryNLevels": &cfg.StatPointsEveryNLevels, "StatPointsPerLevel": &cfg.StatPointsPerLevel, "HPFullLevels": &cfg.HPFullLevels, "XPKneeLevel": &cfg.XPKneeLevel} {
 		if v, err := strconv.Atoi(q.Get(key)); err == nil {
 			*target = configs.ConfigInt(v)
 		}
@@ -131,6 +132,9 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 		cfg.StatCapExemptBonus = configs.ConfigBool(v == "true" || v == "1")
 	}
 
+	if v, err := strconv.ParseBool(q.Get("SmoothStatGrowth")); err == nil {
+		cfg.SmoothStatGrowth = configs.ConfigBool(v)
+	}
 	cfg.Validate()
 
 	maxLevel := int(cfg.MaxLevel)
@@ -152,6 +156,10 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	n := len(chartLevels)
+	statPoints := make([]int, n)
+	for i, lvl := range chartLevels {
+		statPoints[i] = cfg.StatPointsAt(lvl)
+	}
 	levels := chartLevels
 
 	// Stat gains: three representative racial base values plus their compressed (ValueAdj) counterparts.
@@ -228,6 +236,7 @@ func apiV1GetProgressionPreview(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, APIResponse[progressionPreviewData]{
 		Success: true,
 		Data: progressionPreviewData{
+			StatPoints:   statPoints,
 			Levels:       levels,
 			StatGains:    statGains,
 			StatGainsAdj: statGainsAdj,

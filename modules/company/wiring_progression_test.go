@@ -43,15 +43,16 @@ func TestProgressionCompanionSpawnAndSavedVitals(t *testing.T) {
 		m.Character.Level = 20
 		require.True(t, module.RetrainCompanion(m.InstanceId))
 		hp := m.Character.HealthMax.Value
+		oldVit := m.Character.Stats.Vitality.ValueAdj
 		m.Character.Level = 21
 		require.True(t, module.RetrainCompanion(m.InstanceId))
 		// Level 21 is past HPFullLevels and no stat step: only the later,
 		// class-scaled gain applies (30g6 amendment E).
 		require.Greater(t, 21, int(cfg.HPFullLevels))
 		vit := m.Character.Stats.Vitality.ValueAdj
-		gain := cfg.HealthAtLevel(21, vit, rate) - cfg.HealthAtLevel(20, vit, rate)
+		gain := cfg.HealthAtLevel(21, vit, rate) - cfg.HealthAtLevel(20, oldVit, rate)
 		assert.Positive(t, gain)
-		assert.Equal(t, hp+gain, m.Character.HealthMax.Value, "post-full gain with no stat step")
+		assert.Equal(t, hp+gain, m.Character.HealthMax.Value, "post-full gain including smooth Vitality growth")
 		m.Character.Health = 3
 		m.Character.Mana = 0
 	}

@@ -2,7 +2,8 @@
 
 Your character has six core statistics that define how you fight, survive, and
 interact with the world. Each can be raised at a trainer using stat points
-earned on level-up.
+earned every two levels under the shipped rules. Automatic stats grow
+smoothly each level, with fractional growth retained until a whole point is reached.
 
 <ansi fg="black-bold">+----------------------+------------------------------------------------------+</ansi>
 <ansi fg="black-bold">|</ansi> <ansi fg="cyan-bold">Stat                 </ansi> <ansi fg="black-bold">|</ansi> <ansi fg="yellow-bold">Effects                                             </ansi><ansi fg="black-bold">|</ansi>

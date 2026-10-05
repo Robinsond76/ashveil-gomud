@@ -2,10 +2,11 @@
 
 Your level measures experience. Your maximum health grows with levels, and you gain skill
 training points every {{ config "GamePlay.Progression.TrainingPointsEveryNLevels" }} level(s).
-Automatic racial stats rise at multiples of {{ config "GamePlay.Progression.StatStepLevels" }} levels:
-with the shipped interval, levels 5, 10, 15, and so on. Between those steps,
-your racial stats stay the same. Gear, training and effects still matter.
-<ansi fg="command">status</ansi> and the level-up message show your next automatic step.
+{{ if eq (config "GamePlay.Progression.SmoothStatGrowth") "true" }}Smooth automatic stats spread growth across each level instead of waiting for
+five-level steps. Whole points appear when the fractional growth reaches them;
+levels 5, 10, 15 and onward keep their old automatic values.{{ else }}Automatic racial stats use the configured interval of {{ config "GamePlay.Progression.StatStepLevels" }} levels.{{ end }}
+Gear, training and effects still matter. <ansi fg="command">status</ansi>, <ansi fg="command">experience</ansi> and the
+level-up report show your next milestone, with planned features marked (coming).
 
 You earn {{ config "GamePlay.Progression.StatPointsPerLevel" }} stat point(s) every {{ config "GamePlay.Progression.StatPointsEveryNLevels" }} levels.
 Spend yours with <ansi fg="command">status train</ansi>. Companions automatically deal theirs
@@ -16,6 +17,7 @@ by archetype and focus (<ansi fg="command">help growth</ansi>).
 The shipped rates through level {{ config "GamePlay.Progression.HPFullLevels" }} are:
   Warrior 3 HP per level; cleric and ranger 2.5; rogue 2; wizard 1.5.
 <ansi fg="command">archetype</ansi> lists each archetype's current rate.
+With the shipped settings, later gains are 60% of each class rate.
 After that, a cleric or ranger gains {{ config "GamePlay.Progression.HPAfterFull" }} HP per level, and each other archetype
 gains in proportion to its rate: a warrior more, a wizard less.
 Fractional gains accumulate across levels; each part of the total rounds down.
@@ -32,16 +34,28 @@ experience scale still applies. Level 100 is a practical ceiling, not a cap.
 
 Death can cost a level. Your own trained stats and unspent points stay;
 earning a lost level again never awards extra points. Companions' training
-is derived from their current level, so a lost stat step takes its points
+is derived from their current level, so a lost level can take its points
 back and regaining it restores the same allocation. See <ansi fg="command">help death</ansi>.
 
-Older characters keep their level, experience and your invested training.
+Older characters keep their level, experience and invested training.
+They receive the difference in earned stat points under the new rhythm
+once, based on their highest level, including levels since lost to death.
 Their racial stats and maximum health use these rules on loading; health
 and mana above a new maximum are lowered to fit, without a free refill.
+
+<ansi fg="yellow-bold">Upcoming milestones</ansi>
+These choices are planned, and are not unlocked yet:
+  Level 3: second class option (coming)
+  Level 5: talent (coming)
+  Level 10: class promotion (coming)
+  Level 15: talent (coming)
+  Level 20: advanced signature (coming)
+  Level 25: talent (coming)
+  Level 30: elite promotion (coming)
 
 <ansi fg="yellow-bold">Commands</ansi>
   <ansi fg="command">experience</ansi>       your level and the company's progress
   <ansi fg="command">experience chart</ansi> experience thresholds for your race
-  <ansi fg="command">status</ansi>           your stats and the next automatic step
+  <ansi fg="command">status</ansi>           your stats and the next milestone
   <ansi fg="command">status train</ansi>     spend your stat points
   <ansi fg="command">company growth</ansi>   companions' derived stat training

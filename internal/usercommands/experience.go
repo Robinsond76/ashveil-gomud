@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/milestones"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/templates"
@@ -193,12 +194,13 @@ func Experience(rest string, user *users.UserRecord, room *rooms.Room, flags eve
 	}
 
 	realXPNow, realXPTNL := user.Character.XPTNLActual()
-	xpInfo := map[string]int{
-		"Level": user.Character.Level,
-		"Exp":   realXPNow,
-		"Tnl":   realXPTNL,
-		"Tp":    user.Character.TrainingPoints,
-		"Sp":    user.Character.StatPoints,
+	xpInfo := map[string]any{
+		"NextMilestone": milestones.Next(user.Character.Level),
+		"Level":         user.Character.Level,
+		"Exp":           realXPNow,
+		"Tnl":           realXPTNL,
+		"Tp":            user.Character.TrainingPoints,
+		"Sp":            user.Character.StatPoints,
 	}
 
 	tplTxt, _ := templates.Process("character/experience", xpInfo, user.UserId)

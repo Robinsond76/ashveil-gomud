@@ -229,6 +229,9 @@ func TestMissLeavesChantWhole(t *testing.T) {
 // An enemy's chant breaks on a company blow and starts again from the
 // first word at its turn, then lands after its full chant time.
 func TestEnemyChantBreaksAndRestarts(t *testing.T) {
+	// This fixture isolates weapon interruptions: automatic Tackle can
+	// knock the chanter down and delay the otherwise fixed chant rounds.
+	t.Cleanup(hooks.UseAbilityRollForTest(func(n int) int { return n - 1 }))
 	b := guardBrawl(t)
 	forceBlows(t, true)
 	noCounters(t)

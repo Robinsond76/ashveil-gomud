@@ -1,6 +1,7 @@
 package usercommands
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -11,11 +12,17 @@ import (
 
 func TestProgressionHelp(t *testing.T) {
 	useWorld(t, "default")
+	g := configs.GetGamePlayConfig()
+	g.Progression.SmoothStatGrowth = true
+	g.Progression.StatPointsEveryNLevels = 2
+	g.Progression.StatPointsPerLevel = 1
+	g.Progression.HPFullLevels = 20
+	t.Cleanup(configs.SetTestGamePlayConfig(g))
 	keywords.LoadAliases()
 	text, err := GetHelpContents("progression")
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"levels 5, 10, 15", "Warrior 3 HP", "wizard 1.5", "Fractional gains accumulate", "no level cap", "training", "60", "1.1"} {
+	for _, want := range []string{"Smooth automatic stats", "every 2 levels", "through level 20", "60%", "class promotion (coming)", "second class option (coming)", "Warrior 3 HP", "wizard 1.5", "Fractional gains accumulate", "no level cap", "training", "60", "1.1"} {
 		assert.Contains(t, plain, want)
 	}
 	assert.NotContains(t, plain, "{{")
@@ -31,12 +38,15 @@ func TestProgressionHelp(t *testing.T) {
 	}
 }
 
-func TestProgressionStatusNamesNextStep(t *testing.T) {
+func TestProgressionStatusNamesNextMilestone(t *testing.T) {
 	useWorld(t, "default")
 	u := users.NewUserRecord(7, 0)
 	u.Character.Level = 9
 	u.Character.Validate()
 	text := tagPattern.ReplaceAllString(buildStatusPanel(u), "")
-	assert.True(t, strings.Contains(text, "Next stat step:") || strings.Contains(text, "Step:"))
+	assert.True(t, strings.Contains(text, "Next milestone:") || strings.Contains(text, "Next:"))
 	assert.Contains(t, text, "level 10")
+	assert.Contains(t, text, "class")
+	assert.Contains(t, text, "promotion (coming)")
+	assert.NotContains(t, text, "stat step")
 }

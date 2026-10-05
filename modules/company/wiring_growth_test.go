@@ -1,8 +1,10 @@
 package company
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -131,6 +133,7 @@ func TestLiveLevelUpDealsTheSamePointsAsARespawn(t *testing.T) {
 	t.Cleanup(configs.SetTestGamePlayConfig(gameplay))
 	tamsin := b.companion(1)
 	start := tamsin.Character.Level
+	before := tamsin.Character
 
 	paid, lines := mobcommands.AwardCompanyXP(7, b.aria.Character, tamsin.Character.XPTL(start+2), b.road.RoomId)
 	require.GreaterOrEqual(t, paid, 1)
@@ -139,6 +142,19 @@ func TestLiveLevelUpDealsTheSamePointsAsARespawn(t *testing.T) {
 	levelled := trainingOf(&tamsin.Character)
 	assert.Equal(t, wantTraining(t, tamsin, warriorGrowth), levelled, "live level-up uses the warrior's weights")
 	assert.Zero(t, tamsin.Character.StatPoints)
+	var report string
+	count := 0
+	for _, line := range lines {
+		if strings.HasPrefix(line, tamsin.Character.Name+" reaches level") {
+			report = line
+			count++
+		}
+	}
+	require.Equal(t, 1, count, "one line spans a multi-level gain")
+	assert.Contains(t, report, fmt.Sprintf("Health %d -> %d", before.HealthMax.Value, tamsin.Character.HealthMax.Value))
+	assert.Contains(t, report, fmt.Sprintf("Mana %d -> %d", before.ManaMax.Value, tamsin.Character.ManaMax.Value))
+	require.NotEqual(t, before.Stats.Strength.ValueAdj, tamsin.Character.Stats.Strength.ValueAdj)
+	assert.Contains(t, report, fmt.Sprintf("Strength %d -> %d", before.Stats.Strength.ValueAdj, tamsin.Character.Stats.Strength.ValueAdj))
 
 	b.respawn()
 	assert.Equal(t, levelled, trainingOf(&b.companion(1).Character), "a respawn changes nothing")
