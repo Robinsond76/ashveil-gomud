@@ -52,6 +52,9 @@ show up as **longer fights**, the opposite of the goal.
 - **Shields:** warriors may use any shield; rangers only small shields
   (bucklers); no other class uses shields. **Clerics** fight with staffs,
   rods or maces only.
+- **Clerics are priests,** a healer that can't fight well and needs
+  protecting, as weak in a fight as the wizard. A fighting healer belongs to
+  the warrior's promotion routes, not the cleric's.
 
 ## Decisions
 
@@ -77,12 +80,11 @@ characters without an archetype use `Combat.DefaultAttackRate` and
 | Warrior | 1.0 | 1.0 | 30 / 30 |
 | Rogue | 0.9 | 1.1 | 27 / 33 |
 | Ranger | 1.0 | 0.9 | 30 / 27 |
-| Cleric | 0.8 | 0.85 | 24 / 25 |
-| Wizard, Witch | 0.7 | 0.75 | 21 / 22 |
+| Cleric, Wizard, Witch | 0.7 | 0.75 | 21 / 22 |
 | Enemies (default) | 1.0 | 1.0 | 30 / 30 |
 
-Casters are easier to hit than warriors and rogues (owner); their power is
-spells and mana (decision 6). An enemy template may add a small fixed
+Casters, the cleric included, are easier to hit than warriors and rogues
+(owner); their power is spells and mana (decision 6). An enemy template may add a small fixed
 offset (`attackskill: 3`, `evasion: -2`) for a trained captain or a
 lumbering brute, within ±5.
 
@@ -142,9 +144,9 @@ and growth stays small. Each archetype gets a **starting bonus** (new
 levels:
 
 - `HPBase` 48 (was 40); `HPPerVitality` 0.5 unchanged;
-- `HPStart`: warrior 10, cleric and ranger 6, rogue 4, wizard and Witch 0;
-- `HPPerLevel` through level 20: warrior 1.0, cleric and ranger 0.8,
-  rogue 0.7, wizard and Witch 0.5; `DefaultHPPerLevel` 0.8 for enemies
+- `HPStart`: warrior 10, ranger 6, rogue 4, cleric 2, wizard and Witch 0;
+- `HPPerLevel` through level 20: warrior 1.0, ranger 0.8, rogue 0.7,
+  cleric 0.6, wizard and Witch 0.5; `DefaultHPPerLevel` 0.8 for enemies
   unless a race or template overrides it;
 - `HPFullLevels` 20; after it, **25%** of the rate (`HPAfterFull` 0.2,
   the middle rate's quarter).
@@ -155,8 +157,9 @@ HP before Vitality:
 |---|---|---|---|---|---|---|
 | Warrior today | 43 | 70 | 100 | 118 | 172 | 4.0× |
 | **Warrior** | 59 | 68 | 78 | 80 | 88 | **1.5×** |
-| Cleric, Ranger | 54 | 62 | 70 | 72 | 78 | 1.4× |
+| Ranger | 54 | 62 | 70 | 72 | 78 | 1.4× |
 | Rogue | 52 | 59 | 66 | 67 | 73 | 1.4× |
+| Cleric | 50 | 56 | 62 | 63 | 68 | 1.4× |
 | Wizard, Witch | 48 | 53 | 58 | 59 | 63 | 1.3× |
 
 A level-60 warrior keeps 1.4× a wizard's HP (30g6 E keeps class
@@ -227,9 +230,9 @@ very tanky armor makes its wearer slow. Today the only cost is weight
   These stack with burden and are not offset by Strength: plate is slow
   however strong you are. Parry and block are unaffected, so a heavy
   warrior defends with sword and shield, not footwork.
-- **Armor training** per archetype: warrior heavy; cleric and ranger
-  medium; rogue, wizard and Witch light. Untrained armor can be worn, with
-  a **significant penalty** (owner): its tempo and dodge penalties are
+- **Armor training** per archetype: warrior heavy; ranger medium; rogue,
+  cleric, wizard and Witch light (a priest wears robes). Untrained armor
+  can be worn, with a **significant penalty** (owner): its tempo and dodge penalties are
   doubled, the wearer loses **10 Attack and 10 Evasion** (half a full skill
   edge, about ten levels' worth), and a caster takes +1 round on every
   chant. `equip` warns before an untrained piece goes on.
@@ -428,3 +431,8 @@ ones, and the owner approves any change to the shape of the system.
    adding a few items)?
 2. **Cleric kit:** a holy symbol (new item, no combat effect yet) or a
    second healing potion in place of the shield?
+3. **Fighter-healer:** the [branching class design](2026-10-01-branching-class-progression-design.md)
+   gives limited restoration to the warrior's Knight → Paladin route and a
+   frontline Chaplain → War Priest route to the cleric. With clerics as
+   protected priests, the fighting healer moves to the Knight/Paladin
+   route (owner to confirm; recorded in that design when 38b is planned).
