@@ -1,5 +1,10 @@
 # Ashveil Project Status
 
+**Phase 40a3 design approved (2026-10-05):** the owner approved the camp
+gear design as written: the fuel rule, the six items, and their weights,
+effects and prices. The execution plan comes when the visual milestone
+starts. Documentation only.
+
 **Camp gear decisions (2026-10-05):** bedrolls are a bonus only. Camp
 theft is deferred as a future feature: a silent camp event when a company
 rests without bells and trip lines, noticed as missing loot on waking.
@@ -211,7 +216,7 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 |---|---|---|
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
-| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit | S1 |
+| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Design approved** | S1 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |
 | [40c](designs/2026-10-05-phase-40c-terrain-tiles-design.md) | Terrain and landmark tiles, fog, classic toggle | S2 |
 | [40d](designs/2026-10-05-phase-40d-tile-region-travel-design.md) | Tile-ready pilot region and click-to-walk | S2 |

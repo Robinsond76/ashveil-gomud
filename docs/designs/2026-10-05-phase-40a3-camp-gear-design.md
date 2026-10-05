@@ -1,6 +1,8 @@
 # Phase 40a3: camp gear
 
-Status: **design draft, awaiting owner approval** (handoff rule 20). Part
+Status: **approved by the owner on 2026-10-05**, including the item list,
+weights, effects and prices (handoff rule 20). An execution plan comes
+before implementation, which waits for the milestone to start. Part
 of the [visual client milestone](2026-10-05-visual-client-milestone-design.md).
 It follows [40a2 gathering](2026-10-05-phase-40a2-gathering-design.md),
 which makes camp fires need firewood. Art: S1 camp sprites (including
@@ -53,7 +55,7 @@ consumables are spent.
 - **Camp theft is a future feature** (2026-10-05, deferred). See
   "Deferred: camp theft" below.
 
-## Proposed for approval
+## Approved design
 
 ### Fuel rule (refines 40a2)
 
@@ -199,7 +201,6 @@ Details to decide when it is designed:
 
 ## Open questions
 
-1. Confirm the six items and their numbers as balance defaults.
-
-Resolved: bedrolls are a bonus only. Camp theft is deferred as a future
+None. Resolved: the six items and their numbers were approved as
+balance defaults; bedrolls are a bonus only. Camp theft is deferred as a future
 feature.
