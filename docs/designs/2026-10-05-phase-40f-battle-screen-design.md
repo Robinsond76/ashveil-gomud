@@ -39,6 +39,10 @@ the motion.
 
 - An OB64-style separate battle screen, with OB64 as the guide (2026-10-05).
 - Original art only.
+- **The screen opens automatically** when a battle starts, with a setting
+  to switch to manual (2026-10-05).
+- Allied companies: undecided. The owner asked for a recommendation
+  (below).
 
 ## Proposed for approval
 
@@ -75,6 +79,50 @@ the motion.
     race's fallback silhouette.
 - **In darkness**, an enemy not yet labelled shows as `unknown-*` at 50%
   brightness, matching scout's rule.
+
+### Allied companies (recommendation)
+
+Under the [allied companies design](2026-10-01-phase-33d-allied-companies-design.md),
+each company fights its own battle against the **shared** enemy, keeping
+its own formation, focus and retreat. There is no shared 3x3 grid. The
+screen should show the same thing:
+
+- **Your company is centre stage:** your 3x3 is drawn full-size on the
+  left, as above.
+- **Allies stand behind as reserve formations.** Each allied company in
+  the same encounter is drawn as a compact 3x3 at half scale, stacked
+  behind and above yours on the left. It is labelled with its leader's
+  name and an ally pennant. At most two are drawn; any more collapse into
+  a "+N companies" pennant.
+- **Allied units animate their own actions** (40e sends them). Their
+  health shows in **bands only**, and they show only statuses that the
+  narration reveals, because another company's private conditions are
+  never shown.
+- **Tap or click an allied formation to watch it full-size.** Your own
+  formation shrinks into its place. This view is **read-only**: Retreat,
+  focus and member menus act only on your own company, matching 33d's
+  authority rules. Tap again, or start a new round, to swap back.
+- **The enemy stays one formation on the right.** Target lines show which
+  company an enemy is striking.
+- **On phones**, allied formations collapse to pennants. Tapping a pennant
+  still swaps the view.
+
+Why this approach:
+- it keeps OB64's readable 3-against-3 clash at the centre;
+- it respects 33d's rule of no shared grid with each company in charge of
+  itself;
+- allies' contribution is still visible;
+- it scales to several companies.
+
+Alternatives considered:
+- **A banner only:** simplest, but allies' actions go unseen.
+- **Every company full-size side by side:** crowded beyond two companies,
+  and it suggests a shared grid that doesn't exist.
+
+**Server addition:** `Company.Battle` gains `allies`, a list of
+`{leader, members: [{id, label, sprite, cell, health}]}`, with `health` in
+bands. It covers only companies in the player's party that are in the
+same encounter.
 
 ### Information shown
 
@@ -123,7 +171,7 @@ copyover.
 |---|---|
 | `internal/mobs` | optional `Sprite` spec field |
 | World data | `sprite` on shipped mobs |
-| `modules/gmcp/gmcp.CompanyBattle.go` | enemy `sprite`, with the race fallback |
+| `modules/gmcp/gmcp.CompanyBattle.go` | enemy `sprite`, with the race fallback; `allies` |
 | A new `window-battle.js` | screen, layout, layers, open/close, settings; reuses the 40b sprite loader |
 | `window-combat.js` | a "Battle screen" button to open it in manual mode |
 
@@ -157,16 +205,15 @@ copyover.
 3. Dark battle: unlabelled enemies show as dimmed silhouettes.
 4. Retreat and focus buttons send the same commands as the dock.
 5. In manual mode the screen does not auto-open.
-6. Text output is unchanged.
-7. `help battlescreen` renders, and `TestTutorialHelpPointersExist`
+6. With an allied company in the fight:
+   - its reserve formation shows, with banded health only;
+   - tapping swaps the view, read-only;
+   - no private ally conditions appear in any payload.
+7. Text output is unchanged.
+8. `help battlescreen` renders, and `TestTutorialHelpPointersExist`
    passes.
-8. `make js-lint` passes.
+9. `make js-lint` passes.
 
 ## Open questions
 
-1. Should the screen open automatically by default? The proposal is yes,
-   with a setting to switch it off.
-2. Should allied companies in the same fight stand on the company's side?
-   The proposal is yes, in their own 3x3 placed behind (OB64 shows one
-   unit, but the alliance rules allow more). Alternatively, show them as a
-   banner only.
+1. Approve the allied-company recommendation (above).

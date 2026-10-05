@@ -1,5 +1,26 @@
 # Ashveil Project Status
 
+**Visual milestone decisions (2026-10-05):** the owner answered the
+milestone's questions.
+- **Sprite art direction:** mature, grounded high fantasy in the Lord of
+  the Rings tradition, for a dangerous, unforgiving world. Not anime in
+  any way. OB64 sprites are the reference. Recorded in the
+  [sprite specification](designs/2026-10-05-sprite-specification.md).
+- **Other players** are not on the map for now (deferred).
+- **Every room resource is wanted.** The new [40a2 gathering](designs/2026-10-05-phase-40a2-gathering-design.md)
+  design covers herbs, firewood, fishing and game, with room pools and
+  firewood for the camp fire.
+- **A showcase area** may be built for the new features (40d now
+  recommends a new zone). World building moves after the milestone.
+- **No race variants** for now.
+- **An installable web app** is enough.
+- **Travel and battle-screen auto-open** are approved.
+- **Allied companies on the battle screen:** 40f recommends half-scale
+  reserve formations with a read-only swap view, pending approval.
+
+Documentation only. Verification: relative Markdown links and the diff
+checked; no Go tests required.
+
 **Phase 40a–40g designs drafted (2026-10-05):** at the owner's request,
 added a design for each item of the visual roadmap. These are drafts
 awaiting owner approval; no code has changed.
@@ -160,7 +181,9 @@ implemented (handoff rule 20).
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
 
-World building (zones for levels 1–15) follows once 37 and 38b ship.
+World building (zones for levels 1–15) now waits until the visual client
+milestone below is in place (owner, 2026-10-05). A small showcase area for
+the new map features may be built in 40d.
 
 ### Next milestone: visual client (Phase 40, owner 2026-10-05)
 
@@ -170,7 +193,8 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 
 | Phase | Scope | Art set |
 |---|---|---|
-| [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival | S1 |
+| [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
+| [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |
 | [40c](designs/2026-10-05-phase-40c-terrain-tiles-design.md) | Terrain and landmark tiles, fog, classic toggle | S2 |
 | [40d](designs/2026-10-05-phase-40d-tile-region-travel-design.md) | Tile-ready pilot region and click-to-walk | S2 |
@@ -1718,6 +1742,11 @@ those results. This documentation change does not rerun or supersede them.
 
 ## Known issues / deferred items
 
+- **Other players on the map (owner, 2026-10-05):** not shown for now,
+  apart from your own party members. Revisit later, alongside camp
+  visibility.
+- **Race and gender sprite variants (owner, 2026-10-05):** not for now.
+  Revisit with the races review.
 - **PvP camp visibility (owner, 2026-10-05):** the visual map shows only
   your own camp and allied camps. Revisit for PvP: visibility should depend
   on lighting, terrain, and the company's skill at concealing its camp.

@@ -1,4 +1,4 @@
-# Phase 40d: tile-ready pilot region and click-to-walk
+# Phase 40d: tile-ready showcase region and click-to-walk
 
 Status: **design draft, awaiting owner approval** (handoff rule 20). Part
 of the [visual client milestone](2026-10-05-visual-client-milestone-design.md).
@@ -7,7 +7,7 @@ It reuses art set S2.
 
 ## Goal
 
-1. Rebuild one region so that **one room is one tile**: a dense, walkable
+1. Build one showcase region where **one room is one tile**: a dense, walkable
    area laid out on the map, with resources (40a) and landmarks (40c).
 2. Let players **travel** to a visited room by clicking its tile, or with a
    text command. Travel walks step by step through ordinary moves, so
@@ -39,6 +39,11 @@ It reuses art set S2.
 - Areas become denser: multiple rooms represent an area, laid out as tiles
   (2026-10-05).
 - Walking must never advance shared world time (standing invariant).
+- **A showcase area may be built** to show off the new map features.
+  Full world building comes later, once everything is in place
+  (2026-10-05).
+- **Travel as proposed is approved:** one step every 1.5 s, at most 60
+  steps, leader only (2026-10-05).
 
 ## Proposed for approval
 
@@ -61,7 +66,32 @@ tile-ready zone:
 A **validator test** over the world data enforces 1, 2 and 5 for every
 tile-ready zone. Zones that aren't tile-ready are untouched.
 
-### Pilot region
+### Showcase region
+
+**Recommendation:** build a **new, compact showcase area** rather than
+rebuilding the starting rooms. Dunmar, Old Kings Road and Fernhollow keep
+their rooms and tests untouched, and the showcase connects to them by an
+exit.
+
+- **Placement and size:** off the Old Kings Road (from room 2005,
+  Trappers' Post), about 30–50 tile rooms. It is a single zone marked
+  `tileready`.
+- **It must show off every new feature:**
+  - several biomes: road, meadow, forest, a stream and lakeshore, a rocky
+    hillside with a cave mouth, and a hamlet;
+  - every resource type (40a and 40a2);
+  - landmarks;
+  - an up and down exit;
+  - a locked door;
+  - a campable clearing;
+  - one dense loop to test `travel`.
+- **Content stays light:** short filler descriptions and existing mobs.
+  World building later decides whether to keep, grow or replace it.
+- New rooms take free IDs. The exact layout is drawn in the plan, for
+  owner review, before any rooms are written.
+
+The alternative, kept below for reference, is to densify the starting
+region itself:
 
 - **Region:** the starting region of Dunmar, Old Kings Road and
   Fernhollow, unless world building has replaced it by the time 40d runs.
@@ -124,7 +154,7 @@ tile-ready zone. Zones that aren't tile-ready are untouched.
 
 | Area | Change |
 |---|---|
-| World data | tile-ready pilot zones, `tileready` zone flag |
+| World data | the tile-ready showcase zone, `tileready` zone flag |
 | `internal/rooms` zone config | `tileready` field |
 | Validator test | coordinates, exit-direction and landmark checks |
 | New `travel` command (`internal/usercommands` or a `modules/travel` module) | plan, step timer, stop rules |
@@ -144,7 +174,7 @@ tile-ready zone. Zones that aren't tile-ready are untouched.
 
 ## Acceptance tests
 
-1. The validator passes on the pilot zones. It fails on a fixture with
+1. The validator passes on the showcase zone. It fails on a fixture with
    overlapping coordinates or a mismatched exit direction.
 2. Kept room IDs keep their tags: the `camping`, `inn` and tutorial tests
    still pass.
@@ -162,8 +192,8 @@ tile-ready zone. Zones that aren't tile-ready are untouched.
 
 ## Open questions
 
-1. Confirm the pilot region and its size, or name another.
-2. Confirm the step speed (1.5 s), the step cap (60), and leader-only
-   travel.
-3. Should world building for levels 1–15 adopt these conventions now
-   (milestone question 3)? Recommended: yes, conventions only.
+1. Approve the showcase-area recommendation, with its placement and size.
+
+Resolved: the travel numbers (approved). World building comes after the
+new features are in place, so it can adopt the tile-ready conventions from
+the start.

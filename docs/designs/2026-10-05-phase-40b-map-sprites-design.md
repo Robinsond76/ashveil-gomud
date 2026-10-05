@@ -42,6 +42,11 @@ resting states. Allied companies' camps appear too; nobody else's do.
 - **Other companies' camps are hidden** on the map. Revisit for PvP, where
   visibility should depend on lighting, terrain and concealment skills
   (2026-10-05, deferred).
+- **Other players do not appear on the map for now**, apart from your
+  own party members, who already show today. Circle back later, alongside
+  the camp idea (2026-10-05, deferred).
+- **No race or gender variants for now.** Revisit when the game's races
+  are reviewed (2026-10-05).
 
 ## Proposed for approval
 
@@ -159,7 +164,5 @@ everything from the next payloads.
 
 ## Open questions
 
-1. Owner decision 1 from the milestone: should **non-party players** appear
-   on the map? This design shows only party members, as today.
-2. Should sprites vary by race or gender? The proposal is no; elf variants
-   are deferred to S6.
+None. Other players' visibility and race variants are deferred owner
+decisions (above).
