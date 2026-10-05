@@ -20,7 +20,8 @@ worktree. 35b's harness assertions are the phase's balance gate.
 
 ## Delivery status
 
-35a is implemented on `phase-35a-level-impact` and pending PR integration;
+35a is implemented on `phase-35a-level-impact`; [PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15)
+is open and pending integration;
 35b and 35c are pending implementation. See [35a measurements](2026-10-05-phase-35a-measurements.md)
 and Project Status for verification and review.
 

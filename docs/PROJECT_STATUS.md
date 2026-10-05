@@ -139,7 +139,7 @@ implementation after 35a lands. Plans and approved scope are in
 
 ## Current position
 
-**35a level impact (2026-10-05), implementation complete, pending PR integration:**
+**35a level impact (2026-10-05), implementation complete, [PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15) pending integration:**
 fractional racial growth preserves the fifth-level boundary values; keep
 `StatStepLevels: 5` per the approved plan instead of the design draft's 1,
 which would multiply the curve. Shared point awards now give one every two

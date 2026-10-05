@@ -6,7 +6,8 @@ Implements section 1 and section 4.1 of the owner-approved
 Read the [phase 35 handoff](2026-10-05-phase-35-handoff.md) first.
 
 Status: implementation complete on `phase-35a-level-impact`; independent review and final
-verification passed, pending PR integration. 35b and 35c remain pending
+verification passed; [PR #15](https://github.com/Robinsond76/ashveil-gomud/pull/15)
+is open and pending integration. 35b and 35c remain pending
 implementation. [Measurements](2026-10-05-phase-35a-measurements.md).
 
 ## Goal
