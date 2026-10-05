@@ -465,6 +465,30 @@ func TestLoadThroughRealPluginConfigPath(t *testing.T) {
 	assert.Equal(t, []int{1, 10, 20, 30}, wiz.CompanionLevels)
 	assert.Equal(t, "skulduggery", m.config.UtilitySkills["traps"])
 	assert.Equal(t, 900, m.config.DisarmRounds)
+	// Phase 35c: the optional skills survive the flattened plugin config.
+	assert.Equal(t, []archetypes.OptionalSkill{{Skill: "cooking", Archetypes: []string{"*"}, MaxRank: 4}}, m.OptionalSkills())
+}
+
+// Phase 35c: optional skills must name a loaded skill and stay within its
+// own maximum rank.
+func TestBuildOptionalDropsUnknownSkillsAndClampsRanks(t *testing.T) {
+	loadRealData(t)
+	m := newModule()
+	m.skillMax = func(id string) int {
+		if id == "cooking" {
+			return 3
+		}
+		return 4
+	}
+	got := m.buildOptional(parseOptionalSkills([]any{
+		map[any]any{"Skill": "cooking", "Archetypes": []any{"*"}, "MaxRank": 4},
+		map[any]any{"Skill": "no-such-skill", "Archetypes": []any{"*"}, "MaxRank": 2},
+		map[any]any{"Skill": "map", "Archetypes": []any{"Ranger"}, "MaxRank": 2},
+	}))
+	assert.Equal(t, []archetypes.OptionalSkill{
+		{Skill: "cooking", Archetypes: []string{"*"}, MaxRank: 3},
+		{Skill: "map", Archetypes: []string{"ranger"}, MaxRank: 2},
+	}, got)
 }
 
 // Review 17a coverage gap: the spawn re-grant through the event queue.

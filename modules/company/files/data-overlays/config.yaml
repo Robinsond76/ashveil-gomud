@@ -126,6 +126,14 @@ RecruitPricePerLevel: 30
 RecruitAlignmentMin: -80
 RecruitAlignmentMax: 80
 RecruitBynamePercent: 60
+# Phase 35c: RecruitSkilledPercent of generated candidates arrive knowing
+# one optional skill their archetype may learn (archetype OptionalSkills),
+# at rank 2 RecruitSkillRank2Percent of the time, else rank 1. Each rank
+# adds RecruitSkillPricePercent to the price. The ranks cost the companion
+# no training points.
+RecruitSkilledPercent: 20
+RecruitSkillRank2Percent: 20
+RecruitSkillPricePercent: 15
 RecruitTemplates:
   - { MobTemplateId: 80, Weight: 1 }
   - { MobTemplateId: 81, Weight: 1, PricePercent: 90 }

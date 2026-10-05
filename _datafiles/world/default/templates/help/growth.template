@@ -2,8 +2,9 @@
 
 Companions grow on their own. Levels give a companion stat points
 (1 every 2 levels, as the world ships), and their archetype decides where the
-points go. You never spend a companion's points, and they never pile up
-unspent.
+points go. You never spend a companion's stat points, and they never pile up
+unspent. Levels also give training points, which you do spend, on optional
+skills such as Cooking (<ansi fg="command">help company train</ansi>).
 
 <ansi fg="yellow-bold">How the points are dealt</ansi>
 

@@ -58,6 +58,9 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 				}
 			}
 		}
+		// Phase 35c: its optional skills and the points it has left.
+		view.Skills = c.Skills
+		view.TrainingPoints = max(0, m.trainingPoints(leaderUserID, c))
 		out = append(out, view)
 	}
 	return out, true

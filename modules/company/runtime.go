@@ -62,6 +62,9 @@ func (nativeRuntime) Spawn(leaderUserID, roomID, mobTemplateID int, state *domai
 	if identity.Description != "" {
 		mob.Character.Description = identity.Description
 	}
+	// Phase 35c: its trained optional skills, from the record, so the
+	// ordinary skill checks (camp cooking) see them.
+	applySkills(mob, identity.Skills)
 	mob.Character.CharmAsCompanion(leaderUserID, -2, characters.CharmExpiredRevert)
 	leader.Character.TrackCharmed(mob.InstanceId, true)
 	room.AddMob(mob.InstanceId)

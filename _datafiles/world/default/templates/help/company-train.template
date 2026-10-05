@@ -1,0 +1,65 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">company train</ansi>
+
+Companions can learn optional skills, so you shape each member. Cooking
+is the one optional skill as the world ships. Class skills stay
+automatic: a companion's archetype and level give it its specialist
+skills, such as a ranger's Read the Trail (<ansi fg="command">help specialists</ansi>),
+and its stats (<ansi fg="command">help growth</ansi>). Neither is trained.
+
+<ansi fg="yellow-bold">Training points</ansi>
+
+A companion earns training points as it levels, at the same rate you
+do: 1 a level as the world ships, so a level-6 companion has earned 6.
+A rank costs its number in points, as yours do at a trainer: rank 1
+costs 1, rank 2 costs 2, rank 3 costs 3 and rank 4 costs 4. Ranks 1 and
+2 together cost 3, so that level-6 companion has 3 left.
+
+Points are never stored. They are worked out each time from the
+companion's level, less what its ranks cost, so dying, being raised,
+logging out or a restart never gives any back. A level lost to death
+keeps every rank; the companion owes the points instead (shown as 0,
+with what is owed), and its next levels repay them before it can train
+again. A recruit who arrived already knowing a skill paid nothing for
+those ranks.
+
+<ansi fg="yellow-bold">Where</ansi>
+
+  Ranks 1 and 2: at your own camp (the fire need not be lit) or from a
+  trainer who teaches that rank.
+  Ranks 3 and 4: only from a trainer who teaches that rank. The Waymark
+  Inn in Dunmar teaches Cooking up to rank 4.
+
+The companion must be alive, with you, and not fighting. Nobody trains
+during a battle, a journey, or a rest.
+
+<ansi fg="yellow-bold">Usage:</ansi>
+
+  <ansi fg="command">company train</ansi>
+  Every companion's training points, its optional skills and ranks,
+  and what the next rank costs.
+
+  <ansi fg="command">company train [member]</ansi>
+  One companion's choices.
+
+  <ansi fg="command">company train [member] [skill]</ansi>
+  A preview: the rank, where, the cost, the points left after, and what
+  the skill does. It changes nothing.
+
+  <ansi fg="command">company train [member] [skill] [rank] confirm</ansi>
+  Train it. The preview shows the exact line to type, with the rank, and
+  typing that line twice trains nothing more: the companion already has
+  that rank. Without a rank, confirm trains the next one.
+
+  <ansi fg="command">company inspect [member]</ansi>
+  A companion's level, optional skills, and training points.
+
+Name a member by number (<ansi fg="command">#2</ansi>) or by name. <ansi fg="command">experience</ansi> shows any
+points a companion has left, and the web client's Character > Skills
+lists every companion's skills and points.
+
+<ansi fg="yellow-bold">What a trained skill does</ansi>
+
+  <ansi fg="yellow">Cooking</ansi>  The best cook with you cooks at camp (<ansi fg="command">help cooking</ansi>).
+
+Your own skills are trained with <ansi fg="command">train</ansi> (<ansi fg="command">help train</ansi>).
+See also: <ansi fg="command">help company</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help growth</ansi>, <ansi fg="command">help specialists</ansi>.

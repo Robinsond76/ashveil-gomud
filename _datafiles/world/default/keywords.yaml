@@ -40,6 +40,7 @@ help:
     company:
       - company
       - growth
+      - company-train
       - contracts
       - readiness
       - separation
@@ -235,6 +236,7 @@ help-aliases:
   webclient:        [web client, web-client, dock, panels, tabs, layout]
   adventure:        [ashveil, basics]
   company:          [recruit, recruiting, roster, companions, companion]
+  company-train:    [company train, train companion, companion training, companion-training, companion training points, optional skills]
   growth:           [company growth, company-growth, specialize, specialization, companion growth, focus stat]
   contracts:        [contract, company contracts, company-contracts]
   readiness:        [recovery, vitals, regeneration, regen, companion health, companion-health, company readiness]

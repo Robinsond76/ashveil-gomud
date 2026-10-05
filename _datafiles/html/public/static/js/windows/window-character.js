@@ -6,8 +6,9 @@
  *   Overview - name, race/class, level, alignment, stats grid, point
  *              badges, then Worth (window-status.js: XP, gold)
  *   Gear     - worn and carried items (window-gear.js)
- *   Skills   - trained ranks, automatic and field/camp capabilities, then jobs
- *              (profession completion and proficiency)
+ *   Skills   - trained ranks, automatic and field/camp capabilities, the
+ *              companions' optional skills and training points (Phase 35c,
+ *              read-only), then jobs (profession completion and proficiency)
  *   Quests   - in-progress quest log, click to expand
  *   Effects  - active effects, wounds and persistent bonuses with durations
  *   Pet      - only while the player has a pet (window-pet.js)
@@ -24,6 +25,7 @@
  *   Char.Skills  - skill names, levels, max flag
  *   Char.Jobs    - profession completion and proficiency
  *   Char.Affects - active buffs/debuffs
+ *   Company      - members' optional skills and training points (35c)
  *
  * Reads:
  *   Client.GMCPStructs.Char.Info
@@ -778,6 +780,8 @@
                     '<div class="csk-empty">No skills learned</div>' +
                 '</div>' +
                 '<div class="cw-sub" id="cw-capabilities"></div>' +
+                '<h4 class="cw-subhead">Company training</h4>' +
+                '<div class="cw-sub" id="cw-company-skills"></div>' +
                 '<h4 class="cw-subhead">Jobs</h4>' +
                 '<div class="cw-sub" id="cw-jobs">' +
                     '<div class="cjb-empty">No job progress</div>' +
@@ -1007,6 +1011,25 @@
         capabilityText(panel, 'The best eligible company specialist performs automatic field and camp work when its conditions hold. Camp Cooking is manual: camp cook. See help specialists and help cooking.');
     }
 
+    // Phase 35c: each companion's optional skills and training points, read
+    // only (train with "company train").
+    function updateCompanySkills() {
+        const panel = document.getElementById('cw-company-skills');
+        if (!panel) { return; }
+        panel.textContent = '';
+        const company = Client.GMCPStructs.Company;
+        const members = (company && Array.isArray(company.members)) ? company.members : [];
+        if (!members.length) { capabilityText(panel, 'No companions'); return; }
+        members.forEach(m => {
+            const skills = m.skills || {};
+            const ranks = Object.keys(skills).sort().map(id => id.charAt(0).toUpperCase() + id.slice(1) + ' rank ' + skills[id]);
+            const points = typeof m.training_points === 'number' ? m.training_points : 0;
+            capabilityText(panel, (m.name || m.key) + ' — ' + (ranks.length ? ranks.join(', ') : 'no optional skills') +
+                '; ' + points + ' training point' + (points === 1 ? '' : 's') + '.');
+        });
+        capabilityText(panel, 'Companions learn optional skills with company train. See help company-train.');
+    }
+
     function updateJobs() {
         const jobs  = Client.GMCPStructs.Char && Client.GMCPStructs.Char.Jobs;
         const panel = document.getElementById('cw-jobs');
@@ -1138,6 +1161,7 @@
         updateQuests();
         updateSkills();
         updateCapabilities();
+        updateCompanySkills();
         updateJobs();
         updateEffects();
     }
@@ -1147,8 +1171,17 @@
     // -----------------------------------------------------------------------
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Char', 'Company.Conditions'],
-        onGMCP() { update(); },
+        gmcpHandlers: ['Char', 'Company'],
+        onGMCP(namespace) {
+            // A Company snapshot only changes the company training list;
+            // of its extras, only Conditions (Effects) is shown here.
+            if (namespace === 'Company') {
+                if (win.isOpen()) { updateCompanySkills(); }
+                return;
+            }
+            if (namespace.startsWith('Company.') && namespace !== 'Company.Conditions') { return; }
+            update();
+        },
     });
 
 })();

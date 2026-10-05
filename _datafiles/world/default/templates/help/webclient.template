@@ -110,7 +110,9 @@ Company Inventory shows shared cargo once. Worn gear is in Character Gear.
 
 Company Status separates active effects, wounds and persistent bonuses.
 Character Skills separates trained ranks, automatic combat abilities,
-field and camp capabilities, including disabled settings and conditions.
+field and camp capabilities, including disabled settings and conditions,
+and Company training: each companion's optional skills and training
+points, read only (train with company train).
 Character Effects shows your effects and wounds with their true duration
 and meaning. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.
 

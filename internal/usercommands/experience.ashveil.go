@@ -35,14 +35,22 @@ func companyExperienceLines(user *users.UserRecord) string {
 	var b strings.Builder
 	b.WriteString(`<ansi fg="yellow">Your company:</ansi>` + "\n")
 	for _, m := range s.Companions {
+		// Phase 35c: points a companion has left to spend on optional skills.
+		points := ""
+		switch {
+		case m.TrainingPoints == 1:
+			points = ` <ansi fg="black-bold">(1 training point)</ansi>`
+		case m.TrainingPoints > 1:
+			points = fmt.Sprintf(` <ansi fg="black-bold">(%d training points)</ansi>`, m.TrainingPoints)
+		}
 		switch {
 		case m.Status == company.MemberDead:
 			fmt.Fprintf(&b, `  <ansi fg="mobname">%s</ansi> <ansi fg="black-bold">level %d, fallen</ansi>`+"\n", m.Name, m.Level)
 		case m.ExpKnown && m.ExpTNL > 0:
-			fmt.Fprintf(&b, `  <ansi fg="mobname">%s</ansi> <ansi fg="yellow">Lvl:</ansi> <ansi fg="white">%d</ansi> <ansi fg="yellow">XP:</ansi> <ansi fg="white">%d/%d</ansi> <ansi fg="black-bold">(%d%%)</ansi>`+"\n",
-				m.Name, m.Level, m.ExpInto, m.ExpTNL, m.ExpInto*100/m.ExpTNL)
+			fmt.Fprintf(&b, `  <ansi fg="mobname">%s</ansi> <ansi fg="yellow">Lvl:</ansi> <ansi fg="white">%d</ansi> <ansi fg="yellow">XP:</ansi> <ansi fg="white">%d/%d</ansi> <ansi fg="black-bold">(%d%%)</ansi>%s`+"\n",
+				m.Name, m.Level, m.ExpInto, m.ExpTNL, m.ExpInto*100/m.ExpTNL, points)
 		default:
-			fmt.Fprintf(&b, `  <ansi fg="mobname">%s</ansi> <ansi fg="yellow">Lvl:</ansi> <ansi fg="white">%d</ansi>`+"\n", m.Name, m.Level)
+			fmt.Fprintf(&b, `  <ansi fg="mobname">%s</ansi> <ansi fg="yellow">Lvl:</ansi> <ansi fg="white">%d</ansi>%s`+"\n", m.Name, m.Level, points)
 		}
 	}
 	return b.String()

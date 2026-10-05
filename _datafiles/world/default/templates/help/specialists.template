@@ -23,7 +23,9 @@ better of them.
 <ansi fg="yellow-bold">Levels</ansi>
 
 Each skill has levels 1 to 4. A companion of the right archetype reaches
-them at character levels 1, 10, 20, and 30. For you, it is your level in
+them at character levels 1, 10, 20, and 30, on their own: these class
+skills are never trained (<ansi fg="command">company train</ansi> teaches only optional skills
+such as Cooking; <ansi fg="command">help company train</ansi>). For you, it is your level in
 your archetype's skill: <ansi fg="skill">track</ansi> for a ranger, <ansi fg="skill">skulduggery</ansi> for a
 rogue, <ansi fg="skill">cast</ansi> for a wizard, <ansi fg="skill">brawling</ansi> for a warrior,
 <ansi fg="skill">protection</ansi> for a cleric. Recruit for the skills an expedition needs.

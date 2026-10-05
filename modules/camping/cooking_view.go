@@ -14,8 +14,10 @@ func (m *CampingModule) CookingCapability(userID int) (camping.CookingView, bool
 	if u == nil || u.Character == nil {
 		return camping.CookingView{}, false
 	}
-	v := camping.CookingView{Rank: u.Character.GetSkillLevel("cooking")}
 	recipes := m.campSettings().Recipes
+	// Phase 35c: the company's best cook present, not only the leader.
+	cook := m.bestCook(u, recipes)
+	v := camping.CookingView{Rank: cook.rank(campCookSkill)}
 	descriptions := []string{}
 	for _, r := range recipes {
 		need := "no trained skill required"
@@ -24,8 +26,12 @@ func (m *CampingModule) CookingCapability(userID int) (camping.CookingView, bool
 		}
 		descriptions = append(descriptions, itemName(r.Output)+" requires "+need)
 	}
-	v.Description = "Manual camp cook at your own lit campfire, outside battle, with ingredients and cargo space. " + strings.Join(descriptions, "; ")
-	chosen, blocked := selectCampRecipe(u, recipes)
+	who := "you are the best cook here"
+	if !cook.IsLeader {
+		who = cook.Name + " is the best cook here"
+	}
+	v.Description = fmt.Sprintf("Manual camp cook at your own lit campfire, outside battle, with ingredients and cargo space; %s (cooking rank %d). ", who, v.Rank) + strings.Join(descriptions, "; ")
+	chosen, blocked := selectCampRecipe(u, cook, recipes)
 	m.mu.Lock()
 	camp, has := m.camps[userID]
 	m.mu.Unlock()
