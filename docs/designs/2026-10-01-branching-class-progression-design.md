@@ -15,7 +15,7 @@ promotions. The rest of this document's proposals stand until reviewed with
 that design.
 
 **Owner update (2026-10-05, faith routes):** clerics are protected priests
-and fighting healers are warriors, with good and evil routes. The draft
+and fighting healers are warriors, with good and evil routes. The approved
 [faith routes design](2026-10-05-faith-routes-design.md) replaces this
 table's cleric rows (Priest → Hierarch with an Angel, Druid → Elder Druid,
 Blood Priest → Demonologist with a Demon) and the warrior's evil route
