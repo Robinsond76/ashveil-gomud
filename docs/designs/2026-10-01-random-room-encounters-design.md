@@ -10,10 +10,13 @@ approval and the existing roadmap rather than silently reordering Phase 33.
 **Owner update (2026-10-05):** random room encounters are now a roadmap
 priority (see Project Status, "Roadmap priorities"). The owner set the
 encounter contract:
-- ordinary groups are **2–3 enemies below the company's level**, with an
-  occasional group of 4, still below;
-- a boss group has **up to 5** (the boss and 4 escorts) and **no strategy**
-  (coordination tier 0).
+- ordinary groups are **2–3 enemies**, with an occasional group of 4;
+- a boss group has **up to 5** (the boss and 4 escorts);
+- enemy levels come from the **zone's recommended band, never from the
+  player**: a zone for levels 8–10 has groups a company of 8–10 can defeat,
+  and an under-levelled company risks losing;
+- strategy grows with enemy level through the existing 33i2 coordination
+  tiers, for bosses too.
 
 Encounter tables use these sizes instead of the "parties of 2–5" default
 below. Groups take their rewards from the

@@ -8,9 +8,9 @@ abilities and switching rules below are proposed defaults for review.
 **Owner update (2026-10-05):** the first promotion at **level 10** is now an
 owner decision, and class promotions and routes move up the roadmap (see
 Project Status, "Roadmap priorities"). The owner also asked for a **Witch**
-with level-scaling hexes. The [level impact and class power design](2026-10-05-level-impact-class-power-design.md)
-proposes the Witch as a sixth base lineage, with Hedge Witch, Coven Sage and
-Hag routes. It also proposes talent choices at levels 5, 15 and 25 between
+with level-scaling hexes. As the [level impact and class power design](2026-10-05-level-impact-class-power-design.md)
+proposed, the Witch is a sixth base lineage (owner decision), with proposed
+Hedge Witch, Coven Sage and Hag routes. It also proposes talent choices at levels 5, 15 and 25 between
 promotions. The rest of this document's proposals stand until reviewed with
 that design.
 

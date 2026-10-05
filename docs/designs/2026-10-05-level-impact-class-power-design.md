@@ -39,17 +39,28 @@ this design tunes for it.
 
 ## Owner decisions (2026-10-05)
 
-- **The encounter contract.** Ordinary zone groups are **2–3 enemies below
-  the company's level**, an occasional **4**, still below. A **boss** group
-  can have **up to 5** (the boss and 4 escorts), with **no strategy**: no
-  coordinated focus or healing (coordination tier 0, nearest-target aim).
-  Mirror fights stay in the harness as a stress test, not the tuning target.
+- **The encounter contract.** Ordinary groups are **2–3 enemies**, with an
+  occasional **4**. A **boss** group has **up to 5** (the boss and 4
+  escorts). Enemy levels come from the **zone**, never from the player:
+  - A zone recommended for levels 8–10 has groups a company of levels 8–10
+    can defeat. A lower-level company there risks losing.
+  - In practice its foes sit at or just below the zone's band.
+- **Strategy grows with enemy level**, for bosses too. Low-level enemies have
+  none. Higher-level enemies coordinate through the existing 33i2
+  coordination tiers, whose bands change at levels 10, 25 and 45.
+- Mirror fights stay in the harness as a stress test, not the tuning target.
 - **Every level should matter.** Stat changes and other levers are open.
 - **Healing grows with level**; spells and player skills get buffs.
 - **Spells should rarely fizzle.** Casters can cast many spells without
-  fizzling or running dry; mana pools grow greatly.
-- **A Witch class** with hexes that paralyze, knock down and put to sleep,
-  affecting more targets as the Witch levels.
+  fizzling; mana pools grow greatly.
+- **Mana comes back only from rest or mana potions.** Rest means camp or inn;
+  mana potions are special and not cheap. There is no passive mana
+  regeneration. Healers use their larger pools to patch the company up
+  between fights. When mana runs out, the company must rest in camp.
+- **A Witch is a sixth starting class,** with hexes that paralyze, knock
+  down, put to sleep and poison, affecting more targets as the Witch levels.
+  Hexes have spell names, not physical skill names.
+- **A stat point every 2 levels,** provided growth stays balanced across levels.
 - **First class promotion at level 10.** (This matches the branching design's
   proposal; it is now an owner decision.)
 
@@ -74,11 +85,15 @@ by 1/40 of their range. That is a small but real gain every level.
 - Existing characters keep spent points. Their automatic stats are recomputed
   from level, as 30g4 already does.
 
-### 1b. Stat points: one every 2 levels
+### 1b. Stat points: one every 2 levels (owner decision)
 
 Change `StatPointsEveryNLevels` from 5 to **2**. That gives 30 points by level
-60 instead of 12. The player still chooses where they go. The harness checks
-that a level-30 company does not flatten level-25 content.
+60 instead of 12. The player still chooses where they go. The owner's
+condition is that things scale appropriately. Smooth automatic growth (1a)
+and chosen points together must keep each zone band's encounter targets
+(section 4) within bounds at the band's low, middle and high level. The
+harness checks that a company at a band's top does not flatten the next
+band's lowest zone.
 
 ### 1c. Restore HP growth
 
@@ -112,7 +127,7 @@ Talents are small, explicit passives with caps, such as +10% Minor Heal, one
 extra hex target at a lower rank, or +1 parry. They are one-time choices saved
 with the character's or companion's progression owner, and no talent grants a
 free action. The full talent lists belong in the class routes delivery
-(section 6).
+(roadmap item 4).
 
 ### 1f. Level-up feedback
 
@@ -167,38 +182,57 @@ below an average melee hit of the same level. Wound limits still cap healing.
 
 The second base option moves to level 3 (milestone table): Shield Bash/Cleave
 (Warrior), Feint (Rogue), Pinning Shot (Ranger), Minor Heal All (Cleric),
-Shower of Sparks (Wizard) and Sleep (Witch). Each needs a full specification
+Shower of Sparks (Wizard) and Earthbind (Witch). Each needs a full specification
 (trigger, action cost, cooldown, AI priority) in its delivery plan.
 
-### 2d. Mana: larger pools and sustain
+### 2d. Mana: large pools, refilled only by rest or potions
 
-Give each archetype its own mana growth, the way it already has its own HP.
+Mana is the company's expedition clock (owner decision). It comes back only
+from:
+- **a camp rest or inn stay,** which refills it fully;
+- **mana potions,** which are special and expensive.
+
+Passive regeneration is removed: `ManaPerRound` drops to 0 for players and
+companions, and 33h2's online recovery no longer covers mana. Enemies keep
+their current mana behaviour. Since pools can't trickle back, they must be
+large enough to carry a run of several fights. Each archetype gets its own
+mana growth, the way it already has its own HP.
 
 | Archetype | Mana base | Per level | Level 1 / 10 / 30 (+3 × Mysticism) |
 |---|---|---|---|
-| Wizard, Witch | 20 | 8 | ~52 / ~148 / ~380 |
-| Cleric | 18 | 6 | ~45 / ~120 / ~290 |
+| Wizard, Witch | 40 | 10 | ~74 / ~200 / ~460 |
+| Cleric | 36 | 9 | ~69 / ~186 / ~426 |
 | Others | 4 | 1 | as today |
 
-- **In-battle sustain:** each caster regains `1 + level/10` mana per combat round.
-- **Out-of-battle sustain:** after a battle's grace, mana returns to full in
-  about **60 seconds** of real time.
-- **Spell costs stay flat.** Higher levels therefore sustain more.
-- **Target:** a caster casts on every earned turn for **two typical encounters**
-  (2–3 foes) before using the reserve. The 33e mana reserve stays.
+- **Target run:** a full caster pool lasts about **3–4 typical encounters**
+  of the zone's band. The caster casts on every earned turn, and a healer also
+  patches the company up after each fight (section 4). Then the company must
+  rest.
+- **Spell costs:** base spells keep flat costs. Advanced and elite spells cost
+  more, so pools and costs grow together.
+- **The 33e mana reserve stays,** so a healer keeps something back for the
+  next fight.
+- **Mana potions:**
+  - Three sizes: a minor, lesser and greater mana draught restoring about
+    25%, 40% and 60% of a caster's pool at its tier.
+  - Priced as a premium sink: a minor draught costs about one tier-1 Fine
+    weapon.
+  - Sold only by alchemists and apothecaries in settlements. They are a rare
+    drop (loot design).
+  - Drunk out of battle only. 33f's "no items in a fight" rule stands unless
+    the owner changes it.
+  - The existing small blue potion (30014) becomes the minor draught, with
+    its price raised. The wizard starting kit keeps one.
 
 ## 3. The Witch
 
-### 3a. Placement (proposed)
+### 3a. Placement
 
-The Witch becomes a **sixth base class at creation**, so its control grows from
-level 1, which is what the owner described. The expanded catalogue's Wizard
+The Witch is a **sixth base class at creation** (owner decision, 2026-10-05),
+so its control grows from level 1. The expanded catalogue's Wizard
 advanced path named "Witch" is renamed **Hexweaver**, with elite **Malison**,
 keeping its role: debuffs such as Slow and Expose. Its old elite name, Coven
 Sage, moves to the Witch lineage.
-
-The alternative is to keep the Witch as a level-10 Wizard path. That gives the
-Witch nothing until level 10, so this design does not recommend it.
 
 | | |
 |---|---|
@@ -212,20 +246,25 @@ Witch nothing until level 10, so this design does not recommend it.
 ### 3b. Hexes
 
 Every hex uses the existing status engine (`internal/status`) and the
-combat-round timing. Two new statuses are needed: **asleep** and
-**paralyzed**.
+combat-round timing. Three new statuses are needed: **asleep**,
+**paralyzed** and **blighted**. Poison reuses the existing `poisoned` buff.
+Names are hex names, not physical skill names (owner).
 
 | Hex | Level | Effect | Chant | Cost |
 |---|---|---|---|---|
-| Sleep | 1 | Asleep for 2 rounds: loses its turns; the first damage wakes it, and that blow gets +25% hit | 1 | 6 |
-| Trip | 3 | Knocked down (existing status) | 1 | 6 |
-| Hobble | 5 | Hobbled (existing): slower turns | 1 | 8 |
-| Paralysis | 10 | Paralyzed for 1 round, 2 at level 20; not broken by damage | 2 | 12 |
-| Dread (talent or advanced) | 15 | One morale check against the target group (30e) | 2 | 14 |
+| Slumber | 1 | Asleep for 2 rounds: loses its turns; the first damage wakes it, and that blow gets +25% hit | 1 | 6 |
+| Earthbind | 3 | Grave-soil drags the target down: knocked down (existing status) | 1 | 6 |
+| Leaden Curse | 5 | The target's limbs grow heavy: hobbled (existing), with slower turns | 1 | 8 |
+| Miasma | 7 | A poison cloud over one enemy row: poisoned (existing buff 13) for 3 rounds; Cure Poison removes it | 2 | 10 |
+| Binding Hex | 10 | Paralyzed for 1 round, 2 at level 20; damage does not break it | 2 | 12 |
+| Curse of Frailty | 12 | Exposed (existing): the target takes more damage | 1 | 10 |
+| Dread Whisper | 15 | One morale check against the target group (30e) | 2 | 14 |
+| Blight | 18 | Healing the target receives is halved for 3 rounds (new `blighted` status); answers enemy healers in coordinated groups | 1 | 12 |
 
 **Targets grow with level.** A hex affects 1 foe at level 1, **2 at level 8**,
 **3 at level 16**, **4 at level 24**, and the whole enemy group at elite level
 30+. Extra targets come from the same formation row, then the nearest others.
+Miasma covers one row up to the same count.
 
 **Resist rolls.** Each target resists with the stat edge: the Witch's
 Mysticism against the target's Mysticism, or against Vitality for Paralysis.
@@ -242,7 +281,8 @@ unhexed group has the most living foes, preferring:
 
 1. a foe who is winding up (30d2);
 2. an enemy caster who is chanting;
-3. the nearest foe.
+3. an enemy healer, for Blight;
+4. the nearest foe.
 
 It stops hexing when no foe can be hexed and falls back to a weak damage curse
 (Withering Hex).
@@ -251,7 +291,7 @@ It stops hexing when no foe can be hexed and falls back to a weak damage curse
 
 | Advanced | Gate | Elite | Signature |
 |---|---|---|---|
-| Hedge Witch | Positive | Wise One | Wards: a hex that also shields the most hurt ally; Sleep lasts longer |
+| Hedge Witch | Positive | Wise One | Wards: a hex that also shields the most hurt ally; Slumber lasts longer |
 | Coven Sage | Unrestricted | Coven Mother | Reach: +1 hex target and shorter chants |
 | Hag | Negative | Crone of Ash | Curses: hexed foes take +15% damage; Dread spreads to an adjacent group |
 
@@ -259,27 +299,45 @@ It stops hexing when no foe can be hexed and falls back to a weak damage curse
 
 Changes that shorten the loop of one fight, then a long rest:
 
-1. **Tune to the encounter contract.** Add harness cells for a 5-member company
-   against 2, 3 and 4 foes at 1–3 levels below, and against a boss of +2 levels
-   with 4 escorts at tier 0. Proposed acceptance:
+1. **Tune to zone bands.**
+   - Each combat zone gets a recommended level band, for example 8–10, in its
+     zone config.
+   - Its encounter tables use enemy levels from the band's low end to one
+     below its top, for example 7–9. The coordination tier those levels earn
+     comes from 33i2.
+   - Harness cells run a 5-member company at the band's low, middle and high
+     level against the zone's groups. Proposed acceptance:
 
    | Cell | Win rate | Members fallen | HP lost | Rounds (median) |
    |---|---|---|---|---|
-   | 2–3 foes, 1–3 levels below | ≥ 97% | 0 in ≥ 85% of fights | ≤ 30% | 4–8 |
-   | 4 foes, 1–2 levels below | ≥ 90% | ≤ 1 | ≤ 45% | 6–10 |
-   | Boss + 4 escorts | 70–85% | — | — | 10–15 |
+   | 2–3 foes, company at band middle | ≥ 97% | 0 in ≥ 85% of fights | ≤ 30% | 4–8 |
+   | 2–3 foes, company at band low | ≥ 85% | ≤ 1 | ≤ 45% | 5–10 |
+   | 4 foes, company at band middle | ≥ 90% | ≤ 1 | ≤ 45% | 6–10 |
+   | Boss + 4 escorts, company at band top | 70–85% | — | — | 10–15 |
+   | 2–3 foes, company 3 levels under band low | 30–60% | — | — | — |
 
-   The 10–15-round mirror target from 30g6 remains a stress check, not a goal.
-2. **After-battle recovery.**
-   - Healers spend spare mana on a free field mend once a battle ends.
-   - The whole company then recovers HP quickly while out of battle and not
-     travelling: about **5% of max HP per combat round**, reaching full in
-     about 2–3 minutes. Wounds still cap that recovery.
+   - The last row is the intended risk for an under-levelled company, not a
+     failure.
+   - The 10–15-round mirror target from 30g6 remains a stress check, not a
+     goal.
+2. **After-battle patching up, paid in mana.**
+   - When a battle ends, the company's healers automatically cast their
+     ordinary heals on hurt members, at normal mana cost, until each member is
+     above the company's healing threshold (30c1 tactics) or the healer
+     reaches its mana reserve. This takes no game time, only the usual chant
+     pacing.
+   - `company patch` repeats it on demand outside battle.
+   - When healers run dry, the company rests in camp (owner). Healing still
+     stops at the wound limit.
+   - **Owner decision needed:** whether passive HP regeneration outside rest
+     also stops. Recommended: keep a slow trickle up to 50% of max HP, so a
+     company with no healer can still limp to camp, and nothing above that.
 3. **Fewer wounds from easy fights.** A crit from a foe 3 or more levels below
    leaves a light wound only, and only on a crit that would knock the member
    below 50% HP. Lasting wounds stay for boss and even-level fights.
-4. **No change to world time.** Recovery and regeneration are per-character
-   online timers. Nothing advances global game time (handoff invariant).
+4. **No change to world time.** Patching up and any HP trickle are
+   per-character actions and timers. Nothing advances global game time
+   (handoff invariant).
 5. **Keep the risk in bosses and travel ambushes.** Mercy, morale and retreat
    remain the tools for fights that go badly.
 
@@ -308,8 +366,9 @@ Changes that shorten the loop of one fight, then a long rest:
 2. **Caster power:**
    - remove the fizzle and fix the roll-100 bug;
    - scale spells and abilities with level;
-   - per-archetype mana and sustain;
-   - after-battle recovery and wound changes.
+   - per-archetype mana pools, no passive mana regeneration, and mana
+     draughts;
+   - after-battle patching up and the wound changes.
 3. **Witch base class:** the hexes, the two new statuses, the controller role,
    recruit candidates and help.
 4. **Talents and milestones** with class promotion (see the roadmap order in
@@ -319,10 +378,11 @@ Changes that shorten the loop of one fight, then a long rest:
 
 Ship indexed help in the same delivery as its mechanics:
 
-- `help witch`, `help hexes`, `help talents`;
-- the `asleep` and `paralyzed` entries in `help statuses`;
+- `help witch`, `help hexes`, `help talents`, `help mana`;
+- `help draughts` and `help patch`;
+- the `asleep`, `paralyzed` and `blighted` entries in `help statuses`;
 - updates to `help progression`, `help stat-edge`, `help spellbook`,
-  `help mana`, `help heal`, `help abilities`, `help wounds`, `help rest`,
+  `help heal`, `help abilities`, `help wounds`, `help rest`,
   `help strategy` and `help classes`.
 
 Add a creation-step pointer for the Witch and a Practice Yard hint for hexes.
@@ -334,11 +394,13 @@ Acceptance tests:
 - old saves recompute without duplicating points;
 - casts in a real battle never fizzle for owned spells, and a 100% cast never
   fails;
-- mana sustain over a two-encounter sequence;
-- hex target counts at each level boundary, resists, immunity windows and the
-  sleep wake on damage;
+- a full pool carries a 3–4-encounter run, mana never regenerates outside
+  rest or draughts, and rest and draughts restore exactly their amount;
+- after-battle patching up stops at the mana reserve;
+- hex target counts at each level boundary, resists and immunity windows;
+- Slumber's wake on damage, Miasma's row coverage, and Blight halving real
+  heals;
 - boss halving and the lock-loop cap;
-- after-battle recovery stops on travel, rest and battle;
 - copyover keeps current mana, HP, statuses and talents;
 - the balance cells above pass.
 

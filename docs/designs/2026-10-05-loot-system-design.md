@@ -67,9 +67,10 @@ Every equippable item has five layers. All of them are shown on `look`,
   range so a farmed zone can't produce runaway items.
 - **Item level sets which affix tiers can roll** (Path of Exile style).
 - **A level requirement to wear** an item is `ilvl − 5` for Rare and above,
-  `ilvl − 10` for Uncommon, and none for Common. This keeps rare drops from
-  being handed down to new characters. It is an owner decision; the
-  equipment-tiers design had no equip gates.
+  `ilvl − 10` for Uncommon, and none for Common (owner decision, 2026-10-05).
+  This keeps rare drops from being handed down to new characters. It changes
+  the equipment-tiers design, which had no equip gates. Company equip and
+  compare (33g) refuse and explain an item the member is too low to wear.
 
 ### Quality
 
@@ -152,15 +153,34 @@ its base type underneath.
 
 ### Identification
 
-Rare and above drop **unidentified**. They show their base type, tier, quality
-and rarity, but not their affixes. Ways to identify them:
+Rare and above drop **unidentified** (owner decision, 2026-10-05). They show
+their base type, tier, quality and rarity, but not their affixes. Unidentified
+items sell for their base value only.
 
-- a rogue's or any member's Inspect/Appraisal rank (existing skill, auto at
-  camp rest);
-- a merchant or sage in a settlement, for a fee (an economy sink);
-- equipping the item, which takes a camp rest to identify.
+The main way to identify them is a **Scribe** in the company (owner direction).
+Scribe is a new company specialist capability in the 33f pattern:
 
-Unidentified items sell for their base value only.
+- **Who can be a Scribe:** the Wizard, Witch and Cleric lineages and their
+  promoted classes. It uses the best eligible living member present, with the
+  leader and then member-ID tie-breaks, and names that member.
+- **Ranks:** companions gain ranks at levels 1/10/20/30. Players take theirs
+  from their Cast rank, like the other caster specialists.
+- **What each rank identifies:** rank 1 Rare, rank 2 Epic, rank 3 Legendary
+  and Set. Rank 4 also shows each affix's tier and range, and where the item
+  comes from.
+- **When it happens:** automatically, as an item enters the company's cargo
+  or a member's hands (loot, pickup, contract reward). There's no command,
+  and a company with a Scribe never sees an unidentified item it can read.
+  `autoskill` can turn this off.
+- **Not the retired skill:** GoMud's old `scribe` skill was retired in 33f1.
+  The new capability uses a distinct ID (proposed `lore`), so old saved
+  `scribe` ranks or refunds can't revive it.
+
+Without a Scribe of the needed rank, items are identified:
+
+- by a sage or merchant in a settlement, for a fee (an economy sink);
+- by equipping the item through a camp rest;
+- by an identification scroll (a rare drop, sold by sages).
 
 ## Sellable goods and hauling
 
@@ -175,6 +195,7 @@ choice.
 | Materials | iron ore, steel ingots, runestone shards, ashwood, silk | Medium | Smiths, crafters; the Phase 19 commodity markets |
 | Valuables | coin purses, silver trinkets, gemstones, idols, art objects | High, light | Jewellers, black markets (21b standing) |
 | Provisions | game meat, herbs, mushrooms | Low; spoils | Cooks, inns; or eaten (survival) |
+| Draughts | minor, lesser and greater mana draughts; healing potions | Very high, light | Rare drops; alchemists sell them dear (level impact design, 2d) |
 | Curios | sealed letters, maps, relic fragments | Varies | Contracts, sages; can start quests |
 
 - **Goods tie into the Phase 19 commodity markets.** Pelts, ore, ingots and
@@ -223,7 +244,8 @@ group roll, with these outcomes:
   corpse under the existing 33g claim rules (private for 2 game hours, then
   public). Allied companies each get **their own roll** for a shared kill
   (personal loot, as in Diablo III and Guild Wars 2) instead of splitting one
-  roll. This is an owner decision; it changes 33d's fixed shared claims.
+  roll (owner decision, 2026-10-05). It changes 33d's fixed shared claims,
+  and each company keeps its own 33g claim on its own roll.
 
 ## Loot handling for players
 
@@ -282,11 +304,14 @@ group roll, with these outcomes:
 5. **Tier 4–6, legendaries and sets,** placed with bosses and contracts as
    content arrives.
 
-## Owner decisions needed
+## Owner decisions
 
-1. Level requirements on Rare+ (ilvl − 5) and Uncommon (ilvl − 10).
-2. Personal loot rolls per allied company instead of a single shared roll.
-3. Unidentified Rare+ items.
+Settled 2026-10-05:
+1. Level requirements: Rare and above at ilvl − 5, Uncommon at ilvl − 10.
+2. Personal loot: each allied company gets its own roll.
+3. Rare and above drop unidentified; a caster Scribe identifies them.
+
+Still open (proposed defaults stand until the owner decides):
 4. Bad-luck protection counter N = 20 per boss per leader.
 5. Smart loot bias of 50% toward the company's families.
 6. Demand saturation in markets.
@@ -298,7 +323,8 @@ Ship indexed help with its slice, with keywords and aliases, linked from
 
 - `help loot` (update);
 - `help rarity`, `help quality`, `help itemlevel`, `help affixes`;
-- `help goods`, `help salvage`, `help identify`, `help autoloot`;
+- `help goods`, `help salvage`, `help identify`, `help scribe`,
+  `help autoloot`;
 - `help equipmenttiers`.
 
 Add a Departure tutorial hint about loot rarity and goods, and test the help
@@ -313,7 +339,11 @@ Acceptance:
 - **Persistence:** rolled instances survive save/load/copyover with identical
   stats, and legacy items load unchanged.
 - **Gear in play:** compare and equip use the rolled numbers in real combat,
-  identification paths and autoloot filters work through the real command,
+  and level requirements refuse through real equip routes.
+- **Identification:** Scribe rank boundaries identify on real pickup and loot
+  with named attribution, and the retired `scribe` ID never revives. Fee,
+  scroll and camp-rest paths and autoloot filters work through the real
+  command,
   and selling, saturation, salvage and Haggle interact correctly.
 - **Balance:** harness cells with a company in tier-appropriate Standard,
   Fine and Rare gear stay within the encounter contract's targets from the

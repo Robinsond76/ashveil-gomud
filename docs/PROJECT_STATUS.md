@@ -13,7 +13,17 @@ progression, balance, loot and activities. Recorded the owner's decisions:
 - a new roadmap order.
 
 Added the [level impact and class power](designs/2026-10-05-level-impact-class-power-design.md)
-and [loot system](designs/2026-10-05-loot-system-design.md) designs. Owner
+and [loot system](designs/2026-10-05-loot-system-design.md) designs.
+Follow-up owner decisions:
+- the Witch is a starting class;
+- item level requirements;
+- personal loot per allied company;
+- unidentified Rare+ items with a caster Scribe;
+- a stat point every 2 levels, kept in balance;
+- mana refills only by rest or costly draughts, and healers patch the company
+  up until they must camp;
+- enemy levels set by zone bands, with strategy rising with enemy level;
+- hex spell names, including a Miasma poison cloud. Owner
 updates went into the branching class, random encounter and expanded class
 designs. Documentation only. Verification: relative Markdown links and the
 diff checked; no Go tests required.
@@ -56,13 +66,18 @@ review; no gameplay is implemented yet.
      HP growth through level 20;
    - spells and abilities scale with level;
    - owned spells never fizzle in battle, and the roll-100 bug is fixed;
-   - larger caster mana pools with in-battle and out-of-battle sustain;
-   - stronger healing and faster after-battle recovery;
-   - harness cells for the owner's encounter contract: groups of 2–3 below
-     the company's level, occasionally 4, and bosses of up to 5 with no
-     strategy.
+   - large caster mana pools that refill only through rest or costly mana
+     draughts;
+   - stronger healing, with healers patching the company up after battle
+     from their mana until they must camp;
+   - harness cells for the owner's encounter contract: groups of 2–3,
+     occasionally 4, and bosses of up to 5, with levels set by the zone's
+     band (not the player) and strategy growing with enemy level.
 2. **Loot system and gear catalog.** [Design](designs/2026-10-05-loot-system-design.md):
    - tiers, quality, rarity, item level and affixes;
+   - level requirements on Uncommon and better items, personal loot for each
+     allied company, and unidentified Rare+ items read by a caster **Scribe**
+     specialist;
    - legendaries and sets;
    - sellable goods for horse hauling, with salvage;
    - zone and boss drop tables.
@@ -74,9 +89,11 @@ review; no gameplay is implemented yet.
 4. **Class promotion at level 10 and class routes.** [Branching design](designs/2026-10-01-branching-class-progression-design.md):
    - level 10 is now an owner decision;
    - talents at levels 5, 15 and 25;
-   - the proposed **Witch** base lineage, with level-scaling hexes (sleep,
-     trip, paralysis) and its Hedge Witch, Coven Sage and Hag routes, from the
-     level impact design (slice 3).
+   - the **Witch** as a sixth base class (owner decision), with
+     level-scaling hexes: Slumber, Earthbind, Leaden Curse, Miasma (a poison
+     cloud), Binding Hex, Curse of Frailty, Dread Whisper and Blight;
+   - its proposed Hedge Witch, Coven Sage and Hag routes, from the level
+     impact design (slice 3).
 
 Items 1 and 2 can be designed in parallel. Item 1 ships first because the
 loot and encounter tuning depend on its numbers. Earlier items, including the
