@@ -1,6 +1,7 @@
 # Faith routes: clerics, summoners and fighting healers
 
-Status: **design draft, awaiting owner approval** (handoff rule 20). It
+Status: **design draft; the owner's answers to its open questions are
+recorded (2026-10-05)** (handoff rule 20). It
 revises the cleric and warrior rows of the
 [branching class progression design](2026-10-01-branching-class-progression-design.md)
 and the cleric paths of the [expanded companion catalogue](2026-10-01-expanded-companion-classes-design.md).
@@ -90,7 +91,7 @@ health** (sections 2 and 4). A cleric chooses between a two-handed staff
 - Heals also remove one harmful status (bleeding, poisoned) from their
   target, once per patient per battle.
 - **Level 40:** the Angel arrives one chant round sooner. **Level 50:**
-  Call the Host twice per rest.
+  the Angel's Mercy heals every 2 rounds instead of 3.
 
 **The Angel** (a guardian of the Host):
 
@@ -132,8 +133,8 @@ For any alignment; healing that works slowly.
 - **Signature: Bind the Fiend.** Summons a **Demon** for the rest of the
   battle (summoning rules below).
 - **Level 40:** the Demon's arrival forces a morale check on every enemy
-  group, not only its target's. **Level 50:** Bind the Fiend twice per
-  rest.
+  group, not only its target's. **Level 50:** the Demon's claws hit
+  harder (2d8).
 
 **The Demon** (a bound fiend):
 
@@ -151,8 +152,9 @@ fails to protect becomes a danger to the company.
 ### Summoning rules (Angel and Demon)
 
 - **Casting:** a 3-round chant (a blow can break it, as with any chant),
-  costing 40% of the caster's maximum mana. Battle only; once per battle;
-  once per rest until level 50.
+  costing 40% of the caster's maximum mana. Battle only; **once per
+  battle** from level 30 (owner). The mana cost is what limits it: a full
+  pool pays for about two summons before the company must rest.
 - **Duration:** until the battle ends, the summon dies, or the summoner
   falls (the Angel departs; the Demon breaks free).
 - **Not a company member:** it takes no company slot (the company stays
@@ -200,18 +202,17 @@ Warrior route, alignment −30 or lower. Heavy armor and any shield.
 
 **Blackguard (level 10).**
 
-- **Signature: Blood Oath.** Swears an oath on one ally at the start of
-  the battle (its ward, or the most hurt member). When the Blackguard
-  lands a melee blow, half the damage dealt heals that ally, or the
-  Blackguard itself if the ally is unhurt. It works on up to 3 blows per
-  battle, 4 at level 20, and renews every battle.
+- **Signature: Blood Oath.** When the Blackguard lands a melee blow, half
+  the damage dealt heals **the most hurt ally** in the company (owner: any
+  hurt ally), or the Blackguard itself if no ally is hurt. It works on up
+  to 3 blows per battle, 4 at level 20, and renews every battle.
 - Keeps the Reaver's intimidation: a foe the Blackguard has wounded this
-  round has −3 Attack against the Blackguard's ward.
+  round has −3 Attack against the Blackguard's allies.
 
 **Dread Knight (level 30).**
 
-- Blood Oath heals 75% of the damage, and half that again to a second
-  hurt ally; 5 blows per battle.
+- Blood Oath heals the most hurt ally for 75% of the damage, and the next
+  most hurt for half that again; 5 blows per battle.
 - **Aura of Dread:** foes in reach of the Dread Knight have −5 Attack.
 
 Blackguards heal **by hurting**: renewable every battle with no rest
@@ -244,11 +245,10 @@ With `ASHVEIL_BALANCE=1`:
 
 All numbers are starting values for the balance tests.
 
-## Open questions for the owner
+## Owner answers (2026-10-05)
 
-1. **Summon frequency:** once per rest until level 50, as proposed, or
-   once per battle from level 30?
-2. **Unrestricted cleric:** Druid (healing over time) as proposed, or
-   another catalogue path (Oracle, Shaman)?
-3. **Blackguard's oath:** should the drained healing reach any hurt ally,
-   or only the sworn ward, which makes it a bodyguard healer?
+1. **Summon frequency:** once per battle from level 30; mana limits it.
+2. **Unrestricted cleric:** Druid.
+3. **Blood Oath:** heals any hurt ally (the most hurt), not only a ward.
+
+No questions are open. Delivery is planned with class promotions (38b).

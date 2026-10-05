@@ -1,7 +1,7 @@
 # Phase 35a2: skill over hit points
 
-Status: **design draft, awaiting owner approval** (handoff rule 20); the
-owner's first-round answers are recorded under **Owner decisions**. It
+Status: **design draft; all of the owner's answers are recorded under
+Owner decisions (2026-10-05)** (handoff rule 20). Next: an execution plan. It
 follows [35a level impact](../plans/2026-10-05-phase-35a-level-impact.md)
 (merged in PR #15) and comes **before** [35b caster power](../plans/2026-10-05-phase-35b-caster-power.md),
 whose spell and heal numbers it changes. It amends the
