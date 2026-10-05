@@ -1,5 +1,15 @@
 # Ashveil Project Status
 
+**Neutral classes design approved (2026-10-05):** the owner asked for a
+glaive class and classes with no good or evil path, inspired by Ogre Battle
+and Unicorn Overlord. Added the [neutral classes design](designs/2026-10-05-neutral-classes-design.md):
+eight new base lineages (Halberdier, Doll Master, Beast Tamer, Gryphon
+Rider, Samurai, Shaman, Alchemist, Arbalist) with unrestricted routes,
+phases 39a–39h after 38b. The owner approved it and answered all five
+questions (doll and beast take a cell, not a slot; beasts never die; keep
+Samurai and Kensai; flasks brewed at camp; Halberdier first).
+Documentation only. Verification: links and the diff checked.
+
 **Phase 40a3 design approved (2026-10-05):** the owner approved the camp
 gear design as written: the fuel rule, the six items, and their weights,
 effects and prices. The execution plan comes when the visual milestone
@@ -201,6 +211,7 @@ implemented (handoff rule 20).
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 38a |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
+| 39a–39h | Neutral base classes, one per phase: Halberdier, Samurai, Shaman, Doll Master, Beast Tamer, Gryphon Rider, Alchemist, Arbalist | [Neutral classes design](designs/2026-10-05-neutral-classes-design.md) | 38b (39a and 39h also 36b; 39e also 39d) |
 
 World building (zones for levels 1–15) now waits until the visual client
 milestone below is in place (owner, 2026-10-05). A small showcase area for
