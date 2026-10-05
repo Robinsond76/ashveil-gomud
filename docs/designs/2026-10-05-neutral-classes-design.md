@@ -1,10 +1,10 @@
 # Neutral classes: eight new lineages with no good or evil path
 
-Status: **draft for owner review (2026-10-05)**. The owner chose six
+Status: **owner-approved design (2026-10-05)**. The owner chose six
 classes from a brainstorm in the project thread, then the Alchemist and
-Arbalist from a second one. Roles and mechanics below are proposals, and
-every number is a starting value for the balance harness. Open questions
-are listed at the end (handoff rule 20). Builds on
+Arbalist from a second one, and answered every open question (see
+**Owner answers** at the end; handoff rule 20). Every number is a starting
+value for the balance harness. Builds on
 the [branching class progression](2026-10-01-branching-class-progression-design.md),
 [level impact and the Witch](2026-10-05-level-impact-class-power-design.md),
 [35a2 skill over hit points](2026-10-05-phase-35a2-skill-over-hit-points-design.md),
@@ -426,17 +426,16 @@ With `ASHVEIL_BALANCE=1`:
    indexed in `keywords.yaml`; a tutorial hint in the class-choice lesson;
    rendered through `help` in tests and `TestTutorialHelpPointersExist`.
 
-## Open questions for the owner
+## Owner answers (2026-10-05)
 
-1. **Doll and beast slots:** they take a formation cell but no company slot
-   (recommended), so a Doll Master company has six bodies but five turns.
-   Alternative: they take a company slot.
-2. **Beast death:** a fallen beast is wounded and recovers with rest, never
-   dies (recommended). Alternative: it can die like a companion (25b).
-3. **Names:** Samurai, Ninja and Kensai bring Japanese names into the
-   setting, as Ogre Battle does. Keep them, or use setting names (for
-   example Blademaster, Shadowhand)?
+1. **Doll and beast slots:** they take a formation cell but no company
+   slot, so a Doll Master company has six bodies but five turns.
+2. **Beast death:** a fallen beast is wounded and recovers with rest; it
+   never dies.
+3. **Names:** keep Samurai and Kensai (and Ninja, if it is designed later).
 4. **Alchemist flasks:** a satchel refilled by brewing at camp from bought
-   or gathered reagents (recommended), with no mana. Alternative: flasks
-   bought ready-made only.
-5. **Delivery order:** the 39a–39h order above, or a different first class?
+   or gathered reagents, with no mana.
+5. **Delivery order:** 39a–39h as listed, starting with the Halberdier,
+   after 38b.
+
+No questions are open.
