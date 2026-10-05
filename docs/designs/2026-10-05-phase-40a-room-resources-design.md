@@ -33,21 +33,25 @@ rule: if the map shows water, you can drink and fill a waterskin there.
 
 - The idea, its purpose and its MUME inspiration (2026-10-05).
 - The map shows icons for room resources; water is wired into survival.
+- **Every resource is wanted** (2026-10-05): water, forage, shelter, herbs,
+  firewood, fishing and game, even where new mechanics are needed. 40a
+  ships the first three. [40a2 gathering](2026-10-05-phase-40a2-gathering-design.md)
+  adds the other four with their mechanics.
 
 ## Proposed for approval
 
 ### Resource list
 
-Ship only resources whose rules exist in this phase. Others stay in the
-data vocabulary but are **not shown** until a system uses them, so an icon
-never promises nothing.
+Every resource gets a real rule. 40a ships the three whose rules are
+small. The four gathering resources are accepted in data now, and appear
+when 40a2 gives them their mechanics, so an icon never promises nothing.
 
 | Resource | Shown in 40a | Rule |
 |---|---|---|
 | `water` | Yes | `drink water`, `fill`, and `company drink` work here without spending supplies |
 | `forage` | Yes | A camp rest finished here gets **+1 forage find** |
 | `shelter` | Yes | A camp rest here halves the weather's rest penalty: recovery moves halfway from the weather's `RestRecoveryPct` toward 100 |
-| `herbs`, `firewood`, `fishing`, `game` | No (reserved) | Accepted in data; shown once herbalism, fuel, fishing or hunting exist |
+| `herbs`, `firewood`, `fishing`, `game` | From 40a2 | `gather herbs`, `gather firewood`, `fish` and `hunt`, with room pools and firewood for the camp fire. See 40a2 |
 
 ### Data model
 
@@ -170,8 +174,7 @@ never promises nothing.
 
 ## Open questions
 
-1. Confirm the shown list (water, forage, shelter) and the reserved list.
-2. Should water sources freeze in snow-biome blizzards? The proposal is
+1. Should water sources freeze in snow-biome blizzards? The proposal is
    later, with the weather work.
-3. Confirm the forage (+1 find) and shelter (half the weather penalty)
+2. Confirm the forage (+1 find) and shelter (half the weather penalty)
    numbers as balance defaults.

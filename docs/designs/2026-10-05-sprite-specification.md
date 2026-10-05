@@ -32,16 +32,60 @@ consistent style.
 
 These apply to every sprite unless a row says otherwise.
 
-### Style
+### Art direction (owner, 2026-10-05)
 
-- **Original pixel art** in the spirit of late-90s tactical RPGs. Use Ogre
-  Battle 64 as a guide for composition, proportions, the battle layout and
-  readability. **Never copy, trace, or closely imitate OB64 (or any other
-  game's) sprites, tiles or characters.** Every design must be original.
-- **Ashveil tone:** dark fantasy of ash, embers, frost and old stone. The
-  map is **colorful and readable**: rich, saturated terrain hues, not neon.
-  Units are a little darker and earthier than terrain, with **one strong
-  accent color per class** so they read at 1x.
+Ashveil is a **mature high fantasy**: a dangerous, unforgiving world. The
+sprites must reflect that. **This section overrides any row description
+that seems to say otherwise.**
+
+- **Grounded, Tolkien-style high fantasy, in the Lord of the Rings
+  tradition.** Think of weathered travelers in worn cloaks, practical mail
+  and leather, and old stone. Magic is rare, smoky and costly. Monsters are
+  genuinely threatening. Draw on that tradition's mood and realism, but
+  **never copy designs from the films, games or any artist's work**. Every
+  design is original.
+- **Ogre Battle 64 is the sprite reference the owner likes.** Follow its
+  grounded proportions, readable side-on battle poses, sober palette and
+  the way a 3x3 formation reads at small size. Do not copy, trace or
+  closely imitate its sprites.
+- **Not anime in any way.** Specifically, no:
+  - oversized heads or large, shiny eyes;
+  - chibi or "super-deformed" proportions;
+  - spiky, gravity-defying or brightly dyed hair;
+  - oversized weapons or armor;
+  - cute mascot monsters;
+  - sparkles, hearts, sweat-drops or other cartoon emotes;
+  - candy-bright outfits;
+  - youthful, glamorous faces.
+- **Realistic proportions:**
+  - battle sprites about **7 heads tall** (an adult figure about 44–48 px in
+    a 64 px frame);
+  - map sprites as close to that as 32 px allows, about **5 heads tall**,
+    still adult and never chibi.
+
+  Faces are small and plain, often shadowed by hoods or helms.
+- **Wear and weight.** Gear is used: dented helms, mud-stained hems, frayed
+  cloaks, patched leather, nicked blades. Armor follows historical shapes:
+  mail, gambesons, brigandines, simple plate. Weapons are real-world sized.
+- **Danger.** Enemies are ugly, feral, gaunt or uncanny, never comic. Even
+  small creatures look like they can hurt you.
+- **Violence is physical, not gratuitous.** Hits may show a small spray of
+  blood and the fallen lie still. There is no dismemberment and no gore
+  close-ups.
+- **Restrained magic.** Pale light, ember glow, smoke, frost, grave-mist.
+  Effects are brief and dim beside the figures, never neon or glittery.
+- **Mood and color:**
+  - units are muted and naturalistic: earth, iron, wool, leather, bone;
+  - each class has one **subdued** accent so it reads at 1x;
+  - the **map is rich but natural**, like a hand-painted campaign map: deep
+    greens, ochres, slate and river blues, not saturated candy colors.
+- **Victory and emotion are sober.** Survivors lower their weapons and
+  catch their breath. No cheering poses.
+
+### Craft rules
+
+- **Original pixel art**, hand-placed, in the spirit of late-90s tactical
+  RPGs.
 - **Light comes from the top-left.** Two to three shade steps per material.
   Avoid pillow shading.
 - **Outline:** a 1 px selective outline on units, icons and markers, in the
@@ -61,15 +105,15 @@ These apply to every sprite unless a row says otherwise.
 
   | Lineage | Accent | Notes |
   |---|---|---|
-  | Warrior | Iron grey with crimson cloth | Heavy, broad silhouette |
-  | Rogue | Charcoal with plum | Hood, short blades, lean |
-  | Ranger | Moss green with tan leather | Bow on back, cloak |
-  | Cleric | Bone white with gold | Mace or holy symbol, tabard |
-  | Wizard | Deep blue with silver | Pointed hood or hat, staff |
-  | Witch | Violet with ash-moss green | Wide-brimmed or tattered hood, crooked wand |
+  | Warrior | Iron grey with a faded oxblood surcoat | Broad, mailed, helm with nasal guard |
+  | Rogue | Charcoal with dull plum | Hood and mask cloth, short blades, lean |
+  | Ranger | Weathered moss green with tan leather | Hooded cloak, longbow, quiver |
+  | Cleric | Undyed wool with tarnished brass | Mace, worn tabard, iron holy symbol |
+  | Wizard | Slate blue-grey with pewter | Deep travel hood, long beard or gaunt face, tall staff |
+  | Witch | Dusky heather with ash-moss green | Tattered layered shawls, bone and herb charms, crooked wand |
 
-- **Alignment cue for promoted classes:** positive routes add gold or white
-  trim, unrestricted routes keep the lineage accent, and negative routes add
+- **Alignment cue for promoted classes:** positive routes add tarnished
+  gold or pale trim, unrestricted routes keep the lineage accent, and negative routes add
   ash-black and ember red. For example, Knight is gold-trimmed and Reaver is
   ember-trimmed.
 
@@ -126,7 +170,7 @@ Deliver these first. **Stop for owner approval** before starting S1.
 | ID | File | Size | Description |
 |---|---|---|---|
 | palette | `sprites/style/palette.png` + `palette.gpl` | 64 swatches, 8×8 | Master palette, named swatches in the `.gpl` |
-| style-map | `sprites/style/style-map.png` | 320×180 | A mock map scene: forest, road, river, village and camp tiles, the Warrior and Witch map sprites, two resource icons |
+| style-map | `sprites/style/style-map.png` | 320×180 | Must demonstrate the art direction. A mock map scene: forest, road, river, village and camp tiles, the Warrior and Witch map sprites, two resource icons |
 | style-battle | `sprites/style/style-battle.png` | 320×180 | A mock battle: forest background, three company units (Warrior, Cleric, Wizard) on the left against a forest ogre and two goblins on the right |
 | proportions-map | `sprites/style/proportions-map.png` | 6 × 32×32 | All 6 base classes facing down, side by side |
 | proportions-battle | `sprites/style/proportions-battle.png` | 6 × 64×64 | All 6 base classes in battle idle, side by side |
@@ -138,8 +182,8 @@ Deliver these first. **Stop for owner approval** before starting S1.
 
 ### Resource icons — `sprites/map/resources/` (16×16, 1 frame)
 
-Drawn in a tile corner. The final list is set by the 40a design; these are
-proposed.
+Drawn in a tile corner. Every resource is wanted (owner, 2026-10-05): 40a
+shows water, forage and shelter, and 40a2 adds the gathering resources.
 
 | ID | Description |
 |---|---|
@@ -151,6 +195,7 @@ proposed.
 | fishing | Fishing: a fish arcing over a wave |
 | game | Game: a deer track or hoofprint pair |
 | unknown | Unsurveyed: a faint, abstract compass rose (no letters) |
+| depleted | Overlay drawn over any gathering icon (herbs, firewood, fishing, game) whose room is picked clean for now (40a2): a dim, empty-basket mark |
 
 ### Map markers — `sprites/map/markers/`
 
@@ -188,18 +233,19 @@ The frame is 32×32. Each unit has **two files**:
 | `idle.png` | down, up, side | 2 | 64×96 |
 | `walk.png` | down, up, side | 4 | 128×96 |
 
-Proportions are compact, about 2.5 heads tall. The figure fills about 20×28
-px of the frame, with its feet anchored per the global standards.
+Proportions are adult and realistic, about 5 heads tall (see the art
+direction). The figure fills about 14×28 px of the frame, with its feet
+anchored per the global standards.
 
 | ID | Description |
 |---|---|
-| warrior | Broad, mail and tabard, sword and round shield, crimson cloth |
-| rogue | Lean, hooded, leather, two short blades, plum scarf |
-| ranger | Cloaked, bow on back, quiver, moss-green hood |
-| cleric | Tabard over mail, mace, holy symbol, white and gold |
-| wizard | Long robe, tall pointed hood, staff with a pale crystal, blue and silver |
-| witch | Tattered layered robe, wide-brimmed hat, crooked ash wand, violet and moss |
-| adventurer | Fallback for any class without art: plain traveler's cloak, walking staff, neutral brown |
+| warrior | Broad, mail hauberk and faded surcoat, nasal helm, sword and round shield |
+| rogue | Lean, hooded, dark leathers, mask cloth, two short blades |
+| ranger | Hooded travel-stained cloak, longbow on back, quiver, long knife |
+| cleric | Worn wool tabard over mail, mace, iron holy symbol on a cord |
+| wizard | Long weathered robe and deep hood, tall gnarled staff with a dim stone |
+| witch | Layered tattered shawls and hood, bone and herb charms, crooked ash wand |
+| adventurer | Fallback for any class without art: plain traveler's cloak, pack, walking staff, neutral brown |
 
 ### App icons — `sprites/app/` (phase 40i)
 
@@ -335,12 +381,12 @@ their class sprite.
 
 | ID | Notes |
 |---|---|
-| warrior | Shield forward, sword low |
+| warrior | Shield forward, sword low, weight braced |
 | rogue | Crouched, blades reversed |
 | ranger | Bow held, arrow nocked low |
 | cleric | Mace and shield, symbol glinting |
-| wizard | Staff upright, crystal glowing |
-| witch | Wand raised, hat brim shading the eyes, a faint violet wisp |
+| wizard | Staff planted, a faint glow at the stone |
+| witch | Wand low, hood shading the face, a thin curl of grave-mist |
 | adventurer | Fallback humanoid |
 
 **Fallback silhouettes.** For any enemy without art:
@@ -381,10 +427,10 @@ world as of 2026-10-05.
 | bonesetter | M | bandit | poacher bonesetter, back-alley bonesetter | Satchel of splints, heals allies |
 | shadow-trainee | M | shadow guild | shadow trainee | Masked novice, dagger |
 | shadow-master | M | variant of shadow-trainee | shadow master | Black-clad master, twin blades |
-| goblin | M | goblin | (base for the variants below and random encounters) | Small, green-grey, crude spear |
+| goblin | M | goblin | (base for the variants below and random encounters) | Small, sinewy, grey-green, ragged hide, crude spear; feral, not comic |
 | goblin-hexer | M | variant of goblin | goblin hexer | Fetish-hung goblin shaman, bone staff |
-| goblin-loot | M | variant of goblin | loot goblin | Goblin hauling an overstuffed sack |
-| faerie | S | fey | faerie folk | Tiny winged sprite, glowing |
+| goblin-loot | M | variant of goblin | loot goblin | Wiry, feral goblin hunched under a heavy stolen sack |
+| faerie | S | fey | faerie folk | Thin, pale, long-limbed fey with moth-like wings; an uncanny cold glow |
 | imp-forest | S | fey | forest imp | Bark-skinned impish creature, twig horns |
 | fungus | M | plant | sentient fungus | Walking mushroom cluster, spore puffs |
 | ent | L | plant | ent | Treant: bark body, branch arms, mossy face |
@@ -396,7 +442,7 @@ world as of 2026-10-05.
 | bats-echo | S | cave | echo bats | A swarm of 3–4 bats in one sprite |
 | ice-warrior | M | ice | ice warrior | Frost-armored humanoid with an ice blade |
 | ice-guardian | L | ice | ice guardian | An ice-construct sentinel, crystalline |
-| snow-floof | S | snow | snow floof | Round fluffy snow creature, angry little eyes |
+| snow-floof | S | snow | snow floof | Squat, thick-furred tundra predator with hidden teeth; deceptively soft-looking, not cute |
 | dummy-training | M | training | training dummy | A straw dummy on a post |
 | straw-footman | M | training | straw footman | A straw figure with a wooden sword |
 | straw-archer | M | variant of straw-footman | straw archer | A straw figure with a toy bow |
@@ -517,7 +563,7 @@ face right, at the unit's size class.
 | `shoot.png` | 6 | Ranged: Ranger, lake poacher, straw archer | Draw, release, follow-through. Replaces `attack.png` for ranged attacks |
 | `prone.png` | 3 | Everyone except S-size swarms | Frame 1 knocked flat (held), 2–3 getting up |
 | `yield.png` | 2 | Humanoid enemies that can surrender (bandits, cultists, shadow guild, goblins, guards) | Kneel and lower the weapon. The last frame is held |
-| `victory.png` | 4 | Classes only | A short triumphant pose loop for the battle's end |
+| `victory.png` | 4 | Classes only | A sober end-of-battle pose: weapon lowered, catching breath (no cheering) |
 | `guard-step.png` | 3 | Warrior and Cleric (guardian role) | A lunge sideways to intercept a blow for an ally |
 
 **Unit file totals:** each class gets about 10 more files and each enemy
@@ -644,14 +690,14 @@ client shows its lineage sprite.
 | warden | Ranger | Positive | Green-gold cloak, longbow, small buckler |
 | hunter | Ranger | Unrestricted | Furs, recurve bow, trophies |
 | stalker | Ranger | Negative | Dark hooded leathers, barbed arrows, ember eyes |
-| priest | Cleric | Positive | White robes, a radiant censer, gold halo motif |
+| priest | Cleric | Positive | Pale undyed robes, a smoking censer, a sun-disc pendant |
 | chaplain | Cleric | Unrestricted | Armored cassock, warhammer, prayer beads |
 | hexer | Cleric | Negative | Ash-grey vestments, a cracked holy symbol, smoke |
 | theurgist | Wizard | Positive | Silver-blue robes, warding circles, orb staff |
 | arcanist | Wizard | Unrestricted | Layered blue robes, a floating tome |
 | warlock | Wizard | Negative | Black-violet robes, a draining green flame |
 | hedge-witch | Witch | Positive | Herb-laden shawl, warding charms, a pale lantern |
-| coven-sage | Witch | Unrestricted | A tall layered hat, a ring of floating charms |
+| coven-sage | Witch | Unrestricted | A deep layered hood, a staff hung with charms and small bones |
 | hag | Witch | Negative | A hunched form, ragged black robes, ember-lit eyes |
 
 **Approximate total:** 18 × (2 map files + about 11 battle files) ≈ 235

@@ -72,11 +72,17 @@ the companion's leader.
   - `m:<instance>` for enemies;
   - the member key for company members (the leader, companions);
   - `me` for the receiving player;
-  - `o:<n>` for an outsider shown in `Company.Battle.others`.
+  - `o:<n>` for an outsider shown in `Company.Battle.others`;
+  - `a:<leaderUserId>:<memberKey>` for an allied company's member in the
+    same encounter (for 40f's reserve formations).
 - **Fields** are passed through from the stream event: kind, outcome,
   damage, amount, held-back, crit, weapon type, spell ID, status name,
   defenses and rule. They are renamed to short JSON keys and omitted when
   zero.
+- **Allied happenings** in the same encounter are included, so 40f can
+  animate allies. They obey the same limits: no ally health numbers and no
+  private ally conditions. An ally's status appears only when the
+  narration shows it.
 - **Never sent:**
   - enemy health or maximums;
   - any unseen enemy's identity;
