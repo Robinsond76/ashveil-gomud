@@ -2,7 +2,7 @@
 
 > **Pending 35a2 (2026-10-05):** the draft [skill over hit points design](../designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md)
 > lowers HP growth and resizes Magic Missile, Minor Heal and Opening Strike
-> (its decision 5). If the owner approves it, update this plan's numbers before
+> (its decision 6). If the owner approves it, update this plan's numbers before
 > implementing.
 
 Implements section 2 and sections 4.2–4.5 of the owner-approved
