@@ -50,6 +50,7 @@ func newSimMob(mobId mobs.MobId, forceLevel int) (*mobs.Mob, error) {
 
 	mob.Character.HPPerLevel = mob.HPPerLevel
 	mob.Character.AttackOffset, mob.Character.EvasionOffset = mob.AttackSkill, mob.EvasionSkill
+	mob.Character.ManaBaseOverride, mob.Character.ManaPerLevelOverride = mob.ManaBase, mob.ManaPerLevel
 	mob.Character.PlayerDamage = make(map[int]int)
 	mob.Character.StatPoints = configs.GetProgressionConfig().StatPointsAt(mob.Character.Level)
 	mob.Character.Level--

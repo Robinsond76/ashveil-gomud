@@ -3,7 +3,8 @@
 When a battle ends, your company's healers patch everyone up on their own:
 
   <ansi fg="command">Your company patches itself up.</ansi>
-  <ansi fg="command">Brother Oswin heals Garrick Vane: 13 health.</ansi>
+  <ansi fg="command">Brother Oswin kneels beside Garrick Vane first, the worst hurt.</ansi>
+  <ansi fg="command">Brother Oswin lays glowing hands on Garrick Vane. (13 healed)</ansi>
 
 <ansi fg="yellow-bold">How it works</ansi>
 
@@ -11,7 +12,8 @@ When a battle ends, your company's healers patch everyone up on their own:
   mana to spare first, the most hurt member first.
 - Each member is healed up to your company's <ansi fg="yellow">healing threshold</ansi> (50% of
   their wound limit unless you change it; <ansi fg="command">help tactics</ansi>), and no
-  further. Someone bleeding out is healed too.
+  further. If you were knocked down in a battle your company won, they heal
+  you back to your feet. A fallen companion needs a resurrection instead.
 - Each heal costs the usual mana (3) and heals the usual amount: 10 to 16
   health, plus 1 for every 6 levels of the healer, 5% more with a holy
   symbol.
@@ -20,7 +22,7 @@ When a battle ends, your company's healers patch everyone up on their own:
 - Only heals: no wounds are tended, no bandages or splints used, and only
   your own company is healed, never an allied player's.
 - It takes no game time. If a waiting group starts the next battle at
-  once, there is no time to patch.
+  once, or a companion still has a foe, there is no time to patch.
 
 <ansi fg="yellow-bold">On demand</ansi>
 

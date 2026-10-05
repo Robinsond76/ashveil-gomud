@@ -213,6 +213,7 @@ func init() {
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
 	events.RegisterListener(events.LevelUp{}, m.onLevelUp)
+	users.RegisterLevelGrant(m.levelGrant)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	archetypes.SetProvider(m)
 }
@@ -681,6 +682,20 @@ func (m *ArchetypeModule) resetChoice(userID int) (string, error) {
 	return "Archetype cleared.", nil
 }
 
+// levelGrant teaches a player the level spells their level reaches, if they
+// have chosen an archetype. GrantXP runs it before measuring the level-up
+// report (users.RegisterLevelGrant); onLevelUp runs it again, a no-op then.
+func (m *ArchetypeModule) levelGrant(user *users.UserRecord) []string {
+	m.mu.Lock()
+	id, chosen := m.registry.Players[user.UserId]
+	a, known := m.table.Get(id)
+	m.mu.Unlock()
+	if !chosen || !known {
+		return nil
+	}
+	return grantLevelSpells(user, a)
+}
+
 // onLevelUp teaches a player the level spells their new level reaches
 // (Phase 35b) and says so.
 func (m *ArchetypeModule) onLevelUp(e events.Event) events.ListenerReturn {
@@ -692,14 +707,7 @@ func (m *ArchetypeModule) onLevelUp(e events.Event) events.ListenerReturn {
 	if user == nil {
 		return events.Continue
 	}
-	m.mu.Lock()
-	id, chosen := m.registry.Players[evt.UserId]
-	a, known := m.table.Get(id)
-	m.mu.Unlock()
-	if !chosen || !known {
-		return events.Continue
-	}
-	for _, spell := range grantLevelSpells(user, a) {
+	for _, spell := range append(evt.SpellsLearned, m.levelGrant(user)...) {
 		name := spell
 		if sp := spells.GetSpell(spell); sp != nil {
 			name = sp.Name

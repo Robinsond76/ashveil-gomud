@@ -282,6 +282,12 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 		levelUpEvent.NextMilestone = milestones.Next(u.Character.Level, u.Character.ArchetypeID())
 		levelUpEvent.TrainingPoints = u.Character.TrainingPoints - tpBefore
 		levelUpEvent.StatPoints = u.Character.StatPoints - spBefore
+		for _, grant := range levelGrants {
+			if grant == nil {
+				continue
+			}
+			levelUpEvent.SpellsLearned = append(levelUpEvent.SpellsLearned, grant(u)...)
+		}
 		levelUpEvent.PowerLines = powerLines(powerBefore, powerSnapshot(u.Character))
 
 		events.AddToQueue(levelUpEvent)

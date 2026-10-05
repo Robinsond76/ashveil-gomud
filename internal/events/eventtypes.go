@@ -331,7 +331,10 @@ type LevelUp struct {
 	EvasionBefore, EvasionAfter int
 	// Phase 35b: each owned scaling spell's and ability's growth, as
 	// "Magic Missile 8-13 -> 9-14".
-	PowerLines              []string
+	PowerLines []string
+	// SpellsLearned are the spell ids the new level taught, before the
+	// report was measured (Phase 35b review).
+	SpellsLearned           []string
 	StatsBefore, StatsAfter stats.Statistics
 	NextMilestone           milestones.Milestone
 	StatsDelta              stats.Statistics

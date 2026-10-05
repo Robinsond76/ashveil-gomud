@@ -365,7 +365,8 @@ func (m *CompanyModule) spendItem(user *users.UserRecord, members []woundMember,
 func patientsOf(members []woundMember) []wounds.Patient {
 	out := make([]wounds.Patient, 0, len(members))
 	for _, w := range members {
-		out = append(out, wounds.Patient{Key: w.key, Health: w.char.Health, Max: w.char.HealthMax.Value, Wounds: w.char.Wounds})
+		out = append(out, wounds.Patient{Key: w.key, Health: w.char.Health, Max: w.char.HealthMax.Value, Wounds: w.char.Wounds,
+			Bleeding: w.leader() && w.char.Health < 1})
 	}
 	return out
 }

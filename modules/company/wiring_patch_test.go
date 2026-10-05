@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
@@ -96,4 +97,60 @@ func TestBattleEndPatchesTheCompany(t *testing.T) {
 	text := strings.Join(out, "\n")
 	assert.Contains(t, text, "Your company patches itself up.")
 	assert.GreaterOrEqual(t, tamsin.Character.Health, 500, "healed to the default threshold of half")
+}
+
+// Review regression: a leader downed in a won battle is patched back to
+// their feet when the battle ends; a fallen companion is not (it needs a
+// resurrection).
+func TestBattleEndPatchesADownedLeader(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	oswin := b.companion(2)
+	oswin.Character.ManaMax.Value, oswin.Character.Mana = 200, 200
+	tamsin := b.companion(1)
+	tamsin.Character.Health = 0
+	b.aria.Character.Health = -3
+	events.AddToQueue(events.BattleEnded{UserId: b.aria.UserId, Outcome: "victory"})
+	events.ProcessEvents()
+	assert.GreaterOrEqual(t, b.aria.Character.Health, 1, "patched back to her feet")
+	assert.Less(t, oswin.Character.Mana, 200)
+	assert.Equal(t, 0, tamsin.Character.Health, "a fallen companion waits for a resurrection")
+}
+
+// Review regression: while a companion still has a foe, the battle-end
+// patch waits, as `company patch` does.
+func TestBattleEndPatchWaitsWhileTheCompanyFights(t *testing.T) {
+	b := newBrawl(t)
+	b.withArchetypes("")
+	oswin := b.companion(2)
+	oswin.Character.ManaMax.Value, oswin.Character.Mana = 200, 200
+	tamsin := b.companion(1)
+	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 10
+	tamsin.Character.Aggro = &characters.Aggro{MobInstanceId: b.livingBandits()[0].InstanceId}
+	events.AddToQueue(events.BattleEnded{UserId: b.aria.UserId, Outcome: "victory"})
+	events.ProcessEvents()
+	assert.Equal(t, 10, tamsin.Character.Health, "no patch while she still fights")
+	assert.Equal(t, 200, oswin.Character.Mana)
+
+	tamsin.Character.Aggro = nil
+	events.AddToQueue(events.BattleEnded{UserId: b.aria.UserId, Outcome: "victory"})
+	events.ProcessEvents()
+	assert.Greater(t, tamsin.Character.Health, 10, "patched once the fighting stops")
+}
+
+// Phase 35b review: a player's patch heals only their own company; an
+// allied player's (33d) hurt companion keeps its health, and its healer
+// its mana.
+func TestCompanyPatchLeavesAnAllysCompanyAlone(t *testing.T) {
+	b, _, allyTamsin := alliedBrawl(t)
+	b.withArchetypes("")
+	oswin := b.companion(2)
+	oswin.Character.ManaMax.Value, oswin.Character.Mana = 200, 200
+	allyTamsin.Character.HealthMax.Value, allyTamsin.Character.Health = 100, 10
+	tamsin := b.companion(1)
+	tamsin.Character.HealthMax.Value, tamsin.Character.Health = 100, 10
+
+	assert.Contains(t, b.cmd("company", "patch"), "Your company patches itself up.")
+	assert.Greater(t, tamsin.Character.Health, 10, "her own Tamsin is healed")
+	assert.Equal(t, 10, allyTamsin.Character.Health, "the ally's companion is not")
 }

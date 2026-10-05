@@ -7,7 +7,8 @@ out of one, for you or your companions. It returns only through:
   a finished camp rest (<ansi fg="command">help camp</ansi>), which fills it for the company;
   a finished night at an inn (<ansi fg="command">help inn</ansi>), which does the same;
   a mana draught (<ansi fg="command">help draughts</ansi>), 25%, 40% or 60% of your mana at once;
-  half the mana of a chant a blow breaks (<ansi fg="command">help interrupts</ansi>).
+  half the mana of a chant a blow breaks (<ansi fg="command">help interrupts</ansi>);
+  coming back from death, which leaves you with half (<ansi fg="command">help resurrect</ansi>).
 
 Gaining a level raises your maximum but doesn't refill what you have.
 

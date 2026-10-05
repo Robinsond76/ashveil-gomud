@@ -31,22 +31,20 @@ const (
 	patchResting  = "Not while your company is resting. The rest will see to everyone."
 )
 
-// onBattleEnded patches the company up after its battle, if the player is
-// still out of battle: a waiting group may already have begun the next one
-// in the same pass, and then there is no time to patch.
+// onBattleEnded patches the company up after its battle, if the player and
+// the company are still out of battle: a waiting group may already have
+// begun the next one in the same pass, and then there is no time to patch.
+// A leader downed in a won battle is patched back to their feet.
 func (m *CompanyModule) onBattleEnded(e events.Event) events.ListenerReturn {
 	evt, ok := e.(events.BattleEnded)
 	if !ok {
 		return events.Continue
 	}
 	user := users.GetByUserId(evt.UserId)
-	if user == nil || user.Character == nil || user.Character.Health < 1 {
+	if user == nil || user.Character == nil {
 		return events.Continue
 	}
-	if _, inBattle := battle.Current(evt.UserId); inBattle {
-		return events.Continue
-	}
-	if reason := patchBlocked(user); reason != "" {
+	if reason := patchBlocked(user); reason != "" || companionsFighting(m.woundMembers(user)) {
 		return events.Continue
 	}
 	lines, _ := m.patch(user)
@@ -54,6 +52,17 @@ func (m *CompanyModule) onBattleEnded(e events.Event) events.ListenerReturn {
 		user.SendText(line)
 	}
 	return events.Continue
+}
+
+// companionsFighting reports whether a companion still has a foe, as when
+// allies (33d) fight on after the player's own battle has ended.
+func companionsFighting(members []woundMember) bool {
+	for _, w := range members {
+		if !w.leader() && w.char.Aggro != nil {
+			return true
+		}
+	}
+	return false
 }
 
 // patchBlocked is why the company can't patch up now, or "".

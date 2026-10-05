@@ -13,6 +13,20 @@ import (
 // ability does now, from the same numbers the spells roll
 // (internal/spellpower).
 
+// levelGrants teach what a new level brings (an archetype's level spells)
+// before GrantXP measures the report, so a spell first owned at this level
+// appears in it. Each returns the spell ids it taught.
+var levelGrants []func(u *UserRecord) []string
+
+// RegisterLevelGrant adds a level grant and returns its removal (for
+// tests). Modules register them while loading, before any player gains a
+// level.
+func RegisterLevelGrant(grant func(u *UserRecord) []string) (remove func()) {
+	i := len(levelGrants)
+	levelGrants = append(levelGrants, grant)
+	return func() { levelGrants[i] = nil }
+}
+
 // powerEntry is one scaling spell's or ability's size, as the report shows
 // it ("8-13", "+3 damage").
 type powerEntry struct {

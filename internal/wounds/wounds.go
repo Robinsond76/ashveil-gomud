@@ -279,6 +279,10 @@ type Patient struct {
 	Key         string
 	Health, Max int
 	Wounds      []Wound
+	// Bleeding marks a downed player (Health below 1 but alive), whom
+	// after-battle patching heals back to their feet (Phase 35b). A fallen
+	// companion is not bleeding: it needs a resurrection.
+	Bleeding bool
 }
 
 // Limit is the patient's wound limit.
@@ -530,7 +534,7 @@ func Patch(patients []Patient, healers []Healer, rules Rules, healBelow int, rol
 	}
 	for i := range ps {
 		p := &ps[i]
-		if p.Health < 1 {
+		if p.Health < 1 && !p.Bleeding {
 			continue
 		}
 		target := HealTarget(*p, healBelow)

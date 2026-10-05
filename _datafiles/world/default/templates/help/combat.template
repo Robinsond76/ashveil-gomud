@@ -192,7 +192,7 @@ Ambushes, clusters, leaping enemies, narrow ground, fatigue, and cold affect bat
 
 Speed, personal burden and armor bulk set your turns each round: <ansi fg="command">help tempo</ansi>.
 
-Natural health and mana recovery pauses throughout a battle, including between blows.
+Natural health recovery pauses throughout a battle, including between blows.
 Healers still heal by spells; ordinary buffs keep their real-time durations.
 
 Strength adds bounded damage even against an equal opponent (<ansi fg="command">help strength</ansi>).
