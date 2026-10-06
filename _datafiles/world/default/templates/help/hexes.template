@@ -35,8 +35,7 @@ A Witch learns a hex when it reaches its level, and keeps it for good.
 A hex reaches 1 foe at level 1, <ansi fg="yellow">2</ansi> at level 8, <ansi fg="yellow">3</ansi> at level 16, <ansi fg="yellow">4</ansi> at level 24,
 and the whole enemy group from level 30. The first is the one it aims at;
 the rest come from the same row, then the nearest others. Miasma covers one
-row only, up to the same number. In a battle the Witch chooses on her own;
-a hex cast by hand reaches the first foes in the room.
+row only, up to the same number. In a battle the Witch chooses on her own.
 
 <ansi fg="yellow-bold">Resisting</ansi>
 
@@ -56,6 +55,8 @@ more than half of a fight's rounds to hexes.
 Sleep ends at the first damage; poison's damage does too.
 
 Statuses count combat rounds, never game rounds, and end when the fight ends.
+Miasma's poison is ordinary poison: it runs its course, in or out of a
+fight, unless Cure Poison ends it.
 <ansi fg="command">help spell [spell]</ansi> shows one spell's numbers.
 
 See also: <ansi fg="command">help witch</ansi>, <ansi fg="command">help statuses</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help mana</ansi>, <ansi fg="command">help spells</ansi>.

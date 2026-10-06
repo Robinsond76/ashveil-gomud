@@ -828,17 +828,18 @@ func targetCarriesLight(target *characters.Character) bool {
 	return target.HasBuffFlag(rooms.FlagLightSource) || target.HasBuffFlag(rooms.FlagPartyLight)
 }
 
-// darknessPenalty is the attacker's to-hit modifier in room, where
-// visibilityOf reports what the attacker can see there: the darkness
-// penalty (an unknown room applies none), plus (Phase 38a) the bonus
-// against a sleeping target.
+// darknessPenalty is the attacker's to-hit penalty in room, a positive
+// magnitude subtracted from the hit chance, where visibilityOf reports what
+// the attacker can see there: the darkness penalty (an unknown room applies
+// none), less (Phase 38a) the bonus against a sleeping target, so a sleeper
+// in good light gives a negative penalty, a bonus to hit.
 func darknessPenalty(room *rooms.Room, target *characters.Character, visibilityOf func(*rooms.Room) int) int {
 	bonus := 0
 	if target.HasBuffFlag(status.FlagAsleep) {
 		bonus = status.AsleepHitBonus
 	}
 	if room == nil {
-		return bonus
+		return -bonus
 	}
-	return rooms.HitPenaltyForVisibility(visibilityOf(room), targetCarriesLight(target)) + bonus
+	return rooms.HitPenaltyForVisibility(visibilityOf(room), targetCarriesLight(target)) - bonus
 }

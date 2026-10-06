@@ -1338,6 +1338,9 @@ func (a ScriptActor) CastHex(spellId string, target ScriptActor) map[string]any 
 		return out
 	}
 	tc := target.characterRecord
+	if tc.Health < 1 {
+		return out // fell while the hex was chanted
+	}
 	buff := h.Buff
 	if h.Morale {
 		buff = -1

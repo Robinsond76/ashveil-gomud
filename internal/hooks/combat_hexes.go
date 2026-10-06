@@ -21,8 +21,8 @@ import (
 // kind being chanted, (Blight) heals, and (Dread) can lose nerve.
 func hexEligible(h hexes.Hex, a actor, id int) bool {
 	m := mobs.GetInstance(id)
-	if m == nil || m.Character.Health < 1 {
-		return false
+	if m == nil || m.Character.Health < 1 || m.Character.HasBuffFlag("hidden") {
+		return false // hexTargets' pool (enemyparty.Foes) leaves these out too
 	}
 	buff := h.Buff
 	if h.Morale {
@@ -34,8 +34,8 @@ func hexEligible(h hexes.Hex, a actor, id int) bool {
 	if hexes.Default.Immune(fmt.Sprintf(`m%d`, id), buff) {
 		return false
 	}
-	if h.Morale && enemyTemperament(m) == "unbreakable" {
-		return false // a dread that can't move it isn't worth the mana
+	if t := enemyTemperament(m); h.Morale && (t == "" || t == "unbreakable") {
+		return false // a dread that can't move it isn't worth the mana (DreadCheck)
 	}
 	if h.NeedsHealer && strategy.Role(m.EnemyRole()) != strategy.Healer {
 		return false

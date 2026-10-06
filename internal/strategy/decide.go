@@ -127,7 +127,8 @@ type Action struct {
 //   - a fighter swings.
 //
 // A spell is cast only when it is configured, known, and paid for, and an
-// attack spell only while it leaves the member's mana reserve.
+// attack spell only while it leaves the member's mana reserve (heals and
+// hexes ignore the reserve: they are what it is kept for).
 func Decide(s Situation) Action {
 	affordable := func(use Use) (Spell, bool) {
 		sp, ok := SpellFor(s.Spells, use, s.Knows)

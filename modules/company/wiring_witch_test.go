@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/hexes"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/stretchr/testify/assert"
@@ -423,4 +424,49 @@ func TestStrategyCommandOffersControllerAndItsHexes(t *testing.T) {
 	assert.Contains(t, out, "controller")
 	assert.NotContains(t, out, "no hex yet")
 	assert.Contains(t, b.cmd("strategy", "tamsin controller"), "controller")
+}
+
+// Review fix: a status's tick damage (a bleed) wakes a sleeper too.
+func TestBleedingWakesASleeper(t *testing.T) {
+	b := witchBrawl(t, 1)
+	b.startWitchFight()
+	foe := b.livingBandits()[0]
+	b.toughen()
+	foe.Character.AddBuff(status.Asleep, false, 4)
+	foe.Character.AddBuff(status.Bleeding, false)
+	require.True(t, status.Live(&foe.Character, status.Asleep))
+	b.hold(nil)
+	out := b.fight()
+	assert.False(t, status.Live(&foe.Character, status.Asleep), "the bleed woke it")
+	assert.Contains(t, out, "wakes with a start")
+}
+
+// Review fix: a foe whose temperament is unset takes no morale check, so
+// Dread Whisper isn't spent on it either.
+func TestDreadWhisperSkipsAFoeWithNoTemperament(t *testing.T) {
+	b := witchBrawl(t, 15)
+	b.witchHexes("dread")
+	foe := b.livingBandits()[0]
+	r := races.GetRace(foe.Character.GetRaceId())
+	require.NotNil(t, r)
+	prev := r.Temperament
+	r.Temperament = ""
+	t.Cleanup(func() { r.Temperament = prev })
+	for _, m := range b.livingBandits() {
+		m.Temperament = ""
+	}
+	b.startWitchFight()
+	require.NotNil(t, b.aria.Character.Aggro)
+	assert.Equal(t, "hex", b.aria.Character.Aggro.SpellInfo.SpellId, "the weak curse, not a dread that can't land")
+}
+
+// Review fix: a foe that fell while a hex was chanted takes nothing from it.
+func TestCastHexAtAFallenFoeIsInvalid(t *testing.T) {
+	b := witchBrawl(t, 1)
+	b.startWitchFight()
+	foe := b.livingBandits()[0]
+	foe.Character.Health = 0
+	out := scripting.GetActor(b.aria.UserId, 0).CastHex("slumber", *scripting.GetMob(foe.InstanceId))
+	assert.Equal(t, "invalid", out["reason"])
+	assert.False(t, hexes.Default.Immune("m"+itoa(foe.InstanceId), status.Asleep))
 }

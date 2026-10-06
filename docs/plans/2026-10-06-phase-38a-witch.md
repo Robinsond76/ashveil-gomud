@@ -36,7 +36,10 @@ A sixth starting class that takes enemy turns away instead of dealing damage.
 - A `Boss` flag on mob templates marks bosses for the resist; nothing sets
   it yet (a later phase's encounter data will).
 - A manual `cast` of a multi-target hex is capped at the Witch's reach;
-  row limiting applies to automatic casts only.
+  row limiting applies to automatic casts only. In play this is moot: a
+  harmful `cast` is refused in battle and doesn't open one, so hexes are
+  only ever cast by the controller role.
+- Hexes ignore the mana reserve, as heals do; Withering Hex honours it.
 
 ## Balance (timeboxed)
 

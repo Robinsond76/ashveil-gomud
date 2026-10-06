@@ -17,6 +17,17 @@ poison waking a sleeper was confirmed and now tested. Rejected: manual
 Miasma row limiting (a hand `cast` is a utility outside battle; the help now
 says so); "hex the largest group" (a battle has one group); design HP 1.75 a
 level (the shipped HP scale is 0.55, noted in the plan).
+Merge review (Opus): accepted and fixed with regression tests: blows
+against a sleeper were 25 points *less* likely to hit (the bonus was added
+to a penalty that is subtracted); bleed and burn tick damage now wake a
+sleeper; Dread Whisper skips foes with no temperament (no morale check
+happens); a hex finishing on a foe that fell mid-chant does nothing; hidden
+foes no longer make the Witch pick a hex it then can't aim. Help corrected:
+hexes ignore the mana reserve like heals; Miasma's poison outlives the
+fight; the hand-cast sentence is gone, since a harmful `cast` is refused
+both in and out of battle (so manual Miasma never reaches players).
+Accepted as is: the boss resist waits on encounter data setting `Boss`;
+the no-lock ledger covers hex holds only, not a tackle's knockdown.
 
 **Neutral classes design approved (2026-10-05):** the owner asked for a
 glaive class and classes with no good or evil path, inspired by Ogre Battle

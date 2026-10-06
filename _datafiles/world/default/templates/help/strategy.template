@@ -81,7 +81,7 @@ the one thing you can change in a battle.
                               use no class abilities (<ansi fg="command">on</ansi> again; <ansi fg="command">help abilities</ansi>)
   <ansi fg="command">strategy [who] reserve [percent]</ansi>
                               keep that much mana (0 to 90) back from
-                              attack spells; heals ignore it
+                              attack spells; heals and hexes ignore it
   <ansi fg="command">strategy [who] default</ansi>      back to the archetype's default
 
 [who] is <ansi fg="command">me</ansi>, or a companion by name (part of it will do) or number

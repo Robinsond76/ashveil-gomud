@@ -134,7 +134,18 @@ func (h statusHolder) woundable() bool {
 // tickStatuses moves the holder's statuses on one combat round, with the
 // lines and events each one earns.
 func tickStatuses(h statusHolder) {
+	hurt := false
+	defer func() {
+		// Phase 38a review: a bleed's or a burn's damage wakes a sleeper,
+		// as a blow's does.
+		if hurt && status.Wake(h.char) {
+			spec := status.Get(status.Asleep)
+			h.say(spec.EndYou, spec.EndOther, ``)
+			emitCombat(combatstream.Event{Kind: combatstream.StatusExpired, RoomId: h.roomId, Target: h.ref, BuffId: spec.Id, Status: spec.Word})
+		}
+	}()
 	for _, ch := range status.Tick(h.char) {
+		hurt = hurt || ch.Damage > 0
 		// Phase 30b: a bleed that runs its course leaves a light wound.
 		if ch.Expired && ch.Spec.Id == status.Bleeding && h.woundable() {
 			h.char.AddWound(wounds.Bled(ch.Stacks, util.Rand))
