@@ -6,6 +6,10 @@ company's best forager brings back food: 1 find, plus 1 more for every
 meat, wild thyme, and mushrooms. They go into the company's cargo
 (<ansi fg="command">help cargo</ansi>); anything the company can't carry is left behind.
 
+Any member can also take the forage duty (<ansi fg="command">help camp duties</ansi>): each forager
+adds finds of their own at the end of the rest, under the same
+once-every-15-minutes limit, at the cost of their sleep.
+
 A room that lists forage (the "Here:" line in <ansi fg="command">look</ansi>, <ansi fg="command">help resources</ansi>) gives one more
 find than usual. A zone with nothing to find gives nothing extra.
 

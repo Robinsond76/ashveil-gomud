@@ -505,6 +505,31 @@ func (r *Registry) ApplyRestRecovery(leaderUserID int, key MemberKey, fatigue in
 	return changeFor(before.Fatigue, after.Fatigue), nil
 }
 
+// ApplyRestRecoveryCapped is ApplyRestRecovery for a member who did not
+// sleep (Phase 51: a watcher): fatigue rises no higher than ceiling, and a
+// member already above it keeps what they had.
+func (r *Registry) ApplyRestRecoveryCapped(leaderUserID int, key MemberKey, fatigue, ceiling int) (Change, error) {
+	if err := validateMember(leaderUserID, key); err != nil {
+		return Change{}, err
+	}
+	if fatigue <= 0 {
+		return Change{}, ErrInvalidAmount
+	}
+	before, ok := r.NeedsFor(leaderUserID, key)
+	if !ok {
+		return Change{}, ErrUnknownMember
+	}
+	after := before
+	after.Fatigue = clamp(before.Fatigue + fatigue)
+	if limit := max(before.Fatigue, ceiling); after.Fatigue > limit {
+		after.Fatigue = limit
+	}
+	if err := r.PutNeeds(leaderUserID, key, after); err != nil {
+		return Change{}, err
+	}
+	return changeFor(before.Fatigue, after.Fatigue), nil
+}
+
 // ApplyExertion lowers the requested needs. Costs are non-negative and at least
 // one must be positive.
 func (r *Registry) ApplyExertion(leaderUserID int, key MemberKey, cost Exertion) (hunger, thirst, fatigue Change, err error) {
@@ -798,6 +823,29 @@ func ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue
 		return b.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, fatigue, bonusPct)
 	}
 	return s.ApplyCompanyRestRecovery(leaderUserID, operationID, fatigue)
+}
+
+// RestCapService is optionally implemented by the registered CompanyService
+// (Phase 51): a rest in which some members stayed up. ceilings maps a member
+// key to the fatigue that member cannot rise above.
+type RestCapService interface {
+	ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[MemberKey]int, ceilings map[MemberKey]int) ([]ExertionResult, error)
+}
+
+// ApplyCompanyRestRecoveryCapped is ApplyCompanyRestRecoveryBonus with a
+// fatigue ceiling for some members. A service without cap support falls
+// back to the bonus recovery.
+func ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[MemberKey]int, ceilings map[MemberKey]int) ([]ExertionResult, error) {
+	companyServiceMu.RLock()
+	s := companyService
+	companyServiceMu.RUnlock()
+	if s == nil {
+		return nil, ErrRestUnavailable
+	}
+	if c, ok := s.(RestCapService); ok && len(ceilings) > 0 {
+		return c.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, fatigue, bonusPct, ceilings)
+	}
+	return ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, fatigue, bonusPct)
 }
 
 var (

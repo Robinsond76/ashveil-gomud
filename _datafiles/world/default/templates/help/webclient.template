@@ -67,7 +67,10 @@ button in them just types a command for you.
   Camp: Make camp, Light fire, Rest, Break camp, and Inn appear only
   when they would work (<ansi fg="command">camp</ansi>, <ansi fg="command">inn</ansi>); Meal is always there.
   Under the buttons, "Around the fire" shows your companions' latest talk
-  (<ansi fg="command">help banter</ansi>).
+  (<ansi fg="command">help banter</ansi>). At your camp, Rest duties has a button for each duty
+  under each member: Sleep, Watch, Tend, Forage, Cook (and Brew for an Alchemist).
+  The pressed one is the member's duty; the buttons lock while a rest runs
+  (<ansi fg="command">help camp duties</ansi>).
 
   Click a stat, a skill, your race, or your points on the Character tab
   to open its help page; Escape closes it and puts you back where you

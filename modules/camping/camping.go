@@ -45,7 +45,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp duties [member] [duty] | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
 const defaultRoomTag = "camping"
 
 // Registry is the durable, leader-keyed set of active camps plus which
@@ -75,6 +75,10 @@ type Registry struct {
 	// CampRewardCooldown).
 	CampRewards     map[int]campReward `yaml:"camp_rewards,omitempty"`
 	LastCampRewards map[int]time.Time  `yaml:"last_camp_rewards,omitempty"`
+	// RestedDuties (51 review) are the duties of the rest a pending Rested
+	// grant is for, saved with it, so breaking camp or starting a new rest
+	// before the grant neither drops nor swaps them.
+	RestedDuties map[int]map[string]string `yaml:"rested_duties,omitempty"`
 }
 
 // NewRegistry returns an empty registry.
@@ -91,6 +95,7 @@ func NewRegistry() *Registry {
 		PoisonPlans:        map[int][]PoisonAssign{},
 		CampRewards:        map[int]campReward{},
 		LastCampRewards:    map[int]time.Time{},
+		RestedDuties:       map[int]map[string]string{},
 	}
 }
 
@@ -128,6 +133,10 @@ func (r Registry) Clone() Registry {
 		PoisonPlans:        clonePlans(r.PoisonPlans),
 		CampRewards:        make(map[int]campReward, len(r.CampRewards)),
 		LastCampRewards:    make(map[int]time.Time, len(r.LastCampRewards)),
+		RestedDuties:       make(map[int]map[string]string, len(r.RestedDuties)),
+	}
+	for leaderUserID, duties := range r.RestedDuties {
+		out.RestedDuties[leaderUserID] = duties // replaced whole, never edited
 	}
 	for leaderUserID, reward := range r.CampRewards {
 		out.CampRewards[leaderUserID] = reward
@@ -235,6 +244,11 @@ func decodeRegistry(data []byte, registry *Registry) error {
 			loaded.CampRewards[leaderUserID] = reward
 		}
 	}
+	for leaderUserID, duties := range wire.RestedDuties {
+		if leaderUserID > 0 && len(duties) > 0 {
+			loaded.RestedDuties[leaderUserID] = duties
+		}
+	}
 	for leaderUserID, at := range wire.LastCampRewards {
 		if leaderUserID > 0 && !at.IsZero() {
 			loaded.LastCampRewards[leaderUserID] = at
@@ -288,6 +302,11 @@ type bonusSurvival interface {
 	ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int) ([]survival.ExertionResult, error)
 }
 
+// cappedSurvival is the duty-aware recovery of a Survival seam (Phase 51).
+type cappedSurvival interface {
+	ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int, ceilings map[survival.MemberKey]int) ([]survival.ExertionResult, error)
+}
+
 type Survival interface {
 	ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]survival.ExertionResult, error)
 	CompanyNeeds(leaderUserID int) []survival.MemberNeeds
@@ -303,6 +322,11 @@ func (nativeSurvival) ApplyCompanyRestRecovery(leaderUserID int, operationID str
 // ApplyCompanyRestRecoveryBonus is the bedroll-aware recovery (Phase 40a3).
 func (nativeSurvival) ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int) ([]survival.ExertionResult, error) {
 	return survival.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, fatigue, bonusPct)
+}
+
+// ApplyCompanyRestRecoveryCapped is the duty-aware recovery (Phase 51).
+func (nativeSurvival) ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int, ceilings map[survival.MemberKey]int) ([]survival.ExertionResult, error) {
+	return survival.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, fatigue, bonusPct, ceilings)
 }
 
 func (nativeSurvival) CompanyNeeds(leaderUserID int) []survival.MemberNeeds {
@@ -368,12 +392,21 @@ type CampingModule struct {
 	// and camp-specialist config.
 	roll     func(n int) int
 	inBattle func(userID int) bool
+	// memberLevel is one member's own utility level (Phase 51 watchers and
+	// foragers; companionID 0 is the leader). Nil reads the archetypes.
+	memberLevel func(leaderUserID, companionID int, utility string) int
+	// onDuties is the camp-fire banter hook (Phase 49): called once a rest
+	// begins with the duties locked on it (never with none).
+	onDuties func(leaderUserID int, duties map[string]string)
 	// companionCooks stands in for the live companions' cooking ranks
 	// in tests (Phase 35c); nil reads the live mobs.
 	companionCooks func(leaderUserID int, recipes []campRecipe) []campCook
 	spawnRaid      func(roomID, mobTemplateID, leaderUserID int) (int, error)
 	campRewards    map[int]campReward
-	lastRewards    map[int]time.Time
+	// restedDuties (51 review) are the locked duties owed with a pending
+	// Rested grant (Registry.RestedDuties).
+	restedDuties map[int]map[string]string
+	lastRewards  map[int]time.Time
 	// raiders, and the seams that find, check, and send off raid groups.
 	raiders       map[int]raiders
 	raidGroup     func(roomID, first int) []int
@@ -564,6 +597,7 @@ func (m *CampingModule) saveLocked() error {
 		PoisonPlans:        m.poisonPlans,
 		CampRewards:        m.campRewards,
 		LastCampRewards:    m.lastRewards,
+		RestedDuties:       m.restedDuties,
 	}
 	if err := m.store.Save(registry); err != nil {
 		return fmt.Errorf("camping: save failed; please retry: %w", err)
@@ -621,6 +655,9 @@ func (m *CampingModule) load() {
 	}
 	if loaded.LastCampRewards != nil {
 		m.lastRewards = loaded.LastCampRewards
+	}
+	if loaded.RestedDuties != nil {
+		m.restedDuties = loaded.RestedDuties
 	}
 	if m.plug != nil {
 		m.campCfg = parseCampSettings(m.plug.Config.Get)
@@ -870,6 +907,7 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	m.settleTheft(user.UserId)
 	// Phase 43a: so are the queued broth and incense.
 	funded := m.fundPrepared(user, room)
+	funded.present = m.presentKeys(user)
 	text, started := m.startRestLocked(user, room, gear, m.companyMembers(user.UserId), funded)
 	if started && gear.Bells {
 		spend := m.spendItem
@@ -880,6 +918,7 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	}
 	if started {
 		m.settlePrepared(user.UserId, funded)
+		m.announceDuties(user.UserId)
 		// Phase 49: the company talks as it settles in.
 		if said := company.CampBanter(user.UserId, banter.CtxCamp); len(said) > 0 {
 			text += "\n\n" + banter.Format(said)
@@ -934,6 +973,8 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	rest.Incense = funded.Incense
 	resting.Prepared = funded.clearQueue(resting.Prepared)
 	resting.Tent = gear.Tent
+	// Phase 51: the duties of the members at the camp, locked now.
+	rest.Duties = camping.LockDuties(camp.Duties, funded.present)
 	// Phase 33f3: whether raiders come, and when, is settled now.
 	rest.Raid = m.planRaidLocked(room, rest.StartedAtUTC)
 	// Phase 40a4: so is whether thieves come; bells and trip lines never
@@ -961,6 +1002,9 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 		text += "\n" + line
 	}
 	if line := restPrepText(funded, m.prepName(user)); line != "" {
+		text += "\n" + line
+	}
+	if line := m.dutyStartText(user, rest.Duties); line != "" {
 		text += "\n" + line
 	}
 	// 40a4 review: warn of thieves on a road they work, whether or not
@@ -1209,7 +1253,10 @@ func (m *CampingModule) syncLocked(leaderUserID int) error {
 func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.Camp, announce bool) error {
 	operationID := restOperationID(camp)
 	var err error
-	if bonus, ok := m.survival.(bonusSurvival); ok && len(camp.Rest.Bedrolls) > 0 {
+	if capped, ok := m.survival.(cappedSurvival); ok && len(fatigueCeilings(camp.Rest.Duties)) > 0 {
+		// Phase 51: a watcher stayed up, so ends no better than Ready.
+		_, err = capped.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, camp.Rest.RecoveryAmount(), bedrollBonuses(camp.Rest), fatigueCeilings(camp.Rest.Duties))
+	} else if bonus, ok := m.survival.(bonusSurvival); ok && len(camp.Rest.Bedrolls) > 0 {
 		_, err = bonus.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, camp.Rest.RecoveryAmount(), bedrollBonuses(camp.Rest))
 	} else {
 		_, err = m.survival.ApplyCompanyRestRecovery(leaderUserID, operationID, camp.Rest.RecoveryAmount())
@@ -1233,10 +1280,16 @@ func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.C
 	// the game loop (this can run on a timer goroutine). Phase 33f3: so
 	// are the rest's Forage and Vigil.
 	m.restedPending[leaderUserID] = true
+	// 51 review: the rest's duties go with the pending grant.
+	if len(camp.Rest.Duties) > 0 {
+		m.restedDuties[leaderUserID] = camp.Rest.Duties
+	} else {
+		delete(m.restedDuties, leaderUserID)
+	}
 	// Forage and Vigil come at most once per CampRewardCooldown (33f3
 	// review: a free one-minute rest must not be farmed).
 	if last, ok := m.lastRewards[leaderUserID]; !ok || camp.Rest.StartedAtUTC.Sub(last) >= m.campSettings().RewardCooldown {
-		m.campRewards[leaderUserID] = campReward{Op: operationID, RoomID: camp.RoomID}
+		m.campRewards[leaderUserID] = campReward{Op: operationID, RoomID: camp.RoomID, Foragers: strings.Join(camping.DutyMembers(camp.Rest.Duties, camping.DutyForage), ",")}
 		m.lastRewards[leaderUserID] = camp.Rest.StartedAtUTC
 	}
 	if err := m.saveLocked(); err != nil {
@@ -1397,12 +1450,22 @@ func (m *CampingModule) statusTextLocked(leaderUserID int) string {
 		}
 	}
 	lines = append(lines, "Company:")
+	// Phase 51: a camp with duties set shows each member's, the locked
+	// ones while resting.
+	duties := camp.Duties
+	if camp.Rest != nil && camp.Rest.State == camping.Resting {
+		duties = camp.Rest.Duties
+	}
 	for _, member := range m.survival.CompanyNeeds(leaderUserID) {
-		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
+		line := fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
 			member.Name,
 			member.Needs.Hunger, survival.HungerLabel(member.Needs.Hunger),
 			member.Needs.Thirst, survival.ThirstLabel(member.Needs.Thirst),
-			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue)))
+			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue))
+		if len(duties) > 0 {
+			line += fmt.Sprintf(", Duty %s", camping.DutyOf(duties, string(member.Key)))
+		}
+		lines = append(lines, line)
 	}
 	return strings.Join(lines, "\n")
 }
@@ -1448,6 +1511,8 @@ func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *r
 		user.SendText(m.breakCamp(user, room))
 	case "cook":
 		user.SendText(m.cook(user, room)) // Phase 33f3
+	case "duties", "duty":
+		user.SendText(m.dutiesCommand(user, room, args[1:])) // Phase 51
 	case "supplies":
 		user.SendText(m.suppliesCommand(user)) // Phase 43a
 	case "prepare":
@@ -1580,6 +1645,13 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 	m.mu.Unlock()
 	if s.HasCamp && !s.Here {
 		s.RoomTitle = roomTitle(camp.RoomID)
+	}
+	// Phase 51: the duty picker, for a camp the leader stands at.
+	if s.HasCamp && s.Here {
+		if user := m.userByID(leaderUserID); user != nil && user.Character != nil && user.Character.RoomId == camp.RoomID {
+			s.Duties = m.dutyRows(user, camp)
+			s.DutiesLocked = camp.Rest != nil && camp.Rest.State == camping.Resting
+		}
 	}
 	// 40a4 review: the Camp tab warns when thieves work the camp's road
 	// and no bells are carried.

@@ -150,6 +150,7 @@ func (m *CampingModule) resetInnState() {
 	m.poisonPlans = map[int][]PoisonAssign{}
 	m.campRewards = map[int]campReward{}
 	m.lastRewards = map[int]time.Time{}
+	m.restedDuties = map[int]map[string]string{}
 	m.innTimers = map[int]Timer{}
 	m.innTimerGeneration = map[int]uint64{}
 }

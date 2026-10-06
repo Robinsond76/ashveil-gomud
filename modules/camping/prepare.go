@@ -470,6 +470,9 @@ type restPrep struct {
 	// or gone from the pack), dropIncense likewise for the incense.
 	drop        []string
 	dropIncense bool
+	// present are the member keys at the camp when the rest begins
+	// (Phase 51): only they take their rest duties.
+	present map[string]bool
 }
 
 // clearQueue is the queue with what the rest settled removed.

@@ -58,6 +58,10 @@ CampRaids:
   - { Zone: Old Kings Road, MobId: 86, ChancePct: 15 }
   - { Zone: Test Area Road, MobId: 86, ChancePct: 100 } # the admin test area (testarea)
 WatchPctPerLevel: 25
+# Phase 51 rest duties (camp duties): a member on the watch duty adds their
+# own Camp Watch level at WatchPctPerLevel%, never less than WatcherBasePct%;
+# the watchers' chances stack with each other and the specialist's.
+WatcherBasePct: 20
 # Phase 40a4 camp theft: a rest in a zone listed here, with no camp bells
 # and trip lines strung, may draw thieves (ChancePct, rolled at rest start).
 # They work unseen and are noticed on waking: they take TheftSharePct percent

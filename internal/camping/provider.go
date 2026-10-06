@@ -215,6 +215,21 @@ type CampState struct {
 	// CanCamp is true when the leader has no camp and this room allows
 	// one; Inn when this room has an inn.
 	CanCamp, Inn bool
+	// Duties (Phase 51) are the camp rest duties of the members at the
+	// camp, for the Camp tab's picker; Locked is set while a rest runs
+	// (its duties are fixed then).
+	Duties       []DutyRow
+	DutiesLocked bool
+}
+
+// DutyRow is one member's rest duty for the Camp tab's picker.
+type DutyRow struct {
+	// Key is the survival member key; Name the display name; Command the
+	// word "camp duties" takes for them ("me" for the leader).
+	Key, Name, Command string
+	// Duty is their duty now; Options the duties they can take.
+	Duty    string
+	Options []string
 }
 
 // CampStateProvider is optionally implemented by the registered movement

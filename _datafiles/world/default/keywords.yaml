@@ -144,6 +144,7 @@ help:
       - gathering
       - campgear
       - campsupplies
+      - campduties
       - banter
     communication:
       - emote
@@ -443,6 +444,7 @@ help-aliases:
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
   gathering:        [gather, herbs, herb, firewood, fish, fishing, hunt, hunting, snares, deadfall, picked-clean]
   campgear:         [camp gear, camp-gear, bedroll, bedrolls, tent, cookpot, fire steel, fire-steel, tinder, camp bells, camp-bells, trip lines, trip-lines, surgeons kit, surgeon's kit, embers, thieves, thief, theft, camp theft, camp-theft, stolen]
+  campduties:       [camp duties, camp-duties, duties, duty, rest duties, rest-duties, camp duty, watch duty, tending]
   campsupplies:     [camp supplies, camp-supplies, camp prepare, camp-prepare, supplies, broth, fortifying broth, warming draught, cooling salve, incense, watch incense]
   cooking:          [cook, hearth, recipe, recipes, meal-buff, meal-buffs, meal buff, meal buffs]
   market:           [markets]
