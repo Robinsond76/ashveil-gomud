@@ -1,0 +1,5 @@
+flag: blighted
+name: "Blighted"
+description: "Healing the holder receives is halved."
+locked: true
+harmful: true

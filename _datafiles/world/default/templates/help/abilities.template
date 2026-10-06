@@ -52,7 +52,7 @@ items. Anyone outside your company has none.
 
 <ansi fg="yellow-bold">Healers and casters</ansi>
 
-Clerics and wizards fight by their spells (<ansi fg="command">help strategy</ansi>). Two
+Clerics, wizards and witches fight by their spells (<ansi fg="command">help strategy</ansi>). Two
 healers don't heal the same member at once: while one heal is being
 chanted on someone, the other healer heals someone else, or fights. A
 member's mana reserve keeps a share of its mana back from attack spells,

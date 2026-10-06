@@ -37,6 +37,7 @@ help:
       - perception
       - bury
       - archetype
+      - witch
     company:
       - company
       - growth
@@ -119,6 +120,7 @@ help:
       - formation
       - guardian
       - heal
+      - hexes
       - interrupts
       - morale
       - mercy
@@ -270,6 +272,8 @@ help-aliases:
   standing:         [reputation, blackmarket, black-market]
   tutorial:         [replay]
   archetype:        [archetypes, class, classes]
+  witch:            [witches, hedge-witch, hexcraft]
+  hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]
   trap:             [traps]
   specialists:      [specialist, company-specialists, expedition-skills, utilities]
   trail:            [track, tracking, tracks, read-the-trail, tracker]
@@ -313,7 +317,7 @@ help-aliases:
   shields:          [shield, buckler, bucklers, tower-shield, block, blocks, blocking]
   evasion:          [attack skill, combat skill, attack-skill, combat-skill, skill-edge, skill edge]
   armor:            [armour, absorbed, bulk, heavy armor, heavy-armor, armor-training, armor training]
-  statuses:         [status-effects, statuseffects, bleeding, bleed, staggered, stagger, knockdown, knocked-down, stun, stunned, burning, exposed, armor-break, armor-broken, hobbled, overload, crit-effects]
+  statuses:         [status-effects, statuseffects, bleeding, bleed, staggered, stagger, knockdown, knocked-down, stun, stunned, burning, exposed, armor-break, armor-broken, hobbled, overload, crit-effects, asleep, sleep, paralyzed, paralysis, blighted]
   narration:        [critical, crit, healed, chanting, combat-text, pronouns, ordinals, pain, pain-reaction]
   resurrect:        [resurrection]
   wounds:           [wound, wound-limit, woundlimit, heal-wounds, injury, injuries, bandage, bandages, splint, splints, physician, tend]

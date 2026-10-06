@@ -40,6 +40,13 @@ gets through also leaves a wound, from any weapon, fists and bites too:
                   moves slowly (-3 speed), for 3 rounds.
   <ansi fg="yellow">Burning</ansi>       2 fire damage each combat round, for 4 rounds. Water puts
                   it out.
+  <ansi fg="yellow">Asleep</ansi>        loses every action while it sleeps, and blows against it
+                  hit 25 points more often. The first damage it takes wakes
+                  it. A Witch's hex (<ansi fg="command">help hexes</ansi>), 2 rounds.
+  <ansi fg="yellow">Paralyzed</ansi>     loses every action, and can't block or dodge. Damage does
+                  not break it. A Witch's Binding Hex, 1 round (2 from level 20).
+  <ansi fg="yellow">Blighted</ansi>      healing it receives is halved, for 3 rounds. A Witch's
+                  Blight, cast at enemy healers.
   <ansi fg="yellow">Overloaded</ansi>    casts poorly (-30 to its chance to cast) and moves slowly
                   (-3 speed), for 3 rounds. Shower of Sparks overloads what
                   it sears.

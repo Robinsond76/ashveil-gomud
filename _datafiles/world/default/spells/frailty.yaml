@@ -1,0 +1,10 @@
+# Phase 38a: a Witch's hex (internal/hexes). The script rolls the resist and
+# applies the status; the Witch's level sets how many foes it reaches.
+spellid: frailty
+name: Curse of Frailty
+description: "Foes are left open: blows against them crit far more often. Reaches more foes as you level."
+type: harmmulti
+school: hexcraft
+cost: 10
+waitrounds: 1
+difficulty: 40

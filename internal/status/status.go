@@ -23,6 +23,9 @@ const (
 	Overloaded  = 1106
 	Stunned     = 1107
 	Hobbled     = 1108
+	Asleep      = 1109 // Phase 38a: the Witch's hexes
+	Paralyzed   = 1110
+	Blighted    = 1111
 )
 
 // Buff flags the statuses carry.
@@ -34,7 +37,12 @@ const (
 	FlagExposed         = "exposed"
 	FlagNoDodge         = "no-dodge" // no active defense at all: block, parry, or dodge (stunned)
 	FlagNoBlock         = "no-block" // can't block with a shield (stunned)
+	FlagAsleep          = "asleep"   // blows against it hit more often; damage wakes it (38a)
+	FlagBlighted        = "blighted" // healing it receives is halved (38a)
 )
+
+// AsleepHitBonus is the points added to the chance to hit a sleeper.
+const AsleepHitBonus = 25
 
 // ExposedCritBonus is the points added to the crit chance against an
 // exposed target.
@@ -77,11 +85,19 @@ var specs = map[int]*Spec{
 		EndYou: "Your head clears.", EndOther: "%s's head clears."},
 	Hobbled: {Id: Hobbled, Word: "hobbled",
 		EndYou: "Your legs answer you again.", EndOther: "%s's legs answer again."},
+	Asleep: {Id: Asleep, Word: "asleep",
+		LoseYou: "You sleep on, and lose your action.", LoseOther: "%s sleeps on, and loses the action.",
+		EndYou: "You wake with a start.", EndOther: "%s wakes with a start."},
+	Paralyzed: {Id: Paralyzed, Word: "paralyzed",
+		LoseYou: "You cannot move, and lose your action.", LoseOther: "%s cannot move, and loses the action.",
+		EndYou: "Your limbs answer you again.", EndOther: "%s's limbs answer again."},
+	Blighted: {Id: Blighted, Word: "blighted",
+		EndYou: "The blight lifts from you.", EndOther: "The blight lifts from %s."},
 }
 
 // Ids lists every status's buff id.
 func Ids() []int {
-	return []int{Bleeding, Staggered, KnockedDown, ArmorBroken, Exposed, Burning, Overloaded, Stunned, Hobbled}
+	return []int{Bleeding, Staggered, KnockedDown, ArmorBroken, Exposed, Burning, Overloaded, Stunned, Hobbled, Asleep, Paralyzed, Blighted}
 }
 
 // Get is the status with buff id, or nil for a buff that is not one.
@@ -261,12 +277,23 @@ func Live(c *characters.Character, id int) bool {
 	return live
 }
 
-// Grounded reports whether c is knocked down or stunned now (a live
-// status): a guardian so held can't step in (Phase 30c2).
+// Wake ends a sleeper's sleep at once (Phase 38a: the first damage it takes
+// wakes it) and reports whether it was asleep. Paralysis is not broken by
+// damage.
+func Wake(c *characters.Character) bool {
+	if !Live(c, Asleep) {
+		return false
+	}
+	c.RemoveBuff(Asleep)
+	return true
+}
+
+// Grounded reports whether c is knocked down, stunned, asleep or paralyzed
+// now (a live status): a guardian so held can't step in (Phase 30c2, 38a).
 func Grounded(c *characters.Character) bool {
 	grounded := false
 	each(c, func(b *buffs.Buff, s *Spec) {
-		if !b.Expired() && (s.Id == KnockedDown || s.Id == Stunned) {
+		if !b.Expired() && (s.Id == KnockedDown || s.Id == Stunned || s.Id == Asleep || s.Id == Paralyzed) {
 			grounded = true
 		}
 	})

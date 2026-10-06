@@ -11,6 +11,7 @@
 #   heal-all    heals the company (a healer's group heal)
 #   attack      harms one foe (a caster's spell)
 #   attack-all  harms the foe's group (a caster's spell at two or more foes)
+#   hex         a Witch's hex: takes foes' turns away (Phase 38a)
 # A character casts the first listed spell of a use that it knows and can
 # pay for. Unknown spells are dropped at load with a warning.
 AutoSpells:
@@ -18,3 +19,16 @@ AutoSpells:
   - { Spell: healall, Use: heal-all }
   - { Spell: mm, Use: attack }
   - { Spell: sparks, Use: attack-all }
+  # Phase 38a: a Witch (role controller) casts the first listed hex that has
+  # a foe worth it (one not already under it or newly hexed), then its
+  # single-target attack spell. The order is the preference: paralysis, sleep,
+  # knockdown, exposure, hobble, poison, dread, and blight (only at a healer).
+  - { Spell: binding, Use: hex }
+  - { Spell: slumber, Use: hex }
+  - { Spell: earthbind, Use: hex }
+  - { Spell: frailty, Use: hex }
+  - { Spell: leaden, Use: hex }
+  - { Spell: miasma, Use: hex }
+  - { Spell: dread, Use: hex }
+  - { Spell: blight, Use: hex }
+  - { Spell: hex, Use: attack }

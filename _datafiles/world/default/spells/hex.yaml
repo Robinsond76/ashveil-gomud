@@ -3,7 +3,7 @@ spellid: hex
 name: Withering Hex
 description: Hurts for 8+2d4, plus 1 per 8 caster levels and 1 per 12 Mysticism, scaled by skill
 type: harmsingle
-school: conjuration
+school: hexcraft
 cost: 8
 waitrounds: 1
 difficulty: 40

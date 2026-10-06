@@ -104,7 +104,7 @@ func TestWiringTrainRefusesWrongArchetypeAndMarksPanel(t *testing.T) {
 		_, err := usercommands.Train("cast", u, room, 0)
 		require.NoError(t, err)
 	})
-	assert.Contains(t, text, "Cleric or Wizard")
+	assert.Contains(t, text, "Cleric, Witch or Wizard")
 	assert.Zero(t, u.Character.GetSkillLevel("cast"))
 	assert.Equal(t, 20, u.Character.TrainingPoints)
 
@@ -112,7 +112,7 @@ func TestWiringTrainRefusesWrongArchetypeAndMarksPanel(t *testing.T) {
 		_, err := usercommands.Train("", u, room, 0)
 		require.NoError(t, err)
 	})
-	assert.Contains(t, panel, "Cleric or Wizard only")
+	assert.Contains(t, panel, "Cleric, Witch or Wizard only")
 }
 
 func TestWiringTrainUnchangedWithoutProvider(t *testing.T) {

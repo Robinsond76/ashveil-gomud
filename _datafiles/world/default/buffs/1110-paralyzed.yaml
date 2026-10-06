@@ -1,0 +1,15 @@
+buffid: 1110
+name: Paralyzed
+description: You cannot move. You lose your actions and can't block, parry, or dodge. Damage does not break it.
+secret: false
+# Phase 38a: ticked by the combat round (see internal/status), never by game
+# rounds. A hex sets the count itself (rounds + 1); this is the default,
+# 1 round.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 2
+flags:
+  - combat-status
+  - lose-actions
+  - no-dodge
+  - no-block
