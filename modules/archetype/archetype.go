@@ -204,6 +204,7 @@ func init() {
 	m.plug.AddUserCommand("archetypereset", m.adminResetCommand, true, true)
 	m.registerUtility()
 	m.registerSpecialists()
+	m.registerScribe()
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		if err := m.save(); err != nil {
@@ -397,6 +398,11 @@ func schoolWarnings(table archetypes.Table, spellSchools map[string]string) []st
 const unavailableReason = "Archetype records are unavailable right now, so archetype skills and spells can't be learned. Please try again later."
 
 func (m *ArchetypeModule) CanTrain(userID int, skillID string) (bool, string) {
+	// Ashveil 36a: a stale pre-36a scribe rank is refunded before a new rank
+	// can be trained, so the one-time reset never wipes a rank bought after.
+	if skillID == skills.ScribeReset {
+		m.retireSkills(users.GetByUserId(userID))
+	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	ok, reason := m.table.CanTrain(m.registry.Players[userID], skillID)

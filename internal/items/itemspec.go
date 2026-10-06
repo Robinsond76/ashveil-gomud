@@ -209,6 +209,7 @@ type AttackMessages map[ItemSubType]AttackEffects
 type ItemSpec struct {
 	ItemId          int
 	Value           int
+	Tier            int         `yaml:"tier,omitempty"`            // Phase 36a: material and power budget 1-6; 0 means unset (tier 1)
 	Uses            int         `yaml:"uses,omitempty"`            // How many uses it starts with
 	BuffIds         []int       `yaml:"buffids,omitempty"`         // What buffs it can apply (if used)
 	WornBuffIds     []int       `yaml:"wornbuffids,omitempty"`     // BuffId's that are applied while worn, and expired when removed.
@@ -234,6 +235,7 @@ type ItemSpec struct {
 	Reach           bool              `yaml:"reach,omitempty"`       // Polearm-class weapon: extends melee reach to a column's frontmost-or-one-behind occupant (see Phase 11c)
 	Sling           bool              `yaml:"sling,omitempty"`       // cold delays this weapon, never inferred from its name
 	Parry           int               `yaml:"parry,omitempty"`       // Added to the subtype's parry modifier, in percent (Phase 30g2: a staff +5)
+	WarmthBonus     int               `yaml:"warmthbonus,omitempty"` // Phase 36a: affix warmth added on top of Warmth (or the slot default)
 	Warmth          int               `yaml:"warmth,omitempty"`      // Insulation when worn (Phase 15); 0 uses the exposure module's per-slot default, negative means none
 	CarryBonus      int               `yaml:"carrybonus,omitempty"`  // A pack's added carrying capacity in grams (Phase 32f); a member counts only their largest
 	Saddle          SaddleKind        `yaml:"saddle,omitempty"`      // A saddle's kind (Phase 32f): fits a horse of the same kind

@@ -44,5 +44,10 @@ why; if an item changes or leaves cargo, select again. Commands revalidate the
 exact item when you act. Companion gear remains managed through company commands.
 Text and browser use the same checks.
 
-See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help treasury</ansi>, <ansi fg="command">help loot</ansi>,
+Gear can come with a quality, a rarity, affixes and a level requirement
+(<ansi fg="command">help rarity</ansi>): equip and compare refuse a member who is too low, and say
+what level it needs. Rare gear is read with <ansi fg="command">help scribe</ansi>.
+
+See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help treasury</ansi>, <ansi fg="command">help loot</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help quality</ansi>,
+<ansi fg="command">help affixes</ansi>, <ansi fg="command">help identify</ansi>,
 <ansi fg="command">help defense</ansi>, <ansi fg="command">help burden</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help company</ansi>.

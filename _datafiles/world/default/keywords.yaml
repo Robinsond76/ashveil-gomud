@@ -48,6 +48,12 @@ help:
       - equipment
       - gearup
       - loot
+      - rarity
+      - quality
+      - itemlevel
+      - affixes
+      - identify
+      - scribe
       - treasury
       - company-inventory
       - company-meal
@@ -235,6 +241,12 @@ help-aliases:
   equipment: [company-equipment, company equip, company remove, company compare]
   treasury: [company-treasury, company treasury]
   loot: [autoloot, company-loot]
+  rarity: [rare, epic, legendary, unidentified, level requirement, level-requirement, set items, uncommon]
+  quality: [crude, worn, fine, superior, exquisite, workmanship]
+  itemlevel: [item level, ilvl, item-level, tier]
+  affixes: [affix, prefix, suffix, modifiers, major affix]
+  identify: [identification, identified, read gear, unread]
+  scribe: [scribing]
   morale: [nerve, hesitation, temperament]
   retreat: [flee, withdrawal, company-withdrawal, escape]
   mercy: [surrender, surrendered, yield, yielding, execution]

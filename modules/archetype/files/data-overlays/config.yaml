@@ -86,7 +86,7 @@ Archetypes:
     ManaPerLevel: 10
     Name: Wizard
     Description: Scholars of the arcane who light the dark and bend illusion.
-    Skills: [cast, enchant]
+    Skills: [cast, enchant, scribe]
     Schools: [illusion, conjuration]
     GrantSkills:
       - { Skill: cast, Level: 1 }
@@ -163,7 +163,7 @@ Archetypes:
     ManaPerLevel: 9
     Name: Cleric
     Description: Healers and protectors sworn to keep the company standing, with staff, rod or mace.
-    Skills: [cast, protection]
+    Skills: [cast, protection, scribe]
     Schools: [restoration]
     GrantSkills:
       - { Skill: cast, Level: 1 }
@@ -208,15 +208,18 @@ Archetypes:
 # Phase 35c optional skills: the only skills a companion can be trained in
 # ("company train"), with training points earned by level. Class skills and
 # specialists stay automatic. Archetypes lists who may learn one ("*" is
-# everyone); MaxRank caps a companion's rank (1..4). Scribe joins in 36a.
+# everyone); MaxRank caps a companion's rank (1..4). Scribe (36a) is for casters.
 OptionalSkills:
   - { Skill: cooking, Archetypes: ["*"], MaxRank: 4 }
+  - { Skill: scribe, Archetypes: [wizard, cleric], MaxRank: 4 }
 
 # Phase 17b utility skills. A player's utility level is their level in the
 # mapped skill (only if their archetype performs the utility); a
 # companion's comes from its archetype's CompanionLevels.
 Utilities:
   - { Utility: light, Skill: cast }
+  # Phase 36a: reads unidentified gear at a camp rest (autoskill scribe).
+  - { Utility: scribe, Skill: scribe }
   - { Utility: traps, Skill: skulduggery }
   # Phase 33f2 expedition specialists.
   - { Utility: trail, Skill: track }

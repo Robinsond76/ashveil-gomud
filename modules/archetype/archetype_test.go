@@ -475,7 +475,10 @@ func TestLoadThroughRealPluginConfigPath(t *testing.T) {
 	assert.Equal(t, "skulduggery", m.config.UtilitySkills["traps"])
 	assert.Equal(t, 900, m.config.DisarmRounds)
 	// Phase 35c: the optional skills survive the flattened plugin config.
-	assert.Equal(t, []archetypes.OptionalSkill{{Skill: "cooking", Archetypes: []string{"*"}, MaxRank: 4}}, m.OptionalSkills())
+	assert.Equal(t, []archetypes.OptionalSkill{
+		{Skill: "cooking", Archetypes: []string{"*"}, MaxRank: 4},
+		{Skill: "scribe", Archetypes: []string{"wizard", "cleric"}, MaxRank: 4},
+	}, m.OptionalSkills())
 }
 
 // Phase 35c: optional skills must name a loaded skill and stay within its

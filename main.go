@@ -1771,7 +1771,8 @@ func loadAllDataFiles(isReload bool) {
 	buffs.LoadFlagDataFiles() // Load buff flags before buffs so buff validation can check flags
 	buffs.LoadDataFiles()     // Load buffs before items for cost calculation reasons
 	items.LoadDataFiles()
-	loot.LoadLootDataFiles() // category tables reference item specs
+	loot.LoadLootDataFiles()  // category tables reference item specs
+	loot.LoadAffixDataFiles() // Phase 36a gear affixes
 	races.LoadDataFiles()
 	skills.LoadDataFiles()           // skills before professions for cross-ref warnings
 	skills.LoadProfessionDataFiles() // professions reference skills

@@ -26,13 +26,16 @@ See <ansi fg="command">help specialists</ansi> and <ansi fg="command">help autos
 Camp Cooking is manual and class-independent: camp cook uses configured
 recipe ranks and ingredients at your lit campfire outside battle.
 It is separate from autoskills (<ansi fg="command">help cooking</ansi>).
+Scribe is a caster skill that reads the hidden affixes of rare gear: wizards
+and clerics train it, and it reads for the whole company at camp
+(<ansi fg="command">help scribe</ansi>).
 
 <ansi fg="yellow-bold">Companions' skills</ansi>
 
 A companion's skills come in two kinds. Class skills are automatic: its
 archetype and level give it its specialist skills
 (<ansi fg="command">help specialists</ansi>).
-Optional skills, Cooking as the world ships, are trained: a companion
+Optional skills, Cooking and Scribe as the world ships, are trained: a companion
 earns training points by level, and you spend them with
 <ansi fg="command">company train</ansi>. Character > Skills lists each companion's
 optional skills and points, read only. See <ansi fg="command">help company train</ansi>.

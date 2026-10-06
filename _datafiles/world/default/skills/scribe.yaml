@@ -1,0 +1,4 @@
+skillid: scribe
+name: Scribe
+description: Read the hidden properties of rare gear. Rank 1 reads Rare items, rank 2 Epic, rank 3 Legendary and Set, and rank 4 also shows each property's tier and range and where the item came from.
+maxlevel: 4
