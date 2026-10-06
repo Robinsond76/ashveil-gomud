@@ -25,6 +25,8 @@ lists and `DefaultRule` (Samurai strongest, Halberdier crowded).
 
 # Ashveil Project Status
 
+**Phase 45 reviewed and merged via [PR #53](https://github.com/Robinsond76/ashveil-gomud/pull/53) (2026-10-06, Opus review thread):** checked that watching an ally full size draws only what the feed already carries for allies (health bands, chant mark; no numbers, statuses or role letters, since the server never sends them), that the tap only swaps the view (inputs stay retreat and company focus), and that the prompt's progress text rides the existing `{activity}` token (refreshed per round like travel, no extra lines). Accepted and fixed: (1) typing `status` cancelled the gather, though the help and tutorial pointed players at `status` to watch it; the bare sheet and its aliases now keep the work (`status train` still stops it), help and the start message updated (`TestTypedCommandsCancelTheWork`); (2) `Room.Gather` result lines carried terminal colour tags (`<ansi fg="itemname">`) that the Room Info panel would print raw; the GMCP handler strips them (`TestRoomGatherCarriesTheWorksProgress`); (3) companion rows on the status sheet did not line up with `Members:`; labels are padded. Follow-ups: a client that reconnects mid-gather gets no bar until the next start (no resend of `Room.Gather` on login).
+
 **Phase 45 built: UI follow-ups (2026-10-06):** closes three gaps the 40s5, 40a2
 and 40g2 reviews listed. (1) **Class everywhere.** `status` (the sheet `score`
 aliases) names the leader's promoted class with its lineage ("Knight
