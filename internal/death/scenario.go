@@ -43,6 +43,13 @@ const (
 	SeizedGoldKey = "seized-gold"
 	// SeizedRoomKey is the capture room holding the pack.
 	SeizedRoomKey = "seized-room"
+	// SeizedByKey is the ID of the capture scenario holding the pack, so
+	// its guards can be posted again.
+	SeizedByKey = "seized-by"
+	// SeizedGuardsKey counts the capture's guards not yet defeated. Guards
+	// are not saved with the room, so a restart or an unloaded room posts
+	// this many again; the chest opens only when it reaches zero.
+	SeizedGuardsKey = "seized-guards"
 )
 
 // Killer is what landed a defeated leader's killing blow, as the engine's
@@ -267,6 +274,12 @@ func miscInt(raw any) int {
 // the number back as another integer type).
 func SeizedGold(c interface{ GetMiscData(string) any }) int {
 	return max(0, miscInt(c.GetMiscData(SeizedGoldKey)))
+}
+
+// SeizedGuards is how many of a capture's guards still stand over the
+// chest, saved with the character.
+func SeizedGuards(c interface{ GetMiscData(string) any }) int {
+	return max(0, miscInt(c.GetMiscData(SeizedGuardsKey)))
 }
 
 // SeizedRoom is the capture room holding a character's pack; 0 when none.

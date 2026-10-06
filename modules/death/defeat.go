@@ -239,10 +239,11 @@ func (m *DeathModule) capture(user *users.UserRecord, sc domain.Scenario, room *
 		c.SetMiscData(domain.SeizedGoldKey, held)
 	}
 	c.SetMiscData(domain.SeizedRoomKey, sc.Room)
+	c.SetMiscData(domain.SeizedByKey, sc.ID)
 	if err := c.AddBuff(boundBuffID, false); err != nil {
 		mudlog.Warn("death: bound buff not applied", "user", user.UserId, "error", err)
 	}
-	m.postGuards(user.UserId, sc, room)
+	setSeizedGuards(c, m.postGuards(user.UserId, sc, room, sc.GuardCount))
 	events.AddToQueue(events.CompanyAssetsChanged{UserId: user.UserId})
 	lines := []string{"Your pack lies in a locked chest here. Defeat the guards, then <ansi fg=\"command\">reclaim</ansi> it (<ansi fg=\"command\">help defeat</ansi>)."}
 	if lost > 0 {
@@ -251,15 +252,24 @@ func (m *DeathModule) capture(user *users.UserRecord, sc domain.Scenario, room *
 	return lines
 }
 
-// postGuards puts the capture room's guards in it: the scenario's count of
-// its guard mob, less any already standing from this company's capture. They
-// guard; they do not attack.
-func (m *DeathModule) postGuards(userID int, sc domain.Scenario, room *rooms.Room) {
-	if sc.GuardMob <= 0 || sc.GuardCount <= 0 || room == nil {
+// setSeizedGuards saves how many capture guards still stand.
+func setSeizedGuards(c *characters.Character, n int) {
+	if n <= 0 {
+		c.SetMiscData(domain.SeizedGuardsKey, nil)
 		return
 	}
+	c.SetMiscData(domain.SeizedGuardsKey, n)
+}
+
+// postGuards puts the capture room's guards in it: want of the scenario's
+// guard mob, less any already standing from this company's capture, and
+// returns how many now stand. They guard; they do not attack.
+func (m *DeathModule) postGuards(userID int, sc domain.Scenario, room *rooms.Room, want int) int {
+	if sc.GuardMob <= 0 || want <= 0 || room == nil {
+		return 0
+	}
 	group := domain.CaptorGroup(room.RoomId, userID)
-	need := sc.GuardCount - len(m.guardsIn(room, group))
+	need := want - len(m.guardsIn(room, group))
 	var made []*mobs.Mob
 	for ; need > 0; need-- {
 		var guard *mobs.Mob
@@ -270,7 +280,7 @@ func (m *DeathModule) postGuards(userID int, sc domain.Scenario, room *rooms.Roo
 		}
 		if guard == nil {
 			mudlog.Warn("death: guard mob template unavailable", "mob", sc.GuardMob)
-			return
+			break
 		}
 		guard.Hostile = false
 		guard.MaxWander = 0
@@ -290,6 +300,62 @@ func (m *DeathModule) postGuards(userID int, sc domain.Scenario, room *rooms.Roo
 		g.GroupName = name
 		room.AddMob(g.InstanceId)
 	}
+	m.mu.Lock()
+	for _, g := range made {
+		m.guardOwner[g.InstanceId] = userID
+	}
+	m.mu.Unlock()
+	return len(m.guardsIn(room, group))
+}
+
+// onMobDeath counts down a capture's guards as they fall, so the chest
+// opens only once all of them have been defeated.
+func (m *DeathModule) onMobDeath(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.MobDeath)
+	if !ok {
+		return events.Continue
+	}
+	m.mu.Lock()
+	owner, guard := m.guardOwner[evt.InstanceId]
+	delete(m.guardOwner, evt.InstanceId)
+	m.mu.Unlock()
+	if !guard {
+		return events.Continue
+	}
+	if user := m.lookupUser(owner); user != nil && user.Character != nil {
+		setSeizedGuards(user.Character, domain.SeizedGuards(user.Character)-1)
+	}
+	return events.Continue
+}
+
+// restoreGuards posts a capture's undefeated guards again when the leader
+// is in the capture room and none stand there: guards are not saved with
+// the room, so a restart or an unloaded room would otherwise leave the
+// chest unguarded. Reports whether it posted any.
+func (m *DeathModule) restoreGuards(user *users.UserRecord, room *rooms.Room) bool {
+	if user == nil || user.Character == nil || room == nil {
+		return false
+	}
+	c := user.Character
+	want := domain.SeizedGuards(c)
+	if want <= 0 || seizedRoom(c) != room.RoomId {
+		return false
+	}
+	if len(m.guardsIn(room, domain.CaptorGroup(room.RoomId, user.UserId))) > 0 {
+		return false
+	}
+	id, _ := c.GetMiscData(domain.SeizedByKey).(string)
+	sc, ok := domain.ByID(m.config().scenarios, id)
+	if !ok || sc.Kind != domain.Captured {
+		// The table no longer has the capture: nobody is left to guard it.
+		setSeizedGuards(c, 0)
+		return false
+	}
+	if m.postGuards(user.UserId, sc, room, want) == 0 {
+		return false
+	}
+	user.SendText("Your captors stand over the chest again.")
+	return true
 }
 
 // guardsIn lists the living guards of a capture group standing in a room.
@@ -390,6 +456,7 @@ func (m *DeathModule) reclaimCommand(_ string, user *users.UserRecord, room *roo
 		user.SendText("Not while you are fighting.")
 		return true, nil
 	}
+	m.restoreGuards(user, room)
 	if room != nil && len(m.guardsIn(room, domain.CaptorGroup(room.RoomId, user.UserId))) > 0 {
 		user.SendText("The guards stand over the chest. Defeat them first.")
 		return true, nil
@@ -403,6 +470,8 @@ func (m *DeathModule) reclaimCommand(_ string, user *users.UserRecord, room *roo
 	c.Gold += gold
 	c.SetMiscData(domain.SeizedGoldKey, nil)
 	c.SetMiscData(domain.SeizedRoomKey, nil)
+	c.SetMiscData(domain.SeizedByKey, nil)
+	c.SetMiscData(domain.SeizedGuardsKey, nil)
 	events.AddToQueue(events.CompanyAssetsChanged{UserId: user.UserId})
 	text := fmt.Sprintf("You break open the chest and take back your pack (%d items)", count)
 	if gold > 0 {

@@ -79,6 +79,9 @@ type DeathModule struct {
 	// returned is the round each user was last returned to a church, in
 	// memory only: it only has to outlast one round's queued commands.
 	returned map[int]uint64
+	// guardOwner maps a capture guard's instance to the user whose pack it
+	// guards (Phase 53), in memory only: restoreGuards rebuilds it.
+	guardOwner map[int]int
 }
 
 // module is the registered instance, for wiring tests.
@@ -98,6 +101,7 @@ func init() {
 	m.plug.AddUserCommand("reclaim", m.reclaimCommand, false, false)
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
+	events.RegisterListener(events.MobDeath{}, m.onMobDeath)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	userstate.Register(stateContributor{m})
 	domain.SetProvider(m)
@@ -125,6 +129,7 @@ func newModule() *DeathModule {
 		drain:          survival.ApplyMemberDrain,
 		cfg:            defaultSettings(),
 		returned:       map[int]uint64{},
+		guardOwner:     map[int]int{},
 	}
 }
 
@@ -289,7 +294,9 @@ func (m *DeathModule) onRoomChange(e events.Event) events.ListenerReturn {
 	if !ok || evt.UserId <= 0 {
 		return events.Continue
 	}
-	m.visit(m.lookupUser(evt.UserId), evt.ToRoomId)
+	user := m.lookupUser(evt.UserId)
+	m.visit(user, evt.ToRoomId)
+	m.restoreGuards(user, m.loadRoom(evt.ToRoomId))
 	return events.Continue
 }
 
@@ -300,6 +307,7 @@ func (m *DeathModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	}
 	if user := m.lookupUser(evt.UserId); user != nil && user.Character != nil {
 		m.visit(user, user.Character.RoomId)
+		m.restoreGuards(user, m.loadRoom(user.Character.RoomId))
 	}
 	return events.Continue
 }
@@ -421,6 +429,11 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 		lines := append([]string{text}, scenarioLines...)
 		if moved > 0 {
 			lines = append(lines, "Your company is with you.")
+		}
+		if dead := m.deadCompanions(userID); len(dead) > 0 {
+			// The scenario wakes them away from a church; the fallen still
+			// wait to be raised there (help resurrect).
+			lines = append(lines, `Your fallen can still be raised at a church or shaman (<ansi fg="command">help resurrect</ansi>).`)
 		}
 		user.SendText(strings.Join(lines, "\n"))
 		if church != nil && dest != fell {

@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/keywords"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/races"
@@ -186,6 +187,25 @@ func (e *defeatEnv) foe(mobID int) *mobs.Mob {
 
 func (e *defeatEnv) packSize() int { return len(e.user.Character.Items) }
 
+// defeatGuards kills capture guards as a fight would: each death is
+// announced, then the body is gone.
+func defeatGuards(room *rooms.Room, ids []int) {
+	for _, id := range ids {
+		events.AddToQueue(events.MobDeath{InstanceId: id, RoomId: room.RoomId})
+	}
+	events.ProcessEvents()
+	vanishGuards(room, ids)
+}
+
+// vanishGuards removes guards without a fight, as a restart or an unloaded
+// room does.
+func vanishGuards(room *rooms.Room, ids []int) {
+	for _, id := range ids {
+		room.RemoveMob(id)
+		mobs.DestroyInstance(id)
+	}
+}
+
 func TestDefeatScenarioRescuedWakesHungryAtASettlementWithoutLosingALevel(t *testing.T) {
 	env := newDefeatEnv(t, 86)
 	forceScenario(t, "wayfarer-rescue")
@@ -259,10 +279,7 @@ func TestDefeatScenarioCapturedHoldsThePackUntilTheGuardsFall(t *testing.T) {
 	assert.Equal(t, 150, seizedGold(reloaded.Character))
 
 	// The guards fall; the chest opens; the pack is whole again.
-	for _, id := range guards {
-		room.RemoveMob(id)
-		mobs.DestroyInstance(id)
-	}
+	defeatGuards(room, guards)
 	out = env.run("reclaim", "")
 	assert.Contains(t, out, fmt.Sprintf("take back your pack (%d items) and 150 gold", total))
 	assert.Len(t, c.Items, total)
@@ -286,16 +303,56 @@ func TestDefeatScenarioReclaimIsOnlyAtTheCaptureRoom(t *testing.T) {
 	env.run("suicide", "")
 	c := env.user.Character
 	room := rooms.LoadRoom(91001)
-	for _, id := range module.guardsIn(room, domain.CaptorGroup(91001, env.user.UserId)) {
-		room.RemoveMob(id)
-		mobs.DestroyInstance(id)
-	}
+	defeatGuards(room, module.guardsIn(room, domain.CaptorGroup(91001, env.user.UserId)))
 	c.CancelBuffsWithFlag(buffs.All)
 	env.run("go", "south")
 	require.Equal(t, 91002, c.RoomId)
 	assert.Contains(t, env.run("reclaim", ""), "locked in a chest in Brigands' Tent")
 	assert.Empty(t, c.Items)
 	assert.Len(t, c.Seized, env.pack, "still held, never lost by leaving")
+}
+
+// Regression (53 review): guards are not saved with the room, so a restart
+// or an unloaded room used to leave the chest open without a fight. Only
+// guards that fall in a fight count; the rest stand again.
+func TestDefeatScenarioGuardsReturnUntilDefeated(t *testing.T) {
+	env := newDefeatEnv(t, 86)
+	forceScenario(t, "brigand-capture")
+	env.foe(86)
+	env.run("suicide", "")
+	c := env.user.Character
+	room := rooms.LoadRoom(91001)
+	group := domain.CaptorGroup(91001, env.user.UserId)
+	guards := module.guardsIn(room, group)
+	require.Len(t, guards, 2)
+	assert.Equal(t, 2, domain.SeizedGuards(c))
+
+	// One falls in a fight; the other is lost to a restart.
+	defeatGuards(room, guards[:1])
+	assert.Equal(t, 1, domain.SeizedGuards(c))
+	vanishGuards(room, guards[1:])
+	require.Empty(t, module.guardsIn(room, group))
+
+	out := env.run("reclaim", "")
+	assert.Contains(t, out, "Your captors stand over the chest again.")
+	assert.Contains(t, out, "Defeat them first")
+	assert.Empty(t, c.Items)
+	back := module.guardsIn(room, group)
+	require.Len(t, back, 1, "only the guard never beaten returns")
+
+	// Walking back in after the room was emptied posts it as well.
+	vanishGuards(room, back)
+	c.CancelBuffsWithFlag(buffs.All)
+	env.run("go", "south")
+	assert.Contains(t, env.run("go", "north"), "Your captors stand over the chest again.")
+	back = module.guardsIn(room, group)
+	require.Len(t, back, 1)
+
+	defeatGuards(room, back)
+	assert.Zero(t, domain.SeizedGuards(c))
+	assert.Contains(t, env.run("reclaim", ""), fmt.Sprintf("take back your pack (%d items)", env.pack))
+	assert.Len(t, c.Items, env.pack)
+	assert.Nil(t, c.GetMiscData(domain.SeizedByKey))
 }
 
 func TestDefeatScenarioResumesAfterAFailedWakeWithoutRerolling(t *testing.T) {
@@ -383,6 +440,28 @@ func TestDefeatScenarioRobbedTakesGoldAndLooseGoodsOnly(t *testing.T) {
 	assert.Equal(t, weapon, c.Equipment.Weapon, "equipped gear is safe")
 	assert.Empty(t, c.Seized, "taken for good: nothing is held anywhere")
 	assert.Empty(t, c.Wounds)
+}
+
+// A companion who fell in the fight is still on the roster, dead and
+// raisable at a church, after a scenario wakes the company elsewhere.
+func TestDefeatScenarioKeepsFallenCompanionsRaisable(t *testing.T) {
+	env := newDefeatEnv(t, 86)
+	forceScenario(t, "brigand-robbery")
+	env.foe(86)
+	companion := mobs.GetInstance(env.companion)
+	require.NotNil(t, companion)
+	companion.Character.Health = -1
+	_, err := mobcommands.TryCommand("suicide", "", env.companion)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	require.Len(t, company.DeadCompanions(env.user.UserId), 1, "the companion fell in the fight")
+
+	out := env.run("suicide", "")
+	assert.Contains(t, out, "stripped of what the robbers could carry")
+	assert.Contains(t, out, "Your fallen can still be raised at a church or shaman")
+	dead := company.DeadCompanions(env.user.UserId)
+	require.Len(t, dead, 1, "the scenario leaves the fallen on the roster")
+	assert.Positive(t, dead[0].Remaining, "their rescue window still runs")
 }
 
 func TestDefeatFallsBackToTheChurchWhenNoScenarioFits(t *testing.T) {
