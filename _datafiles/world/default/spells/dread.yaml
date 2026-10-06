@@ -1,0 +1,10 @@
+# Phase 38a: a Witch's hex (internal/hexes). The script rolls the resist and
+# applies the status; the Witch's level sets how many foes it reaches.
+spellid: dread
+name: Dread Whisper
+description: "A whisper of terror: each foe it reaches takes one morale check, and may yield or flee by its temperament. Unbreakable foes hold. Reaches more foes as you level."
+type: harmmulti
+school: hexcraft
+cost: 14
+waitrounds: 2
+difficulty: 50

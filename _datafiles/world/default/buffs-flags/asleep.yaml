@@ -1,0 +1,5 @@
+flag: asleep
+name: "Asleep"
+description: "Blows against the holder hit more often, and the first damage it takes wakes it."
+locked: true
+harmful: true

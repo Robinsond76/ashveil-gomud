@@ -1,0 +1,46 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">witch</ansi>
+
+The Witch is a control caster. It deals almost no damage; it takes the
+enemy's turns away instead. Its hexes put foes to sleep, paralyze them,
+knock them down, slow them, poison them, and leave them open to the
+company's blows, and each hex reaches more foes as the Witch levels. A
+company with a Witch fights fewer enemy turns than it takes.
+
+<ansi fg="yellow-bold">What the Witch is</ansi>
+
+  Health      1 to start, 0.55 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 0.7 and Evasion 0.75 a level, like a wizard (<ansi fg="command">help evasion</ansi>)
+  Gear        light armor, no shield, any weapon (<ansi fg="command">help armor</ansi>)
+  Mana        40 and 10 a level, refilled only by a rest, an inn or a draught
+              (<ansi fg="command">help mana</ansi>)
+  Stats       mysticism 4, smarts 3, perception 2, vitality 1 (<ansi fg="command">help growth</ansi>)
+  Starts with Slumber, and Withering Hex, a weak damage curse. Earthbind
+              comes at level 3, and the rest by level 18 (<ansi fg="command">help hexes</ansi>).
+  Starter kit an ash quarterstaff, a leather cap, a cotton shirt, a student's
+              amulet, food, a waterskin, a minor mana draught and a knapsack
+  Utility     Weather Sense (<ansi fg="command">help forecast</ansi>)
+
+<ansi fg="yellow-bold">How a Witch fights</ansi>
+
+A Witch's strategy role is <ansi fg="command">controller</ansi> (<ansi fg="command">help strategy</ansi>). In a battle it hexes on its
+own, with no command from you. Each round it picks the first hex it knows
+that has a foe worth it: a foe not already under that hex, not shaking off
+a recent one, and (for Blight) a healer. It aims first at a foe winding up a
+heavy blow, then a caster that is chanting, then the nearest foe. When no hex
+has a foe left to take, it casts Withering Hex, and when it has no mana, it
+swings.
+
+Hexes are real casts. They cost mana, take chanting rounds, and a blow that
+draws blood on the Witch may break the chant (<ansi fg="command">help interrupts</ansi>), so keep it
+behind the front. A foe can resist a hex (<ansi fg="command">help hexes</ansi>); the Witch is told so.
+
+<ansi fg="yellow-bold">Other Witches</ansi>
+
+A Witch companion hexes the same way. Recruits are hired like any other
+(<ansi fg="command">help company</ansi>); two Witches never hex the same foe at once. A company
+of fighters and one Witch fights best when the Witch's hexes take the foes
+the fighters are about to face.
+
+Commands: <ansi fg="command">archetype</ansi>, <ansi fg="command">strategy</ansi>, <ansi fg="command">spells</ansi>, <ansi fg="command">help hexes</ansi>.
+
+See also: <ansi fg="command">help hexes</ansi>, <ansi fg="command">help statuses</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help combat</ansi>.

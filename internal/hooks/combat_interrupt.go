@@ -104,6 +104,12 @@ func (h statusHolder) chanting() bool {
 // Called at every blow site after the blow's own lines.
 func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	afterWindUpBlow(attacker, defender, r) // Phase 30d2
+	// Phase 38a: the first damage wakes a sleeper (paralysis holds).
+	if r.Hit && r.DamageToTarget > 0 && status.Wake(defender.char) {
+		spec := status.Get(status.Asleep)
+		defender.say(spec.EndYou, spec.EndOther, ` (woken by the blow)`)
+		emitCombat(combatstream.Event{Kind: combatstream.StatusExpired, RoomId: defender.roomId, Target: defender.ref, BuffId: spec.Id, Status: spec.Word})
+	}
 	if interruptsOff {
 		return
 	}

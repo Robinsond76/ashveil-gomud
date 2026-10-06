@@ -17,12 +17,12 @@ func TestGuardianRoleWords(t *testing.T) {
 			t.Errorf("ParseRule(%q) = %q, %v", in, got, ok)
 		}
 	}
-	for _, arch := range []string{"", "warrior", "cleric", "wizard", "rogue", "ranger"} {
+	for _, arch := range []string{"", "warrior", "cleric", "wizard", "rogue", "ranger", "witch"} {
 		if Default(arch).Role == Guardian {
 			t.Errorf("%q defaults to guardian", arch)
 		}
 	}
-	if Roles[len(Roles)-1] != Guardian {
+	if Roles[len(Roles)-2] != Guardian || Roles[len(Roles)-1] != Controller {
 		t.Errorf("Roles = %v", Roles)
 	}
 }

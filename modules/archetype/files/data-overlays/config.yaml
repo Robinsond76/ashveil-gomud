@@ -105,6 +105,52 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     # Phase 35b: one minor mana draught.
     Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 38]
+  # Phase 38a: the control caster. Its hexes take enemy turns away instead of
+  # dealing damage (internal/hexes); each hex reaches more foes as it levels.
+  # Withering Hex is the weak damage curse it falls back on.
+  - ArchetypeId: witch
+    HPPerLevel: 0.55
+    HPStart: 1
+    AttackRate: 0.7
+    EvasionRate: 0.75
+    ArmorTraining: light
+    ShieldSizes: [none]
+    ManaBase: 40
+    ManaPerLevel: 10
+    Name: Witch
+    Description: Hedge-craft casters who take enemy turns away with sleep, paralysis, snares and poison instead of dealing damage.
+    Skills: [cast]
+    Schools: [hexcraft]
+    GrantSkills:
+      - { Skill: cast, Level: 1 }
+    GrantSpells: [slumber, hex]
+    LevelSpells:
+      - { Spell: earthbind, Level: 3 }
+      - { Spell: leaden, Level: 5 }
+      - { Spell: miasma, Level: 7 }
+      - { Spell: binding, Level: 10 }
+      - { Spell: frailty, Level: 12 }
+      - { Spell: dread, Level: 15 }
+      - { Spell: blight, Level: 18 }
+    CompanionSpells:
+      - { Spell: slumber, Level: 1 }
+      - { Spell: hex, Level: 1 }
+      - { Spell: earthbind, Level: 3 }
+      - { Spell: leaden, Level: 5 }
+      - { Spell: miasma, Level: 7 }
+      - { Spell: binding, Level: 10 }
+      - { Spell: frailty, Level: 12 }
+      - { Spell: dread, Level: 15 }
+      - { Spell: blight, Level: 18 }
+    Utility: [weather]
+    Growth:
+      - { Stat: mysticism, Weight: 4 }
+      - { Stat: smarts, Weight: 3 }
+      - { Stat: perception, Weight: 2 }
+      - { Stat: vitality, Weight: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+    # An ash staff, a hooded robe, and one minor mana draught.
+    Kit: [10021, 20020, 20008, 20039, 30004, 30015, 30014, 38]
   - ArchetypeId: cleric
     HPPerLevel: 0.6
     HPStart: 2

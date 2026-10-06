@@ -1433,6 +1433,10 @@ func (c *Character) ApplyHealthChange(healthChange int) int {
 			newHealth = -10
 		}
 	} else if newHealth > oldHealth {
+		// Phase 38a: a blight halves the healing its holder receives.
+		if c.HasBuffFlag("blighted") {
+			newHealth = oldHealth + (newHealth-oldHealth)/2
+		}
 		// Phase 30b: healing stops at the wound limit.
 		newHealth = c.CapHealing(oldHealth, newHealth)
 	} else if newHealth > c.HealthMax.Value {

@@ -65,7 +65,9 @@ func ApplyBuffs(e events.Event) events.ListenerReturn {
 	}
 
 	// Apply the buff
-	if evt.ExtraTriggers > 0 && buffInfo.TriggerCount > 0 {
+	if evt.Triggers > 0 {
+		targetChar.AddBuff(evt.BuffId, false, evt.Triggers)
+	} else if evt.ExtraTriggers > 0 && buffInfo.TriggerCount > 0 {
 		targetChar.AddBuff(evt.BuffId, false, buffInfo.TriggerCount+evt.ExtraTriggers)
 	} else {
 		targetChar.AddBuff(evt.BuffId, false)

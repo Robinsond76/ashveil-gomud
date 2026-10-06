@@ -50,6 +50,8 @@ declare interface ActorObject {
     HasLastingWound(): boolean;
     SpellFactor(target: ActorObject): number;
     SpellPower(spellId: string): number;
+    HexTargets(targets: ActorObject[]): ActorObject[];
+    CastHex(spellId: string, target: ActorObject): { landed: boolean; reason: string; rounds: number };
     HealFactor(): number;
     WoundNote(rolled: number, healed: number): string;
     TendWound(points: number): { closed: number; wound: string; limit: number; max: number };

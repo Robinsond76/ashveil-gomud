@@ -1,0 +1,22 @@
+mobid: 94
+zone: Dunmar
+# Phase 32a2 generated recruit base (witch). See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Recruit Witch
+  description: A hedge-witch looking for a company to hold the road for, one hex at a time.
+  raceid: 1
+  level: 1
+  alignment: 0
+  equipment:
+    weapon:
+      itemid: 10021
+    head:
+      itemid: 20020
+    body:
+      itemid: 20008
+    neck:
+      itemid: 20039

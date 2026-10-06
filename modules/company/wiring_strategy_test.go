@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/hexes"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
@@ -32,7 +33,7 @@ type fakeArchetypes struct{ player string }
 func (fakeArchetypes) CanTrain(int, string) (bool, string)      { return true, "" }
 func (fakeArchetypes) CanLearnSpell(int, string) (bool, string) { return true, "" }
 func (fakeArchetypes) Exists(id string) bool {
-	return id == "warrior" || id == "cleric" || id == "wizard" || id == "ranger" || id == "rogue"
+	return id == "warrior" || id == "cleric" || id == "wizard" || id == "ranger" || id == "rogue" || id == "witch"
 }
 func (fakeArchetypes) ArchetypeName(id string) (string, bool) { return strings.Title(id), true }
 func (f fakeArchetypes) PlayerArchetype(int) (string, bool)   { return f.player, f.player != "" }
@@ -48,6 +49,14 @@ func (fakeArchetypes) CompanionSpells(id string, level int) []string {
 			return []string{"mm", "sparks"}
 		}
 		return []string{"mm"}
+	case "witch": // Phase 38a: the shipped companion spells
+		out := []string{"slumber", "hex"}
+		for _, h := range hexes.All[1:] {
+			if level >= h.Level {
+				out = append(out, h.Spell)
+			}
+		}
+		return out
 	}
 	return nil
 }

@@ -100,6 +100,8 @@ func actorObjectType() ObjectTypeDef {
 			m("HasLastingWound", "boolean", "Returns whether the actor has a lasting wound to tend (Phase 30b)."),
 			m("SpellFactor", "number", "Returns what a damage spell's roll is multiplied by against the target: 1 + 0.5 x the caster's skill edge, 0.5 to 1.5 (Phase 35a2).", p("target", "ActorObject")),
 			m("SpellPower", "number", "Returns one roll of a spell's size for this caster from its power block: base + dice + level and Mysticism bonuses, before SpellFactor or HealFactor; 0 without one (Phase 35b).", p("spellId", "string")),
+			m("HexTargets", "ActorObject[]", "Returns the first of the targets a hex reaches at the caster's level: 1, 2 from level 8, 3 from 16, 4 from 24, all from 30 (Phase 38a).", p("targets", "ActorObject[]")),
+			m("CastHex", "object", "Lands a hex of the spell on the target and returns {landed, reason, rounds}; reason is landed, already, immune, resisted or invalid (Phase 38a).", p("spellId", "string"), p("target", "ActorObject")),
 			m("HealFactor", "number", "Returns what the actor's heals are multiplied by: 1 plus its gear's healing percent (Phase 35a2)."),
 			m("WoundNote", "string", "Returns the text a heal adds when the wound limit held some back, else an empty string (Phase 30b).", p("rolled", "number"), p("healed", "number")),
 			m("TendWound", "object", "Closes points of the worst lasting wound; returns {closed, wound, limit, max} (Phase 30b).", p("points", "number")),

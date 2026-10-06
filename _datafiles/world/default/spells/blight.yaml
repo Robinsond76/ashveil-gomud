@@ -1,0 +1,10 @@
+# Phase 38a: a Witch's hex (internal/hexes). The script rolls the resist and
+# applies the status; the Witch's level sets how many foes it reaches.
+spellid: blight
+name: Blight
+description: "Foes that heal are blighted for 3 rounds: healing they receive is halved. Reaches more foes as you level."
+type: harmmulti
+school: hexcraft
+cost: 12
+waitrounds: 1
+difficulty: 40

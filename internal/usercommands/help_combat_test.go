@@ -274,3 +274,53 @@ func TestFormationDefaultsHelp(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "Worn equipment lives in Character Gear")
 }
+
+// Phase 38a: the Witch and hexes pages render, are indexed (hexes under
+// combat, witch under character), answer to their aliases, and the pages
+// the sixth class touched name it.
+func TestWitchHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	category := map[string]string{}
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		category[topic.Command] = topic.Category
+	}
+	assert.NotEmpty(t, category["witch"], "witch is indexed")
+	assert.Equal(t, "combat", category["hexes"])
+
+	for topic, aliases := range map[string][]string{
+		"witch":    {"witches", "hexcraft"},
+		"hexes":    {"hex", "slumber", "binding", "blight", "dread"},
+		"statuses": {"asleep", "paralyzed", "blighted"},
+	} {
+		want, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, tagPattern.ReplaceAllString(want, ""), "Help for", topic)
+		for _, alias := range aliases {
+			got, err := GetHelpContents(alias)
+			require.NoError(t, err, alias)
+			assert.Equal(t, want, got, "help %s is help %s", alias, topic)
+		}
+	}
+
+	for topic, wants := range map[string][]string{
+		"hexes":     {"Slumber", "Earthbind", "Binding Hex", "Blight", "level 30", "(resisted)"},
+		"witch":     {"controller", "help hexes"},
+		"statuses":  {"Asleep", "Paralyzed", "Blighted"},
+		"combat":    {"help hexes"},
+		"archetype": {"Witch"},
+		"strategy":  {"witches hex"},
+		"health":    {"Witch"},
+		"growth":    {"Witch"},
+		"armor":     {"Witch"},
+		"shields":   {"Witch"},
+		"evasion":   {"Witch"},
+	} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		for _, want := range wants {
+			assert.Contains(t, text, want, "help %s mentions %s", topic, want)
+		}
+	}
+}
