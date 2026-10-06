@@ -3,6 +3,7 @@ package company
 import (
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -386,6 +387,9 @@ func TestRoutesShapeTheDive(t *testing.T) {
 		{"wyvern rider", "wyvern-rider", 10, 10131, func(t *testing.T, foe *mobs.Mob, _ *characters.Character) {
 			assert.True(t, foe.Character.HasBuff(13), "poisoned")
 		}},
+		{"wyvern rider against an immune foe", "wyvern-rider", 10, 10131, func(t *testing.T, foe *mobs.Mob, _ *characters.Character) {
+			assert.False(t, foe.Character.HasBuff(13), "immune to poison")
+		}},
 		{"knight at 25", "gryphon-knight", 25, 10131, func(t *testing.T, _ *mobs.Mob, rider *characters.Character) {
 			assert.Zero(t, rider.Aura.Evasion, "Steady wings: no Evasion spent")
 		}},
@@ -400,6 +404,9 @@ func TestRoutesShapeTheDive(t *testing.T) {
 			rider.Character.HPClass = tc.class
 			rider.Character.Equipment.Weapon = items.New(tc.weapon)
 			foe := b.deepFoe()
+			if strings.Contains(tc.name, "immune") {
+				foe.PoisonSusceptibility = items.PoisonImmune
+			}
 			b.aimTamsinAt(foe)
 			b.hardenBandits()
 			b.fight()

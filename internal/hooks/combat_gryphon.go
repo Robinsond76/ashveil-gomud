@@ -93,7 +93,8 @@ func useDive(a actor, u *users.UserRecord, foe *mobs.Mob, room *rooms.Room) {
 	if fx.Has(classes.DiveExpo) && !status.Live(&target.Character, status.Exposed) {
 		apply(status.Exposed, `You mark %s, and it is left exposed.`, `%s marks `+verbatim(tag)+`, leaving it exposed.`, ` (exposed)`)
 	}
-	if fx.Has(classes.DivePois) {
+	// The creatures that shrug off a coated blade shrug off venom too.
+	if fx.Has(classes.DivePois) && target.PoisonSusceptibility != items.PoisonImmune {
 		apply(buffPoisoned, `Your venom sinks into %s.`, `%s's venom sinks into `+verbatim(tag)+`.`, ` (poisoned)`)
 	}
 }
