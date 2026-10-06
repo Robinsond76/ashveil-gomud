@@ -930,7 +930,12 @@ func (c *Character) UseItem(i items.Item) int {
 				usesLeft--
 			}
 			if usesLeft <= 0 {
-				c.Items = append(c.Items[:j], c.Items[j+1:]...)
+				// Phase 43a: a spent waterskin leaves an empty one to refill.
+				if emptyID := c.Items[j].GetSpec().EmptyItemId; emptyID > 0 && items.GetItemSpec(emptyID) != nil {
+					c.Items[j] = items.New(emptyID)
+				} else {
+					c.Items = append(c.Items[:j], c.Items[j+1:]...)
+				}
 			} else {
 				c.Items[j].Uses = usesLeft
 				c.Items[j].LastUsedRound = util.GetRoundCount()

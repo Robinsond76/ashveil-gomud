@@ -532,7 +532,7 @@ func (m *ExposureModule) tickMemberLocked(leader *users.UserRecord, mb member) {
 	sheltered := room.IsIndoor() || climate.RoomHasHeatSource(room.RoomId)
 
 	prev := m.registry.Exposure[leader.UserId][string(mb.Key)]
-	next := climate.StepExposure(prev, stress, sheltered, m.settings.Exposure)
+	next := climate.StepExposure(prev, draughtStress(mb.Character, stress), sheltered, m.settings.Exposure)
 	if next == 0 {
 		delete(m.registry.Exposure[leader.UserId], string(mb.Key))
 	} else {
@@ -577,6 +577,34 @@ func (m *ExposureModule) tickMemberLocked(leader *users.UserRecord, mb member) {
 			mudlog.Warn("exposure: survival drain", "leader", leader.UserId, "member", mb.Key, "error", err)
 		}
 	}
+}
+
+// Phase 43a camp supplies: a warming draught or a cooling salve (buffs with
+// these flags) cuts the exposure its member takes on by a quarter, in its
+// own direction only. They change no temperature, warmth or damage rule; the
+// cost the stress drives (cold fatigue, heat thirst) is untouched.
+const (
+	warmingDraughtFlag = "warming-draught"
+	coolingSalveFlag   = "cooling-salve"
+)
+
+// draughtStress is the stress that accumulates for a member: a quarter
+// less (rounded up, so never zero) while the matching supply lasts.
+func draughtStress(c *characters.Character, stress int) int {
+	if c == nil || stress == 0 {
+		return stress
+	}
+	flag := coolingSalveFlag
+	if stress < 0 {
+		flag = warmingDraughtFlag
+	}
+	if !c.HasBuffFlag(flag) {
+		return stress
+	}
+	if stress < 0 {
+		return -((-stress*3 + 3) / 4)
+	}
+	return (stress*3 + 3) / 4
 }
 
 // regenPerTick is the health a member regenerates between ticks, which

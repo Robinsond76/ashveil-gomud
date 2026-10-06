@@ -1,0 +1,9 @@
+itemid: 30043
+name: watch incense
+namesimple: incense
+description: A bundle of watchsage sticks. Lit at a camp with a watch posted, it sharpens the watch's eye for raiders by ten points during one rest (help campsupplies).
+type: object
+subtype: mundane
+uses: 1
+value: 8
+weight: 150
