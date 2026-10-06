@@ -213,6 +213,7 @@ func TestCompanyWebRequest(t *testing.T) {
 	u := users.NewUserRecord(41, 4141)
 	users.SetTestUser(u)
 	var got []int
+	freshEvents(t)
 	id := events.RegisterListener(GMCPCompanyRequest{}, func(e events.Event) events.ListenerReturn {
 		got = append(got, e.(GMCPCompanyRequest).UserId)
 		return events.Cancel

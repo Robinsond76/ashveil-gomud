@@ -219,6 +219,7 @@ func TestDeletionLeaveResetsAndHandsBack(t *testing.T) {
 	t.Cleanup(func() { users.GetCharacterIndex().Remove("Aria") })
 
 	purges := []events.UserPurged{}
+	freshEvents(t)
 	id := events.RegisterListener(events.UserPurged{}, func(e events.Event) events.ListenerReturn {
 		purges = append(purges, e.(events.UserPurged))
 		return events.Continue
@@ -253,6 +254,7 @@ func TestAnUnflaggedHandOffIsNotPurged(t *testing.T) {
 	_, _, err := users.LoginUser(u, connID)
 	require.NoError(t, err)
 	purged := false
+	freshEvents(t)
 	id := events.RegisterListener(events.UserPurged{}, func(e events.Event) events.ListenerReturn {
 		purged = true
 		return events.Continue

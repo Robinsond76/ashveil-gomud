@@ -62,6 +62,7 @@ func newEventRig(t *testing.T) *eventRig {
 		{events.CombatData{}, hooks.CombatData_Hold},
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 	} {
+		freshEvents(t)
 		id := events.RegisterListener(reg.evt, reg.fn)
 		evt := reg.evt
 		t.Cleanup(func() { events.UnregisterListener(evt, id) })

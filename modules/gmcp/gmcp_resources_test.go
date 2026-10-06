@@ -117,6 +117,7 @@ func TestWorldResourcesGoToVisitorsOnline(t *testing.T) {
 
 	var got []GMCPWorldResources_Payload
 	var to []int
+	freshEvents(t)
 	id := events.RegisterListener(GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		if out := e.(GMCPOut); out.Module == `World.Resources` {
 			got = append(got, out.Payload.(GMCPWorldResources_Payload))

@@ -51,6 +51,7 @@ func TestGrantXPLevelReport(t *testing.T) {
 			round := util.GetRoundCount()
 			var ev events.LevelUp
 			var messages string
+			freshEvents(t)
 			id := events.RegisterListener(events.LevelUp{}, func(e events.Event) events.ListenerReturn { ev = e.(events.LevelUp); return SendLevelNotifications(e) })
 			mid := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 				m := e.(events.Message)
@@ -144,6 +145,7 @@ func TestGrantXPPaysStatPointCatchUpBeforeLevelReport(t *testing.T) {
 	users.SetTestUser(u)
 	t.Cleanup(func() { users.RemoveTestUser(u.UserId) })
 	var ev events.LevelUp
+	freshEvents(t)
 	id := events.RegisterListener(events.LevelUp{}, func(e events.Event) events.ListenerReturn { ev = e.(events.LevelUp); return events.Continue })
 	t.Cleanup(func() { events.UnregisterListener(events.LevelUp{}, id) })
 
@@ -208,6 +210,7 @@ func TestGrantXPLevelReportNamesElitePromotionAndRanks(t *testing.T) {
 			users.SetTestUser(u)
 			t.Cleanup(func() { users.RemoveTestUser(u.UserId) })
 			var ev events.LevelUp
+			freshEvents(t)
 			id := events.RegisterListener(events.LevelUp{}, func(e events.Event) events.ListenerReturn { ev = e.(events.LevelUp); return events.Continue })
 			t.Cleanup(func() { events.UnregisterListener(events.LevelUp{}, id) })
 

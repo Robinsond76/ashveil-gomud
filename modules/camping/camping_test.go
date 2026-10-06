@@ -162,6 +162,7 @@ func campUser(t *testing.T, userId, roomId int) *users.UserRecord {
 
 func captureMessages(t *testing.T) *[]string {
 	t.Helper()
+	freshEvents(t)
 	messages := []string{}
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		messages = append(messages, e.(events.Message).Text)

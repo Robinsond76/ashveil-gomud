@@ -123,10 +123,19 @@ const (
 // LandChance is the chance in 100 that a hex lands, from the stat edge of
 // the Witch against the foe's resisting stat (internal/combat StatEdge).
 func LandChance(edge float64, boss bool) int {
-	c := LandBase + int(LandSwing*edge)
+	resist := 0
 	if boss {
-		c -= BossResist
+		resist = BossResist
 	}
+	return LandChanceWith(edge, resist, 0)
+}
+
+// LandChanceWith is LandChance with the boss resist given (0 for a foe that
+// isn't one) and points a class adds, the whole held to LandMin..LandMax
+// (Phase 38c3: a Coven Mother halves the boss resist, and the bonus never
+// takes a hex past the cap).
+func LandChanceWith(edge float64, resist, bonus int) int {
+	c := LandBase + int(LandSwing*edge) - resist + bonus
 	return max(LandMin, min(LandMax, c))
 }
 
@@ -190,8 +199,14 @@ func (l *Ledger) Immune(holder string, buff int) bool {
 // own length): it is immune until that length and Immunity more rounds
 // have passed.
 func (l *Ledger) Land(holder string, buff, rounds int) {
-	l.until[key(holder, buff)] = l.round + rounds + Immunity + 1
+	// Phase 38c3: a hold longer than 3 rounds (a Wise One's or Coven
+	// Mother's lengthening) is followed by as many rounds of immunity, so
+	// no foe is held more than half a fight.
+	l.until[key(holder, buff)] = l.round + rounds + max(Immunity+1, rounds)
 }
+
+// Round is the combat round the ledger has counted to.
+func (l *Ledger) Round() int { return l.round }
 
 // Tick advances one combat round and forgets finished immunities.
 func (l *Ledger) Tick() {

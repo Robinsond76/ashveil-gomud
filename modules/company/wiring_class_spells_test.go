@@ -29,6 +29,7 @@ func classCaster(t *testing.T, class string, level int, spells ...string) *brawl
 	b := newBrawl(t)
 	loadStatusBuffs(t)
 	loadShippedBuff(t, "13-poisoned.yaml")
+	freshEvents(t)
 	buffListener := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffListener) })
 	store := &fakeClassStore{state: classes.State{Class: class}}

@@ -75,6 +75,7 @@ function injectStyles(css) {
 
         menuEl = document.createElement('div');
         menuEl.setAttribute('role', 'menu');
+        menuEl.className = 'ui-menu';
         menuEl.style.cssText = [
             'position:fixed',
             'z-index:2147483647',
@@ -88,6 +89,8 @@ function injectStyles(css) {
             'font-size:0.75em',
             'display:flex',
             'flex-direction:column',
+            'max-height:70vh',
+            'overflow-y:auto',
         ].join(';');
 
         const entries = [];
@@ -96,6 +99,7 @@ function injectStyles(css) {
             entry.type = 'button';
             entry.setAttribute('role', 'menuitem');
             entry.tabIndex = -1;
+            entry.className = 'ui-menu-item';
             entry.textContent = item.label;
             entry.style.cssText = [
                 'padding:5px 12px',
@@ -695,7 +699,7 @@ class DockTabGroup {
             (newSide) => this.moveTo(newSide),
             VirtualWindows.getDockInsertIndexFor(this.anchorId(), side)
         );
-        if (panel) { panel.classList.add('dock-panel-fill'); }
+        if (panel) { panel.classList.add('dock-panel-fill'); panel.dataset.win = 'group:' + this.name; }
     }
 
     _syncTitle() {
@@ -1349,7 +1353,7 @@ class VirtualWindow {
         const slot      = DockSlots[this._dockSide];
         const height    = this._dockedHeight || (this._vwinOpts && this._vwinOpts.height) || null;
         const insertAt  = VirtualWindows.getDockInsertIndex(this);
-        slot.addPanel(
+        const docked = slot.addPanel(
             this._contentEl,
             this._vwinOpts.title,
             () => this.undock(),
@@ -1376,6 +1380,8 @@ class VirtualWindow {
             },
             insertAt
         );
+        // Phase 40i: the phone layout shows one panel at a time, by window id.
+        if (docked) { docked.dataset.win = this._id; }
         this._win = 'docked';
         LayoutStore.saveWindow(this);
     }
@@ -1738,7 +1744,9 @@ const Client = (() => {
     function resizeTerminal() {
         const hasLeft  = DockSlots.left  && DockSlots.left.el  && DockSlots.left.el.classList.contains('has-panels');
         const hasRight = DockSlots.right && DockSlots.right.el && DockSlots.right.el.classList.contains('has-panels');
-        const fontSize = (hasLeft && hasRight) ? 16 : (hasLeft || hasRight) ? 18 : 20;
+        // Phase 40i: the phone layout (mobile.js) shows one view at a time.
+        const phone = document.body.classList.contains('mobile');
+        const fontSize = phone ? 13 : (hasLeft && hasRight) ? 16 : (hasLeft || hasRight) ? 18 : 20;
         if (term.options.fontSize !== fontSize) {
             term.options.fontSize = fontSize;
         }

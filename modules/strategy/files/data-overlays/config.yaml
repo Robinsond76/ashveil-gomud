@@ -20,6 +20,7 @@
 #   bless       Attack and Evasion for an ally, cast while no one needs healing
 #   siphon      drains a foe and heals the most hurt ally
 #   summon      calls the class summon (Angel, Demon) as the battle opens
+#   raise       raises a fallen foe as a thrall (a Necromancer)
 #   weather     a Shaman's weather call (fog, chill wind, rain), when none is up (Phase 39c)
 #   storm       a Shaman's Lightning, ahead of its attack spell (Phase 39c)
 #   cure        an Alchemist's antidote, for an ally with poison or bleeding (Phase 39g)
@@ -57,6 +58,8 @@ AutoSpells:
   - { Spell: entangle, Use: hex }
   - { Spell: callhost, Use: summon }
   - { Spell: bindfiend, Use: summon }
+  # Phase 38c3: a Necromancer raises a fallen foe as a thrall.
+  - { Spell: raisefallen, Use: raise }
   # Phase 39c: a Shaman (role caster) calls a weather first when none is up,
   # in the order tried (Rain only once it knows Lightning, fog and a chill
   # only against foes that shoot or cast), then Lightning, then Gust.

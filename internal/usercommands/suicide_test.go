@@ -81,6 +81,7 @@ func newSuicideWorld(t *testing.T) suicideWorld {
 	room.SetTestOccupants([]int{user.UserId}, nil)
 
 	deaths := []events.PlayerDeath{}
+	freshEvents(t)
 	id := events.RegisterListener(events.PlayerDeath{}, func(e events.Event) events.ListenerReturn {
 		deaths = append(deaths, e.(events.PlayerDeath))
 		return events.Continue
@@ -144,6 +145,7 @@ func TestSuicidePendingGoesStraightToRespawn(t *testing.T) {
 	w := newSuicideWorld(t)
 	messages := captureLookMessages(t)
 	broadcasts := 0
+	freshEvents(t)
 	id := events.RegisterListener(events.Broadcast{}, func(events.Event) events.ListenerReturn {
 		broadcasts++
 		return events.Continue

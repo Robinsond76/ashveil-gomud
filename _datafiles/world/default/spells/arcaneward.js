@@ -47,9 +47,18 @@ function onMagic(sourceActor, single) {
             tell(sourceActor, target, target.GetCombatName(false) + ' already stands under a ward. (no effect)', '', '');
             continue;
         }
+        sourceActor.WardGifts(target);
         tell(sourceActor, target,
             'You lay a ward over ' + target.GetCombatName(false) + '.' + suffix,
             fill(sourceActor, '%S lays a ward over you.') + suffix,
             fill(sourceActor, '%S lays a ward over ') + target.GetCombatName(false) + '.' + suffix);
+        // Phase 38c3: an Archon's Twin ward covers a second ally.
+        var more = sourceActor.WardExtra(target, cap, blows);
+        for (var j = 0; j < more.length; j++) {
+            tell(sourceActor, more[j],
+                'The ward spreads to ' + more[j].GetCombatName(false) + '.' + suffix,
+                fill(sourceActor, '%S\'s ward spreads to you.') + suffix,
+                fill(sourceActor, '%S\'s ward spreads to ') + more[j].GetCombatName(false) + '.' + suffix);
+        }
     }
 }

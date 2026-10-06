@@ -101,6 +101,7 @@ func TestLookNamesTheLootClaimant(t *testing.T) {
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
 	room := rooms.NewEmptyRoom()
+	room.Tags = []string{rooms.TagLit} // the light must not depend on the shared clock
 	claimant := users.NewUserRecord(94904, 0)
 	claimant.Character.Name = "Borin"
 	claimant.Character.RoomId = room.RoomId
@@ -111,6 +112,7 @@ func TestLookNamesTheLootClaimant(t *testing.T) {
 	users.SetTestUser(viewer)
 	room.AddCorpse(reviewCorpse("bandit", claimant.UserId, []items.Item{items.New(94915)}, nil))
 	var text []string
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if m := e.(events.Message); m.UserId == viewer.UserId {
 			text = append(text, m.Text)
@@ -155,6 +157,7 @@ func TestLookPrefersTheViewersOwnClaim(t *testing.T) {
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
 	room := rooms.NewEmptyRoom()
+	room.Tags = []string{rooms.TagLit}
 	ally := users.NewUserRecord(94907, 0)
 	ally.Character.Name = "Aria"
 	users.SetTestUser(ally)
@@ -165,6 +168,7 @@ func TestLookPrefersTheViewersOwnClaim(t *testing.T) {
 	room.AddCorpse(reviewCorpse("bandit", ally.UserId, []items.Item{items.New(94917)}, nil))
 	room.AddCorpse(reviewCorpse("bandit", viewer.UserId, []items.Item{items.New(94917)}, nil))
 	var text []string
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if m := e.(events.Message); m.UserId == viewer.UserId {
 			text = append(text, m.Text)

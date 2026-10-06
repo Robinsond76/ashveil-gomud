@@ -526,6 +526,13 @@ CLASS_ART = {
                        acc=[cape("ashmoss", "bone", 8), hood_cowl("ashmoss"), staff_light("bone")]),
     "earthspeaker": dict(base="shaman", mat={"ochre": "stone", "wool": "ochre"},
                          acc=[pauldron("stone"), horns("bone", 3), staff_light("moss")]),
+    # Doll Master lineage (neutral) ----------------------------------------------------
+    "puppeteer": dict(base="dollmaster", mat={"plum": "heather"},
+                      acc=[collar("brass", 2), plume("heather", 3)]),
+    "golemancer": dict(base="dollmaster", mat={"plum": "stone", "charcoal": "iron"},
+                       acc=[pauldron("stone"), hem_band("brass", 5)]),
+    "marionettist": dict(base="dollmaster", mat={"plum": "oxblood", "bone": "wool"},
+                         acc=[cape("charcoal", "oxblood", 8), pointed_hat("charcoal", "oxblood", 3, False)]),
     # Cleric lineage ----------------------------------------------------------------
     "priest": dict(base="cleric", mat={"iron": "wool", "wool": "bone"},
                    acc=[collar("brass", 2), circlet("brass")]),
@@ -572,7 +579,8 @@ CLASS_ART = {
 CLASS_IDS = list(CLASS_ART)
 LINEAGE = {"warlord": "warrior", "sweeper": "halberdier", "vanguard": "halberdier", "valkyrie": "halberdier",
            "kensai": "samurai", "hatamoto": "samurai", "ronin": "samurai", "stormcaller": "shaman",
-           "mistweaver": "shaman", "earthspeaker": "shaman", "knight": "warrior", "paladin": "warrior", "mercenary": "warrior", "blackguard": "warrior",
+           "mistweaver": "shaman", "earthspeaker": "shaman", "puppeteer": "dollmaster", "golemancer": "dollmaster",
+           "marionettist": "dollmaster", "knight": "warrior", "paladin": "warrior", "mercenary": "warrior", "blackguard": "warrior",
            "dread-knight": "warrior", "priest": "cleric", "hierarch": "cleric", "druid": "cleric",
            "elder-druid": "cleric", "blood-priest": "cleric", "demonologist": "cleric", "scout": "rogue",
            "duelist": "rogue", "assassin": "rogue", "warden": "ranger", "hunter": "ranger",

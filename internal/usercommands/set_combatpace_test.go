@@ -19,6 +19,7 @@ func setOutput(t *testing.T, user *users.UserRecord, rest string) (string, []str
 	events.ProcessEvents()
 	var told []string
 	var changed []string
+	freshEvents(t)
 	msg := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if m := e.(events.Message); m.UserId == user.UserId {
 			told = append(told, tagPattern.ReplaceAllString(m.Text, ""))

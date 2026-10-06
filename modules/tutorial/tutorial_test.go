@@ -142,6 +142,7 @@ func newCourse(t *testing.T) *course {
 	c.user.Character.RoomId = -1
 	users.SetTestUser(c.user)
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if msg := e.(events.Message); msg.UserId == 7 {
 			messages = append(messages, msg.Text)

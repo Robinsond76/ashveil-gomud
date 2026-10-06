@@ -190,6 +190,7 @@ func TestEquipmentEditorJournalRecoveryAndPrivateFeed(t *testing.T) {
 	gmcp.AcceptGMCPForTest(b.aria.ConnectionId())
 	count := 0
 	var received domain.EquipmentView
+	freshEvents(t)
 	listener := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out := e.(gmcp.GMCPOut)
 		if out.Module == "Company.Equipment" {

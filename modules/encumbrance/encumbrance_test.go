@@ -371,6 +371,7 @@ func TestCargoMovesRaiseItemOwnership(t *testing.T) {
 	module := newTestModule(&fakeStore{}, user)
 	events.ProcessEvents() // earlier tests' queued events aren't this test's
 	var seen []events.ItemOwnership
+	freshEvents(t)
 	id := events.RegisterListener(events.ItemOwnership{}, func(e events.Event) events.ListenerReturn {
 		if evt, ok := e.(events.ItemOwnership); ok {
 			seen = append(seen, evt)

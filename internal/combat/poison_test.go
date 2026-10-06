@@ -176,6 +176,7 @@ func TestAttackMobVsMobSpendsCompanionCoating(t *testing.T) {
 }
 
 func TestLeadrootCutsPhysicalDamageByFifteenPercent(t *testing.T) {
+	poisonSpecs(t)
 	assert.Equal(t, 17, leadrootDamage(leadrooted(t), 20))
 	assert.Equal(t, 9, leadrootDamage(leadrooted(t), 10))
 	assert.Equal(t, 3, leadrootDamage(leadrooted(t), 3), "rounded down: nothing off a small blow")

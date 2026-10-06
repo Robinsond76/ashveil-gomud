@@ -1,16 +1,12 @@
 package expedition
 
 import (
-	"path/filepath"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/exit"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
-	"github.com/GoMudEngine/GoMud/internal/keywords"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/usercommands"
 	"github.com/GoMudEngine/GoMud/internal/weather"
@@ -18,17 +14,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var wiringAliasesOnce sync.Once
-
-// loadWiringAliases points the data dir at the shipped world (the same
-// override TestDunmarOakRoute uses) and loads its direction aliases.
+// loadWiringAliases loads the shipped world's direction aliases (and its
+// rooms), as TestDunmarOakRoute does.
 func loadWiringAliases(t *testing.T) {
 	t.Helper()
-	wiringAliasesOnce.Do(func() {
-		dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
-		require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
-		keywords.LoadAliases()
-	})
+	useShippedWorld(t)
 }
 
 type trackedWeather struct{ zones map[string]weather.Condition }

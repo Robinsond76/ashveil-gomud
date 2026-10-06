@@ -119,7 +119,7 @@ func TestDefaultAutoSpells(t *testing.T) {
 		"binding": UseHex, "slumber": UseHex, "earthbind": UseHex, "frailty": UseHex,
 		"leaden": UseHex, "miasma": UseHex, "dread": UseHex, "blight": UseHex, "hex": UseAttack,
 		"greaterheal": UseBigHeal, "rejuvenation": UseRejuv, "grove": UseGrove, "siphon": UseSiphon,
-		"ward": UseWard, "arcaneward": UseWard, "barkskin": UseBark, "bless": UseBless, "entangle": UseHex, "callhost": UseSummon, "bindfiend": UseSummon,
+		"ward": UseWard, "arcaneward": UseWard, "barkskin": UseBark, "bless": UseBless, "entangle": UseHex, "callhost": UseSummon, "bindfiend": UseSummon, "raisefallen": UseRaise,
 		"rain": UseWeather, "chillwind": UseWeather, "callfog": UseWeather, "lightning": UseStorm, "gust": UseAttack, "stoneskin": UseBark,
 		"draught": UseHeal, "antidote": UseCure, "tonic": UseBless, "fireflask": UseFlame}
 	got := DefaultAutoSpells()
@@ -252,6 +252,53 @@ func TestElderDruidSowsAGroveEarly(t *testing.T) {
 	sit.Allies = []Ally{{HP: 90, MaxHP: 100}, {HP: 70, MaxHP: 100}}
 	if act := Decide(sit); act.Kind != Buff || act.Spell != "barkskin" {
 		t.Fatalf("a Druid without Grove: %+v, want Barkskin", act)
+	}
+}
+
+// Phase 38c3: a Necromancer raises a fallen foe before anything else, once
+// a foe has fallen and the cast leaves its mana reserve.
+func TestNecromancerRaisesAFallenFoe(t *testing.T) {
+	list := []Spell{{ID: "raisefallen", Use: UseRaise, Cost: 30}, {ID: "mm", Use: UseAttack, Cost: 6}}
+	knows := func(id string) bool { return true }
+	sit := Situation{Role: Caster, Mana: 100, MaxMana: 100, Knows: knows, Spells: list, Foes: 2,
+		Allies: []Ally{{HP: 100, MaxHP: 100}}}
+	if act := Decide(sit); act.Kind == Raise {
+		t.Fatalf("nothing has fallen: %+v", act)
+	}
+	sit.CanRaise = true
+	if act := Decide(sit); act.Kind != Raise || act.Spell != "raisefallen" {
+		t.Fatalf("a foe has fallen: %+v", act)
+	}
+	sit.Reserve = 80
+	if act := Decide(sit); act.Kind == Raise {
+		t.Fatalf("the raise would break the mana reserve: %+v", act)
+	}
+	sit.Reserve, sit.Mana = 0, 20
+	if act := Decide(sit); act.Kind == Raise {
+		t.Fatalf("not enough mana: %+v", act)
+	}
+	sit.Mana, sit.Role = 100, Fighter
+	if act := Decide(sit); act.Kind == Raise {
+		t.Fatalf("a fighter raises nothing: %+v", act)
+	}
+}
+
+// A Warlock's Life Drain is cast while an ally is hurt enough to want it.
+func TestWarlockDrainsWhenAnAllyIsHurt(t *testing.T) {
+	list := []Spell{{ID: "siphon", Use: UseSiphon, Cost: 10}, {ID: "mm", Use: UseAttack, Cost: 6}}
+	knows := func(id string) bool { return true }
+	sit := Situation{Role: Caster, Mana: 100, MaxMana: 100, Knows: knows, Spells: list, Foes: 1,
+		Allies: []Ally{{HP: 100, MaxHP: 100}, {HP: 80, MaxHP: 100}}}
+	if act := Decide(sit); act.Kind == Drain {
+		t.Fatalf("no one is hurt enough: %+v", act)
+	}
+	sit.Allies[1].HP = 70
+	if act := Decide(sit); act.Kind != Drain || act.Spell != "siphon" {
+		t.Fatalf("an ally at 70%%: %+v", act)
+	}
+	sit.Allies[1].Pending = true
+	if act := Decide(sit); act.Kind == Drain {
+		t.Fatalf("a heal is already coming for them: %+v", act)
 	}
 }
 

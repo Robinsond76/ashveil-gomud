@@ -240,6 +240,7 @@ func TestShippedConfigAutoSpells(t *testing.T) {
 func TestUserPurgedForgets(t *testing.T) {
 	m, store, u, _ := testModule(t)
 	run(m, u, "dain leader")
+	freshEvents(t)
 	id := events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	t.Cleanup(func() { events.UnregisterListener(events.UserPurged{}, id) })
 	events.AddToQueue(events.UserPurged{UserId: 4401})

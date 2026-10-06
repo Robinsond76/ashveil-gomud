@@ -118,6 +118,7 @@ func TestCompanyMovesAsOneThroughGo(t *testing.T) {
 	})
 	t.Cleanup(func() { events.UnregisterListener(events.Input{}, mid) })
 	var sent []events.Message
+	freshEvents(t)
 	lid := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		sent = append(sent, e.(events.Message))
 		return events.Continue
