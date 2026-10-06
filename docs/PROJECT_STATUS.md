@@ -278,7 +278,9 @@ wounds, friendly-effects, combat, mana and camp were wrong or stale;
 measurements and status missing (written); coverage for the report through
 GrantXP, Tackle at 20, allied patching and enemy template mana (added); the
 simulator ignored template mana (copied); a test wrote a user file into the
-shipped world (temp folder). The full harness also caught a skill-gap regression
+shipped world (temp folder). The race run caught `TestAimedShotGrowsWithLevel`
+flaking (two brawls in one test shared listeners; each now runs in its own
+subtest, 30/30 passes). The full harness also caught a skill-gap regression
 (L10 beat 2×L20 48%), fixed by the span change. Rejected: updating the Go
 config defaults to the shipped combat chances (they stay GoMud's engine
 values; the shipped config sets every key and tests pin the defaults);
