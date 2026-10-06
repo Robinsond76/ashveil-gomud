@@ -123,11 +123,7 @@ function injectStyles(css) {
                 e.stopPropagation();
                 dismiss(false);
                 if (item.confirm && !window.confirm(item.confirm)) { return; }
-<<<<<<< HEAD
-                if (typeof item.fn === 'function') { item.fn(); return; }
-=======
-                if (item.fn) { item.fn(e); return; }
->>>>>>> origin/master
+                if (typeof item.fn === 'function') { item.fn(e); return; }
                 Client.SendInput(item.cmd);
             });
             entries.push(entry);

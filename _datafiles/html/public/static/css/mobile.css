@@ -186,10 +186,9 @@ body.mobile #battle-badge {
 /* ---- Settings: one column ----------------------------------------------- */
 body.mobile #floating-menu { width: 100vw; max-width: 100vw; max-height: 100dvh; border-radius: 0; }
 
-<<<<<<< HEAD
 /* Phase 48: a member's equipment slots are finger-sized on a phone */
 body.mobile .cmp-slot { min-height: 44px; align-items: center; padding: 4px 6px; border-bottom: 1px solid var(--t-accent-dim); }
-=======
+
 /* ---- Walk to...: search over visited rooms (Phase 47) ------------------- */
 body.mobile #walk-search {
     position: fixed;
@@ -234,4 +233,3 @@ body.mobile .cmp-needs { font-size: 0.85em; }
 body.mobile .cmp-needs th:first-child { width: 34%; }
 body.mobile .cmp-needs th,
 body.mobile .cmp-needs td { padding: 4px 3px; overflow-wrap: break-word; word-break: normal; hyphens: auto; }
->>>>>>> origin/master
