@@ -15,7 +15,12 @@ grey dither crossing the units, now sparse green. Rejected: redrawing large
 units natively at 72 (timeboxed; the shrink keeps their silhouettes). UI
 follow-ups for 40f/40g: when a large unit stands in front, the client should
 still mark units it hides (draw their status and health pips above it, or
-ghost it); the crocodile is 71 px long and fills its lane.
+ghost it); the crocodile is 71 px long and fills its lane. Gates after
+merging master (40a, 40f) pass; one full race run failed
+`TestSpellEventsThroughTheRealRound` ("mm never went off", modules/company)
+and it passed 5 of 5 reruns and the next full run, so it is a flaky 40e test
+to harden. Battle screen with the real art: `/mnt/project-files/screens/40f-battle-art.png`
+(the browser check needs HTTP, since `file://` skips the sprite manifest).
 
 **Phase 40s2 + 40s3 built: art sets S2 (terrain) and S3 (battle) (2026-10-06):**
 `make sprites` now also writes 179 files: S3 battle art (16 backgrounds
