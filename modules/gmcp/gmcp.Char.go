@@ -1086,6 +1086,10 @@ type GMCPCharModule_Payload_Inventory_Item struct {
 	Label        string `json:"label,omitempty"`
 	Rarity       string `json:"rarity,omitempty"`
 	Unidentified bool   `json:"unidentified,omitempty"`
+	// Phase 36d: an authored relic's signature (or its set and bonuses) in
+	// words, and its lore, for the gear window's tooltip.
+	Relic     []string `json:"relic,omitempty"`
+	RelicLore string   `json:"relic_lore,omitempty"`
 }
 
 func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
@@ -1110,6 +1114,12 @@ func newInventory_Item(itm items.Item) GMCPCharModule_Payload_Inventory_Item {
 		d.Label = company.PlainLabel(itm)
 		d.Rarity = string(itm.RollRarity())
 		d.Unidentified = !itm.IsIdentified()
+	}
+
+	if itmSpec.Relic != nil {
+		d.Relic = itm.RelicLines()
+		d.RelicLore = itmSpec.Relic.Lore
+		d.Rarity = string(itmSpec.Relic.Rarity())
 	}
 
 	if !itm.Uncursed && itmSpec.Cursed {

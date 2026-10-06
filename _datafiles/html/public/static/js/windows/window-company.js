@@ -992,7 +992,9 @@
     function itemTip(i) {
         const parts = [label(i), CompanyData.kg(i.grams) + (i.count > 1 ? ' each' : '')];
         if (usesText(i)) { parts.push(i.uses + ' of ' + i.uses_max + ' uses left'); }
-        return parts.join(' \u00b7 ');
+        // Phase 36d review: a relic says what it does (help relics).
+        const relic = Array.isArray(i.relic) && i.relic.length ? '\n' + i.relic.join('\n') : '';
+        return parts.join(' \u00b7 ') + relic;
     }
 
     // presentCompanions are the companions out with the player, who can be

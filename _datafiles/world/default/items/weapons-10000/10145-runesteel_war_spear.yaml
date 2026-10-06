@@ -1,0 +1,14 @@
+itemid: 10145
+name: runesteel war spear
+namesimple: spear
+description: A war spear of runesteel on a rune-bound shaft, long and exact.
+type: weapon
+hands: 2
+subtype: stabbing
+weaponclass: spear
+tier: 5
+family: war spear
+reach: true
+damage:
+  diceroll: 1d12+5
+weight: 2500

@@ -1,0 +1,13 @@
+itemid: 10185
+name: runewrought arbalest
+namesimple: arbalest
+description: An arbalest with a runesteel bow, heavy and deadly at range.
+type: weapon
+hands: 2
+subtype: shooting
+weaponclass: crossbow
+tier: 5
+family: crossbow
+damage:
+  diceroll: 1d12+3
+weight: 4300

@@ -93,7 +93,7 @@ func TestShippedWeaponCatalog(t *testing.T) {
 		assert.Equal(t, f.reach, spec.Reach, "%s reach", spec.Name)
 		assert.Greater(t, spec.Value, 0, spec.Name)
 		assert.Greater(t, spec.Weight, 0, spec.Name)
-		assert.Contains(t, []int{1, 2, 3}, spec.Tier, "launch catalog is tiers 1 to 3: %s", spec.Name)
+		assert.Contains(t, []int{1, 2, 3, 4, 5}, spec.Tier, "the plain catalog is tiers 1 to 5 (tier 6 is authored relics, 36d): %s", spec.Name)
 		assert.Equal(t, spec.Tier, id%10, "%s: the id's last digit is its tier", spec.Name)
 		assert.NotContains(t, names, spec.Name, "unique name")
 		names[spec.Name] = id
@@ -104,13 +104,13 @@ func TestShippedWeaponCatalog(t *testing.T) {
 	}
 	for family := range families {
 		tiers := byFamily[family]
-		want := 3
+		want := 5
 		if family == "staff" {
-			want = 2 // tier 1 is the shipped ash quarterstaff (10021)
+			want = 4 // tier 1 is the shipped ash quarterstaff (10021)
 		}
 		require.Len(t, tiers, want, "family %s has its tiers", family)
 		prev := 0.0
-		for tier := 1; tier <= 3; tier++ {
+		for tier := 1; tier <= 5; tier++ {
 			spec := tiers[tier]
 			if spec == nil {
 				continue
@@ -127,18 +127,20 @@ func TestShippedWeaponCatalog(t *testing.T) {
 
 	// Two-handed weapons out-damage one-handed ones of the tier, as the
 	// price of the shield; reach and shooting are separate from that.
-	for tier := 1; tier <= 3; tier++ {
+	for tier := 1; tier <= 5; tier++ {
 		assert.Greater(t, avgDamage(byFamily["glaive"][tier].Damage), avgDamage(byFamily["sword"][tier].Damage), "tier %d", tier)
 		assert.Greater(t, avgDamage(byFamily["war spear"][tier].Damage), avgDamage(byFamily["spear"][tier].Damage), "tier %d", tier)
 	}
 	// A crossbow is heavier than a bow of its tier.
-	for tier := 1; tier <= 3; tier++ {
+	for tier := 1; tier <= 5; tier++ {
 		assert.Greater(t, byFamily["crossbow"][tier].Weight, byFamily["bow"][tier].Weight, "tier %d", tier)
 	}
 	// The glaive ladder the equipment design names, with its reach.
 	assert.Equal(t, "militia glaive", byFamily["glaive"][1].Name)
 	assert.Equal(t, "steel glaive", byFamily["glaive"][2].Name)
 	assert.Equal(t, "tempered war glaive", byFamily["glaive"][3].Name)
+	assert.Equal(t, "masterwork glaive", byFamily["glaive"][4].Name)
+	assert.Equal(t, "runesteel glaive", byFamily["glaive"][5].Name)
 }
 
 // The catalog's armor: four paths, five slots, three tiers, with protection
@@ -154,7 +156,7 @@ func TestShippedArmorCatalog(t *testing.T) {
 	}
 	got := map[key]*ItemSpec{}
 	for id, spec := range specs {
-		if id < 20100 || id >= 20300 {
+		if id < 20100 || (id >= 20300 && id < 21000) || id >= 21200 {
 			continue
 		}
 		assert.Equal(t, bulk[spec.Family], spec.Bulk, "%s bulk", spec.Name)
@@ -163,7 +165,7 @@ func TestShippedArmorCatalog(t *testing.T) {
 		assert.Empty(t, spec.StatMods, "%s: catalog armor has no stat mods (affixes add them)", spec.Name)
 		got[key{spec.Family, spec.Type, spec.Tier}] = spec
 	}
-	require.Len(t, got, 4*5*3, "every path has every slot at every tier")
+	require.Len(t, got, 4*5*5, "every path has every slot at every tier 1 to 5")
 
 	set := func(path string, tier int) (dr, weight int) {
 		for _, s := range slots {
@@ -174,7 +176,7 @@ func TestShippedArmorCatalog(t *testing.T) {
 		return dr, weight
 	}
 	paths := []string{"cloth", "leather", "medium", "heavy"}
-	for tier := 1; tier <= 3; tier++ {
+	for tier := 1; tier <= 5; tier++ {
 		prevDR, prevWeight := 0, 0
 		for _, path := range paths {
 			dr, weight := set(path, tier)
@@ -186,7 +188,7 @@ func TestShippedArmorCatalog(t *testing.T) {
 	for _, path := range paths {
 		for _, slot := range slots {
 			prev := 0
-			for tier := 1; tier <= 3; tier++ {
+			for tier := 1; tier <= 5; tier++ {
 				dr := got[key{path, slot, tier}].DamageReduction
 				assert.GreaterOrEqual(t, dr, prev, "%s %s tier %d", path, slot, tier)
 				prev = dr
@@ -194,14 +196,14 @@ func TestShippedArmorCatalog(t *testing.T) {
 		}
 		// Higher tiers improve protection at about the same weight.
 		_, w1 := set(path, 1)
-		_, w3 := set(path, 3)
-		assert.Equal(t, w1, w3, "%s weighs the same at every tier", path)
+		_, w5 := set(path, 5)
+		assert.Equal(t, w1, w5, "%s weighs the same at every tier", path)
 	}
 	// Cloth does not gain plate's protection by tier: tier 3 cloth stays
 	// below tier 1 medium.
-	clothT3, _ := set("cloth", 3)
+	clothT5, _ := set("cloth", 5)
 	mediumT1, _ := set("medium", 1)
-	assert.Less(t, clothT3, mediumT1)
+	assert.Less(t, clothT5, mediumT1)
 }
 
 // The catalog's shields: sizes, bulk, and a ladder within each shield.
@@ -225,10 +227,10 @@ func TestShippedShieldCatalog(t *testing.T) {
 		byFamily[spec.Family][spec.Tier] = spec
 	}
 	for _, family := range []string{"buckler", "round shield", "kite shield"} {
-		for _, tier := range []int{1, 2, 3} {
+		for _, tier := range []int{1, 2, 3, 4, 5} {
 			require.NotNil(t, byFamily[family][tier], "%s at tier %d", family, tier)
 		}
-		for tier := 2; tier <= 3; tier++ {
+		for tier := 2; tier <= 5; tier++ {
 			assert.Greater(t, byFamily[family][tier].DamageReduction, byFamily[family][tier-1].DamageReduction, "%s tier %d", family, tier)
 		}
 	}

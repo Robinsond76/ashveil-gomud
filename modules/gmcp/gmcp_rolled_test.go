@@ -5,6 +5,9 @@ import (
 	"testing"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -58,4 +61,51 @@ func TestGMCPItemListsShowRolledNames(t *testing.T) {
 	plain.Junk = true
 	assert.Contains(t, newInventory_Item(plain).Details, "junk")
 
+}
+
+// Phase 36d: a relic's GMCP entry carries its signature (or set and bonuses)
+// in words and its lore for the gear tooltip, and an ordinary item's payload
+// is unchanged.
+func TestGMCPItemListsCarryRelicText(t *testing.T) {
+	testItemSpecs(t,
+		items.ItemSpec{ItemId: 989401, Name: "Test Reaper", NameSimple: "reaper", Type: items.Weapon, Subtype: items.Slashing, Hands: 1, Tier: 6,
+			Damage: items.Damage{Attacks: 1, DiceCount: 1, SideCount: 6}, Value: 100, Weight: 1000,
+			Relic: &items.RelicSpec{Signature: "Reaping", Effects: map[string]int{classes.Wounded: 20}, Lore: "Old and grey.", ILvl: 30, Mob: 1, Chance: 5}},
+		items.ItemSpec{ItemId: 989402, Name: "Test Helm", NameSimple: "helm", Type: items.Head, Subtype: items.Wearable, Tier: 5, DamageReduction: 3, Value: 100, Weight: 1000,
+			Relic: &items.RelicSpec{Set: "gmcpset", ILvl: 30, Mob: 1, Chance: 5}},
+		items.ItemSpec{ItemId: 989403, Name: "plain cap", Type: items.Head, Subtype: items.Wearable, Value: 10, Weight: 100},
+	)
+	items.SetTestSet(&items.SetSpec{SetId: "gmcpset", Name: "Gmcp Regalia", Bonuses: []items.SetBonus{
+		{Pieces: 2, Effects: map[string]int{classes.Armor: 3}},
+		{Pieces: 3, Effects: map[string]int{classes.Evasion: 4}},
+	}})
+	t.Cleanup(func() { items.RemoveTestSet("gmcpset") })
+
+	blade := newInventory_Item(items.New(989401))
+	assert.Equal(t, []string{"Reaping (while worn): blows deal 20% more to a foe at or below half health."}, blade.Relic)
+	assert.Equal(t, "Old and grey.", blade.RelicLore)
+	assert.Equal(t, "legendary", blade.Rarity, "a relic shows its rarity even before it is rolled")
+
+	helm := newInventory_Item(items.New(989402))
+	require.GreaterOrEqual(t, len(helm.Relic), 3)
+	assert.Contains(t, helm.Relic[0], "Gmcp Regalia")
+	assert.Contains(t, helm.Relic[1], "2 worn: +3% damage reduction")
+	assert.Equal(t, "set", helm.Rarity)
+
+	data, err := json.Marshal(newInventory_Item(items.New(989403)))
+	require.NoError(t, err)
+	assert.NotContains(t, string(data), "relic")
+
+	// 36d review: the Company window's gear and cargo rows carry it too,
+	// so a relic handed to a companion still says what it does.
+	var eq characters.Worn
+	eq.Weapon = items.New(989401)
+	member := company.InventoryMemberOf("ysolde", "Ysolde", company.MemberState{Equipment: eq})
+	worn := inventoryMemberOf(member).Worn
+	require.NotEmpty(t, worn)
+	assert.Equal(t, blade.Relic, worn[0].Relic)
+	assert.Equal(t, helm.Relic, cargoItem(encumbrance.CargoStack{ItemId: 989402, Count: 1}).Relic)
+	data, err = json.Marshal(cargoItem(encumbrance.CargoStack{ItemId: 989403, Count: 1}))
+	require.NoError(t, err)
+	assert.NotContains(t, string(data), "relic")
 }

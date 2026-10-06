@@ -63,6 +63,12 @@ type Character struct {
 	fxLevel   int
 	fxTalents []string
 	fxValid   bool
+	// Phase 36d: what worn relics add on top of fx, cached against the
+	// relic ids worn and the fx map it was added to.
+	gearKey  string
+	gearFx   map[string]int
+	gearSets []items.ActiveSet
+	mergedFx classes.Effects
 	// Aura is what allies' class auras give this character this round
 	// (Phase 38b); the combat round sets it and nothing saves it.
 	Aura ClassAura `yaml:"-"`

@@ -1,0 +1,11 @@
+itemid: 21042
+name: masterwork leather boots
+namesimple: boots
+description: Supple leather reinforced at every seam by a master tanner. It is footwear of the leather path.
+type: feet
+subtype: wearable
+bulk: light
+tier: 4
+family: leather
+damagereduction: 4
+weight: 700

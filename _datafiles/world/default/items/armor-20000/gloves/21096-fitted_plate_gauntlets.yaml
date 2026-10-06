@@ -1,0 +1,11 @@
+itemid: 21096
+name: fitted plate gauntlets
+namesimple: gauntlets
+description: Plate fitted to the wearer by a master armorer, close and sure. It is hand protection of the heavy path.
+type: gloves
+subtype: wearable
+bulk: heavy
+tier: 4
+family: heavy
+damagereduction: 6
+weight: 900

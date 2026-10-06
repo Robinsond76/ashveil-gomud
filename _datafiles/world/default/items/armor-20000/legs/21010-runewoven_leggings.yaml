@@ -1,0 +1,11 @@
+itemid: 21010
+name: runewoven leggings
+namesimple: leggings
+description: Cloth woven with runethread, light as linen and far harder to cut. It is leg armor of the cloth path.
+type: legs
+subtype: wearable
+bulk: light
+tier: 5
+family: cloth
+damagereduction: 3
+weight: 400

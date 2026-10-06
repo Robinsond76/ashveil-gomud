@@ -1,0 +1,11 @@
+itemid: 21094
+name: runesteel plate
+namesimple: plate
+description: Runesteel plate, etched and fitted, the armor of a champion. It is body armor of the heavy path.
+type: body
+subtype: wearable
+bulk: heavy
+tier: 5
+family: heavy
+damagereduction: 25
+weight: 8000

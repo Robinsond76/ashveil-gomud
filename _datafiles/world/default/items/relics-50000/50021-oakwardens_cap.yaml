@@ -1,0 +1,18 @@
+itemid: 50021
+name: "Oakwarden's Cap"
+namesimple: cap
+description: 'A cap of runehide and oak leaves that never wither.'
+type: head
+subtype: wearable
+bulk: light
+tier: 5
+family: leather
+damagereduction: 6
+weight: 500
+value: 900
+relic:
+  set: oakwarden
+  ilvl: 40
+  mob: 34
+  chance: 5
+  lore: 'The wardens of the old wood wore what the wood gave them.'

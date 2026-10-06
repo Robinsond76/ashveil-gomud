@@ -1,0 +1,11 @@
+itemid: 21030
+name: masterwork leather cap
+namesimple: cap
+description: Supple leather reinforced at every seam by a master tanner. It is headgear of the leather path.
+type: head
+subtype: wearable
+bulk: light
+tier: 4
+family: leather
+damagereduction: 5
+weight: 500

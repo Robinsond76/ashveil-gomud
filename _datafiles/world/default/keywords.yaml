@@ -126,6 +126,7 @@ help:
       - gearup
       - loot
       - rarity
+      - relics
       - quality
       - itemlevel
       - equipmenttiers
@@ -339,7 +340,8 @@ help-aliases:
   treasury: [company-treasury, company treasury]
   loot: [autoloot, company-loot]
   encounters: [encounter, random-encounter, random-encounters, random encounter, random encounters, danger, dangerous, dangerous rooms, bosses, boss, escorts, cache, caches, spoils, personal loot, personal-loot, grace, breathing room]
-  rarity: [rare, epic, legendary, unidentified, level requirement, level-requirement, set items, uncommon]
+  rarity: [rare, epic, unidentified, level requirement, level-requirement, uncommon]
+  relics: [relic, legendary, legendaries, signature, signatures, sets, set bonus, set bonuses, set-bonus, set items, set pieces, bad luck, bad-luck]
   quality: [crude, worn, fine, superior, exquisite, workmanship]
   itemlevel: [item level, ilvl, item-level]
   equipmenttiers: [tier, tiers, equipment-tiers, equipment tiers, weapon families, glaive, glaives, crossbows, polearms]

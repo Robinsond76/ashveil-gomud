@@ -9,10 +9,7 @@ import (
 )
 
 // goodsValue is the shipped value of each material salvage can yield.
-var goodsValue = map[int]int{
-	MaterialScrapIron: 7, MaterialIronOre: 18, MaterialSteelIngot: 45, MaterialRunestone: 60,
-	MaterialAshwood: 14, MaterialSilk: 38, MaterialTannedHide: 16,
-}
+var goodsValue = materialWorth
 
 func yieldWorth(parts []SalvagePart) int {
 	worth := 0
@@ -118,5 +115,8 @@ func TestSalvageQualityRarityAndRunestoneBonuses(t *testing.T) {
 	assert.True(t, has(SalvageYield(epic), MaterialRunestone), "an Epic gives a runestone shard")
 	tier4 := spec
 	tier4.Tier = 4
+	tier4.Value = 400
 	assert.True(t, has(SalvageYield(specItem(tier4)), MaterialRunestone), "a tier 4 piece gives a runestone shard")
+	tier4.Value = 40
+	assert.False(t, has(SalvageYield(specItem(tier4)), MaterialRunestone), "a piece worth less than the shard keeps it (never salvaged for profit)")
 }

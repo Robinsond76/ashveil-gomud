@@ -1,0 +1,13 @@
+itemid: 10115
+name: runesteel axe
+namesimple: axe
+description: A runesteel axe with a crescent edge and runes cut along the haft.
+type: weapon
+hands: 1
+subtype: cleaving
+weaponclass: axe
+tier: 5
+family: axe
+damage:
+  diceroll: 1d12+1
+weight: 1800

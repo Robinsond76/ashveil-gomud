@@ -1,0 +1,14 @@
+itemid: 10155
+name: runesteel glaive
+namesimple: glaive
+description: A glaive of runesteel, the blade traced with runes that catch the light.
+type: weapon
+hands: 2
+subtype: slashing
+weaponclass: glaive
+tier: 5
+family: glaive
+reach: true
+damage:
+  diceroll: 2d8+3
+weight: 3600

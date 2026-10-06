@@ -35,6 +35,8 @@ type inventoryItem struct {
 	Slot    string `json:"slot,omitempty"`
 	// WornBy (Phase 38e): the creature species the item is cut for.
 	WornBy []string `json:"worn_by,omitempty"`
+	// Relic (36d review): a relic's signature or set bonuses, in words.
+	Relic []string `json:"relic,omitempty"`
 }
 
 type inventoryMember struct {
@@ -152,7 +154,7 @@ func nativeInventorySources() inventorySources {
 
 func inventoryItemOf(i company.InventoryItem) inventoryItem {
 	return inventoryItem{Ref: i.Ref, Name: i.Name, Label: i.Label, Grams: i.Grams, Count: i.Count, Uses: i.Uses, UsesMax: i.UsesMax,
-		Type: i.Type, Subtype: i.Subtype, Slot: i.Slot, WornBy: i.WornBy}
+		Type: i.Type, Subtype: i.Subtype, Slot: i.Slot, WornBy: i.WornBy, Relic: i.Relic}
 }
 
 func inventoryItems(in []company.InventoryItem) []inventoryItem {
@@ -176,6 +178,7 @@ func cargoItem(s encumbrance.CargoStack) inventoryItem {
 	if spec := items.GetItemSpec(s.ItemId); spec != nil {
 		out.Grams, out.UsesMax, out.Type, out.Subtype = spec.Weight, spec.Uses, string(spec.Type), string(spec.Subtype)
 		out.WornBy = spec.WornBy
+		out.Relic = itm.RelicLines()
 		if out.Uses == 0 {
 			out.Uses = spec.Uses // a full stack
 		}

@@ -1,0 +1,11 @@
+itemid: 21073
+name: runescale boots
+namesimple: boots
+description: Runesteel scales sewn to a backing, flexible and nearly unbreakable. It is footwear of the medium path.
+type: feet
+subtype: wearable
+bulk: medium
+tier: 5
+family: medium
+damagereduction: 5
+weight: 1200

@@ -1,0 +1,13 @@
+itemid: 10135
+name: runesteel spear
+namesimple: spear
+description: A spear tipped with runesteel, its socket ringed in runes.
+type: weapon
+hands: 1
+subtype: stabbing
+weaponclass: spear
+tier: 5
+family: spear
+damage:
+  diceroll: 1d10+2
+weight: 1500
