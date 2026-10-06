@@ -118,6 +118,7 @@ func TestDeathThroughPluginsLoad(t *testing.T) {
 	require.NotNil(t, module, "init registered the module")
 	t.Cleanup(plugins.SnapshotLoadStateForTest())
 	plugins.Load(dataDir)
+	churchOnly(t)
 	provider, ok := domain.Active()
 	require.True(t, ok)
 	assert.Same(t, module, provider)
@@ -306,4 +307,13 @@ func spawnKeeper(t *testing.T, roomID int) {
 	}
 	room.Prepare(false)
 	require.NotEmpty(t, room.GetMobs(), "the keeper is in room %d", roomID)
+}
+
+// churchOnly empties the defeat table after plugins.Load, so a test of the
+// church return (Phase 25) isn't claimed by a Phase 53 scenario.
+func churchOnly(t *testing.T) {
+	t.Helper()
+	module.mu.Lock()
+	module.cfg.scenarios = nil
+	module.mu.Unlock()
 }

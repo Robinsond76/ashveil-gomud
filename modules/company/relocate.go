@@ -12,6 +12,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/wounds"
 
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 )
@@ -58,6 +59,40 @@ func (m *CompanyModule) RelocateCompany(leaderUserID, originRoomID, roomID int) 
 		}
 	}
 	return moved
+}
+
+var _ domain.DefeatProvider = (*CompanyModule)(nil)
+
+// WoundCompany implements company.DefeatProvider (Phase 53): a defeat that
+// leaves the company for dead leaves each living companion who is with the
+// leader a lasting wound. The wound lives on the companion's own character,
+// so it shows in the panels and heals like any other; the snapshot is
+// refreshed so a restart keeps it.
+func (m *CompanyModule) WoundCompany(leaderUserID, pct int, roll func(n int) int) []string {
+	byCompanion := m.instances[leaderUserID]
+	companionIDs := make([]int, 0, len(byCompanion))
+	for companionID := range byCompanion {
+		companionIDs = append(companionIDs, companionID)
+	}
+	slices.Sort(companionIDs)
+	var names []string
+	for _, companionID := range companionIDs {
+		instanceID := byCompanion[companionID]
+		if !m.runtime.IsAttached(leaderUserID, instanceID) {
+			continue
+		}
+		if _, _, standing := m.runtime.Standing(instanceID); !standing {
+			continue
+		}
+		mob := mobs.GetInstance(instanceID)
+		if mob == nil {
+			continue
+		}
+		mob.Character.AddWound(wounds.Beaten(mob.Character.HealthMax.Value, pct, roll))
+		m.refreshSnapshot(leaderUserID, companionID)
+		names = append(names, mob.Character.Name)
+	}
+	return names
 }
 
 // separate takes a living companion off the map (Phase 33h3): its gear,

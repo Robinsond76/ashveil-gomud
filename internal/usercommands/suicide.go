@@ -113,6 +113,7 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	allowPenalties := user.Character.Level > int(config.Death.ProtectionLevels)
 
 	killerMobId := 0
+	killerInstanceId := user.Character.KillerMobInstanceId
 	if user.Character.KillerMobInstanceId > 0 {
 		if killerMob := mobs.GetInstance(user.Character.KillerMobInstanceId); killerMob != nil {
 			killerMobId = int(killerMob.MobId)
@@ -123,6 +124,18 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 		user.Character.KillerMobInstanceId = 0
 		user.Character.KillerMobIsElite = false
 		user.Character.KillerMobName = ``
+	}
+
+	// Ashveil Phase 53: a defeat scenario may settle this death (rescue,
+	// capture, robbery). It owns the aftermath, so the engine's drops and
+	// corpse are skipped.
+	scenarioClaimed := false
+	if ashveilDeath {
+		if sp, ok := ashveil.(death.ScenarioProvider); ok {
+			killer := death.Killer{MobID: killerMobId, InstanceID: killerInstanceId,
+				Protected: !allowPenalties || user.Character.HasBuffFlag("perma-gear")}
+			scenarioClaimed = sp.ClaimDefeat(user.UserId, killer)
+		}
 	}
 
 	events.AddToQueue(events.PlayerDeath{
@@ -174,7 +187,9 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	user.EventLog.Add(`death`, fmt.Sprintf(`<ansi fg="username">%s</ansi> has <ansi fg="red-bold">DIED</ansi>`, user.Character.Name))
 
 	// Only apply penalties if they were above the threshold
-	if allowPenalties && !user.Character.HasBuffFlag("perma-gear") {
+	if scenarioClaimed {
+		// The scenario's aftermath replaces the drops and the corpse.
+	} else if allowPenalties && !user.Character.HasBuffFlag("perma-gear") {
 
 		corpseItems := []items.Item{}
 		corpseGold := 0

@@ -91,6 +91,8 @@
 
         .cmp-line { color: var(--t-text-secondary); }
 
+        .cmp-held { color: var(--t-text); border-left: 3px solid var(--t-accent); padding-left: 6px; }
+
         .cmp-actions { display: flex; flex-wrap: wrap; gap: 4px; }
 
         .cmp-btn {
@@ -1087,6 +1089,23 @@
             meter.appendChild(fill);
             pad.appendChild(meter);
             pad.appendChild(el('div', 'cmp-line', 'Capacity: assigned packs ' + CompanyData.kg(l.member_capacity_g) + ', horses ' + CompanyData.kg(l.mount_capacity_g) + '. Cargo ' + CompanyData.kg(l.cargo_g) + '.'));
+        }
+        if (inv.seized) {
+            // Phase 53: a capture holds the leader's pack and gold in a chest.
+            const held = inv.seized;
+            const parts = [];
+            if (held.items > 0) { parts.push(held.items + (held.items === 1 ? ' item' : ' items')); }
+            if (held.gold > 0) { parts.push(held.gold + ' gold'); }
+            const what = parts.join(' and ');
+            const line = el('div', 'cmp-line cmp-held', 'Held by your captors: ' + what + (held.where ? ' in ' + held.where : '') + '. ' +
+                (held.here ? 'Defeat the guards, then reclaim it.' : 'Go back there, defeat the guards, and reclaim it.'));
+            line.setAttribute('role', 'status');
+            pad.appendChild(line);
+            if (held.here) {
+                const seizedActions = el('div', 'cmp-actions');
+                seizedActions.appendChild(button('Reclaim', 'reclaim', 'Open the chest and take back your pack (reclaim)'));
+                pad.appendChild(seizedActions);
+            }
         }
         const actions = el('div', 'cmp-actions');
         actions.appendChild(button('Meal', 'company meal', 'Everyone with you eats and drinks (company meal)'));

@@ -111,6 +111,7 @@ type Character struct {
 	Charmed             *CharmInfo                     `yaml:"-"`                          // If they are charmed, this is the info
 	CharmedMobs         []int                          `yaml:"-"`                          // If they have charmed anyone, this is the list of mob instance ids
 	Items               []items.Item                   `yaml:"items,omitempty"`            // The items the character is holding
+	Seized              []items.Item                   `yaml:"seized,omitempty"`           // Ashveil (Phase 53): the pack a defeat's captors hold until it is reclaimed; saved with Items so a restart never loses or doubles it
 	Buffs               buffs.Buffs                    `yaml:"buffs,omitempty"`            // The buffs the character has active
 	Equipment           Worn                           `yaml:"equipment,omitempty"`        // The equipment the character is wearing
 	TNLScale            float32                        `yaml:"-"`                          // The experience scale of the character. Don't write to yaml since is dynamically calculated.

@@ -25,3 +25,31 @@ Settlements:
 FallbackRoomId: 18
 # Health and mana on waking, as a percentage (1..100) of the new maximums.
 RespawnVitalsPct: 50
+
+# Phase 53: defeat scenarios. A new death that fits a row below ends there
+# instead of at the church, with no level lost (the recovery is the cost).
+# When no row fits, the church and the level loss stand. Each row:
+#   Id, Kind (rescued | captured | left-for-dead | robbed), Weight (its share
+#   among the rows that fit, default 1), Foes (the killer's race name or mob
+#   group; empty fits any foe, including an unknown killer), Zones (the zone
+#   the company fell in; empty fits any), Text (what the leader reads on
+#   waking; empty uses the kind's own).
+#   rescued:       Hunger, Fatigue (members wake at or below these; defaults
+#                  45 and 20)
+#   captured:      Room (the capture room), GuardMob, GuardCount, GuardLevel,
+#                  GoldLossPct (share of gold gone for good; the rest is held
+#                  with the pack until `reclaim`)
+#   left-for-dead: WoundPct (a lasting wound each, in percent of max health)
+#   robbed:        GoldLossPct, ItemLossPct, ItemLossMax (loose goods only;
+#                  equipped gear, quest tokens, keys and camp gear are safe)
+# Test content: the capture room is the Brigands' Tent (91001); the world
+# replaces these rows.
+Scenarios:
+  - { Id: wayfarer-rescue, Kind: rescued, Weight: 2 }
+  - { Id: brigand-capture, Kind: captured, Weight: 3, Foes: [human, elf, goblin, troll, ogre, riffraff],
+      Room: 91001, GuardMob: 86, GuardCount: 2, GuardLevel: 2, GoldLossPct: 25 }
+  - { Id: brigand-robbery, Kind: robbed, Weight: 2, Foes: [human, elf, goblin, troll, ogre, riffraff],
+      GoldLossPct: 20, ItemLossPct: 25, ItemLossMax: 4 }
+  - { Id: left-for-dead, Kind: left-for-dead, Weight: 3,
+      Foes: [rodent, canine, giant spider, insect, reptile, reptilian, beast, undead, lagomorph, monkey, ghostly spirit, fungus, demon, eldritch horror],
+      WoundPct: 20 }
