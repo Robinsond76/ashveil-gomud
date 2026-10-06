@@ -111,7 +111,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 	for _, r := range []string{"water", "forage", "herbs", "firewood", "shelter", "fishing", "game", "unknown", "depleted"} {
 		want = append(want, "map/resources/"+r+".png")
 	}
-	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist", "beasttamer"}, promotedClasses...) {
+	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist", "beasttamer", "arbalist"}, promotedClasses...) {
 		want = append(want, "map/units/"+u+"/idle.png", "map/units/"+u+"/walk.png")
 	}
 	for _, rel := range want {
@@ -174,7 +174,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 // feet on row 30 (frameHeight-2) and nothing outside the frame margins.
 func TestMapUnitSpritesFollowAnchorRules(t *testing.T) {
 	dir := spriteDir(t)
-	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist", "beasttamer"}, promotedClasses...) {
+	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist", "beasttamer", "arbalist"}, promotedClasses...) {
 		for file, frames := range map[string]int{"idle.png": 2, "walk.png": 4} {
 			f, err := os.Open(filepath.Join(dir, "map", "units", u, file))
 			if err != nil {

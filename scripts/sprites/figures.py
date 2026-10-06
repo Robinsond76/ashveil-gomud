@@ -63,6 +63,9 @@ CLASSES = {
     # Phase 39g: a brewer in a stained wool smock and a leather apron.
     "alchemist": dict(trousers="wool", boots="leather", torso="wool", sleeve="wool",
                       hair="leather"),
+    # Phase 39h: a siege-camp crossbowman in a slate padded jack.
+    "arbalist": dict(trousers="charcoal", boots="leather", torso="slate", sleeve="leather",
+                     hair="charcoal"),
     # Phase 39d: the Doll Master, a puppeteer in a long plum frock coat.
     "dollmaster": dict(trousers="charcoal", boots="leather", torso="plum", sleeve="plum",
                        hair="bone"),
@@ -752,6 +755,33 @@ def draw_alchemist(r):
     cv.part(rect(hx - 1, fy, hx + 1, fy + r.px(3)), "bone", flat="l")
     cv.part(rect(hx - 1, fy + 1, hx + 1, fy + r.px(3)), "ember", flat="m")
     cv.part({(hx, fy - 1)}, "wood", flat="m")
+def draw_arbalist(r):
+    """A padded slate jack, a steel cap and a heavy crossbow held across the chest."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("slate")
+    cv.part({(x, r.ysh + r.px(3)) for x in range(r.tx0, r.tx1 + 1)}, "leather", flat="m")  # quilting seam
+    _belt(r, "leather", r.yhip - r.px(1), "brass.m")
+    r.arms("leather", glove="leather")
+    r.head(helm="steel")
+    if v == "up":  # a bolt quiver across the back
+        cv.part(rect(r.cx - 1, r.top + r.px(3), r.cx + r.px(2), r.ysh + r.px(8)), "leather")
+        for i in range(3):
+            cv.put(r.cx + i - 1, r.top + r.px(2), "bone.m")
+        return
+    hx, hy = r.hand_r
+    if v == "down":
+        hx += 1
+    # The crossbow: a wooden stock, a steel prod across its front and a taut string.
+    reach = r.px(8)
+    cv.part(thick(line(hx - reach // 2, hy, hx + reach, hy), 1), "wood", flat="m")
+    px = hx + reach
+    cv.part(line(px, hy - r.px(5), px, hy + r.px(5)), "steel", flat="l")
+    cv.part(line(px - 1, hy - r.px(5), hx, hy), "bone", flat="d")
+    cv.part(line(px - 1, hy + r.px(5), hx, hy), "bone", flat="d")
+    cv.put(hx, hy - 1, "steel.l")  # the nut
+
+
 
 def draw_dollmaster(r):
     """A plum frock coat with brass buttons and a bone-white mane, a puppeteer's
@@ -792,6 +822,7 @@ def draw_dollmaster(r):
 
 DRAWERS = {
     "alchemist": draw_alchemist,
+    "arbalist": draw_arbalist,
     "dollmaster": draw_dollmaster,
     "gryphon-rider": draw_gryphon_rider,
     "halberdier": draw_halberdier, "samurai": draw_samurai, "shaman": draw_shaman,

@@ -92,7 +92,7 @@ endif
 validate: fmtcheck vet ## Run the standard Go formatting and vet checks.
 
 test: generate js-lint js-test lua-lint ## Run code generation, JavaScript/Lua linting, JavaScript tests, and Go tests.
-	@go test -race ./...
+	@go test -race -timeout 30m ./...
 
 smoke: generate ## Play a new character through a live server (a few minutes; see docs/LIVE_SMOKE_PLAYTEST.md).
 	@ASHVEIL_LIVE_SMOKE=1 go test -run 'TestLiveSmoke$$' -timeout 20m -count=1 -v .

@@ -129,6 +129,19 @@ func TestChooseFromPartyPicksTheWeakestLegal(t *testing.T) {
 	assert.False(t, ok)
 }
 
+// TestChooseFromPartyArmoredAimsAtTheMostArmored (39h review): an
+// Arbalist's new target after a kill follows its armored rule, not the
+// weakest, so the party's foes carry their armor.
+func TestChooseFromPartyArmoredAimsAtTheMostArmored(t *testing.T) {
+	party, alive := twoByTwo(t)
+	mobs.GetInstance(8201).Character.RTState().Bark = 30
+	t.Cleanup(func() { mobs.GetInstance(8201).Character.RT = nil })
+
+	id, ok := chooseFromParty(0, 0, true, party, alive, formationcombat.ReachAny, strategy.Armored, 0)
+	require.True(t, ok)
+	assert.Equal(t, 8201, id, "the armored foe, though 8202 is weaker")
+}
+
 func TestLegalAgainstParty(t *testing.T) {
 	party, alive := twoByTwo(t)
 	assert.False(t, legalAgainstParty(2, true, party, 8201, alive, formationcombat.ReachNone), "out of lateral range")

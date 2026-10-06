@@ -34,7 +34,9 @@ reach anyone in the column, however deep (<ansi fg="command">help formation</ans
   <ansi fg="yellow">Crossbow</ansi>     1d6+2 / 1d8+2 / 1d10+2      two hands, heavy, shoots from any rank
 
 The glaive is the militia glaive, steel glaive and tempered war glaive. A
-crossbow weighs about three times a bow. There is no ammunition to carry.
+crossbow weighs about three times a bow. There is no ammunition to carry. An
+Arbalist (and only an Arbalist) shoots it as a Piercing Bolt that takes a
+turn to wind (<ansi fg="command">help arbalist</ansi>); in anyone else's hands it is a heavier bow.
 
 <ansi fg="yellow-bold">Armor</ansi>
 

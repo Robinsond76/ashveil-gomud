@@ -122,7 +122,7 @@ func TestShippedArchetypesLoad(t *testing.T) {
 	for _, a := range m.table.List() {
 		got = append(got, a.ID)
 	}
-	assert.Equal(t, []string{"alchemist", "beasttamer", "cleric", "dollmaster", "gryphon-rider", "halberdier", "ranger", "rogue", "samurai", "shaman", "warrior", "witch", "wizard"}, got, "every shipped archetype resolves against real skills and spells")
+	assert.Equal(t, []string{"alchemist", "arbalist", "beasttamer", "cleric", "dollmaster", "gryphon-rider", "halberdier", "ranger", "rogue", "samurai", "shaman", "warrior", "witch", "wizard"}, got, "every shipped archetype resolves against real skills and spells")
 
 	wiz, ok := m.table.Get("wizard")
 	require.True(t, ok)
@@ -468,7 +468,7 @@ func TestLoadThroughRealPluginConfigPath(t *testing.T) {
 	m.store = &fakeStore{}
 	m.load()
 
-	assert.Equal(t, 13, m.table.Len())
+	assert.Equal(t, 14, m.table.Len())
 	wiz, ok := m.table.Get("wizard")
 	require.True(t, ok)
 	assert.Equal(t, map[string]int{"cast": 1}, wiz.GrantSkills)
