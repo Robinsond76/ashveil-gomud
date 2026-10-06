@@ -18,7 +18,7 @@ func TestWorldMapHelp(t *testing.T) {
 	text, err := GetHelpContents("worldmap")
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Help for worldmap", "adventurer", "gold ring", "shield", "pennant", "tent", "never see the camp", "Sprites", "Camps", "help camp", "help resources"} {
+	for _, want := range []string{"Help for worldmap", "adventurer", "gold ring", "shield", "pennant", "tent", "never see the camp", "Sprites", "Camps", "Terrain", "Landmarks", "no exit between them", "fog", "Style", "Classic", "regrows", "three quarters", "help camp", "embers", "bedrolls", "help resources"} {
 		assert.Contains(t, plain, want)
 	}
 	assert.NotContains(t, text, "</ ", "no broken tags")

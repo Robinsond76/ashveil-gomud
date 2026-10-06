@@ -108,6 +108,9 @@ type GatheringModule struct {
 	ledger   gathering.Ledger
 	settings gathering.Settings
 	actions  map[int]*action
+	// pickedClean is how many resource pools each watched room has at zero
+	// (memory only), so a regrown charge can tell clients to redraw (Phase 40c).
+	pickedClean map[int]int
 
 	// Seams; natives by default.
 	clock       func() time.Time
@@ -566,6 +569,7 @@ func (m *GatheringModule) Active(userID int) (gathering.Kind, bool) {
 
 func (m *GatheringModule) onNewRound(e events.Event) events.ListenerReturn {
 	m.tick()
+	m.checkRegrowth()
 	return events.Continue
 }
 
@@ -801,6 +805,7 @@ func (m *GatheringModule) finish(user *users.UserRecord, room *rooms.Room, a act
 	rest := m.chargesLeft(room, a.Kind, rule)
 	if rest < 1 {
 		lines = append(lines, fmt.Sprintf("The %s here is picked clean for now.", verbs[a.Kind].noun))
+		m.watchRegrowth(room.RoomId)
 		events.AddToQueue(events.RoomResourcesChanged{RoomId: room.RoomId}) // clients redraw the marker
 	}
 	user.SendText(strings.Join(lines, "\n"))
@@ -876,4 +881,57 @@ func (m *GatheringModule) deliver(user *users.UserRecord, drops []gathering.Drop
 		names = append(names, named(id, taken[id]))
 	}
 	return names, left
+}
+
+// pooledClean counts a room's pools that are picked clean now. The caller
+// holds m.mu.
+func (m *GatheringModule) pooledClean(roomID int) int {
+	n := 0
+	now := m.clock()
+	for kind := range m.ledger.Rooms[roomID] {
+		rule, ok := m.settings.Rules[kind]
+		if ok && m.ledger.Charges(roomID, kind, rule, now) < 1 {
+			n++
+		}
+	}
+	return n
+}
+
+// watchRegrowth starts watching a room that was just picked clean.
+func (m *GatheringModule) watchRegrowth(roomID int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.pickedClean == nil {
+		m.pickedClean = map[int]int{}
+	}
+	if n := m.pooledClean(roomID); n > 0 {
+		m.pickedClean[roomID] = n
+	} else {
+		delete(m.pickedClean, roomID)
+	}
+}
+
+// checkRegrowth tells clients to redraw a watched room whose picked-clean
+// count changed because a pool regrew a charge (Phase 40c). Real time only;
+// nothing here touches game time. A restart forgets the watch, and clients
+// refresh the room on their next World.Map or visit.
+func (m *GatheringModule) checkRegrowth() {
+	m.mu.Lock()
+	var changed []int
+	for roomID, was := range m.pickedClean {
+		now := m.pooledClean(roomID)
+		if now != was {
+			changed = append(changed, roomID)
+		}
+		if now == 0 {
+			delete(m.pickedClean, roomID) // nothing left to watch
+		} else {
+			m.pickedClean[roomID] = now
+		}
+	}
+	m.mu.Unlock()
+	sort.Ints(changed)
+	for _, roomID := range changed {
+		events.AddToQueue(events.RoomResourcesChanged{RoomId: roomID})
+	}
 }

@@ -39,7 +39,9 @@ type Member struct {
 	ArchetypeKnown bool
 	// Class is the id of the advanced or elite class it promoted into (Phase
 	// 38b); "" before promotion. The web client draws the class's art.
-	Class     string
+	Class string
+	// Lineage is its base archetype id (Phase 40c), for the map sprite.
+	Lineage   string
 	HasHP     bool
 	HP, HPMax int
 	// HPLimit is the wound limit (Phase 30b): HPMax when unwounded.
@@ -242,6 +244,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
 				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Class: v.Class, Placed: v.Placed, Row: v.Row, Col: v.Col,
 				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
+			m.Lineage = v.Archetype
 			m.Strategy = src.strategy(uid, m.Key)
 			m.Abilities = strategy.CompanionAbilities(v.Archetype)
 			switch v.Status {
