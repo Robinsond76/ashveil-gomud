@@ -1,4 +1,5 @@
 mobid: 68
+sprite: straw-archer
 zone: Tutorial
 itemdropchance: 0
 hostile: false

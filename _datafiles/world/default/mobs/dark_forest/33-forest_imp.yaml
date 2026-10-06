@@ -1,4 +1,5 @@
 mobid:  33
+sprite: imp-forest
 zone: Dark Forest
 itemdropchance: 5
 hostile: true

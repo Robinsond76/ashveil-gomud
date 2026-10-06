@@ -1,4 +1,5 @@
 mobid:  34
+sprite: ent
 zone: Dark Forest
 itemdropchance: 5
 hostile: true
