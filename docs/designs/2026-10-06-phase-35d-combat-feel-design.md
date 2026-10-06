@@ -1,8 +1,9 @@
 # Phase 35d: combat feel
 
-Status: **design drafted 2026-10-06 at the owner's request**, after the
+Status: **approved by the owner 2026-10-06**, who accepted the default for
+each [open question](#open-questions-for-the-owner). Drafted at the owner's
+request after the
 [combat rebalance second opinion](../plans/2026-10-06-combat-rebalance-second-opinion.md).
-It needs the owner's approval before implementation (handoff rule 20).
 Execution plan: [phase 35d plan](../plans/2026-10-06-phase-35d-combat-feel.md).
 It follows [35b caster power](../plans/2026-10-05-phase-35b-caster-power.md)
 (merged in PR #21) and comes **before** phase 37, whose encounter tuning
@@ -284,13 +285,23 @@ it).
 
 ## Open questions for the owner
 
+The owner accepted all four defaults on 2026-10-06. Each can be revisited.
+
 1. Decision 1 widens 35a2's "15 to 25% per landed blow" to three bands. Is a
    glancing blow at about a tenth of HP acceptable as the common weak result?
+   **Default accepted:** yes, a glancing blow deals about a tenth of HP.
 2. Decision 2 makes a one-round heal unbreakable by ordinary blows on both
    sides. Should enemy healers instead keep today's break chance, making
    the rule player-only?
+   **Default accepted:** the rule applies to both sides. The owner added
+   guidance: because unbreakable enemy heals notably raise difficulty,
+   healers can be uncommon in enemy groups. How uncommon is left to the
+   implementer's judgment (here for any enemy groups 35d touches, and for
+   phase 37's encounter tables).
 3. Decision 4 makes "guard the healer" and "focus weakest" defaults by
    level. Should they instead be unlocked options the player must set, so the
    setup layer stays a choice?
+   **Default accepted:** they are automatic defaults by the leader's level.
 4. Decision 6 removes strategy from boss groups as the contract says. Keep
    that, or let bosses at bands 25+ run one tier below the band?
+   **Default accepted:** bosses run no strategy at every band.

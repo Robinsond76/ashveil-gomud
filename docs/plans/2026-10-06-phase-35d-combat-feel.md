@@ -4,8 +4,9 @@ Implements the [35d combat feel design](../designs/2026-10-06-phase-35d-combat-f
 Branch and worktree: `phase-35d-combat-feel`, from master after 35b
 (fb89b3f).
 
-Status: plan written 2026-10-06. The design **awaits the owner's approval**;
-implementation begins only when the owner asks for it. Phase 37 waits on
+Status: plan written 2026-10-06. The design was **approved by the owner
+2026-10-06** with all four open-question defaults accepted; enemy healers may
+be uncommon in enemy groups, at the implementer's judgment. Phase 37 waits on
 this phase.
 
 ## Goal
@@ -100,7 +101,7 @@ HP trickle.
 
 ## Tasks
 
-- [ ] **Owner approval** of the design, recorded in Project Status.
+- [x] **Owner approval** of the design, recorded in Project Status (2026-10-06; all four open-question defaults accepted; enemy healers may be uncommon, at the implementer's judgment).
 - [ ] **Tests first**, red before the code:
   - `blowQuality` odds at edge −1, 0, +1 and the factors; `expectedDPS`
     agrees with a seeded real pass; the message tier and suffix for each

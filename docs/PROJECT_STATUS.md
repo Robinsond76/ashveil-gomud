@@ -92,8 +92,10 @@ the band's tier against the "no strategy" contract. Recorded in the
 [plan](plans/2026-10-06-phase-35d-combat-feel.md) propose blow qualities,
 resolving heals, an 80% patch threshold, level-keyed company defaults,
 `HPAfterFull` 0.4, short bosses and seconds-and-lines targets. 35d depends on
-35b only and must merge before 37 and 38b. Documentation only; awaits the
-owner's approval. Verification: relative Markdown links and the diff checked;
+35b only and must merge before 37 and 38b. Documentation only. The owner
+approved it the same day, accepting the default for each open question, and
+noted that enemy healers can be uncommon because unbreakable enemy heals
+raise difficulty notably (frequency left to the implementer). Verification: relative Markdown links and the diff checked;
 no Go tests required.
 
 **Roadmap and designs (2026-10-05):** the owner reviewed the game's
@@ -221,7 +223,7 @@ implemented (handoff rule 20).
 | 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), complete, merged via [PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16) | Level impact §5 | 35a |
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
-| 35d | Combat feel: every swing lands with a quality (glancing, solid, telling) the skill edge decides, one-round heals resolve, an 80% after-battle patch threshold, company tactics defaults that grow with the leader's level, HP keeping pace after level 20, short bosses with no strategy, seconds-and-lines targets. [Design](designs/2026-10-06-phase-35d-combat-feel-design.md), **awaiting owner approval**; [plan](plans/2026-10-06-phase-35d-combat-feel.md); from the [combat rebalance second opinion](plans/2026-10-06-combat-rebalance-second-opinion.md) | Owner direction 2026-10-06 | 35b |
+| 35d | Combat feel: every swing lands with a quality (glancing, solid, telling) the skill edge decides, one-round heals resolve, an 80% after-battle patch threshold, company tactics defaults that grow with the leader's level, HP keeping pace after level 20, short bosses with no strategy, seconds-and-lines targets. [Design](designs/2026-10-06-phase-35d-combat-feel-design.md), **approved 2026-10-06** (all open-question defaults accepted; enemy healers may be uncommon); [plan](plans/2026-10-06-phase-35d-combat-feel.md); from the [combat rebalance second opinion](plans/2026-10-06-combat-rebalance-second-opinion.md) | Owner direction 2026-10-06 | 35b |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role | Level impact §3 | 35b |
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
