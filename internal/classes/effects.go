@@ -207,3 +207,15 @@ const (
 	DiveSteady = "divesteady" // a Dive costs no Evasion
 	SkyEye     = "skyeye"     // Perception added when its company looks for an ambush in the open
 )
+
+// The Arbalist's lineage (Phase 39h).
+const (
+	BoltPierce  = "boltpierce"  // percent of the target's armor a Piercing Bolt ignores
+	SteadyAim   = "steadyaim"   // Attack a bolt gains when nothing has hurt the shooter since its last one
+	BoltCripple = "boltcripple" // rounds a landed bolt hobbles the target
+	BoltDmg     = "boltdmg"     // percent more damage a Piercing Bolt deals
+	Shred       = "shred"       // armor points each landed bolt takes off the target for the battle
+	ShredCap    = "shredcap"    // the most armor a foe loses that way
+	FirstLoaded = "firstloaded" // the first bolt of each battle needs no reload
+	BoltCD      = "boltcd"      // rounds off Piercing Bolt's cooldown (its reload is unchanged)
+)

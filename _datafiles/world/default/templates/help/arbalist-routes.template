@@ -1,0 +1,43 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">arbalist-routes</ansi>
+
+The Arbalist lineage splits at level 10 into a bolt that breaks armor down,
+a surer eye that crits through a shield or a warden that sets a pavise for
+its row. None of the three asks anything of your alignment, at level 10 or
+at level 30. All three shape the Piercing Bolt or the Arbalist's line
+(<ansi fg="command">help arbalist</ansi>).
+
+<ansi fg="yellow-bold">Siegebreaker</ansi>
+
+  10 Sundering bolts    each bolt that lands takes 10 armor off the foe for the
+                        battle, up to 30 (the foe's armor never goes below none)
+  15 Heavy stock        a Piercing Bolt deals 20% more damage
+  20 Deep sunder        each bolt that lands takes 15 armor off the foe, up to 45
+  25 Siege bolts        a Piercing Bolt deals 35% more damage (in all, not on top)
+
+  <ansi fg="yellow-bold">Siege Master</ansi> (30, still to come): a bolt that passes through to the foe behind.
+
+<ansi fg="yellow-bold">Sharpshooter</ansi>
+
+  10 Keen sight         +15% critical chance with a shooting weapon, and its
+                        critical hits can't be blocked
+  15 Steady hands       Steady Aim gives +20 Attack
+  20 Practiced loader   the first bolt of each battle needs no winding
+  25 Dead eye           +4 Attack with a shooting weapon
+
+  <ansi fg="yellow-bold">Deadeye</ansi> (30, still to come): a crossbow that is ready again at once.
+
+<ansi fg="yellow-bold">Warden of the Wall</ansi>
+
+  10 Pavise             allies in the Warden's row take 10% less damage, the
+                        Warden included (auras don't stack within a row)
+  15 Padded coat        +4 armor
+  20 Deeper pavise      the row's damage cut is 15%
+  25 Wall's keeper      +8% maximum health
+
+  <ansi fg="yellow-bold">Bastion</ansi> (30, still to come): answers a foe that strikes its column with the
+  shot it was holding.
+
+Elite classes are named but not open yet; until they are, an Arbalist keeps
+its advanced class's ranks. Routes are final.
+
+See also: <ansi fg="command">help arbalist</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help statuses</ansi>.

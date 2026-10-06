@@ -200,6 +200,31 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     # An iron short spear, a leather buckler, a padded jack, a leather cap and worn boots.
     Kit: [10131, 20047, 20163, 20020, 20003, 30004, 30015, 38]
+  # Phase 39h: the anti-armor shooter, a neutral lineage (no alignment gate at
+  # 10 or 30). A Piercing Bolt ignores armor, and winding the crossbow takes
+  # the next turn (internal/hooks/combat_arbalist.go); two hands on the
+  # crossbow, so no shield.
+  - ArchetypeId: arbalist
+    HPPerLevel: 0.75
+    HPStart: 4
+    AttackRate: 1.0
+    EvasionRate: 0.8
+    ArmorTraining: medium
+    ShieldSizes: [none]
+    WeaponClasses: [crossbow]
+    Name: Arbalist
+    Description: Crossbow shooters who loose heavy bolts through the heaviest armor, then wind the stock for the next; no creed, no shield, no alignment gate on their routes.
+    Skills: [arbalestry]
+    GrantSkills:
+      - { Skill: arbalestry, Level: 1 }
+    Growth:
+      - { Stat: perception, Weight: 4 }
+      - { Stat: strength, Weight: 3 }
+      - { Stat: vitality, Weight: 2 }
+      - { Stat: speed, Weight: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+    # A hunting crossbow, a padded jack, a leather cap and worn boots, rations and a waterskin.
+    Kit: [10181, 20163, 20020, 20003, 30004, 30015, 38]
   # Phase 39b: the duelist, a neutral lineage (no alignment gate at 10 or 30).
   # Its first strike each battle is its best (Iaijutsu, internal/classes);
   # medium armor and no shield make it an ordinary front-liner after that.

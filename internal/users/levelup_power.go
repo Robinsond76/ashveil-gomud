@@ -68,6 +68,8 @@ func abilityPower(c *characters.Character, known []strategy.Ability) []powerEntr
 			out = append(out, powerEntry{name: "Opening Strike", size: fmt.Sprintf("+%d damage", strategy.OpeningStrikeBonus(c.Level))})
 		case strategy.AimedShot:
 			out = append(out, powerEntry{name: "Aimed Shot", size: fmt.Sprintf("+%d damage", strategy.AimedShotBonus(c.Level))})
+		case strategy.PiercingBolt: // Phase 39h: Heavy stock, Siege bolts and Heavy Bolts grow it
+			out = append(out, powerEntry{name: "Piercing Bolt", size: fmt.Sprintf("%d%% of a shot", strategy.BoltBlowPct+c.ClassEffects().Int(classes.BoltDmg))})
 		case strategy.Dive: // Phase 39f review: Power dive and Falling stone grow it
 			out = append(out, powerEntry{name: "Dive", size: fmt.Sprintf("%d%% of a blow", 100+c.ClassEffects().Int(classes.DiveDmg))})
 		}
