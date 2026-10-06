@@ -200,6 +200,30 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     # An iron shortsword, a padded jack, a leather cap and worn boots.
     Kit: [10101, 20163, 20020, 20003, 30004, 30015, 38]
+  # Phase 39d: the puppet class, neutral from the start. The Master spends no
+  # mana: it drives a wooden doll that stands in a cell of its own and strikes
+  # on the Master's turn (internal/dolls, internal/hooks/combat_doll.go).
+  - ArchetypeId: dollmaster
+    HPPerLevel: 0.55
+    HPStart: 1
+    AttackRate: 0.7
+    EvasionRate: 0.8
+    ArmorTraining: light
+    ShieldSizes: [none]
+    WeaponClasses: [dagger, rod, staff]
+    Name: Doll Master
+    Description: Puppeteers who fight through a wooden doll that stands in the front line and strikes on their turn, guard their wounded with strings, and mend the doll at camp from doll parts; no mana, no creed, no alignment gate on their routes.
+    Skills: [puppetry]
+    GrantSkills:
+      - { Skill: puppetry, Level: 1 }
+    Growth:
+      - { Stat: smarts, Weight: 4 }
+      - { Stat: perception, Weight: 3 }
+      - { Stat: speed, Weight: 2 }
+      - { Stat: mysticism, Weight: 1 }
+    CompanionLevels: [1, 10, 20, 30]
+    # A plain dagger, a cotton shirt, a leather cap, worn boots, two doll parts.
+    Kit: [10004, 20008, 20020, 20003, 30004, 30015, 70, 70, 38]
   # Phase 39c: the weather caster, a neutral lineage (no alignment gate at 10
   # or 30). It calls a battle-local weather (internal/stormcraft, battle
   # state) that changes both sides' odds, then casts wind and lightning; it

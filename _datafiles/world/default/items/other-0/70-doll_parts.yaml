@@ -1,0 +1,9 @@
+itemid: 70
+name: doll parts
+namesimple: parts
+description: A bundle of carved joints, pegs and waxed string, enough to mend a wooden doll back to fighting trim. A Doll Master carries them to mend a doll, at the end of a camp rest or with the doll command (doll mend).
+type: object
+subtype: mundane
+uses: 1
+value: 8
+weight: 600

@@ -35,11 +35,7 @@ func CompanyAlive(uid int, f company.Formation) map[company.MemberKey]bool {
 	out[company.LeaderMemberKey] = u.Character.Health > 0 && !u.Character.CombatWithdrawn
 	for _, row := range f {
 		for _, key := range row {
-			id, ok := company.CompanionIDFromMemberKey(key)
-			if !ok {
-				continue
-			}
-			instance, ok := company.InstanceFor(uid, id)
+			instance, ok := company.InstanceForKey(uid, key) // Phase 39d: a doll's key too
 			if !ok {
 				continue
 			}
@@ -65,9 +61,7 @@ func Standing(f company.Formation, alive map[company.MemberKey]bool, uid int) ma
 			}
 			id, ok := mobparty.InstanceIdFromMemberKey(key)
 			if !ok {
-				if cid, yes := company.CompanionIDFromMemberKey(key); yes {
-					id, ok = company.InstanceFor(uid, cid)
-				}
+				id, ok = company.InstanceForKey(uid, key)
 			}
 			if ok {
 				if m := mobs.GetInstance(id); m != nil {

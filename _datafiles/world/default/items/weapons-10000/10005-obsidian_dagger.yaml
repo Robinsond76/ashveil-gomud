@@ -7,6 +7,7 @@ description: The dagger, forged from pure obsidian, possesses an enigmatic allur
 type: weapon
 hands: 1
 subtype: stabbing
+weaponclass: dagger
 damage:
   diceroll: 2d4
 statmods:

@@ -57,6 +57,25 @@ func TestEveryBuiltClassHasArt(t *testing.T) {
 	}
 }
 
+// Every lineage a character can belong to, the neutral ones included, has its
+// own base figure: a member who has not promoted is drawn as its lineage, and
+// an unpromoted Halberdier, Samurai or Shaman must not be a silhouette
+// (Phase 40h). This one is strict: a new lineage ships its base art.
+func TestEveryLineageHasBaseArt(t *testing.T) {
+	m := loadSpriteManifest(t, spriteDir(t))
+	lineages := classes.Lineages()
+	if len(lineages) < 9 {
+		t.Fatalf("expected the six base and three neutral lineages, got %v", lineages)
+	}
+	for _, l := range lineages {
+		for _, rel := range []string{"battle/units/" + l + "/idle.png", "map/units/" + l + "/idle.png", "map/units/" + l + "/walk.png"} {
+			if _, ok := m.Files[rel]; !ok {
+				t.Errorf("lineage %s has no base art: manifest is missing %s", l, rel)
+			}
+		}
+	}
+}
+
 // A mob's `sprite:` key must name a battle unit the manifest lists, or the
 // battle screen silently falls back to a silhouette.
 func TestMobSpriteKeysHaveArt(t *testing.T) {

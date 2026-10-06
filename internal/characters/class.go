@@ -134,6 +134,7 @@ type ClassRT struct {
 	Hands         int         // Lay on Hands uses since the last rest
 	Summoned      bool        // this character has called its summon this battle
 	Summon        *SummonInfo // set on a summoned creature
+	Doll          *DollInfo   // set on a Doll Master's doll (Phase 39d)
 	Bless         int         // rounds of Bless left
 
 	// Phase 38c1, the Warlord and elite talents.
@@ -157,6 +158,12 @@ type ClassRT struct {
 	Bodyguards   int    // Bodyguard steps spent this battle
 	SidePeak     int    // the most of its side standing this battle (Vengeance)
 	EliteRT             // Phase 38c2: the rogue and ranger elites
+	// The Doll Master's lineage (Phase 39d): Guard String uses spent, the
+	// Emergency Splice spent this battle, and the Master's next turn owed to
+	// it.
+	DollGuards int
+	Spliced    bool
+	SpliceTurn bool
 }
 
 // RTState is the character's class battle state, made on first use.

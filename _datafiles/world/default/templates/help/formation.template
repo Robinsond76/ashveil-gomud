@@ -11,6 +11,11 @@ cell automatically, without moving anyone already placed. With companions,
 you can rearrange or clear members; a deliberate clear stays clear.
 Older formations receive missing placements once when you sign in.
 
+A Doll Master's dolls take a cell for the length of a battle, and no company
+slot: a doll stands in front of its Master in the Master's column when a cell
+is free there, else in the nearest free cell of the front row. You don't
+place a doll, and <ansi fg="command">formation</ansi> doesn't list one (<ansi fg="command">help dollmaster</ansi>).
+
 <ansi fg="yellow">Usage:</ansi>
 
   <ansi fg="command">formation</ansi>

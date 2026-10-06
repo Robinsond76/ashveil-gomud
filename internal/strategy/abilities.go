@@ -37,6 +37,14 @@ const (
 	// holds the turn; the first foe to strike a middle- or back-row ally is
 	// shot before the blow resolves.
 	Overwatch Ability = "overwatch"
+	// The Doll Master's four (Phase 39d). Puppet Strike is its ordinary
+	// action: the doll strikes in its Master's place. Guard String, Tangle and
+	// Emergency Splice are resolved by internal/hooks/combat_doll.go; they are
+	// listed here so the strategy, company and capability views show them.
+	PuppetStrike Ability = "puppet-strike"
+	GuardString  Ability = "guard-string"
+	Tangle       Ability = "tangle"
+	Splice       Ability = "emergency-splice"
 )
 
 // AbilitySpec is an ability's unlock, cooldown, and text.
@@ -71,6 +79,18 @@ var Abilities = []AbilitySpec{
 	{ID: Brace, Name: "Brace", Archetype: "halberdier", Skill: "polearm", Cooldown: 1, MinLevel: 3,
 		When: "its Sweep is not ready (or has no second foe to strike), it wields a melee weapon, and a foe is striking at its place in the line",
 		Does: "holds its turn; the first foe that strikes it takes a held blow at once, 25% harder than an ordinary one"},
+	{ID: PuppetStrike, Name: "Puppet Strike", Archetype: "dollmaster", Skill: "puppetry",
+		When: "its doll stands and a foe is within the doll's reach",
+		Does: "the doll strikes in its Master's place, with the doll's own weapon and Attack; the Master's own blow is not struck"},
+	{ID: GuardString, Name: "Guard String", Archetype: "dollmaster", Skill: "puppetry", MinLevel: 5,
+		When: "a foe is about to strike the most hurt ally beside the doll",
+		Does: "the doll steps in and takes the blow, twice a battle (three times from level 8)"},
+	{ID: Tangle, Name: "Tangle", Archetype: "dollmaster", Skill: "puppetry", Cooldown: 3, MinLevel: 12,
+		When: "the doll strikes a foe that is not already tangled",
+		Does: "strings snag the foe the doll strikes and push its action meter back by half a turn (a quarter for a boss); the same foe can't be tangled again for 2 rounds"},
+	{ID: Splice, Name: "Emergency Splice", Archetype: "dollmaster", Skill: "puppetry", MinLevel: 18,
+		When: "the doll would break",
+		Does: "once a battle the doll stands back up at 25% health, and its Master loses its next turn"},
 }
 
 // SpecOf is an ability's spec.
