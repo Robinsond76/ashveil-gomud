@@ -19,6 +19,7 @@ import (
 func TestCoatedBladePoisonsAFoeThroughTheRealRound(t *testing.T) {
 	b := newBrawl(t)
 	loadStatusBuffs(t)
+	freshEvents(t)
 	buffListener := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffListener) })
 	b.aimAt("bandit captain")
