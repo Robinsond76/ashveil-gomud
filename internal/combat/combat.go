@@ -751,6 +751,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 
 				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
 				attackTargetDamage = leadrootDamage(&sourceChar, attackTargetDamage)
+				attackTargetDamage = fareDamage(&sourceChar, &targetChar, attackTargetDamage)
 				defense := targetChar.GetDefense()
 				// Phase 39h: a Piercing Bolt ignores part of the armor.
 				if p := sourceChar.RT; p != nil && p.BlowPierce > 0 && hit {

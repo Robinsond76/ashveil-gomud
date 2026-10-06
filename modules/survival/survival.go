@@ -160,6 +160,7 @@ func init() {
 	domain.SetLifecycle(m)
 	domain.SetCompanyService(m)
 	domain.SetMemberDrainService(m)
+	domain.SetMealService(m)
 }
 
 func (m *SurvivalModule) persistenceAvailable() error {
@@ -668,8 +669,29 @@ func (m *SurvivalModule) applyBenefit(leaderUserID int, key domain.MemberKey, na
 		}
 		result.Fatigue = fatigue
 	}
+	// Phase 50: a cooked meal's buff, replacing any other.
+	if benefit.Meal != "" {
+		if err := m.registry.SetMeal(leaderUserID, key, benefit.Meal); err != nil {
+			return domain.ProvisionResult{}, err
+		}
+	}
 	result.Needs = m.registry.MustNeedsFor(leaderUserID, key)
 	return result, nil
+}
+
+// SpendMealBattle implements domain.MealService (Phase 50): one battle off
+// the meal buffs of the members that fought it. Like a drain it is written
+// with the next save; a battle lost to a crash is harmless.
+func (m *SurvivalModule) SpendMealBattle(leaderUserID int, keys []domain.MemberKey) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if err := m.persistenceAvailable(); err != nil {
+		return err
+	}
+	if m.registry.SpendMealBattle(leaderUserID, keys) {
+		m.dirty = true
+	}
+	return nil
 }
 
 // resolveMember maps a selector to a current member. The leader is always
@@ -819,6 +841,10 @@ func (m *SurvivalModule) status(leaderUserID int) string {
 			needs.Hunger, domain.HungerLabel(needs.Hunger),
 			needs.Thirst, domain.ThirstLabel(needs.Thirst),
 			needs.Fatigue, domain.FatigueLabel(needs.Fatigue)))
+		// Phase 50: what those needs and a meal do in the next battle.
+		if sum := domain.ConditionFor(needs).Summary(needs.MealBattles); sum != "" {
+			lines = append(lines, "    In battle: "+sum)
+		}
 	}
 	return strings.Join(lines, "\n")
 }

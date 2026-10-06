@@ -35,6 +35,10 @@ type Needs struct {
 	Hunger  int `yaml:"hunger"`
 	Thirst  int `yaml:"thirst"`
 	Fatigue int `yaml:"fatigue"`
+	// Phase 50: the cooked meal the member last ate (a Meal kind) and the
+	// battles its buff has left. Empty or 0 means no meal buff.
+	Meal        string `yaml:"meal,omitempty"`
+	MealBattles int    `yaml:"meal_battles,omitempty"`
 }
 
 // FullNeeds is the default state for a new or missing member record.
@@ -75,6 +79,9 @@ type Benefit struct {
 	Nutrition int
 	Hydration int
 	Fatigue   int
+	// Meal is a cooked meal's kind (Phase 50): eating it gives its buff,
+	// replacing any other. Empty for plain food and drink.
+	Meal string
 }
 
 // ProvisionResult describes the outcome of applying a Benefit to a member.
@@ -143,13 +150,18 @@ func clamp(value int) int {
 	return value
 }
 
-// Normalize clamps every need into 0..100.
+// Normalize clamps every need into 0..100 and drops a meal buff that is
+// unknown or spent (a stored count is capped at its meal's length).
 func Normalize(needs Needs) Needs {
-	return Needs{
+	out := Needs{
 		Hunger:  clamp(needs.Hunger),
 		Thirst:  clamp(needs.Thirst),
 		Fatigue: clamp(needs.Fatigue),
 	}
+	if spec, ok := MealFor(needs.Meal); ok && needs.MealBattles > 0 {
+		out.Meal, out.MealBattles = needs.Meal, min(needs.MealBattles, spec.Battles)
+	}
+	return out
 }
 
 // BandFor maps a need value to its threshold band.

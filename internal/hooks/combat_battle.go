@@ -175,6 +175,7 @@ func (sd side) beginBattle(p mobparty.Party, room *rooms.Room, round uint64) bat
 	sd.captureGuards()
 	startMorale(b)
 	sd.startSigil(room, p.Members) // Phase 54: the sigil laid in this room
+	sd.startFare(room)             // Phase 50: needs and meal buffs
 	consumeAmbush(sd.user, p, room)
 	if enemyparty.Narrow(room) {
 		sd.user.SendText("The narrow ground folds both lines into two columns.")

@@ -75,3 +75,21 @@ func TestSpellFactorIsRaisedAgainstAStoneGolem(t *testing.T) {
 	assert.InDelta(t, 1.0, ScriptActor{characterRecord: caster}.SpellFactor(ScriptActor{characterRecord: person}), 1e-9)
 	assert.InDelta(t, 1.25, ScriptActor{characterRecord: caster}.SpellFactor(ScriptActor{characterRecord: golem}), 1e-9)
 }
+
+// Phase 50 review: a caster's and target's battle condition reach a spell
+// through the factor the spell scripts read.
+func TestSpellFactorCarriesTheBattleCondition(t *testing.T) {
+	g := configs.GetGamePlayConfig()
+	g.Combat.SkillEdgeSpan = 20
+	g.Combat.DefaultAttackRate, g.Combat.DefaultEvasionRate = 1, 1
+	t.Cleanup(configs.SetTestGamePlayConfig(g))
+	mk := func(damage, guard int) ScriptActor {
+		c := characters.New()
+		c.Level = 20
+		c.RTState().FareDamage, c.RTState().FareGuard = damage, guard
+		return ScriptActor{characterRecord: c}
+	}
+	assert.InDelta(t, 0.9, mk(-10, 0).SpellFactor(mk(0, 0)), 1e-9, "a starving caster")
+	assert.InDelta(t, 1.1, mk(0, 0).SpellFactor(mk(0, -10)), 1e-9, "a parched target")
+	assert.InDelta(t, 0.9, mk(0, 0).SpellFactor(mk(0, 10)), 1e-9, "a Hearty target")
+}

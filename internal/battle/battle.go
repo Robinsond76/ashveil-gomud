@@ -55,6 +55,10 @@ type Battle struct {
 	// the Unix second it fades.
 	Sigil        sigils.Kind
 	SigilExpires int64
+
+	// Phase 50: each member's battle condition (needs and meal) as the
+	// battle began, by member key.
+	Fare map[string]string
 }
 
 // Has reports whether instanceId is one of the battle's enemies.
@@ -67,6 +71,12 @@ func (b Battle) clone() Battle {
 		c.Enemies[id] = true
 	}
 	c.EnemyNames = cloneEnemyNames(b.EnemyNames)
+	if b.Fare != nil {
+		c.Fare = make(map[string]string, len(b.Fare))
+		for k, v := range b.Fare {
+			c.Fare[k] = v
+		}
+	}
 	if b.GuardMax != nil {
 		c.GuardMax = make(map[string]int, len(b.GuardMax))
 		for k, n := range b.GuardMax {

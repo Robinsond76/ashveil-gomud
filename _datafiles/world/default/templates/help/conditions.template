@@ -7,7 +7,9 @@ grouped so you can see what matters at a glance:
   <ansi fg="yellow">Weapon edges</ansi>  A sharpened blade, and how many strikes its edge
                 has left (<ansi fg="command">help sharpen</ansi>).
   <ansi fg="yellow">Survival</ansi>      Any need — hunger, thirst, fatigue — worth a
-                warning, and your warmth if it's uncomfortable.
+                warning, and your warmth if it's uncomfortable. An
+                "In battle" row says what your needs and a meal buff
+                do in the next fight (<ansi fg="command">help survival</ansi>, <ansi fg="command">help cooking</ansi>).
   <ansi fg="yellow">Company</ansi>       Your company's chemistry tier, if you've served
                 together long enough for one (<ansi fg="command">help chemistry</ansi>).
   <ansi fg="yellow">Other effects</ansi> Everything else affecting you, with time left

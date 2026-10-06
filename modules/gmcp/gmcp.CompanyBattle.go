@@ -73,6 +73,8 @@ type battleFacts struct {
 	Weather *battleWeather
 	// Phase 54: the sigil the company stands in, if any.
 	Sigil *battleSigil
+	// Phase 50: the battle condition each member began in, by member key.
+	Fare map[string]string
 	// Phase 39d: the Doll Masters' dolls standing in the player's company.
 	Dolls []battleDoll
 }
@@ -251,6 +253,9 @@ type battlePayload struct {
 	// Phase 54: the sigil the company stands in (the battle screen's banner
 	// and the Battle view's note); omitted without one.
 	Sigil *battleSigil `json:"sigil,omitempty"`
+	// Phase 50: each member's battle condition (hungry, parched, a meal
+	// buff), by member key, as the battle began; omitted when none.
+	Fare map[string]string `json:"fare,omitempty"`
 	// Phase 39d: the company's standing dolls (the Combat tab's fighters
 	// and the battle screen's units); omitted when there are none.
 	Dolls []battleDoll `json:"dolls,omitempty"`
@@ -297,9 +302,9 @@ func buildBattle(f battleFacts) any {
 		saved = "none"
 	}
 	if f.Dark {
-		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil}
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil, Fare: f.Fare}
 	}
-	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil, Dolls: f.Dolls}
+	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst, Weather: f.Weather, Sigil: f.Sigil, Fare: f.Fare, Dolls: f.Dolls}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -408,6 +413,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	f.Guards = gatherGuards(user, room)
 	f.Weather = weatherFact(b.Weather)
 	f.Sigil = sigilFact(b)
+	f.Fare = battle.FareOf(user.UserId)
 	f.Faltering = companyFaltering(b)
 	f.Allies = gatherAllies(user, b)
 	f.Dolls = gatherDolls(user.UserId, room.RoomId)

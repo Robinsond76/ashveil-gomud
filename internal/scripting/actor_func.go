@@ -756,6 +756,8 @@ func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
 		return 1
 	}
 	factor := 1 + 0.5*characters.SkillEdge(a.characterRecord.AttackSkill(), target.characterRecord.Evasion())
+	// Phase 50: hunger and meal buffs on the caster and the target.
+	factor *= combat.FareSpellFactor(a.characterRecord, target.characterRecord)
 	factor *= 1 + float64(a.characterRecord.ClassEffects().Int(classes.SpellPct))/100
 	// Phase 38c3: an Archmage's Overchannel, and an Archon's Mana Shield on
 	// the one the spell strikes.

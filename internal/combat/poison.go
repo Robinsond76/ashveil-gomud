@@ -28,6 +28,35 @@ func leadrootDamage(c *characters.Character, dmg int) int {
 	return max(1, dmg-dmg*leadrootCutPct/100)
 }
 
+// fareDamage applies a member's battle condition (Phase 50) to a blow: the
+// percent hunger and a meal buff put on what it deals, then the percent
+// less (or, thirsty, more) its target takes. At least 1 stays.
+func fareDamage(src, tgt *characters.Character, dmg int) int {
+	if dmg <= 0 {
+		return dmg
+	}
+	if src.RT != nil && src.RT.FareDamage != 0 {
+		dmg = max(1, (dmg*(100+src.RT.FareDamage)+50)/100)
+	}
+	if tgt.RT != nil && tgt.RT.FareGuard != 0 {
+		dmg = max(1, (dmg*(100-min(tgt.RT.FareGuard, 90))+50)/100)
+	}
+	return dmg
+}
+
+// FareSpellFactor is a spell's multiplier from the caster's and target's
+// battle condition (Phase 50), as fareDamage does for blows.
+func FareSpellFactor(src, tgt *characters.Character) float64 {
+	f := 1.0
+	if src != nil && src.RT != nil && src.RT.FareDamage != 0 {
+		f *= float64(100+src.RT.FareDamage) / 100
+	}
+	if tgt != nil && tgt.RT != nil && tgt.RT.FareGuard != 0 {
+		f *= float64(100-min(tgt.RT.FareGuard, 90)) / 100
+	}
+	return f
+}
+
 // poisonSusceptibility is the target creature's weapon-poison susceptibility.
 func poisonSusceptibility(targetType SourceTarget, targetMob []*mobs.Mob) string {
 	if targetType == Mob && len(targetMob) > 0 && targetMob[0] != nil {

@@ -137,6 +137,10 @@ type ClassAura struct {
 // uses, which come back with rest.
 type ClassRT struct {
 	Ward, WardCap int // blows a ward absorbs, and the most it takes from each
+	// Phase 50: the battle condition the member began this battle in, from
+	// its needs and meal buff: percent on the damage it deals, and percent
+	// less damage it takes (negative: more, from thirst).
+	FareDamage, FareGuard int
 	// WardSigil marks a ward a ward sigil gave (Phase 54 review): a caster's
 	// own ward replaces it, and healers do not count it as warded.
 	WardSigil    bool
