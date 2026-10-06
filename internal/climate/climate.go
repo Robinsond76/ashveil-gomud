@@ -81,6 +81,7 @@ func TemperatureName(temp int) string {
 type WornPiece struct {
 	Slot   string
 	Warmth int
+	Bonus  int // Phase 36a: affix warmth, added on top of the resolved warmth
 }
 
 // WarmthSettings are the per-slot default warmth values and the bonus for
@@ -100,6 +101,7 @@ func Warmth(worn []WornPiece, warmed bool, s WarmthSettings) int {
 		case piece.Warmth == 0:
 			total += s.SlotDefaults[piece.Slot]
 		}
+		total += piece.Bonus
 	}
 	if warmed {
 		total += s.WarmedBonus

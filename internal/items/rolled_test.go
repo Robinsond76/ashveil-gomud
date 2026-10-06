@@ -156,7 +156,7 @@ func TestLevelRequirementRefusesLowLevelWearers(t *testing.T) {
 	itm := New(testSwordID)
 	itm.ApplyRoll(testRoll(QualityStandard, RarityRare, false))
 	assert.Equal(t, 15, itm.LevelRequirement())
-	assert.Contains(t, itm.WearRefusal(14), "must be level 15")
+	assert.Contains(t, itm.WearRefusal(14), "requires level 15")
 	assert.Empty(t, itm.WearRefusal(15))
 
 	plain := New(testSwordID)
@@ -288,4 +288,71 @@ func TestQualityScalesPerHitOnMultiAttackWeapons(t *testing.T) {
 	got := RolledSpec(multi, testRoll(QualityExquisite, RarityCommon, true))
 	assert.Equal(t, single.Damage.BonusDamage, got.Damage.BonusDamage)
 	assert.Positive(t, got.Damage.BonusDamage)
+}
+
+// Review fix (36a): Weight() reads base data, so an identified weight affix
+// must be applied there too, or it never reaches encumbrance.
+func TestWeightAffixLightensTheCarriedWeightOnceRead(t *testing.T) {
+	rollTestSpecs(t)
+	itm := New(testSwordID)
+	itm.ApplyRoll(testRoll(QualityStandard, RarityRare, false))
+	assert.Equal(t, 1000, itm.Weight(), "an unread affix weighs nothing off")
+	require.True(t, itm.Identify())
+	assert.Equal(t, 900, itm.Weight(), "10% lighter for load")
+	plain := New(testSwordID)
+	assert.Equal(t, 1000, plain.Weight(), "plain items keep base weight")
+}
+
+// Review fix (36a): warmth is a bonus on top of the item's resolved warmth
+// (0 is the slot default, negative is none), never a change to Warmth.
+func TestWarmthAffixAddsABonusNotARawWarmth(t *testing.T) {
+	rollTestSpecs(t)
+	itm := New(testMailID)
+	itm.ApplyRoll(Rolled{Version: RollVersion, Quality: QualityStandard, Rarity: RarityUncommon, Identified: true,
+		Affixes: []RolledAffix{{ID: "furlined", Label: "Fur-lined", Mechanic: "warmth", Value: 2}}})
+	spec := itm.GetSpec()
+	assert.Zero(t, spec.Warmth, "still the slot default")
+	assert.Equal(t, 2, spec.WarmthBonus)
+}
+
+func TestRareNameUsesAnBeforeAVowel(t *testing.T) {
+	rollTestSpecs(t)
+	itm := New(testSwordID)
+	itm.ApplyRoll(testRoll(QualityExquisite, RarityRare, true))
+	assert.Contains(t, stripAnsi(itm.DisplayName()), "Gloomfang, an exquisite short sword")
+}
+
+// Review fix (36a): players can name rolled gear by the words they see.
+func TestRolledItemAnswersToItsShownWords(t *testing.T) {
+	rollTestSpecs(t)
+	itm := New(testSwordID)
+	itm.ApplyRoll(Rolled{Version: RollVersion, Quality: QualityFine, Rarity: RarityUncommon, Identified: true,
+		Affixes: []RolledAffix{{ID: "strength", Label: "Mighty", Mechanic: "statmod:strength", Value: 2}}})
+	for _, word := range []string{"mighty", "fine", "mighty fine short sword", "sword"} {
+		part, _ := itm.NameMatch(word, true)
+		assert.True(t, part, word)
+	}
+	_, full := itm.NameMatch("mighty fine short sword", true)
+	assert.True(t, full)
+
+	hidden := New(testSwordID)
+	hidden.ApplyRoll(testRoll(QualityFine, RarityRare, false))
+	part, _ := hidden.NameMatch("mighty", true)
+	assert.False(t, part, "an unread affix word stays hidden")
+	part, _ = hidden.NameMatch("gloom", true)
+	assert.False(t, part)
+	part, _ = hidden.NameMatch("fine", true)
+	assert.True(t, part, "quality is visible")
+}
+
+// Review fix (36a): enchanting keeps the quality-scaled value.
+func TestEnchantKeepsARolledItemsQualityValue(t *testing.T) {
+	rollTestSpecs(t)
+	itm := New(testSwordID)
+	itm.ApplyRoll(Rolled{Version: RollVersion, Quality: QualityExquisite, Rarity: RarityCommon, Identified: true, BaseValue: 100})
+	before := itm.GetSpec().Value
+	require.Equal(t, 400, before)
+	itm.Enchant(2, 0, map[string]int{"strength": 1}, false)
+	assert.Greater(t, itm.GetSpec().Value, before, "the enchantment adds worth on top")
+	assert.Zero(t, GetItemSpec(testSwordID).StatMods.Get("strength"), "base spec untouched")
 }

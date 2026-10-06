@@ -156,6 +156,20 @@ func (r Rolled) clone() Rolled {
 	return r
 }
 
+// weight is a base weight with the roll's identified weight affixes applied,
+// the same cut applyAffix makes to the Spec override.
+func (r Rolled) weight(base int) int {
+	if !r.IsRolled() || !r.Identified || base <= 0 {
+		return base
+	}
+	for _, a := range r.Affixes {
+		if a.Mechanic == "weightpct" {
+			base = max(1, base*(100-a.Value)/100)
+		}
+	}
+	return base
+}
+
 // IsRolled reports whether the item is generated gear with a saved roll.
 func (i *Item) IsRolled() bool { return i.Loot.IsRolled() }
 
@@ -182,7 +196,7 @@ func (i *Item) LevelRequirement() int {
 // or "" when they may.
 func (i *Item) WearRefusal(level int) string {
 	if req := i.LevelRequirement(); req > level {
-		return fmt.Sprintf("You must be level %d to use the %s (you are level %d).", req, i.Name(), level)
+		return fmt.Sprintf("The %s requires level %d to use (the wearer is level %d).", i.Name(), req, level)
 	}
 	return ""
 }
@@ -323,7 +337,9 @@ func applyAffix(spec *ItemSpec, a RolledAffix) {
 	case a.Mechanic == "parry":
 		spec.Parry += a.Value
 	case a.Mechanic == "warmth":
-		spec.Warmth += a.Value
+		// Added on top of the item's resolved warmth: Warmth 0 means the
+		// slot default and negative means none, so it can't simply grow.
+		spec.WarmthBonus += a.Value
 	case a.Mechanic == "weightpct":
 		if spec.Weight > 0 {
 			spec.Weight = max(1, spec.Weight*(100-a.Value)/100)
@@ -360,7 +376,11 @@ func (i *Item) RollName(base string) string {
 		return plain
 	}
 	if r.Rarity.Rank() >= RarityRare.Rank() && r.Name != "" {
-		return r.Name + ", a " + plain
+		article := "a"
+		if startsWithVowel(plain) {
+			article = "an"
+		}
+		return r.Name + ", " + article + " " + plain
 	}
 	var pre, suf []string
 	for _, a := range r.Affixes {

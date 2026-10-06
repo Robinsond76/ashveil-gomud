@@ -42,7 +42,7 @@ func Gearup(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		mob.Command(fmt.Sprintf(`wear !%d:%s`, itm.ItemId, itm.UUID))
 		if isCharmed {
 			if oldItm, ok := wornItems[itm.GetSpec().Type]; ok {
-				mob.Command(fmt.Sprintf(`drop !%d`, oldItm.ItemId))
+				mob.Command(fmt.Sprintf(`drop !%d:%s`, oldItm.ItemId, oldItm.UUID))
 			}
 		}
 	}

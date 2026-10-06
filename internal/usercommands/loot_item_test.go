@@ -60,7 +60,7 @@ func TestEquipRefusesRolledGearBelowItsLevelRequirement(t *testing.T) {
 	require.NoError(t, err)
 	events.ProcessEvents()
 	said := tagPattern.ReplaceAllString(strings.Join(*messages, "\n"), "")
-	assert.Contains(t, said, "You must be level 15 to use the test hauberk (you are level 9).")
+	assert.Contains(t, said, "The test hauberk requires level 15 to use (the wearer is level 9).")
 	assert.Zero(t, user.Character.Equipment.Body.ItemId, "nothing was worn")
 	assert.Len(t, user.Character.Items, 1, "the item stays in the pack")
 

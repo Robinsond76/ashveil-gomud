@@ -71,7 +71,8 @@ func TestOldScribeRankIsRefundedOnce(t *testing.T) {
 	assert.Equal(t, 20+6, u.Character.TrainingPoints, "1+2+3 for the old rank")
 	assert.Equal(t, map[string]int{"track": 1}, u.Character.Skills)
 	assert.True(t, u.Character.ScribeReset)
-	assert.Contains(t, text, "scribe")
+	assert.Contains(t, text, "Scribe has been reworked and starts fresh")
+	assert.NotContains(t, text, "No longer part of the world", "scribe is reworked, not gone")
 
 	u.Character.Skills["scribe"] = 2 // trained under the new skill
 	text = captureText(t, func() { m.onPlayerSpawn(events.PlayerSpawn{UserId: 53}) })

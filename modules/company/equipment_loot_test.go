@@ -23,8 +23,8 @@ func TestCompanyEquipRefusesRolledGearAboveMemberLevelAndKeepsTheRoll(t *testing
 	companion := b.companion(1)
 	companion.Character.Level = 5
 
-	assert.Contains(t, b.cmd("company", "compare #1 "+rolled.ShorthandId()), "must be level 20")
-	assert.Contains(t, b.cmd("company", "equip #1 "+rolled.ShorthandId()), "must be level 20")
+	assert.Contains(t, b.cmd("company", "compare #1 "+rolled.ShorthandId()), "requires level 20 to use (the wearer is level 5)")
+	assert.Contains(t, b.cmd("company", "equip #1 "+rolled.ShorthandId()), "requires level 20 to use (the wearer is level 5)")
 	assert.NotEqual(t, rolled.UUID, companion.Character.Equipment.Weapon.UUID, "nothing was assigned")
 	require.Len(t, b.aria.Character.Items, 1, "the item stays in the cargo")
 

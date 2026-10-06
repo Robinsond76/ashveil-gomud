@@ -14,7 +14,7 @@ slot: weapons, shields, armor and jewelry each have their own pool.
   Healing      +healing percent (weapons and jewelry)
   Logistics    +warmth (armor), -weight percent
 
-Strength grows with the item's item level (<ansi fg="command">help itemlevel</ansi>). More chances,
+An affix's size grows with the item's item level (<ansi fg="command">help itemlevel</ansi>). More chances,
 resists, status-on-crit and the major mechanics (cleaving, vampiric,
 warded, echoing) join as the systems that read them arrive.
 

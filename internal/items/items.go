@@ -392,6 +392,16 @@ func (i *Item) Enchant(damageBonus int, defenseBonus int, statBonus map[string]i
 		newSpec = *i.Spec
 	}
 
+	// Phase 36a: a rolled item's value carries its quality, which the auto
+	// value doesn't know, so only the enchantment's own worth is added.
+	priorValue, priorAuto := newSpec.Value, 0
+	if i.IsRolled() {
+		before := newSpec
+		before.AutoCalculateValue()
+		priorAuto = before.Value
+		newSpec.StatMods = cloneStatMods(newSpec.StatMods)
+	}
+
 	newSpec.Damage.BonusDamage += damageBonus
 	newSpec.DamageReduction += defenseBonus
 
@@ -405,7 +415,14 @@ func (i *Item) Enchant(damageBonus int, defenseBonus int, statBonus map[string]i
 	newSpec.Cursed = cursed
 
 	newSpec.Damage.FormatDiceRoll()
-	newSpec.AutoCalculateValue()
+	if i.IsRolled() {
+		// Phase 36a: keep the roll's quality-scaled value and add only what
+		// the enchantment itself is worth.
+		newSpec.AutoCalculateValue()
+		newSpec.Value = priorValue + max(0, newSpec.Value-priorAuto)
+	} else {
+		newSpec.AutoCalculateValue()
+	}
 
 	i.Spec = &newSpec
 }
@@ -650,6 +667,26 @@ func (i *Item) NameMatch(input string, allowContains bool) (partialMatch bool, f
 		return true, false
 	}
 
+	// Phase 36a: rolled gear also answers to the words its shown name adds
+	// (quality, and an identified item's affix words), which hold nothing
+	// hidden.
+	if i.IsRolled() {
+		shown := strings.ToLower(strings.ReplaceAll(i.RollName(simpleName), ",", ""))
+		if shown == input {
+			return true, true
+		}
+		if strings.HasPrefix(shown, input) {
+			return true, false
+		}
+		if allowContains {
+			for _, word := range strings.Fields(shown) {
+				if strings.HasPrefix(word, input) {
+					return true, false
+				}
+			}
+		}
+	}
+
 	return false, false
 }
 
@@ -778,7 +815,8 @@ func FindMatchIn(itemName string, items ...Item) (pMatch Item, fMatch Item) {
 // its own spec.
 func (i *Item) Weight() int {
 	if base := GetItemSpec(i.ItemId); base != nil {
-		return base.Weight
+		// Phase 36a: an identified roll's weight affixes lighten the base.
+		return i.Loot.weight(base.Weight)
 	}
 	if i.Spec != nil {
 		return i.Spec.Weight

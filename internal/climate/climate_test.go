@@ -48,6 +48,10 @@ func TestWarmth(t *testing.T) {
 	if got := Warmth(locket, false, WarmthSettings{SlotDefaults: map[string]int{"neck": 1}}); got != 0 {
 		t.Fatalf("a negative warmth means none, not the slot default: got %d", got)
 	}
+	bonus := []WornPiece{{Slot: "body", Bonus: 2}, {Slot: "neck", Warmth: -1, Bonus: 1}}
+	if got := Warmth(bonus, false, s); got != 5+2+1 {
+		t.Fatalf("an affix bonus adds on top of the default or none: got %d", got)
+	}
 	if got := Warmth(nil, false, s); got != 0 {
 		t.Fatalf("naked is 0, got %d", got)
 	}
