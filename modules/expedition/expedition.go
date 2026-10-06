@@ -536,10 +536,6 @@ func parseExertion(raw any) survival.Exertion {
 	}
 }
 
-func exertionZero(cost survival.Exertion) bool {
-	return cost.Hunger == 0 && cost.Thirst == 0 && cost.Fatigue == 0
-}
-
 // StartTravel implements expedition.StartProvider. It is called only for
 // exits carrying a travel profile.
 func (m *ExpeditionModule) StartTravel(req expedition.StartRequest) (bool, error) {
@@ -1183,11 +1179,7 @@ func (m *ExpeditionModule) statusTextLocked(leaderUserID int) string {
 	}
 	lines = append(lines, "Company:")
 	for _, member := range m.companyNeeds(leaderUserID) {
-		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
-			member.Name,
-			member.Needs.Hunger, survival.HungerLabel(member.Needs.Hunger),
-			member.Needs.Thirst, survival.ThirstLabel(member.Needs.Thirst),
-			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue)))
+		lines = append(lines, survival.NeedsLine(member.Name, member.Needs))
 	}
 	return strings.Join(lines, "\n")
 }
