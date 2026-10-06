@@ -57,7 +57,14 @@ const (
 type Killer struct {
 	MobID      int
 	InstanceID int
+	// Protected is true when the engine spares this death its penalties
+	// (the death protection levels, or perma-gear): no scenario may then
+	// take goods or gold, so captures and robberies are never rolled.
+	Protected bool
 }
+
+// TakesGoods reports whether a scenario kind takes or holds goods or gold.
+func (k ScenarioKind) TakesGoods() bool { return k == Captured || k == Robbed }
 
 // Scenario is one row of the defeat table.
 type Scenario struct {

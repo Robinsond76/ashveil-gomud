@@ -81,7 +81,13 @@ type DeathModule struct {
 	returned map[int]uint64
 	// guardOwner maps a capture guard's instance to the user whose pack it
 	// guards (Phase 53), in memory only: restoreGuards rebuilds it.
-	guardOwner map[int]int
+	guardOwner map[int]guardOf
+}
+
+// guardOf is whose pack a capture guard stands over, and its guard group.
+type guardOf struct {
+	userID int
+	group  string
 }
 
 // module is the registered instance, for wiring tests.
@@ -129,7 +135,7 @@ func newModule() *DeathModule {
 		drain:          survival.ApplyMemberDrain,
 		cfg:            defaultSettings(),
 		returned:       map[int]uint64{},
-		guardOwner:     map[int]int{},
+		guardOwner:     map[int]guardOf{},
 	}
 }
 
@@ -351,6 +357,11 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 	firstAttempt := newDeath
 	cfg := m.config()
 	scenario, defeated := m.scenarioFor(c)
+	if !defeated {
+		// A claim whose row has left the table goes to the church; it must
+		// not linger to be read by a later death.
+		c.SetMiscData(domain.ScenarioKey, nil)
+	}
 	if firstAttempt {
 		op := fmt.Sprintf("death-%d-%d", userID, m.round())
 		c.SetMiscData(domain.PendingKey, op)

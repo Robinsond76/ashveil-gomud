@@ -21,8 +21,9 @@ held, saved with your character, until you come back. Guards you have not
 beaten are back over the chest when you return; those you beat stay down.
 
 <ansi fg="yellow-bold">Left for dead</ansi> (by beasts and the undead)
-You wake where you fell. The foes have gone, and each member of your
-company who was with you carries a lasting wound, a fifth of their health
+You wake where you fell. The foes, and anything else hostile there, have
+gone for a while. Each member of your company who was with you
+carries a lasting wound, a fifth of their health
 held back until it is treated or rested away (<ansi fg="command">help wounds</ansi>).
 
 <ansi fg="yellow-bold">Robbed</ansi> (by people)
@@ -30,7 +31,9 @@ You wake where you fell, the foes gone, a fifth of your gold and a share of
 your loose goods taken for good. Worn gear, quest items, keys and camp
 gear are never taken, and nothing taken is held anywhere.
 
-Gold in the bank is never touched by a capture or a robbery.
+Gold in the bank is never touched by a capture or a robbery. Characters of
+level 5 and below are never captured or robbed, so a new company loses no
+goods to a defeat.
 
 When nothing fits (a world with no scenarios, or a defeat the table does
 not cover) you wake at the last city's church a level down, as

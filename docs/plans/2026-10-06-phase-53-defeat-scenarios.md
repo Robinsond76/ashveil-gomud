@@ -63,6 +63,20 @@ the test area's wake override still wins (no scenario is claimed there);
    `seized`). The wake text already prints to the log, and wounds and needs
    already show in the Conditions and status panels.
 
+9. **Review (53 review thread):** guards are counted on the character
+   (`seized-guards`, with the capture's row in `seized-by`); one that falls
+   in a fight counts down, and undefeated guards stand again when the leader
+   returns or reclaims after a restart or an unloaded room. Guards never
+   break (`NeverBreak`), so each one falls. A protected death (the engine's
+   `ProtectionLevels`, perma-gear) never rolls a capture or robbery. Foes
+   sent away keep their room's respawn timer, and any other hostile in the
+   room goes with them.
+10. **Defeat is the leader's death.** The spec's "no one left standing"
+    is how a battle already ends in this engine (the leader's fall ends the
+    company's fight), so the claim is made on the leader's death. The pack
+    held in a capture is the company cargo: `Items` is the shared cargo
+    list (`CompanyCargo` is only the flag saying so).
+
 ## Help and tutorial
 
 New `help defeat` (aliases: captured, robbed, left-for-dead, reclaim, ...);

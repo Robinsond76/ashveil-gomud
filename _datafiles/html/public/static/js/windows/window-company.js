@@ -1089,7 +1089,10 @@
         if (inv.seized) {
             // Phase 53: a capture holds the leader's pack and gold in a chest.
             const held = inv.seized;
-            const what = held.items + (held.items === 1 ? ' item' : ' items') + (held.gold > 0 ? ' and ' + held.gold + ' gold' : '');
+            const parts = [];
+            if (held.items > 0) { parts.push(held.items + (held.items === 1 ? ' item' : ' items')); }
+            if (held.gold > 0) { parts.push(held.gold + ' gold'); }
+            const what = parts.join(' and ');
             const line = el('div', 'cmp-line cmp-held', 'Held by your captors: ' + what + (held.where ? ' in ' + held.where : '') + '. ' +
                 (held.here ? 'Defeat the guards, then reclaim it.' : 'Go back there, defeat the guards, and reclaim it.'));
             line.setAttribute('role', 'status');

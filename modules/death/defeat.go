@@ -99,6 +99,10 @@ func (m *DeathModule) ClaimDefeat(userID int, killer domain.Killer) bool {
 		if s.Kind == domain.Captured && !m.roomLoads(s.Room) {
 			continue
 		}
+		// A protected death (new characters, perma-gear) never costs goods.
+		if killer.Protected && s.Kind.TakesGoods() {
+			continue
+		}
 		table = append(table, s)
 	}
 	sc, ok := domain.Pick(table, fell.Zone, race, groups, m.roll)
@@ -284,6 +288,9 @@ func (m *DeathModule) postGuards(userID int, sc domain.Scenario, room *rooms.Roo
 		}
 		guard.Hostile = false
 		guard.MaxWander = 0
+		// A guard that flees or yields would never fall, and so would
+		// return over the chest: guards stand to the end.
+		guard.NeverBreak = true
 		guard.SpawnGroup = group
 		made = append(made, guard)
 	}
@@ -300,11 +307,7 @@ func (m *DeathModule) postGuards(userID int, sc domain.Scenario, room *rooms.Roo
 		g.GroupName = name
 		room.AddMob(g.InstanceId)
 	}
-	m.mu.Lock()
-	for _, g := range made {
-		m.guardOwner[g.InstanceId] = userID
-	}
-	m.mu.Unlock()
+	m.trackGuards(userID, group, made)
 	return len(m.guardsIn(room, group))
 }
 
@@ -322,10 +325,42 @@ func (m *DeathModule) onMobDeath(e events.Event) events.ListenerReturn {
 	if !guard {
 		return events.Continue
 	}
-	if user := m.lookupUser(owner); user != nil && user.Character != nil {
-		setSeizedGuards(user.Character, domain.SeizedGuards(user.Character)-1)
+	user := m.lookupUser(owner.userID)
+	if user == nil || user.Character == nil {
+		return events.Continue
+	}
+	c := user.Character
+	// Only a guard of the capture holding the pack now counts down.
+	if owner.group == domain.CaptorGroup(seizedRoom(c), owner.userID) {
+		setSeizedGuards(c, domain.SeizedGuards(c)-1)
 	}
 	return events.Continue
+}
+
+// trackGuards remembers whose pack newly posted guards stand over, and
+// forgets guards that are gone without a death (a restart's or an unloaded
+// room's).
+func (m *DeathModule) trackGuards(userID int, group string, made []*mobs.Mob) {
+	m.mu.Lock()
+	known := make([]int, 0, len(m.guardOwner))
+	for id := range m.guardOwner {
+		known = append(known, id)
+	}
+	m.mu.Unlock()
+	var gone []int
+	for _, id := range known {
+		if mobs.GetInstance(id) == nil {
+			gone = append(gone, id)
+		}
+	}
+	m.mu.Lock()
+	for _, id := range gone {
+		delete(m.guardOwner, id)
+	}
+	for _, g := range made {
+		m.guardOwner[g.InstanceId] = guardOf{userID: userID, group: group}
+	}
+	m.mu.Unlock()
 }
 
 // restoreGuards posts a capture's undefeated guards again when the leader
@@ -341,8 +376,13 @@ func (m *DeathModule) restoreGuards(user *users.UserRecord, room *rooms.Room) bo
 	if want <= 0 || seizedRoom(c) != room.RoomId {
 		return false
 	}
-	if len(m.guardsIn(room, domain.CaptorGroup(room.RoomId, user.UserId))) > 0 {
-		return false
+	group := domain.CaptorGroup(room.RoomId, user.UserId)
+	for _, mobID := range room.GetMobs() {
+		// Any guard still here, even one falling this round whose death is
+		// not yet counted, means they were never lost.
+		if mob := mobs.GetInstance(mobID); mob != nil && mob.SpawnGroup == group {
+			return false
+		}
 	}
 	id, _ := c.GetMiscData(domain.SeizedByKey).(string)
 	sc, ok := domain.ByID(m.config().scenarios, id)
@@ -416,15 +456,40 @@ func (m *DeathModule) clearFoes(user *users.UserRecord, room *rooms.Room) {
 		if _, _, member := company.LeaderAndKeyForInstance(id); member {
 			continue
 		}
-		if !(id == foeID || (group != "" && mob.SpawnGroup == group) || mob.AmbushOwner == user.UserId || mob.EncounterOwner == user.UserId) {
+		if !(id == foeID || (group != "" && mob.SpawnGroup == group) || mob.AmbushOwner == user.UserId || mob.EncounterOwner == user.UserId || m.threatens(mob, user.UserId)) {
 			continue
 		}
 		mobs.DestroyInstance(id)
 		room.RemoveMob(id)
 		if home := rooms.LoadRoom(mob.HomeRoomId); home != nil {
-			home.CleanupMobSpawns(true)
+			// Despawned with its cooldown: it returns on the room's
+			// respawn timer, not the next round.
+			home.CleanupMobSpawns(false)
 		}
 	}
+}
+
+// threatens reports whether a mob would set on the woken company at once:
+// it is hostile, it is fighting the leader or a companion, or its group
+// holds a grudge against the leader. The foes "gone" include these.
+func (m *DeathModule) threatens(mob *mobs.Mob, userID int) bool {
+	if mob.Hostile {
+		return true
+	}
+	if a := mob.Character.Aggro; a != nil {
+		if a.UserId == userID {
+			return true
+		}
+		if leader, _, member := company.LeaderAndKeyForInstance(a.MobInstanceId); member && leader == userID {
+			return true
+		}
+	}
+	for _, g := range mob.Groups {
+		if mobs.IsHostile(g, userID) {
+			return true
+		}
+	}
+	return false
 }
 
 // --- reclaim ---
@@ -457,7 +522,7 @@ func (m *DeathModule) reclaimCommand(_ string, user *users.UserRecord, room *roo
 		return true, nil
 	}
 	m.restoreGuards(user, room)
-	if room != nil && len(m.guardsIn(room, domain.CaptorGroup(room.RoomId, user.UserId))) > 0 {
+	if domain.SeizedGuards(c) > 0 || (room != nil && len(m.guardsIn(room, domain.CaptorGroup(room.RoomId, user.UserId))) > 0) {
 		user.SendText("The guards stand over the chest. Defeat them first.")
 		return true, nil
 	}

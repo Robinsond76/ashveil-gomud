@@ -132,7 +132,8 @@ func Suicide(rest string, user *users.UserRecord, room *rooms.Room, flags events
 	scenarioClaimed := false
 	if ashveilDeath {
 		if sp, ok := ashveil.(death.ScenarioProvider); ok {
-			killer := death.Killer{MobID: killerMobId, InstanceID: killerInstanceId}
+			killer := death.Killer{MobID: killerMobId, InstanceID: killerInstanceId,
+				Protected: !allowPenalties || user.Character.HasBuffFlag("perma-gear")}
 			scenarioClaimed = sp.ClaimDefeat(user.UserId, killer)
 		}
 	}

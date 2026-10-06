@@ -327,6 +327,23 @@ func TestDefeatScenarioGuardsReturnUntilDefeated(t *testing.T) {
 	require.Len(t, guards, 2)
 	assert.Equal(t, 2, domain.SeizedGuards(c))
 
+	for _, id := range guards {
+		assert.True(t, mobs.GetInstance(id).NeverBreak, "guards never flee or yield, so each one falls")
+	}
+
+	// A guard falling this round, its death not yet counted, is not lost:
+	// reclaim neither opens the chest nor posts another.
+	for _, id := range guards {
+		mobs.GetInstance(id).Character.Health = 0
+	}
+	assert.Contains(t, env.run("reclaim", ""), "Defeat them first")
+	assert.Empty(t, c.Items)
+	assert.Len(t, room.GetMobs(), 3, "two guards and the companion; none posted")
+	for _, id := range guards {
+		mob := mobs.GetInstance(id)
+		mob.Character.Health = mob.Character.HealthMax.Value
+	}
+
 	// One falls in a fight; the other is lost to a restart.
 	defeatGuards(room, guards[:1])
 	assert.Equal(t, 1, domain.SeizedGuards(c))
@@ -420,6 +437,55 @@ func TestDefeatScenarioLeftForDeadWoundsEveryoneAndSendsTheFoesAway(t *testing.T
 	assert.Contains(t, room.GetMobs(rooms.FindCharmed), env.companion, "companions stay")
 	assert.Equal(t, env.pack, env.packSize(), "left for dead is not a robbery")
 	assert.Equal(t, 200, c.Gold)
+}
+
+// Regression (53 review): foes sent away from a room spawn used to come
+// back the very next round, beside a half-health, wounded company. Any other
+// hostile in the room goes with them.
+func TestDefeatScenarioSentAwayFoesStayAwayForTheirRespawnTime(t *testing.T) {
+	env := newDefeatEnv(t, 9101)
+	forceScenario(t, "left-for-dead")
+	room := rooms.LoadRoom(2002)
+	saved := room.SpawnInfo
+	t.Cleanup(func() { room.SpawnInfo = saved })
+	room.SpawnInfo = append(append([]rooms.SpawnInfo{}, saved...), rooms.SpawnInfo{MobId: 9101, RespawnRate: "1 day"})
+	room.Prepare(false)
+	spawned := room.SpawnInfo[len(room.SpawnInfo)-1].InstanceId
+	require.NotZero(t, spawned, "the room spawned its wolf")
+	env.user.Character.KillerMobInstanceId = spawned
+	bystander := mobs.NewMobById(9101, room.RoomId)
+	require.NotNil(t, bystander)
+	bystander.Hostile = true
+	room.AddMob(bystander.InstanceId)
+
+	env.run("suicide", "")
+	require.Equal(t, 2002, env.user.Character.RoomId)
+	assert.Nil(t, mobs.GetInstance(spawned), "the killer is gone")
+	assert.Nil(t, mobs.GetInstance(bystander.InstanceId), "a hostile bystander is gone too")
+	room.Prepare(false)
+	assert.Zero(t, room.SpawnInfo[len(room.SpawnInfo)-1].InstanceId, "it does not respawn the next round")
+	for _, id := range room.GetMobs() {
+		if mob := mobs.GetInstance(id); mob != nil && id != env.companion {
+			assert.False(t, mob.Hostile, "no hostile waits beside the woken company: %s", mob.Character.Name)
+		}
+	}
+}
+
+// Regression (53 review): a protected death (the death protection levels or
+// perma-gear) never cost goods before scenarios, so it is never captured or
+// robbed.
+func TestDefeatProtectedDeathIsNeverCapturedOrRobbed(t *testing.T) {
+	env := newDefeatEnv(t, 86)
+	foe := env.foe(86)
+	for n := 0; n < 8; n++ {
+		module.roll = func(total int) int { return min(n, total-1) }
+		require.True(t, module.ClaimDefeat(env.user.UserId, domain.Killer{MobID: 86, InstanceID: foe.InstanceId, Protected: true}))
+		sc, ok := module.scenarioFor(env.user.Character)
+		require.True(t, ok)
+		assert.False(t, sc.Kind.TakesGoods(), "roll %d gave %s", n, sc.ID)
+	}
+	module.roll = util.Rand
+	env.user.Character.SetMiscData(domain.ScenarioKey, nil)
 }
 
 func TestDefeatScenarioRobbedTakesGoldAndLooseGoodsOnly(t *testing.T) {
