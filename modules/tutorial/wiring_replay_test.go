@@ -195,7 +195,8 @@ func TestTutorialReplayThroughPluginsLoad(t *testing.T) {
 	turn, round := util.GetTurnCount(), util.GetRoundCount()
 	start := rooms.LoadRoom(1)
 	require.NotNil(t, start)
-	start.Tags = append(start.Tags, "camping") // so the real character can camp there
+	start.Tags = append(start.Tags, "camping")
+	start.Resources = append(start.Resources, "firewood") // deadfall: the fire is free (40a2) // so the real character can camp there
 
 	// A real character, logged in on a real connection, who skipped the
 	// course after recruiting Tamsin: a company of one in the start room.

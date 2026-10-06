@@ -27,6 +27,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/climate"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -351,6 +352,11 @@ type CampingModule struct {
 	despawnRaider func(instanceID int)
 	campCfg       campSettings
 	campCfgLoaded bool
+	// Phase 40a2 fuel: the company's item count and spend (nil: native),
+	// and the leaders whose first try with damp wood failed.
+	itemCount func(leaderUserID, itemID int) int
+	spendItem func(leaderUserID, itemID int) bool
+	dampTried map[int]bool
 
 	mu sync.Mutex
 
@@ -427,7 +433,8 @@ func init() {
 	// Phase 32a: look shows the camps in a room.
 	camping.SetRoomCampsReader(m.RoomCamps)
 	// A lit campfire also warms its room (Phase 15).
-	climate.RegisterHeatSource(m.RoomHasLitFire)
+	// A fire of damp wood (40a2) lights its room but gives no warmth.
+	climate.RegisterHeatSource(m.RoomWarmedByFire)
 }
 
 // RoomHasLitFire reports whether a lit campfire burns in roomID, which
@@ -439,6 +446,19 @@ func (m *CampingModule) RoomHasLitFire(roomID int) bool {
 	defer m.litMu.RUnlock()
 	for _, camp := range m.roomCamps[roomID] {
 		if camp.FireLit {
+			return true
+		}
+	}
+	return false
+}
+
+// RoomWarmedByFire reports whether a campfire that warms its room burns in
+// roomID: lit, and not a fire of damp wood (Phase 40a2).
+func (m *CampingModule) RoomWarmedByFire(roomID int) bool {
+	m.litMu.RLock()
+	defer m.litMu.RUnlock()
+	for _, camp := range m.roomCamps[roomID] {
+		if camp.FireLit && !camp.Damp {
 			return true
 		}
 	}
@@ -460,7 +480,7 @@ func (m *CampingModule) RoomCamps(roomID int) []camping.RoomCamp {
 func (m *CampingModule) refreshLitRoomsLocked() {
 	byRoom := map[int][]camping.RoomCamp{}
 	for _, camp := range m.camps {
-		byRoom[camp.RoomID] = append(byRoom[camp.RoomID], camping.RoomCamp{LeaderUserID: camp.LeaderUserID, FireLit: camp.FireLit})
+		byRoom[camp.RoomID] = append(byRoom[camp.RoomID], camping.RoomCamp{LeaderUserID: camp.LeaderUserID, FireLit: camp.FireLit, Damp: camp.Damp})
 	}
 	for _, list := range byRoom {
 		slices.SortFunc(list, func(a, b camping.RoomCamp) int { return a.LeaderUserID - b.LeaderUserID })
@@ -634,19 +654,40 @@ func (m *CampingModule) establish(user *users.UserRecord, room *rooms.Room) stri
 	return "You make camp here."
 }
 
-// lightFire lights the leader's camp fire. The leader must be at the camp.
+// lightFire lights the leader's camp fire. The leader must be at the camp,
+// and (Phase 40a2) the fire needs fuel: the room's own deadfall, or a
+// firewood bundle from the company.
 func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) string {
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
 	m.mu.Lock()
+	camp, ok := m.camps[user.UserId]
+	var refusal string
+	switch {
+	case !ok:
+		refusal = "You have no camp here. Use \"camp\" to make one."
+	case camp.RoomID != room.RoomId:
+		refusal = "Your camp is not here."
+	case camp.FireLit:
+		refusal = "Your campfire is already lit."
+	}
+	m.mu.Unlock()
+	if refusal != "" {
+		return refusal
+	}
+	// The fuel is spent outside m.mu: the company's packs and cargo have
+	// their own locks.
+	damp, refusal := m.takeFuel(user, room)
+	if refusal != "" {
+		return refusal
+	}
+
+	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
-	camp, ok := m.camps[user.UserId]
-	if !ok {
-		return "You have no camp here. Use \"camp\" to make one."
-	}
-	if camp.RoomID != room.RoomId {
+	camp, ok = m.camps[user.UserId]
+	if !ok || camp.RoomID != room.RoomId {
 		return "Your camp is not here."
 	}
 	lit, err := camp.LightFire()
@@ -656,12 +697,59 @@ func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) stri
 		}
 		return "You can't light a fire here."
 	}
+	lit.Damp = damp
 	m.camps[user.UserId] = lit
 	if err := m.saveLocked(); err != nil {
 		m.camps[user.UserId] = camp
 		return err.Error()
 	}
+	if damp {
+		return "The damp wood catches at last, and you coax a smoky, sullen fire to life. It gives light, but little warmth."
+	}
 	return "You light a crackling campfire."
+}
+
+// Firewood item ids (Phase 40a2); the gathering module hands them out.
+const (
+	firewoodItemID     = 40
+	dampFirewoodItemID = 41
+)
+
+// takeFuel settles what a new fire burns: a room with its own deadfall
+// (a firewood room) costs nothing; otherwise one dry bundle is spent, and a
+// damp bundle lights only on a second try and gives no warmth. A refusal
+// spends nothing.
+func (m *CampingModule) takeFuel(user *users.UserRecord, room *rooms.Room) (damp bool, refusal string) {
+	if room.HasResource(rooms.ResourceFirewood) {
+		return false, "" // the room's own deadfall feeds the fire
+	}
+	count, spend := m.itemCount, m.spendItem
+	if count == nil || spend == nil {
+		count, spend = company.CompanyItemCount, company.SpendCompanyItem
+	}
+	if count(user.UserId, firewoodItemID) > 0 {
+		if spend(user.UserId, firewoodItemID) {
+			return false, ""
+		}
+	}
+	if count(user.UserId, dampFirewoodItemID) > 0 {
+		m.mu.Lock()
+		tried := m.dampTried[user.UserId]
+		if !tried {
+			if m.dampTried == nil {
+				m.dampTried = map[int]bool{}
+			}
+			m.dampTried[user.UserId] = true
+			m.mu.Unlock()
+			return false, "The damp wood smokes and sputters and will not catch. Try again."
+		}
+		delete(m.dampTried, user.UserId)
+		m.mu.Unlock()
+		if spend(user.UserId, dampFirewoodItemID) {
+			return true, ""
+		}
+	}
+	return false, `Your company has no firewood to light a fire with. Buy firewood bundles from a provisioner or market, or gather deadfall where firewood grows (<ansi fg="command">help gathering</ansi>).`
 }
 
 // startRest begins the one configured real-time rest session. The leader

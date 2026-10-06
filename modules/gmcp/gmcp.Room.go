@@ -38,6 +38,7 @@ func init() {
 	events.RegisterListener(GMCPRoomUpdate{}, g.buildAndSendGMCPPayload)
 	events.RegisterListener(events.ItemOwnership{}, g.itemOwnershipHandler)
 	events.RegisterListener(events.AggroChanged{}, g.aggroChangedHandler)
+	events.RegisterListener(events.RoomResourcesChanged{}, g.resourcesChangedHandler)
 
 }
 
@@ -53,6 +54,24 @@ type GMCPRoomUpdate struct {
 }
 
 func (g GMCPRoomUpdate) Type() string { return `GMCPRoomUpdate` }
+
+// resourcesChangedHandler (Phase 40a2) resends Room.Info to everyone in a
+// room whose gatherable resources were picked clean, so the map and the Room
+// panel redraw the marker.
+func (g *GMCPRoomModule) resourcesChangedHandler(e events.Event) events.ListenerReturn {
+	evt, typeOk := e.(events.RoomResourcesChanged)
+	if !typeOk {
+		return events.Continue
+	}
+	room := rooms.LoadRoom(evt.RoomId)
+	if room == nil {
+		return events.Continue
+	}
+	for _, uId := range room.GetPlayers() {
+		events.AddToQueue(GMCPRoomUpdate{UserId: uId, Identifier: `Room.Info`})
+	}
+	return events.Continue
+}
 
 func (g *GMCPRoomModule) itemOwnershipHandler(e events.Event) events.ListenerReturn {
 
@@ -523,6 +542,10 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 		// Phase 40a: the shown room resources (never reserved ones).
 		if shown := room.ShownResources(); len(shown) > 0 {
 			payload.Resources = shown
+			// Phase 40a2: the ones picked clean for now.
+			if gone := room.DepletedResources(); len(gone) > 0 {
+				payload.Depleted = gone
+			}
 		}
 
 	}
@@ -565,6 +588,7 @@ type GMCPRoomModule_Payload struct {
 	ExitsV2     map[string]GMCPRoomModule_Payload_Contents_ExitInfo `json:"exitsv2"`
 	Details     []string                                            `json:"details"`
 	Resources   []string                                            `json:"resources,omitempty"` // Phase 40a: shown room resources, omitted when none
+	Depleted    []string                                            `json:"depleted,omitempty"`  // Phase 40a2: gathering resources picked clean for now
 	Contents    GMCPRoomModule_Payload_Contents                     `json:"Contents"`
 }
 

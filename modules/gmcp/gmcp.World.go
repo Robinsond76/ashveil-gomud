@@ -193,6 +193,9 @@ func (g *GMCPWorldModule) buildWorldMap(user *users.UserRecord) GMCPWorldMap_Pay
 
 			if shown := room.ShownResources(); len(shown) > 0 {
 				entry.Resources = shown // Phase 40a
+				if gone := room.DepletedResources(); len(gone) > 0 {
+					entry.Depleted = gone // Phase 40a2
+				}
 			}
 
 			entries = append(entries, entry)
@@ -228,4 +231,5 @@ type GMCPWorldMap_RoomEntry struct {
 	ExitsV2     map[string]GMCPRoomModule_Payload_Contents_ExitInfo `json:"exitsv2"`
 	Details     []string                                            `json:"details"`
 	Resources   []string                                            `json:"resources,omitempty"` // Phase 40a
+	Depleted    []string                                            `json:"depleted,omitempty"`  // Phase 40a2: gathering resources picked clean for now
 }

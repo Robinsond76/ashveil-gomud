@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -342,4 +343,33 @@ func (g *Grace) Suppresses(now time.Time) bool {
 		return true
 	}
 	return now.Before(g.Until)
+}
+
+// AttemptProvider is implemented by the encounters module (Phase 40a2): a
+// company working in place (gathering) rolls the room's encounter chance
+// once per attempt, with a bonus for noisy work.
+type AttemptProvider interface {
+	// Attempt rolls the room's chance plus bonusPct for the user's company
+	// and springs the encounter on a hit. It reports whether one sprang.
+	Attempt(userID, roomID, bonusPct int) bool
+}
+
+var (
+	attemptMu       sync.RWMutex
+	attemptProvider AttemptProvider
+)
+
+// SetAttemptProvider registers the module. nil clears it.
+func SetAttemptProvider(p AttemptProvider) {
+	attemptMu.Lock()
+	defer attemptMu.Unlock()
+	attemptProvider = p
+}
+
+// Attempt rolls an in-place encounter attempt; false without a provider.
+func Attempt(userID, roomID, bonusPct int) bool {
+	attemptMu.RLock()
+	p := attemptProvider
+	attemptMu.RUnlock()
+	return p != nil && p.Attempt(userID, roomID, bonusPct)
 }

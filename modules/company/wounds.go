@@ -347,6 +347,27 @@ func (m *CompanyModule) SpendSupply(leaderUserID int, item wounds.Item) bool {
 
 var _ domain.SupplyProvider = (*CompanyModule)(nil)
 
+// CompanyItemCount implements company.ItemSupplyProvider (Phase 40a2): how
+// many of itemID the company reaches.
+func (m *CompanyModule) CompanyItemCount(leaderUserID, itemID int) int {
+	user := users.GetByUserId(leaderUserID)
+	if user == nil || user.Character == nil || m.persistenceAvailable() != nil {
+		return 0
+	}
+	return len(m.supplies(user, m.woundMembers(user), itemID, 0))
+}
+
+// SpendCompanyItem implements company.ItemSupplyProvider.
+func (m *CompanyModule) SpendCompanyItem(leaderUserID, itemID int) bool {
+	user := users.GetByUserId(leaderUserID)
+	if user == nil || user.Character == nil || m.persistenceAvailable() != nil {
+		return false
+	}
+	return m.spendItem(user, m.woundMembers(user), itemID, 0)
+}
+
+var _ domain.ItemSupplyProvider = (*CompanyModule)(nil)
+
 // useSupply spends one item. It reports whether it was spent.
 func (m *CompanyModule) useSupply(user *users.UserRecord, s supply, itemID int) bool {
 	switch s.source {

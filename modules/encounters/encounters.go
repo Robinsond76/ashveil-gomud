@@ -118,6 +118,7 @@ func init() {
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	walking.AddStepListener(m.onStep)
 	walking.AddArrivalListener(m.onArrival)
+	encounters.SetAttemptProvider(m)
 }
 
 func newModule() *EncountersModule {
@@ -204,53 +205,64 @@ func (m *EncountersModule) zoneTables(zone string) (encounters.ZoneConfig, bool)
 // It never rolls on look, scout, login, spawn, relocation or a failed
 // move, because only those two producers call it.
 func (m *EncountersModule) Entered(userID, roomID int) {
+	m.attempt(userID, roomID, 0)
+}
+
+// Attempt implements encounters.AttemptProvider (Phase 40a2): one roll for
+// a company working in place, at the room's chance plus bonusPct.
+func (m *EncountersModule) Attempt(userID, roomID, bonusPct int) bool {
+	return m.attempt(userID, roomID, bonusPct)
+}
+
+// attempt is Entered's body: it reports whether an encounter sprang.
+func (m *EncountersModule) attempt(userID, roomID, bonusPct int) bool {
 	user := users.GetByUserId(userID)
 	if user == nil || user.Character == nil || user.Character.RoomId != roomID {
-		return
+		return false
 	}
 	room := rooms.LoadRoom(roomID)
 	if room == nil || room.Encounter == nil || !room.Encounter.Enabled {
-		return
+		return false
 	}
 	// A follower in a player party does not roll: the leader's move did.
 	if p := parties.Get(userID); p != nil && !p.IsLeader(userID) {
-		return
+		return false
 	}
 	if user.Character.Health < 1 || user.Character.CombatWithdrawn || actionpolicy.InBattle(user) {
-		return
+		return false
 	}
 	if blocked, _ := expedition.MovementBlocked(userID); blocked {
-		return
+		return false
 	}
 	if blocked, _ := camping.MovementBlocked(userID); blocked {
-		return
+		return false
 	}
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	zone, ok := m.zoneTables(room.Zone)
 	if !ok {
-		return
+		return false
 	}
 	table := zone.Tables[room.Encounter.Table]
 	if len(table) == 0 {
-		return
+		return false
 	}
 	// An engaging party takes precedence, and one leader holds one group.
 	if m.engagedLocked(room, userID) {
-		return
+		return false
 	}
 	inRoom := 0
 	for _, r := range m.active {
 		if r.Owner == userID {
-			return
+			return false
 		}
 		if r.RoomID == roomID {
 			inRoom++
 		}
 	}
 	if inRoom >= encounters.RoomGroupLimit {
-		return
+		return false
 	}
 	now := m.clock()
 	g, seen := m.graces[userID]
@@ -268,19 +280,23 @@ func (m *EncountersModule) Entered(userID, roomID int) {
 		}
 	}
 	if suppressed {
-		return
+		return false
 	}
-	if !encounters.Roll(room.Encounter.ChanceIn(zone), m.rng) {
-		return
+	chance := room.Encounter.ChanceIn(zone) + bonusPct
+	if chance > 100 {
+		chance = 100
+	}
+	if !encounters.Roll(chance, m.rng) {
+		return false
 	}
 	comp, ok := encounters.Pick(table, m.rng)
 	if !ok {
-		return
+		return false
 	}
 	enc, err := m.spawn(roomID, userID, encounters.Plan(comp, zone.Band, m.rng))
 	if err != nil {
 		mudlog.Warn("encounters: spawn failed", "room", roomID, "composition", comp.ID, "error", err)
-		return
+		return false
 	}
 	m.active[enc.ID] = &record{Encounter: enc}
 	text := comp.Text
@@ -288,6 +304,7 @@ func (m *EncountersModule) Entered(userID, roomID int) {
 		text = defaultText
 	}
 	room.SendText(text)
+	return true
 }
 
 // engagedLocked reports whether a foe in the room is already set on the user.

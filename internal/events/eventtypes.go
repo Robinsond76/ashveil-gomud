@@ -506,6 +506,14 @@ func (p Party) Type() string { return `Party` }
 
 // Rebuilds mapper for a given RoomId
 // NOTE: RoomId should USUALLY be the Room's Zone.RootRoomId
+// RoomResourcesChanged is queued when a room's gatherable resources were
+// picked clean or changed (Phase 40a2), so clients redraw the room's markers.
+type RoomResourcesChanged struct {
+	RoomId int
+}
+
+func (r RoomResourcesChanged) Type() string { return `RoomResourcesChanged` }
+
 type RebuildMap struct {
 	MapRootRoomId int
 	SkipIfExists  bool

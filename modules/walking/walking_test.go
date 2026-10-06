@@ -559,3 +559,19 @@ func TestSteppedWithoutProviderDataIsSafe(t *testing.T) {
 	assert.Empty(t, e.drains)
 	_ = walking.CentiPerPoint
 }
+
+// Phase 40a2: Effort charges a share of one step's strain in place, through
+// the same carry as a step.
+func TestEffortChargesAPercentageOfAStep(t *testing.T) {
+	e := setup(t)
+	e.addUser(t, 7, 1)
+	e.m.Effort(7, 2, 50) // forest: 50 × 50% = 25
+	assert.Equal(t, 25, e.m.registry.Carry[7][string(survival.LeaderMemberKey)])
+	e.m.Effort(7, 2, 50)
+	e.m.Effort(7, 2, 50)
+	e.m.Effort(7, 2, 50)
+	assert.Equal(t, 1, e.fatigueDrained()[survival.LeaderMemberKey], "four half efforts make one point")
+	assert.Zero(t, e.m.registry.Carry[7][string(survival.LeaderMemberKey)])
+	e.m.Effort(99, 2, 100)  // unknown user
+	e.m.Effort(7, 999, 100) // unknown room
+}

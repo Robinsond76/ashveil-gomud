@@ -16,6 +16,8 @@ mutators:
   spawnedround: 1596850
 resources:
 - forage
+- firewood
+- game
 mapx: 20
 mapy: -1
 mapz: 0

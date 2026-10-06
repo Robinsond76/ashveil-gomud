@@ -178,6 +178,41 @@ func SpendSupply(leaderUserID int, item wounds.Item) bool {
 	return ok && sp.SpendSupply(leaderUserID, item)
 }
 
+// ItemSupplyProvider is optionally implemented by the registered
+// FormationProvider (Phase 40a2): any item the company can reach, for the
+// camp fire's firewood and a fishing line. Game loop only.
+type ItemSupplyProvider interface {
+	// CompanyItemCount is how many of itemID the leader's company reaches:
+	// the cargo, the leader's pack and the companions' packs.
+	CompanyItemCount(leaderUserID, itemID int) int
+	// SpendCompanyItem uses up one of itemID from the first place that has
+	// one (cargo, then the leader's pack, then the companions' packs),
+	// reporting whether there was one.
+	SpendCompanyItem(leaderUserID, itemID int) bool
+}
+
+// CompanyItemCount is how many of an item the company carries; 0 without a
+// provider.
+func CompanyItemCount(leaderUserID, itemID int) int {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	if sp, ok := p.(ItemSupplyProvider); ok {
+		return sp.CompanyItemCount(leaderUserID, itemID)
+	}
+	return 0
+}
+
+// SpendCompanyItem spends one of an item from the company; false with no
+// provider or none left.
+func SpendCompanyItem(leaderUserID, itemID int) bool {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	sp, ok := p.(ItemSupplyProvider)
+	return ok && sp.SpendCompanyItem(leaderUserID, itemID)
+}
+
 // ChemistryProvider is optionally implemented by the registered
 // FormationProvider (Phase 24). modules/company runs on the game loop, so
 // call these from the game loop only.

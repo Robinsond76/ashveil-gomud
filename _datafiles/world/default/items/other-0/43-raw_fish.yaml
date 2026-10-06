@@ -1,0 +1,9 @@
+itemid: 43
+name: raw fish
+namesimple: fish
+description: A fresh-caught fish that needs a fire before it can be eaten.
+type: commodity
+subtype: mundane
+value: 3
+weight: 300
+goods: provision

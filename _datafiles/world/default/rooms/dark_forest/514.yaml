@@ -13,6 +13,8 @@ exits:
     roomid: 513
 resources:
 - forage
+- firewood
+- herbs
 mapx: 36
 mapy: 6
 mapz: 0

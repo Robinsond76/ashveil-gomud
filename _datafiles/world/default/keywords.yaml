@@ -75,6 +75,7 @@ help:
       - inn
       - cooking
       - resources
+      - gathering
     communication:
       - emote
       - say
@@ -297,6 +298,7 @@ help-aliases:
   travel:           [journey, journeys]
   camp:             [camping, campfire]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
+  gathering:        [gather, herbs, herb, firewood, fish, fishing, hunt, hunting, snares, deadfall, picked-clean]
   cooking:          [cook, hearth, recipe, recipes]
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]
