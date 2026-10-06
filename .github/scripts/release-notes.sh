@@ -38,11 +38,13 @@ esac
 
 previous_tag="${PREVIOUS_TAG_NAME:-}"
 if [ -z "$previous_tag" ] && [ "${RELEASE_NOTES_SKIP_GH:-}" != "true" ]; then
+	# gh prints the error body to stdout on a 404 (no latest release yet), so
+	# keep the output only when the call succeeds.
 	previous_tag="$(
 		gh api "repos/${repository}/releases/latest" \
 			--jq '.tag_name' \
-			2>/dev/null || true
-	)"
+			2>/dev/null
+	)" || previous_tag=""
 fi
 
 if [ "${RELEASE_NOTES_SKIP_GH:-}" = "true" ]; then
