@@ -28,6 +28,11 @@ const (
 	Blighted    = 1111
 	Fogbound    = 1112 // Phase 39c: a Shaman's weather on foes
 	Windchilled = 1113
+	// Phase 43b: weapon poisons (items.Poisons), one at a time per victim.
+	Bitterleaf = 1120
+	Leechbane  = 1121
+	Leadroot   = 1122
+	Mirethorn  = 1123
 )
 
 // Buff flags the statuses carry.
@@ -43,6 +48,11 @@ const (
 	FlagBlighted        = "blighted"    // healing it receives is halved (38a)
 	FlagFogbound        = "fogbound"    // its ranged attacks and spells are dimmed (39c)
 	FlagWindchilled     = "windchilled" // its chants and sling shots take a round longer (39c)
+	FlagPoison          = "poison"      // curepoison and cleansing take it off
+	FlagWeaponPoison    = "weapon-poison"
+	FlagLeechbane       = "leechbane" // healing it receives is cut by a quarter (43b)
+	FlagLeadroot        = "leadroot"  // physical damage it deals is cut by 15% (43b)
+	FlagMirethorn       = "mirethorn" // its dodge chance is down 10 points (43b)
 )
 
 // AsleepHitBonus is the points added to the chance to hit a sleeper.
@@ -101,11 +111,20 @@ var specs = map[int]*Spec{
 		EndYou: "The fog thins around you.", EndOther: "The fog thins around %s."},
 	Windchilled: {Id: Windchilled, Word: "windchilled",
 		EndYou: "The cold wind dies on you.", EndOther: "The cold wind dies on %s."},
+	Bitterleaf: {Id: Bitterleaf, Word: "bitterleaf", Damage: 1,
+		TickYou: "Bitterleaf burns in your veins.", TickOther: "Bitterleaf burns in %s's veins.",
+		EndYou: "The bitterleaf runs out of your blood.", EndOther: "The bitterleaf runs out of %s's blood."},
+	Leechbane: {Id: Leechbane, Word: "leechbane",
+		EndYou: "The leechbane thins out of your blood.", EndOther: "The leechbane thins out of %s's blood."},
+	Leadroot: {Id: Leadroot, Word: "leadroot",
+		EndYou: "Your arms feel your own again.", EndOther: "%s's arms look their own again."},
+	Mirethorn: {Id: Mirethorn, Word: "mirethorn",
+		EndYou: "Your feet find themselves again.", EndOther: "%s's feet find themselves again."},
 }
 
 // Ids lists every status's buff id.
 func Ids() []int {
-	return []int{Bleeding, Staggered, KnockedDown, ArmorBroken, Exposed, Burning, Overloaded, Stunned, Hobbled, Asleep, Paralyzed, Blighted, Fogbound, Windchilled}
+	return []int{Bleeding, Staggered, KnockedDown, ArmorBroken, Exposed, Burning, Overloaded, Stunned, Hobbled, Asleep, Paralyzed, Blighted, Fogbound, Windchilled, Bitterleaf, Leechbane, Leadroot, Mirethorn}
 }
 
 // Get is the status with buff id, or nil for a buff that is not one.
@@ -310,7 +329,7 @@ func Grounded(c *characters.Character) bool {
 
 // cleansable are the statuses a cleansing heal or touch takes off, worst
 // first.
-var cleansable = []int{Stunned, Paralyzed, Asleep, KnockedDown, Hobbled, Burning, Bleeding, Blighted, ArmorBroken, Exposed, Staggered}
+var cleansable = []int{Stunned, Paralyzed, Asleep, KnockedDown, Hobbled, Burning, Bleeding, Bitterleaf, Leechbane, Leadroot, Mirethorn, Blighted, ArmorBroken, Exposed, Staggered}
 
 // CleanseOne ends the worst harmful status c carries and returns its word,
 // or "" when it has none.
@@ -325,4 +344,20 @@ func CleanseOne(c *characters.Character) string {
 		}
 	}
 	return ""
+}
+
+// PoisonLive reports whether c carries a live weapon-poison effect (Phase
+// 43b): a victim carries one at a time.
+func PoisonLive(c *characters.Character) bool {
+	for _, id := range []int{Bitterleaf, Leechbane, Leadroot, Mirethorn} {
+		if Live(c, id) {
+			return true
+		}
+	}
+	return false
+}
+
+// IsWeaponPoison reports whether buffId is a weapon poison's status.
+func IsWeaponPoison(buffId int) bool {
+	return buffId == Bitterleaf || buffId == Leechbane || buffId == Leadroot || buffId == Mirethorn
 }

@@ -145,6 +145,7 @@ help:
       - mercy
       - light
       - narration
+      - poisons
       - resurrect
       - scout
       - sharpen
@@ -351,6 +352,7 @@ help-aliases:
   abilities:        [ability, class-abilities, class-ability, opening-strike, opening, aimed-shot, aimed, mana-reserve, reserve]
   interrupts:       [interrupt, interrupted, chant, chants, concentration, shield-bash, shieldbash, counter, counters, hexer, wind-up, wind-ups, windup, windups, telegraph, telegraphs, crushing-blow, ogre]
   sharpen:          [whetstone, whetstones, edge]
+  poisons:          [poison, coat, coating, coatings, weapon-poison, weapon-poisons, bitterleaf, leechbane, leadroot, mirethorn, vial, vials]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]
   tempo:            [actions, turns]
