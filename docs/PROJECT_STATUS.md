@@ -1,5 +1,31 @@
 # Ashveil Project Status
 
+**Phase 37 complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) (2026-10-06):** Dark Forest (band 5-7) and the
+Catacombs (band 10-12) spring 2-3 foe battles (sometimes 4) in opted-in
+rooms, on steps and journey arrivals, with a boss lair (boss at band low+2,
+1.75x HP, no strategy, 2-3 escorts, `boss: true` flagged). Levels follow the
+zone band, never the player. Healer groups are about one in five and never
+in four-foe or boss groups. Grace after a battle (2 eligible entries and
+30 s) is saved per leader. Wins drop zone loot, a once-per-group cache and
+boss rolls, personal per company, with a Spoils line in the battle summary.
+`help encounters`, scout danger line, tutorial hint. Plan:
+[37 plan](plans/2026-10-06-phase-37-random-encounters.md); balance:
+[37 measurements](plans/2026-10-06-phase-37-measurements.md). Deferred:
+bad-luck protection, smart loot, autoloot filters, durable (restart-proof)
+groups, content migration to other zones, boss respawn clock.
+Review (Opus review thread): accepted and fixed: (1) every eligible step
+saved the grace registry to disk on the game loop, now only when the grace
+changes; (2) spoils noted by a death outside any fight leaked into the next
+fight's Spoils line, now cleared when a battle begins; (3) UI: players had
+no way to see a zone's level band, so `scout` in a dangerous room now names
+it (help updated). Each has a regression test. Rejected: a battle's end
+removing every ownerless group at once, not only its own (they would vanish
+within the 120 s timeout anyway). Follow-ups: a boss lair can be re-rolled
+every few entries for a guaranteed Rare (boss respawn clock, already
+deferred; 37b), the band shown in `look`/web client zone header, and the
+composition `kind` field is unused by drops (goods come from each foe's
+`lootcategory`).
+
 **38c-d elite routes design (2026-10-06):** rank tables 30–60 for the
 thirteen elites the faith routes design didn't cover (Warlord; Pathfinder,
 Swordmaster, Nightblade; Sentinel, Marksman, Ravager; Archon, Archmage,
@@ -364,7 +390,7 @@ their dependencies and those decisions is the
 | 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification. [Plan](plans/2026-10-06-phase-36a-loot-item-model.md), complete, merged via [PR #23](https://github.com/Robinsond76/ashveil-gomud/pull/23) | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items. [Plan](plans/2026-10-06-phase-36b-gear-catalog.md), complete, merged via [PR #25](https://github.com/Robinsond76/ashveil-gomud/pull/25) | Loot slice 2; equipment tiers | 36a |
 | 35d | Combat feel: every swing lands with a quality (glancing, solid, telling) the skill edge decides, one-round heals resolve, an 80% after-battle patch threshold, company tactics defaults that grow with the leader's level, HP keeping pace after level 20, short bosses with no strategy, seconds-and-lines targets. [Design](designs/2026-10-06-phase-35d-combat-feel-design.md), **approved 2026-10-06** (all open-question defaults accepted; enemy healers may be uncommon); [plan](plans/2026-10-06-phase-35d-combat-feel.md); from the [combat rebalance second opinion](plans/2026-10-06-combat-rebalance-second-opinion.md) | Owner direction 2026-10-06 | 35b |
-| 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 35d, 36b |
+| 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3). [Plan](plans/2026-10-06-phase-37-random-encounters.md), complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). **Can start now** | Roadmap 2026-10-06 (owner's difficulty rule) | — |

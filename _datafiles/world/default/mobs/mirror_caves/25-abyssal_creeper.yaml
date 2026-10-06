@@ -3,6 +3,7 @@ zone: Mirror Caves
 itemdropchance: 2
 hostile: true
 solitary: true
+boss: true
 maxwander: 0
 groups: 
   - creepers

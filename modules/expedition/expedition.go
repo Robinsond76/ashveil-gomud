@@ -32,6 +32,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
+	"github.com/GoMudEngine/GoMud/internal/walking"
 	"github.com/GoMudEngine/GoMud/internal/weather"
 	"gopkg.in/yaml.v2"
 )
@@ -1110,6 +1111,9 @@ func (m *ExpeditionModule) moveAndFinishLocked(session expedition.TravelSession,
 	if err := m.saveLocked(); err != nil {
 		mudlog.Warn("expedition: persist arrival cleanup", "leader", session.LeaderUserID, "error", err)
 	}
+	// Phase 37: the arrival may spring a random room encounter. It runs
+	// after the journey record is gone, so the arrival is not "travelling".
+	walking.Arrived(session.LeaderUserID, session.OriginRoomID, session.DestinationRoomID)
 }
 
 // recoverLocked reconciles persisted sessions with the current clock on module

@@ -67,3 +67,44 @@ func Stepped(userID, fromRoomID, toRoomID int) {
 		fn(userID, fromRoomID, toRoomID)
 	}
 }
+
+// ArrivalListener hears a completed journey's arrival (Phase 37: random
+// room encounters roll on it). It runs on the game loop after the company
+// has relocated and the traveller was told, and never charges walking
+// strain: the journey already paid its own.
+type ArrivalListener func(userID, fromRoomID, toRoomID int)
+
+var arrivalListeners = map[int]ArrivalListener{}
+
+// AddArrivalListener registers a listener for journey arrivals and returns
+// a function that removes it. Listeners run in registration order.
+func AddArrivalListener(fn ArrivalListener) (remove func()) {
+	providerMu.Lock()
+	defer providerMu.Unlock()
+	nextListenerID++
+	id := nextListenerID
+	arrivalListeners[id] = fn
+	return func() {
+		providerMu.Lock()
+		defer providerMu.Unlock()
+		delete(arrivalListeners, id)
+	}
+}
+
+// Arrived reports a completed journey to the arrival listeners.
+func Arrived(userID, fromRoomID, toRoomID int) {
+	providerMu.RLock()
+	ids := make([]int, 0, len(arrivalListeners))
+	for id := range arrivalListeners {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	fns := make([]ArrivalListener, 0, len(ids))
+	for _, id := range ids {
+		fns = append(fns, arrivalListeners[id])
+	}
+	providerMu.RUnlock()
+	for _, fn := range fns {
+		fn(userID, fromRoomID, toRoomID)
+	}
+}

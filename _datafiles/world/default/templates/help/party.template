@@ -56,5 +56,9 @@ Mercy retains one settlement owner and its existing durable recovery rules.
 Legacy party ranks are display labels only. Use formation for your company's
 3x3 positions; allies may use the same cells in their own independent grids.
 
+A random encounter belongs to the company it sprang on: only that company and
+its party or alliance may fight it or draw its attention, and each allied
+company rolls its own spoils (<ansi fg="command">help encounters</ansi>).
+
 See <ansi fg="command">help company</ansi>, <ansi fg="command">help combat</ansi>,
 <ansi fg="command">help friendly-effects</ansi>, and <ansi fg="command">help travel</ansi>.

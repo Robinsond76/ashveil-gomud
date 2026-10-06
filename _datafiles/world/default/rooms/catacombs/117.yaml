@@ -20,3 +20,6 @@ mapx: 3
 mapy: 1
 mapz: -1
 hascoordinates: true
+encounter:
+  enabled: true
+  table: crypt
