@@ -17,6 +17,10 @@
  *                              starts the load. A caller with a fallback
  *                              chain waits on 'loading' and moves down the
  *                              chain on 'none' or 'failed'.
+ *   Sprites.data(path)      -> the parsed JSON file at <path> under sprites/
+ *                              (Phase 40c: map/landmarks.json) once it has
+ *                              loaded, else null; asking starts the load
+ *                              and a failure stays null.
  *   Sprites.frame(info, rowIndex, now, startMs)
  *                           -> the { sx, sy, sw, sh } source rectangle of
  *                              the frame an animation shows at time <now>
@@ -66,6 +70,19 @@ window.Sprites = (function () {
         return images[path] === 'failed' ? 'failed' : 'loading';
     }
 
+    var datas = {};       // path -> parsed JSON | false (loading or failed)
+
+    function data(path) {
+        if (!(path in datas)) {
+            datas[path] = false;
+            if (!base || !window.fetch || /^file:/.test(base)) { return null; }
+            fetch(base + path).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+                if (d) { datas[path] = d; changed(); }
+            }).catch(function () { /* the glyphs stand */ });
+        }
+        return datas[path] || null;
+    }
+
     function frame(info, rowIndex, now, startMs) {
         var fw = info.frame[0], fh = info.frame[1];
         var n = Math.max(1, info.frames || 1);
@@ -77,5 +94,5 @@ window.Sprites = (function () {
     function onChange(fn) { listeners.push(fn); }
 
     load();
-    return { art: art, has: has, status: status, frame: frame, onChange: onChange };
+    return { art: art, has: has, status: status, data: data, frame: frame, onChange: onChange };
 }());

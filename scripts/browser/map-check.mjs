@@ -1,7 +1,8 @@
-// Phase 40b browser check: drives the map window (window-map.js and the
+// Phase 40b and 40c browser check: drives the map window (window-map.js and the
 // shared sprite loader, through map-harness.html with the real web client
 // core) in Chromium with Playwright: the class sprite, its facing and walk
-// queue, the company badge, camp markers and the settings.
+// queue, the company badge, camp markers and the settings (40b); terrain
+// tiles, walls, fog, landmarks, companions and the classic style (40c).
 //
 //   NODE_PATH=$(npm root -g) node scripts/browser/map-check.mjs [screenshot.png]
 import { createRequire } from 'node:module';
@@ -210,7 +211,7 @@ if (shot) { await page.locator('#map-window').screenshot({ path: shot }); }
 await page.close();
 
 // --- Sprites off: the classic square ---
-page = await open({ width: 1280, height: 900 }, { sprites: false });
+page = await open({ width: 1280, height: 900 }, { sprites: false, style: 'classic' });
 await start(page).catch(() => {});
 await moveTo(page, 2, 1); await tick(page, 400);
 s = await state(page);
@@ -226,6 +227,142 @@ await gmcp(page, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warr
 await moveTo(page, 2, 1);
 await page.waitForFunction(() => window.MapView.state().spriteDrawn, null, { timeout: 5000 });
 check((await state(page)).spriteDrawn, 'a missing warrior image falls back to the adventurer sprite');
+await page.close();
+
+
+// --- Phase 40c: terrain tiles, walls, fog, landmarks, companions ---
+// (0,0) is the grid origin the map treats as no room, so it is left out: 7 rooms.
+// Row 0: forest - water - shore - city(Inn, east exit to an unvisited room);
+// row 1: forest - road - city(Bank) - city (an unmarked room under the shore).
+// (2,0) and (2,1) touch with no exit between them: a wall.
+const mixed = { biomes: {}, rooms: [] };
+const mid = (x, y) => 200 + x + 4 * y;
+const layout = [
+  ['forest', 'water', 'shore', 'city'],
+  ['forest', 'road', 'city', 'city'],
+];
+const noExit = new Set([mid(2, 0) + '-' + mid(2, 1), mid(2, 1) + '-' + mid(2, 0)]);
+for (let y = 0; y < 2; y++) {
+  for (let x = 0; x < 4; x++) {
+    const exitsv2 = {};
+    [['east', 1, 0], ['west', -1, 0], ['south', 0, 1], ['north', 0, -1]].forEach(([n, dx, dy]) => {
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx > 3 || ny < 0 || ny > 1 || noExit.has(mid(x, y) + '-' + mid(nx, ny))) { return; }
+      exitsv2[n] = { num: mid(nx, ny), dx, dy, dz: 0 };
+    });
+    if (x === 3 && y === 0) { exitsv2.east = { num: 999, dx: 1, dy: 0, dz: 0 }; }
+    const r = { num: mid(x, y), area: 'Mixed', coords: ['Mixed', x, y, 0].join(','), environment: layout[y][x], exitsv2, details: [] };
+    if (x === 3 && y === 0) { r.maplegend = 'Inn'; r.mapsymbol = 'I'; }
+    if (x === 2 && y === 1) { r.maplegend = 'Bank'; r.mapsymbol = '$'; }
+    if (x === 2 && y === 0) { r.maplegend = 'Shore'; r.mapsymbol = '~'; }
+    if (x === 0 && y === 1) { r.mapsymbol = '%'; }   // no landmark: the letter stays
+    if (x === 3 && y === 1) { r.environment = 'moonbog'; } // no art for this biome: the unknown tile
+    mixed.rooms.push(r);
+  }
+}
+const gotoMixed = async (settings, abort) => {
+  const pg = await open({ width: 1280, height: 900 }, settings, abort);
+  await gmcp(pg, 'World.Map', mixed);
+  await gmcp(pg, 'Char.Info', { name: 'Wren', classid: 'warrior', lineage: 'warrior' });
+  await gmcp(pg, 'Room', { Info: mixed.rooms[5] });
+  await settle(pg);
+  await pg.waitForFunction(() => { const d = window.MapView.state().drawn; return d.tiles === 7 && d.landmarks >= 2; }, null, { timeout: 5000 }).catch(() => {});
+  return pg;
+};
+
+page = await gotoMixed(null);
+s = await state(page);
+check(s.style === 'tiles', 'the tiles style is the default');
+check(s.drawn.tiles === 7 && s.drawn.fallbacks === 0, 'every room draws its biome tile (the unknown biome too): ' + JSON.stringify(s.drawn));
+check(s.drawn.walls === 1, 'two touching rooms with no exit between them show one wall edge: ' + s.drawn.walls);
+check(s.drawn.fog === 1, 'the unvisited exit ends in a fog tile: ' + s.drawn.fog);
+check(s.drawn.landmarks === 2 && s.drawn.glyphs === 1, 'Inn and Bank draw landmarks, an unmapped symbol keeps its letter, the shore draws none: ' + JSON.stringify(s.drawn));
+check(s.zoom === 1, 'the tile map starts at a crisp 1x zoom');
+await page.locator('#map-window').screenshot({ path: shot ? shot.replace(/\.png$/, '-tiles.png') : '/tmp/40c-tiles.png' });
+// zoom stays on crisp steps
+await tick(page, 400); // the camera ease from the last move has finished
+const box = await page.locator('#map-2d-canvas').boundingBox();
+await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+await page.mouse.wheel(0, -120);
+await tick(page, 200);
+const z1 = (await state(page)).zoom;
+check([0.5, 0.75, 1, 1.5, 2, 3, 4].includes(z1) && z1 > 1, 'a wheel turn moves one crisp zoom step: ' + z1);
+// the classic style is today's look
+await page.evaluate(() => { const c = JSON.parse(localStorage.getItem('gomud_map_settings') || '{}'); c.style = 'classic'; localStorage.setItem('gomud_map_settings', JSON.stringify(c)); });
+await page.reload();
+await gmcp(page, 'World.Map', mixed);
+await gmcp(page, 'Room', { Info: mixed.rooms[5] });
+await tick(page, 400);
+s = await state(page);
+check(s.style === 'classic' && s.drawn.tiles === 0 && s.drawn.walls === 0 && s.drawn.fog === 0, 'classic draws no tiles, walls or fog: ' + JSON.stringify(s.drawn));
+await page.close();
+
+// A missing terrain image falls back to the colour square, without a page error.
+page = await open({ width: 1280, height: 900 }, null, '**/map/terrain/forest.png');
+await gmcp(page, 'World.Map', mixed);
+await gmcp(page, 'Room', { Info: mixed.rooms[5] });
+await tick(page, 500);
+s = await state(page);
+check(s.drawn.fallbacks === 1 && s.drawn.tiles === 6, 'a missing forest tile falls back to the colour square on that room only: ' + JSON.stringify(s.drawn));
+await page.close();
+
+// Reduced motion keeps the water still.
+page = await open({ width: 1280, height: 900 });
+await page.emulateMedia({ reducedMotion: 'reduce' });
+await gmcp(page, 'World.Map', mixed);
+await gmcp(page, 'Room', { Info: mixed.rooms[5] });
+await tick(page, 500);
+s = await state(page);
+check(s.drawn.tiles === 7 && s.drawn.animated === 0, 'with reduced motion no tile animates: ' + JSON.stringify(s.drawn));
+await page.close();
+
+// Animated water cycles its frames.
+page = await gotoMixed(null);
+s = await state(page);
+check(s.drawn.animated >= 1, 'water and shore animate: ' + s.drawn.animated);
+const w1 = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+await tick(page, 600);
+const w2 = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+check(w1 !== w2, 'the animated tiles change over time');
+
+// Companions stand beside you, by class; the badge still counts everyone.
+const cmember = (key, status, lineage, classid) => ({ key, id: 1, name: key, status, level: 5, archetype: 'x', lineage, class: classid, cell: null, chemistry: null, strategy: null });
+await gmcp(page, 'Company', { leader: member('leader', 'Wren', 'present'), members: [
+  cmember('companion:1', 'present', 'cleric', 'cleric'), cmember('companion:2', 'present', 'ranger', ''),
+  cmember('companion:3', 'dead', 'rogue', ''), cmember('companion:4', 'present', '', '') ] });
+await tick(page, 300);
+s = await state(page);
+check(s.companions.length === 2 && s.companions.every(c => c.sprite), 'present companions with a class draw as sprites (not the dead, not the unknown): ' + JSON.stringify(s.companions));
+check(s.companySize === 4, 'the badge counts all present members and the leader: ' + s.companySize);
+for (let i = 0; i < 2; i++) { await page.locator('.map-controls button[title="Zoom in"]').click(); }
+await tick(page, 300);
+await page.locator('#map-window').screenshot({ path: shot ? shot.replace(/\.png$/, '-companions.png') : '/tmp/40c-companions.png' });
+
+// Regrowth: a World.Resources update repaints a room you are not in.
+await gmcp(page, 'World.Map', { biomes: {}, rooms: mixed.rooms.map(r => r.num === mid(1, 1) ? Object.assign({}, r, { resources: ['herbs'], depleted: ['herbs'] }) : r) });
+await tick(page, 200);
+const picked = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+await gmcp(page, 'World.Resources', { num: mid(1, 1), resources: ['herbs'], depleted: [] });
+await tick(page, 200);
+const grown = await page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+check(picked !== grown, 'a regrown resource redraws a room you are not standing in');
+await page.close();
+
+
+// Phase 40c: a fire burned to embers glows low (no smoke), a camp without a tent shows the rough camp.
+page = await gotoMixed(null);
+const campView = () => page.evaluate(() => document.getElementById('map-2d-canvas').toDataURL());
+const camp = (o) => Object.assign({ has_camp: true, here: false, room: 'x', room_id: mid(3, 1), fire_lit: false, resting: false, allied_camps: [] }, o);
+await gmcp(page, 'Company.Camp', camp({ tent: true, embers: false }));
+await tick(page, 300);
+const cold = await campView();
+await gmcp(page, 'Company.Camp', camp({ tent: true, embers: true }));
+await tick(page, 300);
+const glowing = await campView();
+check(cold !== glowing, 'a camp burned down to embers draws differently from a cold fire pit');
+await gmcp(page, 'Company.Camp', camp({ tent: false, embers: true }));
+await tick(page, 300);
+check(glowing !== await campView(), 'a camp pitched without a tent draws the rough camp, not the tent');
 await page.close();
 
 await browser.close();
