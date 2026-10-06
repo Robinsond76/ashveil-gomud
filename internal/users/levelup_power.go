@@ -56,27 +56,17 @@ func powerSnapshot(c *characters.Character) []powerEntry {
 }
 
 // abilityPower are the report's entries for the abilities a character
-// knows, at its level, and a halberdier's Hook (Phase 39a review).
+// knows, at its level. A halberdier's Sweep, Brace and Hook are base ranks
+// (Phase 46), reported as "New rank" lines.
 func abilityPower(c *characters.Character, known []strategy.Ability) []powerEntry {
 	var out []powerEntry
 	for _, id := range strategy.AtLevel(known, c.Level) {
 		switch id {
-		case strategy.Sweep: // Phase 39a review: the row widens at level 8
-			reach := "one foe beside"
-			if strategy.SweepWide(c.Level) {
-				reach = "the whole row"
-			}
-			out = append(out, powerEntry{name: "Sweep", size: reach})
-		case strategy.Brace:
-			out = append(out, powerEntry{name: "Brace", size: fmt.Sprintf("held blow at %d%%", strategy.BracePct)})
 		case strategy.OpeningStrike:
 			out = append(out, powerEntry{name: "Opening Strike", size: fmt.Sprintf("+%d damage", strategy.OpeningStrikeBonus(c.Level))})
 		case strategy.AimedShot:
 			out = append(out, powerEntry{name: "Aimed Shot", size: fmt.Sprintf("+%d damage", strategy.AimedShotBonus(c.Level))})
 		}
-	}
-	if chance := strategy.HookChance(c.Level); chance > 0 && c.ArchetypeID() == "halberdier" {
-		out = append(out, powerEntry{name: "Hook", size: fmt.Sprintf("%d%% to trip a leaper", chance)})
 	}
 	return out
 }

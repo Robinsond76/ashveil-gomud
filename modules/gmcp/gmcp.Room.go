@@ -6,9 +6,11 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
+	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mapper"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -64,11 +66,27 @@ func (g GMCPRoomUpdate) Type() string { return `GMCPRoomUpdate` }
 // starting (Phase "start", with Seconds), finishing ("done") or being stopped
 // ("stopped"); Lines are what the leader was told.
 type GMCPRoomGatherPayload struct {
-	Phase   string   `json:"phase"`
-	Kind    string   `json:"kind"`
-	Label   string   `json:"label"`
-	Seconds int      `json:"seconds,omitempty"`
+	Phase   string `json:"phase"`
+	Kind    string `json:"kind"`
+	Label   string `json:"label"`
+	Seconds int    `json:"seconds,omitempty"`
+	// Elapsed (Phase 46) is the seconds of a start already worked, so a client
+	// that reconnected mid-work resumes the bar where it stands.
+	Elapsed int      `json:"elapsed,omitempty"`
 	Lines   []string `json:"lines,omitempty"`
+}
+
+// gatherResume is the Room.Gather start payload for work already under way,
+// or false when the user has none (Phase 46: a reconnecting client asks for
+// it, since it missed the start).
+func gatherResume(userID int) (GMCPRoomGatherPayload, bool) {
+	p, ok := gathering.ProgressOf(userID)
+	if !ok {
+		return GMCPRoomGatherPayload{}, false
+	}
+	total := int((p.Total + time.Second - 1) / time.Second)
+	left := int((p.Remaining + time.Second - 1) / time.Second)
+	return GMCPRoomGatherPayload{Phase: "start", Kind: string(p.Kind), Label: p.Label, Seconds: max(total, 1), Elapsed: max(total-left, 0)}, true
 }
 
 // gatherProgressHandler sends the leader's web client the work's progress.
@@ -298,6 +316,15 @@ func (g *GMCPRoomModule) buildAndSendGMCPPayload(e events.Event) events.Listener
 			}
 
 			requestedId := strings.Join(identifierParts, `.`)
+
+			// Phase 46: a client asking for Room.Gather wants the work in
+			// progress, if there is any.
+			if requestedId == `Room.Gather` {
+				if resume, ok := gatherResume(evt.UserId); ok {
+					events.AddToQueue(GMCPOut{UserId: evt.UserId, Module: `Room.Gather`, Payload: resume})
+				}
+				continue
+			}
 
 			payload, moduleName := g.GetRoomNode(user, requestedId)
 

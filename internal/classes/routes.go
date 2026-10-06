@@ -266,6 +266,16 @@ func init() {
 	register(Class{ID: "crone-of-ash", Name: "Crone of Ash", Lineage: "witch", Tier: TierElite, Parent: "hag", Gate: GateEvil,
 		Role: "curses that spread", Planned: true})
 
+	// ----- Halberdier (Phase 46: its abilities as ranks, so a level-up names
+	// them in the shared "New rank" line like the Samurai and Shaman) -----
+	registerBase("halberdier",
+		rank(1, "Sweep", "one swing strikes its foe and one foe beside it, each at 90% of the damage"),
+		rank(3, "Brace", "holds its turn when a foe is striking at its place in the line; the first foe to strike it takes a held blow at 125%"),
+		rank(6, "Hook", "a glaive hit has a 20% chance to trip a leaping foe"),
+		rank(8, "Wide sweep", "Sweep strikes every foe in the row, not only one beside"),
+		rank(20, "Deep hook", "Hook's chance to trip a leaper is 40%"),
+	)
+
 	// ----- Samurai (Phase 39b: a neutral lineage, no alignment gates) -----
 	registerBase("samurai",
 		rank(1, "Iaijutsu", "starts a battle with half a turn on its action meter (it acts sooner), and its first strike each battle deals 50% more damage with +10% critical chance", Iai, 1, IaiDamage, 50, IaiCrit, 10, OpenMeter, 50),

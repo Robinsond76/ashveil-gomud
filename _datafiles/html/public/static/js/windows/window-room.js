@@ -660,6 +660,7 @@
     // -----------------------------------------------------------------------
     let gatherTimer = null;
     let gatherHide  = null;
+    let gatherRequested = false;
 
     function gatherCapitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
@@ -675,15 +676,17 @@
         clearTimeout(gatherHide);
 
         if (g.phase === 'start') {
-            const total = Math.max(1, g.seconds || 1);
-            const ends  = Date.now() + total * 1000;
+            const total   = Math.max(1, g.seconds || 1);
+            const elapsed = Math.min(total, Math.max(0, g.elapsed || 0));
+            const left0   = total - elapsed;
+            const ends    = Date.now() + left0 * 1000;
             box.className = 'shown';
             what.textContent = gatherCapitalize(g.label || 'working') + '\u2026';
             result.textContent = '';
             fill.style.transition = 'none';
-            fill.style.width = '0%';
+            fill.style.width = (100 * elapsed / total) + '%';
             void fill.offsetWidth;
-            fill.style.transition = 'width ' + total + 's linear';
+            fill.style.transition = 'width ' + left0 + 's linear';
             fill.style.width = '100%';
             const tick = function() {
                 const secs = Math.max(0, Math.ceil((ends - Date.now()) / 1000));
@@ -711,7 +714,14 @@
         window:       win,
         gmcpHandlers: ['Room.Info', 'Room.Gather'],
         onGMCP(ns, body) {
-            if (ns === 'Room.Gather') { updateGather(body); } else { update(); }
+            if (ns === 'Room.Gather') { updateGather(body); return; }
+            // Phase 46: a reload or reconnect misses the start of work under
+            // way, so ask once for it when the first room arrives.
+            if (!gatherRequested) {
+                gatherRequested = true;
+                Client.GMCPRequest('Room.Gather');
+            }
+            update();
         },
     });
 

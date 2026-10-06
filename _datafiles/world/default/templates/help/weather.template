@@ -19,8 +19,11 @@ random intervals, without anyone doing anything.
   sky. Indoors near an exit that looks outside, you get a glimpse of
   the weather through it instead.
 
-  A zone with no weather table of its own (most settlements) has none
-  to show.
+  Cities have weather too (clear, overcast, rain, mist), but their walls
+  shelter you: city weather never slows a walk, tires you or spoils a
+  rest, and a journey that sets out from a city takes the weather of
+  the road it heads for. Zones with no weather table of their own (caves,
+  dungeons) have none to show.
 
 <ansi fg="yellow-bold">How weather affects you</ansi>
 
