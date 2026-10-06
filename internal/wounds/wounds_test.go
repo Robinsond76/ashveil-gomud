@@ -262,3 +262,19 @@ func TestAPunctureLeftOpenFestersAfterTheLimit(t *testing.T) {
 	assert.True(t, Festering(ws, 3), "the third battle")
 	assert.Zero(t, ws[0].Battles, "the count starts over")
 }
+
+// TestTreatingAPunctureStartsItsFeverCountOver (55 review): a bandaged
+// puncture that stays partly open is treated, so it must not fester on
+// the count it had before.
+func TestTreatingAPunctureStartsItsFeverCountOver(t *testing.T) {
+	ws := []Wound{{Kind: Puncture, Place: "arm", Points: 8}}
+	Festering(ws, 3)
+	Festering(ws, 3)
+	ws, _, closed, ok := Treat(ws, Bandage)
+	assert.True(t, ok)
+	assert.Equal(t, BandagePoints, closed)
+	assert.Zero(t, ws[0].Battles, "bandaged: the count starts over")
+	assert.False(t, Festering(ws, 3))
+	assert.False(t, Festering(ws, 3))
+	assert.True(t, Festering(ws, 3), "left untreated three battles again")
+}

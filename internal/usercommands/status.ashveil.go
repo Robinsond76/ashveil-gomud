@@ -96,7 +96,7 @@ func addAshveilVitals(p *templates.Panel, s companyview.Summary) {
 	}
 	// Phase 55: lasting ailments (help ailments).
 	if len(s.Leader.Ailments) > 0 {
-		addRow(p, `Ailing:  `, `Ail:`, `<ansi fg="red">`+strings.Join(s.Leader.Ailments, `, `)+`</ansi>`)
+		addRow(p, `Ailing: `, `Ail:`, `<ansi fg="red">`+strings.Join(s.Leader.Ailments, `, `)+`</ansi>`)
 	}
 	// Phase 50: what those needs and a meal buff do in the next battle.
 	if s.Leader.Fare != `` {

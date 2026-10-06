@@ -38,7 +38,8 @@ type Wound struct {
 
 // Festering counts one more battle on every lasting puncture wound in ws
 // and reports whether any has now stayed open for limit battles; those
-// counters start over. A treated wound that remains keeps its count.
+// counters start over. Treating or tending a wound (Close, Treat) also
+// starts its count over, so only a wound left untreated festers.
 func Festering(ws []Wound, limit int) bool {
 	festered := false
 	for i := range ws {
@@ -236,6 +237,7 @@ func closeWhere(ws []Wound, points int, want func(Kind) bool) ([]Wound, Wound, i
 	was := out[i]
 	closed := min(points, was.Points)
 	out[i].Points -= closed
+	out[i].Battles = 0 // Phase 55: a treated puncture starts its fever count over
 	if out[i].Points <= 0 {
 		out = append(out[:i], out[i+1:]...)
 	}

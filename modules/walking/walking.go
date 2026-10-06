@@ -271,6 +271,10 @@ func init() {
 	})
 	events.RegisterListener(events.NewRound{}, m.onNewRound)
 	walking.SetStepProvider(m)
+	// Phase 55 review: a journey that ends out of doors with a member
+	// Frozen gives a chill, as a step on foot does. Arrival runs on the
+	// event queue, after the expedition's lock is released.
+	walking.AddArrivalListener(func(userID, _, toRoomID int) { m.catchChill(userID, toRoomID) })
 }
 
 func newModule() *WalkingModule {
@@ -493,8 +497,8 @@ func (m *WalkingModule) Stepped(userID, fromRoomID, toRoomID int) {
 	m.catchChill(userID, toRoomID)
 }
 
-// catchChill (Phase 55) gives a Chill to every member who walks out of
-// doors Frozen. It runs after the charge, outside the module's lock: it
+// catchChill (Phase 55) gives a Chill to every member who walks, or
+// arrives from a journey, out of doors Frozen. It runs after the charge, outside the module's lock: it
 // reads exposure and writes survival, and neither may be held across it.
 func (m *WalkingModule) catchChill(userID, toRoomID int) {
 	dest := m.loadRoom(toRoomID)

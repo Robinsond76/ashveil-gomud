@@ -6,8 +6,9 @@ camp from herbs you gathered. They are never random and never come from a
 place: they come from what your company chose to do.
 
   <ansi fg="yellow">Ailment</ansi>    <ansi fg="yellow">Caught by</ansi>                          <ansi fg="yellow">In battle</ansi>         <ansi fg="yellow">Lasts</ansi>
-  Chill       walking out of doors, or ending     -10% damage dealt  4 battles
-              a camp rest, while Frozen
+  Chill       walking or ending a journey out     -10% damage dealt  4 battles
+              of doors, or ending a camp rest,
+              while Frozen
   Gut-ache    eating raw game meat                +10% damage taken  3 battles
   Fever       a lasting puncture wound left       -15% damage dealt  5 battles
               open through 3 battles
@@ -16,16 +17,17 @@ place: they come from what your company chose to do.
 
   Chill      Frozen means frostbitten or worse (<ansi fg="command">help temperature</ansi>): a member whose
              warmth reads frostbitten, hypothermic or freezing to death. A
-             comfortable or merely chilled member is fine, and a step into a
-             room under a roof, or a night at an inn, never gives one. Warm
+             comfortable or merely chilled member is fine, and a step or a
+             journey's end under a roof, or a night at an inn, never gives one. Warm
              clothes, a fire and a warming draught keep it away.
   Gut-ache   <ansi fg="command">eat raw game meat</ansi> (or <ansi fg="command">eat raw game meat [member]</ansi>) fills 10 Hunger and
              always gives it. <ansi fg="command">company eat</ansi> never serves raw meat: cook it first
              (<ansi fg="command">help cooking</ansi>).
   Fever      each battle a member fights with a lasting puncture wound still
              open counts one (<ansi fg="command">help wounds</ansi>); on the third the wound festers.
-             Bandages, a surgeon's kit, an inn or a physician close the wound
-             first. A member with a fever is not counted again.
+             Treating the wound (a bandage, a surgeon's kit, tending, an inn or
+             a physician) starts its count over, even if it stays partly
+             open. A member with a fever is not counted again.
 
 <ansi fg="yellow-bold">What they do</ansi>
 
@@ -58,7 +60,8 @@ camp in the room, no rest running and no fight.
 The fight opens with a "Going in:" line naming each member's ailments;
 <ansi fg="command">status</ansi>, <ansi fg="command">conditions</ansi> and <ansi fg="command">survival</ansi> list them with the battles left; and
 in the web client the vitals strip warns of each ailing member, Company >
-Status shows the "In battle" line, and the battle screen marks the member.
+Status shows the "In battle" line, the Camp tab lists who is ailing while
+you are at your camp, and the battle screen marks the member.
 
 See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help wounds</ansi>, <ansi fg="command">help temperature</ansi>, <ansi fg="command">help cooking</ansi>,
 <ansi fg="command">help camp supplies</ansi>, <ansi fg="command">help conditions</ansi>.
