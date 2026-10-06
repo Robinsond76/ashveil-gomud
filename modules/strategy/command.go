@@ -393,6 +393,8 @@ func (m *StrategyModule) spellsFor(mb member, role domain.Role) []string {
 		uses = []domain.Use{domain.UseHeal, domain.UseHealAll}
 	case domain.Caster:
 		uses = []domain.Use{domain.UseAttack, domain.UseAttackAll}
+	case domain.Controller:
+		uses = []domain.Use{domain.UseHex, domain.UseAttack}
 	default:
 		return nil
 	}
@@ -414,12 +416,15 @@ func (m *StrategyModule) spellsFor(mb member, role domain.Role) []string {
 
 // cantYet warns when a member knows no spell its new role would cast.
 func (m *StrategyModule) cantYet(mb member, role domain.Role) string {
-	if (role != domain.Healer && role != domain.Caster) || len(m.spellsFor(mb, role)) > 0 {
+	if (role != domain.Healer && role != domain.Caster && role != domain.Controller) || len(m.spellsFor(mb, role)) > 0 {
 		return ""
 	}
 	what := "attack spell"
-	if role == domain.Healer {
+	switch role {
+	case domain.Healer:
 		what = "healing spell"
+	case domain.Controller:
+		what = "hex"
 	}
 	return fmt.Sprintf(`%s %s no %s yet, and will fight until learning one.`, mb.name, verb(mb, "know", "knows"), what)
 }

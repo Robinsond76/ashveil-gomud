@@ -35,7 +35,7 @@ func Gearup(rest string, user *users.UserRecord, room *rooms.Room, flags events.
 	}
 
 	for _, itm := range upgrades {
-		user.Command(fmt.Sprintf(`wear !%d`, itm.ItemId), -1)
+		user.Command(fmt.Sprintf(`wear !%d:%s`, itm.ItemId, itm.UUID), -1)
 	}
 
 	return true, nil

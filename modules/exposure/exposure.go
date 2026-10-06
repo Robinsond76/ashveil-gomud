@@ -417,7 +417,7 @@ func (m *ExposureModule) warmthOf(c *characters.Character) int {
 	worn := []climate.WornPiece{}
 	for _, item := range c.Equipment.GetAllItems() {
 		spec := item.GetSpec()
-		worn = append(worn, climate.WornPiece{Slot: strings.ToLower(string(spec.Type)), Warmth: spec.Warmth})
+		worn = append(worn, climate.WornPiece{Slot: strings.ToLower(string(spec.Type)), Warmth: spec.Warmth, Bonus: spec.WarmthBonus})
 	}
 	return climate.Warmth(worn, c.HasBuffFlag("warmed"), m.settings.Warmth)
 }

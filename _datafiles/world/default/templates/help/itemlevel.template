@@ -1,0 +1,30 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">itemlevel</ansi>
+
+Item level (1 to 70) is where an item came from: the level of the foe, boss
+or chest that produced it. It decides how strong its affixes can be, and
+what you need to wear it.
+
+<ansi fg="yellow-bold">Affix tiers</ansi>
+
+An affix has up to five tiers of strength. Item level opens them:
+
+  Item level   1+      15+      30+      45+      60+
+  Tier         1        2        3        4        5
+
+An item always rolls the highest tier its item level allows, with the
+number inside that tier's range chosen at random. Reading an item at Scribe
+rank 4 shows its affix tiers and ranges.
+
+<ansi fg="yellow-bold">Tier</ansi>
+
+The tier of the base type (Common, Steel, Tempered, Masterwork, Runeforged
+and Relic) is a separate thing: it is the material and the power budget the
+item starts with. Tier comes from the type, item level from where it was
+found.
+
+<ansi fg="yellow-bold">To wear it</ansi>
+
+Rare and better gear needs a character level 5 below its item level;
+Uncommon 10 below; Common none (<ansi fg="command">help rarity</ansi>).
+
+See also: <ansi fg="command">help rarity</ansi>, <ansi fg="command">help quality</ansi>, <ansi fg="command">help affixes</ansi>, <ansi fg="command">help equipment</ansi>.

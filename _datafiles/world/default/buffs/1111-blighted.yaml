@@ -1,0 +1,12 @@
+buffid: 1111
+name: Blighted
+description: A blight clings to you. Healing you receive is halved.
+secret: false
+# Phase 38a: ticked by the combat round (see internal/status), never by game
+# rounds; 3 rounds.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 4
+flags:
+  - combat-status
+  - blighted

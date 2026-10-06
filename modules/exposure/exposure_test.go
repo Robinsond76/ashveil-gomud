@@ -610,3 +610,18 @@ func TestRegenPerTickCountsCompanions(t *testing.T) {
 	assert.Positive(t, leader)
 	assert.Equal(t, leader, companion)
 }
+
+// Review fix (36a): a rolled warmth affix adds to the slot default instead
+// of replacing it, so a fur-lined tunic is warmer than a plain one.
+func TestWarmthAffixAddsToTheSlotDefault(t *testing.T) {
+	e := setup(t)
+	u := e.addUser(t, 7, 3)
+	u.Character.Equipment.Body = items.New(testTunic)
+	plain := e.m.warmthOf(u.Character)
+
+	tunic := items.New(testTunic)
+	tunic.ApplyRoll(items.Rolled{Version: items.RollVersion, Quality: items.QualityStandard, Rarity: items.RarityUncommon, Identified: true,
+		Affixes: []items.RolledAffix{{ID: "furlined", Label: "Fur-lined", Mechanic: "warmth", Value: 2}}})
+	u.Character.Equipment.Body = tunic
+	assert.Equal(t, plain+2, e.m.warmthOf(u.Character))
+}

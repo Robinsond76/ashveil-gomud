@@ -45,6 +45,7 @@ for each level through {{ config "GamePlay.Progression.HPFullLevels" }}, a littl
   Rogue       4            0.7             52        73
   Cleric      2            0.6             50        68
   Wizard      0            0.5             48        63
+  Witch       1            0.55            49        65
 
 Those are before Vitality. Fractions accumulate. See <ansi fg="command">help progression</ansi>.
 

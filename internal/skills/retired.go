@@ -1,9 +1,16 @@
 package skills
 
-// Ashveil 33f1 and 33f2 (search, trading): skills retired from the game. A
+// Ashveil 33f1 and 33f2 (search, trading): skills retired from the game
+// (scribe was retired too, and returns in 36a: see ScribeReset). A
 // character still holding one is refunded the training points it cost and the entry is removed
 // (characters.Character.RetireSkills, run at login).
-var retired = []string{`changeform`, `peep`, `portal`, `scribe`, `search`, `tame`, `trading`}
+var retired = []string{`changeform`, `peep`, `portal`, `search`, `tame`, `trading`}
+
+// ScribeReset (Ashveil 36a): `scribe` was retired in 33f1 and returns as a
+// new caster skill. A character that has not been reset yet gives up any old
+// rank for a refund, once (characters.Character.ScribeReset marks it), so
+// nobody keeps a rank they did not train for the new skill.
+const ScribeReset = `scribe`
 
 // cappedLevels are skills whose top levels were retired with the ability
 // they granted (protection 4 granted pray): a higher level is refunded down

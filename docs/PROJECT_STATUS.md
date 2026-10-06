@@ -1,5 +1,58 @@
 # Ashveil Project Status
 
+**Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
+takes enemy turns away. Eight hexes (Slumber to Blight) in the `hexcraft`
+school, reach 1 to the whole group by level, three new statuses (Asleep,
+Paralyzed, Blighted), a resist roll and a shared immunity so no foe is held
+past half a fight, a `controller` strategy role that hexes on its own, a
+recruitable Witch, `help witch`, `help hexes` and tutorial pointers. See the
+[plan](plans/2026-10-06-phase-38a-witch.md). Balance: the Witch matches the
+Wizard in the equal mirror and neither beats a warrior there (about half of
+casters' chants break); timeboxed, no retune.
+Independent review: accepted (fixed with tests) two stale company tests,
+the missing `.d.ts` entries for `CastHex` and `HexTargets`, one shared
+immunity for sleep, paralysis and knockdown (the half-of-a-fight rule held
+only per status), and Dread Whisper no longer cast at unbreakable foes;
+poison waking a sleeper was confirmed and now tested. Rejected: manual
+Miasma row limiting (a hand `cast` is a utility outside battle; the help now
+says so); "hex the largest group" (a battle has one group); design HP 1.75 a
+level (the shipped HP scale is 0.55, noted in the plan).
+Merge review (Opus): accepted and fixed with regression tests: blows
+against a sleeper were 25 points *less* likely to hit (the bonus was added
+to a penalty that is subtracted); bleed and burn tick damage now wake a
+sleeper; Dread Whisper skips foes with no temperament (no morale check
+happens); a hex finishing on a foe that fell mid-chant does nothing; hidden
+foes no longer make the Witch pick a hex it then can't aim. Help corrected:
+hexes ignore the mana reserve like heals; Miasma's poison outlives the
+fight; the hand-cast sentence is gone, since a harmful `cast` is refused
+both in and out of battle (so manual Miasma never reaches players).
+Accepted as is: the boss resist waits on encounter data setting `Boss`;
+the no-lock ledger covers hex holds only, not a tackle's knockdown.
+
+**Phase 36a loot item model merged (2026-10-06):** gear can roll quality,
+rarity, affixes and a level requirement (`items.Rolled`, `internal/loot`,
+data in `lootaffixes/`); Rare and better arrive unidentified until a Scribe
+reads them (new wizard/cleric skill, `scribe` command, camp-rest reading,
+`autoskill scribe`); `Wear` enforces the level requirement; `spawn loot`
+rolls items for testing. Players do not see drops yet. Plan:
+[36a plan](plans/2026-10-06-phase-36a-loot-item-model.md), with deviations
+and deferrals (merchant sale, GMCP names, signature and set effects).
+Independent review accepted: identify clobbered later enchants (fixed),
+`gearup` proposed refused gear and wore by item id (fixed, uuid wear),
+multi-attack quality scaling (per hit), stale scribe rank wiped after
+training (CanTrain settles first), inaccurate help (Legendary, Set, sale),
+companion name lowercased at camp. Rejected: none outright; GMCP names and
+merchant sale are deferred, not fixed. Second (merge) review accepted:
+the weight affix never reached load (`Weight()` reads base data; now
+applies identified `weightpct`), the warmth affix replaced the slot default
+and could make gear colder (now a `WarmthBonus` added after the default),
+the scribe refund said Scribe was gone, the level refusal said "you" to
+companions, "a exquisite", rolled gear not answering to its shown words,
+mob `gearup` dropping by item id, and enchanting losing a roll's quality
+value; each has a regression test. Rejected: capitalised prefixed names
+("Keen fine sword") are a deliberate style. Verification: `make generate`,
+`make validate`, `go test -race ./...`, `make js-lint`.
+
 **Neutral classes design approved (2026-10-05):** the owner asked for a
 glaive class and classes with no good or evil path, inspired by Ogre Battle
 and Unicorn Overlord. Added the [neutral classes design](designs/2026-10-05-neutral-classes-design.md):
@@ -221,11 +274,11 @@ implemented (handoff rule 20).
 | 35a2 | Skill over hit points: derived Attack and Evasion ratings by level and class, one skill edge added to every opposed chance (block included), small HP growth with a 15–25% landed hit, a smaller Strength damage bonus, armor bulk with a significant untrained penalty (warriors the tanks), shields for warriors and rangers (bucklers) only, cleric staffs/rods/maces, spell and heal numbers sized to a weapon hit. [Design](designs/2026-10-05-phase-35a2-skill-over-hit-points-design.md), owner-approved 2026-10-05; [plan](plans/2026-10-05-phase-35a2-skill-over-hit-points.md); complete, merged via [PR #18](https://github.com/Robinsond76/ashveil-gomud/pull/18) ([measurements](plans/2026-10-05-phase-35a2-measurements.md)); three balance rows retuned in 35b | Owner direction 2026-10-05 | 35a |
 | 35b | Caster power: no fizzle, roll-100 fix, scaling spells and abilities, caster mana pools, no passive mana, mana draughts, healing and after-battle patching, the 50% HP trickle, the easy-fight wound change. [Plan](plans/2026-10-05-phase-35b-caster-power.md), complete ([measurements](plans/2026-10-05-phase-35b-measurements.md)) | Level impact §2, §4 | 35a, 35a2 |
 | 35c | Companion training: derived points, `company train`, trained optional skills (Cooking first). [Plan](plans/2026-10-05-phase-35c-companion-training.md), complete, merged via [PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/16) | Level impact §5 | 35a |
-| 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification | Loot design slice 1 | 35b, 35c |
+| 36a | Loot item model and generator: layers, affixes, level requirements, display, persistence; Scribe and identification. [Plan](plans/2026-10-06-phase-36a-loot-item-model.md), complete, merged via [PR #23](https://github.com/Robinsond76/ashveil-gomud/pull/23) | Loot design slice 1 | 35b, 35c |
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
 | 35d | Combat feel: every swing lands with a quality (glancing, solid, telling) the skill edge decides, one-round heals resolve, an 80% after-battle patch threshold, company tactics defaults that grow with the leader's level, HP keeping pace after level 20, short bosses with no strategy, seconds-and-lines targets. [Design](designs/2026-10-06-phase-35d-combat-feel-design.md), **approved 2026-10-06** (all open-question defaults accepted; enemy healers may be uncommon); [plan](plans/2026-10-06-phase-35d-combat-feel.md); from the [combat rebalance second opinion](plans/2026-10-06-combat-rebalance-second-opinion.md) | Owner direction 2026-10-06 | 35b |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 35d, 36b |
-| 38a | Witch base class: hexes, three new statuses, controller role | Level impact §3 | 35b |
+| 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
 | 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |

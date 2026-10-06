@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -25,8 +26,24 @@ func (m *ArchetypeModule) retireSkills(user *users.UserRecord) {
 			mudlog.Error("archetype: saving retired-skill refund", "user", user.UserId, "error", err)
 		}
 	}
-	user.SendText(fmt.Sprintf(`<ansi fg="yellow">No longer part of the world: %s. You get back the %d training %s you spent.</ansi>`,
-		strings.Join(removed, ", "), points, plural(points, "point", "points")))
+	// Ashveil 36a: scribe is refunded because it was reworked, not removed.
+	gone, reworked := []string{}, false
+	for _, id := range removed {
+		if id == skills.ScribeReset {
+			reworked = true
+			continue
+		}
+		gone = append(gone, id)
+	}
+	var lines []string
+	if len(gone) > 0 {
+		lines = append(lines, fmt.Sprintf(`No longer part of the world: %s.`, strings.Join(gone, ", ")))
+	}
+	if reworked {
+		lines = append(lines, `Scribe has been reworked and starts fresh (help scribe).`)
+	}
+	user.SendText(fmt.Sprintf(`<ansi fg="yellow">%s You get back the %d training %s you spent.</ansi>`,
+		strings.Join(lines, " "), points, plural(points, "point", "points")))
 }
 
 func plural(n int, one, many string) string {

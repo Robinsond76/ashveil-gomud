@@ -116,7 +116,7 @@ line opens a fight and one closes it.
 A critical hit leaves a mark that matches the weapon: swords and claws make
 you bleed, maces stagger, hammers and axes knock down or break armor, bows
 leave you exposed. Staggered and knocked-down fighters lose an action,
-stunned ones two, and can't block, parry, or dodge meanwhile (<ansi fg="command">help statuses</ansi>).
+stunned ones two, and a Witch's hexes (<ansi fg="command">help hexes</ansi>) put foes to sleep or paralyze them; and can't block, parry, or dodge meanwhile (<ansi fg="command">help statuses</ansi>).
 Statuses last a few combat rounds and end with the fight.
 
 <ansi fg="yellow-bold">Wounds (</ansi><ansi fg="command">help wounds</ansi><ansi fg="yellow-bold">)</ansi>
@@ -159,6 +159,7 @@ and your company's health.
   <ansi fg="command">formation</ansi>         see and arrange your company's formation
   <ansi fg="command">company chemistry</ansi> your company's chemistry
   <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind
+  <ansi fg="command">help hexes</ansi>        a Witch's hexes, and how they land
   <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
   <ansi fg="command">company patch</ansi>     heal the company to its threshold (<ansi fg="command">help patch</ansi>)
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades

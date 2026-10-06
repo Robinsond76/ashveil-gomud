@@ -25,4 +25,8 @@ No pickup or item use during battle. Loot contains actual drops, not gear that
 stays with the body. Your allies' possessions and quest items retain the normal
 ownership and item rules. A restart does not preserve runtime corpses.
 
+Gear can roll with a rarity, quality and affixes, and Rare and better is
+found unidentified until a Scribe reads it: <ansi fg="command">help rarity</ansi>, <ansi fg="command">help quality</ansi>,
+<ansi fg="command">help itemlevel</ansi>, <ansi fg="command">help affixes</ansi>, <ansi fg="command">help identify</ansi>, <ansi fg="command">help scribe</ansi>.
+
 See also: <ansi fg="command">help cargo</ansi>, <ansi fg="command">help treasury</ansi>, <ansi fg="command">help party</ansi>, <ansi fg="command">help combat</ansi>.

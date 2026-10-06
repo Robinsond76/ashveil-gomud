@@ -210,3 +210,46 @@ func TestGrounded(t *testing.T) {
 		}
 	}
 }
+
+func TestAsleepParalyzedBlightedStatuses(t *testing.T) {
+	loadShipped(t)
+	// Asleep and paralyzed cost every action while they last; blight costs none.
+	for id, loses := range map[int]bool{Asleep: true, Paralyzed: true, Blighted: false} {
+		c := holder(t)
+		assert.NoError(t, c.AddBuff(id, false))
+		_, lost := LostAction(c)
+		assert.False(t, lost, "nothing is lost before the first tick")
+		Tick(c)
+		_, lost = LostAction(c)
+		assert.Equal(t, loses, lost, "buff %d", id)
+	}
+	assert.True(t, hasFlag(buffs.GetBuffSpec(Asleep), FlagAsleep))
+	assert.True(t, hasFlag(buffs.GetBuffSpec(Paralyzed), FlagNoDodge))
+	assert.True(t, hasFlag(buffs.GetBuffSpec(Paralyzed), FlagNoBlock))
+	assert.True(t, hasFlag(buffs.GetBuffSpec(Blighted), FlagBlighted))
+}
+
+func hasFlag(spec *buffs.BuffSpec, flag string) bool {
+	for _, f := range spec.Flags {
+		if f == flag {
+			return true
+		}
+	}
+	return false
+}
+
+func TestWakeEndsSleepOnlyAndGroundedCountsTheHeld(t *testing.T) {
+	loadShipped(t)
+	c := holder(t)
+	assert.NoError(t, c.AddBuff(Paralyzed, false))
+	assert.False(t, Wake(c), "damage does not break paralysis")
+	assert.True(t, Live(c, Paralyzed))
+	assert.True(t, Grounded(c), "a held guardian can't step in")
+
+	s := holder(t)
+	assert.NoError(t, s.AddBuff(Asleep, false))
+	assert.True(t, Grounded(s))
+	assert.True(t, Wake(s))
+	assert.False(t, Live(s, Asleep))
+	assert.False(t, Wake(s), "already awake")
+}

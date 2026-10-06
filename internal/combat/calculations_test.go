@@ -5,10 +5,13 @@ import (
 	"math"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAlignmentChange(t *testing.T) {
@@ -292,4 +295,21 @@ func TestDarknessPenaltyNilRoom(t *testing.T) {
 	if got != 0 || called {
 		t.Fatalf("an unknown room applies no penalty and computes no visibility, got %d", got)
 	}
+}
+
+// Phase 38a review: a sleeper is easier to hit, not harder. The penalty is
+// subtracted from the hit chance, so the sleeper's bonus lowers it.
+func TestDarknessPenaltyFavorsASleepingTarget(t *testing.T) {
+	buffs.SetTestBuffSpec(&buffs.BuffSpec{BuffId: 1109, Name: "Asleep", TriggerRate: "100000 rounds", TriggerCount: 3, Flags: []string{status.FlagAsleep}})
+	t.Cleanup(func() { buffs.RemoveTestBuffSpec(1109) })
+	awake := characters.New()
+	asleep := characters.New()
+	if err := asleep.AddBuff(1109, false); err != nil {
+		t.Fatal(err)
+	}
+	require.True(t, asleep.HasBuffFlag(status.FlagAsleep))
+	assert.Equal(t, -status.AsleepHitBonus, darknessPenalty(nil, asleep, nil))
+	lit := func(*rooms.Room) int { return 2 }
+	room := &rooms.Room{}
+	assert.Less(t, darknessPenalty(room, asleep, lit), darknessPenalty(room, awake, lit))
 }

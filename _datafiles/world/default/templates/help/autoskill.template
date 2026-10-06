@@ -17,6 +17,8 @@ handles it - you or a companion, whichever has the higher level in it.
   <ansi fg="yellow">keeneye</ansi> spotting secret exits (<ansi fg="command">help keeneye</ansi>)
   <ansi fg="yellow">weather</ansi> the forecast in <ansi fg="command">weather</ansi> (<ansi fg="command">help forecast</ansi>)
   <ansi fg="yellow">haggle</ansi>  better market prices (<ansi fg="command">help haggle</ansi>)
+  <ansi fg="yellow">scribe</ansi>  reading unidentified gear when a camp rest ends
+           (<ansi fg="command">help scribe</ansi>)
   <ansi fg="yellow">watch</ansi>, <ansi fg="yellow">fieldsmith</ansi>, <ansi fg="yellow">vigil</ansi>, <ansi fg="yellow">forage</ansi>  camp specialists
            (<ansi fg="command">help specialists</ansi>)
 

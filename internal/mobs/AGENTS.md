@@ -33,3 +33,7 @@
 - `windups` on a mob template maps a wind-up ability id (`internal/windup`) to the percent of its turns it starts one. Only `internal/hooks` (`combat_windup.go`) reads it, and only for an enemy (never a company companion or a charmed mob). The template map is shared by every instance; never write to it. A mob that shoots (a bow's `DefaultAttack` becomes `Shooting`) never winds up, so don't give one `windups` (`TestShippedWindUpsAreRegistered`).
 
 Phase 30f templates may opt into `leap` and `sweep`; both replace normal enemy melee actions and have three-combat-round cooldowns. `stealth` is an optional non-negative ambush detection override. Runtime Ambush fields are never persisted or copied into template authority.
+
+## Ashveil Phase 38a: bosses
+
+`boss: true` on a mob template marks a boss: the Witch's hexes (`internal/hexes`) resist it 25 points more and hold it half as long. Nothing else reads it yet.

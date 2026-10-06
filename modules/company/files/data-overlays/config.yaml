@@ -19,6 +19,7 @@ CompanionArchetypes:
   - { MobTemplateId: 82, Archetype: wizard }
   - { MobTemplateId: 83, Archetype: cleric }
   - { MobTemplateId: 84, Archetype: ranger }
+  - { MobTemplateId: 94, Archetype: witch } # Phase 38a
 # Phase 21a: company alignment. Values are alignment points on the
 # -100..100 scale players see. Out-of-range values fall back to the
 # default.
@@ -140,6 +141,7 @@ RecruitTemplates:
   - { MobTemplateId: 82, Weight: 1, PricePercent: 110 }
   - { MobTemplateId: 83, Weight: 1, PricePercent: 110 }
   - { MobTemplateId: 84, Weight: 1 }
+  - { MobTemplateId: 94, Weight: 1, PricePercent: 110 }
 RecruitGivenNames: [Hild, Anselm, Tobin, Wren, Edda, Bram, Ilse, Corrin, Maud, Osric, Petra, Aldo, Sabine, Lorn, Nessa, Joren, Thea, Ulric, Brisa, Cade, Fenna, Hugo, Ines, Kester, Liesl, Merrit, Orla, Quill, Rowan, Senna]
 RecruitBynames: [Marrow, Reyes, Ashdown, Thorne, Pike, Holloway, of the Ford, of Dunmar, the Younger, Fletcher, Cobb, Wick, Harrow, Stane]
 RecruitTraits:

@@ -122,7 +122,7 @@ func TestShippedArchetypesLoad(t *testing.T) {
 	for _, a := range m.table.List() {
 		got = append(got, a.ID)
 	}
-	assert.Equal(t, []string{"cleric", "ranger", "rogue", "warrior", "wizard"}, got, "every shipped archetype resolves against real skills and spells")
+	assert.Equal(t, []string{"cleric", "ranger", "rogue", "warrior", "witch", "wizard"}, got, "every shipped archetype resolves against real skills and spells")
 
 	wiz, ok := m.table.Get("wizard")
 	require.True(t, ok)
@@ -146,7 +146,7 @@ func TestShippedArchetypesLoad(t *testing.T) {
 	assert.Nil(t, m.CompanionSpells("warrior", 30))
 	assert.Nil(t, m.CompanionSpells("nosuch", 1))
 	assert.True(t, wiz.HasUtility("light"))
-	assert.Equal(t, []string{"cleric", "wizard"}, m.table.SkillClaimants("cast"))
+	assert.Equal(t, []string{"cleric", "witch", "wizard"}, m.table.SkillClaimants("cast"))
 	assert.False(t, m.table.SkillClaimed("map"), "map is a trade skill")
 	assert.Equal(t, "cast", m.config.UtilitySkills["light"])
 	assert.Equal(t, "skulduggery", m.config.UtilitySkills["traps"])
@@ -467,7 +467,7 @@ func TestLoadThroughRealPluginConfigPath(t *testing.T) {
 	m.store = &fakeStore{}
 	m.load()
 
-	assert.Equal(t, 5, m.table.Len())
+	assert.Equal(t, 6, m.table.Len())
 	wiz, ok := m.table.Get("wizard")
 	require.True(t, ok)
 	assert.Equal(t, map[string]int{"cast": 1}, wiz.GrantSkills)
@@ -475,7 +475,10 @@ func TestLoadThroughRealPluginConfigPath(t *testing.T) {
 	assert.Equal(t, "skulduggery", m.config.UtilitySkills["traps"])
 	assert.Equal(t, 900, m.config.DisarmRounds)
 	// Phase 35c: the optional skills survive the flattened plugin config.
-	assert.Equal(t, []archetypes.OptionalSkill{{Skill: "cooking", Archetypes: []string{"*"}, MaxRank: 4}}, m.OptionalSkills())
+	assert.Equal(t, []archetypes.OptionalSkill{
+		{Skill: "cooking", Archetypes: []string{"*"}, MaxRank: 4},
+		{Skill: "scribe", Archetypes: []string{"wizard", "cleric"}, MaxRank: 4},
+	}, m.OptionalSkills())
 }
 
 // Phase 35c: optional skills must name a loaded skill and stay within its

@@ -383,6 +383,13 @@ func (m *EncumbranceModule) put(user *users.UserRecord, itemName string) string 
 		return fmt.Sprintf(`You don't have a "%s" to put in the cargo.`, itemName)
 	}
 
+	// Phase 36a: cargo stacks hold only an item id, which would wipe a rolled
+	// item's quality and affixes. Keep rolled gear in a pack until cargo
+	// carries individual items.
+	if matchItem.IsRolled() {
+		return fmt.Sprintf(`The <ansi fg="item">%s</ansi> is individually crafted gear; carry it in your pack or give it to a companion with company equip. Company cargo holds only plain goods for now.`, matchItem.DisplayName())
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	original, hadEntry := m.cargo[user.UserId]

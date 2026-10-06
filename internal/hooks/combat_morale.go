@@ -178,19 +178,47 @@ func moralePass() {
 			if m == nil {
 				continue
 			}
-			switch r.out {
-			case morale.Yield:
-				withdrawEnemy(m)
-				yielded[r.id] = yieldedEnemy{owner: f.owner, room: f.room, fight: fid, ref: mobRef(m)}
-				emitMoraleOutcome(combatstream.Yield, mobRef(m), f.room)
-				moraleSay(m, "surrenders and stands aside, hands raised.")
-			case morale.Flee:
-				emitMoraleOutcome(combatstream.Flee, mobRef(m), f.room)
-				moraleSay(m, "loses nerve and flees.")
-				escapeEnemy(r.id)
-			}
+			applyEnemyMorale(m, r.out, f.owner, f.room, fid)
 		}
 	}
+}
+
+// applyEnemyMorale carries out one enemy's morale outcome: a yield stands
+// it aside, a flight sends it running.
+func applyEnemyMorale(m *mobs.Mob, out morale.Outcome, owner, room int, fid uint64) {
+	switch out {
+	case morale.Yield:
+		withdrawEnemy(m)
+		yielded[m.InstanceId] = yieldedEnemy{owner: owner, room: room, fight: fid, ref: mobRef(m)}
+		emitMoraleOutcome(combatstream.Yield, mobRef(m), room)
+		moraleSay(m, "surrenders and stands aside, hands raised.")
+	case morale.Flee:
+		emitMoraleOutcome(combatstream.Flee, mobRef(m), room)
+		moraleSay(m, "loses nerve and flees.")
+		escapeEnemy(m.InstanceId)
+	}
+}
+
+// DreadCheck answers a landed Dread Whisper (Phase 38a): one morale check
+// on the enemy, by its temperament, exactly as a leader's fall would roll
+// it. An unbreakable enemy holds; one outside the leader's battle is left
+// alone.
+func DreadCheck(e events.Event) events.ListenerReturn {
+	evt, ok := e.(events.MoraleCheck)
+	if !ok {
+		return events.Continue
+	}
+	b, found := battle.Current(evt.LeaderUserId)
+	m := mobs.GetInstance(evt.MobInstanceId)
+	if !found || m == nil || m.Character.Health < 1 || !b.Has(m.InstanceId) {
+		return events.Continue
+	}
+	s := enemyTemperament(m)
+	if s == "" || s == "unbreakable" {
+		return events.Continue
+	}
+	applyEnemyMorale(m, morale.Enemy(s, moraleRoll(100)), evt.LeaderUserId, b.RoomId, b.FightID)
+	return events.Continue
 }
 func emitMoraleOutcome(kind combatstream.Kind, ref combatstream.Ref, room int) {
 	for _, uid := range battle.Players() {

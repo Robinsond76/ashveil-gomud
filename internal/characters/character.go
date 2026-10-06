@@ -112,6 +112,7 @@ type Character struct {
 	Created             time.Time                      `yaml:"created"`                    // When this character was created
 	Timers              map[string]gametime.RoundTimer `yaml:"timers,omitempty"`           // any special timers added to this character
 	ZonesVisited        map[string]RoomBitset          `yaml:"zonesvisited,omitempty"`     // permanent record of every room visited, keyed by zone name
+	ScribeReset         bool                           `yaml:"scribereset,omitempty"`      // Ashveil 36a: any old (33f1-retired) scribe rank was refunded once
 	KnownSecretExits    []string                       `yaml:"knownsecretexits,omitempty"` // Ashveil 33f2: secret exits spotted by Keen Eye, "<roomId>:<exit>"
 	Wounds              []wounds.Wound                 `yaml:"wounds,omitempty"`           // Ashveil Phase 30b: wounds holding back health (the wound limit)
 	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
@@ -1432,6 +1433,10 @@ func (c *Character) ApplyHealthChange(healthChange int) int {
 			newHealth = -10
 		}
 	} else if newHealth > oldHealth {
+		// Phase 38a: a blight halves the healing its holder receives.
+		if c.HasBuffFlag("blighted") {
+			newHealth = oldHealth + (newHealth-oldHealth)/2
+		}
 		// Phase 30b: healing stops at the wound limit.
 		newHealth = c.CapHealing(oldHealth, newHealth)
 	} else if newHealth > c.HealthMax.Value {
@@ -2059,6 +2064,10 @@ func (c *Character) BestUpgrades() map[items.ItemType]items.Item {
 		if itmSpec.Type != items.Weapon && itmSpec.Subtype != items.Wearable {
 			continue
 		}
+		// Phase 36a: gear the wearer is too low for is never an upgrade.
+		if itm.WearRefusal(c.Level) != `` {
+			continue
+		}
 		if prev, ok := bestBySlot[itmSpec.Type]; !ok || itmSpec.Value > prev.GetSpec().Value {
 			bestBySlot[itmSpec.Type] = itm
 		}
@@ -2150,6 +2159,11 @@ func (c *Character) Wear(i items.Item, targetSlots ...items.ItemType) (returnIte
 
 	// Phase 35a2: a class's shield and weapon rules are hard rules.
 	if ok, reason := c.CanWield(i); !ok {
+		return returnItems, false, reason
+	}
+
+	// Phase 36a: rolled gear has a level requirement.
+	if reason := i.WearRefusal(c.Level); reason != "" {
 		return returnItems, false, reason
 	}
 
@@ -2473,6 +2487,18 @@ func (c *Character) RetireSkills() (int, []string) {
 		if level > 0 {
 			refund += skills.TrainingCost(level)
 			retired = append(retired, id)
+		}
+	}
+	// Ashveil 36a: the old scribe rank is refunded once, before the skill
+	// returns as the new Scribe.
+	if !c.ScribeReset {
+		c.ScribeReset = true
+		if level, ok := c.Skills[skills.ScribeReset]; ok {
+			delete(c.Skills, skills.ScribeReset)
+			if level > 0 {
+				refund += skills.TrainingCost(level)
+				retired = append(retired, skills.ScribeReset)
+			}
 		}
 	}
 	for _, id := range skills.CappedSkills() {

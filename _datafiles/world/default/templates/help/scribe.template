@@ -1,0 +1,40 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">scribe</ansi>
+
+Scribe is a caster skill (ranks 1 to 4) that reads the hidden affixes of
+Rare and better gear (<ansi fg="command">help identify</ansi>).
+
+<ansi fg="yellow-bold">Who has it</ansi>
+
+  Wizards and clerics train it at a trainer with training points, like
+  any skill (<ansi fg="command">train scribe</ansi>). The Magic Academy in Frostfang teaches it.
+  A companion who is a wizard or cleric can learn it after joining:
+  <ansi fg="command">company train [member] scribe</ansi> spends the companion's own points
+  (<ansi fg="command">help company-train</ansi>). Some caster recruits already know it, show it on
+  their card, and cost more.
+
+<ansi fg="yellow-bold">What each rank reads</ansi>
+
+  Rank 1  Rare     Rank 2  Epic     Rank 3  Legendary and Set
+  Rank 4  also shows each affix's tier and range, and where the item
+          came from (<ansi fg="command">look [item]</ansi> and <ansi fg="command">scribe</ansi> show them)
+
+<ansi fg="yellow-bold">At camp</ansi>
+
+When a camp rest finishes, your company's best Scribe present reads every
+unidentified item the company carries that its rank covers, for no mana
+(the rest refills it anyway). The company's best Scribe is the highest
+rank with you; a tie goes to you, then to the lowest companion number.
+It names who read. <ansi fg="command">autoskill scribe off</ansi> turns this off.
+
+<ansi fg="yellow-bold">In the field</ansi>
+
+  <ansi fg="command">scribe</ansi>                 what is waiting to be read, and who can read it
+  <ansi fg="command">scribe [item]</ansi>          your best able Scribe reads one item
+  <ansi fg="command">scribe [member] [item]</ansi> a named companion Scribe reads it
+
+It costs mana: 8 for a Rare, 15 for an Epic, 25 for a Legendary or Set,
+taken from the Scribe who reads. Mana only comes back from resting and
+draughts, so reading in the field competes with healing and spells.
+Nothing is read in battle.
+
+See also: <ansi fg="command">help identify</ansi>, <ansi fg="command">help rarity</ansi>, <ansi fg="command">help affixes</ansi>, <ansi fg="command">help skills</ansi>, <ansi fg="command">help autoskill</ansi>.

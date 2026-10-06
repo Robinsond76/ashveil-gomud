@@ -1,0 +1,10 @@
+# Phase 38a: a Witch's hex (internal/hexes). The script rolls the resist and
+# applies the status; the Witch's level sets how many foes it reaches.
+spellid: miasma
+name: Miasma
+description: "A poison cloud over one row of foes: poisoned until it wears off or Cure Poison removes it. Reaches up to your hex count in the row."
+type: harmmulti
+school: hexcraft
+cost: 10
+waitrounds: 2
+difficulty: 45

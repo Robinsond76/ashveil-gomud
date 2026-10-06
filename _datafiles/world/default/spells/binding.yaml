@@ -1,0 +1,10 @@
+# Phase 38a: a Witch's hex (internal/hexes). The script rolls the resist and
+# applies the status; the Witch's level sets how many foes it reaches.
+spellid: binding
+name: Binding Hex
+description: "Paralyzes foes for 1 round, 2 from level 20: they lose their actions and cannot dodge or block, and damage does not break it. Foes resist with Vitality. Reaches more foes as you level."
+type: harmmulti
+school: hexcraft
+cost: 12
+waitrounds: 2
+difficulty: 50

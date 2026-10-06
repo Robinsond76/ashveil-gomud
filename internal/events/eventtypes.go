@@ -26,6 +26,10 @@ type Buff struct {
 	// ExtraTriggers lengthens the buff by this many triggers (Ashveil
 	// Phase 35b: a level-20 tackle's knockdown lasts a round longer).
 	ExtraTriggers int
+	// Triggers, when above zero, sets the buff's trigger count outright
+	// (Phase 38a: a hex's duration, which a boss halves). It wins over
+	// ExtraTriggers.
+	Triggers int
 }
 
 func (b Buff) Type() string { return `Buff` }
@@ -587,3 +591,13 @@ type FireBlaze struct {
 }
 
 func (c FireBlaze) Type() string { return `FireBlaze` }
+
+// MoraleCheck asks for one morale check on an enemy (Phase 38a: the Witch's
+// Dread Whisper). LeaderUserId is the player whose company the caster
+// fights for.
+type MoraleCheck struct {
+	LeaderUserId  int
+	MobInstanceId int
+}
+
+func (m MoraleCheck) Type() string { return `MoraleCheck` }
