@@ -750,6 +750,8 @@
         const focusedKey = (focused && panel.contains(focused) && focused.getAttribute('data-key')) || null;
         const hasParty  = !!(partyData && ((partyData.Members && partyData.Members.length) || (partyData.Vitals && Object.keys(partyData.Vitals).length)));
 
+        keepScroll(panel);
+
         panel.textContent = '';
         if (company) {
             panel.appendChild(companySection());
@@ -1067,6 +1069,7 @@
 
     function buildInventory(panel) {
         const inv = Client.GMCPStructs.Company && Client.GMCPStructs.Company.Inventory;
+        keepScroll(panel);
         panel.textContent = '';
         const pad = el('div', 'cmp-pad');
         panel.appendChild(pad);
@@ -1203,6 +1206,7 @@
     function buildCamp(panel) {
         const camp = (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Camp) || {};
         const data = CompanyData.read();
+        keepScroll(panel);
         panel.textContent = '';
         const pad = el('div', 'cmp-pad');
         panel.appendChild(pad);

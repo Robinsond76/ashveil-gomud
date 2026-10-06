@@ -574,6 +574,7 @@
             html += '</div>';
         }
 
+        keepScroll(panel);
         panel.innerHTML = html;
     }
 
@@ -597,6 +598,7 @@
 
         var list = document.getElementById('pw-items-list');
         if (!list) { return; }
+        keepScroll(list);
         list.innerHTML = '';
 
         if (items.length === 0) {

@@ -306,6 +306,7 @@
         const badge = document.getElementById('online-count-badge');
         if (!list || !badge) { return; }
 
+        keepScroll(list);
         list.innerHTML = '';
         badge.textContent = String(players.length);
 

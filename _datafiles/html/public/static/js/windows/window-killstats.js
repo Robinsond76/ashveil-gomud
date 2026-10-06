@@ -398,6 +398,7 @@
     }
 
     function renderList(listEl, mapObj, total) {
+        keepScroll(listEl);
         listEl.innerHTML = '';
 
         if (!mapObj || Object.keys(mapObj).length === 0) {
@@ -428,6 +429,7 @@
     }
 
     function renderMobList(listEl, mapObj, eliteMap, total) {
+        keepScroll(listEl);
         listEl.innerHTML = '';
 
         if (!mapObj || Object.keys(mapObj).length === 0) {
@@ -463,6 +465,7 @@
     }
 
     function renderPvpList(listEl, playersObj, total) {
+        keepScroll(listEl);
         listEl.innerHTML = '';
 
         if (!playersObj || Object.keys(playersObj).length === 0) {
