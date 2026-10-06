@@ -222,6 +222,12 @@ func activeDefense(defender, attacker characters.Character, melee bool) string {
 	if defender.HasBuffFlag(status.FlagNoDodge) {
 		return DefenseNone
 	}
+	// Phase 38c2: a Swordmaster's Perfect Parry turns the first melee blow
+	// of a battle aside.
+	if _, ok := parryModifier(defender.Equipment.Weapon); melee && ok && defender.RT != nil && !defender.RT.PerfectUsed && defender.ClassEffects().Has(classes.PerfectParry) {
+		defender.RT.PerfectUsed = true
+		return DefenseParried
+	}
 	if defender.HasShield() {
 		if rollDefense(`Blocks`, blockChance(&defender, &attacker)) {
 			return DefenseBlocked
@@ -632,13 +638,31 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					sourceChar.RT.IaiSpent = true
 				}
 				hit, byChemistry := hitRoll(hitEdge(&sourceChar, &targetChar), penalty, chemistryBonus)
+				// Phase 38c2: a Marksman's Perfect Shot can't miss or be avoided.
+				perfectShot := !harmless && sourceChar.RT != nil && sourceChar.RT.ShotNow
+				if perfectShot {
+					sourceChar.RT.ShotNow = false
+					hit, byChemistry = true, false
+				}
 				if harmless {
 					hit, byChemistry = false, false
 				}
+				forcedCrit := false
 				if hit {
 					// Phase 30g2: one active defense, before armor; a
 					// defended strike does nothing and can't crit.
-					if defense := activeDefense(targetChar, sourceChar, weaponSubType != items.Shooting); defense != DefenseNone {
+					defense := DefenseNone
+					if !perfectShot {
+						defense = activeDefense(targetChar, sourceChar, weaponSubType != items.Shooting)
+					}
+					// Phase 38c2: a Marksman's critical hits can't be blocked, so
+					// a blow that would crit goes through the shield.
+					if defense == DefenseBlocked && iaiFx.Has(classes.NoBlockCrit) {
+						if backstabCrit || critsWith(sourceChar, targetChar, 0) {
+							defense, forcedCrit = DefenseNone, true
+						}
+					}
+					if defense != DefenseNone {
 						attackResult.Defenses = append(attackResult.Defenses, defense)
 						sendDefenseLines(&attackResult, defense, &sourceChar, &targetChar, sourceType, targetType)
 						continue
@@ -689,7 +713,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						critBonus = iaiFx.Int(classes.IaiCrit)
 						attackTargetDamage += (attackTargetDamage*iaiFx.Int(classes.IaiDamage) + 50) / 100
 					}
-					isCrit = backstabCrit || critsWith(sourceChar, targetChar, critBonus)
+					isCrit = backstabCrit || forcedCrit || critsWith(sourceChar, targetChar, critBonus)
 					backstabCrit = false // consume the backstab flag after one use
 					if isCrit {
 						attackResult.Crit = true // record that at least one crit occurred this round
@@ -698,6 +722,10 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						attackResult.BuffTarget = append(attackResult.BuffTarget, critBuffs...)
 						attackTargetDamage += critDamageBonus(dCount, dSides, dBonus,
 							sourceChar.Stats.Perception.ValueAdj, targetChar.Stats.Perception.ValueAdj)
+						// Phase 38c2: a Marksman's Called Shot hits harder when it crits.
+						if p := iaiFx.Int(classes.CritDamage); p > 0 {
+							attackTargetDamage += (attackTargetDamage*p + 50) / 100
+						}
 					}
 				}
 
@@ -723,6 +751,14 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					attackTargetDamage = left
 					attackTargetReduction += absorbed
 				}
+				// Phase 38c2: a Nightblade's Coup de Grace fells a foe near death
+				// (a boss takes double damage instead).
+				coup := false
+				if attackTargetDamage > 0 {
+					if fell := coupDamage(&sourceChar, &targetChar, attackTargetDamage, targetChar.Health-attackResult.DamageToTarget); fell != attackTargetDamage {
+						attackTargetDamage, coup = fell, true
+					}
+				}
 				if attackTargetDamage < 1 && len(attackResult.Qualities) > 0 {
 					// Phase 35d: a blow armor absorbed whole has no quality to report.
 					hitQuality = QualitySolid
@@ -733,6 +769,9 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				// its weapon's status: the weapon's own crit buffs, else the
 				// subtype's effect. It is named in the hit's parentheses.
 				var critStatuses []string
+				if coup {
+					critStatuses = append(critStatuses, "coup de grace")
+				}
 				if isCrit && attackTargetDamage > 0 {
 					attackResult.CritLanded = true
 					effect := critBuffs

@@ -171,7 +171,7 @@ func moralePass() {
 			if s == "" || s == "unbreakable" {
 				continue
 			}
-			results = append(results, result{v.ID, morale.Enemy(s, moraleRoll(100))})
+			results = append(results, result{v.ID, enemyOutcome(m, s)})
 		}
 		for _, r := range results {
 			m := mobs.GetInstance(r.id)
@@ -195,6 +195,7 @@ func applyEnemyMorale(m *mobs.Mob, out morale.Outcome, owner, room int, fid uint
 	case morale.Flee:
 		emitMoraleOutcome(combatstream.Flee, mobRef(m), room)
 		moraleSay(m, "loses nerve and flees.")
+		harrow(m, room)
 		escapeEnemy(m.InstanceId)
 	}
 }
@@ -217,7 +218,7 @@ func DreadCheck(e events.Event) events.ListenerReturn {
 	if s == "" || s == "unbreakable" {
 		return events.Continue
 	}
-	applyEnemyMorale(m, morale.Enemy(s, moraleRoll(100)), evt.LeaderUserId, b.RoomId, b.FightID)
+	applyEnemyMorale(m, enemyOutcome(m, s), evt.LeaderUserId, b.RoomId, b.FightID)
 	return events.Continue
 }
 func emitMoraleOutcome(kind combatstream.Kind, ref combatstream.Ref, room int) {

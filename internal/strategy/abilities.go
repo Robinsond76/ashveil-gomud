@@ -2,9 +2,11 @@ package strategy
 
 import (
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 )
 
@@ -31,6 +33,10 @@ const (
 	// Brace (halberdier): holds the turn; the first foe to strike into the
 	// halberdier's place takes a held blow at once.
 	Brace Ability = "brace"
+	// Overwatch (Phase 38c2, the Sentinel's class gift, not an archetype's):
+	// holds the turn; the first foe to strike a middle- or back-row ally is
+	// shot before the blow resolves.
+	Overwatch Ability = "overwatch"
 )
 
 // AbilitySpec is an ability's unlock, cooldown, and text.
@@ -53,6 +59,9 @@ var Abilities = []AbilitySpec{
 	{ID: OpeningStrike, Name: "Opening Strike", Archetype: "rogue", Skill: "skulduggery", Cooldown: 2,
 		When: "its foe is knocked down, stunned, staggered, or exposed, and it wields a blade or claws",
 		Does: "its first blow that lands this round is a critical hit"},
+	{ID: Overwatch, Name: "Overwatch", Cooldown: 1,
+		When: "it is a Sentinel with a shooting weapon, and a foe could strike an ally in its middle or back row",
+		Does: "holds its turn; the first foe that strikes a middle- or back-row ally is shot before the blow resolves, and on a hit the blow lands at half damage"},
 	{ID: AimedShot, Name: "Aimed Shot", Archetype: "ranger", Skill: "track", Cooldown: 3,
 		When: "it has a shooting weapon and its foe is not already exposed",
 		Does: "its first shot that lands this round is a critical hit, leaving the foe exposed"},
@@ -104,11 +113,21 @@ func AtLevel(list []Ability, level int) []Ability {
 func PlayerAbilities(skillLevel func(skill string) int) []Ability {
 	var out []Ability
 	for _, a := range Abilities {
-		if skillLevel != nil && skillLevel(a.Skill) > 0 {
+		if a.Skill != "" && skillLevel != nil && skillLevel(a.Skill) > 0 {
 			out = append(out, a.ID)
 		}
 	}
 	return out
+}
+
+// WithClass adds the abilities a class gives beyond its archetype's (Phase
+// 38c2: the Sentinel's Overwatch, held before it aims). The class's ranks
+// at the level decide.
+func WithClass(list []Ability, classID string, level int) []Ability {
+	if classID == "" || !classes.EffectsFor(classID, level, nil).Has(classes.Overwatch) || slices.Contains(list, Overwatch) {
+		return list
+	}
+	return append([]Ability{Overwatch}, list...)
 }
 
 // Names are the abilities' names, in order.
@@ -159,6 +178,12 @@ type AbilitySituation struct {
 	// SweepFoes is how many foes a sweep at this foe would strike: the foe
 	// itself and those beside it in its row (Phase 39a).
 	SweepFoes int
+	// PathOpen opens a foe that has not acted yet (Phase 38c2: a
+	// Pathfinder's Eye, a few times a battle).
+	PathOpen bool
+	// Watch is true when a foe could strike an ally in the member's middle
+	// or back row, and no overwatch is held yet (Phase 38c2).
+	Watch bool
 	// Struck is true when a foe is striking at the member (or, for a
 	// Vanguard, at its column) and no brace is held yet: a brace has
 	// something to answer (Phase 39a).
@@ -181,7 +206,11 @@ func DecideAbility(s AbilitySituation) (Ability, bool) {
 				return id, true
 			}
 		case OpeningStrike:
-			if s.Backstab && (s.Ambush || s.FoeDown || s.FoeStunned || s.FoeStaggered || s.FoeExposed) {
+			if s.Backstab && (s.Ambush || s.PathOpen || s.FoeDown || s.FoeStunned || s.FoeStaggered || s.FoeExposed) {
+				return id, true
+			}
+		case Overwatch:
+			if s.Weapon == Shooting && s.Watch {
 				return id, true
 			}
 		case AimedShot:

@@ -400,3 +400,68 @@ func TestBattleScreenHelp(t *testing.T) {
 		assert.Contains(t, tagPattern.ReplaceAllString(hubText, ""), "help battlescreen", "help %s links the battle screen", hub)
 	}
 }
+
+// TestRogueRangerEliteHelp (38c2): the rogue and ranger route pages and the
+// six elite pages are indexed, render with their ranks, answer to their
+// aliases, and the hubs link them.
+func TestRogueRangerEliteHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var listed []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "character" && !topic.AdminOnly {
+			listed = append(listed, topic.Command)
+		}
+	}
+	pages := map[string][]string{
+		"rogue-routes":     {"Scout (good)", "Duelist (neutral)", "Assassin (evil)", "Pathfinder", "Swordmaster", "Nightblade"},
+		"ranger-routes":    {"Warden (good)", "Hunter (neutral)", "Stalker (evil)", "Sentinel", "Marksman", "Ravager"},
+		"elite-pathfinder": {"Pathfinder's Eye", "Ambush Master", "Trailwise", "Shadow Footing"},
+		"swordmaster":      {"Blade Dance", "Twin ripostes", "Perfect Parry", "Unbroken Guard"},
+		"nightblade":       {"Death Mark", "Shadowstep", "Killing Spree", "Coup de Grace"},
+		"sentinel":         {"Overwatch", "Guardian Arrow", "Long Draw"},
+		"marksman":         {"Called Shot", "Second Nock", "Perfect Shot"},
+		"ravager":          {"Hunt Down", "Harrow", "Apex", "Eagle Eye"},
+	}
+	for topic, wants := range pages {
+		assert.Contains(t, listed, topic, "help index lists %s", topic)
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		plain := tagPattern.ReplaceAllString(text, "")
+		assert.Contains(t, plain, "Help for", topic)
+		for _, want := range wants {
+			assert.Contains(t, plain, want, topic)
+		}
+	}
+	aliases := map[string]string{
+		"assassin": "rogue-routes", "warden": "ranger-routes", "stalker": "ranger-routes",
+		"pathfinder-class": "elite-pathfinder", "trailwise": "elite-pathfinder", "death-mark": "nightblade",
+		"overwatch": "sentinel", "second-nock": "marksman", "hunt-down": "ravager", "blade-dance": "swordmaster",
+	}
+	for alias, topic := range aliases {
+		want, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
+	}
+	// The walking skill keeps its name and points at the elite page.
+	skill, err := GetHelpContents("pathfinder")
+	require.NoError(t, err)
+	assert.Contains(t, tagPattern.ReplaceAllString(skill, ""), "elite-pathfinder")
+	for _, hub := range []string{"elite", "classes", "promotion"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		plain := tagPattern.ReplaceAllString(text, "")
+		assert.Contains(t, plain, "rogue-routes", hub)
+		assert.Contains(t, plain, "ranger-routes", hub)
+	}
+	elite, err := GetHelpContents("elite")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(elite, "")
+	for _, name := range []string{"Pathfinder", "Swordmaster", "Nightblade", "Sentinel", "Marksman", "Ravager"} {
+		assert.Contains(t, plain, name)
+	}
+	assert.NotContains(t, plain, "Pathfinder, Swordmaster, Nightblade,\nSentinel", "no longer listed as still to come")
+}

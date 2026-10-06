@@ -86,6 +86,9 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 		if row < 0 {
 			continue // an unplaced member holds no row
 		}
+		if n := fx.Int(classes.WatchBack); n > 0 {
+			evade[2] = max(evade[2], n) // Phase 38c2: a Sentinel watches the back row
+		}
 		evade[row] = max(evade[row], fx.Int(classes.AuraEvade))
 		resolve[row] = max(resolve[row], fx.Int(classes.AuraResolv))
 	}

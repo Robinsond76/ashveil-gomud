@@ -222,11 +222,22 @@ var (
 	tFontOfGrace    = defineEliteTalent(Talent{ID: "font-of-grace", Name: "Font of Grace", Text: "+10% maximum mana", Add: Effects{ManaPct: 10}})
 	tRadiantHealing = defineEliteTalent(Talent{ID: "radiant-healing", Name: "Radiant Healing", Text: "+10% healing", Add: Effects{HealPct: 10}})
 	tUnshaken       = defineEliteTalent(Talent{ID: "unshaken", Name: "Unshaken", Text: "blows break your chant 25% less often", Add: Effects{ChantBreak: 25}})
+
+	// Phase 38c2: the rogue and ranger elite talents. "Razor's Edge" is the
+	// design's Keen Edge, renamed: Keen Edge is already the +2 Attack talent.
+	tShadowFooting = defineEliteTalent(Talent{ID: "shadow-footing", Name: "Shadow Footing", Text: "+5 Evasion", Add: Effects{Evasion: 5}})
+	tRazorsEdge    = defineEliteTalent(Talent{ID: "razors-edge", Name: "Razor's Edge", Text: "+5% critical chance on every blow", Add: Effects{Crit: 5}})
+	tQuickHands    = defineEliteTalent(Talent{ID: "quick-hands", Name: "Quick Hands", Text: "starts a battle with 15 points on its action meter", Add: Effects{OpenMeter: 15}})
+	tLongDraw      = defineEliteTalent(Talent{ID: "long-draw", Name: "Long Draw", Text: "+10% damage with a shooting weapon", Add: Effects{RangedPct: 10}})
+	tEagleEye      = defineEliteTalent(Talent{ID: "eagle-eye", Name: "Eagle Eye", Text: "+5 Attack with a shooting weapon", Add: Effects{RangedAttack: 5}})
+	tQuickNock     = defineEliteTalent(Talent{ID: "quick-nock", Name: "Quick Nock", Text: "starts a battle with 15 points on its action meter", Add: Effects{OpenMeter: 15}})
 )
 
 func init() {
 	offerElite("warrior", tIronHide, tSecondWind, tVeteransEdge)
 	offerElite("cleric", tFontOfGrace, tRadiantHealing, tUnshaken)
+	offerElite("rogue", tShadowFooting, tRazorsEdge, tQuickHands)
+	offerElite("ranger", tLongDraw, tEagleEye, tQuickNock)
 	offer("cleric", tMendingHands, tSteadfast, tDeepWell, tSanctuary, tGentleRest)
 	offer("warrior", tToughness, tHeavyHands, tKeenEdge, tFootwork, tTackleDril)
 	offer("rogue", tKeenEdge, tFootwork, tDeepCuts, tPatientHand, tHeavyHands)

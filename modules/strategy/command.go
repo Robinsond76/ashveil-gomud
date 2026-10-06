@@ -84,6 +84,13 @@ func CompanionKnows(archetype, class string, level int) func(string) bool {
 	return func(id string) bool { return known[id] }
 }
 
+// playerAbilities are the abilities a player has at its level: its skills',
+// then its class's gifts (Phase 38c2).
+func playerAbilities(user *users.UserRecord) []domain.Ability {
+	class, _ := user.Character.ClassState()
+	return domain.WithClass(domain.AtLevel(domain.PlayerAbilities(user.Character.GetSkillLevel), user.Character.Level), class, user.Character.Level)
+}
+
 func nativeMembers(user *users.UserRecord) ([]member, bool) {
 	arch, _ := archetypes.PlayerArchetype(user.UserId)
 	out := []member{{
@@ -95,7 +102,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 		manaMax:   user.Character.ManaMax.Value,
 		present:   true,
 		knows:     PlayerKnows(user),
-		abilities: domain.AtLevel(domain.PlayerAbilities(user.Character.GetSkillLevel), user.Character.Level),
+		abilities: playerAbilities(user),
 	}}
 	form, hasForm := company.FormationFor(user.UserId)
 	if hasForm {
@@ -108,7 +115,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 			name:      v.Name,
 			archetype: v.Archetype,
 			knows:     CompanionKnows(v.Archetype, v.Class, v.Level),
-			abilities: domain.AtLevel(domain.CompanionAbilities(v.Archetype), v.Level),
+			abilities: domain.WithClass(domain.AtLevel(domain.CompanionAbilities(v.Archetype), v.Level), v.Class, v.Level),
 		}
 		if hasForm {
 			_, mb.col, mb.placed = form.Find(company.CompanionMemberKey(v.ID))

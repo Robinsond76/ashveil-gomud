@@ -37,7 +37,10 @@ Once the battle starts:
 - healers heal the hurt and casters cast their spells, with real mana,
   on both sides;
 - warriors tackle, rogues strike an opening, and rangers aim a shot, each
-  on its own when the moment comes (<ansi fg="command">help abilities</ansi>);
+  on its own when the moment comes (<ansi fg="command">help abilities</ansi>); a Sentinel
+  holds its shot to answer a blow at a weak spot in the line, and the other
+  rogue and ranger elite classes add marks, ripostes, bleeding wounds and
+  more (<ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>);
 - guardians step in front of their wards to take blows meant for them
   (<ansi fg="command">help guardian</ansi>);
 - a blow that draws blood may break its target's chant (a heavy one

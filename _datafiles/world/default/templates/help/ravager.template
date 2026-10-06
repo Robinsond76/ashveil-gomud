@@ -1,0 +1,37 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">ravager</ansi>
+
+The Ravager is the evil elite of the Stalker (ranger route, alignment -30 at
+promotion). It hunts the wounded: its blows open bleeding wounds, a foe it has
+struck is harder to scare into flight, and its kills shake the survivors.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Hunt Down         its blows open a bleeding wound on a foe at or
+                       below half health and add a stack to one already
+                       bleeding; a foe it struck this round has 25
+                       points less chance to lose its nerve and flee
+                       (it can still flee)
+  35 Bloodscent        +10% damage against bleeding foes
+  40 Harrow            when a foe it wounded loses its nerve, its whole
+                       group is rattled: every ally has +5 Attack
+                       against them for 2 rounds
+  45 Deep wounds       bleeding it causes lasts a round longer
+  50 Rend              its critical hits also break the target's armor
+                       for 2 rounds
+  55 Relentless hunt   Hunt Down's flee penalty is 40 points
+  60 Apex              each foe it fells forces a morale check on that
+                       foe's group
+
+Foes that could never flee still never do. Every effect lasts only for the
+battle and is never saved. See <ansi fg="command">help morale</ansi> for what
+losing nerve means.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Ranger elite talents (levels 35, 45, 55): Long Draw (+10% damage with a
+shooting weapon), Eagle Eye (+5 Attack with a shooting weapon), Quick Nock
+(+15 opening action meter). Every elite ranger may take them. See <ansi
+fg="command">help talents</ansi>.
+
+
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help ranger-routes</ansi>, <ansi fg="command">help morale</ansi>, <ansi fg="command">help statuses</ansi>, <ansi fg="command">help talents</ansi>.
