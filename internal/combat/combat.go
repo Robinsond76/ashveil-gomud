@@ -590,6 +590,11 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				dBonus += weapon.StatMod(string(statmods.RacialBonusPrefix) + strings.ToLower(targetChar.Race()))
 			}
 
+			// Phase 44: a body with no weapon and no natural damage (the
+			// tutorial's straw soldiers, race 19: 0d0) deals nothing; the flat
+			// damage floor must not arm it.
+			harmless := harmlessStrike(weapon.ItemId, sourceChar.GetRaceId())
+
 			// Apply damage stat modifier after weapon selection so it is never overwritten.
 			dBonus += statModDBonus
 
@@ -616,6 +621,9 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				hitQuality := QualitySolid
 
 				hit, byChemistry := hitRoll(hitEdge(&sourceChar, &targetChar), penalty, chemistryBonus)
+				if harmless {
+					hit, byChemistry = false, false
+				}
 				if hit {
 					// Phase 30g2: one active defense, before armor; a
 					// defended strike does nothing and can't crit.

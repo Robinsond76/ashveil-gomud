@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -117,6 +118,16 @@ func spendEdges(char *characters.Character, spent map[items.ItemType]int) {
 			itm.SpendEdge(n)
 		}
 	}
+}
+
+// harmlessStrike reports a strike with no weapon from a race with no natural
+// damage at all (dice 0d0, no bonus): the flat damage bonus never arms it.
+func harmlessStrike(weaponItemId int, raceId int) bool {
+	if weaponItemId > 0 {
+		return false
+	}
+	d := races.GetRace(raceId).Damage
+	return d.DiceCount*d.SideCount <= 0 && d.BonusDamage <= 0
 }
 
 // damageBonus is the flat bonus a blow adds: the minimum, plus Strength ×
@@ -633,6 +644,9 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 			attacks, dCount, dSides, dBonus, _ = weapon.GetDiceRoll()
 		} else {
 			attacks, dCount, dSides, dBonus, _ = atkChar.GetDefaultDiceRoll()
+		}
+		if harmlessStrike(weapon.ItemId, atkChar.GetRaceId()) {
+			continue
 		}
 		dBonus += statDmgBonus
 

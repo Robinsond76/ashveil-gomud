@@ -517,7 +517,7 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 		payload.Info = &GMCPCharModule_Payload_Info{
 			Account:        user.Username,
 			Name:           user.Character.Name,
-			Class:          skills.GetProfession(user.Character.GetAllSkillRanks()),
+			Class:          user.Character.ClassTitle(),
 			Lineage:        lineageID,
 			ClassID:        classID,
 			Race:           user.Character.Race(),

@@ -41,6 +41,57 @@ while sprites show is needed (every map sprite animates, and closing the
 window stops it). Follow-up: companions are not drawn on the map (only the
 badge count).
 
+**Phase 44 complete: live smoke playtest (2026-10-06):** `make smoke` builds
+the server, copies the shipped world and plays a new Warrior over telnet
+through the whole tutorial (a real camp rest and a real battle), the `help`
+index, copyover, a second player (a Witch) in the same room, and a restart
+and relogin; see [Live smoke playtest](LIVE_SMOKE_PLAYTEST.md). It is
+env-gated (a few minutes of real time) and meant to be re-run at the end of
+each lane. First run found, and this phase fixed with regression tests:
+the tutorial's straw soldiers hit for the flat damage floor (a 0d0 body with
+no weapon now deals nothing; they had killed the whole company, against
+"cannot hurt anyone"), `status`/`who`/GMCP called every warrior a "scrub
+paladin" (now the archetype name), every login printed "inbox not
+recognized" and "mudletmap not recognized", a won fight ended with "Your
+target can't be found.", `help help` and `help bid|store|unstore` found nothing (the
+index listed a command that does not exist). Not fixed, noted: a line typed
+within one turn (50 ms) of the last is silently dropped, so a scripted
+client must pace itself; the tutorial hand-off drops input typed during it;
+the gate hand-off prints "looks a little confused (gate )" for each
+companion; "The battle is under way" is still said for a moment after a
+fight's summary; the `weather` command says "You can't tell what the weather
+is like here" in the open Weather Yard. Not covered (proposed 44b): a fight
+against a world mob with loot, travel on the Old Kings Road, and Dunmar's
+inn (the gate lands in Frostfang; the one shipped travel route starts in
+Dunmar, and no step of this run reached it), all needing 37's encounters.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`, `make smoke`. One flake seen: `TestAttackOnAWaitingGroupIsRefused`
+(modules/company) failed once in the full race run (its battle was already
+over after one round) and passed on a rerun of the package; it is random,
+not from this phase.
+Review (2026-10-06, Opus review thread): accepted the five live fixes as
+root-cause fixes (only races 19 dummy and 20 orb are 0d0, so no fighting
+mob lost its blows; `ClassTitle` falls back to the profession title with no
+archetype). Fixed in review, each with a regression test: a line typed
+within a turn of the last now waits out the turn instead of being dropped
+(telnet, websocket and restored connections; `waitForTurn`); companions no
+longer print "looks a little confused (gate )" when the graduation has
+already moved them beside their leader (`companionAlreadyWithLeader`; the
+smoke run now fails on that line); `TestAttackOnAWaitingGroupIsRefused` is
+deterministic (the bandits outlast the first round). Import grouping tidied.
+Rejected or left as follow-ups: "The battle is under way" for a moment after
+a summary (clearing the aim at victory did not change the brawl harness, so
+the live cause is elsewhere; `doAfterBattle` covers the smoke run); `weather`
+in the Weather Yard (only the forest biome has a weather table, so the
+tutorial and Frostfang show none: a content gap, not a code bug); input
+typed during the tutorial hand-off. A package run before the fixes showed
+the known `TestBalanceMirrorClericIsACasterWhoCastsNothing` flake (37b).
+Verification after review: `make generate`, `make validate`, `make
+js-lint`, `go test -race ./...` (pass), `make smoke`. Merging master then
+found 37b's goblin shaman and 38b's summoned Angel both used mob id 95
+(every world load panicked); the shaman is now mob 97, its dark forest
+encounter updated, since the Angel's id is a code constant (40a2's review made the same fix).
+
 **Phase 40a2 complete, merged via [PR #41](https://github.com/Robinsond76/ashveil-gomud/pull/41) (2026-10-06): gathering.** Herbs,
 firewood, fishing and game are real. New `gather [herbs|firewood]`, `fish`
 and `hunt` commands (module `modules/gathering`, rules in `internal/gathering`)
@@ -887,7 +938,7 @@ their dependencies and those decisions is the
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
 | 38b | Complete, merged via [PR #34](https://github.com/Robinsond76/ashveil-gomud/pull/34). Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
-| 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
+| 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). Complete, merged via [PR #38](https://github.com/Robinsond76/ashveil-gomud/pull/38) (`make smoke`) | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |

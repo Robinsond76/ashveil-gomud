@@ -11,7 +11,6 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/milestones"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/templates"
 	"github.com/GoMudEngine/GoMud/internal/term"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -22,8 +21,7 @@ import (
 func buildStatusPanel(user *users.UserRecord) string {
 	c := user.Character
 
-	allRanks := c.GetAllSkillRanks()
-	profession := skills.GetProfession(allRanks)
+	profession := c.ClassTitle()
 	realXPNow, realXPTNL := c.XPTNLActual()
 	xpPct := 0
 	if realXPTNL > 0 {

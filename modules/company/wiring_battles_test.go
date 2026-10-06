@@ -177,6 +177,12 @@ func TestAttackOnAWaitingGroupIsRefused(t *testing.T) {
 	b.looseBandits()
 	b.aimAt("bandit captain")
 	b.toughen()
+	// The battle must outlast its first round: a lucky round once felled
+	// every engaged bandit and ended it (a random failure, seen in Phase 44).
+	for _, m := range b.livingBandits() {
+		m.Character.HealthMax.Value = 1000
+		m.Character.Health = 1000
+	}
 	b.fight()
 	cur, ok := battle.Current(7)
 	require.True(t, ok)
