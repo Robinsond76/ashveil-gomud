@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/banter"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
 
@@ -632,9 +633,17 @@ func CompanionsWithLeader(leaderUserID int) []int {
 
 // WalkingMembers is how many members walk with a leader: the leader and
 // each living companion in their room (32f review: the riding pace). A
-// leader alone is one.
+// leader alone is one. A creature (Phase 38e) rides no horse and keeps the
+// pace on its own, so it needs no saddle (38e review).
 func WalkingMembers(leaderUserID int) int {
-	return 1 + len(CompanionsWithLeader(leaderUserID))
+	n := 1
+	for _, id := range CompanionsWithLeader(leaderUserID) {
+		if archetype, ok := CompanionArchetype(leaderUserID, id); ok && creatures.Is(archetype) {
+			continue
+		}
+		n++
+	}
+	return n
 }
 
 // CountedMembers is how many members carry for a leader: the leader and

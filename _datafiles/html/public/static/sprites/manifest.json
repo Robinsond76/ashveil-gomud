@@ -1672,6 +1672,26 @@
     64
    ]
   },
+  "battle/units/hound/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "creature",
+   "note": "a hound recruit (38e)",
+   "size": [
+    256,
+    64
+   ]
+  },
   "battle/units/hunter/idle.png": {
    "kind": "battle-unit",
    "set": "S5",
@@ -2623,6 +2643,26 @@
    "family": "promoted class",
    "variant_of": "ranger",
    "note": "ranger line",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/stone-golem/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "creature",
+   "note": "a stone golem recruit (38e)",
    "size": [
     256,
     64

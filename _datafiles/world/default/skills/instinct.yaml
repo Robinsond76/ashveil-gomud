@@ -1,0 +1,5 @@
+# [LVL 1-4] Creature instinct
+skillid: instinct
+name: Instinct
+description: A creature recruit's own skill. It cannot be trained; a hound or a golem fights by it on its own in battle.
+maxlevel: 4

@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -176,6 +177,9 @@ func (m *ArchetypeModule) AdminSetClass(userID int, id string) (string, error) {
 	lineage, classID := id, ""
 	if c, ok := classes.Get(id); ok {
 		lineage, classID = c.Lineage, c.ID
+	}
+	if creatures.Is(lineage) { // Phase 38e review: a creature species is a companion's, never a character's
+		return "", fmt.Errorf("%s is a creature species: recruit one with testarea companion add %s", lineage, lineage)
 	}
 	m.mu.Lock()
 	a, ok := m.table.Get(lineage)

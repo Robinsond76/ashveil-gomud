@@ -3,6 +3,7 @@ package company
 import (
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -130,7 +131,7 @@ func (m *CompanyModule) setArchetype(leaderUserID int, selector, archetype strin
 		return err.Error()
 	}
 	archetype = strings.ToLower(strings.TrimSpace(archetype))
-	if !archetypes.Exists(archetype) {
+	if !archetypes.Exists(archetype) || creatures.Is(archetype) { // Phase 38e: a creature is recruited, not assigned
 		return fmt.Sprintf(`There is no archetype called "%s".`, archetype)
 	}
 	before, ok := m.registry.Get(leaderUserID)

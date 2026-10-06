@@ -1,0 +1,31 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">creatures</ansi>
+
+Not every companion is a person. A creature takes one company slot and one
+formation cell like anyone else, and fights by its own strategy, but it is
+kept differently. Two kinds are on offer in the Dunmar region:
+
+  <ansi fg="yellow">Hound</ansi>         a biological creature (<ansi fg="command">help hound</ansi>)
+  <ansi fg="yellow">Stone Golem</ansi>   a construct (<ansi fg="command">help stone-golem</ansi>)
+
+<ansi fg="yellow-bold">What every creature shares</ansi>
+
+  - It carries nothing: no starter pack, no share of the company's load, no
+    horse to ride. It wears only gear cut for its own kind, and no person can
+    wear that gear (<ansi fg="command">help equipment</ansi>).
+  - It has ranks that come with its level, but no promotion route and no
+    talents (<ansi fg="command">help classes</ansi>).
+  - It cannot be given a different archetype, and no player can choose to be
+    one (<ansi fg="command">company archetype</ansi> refuses it).
+  - It is recruited, not trained: <ansi fg="command">company recruit</ansi> at a recruiter lists
+    it on a "Creature:" line (<ansi fg="command">help company</ansi>).
+
+<ansi fg="yellow-bold">What differs</ansi>
+
+                        Hound                    Stone Golem
+  Food, drink, rest     like any companion       none needed
+  Mends                 by rest, camp and inn    only with stone mortar
+  Loses heart, leaves   yes, like anyone         never (it is bound)
+  Takes a bed at an inn yes                      no
+
+Constructs show as <ansi fg="command">bound</ansi> instead of a loyalty number in <ansi fg="command">company status</ansi>, and
+<ansi fg="command">survival</ansi> says they need nothing. To mend one, see <ansi fg="command">help repair</ansi>.

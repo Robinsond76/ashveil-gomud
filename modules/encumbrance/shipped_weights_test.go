@@ -1,6 +1,7 @@
 package encumbrance
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -133,6 +134,9 @@ func TestStarterKitsAreLight(t *testing.T) {
 	require.NotEmpty(t, cfg.Archetypes)
 	base := shippedMemberBase(t)
 	for _, a := range cfg.Archetypes {
+		if creatures.Is(a.ArchetypeId) {
+			continue // Phase 38e: a creature has no kit and carries nothing
+		}
 		total, pack := 0, 0
 		for _, id := range a.Kit {
 			it, ok := items[id]

@@ -1,0 +1,19 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">repair</ansi>
+
+A stone golem does not mend on its own: rest, camp and the trickle between
+fights do nothing for it (<ansi fg="command">help stone-golem</ansi>). It is repaired with stone mortar.
+
+  <ansi fg="command">company repair</ansi>            who needs repair, and how much mortar is in reach
+  <ansi fg="command">company repair [golem]</ansi>    pack mortar into the golem until it is whole
+
+Each mortar restores half the golem's maximum health. Mortar is taken from
+the company's cargo (your own pack too, when the company keeps no shared
+cargo), then from each companion's pack, and one is spent at a time until the
+golem is whole or the mortar runs out. Only what is needed is used.
+
+  - The golem must be alive and with you. A fallen golem needs a
+    resurrection (<ansi fg="command">help resurrect</ansi>).
+  - You cannot repair in a fight or a battle (<ansi fg="command">help battle-summary</ansi>).
+  - Repair takes no game time. Healing spells also heal a golem.
+  - Mortar is sold at the Dunmar market for a few gold. Only the living
+    mend by <ansi fg="command">heal</ansi> and rest: a hound is not repaired (<ansi fg="command">help heal</ansi>).

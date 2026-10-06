@@ -11,6 +11,7 @@ package archetype
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"math"
 	"strings"
 
@@ -204,6 +205,9 @@ func (m *ArchetypeModule) CreationChoices() []archetypes.Choice {
 	m.mu.Unlock()
 	out := make([]archetypes.Choice, 0, len(list))
 	for _, a := range list {
+		if creatures.Is(a.ID) {
+			continue // Phase 38e: a creature is recruited, never chosen at creation
+		}
 		out = append(out, archetypes.Choice{
 			ID:          a.ID,
 			Name:        a.Name,

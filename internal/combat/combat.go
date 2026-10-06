@@ -13,6 +13,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -205,6 +206,9 @@ func MobWounds(m *mobs.Mob) (woundable, lightOnly bool) {
 	}
 	if m.Character.RT != nil && m.Character.RT.Beast != nil {
 		return false, false // Phase 39e: a beast is wounded by its record, not by a blow
+	}
+	if f, ok := creatures.ForArchetype(m.Character.ArchetypeID()); ok && f.Repaired() {
+		return false, false // Phase 38e review: stone cracks; a repair closes it, no wound lingers
 	}
 	if _, _, companion := company.LeaderAndKeyForInstance(m.InstanceId); companion {
 		return true, false

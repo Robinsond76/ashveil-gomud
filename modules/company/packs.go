@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"strconv"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -70,7 +71,7 @@ func (m *CompanyModule) migratePacks(rec *domain.Record, cargo *[]items.Item, wo
 		rec.LeaderPackGranted, changed = true, true
 	}
 	for i, c := range rec.Companions {
-		if c.PackGranted || c.Dead() || c.State == nil {
+		if c.PackGranted || c.Dead() || c.State == nil || creatures.Is(c.Archetype) { // Phase 38e: a creature carries no pack
 			continue
 		}
 		st := c.State.Clone()

@@ -130,7 +130,8 @@ func DefaultRole(archetype string) Role {
 // (the rule every fight used before 32d), except a Samurai, the duelist
 // (Phase 39b), who goes for the strongest, and a Halberdier (Phase 39a),
 // who goes for the most crowded row, and a Gryphon Rider (Phase 39f), the
-// skirmisher, who goes for healers and casters in the rear.
+// skirmisher, who goes for healers and casters in the rear; a hound (Phase
+// 38e) goes for the most hurt foe and a stone golem for the front-most.
 func DefaultRule(archetype string) Rule {
 	switch strings.ToLower(strings.TrimSpace(archetype)) {
 	case "samurai":
@@ -141,6 +142,10 @@ func DefaultRule(archetype string) Rule {
 		return Armored // Phase 39h: the crossbow goes for the heaviest armor
 	case "gryphon-rider":
 		return Healers // Phase 39f: the skirmisher dives on healers, then casters
+	case "hound":
+		return Wounded // Phase 38e: a hound runs down the foe already hurt
+	case "stone-golem":
+		return Nearest // Phase 38e: a golem holds the line and strikes what is in front of it
 	}
 	return Weakest
 }

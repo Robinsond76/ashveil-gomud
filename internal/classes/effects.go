@@ -268,6 +268,11 @@ const (
 	DiveSteady = "divesteady" // a Dive costs no Evasion
 	SkyEye     = "skyeye"     // Perception added when its company looks for an ambush in the open
 
+	// The creature recruits (Phase 38e).
+	Pounce    = "pounce"    // percent more damage to a foe that is exposed, knocked down or hobbled
+	Slow      = "slow"      // percent fewer turns a round (a golem's slow stone)
+	SpellWeak = "spellweak" // percent more damage spells deal it
+
 	// The Alchemist's lineage (Phase 39g).
 	FlaskHeal   = "flaskheal"   // percent more a Healing Draught heals
 	FlaskCap    = "flaskcap"    // flasks added to the satchel's size

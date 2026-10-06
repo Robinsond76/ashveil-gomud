@@ -65,7 +65,8 @@ own name in your company, even if two of them are the same archetype.
 
   <ansi fg="command">company recruit</ansi>
   List who is hiring here, with their archetype, level, alignment, gear,
-  and price.
+  and price. A creature candidate has a "Creature:" line saying how it is
+  kept (<ansi fg="command">help creatures</ansi>).
 
   <ansi fg="command">company recruit [candidate]</ansi>
   Take one on. Most candidates cost gold; some are offered free, but only
@@ -98,9 +99,13 @@ isn't with you is separated and finds its way back in about a minute
 <ansi fg="yellow-bold">Your roster</ansi>
 
   <ansi fg="command">company status</ansi>
-  Every companion's number, name, level, archetype, alignment, loyalty,
-  and whether they're present, awaiting restoration, separated (and how
+  Every companion's number, name, level, archetype, alignment, loyalty (a golem shows
+  "bound" instead), and whether they're present, awaiting restoration, separated (and how
   long until they're back), fallen, or lost for good.
+
+  <ansi fg="command">company repair [golem]</ansi>
+  Mend a stone golem with stone mortar; the living heal by rest instead
+  (<ansi fg="command">help repair</ansi>). A hound or golem is a creature recruit: <ansi fg="command">help creatures</ansi>.
 
   <ansi fg="command">company gear [member]</ansi>
   What a companion is wearing; unworn items are shared cargo.

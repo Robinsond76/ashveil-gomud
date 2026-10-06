@@ -94,6 +94,15 @@ Markets:
         StartStock: 10
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
+      - ItemId: 290 # stone mortar (Phase 38e); repairs a stone golem
+        BasePrice: 14
+        MinPrice: 9
+        MaxPrice: 28
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 8
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       - ItemId: 95 # alchemist's reagents (Phase 39g); brewed into an Alchemist's flasks
         BasePrice: 8
         MinPrice: 5
