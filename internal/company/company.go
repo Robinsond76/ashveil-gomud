@@ -79,6 +79,10 @@ type Companion struct {
 	// so old saves read as unpromoted.
 	Class   string   `yaml:"class,omitempty"`
 	Talents []string `yaml:"talents,omitempty"`
+	// Personality is the temperament its banter is drawn by (Phase 49),
+	// rolled when it joins. Blank on a companion saved before then, which
+	// banter derives from its ID until one is set.
+	Personality string `yaml:"personality,omitempty"`
 }
 
 // Identity is what a companion's live mob is called and looks like, over
@@ -372,6 +376,27 @@ func (r *Registry) SetCompanionArchetype(leaderUserID, companionID int, archetyp
 			return ErrArchetypeAlreadySet
 		}
 		record.Companions[i].Archetype = archetype
+		r.Put(record)
+		return nil
+	}
+	return ErrUnknownMember
+}
+
+// SetCompanionPersonality records a companion's banter personality (Phase
+// 49). It is set at most once: a companion that has one keeps it.
+func (r *Registry) SetCompanionPersonality(leaderUserID, companionID int, personality string) error {
+	record, ok := r.Get(leaderUserID)
+	if !ok {
+		return ErrUnknownMember
+	}
+	for i, c := range record.Companions {
+		if c.ID != companionID {
+			continue
+		}
+		if c.Personality != "" {
+			return nil
+		}
+		record.Companions[i].Personality = personality
 		r.Put(record)
 		return nil
 	}

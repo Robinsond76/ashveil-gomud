@@ -177,6 +177,7 @@ and your company's health.
   <ansi fg="command">help campwatch</ansi>    raiders at camp, and the watch that spots them
   <ansi fg="command">light</ansi>             how well you can see here
   <ansi fg="command">set combatpace</ansi>    how fast a round's lines come to you
+  <ansi fg="command">help banter</ansi>       how your companions talk after a won fight
 
 In the tutorial, the Practice Yard lets you try all of this against straw
 soldiers that can't hurt you (<ansi fg="command">help tutorial</ansi>).
