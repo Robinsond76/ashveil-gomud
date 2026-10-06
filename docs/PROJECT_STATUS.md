@@ -1,5 +1,52 @@
 # Ashveil Project Status
 
+**Phase 40g2 built: battle screen follow-ups (2026-10-06, PR pending):**
+closes the 40g review's follow-ups. (1) **Allied formations.** Each allied
+company fights its own fight (33d), so the 40e feed now also relays a
+fight's happenings to the leader's consenting allies
+(`parties.AlliedLeaders`) who are in a battle of their own against some of
+the same mobs in the same room, with the ally's members as
+`a:<leader>:<key>`. Only watchable kinds go (strikes, spells, heals, casts,
+wind-ups, interrupts, falls, flight, abilities, target changes, statuses on
+enemies), never a fight's start, end or focus, wound changes, guards or
+mercy; what befell an ally has its numbers and status scrubbed and no status
+event on an ally is sent. `Company.Battle` gains `allies` (leader id and
+name; each member's id, name, class, cell, health in words, `down`), and the
+screen draws up to two as half-scale formations behind and above the
+player's, each with a pennant and the leader's name, a "+N more" mark for
+the rest, and pennants with a count of those standing on a phone. Allied
+units strike from where they stand (no lunge across the field). (2) **The
+pace is sent:** every `Company.Battle.Event` message carries `pace` (fast,
+normal, slow, off; `hooks.PaceOf`); the screen uses it and keeps the old
+inference only as a fallback for a server that sends none. (3) **Morale is
+drawn:** `Company.Battle.nerve` is "faltering" while the nerve rule
+(`morale.Losing`: half the company down or a quarter of its health left)
+holds; the header says "company faltering", each company figure shows a
+drop of sweat, hover says "shaken", and a hesitating companion's lost action
+reads "hesitates as the company falters" in the last-blow line. Enemy yield
+and flight markers were already shown. **Role letters are crisp:** a 3x5
+pixel font drawn in whole pixels (also used for "yields" and the allied
+labels) replaces anti-aliased canvas text; a browser check samples the role
+chip and finds two colours only. **The unseen presence** takes the first free
+enemy cell (centre first) and steps aside when a foe comes into view.
+Decisions (delegated): (a) allies are matched by party consent plus a shared
+enemy and room rather than a new alliance store, so nothing is persisted and
+33d's rules are untouched; (b) an ally's blows on the shared enemy keep
+their damage digits (the enemy's numbers are already shown) while numbers on
+ally members are hidden, the conservative reading of "bands only"; (c)
+tap-to-swap to watch an ally full-size is not built (view-only, the design
+marked it a recommendation), a candidate follow-up; (d) the nerve mark is
+computed in `modules/gmcp` from the fight's roster with the same
+`morale.Losing` rule rather than reading `hooks`' private fight state; (e)
+only two allied formations are drawn (the design's cap). Tests:
+`modules/gmcp/gmcp_battle_allies_test.go` (relay with consent, room, shared
+enemy, unseen masking and scrubbing through the real stream, hooks pacer and
+GMCP path; payload; ally selection; nerve; pace on released batches), a Node
+planner test for allied refs, and the allied section of
+`scripts/browser/battle-check.mjs`; help `battlescreen` gained Allies,
+morale and pace text (tested) and the Departure tutorial lesson points to it;
+screenshot `screens/40g2-battle.png`.
+
 **Phase 40g reviewed (2026-10-06, PR #40):** Checked the scheduler never
 drops a state change (a collapse applies every unfired op in order) and
 catches up after a round of backlog, that reduced motion drops lunges,

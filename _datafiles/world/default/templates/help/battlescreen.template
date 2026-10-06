@@ -16,7 +16,12 @@ change the company's focus.
   stand further out (<ansi fg="command">help formation</ansi>). The three columns are three lanes,
   upper (further) to lower (nearer).
 - Each of you shows a health bar, and a letter for your role: F fighter,
-  H healer, C caster, G guardian. You wear a small crown.
+  H healer, C caster, G guardian, K controller. You wear a small crown.
+- When your company is losing (half of it down, or a quarter of its health
+  left), the header says <ansi fg="yellow">company faltering</ansi> and a drop of sweat shows by each
+  of you: companions of weak loyalty may now hesitate or flee
+  (<ansi fg="command">help morale</ansi>). A companion who hesitates loses its action, and the
+  last-blow line says so. A foe that yields or runs is marked the same way.
 - Enemy health is shown in five steps, never as numbers: unhurt, scratched,
   wounded, badly wounded, near death. Hover or tap a figure to read its
   name and health, and to see whom it strikes.
@@ -27,7 +32,20 @@ change the company's focus.
   second wolf (6)"), and the title shows the round. Hovering a figure shows
   its own name and health instead.
 - In the dark, or against a foe you can't make out, you see one shadow
-  instead of the enemy (<ansi fg="command">help light</ansi>).
+  instead of the enemy (<ansi fg="command">help light</ansi>). The shadow stands in a place no foe you
+  can see holds.
+
+<ansi fg="yellow-bold">Allies</ansi>
+
+  When a player allied with you (<ansi fg="command">help party</ansi>) fights the same foes with their own
+  company, that company stands behind and above yours in a small formation of
+  its own, with a pennant and its leader's name. Up to two are drawn; more
+  show as "+N more" at the top. You see their blows, spells, falls and flight,
+  and how hurt each looks in the same five steps, never numbers, and never
+  their statuses or tactics. Each company keeps its own formation and orders:
+  you cannot command theirs, and the buttons act on your company only. On a
+  narrow screen (a phone) each allied company is a pennant with a count of
+  those still standing.
 
 <ansi fg="yellow-bold">Animation</ansi>
 
@@ -43,8 +61,9 @@ change the company's focus.
   flashes, shaking or travelling shots, and is the choice already made for
   you if your system asks for reduced motion. <ansi fg="yellow">off</ansi> is the still picture.
   Animation only shows the battle: it never changes or delays it, and it
-  keeps pace with your <ansi fg="command">help combatpace</ansi>: if a busy fight leaves it more
-  than a round behind, it skips ahead to the present. The story text is
+  keeps pace with your <ansi fg="command">help combatpace</ansi> setting (fast, normal, slow or off), which
+  the game sends the screen: if a busy fight leaves it more than a round
+  behind, it skips ahead to the present. The story text is
   the full record.
 
 <ansi fg="yellow-bold">Opening and closing</ansi>

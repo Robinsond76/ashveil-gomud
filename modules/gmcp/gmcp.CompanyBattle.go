@@ -25,10 +25,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/assessment"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/combat"
+	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/morale"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
@@ -59,6 +63,26 @@ type battleFacts struct {
 	// Phase 33i1: the company's assessment of the battle's group, as scout
 	// ends with it; nil when the group can't be seen.
 	Outlook *battleOutlook
+	// Phase 40g2: the allied companies fighting the same group here, and
+	// whether the player's own company is faltering (its nerve is tested).
+	Allies    []allyFact
+	Faltering bool
+}
+
+// allyFact is one allied company in the battle: its leader and the members
+// standing in its formation, health in words only.
+type allyFact struct {
+	Leader  int
+	Name    string // the leader's name
+	Members []allyMemberFact
+}
+
+type allyMemberFact struct {
+	Key               string
+	Name, Class       string
+	Row, Col          int
+	Health, HealthMax int
+	Down              bool
 }
 
 // battleOutlook is the assessment in words: the risk, whether it could go
@@ -168,7 +192,36 @@ type battlePayload struct {
 	Guards []guardFact `json:"guards,omitempty"`
 	// Phase 33i1: the company's outlook (the battle view's assessment).
 	Outlook *battleOutlook `json:"outlook,omitempty"`
+	// Phase 40g2: allied companies in the same battle (each its own
+	// formation, drawn behind the player's), and "faltering" while the
+	// player's company is losing and its nerve is being tested; omitted
+	// while steady.
+	Allies []battleAlly `json:"allies,omitempty"`
+	Nerve  string       `json:"nerve,omitempty"`
 }
+
+// battleAlly is an allied company: its leader's ref ("a:<user>") and name,
+// and its members, whose ids ("a:<user>:<key>") are the ones the allied
+// events use. Another company's health is shown in words, never numbers.
+type battleAlly struct {
+	ID      string             `json:"id"`
+	Name    string             `json:"name"`
+	Members []battleAllyMember `json:"members"`
+}
+
+type battleAllyMember struct {
+	ID     string     `json:"id"`
+	Name   string     `json:"name"`
+	Class  string     `json:"class,omitempty"`
+	Cell   battleCell `json:"cell"`
+	Health string     `json:"health"`
+	Down   bool       `json:"down,omitempty"`
+}
+
+// allyRef is an allied company's leader ref, and allyMemberRef a member's.
+func allyRef(leaderId int) string { return "a:" + strconv.Itoa(leaderId) }
+
+func allyMemberRef(leaderId int, key string) string { return allyRef(leaderId) + ":" + key }
 
 func mobID(instanceId int) string { return "m:" + strconv.Itoa(instanceId) }
 
@@ -190,6 +243,17 @@ func buildBattle(f battleFacts) any {
 	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst}
 	if p.Group == "" {
 		p.Group = "the enemy"
+	}
+	if f.Faltering {
+		p.Nerve = "faltering"
+	}
+	for _, a := range f.Allies {
+		ba := battleAlly{ID: allyRef(a.Leader), Name: a.Name, Members: []battleAllyMember{}}
+		for _, m := range a.Members {
+			ba.Members = append(ba.Members, battleAllyMember{ID: allyMemberRef(a.Leader, m.Key), Name: m.Name, Class: m.Class,
+				Cell: battleCell{Row: m.Row, Col: m.Col}, Health: enemyparty.HealthWord(m.Health, m.HealthMax), Down: m.Down})
+		}
+		p.Allies = append(p.Allies, ba)
 	}
 	listed := map[int]bool{}
 	others := map[string]bool{}
@@ -283,6 +347,8 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		}
 	}
 	f.Guards = gatherGuards(user, room)
+	f.Faltering = companyFaltering(b)
+	f.Allies = gatherAllies(user, b)
 	if room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
 		f.Dark = true
 		return f
@@ -553,4 +619,111 @@ func raceSprite(name string) string {
 		return "unknown-beast"
 	}
 	return "unknown-humanoid"
+}
+
+// companyFaltering reports whether the player's company is losing as the
+// nerve check reads it (Phase 30e): half the company down, or a quarter of
+// its health left. Companions of weak loyalty may then hesitate or flee.
+// The same rule as the check, read from the fight's roster.
+func companyFaltering(b battle.Battle) bool {
+	fi, ok := combatstream.Default().Fight(b.FightID)
+	if !ok || len(fi.Company) == 0 {
+		return false
+	}
+	hp, maximum, down := 0, 0, 0
+	for _, r := range fi.Company {
+		var c *characters.Character
+		if r.UserId > 0 {
+			if u := users.GetByUserId(r.UserId); u != nil {
+				c = u.Character
+			}
+		} else if m := mobs.GetInstance(r.MobInstanceId); m != nil {
+			c = &m.Character
+		}
+		if c == nil || c.Health <= 0 {
+			down++
+			continue
+		}
+		hp += c.Health
+		maximum += c.HealthMax.Value
+	}
+	return morale.Losing(len(fi.Company), down, hp, maximum)
+}
+
+// sharesEnemy reports whether two battles are against some of the same
+// mobs.
+func sharesEnemy(a, b battle.Battle) bool {
+	for id := range a.Enemies {
+		if b.Enemies[id] {
+			return true
+		}
+	}
+	return false
+}
+
+// alliesOf lists the allied leaders fighting the same enemy in the player's
+// battle: consenting allies (parties.AlliedLeaders) here, in a battle of
+// their own against some of the same mobs.
+func alliesOf(user *users.UserRecord, b battle.Battle) []*users.UserRecord {
+	ids := parties.AlliedLeaders(user.UserId)
+	sort.Ints(ids)
+	var out []*users.UserRecord
+	for _, id := range ids {
+		u := users.GetByUserId(id)
+		if u == nil || u.Character == nil {
+			continue
+		}
+		ab, ok := battle.Current(id)
+		if !ok || ab.RoomId != b.RoomId || u.Character.RoomId != b.RoomId || !sharesEnemy(b, ab) {
+			continue
+		}
+		out = append(out, u)
+	}
+	return out
+}
+
+// gatherAllies reads each allied company's formation, as it stands: who is
+// in which cell, their class and health in words. Each company keeps its
+// own formation (33d), so the cells are the ally's own.
+func gatherAllies(user *users.UserRecord, b battle.Battle) []allyFact {
+	var out []allyFact
+	for _, au := range alliesOf(user, b) {
+		sum := companyview.For(au)
+		if !sum.CompanyKnown {
+			continue
+		}
+		form, ok := enemyparty.CompanyFormation(au.UserId)
+		if !ok {
+			continue
+		}
+		cells := map[string]battleCell{}
+		for r, row := range form {
+			for c, key := range row {
+				if key != "" {
+					cells[string(key)] = battleCell{Row: r, Col: c}
+				}
+			}
+		}
+		fact := allyFact{Leader: au.UserId, Name: au.Character.Name}
+		add := func(m companyview.Member) {
+			cell, ok := cells[string(m.Key)]
+			if !ok || m.Status == company.MemberAwaiting || m.Status == company.MemberFled || m.Status == company.MemberSeparated {
+				return
+			}
+			class := ""
+			if !m.Leader || m.ArchetypeKnown {
+				class = strings.ToLower(m.Archetype)
+			}
+			fact.Members = append(fact.Members, allyMemberFact{Key: string(m.Key), Name: m.Name, Class: class, Row: cell.Row, Col: cell.Col,
+				Health: m.HP, HealthMax: m.HPMax, Down: m.Status == company.MemberDead || (m.HasHP && m.HP < 1)})
+		}
+		add(sum.Leader)
+		for _, m := range sum.Companions {
+			add(m)
+		}
+		if len(fact.Members) > 0 {
+			out = append(out, fact)
+		}
+	}
+	return out
 }

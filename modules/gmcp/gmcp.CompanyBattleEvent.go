@@ -13,6 +13,16 @@ package gmcp
 // player typed, they go out at once. Nothing is stored; a copyover ends the
 // fight, and the client resyncs from the next Company.Battle snapshot.
 //
+// Phase 40g2: allied companies. Each allied company fights its own battle
+// (33d) over the same enemy, so its happenings ride its own fight. The
+// fight's leader's consenting allies, in a battle against some of the same
+// mobs in the same room, are sent them too, their members as
+// "a:<leader>:<key>" (the ids Company.Battle.allies lists). Only what a
+// watcher would see: strikes, casts, deaths and flight; never an ally's
+// health, statuses or tactics, and nothing that ends or starts its fight.
+// Each payload also carries the receiver's combat pace, so the screen
+// paces its animation by it instead of guessing.
+//
 // What is never sent: enemy health or maximums, an enemy the player can't
 // make out (a ref of "?"), a secret status, another company's anything.
 // The feed goes to the leader of the fight only, and only to a client that
@@ -20,6 +30,7 @@ package gmcp
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
@@ -27,6 +38,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/parties"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -79,8 +91,11 @@ type battleEventPayload struct {
 	Round uint64 `json:"round"` // the server's round counter
 	// FightRound counts the fight's own rounds from 1 (Phase 40g: the
 	// battle screen's title); 0 when the fight's start is unknown.
-	FightRound uint64        `json:"fight_round,omitempty"`
-	Events     []battleEvent `json:"events"`
+	FightRound uint64 `json:"fight_round,omitempty"`
+	// Pace is the receiver's combat pace (fast, normal, slow or off), which
+	// the screen's animation budgets follow.
+	Pace   string        `json:"pace,omitempty"`
+	Events []battleEvent `json:"events"`
 }
 
 // wantsBattleEvents reports whether a connection takes the feed: a web
@@ -100,6 +115,9 @@ func wantsBattleEvents(connectionId uint64) bool {
 type battleViewer struct {
 	userId int
 	unseen func(instanceId int) bool // an enemy the player can't make out
+	// allyLeader is set when the event is an allied company's: the leader
+	// of the fight it rode, whose members are "a:<leader>:<key>".
+	allyLeader int
 }
 
 // refID names a combatant as Company.Battle and Company do: a member key
@@ -111,6 +129,8 @@ func (v battleViewer) refID(r combatstream.Ref) string {
 	switch {
 	case r.Zero():
 		return ""
+	case v.allyLeader > 0 && r.LeaderUserId == v.allyLeader && r.MemberKey != "":
+		return allyMemberRef(v.allyLeader, r.MemberKey)
 	case r.LeaderUserId == v.userId && r.MemberKey != "":
 		return r.MemberKey
 	case r.UserId == v.userId:
@@ -212,6 +232,65 @@ func viewerFor(user *users.UserRecord, roomId int, fightId uint64) battleViewer 
 	return v
 }
 
+// allyKinds are the happenings an ally's watcher is shown.
+var allyKinds = map[combatstream.Kind]bool{
+	combatstream.TargetChange: true, combatstream.Attack: true, combatstream.SpellHit: true, combatstream.Heal: true,
+	combatstream.CastStart: true, combatstream.CastProgress: true, combatstream.CastComplete: true,
+	combatstream.WindUpStart: true, combatstream.WindUpLand: true, combatstream.Interrupt: true,
+	combatstream.StatusApplied: true, combatstream.StatusExpired: true, combatstream.StatusTick: true,
+	combatstream.Death: true, combatstream.Flee: true, combatstream.Ability: true,
+}
+
+// isAllyRef reports whether a ref names a member of an allied company.
+func isAllyRef(id string) bool { return strings.HasPrefix(id, "a:") }
+
+// scrubAlly removes what another company's watcher is not shown of its
+// members: the numbers of what befell them (the narration of their own
+// company's fight is theirs, not ours) and the status a blow left on them.
+func scrubAlly(be battleEvent) battleEvent {
+	if isAllyRef(be.Tgt) {
+		be.Damage, be.Amount, be.HeldBack, be.Status = 0, 0, 0, ""
+	}
+	return be
+}
+
+// relayToAllies queues an allied company's event to each allied leader
+// fighting the same enemy here. The fight must be open: its roster tells
+// which mobs it fights.
+func relayToAllies(e combatstream.Event, leaderId int, fi combatstream.FightInfo, haveFight bool) {
+	if !haveFight || !allyKinds[e.Kind] {
+		return
+	}
+	for _, allyId := range parties.AlliedLeaders(leaderId) {
+		user := users.GetByUserId(allyId)
+		if user == nil || user.Character == nil || !wantsBattleEvents(user.ConnectionId()) {
+			continue
+		}
+		b, ok := battle.Current(allyId)
+		if !ok || b.FightID == 0 || b.FightID == e.FightID || b.RoomId != fi.RoomId || user.Character.RoomId != fi.RoomId {
+			continue
+		}
+		shared := false
+		for _, r := range fi.Enemies {
+			if b.Enemies[r.MobInstanceId] {
+				shared = true
+				break
+			}
+		}
+		if !shared {
+			continue
+		}
+		v := viewerFor(user, e.RoomId, b.FightID)
+		v.allyLeader = leaderId
+		// A status on one of its members is not shown; nor is a status on
+		// a fighter the receiver can't make out.
+		if be, ok := buildBattleEvent(v, e, fi, true); ok && !(isAllyRef(be.Tgt) && (e.Kind == combatstream.StatusApplied || e.Kind == combatstream.StatusExpired || e.Kind == combatstream.StatusTick)) {
+			own, ownOk := combatstream.Default().Fight(b.FightID)
+			events.AddToQueue(events.CombatData{UserId: allyId, Data: battleEventItem{fight: b.FightID, round: e.Round, fightRound: fightRound(e, own, ownOk), event: scrubAlly(be)}})
+		}
+	}
+}
+
 // onCombatEvent is the combat stream's sink: it routes an event to its
 // fight's leader and queues it behind the round's narration.
 func onCombatEvent(e combatstream.Event) {
@@ -229,6 +308,7 @@ func onCombatEvent(e combatstream.Event) {
 	if leaderId <= 0 {
 		return
 	}
+	relayToAllies(e, leaderId, fi, haveFight)
 	user := users.GetByUserId(leaderId)
 	if user == nil || user.Character == nil || !wantsBattleEvents(user.ConnectionId()) {
 		return
@@ -276,7 +356,7 @@ func sendBattleEvents(userId int, batch []any) {
 		}
 		if cur == nil || cur.Fight != it.fight || cur.Round != it.round {
 			flush()
-			cur = &battleEventPayload{Fight: it.fight, Round: it.round, FightRound: it.fightRound}
+			cur = &battleEventPayload{Fight: it.fight, Round: it.round, FightRound: it.fightRound, Pace: string(hooks.PaceOf(user))}
 		}
 		cur.Events = append(cur.Events, it.event)
 	}
