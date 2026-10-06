@@ -312,34 +312,54 @@ func (tr *trip) assertAsBefore(b roundTrip) {
 	}
 }
 
-// TestCompanionGearDismissalAndCargoAreUndone: gear put on a companion,
-// items packed into a horse's cargo and a companion dismissed in the area
-// are all back as they were after the return, and no armory item survives
-// anywhere.
+// TestCompanionGearDismissalAndCargoAreUndone: gear equipped on or removed
+// from a companion in the area, and a companion dismissed there (which hands
+// its gear to the leader), are all back as they were after the return, and
+// no armory item survives anywhere.
 func TestCompanionGearDismissalAndCargoAreUndone(t *testing.T) {
 	tr := newTrip(t)
 	u := tr.user
 	tr.withCompany()
-	// A fighter who can hold a weapon, recruited before the trip.
+	// A fighter who can hold a weapon, recruited and armed before the trip.
 	_, err := company.AdminRecruit(u.UserId, u.Character.RoomId, "warrior", 5)
 	require.NoError(t, err)
 	tr.run("look", "")
+	kit, ok := kitItems("weapons")
+	require.True(t, ok)
+	require.GreaterOrEqual(t, len(kit), 2)
+	own := items.New(kit[0])
+	require.True(t, u.Character.StoreItem(own))
+	require.NotContains(t, tr.run("company", "equip #2 "+own.ShorthandId()), "can't")
 	b := tr.before()
-	itemsBefore := len(u.Character.Items)
+	itemIDs := func() map[int]int {
+		out := map[int]int{}
+		for _, itm := range u.Character.Items {
+			out[itm.ItemId]++
+		}
+		return out
+	}
+	inventoryBefore := itemIDs()
 
 	tr.run("testarea", "")
 	require.Contains(t, tr.run("testarea", "kit weapons"), "You take")
-	require.Greater(t, len(u.Character.Items), itemsBefore)
-	weapon := u.Character.Items[len(u.Character.Items)-1]
-	equipped := tr.run("company", "equip #2 "+weapon.ShorthandId())
-	require.NotContains(t, equipped, "can't", equipped)
-	require.Contains(t, tr.run("company", "dismiss #1"), "dismissed")
+	var armory items.Item
+	for _, itm := range u.Character.Items {
+		if itm.ItemId == kit[1] {
+			armory = itm
+		}
+	}
+	require.NotZero(t, armory.ItemId)
+	require.NotContains(t, tr.run("company", "equip #2 "+armory.ShorthandId()), "can't", "an armory weapon displaces the companion's own")
+	require.NotContains(t, tr.run("company", "remove #2 weapon"), "can't")
+	require.NotContains(t, tr.run("company", "equip #2 "+armory.ShorthandId()), "can't")
+	require.Contains(t, tr.run("company", "dismiss #2"), "dismissed")
 	inArea, _ := company.CompanyMembers(u.UserId)
 	require.Len(t, inArea, 1, "the dismissal happened")
+	assert.Positive(t, itemIDs()[kit[1]], "the dismissed companion's armory weapon came back to the leader")
 	tr.run("testarea", "return")
 	tr.assertAsBefore(b)
 
-	assert.Len(t, u.Character.Items, itemsBefore, "no armory item came back")
+	assert.Equal(t, inventoryBefore, itemIDs(), "the leader carries exactly what they did; no armory item came back")
 	members, ok := company.CompanyMembers(u.UserId)
 	require.True(t, ok)
 	require.Len(t, members, 2, "the dismissed companion is back")
