@@ -40,7 +40,7 @@ test('an empty room offers no attack, no gather, no exits', () => {
 
 test('targets are named by id', () => {
   const attack = find(QM.build({ room }), 'Attack').sub();
-  assert.deepEqual(attack.map(e => e.cmd), ['attack 11', 'attack 12']);
+  assert.deepEqual(attack.map(e => e.cmd), ['attack 12']);
   const get = find(QM.build({ room }), 'Get').sub();
   assert.ok(get.some(e => e.cmd === 'get all'));
   assert.ok(get.some(e => e.cmd === 'get a:1'));
@@ -67,11 +67,25 @@ test('services list shops and the trainer', () => {
   assert.deepEqual(cmds, ['list 11', 'train']);
 });
 
-test('a battle puts its orders first and hides attack and gathering', () => {
-  const s = { room, battle: { enemies: [{}], focus_ready: true } };
+test('attack lists foes only: not companions, shopkeepers, the downed or the surrendered', () => {
+  const npcs = [
+    { id: 1, name: 'Ysolde', adjectives: ['charmed'] },
+    { id: 2, name: 'Merchant', adjectives: ['shop'] },
+    { id: 3, name: 'fallen wolf', adjectives: ['downed'] },
+    { id: 4, name: 'bandit', adjectives: ['surrendered'] },
+    { id: 5, name: 'wolf', adjectives: ['poisoned'] },
+  ];
+  const attack = find(QM.build({ room: { Contents: { Npcs: npcs } } }), 'Attack').sub();
+  assert.deepEqual(attack.map(e => e.cmd), ['attack 5']);
+  assert.ok(!top({ room: { Contents: { Npcs: npcs.slice(0, 4) } } }).includes('Attack'), 'no foes, no Attack');
+});
+
+test('a battle puts its orders first and leaves out what the battle refuses', () => {
+  const s = { room, battle: { enemies: [{}], focus_ready: true }, camp: { can_camp: true } };
   const labels = top(s);
   assert.equal(labels[0], 'Battle');
-  assert.ok(!labels.includes('Attack') && !labels.includes('Gather'));
+  assert.deepEqual(labels, ['Battle', 'Look', 'Company', 'Me', 'Help']);
+  assert.deepEqual(find(QM.build(s), 'Company').sub().map(e => e.cmd), ['company status', 'company inventory']);
   const cmds = QM.build(s)[0].sub().map(e => e.cmd);
   assert.ok(cmds.includes('retreat'));
   assert.ok(cmds.includes('company tactics focus weakest'));

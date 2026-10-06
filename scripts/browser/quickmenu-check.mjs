@@ -55,7 +55,7 @@ page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.mess
 await page.addInitScript(() => {
   window.wsSent = [];
   window.WebSocket = class {
-    constructor() { this.readyState = 1; setTimeout(() => this.onopen && this.onopen({}), 0); }
+    constructor() { this.readyState = 1; window.wsLast = this; setTimeout(() => this.onopen && this.onopen({}), 0); }
     send(d) { window.wsSent.push(d); }
     close() { this.readyState = 3; }
     addEventListener() {}
@@ -130,12 +130,11 @@ await page.keyboard.press('ArrowDown');
 // --- attack opens a submenu of this room's foes; the pick sends by id ---
 await page.keyboard.press('ArrowDown');
 await page.keyboard.press('Enter');
-check(JSON.stringify(await rows()) === JSON.stringify(['Old Trapper', 'giant rat', 'Back']), 'Attack lists the room\'s foes and Back: ' + JSON.stringify(await rows()));
+check(JSON.stringify(await rows()) === JSON.stringify(['giant rat', 'Back']), 'Attack lists the room\'s foes (not the shopkeeper) and Back: ' + JSON.stringify(await rows()));
 await shot('attack');
 await page.keyboard.press('Escape');
 check((await rows()).includes('Attack') && await selected() === 'Attack', 'Esc goes back to the first menu, on the entry it came from');
 await page.keyboard.press('Enter');
-await page.keyboard.press('ArrowDown');
 await page.keyboard.press('Enter');
 check(!(await menuOpen()), 'choosing a command closes the menu');
 check(JSON.stringify(await sent()) === JSON.stringify(['attack 12']), 'and sends attack by id: ' + JSON.stringify(await sent()));
@@ -163,7 +162,7 @@ check(await page.evaluate(() => document.activeElement.id === 'command-input'), 
 await gmcp('Company.Battle', { group: 'wolves', enemies: [{ id: 'm:1', label: 'wolf' }], focus_ready: true, focus: 'none' });
 await page.keyboard.press('Enter');
 const inFight = await rows();
-check(inFight[0] === 'Battle' && !inFight.includes('Attack'), 'in a battle the menu leads with Battle and drops Attack: ' + inFight.join(', '));
+check(inFight[0] === 'Battle' && !['Attack', 'Move', 'Get', 'Gather', 'Services'].some(l => inFight.includes(l)), 'in a battle the menu leads with Battle and drops the orders the battle refuses: ' + inFight.join(', '));
 await page.keyboard.press('Enter');
 check((await rows())[0] === 'Retreat', 'Battle lists Retreat first');
 await shot('battle');
@@ -180,6 +179,23 @@ await clear();
 await page.keyboard.type('say hello');
 await page.keyboard.press('Enter');
 check(JSON.stringify(await sent()) === JSON.stringify(['say hello']) && !(await menuOpen()), 'Enter with text sends the line and opens no menu');
+
+// --- a pending question keeps a blank Enter and the arrows for its answer ---
+const serverSays = text => page.evaluate(t => window.wsLast.onmessage({ data: t }), text);
+await gmcp('Room.Info', room);
+await page.focus('#command-input');
+await clear();
+await serverSays('\x1b[1;30m.:\x1b[0m \x1b[1;33mBuy the dagger?\x1b[0m \x1b[1;30m[\x1b[0myes/no\x1b[1;30m]\x1b[0m ');
+await page.keyboard.press('Enter');
+check(!(await menuOpen()) && JSON.stringify(await sent()) === JSON.stringify(['']), 'with a question waiting, a blank Enter answers it (its default): ' + JSON.stringify(await sent()));
+await clear();
+await page.keyboard.press('ArrowUp');
+check(!(await sent()).includes('north'), 'and the arrows do not walk into the answer');
+await page.fill('#command-input', '');
+await serverSays('You buy the dagger.\r\n\x1b[1;30m[\x1b[0m10:00 HP:20/20\x1b[1;30m]:\x1b[0m ');
+await page.keyboard.press('Enter');
+check(await menuOpen(), 'once the game prompt is back, Enter opens the menu again');
+await page.keyboard.press('Escape');
 
 // --- a mouse can drive it too ---
 await gmcp('Room.Info', room);

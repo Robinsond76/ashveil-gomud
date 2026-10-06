@@ -1961,6 +1961,24 @@ const Client = (() => {
         return false;
     }
 
+    // A pending prompt question (yes/no, a name, a choice) replaces the game
+    // prompt with a line that starts ".:" and waits on the same line, where
+    // a blank Enter takes its default. While one waits, Enter and the arrows
+    // answer it as typed text, not the quick menu or walking.
+    let questionPending = false;
+    function _trackQuestion(data) {
+        const plain = data.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '');
+        const tail  = plain.slice(Math.max(plain.lastIndexOf('\n'), plain.lastIndexOf('\r')) + 1);
+        if (tail.trim() === '') { return; }
+        questionPending = tail.trimStart().startsWith('.:');
+    }
+
+    // playing: logged in and in a room, not at the login prompts or a
+    // pending question, so the empty box's keys can walk and open menus.
+    function playing() {
+        return !questionPending && !!(GMCPStructs.Room && GMCPStructs.Room.Info);
+    }
+
     function _onMessage(event) {
         totalBytesReceived += event.data.length;
 
@@ -2004,6 +2022,7 @@ const Client = (() => {
         }
 
         term.write(event.data);
+        _trackQuestion(event.data);
         Triggers.Try(event.data);
     }
 
@@ -2637,7 +2656,7 @@ const Client = (() => {
             // (the numpad shortcuts below), so Alt+Up and Alt+Down start
             // the history; once it is showing, plain arrows keep going.
             const arrowsWalk = textInput.value.length === 0 && historyPosition === 0 &&
-                !event.altKey && textInput.type !== 'password';
+                !event.altKey && textInput.type !== 'password' && playing();
             if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && !arrowsWalk) {
                 event.preventDefault();
                 historyPosition += (event.key === 'ArrowUp') ? 1 : -1;
@@ -2648,8 +2667,10 @@ const Client = (() => {
                 return;
             }
 
-            // Numpad / arrow shortcuts when input is empty
-            if (textInput.value.length === 0 && codeShortcuts[event.code]) {
+            // Numpad / arrow shortcuts when input is empty (arrows only in
+            // play, so they never answer a login or a pending question)
+            if (textInput.value.length === 0 && codeShortcuts[event.code] &&
+                (event.code.indexOf('Arrow') !== 0 || playing())) {
                 sendData(codeShortcuts[event.code]);
                 if (event.preventDefault) { event.preventDefault(); }
                 return false;
@@ -2769,6 +2790,7 @@ const Client = (() => {
 
         // Shared state (read by window modules)
         get GMCPStructs()  { return GMCPStructs; },
+        Playing:           playing,
         // sliderValues is a `let` that gets reassigned on mute/unmute, so the
         // getter captures the variable binding, not a snapshot of the object.
         get sliderValues() { return sliderValues; },

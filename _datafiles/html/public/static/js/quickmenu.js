@@ -58,6 +58,15 @@
         return mobs.map(function(c) { return { label: c.name, cmd: verb + ' ' + c.id }; });
     }
 
+    // foes are the NPCs worth attacking: not your own company (charmed),
+    // not a shopkeeper, and not one already down or giving up.
+    var NOT_FOES = ['charmed', 'shop', 'downed', 'surrendered'];
+    function foes(npcs) {
+        return npcs.filter(function(c) {
+            return !NOT_FOES.some(function(a) { return has(c.adjectives, a); });
+        });
+    }
+
     function battleOn(battle) {
         return !!(battle && Array.isArray(battle.enemies) && battle.enemies.length);
     }
@@ -90,10 +99,18 @@
         return out;
     }
 
-    function companyEntry(state) {
+    // companyEntry is the company's orders; during a battle only the views,
+    // since the battle runs itself (retreat and focus are under Battle).
+    function companyEntry(state, inBattle) {
         var camp = state.camp || {};
         return {
             label: 'Company', sub: function() {
+                if (inBattle) {
+                    return [
+                        { label: 'Status', cmd: 'company status' },
+                        { label: 'Inventory', cmd: 'company inventory' },
+                    ];
+                }
                 var out = [
                     { label: 'Status', cmd: 'company status' },
                     { label: 'Inventory', cmd: 'company inventory' },
@@ -151,8 +168,19 @@
             },
         });
 
-        if (!inBattle && npcs.length) {
-            out.push({ label: 'Attack', sub: function() { return targets('attack', npcs); } });
+        var enemies = foes(npcs);
+        if (!inBattle && enemies.length) {
+            out.push({ label: 'Attack', sub: function() { return targets('attack', enemies); } });
+        }
+
+        // During a battle the server refuses walking, shopping, picking up
+        // and gathering (only retreat and the focus are orders), so the menu
+        // leaves them out.
+        if (inBattle) {
+            out.push(companyEntry(state, true));
+            out.push({ label: 'Me', sub: function() { return plain(ME); } });
+            out.push({ label: 'Help', sub: function() { return plain(HELP); } });
+            return out;
         }
 
         if (exits.length || (state.places && state.places.length) || state.walking) {
@@ -185,17 +213,15 @@
         campEntries(state.camp || {}).filter(function(e) { return e.cmd === 'inn'; }).forEach(function(e) { services.push(e); });
         if (services.length) { out.push({ label: 'Services', sub: function() { return services; } }); }
 
-        if (items.length || !inBattle) {
-            out.push({
-                label: 'Get', sub: function() {
-                    var g = [];
-                    if (items.length) { g.push({ label: 'Get everything here', cmd: 'get all' }); }
-                    items.forEach(function(i) { g.push({ label: i.label || i.name, cmd: 'get ' + i.id }); });
-                    g.push({ label: 'Loot the fallen', hint: 'after a battle', cmd: 'loot' });
-                    return g;
-                },
-            });
-        }
+        out.push({
+            label: 'Get', sub: function() {
+                var g = [];
+                if (items.length) { g.push({ label: 'Get everything here', cmd: 'get all' }); }
+                items.forEach(function(i) { g.push({ label: i.label || i.name, cmd: 'get ' + i.id }); });
+                g.push({ label: 'Loot the fallen', hint: 'after a battle', cmd: 'loot' });
+                return g;
+            },
+        });
 
         // A resource picked clean is left out; it regrows with time.
         var gone = room.depleted || [];
@@ -203,9 +229,9 @@
         list(room.resources).forEach(function(r) {
             if (GATHER[r] && !has(gone, r)) { gather.push({ label: GATHER[r].label, cmd: GATHER[r].cmd }); }
         });
-        if (gather.length && !inBattle) { out.push({ label: 'Gather', sub: function() { return gather; } }); }
+        if (gather.length) { out.push({ label: 'Gather', sub: function() { return gather; } }); }
 
-        out.push(companyEntry(state));
+        out.push(companyEntry(state, false));
         out.push({ label: 'Me', sub: function() { return plain(ME); } });
         out.push({ label: 'Help', sub: function() { return plain(HELP); } });
         return out;
@@ -389,10 +415,13 @@
     }
 
     // typingReady: the command box has the focus, is empty and is not a
-    // password prompt, so Enter is free to open the menu.
+    // password prompt, and the player is in play (not logging in, and no
+    // question such as a yes/no waits, where a blank Enter takes its
+    // default), so Enter is free to open the menu.
     function typingReady(ev) {
         var t = ev.target;
-        return t && t.id === 'command-input' && t.value === '' && t.type !== 'password';
+        return t && t.id === 'command-input' && t.value === '' && t.type !== 'password' &&
+            !!(Client.Playing && Client.Playing());
     }
 
     document.addEventListener('keydown', function(ev) {
