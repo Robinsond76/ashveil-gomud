@@ -277,41 +277,6 @@
             display: none;
         }
 
-        .cw-tt-name {
-            font-size: 0.85em;
-            font-weight: bold;
-            color: var(--t-text);
-            margin-bottom: 4px;
-            line-height: 1.3;
-        }
-
-        .cw-tt-divider {
-            border: none;
-            border-top: 1px solid var(--t-border-accent);
-            margin: 5px 0;
-        }
-
-        .cw-tt-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 8px;
-            line-height: 1.6;
-        }
-
-        .cw-tt-row-label {
-            color: var(--t-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            font-size: 0.88em;
-            flex-shrink: 0;
-        }
-
-        .cw-tt-row-value {
-            color: var(--t-text);
-            text-align: right;
-        }
-
         /* ---- Quests tab ---- */
         #cw-quests {
             padding: 4px 6px;

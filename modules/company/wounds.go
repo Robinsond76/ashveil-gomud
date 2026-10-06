@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"strconv"
 	"strings"
 
@@ -55,17 +56,17 @@ func parsePhysicians(raw any) map[int]physician {
 		return out
 	}
 	for _, entry := range list {
-		fields := lowerKeys(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			mudlog.Warn("company: physician entry is not a map; skipped")
 			continue
 		}
-		roomID, ok := configInt(fields["roomid"])
+		roomID, ok := modconfig.Int(fields["roomid"])
 		if !ok || roomID <= 0 {
 			mudlog.Warn("company: physician without a room; skipped", "roomid", fields["roomid"])
 			continue
 		}
-		price, ok := configInt(fields["priceperwound"])
+		price, ok := modconfig.Int(fields["priceperwound"])
 		if !ok || price < 0 {
 			mudlog.Warn("company: physician with a bad price; skipped", "roomid", roomID)
 			continue
@@ -153,7 +154,7 @@ func (m *CompanyModule) woundMembers(user *users.UserRecord) []woundMember {
 			known[s] = true
 		}
 		out = append(out, woundMember{
-			key: "companion:" + strconv.Itoa(id), name: name, char: &mob.Character, companionID: id,
+			key: string(domain.CompanionMemberKey(id)), name: name, char: &mob.Character, companionID: id,
 			knows: func(s string) bool { return known[s] },
 		})
 	}
@@ -847,6 +848,7 @@ func (m *CompanyModule) physicianAnswer(user *users.UserRecord, room *rooms.Room
 	}
 
 	user.Character.Gold -= price
+	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -price})
 	for _, w := range members {
 		w.char.Wounds = nil
 		if !w.leader() {

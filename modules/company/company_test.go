@@ -2,6 +2,7 @@ package company
 
 import (
 	"errors"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"maps"
 	"strings"
 	"testing"
@@ -836,11 +837,11 @@ func TestDismissAllSaveFailureRollsBack(t *testing.T) {
 
 func TestConfigIntAcceptsYAMLAndStringValues(t *testing.T) {
 	for _, value := range []any{4, int64(4), float64(4), "4"} {
-		got, ok := configInt(value)
+		got, ok := modconfig.Int(value)
 		require.True(t, ok)
 		assert.Equal(t, 4, got)
 	}
-	_, ok := configInt("not-a-number")
+	_, ok := modconfig.Int("not-a-number")
 	assert.False(t, ok)
 }
 

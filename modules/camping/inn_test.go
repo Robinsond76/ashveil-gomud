@@ -456,3 +456,36 @@ func (l *lockedSurvival) calls() int {
 	defer l.mu.Unlock()
 	return len(l.inner.amounts)
 }
+
+// goldChanges captures the GoldChange of every EquipmentChange queued while
+// the test runs, so the Worth panel refresh can be asserted.
+func goldChanges(t *testing.T) *[]int {
+	t.Helper()
+	got := &[]int{}
+	id := events.RegisterListener(events.EquipmentChange{}, func(e events.Event) events.ListenerReturn {
+		*got = append(*got, e.(events.EquipmentChange).GoldChange)
+		return events.Continue
+	})
+	t.Cleanup(func() { events.UnregisterListener(events.EquipmentChange{}, id) })
+	return got
+}
+
+// TestInnRestQueuesGoldChange: paying for a room queues the same gold event
+// as a shop purchase, so the client's Worth panel refreshes.
+func TestInnRestQueuesGoldChange(t *testing.T) {
+	events.ProcessEvents() // drain what earlier tests queued
+	e := newInnEnv(t)
+	user := campUser(t, 7, 2003)
+	user.Character.Gold = 25
+	got := goldChanges(t)
+	e.module.innRest(user, innRoom())
+	events.ProcessEvents()
+	assert.Equal(t, []int{-10}, *got)
+
+	e.store.saveErr = assert.AnError
+	user = campUser(t, 8, 2003)
+	user.Character.Gold = 25
+	e.module.innRest(user, innRoom())
+	events.ProcessEvents()
+	assert.Equal(t, []int{-10}, *got, "a refunded payment queues nothing")
+}

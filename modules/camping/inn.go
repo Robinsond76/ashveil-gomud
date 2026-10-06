@@ -2,7 +2,7 @@ package camping
 
 import (
 	"fmt"
-	"strconv"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"strings"
 	"time"
 
@@ -65,72 +65,43 @@ func defaultInnSettings() innSettings {
 // value that is missing or out of range.
 func parseInnSettings(get func(string) any) innSettings {
 	s := defaultInnSettings()
-	if tag := strings.TrimSpace(configString(get("InnRoomTag"))); tag != "" {
+	if tag := strings.TrimSpace(modconfig.String(get("InnRoomTag"))); tag != "" {
 		s.RoomTag = tag
 	}
-	if n, ok := configInt(get("PricePerMember")); ok && n >= 0 {
+	if n, ok := modconfig.Int(get("PricePerMember")); ok && n >= 0 {
 		s.PricePerMember = n
 	}
-	if d, ok := configSeconds(get("InnRestDuration")); ok && d > 0 {
+	if d, ok := modconfig.Duration(get("InnRestDuration")); ok && d > 0 {
 		s.RestDuration = d
 	}
-	if n, ok := configInt(get("InnFatigueRecovery")); ok && n > 0 {
+	if n, ok := modconfig.Int(get("InnFatigueRecovery")); ok && n > 0 {
 		s.FatigueRecovery = n
 	}
-	if n, ok := configInt(get("WellRestedBuffId")); ok && n > 0 {
+	if n, ok := modconfig.Int(get("WellRestedBuffId")); ok && n > 0 {
 		s.WellRestedBuffId = n
 	}
-	if n, ok := configInt(get("RestedBuffId")); ok && n > 0 {
+	if n, ok := modconfig.Int(get("RestedBuffId")); ok && n > 0 {
 		s.RestedBuffId = n
 	}
-	if d, ok := configSeconds(get("RestedDuration")); ok && d > 0 {
+	if d, ok := modconfig.Duration(get("RestedDuration")); ok && d > 0 {
 		s.RestedDuration = d
 	}
-	if d, ok := configSeconds(get("WellRestedDuration")); ok && d > 0 {
+	if d, ok := modconfig.Duration(get("WellRestedDuration")); ok && d > 0 {
 		s.WellRestedDuration = d
 	}
-	if n, ok := configInt(get("WhetstoneItemId")); ok && n > 0 {
+	if n, ok := modconfig.Int(get("WhetstoneItemId")); ok && n > 0 {
 		s.WhetstoneItemId = n
 	}
-	if n, ok := configInt(get("SharpenedBonus")); ok && n > 0 {
+	if n, ok := modconfig.Int(get("SharpenedBonus")); ok && n > 0 {
 		s.SharpenedBonus = n
 	}
-	if n, ok := configInt(get("SharpenedStrikes")); ok && n > 0 {
+	if n, ok := modconfig.Int(get("SharpenedStrikes")); ok && n > 0 {
 		s.SharpenedStrikes = n
 	}
-	if n, ok := configInt(get("FieldSmithStrikesPerLevel")); ok && n >= 0 {
+	if n, ok := modconfig.Int(get("FieldSmithStrikesPerLevel")); ok && n >= 0 {
 		s.FieldSmithStrikesPerLevel = n
 	}
 	return s
-}
-
-func configInt(raw any) (int, bool) {
-	switch value := raw.(type) {
-	case int:
-		return value, true
-	case int64:
-		return int(value), true
-	case float64:
-		return int(value), true
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		return n, err == nil
-	}
-	return 0, false
-}
-
-// configSeconds reads a duration as a Go duration string ("60s") or a
-// number of seconds.
-func configSeconds(raw any) (time.Duration, bool) {
-	if text, ok := raw.(string); ok {
-		if d, err := time.ParseDuration(strings.TrimSpace(text)); err == nil {
-			return d, true
-		}
-	}
-	if n, ok := configInt(raw); ok {
-		return time.Duration(n) * time.Second, true
-	}
-	return 0, false
 }
 
 func (m *CampingModule) innSettings() innSettings {
@@ -358,6 +329,8 @@ func (m *CampingModule) innRest(user *users.UserRecord, room *rooms.Room) string
 		user.Character.Gold += price
 		return err.Error()
 	}
+	// The Worth panel refreshes on this event, like every other purchase.
+	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -price})
 	m.scheduleStayLocked(stay)
 	return fmt.Sprintf("You pay %d gold and your company settles in to rest. (%s)", price, settings.RestDuration)
 }
@@ -487,11 +460,7 @@ func (m *CampingModule) innStatusTextLocked(leaderUserID int) string {
 	}
 	lines = append(lines, "Company:")
 	for _, member := range m.survival.CompanyNeeds(leaderUserID) {
-		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
-			member.Name,
-			member.Needs.Hunger, survival.HungerLabel(member.Needs.Hunger),
-			member.Needs.Thirst, survival.ThirstLabel(member.Needs.Thirst),
-			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue)))
+		lines = append(lines, survival.NeedsLine(member.Name, member.Needs))
 	}
 	return strings.Join(lines, "\n")
 }

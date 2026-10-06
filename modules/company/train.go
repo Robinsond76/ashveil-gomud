@@ -267,7 +267,7 @@ func trainPlace(leaderUserID int, room *rooms.Room, skill string, rank int) (str
 		}
 	}
 	if rank <= campTrainMaxRank && room != nil {
-		if s, ok := camping.CampStateOf(leaderUserID, room.RoomId, room.Tags); ok && s.HasCamp && s.Here {
+		if s, ok := camping.CampStateOf(leaderUserID, room.RoomId, room.GetTags()); ok && s.HasCamp && s.Here {
 			return "your camp", true
 		}
 	}

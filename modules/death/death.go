@@ -9,8 +9,8 @@ package death
 import (
 	"embed"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -141,54 +141,17 @@ func newModule() *DeathModule {
 
 // --- config ---
 
-func lowerKeys(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			out[strings.ToLower(k)] = v
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			if name, ok := k.(string); ok {
-				out[strings.ToLower(name)] = v
-			}
-		}
-		return out
-	}
-	return nil
-}
-
-func configInt(raw any) (int, bool) {
-	switch v := raw.(type) {
-	case int:
-		return v, true
-	case int64:
-		return int(v), true
-	case uint64:
-		return int(v), true
-	case float64:
-		return int(v), true
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(v))
-		return n, err == nil
-	}
-	return 0, false
-}
-
 // parseSettings reads the module config. A settlement entry that isn't a
 // map, or that the registry rejects, is skipped with a warning; a fallback
 // room below 1 or a vitals percentage outside 1..100 uses its default.
 func parseSettings(get func(string) any) settings {
 	s := defaultSettings()
-	if id, ok := configInt(get("FallbackRoomId")); ok && id > 0 {
+	if id, ok := modconfig.Int(get("FallbackRoomId")); ok && id > 0 {
 		s.fallbackID = id
 	} else if get("FallbackRoomId") != nil {
 		mudlog.Warn("death: FallbackRoomId must be a room ID; using the default", "value", get("FallbackRoomId"))
 	}
-	if pct, ok := configInt(get("RespawnVitalsPct")); ok && pct >= 1 && pct <= 100 {
+	if pct, ok := modconfig.Int(get("RespawnVitalsPct")); ok && pct >= 1 && pct <= 100 {
 		s.vitalsPct = pct
 	} else if get("RespawnVitalsPct") != nil {
 		mudlog.Warn("death: RespawnVitalsPct must be 1..100; using the default", "value", get("RespawnVitalsPct"))
@@ -196,15 +159,15 @@ func parseSettings(get func(string) any) settings {
 	var entries []domain.Settlement
 	list, _ := get("Settlements").([]any)
 	for _, raw := range list {
-		fields := lowerKeys(raw)
+		fields := modconfig.Map(raw)
 		if fields == nil {
 			mudlog.Warn("death: settlement entry is not a map; skipped")
 			continue
 		}
 		zone, _ := fields["zone"].(string)
 		kind, _ := fields["kind"].(string)
-		roomID, _ := configInt(fields["serviceroomid"])
-		mobID, _ := configInt(fields["servicemobid"])
+		roomID, _ := modconfig.Int(fields["serviceroomid"])
+		mobID, _ := modconfig.Int(fields["servicemobid"])
 		entries = append(entries, domain.Settlement{Zone: zone, Kind: domain.Kind(kind), ServiceRoomID: roomID, ServiceMobID: mobID})
 	}
 	registry, errs := domain.NewRegistry(entries)
@@ -260,7 +223,7 @@ func (m *DeathModule) roomLoads(roomID int) bool {
 }
 
 func checkpoint(c *characters.Character) int {
-	id, _ := configInt(c.GetMiscData(domain.CheckpointKey))
+	id, _ := modconfig.Int(c.GetMiscData(domain.CheckpointKey))
 	return id
 }
 

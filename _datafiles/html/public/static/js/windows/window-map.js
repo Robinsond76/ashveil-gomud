@@ -1669,10 +1669,6 @@
             return wrap;
         }
 
-        function onSettingsChanged() {
-            render();
-        }
-
         function onActivate() {
             resizeCanvas();
             render();

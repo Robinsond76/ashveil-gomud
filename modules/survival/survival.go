@@ -910,11 +910,7 @@ func (m *SurvivalModule) status(leaderUserID int) string {
 		if !ok {
 			needs = domain.FullNeeds()
 		}
-		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
-			ref.Name,
-			needs.Hunger, domain.HungerLabel(needs.Hunger),
-			needs.Thirst, domain.ThirstLabel(needs.Thirst),
-			needs.Fatigue, domain.FatigueLabel(needs.Fatigue)))
+		lines = append(lines, domain.NeedsLine(ref.Name, needs))
 		// Phase 50: what those needs and a meal do in the next battle.
 		if sum := domain.ConditionFor(needs).Summary(needs.MealBattles); sum != "" {
 			lines = append(lines, "    In battle: "+sum)
@@ -974,7 +970,7 @@ func (m *SurvivalModule) displayName(key domain.MemberKey) string {
 	if key == domain.LeaderMemberKey {
 		return "leader"
 	}
-	if id, ok := parseCompanionSelector(strings.TrimPrefix(string(key), "companion:")); ok {
+	if id, ok := domain.CompanionIDFromMemberKey(key); ok && id > 0 {
 		return fmt.Sprintf("#%d", id)
 	}
 	return string(key)

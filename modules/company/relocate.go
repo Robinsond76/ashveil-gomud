@@ -2,6 +2,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -164,7 +165,7 @@ func roundsText(rounds int) string {
 // separationRounds is the configured catch-up time.
 func (m *CompanyModule) separationRounds() int {
 	if m.plug != nil {
-		if n, ok := configInt(m.plug.Config.Get("SeparationRounds")); ok && n >= 1 && n <= 10000 {
+		if n, ok := modconfig.Int(m.plug.Config.Get("SeparationRounds")); ok && n >= 1 && n <= 10000 {
 			return n
 		}
 	}

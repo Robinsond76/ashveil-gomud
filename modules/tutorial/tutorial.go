@@ -13,6 +13,7 @@ package tutorial
 import (
 	"embed"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"regexp"
 	"strconv"
 	"strings"
@@ -204,35 +205,20 @@ func configuredRooms() []int {
 	return out
 }
 
-func configInt(raw any) (int, bool) {
-	switch v := raw.(type) {
-	case int:
-		return v, true
-	case int64:
-		return int(v), true
-	case float64:
-		return int(v), true
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(v))
-		return n, err == nil
-	}
-	return 0, false
-}
-
 func (m *TutorialModule) load() {
-	if n, ok := configInt(m.plug.Config.Get("GraduationItemId")); ok && n > 0 {
+	if n, ok := modconfig.Int(m.plug.Config.Get("GraduationItemId")); ok && n > 0 {
 		m.graduationItem = n
 	}
-	if n, ok := configInt(m.plug.Config.Get("RationItemId")); ok && n > 0 {
+	if n, ok := modconfig.Int(m.plug.Config.Get("RationItemId")); ok && n > 0 {
 		m.rationItem = n
 	}
-	if n, ok := configInt(m.plug.Config.Get("WaterItemId")); ok && n > 0 {
+	if n, ok := modconfig.Int(m.plug.Config.Get("WaterItemId")); ok && n > 0 {
 		m.waterItem = n
 	}
 	if list, ok := m.plug.Config.Get("PracticeSquad").([]any); ok {
 		var ids []int
 		for _, raw := range list {
-			if n, ok := configInt(raw); ok && n > 0 {
+			if n, ok := modconfig.Int(raw); ok && n > 0 {
 				ids = append(ids, n)
 			}
 		}
@@ -243,7 +229,7 @@ func (m *TutorialModule) load() {
 	if list, ok := m.plug.Config.Get("TutorialRecruits").([]any); ok {
 		var ids []int
 		for _, raw := range list {
-			if n, ok := configInt(raw); ok && n > 0 {
+			if n, ok := modconfig.Int(raw); ok && n > 0 {
 				ids = append(ids, n)
 			}
 		}

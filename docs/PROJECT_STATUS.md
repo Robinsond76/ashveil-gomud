@@ -1,3 +1,37 @@
+**Code cleanup pass (2026-10-06):** a survey of the day's Go modules and
+the web client for duplication and drift, ranked in the
+[cleanup review](plans/2026-10-06-code-cleanup-review.md). Carried out:
+one `internal/modconfig` package replaces thirteen copies of the module
+config coercion helpers (the copies had drifted on fractional floats and
+duration formats); `survival.NeedsLine` replaces a four-way copy. Bugs
+fixed with regression tests: making camp and the Camp tab compared room
+tags exactly while the inn used `HasTag`; member keys were parsed four
+ways and two accepted a bare number as a companion; inn and physician
+payments never queued the gold event that refreshes the Worth panel;
+purging a leader whose only camping state was a reward cooldown skipped
+the save; `Char.Vitals` and `Char.Worth` dropped zero values so the client
+showed "undefined / 50" and a dash for 0 gold; the company card had no
+branch for a fled member; the gametime countdown could read "1h 60m".
+Dead code removed: six Go helpers, two JS functions, WinBox-era CSS and
+13 theme tokens read nowhere. Larger refactors (shared module
+persistence, one live-companion roster helper, one member-selector
+matcher, a shared scheduler, GMCP dispatch firing at every namespace
+level, tooltip and tab-switcher consolidation) are proposals in the
+review with the reason each waits. `modules/archetype` and loot/items
+were left alone for the in-flight 39i2 and 36d builds. Verification:
+`make generate`, `make validate`, `go test -race -timeout 30m ./...`,
+`make js-lint`. **Review (2026-10-06, merged as PR #123):** every value in
+the shipped module configs parses as before (the only fractional numbers,
+`StrengthKg`, `MinRatio` and `HeatFactor`, are read as floats; every
+duration is a unit string); the six Go helpers, two JS functions,
+`.cw-tt-*` and `.vw-max/full/min` rules and 13 theme tokens have no
+reader in Go, Lua, templates, JS or concatenated `--t-` names (the window
+library only builds `.vw-close`). Accepted, fixed: `modules/encumbrance/AGENTS.md`
+still pointed at the removed `company.AddedGrams`. Checked, kept: member
+keys like a bare "5" no longer resolve to a companion's display name (no
+code writes one). Browser: SP 0, zero gold, and the fled companion line
+verified in Chromium at 1280px and 390px; `dock-windows-check.mjs` passes.
+
 **Flaky test cleanup (2026-10-06).** `TestWiringKeenEyeWithoutARogueRarelySpots` failed about 1 run in 100: the archetype and encounters modules' `init()` step listeners stay registered in the test binary and rolled real dice alongside the test's fixed-roll module (with Keen Eye a 1% chance to spot). New `walking.SuspendListeners` sets them aside for tests that wire their own listener (`wired` in archetype, the encounters harness); 1500 repeats pass. `TestWarlordRelentlessQuickensItWhenItsFoeStandsUp` did not reproduce (200 repeats, six shuffled runs, two full company runs all green) and no cause was found, so it is unchanged; a full `go test -race ./...` is green. Not reproduced either: the unnamed company failure on PR #107 (its CI logs could not be read from here). **Review (accepted, fixed):** `SuspendListeners` returned a restore function any caller could forget, and nothing kept game code from calling it; it now takes the test's `testing.TB` and restores the listeners through `tb.Cleanup` (after the test's own listener is removed), with `TestSuspendListenersSilencesAndRestoresThemAfterTheTest`. **Review (checked, kept):** no archetype, encounters or walking test runs in parallel, so the global swap is safe; no other test binary links a module whose `init()` adds a walking listener next to a test listener (modules/walking's chill listener is the one its own test exercises). The PR #107 company log is still unreadable here (the tail holds only `FAIL`; the full log host is blocked).
 
 **Phase 56 built, reviewed and merged from [PR #116](https://github.com/Robinsond76/ashveil-gomud/pull/116) (2026-10-06): recipe discovery.** [Plan and decisions](plans/2026-10-06-phase-56-recipe-discovery.md). `cook [ingredient]...` (and `camp cook [ingredient]...`) at a hearth or the leader's lit campfire tries exactly that mix from the pack and cargo: a match cooks the dish and, the first time, learns it into a per-character recipe book (`recipes`; `internal/cookbook`, kept in the character's MiscData); a miss makes a makeshift meal (item 30062, 25 Hunger, no buff, never bought back) and spends the ingredients; a dish above the cook's rank is refused with nothing spent or learned. Bare `camp cook`, `use hearth` and the cook duty make only learned dishes; Cooking 1 dishes (seared meat, grilled fish) are common knowledge. Recipe pages (items 30063-30064, `recipe:` on a usable item) teach a dish. `look hearth`, the manual cooking capability and the Camp tab (`Company.Camp` gains `recipes`) list what you know. Help: new `help recipes`; `cooking`, `camp`, `camp duties`, tutorial camp hint. Remedies (phase 55) share the book: thyme tea is common knowledge, gut-ache and fever are learned with `camp prepare remedy with [herb]...` (a wrong or unneeded mix spends its herbs). Follow-up: recipe pages need placing in the replacement world. **Review (accepted, fixed):** (1) characters saved before this phase would have lost every non-basic dish and two remedies; `characters.New` now writes an empty book, and a saved character with no book key is `cookbook.Legacy`, knowing every dish and remedy as before (no cutoff date, so online-through-deploy players are covered; `TestALegacyCharacterKeepsEveryDish`, `TestLegacyCharactersKnowEverything`). (2) Any recipe container counted as a hearth: `cook` at Frostfang's tattertail loom made a makeshift meal, and a gated non-Cooking recipe could never be learned; `rooms.Container.IsHearth` (name says hearth, or a Cooking gate) limits `cook`, `use` and `look` filtering to hearths (`TestCookAtALoomIsRefused`, `TestUseALoomNeedsNoRecipeBook`). (3) The right mix for an unknown dish above the cook's rank was refused with "needs cooking 3", confirming it for free; it is now a plain miss, and only a known dish is refused (`TestATooHardDishIsAMissUnlessKnown`). (4) A right remedy mix with two members ill charged two doses, or refused ("Nothing was used") and so confirmed the mix free; a mix is now one dose for the first member it helps, spending exactly the named herbs, and learning reads a cured count instead of matching text (`TestAMixIsOneDoseForOneMember`). (5) A single 3-copper herb made a 25-Hunger meal; herbs-only pots are refused before anything is spent (every dish has game or fish, so this reveals nothing; `TestHerbsAloneAreRefused`). (6) `recipes` and the Camp tab listed only camp dishes; hearth-only learned dishes now show. (7) Filler words ("meat and thyme") matched an arbitrary ingredient; they are skipped. (8) UI: the recipe list sat above the camp buttons and grows with the book; it is now a folded "Recipe book (N)" block under the needs table that stays open across refreshes (dock-windows browser check, desktop and 360px). **Review (checked, kept):** the iron cookpot also doubles a `cook` at a hearth (the player brings the pot; harmless). The Camp tab is rebuilt every refresh, so the book is never stale. The test area armory catalog lists every item spec, so recipe pages 30063-30064 are already offered there (`testarea catalog recipe`), and a trip's restore undoes anything learned. Economy: makeshift meals, cooked meals and pages are never bought back (`IsSpecialForSale`).
