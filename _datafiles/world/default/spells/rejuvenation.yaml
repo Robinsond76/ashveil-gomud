@@ -1,0 +1,11 @@
+# Phase 38b: a Druid's healing over time. Its size is a Minor Heal's, read from heal.yaml.
+spellid: rejuvenation
+name: Rejuvenation
+description: Heals an ally over several rounds
+type: helpsingle
+school: restoration
+cost: 3
+waitrounds: 1
+difficulty: 0
+scope: member
+allowdowned: false

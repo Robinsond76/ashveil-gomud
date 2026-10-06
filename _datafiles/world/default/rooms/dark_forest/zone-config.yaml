@@ -17,21 +17,18 @@ encounters:
   tables:
     woodland:
       - id: wolf-pack
-        kind: beast
         weight: 35
         text: Gray shapes slip between the trunks, and a pack of timber wolves closes around your company.
         members:
           - mobid: 56
             count: 3
       - id: wolf-pack-large
-        kind: beast
         weight: 10
         text: A big pack of timber wolves breaks cover, circling your company.
         members:
           - mobid: 56
             count: 4
       - id: spider-brood
-        kind: beast
         weight: 25
         text: Webs shiver overhead as spiders drop onto the road.
         members:
@@ -40,14 +37,12 @@ encounters:
           - mobid: 35
             count: 1
       - id: imp-gang
-        kind: spirit
         weight: 15
         text: Cackling forest imps tumble out of the mist.
         members:
           - mobid: 33
             count: 3
       - id: goblin-raiders
-        kind: humanoid
         weight: 15
         text: Goblin raiders rush out of the undergrowth, a hexer chanting behind them.
         members:
@@ -55,9 +50,18 @@ encounters:
             count: 2
           - mobid: 33
             count: 1
+      - id: goblin-mending-band
+        weight: 20
+        text: Goblin raiders burst from the brush, a shaman humming over the wounded at their back.
+        members:
+          - mobid: 70
+            count: 1
+          - mobid: 97
+            count: 1
+          - mobid: 33
+            count: 1
     lair:
       - id: forest-ogre-and-pack
-        kind: beast
         weight: 100
         boss: true
         text: The trees shudder. A forest ogre lumbers into the open, its wolves slinking at its heels.

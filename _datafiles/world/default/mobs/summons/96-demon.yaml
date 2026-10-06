@@ -1,0 +1,16 @@
+mobid: 96
+zone: Summons
+# Phase 38b: a Demonologist's Demon. It is made at the Demonologist's level
+# by the summons package and lives for one battle; nothing of it drops.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+wounds: none
+character:
+  name: Demon
+  pronouns: it
+  description: 'A hunched, black-skinned fiend with a fire in its chest and chains of red light trailing from its wrists. It is bound to the one who called it, and it knows exactly how thin that binding is.'
+  raceid: 24
+  level: 1
+  alignment: -90

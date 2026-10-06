@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -752,7 +753,8 @@ func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
 	if a.characterRecord == nil || target.characterRecord == nil {
 		return 1
 	}
-	return 1 + 0.5*characters.SkillEdge(a.characterRecord.AttackSkill(), target.characterRecord.Evasion())
+	factor := 1 + 0.5*characters.SkillEdge(a.characterRecord.AttackSkill(), target.characterRecord.Evasion())
+	return factor * (1 + float64(a.characterRecord.ClassEffects().Int(classes.SpellPct))/100)
 }
 
 // SpellPower is one roll of a spell's size for this caster (Phase 35b),
@@ -1297,7 +1299,7 @@ func (a ScriptActor) wakeLines() {
 // HexTargets is the foes a hex reaches (Phase 38a): the first of targets,
 // as many as the caster's level allows (hexes.Reach).
 func (a ScriptActor) HexTargets(targets []*ScriptActor) []*ScriptActor {
-	reach := hexes.Reach(a.characterRecord.Level)
+	reach := hexes.Reach(a.characterRecord.Level) + a.characterRecord.ClassEffects().Int(classes.HexReach)
 	if reach >= len(targets) {
 		return targets
 	}
@@ -1359,11 +1361,12 @@ func (a ScriptActor) CastHex(spellId string, target ScriptActor) map[string]any 
 	if h.Resist == hexes.Vitality {
 		theirs = tc.Stats.Vitality.ValueAdj
 	}
-	if hexRoll(100) >= hexes.LandChance(combat.StatEdge(mine, theirs), boss) {
+	if hexRoll(100) >= hexes.LandChance(combat.StatEdge(mine, theirs), boss)+a.characterRecord.ClassEffects().Int(classes.HexLand) {
 		out[`reason`] = `resisted`
 		return out
 	}
 	out[`landed`], out[`reason`] = true, `landed`
+	a.hexWard()
 	if h.Morale {
 		leader := a.userId
 		if a.mobInstanceId > 0 {
@@ -1385,6 +1388,9 @@ func (a ScriptActor) CastHex(spellId string, target ScriptActor) map[string]any 
 		own, extra = spec.TriggerCount-1, 1
 	}
 	rounds := h.RoundsAt(a.characterRecord.Level, boss, own)
+	if h.Buff == buffAsleepID && rounds > 0 && !boss {
+		rounds += a.characterRecord.ClassEffects().Int(classes.SlumberLong)
+	}
 	evt := events.Buff{UserId: target.userId, MobInstanceId: target.mobInstanceId, BuffId: h.Buff, Source: `spell`}
 	if rounds > 0 {
 		evt.Triggers = rounds + extra
@@ -1395,4 +1401,19 @@ func (a ScriptActor) CastHex(spellId string, target ScriptActor) map[string]any 
 	hexes.Default.Land(holder, buff, rounds)
 	out[`rounds`] = rounds
 	return out
+}
+
+// buffAsleepID is Slumber's status, for the Witch's longer sleeps.
+const buffAsleepID = status.Asleep
+
+// hexWard is a Witch's Warding hex: a landed hex shields the most hurt ally
+// from the next blows, up to an average hit of her level.
+func (a ScriptActor) hexWard() {
+	fx := a.characterRecord.ClassEffects()
+	if !fx.Has(classes.HexWard) {
+		return
+	}
+	if ally := a.MostHurtAlly(false); ally != nil {
+		ally.GrantWard(max(1, int(a.SpellPower("ward"))), max(1, fx.Int(classes.WardBlows)))
+	}
 }

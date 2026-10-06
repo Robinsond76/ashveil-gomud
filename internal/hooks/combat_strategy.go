@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/hexes"
 	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
@@ -97,6 +99,9 @@ func strategyPass() {
 			// be healed (32d review).
 			// Phase 30b: a wounded ally is healed only to its limit.
 			allies[i] = strategy.Ally{HP: a.char.Health, MaxHP: a.char.HealthLimit(), Downed: a.who.userId > 0 && a.char.Health < 1}
+			if rt := a.char.RT; rt != nil {
+				allies[i].Warded, allies[i].Barked, allies[i].Rejuv, allies[i].Blessed = rt.Ward > 0, rt.Bark > 0, rt.Rejuv > 0, rt.Bless > 0
+			}
 		}
 		// Phase 33e: a heal already chanting covers its patients, so a
 		// second healer turns to someone else.
@@ -116,9 +121,12 @@ func strategyPass() {
 				Role:   role,
 				Mana:   a.char.Mana,
 				Knows:  a.knows,
-				Spells: autoSpells,
+				Spells: classCosted(a.char, autoSpells),
 				Allies: allies,
 				Foes:   len(foes),
+				// Phase 38b: a summoner calls its summon once a battle.
+				Summoned: a.char.ClassEffects().Int(classes.Summon) == 0 || (a.char.RT != nil && a.char.RT.Summoned),
+				Boss:     anyBoss(foes),
 				// Phase 30c: the company's healing threshold.
 				HealBelow: healBelow,
 				// Phase 33e: the member's mana reserve.
@@ -151,7 +159,31 @@ func costedAutoSpells() []strategy.Spell {
 	return out
 }
 
+// classCosted is the automatic spells at the caster's own mana costs, which
+// its class may change (Phase 38b). A caster with no class gets the list.
+func classCosted(c *characters.Character, list []strategy.Spell) []strategy.Spell {
+	if c.ClassEffects() == nil {
+		return list
+	}
+	out := make([]strategy.Spell, len(list))
+	for i, sp := range list {
+		out[i] = sp
+		out[i].Cost = c.SpellCost(spells.GetSpell(sp.ID))
+	}
+	return out
+}
+
 // standingFoes are the battle group's living, visible members in the room.
+// anyBoss reports whether one of the foes is a boss (Phase 38b review).
+func anyBoss(foes []int) bool {
+	for _, id := range foes {
+		if m := mobs.GetInstance(id); m != nil && m.Boss {
+			return true
+		}
+	}
+	return false
+}
+
 func standingFoes(g enemyparty.Group, room *rooms.Room) []int {
 	var out []int
 	for _, id := range g.Party.Members {
@@ -174,7 +206,7 @@ func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 			ref:  userRef(u),
 			key:  company.LeaderMemberKey,
 			knows: func(id string) bool {
-				return u.Character.GetSkillLevel(`cast`) > 0 && u.Character.HasSpell(id)
+				return u.Character.GetSkillLevel(`cast`) > 0 && u.Character.KnowsSpell(id)
 			},
 			att:    enemyparty.PlayerAttacker(u),
 			holder: userHolder(u),
@@ -195,7 +227,8 @@ func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 			arch, _ = company.CompanionArchetype(u.UserId, id)
 		}
 		known := map[string]bool{}
-		for _, id := range archetypes.CompanionSpells(arch, m.Character.Level) {
+		class, _ := m.Character.ClassState()
+		for _, id := range archetypes.CompanionKnownSpells(arch, class, m.Character.Level) {
 			known[id] = true
 		}
 		out = append(out, actor{
@@ -253,6 +286,34 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 		for _, t := range side {
 			add(t)
 		}
+	case strategy.Buff:
+		if action.Ally < 0 || action.Ally >= len(side) {
+			return info, false
+		}
+		add(side[action.Ally])
+	case strategy.Summon:
+		add(a) // the call has no target; the caster stands for it
+	case strategy.Row:
+		if action.Ally < 0 || action.Ally >= len(side) {
+			return info, false
+		}
+		add(side[action.Ally]) // the spell's script reaches the row
+	case strategy.Drain:
+		att := a.att
+		att.Spell = true
+		id, ok := enemyparty.Aim(g, att)
+		if !ok {
+			return info, false
+		}
+		info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, id)
+		if a.char.ClassEffects().Int(classes.Siphon) >= 2 {
+			for _, other := range foes {
+				if other != id {
+					info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, other)
+					break
+				}
+			}
+		}
 	case strategy.Attack:
 		att := a.att
 		att.Spell = true // a spell reaches anyone
@@ -276,7 +337,7 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 // the cast-start event. The caster's aim is remembered, to turn back to.
 func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId int) bool {
 	sp := spells.GetSpell(spellId)
-	if sp == nil || a.char.Mana < sp.Cost {
+	if sp == nil || a.char.Mana < a.char.SpellCost(sp) {
 		return false
 	}
 	info = effecttargets.Resolve(a.who.userId, a.who.mobId, info)
@@ -296,8 +357,15 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 		// Phase 33i2: an enemy aimed at a player turns back to them.
 		enemyCastAims[a.who.mobId] = agg.UserId
 	}
-	a.char.Mana -= sp.Cost
-	a.char.SetCast(sp.WaitRounds, info)
+	a.char.Mana -= a.char.SpellCost(sp)
+	wait := sp.WaitRounds
+	if sp.SpellId == "callhost" || sp.SpellId == "bindfiend" {
+		wait = max(0, wait-a.char.ClassEffects().Int(classes.SummonSooner)) // Swift Host, Mastered binding
+	}
+	if _, isHex := hexes.For(spellId); isHex {
+		wait = max(0, wait-a.char.ClassEffects().Int(classes.HexChant)) // Phase 38b: a Witch's quicker chant
+	}
+	a.char.SetCast(wait, info)
 	if tempoActive {
 		tempoChanted[a.who], tempoBlocked[a.who] = true, true
 	}
@@ -327,7 +395,21 @@ func markPendingHeals(allies []strategy.Ally, side []actor, autoSpells []strateg
 		switch uses[agg.SpellInfo.SpellId] {
 		case strategy.UseHealAll:
 			coverHeal(allies, strategy.Action{Kind: strategy.HealAll})
-		case strategy.UseHeal:
+		case strategy.UseWard, strategy.UseBark, strategy.UseBless:
+			for i, t := range side {
+				if (t.who.userId > 0 && slices.Contains(agg.SpellInfo.TargetUserIds, t.who.userId)) ||
+					(t.who.mobId > 0 && slices.Contains(agg.SpellInfo.TargetMobInstanceIds, t.who.mobId)) {
+					switch uses[agg.SpellInfo.SpellId] {
+					case strategy.UseWard:
+						allies[i].Warded = true
+					case strategy.UseBark:
+						allies[i].Barked = true
+					default:
+						allies[i].Blessed = true
+					}
+				}
+			}
+		case strategy.UseHeal, strategy.UseBigHeal, strategy.UseRejuv:
 			for i, t := range side {
 				if (t.who.userId > 0 && slices.Contains(agg.SpellInfo.TargetUserIds, t.who.userId)) ||
 					(t.who.mobId > 0 && slices.Contains(agg.SpellInfo.TargetMobInstanceIds, t.who.mobId)) {
@@ -341,6 +423,17 @@ func markPendingHeals(allies []strategy.Ally, side []actor, autoSpells []strateg
 // coverHeal marks the allies a heal just started covers.
 func coverHeal(allies []strategy.Ally, action strategy.Action) {
 	switch action.Kind {
+	case strategy.Buff:
+		if action.Ally >= 0 && action.Ally < len(allies) {
+			switch action.Spell {
+			case "ward", "arcaneward":
+				allies[action.Ally].Warded = true
+			case "barkskin":
+				allies[action.Ally].Barked = true
+			case "bless":
+				allies[action.Ally].Blessed = true
+			}
+		}
 	case strategy.Heal:
 		if action.Ally >= 0 && action.Ally < len(allies) {
 			allies[action.Ally].Pending = true

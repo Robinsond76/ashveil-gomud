@@ -128,7 +128,7 @@ func TestPlanLevelsFollowTheBand(t *testing.T) {
 	boss := Plan(Composition{Boss: true, Members: []Member{{1, 1}, {2, 2}}}, band, high)
 	require.Len(t, boss, 3)
 	assert.True(t, boss[0].Boss)
-	assert.Equal(t, 10, boss[0].Level, "the boss is two over the low")
+	assert.Equal(t, 8+BossLevelBonus, boss[0].Level, "the boss is over the low by the bonus")
 	for _, f := range boss[1:] {
 		assert.True(t, f.Escort)
 		assert.Equal(t, 8, f.Level, "escorts at the band's low")
@@ -172,4 +172,22 @@ func TestPacingGapBetweenBattles(t *testing.T) {
 	}
 	gap := float64(entries) / float64(battles)
 	assert.InDelta(t, 2+100.0/DefaultEntryChance, gap, 0.3, "entries per battle")
+}
+
+func TestRatingFollowsTheGapBetweenLevelAndBand(t *testing.T) {
+	band := Band{Low: 10, High: 12}
+	for level, want := range map[int]string{14: RatingEasy, 10: RatingEasy, 9: RatingFair, 8: RatingFair, 7: RatingRisky, 6: RatingRisky, 5: RatingDangerous, 1: RatingDangerous} {
+		assert.Equal(t, want, Rating(level, band), "level %d", level)
+	}
+	assert.Empty(t, Rating(5, Band{}), "no band, no rating")
+}
+
+func TestAvailableDropsOnlyCoolingBosses(t *testing.T) {
+	table := []Composition{{ID: "pack", Weight: 1}, {ID: "chief", Boss: true, Weight: 1}, {ID: "other", Boss: true, Weight: 1}}
+	got := Available(table, func(id string) bool { return id == "chief" })
+	require.Len(t, got, 2)
+	assert.Equal(t, "pack", got[0].ID)
+	assert.Equal(t, "other", got[1].ID)
+	assert.Len(t, table, 3, "the zone's own table is untouched")
+	assert.Len(t, Available(table, func(string) bool { return true }), 1, "ordinary groups never cool")
 }

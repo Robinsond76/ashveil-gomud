@@ -24,13 +24,16 @@ const (
 	MaxGroup           = 4
 	MinEscorts         = 2 // a boss brings two or three escorts
 	MaxEscorts         = 3
-	BossLevelBonus     = 2    // the boss is this many levels over its escorts
-	BossHPBonus        = 0.75 // 1.75x the HP of an ordinary foe of its level
-	GraceEntries       = 2    // eligible entries skipped after a battle
-	GraceSeconds       = 30   // and at least this long
-	HealerShareMax     = 20   // percent of a table's weight a healer group may hold
-	RoomGroupLimit     = 4    // unresolved random groups one room holds
-	AbandonSeconds     = 120  // an ownerless group disappears after this long
+	BossLevelBonus     = 3   // the boss is this many levels over its escorts
+	BossHPBonus        = 1.0 // 2x the HP of an ordinary foe of its level
+	GraceEntries       = 2   // eligible entries skipped after a battle
+	GraceSeconds       = 30  // and at least this long
+	HealerShareMax     = 20  // percent of a table's weight a healer group may hold
+	RoomGroupLimit     = 4   // unresolved random groups one room holds
+	AbandonSeconds     = 120 // an ownerless group disappears after this long
+	// BossRespawnSeconds is how long a lair stays quiet for a company after
+	// it beats the boss (real time, saved: it never moves the world's clock).
+	BossRespawnSeconds = 30 * 60
 )
 
 // Member is a template and how many of it a composition spawns.
@@ -43,7 +46,6 @@ type Member struct {
 // the first member is the boss (count 1) and the rest are its escorts.
 type Composition struct {
 	ID      string   `yaml:"id"`
-	Kind    string   `yaml:"kind,omitempty"` // beast, humanoid, undead...: descriptive (goods come from each foe's lootcategory)
 	Weight  int      `yaml:"weight"`
 	Text    string   `yaml:"text,omitempty"` // the line that opens the encounter
 	Boss    bool     `yaml:"boss,omitempty"`
@@ -319,6 +321,51 @@ func Plan(c Composition, band Band, rng Rand) []Foe {
 		}
 	}
 	return foes
+}
+
+// Rating words say how a zone's band compares with a level.
+const (
+	RatingEasy      = "easy"      // at or above the band's low end
+	RatingFair      = "fair"      // one or two levels under it
+	RatingRisky     = "risky"     // three or four under: expect losses
+	RatingDangerous = "dangerous" // five or more under: prepare carefully
+)
+
+// Rating is how hard the band is for a company of the given level (the
+// owner's rule: difficulty comes only from entering a zone above the
+// company's level, measured in 37b). Balance row: five members at the
+// band's low less 2 won about 96%, less 3 about 90%, less 5 about 46%.
+func Rating(level int, b Band) string {
+	if !b.Valid() {
+		return ""
+	}
+	switch gap := b.Low - level; {
+	case gap <= 0:
+		return RatingEasy
+	case gap <= 2:
+		return RatingFair
+	case gap <= 4:
+		return RatingRisky
+	}
+	return RatingDangerous
+}
+
+// LairQuiet is how much longer the lair in roomID stays quiet for the
+// user's company after it beat the boss there (zero when it is not quiet).
+// The encounters module sets it; look and scout read it.
+var LairQuiet func(userID, roomID int) time.Duration
+
+// Available drops the boss compositions the cooling predicate holds back,
+// leaving ordinary ones. It never changes the table's own slice.
+func Available(table []Composition, cooling func(id string) bool) []Composition {
+	out := make([]Composition, 0, len(table))
+	for _, c := range table {
+		if c.Boss && cooling(c.ID) {
+			continue
+		}
+		out = append(out, c)
+	}
+	return out
 }
 
 // Grace is one leader's quiet after a battle: GraceEntries eligible entries

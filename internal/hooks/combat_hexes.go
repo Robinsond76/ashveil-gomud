@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"slices"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -101,5 +102,5 @@ func hexTargets(spellId string, a actor, g enemyparty.Group, foes []int) []int {
 	if len(pool) == 0 {
 		return nil
 	}
-	return strategy.HexTargets(pool, h.Row, hexes.Reach(a.char.Level), WindingUp)
+	return strategy.HexTargets(pool, h.Row, h.ReachOf(a.char.Level)+a.char.ClassEffects().Int(classes.HexReach), WindingUp)
 }

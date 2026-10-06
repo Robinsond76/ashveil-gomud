@@ -141,15 +141,15 @@ func (m *CompanyModule) woundMembers(user *users.UserRecord) []woundMember {
 			continue
 		}
 		name := mob.Character.Name
-		arch := ""
+		arch, class := "", ""
 		for _, c := range record.Companions {
 			if c.ID == id {
 				name = nameOf(c, name)
-				arch = c.Archetype
+				arch, class = c.Archetype, c.Class
 			}
 		}
 		known := map[string]bool{}
-		for _, s := range archetypes.CompanionSpells(arch, mob.Character.Level) {
+		for _, s := range archetypes.CompanionKnownSpells(arch, class, mob.Character.Level) {
 			known[s] = true
 		}
 		out = append(out, woundMember{
@@ -488,7 +488,7 @@ func (m *CompanyModule) treat(user *users.UserRecord, members []woundMember) []s
 			knowers++
 		}
 		if (tend || heal) && w.char.Mana > 0 {
-			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: healBonus(w.char), HealPct: w.char.HealingBonusPct()})
+			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: healBonus(w.char), HealPct: w.char.HealingBonusPct(), CostPct: w.char.HealCostPct(false)})
 		}
 	}
 	anyHurt := false

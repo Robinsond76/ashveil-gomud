@@ -171,10 +171,13 @@ Archetypes:
     GrantSpells: [heal, tend]
     LevelSpells:
       - { Spell: healall, Level: 3 }
+      - { Spell: curepoison, Level: 6 } # Phase 38b
+      - { Spell: bless, Level: 8 }
     CompanionSpells:
       - { Spell: heal, Level: 1 }
       - { Spell: tend, Level: 1 } # Phase 30b: used by heal wounds, never by battle strategy
       - { Spell: healall, Level: 3 }
+      - { Spell: bless, Level: 8 } # Phase 38b: cast while no one needs healing
     Utility: [vigil]
     Growth:
       - { Stat: mysticism, Weight: 3 }

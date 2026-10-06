@@ -11,12 +11,22 @@ const (
 	UseAttack    Use = "attack"     // harms one foe
 	UseAttackAll Use = "attack-all" // harms the foe's group
 	UseHex       Use = "hex"        // a Witch's hex, which takes foes' turns away (Phase 38a)
+
+	// Phase 38b: class spells.
+	UseBigHeal Use = "big-heal" // a heavy single heal, for an ally in trouble
+	UseRejuv   Use = "rejuv"    // heals one over rounds
+	UseGrove   Use = "grove"    // heals over rounds a whole formation row
+	UseWard    Use = "ward"     // absorbs an ally's next blows
+	UseBark    Use = "bark"     // armor for an ally (or a row)
+	UseBless   Use = "bless"    // Attack and Evasion for an ally
+	UseSiphon  Use = "siphon"   // drains a foe and heals the most hurt ally
+	UseSummon  Use = "summon"   // calls the class summon at the start of a battle
 )
 
 // ParseUse reads a use from config.
 func ParseUse(s string) (Use, bool) {
 	switch u := Use(strings.ToLower(strings.TrimSpace(s))); u {
-	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex:
+	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon:
 		return u, true
 	}
 	return "", false
@@ -48,6 +58,19 @@ func DefaultAutoSpells() []Spell {
 		{ID: "dread", Use: UseHex},
 		{ID: "blight", Use: UseHex},
 		{ID: "hex", Use: UseAttack},
+		// Phase 38b: the class spells (a character casts one only if its
+		// class has taught it).
+		{ID: "greaterheal", Use: UseBigHeal},
+		{ID: "rejuvenation", Use: UseRejuv},
+		{ID: "grove", Use: UseGrove},
+		{ID: "siphon", Use: UseSiphon},
+		{ID: "ward", Use: UseWard},
+		{ID: "arcaneward", Use: UseWard},
+		{ID: "barkskin", Use: UseBark},
+		{ID: "bless", Use: UseBless},
+		{ID: "entangle", Use: UseHex},
+		{ID: "callhost", Use: UseSummon},
+		{ID: "bindfiend", Use: UseSummon},
 	}
 }
 
@@ -72,6 +95,9 @@ type Ally struct {
 	// progress, or another healer's choice this round. It is not healed
 	// again.
 	Pending bool
+	// Phase 38b: what the ally already carries this battle, so a buff goes
+	// to someone without it.
+	Warded, Barked, Rejuv, Blessed bool
 }
 
 // Situation is what a character's role decides from, each round.
@@ -82,6 +108,12 @@ type Situation struct {
 	Spells []Spell // the automatic spells, in order, with costs
 	Allies []Ally  // the side's members here, the character included
 	Foes   int     // the battle's foes standing
+	// Summoned (Phase 38b) is whether the character has called its summon
+	// this battle (or has none to call).
+	Summoned bool
+	// Boss (Phase 38b review) is whether a boss stands among the foes: a
+	// summoner calls for a boss even when fewer than SummonFoes stand.
+	Boss bool
 	// HealBelow is the healing threshold, a percent of each ally's wound
 	// limit (Phase 30c tactics); 0 means DefaultHealing.
 	HealBelow int
@@ -104,6 +136,10 @@ const (
 	Attack                      // a spell at its target
 	AttackAll                   // a spell at the group
 	Hex                         // a hex at the foes it reaches (Phase 38a)
+	Buff                        // a class buff on Allies[Ally] (Phase 38b)
+	Row                         // a spell on the formation row of Allies[Ally]
+	Drain                       // Siphon at the foes it reaches
+	Summon                      // call the class summon (the caster is its own target)
 )
 
 // Action is a role's decision. Spell is the spell to cast (for all but
@@ -140,6 +176,14 @@ func Decide(s Situation) Action {
 		}
 		return sp, true
 	}
+	// Phase 38b: a summoner calls its summon first, as the battle opens,
+	// when the battle is worth it (three or more foes, or a boss) and the
+	// call leaves its mana reserve.
+	if !s.Summoned && (s.Foes >= SummonFoes || (s.Boss && s.Foes >= 1)) && (s.Role == Healer || s.Role == Caster || s.Role == Controller) {
+		if sp, ok := affordable(UseSummon); ok && (s.Reserve <= 0 || (s.Mana-sp.Cost)*100 >= s.Reserve*s.MaxMana) {
+			return Action{Kind: Summon, Spell: sp.ID}
+		}
+	}
 	switch s.Role {
 	case Healer:
 		below := s.HealBelow
@@ -157,11 +201,30 @@ func Decide(s Situation) Action {
 			}
 		}
 		if hurt == 0 {
-			return Action{Kind: Swing}
+			return idleHealer(s, affordable)
+		}
+		worstFrac := fraction(s.Allies[worst].HP, s.Allies[worst].MaxHP)
+		if worstFrac < BigHealBelow {
+			if sp, ok := affordable(UseBigHeal); ok {
+				return Action{Kind: Heal, Spell: sp.ID, Ally: worst}
+			}
 		}
 		if hurt >= 2 {
+			if sp, ok := affordable(UseGrove); ok {
+				return Action{Kind: Row, Spell: sp.ID, Ally: worst}
+			}
 			if sp, ok := affordable(UseHealAll); ok {
 				return Action{Kind: HealAll, Spell: sp.ID}
+			}
+		}
+		if worstFrac >= RejuvAbove && !s.Allies[worst].Rejuv {
+			if sp, ok := affordable(UseRejuv); ok {
+				return Action{Kind: Heal, Spell: sp.ID, Ally: worst}
+			}
+		}
+		if s.Foes >= 1 && !s.Allies[worst].Downed {
+			if sp, ok := affordable(UseSiphon); ok {
+				return Action{Kind: Drain, Spell: sp.ID, Ally: -1}
 			}
 		}
 		if sp, ok := affordable(UseHeal); ok {
@@ -190,6 +253,13 @@ func Decide(s Situation) Action {
 		if s.Foes < 1 {
 			return Action{Kind: Swing}
 		}
+		// Phase 38b: a Theurgist wards the company before it casts.
+		spare := func(sp Spell) bool {
+			return s.Reserve <= 0 || (s.Mana-sp.Cost)*100 >= s.Reserve*s.MaxMana
+		}
+		if act, ok := tryBuffs(s, affordable, spare, UseWard); ok {
+			return act
+		}
 		if s.Foes >= 2 {
 			if sp, ok := affordable(UseAttackAll); ok {
 				return Action{Kind: AttackAll, Spell: sp.ID}
@@ -203,4 +273,65 @@ func Decide(s Situation) Action {
 		}
 	}
 	return Action{Kind: Swing}
+}
+
+// SummonFoes is how many foes make a battle worth a summon (faith routes
+// design: three or more, or a boss).
+const SummonFoes = 3
+
+// BigHealBelow and RejuvAbove are the shares of health (in thousandths) under
+// which a healer reaches for its heavy heal, and from which it prefers a
+// heal over time (Phase 38b).
+const (
+	BigHealBelow = 400
+	RejuvAbove   = 350
+)
+
+// idleHealer is what a healer does when no one needs healing: while foes
+// stand, put up a class buff on someone without it, hobble a foe, or drain
+// one; otherwise swing. Each keeps the mana reserve.
+func idleHealer(s Situation, affordable func(Use) (Spell, bool)) Action {
+	if s.Foes < 1 {
+		return Action{Kind: Swing}
+	}
+	spare := func(sp Spell) bool {
+		return s.Reserve <= 0 || (s.Mana-sp.Cost)*100 >= s.Reserve*s.MaxMana
+	}
+	if act, ok := tryBuffs(s, affordable, spare, UseWard, UseBark, UseBless); ok {
+		return act
+	}
+	for _, sp := range s.Spells {
+		if sp.Use != UseHex || s.Knows == nil || !s.Knows(sp.ID) || s.Mana < sp.Cost || !spare(sp) {
+			continue
+		}
+		if s.CanHex != nil && !s.CanHex(sp.ID) {
+			continue
+		}
+		return Action{Kind: Hex, Spell: sp.ID}
+	}
+	if sp, ok := affordable(UseSiphon); ok && spare(sp) {
+		return Action{Kind: Drain, Spell: sp.ID, Ally: -1}
+	}
+	return Action{Kind: Swing}
+}
+
+// tryBuffs is the first of the buffs, in order, that a known, affordable
+// spell can put on an ally who lacks it.
+func tryBuffs(s Situation, affordable func(Use) (Spell, bool), spare func(Spell) bool, uses ...Use) (Action, bool) {
+	for _, use := range uses {
+		sp, ok := affordable(use)
+		if !ok || !spare(sp) {
+			continue
+		}
+		for i, a := range s.Allies {
+			if a.HP < 1 || a.Pending {
+				continue
+			}
+			if (use == UseWard && a.Warded) || (use == UseBark && a.Barked) || (use == UseBless && a.Blessed) {
+				continue
+			}
+			return Action{Kind: Buff, Spell: sp.ID, Ally: i}, true
+		}
+	}
+	return Action{}, false
 }

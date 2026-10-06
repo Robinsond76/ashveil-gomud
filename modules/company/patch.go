@@ -135,7 +135,7 @@ func (m *CompanyModule) patch(user *users.UserRecord) (lines []string, healed bo
 	rules := spellRules()
 	var healers []wounds.Healer
 	for _, w := range members {
-		if !w.knows("heal") || w.char.Mana < rules.HealCost || w.char.Health < 1 {
+		if !w.knows("heal") || w.char.Mana < (wounds.Healer{CostPct: w.char.HealCostPct(true)}).CostOf(rules.HealCost) || w.char.Health < 1 {
 			continue
 		}
 		key := domain.LeaderMemberKey
@@ -145,7 +145,7 @@ func (m *CompanyModule) patch(user *users.UserRecord) (lines []string, healed bo
 		reservePct := enemyparty.MemberStrategy(user.UserId, key).Reserve
 		healers = append(healers, wounds.Healer{
 			Key: w.key, Mana: w.char.Mana, Heal: true,
-			HealBonus: healBonus(w.char), HealPct: w.char.HealingBonusPct(),
+			HealBonus: healBonus(w.char), HealPct: w.char.HealingBonusPct(), CostPct: w.char.HealCostPct(true),
 			Reserve: w.char.ManaMax.Value * reservePct / 100,
 		})
 	}

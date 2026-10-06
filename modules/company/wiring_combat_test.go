@@ -119,7 +119,7 @@ func newBrawl(t *testing.T) *brawl {
 	dataDir := t.TempDir()
 	useDataDir(t, dataDir)
 	copyShipped(t, dataDir, "items", "races", "combat-messages", "biomes", "keywords.yaml", "spells", "skills",
-		"mobs/dunmar/61-tamsin_reed.yaml", "mobs/dunmar/62-brother_oswin.yaml",
+		"mobs/summons", "mobs/dunmar/61-tamsin_reed.yaml", "mobs/dunmar/62-brother_oswin.yaml",
 		"mobs/dunmar/63-garrick_vane.yaml", "mobs/old_kings_road/64-ysolde.yaml")
 	fixtures := map[string]string{
 		"rooms/brawl/zone-config.yaml":          "name: brawl\nroomid: 920101\n",

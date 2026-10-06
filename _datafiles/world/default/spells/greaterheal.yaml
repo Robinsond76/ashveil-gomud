@@ -1,0 +1,15 @@
+# Phase 38b: a Priest's big heal.
+spellid: greaterheal
+name: Greater Heal
+description: Heals for about two average hits
+type: helpsingle
+school: restoration
+cost: 14
+waitrounds: 2
+difficulty: 0
+scope: member
+allowdowned: true
+power:
+  base: 18
+  dice: 3d4
+  leveldiv: 3

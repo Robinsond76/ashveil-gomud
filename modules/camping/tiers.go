@@ -255,6 +255,7 @@ func restoreVitals(leader *characters.Character, live map[int]*characters.Charac
 		}
 		c.Health = max(c.Health, c.HealthLimit())
 		c.Mana = max(c.Mana, c.ManaMax.Value)
+		c.RestClass() // Phase 38b: Lay on Hands comes back with rest
 	}
 	restore(leader)
 	for _, id := range sortedIDs(live) {

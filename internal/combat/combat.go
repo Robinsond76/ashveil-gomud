@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -520,7 +521,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 	strikeBonus := 0
 
 	// Statmods can add a damage bonus plus the stat-driven damage bonus.
-	statModDBonus := sourceChar.StatMod(`damage`) + damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
+	statModDBonus := sourceChar.StatMod(`damage`) + sourceChar.ClassEffects().Int(classes.Damage) + damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
 
 	for i := 0; i < atkCount; i++ {
 
@@ -676,7 +677,24 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					}
 				}
 
+				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
 				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
+				// Phase 38b review: an aura's "less damage" is a true percent
+				// off the blow (on the armor roll it averaged half that).
+				if r := targetChar.Aura.Resolve; r > 0 && attackTargetDamage > 0 {
+					cut := (attackTargetDamage*r + 50) / 100
+					attackTargetDamage -= cut
+					attackTargetReduction += cut
+				}
+				// Phase 38b: a Divine Shield turns the first blow of a battle
+				// aside, and a ward takes its share of one.
+				if attackTargetDamage > 0 && targetChar.ShieldBlow() {
+					attackTargetReduction += attackTargetDamage
+					attackTargetDamage = 0
+				} else if left, absorbed := targetChar.AbsorbWard(attackTargetDamage); absorbed > 0 {
+					attackTargetDamage = left
+					attackTargetReduction += absorbed
+				}
 				if attackTargetDamage < 1 && len(attackResult.Qualities) > 0 {
 					// Phase 35d: a blow armor absorbed whole has no quality to report.
 					hitQuality = QualitySolid

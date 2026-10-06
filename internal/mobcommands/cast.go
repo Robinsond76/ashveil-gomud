@@ -38,7 +38,7 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if spellInfo == nil {
 		return true, nil
 	}
-	if mob.Character.Mana < spellInfo.Cost {
+	if mob.Character.Mana < mob.Character.SpellCost(spellInfo) {
 		return true, nil
 	}
 	targetPlayerId := 0
@@ -217,7 +217,7 @@ func Cast(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		}
 
 		if continueCasting {
-			mob.Character.Mana -= spellInfo.Cost
+			mob.Character.Mana -= mob.Character.SpellCost(spellInfo)
 			mob.Character.SetCast(spellInfo.WaitRounds, spellAggro)
 		}
 

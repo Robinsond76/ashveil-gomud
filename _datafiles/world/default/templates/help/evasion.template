@@ -37,9 +37,10 @@ there is. The edge is added to the stat edge each chance already uses
   Parry         {{ config "GamePlay.Combat.ParryChanceEven" }}%       {{ config "GamePlay.Combat.ParryChanceMin" }}%      {{ config "GamePlay.Combat.ParryChanceMax" }}%, plus the weapon's modifier
   Block         {{ config "GamePlay.Combat.BlockChanceEven" }}% + shield  {{ config "GamePlay.Combat.BlockChanceMin" }}%      {{ config "GamePlay.Combat.BlockChanceMax" }}%
 
-For example, a level 20 warrior swinging at a level 10 warrior (a 10-point
-lead) hits 93% of the time and meets a 4% dodge. The level 10 warrior
-swinging back hits only 32% of the time and meets a 30% dodge.
+For example, a level 18 warrior swinging at a level 10 warrior (an 8-point
+lead, the most there is) hits 95% of the time and meets a 3% dodge. The
+level 10 warrior swinging back hits only 10% of the time and meets a 40%
+dodge.
 A {{ config "GamePlay.Combat.ToHitMin" }}% floor keeps a lucky blow possible, so a pack of weaker foes is
 still a threat. Critical hits stay with Smarts (<ansi fg="command">help smarts</ansi>).
 
