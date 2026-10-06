@@ -26,7 +26,10 @@ why the fight ended; `off` keeps the 40f picture. **Follow-ups:** 40g2
 allied formations (an allied relay in the 40e feed plus a third formation on
 the canvas; not small, so not folded in); a `pace` field on `Company.Battle`
 to replace pace inference; morale not drawn; role letters blurry; a `?`
-presence can overlap a visible foe.
+presence can overlap a visible foe. Gates: one full race run failed once in
+`modules/company` (its output was not kept); three package reruns and a
+second full race run passed, so it is likely one of the known company
+flakes, unidentified.
 
 **Phase 40g built: battle animation and effects (2026-10-06, PR #40):**
 the battle screen now plays each 40e event. A pure planner,
