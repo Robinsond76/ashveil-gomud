@@ -1,0 +1,801 @@
+{
+ "version": 1,
+ "palette": "style/palette.gpl",
+ "notes": "Frames run left to right, rows top to bottom in `rows` order. Units anchor bottom-center; icons and markers center. Map units face down, up and side (side faces right; mirror for left).",
+ "files": {
+  "app/favicon-32.png": {
+   "kind": "app-icon",
+   "set": "S1",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "app/icon-192.png": {
+   "kind": "app-icon",
+   "set": "S1",
+   "size": [
+    192,
+    192
+   ]
+  },
+  "app/icon-512.png": {
+   "kind": "app-icon",
+   "set": "S1",
+   "size": [
+    512,
+    512
+   ]
+  },
+  "app/icon-maskable-512.png": {
+   "kind": "app-icon",
+   "set": "S1",
+   "maskable": true,
+   "safe_zone": 0.8,
+   "size": [
+    512,
+    512
+   ]
+  },
+  "map/camp/camp-rough-ally.png": {
+   "frame": [
+    32,
+    32
+   ],
+   "kind": "camp",
+   "set": "S1",
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/camp/camp-rough.png": {
+   "frame": [
+    32,
+    32
+   ],
+   "kind": "camp",
+   "set": "S1",
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/camp/embers.png": {
+   "kind": "camp",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 3,
+   "anchor": "center",
+   "frame_ms": 150,
+   "size": [
+    48,
+    16
+   ]
+  },
+  "map/camp/fire-lit.png": {
+   "kind": "camp",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 4,
+   "anchor": "center",
+   "frame_ms": 150,
+   "size": [
+    64,
+    16
+   ]
+  },
+  "map/camp/fire-unlit.png": {
+   "frame": [
+    16,
+    16
+   ],
+   "kind": "camp",
+   "set": "S1",
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/camp/inn-rest.png": {
+   "frame": [
+    16,
+    16
+   ],
+   "kind": "camp",
+   "set": "S1",
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/camp/resting.png": {
+   "kind": "camp",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 3,
+   "anchor": "center",
+   "frame_ms": 150,
+   "size": [
+    48,
+    16
+   ]
+  },
+  "map/camp/smoke.png": {
+   "kind": "camp",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 4,
+   "anchor": "center",
+   "frame_ms": 150,
+   "size": [
+    64,
+    16
+   ]
+  },
+  "map/camp/tent-ally.png": {
+   "frame": [
+    32,
+    32
+   ],
+   "kind": "camp",
+   "set": "S1",
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/camp/tent.png": {
+   "frame": [
+    32,
+    32
+   ],
+   "kind": "camp",
+   "set": "S1",
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/markers/ally-banner.png": {
+   "kind": "marker",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 2,
+   "anchor": "center",
+   "frame_ms": 250,
+   "size": [
+    32,
+    16
+   ]
+  },
+  "map/markers/company-badge.png": {
+   "kind": "marker",
+   "set": "S1",
+   "frame": [
+    12,
+    12
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    12,
+    12
+   ]
+  },
+  "map/markers/exit-down.png": {
+   "kind": "marker",
+   "set": "S1",
+   "frame": [
+    8,
+    8
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    8,
+    8
+   ]
+  },
+  "map/markers/exit-up.png": {
+   "kind": "marker",
+   "set": "S1",
+   "frame": [
+    8,
+    8
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    8,
+    8
+   ]
+  },
+  "map/markers/here-ring.png": {
+   "kind": "marker",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "anchor": "center",
+   "frame_ms": 180,
+   "size": [
+    128,
+    32
+   ]
+  },
+  "map/markers/walk-dot.png": {
+   "kind": "marker",
+   "set": "S1",
+   "frame": [
+    8,
+    8
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    8,
+    8
+   ]
+  },
+  "map/markers/walk-target.png": {
+   "kind": "marker",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 2,
+   "anchor": "center",
+   "frame_ms": 250,
+   "size": [
+    32,
+    16
+   ]
+  },
+  "map/resources/depleted.png": {
+   "kind": "icon",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/resources/firewood.png": {
+   "kind": "icon",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/resources/fishing.png": {
+   "kind": "icon",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/resources/forage.png": {
+   "kind": "icon",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/resources/game.png": {
+   "kind": "icon",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/resources/herbs.png": {
+   "kind": "icon",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/resources/shelter.png": {
+   "kind": "icon",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/resources/unknown.png": {
+   "kind": "icon",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/resources/water.png": {
+   "kind": "icon",
+   "set": "S1",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "map/units/adventurer/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/adventurer/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/cleric/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/cleric/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/ranger/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/ranger/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/rogue/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/rogue/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/warrior/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/warrior/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/witch/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/witch/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "map/units/wizard/idle.png": {
+   "frames": 2,
+   "frame_ms": 500,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    64,
+    96
+   ]
+  },
+  "map/units/wizard/walk.png": {
+   "frames": 4,
+   "frame_ms": 120,
+   "kind": "map-unit",
+   "set": "S1",
+   "frame": [
+    32,
+    32
+   ],
+   "rows": [
+    "down",
+    "up",
+    "side"
+   ],
+   "anchor": "bottom-center",
+   "feet_baseline": 30,
+   "size": [
+    128,
+    96
+   ]
+  },
+  "style/icon-sample.png": {
+   "kind": "icons",
+   "set": "S0",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 8,
+   "order": [
+    "water",
+    "forage",
+    "bleeding",
+    "stunned",
+    "fighter",
+    "healer",
+    "yield",
+    "dark"
+   ],
+   "size": [
+    128,
+    16
+   ]
+  },
+  "style/palette.gpl": {
+   "kind": "palette-gpl",
+   "set": "S0",
+   "swatches": 64
+  },
+  "style/palette.png": {
+   "kind": "palette",
+   "set": "S0",
+   "swatches": 64,
+   "size": [
+    8,
+    8
+   ]
+  },
+  "style/proportions-battle.png": {
+   "kind": "proportions",
+   "set": "S0",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 6,
+   "order": [
+    "warrior",
+    "rogue",
+    "ranger",
+    "cleric",
+    "wizard",
+    "witch"
+   ],
+   "size": [
+    384,
+    64
+   ]
+  },
+  "style/proportions-map.png": {
+   "kind": "proportions",
+   "set": "S0",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 6,
+   "order": [
+    "warrior",
+    "rogue",
+    "ranger",
+    "cleric",
+    "wizard",
+    "witch"
+   ],
+   "size": [
+    192,
+    32
+   ]
+  },
+  "style/style-battle.png": {
+   "kind": "style-frame",
+   "set": "S0",
+   "size": [
+    320,
+    180
+   ]
+  },
+  "style/style-map.png": {
+   "kind": "style-frame",
+   "set": "S0",
+   "size": [
+    320,
+    180
+   ]
+  }
+ }
+}

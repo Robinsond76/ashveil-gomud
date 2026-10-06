@@ -93,6 +93,7 @@ func RegisterListeners() {
 
 	// Messages
 	events.RegisterListener(events.Message{}, Message_SendMessage)
+	events.RegisterListener(events.CombatData{}, CombatData_Hold)
 	// Prompt
 	events.RegisterListener(events.RedrawPrompt{}, RedrawPrompt_SendRedraw)
 

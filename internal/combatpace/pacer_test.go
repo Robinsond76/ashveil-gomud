@@ -134,7 +134,7 @@ func TestAnOlderRoundIsFlushedAheadOfANewOne(t *testing.T) {
 	p.Hold(1, 2, "old2", spec, at(0))
 	p.Due(at(0)) // old1 out
 	flushed := p.Hold(1, 4, "new1", spec, at(8000))
-	if !reflect.DeepEqual(flushed, []string{"old2"}) {
+	if !reflect.DeepEqual(flushed, []Release{{UserId: 1, Text: "old2"}}) {
 		t.Fatalf("flushed %v, want [old2]", flushed)
 	}
 	rel, drained := p.Due(at(8000))
@@ -150,14 +150,14 @@ func TestFlushAndFlushAll(t *testing.T) {
 	p.Hold(1, 2, "a1", spec, at(0))
 	p.Hold(1, 2, "a2", spec, at(0))
 	p.Hold(3, 2, "c1", spec, at(0))
-	if got, ended := p.Flush(3); !reflect.DeepEqual(got, []string{"c1"}) || !ended {
+	if got, ended := p.Flush(3); !reflect.DeepEqual(got, []Release{{UserId: 3, Text: "c1"}}) || !ended {
 		t.Fatalf("Flush(3) = %v %v", got, ended)
 	}
 	if got, ended := p.Flush(3); p.Busy(3) || got != nil || ended {
 		t.Fatal("a flushed player holds nothing")
 	}
 	rel, drained := p.FlushAll()
-	want := []Release{{1, "a1"}, {1, "a2"}, {2, "b1"}}
+	want := []Release{{UserId: 1, Text: "a1"}, {UserId: 1, Text: "a2"}, {UserId: 2, Text: "b1"}}
 	if !reflect.DeepEqual(rel, want) || !reflect.DeepEqual(drained, []int{1, 2}) {
 		t.Fatalf("FlushAll = %v %v", rel, drained)
 	}
@@ -265,5 +265,85 @@ func TestABusyRoundStillFillsItsWindow(t *testing.T) {
 	}
 	if mid := got[string(rune('A'+15))]; mid < 3000 || mid > 3400 {
 		t.Fatalf("line 16 at %dms, want it about halfway", mid)
+	}
+}
+
+// Phase 40e: data entries ride the queue without a beat of their own.
+
+func TestDataGoesOutWithTheNextTextLine(t *testing.T) {
+	p := New()
+	spec := Normal.ForRound(8 * time.Second)
+	p.Hold(1, 2, "line one", spec, at(0))
+	p.HoldData(1, 2, "d1", spec, at(0))
+	p.HoldData(1, 2, "d2", spec, at(0))
+	p.Hold(1, 2, "line two", spec, at(0))
+	p.HoldData(1, 2, "d3", spec, at(0))
+
+	var order []string
+	var times []int
+	for ms := 0; ms <= 4000; ms += 50 {
+		rel, _ := p.Due(at(ms))
+		for _, r := range rel {
+			if r.IsData {
+				order = append(order, r.Data.(string))
+			} else {
+				order = append(order, r.Text)
+			}
+			times = append(times, ms)
+		}
+	}
+	want := []string{"line one", "d1", "d2", "line two", "d3"}
+	if !reflect.DeepEqual(order, want) {
+		t.Fatalf("order %v, want %v", order, want)
+	}
+	// d1 and d2 are no earlier than line one and no later than line two;
+	// d3, with no line after it, goes out with the last line.
+	if times[1] != times[3] || times[2] != times[3] || times[4] != times[3] || times[0] >= times[3] {
+		t.Fatalf("release times %v: data should share line two's moment", times)
+	}
+}
+
+func TestDataAloneAndFlushedWithText(t *testing.T) {
+	p := New()
+	spec := Slow.ForRound(8 * time.Second)
+	p.HoldData(1, 2, "only", spec, at(0))
+	if !p.Busy(1) {
+		t.Fatal("held data leaves a player busy")
+	}
+	rel, drained := p.Due(at(0))
+	if len(rel) != 1 || !rel[0].IsData || !reflect.DeepEqual(drained, []int{1}) {
+		t.Fatalf("data-only release %v drained %v", rel, drained)
+	}
+
+	p.Hold(2, 2, "t1", spec, at(0))
+	p.HoldData(2, 2, "d1", spec, at(0))
+	got, ended := p.Flush(2)
+	want := []Release{{UserId: 2, Text: "t1"}, {UserId: 2, Data: "d1", IsData: true}}
+	if !reflect.DeepEqual(got, want) || !ended {
+		t.Fatalf("Flush = %v %v, want %v", got, ended, want)
+	}
+}
+
+func TestOlderRoundDataIsFlushedAheadOfANewRound(t *testing.T) {
+	p := New()
+	spec := Normal.ForRound(8 * time.Second)
+	p.Hold(1, 2, "old", spec, at(0))
+	p.HoldData(1, 2, "od", spec, at(0))
+	flushed := p.HoldData(1, 4, "nd", spec, at(8000))
+	want := []Release{{UserId: 1, Text: "old"}, {UserId: 1, Data: "od", IsData: true}}
+	if !reflect.DeepEqual(flushed, want) {
+		t.Fatalf("flushed %v, want %v", flushed, want)
+	}
+}
+
+func TestFollowDataWaitsOnlyBehindHeldEntries(t *testing.T) {
+	p := New()
+	spec := Normal.ForRound(8 * time.Second)
+	if p.FollowData(1, "x") {
+		t.Fatal("nothing held: data goes out at once")
+	}
+	p.Hold(1, 2, "l1", spec, at(0))
+	if !p.FollowData(1, "x") {
+		t.Fatal("held lines: data follows them")
 	}
 }

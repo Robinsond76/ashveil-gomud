@@ -15,3 +15,12 @@ func RefuseGMCPForTest(connectionId uint64) {
 	settings.GMCPAccepted = false
 	gmcpModule.cache.Add(connectionId, settings)
 }
+
+// WebClientForTest marks a connection as the web client's (which takes the
+// Company.Battle.Event feed without asking), for tests in other packages.
+func WebClientForTest(connectionId uint64) {
+	settings, _ := gmcpModule.cache.Get(connectionId)
+	settings.GMCPAccepted = true
+	settings.Client.Name = `WebClient`
+	gmcpModule.cache.Add(connectionId, settings)
+}
