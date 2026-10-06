@@ -382,6 +382,25 @@ await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: tr
 if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '49-camp-banter.png') }); }
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Around the fire'), 'no banter block before any talk (49)');
+// Phase 55: who is ailing, and one press to make the remedies.
+{
+  const ill = JSON.parse(JSON.stringify(company));
+  ill.vitals.leader.ailments = ['Chill (3 battles)'];
+  ill.vitals['companion:1'].ailments = ['Fever (5 battles)'];
+  await page.evaluate(c => window.gmcp('Company', c), ill);
+  await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+  const text = await page.evaluate(() => document.getElementById('company-camp').textContent);
+  check(text.includes('Ailing: You: Chill (3 battles); Oswin: Fever (5 battles).'), 'the Ailing line names each ailing member (55)');
+  const got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Make remedies' }).click(); });
+  check(JSON.stringify(got) === '["camp prepare remedy all"]', 'Make remedies sends camp prepare remedy all (55)');
+  check((await strip()).includes('You: chill (3 battles)'), 'the vitals strip warns of an ailment (55)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '55-camp-ailing.png') }); }
+  await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 10, rest_seconds: 60, can_camp: false, inn: false }));
+  check(await page.locator('#company-camp').getByRole('button', { name: 'Make remedies' }).count() === 0, 'no Make remedies while resting (55)');
+  await page.evaluate(c => window.gmcp('Company', c), company);
+  await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+  check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Ailing'), 'no Ailing line when everyone is well (55)');
+}
 // Phase 51: the rest duty picker, a row per member at the camp.
 {
   const opts = ['sleep', 'watch', 'tend', 'forage', 'cook'];

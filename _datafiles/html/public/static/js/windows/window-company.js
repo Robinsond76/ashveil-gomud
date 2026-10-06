@@ -1236,6 +1236,16 @@
             });
             if (ailing.length) {
                 pad.appendChild(el('div', 'cmp-line', 'Ailing: ' + ailing.join('; ') + '. Make the remedy from gathered herbs with camp prepare remedy (help ailments).'));
+                if (!camp.resting) {
+                    // 55 review: the cure is one press, like the camp's other actions.
+                    const b = el('button', 'cmp-btn', 'Make remedies');
+                    b.type = 'button';
+                    b.title = 'camp prepare remedy all: uses gathered herbs (help ailments)';
+                    b.addEventListener('click', () => send('camp prepare remedy all'));
+                    const row = el('div');
+                    row.appendChild(b);
+                    pad.appendChild(row);
+                }
             }
         }
         if (camp.has_camp && Array.isArray(camp.prepared) && camp.prepared.length) {

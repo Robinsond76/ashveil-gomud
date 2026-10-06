@@ -46,8 +46,9 @@ any, and cures at once.
    check runs when the finished rest's grant is paid. Both run outside every
    module lock (exposure holds its lock while calling camping's heat-source
    check, so reading exposure under camping's lock could deadlock).
-   Expedition travel does not catch a chill: it runs under its own lock and
-   its exposure is the same one the walking steps already check.
+   Review: expedition travel catches one too, when the journey ends out of
+   doors (a walking arrival listener, run from the event queue after the
+   expedition lock is released), since the spec names travel.
 5. **Raw meat is edible but always gives a Gut-ache.** The plan said "from
    eating raw game meat"; a certain, visible cause is clearer than a dice
    roll. `company eat` (the planner) never serves it (`larderEntry` refuses
@@ -57,7 +58,9 @@ any, and cures at once.
    item, so there is nothing to buy back (economy rule). The herbs are the
    gatherable thyme, mushroom and glacial mint; none sells for more than a
    quarter of its value, and cooking is unchanged.
-7. **A feverish member's wound is not counted again**; the count starts over
+7. **Treating a puncture starts its count over** (review: bandaging,
+   tending, a surgeon's kit), even if it stays partly open; only an
+   untreated wound festers. **A feverish member's wound is not counted again**; the count starts over
    when the fever starts, so one untreated wound makes a fever at most every
    fifth battle.
 8. **No hidden difficulty.** Every ailment comes from the company's own

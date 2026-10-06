@@ -61,7 +61,7 @@ The fight opens with a "Going in:" line naming each member's ailments;
 <ansi fg="command">status</ansi>, <ansi fg="command">conditions</ansi> and <ansi fg="command">survival</ansi> list them with the battles left; and
 in the web client the vitals strip warns of each ailing member, Company >
 Status shows the "In battle" line, the Camp tab lists who is ailing while
-you are at your camp, and the battle screen marks the member.
+you are at your camp, with a Make remedies button, and the battle screen marks the member.
 
 See also: <ansi fg="command">help survival</ansi>, <ansi fg="command">help wounds</ansi>, <ansi fg="command">help temperature</ansi>, <ansi fg="command">help cooking</ansi>,
 <ansi fg="command">help camp supplies</ansi>, <ansi fg="command">help conditions</ansi>.
