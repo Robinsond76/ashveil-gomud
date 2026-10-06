@@ -10,14 +10,14 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 )
 
-// Every built promoted class should have map and battle art (Phase 40s5).
-// A class without art still plays: the battle screen draws its base class
-// (or a silhouette for a lineage with no art yet), so missing art is logged
-// rather than failed and class phases (38c, 39) are never blocked on art. The
-// art pass runs this with ASHVEIL_ART_STRICT=1 to make the pending list fail.
+// Every built promoted class has map and battle art. A class that ships
+// without art still plays (the battle screen draws its base class), but the
+// final art pass closed the gap and this check now fails the build, so a new
+// class phase must add its drawer to scripts/sprites/promoted.py and run
+// `make sprites`. Classes marked Planned (routes whose mechanics are not
+// delivered yet) are exempt; their art may be drawn ahead of the class.
 func TestEveryBuiltClassHasArt(t *testing.T) {
 	m := loadSpriteManifest(t, spriteDir(t))
-	strict := os.Getenv("ASHVEIL_ART_STRICT") == "1"
 	known := map[string]bool{}
 	var pending []string
 	for _, c := range classes.All() {
@@ -39,15 +39,11 @@ func TestEveryBuiltClassHasArt(t *testing.T) {
 		if _, ok := m.Files["battle/units/"+c.Lineage+"/idle.png"]; ok {
 			fallback = c.Lineage + " art"
 		}
-		msg := "class %s has no art yet (battle screen shows %s): manifest is missing %s"
-		if strict {
-			t.Errorf(msg, c.ID, fallback, strings.Join(missing, ", "))
-		} else {
-			t.Logf(msg, c.ID, fallback, strings.Join(missing, ", "))
-		}
+		t.Errorf("class %s has no art yet (battle screen shows %s): manifest is missing %s",
+			c.ID, fallback, strings.Join(missing, ", "))
 	}
-	if len(pending) > 0 && !strict {
-		t.Logf("art pending for %d built classes: %s", len(pending), strings.Join(pending, " "))
+	if len(pending) > 0 {
+		t.Errorf("art pending for %d built classes: %s", len(pending), strings.Join(pending, " "))
 	}
 	// The art list the layout tests check must name real classes.
 	for _, id := range promotedClasses {
@@ -104,5 +100,46 @@ func TestMobSpriteKeysHaveArt(t *testing.T) {
 	}
 	if n < 50 {
 		t.Errorf("found only %d mobs with a sprite key; is the mobs path right?", n)
+	}
+}
+
+// The creature recruits and the Beast Tamer's bonded beasts have their own art:
+// a hound and a stone golem on the map (a companion's key is its class id), and
+// a war bear and a drake hatchling in battle, which the battle window and the
+// summon mobs name.
+func TestCreatureArtExists(t *testing.T) {
+	m := loadSpriteManifest(t, spriteDir(t))
+	for _, id := range []string{"hound", "stone-golem"} {
+		for _, rel := range []string{"map/units/" + id + "/idle.png", "map/units/" + id + "/walk.png", "battle/units/" + id + "/idle.png"} {
+			if _, ok := m.Files[rel]; !ok {
+				t.Errorf("creature %s: manifest is missing %s", id, rel)
+			}
+		}
+	}
+	for _, id := range []string{"war-bear", "drake-hatchling"} {
+		if _, ok := m.Files["battle/units/"+id+"/idle.png"]; !ok {
+			t.Errorf("bonded beast %s has no battle art", id)
+		}
+	}
+	// The battle window maps each beast kind to a unit; none may be a silhouette.
+	js, err := os.ReadFile(filepath.Join(spriteDir(t), "..", "js", "windows", "window-battle.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	line := regexp.MustCompile(`(?m)BEAST_SPRITES = \{([^}]*)\}`).FindSubmatch(js)
+	if line == nil {
+		t.Fatal("window-battle.js has no BEAST_SPRITES table")
+	}
+	kinds := regexp.MustCompile(`(\w+):\s*'([\w-]+)'`).FindAllSubmatch(line[1], -1)
+	if len(kinds) != 4 {
+		t.Fatalf("BEAST_SPRITES lists %d kinds, want wolf, warhound, bear and drake", len(kinds))
+	}
+	for _, k := range kinds {
+		if strings.HasPrefix(string(k[2]), "unknown-") {
+			t.Errorf("beast kind %s is drawn as the %s silhouette", k[1], k[2])
+		}
+		if _, ok := m.Files["battle/units/"+string(k[2])+"/idle.png"]; !ok {
+			t.Errorf("beast kind %s names unit %s, which has no battle art", k[1], k[2])
+		}
 	}
 }

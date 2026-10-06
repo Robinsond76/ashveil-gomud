@@ -2,6 +2,7 @@
 size class, family, in-game names and idle drawer
 (docs/designs/2026-10-05-sprite-specification.md, S3 enemy table)."""
 import beasts
+import companions
 import figures
 import giants
 import humanoids
@@ -98,6 +99,10 @@ add("hound", "M", "creature", lambda t: beasts.canine(t, fur="leather", belly="o
 add("stone-golem", "M", "creature",
     lambda t: shrink(recolor(giants.ice_guardian(t), {"water": "stone", "steel": "slate", "slate": "charcoal"}), 64),
     note="a stone golem recruit (38e)")
+# Beast Tamer bonded beasts (39e) drawn in the final art pass; the wolf and warhound reuse the wolf and dog sprites.
+add("war-bear", "L", "creature", companions.war_bear, ["war bear"], note="a Beast Tamer's bonded bear (39e)")
+add("drake-hatchling", "M", "creature", companions.drake_hatchling, ["drake hatchling"],
+    note="a Beast Tamer's bonded drake (39e)")
 add("unknown-humanoid", "M", "fallback", H["unknown-humanoid"], note="fallback silhouette")
 add("unknown-beast", "M", "fallback", beasts.unknown_beast, note="fallback silhouette")
 add("unknown-large", "L", "fallback", giants.unknown_large, note="fallback silhouette")
