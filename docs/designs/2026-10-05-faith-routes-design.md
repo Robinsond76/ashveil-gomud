@@ -1,7 +1,7 @@
 # Faith routes: clerics, summoners and fighting healers
 
-Status: **design draft; the owner's answers to its open questions are
-recorded (2026-10-05)** (handoff rule 20). It
+Status: **owner-approved design (2026-10-05)**; every open question is
+answered below (handoff rule 20). It
 revises the cleric and warrior rows of the
 [branching class progression design](2026-10-01-branching-class-progression-design.md)
 and the cleric paths of the [expanded companion catalogue](2026-10-01-expanded-companion-classes-design.md).
@@ -44,6 +44,23 @@ Changes to the earlier designs:
   name **Dread Knight**.
 - The earlier "no persistent spirit summons" rule stands: summons last one
   battle and are never saved.
+
+## Alignment and route commitment (owner, 2026-10-05)
+
+- **Gates are checked at each promotion**, at level 10 and again at level
+  30. A Priest whose alignment has fallen below +30 by level 30 can't
+  become a Hierarch, and a Blood Priest above −30 can't become a
+  Demonologist. It **waits**: it stays on its advanced route, keeps every
+  rank it has reached, and promotes as soon as its alignment meets the
+  gate again. It is never moved to another route and never loses ranks.
+  The same rule covers Knight → Paladin and Blackguard → Dread Knight.
+  Advanced ranks stop at 25, so a waiting character gains no new ranks
+  until it promotes (talents still arrive at 35, 45 and 55).
+- **Routes are final.** A character can't switch to a sibling route at
+  launch. Retraining, perhaps for a fee at a town, may be designed later as
+  its own phase.
+- Promotion preview shows the exact gate and the character's alignment, and
+  `help promotion` explains waiting and that routes are final.
 
 ## 1. The base cleric, levels 1–9
 
@@ -128,8 +145,8 @@ spirit-beast companion belongs in the catalogue's Beastkeeper rules).
 ## 4. Evil route: Blood Priest → Demonologist
 
 **Blood Priest** (alignment −30 or lower). Heals by taking life. **Dark
-healing is hungry:** its ordinary heals and after-battle patching cost 25%
-more mana.
+healing is hungry** (owner: keep): its ordinary heals and after-battle
+patching cost 25% more mana. Siphon is its efficient heal.
 
 | Rank | Gains |
 |---|---|
@@ -139,7 +156,7 @@ more mana.
 | 25 | **Blood ward:** Siphon healing beyond an ally's full health becomes a ward of up to half a hit |
 
 **Demonologist.** Binds a **Demon** that grows with every rank. The
-**broken binding** is the evil route's price until it is mastered: if the
+**broken binding** (owner: keep) is the evil route's price until it is mastered: if the
 Demonologist falls, the Demon breaks free, its next turn attacks the
 nearest creature, friend or foe, then it vanishes.
 
@@ -243,17 +260,22 @@ With `ASHVEIL_BALANCE=1`:
    level, and neither heals as much as a Priest.
 4. **Priests stay protected:** with no warrior in front, a cleric loses
    more fights than with one (the class needs protecting, as intended).
-5. **Ranks:** each rank applies from its level, never earlier, for players
+5. **Alignment and commitment:** an advanced character below its elite
+   gate at level 30 can't promote, keeps its ranks, and promotes once its
+   alignment recovers (tested at the gate's boundary values); no command
+   switches a promoted character to a sibling route.
+6. **Ranks:** each rank applies from its level, never earlier, for players
    and companions; a level lost to death removes the rank until it is
    regained (ranks are derived from level, never saved).
-6. **Wiring:** promotion gates by alignment; each signature through its
+7. **Wiring:** promotion gates by alignment; each signature through its
    real cast or attack path; companion strategy rules for Ward, Siphon,
    Lay on Hands, Blood Oath and the summons; the holy symbol's bonuses.
-7. **Help:** a page per route, each listing its rank table (`help priest`, `help hierarch`, `help
+8. **Help:** a page per route, each listing its rank table (`help priest`, `help hierarch`, `help
    druid`, `help blood priest`, `help demonologist`, `help knight`, `help
    paladin`, `help blackguard`, `help dread knight`), `help summoning`,
    updates to `help cleric` and `help warrior`, and tutorial pointers from
-   the promotion lesson.
+   the promotion lesson. `help promotion` explains the elite wait and that
+   routes are final.
 
 All numbers are starting values for the balance tests.
 
@@ -271,5 +293,14 @@ All numbers are starting values for the balance tests.
 5. **Ranks every 5 levels** (later the same day): the Angel's benefits,
    and every route's, arrive one rank every 5 levels up to 60 instead of
    all at the elite promotion; the Demon follows the same ladder.
+
+6. **Alignment drift before level 30:** wait. The character stays on its
+   advanced route with its ranks and promotes once its alignment meets the
+   gate again.
+7. **Broken binding:** keep.
+8. **Hungry dark healing:** keep (25% more mana on ordinary heals and
+   patching).
+9. **Route commitment:** routes are final at launch; retraining may come
+   later as its own design.
 
 No questions are open. Delivery is planned with class promotions (38b).

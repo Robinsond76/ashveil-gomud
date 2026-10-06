@@ -1,5 +1,15 @@
 # Ashveil Project Status
 
+**Neutral classes design approved (2026-10-05):** the owner asked for a
+glaive class and classes with no good or evil path, inspired by Ogre Battle
+and Unicorn Overlord. Added the [neutral classes design](designs/2026-10-05-neutral-classes-design.md):
+eight new base lineages (Halberdier, Doll Master, Beast Tamer, Gryphon
+Rider, Samurai, Shaman, Alchemist, Arbalist) with unrestricted routes,
+phases 39a–39h after 38b. The owner approved it and answered all five
+questions (doll and beast take a cell, not a slot; beasts never die; keep
+Samurai and Kensai; flasks brewed at camp; Halberdier first).
+Documentation only. Verification: links and the diff checked.
+
 **Phase 40a3 design approved (2026-10-05):** the owner approved the camp
 gear design as written: the fuel rule, the six items, and their weights,
 effects and prices. The execution plan comes when the visual milestone
@@ -117,7 +127,7 @@ commit lands or a phase completes, recording **what was done**, **why**, and
 **which step/phase completed**. Keep it short and current; link to detailed docs
 instead of duplicating them.
 
-- **Last updated:** 2026-10-05 (35b caster power, mana and recovery complete with retuned combat chances; 35a2 skill over hit points merged via PR #18; 35c companion training merged via PR #16; 35a merged via PR #15; 35a2 skill-over-HP design approved and planned, faith routes design drafted; visual client milestone and sprite specification added; roadmap reprioritized)
+- **Last updated:** 2026-10-06 (35b caster power, mana and recovery complete with retuned combat chances; 35a2 skill over hit points merged via PR #18; 35c companion training merged via PR #16; 35a merged via PR #15; 35a2 skill-over-HP design approved and planned, faith routes design approved (alignment wait at elite, broken binding and hungry dark healing kept, routes final); visual client milestone and sprite specification added; roadmap reprioritized)
 - **Latest completed slices:** 35b, caster power; 35a2, skill over hit points; 35c, companion training; 35a, level impact; 30g5, action meter; 30g4, progression; 30f, battlefield conditions; Phase 34 review follow-up; 33i2, coordinated enemies; 34d, effects and current capabilities; 33h3,
   relocation and separation; 34c, equipment editor; 33h2, readiness and recovery; 34a,
   UI/formation; 34b, packs/capacity; 33h1, companion growth and contracts
@@ -198,9 +208,10 @@ implemented (handoff rule 20).
 | 36b | Tier 1–3 gear catalog, goods and an audit of existing items | Loot slice 2; equipment tiers | 36a |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3) | Encounter design; loot slice 3 | 35b, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role | Level impact §3 | 35b |
-| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the draft [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 38a |
+| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 38a |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees | Loot slice 4 | 37 |
 | 38c+ | Elite promotions (level 30), tier 4–6 gear, legendaries and sets, expanded class catalogue bundles | Later | 38b, 36c |
+| 39a–39h | Neutral base classes, one per phase: Halberdier, Samurai, Shaman, Doll Master, Beast Tamer, Gryphon Rider, Alchemist, Arbalist | [Neutral classes design](designs/2026-10-05-neutral-classes-design.md) | 38b (39a and 39h also 36b; 39e also 39d) |
 
 World building (zones for levels 1–15) now waits until the visual client
 milestone below is in place (owner, 2026-10-05). A small showcase area for
@@ -1052,6 +1063,16 @@ delegated to the lead. 33a–33e are complete.
 | 12+ | Merchant/injured-NPC/route-choice/camp-opportunity/ruined-site/resource/social encounters | Future ideas, not planned work |
 
 ## Recent work log
+
+### 38b faith routes design approved (2026-10-05)
+
+- **Why:** the draft had four points the owner had not decided.
+- **Decided:** a character below its elite gate at level 30 waits on its
+  advanced route with its ranks and promotes once its alignment recovers;
+  the Demon's broken binding stays; Blood Priest healing keeps its 25% mana
+  surcharge; routes are final at launch, with retraining a later design.
+  Recorded in the [faith routes design](designs/2026-10-05-faith-routes-design.md).
+  Docs only; 38b still waits on 38a.
 
 ### Phase 33h2: company readiness and recovery (2026-10-02)
 
