@@ -112,15 +112,35 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 	if !found {
 		return guardMember{}, false
 	}
+	// Phase 39b: a Hatamoto's Bodyguard steps in for the company leader,
+	// whatever strategy it fights by, a few times a battle.
+	if struck == company.LeaderMemberKey {
+		narrow := enemyparty.Narrow(rooms.LoadRoom(leader.Character.RoomId))
+		for _, g := range members {
+			if g.key == struck || (len(struckAlready) > 0 && struckAlready[0][g.key]) ||
+				bodyguardLeft(g.char) < 1 || !ableToGuard(g) || !formationcombat.GuardGround(f, g.key, struck, narrow) {
+				continue
+			}
+			g.char.RTState().Bodyguards++
+			announceGuard(leader, b.FightID, g, ward, bodyguardLeft(g.char))
+			return g, true
+		}
+	}
 	for _, g := range members {
 		if g.key == struck || (len(struckAlready) > 0 && struckAlready[0][g.key]) {
 			continue
 		}
 		s := enemyparty.MemberStrategy(leader.UserId, g.key)
-		if s.Role == strategy.Guardian {
+		// Phase 38b: a Hierarch's Angel guards the most hurt ally, a few
+		// times a battle, whatever strategy a summon (which has none) holds.
+		angel := angelGuardsLeft(g.char) > 0
+		if angel {
+			s.Role, s.Ward = strategy.Guardian, ""
+		}
+		if s.Role == strategy.Guardian && !angel {
 			battle.CaptureGuards(leader.UserId, string(g.key), g.char.Level) // Phase 35b
 		}
-		if s.Role != strategy.Guardian || !ableToGuard(g) || battle.GuardsLeft(leader.UserId, string(g.key)) < 1 {
+		if s.Role != strategy.Guardian || !ableToGuard(g) || !angel && battle.GuardsLeft(leader.UserId, string(g.key)) < 1 {
 			continue
 		}
 		// A set ward still in the company but not here (away, fallen) is
@@ -139,9 +159,15 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		if w, ok := strategy.GuardWard(string(g.key), s.Ward, guarded); !ok || w != string(struck) {
 			continue
 		}
-		left, ok := battle.SpendGuard(leader.UserId, string(g.key))
-		if !ok {
-			continue
+		var left int
+		if angel {
+			g.char.RT.Summon.GuardsUsed++
+			left = angelGuardsLeft(g.char)
+		} else {
+			var ok bool
+			if left, ok = battle.SpendGuard(leader.UserId, string(g.key)); !ok {
+				continue
+			}
 		}
 		announceGuard(leader, b.FightID, g, ward, left)
 		return g, true
@@ -210,3 +236,12 @@ func announceGuard(leader *users.UserRecord, fightID uint64, g, ward guardMember
 
 // guardPass counts one combat round toward every spent guard's return.
 func guardPass() { battle.TickGuards() }
+
+// angelGuardsLeft is how many guards a summoned Angel has left this battle
+// (none for any other character).
+func angelGuardsLeft(c *characters.Character) int {
+	if c == nil || c.RT == nil || c.RT.Summon == nil || c.RT.Summon.Kind != "angel" {
+		return 0
+	}
+	return max(0, c.RT.Summon.Guards-c.RT.Summon.GuardsUsed)
+}

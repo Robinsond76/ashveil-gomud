@@ -4,8 +4,10 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // Phase 35a2 (skill over hit points): Attack and Evasion are derived from
@@ -68,14 +70,18 @@ func (c *Character) skillPenalty() int {
 // template's offset, less the untrained-armor loss.
 func (c *Character) AttackSkill() int {
 	rate, _ := c.skillRates()
-	return levelRating(c.Level, rate) + c.AttackOffset - c.skillPenalty()
+	return levelRating(c.Level, rate) + c.AttackOffset - c.skillPenalty() + c.ClassEffects().Int(classes.Attack) + c.blessPoints()
 }
 
 // Evasion is the character's Evasion: floor(level × rate) plus an enemy
 // template's offset, less the untrained-armor loss.
 func (c *Character) Evasion() int {
 	_, rate := c.skillRates()
-	return levelRating(c.Level, rate) + c.EvasionOffset - c.skillPenalty()
+	bonus := c.ClassEffects().Int(classes.Evasion) + c.Aura.Evasion + c.blessPoints()
+	if c.Aggro != nil && c.Aggro.Type == SpellCast {
+		bonus += c.ClassEffects().Int(classes.ChantEvade) // Phase 38b: Sanctuary
+	}
+	return levelRating(c.Level, rate) + c.EvasionOffset - c.skillPenalty() + bonus
 }
 
 func levelRating(level int, rate float64) int {
@@ -196,7 +202,7 @@ func (c *Character) WouldBeUntrained(itm items.Item) bool {
 // HealingBonusPct is the percent a healer's gear adds to its heals (the
 // holy symbol's +5).
 func (c *Character) HealingBonusPct() int {
-	return max(0, c.StatMod("healing"))
+	return max(0, c.StatMod("healing")) + c.ClassEffects().Int(classes.HealPct)
 }
 
 // UnequipDisallowed moves any held shield or weapon the class may not use
@@ -252,4 +258,16 @@ func (c *Character) ManaRates() (base int, perLevel float64) {
 		}
 	}
 	return base, perLevel
+}
+
+// ClassTitle is the class a player sees beside a name: the chosen
+// archetype ("Warrior"), else the skill-derived profession title. The
+// profession title alone read "scrub paladin" for every Ashveil warrior.
+func (c *Character) ClassTitle() string {
+	if id := c.ArchetypeID(); id != "" {
+		if name, ok := archetypes.Name(id); ok && name != "" {
+			return name
+		}
+	}
+	return skills.GetProfession(c.GetAllSkillRanks())
 }

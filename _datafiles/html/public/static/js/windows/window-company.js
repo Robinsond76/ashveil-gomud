@@ -541,10 +541,16 @@
         const header = el('div', 'party-member-header');
         header.appendChild(el('span', 'party-member-name', m.name + (m.key === 'leader' ? ' \u2605' : '')));
         if (m.level) { header.appendChild(el('span', 'party-member-level', 'Lv ' + m.level)); }
-        if (m.archetype) { header.appendChild(el('span', 'party-member-rank', m.archetype)); }
+        // A promoted member shows its class (Phase 40s5), its lineage on hover.
+        const rank = m.class_name || m.archetype;
+        if (rank) {
+            const node = el('span', 'party-member-rank', rank);
+            if (m.class_name && m.archetype) { node.title = m.archetype + ' line'; }
+            header.appendChild(node);
+        }
         card.appendChild(header);
 
-        const spoken = [m.name, m.level ? 'level ' + m.level : '', m.archetype || ''];
+        const spoken = [m.name, m.level ? 'level ' + m.level : '', rank || ''];
         if (m.status === 'dead') {
             const rescue = live.rescue && live.rescue[m.key];
             const left = typeof rescue === 'number' ? 'Fallen: ' + formatSeconds(rescue) + ' to raise' : 'Fallen';
@@ -968,13 +974,18 @@
 
         let where = 'No camp.';
         if (camp.has_camp && camp.here) {
-            where = 'Your camp is here' + (camp.fire_lit ? ', around a lit fire.' : '; the fire is cold.');
+            where = 'Your camp is here' + (camp.fire_lit ? ', around a lit fire.' : (camp.embers ? ', around glowing embers.' : '; the fire is cold.'));
         } else if (camp.has_camp) {
             where = 'Your camp is at ' + (camp.room || 'another place') + '.';
         }
         pad.appendChild(el('div', null, where));
-        if (camp.rested && camp.here) {
-            pad.appendChild(el('div', 'cmp-line', 'Your company has rested at this camp; break it and make a new one to rest again.'));
+        if (camp.has_camp && camp.here && camp.tent) {
+            pad.appendChild(el('div', 'cmp-line', 'An oiled canvas tent is pitched here: shelter, and no cold while you rest.'));
+        }
+        if (camp.rested && camp.here && !camp.resting) {
+            pad.appendChild(el('div', 'cmp-line', camp.embers
+                ? 'Your company has rested. The fire has burned to embers: feed it (Light fire) to rest again.'
+                : 'Your company has rested at this camp.'));
         }
         if (camp.resting) {
             pad.appendChild(el('div', null, 'Resting: ' + CompanyData.formatSeconds(camp.rest_seconds) + ' left.'));
@@ -996,8 +1007,8 @@
         // Each button only when it would work.
         const actions = el('div', 'cmp-actions');
         if (camp.can_camp) { actions.appendChild(button('Make camp', 'camp', 'Make camp here (camp)')); }
-        if (camp.has_camp && camp.here && !camp.fire_lit) { actions.appendChild(button('Light fire', 'camp fire', 'Light the campfire (camp fire)')); }
-        if (camp.has_camp && camp.here && camp.fire_lit && !camp.resting && !camp.rested) { actions.appendChild(button('Rest', 'camp rest', 'Rest by the fire (camp rest)')); }
+        if (camp.has_camp && camp.here && !camp.fire_lit) { actions.appendChild(button(camp.embers ? 'Feed fire' : 'Light fire', 'camp fire', camp.embers ? 'Feed the embers fuel (camp fire)' : 'Light the campfire (camp fire)')); }
+        if (camp.has_camp && camp.here && camp.fire_lit && !camp.resting) { actions.appendChild(button('Rest', 'camp rest', 'Rest by the fire (camp rest)')); }
         if (camp.has_camp && camp.here && !camp.resting) { actions.appendChild(button('Break camp', 'camp break', 'Strike the camp (camp break)')); }
         actions.appendChild(button('Meal', 'company meal', 'Everyone with you eats and drinks (company meal)'));
         if (camp.inn) { actions.appendChild(button('Inn', 'inn', 'This inn\'s price and your stay (inn)')); }

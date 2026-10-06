@@ -19,6 +19,8 @@ maplegend: Village
 resources:
 - water
 - forage
+- herbs
+- firewood
 mapx: -1
 mapy: -1
 mapz: 0

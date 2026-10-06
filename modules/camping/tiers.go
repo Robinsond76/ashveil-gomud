@@ -206,6 +206,17 @@ func (m *CampingModule) grantPendingTiers() {
 		// Phase 30b: an inn stay knits every wound of the members present;
 		// a camp rest only those it has a splint (a broken bone) or a
 		// bandage (a cut or a puncture) for (owner, 2026-09-30).
+		// Phase 40a3: a field surgeon's kit packed for the rest has a
+		// healer with mana treat the worst lasting wound first, before
+		// the bandages and splints.
+		if campRest && tier == camping.TierRested && m.restKit(leaderUserID) {
+			if lines, treated := m.fieldSurgery(leaderUserID); treated {
+				for _, line := range lines {
+					user.SendText(line)
+				}
+				user.SendText("The field surgeon's kit wears a little with the work.")
+			}
+		}
 		spend := m.supply(leaderUserID)
 		if tier == camping.TierWellRested {
 			spend = nil
@@ -245,6 +256,23 @@ func (m *CampingModule) grantPendingTiers() {
 	}
 }
 
+// restKit reports whether the leader's camp rest packed a field surgeon's
+// kit (locked when the rest began).
+func (m *CampingModule) restKit(leaderUserID int) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[leaderUserID]
+	return ok && camp.Rest != nil && camp.Rest.Kit && !camp.Rest.Broken
+}
+
+// fieldSurgery is the seam the kit's treatment goes through.
+func (m *CampingModule) fieldSurgery(leaderUserID int) ([]string, bool) {
+	if m.surgery != nil {
+		return m.surgery(leaderUserID)
+	}
+	return company.FieldSurgery(leaderUserID, surgeonKitItemID)
+}
+
 // restoreVitals brings the leader and the live companions to their wound
 // limit and full mana (Phase 33h2, an inn stay; Phase 35b, a camp rest).
 // It never lowers anyone.
@@ -255,6 +283,7 @@ func restoreVitals(leader *characters.Character, live map[int]*characters.Charac
 		}
 		c.Health = max(c.Health, c.HealthLimit())
 		c.Mana = max(c.Mana, c.ManaMax.Value)
+		c.RestClass() // Phase 38b: Lay on Hands comes back with rest
 	}
 	restore(leader)
 	for _, id := range sortedIDs(live) {

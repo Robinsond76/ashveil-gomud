@@ -22,6 +22,8 @@ spawninfo:
   respawnrate: 15 real minutes
 resources:
 - forage
+- firewood
+- herbs
 mapx: 31
 mapy: -9
 mapz: 0

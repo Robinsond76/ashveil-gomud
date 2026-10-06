@@ -65,7 +65,7 @@ help: ## List documented Makefile targets.
 	@printf "\n"
 
 ## Developer Workflow
-.PHONY: build build_local generate module validate test coverage fmt fmtcheck vet mod js-lint lua-lint
+.PHONY: build build_local generate module validate test smoke coverage fmt fmtcheck vet mod js-lint js-test lua-lint
 
 build: validate build_local ## Validate the code and build ./$(BIN).
 
@@ -91,8 +91,11 @@ endif
 
 validate: fmtcheck vet ## Run the standard Go formatting and vet checks.
 
-test: generate js-lint lua-lint ## Run code generation, JavaScript/Lua linting, and Go tests.
+test: generate js-lint js-test lua-lint ## Run code generation, JavaScript/Lua linting, JavaScript tests, and Go tests.
 	@go test -race ./...
+
+smoke: generate ## Play a new character through a live server (a few minutes; see docs/LIVE_SMOKE_PLAYTEST.md).
+	@ASHVEIL_LIVE_SMOKE=1 go test -run TestLiveSmoke -timeout 20m -count=1 -v .
 
 coverage: ## Generate and open an HTML Go coverage report.
 	@mkdir -p bin/covdatafiles && \
@@ -133,6 +136,9 @@ js-lint: ## Run JSHint using npx when available, otherwise Docker.
 		exit 127; \
 	fi
 
+js-test: ## Run the Node tests of the web client's pure modules (battle timeline).
+	@node --test scripts/js/*.test.mjs
+
 lua-lint: ## Run Luacheck using a local install when available, otherwise Docker.
 	@if [ -z "$(strip $(LUA_LINT_PATHS))" ]; then \
 		echo "lua-lint: no .lua files to check"; \
@@ -154,7 +160,7 @@ run: generate ## Start the server with `go run .`.
 run-new: clean-instances generate run ## Delete room instance data and start a fresh world.
 
 sprites: ## Regenerate the code-drawn sprite sets and the review contact sheet (needs Pillow).
-	python3 scripts/sprites/generate.py --preview docs/verification/40s1-contact-sheet.png --preview-s23 docs/verification/40s-s2-s3-contact-sheet.png
+	python3 scripts/sprites/generate.py --preview docs/verification/40s1-contact-sheet.png --preview-s23 docs/verification/40s-s2-s3-contact-sheet.png --preview-s5 docs/verification/40s5-contact-sheet.png
 
 clean-instances: ## Delete generated room instance data for bundled worlds.
 	rm -Rf _datafiles/world/default/rooms.instances

@@ -1,0 +1,93 @@
+# Phase 40a2 gathering.
+#
+# A room tagged (in its `resources`) herbs, firewood, fishing or game lets
+# the company gather: `gather herbs`, `gather firewood`, `fish`, `hunt`.
+# Each is a timed action in real time (it never advances the game clock)
+# that any other command, a move or a fight cancels. Every attempt charges
+# the company EffortPct percent of one step's strain on the room's terrain.
+#
+# Each room's resource has a pool of Pool charges that every completed
+# attempt spends (a failed catch too); one charge regrows every Regrow of
+# real time. Pools are shared by every company and saved with the world.
+Resources:
+  - { Kind: herbs, Duration: 20s, Pool: 3, Regrow: 20m, EffortPct: 100 }
+  - { Kind: firewood, Duration: 20s, Pool: 4, Regrow: 20m, EffortPct: 100 }
+  - { Kind: fishing, Duration: 30s, Pool: 4, Regrow: 20m, EffortPct: 50 }
+  - { Kind: game, Duration: 30s, Pool: 2, Regrow: 40m, EffortPct: 100 }
+# Hunting is noisy: points added to the room's random encounter chance.
+HuntEncounterBonus: 10
+# Items (the default world's ids).
+FirewoodItemId: 40
+DampFirewoodItemId: 41
+FishingLineItemId: 42
+RawFishItemId: 43
+BitterWeedItemId: 44
+RawMeatItemId: 29
+# Herbs: HerbMin..HerbMax per gather, plus one per ForageLevelsPerOne levels
+# of the best Forage specialist, plus KnifeBonus with a bladed weapon in the
+# company. Darkness keeps DarkPct of that. With no Forage specialist a gather
+# has a BitterWeedPct chance to return one bitter weed instead. A Scribe has
+# a ScribePct chance to find one rarer herb as well.
+HerbMin: 1
+HerbMax: 2
+ForageLevelsPerOne: 2
+KnifeBonus: 1
+DarkPct: 50
+BitterWeedPct: 15
+ScribePct: 10
+# Firewood: FirewoodBundles per gather, times ToolMultiplier with an axe
+# (a cleaving weapon) in the company, plus FieldSmithBonus with a Field
+# Smith. In WetWeather conditions half the bundles come back damp.
+FirewoodBundles: 2
+ToolMultiplier: 2
+FieldSmithBonus: 1
+WetWeather: [rain, storm]
+# Fishing: FishAttempts chances at FishPct percent each (+RangerFishPct with a
+# Forage specialist). A fishing line breaks LineBreakPct percent of the time.
+FishAttempts: 2
+FishPct: 40
+RangerFishPct: 10
+LineBreakPct: 5
+# Hunting: GamePct base chance, plus RangerGamePct per level of the Forage
+# specialist, up to GameCapPct. Without a bow, crossbow or sling the company
+# sets snares and keeps SnarePct percent of the chance. A success brings
+# GameMeat raw meat (+ForageMeat with a specialist) and, GoodsPct of the
+# time, one hide or pelt from the zone's Goods table.
+GamePct: 50
+GameMeat: 2
+ForageMeat: 1
+RangerGamePct: 5
+GameCapPct: 90
+SnarePct: 50
+GoodsPct: 35
+# Yield tables by zone; "*" is every zone without its own.
+Herbs:
+  - Zone: "*"
+    Items:
+      - { ItemId: 30018, Weight: 4 } # wild thyme
+      - { ItemId: 30007, Weight: 3 } # mushroom
+      - { ItemId: 30016, Weight: 1 } # spotted mushroom
+  - Zone: Frost Lake
+    Items:
+      - { ItemId: 30018, Weight: 3 } # wild thyme
+      - { ItemId: 30009, Weight: 3 } # glacial mint
+      - { ItemId: 30007, Weight: 2 } # mushroom
+RareHerbs:
+  - Zone: "*"
+    Items:
+      - { ItemId: 30008, Weight: 2 } # goldenbell
+      - { ItemId: 30009, Weight: 2 } # glacial mint
+      - { ItemId: 30010, Weight: 1 } # moonshade leaf
+Fish:
+  - Zone: "*"
+    Items:
+      - { ItemId: 43, Weight: 1 } # raw fish
+Goods:
+  - Zone: "*"
+    Items:
+      - { ItemId: 28, Weight: 3 } # wolf hide
+      - { ItemId: 200, Weight: 1 } # bear hide
+  - Zone: Frost Lake
+    Items:
+      - { ItemId: 204, Weight: 2 } # snowcat pelt
+      - { ItemId: 28, Weight: 2 }  # wolf hide

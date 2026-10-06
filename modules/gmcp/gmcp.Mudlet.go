@@ -672,9 +672,10 @@ func (g *GMCPMudletModule) sendMapCommand(rest string, user *users.UserRecord, r
 	connId := user.ConnectionId()
 	if gmcpData, ok := gmcpModule.cache.Get(connId); ok && gmcpData.Client.IsMudlet {
 		g.sendMudletMapConfig(user.UserId)
-		return true, nil
 	}
-	return false, nil
+	// Handled either way: the login script runs this for every client, and
+	// "mudletmap not recognized" is no welcome for a plain telnet player.
+	return true, nil
 }
 
 // checkClientCommand checks if client is Mudlet and shows info

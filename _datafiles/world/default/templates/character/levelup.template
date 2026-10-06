@@ -9,6 +9,8 @@
 {{ end }}{{ if ne .statsBefore.Perception.ValueAdj .statsAfter.Perception.ValueAdj }} Perception {{ .statsBefore.Perception.ValueAdj }} -> {{ .statsAfter.Perception.ValueAdj }}
 {{ end }} Training Points: +{{ .trainingPoints }}   Stat Points: +{{ .statPoints }}{{ if .livesUp }}   Extra Lives: +{{ .livesUp }}{{ end }}
 {{ range .powerLines }} {{ . }}
+{{ end }}{{ range .classRanks }} <ansi fg="yellow">{{ . }}</ansi>
 {{ end }} Next: {{ .nextMilestone }}
- Type <ansi fg="command">stat train</ansi> to spend your extra Stat Points.
+{{ if .classMilestone }} {{ .classMilestone }}
+{{ end }} Type <ansi fg="command">stat train</ansi> to spend your extra Stat Points.
  See <ansi fg="command">help progression</ansi> and <ansi fg="command">help evasion</ansi>.

@@ -1,0 +1,17 @@
+mobid: 95
+sprite: angel
+zone: Summons
+# Phase 38b: a Hierarch's Angel. It is made at the Hierarch's level by the
+# summons package and lives for one battle; nothing of it drops or is kept.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+wounds: none
+character:
+  name: Angel
+  pronouns: it
+  description: 'A tall figure of white fire in the shape of a warrior, its wings folded close and a blade of light in its hand. It has come to stand between the company and harm, and it will not stay past the end of the fight.'
+  raceid: 23
+  level: 1
+  alignment: 90

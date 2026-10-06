@@ -9,9 +9,14 @@ meat, wild thyme, and mushrooms. They go into the company's cargo
 A room that lists forage (the "Here:" line in <ansi fg="command">look</ansi>, <ansi fg="command">help resources</ansi>) gives one more
 find than usual. A zone with nothing to find gives nothing extra.
 
+Camp forage is not the same as gathering (<ansi fg="command">help gathering</ansi>). Forage rewards a finished
+camp rest with a few finds. Gathering is work you order in a room: <ansi fg="command">gather herbs</ansi>,
+<ansi fg="command">fish</ansi> and <ansi fg="command">hunt</ansi>. A ranger helps with both: more herbs, better odds of a catch
+and a kill, and extra meat.
+
 Raw meat and thyme are what a cook needs (<ansi fg="command">help cooking</ansi>). A rest spoiled
 by raiders brings no forage, and a company forages (and keeps a vigil) at
 most once every 15 minutes of real time. You collect it at the camp, once
 any fight there is over; leave before then and it's lost.
 
-See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help cooking</ansi>.
+See also: <ansi fg="command">help gathering</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help cooking</ansi>.

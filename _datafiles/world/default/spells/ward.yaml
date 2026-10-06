@@ -1,0 +1,14 @@
+# Phase 38b: Ward, a Priest's (or Theurgist's) ward.
+spellid: ward
+name: Ward
+description: Absorbs an ally's next blow, up to one average hit of your level
+type: helpsingle
+school: restoration
+cost: 10
+waitrounds: 1
+difficulty: 0
+scope: member
+power:
+  base: 6
+  dice: 2d4
+  leveldiv: 3

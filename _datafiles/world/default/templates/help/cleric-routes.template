@@ -1,0 +1,48 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">cleric-routes</ansi>
+
+The cleric lineage splits at level 10 into a healer of light, of growth or of
+blood. All three heal on their own in battle; their strategy role stays healer
+(<ansi fg="command">help strategy</ansi>).
+
+<ansi fg="yellow-bold">Priest (good)</ansi>
+
+  10 Ward               one ally's next blow is absorbed, up to an average hit
+                        of the Priest's level; chant 1, cost 10; one ward each
+  15 Greater Heal       about two average hits; chant 2, cost 14
+  20 Double ward        a ward absorbs two blows
+  25 Prayer of Mending  after-battle patching costs 20% less mana
+
+  <ansi fg="yellow-bold">Hierarch</ansi> (30, calls an Angel): see <ansi fg="command">help summoning</ansi>.
+
+<ansi fg="yellow-bold">Druid (neutral)</ansi>
+
+  10 Rejuvenation       heals one ally over 3 rounds, 130% of a Minor Heal
+  15 Barkskin           one ally gains +10 armor for the battle
+  20 Lasting growth     Rejuvenation lasts 4 rounds (160%)
+  25 Thornhide          a foe that strikes a Barkskinned ally takes 2 damage
+
+  <ansi fg="yellow-bold">Elder Druid</ansi> (30): Grove (Rejuvenation on a whole row at 60%), Nature's
+  patience, Deep grove (80%), Entangle (hobble a foe 2 rounds), Wide bark, Wild
+  growth (Rejuvenation also cures poison), Two groves (covers two rows).
+
+<ansi fg="yellow-bold">Blood Priest (evil)</ansi>
+
+  10 Siphon             damages a foe like Magic Missile and heals the most hurt
+                        ally for the damage; costs 10 mana; ordinary heals and
+                        patching cost 25% more mana (Siphon doesn't)
+  15 Cheaper siphon     Siphon costs 8
+  20 Twin siphon        Siphon also strikes a second foe and heals a second
+                        ally, at 60%
+  25 Blood ward         healing beyond full health becomes a ward
+
+  <ansi fg="yellow-bold">Demonologist</ansi> (30, binds a Demon): see <ansi fg="command">help summoning</ansi>.
+
+<ansi fg="yellow-bold">In battle</ansi>
+
+A healer in your company with these spells uses them on its own: big heals
+for an ally below 40% health, Rejuvenation or Grove while allies are hurt,
+wards and Barkskin while no one is, Siphon on a foe. Wards, Barkskin, Bless
+and the summons keep the mana reserve; heals don't (<ansi fg="command">help strategy</ansi>). Every cleric also learns Cure Poison at level 6
+and Bless (+5 Attack and Evasion for 3 rounds) at level 8.
+
+See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help summoning</ansi>, <ansi fg="command">help heal</ansi>, <ansi fg="command">help warrior-routes</ansi>.

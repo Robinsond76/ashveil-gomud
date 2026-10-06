@@ -74,6 +74,9 @@ func InstanceFor(leaderUserID, companionID int) (int, bool) {
 // FormationProvider. See FormationFor for the no-provider-registered
 // contract.
 func LeaderAndKeyForInstance(instanceId int) (int, MemberKey, bool) {
+	if leader, key, ok := SummonOf(instanceId); ok { // Phase 38b
+		return leader, key, true
+	}
 	formationProviderMu.RLock()
 	p := formationProvider
 	formationProviderMu.RUnlock()
@@ -176,6 +179,65 @@ func SpendSupply(leaderUserID int, item wounds.Item) bool {
 	formationProviderMu.RUnlock()
 	sp, ok := p.(SupplyProvider)
 	return ok && sp.SpendSupply(leaderUserID, item)
+}
+
+// ItemSupplyProvider is optionally implemented by the registered
+// FormationProvider (Phase 40a2): any item the company can reach, for the
+// camp fire's firewood and a fishing line. Game loop only.
+type ItemSupplyProvider interface {
+	// CompanyItemCount is how many of itemID the leader's company reaches:
+	// the cargo, the leader's pack and the companions' packs.
+	CompanyItemCount(leaderUserID, itemID int) int
+	// SpendCompanyItem uses up one of itemID from the first place that has
+	// one (cargo, then the leader's pack, then the companions' packs),
+	// reporting whether there was one.
+	SpendCompanyItem(leaderUserID, itemID int) bool
+}
+
+// CompanyItemCount is how many of an item the company carries; 0 without a
+// provider.
+func CompanyItemCount(leaderUserID, itemID int) int {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	if sp, ok := p.(ItemSupplyProvider); ok {
+		return sp.CompanyItemCount(leaderUserID, itemID)
+	}
+	return 0
+}
+
+// SpendCompanyItem spends one of an item from the company; false with no
+// provider or none left.
+func SpendCompanyItem(leaderUserID, itemID int) bool {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	sp, ok := p.(ItemSupplyProvider)
+	return ok && sp.SpendCompanyItem(leaderUserID, itemID)
+}
+
+// SurgeryProvider is optionally implemented by the registered
+// FormationProvider (Phase 40a3): the field surgeon's kit at a finished
+// camp rest. Game loop only.
+type SurgeryProvider interface {
+	// FieldSurgery has a healer with mana tend the most wounded member's
+	// worst lasting wound, wearing one use off the kit (kitItemID) the
+	// company carries. It returns the lines to show and whether a wound was
+	// treated; nothing is worn when none was.
+	FieldSurgery(leaderUserID, kitItemID int) (lines []string, treated bool)
+}
+
+// FieldSurgery treats one lasting wound with the company's surgeon's kit;
+// false with no provider, no kit, no healer with mana, or no wound.
+func FieldSurgery(leaderUserID, kitItemID int) ([]string, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	sp, ok := p.(SurgeryProvider)
+	if !ok {
+		return nil, false
+	}
+	return sp.FieldSurgery(leaderUserID, kitItemID)
 }
 
 // ChemistryProvider is optionally implemented by the registered
@@ -345,6 +407,9 @@ type MemberView struct {
 	Status    MemberStatus
 	Level     int
 	Archetype string
+	// Class is its Phase 38b advanced or elite class id; blank before
+	// promotion.
+	Class string
 	// ExpInto and ExpTNL are the experience into the level and the span to
 	// the next, for a present companion only (Phase 32e); ExpKnown says so.
 	ExpInto, ExpTNL int
@@ -597,4 +662,27 @@ func LivingCompanionIDs(leaderUserID int) []int {
 		return nil
 	}
 	return rp.LivingCompanionIDs(leaderUserID)
+}
+
+// ClassProvider is optionally implemented by the registered
+// FormationProvider (Phase 38b): a read-only view of a companion's class
+// and talents, and the write seam the class commands use. The company
+// module saves with rollback and refreshes the live mob.
+type ClassProvider interface {
+	CompanionClassState(leaderUserID, companionID int) (class string, talents []string, ok bool)
+	PromoteCompanion(leaderUserID, companionID int, class string) error
+	PickCompanionTalent(leaderUserID, companionID int, talent string) error
+}
+
+// CompanionClassState is a companion's class id (blank before promotion)
+// and talents. ok is false without a provider or for an unknown companion.
+func CompanionClassState(leaderUserID, companionID int) (string, []string, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	cp, ok := p.(ClassProvider)
+	if !ok {
+		return "", nil, false
+	}
+	return cp.CompanionClassState(leaderUserID, companionID)
 }

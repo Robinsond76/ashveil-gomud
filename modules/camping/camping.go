@@ -27,6 +27,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/climate"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
@@ -264,6 +265,11 @@ type realTimer struct{ timer *time.Timer }
 func (r realTimer) Stop() bool { return r.timer.Stop() }
 
 // Survival is the Phase 4/7 company rest-recovery seam needed by camping.
+// bonusSurvival is the optional bedroll-aware recovery of a Survival seam.
+type bonusSurvival interface {
+	ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int) ([]survival.ExertionResult, error)
+}
+
 type Survival interface {
 	ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]survival.ExertionResult, error)
 	CompanyNeeds(leaderUserID int) []survival.MemberNeeds
@@ -274,6 +280,11 @@ type nativeSurvival struct{}
 
 func (nativeSurvival) ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]survival.ExertionResult, error) {
 	return survival.ApplyCompanyRestRecovery(leaderUserID, operationID, fatigue)
+}
+
+// ApplyCompanyRestRecoveryBonus is the bedroll-aware recovery (Phase 40a3).
+func (nativeSurvival) ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int) ([]survival.ExertionResult, error) {
+	return survival.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, fatigue, bonusPct)
 }
 
 func (nativeSurvival) CompanyNeeds(leaderUserID int) []survival.MemberNeeds {
@@ -351,6 +362,14 @@ type CampingModule struct {
 	despawnRaider func(instanceID int)
 	campCfg       campSettings
 	campCfgLoaded bool
+	// Phase 40a2 fuel: the company's item count and spend (nil: native),
+	// and the leaders whose first try with damp wood failed.
+	// surgery stands in for the company's field surgery in tests (Phase
+	// 40a3).
+	surgery   func(leaderUserID int) ([]string, bool)
+	itemCount func(leaderUserID, itemID int) int
+	spendItem func(leaderUserID, itemID int) bool
+	dampTried map[int]bool
 
 	mu sync.Mutex
 
@@ -427,7 +446,8 @@ func init() {
 	// Phase 32a: look shows the camps in a room.
 	camping.SetRoomCampsReader(m.RoomCamps)
 	// A lit campfire also warms its room (Phase 15).
-	climate.RegisterHeatSource(m.RoomHasLitFire)
+	// A fire of damp wood (40a2) lights its room but gives no warmth.
+	climate.RegisterHeatSource(m.RoomWarmedByFire)
 }
 
 // RoomHasLitFire reports whether a lit campfire burns in roomID, which
@@ -439,6 +459,21 @@ func (m *CampingModule) RoomHasLitFire(roomID int) bool {
 	defer m.litMu.RUnlock()
 	for _, camp := range m.roomCamps[roomID] {
 		if camp.FireLit {
+			return true
+		}
+	}
+	return false
+}
+
+// RoomWarmedByFire reports whether a campfire that warms its room burns in
+// roomID: lit, and not a fire of damp wood (Phase 40a2).
+func (m *CampingModule) RoomWarmedByFire(roomID int) bool {
+	m.litMu.RLock()
+	defer m.litMu.RUnlock()
+	for _, camp := range m.roomCamps[roomID] {
+		// Embers keep their warmth until the camp is broken, and a tent
+		// shuts the cold out of a rest (Phase 40a3).
+		if (camp.FireLit || camp.Embers) && !camp.Damp || camp.Tent && camp.Resting {
 			return true
 		}
 	}
@@ -460,7 +495,9 @@ func (m *CampingModule) RoomCamps(roomID int) []camping.RoomCamp {
 func (m *CampingModule) refreshLitRoomsLocked() {
 	byRoom := map[int][]camping.RoomCamp{}
 	for _, camp := range m.camps {
-		byRoom[camp.RoomID] = append(byRoom[camp.RoomID], camping.RoomCamp{LeaderUserID: camp.LeaderUserID, FireLit: camp.FireLit})
+		resting := camp.Rest != nil && camp.Rest.State == camping.Resting
+		byRoom[camp.RoomID] = append(byRoom[camp.RoomID], camping.RoomCamp{LeaderUserID: camp.LeaderUserID, FireLit: camp.FireLit, Damp: camp.Damp,
+			Embers: camp.Embers, Tent: camp.Tent, Resting: resting})
 	}
 	for _, list := range byRoom {
 		slices.SortFunc(list, func(a, b camping.RoomCamp) int { return a.LeaderUserID - b.LeaderUserID })
@@ -613,6 +650,7 @@ func (m *CampingModule) establish(user *users.UserRecord, room *rooms.Room) stri
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
+	tent := m.gearCount(user.UserId, tentItemID) > 0 // read before m.mu: it calls the company module
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
@@ -626,27 +664,53 @@ func (m *CampingModule) establish(user *users.UserRecord, room *rooms.Room) stri
 	if err != nil {
 		return "You can't make camp here."
 	}
+	camp.Tent = tent // Phase 40a3
 	m.camps[user.UserId] = camp
 	if err := m.saveLocked(); err != nil {
 		delete(m.camps, user.UserId)
 		return err.Error()
 	}
+	if tent {
+		return "You make camp here, pegging out your oiled canvas tent."
+	}
 	return "You make camp here."
 }
 
-// lightFire lights the leader's camp fire. The leader must be at the camp.
+// lightFire lights the leader's camp fire. The leader must be at the camp,
+// and (Phase 40a2) the fire needs fuel: the room's own deadfall, or a
+// firewood bundle from the company.
 func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) string {
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
 	m.mu.Lock()
+	camp, ok := m.camps[user.UserId]
+	var refusal string
+	switch {
+	case !ok:
+		refusal = "You have no camp here. Use \"camp\" to make one."
+	case camp.RoomID != room.RoomId:
+		refusal = "Your camp is not here."
+	case camp.FireLit:
+		refusal = "Your campfire is already lit."
+	}
+	m.mu.Unlock()
+	if refusal != "" {
+		return refusal
+	}
+	// The fuel is spent outside m.mu: the company's packs and cargo have
+	// their own locks.
+	damp, steel, refusal := m.takeFuel(user, room)
+	if refusal != "" {
+		return refusal
+	}
+	tent := m.gearCount(user.UserId, tentItemID) > 0 // Phase 40a3
+
+	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
-	camp, ok := m.camps[user.UserId]
-	if !ok {
-		return "You have no camp here. Use \"camp\" to make one."
-	}
-	if camp.RoomID != room.RoomId {
+	camp, ok = m.camps[user.UserId]
+	if !ok || camp.RoomID != room.RoomId {
 		return "Your camp is not here."
 	}
 	lit, err := camp.LightFire()
@@ -656,12 +720,109 @@ func (m *CampingModule) lightFire(user *users.UserRecord, room *rooms.Room) stri
 		}
 		return "You can't light a fire here."
 	}
+	lit.Damp = damp
+	lit.Tent = tent
 	m.camps[user.UserId] = lit
 	if err := m.saveLocked(); err != nil {
 		m.camps[user.UserId] = camp
 		return err.Error()
 	}
+	if damp {
+		return "The damp wood catches at last, and you coax a smoky, sullen fire to life. It gives light, but little warmth."
+	}
+	if steel {
+		return "A few strikes of the fire steel into the tinder, and even the damp wood catches. You light a crackling campfire."
+	}
+	if camp.Embers {
+		return "You feed the embers fresh fuel, and the fire crackles up again."
+	}
 	return "You light a crackling campfire."
+}
+
+// Firewood item ids (Phase 40a2); the gathering module hands them out.
+const (
+	firewoodItemID     = 40
+	dampFirewoodItemID = 41
+)
+
+// takeFuel settles what a new fire burns: a room with its own deadfall
+// (a firewood room) costs nothing; otherwise one dry bundle is spent, and a
+// damp bundle lights only on a second try and gives no warmth. A refusal
+// spends nothing.
+func (m *CampingModule) takeFuel(user *users.UserRecord, room *rooms.Room) (damp, steel bool, refusal string) {
+	if room.HasResource(rooms.ResourceFirewood) {
+		return false, false, "" // the room's own deadfall feeds the fire
+	}
+	count, spend := m.itemCount, m.spendItem
+	if count == nil || spend == nil {
+		count, spend = company.CompanyItemCount, company.SpendCompanyItem
+	}
+	if count(user.UserId, firewoodItemID) > 0 {
+		if spend(user.UserId, firewoodItemID) {
+			return false, false, ""
+		}
+	}
+	if count(user.UserId, dampFirewoodItemID) > 0 {
+		// Phase 40a3: fire steel and tinder light damp wood first time,
+		// at full warmth.
+		if count(user.UserId, fireSteelItemID) > 0 && spend(user.UserId, dampFirewoodItemID) {
+			return false, true, ""
+		}
+		m.mu.Lock()
+		tried := m.dampTried[user.UserId]
+		if !tried {
+			if m.dampTried == nil {
+				m.dampTried = map[int]bool{}
+			}
+			m.dampTried[user.UserId] = true
+			m.mu.Unlock()
+			return false, false, "The damp wood smokes and sputters and will not catch. Try again."
+		}
+		delete(m.dampTried, user.UserId)
+		m.mu.Unlock()
+		if spend(user.UserId, dampFirewoodItemID) {
+			return true, false, ""
+		}
+	}
+	return false, false, `Your company has no firewood to light a fire with. Buy firewood bundles from a provisioner or market, or gather deadfall where firewood grows (<ansi fg="command">help gathering</ansi>).`
+}
+
+// unlitCampRoom is the room of the leader's camp while its fire is unlit.
+func (m *CampingModule) unlitCampRoom(leaderUserID int) (int, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[leaderUserID]
+	if !ok || camp.FireLit {
+		return 0, false
+	}
+	return camp.RoomID, true
+}
+
+// fuelLine (Phase 40a2 review) tells the leader what a fire in the camp's
+// room would burn, so a missing bundle is known before "camp fire" fails.
+func (m *CampingModule) fuelLine(user *users.UserRecord, room *rooms.Room) string {
+	if room != nil && room.HasResource(rooms.ResourceFirewood) {
+		return "Fuel: the deadfall here feeds a fire for nothing."
+	}
+	count := m.itemCount
+	if count == nil {
+		count = company.CompanyItemCount
+	}
+	dry, damp := count(user.UserId, firewoodItemID), count(user.UserId, dampFirewoodItemID)
+	switch {
+	case dry > 0:
+		return fmt.Sprintf("Fuel: %s; a fire here burns one.", bundles(dry, "firewood bundle"))
+	case damp > 0:
+		return fmt.Sprintf("Fuel: %s only; it lights on a second try and gives no warmth.", bundles(damp, "damp firewood bundle"))
+	}
+	return `Fuel: none. A fire here needs a firewood bundle: buy one at a market or <ansi fg="command">gather firewood</ansi> where it grows (<ansi fg="command">help gathering</ansi>).`
+}
+
+func bundles(n int, name string) string {
+	if n == 1 {
+		return "1 " + name
+	}
+	return fmt.Sprintf("%d %ss", n, name)
 }
 
 // startRest begins the one configured real-time rest session. The leader
@@ -674,42 +835,70 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	if err := m.survival.Available(); err != nil {
 		return err.Error()
 	}
+	// Phase 40a3: the gear is counted before m.mu (it calls the company
+	// module) and locked on the rest; the bells wear a use once the rest
+	// is on, also outside m.mu.
+	gear := m.gearOf(user.UserId)
+	text, started := m.startRestLocked(user, room, gear, m.companyMembers(user.UserId))
+	if started && gear.Bells {
+		spend := m.spendItem
+		if spend == nil {
+			spend = company.SpendCompanyItem
+		}
+		spend(user.UserId, campBellsItemID)
+	}
+	return text
+}
+
+func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room, gear campGear, members int) (string, bool) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
 	camp, ok := m.camps[user.UserId]
 	if !ok {
-		return "You have no camp here. Use \"camp\" to make one."
+		return "You have no camp here. Use \"camp\" to make one.", false
 	}
 	if camp.RoomID != room.RoomId {
-		return "Your camp is not here."
+		return "Your camp is not here.", false
 	}
 	if stay, ok := m.stays[user.UserId]; ok && stay.Resting() {
-		return "You are already resting at the inn."
+		return "You are already resting at the inn.", false
+	}
+	// A finished rest's recovery must be in before another rest begins.
+	if camp.Rest != nil && camp.Rest.State == camping.Completed && !m.recoveryApplied[user.UserId] {
+		if err := m.syncLocked(user.UserId); err != nil || !m.recoveryApplied[user.UserId] {
+			return "Your last rest is still settling. Try again in a moment.", false
+		}
+		camp = m.camps[user.UserId]
 	}
 	resting, err := camp.StartRest(m.clock().UTC())
 	if err != nil {
 		switch {
+		case errors.Is(err, camping.ErrFireNotLit) && camp.Embers:
+			return "The fire has burned down to embers. Feed it with \"camp fire\" to rest again.", false
 		case errors.Is(err, camping.ErrFireNotLit):
-			return "You need a lit campfire to rest. Use \"camp fire\" first."
+			return "You need a lit campfire to rest. Use \"camp fire\" first.", false
 		case errors.Is(err, camping.ErrRestAlreadyStarted):
-			return "You are already resting."
-		case errors.Is(err, camping.ErrRestAlreadyCompleted):
-			return "Your company has already rested at this camp."
+			return "You are already resting.", false
 		}
-		return "You can't rest here."
+		return "You can't rest here.", false
 	}
+	delete(m.recoveryApplied, user.UserId) // the new rest's recovery is not in yet
 	// Phase 16: the weather at the camp scales its recovery, locked now.
-	recovery, condition, scaled := m.campRecovery(room)
+	recovery, condition, scaled := m.campRecovery(room, gear.Tent)
 	rest := *resting.Rest
 	rest.Recovery = recovery
+	rest.Bedrolls = gear.Bedrolls
+	rest.Bells = gear.Bells
+	rest.Kit = gear.Kit
+	resting.Tent = gear.Tent
 	// Phase 33f3: whether raiders come, and when, is settled now.
 	rest.Raid = m.planRaidLocked(room, rest.StartedAtUTC)
 	resting.Rest = &rest
 	m.camps[user.UserId] = resting
 	if err := m.saveLocked(); err != nil {
 		m.camps[user.UserId] = camp
-		return err.Error()
+		return err.Error(), false
 	}
 	m.scheduleLocked(resting)
 	text := fmt.Sprintf("You settle in by the fire to rest. (%s)", camping.RestDuration)
@@ -717,9 +906,14 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 		text += fmt.Sprintf("\nThe %s makes for a poorer rest.", condition.Name)
 		if room.HasResource(rooms.ResourceShelter) {
 			text += " The shelter here softens it."
+		} else if gear.Tent {
+			text += " The tent softens it."
 		}
 	}
-	return text
+	if line := restGearText(resting.Rest, gear.Tent, members); line != "" {
+		text += "\n" + line
+	}
+	return text, true
 }
 
 // breakCamp removes an idle camp. A resting camp cannot be broken.
@@ -842,6 +1036,8 @@ func (m *CampingModule) status(leaderUserID int) string {
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
+	// The gear is counted before m.mu: it calls the company module.
+	gear, members := m.gearOf(leaderUserID), m.companyMembers(leaderUserID)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
@@ -851,7 +1047,15 @@ func (m *CampingModule) status(leaderUserID int) string {
 	if err := m.syncLocked(leaderUserID); err != nil {
 		mudlog.Warn("camping: status sync", "leader", leaderUserID, "error", err)
 	}
-	return m.statusTextLocked(leaderUserID)
+	text := m.statusTextLocked(leaderUserID)
+	// 40a3 review: between rests, show what the gear at hand will do (a
+	// running rest already reports the gear locked for it).
+	if camp := m.camps[leaderUserID]; camp.Rest == nil || camp.Rest.State != camping.Resting {
+		if lines := gear.lines(members); len(lines) > 0 {
+			text += "\nCamp gear at hand (help camp gear):\n" + strings.Join(lines, "\n")
+		}
+	}
+	return text
 }
 
 // RenderCampView implements camping.ViewProvider. It replaces ordinary room
@@ -943,7 +1147,13 @@ func (m *CampingModule) syncLocked(leaderUserID int) error {
 
 func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.Camp, announce bool) error {
 	operationID := restOperationID(camp)
-	if _, err := m.survival.ApplyCompanyRestRecovery(leaderUserID, operationID, camp.Rest.RecoveryAmount()); err != nil {
+	var err error
+	if bonus, ok := m.survival.(bonusSurvival); ok && len(camp.Rest.Bedrolls) > 0 {
+		_, err = bonus.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, camp.Rest.RecoveryAmount(), bedrollBonuses(camp.Rest))
+	} else {
+		_, err = m.survival.ApplyCompanyRestRecovery(leaderUserID, operationID, camp.Rest.RecoveryAmount())
+	}
+	if err != nil {
 		return err
 	}
 	m.recoveryApplied[leaderUserID] = true
@@ -974,7 +1184,16 @@ func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.C
 		return err
 	}
 	if announce {
-		m.sendToLeader(leaderUserID, "Your company feels rested.")
+		text := "Your company feels rested."
+		if n := len(camp.Rest.Bedrolls); n == 1 {
+			text += " The bedroll made for a deeper sleep."
+		} else if n > 1 {
+			text += fmt.Sprintf(" The %d bedrolls made for a deeper sleep.", n)
+		}
+		if camp.Rest.Bells && camp.Rest.Raid == nil {
+			text += " The bells hung quiet."
+		}
+		m.sendToLeader(leaderUserID, text+" The fire has burned down to embers.")
 	}
 	return nil
 }
@@ -1048,6 +1267,15 @@ func (m *CampingModule) recoverLocked() {
 				m.scheduleLocked(refreshed)
 			}
 		case camping.Completed:
+			// A camp saved before Phase 40a3 kept its fire lit after the
+			// rest; it burns down now, so resting again needs fuel.
+			if camp.FireLit {
+				camp.BurnDown()
+				m.camps[leaderUserID] = camp
+				if err := m.saveLocked(); err != nil {
+					mudlog.Warn("camping: recovery burn down", "leader", leaderUserID, "error", err)
+				}
+			}
 			if err := m.syncLocked(leaderUserID); err != nil {
 				mudlog.Warn("camping: recovery completion retry", "leader", leaderUserID, "error", err)
 			}
@@ -1074,10 +1302,23 @@ func (m *CampingModule) statusTextLocked(leaderUserID int) string {
 		return "You have no camp."
 	}
 	lines := []string{fmt.Sprintf("Camp at %s.", roomTitle(camp.RoomID))}
-	if camp.FireLit {
+	switch {
+	case camp.FireLit && camp.Damp:
+		lines = append(lines, "The campfire is lit, but its damp wood gives light and no warmth.")
+	case camp.FireLit:
 		lines = append(lines, "The campfire is lit.")
-	} else {
+	case camp.Embers:
+		lines = append(lines, `The fire has burned down to glowing embers. They keep the camp warm; feed the fire (camp fire) to rest again.`)
+	default:
 		lines = append(lines, "There is no fire lit.")
+	}
+	if camp.Tent {
+		lines = append(lines, "An oiled canvas tent is pitched here.")
+	}
+	if camp.Rest != nil && camp.Rest.State == camping.Resting {
+		if line := restGearText(camp.Rest, camp.Tent, m.companyMembers(leaderUserID)); line != "" {
+			lines = append(lines, line)
+		}
 	}
 	if camp.Rest != nil {
 		switch camp.Rest.State {
@@ -1110,12 +1351,19 @@ func roomTitle(roomID int) string {
 func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
 	args := strings.Fields(strings.ToLower(strings.TrimSpace(rest)))
 	if len(args) == 0 {
-		user.SendText(m.establish(user, room))
+		text := m.establish(user, room)
+		if strings.HasPrefix(text, "You make camp here.") && room != nil {
+			text += " " + m.fuelLine(user, room)
+		}
+		user.SendText(text)
 		return true, nil
 	}
 	switch args[0] {
 	case "status":
 		text := m.status(user.UserId)
+		if roomID, unlit := m.unlitCampRoom(user.UserId); unlit {
+			text += "\n" + m.fuelLine(user, rooms.LoadRoom(roomID))
+		}
 		if m.hasCamp(user.UserId) {
 			text += "\n" + m.sharpenPreview(user)
 		}
@@ -1222,6 +1470,8 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 		s.CanCamp = has(m.roomTag())
 	} else {
 		s.HasCamp, s.Here, s.FireLit = true, camp.RoomID == roomID, camp.FireLit
+		s.Embers, s.Tent = camp.Embers, camp.Tent
+		s.RoomID = camp.RoomID
 		if camp.Rest != nil && camp.Rest.State == camping.Completed {
 			s.Rested = true
 		}

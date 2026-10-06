@@ -12,6 +12,14 @@
 #   attack      harms one foe (a caster's spell)
 #   attack-all  harms the foe's group (a caster's spell at two or more foes)
 #   hex         a Witch's hex: takes foes' turns away (Phase 38a)
+#   big-heal    a heavy heal for an ally under 40% health (Phase 38b)
+#   rejuv       a heal over time, for an ally above 35% health
+#   grove       a heal over time on a whole formation row
+#   ward        absorbs an ally's next blows, cast while no one needs healing
+#   bark        armor for an ally, cast while no one needs healing
+#   bless       Attack and Evasion for an ally, cast while no one needs healing
+#   siphon      drains a foe and heals the most hurt ally
+#   summon      calls the class summon (Angel, Demon) as the battle opens
 # A character casts the first listed spell of a use that it knows and can
 # pay for. Unknown spells are dropped at load with a warning.
 AutoSpells:
@@ -32,3 +40,16 @@ AutoSpells:
   - { Spell: dread, Use: hex }
   - { Spell: blight, Use: hex }
   - { Spell: hex, Use: attack }
+  # Phase 38b: the class spells; a character casts one only when its class
+  # (or level) has taught it.
+  - { Spell: greaterheal, Use: big-heal }
+  - { Spell: rejuvenation, Use: rejuv }
+  - { Spell: grove, Use: grove }
+  - { Spell: siphon, Use: siphon }
+  - { Spell: ward, Use: ward }
+  - { Spell: arcaneward, Use: ward }
+  - { Spell: barkskin, Use: bark }
+  - { Spell: bless, Use: bless }
+  - { Spell: entangle, Use: hex }
+  - { Spell: callhost, Use: summon }
+  - { Spell: bindfiend, Use: summon }

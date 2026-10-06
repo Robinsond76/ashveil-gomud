@@ -98,6 +98,10 @@ screen should show the same thing:
   health shows in **bands only**, and they show only statuses that the
   narration reveals, because another company's private conditions are
   never shown.
+- **Shipped in 40g2:** the half-scale reserve formations, the pennant and the
+  "+N more" collapse (two drawn) and the phone pennants. **Not shipped:**
+  tap-to-swap to watch an ally full-size (deferred as a follow-up: it is a
+  view-only nicety and the half-scale picture already shows the ally's acts).
 - **Tap or click an allied formation to watch it full-size.** Your own
   formation shrinks into its place. This view is **read-only**: Retreat,
   focus and member menus act only on your own company, matching 33d's

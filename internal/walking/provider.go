@@ -12,6 +12,25 @@ type StepProvider interface {
 	Stepped(userID, fromRoomID, toRoomID int)
 }
 
+// EffortProvider is optionally implemented by the step provider (Phase
+// 40a2): a company working in place (gathering) pays the strain of one step
+// on the room's terrain, scaled by a percentage, through the same carry
+// and multipliers a step uses.
+type EffortProvider interface {
+	Effort(userID, roomID, pct int)
+}
+
+// Effort charges the mover's company pct% of one step's strain in roomID. It
+// does nothing without a provider that charges effort.
+func Effort(userID, roomID, pct int) {
+	providerMu.RLock()
+	p := stepProvider
+	providerMu.RUnlock()
+	if ep, ok := p.(EffortProvider); ok && pct > 0 {
+		ep.Effort(userID, roomID, pct)
+	}
+}
+
 // StepListener hears every ordinary step after the provider has charged it
 // (Phase 17: archetype auto-skills). It runs on the game loop.
 type StepListener func(userID, fromRoomID, toRoomID int)

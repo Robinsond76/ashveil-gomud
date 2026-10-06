@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
@@ -317,4 +318,24 @@ func TestCompanyLevelAveragesLeaderAndCompanions(t *testing.T) {
 	assert.Equal(t, 6, CompanyLevel(mk(true, 12, 5, 5, 5, 5)), "6.4 rounds down")
 	assert.Equal(t, 12, CompanyLevel(mk(false, 12, 1, 1, 1)), "unreadable company: the leader alone")
 	assert.Equal(t, 1, CompanyLevel(mk(true, 0)), "never below 1")
+}
+
+type fakeClasses struct{ class string }
+
+func (f fakeClasses) PlayerClass(int) classes.State { return classes.State{Class: f.class} }
+
+// TestSummaryCarriesPromotedClass (Phase 40s5): the leader's class comes from
+// the class provider, a companion's from its member view.
+func TestSummaryCarriesPromotedClass(t *testing.T) {
+	classes.SetProvider(fakeClasses{class: "knight"})
+	t.Cleanup(func() { classes.SetProvider(nil) })
+	src := fullSources()
+	members, _ := src.members(1)
+	members[0].Class = "druid"
+	src.members = func(int) ([]company.MemberView, bool) { return members, true }
+	s := src.summary(testUser())
+	assert.Equal(t, "knight", s.Leader.Class)
+	require.NotEmpty(t, s.Companions)
+	assert.Equal(t, "druid", s.Companions[0].Class)
+	assert.Equal(t, "", s.Companions[1].Class)
 }

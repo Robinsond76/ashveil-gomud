@@ -1,6 +1,6 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">campwatch</ansi>
 
-Camp Watch is a warrior's skill. Camping in the wilds is not always
+Camp Watch is a warrior's and a samurai's skill. Camping in the wilds is not always
 safe: on the Old Kings Road, a camp rest has a 15% chance of drawing a
 pair of road brigands, who come partway through the rest (between 30%
 and 70% of it).
@@ -13,6 +13,11 @@ and 70% of it).
   usual. Unspotted, they fall on a sleeping camp: you still fight them,
   Fatigue still recovers, but nobody is Rested and there is no Forage
   or Vigil from that rest.
+
+Camp bells and trip lines (<ansi fg="command">help camp gear</ansi>) spot raiders too: with no watch
+posted they give a flat 20% chance, and with a watch they add 10 points to
+its chance, up to 90%. A rest uses them a little, and after ten rests they
+are spent.
 
 Whether raiders come, and when, is settled as the rest begins, so a server
 restart never rolls it again. Logging out doesn't dodge them: raiders

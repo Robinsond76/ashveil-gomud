@@ -23,12 +23,16 @@ need and makes nothing, without using up any ingredients.
 
 <ansi fg="yellow-bold">Where to cook</ansi>
 
-The Waymark Inn's hearth (Dunmar) makes three meals from raw game meat
-and wild thyme, gathered on the road:
+The Waymark Inn's hearth (Dunmar) makes its meals from raw game meat, wild
+thyme and fish, gathered on the road:
 
   <ansi fg="yellow">Seared game meat</ansi>    1 meat                    Cooking 1
   <ansi fg="yellow">Thyme-roasted game</ansi>  1 meat, 1 wild thyme      Cooking 2
   <ansi fg="yellow">Hunter's stew</ansi>       2 meat, 1 wild thyme      Cooking 3
+
+Fish gathered with <ansi fg="command">fish</ansi> (<ansi fg="command">help gathering</ansi>) cooks too:
+
+  <ansi fg="yellow">Grilled fish</ansi>       1 raw fish                Cooking 1
 
 The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train</ansi>).
 
@@ -36,10 +40,13 @@ The Waymark Inn also trains Cooking up to level 4 (<ansi fg="command">help train
 
   <ansi fg="command">camp cook</ansi>
   At your own camp with its fire lit, the best cook with you cooks the
-  same three meals, the first their Cooking allows, from company cargo.
+  same meals, the first their Cooking allows, from company cargo.
   The meal goes into the same cargo. A ranger's forage
   fills the cargo with meat and thyme (<ansi fg="command">help forage</ansi>). You can't cook
   in a fight.
+
+An iron cookpot in the company's gear (<ansi fg="command">help camp gear</ansi>) stretches a dish made
+from more than one ingredient into one extra portion.
 
 The best cook is whoever has the highest Cooking among you and the living
 companions at the camp; you win a tie, then the companion with the lowest

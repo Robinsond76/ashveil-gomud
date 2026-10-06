@@ -312,3 +312,31 @@ func TestMarketBuyRefusedWhenCompanyFull(t *testing.T) {
 	assert.Equal(t, 4, stockOf(t, w.store.saved, "Dunmar", 28), "the ledger is untouched")
 	assert.Equal(t, saves, w.store.saveCalls)
 }
+
+// Phase 40a2 review: a SupplyOnly good (firewood, fishing lines) is sold but
+// never bought back, so gathering deadfall to sell is not a money loop.
+func TestMarketNeverBuysBackASupplyOnlyGood(t *testing.T) {
+	w := newTradeWorld(t, 100)
+	w.module.markets["Dunmar"][1].SupplyOnly = true // raw game meat
+	w.user.Character.StoreItem(items.New(29))
+
+	out := w.run(t, "sell meat")
+	assert.Contains(t, out, "The market sells raw game meat but doesn't buy it back.")
+	assert.Equal(t, 100, w.user.Character.Gold)
+	assert.Equal(t, 1, countItem(w.user.Character.Items, 29), "the meat is kept")
+
+	assert.Regexp(t, `raw game meat\s+\d+ gold\s+never`, w.run(t, ""), "the listing says it is never bought")
+	assert.Contains(t, w.run(t, "buy meat"), "You buy the raw game meat")
+}
+
+func TestParseGoodsReadsSupplyOnly(t *testing.T) {
+	raw := []any{
+		map[any]any{"ItemId": 28, "BasePrice": 4, "MinPrice": 2, "MaxPrice": 10, "MaxStock": 40, "TargetStock": 20, "StartStock": 20, "DriftStep": 2, "SupplyOnly": true},
+		map[any]any{"ItemId": 29, "BasePrice": 4, "MinPrice": 2, "MaxPrice": 10, "MaxStock": 40, "TargetStock": 20, "StartStock": 20, "DriftStep": 2},
+	}
+	goods, ok := parseGoods("Dunmar", raw, nil)
+	require.True(t, ok)
+	require.Len(t, goods, 2)
+	assert.True(t, goods[0].SupplyOnly)
+	assert.False(t, goods[1].SupplyOnly)
+}

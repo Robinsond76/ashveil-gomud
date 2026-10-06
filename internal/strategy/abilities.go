@@ -127,6 +127,9 @@ type AbilitySituation struct {
 	// succeeded, but the knockdown is not live yet. It stops a second
 	// tackle and opens nothing else (30g6a).
 	FoeDownQueued bool
+	// Ambush opens any foe (Phase 38b: a Mercenary-turned-Scout's Ambush,
+	// in the battle's first rounds).
+	Ambush bool
 }
 
 // DecideAbility is the ability a member uses this turn, if any: the first
@@ -145,7 +148,7 @@ func DecideAbility(s AbilitySituation) (Ability, bool) {
 				return id, true
 			}
 		case OpeningStrike:
-			if s.Backstab && (s.FoeDown || s.FoeStunned || s.FoeStaggered || s.FoeExposed) {
+			if s.Backstab && (s.Ambush || s.FoeDown || s.FoeStunned || s.FoeStaggered || s.FoeExposed) {
 				return id, true
 			}
 		case AimedShot:

@@ -4,8 +4,10 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/status"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -43,12 +45,12 @@ func combinedEdge(skill, stat float64) float64 {
 
 // attackEdge is the attacker's skill edge over the defender.
 func attackEdge(atk, def *characters.Character) float64 {
-	return SkillEdge(atk.AttackSkill(), def.Evasion())
+	return SkillEdge(attackRating(atk, def), def.Evasion())
 }
 
 // defenseEdge is the defender's skill edge over the attacker.
 func defenseEdge(def, atk *characters.Character) float64 {
-	return SkillEdge(def.Evasion(), atk.AttackSkill())
+	return SkillEdge(def.Evasion(), attackRating(atk, def))
 }
 
 // statAdvantage is StatEdge, never below 0: one-sided chances start at
@@ -116,6 +118,16 @@ func spendEdges(char *characters.Character, spent map[items.ItemType]int) {
 			itm.SpendEdge(n)
 		}
 	}
+}
+
+// harmlessStrike reports a strike with no weapon from a race with no natural
+// damage at all (dice 0d0, no bonus): the flat damage bonus never arms it.
+func harmlessStrike(weaponItemId int, raceId int) bool {
+	if weaponItemId > 0 {
+		return false
+	}
+	d := races.GetRace(raceId).Damage
+	return d.DiceCount*d.SideCount <= 0 && d.BonusDamage <= 0
 }
 
 // damageBonus is the flat bonus a blow adds: the minimum, plus Strength ×
@@ -283,6 +295,12 @@ func critChance(atkSmarts, defSmarts int, hasAccuracy, targetHasBlink bool) int 
 
 // Crits rolls whether an attack is a critical hit.
 func Crits(sourceChar characters.Character, targetChar characters.Character) bool {
+	return critsWith(sourceChar, targetChar, 0)
+}
+
+// critsWith is Crits with extra critical chance points (Phase 39b: a
+// Samurai's Iaijutsu), on top of the class's own (Sharp Eye, Focus).
+func critsWith(sourceChar characters.Character, targetChar characters.Character, extra int) bool {
 	chance := critChance(
 		sourceChar.Stats.Smarts.ValueAdj,
 		targetChar.Stats.Smarts.ValueAdj,
@@ -293,6 +311,7 @@ func Crits(sourceChar characters.Character, targetChar characters.Character) boo
 	if targetChar.HasBuffFlag(status.FlagExposed) {
 		chance = min(chance+status.ExposedCritBonus, 100)
 	}
+	chance = min(chance+sourceChar.ClassCrit()+extra, 100)
 	critRoll := util.Rand(100)
 	util.LogRoll(`Crits`, critRoll, chance)
 	return critRoll < chance
@@ -374,7 +393,8 @@ func blockChanceForEdge(shieldArmor int, edge float64) int {
 // Attack, plus the Strength edge, with its shield's armor.
 func blockChance(def, atk *characters.Character) int {
 	edge := combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Strength.ValueAdj, atk.Stats.Strength.ValueAdj))
-	return blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge)
+	chance := blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge) + def.ClassEffects().Int(classes.Block) + def.Aura.Block
+	return max(0, min(100, chance))
 }
 
 // parryModifier is a weapon's parry modifier in percent (Phase 30g2,
@@ -424,7 +444,8 @@ func parryChanceForEdge(edge float64, weaponMod int) int {
 // Attack, plus the Speed edge, with its weapon's modifier.
 func parryChance(def, atk *characters.Character, weaponMod int) int {
 	edge := combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Speed.ValueAdj, atk.Stats.Speed.ValueAdj))
-	return parryChanceForEdge(edge, weaponMod)
+	chance := parryChanceForEdge(edge, weaponMod) + def.ClassEffects().Int(classes.Parry)
+	return max(0, min(100, chance))
 }
 
 // rollDefense rolls a defense's chance, logging it under name.
@@ -630,6 +651,9 @@ func expectedDPS(atkChar characters.Character, defChar characters.Character) flo
 			attacks, dCount, dSides, dBonus, _ = weapon.GetDiceRoll()
 		} else {
 			attacks, dCount, dSides, dBonus, _ = atkChar.GetDefaultDiceRoll()
+		}
+		if harmlessStrike(weapon.ItemId, atkChar.GetRaceId()) {
+			continue
 		}
 		dBonus += statDmgBonus
 

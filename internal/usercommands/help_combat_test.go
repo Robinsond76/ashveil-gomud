@@ -326,6 +326,56 @@ func TestWitchHelp(t *testing.T) {
 	}
 }
 
+// TestClassHelpTopics: Phase 38b's class pages are indexed, answer to their
+// aliases and render, and the old "help class" now reaches the class hub.
+func TestClassHelpTopics(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var listed []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "character" && !topic.AdminOnly {
+			listed = append(listed, topic.Command)
+		}
+	}
+	pages := map[string][]string{
+		"classes":        {"Ranks", "class promote", "Hierarch"},
+		"promotion":      {"Level 10", "class promote [class] confirm"},
+		"talents":        {"Mending Hands", "talent pick [talent] confirm"},
+		"cleric-routes":  {"Greater Heal", "Rejuvenation", "Siphon"},
+		"warrior-routes": {"Lay on Hands", "Blood Oath", "Divine shield"},
+		"summoning":      {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
+	}
+	for topic, wants := range pages {
+		assert.Contains(t, listed, topic, "help index lists %s", topic)
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		plain := tagPattern.ReplaceAllString(text, "")
+		assert.Contains(t, plain, "Help for", topic)
+		for _, want := range wants {
+			assert.Contains(t, plain, want, topic)
+		}
+	}
+	aliases := map[string]string{
+		"class": "classes", "routes": "classes", "promote": "promotion", "talent": "talents",
+		"priest": "cleric-routes", "druid": "cleric-routes", "paladin": "warrior-routes",
+		"knight": "warrior-routes", "blackguard": "warrior-routes", "angel": "summoning", "demon": "summoning",
+		"hierarch": "summoning", "demonologist": "summoning",
+	}
+	for alias, topic := range aliases {
+		want, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
+	}
+	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch"} {
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "help ", topic)
+	}
+}
+
 // TestBattleScreenHelp (40f): the page says what the picture shows, links
 // the topics it relies on, and the combat and web client hubs point to it.
 func TestBattleScreenHelp(t *testing.T) {
@@ -335,7 +385,7 @@ func TestBattleScreenHelp(t *testing.T) {
 	text, err := GetHelpContents("battlescreen")
 	require.NoError(t, err)
 	text = tagPattern.ReplaceAllString(text, "")
-	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy"} {
+	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy", "Animation", "reduced", "keeps pace", "latest blow", "Allies", "company faltering", "+N more", "K controller", "setting", "hovering names the class", "help promotion"} {
 		assert.Contains(t, text, want)
 	}
 	for _, hub := range []string{"combat", "webclient"} {

@@ -252,3 +252,15 @@ func (s *SpellData) FriendlyScope() EffectScope {
 	}
 	return ""
 }
+
+// UseSpellsForTest replaces the loaded spells with these, returning a func
+// that restores the previous set.
+func UseSpellsForTest(list ...*SpellData) (restore func()) {
+	prev := allSpells
+	next := map[string]*SpellData{}
+	for _, sd := range list {
+		next[sd.SpellId] = sd
+	}
+	allSpells = next
+	return func() { allSpells = prev }
+}

@@ -39,6 +39,8 @@
         mapBackground:   '#111111',  // canvas background color
         defaultZoom:     null,       // null = no default; number = zoom level to ease to on room change
         showResources:   true,       // Phase 40a: draw room-resource icons in tile corners
+        sprites:         true,       // Phase 40b: your class sprite, company badge and ally sprites; off = the classic red square and hearts
+        showCamp:        true,       // Phase 40b: your camp and your party's camps
     };
 
     // Phase 40a: room resources. Until the S1 icon sprites exist each one
@@ -57,6 +59,12 @@
     function resourcesFor(roomId) {
         var info = roomInfoStore.get(roomId);
         return (info && Array.isArray(info.resources)) ? info.resources : [];
+    }
+
+    // Phase 40a2: gathering resources picked clean for now ("depleted").
+    function depletedFor(roomId) {
+        var info = roomInfoStore.get(roomId);
+        return (info && Array.isArray(info.depleted)) ? info.depleted : [];
     }
 
     var mapSettings = (function () {
@@ -277,8 +285,10 @@
         }
 
         if (Array.isArray(info.resources) && info.resources.length > 0) {
+            var gone = Array.isArray(info.depleted) ? info.depleted : [];
             var resNames = info.resources.map(function (r) {
-                return (RESOURCE_INFO[r] && RESOURCE_INFO[r].label) || r;
+                var label = (RESOURCE_INFO[r] && RESOURCE_INFO[r].label) || r;
+                return gone.indexOf(r) !== -1 ? label + ' (picked clean)' : label;
             });
             html += '<hr class="tt-divider"><div class="tt-row">' +
                     '<span class="tt-label">Here</span>' +
@@ -510,6 +520,275 @@
         var partyHeartEase = {}; // name -> { fromGx, fromGy, toGx, toGy, toZ, startTime }
         var heartRafId = null;
 
+
+        // -- Phase 40b: sprites, badge, camps ------------------------------------
+        var WALK_STEP_MS    = 200;  // time the sprite takes per tile; matches CENTER_EASE_DURATION
+        var WALK_QUEUE_MAX  = 2;    // steps the sprite may trail the player before it snaps
+        var FADE_MS         = 250;  // fade-in after a level (z) or zone change
+        var ALLY_SCALE      = 0.75; // allied class sprites at 75% of the player's
+        var identity    = { classid: '', lineage: '' }; // Char.Info
+        var companySize = 0;        // members with the leader, 0 when alone or unknown
+        var campInfo    = null;     // Company.Camp
+        var unit = {
+            x: null, y: null,       // grid position drawn (eased)
+            targetX: null, targetY: null,
+            zoneKey: '',
+            face: 'down', flip: false,
+            step: null,             // { fromX, fromY, toX, toY, face, flip, start }
+            queue: [],
+            fadeStart: -1,
+        };
+        var animTimer = null;
+
+        function faceOf(dx, dy, prev) {
+            if (dx === 0 && dy === 0) { return prev || { face: 'down', flip: false }; }
+            if (dx === 0) { return { face: dy < 0 ? 'up' : 'down', flip: false }; }
+            return { face: 'side', flip: dx < 0 }; // sprites face right; mirror for west; diagonals use side
+        }
+
+        // chainKeys is the sprite folder order for a character: current
+        // class, lineage, then the adventurer.
+        function chainKeys(classid, lineage) {
+            var keys = [];
+            [classid, lineage, 'adventurer'].forEach(function (k) {
+                if (k && keys.indexOf(k) === -1) { keys.push(k); }
+            });
+            return keys;
+        }
+
+        // resolveSheet walks the fallback chain. It returns null while the
+        // wanted image is still loading (nothing flashes in a worse sprite)
+        // and when every image is missing or failed (the caller then draws
+        // the classic marker).
+        function resolveSheet(keys, walking) {
+            for (var i = 0; i < keys.length; i++) {
+                var idle = 'map/units/' + keys[i] + '/idle.png';
+                var walk = 'map/units/' + keys[i] + '/walk.png';
+                var st = Sprites.status(idle);
+                if (st === 'ready') {
+                    if (Sprites.status(walk) === 'ready' && walking) { return { sheet: Sprites.art(walk), walk: true }; }
+                    return { sheet: Sprites.art(idle), walk: false };
+                }
+                if (st === 'loading') { return null; }
+            }
+            return null;
+        }
+
+        // spriteMult is the whole-number multiple of 32 px nearest the tile
+        // size, so pixels stay square; zoomed far out it halves (16 px).
+        function spriteMult(tilePx) {
+            return tilePx < 16 ? 0.5 : Math.max(1, Math.round(tilePx / 32));
+        }
+
+        function drawFrame(sheet, row, flip, cx, feetY, mult, now, startMs, alpha) {
+            var info = sheet.info;
+            var r = Math.max(0, (info.rows || []).indexOf(row));
+            var f = Sprites.frame(info, r, now, startMs);
+            var w = f.sw * mult, h = f.sh * mult;
+            var x = Math.round(cx - w / 2);
+            var y = Math.round(feetY - h * ((info.feet_baseline || f.sh) / f.sh));
+            ctx.save();
+            ctx.imageSmoothingEnabled = false;
+            ctx.globalAlpha = alpha;
+            if (flip) {
+                ctx.translate(x + w, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(sheet.img, f.sx, f.sy, f.sw, f.sh, 0, y, w, h);
+            } else {
+                ctx.drawImage(sheet.img, f.sx, f.sy, f.sw, f.sh, x, y, w, h);
+            }
+            ctx.restore();
+        }
+
+        // drawIcon draws a centered, anchor-less marker (ring, badge, camp
+        // pieces) at <mult>x. It reports whether the image was ready.
+        function drawIcon(path, cx, cy, mult, now) {
+            var a = Sprites.art(path);
+            if (!a) { return false; }
+            var f = Sprites.frame(a.info, 0, now, 0);
+            var w = f.sw * mult, h = f.sh * mult;
+            ctx.save();
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(a.img, f.sx, f.sy, f.sw, f.sh, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h);
+            ctx.restore();
+            return true;
+        }
+
+        function spritesOn() { return mapSettings.sprites !== false; }
+
+        // unitMoveTo records the player's move: a one-tile step walks (facing
+        // the way it went) and queues at most WALK_QUEUE_MAX behind; a jump
+        // of more than a tile (recall, teleport) and a faster pile-up snap;
+        // a level or zone change snaps and fades in, keeping the facing.
+        function unitMoveTo(gx, gy, zoneKey, now) {
+            if (unit.x === null) {
+                unit.x = unit.targetX = gx; unit.y = unit.targetY = gy; unit.zoneKey = zoneKey;
+                return;
+            }
+            if (zoneKey !== unit.zoneKey) {
+                unit.zoneKey = zoneKey;
+                unitSnap(gx, gy);
+                unit.fadeStart = now;
+                return;
+            }
+            var dx = gx - unit.targetX, dy = gy - unit.targetY;
+            if (dx === 0 && dy === 0) { return; }
+            if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) { unitSnap(gx, gy); return; }
+            var f = faceOf(dx, dy);
+            unit.queue.push({ x: gx, y: gy, face: f.face, flip: f.flip });
+            unit.targetX = gx; unit.targetY = gy;
+            if (unit.queue.length > WALK_QUEUE_MAX) { unitSnap(gx, gy); }
+        }
+
+        function unitSnap(gx, gy) {
+            unit.x = unit.targetX = gx; unit.y = unit.targetY = gy;
+            unit.queue = [];
+            unit.step = null;
+        }
+
+        // unitPose advances the walk to <now> and returns where the sprite
+        // is and whether it is walking.
+        function unitPose(now) {
+            var chainStart = null;
+            while (true) {
+                if (!unit.step && unit.queue.length) {
+                    var n = unit.queue.shift();
+                    unit.step = { fromX: unit.x, fromY: unit.y, toX: n.x, toY: n.y,
+                                  start: chainStart !== null ? chainStart : now };
+                    unit.face = n.face; unit.flip = n.flip;
+                }
+                if (!unit.step) { break; }
+                var t = (now - unit.step.start) / WALK_STEP_MS;
+                if (t >= 1) {
+                    unit.x = unit.step.toX; unit.y = unit.step.toY;
+                    chainStart = unit.step.start + WALK_STEP_MS;
+                    unit.step = null;
+                    continue;
+                }
+                return {
+                    x: unit.step.fromX + (unit.step.toX - unit.step.fromX) * t,
+                    y: unit.step.fromY + (unit.step.toY - unit.step.fromY) * t,
+                    walking: true, start: unit.step.start,
+                };
+            }
+            return { x: unit.x, y: unit.y, walking: false, start: 0 };
+        }
+
+        // fireAndRest draws a camp's fire (bottom right of the tent, or at
+        // <at>) and its resting mark (over the tent).
+        function fireAndRest(cx, cy, mult, lit, resting, now, at) {
+            var fx = at ? at.px : cx + 8 * mult, fy = at ? at.py : cy + 8 * mult;
+            if (lit) {
+                drawIcon('map/camp/fire-lit.png', fx, fy, mult, now);
+                drawIcon('map/camp/smoke.png', fx, fy - 12 * mult, mult, now);
+            } else {
+                drawIcon('map/camp/fire-unlit.png', fx, fy, mult, now);
+            }
+            if (resting) { drawIcon('map/camp/resting.png', cx - 8 * mult, cy - 12 * mult, mult, now); }
+        }
+
+        function drawCamp(roomId, ally, lit, resting, innRest, now, occupied) {
+            var r = rooms.get(roomId);
+            if (!r) { return; }
+            var p = gridToCanvas(r.x, r.y);
+            var mult = spriteMult(getRoomSize() * zoomScale);
+            var fire = null;
+            if (occupied) {
+                // Your sprite stands on this tile and would hide the camp:
+                // pitch the tent behind your left shoulder and the fire by
+                // your right foot so both still show (40b review).
+                fire = { px: p.px + 14 * mult, py: p.py + 6 * mult };
+                p = { px: p.px - 12 * mult, py: p.py - 8 * mult };
+            }
+            if (innRest) {
+                drawIcon('map/camp/inn-rest.png', p.px, p.py, mult, now);
+                return;
+            }
+            var tent = ally ? 'map/camp/tent-ally.png' : 'map/camp/tent.png';
+            if (!drawIcon(tent, p.px, p.py, mult, now)) {
+                // no art yet: a small tent triangle
+                var q = getRoomSize() * zoomScale * 0.4;
+                ctx.fillStyle = ally ? '#6a9ec9' : '#c9a15a';
+                ctx.beginPath(); ctx.moveTo(p.px, p.py - q); ctx.lineTo(p.px + q, p.py + q); ctx.lineTo(p.px - q, p.py + q); ctx.closePath(); ctx.fill();
+            }
+            fireAndRest(p.px, p.py, mult, lit, resting, now, fire);
+        }
+
+        // drawCamps draws your camp and your party's. spriteOn says your class
+        // sprite stands on your tile, so a camp there is drawn beside it.
+        function drawCamps(now, spriteOn) {
+            if (!campInfo || mapSettings.showCamp === false) { return; }
+            (campInfo.allied_camps || []).forEach(function (c) {
+                drawCamp(c.room_id, true, !!c.fire_lit, !!c.resting, false, now, spriteOn && c.room_id === currentRoomId);
+            });
+            if (campInfo.has_camp && campInfo.room_id) {
+                var inn = !!(campInfo.here && campInfo.inn && campInfo.resting);
+                drawCamp(campInfo.room_id, false, !!campInfo.fire_lit, !!campInfo.resting, inn, now, spriteOn && campInfo.room_id === currentRoomId);
+            }
+        }
+
+        // drawUnit draws the player's marker above the terrain: the here-ring,
+        // the class sprite, then the company badge. It returns false when
+        // there is no sprite to draw (off, still loading, or no art), so the
+        // caller shows the classic red square.
+        function drawUnit(now) {
+            if (!spritesOn() || currentRoomId === null || unit.x === null) { return false; }
+            var pose = unitPose(now);
+            var res = resolveSheet(chainKeys(identity.classid, identity.lineage), pose.walking);
+            if (!res) { return false; }
+            var tile = getRoomSize() * zoomScale;
+            var mult = spriteMult(tile);
+            var p = gridToCanvas(pose.x, pose.y);
+            var alpha = 1;
+            if (unit.fadeStart >= 0) {
+                alpha = Math.min(1, (now - unit.fadeStart) / FADE_MS);
+                if (alpha >= 1) { unit.fadeStart = -1; }
+            }
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            if (!drawIcon('map/markers/here-ring.png', p.px, p.py + 8 * mult, mult, now)) {
+                ctx.strokeStyle = '#ffd24a'; ctx.lineWidth = Math.max(1, mult * 2);
+                ctx.strokeRect(p.px - tile / 2, p.py - tile / 2, tile, tile);
+            }
+            ctx.restore();
+            drawFrame(res.sheet, unit.face, unit.flip, p.px, p.py + 12 * mult, mult, now, pose.walking ? pose.start : 0, alpha);
+            if (companySize > 1) {
+                var bx = p.px + 9 * mult, by = p.py - 12 * mult;
+                var bw = 12 * mult;
+                if (!drawIcon('map/markers/company-badge.png', bx, by, mult, now)) {
+                    ctx.fillStyle = '#8a2a2a'; ctx.beginPath(); ctx.arc(bx, by, bw / 2, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold ' + Math.round(8 * mult) + 'px monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(String(companySize), bx, by);
+            }
+            return { walking: pose.walking };
+        }
+
+        // drawAllySprite draws a party member as a class sprite at 75% with
+        // an ally pennant. It returns false when there is no art to draw, so
+        // the caller keeps the heart.
+        function drawAllySprite(ease, gx, gy, moving, now) {
+            if (!ease.classid && !ease.lineage) { return false; }
+            var res = resolveSheet(chainKeys(ease.classid, ease.lineage), moving);
+            if (!res) { return false; }
+            var p = gridToCanvas(gx, gy);
+            var mult = spriteMult(getRoomSize() * zoomScale) * ALLY_SCALE;
+            drawFrame(res.sheet, ease.face || 'down', !!ease.flip, p.px, p.py + 12 * mult, mult, now, ease.startTime, 1);
+            drawIcon('map/markers/ally-banner.png', p.px + 9 * mult, p.py - 10 * mult, mult, now);
+            return true;
+        }
+
+        function scheduleAnim(walking) {
+            if (!container || !container.isConnected || animTimer !== null) { return; }
+            if (walking) {
+                animTimer = requestAnimationFrame(function () { animTimer = null; render(); });
+            } else {
+                animTimer = setTimeout(function () { animTimer = null; render(); }, 120);
+            }
+        }
+
         // -- Helpers -----------------------------------------------------------
         function resizeCanvas() {
             if (!canvas || !container) { return; }
@@ -699,14 +978,21 @@
                 }
             });
 
+            var nowMs        = performance.now();
             var scaledSize   = ROOM_SIZE        * zoomScale;
             var scaledBorder = ROOM_BORDER_WIDTH * zoomScale;
             var scaledFont   = SYMBOL_FONT_SIZE  * zoomScale;
             var half         = scaledSize / 2;
 
+            // Phase 40b: with a class sprite the current room keeps its terrain
+            // colour and the sprite stands above it; without one it stays the
+            // classic red square.
+            var spriteOn = spritesOn() && currentRoomId !== null && unit.x !== null &&
+                resolveSheet(chainKeys(identity.classid, identity.lineage), false) !== null;
+
             rooms.forEach(function (room, id) {
                 var p         = gridToCanvas(room.x, room.y);
-                var isCurrent = (id === currentRoomId);
+                var isCurrent = (id === currentRoomId) && !spriteOn;
                 var fill      = isCurrent ? CURRENT_ROOM_COLOR : colorForSymbol(room.symbol, room.env);
                 var rx = p.px - half, ry = p.py - half;
                 ctx.fillStyle   = fill;
@@ -731,6 +1017,7 @@
                 ctx.fillText(room.symbol || '\u2022', p.px, p.py);
                 if (mapSettings.showResources) {
                     var resIds = resourcesFor(id);
+                    var goneIds = depletedFor(id);
                     if (resIds.length > 0) {
                         var dot   = Math.max(3, scaledSize * 0.16);
                         var shown = resIds.slice(0, RESOURCE_ICON_MAX);
@@ -746,10 +1033,23 @@
                                 dx = p.px - half * 0.5 + i * (dot * 2 + 1) - dot;
                                 dy = p.py - half * 0.62;
                             }
+                            var picked = goneIds.indexOf(rid) !== -1;
                             ctx.beginPath();
                             ctx.arc(dx, dy, dot, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.stroke();
+                            if (picked) {
+                                // depleted: the dot is hollow with a slash through it
+                                ctx.fillStyle = mapSettings.mapBackground;
+                                ctx.fill();
+                                ctx.strokeStyle = (meta && meta.color) || '#aaaaaa';
+                                ctx.stroke();
+                                ctx.beginPath();
+                                ctx.moveTo(dx - dot, dy + dot);
+                                ctx.lineTo(dx + dot, dy - dot);
+                                ctx.stroke();
+                            } else {
+                                ctx.fill();
+                                ctx.stroke();
+                            }
                         });
                         if (resIds.length > RESOURCE_ICON_MAX) {
                             ctx.fillStyle = symColor;
@@ -779,6 +1079,8 @@
                 }
             });
 
+            drawCamps(nowMs, spriteOn);
+
             // Draw party member hearts over rooms (skip the player's current room).
             // Each heart eases from its previous grid position to the new one over HEART_EASE_DURATION.
             // Hearts on a different z-plane than the current room are not drawn.
@@ -798,15 +1100,29 @@
                 var gx = ease.fromGx + (ease.toGx - ease.fromGx) * s;
                 var gy = ease.fromGy + (ease.toGy - ease.fromGy) * s;
                 var p = gridToCanvas(gx, gy);
-                ctx.fillStyle = ease.aggro ? '#ff3333' : '#00cfcf';
-                ctx.fillText('\u2665', p.px, p.py);
+                // Phase 40b: a member whose class is known shows as that class's
+                // sprite with an ally pennant; otherwise (or with sprites off)
+                // the heart stays.
+                if (!(spritesOn() && drawAllySprite(ease, gx, gy, t < 1, nowMs))) {
+                    ctx.fillStyle = ease.aggro ? '#ff3333' : '#00cfcf';
+                    ctx.font = 'bold ' + Math.round(scaledSize) + 'px serif';
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('\u2665', p.px, p.py);
+                }
                 if (t < 1) { anyEasing = true; }
             });
+            var drewUnit = drawUnit(nowMs);
             if (anyEasing && heartRafId === null) {
                 heartRafId = requestAnimationFrame(function () {
                     heartRafId = null;
                     render();
                 });
+            }
+            // The sprites and camp fires animate: keep redrawing while any is
+            // on screen (a walk redraws every frame, idling a few times a second).
+            if (drewUnit || (spritesOn() && campInfo && mapSettings.showCamp !== false &&
+                (campInfo.has_camp || (campInfo.allied_camps || []).length))) {
+                scheduleAnim(!!(drewUnit && drewUnit.walking));
             }
         }
 
@@ -959,6 +1275,7 @@
                 }
             }
             currentRoomId = info.num;
+            unitMoveTo(gx, gy, zoneKey, performance.now());
             setCameraTarget(gx, gy);
         }
 
@@ -1012,6 +1329,18 @@
                 [{ label: 'On', value: true }, { label: 'Off', value: false }],
                 function () { return mapSettings.showResources !== false; },
                 function (v) { mapSettings.showResources = v; }
+            )));
+
+            panel.appendChild(row('Sprites', btnGroup(
+                [{ label: 'On', value: true }, { label: 'Off', value: false }],
+                function () { return mapSettings.sprites !== false; },
+                function (v) { mapSettings.sprites = v; }
+            )));
+
+            panel.appendChild(row('Camps', btnGroup(
+                [{ label: 'On', value: true }, { label: 'Off', value: false }],
+                function () { return mapSettings.showCamp !== false; },
+                function (v) { mapSettings.showCamp = v; }
             )));
 
             var slider = document.createElement('input');
@@ -1120,6 +1449,31 @@
             onRoomUpdate:        onRoomUpdate,
             setupResizeObserver: setupResizeObserver,
             getCurrentRoomId:    function () { return currentRoomId; },
+            setIdentity: function (classid, lineage) {
+                if (identity.classid === classid && identity.lineage === lineage) { return; }
+                identity.classid = classid; identity.lineage = lineage;
+                render();
+            },
+            setCompanySize: function (n) { if (n !== companySize) { companySize = n; render(); } },
+            setCamp: function (camp) { campInfo = camp; render(); },
+            redraw: function () { render(); },
+            // state is for the browser checks (scripts/browser/map-check.mjs).
+            state: function () {
+                var res = resolveSheet(chainKeys(identity.classid, identity.lineage), false);
+                var pose = unit.x === null ? null : unitPose(performance.now());
+                return {
+                    spriteDrawn: spritesOn() && !!res, face: unit.face, flip: unit.flip, walking: !!(pose && pose.walking),
+                    queued: unit.queue.length, companySize: companySize,
+                    camp: campInfo, fading: unit.fadeStart >= 0,
+                    unit: pose ? { x: pose.x, y: pose.y } : null,
+                    keys: chainKeys(identity.classid, identity.lineage),
+                    allies: Object.keys(partyHeartEase).map(function (n) {
+                        var e = partyHeartEase[n];
+                        return { name: n, classid: e.classid, lineage: e.lineage, face: e.face,
+                                 sprite: spritesOn() && !!(e.classid || e.lineage) && resolveSheet(chainKeys(e.classid, e.lineage), false) !== null };
+                    }),
+                };
+            },
             setPartyPositions: function (positions) {
                 var newPositions = positions || {};
                 var now = performance.now();
@@ -1155,8 +1509,13 @@
                         toGy:      pos.y,
                         toZ:       pos.z,
                         aggro:     pos.aggro,
+                        lineage:   pos.lineage,
+                        classid:   pos.classid,
                         startTime: now,
                     };
+                    var f = faceOf(pos.x - fromGx, pos.y - fromGy, existing ? { face: existing.face, flip: existing.flip } : null);
+                    partyHeartEase[name].face = f.face;
+                    partyHeartEase[name].flip = f.flip;
                 });
 
                 // Remove ease entries for members no longer in the party.
@@ -1223,6 +1582,8 @@
     });
 
     view2d.setupResizeObserver(win);
+    Sprites.onChange(function () { view2d.redraw(); });
+    window.MapView = { state: function () { return view2d.state(); } };
 
     // =========================================================================
     // GMCP update logic
@@ -1246,9 +1607,29 @@
             if (name === myName) { return; }
             var v = vitals[name];
             if (!v.hascoordinates) { return; }
-            partyMemberPositions[name] = { x: v.mapx, y: v.mapy, z: v.mapz, hasCoordinates: true, aggro: !!v.aggro };
+            partyMemberPositions[name] = { x: v.mapx, y: v.mapy, z: v.mapz, hasCoordinates: true, aggro: !!v.aggro,
+                                           lineage: v.lineage || '', classid: v.classid || '' };
         });
         view2d.setPartyPositions(partyMemberPositions);
+    }
+
+    // Phase 40b: who the player is (Char.Info), how many travel with them and
+    // their camps (Company), all read from the stored GMCP state.
+    function updateIdentity() {
+        var c = Client.GMCPStructs.Char;
+        var info = c && c.Info;
+        view2d.setIdentity((info && info.classid) || '', (info && info.lineage) || '');
+    }
+
+    function updateCompany() {
+        var co = Client.GMCPStructs.Company;
+        var size = 0;
+        if (co && co.leader && Array.isArray(co.members)) {
+            var withLeader = co.members.filter(function (m) { return m && m.status === 'present'; }).length;
+            size = withLeader > 0 ? withLeader + 1 : 0;
+        }
+        view2d.setCompanySize(size);
+        view2d.setCamp((co && co.Camp) || null);
     }
 
     function updateMap() {
@@ -1256,6 +1637,9 @@
         if (!obj || !obj.Info) { return; }
         win.open();
         if (!win.isOpen()) { return; }
+
+        updateIdentity();
+        updateCompany();
 
         if (!worldMapRequested) {
             worldMapRequested = true;
@@ -1285,9 +1669,13 @@
 
     VirtualWindows.register({
         window:       win,
-        gmcpHandlers: ['Room', 'World', 'Party', 'Party.Vitals'],
+        gmcpHandlers: ['Room', 'World', 'Party', 'Party.Vitals', 'Char', 'Company'],
         onGMCP: function (namespace) {
-            if (namespace === 'World.Map') {
+            if (namespace === 'Char.Info' || namespace === 'Char') {
+                updateIdentity();
+            } else if (namespace.indexOf('Company') === 0) {
+                updateCompany();
+            } else if (namespace === 'World.Map') {
                 updateWorldMap();
             } else if (namespace === 'Room.Info' || namespace === 'Room') {
                 updateMap();

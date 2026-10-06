@@ -12,6 +12,7 @@ func RegisterListeners() {
 	events.RegisterListener(events.UserPurged{}, PurgeAlliance, events.First)
 	events.RegisterListener(events.NewTurn{}, MercyTick)
 	events.RegisterListener(events.MobDeath{}, MoraleDeath)
+	events.RegisterListener(events.MobDeath{}, SoulFeast) // Phase 38b
 	events.RegisterListener(events.MoraleCheck{}, DreadCheck)
 	events.RegisterListener(events.RoomChange{}, MercyLeave)
 	events.RegisterListener(events.PlayerDespawn{}, MercyLeave)

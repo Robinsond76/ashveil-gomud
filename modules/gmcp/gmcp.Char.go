@@ -5,8 +5,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
@@ -511,10 +513,13 @@ func (g *GMCPCharModule) GetCharNode(user *users.UserRecord, gmcpModule string) 
 	payload := GMCPCharModule_Payload{}
 
 	if all || g.wantsGMCPPayload(`Char.Info`, gmcpModule) {
+		lineageID, classID := classKeys(user.UserId)
 		payload.Info = &GMCPCharModule_Payload_Info{
 			Account:        user.Username,
 			Name:           user.Character.Name,
-			Class:          skills.GetProfession(user.Character.GetAllSkillRanks()),
+			Class:          user.Character.ClassTitle(),
+			Lineage:        lineageID,
+			ClassID:        classID,
 			Race:           user.Character.Race(),
 			Alignment:      user.Character.AlignmentName(),
 			Level:          user.Character.Level,
@@ -968,9 +973,15 @@ type GMCPCharModule_Payload struct {
 // Char.Info
 // /////////////////
 type GMCPCharModule_Payload_Info struct {
-	Account        string `json:"account,omitempty"`
-	Name           string `json:"name,omitempty"`
-	Class          string `json:"class,omitempty"`
+	Account string `json:"account,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Class   string `json:"class,omitempty"`
+	// Phase 40b: the Ashveil class keys the map sprite is chosen by:
+	// Lineage is the base archetype, ClassID the promoted class (the
+	// archetype until the character promotes). Empty before an archetype
+	// is chosen.
+	Lineage        string `json:"lineage,omitempty"`
+	ClassID        string `json:"classid,omitempty"`
 	Race           string `json:"race,omitempty"`
 	Alignment      string `json:"alignment,omitempty"`
 	Level          int    `json:"level,omitempty"`
@@ -1234,4 +1245,18 @@ type GMCPCharModule_Payload_Kills_PvpSection struct {
 
 type GMCPCharModule_Payload_Kills_PvpEntry struct {
 	Count int `json:"count"`
+}
+
+// classKeys are a player's lineage (base archetype) and current class ids
+// for the map sprite (Phase 40b); both empty before an archetype is chosen.
+func classKeys(userID int) (lineage, classID string) {
+	lineage, ok := archetypes.PlayerArchetype(userID)
+	if !ok {
+		return "", ""
+	}
+	classID = lineage
+	if c := classes.PlayerClass(userID).Class; c != "" {
+		classID = c
+	}
+	return lineage, classID
 }

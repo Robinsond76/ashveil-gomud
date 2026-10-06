@@ -6,6 +6,10 @@ import "sync"
 type RoomCamp struct {
 	LeaderUserID int
 	FireLit      bool
+	Damp         bool // lit with damp wood: no warmth (Phase 40a2)
+	Embers       bool // burned down after a rest (Phase 40a3)
+	Tent         bool // an oiled canvas tent is pitched (Phase 40a3)
+	Resting      bool // a rest is under way
 }
 
 var (
@@ -45,9 +49,20 @@ func CampLines(camps []RoomCamp, viewerUserID int, nameOf func(userID int) strin
 				whose = name + "'s camp"
 			}
 		}
-		if camp.FireLit {
-			lines = append(lines, whose+" is pitched here: bedrolls around a crackling campfire.")
-		} else {
+		pitch := "bedrolls"
+		if camp.Tent {
+			pitch = "an oiled canvas tent and bedrolls"
+		}
+		switch {
+		case camp.FireLit && camp.Damp:
+			lines = append(lines, whose+" is pitched here: "+pitch+" around a smoky, sullen fire of damp wood.")
+		case camp.FireLit:
+			lines = append(lines, whose+" is pitched here: "+pitch+" around a crackling campfire.")
+		case camp.Embers:
+			lines = append(lines, whose+" is pitched here: "+pitch+" around the glowing embers of a banked fire.")
+		case camp.Tent:
+			lines = append(lines, whose+" is pitched here: an oiled canvas tent beside a cold fire pit.")
+		default:
 			lines = append(lines, whose+" is pitched here, around a cold fire pit.")
 		}
 	}

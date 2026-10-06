@@ -1,0 +1,39 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">talents</ansi>
+
+A talent is a small, permanent bonus you choose at levels 5, 15, 25, 35, 45
+and 55. Each lineage has its own list of five. You may take the same talent
+twice, unless it says it can be taken once.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">talent</ansi>                          your talents and any you may still choose
+  <ansi fg="command">talent list</ansi>                     your lineage's talents
+  <ansi fg="command">talent pick [talent]</ansi>            preview a choice
+  <ansi fg="command">talent pick [talent] confirm</ansi>    take it (permanent)
+  <ansi fg="command">talent pick [member] [talent]</ansi>   the same for a companion
+
+<ansi fg="yellow-bold">The lists</ansi>
+
+  Cleric   Mending Hands (+10% healing), Steadfast Prayer (blows break your
+           chant 25% less often), Deep Well (+10% maximum mana), Sanctuary
+           (+3 Evasion while chanting), Gentle Rest (after-battle patching
+           costs 15% less mana)
+  Warrior  Toughness (+8% maximum health), Heavy Hands (+1 damage on every
+           blow), Keen Edge (+2 Attack), Footwork (+2 Evasion), Tackle Drill
+           (Tackle ready a round sooner; once)
+  Samurai  Keen Edge, Footwork, Heavy Hands, Toughness, Sharp Eye (+3% critical
+           chance on every blow)
+  Witch    Deep Well, Steadfast Prayer, Thrift (spells cost 10% less mana),
+           Potent Hex (+5 to a hex's chance to land), Sanctuary
+  Wizard   Deep Well, Focus (+8% spell damage), Steadfast Prayer, Thrift,
+           Sanctuary
+  Ranger   Keen Edge, Footwork, Steady Aim (Aimed Shot +2 damage), Quick Draw
+           (Aimed Shot ready a round sooner; once), Toughness
+  Rogue    Keen Edge, Footwork, Deep Cuts (Opening Strike +2 damage), Patient
+           Hand (Opening Strike ready a round sooner; once), Heavy Hands
+
+Talents need no class: a character can take its first at level 5, before
+promotion. Picks beyond what your level has earned stay on your record but do
+nothing until you have earned the slot.
+
+See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help progression</ansi>.

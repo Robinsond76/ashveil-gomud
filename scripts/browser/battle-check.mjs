@@ -2,6 +2,8 @@
 // through dock-windows-harness.html with the real web client core) in
 // Chromium with Playwright: GMCP feeds and Company.Battle.Event messages
 // in, positions, bars, statuses, the outcome hold and the commands out.
+// Phase 40g2 adds allied formations, the pace the feed sends, the company's
+// nerve, pixel-font role letters and the unseen presence's cell.
 //
 //   NODE_PATH=$(npm root -g) node scripts/browser/battle-check.mjs [screenshot.png]
 import { createRequire } from 'node:module';
@@ -25,7 +27,7 @@ const company = {
   leader: member('leader', 0, 'Wren', 'Ranger', { row: 0, col: 1 }, 'fighter'),
   members: [
     member('companion:1', 1, 'Oswin', 'Cleric', { row: 1, col: 0 }, 'healer'),
-    member('companion:2', 2, 'Brant', 'Warrior', { row: 0, col: 0 }, 'guardian'),
+    { ...member('companion:2', 2, 'Brant', 'Warrior', { row: 0, col: 0 }, 'guardian'), class: 'knight', class_name: 'Knight' },
     member('companion:3', 3, 'Ysolde', 'Wizard', { row: 2, col: 2 }, 'caster'),
     member('companion:4', 4, 'Tamsin', 'Rogue', null, 'fighter'),
   ],
@@ -63,9 +65,15 @@ await page.reload();
 const state = () => page.evaluate(() => window.BattleScreen.state());
 const unitOf = (s, id) => s.units.find(u => u.id === id);
 const gmcp = (ns, body) => page.evaluate(([n, b]) => window.gmcp(n, b), [ns, body]);
-const events = body => page.evaluate(b => Client.dispatchBattleEvents(b), body);
+// As the server sends them: round is its own counter, fight_round the
+// fight's round from 1 (the title must show the latter).
+const events = body => page.evaluate(b => Client.dispatchBattleEvents(b),
+  Object.assign({}, body, { round: body.round + 5000, fight_round: body.round }));
 
-await gmcp('Room', { Info: { environment: 'forest' } });
+// The 40f section runs with animations off: the screen must behave as it did
+// then (acceptance test 3). The 40g section below turns them on.
+await page.evaluate(() => window.BattleScreen.setMotion('off'));
+await gmcp('Room', { Info: { environment: 'forest', area: 'Frostfang' } });
 await gmcp('Company', company);
 check(!(await state()).open, 'closed with no battle');
 
@@ -76,6 +84,15 @@ check(s.open, 'the screen opens by itself when a battle starts');
 check(s.biome === 'forest', 'the biome comes from Room.Info.environment');
 check(s.units.filter(u => u.side === 'company').length === 4, 'four placed members stand (the unplaced one does not)');
 check(s.units.filter(u => u.side === 'enemy').length === 4, 'four enemies stand');
+check(unitOf(s, 'companion:2').promoted === 'knight' && unitOf(s, 'leader').promoted === '', 'a promoted member draws its class art (40s5), others their base');
+{
+  const b = unitOf(s, 'companion:2').at;
+  const box = await page.locator('#battle-screen canvas').boundingBox();
+  await page.mouse.move(box.x + b.x * box.width / 320, box.y + (b.y - 12) * box.height / 180);
+  const cap = await page.evaluate(() => document.querySelector('#battle-screen .bs-caption').textContent);
+  check(cap.startsWith('Brant, Knight'), 'hovering a promoted member names its class: ' + cap);
+  await page.mouse.move(0, 0);
+}
 check(unitOf(s, 'leader').cell.row === 0 && unitOf(s, 'leader').cell.col === 1, 'the leader stands in their cell');
 check(unitOf(s, 'leader').at.x === 160 - 46 && unitOf(s, 'leader').at.y === 140, 'row 0 col 1 sits left of the line, middle lane');
 check(unitOf(s, 'm:1').at.x > 160 && unitOf(s, 'leader').at.x < 160, 'company left, enemy right');
@@ -97,7 +114,6 @@ await events({ fight: 1, round: 1, events: [
   { seq: 3, kind: 'cast-start', src: 'companion:3', spell: 'fire bolt' },
   { seq: 4, kind: 'heal', src: 'companion:1', tgt: 'companion:2', amount: 4 },
 ] });
-if (shot) { await page.locator('#battle-screen').screenshot({ path: shot }); }
 
 // --- Events ---
 s = await state();
@@ -164,7 +180,7 @@ check((await state()).open, 'the badge reopens it');
 await events({ fight: 1, round: 9, events: [{ seq: 20, kind: 'fight-end', outcome: 'victory' }] });
 await gmcp('Company.Battle', {});
 s = await state();
-check(s.open && s.outcome === 'Victory', 'the outcome shows after the fight');
+check(s.open && s.outcome === 'Victory: no foe is left standing', 'the outcome shows after the fight, with its reason: ' + s.outcome);
 await page.waitForTimeout(3300);
 check(!(await state()).open, 'the screen closes about 3 seconds later');
 
@@ -173,7 +189,7 @@ await gmcp('Company.Battle', battle);
 await events({ fight: 1, round: 10, events: [{ seq: 21, kind: 'fight-end', outcome: 'defeat' }] });
 await gmcp('Company.Battle', battle);
 s = await state();
-check(s.open && s.outcome === 'Defeat', 'a snapshot after fight-end does not clear the outcome');
+check(s.open && s.outcome === 'Defeat: the company has fallen', 'a snapshot after fight-end does not clear the outcome');
 await page.waitForTimeout(3300);
 await gmcp('Company.Battle', battle);
 s = await state();
@@ -185,6 +201,165 @@ check(!(await state()).open, 'the end of the battle does not show a second outco
 await gmcp('Company.Battle', { group: 'the enemy', dark: true, enemies: [], focus: 'none', saved_focus: 'none', focus_ready: true });
 s = await state();
 check(s.open && s.units.filter(u => u.unseen).length === 1 && s.units.filter(u => u.side === 'enemy').length === 1, 'a dark battle shows one unseen presence');
+await gmcp('Company.Battle', {});
+await page.waitForTimeout(3300);
+
+// --- Phase 40g: animation ---
+const until = (fn, what, ms = 4000) => page.waitForFunction(fn, null, { timeout: ms }).then(() => check(true, what)).catch(() => check(false, what));
+await page.evaluate(() => window.BattleScreen.setMotion('full'));
+await gmcp('Company', company);
+await gmcp('Company.Battle', battle);
+check((await state()).motion === 'full', 'animations are full');
+check((await state()).zone === 'Frostfang', 'the zone name comes from Room.Info.area (a zone backdrop is looked up by it)');
+await events({ fight: 2, round: 1, events: [{ seq: 30, kind: 'attack', src: 'leader', tgt: 'm:2', outcome: 'hit', damage: 6, weapon: 'slashing' }] });
+s = await state();
+check(s.round === 1 && (await page.evaluate(() => document.querySelector('#battle-screen .bs-title').textContent)).includes('round 1'), 'the title shows the round');
+check(s.lastBlow === 'Wren hits the second wolf (6)', 'the last-blow line says who hit whom: ' + s.lastBlow);
+await page.waitForTimeout(150);
+check(unitOf(await state(), 'leader').pose.dx > 0, 'the attacker steps in toward its target');
+await until(() => window.BattleScreen.state().fx.includes('hit:slash'), 'a slashing weapon shows the slash effect on the target');
+if (shot) { await page.locator('#battle-screen').screenshot({ path: shot }); }
+s = await state();
+check(s.digits.includes('6') && unitOf(s, 'm:2').flashing, 'damage digits rise from the target with the blow, which flashes');
+await events({ fight: 2, round: 1, events: [
+  { seq: 31, kind: 'attack', src: 'companion:2', tgt: 'm:1', outcome: 'crit', crit: true, damage: 12, weapon: 'bludgeoning' },
+  { seq: 32, kind: 'attack', src: 'm:1', tgt: 'companion:2', outcome: 'miss', defenses: ['blocked'] },
+] });
+await until(() => window.BattleScreen.state().shaking && window.BattleScreen.state().digits.includes('12'), 'a critical hit shakes the screen and shows large digits');
+await until(() => window.BattleScreen.state().icons.includes('blocked'), 'a blocked strike shows the blocked icon on the defender');
+// A spell is named by its display name; one cast by an unseen foe is not.
+await events({ fight: 2, round: 1, events: [{ seq: 35, kind: 'spell-hit', src: 'companion:3', tgt: 'm:1', spell: 'mm', spell_name: 'Magic Missile', damage: 7 }] });
+await until(() => window.BattleScreen.state().lastBlow === 'Ysolde\'s Magic Missile strikes the first wolf (7)', 'the last-blow line names the spell');
+await events({ fight: 2, round: 1, events: [{ seq: 36, kind: 'spell-hit', src: '?', tgt: 'companion:3', spell: 'mm', spell_name: 'Magic Missile', damage: 2 }] });
+await until(() => window.BattleScreen.state().lastBlow === 'A spell strikes Ysolde (2)', 'an unseen caster\'s spell goes unnamed');
+// A death plays out: the unit stands until its fall has played, then lies down.
+await events({ fight: 2, round: 2, events: [{ seq: 33, kind: 'death', tgt: 'm:3' }] });
+check(!unitOf(await state(), 'm:3').fallen, 'a death does not lay the unit down until its animation has played');
+await gmcp('Company.Battle', battle);
+check(!unitOf(await state(), 'm:3').fallen, 'nor does a snapshot arriving mid-fall');
+await until(() => window.BattleScreen.state().units.find(u => u.id === 'm:3').fallen, 'the unit lies fallen once the collapse ends', 6000);
+// A status shows when its event plays, not when it arrives.
+await events({ fight: 2, round: 2, events: [{ seq: 34, kind: 'status-applied', tgt: 'm:4', status: 'bleeding' }] });
+await until(() => window.BattleScreen.state().units.find(u => u.id === 'm:4').statuses.includes('bleeding'), 'a status appears');
+// Never fall behind: more than a round of work collapses to its end state.
+const flurry = [];
+for (let i = 0; i < 20; i++) { flurry.push({ seq: 100 + i, kind: 'attack', src: 'companion:2', tgt: 'm:1', outcome: 'hit', damage: 3, weapon: 'slashing' }); }
+await events({ fight: 2, round: 3, events: flurry });
+check((await state()).backlog > 8000, 'a long flurry queues more than a round of work: ' + (await state()).backlog);
+await events({ fight: 2, round: 4, events: [{ seq: 120, kind: 'death', tgt: 'm:2' }, { seq: 121, kind: 'yield', src: 'm:4' }] });
+s = await state();
+check(s.backlog < 3000 && unitOf(s, 'm:4').yielded, 'a backlog collapses to the end state and plays the new round: ' + s.backlog);
+// Reduced: no projectile travel, no flashes or shake.
+await page.evaluate(() => window.BattleScreen.setMotion('reduced'));
+await events({ fight: 2, round: 5, events: [{ seq: 130, kind: 'attack', src: 'companion:3', tgt: 'm:1', outcome: 'crit', crit: true, damage: 9, weapon: 'shooting' }] });
+await until(() => window.BattleScreen.state().digits.includes('9'), 'a reduced screen still shows the digits');
+s = await state();
+check(!s.fx.some(f => f.startsWith('projectile')) && !s.shaking && !unitOf(s, 'm:1').flashing, 'reduced motion: no projectile travel, flash or shake');
+check(await page.evaluate(() => localStorage.getItem('ashveil-battle-animations')) === 'reduced', 'the animation choice is remembered');
+// Selecting the setting in the footer works.
+await page.selectOption('#battle-screen select', 'off');
+check((await state()).motion === 'off', 'the Animation menu switches the screen off');
+// Off: the 40f static path. A hit flashes at once and nothing queues.
+await events({ fight: 2, round: 6, events: [{ seq: 140, kind: 'attack', src: 'leader', tgt: 'm:1', outcome: 'hit', damage: 4 }] });
+s = await state();
+check(s.backlog === 0 && s.digits.includes('4') && s.lastBlow === 'Wren hits the first wolf (4)', 'with animations off events take effect at once');
+await page.evaluate(() => window.BattleScreen.setMotion('full'));
+// The outcome hold waits for the last animation, then closes.
+// The outcome comes after the last blow has played, even when the
+// finished battle's empty snapshot arrives first.
+await events({ fight: 2, round: 9, events: [{ seq: 149, kind: 'death', tgt: 'm:1' }, { seq: 150, kind: 'fight-end', outcome: 'broken-off' }] });
+await gmcp('Company.Battle', {});
+s = await state();
+check(s.open && s.outcome === '' && !unitOf(s, 'm:1').fallen, 'the outcome waits while the last fall plays: ' + s.outcome);
+await until(() => window.BattleScreen.state().outcome !== '', 'the outcome shows once the fight\'s end plays', 6000);
+s = await state();
+check(unitOf(s, 'm:1').fallen, 'the last fall has played before the outcome');
+check(s.outcome === 'The company breaks off: the battle was broken off', 'a broken-off fight gives its reason: ' + s.outcome);
+await until(() => !window.BattleScreen.state().open, 'the screen closes after the outcome hold', 8000);
+
+// --- Phase 40g2: allied formations, the pace, morale, crisp roles, the unseen ---
+const ally = (leader, name, members) => ({ id: 'a:' + leader, name, members: members.map(([key, n, klass, row, col, health, down]) => (
+  { id: 'a:' + leader + ':' + key, name: n, class: klass, cell: { row, col }, health, ...(down ? { down: true } : {}) })) });
+const allied = {
+  ...battle,
+  nerve: 'faltering',
+  allies: [
+    ally(8, 'Brannoc', [['leader', 'Brannoc', 'warrior', 0, 1, 'unhurt'], ['companion:2', 'Cael', 'cleric', 1, 2, 'wounded'], ['companion:3', 'Dun', 'ranger', 1, 0, 'unhurt']]),
+    ally(9, 'Maren', [['leader', 'Maren', 'wizard', 0, 0, 'scratched'], ['companion:1', 'Pell', 'rogue', 2, 1, 'near death']]),
+    ally(10, 'Tove', [['leader', 'Tove', 'witch', 0, 1, 'unhurt']]),
+  ],
+};
+await page.evaluate(() => window.BattleScreen.setMotion('full'));
+await gmcp('Company.Battle', allied);
+s = await state();
+const allyUnits = s.units.filter(u => u.side === 'ally');
+check(allyUnits.length === 5, 'the first two allied companies stand in their own formations: ' + allyUnits.length);
+check(s.allies.list.length === 2 && s.allies.more === 1, 'a third company is a "+1" pennant, not a formation');
+const bren = unitOf(s, 'a:8:leader');
+check(bren.at.x < 160 && bren.at.y < 100 && bren.pose.scale === 0.5, 'an allied unit stands behind and above, at half scale');
+check(unitOf(s, 'a:9:leader').at.x < bren.at.x - 20, 'the second allied formation stands beside the first');
+check(allyUnits.every(u => u.at.y < 90), 'no allied unit overlaps the company\'s own lanes');
+check(!s.units.some(u => u.id.startsWith('a:10')), 'a company past the second is not drawn');
+const banners = await page.evaluate(() => document.querySelector('#battle-screen .bs-banners').textContent);
+check(banners.includes('company faltering') && banners.includes('allies: Brannoc, Maren, Tove'), 'the header names the allies and a faltering company: ' + banners);
+check(s.nerve === 'faltering', 'the nerve of the company is known to the screen');
+// An ally's own blows and falls play, at its own place, with no lunge across the field.
+await events({ fight: 2, round: 10, pace: 'slow', events: [{ seq: 200, kind: 'attack', src: 'a:8:leader', tgt: 'm:1', outcome: 'hit', damage: 5, weapon: 'slashing' }] });
+s = await state();
+check(s.lastBlow === 'Brannoc hits the first wolf (5)', 'an ally\'s blow reads in the last-blow line: ' + s.lastBlow);
+await page.waitForTimeout(200);
+check(unitOf(await state(), 'a:8:leader').pose.dx < 8, 'an allied unit strikes from where it stands');
+await until(() => window.BattleScreen.state().digits.includes('5'), 'the blow shows its digits on the enemy');
+await events({ fight: 2, round: 10, events: [{ seq: 201, kind: 'attack', src: 'm:1', tgt: 'a:8:companion:2', outcome: 'hit' }] });
+await until(() => window.BattleScreen.state().lastBlow === 'the first wolf hits Cael', 'an ally struck reads without a number', 6000);
+check(!(await state()).digits.some(d => /^\d+$/.test(d) && d !== '5'), 'and shows no digits for what befell it');
+await events({ fight: 2, round: 11, events: [{ seq: 202, kind: 'death', src: 'm:1', tgt: 'a:8:companion:3' }] });
+await until(() => window.BattleScreen.state().units.find(u => u.id === 'a:8:companion:3').fallen, 'an allied member\'s fall plays', 6000);
+// A fallen member stays down on the next snapshot.
+await gmcp('Company.Battle', { ...allied, allies: [ally(8, 'Brannoc', [['leader', 'Brannoc', 'warrior', 0, 1, 'unhurt'], ['companion:3', 'Dun', 'ranger', 1, 0, 'near death', true]])] });
+s = await state();
+check(unitOf(s, 'a:8:companion:3').fallen && !unitOf(s, 'a:8:companion:2'), 'an ally who left the fight leaves the picture; a fallen one lies down');
+check(s.allies.list.length === 1 && s.allies.more === 0, 'one allied company is one formation');
+// The pace comes from the feed, not from how the batches arrive.
+check(s.pace === 'slow', 'the pace is the one the server sent: ' + s.pace);
+await events({ fight: 2, round: 12, pace: 'fast', events: [{ seq: 203, kind: 'attack', src: 'leader', tgt: 'm:2', outcome: 'hit', damage: 2 }] });
+check((await state()).pace === 'fast', 'a new pace replaces it');
+// Allies on a phone are pennants.
+await page.setViewportSize({ width: 360, height: 700 });
+await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+s = await state();
+check(s.compact, 'on a phone the allied formations collapse to pennants');
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+check(!(await state()).compact, 'and come back at width');
+// An unseen foe stands in a cell no visible foe holds.
+await gmcp('Company.Battle', { ...battle, enemies: battle.enemies.concat([enemy(6, 'a boar', 0, 1, 'unhurt', 'unknown-beast', '')]) });
+await events({ fight: 2, round: 13, events: [{ seq: 210, kind: 'attack', src: '?', tgt: 'leader', outcome: 'hit', damage: 1 }] });
+s = await state();
+const unseenFoe = s.units.find(u => u.unseen);
+const taken = s.units.filter(u => u.side === 'enemy' && !u.unseen).map(u => u.cell.row + ',' + u.cell.col);
+check(unseenFoe && !taken.includes(unseenFoe.cell.row + ',' + unseenFoe.cell.col), 'an unseen presence stands apart from every visible foe: ' + JSON.stringify(unseenFoe && unseenFoe.cell));
+await gmcp('Company.Battle', { ...battle, enemies: [enemy(6, 'a boar', 0, 1, 'unhurt', 'unknown-beast', ''), ...battle.enemies.slice(0, 3)] });
+s = await state();
+const moved = s.units.find(u => u.unseen);
+check(!s.units.some(u => !u.unseen && u.side === 'enemy' && u.cell.row === moved.cell.row && u.cell.col === moved.cell.col), 'it steps aside when a foe comes into view');
+// Role letters are drawn in whole pixels: only the chip's and the letter's colours.
+await page.evaluate(() => window.BattleScreen.setMotion('off'));
+await gmcp('Company.Battle', battle);
+const chip = await page.evaluate(() => {
+  const st = window.BattleScreen.state();
+  const u = st.units.find(o => o.id === 'companion:2');
+  const c = document.querySelector('#battle-screen canvas').getContext('2d');
+  const d = c.getImageData(Math.round(u.at.x - 9), Math.round(u.at.y + 7), 5, 7).data;
+  const colours = new Set();
+  for (let i = 0; i < d.length; i += 4) { colours.add(d[i] + ',' + d[i + 1] + ',' + d[i + 2] + ',' + d[i + 3]); }
+  return colours.size;
+});
+check(chip === 2, 'a role letter is crisp: two colours, no anti-aliasing (' + chip + ')');
+await page.evaluate(() => window.BattleScreen.setMotion('full'));
+await gmcp('Company.Battle', allied);
+await page.waitForTimeout(400);
+if (shot) { await page.locator('#battle-screen').screenshot({ path: shot }); }
 await gmcp('Company.Battle', {});
 await page.waitForTimeout(3300);
 

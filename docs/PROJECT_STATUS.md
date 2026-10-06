@@ -36,6 +36,453 @@ fired before the test reset its message map). Not reproduced: the
 `TestAlliedFinalEnemyPaysAfterCombatClosesBattle` (failed once in one
 shuffled run, clean on the same seed afterwards).
 
+**Phase 40g2 reviewed and merged via [PR #48](https://github.com/Robinsond76/ashveil-gomud/pull/48) (2026-10-06, Opus review thread):**
+ally relay checked for consent (both players support the party), same room,
+shared enemy and the receiver's own unseen masking; mid-battle inputs are
+still only retreat and company focus; the nerve mark uses `morale.Losing` on
+the fight's roster like the check does. Accepted and fixed: (1) an allied
+player with no formation is named `u:<id>`, not `a:<leader>:<key>`, so what
+befell them kept its numbers and statuses; `isAllyRef` now covers `u:` refs
+(regression `TestAlliedHappeningsScrubAnAllyWithoutFormation`); (2) UI check:
+allied members were drawn as their base class even when promoted, so
+`allies[].members[].promoted` now carries the 40s5 class id and the screen
+draws that art first; (3) `help battlescreen` said weak companions "may now"
+falter while the mark shows, but the nerve test runs once per fight; reworded.
+Rejected: the mark reads `fi.Company`, which grows if a companion joins
+mid-fight, while the check uses the starting roster; reading `hooks`' fight
+state from the GMCP goroutine would race, and the mismatch needs a mid-fight
+join, so it stays (decision (d)). Merged master (40s5 class art): the caption
+names a member's class and an ally's company. Follow-ups: tap an allied
+formation to watch it full size; an ally's blow on a foe the receiver is not
+fighting is relayed but has no figure to land on.
+
+**Phase 40g2 built: battle screen follow-ups (2026-10-06):**
+closes the 40g review's follow-ups. (1) **Allied formations.** Each allied
+company fights its own fight (33d), so the 40e feed now also relays a
+fight's happenings to the leader's consenting allies
+(`parties.AlliedLeaders`) who are in a battle of their own against some of
+the same mobs in the same room, with the ally's members as
+`a:<leader>:<key>`. Only watchable kinds go (strikes, spells, heals, casts,
+wind-ups, interrupts, falls, flight, abilities, target changes, statuses on
+enemies), never a fight's start, end or focus, wound changes, guards or
+mercy; what befell an ally has its numbers and status scrubbed and no status
+event on an ally is sent. `Company.Battle` gains `allies` (leader id and
+name; each member's id, name, class, cell, health in words, `down`), and the
+screen draws up to two as half-scale formations behind and above the
+player's, each with a pennant and the leader's name, a "+N more" mark for
+the rest, and pennants with a count of those standing on a phone. Allied
+units strike from where they stand (no lunge across the field). (2) **The
+pace is sent:** every `Company.Battle.Event` message carries `pace` (fast,
+normal, slow, off; `hooks.PaceOf`); the screen uses it and keeps the old
+inference only as a fallback for a server that sends none. (3) **Morale is
+drawn:** `Company.Battle.nerve` is "faltering" while the nerve rule
+(`morale.Losing`: half the company down or a quarter of its health left)
+holds; the header says "company faltering", each company figure shows a
+drop of sweat, hover says "shaken", and a hesitating companion's lost action
+reads "hesitates as the company falters" in the last-blow line. Enemy yield
+and flight markers were already shown. **Role letters are crisp:** a 3x5
+pixel font drawn in whole pixels (also used for "yields" and the allied
+labels) replaces anti-aliased canvas text; a browser check samples the role
+chip and finds two colours only. **The unseen presence** takes the first free
+enemy cell (centre first) and steps aside when a foe comes into view.
+Decisions (delegated): (a) allies are matched by party consent plus a shared
+enemy and room rather than a new alliance store, so nothing is persisted and
+33d's rules are untouched; (b) an ally's blows on the shared enemy keep
+their damage digits (the enemy's numbers are already shown) while numbers on
+ally members are hidden, the conservative reading of "bands only"; (c)
+tap-to-swap to watch an ally full-size is not built (view-only, the design
+marked it a recommendation), a candidate follow-up; (d) the nerve mark is
+computed in `modules/gmcp` from the fight's roster with the same
+`morale.Losing` rule rather than reading `hooks`' private fight state; (e)
+only two allied formations are drawn (the design's cap). Tests:
+`modules/gmcp/gmcp_battle_allies_test.go` (relay with consent, room, shared
+enemy, unseen masking and scrubbing through the real stream, hooks pacer and
+GMCP path; payload; ally selection; nerve; pace on released batches), a Node
+planner test for allied refs, and the allied section of
+`scripts/browser/battle-check.mjs`; help `battlescreen` gained Allies,
+morale and pace text (tested) and the Departure tutorial lesson points to it;
+screenshot `screens/40g2-battle.png`.
+
+**Phase 39b complete (merged via PR #47, 2026-10-06): the Samurai neutral lineage.** Iaijutsu (first swing of a battle +50% damage, +10% crit, half a turn ahead; spent hit or miss), Focus (+3% crit per quiet round to +9%), Zanshin (+50 meter once a round when it fells a foe); routes Kensai (piercing draw), Hatamoto (Bodyguard: guards the leader twice a battle), Ronin (Vengeance per fallen ally). New base-rank mechanism (`classes/base.go`) for lineage ranks from level 1. Samurai archetype (6 HP, 0.85/level, medium armor, sword), recruit mob 139, default rule strongest, Camp Watch utility. Help: `help samurai`, `help samurai-routes` plus updates to related pages; tutorial hint in the creation lesson. Plan: [39b](plans/2026-10-06-phase-39b-samurai.md). Balance (80 fights, ±5): Samurai 83/91/77% vs Rogue 76/92/76% at L5/10/20. Decisions: duelist is a Fighter with default rule strongest; first strike spent on the first swing; Bodyguard precedes strategy guards; Focus 3/9 and Attack 1.0 tuned down from the design; elites stay planned (39i). Follow-ups: Samurai battle sprites (art pass), elite ranks (39i). Review (Opus review thread): accepted, level-up reports named only the next rank, so a player never saw what Focus or Zanshin (or any route rank) had just given; fixed with `classes.RanksGained`/`RankLines`, a "New rank: ..." line in the player and companion level-up reports, `help classes` updated, regression tests in classes, hooks and mobcommands; accepted, this entry described Zanshin as triggering on being struck (it fires on felling a foe), corrected. Checked and kept: Iaijutsu RT exists before the first blow (auraPass makes it for any character with class effects), Vengeance counts only standing members, Bodyguard skips the leader itself and spends its own count, effect keys are unique, recruit 139 does not collide with 39a's 130. UI: `class`, level-ups, help and the battle-screen hue cover the change; no web panel lists ranks, so none needed updating.
+
+**Phase 40a3 complete (2026-10-06, PR #45): camp gear.** The fuel rule
+and six durable camp items. A finished camp rest now burns the fire down to
+**embers** (`Camp.Embers`): embers keep the room warm until the camp is broken
+(a damp fire's embers stay cold) but give no light, and resting again needs
+`camp fire` again, which spends another bundle (or the deadfall in a firewood
+room); the camp then takes a fresh rest session (new operation id), once the
+last rest's recovery is in. A camp saved before this phase burns down on load.
+New items 45-50 (`bedroll` 2.5 kg, 8 gold; `oiled canvas tent` 9 kg, 40;
+`fire steel and tinder` 0.2 kg, 5; `iron cookpot` 3 kg, 12; `camp bells and
+trip lines` 1 kg, 6, 10 uses; `field surgeon's kit` 1.5 kg, 25, 5 uses), sold
+at the Dunmar and Old Kings Road markets (road dearer) as `SupplyOnly`, so none
+buys back. `modules/camping/gear.go` counts the gear through
+`company.CompanyItemCount` (cargo, the leader's pack, present companions'
+packs; separated and dead members' packs are skipped) before `m.mu`, and locks
+it on the rest (`RestSession.Bedrolls/Bells/Kit`, `Camp.Tent`, all saved, so a
+restart or copyover mid-rest keeps them). **Bedrolls:** one per member, leader
+first then companions by number; `survival.ApplyCompanyRestRecoveryBonus` gives
+those members +25% of the rest's fatigue on top (the ledger keeps the base
+amount, so a replay is still a no-op). **Tent:** counts as shelter for the
+weather (never stacks with a shelter room), makes the camp room a heat source
+while resting (no rest-time cold), shows in `look`, `camp status` and GMCP
+`Company.Camp.tent`. **Fire steel:** damp bundles light first time at full
+warmth. **Cookpot:** `camp cook` makes two portions of a dish with two or more
+inputs. **Bells:** a flat 20% spot chance with no watch, +10 points on a watch
+capped at 90, one use worn when a rest starts; their own warning line.
+**Surgeon's kit:** at the end of an unbroken camp rest a healer who knows Tend
+Wounds and has the mana tends the worst lasting wound of the most wounded
+member present (`company.FieldSurgery`), before bandages and splints; one use
+worn only when a wound was treated. The rest start, `camp status` and the
+rest-complete line report the gear in use. Web: the Camp tab shows embers
+("Feed fire"), the tent, and offers Rest again once the fire is fed
+(`/mnt/project-files/screens/40a3-camp-embers.png`); GMCP `Company.Camp` gains
+`embers` and `tent` for 40b's map sprites. Help: new `help camp gear` (indexed
+under `road`; aliases bedroll, tent, cookpot, fire steel, camp bells, trip
+lines, surgeon's kit, embers) and updates to camp, gathering, campwatch,
+cooking and wounds; tutorial: the Survival lesson hands out a bedroll and a
+fire steel with its supplies and the Camp hints explain embers and gear.
+Design: [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md).
+Decisions (builder, owner delegation): (1) gear in the cargo counts without a
+horse check: cargo has no per-horse presence concept and always travels with
+the company, so the design's "cargo with its horse present" is met by the
+existing cargo rules; (2) the bells wear one use at every rest start, raid or
+not (the design's "wears 10 rests"); (3) no restring or restock service: a spent
+set of bells or a kit is bought again (the 3 and 10 gold refill prices were
+dropped; items with uses already model wear and a refill action would be a new
+shop mechanic); (4) gear is sold `SupplyOnly` and is never loot, so nothing
+gathered for free sells for more than a low-level fight pays; (5) the tutorial
+gear is granted with the Survival supplies (same once-only flag) because stage
+entry grants only there; (6) the cookpot is read when cooking, not locked on a
+rest, since `camp cook` is its own command; (7) the tent is pitched when the
+camp is made and refreshed at `camp fire` and `camp rest`. Not folded in: the
+40a2 follow-ups (gather progress as a web panel, a redraw on regrowth) are
+about gathering and the map, not camp gear; both stay open (the map redraw
+belongs with 40b).
+Review (2026-10-06): checked the fuel rule and repeat rests (a new operation
+id per rest, the last rest's recovery settled first, the burn-down of old
+saves), the bedroll ledger, raid spotting with bells, the kit's
+before-refill mana gate, item ids 45-50 (no clash with master or any open
+branch) and the economy (all six `SupplyOnly`; objects never salvage; a
+generic merchant pays at most a quarter of value, so the tutorial's free
+bedroll and fire steel fetch about 2 gold each, once per character:
+accepted). Kept the builder's three decisions: cargo counts without a horse
+check (cargo always travels with the company under 32f), bells wear at every
+rest start (a count the player can predict: "10 rests"), and no restring
+service (rebuying at 6 and 25 gold costs little and needs no new shop
+mechanic). Fixed: `camp status` between rests now lists the gear at hand
+and what it will do (`campGear.lines` was unused, so a player saw the gear
+only once a rest began), with a regression test and the help updated; the
+dock browser check timed out because the 40f battle screen opens over the
+Combat tab, so it now sets the screen to manual (battle-check covers the
+screen), and its focus-bar count was stale (eight buttons, not seven).
+Follow-ups: the web Camp tab and GMCP carry only the tent and embers, not
+bedrolls, bells or the kit (candidate: a gear line in `Company.Camp`);
+the 40b map draws a burned-down camp as a cold fire (candidate: an embers
+sprite from `Company.Camp.embers`).
+
+**Phase 40s5 reviewed and merged (2026-10-06, Opus review thread):** the
+class art, GMCP `class` key and battle-window fallback are sound; promoted
+classes read apart from their base at 1x in the contact sheet and the battle
+screen (UI check screenshot kept outside the repo as
+`screens/40s5-battle.png` in the project files).
+Decision (delegated): `TestEveryBuiltClassHasArt` no longer fails when a
+built class has no art, because elite (38c) and neutral (39) classes are
+built in parallel and the battle screen already falls back to the base
+class (or a silhouette for a lineage with no art). It logs each pending
+class and its fallback instead; the later art pass runs it with
+`ASHVEIL_ART_STRICT=1`, which fails until every built class has art. It
+still fails when `promotedClasses` names a class that does not exist.
+UI check, fixed in review: the company list showed a promoted member only
+by its base archetype ("Warrior" for a Paladin) and the battle caption only
+by name, so Company GMCP members now also carry `class_name`; the company
+card shows the class (its line on hover) and the battle caption reads
+"Wren, Paladin, striking …"; `help battlescreen` says so (tests: GMCP
+payload, `TestBattleScreenHelp`, and assertions in
+`scripts/browser/battle-check.mjs` and `dock-windows-check.mjs`).
+Follow-ups: `score` and the Character window still show no class (38b
+follow-up); `dock-windows-check.mjs` stalls at its Combat-tab hover since
+40f because the battle screen opens over the tab (pre-existing; the 40s5
+assertions run before that point); three members in one row overlap
+heavily on the battle screen. Merged master (44 smoke, 40a2 shaman
+renumber: same mob 97, kept the shaman's own sprite) and 40g (battle
+animation): a promoted member uses its own class's pose sheets once its
+idle exists, never the base class's, so it does not flicker between looks.
+
+**Phase 40s5 built: class art, art set S5 (2026-10-06):** map sprites
+(down/up/side, idle and walk) and battle idles for the 23 promoted classes on
+master (the 18 level-10 classes plus Paladin, Hierarch, Elder Druid, Blood
+ Priest, Demonologist and Dread Knight), the Angel and Demon summons (large
+units) and a goblin shaman of its own (was the hexer's art); `scripts/sprites/promoted.py`,
+`summoned.py`, `make sprites` now also writes
+[`docs/verification/40s5-contact-sheet.png`](verification/40s5-contact-sheet.png).
+Forks, with reasons: (1) each promoted class is its lineage's base figure with
+ramps swapped and a few accessories, not a new rig, so a promotion reads as a
+step up and the S0 proportions and anchors hold for free; (2) good routes go
+lighter with brass, neutral earth-toned, evil darker with ember touches, using
+the existing 64-color palette only; (3) the Company GMCP member now carries
+`class` (promoted class id, omitted before promotion) and the battle window
+draws `battle/units/<class>/idle.png` when the manifest lists it, falling back
+to the base class, so the art shows today; (4) mobs `95-angel`, `96-demon` and
+the shaman use `sprite:` keys; (5) the goblin shaman is mob 97 (master made the same fix in 40a2, since 38b's Angel holds id 95). Elite (38c) and neutral (39) classes still
+`Planned` are left to a later art pass: warlord, pathfinder, swordmaster,
+nightblade, sentinel, marksman, ravager, archon, archmage, necromancer,
+wise-one, coven-mother, crone-of-ash; `TestEveryBuiltClassHasArt` lists built classes
+with no art (see the review below), and `TestMobSpriteKeysHaveArt` checks every mob
+`sprite:` key. The 40b map window (merged alongside) draws a promoted
+player's class map sprite first, so the S5 map art shows there too. No new player command, so no help page. Gates: `make generate`, `make validate`, `make js-lint`, `go test ./scripts` and `go test -race ./...` green; `TestAimedShotGrowsWithLevel` failed once in the full run (a random-roll comparison, 14 vs 15) and passed on three reruns, unrelated to this change.
+
+**Phase 40b complete, merged via [PR #43](https://github.com/Robinsond76/ashveil-gomud/pull/43) (2026-10-06): map sprites in the web client.** The Map
+window draws you as your class sprite (chain: current class, lineage,
+`adventurer`, then the classic red square), a gold here-ring under you and the
+company badge (members present with the leader, hidden alone), all drawn above
+the terrain so you never blend in. Moves walk tile to tile facing the way you
+went (up/down/side, west mirrored), queue at most 2 steps behind and then snap;
+jumps (recall, teleport) do not walk; level or zone changes snap and fade in.
+Your camp draws as a tent with fire, smoke and a resting mark, `inn-rest` while
+resting at an inn; camps of your **party** draw as `tent-ally`; no other
+company's camp is ever sent or drawn. Party members with a known class draw as
+that class at 75% with an ally pennant, else stay hearts. Server: `Char.Info`
+and `Party` vitals gain `lineage` and `classid`; `Company.Camp` gains
+`room_id` and `allied_camps` (party members' camps only, regression-tested with
+a same-room outsider). New `static/js/sprites.js` loader (manifest, status,
+fallback, redraw) for 40c and later. Settings: Sprites and Camps. Help:
+`help worldmap` (aliases `map window`, `tile map`, `world map`), indexed, linked
+from `help webclient`, `help camp` and `help map`; Camp tutorial hint. Check:
+`scripts/browser/map-check.mjs` (facings, queue, badge, camp, allies,
+sprites-off, missing image); screenshot `screens/40b-map.png`.
+Decisions (delegated, with reasons): sprite scale is the nearest whole multiple
+of 32 px (half, 16 px, when zoomed out below a 16 px tile) so pixels stay
+square; `inn-rest` shows when the camp tile is `here`, an inn, and resting
+(`Company.Camp` has no separate inn-stay field, adding one is not worth a new
+payload); the unit walks on its own queue at 200 ms a tile while the camera
+keeps its existing ease; allied camps refresh with the company feed's changed-
+payload sends (no new event); the sprite loader does not yet replace the
+battle screen's own loader (follow-up, no behaviour change). Not changed: other
+players do not appear on the map, no race variants (owner deferrals).
+Review (Opus): decisions hold (whole-multiple scale keeps pixels square;
+inn-rest rule matches the payload; allied camps reach the client within a
+round because the company feed rebuilds every round). No leak: allied camps
+come only from accepted party members (not invitees), party sprites ride the
+existing party-only `Party.Vitals`. Accepted and fixed: a camp on your own
+tile was hidden under your sprite, so it is now pitched behind your left
+shoulder with the fire by your right foot (map-check regression); `help
+worldmap` claimed the map never shows more than `look`, though it shows your
+party's camps anywhere in the zone, reworded; after merging master (44's
+`ClassTitle` in `Char.Info`), the sprite-keys test's fake archetype provider
+gained `ArchetypeName`. Rejected: continuous redraw
+while sprites show is needed (every map sprite animates, and closing the
+window stops it). Follow-up: companions are not drawn on the map (only the
+badge count).
+
+**Phase 40g reviewed (2026-10-06, PR #40):** Checked the scheduler never
+drops a state change (a collapse applies every unfired op in order) and
+catches up after a round of backlog, that reduced motion drops lunges,
+travel, tints and shake, and that an unseen foe stays unseen. Accepted and
+fixed: (1) **the title showed the server's round counter** ("round 48213"),
+since the feed's `round` is global; `Company.Battle.Event` now also sends
+`fight_round` (from 1, from the fight's start round or, for a fight-end, its
+summary) and the screen shows that (Go wiring test and gmcp unit test
+assert it). (2) **The outcome and the victory pose came before the last
+blow** while animation was behind: the fight's end now waits for every unit,
+and the outcome (with its reason, read while the last snapshot stands) shows
+when it plays; the empty snapshot that follows no longer shows "The battle is
+over" first or closes the screen early. A fight-start in the same batch as
+deaths no longer clears their hold. (3) **Spells were named by id** ("Ysolde's
+mm strikes"): the feed carries `spell_name` and the last-blow line and chant
+mark use it; an unseen caster's spell is neither named in the line nor
+coloured in its glow. (4) The help page no longer promises the picture never
+falls behind (it skips ahead after a round) and says the outcome follows the
+last blow. Tests: Node planner tests for the end-wait and hidden spells,
+browser checks for the outcome order, spell names and fight rounds (the
+harness now sends a server-sized `round`). Rejected: none. UI check: at each
+setting a player can follow who did what (last-blow line, digits, icons) and
+why the fight ended; `off` keeps the 40f picture. **Follow-ups:** 40g2
+allied formations (an allied relay in the 40e feed plus a third formation on
+the canvas; not small, so not folded in); a `pace` field on `Company.Battle`
+to replace pace inference; morale not drawn; role letters blurry; a `?`
+presence can overlap a visible foe. Gates: one full race run failed once in
+`modules/company` (its output was not kept); three package reruns and a
+second full race run passed, so it is likely one of the known company
+flakes, unidentified.
+
+**Phase 40g built: battle animation and effects (2026-10-06, PR #40):**
+the battle screen now plays each 40e event. A pure planner,
+`static/js/battle-timeline.js`, turns an event batch into steps (lunge,
+strike, shoot, chant, hurt, block, parry, dodge, windup, guard, tackle,
+yield, flee, fall, victory) with hit effects, projectiles, glows, digits and
+feedback icons, and a `Scheduler` queues them per unit (units overlap, one
+unit's actions do not), fires state changes when their step starts or ends,
+and when more than a round of work is queued collapses the older steps to
+their end state. `window-battle.js` plays them (S4 sheets at
+`battle/units/<key>/<pose>.png` and `battle/effects/...` when the manifest
+lists them; otherwise the idle figure nudges and effects are drawn in code).
+New on screen: the round in the title, a "last blow" line ("Wren hits the
+second wolf (6)"), a named outcome reason ("Victory: no foe is left
+standing"), a zone backdrop lookup (`battle/backgrounds/zone-<slug>.png` by
+`Room.Info.area`), and an **Animation** menu (`full`, `reduced`, `off`;
+`ashveil-battle-animations` in `localStorage`; default reduced when the
+system asks for reduced motion). `off` is the 40f path unchanged. Tests:
+`scripts/js/battle-timeline.test.mjs` (Node, new `make js-test`, run by
+`make test` and CI) and the animated section of
+`scripts/browser/battle-check.mjs`; screenshot `screens/40g-battle.png`.
+`help battlescreen` gained the Animation section. Decisions (delegated):
+(1) **Pace is inferred, not sent:** the feed carries no pace, so the client
+reads it from how batches arrive (whole-round batches mean pacing off, else
+the gap between batches: under 0.9 s fast, over 2.5 s slow); the budgets are
+the design's 1.2 s action and 0.6 s reaction, half for fast, 1.5x for slow,
+0.3 s for off. A `pace` field on `Company.Battle` would make this exact
+(follow-up, small). (2) **S4 art is not drawn** (40s4 is not on master), so
+every pose uses its fallback and effects are code-drawn; art lands with no
+code change. (3) **Allied reserve formations stay deferred:** they still
+need an allied relay in the 40e feed (a Go change to combat events, out of
+scope for a client polish phase). (4) **Crit digits are large, not
+"12!"** (the narration style has no exclamation marks) in animated modes;
+`off` keeps the 40f text. (5) A fall or exit waits for its animation: a
+`Company.Battle` snapshot arriving mid-fall does not lay the unit down or
+drop it early (`holding`). (6) The outcome hold waits up to 6 s more for the
+last animations. (7) Sound stays out of scope, per the roadmap. (8) **Review follow-ups folded in:** bars, role
+letters and statuses now draw in a second pass over every figure, so a large
+unit in front no longer hides the health of those behind it; a hit tints the
+figure's own shape for art units (a box for code figures). The flaky
+`TestSpellEventsThroughTheRealRound` ("mm never went off") is hardened:
+Aria did not own Minor Heal or Magic Missile, so each try rolled a success
+chance beside the bandits' interrupts and 60 misses in a row could happen;
+she now learns both (an owned spell never fizzles in battle, 35b) and has
+100 tries. Probable cause, not reproduced alone (25 and 15 clean runs
+before and after). Still open: morale (nerve) is not drawn; role letters
+are still blurry at the canvas font size; a `?` presence can overlap a
+visible foe.
+
+**Phase 44 complete: live smoke playtest (2026-10-06):** `make smoke` builds
+the server, copies the shipped world and plays a new Warrior over telnet
+through the whole tutorial (a real camp rest and a real battle), the `help`
+index, copyover, a second player (a Witch) in the same room, and a restart
+and relogin; see [Live smoke playtest](LIVE_SMOKE_PLAYTEST.md). It is
+env-gated (a few minutes of real time) and meant to be re-run at the end of
+each lane. First run found, and this phase fixed with regression tests:
+the tutorial's straw soldiers hit for the flat damage floor (a 0d0 body with
+no weapon now deals nothing; they had killed the whole company, against
+"cannot hurt anyone"), `status`/`who`/GMCP called every warrior a "scrub
+paladin" (now the archetype name), every login printed "inbox not
+recognized" and "mudletmap not recognized", a won fight ended with "Your
+target can't be found.", `help help` and `help bid|store|unstore` found nothing (the
+index listed a command that does not exist). Not fixed, noted: a line typed
+within one turn (50 ms) of the last is silently dropped, so a scripted
+client must pace itself; the tutorial hand-off drops input typed during it;
+the gate hand-off prints "looks a little confused (gate )" for each
+companion; "The battle is under way" is still said for a moment after a
+fight's summary; the `weather` command says "You can't tell what the weather
+is like here" in the open Weather Yard. Not covered (proposed 44b): a fight
+against a world mob with loot, travel on the Old Kings Road, and Dunmar's
+inn (the gate lands in Frostfang; the one shipped travel route starts in
+Dunmar, and no step of this run reached it), all needing 37's encounters.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`, `make smoke`. One flake seen: `TestAttackOnAWaitingGroupIsRefused`
+(modules/company) failed once in the full race run (its battle was already
+over after one round) and passed on a rerun of the package; it is random,
+not from this phase.
+Review (2026-10-06, Opus review thread): accepted the five live fixes as
+root-cause fixes (only races 19 dummy and 20 orb are 0d0, so no fighting
+mob lost its blows; `ClassTitle` falls back to the profession title with no
+archetype). Fixed in review, each with a regression test: a line typed
+within a turn of the last now waits out the turn instead of being dropped
+(telnet, websocket and restored connections; `waitForTurn`); companions no
+longer print "looks a little confused (gate )" when the graduation has
+already moved them beside their leader (`companionAlreadyWithLeader`; the
+smoke run now fails on that line); `TestAttackOnAWaitingGroupIsRefused` is
+deterministic (the bandits outlast the first round). Import grouping tidied.
+Rejected or left as follow-ups: "The battle is under way" for a moment after
+a summary (clearing the aim at victory did not change the brawl harness, so
+the live cause is elsewhere; `doAfterBattle` covers the smoke run); `weather`
+in the Weather Yard (only the forest biome has a weather table, so the
+tutorial and Frostfang show none: a content gap, not a code bug); input
+typed during the tutorial hand-off. A package run before the fixes showed
+the known `TestBalanceMirrorClericIsACasterWhoCastsNothing` flake (37b).
+Verification after review: `make generate`, `make validate`, `make
+js-lint`, `go test -race ./...` (pass), `make smoke`. Merging master then
+found 37b's goblin shaman and 38b's summoned Angel both used mob id 95
+(every world load panicked); the shaman is now mob 97, its dark forest
+encounter updated, since the Angel's id is a code constant (40a2's review made the same fix).
+
+**Phase 40a2 complete, merged via [PR #41](https://github.com/Robinsond76/ashveil-gomud/pull/41) (2026-10-06): gathering.** Herbs,
+firewood, fishing and game are real. New `gather [herbs|firewood]`, `fish`
+and `hunt` commands (module `modules/gathering`, rules in `internal/gathering`)
+run a real-time timed action (20s herbs and firewood, 30s fish and game) kept in
+memory and resolved on the round tick with the real clock; it never touches the
+world clock. A typed command (other than look and a few reads), a move, a fight
+or death cancels it with nothing gained. Each room resource has a pool (herbs 3,
+firewood 4, fishing 4, game 2) shared by every company, regrowing one charge per
+20 minutes (game 40); only pools in recovery are saved (plugin `pools`, computed
+on read, so a restart never refills early). Depleted resources show "(picked
+clean)" in `look`, GMCP `Room.Info`/`World.Map` (`depleted`), the room panel
+(dimmed badge) and the map (hollow dot with a slash). Herbs use the zone's
+table; a company without a Forage specialist risks bitter weed; a knife, a
+Forage specialist and a Scribe (rarer herb, 10%) add finds; darkness halves
+them. Firewood doubles with an axe (+1 Field Smith) and half is damp in rain
+or storm. Fishing needs a line (5% break) and costs half effort; game needs a
+bow or sets snares (half chance), adds +10 to the room's encounter chance, and
+hands a haul to cargo (leader's pack on `ErrNoCargo`). Effort goes through
+`walking.Effort`; the encounter roll is `encounters.Attempt`; supplies through
+`company.CompanyItemCount/SpendCompanyItem`. Camp fire rule: a fire needs a
+firewood room (free) or one dry bundle; a damp bundle needs two tries and
+lights a smoky fire with light but no warmth (`Camp.Damp`,
+`RoomWarmedByFire`). New items 40-44 (firewood, damp firewood, fishing line,
+raw fish, bitter weed) and grilled fish (30024, Dunmar hearth, cooking 1);
+firewood and line sell at the Dunmar and Old Kings Road markets; 152 rooms
+tagged (Dark Forest, Frost Lake, Fernhollow, Old Kings Road, tutorial).
+Help: new `help gathering` (indexed under `road`; aliases gather, herbs,
+firewood, fish, hunt, snares, deadfall, picked-clean) and updates to
+resources, camp, forage, cooking, survival and webclient; tutorial hints in
+the Survival and Camp lessons. Tests: rules, module, wiring through
+`plugins.Load` and `TryCommand`, camp fuel, the three seams, help.
+Design: [40a2](designs/2026-10-05-phase-40a2-gathering-design.md).
+Decisions (builder, owner delegation): (1) room 2002 (the lightning-split oak)
+and tutorial room 905 are firewood rooms, so the existing camp flows and the
+tutorial keep working with no change to the starter kit; (2) ephemeral
+(tutorial) rooms use a memory-only ledger and never deplete; (3) the encounter
+roll happens after the haul, so an ambush never costs the work; (4) the damp
+first try is in memory only (a restart gives another first try); (5) the
+Forage specialist stands in for "Ranger" and a knife is any bladed weapon;
+(6) raw fish has no spoilage (the game has no spoilage mechanic). Not folded
+in: the 40a follow-up that a waterskin is destroyed by its last sip (belongs
+with consumables, still open). Follow-ups: regrowth does not push a GMCP
+redraw (the panel updates on the next room refresh); S1 `depleted` art
+replaces the slashed dot. Browser check: `/mnt/project-files/screens/40a2-gathering-panel.png`.
+Review (Opus review thread), exploit search against the 36c economy:
+**Accepted:** (1) gather-and-sell: with an axe and a Field Smith a room gave
+16-20 firewood bundles in 80 seconds, each sold back at about 3-5 gold to a
+market whose stock drifts back every round, several times what a fight pays
+at low level; lines and bundles also carried a haggled 1-gold margin from
+Dunmar to the road post. Markets now take `SupplyOnly: true` (sold, never
+bought back; `market` shows "never", `market sell` says so) for firewood and
+fishing lines (`TestMarketNeverBuysBackASupplyOnlyGood`,
+`TestShippedFirewoodAndLinesAreSupplyOnly`, `TestBidForStockClosedForSupplyOnly`).
+Hunting (about 6 gold a hunt, 2 a room per 40 minutes) and herbs (about 3
+gold a pick, 3 a room) stay sellable: fair. (2) Fishing lines were sold only
+in Dunmar and at the road post, yet the help and refusal said
+"provisioners"; the old fisherman at Frost Lake (where the fishing rooms
+are) now sells them at 12, above every market. (3) UI: `camp` and
+`camp status` now say what a fire would burn (free deadfall, N bundles, damp
+only, or none and where to get some) before `camp fire` fails, and a damp
+fire's status says it gives no warmth (`TestFuelLineSaysWhatAFireWouldBurn`,
+`TestCampCommandsShowFuelUntilTheFireIsLit`); a bare `gather` says when a
+picked-clean resource regrows. (4) The memory-only ledger for tutorial
+copies grew with every gather and was never read; it is gone, and tutorial
+copies record nothing. **Checked, no change:** `camp fire` stays free in the
+tutorial camp (905) and at the starter road's oak (2002), where the 44 smoke
+script and the tutorial flows camp; inns are untouched; everywhere else a
+fire now needs a bundle, as designed. **Rejected:**
+the tutorial's never-depleting rooms let a new character leave with one
+load of herbs before playing (bounded by carry weight, once); the 40a
+waterskin follow-up is not small (an item at 0 uses is refilled to full by
+`Validate`, so an empty skin needs a new representation; left for 43a camp
+consumables). Master fix carried with this merge: 37b's goblin shaman and
+38b's summoned Angel both used mob id 95, so loading the world panicked
+(`TestShippedEncounterContentIsValid` red on master); the shaman is now mob
+97. Follow-ups: a gather in progress shows only in text (no
+GMCP/panel progress); regrowth still does not push a redraw.
+
 **Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
 battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
 `frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene
@@ -439,6 +886,56 @@ its kit's "padded jerkin" is the catalog padded jack (20163). 35b's flaky
 Verification:
 `make generate`, `make validate`, `go test -race ./...`, `make js-lint`.
 
+**Phase 38b complete: promotions and talents (2026-10-06, PR #34):** class
+promotion at level 10 and 30, talents at 5/15/25/35/45/55, the six lineages'
+routes, and the faith routes (Priest and Hierarch with an Angel, Blood Priest
+and Demonologist with a Demon, Knight and Paladin, Blackguard and Dread
+Knight), with extension points for the neutral classes 39a-39h. See the
+[plan](plans/2026-10-06-phase-38b-promotions-talents.md). Terror, Soul feast
+and Hellfire rank texts were reworded to what is built.
+
+Review (independent reviewer, fixed with regression tests): Bless never wore
+off (now 3 rounds); Siphon cost 13 at every rank (now 10, then 8, free of the
+hungry heal tax); Intimidation lasted the whole battle (now the round of the
+wound and the next); a summon cast in peace spent the next battle's call (now
+battle only); companions summoned against a single foe and ignored the mana
+reserve (now 3+ foes or a boss, reserve kept); "10% less damage" auras gave
+about 5% (now a true percent off the blow); the Angel stayed when its Hierarch
+fell (now departs); two summons of a kind shared a member key (now per
+instance); a player kept casting rank spells after a death cost the level
+(now locked until regained). UI: the company roster names a companion's class
+and flags "promotion ready" and talents to choose; `class paths` shows each
+rank's text (15 advanced classes outside the cleric and warrior lines have no
+help page of their own). Accepted as is: Lay on Hands uses live in memory,
+reset by a camp or inn rest and refilled by a restart (rare, harmless
+leniency). Left as follow-ups (below).
+
+Balance (`TestPhase38bClassRoutes`, 100 fights a cell, even 5v5 mirror,
+company HP lost per fight): fighting healers vs a Mercenary: L25 Knight 41%,
+Blackguard 40% vs 56% (27-28% less, in the 15-30% target); L35 Paladin 38%,
+Dread Knight 46% vs 60%; L45 Paladin 26%, Dread Knight 33% vs 54% (the
+Mercenary has no elite yet, so the gap is wide there). Aura of Dread was the
+outlier (-5 Attack took the Dread Knight to 15% HP lost); it is -1 now.
+Summons against a boss mirror: Hierarch 99/98% wins vs Priest 72/67%,
+Demonologist 85/93% vs Blood Priest 65/55% (+20 to +38, target +10-20). Halving
+summon health or armor barely moved it: the gain comes from enemies turning to
+the arriving summon (a decoy), because it holds no formation cell. Settled
+(timeboxed) and left to the follow-up below.
+
+Follow-ups: summons stand in a front-row cell as the design says (and aim
+stickiness), then re-measure summon wins; Angel and Demon Attack/Evasion rates
+(1.0/1.1, 1.1/0.9; both use warrior rates now); Hierarch cleansing on Minor
+Heal, not only Greater Heal; the broken binding strikes allies only (design:
+nearest creature, friend or foe); Hellfire and Thornhide damage gives no kill
+credit and Soul feast fires on any mob death in the room; Quick chant shortens
+every hex, and Swift Host and Mastered binding skip the manual cast path; help
+pages for the 15 other advanced classes; class and talents in score and the
+web client panels. The race suite surfaced the
+`TestAnEnemysBleedLeavesALightWound` flake (3 in 40 on master: a crushing
+blow's bruise); the test now counts only the bleed's wound.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`.
+
 **Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
 takes enemy turns away. Eight hexes (Slumber to Blight) in the `hexcraft`
 school, reach 1 to the whole group by level, three new statuses (Asleep,
@@ -752,9 +1249,9 @@ their dependencies and those decisions is the
 | 35d | Combat feel: every swing lands with a quality (glancing, solid, telling) the skill edge decides, one-round heals resolve, an 80% after-battle patch threshold, company tactics defaults that grow with the leader's level, HP keeping pace after level 20, short bosses with no strategy, seconds-and-lines targets. [Design](designs/2026-10-06-phase-35d-combat-feel-design.md), **approved 2026-10-06** (all open-question defaults accepted; enemy healers may be uncommon); [plan](plans/2026-10-06-phase-35d-combat-feel.md); from the [combat rebalance second opinion](plans/2026-10-06-combat-rebalance-second-opinion.md) | Owner direction 2026-10-06 | 35b |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3). [Plan](plans/2026-10-06-phase-37-random-encounters.md), complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
-| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
+| 38b | Complete, merged via [PR #34](https://github.com/Robinsond76/ashveil-gomud/pull/34). Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
-| 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
+| 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). Complete, merged via [PR #38](https://github.com/Robinsond76/ashveil-gomud/pull/38) (`make smoke`) | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
 | 37c | Test stability (flaky tests found by shuffled and repeated runs) and the zone band rating by company level, refreshed on level change. Built, in review | Roadmap 2026-10-06 | 37b |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
@@ -790,7 +1287,7 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 |---|---|---|
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
-| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Design approved** | S1 |
+| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Done (PR #45)** | S1 |
 | 40a4 | Camp theft without bells and trip lines (after 40a3) | — |
 | 40s1–40s5 | Art sets S0+S1, S2, S3, S4, S5 as code-generated pixel art (S5 after 38b) | S0–S5 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |

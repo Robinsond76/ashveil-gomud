@@ -1,6 +1,6 @@
 # Phase 40a2: gathering (herbs, firewood, fishing, game)
 
-Status: **approved 2026-10-06 under the owner's delegation**; open questions are decided in the [remaining roadmap](../plans/2026-10-06-remaining-roadmap.md#decisions-on-open-questions) (handoff rule 20). Part
+Status: **built 2026-10-06** (see [PROJECT_STATUS](../PROJECT_STATUS.md)); approved under the owner's delegation; open questions are decided in the [remaining roadmap](../plans/2026-10-06-remaining-roadmap.md#decisions-on-open-questions) (handoff rule 20). Part
 of the [visual client milestone](2026-10-05-visual-client-milestone-design.md).
 It follows [40a room resources](2026-10-05-phase-40a-room-resources-design.md),
 which supplies the room data, `look` line, GMCP field and map icons. Art:

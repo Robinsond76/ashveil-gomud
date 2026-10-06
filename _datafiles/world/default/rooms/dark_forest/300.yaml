@@ -15,6 +15,9 @@ mutators:
 - mutatorid: wildfire
 resources:
 - forage
+- firewood
+- herbs
+- game
 mapx: 18
 mapy: -1
 mapz: 0

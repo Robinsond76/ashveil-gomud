@@ -101,3 +101,66 @@ func TestShopkeepersNeverUndercutMarketsOnTradedGoods(t *testing.T) {
 	}))
 	assert.Positive(t, checked, "Brynja's goods are checked")
 }
+
+// Phase 40a2 review: firewood (free to gather) and fishing lines are sold
+// in every shipped market but never bought back.
+func TestShippedFirewoodAndLinesAreSupplyOnly(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	var overlay struct {
+		Markets []struct {
+			Zone  string `yaml:"Zone"`
+			Goods []struct {
+				ItemId     int  `yaml:"ItemId"`
+				SupplyOnly bool `yaml:"SupplyOnly"`
+			} `yaml:"Goods"`
+		} `yaml:"Markets"`
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	require.NoError(t, yaml.Unmarshal(data, &overlay))
+	seen := 0
+	for _, m := range overlay.Markets {
+		for _, g := range m.Goods {
+			if g.ItemId == 40 || g.ItemId == 42 {
+				assert.True(t, g.SupplyOnly, "%s item %d", m.Zone, g.ItemId)
+				seen++
+			}
+		}
+	}
+	assert.Equal(t, 4, seen, "firewood and lines in Dunmar and on the Old Kings Road")
+}
+
+// Phase 40a3: camp gear is sold in both shipped markets and never bought
+// back, at the designed prices (Dunmar).
+func TestShippedCampGearIsSupplyOnly(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	var overlay struct {
+		Markets []struct {
+			Zone  string `yaml:"Zone"`
+			Goods []struct {
+				ItemId     int  `yaml:"ItemId"`
+				BasePrice  int  `yaml:"BasePrice"`
+				SupplyOnly bool `yaml:"SupplyOnly"`
+			} `yaml:"Goods"`
+		} `yaml:"Markets"`
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	require.NoError(t, yaml.Unmarshal(data, &overlay))
+	price := map[int]int{45: 8, 46: 40, 47: 5, 48: 12, 49: 6, 50: 25}
+	seen := map[string]int{}
+	for _, m := range overlay.Markets {
+		for _, g := range m.Goods {
+			if want, ok := price[g.ItemId]; ok {
+				assert.True(t, g.SupplyOnly, "%s item %d", m.Zone, g.ItemId)
+				if m.Zone == "Dunmar" {
+					assert.Equal(t, want, g.BasePrice, "item %d", g.ItemId)
+				} else {
+					assert.GreaterOrEqual(t, g.BasePrice, want, "the road is never cheaper: item %d", g.ItemId)
+				}
+				seen[m.Zone]++
+			}
+		}
+	}
+	assert.Equal(t, map[string]int{"Dunmar": 6, "Old Kings Road": 6}, seen)
+}

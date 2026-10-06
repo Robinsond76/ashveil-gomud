@@ -15,6 +15,9 @@
 #   0 <= StartStock <= MaxStock
 #   1 <= DriftStep <= MaxStock
 #   the item ID must exist; a zone listing an item twice gets no market.
+# SupplyOnly: true (Phase 40a2) makes a good one the market sells but never
+# buys back ("never" in the You sell column), for supplies anyone can
+# gather for free (firewood), so gathering is not a money loop.
 #
 # Phase 19b: the market itself lives in any room of a market zone tagged
 # with RoomTag (Dunmar Market Square, 2004; Trappers' Post, 2005). Only
@@ -141,6 +144,80 @@ Markets:
         TargetStock: 5
         StartStock: 3
         DriftStep: 1
+      # Phase 40a2: camp fuel and a line to fish with.
+      - ItemId: 40 # firewood bundle (a camp fire away from deadfall burns one)
+        BasePrice: 4
+        MinPrice: 2
+        MaxPrice: 10
+        MaxStock: 40
+        TargetStock: 20
+        StartStock: 20
+        DriftStep: 2
+        SupplyOnly: true # sold, never bought back: no gather-and-sell loop
+      - ItemId: 42 # fishing line
+        BasePrice: 8
+        MinPrice: 4
+        MaxPrice: 18
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 10
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back: no gather-and-sell loop
+      # Phase 40a3: camp gear (help camp gear), sold and never bought back.
+      - ItemId: 45 # bedroll
+        BasePrice: 8
+        MinPrice: 5
+        MaxPrice: 16
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 10
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 46 # oiled canvas tent
+        BasePrice: 40
+        MinPrice: 25
+        MaxPrice: 80
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 47 # fire steel and tinder
+        BasePrice: 5
+        MinPrice: 3
+        MaxPrice: 10
+        MaxStock: 20
+        TargetStock: 10
+        StartStock: 10
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 48 # iron cookpot
+        BasePrice: 12
+        MinPrice: 8
+        MaxPrice: 24
+        MaxStock: 8
+        TargetStock: 4
+        StartStock: 4
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 49 # camp bells and trip lines
+        BasePrice: 6
+        MinPrice: 4
+        MaxPrice: 12
+        MaxStock: 12
+        TargetStock: 6
+        StartStock: 6
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 50 # field surgeon's kit
+        BasePrice: 25
+        MinPrice: 16
+        MaxPrice: 50
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       # Phase 36c: the 36b trade goods, so a hauled load has somewhere to go.
       # Town pays best for materials and valuables; the road post is glutted
       # with trophies and salvage, so carrying them to Dunmar pays.
@@ -338,6 +415,80 @@ Markets:
         DriftStep: 1
   - Zone: Old Kings Road
     Goods:
+      # Phase 40a2: camp fuel and a line to fish with, dearer out on the road.
+      - ItemId: 40 # firewood bundle
+        BasePrice: 6
+        MinPrice: 3
+        MaxPrice: 14
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 15
+        DriftStep: 2
+        SupplyOnly: true # sold, never bought back: no gather-and-sell loop
+      - ItemId: 42 # fishing line
+        BasePrice: 10
+        MinPrice: 6
+        MaxPrice: 22
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 5
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back: no gather-and-sell loop
+      # Phase 40a3: camp gear, dearer out on the road.
+      - ItemId: 45 # bedroll
+        BasePrice: 10
+        MinPrice: 6
+        MaxPrice: 20
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 5
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 46 # oiled canvas tent
+        BasePrice: 48
+        MinPrice: 30
+        MaxPrice: 96
+        MaxStock: 3
+        TargetStock: 1
+        StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 47 # fire steel and tinder
+        BasePrice: 6
+        MinPrice: 4
+        MaxPrice: 12
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 5
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 48 # iron cookpot
+        BasePrice: 15
+        MinPrice: 10
+        MaxPrice: 30
+        MaxStock: 4
+        TargetStock: 2
+        StartStock: 2
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 49 # camp bells and trip lines
+        BasePrice: 8
+        MinPrice: 5
+        MaxPrice: 16
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 50 # field surgeon's kit
+        BasePrice: 30
+        MinPrice: 20
+        MaxPrice: 60
+        MaxStock: 3
+        TargetStock: 1
+        StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       - ItemId: 28 # wolf hide
         BasePrice: 9
         MinPrice: 4

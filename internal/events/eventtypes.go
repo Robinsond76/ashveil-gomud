@@ -341,6 +341,8 @@ type LevelUp struct {
 	SpellsLearned           []string
 	StatsBefore, StatsAfter stats.Statistics
 	NextMilestone           milestones.Milestone
+	ClassMilestone          string   // Phase 38b: the class's next promotion, talent or rank
+	ClassRanks              []string // 39b review: the ranks the new levels gave, as "New rank: ..."
 	StatsDelta              stats.Statistics
 	TrainingPoints          int
 	StatPoints              int
@@ -506,6 +508,14 @@ func (p Party) Type() string { return `Party` }
 
 // Rebuilds mapper for a given RoomId
 // NOTE: RoomId should USUALLY be the Room's Zone.RootRoomId
+// RoomResourcesChanged is queued when a room's gatherable resources were
+// picked clean or changed (Phase 40a2), so clients redraw the room's markers.
+type RoomResourcesChanged struct {
+	RoomId int
+}
+
+func (r RoomResourcesChanged) Type() string { return `RoomResourcesChanged` }
+
 type RebuildMap struct {
 	MapRootRoomId int
 	SkipIfExists  bool

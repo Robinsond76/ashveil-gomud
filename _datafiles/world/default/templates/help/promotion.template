@@ -1,0 +1,36 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">promotion</ansi>
+
+Promotion is how a character picks its class. It is permanent, and it is the
+biggest choice a character makes after its archetype.
+
+<ansi fg="yellow-bold">When</ansi>
+
+  Level 10   an advanced class, on the good, neutral or evil route
+  Level 30   an elite class, where your route has one (Hierarch, Demonologist,
+             Elder Druid, Paladin, Dread Knight)
+
+<ansi fg="yellow-bold">How</ansi>
+
+  <ansi fg="command">class paths</ansi>                     what each route of your lineage offers and asks
+  <ansi fg="command">class promote [class]</ansi>           preview a promotion: its ranks, its gate
+  <ansi fg="command">class promote [class] confirm</ansi>   make it
+
+For a companion, add its name: <ansi fg="command">class promote tamsin priest confirm</ansi>. A companion
+promotes on its own record: the leader chooses, and the choice is saved with
+the company.
+
+<ansi fg="yellow-bold">The alignment gate</ansi>
+
+Good routes need alignment +30 or higher and evil routes -30 or lower when
+you promote. Neutral routes need nothing, and the Samurai lineage (Kensai,
+Hatamoto, Ronin) has only neutral routes. If your alignment is not yet right,
+<ansi fg="command">class</ansi> says the promotion is waiting; you keep your ranks and promote once your
+alignment recovers (see <ansi fg="command">help alignment</ansi>). A class is never lowered.
+
+<ansi fg="yellow-bold">What you get</ansi>
+
+A promotion starts the class's ranks at once, including every rank your level
+has already reached. Spells those ranks teach are learned immediately. A class
+changes how you fight but never takes anything away.
+
+See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help warrior-routes</ansi>, <ansi fg="command">help samurai-routes</ansi>.

@@ -78,5 +78,6 @@ CampRecipes:
   - { Output: 30019, Inputs: [29, 29, 30018], Skill: cooking, MinLevel: 3 } # hunter's stew
   - { Output: 30020, Inputs: [29, 30018], Skill: cooking, MinLevel: 2 }     # thyme-roasted game
   - { Output: 30021, Inputs: [29], Skill: cooking, MinLevel: 1 }            # seared game meat
+  - { Output: 30024, Inputs: [43], Skill: cooking, MinLevel: 1 }            # grilled fish (Phase 40a2)
 # Forage and Vigil come at most once per this real time, per company.
 CampRewardCooldown: 15m

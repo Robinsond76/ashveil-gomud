@@ -141,15 +141,15 @@ func (m *CompanyModule) woundMembers(user *users.UserRecord) []woundMember {
 			continue
 		}
 		name := mob.Character.Name
-		arch := ""
+		arch, class := "", ""
 		for _, c := range record.Companions {
 			if c.ID == id {
 				name = nameOf(c, name)
-				arch = c.Archetype
+				arch, class = c.Archetype, c.Class
 			}
 		}
 		known := map[string]bool{}
-		for _, s := range archetypes.CompanionSpells(arch, mob.Character.Level) {
+		for _, s := range archetypes.CompanionKnownSpells(arch, class, mob.Character.Level) {
 			known[s] = true
 		}
 		out = append(out, woundMember{
@@ -347,6 +347,101 @@ func (m *CompanyModule) SpendSupply(leaderUserID int, item wounds.Item) bool {
 
 var _ domain.SupplyProvider = (*CompanyModule)(nil)
 
+// CompanyItemCount implements company.ItemSupplyProvider (Phase 40a2): how
+// many of itemID the company reaches.
+func (m *CompanyModule) CompanyItemCount(leaderUserID, itemID int) int {
+	user := users.GetByUserId(leaderUserID)
+	if user == nil || user.Character == nil || m.persistenceAvailable() != nil {
+		return 0
+	}
+	return len(m.supplies(user, m.woundMembers(user), itemID, 0))
+}
+
+// SpendCompanyItem implements company.ItemSupplyProvider.
+func (m *CompanyModule) SpendCompanyItem(leaderUserID, itemID int) bool {
+	user := users.GetByUserId(leaderUserID)
+	if user == nil || user.Character == nil || m.persistenceAvailable() != nil {
+		return false
+	}
+	return m.spendItem(user, m.woundMembers(user), itemID, 0)
+}
+
+var _ domain.ItemSupplyProvider = (*CompanyModule)(nil)
+
+// FieldSurgery implements company.SurgeryProvider (Phase 40a3): at the end
+// of a camp rest, a healer with mana left tends the worst lasting wound of
+// the most wounded member present, and the kit wears one use. It tends
+// only, so it spends no healing mana on plain damage (the rest restores
+// that), and it closes that one wound as far as the healer's mana allows.
+func (m *CompanyModule) FieldSurgery(leaderUserID, kitItemID int) ([]string, bool) {
+	user := users.GetByUserId(leaderUserID)
+	if user == nil || user.Character == nil || user.Character.Health < 1 || m.persistenceAvailable() != nil {
+		return nil, false
+	}
+	members := m.woundMembers(user)
+	if companyFighting(user, members) || len(m.supplies(user, members, kitItemID, 0)) == 0 {
+		return nil, false
+	}
+	rules := spellRules()
+	var healers []wounds.Healer
+	for _, w := range members {
+		if w.knows("tend") && w.char.Mana >= rules.TendCost {
+			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: true, CostPct: w.char.HealCostPct(false)})
+		}
+	}
+	if len(healers) == 0 {
+		return nil, false
+	}
+	// The most wounded member, with only the worst of their lasting wounds
+	// on the table, so the kit treats one wound and no more.
+	patients := patientsOf(members)
+	wounds.Order(patients)
+	var patient *wounds.Patient
+	for i := range patients {
+		if patients[i].Health >= 1 && len(wounds.Lasting(patients[i].Wounds)) > 0 {
+			patient = &patients[i]
+			break
+		}
+	}
+	if patient == nil {
+		return nil, false
+	}
+	lasting := wounds.Lasting(patient.Wounds)
+	pick := lasting[0]
+	for _, w := range lasting {
+		if w.Points > pick.Points {
+			pick = w
+		}
+	}
+	one := wounds.Patient{Key: patient.Key, Health: patient.Health, Max: patient.Max, Wounds: []wounds.Wound{pick}}
+	res := wounds.Plan([]wounds.Patient{one}, healers, wounds.Stock{}, rules, util.Rand)
+	if len(res.Steps) == 0 || !m.spendItem(user, members, kitItemID, 0) {
+		return nil, false
+	}
+	who := byKey(members)
+	// Put the tended wound's outcome back among the member's other wounds.
+	w := who[patient.Key]
+	var after []wounds.Wound
+	removed := false
+	for _, existing := range w.char.Wounds {
+		if !removed && existing == pick {
+			removed = true
+			continue
+		}
+		after = append(after, existing)
+	}
+	after = append(after, res.Patients[0].Wounds...)
+	w.char.Wounds = after
+	for _, h := range res.Healers {
+		if hm, ok := who[h.Key]; ok {
+			hm.char.Mana = h.Mana
+		}
+	}
+	return stepLines(who, res.Steps), true
+}
+
+var _ domain.SurgeryProvider = (*CompanyModule)(nil)
+
 // useSupply spends one item. It reports whether it was spent.
 func (m *CompanyModule) useSupply(user *users.UserRecord, s supply, itemID int) bool {
 	switch s.source {
@@ -467,7 +562,7 @@ func (m *CompanyModule) treat(user *users.UserRecord, members []woundMember) []s
 			knowers++
 		}
 		if (tend || heal) && w.char.Mana > 0 {
-			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: healBonus(w.char), HealPct: w.char.HealingBonusPct()})
+			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: healBonus(w.char), HealPct: w.char.HealingBonusPct(), CostPct: w.char.HealCostPct(false)})
 		}
 	}
 	anyHurt := false

@@ -8,6 +8,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combatpace"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
@@ -514,13 +515,19 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 		woundable, lightOnly = MobWounds(targetMob[0])
 	}
 
+	// Phase 39b: a Samurai's Iaijutsu is its battle's first strike (a wind-up
+	// is not one): stronger, surer and, for a Kensai, armor-piercing. It is
+	// spent by that swing whether it lands or not.
+	iai := power == nil && sourceChar.IaiReady()
+	iaiFx := sourceChar.ClassEffects()
+
 	// backstabCrit makes the first blow that lands a critical hit.
 	backstabCrit := false
 	// strikeBonus is a readied strike's extra damage (Opening Strike).
 	strikeBonus := 0
 
 	// Statmods can add a damage bonus plus the stat-driven damage bonus.
-	statModDBonus := sourceChar.StatMod(`damage`) + damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
+	statModDBonus := sourceChar.StatMod(`damage`) + sourceChar.ClassEffects().Int(classes.Damage) + damageBonus(sourceChar.Stats.Strength.ValueAdj, targetChar.Stats.Strength.ValueAdj)
 
 	for i := 0; i < atkCount; i++ {
 
@@ -589,6 +596,11 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				dBonus += weapon.StatMod(string(statmods.RacialBonusPrefix) + strings.ToLower(targetChar.Race()))
 			}
 
+			// Phase 44: a body with no weapon and no natural damage (the
+			// tutorial's straw soldiers, race 19: 0d0) deals nothing; the flat
+			// damage floor must not arm it.
+			harmless := harmlessStrike(weapon.ItemId, sourceChar.GetRaceId())
+
 			// Apply damage stat modifier after weapon selection so it is never overwritten.
 			dBonus += statModDBonus
 
@@ -614,7 +626,15 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				isCrit := false
 				hitQuality := QualitySolid
 
+				strikeIai := iai
+				if iai {
+					iai = false
+					sourceChar.RT.IaiSpent = true
+				}
 				hit, byChemistry := hitRoll(hitEdge(&sourceChar, &targetChar), penalty, chemistryBonus)
+				if harmless {
+					hit, byChemistry = false, false
+				}
 				if hit {
 					// Phase 30g2: one active defense, before armor; a
 					// defended strike does nothing and can't crit.
@@ -664,7 +684,12 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						attackTargetDamage += strikeBonus
 						strikeBonus = 0
 					}
-					isCrit = backstabCrit || Crits(sourceChar, targetChar)
+					critBonus := 0
+					if strikeIai {
+						critBonus = iaiFx.Int(classes.IaiCrit)
+						attackTargetDamage += (attackTargetDamage*iaiFx.Int(classes.IaiDamage) + 50) / 100
+					}
+					isCrit = backstabCrit || critsWith(sourceChar, targetChar, critBonus)
 					backstabCrit = false // consume the backstab flag after one use
 					if isCrit {
 						attackResult.Crit = true // record that at least one crit occurred this round
@@ -676,7 +701,28 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 					}
 				}
 
-				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, targetChar.GetDefense())
+				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
+				defense := targetChar.GetDefense()
+				if strikeIai && hit {
+					defense -= defense * min(iaiFx.Int(classes.IaiPierce), 100) / 100
+				}
+				attackTargetDamage, attackTargetReduction = applyDefenseReduction(attackTargetDamage, defense)
+				// Phase 38b review: an aura's "less damage" is a true percent
+				// off the blow (on the armor roll it averaged half that).
+				if r := targetChar.Aura.Resolve; r > 0 && attackTargetDamage > 0 {
+					cut := (attackTargetDamage*r + 50) / 100
+					attackTargetDamage -= cut
+					attackTargetReduction += cut
+				}
+				// Phase 38b: a Divine Shield turns the first blow of a battle
+				// aside, and a ward takes its share of one.
+				if attackTargetDamage > 0 && targetChar.ShieldBlow() {
+					attackTargetReduction += attackTargetDamage
+					attackTargetDamage = 0
+				} else if left, absorbed := targetChar.AbsorbWard(attackTargetDamage); absorbed > 0 {
+					attackTargetDamage = left
+					attackTargetReduction += absorbed
+				}
 				if attackTargetDamage < 1 && len(attackResult.Qualities) > 0 {
 					// Phase 35d: a blow armor absorbed whole has no quality to report.
 					hitQuality = QualitySolid

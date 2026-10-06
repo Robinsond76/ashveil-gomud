@@ -11,14 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Phase 40a: Room.Info carries the shown room resources, never reserved
-// ones, and omits the field when there are none.
+// Phase 40a: Room.Info carries the shown room resources and omits the field
+// when there are none. Phase 40a2: it also lists the ones picked clean.
 func TestRoomInfoCarriesShownResources(t *testing.T) {
 	mudlog.SetupLogger(nil, "", "", false)
 	rooms.SetTestBiome(&rooms.BiomeInfo{BiomeId: "gmcpres", Name: "Meadow", LitArea: true})
 	t.Cleanup(func() { rooms.RemoveTestBiome("gmcpres") })
 	spring := &rooms.Room{RoomId: 990401, Zone: "Meadow", Biome: "gmcpres", Resources: []string{"herbs", "shelter", "water"}}
-	bare := &rooms.Room{RoomId: 990402, Zone: "Meadow", Biome: "gmcpres", Resources: []string{"herbs"}}
+	bare := &rooms.Room{RoomId: 990402, Zone: "Meadow", Biome: "gmcpres"}
 	for _, r := range []*rooms.Room{spring, bare} {
 		rooms.SetTestRoom(r)
 		id := r.RoomId
@@ -37,21 +37,29 @@ func TestRoomInfoCarriesShownResources(t *testing.T) {
 	}
 
 	p, raw := payload(spring.RoomId)
-	assert.Equal(t, []string{"water", "shelter"}, p.Resources, "table order, reserved herbs withheld")
-	assert.Contains(t, raw, `"resources":["water","shelter"]`)
+	assert.Equal(t, []string{"water", "shelter", "herbs"}, p.Resources, "table order")
+	assert.Contains(t, raw, `"resources":["water","shelter","herbs"]`)
+	assert.NotContains(t, raw, "depleted", "omitted when nothing is picked clean")
+
+	rooms.SetDepletedCheck(func(roomID int, resource string) bool { return roomID == spring.RoomId && resource == "herbs" })
+	t.Cleanup(func() { rooms.SetDepletedCheck(nil) })
+	p, raw = payload(spring.RoomId)
+	assert.Equal(t, []string{"herbs"}, p.Depleted)
+	assert.Contains(t, raw, `"depleted":["herbs"]`)
 
 	p, raw = payload(bare.RoomId)
 	assert.Empty(t, p.Resources)
 	assert.NotContains(t, raw, "resources", "omitted, never null or empty")
+	assert.NotContains(t, raw, "depleted")
 }
 
-// World.Map entries carry the same field for visited rooms.
+// World.Map entries carry the same fields for visited rooms.
 func TestWorldMapEntriesCarryShownResources(t *testing.T) {
 	mudlog.SetupLogger(nil, "", "", false)
 	rooms.SetTestBiome(&rooms.BiomeInfo{BiomeId: "gmcpres2", Name: "Meadow", LitArea: true})
 	t.Cleanup(func() { rooms.RemoveTestBiome("gmcpres2") })
 	spring := &rooms.Room{RoomId: 990411, Zone: "Meadow2", Biome: "gmcpres2", Resources: []string{"game", "forage"}}
-	bare := &rooms.Room{RoomId: 990412, Zone: "Meadow2", Biome: "gmcpres2", Resources: []string{"game"}}
+	bare := &rooms.Room{RoomId: 990412, Zone: "Meadow2", Biome: "gmcpres2"}
 	valid := map[int]struct{}{}
 	user := users.NewUserRecord(8, 1)
 	for _, r := range []*rooms.Room{spring, bare} {
@@ -61,18 +69,24 @@ func TestWorldMapEntriesCarryShownResources(t *testing.T) {
 		valid[id] = struct{}{}
 		user.Character.MarkVisitedRoom(id, "Meadow2", valid)
 	}
+	rooms.SetDepletedCheck(func(roomID int, resource string) bool { return roomID == spring.RoomId && resource == "game" })
+	t.Cleanup(func() { rooms.SetDepletedCheck(nil) })
 
 	payload := (&GMCPWorldModule{}).buildWorldMap(user)
 	got := map[int][]string{}
+	depleted := map[int][]string{}
 	for _, entry := range payload.Rooms {
 		got[entry.Id] = entry.Resources
+		depleted[entry.Id] = entry.Depleted
 		raw, err := json.Marshal(entry)
 		require.NoError(t, err)
 		if entry.Id == bare.RoomId {
 			assert.NotContains(t, string(raw), "resources")
+			assert.NotContains(t, string(raw), "depleted")
 		}
 	}
-	assert.Equal(t, []string{"forage"}, got[spring.RoomId], "reserved game withheld")
+	assert.Equal(t, []string{"forage", "game"}, got[spring.RoomId])
+	assert.Equal(t, []string{"game"}, depleted[spring.RoomId])
 	assert.Empty(t, got[bare.RoomId])
 	assert.Len(t, got, 2)
 }

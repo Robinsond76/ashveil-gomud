@@ -308,6 +308,17 @@ type Healer struct {
 	// Reserve is the mana a healer keeps when patching (Phase 35b: its
 	// strategy's mana reserve); Plan ignores it.
 	Reserve int
+	// CostPct moves the healer's spell costs by a percent, signed (Phase 38b:
+	// a class that heals dearly or patches cheaply); 0 pays the rules' costs.
+	CostPct int
+}
+
+// CostOf is a spell's mana for this healer, never below 1.
+func (h Healer) CostOf(base int) int {
+	if h.CostPct == 0 || base <= 0 {
+		return base
+	}
+	return max(1, base+(base*h.CostPct+50)/100)
 }
 
 // Stock is the treatment items the company can reach.
@@ -419,10 +430,10 @@ func Plan(patients []Patient, healers []Healer, stock Stock, rules Rules, roll R
 	caster := func(tend bool) *Healer {
 		for i := range hs {
 			h := &hs[i]
-			if tend && h.Tend && h.Mana >= rules.TendCost {
+			if tend && h.Tend && h.Mana >= h.CostOf(rules.TendCost) {
 				return h
 			}
-			if !tend && h.Heal && h.Mana >= rules.HealCost {
+			if !tend && h.Heal && h.Mana >= h.CostOf(rules.HealCost) {
 				return h
 			}
 		}
@@ -440,7 +451,7 @@ func Plan(patients []Patient, healers []Healer, stock Stock, rules Rules, roll R
 			if h == nil {
 				break
 			}
-			h.Mana -= rules.TendCost
+			h.Mana -= h.CostOf(rules.TendCost)
 			ws, was, closed, ok := Close(p.Wounds, dice(rules.TendDice, roll))
 			if !ok {
 				break
@@ -453,7 +464,7 @@ func Plan(patients []Patient, healers []Healer, stock Stock, rules Rules, roll R
 			if h == nil {
 				break
 			}
-			h.Mana -= rules.HealCost
+			h.Mana -= h.CostOf(rules.HealCost)
 			amt := min((dice(rules.HealDice, roll)+h.HealBonus)*(100+max(h.HealPct, 0))/100, p.Limit()-p.Health)
 			p.Health += amt
 			res.Steps = append(res.Steps, after(Step{Kind: StepHeal, Healed: amt}, *p, h))
@@ -526,7 +537,7 @@ func Patch(patients []Patient, healers []Healer, rules Rules, healBelow int, rol
 	res := Result{}
 	caster := func() *Healer {
 		for i := range hs {
-			if h := &hs[i]; h.Heal && h.Mana-rules.HealCost >= max(h.Reserve, 0) {
+			if h := &hs[i]; h.Heal && h.Mana-h.CostOf(rules.HealCost) >= max(h.Reserve, 0) {
 				return h
 			}
 		}
@@ -543,7 +554,7 @@ func Patch(patients []Patient, healers []Healer, rules Rules, healBelow int, rol
 			if h == nil {
 				break
 			}
-			h.Mana -= rules.HealCost
+			h.Mana -= h.CostOf(rules.HealCost)
 			amt := min((dice(rules.HealDice, roll)+h.HealBonus)*(100+max(h.HealPct, 0))/100, p.Limit()-p.Health)
 			p.Health += amt
 			res.Steps = append(res.Steps, Step{Kind: StepHeal, Healer: h.Key, Patient: p.Key, Healed: amt, Health: p.Health, Limit: p.Limit(), Max: p.Max, HealerMana: h.Mana})
