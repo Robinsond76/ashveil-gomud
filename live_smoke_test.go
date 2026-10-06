@@ -481,7 +481,7 @@ func TestLiveSmoke(t *testing.T) {
 			return
 		}
 		txt := p1.text()
-		for _, bad := range []string{"not recognized", "panic:", "runtime error"} {
+		for _, bad := range []string{"not recognized", "looks a little confused", "panic:", "runtime error"} {
 			if strings.Contains(txt, bad) {
 				t.Errorf("player 1 saw %q:\n%s", bad, snippetAround(txt, bad))
 			}

@@ -1,12 +1,12 @@
 package characters
 
 import (
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/skills"
 )
 
 // Phase 35a2 (skill over hit points): Attack and Evasion are derived from

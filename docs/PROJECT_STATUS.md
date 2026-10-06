@@ -28,6 +28,25 @@ Verification: `make generate`, `make validate`, `go test -race ./...`,
 (modules/company) failed once in the full race run (its battle was already
 over after one round) and passed on a rerun of the package; it is random,
 not from this phase.
+Review (2026-10-06, Opus review thread): accepted the five live fixes as
+root-cause fixes (only races 19 dummy and 20 orb are 0d0, so no fighting
+mob lost its blows; `ClassTitle` falls back to the profession title with no
+archetype). Fixed in review, each with a regression test: a line typed
+within a turn of the last now waits out the turn instead of being dropped
+(telnet, websocket and restored connections; `waitForTurn`); companions no
+longer print "looks a little confused (gate )" when the graduation has
+already moved them beside their leader (`companionAlreadyWithLeader`; the
+smoke run now fails on that line); `TestAttackOnAWaitingGroupIsRefused` is
+deterministic (the bandits outlast the first round). Import grouping tidied.
+Rejected or left as follow-ups: "The battle is under way" for a moment after
+a summary (clearing the aim at victory did not change the brawl harness, so
+the live cause is elsewhere; `doAfterBattle` covers the smoke run); `weather`
+in the Weather Yard (only the forest biome has a weather table, so the
+tutorial and Frostfang show none: a content gap, not a code bug); input
+typed during the tutorial hand-off; a full race run also showed random
+failures in `TestLegacySkillsDoNotOverwriteBattleActions` and
+`TestAimedShotGrowsWithLevel` (both pass alone and on master's code) and
+the known `TestBalanceMirrorClericIsACasterWhoCastsNothing` (37b).
 
 **Phase 40f built: battle screen in the web client (2026-10-06):** a battle
 opens as a picture (`window-battle.js`): the company left, the enemy right,
