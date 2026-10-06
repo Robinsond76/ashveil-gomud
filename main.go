@@ -598,27 +598,27 @@ func resumeRestoredConnection(connDetails *connections.ConnectionDetails, userOb
 		if clientInput.EnterPressed {
 			c = configs.GetConfig()
 
-			if time.Since(lastInput) < time.Duration(c.Timing.TurnMs)*time.Millisecond {
-				clientInput.Reset()
-				userObject.SetUnsentText(``, ``)
-			} else {
-				_, suggested := userObject.GetUnsentText()
-				if len(suggested) > 0 {
-					clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
-					sug.Clear()
-					userObject.SetUnsentText(string(clientInput.Buffer), ``)
-					connections.SendTo([]byte(templates.AnsiParse(userObject.GetCommandPrompt())), clientInput.ConnectionId)
-				}
+			// A line typed within a turn of the last waits out the turn
+			// instead of being dropped (Phase 44: scripted and pasted
+			// input lost lines).
+			waitForTurn(lastInput, time.Duration(c.Timing.TurnMs)*time.Millisecond)
 
-				wi := WorldInput{
-					FromId:    userObject.UserId,
-					InputText: string(clientInput.Buffer),
-				}
-				worldManager.SendInput(wi)
-				clientInput.Reset()
-				userObject.SetUnsentText(``, ``)
-				lastInput = time.Now()
+			_, suggested := userObject.GetUnsentText()
+			if len(suggested) > 0 {
+				clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
+				sug.Clear()
+				userObject.SetUnsentText(string(clientInput.Buffer), ``)
+				connections.SendTo([]byte(templates.AnsiParse(userObject.GetCommandPrompt())), clientInput.ConnectionId)
 			}
+
+			wi := WorldInput{
+				FromId:    userObject.UserId,
+				InputText: string(clientInput.Buffer),
+			}
+			worldManager.SendInput(wi)
+			clientInput.Reset()
+			userObject.SetUnsentText(``, ``)
+			lastInput = time.Now()
 
 			time.Sleep(time.Duration(10) * time.Millisecond)
 		}
@@ -1074,69 +1074,56 @@ func handleTelnetConnection(connDetails *connections.ConnectionDetails, wg *sync
 			// No need to update it every loop
 			c = configs.GetConfig()
 
-			if time.Since(lastInput) < time.Duration(c.Timing.TurnMs)*time.Millisecond {
-				/*
+			// A line typed within a turn of the last waits out the turn
+			// instead of being dropped (Phase 44: scripted and pasted
+			// input lost lines).
+			waitForTurn(lastInput, time.Duration(c.Timing.TurnMs)*time.Millisecond)
+
+			_, suggested := userObject.GetUnsentText()
+
+			if len(suggested) > 0 {
+				// solidify it in the render for UX reasons
+
+				clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
+				sug.Clear()
+				userObject.SetUnsentText(string(clientInput.Buffer), ``)
+
+				if connections.IsWebsocket(clientInput.ConnectionId) {
+					connections.SendTo([]byte(userObject.GetCommandPrompt()), clientInput.ConnectionId)
+				} else {
+					connections.SendTo([]byte(templates.AnsiParse(userObject.GetCommandPrompt())), clientInput.ConnectionId)
+				}
+
+			}
+
+			if connDetails.ConnType() == connections.ConnAI {
+				if !connDetails.AICommandAllowed(int64(util.GetRoundCount()), int(c.Network.AI.CommandsPerRound)) {
 					connections.SendTo(
-						[]byte("Slow down! You're typing too fast! "+time.Since(lastInput).String()+"\n"),
+						[]byte(fmt.Sprintf("Command dropped — AI rate limit (%d/round). Wait for the next round.\r\n", int(c.Network.AI.CommandsPerRound))),
 						connDetails.ConnectionId(),
 					)
-				*/
-
-				// Reset the buffer for future commands.
-				clientInput.Reset()
-
-				// Capturing and resetting the unsent text is purely to allow us to
-				// Keep updating the prompt without losing the typed in text.
-				userObject.SetUnsentText(``, ``)
-
-			} else {
-
-				_, suggested := userObject.GetUnsentText()
-
-				if len(suggested) > 0 {
-					// solidify it in the render for UX reasons
-
-					clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
-					sug.Clear()
-					userObject.SetUnsentText(string(clientInput.Buffer), ``)
-
-					if connections.IsWebsocket(clientInput.ConnectionId) {
-						connections.SendTo([]byte(userObject.GetCommandPrompt()), clientInput.ConnectionId)
-					} else {
-						connections.SendTo([]byte(templates.AnsiParse(userObject.GetCommandPrompt())), clientInput.ConnectionId)
-					}
-
+					clientInput.Reset()
+					userObject.SetUnsentText(``, ``)
+					time.Sleep(time.Duration(10) * time.Millisecond)
+					continue
 				}
-
-				if connDetails.ConnType() == connections.ConnAI {
-					if !connDetails.AICommandAllowed(int64(util.GetRoundCount()), int(c.Network.AI.CommandsPerRound)) {
-						connections.SendTo(
-							[]byte(fmt.Sprintf("Command dropped — AI rate limit (%d/round). Wait for the next round.\r\n", int(c.Network.AI.CommandsPerRound))),
-							connDetails.ConnectionId(),
-						)
-						clientInput.Reset()
-						userObject.SetUnsentText(``, ``)
-						time.Sleep(time.Duration(10) * time.Millisecond)
-						continue
-					}
-				}
-
-				wi := WorldInput{
-					FromId:    userObject.UserId,
-					InputText: string(clientInput.Buffer),
-				}
-
-				// Buffer should be processed as an in-game command
-				worldManager.SendInput(wi)
-				// Reset the buffer for future commands.
-				clientInput.Reset()
-
-				// Capturing and resetting the unsent text is purely to allow us to
-				// Keep updating the prompt without losing the typed in text.
-				userObject.SetUnsentText(``, ``)
-
-				lastInput = time.Now()
 			}
+
+			wi := WorldInput{
+				FromId:    userObject.UserId,
+				InputText: string(clientInput.Buffer),
+			}
+
+			// Buffer should be processed as an in-game command
+			worldManager.SendInput(wi)
+			// Reset the buffer for future commands.
+			clientInput.Reset()
+
+			// Capturing and resetting the unsent text is purely to allow us to
+			// Keep updating the prompt without losing the typed in text.
+			userObject.SetUnsentText(``, ``)
+
+			lastInput = time.Now()
 
 			time.Sleep(time.Duration(10) * time.Millisecond)
 			//	time.Sleep(time.Duration(util.TurnMs) * time.Millisecond)
@@ -1721,27 +1708,27 @@ func handleSSHConnection(connDetails *connections.ConnectionDetails, reqs <-chan
 		if clientInput.EnterPressed {
 			c = configs.GetConfig()
 
-			if time.Since(lastInput) < time.Duration(c.Timing.TurnMs)*time.Millisecond {
-				clientInput.Reset()
-				userObject.SetUnsentText(``, ``)
-			} else {
-				_, suggested := userObject.GetUnsentText()
-				if len(suggested) > 0 {
-					clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
-					sug.Clear()
-					userObject.SetUnsentText(string(clientInput.Buffer), ``)
-					connections.SendTo([]byte(templates.AnsiParse(userObject.GetCommandPrompt())), clientInput.ConnectionId)
-				}
+			// A line typed within a turn of the last waits out the turn
+			// instead of being dropped (Phase 44: scripted and pasted
+			// input lost lines).
+			waitForTurn(lastInput, time.Duration(c.Timing.TurnMs)*time.Millisecond)
 
-				wi := WorldInput{
-					FromId:    userObject.UserId,
-					InputText: string(clientInput.Buffer),
-				}
-				worldManager.SendInput(wi)
-				clientInput.Reset()
-				userObject.SetUnsentText(``, ``)
-				lastInput = time.Now()
+			_, suggested := userObject.GetUnsentText()
+			if len(suggested) > 0 {
+				clientInput.Buffer = append(clientInput.Buffer, []byte(suggested)...)
+				sug.Clear()
+				userObject.SetUnsentText(string(clientInput.Buffer), ``)
+				connections.SendTo([]byte(templates.AnsiParse(userObject.GetCommandPrompt())), clientInput.ConnectionId)
 			}
+
+			wi := WorldInput{
+				FromId:    userObject.UserId,
+				InputText: string(clientInput.Buffer),
+			}
+			worldManager.SendInput(wi)
+			clientInput.Reset()
+			userObject.SetUnsentText(``, ``)
+			lastInput = time.Now()
 
 			time.Sleep(time.Duration(10) * time.Millisecond)
 		}
@@ -1785,4 +1772,12 @@ func loadAllDataFiles(isReload bool) {
 	colorpatterns.LoadColorPatterns()
 	audio.LoadAudioConfig()
 	characters.CompileAdjectiveSwaps() // This should come after loading color patterns.
+}
+
+// waitForTurn holds a connection's next command until a turn has passed
+// since its last one, so typing fast is paced rather than discarded.
+func waitForTurn(lastInput time.Time, turn time.Duration) {
+	if wait := turn - time.Since(lastInput); wait > 0 {
+		time.Sleep(wait)
+	}
 }

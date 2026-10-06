@@ -91,7 +91,6 @@ help:
     shops:
       - appraise
       - bank
-      - bid
       - buy
       - deposit
       - list
@@ -99,8 +98,7 @@ help:
       - sell
       - salvage
       - mark
-      - store
-      - unstore
+      - storage
       - withdraw
       - market
       - rumors
@@ -249,6 +247,7 @@ help:
 # Aliases for keywords when typing: help <keyword>
 # Key is the target keyword, value is the list of aliases
 help-aliases:
+  storage: [store, unstore]
   progression: [stat-steps, stat steps, leveling]
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
   ambush: [surprise, surprised]
