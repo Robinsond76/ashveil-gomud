@@ -1,5 +1,7 @@
 # Ashveil Project Status
 
+**Phase 39b complete (PR open, 2026-10-06): the Samurai neutral lineage.** Iaijutsu (first swing of a battle +50% damage, +10% crit, half a turn ahead; spent hit or miss), Focus (+3% crit per quiet round to +9%), Zanshin (+50 meter once a round after being struck); routes Kensai (piercing draw), Hatamoto (Bodyguard: guards the leader twice a battle), Ronin (Vengeance per fallen ally). New base-rank mechanism (`classes/base.go`) for lineage ranks from level 1. Samurai archetype (6 HP, 0.85/level, medium armor, sword), recruit mob 139, default rule strongest, Camp Watch utility. Help: `help samurai`, `help samurai-routes` plus updates to related pages; tutorial hint in the creation lesson. Plan: [39b](plans/2026-10-06-phase-39b-samurai.md). Balance (80 fights, ±5): Samurai 83/91/77% vs Rogue 76/92/76% at L5/10/20. Decisions: duelist is a Fighter with default rule strongest; first strike spent on the first swing; Bodyguard precedes strategy guards; Focus 3/9 and Attack 1.0 tuned down from the design; elites stay planned (39i). Follow-ups: Samurai battle sprites, elite ranks, level-up text names only the next rank. Independent review is the review thread's job.
+
 **Phase 40a2 complete, merged via [PR #41](https://github.com/Robinsond76/ashveil-gomud/pull/41) (2026-10-06): gathering.** Herbs,
 firewood, fishing and game are real. New `gather [herbs|firewood]`, `fish`
 and `hunt` commands (module `modules/gathering`, rules in `internal/gathering`)

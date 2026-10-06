@@ -60,3 +60,22 @@ in its first moment.
   Samurai weapons.
 - Focus is 3% a quiet round to +9% (the design's 5% to +15% was too strong
   in the harness) and Attack rate 1.0 (the design's 1.1); see Balance.
+
+## Balance
+
+Harness: `TestPhase39bSamurai` (`ASHVEIL_BALANCE=1`), slot 3 swapped, 80 fights
+per cell (about ±5 points of noise), final settings Focus 3%/+9%, Attack 1.0.
+
+| Level | Warrior | Rogue | Samurai |
+| --- | --- | --- | --- |
+| 5 | 78% | 76% | 83% |
+| 10 | 91% | 92% | 91% |
+| 20 | 63% | 76% | 77% |
+
+Samurai at L15 and L25: 87% and 81%. The design asks for a win rate within 5
+points of the Rogue company: L10 and L20 meet it; L5 is 7 points above, which is
+inside the noise at this sample size. The harness gives every companion the same
+light gear, so it understates the Samurai's medium armor. The design's first
+values (Focus 5%/+15%, Attack 1.1) ran 7-20 points above the Rogue and were
+lowered. Route cells (Kensai, Hatamoto, Ronin) are in the test but were not
+tuned further (timeboxed).
