@@ -169,7 +169,7 @@ def contact_sheet_s5(out, dest):
             row_h = max(row_h, big.height)
         y += row_h + gap + 6
 
-    for lineage in ("warrior", "cleric", "rogue", "ranger", "wizard", "witch", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist"):
+    for lineage in ("warrior", "cleric", "rogue", "ranger", "wizard", "witch", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist", "beasttamer"):
         ids = [c for c in promoted.CLASS_IDS if promoted.LINEAGE[c] == lineage]
         put_row(f"{lineage} line: base, then " + ", ".join(ids) + " (battle idle 2x)",
                 [(_load(out, f"battle/units/{i}/idle.png").crop((0, 0, 128, 64)), 2) for i in [lineage] + ids])

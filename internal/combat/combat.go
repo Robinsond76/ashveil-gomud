@@ -203,6 +203,9 @@ func MobWounds(m *mobs.Mob) (woundable, lightOnly bool) {
 	if m.Character.RT != nil && m.Character.RT.Doll != nil {
 		return false, false // Phase 39d: a doll breaks; it takes no wounds
 	}
+	if m.Character.RT != nil && m.Character.RT.Beast != nil {
+		return false, false // Phase 39e: a beast is wounded by its record, not by a blow
+	}
 	if _, _, companion := company.LeaderAndKeyForInstance(m.InstanceId); companion {
 		return true, false
 	}

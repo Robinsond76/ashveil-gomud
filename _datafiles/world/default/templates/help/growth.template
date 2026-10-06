@@ -19,6 +19,7 @@ Each archetype leans toward the stats it needs, by these weights out of 10:
   Doll Master smarts 4, perception 3, speed 2, mysticism 1
   Alchemist smarts 4, perception 2, vitality 2, speed 2
   Gryphon Rider speed 4, strength 3, perception 2, vitality 1
+  Beast Tamer perception 3, vitality 3, strength 2, smarts 2
   Shaman    mysticism 4, smarts 3, perception 2, speed 1
   Cleric    mysticism 3, vitality 3, smarts 2, strength 2
   Ranger    perception 4, speed 3, strength 2, vitality 1

@@ -4,6 +4,7 @@ family: whip
 name: long whip
 namesimple: whip
 description: A long whip used by circus performers.
+weaponclass: whip
 type: weapon
 hands: 1
 subtype: whipping

@@ -1,6 +1,6 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">abilities</ansi>
 
-Warriors, rogues, rangers, halberdiers, Doll Masters and gryphon riders each have a class ability they use on their
+Warriors, rogues, rangers, halberdiers, Doll Masters, gryphon riders and Beast Tamers each have a class ability they use on their
 own in a battle, when the moment comes. Nobody types it: like a healer's
 heal, it follows from how your company is set up. Who has which:
 
@@ -69,6 +69,21 @@ heal, it follows from how your company is set up. Who has which:
     When: the doll would break.
     Does: once a battle the doll stands back up at 25% health and its
     Master loses its next turn.
+
+  <ansi fg="command">Sic</ansi>              Beast Tamers; for you, the <ansi fg="skill">taming</ansi> skill
+    When: its beast stands and the Tamer has a foe.
+    Does: sends the beast at the Tamer's foe with +10 Attack on its
+    strike. The Tamer still strikes its own blow, with a whip that reaches
+    like a polearm (<ansi fg="command">help beasttamer</ansi>).
+
+  <ansi fg="command">Rally</ansi>            Beast Tamers, from level 3
+    When: its beast is below the company's healing threshold.
+    Does: heals the beast for a Minor Heal's worth with no mana. Twice a
+    battle.
+
+  <ansi fg="command">Pack Sense</ansi>       Beast Tamers, from level 8
+    When: always, while its beast stands.
+    Does: the Tamer has +5 Evasion.
 
   <ansi fg="command">Opening Strike</ansi>   rogues; for you, the <ansi fg="skill">skulduggery</ansi> skill
     When: its foe is knocked down, stunned, staggered, or exposed, and it
