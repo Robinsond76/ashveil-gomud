@@ -28,7 +28,7 @@ func TestCreatureRanksCarryTheirEffects(t *testing.T) {
 	hound := EffectsForLineage("hound", "", 20, nil)
 	golem := EffectsForLineage("stone-golem", "", 20, nil)
 	assert.Equal(t, 50, hound.Int(Pounce), "Savage pursuit replaces Run down's 30")
-	assert.Equal(t, 25, golem.Int(Slow))
+	assert.Equal(t, 15, golem.Int(Slow))
 	assert.Equal(t, 25, golem.Int(SpellWeak))
 	assert.Equal(t, 40, golem.Int(Armor), "Granite replaces Stone body's 30")
 	assert.Equal(t, 15, golem.Int(AuraResolv), "Bedrock replaces Anchor's 10")

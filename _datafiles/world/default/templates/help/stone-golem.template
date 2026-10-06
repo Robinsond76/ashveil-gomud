@@ -6,7 +6,7 @@ fear. It is a construct, so it is kept differently from any other companion
 
 <ansi fg="yellow-bold">What the Stone Golem is</ansi>
 
-  Health      12 to start, 1.3 a level (<ansi fg="command">help health</ansi>)
+  Health      12 to start, 1.5 a level (<ansi fg="command">help health</ansi>)
   Skill       Attack 0.9 and Evasion 0.6 a level (<ansi fg="command">help evasion</ansi>)
   Attack      a stone fist, 2d5
   Stats       vitality 4, strength 3 (<ansi fg="command">help growth</ansi>)
@@ -19,7 +19,7 @@ fear. It is a construct, so it is kept differently from any other companion
 
 <ansi fg="yellow-bold">Ranks of the Stone Golem</ansi>
 
-  Level 1   <ansi fg="yellow">Stone body</ansi>  +30 armor, but it acts a quarter less often and spells
+  Level 1   <ansi fg="yellow">Stone body</ansi>  +30 armor, but it acts 15% less often and spells
                        hit it 25% harder
   Level 1   <ansi fg="yellow">Anchor</ansi>      allies in its row take 10% less damage (auras do not
                        stack within a row; <ansi fg="command">help formation</ansi>)

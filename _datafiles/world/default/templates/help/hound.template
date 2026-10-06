@@ -6,11 +6,11 @@ so it is kept like any companion (<ansi fg="command">help creatures</ansi>).
 
 <ansi fg="yellow-bold">What the Hound is</ansi>
 
-  Health      4 to start, 0.8 a level (<ansi fg="command">help health</ansi>)
-  Skill       Attack 1.0 and Evasion 1.1 a level (<ansi fg="command">help evasion</ansi>)
+  Health      3 to start, 0.6 a level (<ansi fg="command">help health</ansi>)
+  Skill       Attack 0.75 and Evasion 1.0 a level (<ansi fg="command">help evasion</ansi>)
   Gear        a collar and a harness only (<ansi fg="command">help armor</ansi>)
   Attack      two bites a turn, 1d4 each
-  Stats       speed 4, strength 3, perception 2, vitality 1 (<ansi fg="command">help growth</ansi>)
+  Stats       speed 3, strength 3, perception 2, vitality 2 (<ansi fg="command">help growth</ansi>)
   Upkeep      eats, drinks and tires like the rest of the company, mends in
               camp and by rest (<ansi fg="command">help survival</ansi>)
   Loyalty     can lose heart and leave, like any companion (<ansi fg="command">help morale</ansi>)

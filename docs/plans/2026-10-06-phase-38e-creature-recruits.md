@@ -47,8 +47,8 @@ decision below was taken under that rule; none waited on an answer.
 
 | Species | Health | Atk / Eva | Ranks |
 |---|---|---|---|
-| Hound (90 gold, Trappers' Post) | 4, 0.8/level | 1.0 / 1.1 | 1 Run down (Pounce 30), 5 Worry (+25% vs a foe at or below half health), 10 Fleet (+3 Evasion), 20 Savage pursuit (Pounce 50) |
-| Stone Golem (180 gold, Waymark Inn) | 12, 1.3/level | 0.9 / 0.6 | 1 Stone body (+30 armor, Slow 25, SpellWeak 25), 1 Anchor (row takes 10% less), 10 Granite (armor 40 in all), 20 Bedrock (row 15% in all) |
+| Hound (90 gold, Trappers' Post) | 3, 0.6/level | 0.75 / 1.0 | 1 Run down (Pounce 30), 5 Worry (+25% vs a foe at or below half health), 10 Fleet (+3 Evasion), 20 Savage pursuit (Pounce 50) |
+| Stone Golem (180 gold, Waymark Inn) | 12, 1.5/level | 0.9 / 0.6 | 1 Stone body (+30 armor, Slow 15, SpellWeak 25), 1 Anchor (row takes 10% less), 10 Granite (armor 40 in all), 20 Bedrock (row 15% in all) |
 
 Default target rules: Hound `wounded`, Stone Golem `nearest`. Mobs 260
 (Brindle) and 261 (Cairn); recruiters in Dunmar; Dunmar's market sells mortar
