@@ -12,7 +12,7 @@ out of one, for you or your companions. It returns only through:
 
 Gaining a level raises your maximum but doesn't refill what you have.
 
-Wizards, witches and clerics have deep pools: a wizard has 40 mana plus 10 a level,
+Wizards, witches, shamans and clerics have deep pools: a wizard has 40 mana plus 10 a level,
 a witch the same, a cleric 36 plus 9 a level. Everyone else has 4 plus 1 a level. Every
 point of Mysticism adds 3 more. In a battle, healers and casters
 spend it on their own (<ansi fg="command">help strategy</ansi>), and after one your healers

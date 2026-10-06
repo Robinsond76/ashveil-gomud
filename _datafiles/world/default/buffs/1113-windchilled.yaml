@@ -1,0 +1,13 @@
+buffid: 1113
+name: Windchilled
+description: A cold wind numbs you. Your spell chants and sling shots take a round longer to begin.
+secret: false
+# Phase 39c: a Shaman's Chill Wind. Ticked by the combat round (see
+# internal/status), never by game rounds; the call sets the count itself
+# (rounds + 1); this is the default, 3 rounds.
+triggerrate: 100000 rounds
+combatrounds: true
+triggercount: 4
+flags:
+  - combat-status
+  - windchilled

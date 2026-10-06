@@ -286,6 +286,7 @@ const ally = (leader, name, members) => ({ id: 'a:' + leader, name, members: mem
 const allied = {
   ...battle,
   nerve: 'faltering',
+  weather: { kind: 'fog', name: 'fog', rounds: 2, effect: 'foe ranged attacks and spells weaker' },
   allies: [
     ally(8, 'Brannoc', [['leader', 'Brannoc', 'warrior', 0, 1, 'unhurt'], ['companion:2', 'Cael', 'cleric', 1, 2, 'wounded'], ['companion:3', 'Dun', 'ranger', 1, 0, 'unhurt']]),
     ally(9, 'Maren', [['leader', 'Maren', 'wizard', 0, 0, 'scratched'], ['companion:1', 'Pell', 'rogue', 2, 1, 'near death']]),
@@ -306,6 +307,8 @@ check(!s.units.some(u => u.id.startsWith('a:10')), 'a company past the second is
 const banners = await page.evaluate(() => document.querySelector('#battle-screen .bs-banners').textContent);
 check(banners.includes('company faltering') && banners.includes('allies: Brannoc, Maren, Tove'), 'the header names the allies and a faltering company: ' + banners);
 check(s.nerve === 'faltering', 'the nerve of the company is known to the screen');
+// Phase 39c: a Shaman's weather is named in the header with its rounds and effect.
+check(banners.includes('fog (2 rounds: foe ranged attacks and spells weaker)') && s.weather === 'fog', 'the header names the battle\'s weather: ' + banners);
 // An ally's own blows and falls play, at its own place, with no lunge across the field.
 await events({ fight: 2, round: 10, pace: 'slow', events: [{ seq: 200, kind: 'attack', src: 'a:8:leader', tgt: 'm:1', outcome: 'hit', damage: 5, weapon: 'slashing' }] });
 s = await state();
