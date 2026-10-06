@@ -244,6 +244,7 @@
             u.klass = String(m.archetype || '').toLowerCase();
             u.sprite = u.klass || 'adventurer';
             u.promoted = String(m.class || '').toLowerCase();   // Phase 40s5: an advanced or elite class has its own art
+            u.className = m.class_name || '';
             u.cell = cell;
             u.leader = m.key === 'leader';
             u.role = (m.strategy && m.strategy.role) || '';
@@ -546,6 +547,7 @@
         const u = hover ? units.get(hover) : null;
         if (!u) { captionNode.textContent = battle && !outcomeText ? HINT : ''; return; }
         let text = u.label;
+        if (u.side === 'company' && u.className) { text += ', ' + u.className; }
         if (u.side === 'enemy' && u.band) { text += ', ' + u.band; }
         if (u.side === 'company' && u.fallen) { text += ', fallen'; }
         if (u.yielded) { text += ', surrendered'; }

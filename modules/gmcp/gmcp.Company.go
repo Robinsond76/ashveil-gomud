@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -78,7 +79,10 @@ type companyMember struct {
 	Archetype *string `json:"archetype"`
 	// Class is its promoted class id (Phase 40s5 art key); omitted before
 	// promotion.
-	Class     string       `json:"class,omitempty"`
+	Class string `json:"class,omitempty"`
+	// ClassName is the class's display name (e.g. "Dread Knight"), sent with
+	// Class so the company list and battle caption can name it.
+	ClassName string       `json:"class_name,omitempty"`
 	Cell      *companyCell `json:"cell"`
 	Chemistry *string      `json:"chemistry"`
 	// Strategy is nil when unknown.
@@ -207,6 +211,9 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 		out.Archetype = strPtr(m.Archetype)
 	}
 	out.Class = m.Class
+	if c, ok := classes.Get(m.Class); ok && m.Class != "" {
+		out.ClassName = c.Name
+	}
 	if m.Placed {
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}
 	}

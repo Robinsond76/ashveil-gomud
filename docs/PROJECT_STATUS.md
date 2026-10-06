@@ -12,8 +12,19 @@ class (or a silhouette for a lineage with no art). It logs each pending
 class and its fallback instead; the later art pass runs it with
 `ASHVEIL_ART_STRICT=1`, which fails until every built class has art. It
 still fails when `promotedClasses` names a class that does not exist.
-Merged master (44 smoke, 40a2 shaman renumber: same mob 97, kept the
-shaman's own sprite).
+UI check, fixed in review: the company list showed a promoted member only
+by its base archetype ("Warrior" for a Paladin) and the battle caption only
+by name, so Company GMCP members now also carry `class_name`; the company
+card shows the class (its line on hover) and the battle caption reads
+"Wren, Paladin, striking …"; `help battlescreen` says so (tests: GMCP
+payload, `TestBattleScreenHelp`, and assertions in
+`scripts/browser/battle-check.mjs` and `dock-windows-check.mjs`).
+Follow-ups: `score` and the Character window still show no class (38b
+follow-up); `dock-windows-check.mjs` stalls at its Combat-tab hover since
+40f because the battle screen opens over the tab (pre-existing; the 40s5
+assertions run before that point); three members in one row overlap
+heavily on the battle screen. Merged master (44 smoke, 40a2 shaman
+renumber: same mob 97, kept the shaman's own sprite).
 
 **Phase 40s5 built: class art, art set S5 (2026-10-06):** map sprites
 (down/up/side, idle and walk) and battle idles for the 23 promoted classes on

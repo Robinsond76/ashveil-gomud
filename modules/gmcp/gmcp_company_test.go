@@ -479,7 +479,11 @@ func TestCompanyMemberClass(t *testing.T) {
 	require.NoError(t, json.Unmarshal(data, &got))
 	assert.Equal(t, "paladin", got["leader"].(map[string]any)["class"])
 	members := got["members"].([]any)
+	assert.Equal(t, "Paladin", got["leader"].(map[string]any)["class_name"], "the display name travels with the id")
 	assert.Equal(t, "hag", members[0].(map[string]any)["class"])
+	assert.Equal(t, "Hag", members[0].(map[string]any)["class_name"])
 	_, has := members[1].(map[string]any)["class"]
 	assert.False(t, has, "an unpromoted member carries no class key")
+	_, has = members[1].(map[string]any)["class_name"]
+	assert.False(t, has, "nor a class name")
 }
