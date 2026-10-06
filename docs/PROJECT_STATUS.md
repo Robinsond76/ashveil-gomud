@@ -46,7 +46,10 @@ tutorial and Frostfang show none: a content gap, not a code bug); input
 typed during the tutorial hand-off. A package run before the fixes showed
 the known `TestBalanceMirrorClericIsACasterWhoCastsNothing` flake (37b).
 Verification after review: `make generate`, `make validate`, `make
-js-lint`, `go test -race ./...` (pass), `make smoke`.
+js-lint`, `go test -race ./...` (pass), `make smoke`. Merging master then
+found 37b's goblin shaman and 38b's summoned Angel both used mob id 95
+(every world load panicked); the shaman is now mob 97, its dark forest
+encounter updated, since the Angel's id is a code constant.
 
 **Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
 battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
