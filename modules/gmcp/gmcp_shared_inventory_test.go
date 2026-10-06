@@ -83,3 +83,14 @@ func TestSharedInventoryContainersTrackAssignedCarrierAvailability(t *testing.T)
 	u.Character.Health = 0
 	assert.False(t, buildInventoryPayload(u, src).Containers[0].Available)
 }
+
+// Phase 48: the payload lists every gear slot, so the client shows a member's
+// empty ones and can offer cargo for them.
+func TestInventoryPayloadListsEveryGearSlot(t *testing.T) {
+	u := inventoryUser(t)
+	u.Character.CompanyCargo = true
+	p := buildInventoryPayload(u, inventoryTestSources(nil))
+	require.Len(t, p.Slots, 11)
+	assert.Equal(t, inventorySlot{Slot: "weapon", Label: "Weapon"}, p.Slots[0])
+	assert.Equal(t, "pack", p.Slots[len(p.Slots)-1].Slot)
+}

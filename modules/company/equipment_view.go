@@ -13,6 +13,7 @@ import (
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/pets"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
@@ -110,7 +111,47 @@ func (m *CompanyModule) EquipmentView(id int) domain.EquipmentView {
 // slot when focus is "": a rebuild costs a copy of the character per
 // preview, and the editor shows one slot's choices at a time.
 func (m *CompanyModule) EquipmentViewFor(id int, focus string) domain.EquipmentView {
-	out := domain.EquipmentView{Slots: []domain.EquipmentSlot{}}
+	return m.EquipmentViewForMember(id, "me", focus)
+}
+
+// equipmentMembers lists who the Gear editor can show: the leader, then each
+// living companion, with whether each can change gear now.
+func (m *CompanyModule) equipmentMembers(u *users.UserRecord) []domain.EquipmentMember {
+	out := []domain.EquipmentMember{{Ref: "me", Name: u.Character.Name, Ready: true}}
+	rec, _ := m.registry.Get(u.UserId)
+	for _, c := range rec.Companions {
+		ref := fmt.Sprintf("#%d", c.ID)
+		_, _, err := m.equipmentActor(u, ref)
+		out = append(out, domain.EquipmentMember{Ref: ref, Name: companionName(c), Ready: err == nil})
+	}
+	return out
+}
+
+// memberCharacter is a member's character for display only, whether or not
+// the member can change gear now.
+func (m *CompanyModule) memberCharacter(u *users.UserRecord, member string) *characters.Character {
+	key, err := m.resolveMemberKey(u.UserId, member)
+	if err != nil || key == domain.LeaderMemberKey {
+		return u.Character
+	}
+	id, _ := domain.CompanionIDFromMemberKey(key)
+	if inst, ok := m.instance(u.UserId, id); ok {
+		if live := mobs.GetInstance(inst); live != nil {
+			return &live.Character
+		}
+	}
+	return nil
+}
+
+// EquipmentViewForMember is EquipmentViewFor for one named member ("me" or
+// "#N"): the same slots, exact cargo choices and Current -> After previews,
+// run against that member's gear and the leader's shared cargo.
+func (m *CompanyModule) EquipmentViewForMember(id int, member, focus string) domain.EquipmentView {
+	member = strings.ToLower(strings.TrimSpace(member))
+	if member == "" || member == "leader" || member == "self" {
+		member = "me"
+	}
+	out := domain.EquipmentView{Member: member, Slots: []domain.EquipmentSlot{}}
 	u := users.GetByUserId(id)
 	if u == nil || u.Character == nil {
 		out.Reason = "Character unavailable."
@@ -120,9 +161,9 @@ func (m *CompanyModule) EquipmentViewFor(id int, focus string) domain.EquipmentV
 		out.Reason = "Shared cargo is not ready."
 		return out
 	}
+	out.Members = m.equipmentMembers(u)
 	load, known := encumbrance.CurrentLoad(id)
-	out.Current = equipmentStats(u.Character, load)
-	_, actor, err := m.equipmentActor(u, "me")
+	_, actor, err := m.equipmentActor(u, member)
 	if err != nil {
 		out.Reason = err.Error()
 	} else if err = m.persistenceAvailable(); err != nil {
@@ -137,10 +178,15 @@ func (m *CompanyModule) EquipmentViewFor(id int, focus string) domain.EquipmentV
 		}
 	}
 	if actor == nil {
-		actor = u.Character
+		actor = m.memberCharacter(u, member)
 	}
-	// The view covers the leader only, so the actor is the leader and its
-	// items are the shared cargo, which every proposal takes from u instead.
+	if actor == nil {
+		out.Available, out.Reason = false, "That member is not here."
+		return out
+	}
+	out.Current = equipmentStats(actor, load)
+	// A member's items are the shared cargo, which every proposal takes
+	// from u instead.
 	// The cache is keyed on the character without them or its round ticks,
 	// plus the cargo; a rebuild marshals it once more, in full, as the source
 	// of every preview's clone.
@@ -155,7 +201,7 @@ func (m *CompanyModule) EquipmentViewFor(id int, focus string) domain.EquipmentV
 	}
 	hpPerLevel := bare.HealthGainPerLevel()
 	archetype := bare.ArchetypeID() // 35a2: the class decides the gear rules
-	key := sha256.Sum256(append(append(keyRaw, cargoRaw...), fmt.Sprintf("|%+v|%t|%t|%s|%t|%v|%s|%g|%s", load, known, out.Available, out.Reason, bare.Pet.Exists() && !bare.Pet.IsMissing(), bare.Pet.GetBuffs(), focus, hpPerLevel, archetype)...))
+	key := sha256.Sum256(append(append(keyRaw, cargoRaw...), fmt.Sprintf("|%+v|%t|%t|%s|%t|%v|%s|%g|%s|%s|%v", load, known, out.Available, out.Reason, bare.Pet.Exists() && !bare.Pet.IsMissing(), bare.Pet.GetBuffs(), focus, hpPerLevel, archetype, member, out.Members)...))
 	round := util.GetRoundCount()
 	m.equipmentViews.mu.Lock()
 	cached, hit := m.equipmentViews.byUser[id]
@@ -172,9 +218,9 @@ func (m *CompanyModule) EquipmentViewFor(id int, focus string) domain.EquipmentV
 	clone := func() (*characters.Character, error) { return characterFrom(raw, hpPerLevel, archetype) }
 	preview := func(verb, slot string, itm items.Item) domain.EquipmentChoice {
 		choice := domain.EquipmentChoice{Ref: itm.ShorthandId(), Label: domain.PlainLabel(itm)}
-		args := []string{verb, "me", itm.ShorthandId(), slot}
+		args := []string{verb, member, itm.ShorthandId(), slot}
 		if verb == "remove" {
-			args = []string{verb, "me", slot, itm.ShorthandId()}
+			args = []string{verb, member, slot, itm.ShorthandId()}
 		}
 		choice.Command = "company " + strings.Join(args, " ")
 		proposed, cargo, _, displaced, err := proposalFrom(u, actor, args, clone)

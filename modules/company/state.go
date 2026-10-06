@@ -13,6 +13,7 @@ import (
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 )
 
@@ -218,6 +219,11 @@ func (m *CompanyModule) gearView(leaderUserID int, selector string) string {
 	} else {
 		lines = append(lines, "  Wearing:")
 		lines = append(lines, worn...)
+	}
+	if inst, ok := m.instance(leaderUserID, c.ID); ok && !c.Dead() {
+		if live := mobs.GetInstance(inst); live != nil {
+			lines = append(lines, "  Effect: "+gearStatLine(&live.Character, c.State.Equipment)+" (company equip, company remove, help companion-gear)")
+		}
 	}
 	if len(c.State.Items) == 0 {
 		lines = append(lines, "  Carrying nothing.")

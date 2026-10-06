@@ -44,16 +44,35 @@ type EquipmentSlot struct {
 	// removal preview are not built until it is selected (Phase 34 review).
 	Pending bool `json:"pending,omitempty"`
 }
+
+// EquipmentMember is one member the Gear editor can show: the leader ("me")
+// or a companion ("#2").
+type EquipmentMember struct {
+	Ref  string `json:"ref"`
+	Name string `json:"name"`
+	// Ready is false for a member who cannot change gear right now (fallen,
+	// away, or still returning).
+	Ready bool `json:"ready"`
+}
 type EquipmentView struct {
-	Available bool            `json:"available"`
-	Reason    string          `json:"reason,omitempty"`
-	Current   EquipmentStats  `json:"current"`
-	Slots     []EquipmentSlot `json:"slots"`
+	// Member is who the slots belong to, as a member reference.
+	Member    string            `json:"member,omitempty"`
+	Members   []EquipmentMember `json:"members,omitempty"`
+	Available bool              `json:"available"`
+	Reason    string            `json:"reason,omitempty"`
+	Current   EquipmentStats    `json:"current"`
+	Slots     []EquipmentSlot   `json:"slots"`
 }
 type EquipmentViewProvider interface {
 	// EquipmentViewFor previews only the focus slot's choices; "" previews
 	// every slot.
 	EquipmentViewFor(id int, focus string) EquipmentView
+}
+
+// EquipmentMemberViewProvider previews one named member's gear: "me" for
+// the leader or "#N" for a companion.
+type EquipmentMemberViewProvider interface {
+	EquipmentViewForMember(id int, member, focus string) EquipmentView
 }
 
 // EquipmentViewOf previews every slot.
@@ -69,4 +88,16 @@ func EquipmentViewFocused(id int, focus string) EquipmentView {
 		return ep.EquipmentViewFor(id, focus)
 	}
 	return EquipmentView{Reason: "Equipment service unavailable.", Slots: []EquipmentSlot{}}
+}
+
+// EquipmentViewMember previews one member's gear, focused on one slot as
+// EquipmentViewFocused does.
+func EquipmentViewMember(id int, member, focus string) EquipmentView {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	if ep, ok := p.(EquipmentMemberViewProvider); ok {
+		return ep.EquipmentViewForMember(id, member, focus)
+	}
+	return EquipmentViewFocused(id, focus)
 }

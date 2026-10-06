@@ -10,7 +10,9 @@ package gmcp
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -71,7 +73,17 @@ type inventoryContainer struct {
 	Available bool   `json:"available"`
 }
 
+// inventorySlot names one gear slot, in the order the web client lists a
+// member's equipment (Phase 48).
+type inventorySlot struct {
+	Slot  string `json:"slot"`
+	Label string `json:"label"`
+}
+
 type inventoryPayload struct {
+	// Slots are every gear slot a member can fill, so the client shows the
+	// empty ones too.
+	Slots      []inventorySlot      `json:"slots"`
 	Containers []inventoryContainer `json:"containers"`
 	Shared     bool                 `json:"shared"`
 	Treasury   int                  `json:"treasury"`
@@ -140,7 +152,11 @@ func buildInventoryPayload(user *users.UserRecord, src inventorySources) invento
 	leader := company.InventoryMemberOf(company.LeaderMemberKey, user.Character.Name,
 		company.MemberState{Items: user.Character.Items, Equipment: user.Character.Equipment})
 	leader.Available = user.Character.Health > 0
-	p := inventoryPayload{Shared: user.Character.CompanyCargo, Treasury: user.Character.Gold, AutoLoot: user.Character.AutoLoot, Members: []inventoryMember{inventoryMemberOf(leader)}, Horses: []inventoryHorse{}, Cargo: []inventoryItem{}}
+	slots := make([]inventorySlot, 0, len(items.AllEquipSlots()))
+	for _, slot := range items.AllEquipSlots() {
+		slots = append(slots, inventorySlot{Slot: string(slot), Label: strings.TrimSuffix(characters.SlotLabel(slot), ":")})
+	}
+	p := inventoryPayload{Slots: slots, Shared: user.Character.CompanyCargo, Treasury: user.Character.Gold, AutoLoot: user.Character.AutoLoot, Members: []inventoryMember{inventoryMemberOf(leader)}, Horses: []inventoryHorse{}, Cargo: []inventoryItem{}}
 	if load, ok := src.load(uid); ok {
 		p.Load = &inventoryLoad{TotalG: load.TotalGrams(), CapacityG: load.CapacityGrams, MemberCapacityG: load.MemberCapacityGrams,
 			MountCapacityG: load.MountCapacityGrams, CargoG: load.CargoGrams}

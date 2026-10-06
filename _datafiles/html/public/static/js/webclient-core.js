@@ -42,6 +42,7 @@ function injectStyles(css) {
 //       { label: 'remove item', cmd: 'remove longsword' },
 //   ]);
 //
+// An item with fn: function runs it instead of sending a command (Phase 48).
 // An item with confirm: '<question>' asks first and sends nothing unless
 // the player agrees (Phase 32g: for what can't be undone).
 // ---------------------------------------------------------------------------
@@ -122,6 +123,7 @@ function injectStyles(css) {
                 e.stopPropagation();
                 dismiss(false);
                 if (item.confirm && !window.confirm(item.confirm)) { return; }
+                if (typeof item.fn === 'function') { item.fn(); return; }
                 Client.SendInput(item.cmd);
             });
             entries.push(entry);

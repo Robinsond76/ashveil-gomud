@@ -1,0 +1,54 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">companion gear</ansi>
+
+Your companions wear what you give them. Better gear is the plainest way to
+buff a companion: a sturdier weapon, heavier armor, a shield. Everything comes
+from your shared cargo, and everything you take off goes back to it.
+
+  <ansi fg="command">company equip [member] [item]</ansi>
+  Gives one cargo item to a member (#1, #2, a name, or me for yourself). The
+  gear it replaces goes back to cargo, so nothing is lost or duplicated.
+
+  <ansi fg="command">company remove [member] [slot]</ansi>
+  Takes a worn piece off and returns it to cargo.
+
+  <ansi fg="command">company compare [member] [item]</ansi>
+  Shows the change before you commit: protection, weapon hands and reach,
+  burden and company capacity.
+
+  <ansi fg="command">company gear [member]</ansi>
+  What a companion wears and carries, and what it does for them: damage,
+  protection, burden and dodge. <ansi fg="command">company status</ansi> carries a one-line gear summary for each.
+
+The same rules apply to a companion as to you. A class refuses gear it isn't
+taught (<ansi fg="command">help shields</ansi>), armor heavier than its training costs it skill and dodge
+(<ansi fg="command">help armor</ansi>), and gear with a level requirement needs a member who has the level
+(<ansi fg="command">help rarity</ansi>). Changes are refused in battle, and the companion must be alive and
+with you. When a change lands, the reply lists what moved, such as
+"Now: protection 3 -> 7, damage 1d4 -> 1d6+1".
+
+<ansi fg="yellow-bold">When a companion leaves</ansi>
+
+Dismiss a companion (<ansi fg="command">company dismiss</ansi>), lose one to desertion, or fail to raise a fallen one in time,
+and every piece you gave them comes back to your cargo, with the report in
+the same message. They keep only what they came with (their own weapon and
+armor), so recruiting the same companion again never earns you free gear. If
+the return leaves your company over capacity you can still walk; drop or sell
+something, or give a pack horse more to carry (<ansi fg="command">help cargo</ansi>).
+
+A fallen companion keeps its gear while it waits to be raised.
+
+<ansi fg="yellow-bold">Dolls</ansi>
+
+A Doll Master's dolls are dressed with <ansi fg="command">doll wield</ansi> and <ansi fg="command">doll wear</ansi> (<ansi fg="command">help doll</ansi>). If their
+Master leaves the company, what you dressed them in comes back to your cargo
+too, except the cudgel every doll starts with.
+
+<ansi fg="yellow-bold">In the browser</ansi>
+
+Company > Inventory lists every member's slots, empty ones too. Tap a slot to
+pick from the cargo items that fit it, or tap worn gear to take it off. On a
+computer you can also drag a cargo item onto a member's slot, and drag worn
+gear back onto the cargo. Character > Gear previews Current -> After for any
+member: choose who from the row of names at the top.
+
+See also: <ansi fg="command">help equipment</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help cargo</ansi>, <ansi fg="command">help doll</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help shields</ansi>.

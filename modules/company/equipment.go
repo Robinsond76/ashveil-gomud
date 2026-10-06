@@ -242,6 +242,7 @@ func (m *CompanyModule) equipmentCommand(u *users.UserRecord, args []string) str
 	if err != nil {
 		return err.Error()
 	}
+	changes := statChanges(actor, proposed) // before the live gear changes
 	loadBefore, loadAfter, hasLoad := equipmentLoad(u.UserId, actor, proposed, u.Character.Items, cargo)
 	lossAllowed := args[0] == "remove" && itm.GetSpec().Type == items.Pack
 	if args[0] != "compare" && hasLoad && !lossAllowed && !equipmentFits(loadBefore, loadAfter) {
@@ -318,6 +319,9 @@ func (m *CompanyModule) equipmentCommand(u *users.UserRecord, args []string) str
 	}
 	events.AddToQueue(evt)
 	msg := fmt.Sprintf("%s's equipment updated. Shared cargo retains every displaced item.", actor.Name)
+	if changes != "" {
+		msg += " Now: " + changes + "."
+	}
 	// Phase 35a2: untrained armor is allowed, with a warning.
 	if args[0] != "remove" && proposed.WouldBeUntrained(itm) {
 		cfg := configs.GetCombatConfig()
