@@ -1,5 +1,38 @@
 # Ashveil Project Status
 
+**Phase 40f built: battle screen in the web client (2026-10-06):** a battle
+opens as a picture (`window-battle.js`): the company left, the enemy right,
+each in its 3x3 formation on a 320x180 canvas scaled by whole numbers, over
+a biome backdrop (dimmed in the dark). It reads `Company.Battle`, `Company`
+and `.Vitals`, and the 40e event feed (hit and heal flashes with numbers,
+statuses, chant marks, falls, yields, the outcome held for 3 seconds).
+Company health is exact; enemy health is five bands. Retreat and focus send
+the dock's commands; Minimise leaves a badge; a setting (`Open
+automatically`, kept in `localStorage`) and the Combat tab's "Battle screen"
+button cover manual mode. Server: `Company.Battle.enemies[].sprite` (the mob
+spec's new optional `sprite:` key, else `unknown-humanoid`, `-beast` or
+`-large` by race). Help: `help battlescreen`, linked from `help combat` and
+`help webclient`, and the Combat tutorial lesson. Browser check:
+`scripts/browser/battle-check.mjs`; screenshot in the project files
+(`screens/40f-battle.png`). 40e follow-ups done: the roster refreshes from
+every `Company.Battle` snapshot (a fight that grows shows its newcomers);
+every `?` is one unseen presence; a `?` caster's cast shows no spell name;
+the chant mark lasts until `cast-complete`, so the lagging spell results
+(which arrive with the line after the cast) flash when they come.
+Decisions (delegated): (1) **Art:** S3 is not drawn yet, so figures are
+drawn in code (class hues, a beast and a humanoid shape, unseen shadow) and
+the screen loads `battle/units/<key>/idle.png` and
+`battle/backgrounds/<id>.png` as soon as `manifest.json` lists them, with
+no code change; (2) shipped mobs get no `sprite:` keys yet, since the S3 key
+table is not drawn and the race silhouettes cover them; the keys come with
+S3; (3) **allied reserve formations** are left as a follow-up: the 40e feed
+has no allied relay (a fight has one leader), so the half-scale view would
+have no events to animate; (4) per-member Company.Conditions icons are not
+drawn (statuses come from events, which cover enemies too); (5) the
+tutorial-zone and Stormwatchers Keep backdrop overrides wait for S3's
+`training-yard` and `ice-keep` art; (6) the screen is a floating panel, not
+a modal, so the terminal stays usable under it.
+
 **Phase 40s1 built: art sets S0 and S1 (2026-10-06):** `make sprites` runs
 `scripts/sprites/generate.py` (Pillow) and writes 51 PNG/GPL files under
 `_datafiles/html/public/static/sprites/` plus `manifest.json` (frame size,

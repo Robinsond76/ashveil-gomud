@@ -574,6 +574,14 @@
         retreat.title = 'Withdraw your company: one round to prepare, then the attempt (retreat)';
         retreat.addEventListener('click', () => Client.SendInput('retreat'));
         head.appendChild(retreat);
+        // Phase 40f: the picture of this battle (it opens itself unless turned off).
+        if (window.BattleScreen) {
+            const picture = el('button', 'cbt-btn', 'Battle screen');
+            picture.type = 'button';
+            picture.title = 'Show the battle as a picture (help battlescreen)';
+            picture.addEventListener('click', () => window.BattleScreen.open());
+            head.appendChild(picture);
+        }
         root.appendChild(head);
         if (typeof battle.focus === 'string') { root.appendChild(focusBar(battle)); }
         if (battle.outlook && battle.outlook.text) {

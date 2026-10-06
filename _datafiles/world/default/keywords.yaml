@@ -134,6 +134,7 @@ help:
       - stat-edge
       - shields
       - shoot
+      - battlescreen
       - strategy
       - tactics
       - targeting
@@ -299,6 +300,7 @@ help-aliases:
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]
   combat:           [battle, battles, fighting, fight]
+  battlescreen:     [battle-screen, battle screen, battle-map, battle map, battle-picture]
   formation:        [reach, interception, formations]
   targeting:        [target, targets, enemy-parties]
   scout:            [scouting, enemy-groups, groups]

@@ -65,17 +65,17 @@
 
     // Biome (from Room.Info.environment) to a backdrop.
     const SCENES = {
-        snow:      { sky: ['#8fa8c8', '#d8e4f0'], ground: '#e8eef4', far: '#aebfd4', style: 'hills' },
-        mountains: { sky: ['#6f86a8', '#b9c6d8'], ground: '#7a7468', far: '#5a5f6e', style: 'peaks' },
-        forest:    { sky: ['#6fa0a0', '#a8c8b0'], ground: '#4d6b3a', far: '#2f4a2c', style: 'trees' },
-        desert:    { sky: ['#d8a860', '#f0d8a0'], ground: '#d8b878', far: '#b88a50', style: 'hills' },
-        city:      { sky: ['#7a8aa8', '#b8c0d0'], ground: '#6a6a70', far: '#4a4a56', style: 'wall' },
-        fort:      { sky: ['#6a7a98', '#a8b0c0'], ground: '#5e5e66', far: '#3e3e4a', style: 'wall' },
-        house:     { sky: ['#3a2f28', '#5a4636'], ground: '#6e5238', far: '#4a382a', style: 'room' },
-        spiderweb: { sky: ['#1c1c24', '#2c2c38'], ground: '#34303a', far: '#222028', style: 'cave' },
-        cave:      { sky: ['#1c1c24', '#2c2c38'], ground: '#3a3640', far: '#22202a', style: 'cave' },
-        road:      { sky: ['#7a9ac0', '#c0d4e0'], ground: '#8a7a58', far: '#58704a', style: 'hills' },
-        land:      { sky: ['#7aa4c8', '#bcd8e4'], ground: '#5c8040', far: '#3e6038', style: 'hills' },
+        snow:      { bg: 'snowfield', sky: ['#8fa8c8', '#d8e4f0'], ground: '#e8eef4', far: '#aebfd4', style: 'hills' },
+        mountains: { bg: 'highlands', sky: ['#6f86a8', '#b9c6d8'], ground: '#7a7468', far: '#5a5f6e', style: 'peaks' },
+        forest:    { bg: 'forest', sky: ['#6fa0a0', '#a8c8b0'], ground: '#4d6b3a', far: '#2f4a2c', style: 'trees' },
+        desert:    { bg: 'desert', sky: ['#d8a860', '#f0d8a0'], ground: '#d8b878', far: '#b88a50', style: 'hills' },
+        city:      { bg: 'city', sky: ['#7a8aa8', '#b8c0d0'], ground: '#6a6a70', far: '#4a4a56', style: 'wall' },
+        fort:      { bg: 'city', sky: ['#6a7a98', '#a8b0c0'], ground: '#5e5e66', far: '#3e3e4a', style: 'wall' },
+        house:     { bg: 'interior', sky: ['#3a2f28', '#5a4636'], ground: '#6e5238', far: '#4a382a', style: 'room' },
+        spiderweb: { bg: 'deep-web', sky: ['#1c1c24', '#2c2c38'], ground: '#34303a', far: '#222028', style: 'cave' },
+        cave:      { bg: 'cave', sky: ['#1c1c24', '#2c2c38'], ground: '#3a3640', far: '#22202a', style: 'cave' },
+        road:      { bg: 'road', sky: ['#7a9ac0', '#c0d4e0'], ground: '#8a7a58', far: '#58704a', style: 'hills' },
+        land:      { bg: 'plains', sky: ['#7aa4c8', '#bcd8e4'], ground: '#5c8040', far: '#3e6038', style: 'hills' },
     };
 
     injectStyles(`
@@ -114,6 +114,43 @@
         #battle-badge { position: fixed; right: 10px; bottom: 10px; z-index: 9000; display: none; padding: 4px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.7); }
         #battle-badge.show { display: block; }
     `);
+
+    // ---------------------------------------------------------------------
+    // Art: the sprite manifest (Phase 40s1) and the S3 battle set
+    // ---------------------------------------------------------------------
+
+    // Sprites live beside the scripts: <base>/static/sprites/manifest.json.
+    // Only files the manifest lists are ever requested, so a set that has
+    // not been drawn yet costs no failed fetches: the unit or backdrop is
+    // drawn in code instead, and the art replaces it when it appears,
+    // with no change here. Layout (sprite specification, S3):
+    //   battle/units/<sprite key>/idle.png        4 frames, facing right
+    //   battle/backgrounds/<background id>.png    320x180, opaque
+    const here = document.currentScript && document.currentScript.src ? document.currentScript.src : '';
+    const spriteBase = here.replace(/js\/windows\/[^/]*$/, 'sprites/');
+    let manifest = null;
+    const images = new Map();   // path -> HTMLImageElement | null (failed)
+
+    function loadManifest() {
+        if (!spriteBase || !window.fetch || /^file:/.test(spriteBase)) { return; }
+        fetch(spriteBase + 'manifest.json').then(r => (r.ok ? r.json() : null)).then(m => {
+            if (m && m.files) { manifest = m; draw(); }
+        }).catch(() => { /* no art yet: the code-drawn figures stand */ });
+    }
+
+    // art returns a loaded image and its manifest entry, or null.
+    function art(path) {
+        if (!manifest || !manifest.files[path]) { return null; }
+        if (!images.has(path)) {
+            const img = new Image();
+            images.set(path, null);
+            img.onload = () => { images.set(path, img); draw(); };
+            img.onerror = () => { /* stays null */ };
+            img.src = spriteBase + path;
+        }
+        const img = images.get(path);
+        return img ? { img, info: manifest.files[path] } : null;
+    }
 
     // ---------------------------------------------------------------------
     // State
@@ -556,6 +593,8 @@
 
     function drawBackground() {
         const s = scene();
+        const bg = art('battle/backgrounds/' + s.bg + '.png');
+        if (bg) { ctx.drawImage(bg.img, 0, 0, W, H); return; }
         const g = ctx.createLinearGradient(0, 0, 0, 100);
         g.addColorStop(0, s.sky[0]);
         g.addColorStop(1, s.sky[1]);
@@ -614,7 +653,19 @@
             rect(x - 4, y - 30, 8, 6, 'rgba(10,10,16,0.75)');
             return;
         }
-        if (u.side === 'company') {
+        const sheet = art('battle/units/' + u.sprite + '/idle.png');
+        if (sheet) {
+            // Art: the idle loop, anchored bottom-centre, enemies mirrored.
+            const fw = (sheet.info.frame || [64, 64])[0], fh = (sheet.info.frame || [64, 64])[1];
+            const frames = sheet.info.frames || 1;
+            const i = Math.floor(now / (sheet.info.frame_ms || 250)) % frames;
+            ctx.save();
+            ctx.translate(Math.round(x), y);
+            if (dir < 0) { ctx.scale(-1, 1); }
+            if (dim < 1) { ctx.filter = 'brightness(0.5)'; }
+            ctx.drawImage(sheet.img, i * fw, 0, fw, fh, -fw / 2, -fh, fw, fh);
+            ctx.restore();
+        } else if (u.side === 'company') {
             const hues = CLASS_HUES[u.klass] || DEFAULT_HUES;
             const body = shade(hues[0], dim), trim = shade(hues[1], dim);
             rect(x - 3, y - 8, 2, 8, '#2a2a30');                 // legs
@@ -798,6 +849,7 @@
     });
 
     Client.onBattleEvents(onEvents);
+    loadManifest();
 
     window.BattleScreen = {
         open,

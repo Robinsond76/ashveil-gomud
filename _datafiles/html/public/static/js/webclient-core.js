@@ -2753,6 +2753,7 @@ const Client = (() => {
         // Extension points for window modules
         registerShortcut,
         onBattleEvents,
+        dispatchBattleEvents: _dispatchBattleEvents, // for browser checks that feed the screen
 
         // Functions called from HTML event handlers
         init,
