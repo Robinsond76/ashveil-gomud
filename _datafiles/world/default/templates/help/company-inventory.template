@@ -22,8 +22,9 @@ refuses a shield or weapon the class isn't taught (<ansi fg="command">help shiel
 about armor heavier than its training (<ansi fg="command">help armor</ansi>).
 
 In the web client, Company Inventory shows shared Cargo, treasury, supplies
-and containers. Worn equipment lives in Character Gear; use company gear for
-a companion. In Character > Gear, select a slot and a compatible item for a
+and containers, and every member's equipment slots: tap a slot to pick a
+cargo item for it, or drag cargo onto a member (<ansi fg="command">help companion-gear</ansi>). In
+Character > Gear, choose a member, select a slot and a compatible item for a
 Current → After preview; equip or preview removal there. Clicking a cargo
 item sends these commands for you (<ansi fg="command">help webclient</ansi>).
 

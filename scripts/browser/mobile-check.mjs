@@ -330,6 +330,39 @@ const needsFit = await page.evaluate(() => {
 });
 check(needsFit && needsFit.inside && needsFit.firstW / needsFit.w >= 0.3 && needsFit.w <= VW, 'the Camp Needs table fits with a wide name column: ' + JSON.stringify(needsFit));
 await shot('company-camp');
+// Phase 48: every member's gear slots in Company > Inventory, tap-to-pick on a phone.
+const sword = (ref, label, slot, type) => ({ ref, name: label, label, grams: 1500, count: 1, uses: 0, uses_max: 0, type, subtype: 'wearable', slot });
+await gmcp('Company.Inventory', {
+  shared: true, treasury: 40, autoloot: false, companions_known: true, containers: [], horses: [],
+  load: { total_g: 9000, capacity_g: 60000, member_capacity_g: 60000, mount_capacity_g: 0, cargo_g: 3000 },
+  slots: [{ slot: 'weapon', label: 'Weapon' }, { slot: 'offhand', label: 'Offhand' }, { slot: 'head', label: 'Head' }, { slot: 'body', label: 'Body' }, { slot: 'pack', label: 'Pack' }],
+  members: [
+    { key: 'leader', name: 'Wren', available: true, fallen: false, unrecorded: false, grams: 4000, pack: '', pack_bonus_g: 0, worn: [sword('!1:sword', 'iron sword', 'weapon', 'weapon')], carried: [] },
+    { key: 'companion:1', name: 'Oswin', available: true, fallen: false, unrecorded: false, grams: 3000, pack: '', pack_bonus_g: 0, worn: [sword('!5:mace', 'oak mace', 'weapon', 'weapon'), sword('!6:cap', 'leather cap', 'head', 'head')], carried: [] },
+    { key: 'companion:2', name: 'Brant', available: true, fallen: false, unrecorded: false, grams: 2000, pack: '', pack_bonus_g: 0, worn: [], carried: [] },
+  ],
+  cargo: [sword('!9:coat', 'quilted coat', 'body', 'body'), sword('!10:buckler', 'oak buckler', 'offhand', 'offhand')],
+});
+await page.getByRole('tab', { name: 'Company' }).tap();
+await page.getByRole('tab', { name: 'Inventory' }).tap();
+await page.waitForTimeout(150);
+const gearBox = page.locator('#company-inventory [aria-label="Oswin equipment"]');
+check((await gearBox.textContent()).includes('Body') && (await gearBox.textContent()).includes('empty') && (await gearBox.textContent()).includes('leather cap'), 'the phone Company view lists a companion\'s slots, empty ones too');
+const slotHeights = await page.evaluate(() => [...document.querySelectorAll('#company-inventory .cmp-slot')].map(n => n.getBoundingClientRect().height));
+check(slotHeights.length > 0 && slotHeights.every(h => h >= 43.5), 'every slot row is finger-sized: ' + Math.min(...slotHeights));
+check(await overflow() <= 0, 'the equipment list never scrolls sideways');
+await clearSent();
+await gearBox.locator('button', { hasText: 'Body' }).tap();
+const picks = await page.evaluate(() => [...document.querySelectorAll('.ui-menu-item')].map(b => b.textContent));
+check(picks.join('|') === 'Equip quilted coat', 'tapping an empty slot offers only the cargo that fits: ' + picks.join('|'));
+await shot('equipment-pick');
+await page.locator('.ui-menu-item', { hasText: 'Equip quilted coat' }).tap();
+check((await sent()).join() === 'company equip #1 !9:coat body', 'picking it equips that companion: ' + (await sent()).join());
+await clearSent();
+await gearBox.locator('button', { hasText: 'oak mace' }).tap();
+check((await page.evaluate(() => [...document.querySelectorAll('.ui-menu-item')].map(b => b.textContent))).includes('Remove to cargo'), 'tapping worn gear offers to remove it');
+await page.mouse.click(5, 5);
+await shot('equipment');
 await page.getByRole('tab', { name: 'Combat' }).tap();
 check(await overflow() <= 0, 'the Combat tab never scrolls sideways');
 

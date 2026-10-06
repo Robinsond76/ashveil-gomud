@@ -90,6 +90,7 @@ help:
       - readiness
       - separation
       - equipment
+      - companion-gear
       - gearup
       - loot
       - rarity
@@ -296,6 +297,7 @@ help-aliases:
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
   ambush: [surprise, surprised]
   equipment: [company-equipment, company equip, company remove, company compare]
+  companion-gear: [companion gear, companion-equipment, companion equipment, buff companions, company gear, disband gear]
   treasury: [company-treasury, company treasury]
   loot: [autoloot, company-loot]
   encounters: [encounter, random-encounter, random-encounters, random encounter, random encounters, danger, dangerous, dangerous rooms, bosses, boss, escorts, cache, caches, spoils, personal loot, personal-loot, grace, breathing room]
