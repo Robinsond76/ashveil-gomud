@@ -8,7 +8,12 @@ may break it</ansi>:
 
 - Heavy force <ansi fg="yellow">always breaks</ansi> a chant: a <ansi fg="yellow">critical hit</ansi> that gets through
   the armor, or a blow that <ansi fg="yellow">staggers</ansi>, <ansi fg="yellow">knocks down</ansi>, or <ansi fg="yellow">stuns</ansi> the caster.
-- Any other blow breaks it by chance, more often the harder it lands
+- A <ansi fg="yellow">one-round heal</ansi> (Minor Heal, Tend Wounds) <ansi fg="yellow">resolves</ansi>: an ordinary blow
+  never breaks it, whatever the roll. Only heavy force does, on either
+  side. The caster still flinches: <ansi fg="command">Brother Oswin flinches, but the chant holds.</ansi>
+  An enemy healer's heal resolves the same way, so a foe that chants a heal
+  is stopped by heavy force or by the <ansi fg="command">casters</ansi> focus, not by a lucky scratch.
+- Any other blow breaks a chant by chance, more often the harder it lands
   against the caster's maximum health: a scratch on a sturdy caster breaks
   it about <ansi fg="yellow">40%</ansi> of the time, and a blow that takes <ansi fg="yellow">a quarter of their health</ansi>
   (or more) <ansi fg="yellow">90%</ansi>. The chance is 40% plus 2% for each percent of the

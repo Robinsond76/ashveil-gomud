@@ -31,7 +31,8 @@ Once the battle starts:
 
 - the whole enemy group fights, and each of you starts on the foe your
   strategy picks (the weakest you can reach, unless you set another rule
-  or a company focus), and each enemy on the one its kind prefers, or
+  or a company focus; from level 10 your company focuses the weakest foe
+  on its own, and a warrior guards your healer, <ansi fg="command">help tactics</ansi>), and each enemy on the one its kind prefers, or
   its leader's, as well as its group is coordinated (<ansi fg="command">help coordination</ansi>);
 - healers heal the hurt and casters cast their spells, with real mana,
   on both sides;
@@ -40,7 +41,8 @@ Once the battle starts:
 - guardians step in front of their wards to take blows meant for them
   (<ansi fg="command">help guardian</ansi>);
 - a blow that draws blood may break its target's chant (a heavy one
-  always does), on either side, and
+  always does, but a one-round heal such as Minor Heal only breaks to heavy
+  force), on either side, and
   a blow that would hit meets one defense: a shield blocks it, a weapon
   parries it, or the target dodges (<ansi fg="command">help defense</ansi>; a burdened
   fighter dodges less, <ansi fg="command">help burden</ansi>), and a
@@ -85,7 +87,9 @@ Several things add to it or take it away:
   penalty.
 
 A blow that would hit then meets the target's block, parry, or dodge, and
-what gets through is cut by their armor (<ansi fg="command">help defense</ansi>, <ansi fg="command">help armor</ansi>).
+what gets through is cut by their armor (<ansi fg="command">help defense</ansi>, <ansi fg="command">help armor</ansi>). A blow that
+lands is <ansi fg="yellow">glancing</ansi>, <ansi fg="yellow">solid</ansi>, or <ansi fg="yellow">telling</ansi>: the better your skill against the
+target's, the likelier a telling blow (<ansi fg="command">help attack</ansi>).
 
 A sharpened blade (<ansi fg="command">help sharpen</ansi>) does +1 damage on each strike while its
 edge lasts.
@@ -100,7 +104,8 @@ roster for a while, and can be raised at a church or a village shaman.
 
 Every blow gets a line, and its numbers sit in brackets at the end:
 <ansi fg="command">(5 damage)</ansi>, or <ansi fg="command">(critical hit, 9 damage, bleeding)</ansi> for a critical hit, which
-also names the status it leaves. A line with no brackets is a miss, a
+also names the status it leaves. A grazing blow says <ansi fg="command">(glancing, 2 damage)</ansi> and
+a hard one <ansi fg="command">(telling, 9 damage)</ansi>. A line with no brackets is a miss, a
 block, a parry, or a dodge. A damaging critical hit that leaves someone
 standing gets a pain reaction right after the blow; a fatal one gets a
 death line instead. The reactions are only text (<ansi fg="command">help narration</ansi>). One
@@ -120,7 +125,7 @@ A critical hit on you or a companion also leaves a wound, which stops
 healing short of your maximum until it is treated. A foe 3 or more levels
 below the one it strikes wounds only lightly, and only when the blow
 leaves them under half their health. After the fight, your healers patch
-everyone up to your healing threshold on their own (<ansi fg="command">help patch</ansi>);
+everyone up to your patch threshold, 80% of their wound limit, on their own (<ansi fg="command">help patch</ansi>);
 <ansi fg="command">heal wounds</ansi> has your clerics, bandages, and splints tend the company fully;
 an inn stay knits what is left, and a camp rest one wound per splint or
 bandage. Spells cost mana that only a rest, an inn or a draught brings

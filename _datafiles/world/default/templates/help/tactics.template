@@ -1,19 +1,34 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">tactics</ansi>
 
 Company tactics are orders for your whole company: whom everyone goes for
-(the focus), and how hurt someone must be before your healers heal them
-(the healing threshold). They sit on top of each character's own strategy
+(the focus), how hurt someone must be before your healers heal them in a
+battle (the healing threshold), and how far they patch everyone up after it
+(the patch threshold). They sit on top of each character's own strategy
 (<ansi fg="command">help strategy</ansi>), and are kept when you log out.
 
 <ansi fg="yellow-bold">The focus</ansi>
 
-  <ansi fg="command">none</ansi>       each character goes for the foe its own strategy picks (the default)
+  <ansi fg="command">none</ansi>       each character goes for the foe its own strategy picks
   <ansi fg="command">leader</ansi>     their leader, the toughest of them
-  <ansi fg="command">casters</ansi>    their spell-casters: one chanting a spell first
+  <ansi fg="command">casters</ansi>    casters first: one chanting a spell first, then any caster,
+             then the weakest foe once none is left
   <ansi fg="command">nearest</ansi>    the front-most foe
   <ansi fg="command">weakest</ansi>    the foe with the least health left
   <ansi fg="command">strongest</ansi>  the foe with the most health left
   <ansi fg="command">wounded</ansi>    the most badly hurt foe, to finish it
+
+<ansi fg="yellow">Until you set a focus, your company grows smarter with your level.</ansi> Its
+default focus follows your level, as the enemy's coordination does:
+
+  below level 10   <ansi fg="command">none</ansi>: each character by its own strategy
+  level 10 and up  <ansi fg="command">weakest</ansi>: everyone goes for the foe with the least health
+  level 25 and up  <ansi fg="command">casters</ansi>: casters first, then the weakest
+
+Setting a focus, <ansi fg="command">none</ansi> included, always wins over the default.
+<ansi fg="command">company tactics focus default</ansi> goes back to the default for your level, and
+<ansi fg="command">company tactics</ansi> says when the default is in force. Also by default, the
+first warrior among your companions <ansi fg="yellow">guards your healer</ansi> when it has no role
+or ward of its own (<ansi fg="command">help guardian</ansi>).
 
 With a focus set, everyone in your company, you included, goes for the
 focus's choice instead of their own rule. Only whom they go for changes:
@@ -43,8 +58,15 @@ after <ansi fg="command">attack</ansi>, wait a round for the battle to begin bef
 Healers heal anyone in your company below this share of their health
 (of what their wounds allow, <ansi fg="command">help wounds</ansi>): 10 to 90 percent, in steps
 of 10. It is 50, half health, until you change it. Someone down and
-bleeding out is always healed first. After a battle, your healers heal
-everyone up to the same threshold (<ansi fg="command">help patch</ansi>).
+bleeding out is always healed first.
+
+<ansi fg="yellow-bold">The patch threshold</ansi>
+
+After a battle, and on <ansi fg="command">company patch</ansi>, your healers heal everyone up to this
+share of their wound limit (<ansi fg="command">help patch</ansi>): 50 to 100 percent. It is
+80, so the company starts its next fight nearly whole, and it is its own
+setting: the healing threshold only governs healing in the middle of a
+battle.
 
 <ansi fg="yellow-bold">Guardians</ansi>
 
@@ -75,7 +97,9 @@ drilled company goes for your casters first (<ansi fg="command">help coordinatio
   <ansi fg="command">company tactics focus [rule]</ansi>     set the focus (in a battle, for that battle)
   <ansi fg="command">company tactics focus default</ansi>    in a battle, back to your saved focus
   <ansi fg="command">company tactics healing [percent]</ansi> e.g. <ansi fg="command">company tactics healing 70</ansi>
-  <ansi fg="command">company tactics default</ansi>          focus none, healing 50
+  <ansi fg="command">company tactics patch [percent]</ansi>  e.g. <ansi fg="command">company tactics patch 90</ansi>
+  <ansi fg="command">company tactics focus none</ansi>       keep every character on its own rule
+  <ansi fg="command">company tactics default</ansi>          the level's default focus, healing 50, patch 80
 
 <ansi fg="command">tactics</ansi> is short for <ansi fg="command">company tactics</ansi>. In the web client, the Combat tab
 has a button for each focus during a battle, and your tactics under Setup

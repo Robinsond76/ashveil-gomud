@@ -30,8 +30,8 @@ strategy (<ansi fg="command">help strategy</ansi>). An inn stay closes whatever 
 rest closes a broken bone for each splint, and a cut or puncture for each
 bandage, you carry (<ansi fg="command">help wounds</ansi>).
 
-After every battle your clerics already heal the hurt up to your healing
-threshold, keeping their mana reserve (<ansi fg="command">help patch</ansi>); <ansi fg="command">heal wounds</ansi> goes
+After every battle your clerics already heal the hurt up to your patch
+threshold (80% unless you change it), keeping their mana reserve (<ansi fg="command">help patch</ansi>); <ansi fg="command">heal wounds</ansi> goes
 further, to the wound limit, and spends every drop. Out of a fight,
 everyone also recovers slowly on their own while you're logged in, but
 only up to half their health; companions keep their health between

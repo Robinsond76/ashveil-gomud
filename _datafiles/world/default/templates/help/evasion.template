@@ -38,10 +38,13 @@ there is. The edge is added to the stat edge each chance already uses
   Block         {{ config "GamePlay.Combat.BlockChanceEven" }}% + shield  {{ config "GamePlay.Combat.BlockChanceMin" }}%      {{ config "GamePlay.Combat.BlockChanceMax" }}%
 
 For example, a level 20 warrior swinging at a level 10 warrior (a 10-point
-lead) hits 89% of the time and meets a 4% dodge. The level 10 warrior
-swinging back hits only 28% of the time and meets a 30% dodge.
+lead) hits 93% of the time and meets a 4% dodge. The level 10 warrior
+swinging back hits only 32% of the time and meets a 30% dodge.
 A {{ config "GamePlay.Combat.ToHitMin" }}% floor keeps a lucky blow possible, so a pack of weaker foes is
 still a threat. Critical hits stay with Smarts (<ansi fg="command">help smarts</ansi>).
+
+A blow that lands is glancing, solid, or telling, and the same edge makes a
+telling one likelier (<ansi fg="command">help attack</ansi>).
 
 Spells use the same gap: a damage spell lands half to one and a half
 times its listed damage, by the caster's Attack against the target's

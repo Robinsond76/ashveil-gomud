@@ -28,6 +28,10 @@ ward again.
 
 <ansi fg="yellow-bold">The ward</ansi>
 
+- <ansi fg="yellow">By default</ansi>, the first warrior among your companions is a guardian of your
+  healer, unless you gave that warrior a role or a ward of its own.
+  <ansi fg="command">strategy [who] fighter</ansi> keeps a warrior fighting instead, and
+  <ansi fg="command">strategy [who] default</ansi> goes back to the default guard.
 - Name a ward, and the guardian guards only them: while they are away or
   fallen, it guards no one. With none named, it guards whoever in your
   company is <ansi fg="yellow">most hurt</ansi> (the smallest share of their health left) and
