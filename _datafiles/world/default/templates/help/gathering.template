@@ -35,7 +35,8 @@ nothing gained. You can't start in battle, while resting or while travelling.
 
   <ansi fg="yellow">Fish</ansi>  Two chances at 40 in 100 each, better with a ranger. The line
   breaks now and then (5 in 100) and is lost. Fishing needs a room marked
-  fishing, or fresh water on a shore. Buy a fishing line at a market.
+  fishing, or fresh water on a shore. Buy a fishing line at a market or
+  from the old fisherman at Frost Lake.
 
   <ansi fg="yellow">Game</ansi>  Half the hunts bring something down; a ranger adds 5 points
   for each level, up to 90. A bow, crossbow or sling in the company is the
@@ -68,7 +69,8 @@ fire for nothing. Anywhere else it burns one firewood bundle from your pack,
 a companion's pack or the cargo. A damp bundle lights only on a second try
 and the smoky fire it makes gives no warmth. With no firewood you cannot
 light the fire, so you cannot rest at camp (an inn is not affected). Markets
-sell bundles: prepare before you set out (<ansi fg="command">help camp</ansi>).
+sell bundles but never buy them back: prepare before you set out, and
+<ansi fg="command">camp status</ansi> shows the fuel your company carries (<ansi fg="command">help camp</ansi>).
 
 Gathered fish is cooked into grilled fish (<ansi fg="command">help cooking</ansi>); herbs, meat and
 hides feed cooks, markets and the trades.

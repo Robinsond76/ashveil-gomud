@@ -106,7 +106,6 @@ type GatheringModule struct {
 	store    Store
 	loadErr  error
 	ledger   gathering.Ledger
-	temp     gathering.Ledger // pools in ephemeral (tutorial) rooms: never saved, never spent
 	settings gathering.Settings
 	actions  map[int]*action
 
@@ -163,7 +162,6 @@ func init() {
 func newModule() *GatheringModule {
 	return &GatheringModule{
 		ledger:   gathering.NewLedger(),
-		temp:     gathering.NewLedger(),
 		settings: gathering.DefaultSettings(),
 		actions:  map[int]*action{},
 		clock:    time.Now,
@@ -277,13 +275,6 @@ func (m *GatheringModule) cfg() gathering.Settings {
 
 // --- pools ---
 
-func (m *GatheringModule) ledgerFor(roomID int) *gathering.Ledger {
-	if rooms.IsEphemeralRoomId(roomID) {
-		return &m.temp
-	}
-	return &m.ledger
-}
-
 // isDepleted is rooms' depleted check: the room's resource has no charge
 // left right now. Ephemeral (tutorial) rooms are never depleted.
 func (m *GatheringModule) isDepleted(roomID int, resource string) bool {
@@ -389,14 +380,14 @@ func (m *GatheringModule) offers(user *users.UserRecord, room *rooms.Room) strin
 		}
 		rule := cfg.Rules[kind]
 		m.mu.Lock()
-		charges := m.ledgerFor(room.RoomId).Charges(room.RoomId, kind, rule, now)
+		charges := m.ledger.Charges(room.RoomId, kind, rule, now)
 		m.mu.Unlock()
 		if rooms.IsEphemeralRoomId(room.RoomId) {
 			charges = rule.PoolMax
 		}
 		state := fmt.Sprintf("%d of %d ready", charges, rule.PoolMax)
 		if charges < 1 {
-			state = "picked clean for now"
+			state = "picked clean for now, regrows in " + waitText(m.untilNextCharge(room.RoomId, kind))
 		}
 		line := fmt.Sprintf(`  <ansi fg="command">%-15s</ansi> %s, %s`, verbs[kind].command, state, durationText(rule.Duration))
 		if note := m.needNote(user, kind, cfg); note != "" {
@@ -468,7 +459,7 @@ func (m *GatheringModule) refuse(user *users.UserRecord, room *rooms.Room, kind 
 		}[kind]
 	}
 	if kind == gathering.Fishing && m.itemCount(user.UserId, cfg.Items.FishingLine) < 1 {
-		return `You need a fishing line to fish. Provisioners and markets sell them (<ansi fg="command">help gathering</ansi>).`
+		return `You need a fishing line to fish. Markets and the old fisherman at Frost Lake sell them (<ansi fg="command">help gathering</ansi>).`
 	}
 	return ""
 }
@@ -491,7 +482,7 @@ func (m *GatheringModule) start(user *users.UserRecord, room *rooms.Room, kind g
 		m.mu.Unlock()
 		return fmt.Sprintf("Your company is already %s here.", verbs[cur.Kind].present)
 	}
-	charges := m.ledgerFor(room.RoomId).Charges(room.RoomId, kind, rule, now)
+	charges := m.ledger.Charges(room.RoomId, kind, rule, now)
 	if rooms.IsEphemeralRoomId(room.RoomId) {
 		charges = rule.PoolMax
 	}
@@ -714,17 +705,16 @@ func (m *GatheringModule) finish(user *users.UserRecord, room *rooms.Room, a act
 	rule := cfg.Rules[a.Kind]
 	now := m.clock()
 
-	m.mu.Lock()
-	ledger := m.ledgerFor(room.RoomId)
-	spent := ledger.Spend(room.RoomId, a.Kind, rule, now)
-	if rooms.IsEphemeralRoomId(room.RoomId) {
-		spent = true // tutorial copies are never picked clean
+	// Tutorial copies are never picked clean, and nothing is recorded for
+	// them (their ids are short-lived).
+	spent, saveErr := true, error(nil)
+	if !rooms.IsEphemeralRoomId(room.RoomId) {
+		m.mu.Lock()
+		if spent = m.ledger.Spend(room.RoomId, a.Kind, rule, now); spent {
+			saveErr = m.saveLocked()
+		}
+		m.mu.Unlock()
 	}
-	var saveErr error
-	if spent && ledger == &m.ledger {
-		saveErr = m.saveLocked()
-	}
-	m.mu.Unlock()
 	if saveErr != nil {
 		mudlog.Error("gathering: save pools", "error", saveErr)
 	}

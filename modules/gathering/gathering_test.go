@@ -621,6 +621,8 @@ func TestPoolsAreSharedAndRefuseWhenEmpty(t *testing.T) {
 	got := w.start(gathering.Game)
 	assert.Contains(t, got, "picked clean for now")
 	assert.Contains(t, got, "regrows in")
+	// Phase 40a2 review: the bare listing says when, too.
+	assert.Contains(t, w.m.offers(w.user, w.room), "picked clean for now, regrows in about 40 minutes")
 
 	// Another company arrives and finds the same empty room.
 	other := users.NewUserRecord(8, 1)

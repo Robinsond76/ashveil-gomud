@@ -654,3 +654,45 @@ func TestDryBundleIsPreferredOverDamp(t *testing.T) {
 	assert.Contains(t, module.lightFire(user, bareRoom()), "crackling")
 	assert.Equal(t, 1, bag[dampFirewoodItemID])
 }
+
+// Phase 40a2 review: making camp and camp status say what a fire here would
+// burn, so a missing bundle is known before "camp fire" fails.
+func TestFuelLineSaysWhatAFireWouldBurn(t *testing.T) {
+	bag := fuelBag{}
+	module := fuelModule(bag)
+	user := campUser(t, 7, 100)
+
+	assert.Contains(t, module.fuelLine(user, eligibleRoom()), "deadfall here")
+	assert.Contains(t, module.fuelLine(user, bareRoom()), "Fuel: none")
+	assert.Contains(t, module.fuelLine(user, nil), "Fuel: none")
+	bag[dampFirewoodItemID] = 1
+	assert.Contains(t, module.fuelLine(user, bareRoom()), "1 damp firewood bundle only")
+	bag[firewoodItemID] = 2
+	assert.Contains(t, module.fuelLine(user, bareRoom()), "2 firewood bundles; a fire here burns one")
+}
+
+func TestCampCommandsShowFuelUntilTheFireIsLit(t *testing.T) {
+	bag := fuelBag{}
+	module := fuelModule(bag)
+	user := campUser(t, 7, 100)
+	messages := captureMessages(t)
+	runCampCommand := func(rest string) string {
+		before := len(*messages)
+		_, err := module.userCommand(rest, user, bareRoom(), 0)
+		require.NoError(t, err)
+		events.ProcessEvents()
+		return strings.Join((*messages)[before:], "\n")
+	}
+	text := runCampCommand("")
+	assert.Contains(t, text, "You make camp here.")
+	assert.Contains(t, text, "Fuel: none")
+
+	assert.Contains(t, runCampCommand("status"), "Fuel: none")
+
+	bag[dampFirewoodItemID] = 1
+	module.lightFire(user, bareRoom())
+	module.lightFire(user, bareRoom())
+	status := runCampCommand("status")
+	assert.Contains(t, status, "damp wood gives light and no warmth")
+	assert.NotContains(t, status, "Fuel:", "a lit fire needs no fuel line")
+}

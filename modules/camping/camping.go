@@ -752,6 +752,44 @@ func (m *CampingModule) takeFuel(user *users.UserRecord, room *rooms.Room) (damp
 	return false, `Your company has no firewood to light a fire with. Buy firewood bundles from a provisioner or market, or gather deadfall where firewood grows (<ansi fg="command">help gathering</ansi>).`
 }
 
+// unlitCampRoom is the room of the leader's camp while its fire is unlit.
+func (m *CampingModule) unlitCampRoom(leaderUserID int) (int, bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	camp, ok := m.camps[leaderUserID]
+	if !ok || camp.FireLit {
+		return 0, false
+	}
+	return camp.RoomID, true
+}
+
+// fuelLine (Phase 40a2 review) tells the leader what a fire in the camp's
+// room would burn, so a missing bundle is known before "camp fire" fails.
+func (m *CampingModule) fuelLine(user *users.UserRecord, room *rooms.Room) string {
+	if room != nil && room.HasResource(rooms.ResourceFirewood) {
+		return "Fuel: the deadfall here feeds a fire for nothing."
+	}
+	count := m.itemCount
+	if count == nil {
+		count = company.CompanyItemCount
+	}
+	dry, damp := count(user.UserId, firewoodItemID), count(user.UserId, dampFirewoodItemID)
+	switch {
+	case dry > 0:
+		return fmt.Sprintf("Fuel: %s; a fire here burns one.", bundles(dry, "firewood bundle"))
+	case damp > 0:
+		return fmt.Sprintf("Fuel: %s only; it lights on a second try and gives no warmth.", bundles(damp, "damp firewood bundle"))
+	}
+	return `Fuel: none. A fire here needs a firewood bundle: buy one at a market or <ansi fg="command">gather firewood</ansi> where it grows (<ansi fg="command">help gathering</ansi>).`
+}
+
+func bundles(n int, name string) string {
+	if n == 1 {
+		return "1 " + name
+	}
+	return fmt.Sprintf("%d %ss", n, name)
+}
+
 // startRest begins the one configured real-time rest session. The leader
 // must be at a lit camp, and survival must be available before any change is
 // made.
@@ -1162,7 +1200,9 @@ func (m *CampingModule) statusTextLocked(leaderUserID int) string {
 		return "You have no camp."
 	}
 	lines := []string{fmt.Sprintf("Camp at %s.", roomTitle(camp.RoomID))}
-	if camp.FireLit {
+	if camp.FireLit && camp.Damp {
+		lines = append(lines, "The campfire is lit, but its damp wood gives light and no warmth.")
+	} else if camp.FireLit {
 		lines = append(lines, "The campfire is lit.")
 	} else {
 		lines = append(lines, "There is no fire lit.")
@@ -1198,12 +1238,19 @@ func roomTitle(roomID int) string {
 func (m *CampingModule) userCommand(rest string, user *users.UserRecord, room *rooms.Room, _ events.EventFlag) (bool, error) {
 	args := strings.Fields(strings.ToLower(strings.TrimSpace(rest)))
 	if len(args) == 0 {
-		user.SendText(m.establish(user, room))
+		text := m.establish(user, room)
+		if text == "You make camp here." && room != nil {
+			text += " " + m.fuelLine(user, room)
+		}
+		user.SendText(text)
 		return true, nil
 	}
 	switch args[0] {
 	case "status":
 		text := m.status(user.UserId)
+		if roomID, unlit := m.unlitCampRoom(user.UserId); unlit {
+			text += "\n" + m.fuelLine(user, rooms.LoadRoom(roomID))
+		}
 		if m.hasCamp(user.UserId) {
 			text += "\n" + m.sharpenPreview(user)
 		}

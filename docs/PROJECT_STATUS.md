@@ -1,6 +1,6 @@
 # Ashveil Project Status
 
-**Phase 40a2 built, awaiting review (2026-10-06): gathering.** Herbs,
+**Phase 40a2 complete, merged via [PR #41](https://github.com/Robinsond76/ashveil-gomud/pull/41) (2026-10-06): gathering.** Herbs,
 firewood, fishing and game are real. New `gather [herbs|firewood]`, `fish`
 and `hunt` commands (module `modules/gathering`, rules in `internal/gathering`)
 run a real-time timed action (20s herbs and firewood, 30s fish and game) kept in
@@ -43,7 +43,37 @@ Forage specialist stands in for "Ranger" and a knife is any bladed weapon;
 in: the 40a follow-up that a waterskin is destroyed by its last sip (belongs
 with consumables, still open). Follow-ups: regrowth does not push a GMCP
 redraw (the panel updates on the next room refresh); S1 `depleted` art
-replaces the slashed dot. Review: pending. Browser check: `/mnt/project-files/screens/40a2-gathering-panel.png`.
+replaces the slashed dot. Browser check: `/mnt/project-files/screens/40a2-gathering-panel.png`.
+Review (Opus review thread), exploit search against the 36c economy:
+**Accepted:** (1) gather-and-sell: with an axe and a Field Smith a room gave
+16-20 firewood bundles in 80 seconds, each sold back at about 3-5 gold to a
+market whose stock drifts back every round, several times what a fight pays
+at low level; lines and bundles also carried a haggled 1-gold margin from
+Dunmar to the road post. Markets now take `SupplyOnly: true` (sold, never
+bought back; `market` shows "never", `market sell` says so) for firewood and
+fishing lines (`TestMarketNeverBuysBackASupplyOnlyGood`,
+`TestShippedFirewoodAndLinesAreSupplyOnly`, `TestBidForStockClosedForSupplyOnly`).
+Hunting (about 6 gold a hunt, 2 a room per 40 minutes) and herbs (about 3
+gold a pick, 3 a room) stay sellable: fair. (2) Fishing lines were sold only
+in Dunmar and at the road post, yet the help and refusal said
+"provisioners"; the old fisherman at Frost Lake (where the fishing rooms
+are) now sells them at 12, above every market. (3) UI: `camp` and
+`camp status` now say what a fire would burn (free deadfall, N bundles, damp
+only, or none and where to get some) before `camp fire` fails, and a damp
+fire's status says it gives no warmth (`TestFuelLineSaysWhatAFireWouldBurn`,
+`TestCampCommandsShowFuelUntilTheFireIsLit`); a bare `gather` says when a
+picked-clean resource regrows. (4) The memory-only ledger for tutorial
+copies grew with every gather and was never read; it is gone, and tutorial
+copies record nothing. **Checked, no change:** `camp fire` stays free in the
+tutorial camp (905) and at the starter road's oak (2002), where the 44 smoke
+script and the tutorial flows camp; inns are untouched; everywhere else a
+fire now needs a bundle, as designed. **Rejected:**
+the tutorial's never-depleting rooms let a new character leave with one
+load of herbs before playing (bounded by carry weight, once); the 40a
+waterskin follow-up is not small (an item at 0 uses is refilled to full by
+`Validate`, so an empty skin needs a new representation; left for 43a camp
+consumables). Follow-ups: a gather in progress shows only in text (no
+GMCP/panel progress); regrowth still does not push a redraw.
 
 **Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
 battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and

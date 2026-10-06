@@ -15,6 +15,9 @@
 #   0 <= StartStock <= MaxStock
 #   1 <= DriftStep <= MaxStock
 #   the item ID must exist; a zone listing an item twice gets no market.
+# SupplyOnly: true (Phase 40a2) makes a good one the market sells but never
+# buys back ("never" in the You sell column), for supplies anyone can
+# gather for free (firewood), so gathering is not a money loop.
 #
 # Phase 19b: the market itself lives in any room of a market zone tagged
 # with RoomTag (Dunmar Market Square, 2004; Trappers' Post, 2005). Only
@@ -150,6 +153,7 @@ Markets:
         TargetStock: 20
         StartStock: 20
         DriftStep: 2
+        SupplyOnly: true # sold, never bought back: no gather-and-sell loop
       - ItemId: 42 # fishing line
         BasePrice: 8
         MinPrice: 4
@@ -158,6 +162,7 @@ Markets:
         TargetStock: 10
         StartStock: 10
         DriftStep: 1
+        SupplyOnly: true # sold, never bought back: no gather-and-sell loop
       # Phase 36c: the 36b trade goods, so a hauled load has somewhere to go.
       # Town pays best for materials and valuables; the road post is glutted
       # with trophies and salvage, so carrying them to Dunmar pays.
@@ -364,6 +369,7 @@ Markets:
         TargetStock: 15
         StartStock: 15
         DriftStep: 2
+        SupplyOnly: true # sold, never bought back: no gather-and-sell loop
       - ItemId: 42 # fishing line
         BasePrice: 10
         MinPrice: 6
@@ -372,6 +378,7 @@ Markets:
         TargetStock: 5
         StartStock: 5
         DriftStep: 1
+        SupplyOnly: true # sold, never bought back: no gather-and-sell loop
       - ItemId: 28 # wolf hide
         BasePrice: 9
         MinPrice: 4

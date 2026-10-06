@@ -18,8 +18,9 @@ round count; a rest takes real time, not game time.
   nothing; anywhere else it burns one firewood bundle from your pack, a
   companion's pack or the cargo. A damp bundle lights only on a second try
   and gives light but no warmth. With no firewood there is no fire and no
-  rest at camp. Markets sell bundles, and you can gather your own
-  (<ansi fg="command">help gathering</ansi>).
+  rest at camp. Making camp and <ansi fg="command">camp status</ansi> show the fuel your company
+  carries. Markets sell bundles (they never buy them back), and you can
+  gather your own (<ansi fg="command">help gathering</ansi>).
 
   A camp is part of the room: <ansi fg="command">look</ansi> shows it to everyone
   there, a cold fire pit until the fire is lit and bedrolls around a
