@@ -483,9 +483,11 @@
         button.csk-card { cursor: pointer; }
         button.csk-card:focus-visible { outline: 2px solid var(--t-accent); outline-offset: 1px; }
 
-        .csk-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+        /* A long status badge wraps under the name instead of squeezing it to one
+           letter a line (Phase 57 review: "Missing recipe ingredients..."). */
+        .csk-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 6px; }
         .csk-name { font-weight: bold; color: var(--t-text); }
-        .csk-side { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+        .csk-side { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; min-width: 0; max-width: 100%; }
         .csk-rank { color: var(--t-text-secondary); font-size: 0.9em; white-space: nowrap; }
         .csk-desc { color: var(--t-text-secondary); font-size: 0.92em; line-height: 1.35; }
         .csk-meta { color: var(--t-text-secondary); opacity: 0.85; font-size: 0.88em; line-height: 1.3; }
@@ -507,8 +509,8 @@
             font-size: 0.85em;
             padding: 0 4px;
             border-radius: 3px;
-            flex-shrink: 0;
-            white-space: nowrap;
+            flex-shrink: 1;
+            min-width: 0;
             background: var(--t-bg-surface);
             color: var(--t-text-secondary);
             border: 1px solid var(--t-accent-dim);

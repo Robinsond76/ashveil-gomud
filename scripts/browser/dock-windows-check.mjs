@@ -826,6 +826,15 @@ check((await skillsText()).includes('Trained ranks') && (await skillsText()).inc
 check((await skillsText()).includes('Camp CookingManual') && (await skillsText()).includes('eared game meat requires cooking rank 1'), 'Skills shows manual camp cooking independently of class specialists');
 check((await skillsText()).includes('disabled by strategy') && (await skillsText()).includes('Autoskill off'), 'Skills explains disabled strategies and autoskills');
 check(await page.locator('#cw-capabilities img').count() === 0 && await page.locator('#cw-skills .csk-pip').count() === 3, 'safe capability text and actual trained-rank maximum');
+// Phase 57 review: a long status badge wraps instead of squeezing the name to one letter a line.
+await page.evaluate(() => window.gmcp('Char.Capabilities', { automatic: [], utility: [
+  { name: 'Camp Cooking', group: 'camp', mode: 'manual', skill: 'cooking', rank: 0, description: 'Manual camp cook at your own lit campfire', enabled: false, reason: 'Missing recipe ingredients or trained ranks' }] }));
+const squeezed = await page.evaluate(() => {
+  const name = [...document.querySelectorAll('#cw-capabilities .csk-name')].find(e => e.textContent === 'Camp Cooking');
+  const lh = parseFloat(getComputedStyle(name).lineHeight) || parseFloat(getComputedStyle(name).fontSize) * 1.4;
+  return { found: !!name, h: name && name.getBoundingClientRect().height, lh, badge: name && name.parentElement.querySelector('.csk-side').getBoundingClientRect().right <= name.closest('.csk-card').getBoundingClientRect().right + 0.5 };
+});
+check(squeezed.found && squeezed.h <= squeezed.lh * 1.5 && squeezed.badge, 'a long capability status wraps below the name and stays inside the card (' + JSON.stringify(squeezed) + ')');
 await page.getByRole('button', { name: 'protection, rank 3 of 3, help' }).focus();
 await page.evaluate(c => window.gmcp('Char.Capabilities', c), capabilities);
 check(await page.evaluate(() => document.activeElement.dataset.skill === 'protection'), 'Skills keeps focus through capability refresh');
@@ -912,11 +921,19 @@ check(JSON.stringify(await page.evaluate(() => window.helpRequests)) === '[["Hel
 // The Help screen: it takes focus from the control that opened it, nothing behind it keeps a hover, and Escape returns focus.
 await page.evaluate(() => { document.dispatchEvent(new Event('DOMContentLoaded')); });
 await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).focus();
+await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');  // reach it by keyboard
 await page.evaluate(() => GameModal.open({ title: 'track', body: 'Track help', format: 'html' }));
 check(await page.evaluate(() => document.body.classList.contains('game-modal-open') && !document.activeElement.classList.contains('csk-card')), 'opening a help screen takes focus from the control behind it');
 check(await page.evaluate(() => getComputedStyle(document.getElementById('main-container')).pointerEvents === 'none'), 'nothing behind an open help screen takes the pointer');
 await page.keyboard.press('Escape');
-check(await page.evaluate(() => !document.body.classList.contains('game-modal-open') && document.activeElement && document.activeElement.classList.contains('csk-card')), 'closing it returns focus to the control and restores the pointer');
+check(await page.evaluate(() => !document.body.classList.contains('game-modal-open') && document.activeElement && document.activeElement.classList.contains('csk-card')), 'closing a screen the keyboard opened returns focus to the control and restores the pointer');
+// Phase 57 review: a screen opened with the mouse and closed with Esc must
+// not light a focus ring on the control behind it; typing resumes instead.
+await page.evaluate(() => document.activeElement.blur());
+await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).click();
+await page.evaluate(() => GameModal.open({ title: 'track', body: 'Track help', format: 'html' }));
+await page.keyboard.press('Escape');
+check(await page.evaluate(() => !document.body.classList.contains('game-modal-open') && document.querySelectorAll(':focus-visible:not(input)').length === 0 && document.activeElement && document.activeElement.id === 'command-input'), 'closing a screen the mouse opened leaves no focus ring behind and returns to the command line');
 // Hover highlights only for a real pointer, so a tap on a touch screen leaves none stuck.
 const stuck = await page.evaluate(() => {
   const bad = [];
