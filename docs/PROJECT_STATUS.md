@@ -21,7 +21,24 @@ named "water" and keeps its old waterskin meaning away from a source (no
 surprise for existing habits); a source drink also gives the Hydrated buff
 (same as a waterskin glug); `company fill` refills part-used cargo by
 withdraw-then-deposit through the existing cargo API (no new cargo
-interface); the shelter bonus never beats a full rest. Review pending.
+interface); the shelter bonus never beats a full rest. Review (2026-10-06, Opus):
+the three builder decisions are kept. Accepted findings: (1) forage and
+shelter were tagged on ~225 rooms where no camp can be made (only two
+default rooms admit `camp`), so the markers promised a rule that could not
+act; rooms now show them only where the camping module says a camp can be
+made (`rooms.SetCampableCheck`), keeping the data for when 41/42 place
+camps; (2) `company drink` at a source gave one glug each, so a parched
+member stayed thirsty beside free water; members now drink until no longer
+thirsty (at most three); (3) the Room Info panel did not show resources;
+it now has a badge per resource that opens `help resources`. Help updated
+(resources, webclient). Rejected: withdraw-then-deposit can lose part-used
+cargo if the deposit's save fails right after a good withdraw (logged as
+an error; same failure mode as other cargo moves). Browser check: dots,
+tooltip, toggle and badge render and read clearly
+(`/mnt/project-files/screens/40a-map.png`). Follow-ups: a waterskin is
+destroyed by its last glug, so `fill` only tops up part-used skins (keep
+an empty refillable container); the water dot on blue shore tiles is
+low-contrast until the S1 icons land.
 Verification: `make generate`, `make validate`, `go test -race ./...`,
 `make js-lint`.
 

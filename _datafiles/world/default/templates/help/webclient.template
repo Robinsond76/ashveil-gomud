@@ -11,7 +11,8 @@ button in them just types a command for you.
 
   On the map, a small coloured dot in a room's corner marks what it
   provides: blue fresh water, green forage, tan shelter. Hover for names;
-  the settings button turns the dots off (<ansi fg="command">help resources</ansi>).
+  the settings button turns the dots off (<ansi fg="command">help resources</ansi>). The Room Info
+  panel lists the current room's resources as badges under its name.
 
 <ansi fg="yellow-bold">The right column: the dock</ansi>
 
