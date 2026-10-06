@@ -985,7 +985,10 @@
         if (camp.has_camp && Array.isArray(camp.gear) && camp.gear.length) {
             pad.appendChild(el('div', 'cmp-line', 'Camp gear: ' + camp.gear.join(', ') + '.'));
         } else if (camp.has_camp) {
-            pad.appendChild(el('div', 'cmp-line', 'No camp gear carried. Bells and trip lines keep thieves out (help camp gear).'));
+            pad.appendChild(el('div', 'cmp-line', 'No camp gear carried (help camp gear).'));
+        }
+        if (camp.has_camp && camp.theft_risk) {
+            pad.appendChild(el('div', 'cmp-line', 'Thieves work this road: without bells and trip lines, a rest here may be robbed.'));
         }
         if (camp.rested && camp.here && !camp.resting) {
             pad.appendChild(el('div', 'cmp-line', camp.embers

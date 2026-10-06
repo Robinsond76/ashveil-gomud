@@ -58,10 +58,12 @@ little dearer on the road. They never buy gear back (<ansi fg="command">help mar
 <ansi fg="yellow-bold">Thieves</ansi>
 
 On some roads (the Old Kings Road for now), a camp rest has a 20% chance of
-drawing thieves who slip in while the company sleeps. There is no fight and
-no warning: you find out when you wake, and the rest report names what is
-missing. They take about a tenth of the loose goods in the cargo and your
-companions' packs (at least one item, never more than four).
+drawing thieves who slip in while the company sleeps. There is no fight:
+you find out when you wake, and are told what is missing. Starting a rest
+there without bells warns you, and so does the web Camp tab. They take
+about a tenth of the loose goods in the cargo and your companions' packs
+(at least one item, never more than four). Breaking camp or resting again
+straight away does not shake them off.
 
   - Never taken: anything equipped, your own pack, your gold and the
     treasury, quest items, keys, and camp gear.

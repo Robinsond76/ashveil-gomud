@@ -66,56 +66,85 @@ func (m *CampingModule) resolveCampTheft() {
 	m.mu.Unlock()
 	sort.Ints(due)
 	for _, leaderUserID := range due {
-		leader := m.userByID(leaderUserID)
-		if leader == nil || leader.Character == nil {
-			continue // noticed when the leader is back online
-		}
-		if m.inBattle != nil && m.inBattle(leaderUserID) {
-			continue
-		}
-		m.mu.Lock()
-		camp, ok := m.camps[leaderUserID]
-		m.mu.Unlock()
-		if !ok || camp.Rest == nil || !camp.Rest.TheftPending() {
-			continue
-		}
-		watched := false
-		if leader.Character.RoomId == camp.RoomID && m.specialist != nil {
-			if watch, ok := m.specialist(leaderUserID, archetypes.UtilityWatch, camp.RoomID); ok {
-				pct := archetypes.PctByLevel(watch.Level, cfg.WatchPctPerLevel, 100)
-				watched = pct > 0 && m.rollPct() < pct
-			}
-		}
-
-		m.mu.Lock()
-		camp, ok = m.camps[leaderUserID]
-		if !ok || camp.Rest == nil || !camp.Rest.TheftPending() {
-			m.mu.Unlock()
-			continue
-		}
-		rest := *camp.Rest
-		rest.Theft = &camping.Theft{Done: true}
-		updated := camp
-		updated.Rest = &rest
-		m.camps[leaderUserID] = updated
-		if err := m.saveLocked(); err != nil {
-			m.camps[leaderUserID] = camp
-			m.mu.Unlock()
-			mudlog.Error("camping: theft save", "leader", leaderUserID, "error", err)
-			continue
-		}
-		m.mu.Unlock()
-
-		if watched {
-			leader.SendText("Your watch hears something at the edge of the camp and shouts. Footsteps run off into the dark; nothing is missing.")
-			continue
-		}
-		losses := m.campTheft(leaderUserID, cfg.TheftSharePct, cfg.TheftMaxItems)
-		if len(losses) == 0 {
-			continue // nothing worth taking: the thieves left empty-handed
-		}
-		leader.SendText(theftText(losses))
+		m.resolveTheftFor(leaderUserID, cfg)
 	}
+}
+
+// settleTheft completes a due rest and resolves its theft before the
+// leader breaks camp or rests again (40a4 review), so neither can slip
+// between a rest's end and the next round to dodge thieves. Game loop;
+// call without m.mu.
+func (m *CampingModule) settleTheft(leaderUserID int) {
+	m.mu.Lock()
+	if err := m.syncLocked(leaderUserID); err != nil {
+		mudlog.Warn("camping: theft settle sync", "leader", leaderUserID, "error", err)
+	}
+	camp, ok := m.camps[leaderUserID]
+	pending := ok && camp.Rest != nil && camp.Rest.TheftPending()
+	m.mu.Unlock()
+	if pending {
+		m.resolveTheftFor(leaderUserID, m.campSettings())
+	}
+}
+
+// resolveTheftFor settles one leader's pending theft, if the leader is
+// online and out of battle.
+func (m *CampingModule) resolveTheftFor(leaderUserID int, cfg campSettings) {
+	leader := m.userByID(leaderUserID)
+	if leader == nil || leader.Character == nil {
+		return // noticed when the leader is back online
+	}
+	if m.inBattle != nil && m.inBattle(leaderUserID) {
+		return
+	}
+	m.mu.Lock()
+	camp, ok := m.camps[leaderUserID]
+	m.mu.Unlock()
+	if !ok || camp.Rest == nil || !camp.Rest.TheftPending() {
+		return
+	}
+	watched := false
+	if leader.Character.RoomId == camp.RoomID && m.specialist != nil {
+		if watch, ok := m.specialist(leaderUserID, archetypes.UtilityWatch, camp.RoomID); ok {
+			pct := archetypes.PctByLevel(watch.Level, cfg.WatchPctPerLevel, 100)
+			watched = pct > 0 && m.rollPct() < pct
+		}
+	}
+
+	m.mu.Lock()
+	camp, ok = m.camps[leaderUserID]
+	if !ok || camp.Rest == nil || !camp.Rest.TheftPending() {
+		m.mu.Unlock()
+		return
+	}
+	rest := *camp.Rest
+	rest.Theft = &camping.Theft{Done: true}
+	updated := camp
+	updated.Rest = &rest
+	m.camps[leaderUserID] = updated
+	if err := m.saveLocked(); err != nil {
+		m.camps[leaderUserID] = camp
+		m.mu.Unlock()
+		mudlog.Error("camping: theft save", "leader", leaderUserID, "error", err)
+		return
+	}
+	m.mu.Unlock()
+
+	if watched {
+		leader.SendText("Your watch hears something at the edge of the camp and shouts. Footsteps run off into the dark; nothing is missing.")
+		return
+	}
+	losses := m.campTheft(leaderUserID, cfg.TheftSharePct, cfg.TheftMaxItems)
+	if len(losses) == 0 {
+		return // nothing worth taking: the thieves left empty-handed
+	}
+	leader.SendText(theftText(losses))
+}
+
+// theftRiskIn reports whether thieves work this room's zone (40a4 review):
+// a rest there without bells and trip lines may be robbed.
+func (m *CampingModule) theftRiskIn(room *rooms.Room) bool {
+	return room != nil && m.campSettings().Thefts[room.Zone] > 0
 }
 
 // theftText is the wake-up report of what thieves took.

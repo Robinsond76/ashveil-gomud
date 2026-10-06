@@ -201,6 +201,9 @@ type CampState struct {
 	// Gear is the camp gear the company carries (Phase 40a4), one short
 	// label each, for the web Camp tab.
 	Gear []string
+	// TheftRisk is set when thieves work the camp's road and the company
+	// carries no camp bells (40a4 review).
+	TheftRisk bool
 	// RestPercent and RestSeconds are a running rest's progress and time
 	// left.
 	RestPercent, RestSeconds int

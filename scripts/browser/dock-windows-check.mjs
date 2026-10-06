@@ -301,10 +301,11 @@ await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: tr
 check(JSON.stringify(await campButtons()) === '["Feed fire","Break camp","Meal"]' && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('burned to embers'), 'after a rest: embers, Feed fire, no Rest until fed (40a3)');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('oiled canvas tent'), 'a pitched tent shows (40a3)');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Camp gear: Bedrolls 2/3, Tent, Bells and trip lines.'), 'the camp gear line (40a4)');
+check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work'), 'no thieves warning without theft_risk (40a4)');
 if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '40a4-camp-gear.png') }); }
-await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], theft_risk: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');
-check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Bells and trip lines keep thieves out'), 'no gear: the thieves hint (40a4)');
+check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work this road'), 'no bells on a thieves road: the warning (40a4)');
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: false, room: 'A Clearing', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: true }));
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Your camp is at A Clearing.') && JSON.stringify(await campButtons()) === '["Meal","Inn"]', 'a camp elsewhere; an inn here');
 got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Inn' }).click(); });

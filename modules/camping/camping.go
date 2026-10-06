@@ -841,6 +841,8 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	// module) and locked on the rest; the bells wear a use once the rest
 	// is on, also outside m.mu.
 	gear := m.gearOf(user.UserId)
+	// 40a4 review: a finished rest's thieves come before another rest.
+	m.settleTheft(user.UserId)
 	text, started := m.startRestLocked(user, room, gear, m.companyMembers(user.UserId))
 	if started && gear.Bells {
 		spend := m.spendItem
@@ -920,6 +922,11 @@ func (m *CampingModule) startRestLocked(user *users.UserRecord, room *rooms.Room
 	if line := restGearText(resting.Rest, gear.Tent, members); line != "" {
 		text += "\n" + line
 	}
+	// 40a4 review: warn of thieves on a road they work, whether or not
+	// they come this time.
+	if !gear.Bells && m.theftRiskIn(room) {
+		text += "\nNo bells or trip lines are strung: on this road, thieves may slip into the camp while you sleep."
+	}
 	return text, true
 }
 
@@ -928,6 +935,9 @@ func (m *CampingModule) breakCamp(user *users.UserRecord, room *rooms.Room) stri
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
+	// 40a4 review: breaking camp straight after a rest does not dodge its
+	// thieves.
+	m.settleTheft(user.UserId)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
@@ -1476,8 +1486,10 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 	_, hasCamp := m.camps[leaderUserID]
 	m.mu.Unlock()
 	var gear []string
+	bells := false
 	if hasCamp {
-		gear = m.gearOf(leaderUserID).labels(m.companyMembers(leaderUserID))
+		carried := m.gearOf(leaderUserID)
+		gear, bells = carried.labels(m.companyMembers(leaderUserID)), carried.Bells
 	}
 	m.mu.Lock()
 	camp, ok := m.camps[leaderUserID]
@@ -1501,6 +1513,11 @@ func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string)
 	m.mu.Unlock()
 	if s.HasCamp && !s.Here {
 		s.RoomTitle = roomTitle(camp.RoomID)
+	}
+	// 40a4 review: the Camp tab warns when thieves work the camp's road
+	// and no bells are carried.
+	if s.HasCamp && !bells {
+		s.TheftRisk = m.theftRiskIn(rooms.LoadRoom(camp.RoomID))
 	}
 	return s, true
 }

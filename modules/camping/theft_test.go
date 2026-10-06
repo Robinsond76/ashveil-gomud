@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/stretchr/testify/assert"
@@ -190,4 +191,47 @@ func TestCampStateCarriesGearLabels(t *testing.T) {
 	assert.Equal(t, []string{"Tent", "Cookpot"}, s.Gear)
 	none, _ := w.m.CampStateOf(99, 100, nil)
 	assert.Empty(t, none.Gear, "no camp, no gear line")
+}
+
+// 40a4 review: breaking camp, or resting again, straight after a rest does
+// not slip between the rest's end and the next round to dodge thieves,
+// even before the rest's timer has fired.
+func TestBreakingCampOrRestingAgainDoesNotDodgeThieves(t *testing.T) {
+	w, calls := theftWorld(t, 100, 0)
+	w.rest(t)
+	messages := captureMessages(t)
+	w.at(camping.RestDuration + time.Second) // due, timer not yet fired
+	assert.Equal(t, "You break camp.", w.m.breakCamp(w.user, w.room))
+	events.ProcessEvents()
+	require.Len(t, *calls, 1, "robbed as camp is broken")
+	assert.Contains(t, strings.Join(*messages, "\n"), "Missing: 2 raw game meat")
+
+	again, againCalls := theftWorld(t, 50, 0) // robbed; later rolls are 99, so the next rest draws none
+	again.rest(t)
+	finishRest(again)
+	again.m.lightFire(again.user, again.room)
+	again.rest(t)
+	require.Len(t, *againCalls, 1, "the first rest's thieves come before the next rest")
+	assert.Nil(t, again.camp().Rest.Theft)
+}
+
+// 40a4 review: the player is warned on a road thieves work, at rest start
+// and on the web Camp tab, unless bells are carried.
+func TestThievesAreWarnedOfAtRestStartAndOnTheCampTab(t *testing.T) {
+	const warning = "thieves may slip into the camp"
+	w, _ := theftWorld(t, 20, 99)
+	s, _ := w.m.CampStateOf(7, 100, nil)
+	assert.True(t, s.TheftRisk, "camp tab: thieves work this road")
+	assert.Contains(t, w.m.startRest(w.user, w.room), warning)
+
+	bells, _ := theftWorld(t, 20, 99)
+	stock{campBellsItemID: 1}.install(bells.m)
+	s, _ = bells.m.CampStateOf(7, 100, nil)
+	assert.False(t, s.TheftRisk, "bells carried")
+	assert.NotContains(t, bells.m.startRest(bells.user, bells.room), warning)
+
+	safe := newRaidWorld(t, 0, 99)
+	s, _ = safe.m.CampStateOf(7, 100, nil)
+	assert.False(t, s.TheftRisk, "no thieves on this road")
+	assert.NotContains(t, safe.m.startRest(safe.user, safe.room), warning)
 }

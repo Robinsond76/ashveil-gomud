@@ -24,6 +24,7 @@ type campPayload struct {
 	Tent    bool   `json:"tent"`
 	// Phase 40a4: the camp gear the company carries, one label each.
 	Gear        []string `json:"gear"`
+	TheftRisk   bool     `json:"theft_risk"`
 	RestPercent int      `json:"rest_percent"`
 	RestSeconds int      `json:"rest_seconds"`
 	CanCamp     bool     `json:"can_camp"`
@@ -47,7 +48,7 @@ func campPayloadOf(s camping.CampState) campPayload {
 	if gear == nil {
 		gear = []string{}
 	}
-	return campPayload{Gear: gear, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	return campPayload{Gear: gear, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 
