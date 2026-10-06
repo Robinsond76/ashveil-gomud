@@ -55,6 +55,31 @@ screen lane first, with code-generated pixel art. Open questions in the
 40a–40g and loot designs are decided there, each with a reason.
 Documentation only. Verification: links and the diff checked.
 
+**Phase 40e complete, merged via [PR #30](https://github.com/Robinsond76/ashveil-gomud/pull/30): structured combat events (2026-10-06):** the web client
+now receives `Company.Battle.Event`, one entry per combat happening of its
+fight (attack, spell, heal, status, wind-up, guard, yield, flee, death, fight
+start and end), released in step with the paced narration. No visible player
+change, so no help page. Data entries ride the combat pacer's queue with the
+text (flushed with it, sent at once with pacing off) and the module reuses
+`Company.Battle`'s IDs. Decisions: the leader's own fight only (allied
+companies each have their own fight, so no allied relay yet); fight-start
+lists the roster, not cells, because `Company.Battle` is the one source of
+cells; in the dark or for a hidden enemy every enemy ref is `?` and its
+statuses are dropped, instead of tracking which enemies the narration
+labelled; secret statuses are never sent. Design:
+[40e](designs/2026-10-05-phase-40e-combat-event-messages-design.md).
+Independent review (Opus, 2026-10-06): accepted, the leader's ref was
+`me`, which matches nothing in `Company.Battle`; it is now their member key
+`leader` (`me` only without a company), with a unit test and a real-round
+check that the fight-start roster matches the formation's cells; an unused
+viewer field removed. Rejected: data released one line after a spell's
+narration (by design: an event rides the next line). Left for 40f: an
+unseen enemy's cast still carries its spell ID (cast lines already hint at
+the spell); 40f should not show it for a `?` caster.
+Checked and sound: no health or secret status in the feed, dark/hidden
+masking matches `Company.Battle`, flushes carry the data, pace off sends at
+once. 40f follow-ups are in the design's Built section.
+
 **Phase 36b complete: gear catalog (2026-10-06):** the first tier 1-3 catalog
 (swords, axes, maces, short and war spears, glaives, staffs, bows,
 crossbows, four armor paths, shields), 24 trade goods with value-per-kg
