@@ -6,6 +6,7 @@ package usercommands
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/buffs"
 	"github.com/GoMudEngine/GoMud/internal/company"
@@ -41,6 +42,11 @@ func conditionGroups(user *users.UserRecord, s companyview.Summary) []condGroup 
 		if itm.ItemId > 0 && itm.Sharpened() {
 			edges.rows = append(edges.rows, condRow{name: `Sharpened`, description: fmt.Sprintf(`%s: +%d damage`, itm.Name(), itm.SharpBonus),
 				left: fmt.Sprintf(`%d strikes left`, itm.SharpStrikes)})
+		}
+		// Phase 43b: a live poison coating, with its time and hits left.
+		if itm.ItemId > 0 && itm.Coated(time.Now()) {
+			edges.rows = append(edges.rows, condRow{name: `Poison coating`, description: fmt.Sprintf(`%s: %s`, itm.Name(), itm.CoatSummary(time.Now())),
+				left: fmt.Sprintf(`%d hits left`, itm.CoatContacts)})
 		}
 	}
 

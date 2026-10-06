@@ -293,6 +293,17 @@ func (g *GMCPModule) HandleWebGMCP(connectionId uint64, webGMCP []byte) bool {
 			return true
 		}
 
+		if identifier == `Walkto` {
+			// Phase 40d: the web map asks for the walk in progress.
+			for _, user := range users.GetAllActiveUsers() {
+				if user.ConnectionId() == connectionId {
+					events.AddToQueue(GMCPWalktoRequest{UserId: user.UserId})
+					break
+				}
+			}
+			return true
+		}
+
 		if identifier == `Company.Equipment` {
 			// Phase 34 review: the Gear editor says when it is shown.
 			for _, user := range users.GetAllActiveUsers() {

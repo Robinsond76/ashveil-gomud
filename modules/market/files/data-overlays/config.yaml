@@ -85,7 +85,7 @@ Markets:
         TargetStock: 10
         StartStock: 8
         DriftStep: 1
-      - ItemId: 70 # doll parts (Phase 39d); mend a Doll Master's dolls, only bought back unused
+      - ItemId: 70 # doll parts (Phase 39d); mend a Doll Master's dolls
         BasePrice: 12
         MinPrice: 8
         MaxPrice: 24
@@ -93,6 +93,44 @@ Markets:
         TargetStock: 15
         StartStock: 10
         DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      # Phase 43b: weapon poison vials, one dose each (help poisons).
+      - ItemId: 280 # vial of bitterleaf (Phase 43b)
+        BasePrice: 6
+        MinPrice: 3
+        MaxPrice: 14
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 10
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 281 # vial of leechbane (Phase 43b)
+        BasePrice: 12
+        MinPrice: 7
+        MaxPrice: 26
+        MaxStock: 16
+        TargetStock: 8
+        StartStock: 5
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 282 # vial of leadroot (Phase 43b)
+        BasePrice: 12
+        MinPrice: 7
+        MaxPrice: 26
+        MaxStock: 16
+        TargetStock: 8
+        StartStock: 5
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 283 # vial of mirethorn (Phase 43b)
+        BasePrice: 12
+        MinPrice: 7
+        MaxPrice: 26
+        MaxStock: 16
+        TargetStock: 8
+        StartStock: 5
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       # Phase 32f: packs raise a member's carrying share; saddles fit horses
       # bought at a stable (help mount).
       - ItemId: 31 # satchel (+5 kg)
@@ -521,6 +559,16 @@ Markets:
         TargetStock: 5
         StartStock: 3
         DriftStep: 1
+      # Phase 43b: the road sells the common poison only, a little dearer.
+      - ItemId: 280 # vial of bitterleaf (Phase 43b)
+        BasePrice: 8
+        MinPrice: 4
+        MaxPrice: 18
+        MaxStock: 16
+        TargetStock: 8
+        StartStock: 4
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       # Phase 30b: bandages and splints, dearer out on the road.
       - ItemId: 36 # linen bandage
         BasePrice: 8

@@ -76,6 +76,11 @@ round count; a rest takes real time, not game time.
   On dangerous roads a camp without bells may be robbed while it sleeps; you
   are told what is missing when you wake.
 
+  <ansi fg="command">camp poison</ansi>
+  Keeps a preparation list of which weapon poison goes on which blade, and
+  coats the whole company's blades from it in one go (<ansi fg="command">help poisons</ansi>). Nothing
+  is spent until <ansi fg="command">camp poison apply</ansi>, and it applies everything or nothing.
+
   <ansi fg="command">camp sharpen</ansi>
   Spends your whetstones sharpening your company's blades, the same as
   the <ansi fg="command">sharpen</ansi> command. See <ansi fg="command">help sharpen</ansi> for how that works, including
@@ -96,6 +101,7 @@ round count; a rest takes real time, not game time.
 <ansi fg="yellow-bold">Usage:</ansi>
 
   <ansi fg="command">camp</ansi> | <ansi fg="command">camp status</ansi> | <ansi fg="command">camp fire</ansi> | <ansi fg="command">camp rest</ansi> | <ansi fg="command">camp cook</ansi> | <ansi fg="command">camp break</ansi>
+  <ansi fg="command">camp poison</ansi> [<ansi fg="command">assign</ansi>|<ansi fg="command">unassign</ansi>|<ansi fg="command">preview</ansi>|<ansi fg="command">apply</ansi>]
   <ansi fg="command">camp sharpen</ansi> [<ansi fg="command">status</ansi> | <ansi fg="command">auto on</ansi>|<ansi fg="command">off</ansi>]
 
 <ansi fg="yellow-bold">Cooking, raids, and camp specialists</ansi>
@@ -116,7 +122,7 @@ The web client's map also marks your camp as a tent on its tile, with its
 fire and a sleeping mark while you rest. The camps of your own party show
 as blue tents; no other company's camp is ever shown (<ansi fg="command">help worldmap</ansi>).
 
-See also: <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
+See also: <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help poisons</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
 <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>.
 
 A successful Camp Watch also prevents enemy surprise in a raid. Perception can still prevent surprise after a missed watch, but does not restore spoiled rest. See help ambush.

@@ -1,0 +1,18 @@
+roomid: 2112
+zone: Alderbrook
+title: Alderbrook Road
+description: A rutted cart road runs east between hedgerows. Wheel ruts hold last night's rain.
+biome: road
+exits:
+  east:
+    roomid: 2113
+  north:
+    roomid: 2104
+  south:
+    roomid: 2119
+  west:
+    roomid: 2111
+mapx: 2
+mapy: 1
+mapz: 0
+hascoordinates: true

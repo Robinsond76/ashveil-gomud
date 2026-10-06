@@ -1,0 +1,22 @@
+roomid: 2129
+zone: Alderbrook
+title: Reedy Shore
+description: Tall reeds sway at the shallows, humming with dragonflies. The water is clear and
+  cold.
+biome: shore
+exits:
+  north:
+    roomid: 2122
+  south:
+    roomid: 2135
+  southwest:
+    roomid: 2134
+  west:
+    roomid: 2128
+resources:
+- water
+- fishing
+mapx: 5
+mapy: 3
+mapz: 0
+hascoordinates: true

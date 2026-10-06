@@ -60,8 +60,7 @@ with <ansi fg="command">strategy [member] abilities off</ansi>.
 Doll parts mend dolls. Each part mends a doll for 10 health plus 3 for each
 level of its Master, broken dolls first. The end of a camp rest mends the
 company's dolls with the leader's parts (<ansi fg="command">help camp</ansi>), or use <ansi fg="command">doll mend</ansi>
-out of battle. Doll parts are sold in Dunmar's market; they are only bought
-back unused.
+out of battle. Doll parts are sold in Dunmar's market and never bought back.
 
 <ansi fg="yellow-bold">Routes</ansi>
 

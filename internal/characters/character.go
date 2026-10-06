@@ -1470,6 +1470,13 @@ func (c *Character) ApplyHealthChange(healthChange int) int {
 		if c.HasBuffFlag("blighted") {
 			newHealth = oldHealth + (newHealth-oldHealth)/2
 		}
+		// Phase 43b: leechbane cuts healing by a quarter, rounded down in
+		// the victim's favor of the poison (the heal loses floor(25%)), and
+		// never below one point of a positive heal.
+		if c.HasBuffFlag("leechbane") {
+			heal := newHealth - oldHealth
+			newHealth = oldHealth + max(1, heal-heal/4)
+		}
 		// Phase 30b: healing stops at the wound limit.
 		newHealth = c.CapHealing(oldHealth, newHealth)
 	} else if newHealth > c.HealthMax.Value {

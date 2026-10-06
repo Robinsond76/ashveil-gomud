@@ -39,6 +39,7 @@ func (m *CampingModule) purgeLocked(leaderUserID int) bool {
 	_, rested := m.restedPending[leaderUserID]
 	_, owed := m.owed[leaderUserID]
 	_, sharpen := m.autoSharpen[leaderUserID]
+	_, poisonPlan := m.poisonPlans[leaderUserID]
 	_, rewards := m.campRewards[leaderUserID]
 	delete(m.camps, leaderUserID)
 	delete(m.recoveryApplied, leaderUserID)
@@ -48,8 +49,9 @@ func (m *CampingModule) purgeLocked(leaderUserID int) bool {
 	delete(m.restedPending, leaderUserID)
 	delete(m.owed, leaderUserID)
 	delete(m.autoSharpen, leaderUserID)
+	delete(m.poisonPlans, leaderUserID)
 	delete(m.campRewards, leaderUserID)
 	delete(m.lastRewards, leaderUserID)
 	delete(m.raiders, leaderUserID)
-	return camp || applied || stay || innApplied || wellRested || rested || owed || sharpen || rewards
+	return camp || applied || stay || innApplied || wellRested || rested || owed || sharpen || poisonPlan || rewards
 }

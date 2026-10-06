@@ -1,0 +1,17 @@
+roomid: 2110
+zone: Alderbrook
+title: Standing Rocks
+description: Three weathered stones lean together on the hilltop, ringed by thrift and sheep
+  droppings. Shepherds say the stones walk down to the lake at midsummer to drink.
+biome: mountains
+exits:
+  south:
+    roomid: 2118
+  west:
+    roomid: 2109
+mapsymbol: R
+maplegend: Rocks
+mapx: 8
+mapy: 0
+mapz: 0
+hascoordinates: true

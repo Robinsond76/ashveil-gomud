@@ -81,6 +81,7 @@ help:
       - patch
     road:
       - travel
+      - walkto
       - survival
       - strain
       - weather
@@ -148,6 +149,7 @@ help:
       - mercy
       - light
       - narration
+      - poisons
       - resurrect
       - scout
       - sharpen
@@ -336,6 +338,7 @@ help-aliases:
   pack:             [packs, satchel, knapsack, backpack, container, containers]
   mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
+  walkto:           [autowalk, auto-walk, click-to-walk, click to walk, walk to, walk-to, tile-ready, tile ready, tile regions, showcase, alderbrook]
   camp:             [camping, campfire]
   worldmap:         [map window, mapwindow, tile map, world map]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
@@ -357,6 +360,7 @@ help-aliases:
   abilities:        [ability, class-abilities, class-ability, opening-strike, opening, aimed-shot, aimed, mana-reserve, reserve]
   interrupts:       [interrupt, interrupted, chant, chants, concentration, shield-bash, shieldbash, counter, counters, hexer, wind-up, wind-ups, windup, windups, telegraph, telegraphs, crushing-blow, ogre]
   sharpen:          [whetstone, whetstones, edge]
+  poisons:          [poison, coat, coating, coatings, weapon-poison, weapon-poisons, bitterleaf, leechbane, leadroot, mirethorn, vial, vials]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]
   tempo:            [actions, turns]
@@ -418,6 +422,7 @@ command-aliases:
   go:                 ['enter']
   experience:         ['exp', 'xp', 'tnl', 'level', 'levels']
   map:                ['m']
+  walkto:             ['autowalk']
   conditions:         ['c', 'cond', 'conds']
   skills:             ['sk', 'skill']
   equip:              ['wear', 'wield', 'hold']

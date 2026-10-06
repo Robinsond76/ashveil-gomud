@@ -1,0 +1,26 @@
+roomid: 2114
+zone: Alderbrook
+title: Alderbrook Green
+description: Alderbrook's green lies at the heart of the hamlet, a ring of cottages around a
+  stone well and a trampled common. Geese patrol the grass, and villagers stop at the
+  well to trade news of the road. A hand-lettered board by the well lists lost goats
+  and found boots, and a stable lad waves travelers toward the lake path.
+biome: city
+exits:
+  east:
+    roomid: 2115
+  north:
+    roomid: 2106
+  south:
+    roomid: 2121
+  west:
+    roomid: 2113
+mapsymbol: V
+maplegend: Village
+resources:
+- water
+- shelter
+mapx: 4
+mapy: 1
+mapz: 0
+hascoordinates: true
