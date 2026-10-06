@@ -154,6 +154,8 @@ func (s pluginStore) Save(registry domain.Registry) error {
 }
 
 type CompanyModule struct {
+	// banter is the Phase 49 banter memory (banter.go).
+	banter banterState
 	// equipmentViews caches the Gear editor's read model (Phase 34c).
 	equipmentViews     equipmentViewCache
 	starterPackForTest int
@@ -473,6 +475,7 @@ func (m *CompanyModule) enlist(leaderUserID, roomID, templateID int, allowed map
 	m.assignConfiguredArchetype(leaderUserID, companion)
 	companion.Archetype, _ = m.CompanionArchetype(leaderUserID, companion.ID)
 	m.seedDisposition(leaderUserID, companion)
+	m.rollPersonality(leaderUserID, companion) // Phase 49
 	var spawnState *domain.MemberState
 	if hire != nil {
 		g := hire.candidate

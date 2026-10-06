@@ -44,6 +44,15 @@ func (m *CompanyModule) onBattleEnded(e events.Event) events.ListenerReturn {
 	if user == nil || user.Character == nil {
 		return events.Continue
 	}
+	// Phase 49: comrades' talk reads the fight's toll, so it is worked out
+	// before the patch-up and said after it.
+	talk := m.battleBanter(user, evt.Outcome)
+	if _, inBattle := battle.Current(user.UserId); inBattle {
+		talk = "" // the next fight has begun
+	}
+	if talk != "" {
+		defer user.SendText(talk)
+	}
 	if reason := patchBlocked(user); reason != "" || companionsFighting(m.woundMembers(user)) {
 		return events.Continue
 	}

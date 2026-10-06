@@ -1,0 +1,68 @@
+# Phase 49 review: lines that need two tags at once, so a temperament
+# sounds different in a good heart and an evil one (a devout witch who
+# prays to something dark, a cheerful killer), and lines for archetypes
+# the families below did not cover yet.
+
+# --- devout and evil: a darker faith ---
+- {text: "The powers I pray to do not care about mercy. They care about offerings.", ctx: [camp], pers: [devout], align: [evil]}
+- {text: "I give thanks for the blood spilled today. Something below is grateful for it.", ctx: [win], pers: [devout], align: [evil]}
+- {text: "The old dark gods watch over this fire. Do not ask what they want in return.", ctx: [camp], pers: [devout], align: [evil], when: [night]}
+- {text: "My prayers were answered. Theirs were not.", ctx: [win, flawless], pers: [devout], align: [evil]}
+- {text: "{fallen} is dead. I will bargain for them, and whatever I bargain with will remember.", ctx: [fall], pers: [devout], align: [evil]}
+- {text: "I am rested, and my patron is pleased. A good sign for us, a bad one for whoever we meet.", ctx: [rested], pers: [devout], align: [evil]}
+- {text: "Faith is a blade like any other. I keep mine sharp.", ctx: [camp], pers: [devout, stoic], align: [evil]}
+
+# --- devout and good ---
+- {text: "May whoever finds this camp after us find it warm and kindly left.", ctx: [rested], pers: [devout], align: [good]}
+- {text: "We were shielded today. Let us be a shield for someone else tomorrow.", ctx: [win, flawless], pers: [devout], align: [good]}
+
+# --- cheerful and evil: a smile with teeth ---
+- {text: "Did you hear the one screaming? I could listen to that all day!", ctx: [win], pers: [cheerful], align: [evil]}
+- {text: "What a lovely mess we made. Truly, I love this work.", ctx: [win, flawless], pers: [cheerful], align: [evil]}
+- {text: "Tomorrow somebody rich is going to have a very bad day. I cannot wait!", ctx: [camp], pers: [cheerful], align: [evil]}
+- {text: "Oh, cheer up. {fallen} can be bought back, and it is only coin. Other people's, if we are clever.", ctx: [fall], pers: [cheerful], align: [evil]}
+- {text: "Up and smiling! Let us go and ruin someone's plans.", ctx: [rested], pers: [cheerful], align: [evil]}
+
+# --- cheerful and good ---
+- {text: "We helped somebody today, even if they will never know it. That makes me happy.", ctx: [camp, win], pers: [cheerful], align: [good]}
+
+# --- stoic and evil ---
+- {text: "They begged. It changed nothing. It never does.", ctx: [win], pers: [stoic], align: [evil]}
+- {text: "I sleep well. A clear conscience is easy when you never kept one.", ctx: [rested], pers: [stoic], align: [evil]}
+
+# --- grim and good / grim and evil ---
+- {text: "I hope there was no one waiting for them at home. There usually is.", ctx: [win], pers: [grim], align: [good]}
+- {text: "Everyone dies. I only see that it is them first.", ctx: [win], pers: [grim], align: [evil]}
+- {text: "The world is rotten. I just take my share before it falls apart.", ctx: [camp], pers: [grim], align: [evil]}
+
+# --- boastful and evil / good ---
+- {text: "Let them tell stories about me in the villages. Let them be afraid to.", ctx: [camp], pers: [boastful], align: [evil]}
+- {text: "Somewhere tonight a family sleeps safe because of me. You are welcome, world.", ctx: [camp], pers: [boastful], align: [good], when: [night]}
+
+# --- wry and evil / good ---
+- {text: "I took a little something from the last one. Do not worry, they had no further use for it.", ctx: [win], pers: [wry], align: [evil]}
+- {text: "Heroics, at my age. My mother would be so confused.", ctx: [win], pers: [wry], align: [good]}
+
+# --- replies an evil member would make ---
+- {text: "Blame yourself, if it helps. I will blame the priest who charges us to raise them.", reply: f-fall, align: [evil]}
+- {text: "Luck is for people who did not cheat. I cheated.", reply: c-luck, align: [evil]}
+- {text: "Home? I burned mine down on the way out. I do not dream about it.", reply: c-dream, align: [evil]}
+- {text: "Then freeze. I am not giving up my spot.", reply: c-cold, align: [evil]}
+
+# --- archetypes the families did not cover ---
+- {text: "Hold still while I mix this. One wrong drop and we will all be glowing.", ctx: [camp], arch: [alchemist]}
+- {text: "I gathered a few herbs on the way. Bitter, but they will keep us standing.", ctx: [camp], arch: [alchemist]}
+- {text: "My flasks are nearly dry. I will brew more by the next fire.", ctx: [win], arch: [alchemist]}
+- {text: "The reagents settled nicely while we slept. Everything is ready to throw.", ctx: [rested], arch: [alchemist]}
+- {text: "One flask in the right place. Worth more than a dozen sword swings.", ctx: [flawless], arch: [alchemist]}
+- {text: "My beast does not like the smell of this place. I trust its nose more than my eyes.", ctx: [camp], arch: [beasttamer]}
+- {text: "Easy, easy. You did well. Here, a scrap of the good meat.", ctx: [win], arch: [beasttamer]}
+- {text: "The beast slept against my back all through the rest. Best blanket I own.", ctx: [rested], arch: [beasttamer]}
+- {text: "A beast knows who it trusts. It trusts this company. So do I.", ctx: [camp], arch: [beasttamer]}
+- {text: "I want to count my bolts before we go on. A crossbow without them is a club.", ctx: [win], arch: [arbalist]}
+- {text: "Winding a crossbow is slow. Waiting for the right shot is slower. I am good at both.", ctx: [camp], arch: [arbalist]}
+
+# --- more falls, so a death is never met with the same words ---
+- {text: "Someone pick up {fallen}. We are not leaving them out here.", ctx: [fall], arch: [martial, skirmisher]}
+- {text: "There is still time for {fallen}. A church, or a village shaman. We must hurry.", ctx: [fall], arch: [faith]}
+- {text: "Count the bruises later. Get {fallen} on someone's back, now.", ctx: [fall], pers: [wry, grim]}
