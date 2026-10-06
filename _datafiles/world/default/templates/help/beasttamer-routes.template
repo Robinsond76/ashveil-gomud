@@ -1,0 +1,45 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">beasttamer-routes</ansi>
+
+The Beast Tamer is a neutral lineage. At level 10 it promotes to one of three
+classes, and any alignment may choose any of them. Each class chooses the
+beast and adds four ranks (10, 15, 20, 25); a talent adds more
+(<ansi fg="command">help talents</ansi>). A beast's health below is a share of the starting wolf's.
+
+<ansi fg="yellow-bold">Houndmaster</ansi>
+
+  10 Warhound           your beast is a warhound with 110% of a wolf's health;
+                        its bites hobble a foe below half health, who can't
+                        flee and moves slowly for a few rounds
+  15 Keen nose          +2 Attack on the warhound's bites
+  20 Sharp fangs        +1 damage on the warhound's bites
+  25 Heavy build        the warhound has 130% of a wolf's health
+
+<ansi fg="yellow-bold">Bearward</ansi>
+
+  10 War bear           your beast is a war bear with 120% of a wolf's health;
+                        it steps in and takes a blow meant for the most hurt
+                        ally (the Tamer too), three times a battle
+  15 Thick hide         +1 damage on the bear's blows
+  20 Old bear           the bear has 140% of a wolf's health
+  25 Steady guard       the bear guards one more time a battle
+
+<ansi fg="yellow-bold">Dragon Tamer</ansi>
+
+  10 Drake hatchling    your beast is a drake hatchling (a smaller bite, 1d2);
+                        every 3 rounds, in place of its bite, it breathes
+                        fire on its foe and up to two other foes, 1d6 plus
+                        half the Tamer's level in damage to each
+  15 Scorching breath   +2 damage on the drake's bites and its Breath
+  20 Growing drake      the drake has 120% of a wolf's health
+  25 Quick fire         Breath comes every 2 rounds
+
+The elite classes of these routes (Packlord, Beastlord, Dragon Lord) are still
+to come; until then a Beast Tamer keeps its advanced class's ranks.
+
+<ansi fg="yellow-bold">Talents</ansi>
+
+Thick Pelt (+10% beast health), Strong Jaws (+1 beast damage), Steady Leash
+(Rally one more time, once) and Field Hand (+1 Evasion) suit any route
+(<ansi fg="command">help talents</ansi>).
+
+See also: <ansi fg="command">help beasttamer</ansi>, <ansi fg="command">help beast</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help talents</ansi>, <ansi fg="command">help abilities</ansi>.

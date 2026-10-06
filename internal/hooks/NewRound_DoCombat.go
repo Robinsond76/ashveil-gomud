@@ -59,6 +59,9 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// Ashveil Phase 39d: a Doll Master's dolls stand for the battle.
 	dollPass()
 
+	// Ashveil Phase 39e: a Beast Tamer's beast stands for the battle.
+	beastPass()
+
 	// Ashveil Phase 30c2: spent guards come back, one per two combat
 	// rounds.
 	guardPass()
@@ -1427,6 +1430,8 @@ func handleAffected(affectedPlayerIds []int, affectedMobInstanceIds []int) {
 		if mob := mobs.GetInstance(mobId); mob != nil {
 			if mob.Character.Health < 1 && dolls.IsDoll(mob) {
 				dollFalls(mob) // Phase 39d: a doll breaks (or is spliced), it doesn't die
+			} else if mob.Character.Health < 1 && isBeastInstance(mob.InstanceId) {
+				beastFalls(mob) // Phase 39e: a beast is wounded, it doesn't die
 			} else if mob.Character.Health < 1 {
 
 				outcome := combatstream.OutcomeSlain

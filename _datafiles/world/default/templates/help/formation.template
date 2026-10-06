@@ -15,6 +15,8 @@ A Doll Master's dolls take a cell for the length of a battle, and no company
 slot: a doll stands in front of its Master in the Master's column when a cell
 is free there, else in the nearest free cell of the front row. You don't
 place a doll, and <ansi fg="command">formation</ansi> doesn't list one (<ansi fg="command">help dollmaster</ansi>).
+A Beast Tamer's bonded beast stands the same way, in front of its Tamer, and
+takes its own turn there (<ansi fg="command">help beasttamer</ansi>).
 
 <ansi fg="yellow">Usage:</ansi>
 

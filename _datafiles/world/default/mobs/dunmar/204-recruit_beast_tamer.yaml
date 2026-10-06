@@ -1,0 +1,22 @@
+mobid: 204
+zone: Dunmar
+# Phase 39e recruit base (beasttamer). See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Recruit Beast Tamer
+  description: A weathered handler with a coiled whip at the hip and a grey wolf that never lets them out of its sight, looking for a company that will not mind the fur.
+  raceid: 1
+  level: 1
+  alignment: 0
+  equipment:
+    weapon:
+      itemid: 10020
+    head:
+      itemid: 20020
+    body:
+      itemid: 20008
+    feet:
+      itemid: 20003
