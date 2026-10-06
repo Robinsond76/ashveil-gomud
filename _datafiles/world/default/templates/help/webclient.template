@@ -148,3 +148,9 @@ Character Effects shows your effects and wounds with their true duration
 and meaning. See <ansi fg="command">help conditions</ansi> and <ansi fg="command">help skills</ansi>.
 
 The Battle view uses current combat positions on narrow ground, with two active columns and any overflow marked Reserve. Setup continues to show your saved formation. See help battlefield.
+
+<ansi fg="yellow-bold">Keys</ansi>
+
+  With the command box empty, the arrow keys walk, and Enter opens a quick
+  menu of what you can do in this room: look, attack, move, get, gather,
+  company, and more (<ansi fg="command">help quickmenu</ansi>).
