@@ -151,6 +151,31 @@ that uses it.
    byte-for-byte unchanged against the existing narration tests.
 7. The game clock and the combat round count are unaffected.
 
+## Built (2026-10-06)
+
+Built as designed, with these decisions (best judgment, delegated):
+
+- **Own fight only.** A fight has one leader and each allied company has its
+  own fight, so the feed carries the leader's fight and no `a:` refs yet;
+  40f's reserve formations can add an allied relay. Outsiders are `u:<id>` or
+  `m:<instance>`, as in `Company.Battle.others`, not `o:<n>`.
+- **Fight-start carries the roster** (`company`, `enemies` refs), not cells:
+  `Company.Battle` is the one source of cells and would otherwise be read a
+  second time at an unsettled moment.
+- **Masking.** In the dark, or for an enemy that is hidden (or was when last
+  seen), its refs are `?` and statuses on it are not sent. The design's
+  "unless already labelled in the narration" would need narration tracking;
+  masking is the safe subset.
+- **Opt-in.** The web client takes the feed by being the web client (it sends
+  no `Core.Supports.Set`); any other client must list `Company.Battle.Event`.
+- **Pacing.** `events.CombatData` is queued as the event is emitted, so it
+  dispatches in order with the round's `Message`s. `combatpace` data entries
+  take no beat; an event goes out with the next text line after it, so an
+  event emitted after its own narration line (spell results) goes out with
+  the following line or the round's last.
+- **Client.** `Client.onBattleEvents(fn)` in `webclient-core.js` delivers each
+  message; events never enter `GMCPStructs`. 40f adds the listener.
+
 ## Open questions
 
 1. Should spectators (players in the room but not in the fight) receive

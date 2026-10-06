@@ -15,6 +15,10 @@
 
 ## Causal combat tagging (Ashveil Phase 29f)
 
+- Phase 40e: `CombatData` carries structured combat data for one player. A
+  producer queues it as it emits the happening, so it dispatches in order
+  with the round's `Message`s; `hooks.CombatData_Hold` paces it with them.
+
 - `cause.go`: every queued event carries the combat round that caused it
   (`WithCause`, inherited while a caused event is dispatched). `Cause()`
   reads it during dispatch; `hooks.Message_SendMessage` uses it to pace

@@ -61,3 +61,16 @@
   counters), cargo, load, availability or the slot changes, or every 15
   rounds. `ASHVEIL_LOAD_BENCH=1 go test ./modules/company -run
   TestCompanyRefreshLoad -v` measures a player's whole company refresh.
+
+- Phase 40e: `Company.Battle.Event` (`gmcp.CompanyBattleEvent.go`) is a
+  stream, not state: a combat stream sink turns each event of the leader's
+  fight into an entry and queues `events.CombatData`, which
+  `hooks.CombatData_Hold` orders with the round's narration (held with it for
+  a player who paces combat, released with the next text line or the round's
+  last, flushed with it) and hands back through `hooks.SetCombatDataSender`
+  as one message per released batch. Refs match `Company.Battle` (`me`, member
+  key, `m:<instance>`, `u:<id>`; `?` for an enemy in the dark or hidden, whose
+  statuses are also dropped). Never add enemy health, unshown numbers, or
+  secret statuses. Sent only to the web client, or a client that listed the
+  module in `Core.Supports.Set`. The web client does not store it:
+  `Client.onBattleEvents`.
