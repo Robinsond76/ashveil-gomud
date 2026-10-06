@@ -74,6 +74,9 @@ help:
       - shaman-routes
       - gryphon-rider
       - gryphon-rider-routes
+      - alchemist
+      - alchemist-routes
+      - brew
       - summoning
     company:
       - company
@@ -358,6 +361,9 @@ help-aliases:
   halberdier:       [halberdiers, sweep, brace, hook, crowded]
   dollmaster:       [doll-master, doll master, dollmasters, dolls, puppetry, puppet-strike, guard-string, tangle, emergency-splice, splice, puppet]
   dollmaster-routes: [puppeteer, golemancer, marionettist, grand-puppeteer, golem-lord, string-sovereign, golem, two-dolls]
+  alchemist:        [alchemists, flask, flasks, flask-satchel, healing-draught, antidote, fire-flask, fireflask, tonic, bracing-tonic, brewing, reagents]
+  alchemist-routes: [apothecary, bombardier, mutagenist, panacean, grenadier, transmuter, mutagen, potent-draughts, splash-draught, wide-throw, pitch-and-tar]
+  brew:             [brewing-flasks, refill-flasks]
   doll:             [mend-doll, doll-parts, doll-mend]
   halberdier-routes: [sweeper, vanguard, valkyrie, reaper, linebreaker, tempest-lancer, charged-sweep]
   hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]

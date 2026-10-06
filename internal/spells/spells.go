@@ -37,6 +37,9 @@ type SpellData struct {
 	Cost        int         `yaml:"cost,omitempty"`
 	WaitRounds  int         `yaml:"waitrounds,omitempty"`
 	Difficulty  int         `yaml:"difficulty,omitempty"` // Augments final success chance by this %
+	// Flask is the flasks a cast uses up (Phase 39g): an Alchemist's spells
+	// cost a flask from its satchel instead of mana (internal/flasks).
+	Flask int `yaml:"flask,omitempty"`
 	// Power is the spell's size (Phase 35b): its scripts, heal wounds and
 	// the level-up report all read it through internal/spellpower. Spells
 	// without one size themselves in their scripts.

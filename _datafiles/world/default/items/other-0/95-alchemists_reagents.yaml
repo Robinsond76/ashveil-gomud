@@ -1,0 +1,9 @@
+itemid: 95
+name: alchemist's reagents
+namesimple: reagents
+description: A twist of dried herbs, a pinch of salts and a stoppered vial of spirit, enough to brew one flask. An Alchemist brews them into flasks at the end of a camp rest, or at any time with the brew command (help brew).
+type: object
+subtype: mundane
+uses: 1
+value: 5
+weight: 200

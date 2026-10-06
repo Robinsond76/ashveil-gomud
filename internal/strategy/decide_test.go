@@ -120,7 +120,8 @@ func TestDefaultAutoSpells(t *testing.T) {
 		"leaden": UseHex, "miasma": UseHex, "dread": UseHex, "blight": UseHex, "hex": UseAttack,
 		"greaterheal": UseBigHeal, "rejuvenation": UseRejuv, "grove": UseGrove, "siphon": UseSiphon,
 		"ward": UseWard, "arcaneward": UseWard, "barkskin": UseBark, "bless": UseBless, "entangle": UseHex, "callhost": UseSummon, "bindfiend": UseSummon, "raisefallen": UseRaise,
-		"rain": UseWeather, "chillwind": UseWeather, "callfog": UseWeather, "lightning": UseStorm, "gust": UseAttack, "stoneskin": UseBark}
+		"rain": UseWeather, "chillwind": UseWeather, "callfog": UseWeather, "lightning": UseStorm, "gust": UseAttack, "stoneskin": UseBark,
+		"draught": UseHeal, "antidote": UseCure, "tonic": UseBless, "fireflask": UseFlame}
 	got := DefaultAutoSpells()
 	if len(got) != len(want) {
 		t.Fatalf("DefaultAutoSpells = %+v", got)
@@ -298,5 +299,59 @@ func TestWarlockDrainsWhenAnAllyIsHurt(t *testing.T) {
 	sit.Allies[1].Pending = true
 	if act := Decide(sit); act.Kind == Drain {
 		t.Fatalf("a heal is already coming for them: %+v", act)
+	}
+}
+
+// Phase 39g: the Alchemist's flasks. A healer throws a draught while anyone
+// is hurt, an antidote for poison when no one is in danger, a tonic before the
+// blows, and fire only while more than FlaskKeep flasks remain.
+func TestDecideAlchemistFlasks(t *testing.T) {
+	spells := []Spell{
+		{ID: "draught", Use: UseHeal, Flask: 1},
+		{ID: "antidote", Use: UseCure, Flask: 1},
+		{ID: "tonic", Use: UseBless, Flask: 1},
+		{ID: "fireflask", Use: UseFlame, Flask: 1},
+	}
+	s := Situation{Role: Healer, Flasks: 6, Knows: known("draught", "antidote", "tonic", "fireflask"), Spells: spells,
+		Allies: []Ally{{HP: 20, MaxHP: 20}, {HP: 4, MaxHP: 20}}, Foes: 2}
+	if a := Decide(s); a.Kind != Heal || a.Spell != "draught" || a.Ally != 1 {
+		t.Errorf("a hurt ally: %+v", a)
+	}
+	// Poisoned, hurt but not in danger (above CureAbove): the antidote first.
+	s.Allies = []Ally{{HP: 12, MaxHP: 20, Afflicted: true}, {HP: 11, MaxHP: 20}}
+	if a := Decide(s); a.Kind != Buff || a.Spell != "antidote" || a.Ally != 0 {
+		t.Errorf("cure before danger: %+v", a)
+	}
+	// Someone near death: the heal comes first.
+	s.Allies = []Ally{{HP: 12, MaxHP: 20, Afflicted: true}, {HP: 3, MaxHP: 20}}
+	if a := Decide(s); a.Kind != Heal || a.Ally != 1 {
+		t.Errorf("heal before cure: %+v", a)
+	}
+	// Nobody hurt: fire while flasks are spare, nothing at the reserve.
+	s.Allies = []Ally{{HP: 20, MaxHP: 20}}
+	s.Flasks = FlaskKeep + 1
+	if a := Decide(s); a.Kind != Buff && a.Kind != Flame {
+		t.Errorf("flasks to spare: %+v", a)
+	}
+	s.Spells = []Spell{{ID: "fireflask", Use: UseFlame, Flask: 1}}
+	if a := Decide(s); a.Kind != Flame || a.Spell != "fireflask" {
+		t.Errorf("fire: %+v", a)
+	}
+	s.Flasks = FlaskKeep
+	if a := Decide(s); a.Kind != Swing {
+		t.Errorf("the last flasks are for heals: %+v", a)
+	}
+	// An empty satchel casts nothing.
+	s.Flasks = 0
+	s.Spells = spells
+	s.Allies = []Ally{{HP: 4, MaxHP: 20}}
+	if a := Decide(s); a.Kind != Swing {
+		t.Errorf("empty satchel: %+v", a)
+	}
+}
+
+func TestAlchemistDefaultsToHealer(t *testing.T) {
+	if DefaultRole("alchemist") != Healer {
+		t.Error("an Alchemist is a healer by default")
 	}
 }
