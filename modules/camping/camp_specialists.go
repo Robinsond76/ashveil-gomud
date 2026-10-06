@@ -218,11 +218,12 @@ func (m *CampingModule) rollPct() int {
 }
 
 // planRaidLocked (rest start) rolls whether raiders come to a camp in this
-// zone and when, as a share of the rest.
-func (m *CampingModule) planRaidLocked(room *rooms.Room, started time.Time) *camping.Raid {
+// zone and when, as a share of the rest. tentPct (Phase 52) scales the
+// chance for the pitched tent; 100 changes nothing.
+func (m *CampingModule) planRaidLocked(room *rooms.Room, started time.Time, tentPct int) *camping.Raid {
 	cfg := m.campSettings()
 	raid, ok := cfg.Raids[room.Zone]
-	if !ok || raid.ChancePct <= 0 || m.rollPct() >= raid.ChancePct {
+	if !ok || raid.ChancePct <= 0 || m.rollPct() >= camping.ScaleChance(raid.ChancePct, tentPct) {
 		return nil
 	}
 	span := cfg.RaidLatestPct - cfg.RaidEarliestPct

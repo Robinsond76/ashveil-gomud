@@ -246,6 +246,33 @@ Markets:
         StartStock: 3
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
+      - ItemId: 300 # fur-lined tent (Phase 52)
+        BasePrice: 90
+        MinPrice: 60
+        MaxPrice: 180
+        MaxStock: 4
+        TargetStock: 2
+        StartStock: 2
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 301 # camouflaged tent (Phase 52)
+        BasePrice: 70
+        MinPrice: 45
+        MaxPrice: 140
+        MaxStock: 4
+        TargetStock: 2
+        StartStock: 2
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 302 # large pavilion tent (Phase 52)
+        BasePrice: 120
+        MinPrice: 80
+        MaxPrice: 240
+        MaxStock: 3
+        TargetStock: 1
+        StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       - ItemId: 47 # fire steel and tinder
         BasePrice: 5
         MinPrice: 3
@@ -559,6 +586,33 @@ Markets:
         MinPrice: 30
         MaxPrice: 96
         MaxStock: 3
+        TargetStock: 1
+        StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 300 # fur-lined tent (Phase 52)
+        BasePrice: 105
+        MinPrice: 70
+        MaxPrice: 210
+        MaxStock: 2
+        TargetStock: 1
+        StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 301 # camouflaged tent (Phase 52)
+        BasePrice: 82
+        MinPrice: 52
+        MaxPrice: 164
+        MaxStock: 2
+        TargetStock: 1
+        StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 302 # large pavilion tent (Phase 52)
+        BasePrice: 140
+        MinPrice: 92
+        MaxPrice: 280
+        MaxStock: 2
         TargetStock: 1
         StartStock: 1
         DriftStep: 1

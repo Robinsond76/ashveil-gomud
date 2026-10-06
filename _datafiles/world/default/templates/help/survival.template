@@ -51,6 +51,9 @@ a buff for its next few battles (<ansi fg="command">help cooking</ansi>). The fi
 <ansi fg="command">conditions</ansi> and the Company panel show it for the next battle, and the
 battle screen and Combat tab show the one the fight began with.
 
+Sickness adds to it: a Chill, Gut-ache or Fever has its own penalty and its
+own cure (<ansi fg="command">help ailments</ansi>).
+
 <ansi fg="yellow-bold">Feeding your company</ansi>
 
 <ansi fg="command">eat</ansi> and <ansi fg="command">drink</ansi> restore Hunger and/or Thirst from your own pack, for
@@ -65,9 +68,9 @@ fish and game take time and effort (<ansi fg="command">help gathering</ansi>).
 
   <ansi fg="command">survival</ansi>
   Shows every current company member's Hunger, Thirst, and Fatigue, and
-  an "In battle:" line for anyone whose needs or meal change a fight.
+  an "In battle:" line for anyone whose needs, meal or ailments change a fight.
 
-See also: <ansi fg="command">help gathering</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>,
+See also: <ansi fg="command">help ailments</ansi>, <ansi fg="command">help gathering</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help eat</ansi>, <ansi fg="command">help drink</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help inn</ansi>,
 <ansi fg="command">help temperature</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help travel</ansi>, <ansi fg="command">help company</ansi>.
 
 Fatigue's hit chance cut is on physical blows (<ansi fg="command">help battlefield</ansi>).

@@ -34,6 +34,7 @@ var tools = map[string]toolFunc{
 	"give":      toolGive,
 	"kit":       toolKit,
 	"items":     toolItems,
+	"catalog":   toolCatalog,
 	"weather":   toolWeather,
 }
 

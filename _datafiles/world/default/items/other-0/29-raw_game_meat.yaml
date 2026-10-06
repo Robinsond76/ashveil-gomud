@@ -1,9 +1,11 @@
 itemid: 29
 name: raw game meat
 namesimple: meat
-description: Fresh game meat that needs a hearth before it can be eaten.
+description: Fresh game meat that wants a hearth. Eaten raw it staves off hunger a little, but it gives the eater a gut-ache (help ailments).
 type: commodity
-subtype: mundane
+subtype: edible
 value: 4
+nutrition: 10
+ailment: gutache
 weight: 300
 goods: provision

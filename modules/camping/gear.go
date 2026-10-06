@@ -8,6 +8,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/camping"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/util"
 )
 
 // Phase 40a3 camp gear: durable items a company hauls to camp better. Each
@@ -38,8 +39,12 @@ const (
 type campGear struct {
 	// Bedrolls are the member keys that sleep on one: the leader first,
 	// then companions by number.
-	Bedrolls  []string
+	Bedrolls []string
+	// Tent is whether one is pitched; TentKind which (empty is canvas) and
+	// Tents every kind carried (Phase 52).
 	Tent      bool
+	TentKind  camping.TentKind
+	Tents     []camping.TentKind
 	FireSteel bool
 	Cookpot   bool
 	Bells     bool
@@ -58,8 +63,15 @@ func (m *CampingModule) gearCount(leaderUserID, itemID int) int {
 // gearOf counts the company's gear. It calls into the company module, so
 // it is read before taking m.mu.
 func (m *CampingModule) gearOf(leaderUserID int) campGear {
+	m.mu.Lock()
+	choice := m.tentChoices[leaderUserID]
+	m.mu.Unlock()
+	tents := m.tentsCarried(leaderUserID)
+	kind, pitched := camping.PickTent(tents, choice)
 	g := campGear{
-		Tent:      m.gearCount(leaderUserID, tentItemID) > 0,
+		Tent:      pitched,
+		TentKind:  kind,
+		Tents:     tents,
 		FireSteel: m.gearCount(leaderUserID, fireSteelItemID) > 0,
 		Cookpot:   m.gearCount(leaderUserID, cookpotItemID) > 0,
 		Bells:     m.gearCount(leaderUserID, campBellsItemID) > 0,
@@ -76,6 +88,18 @@ func (m *CampingModule) gearOf(leaderUserID int) campGear {
 		g.Bedrolls = keys[:min(n, len(keys))]
 	}
 	return g
+}
+
+// tentsCarried is every kind of tent the company carries, in Tents order
+// (Phase 52). It calls into the company module, so it is read before m.mu.
+func (m *CampingModule) tentsCarried(leaderUserID int) []camping.TentKind {
+	var out []camping.TentKind
+	for _, t := range camping.Tents {
+		if m.gearCount(leaderUserID, t.ItemID) > 0 {
+			out = append(out, t.Kind)
+		}
+	}
+	return out
 }
 
 // bedrollBonuses is the survival bonus map for a rest's locked bedrolls.
@@ -111,7 +135,11 @@ func (g campGear) lines(members int) []string {
 		out = append(out, fmt.Sprintf("  Bedrolls: %d of %d members sleep on one (+%d%% fatigue recovered).", n, max(members, n), camping.BedrollBonusPct))
 	}
 	if g.Tent {
-		out = append(out, "  Oiled canvas tent: counts as shelter and keeps the cold off while you rest.")
+		tent := camping.TentOf(g.TentKind)
+		out = append(out, "  "+util.CapitalizeFirst(tent.Name)+": "+tent.Effect+".")
+		if len(g.Tents) > 1 {
+			out = append(out, "  Tents carried: "+tentNames(g.Tents)+" (camp tent [name] chooses).")
+		}
 	}
 	if g.FireSteel {
 		out = append(out, "  Fire steel and tinder: damp firewood lights first time.")
@@ -136,7 +164,7 @@ func (g campGear) labels(members int) []string {
 		out = append(out, fmt.Sprintf("Bedrolls %d/%d", n, max(members, n)))
 	}
 	if g.Tent {
-		out = append(out, "Tent")
+		out = append(out, util.CapitalizeFirst(camping.TentOf(g.TentKind).Short)+" tent")
 	}
 	if g.FireSteel {
 		out = append(out, "Fire steel")
@@ -160,7 +188,7 @@ func restGearText(rest *camping.RestSession, tent bool, members int) string {
 		parts = append(parts, fmt.Sprintf("%d of %d on bedrolls (+%d%% fatigue)", n, max(members, n), camping.BedrollBonusPct))
 	}
 	if tent {
-		parts = append(parts, "the tent keeps out the weather and the cold")
+		parts = append(parts, "the "+camping.TentOf(rest.Tent).Name+" keeps out the weather and the cold")
 	}
 	if rest.Bells {
 		parts = append(parts, "bells and trip lines strung")
@@ -172,4 +200,13 @@ func restGearText(rest *camping.RestSession, tent bool, members int) string {
 		return ""
 	}
 	return "Gear: " + strings.Join(parts, "; ") + "."
+}
+
+// tentNames lists tent kinds as "canvas, fur".
+func tentNames(kinds []camping.TentKind) string {
+	names := make([]string, 0, len(kinds))
+	for _, k := range kinds {
+		names = append(names, camping.TentOf(k).Short)
+	}
+	return strings.Join(names, ", ")
 }
