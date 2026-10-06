@@ -108,3 +108,18 @@ func TestSpoilsLedgerIsReadOnceAndBounded(t *testing.T) {
 	}
 	assert.Len(t, TakeSpoils(985132), maxSpoils)
 }
+
+// Phase 38c2: a Pathfinder's Trailwise makes a cache likelier to hold gear.
+func TestEquipmentWithRaisesTheChanceOfGear(t *testing.T) {
+	withBases(t, tieredWeapon(985131, 1))
+	p := ZoneProfile{ILvl: Range{Low: 5, High: 9}}
+	got, err := EquipmentWith(Cache, 6, p, "band", &seq{vals: []int{25, 50, 0}}, 0)
+	require.NoError(t, err)
+	assert.Empty(t, got, "a 25 misses the cache's 20% chance")
+	got, err = EquipmentWith(Cache, 6, p, "band", &seq{vals: []int{25, 50, 0}}, 10)
+	require.NoError(t, err)
+	assert.Len(t, got, 1, "and meets it at 30%")
+	got, err = EquipmentWith(Cache, 6, p, "band", &seq{vals: []int{99, 50, 0}}, 10)
+	require.NoError(t, err)
+	assert.Empty(t, got, "never certain")
+}

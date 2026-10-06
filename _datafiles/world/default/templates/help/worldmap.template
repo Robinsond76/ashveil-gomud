@@ -73,17 +73,32 @@ tiles and shows you on them. The text clients have <ansi fg="command">map</ansi>
 
 <ansi fg="yellow-bold">Resources</ansi>
 
-  A small coloured dot in a tile's corner marks what it provides, such as
-  fresh water or forage (<ansi fg="command">help resources</ansi>). A resource that has been picked
-  clean is drawn hollow with a slash, and the slash clears on its own
-  when the resource regrows, even in a room you are not standing in.
+  A small icon in a tile's corner marks what it provides, such as fresh
+  water, forage or a fishing spot (<ansi fg="command">help resources</ansi>). Up to three show, with a plus
+  for more. A resource that has been picked clean has an empty-basket mark
+  over its icon, and the mark clears on its own when the resource regrows,
+  even in a room you are not standing in. On the Classic style, and on a
+  tile zoomed too small for icons, each shows as a coloured dot instead.
+
+<ansi fg="yellow-bold">Walking by clicking</ansi>
+
+  Click another room and pick <ansi fg="yellow">Walk to [room]</ansi> to have your company walk there
+  (<ansi fg="command">help walkto</ansi>). Small dots mark the rooms ahead and a flag marks the
+  destination until you arrive or stop; the same click offers <ansi fg="yellow">Stop walking</ansi>
+  while a walk is under way. The server only walks to rooms you have visited.
+
+<ansi fg="yellow-bold">Day and night</ansi>
+
+  Outdoor tiles darken and cool as the game's evening comes, with an hour of
+  dusk before nightfall and an hour of dawn after sunrise. Rooms under a roof or
+  underground are not shaded, as the sky does not reach them.
 
 <ansi fg="yellow-bold">Settings</ansi>
 
   The settings button on the map has <ansi fg="yellow">Style</ansi> (Tiles, or Classic for the plain
   coloured squares and letters, where shape, size and spacing apply),
   <ansi fg="yellow">Sprites</ansi> (on, or off for the classic red square and hearts) and
-  <ansi fg="yellow">Camps</ansi> (on, or off to hide every camp marker). All are kept per browser. The map shows only what the game already tells
+  <ansi fg="yellow">Camps</ansi> (on, or off to hide every camp marker) and <ansi fg="yellow">Day/night</ansi> (on, or off for no shading). All are kept per browser. The map shows only what the game already tells
   you: nothing about anyone outside your party.
 
-See also: <ansi fg="command">help webclient</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help party</ansi>.
+See also: <ansi fg="command">help walkto</ansi>, <ansi fg="command">help webclient</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help party</ansi>.

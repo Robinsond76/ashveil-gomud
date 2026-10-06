@@ -54,8 +54,10 @@ func UseCounterspellRollForTest(roll func(int) int) (restore func()) {
 	return func() { counterspellRoll = prev }
 }
 
-// ResetEliteForTest forgets held turns and fallen foes.
+// ResetEliteForTest forgets held turns and fallen foes, and the rogue and
+// ranger elites' marks.
 func ResetEliteForTest() {
+	resetRogueRangerElite()
 	clear(heldTurns)
 	summons.ResetFallenForTest()
 }

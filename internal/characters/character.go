@@ -133,6 +133,7 @@ type Character struct {
 	ScribeReset         bool                           `yaml:"scribereset,omitempty"`      // Ashveil 36a: any old (33f1-retired) scribe rank was refunded once
 	KnownSecretExits    []string                       `yaml:"knownsecretexits,omitempty"` // Ashveil 33f2: secret exits spotted by Keen Eye, "<roomId>:<exit>"
 	Wounds              []wounds.Wound                 `yaml:"wounds,omitempty"`           // Ashveil Phase 30b: wounds holding back health (the wound limit)
+	Dolls               []DollState                    `yaml:"dolls,omitempty"`            // Ashveil Phase 39d: a Doll Master's durable dolls
 	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
 	PlayerDamage        map[int]int                    `yaml:"-"` // key = who, value = how much
 	LastPlayerDamage    uint64                         `yaml:"-"` // last round a player damaged this character
@@ -930,7 +931,12 @@ func (c *Character) UseItem(i items.Item) int {
 				usesLeft--
 			}
 			if usesLeft <= 0 {
-				c.Items = append(c.Items[:j], c.Items[j+1:]...)
+				// Phase 43a: a spent waterskin leaves an empty one to refill.
+				if emptyID := c.Items[j].GetSpec().EmptyItemId; emptyID > 0 && items.GetItemSpec(emptyID) != nil {
+					c.Items[j] = items.New(emptyID)
+				} else {
+					c.Items = append(c.Items[:j], c.Items[j+1:]...)
+				}
 			} else {
 				c.Items[j].Uses = usesLeft
 				c.Items[j].LastUsedRound = util.GetRoundCount()
@@ -1254,6 +1260,9 @@ func (c *Character) SetAggroRemote(exitName string, userId int, mobInstanceId in
 }
 
 func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType, roundsWaitTime ...int) {
+	if c.RT != nil && c.RT.Doll != nil {
+		return // Phase 39d: a doll has no aim of its own; its Master's turn is its strike
+	}
 	if c.CombatWithdrawn {
 		return
 	}
@@ -1750,6 +1759,10 @@ func (c *Character) RecalculateStats() {
 	// Phase 38c3: a thrall rises with a share of its template's whole health.
 	if c.RT != nil && c.RT.Summon != nil && c.RT.Summon.HealthPct > 0 {
 		c.HealthMax.Mods = max(1, c.HealthMax.Mods*c.RT.Summon.HealthPct/100)
+	}
+	// Phase 39d: a doll's health is its own share of a warrior's.
+	if c.RT != nil && c.RT.Doll != nil && c.RT.Doll.HPPct > 0 {
+		c.HealthMax.Mods = c.HealthMax.Mods * c.RT.Doll.HPPct / 100
 	}
 
 	c.ManaMax.NoCap = true

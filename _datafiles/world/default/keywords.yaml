@@ -40,6 +40,9 @@ help:
       - witch
       - halberdier
       - halberdier-routes
+      - dollmaster
+      - dollmaster-routes
+      - doll
       - classes
       - promotion
       - talents
@@ -56,6 +59,14 @@ help:
       - coven-mother
       - crone-of-ash
       - witch-routes
+      - rogue-routes
+      - ranger-routes
+      - elite-pathfinder
+      - swordmaster
+      - nightblade
+      - sentinel
+      - marksman
+      - ravager
       - samurai
       - samurai-routes
       - shaman
@@ -87,6 +98,7 @@ help:
       - patch
     road:
       - travel
+      - walkto
       - survival
       - strain
       - weather
@@ -101,6 +113,7 @@ help:
       - worldmap
       - gathering
       - campgear
+      - campsupplies
     communication:
       - emote
       - say
@@ -311,6 +324,14 @@ help-aliases:
   talents:          [talent, talent-pick, talent-list]
   cleric-routes:    [priest, druid, blood-priest, blood priest, elder-druid, elder druid, siphon, rejuvenation, barkskin, grove, greater-heal]
   elite:            [elites, elite-class, elite-classes, elite-promotion, second-promotion]
+  rogue-routes:     [scout-class, assassin, riposte, finisher, rogue-class, rogue-classes]
+  ranger-routes:    [warden, hunter, stalker, ranger-class, ranger-classes]
+  elite-pathfinder: [pathfinder-class, pathfinder-elite, pathfinders-eye, ambush-master, trailwise, vanish]
+  swordmaster:      [swordmasters, blade-dance, twin-ripostes, perfect-parry, counter-strike]
+  nightblade:       [nightblades, death-mark, envenom, shadowstep, killing-spree, coup-de-grace]
+  sentinel:         [sentinels, overwatch, guardian-arrow, twin-watch]
+  marksman:         [marksmen, called-shot, second-nock, perfect-shot, pinning-crit]
+  ravager:          [ravagers, hunt-down, harrow, apex, bloodscent]
   warlord:          [warlords, marked-for-ruin, battle-cry, sunder, relentless]
   archon:           [archons, counterspell, counter-spell, aegis, mana-shield, reflection]
   archmage:         [archmages, overchannel, storm, arcane-barrage, barrage]
@@ -329,6 +350,9 @@ help-aliases:
   shaman-routes:    [stormcaller, mistweaver, earthspeaker, tempest-lord, tempest lord, veil-mother, veil mother, mountain-speaker, mountain speaker, stoneskin, chain-lightning]
   witch:            [witches, hedge-witch, hexcraft]
   halberdier:       [halberdiers, sweep, brace, hook, crowded]
+  dollmaster:       [doll-master, doll master, dollmasters, dolls, puppetry, puppet-strike, guard-string, tangle, emergency-splice, splice, puppet]
+  dollmaster-routes: [puppeteer, golemancer, marionettist, grand-puppeteer, golem-lord, string-sovereign, golem, two-dolls]
+  doll:             [mend-doll, doll-parts, doll-mend]
   halberdier-routes: [sweeper, vanguard, valkyrie, reaper, linebreaker, tempest-lancer, charged-sweep]
   hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]
   trap:             [traps]
@@ -349,11 +373,13 @@ help-aliases:
   pack:             [packs, satchel, knapsack, backpack, container, containers]
   mount:            [mounts, horse, horses, stable, saddle, saddles]
   travel:           [journey, journeys]
+  walkto:           [autowalk, auto-walk, click-to-walk, click to walk, walk to, walk-to, tile-ready, tile ready, tile regions, showcase, alderbrook]
   camp:             [camping, campfire]
   worldmap:         [map window, mapwindow, tile map, world map]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
   gathering:        [gather, herbs, herb, firewood, fish, fishing, hunt, hunting, snares, deadfall, picked-clean]
   campgear:         [camp gear, camp-gear, bedroll, bedrolls, tent, cookpot, fire steel, fire-steel, tinder, camp bells, camp-bells, trip lines, trip-lines, surgeons kit, surgeon's kit, embers, thieves, thief, theft, camp theft, camp-theft, stolen]
+  campsupplies:     [camp supplies, camp-supplies, camp prepare, camp-prepare, supplies, broth, fortifying broth, warming draught, cooling salve, incense, watch incense]
   cooking:          [cook, hearth, recipe, recipes]
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]
@@ -432,6 +458,7 @@ command-aliases:
   go:                 ['enter']
   experience:         ['exp', 'xp', 'tnl', 'level', 'levels']
   map:                ['m']
+  walkto:             ['autowalk']
   conditions:         ['c', 'cond', 'conds']
   skills:             ['sk', 'skill']
   equip:              ['wear', 'wield', 'hold']

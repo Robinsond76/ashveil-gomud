@@ -441,6 +441,39 @@ def scars_markings():
     return f
 
 
+def winged_helm(ramp="bone"):
+    """A pair of small wings sweeping up from the helm (Valkyrie)."""
+    def f(r, t):
+        x0, y0, hw, hh, _ = head_box(r)
+        n = r.px(4)
+        flap = 1 if t == 2 else 0
+        if r.view == "side":
+            pts = {(x0 + 1 + i // 2, y0 - 1 - i + (i > 2) * flap) for i in range(n)}
+            pts |= {(x0 + 2 + i // 2, y0 - 1 - i) for i in range(n - 1)}
+        else:
+            pts = {(x0 - 1 - i // 2, y0 - i + flap * (i > 2)) for i in range(n)}
+            pts |= {(x0 + hw + i // 2, y0 - i + flap * (i > 2)) for i in range(n)}
+        over(r, pts, ramp, flat="l")
+    return f
+
+
+def staff_light(ramp="water"):
+    """A few bright pixels at the shaman's staff tip; the third frame pulses wider."""
+    def f(r, t):
+        if r.view == "up":
+            return
+        hx, hy = r.hand_r
+        hx += 1 if r.view == "down" else 0
+        tip = hy - (r.px(20) if r.battle else r.px(21)) - r.px(3)
+        r.cv.put(hx, tip, f"{ramp}.l")
+        for dx, dy in ((-1, 0), (1, 0), (0, -1)):
+            r.cv.put(hx + dx, tip + dy, f"{ramp}.m")
+        if t == 2:
+            for dx, dy in ((-2, -1), (2, -1), (0, -2)):
+                r.cv.put(hx + dx, tip + dy, f"{ramp}.d")
+    return f
+
+
 def fur_back():
     """A hide mantle over one shoulder trailing down the back (hunter)."""
     def f(r, t):
@@ -469,6 +502,30 @@ CLASS_ART = {
     "dread-knight": dict(base="warrior", mat={"oxblood": "plum", "iron": "charcoal", "steel": "iron"},
                          acc=[cape("charcoal", "plum", 9), spikes("bone.l"), horns("bone", 3),
                               eyes("ember.m", True)]),
+    "warlord": dict(base="warrior", mat={"oxblood": "ochre", "iron": "leather"},
+                    acc=[cape("oxblood", "brass", 9), strap("leather", "brass.l"), pauldron("brass"),
+                         circlet("brass"), plume("oxblood", 4)]),
+    # Halberdier lineage (neutral) ---------------------------------------------------
+    "sweeper": dict(base="halberdier", mat={"leather": "ochre", "ochre": "leather"},
+                    acc=[strap("leather", "brass.l"), plume("oxblood", 3)]),
+    "vanguard": dict(base="halberdier", mat={"leather": "slate", "ochre": "brass", "iron": "steel"},
+                     acc=[pauldron("steel"), collar("steel", 2), plume("water", 4)]),
+    "valkyrie": dict(base="halberdier", mat={"leather": "bone", "ochre": "water", "iron": "steel"},
+                     acc=[cape("water", "bone", 8), winged_helm("bone"), pauldron("brass")]),
+    # Samurai lineage (neutral) --------------------------------------------------------
+    "kensai": dict(base="samurai", mat={"oxblood": "slate"},
+                   acc=[strap("bone", "brass.l"), hem_band("brass")]),
+    "hatamoto": dict(base="samurai", mat={"oxblood": "forest"},
+                     acc=[cape("forest", "brass", 8), pauldron("brass"), plume("brass", 4)]),
+    "ronin": dict(base="samurai", mat={"oxblood": "charcoal", "iron": "leather"},
+                  acc=[pointed_hat("ochre", "wood", 3, False), strap("leather")]),
+    # Shaman lineage (neutral) ---------------------------------------------------------
+    "stormcaller": dict(base="shaman", mat={"ochre": "water", "wool": "bone"},
+                        acc=[plume("water", 5), staff_light("water")]),
+    "mistweaver": dict(base="shaman", mat={"ochre": "ashmoss", "leather": "heather"},
+                       acc=[cape("ashmoss", "bone", 8), hood_cowl("ashmoss"), staff_light("bone")]),
+    "earthspeaker": dict(base="shaman", mat={"ochre": "stone", "wool": "ochre"},
+                         acc=[pauldron("stone"), horns("bone", 3), staff_light("moss")]),
     # Cleric lineage ----------------------------------------------------------------
     "priest": dict(base="cleric", mat={"iron": "wool", "wool": "bone"},
                    acc=[collar("brass", 2), circlet("brass")]),
@@ -513,7 +570,9 @@ CLASS_ART = {
 }
 
 CLASS_IDS = list(CLASS_ART)
-LINEAGE = {"knight": "warrior", "paladin": "warrior", "mercenary": "warrior", "blackguard": "warrior",
+LINEAGE = {"warlord": "warrior", "sweeper": "halberdier", "vanguard": "halberdier", "valkyrie": "halberdier",
+           "kensai": "samurai", "hatamoto": "samurai", "ronin": "samurai", "stormcaller": "shaman",
+           "mistweaver": "shaman", "earthspeaker": "shaman", "knight": "warrior", "paladin": "warrior", "mercenary": "warrior", "blackguard": "warrior",
            "dread-knight": "warrior", "priest": "cleric", "hierarch": "cleric", "druid": "cleric",
            "elder-druid": "cleric", "blood-priest": "cleric", "demonologist": "cleric", "scout": "rogue",
            "duelist": "rogue", "assassin": "rogue", "warden": "ranger", "hunter": "ranger",

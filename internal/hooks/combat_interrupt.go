@@ -113,6 +113,7 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 		emitCombat(combatstream.Event{Kind: combatstream.StatusExpired, RoomId: defender.roomId, Target: defender.ref, BuffId: spec.Id, Status: spec.Word})
 	}
 	samuraiBlow(attacker, defender, r)   // Phase 39b
+	eliteBlow(attacker, defender, r)     // Phase 38c2
 	wardAfterBlow(attacker, defender, r) // Phase 38c3
 	if interruptsOff {
 		return
@@ -155,17 +156,35 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 // counter-blow the size of an Opening Strike (half again at Riposte 2).
 // Once a round, as a shield's counter is.
 func riposteBlow(attacker, defender statusHolder) {
-	n := defender.char.ClassEffects().Int(classes.Riposte)
-	if n <= 0 || defender.char.Health < 1 || attacker.char.Health < 1 || countered[defender.ref.Key()] ||
+	fx := defender.char.ClassEffects()
+	n := fx.Int(classes.Riposte)
+	if n <= 0 || defender.char.Health < 1 || attacker.char.Health < 1 ||
 		attacker.char.RoomId != defender.char.RoomId || defender.char.HasBuffFlag("no-combat") || status.Grounded(defender.char) {
 		return
 	}
+	// Phase 38c2: a Swordmaster may riposte more than once a round (Twin
+	// ripostes) or without limit while above half health (Unbroken Guard).
+	round := combatRound.Load()
+	rt := defender.char.RTState()
+	if rt.RiposteRound != round {
+		rt.RiposteRound, rt.Ripostes = round, 0
+	}
+	free := fx.Has(classes.RiposteFree) && defender.char.Health*2 > defender.char.HealthLimit()
+	if rt.Ripostes >= 1 {
+		if !free && rt.Ripostes >= fx.Int(classes.RiposteRound) {
+			return
+		}
+	} else if countered[defender.ref.Key()] {
+		return
+	}
+	rt.Ripostes++
 	countered[defender.ref.Key()] = true
 	size := strategy.OpeningStrikeBonus(defender.char.Level)
 	if n >= 2 {
 		size += size / 2
 	}
-	size = max(1, size)
+	size = max(1, size*(100+fx.Int(classes.RipostePct))/100)
+	crit := fx.Has(classes.RiposteDaze) && combat.Crits(*defender.char, *attacker.char)
 	dealt := -attacker.char.ApplyHealthChange(-size)
 	for _, e := range attackEvents(defender.ref, attacker.ref, defender.char.RoomId, defender.char, combat.AttackResult{Hit: true, DamageToTarget: dealt}) {
 		if e.Kind == combatstream.Attack {
@@ -174,6 +193,16 @@ func riposteBlow(attacker, defender statusHolder) {
 		emitCombat(e)
 	}
 	suffix := fmt.Sprintf(` (riposte, %d damage)`, dealt)
+	if attacker.mob != nil && attacker.char.Health >= 1 {
+		if crit {
+			events.AddToQueue(events.Buff{MobInstanceId: attacker.mob.InstanceId, BuffId: status.Staggered, Source: `combat`})
+			suffix += ` (disarmed: staggered)`
+		}
+		if fx.Has(classes.RiposteExpo) {
+			events.AddToQueue(events.Buff{MobInstanceId: attacker.mob.InstanceId, BuffId: status.Exposed, Source: `combat`, Triggers: 1})
+			suffix += ` (exposed)`
+		}
+	}
 	room := rooms.LoadRoom(defender.char.RoomId)
 	var exclude []int
 	if defender.user != nil {

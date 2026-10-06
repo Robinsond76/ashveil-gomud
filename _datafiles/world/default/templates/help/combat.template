@@ -37,7 +37,10 @@ Once the battle starts:
 - healers heal the hurt and casters cast their spells, with real mana,
   on both sides;
 - warriors tackle, rogues strike an opening, and rangers aim a shot, each
-  on its own when the moment comes (<ansi fg="command">help abilities</ansi>);
+  on its own when the moment comes (<ansi fg="command">help abilities</ansi>); a Sentinel
+  holds its shot to answer a blow at a weak spot in the line, and the other
+  rogue and ranger elite classes add marks, ripostes, bleeding wounds and
+  more (<ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help ranger-routes</ansi>);
 - guardians step in front of their wards to take blows meant for them
   (<ansi fg="command">help guardian</ansi>);
 - a blow that draws blood may break its target's chant (a heavy one
@@ -162,6 +165,7 @@ and your company's health.
   <ansi fg="command">help statuses</ansi>     what a critical hit leaves behind
   <ansi fg="command">help hexes</ansi>        a Witch's hexes, and how they land
   <ansi fg="command">help halberdier</ansi>   a Halberdier's sweep, brace and hook
+  <ansi fg="command">help dollmaster</ansi>   a Doll Master's dolls, and how they fight
   <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
   <ansi fg="command">company patch</ansi>     heal the company to its threshold (<ansi fg="command">help patch</ansi>)
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades

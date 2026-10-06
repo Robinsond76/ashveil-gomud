@@ -110,7 +110,7 @@ func loadCompanySide(leader *users.UserRecord, room *rooms.Room) (companySide, b
 	side := companySide{leader: leader, formation: f, companions: map[int]company.MemberKey{}}
 	for _, instanceId := range room.GetMobs(rooms.FindCharmed) {
 		leaderId, key, isCompanion := company.LeaderAndKeyForInstance(instanceId)
-		if isCompanion && leaderId == leader.UserId {
+		if isCompanion && leaderId == leader.UserId && !isDollInstance(instanceId) { // Phase 39d: a doll has no aim of its own
 			side.companions[instanceId] = key
 			side.companionIds = append(side.companionIds, instanceId)
 		}

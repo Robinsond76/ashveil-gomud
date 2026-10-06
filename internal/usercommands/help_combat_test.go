@@ -346,6 +346,9 @@ func TestClassHelpTopics(t *testing.T) {
 		"warrior-routes":    {"Lay on Hands", "Blood Oath", "Divine shield"},
 		"halberdier":        {"Sweep", "Brace", "Hook", "crowded"},
 		"halberdier-routes": {"Sweeper", "Vanguard", "Valkyrie", "Charged Sweep", "Hold the line"},
+		"dollmaster":        {"Puppet Strike", "Guard String", "Tangle", "Emergency Splice", "doll parts"},
+		"dollmaster-routes": {"Puppeteer", "Golemancer", "Marionettist", "Two dolls", "Golem"},
+		"doll":              {"doll wield", "doll mend", "doll name", "doll remove"},
 		"summoning":         {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
 		"elite":             {"Warlord", "Paladin", "Dread Knight", "Promotion ready", "Elite talents", "Routes are final"},
 		"warlord":           {"Marked for Ruin", "Battle Cry", "Sunder", "Relentless", "Warlord's Command", "Iron Hide"},
@@ -380,6 +383,8 @@ func TestClassHelpTopics(t *testing.T) {
 		"counterspell": "archon", "overchannel": "archmage", "raise-the-fallen": "necromancer", "thralls": "thrall",
 		"theurgist": "wizard-routes", "warlock": "wizard-routes", "hearthward": "wise-one", "coven-circle": "coven-mother",
 		"crone": "crone-of-ash", "soul-rot": "crone-of-ash", "hag": "witch-routes", "coven-sage": "witch-routes",
+		"dolls": "dollmaster", "tangle": "dollmaster", "puppeteer": "dollmaster-routes", "marionettist": "dollmaster-routes",
+		"mend-doll": "doll",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)
@@ -388,7 +393,7 @@ func TestClassHelpTopics(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
 	}
-	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "promotion", "classes", "elite", "interrupts", "summoning", "talents"} {
+	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "dollmaster", "promotion", "classes", "elite", "interrupts", "summoning", "talents"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "help ", topic)
@@ -412,4 +417,69 @@ func TestBattleScreenHelp(t *testing.T) {
 		require.NoError(t, err, hub)
 		assert.Contains(t, tagPattern.ReplaceAllString(hubText, ""), "help battlescreen", "help %s links the battle screen", hub)
 	}
+}
+
+// TestRogueRangerEliteHelp (38c2): the rogue and ranger route pages and the
+// six elite pages are indexed, render with their ranks, answer to their
+// aliases, and the hubs link them.
+func TestRogueRangerEliteHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	var listed []string
+	for _, topic := range keywords.GetAllHelpTopicInfo() {
+		if topic.Category == "character" && !topic.AdminOnly {
+			listed = append(listed, topic.Command)
+		}
+	}
+	pages := map[string][]string{
+		"rogue-routes":     {"Scout (good)", "Duelist (neutral)", "Assassin (evil)", "Pathfinder", "Swordmaster", "Nightblade"},
+		"ranger-routes":    {"Warden (good)", "Hunter (neutral)", "Stalker (evil)", "Sentinel", "Marksman", "Ravager"},
+		"elite-pathfinder": {"Pathfinder's Eye", "Ambush Master", "Trailwise", "Shadow Footing"},
+		"swordmaster":      {"Blade Dance", "Twin ripostes", "Perfect Parry", "Unbroken Guard"},
+		"nightblade":       {"Death Mark", "Shadowstep", "Killing Spree", "Coup de Grace"},
+		"sentinel":         {"Overwatch", "Guardian Arrow", "Long Draw"},
+		"marksman":         {"Called Shot", "Second Nock", "Perfect Shot"},
+		"ravager":          {"Hunt Down", "Harrow", "Apex", "Eagle Eye"},
+	}
+	for topic, wants := range pages {
+		assert.Contains(t, listed, topic, "help index lists %s", topic)
+		text, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		plain := tagPattern.ReplaceAllString(text, "")
+		assert.Contains(t, plain, "Help for", topic)
+		for _, want := range wants {
+			assert.Contains(t, plain, want, topic)
+		}
+	}
+	aliases := map[string]string{
+		"assassin": "rogue-routes", "warden": "ranger-routes", "stalker": "ranger-routes",
+		"pathfinder-class": "elite-pathfinder", "trailwise": "elite-pathfinder", "death-mark": "nightblade",
+		"overwatch": "sentinel", "second-nock": "marksman", "hunt-down": "ravager", "blade-dance": "swordmaster",
+	}
+	for alias, topic := range aliases {
+		want, err := GetHelpContents(topic)
+		require.NoError(t, err, topic)
+		got, err := GetHelpContents(alias)
+		require.NoError(t, err, alias)
+		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
+	}
+	// The walking skill keeps its name and points at the elite page.
+	skill, err := GetHelpContents("pathfinder")
+	require.NoError(t, err)
+	assert.Contains(t, tagPattern.ReplaceAllString(skill, ""), "elite-pathfinder")
+	for _, hub := range []string{"elite", "classes", "promotion"} {
+		text, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		plain := tagPattern.ReplaceAllString(text, "")
+		assert.Contains(t, plain, "rogue-routes", hub)
+		assert.Contains(t, plain, "ranger-routes", hub)
+	}
+	elite, err := GetHelpContents("elite")
+	require.NoError(t, err)
+	plain := tagPattern.ReplaceAllString(elite, "")
+	for _, name := range []string{"Pathfinder", "Swordmaster", "Nightblade", "Sentinel", "Marksman", "Ravager"} {
+		assert.Contains(t, plain, name)
+	}
+	assert.NotContains(t, plain, "Pathfinder, Swordmaster, Nightblade,\nSentinel", "no longer listed as still to come")
 }

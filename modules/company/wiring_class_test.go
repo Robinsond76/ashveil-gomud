@@ -275,10 +275,10 @@ func TestEliteWaitsForTheGateAndPromotesWhenItRecovers(t *testing.T) {
 // The rogue, ranger, wizard and witch elites arrive with 38c2 and 38c3.
 func TestPlannedEliteIsNotOpenYet(t *testing.T) {
 	w, store := classBrawl(t, 30, 100)
-	w.withArchetypes("rogue")
-	store.state.Class = "scout"
-	assert.Contains(t, w.cmd("class", "promote pathfinder confirm"), "not open yet")
-	assert.NotContains(t, w.cmd("class", ""), "Ready to promote: Pathfinder")
+	w.withArchetypes("samurai")
+	store.state.Class = "kensai"
+	assert.Contains(t, w.cmd("class", "promote sword-saint confirm"), "not open yet")
+	assert.NotContains(t, w.cmd("class", ""), "Ready to promote: Sword Saint")
 }
 
 func TestUnpromotedHighLevelCharacterKeepsItsBase(t *testing.T) {
@@ -387,6 +387,12 @@ func TestEliteGatesForTheOpenRoutes(t *testing.T) {
 		{"witch", "hedge-witch", "wise-one", "Wise One", true, false},
 		{"witch", "coven-sage", "coven-mother", "Coven Mother", false, false},
 		{"witch", "hag", "crone-of-ash", "Crone of Ash", false, true},
+		{"rogue", "scout", "pathfinder", "Pathfinder", true, false},
+		{"rogue", "duelist", "swordmaster", "Swordmaster", false, false},
+		{"rogue", "assassin", "nightblade", "Nightblade", false, true},
+		{"ranger", "warden", "sentinel", "Sentinel", true, false},
+		{"ranger", "hunter", "marksman", "Marksman", false, false},
+		{"ranger", "stalker", "ravager", "Ravager", false, true},
 	} {
 		t.Run(tc.elite, func(t *testing.T) {
 			wait, ok := 0, 0 // the alignments one point short of the gate, and at it

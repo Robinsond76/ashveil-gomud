@@ -1,0 +1,10 @@
+# Phase 43a: a cooling salve (help campsupplies) cuts the heat you take on by
+# a quarter. It gives no cold protection.
+buffid: 75
+name: Cooling Salve
+description: A cooling salve slows the heat's grip on you by a quarter.
+secret: false
+triggerrate: 15 real minutes
+triggercount: 1
+flags:
+  - cooling-salve

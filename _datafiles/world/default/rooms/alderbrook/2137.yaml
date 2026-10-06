@@ -1,0 +1,21 @@
+roomid: 2137
+zone: Alderbrook
+title: Fisher's Landing
+description: A grey boathouse and a stub of jetty stand where the shore bends south. Nets hang
+  drying on poles, and a boat lies keel-up on the shingle.
+biome: shore
+exits:
+  north:
+    roomid: 2130
+  west:
+    roomid: 2136
+mapsymbol: L
+maplegend: Lake House
+resources:
+- water
+- fishing
+- shelter
+mapx: 7
+mapy: 4
+mapz: 0
+hascoordinates: true

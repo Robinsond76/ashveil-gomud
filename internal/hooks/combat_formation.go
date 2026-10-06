@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/dolls"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -191,6 +192,11 @@ func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leade
 	if !legalOk {
 		return nil, false, false
 	}
+	// Phase 38c2: a Sentinel's held shot answers a foe going for a middle- or
+	// back-row ally, before the front row or a guardian takes the blow.
+	if overwatchBlow(leader, f, defenderKey, mob, mobRoom) {
+		return nil, true, true
+	}
 	// Phase 30c2: a guardian of the member struck steps in, and takes the
 	// blow itself (the one already found, never looked up again).
 	if g, guarded := guardianFor(leader, f, finalKey); guarded {
@@ -210,11 +216,7 @@ func gateEnemyAttacksCompanion(mob, defMob *mobs.Mob, mobRoom *rooms.Room, leade
 		return nil, true, true
 	}
 
-	companionID, companionOk := company.CompanionIDFromMemberKey(finalKey)
-	if !companionOk {
-		return defMob, false, true
-	}
-	instanceId, instanceOk := company.InstanceFor(leaderUserID, companionID)
+	instanceId, instanceOk := company.InstanceForKey(leaderUserID, finalKey)
 	if !instanceOk {
 		return defMob, false, true
 	}
@@ -273,6 +275,9 @@ func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, de
 	if !legalOk {
 		return false, false
 	}
+	if overwatchBlow(defUser, f, company.LeaderMemberKey, mob, mobRoom) { // Phase 38c2
+		return true, true
+	}
 	// Phase 30c2: a guardian of the member struck steps in, and takes the
 	// blow itself (the one already found, never looked up again).
 	if g, guarded := guardianFor(defUser, f, finalKey); guarded {
@@ -286,11 +291,7 @@ func gateMobVsPlayerAttack(mob *mobs.Mob, defUser *users.UserRecord, mobRoom, de
 		return false, true
 	}
 
-	companionID, companionOk := company.CompanionIDFromMemberKey(finalKey)
-	if !companionOk {
-		return false, true
-	}
-	instanceId, instanceOk := company.InstanceFor(defUser.UserId, companionID)
+	instanceId, instanceOk := company.InstanceForKey(defUser.UserId, finalKey)
 	if !instanceOk {
 		return false, true
 	}
@@ -343,7 +344,7 @@ func resolveInterceptedMobAttack(mob, interceptor *mobs.Mob, mobRoom, defRoom *r
 
 	for _, instanceId := range mobRoom.GetMobs(rooms.FindCharmed) {
 		if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
-			if charmedMob.Character.IsCharmed(defenderUserId) && charmedMob.Character.Aggro == nil {
+			if charmedMob.Character.IsCharmed(defenderUserId) && charmedMob.Character.Aggro == nil && !dolls.IsDoll(charmedMob) {
 				charmedMob.Character.Aggro = &characters.Aggro{Type: characters.DefaultAttack}
 				charmedMob.Command(fmt.Sprintf("attack #%d", mob.InstanceId))
 			}
@@ -415,7 +416,7 @@ func resolveInterceptedAttackOnLeader(mob *mobs.Mob, leader *users.UserRecord, m
 
 	for _, instanceId := range mobRoom.GetMobs(rooms.FindCharmed) {
 		if charmedMob := mobs.GetInstance(instanceId); charmedMob != nil {
-			if charmedMob.Character.IsCharmed(leader.UserId) && charmedMob.Character.Aggro == nil {
+			if charmedMob.Character.IsCharmed(leader.UserId) && charmedMob.Character.Aggro == nil && !dolls.IsDoll(charmedMob) {
 				charmedMob.Character.Aggro = &characters.Aggro{Type: characters.DefaultAttack}
 				charmedMob.Command(fmt.Sprintf("attack #%d", mob.InstanceId))
 			}

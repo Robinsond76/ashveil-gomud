@@ -33,6 +33,9 @@ twice, unless it says it can be taken once.
            (Aimed Shot ready a round sooner; once), Toughness
   Halberdier  Toughness, Heavy Hands, Keen Edge, Footwork, Sweep Drill (Sweep ready
            a round sooner; once)
+  Doll Master  Toughness, Hardwood (+10% doll health), Stout Strings (Guard String
+           one more time a battle; once), Fine Carving (+1 doll damage), Steady Hand
+           (+2 doll Attack)
   Rogue    Keen Edge, Footwork, Deep Cuts (Opening Strike +2 damage), Patient
            Hand (Opening Strike ready a round sooner; once), Heavy Hands
 
@@ -50,6 +53,10 @@ beside the five above:
            chant 25% less often), Spell Edge (+10% spell damage)
   Witch    Deep Reserves, Iron Will (blows break your chant 25% less often),
            Hex Reach (+5 to a hex's chance to land, never above 90)
+  Rogue    Shadow Footing (+5 Evasion), Razor's Edge (+5% critical chance on every
+           blow), Quick Hands (starts a battle with 15 points on its action meter)
+  Ranger   Long Draw (+10% damage with a shooting weapon), Eagle Eye (+5 Attack with
+           a shooting weapon), Quick Nock (starts a battle with 15 action meter points)
 
 Talents need no class: a character can take its first at level 5, before
 promotion. Picks beyond what your level has earned stay on your record but do

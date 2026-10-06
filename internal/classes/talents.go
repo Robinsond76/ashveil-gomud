@@ -231,6 +231,14 @@ var (
 	tSpellEdge    = defineEliteTalent(Talent{ID: "spell-edge", Name: "Spell Edge", Text: "+10% spell damage", Add: Effects{SpellPct: 10}})
 	tIronWill     = defineEliteTalent(Talent{ID: "iron-will", Name: "Iron Will", Text: "blows break your chant 25% less often", Add: Effects{ChantBreak: 25}})
 	tHexReach     = defineEliteTalent(Talent{ID: "hex-reach", Name: "Hex Reach", Text: "+5 to a hex's chance to land (never above 90)", Add: Effects{HexLand: 5}})
+	// Phase 38c2: the rogue and ranger elite talents. "Razor's Edge" is the
+	// design's Keen Edge, renamed: Keen Edge is already the +2 Attack talent.
+	tShadowFooting = defineEliteTalent(Talent{ID: "shadow-footing", Name: "Shadow Footing", Text: "+5 Evasion", Add: Effects{Evasion: 5}})
+	tRazorsEdge    = defineEliteTalent(Talent{ID: "razors-edge", Name: "Razor's Edge", Text: "+5% critical chance on every blow", Add: Effects{Crit: 5}})
+	tQuickHands    = defineEliteTalent(Talent{ID: "quick-hands", Name: "Quick Hands", Text: "starts a battle with 15 points on its action meter", Add: Effects{OpenMeter: 15}})
+	tLongDraw      = defineEliteTalent(Talent{ID: "long-draw", Name: "Long Draw", Text: "+10% damage with a shooting weapon", Add: Effects{RangedPct: 10}})
+	tEagleEye      = defineEliteTalent(Talent{ID: "eagle-eye", Name: "Eagle Eye", Text: "+5 Attack with a shooting weapon", Add: Effects{RangedAttack: 5}})
+	tQuickNock     = defineEliteTalent(Talent{ID: "quick-nock", Name: "Quick Nock", Text: "starts a battle with 15 points on its action meter", Add: Effects{OpenMeter: 15}})
 )
 
 func init() {
@@ -238,6 +246,8 @@ func init() {
 	offerElite("cleric", tFontOfGrace, tRadiantHealing, tUnshaken)
 	offerElite("wizard", tDeepReserves, tFocusedWill, tSpellEdge)
 	offerElite("witch", tDeepReserves, tIronWill, tHexReach)
+	offerElite("rogue", tShadowFooting, tRazorsEdge, tQuickHands)
+	offerElite("ranger", tLongDraw, tEagleEye, tQuickNock)
 	offer("cleric", tMendingHands, tSteadfast, tDeepWell, tSanctuary, tGentleRest)
 	offer("warrior", tToughness, tHeavyHands, tKeenEdge, tFootwork, tTackleDril)
 	offer("rogue", tKeenEdge, tFootwork, tDeepCuts, tPatientHand, tHeavyHands)

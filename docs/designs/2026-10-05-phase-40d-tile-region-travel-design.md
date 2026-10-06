@@ -1,6 +1,6 @@
 # Phase 40d: tile-ready showcase region and click-to-walk
 
-Status: **approved 2026-10-06 under the owner's delegation**; open questions are decided in the [remaining roadmap](../plans/2026-10-06-remaining-roadmap.md#decisions-on-open-questions) (handoff rule 20). Part
+Status: **built 2026-10-06** (see [As built](#as-built)); approved under the owner's delegation; open questions are decided in the [remaining roadmap](../plans/2026-10-06-remaining-roadmap.md#decisions-on-open-questions) (handoff rule 20). Part
 of the [visual client milestone](2026-10-05-visual-client-milestone-design.md).
 Roadmap item 4: an area density pass on one region, plus click-to-walk.
 It reuses art set S2.
@@ -197,3 +197,39 @@ region itself:
 Resolved: the travel numbers (approved). World building comes after the
 new features are in place, so it can adopt the tile-ready conventions from
 the start.
+
+## As built
+
+Built on 2026-10-06. Where the build departs from the proposal above:
+
+- **The command is `walkto`, not `travel`.** `travel` already belongs to
+  journeys (`travel status`, `travel resume`, `travel return`), so the
+  click-to-walk command is `walkto [place]` and `walkto stop`, with the
+  alias `autowalk`. The GMCP namespace is `Walkto` for the same reason.
+  The help topic is `help walkto` (aliases `click-to-walk`, `walk to`).
+- **Planning is its own breadth-first search** (`internal/walkto`), not the
+  mapper's A*: the mapper walks every exit of the zone map, while a walk may
+  use only visited rooms and usable exits, across zones. It is pure over a
+  `Graph` and unit tested.
+- **Landmark words search the zone you stand in.** A room number works
+  anywhere you have been; `walkto inn` finds the nearest visited room in the
+  current zone whose `maplegend` is `Inn`, else whose name starts with or
+  contains the word.
+- **Exits with an `exitmessage` are not walked** (they delay and requeue the
+  move), like journey exits.
+- **Showcase region: Alderbrook**, a new zone of 44 rooms (ids 2101 to 2144)
+  east of the Trappers' Post, not a rebuild of the starting rooms.
+- **Validator** is `rooms.ValidateTileReady`, covering conventions 1 to 5 of
+  [tile-ready-conventions](tile-ready-conventions.md).
+- **Stops** are the listed ones, checked before each step; a need that already
+  warned when the walk began does not stop it again (only a new crossing, or
+  fatigue at zero). The step timer only queues an event; steps run on the game
+  loop.
+- **Web map:** a click offers `Walk to [room]` through the existing menu
+  (one pick confirms; admins keep the teleport items), the path is drawn
+  with the S1 `walk-dot` and `walk-target` markers, and two 40c follow-ups
+  are folded in: S1 resource icons replace the dots (dots remain on the
+  classic style, on tiles under 24 px and for an icon still loading), and
+  outdoor tiles are shaded by the game's time of day (`Gametime`; an hour of
+  dusk and dawn; indoor and dark biomes, which `World.Map` biomes now flag,
+  are not shaded; a Day/night switch in the map settings).

@@ -145,3 +145,55 @@ func TestCompanyDrinkAtASourceDrinksUntilFull(t *testing.T) {
 	assert.Equal(t, 1, tracker.drinks["#1"], "50 -> 90: one drink")
 	assert.NotContains(t, out, "still thirsty")
 }
+
+// Phase 43a: a waterskin drunk dry becomes an empty one, and a fill brings
+// it back, wherever it is carried.
+const (
+	emptyBefore = 989403
+)
+
+func emptySkin(t *testing.T) items.Item {
+	t.Helper()
+	itm := spec(t, items.ItemSpec{ItemId: emptyBefore, Name: "empty waterskin", Refillable: "water", FilledItemId: skinID})
+	itm.UUID = uuid.New(items.UUIDItem)
+	return itm
+}
+
+func TestCompanyFillRefillsEmptySkinsInPackAndCargo(t *testing.T) {
+	m, _, user := mealSetup(t)
+	thirstyCompany(t)
+	skinItem(t, 5) // registers the full skin spec
+	cargo := &keeperCargo{fakeCargo: &fakeCargo{stacks: []encumbrance.CargoStack{{ItemId: emptyBefore, Count: 2}}}}
+	encumbrance.SetProvider(cargo)
+	t.Cleanup(func() { encumbrance.SetProvider(nil) })
+	user.Character.Items = []items.Item{emptySkin(t)}
+
+	out := m.fillView(user, waterRoom())
+	assert.Contains(t, out, "fills 3 water containers")
+	assert.Equal(t, skinID, user.Character.Items[0].ItemId, "the leader's empty skin is a full one")
+	assert.Equal(t, 5, user.Character.Items[0].Uses)
+	assert.Equal(t, []encumbrance.CargoStack{{ItemId: emptyBefore, Count: 2}}, cargo.withdrawn)
+	assert.Equal(t, []encumbrance.CargoStack{{ItemId: skinID, Count: 2}}, cargo.deposited, "empty skins go back as full ones")
+}
+
+func TestCompanionDrinksItsLastGlugAndKeepsAnEmptySkin(t *testing.T) {
+	empty := emptySkin(t)
+	skin := spec(t, items.ItemSpec{ItemId: 989404, Name: "waterskin", Uses: 5, Subtype: items.Drinkable, Hydration: 40, EmptyItemId: emptyBefore})
+	skin.Uses = 1
+	skin.UUID = uuid.New(items.UUIDItem)
+	state := domain.MemberState{Level: 1, Items: []items.Item{skin}}
+	module := newTestModule(domain.Registry{Companies: map[int]domain.Record{
+		7: {LeaderUserID: 7, Companions: []domain.Companion{{ID: 1, MobTemplateID: 58, State: &state}}},
+	}}, &fakeRuntime{})
+
+	require.True(t, module.useCompanionItem(7, 1, skin))
+	record, _ := module.registry.Get(7)
+	require.Len(t, record.Companions[0].State.Items, 1)
+	assert.Equal(t, empty.ItemId, record.Companions[0].State.Items[0].ItemId, "an empty skin, not nothing")
+
+	// A fill from a source turns it back into a full one (the saved path).
+	skinItem(t, 5)
+	require.True(t, module.setCompanionItemUses(7, 1, record.Companions[0].State.Items[0], 5))
+	record, _ = module.registry.Get(7)
+	assert.Equal(t, skinID, record.Companions[0].State.Items[0].ItemId)
+}

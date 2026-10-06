@@ -75,6 +75,7 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 	// the whole company.
 	fogged := battle.WeatherOf(uid).Kind == stormcraft.Fog
 	fogEvade := 0
+	watchBack := 0 // Phase 38c2: a Sentinel's Watchful, on top of the row's own aura
 	for _, a := range side {
 		// An Angel's wings cover the owner's row.
 		if sm := summonInfo(a.char); sm != nil && sm.Wings > 0 && a.char.Health >= 1 {
@@ -94,8 +95,12 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 		if row < 0 {
 			continue // an unplaced member holds no row
 		}
+		watchBack = max(watchBack, fx.Int(classes.WatchBack)) // Phase 38c2: a Sentinel watches the back row
 		evade[row] = max(evade[row], fx.Int(classes.AuraEvade))
 		resolve[row] = max(resolve[row], fx.Int(classes.AuraResolv))
+	}
+	if watchBack > 0 {
+		evade[2] += watchBack
 	}
 	for _, a := range side {
 		row := rowOf(a)

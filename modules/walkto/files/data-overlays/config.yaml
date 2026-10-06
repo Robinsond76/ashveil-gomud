@@ -1,0 +1,7 @@
+# Phase 40d click-to-walk (`walkto`, the web map's click on a visited tile).
+#
+# The leader walks a planned route of at most 60 steps through rooms they
+# have already visited, one ordinary `go` per step, StepMillis of real time
+# apart. Each step is a typed move as far as strain, encounters, followers,
+# hunger and weather go, and nothing here ever advances the game clock.
+StepMillis: 1500

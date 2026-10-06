@@ -28,7 +28,7 @@ func (m *CompanyModule) fillView(user *users.UserRecord, room *rooms.Room) strin
 	// Your own pack.
 	for i := range user.Character.Items {
 		if full, ok := usercommands.RefillableUses(user.Character.Items[i].GetSpec()); ok && user.Character.Items[i].Uses < full {
-			user.Character.Items[i].Uses = full
+			user.Character.Items[i] = user.Character.Items[i].Refilled(full)
 			filled++
 		}
 	}
@@ -54,7 +54,25 @@ func (m *CompanyModule) fillView(user *users.UserRecord, room *rooms.Room) strin
 	if !user.Character.CompanyCargo {
 		for _, stack := range encumbrance.CargoContents(user.UserId) {
 			spec := items.GetItemSpec(stack.ItemId)
-			if spec == nil || stack.Uses <= 0 {
+			if spec == nil {
+				continue
+			}
+			// Phase 43a: an empty container in the cargo comes out and goes
+			// back as its full item.
+			if spec.FilledItemId > 0 {
+				if err := encumbrance.WithdrawCargo(user.UserId, stack.ItemId, stack.Count); err != nil {
+					mudlog.Warn("company: fill cargo", "leader", user.UserId, "error", err)
+					continue
+				}
+				deposit := []encumbrance.CargoStack{{ItemId: spec.FilledItemId, Count: stack.Count}}
+				if err := encumbrance.DepositCargo(user.UserId, "", deposit); err != nil {
+					mudlog.Error("company: fill cargo deposit", "leader", user.UserId, "error", err)
+					continue
+				}
+				filled += stack.Count
+				continue
+			}
+			if stack.Uses <= 0 {
 				continue
 			}
 			if full, ok := usercommands.RefillableUses(*spec); !ok || stack.Uses >= full {
@@ -109,7 +127,7 @@ func (m *CompanyModule) setCompanionItemUses(leaderUserID, companionID int, itm 
 			if !state.Items[i].Equals(itm) {
 				continue
 			}
-			state.Items[i].Uses = uses
+			state.Items[i] = state.Items[i].Refilled(uses)
 			if m.registry.SetState(leaderUserID, companionID, state) != nil {
 				return false
 			}

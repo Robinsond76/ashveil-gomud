@@ -1,0 +1,31 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">swordmaster</ansi>
+
+The Swordmaster is the neutral elite of the Duelist (rogue route; no alignment
+asked). It turns a parry into a counter-blow, and the counter-blows grow
+harder and more frequent. It needs a weapon that can parry.
+
+<ansi fg="yellow-bold">Ranks</ansi>
+
+  30 Blade Dance       ripostes deal 50% more damage
+  35 Parry mastery     +5 parry chance
+  40 Disarming Riposte a riposte that is a critical hit staggers the
+                       target, which loses its next action
+  45 Twin ripostes     it can riposte twice a round
+  50 Perfect Parry     once a battle, it parries the next melee blow
+                       automatically
+  55 Counter-strike    a riposte also leaves its target exposed for a
+                       round
+  60 Unbroken Guard    no riposte limit while it is above half health
+
+A riposte is the answer to a blow the Swordmaster parries; the Duelist's once-
+a-round limit is the one the ranks above lift. Perfect Parry needs a parry-
+capable weapon in hand and turns aside a hand-to-hand blow, not a shot.
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+Rogue elite talents (levels 35, 45, 55): Shadow Footing (+5 Evasion), Razor's
+Edge (+5% critical chance), Quick Hands (+15 opening action meter). Every
+elite rogue may take them. See <ansi fg="command">help talents</ansi>.
+
+
+See also: <ansi fg="command">help elite</ansi>, <ansi fg="command">help rogue-routes</ansi>, <ansi fg="command">help defense</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help talents</ansi>.

@@ -201,6 +201,11 @@ type CampState struct {
 	// Gear is the camp gear the company carries (Phase 40a4), one short
 	// label each, for the web Camp tab.
 	Gear []string
+	// Supplies are the camp supplies the company carries (Phase 43a), one
+	// label each ("Broth x2"); Prepared what is queued for the next rest
+	// ("Broth for Tamsin", "Watch incense").
+	Supplies []string
+	Prepared []string
 	// TheftRisk is set when thieves work the camp's road and the company
 	// carries no camp bells (40a4 review).
 	TheftRisk bool

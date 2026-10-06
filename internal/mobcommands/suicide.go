@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/dolls"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/loot"
@@ -56,6 +57,13 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if summons.IsSummon(mob) {
 		mob.DeathProcessed = true
 		summons.Dismiss(mob.InstanceId)
+		return true, nil
+	}
+
+	// Phase 39d: a doll that is struck down breaks; it never dies.
+	if dolls.IsDoll(mob) {
+		mob.DeathProcessed = true
+		dolls.Dismiss(mob.InstanceId)
 		return true, nil
 	}
 

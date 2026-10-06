@@ -7,6 +7,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
@@ -129,6 +130,7 @@ func fillTempo(who caster, c *characters.Character) {
 		len(fights) == 0 && st.epoch != c.CombatEpoch {
 		st = &tempoState{char: c}
 		st.meter.Bonus = float64(c.ClassEffects().Int(classes.OpenMeter)) // Phase 39b: Iaijutsu
+		st.meter.Bonus += float64(scoutMeter(who))                        // Phase 38c2: Scouted ground
 		tempoMeters[who] = st
 	}
 	st.epoch, st.fights = c.CombatEpoch, fights
@@ -199,4 +201,19 @@ func tempoStatusCostsAction(h statusHolder) bool {
 		return true
 	}
 	return false
+}
+
+// scoutMeter is the opening meter a company's Pathfinder gives each of its
+// members (Phase 38c2: Scouted ground).
+func scoutMeter(who caster) int {
+	leader := who.userId
+	if who.mobId > 0 {
+		owner, _, ok := company.LeaderAndKeyForInstance(who.mobId)
+		if !ok {
+			return 0
+		}
+		leader = owner
+	}
+	v, _ := enemyparty.CompanyEffect(leader, classes.ScoutMeter)
+	return v
 }
