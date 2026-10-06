@@ -26,6 +26,23 @@ deferred; 37b), the band shown in `look`/web client zone header, and the
 composition `kind` field is unused by drops (goods come from each foe's
 `lootcategory`).
 
+**38c-d elite routes design (2026-10-06):** rank tables 30–60 for the
+thirteen elites the faith routes design didn't cover (Warlord; Pathfinder,
+Swordmaster, Nightblade; Sentinel, Marksman, Ravager; Archon, Archmage,
+Necromancer; Wise One, Coven Mother, Crone of Ash), shared elite rules for
+all eighteen (one elite per advanced route, the faith routes' gate wait for
+every lineage, catch-up ranks for a late promoter, no cost, three elite
+talents per lineage from 35) and how players see it (readiness and
+gate-wait lines, preview, `class`, company markers, GMCP fields, battle
+narration, `help elite` and a page per route). Every open question decided
+under the owner's delegation, with reasons in the
+[design](designs/2026-10-06-elite-routes-design.md). 38c splits into 38c1
+(framework, UI, warrior and cleric elites), 38c2 (rogue, ranger) and 38c3
+(wizard, witch): [plan](plans/2026-10-06-phase-38c-elite-routes.md). 38b's
+plan wasn't published yet, so each slice reconciles with the advanced
+signatures 38b ships. Documentation only. Verification: links and the
+diff checked.
+
 **Remaining roadmap planned (2026-10-06):** the owner handed over the rest
 of the roadmap, delegating design approval and the visual direction. The
 [remaining roadmap](plans/2026-10-06-remaining-roadmap.md) maps every
@@ -380,15 +397,17 @@ their dependencies and those decisions is the
 | 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Can start now** | Roadmap 2026-10-06 | — |
 | 37b | Encounter and pacing tuning: enemy healers to uncommon, harness cells in tiered gear, the 35b zone rows and 35d misses re-measured on real encounters | Roadmap 2026-10-06 | 37, 35e |
 | 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals) | Loot slice 4 | 37 |
-| 38c-d | Elite routes design for the six lineages (docs only; cleric and warrior elites are in the faith routes design). **Can start now** | Branching design | — |
-| 38c | Elite promotions at level 30, ranks 30–60 for the six lineages | Branching; faith routes | 38b, 38c-d |
-| 38d | Expanded class catalogue bundles, Sorcerer first | Expanded catalogue | 38c |
+| 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
+| 38c1 | Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
+| 38c2 | Rogue and ranger elites (Pathfinder, Swordmaster, Nightblade, Sentinel, Marksman, Ravager) | Elite routes design | 38c1 |
+| 38c3 | Wizard and witch elites (Archon, Archmage, Necromancer with its thrall, Wise One, Coven Mother, Crone of Ash) | Elite routes design | 38c1 |
+| 38d | Expanded class catalogue bundles, Sorcerer first | Expanded catalogue | 38c1 |
 | 38e | Creature recruits, Hound and Stone Golem pilot | Expanded catalogue | 38d, 39e |
-| 36d | Tier 4–6 gear, Legendary signatures and Set bonuses | Loot slice 5 | 36c, 38c |
+| 36d | Tier 4–6 gear, Legendary signatures and Set bonuses | Loot slice 5 | 36c, 38c1–38c3 |
 | 39a–39h | Neutral base classes, one per phase: Halberdier, Samurai, Shaman, Doll Master, Beast Tamer, Gryphon Rider, Alchemist, Arbalist; at most two building at once | [Neutral classes design](designs/2026-10-05-neutral-classes-design.md) | 38b (39e also 39d) |
-| 39i | Elite ranks 30–60 for the eight neutral lineages | Neutral classes design §12 | 38c, 39a–39h |
+| 39i | Elite ranks 30–60 for the eight neutral lineages | Neutral classes design §12 | 38c1, 39a–39h |
 | 41 | World building, levels 1–15, tile-ready | Owner 2026-10-05 | 40d, 37b |
-| 42 | Zones 15–30+, elite content, tier 4–6 placement | Roadmap 2026-10-06 | 41, 38c, 36d |
+| 42 | Zones 15–30+, elite content, tier 4–6 placement | Roadmap 2026-10-06 | 41, 38c1–38c3, 36d |
 | 43a | Camp consumables | [Design](designs/2026-10-01-camp-consumables-design.md) | 40a2 |
 | 43b | Weapon poisons | [Design](designs/2026-10-01-weapon-poisons-design.md) | 43a |
 
