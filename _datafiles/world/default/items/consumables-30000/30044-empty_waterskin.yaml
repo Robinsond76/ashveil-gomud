@@ -1,0 +1,12 @@
+# Phase 43a: what is left of a waterskin when its last glug is drunk. It
+# holds nothing, so only a water source refills it (help resources).
+itemid: 30044
+name: empty waterskin
+namesimple: empty waterskin
+description: A waterskin with nothing left in it. Fill it at a water source
+  (help resources).
+type: object
+subtype: mundane
+refillable: water
+filleditemid: 30015
+weight: 300

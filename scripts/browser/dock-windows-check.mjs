@@ -316,6 +316,13 @@ check((await page.evaluate(() => document.getElementById('company-camp').textCon
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Camp gear: Bedrolls 2/3, Tent, Bells and trip lines.'), 'the camp gear line (40a4)');
 check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work'), 'no thieves warning without theft_risk (40a4)');
 if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '40a4-camp-gear.png') }); }
+// Phase 43a: camp supplies carried, and what is set by for the next rest.
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: true, gear: ['Tent'], supplies: ['fortifying broth x2', 'warming draught x1', 'watch incense x1'], prepared: ['fortifying broth for Oswin', 'watch incense'], resting: false, rested: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Supplies: fortifying broth x2, warming draught x1, watch incense x1 (camp prepare).'), 'the camp supplies line (43a)');
+check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Set by for the next rest: fortifying broth for Oswin, watch incense.'), 'what is set by for the rest (43a)');
+if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '43a-camp-supplies.png') }); }
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], resting: false, rested: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check(!(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Set by for the next rest') && !(await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Supplies:'), 'no supplies lines with none carried or queued (43a)');
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], theft_risk: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Thieves work this road'), 'no bells on a thieves road: the warning (40a4)');

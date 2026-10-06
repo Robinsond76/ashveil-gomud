@@ -1,0 +1,9 @@
+itemid: 30042
+name: cooling salve
+namesimple: salve
+description: A sealed pot of pale coolmint salve. Prepared at camp it cuts the heat a member takes on by a quarter for fifteen minutes (help campsupplies).
+type: object
+subtype: mundane
+uses: 1
+value: 12
+weight: 200

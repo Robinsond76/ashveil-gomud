@@ -1,0 +1,649 @@
+package camping
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/mudlog"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/users"
+)
+
+// Phase 43a camp supplies (help campsupplies). Fortifying broth, a warming
+// draught, a cooling salve and watch incense are ordinary items the company
+// carries, prepared at an established camp with `camp prepare`:
+//
+//   - A warming draught or cooling salve starts at once, as a buff on its
+//     member that lasts fifteen real minutes. The exposure module cuts the
+//     exposure that member takes on by a quarter, in that one direction.
+//   - Broth and incense are queued on the camp (Camp.Prepared) and spent
+//     when the next rest begins. Incense is locked on the rest and adds ten
+//     points to the watch's chance to spot raiders; broth is locked per
+//     member and fortifies them when the rest is done, so a spoiled rest
+//     gives none.
+//   - A member holds one personal benefit (broth, draught or salve) at a
+//     time, and nothing is replaced silently.
+//
+// The company's stock is counted before m.mu (it calls the company
+// module), as camp gear is.
+
+// brothBuffs and the two draught buffs are the personal benefit buffs.
+var personalBuffs = []int{camping.WarmingBuffID, camping.CoolingBuffID}
+
+const prepareUsage = "Usage: camp supplies | camp prepare status | camp prepare broth|warming|cooling [member|all] | camp prepare incense | camp prepare clear [member|all|incense]"
+
+// prepTarget is one company member a supply can be prepared for: the leader
+// or a live companion in the leader's room.
+type prepTarget struct {
+	key  string
+	name string
+	char *characters.Character
+}
+
+func (m *CampingModule) prepTargets(user *users.UserRecord) (targets []prepTarget, fighting bool) {
+	targets = []prepTarget{{key: string(survival.LeaderMemberKey), name: user.Character.Name, char: user.Character}}
+	fighting = user.Character.Aggro != nil || (m.inBattle != nil && m.inBattle(user.UserId))
+	live, _ := m.companions(user.UserId)
+	for _, id := range sortedIDs(live) {
+		c := live[id]
+		if c.Aggro != nil {
+			fighting = true
+		}
+		if c.RoomId != user.Character.RoomId {
+			continue // a companion elsewhere is not at the camp
+		}
+		targets = append(targets, prepTarget{key: string(survival.CompanionMemberKey(id)), name: c.Name, char: c})
+	}
+	return targets, fighting
+}
+
+// personalBuff reports which personal benefit a member holds, if any: the
+// buff id, and a label for the status line.
+func (m *CampingModule) personalBuff(c *characters.Character) (int, bool) {
+	for _, id := range personalBuffs {
+		if m.holdsBuff(c, id) {
+			return id, true
+		}
+	}
+	for _, tier := range camping.BrothBuffs {
+		if m.holdsBuff(c, tier.BuffID) {
+			return tier.BuffID, true
+		}
+	}
+	return 0, false
+}
+
+func personalBuffName(buffID int) string {
+	switch {
+	case buffID == camping.WarmingBuffID:
+		return "a warming draught"
+	case buffID == camping.CoolingBuffID:
+		return "a cooling salve"
+	case camping.IsBrothBuff(buffID):
+		return "fortifying broth"
+	}
+	return "a supply"
+}
+
+// resolveTargets picks the members a prepare names: no word is the leader,
+// "all" or "company" everyone at the camp, anything else a member by name
+// (a prefix is enough).
+func resolveTargets(word string, all []prepTarget) ([]prepTarget, string) {
+	word = strings.ToLower(strings.TrimSpace(word))
+	switch word {
+	case "", "me", "self":
+		return all[:1], ""
+	case "all", "company":
+		return all, ""
+	}
+	for _, t := range all {
+		if strings.EqualFold(t.name, word) {
+			return []prepTarget{t}, ""
+		}
+	}
+	var found []prepTarget
+	for _, t := range all {
+		if strings.HasPrefix(strings.ToLower(t.name), word) {
+			found = append(found, t)
+		}
+	}
+	switch len(found) {
+	case 1:
+		return found, ""
+	case 0:
+		return nil, fmt.Sprintf("There is nobody called %q at your camp.", word)
+	}
+	return nil, fmt.Sprintf("More than one member matches %q; use the whole name.", word)
+}
+
+func (m *CampingModule) spendOne(leaderUserID, itemID int) bool {
+	spend := m.spendItem
+	if spend == nil {
+		spend = company.SpendCompanyItem
+	}
+	return spend(leaderUserID, itemID)
+}
+
+// suppliesHeld is one line per supply the company carries or has queued.
+func (m *CampingModule) suppliesText(user *users.UserRecord, prepared *camping.Prepared) string {
+	lines := []string{"Camp supplies (help campsupplies):"}
+	any := false
+	for _, s := range camping.Supplies {
+		n := m.gearCount(user.UserId, s.ItemID)
+		if n == 0 {
+			continue
+		}
+		any = true
+		lines = append(lines, fmt.Sprintf("  %s x%d (camp prepare %s)", s.Name, n, s.Key))
+	}
+	if !any {
+		lines = append(lines, "  None. Provisioners and the road post sell broth, draughts, salves and incense.")
+	}
+	if !prepared.Empty() {
+		lines = append(lines, "Queued for the next rest: "+m.queuedText(user, prepared)+".")
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (m *CampingModule) queuedText(user *users.UserRecord, prepared *camping.Prepared) string {
+	return m.queuedTextLocked(user.UserId, prepared)
+}
+
+// queuedTextLocked names what is queued, members by their roster names.
+func (m *CampingModule) queuedTextLocked(leaderUserID int, prepared *camping.Prepared) string {
+	names := map[string]string{}
+	for _, member := range m.survival.CompanyNeeds(leaderUserID) {
+		names[string(member.Key)] = member.Name
+	}
+	var parts []string
+	for _, key := range prepared.Broth {
+		name := names[key]
+		if name == "" {
+			name = "a member"
+		}
+		parts = append(parts, "fortifying broth for "+name)
+	}
+	if prepared.Incense {
+		parts = append(parts, "watch incense")
+	}
+	return strings.Join(parts, ", ")
+}
+
+// prepareStatus lists each member's benefit, with the time it has left, and
+// what is queued.
+func (m *CampingModule) prepareStatus(user *users.UserRecord, prepared *camping.Prepared) string {
+	targets, _ := m.prepTargets(user)
+	lines := []string{"Prepared supplies:"}
+	for _, t := range targets {
+		line := fmt.Sprintf("  %s: ", t.name)
+		if id, ok := m.personalBuff(t.char); ok {
+			left := time.Duration(m.buffRoundsLeft(t.char, id)*m.roundLength()) * time.Second
+			line += fmt.Sprintf("%s (%s left)", personalBuffName(id), left.Round(time.Minute))
+			if camping.IsBrothBuff(id) {
+				for _, tier := range camping.BrothBuffs {
+					if tier.BuffID == id {
+						line += fmt.Sprintf(", health limit +%d", tier.Bonus)
+					}
+				}
+			}
+		} else if prepared.HasBroth(t.key) {
+			line += "fortifying broth queued for the next rest"
+		} else {
+			line += "nothing"
+		}
+		lines = append(lines, line)
+	}
+	if prepared != nil && prepared.Incense {
+		lines = append(lines, "  Camp: watch incense queued for the next rest.")
+	}
+	return strings.Join(lines, "\n")
+}
+
+// preparedOf is the leader's queue, read under the lock.
+func (m *CampingModule) preparedOf(leaderUserID int) *camping.Prepared {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.camps[leaderUserID].Prepared
+}
+
+// suppliesCommand is `camp supplies`.
+func (m *CampingModule) suppliesCommand(user *users.UserRecord) string {
+	return m.suppliesText(user, m.preparedOf(user.UserId))
+}
+
+// prepareCommand is `camp prepare ...`.
+func (m *CampingModule) prepareCommand(user *users.UserRecord, room *rooms.Room, args []string) string {
+	if err := m.persistenceAvailable(); err != nil {
+		return err.Error()
+	}
+	m.mu.Lock()
+	camp, has := m.camps[user.UserId]
+	m.mu.Unlock()
+	if !has {
+		return "You have no camp. Use \"camp\" to make one, then prepare supplies."
+	}
+	if len(args) == 0 || args[0] == "status" {
+		return m.prepareStatus(user, camp.Prepared) + "\n" + prepareUsage
+	}
+	if camp.RoomID != room.RoomId {
+		return "Your camp is not here."
+	}
+	if camp.Rest != nil && camp.Rest.State == camping.Resting {
+		return "You can't prepare supplies while the company rests. Wait for the rest to end."
+	}
+	targets, fighting := m.prepTargets(user)
+	if fighting {
+		return "You can't prepare supplies in the middle of a fight."
+	}
+	if args[0] == "clear" {
+		return m.clearPrepared(user, camp, targets, args[1:])
+	}
+	supply, ok := camping.FindSupply(args[0])
+	if !ok {
+		return "Prepare what? " + prepareUsage
+	}
+	rest := ""
+	if len(args) > 1 {
+		rest = args[1]
+	}
+	if len(args) > 2 {
+		return prepareUsage
+	}
+	if supply.Key == "incense" {
+		return m.queueIncense(user, room, camp, supply)
+	}
+	chosen, refusal := resolveTargets(rest, targets)
+	if refusal != "" {
+		return refusal
+	}
+	return m.prepareFor(user, camp, supply, chosen)
+}
+
+// prepareFor applies or queues a personal supply for members. Every member
+// is checked, and the stock counted, before anything is spent; a refusal
+// consumes nothing.
+func (m *CampingModule) prepareFor(user *users.UserRecord, camp camping.Camp, supply camping.Supply, chosen []prepTarget) string {
+	var lines []string
+	var apply []prepTarget
+	for _, t := range chosen {
+		if id, ok := m.personalBuff(t.char); ok {
+			lines = append(lines, fmt.Sprintf("%s already has %s; \"camp prepare clear\" to drop it first.", t.name, personalBuffName(id)))
+			continue
+		}
+		if camp.Prepared.HasBroth(t.key) {
+			lines = append(lines, fmt.Sprintf("%s already has fortifying broth queued for the next rest.", t.name))
+			continue
+		}
+		apply = append(apply, t)
+	}
+	if len(apply) == 0 {
+		return strings.Join(lines, "\n")
+	}
+	queued := 0
+	if supply.Key == "broth" && camp.Prepared != nil {
+		queued = len(camp.Prepared.Broth) // already counted against stock
+	}
+	if have := m.gearCount(user.UserId, supply.ItemID); have < len(apply)+queued {
+		noun := supply.Name
+		if len(apply)+queued > 1 {
+			return fmt.Sprintf("You need %d %s for that, and carry %d. Nothing was used.", len(apply)+queued, noun, have)
+		}
+		return fmt.Sprintf("You carry no %s. Nothing was used.", noun)
+	}
+	switch supply.Key {
+	case "broth":
+		return strings.Join(append(lines, m.queueBroth(user, camp, apply)), "\n")
+	default:
+		return strings.Join(append(lines, m.startDraught(user, supply, apply)...), "\n")
+	}
+}
+
+// queueBroth queues broth for members, saved. The broth is spent when the
+// rest begins.
+func (m *CampingModule) queueBroth(user *users.UserRecord, camp camping.Camp, apply []prepTarget) string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	current, ok := m.camps[user.UserId]
+	if !ok || current.RoomID != camp.RoomID {
+		return "Your camp is gone."
+	}
+	updated := current
+	var names []string
+	for _, t := range apply {
+		updated.Prepared = updated.Prepared.WithBroth(t.key)
+		names = append(names, t.name)
+	}
+	m.camps[user.UserId] = updated
+	if err := m.saveLocked(); err != nil {
+		m.camps[user.UserId] = current
+		return err.Error()
+	}
+	return fmt.Sprintf("Fortifying broth is set by for %s. It is spent when the company next rests, and takes hold when the rest is done.", strings.Join(names, ", "))
+}
+
+// startDraught spends a dose for each member and gives them the buff.
+func (m *CampingModule) startDraught(user *users.UserRecord, supply camping.Supply, apply []prepTarget) []string {
+	buffID := camping.WarmingBuffID
+	verb := "drinks the warming draught"
+	if supply.Key == "cooling" {
+		buffID = camping.CoolingBuffID
+		verb = "rubs on the cooling salve"
+	}
+	var lines []string
+	for _, t := range apply {
+		if !m.spendOne(user.UserId, supply.ItemID) {
+			lines = append(lines, fmt.Sprintf("%s: the %s ran out.", t.name, supply.Name))
+			break
+		}
+		if err := m.addBuff(t.char, buffID, 0); err != nil {
+			mudlog.Warn("camping: prepare supply", "supply", supply.Key, "member", t.name, "error", err)
+			lines = append(lines, fmt.Sprintf("%s couldn't use the %s.", t.name, supply.Name))
+			continue
+		}
+		who := t.name + " " + verb
+		if t.key == string(survival.LeaderMemberKey) {
+			who = "You " + strings.Replace(verb, "drinks", "drink", 1)
+			who = strings.Replace(who, "rubs", "rub", 1)
+		}
+		lines = append(lines, fmt.Sprintf("%s. It lasts %d minutes.", who, camping.SupplyMinutes))
+	}
+	return lines
+}
+
+// queueIncense queues a bundle of incense. It needs a posted watch, which it
+// does not invent, and is spent when the rest begins.
+func (m *CampingModule) queueIncense(user *users.UserRecord, room *rooms.Room, camp camping.Camp, supply camping.Supply) string {
+	if camp.Prepared != nil && camp.Prepared.Incense {
+		return "Watch incense is already set for the next rest."
+	}
+	if m.gearCount(user.UserId, supply.ItemID) < 1 {
+		return "You carry no watch incense. Nothing was used."
+	}
+	if !m.hasWatch(user.UserId, room.RoomId) {
+		return "Watch incense needs a Camp Watch: a company member with the watch skill, here at the camp, to be the one who looks out. Nothing was used."
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	current, ok := m.camps[user.UserId]
+	if !ok || current.RoomID != camp.RoomID {
+		return "Your camp is gone."
+	}
+	updated := current
+	updated.Prepared = updated.Prepared.WithIncense()
+	m.camps[user.UserId] = updated
+	if err := m.saveLocked(); err != nil {
+		m.camps[user.UserId] = current
+		return err.Error()
+	}
+	return "A bundle of watchsage is set by. It is lit when the company next rests, and sharpens the watch's eye for raiders by ten points."
+}
+
+func (m *CampingModule) hasWatch(leaderUserID, roomID int) bool {
+	if m.specialist == nil {
+		return false
+	}
+	_, ok := m.specialist(leaderUserID, archetypes.UtilityWatch, roomID)
+	return ok
+}
+
+// clearPrepared drops what is queued, and an active personal benefit,
+// refunding nothing.
+func (m *CampingModule) clearPrepared(user *users.UserRecord, camp camping.Camp, targets []prepTarget, args []string) string {
+	word := "all"
+	if len(args) > 0 {
+		word = strings.ToLower(args[0])
+	}
+	if len(args) > 1 {
+		return prepareUsage
+	}
+	var chosen []prepTarget
+	incense := false
+	switch word {
+	case "incense":
+		incense = true
+	case "all", "company":
+		chosen, incense = targets, true
+	default:
+		var refusal string
+		if chosen, refusal = resolveTargets(word, targets); refusal != "" {
+			return refusal
+		}
+	}
+	var lines []string
+	for _, t := range chosen {
+		if id, ok := m.personalBuff(t.char); ok {
+			m.dropBuff(t.char, id)
+			lines = append(lines, fmt.Sprintf("%s's %s is dropped.", t.name, strings.TrimPrefix(personalBuffName(id), "a ")))
+		}
+		if camp.Prepared.HasBroth(t.key) {
+			lines = append(lines, fmt.Sprintf("%s's queued broth is set aside.", t.name))
+		}
+	}
+	if incense && camp.Prepared != nil && camp.Prepared.Incense {
+		lines = append(lines, "The watch incense is set aside.")
+	}
+	m.mu.Lock()
+	current, ok := m.camps[user.UserId]
+	if ok {
+		updated := current
+		for _, t := range chosen {
+			updated.Prepared = updated.Prepared.Cleared(t.key)
+		}
+		if incense && updated.Prepared != nil && updated.Prepared.Incense {
+			rest := *updated.Prepared
+			rest.Incense = false
+			if rest.Empty() {
+				updated.Prepared = nil
+			} else {
+				updated.Prepared = &rest
+			}
+		}
+		m.camps[user.UserId] = updated
+		if err := m.saveLocked(); err != nil {
+			m.camps[user.UserId] = current
+			m.mu.Unlock()
+			return err.Error()
+		}
+	}
+	m.mu.Unlock()
+	if len(lines) == 0 {
+		return "Nothing to clear."
+	}
+	lines = append(lines, "Nothing is refunded.")
+	return strings.Join(lines, "\n")
+}
+
+// restPrep is the queue funded for a rest: the members whose broth the
+// company can supply, and whether incense can burn.
+type restPrep struct {
+	Broth   []string
+	Incense bool
+	// notes are lines for the rest-start report about what was dropped.
+	notes []string
+	// drop are the queued broth keys the rest takes off the queue (funded
+	// or gone from the pack), dropIncense likewise for the incense.
+	drop        []string
+	dropIncense bool
+}
+
+// clearQueue is the queue with what the rest settled removed.
+func (p restPrep) clearQueue(prepared *camping.Prepared) *camping.Prepared {
+	if prepared == nil {
+		return nil
+	}
+	out := camping.Prepared{Incense: prepared.Incense && !p.dropIncense}
+	for _, key := range prepared.Broth {
+		dropped := false
+		for _, d := range p.drop {
+			dropped = dropped || d == key
+		}
+		if !dropped {
+			out.Broth = append(out.Broth, key)
+		}
+	}
+	if out.Empty() {
+		return nil
+	}
+	return &out
+}
+
+// fundPrepared counts the stock against the queue before the rest starts
+// (it calls the company module, so it runs before m.mu). Broth the company
+// no longer carries is dropped; incense is kept queued when no watch is
+// posted, and burned only with one.
+func (m *CampingModule) fundPrepared(user *users.UserRecord, room *rooms.Room) restPrep {
+	prepared := m.preparedOf(user.UserId)
+	var out restPrep
+	if prepared.Empty() {
+		return out
+	}
+	targets, _ := m.prepTargets(user)
+	name := func(key string) string {
+		for _, t := range targets {
+			if t.key == key {
+				return t.name
+			}
+		}
+		return "a member"
+	}
+	stock := m.gearCount(user.UserId, camping.BrothItemID)
+	for _, key := range prepared.Broth {
+		present := false
+		for _, t := range targets {
+			present = present || t.key == key
+		}
+		switch {
+		case !present:
+			out.notes = append(out.notes, fmt.Sprintf("%s is not at the camp, so the broth is saved.", name(key)))
+		case stock < 1:
+			out.notes = append(out.notes, fmt.Sprintf("There is no broth left for %s.", name(key)))
+			out.drop = append(out.drop, key)
+		default:
+			stock--
+			out.Broth = append(out.Broth, key)
+			out.drop = append(out.drop, key)
+		}
+	}
+	if prepared.Incense {
+		switch {
+		case m.gearCount(user.UserId, camping.IncenseItemID) < 1:
+			out.notes = append(out.notes, "The incense is gone from your pack.")
+			out.dropIncense = true
+		case !m.hasWatch(user.UserId, room.RoomId):
+			out.notes = append(out.notes, "No watch is posted, so the incense stays unlit for another rest.")
+		default:
+			out.Incense = true
+			out.dropIncense = true
+		}
+	}
+	return out
+}
+
+// settlePrepared spends what the rest locked and clears it from the queue.
+// It runs outside m.mu, after the rest is saved.
+func (m *CampingModule) settlePrepared(leaderUserID int, funded restPrep) {
+	for range funded.Broth {
+		m.spendOne(leaderUserID, camping.BrothItemID)
+	}
+	if funded.Incense {
+		m.spendOne(leaderUserID, camping.IncenseItemID)
+	}
+}
+
+// restPrepText is the rest start's report of what was lit and set by.
+func restPrepText(funded restPrep, names func(key string) string) string {
+	var parts []string
+	if len(funded.Broth) > 0 {
+		var who []string
+		for _, key := range funded.Broth {
+			who = append(who, names(key))
+		}
+		parts = append(parts, "broth simmering for "+strings.Join(who, ", "))
+	}
+	if funded.Incense {
+		parts = append(parts, "watchsage burning for the watch")
+	}
+	var text string
+	if len(parts) > 0 {
+		text = "Supplies: " + strings.Join(parts, "; ") + "."
+	}
+	for _, note := range funded.notes {
+		if text != "" {
+			text += "\n"
+		}
+		text += note
+	}
+	return text
+}
+
+// grantBroth gives the rest's broth drinkers their buff when the rest is
+// done. It runs once, with the save that clears the rest's marker, on the
+// game loop. Members who are dead, separated or not spawned miss it.
+func (m *CampingModule) grantBroth(user *users.UserRecord, live map[int]*characters.Character) {
+	m.mu.Lock()
+	camp, ok := m.camps[user.UserId]
+	var members []string
+	if ok && camp.Rest != nil && !camp.Rest.Broken {
+		members = append(members, camp.Rest.Broth...)
+	}
+	m.mu.Unlock()
+	if len(members) == 0 {
+		return
+	}
+	var fed []string
+	for _, key := range members {
+		var c *characters.Character
+		if key == string(survival.LeaderMemberKey) {
+			c = user.Character
+		} else if id, isCompanion := company.CompanionIDFromMemberKey(survival.MemberKey(key)); isCompanion {
+			c = live[id]
+		}
+		if c == nil || c.Health < 1 {
+			continue
+		}
+		if _, held := m.personalBuff(c); held {
+			continue // never replaced silently; the broth is lost with the rest
+		}
+		tier := camping.BrothTierFor(c.HealthMax.Value)
+		if err := m.addBuff(c, tier.BuffID, 0); err != nil {
+			mudlog.Warn("camping: grant broth", "member", c.Name, "error", err)
+			continue
+		}
+		fed = append(fed, fmt.Sprintf("%s (+%d)", c.Name, tier.Bonus))
+	}
+	if len(fed) > 0 {
+		user.SendText(fmt.Sprintf("The broth takes hold: health limit up for %d minutes for %s.", camping.SupplyMinutes, strings.Join(fed, ", ")))
+	}
+}
+
+// prepName names a member by key for the rest report.
+func (m *CampingModule) prepName(user *users.UserRecord) func(key string) string {
+	targets, _ := m.prepTargets(user)
+	return func(key string) string {
+		for _, t := range targets {
+			if t.key == key {
+				return t.name
+			}
+		}
+		return "a member"
+	}
+}
+
+// supplyLabels is one short label per camp supply the company carries, for
+// the web Camp tab. It counts through the company module, so it runs before
+// m.mu.
+func (m *CampingModule) supplyLabels(leaderUserID int) []string {
+	var out []string
+	for _, s := range camping.Supplies {
+		if n := m.gearCount(leaderUserID, s.ItemID); n > 0 {
+			out = append(out, fmt.Sprintf("%s x%d", s.Name, n))
+		}
+	}
+	return out
+}

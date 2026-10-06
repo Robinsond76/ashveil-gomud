@@ -1,0 +1,71 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">camp supplies</ansi>
+
+Camp supplies are small consumables that prepare your company for what the
+road is about to ask: a rest that leaves someone sturdier, a cold crossing
+or a hot one, a watch that sees raiders sooner. They are ordinary items you
+carry (in your pack, a companion's pack or the cargo), sold by provisioners
+and never bought back (<ansi fg="command">help market</ansi>), and each one is used up when it takes effect.
+
+<ansi fg="yellow-bold">The supplies</ansi>
+
+  <ansi fg="yellow">Fortifying broth</ansi>     10 gold   one dose a member
+  Raises one member's health limit by about 5% (at least 2), for 15
+  minutes after a rest. It is set by before the rest and takes hold when the
+  rest is done: <ansi fg="command">camp prepare broth</ansi> [member]. The finished rest fills the
+  drinker to the higher limit; when it ends nobody is left above their
+  ordinary limit, and it cannot kill.
+
+  <ansi fg="yellow">Warming draught</ansi>      12 gold   one dose a member
+  For 15 minutes, a quarter less cold exposure builds up on that member
+  (<ansi fg="command">help temperature</ansi>). It gives no warmth and no protection from heat.
+
+  <ansi fg="yellow">Cooling salve</ansi>        12 gold   one dose a member
+  For 15 minutes, a quarter less heat exposure builds up on that member. It
+  gives no protection from cold.
+
+  <ansi fg="yellow">Watch incense</ansi>         8 gold   one bundle a rest
+  Burns during the next rest and adds 10 points to your Camp Watch's chance
+  to spot raiders, never above 90% (a watch that already spots them every
+  time keeps it). It needs a watch posted at the camp
+  (<ansi fg="command">help campwatch</ansi>) and does nothing for raiders' chance of coming.
+
+The road post sells them a little dearer than Dunmar.
+
+<ansi fg="yellow-bold">Commands</ansi>
+
+  <ansi fg="command">camp supplies</ansi>
+  Lists the supplies your company carries and what is set by for the rest.
+
+  <ansi fg="command">camp prepare broth</ansi> [member|all]
+  <ansi fg="command">camp prepare warming</ansi> [member|all]
+  <ansi fg="command">camp prepare cooling</ansi> [member|all]
+  <ansi fg="command">camp prepare incense</ansi>
+  Prepares a supply for yourself, a named member at the camp, or everyone
+  (<ansi fg="command">all</ansi>). Draughts and salves start at once. Broth and incense are set
+  by and spent when you start the rest, <ansi fg="command">camp rest</ansi>.
+
+  <ansi fg="command">camp prepare status</ansi>
+  Shows each member's benefit and how long it has left, and what is queued.
+
+  <ansi fg="command">camp prepare clear</ansi> [member|all|incense]
+  Drops a benefit, or sets queued supplies aside. Nothing is refunded.
+
+<ansi fg="yellow-bold">The rules</ansi>
+
+  - You need an established camp in this room, no rest running, and no
+    battle. Draughts and salves are for members with you at the camp.
+  - Each member holds one personal benefit at a time: broth, a draught or a
+    salve. Nothing is replaced silently: <ansi fg="command">camp prepare clear</ansi> first. Using the
+    same supply again neither uses a dose nor extends the time.
+  - A refused preparation uses nothing. Asking for more doses than you carry
+    refuses the whole thing.
+  - Broth and incense are counted when the rest begins: broth you no longer
+    carry is dropped with a note, incense with no watch posted stays set by
+    for another rest. A rest that raiders spoil gives no broth.
+  - Timers are real minutes, and nothing here moves the world's clock.
+
+In the web client, Company > Camp lists the supplies you carry and what is set
+by for the next rest, and the Conditions list shows each active benefit.
+
+See also: <ansi fg="command">help camp</ansi>, <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help campwatch</ansi>, <ansi fg="command">help temperature</ansi>,
+<ansi fg="command">help market</ansi>.
