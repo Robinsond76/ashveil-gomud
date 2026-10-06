@@ -313,6 +313,9 @@ func (g *GMCPModule) HandleWebGMCP(connectionId uint64, webGMCP []byte) bool {
 					if watch.Open && len(words) > 1 {
 						watch.Slot = words[1]
 					}
+					if watch.Open && len(words) > 2 {
+						watch.Member = words[2]
+					}
 					events.AddToQueue(watch)
 					break
 				}

@@ -104,3 +104,33 @@ func TestGearWatchWebRequestAndSpawn(t *testing.T) {
 	f.mu.Unlock()
 	assert.True(t, f.setGearOpen(9, true, "feet"), "after the gap a new slot refreshes at once")
 }
+
+// Phase 48: the editor names whose gear it shows, and only "me" or "#N"
+// is accepted from a client.
+func TestGearWatchFollowsTheNamedMember(t *testing.T) {
+	f, _ := testFeed()
+	assert.True(t, f.setGearOpen(21, true, "weapon", "#2"), "opening refreshes at once")
+	assert.Equal(t, "#2", f.watchingGearMember(21))
+	slot, open := f.watchingGear(21)
+	assert.True(t, open)
+	assert.Equal(t, "weapon", slot)
+	assert.False(t, f.setGearOpen(21, true, "weapon", "#2"), "the same member and slot refresh nothing")
+	f.setGearOpen(21, true, "weapon", "me")
+	assert.Equal(t, "me", f.watchingGearMember(21), "switching members is noticed")
+	for _, bad := range []string{"#0", "#x", "../etc", "", "leader"} {
+		f.setGearOpen(21, true, "body", bad)
+		assert.Equal(t, "me", f.watchingGearMember(21), "%q is not a member reference", bad)
+	}
+	f.setGearOpen(21, false, "")
+	assert.Equal(t, "me", f.watchingGearMember(21), "a closed editor shows the leader")
+}
+
+func TestEquipmentExtraAsksForTheWatchedMember(t *testing.T) {
+	u := inventoryUser(t)
+	u.Character.CompanyCargo = true
+	open := func(int) (string, bool) { return "weapon", true }
+	asked := ""
+	extra := equipmentExtra(open, func(int) string { asked = "#3"; return "#3" })
+	assert.NotNil(t, extra.build(u))
+	assert.Equal(t, "#3", asked)
+}
