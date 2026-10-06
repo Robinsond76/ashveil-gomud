@@ -16,15 +16,19 @@ both use.
   If the mix is a dish you can make, you cook it, and the first time you
   do, you learn it: the recipe goes in your book and you will not need
   to name its ingredients again. If the mix matches nothing, you get a
-  <ansi fg="itemname">makeshift meal</ansi>, plain food that eases hunger a little and gives no
-  buff. The ingredients are spent either way.
+  <ansi fg="itemname">makeshift meal</ansi>, plain food worth 25 Hunger that gives no buff.
+  The ingredients are spent either way.
 
-  A mix that would make a dish above your Cooking level is refused,
-  and nothing is spent. At camp the best cook with you cooks, as with
-  <ansi fg="command">camp cook</ansi>; at a hearth it is your own Cooking.
+  A new dish above your Cooking level does not come out: the mix is only
+  a makeshift meal, and you learn nothing. A dish you already know but
+  lack the Cooking for is refused, and nothing is spent. At camp the
+  best cook with you cooks, as with <ansi fg="command">camp cook</ansi>; at a hearth it is your
+  own Cooking.
 
-  Only raw game, fish and herbs go in the pot. A cooked meal, a drink
-  or a tool does not.
+  Only raw game, fish and herbs go in the pot, and every mix needs some
+  game or fish: herbs alone only season, so they are refused before
+  anything is spent. A cooked meal, a drink or a tool does not go in.
+  Filler words are fine: <ansi fg="command">cook meat and thyme</ansi>.
 
 <ansi fg="yellow-bold">Cooking what you know</ansi>
 
@@ -41,7 +45,8 @@ both use.
   <ansi fg="command">camp prepare remedy with [herb] [herb] ...</ansi>
   Tries exactly that mix of herbs on the ailing members of your company
   (<ansi fg="command">help ailments</ansi>). If it is the remedy for an ailment someone has, it
-  cures them and you learn the remedy; after that a plain
+  is one dose: it cures the first member it helps, uses exactly the herbs
+  you named, and you learn the remedy; after that a plain
   <ansi fg="command">camp prepare remedy</ansi> makes it. Any other mix uses up its herbs and
   teaches nothing. Thyme tea, for the chill, is common knowledge.
 
@@ -51,6 +56,9 @@ both use.
   Lists every dish and remedy you have learned and what it takes. The web client's
   Company window shows the same list on its Camp tab. <ansi fg="command">look hearth</ansi> lists
   only the dishes you know.
+
+  Characters made before recipe discovery arrived keep every dish and
+  remedy they could already make.
 
 <ansi fg="yellow-bold">Recipe pages</ansi>
 

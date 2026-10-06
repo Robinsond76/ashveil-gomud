@@ -108,6 +108,25 @@ func (c *Container) ReadyRecipes() []int {
 	return ready
 }
 
+// IsHearth (56 review) reports whether a recipe container cooks food: its
+// name says hearth, or a recipe is gated on Cooking. Only a hearth's dishes
+// are discovered and kept in a recipe book; other crafting containers (a
+// loom) work as before.
+func (c *Container) IsHearth(name string) bool {
+	if len(c.Recipes) == 0 {
+		return false
+	}
+	if strings.Contains(strings.ToLower(name), "hearth") {
+		return true
+	}
+	for _, req := range c.RecipeRequirements {
+		if strings.EqualFold(req.SkillId, "cooking") {
+			return true
+		}
+	}
+	return false
+}
+
 // SelectRecipe picks the lowest ready output itemId whose requirement the actor meets,
 // given a skill-level lookup. When recipes are ready but all are gated, it returns 0 and
 // the easiest unmet requirement (lowest level, then lowest output id). known (Phase 56)

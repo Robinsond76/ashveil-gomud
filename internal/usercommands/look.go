@@ -220,7 +220,7 @@ func Look(rest string, user *users.UserRecord, room *rooms.Room, flags events.Ev
 			hidden := 0
 			for _, finalItemId := range recipeIds {
 				// Phase 56: only dishes the viewer has learned are listed.
-				if !cookbook.Knows(user.Character, HearthRecipe(container, finalItemId)) {
+				if container.IsHearth(containerName) && !cookbook.Knows(user.Character, HearthRecipe(container, finalItemId)) {
 					hidden++
 					continue
 				}

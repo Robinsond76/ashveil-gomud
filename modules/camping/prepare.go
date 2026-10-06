@@ -713,7 +713,8 @@ func (m *CampingModule) remediesText(user *users.UserRecord) string {
 // herbs counted before anything is spent; a refusal consumes nothing. A
 // remedy is used up as it is made, never an item, so it can't be sold.
 func (m *CampingModule) prepareRemedy(user *users.UserRecord, chosen []prepTarget) string {
-	return m.cureWith(user, chosen, nil)
+	text, _ := m.cureWith(user, chosen, nil)
+	return text
 }
 
 // remedyKnown reports whether the leader can make an ailment's remedy.
@@ -771,7 +772,9 @@ func (m *CampingModule) prepareRemedyMix(user *users.UserRecord, targets []prepT
 			break
 		}
 	}
-	ill := false
+	// 56 review: one mix is one dose, for the first member it helps, so
+	// the herbs spent are exactly the herbs named.
+	var patient []prepTarget
 	if matched != nil {
 		needs := map[string]survival.Needs{}
 		for _, n := range m.survival.CompanyNeeds(user.UserId) {
@@ -779,11 +782,13 @@ func (m *CampingModule) prepareRemedyMix(user *users.UserRecord, targets []prepT
 		}
 		for _, t := range targets {
 			for _, a := range survival.ActiveAilments(needs[t.key]) {
-				ill = ill || a.Kind == matched.Kind
+				if a.Kind == matched.Kind && patient == nil {
+					patient = []prepTarget{t}
+				}
 			}
 		}
 	}
-	if matched == nil || !ill {
+	if matched == nil || patient == nil {
 		// A guess that helps nobody: the herbs are spent.
 		for _, id := range mix {
 			if !m.spendOne(user.UserId, id) {
@@ -794,8 +799,8 @@ func (m *CampingModule) prepareRemedyMix(user *users.UserRecord, targets []prepT
 	}
 	fresh := !cookbook.KnowsRemedy(user.Character, matched.Kind, matched.Common)
 	only := *matched
-	text := m.cureWith(user, targets, &only)
-	if fresh && strings.Contains(text, "the "+strings.ToLower(only.Name)+" breaks") {
+	text, cured := m.cureWith(user, patient, &only)
+	if fresh && cured > 0 {
 		cookbook.LearnRemedy(user.Character, only.Kind)
 		text += fmt.Sprintf("\nYou have worked out a new remedy: %s (%s). It is in your recipe book (recipes).", only.RemedyName, remedyHerbsText(only))
 	}
@@ -804,8 +809,9 @@ func (m *CampingModule) prepareRemedyMix(user *users.UserRecord, targets []prepT
 
 // cureWith cures the ailments of the chosen members. only (a mix being
 // tried) limits it to one ailment, whether or not it is known; otherwise
-// only the remedies the leader knows are made.
-func (m *CampingModule) cureWith(user *users.UserRecord, chosen []prepTarget, only *survival.AilmentSpec) string {
+// only the remedies the leader knows are made. It returns how many
+// ailments broke.
+func (m *CampingModule) cureWith(user *users.UserRecord, chosen []prepTarget, only *survival.AilmentSpec) (string, int) {
 	needs := map[string]survival.Needs{}
 	for _, n := range m.survival.CompanyNeeds(user.UserId) {
 		needs[string(n.Key)] = n.Needs
@@ -829,11 +835,11 @@ func (m *CampingModule) cureWith(user *users.UserRecord, chosen []prepTarget, on
 		}
 	}
 	if len(work) == 0 {
-		return strings.Join(lines, "\n")
+		return strings.Join(lines, "\n"), 0
 	}
 	curing, ok := m.survival.(curingSurvival)
 	if !ok {
-		return "Remedies are not available right now."
+		return "Remedies are not available right now.", 0
 	}
 	want := map[int]int{}
 	names := map[int]string{}
@@ -854,15 +860,16 @@ func (m *CampingModule) cureWith(user *users.UserRecord, chosen []prepTarget, on
 		}
 	}
 	if len(short) > 0 {
-		return strings.Join(append(lines, "You need "+strings.Join(short, ", ")+" for that. Nothing was used. \"camp supplies\" lists the herbs."), "\n")
+		return strings.Join(append(lines, "You need "+strings.Join(short, ", ")+" for that. Nothing was used. \"camp supplies\" lists the herbs."), "\n"), 0
 	}
 	for _, id := range order {
 		for i := 0; i < want[id]; i++ {
 			if !m.spendOne(user.UserId, id) {
-				return strings.Join(append(lines, "The herbs were not there when you reached for them."), "\n")
+				return strings.Join(append(lines, "The herbs were not there when you reached for them."), "\n"), 0
 			}
 		}
 	}
+	broke := 0
 	for _, w := range work {
 		cured, err := curing.CureAilment(user.UserId, survival.MemberKey(w.target.key), w.ailment.Kind)
 		if err != nil {
@@ -871,8 +878,9 @@ func (m *CampingModule) cureWith(user *users.UserRecord, chosen []prepTarget, on
 			continue
 		}
 		if cured {
+			broke++
 			lines = append(lines, fmt.Sprintf("You make %s for %s, and the %s breaks.", w.ailment.RemedyName, w.target.name, strings.ToLower(w.ailment.Name)))
 		}
 	}
-	return strings.Join(lines, "\n")
+	return strings.Join(lines, "\n"), broke
 }

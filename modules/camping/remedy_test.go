@@ -3,6 +3,7 @@ package camping
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -130,7 +131,7 @@ func TestSuppliesAndStatusMentionRemediesAndAilments(t *testing.T) {
 
 // Phase 56: remedies are discovered like dishes. The chill's thyme tea is
 // common knowledge; the rest must be worked out with a mix of herbs.
-func forgetRemedies(w *raidWorld) { w.user.Character.SetMiscData(cookbook.BookKey, nil) }
+func forgetRemedies(w *raidWorld) { w.user.Character.SetMiscData(cookbook.BookKey, "") }
 
 func TestABareRemedyOnlyMakesKnownRemediesAndSaysSo(t *testing.T) {
 	n := fit()
@@ -195,4 +196,26 @@ func TestSuppliesListOnlyKnownRemedies(t *testing.T) {
 	assert.Contains(t, supplies, "thyme tea")
 	assert.NotContains(t, supplies, "tisane")
 	assert.NotContains(t, supplies, "fever draught")
+}
+
+// 56 review: a mix is one dose. With two members ill, the right mix cures
+// the first and spends exactly the herbs named, never more, and never
+// refuses in a way that would confirm the mix for free.
+func TestAMixIsOneDoseForOneMember(t *testing.T) {
+	n := fit()
+	n.GutAche = 2
+	herbs := stock{thymeID: 1, mushroomID: 1}
+	w, f := ailingWorld(t, herbs, n)
+	forgetRemedies(w)
+	mira := &characters.Character{Name: "Mira", RoomId: w.user.Character.RoomId}
+	w.m.companionsOf = func(int) (map[int]*characters.Character, []int) {
+		return map[int]*characters.Character{1: mira}, []int{1}
+	}
+	f.needs = append(f.needs, survival.MemberNeeds{Key: survival.CompanionMemberKey(1), Name: "Mira", Needs: n})
+	text := prepare(w, "remedy", "with", "thyme", "mushroom")
+	assert.Contains(t, text, "breaks")
+	assert.NotContains(t, text, "Nothing was used")
+	assert.Equal(t, stock{thymeID: 0, mushroomID: 0}, herbs, "exactly the named herbs")
+	assert.Len(t, f.cured, 1, "one dose, one member")
+	assert.True(t, cookbook.KnowsRemedy(w.user.Character, survival.AilmentGutAche, false))
 }

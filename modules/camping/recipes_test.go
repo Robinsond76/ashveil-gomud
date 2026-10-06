@@ -3,6 +3,7 @@ package camping
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/cookbook"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -32,10 +33,7 @@ func discoveryWorld(t *testing.T) (*raidWorld, *fakeCargo) {
 		t.Cleanup(func() { items.RemoveTestItemSpec(id) })
 	}
 	w := newRaidWorld(t, 0)
-	for _, dish := range []int{30019, 30020, 30021, 30024} {
-		cookbook.Learn(w.user.Character, 0*dish) // no-op: start from an empty book
-	}
-	w.user.Character.SetMiscData(cookbook.BookKey, nil)
+	w.user.Character.SetMiscData(cookbook.BookKey, "") // an empty book, not a legacy character
 	w.m.campCfg.Recipes = []campRecipe{
 		{Output: 30019, Inputs: []int{29, 29, 30018}, Skill: "cooking", MinLevel: 3},
 		{Output: 30020, Inputs: []int{29, 30018}, Skill: "cooking", MinLevel: 2},
@@ -97,26 +95,68 @@ func TestAnUnlearnedDishIsNotMadeWithoutTrying(t *testing.T) {
 
 func TestAMissMakesAMakeshiftMealAndTeachesNothing(t *testing.T) {
 	w, cargo := discoveryWorld(t)
-	cargo.stacks[30018] = 2
-	text := w.m.cook(w.user, w.room, []string{"thyme", "thyme"})
+	cargo.stacks[29] = 3
+	text := w.m.cook(w.user, w.room, []string{"3", "meat"})
 	assert.Contains(t, text, "makeshift meal")
-	assert.Equal(t, 0, cargo.stacks[30018], "the herbs are gone")
+	assert.Equal(t, 0, cargo.stacks[29], "the ingredients are gone")
 	assert.Equal(t, 1, cargo.stacks[items.MakeshiftMealItemId])
 	assert.Empty(t, cookbook.Learned(w.user.Character))
 	meal := items.New(items.MakeshiftMealItemId)
 	assert.True(t, meal.IsSpecialForSale(), "a merchant never buys it back")
 }
 
-func TestATooHardDishConsumesAndTeachesNothing(t *testing.T) {
+// 56 review: herbs alone are refused before anything is spent, so a cheap
+// herb is never a 25-Hunger meal.
+func TestHerbsAloneAreRefused(t *testing.T) {
+	w, cargo := discoveryWorld(t)
+	cargo.stacks[30018] = 2
+	text := w.m.cook(w.user, w.room, []string{"thyme", "and", "thyme"})
+	assert.Contains(t, text, "Herbs alone")
+	assert.Equal(t, 2, cargo.stacks[30018], "nothing spent")
+	assert.Equal(t, 0, cargo.stacks[items.MakeshiftMealItemId])
+}
+
+// 56 review: the right mix for an unknown dish above the cook's rank is a
+// plain miss, so no refusal confirms a mix for free; a known dish above
+// the cook's rank is refused with nothing spent.
+func TestATooHardDishIsAMissUnlessKnown(t *testing.T) {
 	w, cargo := discoveryWorld(t)
 	w.user.Character.Skills["cooking"] = 2
 	cargo.stacks[29] = 2
 	cargo.stacks[30018] = 1
 	text := w.m.cook(w.user, w.room, []string{"meat", "meat", "thyme"})
-	assert.Contains(t, text, "needs cooking 3")
-	assert.Equal(t, 2, cargo.stacks[29])
-	assert.Equal(t, 1, cargo.stacks[30018])
+	assert.Contains(t, text, "makeshift meal")
+	assert.NotContains(t, text, "needs cooking")
+	assert.Equal(t, 0, cargo.stacks[29])
+	assert.Equal(t, 1, cargo.stacks[items.MakeshiftMealItemId])
 	assert.Empty(t, cookbook.Learned(w.user.Character))
+
+	cookbook.Learn(w.user.Character, 30019)
+	cargo.stacks[29] = 2
+	cargo.stacks[30018] = 1
+	text = w.m.cook(w.user, w.room, []string{"meat", "meat", "thyme"})
+	assert.Contains(t, text, "needs cooking 3")
+	assert.Equal(t, 2, cargo.stacks[29], "nothing spent")
+	assert.Equal(t, 1, cargo.stacks[30018])
+}
+
+// 56 review: a character saved before recipe discovery (no book key at
+// all) keeps every dish it could cook, and the camp cooks them; a page
+// teaches it nothing new.
+func TestALegacyCharacterKeepsEveryDish(t *testing.T) {
+	w, cargo := discoveryWorld(t)
+	delete(w.user.Character.MiscData, cookbook.BookKey)
+	w.user.Character.Created = time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	require.True(t, cookbook.Legacy(w.user.Character))
+	cargo.stacks[29] = 2
+	cargo.stacks[30018] = 1
+	text := w.m.cook(w.user, w.room, nil)
+	assert.Contains(t, text, "hunter's stew", "bare cook makes the best dish, as before phase 56")
+	assert.NotContains(t, text, "worked out")
+	assert.Len(t, w.m.recipesLines(w.user), 3+len(survival.Ailments()), "every camp dish and remedy is listed")
+	assert.False(t, cookbook.Learn(w.user.Character, 30020))
+	_, has := w.user.Character.MiscData[cookbook.BookKey]
+	assert.False(t, has, "the book key is never written, so the character stays legacy")
 }
 
 func TestFailedSaveDoesNotTeachTheDish(t *testing.T) {
@@ -189,6 +229,23 @@ func TestCookAtAHearthLearnsToo(t *testing.T) {
 	assert.Contains(t, out, "worked out a new recipe")
 	assert.Equal(t, []int{30020}, cookbook.Learned(w.user.Character))
 	assert.Equal(t, 1, cargo.stacks[30020])
+}
+
+// 56 review: a loom (a recipe container that is not a hearth) is not a
+// place to cook.
+func TestCookAtALoomIsRefused(t *testing.T) {
+	w, cargo := discoveryWorld(t)
+	camp := w.m.camps[7]
+	camp.FireLit = false
+	w.m.camps[7] = camp
+	w.room.Containers = map[string]rooms.Container{"tattertail loom": {Recipes: map[int][]int{30020: {29}}}}
+	cargo.stacks[29] = 1
+	messages := captureMessages(t)
+	_, err := w.m.cookCommand("meat", w.user, w.room, 0)
+	require.NoError(t, err)
+	events.ProcessEvents()
+	assert.Contains(t, strings.Join(*messages, ""), "You need a hearth")
+	assert.Equal(t, 1, cargo.stacks[29], "nothing spent")
 }
 
 // The Camp tab lists the book, and the manual cooking capability lists only

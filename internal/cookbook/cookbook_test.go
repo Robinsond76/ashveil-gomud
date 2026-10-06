@@ -93,3 +93,28 @@ func TestDescribeListsCounts(t *testing.T) {
 	withSpecs(t)
 	assert.Equal(t, "2 raw game meat, 1 wild thyme", Describe([]int{30018, 29, 29}))
 }
+
+// 56 review: characters.New writes an empty book; a saved character without
+// the key predates recipe discovery and knows every dish and remedy.
+func TestLegacyCharactersKnowEverything(t *testing.T) {
+	fresh := characters.New()
+	assert.False(t, Legacy(fresh))
+	assert.False(t, Knows(fresh, Recipe{Output: 30019, MinLevel: 3}))
+	old := characters.New()
+	delete(old.MiscData, BookKey)
+	assert.True(t, Legacy(old))
+	assert.True(t, Knows(old, Recipe{Output: 30019, MinLevel: 3}))
+	assert.True(t, KnowsRemedy(old, "fever", false))
+	assert.False(t, Learn(old, 30019), "nothing to learn")
+	assert.False(t, LearnRemedy(old, "fever"))
+	assert.False(t, Legacy(&characters.Character{}), "a bare struct is not legacy")
+}
+
+func TestFillerWordsNameNothing(t *testing.T) {
+	withSpecs(t)
+	got, problem := Resolve([]string{"meat", "and", "thyme"}, []Stack{{29, 1}, {30018, 1}})
+	assert.Empty(t, problem)
+	assert.Equal(t, []int{29, 30018}, got)
+	assert.True(t, HasFood(got))
+	assert.False(t, HasFood([]int{30018}))
+}

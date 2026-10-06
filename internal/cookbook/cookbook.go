@@ -30,6 +30,20 @@ const (
 	MakeshiftMealItemId = items.MakeshiftMealItemId
 )
 
+// Legacy (56 review) reports whether the character predates recipe
+// discovery. Before it every company could cook every dish its skill
+// allowed and brew every remedy, so such a character keeps all of them.
+// characters.New writes an empty book; a saved character without the key
+// was made earlier. A zero creation time (a bare struct, as tests build) is
+// not legacy.
+func Legacy(c *characters.Character) bool {
+	if c == nil || c.Created.IsZero() {
+		return false
+	}
+	_, has := c.MiscData[BookKey]
+	return !has
+}
+
 // Recipe is one dish: its output item, its ingredient items (a repeat means
 // two of that ingredient) and the skill level it takes.
 type Recipe struct {
@@ -92,13 +106,13 @@ func Learned(c *characters.Character) []int {
 // Knows reports whether the character can cook the recipe without
 // experimenting: it is basic or in the book.
 func Knows(c *characters.Character, r Recipe) bool {
-	return r.Basic() || hasToken(c, strconv.Itoa(r.Output))
+	return r.Basic() || Legacy(c) || hasToken(c, strconv.Itoa(r.Output))
 }
 
 // Learn writes a dish into the character's book; false when it was already
-// there.
+// there or the character is Legacy (it knows every dish).
 func Learn(c *characters.Character, output int) bool {
-	if output < 1 {
+	if output < 1 || Legacy(c) {
 		return false
 	}
 	return addToken(c, strconv.Itoa(output))
@@ -107,12 +121,12 @@ func Learn(c *characters.Character, output int) bool {
 // KnowsRemedy reports whether the character can make the remedy for an
 // ailment kind: it is common knowledge (common) or in the book.
 func KnowsRemedy(c *characters.Character, kind string, common bool) bool {
-	return common || hasToken(c, "r:"+kind)
+	return common || Legacy(c) || hasToken(c, "r:"+kind)
 }
 
 // LearnRemedy writes a remedy into the book; false when already there.
 func LearnRemedy(c *characters.Character, kind string) bool {
-	return kind != "" && addToken(c, "r:"+kind)
+	return kind != "" && !Legacy(c) && addToken(c, "r:"+kind)
 }
 
 // Known filters recipes to those the character can cook, keeping order.
@@ -168,6 +182,17 @@ func IsIngredient(spec *items.ItemSpec) bool {
 	return false
 }
 
+// HasFood reports whether a mix holds something besides herbs (56 review):
+// every dish has game or fish in it, and herbs alone only season a pot.
+func HasFood(inputs []int) bool {
+	for _, id := range inputs {
+		if spec := items.GetItemSpec(id); spec != nil && spec.Type != items.Botanical {
+			return true
+		}
+	}
+	return false
+}
+
 // Stack is a count of one ingredient item the cook has to hand.
 type Stack struct {
 	ItemID int
@@ -204,7 +229,7 @@ func ResolveWith(words []string, stock []Stack, extra func(itemID int) bool) ([]
 	qty := 1
 	for _, word := range words {
 		word = strings.ToLower(strings.TrimSpace(word))
-		if word == "" {
+		if word == "" || fillers[word] {
 			continue
 		}
 		if n, err := strconv.Atoi(word); err == nil {
@@ -239,6 +264,10 @@ func ResolveWith(words []string, stock []Stack, extra func(itemID int) bool) ([]
 	}
 	return picked, ""
 }
+
+// fillers are words a cook may type between ingredients ("meat and thyme");
+// they name nothing (56 review: "of" matched any "... of ..." name).
+var fillers = map[string]bool{"and": true, "with": true, "of": true, "the": true, "a": true, "an": true, "some": true}
 
 // nameMatch picks the ingredient a word names: an exact short name first,
 // then a whole word of a name, then the start of one.

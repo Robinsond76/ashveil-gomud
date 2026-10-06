@@ -131,6 +131,8 @@
             gap: 6px;
         }
 
+        .cmp-recipes summary { cursor: pointer; font-weight: bold; }
+        .cmp-recipes ul { margin: 4px 0; padding-left: 18px; }
         .cmp-block h4 .cmp-weight { color: var(--t-text-secondary); font-weight: normal; }
         .cmp-sub { color: var(--t-text-secondary); font-size: 0.9em; margin-top: 2px; }
 
@@ -1414,10 +1416,15 @@
         return block;
     }
 
+    // recipesOpen remembers whether the Camp tab's recipe book is unfolded.
+    let recipesOpen = false;
+
     function buildCamp(panel) {
         const camp = (Client.GMCPStructs.Company && Client.GMCPStructs.Company.Camp) || {};
         const data = CompanyData.read();
         keepScroll(panel);
+        const oldBook = panel.querySelector('details.cmp-recipes');
+        if (oldBook) { recipesOpen = oldBook.open; }
         panel.textContent = '';
         const pad = el('div', 'cmp-pad');
         panel.appendChild(pad);
@@ -1467,12 +1474,6 @@
         }
         if (camp.has_camp && Array.isArray(camp.prepared) && camp.prepared.length) {
             pad.appendChild(el('div', 'cmp-line', 'Set by for the next rest: ' + camp.prepared.join(', ') + '.'));
-        }
-        if (Array.isArray(camp.recipes) && camp.recipes.length) {
-            pad.appendChild(el('div', 'cmp-line', 'Recipes you know (type recipes; cook to try a new mix):'));
-            camp.recipes.forEach(function (r) {
-                pad.appendChild(el('div', 'cmp-line', '\u2022 ' + r));
-            });
         }
         if (camp.has_camp && camp.theft_risk) {
             pad.appendChild(el('div', 'cmp-line', 'Thieves work this road: without bells and trip lines, a rest here may be robbed.'));
@@ -1554,6 +1555,21 @@
                 table.appendChild(tr);
             });
             pad.appendChild(table);
+        }
+
+        // Phase 56: the recipe book, folded below everything the camp's
+        // buttons do (56 review: open above them it pushed Rest off a
+        // phone). Whether it is open survives the tab's rebuilds.
+        if (Array.isArray(camp.recipes) && camp.recipes.length) {
+            const book = el('details', 'cmp-block cmp-recipes');
+            book.open = recipesOpen;
+            book.addEventListener('toggle', () => { recipesOpen = book.open; });
+            book.appendChild(el('summary', null, 'Recipe book (' + camp.recipes.length + ')'));
+            const list = el('ul');
+            camp.recipes.forEach(r => list.appendChild(el('li', 'cmp-line', r)));
+            book.appendChild(list);
+            book.appendChild(el('div', 'cmp-note', 'Type cook with a new mix of ingredients to find another dish (help recipes).'));
+            pad.appendChild(book);
         }
     }
 

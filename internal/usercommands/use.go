@@ -33,9 +33,13 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 				return true, nil
 			}
 
-			recipeReadyItemId, blocked := container.SelectRecipe(user.Character.GetSkillLevel, func(finalItemId int) bool {
-				return cookbook.Knows(user.Character, HearthRecipe(container, finalItemId))
-			})
+			var known func(int) bool
+			if container.IsHearth(containerName) {
+				known = func(finalItemId int) bool {
+					return cookbook.Knows(user.Character, HearthRecipe(container, finalItemId))
+				}
+			}
+			recipeReadyItemId, blocked := container.SelectRecipe(user.Character.GetSkillLevel, known)
 
 			if recipeReadyItemId == 0 && blocked.MinLevel > 0 {
 				user.SendText("")
@@ -46,7 +50,11 @@ func Use(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 
 			if recipeReadyItemId == 0 {
 				user.SendText("")
-				user.SendText(fmt.Sprintf(`The <ansi fg="container">%s</ansi> seems to be missing something, or you don't know a dish to make from it. To try a new combination, <ansi fg="command">cook</ansi> it (<ansi fg="command">help recipes</ansi>).`, containerName))
+				if known != nil {
+					user.SendText(fmt.Sprintf(`The <ansi fg="container">%s</ansi> seems to be missing something, or you don't know a dish to make from it. To try a new combination, <ansi fg="command">cook</ansi> it (<ansi fg="command">help recipes</ansi>).`, containerName))
+				} else {
+					user.SendText(fmt.Sprintf(`The <ansi fg="container">%s</ansi> seems to be missing something.`, containerName))
+				}
 				user.SendText("")
 				return true, nil
 			}

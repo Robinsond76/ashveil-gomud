@@ -64,7 +64,7 @@ func cook(cookingLevel int) *users.UserRecord {
 // newCook knows only the common dishes.
 func newCook(cookingLevel int) *users.UserRecord {
 	user := cook(cookingLevel)
-	user.Character.SetMiscData(cookbook.BookKey, nil)
+	user.Character.SetMiscData(cookbook.BookKey, "")
 	return user
 }
 
@@ -223,4 +223,23 @@ func TestUseContainerCooksOnlyLearnedDishes(t *testing.T) {
 		})
 		assert.Contains(t, learned, "requires")
 	})
+}
+
+// 56 review: a crafting container that is not a hearth keeps working
+// without a recipe book, even for a gated recipe in another skill.
+func TestUseALoomNeedsNoRecipeBook(t *testing.T) {
+	setupUseTest(t)
+	skills.SetTestData([]*skills.Skill{{SkillId: "cooking", Name: "Cooking", MaxLevel: 4}, {SkillId: "tailoring", Name: "Tailoring", MaxLevel: 4}}, nil)
+	room := useTestRoom(map[int][]int{useTestStew: {useTestMeat}}, map[int]rooms.RecipeRequirement{useTestStew: {SkillId: "tailoring", MinLevel: 2}}, useTestMeat)
+	room.Containers = map[string]rooms.Container{"tattertail loom": room.Containers["hearth"]}
+	user := newCook(0)
+	user.Character.Skills = map[string]int{"tailoring": 2}
+	out := captureUserText(t, func() {
+		_, err := Use("loom", user, room, 0)
+		require.NoError(t, err)
+	})
+	assert.NotContains(t, out, "don't know a dish")
+	c := room.Containers["tattertail loom"]
+	require.Len(t, c.Items, 1, out)
+	assert.Equal(t, useTestStew, c.Items[0].ItemId)
 }

@@ -51,8 +51,8 @@ it always has.
 
 Thyme tea is common knowledge. You make the other two only once you have
 worked them out: <ansi fg="command">camp prepare remedy with</ansi> [herb] [herb] tries exactly that mix of
-herbs on your ailing company. The right mix for someone who is ill cures them
-and goes into your recipe book (<ansi fg="command">help recipes</ansi>), so you never name it again. Any
+herbs on your ailing company. The right mix for someone who is ill cures the
+first member it helps (one mix is one dose) and goes into your recipe book (<ansi fg="command">help recipes</ansi>), so you never name it again. Any
 other mix, or the right one when nobody needs it, only uses up its herbs. A
 plain <ansi fg="command">camp prepare remedy</ansi> makes only the remedies you know.
 
