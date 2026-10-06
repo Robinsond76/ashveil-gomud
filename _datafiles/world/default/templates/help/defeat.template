@@ -1,0 +1,43 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">defeat</ansi>
+
+When your leader falls, the world rarely leaves your company where it lay.
+Most defeats end in one of four situations, picked by what beat you and
+where. <ansi fg="yellow">No level is lost</ansi> in any of them: the cost is the trouble you wake
+into. No game time passes (<ansi fg="command">help death</ansi> for the rest).
+
+<ansi fg="yellow-bold">Rescued</ansi>
+A passing traveller carries your company to the nearest settlement: one in
+the zone where you fell, otherwise the church you would have woken in.
+Every member wakes Hungry and Exhausted, so eat and rest before the next
+road (<ansi fg="command">help survival</ansi>).
+
+<ansi fg="yellow-bold">Captured</ansi> (by people)
+Your company wakes in the captors' camp, the leader bound for a few
+moments and unable to move. Your pack and most of your gold are locked in
+a chest there, guarded by a weak group; about a quarter of your gold is gone
+for good. What you wear is not taken. Defeat the guards, then
+<ansi fg="command">reclaim</ansi> the chest in that room. Walk away without it and it stays
+held, saved with your character, until you come back; the guards stay there.
+
+<ansi fg="yellow-bold">Left for dead</ansi> (by beasts and the undead)
+You wake where you fell. The foes have gone, and each member of your
+company who was with you carries a lasting wound, a fifth of their health
+held back until it is treated or rested away (<ansi fg="command">help wounds</ansi>).
+
+<ansi fg="yellow-bold">Robbed</ansi> (by people)
+You wake where you fell, the foes gone, a fifth of your gold and a share of
+your loose goods taken for good. Worn gear, quest items, keys and camp
+gear are never taken, and nothing taken is held anywhere.
+
+When nothing fits (a world with no scenarios, or a defeat the table does
+not cover) you wake at the last city's church a level down, as
+<ansi fg="command">help death</ansi> describes. Companions who die in the fight can still be
+raised: <ansi fg="command">help resurrect</ansi>.
+
+<ansi fg="yellow">Usage:</ansi>
+
+  <ansi fg="command">reclaim</ansi>
+  In the capture room, with its guards down, take back the pack and gold
+  the captors held. Elsewhere it tells you where they are held.
+
+The Company panel's Inventory tab shows what is held and where.

@@ -10,7 +10,7 @@ description: An enormous black oak dominates the fork where the Old King's Road
   travelers once chose between the two forest tracks. Beside the oak, a trodden
   footpath leads east to a trappers' clearing, and the smell of woodsmoke and
   curing hides drifts back along it. A second, narrower path winds west through the
-  bracken toward the hamlet of Fernhollow.
+  bracken toward the hamlet of Fernhollow. A faint trail leads north to a brigands' camp.
 biome: forest
 tags:
   - camping
@@ -21,6 +21,8 @@ exits:
     roomid: 2005
   west:
     roomid: 2008
+  north:
+    roomid: 91002
 resources:
 - forage
 - firewood

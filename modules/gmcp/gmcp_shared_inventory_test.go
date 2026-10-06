@@ -1,7 +1,9 @@
 package gmcp
 
 import (
+	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -93,4 +95,22 @@ func TestInventoryPayloadListsEveryGearSlot(t *testing.T) {
 	require.Len(t, p.Slots, 11)
 	assert.Equal(t, inventorySlot{Slot: "weapon", Label: "Weapon"}, p.Slots[0])
 	assert.Equal(t, "pack", p.Slots[len(p.Slots)-1].Slot)
+}
+
+// TestInventoryPayloadReportsHeldGoods (Phase 53): a captured leader's
+// pack and gold show as a held notice with the capture room's title, and
+// nothing is reported when nothing is held.
+func TestInventoryPayloadReportsHeldGoods(t *testing.T) {
+	c := characters.New()
+	assert.Nil(t, seizedOf(c), "nothing held")
+	c.Seized = []items.Item{{ItemId: 1}, {ItemId: 2}}
+	c.SetMiscData(death.SeizedGoldKey, int64(150)) // YAML may bring it back as another integer type
+	held := seizedOf(c)
+	require.NotNil(t, held)
+	assert.Equal(t, 2, held.Items)
+	assert.Equal(t, 150, held.Gold)
+	assert.False(t, held.Here)
+	c.Seized = nil
+	c.SetMiscData(death.SeizedGoldKey, nil)
+	assert.Nil(t, seizedOf(c))
 }

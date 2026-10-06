@@ -1,0 +1,10 @@
+# Phase 53: a captured company's leader wakes bound (help defeat). It holds
+# them in place for a few rounds; it is not a combat effect.
+buffid: 9301
+name: Bound
+description: You are bound hand and foot, and can't move until you work loose.
+secret: false
+triggerrate: 1 round
+triggercount: 6
+flags:
+  - no-go

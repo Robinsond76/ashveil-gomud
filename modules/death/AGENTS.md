@@ -59,3 +59,16 @@ Phase 25b adds the `resurrect` command for dead companions (below); design:
   `SnapshotLoadStateForTest` guard as the company tests, and drives travel
   through the real `go` command (the exit message requeues the command with
   input blocked, so the test unblocks it the way the game loop would).
+- **Phase 53: defeat scenarios** (`defeat.go`, `internal/death/scenario.go`).
+  `suicide` asks `ScenarioProvider.ClaimDefeat` (optional on the provider)
+  after the killer is known and before drops and the corpse. A claim stores
+  the scenario ID (`defeat-scenario`) and the killing foe's group in
+  `MiscData`, skips the engine's penalties, and `Respawn` applies the row
+  after the move (rescued: needs drain; captured: `Character.Seized`, bound
+  buff 9301, guards in the capture room, `reclaim`; left for dead: wounds;
+  robbed: gold and loose goods) with no level taken. The retry path reads the
+  saved ID, so a restart never re-rolls. The table is the `Scenarios` config;
+  an empty table, an unfit row, or the test area's wake override sends the
+  death to the church as before. Tests that exercise the church path call
+  `churchOnly(t)` after `plugins.Load`. Design:
+  `docs/plans/2026-10-06-phase-53-defeat-scenarios.md`.

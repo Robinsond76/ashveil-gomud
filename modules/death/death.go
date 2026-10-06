@@ -23,6 +23,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/plugins"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
+	"github.com/GoMudEngine/GoMud/internal/survival"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -40,6 +41,9 @@ type settings struct {
 	registry   domain.Registry
 	fallbackID int
 	vitalsPct  int
+	// scenarios is the Phase 53 defeat table; empty means every death goes
+	// to the church.
+	scenarios []domain.Scenario
 }
 
 func defaultSettings() settings {
@@ -63,6 +67,11 @@ type DeathModule struct {
 	keeper         func(room *rooms.Room, mobID int) (name string, ok bool)
 	deadCompanions func(leaderUserID int) []company.DeadCompanionView
 	raise          func(leaderUserID int, selector string, roomID int) (company.ResurrectionResult, error)
+	// Phase 53 defeat seams.
+	roll  func(n int) int
+	wound func(leaderUserID, pct int, roll func(int) int) []string
+	needs func(leaderUserID int) []survival.MemberNeeds
+	drain func(leaderUserID int, key survival.MemberKey, cost survival.Exertion) (survival.ExertionResult, error)
 
 	// mu guards cfg, written at load, and returned. It is a leaf lock.
 	mu  sync.Mutex
@@ -86,6 +95,7 @@ func init() {
 	m.plug.ReserveTags(domain.ChurchTag, domain.ShamanTag)
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.AddUserCommand("resurrect", m.resurrectCommand, false, false)
+	m.plug.AddUserCommand("reclaim", m.reclaimCommand, false, false)
 	events.RegisterListener(events.RoomChange{}, m.onRoomChange)
 	events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
@@ -110,6 +120,9 @@ func newModule() *DeathModule {
 		keeper:         keeperInRoom,
 		deadCompanions: company.DeadCompanions,
 		raise:          company.ResurrectCompanion,
+		roll:           util.Rand,
+		needs:          survival.CompanyNeeds,
+		drain:          survival.ApplyMemberDrain,
 		cfg:            defaultSettings(),
 		returned:       map[int]uint64{},
 	}
@@ -188,6 +201,7 @@ func parseSettings(get func(string) any) settings {
 		mudlog.Warn("death: settlement skipped", "error", err)
 	}
 	s.registry = registry
+	s.scenarios = parseScenarios(get("Scenarios"))
 	return s
 }
 
@@ -327,25 +341,40 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 		return // nothing owed
 	}
 	firstAttempt := newDeath
+	cfg := m.config()
+	scenario, defeated := m.scenarioFor(c)
 	if firstAttempt {
-		from, to := c.LoseLevel()
 		op := fmt.Sprintf("death-%d-%d", userID, m.round())
 		c.SetMiscData(domain.PendingKey, op)
-		c.SetMiscData(domain.LastLossKey, domain.LastLossValue(from, to))
-		mudlog.Info("death: level taken", "user", userID, "op", op, "from", from, "to", to)
-		if from > to {
-			user.SendText(fmt.Sprintf(`You lose a level (now level <ansi fg="yellow">%d</ansi>).`, to))
+		if defeated {
+			// A defeat scenario costs no level: the recovery is the cost.
+			c.SetMiscData(domain.LastLossKey, nil)
+			mudlog.Info("death: defeat scenario", "user", userID, "op", op, "scenario", scenario.ID)
 		} else {
-			user.SendText("You lose what you had learned toward level 2.")
+			from, to := c.LoseLevel()
+			c.SetMiscData(domain.LastLossKey, domain.LastLossValue(from, to))
+			mudlog.Info("death: level taken", "user", userID, "op", op, "from", from, "to", to)
+			if from > to {
+				user.SendText(fmt.Sprintf(`You lose a level (now level <ansi fg="yellow">%d</ansi>).`, to))
+			} else {
+				user.SendText("You lose what you had learned toward level 2.")
+			}
 		}
 	}
-	cfg := m.config()
-	dest, ok := domain.Destination(checkpoint(c), cfg.fallbackID, m.validChurch, m.roomLoads)
-	wake, overridden := domain.WakeOverride(c.RoomId)
-	if overridden && m.roomLoads(wake) {
-		dest, ok = wake, true
+	var dest int
+	var ok bool
+	overridden := false
+	if defeated {
+		dest, ok = m.scenarioDestination(scenario, c, cfg)
 	} else {
-		overridden = false
+		dest, ok = domain.Destination(checkpoint(c), cfg.fallbackID, m.validChurch, m.roomLoads)
+		var wake int
+		wake, overridden = domain.WakeOverride(c.RoomId)
+		if overridden && m.roomLoads(wake) {
+			dest, ok = wake, true
+		} else {
+			overridden = false
+		}
 	}
 	if !ok {
 		m.hold(user, firstAttempt, "no church can be loaded", nil)
@@ -361,15 +390,22 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 	}
 	c.Aggro = nil
 	fell := c.RoomId
-	if err := m.moveToRoom(userID, dest); err != nil || c.RoomId != dest {
-		m.hold(user, firstAttempt, "the move to the church failed", err)
-		return
+	if dest != fell {
+		if err := m.moveToRoom(userID, dest); err != nil || c.RoomId != dest {
+			m.hold(user, firstAttempt, "the move to the church failed", err)
+			return
+		}
 	}
 	// Phase 30b: death clears wounds; the church wakes a whole body.
 	c.Wounds = nil
 	c.Health = max(1, c.HealthMax.Value*cfg.vitalsPct/100)
 	c.Mana = c.ManaMax.Value * cfg.vitalsPct / 100
 	moved := m.relocate(userID, fell, dest)
+	church := m.loadRoom(dest)
+	var scenarioLines []string
+	if defeated {
+		scenarioLines = m.applyScenario(user, scenario, church)
+	}
 	op := pendingOp(c)
 	c.SetMiscData(domain.PendingKey, nil)
 	m.mu.Lock()
@@ -377,7 +413,23 @@ func (m *DeathModule) Respawn(userID int, newDeath bool) {
 	m.mu.Unlock()
 	mudlog.Info("death: returned", "user", userID, "op", op, "room", dest, "companions", moved)
 
-	church := m.loadRoom(dest)
+	if defeated {
+		text := scenario.Text
+		if text == "" {
+			text = defaultText(scenario, roomTitle(church))
+		}
+		lines := append([]string{text}, scenarioLines...)
+		if moved > 0 {
+			lines = append(lines, "Your company is with you.")
+		}
+		user.SendText(strings.Join(lines, "\n"))
+		if church != nil && dest != fell {
+			church.SendText(fmt.Sprintf(`<ansi fg="username">%s</ansi> is brought in, beaten and senseless.`, c.Name), userID)
+		}
+		events.AddToQueue(events.CharacterVitalsChanged{UserId: userID})
+		user.Command("look")
+		return
+	}
 	lines := []string{fmt.Sprintf("You wake before the altar of %s.", roomTitle(church))}
 	if overridden {
 		lines[0] = fmt.Sprintf("You wake in %s.", roomTitle(church))

@@ -29,6 +29,7 @@ help:
       - killstats
       - encumbrance
       - death
+      - defeat
       - pets
       - train
       - stat-train
@@ -475,6 +476,7 @@ help-aliases:
   statuses:         [status-effects, statuseffects, bleeding, bleed, staggered, stagger, knockdown, knocked-down, stun, stunned, burning, exposed, armor-break, armor-broken, hobbled, overload, crit-effects, asleep, sleep, paralyzed, paralysis, blighted]
   narration:        [critical, crit, healed, chanting, combat-text, pronouns, ordinals, pain, pain-reaction]
   resurrect:        [resurrection]
+  defeat:           [defeated, defeats, captured, captive, captives, capture, rescued, robbed, robbery, left-for-dead, reclaim, scenario, scenarios, captors, chest]
   wounds:           [wound, wound-limit, woundlimit, heal-wounds, injury, injuries, bandage, bandages, splint, splints, physician, tend]
   light:            [darkness, dark]
   brawling:         [tackle, brawl, disarm, recover, throw]

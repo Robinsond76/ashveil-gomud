@@ -200,6 +200,16 @@ type Provider interface {
 	Respawn(userID int, newDeath bool)
 }
 
+// ScenarioProvider is optionally implemented by the Provider (Phase 53).
+// The engine's death path asks it about a new death before the death's
+// penalties.
+type ScenarioProvider interface {
+	// ClaimDefeat reports whether a defeat scenario will settle this new
+	// death. When it does, the engine skips the drops and the corpse, and
+	// Respawn applies the scenario instead of taking a level.
+	ClaimDefeat(userID int, killer Killer) bool
+}
+
 var (
 	providerMu sync.RWMutex
 	provider   Provider
