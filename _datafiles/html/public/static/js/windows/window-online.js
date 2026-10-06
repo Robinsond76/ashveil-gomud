@@ -134,8 +134,10 @@
             border-bottom: none;
         }
 
-        .online-player-row:hover {
-            background: var(--t-bg-surface);
+        @media (hover: hover) and (pointer: fine) {
+            .online-player-row:hover {
+                background: var(--t-bg-surface);
+            }
         }
 
         .online-player-level {

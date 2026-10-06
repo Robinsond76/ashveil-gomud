@@ -112,7 +112,7 @@ check(overview.includes('Wren') && overview.includes('40 / 100') && overview.inc
 await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 52, route: 'Marksman', tier: 'elite', rank: 50, promotion: '' }));
 check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('Marksman (elite), rank 50'), 'the character window shows the class, tier and rank');
 await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 30, route: 'Warden', tier: 'advanced', rank: 25, promotion: 'waiting-gate' }));
-check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('promotion waits on alignment'), 'and a promotion waiting on alignment');
+check((await page.evaluate(() => document.getElementById('cw-char-name').textContent)).includes('Promotion waits on alignment'), 'and a promotion waiting on alignment');
 await page.evaluate(() => window.gmcp('Char.Info', { name: 'Wren', class: 'ranger', race: 'Human', level: 5 }));
 await page.getByRole('tab', { name: 'Gear' }).click();
 check(await page.evaluate(() => document.getElementById('gw-bp-count').textContent) === 'You 2.5 kg \u00b7 company 46.0 / 50.0 kg', 'Gear header: your weight and the company\'s load against capacity');
@@ -140,7 +140,7 @@ for (const [verb, type, subtype] of [['eat', 'food', 'edible'], ['use', 'object'
   check(JSON.stringify(await page.evaluate(() => window.sent)) === JSON.stringify([verb + ' !3:second']), verb + ' selects the clicked duplicate instance');
 }
 await page.getByRole('tab', { name: 'Skills' }).click();
-check(await page.evaluate(() => document.getElementById('cw-skills-tab').textContent.includes('Jobs')), 'Jobs sit under Skills');
+check(await page.evaluate(() => !document.getElementById('cw-skills-tab').textContent.includes('Jobs') && !document.getElementById('cw-jobs')), 'the stock Jobs section is gone from Skills (Phase 57)');
 await page.evaluate(() => window.gmcp('Char.Pets', [{ name: 'Rex', type: 'dog', level: 2, hunger: 'full', items: [], buffs: [] }]));
 check((await subtabs()).includes('Pet'), 'Pet appears with a pet');
 await page.getByRole('tab', { name: 'Pet' }).click();
@@ -823,9 +823,18 @@ const capabilities = { automatic: [{ name: xss, skill: 'brawling', description: 
 await page.evaluate(c => window.gmcp('Char.Capabilities', c), capabilities);
 const skillsText = () => page.locator('#cw-skills-tab').textContent();
 check((await skillsText()).includes('Trained ranks') && (await skillsText()).includes('Automatic combat abilities') && (await skillsText()).includes('Field capabilities') && (await skillsText()).includes('Camp capabilities'), 'Skills groups ranks, combat, field and camp capabilities');
-check((await skillsText()).includes('Camp Cooking (Manual)') && (await skillsText()).includes('seared game meat requires cooking rank 1'), 'Skills shows manual camp cooking independently of class specialists');
+check((await skillsText()).includes('Camp CookingManual') && (await skillsText()).includes('eared game meat requires cooking rank 1'), 'Skills shows manual camp cooking independently of class specialists');
 check((await skillsText()).includes('disabled by strategy') && (await skillsText()).includes('Autoskill off'), 'Skills explains disabled strategies and autoskills');
 check(await page.locator('#cw-capabilities img').count() === 0 && await page.locator('#cw-skills .csk-pip').count() === 3, 'safe capability text and actual trained-rank maximum');
+// Phase 57 review: a long status badge wraps instead of squeezing the name to one letter a line.
+await page.evaluate(() => window.gmcp('Char.Capabilities', { automatic: [], utility: [
+  { name: 'Camp Cooking', group: 'camp', mode: 'manual', skill: 'cooking', rank: 0, description: 'Manual camp cook at your own lit campfire', enabled: false, reason: 'Missing recipe ingredients or trained ranks' }] }));
+const squeezed = await page.evaluate(() => {
+  const name = [...document.querySelectorAll('#cw-capabilities .csk-name')].find(e => e.textContent === 'Camp Cooking');
+  const lh = parseFloat(getComputedStyle(name).lineHeight) || parseFloat(getComputedStyle(name).fontSize) * 1.4;
+  return { found: !!name, h: name && name.getBoundingClientRect().height, lh, badge: name && name.parentElement.querySelector('.csk-side').getBoundingClientRect().right <= name.closest('.csk-card').getBoundingClientRect().right + 0.5 };
+});
+check(squeezed.found && squeezed.h <= squeezed.lh * 1.5 && squeezed.badge, 'a long capability status wraps below the name and stays inside the card (' + JSON.stringify(squeezed) + ')');
 await page.getByRole('button', { name: 'protection, rank 3 of 3, help' }).focus();
 await page.evaluate(c => window.gmcp('Char.Capabilities', c), capabilities);
 check(await page.evaluate(() => document.activeElement.dataset.skill === 'protection'), 'Skills keeps focus through capability refresh');
@@ -835,7 +844,7 @@ check(JSON.stringify(await page.evaluate(() => window.helpRequests)) === '[[' + 
 check(await page.evaluate(() => { const p = document.getElementById('cw-skills-tab'); return p.scrollWidth <= p.clientWidth + 1; }), 'Skills fits a narrow viewport');
 // Phase 35c: the companions' optional skills and training points, read only.
 await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].skills = { cooking: 2 }; g.members[0].training_points = 3; g.members[1].training_points = 1; g.members[1].name = '<img src=x onerror="window.__xss35c=1">'; window.gmcp('Company', g); }, company);
-check((await skillsText()).includes('Company training') && (await skillsText()).includes('Cooking rank 2; 3 training points.') && (await skillsText()).includes('no optional skills; 1 training point.'), 'Skills lists the companions\' optional skills and training points (35c)');
+check((await skillsText()).includes('Company training') && (await skillsText()).includes('Cooking rank 2') && (await skillsText()).includes('3 training points') && (await skillsText()).includes('No optional skills') && (await skillsText()).includes('1 training point'), 'Skills lists the companions\' optional skills and training points (35c)');
 check(await page.locator('#cw-company-skills img').count() === 0 && await page.locator('#cw-company-skills button').count() === 0 && !(await page.evaluate(() => window.__xss35c)), 'company training text is plain and has no train button');
 check(await page.evaluate(() => { const p = document.getElementById('cw-skills-tab'); return p.scrollWidth <= p.clientWidth + 1; }), 'company training fits a narrow viewport');
 await page.getByRole('tab', { name: 'Effects', exact: true }).click();
@@ -888,6 +897,98 @@ for (const theme of readdirSync(path.join(here, '../../_datafiles/html/public/st
     });
     check(ratios.length > 0 && ratios.every(n => n >= 4.5), theme + ': effect card text contrast >= 4.5 (' + Math.min(...ratios).toFixed(2) + ')');
 }
+
+// Phase 57: the Character panel's Skills, Gear and Overview in the Company
+// type scale, no stock Jobs, and hover highlights that read well and never stick.
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.evaluate(() => { window.helpRequests = []; Client.GMCPRequest = (...args) => { window.helpRequests.push(args); }; });
+await page.getByRole('tab', { name: 'Character', exact: true }).first().click();
+await page.getByRole('tab', { name: 'Skills', exact: true }).click();
+await page.evaluate(() => window.gmcp('Char.Skills', [
+  { name: 'dual-wield', title: 'Dual Wield', description: 'Wield weapons in both hands that normally wouldn\'t allow it.', level: 4, max_level: 4, maximum: true },
+  { name: 'track', title: 'Track', description: 'Read the trail for enemy groups beyond the exits.', level: 1, max_level: 4 }]));
+check((await skillsText()).includes('Dual Wield') && (await skillsText()).includes('Wield weapons in both hands') && (await skillsText()).includes('4/4') && (await skillsText()).includes('MAX'),
+  'Skills names each skill, says what it does and its rank (57)');
+check(await page.getByRole('button', { name: 'Dual Wield, rank 4 of 4, help' }).count() === 1, 'a skill\'s accessible name uses its title');
+check(await page.evaluate(() => {
+  const size = e => parseFloat(getComputedStyle(e).fontSize);
+  const cap = document.querySelector('#cw-capabilities .csk-card');
+  const base = parseFloat(getComputedStyle(document.querySelector('.cmp-tab-btn') || document.body).fontSize) / 0.7;
+  return !cap || (size(cap) <= base * 0.85 && size(document.querySelector('#cw-skills .csk-desc')) <= base * 0.8);
+}), 'Skills text is in the compact Company scale, not the dock\'s full size');
+await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).click();
+check(JSON.stringify(await page.evaluate(() => window.helpRequests)) === '[["Help","track"]]', 'clicking a skill asks for its help page');
+// The Help screen: it takes focus from the control that opened it, nothing behind it keeps a hover, and Escape returns focus.
+await page.evaluate(() => { document.dispatchEvent(new Event('DOMContentLoaded')); });
+await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).focus();
+await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');  // reach it by keyboard
+await page.evaluate(() => GameModal.open({ title: 'track', body: 'Track help', format: 'html' }));
+check(await page.evaluate(() => document.body.classList.contains('game-modal-open') && !document.activeElement.classList.contains('csk-card')), 'opening a help screen takes focus from the control behind it');
+check(await page.evaluate(() => getComputedStyle(document.getElementById('main-container')).pointerEvents === 'none'), 'nothing behind an open help screen takes the pointer');
+await page.keyboard.press('Escape');
+check(await page.evaluate(() => !document.body.classList.contains('game-modal-open') && document.activeElement && document.activeElement.classList.contains('csk-card')), 'closing a screen the keyboard opened returns focus to the control and restores the pointer');
+// Phase 57 review: a screen opened with the mouse and closed with Esc must
+// not light a focus ring on the control behind it; typing resumes instead.
+await page.evaluate(() => document.activeElement.blur());
+await page.getByRole('button', { name: 'Track, rank 1 of 4, help' }).click();
+await page.evaluate(() => GameModal.open({ title: 'track', body: 'Track help', format: 'html' }));
+await page.keyboard.press('Escape');
+check(await page.evaluate(() => !document.body.classList.contains('game-modal-open') && document.querySelectorAll(':focus-visible:not(input)').length === 0 && document.activeElement && document.activeElement.id === 'command-input'), 'closing a screen the mouse opened leaves no focus ring behind and returns to the command line');
+// Hover highlights only for a real pointer, so a tap on a touch screen leaves none stuck.
+const stuck = await page.evaluate(() => {
+  const bad = [];
+  for (const sheet of document.styleSheets) {
+    let rules; try { rules = sheet.cssRules; } catch (e) { continue; }
+    for (const r of rules) {
+      if (r.type === 1 && /:hover/.test(r.selectorText) && !/scrollbar/.test(r.selectorText) && (r.style.background || r.style.backgroundColor || r.style.color)) { bad.push(r.selectorText); }
+    }
+  }
+  return bad;
+});
+check(stuck.length === 0, 'every hover highlight is limited to hover-capable pointers: ' + stuck.join(' | '));
+// A menu has one highlighted entry: the pointer moves focus, no inline highlight is left behind.
+await page.getByRole('tab', { name: 'Company', exact: true }).first().click();
+await page.getByRole('tab', { name: 'Inventory', exact: true }).click();
+await page.evaluate(i => window.gmcp('Company.Inventory', i), inventory);
+await page.locator('button.cmp-item').first().click();
+const entries = page.locator('.ui-menu-item');
+const litCount = () => page.evaluate(() => [...document.querySelectorAll(".ui-menu-item")].filter(e => getComputedStyle(e).backgroundColor !== 'rgba(0, 0, 0, 0)').length);
+check(await litCount() === 1, 'a fresh menu highlights only its first entry');
+await entries.nth(1).hover();
+check(await litCount() === 1 && await page.evaluate(() => document.activeElement === document.querySelectorAll('.ui-menu-item')[1]), 'hovering moves the one highlight, never adds a second');
+await page.mouse.move(5, 5);
+await page.mouse.down();
+await page.mouse.up();
+check(await page.locator('.ui-menu').count() === 0, 'clicking away closes the menu and its highlight');
+// A highlighted row stays readable: the row and its quieter parts against the highlight, in every theme.
+for (const theme of readdirSync(path.join(here, '../../_datafiles/html/public/static/css')).filter(n => /^theme-.*\.css$/.test(n))) {
+  await page.evaluate(theme => new Promise(resolve => {
+    const link = document.getElementById('theme-css');
+    link.onload = resolve;
+    link.href = '../../_datafiles/html/public/static/css/' + theme;
+  }), theme);
+  await page.locator('button.cmp-item').first().hover();
+  const worst = await page.evaluate(() => {
+    function lum(color) {
+      const v = color.match(/[\d.]+/g).slice(0, 3).map(n => Number(n) / 255).map(n => n <= 0.04045 ? n / 12.92 : Math.pow((n + 0.055) / 1.055, 2.4));
+      return v[0] * 0.2126 + v[1] * 0.7152 + v[2] * 0.0722;
+    }
+    const ratio = (a, b) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+    const row = document.querySelector('button.cmp-item:hover');
+    if (!row) { return 0; }
+    const bg = getComputedStyle(row).backgroundColor;
+    return Math.min(...[row, ...row.querySelectorAll('span')].map(e => ratio(getComputedStyle(e).color, bg)));
+  });
+  check(worst >= 3, theme + ': a hovered inventory row reads (' + worst.toFixed(2) + ')');
+}
+// 360px: the Skills, Gear and Overview fit without sideways scrolling.
+await page.setViewportSize({ width: 360, height: 760 });
+await page.getByRole('tab', { name: 'Character', exact: true }).first().click();
+for (const name of ['Overview', 'Gear', 'Skills']) {
+  await page.getByRole('tab', { name, exact: true }).click();
+  check(await page.evaluate(() => [...document.querySelectorAll('#character-window .cw-tab-panel.active')].every(p => p.scrollWidth <= p.clientWidth + 1)), name + ' fits a 360px viewport (57)');
+}
+await page.setViewportSize({ width: 1280, height: 900 });
 
 await browser.close();
 if (failures) { console.log(failures + ' failure(s)'); process.exit(1); }

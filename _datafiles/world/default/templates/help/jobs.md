@@ -19,3 +19,5 @@ To find out about some specific jobs, try the following help commands:
   ~help sorcerer~  
   ~help treasure-hunter~  
   ~help warrior~
+
+**Note:** The web client does not show jobs; its Character > Skills tab lists your trained skills and what each does (~help skills~). Your class, not a job, names your character (~help classes~).
