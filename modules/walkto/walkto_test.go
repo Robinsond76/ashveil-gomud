@@ -118,9 +118,9 @@ func newWorld(t *testing.T) *world {
 	t.Cleanup(func() {
 		module.lookupUser, module.loadRoom, module.after, module.move = lookupUser, loadRoom, after, move
 		module.inBattle, module.summary, module.hostileIn = inBattle, summary, hostileIn
-		module.issued = map[int]string{}
+		module.issued, module.tried = map[int]string{}, map[int]tried{}
 	})
-	module.issued = map[int]string{}
+	module.issued, module.tried = map[int]string{}, map[int]tried{}
 	w.m.after = func(_ time.Duration, f func()) { w.timers = append(w.timers, f) }
 	w.m.move = func(userID int, text string) {
 		// What the world's input handler does with the queued line.
@@ -366,4 +366,21 @@ func TestWalktoThroughPluginsLoad(t *testing.T) {
 	assert.True(t, module.Active(7))
 	w.typed("say hi")
 	assert.False(t, module.Active(7), "the registered Input listener ends it")
+}
+
+// Review 40d: a step the Go command refuses (no action points here; a room
+// script or a no-go buff likewise) used to be re-queued every step forever.
+func TestARefusedStepStopsTheWalk(t *testing.T) {
+	w := newWorld(t)
+	w.walk("inn")
+	require.Equal(t, 96002, w.user.Character.RoomId)
+	w.user.Character.ActionPoints = 0
+	out := w.tick()
+	assert.Contains(t, out, "too tired to move", "the refused step is tried once")
+	assert.True(t, w.m.Active(7))
+	out = w.tick()
+	assert.Contains(t, out, "Something keeps you from going on, so you stop walking.")
+	assert.False(t, w.m.Active(7))
+	assert.Equal(t, 96002, w.user.Character.RoomId)
+	assert.Empty(t, w.timers, "no timer re-arms after the stop")
 }

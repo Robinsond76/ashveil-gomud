@@ -1572,6 +1572,7 @@
                                { label: 'room info ' + id, cmd: 'room info ' + id });
                 }
                 if (items.length === 0) { return; }
+                hideTooltip();
                 uiMenu(e, items);
             });
             canvas.addEventListener('wheel', function (e) {

@@ -48,6 +48,7 @@ type WalktoModule struct {
 
 	mu     sync.Mutex
 	issued map[int]string // the move text a walk just queued, so the Input listener lets it pass
+	tried  map[int]tried  // the step a walk last queued, so a refused move stops the walk
 
 	stepEvery time.Duration
 
@@ -82,6 +83,7 @@ func init() {
 func newModule() *WalktoModule {
 	return &WalktoModule{
 		issued:     map[int]string{},
+		tried:      map[int]tried{},
 		stepEvery:  defaultStepMillis * time.Millisecond,
 		lookupUser: users.GetByUserId,
 		loadRoom:   rooms.LoadRoom,
@@ -95,6 +97,12 @@ func newModule() *WalktoModule {
 		summary:   companyview.For,
 		hostileIn: hostileMob,
 	}
+}
+
+// tried is the walk generation and path index whose step was last queued.
+type tried struct {
+	gen uint64
+	idx int
 }
 
 // timerDue carries a step timer's callback onto the game loop.
@@ -318,6 +326,16 @@ func (m *WalktoModule) step(userID int, gen uint64) {
 	idx := a.Idx
 	switch {
 	case cur == a.Path[idx]:
+		// The last step was queued from here and the walker never left: the
+		// move was refused (a script, a buff, no action points), so stop
+		// rather than retry it every step.
+		m.mu.Lock()
+		last, ok := m.tried[userID]
+		m.mu.Unlock()
+		if ok && last.gen == gen && last.idx == idx {
+			m.stop(userID, "Something keeps you from going on, so you stop walking.")
+			return
+		}
 	case idx+1 < len(a.Path) && cur == a.Path[idx+1]:
 		idx++
 		walkto.Advance(userID, gen, idx)
@@ -336,6 +354,7 @@ func (m *WalktoModule) step(userID int, gen uint64) {
 	next := a.Steps[idx]
 	m.mu.Lock()
 	m.issued[userID] = "go " + next.Exit
+	m.tried[userID] = tried{gen: gen, idx: idx}
 	m.mu.Unlock()
 	m.move(userID, "go "+next.Exit)
 	m.after(m.stepEvery, func() { m.step(userID, gen) })
@@ -409,6 +428,7 @@ func (m *WalktoModule) stop(userID int, why string) bool {
 func (m *WalktoModule) dropIssued(userID int) {
 	m.mu.Lock()
 	delete(m.issued, userID)
+	delete(m.tried, userID)
 	m.mu.Unlock()
 }
 
