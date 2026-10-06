@@ -4,6 +4,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/hexes"
 	"slices"
+	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/battle"
@@ -15,6 +16,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/engagement"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/flasks"
+	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
@@ -349,7 +351,11 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 		info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, id)
 		// Phase 38c3: an Archmage's Arcane Barrage reaches a second foe; Phase 39c:
 		// a Stormcaller's Lightning chains to a second foe.
-		if (action.Spell == "mm" && a.char.ClassEffects().Has(classes.Barrage)) ||
+		// Phase 39i: a Tempest Lord's Storm wall chains Lightning through every
+		// other foe in its target's row.
+		if action.Kind == strategy.Storm && a.char.ClassEffects().Has(classes.ChainRow) {
+			info.TargetMobInstanceIds = append(info.TargetMobInstanceIds, rowFoes(g, id, foes)...)
+		} else if (action.Spell == "mm" && a.char.ClassEffects().Has(classes.Barrage)) ||
 			(action.Kind == strategy.Storm && a.char.ClassEffects().Int(classes.Chain) > 0) ||
 			(action.Spell == "arcanelance" && a.char.ClassEffects().Int(classes.LanceTwin) > 0) {
 			for _, other := range foes {
@@ -592,4 +598,29 @@ func pruneCastAims() {
 func canRaise(a actor, leader int) bool {
 	n := a.char.ClassEffects().Int(classes.Raise)
 	return n > 0 && n > a.char.RTState().Raised && summons.HasFallen(leader)
+}
+
+// rowFoes are the other standing foes of the group in the same formation
+// row as foe id, nearest column first (a Tempest Lord's Storm wall). A foe
+// the group's formation does not place has no row-mates.
+func rowFoes(g enemyparty.Group, id int, foes []int) []int {
+	row, col, ok := g.Party.Formation.Find(mobparty.MemberKeyFor(id))
+	if !ok {
+		return nil
+	}
+	var out []int
+	for _, other := range foes {
+		if other == id {
+			continue
+		}
+		if r, _, found := g.Party.Formation.Find(mobparty.MemberKeyFor(other)); found && r == row {
+			out = append(out, other)
+		}
+	}
+	dist := func(i int) int {
+		_, c, _ := g.Party.Formation.Find(mobparty.MemberKeyFor(out[i]))
+		return abs(c - col)
+	}
+	sort.SliceStable(out, func(i, j int) bool { return dist(i) < dist(j) })
+	return out
 }

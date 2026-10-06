@@ -165,21 +165,28 @@ type ClassRT struct {
 	// resolved (a Sweep's 90%, a held blow's 125%) and is cleared at once.
 	Brace   bool
 	BlowPct int
+	// BraceUsed counts the held blows a brace has answered (a Linebreaker's
+	// Twin brace holds for two).
+	BraceUsed int
 	// The Samurai's lineage (Phase 39b).
-	IaiSpent     bool   // the first strike of the battle has been made
+	IaiSpent     bool   // the first strike of the battle has been made (every strike Iaijutsu covers, for a Sword Saint)
+	IaiStrikes   int    // strikes that carried Iaijutsu's edge this battle (a Sword Saint's Twin draw)
 	Quiet        int    // rounds in a row no blow has landed on it (Focus)
 	Struck       bool   // a blow landed on it since the round began
 	QuietStarted bool   // the first round's Focus count has begun
 	ZanshinRound uint64 // the combat round Zanshin last gave its turn back
 	Bodyguards   int    // Bodyguard steps spent this battle
 	SidePeak     int    // the most of its side standing this battle (Vengeance)
+	Alone        bool   // it is the last of its company standing (a Kenshi's Last stand)
 	EliteRT             // Phase 38c2: the rogue and ranger elites
 	// The Doll Master's lineage (Phase 39d): Guard String uses spent, the
 	// Emergency Splice spent this battle, and the Master's next turn owed to
 	// it.
-	DollGuards int
-	Spliced    bool
-	SpliceTurn bool
+	DollGuards   int
+	Spliced      bool
+	SpliceTurn   bool
+	SplicedAgain bool // a Golem Lord's Rise again has been spent (Phase 39i)
+	Cut          int  // on a foe: the Attack its next attack loses to a String Sovereign's Cut strings
 	// The Arbalist's lineage (Phase 39h): a bolt just loosed leaves its next
 	// turn to the winding (Reload); BoltFired is the first bolt of the battle
 	// spent; AimStruck is a blow landing on the holder since its last bolt

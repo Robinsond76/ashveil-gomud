@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
@@ -110,6 +111,56 @@ func extraBlow(a actor, foe *mobs.Mob, room *rooms.Room, pct int) combat.AttackR
 // it), or every foe in the row from level 8. Only the standing foes of the
 // battle count.
 func sweepTargets(a actor, foe *mobs.Mob, room *rooms.Room, foes map[int]bool) []*mobs.Mob {
+	out := sweepRow(a, foe, room, foes)
+	if a.char.ClassEffects().Int(classes.SweepBehind) > 0 {
+		out = append(out, foesBehind(foe, room, foes)...)
+	}
+	return out
+}
+
+// foesBehind are the standing foes of the battle in the nearest row behind
+// the foe's own (a Reaper's reaping sweep), nearest column first.
+func foesBehind(foe *mobs.Mob, room *rooms.Room, foes map[int]bool) []*mobs.Mob {
+	party, ok := enemyparty.PartyOf(room, foe.InstanceId)
+	if !ok {
+		return nil
+	}
+	row, col, found := party.Formation.Find(mobparty.MemberKeyFor(foe.InstanceId))
+	if !found {
+		return nil
+	}
+	alive := enemyparty.Alive(party)
+	for r := row + 1; r < company.FormationRows; r++ {
+		var out []*mobs.Mob
+		var dist []int
+		for c := 0; c < company.FormationCols; c++ {
+			key := party.Formation.At(r, c)
+			if key == "" || !alive[key] {
+				continue
+			}
+			id, ok := mobparty.InstanceIdFromMemberKey(key)
+			if !ok || !foes[id] {
+				continue
+			}
+			m := mobs.GetInstance(id)
+			if m == nil || m.Character.Health < 1 || m.Character.CombatWithdrawn || m.Character.HasBuffFlag("hidden") {
+				continue
+			}
+			out = append(out, m)
+			dist = append(dist, abs(c-col))
+		}
+		if len(out) == 0 {
+			continue
+		}
+		sort.SliceStable(out, func(i, j int) bool { return dist[i] < dist[j] })
+		return out
+	}
+	return nil
+}
+
+// sweepRow is the foe a sweep is aimed at and the foes beside it (or the
+// whole row from level 8).
+func sweepRow(a actor, foe *mobs.Mob, room *rooms.Room, foes map[int]bool) []*mobs.Mob {
 	out := []*mobs.Mob{foe}
 	party, ok := enemyparty.PartyOf(room, foe.InstanceId)
 	if !ok {
@@ -226,6 +277,10 @@ func useSweep(a actor, foe *mobs.Mob, room *rooms.Room, foes map[int]bool) {
 	}
 	abilityTurns[a.who] = true
 	targets := sweepTargets(a, foe, room, foes)
+	inRow := map[int]bool{}
+	for _, t := range sweepRow(a, foe, room, foes) {
+		inRow[t.InstanceId] = true
+	}
 	sides := 0
 	if cost := fx.Int(classes.ChargedMana); cost > 0 && a.char.Mana >= cost {
 		a.char.ApplyManaChange(-cost)
@@ -236,36 +291,114 @@ func useSweep(a actor, foe *mobs.Mob, room *rooms.Room, foes map[int]bool) {
 		suffix = ` (charged sweep)`
 	}
 	var what string
-	if len(targets) > 1 {
+	switch {
+	case len(targets) > 1 && len(targets) > len(inRow) && fx.Has(classes.SweepBehind):
+		what = fmt.Sprintf(`You sweep your weapon across %s, the foes beside it and the row behind.`, mobHolder(foe).tag())
+	case len(targets) > 1:
 		what = fmt.Sprintf(`You sweep your weapon across %s and the foes beside it.`, mobHolder(foe).tag())
-	} else {
+	default:
 		what = fmt.Sprintf(`You sweep your weapon across %s.`, mobHolder(foe).tag())
 	}
 	a.holder.say(what, `%s sweeps a weapon across the row.`, suffix)
 	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Target: mobRef(foe), Status: `Sweep`})
 	struck := map[int]bool{}
+	arced := map[int]bool{}
 	for _, t := range targets {
 		if struck[t.InstanceId] || t.Character.Health < 1 {
 			continue
 		}
 		struck[t.InstanceId] = true
-		r := extraBlow(a, t, room, pct)
+		share := pct
+		if !inRow[t.InstanceId] {
+			share = fx.Int(classes.SweepBehind) // the row behind takes its own share of a blow
+		}
+		r := extraBlow(a, t, room, share)
 		if sides > 0 && r.Hit && t.Character.Health > 0 {
-			bolt := util.RollDice(1, sides)
-			t.Character.ApplyHealthChange(-bolt)
-			if t.Character.Health < 1 {
-				t.Character.EndAggro()
-				events.AddToQueue(events.AggroChanged{MobInstanceId: t.InstanceId, RoomId: t.Character.RoomId})
+			bolt := chargedHit(a, t, util.RollDice(1, sides), false)
+			// A Tempest Lancer's lightning arcs on to a foe in the next row.
+			if arc := fx.Int(classes.ChargedArc); arc > 0 && bolt > 0 {
+				for _, next := range foesBehind(t, room, foes) {
+					if next.Character.Health < 1 || arced[next.InstanceId] {
+						continue
+					}
+					arced[next.InstanceId] = true
+					chargedHit(a, next, max(1, bolt*arc/100), true)
+					break
+				}
 			}
-			a.holder.say(fmt.Sprintf(`Lightning leaps from your weapon into %s.`, mobHolder(t).tag()),
-				`Lightning leaps from %s's weapon into `+verbatim(mobHolder(t).tag())+`.`, fmt.Sprintf(` (lightning, %d damage)`, bolt))
-			if owner := a.holder.char.GetCharmedUserId(); a.holder.user == nil && owner > 0 {
-				t.Character.TrackPlayerDamage(owner, bolt)
-			} else if a.holder.user != nil {
-				t.Character.TrackPlayerDamage(a.holder.user.UserId, bolt)
+			if fx.Has(classes.ChargedStun) {
+				stormstruck(a, t)
 			}
 		}
 	}
+}
+
+// chargedHit puts a lightning bolt of bolt damage on a foe, with its lines
+// (arc: it is a Tempest Lancer's bolt leaping on to a second foe). It
+// returns the damage dealt.
+func chargedHit(a actor, t *mobs.Mob, bolt int, arc bool) int {
+	t.Character.ApplyHealthChange(-bolt)
+	if t.Character.Health < 1 {
+		t.Character.EndAggro()
+		events.AddToQueue(events.AggroChanged{MobInstanceId: t.InstanceId, RoomId: t.Character.RoomId})
+	}
+	if arc {
+		a.holder.say(fmt.Sprintf(`The lightning arcs on into %s.`, mobHolder(t).tag()),
+			`The lightning from %s's weapon arcs on into `+verbatim(mobHolder(t).tag())+`.`, fmt.Sprintf(` (lightning arc, %d damage)`, bolt))
+	} else {
+		a.holder.say(fmt.Sprintf(`Lightning leaps from your weapon into %s.`, mobHolder(t).tag()),
+			`Lightning leaps from %s's weapon into `+verbatim(mobHolder(t).tag())+`.`, fmt.Sprintf(` (lightning, %d damage)`, bolt))
+	}
+	if owner := a.holder.char.GetCharmedUserId(); a.holder.user == nil && owner > 0 {
+		t.Character.TrackPlayerDamage(owner, bolt)
+	} else if a.holder.user != nil {
+		t.Character.TrackPlayerDamage(a.holder.user.UserId, bolt)
+	}
+	return bolt
+}
+
+// stormstrikeUntil is the combat round through which a foe that a Tempest
+// Lancer's lightning paralyzed can't be paralyzed again.
+var stormstrikeUntil = map[int]int{}
+
+// stormRoll rolls Stormstruck's chance; tests replace it.
+var stormRoll = util.Rand
+
+// UseStormRollForTest replaces Stormstruck's dice until the returned restore
+// is called.
+func UseStormRollForTest(roll func(int) int) (restore func()) {
+	prev := stormRoll
+	stormRoll = roll
+	return func() { stormRoll = prev }
+}
+
+// stormstruck is a Tempest Lancer's capstone: a foe its Charged Sweep's
+// lightning struck may be left paralyzed for a round. A boss resists (10%
+// where others take 35%), and no foe is paralyzed twice in three rounds, so
+// the lightning can never lock a fight.
+func stormstruck(a actor, t *mobs.Mob) {
+	if t.Character.Health < 1 || status.Live(&t.Character, status.Paralyzed) {
+		return
+	}
+	for id, until := range stormstrikeUntil {
+		if until < abilityRounds {
+			delete(stormstrikeUntil, id)
+		}
+	}
+	if until, held := stormstrikeUntil[t.InstanceId]; held && until >= abilityRounds {
+		return
+	}
+	chance := a.char.ClassEffects().Int(classes.ChargedStun)
+	if t.Boss {
+		chance = max(0, chance-25)
+	}
+	if chance <= 0 || stormRoll(100) >= chance {
+		return
+	}
+	stormstrikeUntil[t.InstanceId] = abilityRounds + 3
+	events.AddToQueue(events.Buff{MobInstanceId: t.InstanceId, BuffId: status.Paralyzed, Source: `combat`, Triggers: 2})
+	a.holder.say(fmt.Sprintf(`The lightning locks %s rigid.`, mobHolder(t).tag()),
+		`The lightning locks `+verbatim(mobHolder(t).tag())+` rigid.`, ` (paralyzed)`)
 }
 
 // useBrace is a Brace: the whole turn, and a blow held for the first foe
@@ -273,6 +406,7 @@ func useSweep(a actor, foe *mobs.Mob, room *rooms.Room, foes map[int]bool) {
 func useBrace(a actor, room *rooms.Room) {
 	abilityTurns[a.who] = true
 	a.char.RTState().Brace = true
+	a.char.RT.BraceUsed = 0
 	a.holder.say(`You set your weapon and brace for the first blow.`, `%s sets a weapon and braces for the first blow.`, ` (brace)`)
 	emitCombat(combatstream.Event{Kind: combatstream.Ability, RoomId: room.RoomId, Source: a.ref, Status: `Brace`})
 }
@@ -323,7 +457,10 @@ func braceBlow(attacker, defender statusHolder) {
 		if reached, _ := abilityReach(h, u, attacker.mob, room); !reached {
 			continue
 		}
-		rt.Brace = false
+		rt.BraceUsed++
+		if !fx.Has(classes.BraceTwice) || rt.BraceUsed >= 2 {
+			rt.Brace = false
+		}
 		h.holder.say(fmt.Sprintf(`Your braced weapon meets %s.`, attacker.tag()),
 			`%s's braced weapon meets `+verbatim(attacker.tag())+`.`, ` (brace)`)
 		r := extraBlow(h, attacker.mob, room, strategy.BracePct)
