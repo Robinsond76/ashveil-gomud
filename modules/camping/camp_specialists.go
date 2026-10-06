@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"sort"
 	"strings"
 	"time"
@@ -114,7 +115,7 @@ func fieldsOf(raw any) map[string]any {
 func intsOf(raw any) []int {
 	var out []int
 	for _, v := range listOf(raw) {
-		if n, ok := configInt(v); ok && n > 0 {
+		if n, ok := modconfig.Int(v); ok && n > 0 {
 			out = append(out, n)
 		}
 	}
@@ -129,9 +130,9 @@ func parseCampSettings(get func(string) any) campSettings {
 	}
 	for _, entry := range listOf(get("CampRaids")) {
 		f := fieldsOf(entry)
-		zone := configString(f["zone"])
-		mobID, okM := configInt(f["mobid"])
-		chance, okC := configInt(f["chancepct"])
+		zone := modconfig.String(f["zone"])
+		mobID, okM := modconfig.Int(f["mobid"])
+		chance, okC := modconfig.Int(f["chancepct"])
 		if zone == "" || !okM || mobID <= 0 || !okC || chance < 0 || chance > 100 {
 			mudlog.Warn("camping: CampRaids entry skipped", "entry", entry)
 			continue
@@ -140,8 +141,8 @@ func parseCampSettings(get func(string) any) campSettings {
 	}
 	for _, entry := range listOf(get("CampTheft")) {
 		f := fieldsOf(entry)
-		zone := configString(f["zone"])
-		chance, okC := configInt(f["chancepct"])
+		zone := modconfig.String(f["zone"])
+		chance, okC := modconfig.Int(f["chancepct"])
 		if zone == "" || !okC || chance < 0 || chance > 100 {
 			mudlog.Warn("camping: CampTheft entry skipped", "entry", entry)
 			continue
@@ -149,7 +150,7 @@ func parseCampSettings(get func(string) any) campSettings {
 		s.Thefts[zone] = chance
 	}
 	pct := func(key string, into *int, lo, hi int) {
-		if n, ok := configInt(get(key)); ok && n >= lo && n <= hi {
+		if n, ok := modconfig.Int(get(key)); ok && n >= lo && n <= hi {
 			*into = n
 		}
 	}
@@ -165,19 +166,17 @@ func parseCampSettings(get func(string) any) campSettings {
 	pct("VigilCap", &s.VigilCap, 0, company.MaxLoyalty)
 	pct("ForageBase", &s.ForageBase, 0, 10)
 	pct("ForageLevelsPerOne", &s.ForageLevelsPerOne, 1, 10)
-	if raw := configString(get("CampRewardCooldown")); raw != "" {
-		if d, err := time.ParseDuration(raw); err == nil && d >= 0 {
-			s.RewardCooldown = d
-		}
+	if d, ok := modconfig.Duration(get("CampRewardCooldown")); ok {
+		s.RewardCooldown = d
 	}
 	for _, entry := range listOf(get("Forage")) {
 		f := fieldsOf(entry)
-		zone := configString(f["zone"])
+		zone := modconfig.String(f["zone"])
 		var finds []forageFind
 		for _, it := range listOf(f["items"]) {
 			fi := fieldsOf(it)
-			id, okI := configInt(fi["itemid"])
-			w, okW := configInt(fi["weight"])
+			id, okI := modconfig.Int(fi["itemid"])
+			w, okW := modconfig.Int(fi["weight"])
 			if okI && id > 0 && okW && w > 0 {
 				finds = append(finds, forageFind{ItemID: id, Weight: w})
 			}
@@ -190,14 +189,14 @@ func parseCampSettings(get func(string) any) campSettings {
 	}
 	for _, entry := range listOf(get("CampRecipes")) {
 		f := fieldsOf(entry)
-		out, okO := configInt(f["output"])
+		out, okO := modconfig.Int(f["output"])
 		inputs := intsOf(f["inputs"])
-		level, _ := configInt(f["minlevel"])
+		level, _ := modconfig.Int(f["minlevel"])
 		if !okO || out <= 0 || len(inputs) == 0 {
 			mudlog.Warn("camping: CampRecipes entry skipped", "entry", entry)
 			continue
 		}
-		s.Recipes = append(s.Recipes, campRecipe{Output: out, Inputs: inputs, Skill: strings.ToLower(configString(f["skill"])), MinLevel: level})
+		s.Recipes = append(s.Recipes, campRecipe{Output: out, Inputs: inputs, Skill: strings.ToLower(modconfig.String(f["skill"])), MinLevel: level})
 	}
 	return s
 }

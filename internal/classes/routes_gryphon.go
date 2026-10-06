@@ -22,7 +22,16 @@ func init() {
 			rank(25, "Steady wings", "a Dive costs no Evasion", DiveSteady, 1),
 		}})
 	register(Class{ID: "gryphon-lord", Name: "Gryphon Lord", Lineage: "gryphon-rider", Tier: TierElite, Parent: "gryphon-knight", Gate: GateAny,
-		Role: "a Dive ready every other round", Planned: true})
+		Role: "a Dive ready every other round, and a landing that shakes the foes beside its target",
+		Ranks: []Rank{
+			rank(30, "Lord's stoop", "Dive is ready every other round (cooldown 2)", DiveCD, 1),
+			rank(35, "Lord's plate", "+8 armor in all", Armor, 8),
+			rank(40, "Mountain stoop", "a Dive deals 75% more damage", DiveDmg, 75),
+			rank(45, "Gryphon's vigor", "+10% maximum health", HealthPct, 10),
+			rank(50, "Avalanche", "a Dive deals 100% more damage", DiveDmg, 100),
+			rank(55, "Sky lord", "+4 Attack", Attack, 4),
+			rank(60, "Thunder landing", "a Dive that knocks its foe down also knocks down the foes beside it", DiveQuake, 1),
+		}})
 
 	register(Class{ID: "skyscout", Name: "Skyscout", Lineage: "gryphon-rider", Tier: TierAdvanced, Gate: GateAny,
 		Role: "a watcher on the wing: it spots ambushes and marks its prey",
@@ -33,7 +42,16 @@ func init() {
 			rank(25, "Far sight", "Eagle eye gives +12 Perception", SkyEye, 12),
 		}})
 	register(Class{ID: "falcon-marshal", Name: "Falcon Marshal", Lineage: "gryphon-rider", Tier: TierElite, Parent: "skyscout", Gate: GateAny,
-		Role: "allies strike harder at the foe it dove on", Planned: true})
+		Role: "allies strike harder at the foe it dove on",
+		Ranks: []Rank{
+			rank(30, "Marshal's mark", "a foe a Dive lands on is marked for 2 rounds: every ally has +5 Attack against it", DiveMark, 5),
+			rank(35, "Keen horizon", "Eagle eye gives +18 Perception", SkyEye, 18),
+			rank(40, "Falcon's talons", "+4 Attack", Attack, 4),
+			rank(45, "Rallying cry", "the mark gives +8 Attack", DiveMark, 8),
+			rank(50, "Swift wings", "a Dive deals 50% more damage", DiveDmg, 50),
+			rank(55, "Marshal's guard", "+6 Evasion", Evasion, 6),
+			rank(60, "Sky commander", "the mark gives +12 Attack", DiveMark, 12),
+		}})
 
 	register(Class{ID: "wyvern-rider", Name: "Wyvern Rider", Lineage: "gryphon-rider", Tier: TierAdvanced, Gate: GateAny,
 		Role: "a venomous stoop on a wyvern's tougher hide",
@@ -44,5 +62,14 @@ func init() {
 			rank(25, "Wyvern guile", "+3 Evasion", Evasion, 3),
 		}})
 	register(Class{ID: "wyvern-lord", Name: "Wyvern Lord", Lineage: "gryphon-rider", Tier: TierElite, Parent: "wyvern-rider", Gate: GateAny,
-		Role: "poisoned foes it dives on take more damage", Planned: true})
+		Role: "poisoned foes it dives on take more damage, and a tail that lashes a second foe",
+		Ranks: []Rank{
+			rank(30, "Rotting venom", "a Dive deals 25% more damage to a poisoned foe", DivePoisX, 25),
+			rank(35, "Wyvern scales", "+14% maximum health in all", HealthPct, 14),
+			rank(40, "Barbed tail", "+5 Attack in all", Attack, 5),
+			rank(45, "Deep venom", "a Dive deals 40% more damage to a poisoned foe", DivePoisX, 40),
+			rank(50, "Wyvern cunning", "+7 Evasion in all", Evasion, 7),
+			rank(55, "Power dive", "a Dive deals 50% more damage", DiveDmg, 50),
+			rank(60, "Lashing tail", "a Dive that lands also lashes the foe beside its target with the wyvern's tail for half the Dive's damage, and poisons it", DiveTail, 50),
+		}})
 }

@@ -137,3 +137,36 @@ func TestEliteSpellCosts(t *testing.T) {
 	assert.Equal(t, 7, mother.SpellCost(&spells.SpellData{SpellId: "slumber", Cost: 10}), "Cheaper hexes: 30% in all")
 	assert.Equal(t, 9, mother.SpellCost(&spells.SpellData{SpellId: "mm", Cost: 10}), "only hexes get the 20%")
 }
+
+// Phase 39i2: a Panacean's Elixir leaves a falling ally one health, shared
+// by the whole company's uses, and does nothing for an unmarked ally.
+func TestElixirKeepsAFallingAllyStanding(t *testing.T) {
+	panacean := &Character{}
+	by := panacean.RTState()
+	by.ElixirMax, by.ElixirPct = 2, 25
+	ally := &Character{}
+	dmg, saved := ally.GuardFall(50, 10, false)
+	assert.Equal(t, []any{50, ""}, []any{dmg, saved}, "an ally the Panacean never marked")
+	ally.RTState().ElixirBy = by
+	dmg, saved = ally.GuardFall(9, 10, false)
+	assert.Equal(t, []any{9, ""}, []any{dmg, saved}, "a blow that doesn't fell is left alone")
+	dmg, saved = ally.GuardFall(50, 10, false)
+	assert.Equal(t, []any{9, "elixir"}, []any{dmg, saved})
+	assert.Equal(t, 1, by.ElixirSpent)
+	other := &Character{}
+	other.RTState().ElixirBy = by
+	dmg, saved = other.GuardFall(50, 10, false)
+	assert.Equal(t, []any{9, "elixir"}, []any{dmg, saved}, "a second use, for anyone")
+	dmg, saved = ally.GuardFall(50, 10, false)
+	assert.Equal(t, []any{50, ""}, []any{dmg, saved}, "the uses are spent")
+
+	// Ward of Life is spent first: the Elixir is not wasted on the same blow.
+	wise := &Character{}
+	warded := &Character{}
+	warded.RTState().WardLifeBy = wise.RTState()
+	warded.RT.ElixirBy = by
+	by.ElixirSpent = 0
+	_, saved = warded.GuardFall(50, 10, true)
+	assert.Equal(t, "ward of life", saved)
+	assert.Zero(t, by.ElixirSpent)
+}

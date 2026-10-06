@@ -9,6 +9,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"strings"
@@ -273,7 +274,7 @@ func parseAutoSpells(raw any, exists func(string) bool) []domain.Spell {
 	}
 	var out []domain.Spell
 	for _, entry := range list {
-		fields := lowerKeys(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			continue
 		}
@@ -286,26 +287,6 @@ func parseAutoSpells(raw any, exists func(string) bool) []domain.Spell {
 		out = append(out, domain.Spell{ID: id, Use: use})
 	}
 	return out
-}
-
-func lowerKeys(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			out[strings.ToLower(k)] = v
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			if name, ok := k.(string); ok {
-				out[strings.ToLower(name)] = v
-			}
-		}
-		return out
-	}
-	return nil
 }
 
 func (m *StrategyModule) persistenceAvailableLocked() error {

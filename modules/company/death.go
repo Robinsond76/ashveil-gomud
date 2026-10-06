@@ -7,6 +7,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"slices"
 	"strconv"
 	"strings"
@@ -64,7 +65,7 @@ func (m *CompanyModule) allowanceSeconds() int {
 // allowanceDays reads ResurrectionAllowanceDays: a whole number of days,
 // at least 1, or the default.
 func allowanceDays(raw any) int {
-	if n, ok := configInt(raw); ok && n >= 1 {
+	if n, ok := modconfig.Int(raw); ok && n >= 1 {
 		return n
 	}
 	if raw != nil {

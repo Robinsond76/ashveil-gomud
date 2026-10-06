@@ -25,11 +25,10 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"math"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"math/rand/v2"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -685,7 +684,7 @@ func parseMarkets(raw any, itemExists func(int) bool, zoneExists func(string) bo
 	entries := []map[string]any{}
 	zoneCount := map[string]int{}
 	for _, entry := range list {
-		fields := stringMap(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			mudlog.Warn("market: skipping market entry that is not a map")
 			continue
@@ -724,21 +723,21 @@ func parseGoods(zone string, raw any, itemExists func(int) bool) ([]market.Good,
 	goods := []market.Good{}
 	seenItems := map[int]bool{}
 	for _, goodRaw := range goodList {
-		gf := stringMap(goodRaw)
+		gf := modconfig.Map(goodRaw)
 		if gf == nil {
 			mudlog.Warn("market: skipping good that is not a map", "zone", zone)
 			continue
 		}
 		g := market.Good{
-			ItemID:      configInt(gf["itemid"]),
-			BasePrice:   configInt(gf["baseprice"]),
-			MinPrice:    configInt(gf["minprice"]),
-			MaxPrice:    configInt(gf["maxprice"]),
-			MaxStock:    configInt(gf["maxstock"]),
-			TargetStock: configInt(gf["targetstock"]),
-			StartStock:  configInt(gf["startstock"]),
-			DriftStep:   configInt(gf["driftstep"]),
-			SupplyOnly:  configBool(gf["supplyonly"]),
+			ItemID:      modconfig.IntOr(gf["itemid"], 0),
+			BasePrice:   modconfig.IntOr(gf["baseprice"], 0),
+			MinPrice:    modconfig.IntOr(gf["minprice"], 0),
+			MaxPrice:    modconfig.IntOr(gf["maxprice"], 0),
+			MaxStock:    modconfig.IntOr(gf["maxstock"], 0),
+			TargetStock: modconfig.IntOr(gf["targetstock"], 0),
+			StartStock:  modconfig.IntOr(gf["startstock"], 0),
+			DriftStep:   modconfig.IntOr(gf["driftstep"], 0),
+			SupplyOnly:  modconfig.Bool(gf["supplyonly"]),
 		}
 		if err := g.Validate(); err != nil {
 			mudlog.Warn("market: invalid good", "zone", zone, "itemid", g.ItemID, "error", err)
@@ -778,7 +777,7 @@ func parseSpreadPct(raw any) int {
 	if raw == nil {
 		return defaultSpreadPct
 	}
-	pct := configInt(raw)
+	pct := modconfig.IntOr(raw, 0)
 	if pct < 1 || pct > 90 {
 		mudlog.Warn("market: SpreadPct must be 1..90; using default", "value", raw, "default", defaultSpreadPct)
 		return defaultSpreadPct
@@ -792,61 +791,10 @@ func parseHagglePerLevel(raw any) int {
 	if raw == nil {
 		return defaultHagglePerLevel
 	}
-	pct := configInt(raw)
+	pct := modconfig.IntOr(raw, 0)
 	if pct < 0 || pct > 10 {
 		mudlog.Warn("market: HagglePctPerLevel must be 0..10; using default", "value", raw, "default", defaultHagglePerLevel)
 		return defaultHagglePerLevel
 	}
 	return pct
-}
-
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	}
-	return nil
-}
-
-// configBool reads a yes/no config value; anything else is false.
-func configBool(raw any) bool {
-	switch value := raw.(type) {
-	case bool:
-		return value
-	case string:
-		b, err := strconv.ParseBool(strings.TrimSpace(value))
-		return err == nil && b
-	}
-	return false
-}
-
-func configInt(raw any) int {
-	switch value := raw.(type) {
-	case int:
-		return value
-	case int64:
-		return int(value)
-	case float64:
-		if value == math.Trunc(value) && math.Abs(value) <= math.MaxInt32 {
-			return int(value)
-		}
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		if err == nil {
-			return n
-		}
-	}
-	return 0
 }

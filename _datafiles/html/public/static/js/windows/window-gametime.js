@@ -253,8 +253,10 @@
             if (hoursLeft <= 0) { hoursLeft += 24; }
         }
 
-        const h   = Math.floor(hoursLeft);
-        const m   = Math.round((hoursLeft - h) * 60);
+        // Round to whole minutes first so 1.999h reads "2h 0m", not "1h 60m".
+        const totalMinutes = Math.round(hoursLeft * 60);
+        const h   = Math.floor(totalMinutes / 60);
+        const m   = totalMinutes % 60;
         const hStr = h > 0 ? h + 'h ' : '';
         const mStr = m + 'm';
         const label = night
@@ -408,16 +410,6 @@
             if (elapsed < 0) { elapsed += 24; }
             return elapsed / nightDuration;
         }
-    }
-
-    // Given a rawPos in [0, 1] and a body radius r, return the pixel X
-    // coordinate so that:
-    //   rawPos=0   -> bodyX = -(r*3)     (fully off left edge including glow)
-    //   rawPos=0.5 -> bodyX = w/2        (centered)
-    //   rawPos=1   -> bodyX = w+(r*3)    (fully off right edge including glow)
-    function rawPosToX(rawPos, r, w) {
-        const offscreen = r * 3;
-        return rawPos * (w + 2 * offscreen) - offscreen;
     }
 
     // Given a rawPos in [0, 1], return the pixel Y coordinate on the parabolic

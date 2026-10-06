@@ -786,6 +786,9 @@
         } else if (m.status === 'awaiting') {
             card.appendChild(el('div', 'company-status', 'Away: rejoins when you return'));
             spoken.push('away');
+        } else if (m.status === 'fled') {
+            card.appendChild(el('div', 'company-status', 'Fled: returns after the battle'));
+            spoken.push('fled');
         } else if (m.status === 'separated') {
             card.appendChild(el('div', 'company-status', 'Separated: finding the way back'));
             spoken.push('separated');

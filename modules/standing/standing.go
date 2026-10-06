@@ -7,8 +7,7 @@ package standing
 import (
 	"embed"
 	"fmt"
-	"math"
-	"strconv"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"strings"
 	"sync"
 
@@ -172,7 +171,7 @@ func parseConfig(get func(string) any, zoneExists func(string) bool) config {
 		if raw == nil {
 			return
 		}
-		if v, ok := configInt(raw); ok && v >= lo && v <= hi {
+		if v, ok := modconfig.Int(raw); ok && v >= lo && v <= hi {
 			*into = v
 			return
 		}
@@ -199,14 +198,14 @@ func parseConfig(get func(string) any, zoneExists func(string) bool) config {
 	}
 	entries := []entry{}
 	for _, raw := range list {
-		fields := lowerKeys(raw)
+		fields := modconfig.Map(raw)
 		if fields == nil {
 			mudlog.Warn("standing: settlement entry is not a map; skipped", "value", raw)
 			continue
 		}
 		zone, _ := fields["zone"].(string)
 		zone = strings.TrimSpace(zone)
-		alignment, ok := configInt(fields["alignment"])
+		alignment, ok := modconfig.Int(fields["alignment"])
 		switch {
 		case zone == "":
 			mudlog.Warn("standing: settlement without a zone; skipped")
@@ -234,43 +233,4 @@ func parseConfig(get func(string) any, zoneExists func(string) bool) config {
 		cfg.order = append(cfg.order, e.zone)
 	}
 	return cfg
-}
-
-func lowerKeys(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			out[strings.ToLower(k)] = v
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for k, v := range value {
-			if name, ok := k.(string); ok {
-				out[strings.ToLower(name)] = v
-			}
-		}
-		return out
-	}
-	return nil
-}
-
-func configInt(raw any) (int, bool) {
-	switch v := raw.(type) {
-	case int:
-		return v, true
-	case int64:
-		return int(v), true
-	case float64:
-		if v == math.Trunc(v) && math.Abs(v) <= math.MaxInt32 {
-			return int(v), true
-		}
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(v))
-		if err == nil {
-			return n, true
-		}
-	}
-	return 0, false
 }

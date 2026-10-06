@@ -542,3 +542,15 @@ func TestOnProvisionFiresOnlyOnSuccess(t *testing.T) {
 	_, _ = Provision(4271, "", Benefit{Hydration: 10})
 	assert.Len(t, got, 1, "nor is one without a module")
 }
+
+// TestValidMemberKeyRequiresTheCompanionPrefix: member keys are parsed by
+// the one company helper, so a bare number is never a companion.
+func TestValidMemberKeyRequiresTheCompanionPrefix(t *testing.T) {
+	assert.True(t, ValidMemberKey(LeaderMemberKey))
+	assert.True(t, ValidMemberKey(CompanionMemberKey(3)))
+	for _, key := range []MemberKey{"3", "companion:0", "companion:-1", "mob:3", ""} {
+		assert.False(t, ValidMemberKey(key), "%q", key)
+	}
+	assert.Equal(t, 3, companionOrdinal(CompanionMemberKey(3)))
+	assert.Equal(t, 0, companionOrdinal("3"))
+}

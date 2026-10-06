@@ -108,6 +108,27 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 	if watchBack > 0 {
 		evade[2] += watchBack
 	}
+	// Phase 39i2: a Panacean's Elixir covers every ally of its side, the
+	// first Panacean with an elixir left first.
+	var elixir *characters.ClassRT
+	for _, a := range side {
+		fx := a.char.ClassEffects()
+		if a.char.Health < 1 || fx == nil || fx.Int(classes.ElixirSave) < 1 {
+			continue
+		}
+		rt := a.char.RTState()
+		rt.ElixirMax, rt.ElixirPct = fx.Int(classes.ElixirUses), fx.Int(classes.ElixirSave)
+		if elixir == nil && rt.ElixirSpent < rt.ElixirMax {
+			elixir = rt
+		}
+	}
+	for _, a := range side {
+		if elixir != nil {
+			a.char.RTState().ElixirBy = elixir
+		} else if a.char.RT != nil {
+			a.char.RT.ElixirBy = nil
+		}
+	}
 	for _, a := range side {
 		row := rowOf(a)
 		col := -1

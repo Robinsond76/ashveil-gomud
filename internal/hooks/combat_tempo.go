@@ -131,6 +131,9 @@ func fillTempo(who caster, c *characters.Character) {
 		st = &tempoState{char: c}
 		st.meter.Bonus = float64(c.ClassEffects().Int(classes.OpenMeter)) // Phase 39b: Iaijutsu
 		st.meter.Bonus += float64(scoutMeter(who))                        // Phase 38c2: Scouted ground
+		if c.RT != nil && c.RT.Beast != nil {
+			st.meter.Bonus += float64(c.RT.Beast.Open) // Phase 39i2: a Packlord's hound strikes first
+		}
 		tempoMeters[who] = st
 	}
 	st.epoch, st.fights = c.CombatEpoch, fights

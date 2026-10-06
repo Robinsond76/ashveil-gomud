@@ -280,6 +280,10 @@ func TestNeutralElitesPromoteThroughTheClassCommand(t *testing.T) {
 		{"samurai", "kensai", "sword-saint", "Sword Saint"},
 		{"shaman", "earthspeaker", "mountain-speaker", "Mountain Speaker"},
 		{"dollmaster", "golemancer", "golem-lord", "Golem Lord"},
+		{"beasttamer", "dragon-tamer", "dragon-lord", "Dragon Lord"},
+		{"gryphon-rider", "skyscout", "falcon-marshal", "Falcon Marshal"},
+		{"alchemist", "apothecary", "panacean", "Panacean"},
+		{"arbalist", "sharpshooter", "deadeye", "Deadeye"},
 	} {
 		t.Run(c.to, func(t *testing.T) {
 			w, store := classBrawl(t, 30, -100)
@@ -295,6 +299,7 @@ func TestNeutralElitesPromoteThroughTheClassCommand(t *testing.T) {
 
 // The rogue, ranger, wizard and witch elites arrive with 38c2 and 38c3.
 func TestPlannedEliteIsNotOpenYet(t *testing.T) {
+	defer classes.SetPlannedForTest("packlord", true)() // every elite is open (39i2): borrow one
 	w, store := classBrawl(t, 30, 100)
 	w.withArchetypes("beasttamer")
 	store.state.Class = "houndmaster"

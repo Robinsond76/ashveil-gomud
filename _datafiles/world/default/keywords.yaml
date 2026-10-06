@@ -86,6 +86,18 @@ help:
       - grand-puppeteer
       - golem-lord
       - string-sovereign
+      - packlord
+      - beastlord
+      - dragon-lord
+      - gryphon-lord
+      - falcon-marshal
+      - wyvern-lord
+      - panacean
+      - grenadier
+      - transmuter
+      - siege-master
+      - deadeye
+      - bastion
       - samurai
       - samurai-routes
       - shaman
@@ -387,6 +399,18 @@ help-aliases:
   grand-puppeteer:  [grand puppeteer, grand-puppeteers, third-doll, ironwood, heartwood]
   golem-lord:       [golem lord, golem-lords, rise-again, hammering-blows, ringing-blows]
   string-sovereign: [string sovereign, string-sovereigns, sovereign-strings, cut-strings, fine-fingers]
+  packlord:         [packlords, pack-hunt, wider-hobble, hunting-cry, hound-of-war]
+  beastlord:        [beastlords, cleaving-swipe, raking-swipe, stands-again]
+  dragon-lord:      [dragon lord, dragon-lords, searing-breath, wide-breath, furnace-heart]
+  gryphon-lord:     [gryphon lord, gryphon-lords, lord-s-stoop, thunder-landing, avalanche]
+  falcon-marshal:   [falcon marshal, falcon-marshals, marshal-s-mark, sky-commander]
+  wyvern-lord:      [wyvern lord, wyvern-lords, rotting-venom, lashing-tail]
+  panacean:         [panaceans, elixir, second-elixir, fine-elixir]
+  grenadier:        [grenadiers, grenado, white-fire, arsenal]
+  transmuter:       [transmuters, twin-mutagen, row-mutagen, long-tonic]
+  siege-master:     [siege master, siege-masters, ballista-bolt, ballista, siege-barrage]
+  deadeye:          [deadeyes, hair-trigger, ready-again, dead-calm]
+  bastion:          [bastions, covering-shot, third-shot, unbroken-wall]
   warlord:          [warlords, marked-for-ruin, battle-cry, sunder, relentless]
   archon:           [archons, counterspell, counter-spell, aegis, mana-shield, reflection]
   archmage:         [archmages, overchannel, storm, arcane-barrage, barrage]
@@ -406,9 +430,9 @@ help-aliases:
   repair:           [repairs, mortar, stone mortar, stone-mortar, company repair, mend a golem]
   samurai:          [samurais, duelist, iaijutsu, zanshin, iai]
   gryphon-rider:    [gryphon rider, gryphon, gryphons, rider, dive, talons, skirmisher, skirmish, power-dive]
-  gryphon-rider-routes: [gryphon-knight, gryphon knight, skyscout, wyvern-rider, wyvern rider, gryphon-lord, gryphon lord, falcon-marshal, falcon marshal, wyvern-lord, wyvern lord, lance-charge, eagle-eye, hawk-s-mark]
+  gryphon-rider-routes: [gryphon-knight, gryphon knight, skyscout, wyvern-rider, wyvern rider, lance-charge, eagle-eye, hawk-s-mark]
   arbalist:         [arbalists, crossbowman, crossbowmen, piercing-bolt, piercing bolt, bolt, bolts, winding, armor-breaker, crippling-bolt]
-  arbalist-routes:  [siegebreaker, sharpshooter, warden-of-the-wall, warden of the wall, siege-master, siege master, deadeye, bastion, pavise, sundering-bolts, keen-sight]
+  arbalist-routes:  [siegebreaker, sharpshooter, warden-of-the-wall, warden of the wall, pavise, sundering-bolts, keen-sight]
   samurai-routes:   [kensai, hatamoto, ronin, bodyguard, vengeance]
   shaman:           [shamans, weather-caller, stormcraft, call-fog, callfog, gust, chill-wind, chillwind, lightning, battle-weather, fogbound, windchilled]
   shaman-routes:    [stormcaller, mistweaver, earthspeaker, stoneskin, chain-lightning]
@@ -417,11 +441,11 @@ help-aliases:
   dollmaster:       [doll-master, doll master, dollmasters, dolls, puppetry, puppet-strike, guard-string, tangle, emergency-splice, splice, puppet]
   dollmaster-routes: [puppeteer, golemancer, marionettist, golem, two-dolls]
   alchemist:        [alchemists, flask, flasks, flask-satchel, healing-draught, antidote, fire-flask, fireflask, tonic, bracing-tonic, brewing, reagents]
-  alchemist-routes: [apothecary, bombardier, mutagenist, panacean, grenadier, transmuter, mutagen, potent-draughts, splash-draught, wide-throw, pitch-and-tar]
+  alchemist-routes: [apothecary, bombardier, mutagenist, mutagen, potent-draughts, splash-draught, wide-throw, pitch-and-tar]
   brew:             [brewing-flasks, refill-flasks]
   doll:             [mend-doll, doll-parts, doll-mend]
   beasttamer:       [beast-tamer, beast tamer, beast-tamers, beasttamers, taming, sic, rally, pack-sense, pack sense, bonded-beast, bonded beast, wolf, whip]
-  beasttamer-routes: [houndmaster, bearward, dragon-tamer, dragon tamer, packlord, beastlord, dragon-lord, dragon lord, warhound, war-bear, war bear, drake, breath, hobble]
+  beasttamer-routes: [houndmaster, bearward, dragon-tamer, dragon tamer, warhound, war-bear, war bear, drake, breath, hobble]
   beast:            [beast-name, beast-rest]
   halberdier-routes: [sweeper, vanguard, valkyrie, charged-sweep]
   hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]

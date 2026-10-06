@@ -12,10 +12,10 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/modconfig"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"math/rand"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -414,13 +414,13 @@ func parseProfiles(raw any) map[string]expedition.TravelProfile {
 		return profiles
 	}
 	for _, entry := range list {
-		fields := stringMap(entry)
+		fields := modconfig.Map(entry)
 		if fields == nil {
 			continue
 		}
 		name, _ := fields["name"].(string)
 		name = strings.TrimSpace(name)
-		duration, ok := parseDuration(fields["duration"])
+		duration, ok := modconfig.Duration(fields["duration"])
 		if !ok {
 			continue
 		}
@@ -454,21 +454,21 @@ func parseInterruption(raw any) (*expedition.InterruptionProfile, bool) {
 	if raw == nil {
 		return nil, true
 	}
-	fields := stringMap(raw)
+	fields := modconfig.Map(raw)
 	if fields == nil {
 		return nil, false
 	}
-	checkpoint := configInt(fields["checkpoint"])
+	checkpoint := modconfig.IntOr(fields["checkpoint"], 0)
 	if checkpoint < 1 || checkpoint >= expedition.CheckpointCount {
 		return nil, false
 	}
 	interruption := &expedition.InterruptionProfile{
-		Kind:        expedition.InterruptionKind(configString(fields["kind"])),
+		Kind:        expedition.InterruptionKind(modconfig.String(fields["kind"])),
 		Checkpoint:  uint8(checkpoint),
-		CombatMobID: configInt(fields["combatmobid"]),
+		CombatMobID: modconfig.IntOr(fields["combatmobid"], 0),
 	}
 	if interruption.CombatMobID == 0 {
-		interruption.CombatMobID = configInt(fields["combat_mob_id"])
+		interruption.CombatMobID = modconfig.IntOr(fields["combat_mob_id"], 0)
 	}
 	// Phase 33f2 review: a weighted table (12b) and an ambush's mob were
 	// documented but never read from config.
@@ -478,13 +478,13 @@ func parseInterruption(raw any) (*expedition.InterruptionProfile, bool) {
 			return nil, false
 		}
 		for _, entry := range list {
-			kf := stringMap(entry)
-			weight := configInt(kf["weight"])
+			kf := modconfig.Map(entry)
+			weight := modconfig.IntOr(kf["weight"], 0)
 			if kf == nil || weight <= 0 {
 				return nil, false
 			}
 			interruption.Kinds = append(interruption.Kinds, expedition.WeightedInterruptionKind{
-				Kind:   expedition.InterruptionKind(configString(kf["kind"])),
+				Kind:   expedition.InterruptionKind(modconfig.String(kf["kind"])),
 				Weight: uint(weight),
 			})
 		}
@@ -524,85 +524,16 @@ func (m *ExpeditionModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 	return events.Continue
 }
 
-// stringMap normalizes the map types produced by YAML decoding and lowercases
-// keys so profile fields are matched case-insensitively.
-func stringMap(raw any) map[string]any {
-	switch value := raw.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			out[strings.ToLower(key)] = item
-		}
-		return out
-	case map[any]any:
-		out := make(map[string]any, len(value))
-		for key, item := range value {
-			if name, ok := key.(string); ok {
-				out[strings.ToLower(name)] = item
-			}
-		}
-		return out
-	default:
-		return nil
-	}
-}
-
-func parseDuration(raw any) (time.Duration, bool) {
-	switch value := raw.(type) {
-	case string:
-		trimmed := strings.TrimSpace(value)
-		if d, err := time.ParseDuration(trimmed); err == nil {
-			return d, true
-		}
-		if seconds, err := strconv.Atoi(trimmed); err == nil {
-			return time.Duration(seconds) * time.Second, true
-		}
-	case int:
-		return time.Duration(value) * time.Second, true
-	case int64:
-		return time.Duration(value) * time.Second, true
-	case float64:
-		return time.Duration(value * float64(time.Second)), true
-	}
-	return 0, false
-}
-
 func parseExertion(raw any) survival.Exertion {
-	fields := stringMap(raw)
+	fields := modconfig.Map(raw)
 	if fields == nil {
 		return survival.Exertion{}
 	}
 	return survival.Exertion{
-		Hunger:  configInt(fields["hunger"]),
-		Thirst:  configInt(fields["thirst"]),
-		Fatigue: configInt(fields["fatigue"]),
+		Hunger:  modconfig.IntOr(fields["hunger"], 0),
+		Thirst:  modconfig.IntOr(fields["thirst"], 0),
+		Fatigue: modconfig.IntOr(fields["fatigue"], 0),
 	}
-}
-
-func configInt(raw any) int {
-	switch value := raw.(type) {
-	case int:
-		return value
-	case int64:
-		return int(value)
-	case float64:
-		return int(value)
-	case string:
-		n, err := strconv.Atoi(strings.TrimSpace(value))
-		if err == nil {
-			return n
-		}
-	}
-	return 0
-}
-
-func configString(raw any) string {
-	value, _ := raw.(string)
-	return value
-}
-
-func exertionZero(cost survival.Exertion) bool {
-	return cost.Hunger == 0 && cost.Thirst == 0 && cost.Fatigue == 0
 }
 
 // StartTravel implements expedition.StartProvider. It is called only for
@@ -1248,11 +1179,7 @@ func (m *ExpeditionModule) statusTextLocked(leaderUserID int) string {
 	}
 	lines = append(lines, "Company:")
 	for _, member := range m.companyNeeds(leaderUserID) {
-		lines = append(lines, fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
-			member.Name,
-			member.Needs.Hunger, survival.HungerLabel(member.Needs.Hunger),
-			member.Needs.Thirst, survival.ThirstLabel(member.Needs.Thirst),
-			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue)))
+		lines = append(lines, survival.NeedsLine(member.Name, member.Needs))
 	}
 	return strings.Join(lines, "\n")
 }
