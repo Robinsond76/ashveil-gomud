@@ -1,0 +1,15 @@
+roomid: 2144
+zone: Alderbrook
+title: Farmhouse Loft
+description: A low loft under the thatch, stacked with sacks of grain and blankets. A round
+  window looks out over the green.
+biome: house
+exits:
+  down:
+    roomid: 2115
+resources:
+- shelter
+mapx: 5
+mapy: 1
+mapz: 1
+hascoordinates: true
