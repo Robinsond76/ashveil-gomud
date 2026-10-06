@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/races"
@@ -44,12 +45,12 @@ func combinedEdge(skill, stat float64) float64 {
 
 // attackEdge is the attacker's skill edge over the defender.
 func attackEdge(atk, def *characters.Character) float64 {
-	return SkillEdge(atk.AttackSkill(), def.Evasion())
+	return SkillEdge(attackRating(atk, def), def.Evasion())
 }
 
 // defenseEdge is the defender's skill edge over the attacker.
 func defenseEdge(def, atk *characters.Character) float64 {
-	return SkillEdge(def.Evasion(), atk.AttackSkill())
+	return SkillEdge(def.Evasion(), attackRating(atk, def))
 }
 
 // statAdvantage is StatEdge, never below 0: one-sided chances start at
@@ -385,7 +386,8 @@ func blockChanceForEdge(shieldArmor int, edge float64) int {
 // Attack, plus the Strength edge, with its shield's armor.
 func blockChance(def, atk *characters.Character) int {
 	edge := combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Strength.ValueAdj, atk.Stats.Strength.ValueAdj))
-	return blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge)
+	chance := blockChanceForEdge(def.Equipment.Offhand.GetDefense(), edge) + def.ClassEffects().Int(classes.Block) + def.Aura.Block
+	return max(0, min(100, chance))
 }
 
 // parryModifier is a weapon's parry modifier in percent (Phase 30g2,
@@ -435,7 +437,8 @@ func parryChanceForEdge(edge float64, weaponMod int) int {
 // Attack, plus the Speed edge, with its weapon's modifier.
 func parryChance(def, atk *characters.Character, weaponMod int) int {
 	edge := combinedEdge(defenseEdge(def, atk), StatEdge(def.Stats.Speed.ValueAdj, atk.Stats.Speed.ValueAdj))
-	return parryChanceForEdge(edge, weaponMod)
+	chance := parryChanceForEdge(edge, weaponMod) + def.ClassEffects().Int(classes.Parry)
+	return max(0, min(100, chance))
 }
 
 // rollDefense rolls a defense's chance, logging it under name.

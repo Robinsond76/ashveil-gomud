@@ -240,6 +240,44 @@ set gives a clear, readable class marker and camp state at 32 px; the gap is
 that S2 terrain must keep tiles quieter than units, and 40b should draw the
 here-ring and badge above terrain so the player's sprite never blends in.
 
+**Phase 37b complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39) (2026-10-06):** encounter follow-ups.
+Enemy healers: a Dark Forest goblin shaman band; both pilot zones now hold
+healer groups at one in six of their table (cap stays 20%). Boss respawn: a
+company, and its party, finds a lair quiet for 30 real minutes after beating
+the boss (saved; fleeing starts no wait), so lairs cannot be farmed. Zone
+band: `look` and `scout` name it and rate it against your level (easy, fair,
+risky, dangerous), GMCP `Room.Info.levelband` and the web client room header
+("Lv 5-7", coloured) show it. The unused composition `kind` field is removed
+(re-add with the scent-masking consumable). Tuning: `SkillEdgeSpan` 14 to 8
+makes a zone above the company's level hard (five levels under: 87% to about
+50% wins); bosses are 3 levels over and 2x HP. Measurements:
+[37b measurements](plans/2026-10-06-phase-37b-measurements.md). Decisions
+(delegated, with reasons): span 8 over 10 because it matched the owner's
+8-vs-10-12 fair and 8-vs-13-15 hard gradient best without lengthening
+at-band fights; boss +3/2x over +4/1.5x because those fights ran 3 minutes;
+cooldown 30 minutes, party-wide, starts on the boss's fall, because a
+fled fight should not lock the lair; `kind` removed because nothing reads it.
+Deferred: tier-appropriate gear in the harness (needs item tiers in the
+mirror), durable groups, bad-luck protection.
+
+**37b review (2026-10-06):** accepted and fixed: (1) a member who beat the
+boss could join a party led by a fresh character and farm the lair again,
+because the quiet was checked for the leader only; it now holds while any
+party member's quiet runs (regression test). (2) Only the owner heard that
+the lair fell quiet; every member now does. (3) A player in a quiet lair had
+no way to see why or for how long; `look` and `scout` now say how many
+minutes remain, and `help encounters` says so. (4) The admin config hint
+still said the span ships at 16. Verified, no change: the narration golden
+differs only by the span (regenerated at span 14 it matches master byte for
+byte); the span 8 gradient holds at higher bands (6-fight samples: band
+25-27 and 35-37 at-band 100% wins, two under 79-83%, five under 41-45%), so
+casters' lower rates saturating the edge at high levels does not break
+at-level fights. Follow-ups: the rating uses the player's own level, not a
+company average; the web header's rating refreshes only on the next room
+update after a level-up; boss quiet is keyed by composition id, so two zones
+sharing a lair id would share it; the new goblin shaman borrows the
+goblin-hexer battle sprite until its own is drawn (art follow-up).
+
 **Phase 37 complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) (2026-10-06):** Dark Forest (band 5-7) and the
 Catacombs (band 10-12) spring 2-3 foe battles (sometimes 4) in opted-in
 rooms, on steps and journey arrivals, with a boss lair (boss at band low+2,
@@ -412,6 +450,56 @@ its kit's "padded jerkin" is the catalog padded jack (20163). 35b's flaky
 `TestBattleEndPatchesTheCompany` was fixed in the 35d merge review.
 Verification:
 `make generate`, `make validate`, `go test -race ./...`, `make js-lint`.
+
+**Phase 38b complete: promotions and talents (2026-10-06, PR #34):** class
+promotion at level 10 and 30, talents at 5/15/25/35/45/55, the six lineages'
+routes, and the faith routes (Priest and Hierarch with an Angel, Blood Priest
+and Demonologist with a Demon, Knight and Paladin, Blackguard and Dread
+Knight), with extension points for the neutral classes 39a-39h. See the
+[plan](plans/2026-10-06-phase-38b-promotions-talents.md). Terror, Soul feast
+and Hellfire rank texts were reworded to what is built.
+
+Review (independent reviewer, fixed with regression tests): Bless never wore
+off (now 3 rounds); Siphon cost 13 at every rank (now 10, then 8, free of the
+hungry heal tax); Intimidation lasted the whole battle (now the round of the
+wound and the next); a summon cast in peace spent the next battle's call (now
+battle only); companions summoned against a single foe and ignored the mana
+reserve (now 3+ foes or a boss, reserve kept); "10% less damage" auras gave
+about 5% (now a true percent off the blow); the Angel stayed when its Hierarch
+fell (now departs); two summons of a kind shared a member key (now per
+instance); a player kept casting rank spells after a death cost the level
+(now locked until regained). UI: the company roster names a companion's class
+and flags "promotion ready" and talents to choose; `class paths` shows each
+rank's text (15 advanced classes outside the cleric and warrior lines have no
+help page of their own). Accepted as is: Lay on Hands uses live in memory,
+reset by a camp or inn rest and refilled by a restart (rare, harmless
+leniency). Left as follow-ups (below).
+
+Balance (`TestPhase38bClassRoutes`, 100 fights a cell, even 5v5 mirror,
+company HP lost per fight): fighting healers vs a Mercenary: L25 Knight 41%,
+Blackguard 40% vs 56% (27-28% less, in the 15-30% target); L35 Paladin 38%,
+Dread Knight 46% vs 60%; L45 Paladin 26%, Dread Knight 33% vs 54% (the
+Mercenary has no elite yet, so the gap is wide there). Aura of Dread was the
+outlier (-5 Attack took the Dread Knight to 15% HP lost); it is -1 now.
+Summons against a boss mirror: Hierarch 99/98% wins vs Priest 72/67%,
+Demonologist 85/93% vs Blood Priest 65/55% (+20 to +38, target +10-20). Halving
+summon health or armor barely moved it: the gain comes from enemies turning to
+the arriving summon (a decoy), because it holds no formation cell. Settled
+(timeboxed) and left to the follow-up below.
+
+Follow-ups: summons stand in a front-row cell as the design says (and aim
+stickiness), then re-measure summon wins; Angel and Demon Attack/Evasion rates
+(1.0/1.1, 1.1/0.9; both use warrior rates now); Hierarch cleansing on Minor
+Heal, not only Greater Heal; the broken binding strikes allies only (design:
+nearest creature, friend or foe); Hellfire and Thornhide damage gives no kill
+credit and Soul feast fires on any mob death in the room; Quick chant shortens
+every hex, and Swift Host and Mastered binding skip the manual cast path; help
+pages for the 15 other advanced classes; class and talents in score and the
+web client panels. The race suite surfaced the
+`TestAnEnemysBleedLeavesALightWound` flake (3 in 40 on master: a crushing
+blow's bruise); the test now counts only the bleed's wound.
+Verification: `make generate`, `make validate`, `go test -race ./...`,
+`make js-lint`.
 
 **Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
 takes enemy turns away. Eight hexes (Slumber to Blight) in the `hexcraft`
@@ -726,11 +814,11 @@ their dependencies and those decisions is the
 | 35d | Combat feel: every swing lands with a quality (glancing, solid, telling) the skill edge decides, one-round heals resolve, an 80% after-battle patch threshold, company tactics defaults that grow with the leader's level, HP keeping pace after level 20, short bosses with no strategy, seconds-and-lines targets. [Design](designs/2026-10-06-phase-35d-combat-feel-design.md), **approved 2026-10-06** (all open-question defaults accepted; enemy healers may be uncommon); [plan](plans/2026-10-06-phase-35d-combat-feel.md); from the [combat rebalance second opinion](plans/2026-10-06-combat-rebalance-second-opinion.md) | Owner direction 2026-10-06 | 35b |
 | 37 | Random room encounters and zone level bands, with drop tables, caches, boss rolls and personal loot (loot slice 3). [Plan](plans/2026-10-06-phase-37-random-encounters.md), complete, merged via [PR #29](https://github.com/Robinsond76/ashveil-gomud/pull/29) | Encounter design; loot slice 3 | 35b, 35d, 36b |
 | 38a | Witch base class: hexes, three new statuses, controller role. [Plan](plans/2026-10-06-phase-38a-witch.md), complete, merged via [PR #24](https://github.com/Robinsond76/ashveil-gomud/pull/24) | Level impact §3 | 35b |
-| 38b | Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
+| 38b | Complete, merged via [PR #34](https://github.com/Robinsond76/ashveil-gomud/pull/34). Class promotion at level 10, talents at 5/15/25, core routes for all six lineages; cleric and warrior routes per the approved [faith routes design](designs/2026-10-05-faith-routes-design.md) (summoned Angel and Demon, Paladin and Blackguard fighting healers) | Branching design; level impact §1e; faith routes | 35a, 35a2, 35d, 38a |
 | 35e | Focus the healer: a `healers` focus rule, the company default whenever the enemy has a healer (from leader level 5). Complete, merged via [PR #33](https://github.com/Robinsond76/ashveil-gomud/pull/33) | Roadmap 2026-10-06 (owner's difficulty rule) | — |
-| 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). **Done** (`make smoke`) | Roadmap 2026-10-06 | — |
-| 37b | Encounter and pacing tuning: enemy healers to uncommon, harness cells in tiered gear, the 35b zone rows and 35d misses re-measured on real encounters | Roadmap 2026-10-06 | 37, 35e |
-| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, review pending | Loot slice 4 | 37 |
+| 44 | Live smoke playtest: a scripted run against a real server (tutorial, company, fight, copyover, two players). Complete, merged via [PR #38](https://github.com/Robinsond76/ashveil-gomud/pull/38) (`make smoke`) | Roadmap 2026-10-06 | — |
+| 37b | Encounter and pacing tuning: enemy healers to uncommon, boss respawn, zone band in look and web header, level-gap and boss tuning. Complete, merged via [PR #39](https://github.com/Robinsond76/ashveil-gomud/pull/39); harness gear deferred | Roadmap 2026-10-06 | 37, 35e |
+| 36c | Loot economy: goods in markets, saturation, salvage, `sell junk`, identification fees; merchants buy rolled gear and GMCP shows rolled names (36a deferrals). [Plan](plans/2026-10-06-phase-36c-loot-economy.md), complete, merged via [PR #37](https://github.com/Robinsond76/ashveil-gomud/pull/37) | Loot slice 4 | 37 |
 | 38c-d | Elite routes design for the six lineages: [design](designs/2026-10-06-elite-routes-design.md) and [38c plan](plans/2026-10-06-phase-38c-elite-routes.md), complete (approved under delegation 2026-10-06) | Branching design | — |
 | 38c1 | Elite framework (promotion at 30, gates and waiting, catch-up ranks, elite talents), UI and `help elite`; warrior and cleric elites | Elite routes design; faith routes | 38b |
 | 38c2 | Rogue and ranger elites (Pathfinder, Swordmaster, Nightblade, Sentinel, Marksman, Ravager) | Elite routes design | 38c1 |

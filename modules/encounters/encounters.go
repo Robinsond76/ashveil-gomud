@@ -46,6 +46,9 @@ const defaultText = `Shapes stir nearby, and a party of foes closes in on your c
 // Registry is what the module saves: each leader's grace.
 type Registry struct {
 	Graces map[int]encounters.Grace `yaml:"graces"`
+	// Bosses is when each company's lairs wake again: leader, then the
+	// boss composition's id, to the real time it may spring (37b).
+	Bosses map[int]map[string]time.Time `yaml:"bosses,omitempty"`
 }
 
 // Store abstracts persistence so tests can inject failures.
@@ -59,7 +62,7 @@ type pluginStore struct{ plug *plugins.Plugin }
 func (s pluginStore) Load(r *Registry) error {
 	data, err := s.plug.ReadBytes("encounters")
 	if errors.Is(err, os.ErrNotExist) {
-		*r = Registry{Graces: map[int]encounters.Grace{}}
+		*r = Registry{Graces: map[int]encounters.Grace{}, Bosses: map[int]map[string]time.Time{}}
 		return nil
 	}
 	if err != nil {
@@ -69,10 +72,15 @@ func (s pluginStore) Load(r *Registry) error {
 	if err := yaml.Unmarshal(data, &wire); err != nil {
 		return err
 	}
-	loaded := Registry{Graces: map[int]encounters.Grace{}}
+	loaded := Registry{Graces: map[int]encounters.Grace{}, Bosses: map[int]map[string]time.Time{}}
 	for id, g := range wire.Graces {
 		if id > 0 {
 			loaded.Graces[id] = g
+		}
+	}
+	for id, comps := range wire.Bosses {
+		if id > 0 && len(comps) > 0 {
+			loaded.Bosses[id] = comps
 		}
 	}
 	*r = loaded
@@ -85,6 +93,8 @@ func (s pluginStore) Save(r Registry) error { return s.plug.WriteStruct("encount
 type record struct {
 	enemyparty.Encounter
 	ownerless time.Time // when nobody was last fighting it; zero while someone is
+	comp      string    // the composition's id
+	cooled    bool      // a fallen boss's lair cooldown has been started
 }
 
 // EncountersModule is the module's state.
@@ -95,6 +105,7 @@ type EncountersModule struct {
 	store   Store
 	loadErr error
 	graces  map[int]encounters.Grace
+	bosses  map[int]map[string]time.Time
 	active  map[string]*record // by group id
 
 	clock func() time.Time
@@ -118,11 +129,13 @@ func init() {
 	events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	walking.AddStepListener(m.onStep)
 	walking.AddArrivalListener(m.onArrival)
+	encounters.LairQuiet = m.LairQuiet
 }
 
 func newModule() *EncountersModule {
 	return &EncountersModule{
 		graces: map[int]encounters.Grace{},
+		bosses: map[int]map[string]time.Time{},
 		active: map[string]*record{},
 		clock:  time.Now,
 		rng:    util.Rand,
@@ -149,6 +162,10 @@ func (m *EncountersModule) load() {
 	if m.graces == nil {
 		m.graces = map[int]encounters.Grace{}
 	}
+	m.bosses = loaded.Bosses
+	if m.bosses == nil {
+		m.bosses = map[int]map[string]time.Time{}
+	}
 	m.loadErr = nil
 }
 
@@ -165,7 +182,7 @@ func (m *EncountersModule) saveLocked() error {
 	if m.store == nil {
 		return nil
 	}
-	return m.store.Save(Registry{Graces: m.graces})
+	return m.store.Save(Registry{Graces: m.graces, Bosses: m.bosses})
 }
 
 func (m *EncountersModule) onStep(userID, _, toRoomID int) { m.Entered(userID, toRoomID) }
@@ -233,6 +250,8 @@ func (m *EncountersModule) Entered(userID, roomID int) {
 		return
 	}
 	table := zone.Tables[room.Encounter.Table]
+	// A lair that this company emptied lately stays quiet (37b).
+	table = encounters.Available(table, func(id string) bool { return m.bossCoolingLocked(userID, id) > 0 })
 	if len(table) == 0 {
 		return
 	}
@@ -282,7 +301,7 @@ func (m *EncountersModule) Entered(userID, roomID int) {
 		mudlog.Warn("encounters: spawn failed", "room", roomID, "composition", comp.ID, "error", err)
 		return
 	}
-	m.active[enc.ID] = &record{Encounter: enc}
+	m.active[enc.ID] = &record{Encounter: enc, comp: comp.ID}
 	text := comp.Text
 	if text == "" {
 		text = defaultText
@@ -343,6 +362,7 @@ func (m *EncountersModule) settleLocked(battleJustEnded bool) {
 	sort.Strings(ids)
 	for _, id := range ids {
 		r := m.active[id]
+		m.noteBossFallenLocked(r, now)
 		if r.standing() == 0 {
 			delete(m.active, id)
 			continue
@@ -357,6 +377,90 @@ func (m *EncountersModule) settleLocked(battleJustEnded bool) {
 		if battleJustEnded || now.Sub(r.ownerless) >= encounters.AbandonSeconds*time.Second {
 			r.Remove()
 			delete(m.active, id)
+		}
+	}
+}
+
+// companyLocked is who shares a lair's quiet with the user: the user's
+// party, or the user alone.
+func companyLocked(userID int) []int {
+	p := parties.Get(userID)
+	if p == nil {
+		return []int{userID}
+	}
+	holders := p.GetMembers()
+	if !p.IsMember(userID) {
+		holders = append(holders, userID)
+	}
+	return holders
+}
+
+// bossCoolingLocked is how much longer the lair for composition id stays
+// quiet for the user's company: the longest wait any party member holds,
+// so swapping who leads cannot wake a lair one of them emptied.
+func (m *EncountersModule) bossCoolingLocked(userID int, id string) time.Duration {
+	now := m.clock()
+	var longest time.Duration
+	for _, uid := range companyLocked(userID) {
+		if ready, ok := m.bosses[uid][id]; ok && now.Before(ready) {
+			longest = max(longest, ready.Sub(now))
+		}
+	}
+	return longest
+}
+
+// LairQuiet is how much longer the lair in roomID stays quiet for the
+// user's company (zero when it is not quiet or the room has no lair).
+func (m *EncountersModule) LairQuiet(userID, roomID int) time.Duration {
+	room := rooms.LoadRoom(roomID)
+	if room == nil || room.Encounter == nil || !room.Encounter.Enabled {
+		return 0
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	zone, ok := m.zoneTables(room.Zone)
+	if !ok {
+		return 0
+	}
+	var longest time.Duration
+	for _, c := range zone.Tables[room.Encounter.Table] {
+		if c.Boss {
+			longest = max(longest, m.bossCoolingLocked(userID, c.ID))
+		}
+	}
+	return longest
+}
+
+// noteBossFallenLocked starts the lair's cooldown for the owner and the
+// owner's party the first time a boss record's boss is seen fallen, whether
+// or not its escorts still stand (they are cleared with the group).
+func (m *EncountersModule) noteBossFallenLocked(r *record, now time.Time) {
+	if !r.Boss || r.cooled || len(r.Foes) == 0 {
+		return
+	}
+	if boss := mobs.GetInstance(r.Foes[0]); boss != nil && boss.Character.Health > 0 {
+		return
+	}
+	r.cooled = true
+	ready := now.Add(encounters.BossRespawnSeconds * time.Second)
+	holders := companyLocked(r.Owner)
+	for _, uid := range holders {
+		if m.bosses[uid] == nil {
+			m.bosses[uid] = map[string]time.Time{}
+		}
+		m.bosses[uid][r.comp] = ready
+		for id, t := range m.bosses[uid] {
+			if !now.Before(t) {
+				delete(m.bosses[uid], id) // expired: keep the saved file small
+			}
+		}
+	}
+	if err := m.saveLocked(); err != nil {
+		mudlog.Warn("encounters: save boss cooldown", "user", r.Owner, "error", err)
+	}
+	for _, uid := range holders {
+		if user := users.GetByUserId(uid); user != nil {
+			user.SendText(`<ansi fg="yellow">The lair falls quiet. Its master will not rise here again for your company for about half an hour.</ansi>`)
 		}
 	}
 }
@@ -404,10 +508,13 @@ func (m *EncountersModule) onUserPurged(e events.Event) events.ListenerReturn {
 			delete(m.active, id)
 		}
 	}
-	if _, held := m.graces[evt.UserId]; !held {
+	_, held := m.graces[evt.UserId]
+	_, boss := m.bosses[evt.UserId]
+	if !held && !boss {
 		return events.Continue
 	}
 	delete(m.graces, evt.UserId)
+	delete(m.bosses, evt.UserId)
 	if err := m.saveLocked(); err != nil {
 		mudlog.Error("encounters: save after purge", "user", evt.UserId, "error", err)
 	}

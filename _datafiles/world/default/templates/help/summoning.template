@@ -1,0 +1,50 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">summoning</ansi>
+
+Two elite classes call a creature to fight beside the company for one battle:
+the Hierarch's Angel and the Demonologist's Demon. A summon is not a company
+member: it is made at the caster's level, fights until the battle ends, then is
+gone, and nothing about it is saved.
+
+<ansi fg="yellow-bold">How it is called</ansi>
+
+At level 30 a Hierarch learns <ansi fg="command">Call the Host</ansi> and a Demonologist <ansi fg="command">Bind the Fiend</ansi>.
+The caster uses it on its own as a battle opens, when three or more foes stand
+or one is a boss, and only if the call leaves its mana reserve: you set nothing
+(see <ansi fg="command">help strategy</ansi>). It is called in battle only. It takes 3 chant rounds and costs a tenth of the
+caster's maximum mana, and a blow can break the chant (<ansi fg="command">help interrupts</ansi>).
+It can be called once a battle. If the call is broken, the mana is lost and it
+may be tried again.
+
+<ansi fg="yellow-bold">The Angel (Hierarch)</ansi>
+
+  Health   a warrior's of the Hierarch's level, +25% with a holy symbol
+  Blade    1d8; Mercy heals the most hurt ally for half a Minor Heal every 3
+           rounds; Guard once a battle (steps in front of the most hurt ally)
+  35  Armor of the Host    armor like heavy kit (defense 40)
+  40  Mercy                a full Minor Heal every 2 rounds
+  45  Wings of the Host    allies in the Hierarch's row gain +5 Evasion
+  50  Sword of the Host    Guard 3 times a battle; blade 1d10, +50% vs undead and demons
+  55  Cleansing light      on arrival, removes a harmful status from every ally
+  60  Swift Host           arrives a chant round sooner; Mercy heals two allies
+
+<ansi fg="yellow-bold">The Demon (Demonologist)</ansi>
+
+  Health   80% of a warrior's of the Demonologist's level, +25% with a holy symbol
+  Claws    2d6; Dread falls on its target's group when it arrives
+  35  Infernal hide        armor (defense 30)
+  40  Terror               Dread falls on every enemy group
+  45  Hellfire             every foe takes 2 damage each round while it stands
+  50  Rending claws        2d8, +50% against holy creatures
+  55  Soul feast           when a foe falls while it fights, the most hurt ally
+                           heals half a Minor Heal and the Demonologist regains
+                           5% of its mana
+  60  Mastered binding     arrives a chant round sooner
+
+If the Hierarch falls, the Angel departs. If the Demonologist falls, the
+binding breaks: the Demon claws the nearest ally once and is gone (at 60 it
+simply vanishes).
+
+A summon can be struck and can fall; one that falls fades, leaving no body, no
+experience and no loot.
+
+See also: <ansi fg="command">help classes</ansi>, <ansi fg="command">help cleric-routes</ansi>, <ansi fg="command">help strategy</ansi>, <ansi fg="command">help interrupts</ansi>, <ansi fg="command">help combat</ansi>.

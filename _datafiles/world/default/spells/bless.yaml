@@ -1,0 +1,10 @@
+# Phase 38b: a cleric's blessing, from level 8.
+spellid: bless
+name: Bless
+description: One ally gains +5 Attack and Evasion for 3 combat rounds
+type: helpsingle
+school: restoration
+cost: 8
+waitrounds: 1
+difficulty: 0
+scope: member

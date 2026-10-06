@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/items"
+	"slices"
 	"strings"
 )
 
@@ -72,6 +73,12 @@ type Companion struct {
 	// in State, so no gear snapshot can drop them; nil means none.
 	Skills        map[string]int `yaml:"skills,omitempty"`
 	GrantedSkills map[string]int `yaml:"granted_skills,omitempty"`
+	// Class and Talents are the advanced or elite class it promoted into
+	// and the talents it picked (Phase 38b); everything they give is
+	// derived from them and its level. Blank for an unpromoted companion,
+	// so old saves read as unpromoted.
+	Class   string   `yaml:"class,omitempty"`
+	Talents []string `yaml:"talents,omitempty"`
 }
 
 // Identity is what a companion's live mob is called and looks like, over
@@ -83,11 +90,15 @@ type Identity struct {
 	// Skills are its optional-skill ranks (Phase 35c), from the record,
 	// written onto the live mob at every spawn.
 	Skills map[string]int
+	// Class and Talents are its Phase 38b class state, written onto the
+	// live mob at every spawn.
+	Class   string
+	Talents []string
 }
 
 // Identity is the companion's own name and description.
 func (c Companion) Identity() Identity {
-	return Identity{Name: c.Name, Description: c.Description, Archetype: c.Archetype, Skills: cloneRanks(c.Skills)}
+	return Identity{Name: c.Name, Description: c.Description, Archetype: c.Archetype, Skills: cloneRanks(c.Skills), Class: c.Class, Talents: slices.Clone(c.Talents)}
 }
 
 // AssetOperation is a write-ahead record. Company gear is saved with this
@@ -361,6 +372,52 @@ func (r *Registry) SetCompanionArchetype(leaderUserID, companionID int, archetyp
 			return ErrArchetypeAlreadySet
 		}
 		record.Companions[i].Archetype = archetype
+		r.Put(record)
+		return nil
+	}
+	return ErrUnknownMember
+}
+
+// SetCompanionClass records the class a companion promoted into (Phase 38b).
+// The rules (level, alignment, route) are the caller's; this refuses an
+// unknown companion and never lowers a class: a repeated promotion to the
+// class it already has is a no-op, and a class below its current tier is
+// refused.
+func (r *Registry) SetCompanionClass(leaderUserID, companionID int, class string) error {
+	class = strings.ToLower(strings.TrimSpace(class))
+	if class == "" {
+		return ErrInvalidArchetype
+	}
+	record, ok := r.Get(leaderUserID)
+	if !ok {
+		return ErrUnknownMember
+	}
+	for i, c := range record.Companions {
+		if c.ID != companionID {
+			continue
+		}
+		record.Companions[i].Class = class
+		r.Put(record)
+		return nil
+	}
+	return ErrUnknownMember
+}
+
+// AddCompanionTalent appends a picked talent to a companion (Phase 38b).
+func (r *Registry) AddCompanionTalent(leaderUserID, companionID int, talent string) error {
+	talent = strings.ToLower(strings.TrimSpace(talent))
+	if talent == "" {
+		return ErrInvalidArchetype
+	}
+	record, ok := r.Get(leaderUserID)
+	if !ok {
+		return ErrUnknownMember
+	}
+	for i, c := range record.Companions {
+		if c.ID != companionID {
+			continue
+		}
+		record.Companions[i].Talents = append(slices.Clone(c.Talents), talent)
 		r.Put(record)
 		return nil
 	}

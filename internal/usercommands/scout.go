@@ -2,7 +2,10 @@ package usercommands
 
 import (
 	"fmt"
+	"math"
 	"strings"
+
+	"github.com/GoMudEngine/GoMud/internal/encounters"
 
 	"github.com/GoMudEngine/GoMud/internal/assessment"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -71,8 +74,11 @@ func scoutList(room *rooms.Room, user *users.UserRecord) string {
 	if len(lines) == 0 {
 		if room.Encounter != nil && room.Encounter.Enabled {
 			out := `You see no enemies here, but the place feels dangerous: a fight could find you.`
-			if cfg := rooms.GetZoneConfig(room.Zone); cfg != nil && cfg.Encounters.Band.Valid() {
-				out += fmt.Sprintf(` Foes in %s are of levels %d to %d.`, cfg.Name, cfg.Encounters.Band.Low, cfg.Encounters.Band.High)
+			if note := zoneBandNote(user, room); note != `` {
+				out += ` ` + note
+			}
+			if note := lairNote(user, room); note != `` {
+				out += ` ` + note
 			}
 			return out
 		}
@@ -177,4 +183,51 @@ func burdenedLine(members []*mobs.Mob) string {
 		return ``
 	}
 	return `Burdened: ` + strings.Join(parts, `, `) + `. A burdened fighter dodges less.`
+}
+
+// ratingPhrases say how a zone's band weighs on the viewer's level
+// (encounters.Rating): the owner's rule that difficulty comes only from
+// entering a zone above your level.
+var ratingPhrases = map[string]string{
+	encounters.RatingEasy:      `Your company should manage.`,
+	encounters.RatingFair:      `A fair test at your level.`,
+	encounters.RatingRisky:     `Risky at your level: expect losses.`,
+	encounters.RatingDangerous: `Dangerous at your level: prepare carefully.`,
+}
+
+// zoneBandNote is the zone's level band for look and scout: "Foes in the
+// Dark Forest are of levels 5 to 7." and how that weighs on the viewer's
+// level. Empty for a zone with no band (towns, unfinished zones).
+func zoneBandNote(user *users.UserRecord, room *rooms.Room) string {
+	cfg := rooms.GetZoneConfig(room.Zone)
+	if cfg == nil || !cfg.Encounters.Band.Valid() {
+		return ``
+	}
+	b := cfg.Encounters.Band
+	out := fmt.Sprintf(`Foes in %s are of levels %d to %d.`, cfg.Name, b.Low, b.High)
+	if user != nil && user.Character != nil {
+		if phrase := ratingPhrases[encounters.Rating(user.Character.Level, b)]; phrase != `` {
+			out += ` ` + phrase
+		}
+	}
+	return out
+}
+
+// lairNote says how much longer a lair the viewer's company emptied stays
+// quiet (37b), so a quiet lair reads as earned rather than broken. Empty
+// anywhere else.
+func lairNote(user *users.UserRecord, room *rooms.Room) string {
+	if user == nil || room == nil || encounters.LairQuiet == nil {
+		return ``
+	}
+	left := encounters.LairQuiet(user.UserId, room.RoomId)
+	if left <= 0 {
+		return ``
+	}
+	minutes := int(math.Ceil(left.Minutes()))
+	unit := `minutes`
+	if minutes == 1 {
+		unit = `minute`
+	}
+	return fmt.Sprintf(`Your company emptied this lair: its master will not rise here for you for about %d %s.`, minutes, unit)
 }

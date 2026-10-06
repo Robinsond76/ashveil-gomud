@@ -74,6 +74,9 @@ func InstanceFor(leaderUserID, companionID int) (int, bool) {
 // FormationProvider. See FormationFor for the no-provider-registered
 // contract.
 func LeaderAndKeyForInstance(instanceId int) (int, MemberKey, bool) {
+	if leader, key, ok := SummonOf(instanceId); ok { // Phase 38b
+		return leader, key, true
+	}
 	formationProviderMu.RLock()
 	p := formationProvider
 	formationProviderMu.RUnlock()
@@ -345,6 +348,9 @@ type MemberView struct {
 	Status    MemberStatus
 	Level     int
 	Archetype string
+	// Class is its Phase 38b advanced or elite class id; blank before
+	// promotion.
+	Class string
 	// ExpInto and ExpTNL are the experience into the level and the span to
 	// the next, for a present companion only (Phase 32e); ExpKnown says so.
 	ExpInto, ExpTNL int
@@ -597,4 +603,27 @@ func LivingCompanionIDs(leaderUserID int) []int {
 		return nil
 	}
 	return rp.LivingCompanionIDs(leaderUserID)
+}
+
+// ClassProvider is optionally implemented by the registered
+// FormationProvider (Phase 38b): a read-only view of a companion's class
+// and talents, and the write seam the class commands use. The company
+// module saves with rollback and refreshes the live mob.
+type ClassProvider interface {
+	CompanionClassState(leaderUserID, companionID int) (class string, talents []string, ok bool)
+	PromoteCompanion(leaderUserID, companionID int, class string) error
+	PickCompanionTalent(leaderUserID, companionID int, talent string) error
+}
+
+// CompanionClassState is a companion's class id (blank before promotion)
+// and talents. ok is false without a provider or for an unknown companion.
+func CompanionClassState(leaderUserID, companionID int) (string, []string, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	cp, ok := p.(ClassProvider)
+	if !ok {
+		return "", nil, false
+	}
+	return cp.CompanionClassState(leaderUserID, companionID)
 }

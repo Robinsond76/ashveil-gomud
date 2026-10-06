@@ -39,6 +39,9 @@ type Hex struct {
 	NeedsHealer bool
 	// Morale is a hex that triggers a morale check instead of a status.
 	Morale bool
+	// Single is a hex that reaches one foe at any level, and Class one a
+	// class route grants rather than the Witch's own list (Phase 38b).
+	Single, Class bool
 }
 
 // Buff ids the table names, from internal/status and the shipped buffs.
@@ -64,14 +67,28 @@ var All = []Hex{
 	{Spell: "blight", Level: 18, Buff: buffBlighted, Rounds: 3, Resist: Mysticism, NeedsHealer: true},
 }
 
+// ClassHexes are the hexes a class route grants rather than the Witch's own
+// list (Phase 38b): an Elder Druid's Entangle.
+var ClassHexes = []Hex{
+	{Spell: "entangle", Buff: buffHobbled, Rounds: 2, Resist: Vitality, Single: true, Class: true},
+}
+
 // For is the hex a spell id names.
 func For(spell string) (Hex, bool) {
-	for _, h := range All {
+	for _, h := range append(append([]Hex{}, All...), ClassHexes...) {
 		if h.Spell == spell {
 			return h, true
 		}
 	}
 	return Hex{}, false
+}
+
+// ReachOf is how many foes the hex reaches at a level: one for a Single hex.
+func (h Hex) ReachOf(level int) int {
+	if h.Single {
+		return 1
+	}
+	return Reach(level)
 }
 
 // Reach is how many foes a hex affects at a character level: 1, then 2 at

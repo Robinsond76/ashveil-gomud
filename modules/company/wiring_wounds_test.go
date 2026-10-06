@@ -107,8 +107,16 @@ func TestAnEnemysBleedLeavesALightWound(t *testing.T) {
 		b.fight()
 	}
 	require.False(t, status.Has(&captain.Character))
-	require.Len(t, captain.Character.Wounds, 1, "the fight goes on, so the wound is still open")
-	assert.True(t, captain.Character.Wounds[0].Light)
+	// A crushing blow (a bruise) is a wound source of its own the fixture
+	// can't rule out (it flaked on master); only the bleed's cut counts.
+	var cuts []wounds.Wound
+	for _, w := range captain.Character.Wounds {
+		if w.Kind != wounds.Bruise {
+			cuts = append(cuts, w)
+		}
+	}
+	require.Len(t, cuts, 1, "the fight goes on, so the wound is still open")
+	assert.True(t, cuts[0].Light)
 
 	captain.WoundsRule = "none"
 	captain.Character.Wounds = nil

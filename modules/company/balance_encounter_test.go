@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,17 +34,18 @@ func TestBalanceEncounterShapes(t *testing.T) {
 	}
 	for _, band := range [][2]int{{5, 7}, {10, 12}} {
 		low, high := band[0], band[1]
+		encHigh := high - 1
 		middle := (low + high) / 2
 		var cells []cell
 		for _, level := range []int{low, middle} {
 			for _, count := range []int{2, 3} {
-				for enemy := low; enemy <= high-1; enemy++ {
+				for enemy := low; enemy <= encHigh; enemy++ {
 					cells = append(cells, cell{fmt.Sprintf("ordinary L%d", level), level, companyDefault, enemyDefault, balanceFightOptions{EnemyCount: count, EnemyLevels: []int{enemy}}})
 				}
 			}
 			cells = append(cells, cell{fmt.Sprintf("four L%d", level), level, companyDefault, enemyDefault, balanceFightOptions{EnemyCount: 4, EnemyLevels: []int{low}}})
 			// A healer group is always three foes: the mirror's priest heals.
-			for enemy := low; enemy <= high-1; enemy++ {
+			for enemy := low; enemy <= encHigh; enemy++ {
 				cells = append(cells, cell{fmt.Sprintf("healer L%d", level), level, companyDefault, enemyHealer, balanceFightOptions{EnemyCount: 3, EnemyLevels: []int{enemy}}})
 			}
 		}
@@ -52,10 +54,17 @@ func TestBalanceEncounterShapes(t *testing.T) {
 				cell{fmt.Sprintf("boss+%d escorts L%d", count-1, high), high, companyDefault, enemyDefault, balanceFightOptions{EnemyCount: count, EnemyLevels: []int{low}, Boss: true, Coordination: 1}},
 				cell{fmt.Sprintf("boss+%d escorts L%d tactics", count-1, high), high, companyTactics, enemyDefault, balanceFightOptions{EnemyCount: count, EnemyLevels: []int{low}, Boss: true, Coordination: 1}})
 		}
-		if under := low - 5; under >= 1 {
+		// A company 2, 3 and 5 levels under the band's low: the owner's
+		// gradient (relative ease at and above the band, fine a little
+		// under it, hard enough to need preparation well under it).
+		for _, gap := range []int{2, 3, 5} {
+			under := low - gap
+			if under < 1 {
+				continue
+			}
 			for _, count := range []int{2, 3} {
-				for enemy := low; enemy <= high-1; enemy++ {
-					cells = append(cells, cell{fmt.Sprintf("under L%d", under), under, companyDefault, enemyDefault, balanceFightOptions{EnemyCount: count, EnemyLevels: []int{enemy}}})
+				for enemy := low; enemy <= encHigh; enemy++ {
+					cells = append(cells, cell{fmt.Sprintf("under %d (L%d)", gap, under), under, companyDefault, enemyDefault, balanceFightOptions{EnemyCount: count, EnemyLevels: []int{enemy}}})
 				}
 			}
 		}
@@ -105,6 +114,10 @@ func TestBalanceEncounterShapes(t *testing.T) {
 				assert.GreaterOrEqual(t, wins, 85, name)
 			case len(shape) > 6 && shape[:6] == "healer":
 				assert.GreaterOrEqual(t, wins, 60, name)
+			case strings.HasPrefix(shape, "under 2"):
+				assert.GreaterOrEqual(t, wins, 75, name+": a little under the band is fine")
+			case strings.HasPrefix(shape, "under 5"):
+				assert.LessOrEqual(t, wins, 70, name+": well under the band is hard")
 			}
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -13,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/status"
+	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -115,6 +117,10 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	}
 	if defender.char.Health >= 1 && interrupt.CanBreak(r.Hit, r.DamageToTarget, defender.chanting()) {
 		chance := interrupt.BreakChanceFor(r.DamageToTarget, defender.char.HealthMax.Value, heavyBlow(r), chantDifficulty(defender), chantResolves(defender))
+		// Phase 38b: a class steadies its chants.
+		if pct := defender.char.ClassEffects().Int(classes.ChantBreak); pct > 0 && chance < 100 {
+			chance = chance * (100 - min(pct, 100)) / 100
+		}
 		if interrupt.RollBreak(chance, breakRoll) {
 			breakChant(attacker, defender)
 		} else {
@@ -123,6 +129,72 @@ func afterBlow(attacker, defender statusHolder, r combat.AttackResult) {
 	}
 	if r.Blocked() {
 		counterBlow(attacker, defender)
+	}
+	if r.Parried() {
+		riposteBlow(attacker, defender)
+	}
+	thornsBlow(attacker, defender, r)
+	oathBlow(attacker, defender, r)
+	if r.CritLanded && attacker.char.ClassEffects().Has(classes.TerrorCrit) && defender.char.Health >= 1 && !status.Live(defender.char, status.Staggered) {
+		ev := events.Buff{BuffId: status.Staggered, Source: `combat`}
+		if defender.user != nil {
+			ev.UserId = defender.user.UserId
+		} else {
+			ev.MobInstanceId = defender.mob.InstanceId
+		}
+		events.AddToQueue(ev)
+		defender.say(`Dread of the blow staggers you.`, `Dread of the blow staggers %s.`, ` (staggered)`)
+	}
+}
+
+// riposteBlow lets a parrying Duelist answer the blow at once, with a
+// counter-blow the size of an Opening Strike (half again at Riposte 2).
+// Once a round, as a shield's counter is.
+func riposteBlow(attacker, defender statusHolder) {
+	n := defender.char.ClassEffects().Int(classes.Riposte)
+	if n <= 0 || defender.char.Health < 1 || attacker.char.Health < 1 || countered[defender.ref.Key()] ||
+		attacker.char.RoomId != defender.char.RoomId || defender.char.HasBuffFlag("no-combat") || status.Grounded(defender.char) {
+		return
+	}
+	countered[defender.ref.Key()] = true
+	size := strategy.OpeningStrikeBonus(defender.char.Level)
+	if n >= 2 {
+		size += size / 2
+	}
+	size = max(1, size)
+	dealt := -attacker.char.ApplyHealthChange(-size)
+	for _, e := range attackEvents(defender.ref, attacker.ref, defender.char.RoomId, defender.char, combat.AttackResult{Hit: true, DamageToTarget: dealt}) {
+		if e.Kind == combatstream.Attack {
+			e.WeaponType = `riposte`
+		}
+		emitCombat(e)
+	}
+	suffix := fmt.Sprintf(` (riposte, %d damage)`, dealt)
+	room := rooms.LoadRoom(defender.char.RoomId)
+	var exclude []int
+	if defender.user != nil {
+		defender.user.SendText(fmt.Sprintf(`You turn the parry into a riposte against %s.`, attacker.tag()) + suffix)
+		exclude = append(exclude, defender.user.UserId)
+	}
+	if attacker.user != nil {
+		attacker.user.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s turns the parry into a riposte against you.`, defender.tag())) + suffix)
+		exclude = append(exclude, attacker.user.UserId)
+	}
+	if room != nil {
+		room.SendText(util.CapitalizeFirst(fmt.Sprintf(`%s turns the parry into a riposte against %s.`, defender.tag(), attacker.tag()))+suffix, exclude...)
+	}
+	owner := defender.char.GetCharmedUserId()
+	if defender.user != nil {
+		owner = defender.user.UserId
+	}
+	if owner > 0 {
+		attacker.char.TrackPlayerDamage(owner, dealt)
+	}
+	if attacker.user != nil {
+		roundExtraPlayers = append(roundExtraPlayers, attacker.user.UserId)
+		events.AddToQueue(events.CharacterVitalsChanged{UserId: attacker.user.UserId})
+	} else {
+		roundExtraMobs = append(roundExtraMobs, attacker.mob.InstanceId)
 	}
 }
 
@@ -181,7 +253,8 @@ func spellName(spellId string) (string, int) {
 // enemy a restart owed.
 func breakChant(by, chanter statusHolder) {
 	spellId := chanter.char.Aggro.SpellInfo.SpellId
-	name, cost := spellName(spellId)
+	name, _ := spellName(spellId)
+	cost := chanter.char.SpellCost(spells.GetSpell(spellId))
 	roomId := chanter.char.RoomId
 	emitCombat(combatstream.Event{Kind: combatstream.Interrupt, RoomId: roomId, Source: by.ref, Target: chanter.ref, SpellId: spellId, Status: name, Outcome: combatstream.OutcomeSucceeded})
 	emitCast(combatstream.CastComplete, chanter.ref, spellId, combatstream.OutcomeInterrupted, roomId)

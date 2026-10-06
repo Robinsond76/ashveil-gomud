@@ -1,0 +1,23 @@
+raceid: 23
+name: angel
+defaultpronouns: it
+description: A radiant warrior of the Host, called for a single battle.
+defaultalignment: 90
+size: medium
+groupnoun: host
+unarmedname: radiant blade
+tnlscale: 1.0
+tameable: false
+stats:
+  strength:
+    base: 3
+  speed:
+    base: 2
+  vitality:
+    base: 3
+damage:
+  diceroll: 1d8
+disabledslots: []
+# Phase 38b: a summon never breaks and is never an enemy's choice of morale.
+neverbreak: true
+targeting: nearest

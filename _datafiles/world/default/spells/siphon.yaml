@@ -1,0 +1,14 @@
+# Phase 38b: a Blood Priest's drain; sized like Magic Missile.
+spellid: siphon
+name: Siphon
+description: Drains a foe for a Magic Missile's worth and heals the most hurt ally for it
+type: harmmulti
+school: restoration
+cost: 10
+waitrounds: 1
+difficulty: 75
+power:
+  base: 7
+  dice: 1d6
+  leveldiv: 10
+  mysticismdiv: 15

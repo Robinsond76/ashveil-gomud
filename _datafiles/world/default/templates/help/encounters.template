@@ -14,6 +14,17 @@ normal battle begins with your company set up as it is.
   set its own, higher or lower or none. <ansi fg="command">scout</ansi> in a room that allows them says
   so and names the zone's level band.
 
+<ansi fg="yellow-bold">The zone's level band</ansi>
+  <ansi fg="command">look</ansi> and <ansi fg="command">scout</ansi> name the levels a zone's foes come at ("Foes in the Dark
+  Forest are of levels 5 to 7") and how that weighs on your level, and the
+  web client's room panel shows it as "Lv 5-7" beside the zone's name:
+  green is easy, yellow fair, orange risky, red dangerous.
+    easy       your level is at or above the band's low end
+    fair       one or two levels under it: a fair test
+    risky      three or four under: expect losses
+    dangerous  five or more under: prepare carefully (formation,
+               tactics, healers) or come back stronger
+
 <ansi fg="yellow-bold">Breathing room</ansi>
   After any battle, the next two entries into such rooms roll nothing, and
   at least 30 real seconds must pass besides. It is saved with you, so
@@ -26,16 +37,24 @@ normal battle begins with your company set up as it is.
   never by your level: a zone for levels 8 to 10 sends foes you can beat at
   those levels, and a company well under the band risks losing. Foes are
   drawn from the zone's own kinds, and a healer is in about one group in
-  five and never in a group of four. Four foes come from the band's low
+  six and never in a group of four. A company that has set its tactics to
+  focus the healer (<ansi fg="command">help tactics</ansi>) cuts such a group down faster. Four foes come from the band's low
   end. How well each fights together follows their level
   (<ansi fg="command">help coordination</ansi>).
 
 <ansi fg="yellow-bold">Bosses</ansi>
   A boss waits in a lair and comes with two or three escorts at the band's
-  low level. The boss is two levels over them with 1.75 times the health,
+  low level. The boss is three levels over them with twice the health,
   and the group fights without a strategy: no focus fire, no guard. What
   makes it frightening is the boss itself, and a hex holds it half as long
   (<ansi fg="command">help hexes</ansi>).
+  Beat the boss and its lair falls quiet for your company, and for your
+  party, for about half an hour of real time: no boss springs there until
+  it has passed, so a lair cannot be farmed. It is saved, so a restart
+  does not wake it early. Fleeing or losing starts no wait. While it is
+  quiet, <ansi fg="command">look</ansi> and <ansi fg="command">scout</ansi> in the lair say how many minutes are left.
+  The wait follows each member who beat the boss, so changing who leads
+  the party does not wake it.
 
 <ansi fg="yellow-bold">Whose fight it is</ansi>
   The foes are set on your company alone. They stand in the room where

@@ -76,9 +76,9 @@ func PlayerKnows(u *users.UserRecord) func(string) bool {
 
 // CompanionKnows reports the spells a companion knows: its archetype's at
 // its level (Phase 32d).
-func CompanionKnows(archetype string, level int) func(string) bool {
+func CompanionKnows(archetype, class string, level int) func(string) bool {
 	known := map[string]bool{}
-	for _, id := range archetypes.CompanionSpells(archetype, level) {
+	for _, id := range archetypes.CompanionKnownSpells(archetype, class, level) {
 		known[id] = true
 	}
 	return func(id string) bool { return known[id] }
@@ -107,7 +107,7 @@ func nativeMembers(user *users.UserRecord) ([]member, bool) {
 			key:       string(company.CompanionMemberKey(v.ID)),
 			name:      v.Name,
 			archetype: v.Archetype,
-			knows:     CompanionKnows(v.Archetype, v.Level),
+			knows:     CompanionKnows(v.Archetype, v.Class, v.Level),
 			abilities: domain.CompanionAbilities(v.Archetype),
 		}
 		if hasForm {
