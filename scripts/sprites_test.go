@@ -111,7 +111,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 	for _, r := range []string{"water", "forage", "herbs", "firewood", "shelter", "fishing", "game", "unknown", "depleted"} {
 		want = append(want, "map/resources/"+r+".png")
 	}
-	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider"}, promotedClasses...) {
+	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist"}, promotedClasses...) {
 		want = append(want, "map/units/"+u+"/idle.png", "map/units/"+u+"/walk.png")
 	}
 	for _, rel := range want {
@@ -174,7 +174,7 @@ func TestSpriteSetsMatchSpecificationLayout(t *testing.T) {
 // feet on row 30 (frameHeight-2) and nothing outside the frame margins.
 func TestMapUnitSpritesFollowAnchorRules(t *testing.T) {
 	dir := spriteDir(t)
-	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider"}, promotedClasses...) {
+	for _, u := range append([]string{"warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer", "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist"}, promotedClasses...) {
 		for file, frames := range map[string]int{"idle.png": 2, "walk.png": 4} {
 			f, err := os.Open(filepath.Join(dir, "map", "units", u, file))
 			if err != nil {
@@ -275,7 +275,7 @@ func TestSpriteSetsS2S3AreComplete(t *testing.T) {
 	for _, b := range strings.Fields("forest deep-web plains road city slums interior catacombs cave snowfield ice-keep shore swamp desert highlands training-yard") {
 		want = append(want, "battle/backgrounds/"+b+".png")
 	}
-	for _, u := range strings.Fields(`warrior rogue ranger cleric wizard witch adventurer dollmaster halberdier samurai shaman gryphon-rider ` + strings.Join(promotedClasses, " ") + ` unknown-humanoid unknown-beast unknown-large
+	for _, u := range strings.Fields(`warrior rogue ranger cleric wizard witch adventurer dollmaster halberdier samurai shaman gryphon-rider alchemist ` + strings.Join(promotedClasses, " ") + ` unknown-humanoid unknown-beast unknown-large
 		rat rat-big wolf-timber wolf-snow dog-junkyard spider-hatchling spider-large spider-warrior spider-queen skeleton bone-warden
 		bonecrafter lich acolyte-dark grave-chanter brigand ruffian ruffian-dangerous ruffian-enforcer poacher poacher-shieldman
 		bonesetter shadow-trainee shadow-master goblin goblin-hexer goblin-loot faerie imp-forest fungus ent ogre-forest crocodile

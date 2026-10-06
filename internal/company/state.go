@@ -26,6 +26,9 @@ type MemberState struct {
 	// Dolls are a Doll Master companion's dolls (Phase 39d): name, wear,
 	// broken flag and gear, snapshotted with the companion.
 	Dolls []characters.DollState `yaml:"dolls,omitempty"`
+	// FlasksSpent is the flasks an Alchemist companion has thrown since it
+	// last brewed (Phase 39g); 0 is a full satchel.
+	FlasksSpent int `yaml:"flasksspent,omitempty"`
 }
 
 // Vitals are a companion's saved health and mana (Phase 33h2). Percent,

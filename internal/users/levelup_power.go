@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 )
@@ -71,6 +72,10 @@ func abilityPower(c *characters.Character, known []strategy.Ability) []powerEntr
 		case strategy.Dive: // Phase 39f review: Power dive and Falling stone grow it
 			out = append(out, powerEntry{name: "Dive", size: fmt.Sprintf("%d%% of a blow", 100+c.ClassEffects().Int(classes.DiveDmg))})
 		}
+	}
+	// Phase 39g: an Alchemist's satchel grows a flask every three levels.
+	if flasks.IsAlchemist(c) {
+		out = append(out, powerEntry{name: "Flask satchel", size: fmt.Sprintf("%d flasks", flasks.Capacity(c))})
 	}
 	return out
 }

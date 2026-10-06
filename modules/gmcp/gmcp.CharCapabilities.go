@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -51,7 +52,7 @@ func buildCapabilities(user *users.UserRecord) charCapabilities {
 	knows := func(id string) bool {
 		return user.Character.GetSkillLevel("cast") > 0 && user.Character.HasSpell(id) && spells.GetSpell(id) != nil
 	}
-	for _, use := range []strategy.Use{strategy.UseHeal, strategy.UseHealAll, strategy.UseAttack, strategy.UseAttackAll} {
+	for _, use := range []strategy.Use{strategy.UseHeal, strategy.UseHealAll, strategy.UseAttack, strategy.UseAttackAll, strategy.UseCure, strategy.UseBless, strategy.UseFlame} {
 		auto, ok := strategy.SpellFor(strategy.AutoSpells(), use, knows)
 		if !ok {
 			continue
@@ -60,21 +61,37 @@ func buildCapabilities(user *users.UserRecord) charCapabilities {
 		role := strategy.Caster
 		when := "standing foes remain; group spells prefer two or more foes"
 		attack := use == strategy.UseAttack || use == strategy.UseAttackAll
-		if !attack {
+		switch use {
+		case strategy.UseHeal, strategy.UseHealAll:
 			role = strategy.Healer
 			when = fmt.Sprintf("an uncovered ally falls below %d%% of its wound limit; group healing prefers two or more hurt allies", strategy.TacticsFor(user.UserId).Resolve().Healing)
+		case strategy.UseCure:
+			role = strategy.Healer
+			when = "an ally carries poison or bleeding and no one is in danger"
+		case strategy.UseBless:
+			role = strategy.Healer
+			when = "no one needs healing and a battle is on: one tonic for each ally without one"
+		case strategy.UseFlame:
+			role = strategy.Healer
+			when = fmt.Sprintf("no one needs healing and more than %d flasks remain", strategy.FlaskKeep)
 		}
 		v := automaticCapability{Name: spell.Name, Skill: "cast", Description: spell.Description, When: when, Enabled: true}
 		switch {
 		case s.Role != role:
 			v.Reason = "Requires " + string(role) + " strategy role"
+		case spell.Flask > 0 && flasks.Remaining(user.Character) < spell.Flask:
+			v.Reason = "Satchel empty"
 		case user.Character.Mana < spell.Cost:
 			v.Reason = "Not enough mana"
 		case attack && s.Reserve > 0 && (user.Character.Mana-spell.Cost)*100 < s.Reserve*user.Character.ManaMax.Value:
 			v.Reason = "Mana reserve prevents casting"
 		}
 		v.Enabled = v.Reason == ""
-		v.Description += fmt.Sprintf("; costs %d mana", spell.Cost)
+		if spell.Flask > 0 {
+			v.Description += fmt.Sprintf("; %d flasks left", flasks.Remaining(user.Character))
+		} else {
+			v.Description += fmt.Sprintf("; costs %d mana", spell.Cost)
+		}
 		out.Automatic = append(out.Automatic, v)
 	}
 	return out

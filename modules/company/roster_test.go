@@ -366,7 +366,7 @@ func TestShippedRosters(t *testing.T) {
 			assert.True(t, itemFileExists(t, world, itm.ItemId), "%s: item %d exists", a.Archetype, itm.ItemId)
 		}
 	}
-	assert.Equal(t, map[string]bool{"warrior": true, "rogue": true, "wizard": true, "cleric": true, "ranger": true, "witch": true, "halberdier": true, "samurai": true, "shaman": true, "dollmaster": true, "gryphon-rider": true}, seen)
+	assert.Equal(t, map[string]bool{"warrior": true, "rogue": true, "wizard": true, "cleric": true, "ranger": true, "witch": true, "halberdier": true, "samurai": true, "shaman": true, "dollmaster": true, "gryphon-rider": true, "alchemist": true}, seen)
 	assert.GreaterOrEqual(t, len(rules.GivenNames), 20)
 	assert.NotEmpty(t, rules.Bynames)
 	assert.NotEmpty(t, rules.Traits)
