@@ -56,6 +56,9 @@ func (m *CampingModule) addBuff(c *characters.Character, buffID, rounds int) err
 	if m.grantBuff != nil {
 		return m.grantBuff(c, buffID, rounds)
 	}
+	if rounds <= 0 { // Phase 43a: the buff's own length (a supply's fifteen minutes)
+		return c.AddBuff(buffID, false)
+	}
 	return c.AddBuff(buffID, false, rounds)
 }
 
@@ -248,6 +251,10 @@ func (m *CampingModule) grantPendingTiers() {
 			for _, line := range archetypes.CampIdentify(leaderUserID) {
 				user.SendText(line)
 			}
+		}
+		// Phase 43a: the rest's fortifying broth takes hold now that it is done.
+		if campRest {
+			m.grantBroth(user, live)
 		}
 		if campRest && m.autoSharpenOn(leaderUserID) {
 			if text := m.sharpen(user, true); text != "" {

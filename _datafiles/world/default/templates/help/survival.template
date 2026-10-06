@@ -41,7 +41,7 @@ the label right now; they don't yet stop you doing anything.
 yourself or a named companion. See <ansi fg="command">help eat</ansi> and <ansi fg="command">help drink</ansi>.
 
 Rooms with fresh water let you drink for free and refill a waterskin
-(<ansi fg="command">drink water</ansi>, <ansi fg="command">fill</ansi>, <ansi fg="command">company fill</ansi>); <ansi fg="command">look</ansi> shows them on its "Here:" line. See
+(<ansi fg="command">drink water</ansi>, <ansi fg="command">fill</ansi>, <ansi fg="command">company fill</ansi>; a waterskin drunk dry stays as an empty one to refill); <ansi fg="command">look</ansi> shows them on its "Here:" line. See
 <ansi fg="command">help resources</ansi>. Away from supplies, a company can work for them: herbs, firewood,
 fish and game take time and effort (<ansi fg="command">help gathering</ansi>).
 

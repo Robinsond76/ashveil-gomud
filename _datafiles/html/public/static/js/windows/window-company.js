@@ -987,6 +987,12 @@
         } else if (camp.has_camp) {
             pad.appendChild(el('div', 'cmp-line', 'No camp gear carried (help camp gear).'));
         }
+        if (camp.has_camp && Array.isArray(camp.supplies) && camp.supplies.length) {
+            pad.appendChild(el('div', 'cmp-line', 'Supplies: ' + camp.supplies.join(', ') + ' (camp prepare).'));
+        }
+        if (camp.has_camp && Array.isArray(camp.prepared) && camp.prepared.length) {
+            pad.appendChild(el('div', 'cmp-line', 'Set by for the next rest: ' + camp.prepared.join(', ') + '.'));
+        }
         if (camp.has_camp && camp.theft_risk) {
             pad.appendChild(el('div', 'cmp-line', 'Thieves work this road: without bells and trip lines, a rest here may be robbed.'));
         }

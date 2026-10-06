@@ -104,6 +104,10 @@ round count; a rest takes real time, not game time.
   With your camp's fire lit, cook a meal from what your pack and the
   company cargo hold (<ansi fg="command">help cooking</ansi>).
 
+  <ansi fg="command">camp supplies</ansi>, <ansi fg="command">camp prepare</ansi> [supply] [member]
+  Fortifying broth, a warming draught, a cooling salve, or watch incense,
+  prepared at the camp before a rest or a hard road (<ansi fg="command">help camp supplies</ansi>).
+
 Camping in the wilds isn't always safe: raiders may come during a rest
 (<ansi fg="command">help campwatch</ansi>). A finished rest that raiders didn't spoil also
 brings a ranger's forage (<ansi fg="command">help forage</ansi>) and a cleric's vigil
@@ -116,7 +120,7 @@ The web client's map also marks your camp as a tent on its tile, with its
 fire and a sleeping mark while you rest. The camps of your own party show
 as blue tents; no other company's camp is ever shown (<ansi fg="command">help worldmap</ansi>).
 
-See also: <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
+See also: <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help camp supplies</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
 <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>.
 
 A successful Camp Watch also prevents enemy surprise in a raid. Perception can still prevent surprise after a missed watch, but does not restore spoiled rest. See help ambush.

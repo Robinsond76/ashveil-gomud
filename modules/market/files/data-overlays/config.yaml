@@ -218,6 +218,43 @@ Markets:
         StartStock: 3
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
+      # Phase 43a: camp supplies (help campsupplies), sold and never bought back.
+      - ItemId: 30040 # fortifying broth
+        BasePrice: 10
+        MinPrice: 6
+        MaxPrice: 20
+        MaxStock: 12
+        TargetStock: 6
+        StartStock: 6
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 30041 # warming draught
+        BasePrice: 12
+        MinPrice: 8
+        MaxPrice: 24
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 5
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 30042 # cooling salve
+        BasePrice: 12
+        MinPrice: 8
+        MaxPrice: 24
+        MaxStock: 10
+        TargetStock: 5
+        StartStock: 5
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 30043 # watch incense
+        BasePrice: 8
+        MinPrice: 5
+        MaxPrice: 16
+        MaxStock: 8
+        TargetStock: 4
+        StartStock: 4
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
       # Phase 36c: the 36b trade goods, so a hauled load has somewhere to go.
       # Town pays best for materials and valuables; the road post is glutted
       # with trophies and salvage, so carrying them to Dunmar pays.
@@ -487,6 +524,43 @@ Markets:
         MaxStock: 3
         TargetStock: 1
         StartStock: 1
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      # Phase 43a: camp supplies, dearer on the road.
+      - ItemId: 30040 # fortifying broth
+        BasePrice: 12
+        MinPrice: 8
+        MaxPrice: 24
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 30041 # warming draught
+        BasePrice: 15
+        MinPrice: 10
+        MaxPrice: 30
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 30042 # cooling salve
+        BasePrice: 15
+        MinPrice: 10
+        MaxPrice: 30
+        MaxStock: 6
+        TargetStock: 3
+        StartStock: 3
+        DriftStep: 1
+        SupplyOnly: true # sold, never bought back
+      - ItemId: 30043 # watch incense
+        BasePrice: 10
+        MinPrice: 6
+        MaxPrice: 20
+        MaxStock: 4
+        TargetStock: 2
+        StartStock: 2
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
       - ItemId: 28 # wolf hide

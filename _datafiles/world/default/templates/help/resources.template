@@ -39,14 +39,15 @@ rooms where you can make camp (<ansi fg="command">help camp</ansi>).
 
   <ansi fg="command">fill</ansi>
   Fills every refillable container in your pack (a waterskin) back to full.
-  A waterskin is used up with its last glug, so fill it before it runs dry.
+  A waterskin drunk dry is not lost: it stays in the pack as an empty
+  waterskin, and a fill turns it back into a full one.
 
   <ansi fg="command">fill waterskin</ansi>
   Fills just that one.
 
   <ansi fg="command">company fill</ansi>
-  Fills the refillable containers your whole company carries: your
-  pack, each companion with you, and the cargo.
+  Fills the refillable containers your whole company carries, empty ones
+  included: your pack, each companion with you, and the cargo.
 
   <ansi fg="command">company drink</ansi>
   At a water source, everyone who is thirsty drinks from the source until
