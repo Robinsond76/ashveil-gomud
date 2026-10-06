@@ -19,7 +19,7 @@ type Milestone struct {
 var eliteShipped = []string{"warrior", "cleric"}
 
 var schedule = [...]Milestone{
-	{3, "second class option", false, []string{"wizard", "cleric", "witch", "halberdier"}},
+	{3, "second class option", false, []string{"wizard", "cleric", "witch", "halberdier", "dollmaster"}},
 	{5, "talent", true, nil},
 	{10, "class promotion", true, nil},
 	{15, "talent", true, nil},

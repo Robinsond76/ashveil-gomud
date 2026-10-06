@@ -134,13 +134,14 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		// Phase 38b: a Hierarch's Angel guards the most hurt ally, a few
 		// times a battle, whatever strategy a summon (which has none) holds.
 		angel := angelGuardsLeft(g.char) > 0
-		if angel {
+		doll := dollGuardsLeft(g.char) > 0 // Phase 39d: Guard String
+		if angel || doll {
 			s.Role, s.Ward = strategy.Guardian, ""
 		}
-		if s.Role == strategy.Guardian && !angel {
+		if s.Role == strategy.Guardian && !angel && !doll {
 			battle.CaptureGuards(leader.UserId, string(g.key), g.char.Level) // Phase 35b
 		}
-		if s.Role != strategy.Guardian || !ableToGuard(g) || !angel && battle.GuardsLeft(leader.UserId, string(g.key)) < 1 {
+		if s.Role != strategy.Guardian || !ableToGuard(g) || !angel && !doll && battle.GuardsLeft(leader.UserId, string(g.key)) < 1 {
 			continue
 		}
 		// A set ward still in the company but not here (away, fallen) is
@@ -163,6 +164,10 @@ func guardianFor(leader *users.UserRecord, f company.Formation, struck company.M
 		if angel {
 			g.char.RT.Summon.GuardsUsed++
 			left = angelGuardsLeft(g.char)
+		} else if doll {
+			master := dollMasterOf(g.char)
+			master.RTState().DollGuards++
+			left = dollGuardsLeft(g.char)
 		} else {
 			var ok bool
 			if left, ok = battle.SpendGuard(leader.UserId, string(g.key)); !ok {

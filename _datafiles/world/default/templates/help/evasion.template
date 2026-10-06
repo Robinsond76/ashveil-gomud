@@ -18,6 +18,7 @@ who wins a fight between fighters of different levels.
   <ansi fg="yellow">Rogue</ansi>              Attack 0.9   Evasion 1.1    (level 30: 27 / 33)
   <ansi fg="yellow">Ranger, Halberdier</ansi> Attack 1     Evasion 0.9    (level 30: 30 / 27)
   <ansi fg="yellow">Cleric, Wizard, Witch</ansi>  Attack 0.7   Evasion 0.75   (level 30: 21 / 22)
+  <ansi fg="yellow">Doll Master</ansi>        Attack 0.7   Evasion 0.8    (level 30: 21 / 24)
   <ansi fg="yellow">Shaman</ansi>             Attack 0.7   Evasion 0.75   (level 30: 21 / 22)
   <ansi fg="yellow">Enemies</ansi>            Attack {{ config "GamePlay.Combat.DefaultAttackRate" }}     Evasion {{ config "GamePlay.Combat.DefaultEvasionRate" }}
 

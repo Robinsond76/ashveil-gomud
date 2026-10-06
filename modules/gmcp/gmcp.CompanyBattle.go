@@ -70,6 +70,20 @@ type battleFacts struct {
 	Faltering bool
 	// Phase 39c: the weather a Shaman has called into the battle, if any.
 	Weather *battleWeather
+	// Phase 39d: the Doll Masters' dolls standing in the player's company.
+	Dolls []battleDoll
+}
+
+// battleDoll is a Doll Master's doll standing in the battle (Phase 39d): its
+// member key (the id its events use, and its key in positions), its name,
+// its Master's member key, and its health. A doll is the player's own side,
+// so its numbers are shown as a member's are.
+type battleDoll struct {
+	Key       string `json:"key"`
+	Name      string `json:"name"`
+	Master    string `json:"master"`
+	Health    int    `json:"hp"`
+	HealthMax int    `json:"hp_max"`
 }
 
 // battleWeather is a Shaman's battle weather (Phase 39c): its kind ("fog",
@@ -215,6 +229,9 @@ type battlePayload struct {
 	// Phase 39c: the battle's weather (the battle screen's banner and the
 	// Battle view's note); omitted while the sky is clear.
 	Weather *battleWeather `json:"weather,omitempty"`
+	// Phase 39d: the company's standing dolls (the Combat tab's fighters
+	// and the battle screen's units); omitted when there are none.
+	Dolls []battleDoll `json:"dolls,omitempty"`
 }
 
 // battleAlly is an allied company: its leader's ref ("a:<user>") and name,
@@ -260,7 +277,7 @@ func buildBattle(f battleFacts) any {
 	if f.Dark {
 		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst, Weather: f.Weather}
 	}
-	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst, Weather: f.Weather}
+	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst, Weather: f.Weather, Dolls: f.Dolls}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -370,6 +387,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	f.Weather = weatherFact(b.Weather)
 	f.Faltering = companyFaltering(b)
 	f.Allies = gatherAllies(user, b)
+	f.Dolls = gatherDolls(user.UserId, room.RoomId)
 	if room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
 		f.Dark = true
 		return f
@@ -481,6 +499,21 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		}
 	}
 	return f
+}
+
+// gatherDolls lists the player's company's dolls standing in the battle's
+// room (Phase 39d), by Master then place.
+func gatherDolls(userId, roomId int) []battleDoll {
+	var out []battleDoll
+	for _, e := range company.DollsOf(userId) {
+		m := mobs.GetInstance(e.Instance)
+		if m == nil || m.Character.RoomId != roomId || m.Character.Health < 1 {
+			continue
+		}
+		out = append(out, battleDoll{Key: string(e.Key), Name: m.Character.Name, Master: string(e.Owner),
+			Health: m.Character.Health, HealthMax: m.Character.HealthMax.Value})
+	}
+	return out
 }
 
 // targetOf is whom an enemy strikes, seen by the player whose battle it

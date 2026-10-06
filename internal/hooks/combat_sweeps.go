@@ -131,11 +131,7 @@ func trySweep(m *mobs.Mob, owner int, room *rooms.Room) bool {
 			resolveInterceptedAttackOnLeader(m, u, room, room)
 			continue
 		}
-		cid, ok := company.CompanionIDFromMemberKey(key)
-		if !ok {
-			continue
-		}
-		id, ok := company.InstanceFor(owner, cid)
+		id, ok := company.InstanceForKey(owner, key)
 		if !ok {
 			continue
 		}
@@ -150,11 +146,7 @@ func sweepHidden(u *users.UserRecord, key company.MemberKey) bool {
 	if key == company.LeaderMemberKey {
 		return u.Character.HasBuffFlag("hidden")
 	}
-	cid, ok := company.CompanionIDFromMemberKey(key)
-	if !ok {
-		return true
-	}
-	id, ok := company.InstanceFor(u.UserId, cid)
+	id, ok := company.InstanceForKey(u.UserId, key)
 	if !ok {
 		return true
 	}

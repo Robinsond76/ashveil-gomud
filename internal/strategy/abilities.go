@@ -34,6 +34,14 @@ const (
 	// Dive (gryphon rider, Phase 39f): the whole turn, a stooping blow that
 	// may pass a standing front-row foe to strike one in the rows behind.
 	Dive Ability = "dive"
+	// The Doll Master's four (Phase 39d). Puppet Strike is its ordinary
+	// action: the doll strikes in its Master's place. Guard String, Tangle and
+	// Emergency Splice are resolved by internal/hooks/combat_doll.go; they are
+	// listed here so the strategy, company and capability views show them.
+	PuppetStrike Ability = "puppet-strike"
+	GuardString  Ability = "guard-string"
+	Tangle       Ability = "tangle"
+	Splice       Ability = "emergency-splice"
 )
 
 // AbilitySpec is an ability's unlock, cooldown, and text.
@@ -68,6 +76,18 @@ var Abilities = []AbilitySpec{
 	{ID: Dive, Name: "Dive", Archetype: "gryphon-rider", Skill: "skirmish", Cooldown: 3,
 		When: "it wields a melee weapon, its foe stands within a column of its own or the next, and the ground is open sky (not indoors, in a cave or on narrow ground)",
 		Does: "one stooping blow that may pass a standing front-row foe to strike the middle or back row (a guardian can still step in); 25% harder from level 8; a landed blow from level 3 leaves the foe bleeding; the rider has -10 Evasion until its next turn; the whole turn"},
+	{ID: PuppetStrike, Name: "Puppet Strike", Archetype: "dollmaster", Skill: "puppetry",
+		When: "its doll stands and a foe is within the doll's reach",
+		Does: "the doll strikes in its Master's place, with the doll's own weapon and Attack; the Master's own blow is not struck"},
+	{ID: GuardString, Name: "Guard String", Archetype: "dollmaster", Skill: "puppetry", MinLevel: 5,
+		When: "a foe is about to strike the most hurt ally beside the doll",
+		Does: "the doll steps in and takes the blow, twice a battle (three times from level 8)"},
+	{ID: Tangle, Name: "Tangle", Archetype: "dollmaster", Skill: "puppetry", Cooldown: 3, MinLevel: 12,
+		When: "the doll strikes a foe that is not already tangled",
+		Does: "strings snag the foe the doll strikes and push its action meter back by half a turn (a quarter for a boss); the same foe can't be tangled again for 2 rounds"},
+	{ID: Splice, Name: "Emergency Splice", Archetype: "dollmaster", Skill: "puppetry", MinLevel: 18,
+		When: "the doll would break",
+		Does: "once a battle the doll stands back up at 25% health, and its Master loses its next turn"},
 }
 
 // SpecOf is an ability's spec.
