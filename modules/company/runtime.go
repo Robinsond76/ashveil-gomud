@@ -93,6 +93,27 @@ func (nativeRuntime) WithLeader(leaderUserID, instanceID int) bool {
 	return leader != nil && mob != nil && mob.Character.RoomId == leader.Character.RoomId
 }
 
+func (r nativeRuntime) Trailing(leaderUserID, instanceID int) bool {
+	if r.WithLeader(leaderUserID, instanceID) {
+		return true
+	}
+	leader := users.GetByUserId(leaderUserID)
+	mob := mobs.GetInstance(instanceID)
+	if leader == nil || mob == nil {
+		return false
+	}
+	here := rooms.LoadRoom(mob.Character.RoomId)
+	if here == nil {
+		return false
+	}
+	for _, e := range here.Exits {
+		if e.RoomId == leader.Character.RoomId {
+			return true
+		}
+	}
+	return false
+}
+
 func (nativeRuntime) IsAttached(leaderUserID, instanceID int) bool {
 	leader := users.GetByUserId(leaderUserID)
 	mob := mobs.GetInstance(instanceID)

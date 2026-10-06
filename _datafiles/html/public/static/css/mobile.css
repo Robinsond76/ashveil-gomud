@@ -30,9 +30,12 @@ body.mobile #dock-right {
     z-index: 5;
     overflow-y: auto;
 }
-body.mobile[data-mview="map"] #dock-left.has-panels,
-body.mobile[data-mview="here"] #dock-left.has-panels,
-body.mobile[data-mview="company"] #dock-right.has-panels { display: flex; }
+/* mobile.js marks a dock data-mshow="1" when it holds a panel of the front
+   view (whichever side it was docked on) and data-msplit="1" when both do. */
+body.mobile #dock-left[data-mshow="1"],
+body.mobile #dock-right[data-mshow="1"] { display: flex; }
+body.mobile #dock-left[data-msplit="1"][data-mshow="1"] { bottom: 50%; }
+body.mobile #dock-right[data-msplit="1"][data-mshow="1"] { top: 50%; }
 
 body.mobile .dock-slot-resize,
 body.mobile .dock-panel-resize,
@@ -41,14 +44,14 @@ body.mobile .vwin { display: none !important; }
 
 body.mobile .dock-panel { margin: 0; border: none; border-radius: 0; box-shadow: none; }
 
-/* The map owns the Map view; the room, clock and tutorial share Here. */
-body.mobile[data-mview="map"] #dock-left .dock-panel:not([data-win="Map"]),
-body.mobile[data-mview="here"] #dock-left .dock-panel[data-win="Map"] { display: none; }
-body.mobile[data-mview="map"] #dock-left .dock-panel[data-win="Map"] { flex: 1 1 auto !important; }
-body.mobile[data-mview="here"] #dock-left .dock-panel[data-win="RoomInfo"] { flex: 1 0 auto !important; min-height: 60%; }
-body.mobile[data-mview="here"] #dock-left .dock-panel[data-win="Time & Date"] { order: 2; flex: 0 0 auto !important; }
-body.mobile[data-mview="here"] #dock-left .dock-panel[data-win="Tutorial"] { order: 3; flex: 0 0 auto !important; max-height: 40%; }
-body.mobile #dock-right .dock-panel { flex: 1 1 auto !important; }
+/* The map owns the Map view; the room, clock and tutorial share Here; the
+   panels a view does not own are marked m-off by mobile.js. */
+body.mobile .dock-panel.m-off { display: none; }
+body.mobile[data-mview="map"] .dock-panel[data-win="Map"] { flex: 1 1 auto !important; }
+body.mobile[data-mview="here"] .dock-panel[data-win="RoomInfo"] { flex: 1 0 auto !important; min-height: 60%; }
+body.mobile[data-mview="here"] .dock-panel[data-win="Time & Date"] { order: 2; flex: 0 0 auto !important; }
+body.mobile[data-mview="here"] .dock-panel[data-win="Tutorial"] { order: 3; flex: 0 0 auto !important; max-height: 40%; }
+body.mobile[data-mview="company"] .dock-panel { flex: 1 1 auto !important; }
 
 /* ---- The company dock's tab row scrolls sideways, with finger-sized tabs -- */
 body.mobile .dock-tabgroup-tabs {
@@ -183,5 +186,52 @@ body.mobile #battle-badge {
 /* ---- Settings: one column ----------------------------------------------- */
 body.mobile #floating-menu { width: 100vw; max-width: 100vw; max-height: 100dvh; border-radius: 0; }
 
+<<<<<<< HEAD
 /* Phase 48: a member's equipment slots are finger-sized on a phone */
 body.mobile .cmp-slot { min-height: 44px; align-items: center; padding: 4px 6px; border-bottom: 1px solid var(--t-accent-dim); }
+=======
+/* ---- Walk to...: search over visited rooms (Phase 47) ------------------- */
+body.mobile #walk-search {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483646;
+    display: flex;
+    flex-direction: column;
+    background: var(--t-bg);
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    gap: 8px;
+}
+body.mobile #walk-search .ws-head { display: flex; gap: 8px; }
+body.mobile #walk-search input {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 44px;
+    font-size: 16px;
+    padding: 0 10px;
+    color: var(--t-text);
+    background: var(--t-bg-surface-alt, var(--t-bg-panel));
+    border: 1px solid var(--t-border-accent);
+    border-radius: 5px;
+}
+body.mobile #walk-search .ws-close,
+body.mobile #walk-search .ws-item {
+    min-height: 44px;
+    padding: 0 12px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--t-text);
+    background: var(--t-bg-surface-alt, var(--t-bg-panel));
+    border: 1px solid var(--t-accent-dim);
+    border-radius: 6px;
+}
+body.mobile #walk-search .ws-list { flex: 1 1 auto; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+body.mobile #walk-search .ws-item { text-align: left; white-space: normal; }
+body.mobile #walk-search .ws-empty { color: var(--t-text-secondary); padding: 12px 4px; }
+
+/* ---- Camp tab Needs table at 360 px (Phase 47): a wide name column, and
+   short need labels that wrap instead of running over each other ---------- */
+body.mobile .cmp-needs { font-size: 0.85em; }
+body.mobile .cmp-needs th:first-child { width: 34%; }
+body.mobile .cmp-needs th,
+body.mobile .cmp-needs td { padding: 4px 3px; overflow-wrap: break-word; word-break: normal; hyphens: auto; }
+>>>>>>> origin/master

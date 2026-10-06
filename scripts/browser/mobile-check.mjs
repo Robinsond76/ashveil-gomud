@@ -74,7 +74,9 @@ const company = {
   ],
   alive: 4, dead: 0,
   vitals: {
-    leader: { hp: 30, hp_max: 40 }, 'companion:1': { hp: 12, hp_max: 24 }, 'companion:2': { hp: 20, hp_max: 20 }, 'companion:3': { hp: 5, hp_max: 20 },
+    leader: { hp: 30, hp_max: 40, needs: { hunger: { value: 40, label: 'Hungry', warn: true }, thirst: { value: 90, label: 'Hydrated', warn: false }, fatigue: { value: 20, label: 'Exhausted', warn: true } } },
+    'companion:1': { hp: 12, hp_max: 24, needs: { hunger: { value: 70, label: 'Sated', warn: false }, thirst: { value: 20, label: 'Parched', warn: true }, fatigue: { value: 60, label: 'Weary', warn: false } } },
+    'companion:2': { hp: 20, hp_max: 20 }, 'companion:3': { hp: 5, hp_max: 20 },
   },
 };
 const enemy = (n, label, row, col, health, sprite, target) => ({ id: 'm:' + n, label, cell: { row, col }, health, sprite, reach: true, target });
@@ -211,6 +213,7 @@ const zoomOf = () => page.evaluate(() => { const t = [...document.querySelectorA
 void zoomOf;
 const vp = () => page.evaluate(() => MapPlaces.viewport());
 const before = await vp();
+check(before.zoom === 1.5, 'the phone map starts one tile size closer (48 px tiles): ' + before.zoom);
 await touch('touchStart', [[centre.x, centre.y]]);
 for (let i = 1; i <= 6; i++) { await touch('touchMove', [[centre.x - i * 14, centre.y - i * 6]]); }
 await touch('touchEnd', []);
@@ -231,11 +234,25 @@ check(!(await page.evaluate(() => document.querySelector('.ui-menu'))), 'and a p
 await page.locator('#mobile-nav button', { hasText: 'Game' }).tap();
 await page.locator('#touch-bar .mb-walk').tap();
 const places = await page.evaluate(() => [...document.querySelectorAll('.ui-menu-item')].map(b => b.textContent));
-check(places.length === 3 && places[0].startsWith('The Obelisk (obelisk)'), 'Walk to... lists the named places, nearest first: ' + places.join('|'));
+check(places.length === 4 && places[0].startsWith('The Obelisk (obelisk)'), 'Walk to... lists the named places, nearest first: ' + places.join('|'));
+check(places[3].startsWith('Find a visited room'), 'and ends with a way to search every visited room: ' + places[3]);
 check(await page.evaluate(() => { const m = document.querySelector('.ui-menu').getBoundingClientRect(); return m.left >= 0 && m.right <= window.innerWidth && m.top >= 0 && m.bottom <= window.innerHeight; }), 'the list stays on screen');
 await shot('walk-to-list');
 await page.locator('.ui-menu-item', { hasText: 'Bridge' }).tap();
 check((await sent()).join() === 'walkto ' + id(5, 0), 'picking a place sends walkto with its room: ' + (await sent()).join());
+await clearSent();
+// Phase 47: a search box over every visited room.
+await page.locator('#touch-bar .mb-walk').tap();
+await page.locator('.ui-menu-item', { hasText: 'Find a visited room' }).tap();
+const allRooms = await page.evaluate(() => document.querySelectorAll('#walk-search .ws-item').length);
+check(allRooms > 5, 'the search sheet lists the visited rooms: ' + allRooms);
+await page.locator('#walk-search input').fill('meadow 4,2');
+const hits = await page.evaluate(() => [...document.querySelectorAll('#walk-search .ws-item')].map(b => b.textContent));
+check(hits.length === 1 && hits[0] === 'Meadow 4,2', 'typing narrows it to the matching rooms: ' + hits.join('|'));
+await shot('walk-search');
+await page.locator('#walk-search .ws-item').first().tap();
+check((await sent()).join() === 'walkto ' + id(4, 2), 'picking a hit sends walkto: ' + (await sent()).join());
+check(!(await page.evaluate(() => document.getElementById('walk-search'))), 'and the sheet closes');
 await clearSent();
 check(await page.evaluate(() => document.querySelector('#touch-bar .mb-stop').hidden), 'no Stop button when no walk is under way');
 await gmcp('Walkto', { target: id(5, 0), path: [id(3, 1), id(4, 1)] });
@@ -262,6 +279,32 @@ check(await overflow() <= 0, 'Here never scrolls sideways');
 await shot('here-gather');
 await gmcp('Room.Gather', { phase: 'done', kind: 'herbs', label: 'gathering herbs', lines: ['Your company gathers 3 wild thyme.'] });
 
+// --- Phase 47: panels are found wherever they are docked ---
+await page.locator('#mobile-nav button', { hasText: 'Map' }).tap();
+const mapDockSide = () => page.evaluate(() => { const p = document.querySelector('.dock-panel[data-win="Map"]'); return p ? p.closest('#dock-left') ? 'left' : 'right' : 'none'; });
+check(await mapDockSide() === 'left', 'the Map panel starts in the left dock');
+await page.evaluate(() => {
+  const panel = document.querySelector('.dock-panel[data-win="Map"]');
+  const right = document.getElementById('dock-right');
+  right.appendChild(panel);
+  right.classList.add('has-panels');
+  Mobile.layout();
+});
+check(await mapDockSide() === 'right', 'the Map panel is moved to the right dock (as a desktop drag would)');
+const movedMapBox = await box('.dock-panel[data-win="Map"]');
+check(movedMapBox && movedMapBox.width >= VW - 2 && movedMapBox.height > 200, 'the phone Map view still shows it: ' + JSON.stringify(movedMapBox && { w: Math.round(movedMapBox.width), h: Math.round(movedMapBox.height) }));
+check((await visibleWins('#dock-right')).join() === 'Map', 'only the map shows in the Map view: ' + (await visibleWins('#dock-right')).join());
+await page.locator('#mobile-nav button', { hasText: 'Here' }).tap();
+const hereRight = await visibleWins('#dock-right');
+check(!hereRight.includes('Map') && (await visibleWins('#dock-left')).includes('RoomInfo'), 'the Here view skips the moved map and shows the room');
+await page.locator('#mobile-nav button', { hasText: 'Company' }).tap();
+check(!(await visibleWins('#dock-right')).includes('Map'), 'the Company view does not show the moved map');
+await page.evaluate(() => {
+  const panel = document.querySelector('.dock-panel[data-win="Map"]');
+  document.getElementById('dock-left').appendChild(panel);
+  Mobile.layout();
+});
+
 // --- Company: tabs, the Camp tab ---
 await page.locator('#mobile-nav button', { hasText: 'Company' }).tap();
 check((await visibleWins('#dock-right')).join() === 'group:dock', 'the Company view shows the dock');
@@ -276,6 +319,16 @@ check(campText.includes('Camp gear: Bedrolls 2/3, Tent, Bells and trip lines.'),
 const camp = await box('#company-camp');
 check(camp && camp.x >= 0 && camp.x + camp.width <= VW + 1, 'the Camp tab fits the screen width: ' + (camp && Math.round(camp.width)));
 check(await overflow() <= 0, 'Company never scrolls sideways');
+// Phase 47: the Needs table keeps a readable name column and every cell inside it.
+const needsFit = await page.evaluate(() => {
+  const t = document.querySelector('#company-camp .cmp-needs');
+  if (!t) { return null; }
+  const tr = t.getBoundingClientRect();
+  const cells = [...t.querySelectorAll('th, td')].map(c => c.getBoundingClientRect());
+  const first = t.querySelector('tr + tr th').getBoundingClientRect();
+  return { inside: cells.every(r => r.left >= tr.left - 1 && r.right <= tr.right + 1), firstW: first.width, w: tr.width, scroll: t.scrollWidth - t.clientWidth };
+});
+check(needsFit && needsFit.inside && needsFit.firstW / needsFit.w >= 0.3 && needsFit.w <= VW, 'the Camp Needs table fits with a wide name column: ' + JSON.stringify(needsFit));
 await shot('company-camp');
 // Phase 48: every member's gear slots in Company > Inventory, tap-to-pick on a phone.
 const sword = (ref, label, slot, type) => ({ ref, name: label, label, grams: 1500, count: 1, uses: 0, uses_max: 0, type, subtype: 'wearable', slot });
