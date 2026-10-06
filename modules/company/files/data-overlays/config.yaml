@@ -24,6 +24,7 @@ CompanionArchetypes:
   - { MobTemplateId: 139, Archetype: samurai } # Phase 39b
   - { MobTemplateId: 160, Archetype: dollmaster } # Phase 39d
   - { MobTemplateId: 175, Archetype: gryphon-rider } # Phase 39f
+  - { MobTemplateId: 190, Archetype: alchemist } # Phase 39g
   - { MobTemplateId: 150, Archetype: shaman } # Phase 39c
   - { MobTemplateId: 260, Archetype: hound } # Phase 38e: creature recruits
   - { MobTemplateId: 261, Archetype: stone-golem }
@@ -155,6 +156,7 @@ RecruitTemplates:
   - { MobTemplateId: 139, Weight: 1, PricePercent: 110 }
   - { MobTemplateId: 160, Weight: 1, PricePercent: 110 }
   - { MobTemplateId: 175, Weight: 1, PricePercent: 110 } # Phase 39f
+  - { MobTemplateId: 190, Weight: 1, PricePercent: 110 } # Phase 39g
   - { MobTemplateId: 150, Weight: 1, PricePercent: 110 }
 RecruitGivenNames: [Hild, Anselm, Tobin, Wren, Edda, Bram, Ilse, Corrin, Maud, Osric, Petra, Aldo, Sabine, Lorn, Nessa, Joren, Thea, Ulric, Brisa, Cade, Fenna, Hugo, Ines, Kester, Liesl, Merrit, Orla, Quill, Rowan, Senna]
 RecruitBynames: [Marrow, Reyes, Ashdown, Thorne, Pike, Holloway, of the Ford, of Dunmar, the Younger, Fletcher, Cobb, Wick, Harrow, Stane]

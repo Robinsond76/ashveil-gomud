@@ -16,7 +16,7 @@ FRAME = {"S": 48, "M": 64, "L": 72, "XL": 96}
 DRAW = {"L": 96, "XL": 128}
 
 CLASS_IDS = ["warrior", "rogue", "ranger", "cleric", "wizard", "witch", "adventurer",
-             "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider"]
+             "dollmaster", "halberdier", "samurai", "shaman", "gryphon-rider", "alchemist"]
 
 
 class Unit:

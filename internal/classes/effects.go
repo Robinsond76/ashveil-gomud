@@ -249,4 +249,17 @@ const (
 	Pounce    = "pounce"    // percent more damage to a foe that is exposed, knocked down or hobbled
 	Slow      = "slow"      // percent fewer turns a round (a golem's slow stone)
 	SpellWeak = "spellweak" // percent more damage spells deal it
+
+	// The Alchemist's lineage (Phase 39g).
+	FlaskHeal   = "flaskheal"   // percent more a Healing Draught heals
+	FlaskCap    = "flaskcap"    // flasks added to the satchel's size
+	FlaskSplash = "flasksplash" // percent of a draught's heal that also reaches the next most hurt ally
+	FlaskClean  = "flaskclean"  // a draught also takes one harmful status off its patient
+	FlaskFire   = "flaskfire"   // percent more a Fire Flask burns
+	FlaskReach  = "flaskreach"  // extra foes a Fire Flask reaches
+	FlaskBurn   = "flaskburn"   // a Fire Flask leaves the foes it burns alight
+	TonicLong   = "toniclong"   // rounds added to a Bracing Tonic
+	MutagenArmr = "mutagenarmr" // armor a Bracing Tonic adds for the battle (a Mutagen)
+	MutagenCost = "mutagencost" // percent of its health the ally pays for a Mutagen
+	MutagenFree = "mutagenfree" // a Mutagen costs its ally no health
 )

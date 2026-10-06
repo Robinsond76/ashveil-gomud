@@ -27,7 +27,7 @@ them at character levels 1, 10, 20, and 30, on their own: these class
 skills are never trained (<ansi fg="command">company train</ansi> teaches only optional skills
 such as Cooking; <ansi fg="command">help company train</ansi>). For you, it is your level in
 your archetype's skill: <ansi fg="skill">track</ansi> for a ranger, <ansi fg="skill">skulduggery</ansi> for a
-rogue, <ansi fg="skill">cast</ansi> for a wizard, witch or shaman, <ansi fg="skill">brawling</ansi> for a warrior or samurai, <ansi fg="skill">skirmish</ansi> for a gryphon rider,
+rogue, <ansi fg="skill">cast</ansi> for a wizard, witch, shaman or alchemist, <ansi fg="skill">brawling</ansi> for a warrior or samurai, <ansi fg="skill">skirmish</ansi> for a gryphon rider,
 <ansi fg="skill">protection</ansi> for a cleric. Recruit for the skills an expedition needs.
 
 <ansi fg="yellow-bold">Who counts</ansi>

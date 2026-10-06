@@ -101,6 +101,13 @@ Markets:
         MaxStock: 20
         TargetStock: 10
         StartStock: 8
+      - ItemId: 95 # alchemist's reagents (Phase 39g); brewed into an Alchemist's flasks
+        BasePrice: 8
+        MinPrice: 5
+        MaxPrice: 16
+        MaxStock: 40
+        TargetStock: 20
+        StartStock: 14
         DriftStep: 1
         SupplyOnly: true # sold, never bought back
       # Phase 43b: weapon poison vials, one dose each (help poisons).

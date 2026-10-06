@@ -93,6 +93,17 @@ func addAshveilVitals(p *templates.Panel, s companyview.Summary) {
 			addRow(p, row.full, row.short, needValue(row.need))
 		}
 	}
+	// Phase 39g: an Alchemist's flask satchel.
+	if s.Leader.FlasksMax > 0 {
+		colour := `green`
+		switch {
+		case s.Leader.Flasks == 0:
+			colour = `red`
+		case s.Leader.Flasks*3 <= s.Leader.FlasksMax:
+			colour = `yellow`
+		}
+		addRow(p, `Flasks: `, `Fsk:`, fmt.Sprintf(`<ansi fg="%s">%d</ansi> <ansi fg="black-bold">of %d</ansi>`, colour, s.Leader.Flasks, s.Leader.FlasksMax))
+	}
 	if s.Leader.WarmthKnown {
 		warmth := `<ansi fg="green">Comfortable</ansi>`
 		if s.Leader.Warmth != `` {

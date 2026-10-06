@@ -7,6 +7,8 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/creatures"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -47,6 +49,9 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 					view.HPLimit = limit
 				}
 				view.MP, view.MPMax, _ = m.runtime.Mana(instanceID)
+				if mob := mobs.GetInstance(instanceID); mob != nil && flasks.IsAlchemist(&mob.Character) {
+					view.Flasks, view.FlasksMax = flasks.Remaining(&mob.Character), flasks.Capacity(&mob.Character)
+				}
 				// The live mob is ahead of its record between snapshots.
 				if level, into, tnl, ok := m.runtime.Progress(instanceID); ok {
 					view.Level, view.ExpInto, view.ExpTNL, view.ExpKnown = level, into, tnl, true

@@ -263,3 +263,32 @@ func TestShippedDollPartsAreSupplyOnly(t *testing.T) {
 	}
 	assert.Equal(t, 1, seen, "doll parts are sold in Dunmar")
 }
+
+// Phase 39g: reagents (a free starter kit item too) are sold in Dunmar and
+// never bought back.
+func TestShippedReagentsAreSupplyOnly(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	var overlay struct {
+		Markets []struct {
+			Zone  string `yaml:"Zone"`
+			Goods []struct {
+				ItemId     int  `yaml:"ItemId"`
+				SupplyOnly bool `yaml:"SupplyOnly"`
+			} `yaml:"Goods"`
+		} `yaml:"Markets"`
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	require.NoError(t, yaml.Unmarshal(data, &overlay))
+	seen := 0
+	for _, m := range overlay.Markets {
+		for _, g := range m.Goods {
+			if g.ItemId == 95 {
+				assert.True(t, g.SupplyOnly, "%s reagents", m.Zone)
+				assert.Equal(t, "Dunmar", m.Zone)
+				seen++
+			}
+		}
+	}
+	assert.Equal(t, 1, seen, "reagents are sold in Dunmar")
+}
