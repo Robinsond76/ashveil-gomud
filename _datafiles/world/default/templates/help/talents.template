@@ -29,8 +29,21 @@ twice, unless it says it can be taken once.
            Sanctuary
   Ranger   Keen Edge, Footwork, Steady Aim (Aimed Shot +2 damage), Quick Draw
            (Aimed Shot ready a round sooner; once), Toughness
+  Halberdier  Toughness, Heavy Hands, Keen Edge, Footwork, Sweep Drill (Sweep ready
+           a round sooner; once)
   Rogue    Keen Edge, Footwork, Deep Cuts (Opening Strike +2 damage), Patient
            Hand (Opening Strike ready a round sooner; once), Heavy Hands
+
+<ansi fg="yellow-bold">Elite talents</ansi>
+
+An elite class (<ansi fg="command">help elite</ansi>) offers a second list at levels 35, 45 and 55,
+beside the five above:
+
+  Warrior  Iron Hide (+5 Armor), Second Wind (once a battle, below a quarter of
+           its health at the start of its turn, heals a tenth of its maximum),
+           Veteran's Edge (+3 Attack)
+  Cleric   Font of Grace (+10% maximum mana), Radiant Healing (+10% healing),
+           Unshaken (blows break your chant 25% less often)
 
 Talents need no class: a character can take its first at level 5, before
 promotion. Picks beyond what your level has earned stay on your record but do

@@ -24,7 +24,7 @@ func (m *CompanyModule) CompanyMembers(leaderUserID int) ([]domain.MemberView, b
 	}
 	out := make([]domain.MemberView, 0, len(record.Companions))
 	for _, c := range record.Companions {
-		view := domain.MemberView{ID: c.ID, Name: companionName(c), Archetype: c.Archetype, Class: c.Class, Level: companionLevelNumber(c), Status: domain.MemberAwaiting}
+		view := domain.MemberView{ID: c.ID, Name: companionName(c), Archetype: c.Archetype, Class: c.Class, Alignment: m.companionAlignment(c), Level: companionLevelNumber(c), Status: domain.MemberAwaiting}
 		view.Row, view.Col, view.Placed = record.Formation.Find(domain.CompanionMemberKey(c.ID))
 		if !view.Placed {
 			view.Row, view.Col = 0, 0

@@ -12,12 +12,12 @@ var baseLineages = []string{"cleric", "ranger", "rogue", "warrior", "witch", "wi
 
 // neutralLineages have no good or evil route (Phase 39b): every route is open
 // to any alignment, at level 10 and level 30.
-var neutralLineages = []string{"samurai"}
+var neutralLineages = []string{"halberdier", "samurai"}
 
 // TestEveryLineageHasThreeAdvancedRoutes: one good, one unrestricted and one
 // evil route a lineage, each with an elite continuation.
 func TestEveryLineageHasThreeAdvancedRoutes(t *testing.T) {
-	assert.Equal(t, []string{"cleric", "ranger", "rogue", "samurai", "warrior", "witch", "wizard"}, Lineages())
+	assert.Equal(t, []string{"cleric", "halberdier", "ranger", "rogue", "samurai", "warrior", "witch", "wizard"}, Lineages())
 	for _, l := range baseLineages {
 		adv := Advanced(l)
 		require.Len(t, adv, 3, l)
@@ -97,11 +97,11 @@ func TestRankTablesAreOrdered(t *testing.T) {
 	}
 }
 
-// TestFaithRoutesAreOpenAndTheRestPlanned: the cleric and warrior elite
+// TestFaithRoutesAreOpenAndTheRestPlanned: the cleric and warrior elite (38c1)
 // routes of the faith design are selectable; the other lineages' elite
 // routes are listed as planned (38c).
 func TestFaithRoutesAreOpenAndTheRestPlanned(t *testing.T) {
-	open := map[string]bool{"paladin": true, "dread-knight": true, "hierarch": true, "elder-druid": true, "demonologist": true}
+	open := map[string]bool{"warlord": true, "paladin": true, "dread-knight": true, "hierarch": true, "elder-druid": true, "demonologist": true}
 	for _, c := range All() {
 		if c.Tier != TierElite {
 			continue
@@ -265,20 +265,20 @@ func TestTalentSlots(t *testing.T) {
 }
 
 func TestPickingTalents(t *testing.T) {
-	assert.ErrorIs(t, CanPick("cleric", nil, 4, "mending-hands"), ErrNoTalentOwed)
-	assert.NoError(t, CanPick("cleric", nil, 5, "mending-hands"))
-	assert.ErrorIs(t, CanPick("cleric", nil, 5, "toughness"), ErrUnknownTalent, "a talent of another lineage")
-	assert.ErrorIs(t, CanPick("cleric", []string{"deep-well"}, 5, "mending-hands"), ErrNoTalentOwed)
-	assert.NoError(t, CanPick("cleric", []string{"deep-well"}, 15, "mending-hands"))
+	assert.ErrorIs(t, CanPick("cleric", "", nil, 4, "mending-hands"), ErrNoTalentOwed)
+	assert.NoError(t, CanPick("cleric", "", nil, 5, "mending-hands"))
+	assert.ErrorIs(t, CanPick("cleric", "", nil, 5, "toughness"), ErrUnknownTalent, "a talent of another lineage")
+	assert.ErrorIs(t, CanPick("cleric", "", []string{"deep-well"}, 5, "mending-hands"), ErrNoTalentOwed)
+	assert.NoError(t, CanPick("cleric", "", []string{"deep-well"}, 15, "mending-hands"))
 	// A talent can be taken twice, not three times.
 	picked := []string{"deep-well", "deep-well"}
-	assert.NoError(t, CanPick("cleric", picked, 25, "mending-hands"))
+	assert.NoError(t, CanPick("cleric", "", picked, 25, "mending-hands"))
 }
 
 func TestTalentMaxIsEnforced(t *testing.T) {
-	err := CanPick("warrior", []string{"tackle-drill"}, 15, "tackle-drill")
+	err := CanPick("warrior", "", []string{"tackle-drill"}, 15, "tackle-drill")
 	assert.True(t, errors.Is(err, ErrTalentMaxed))
-	err = CanPick("cleric", []string{"deep-well", "deep-well"}, 25, "deep-well")
+	err = CanPick("cleric", "", []string{"deep-well", "deep-well"}, 25, "deep-well")
 	assert.True(t, errors.Is(err, ErrTalentMaxed))
 }
 
@@ -331,6 +331,148 @@ func TestSpellLockedBelowItsRank(t *testing.T) {
 	assert.True(t, SpellLocked("hierarch", 29, "callhost"))
 	assert.False(t, SpellLocked("priest", 1, "heal"), "a spell no rank teaches is never locked")
 	assert.False(t, SpellLocked("", 1, "greaterheal"))
+}
+
+// Phase 38c1: the Warlord's ranks apply from their level, never earlier,
+// and an advanced Mercenary at 45 has none of them.
+func TestWarlordRanksApplyFromTheirLevel(t *testing.T) {
+	cases := []struct {
+		level int
+		key   string
+		want  int
+	}{
+		{29, MarkRuin, 0}, {30, MarkRuin, 5},
+		{34, BattleCry, 0}, {35, BattleCry, 3},
+		{39, TackleCD, 1}, {40, TackleCD, 2},
+		{44, Sunder, 0}, {45, Sunder, 1},
+		{49, MarkRuin, 5}, {50, MarkRuin, 10},
+		{54, Relentless, 0}, {55, Relentless, 25},
+		{59, WarCommand, 0}, {60, WarCommand, 25},
+	}
+	for _, c := range cases {
+		assert.Equal(t, c.want, EffectsFor("warlord", c.level, nil).Int(c.key), "%s at %d", c.key, c.level)
+	}
+	assert.Equal(t, 0, EffectsFor("mercenary", 45, nil).Int(MarkRuin), "an advanced Mercenary has no elite ranks")
+	assert.Equal(t, 10, EffectsFor("warlord", 30, nil).Int(TackleHit), "an elite keeps its advanced ranks")
+}
+
+// An elite talent is for elites of the lineage from level 35.
+func TestEliteTalentsAreOfferedToElitesFromThirtyFive(t *testing.T) {
+	for _, tc := range []struct {
+		lineage, class string
+		level          int
+		id             string
+		err            error
+	}{
+		{"warrior", "warlord", 34, "iron-hide", ErrEliteTalent},
+		{"warrior", "warlord", 35, "iron-hide", nil},
+		{"warrior", "mercenary", 45, "iron-hide", ErrEliteTalent},
+		{"warrior", "", 45, "iron-hide", ErrEliteTalent},
+		{"cleric", "hierarch", 35, "iron-hide", ErrUnknownTalent},
+		{"cleric", "hierarch", 35, "font-of-grace", nil},
+		{"cleric", "elder-druid", 55, "unshaken", nil},
+	} {
+		picked := []string{"toughness", "toughness", "keen-edge", "footwork"}
+		if tc.lineage == "cleric" {
+			picked = []string{"mending-hands", "mending-hands", "deep-well", "sanctuary"}
+		}
+		// Four slots at 35; enough owed for the level.
+		if tc.level >= 45 {
+			picked = picked[:3]
+		}
+		err := CanPick(tc.lineage, tc.class, picked[:min(len(picked), TalentSlots(tc.level)-1)], tc.level, tc.id)
+		if tc.err == nil {
+			assert.NoError(t, err, "%s %s %d %s", tc.lineage, tc.class, tc.level, tc.id)
+		} else {
+			assert.ErrorIs(t, err, tc.err, "%s %s %d %s", tc.lineage, tc.class, tc.level, tc.id)
+		}
+	}
+}
+
+func TestEliteTalentsMenuAndEffects(t *testing.T) {
+	assert.Len(t, MenuFor("warrior", "mercenary", 45), 5)
+	assert.Len(t, MenuFor("warrior", "warlord", 34), 5)
+	assert.Len(t, MenuFor("warrior", "warlord", 35), 8)
+	assert.Len(t, MenuFor("cleric", "hierarch", 35), 8)
+	assert.Len(t, EliteTalentsFor("warrior"), 3)
+	// Each is taken once, and stacks with a base talent of the same kind.
+	tal, _ := TalentByID("font-of-grace")
+	assert.Equal(t, 1, tal.Max)
+	fx := EffectsFor("hierarch", 35, []string{"deep-well", "deep-well", "mending-hands", "font-of-grace"})
+	assert.Equal(t, 30, fx.Int(ManaPct), "Deep Well x2 and Font of Grace")
+	fx = EffectsFor("warlord", 35, []string{"toughness", "toughness", "keen-edge", "veterans-edge"})
+	assert.Equal(t, 7, fx.Int(Attack), "Practiced hands +2, Keen Edge +2 and Veteran's Edge +3")
+	assert.Equal(t, 4, EffectsFor("warlord", 34, []string{"toughness", "toughness", "keen-edge", "veterans-edge"}).Int(Attack), "a talent the level hasn't earned is off")
+}
+
+func TestPromotionStateAndReadinessNote(t *testing.T) {
+	assert.Equal(t, "ready", PromotionState("warrior", "knight", 30, 30))
+	assert.Equal(t, "waiting-gate", PromotionState("warrior", "knight", 30, 29))
+	assert.Equal(t, "", PromotionState("warrior", "knight", 29, 80))
+	assert.Equal(t, "ready", PromotionState("warrior", "mercenary", 30, -90))
+	assert.Equal(t, "ready", PromotionState("warrior", "", 10, 50), "a base character at 10 may take an advanced route")
+	assert.Equal(t, "", PromotionState("warrior", "paladin", 60, 90), "an elite has nothing further")
+	assert.Equal(t, "", PromotionState("rogue", "scout", 30, 90), "a planned elite is not offered")
+
+	assert.Equal(t, "Elite promotion ready: Knight -> Paladin. Visit a camp or town and type class promote paladin.",
+		ReadinessNote("warrior", "knight", 30, 41, "", ""))
+	assert.Equal(t, "Elite promotion ready: Mercenary -> Warlord. Visit a camp or town and type class promote #2 warlord.",
+		ReadinessNote("warrior", "mercenary", 30, 0, "#2", "Tamsin"))
+	assert.Equal(t, "Paladin needs alignment +30 (yours: +22). You keep your Knight ranks and can promote once it rises.",
+		ReadinessNote("warrior", "knight", 30, 22, "", ""))
+	assert.Equal(t, "Dread Knight needs alignment -30 (theirs: +5). Tamsin keeps their Blackguard ranks and can promote once it rises.",
+		ReadinessNote("warrior", "blackguard", 31, 5, "#2", "Tamsin"))
+	assert.Equal(t, "", ReadinessNote("warrior", "knight", 29, 90, "", ""))
+	assert.Equal(t, "", ReadinessNote("warrior", "", 30, 90, "", ""))
+}
+
+func TestRankLevelAndRankUpLines(t *testing.T) {
+	assert.Equal(t, 0, RankLevel("", 40))
+	assert.Equal(t, 25, RankLevel("mercenary", 49))
+	assert.Equal(t, 45, RankLevel("warlord", 49))
+	assert.Equal(t, 60, RankLevel("warlord", 70))
+	lines := RankLines("warrior", "warlord", 44, 50)
+	assert.Equal(t, []string{
+		"New rank: Sunder, Tackle also breaks the target's armor for 2 rounds.",
+		"New rank: Ruinous mark, Marked for Ruin gives +10 Attack.",
+	}, lines)
+	assert.Empty(t, RankLines("warrior", "warlord", 60, 70))
+}
+
+// Phase 38c1: every rank of every open elite applies from its level and not
+// a level earlier; an advanced class at 45 has none of the elite ranks; the
+// elite keeps every advanced rank and the tiers' levels are 30 to 60.
+func TestEveryOpenEliteRankAppliesFromItsLevel(t *testing.T) {
+	open := 0
+	for _, c := range All() {
+		if c.Tier != TierElite || c.Planned {
+			continue
+		}
+		open++
+		parent, ok := Get(c.Parent)
+		require.True(t, ok, c.ID)
+		assert.Equal(t, parent.Gate, c.Gate, c.ID+": the elite shares its advanced class's gate")
+		for _, r := range c.Ranks {
+			below, at := RanksReached(c.ID, r.Level-1), RanksReached(c.ID, r.Level)
+			assert.NotContains(t, rankNames(below), r.Name, "%s rank %d at %d", c.ID, r.Level, r.Level-1)
+			assert.Contains(t, rankNames(at), r.Name, "%s rank %d at %d", c.ID, r.Level, r.Level)
+			assert.Len(t, at, len(below)+1, "%s: one rank a level", c.ID)
+			for _, adv := range RanksReached(parent.ID, 45) {
+				assert.Contains(t, rankNames(RanksReached(c.ID, 60)), adv.Name, "%s keeps %s", c.ID, adv.Name)
+			}
+		}
+		assert.Equal(t, 11, len(RanksReached(c.ID, 60)), c.ID+": four advanced and seven elite ranks")
+		assert.Equal(t, 4, len(RanksReached(parent.ID, 59)), parent.ID+" gains nothing from the elite table")
+	}
+	assert.Equal(t, 6, open, "warrior and cleric elites are open")
+}
+
+func rankNames(rs []Rank) []string {
+	out := make([]string, 0, len(rs))
+	for _, r := range rs {
+		out = append(out, r.Name)
+	}
+	return out
 }
 
 // TestSamuraiBaseRanksAndRoutes: Iaijutsu from level 1, Focus at 3, Zanshin

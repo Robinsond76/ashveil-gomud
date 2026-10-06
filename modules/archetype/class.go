@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -101,7 +102,7 @@ func (m *ArchetypeModule) PickPlayerTalent(userID, level int, talent string) err
 		return ErrNotPromotable
 	}
 	prev, had := m.registry.Classes[userID]
-	if err := classes.CanPick(lineage, prev.Talents, level, talent); err != nil {
+	if err := classes.CanPick(lineage, prev.Class, prev.Talents, level, talent); err != nil {
 		m.mu.Unlock()
 		return err
 	}
@@ -135,6 +136,8 @@ func (m *ArchetypeModule) afterClassChange(userID int) {
 	user.Character.RecalculateStats()
 	user.Character.Health = min(user.Character.Health, user.Character.HealthLimit())
 	user.Character.Mana = min(user.Character.Mana, user.Character.ManaMax.Value)
+	// Phase 38c1: the web client's character window shows the class.
+	events.AddToQueue(events.CharacterTrained{UserId: userID})
 }
 
 // grantClassSpells teaches a player the spells their class's ranks have

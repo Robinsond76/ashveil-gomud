@@ -358,6 +358,11 @@
         }
 
         .company-fallen, .need-warn { color: var(--t-party-hp-low); font-weight: bold; }
+
+        .company-class { font-size: 0.68em; color: var(--t-text-secondary); }
+        .company-class.is-elite { color: var(--t-party-leader); font-weight: bold; }
+        .company-promote { font-size: 0.68em; color: var(--t-party-leader); font-weight: bold; }
+        .company-promote.is-waiting { color: var(--t-text-secondary); font-weight: normal; }
     `);
 
     function hpClass(pct) {
@@ -551,6 +556,22 @@
         card.appendChild(header);
 
         const spoken = [m.name, m.level ? 'level ' + m.level : '', rank || ''];
+        // Phase 38c1: under the class name in the header, its tier (an elite
+        // badge) and rank, and whether a promotion is ready or waiting on
+        // alignment.
+        if (m.class_name && (m.tier || m.rank)) {
+            const elite = m.tier === 'elite';
+            const text  = (elite ? '\u2605 elite' : (m.tier || '')) + (m.rank ? (m.tier ? ', ' : '') + 'rank ' + m.rank : '');
+            card.appendChild(el('div', 'company-class' + (elite ? ' is-elite' : ''), text));
+            spoken.push((elite ? 'elite' : (m.tier || '')) + (m.rank ? ' rank ' + m.rank : ''));
+        }
+        if (m.promotion === 'ready') {
+            card.appendChild(el('div', 'company-promote', 'Promotion ready'));
+            spoken.push('promotion ready');
+        } else if (m.promotion === 'waiting-gate') {
+            card.appendChild(el('div', 'company-promote is-waiting', 'Promotion waiting on alignment'));
+            spoken.push('promotion waiting on alignment');
+        }
         if (m.status === 'dead') {
             const rescue = live.rescue && live.rescue[m.key];
             const left = typeof rescue === 'number' ? 'Fallen: ' + formatSeconds(rescue) + ' to raise' : 'Fallen';
@@ -981,6 +1002,14 @@
         pad.appendChild(el('div', null, where));
         if (camp.has_camp && camp.here && camp.tent) {
             pad.appendChild(el('div', 'cmp-line', 'An oiled canvas tent is pitched here: shelter, and no cold while you rest.'));
+        }
+        if (camp.has_camp && Array.isArray(camp.gear) && camp.gear.length) {
+            pad.appendChild(el('div', 'cmp-line', 'Camp gear: ' + camp.gear.join(', ') + '.'));
+        } else if (camp.has_camp) {
+            pad.appendChild(el('div', 'cmp-line', 'No camp gear carried (help camp gear).'));
+        }
+        if (camp.has_camp && camp.theft_risk) {
+            pad.appendChild(el('div', 'cmp-line', 'Thieves work this road: without bells and trip lines, a rest here may be robbed.'));
         }
         if (camp.rested && camp.here && !camp.resting) {
             pad.appendChild(el('div', 'cmp-line', camp.embers

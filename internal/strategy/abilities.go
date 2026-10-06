@@ -25,6 +25,12 @@ const (
 	// AimedShot (ranger): the round's first shot that lands is a critical
 	// hit (and so leaves the foe exposed).
 	AimedShot Ability = "aimed-shot"
+	// Sweep (halberdier, Phase 39a): one swing strikes its foe and the
+	// foes beside it in the same row, each at part of the damage.
+	Sweep Ability = "sweep"
+	// Brace (halberdier): holds the turn; the first foe to strike into the
+	// halberdier's place takes a held blow at once.
+	Brace Ability = "brace"
 )
 
 // AbilitySpec is an ability's unlock, cooldown, and text.
@@ -34,6 +40,7 @@ type AbilitySpec struct {
 	Archetype string // a companion of this archetype has it
 	Skill     string // a player with this skill (level 1+) has it
 	Cooldown  int    // combat rounds before it can be used again
+	MinLevel  int    // the character level it comes at (0: from level 1)
 	When      string // its condition, for the strategy command
 	Does      string // its effect
 }
@@ -49,6 +56,12 @@ var Abilities = []AbilitySpec{
 	{ID: AimedShot, Name: "Aimed Shot", Archetype: "ranger", Skill: "track", Cooldown: 3,
 		When: "it has a shooting weapon and its foe is not already exposed",
 		Does: "its first shot that lands this round is a critical hit, leaving the foe exposed"},
+	{ID: Sweep, Name: "Sweep", Archetype: "halberdier", Skill: "polearm", Cooldown: 3,
+		When: "it wields a melee weapon, and its foe stands in a row with another foe",
+		Does: "one swing strikes its foe and one foe beside it in the same row (every foe in the row from level 8), each at 90% of the damage and each defending separately; the whole turn"},
+	{ID: Brace, Name: "Brace", Archetype: "halberdier", Skill: "polearm", Cooldown: 1, MinLevel: 3,
+		When: "its Sweep is not ready (or has no second foe to strike), it wields a melee weapon, and a foe is striking at its place in the line",
+		Does: "holds its turn; the first foe that strikes it takes a held blow at once, 25% harder than an ordinary one"},
 }
 
 // SpecOf is an ability's spec.
@@ -69,6 +82,19 @@ func CompanionAbilities(archetype string) []Ability {
 		if archetype != "" && a.Archetype == archetype {
 			out = append(out, a.ID)
 		}
+	}
+	return out
+}
+
+// AtLevel keeps the abilities a character of this level has: one that
+// comes at a level (Phase 39a: Brace at 3) is left out below it.
+func AtLevel(list []Ability, level int) []Ability {
+	out := make([]Ability, 0, len(list))
+	for _, id := range list {
+		if spec, ok := SpecOf(id); ok && spec.MinLevel > level {
+			continue
+		}
+		out = append(out, id)
 	}
 	return out
 }
@@ -130,6 +156,13 @@ type AbilitySituation struct {
 	// Ambush opens any foe (Phase 38b: a Mercenary-turned-Scout's Ambush,
 	// in the battle's first rounds).
 	Ambush bool
+	// SweepFoes is how many foes a sweep at this foe would strike: the foe
+	// itself and those beside it in its row (Phase 39a).
+	SweepFoes int
+	// Struck is true when a foe is striking at the member (or, for a
+	// Vanguard, at its column) and no brace is held yet: a brace has
+	// something to answer (Phase 39a).
+	Struck bool
 }
 
 // DecideAbility is the ability a member uses this turn, if any: the first
@@ -153,6 +186,14 @@ func DecideAbility(s AbilitySituation) (Ability, bool) {
 			}
 		case AimedShot:
 			if s.Weapon == Shooting && !s.FoeExposed {
+				return id, true
+			}
+		case Sweep:
+			if s.Weapon == Melee && s.SweepFoes >= 2 {
+				return id, true
+			}
+		case Brace:
+			if s.Weapon == Melee && s.Struck {
 				return id, true
 			}
 		}
@@ -225,3 +266,29 @@ func ParseReserve(s string) (int, bool) {
 	}
 	return n, true
 }
+
+// Sweep numbers (Phase 39a). A sweep strikes each foe at SweepPct of a
+// blow's damage; from SweepRowLevel it reaches the whole row.
+const (
+	SweepPct      = 90
+	SweepRowLevel = 8
+	BracePct      = 125
+)
+
+// HookLevel is the level a halberdier's glaive hit can knock down a
+// leaping foe; HookChance is its chance in 100: 20, and 40 from level 20.
+const HookLevel = 6
+
+func HookChance(level int) int {
+	switch {
+	case level >= 20:
+		return 40
+	case level >= HookLevel:
+		return 20
+	}
+	return 0
+}
+
+// SweepWide reports whether a halberdier's sweep reaches every foe in its
+// target's row, not only one beside it.
+func SweepWide(level int) bool { return level >= SweepRowLevel }

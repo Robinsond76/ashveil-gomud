@@ -339,12 +339,16 @@ func TestClassHelpTopics(t *testing.T) {
 		}
 	}
 	pages := map[string][]string{
-		"classes":        {"Ranks", "class promote", "Hierarch"},
-		"promotion":      {"Level 10", "class promote [class] confirm"},
-		"talents":        {"Mending Hands", "talent pick [talent] confirm"},
-		"cleric-routes":  {"Greater Heal", "Rejuvenation", "Siphon"},
-		"warrior-routes": {"Lay on Hands", "Blood Oath", "Divine shield"},
-		"summoning":      {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
+		"classes":           {"Ranks", "class promote", "Hierarch"},
+		"promotion":         {"Level 10", "class promote [class] confirm"},
+		"talents":           {"Mending Hands", "talent pick [talent] confirm"},
+		"cleric-routes":     {"Greater Heal", "Rejuvenation", "Siphon"},
+		"warrior-routes":    {"Lay on Hands", "Blood Oath", "Divine shield"},
+		"halberdier":        {"Sweep", "Brace", "Hook", "crowded"},
+		"halberdier-routes": {"Sweeper", "Vanguard", "Valkyrie", "Charged Sweep", "Hold the line"},
+		"summoning":         {"Call the Host", "Bind the Fiend", "Hellfire", "Mercy"},
+		"elite":             {"Warlord", "Paladin", "Dread Knight", "Promotion ready", "Elite talents", "Routes are final"},
+		"warlord":           {"Marked for Ruin", "Battle Cry", "Sunder", "Relentless", "Warlord's Command", "Iron Hide"},
 	}
 	for topic, wants := range pages {
 		assert.Contains(t, listed, topic, "help index lists %s", topic)
@@ -361,6 +365,8 @@ func TestClassHelpTopics(t *testing.T) {
 		"priest": "cleric-routes", "druid": "cleric-routes", "paladin": "warrior-routes",
 		"knight": "warrior-routes", "blackguard": "warrior-routes", "angel": "summoning", "demon": "summoning",
 		"hierarch": "summoning", "demonologist": "summoning",
+		"elites": "elite", "elite-class": "elite", "warlords": "warlord", "battle-cry": "warlord",
+		"sweep": "halberdier", "valkyrie": "halberdier-routes", "sweeper": "halberdier-routes",
 	}
 	for alias, topic := range aliases {
 		want, err := GetHelpContents(topic)
@@ -369,7 +375,7 @@ func TestClassHelpTopics(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, "help %s is help %s", alias, topic)
 	}
-	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch"} {
+	for _, topic := range []string{"archetype", "progression", "strategy", "combat", "warrior", "witch", "halberdier", "promotion", "classes"} {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "help ", topic)

@@ -37,9 +37,13 @@ type Member struct {
 	// when no provider can say (the leader only).
 	Archetype      string
 	ArchetypeKnown bool
-	// Class is the id of the advanced or elite class it promoted into (Phase
-	// 38b); "" before promotion. The web client draws the class's art.
-	Class string
+	// Class is the advanced or elite class id ("" before promotion),
+	// ClassName its name and ClassTier "advanced" or "elite"; ClassRank is
+	// the highest rank level reached (0 before any), and Promotion is
+	// "ready", "waiting-gate" or "" (Phase 38c1).
+	Class, ClassName, ClassTier string
+	ClassRank                   int
+	Promotion                   string
 	// Lineage is its base archetype id (Phase 40c), for the map sprite.
 	Lineage   string
 	HasHP     bool
@@ -71,6 +75,13 @@ type Member struct {
 	// points it has left to spend on them (Phase 35c).
 	Skills         map[string]int
 	TrainingPoints int
+}
+
+// SetClass fills a member's class fields from its lineage, class, level and
+// alignment: all of them derived, none saved.
+func (m *Member) SetClass(lineage, classID string, level, alignment int) {
+	info := classes.Describe(lineage, classID, level, alignment)
+	m.Class, m.ClassName, m.ClassTier, m.ClassRank, m.Promotion = info.ID, info.Name, info.Tier, info.Rank, info.Promotion
 }
 
 // Summary is a player and their company, as every surface shows them.
@@ -207,7 +218,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 	}
 	s.Leader.Class = classes.PlayerClass(uid).Class
 	s.Leader.Strategy = src.strategy(uid, company.LeaderMemberKey)
-	s.Leader.Abilities = strategy.PlayerAbilities(c.GetSkillLevel)
+	s.Leader.Abilities = strategy.AtLevel(strategy.PlayerAbilities(c.GetSkillLevel), c.Level)
 	s.Tactics = strategy.Tactics{}.Resolve()
 	if src.tactics != nil {
 		s.Tactics = src.tactics(uid)
@@ -224,6 +235,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		s.Leader.ArchetypeKnown = true
 		if id, ok := src.archetype(uid); ok {
 			s.Leader.Archetype = src.archetypeName(id)
+			s.Leader.SetClass(id, classes.PlayerClass(uid).Class, c.Level, int(c.Alignment))
 		}
 	}
 
@@ -245,8 +257,9 @@ func (src sources) summary(user *users.UserRecord) Summary {
 				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Class: v.Class, Placed: v.Placed, Row: v.Row, Col: v.Col,
 				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
 			m.Lineage = v.Archetype
+			m.SetClass(v.Archetype, v.Class, v.Level, v.Alignment)
 			m.Strategy = src.strategy(uid, m.Key)
-			m.Abilities = strategy.CompanionAbilities(v.Archetype)
+			m.Abilities = strategy.AtLevel(strategy.CompanionAbilities(v.Archetype), v.Level)
 			switch v.Status {
 			case company.MemberDead:
 				s.Dead++

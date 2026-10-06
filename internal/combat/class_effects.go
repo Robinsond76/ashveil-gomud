@@ -36,6 +36,10 @@ func hexed(c *characters.Character) bool {
 // threshold, and Wounded, Smite, Rend Holy and Hexed Damage raise it by a
 // percent. Only a blow that has damage to raise is changed.
 func classBlowDamage(src, tgt *characters.Character, dmg int) int {
+	// Phase 39a: a Sweep's or a held blow's own share of the damage.
+	if src.RT != nil && src.RT.BlowPct > 0 && dmg > 0 {
+		dmg = max(1, (dmg*src.RT.BlowPct+50)/100)
+	}
 	fx := src.ClassEffects()
 	var summon *characters.SummonInfo
 	if src.RT != nil {
@@ -82,12 +86,17 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	return dmg
 }
 
-// attackRating is the attacker's Attack against this defender: lowered by a
+// attackRating is the attacker's Attack against this defender: raised by a
+// Warlord's Battle Cry and by its mark on the defender, lowered by a
 // Dread Knight's Aura of Dread when it is the one aimed at, and by a foe's
 // Intimidation (a Blackguard's wound) against anyone but the one who made
 // it.
 func attackRating(atk, def *characters.Character) int {
-	rating := atk.AttackSkill() - def.ClassEffects().Int(classes.AuraDread)
+	rating := atk.AttackSkill() + atk.Aura.Attack - def.ClassEffects().Int(classes.AuraDread)
+	// Phase 38c1: a foe the Warlord has marked is easier for everyone to hit.
+	if def.RT != nil && def.RT.Mark > 0 {
+		rating += def.RT.Mark
+	}
 	if rt := atk.RT; rt != nil && rt.Intim > 0 && def.RT != rt.IntimOwner {
 		rating -= rt.Intim
 	}
