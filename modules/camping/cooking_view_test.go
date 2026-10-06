@@ -48,6 +48,7 @@ func TestManualCookingCapabilityUsesRecipeRanksAndRealRefresh(t *testing.T) {
 		}
 	}
 	count := 0
+	freshEvents(t)
 	listener := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out := e.(gmcp.GMCPOut)
 		if out.Module == "Char.Capabilities" {

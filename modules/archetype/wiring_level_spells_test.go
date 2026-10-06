@@ -22,6 +22,7 @@ func TestWiringLevelUpTeachesLevelSpells(t *testing.T) {
 	// LevelUp listener (registered by init) says so.
 	t.Cleanup(users.RegisterLevelGrant(m.levelGrant))
 	var report []string
+	freshEvents(t)
 	rid := events.RegisterListener(events.LevelUp{}, func(e events.Event) events.ListenerReturn {
 		report = append(report, e.(events.LevelUp).PowerLines...)
 		return events.Continue

@@ -49,6 +49,7 @@ func alliedBrawl(t *testing.T) (*brawl, *users.UserRecord, *mobs.Mob) {
 	require.NotNil(t, p)
 	p.InvitePlayer(8)
 	p.AcceptInvite(8)
+	freshEvents(t)
 	id := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
 		in := e.(events.Input)
 		if in.PartyAttack != nil && usercommands.ValidPartyFollow(in) {

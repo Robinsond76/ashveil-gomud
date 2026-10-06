@@ -92,6 +92,7 @@ func TestPartyFollowMovementRequiresConsent(t *testing.T) {
 			}
 			p.SetFollow(follower.UserId, consent)
 			var inputs []events.Input
+			freshEvents(t)
 			id := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
 				inputs = append(inputs, e.(events.Input))
 				return events.Cancel

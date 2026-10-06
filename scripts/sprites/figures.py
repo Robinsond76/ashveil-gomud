@@ -54,6 +54,9 @@ CLASSES = {
                     wide=1, hair="charcoal"),
     "shaman": dict(trousers="leather", boots="leather", torso="leather", sleeve="leather",
                    hair="charcoal"),
+    # Phase 39d: a puppeteer in a long plum coat, working a wooden doll on strings.
+    "dollmaster": dict(trousers="charcoal", boots="leather", torso="plum", sleeve="plum",
+                       hair="charcoal"),
     # Phase 39f: a sky skirmisher in a riding jack.
     "gryphon-rider": dict(trousers="leather", boots="leather", torso="ochre", sleeve="leather",
                           hair="leather"),
@@ -631,6 +634,34 @@ def draw_shaman(r):
     cv.part(line(hx - 1, tip + r.px(1), hx - r.px(2), tip + r.px(4)), "water", flat="m")
 
 
+def draw_dollmaster(r):
+    """A long plum coat with brass buttons, a cross-bar control and a wooden doll on strings."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("plum")
+    cv.part(rect(r.tx0 - 1, r.yhip - r.px(1), r.tx1 + 1, r.yhip + r.px(4)), "plum", flat="d")  # coat tails
+    if v != "up":
+        for y in range(r.ysh + r.px(2), r.yhip, max(2, r.px(2))):  # a row of brass buttons
+            cv.put(r.cx, y, "brass.l")
+    _belt(r, "leather", r.yhip - r.px(1))
+    r.arms("plum", glove="wool")
+    r.head(hair="charcoal")
+    if v == "up":
+        return
+    hx, hy = r.hand_r
+    bar = hy - r.px(3)
+    cv.part({(x, bar) for x in range(hx - r.px(2), hx + r.px(3))}, "wood", flat="m")  # control bar
+    cv.part({(hx, y) for y in range(bar, hy + 1)}, "wood", flat="m")
+    # The doll hangs below and beside the hand: head, body, two legs.
+    dx = hx + r.px(2) if v == "down" else hx + r.px(3)
+    dy = min(hy + r.px(6), S.W - r.px(5) - 2)
+    for sx in (hx - r.px(2), hx + r.px(2)):  # strings from the bar's ends
+        cv.part(line(sx, bar + 1, dx, dy - 1), "bone", flat="l")
+    cv.part(rect(dx - 1, dy, dx, dy + 1), "wood", flat="l")  # head
+    cv.part(rect(dx - 1, dy + 2, dx, dy + r.px(3)), "oxblood", flat="m")  # body
+    cv.part({(dx - 1, dy + r.px(3) + 1), (dx, dy + r.px(3) + 1)}, "wood", flat="m")  # legs
+
+
 def draw_gryphon_rider(r):
     """A riding jack, a winged helm with tawny feathers, a spear held high."""
     S, cv, v, k = r.S, r.cv, r.view, r.k
@@ -658,6 +689,7 @@ def draw_gryphon_rider(r):
 
 
 DRAWERS = {
+    "dollmaster": draw_dollmaster,
     "gryphon-rider": draw_gryphon_rider,
     "halberdier": draw_halberdier, "samurai": draw_samurai, "shaman": draw_shaman,
     "warrior": draw_warrior, "rogue": draw_rogue, "ranger": draw_ranger,

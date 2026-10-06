@@ -60,6 +60,7 @@ func TestGatheringThroughPluginsLoad(t *testing.T) {
 	users.SetTestUser(user)
 
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		messages = append(messages, e.(events.Message).Text)
 		return events.Continue

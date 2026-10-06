@@ -118,6 +118,7 @@ func TestRosterThroughPluginsLoad(t *testing.T) {
 	// this listener at the first ProcessEvents, before run resets the map
 	// (a shuffled run panicked on the nil map, 37c).
 	byUser := map[int][]string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		msg := e.(events.Message)
 		byUser[msg.UserId] = append(byUser[msg.UserId], msg.Text)

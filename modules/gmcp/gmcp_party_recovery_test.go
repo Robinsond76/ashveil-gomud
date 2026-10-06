@@ -23,6 +23,7 @@ func TestRecoveredPartySpawnPublishesAuthorityAndOfflineMembers(t *testing.T) {
 	p.SetSupport(u.UserId, true)
 	g := &GMCPPartyModule{}
 	var refresh bool
+	freshEvents(t)
 	id := events.RegisterListener(events.PartyUpdated{}, func(e events.Event) events.ListenerReturn {
 		evt := e.(events.PartyUpdated)
 		if evt.Action == "recovered" {

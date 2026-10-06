@@ -239,6 +239,7 @@ func TestUserCommandShowsCurrentConditionOrUntracked(t *testing.T) {
 func captureMessages(t *testing.T) *[]string {
 	t.Helper()
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		messages = append(messages, e.(events.Message).Text)
 		return events.Continue

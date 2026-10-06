@@ -53,6 +53,7 @@ func witchBrawl(t *testing.T, level int) *brawl {
 	// The game registers these (hooks.RegisterListeners).
 	buffListener := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffListener) })
+	freshEvents(t)
 	dreadListener := events.RegisterListener(events.MoraleCheck{}, hooks.DreadCheck)
 	t.Cleanup(func() { events.UnregisterListener(events.MoraleCheck{}, dreadListener) })
 	b.withArchetypes("witch")

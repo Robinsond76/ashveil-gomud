@@ -26,6 +26,7 @@ func TestOwnedConditionsThroughRefreshExpiryAndReconnect(t *testing.T) {
 		Effects []struct{ Name, Description, Duration string } `json:"effects"`
 		Wounds  []struct{ Name, Description, Duration string } `json:"wounds"`
 	}
+	freshEvents(t)
 	listener := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out := e.(gmcp.GMCPOut)
 		if out.Module == "Company.Conditions" {
@@ -113,6 +114,7 @@ func TestSeparatedConditionsFollowRealRelocationAndRejoin(t *testing.T) {
 		Wounds  []struct{ Name, Duration string }
 		Effects []struct{ Name string }
 	}
+	freshEvents(t)
 	listener := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out := e.(gmcp.GMCPOut)
 		if out.Module == "Company.Conditions" {

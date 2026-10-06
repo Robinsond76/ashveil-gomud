@@ -59,6 +59,7 @@ func (b *brawl) scriptedHound(owner int) *mobs.Mob {
 // scriptOrders records the follower orders queued while a test runs.
 func scriptOrders(t *testing.T) *[]events.Input {
 	var orders []events.Input
+	freshEvents(t)
 	listener := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
 		if in := e.(events.Input); in.MemberOrder != nil {
 			orders = append(orders, in)

@@ -33,12 +33,14 @@ func TestPartyLogoutConsentAndSuccessorFeedback(t *testing.T) {
 				p.SetSupport(member.UserId, true)
 			}
 			var messages []events.Message
+			freshEvents(t)
 			mid := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 				messages = append(messages, e.(events.Message))
 				return events.Cancel
 			})
 			t.Cleanup(func() { events.UnregisterListener(events.Message{}, mid) })
 			var updates []events.PartyUpdated
+			freshEvents(t)
 			pid := events.RegisterListener(events.PartyUpdated{}, func(e events.Event) events.ListenerReturn {
 				updates = append(updates, e.(events.PartyUpdated))
 				return events.Cancel

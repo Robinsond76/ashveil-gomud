@@ -43,6 +43,7 @@ func TestCampShowsInLook(t *testing.T) {
 
 	tags := regexp.MustCompile(`<[^>]*>`)
 	var seen []string
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		seen = append(seen, e.(events.Message).Text)
 		return events.Continue

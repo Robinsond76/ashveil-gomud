@@ -23,6 +23,7 @@ import (
 func captureLookMessages(t *testing.T) *[]string {
 	t.Helper()
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		messages = append(messages, e.(events.Message).Text)
 		return events.Continue
@@ -118,4 +119,12 @@ func TestLookThroughExitRespectsFogInLitBiome(t *testing.T) {
 	assert.True(t, handled)
 	events.ProcessEvents()
 	assert.Contains(t, strings.Join(*messages, "\n"), "too dark to see anything in that direction")
+}
+
+// freshEvents drops events an earlier test queued and never processed (they
+// would otherwise reach this test's listeners) and again when the test ends.
+func freshEvents(t testing.TB) {
+	t.Helper()
+	events.ClearQueueForTest()
+	t.Cleanup(events.ClearQueueForTest)
 }

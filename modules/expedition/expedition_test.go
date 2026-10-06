@@ -207,6 +207,42 @@ func (f *fakeMobSpawner) EncounterActive(instanceID, roomID int) bool {
 	return f.activeIDs[instanceID]
 }
 
+// noWorld makes room lookups find nothing (the module then names rooms "room
+// #N"), however an earlier test left the shared room cache and data path,
+// and leaves the cache clean for the next test.
+func noWorld(t *testing.T) {
+	t.Helper()
+	freshEvents(t)
+	restore := configs.SetTestDataFiles(t.TempDir())
+	rooms.ResetForTest()
+	t.Cleanup(func() { rooms.ResetForTest(); restore() })
+}
+
+// useShippedWorld loads the shipped default world for one test: its data
+// path, rooms, biomes and direction aliases. It starts from an empty room
+// cache and leaves one, so no test sees a world an earlier test loaded.
+func useShippedWorld(t *testing.T) {
+	t.Helper()
+	dataDir, err := filepath.Abs(filepath.Join("..", "..", "_datafiles", "world", "default"))
+	require.NoError(t, err)
+	freshEvents(t)
+	restore := configs.SetTestDataFiles(dataDir)
+	rooms.ResetForTest()
+	t.Cleanup(func() { rooms.ResetForTest(); restore() })
+	rooms.LoadDataFiles()
+	rooms.LoadBiomeDataFiles()
+	keywords.LoadAliases()
+}
+
+// freshEvents drops events an earlier test queued and never processed (a
+// journey's arrival, a timer) so they don't fire in this test, and again when
+// the test ends.
+func freshEvents(t *testing.T) {
+	t.Helper()
+	events.ClearQueueForTest()
+	t.Cleanup(events.ClearQueueForTest)
+}
+
 func newTestModule(store Store, scheduler Scheduler, mover Mover, surv Survival, clock func() time.Time, profiles map[string]expedition.TravelProfile) *ExpeditionModule {
 	return &ExpeditionModule{
 		store:     store,
@@ -348,6 +384,7 @@ func TestSyncAppliesSevenOfTenCheckpoint(t *testing.T) {
 }
 
 func TestStatusRendersProgressAndNeeds(t *testing.T) {
+	noWorld(t)
 	store := &fakeStore{}
 	surv := &fakeSurvival{needs: []survival.MemberNeeds{
 		{Key: survival.LeaderMemberKey, Name: "Tester", Needs: survival.Needs{Hunger: 90, Thirst: 80, Fatigue: 70}},
@@ -433,6 +470,7 @@ func TestPausedTravelAccruesNoSurvivalUntilResume(t *testing.T) {
 }
 
 func TestResumeThenFinalBoundaryMovesOnceAndChargesTotalExertion(t *testing.T) {
+	noWorld(t)
 	user := travelUser(t, 7, 100)
 	store := &fakeStore{}
 	scheduler := &fakeScheduler{}
@@ -441,6 +479,7 @@ func TestResumeThenFinalBoundaryMovesOnceAndChargesTotalExertion(t *testing.T) {
 	now := baseTime()
 	module := newTestModule(store, scheduler, mover, surv, func() time.Time { return now }, interruptionProfiles())
 	arrivalMessages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		message := e.(events.Message).Text
 		if strings.Contains(message, "You have reached") {
@@ -626,6 +665,7 @@ func TestTravelUserCommandUsageRefusalAndResolutionMessages(t *testing.T) {
 	user := travelUser(t, 7, 100)
 	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{user: user}, &fakeSurvival{}, baseTime, interruptionProfiles())
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		messages = append(messages, e.(events.Message).Text)
 		return events.Continue
@@ -677,6 +717,7 @@ func TestRenderTravelViewPausedShowsObstructionWithoutLiveCountdown(t *testing.T
 	module := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeMover{user: user}, &fakeSurvival{}, func() time.Time { return baseTime().Add(time.Hour) }, interruptionProfiles())
 	module.sessions[7] = expedition.TravelSession{LeaderUserID: 7, OriginRoomID: 100, DestinationRoomID: 200, ExitName: "north", ProfileName: "oak-road", StartedAtUTC: baseTime(), PausedAtUTC: baseTime().Add(5 * time.Second), InterruptionTriggered: true, Interruption: &expedition.TravelInterruption{Kind: expedition.FallenTree, Checkpoint: 5}, State: expedition.Interrupted}
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		messages = append(messages, e.(events.Message).Text)
 		return events.Continue
@@ -709,6 +750,7 @@ func TestRenderTravelViewOnlyForActiveSession(t *testing.T) {
 
 func travelUser(t *testing.T, userId, roomId int) *users.UserRecord {
 	t.Helper()
+	freshEvents(t)
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
 	user := users.NewUserRecord(userId, 1)
@@ -1108,11 +1150,7 @@ func TestCopyoverRestorationReschedulesFromDurableRecord(t *testing.T) {
 func TestDunmarOakRoute(t *testing.T) {
 	// Load the shipped default world so the proving route is validated exactly
 	// as it ships.
-	dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
-	require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
-	rooms.LoadDataFiles()
-	rooms.LoadBiomeDataFiles()
-	keywords.LoadAliases()
+	useShippedWorld(t)
 
 	origin := rooms.LoadRoom(2001)
 	require.NotNil(t, origin, "Dunmar West Gate must exist")

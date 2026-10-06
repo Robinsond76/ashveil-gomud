@@ -48,6 +48,7 @@ func TestQueuedMemberOrdersRevalidate(t *testing.T) {
 			b := newBrawl(t)
 			m := b.companion(1)
 			var queued *events.Input
+			freshEvents(t)
 			listener := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
 				in := e.(events.Input)
 				if in.MemberOrder != nil {
@@ -101,6 +102,7 @@ func TestScriptedFollowerOrdersCarryRequester(t *testing.T) {
 	b := newBrawl(t)
 	m := b.companion(1)
 	var orders []events.Input
+	freshEvents(t)
 	listener := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
 		in := e.(events.Input)
 		if in.MemberOrder != nil {

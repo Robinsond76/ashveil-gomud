@@ -66,6 +66,7 @@ func TestSharedEnemyRewardsAndLootSettleOnce(t *testing.T) {
 	assert.Equal(t, []int{players[0].UserId, players[1].UserId}, expected)
 
 	deaths := 0
+	freshEvents(t)
 	id := events.RegisterListener(events.MobDeath{}, func(events.Event) events.ListenerReturn { deaths++; return events.Continue })
 	t.Cleanup(func() { events.UnregisterListener(events.MobDeath{}, id) })
 	_, err := Suicide("", foe, room)

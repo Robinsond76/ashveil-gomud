@@ -89,6 +89,7 @@ func TestCompanyGMCPThroughPluginsLoad(t *testing.T) {
 	})
 
 	var sent []gmcpSent
+	freshEvents(t)
 	id := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out := e.(gmcp.GMCPOut)
 		if out.Module != "Company" && out.Module != "Company.Vitals" {

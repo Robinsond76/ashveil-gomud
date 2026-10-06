@@ -74,3 +74,18 @@ func SetTestZoneConfig(cfg *ZoneConfig) (restore func()) {
 		}
 	}
 }
+
+// ResetForTest forgets every loaded room and zone, so the next LoadRoom or
+// LoadDataFiles reads from whatever FilePaths.DataFiles names then. A test
+// that loads the shipped world calls it when it ends (and one that needs
+// "no such room" calls it first), so shuffled runs don't depend on which
+// test loaded the world before. For testing only.
+func ResetForTest() {
+	roomManager.rooms = make(map[int]*Room)
+	roomManager.zones = make(map[string]*ZoneConfig)
+	roomManager.roomsWithUsers = make(map[int]int)
+	roomManager.roomsWithMobs = make(map[int]int)
+	roomManager.roomIdToFileCache = make(map[int]string)
+	roomManager.roomSummaries = make(map[int]RoomSummaryInfo)
+	roomManager.coordinateIndex = make(map[string]map[[3]int]int)
+}

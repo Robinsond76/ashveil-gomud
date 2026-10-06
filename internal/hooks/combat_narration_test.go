@@ -63,6 +63,7 @@ func TestDeathNoticeOnce(t *testing.T) {
 	m.Character.Name = "bandit captain"
 
 	var deaths int
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if msg := e.(events.Message); msg.RoomId == room.RoomId && strings.Contains(msg.Text, "bandit captain") {
 			deaths++
@@ -76,6 +77,7 @@ func TestDeathNoticeOnce(t *testing.T) {
 	pacer := combatpace.New()
 	t.Cleanup(combatpace.UseForTest(pacer))
 	var line string
+	freshEvents(t)
 	lineId := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if msg := e.(events.Message); msg.RoomId == room.RoomId {
 			line = msg.Text

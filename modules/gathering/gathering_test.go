@@ -258,6 +258,7 @@ func (w *world) packCount(id int) int {
 // text runs the events queue and returns what the user was told.
 func (w *world) heard(f func()) string {
 	var lines []string
+	freshEvents(w.t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		lines = append(lines, e.(events.Message).Text)
 		return events.Continue
@@ -673,6 +674,7 @@ func TestPickedCleanShowsOnLookAndQueuesARedraw(t *testing.T) {
 	assert.Empty(t, w.room.DepletedResources())
 
 	var redraws []int
+	freshEvents(t)
 	id := events.RegisterListener(events.RoomResourcesChanged{}, func(e events.Event) events.ListenerReturn {
 		redraws = append(redraws, e.(events.RoomResourcesChanged).RoomId)
 		return events.Continue

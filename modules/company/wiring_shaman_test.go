@@ -28,6 +28,7 @@ func shamanBrawl(t *testing.T, class string, level int, spells ...string) *brawl
 	t.Helper()
 	b := newBrawl(t)
 	loadStatusBuffs(t)
+	freshEvents(t)
 	buffListener := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffListener) })
 	classes.SetProvider(&fakeClassStore{state: classes.State{Class: class}})
