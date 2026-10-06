@@ -28,6 +28,9 @@ type MemberState struct {
 	Dolls []characters.DollState `yaml:"dolls,omitempty"`
 	// Beast is a Beast Tamer companion's bonded beast (Phase 39e).
 	Beast *characters.BeastState `yaml:"beast,omitempty"`
+	// FlasksSpent is the flasks an Alchemist companion has thrown since it
+	// last brewed (Phase 39g); 0 is a full satchel.
+	FlasksSpent int `yaml:"flasksspent,omitempty"`
 }
 
 // Vitals are a companion's saved health and mana (Phase 33h2). Percent,

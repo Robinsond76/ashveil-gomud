@@ -218,8 +218,9 @@ func applyState(mob *mobs.Mob, state domain.MemberState) {
 	// Phase 30b: its lasting wounds come back with it (no fight survives a
 	// respawn, so light ones don't), and its health stops at the limit.
 	mob.Character.Wounds = wounds.CloseLight(saved.Wounds)
-	mob.Character.Dolls = saved.Dolls // Phase 39d
-	mob.Character.Beast = saved.Beast // Phase 39e
+	mob.Character.Dolls = saved.Dolls             // Phase 39d
+	mob.Character.FlasksSpent = saved.FlasksSpent // Phase 39g
+	mob.Character.Beast = saved.Beast             // Phase 39e
 	mob.Character.Validate(true)
 	// Phase 33h2: its saved health and mana, held to today's limits.
 	mob.Character.Health, mob.Character.Mana = saved.Vitals.Resolve(mob.Character.HealthLimit(), mob.Character.ManaMax.Value)
@@ -232,15 +233,16 @@ func (nativeRuntime) Snapshot(instanceID int) (domain.MemberState, bool) {
 		return domain.MemberState{}, false
 	}
 	state := domain.MemberState{
-		Level:      mob.Character.Level,
-		Experience: mob.Character.Experience,
-		Equipment:  mob.Character.Equipment,
-		Items:      mob.Character.Items,
-		Gold:       mob.Character.Gold,
-		Wounds:     mob.Character.Wounds,
-		Dolls:      mob.Character.Dolls,
-		Beast:      mob.Character.Beast,
-		Vitals:     &domain.Vitals{Health: mob.Character.Health, Mana: mob.Character.Mana},
+		Level:       mob.Character.Level,
+		Experience:  mob.Character.Experience,
+		Equipment:   mob.Character.Equipment,
+		Items:       mob.Character.Items,
+		Gold:        mob.Character.Gold,
+		Wounds:      mob.Character.Wounds,
+		Dolls:       mob.Character.Dolls,
+		Beast:       mob.Character.Beast,
+		FlasksSpent: mob.Character.FlasksSpent,
+		Vitals:      &domain.Vitals{Health: mob.Character.Health, Mana: mob.Character.Mana},
 	}
 	return state.Clone(), true
 }

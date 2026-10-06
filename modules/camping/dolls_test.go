@@ -5,6 +5,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/dolls"
+	"github.com/GoMudEngine/GoMud/internal/flasks"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -42,4 +43,29 @@ func TestCampRestMendsADollMastersDollsWithTheLeadersParts(t *testing.T) {
 
 	// A company with no Doll Master says nothing.
 	assert.Empty(t, mendRestDolls(leader, map[int]*characters.Character{2: {Name: "Garrick"}}))
+}
+
+// Phase 39g: a camp rest's end refills a company Alchemist's satchel from the
+// leader's reagents, one a flask.
+func TestCampRestBrewsAnAlchemistsFlasksWithTheLeadersReagents(t *testing.T) {
+	leader := &users.UserRecord{UserId: 7, Character: &characters.Character{Name: "Aria", Level: 5}}
+	mira := &characters.Character{Name: "Mira", Level: 5, HPArchetype: "alchemist"}
+	mira.FlasksSpent = 4
+	live := map[int]*characters.Character{1: mira}
+
+	assert.Equal(t, []string{"Your flask satchels stay low: you have no reagents."}, brewRestFlasks(leader, live))
+	assert.Equal(t, 4, mira.FlasksSpent)
+
+	for i := 0; i < 3; i++ {
+		leader.Character.Items = append(leader.Character.Items, items.Item{ItemId: flasks.ReagentItemID})
+	}
+	lines := brewRestFlasks(leader, live)
+	assert.Equal(t, []string{"Mira brews through the night: 3 flask(s) from 3 reagent(s)."}, lines)
+	assert.Equal(t, 1, mira.FlasksSpent)
+	assert.Zero(t, flasks.Reagents(leader.Character))
+
+	// Nothing missing, or no Alchemist: nothing said.
+	mira.FlasksSpent = 0
+	assert.Empty(t, brewRestFlasks(leader, live))
+	assert.Empty(t, brewRestFlasks(leader, map[int]*characters.Character{2: {Name: "Garrick"}}))
 }

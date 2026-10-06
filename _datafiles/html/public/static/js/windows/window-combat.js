@@ -654,15 +654,17 @@
             const fallen = m.status === 'dead';
             let subText = '';
             if (fallen) { subText = 'fallen'; } else if (v.hp !== null && v.hp !== undefined) { subText = v.hp + ' / ' + v.hp_max; }
+            // Phase 39g: an Alchemist's flasks left.
+            const flaskNote = !fallen && v.flasks_max > 0 ? v.flasks + ' of ' + v.flasks_max + ' flasks' : '';
             // Phase 30c2: a guardian's ward and guards left.
             const g = fallen ? null : (battle.guards || []).find(x => x.key === m.key);
             const guardNote = g ? 'guards ' + wardName(g.ward, members) + ', ' +
                 (g.left > 0 ? g.left + (g.left === 1 ? ' guard' : ' guards') + ' left' : 'no guards left') : '';
-            const subLine = [subText, guardNote].filter(Boolean).join(' · ');
+            const subLine = [subText, flaskNote, guardNote].filter(Boolean).join(' · ');
             const sub = subLine ? el('span', 'cbt-sub', subLine) : null;
             const you = m.key === 'leader';
             const target = aimsAt[m.key];
-            const spoken = (you && data.company ? m.name + ' (you)' : m.name) + (subText ? ', ' + (fallen ? 'fallen' : 'health ' + subText.replace(' / ', ' of ')) : '') +
+            const spoken = (you && data.company ? m.name + ' (you)' : m.name) + (subText ? ', ' + (fallen ? 'fallen' : 'health ' + subText.replace(' / ', ' of ')) : '') + (flaskNote ? ', ' + flaskNote : '') +
                 (target ? ', striking ' + nameOf(target, battle, data) : '') + (guardNote ? ', ' + guardNote : '');
             const node = fighterButton(m.key, (you ? 'is-you' : '') + (fallen ? ' is-fallen' : ''), m.name, sub, spoken);
             if (data.company) {

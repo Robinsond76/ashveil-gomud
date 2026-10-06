@@ -72,7 +72,7 @@
     const CLASS_HUES = {
         warrior: ['#8a8f99', '#c0504d'], cleric: ['#e8e4d0', '#d4a72c'], ranger: ['#4e7d3a', '#8a6a3b'],
         rogue: ['#444a56', '#9b59b6'], wizard: ['#4a5fc1', '#e0c040'], witch: ['#6b3f8c', '#3fb08a'], halberdier: ['#7d8590', '#b87333'],
-        samurai: ['#2f3a4a', '#d9a441'], shaman: ['#3b6a7a', '#9fd0e0'], 'gryphon-rider': ['#8a6d3b', '#e8e2c9'],
+        samurai: ['#2f3a4a', '#d9a441'], shaman: ['#3b6a7a', '#9fd0e0'], 'gryphon-rider': ['#8a6d3b', '#e8e2c9'], alchemist: ['#8a7a4e', '#c4561c'],
         dollmaster: ['#6a3d4a', '#d8b878'], doll: ['#b08850', '#6a4a2a'], // Phase 39d: the doll is painted wood
         beasttamer: ['#6b5a3a', '#c9a24a'], wolf: ['#7d7d85', '#c9c9d0'], warhound: ['#5a4632', '#b08850'], // Phase 39e: the bonded beasts
         bear: ['#5b4030', '#8a6a4a'], drake: ['#3f7a4a', '#d9622b'],
@@ -374,6 +374,8 @@
             u.sprite = u.klass || 'adventurer';
             u.promoted = String(m.class || '').toLowerCase();   // Phase 40s5: an advanced or elite class has its own art
             u.className = m.class_name || '';
+            // Phase 39g: an Alchemist's flasks left, named when its figure is tapped.
+            u.flasks = (v.flasks_max > 0) ? v.flasks + ' of ' + v.flasks_max + ' flasks' : '';
             u.cell = cell;
             u.leader = m.key === 'leader';
             u.role = (m.strategy && m.strategy.role) || '';
@@ -956,6 +958,7 @@
         }
         let text = u.label;
         if (u.side === 'company' && u.className) { text += ', ' + u.className; }
+        if (u.side === 'company' && u.flasks && !u.fallen) { text += ', ' + u.flasks; }
         if (u.side === 'ally' && u.allyName) { text += ' of ' + u.allyName + '\'s company'; }
         if (isShrunk(u) && u.side === 'ally') { text += ' (tap to watch)'; }
         if (u.side !== 'company' && u.band) { text += ', ' + u.band; }
