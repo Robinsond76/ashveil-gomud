@@ -1,3 +1,28 @@
+**Phase 39a complete, merged via [PR #44](https://github.com/Robinsond76/ashveil-gomud/pull/44) (2026-10-06): the Halberdier.** the first neutral class,
+a polearm fighter that wins by crowding. Sweep (a whole-turn blow at 90% on
+the foe and its row neighbour, the whole row from level 8), Brace (answers
+the first strike at 125%), Hook (knocks a leaping foe down), a `crowded`
+target rule, Sweeper, Vanguard and Valkyrie routes open at any alignment
+(elites planned for 39i), a Sweep Drill talent, a recruitable Halberdier
+(mob 130), `help halberdier` and `help halberdier-routes`. See the
+[plan](plans/2026-10-06-phase-39a-halberdier.md). Decisions: Sweep 90% after
+the balance run showed 80% lost five-foe groups; sprite deferred to 40s5.
+Review (2026-10-06): accepted: the strategy, company and GMCP displays
+listed Brace from level 1 though it comes at 3 (new `strategy.AtLevel`
+filters displays and battle alike; GMCP shows it disabled, "Comes at level
+3"); the level-up report now names Brace, Hook and the whole-row Sweep as
+they arrive; help said Brace waits only on Sweep's cooldown (it also braces
+when Sweep has no second foe); stale 80% comments. Checked and fine: mob
+130 is clear of master (max 97) and 39b (139); brace state clears with the
+fight's class state; no economy surface. Balance re-run (40 fights a cell):
+the Halberdier is within 5 points of the Warrior everywhere but level 20
+five-foe groups (90% vs 72%), its intended crowd strength; Sweep stays 90%.
+After the 40a3/40b/40s5 master merge, one race run failed
+`TestAimedShotGrowsWithLevel` (35b's ranger test, weapon dice: level 1 rolled
+21); it passed 8 of 8 reruns and is left for the flaky-test phase (37c).
+Merged after 39b: both neutral lineages share the help tables, recruit
+lists and `DefaultRule` (Samurai strongest, Halberdier crowded).
+
 # Ashveil Project Status
 
 **Phase 45 built: UI follow-ups (2026-10-06):** closes three gaps the 40s5, 40a2

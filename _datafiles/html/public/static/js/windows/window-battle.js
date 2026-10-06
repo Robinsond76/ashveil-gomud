@@ -71,7 +71,7 @@
     // Class hues for company figures: body, trim.
     const CLASS_HUES = {
         warrior: ['#8a8f99', '#c0504d'], cleric: ['#e8e4d0', '#d4a72c'], ranger: ['#4e7d3a', '#8a6a3b'],
-        rogue: ['#444a56', '#9b59b6'], wizard: ['#4a5fc1', '#e0c040'], witch: ['#6b3f8c', '#3fb08a'],
+        rogue: ['#444a56', '#9b59b6'], wizard: ['#4a5fc1', '#e0c040'], witch: ['#6b3f8c', '#3fb08a'], halberdier: ['#7d8590', '#b87333'],
         samurai: ['#2f3a4a', '#d9a441'],
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
