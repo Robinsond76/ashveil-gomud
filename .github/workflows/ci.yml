@@ -217,6 +217,9 @@ jobs:
       - name: Run JavaScript lint checks
         run: make js-lint
 
+      - name: Run JavaScript tests
+        run: make js-test
+
   lua-lint:
     name: Lua Lint
     runs-on: ubuntu-24.04
