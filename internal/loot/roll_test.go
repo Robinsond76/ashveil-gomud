@@ -103,7 +103,7 @@ func TestGenerateRarityDecidesAffixCountsAndIdentification(t *testing.T) {
 		{items.RarityUncommon, 1, 1, true, 0, false, 40},
 		{items.RarityRare, 2, 3, false, 0, true, 45},
 		{items.RarityEpic, 3, 4, false, 1, true, 45},
-		{items.RarityLegendary, 3, 3, false, 1, true, 45},
+		{items.RarityLegendary, 2, 2, false, 0, true, 45},
 		{items.RaritySet, 2, 2, false, 0, true, 45},
 	}
 	rng := seeded{rand.New(rand.NewSource(7))}

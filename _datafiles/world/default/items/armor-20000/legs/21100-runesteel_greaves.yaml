@@ -1,0 +1,11 @@
+itemid: 21100
+name: runesteel greaves
+namesimple: greaves
+description: Runesteel plate, etched and fitted, the armor of a champion. It is leg armor of the heavy path.
+type: legs
+subtype: wearable
+bulk: heavy
+tier: 5
+family: heavy
+damagereduction: 13
+weight: 3500

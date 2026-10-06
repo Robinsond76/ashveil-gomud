@@ -1,0 +1,12 @@
+itemid: 20314
+name: masterwork kite shield
+namesimple: shield
+description: A long steel-faced kite shield that covers the wearer from chin to knee.
+type: offhand
+subtype: wearable
+shieldsize: shield
+bulk: medium
+tier: 4
+family: kite shield
+damagereduction: 15
+weight: 5400

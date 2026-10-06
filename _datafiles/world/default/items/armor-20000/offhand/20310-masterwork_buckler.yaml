@@ -1,0 +1,12 @@
+itemid: 20310
+name: masterwork buckler
+namesimple: shield
+description: A small steel buckler with a rolled edge and a perfect boss, quick in the hand.
+type: offhand
+subtype: wearable
+shieldsize: buckler
+bulk: light
+tier: 4
+family: buckler
+damagereduction: 8
+weight: 1700

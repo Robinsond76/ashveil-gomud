@@ -1,0 +1,19 @@
+itemid: 50005
+name: "Widow's Weave"
+namesimple: robe
+description: 'A robe of silk so fine it is nearly invisible in a web, strong enough to stop a knife and light enough to fall like water.'
+type: body
+subtype: wearable
+bulk: light
+tier: 6
+family: cloth
+damagereduction: 6
+weight: 700
+value: 1625
+relic:
+  signature: Webwalker
+  effects: {evasion: 8, spellpct: 15}
+  ilvl: 45
+  mob: 37
+  chance: 8
+  lore: 'It is spun from the thread of the spider queen herself, and her children still know its scent.'

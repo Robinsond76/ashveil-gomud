@@ -1,0 +1,12 @@
+itemid: 20315
+name: runesteel kite shield
+namesimple: shield
+description: A runesteel kite shield, tall and nearly unmarked by hard use.
+type: offhand
+subtype: wearable
+shieldsize: shield
+bulk: medium
+tier: 5
+family: kite shield
+damagereduction: 17
+weight: 5600

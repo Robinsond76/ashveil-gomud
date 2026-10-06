@@ -1,0 +1,11 @@
+itemid: 21093
+name: fitted plate cuirass
+namesimple: cuirass
+description: Plate fitted to the wearer by a master armorer, close and sure. It is body armor of the heavy path.
+type: body
+subtype: wearable
+bulk: heavy
+tier: 4
+family: heavy
+damagereduction: 23
+weight: 8000

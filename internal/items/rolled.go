@@ -365,6 +365,9 @@ func ValidMechanic(m string) bool {
 // set by Rename always wins (DisplayName handles that).
 func (i *Item) RollName(base string) string {
 	r := i.Loot
+	if spec := GetItemSpec(i.ItemId); spec != nil && spec.Relic != nil {
+		return base // Phase 36d: a relic's own name stands, whatever it rolled
+	}
 	words := []string{}
 	if r.Quality != QualityStandard && r.Quality != "" {
 		words = append(words, string(r.Quality))

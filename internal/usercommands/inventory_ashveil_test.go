@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
@@ -59,4 +60,49 @@ func TestInventoryWithoutLoad(t *testing.T) {
 	text := inventoryText(t, users.NewUserRecord(7, 1), "")
 	assert.NotContains(t, text, "Company load")
 	assert.Contains(t, text, "Equipment")
+}
+
+// Phase 36d: the inventory lists what worn relics do, and nothing for plain gear.
+func TestInventoryListsWornRelicsAndSetProgress(t *testing.T) {
+	useWorld(t, "default")
+	useSummary(t, companyview.Summary{Alive: 1})
+	specs := []*items.ItemSpec{
+		{ItemId: 9821, Name: "Test Reaper", NameSimple: "reaper", Type: items.Weapon, Subtype: items.Slashing, Hands: 1, Tier: 6,
+			Damage: items.Damage{Attacks: 1, DiceCount: 1, SideCount: 6},
+			Relic:  &items.RelicSpec{Signature: "Reaping", Effects: map[string]int{classes.Wounded: 20}, ILvl: 30, Mob: 1, Chance: 5}},
+		{ItemId: 9822, Name: "Test Helm", Type: items.Head, Subtype: items.Wearable, Tier: 5, DamageReduction: 3, Relic: &items.RelicSpec{Set: "invset", ILvl: 30, Mob: 1, Chance: 5}},
+		{ItemId: 9823, Name: "Test Mail", Type: items.Body, Subtype: items.Wearable, Tier: 5, DamageReduction: 6, Relic: &items.RelicSpec{Set: "invset", ILvl: 30, Mob: 1, Chance: 5}},
+		{ItemId: 9824, Name: "Test Boots", Type: items.Feet, Subtype: items.Wearable, Tier: 5, DamageReduction: 2, Relic: &items.RelicSpec{Set: "invset", ILvl: 30, Mob: 1, Chance: 5}},
+	}
+	for _, s := range specs {
+		items.SetTestItemSpec(s)
+	}
+	items.SetTestSet(&items.SetSpec{SetId: "invset", Name: "Inventory Regalia", Bonuses: []items.SetBonus{
+		{Pieces: 2, Effects: map[string]int{classes.Armor: 3}},
+		{Pieces: 3, Effects: map[string]int{classes.Evasion: 4}},
+	}})
+	t.Cleanup(func() {
+		for _, s := range specs {
+			items.RemoveTestItemSpec(s.ItemId)
+		}
+		items.RemoveTestSet("invset")
+	})
+	user := users.NewUserRecord(7, 1)
+	user.Character.Level = 30
+
+	assert.NotContains(t, inventoryText(t, user, ""), "Relics worn", "plain gear lists nothing")
+
+	user.Character.Equipment.Weapon = items.New(9821)
+	user.Character.Equipment.Head = items.New(9822)
+	user.Character.Equipment.Body = items.New(9823)
+	text := inventoryText(t, user, "")
+	assert.Contains(t, text, "Relics worn:")
+	assert.Contains(t, text, "Test Reaper: Reaping (while worn): blows deal 20% more to a foe at or below half health.")
+	assert.Contains(t, text, "Inventory Regalia: 2 of 3 pieces")
+	assert.Contains(t, text, "+3% damage reduction on top of worn armor", "the bonus in force")
+	assert.NotContains(t, text, "+4 Evasion", "the third piece's bonus is not yet")
+
+	user.Character.Equipment.Feet = items.New(9824)
+	assert.Contains(t, inventoryText(t, user, ""), "+4 Evasion")
+	assert.NotContains(t, inventoryText(t, user, "reaper"), "Relics worn", "a filter shows only matches")
 }

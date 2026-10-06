@@ -26,8 +26,11 @@ that is not worth the weight.
 The heavier the piece, the more pieces of material you get. A Superior or
 Exquisite item gives one or two more, and rarity adds up to three (Rare 1,
 Epic 2, Legendary or Set 3). A tier 4 or better item, or an Epic or better
-one, also yields a runestone shard. Rings, necklaces, packs and gear with no
-tier or family audit give nothing a smith can use.
+one, also yields a runestone shard, unless the piece is worth less than the
+shard (a masterwork glove gives its leather and no shard). Rings, necklaces,
+packs and gear with no tier or family audit give nothing a smith can use.
+A relic breaks down like any other find, but it is worth far more whole
+(<ansi fg="command">help relics</ansi>).
 
 Materials are goods: <ansi fg="command">help goods</ansi>. Sell them at a market (<ansi fg="command">help market</ansi>) or keep
 them for crafting later. Check <ansi fg="command">offer [item]</ansi> first: a merchant who wants the

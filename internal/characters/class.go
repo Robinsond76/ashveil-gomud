@@ -2,9 +2,11 @@ package characters
 
 import (
 	"slices"
+	"strconv"
 
 	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/hexes"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 )
 
@@ -36,6 +38,64 @@ func (c *Character) ClassState() (string, []string) {
 // its route's ranks reached and the talents it has earned. Nil for a
 // character with neither.
 func (c *Character) ClassEffects() classes.Effects {
+	own := c.classOwnEffects()
+	if c == nil {
+		return own
+	}
+	key, gear := c.wornGear()
+	if key == "" {
+		return own
+	}
+	// Phase 36d: worn relics add their signature and set bonuses on top.
+	// classOwnEffects and wornGear drop mergedFx whenever either side is
+	// remade, so the merge is redone only then.
+	if c.mergedFx == nil {
+		c.mergedFx = classes.WithGear(own, gear)
+	}
+	return c.mergedFx
+}
+
+// WornGear is what the character's worn relics grant (Phase 36d): the
+// gear effects and each set's progress. Empty for a character in plain gear.
+func (c *Character) WornGear() (map[string]int, []items.ActiveSet) {
+	key, fx := c.wornGear()
+	if key == "" {
+		return nil, nil
+	}
+	return fx, c.gearSets
+}
+
+// wornGear returns a key naming the relics worn ("" when none) and the
+// effects they grant, recomputed only when the relics worn change.
+func (c *Character) wornGear() (string, map[string]int) {
+	key := ""
+	for _, slot := range AllSlots() {
+		if slot == items.Pack {
+			continue
+		}
+		if it := c.Equipment.Get(slot); it.ItemId > 0 && items.IsRelicItem(it.ItemId) {
+			key += strconv.Itoa(it.ItemId) + ","
+		}
+	}
+	if key == "" {
+		c.gearKey = ""
+		return "", nil
+	}
+	if key != c.gearKey {
+		var worn []items.Item
+		for _, slot := range AllSlots() {
+			if slot != items.Pack {
+				worn = append(worn, *c.Equipment.Get(slot))
+			}
+		}
+		c.gearFx, c.gearSets = items.GearEffects(worn)
+		c.gearKey = key
+		c.mergedFx = nil
+	}
+	return key, c.gearFx
+}
+
+func (c *Character) classOwnEffects() classes.Effects {
 	class, talents := c.ClassState()
 	// Phase 39b: a neutral lineage's base ranks (the Samurai's Iaijutsu)
 	// count from level 1, before any promotion.
@@ -46,12 +106,16 @@ func (c *Character) ClassEffects() classes.Effects {
 		}
 	}
 	if class == "" && len(talents) == 0 && lineage == "" {
+		if c != nil && c.fxValid {
+			c.fxValid, c.mergedFx = false, nil // 36d review: no class now, so no merge on the old one
+		}
 		return nil
 	}
 	if c.fxValid && c.fxClass == class && c.fxLineage == lineage && c.fxLevel == c.Level && slices.Equal(c.fxTalents, talents) {
 		return c.fx
 	}
 	c.fx = classes.EffectsForLineage(lineage, class, c.Level, talents)
+	c.mergedFx = nil // 36d review: the gear merge sits on top of the old map
 	c.fxClass, c.fxLineage, c.fxLevel, c.fxTalents, c.fxValid = class, lineage, c.Level, slices.Clone(talents), true
 	return c.fx
 }
@@ -353,7 +417,12 @@ func (c *Character) GuardFall(dmg, room int, warded bool) (int, string) {
 
 // ShieldBlow spends a Divine Shield on a blow, once a battle.
 func (c *Character) ShieldBlow() bool {
-	if c.RT == nil || c.RT.ShieldUsed || !c.ClassEffects().Has(classes.DivineShield) {
+	if !c.ClassEffects().Has(classes.DivineShield) {
+		return false
+	}
+	// 36d review: a relic gives a classless wearer the shield, and it may be
+	// struck before it has acted (and so before it has runtime state).
+	if rt := c.RTState(); rt.ShieldUsed {
 		return false
 	}
 	c.RT.ShieldUsed = true

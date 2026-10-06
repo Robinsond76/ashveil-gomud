@@ -1,0 +1,11 @@
+itemid: 21090
+name: fitted plate helm
+namesimple: helm
+description: Plate fitted to the wearer by a master armorer, close and sure. It is headgear of the heavy path.
+type: head
+subtype: wearable
+bulk: heavy
+tier: 4
+family: heavy
+damagereduction: 9
+weight: 2000

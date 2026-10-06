@@ -310,6 +310,23 @@
             line-height: 1.3;
         }
 
+        .gw-tt-name.r-uncommon { color: #5fd75f; }
+        .gw-tt-name.r-rare     { color: #5f87ff; }
+        .gw-tt-name.r-epic     { color: #af5fff; }
+        .gw-tt-name.r-legendary { color: #ff8700; }
+        .gw-tt-name.r-set      { color: #00afaf; }
+
+        .gw-tt-relic {
+            font-size: 0.75em;
+            line-height: 1.5;
+            color: var(--t-text);
+        }
+
+        .gw-tt-relic .gw-tt-relic-lore {
+            color: var(--t-text-secondary);
+            font-style: italic;
+        }
+
         .gw-tt-details {
             font-weight: normal;
             font-style: italic;
@@ -420,7 +437,8 @@
         const detailClass = item.details && item.details.includes('cursed') ? 'cursed'
                           : item.details && item.details.includes('quest')  ? 'quest' : '';
 
-        let html = '<div class="gw-tt-name">' + (item.label || item.name);
+        const rarityClass = item.rarity ? ' r-' + String(item.rarity).replace(/[^a-z]/g, '') : '';
+        let html = '<div class="gw-tt-name' + rarityClass + '">' + (item.label || item.name);
         if (details) {
             html += ' <span class="gw-tt-details ' + detailClass + '">(' + details + ')</span>';
         }
@@ -441,6 +459,20 @@
                     '<span class="gw-tt-row-value">' + r.value + '</span>' +
                 '</div>';
             });
+        }
+
+        // Phase 36d: a Legendary's signature, or a set piece's set and its
+        // bonuses, as the server words them.
+        if (item.relic && item.relic.length > 0) {
+            const esc = function (v) {
+                return String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            };
+            html += '<hr class="gw-tt-divider"><div class="gw-tt-relic">' +
+                item.relic.map(function (line) { return '<div>' + esc(line) + '</div>'; }).join('');
+            if (item.relic_lore) {
+                html += '<div class="gw-tt-relic-lore">' + esc(item.relic_lore) + '</div>';
+            }
+            html += '</div>';
         }
 
         const hint = _itemHint(item);

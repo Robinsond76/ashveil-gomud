@@ -251,6 +251,7 @@ type ItemSpec struct {
 	Family          string            `yaml:"family,omitempty"`      // Phase 36b: catalog family, e.g. glaive, leather, kite shield; shown on look, never inferred from the name
 	Goods           string            `yaml:"goods,omitempty"`       // Phase 36b: trade goods category (trophy, salvage, material, valuable, provision, curio)
 	WornBy          []string          `yaml:"wornby,omitempty"`      // Phase 38e: creature species (archetype ids) this gear is cut for; only they wear it, and they wear nothing else
+	Relic           *RelicSpec        `yaml:"relic,omitempty"`       // Phase 36d: an authored Legendary or Set piece: its signature or set, item level and boss
 }
 
 // Trade goods categories (Phase 36b). Goods are sold, not worn: they make
@@ -567,7 +568,9 @@ func (i *ItemSpec) AutoCalculateValue() {
 }
 
 func (i *ItemSpec) ItemFolder(baseonly ...bool) string {
-	if i.ItemId >= 40000 {
+	if i.ItemId >= 50000 && i.ItemId < 60000 {
+		return `relics-50000`
+	} else if i.ItemId >= 40000 {
 		return ``
 	} else if i.ItemId >= 30000 {
 		return `consumables-30000`
@@ -650,6 +653,12 @@ func (i *ItemSpec) Validate() error {
 		}
 		if i.Type == Weapon || i.Type == Pack || i.IsArmor() {
 			return fmt.Errorf("goods cannot be equipment")
+		}
+	}
+
+	if i.Relic != nil {
+		if err := i.Relic.validate(i); err != nil {
+			return fmt.Errorf("relic: %w", err)
 		}
 	}
 

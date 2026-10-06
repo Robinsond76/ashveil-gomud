@@ -72,7 +72,8 @@ normal battle begins with your company set up as it is.
   Every foe makes its own roll. When the last foe of a group falls, the
   group's cache adds gold by the zone's level band, a chance of gear and
   some goods; a boss's roll gives two pieces of gear (one of them Rare or
-  better), three goods rolls and much more gold. Gear is made at the
+  better), three goods rolls and much more gold, and each company that
+  beat it may also win one of its relics (<ansi fg="command">help relics</ansi>). Gear is made at the
   zone's item levels. Allied companies each get their own roll, held in a
   corpse claimed by that company (<ansi fg="command">help loot</ansi>), and your battle summary lists
   your spoils (<ansi fg="command">help battle-summary</ansi>).
