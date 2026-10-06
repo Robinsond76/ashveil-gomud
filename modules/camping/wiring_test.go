@@ -2,7 +2,6 @@ package camping
 
 import (
 	"path/filepath"
-	"sync"
 	"testing"
 	"time"
 
@@ -20,16 +19,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var worldOnce sync.Once
-
+// loadShippedWorld loads the shipped default world for one test: its data
+// path, rooms and biomes, from an empty room cache, and clears both when the
+// test ends, so no test sees a world an earlier test loaded.
 func loadShippedWorld(t *testing.T) {
 	t.Helper()
-	worldOnce.Do(func() {
-		dataDir := filepath.Join("..", "..", "_datafiles", "world", "default")
-		require.NoError(t, configs.AddOverlayOverrides(map[string]any{"FilePaths.DataFiles": dataDir}))
-		rooms.LoadDataFiles()
-		rooms.LoadBiomeDataFiles()
-	})
+	dataDir, err := filepath.Abs(filepath.Join("..", "..", "_datafiles", "world", "default"))
+	require.NoError(t, err)
+	restore := configs.SetTestDataFiles(dataDir)
+	rooms.ResetForTest()
+	t.Cleanup(func() { rooms.ResetForTest(); restore() })
+	rooms.LoadDataFiles()
+	rooms.LoadBiomeDataFiles()
+}
+
+// noWorld makes room lookups find nothing (rooms are then named "room #N"),
+// whatever an earlier test loaded.
+func noWorld(t *testing.T) {
+	t.Helper()
+	restore := configs.SetTestDataFiles(t.TempDir())
+	rooms.ResetForTest()
+	t.Cleanup(func() { rooms.ResetForTest(); restore() })
 }
 
 type zoneWeather map[string]weather.Condition

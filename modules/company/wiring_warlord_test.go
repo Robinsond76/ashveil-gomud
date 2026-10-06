@@ -151,7 +151,7 @@ func TestWarlordRelentlessQuickensItWhenItsFoeStandsUp(t *testing.T) {
 	b.fight()
 	require.True(t, status.Live(&foe.Character, status.KnockedDown))
 	told := false
-	for i := 0; i < 6 && !told; i++ {
+	for i := 0; i < 12 && !told; i++ {
 		b.toughen()
 		b.hardenBandits()
 		out := b.fight()

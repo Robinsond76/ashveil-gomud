@@ -187,6 +187,7 @@ func TestWiringStartSkipsChosenArchetype(t *testing.T) {
 
 func TestWiringPlayerSpawnRecoversKit(t *testing.T) {
 	m := registered(t)
+	freshEvents(t)
 	id := events.RegisterListener(events.PlayerSpawn{}, m.onPlayerSpawn)
 	t.Cleanup(func() { events.UnregisterListener(events.PlayerSpawn{}, id) })
 
@@ -261,6 +262,7 @@ func TestWiringStartOffersStepForUnconfiguredArchetype(t *testing.T) {
 // owed kit with the choice.
 func TestWiringPermadeathEventClearsOwedKit(t *testing.T) {
 	m, store := testModule(t)
+	freshEvents(t)
 	id := events.RegisterListener(events.PlayerDeath{}, m.onPlayerDeath)
 	t.Cleanup(func() { events.UnregisterListener(events.PlayerDeath{}, id) })
 	m.choose(newUser(3022), "warrior", true)

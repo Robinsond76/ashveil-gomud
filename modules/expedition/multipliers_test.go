@@ -57,6 +57,7 @@ func rain() weather.Condition {
 func captureTravelMessages(t *testing.T) func() string {
 	t.Helper()
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		messages = append(messages, e.(events.Message).Text)
 		return events.Continue

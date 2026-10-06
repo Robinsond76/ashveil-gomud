@@ -129,6 +129,7 @@ func TestCompanyNormalLogoutLoginRestoresNativeFollowing(t *testing.T) {
 			assert.Contains(t, module.registry.Companies, 7)
 			events.ProcessEvents()
 			followed := false
+			freshEvents(t)
 			listener := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
 				input := e.(events.Input)
 				if input.MobInstanceId == instance && input.InputText == "north" {

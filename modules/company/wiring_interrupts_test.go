@@ -381,6 +381,7 @@ func TestShieldCounterOnlyOnBlock(t *testing.T) {
 func TestShieldCounterStuns(t *testing.T) {
 	b := guardBrawl(t)
 	loadStatusBuffs(t)
+	freshEvents(t)
 	buffId := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffId) })
 	forceBlocks(t)

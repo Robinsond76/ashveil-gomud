@@ -200,6 +200,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 		return u
 	}
 	var messages = map[int][]string{}
+	freshEvents(t)
 	lid := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		m := e.(events.Message)
 		messages[m.UserId] = append(messages[m.UserId], m.Text)
@@ -250,6 +251,7 @@ func TestTutorialThroughPluginsLoad(t *testing.T) {
 
 	// Phase 27d: the Tutorial GMCP package, as the gmcp module sends it.
 	panels := map[int][]map[string]any{}
+	freshEvents(t)
 	gid := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		if out, ok := e.(gmcp.GMCPOut); ok && out.Module == "Tutorial" {
 			var body map[string]any

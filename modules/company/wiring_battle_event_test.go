@@ -53,6 +53,7 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 			steps = append(steps, step{at: now.Sub(start), text: companyTagPattern.ReplaceAllString(text, "")})
 		}
 	}))
+	freshEvents(t)
 	gid := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out, ok := e.(gmcp.GMCPOut)
 		if !ok || out.UserId != 7 || out.Module != "Company.Battle.Event" {
@@ -76,6 +77,7 @@ func TestBattleEventsThroughTheRealRound(t *testing.T) {
 		{events.NewTurn{}, hooks.ReleasePacedCombat},
 		{events.NewRound{}, hooks.IdleMobs},
 	} {
+		freshEvents(t)
 		id := events.RegisterListener(reg.evt, reg.fn)
 		evt := reg.evt
 		t.Cleanup(func() { events.UnregisterListener(evt, id) })
@@ -237,6 +239,7 @@ func TestBattleEventsGoOutAtOnceWithPacingOff(t *testing.T) {
 	b.aria.SetConfigOption(combatpace.OptionKey, string(combatpace.Off))
 
 	var got int
+	freshEvents(t)
 	gid := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		if out, ok := e.(gmcp.GMCPOut); ok && out.UserId == 7 && out.Module == "Company.Battle.Event" {
 			got++
@@ -253,6 +256,7 @@ func TestBattleEventsGoOutAtOnceWithPacingOff(t *testing.T) {
 		{events.Message{}, hooks.Message_SendMessage},
 		{events.CombatData{}, hooks.CombatData_Hold},
 	} {
+		freshEvents(t)
 		id := events.RegisterListener(reg.evt, reg.fn)
 		evt := reg.evt
 		t.Cleanup(func() { events.UnregisterListener(evt, id) })

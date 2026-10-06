@@ -13,6 +13,7 @@ import (
 // reaches the leader's client as Room.Gather through the real listener.
 func TestRoomGatherCarriesTheWorksProgress(t *testing.T) {
 	var out []GMCPOut
+	freshEvents(t)
 	id := events.RegisterListener(GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out = append(out, e.(GMCPOut))
 		return events.Cancel // the dispatcher needs a connection; only the payload is under test

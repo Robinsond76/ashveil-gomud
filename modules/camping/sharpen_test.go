@@ -204,6 +204,7 @@ func TestSpentStoneQueuesOwnershipLoss(t *testing.T) {
 	armed(user.Character, testSwordID, 0)
 	user.Character.StoreItem(stone(1))
 	lost := 0
+	freshEvents(t)
 	id := events.RegisterListener(events.ItemOwnership{}, func(e events.Event) events.ListenerReturn {
 		if o := e.(events.ItemOwnership); o.UserId == 7 && !o.Gained && o.Item.ItemId == testStoneID {
 			lost++

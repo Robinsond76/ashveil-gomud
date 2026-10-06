@@ -162,6 +162,7 @@ func (e *env) addUser(t *testing.T, id, roomId int) *users.UserRecord {
 func captureMessages(t *testing.T) *[]string {
 	t.Helper()
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(ev events.Event) events.ListenerReturn {
 		messages = append(messages, ev.(events.Message).Text)
 		return events.Continue

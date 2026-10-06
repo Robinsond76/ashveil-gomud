@@ -71,6 +71,7 @@ func TestDecodeRegistryDropsBadTactics(t *testing.T) {
 func TestUserPurgedForgetsTactics(t *testing.T) {
 	m, store, _, _ := testModule(t)
 	require.NoError(t, m.SetTactics(4401, domain.Tactics{Focus: domain.Leader}))
+	freshEvents(t)
 	id := events.RegisterListener(events.UserPurged{}, m.onUserPurged)
 	t.Cleanup(func() { events.UnregisterListener(events.UserPurged{}, id) })
 	events.AddToQueue(events.UserPurged{UserId: 4401})

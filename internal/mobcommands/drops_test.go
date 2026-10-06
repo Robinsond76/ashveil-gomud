@@ -59,6 +59,8 @@ func newDropWorld(t *testing.T, nUsers int, band encounters.Band) *dropWorld {
 	w.room.Zone = dropZone
 	for i := 0; i < nUsers; i++ {
 		u := users.NewUserRecord(98800+i, 0)
+		loot.TakeSpoils(u.UserId) // spoils an earlier test noted for this id
+		t.Cleanup(func() { loot.TakeSpoils(u.UserId) })
 		u.Character.RoomId = w.room.RoomId
 		u.Character.Level = 1
 		u.Character.Health = 10

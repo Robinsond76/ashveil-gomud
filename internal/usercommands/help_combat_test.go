@@ -101,7 +101,11 @@ func TestDefenseHelp(t *testing.T) {
 		require.NoError(t, err, alias)
 		assert.Equal(t, text, got, "help %s is help defense", alias)
 	}
-	configs.SetTestGamePlayConfig(old) // the rest reads the code's defaults
+	// The rest reads a blank gameplay config, not whatever an earlier test (or
+	// the first pass of -count=2) left loaded.
+	defaults := configs.GamePlay{}
+	defaults.Validate()
+	configs.SetTestGamePlayConfig(defaults)
 
 	for _, topic := range []string{"combat", "armor", "interrupts", "statuses", "battle-summary"} {
 		page, err := GetHelpContents(topic)

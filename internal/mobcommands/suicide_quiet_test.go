@@ -24,6 +24,7 @@ func roomLines(t *testing.T, rest string, practice bool) string {
 	room.AddMob(mob.InstanceId)
 
 	var seen []string
+	freshEvents(t)
 	lid := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if m := e.(events.Message); m.RoomId == room.RoomId {
 			seen = append(seen, m.Text)
@@ -63,6 +64,7 @@ func TestSuicideDoesNotRepeatDeath(t *testing.T) {
 	mob := &mobs.Mob{MobId: 998, InstanceId: 434344}
 	room.AddMob(mob.InstanceId)
 	var count int
+	freshEvents(t)
 	id := events.RegisterListener(events.MobDeath{}, func(events.Event) events.ListenerReturn { count++; return events.Continue })
 	t.Cleanup(func() { events.UnregisterListener(events.MobDeath{}, id) })
 	_, err := Suicide("quiet", mob, room)

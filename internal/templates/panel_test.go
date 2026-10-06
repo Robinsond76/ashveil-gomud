@@ -395,9 +395,14 @@ func TestPanelLayout_PanelLookup(t *testing.T) {
 	assert.Equal(t, p, layout.Panel("test"))
 }
 
-func TestPanelLayout_PanelLookup_PanicsOnMissing(t *testing.T) {
+// A missing panel id logs an error and returns a no-op panel, so the caller
+// carries on (this once passed only because an unset logger panicked).
+func TestPanelLayout_PanelLookup_NoOpOnMissing(t *testing.T) {
 	layout := &PanelLayout{byID: make(map[string]*Panel)}
-	assert.Panics(t, func() { layout.Panel("nonexistent") })
+	var p *Panel
+	assert.NotPanics(t, func() { p = layout.Panel("nonexistent") })
+	assert.NotNil(t, p)
+	assert.False(t, layout.HasPanel("nonexistent"))
 }
 
 func TestPanelLayout_Render_SingleSlot_TwoRows(t *testing.T) {

@@ -161,6 +161,7 @@ func TestCompanionEquipmentRefreshesLeaderGMCPInventory(t *testing.T) {
 	weapon := items.New(10004)
 	b.aria.Character.Items = []items.Item{weapon}
 	var inventory *gmcp.GMCPCharModule_Payload_Inventory
+	freshEvents(t)
 	id := events.RegisterListener(gmcp.GMCPOut{}, func(e events.Event) events.ListenerReturn {
 		out := e.(gmcp.GMCPOut)
 		if out.UserId == 7 && out.Module == "Char.Inventory" {
@@ -191,6 +192,7 @@ func TestAutoLootRoundUsesRealCommandAndOnlyOwnSpoils(t *testing.T) {
 	b.road.Corpses = []rooms.Corpse{foreign, own}
 	util.SetRoundCount(gametime.GetDate(500).AddPeriod("2 hours"))
 	var inputs []string
+	freshEvents(t)
 	listener := events.RegisterListener(events.Input{}, func(e events.Event) events.ListenerReturn {
 		in := e.(events.Input)
 		if in.UserId == 7 {

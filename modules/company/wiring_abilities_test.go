@@ -35,6 +35,7 @@ func abilityBrawl(t *testing.T, companions map[int]string) (*brawl, *[]combatstr
 	t.Cleanup(hooks.UseAbilityRollForTest(func(int) int { return 0 }))
 	// The shipped statuses, applied as the world loop applies buffs.
 	loadStatusBuffs(t)
+	freshEvents(t)
 	buffId := events.RegisterListener(events.Buff{}, hooks.ApplyBuffs)
 	t.Cleanup(func() { events.UnregisterListener(events.Buff{}, buffId) })
 	return b, b.listen()

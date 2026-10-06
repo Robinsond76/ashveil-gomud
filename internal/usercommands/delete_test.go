@@ -51,6 +51,7 @@ func newDeleter(t *testing.T) *deleter {
 	t.Cleanup(func() { users.RemoveTestUser(7) })
 
 	d := &deleter{t: t, user: u, heard: &[]string{}, despawns: &[]events.PlayerDespawn{}}
+	freshEvents(t)
 	mid := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if m := e.(events.Message); m.UserId == 7 {
 			*d.heard = append(*d.heard, m.Text)

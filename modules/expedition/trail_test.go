@@ -20,6 +20,7 @@ func trailMessages(t *testing.T) *[]string {
 	users.SetTestUser(users.NewUserRecord(7, 1))
 	events.ProcessEvents()
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		messages = append(messages, e.(events.Message).Text)
 		return events.Continue

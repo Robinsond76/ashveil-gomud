@@ -220,6 +220,7 @@ func newBrawl(t *testing.T) *brawl {
 		return events.Continue
 	})
 	t.Cleanup(func() { events.UnregisterListener(events.Input{}, mid) })
+	freshEvents(t)
 	idle := events.RegisterListener(events.MobIdle{}, hooks.HandleIdleMobs)
 	t.Cleanup(func() { events.UnregisterListener(events.MobIdle{}, idle) })
 

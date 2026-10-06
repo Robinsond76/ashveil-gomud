@@ -14,6 +14,7 @@ import (
 func watchProgress(t *testing.T, f func()) []events.GatherProgress {
 	t.Helper()
 	var got []events.GatherProgress
+	freshEvents(t)
 	id := events.RegisterListener(events.GatherProgress{}, func(e events.Event) events.ListenerReturn {
 		got = append(got, e.(events.GatherProgress))
 		return events.Continue

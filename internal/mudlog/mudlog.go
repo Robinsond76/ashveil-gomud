@@ -12,8 +12,11 @@ import (
 )
 
 var (
-	slogInstance *slog.Logger
-	logLevel     = new(slog.LevelVar) // goroutine safe way to change log levels
+	logLevel = new(slog.LevelVar) // goroutine safe way to change log levels
+
+	// slogInstance logs to stderr until SetupLogger replaces it, so a caller
+	// (a test, a tool) that never sets up logging can't hit a nil logger.
+	slogInstance = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: logLevel}))
 )
 
 type teeLogger interface {

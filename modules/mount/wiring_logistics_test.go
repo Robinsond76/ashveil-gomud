@@ -157,6 +157,7 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 	})
 
 	messages := []string{}
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if msg := e.(events.Message); msg.UserId == user.UserId {
 			messages = append(messages, msg.Text)
@@ -277,6 +278,7 @@ func TestCompanyLogisticsThroughPluginsLoad(t *testing.T) {
 	companion.Character.StoreItem(items.New(30015))
 
 	buffed := []int{}
+	freshEvents(t)
 	buffListener := events.RegisterListener(events.Buff{}, func(e events.Event) events.ListenerReturn {
 		if b := e.(events.Buff); b.UserId == user.UserId {
 			buffed = append(buffed, b.BuffId)

@@ -13,6 +13,7 @@ import (
 // leader stands in: none (and whether camp can be made here), here with
 // the fire and a running rest, elsewhere, and an inn.
 func TestCampStateOf(t *testing.T) {
+	noWorld(t)
 	now := time.Date(2026, 9, 29, 12, 0, 0, 0, time.UTC)
 	m := newTestModule(&fakeStore{}, &fakeScheduler{}, &fakeSurvival{}, func() time.Time { return now })
 	campUser(t, 7, 100)

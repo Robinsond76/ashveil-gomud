@@ -32,6 +32,7 @@ func windUpWorld(t *testing.T) (ogre, foe int, lines *[]string, stream *[]combat
 
 	events.ProcessEvents() // nothing left over from an earlier test
 	var got []string
+	freshEvents(t)
 	id := events.RegisterListener(events.Message{}, func(e events.Event) events.ListenerReturn {
 		if msg := e.(events.Message); msg.RoomId == room.RoomId {
 			got = append(got, msg.Text)

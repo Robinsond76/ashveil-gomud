@@ -53,6 +53,7 @@ func captureBuffs(t *testing.T, fn func()) []events.Buff {
 	t.Helper()
 	events.ProcessEvents()
 	var out []events.Buff
+	freshEvents(t)
 	id := events.RegisterListener(events.Buff{}, func(e events.Event) events.ListenerReturn {
 		out = append(out, e.(events.Buff))
 		return events.Continue
