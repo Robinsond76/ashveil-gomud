@@ -14,9 +14,11 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mount"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -101,6 +103,33 @@ type inventoryPayload struct {
 	CompanionsKnown bool             `json:"companions_known"`
 	Horses          []inventoryHorse `json:"horses"`
 	Cargo           []inventoryItem  `json:"cargo"`
+	// Seized (Phase 53) is what a defeat's captors hold for the leader, and
+	// where; absent when nothing is held.
+	Seized *inventorySeized `json:"seized,omitempty"`
+}
+
+// inventorySeized is the pack and gold a capture holds (help defeat).
+type inventorySeized struct {
+	Items int    `json:"items"`
+	Gold  int    `json:"gold"`
+	Where string `json:"where"` // the capture room's title, plain
+	Here  bool   `json:"here"`  // the leader stands in it now
+}
+
+// seizedOf reads a leader's held goods; nil when none are held.
+func seizedOf(c *characters.Character) *inventorySeized {
+	gold := death.SeizedGold(c)
+	if len(c.Seized) == 0 && gold <= 0 {
+		return nil
+	}
+	out := &inventorySeized{Items: len(c.Seized), Gold: gold}
+	if roomID := death.SeizedRoom(c); roomID > 0 {
+		if room := rooms.LoadRoom(roomID); room != nil {
+			out.Where = room.Title
+		}
+		out.Here = c.RoomId == roomID
+	}
+	return out
 }
 
 // inventorySources are what the payload reads; natives unless a test
@@ -163,7 +192,7 @@ func buildInventoryPayload(user *users.UserRecord, src inventorySources) invento
 	for _, slot := range items.AllEquipSlots() {
 		slots = append(slots, inventorySlot{Slot: string(slot), Label: strings.TrimSuffix(characters.SlotLabel(slot), ":")})
 	}
-	p := inventoryPayload{Slots: slots, Shared: user.Character.CompanyCargo, Treasury: user.Character.Gold, AutoLoot: user.Character.AutoLoot, Members: []inventoryMember{inventoryMemberOf(leader)}, Horses: []inventoryHorse{}, Cargo: []inventoryItem{}}
+	p := inventoryPayload{Seized: seizedOf(user.Character), Slots: slots, Shared: user.Character.CompanyCargo, Treasury: user.Character.Gold, AutoLoot: user.Character.AutoLoot, Members: []inventoryMember{inventoryMemberOf(leader)}, Horses: []inventoryHorse{}, Cargo: []inventoryItem{}}
 	if load, ok := src.load(uid); ok {
 		p.Load = &inventoryLoad{TotalG: load.TotalGrams(), CapacityG: load.CapacityGrams, MemberCapacityG: load.MemberCapacityGrams,
 			MountCapacityG: load.MountCapacityGrams, CargoG: load.CargoGrams}

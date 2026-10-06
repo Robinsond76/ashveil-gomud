@@ -43,6 +43,7 @@ a band. Every part has its own page:
 
 <ansi fg="yellow-bold">Falling</ansi>
   <ansi fg="command">help death</ansi>         what happens when you die
+  <ansi fg="command">help defeat</ansi>        rescued, captured, robbed or left for dead
   <ansi fg="command">help resurrect</ansi>     raising a fallen companion
 
 New to the world? <ansi fg="command">help tutorial</ansi> explains the training course.

@@ -232,3 +232,16 @@ func TestPlanHealAddsTheHealersBonus(t *testing.T) {
 		t.Fatalf("capped at the limit, health %d", got)
 	}
 }
+
+func TestBeatenIsALastingWoundOfThePercentage(t *testing.T) {
+	w := Beaten(100, 20, func(n int) int { return n - 1 })
+	if w.Points != 20 || w.Light || w.Kind != Fracture || w.Place == "" {
+		t.Fatalf("Beaten(100, 20) = %+v, want a lasting 20-point fracture", w)
+	}
+	if got := Beaten(3, 20, nil).Points; got != 1 {
+		t.Fatalf("a small max health still leaves 1 point, got %d", got)
+	}
+	if got := Beaten(40, 10, nil).Kind; got != Cut {
+		t.Fatalf("no roll picks a cut, got %s", got)
+	}
+}

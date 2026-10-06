@@ -35,7 +35,7 @@ another meter.
 | 50 | Condition carries into battle; cooked meals give buffs | S–M | 47 merged (shared `modules/company` files) |
 | 51 | Rest duties: each member sleeps, watches, tends or works | M | 47 merged; coordinate with 49 if banter hooks the camp rest |
 | 52 | Tents with trade-offs | S | 51 |
-| 53 | Defeat scenarios in place of the church respawn | M–L | Companion equipment phase merged; 40a4 |
+| 53 | Defeat scenarios in place of the church respawn (built) | M–L | Companion equipment phase merged; 40a4 |
 | 54 | Sigils: prepare the ground before a battle | M | — |
 | 55 | Ailments and remedies | M | 50 |
 | 56 | Recipe discovery | S–M | 50 |

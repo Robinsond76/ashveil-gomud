@@ -1,0 +1,17 @@
+roomid: 91002
+zone: Brigand Camp
+title: Brigand Camp
+description: >-
+  A scatter of lean-tos and a cold fire ring crowd a clearing off the Old King's Road. Rough men's gear hangs from the branches. A path leads south to the road, and a patched hide tent stands to the north. Test content: the way out of a capture (phase 53).
+biome: forest
+tags:
+  - lit
+exits:
+  south:
+    roomid: 2002
+  north:
+    roomid: 91001
+mapx: 0
+mapy: -2
+mapz: 0
+hascoordinates: true

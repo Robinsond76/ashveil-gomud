@@ -1,0 +1,15 @@
+roomid: 91001
+zone: Brigand Camp
+title: Brigands' Tent
+description: >-
+  A low hide tent that stinks of smoke and old sweat. A stout, iron-banded chest sits against the back wall, the brigands' stolen goods piled about it. The tent flap opens south onto the camp. Test content: where a captured company wakes (phase 53).
+biome: forest
+tags:
+  - lit
+exits:
+  south:
+    roomid: 91002
+mapx: 0
+mapy: -3
+mapz: 0
+hascoordinates: true

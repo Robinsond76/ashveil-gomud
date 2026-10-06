@@ -97,11 +97,13 @@ target's, the likelier a telling blow (<ansi fg="command">help attack</ansi>).
 A coated blade (<ansi fg="command">help poisons</ansi>) may leave a poison on a foe it wounds. A sharpened blade (<ansi fg="command">help sharpen</ansi>) does +1 damage on each strike while its
 edge lasts.
 
-<ansi fg="yellow-bold">Falling (</ansi><ansi fg="command">help death</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help resurrect</ansi><ansi fg="yellow-bold">)</ansi>
+<ansi fg="yellow-bold">Falling (</ansi><ansi fg="command">help death</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help defeat</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help resurrect</ansi><ansi fg="yellow-bold">)</ansi>
 
-At 0 health you drop. At -10 you die: you lose a level and wake at the last
-city's church, with your living company. A companion who dies stays on your
-roster for a while, and can be raised at a church or a village shaman.
+At 0 health you drop. At -10 you die. Usually you wake in a defeat
+scenario with no level lost: rescued, captured, robbed or left for dead,
+by what beat you. Otherwise you lose a level and wake at the last city's
+church. A companion who dies stays on your roster for a while, and can be
+raised at a church or a village shaman.
 
 <ansi fg="yellow-bold">Reading a fight (</ansi><ansi fg="command">help narration</ansi><ansi fg="yellow-bold">)</ansi>
 

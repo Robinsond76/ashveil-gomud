@@ -118,6 +118,17 @@ func Bled(stacks int, roll Roll) Wound {
 	return Wound{Kind: Cut, Place: place(Cut, roll), Points: max(1, stacks), Light: true}
 }
 
+// Beaten is the lasting wound a defeat leaves (Phase 53): pct percent of
+// max health, at least 1, of a kind picked by roll.
+func Beaten(maxHealth, pct int, roll Roll) Wound {
+	kinds := []Kind{Cut, Puncture, Fracture}
+	k := kinds[0]
+	if roll != nil {
+		k = kinds[max(0, min(roll(len(kinds)), len(kinds)-1))]
+	}
+	return Wound{Kind: k, Place: place(k, roll), Points: max(1, maxHealth*max(pct, 0)/100)}
+}
+
 // Total is the health all ws hold back.
 func Total(ws []Wound) int {
 	t := 0

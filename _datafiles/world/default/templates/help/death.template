@@ -6,14 +6,19 @@ the negative range. Someone can still heal you back up.
 
 Once you reach -10 hitpoints, you will die!
 
-Dying costs you <ansi fg="yellow">one level</ansi> (at level 1 you keep your level but lose its
-progress). Earning that level back doesn't give its training points again.
-You may also drop some of your gear, which you'll need to go back for.
+Most defeats end in a scenario that fits what beat you and where you fell:
+you are rescued, captured, left for dead or robbed, with no level lost
+(<ansi fg="command">help defeat</ansi>). When no scenario fits, dying costs you
+<ansi fg="yellow">one level</ansi> (at level 1 you keep your level but lose its progress), and
+earning that level back doesn't give its training points again. You may also
+drop some of your gear, which you'll need to go back for.
 
-You wake at the church of the last city you visited, with the living
+Then you wake at the church of the last city you visited, with the living
 companions who were with you when you fell beside you. One who was
 elsewhere is separated and finds its way back to you
 (<ansi fg="command">help separation</ansi>). Any journey, camp, or inn stay is left behind.
 You wake without your wounds (<ansi fg="command">help wounds</ansi>).
 
-Your companions can die too: see <ansi fg="command">help resurrect</ansi>.
+Your companions can die too: see <ansi fg="command">help resurrect</ansi>. A scenario
+moves your whole company the same way: those with you come along, and one
+who was elsewhere is separated and finds its way back.

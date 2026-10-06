@@ -137,3 +137,41 @@ func TestShippedShaman(t *testing.T) {
 		assert.Zero(t, mob.MaxWander, path)
 	}
 }
+
+// TestShippedDefeatScenarios pins the Phase 53 test content: the shipped
+// table parses with one scenario of each kind, the capture room is a camp
+// tent with a way out to the road and back, its guard template is a weak
+// human, and the bound buff exists with the no-go flag.
+func TestShippedDefeatScenarios(t *testing.T) {
+	s := shippedSettings(t)
+	kinds := map[domain.ScenarioKind]domain.Scenario{}
+	for _, sc := range s.scenarios {
+		assert.NoError(t, sc.Valid(), sc.ID)
+		kinds[sc.Kind] = sc
+	}
+	for _, kind := range []domain.ScenarioKind{domain.Rescued, domain.Captured, domain.LeftForDead, domain.Robbed} {
+		assert.Contains(t, kinds, kind)
+	}
+
+	capture := kinds[domain.Captured]
+	tent := shippedRoom(t, "brigand_camp/91001.yaml")
+	camp := shippedRoom(t, "brigand_camp/91002.yaml")
+	fork := shippedRoom(t, "old_kings_road/2002.yaml")
+	assert.Equal(t, capture.Room, tent.RoomId)
+	assert.Equal(t, 91002, tent.Exits["south"].RoomId, "the tent opens on the camp")
+	assert.Equal(t, 91001, camp.Exits["north"].RoomId)
+	assert.Equal(t, 2002, camp.Exits["south"].RoomId, "the camp opens on the road")
+	assert.Equal(t, 91002, fork.Exits["north"].RoomId, "and the road leads back, to reclaim")
+
+	data, err := os.ReadFile(filepath.Join(shippedWorld(), "mobs", "old_kings_road", "86-road_brigand.yaml"))
+	require.NoError(t, err)
+	guard := mobs.Mob{}
+	require.NoError(t, yaml.Unmarshal(data, &guard))
+	assert.Equal(t, mobs.MobId(capture.GuardMob), guard.MobId)
+	assert.LessOrEqual(t, capture.GuardLevel, guard.Character.Level, "guards come from the lowest band")
+
+	buff, err := os.ReadFile(filepath.Join(shippedWorld(), "buffs", "9301-bound.yaml"))
+	require.NoError(t, err)
+	assert.Contains(t, string(buff), "no-go")
+	assert.Contains(t, string(buff), "buffid: 9301")
+}

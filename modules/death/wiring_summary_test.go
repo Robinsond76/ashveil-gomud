@@ -61,6 +61,7 @@ func TestCompanySummaryThroughPluginsLoad(t *testing.T) {
 
 	t.Cleanup(plugins.SnapshotLoadStateForTest())
 	plugins.Load(dataDir)
+	churchOnly(t)
 
 	users.ResetActiveUsers()
 	t.Cleanup(users.ResetActiveUsers)
@@ -190,6 +191,7 @@ func TestCompanySummaryThroughPluginsLoad(t *testing.T) {
 	before := companyview.For(user)
 	plugins.Save()
 	plugins.Load(dataDir)
+	churchOnly(t)
 	after := companyview.For(user)
 	assert.Equal(t, before.Alive, after.Alive)
 	assert.Equal(t, before.Dead, after.Dead)
