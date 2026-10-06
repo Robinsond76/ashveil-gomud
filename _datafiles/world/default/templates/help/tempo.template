@@ -14,6 +14,9 @@ pays for one turn. Tempo is between {{ config "GamePlay.Combat.TempoMin" }} and 
 with at most {{ config "GamePlay.Combat.MaxTurnsPerRound" }} turns in any round. Afterward at most 99 points carry
 forward. You cannot bank whole turns for a burst. The meter ends with the
 fight and starts fresh in the next one, including after a server restart.
+A Samurai opens each battle with half a turn already on its meter (Iaijutsu),
+and gains half a turn when it fells a foe (Zanshin, from level 8): see
+<ansi fg="command">help samurai</ansi>.
 
 At Speed {{ config "GamePlay.Combat.TempoSpeedRef" }}, without burden, your tempo is one. Each {{ config "GamePlay.Combat.TempoSpeedSpan" }} extra Speed
 adds one before the cap. Full personal burden reduces this rate by 35%. Medium armor then takes

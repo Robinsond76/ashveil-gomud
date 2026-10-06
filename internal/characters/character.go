@@ -58,6 +58,7 @@ type Character struct {
 	HPTalents []string `yaml:"-"`
 	fx        classes.Effects
 	fxClass   string
+	fxLineage string
 	fxLevel   int
 	fxTalents []string
 	fxValid   bool

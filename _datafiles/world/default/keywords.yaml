@@ -43,6 +43,8 @@ help:
       - talents
       - cleric-routes
       - warrior-routes
+      - samurai
+      - samurai-routes
       - summoning
     company:
       - company
@@ -294,6 +296,8 @@ help-aliases:
   cleric-routes:    [priest, druid, blood-priest, blood priest, elder-druid, elder druid, siphon, rejuvenation, barkskin, grove, greater-heal]
   warrior-routes:   [knight, paladin, blackguard, dread-knight, dread knight, mercenary, lay-on-hands, blood-oath, intimidate]
   summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]
+  samurai:          [samurais, duelist, iaijutsu, zanshin, iai]
+  samurai-routes:   [kensai, hatamoto, ronin, sword-saint, sword saint, shogun, kenshi, bodyguard, vengeance]
   witch:            [witches, hedge-witch, hexcraft]
   hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]
   trap:             [traps]

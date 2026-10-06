@@ -1,0 +1,22 @@
+mobid: 139
+zone: Dunmar
+# Phase 39b recruit base (samurai). See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Recruit Samurai
+  description: A masterless swordsman looking for a company to serve, who means to win each fight in its first moment.
+  raceid: 1
+  level: 1
+  alignment: 0
+  equipment:
+    weapon:
+      itemid: 10101
+    head:
+      itemid: 20020
+    body:
+      itemid: 20163
+    feet:
+      itemid: 20003
