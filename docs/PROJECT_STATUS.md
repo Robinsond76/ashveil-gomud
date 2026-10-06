@@ -20,7 +20,17 @@ level, tooltip and tab-switcher consolidation) are proposals in the
 review with the reason each waits. `modules/archetype` and loot/items
 were left alone for the in-flight 39i2 and 36d builds. Verification:
 `make generate`, `make validate`, `go test -race -timeout 30m ./...`,
-`make js-lint`.
+`make js-lint`. **Review (2026-10-06, merged as PR #123):** every value in
+the shipped module configs parses as before (the only fractional numbers,
+`StrengthKg`, `MinRatio` and `HeatFactor`, are read as floats; every
+duration is a unit string); the six Go helpers, two JS functions,
+`.cw-tt-*` and `.vw-max/full/min` rules and 13 theme tokens have no
+reader in Go, Lua, templates, JS or concatenated `--t-` names (the window
+library only builds `.vw-close`). Accepted, fixed: `modules/encumbrance/AGENTS.md`
+still pointed at the removed `company.AddedGrams`. Checked, kept: member
+keys like a bare "5" no longer resolve to a companion's display name (no
+code writes one). Browser: SP 0, zero gold, and the fled companion line
+verified in Chromium at 1280px and 390px; `dock-windows-check.mjs` passes.
 
 **Flaky test cleanup (2026-10-06).** `TestWiringKeenEyeWithoutARogueRarelySpots` failed about 1 run in 100: the archetype and encounters modules' `init()` step listeners stay registered in the test binary and rolled real dice alongside the test's fixed-roll module (with Keen Eye a 1% chance to spot). New `walking.SuspendListeners` sets them aside for tests that wire their own listener (`wired` in archetype, the encounters harness); 1500 repeats pass. `TestWarlordRelentlessQuickensItWhenItsFoeStandsUp` did not reproduce (200 repeats, six shuffled runs, two full company runs all green) and no cause was found, so it is unchanged; a full `go test -race ./...` is green. Not reproduced either: the unnamed company failure on PR #107 (its CI logs could not be read from here). **Review (accepted, fixed):** `SuspendListeners` returned a restore function any caller could forget, and nothing kept game code from calling it; it now takes the test's `testing.TB` and restores the listeners through `tb.Cleanup` (after the test's own listener is removed), with `TestSuspendListenersSilencesAndRestoresThemAfterTheTest`. **Review (checked, kept):** no archetype, encounters or walking test runs in parallel, so the global swap is safe; no other test binary links a module whose `init()` adds a walking listener next to a test listener (modules/walking's chill listener is the one its own test exercises). The PR #107 company log is still unreadable here (the tail holds only `FAIL`; the full log host is blocked).
 
