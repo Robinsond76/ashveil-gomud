@@ -938,6 +938,10 @@
             if (battle.weather && battle.weather.name) {
                 banners.push(battle.weather.name + ' (' + battle.weather.rounds + (battle.weather.rounds === 1 ? ' round' : ' rounds') + ': ' + battle.weather.effect + ')');
             }
+            // Phase 54: the sigil the company stands in.
+            if (battle.sigil && battle.sigil.name) {
+                banners.push(battle.sigil.name + ' (' + battle.sigil.effect + ')');
+            }
             if ((battle.allies || []).length) { banners.push('allies: ' + battle.allies.map(a => a.name).join(', ')); }
             if (battle.waiting && battle.waiting.length) { banners.push('waiting: ' + battle.waiting.join(', ')); }
         }
@@ -1776,6 +1780,7 @@
                 pace: feedPace,
                 nerve: battle && battle.nerve ? battle.nerve : '',
                 weather: battle && battle.weather ? battle.weather.kind : '',
+                sigil: battle && battle.sigil ? battle.sigil.kind : '',
                 watching,
                 allies: allyGroups(),
                 compact: compactAllies(),

@@ -136,22 +136,25 @@ type ClassAura struct {
 // it is saved, and a fight's end clears all of it but the Lay on Hands
 // uses, which come back with rest.
 type ClassRT struct {
-	Ward, WardCap int  // blows a ward absorbs, and the most it takes from each
-	Bark, Thorns  int  // Barkskin's armor and the damage a striker takes
-	Rejuv, Per    int  // rounds of Rejuvenation left and its heal each round
-	ShieldUsed    bool // Divine Shield has been spent this battle
-	OathUsed      int  // Blood Oath blows spent this battle
-	Intim         int  // Attack this foe loses against anyone but IntimOwner
-	IntimOwner    *ClassRT
-	IntimRound    uint64 // the combat round the foe was wounded in
-	Cleansed      map[string]bool
-	Guards        int         // an Angel's Guard uses spent
-	Hands         int         // Lay on Hands uses since the last rest
-	Summoned      bool        // this character has called its summon this battle
-	Summon        *SummonInfo // set on a summoned creature
-	Doll          *DollInfo   // set on a Doll Master's doll (Phase 39d)
-	Beast         *BeastInfo  // set on a Beast Tamer's bonded beast (Phase 39e)
-	Bless         int         // rounds of Bless left
+	Ward, WardCap int // blows a ward absorbs, and the most it takes from each
+	// WardSigil marks a ward a ward sigil gave (Phase 54 review): a caster's
+	// own ward replaces it, and healers do not count it as warded.
+	WardSigil    bool
+	Bark, Thorns int  // Barkskin's armor and the damage a striker takes
+	Rejuv, Per   int  // rounds of Rejuvenation left and its heal each round
+	ShieldUsed   bool // Divine Shield has been spent this battle
+	OathUsed     int  // Blood Oath blows spent this battle
+	Intim        int  // Attack this foe loses against anyone but IntimOwner
+	IntimOwner   *ClassRT
+	IntimRound   uint64 // the combat round the foe was wounded in
+	Cleansed     map[string]bool
+	Guards       int         // an Angel's Guard uses spent
+	Hands        int         // Lay on Hands uses since the last rest
+	Summoned     bool        // this character has called its summon this battle
+	Summon       *SummonInfo // set on a summoned creature
+	Doll         *DollInfo   // set on a Doll Master's doll (Phase 39d)
+	Beast        *BeastInfo  // set on a Beast Tamer's bonded beast (Phase 39e)
+	Bless        int         // rounds of Bless left
 
 	// Phase 38c1, the Warlord and elite talents.
 	Mark      int    // on a foe: the Attack every ally has against it (Marked for Ruin)

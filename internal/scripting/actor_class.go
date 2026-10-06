@@ -34,10 +34,10 @@ func (a ScriptActor) GrantWard(cap, blows int) bool {
 		return false
 	}
 	rt := c.RTState()
-	if rt.Ward > 0 {
+	if rt.Ward > 0 && !rt.WardSigil { // Phase 54 review: a sigil's small ward gives way
 		return false
 	}
-	rt.Ward, rt.WardCap = blows, cap
+	rt.Ward, rt.WardCap, rt.WardSigil = blows, cap, false
 	return true
 }
 

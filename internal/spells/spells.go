@@ -37,6 +37,9 @@ type SpellData struct {
 	Cost        int         `yaml:"cost,omitempty"`
 	WaitRounds  int         `yaml:"waitrounds,omitempty"`
 	Difficulty  int         `yaml:"difficulty,omitempty"` // Augments final success chance by this %
+	// Element names the force a damage spell carries ("fire"), which a
+	// sigil may answer (Phase 54). Empty for most spells.
+	Element string `yaml:"element,omitempty"`
 	// Flask is the flasks a cast uses up (Phase 39g): an Alchemist's spells
 	// cost a flask from its satchel instead of mana (internal/flasks).
 	Flask int `yaml:"flask,omitempty"`

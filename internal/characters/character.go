@@ -18,6 +18,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/pets"
 	"github.com/GoMudEngine/GoMud/internal/quests"
 	"github.com/GoMudEngine/GoMud/internal/races"
+	"github.com/GoMudEngine/GoMud/internal/sigils"
 	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/spells"
 	"github.com/GoMudEngine/GoMud/internal/statmods"
@@ -136,6 +137,7 @@ type Character struct {
 	Dolls               []DollState                    `yaml:"dolls,omitempty"`            // Ashveil Phase 39d: a Doll Master's durable dolls
 	Beast               *BeastState                    `yaml:"beast,omitempty"`            // Ashveil Phase 39e: a Beast Tamer's bonded beast
 	FlasksSpent         int                            `yaml:"flasksspent,omitempty"`      // Ashveil Phase 39g: flasks an Alchemist has thrown since it last brewed (0 is a full satchel)
+	Sigil               sigils.Laid                    `yaml:"sigil,omitempty"`            // Ashveil Phase 54: the sigil this company has laid (one at a time), with its real-time expiry
 	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
 	PlayerDamage        map[int]int                    `yaml:"-"` // key = who, value = how much
 	LastPlayerDamage    uint64                         `yaml:"-"` // last round a player damaged this character

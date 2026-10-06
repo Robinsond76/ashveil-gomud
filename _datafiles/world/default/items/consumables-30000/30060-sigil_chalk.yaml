@@ -1,0 +1,9 @@
+itemid: 30060
+name: sigil chalk
+namesimple: chalk
+description: A stick of enchanted chalk, ground from bone and ash. One stick draws one sigil (help sigils). It is sold by markets and never bought back.
+type: object
+subtype: mundane
+uses: 1
+value: 6
+weight: 50

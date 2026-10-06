@@ -12,6 +12,8 @@ package battle
 import (
 	"sort"
 	"sync"
+
+	"github.com/GoMudEngine/GoMud/internal/sigils"
 )
 
 // Battle is one player's current battle.
@@ -48,6 +50,11 @@ type Battle struct {
 
 	// Phase 39c: the weather a Shaman has called into this battle.
 	Weather Weather
+
+	// Phase 54: the sigil the company stood in when the battle began, and
+	// the Unix second it fades.
+	Sigil        sigils.Kind
+	SigilExpires int64
 }
 
 // Has reports whether instanceId is one of the battle's enemies.

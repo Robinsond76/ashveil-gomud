@@ -292,3 +292,33 @@ func TestShippedReagentsAreSupplyOnly(t *testing.T) {
 	}
 	assert.Equal(t, 1, seen, "reagents are sold in Dunmar")
 }
+
+// Phase 54: sigil chalk is sold in both shipped markets and never bought
+// back, and the road is never cheaper than town.
+func TestShippedSigilChalkIsSupplyOnly(t *testing.T) {
+	_, thisFile, _, _ := runtime.Caller(0)
+	var overlay struct {
+		Markets []struct {
+			Zone  string `yaml:"Zone"`
+			Goods []struct {
+				ItemId     int  `yaml:"ItemId"`
+				BasePrice  int  `yaml:"BasePrice"`
+				SupplyOnly bool `yaml:"SupplyOnly"`
+			} `yaml:"Goods"`
+		} `yaml:"Markets"`
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(thisFile), "files", "data-overlays", "config.yaml"))
+	require.NoError(t, err)
+	require.NoError(t, yaml.Unmarshal(data, &overlay))
+	prices := map[string]int{}
+	for _, m := range overlay.Markets {
+		for _, g := range m.Goods {
+			if g.ItemId == 30060 {
+				assert.True(t, g.SupplyOnly, "%s sigil chalk", m.Zone)
+				prices[m.Zone] = g.BasePrice
+			}
+		}
+	}
+	require.Len(t, prices, 2, "chalk in Dunmar and on the road")
+	assert.GreaterOrEqual(t, prices["Old Kings Road"], prices["Dunmar"], "the road is never cheaper")
+}

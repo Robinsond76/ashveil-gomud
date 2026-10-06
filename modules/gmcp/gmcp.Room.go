@@ -608,6 +608,14 @@ func (g *GMCPRoomModule) GetRoomNode(user *users.UserRecord, gmcpModule string) 
 		}
 		// end room details
 
+		// Phase 54: the sigils lit here (shown to everyone).
+		for _, sg := range users.SigilsIn(room.RoomId, time.Now()) {
+			payload.Sigils = append(payload.Sigils, GMCPRoomModule_Payload_Sigil{
+				Kind: string(sg.Kind), Name: sg.Kind.Name(), Effect: sg.Kind.Effect(), Owner: sg.Owner,
+				Mine: sg.UserId == user.UserId, Expires: sg.Expires,
+			})
+		}
+
 		// Phase 40a: the shown room resources (never reserved ones).
 		if shown := room.ShownResources(); len(shown) > 0 {
 			payload.Resources = shown
@@ -658,6 +666,7 @@ type GMCPRoomModule_Payload struct {
 	Details     []string                                            `json:"details"`
 	Resources   []string                                            `json:"resources,omitempty"` // Phase 40a: shown room resources, omitted when none
 	Depleted    []string                                            `json:"depleted,omitempty"`  // Phase 40a2: gathering resources picked clean for now
+	Sigils      []GMCPRoomModule_Payload_Sigil                      `json:"sigils,omitempty"`    // Phase 54: sigils lit here, omitted when none
 	// LevelBand is the zone's recommended level band (Phase 37b) and how
 	// it rates against this player's level: easy, fair, risky or
 	// dangerous. Absent in zones with no band.
@@ -780,4 +789,16 @@ func (b *bandWatch) onRefresh(r companyview.Refreshed) companyview.Refreshed {
 		}
 	}
 	return r
+}
+
+// GMCPRoomModule_Payload_Sigil is a sigil lit in the room (Phase 54): its
+// kind, the name lines use, what it does, who laid it, whether it is the
+// player's company's, and the Unix second it fades (clients hide it then).
+type GMCPRoomModule_Payload_Sigil struct {
+	Kind    string `json:"kind"`
+	Name    string `json:"name"`
+	Effect  string `json:"effect"`
+	Owner   string `json:"owner"`
+	Mine    bool   `json:"mine"`
+	Expires int64  `json:"expires"`
 }
