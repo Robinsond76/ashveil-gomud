@@ -165,7 +165,7 @@ func TestMarkAndSellJunk(t *testing.T) {
 	spear := items.New(ironShortSpear)
 	keeper := items.New(ironShortSword)
 	robe := items.New(20104) // a robe: this smith buys weapons, not cloth
-	scrap := items.New(20) // the shipped junk item
+	scrap := items.New(20)   // the shipped junk item
 	for _, it := range []items.Item{sword, spear, keeper, robe, scrap} {
 		require.True(t, seller.Character.StoreItem(it))
 	}
