@@ -29,7 +29,9 @@ an ordinary command for you (<ansi fg="command">help webclient</ansi> describes 
                  The last entry, "Find a visited room...", opens a search box:
                  type part of a room's name to list every room in this zone the
                  map has seen, nearest first, and tap one to walk there.
-  <ansi fg="yellow">Look, Inventory, Status, Camp</ansi>   type those commands and switch to the
+  <ansi fg="yellow">Menu</ansi>          opens the quick command menu for this room: look, attack,
+                 move, get, gather, company, and more (<ansi fg="command">help quickmenu</ansi>).
+  <ansi fg="yellow">Look, Inventory, Camp</ansi>   type those commands and switch to the
                  Game view, where their answer appears.
   The small arrow at the left folds the bar away and brings it back.
 
