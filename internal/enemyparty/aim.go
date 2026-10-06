@@ -1,12 +1,15 @@
 package enemyparty
 
 import (
+	"slices"
+
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/formationcombat"
+	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
@@ -193,6 +196,7 @@ func Foes(g Group, a Attacker) []strategy.Foe {
 	if a.Char != nil {
 		room = rooms.LoadRoom(a.Char.RoomId)
 	}
+	diving := placed && canDive(a, room)
 	leaderFound := false
 	var out []strategy.Foe
 	for _, id := range g.Party.Members {
@@ -208,7 +212,7 @@ func Foes(g Group, a Attacker) []strategy.Foe {
 			MaxHP:      m.Character.HealthMax.Value,
 			Row:        row,
 			Col:        mcol,
-			Reachable:  a.Spell || !placed || Legal(room, a.LeaderId, col, g.Party.Formation, key, alive, reach),
+			Reachable:  a.Spell || !placed || Legal(room, a.LeaderId, col, g.Party.Formation, key, alive, reach) || (diving && formationcombat.InLateralRange(col, mcol)),
 			StrikesPct: StrikesPct(m.Character.Aggro, a.LeaderId),
 			Chanting:   m.Character.Aggro != nil && m.Character.Aggro.Type == characters.SpellCast,
 			Caster:     len(m.Character.SpellBook) > 0,
@@ -222,6 +226,29 @@ func Foes(g Group, a Attacker) []strategy.Foe {
 		out = append(out, f)
 	}
 	return out
+}
+
+// canDive reports whether the attacker is a gryphon rider who can dive from
+// here (Phase 39f): it knows Dive at its level, has not turned abilities off,
+// wields a melee weapon, and the ground is open sky. A dive passes the front
+// row, so every foe within its lateral range counts as reachable; a swing on
+// a turn the dive is not ready is still caught by the front, as any blow is.
+func canDive(a Attacker, room *rooms.Room) bool {
+	if a.Char == nil || a.Spell || room == nil || room.IsIndoor() || Narrow(room) {
+		return false
+	}
+	weapon := a.Char.Equipment.Weapon
+	if weapon.ItemId == 0 || weapon.GetSpec().Subtype == items.Shooting {
+		return false
+	}
+	if MemberStrategy(a.LeaderId, a.Key).NoAbilities {
+		return false
+	}
+	known := strategy.CompanionAbilities(a.Char.ArchetypeID())
+	if a.Key == company.LeaderMemberKey {
+		known = strategy.PlayerAbilities(a.Char.GetSkillLevel)
+	}
+	return slices.Contains(strategy.AtLevel(known, a.Char.Level), strategy.Dive)
 }
 
 // StrikesPct is the health percentage of the member of leaderId's side an

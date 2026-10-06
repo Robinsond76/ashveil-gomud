@@ -54,6 +54,9 @@ CLASSES = {
                     wide=1, hair="charcoal"),
     "shaman": dict(trousers="leather", boots="leather", torso="leather", sleeve="leather",
                    hair="charcoal"),
+    # Phase 39f: a sky skirmisher in a riding jack.
+    "gryphon-rider": dict(trousers="leather", boots="leather", torso="ochre", sleeve="leather",
+                          hair="leather"),
     # Phase 39d: the Doll Master, a puppeteer in a long plum frock coat.
     "dollmaster": dict(trousers="charcoal", boots="leather", torso="plum", sleeve="plum",
                        hair="bone"),
@@ -631,6 +634,33 @@ def draw_shaman(r):
     cv.part(line(hx - 1, tip + r.px(1), hx - r.px(2), tip + r.px(4)), "water", flat="m")
 
 
+def draw_gryphon_rider(r):
+    """A riding jack, a winged helm with tawny feathers, a spear held high."""
+    S, cv, v, k = r.S, r.cv, r.view, r.k
+    r.legs()
+    r.torso("ochre")
+    cv.part({(x, r.ysh + r.px(2)) for x in range(r.tx0, r.tx1 + 1)}, "leather", flat="m")  # harness strap
+    _belt(r, "leather", r.yhip - r.px(1), "brass.m")
+    r.arms("leather", glove="leather")
+    r.head(helm="steel")
+    x0 = r.cx - S.hw // 2
+    if v != "up":  # feathered wings on the helm
+        for side, x in ((-1, x0 - 1), (1, x0 + S.hw)):
+            cv.part(line(x, r.top + r.px(2), x + side * r.px(3), r.top - r.px(1)), "wool", flat="l")
+            cv.part(line(x, r.top + r.px(3), x + side * r.px(3), r.top), "ochre", flat="m")
+    hx, hy = r.hand_r
+    if v == "up":
+        hx = r.cx + r.px(2)
+    elif v == "down":
+        hx += 1
+    long = r.px(16)
+    cv.part(thick(line(hx, hy + r.px(6), hx, hy - long), 1), "wood", flat="m")
+    tip = hy - long
+    cv.part(rect(hx - 1, tip - r.px(3), hx + (1 if k == 1 else 2), tip), "steel", flat="l")  # spearhead
+    cv.put(hx, tip + 1, "ochre.m")  # pennon
+
+
+
 def draw_dollmaster(r):
     """A plum frock coat with brass buttons and a bone-white mane, a puppeteer's
     wooden control bar held up with three strings, and a spool of thread at the belt."""
@@ -669,7 +699,9 @@ def draw_dollmaster(r):
 
 
 DRAWERS = {
-    "dollmaster": draw_dollmaster, "halberdier": draw_halberdier, "samurai": draw_samurai, "shaman": draw_shaman,
+    "dollmaster": draw_dollmaster,
+    "gryphon-rider": draw_gryphon_rider,
+    "halberdier": draw_halberdier, "samurai": draw_samurai, "shaman": draw_shaman,
     "warrior": draw_warrior, "rogue": draw_rogue, "ranger": draw_ranger,
     "cleric": draw_cleric, "wizard": draw_wizard, "witch": draw_witch,
     "adventurer": draw_adventurer,
