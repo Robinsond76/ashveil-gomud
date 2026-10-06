@@ -285,3 +285,15 @@ func TestPlanMealKeepsAMealBuff(t *testing.T) {
 	plan = planMeal([]survival.MemberNeeds{fed}, []larderItem{slab}, mealEat)
 	assert.Equal(t, map[string]string{"Tamsin": "slab;"}, eaten(plan, []larderItem{slab}), "with only a meal, being fed wins")
 }
+
+// TestCompanionIDOfRequiresTheCompanionPrefix: a bare "5" or the leader key
+// is not a companion key; only "companion:<id>" with a positive id is.
+func TestCompanionIDOfRequiresTheCompanionPrefix(t *testing.T) {
+	id, ok := companionIDOf(survival.CompanionMemberKey(5))
+	assert.True(t, ok)
+	assert.Equal(t, 5, id)
+	for _, key := range []survival.MemberKey{"5", survival.LeaderMemberKey, "companion:0", "companion:x", "mob:5"} {
+		_, ok := companionIDOf(key)
+		assert.False(t, ok, "%q", key)
+	}
+}

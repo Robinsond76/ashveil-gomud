@@ -218,8 +218,8 @@ func mealBenefit(food larderItem, drink bool) survival.Benefit {
 
 // companionIDOf is a companion member key's id; false for the leader.
 func companionIDOf(key survival.MemberKey) (int, bool) {
-	id, err := strconv.Atoi(strings.TrimPrefix(string(key), "companion:"))
-	if err != nil || id <= 0 {
+	id, ok := survival.CompanionIDFromMemberKey(key)
+	if !ok || id <= 0 {
 		return 0, false
 	}
 	return id, true

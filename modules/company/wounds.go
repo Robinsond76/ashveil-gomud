@@ -154,7 +154,7 @@ func (m *CompanyModule) woundMembers(user *users.UserRecord) []woundMember {
 			known[s] = true
 		}
 		out = append(out, woundMember{
-			key: "companion:" + strconv.Itoa(id), name: name, char: &mob.Character, companionID: id,
+			key: string(domain.CompanionMemberKey(id)), name: name, char: &mob.Character, companionID: id,
 			knows: func(s string) bool { return known[s] },
 		})
 	}
@@ -848,6 +848,7 @@ func (m *CompanyModule) physicianAnswer(user *users.UserRecord, room *rooms.Room
 	}
 
 	user.Character.Gold -= price
+	events.AddToQueue(events.EquipmentChange{UserId: user.UserId, GoldChange: -price})
 	for _, w := range members {
 		w.char.Wounds = nil
 		if !w.leader() {

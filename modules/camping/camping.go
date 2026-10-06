@@ -740,15 +740,9 @@ func (m *CampingModule) roomTag() string {
 }
 
 func roomEligible(room *rooms.Room, tag string) bool {
-	if room == nil {
-		return false
-	}
-	for _, t := range room.Tags {
-		if t == tag {
-			return true
-		}
-	}
-	return false
+	// HasTag matches case-insensitively and counts mutator tags, the same
+	// rule the inn uses, so camp and inn eligibility cannot disagree.
+	return room != nil && room.HasTag(tag)
 }
 
 // restOperationID derives a deterministic rest-recovery operation ID from
@@ -1528,11 +1522,7 @@ func (m *CampingModule) statusTextLocked(leaderUserID int) string {
 		duties = camp.Rest.Duties
 	}
 	for _, member := range m.survival.CompanyNeeds(leaderUserID) {
-		line := fmt.Sprintf("  %s: Hunger %d (%s), Thirst %d (%s), Fatigue %d (%s)",
-			member.Name,
-			member.Needs.Hunger, survival.HungerLabel(member.Needs.Hunger),
-			member.Needs.Thirst, survival.ThirstLabel(member.Needs.Thirst),
-			member.Needs.Fatigue, survival.FatigueLabel(member.Needs.Fatigue))
+		line := survival.NeedsLine(member.Name, member.Needs)
 		if len(duties) > 0 {
 			line += fmt.Sprintf(", Duty %s", camping.DutyOf(duties, string(member.Key)))
 		}
@@ -1670,12 +1660,13 @@ func (m *CampingModule) registerBuffGroupsLocked() {
 var _ camping.CampStateProvider = (*CampingModule)(nil)
 
 // CampStateOf implements camping.CampStateProvider (Phase 32g): the
-// leader's camp seen from a room with those tags. It reads state only; the
+// leader's camp seen from a room with those tags (compared case-insensitively;
+// callers pass room.GetTags() so mutator tags count). It reads state only; the
 // camp's room title is looked up after the lock is released.
 func (m *CampingModule) CampStateOf(leaderUserID, roomID int, roomTags []string) (camping.CampState, bool) {
 	has := func(tag string) bool {
 		for _, t := range roomTags {
-			if t == tag {
+			if strings.EqualFold(t, tag) {
 				return true
 			}
 		}
