@@ -19,9 +19,9 @@ not worn by right, and a level requirement still applies (<ansi fg="command">hel
 
 <ansi fg="yellow-bold">Weapons</ansi>
 
-Damage by tier (1 / 2 / 3). Two hands means no shield. Reach lets a fighter
-in the second rank strike the front rank's column; bows and crossbows
-reach anywhere (<ansi fg="command">help formation</ansi>).
+Damage by tier (1 / 2 / 3). Two hands means no shield. Reach strikes the
+frontmost foe in a column or the one just behind it; bows and crossbows
+reach anyone in the column, however deep (<ansi fg="command">help formation</ansi>).
 
   <ansi fg="yellow">Sword</ansi>        1d4+1 / 1d6+1 / 1d8+1       one hand, steady damage
   <ansi fg="yellow">Axe</ansi>          1d6 / 1d8 / 1d10            one hand, a wider spread

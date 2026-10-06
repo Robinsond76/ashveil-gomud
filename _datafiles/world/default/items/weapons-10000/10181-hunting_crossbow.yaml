@@ -1,7 +1,7 @@
 itemid: 10181
 name: hunting crossbow
 namesimple: crossbow
-description: 'A light hunting crossbow with a stirrup and a hook for the string. It hits hard, and it is slow and heavy to carry.'
+description: 'A light hunting crossbow with a stirrup and a hook for the string. It hits hard, and it is heavy to carry.'
 type: weapon
 hands: 2
 subtype: shooting
