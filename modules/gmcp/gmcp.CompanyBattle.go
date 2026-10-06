@@ -84,6 +84,9 @@ type battleDoll struct {
 	Master    string `json:"master"`
 	Health    int    `json:"hp"`
 	HealthMax int    `json:"hp_max"`
+	// Phase 39e: a Beast Tamer's bonded beast stands in the same list; its
+	// kind ("wolf", "warhound", "bear" or "drake") tells it from a doll.
+	Kind string `json:"kind,omitempty"`
 }
 
 // battleWeather is a Shaman's battle weather (Phase 39c): its kind ("fog",
@@ -501,7 +504,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	return f
 }
 
-// gatherDolls lists the player's company's dolls standing in the battle's
+// gatherDolls lists the player's company's dolls and beasts standing in the battle's
 // room (Phase 39d), by Master then place.
 func gatherDolls(userId, roomId int) []battleDoll {
 	var out []battleDoll
@@ -512,6 +515,19 @@ func gatherDolls(userId, roomId int) []battleDoll {
 		}
 		out = append(out, battleDoll{Key: string(e.Key), Name: m.Character.Name, Master: string(e.Owner),
 			Health: m.Character.Health, HealthMax: m.Character.HealthMax.Value})
+	}
+	// Phase 39e: a Beast Tamer's bonded beasts, after the dolls.
+	for _, e := range company.BeastsOf(userId) {
+		m := mobs.GetInstance(e.Instance)
+		if m == nil || m.Character.RoomId != roomId || m.Character.Health < 1 {
+			continue
+		}
+		kind := ""
+		if m.Character.RT != nil && m.Character.RT.Beast != nil {
+			kind = m.Character.RT.Beast.Kind
+		}
+		out = append(out, battleDoll{Key: string(e.Key), Name: m.Character.Name, Master: string(e.Owner),
+			Health: m.Character.Health, HealthMax: m.Character.HealthMax.Value, Kind: kind})
 	}
 	return out
 }

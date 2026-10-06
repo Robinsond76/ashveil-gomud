@@ -74,8 +74,12 @@
         rogue: ['#444a56', '#9b59b6'], wizard: ['#4a5fc1', '#e0c040'], witch: ['#6b3f8c', '#3fb08a'], halberdier: ['#7d8590', '#b87333'],
         samurai: ['#2f3a4a', '#d9a441'], shaman: ['#3b6a7a', '#9fd0e0'], 'gryphon-rider': ['#8a6d3b', '#e8e2c9'], alchemist: ['#8a7a4e', '#c4561c'],
         dollmaster: ['#6a3d4a', '#d8b878'], doll: ['#b08850', '#6a4a2a'], // Phase 39d: the doll is painted wood
+        beasttamer: ['#6b5a3a', '#c9a24a'], wolf: ['#7d7d85', '#c9c9d0'], warhound: ['#5a4632', '#b08850'], // Phase 39e: the bonded beasts
+        bear: ['#5b4030', '#8a6a4a'], drake: ['#3f7a4a', '#d9622b'],
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
+    // Phase 39e: a bonded beast is drawn as the battle unit nearest its kind.
+    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'dog-junkyard', bear: 'unknown-large', drake: 'unknown-beast' };
 
     // Fallback silhouettes: width, height in virtual pixels.
     const SIZES = { 'unknown-humanoid': [10, 24], 'unknown-beast': [20, 14], 'unknown-large': [18, 34] };
@@ -392,10 +396,10 @@
                 const u = unit(d.key);
                 u.side = 'company';
                 u.label = d.name || d.key;
-                u.klass = 'doll';
-                u.sprite = 'doll';
+                u.klass = d.kind || 'doll'; // Phase 39e: a beast's kind, else the doll
+                u.sprite = BEAST_SPRITES[d.kind] || d.kind || 'doll';
                 u.promoted = '';
-                u.className = 'Doll';
+                u.className = d.kind ? ({ bear: 'War bear', drake: 'Drake hatchling' }[d.kind] || (d.kind.charAt(0).toUpperCase() + d.kind.slice(1))) : 'Doll';
                 u.cell = cell;
                 u.leader = false;
                 u.role = '';

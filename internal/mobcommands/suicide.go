@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
+	"github.com/GoMudEngine/GoMud/internal/beasts"
 	"github.com/GoMudEngine/GoMud/internal/combat"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/dolls"
@@ -64,6 +65,18 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 	if dolls.IsDoll(mob) {
 		mob.DeathProcessed = true
 		dolls.Dismiss(mob.InstanceId)
+		return true, nil
+	}
+
+	// Phase 39e review: a bonded beast is never killed. Struck down it is
+	// wounded (its record keeps the wound until a rest); made to vanish it
+	// simply leaves.
+	if beasts.IsBeast(mob) {
+		mob.DeathProcessed = true
+		if rest != "vanish" && mob.Character.Health > 0 {
+			mob.Character.Health = 0
+		}
+		beasts.Dismiss(mob.InstanceId)
 		return true, nil
 	}
 

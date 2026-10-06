@@ -1,0 +1,20 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">beast</ansi>
+
+A Beast Tamer's bonded beast is kept and named with the beast command. It
+works only out of a battle (<ansi fg="command">help beasttamer</ansi>).
+
+  <ansi fg="command">beast</ansi>
+  Show each Beast Tamer's beast in your company: name, kind, condition
+  (whole, bruised, badly hurt or wounded) and health.
+
+  <ansi fg="command">beast [member]</ansi>
+  Show a companion Beast Tamer's beast (<ansi fg="command">beast tamsin</ansi>).
+
+  <ansi fg="command">beast name [name]</ansi>
+  Name your own beast (1 to 20 letters, spaces, apostrophes or hyphens).
+
+A beast that took damage or fell in a battle mends with rest: a camp rest or a
+night at an inn brings it back to full health and closes its wounds, with
+nothing to spend (<ansi fg="command">help camp</ansi>). A wounded beast sits out battles until then.
+
+See also: <ansi fg="command">help beasttamer</ansi>, <ansi fg="command">help beasttamer-routes</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help formation</ansi>.
