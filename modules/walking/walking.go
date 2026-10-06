@@ -250,6 +250,7 @@ type WalkingModule struct {
 }
 
 var _ walking.StepProvider = (*WalkingModule)(nil)
+var _ walking.EffortProvider = (*WalkingModule)(nil)
 
 func init() {
 	m := newModule()
@@ -486,6 +487,18 @@ func (m *WalkingModule) applyPathfinder(p *stepPlan, leaderUserID int, roomIDs .
 // after an ordinary move succeeds; it charges every member walking with the
 // mover their share of the step's strain.
 func (m *WalkingModule) Stepped(userID, fromRoomID, toRoomID int) {
+	m.charge(userID, fromRoomID, toRoomID, 100)
+}
+
+// Effort implements walking.EffortProvider (Phase 40a2): the company works
+// in roomID and pays pct% of one step's strain there.
+func (m *WalkingModule) Effort(userID, roomID, pct int) {
+	m.charge(userID, roomID, roomID, pct)
+}
+
+// charge applies pct% of the strain of stepping into toRoomID to every
+// member walking with the mover.
+func (m *WalkingModule) charge(userID, fromRoomID, toRoomID, pct int) {
 	leader := m.lookupUser(userID)
 	if leader == nil || leader.Character == nil {
 		return
@@ -497,6 +510,11 @@ func (m *WalkingModule) Stepped(userID, fromRoomID, toRoomID int) {
 	plan := m.planStep(leader, dest, fromRoomID)
 	if plan.terrain == 0 {
 		return // settlements: no strain, and no survival touch
+	}
+	if pct != 100 {
+		for i := range plan.members {
+			plan.members[i].cost = plan.members[i].cost * pct / 100
+		}
 	}
 
 	m.mu.Lock()

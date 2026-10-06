@@ -13,7 +13,14 @@ round count; a rest takes real time, not game time.
   at <ansi fg="command">camp status</ansi>.
 
   <ansi fg="command">camp fire</ansi>
-  Lights the campfire. You need a lit fire before you can rest.
+  Lights the campfire. You need a lit fire before you can rest. The
+  fire needs fuel: in a room that offers firewood the deadfall feeds it for
+  nothing; anywhere else it burns one firewood bundle from your pack, a
+  companion's pack or the cargo. A damp bundle lights only on a second try
+  and gives light but no warmth. With no firewood there is no fire and no
+  rest at camp. Making camp and <ansi fg="command">camp status</ansi> show the fuel your company
+  carries. Markets sell bundles (they never buy them back), and you can
+  gather your own (<ansi fg="command">help gathering</ansi>).
 
   A camp is part of the room: <ansi fg="command">look</ansi> shows it to everyone
   there, a cold fire pit until the fire is lit and bedrolls around a

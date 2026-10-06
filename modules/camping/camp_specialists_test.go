@@ -211,7 +211,7 @@ func newRaidWorld(t *testing.T, chance int, rolls ...int) *raidWorld {
 		return 1, nil
 	}
 	m.specialist = func(int, string, ...int) (archetypes.Specialist, bool) { return archetypes.Specialist{}, false }
-	w.room = &rooms.Room{RoomId: 100, Zone: "Road", Title: "A Clearing", Tags: []string{"camping"}}
+	w.room = &rooms.Room{RoomId: 100, Zone: "Road", Title: "A Clearing", Tags: []string{"camping"}, Resources: []string{"firewood"}}
 	rooms.SetTestRoom(w.room)
 	t.Cleanup(func() { rooms.RemoveTestRoom(100) })
 	w.user = campUser(t, 7, 100)
@@ -440,7 +440,7 @@ func TestShippedCampConfigParses(t *testing.T) {
 	assert.Equal(t, 25, cfg.WatchPctPerLevel)
 	assert.Equal(t, 60, cfg.VigilCap)
 	assert.Len(t, cfg.Forage["Old Kings Road"], 3)
-	assert.Len(t, cfg.Recipes, 3)
+	assert.Len(t, cfg.Recipes, 4, "game meat dishes plus grilled fish (40a2)")
 }
 
 func shippedCampSettings(t *testing.T) campSettings {

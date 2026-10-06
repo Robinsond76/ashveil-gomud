@@ -300,3 +300,12 @@ func TestHaggledPrices(t *testing.T) {
 	assert.Equal(t, 20, HaggledSell(20, 0, 100))
 	assert.Equal(t, 1, HaggledSell(3, 0, 0), "a sale worth anything pays at least 1")
 }
+
+func TestBidForStockClosedForSupplyOnly(t *testing.T) {
+	g := Good{ItemID: 40, BasePrice: 4, MinPrice: 2, MaxPrice: 10, MaxStock: 40, TargetStock: 20, StartStock: 20, DriftStep: 2, SupplyOnly: true}
+	_, ok := g.BidForStock(20, 20)
+	assert.False(t, ok)
+	ask, ok := g.AskForStock(20)
+	assert.True(t, ok)
+	assert.Equal(t, 4, ask)
+}
