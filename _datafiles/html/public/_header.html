@@ -38,7 +38,6 @@
       link.addEventListener('click', function(e) {
         e.preventDefault();
         document.getElementsByTagName('header')[0].style.display = 'none';
-        document.getElementsByTagName('nav')[0].style.display = 'none';
         document.getElementsByTagName('footer')[0].style.display = 'none';
         if (typeof resizeClientIFrame === 'function') { resizeClientIFrame(); }
       });
@@ -53,23 +52,9 @@
     </div>
     <div class="header-right">
       <button class="site-gear-btn" id="site-gear-btn" title="Settings">&#9881;</button>
-      <div class="nav-toggle" onclick="toggleMenu()">
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
     </div>
   </header>
 
-  <nav>
-    <div class="nav-container">
-      {{ $reqPath := .REQUEST.RequestURI }}
-      {{ range $idx, $navDetails := .NAV }}
-        <a href="{{ $navDetails.Target }}" {{ if eq $reqPath $navDetails.Target }}class="selected"{{end}}>{{ $navDetails.Name }}</a>
-      {{ end }}
-      {{ if eq .REQUEST.RequestURI "/webclient" }}<a id="hide-header-footer" href="/webclient-pure">&#9974;</a>{{ end }}
-    </div>
-  </nav>
 
   <!-- Settings Modal -->
   <div id="site-settings-backdrop">
@@ -79,13 +64,28 @@
         <button id="site-settings-close" aria-label="Close">&#x2715;</button>
       </div>
       <div id="site-settings-tab-bar">
-        <button class="site-settings-tab-btn active" data-tab="site-tab-theme">Theme</button>
+        <button class="site-settings-tab-btn active" data-tab="site-tab-pages">Pages</button>
+        <button class="site-settings-tab-btn" data-tab="site-tab-theme">Theme</button>
         <button class="site-settings-tab-btn" data-tab="site-tab-settings">Settings</button>
       </div>
       <div id="site-settings-tab-body">
 
+        <!-- Pages Tab: the site navigation -->
+        <div class="site-settings-tab-panel active" id="site-tab-pages">
+          <div class="site-settings-section">
+            <div class="site-settings-section-title">Pages</div>
+            <div class="site-pages-list">
+              {{ $reqPath := .REQUEST.RequestURI }}
+              {{ range $idx, $navDetails := .NAV }}
+                <a href="{{ $navDetails.Target }}" {{ if eq $reqPath $navDetails.Target }}class="selected"{{end}}>{{ $navDetails.Name }}</a>
+              {{ end }}
+              {{ if eq .REQUEST.RequestURI "/webclient" }}<a id="hide-header-footer" href="/webclient-pure">Hide header and footer</a>{{ end }}
+            </div>
+          </div>
+        </div><!-- #site-tab-pages -->
+
         <!-- Theme Tab -->
-        <div class="site-settings-tab-panel active" id="site-tab-theme">
+        <div class="site-settings-tab-panel" id="site-tab-theme">
           <div class="site-settings-section">
             <div class="site-settings-section-title">Color Theme</div>
             <div class="site-theme-dropdown" id="site-theme-dropdown">

@@ -1667,6 +1667,13 @@ complete and merged ([PR #16](https://github.com/Robinsond76/ashveil-gomud/pull/
 
 ## Current position
 
+**Web page cleanup (2026-10-06):** the public site's nav links (Home, Who's
+Online, Web Client, Configuration, Help) moved into a "Pages" tab of the
+top-right settings menu; the header and footer are slimmer so the web client
+fills more of the screen; the default `Server.MudName` is now "Ashveil"; the
+footer is one tiny "Powered by GoMud" line linking to the GoMud GitHub.
+Screenshots in `docs/screens/web-cleanup-*.png`.
+
 **35b caster power, mana and recovery (2026-10-05), complete:** owned spells
 never fizzle in a battle, and a 100% cast never fails anywhere. Spell and
 ability power comes from one `spellpower` table per spell (YAML `power`
