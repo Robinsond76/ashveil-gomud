@@ -1,0 +1,10 @@
+# Phase 38b: a Druid's armor spell.
+spellid: barkskin
+name: Barkskin
+description: Armor for the battle on one ally, or a whole row
+type: helpsingle
+school: restoration
+cost: 6
+waitrounds: 1
+difficulty: 0
+scope: member

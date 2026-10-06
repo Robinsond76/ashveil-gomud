@@ -38,6 +38,12 @@ help:
       - bury
       - archetype
       - witch
+      - classes
+      - promotion
+      - talents
+      - cleric-routes
+      - warrior-routes
+      - summoning
     company:
       - company
       - growth
@@ -75,6 +81,7 @@ help:
       - inn
       - cooking
       - resources
+      - gathering
     communication:
       - emote
       - say
@@ -84,7 +91,6 @@ help:
     shops:
       - appraise
       - bank
-      - bid
       - buy
       - deposit
       - list
@@ -92,8 +98,7 @@ help:
       - sell
       - salvage
       - mark
-      - store
-      - unstore
+      - storage
       - withdraw
       - market
       - rumors
@@ -242,6 +247,7 @@ help:
 # Aliases for keywords when typing: help <keyword>
 # Key is the target keyword, value is the list of aliases
 help-aliases:
+  storage: [store, unstore]
   progression: [stat-steps, stat steps, leveling]
   battlefield: [battlefield-conditions, clusters, flanking, leaping, narrow-ground, sweeps]
   ambush: [surprise, surprised]
@@ -279,7 +285,13 @@ help-aliases:
   company-meal:     [company meal, company eat, company drink, meal, meals, company-eat, company-drink]
   standing:         [reputation, blackmarket, black-market]
   tutorial:         [replay]
-  archetype:        [archetypes, class, classes]
+  archetype:        [archetypes]
+  classes:          [class, advanced-class, elite-class, class-paths, routes, route]
+  promotion:        [promote, promotions, class-promotion, promoting]
+  talents:          [talent, talent-pick, talent-list]
+  cleric-routes:    [priest, druid, blood-priest, blood priest, elder-druid, elder druid, siphon, rejuvenation, barkskin, grove, greater-heal]
+  warrior-routes:   [knight, paladin, blackguard, dread-knight, dread knight, mercenary, lay-on-hands, blood-oath, intimidate]
+  summoning:        [summon, summons, angel, demon, hierarch, demonologist, call-the-host, bind-the-fiend, host]
   witch:            [witches, hedge-witch, hexcraft]
   hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]
   trap:             [traps]
@@ -302,6 +314,7 @@ help-aliases:
   travel:           [journey, journeys]
   camp:             [camping, campfire]
   resources:        [resource, water, water-source, fresh-water, spring, shelter, fill, refill, waterskin]
+  gathering:        [gather, herbs, herb, firewood, fish, fishing, hunt, hunting, snares, deadfall, picked-clean]
   cooking:          [cook, hearth, recipe, recipes]
   market:           [markets]
   rumors:           [rumours, rumor, rumour, gossip]

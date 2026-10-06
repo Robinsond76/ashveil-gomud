@@ -254,16 +254,23 @@ func statusCostsAction(h statusHolder) bool {
 // clearFightStatuses ends the statuses of everyone in a fight that is
 // ending, and closes their light wounds (Phase 30b).
 func clearFightStatuses(fi combatstream.FightInfo) {
+	for _, r := range fi.Company {
+		if r.UserId > 0 {
+			dismissSummons(r.UserId) // Phase 38b: a summon lives for one battle
+		}
+	}
 	for _, r := range append(append([]combatstream.Ref{}, fi.Company...), fi.Enemies...) {
 		switch {
 		case r.UserId > 0:
 			if u := users.GetByUserId(r.UserId); u != nil && u.Character != nil {
 				status.Clear(u.Character)
+				u.Character.EndFightRT()
 				u.Character.Wounds = wounds.CloseLight(u.Character.Wounds)
 			}
 		case r.MobInstanceId > 0:
 			if m := mobs.GetInstance(r.MobInstanceId); m != nil {
 				status.Clear(&m.Character)
+				m.Character.EndFightRT()
 				m.Character.Wounds = wounds.CloseLight(m.Character.Wounds)
 			}
 		}

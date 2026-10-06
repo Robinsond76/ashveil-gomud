@@ -141,15 +141,15 @@ func (m *CompanyModule) woundMembers(user *users.UserRecord) []woundMember {
 			continue
 		}
 		name := mob.Character.Name
-		arch := ""
+		arch, class := "", ""
 		for _, c := range record.Companions {
 			if c.ID == id {
 				name = nameOf(c, name)
-				arch = c.Archetype
+				arch, class = c.Archetype, c.Class
 			}
 		}
 		known := map[string]bool{}
-		for _, s := range archetypes.CompanionSpells(arch, mob.Character.Level) {
+		for _, s := range archetypes.CompanionKnownSpells(arch, class, mob.Character.Level) {
 			known[s] = true
 		}
 		out = append(out, woundMember{
@@ -347,6 +347,27 @@ func (m *CompanyModule) SpendSupply(leaderUserID int, item wounds.Item) bool {
 
 var _ domain.SupplyProvider = (*CompanyModule)(nil)
 
+// CompanyItemCount implements company.ItemSupplyProvider (Phase 40a2): how
+// many of itemID the company reaches.
+func (m *CompanyModule) CompanyItemCount(leaderUserID, itemID int) int {
+	user := users.GetByUserId(leaderUserID)
+	if user == nil || user.Character == nil || m.persistenceAvailable() != nil {
+		return 0
+	}
+	return len(m.supplies(user, m.woundMembers(user), itemID, 0))
+}
+
+// SpendCompanyItem implements company.ItemSupplyProvider.
+func (m *CompanyModule) SpendCompanyItem(leaderUserID, itemID int) bool {
+	user := users.GetByUserId(leaderUserID)
+	if user == nil || user.Character == nil || m.persistenceAvailable() != nil {
+		return false
+	}
+	return m.spendItem(user, m.woundMembers(user), itemID, 0)
+}
+
+var _ domain.ItemSupplyProvider = (*CompanyModule)(nil)
+
 // useSupply spends one item. It reports whether it was spent.
 func (m *CompanyModule) useSupply(user *users.UserRecord, s supply, itemID int) bool {
 	switch s.source {
@@ -467,7 +488,7 @@ func (m *CompanyModule) treat(user *users.UserRecord, members []woundMember) []s
 			knowers++
 		}
 		if (tend || heal) && w.char.Mana > 0 {
-			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: healBonus(w.char), HealPct: w.char.HealingBonusPct()})
+			healers = append(healers, wounds.Healer{Key: w.key, Mana: w.char.Mana, Tend: tend, Heal: heal, HealBonus: healBonus(w.char), HealPct: w.char.HealingBonusPct(), CostPct: w.char.HealCostPct(false)})
 		}
 	}
 	anyHurt := false

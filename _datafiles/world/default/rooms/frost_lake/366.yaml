@@ -19,6 +19,7 @@ idlemessages:
 - "304"
 resources:
 - forage
+- firewood
 mapx: 27
 mapy: 12
 mapz: 0

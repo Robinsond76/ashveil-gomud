@@ -15,6 +15,7 @@ exits:
     roomid: 902
 resources:
 - water
+- herbs
 mapx: -7
 mapy: 0
 mapz: -99

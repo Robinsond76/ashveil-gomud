@@ -13,4 +13,6 @@ only class that may carry any shield (buckler, shield or tower), the most
 health (10 more to start, 1 a level), and Attack and Evasion 1 a level
 (<ansi fg="command">help shields</ansi>, <ansi fg="command">help armor</ansi>, <ansi fg="command">help evasion</ansi>).
 
+At level 10 a warrior promotes to a Knight, Mercenary or Blackguard (<ansi fg="command">help warrior-routes</ansi>).
+
 <ansi fg="magenta-bold">See also:</ansi> <ansi fg="command">help jobs</ansi>, <ansi fg="command">help archetype</ansi>

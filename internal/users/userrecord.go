@@ -10,12 +10,12 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/audio"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/connections"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/milestones"
 	"github.com/GoMudEngine/GoMud/internal/prompt"
-	"github.com/GoMudEngine/GoMud/internal/skills"
 	"github.com/GoMudEngine/GoMud/internal/stats"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"golang.org/x/crypto/bcrypt"
@@ -280,6 +280,8 @@ func (u *UserRecord) GrantXP(amt int, source string) {
 		levelUpEvent.AttackAfter, levelUpEvent.EvasionAfter = u.Character.AttackSkill(), u.Character.Evasion()
 		levelUpEvent.StatsAfter = u.Character.Stats
 		levelUpEvent.NextMilestone = milestones.Next(u.Character.Level, u.Character.ArchetypeID())
+		class, _ := u.Character.ClassState()
+		levelUpEvent.ClassMilestone = classes.Milestone(class, u.Character.Level)
 		levelUpEvent.TrainingPoints = u.Character.TrainingPoints - tpBefore
 		levelUpEvent.StatPoints = u.Character.StatPoints - spBefore
 		for _, grant := range levelGrants {
@@ -704,7 +706,7 @@ func (u *UserRecord) GetOnlineInfo() OnlineInfo {
 		u.Character.Name,
 		u.Character.Level,
 		u.Character.AlignmentName(),
-		skills.GetProfession(u.Character.GetAllSkillRanks()),
+		u.Character.ClassTitle(),
 		int64(oTime.Seconds()),
 		timeStr,
 		isAfk,

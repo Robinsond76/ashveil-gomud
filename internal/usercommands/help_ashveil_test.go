@@ -40,7 +40,7 @@ func TestAshveilHelpTopics(t *testing.T) {
 
 	aliases := map[string]string{
 		"ashveil": "adventure", "recruit": "company", "reputation": "standing",
-		"class": "archetype", "traps": "trap", "hunger": "survival", "fatigue": "survival",
+		"traps": "trap", "hunger": "survival", "fatigue": "survival",
 		"walking": "strain", "cold": "temperature", "load": "cargo", "horse": "mount",
 		"journey": "travel", "camping": "camp", "hearth": "cooking", "cook": "cooking",
 		"markets": "market", "rumours": "rumors", "gossip": "rumors",

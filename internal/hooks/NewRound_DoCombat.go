@@ -40,6 +40,7 @@ func DoCombat(e events.Event) events.ListenerReturn {
 
 	// Ashveil Phase 29b: every event this round reports is stamped with it.
 	combatRound.Store(evt.RoundNumber)
+	expireIntimidation(evt.RoundNumber) // Phase 38b review: a round, not a battle
 	resetRoundExtras()
 	beginBattlefieldRound()
 
@@ -74,6 +75,8 @@ func DoCombat(e events.Event) events.ListenerReturn {
 	// before any blow.
 	beginTempoRound()
 	defer func() { tempoActive = false }()
+	auraPass()   // Phase 38b: class auras for the round
+	summonPass() // Phase 38b: Angels and Demons
 	nervePass()
 	strategyPass()
 	// Ashveil Phase 33i2: enemy healers and casters, by their group's
@@ -580,7 +583,9 @@ func handlePlayerCombat(evt events.NewRound, extra bool) (affectedPlayerIds []in
 				if reassignPlayerTarget(user, uRoom) {
 					continue
 				}
-				user.SendText("Your target can't be found.")
+				if targetLostNotice(user.Character.Aggro.MobInstanceId) {
+					user.SendText("Your target can't be found.")
+				}
 				user.Character.Aggro = nil
 				continue
 			}
@@ -1445,4 +1450,12 @@ func aggroTargetDown(a *characters.Aggro) bool {
 		return m != nil && m.Character.Health < 1
 	}
 	return false
+}
+
+// targetLostNotice reports whether a player whose mob target is gone is told
+// so. A foe that just fell (a practice foe is beaten and removed, its
+// attackers keeping their aim) ended the fight; the summary already said so,
+// and "Your target can't be found." after it read as an error (Phase 44).
+func targetLostNotice(mobInstanceId int) bool {
+	return mobInstanceId <= 0 || !mobs.RecentlyDied(mobInstanceId)
 }

@@ -24,8 +24,9 @@ func SendLevelNotifications(e events.Event) events.ListenerReturn {
 	}
 
 	levelUpData := map[string]interface{}{
-		"nextMilestone": evt.NextMilestone,
-		"healthBefore":  evt.HealthMaxBefore, "healthAfter": evt.HealthMaxAfter,
+		"nextMilestone":  evt.NextMilestone,
+		"classMilestone": evt.ClassMilestone,
+		"healthBefore":   evt.HealthMaxBefore, "healthAfter": evt.HealthMaxAfter,
 		"manaBefore": evt.ManaMaxBefore, "manaAfter": evt.ManaMaxAfter,
 		"attackBefore": evt.AttackBefore, "attackAfter": evt.AttackAfter,
 		"evasionBefore": evt.EvasionBefore, "evasionAfter": evt.EvasionAfter,

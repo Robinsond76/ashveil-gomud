@@ -1,0 +1,22 @@
+raceid: 24
+name: demon
+defaultpronouns: it
+description: A bound fiend, loosed for a single battle.
+defaultalignment: -90
+size: medium
+groupnoun: host
+unarmedname: claws
+tnlscale: 1.0
+tameable: false
+stats:
+  strength:
+    base: 3
+  speed:
+    base: 2
+  vitality:
+    base: 3
+damage:
+  diceroll: 2d6
+disabledslots: []
+neverbreak: true
+targeting: nearest
