@@ -365,7 +365,17 @@ func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind 
 	}
 	needs = m.presentNeeds(user.UserId, needs)
 	larder := m.larderFor(user, needs)
-	plan := planMeal(needs, larder, kind)
+	// Phase 40a: at a water source everyone drinks from it first, and no
+	// drinking item is spent; the plan only feeds.
+	atSource := kind != mealEat && usercommands.HasWater(room)
+	planKind := kind
+	if atSource {
+		planKind = mealEat
+	}
+	plan := mealPlan{}
+	if !atSource || kind == mealBoth {
+		plan = planMeal(needs, larder, planKind)
+	}
 
 	lines := []string{}
 	ate, drank := false, false
@@ -405,6 +415,12 @@ func (m *CompanyModule) mealView(user *users.UserRecord, room *rooms.Room, kind 
 			}
 		}
 		lines = append(lines, mealLine(step, food, result, isCompanion))
+	}
+	if atSource {
+		if sourceLines := m.waterFromSource(user); len(sourceLines) > 0 {
+			drank = true
+			lines = append(lines, sourceLines...)
+		}
 	}
 	for _, name := range plan.Hungry {
 		lines = append(lines, fmt.Sprintf("%s is still hungry; there's nothing left to eat.", name))
@@ -514,4 +530,54 @@ func mealLine(step mealStep, food larderItem, result survival.ProvisionResult, i
 		status = "Thirst: " + survival.ThirstLabel(result.Needs.Thirst)
 	}
 	return fmt.Sprintf(`%s %s <ansi fg="itemname">%s</ansi> (%s). %s.`, subject, verb, food.Name, where, status)
+}
+
+// sourceDrinksMax bounds how many drinks one member takes from a source in
+// one company drink: three glugs reach full from empty.
+const sourceDrinksMax = 3
+
+// waterFromSource waters every present member below the top thirst band
+// from the room's water, costing nothing (Phase 40a). It reads thirst
+// fresh, after any meal's own water.
+func (m *CompanyModule) waterFromSource(user *users.UserRecord) []string {
+	needs := survival.CompanyNeeds(user.UserId)
+	if len(needs) == 0 {
+		return nil
+	}
+	needs = m.presentNeeds(user.UserId, needs)
+	lines := []string{}
+	for _, member := range needs {
+		if survival.BandFor(member.Needs.Thirst) == survival.BandFull {
+			continue
+		}
+		selector := ""
+		companionID, isCompanion := companionIDOf(member.Key)
+		if isCompanion {
+			selector = "#" + strconv.Itoa(companionID)
+		}
+		// The water is free, so each member drinks until no longer thirsty.
+		var result survival.ProvisionResult
+		var err error
+		thirst := member.Needs.Thirst
+		for range sourceDrinksMax {
+			result, err = survival.Provision(user.UserId, selector, survival.Benefit{Hydration: usercommands.WaterSourceHydration})
+			if err != nil || survival.BandFor(result.Needs.Thirst) == survival.BandFull || result.Needs.Thirst <= thirst {
+				break
+			}
+			thirst = result.Needs.Thirst
+		}
+		if err != nil {
+			lines = append(lines, fmt.Sprintf("%s couldn't be watered: %s", member.Name, err))
+			continue
+		}
+		label := "Thirst: " + survival.ThirstLabel(result.Needs.Thirst)
+		if isCompanion {
+			lines = append(lines, fmt.Sprintf(`<ansi fg="username">%s</ansi> drinks from the water here. %s.`, result.Name, label))
+			continue
+		}
+		user.Character.CancelBuffsWithFlag("hidden")
+		user.AddBuff(usercommands.WaterSourceBuff, "drink")
+		lines = append(lines, "You drink from the water here. "+label+".")
+	}
+	return lines
 }

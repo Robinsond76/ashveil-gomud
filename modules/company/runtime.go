@@ -257,6 +257,21 @@ func (nativeRuntime) UseItem(instanceID int, itm items.Item) bool {
 	return false
 }
 
+// SetItemUses sets the uses left on a carried item of a live mob.
+func (nativeRuntime) SetItemUses(instanceID int, itm items.Item, uses int) bool {
+	mob := mobs.GetInstance(instanceID)
+	if mob == nil {
+		return false
+	}
+	for i := range mob.Character.Items {
+		if mob.Character.Items[i].Equals(itm) {
+			mob.Character.Items[i].Uses = uses
+			return true
+		}
+	}
+	return false
+}
+
 // CharmedByOther reports whether a live mob is now charmed by someone other
 // than the leader (befriended away). An uncharmed companion, such as one
 // whose charm expired when its leader left, is still the company's.

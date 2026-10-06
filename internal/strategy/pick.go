@@ -17,6 +17,9 @@ type Foe struct {
 	// (knows spells, or, for a company member, a healer or caster role).
 	// The casters rule (Phase 30c).
 	Chanting, Caster bool
+	// Healer is a foe whose role is healing: a mob with the healer role, or
+	// a company member set to heal. The healers rule (Phase 35e).
+	Healer bool
 }
 
 // Pick chooses a target by rule (the owner's rule 6). The rule chooses
@@ -107,6 +110,24 @@ func choose(rule Rule, pool []Foe, assistID int) (int, bool) {
 			}
 		}
 		return 0, false
+	case Healers:
+		// Healers first (Phase 35e): a healer chanting a spell, else an
+		// idle healer (the weakest of them), else the casters order.
+		for _, f := range pool {
+			if f.Healer && f.Chanting {
+				return f.ID, true
+			}
+		}
+		h := -1
+		for i, f := range pool {
+			if f.Healer && (h < 0 || f.HP < pool[h].HP) {
+				h = i
+			}
+		}
+		if h >= 0 {
+			return pool[h].ID, true
+		}
+		return choose(Casters, pool, assistID)
 	case Casters:
 		// Casters first (Phase 35d): a chanting caster, else any caster,
 		// else the weakest foe.

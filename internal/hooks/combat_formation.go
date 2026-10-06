@@ -488,6 +488,7 @@ func chooseFromParty(leaderId, col int, placed bool, party mobparty.Party, alive
 			ID: id, HP: m.Character.Health, MaxHP: m.Character.HealthMax.Value, Row: row, Col: mcol,
 			Reachable: legal, Leader: leader, StrikesPct: enemyparty.StrikesPct(m.Character.Aggro, leaderId),
 			Caster:   len(m.Character.SpellBook) > 0,
+			Healer:   strategy.Role(m.EnemyRole()) == strategy.Healer,
 			Chanting: m.Character.Aggro != nil && m.Character.Aggro.Type == characters.SpellCast,
 		})
 		leader = false
@@ -495,7 +496,7 @@ func chooseFromParty(leaderId, col int, placed bool, party mobparty.Party, alive
 	if !any {
 		return 0, false
 	}
-	return strategy.Pick(rule, foes, assistId, false)
+	return strategy.Pick(enemyparty.RuleVs(leaderId, rule, foes), foes, assistId, false)
 }
 
 // partyCombatants adapts an assembled party's members into

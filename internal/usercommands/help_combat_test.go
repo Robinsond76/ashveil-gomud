@@ -23,7 +23,7 @@ func TestCombatHelpTopics(t *testing.T) {
 			combat = append(combat, topic.Command)
 		}
 	}
-	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "resurrect", "narration", "combatpace"} {
+	for _, want := range []string{"combat", "formation", "targeting", "strategy", "chemistry", "sharpen", "light", "battle-summary", "resurrect", "narration", "combatpace", "battlescreen"} {
 		assert.Contains(t, combat, want, "help index lists %s under combat", want)
 	}
 	for _, topic := range combat {
@@ -38,6 +38,7 @@ func TestCombatHelpTopics(t *testing.T) {
 		"target": "targeting", "whetstone": "sharpen", "darkness": "light",
 		"battlesummary": "battle-summary", "resurrection": "resurrect",
 		"critical": "narration", "crit": "narration", "healed": "narration", "chanting": "narration",
+		"battle-screen": "battlescreen", "battle-map": "battlescreen",
 		"pace": "combatpace", "pacing": "combatpace", "combat-pace": "combatpace",
 	}
 	for alias, topic := range aliases {
@@ -372,5 +373,24 @@ func TestClassHelpTopics(t *testing.T) {
 		text, err := GetHelpContents(topic)
 		require.NoError(t, err, topic)
 		assert.Contains(t, tagPattern.ReplaceAllString(text, ""), "help ", topic)
+	}
+}
+
+// TestBattleScreenHelp (40f): the page says what the picture shows, links
+// the topics it relies on, and the combat and web client hubs point to it.
+func TestBattleScreenHelp(t *testing.T) {
+	useWorld(t, "default")
+	keywords.LoadAliases()
+
+	text, err := GetHelpContents("battlescreen")
+	require.NoError(t, err)
+	text = tagPattern.ReplaceAllString(text, "")
+	for _, want := range []string{"Help for battlescreen", "Minimise", "Open automatically", "never as numbers", "retreat", "company tactics focus [rule]", "help strategy"} {
+		assert.Contains(t, text, want)
+	}
+	for _, hub := range []string{"combat", "webclient"} {
+		hubText, err := GetHelpContents(hub)
+		require.NoError(t, err, hub)
+		assert.Contains(t, tagPattern.ReplaceAllString(hubText, ""), "help battlescreen", "help %s links the battle screen", hub)
 	}
 }

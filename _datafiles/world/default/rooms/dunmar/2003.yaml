@@ -39,6 +39,8 @@ exits:
     roomid: 2001
 mapsymbol: I
 maplegend: Inn
+resources:
+- shelter
 mapx: -1
 mapy: 0
 mapz: 0

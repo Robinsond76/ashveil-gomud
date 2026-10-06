@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/assessment"
@@ -28,6 +29,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -49,6 +51,9 @@ type battleFacts struct {
 	// whether an order may be given (none waiting for the next round).
 	Focus, SavedFocus string
 	FocusReady        bool
+	// Phase 35e: the company is on its healers default and an enemy healer
+	// stands (it goes for the healer first).
+	HealersFirst bool
 	// Phase 30c2: each guardian on the player's side.
 	Guards []guardFact
 	// Phase 33i1: the company's assessment of the battle's group, as scout
@@ -89,7 +94,8 @@ type enemyFact struct {
 	Seen              bool // a fallen one may be named: not last seen hidden
 	Row, Col          int
 	Health, HealthMax int
-	Reach             bool // the player can strike it from their cell
+	Reach             bool   // the player can strike it from their cell
+	Sprite            string // Phase 40f: its battle-screen sprite key
 	Target            targetFact
 }
 
@@ -120,6 +126,9 @@ type battleEnemy struct {
 	Health string     `json:"health"`
 	Reach  *bool      `json:"reach,omitempty"`
 	Target string     `json:"target,omitempty"`
+	// Phase 40f: the battle screen's sprite key (the mob's own, else its
+	// race's unknown-* silhouette).
+	Sprite string `json:"sprite,omitempty"`
 }
 
 type battleFallen struct {
@@ -153,6 +162,8 @@ type battlePayload struct {
 	Focus      string `json:"focus"`
 	SavedFocus string `json:"saved_focus"`
 	FocusReady bool   `json:"focus_ready"`
+	// Phase 35e: the default focus is on the enemy healer first.
+	HealersFirst bool `json:"healers_first,omitempty"`
 	// Phase 30c2: guardians' guards (the battle view's guard counts).
 	Guards []guardFact `json:"guards,omitempty"`
 	// Phase 33i1: the company's outlook (the battle view's assessment).
@@ -174,9 +185,9 @@ func buildBattle(f battleFacts) any {
 		saved = "none"
 	}
 	if f.Dark {
-		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat}
+		return battlePayload{Group: "the enemy", Dark: true, Enemies: []battleEnemy{}, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, HealersFirst: f.HealersFirst}
 	}
-	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook}
+	p := battlePayload{Narrow: f.Narrow, Positions: f.Positions, Group: f.Group, Enemies: []battleEnemy{}, Waiting: f.Waiting, Focus: focus, SavedFocus: saved, FocusReady: f.FocusReady, Guards: f.Guards, Retreat: f.Retreat, Outlook: f.Outlook, HealersFirst: f.HealersFirst}
 	if p.Group == "" {
 		p.Group = "the enemy"
 	}
@@ -200,7 +211,7 @@ func buildBattle(f battleFacts) any {
 		}
 		listed[e.Id] = true
 		be := battleEnemy{ID: mobID(e.Id), Label: e.Label, Cell: battleCell{Row: e.Row, Col: e.Col},
-			Health: enemyparty.HealthWord(e.Health, e.HealthMax)}
+			Health: enemyparty.HealthWord(e.Health, e.HealthMax), Sprite: e.Sprite}
 		if f.Placed {
 			reach := e.Reach
 			be.Reach = &reach
@@ -262,6 +273,14 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	}
 	if rule, ok := enemyparty.Focus(user.UserId); ok {
 		f.Focus = string(rule)
+	}
+	if enemyparty.HealersDefault(user.UserId) {
+		for id := range b.Enemies {
+			if m := mobs.GetInstance(id); m != nil && m.Character.Health > 0 && strategy.Role(m.EnemyRole()) == strategy.Healer {
+				f.HealersFirst = true
+				break
+			}
+		}
 	}
 	f.Guards = gatherGuards(user, room)
 	if room.VisibilityForUser(user) < 1 && !user.Character.HasBuffFlag("nightvision") {
@@ -334,6 +353,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		if m != nil && m.Character.Health > 0 && m.Character.RoomId == room.RoomId && inGroup[id] {
 			key := mobparty.MemberKeyFor(id)
 			e.Standing = true
+			e.Sprite = battleSprite(m)
 			e.Hidden = m.Character.HasBuffFlag("hidden")
 			e.Row, e.Col, _ = group.Party.Formation.Find(key)
 			e.Health, e.HealthMax = m.Character.Health, m.Character.HealthMax.Value
@@ -505,4 +525,32 @@ func savedFocus(userID int) string {
 		return string(rule)
 	}
 	return string(strategy.NoFocus)
+}
+
+// battleSprite is the sprite key the battle screen draws a mob with (Phase
+// 40f): the mob spec's own, else a silhouette by race, so an enemy the
+// art doesn't know yet still stands as a shape of the right kind.
+func battleSprite(m *mobs.Mob) string {
+	if m == nil {
+		return "unknown-humanoid"
+	}
+	if m.Sprite != "" {
+		return m.Sprite
+	}
+	race := races.GetRace(m.Character.GetRaceId())
+	if race == nil {
+		return "unknown-humanoid"
+	}
+	return raceSprite(race.Name)
+}
+
+// raceSprite maps a race name to its fallback silhouette.
+func raceSprite(name string) string {
+	switch strings.ToLower(name) {
+	case "ogre", "troll", "golem", "tree", "eldritch horror", "giant spider":
+		return "unknown-large"
+	case "rodent", "canine", "insect", "reptile", "reptilian", "lagomorph", "monkey", "fungus", "orb", "ghostly spirit", "faerie":
+		return "unknown-beast"
+	}
+	return "unknown-humanoid"
 }

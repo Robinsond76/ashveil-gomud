@@ -16,6 +16,8 @@ exits:
     roomid: 362
 idlemessages:
 - "304"
+resources:
+- water
 mapx: 30
 mapy: 14
 mapz: 0

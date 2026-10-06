@@ -16,6 +16,8 @@ spawninfo:
   respawnrate: 5 real minutes
 - mobid: 51
   respawnrate: 5 real minutes
+resources:
+- shelter
 mapx: -19
 mapy: -5
 mapz: 3

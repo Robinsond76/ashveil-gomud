@@ -172,7 +172,18 @@ when 40a2 gives them their mechanics, so an icon never promises nothing.
 10. `help resources` renders, and `TestTutorialHelpPointersExist` passes.
 11. The map shows icons for the current and visited rooms (browser check).
 
-## Open questions
+## Decisions made while building (2026-10-06)
+
+- Water freezing waits for the weather work; the +1 forage find and the
+  halved shelter penalty are the shipped defaults.
+- `drink water` yields to an item exactly named "water"; away from a
+  source it keeps its old meaning (a carried waterskin), while `drink
+  source` always means the room.
+- A source drink gives the Hydrated buff like a waterskin glug.
+- `company fill` refills cargo by withdrawing and re-depositing part-used
+  stacks through the existing cargo API.
+
+## Open questions (resolved)
 
 1. Should water sources freeze in snow-biome blizzards? The proposal is
    later, with the weather work.

@@ -12,6 +12,8 @@ description: In this secluded part of The Mirror Caves, you come across a chambe
 exits:
   south:
     roomid: 1019
+resources:
+- shelter
 mapx: -17
 mapy: 9
 mapz: -1
