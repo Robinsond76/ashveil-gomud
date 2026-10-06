@@ -42,6 +42,8 @@ func (m *CampingModule) purgeLocked(leaderUserID int) bool {
 	_, poisonPlan := m.poisonPlans[leaderUserID]
 	_, rewards := m.campRewards[leaderUserID]
 	_, dutied := m.restedDuties[leaderUserID]
+	_, tented := m.restedTents[leaderUserID]
+	_, chose := m.tentChoices[leaderUserID]
 	delete(m.camps, leaderUserID)
 	delete(m.recoveryApplied, leaderUserID)
 	delete(m.stays, leaderUserID)
@@ -54,6 +56,8 @@ func (m *CampingModule) purgeLocked(leaderUserID int) bool {
 	delete(m.campRewards, leaderUserID)
 	delete(m.lastRewards, leaderUserID)
 	delete(m.restedDuties, leaderUserID)
+	delete(m.restedTents, leaderUserID)
+	delete(m.tentChoices, leaderUserID)
 	delete(m.raiders, leaderUserID)
-	return camp || applied || stay || innApplied || wellRested || rested || owed || sharpen || poisonPlan || rewards || dutied
+	return camp || applied || stay || innApplied || wellRested || rested || owed || sharpen || poisonPlan || rewards || dutied || tented || chose
 }

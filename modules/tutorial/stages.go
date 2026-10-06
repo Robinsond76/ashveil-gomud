@@ -94,7 +94,7 @@ func init() {
 			Goal:  "Put one companion in the front row and another behind it.",
 			Hints: []string{
 				`<ansi fg="command">formation</ansi> shows the grid, row by row.`,
-				`<ansi fg="command">formation move <name> <row> <col></ansi> places someone, e.g. <ansi fg="command">formation move tamsin 1 2</ansi>.`,
+				`<ansi fg="command">formation move <name> <row> <col></ansi> places someone, e.g. <ansi fg="command">formation move tamsin 1 2</ansi>. In the web client, click a member in Company > Status, then a cell.`,
 				`<ansi fg="command">formation swap <a> <b></ansi> trades two members' places.`,
 				`<ansi fg="command">help formation</ansi> explains reach and interception in full.`,
 			},
@@ -128,7 +128,7 @@ func init() {
 			Hints: []string{
 				`<ansi fg="command">camp</ansi> makes camp here, <ansi fg="command">camp fire</ansi> lights the fire, and <ansi fg="command">camp rest</ansi> rests for about a minute. You stay put while you rest.`,
 				`A fire needs fuel. Here the kindling stacked beside the fire ring feeds it for nothing, but away from deadfall <ansi fg="command">camp fire</ansi> burns a firewood bundle from your packs or cargo: buy bundles at a market or <ansi fg="command">gather firewood</ansi> where it grows (<ansi fg="command">help gathering</ansi>). One bundle fuels one rest: afterwards the fire is embers, and resting again means feeding it with <ansi fg="command">camp fire</ansi>.`,
-				`The wardens gave you camp gear: a bedroll (a quarter more Fatigue back from a rest) and fire steel (damp wood lights first time). A tent, a cookpot, camp bells and a field surgeon's kit are sold in markets too; each earns its weight in one way, and bells also keep thieves off a sleeping camp on dangerous roads (<ansi fg="command">help camp gear</ansi>).`,
+				`The wardens gave you camp gear: a bedroll (a quarter more Fatigue back from a rest) and fire steel (damp wood lights first time). A tent, a cookpot, camp bells and a field surgeon's kit are sold in markets too; each earns its weight in one way, and bells also keep thieves off a sleeping camp on dangerous roads. Tents trade something for something: a fur-lined one shuts the weather out, a camouflaged one draws raiders half as often, a large one wakes the company Well Rested; <ansi fg="command">camp tent</ansi> picks one (<ansi fg="command">help camp gear</ansi>).`,
 				`Before a rest or a hard road, <ansi fg="command">camp prepare</ansi> uses a supply from your packs: fortifying broth for a sturdier member after the rest, a warming draught or cooling salve against a cold or hot crossing, watch incense for a sharper watch. <ansi fg="command">camp supplies</ansi> lists what you carry (<ansi fg="command">help camp supplies</ansi>).`,
 				`<ansi fg="command">camp status</ansi> shows the rest's progress and everyone's needs; <ansi fg="command">conditions</ansi> shows Rested afterwards.`,
 				`With a whetstone, <ansi fg="command">camp sharpen on</ansi> hones every blade in the company at the end of a rest, using the stone once. Whetstones are sold in markets (<ansi fg="command">help sharpen</ansi>).`,

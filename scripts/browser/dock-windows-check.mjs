@@ -163,6 +163,54 @@ check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, Health 1
 check(await page.getByRole('listitem', { name: /Wren, level 5, Warden/ }).count() === 1
   && await page.evaluate(() => document.querySelector('#party-panel [data-key=leader] .party-member-rank').title) === 'Ranger line', 'a promoted member card names its class, its lineage on hover (40s5)');
 check(!(await status()).includes('Travelling with'), 'no human party: no Travelling with');
+// Phase 58: click a member in the formation drawing, then a place.
+{
+  const sentFm = async fn => { await page.evaluate(() => { window.sent = []; }); await fn(); return page.evaluate(() => window.sent); };
+  const fmHelp = () => page.locator('.fm-help').textContent();
+  check((await fmHelp()).includes('Click a member, then a place'), 'formation: a hint says how to move');
+  let moved = await sentFm(async () => {
+    await page.getByRole('button', { name: /^Move Oswin/ }).click();
+    await page.getByRole('button', { name: 'Move Oswin to row 3, column 3' }).click();
+  });
+  check(JSON.stringify(moved) === '["formation move #1 3 3"]', 'formation: pick a member, then an empty cell, sends formation move');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: /^Move Wren/ }).click();
+    await page.getByRole('button', { name: 'Swap Wren with Oswin' }).click();
+  });
+  check(JSON.stringify(moved) === '["formation swap me #1"]', 'formation: pick a member, then another, swaps them');
+  await page.getByRole('button', { name: /^Move Wren/ }).click();
+  check((await fmHelp()).includes('Moving Wren') && await page.locator('td.is-moving').count() === 1, 'formation: the picked member is marked, with instructions');
+  await page.keyboard.press('Escape');
+  check((await fmHelp()).includes('cancelled') && await page.locator('td.is-moving').count() === 0, 'formation: Escape puts the member back down');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: /^Move Wren/ }).focus();
+    await page.keyboard.press('Enter');
+    await page.getByRole('button', { name: 'Move Wren to row 2, column 1' }).focus();
+    await page.keyboard.press('Enter');
+  });
+  check(JSON.stringify(moved) === '["formation move me 2 1"]', 'formation: works from the keyboard');
+  moved = await sentFm(async () => { await page.getByRole('button', { name: 'Ysolde' }).click(); });
+  check(moved.length === 0 && (await fmHelp()).includes('fallen'), 'formation: a fallen member is refused with a message, nothing sent');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: 'Place Tamsin in the formation' }).click();
+    await page.getByRole('button', { name: 'Swap Tamsin with Oswin' }).click();
+  });
+  check(moved.length === 0 && (await fmHelp()).includes('Pick an empty cell to place Tamsin'), 'formation: an unplaced member is not swapped with a placed one (the server refuses that)');
+  moved = await sentFm(async () => {
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: /^Move Oswin/ }).click();
+    await page.getByRole('button', { name: 'Place Tamsin in the formation' }).click();
+  });
+  check(moved.length === 0 && await page.locator('.fm-unplaced .fm-cell.is-moving').count() === 1 && (await fmHelp()).includes('Moving Tamsin'), 'formation: with a placed member picked up, an unplaced one is picked up instead of swapped');
+  moved = await sentFm(async () => {
+    await page.getByRole('button', { name: 'Move Tamsin to row 1, column 3' }).click();
+  });
+  check(JSON.stringify(moved) === '["formation move #3 1 3"]', 'formation: an unplaced member can be placed');
+  await page.evaluate(() => { const c = Client.GMCPStructs.Company; c.Battle = { enemies: [{ name: 'x' }] }; });
+  moved = await sentFm(async () => { await page.getByRole('button', { name: /^Move Oswin/ }).click(); });
+  check(moved.length === 0 && (await fmHelp()).includes('battle is under way'), 'formation: in a battle a click is refused with a message, nothing sent');
+  await page.evaluate(c => window.gmcp('Company', c), company);
+}
 await page.evaluate(() => window.gmcp('Party', { Leader: 'Wren', Members: [{ Name: 'Wren', Position: 'leader', owner_user_id: 7, online: true, follow: false, support: true, autoattack: false }, { Name: '<b>Tamsin</b>', Position: 'member', owner_user_id: 8, online: false, follow: false, support: false, autoattack: false }], Invited: [], Vitals: { Wren: { health: 80, level: 5, location: 'Dunmar' }, '<b>Tamsin</b>': { health: 40, level: 4, location: 'Dunmar' } } }));
 check((await status()).includes('Travelling with') && (await status()).includes('<b>Tamsin</b>') && await page.locator('#party-panel b').count() === 0, 'a human party under Travelling with, names as text');
 check((await status()).includes('each owner commands their own company') && (await status()).includes('(offline)'), 'alliance authority and offline status appear');
@@ -426,6 +474,31 @@ check(!(await page.evaluate(() => document.getElementById('company-camp').textCo
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.evaluate(c => window.gmcp('Company.Camp', c), campWith(true));
   check(await page.evaluate(() => [...document.querySelectorAll('#company-camp .cmp-duty button')].every(b => b.disabled)) && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('fixed for this rest'), 'duties lock while resting (51)');
+}
+// Phase 52: the pitched tent, and a picker when more than one tent is carried.
+{
+  const tents = [
+    { kind: 'canvas', name: 'oiled canvas tent', effect: 'shelter', pitched: false, command: 'camp tent canvas' },
+    { kind: 'large', name: 'large pavilion tent', effect: 'everyone wakes Well Rested', pitched: true, command: 'camp tent large' },
+  ];
+  const campWith = (extra) => ({ has_camp: true, here: true, room: '', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false, tent: true, tent_kind: 'large', tent_name: 'large pavilion tent', tent_note: 'everyone wakes Well Rested', tents, gear: ['Large tent'], ...extra });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({}));
+  check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('A large pavilion tent is pitched here: everyone wakes Well Rested.'), 'the pitched tent is named with its effect (52)');
+  const picks = await page.evaluate(() => [...document.querySelectorAll('#company-camp [aria-label="Tent choice"] button')].map(b => ({ text: b.textContent, pressed: b.getAttribute('aria-pressed') })));
+  check(picks.length === 2 && picks[1].text === 'Large pavilion tent' && picks[1].pressed === 'true' && picks[0].pressed === 'false', 'a button per tent carried, the pitched one pressed (52)');
+  got = await sentNow(async () => { await page.getByRole('group', { name: 'Tent choice' }).getByRole('button', { name: 'Oiled canvas tent' }).click(); });
+  check(JSON.stringify(got) === '["camp tent canvas"]', 'a tent button sends camp tent (52)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '52-camp-tents.png') }); }
+  await page.setViewportSize({ width: 360, height: 800 });
+  check(await page.evaluate(() => { const p = document.getElementById('company-camp'); return p.scrollWidth <= p.clientWidth + 1; }), 'the tent picker fits a phone (52)');
+  if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '52-camp-tents-phone.png') }); }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ resting: true, rest_seconds: 20 }));
+  check(await page.evaluate(() => [...document.querySelectorAll('#company-camp [aria-label="Tent choice"] button')].every(b => b.disabled)), 'the tent is fixed while resting (52)');
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ tents: [tents[1]] }));
+  check(await page.evaluate(() => document.querySelectorAll('#company-camp [aria-label="Tent choice"]').length) === 0, 'no picker with one tent carried (52)');
+  await page.evaluate(c => window.gmcp('Company.Camp', c), campWith({ tent_kind: 'canvas', tent_name: 'oiled canvas tent', tent_note: 'shelter' }));
+  check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('An oiled canvas tent is pitched here'), 'a tent name starting with a vowel takes "An" (52 review)');
 }
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, gear: [], theft_risk: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');

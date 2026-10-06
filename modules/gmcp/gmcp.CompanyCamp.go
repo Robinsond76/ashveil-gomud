@@ -23,6 +23,12 @@ type campPayload struct {
 	Rested  bool   `json:"rested"`
 	Embers  bool   `json:"embers"`
 	Tent    bool   `json:"tent"`
+	// Phase 52: which tent is pitched (its name and effect), and the tents
+	// carried, for the picker.
+	TentKind string    `json:"tent_kind,omitempty"`
+	TentName string    `json:"tent_name,omitempty"`
+	TentNote string    `json:"tent_note,omitempty"`
+	Tents    []tentRow `json:"tents"`
 	// Phase 40a4: the camp gear the company carries, one label each.
 	Gear []string `json:"gear"`
 	// Phase 43a: camp supplies carried, and what is queued for the next rest.
@@ -54,6 +60,16 @@ type dutyRow struct {
 	Command string   `json:"command"`
 	Duty    string   `json:"duty"`
 	Options []string `json:"options"`
+}
+
+// tentRow is one carried tent for the Camp tab's picker. Command is what
+// pitches it.
+type tentRow struct {
+	Kind    string `json:"kind"`
+	Name    string `json:"name"`
+	Effect  string `json:"effect"`
+	Pitched bool   `json:"pitched"`
+	Command string `json:"command"`
 }
 
 type banterLine struct {
@@ -88,7 +104,16 @@ func campPayloadOf(s camping.CampState) campPayload {
 	for _, d := range s.Duties {
 		duties = append(duties, dutyRow{Key: d.Key, Name: d.Name, Command: d.Command, Duty: d.Duty, Options: d.Options})
 	}
-	return campPayload{Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
+	tents := make([]tentRow, 0, len(s.Tents))
+	for _, t := range s.Tents {
+		tents = append(tents, tentRow{Kind: string(t.Kind), Name: t.Name, Effect: t.Effect, Pitched: t.Pitched, Command: "camp tent " + camping.TentOf(t.Kind).Short})
+	}
+	var tentKind, tentName string
+	if s.Tent {
+		spec := camping.TentOf(s.TentKind)
+		tentKind, tentName = string(spec.Kind), spec.Name
+	}
+	return campPayload{Tents: tents, TentKind: tentKind, TentName: tentName, TentNote: s.TentNote, Duties: duties, DutiesLocked: s.DutiesLocked, Gear: gear, Supplies: supplies, Prepared: prepared, TheftRisk: s.TheftRisk, AlliedCamps: []alliedCamp{}, RoomID: s.RoomID, HasCamp: s.HasCamp, Here: s.Here, Room: s.RoomTitle, FireLit: s.FireLit, Resting: s.Resting, Rested: s.Rested,
 		Embers: s.Embers, Tent: s.Tent, RestPercent: s.RestPercent, RestSeconds: s.RestSeconds, CanCamp: s.CanCamp, Inn: s.Inn}
 }
 

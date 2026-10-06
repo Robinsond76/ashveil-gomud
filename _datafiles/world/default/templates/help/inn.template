@@ -31,7 +31,8 @@ the world clock, and weather never spoils it.
   walking strain more than a camp's Rested does (<ansi fg="command">help camp</ansi>), and
   giving you +2 speed and +2 perception besides. Well Rested always
   replaces Rested, and a camp rest afterward can't
-  downgrade it back. A companion who wasn't with you when the stay
+  downgrade it back. (A large pavilion tent also gives a camp rest's Well
+  Rested buff, but not the rest of the stay: <ansi fg="command">help camp gear</ansi>.) A companion who wasn't with you when the stay
   finished still gets its share of Well Rested once it rejoins, for
   whatever time is left. A finished stay also knits every wound of you
   and the companions with you (<ansi fg="command">help wounds</ansi>), then restores you
