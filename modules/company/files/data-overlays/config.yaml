@@ -25,6 +25,7 @@ CompanionArchetypes:
   - { MobTemplateId: 160, Archetype: dollmaster } # Phase 39d
   - { MobTemplateId: 175, Archetype: gryphon-rider } # Phase 39f
   - { MobTemplateId: 190, Archetype: alchemist } # Phase 39g
+  - { MobTemplateId: 204, Archetype: beasttamer } # Phase 39e
   - { MobTemplateId: 235, Archetype: arbalist } # Phase 39h
   - { MobTemplateId: 150, Archetype: shaman } # Phase 39c
 # Phase 21a: company alignment. Values are alignment points on the
@@ -154,6 +155,7 @@ RecruitTemplates:
   - { MobTemplateId: 160, Weight: 1, PricePercent: 110 }
   - { MobTemplateId: 175, Weight: 1, PricePercent: 110 } # Phase 39f
   - { MobTemplateId: 190, Weight: 1, PricePercent: 110 } # Phase 39g
+  - { MobTemplateId: 204, Weight: 1, PricePercent: 110 }
   - { MobTemplateId: 235, Weight: 1, PricePercent: 110 } # Phase 39h
   - { MobTemplateId: 150, Weight: 1, PricePercent: 110 }
 RecruitGivenNames: [Hild, Anselm, Tobin, Wren, Edda, Bram, Ilse, Corrin, Maud, Osric, Petra, Aldo, Sabine, Lorn, Nessa, Joren, Thea, Ulric, Brisa, Cade, Fenna, Hugo, Ines, Kester, Liesl, Merrit, Orla, Quill, Rowan, Senna]

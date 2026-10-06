@@ -77,7 +77,50 @@
         if (places.length === 0) {
             items.push({ label: 'No named places on this map yet. Tap a room on the Map instead (help walkto)', cmd: 'help walkto' });
         }
+        // Phase 47: "Find a visited room..." types part of a name and lists
+        // the rooms the map has seen that match, nearest first.
+        if (window.MapPlaces && MapPlaces.search) {
+            items.push({ label: 'Find a visited room\u2026', fn: searchRooms });
+        }
         window.uiMenu(ev, items);
+    }
+
+    // A sheet with a search box over every room the map has seen (named
+    // places and plain rooms alike), nearest first; a pick sends walkto.
+    function searchRooms() {
+        var old = document.getElementById('walk-search');
+        if (old) { old.remove(); }
+        var sheet = el('div');
+        sheet.id = 'walk-search';
+        sheet.setAttribute('role', 'dialog');
+        sheet.setAttribute('aria-label', 'Find a visited room');
+        var input = el('input');
+        input.type = 'search';
+        input.placeholder = 'Search visited rooms';
+        input.setAttribute('aria-label', 'Search visited rooms');
+        var list = el('div', 'ws-list');
+        var close = button('Close', 'Close the search', function () { sheet.remove(); }, 'mb-btn ws-close');
+        function paint() {
+            list.textContent = '';
+            var found = MapPlaces.search(input.value);
+            found.forEach(function (p) {
+                var b = button(p.name + (p.legend ? ' (' + p.legend + ')' : ''), 'Walk to ' + p.name, function () {
+                    sheet.remove();
+                    send('walkto ' + p.id);
+                }, 'ws-item');
+                list.appendChild(b);
+            });
+            if (found.length === 0) { list.appendChild(el('div', 'ws-empty', 'No visited room matches.')); }
+        }
+        input.addEventListener('input', paint);
+        var head = el('div', 'ws-head');
+        head.appendChild(input);
+        head.appendChild(close);
+        sheet.appendChild(head);
+        sheet.appendChild(list);
+        document.body.appendChild(sheet);
+        paint();
+        input.focus();
     }
 
     function build() {
@@ -134,6 +177,7 @@
             onGMCP: function () { paintWalk(); },
         });
         paintNav();
+        watchDocks();
     }
 
     // The height of the bars at the bottom (touch bar, command box, view
@@ -168,11 +212,48 @@
         });
     }
 
+    // Phase 47: a view owns panels by window id, wherever the player docked
+    // them on desktop. Map and Here claim theirs; the Company view takes the
+    // rest (the tab groups and any panel dragged out of them). A dock shows
+    // when it holds a panel of the front view; two docks share the screen.
+    var OWNS = { map: ['Map'], here: ['RoomInfo', 'Time & Date', 'Tutorial'] };
+    function viewOf(win) {
+        if (OWNS.map.indexOf(win) >= 0) { return 'map'; }
+        if (OWNS.here.indexOf(win) >= 0) { return 'here'; }
+        return 'company';
+    }
+
+    function layoutDocks() {
+        var shown = [];
+        var docks = [document.getElementById('dock-left'), document.getElementById('dock-right')].filter(Boolean);
+        docks.forEach(function (d) {
+            var has = false;
+            d.querySelectorAll('.dock-panel').forEach(function (p) {
+                var mine = viewOf(p.dataset.win || '') === current;
+                p.classList.toggle('m-off', !mine);
+                if (mine) { has = true; }
+            });
+            has = has && d.classList.contains('has-panels');
+            d.dataset.mshow = has ? '1' : '0';
+            if (has) { shown.push(d); }
+        });
+        docks.forEach(function (d) { d.dataset.msplit = shown.length > 1 ? '1' : '0'; });
+    }
+
+    function watchDocks() {
+        if (!window.MutationObserver) { return; }
+        var observer = new MutationObserver(function () { if (mq.matches) { layoutDocks(); } });
+        ['dock-left', 'dock-right'].forEach(function (id) {
+            var d = document.getElementById(id);
+            if (d) { observer.observe(d, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-win', 'class'] }); }
+        });
+    }
+
     function show(id) {
         if (!VIEWS.some(function (v) { return v.id === id; })) { return; }
         current = id;
         document.body.dataset.mview = id;
-        if (built) { paintNav(); }
+        if (built) { paintNav(); layoutDocks(); }
         // The map and the terminal measure themselves when they become visible.
         window.dispatchEvent(new Event('resize'));
         if (id === 'game') {
@@ -202,6 +283,7 @@
         active: function () { return document.body.classList.contains('mobile'); },
         view:   function () { return current; },
         show:   show,
+        layout: layoutDocks,
     };
 
     // Client.init() mounts the terminal and docks on body load; the layout

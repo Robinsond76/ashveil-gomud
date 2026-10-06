@@ -44,6 +44,9 @@ help:
       - dollmaster
       - dollmaster-routes
       - doll
+      - beasttamer
+      - beasttamer-routes
+      - beast
       - classes
       - promotion
       - talents
@@ -369,6 +372,9 @@ help-aliases:
   alchemist-routes: [apothecary, bombardier, mutagenist, panacean, grenadier, transmuter, mutagen, potent-draughts, splash-draught, wide-throw, pitch-and-tar]
   brew:             [brewing-flasks, refill-flasks]
   doll:             [mend-doll, doll-parts, doll-mend]
+  beasttamer:       [beast-tamer, beast tamer, beast-tamers, beasttamers, taming, sic, rally, pack-sense, pack sense, bonded-beast, bonded beast, wolf, whip]
+  beasttamer-routes: [houndmaster, bearward, dragon-tamer, dragon tamer, packlord, beastlord, dragon-lord, dragon lord, warhound, war-bear, war bear, drake, breath, hobble]
+  beast:            [beast-name, beast-rest]
   halberdier-routes: [sweeper, vanguard, valkyrie, reaper, linebreaker, tempest-lancer, charged-sweep]
   hexes:            [hex, slumber, earthbind, leaden, miasma, binding, frailty, dread, blight, curse, curses, controller]
   trap:             [traps]

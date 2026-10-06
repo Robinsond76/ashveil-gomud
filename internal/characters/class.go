@@ -144,6 +144,7 @@ type ClassRT struct {
 	Summoned      bool        // this character has called its summon this battle
 	Summon        *SummonInfo // set on a summoned creature
 	Doll          *DollInfo   // set on a Doll Master's doll (Phase 39d)
+	Beast         *BeastInfo  // set on a Beast Tamer's bonded beast (Phase 39e)
 	Bless         int         // rounds of Bless left
 
 	// Phase 38c1, the Warlord and elite talents.
@@ -184,6 +185,14 @@ type ClassRT struct {
 	AimStruck  bool
 	BlowPierce int
 	Shred      int
+	// The Beast Tamer's lineage (Phase 39e): the Attack Sic gives its beast
+	// this round, the Evasion Pack Sense gives the Tamer while the beast
+	// stands, and the Rally heals spent this battle.
+	Sic       int
+	PackSense int
+	Rallies   int
+	// Benched is a wounded beast's sitting-out told this battle (review fix).
+	Benched bool
 
 	// Phase 38c3: the Wizard's elites. Overchannel and the once-a-battle
 	// gifts of the Archon, Archmage and Necromancer.

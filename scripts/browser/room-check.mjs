@@ -69,6 +69,12 @@ const resumedLeft = await page.evaluate(() => document.getElementById('rw-gather
 check(/^(5|6)s left$/.test(resumedLeft), 'a resumed bar shows only the time left: ' + resumedLeft);
 const resumedWidth = await page.evaluate(() => document.getElementById('rw-gather-fill').getBoundingClientRect().width / document.getElementById('rw-gather-track').getBoundingClientRect().width);
 check(resumedWidth > 0.7, 'and starts most of the way along: ' + resumedWidth.toFixed(2));
+// Phase 47: an in-page reconnect (copyover) is a new session, so the next
+// room asks again for the work in progress.
+await page.evaluate(() => { window.requests = []; VirtualWindows.setConnected(false); VirtualWindows.setConnected(true); });
+await page.evaluate(() => window.gmcp('Room.Info', { name: 'The Road', area: 'Frost Vale', environment: 'land', exits: {}, Contents: {} }));
+const askedAgain = await page.evaluate(() => window.requests.filter(r => r === 'Room.Gather').length);
+check(askedAgain === 1, 'an in-page reconnect asks for the work in progress again: ' + askedAgain);
 // Room.Info still works beside it.
 await page.evaluate(() => window.gmcp('Room.Info', { name: 'The Road', area: 'Frost Vale', environment: 'land', exits: {}, Contents: {} }));
 check(await page.evaluate(() => document.getElementById('rw-room-name').textContent.includes('The Road')), 'Room.Info still updates the window');

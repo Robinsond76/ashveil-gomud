@@ -74,8 +74,12 @@
         rogue: ['#444a56', '#9b59b6'], wizard: ['#4a5fc1', '#e0c040'], witch: ['#6b3f8c', '#3fb08a'], halberdier: ['#7d8590', '#b87333'],
         samurai: ['#2f3a4a', '#d9a441'], shaman: ['#3b6a7a', '#9fd0e0'], 'gryphon-rider': ['#8a6d3b', '#e8e2c9'], alchemist: ['#8a7a4e', '#c4561c'], arbalist: ['#5a6a7a', '#c0a060'],
         dollmaster: ['#6a3d4a', '#d8b878'], doll: ['#b08850', '#6a4a2a'], // Phase 39d: the doll is painted wood
+        beasttamer: ['#6b5a3a', '#c9a24a'], wolf: ['#7d7d85', '#c9c9d0'], warhound: ['#5a4632', '#b08850'], // Phase 39e: the bonded beasts
+        bear: ['#5b4030', '#8a6a4a'], drake: ['#3f7a4a', '#d9622b'],
     };
     const DEFAULT_HUES = ['#7a6a55', '#c0a060'];
+    // Phase 39e: a bonded beast is drawn as the battle unit nearest its kind.
+    const BEAST_SPRITES = { wolf: 'wolf-timber', warhound: 'dog-junkyard', bear: 'unknown-large', drake: 'unknown-beast' };
 
     // Fallback silhouettes: width, height in virtual pixels.
     const SIZES = { 'unknown-humanoid': [10, 24], 'unknown-beast': [20, 14], 'unknown-large': [18, 34] };
@@ -118,6 +122,8 @@
         #battle-screen .bs-title { font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         #battle-screen .bs-banners { color: var(--t-text-secondary); }
         #battle-screen canvas { display: block; margin: 4px auto; image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
+        #battle-screen .bs-legend { min-height: 1.3em; display: flex; flex-wrap: wrap; gap: 2px 10px; justify-content: center; color: var(--t-text-secondary); font-size: 0.9em; }
+        #battle-screen .bs-legend .bs-dot { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 1px; vertical-align: baseline; }
         #battle-screen .bs-last { min-height: 1.3em; text-align: center; font-style: italic; }
         #battle-screen .bs-caption { min-height: 1.3em; color: var(--t-text-secondary); text-align: center; }
         #battle-screen .bs-outcome { text-align: center; font-weight: bold; min-height: 1.3em; }
@@ -390,10 +396,10 @@
                 const u = unit(d.key);
                 u.side = 'company';
                 u.label = d.name || d.key;
-                u.klass = 'doll';
-                u.sprite = 'doll';
+                u.klass = d.kind || 'doll'; // Phase 39e: a beast's kind, else the doll
+                u.sprite = BEAST_SPRITES[d.kind] || d.kind || 'doll';
                 u.promoted = '';
-                u.className = 'Doll';
+                u.className = d.kind ? ({ bear: 'War bear', drake: 'Drake hatchling' }[d.kind] || (d.kind.charAt(0).toUpperCase() + d.kind.slice(1))) : 'Doll';
                 u.cell = cell;
                 u.leader = false;
                 u.role = '';
@@ -795,7 +801,7 @@
     // DOM
     // ---------------------------------------------------------------------
 
-    let titleNode, bannerNode, lastNode, captionNode, outcomeNode, retreatBtn, autoBox, animSelect, focusBtns = [];
+    let titleNode, bannerNode, lastNode, captionNode, outcomeNode, legendNode, retreatBtn, autoBox, animSelect, focusBtns = [];
 
     function build() {
         if (overlay) { return; }
@@ -826,6 +832,11 @@
         ctx = canvas.getContext('2d');
         overlay.appendChild(canvas);
 
+        // Phase 47: names the coloured dots over the figures; the screen
+        // reader gets the same words from each figure's description.
+        legendNode = el('div', 'bs-legend');
+        legendNode.setAttribute('aria-hidden', 'true');
+        overlay.appendChild(legendNode);
         lastNode = el('div', 'bs-last');
         lastNode.setAttribute('aria-live', 'off');
         captionNode = el('div', 'bs-caption');
@@ -1383,6 +1394,35 @@
         }
     }
 
+    // legendOf lists the statuses whose dots are on the picture now, in the
+    // order first seen, so the legend names exactly the colours on screen.
+    function legendOf(list) {
+        const seen = [];
+        list.forEach(u => {
+            if (u.fallen || u.unseen || isShrunk(u)) { return; }
+            u.statuses.forEach(s => { if (seen.indexOf(s) < 0) { seen.push(s); } });
+        });
+        return seen;
+    }
+
+    let legendKey = '';
+    function paintLegend(list) {
+        if (!legendNode) { return; }
+        const seen = legendOf(list);
+        const key = seen.join('|');
+        if (key === legendKey) { return; }
+        legendKey = key;
+        legendNode.textContent = '';
+        seen.forEach(s => {
+            const item = el('span', 'bs-legend-item');
+            const dot = el('span', 'bs-dot');
+            dot.style.background = 'hsl(' + hashHue(s) + ',70%,60%)';
+            item.appendChild(dot);
+            item.appendChild(document.createTextNode(s.replace(/-/g, ' ')));
+            legendNode.appendChild(item);
+        });
+    }
+
     function draw() {
         if (!ctx || !isShown()) { return; }
         const now = Date.now();
@@ -1407,6 +1447,7 @@
             const p = slotOf(u);
             drawInfo(u, p.x, p.y);
         });
+        paintLegend(list);
         drawEffects(now);
         // Target lines for the hovered unit, and anyone striking it.
         if (hover && units.get(hover)) {
@@ -1743,6 +1784,7 @@
                 digits: floaters.filter(f => f.text).map(f => f.text),
                 icons: floaters.filter(f => f.icon).map(f => f.icon),
                 shaking: shakeUntil > Date.now(),
+                legend: legendOf(Array.from(units.values()).filter(u => u.cell)),
                 badge: !!badge && badge.classList.contains('show'),
                 units: Array.from(units.values()).map(u => ({
                     id: u.id, side: u.side, ally: u.ally, label: u.label, sprite: u.sprite, promoted: u.promoted || "", cell: u.cell, frac: u.frac, band: u.band,

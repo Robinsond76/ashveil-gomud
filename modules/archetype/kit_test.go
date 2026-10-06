@@ -279,8 +279,10 @@ func TestCreationChoicesAndChooseAtCreation(t *testing.T) {
 	m, _ := testModule(t)
 	choices := m.CreationChoices()
 	require.Len(t, choices, 13)
+	assert.Equal(t, "alchemist", choices[0].ID)
 	assert.Equal(t, "arbalist", choices[1].ID)
 	assert.Contains(t, choices[1].Kit, "hunting crossbow")
+	assert.Equal(t, "beasttamer", choices[2].ID)
 	assert.Equal(t, "cleric", choices[2].ID)
 	assert.Contains(t, choices[2].Kit, "small red potion (x2)")
 

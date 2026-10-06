@@ -52,6 +52,12 @@ const (
 	GuardString  Ability = "guard-string"
 	Tangle       Ability = "tangle"
 	Splice       Ability = "emergency-splice"
+	// The Beast Tamer's three (Phase 39e). Sic is part of the Tamer's own
+	// turn; Rally and Pack Sense are resolved by internal/hooks/combat_beast.go
+	// and listed here so the strategy, company and capability views show them.
+	Sic       Ability = "sic"
+	Rally     Ability = "rally"
+	PackSense Ability = "pack-sense"
 )
 
 // AbilitySpec is an ability's unlock, cooldown, and text.
@@ -104,6 +110,15 @@ var Abilities = []AbilitySpec{
 	{ID: PiercingBolt, Name: "Piercing Bolt", Archetype: "arbalist", Skill: "arbalestry", Cooldown: 2,
 		When: "it wields a shooting weapon (the crossbow), and is not winding it",
 		Does: "one heavy bolt, 140% of a shot, that ignores half the foe's armor (all of it from level 8); +10 Attack from level 3 when nothing has hurt it since its last bolt; from level 6 a landed bolt hobbles the foe; the whole turn, and the next turn is spent winding the crossbow"},
+	{ID: Sic, Name: "Sic", Archetype: "beasttamer", Skill: "taming",
+		When: "its beast stands and the Tamer has a foe",
+		Does: "sends the beast at the Tamer's foe with +10 Attack on its strike; the Tamer's own blow is still struck, with a whip that reaches like a polearm"},
+	{ID: Rally, Name: "Rally", Archetype: "beasttamer", Skill: "taming", MinLevel: 3,
+		When: "its beast is below the company's healing threshold",
+		Does: "heals the beast for a Minor Heal's worth with no mana, twice a battle"},
+	{ID: PackSense, Name: "Pack Sense", Archetype: "beasttamer", Skill: "taming", MinLevel: 8,
+		When: "always, while its beast stands",
+		Does: "the Tamer has +5 Evasion"},
 }
 
 // SpecOf is an ability's spec.

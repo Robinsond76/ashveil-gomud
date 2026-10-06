@@ -122,6 +122,7 @@ function injectStyles(css) {
                 e.stopPropagation();
                 dismiss(false);
                 if (item.confirm && !window.confirm(item.confirm)) { return; }
+                if (item.fn) { item.fn(e); return; }
                 Client.SendInput(item.cmd);
             });
             entries.push(entry);
@@ -1694,6 +1695,9 @@ const VirtualWindows = (() => {
     function setConnected(connected) {
         if (connected) {
             document.body.classList.remove('windows-disconnected');
+            // Phase 47: windows that asked for state once per page (the Room
+            // window's gather in progress) ask again after a reconnect.
+            window.dispatchEvent(new Event('vwin:connected'));
         } else {
             document.body.classList.add('windows-disconnected');
         }

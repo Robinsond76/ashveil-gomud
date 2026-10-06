@@ -310,6 +310,31 @@ Archetypes:
     CompanionLevels: [1, 10, 20, 30]
     # A plain dagger, a cotton shirt, a leather cap, worn boots, two doll parts.
     Kit: [10004, 20008, 20020, 20003, 30004, 30015, 70, 70, 38]
+  # Phase 39e: the bonded-beast class, neutral from the start. The Tamer
+  # spends no mana: it raises a living beast that stands in a cell of its own
+  # and takes its own turn, and a Tamer's turn sends it in (internal/beasts,
+  # internal/hooks/combat_beast.go). Role: striker.
+  - ArchetypeId: beasttamer
+    HPPerLevel: 0.8
+    HPStart: 5
+    AttackRate: 0.8
+    EvasionRate: 0.9
+    ArmorTraining: medium
+    ShieldSizes: [none]
+    WeaponClasses: [whip, spear, dagger]
+    Name: Beast Tamer
+    Description: Handlers who raise a bonded beast that fights beside them on its own turn, send it at their foe with a crack of the whip, rally it when it is hurt, and rest it at camp; no mana, no creed, no alignment gate on their routes.
+    Skills: [taming]
+    GrantSkills:
+      - { Skill: taming, Level: 1 }
+    Growth:
+      - { Stat: perception, Weight: 3 }
+      - { Stat: vitality, Weight: 3 }
+      - { Stat: strength, Weight: 2 }
+      - { Stat: smarts, Weight: 2 }
+    CompanionLevels: [1, 10, 20, 30]
+    # A long whip, a padded jack, a leather cap, worn boots.
+    Kit: [10020, 20163, 20020, 20003, 30004, 30015, 38]
   # Phase 39c: the weather caster, a neutral lineage (no alignment gate at 10
   # or 30). It calls a battle-local weather (internal/stormcraft, battle
   # state) that changes both sides' odds, then casts wind and lightning; it
