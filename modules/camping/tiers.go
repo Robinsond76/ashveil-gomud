@@ -221,6 +221,12 @@ func (m *CampingModule) grantPendingTiers() {
 		if !saved {
 			continue
 		}
+		// Phase 55: a company that slept in the cold wakes with a chill.
+		if campRest {
+			for _, c := range survival.CatchChillIfFrozen(leaderUserID) {
+				user.SendText(survival.CaughtLine(c.Name, survival.AilmentChill))
+			}
+		}
 		if granted && tier == camping.TierWellRested {
 			user.SendText("Your company feels well rested.")
 		} else if granted {

@@ -45,7 +45,7 @@ import (
 //go:embed files/*
 var files embed.FS
 
-const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp duties [member] [duty] | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
+const campUsage = "Usage: camp | camp status | camp fire | camp rest | camp cook | camp duties [member] [duty] | camp break | camp sharpen [status | auto on|off] | camp supplies | camp prepare [supply|remedy] [member] | camp poison [assign|unassign|preview|apply] | camp coat"
 const defaultRoomTag = "camping"
 
 // Registry is the durable, leader-keyed set of active camps plus which
@@ -307,6 +307,12 @@ type cappedSurvival interface {
 	ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int, ceilings map[survival.MemberKey]int) ([]survival.ExertionResult, error)
 }
 
+// curingSurvival ends an ailment (Phase 55); nativeSurvival does it through the
+// survival module.
+type curingSurvival interface {
+	CureAilment(leaderUserID int, key survival.MemberKey, kind string) (bool, error)
+}
+
 type Survival interface {
 	ApplyCompanyRestRecovery(leaderUserID int, operationID string, fatigue int) ([]survival.ExertionResult, error)
 	CompanyNeeds(leaderUserID int) []survival.MemberNeeds
@@ -327,6 +333,11 @@ func (nativeSurvival) ApplyCompanyRestRecoveryBonus(leaderUserID int, operationI
 // ApplyCompanyRestRecoveryCapped is the duty-aware recovery (Phase 51).
 func (nativeSurvival) ApplyCompanyRestRecoveryCapped(leaderUserID int, operationID string, fatigue int, bonusPct map[survival.MemberKey]int, ceilings map[survival.MemberKey]int) ([]survival.ExertionResult, error) {
 	return survival.ApplyCompanyRestRecoveryCapped(leaderUserID, operationID, fatigue, bonusPct, ceilings)
+}
+
+// CureAilment ends a member's ailment (Phase 55).
+func (nativeSurvival) CureAilment(leaderUserID int, key survival.MemberKey, kind string) (bool, error) {
+	return survival.CureAilment(leaderUserID, key, kind)
 }
 
 func (nativeSurvival) CompanyNeeds(leaderUserID int) []survival.MemberNeeds {

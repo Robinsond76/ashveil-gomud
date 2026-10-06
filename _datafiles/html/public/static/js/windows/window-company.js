@@ -1225,6 +1225,19 @@
         if (camp.has_camp && Array.isArray(camp.supplies) && camp.supplies.length) {
             pad.appendChild(el('div', 'cmp-line', 'Supplies: ' + camp.supplies.join(', ') + ' (camp prepare).'));
         }
+        if (camp.has_camp && camp.here) {
+            const ailing = [];
+            data.members.forEach(m => {
+                if (!m || m.status === 'dead') { return; }
+                const list = data.vitals(m.key).ailments;
+                if (Array.isArray(list) && list.length) {
+                    ailing.push((m.key === 'leader' ? 'You' : m.name) + ': ' + list.join(', '));
+                }
+            });
+            if (ailing.length) {
+                pad.appendChild(el('div', 'cmp-line', 'Ailing: ' + ailing.join('; ') + '. Make the remedy from gathered herbs with camp prepare remedy (help ailments).'));
+            }
+        }
         if (camp.has_camp && Array.isArray(camp.prepared) && camp.prepared.length) {
             pad.appendChild(el('div', 'cmp-line', 'Set by for the next rest: ' + camp.prepared.join(', ') + '.'));
         }

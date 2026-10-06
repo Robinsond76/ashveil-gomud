@@ -212,7 +212,7 @@ Shared cargo and deliberate equipment assignment: <ansi fg="command">help equipm
 Pooled gold: <ansi fg="command">help treasury</ansi>. Battle spoils: <ansi fg="command">help loot</ansi>.
 
 Ambushes, clusters, leaping enemies, narrow ground, fatigue, and cold affect battles: help battlefield and help ambush. A sigil laid in the room beforehand (cast sigil of [kind]) shapes one too: help sigils.
-How your company goes in matters too: hunger cuts the damage a member deals, thirst makes a member take more and fatigue cuts its hit chance, and a cooked meal gives a buff for a few battles: help survival and help cooking.
+How your company goes in matters too: hunger cuts the damage a member deals, thirst makes a member take more and fatigue cuts its hit chance, and a cooked meal gives a buff for a few battles: help survival and help cooking. A chill, gut-ache or fever costs a member damage or guard until it is cured: help ailments.
 
 Speed, personal burden and armor bulk set your turns each round: <ansi fg="command">help tempo</ansi>.
 

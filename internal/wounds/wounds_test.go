@@ -3,6 +3,8 @@ package wounds
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/GoMudEngine/GoMud/internal/items"
 )
 
@@ -244,4 +246,19 @@ func TestBeatenIsALastingWoundOfThePercentage(t *testing.T) {
 	if got := Beaten(40, 10, nil).Kind; got != Cut {
 		t.Fatalf("no roll picks a cut, got %s", got)
 	}
+}
+
+func TestAPunctureLeftOpenFestersAfterTheLimit(t *testing.T) {
+	ws := []Wound{
+		{Kind: Puncture, Place: "arm", Points: 4},
+		{Kind: Cut, Place: "leg", Points: 3},
+		{Kind: Puncture, Place: "side", Points: 2, Light: true},
+	}
+	assert.False(t, Festering(ws, 3))
+	assert.False(t, Festering(ws, 3))
+	assert.Equal(t, 2, ws[0].Battles)
+	assert.Zero(t, ws[1].Battles, "a cut does not fester")
+	assert.Zero(t, ws[2].Battles, "a light wound closes by itself")
+	assert.True(t, Festering(ws, 3), "the third battle")
+	assert.Zero(t, ws[0].Battles, "the count starts over")
 }

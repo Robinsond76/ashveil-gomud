@@ -115,6 +115,7 @@ func init() {
 				`<ansi fg="command">company meal</ansi> feeds and waters everyone at once, from the cargo, then their own packs, then yours; <ansi fg="command">company inventory</ansi> shows what everyone carries (<ansi fg="command">help company-meal</ansi>, <ansi fg="command">help company-inventory</ansi>).`,
 				`Walking from room to room nearby is quick. A journey between places, with <ansi fg="command">travel</ansi>, takes real time and never hurries the world along.`,
 				`Go into a fight fed, watered and rested: hunger cuts a member's damage, thirst makes a member take more damage and fatigue cuts its hit chance, and a cooked meal gives a buff for a few battles (<ansi fg="command">help survival</ansi>, <ansi fg="command">help cooking</ansi>).`,
+				`Sickness has causes you can avoid: walking or sleeping Frozen gives a chill, eating raw game meat a gut-ache, and a puncture wound left open through three battles a fever. Each has a remedy you make at camp from gathered herbs (<ansi fg="command">camp prepare remedy</ansi>, <ansi fg="command">help ailments</ansi>).`,
 				`Each has a help page: <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>, <ansi fg="command">help temperature</ansi>, <ansi fg="command">help strain</ansi>, <ansi fg="command">help cargo</ansi>, and <ansi fg="command">help travel</ansi>.`,
 			},
 			Done:        "You know what the road will ask of you.",
