@@ -27,10 +27,10 @@ func TestCampGearHelpRendersAndIsIndexed(t *testing.T) {
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(want, "")
 	for _, phrase := range []string{"Bedroll", "+25% Fatigue", "Oiled canvas tent", "Fire steel and tinder", "Iron cookpot",
-		"Camp bells and trip lines", "Field surgeon's kit", "20% chance", "90%", "embers", "10 rests", "5 uses", "camp fire"} {
+		"Camp bells and trip lines", "Field surgeon's kit", "20% chance", "90%", "embers", "10 rests", "5 uses", "camp fire", "Thieves", "Never taken", "mean thieves never"} {
 		assert.Contains(t, plain, phrase)
 	}
-	for _, alias := range []string{"camp gear", "camp-gear", "bedroll", "tent", "cookpot", "fire steel", "camp bells", "trip lines", "surgeon's kit", "embers"} {
+	for _, alias := range []string{"camp gear", "camp-gear", "bedroll", "tent", "cookpot", "fire steel", "camp bells", "trip lines", "surgeon's kit", "embers", "thieves", "theft", "camp theft"} {
 		got, err := GetHelpContents(alias)
 		require.NoError(t, err, alias)
 		assert.Equal(t, want, got, alias)
@@ -40,6 +40,7 @@ func TestCampGearHelpRendersAndIsIndexed(t *testing.T) {
 		require.NoError(t, err, topic)
 		assert.Contains(t, text, "camp gear", "help %s points at help camp gear", topic)
 	}
+	assert.NotContains(t, plain, "Nothing here is stolen")
 	camp, err := GetHelpContents("camp")
 	require.NoError(t, err)
 	assert.Contains(t, camp, "embers")

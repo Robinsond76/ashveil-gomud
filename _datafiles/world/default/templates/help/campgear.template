@@ -31,6 +31,7 @@ you take on the road is the decision.
   Strung round a resting camp, they give raiders away: with no watch posted
   there is a flat 20% chance to spot them, and with a watch the chance rises
   by 10 points, never above 90% (<ansi fg="command">help campwatch</ansi>). A rest uses one up.
+  They also keep thieves out of the camp entirely (see Thieves below).
 
   <ansi fg="yellow">Field surgeon's kit</ansi>  1.5 kg   25 gold   5 uses
   At the end of a finished camp rest, a healer with mana left tends the worst
@@ -52,7 +53,28 @@ little dearer on the road. They never buy gear back (<ansi fg="command">help mar
     the rest report and <ansi fg="command">camp status</ansi> during a rest list the gear in use.
   - You get one tent, one cookpot, one fire steel and one set of bells at
     most: a second does nothing. Bedrolls count one per member.
-  - Nothing here is stolen; gear is only ever made use of.
+  - Thieves never take camp gear (see below); it is only ever made use of.
+
+<ansi fg="yellow-bold">Thieves</ansi>
+
+On some roads (the Old Kings Road for now), a camp rest has a 20% chance of
+drawing thieves who slip in while the company sleeps. There is no fight:
+you find out when you wake, and are told what is missing. Starting a rest
+there without bells warns you, and so does the web Camp tab. They take
+about a tenth of the loose goods in the cargo and your companions' packs
+(at least one item, never more than four). Breaking camp or resting again
+straight away does not shake them off.
+
+  - Never taken: anything equipped, your own pack, your gold and the
+    treasury, quest items, keys, and camp gear.
+  - <ansi fg="yellow">Camp bells and trip lines</ansi> strung before the rest mean thieves never
+    come at all.
+  - A posted watch may hear them first, with the same chance it has to spot
+    raiders (<ansi fg="command">help campwatch</ansi>); a caught thief takes nothing.
+  - Whether they come is settled as the rest begins, so a restart never
+    rolls it again or robs you twice. If you are offline when the rest ends,
+    you are told on your return.
+  - Stolen goods are gone; they are not tracked down.
 
 <ansi fg="yellow-bold">Fuel and embers</ansi>
 
