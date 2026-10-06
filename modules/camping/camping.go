@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GoMudEngine/GoMud/internal/archetypes"
+	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
@@ -877,6 +878,10 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	}
 	if started {
 		m.settlePrepared(user.UserId, funded)
+		// Phase 49: the company talks as it settles in.
+		if said := company.CampBanter(user.UserId, banter.CtxCamp); len(said) > 0 {
+			text += "\n\n" + banter.Format(said)
+		}
 	}
 	return text
 }
@@ -1247,7 +1252,12 @@ func (m *CampingModule) applyRestRecoveryLocked(leaderUserID int, camp camping.C
 		if camp.Rest.Bells && camp.Rest.Raid == nil {
 			text += " The bells hung quiet."
 		}
-		m.sendToLeader(leaderUserID, text+" The fire has burned down to embers.")
+		text += " The fire has burned down to embers."
+		// Phase 49: and talks as the rest ends.
+		if said := company.CampBanter(leaderUserID, banter.CtxRested); len(said) > 0 {
+			text += "\n\n" + banter.Format(said)
+		}
+		m.sendToLeader(leaderUserID, text)
 	}
 	return nil
 }

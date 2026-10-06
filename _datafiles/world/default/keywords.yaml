@@ -125,6 +125,7 @@ help:
       - gathering
       - campgear
       - campsupplies
+      - banter
     communication:
       - emote
       - say
@@ -421,6 +422,7 @@ help-aliases:
   poisons:          [poison, coat, coating, coatings, weapon-poison, weapon-poisons, bitterleaf, leechbane, leadroot, mirethorn, vial, vials]
   battle-summary:   [battlesummary, summary]
   combatpace:       [pace, pacing, combat-pace]
+  banter:           [camp-talk, chatter, companion-talk, comrades]
   tempo:            [actions, turns]
   stat-edge:        [stat-edges, hit-chance, to-hit, crit-chance, critical-chance]
   burden:           [burdened, unburdened, burdens, agility, personal-load, nimble]

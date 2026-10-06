@@ -62,6 +62,8 @@ button in them just types a command for you.
 
   Camp: Make camp, Light fire, Rest, Break camp, and Inn appear only
   when they would work (<ansi fg="command">camp</ansi>, <ansi fg="command">inn</ansi>); Meal is always there.
+  Under the buttons, "Around the fire" shows your companions' latest talk
+  (<ansi fg="command">help banter</ansi>).
 
   Menus work from the keyboard too: Enter opens one, the arrow keys move,
   Enter chooses, and Escape closes it.

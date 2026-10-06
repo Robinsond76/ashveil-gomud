@@ -202,3 +202,11 @@ ResurrectionAllowanceDays: 3
 # of the leader's online time, once the leader is out of any fight,
 # journey, or camp rest. 15 rounds is about a minute.
 SeparationRounds: 15
+
+# Phase 49: companion banter. The chance, in percent (0..100), that the
+# company talks as a camp rest begins (BanterCampStartPercent), as one ends
+# (BanterRestedPercent), and after a won battle (BanterBattlePercent). A
+# player can turn banter off with `set banter off`.
+BanterCampStartPercent: 100
+BanterRestedPercent: 50
+BanterBattlePercent: 33
