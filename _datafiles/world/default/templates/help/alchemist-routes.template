@@ -1,0 +1,41 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">alchemist-routes</ansi>
+
+The Alchemist is a neutral lineage. At level 10 it promotes to one of three
+classes, and any alignment may choose any of them. Each class adds four ranks
+(10, 15, 20, 25); a talent adds more (<ansi fg="command">help talents</ansi>).
+
+<ansi fg="yellow-bold">Apothecary</ansi>
+
+  10 Potent draughts    Healing Draught heals 30% more
+  15 Deep satchel       +4 flasks in the satchel
+  20 Splash draught     a Healing Draught also heals the next most hurt ally for
+                        30% as much
+  25 Clean draught      a Healing Draught also takes one harmful status off its
+                        patient (once a battle for each ally)
+
+<ansi fg="yellow-bold">Bombardier</ansi>
+
+  10 Hotter flasks      Fire Flask burns at 100% of Sparks (from 70%)
+  15 Wide throw         Fire Flask reaches one more foe
+  20 Pitch and tar      foes a Fire Flask burns are left alight (2 damage a round
+                        for 4 rounds)
+  25 Deep satchel       +4 flasks in the satchel
+
+<ansi fg="yellow-bold">Mutagenist</ansi>
+
+  10 Mutagen            Bracing Tonic also hardens its ally: +10 armor for the
+                        battle, for a tenth of the ally's health
+  15 Stable mutagen     a Mutagen costs a twentieth of the ally's health
+  20 Strong mutagen     a Mutagen gives +15 armor, and a Bracing Tonic lasts 2
+                        rounds longer
+  25 Pure mutagen       a Mutagen costs its ally no health
+
+The elite classes of these routes (Panacean, Grenadier, Transmuter) are still
+to come; until then an Alchemist keeps its advanced class's ranks.
+
+<ansi fg="yellow-bold">Talents</ansi>
+
+Deep Satchel (+2 flasks), Steady Brew (Healing Draught heals 10% more), Hot Brew (Fire Flask burns 10% harder), and the shared
+Toughness and Footwork (<ansi fg="command">help talents</ansi>).
+
+See also: <ansi fg="command">help alchemist</ansi>, <ansi fg="command">help promotion</ansi>, <ansi fg="command">help classes</ansi>.
