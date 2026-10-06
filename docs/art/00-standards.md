@@ -274,8 +274,10 @@ Go through every file:
 
 ## 9. Delivering
 
-- Put files under `art/source/<phase>/` with the exact relative names in
-  the phase file. For example, `art/source/A1/map/units/warrior.png`.
+- Deliver to the **shared art folder** the owner gives you. **Never commit
+  art to the git repository.** In the phase files, `art/source/` means the
+  root of that folder. Use the exact relative names the phase file gives:
+  for example, `A1/map/units/warrior.png` goes in the folder `A1/map/units/`.
 - Add **one review sheet**, `art/source/<phase>/_review.png`. It shows
   every file small, on mid-grey, labeled. This is the only place text is
   allowed.

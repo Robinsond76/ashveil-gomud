@@ -21,10 +21,24 @@ turns a delivered sheet into the client's sheet layout.
 2. Also attach the **style anchors** approved in A0 (and, once they exist,
    the approved sheets of earlier phases). Consistency across hundreds of
    files comes from those references, not from the words alone.
-3. The agent delivers source files under `art/source/<phase>/` with the
+3. The agent delivers its source files to the **shared art folder**,
+   outside git (see "Where the files live" below). It uses the folder
    names the phase lists, plus one review contact sheet.
-4. The lead imports them, checks them in the running client and records
-   the outcome in `docs/PROJECT_STATUS.md`. Then the next phase starts.
+4. The lead copies that phase into a local `art/source/` (ignored by git)
+   and imports it. Then the lead checks it in the running client and
+   records the outcome in `docs/PROJECT_STATUS.md`. The next phase starts
+   after that.
+
+## Where the files live
+
+| Files | Where | In git? |
+|---|---|---|
+| **Masters:** the agent's large originals (1–3 MB each, 200–400 MB in all) | The shared art folder, a cloud drive or bucket the owner chooses. Its layout mirrors `art/source/`: `A0/`, `A1/map/units/warrior.png` and so on. | **No.** Git would keep every version forever, and every clone would download them all. |
+| **Local staging:** `art/source/` in a checkout | A copy of the phase being imported. It's listed in `.gitignore`. | No |
+| **Runtime files:** the imported, compressed sheets in `_datafiles/html/public/static/sprites/`, and their copies in `scripts/sprites/imported/` | The repository | **Yes.** They're small (about 20–40 MB for the whole program) and are what players download. |
+
+Back the shared folder up and keep old versions there if you want them. To
+re-import at a different size later, import again from the masters.
 
 Phases run in order. **A0 is an approval gate:** nothing else starts until
 the owner signs off on the style anchors.
@@ -53,15 +67,15 @@ never has gaps.
 
 ## Engineering prerequisites (lead, not the art agent)
 
-The art agent can work ahead of these. Its files wait in `art/source/`
-until the matching step is merged.
+The art agent can work ahead of these. Its files wait in the shared art
+folder until the matching step is merged.
 
 | Step | Work | Unblocks |
 |---|---|---|
 | **E1** | Land the spike as a phase. Density on map units, a high-DPI map canvas, `import_sheet.py` reading the A1 layout (2 idle and 6 walk columns per row). Make the tests' rules depend on density. Even out 1x pixel art on fractional pixel ratios. | A1, map half of A8–A10 |
 | **E2** | Importer kinds for terrain (3 variant files, 4 animation files, opaque, edge check), overlays (landmarks, camp) and icons (one shared box per animated row, so frames don't jitter). Per-kind density. Compression (quantized PNG; WebP once the client checks support), with the size budgets in the standards. Generate the `night-mask` in code. | A2–A5 |
 | **E3** | High-resolution battle screen. Today it draws a 320×180 canvas scaled by CSS. It must draw at device pixels, with density on units and backgrounds. | A6, A7, battle half of A8–A10 |
-| **E4** | Rewrite the sprite specification's craft and technical sections to point here. Store masters in `art/source/` with Git LFS (owner decision below). Contact sheets come from the imported art. | all, as phases land |
+| **E4** | Rewrite the sprite specification's craft and technical sections to point here. Contact sheets come from the imported art. | all, as phases land |
 
 ## Owner decisions to confirm
 
@@ -69,9 +83,10 @@ until the matching step is merged.
    on the map, 7 in battle" rule. The standards now say about **4.5–5
    heads on the map** and **6–7 in battle**: adult and never chibi. Confirm
    this at A0.
-2. **Source storage.** Master files are large: about 1–3 MB per sheet,
-   200–400 MB for the program. Recommended: Git LFS for `art/source/`. Only
-   the compressed runtime files go in `_datafiles/`.
+2. **Source storage (decided 2026-10-06).** Masters stay outside git in
+   the shared art folder, and only the compressed runtime files are
+   committed (see "Where the files live"). The owner still needs to name
+   the folder.
 3. **Battle animations.** The battle screen animates with code effects
    today, so only idle sheets are drawn (S4 in the old spec). Full attack
    and hurt sheets can be a later phase once A7 is approved.
