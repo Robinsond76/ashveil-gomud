@@ -1,0 +1,12 @@
+itemid: 281
+name: vial of leechbane
+namesimple: leechbane vial
+description: A stoppered glass vial of a thin, pale draught that clots slowly. One dose coats one bladed
+  weapon (coat leechbane); a wounding blow then has a 40% chance to leave it in
+  the wound (healing received cut by a quarter for 3 rounds). The coating lasts 10 minutes or 8 wounding blows
+  (help poisons).
+type: object
+subtype: mundane
+uses: 1
+value: 6
+weight: 30

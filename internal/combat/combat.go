@@ -5,6 +5,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
@@ -78,6 +79,7 @@ func AttackPlayerVsMob(user *users.UserRecord, mob *mobs.Mob) AttackResult {
 	attackResult := calculateCombat(*user.Character, targetChar, User, Mob, penalty, company.ChemistryBonusForUser(user.UserId), mob)
 	fatigueText(&attackResult, fatigue, fmt.Sprintf("u%d", user.UserId))
 	spendEdges(user.Character, attackResult.EdgeSpent)
+	spendCoatings(user.Character, attackResult.PoisonSpent)
 
 	if attackResult.DamageToSource != 0 {
 		user.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -108,6 +110,7 @@ func AttackPlayerVsPlayer(userAtk *users.UserRecord, userDef *users.UserRecord) 
 	attackResult := calculateCombat(*userAtk.Character, *userDef.Character, User, User, penalty, company.ChemistryBonusForUser(userAtk.UserId))
 	fatigueText(&attackResult, fatigue, fmt.Sprintf("u%d", userAtk.UserId))
 	spendEdges(userAtk.Character, attackResult.EdgeSpent)
+	spendCoatings(userAtk.Character, attackResult.PoisonSpent)
 
 	if attackResult.DamageToSource != 0 {
 		userAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
@@ -143,6 +146,7 @@ func AttackMobVsPlayer(mob *mobs.Mob, user *users.UserRecord) AttackResult {
 	attackResult := calculateCombatPower(sourceChar, *user.Character, Mob, User, penalty, company.ChemistryBonusForInstance(mob.InstanceId), mobPower(mob))
 	fatigueText(&attackResult, fatigue, fmt.Sprintf("m%d", mob.InstanceId))
 	spendEdges(&mob.Character, attackResult.EdgeSpent)
+	spendCoatings(&mob.Character, attackResult.PoisonSpent)
 
 	mob.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
 
@@ -173,6 +177,7 @@ func AttackMobVsMob(mobAtk *mobs.Mob, mobDef *mobs.Mob) AttackResult {
 	attackResult := calculateCombatPower(sourceChar, targetChar, Mob, Mob, penalty, company.ChemistryBonusForInstance(mobAtk.InstanceId), mobPower(mobAtk), mobDef)
 	fatigueText(&attackResult, fatigue, fmt.Sprintf("m%d", mobAtk.InstanceId))
 	spendEdges(&mobAtk.Character, attackResult.EdgeSpent)
+	spendCoatings(&mobAtk.Character, attackResult.PoisonSpent)
 
 	mobAtk.Character.ApplyHealthChange(attackResult.DamageToSource * -1)
 	mobDef.Character.ApplyHealthChange(attackResult.DamageToTarget * -1)
@@ -731,6 +736,7 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 				}
 
 				attackTargetDamage = classBlowDamage(&sourceChar, &targetChar, attackTargetDamage)
+				attackTargetDamage = leadrootDamage(&sourceChar, attackTargetDamage)
 				defense := targetChar.GetDefense()
 				if strikeIai && hit {
 					defense -= defense * min(iaiFx.Int(classes.IaiPierce), 100) / 100
@@ -781,6 +787,13 @@ func calculateCombatPower(sourceChar characters.Character, targetChar characters
 						attackResult.BuffTarget = append(attackResult.BuffTarget, effect...)
 					}
 					critStatuses = status.Words(effect)
+				}
+
+				// Phase 43b: a coated blade's contact, once a blow wounds.
+				if attackTargetDamage > 0 {
+					if word := deliverWeaponPoison(&attackResult, weaponSlots[wIdx], weapon, &targetChar, poisonSusceptibility(targetType, targetMob), time.Now()); word != `` {
+						critStatuses = append(critStatuses, word)
+					}
 				}
 
 				// Phase 30d2: a wind-up's blow that got through leaves its

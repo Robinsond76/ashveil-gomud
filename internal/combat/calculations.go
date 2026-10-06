@@ -120,6 +120,16 @@ func spendEdges(char *characters.Character, spent map[items.ItemType]int) {
 	}
 }
 
+// spendCoatings charges the contacts an attack round spent to the
+// attacker's real weapons' poison coatings (Phase 43b).
+func spendCoatings(char *characters.Character, spent map[items.ItemType]int) {
+	for slot, n := range spent {
+		if itm := char.Equipment.Get(slot); itm != nil {
+			itm.SpendCoat(n)
+		}
+	}
+}
+
 // harmlessStrike reports a strike with no weapon from a race with no natural
 // damage at all (dice 0d0, no bonus): the flat damage bonus never arms it.
 func harmlessStrike(weaponItemId int, raceId int) bool {
@@ -352,7 +362,11 @@ func dodgeChance(def, atk *characters.Character) int {
 // effectiveDodge is the dodge a blow meets: dodgeChance after the
 // defender's burden (30g3), then its armor bulk (35a2).
 func effectiveDodge(def, atk *characters.Character) int {
-	return bulkDodge(burdenedDodge(dodgeChance(def, atk), def.Burden()), def.BulkDodgeFactor())
+	d := bulkDodge(burdenedDodge(dodgeChance(def, atk), def.Burden()), def.BulkDodgeFactor())
+	if def.HasBuffFlag(status.FlagMirethorn) {
+		d = max(0, d-mirethornDodgeCut)
+	}
+	return d
 }
 
 // bulkDodge is a dodge after armor bulk: dodge × the share bulk leaves,

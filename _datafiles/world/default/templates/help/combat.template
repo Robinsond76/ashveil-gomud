@@ -94,7 +94,7 @@ what gets through is cut by their armor (<ansi fg="command">help defense</ansi>,
 lands is <ansi fg="yellow">glancing</ansi>, <ansi fg="yellow">solid</ansi>, or <ansi fg="yellow">telling</ansi>: the better your skill against the
 target's, the likelier a telling blow (<ansi fg="command">help attack</ansi>).
 
-A sharpened blade (<ansi fg="command">help sharpen</ansi>) does +1 damage on each strike while its
+A coated blade (<ansi fg="command">help poisons</ansi>) may leave a poison on a foe it wounds. A sharpened blade (<ansi fg="command">help sharpen</ansi>) does +1 damage on each strike while its
 edge lasts.
 
 <ansi fg="yellow-bold">Falling (</ansi><ansi fg="command">help death</ansi><ansi fg="yellow-bold">, </ansi><ansi fg="command">help resurrect</ansi><ansi fg="yellow-bold">)</ansi>
@@ -168,6 +168,7 @@ and your company's health.
   <ansi fg="command">heal wounds</ansi>       tend the company's wounds after a fight
   <ansi fg="command">company patch</ansi>     heal the company to its threshold (<ansi fg="command">help patch</ansi>)
   <ansi fg="command">sharpen</ansi>           sharpen your company's blades
+  <ansi fg="command">coat</ansi>              coat a blade with weapon poison
   <ansi fg="command">help campwatch</ansi>    raiders at camp, and the watch that spots them
   <ansi fg="command">light</ansi>             how well you can see here
   <ansi fg="command">set combatpace</ansi>    how fast a round's lines come to you

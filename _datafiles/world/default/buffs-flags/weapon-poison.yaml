@@ -1,0 +1,5 @@
+flag: weapon-poison
+name: "Weapon poison"
+description: "A poison left by a coated blade; a victim carries one at a time and it clears when the fight ends."
+locked: true
+harmful: true
