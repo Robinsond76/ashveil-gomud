@@ -16,7 +16,7 @@ import (
 )
 
 // promotedClasses are the Phase 38b advanced and built elite classes with art (S5).
-var promotedClasses = []string{"knight", "paladin", "mercenary", "blackguard", "dread-knight", "priest", "hierarch", "druid", "elder-druid", "blood-priest", "demonologist", "scout", "duelist", "assassin", "warden", "hunter", "stalker", "theurgist", "arcanist", "warlock", "hedge-witch", "coven-sage", "hag", "puppeteer", "golemancer", "marionettist", "warlord", "sweeper", "vanguard", "valkyrie", "kensai", "hatamoto", "ronin", "stormcaller", "mistweaver", "earthspeaker"}
+var promotedClasses = []string{"knight", "paladin", "mercenary", "blackguard", "dread-knight", "priest", "hierarch", "druid", "elder-druid", "blood-priest", "demonologist", "scout", "duelist", "assassin", "warden", "hunter", "stalker", "theurgist", "arcanist", "warlock", "hedge-witch", "coven-sage", "hag", "puppeteer", "golemancer", "marionettist", "warlord", "sweeper", "vanguard", "valkyrie", "kensai", "hatamoto", "ronin", "stormcaller", "mistweaver", "earthspeaker", "pathfinder", "swordmaster", "nightblade", "sentinel", "marksman", "ravager", "archon", "archmage", "necromancer", "wise-one", "coven-mother", "crone-of-ash", "gryphon-knight", "skyscout", "wyvern-rider"}
 
 type spriteMeta struct {
 	Size   []int    `json:"size"`

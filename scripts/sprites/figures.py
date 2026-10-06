@@ -676,6 +676,11 @@ def draw_gryphon_rider(r):
     cv.part({(x, r.ysh + r.px(2)) for x in range(r.tx0, r.tx1 + 1)}, "leather", flat="m")  # harness strap
     _belt(r, "leather", r.yhip - r.px(1), "brass.m")
     r.arms("leather", glove="leather")
+    # A short mantle of gryphon feathers over the shoulders, tipped pale, so the rider reads as a rider.
+    mantle = rect(r.tx0 - 1, r.ysh, r.tx1 + 1, r.ysh + r.px(3))
+    cv.part(mantle, "ochre", flat="m")
+    for x in range(r.tx0 - 1, r.tx1 + 2):
+        cv.put(x, r.ysh + r.px(3), "wool.m" if (x + r.tx0) % 2 else "ochre.d")
     r.head(helm="steel")
     x0 = r.cx - S.hw // 2
     if v != "up":  # feathered wings on the helm
