@@ -1,5 +1,63 @@
 # Ashveil Project Status
 
+**Phase 40f built: battle screen in the web client (2026-10-06):** a battle
+opens as a picture (`window-battle.js`): the company left, the enemy right,
+each in its 3x3 formation on a 320x180 canvas scaled by whole numbers, over
+a biome backdrop (dimmed in the dark). It reads `Company.Battle`, `Company`
+and `.Vitals`, and the 40e event feed (hit and heal flashes with numbers,
+statuses, chant marks, falls, yields, the outcome held for 3 seconds).
+Company health is exact; enemy health is five bands. Retreat and focus send
+the dock's commands; Minimise leaves a badge; a setting (`Open
+automatically`, kept in `localStorage`) and the Combat tab's "Battle screen"
+button cover manual mode. Server: `Company.Battle.enemies[].sprite` (the mob
+spec's new optional `sprite:` key, else `unknown-humanoid`, `-beast` or
+`-large` by race). Help: `help battlescreen`, linked from `help combat` and
+`help webclient`, and the Combat tutorial lesson. Browser check:
+`scripts/browser/battle-check.mjs`; screenshot in the project files
+(`screens/40f-battle.png`). 40e follow-ups done: the roster refreshes from
+every `Company.Battle` snapshot (a fight that grows shows its newcomers);
+every `?` is one unseen presence; a `?` caster's cast shows no spell name;
+the chant mark lasts until `cast-complete`, so the lagging spell results
+(which arrive with the line after the cast) flash when they come.
+Decisions (delegated): (1) **Art:** S3 is not drawn yet, so figures are
+drawn in code (class hues, a beast and a humanoid shape, unseen shadow) and
+the screen loads `battle/units/<key>/idle.png` and
+`battle/backgrounds/<id>.png` as soon as `manifest.json` lists them, with
+no code change; (2) shipped mobs get no `sprite:` keys yet, since the S3 key
+table is not drawn and the race silhouettes cover them; the keys come with
+S3; (3) **allied reserve formations** are left as a follow-up: the 40e feed
+has no allied relay (a fight has one leader), so the half-scale view would
+have no events to animate; (4) per-member Company.Conditions icons are not
+drawn (statuses come from events, which cover enemies too); (5) the
+tutorial-zone and Stormwatchers Keep backdrop overrides wait for S3's
+`training-yard` and `ice-keep` art; (6) the screen is a floating panel, not
+a modal, so the terminal stays usable under it.
+
+**Phase 40f reviewed and merged (2026-10-06, PR #35):** the review
+confirmed the screen sends only `retreat` and `company tactics focus
+[rule]` (both allowed mid-battle, as the Combat tab), and hides what scout
+hides (enemy health in five bands, hidden foes skipped, every `?` one
+shadow, no spell or status for it). Fixed: (1) enemy figures faced away
+from the company (head, eyes and weapon mirrored the wrong way); (2)
+members who fled or were separated still stood in the picture (now
+filtered as the Combat tab does; dead `&& false` code removed); (3) a
+`Company.Battle` snapshot arriving after `fight-end` cleared the outcome,
+and one after the hold could reopen the finished battle and show "The
+battle is over" again (an `ended` flag now holds until the battle clears or
+a `fight-start`); (4) UI: a caption hint says to hover or tap a figure, a
+Help button sends `help battlescreen`, and status ticks (bleeding) flash
+their damage. Regression checks added to `battle-check.mjs`. Rejected: the
+design's "unknown-* at 50% per enemy in the dark" was replaced by one
+shadow on purpose (the 40e rule that `?` foes are one presence). UI
+follow-ups for 40g: show the round and a short "last blow" line so who hit
+whom reads without hovering (after the 35e merge the focus buttons also offer `healers`, as the Combat tab does); a named outcome reason (all fell, the company
+withdrew); role letters are blurry at the canvas font size; a `?` presence
+in a lit battle stands at front centre and can overlap a visible foe, and
+stays until the battle ends; morale (nerve) is not drawn yet. Flaky test seen: `TestBalanceMirrorClericIsACasterWhoCastsNothing`
+(`modules/company`) failed once in the full race run (1 of 5 foes aimed at
+the cleric) and passed alone five times and in a package re-run; this PR
+touches no company code, so it is left as a follow-up to make robust.
+
 **Phase 40a complete, merged via [PR #32](https://github.com/Robinsond76/ashveil-gomud/pull/32): room resources (2026-10-06):** rooms carry a validated
 `resources` list (water, forage, shelter; herbs, firewood, fishing and game
 are accepted in data but hidden until 40a2). `look` prints a "Here:" line,
