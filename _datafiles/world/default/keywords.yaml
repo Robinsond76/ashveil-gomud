@@ -11,6 +11,7 @@ help:
       - password
       - delete
       - webclient
+      - mobile
     character:
       - actionpoints
       - alignment
@@ -282,6 +283,7 @@ help-aliases:
   mercy: [surrender, surrendered, yield, yielding, execution]
   delete:           [deletion, delete-character, reroll]
   webclient:        [web client, web-client, dock, panels, tabs, layout]
+  mobile:           [phone, touch, touchscreen, touch bar, touch-bar, install, install app, add to home screen, pwa, web app]
   adventure:        [ashveil, basics]
   company:          [recruit, recruiting, roster, companions, companion]
   company-train:    [company train, train companion, companion training, companion-training, companion training points, optional skills]

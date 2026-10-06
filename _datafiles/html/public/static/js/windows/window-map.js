@@ -1575,6 +1575,49 @@
                 hideTooltip();
                 uiMenu(e, items);
             });
+            // Phase 40i: one finger pans the map, two pinch to zoom; a tap is
+            // left to the click handler above. (Mouse drags use the handlers
+            // above; this is for touch and pen only.)
+            var touches = new Map();
+            var pinchStart = null;
+            canvas.style.touchAction = 'none';
+            function touchPair() {
+                var pts = Array.from(touches.values());
+                return { dist: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1 };
+            }
+            canvas.addEventListener('pointerdown', function (e) {
+                if (e.pointerType === 'mouse') { return; }
+                canvas.setPointerCapture(e.pointerId);
+                touches.set(e.pointerId, { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY });
+                if (touches.size === 2) { pinchStart = { dist: touchPair().dist, zoom: zoomScale }; }
+            });
+            canvas.addEventListener('pointermove', function (e) {
+                var t = touches.get(e.pointerId);
+                if (!t) { return; }
+                if (touches.size === 1) {
+                    var step = getBaseStep() * zoomScale;
+                    var dx = e.clientX - t.x, dy = e.clientY - t.y;
+                    if (Math.abs(e.clientX - t.sx) > 6 || Math.abs(e.clientY - t.sy) > 6) { canvas.dataset.suppressClick = '1'; }
+                    panOffsetX -= dx / step; panOffsetY -= dy / step;
+                    t.x = e.clientX; t.y = e.clientY;
+                    render();
+                } else if (touches.size === 2 && pinchStart) {
+                    t.x = e.clientX; t.y = e.clientY;
+                    canvas.dataset.suppressClick = '1';
+                    zoomScale = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, pinchStart.zoom * touchPair().dist / pinchStart.dist));
+                    render();
+                }
+            });
+            function touchEnd(e) {
+                if (!touches.delete(e.pointerId)) { return; }
+                if (pinchStart && touches.size < 2) {
+                    pinchStart = null;
+                    if (tilesOn()) { zoomScale = snapZoom(zoomScale); render(); }
+                }
+                if (touches.size === 0) { setTimeout(function () { delete canvas.dataset.suppressClick; }, 0); }
+            }
+            canvas.addEventListener('pointerup', touchEnd);
+            canvas.addEventListener('pointercancel', touchEnd);
             canvas.addEventListener('wheel', function (e) {
                 e.preventDefault();
                 var factor = Math.pow(ZOOM_STEP, e.deltaY * 0.002);
@@ -1900,6 +1943,23 @@
                 if (q !== nightQuant) { render(); }
             },
             redraw: function () { render(); },
+            // Phase 40i: the named places the map knows (a landmark legend),
+            // nearest first, for the phone's "Walk to" list. The server still
+            // decides whether the player may walk there.
+            places: function () {
+                var here = rooms.get(currentRoomId);
+                var out = [];
+                rooms.forEach(function (r, id) {
+                    var info = roomInfoStore.get(id);
+                    if (id === currentRoomId || !info || !info.maplegend || !info.name) { return; }
+                    out.push({ id: id, name: info.name, legend: info.maplegend,
+                               d: here ? Math.abs(r.x - here.x) + Math.abs(r.y - here.y) : 0 });
+                });
+                out.sort(function (a, b) { return a.d - b.d || a.id - b.id; });
+                return out.slice(0, 14);
+            },
+            walking: function () { return !!walkInfo; },
+            viewport: function () { return { pan: [panOffsetX, panOffsetY], zoom: zoomScale }; },
             // pointOf is a room's centre in client pixels, for the browser checks.
             pointOf: function (roomId) {
                 var room = rooms.get(roomId);
@@ -2153,6 +2213,13 @@
     // =========================================================================
     // Registration
     // =========================================================================
+
+    // Phase 40i: the phone's touch bar asks the map for places to walk to.
+    window.MapPlaces = {
+        list:    function () { return view2d.places(); },
+        walking: function () { return view2d.walking(); },
+        viewport: function () { return view2d.viewport(); },
+    };
 
     VirtualWindows.register({
         window:       win,

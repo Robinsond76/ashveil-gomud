@@ -1,0 +1,49 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">mobile</ansi>
+
+The web client works on a phone. On a narrow screen it shows one view at a
+time instead of side-by-side panels, and everything you can tap just types
+an ordinary command for you (<ansi fg="command">help webclient</ansi> describes the panels).
+
+<ansi fg="yellow-bold">The bottom bar</ansi>
+
+  <ansi fg="yellow">Game</ansi>      the story text.
+  <ansi fg="yellow">Map</ansi>       the map, full screen. Drag with one finger to pan, pinch to
+            zoom, and tap a room to walk there (a menu offers "Walk to
+            [room]"; <ansi fg="command">help walkto</ansi>).
+  <ansi fg="yellow">Here</ansi>      the room you stand in (exits, who is here, gathering progress),
+            the game clock, and the tutorial while you take the course.
+  <ansi fg="yellow">Company</ansi>   the dock: health, and the Character, Company, Combat and Comm
+            tabs, scrolled sideways if they do not all fit.
+  The cog opens the client's settings.
+
+  The command box and the touch bar stay on screen in every view, so you
+  can walk and type while you watch the map.
+
+<ansi fg="yellow-bold">The touch bar</ansi>
+
+  <ansi fg="yellow">N S E W U D</ansi>   go that way (<ansi fg="command">north</ansi>, <ansi fg="command">south</ansi>, <ansi fg="command">east</ansi>, <ansi fg="command">west</ansi>, <ansi fg="command">up</ansi>, <ansi fg="command">down</ansi>).
+  <ansi fg="yellow">Walk to...</ansi>    lists the named places on the map, nearest first (the same
+                 places <ansi fg="command">walkto</ansi> understands); pick one and your company
+                 walks there. While a walk is under way the list starts with
+                 "Stop walking" and a <ansi fg="yellow">Stop</ansi> button appears (<ansi fg="command">walkto stop</ansi>).
+  <ansi fg="yellow">Look, Inventory, Status, Camp</ansi>   type those commands.
+  The small arrow at the left folds the bar away and brings it back.
+
+<ansi fg="yellow-bold">Battles</ansi>
+
+  The battle screen fills the phone. Retreat and the company focus buttons
+  (the only things you can change mid-battle) are one tap each. Your
+  allies' companies show as small pennants at the top of the picture: tap
+  one to watch that company full size, and tap your own band to come back
+  (<ansi fg="command">help battlescreen</ansi>). Minimise shrinks the picture to a badge above the
+  bottom bar.
+
+<ansi fg="yellow-bold">Installing it</ansi>
+
+  The client can be installed like an app. In Chrome on Android, open the
+  menu and choose "Install app" (or "Add to Home screen"); in Safari on an
+  iPhone or iPad, tap Share, then "Add to Home Screen". It then opens
+  without the browser's address bar, under the Ashveil icon. It still needs
+  a connection to the game; it does not play offline.
+
+See also: <ansi fg="command">help webclient</ansi>, <ansi fg="command">help walkto</ansi>, <ansi fg="command">help worldmap</ansi>, <ansi fg="command">help battlescreen</ansi>.

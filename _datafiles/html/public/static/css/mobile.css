@@ -1,0 +1,180 @@
+/*
+ * mobile.css (Phase 40i)
+ *
+ * The phone layout of the web client; mobile.js adds body.mobile on a screen
+ * 820 px wide or less and sets body[data-mview] to the view in front: game
+ * (the terminal), map, here (room, time, tutorial) or company (the dock).
+ * Every selector sits under body.mobile, so the desktop layout is untouched.
+ */
+
+body.mobile {
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+/* ---- The stage: the terminal, with a dock laid over it when it is shown --- */
+body.mobile #terminal { padding-left: 4px; }
+body.mobile #menu-icon { display: none; }
+body.mobile:not([data-mview="game"]) #terminal { visibility: hidden; }
+
+body.mobile #dock-left,
+body.mobile #dock-right {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    min-width: 0;
+    transform: none !important;
+    display: none;
+    z-index: 5;
+    overflow-y: auto;
+}
+body.mobile[data-mview="map"] #dock-left.has-panels,
+body.mobile[data-mview="here"] #dock-left.has-panels,
+body.mobile[data-mview="company"] #dock-right.has-panels { display: flex; }
+
+body.mobile .dock-slot-resize,
+body.mobile .dock-panel-resize,
+body.mobile .dock-panel-titlebar { display: none !important; }
+body.mobile .vwin { display: none !important; }
+
+body.mobile .dock-panel { margin: 0; border: none; border-radius: 0; box-shadow: none; }
+
+/* The map owns the Map view; the room, clock and tutorial share Here. */
+body.mobile[data-mview="map"] #dock-left .dock-panel:not([data-win="Map"]),
+body.mobile[data-mview="here"] #dock-left .dock-panel[data-win="Map"] { display: none; }
+body.mobile[data-mview="map"] #dock-left .dock-panel[data-win="Map"] { flex: 1 1 auto !important; }
+body.mobile[data-mview="here"] #dock-left .dock-panel[data-win="RoomInfo"] { flex: 1 0 auto !important; min-height: 60%; }
+body.mobile[data-mview="here"] #dock-left .dock-panel[data-win="Time & Date"] { order: 2; flex: 0 0 auto !important; }
+body.mobile[data-mview="here"] #dock-left .dock-panel[data-win="Tutorial"] { order: 3; flex: 0 0 auto !important; max-height: 40%; }
+body.mobile #dock-right .dock-panel { flex: 1 1 auto !important; }
+
+/* ---- The company dock's tab row scrolls sideways, with finger-sized tabs -- */
+body.mobile .dock-tabgroup-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 4px;
+    padding: 4px 4px 0;
+    -webkit-overflow-scrolling: touch;
+}
+body.mobile .dock-tabgroup-tab {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 6px 14px;
+    font-size: 14px;
+}
+body.mobile .dock-tabgroup-pane { -webkit-overflow-scrolling: touch; }
+
+/* ---- Input, touch bar and the view bar ---------------------------------- */
+body.mobile #input-area { padding: 6px; }
+body.mobile #command-input { min-height: 44px; font-size: 16px; border-radius: 5px; }
+body.mobile #connect-button { padding: 16px 24px; font-size: 18px; max-width: 90vw; }
+
+#mobile-nav, #touch-bar { display: none; }
+body.mobile #mobile-nav,
+body.mobile #touch-bar { display: flex; }
+
+body.mobile #touch-bar {
+    align-items: stretch;
+    background: var(--t-bg);
+    border-top: 1px solid var(--t-border-accent);
+}
+body.mobile #touch-bar .tb-row {
+    display: flex;
+    flex: 1 1 auto;
+    gap: 4px;
+    padding: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+body.mobile #touch-bar.folded .tb-row { display: none; }
+body.mobile #touch-bar .mb-btn {
+    flex: 0 0 auto;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 12px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--t-text);
+    background: var(--t-bg-surface-alt, var(--t-bg-panel));
+    border: 1px solid var(--t-accent-dim);
+    border-radius: 6px;
+    touch-action: manipulation;
+}
+body.mobile #touch-bar .mb-btn:active { background: var(--t-accent-dim); color: var(--t-text-white); }
+body.mobile #touch-bar .mb-dir { font-weight: bold; padding: 0; }
+body.mobile #touch-bar .mb-walk { border-color: var(--t-border-accent); }
+body.mobile #touch-bar .mb-stop { color: var(--t-text-white); background: var(--t-accent-dim); }
+body.mobile #touch-bar .mb-stop[hidden] { display: none; }
+body.mobile #touch-bar .mb-fold { min-width: 36px; padding: 0 6px; border: none; background: none; align-self: center; }
+body.mobile #touch-bar.folded { min-height: 0; }
+body.mobile #touch-bar.folded .mb-fold { margin-left: auto; }
+
+body.mobile #mobile-nav {
+    background: var(--t-bg-panel);
+    border-top: 1px solid var(--t-border-accent);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+body.mobile #mobile-nav .mn-btn {
+    flex: 1 1 0;
+    min-height: 48px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--t-text);
+    background: none;
+    border: none;
+    border-top: 3px solid transparent;
+    touch-action: manipulation;
+}
+body.mobile #mobile-nav .mn-btn.active {
+    color: var(--t-text-white);
+    background: var(--t-accent-dim);
+    border-top-color: var(--t-accent);
+    font-weight: bold;
+}
+body.mobile #mobile-nav .mn-settings { flex: 0 0 52px; font-size: 20px; }
+
+/* ---- Menus (uiMenu): tall rows a finger can hit ------------------------- */
+body.mobile .ui-menu { font-size: 1rem !important; min-width: 200px !important; max-width: calc(100vw - 16px); }
+body.mobile .ui-menu-item {
+    min-height: 44px;
+    padding: 10px 16px !important;
+    white-space: normal !important;
+}
+
+/* ---- Map: bigger buttons, no hover tooltip under a thumb ---------------- */
+body.mobile .map-controls button { min-width: 44px; min-height: 44px; font-size: 18px; }
+body.mobile #map-tooltip { display: none !important; }
+
+/* ---- Battle screen: the whole screen, big buttons ----------------------- */
+body.mobile #battle-screen {
+    inset: 0;
+    top: 0;
+    left: 0;
+    transform: none;
+    max-width: none;
+    border-radius: 0;
+    border: none;
+    overflow-y: auto;
+    font-size: 0.9em;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+}
+body.mobile #battle-screen .bs-head { flex-wrap: wrap; }
+body.mobile #battle-screen .bs-banners { flex-basis: 100%; order: 3; }
+body.mobile #battle-screen button,
+body.mobile #battle-screen select {
+    min-height: 44px;
+    padding: 0 12px;
+    font-size: 14px;
+}
+body.mobile #battle-screen .bs-foot { gap: 6px; }
+body.mobile #battle-screen label { min-height: 44px; display: inline-flex; align-items: center; }
+body.mobile #battle-badge {
+    min-height: 44px;
+    bottom: calc(150px + env(safe-area-inset-bottom)) !important;
+    right: 8px !important;
+}
+
+/* ---- Settings: one column ----------------------------------------------- */
+body.mobile #floating-menu { width: 100vw; max-width: 100vw; max-height: 100dvh; border-radius: 0; }
