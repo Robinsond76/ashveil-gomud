@@ -34,7 +34,7 @@ Blackguard also heal.
   20 Fearful wounds     the wounded foe has -5 Attack
   25 Deepest oath       5 blows a battle
 
-  <ansi fg="yellow-bold">Dread Knight</ansi> (30): Blood Oath heals 75%, Aura of Dread (foes aimed at it have -5
+  <ansi fg="yellow-bold">Dread Knight</ansi> (30): Blood Oath heals 75%, Aura of Dread (foes aimed at it have -1
   Attack), Spreading oath (a second ally heals half as much), up to 7 blows,
   Terror (its critical hits that land also stagger the target, which loses its
   next action), and at 60 Blood Oath heals 100%.

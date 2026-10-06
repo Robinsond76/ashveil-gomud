@@ -62,7 +62,7 @@ func init() {
 		Role: "fearsome armored healer, a stronger Blood Oath",
 		Ranks: []Rank{
 			rank(30, "Dread Knight", "Blood Oath heals 75% of the damage", OathPct, 75),
-			rank(35, "Aura of Dread", "foes aimed at the Dread Knight have -5 Attack", AuraDread, 5),
+			rank(35, "Aura of Dread", "foes aimed at the Dread Knight have -1 Attack", AuraDread, 1),
 			rank(40, "Spreading oath", "Blood Oath also heals the next most hurt ally for half as much", OathSecond, 1),
 			rank(45, "Bottomless oath", "Blood Oath: 6 blows a battle", BloodOath, 6),
 			rank(50, "Terror", "its critical hits that land also stagger the target, which loses its next action", TerrorCrit, 1),
