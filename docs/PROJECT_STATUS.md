@@ -48,8 +48,51 @@ the shaman use `sprite:` keys; (5) the goblin shaman is mob 97 (master made the 
 nightblade, sentinel, marksman, ravager, archon, archmage, necromancer,
 wise-one, coven-mother, crone-of-ash; `TestEveryBuiltClassHasArt` lists built classes
 with no art (see the review below), and `TestMobSpriteKeysHaveArt` checks every mob
-`sprite:` key. Map rendering of promoted units waits for 40b/40h, which read
-the same manifest paths. No new player command, so no help page. Gates: `make generate`, `make validate`, `make js-lint`, `go test ./scripts` and `go test -race ./...` green; `TestAimedShotGrowsWithLevel` failed once in the full run (a random-roll comparison, 14 vs 15) and passed on three reruns, unrelated to this change.
+`sprite:` key. The 40b map window (merged alongside) draws a promoted
+player's class map sprite first, so the S5 map art shows there too. No new player command, so no help page. Gates: `make generate`, `make validate`, `make js-lint`, `go test ./scripts` and `go test -race ./...` green; `TestAimedShotGrowsWithLevel` failed once in the full run (a random-roll comparison, 14 vs 15) and passed on three reruns, unrelated to this change.
+
+**Phase 40b complete, merged via [PR #43](https://github.com/Robinsond76/ashveil-gomud/pull/43) (2026-10-06): map sprites in the web client.** The Map
+window draws you as your class sprite (chain: current class, lineage,
+`adventurer`, then the classic red square), a gold here-ring under you and the
+company badge (members present with the leader, hidden alone), all drawn above
+the terrain so you never blend in. Moves walk tile to tile facing the way you
+went (up/down/side, west mirrored), queue at most 2 steps behind and then snap;
+jumps (recall, teleport) do not walk; level or zone changes snap and fade in.
+Your camp draws as a tent with fire, smoke and a resting mark, `inn-rest` while
+resting at an inn; camps of your **party** draw as `tent-ally`; no other
+company's camp is ever sent or drawn. Party members with a known class draw as
+that class at 75% with an ally pennant, else stay hearts. Server: `Char.Info`
+and `Party` vitals gain `lineage` and `classid`; `Company.Camp` gains
+`room_id` and `allied_camps` (party members' camps only, regression-tested with
+a same-room outsider). New `static/js/sprites.js` loader (manifest, status,
+fallback, redraw) for 40c and later. Settings: Sprites and Camps. Help:
+`help worldmap` (aliases `map window`, `tile map`, `world map`), indexed, linked
+from `help webclient`, `help camp` and `help map`; Camp tutorial hint. Check:
+`scripts/browser/map-check.mjs` (facings, queue, badge, camp, allies,
+sprites-off, missing image); screenshot `screens/40b-map.png`.
+Decisions (delegated, with reasons): sprite scale is the nearest whole multiple
+of 32 px (half, 16 px, when zoomed out below a 16 px tile) so pixels stay
+square; `inn-rest` shows when the camp tile is `here`, an inn, and resting
+(`Company.Camp` has no separate inn-stay field, adding one is not worth a new
+payload); the unit walks on its own queue at 200 ms a tile while the camera
+keeps its existing ease; allied camps refresh with the company feed's changed-
+payload sends (no new event); the sprite loader does not yet replace the
+battle screen's own loader (follow-up, no behaviour change). Not changed: other
+players do not appear on the map, no race variants (owner deferrals).
+Review (Opus): decisions hold (whole-multiple scale keeps pixels square;
+inn-rest rule matches the payload; allied camps reach the client within a
+round because the company feed rebuilds every round). No leak: allied camps
+come only from accepted party members (not invitees), party sprites ride the
+existing party-only `Party.Vitals`. Accepted and fixed: a camp on your own
+tile was hidden under your sprite, so it is now pitched behind your left
+shoulder with the fire by your right foot (map-check regression); `help
+worldmap` claimed the map never shows more than `look`, though it shows your
+party's camps anywhere in the zone, reworded; after merging master (44's
+`ClassTitle` in `Char.Info`), the sprite-keys test's fake archetype provider
+gained `ArchetypeName`. Rejected: continuous redraw
+while sprites show is needed (every map sprite animates, and closing the
+window stops it). Follow-up: companions are not drawn on the map (only the
+badge count).
 
 **Phase 40g reviewed (2026-10-06, PR #40):** Checked the scheduler never
 drops a state change (a collapse applies every unfired op in order) and

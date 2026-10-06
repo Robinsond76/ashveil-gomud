@@ -236,6 +236,7 @@ func (g *GMCPPartyModule) GetPartyNode(party *parties.Party, gmcpModule string) 
 				RoomId:        user.Character.RoomId,
 				Aggro:         user.Character.Aggro != nil,
 			}
+			userVitals.Lineage, userVitals.ClassID = classKeys(uId)
 			if !ok {
 				if uRoom := rooms.LoadRoom(user.Character.RoomId); uRoom != nil {
 					roomTitle = uRoom.Title
@@ -391,13 +392,15 @@ type GMCPPartyModule_Payload_User struct {
 }
 
 type GMCPPartyModule_Payload_Vitals struct {
-	Level          int    `json:"level"`          // level of user
-	HealthPercent  int    `json:"health"`         // 1 = 1%, 23 = 23% etc.
-	Location       string `json:"location"`       // Title of room they are in
-	RoomId         int    `json:"roomid"`         // Room ID they are in (0 if unknown/invited)
-	MapX           int    `json:"mapx"`           // World X coordinate of the room
-	MapY           int    `json:"mapy"`           // World Y coordinate of the room
-	MapZ           int    `json:"mapz"`           // World Z coordinate of the room
-	HasCoordinates bool   `json:"hascoordinates"` // Whether the room has map coordinates
-	Aggro          bool   `json:"aggro"`          // Whether the user is currently in aggro state
+	Level          int    `json:"level"`             // level of user
+	HealthPercent  int    `json:"health"`            // 1 = 1%, 23 = 23% etc.
+	Location       string `json:"location"`          // Title of room they are in
+	RoomId         int    `json:"roomid"`            // Room ID they are in (0 if unknown/invited)
+	MapX           int    `json:"mapx"`              // World X coordinate of the room
+	MapY           int    `json:"mapy"`              // World Y coordinate of the room
+	MapZ           int    `json:"mapz"`              // World Z coordinate of the room
+	HasCoordinates bool   `json:"hascoordinates"`    // Whether the room has map coordinates
+	Aggro          bool   `json:"aggro"`             // Whether the user is currently in aggro state
+	Lineage        string `json:"lineage,omitempty"` // Phase 40b: base archetype id, for the map sprite
+	ClassID        string `json:"classid,omitempty"` // Phase 40b: current class id
 }
