@@ -48,6 +48,9 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
 await page.goto(process.env.DOCK_HARNESS_URL || 'file://' + path.join(here, 'dock-windows-harness.html'));
 await page.evaluate(() => localStorage.clear());
+// The battle screen (40f) opens over the dock on every battle and would
+// cover the Combat tab checked here; battle-check.mjs covers the screen.
+await page.evaluate(() => localStorage.setItem('ashveil-battle-screen', 'manual'));
 await page.reload();
 
 // --- Task 8: the vitals strip ---
@@ -563,7 +566,7 @@ const focused = JSON.parse(JSON.stringify(next));
 Object.assign(focused, { focus: 'none', saved_focus: 'none', focus_ready: true });
 await page.evaluate(b => window.gmcp('Company.Battle', b), focused);
 const bar = page.getByRole('group', { name: 'Company focus' });
-check(await bar.getByRole('button').count() === 7, 'seven focus buttons');
+check(await bar.getByRole('button').count() === 8, 'eight focus buttons');
 check((await page.locator('.cbt-focus [aria-pressed="true"]').allTextContents()).join() === 'none', 'the current focus is pressed');
 got = await sentNow(async () => { await page.locator('.cbt-focus [data-focus="leader"]').click(); });
 check(JSON.stringify(got) === '["company tactics focus leader"]', 'a focus button sends the order');

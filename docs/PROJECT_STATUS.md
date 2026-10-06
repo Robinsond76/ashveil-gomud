@@ -1,6 +1,6 @@
 # Ashveil Project Status
 
-**Phase 40a3 built (2026-10-06, PR pending review): camp gear.** The fuel rule
+**Phase 40a3 complete (2026-10-06, PR #45): camp gear.** The fuel rule
 and six durable camp items. A finished camp rest now burns the fire down to
 **embers** (`Camp.Embers`): embers keep the room warm until the camp is broken
 (a damp fire's embers stay cold) but give no light, and resting again needs
@@ -54,6 +54,26 @@ camp is made and refreshed at `camp fire` and `camp rest`. Not folded in: the
 40a2 follow-ups (gather progress as a web panel, a redraw on regrowth) are
 about gathering and the map, not camp gear; both stay open (the map redraw
 belongs with 40b).
+Review (2026-10-06): checked the fuel rule and repeat rests (a new operation
+id per rest, the last rest's recovery settled first, the burn-down of old
+saves), the bedroll ledger, raid spotting with bells, the kit's
+before-refill mana gate, item ids 45-50 (no clash with master or any open
+branch) and the economy (all six `SupplyOnly`; objects never salvage; a
+generic merchant pays at most a quarter of value, so the tutorial's free
+bedroll and fire steel fetch about 2 gold each, once per character:
+accepted). Kept the builder's three decisions: cargo counts without a horse
+check (cargo always travels with the company under 32f), bells wear at every
+rest start (a count the player can predict: "10 rests"), and no restring
+service (rebuying at 6 and 25 gold costs little and needs no new shop
+mechanic). Fixed: `camp status` between rests now lists the gear at hand
+and what it will do (`campGear.lines` was unused, so a player saw the gear
+only once a rest began), with a regression test and the help updated; the
+dock browser check timed out because the 40f battle screen opens over the
+Combat tab, so it now sets the screen to manual (battle-check covers the
+screen), and its focus-bar count was stale (eight buttons, not seven).
+Follow-ups: the web Camp tab and GMCP carry only the tent and embers, not
+bedrolls, bells or the kit (candidate: a gear line in `Company.Camp`).
+
 **Phase 40g reviewed (2026-10-06, PR #40):** Checked the scheduler never
 drops a state change (a collapse applies every unfired op in order) and
 catches up after a round of backlog, that reduced motion drops lunges,
@@ -1065,7 +1085,7 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 |---|---|---|
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
-| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Built; awaiting review** | S1 |
+| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Done (PR #45)** | S1 |
 | 40a4 | Camp theft without bells and trip lines (after 40a3) | — |
 | 40s1–40s5 | Art sets S0+S1, S2, S3, S4, S5 as code-generated pixel art (S5 after 38b) | S0–S5 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |

@@ -506,3 +506,22 @@ func TestShippedGearItemsMatchTheDesign(t *testing.T) {
 		assert.Equal(t, want.value, spec.Value, want.name)
 	}
 }
+
+// 40a3 review: between rests, camp status lists the gear at hand and what
+// it will do, so a player sees it before resting; a running rest reports
+// only the gear locked for it.
+func TestCampStatusListsGearAtHandBetweenRests(t *testing.T) {
+	w := newRaidWorld(t, 0)
+	withRoster(w.m)
+	w.m.camps = map[int]camping.Camp{}
+	stock{bedrollItemID: 2, cookpotItemID: 1, surgeonKitItemID: 1}.install(w.m)
+	w.m.establish(w.user, w.room)
+	text := w.m.status(7)
+	assert.Contains(t, text, "Camp gear at hand (help camp gear):")
+	assert.Contains(t, text, "Bedrolls: 2 of 3 members sleep on one (+25% fatigue recovered).")
+	assert.Contains(t, text, "Iron cookpot: a multi-ingredient dish makes one extra portion.")
+	assert.Contains(t, text, "Field surgeon's kit")
+
+	stock{}.install(w.m)
+	assert.NotContains(t, w.m.status(7), "Camp gear at hand", "no gear, no list")
+}

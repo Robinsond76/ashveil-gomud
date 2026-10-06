@@ -1,7 +1,7 @@
 # Phase 40a3: camp gear
 
 Status: **approved by the owner on 2026-10-05**, including the item list,
-weights, effects and prices (handoff rule 20). **Built 2026-10-06**; see
+weights, effects and prices (handoff rule 20). **Built and reviewed 2026-10-06 (PR #45)**; see
 `docs/PROJECT_STATUS.md` for the decisions (no restring or restock service;
 cargo counts without a horse check). Part
 of the [visual client milestone](2026-10-05-visual-client-milestone-design.md).

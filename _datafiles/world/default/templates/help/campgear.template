@@ -47,8 +47,9 @@ little dearer on the road. They never buy gear back (<ansi fg="command">help mar
     member's pack, or the cargo. A separated, dead or away member's gear
     doesn't count.
   - It is counted when the rest begins, and the effects are fixed then: a
-    bedroll lost mid-rest changes nothing until the next rest. The rest
-    report and <ansi fg="command">camp status</ansi> list the gear in use.
+    bedroll lost mid-rest changes nothing until the next rest. Between
+    rests, <ansi fg="command">camp status</ansi> lists the gear at hand and what it will do;
+    the rest report and <ansi fg="command">camp status</ansi> during a rest list the gear in use.
   - You get one tent, one cookpot, one fire steel and one set of bells at
     most: a second does nothing. Bedrolls count one per member.
   - Nothing here is stolen; gear is only ever made use of.

@@ -1036,6 +1036,8 @@ func (m *CampingModule) status(leaderUserID int) string {
 	if err := m.persistenceAvailable(); err != nil {
 		return err.Error()
 	}
+	// The gear is counted before m.mu: it calls the company module.
+	gear, members := m.gearOf(leaderUserID), m.companyMembers(leaderUserID)
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	defer m.refreshLitRoomsLocked()
@@ -1045,7 +1047,15 @@ func (m *CampingModule) status(leaderUserID int) string {
 	if err := m.syncLocked(leaderUserID); err != nil {
 		mudlog.Warn("camping: status sync", "leader", leaderUserID, "error", err)
 	}
-	return m.statusTextLocked(leaderUserID)
+	text := m.statusTextLocked(leaderUserID)
+	// 40a3 review: between rests, show what the gear at hand will do (a
+	// running rest already reports the gear locked for it).
+	if camp := m.camps[leaderUserID]; camp.Rest == nil || camp.Rest.State != camping.Resting {
+		if lines := gear.lines(members); len(lines) > 0 {
+			text += "\nCamp gear at hand (help camp gear):\n" + strings.Join(lines, "\n")
+		}
+	}
+	return text
 }
 
 // RenderCampView implements camping.ViewProvider. It replaces ordinary room
