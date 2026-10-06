@@ -36,7 +36,7 @@ cost merge order, not a dependency.
 | 37b | Encounter and pacing tuning (new, below) | 37, 35e | After 37 |
 | 36c | Loot economy, plus selling rolled gear and GMCP rolled names | 37 | After 37 |
 | 39a–39h | Neutral base classes, at most two building at once | 38b (39e also 39d) | After 38b |
-| 38c | Elite promotions at 30, ranks 30–60, six lineages | 38b, 38c-d | After 38b |
+| 38c | Elite promotions at 30, ranks 30–60, six lineages; three slices 38c1–38c3 ([plan](2026-10-06-phase-38c-elite-routes.md)) | 38b, 38c-d | After 38b |
 | 38d | Expanded class catalogue bundles, Sorcerer first | 38c | Later |
 | 38e | Creature recruits (Hound and Stone Golem pilot) | 38d, 39e | Later |
 | 39i | Elite ranks for the eight neutral lineages (new) | 38c, 39a–39h | Later |
