@@ -42,7 +42,8 @@ button in them just types a command for you.
               Skills (each trained skill with what it does, then what
               your abilities and company can do), Quests, Effects, and
               Pet when you have one.
-  <ansi fg="yellow">Company</ansi>     Status (formation and each member), Inventory (everyone's
+  <ansi fg="yellow">Company</ansi>     Status (formation, where you click a member and then a cell to
+              move or swap them, and each member), Inventory (everyone's
               gear, your horses, and the cargo), and Camp.
   <ansi fg="yellow">Combat</ansi>      Setup (how your company fights: formation, each member's
               role and target rule, and your company tactics), and the
