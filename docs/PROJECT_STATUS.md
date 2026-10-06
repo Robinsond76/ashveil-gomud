@@ -1,7 +1,7 @@
 # Ashveil Project Status
 
 **Phase 40s2 + 40s3 built: art sets S2 (terrain) and S3 (battle) (2026-10-06):**
-`make sprites` now also writes 175 files: S3 battle art (16 backgrounds
+`make sprites` now also writes 179 files: S3 battle art (16 backgrounds
 320x180, 56 battle units with 4-frame idles, 7 formation markers, 47 status,
 role, morale and condition icons) and S2 (19 terrain biomes x 3 variants, 5
 animated overlays, fog, unknown and night-mask tiles, 27 landmark overlays).
