@@ -23,6 +23,8 @@ spawninfo:
   respawnrate: 15 real minutes
 idlemessages:
 - The wind howls from every direction
+resources:
+- shelter
 mapx: -17
 mapy: 0
 mapz: 0

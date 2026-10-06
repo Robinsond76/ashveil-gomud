@@ -24,6 +24,8 @@ idlemessages:
 - Several small birds fly overhead, harassing a larger bird
 tags:
 - fishing
+resources:
+- water
 mapx: 19
 mapy: 10
 mapz: 0

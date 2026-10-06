@@ -26,6 +26,10 @@ them, or the biggest there is when nothing will. Food that also waters,
 like a stew, counts toward thirst, so no one drinks after it who
 doesn't need to.
 
+At a water source (<ansi fg="command">help resources</ansi>), <ansi fg="command">company drink</ansi> waters everyone from the
+source first and uses no supplies; <ansi fg="command">company fill</ansi> refills every refillable
+container the company carries.
+
 Only plain food and water are used. Anything with another effect, such
 as a potion or an ale, is left for you to use by hand with
 <ansi fg="command">eat</ansi> or <ansi fg="command">drink</ansi>. Well fed and Hydrated come to you when you eat

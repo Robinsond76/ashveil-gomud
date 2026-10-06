@@ -15,6 +15,8 @@ spawninfo:
 - mobid: 32
   message: A fungal growth emerges from the ground.
   respawnrate: 5 real minutes
+resources:
+- forage
 mapx: 32
 mapy: 2
 mapz: 0

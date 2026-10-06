@@ -55,7 +55,8 @@ round count; a rest takes real time, not game time.
   Foul weather makes for a poorer rest: the Fatigue you recover is
   scaled down (never increased) by how bad conditions are where you've
   camped, so the same rest recovers less in a storm than under clear
-  skies. Each rest only happens once — you can't rest again at a camp
+  skies. In a shelter room (<ansi fg="command">help resources</ansi>) the penalty is halved: recovery
+  moves halfway from the weather's figure toward a full rest. Each rest only happens once — you can't rest again at a camp
   that has already rested.
 
   <ansi fg="command">camp sharpen</ansi>

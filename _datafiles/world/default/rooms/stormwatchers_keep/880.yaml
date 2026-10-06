@@ -20,6 +20,8 @@ exits:
 spawninfo:
 - mobid: 51
   respawnrate: 5 real minutes
+resources:
+- shelter
 mapx: -19
 mapy: -4
 mapz: 0

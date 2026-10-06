@@ -712,6 +712,9 @@ func (m *CampingModule) startRest(user *users.UserRecord, room *rooms.Room) stri
 	text := fmt.Sprintf("You settle in by the fire to rest. (%s)", camping.RestDuration)
 	if scaled {
 		text += fmt.Sprintf("\nThe %s makes for a poorer rest.", condition.Name)
+		if room.HasResource(rooms.ResourceShelter) {
+			text += " The shelter here softens it."
+		}
 	}
 	return text
 }

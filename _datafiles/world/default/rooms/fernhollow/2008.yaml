@@ -16,6 +16,9 @@ exits:
     roomid: 2009
 mapsymbol: v
 maplegend: Village
+resources:
+- water
+- forage
 mapx: -1
 mapy: -1
 mapz: 0

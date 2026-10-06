@@ -21,6 +21,8 @@ spawninfo:
 mutators:
 - mutatorid: wildfire
   spawnedround: 1596850
+resources:
+- forage
 mapx: 21
 mapy: -2
 mapz: 0

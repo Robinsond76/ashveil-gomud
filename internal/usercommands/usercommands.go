@@ -86,6 +86,7 @@ var (
 		`experience`:  {Experience, true, false},
 		`equip`:       {Equip, false, false},
 		`feed`:        {Feed, false, false},
+		`fill`:        {Fill, false, false}, // Phase 40a
 		`flee`:        {Flee, false, false},
 		`retreat`:     {Retreat, false, false},
 		`formset`:     {FormSet, false, true}, // Admin only
