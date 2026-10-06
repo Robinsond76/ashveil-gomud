@@ -58,6 +58,9 @@ func (m *CompanyModule) CompanyInventory(leaderUserID int) ([]domain.InventoryMe
 			continue
 		}
 		member := domain.InventoryMemberOf(key, name, *state)
+		if f, ok := familyOf(c); ok { // Phase 38e review: species gear only
+			member.Species = f.ID
+		}
 		if inst, ok := m.instance(leaderUserID, c.ID); ok {
 			hp, _, aliveKnown := m.runtime.Vitals(inst)
 			member.Available = aliveKnown && hp > 0 && !c.PendingReturn && m.runtime.IsLive(inst) && m.runtime.WithLeader(leaderUserID, inst) && m.runtime.IsAttached(leaderUserID, inst)

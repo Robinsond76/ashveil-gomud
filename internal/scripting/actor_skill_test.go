@@ -58,3 +58,20 @@ func TestSpellFactorUnderFog(t *testing.T) {
 	caster.characterRecord.Buffs.List = []*buffs.Buff{{BuffId: status.Fogbound, TriggersLeft: 3}}
 	assert.InDelta(t, 0.9, caster.SpellFactor(target), 1e-9)
 }
+
+// Phase 38e: runed stone takes spells hard.
+func TestSpellFactorIsRaisedAgainstAStoneGolem(t *testing.T) {
+	g := configs.GetGamePlayConfig()
+	g.Combat.SkillEdgeSpan = 20
+	g.Combat.DefaultAttackRate, g.Combat.DefaultEvasionRate = 1, 1
+	t.Cleanup(configs.SetTestGamePlayConfig(g))
+	caster := characters.New()
+	caster.Level = 20
+	golem := characters.New()
+	golem.Level = 20
+	person := characters.New()
+	person.Level = 20
+	golem.HPArchetype = "stone-golem"
+	assert.InDelta(t, 1.0, ScriptActor{characterRecord: caster}.SpellFactor(ScriptActor{characterRecord: person}), 1e-9)
+	assert.InDelta(t, 1.25, ScriptActor{characterRecord: caster}.SpellFactor(ScriptActor{characterRecord: golem}), 1e-9)
+}

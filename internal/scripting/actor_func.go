@@ -765,6 +765,10 @@ func (a ScriptActor) SpellFactor(target ScriptActor) float64 {
 	if r := target.characterRecord.Aura.SpellResolve; r > 0 {
 		factor *= 1 - float64(min(r, 100))/100
 	}
+	// Phase 38e: runed stone takes spells hard.
+	if w := target.characterRecord.ClassEffects().Int(classes.SpellWeak); w > 0 {
+		factor *= 1 + float64(w)/100
+	}
 	// Phase 39c: a fogbound caster's spells hit weaker.
 	if len(a.characterRecord.GetBuffs(status.Fogbound)) > 0 {
 		factor *= float64(100-stormcraft.FogSpellPct) / 100

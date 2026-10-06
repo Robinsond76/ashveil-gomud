@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/banter"
 	"github.com/GoMudEngine/GoMud/internal/combatstream"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/gametime"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -137,7 +138,7 @@ func (m *CompanyModule) campMembers(leaderUserID int) []banter.Member {
 	}
 	var out []banter.Member
 	for _, c := range record.Companions {
-		if c.Dead() || c.Separated() || c.PendingReturn {
+		if c.Dead() || c.Separated() || c.PendingReturn || creatures.Is(c.Archetype) { // 38e review: a hound or a golem doesn't talk
 			continue
 		}
 		out = append(out, m.banterMember(c))
@@ -263,7 +264,7 @@ func (m *CompanyModule) battleBanter(user *users.UserRecord, outcome string) str
 			continue
 		}
 		note(v.HP, v.HPMax)
-		if c, ok := byID[v.ID]; ok {
+		if c, ok := byID[v.ID]; ok && !creatures.Is(c.Archetype) { // 38e review: creatures don't talk
 			members = append(members, m.banterMember(c))
 		}
 	}

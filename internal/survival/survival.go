@@ -121,7 +121,9 @@ var (
 	ErrAmbiguousMember = errors.New("survival: ambiguous company member")
 	ErrDeadMember      = errors.New("survival: that companion is dead")
 	// ErrAwayMember: a separated companion (Phase 33h3) is not here to feed.
-	ErrAwayMember             = errors.New("survival: that companion is separated from you")
+	ErrAwayMember = errors.New("survival: that companion is separated from you")
+	// ErrNeedlessMember: a construct (Phase 38e) needs no food or drink.
+	ErrNeedlessMember         = errors.New("survival: that companion needs no food, drink or rest")
 	ErrInvalidAmount          = errors.New("survival: amount must be positive")
 	ErrPersistenceUnavailable = errors.New("survival: persistence unavailable")
 	ErrProvisionUnavailable   = errors.New("survival: provisioning unavailable")
@@ -528,6 +530,10 @@ type MemberRef struct {
 	// Away marks a companion separated from its leader (Phase 33h3): like
 	// the dead, it spends and recovers nothing until it rejoins.
 	Away bool
+	// Needless marks a creature that is kept without food, drink or rest (a
+	// construct, Phase 38e): it spends and recovers nothing and cannot be
+	// fed, like the dead and the separated, but it is present and fights.
+	Needless bool
 }
 
 // MemberSnapshot is the exact durable survival state for one companion at a

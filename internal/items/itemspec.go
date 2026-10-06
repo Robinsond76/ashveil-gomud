@@ -247,6 +247,7 @@ type ItemSpec struct {
 	WeaponClass     string            `yaml:"weaponclass,omitempty"` // A weapon's class (Phase 35a2), e.g. mace, staff, rod, club, improvised
 	Family          string            `yaml:"family,omitempty"`      // Phase 36b: catalog family, e.g. glaive, leather, kite shield; shown on look, never inferred from the name
 	Goods           string            `yaml:"goods,omitempty"`       // Phase 36b: trade goods category (trophy, salvage, material, valuable, provision, curio)
+	WornBy          []string          `yaml:"wornby,omitempty"`      // Phase 38e: creature species (archetype ids) this gear is cut for; only they wear it, and they wear nothing else
 }
 
 // Trade goods categories (Phase 36b). Goods are sold, not worn: they make
@@ -633,6 +634,9 @@ func (i *ItemSpec) Validate() error {
 	}
 	i.Family = strings.ToLower(strings.TrimSpace(i.Family))
 	i.Goods = strings.ToLower(strings.TrimSpace(i.Goods))
+	for n, who := range i.WornBy {
+		i.WornBy[n] = strings.ToLower(strings.TrimSpace(who))
+	}
 	if i.Goods != `` {
 		valid := false
 		for _, c := range GoodsCategories() {

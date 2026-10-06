@@ -12,6 +12,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"github.com/GoMudEngine/GoMud/internal/userstate"
 	"os"
 	"sort"
@@ -621,7 +622,7 @@ func (m *ArchetypeModule) chooseResult(user *users.UserRecord, name string, conf
 	}
 	m.mu.Lock()
 	a, ok := m.table.Get(name)
-	if !ok {
+	if !ok || creatures.Is(a.ID) { // Phase 38e: a creature is recruited, never chosen
 		m.mu.Unlock()
 		return fmt.Sprintf(`There is no archetype called "%s". Type "archetype" to see them.`, name), false
 	}
@@ -847,6 +848,9 @@ func (m *ArchetypeModule) list(userID int) string {
 	}
 	lines = append(lines, "Archetypes:")
 	for _, a := range table.List() {
+		if creatures.Is(a.ID) {
+			continue // Phase 38e: creatures are recruited, never chosen
+		}
 		line := fmt.Sprintf("  %-8s %s %s Skills: %s.", a.Name, a.Description, healthLine(a), strings.Join(a.Skills, ", "))
 		if len(a.Schools) > 0 {
 			line += " Spell schools: " + strings.Join(a.Schools, ", ") + "."

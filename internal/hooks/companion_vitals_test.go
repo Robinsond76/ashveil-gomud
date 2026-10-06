@@ -60,3 +60,28 @@ func TestRegenCompanionVitals(t *testing.T) {
 	regenCompanionVitals(leaderOf)
 	assert.Equal(t, 15, idle.Character.Health, "above half, nothing")
 }
+
+// Phase 38e: a hound mends on the idle beat like any companion; a stone golem
+// does not (it is repaired with mortar).
+func TestRegenCompanionVitalsLeavesConstructsBroken(t *testing.T) {
+	const room = 990302
+	leader := users.NewUserRecord(93020, 1)
+	users.SetTestUser(leader)
+	t.Cleanup(func() { users.RemoveTestUser(93020) })
+
+	hound := engagementMob(t, 9311, 4, room)
+	golem := engagementMob(t, 9312, 4, room)
+	hound.Character.HPArchetype = "hound"
+	golem.Character.HPArchetype = "stone-golem"
+	for _, m := range []*characters.Character{&hound.Character, &golem.Character} {
+		m.HealthMax.Value = 20
+	}
+	leaderOf := func(id int) (int, company.MemberKey, bool) {
+		return 93020, company.CompanionMemberKey(id), true
+	}
+	for range 5 {
+		regenCompanionVitals(leaderOf)
+	}
+	assert.Greater(t, hound.Character.Health, 4, "a hound heals")
+	assert.Equal(t, 4, golem.Character.Health, "a golem needs mortar")
+}

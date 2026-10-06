@@ -130,7 +130,7 @@ func TestCompanionArchetypesThroughRealConfigPath(t *testing.T) {
 	}
 	require.NoError(t, configs.AddOverlayOverrides(overlay))
 	raw := configs.Flatten(configs.GetModulesConfig())["company.CompanionArchetypes"]
-	assert.Equal(t, map[int]string{58: "warrior", 61: "warrior", 62: "cleric", 63: "warrior", 64: "ranger", 69: "rogue", 80: "warrior", 81: "rogue", 82: "wizard", 83: "cleric", 84: "ranger", 94: "witch", 130: "halberdier", 139: "samurai", 150: "shaman", 160: "dollmaster", 175: "gryphon-rider", 190: "alchemist", 204: "beasttamer", 235: "arbalist"}, parseCompanionArchetypes(raw))
+	assert.Equal(t, map[int]string{58: "warrior", 61: "warrior", 62: "cleric", 63: "warrior", 64: "ranger", 69: "rogue", 80: "warrior", 81: "rogue", 82: "wizard", 83: "cleric", 84: "ranger", 94: "witch", 130: "halberdier", 139: "samurai", 150: "shaman", 160: "dollmaster", 175: "gryphon-rider", 190: "alchemist", 204: "beasttamer", 235: "arbalist", 260: "hound", 261: "stone-golem"}, parseCompanionArchetypes(raw))
 }
 
 func TestCompanyArchetypeUserCommand(t *testing.T) {

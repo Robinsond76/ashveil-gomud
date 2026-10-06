@@ -22,7 +22,7 @@ func (m *CompanyModule) MoraleMembers(uid int) []domain.MoraleMember {
 	rules := m.chemistryRules()
 	for _, c := range r.Companions {
 		id, tracked := m.instance(uid, c.ID)
-		if !tracked || c.Dead() || c.PendingReturn || !m.runtime.WithLeader(uid, id) {
+		if !tracked || c.Dead() || c.PendingReturn || bound(c) || !m.runtime.WithLeader(uid, id) { // Phase 38e: a construct never loses heart
 			continue
 		}
 		loyalty := domain.MaxLoyalty
@@ -54,7 +54,7 @@ func (m *CompanyModule) MercyReaction(uid int, token string, witnesses []int, sp
 	}
 	var lines []string
 	for i, c := range r.Companions {
-		if !want[c.ID] || c.Dead() {
+		if !want[c.ID] || c.Dead() || bound(c) { // Phase 38e: a construct passes no judgement
 			continue
 		}
 		a := m.companionAlignment(c)

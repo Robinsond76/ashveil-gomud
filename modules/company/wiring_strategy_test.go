@@ -33,7 +33,7 @@ type fakeArchetypes struct{ player string }
 func (fakeArchetypes) CanTrain(int, string) (bool, string)      { return true, "" }
 func (fakeArchetypes) CanLearnSpell(int, string) (bool, string) { return true, "" }
 func (fakeArchetypes) Exists(id string) bool {
-	return id == "warrior" || id == "cleric" || id == "wizard" || id == "ranger" || id == "rogue" || id == "witch" || id == "halberdier" || id == "gryphon-rider" || id == "arbalist"
+	return id == "warrior" || id == "cleric" || id == "wizard" || id == "ranger" || id == "rogue" || id == "witch" || id == "halberdier" || id == "gryphon-rider" || id == "arbalist" || id == "hound" || id == "stone-golem"
 }
 func (fakeArchetypes) ArchetypeName(id string) (string, bool) { return strings.Title(id), true }
 func (f fakeArchetypes) PlayerArchetype(int) (string, bool)   { return f.player, f.player != "" }

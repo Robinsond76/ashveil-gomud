@@ -2,7 +2,7 @@ itemid: 20026
 tier: 2
 name: spiked collar
 namesimple: dog collar
-description: A leather collar with metal spikes.
+description: A leather collar with metal spikes, cut for a war hound. Only a hound can wear it.
 type: neck
 subtype: wearable
 bulk: light
@@ -12,3 +12,4 @@ statmods:
   perception: 10
 warmth: -1
 weight: 300
+wornby: [hound]

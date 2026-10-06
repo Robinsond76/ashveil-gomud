@@ -169,7 +169,7 @@ func (m *CampingModule) companyMembers(leaderUserID int) int {
 	}
 	living := 0
 	for _, ref := range survival.CurrentRoster(leaderUserID) {
-		if !ref.Dead && !ref.Away { // the dead (Phase 25b) and the separated (33h3) take no bed
+		if !ref.Dead && !ref.Away && !ref.Needless { // the dead (Phase 25b), the separated (33h3) and a construct (38e) take no bed
 			living++
 		}
 	}

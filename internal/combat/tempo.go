@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 )
 
@@ -19,7 +20,14 @@ func Tempo(c *characters.Character) float64 {
 	if c.RT != nil && c.RT.Beast != nil && c.RT.Beast.TempoPct > 0 {
 		rate = rate * float64(c.RT.Beast.TempoPct) / 100
 	}
-	return math.Max(float64(cfg.TempoMin), math.Min(float64(cfg.TempoMax), rate))
+	rate = math.Max(float64(cfg.TempoMin), math.Min(float64(cfg.TempoMax), rate))
+	// Phase 38e: a golem's slow stone costs it a share of its turns on top of
+	// the floor, so a creature of stone is really slower than the slowest
+	// person.
+	if slow := c.ClassEffects().Int(classes.Slow); slow > 0 {
+		rate *= float64(100-min(slow, 90)) / 100
+	}
+	return rate
 }
 
 // Meter is ephemeral battle state. Its zero value grants one opening turn,

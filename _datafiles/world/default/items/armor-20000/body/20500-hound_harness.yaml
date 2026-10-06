@@ -1,0 +1,11 @@
+itemid: 20500
+tier: 1
+name: hound harness
+namesimple: harness
+description: A broad leather harness with a spiked brace over the shoulders, cut for a war hound. Only a hound can wear it.
+type: body
+subtype: wearable
+bulk: light
+damagereduction: 5
+weight: 900
+wornby: [hound]

@@ -410,6 +410,10 @@ func (m *SurvivalModule) ApplyMemberDrain(leaderUserID int, key domain.MemberKey
 		(cost.Hunger == 0 && cost.Thirst == 0 && cost.Fatigue == 0) {
 		return domain.ExertionResult{}, domain.ErrInvalidAmount
 	}
+	// Phase 38e: a construct is not worn down by heat, cold or the road.
+	if ref, ok := currentRosterMember(leaderUserID, key); ok && ref.Needless {
+		return domain.ExertionResult{Member: key, Name: ref.Name, Needs: domain.FullNeeds()}, nil
+	}
 	snapshot := m.registry.Clone()
 	if err := m.registry.Ensure(leaderUserID, key); err != nil {
 		m.registry = snapshot
@@ -623,6 +627,8 @@ func (m *SurvivalModule) Provision(leaderUserID int, selector string, benefit do
 		return domain.ProvisionResult{}, domain.ErrDeadMember
 	} else if ok && ref.Away {
 		return domain.ProvisionResult{}, domain.ErrAwayMember
+	} else if ok && ref.Needless {
+		return domain.ProvisionResult{}, domain.ErrNeedlessMember
 	}
 	snapshot := m.registry.Clone()
 	if err := m.registry.Ensure(leaderUserID, key); err != nil {
@@ -800,6 +806,10 @@ func (m *SurvivalModule) status(leaderUserID int) string {
 			lines = append(lines, fmt.Sprintf("  %s: separated", ref.Name))
 			continue
 		}
+		if ref.Needless {
+			lines = append(lines, fmt.Sprintf("  %s: needs no food, drink or rest", ref.Name))
+			continue
+		}
 		needs, ok := m.registry.NeedsFor(leaderUserID, ref.Key)
 		if !ok {
 			needs = domain.FullNeeds()
@@ -821,12 +831,14 @@ func (m *SurvivalModule) memberRefs(leaderUserID int) []domain.MemberRef {
 	names := map[domain.MemberKey]string{}
 	dead := map[domain.MemberKey]bool{}
 	away := map[domain.MemberKey]bool{}
+	needless := map[domain.MemberKey]bool{}
 	if roster := domain.CurrentRoster(leaderUserID); len(roster) > 0 {
 		for _, ref := range roster {
 			keys = append(keys, ref.Key)
 			names[ref.Key] = ref.Name
 			dead[ref.Key] = ref.Dead
 			away[ref.Key] = ref.Away
+			needless[ref.Key] = ref.Needless
 		}
 	} else {
 		keys = m.registry.Members(leaderUserID)
@@ -841,17 +853,17 @@ func (m *SurvivalModule) memberRefs(leaderUserID int) []domain.MemberRef {
 				name = m.displayName(key)
 			}
 		}
-		refs = append(refs, domain.MemberRef{Key: key, Name: name, Dead: dead[key], Away: away[key]})
+		refs = append(refs, domain.MemberRef{Key: key, Name: name, Dead: dead[key], Away: away[key], Needless: needless[key]})
 	}
 	return refs
 }
 
-// livingRefs is memberRefs without the dead (Phase 25b) and the separated
-// (Phase 33h3): they spend and recover nothing.
+// livingRefs is memberRefs without the dead (Phase 25b), the separated
+// (Phase 33h3) and the needless (Phase 38e): they spend and recover nothing.
 func (m *SurvivalModule) livingRefs(leaderUserID int) []domain.MemberRef {
 	var out []domain.MemberRef
 	for _, ref := range m.memberRefs(leaderUserID) {
-		if !ref.Dead && !ref.Away {
+		if !ref.Dead && !ref.Away && !ref.Needless {
 			out = append(out, ref)
 		}
 	}

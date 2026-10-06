@@ -1,0 +1,20 @@
+mobid: 260
+zone: Dunmar
+# Phase 38e recruit base (hound). A creature recruit wears only what its race
+# allows (a collar and a harness), carries nothing, has no gold and drops
+# nothing. See 80.
+itemdropchance: 0
+hostile: false
+maxwander: 0
+activitylevel: 10
+character:
+  name: Brindle
+  description: A brindled war hound with a scarred muzzle and a handler's collar, left behind when its handler went down on the Old Kings Road. It watches the company's packs and decides whether to stay.
+  raceid: 11
+  level: 1
+  alignment: 0
+  equipment:
+    neck:
+      itemid: 20026
+    body:
+      itemid: 20500

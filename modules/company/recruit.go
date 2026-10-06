@@ -208,6 +208,9 @@ func (m *CompanyModule) listing(leaderUserID int, rec recruiter) string {
 			name, c.ID, archetypeLabel(m.companionArchetypes()[c.MobTemplateID]), state.Level,
 			alignmentLabel(m.alignmentWorld().TemplateAlignment(c.MobTemplateID))))
 		lines = append(lines, "    Gear: "+gearSummary(state))
+		if f, ok := m.templateFamily(c.MobTemplateID); ok { // Phase 38e
+			lines = append(lines, "    Creature: "+familyShort(f))
+		}
 		switch {
 		case c.Tutorial && record.HasClaimed(c.MobTemplateID):
 			lines = append(lines, "    Price: already claimed (once only)")
@@ -417,6 +420,9 @@ func (m *CompanyModule) LookCandidate(viewerUserID, roomID int, selector string)
 	lines := []string{fmt.Sprintf(`You read about <ansi fg="mobname">%s</ansi> on %s.`, name, rec.Name)}
 	if spec := mobs.GetMobSpec(mobs.MobId(c.MobTemplateID)); spec != nil && spec.Character.Description != "" {
 		lines = append(lines, spec.Character.Description)
+	}
+	if f, ok := m.templateFamily(c.MobTemplateID); ok { // Phase 38e
+		lines = append(lines, familyLine(f))
 	}
 	lines = append(lines, fmt.Sprintf(`Type <ansi fg="command">company inspect %s</ansi> to weigh them against your company.`, c.ID))
 	return strings.Join(lines, "\n"), true

@@ -7,6 +7,7 @@ package company
 
 import (
 	"fmt"
+	"github.com/GoMudEngine/GoMud/internal/creatures"
 	"sort"
 	"strconv"
 	"strings"
@@ -96,6 +97,9 @@ func (m *CompanyModule) trainingLevel(leaderUserID int, c domain.Companion) int 
 // trainingPoints is the companion's points left; negative while a lost
 // level is being repaid.
 func (m *CompanyModule) trainingPoints(leaderUserID int, c domain.Companion) int {
+	if creatures.Is(c.Archetype) {
+		return 0 // Phase 38e: a creature learns no optional skills
+	}
 	return c.TrainingPoints(earnedTrainingPoints(m.trainingLevel(leaderUserID, c)))
 }
 
@@ -214,6 +218,9 @@ func (m *CompanyModule) trainMemberView(leaderUserID int, c domain.Companion) st
 
 // trainLines is one companion's heading and its optional skills.
 func (m *CompanyModule) trainLines(leaderUserID int, c domain.Companion) []string {
+	if creatures.Is(c.Archetype) {
+		return []string{fmt.Sprintf("  #%d %s, %s, level %d: a creature; it learns by living and has nothing to train", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)), archetypeLabel(c.Archetype), m.trainingLevel(leaderUserID, c))}
+	}
 	points := m.trainingPoints(leaderUserID, c)
 	head := fmt.Sprintf("  #%d %s, %s, level %d: %s", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)), archetypeLabel(c.Archetype), m.trainingLevel(leaderUserID, c), pointsLabel(points))
 	lines := []string{head}
@@ -409,6 +416,10 @@ func (m *CompanyModule) inspectMember(leaderUserID int, selector string, exact b
 	}
 	level := m.trainingLevel(leaderUserID, c)
 	lines := []string{fmt.Sprintf("#%d %s, %s, level %d.", c.ID, nameOf(c, strconv.Itoa(c.MobTemplateID)), archetypeLabel(c.Archetype), level)}
+	if f, ok := familyOf(c); ok { // Phase 38e: a creature learns no optional skills
+		lines = append(lines, familyLine(f))
+		return strings.Join(lines, "\n"), true
+	}
 	var trained []string
 	for _, skill := range sortedSkillIDs(c.Skills) {
 		text := fmt.Sprintf("%s rank %d", skillName(skill), c.Skills[skill])
