@@ -26,7 +26,7 @@ func TestGatheringHelpRendersAndIsIndexed(t *testing.T) {
 	want, err := GetHelpContents("gathering")
 	require.NoError(t, err)
 	plain := tagPattern.ReplaceAllString(want, "")
-	for _, phrase := range []string{"gather herbs", "gather firewood", "fish", "hunt", "picked clean", "bitter weed", "camp fire", "snares", "20 minutes"} {
+	for _, phrase := range []string{"gather herbs", "gather firewood", "fish", "hunt", "picked clean", "bitter weed", "camp fire", "snares", "20 minutes", "Doing line", "Room Info window"} {
 		assert.Contains(t, plain, phrase)
 	}
 	for _, alias := range []string{"gather", "herbs", "firewood", "fish", "fishing", "hunt", "hunting", "snares"} {

@@ -11,6 +11,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/death"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
 	"github.com/GoMudEngine/GoMud/internal/expedition"
+	"github.com/GoMudEngine/GoMud/internal/gathering"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/survival"
@@ -302,6 +303,34 @@ func TestSummaryTacticsShowLevelDefaultFocus(t *testing.T) {
 	assert.Equal(t, strategy.NoFocus, src.summary(u).Tactics.Focus)
 }
 
+// Phase 38c1: the summary names each member's class, tier, rank and
+// promotion state, derived from lineage, class, level and alignment.
+func TestSummaryMemberClasses(t *testing.T) {
+	user := testUser()
+	user.Character.Level = 30
+	user.Character.Alignment = 41
+	src := fullSources()
+	src.members = func(int) ([]company.MemberView, bool) {
+		return []company.MemberView{
+			{ID: 1, Name: "Bran", Status: company.MemberPresent, Level: 52, Archetype: "warrior", Class: "warlord", Alignment: 0},
+			{ID: 2, Name: "Tamsin", Status: company.MemberPresent, Level: 30, Archetype: "warrior", Class: "knight", Alignment: 29},
+			{ID: 3, Name: "Oswin", Status: company.MemberPresent, Level: 30, Archetype: "warrior", Class: "mercenary", Alignment: -80},
+			{ID: 4, Name: "Ysolde", Status: company.MemberPresent, Level: 12, Archetype: "cleric"},
+		}, true
+	}
+	s := src.summary(user)
+	assert.Empty(t, s.Leader.Class, "no class record: unpromoted")
+	warlord := s.Companions[0]
+	assert.Equal(t, [4]string{"warlord", "Warlord", "elite", ""}, [4]string{warlord.Class, warlord.ClassName, warlord.ClassTier, warlord.Promotion})
+	assert.Equal(t, 50, warlord.ClassRank)
+	waiting := s.Companions[1]
+	assert.Equal(t, "advanced", waiting.ClassTier)
+	assert.Equal(t, 25, waiting.ClassRank)
+	assert.Equal(t, "waiting-gate", waiting.Promotion, "+29 does not meet the Knight's gate")
+	assert.Equal(t, "ready", s.Companions[2].Promotion, "a Mercenary has no gate")
+	assert.Equal(t, "ready", s.Companions[3].Promotion, "a base character at level 12 may take an advanced route")
+}
+
 type fakeClasses struct{ class string }
 
 func (f fakeClasses) PlayerClass(int) classes.State { return classes.State{Class: f.class} }
@@ -320,4 +349,38 @@ func TestSummaryCarriesPromotedClass(t *testing.T) {
 	require.NotEmpty(t, s.Companions)
 	assert.Equal(t, "druid", s.Companions[0].Class)
 	assert.Equal(t, "", s.Companions[1].Class)
+}
+
+// TestSummaryRankNamesThePromotedClass (Phase 45): a member's rank reads as
+// its class with its lineage once promoted, else the archetype alone.
+func TestSummaryRankNamesThePromotedClass(t *testing.T) {
+	classes.SetProvider(fakeClasses{class: "priest"})
+	t.Cleanup(func() { classes.SetProvider(nil) })
+	src := fullSources()
+	src.archetype = func(int) (string, bool) { return "cleric", true }
+	src.archetypeReporting = func() bool { return true }
+	src.name = func(id string) (string, bool) {
+		return map[string]string{"cleric": "Cleric", "warrior": "Warrior"}[id], true
+	}
+	members, _ := src.members(1)
+	members[0].Class = "knight"
+	src.members = func(int) ([]company.MemberView, bool) { return members, true }
+	s := src.summary(testUser())
+	assert.Equal(t, "Priest (Cleric)", s.Leader.RankName())
+	assert.Equal(t, "Knight (Warrior)", s.Companions[0].RankName())
+	assert.Equal(t, "", s.Companions[1].RankName(), "no archetype, no class")
+	assert.Equal(t, "Warrior", Member{Archetype: "Warrior"}.RankName(), "unpromoted: the archetype alone")
+}
+
+// TestSummaryGatheringIsTheActivity (Phase 45): a gather in progress is what
+// the company is doing, ahead of a camp.
+func TestSummaryGatheringIsTheActivity(t *testing.T) {
+	src := fullSources()
+	src.gather = func(int) (gathering.Progress, bool) {
+		return gathering.Progress{Kind: gathering.Herbs, Label: "gathering herbs", Total: 20 * time.Second, Remaining: 10 * time.Second}, true
+	}
+	s := src.summary(testUser())
+	assert.True(t, s.ActivityKnown)
+	assert.Equal(t, Gathering, s.Activity.Kind)
+	assert.Equal(t, "Gathering herbs 50%, 10s left", s.Activity.Label())
 }
