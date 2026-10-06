@@ -534,7 +534,7 @@ func TestSuppliesOnceAndOnlyWhatsMissing(t *testing.T) {
 	c.m.Begin(7)
 	c.food = true // the kit's sandwich is still in the pack
 	c.walkIn(t, StageSurvival)
-	assert.Equal(t, []int{defaultWaterItem}, c.given, "only the missing drink")
+	assert.Equal(t, []int{defaultWaterItem, 45, 47}, c.given, "only the missing drink, and the camp gear (Phase 40a3)")
 	assert.True(t, progressOf(c.user.Character).Supplied)
 	assert.Contains(t, c.text(), "stage 4 of 8: Survival")
 
@@ -544,7 +544,7 @@ func TestSuppliesOnceAndOnlyWhatsMissing(t *testing.T) {
 	delete(c.m.copies, 7)
 	c.user.Character.RoomId = -1
 	c.m.resume(7)
-	assert.Equal(t, []int{defaultWaterItem}, c.given, "never again, by walking in or by resume")
+	assert.Equal(t, []int{defaultWaterItem, 45, 47}, c.given, "never again, by walking in or by resume")
 }
 
 func TestSuppliesOnResumeAtSurvival(t *testing.T) {
@@ -555,7 +555,7 @@ func TestSuppliesOnResumeAtSurvival(t *testing.T) {
 	c.user.Character.RoomId = -1
 	c.m.resume(7)
 	assert.Equal(t, 2904, c.user.Character.RoomId)
-	assert.Equal(t, []int{defaultRationItem, defaultWaterItem}, c.given, "an empty pack gets both")
+	assert.Equal(t, []int{defaultRationItem, defaultWaterItem, 45, 47}, c.given, "an empty pack gets both, and the camp gear (Phase 40a3)")
 }
 
 func TestCampStruckOnPlaceSkipAndLeave(t *testing.T) {

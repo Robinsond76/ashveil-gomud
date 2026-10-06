@@ -53,6 +53,8 @@ heal a wounded member only up to their limit.
                      for each birch splint the company has, and a cut or
                      puncture for each linen bandage, using them up;
                      without them, a camp heals no wounds
+  a surgeon's kit    packed for a camp rest (<ansi fg="command">help camp gear</ansi>), it has a healer
+                     with mana left tend one lasting wound first; five uses
 
 Bandages and splints are sold in the markets of Dunmar and the Old Kings
 Road (<ansi fg="command">help market</ansi>). Death clears your wounds, and a companion raised

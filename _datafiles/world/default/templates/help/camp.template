@@ -17,14 +17,18 @@ round count; a rest takes real time, not game time.
   fire needs fuel: in a room that offers firewood the deadfall feeds it for
   nothing; anywhere else it burns one firewood bundle from your pack, a
   companion's pack or the cargo. A damp bundle lights only on a second try
-  and gives light but no warmth. With no firewood there is no fire and no
-  rest at camp. Making camp and <ansi fg="command">camp status</ansi> show the fuel your company
+  and gives light but no warmth, unless you carry fire steel and tinder
+  (<ansi fg="command">help camp gear</ansi>). With no firewood there is no fire and no
+  rest at camp. One bundle fuels one rest: when a rest finishes the fire
+  burns down to embers, which keep the camp warm until you break it, but
+  resting again means feeding the fire with <ansi fg="command">camp fire</ansi> once more. Making camp and <ansi fg="command">camp status</ansi> show the fuel your company
   carries. Markets sell bundles (they never buy them back), and you can
   gather your own (<ansi fg="command">help gathering</ansi>).
 
   A camp is part of the room: <ansi fg="command">look</ansi> shows it to everyone
   there, a cold fire pit until the fire is lit and bedrolls around a
-  crackling campfire after. Someone else's camp is shown with its
+  crackling campfire after, glowing embers once it has burned down, and
+  an oiled canvas tent when one is pitched. Someone else's camp is shown with its
   leader's name. It goes when the camp is struck.
 
   <ansi fg="command">camp status</ansi>
@@ -63,8 +67,12 @@ round count; a rest takes real time, not game time.
   scaled down (never increased) by how bad conditions are where you've
   camped, so the same rest recovers less in a storm than under clear
   skies. In a shelter room (<ansi fg="command">help resources</ansi>) the penalty is halved: recovery
-  moves halfway from the weather's figure toward a full rest. Each rest only happens once — you can't rest again at a camp
-  that has already rested.
+  moves halfway from the weather's figure toward a full rest; so does a tent.
+  After a rest the fire is embers, so another rest costs another bundle.
+  Camp gear improves a rest: bedrolls add a quarter more Fatigue for each
+  member who has one, a tent shelters the company, bells and trip lines
+  warn of raiders, and a field surgeon's kit treats a wound
+  (<ansi fg="command">help camp gear</ansi>). The rest report lists the gear in use.
 
   <ansi fg="command">camp sharpen</ansi>
   Spends your whetstones sharpening your company's blades, the same as
@@ -106,7 +114,7 @@ The web client's map also marks your camp as a tent on its tile, with its
 fire and a sleeping mark while you rest. The camps of your own party show
 as blue tents; no other company's camp is ever shown (<ansi fg="command">help worldmap</ansi>).
 
-See also: <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
+See also: <ansi fg="command">help camp gear</ansi>, <ansi fg="command">help specialists</ansi>, <ansi fg="command">help inn</ansi>, <ansi fg="command">help sharpen</ansi>, <ansi fg="command">help survival</ansi>, <ansi fg="command">help weather</ansi>,
 <ansi fg="command">help conditions</ansi>, <ansi fg="command">help travel</ansi>.
 
 A successful Camp Watch also prevents enemy surprise in a raid. Perception can still prevent surprise after a missed watch, but does not restore spoiled rest. See help ambush.

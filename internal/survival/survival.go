@@ -758,6 +758,30 @@ type CompanyService interface {
 	CompanyNeeds(leaderUserID int) []MemberNeeds
 }
 
+// RestBonusService is optionally implemented by the registered
+// CompanyService (Phase 40a3): a rest that restores more fatigue to some
+// members, as a bedroll does. bonusPct maps a member key to the extra
+// percent of the rest's fatigue that member recovers.
+type RestBonusService interface {
+	ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue int, bonusPct map[MemberKey]int) ([]ExertionResult, error)
+}
+
+// ApplyCompanyRestRecoveryBonus restores fatigue through the registered
+// module, giving the members in bonusPct their extra percent. A service
+// without bonus support restores the base amount to everyone.
+func ApplyCompanyRestRecoveryBonus(leaderUserID int, operationID string, fatigue int, bonusPct map[MemberKey]int) ([]ExertionResult, error) {
+	companyServiceMu.RLock()
+	s := companyService
+	companyServiceMu.RUnlock()
+	if s == nil {
+		return nil, ErrRestUnavailable
+	}
+	if b, ok := s.(RestBonusService); ok && len(bonusPct) > 0 {
+		return b.ApplyCompanyRestRecoveryBonus(leaderUserID, operationID, fatigue, bonusPct)
+	}
+	return s.ApplyCompanyRestRecovery(leaderUserID, operationID, fatigue)
+}
+
 var (
 	companyServiceMu sync.RWMutex
 	companyService   CompanyService

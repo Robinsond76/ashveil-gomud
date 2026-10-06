@@ -14,6 +14,11 @@ and 70% of it).
   Fatigue still recovers, but nobody is Rested and there is no Forage
   or Vigil from that rest.
 
+Camp bells and trip lines (<ansi fg="command">help camp gear</ansi>) spot raiders too: with no watch
+posted they give a flat 20% chance, and with a watch they add 10 points to
+its chance, up to 90%. A rest uses them a little, and after ten rests they
+are spent.
+
 Whether raiders come, and when, is settled as the rest begins, so a server
 restart never rolls it again. Logging out doesn't dodge them: raiders
 who find a camp with its leader gone spoil the rest the same way. If
