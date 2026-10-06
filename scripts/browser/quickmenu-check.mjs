@@ -209,6 +209,30 @@ await page.keyboard.press('Enter');
 await page.mouse.click(5, 5);
 check(!(await menuOpen()), 'clicking outside closes the menu');
 
+// --- after a password prompt the command box is a fresh text box ---
+// (Firefox treats a box that was ever type="password" as a login field and
+// opens "Manage passwords" on the arrow keys, autocomplete="off" or not.)
+await page.focus('#command-input');
+await serverSays('TEXTMASK:true');
+check(await page.evaluate(() => document.getElementById('command-input').type) === 'password', 'a password prompt masks the command box');
+await page.evaluate(() => { window.maskedBox = document.getElementById('command-input'); });
+await page.keyboard.type('secret');
+await serverSays('TEXTMASK:false');
+const box = await page.evaluate(() => {
+  const b = document.getElementById('command-input');
+  return { fresh: b !== window.maskedBox, type: b.type, value: b.value, focused: document.activeElement === b,
+    autocomplete: b.getAttribute('autocomplete'), count: document.querySelectorAll('#command-input').length };
+});
+check(box.fresh && box.type === 'text' && box.count === 1, 'unmasking swaps in a fresh text box: ' + JSON.stringify(box));
+check(box.value === '' && box.focused && box.autocomplete === 'off', 'which is empty, keeps the focus and its attributes');
+await gmcp('Room.Info', room);
+await clear();
+await page.keyboard.type('look');
+await page.keyboard.press('Enter');
+await page.keyboard.press('Enter');
+check(JSON.stringify(await sent()) === JSON.stringify(['look']) && await menuOpen(), 'the fresh box sends and opens the menu: ' + JSON.stringify(await sent()));
+await page.keyboard.press('Escape');
+
 await browser.close();
 server.close();
 console.log(failures ? failures + ' failure(s)' : 'all passed');

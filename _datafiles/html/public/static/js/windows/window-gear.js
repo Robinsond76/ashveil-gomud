@@ -778,6 +778,7 @@
         if (!panel) { return; }
         const active = document.activeElement;
         const focusKey = active && panel.contains(active) && active.dataset.gearFocus;
+        keepScroll(panel);
         panel.replaceChildren();
         const tabs = document.querySelectorAll('#gear-window .gw-tab-btn');
         tabs[0].textContent = 'Equipment';

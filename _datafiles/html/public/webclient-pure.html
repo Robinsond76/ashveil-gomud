@@ -1253,6 +1253,7 @@
     <script src="{{ .ASSET_BASE_URL }}/static/js/xterm/xterm-addon-fit.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/mp3.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/fx.js"></script>
+    <script src="{{ .ASSET_BASE_URL }}/static/js/keep-scroll.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/vwin.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/webclient-core.js"></script>
     <script src="{{ .ASSET_BASE_URL }}/static/js/company-data.js"></script>
@@ -1713,7 +1714,7 @@
     <button id="connect-button">Connect to {{ .CONFIG.Server.MudName }}</button>
 
     <div id="input-area">
-        <input type="text" id="command-input" placeholder="Enter command...">
+        <input type="text" id="command-input" name="mud-command" placeholder="Enter command..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-lpignore="true" data-1p-ignore data-form-type="other">
     </div>
 
     <script>
