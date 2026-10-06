@@ -6,6 +6,7 @@ import (
 
 	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/stretchr/testify/assert"
@@ -270,4 +271,30 @@ func TestBattlePayloadOutlook(t *testing.T) {
 	f.Dark = true
 	raw, _ = json.Marshal(buildBattle(f))
 	assert.NotContains(t, string(raw), "outlook", "the dark hides it, as scout")
+}
+
+// TestBattleEnemiesCarrySprites (40f): the payload names each enemy's
+// sprite key; a mob's own key wins, else its race's silhouette, and an
+// unknown race stands as a humanoid.
+func TestBattleEnemiesCarrySprites(t *testing.T) {
+	f := battleFacts{InBattle: true, Enemies: []enemyFact{
+		{Id: 1, Label: "a wolf", Standing: true, Sprite: "wolf-timber", Health: 5, HealthMax: 5},
+		{Id: 2, Label: "an ogre", Standing: true, Sprite: "unknown-large", Row: 1, Health: 5, HealthMax: 5},
+	}}
+	raw, err := json.Marshal(buildBattle(f))
+	require.NoError(t, err)
+	var got struct {
+		Enemies []struct{ Sprite string } `json:"enemies"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &got))
+	require.Len(t, got.Enemies, 2)
+	assert.Equal(t, "wolf-timber", got.Enemies[0].Sprite)
+	assert.Equal(t, "unknown-large", got.Enemies[1].Sprite)
+
+	own := &mobs.Mob{Sprite: "bandit-captain"}
+	assert.Equal(t, "bandit-captain", battleSprite(own))
+	assert.Equal(t, "unknown-humanoid", battleSprite(nil))
+	for race, want := range map[string]string{"Ogre": "unknown-large", "canine": "unknown-beast", "goblin": "unknown-humanoid", "": "unknown-humanoid"} {
+		assert.Equal(t, want, raceSprite(race), race)
+	}
 }

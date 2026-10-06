@@ -19,6 +19,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/GoMudEngine/GoMud/internal/assessment"
@@ -28,6 +29,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/mobparty"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/races"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
@@ -89,7 +91,8 @@ type enemyFact struct {
 	Seen              bool // a fallen one may be named: not last seen hidden
 	Row, Col          int
 	Health, HealthMax int
-	Reach             bool // the player can strike it from their cell
+	Reach             bool   // the player can strike it from their cell
+	Sprite            string // Phase 40f: its battle-screen sprite key
 	Target            targetFact
 }
 
@@ -120,6 +123,9 @@ type battleEnemy struct {
 	Health string     `json:"health"`
 	Reach  *bool      `json:"reach,omitempty"`
 	Target string     `json:"target,omitempty"`
+	// Phase 40f: the battle screen's sprite key (the mob's own, else its
+	// race's unknown-* silhouette).
+	Sprite string `json:"sprite,omitempty"`
 }
 
 type battleFallen struct {
@@ -200,7 +206,7 @@ func buildBattle(f battleFacts) any {
 		}
 		listed[e.Id] = true
 		be := battleEnemy{ID: mobID(e.Id), Label: e.Label, Cell: battleCell{Row: e.Row, Col: e.Col},
-			Health: enemyparty.HealthWord(e.Health, e.HealthMax)}
+			Health: enemyparty.HealthWord(e.Health, e.HealthMax), Sprite: e.Sprite}
 		if f.Placed {
 			reach := e.Reach
 			be.Reach = &reach
@@ -334,6 +340,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 		if m != nil && m.Character.Health > 0 && m.Character.RoomId == room.RoomId && inGroup[id] {
 			key := mobparty.MemberKeyFor(id)
 			e.Standing = true
+			e.Sprite = battleSprite(m)
 			e.Hidden = m.Character.HasBuffFlag("hidden")
 			e.Row, e.Col, _ = group.Party.Formation.Find(key)
 			e.Health, e.HealthMax = m.Character.Health, m.Character.HealthMax.Value
@@ -505,4 +512,32 @@ func savedFocus(userID int) string {
 		return string(rule)
 	}
 	return string(strategy.NoFocus)
+}
+
+// battleSprite is the sprite key the battle screen draws a mob with (Phase
+// 40f): the mob spec's own, else a silhouette by race, so an enemy the
+// art doesn't know yet still stands as a shape of the right kind.
+func battleSprite(m *mobs.Mob) string {
+	if m == nil {
+		return "unknown-humanoid"
+	}
+	if m.Sprite != "" {
+		return m.Sprite
+	}
+	race := races.GetRace(m.Character.GetRaceId())
+	if race == nil {
+		return "unknown-humanoid"
+	}
+	return raceSprite(race.Name)
+}
+
+// raceSprite maps a race name to its fallback silhouette.
+func raceSprite(name string) string {
+	switch strings.ToLower(name) {
+	case "ogre", "troll", "golem", "tree", "eldritch horror", "giant spider":
+		return "unknown-large"
+	case "rodent", "canine", "insect", "reptile", "reptilian", "lagomorph", "monkey", "fungus", "orb", "ghostly spirit", "faerie":
+		return "unknown-beast"
+	}
+	return "unknown-humanoid"
 }
