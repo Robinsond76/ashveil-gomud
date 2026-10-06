@@ -85,6 +85,14 @@ Markets:
         TargetStock: 10
         StartStock: 8
         DriftStep: 1
+      - ItemId: 70 # doll parts (Phase 39d); mend a Doll Master's dolls, only bought back unused
+        BasePrice: 12
+        MinPrice: 8
+        MaxPrice: 24
+        MaxStock: 30
+        TargetStock: 15
+        StartStock: 10
+        DriftStep: 1
       # Phase 32f: packs raise a member's carrying share; saddles fit horses
       # bought at a stable (help mount).
       - ItemId: 31 # satchel (+5 kg)

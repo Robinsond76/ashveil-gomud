@@ -121,4 +121,21 @@ const (
 	Crit      = "crit"      // critical chance points on every blow
 	Bodyguard = "bodyguard" // times a battle it steps in for the company leader
 	Vengeance = "vengeance" // percent more damage for each fallen ally
+
+	// The Doll Master's lineage (Phase 39d). The doll is a durable fighter
+	// in a cell of its own that acts on its Master's turn.
+	DollGuards  = "dollguards"  // times a battle the doll guards its most hurt neighbour (Guard String)
+	DollTangle  = "tangle"      // knows Tangle: strings snag a foe and push its action meter back
+	TangleFoes  = "tanglefoes"  // foes a Tangle snags (one when absent)
+	TangleCD    = "tanglecd"    // rounds off Tangle's cooldown
+	TanglePush  = "tanglepush"  // action meter points added to a Tangle's push
+	Splice      = "splice"      // knows Emergency Splice: a doll that would break stands back up once a battle
+	SplicePct   = "splicepct"   // percent of its health a spliced doll stands back up at (25 when absent)
+	DollCount   = "dollcount"   // dolls beyond the first
+	DollHPPct   = "dollhppct"   // each doll's health as a percent of the standard doll's (100 when absent)
+	DollHPBonus = "dollhpbonus" // percent points added to that
+	DollArmor   = "dollarmor"   // armor each doll carries on its own body
+	DollNoWear  = "dollnowear"  // a doll that cannot wear armor (a golem's body is its armor)
+	DollAttack  = "dollattack"  // Attack added to each doll's blows
+	DollDamage  = "dolldamage"  // damage added to each doll's blows
 )

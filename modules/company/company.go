@@ -214,6 +214,7 @@ func init() {
 	m.plug.AddUserCommand("patch", m.patchUserCommand, false, false) // Phase 35b: company patch
 	m.plug.AddUserCommand("class", m.classCommand, false, false)     // Phase 38b: promotion
 	m.plug.AddUserCommand("talent", m.talentCommand, false, false)   // Phase 38b: talents
+	m.plug.AddUserCommand("doll", m.dollCommand, false, false)       // Phase 39d: a Doll Master's dolls
 	m.plug.Callbacks.SetOnLoad(m.load)
 	m.plug.Callbacks.SetOnSave(func() {
 		// Phase 22b: record live companions' gear before writing.

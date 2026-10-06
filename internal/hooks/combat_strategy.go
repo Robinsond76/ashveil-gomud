@@ -219,8 +219,8 @@ func sideActors(u *users.UserRecord, room *rooms.Room) []actor {
 	for _, instanceId := range room.GetMobs(rooms.FindCharmed) {
 		leaderId, key, ok := company.LeaderAndKeyForInstance(instanceId)
 		m := mobs.GetInstance(instanceId)
-		if !ok || leaderId != u.UserId || m == nil || m.Character.Health < 1 {
-			continue
+		if !ok || leaderId != u.UserId || m == nil || m.Character.Health < 1 || isDollInstance(instanceId) {
+			continue // Phase 39d: a doll has no turn of its own
 		}
 		arch := ""
 		if id, ok := company.CompanionIDFromMemberKey(key); ok {

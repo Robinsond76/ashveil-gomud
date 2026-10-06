@@ -1,0 +1,23 @@
+raceid: 25
+name: doll
+defaultpronouns: it
+description: A jointed wooden doll on strings, driven by a Doll Master.
+defaultalignment: 0
+size: medium
+groupnoun: dolls
+unarmedname: wooden fist
+tnlscale: 1.0
+tameable: false
+stats:
+  strength:
+    base: 3
+  speed:
+    base: 2
+  vitality:
+    base: 3
+damage:
+  diceroll: 1d4
+disabledslots: []
+# Phase 39d: a doll never breaks its nerve; it breaks only when its health is gone.
+neverbreak: true
+targeting: nearest

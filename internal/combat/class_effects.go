@@ -40,6 +40,10 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	if src.RT != nil && src.RT.BlowPct > 0 && dmg > 0 {
 		dmg = max(1, (dmg*src.RT.BlowPct+50)/100)
 	}
+	// Phase 39d: a doll's blows carry its Master's carving.
+	if src.RT != nil && src.RT.Doll != nil && src.RT.Doll.Damage > 0 && dmg > 0 {
+		dmg += src.RT.Doll.Damage
+	}
 	fx := src.ClassEffects()
 	var summon *characters.SummonInfo
 	if src.RT != nil {

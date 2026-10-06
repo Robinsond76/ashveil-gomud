@@ -1,0 +1,79 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">dollmaster</ansi>
+
+The Doll Master fights through a wooden doll. The Master stays behind with
+a dagger and a rod; the doll stands in front and does the striking. The
+doll is the Master's whole turn, so a Doll Master company has six bodies
+but only five turns. The doll never dodges, but it takes blows in the Master's
+place and breaks instead of dying. It is a neutral class: it has no
+alignment gate to meet.
+
+<ansi fg="yellow-bold">What the Doll Master is</ansi>
+
+  Health      1 to start, 0.55 a level to level 20 (<ansi fg="command">help health</ansi>)
+  Skill       Attack 0.7 and Evasion 0.8 a level (<ansi fg="command">help evasion</ansi>)
+  Gear        light armor, no shield, daggers, rods and staffs (<ansi fg="command">help armor</ansi>)
+  Stats       smarts 4, perception 3, speed 2, mysticism 1 (<ansi fg="command">help growth</ansi>)
+  Starts with the Puppetry skill, which its abilities draw on
+  Starter kit a dagger, a cap, a shirt, boots, food, a waterskin, a knapsack and
+              doll parts
+
+<ansi fg="yellow-bold">The doll</ansi>
+
+  Where       it stands in the formation for a battle and takes no company slot
+              (<ansi fg="command">help formation</ansi>); it is gone when the battle ends
+  Health      70% of a warrior's at the Master's level
+  Attack      90% of the Master's level; it never dodges (Evasion 0)
+  Gear        its own weapon (a cudgel to start) and armor, put on with
+              <ansi fg="command">doll wield</ansi> and <ansi fg="command">doll wear</ansi> (<ansi fg="command">help doll</ansi>)
+  Breaking    at 0 health it breaks and is out of the battle, never lost: its
+              gear stays on it and it comes back mended
+  Persistence it is saved on the Master: name, wear, gear and breaks survive
+              a restart
+  No mana, no food, no experience: a doll isn't a person
+
+<ansi fg="yellow-bold">How a Doll Master fights</ansi>
+
+Its abilities need no command and use no mana (<ansi fg="command">help abilities</ansi>):
+
+  <ansi fg="yellow-bold">Puppet Strike</ansi>     the doll strikes in its Master's place on every turn the Master
+                  has, at the foe the Master aims at (or one the front row puts
+                  in the way). The Master does not swing. With no doll able to
+                  act (broken, stunned or on the ground) the Master swings
+                  itself.
+  <ansi fg="yellow-bold">Guard String</ansi>      from level 5, the doll steps in and takes a blow meant for the
+                  most hurt ally beside it: twice a battle, three times from
+                  level 8.
+  <ansi fg="yellow-bold">Tangle</ansi>            from level 12, strings snag the foe the doll strikes and push its
+                  action meter back by half a turn (a quarter for a boss). At
+                  most once every 3 rounds, and the same foe can't be tangled
+                  again for 2 rounds.
+  <ansi fg="yellow-bold">Emergency Splice</ansi>  from level 18, once a battle a doll that would break stands back
+                  up at 25% health, and its Master loses its next turn.
+
+Each blow is a real blow: it can miss, be dodged, blocked or parried, and a
+foe it wounds can lose a chant (<ansi fg="command">help interrupts</ansi>). A doll that is stunned or knocked
+down loses its strike, as any fighter does (<ansi fg="command">help statuses</ansi>). Turn abilities off
+with <ansi fg="command">strategy [member] abilities off</ansi>.
+
+<ansi fg="yellow-bold">Mending</ansi>
+
+Doll parts mend dolls. Each part mends a doll for 10 health plus 3 for each
+level of its Master, broken dolls first. The end of a camp rest mends the
+company's dolls with the leader's parts (<ansi fg="command">help camp</ansi>), or use <ansi fg="command">doll mend</ansi>
+out of battle. Doll parts are sold in Dunmar's market; they are only bought
+back unused.
+
+<ansi fg="yellow-bold">Routes</ansi>
+
+At level 10 a Doll Master promotes to a Puppeteer, a Golemancer or a
+Marionettist. All three are open at any alignment (<ansi fg="command">help dollmaster-routes</ansi>).
+
+<ansi fg="yellow-bold">Companions</ansi>
+
+A Doll Master companion fights the same way, with a doll of its own that stands
+in front of it. Recruits are hired like any other (<ansi fg="command">help company</ansi>); <ansi fg="command">doll [member]</ansi> shows its
+doll. Put the Master in the back row and leave the front of its column free.
+
+Commands: <ansi fg="command">doll</ansi>, <ansi fg="command">archetype</ansi>, <ansi fg="command">class</ansi>, <ansi fg="command">strategy</ansi>, <ansi fg="command">help dollmaster-routes</ansi>.
+
+See also: <ansi fg="command">help doll</ansi>, <ansi fg="command">help dollmaster-routes</ansi>, <ansi fg="command">help abilities</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help archetype</ansi>, <ansi fg="command">help classes</ansi>, <ansi fg="command">help combat</ansi>.

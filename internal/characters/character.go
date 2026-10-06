@@ -133,6 +133,7 @@ type Character struct {
 	ScribeReset         bool                           `yaml:"scribereset,omitempty"`      // Ashveil 36a: any old (33f1-retired) scribe rank was refunded once
 	KnownSecretExits    []string                       `yaml:"knownsecretexits,omitempty"` // Ashveil 33f2: secret exits spotted by Keen Eye, "<roomId>:<exit>"
 	Wounds              []wounds.Wound                 `yaml:"wounds,omitempty"`           // Ashveil Phase 30b: wounds holding back health (the wound limit)
+	Dolls               []DollState                    `yaml:"dolls,omitempty"`            // Ashveil Phase 39d: a Doll Master's durable dolls
 	roomHistory         []int                          // A stack FILO of the last X rooms the character has been in
 	PlayerDamage        map[int]int                    `yaml:"-"` // key = who, value = how much
 	LastPlayerDamage    uint64                         `yaml:"-"` // last round a player damaged this character
@@ -1254,6 +1255,9 @@ func (c *Character) SetAggroRemote(exitName string, userId int, mobInstanceId in
 }
 
 func (c *Character) SetAggro(userId int, mobInstanceId int, aggroType AggroType, roundsWaitTime ...int) {
+	if c.RT != nil && c.RT.Doll != nil {
+		return // Phase 39d: a doll has no aim of its own; its Master's turn is its strike
+	}
 	if c.CombatWithdrawn {
 		return
 	}
@@ -1740,6 +1744,10 @@ func (c *Character) RecalculateStats() {
 	c.HealthMax.Mods = stats.SaturatingSum(cfgProg.HealthAtLevel(c.Level, c.Stats.Vitality.ValueAdj, c.HealthGainPerLevel(), c.HPStart()), c.StatMod(string(statmods.HealthMax)))
 	// Phase 38b: a talent's percent more health, on the worked-out total.
 	c.HealthMax.Mods = classPct(c.HealthMax.Mods, classFx.Int(classes.HealthPct))
+	// Phase 39d: a doll's health is its own share of a warrior's.
+	if c.RT != nil && c.RT.Doll != nil && c.RT.Doll.HPPct > 0 {
+		c.HealthMax.Mods = c.HealthMax.Mods * c.RT.Doll.HPPct / 100
+	}
 
 	c.ManaMax.NoCap = true
 	manaBase, manaPerLevel := c.ManaRates()

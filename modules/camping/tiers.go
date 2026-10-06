@@ -11,10 +11,12 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
+	"github.com/GoMudEngine/GoMud/internal/dolls"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/survival"
+	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 	"github.com/GoMudEngine/GoMud/internal/wounds"
 )
@@ -245,6 +247,14 @@ func (m *CampingModule) grantPendingTiers() {
 		// unidentified gear (and a worn item reveals itself).
 		if campRest {
 			for _, line := range archetypes.CampIdentify(leaderUserID) {
+				user.SendText(line)
+			}
+		}
+		// Phase 39d: the rest also lets a Doll Master mend its dolls with the
+		// leader's doll parts, the leader's own first, then companions' by
+		// number.
+		if campRest {
+			for _, line := range mendRestDolls(user, live) {
 				user.SendText(line)
 			}
 		}
@@ -546,4 +556,60 @@ func (m *CampingModule) onPlayerSpawn(e events.Event) events.ListenerReturn {
 		m.dropBuff(user.Character, settings.RestedBuffId)
 	}
 	return events.Continue
+}
+
+// mendRestDolls mends the company's dolls at the end of a camp rest (Phase
+// 39d) with the leader's doll parts, the leader's dolls first and then each
+// live companion's by number.
+func mendRestDolls(user *users.UserRecord, live map[int]*characters.Character) []string {
+	type master struct {
+		name string
+		char *characters.Character
+	}
+	var masters []master
+	if dolls.IsMaster(user.Character) {
+		masters = append(masters, master{"You", user.Character})
+	}
+	ids := make([]int, 0, len(live))
+	for id := range live {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	for _, id := range ids {
+		if c := live[id]; c != nil && dolls.IsMaster(c) {
+			masters = append(masters, master{c.Name, c})
+		}
+	}
+	if len(masters) == 0 {
+		return nil
+	}
+	chars := make([]*characters.Character, len(masters))
+	for i, m := range masters {
+		chars[i] = m.char
+	}
+	needs := false
+	for _, c := range chars {
+		needs = needs || dolls.NeedsMending(c)
+	}
+	if !needs {
+		return nil
+	}
+	if dolls.Parts(user.Character) == 0 {
+		return []string{"Your dolls stay worn: you have no doll parts."}
+	}
+	taken, used := dolls.MendCompany(user.Character, chars)
+	for _, itm := range taken {
+		events.AddToQueue(events.ItemOwnership{UserId: user.UserId, Item: itm, Gained: false})
+	}
+	var lines []string
+	for i, n := range used {
+		if n > 0 {
+			verb := "mend"
+			if masters[i].name != "You" {
+				verb = "mends"
+			}
+			lines = append(lines, fmt.Sprintf("%s %s the dolls through the night with %d doll part(s).", masters[i].name, verb, n))
+		}
+	}
+	return lines
 }

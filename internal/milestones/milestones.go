@@ -14,7 +14,7 @@ type Milestone struct {
 
 // Flip Shipped only in the phase that delivers the corresponding choice.
 var schedule = [...]Milestone{
-	{3, "second class option", false, []string{"wizard", "cleric", "witch", "halberdier"}},
+	{3, "second class option", false, []string{"wizard", "cleric", "witch", "halberdier", "dollmaster"}},
 	{5, "talent", false, nil},
 	{10, "class promotion", false, nil},
 	{15, "talent", false, nil},
