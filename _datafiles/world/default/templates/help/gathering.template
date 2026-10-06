@@ -70,7 +70,10 @@ a companion's pack or the cargo. A damp bundle lights only on a second try
 and the smoky fire it makes gives no warmth. With no firewood you cannot
 light the fire, so you cannot rest at camp (an inn is not affected). Markets
 sell bundles but never buy them back: prepare before you set out, and
-<ansi fg="command">camp status</ansi> shows the fuel your company carries (<ansi fg="command">help camp</ansi>).
+<ansi fg="command">camp status</ansi> shows the fuel your company carries (<ansi fg="command">help camp</ansi>). One
+bundle fuels one rest: a finished rest leaves embers, and the next one needs
+the fire fed again. Fire steel and tinder light damp wood first time with
+full warmth (<ansi fg="command">help camp gear</ansi>).
 
 Gathered fish is cooked into grilled fish (<ansi fg="command">help cooking</ansi>); herbs, meat and
 hides feed cooks, markets and the trades.

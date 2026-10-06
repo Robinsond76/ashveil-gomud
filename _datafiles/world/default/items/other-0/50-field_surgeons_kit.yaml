@@ -1,0 +1,12 @@
+itemid: 50
+name: field surgeon's kit
+namesimple: surgeon's kit
+description: A roll of needles, gut thread, clean linen and a small flask of spirits.
+  Packed for a camp rest, it has a healer with mana left treat one lasting wound,
+  on whoever is worst hurt, before the rest's other healing. Five uses and it is
+  spent (help camp gear).
+type: object
+subtype: mundane
+uses: 5
+value: 25
+weight: 1500

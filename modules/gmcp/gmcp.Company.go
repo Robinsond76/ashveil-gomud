@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/GoMudEngine/GoMud/internal/camping"
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/companyview"
 	"github.com/GoMudEngine/GoMud/internal/events"
@@ -76,10 +77,15 @@ type companyMember struct {
 	Status    string  `json:"status"`
 	Level     int     `json:"level"`
 	Archetype *string `json:"archetype"`
-	// Class is its advanced or elite class name, Tier "advanced" or
-	// "elite", Rank the highest rank level reached, and Promotion "ready"
-	// or "waiting-gate" (Phase 38c1); each omitted when empty.
-	Class     string       `json:"class,omitempty"`
+	// Class is its promoted class id (Phase 40s5 art key); omitted before
+	// promotion.
+	Class string `json:"class,omitempty"`
+	// ClassName is the class's display name (e.g. "Dread Knight"), sent with
+	// Class so the company list and battle caption can name it.
+	ClassName string `json:"class_name,omitempty"`
+	// Tier is "advanced" or "elite", Rank the highest rank level reached,
+	// and Promotion "ready" or "waiting-gate" (Phase 38c1); each omitted
+	// when empty.
 	Tier      string       `json:"tier,omitempty"`
 	Rank      int          `json:"rank,omitempty"`
 	Promotion string       `json:"promotion,omitempty"`
@@ -210,7 +216,11 @@ func memberOf(m companyview.Member, leaderUserID int, chemistry chemistryFunc) c
 	if !m.Leader || m.ArchetypeKnown {
 		out.Archetype = strPtr(m.Archetype)
 	}
-	out.Class, out.Tier, out.Rank, out.Promotion = m.ClassName, m.ClassTier, m.ClassRank, m.Promotion
+	out.Class, out.ClassName = m.Class, m.ClassName
+	if c, ok := classes.Get(m.Class); ok && m.Class != "" && out.ClassName == "" {
+		out.ClassName = c.Name
+	}
+	out.Tier, out.Rank, out.Promotion = m.ClassTier, m.ClassRank, m.Promotion
 	if m.Placed {
 		out.Cell = &companyCell{Row: m.Row, Col: m.Col}
 	}
@@ -319,7 +329,7 @@ func newCompanyFeed() *companyFeed {
 		accepting: nativeAccepting,
 		gearOpen:  map[int]gearWatch{},
 	}
-	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf), battleExtra(gatherBattle)}
+	f.extras = []companyExtra{inventoryExtra(), equipmentExtra(f.watchingGear), conditionsExtra(), capabilitiesExtra(), campExtra(camping.CampStateOf, partyCamps), battleExtra(gatherBattle)}
 	return f
 }
 

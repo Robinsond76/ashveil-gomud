@@ -87,6 +87,176 @@ Follow-ups: the Druid itself trails the Priest and even an unpromoted cleric
 in the boss mirror (10-40% vs 37-47%), and Barkskin takes most idle turns;
 a "Druid tuning" pass belongs with 39i or a small phase.
 
+**Phase 40a3 complete (2026-10-06, PR #45): camp gear.** The fuel rule
+and six durable camp items. A finished camp rest now burns the fire down to
+**embers** (`Camp.Embers`): embers keep the room warm until the camp is broken
+(a damp fire's embers stay cold) but give no light, and resting again needs
+`camp fire` again, which spends another bundle (or the deadfall in a firewood
+room); the camp then takes a fresh rest session (new operation id), once the
+last rest's recovery is in. A camp saved before this phase burns down on load.
+New items 45-50 (`bedroll` 2.5 kg, 8 gold; `oiled canvas tent` 9 kg, 40;
+`fire steel and tinder` 0.2 kg, 5; `iron cookpot` 3 kg, 12; `camp bells and
+trip lines` 1 kg, 6, 10 uses; `field surgeon's kit` 1.5 kg, 25, 5 uses), sold
+at the Dunmar and Old Kings Road markets (road dearer) as `SupplyOnly`, so none
+buys back. `modules/camping/gear.go` counts the gear through
+`company.CompanyItemCount` (cargo, the leader's pack, present companions'
+packs; separated and dead members' packs are skipped) before `m.mu`, and locks
+it on the rest (`RestSession.Bedrolls/Bells/Kit`, `Camp.Tent`, all saved, so a
+restart or copyover mid-rest keeps them). **Bedrolls:** one per member, leader
+first then companions by number; `survival.ApplyCompanyRestRecoveryBonus` gives
+those members +25% of the rest's fatigue on top (the ledger keeps the base
+amount, so a replay is still a no-op). **Tent:** counts as shelter for the
+weather (never stacks with a shelter room), makes the camp room a heat source
+while resting (no rest-time cold), shows in `look`, `camp status` and GMCP
+`Company.Camp.tent`. **Fire steel:** damp bundles light first time at full
+warmth. **Cookpot:** `camp cook` makes two portions of a dish with two or more
+inputs. **Bells:** a flat 20% spot chance with no watch, +10 points on a watch
+capped at 90, one use worn when a rest starts; their own warning line.
+**Surgeon's kit:** at the end of an unbroken camp rest a healer who knows Tend
+Wounds and has the mana tends the worst lasting wound of the most wounded
+member present (`company.FieldSurgery`), before bandages and splints; one use
+worn only when a wound was treated. The rest start, `camp status` and the
+rest-complete line report the gear in use. Web: the Camp tab shows embers
+("Feed fire"), the tent, and offers Rest again once the fire is fed
+(`/mnt/project-files/screens/40a3-camp-embers.png`); GMCP `Company.Camp` gains
+`embers` and `tent` for 40b's map sprites. Help: new `help camp gear` (indexed
+under `road`; aliases bedroll, tent, cookpot, fire steel, camp bells, trip
+lines, surgeon's kit, embers) and updates to camp, gathering, campwatch,
+cooking and wounds; tutorial: the Survival lesson hands out a bedroll and a
+fire steel with its supplies and the Camp hints explain embers and gear.
+Design: [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md).
+Decisions (builder, owner delegation): (1) gear in the cargo counts without a
+horse check: cargo has no per-horse presence concept and always travels with
+the company, so the design's "cargo with its horse present" is met by the
+existing cargo rules; (2) the bells wear one use at every rest start, raid or
+not (the design's "wears 10 rests"); (3) no restring or restock service: a spent
+set of bells or a kit is bought again (the 3 and 10 gold refill prices were
+dropped; items with uses already model wear and a refill action would be a new
+shop mechanic); (4) gear is sold `SupplyOnly` and is never loot, so nothing
+gathered for free sells for more than a low-level fight pays; (5) the tutorial
+gear is granted with the Survival supplies (same once-only flag) because stage
+entry grants only there; (6) the cookpot is read when cooking, not locked on a
+rest, since `camp cook` is its own command; (7) the tent is pitched when the
+camp is made and refreshed at `camp fire` and `camp rest`. Not folded in: the
+40a2 follow-ups (gather progress as a web panel, a redraw on regrowth) are
+about gathering and the map, not camp gear; both stay open (the map redraw
+belongs with 40b).
+Review (2026-10-06): checked the fuel rule and repeat rests (a new operation
+id per rest, the last rest's recovery settled first, the burn-down of old
+saves), the bedroll ledger, raid spotting with bells, the kit's
+before-refill mana gate, item ids 45-50 (no clash with master or any open
+branch) and the economy (all six `SupplyOnly`; objects never salvage; a
+generic merchant pays at most a quarter of value, so the tutorial's free
+bedroll and fire steel fetch about 2 gold each, once per character:
+accepted). Kept the builder's three decisions: cargo counts without a horse
+check (cargo always travels with the company under 32f), bells wear at every
+rest start (a count the player can predict: "10 rests"), and no restring
+service (rebuying at 6 and 25 gold costs little and needs no new shop
+mechanic). Fixed: `camp status` between rests now lists the gear at hand
+and what it will do (`campGear.lines` was unused, so a player saw the gear
+only once a rest began), with a regression test and the help updated; the
+dock browser check timed out because the 40f battle screen opens over the
+Combat tab, so it now sets the screen to manual (battle-check covers the
+screen), and its focus-bar count was stale (eight buttons, not seven).
+Follow-ups: the web Camp tab and GMCP carry only the tent and embers, not
+bedrolls, bells or the kit (candidate: a gear line in `Company.Camp`);
+the 40b map draws a burned-down camp as a cold fire (candidate: an embers
+sprite from `Company.Camp.embers`).
+
+**Phase 40s5 reviewed and merged (2026-10-06, Opus review thread):** the
+class art, GMCP `class` key and battle-window fallback are sound; promoted
+classes read apart from their base at 1x in the contact sheet and the battle
+screen (UI check screenshot kept outside the repo as
+`screens/40s5-battle.png` in the project files).
+Decision (delegated): `TestEveryBuiltClassHasArt` no longer fails when a
+built class has no art, because elite (38c) and neutral (39) classes are
+built in parallel and the battle screen already falls back to the base
+class (or a silhouette for a lineage with no art). It logs each pending
+class and its fallback instead; the later art pass runs it with
+`ASHVEIL_ART_STRICT=1`, which fails until every built class has art. It
+still fails when `promotedClasses` names a class that does not exist.
+UI check, fixed in review: the company list showed a promoted member only
+by its base archetype ("Warrior" for a Paladin) and the battle caption only
+by name, so Company GMCP members now also carry `class_name`; the company
+card shows the class (its line on hover) and the battle caption reads
+"Wren, Paladin, striking …"; `help battlescreen` says so (tests: GMCP
+payload, `TestBattleScreenHelp`, and assertions in
+`scripts/browser/battle-check.mjs` and `dock-windows-check.mjs`).
+Follow-ups: `score` and the Character window still show no class (38b
+follow-up); `dock-windows-check.mjs` stalls at its Combat-tab hover since
+40f because the battle screen opens over the tab (pre-existing; the 40s5
+assertions run before that point); three members in one row overlap
+heavily on the battle screen. Merged master (44 smoke, 40a2 shaman
+renumber: same mob 97, kept the shaman's own sprite) and 40g (battle
+animation): a promoted member uses its own class's pose sheets once its
+idle exists, never the base class's, so it does not flicker between looks.
+
+**Phase 40s5 built: class art, art set S5 (2026-10-06):** map sprites
+(down/up/side, idle and walk) and battle idles for the 23 promoted classes on
+master (the 18 level-10 classes plus Paladin, Hierarch, Elder Druid, Blood
+ Priest, Demonologist and Dread Knight), the Angel and Demon summons (large
+units) and a goblin shaman of its own (was the hexer's art); `scripts/sprites/promoted.py`,
+`summoned.py`, `make sprites` now also writes
+[`docs/verification/40s5-contact-sheet.png`](verification/40s5-contact-sheet.png).
+Forks, with reasons: (1) each promoted class is its lineage's base figure with
+ramps swapped and a few accessories, not a new rig, so a promotion reads as a
+step up and the S0 proportions and anchors hold for free; (2) good routes go
+lighter with brass, neutral earth-toned, evil darker with ember touches, using
+the existing 64-color palette only; (3) the Company GMCP member now carries
+`class` (promoted class id, omitted before promotion) and the battle window
+draws `battle/units/<class>/idle.png` when the manifest lists it, falling back
+to the base class, so the art shows today; (4) mobs `95-angel`, `96-demon` and
+the shaman use `sprite:` keys; (5) the goblin shaman is mob 97 (master made the same fix in 40a2, since 38b's Angel holds id 95). Elite (38c) and neutral (39) classes still
+`Planned` are left to a later art pass: warlord, pathfinder, swordmaster,
+nightblade, sentinel, marksman, ravager, archon, archmage, necromancer,
+wise-one, coven-mother, crone-of-ash; `TestEveryBuiltClassHasArt` lists built classes
+with no art (see the review below), and `TestMobSpriteKeysHaveArt` checks every mob
+`sprite:` key. The 40b map window (merged alongside) draws a promoted
+player's class map sprite first, so the S5 map art shows there too. No new player command, so no help page. Gates: `make generate`, `make validate`, `make js-lint`, `go test ./scripts` and `go test -race ./...` green; `TestAimedShotGrowsWithLevel` failed once in the full run (a random-roll comparison, 14 vs 15) and passed on three reruns, unrelated to this change.
+
+**Phase 40b complete, merged via [PR #43](https://github.com/Robinsond76/ashveil-gomud/pull/43) (2026-10-06): map sprites in the web client.** The Map
+window draws you as your class sprite (chain: current class, lineage,
+`adventurer`, then the classic red square), a gold here-ring under you and the
+company badge (members present with the leader, hidden alone), all drawn above
+the terrain so you never blend in. Moves walk tile to tile facing the way you
+went (up/down/side, west mirrored), queue at most 2 steps behind and then snap;
+jumps (recall, teleport) do not walk; level or zone changes snap and fade in.
+Your camp draws as a tent with fire, smoke and a resting mark, `inn-rest` while
+resting at an inn; camps of your **party** draw as `tent-ally`; no other
+company's camp is ever sent or drawn. Party members with a known class draw as
+that class at 75% with an ally pennant, else stay hearts. Server: `Char.Info`
+and `Party` vitals gain `lineage` and `classid`; `Company.Camp` gains
+`room_id` and `allied_camps` (party members' camps only, regression-tested with
+a same-room outsider). New `static/js/sprites.js` loader (manifest, status,
+fallback, redraw) for 40c and later. Settings: Sprites and Camps. Help:
+`help worldmap` (aliases `map window`, `tile map`, `world map`), indexed, linked
+from `help webclient`, `help camp` and `help map`; Camp tutorial hint. Check:
+`scripts/browser/map-check.mjs` (facings, queue, badge, camp, allies,
+sprites-off, missing image); screenshot `screens/40b-map.png`.
+Decisions (delegated, with reasons): sprite scale is the nearest whole multiple
+of 32 px (half, 16 px, when zoomed out below a 16 px tile) so pixels stay
+square; `inn-rest` shows when the camp tile is `here`, an inn, and resting
+(`Company.Camp` has no separate inn-stay field, adding one is not worth a new
+payload); the unit walks on its own queue at 200 ms a tile while the camera
+keeps its existing ease; allied camps refresh with the company feed's changed-
+payload sends (no new event); the sprite loader does not yet replace the
+battle screen's own loader (follow-up, no behaviour change). Not changed: other
+players do not appear on the map, no race variants (owner deferrals).
+Review (Opus): decisions hold (whole-multiple scale keeps pixels square;
+inn-rest rule matches the payload; allied camps reach the client within a
+round because the company feed rebuilds every round). No leak: allied camps
+come only from accepted party members (not invitees), party sprites ride the
+existing party-only `Party.Vitals`. Accepted and fixed: a camp on your own
+tile was hidden under your sprite, so it is now pitched behind your left
+shoulder with the fire by your right foot (map-check regression); `help
+worldmap` claimed the map never shows more than `look`, though it shows your
+party's camps anywhere in the zone, reworded; after merging master (44's
+`ClassTitle` in `Char.Info`), the sprite-keys test's fake archetype provider
+gained `ArchetypeName`. Rejected: continuous redraw
+while sprites show is needed (every map sprite animates, and closing the
+window stops it). Follow-up: companions are not drawn on the map (only the
+badge count).
+
 **Phase 40g reviewed (2026-10-06, PR #40):** Checked the scheduler never
 drops a state change (a collapse applies every unfired op in order) and
 catches up after a round of backlog, that reduced motion drops lunges,
@@ -1098,7 +1268,7 @@ and the [sprite specification](designs/2026-10-05-sprite-specification.md).
 |---|---|---|
 | [40a](designs/2026-10-05-phase-40a-room-resources-design.md) | Room resources: data, `look` line, GMCP, map icons, water in survival, forage, shelter | S1 |
 | [40a2](designs/2026-10-05-phase-40a2-gathering-design.md) | Gathering: herbs, firewood, fishing, game; room pools; firewood for the camp fire | S1 |
-| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Design approved** | S1 |
+| [40a3](designs/2026-10-05-phase-40a3-camp-gear-design.md) | Camp gear: a firewood bundle per rest, plus bedroll, tent, fire steel, cookpot, bells, surgeon's kit. **Done (PR #45)** | S1 |
 | 40a4 | Camp theft without bells and trip lines (after 40a3) | — |
 | 40s1–40s5 | Art sets S0+S1, S2, S3, S4, S5 as code-generated pixel art (S5 after 38b) | S0–S5 |
 | [40b](designs/2026-10-05-phase-40b-map-sprites-design.md) | Class sprite on the map, company badge, own and allied camps | S0, S1 |

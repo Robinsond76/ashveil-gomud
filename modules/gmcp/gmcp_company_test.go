@@ -464,37 +464,52 @@ func TestCompanyPayloadTrainingFields(t *testing.T) {
 	assert.Equal(t, 0.0, awaiting["training_points"], "known, and zero")
 }
 
-// Phase 38c1: each member carries class, tier, rank and promotion, omitted
-// while empty.
+// Phase 38c1: each member carries class (id), class_name, tier, rank and
+// promotion, omitted while empty.
 func TestCompanyPayloadClassFields(t *testing.T) {
 	s := sampleCompany()
 	s.Leader.SetClass("ranger", "", 5, 0)
 	s.Companions[0].SetClass("warrior", "paladin", 49, 41)
 	s.Companions[1].SetClass("warrior", "knight", 30, 22)
 	s.Companions[2].SetClass("warrior", "mercenary", 30, 0)
-	p, ok := buildCompanyPayload(7, s, noChemistry)
-	require.True(t, ok)
-	data, err := json.Marshal(p)
-	require.NoError(t, err)
-	var got map[string]any
-	require.NoError(t, json.Unmarshal(data, &got))
+	got := companyJSON(t, s)
 
 	leader := got["leader"].(map[string]any)
-	for _, k := range []string{"class", "tier", "rank", "promotion"} {
+	for _, k := range []string{"class", "class_name", "tier", "rank", "promotion"} {
 		assert.NotContains(t, leader, k, "an unpromoted leader carries none")
 	}
 	members := got["members"].([]any)
 	paladin := members[0].(map[string]any)
-	assert.Equal(t, "Paladin", paladin["class"])
+	assert.Equal(t, "paladin", paladin["class"])
+	assert.Equal(t, "Paladin", paladin["class_name"])
 	assert.Equal(t, "elite", paladin["tier"])
 	assert.Equal(t, 45.0, paladin["rank"])
 	assert.NotContains(t, paladin, "promotion", "an elite has nothing further")
 	waiting := members[1].(map[string]any)
-	assert.Equal(t, "Knight", waiting["class"])
+	assert.Equal(t, "Knight", waiting["class_name"])
 	assert.Equal(t, "advanced", waiting["tier"])
 	assert.Equal(t, 25.0, waiting["rank"])
 	assert.Equal(t, "waiting-gate", waiting["promotion"])
 	ready := members[2].(map[string]any)
-	assert.Equal(t, "Mercenary", ready["class"])
+	assert.Equal(t, "Mercenary", ready["class_name"])
 	assert.Equal(t, "ready", ready["promotion"])
+}
+
+// TestCompanyMemberClass (Phase 40s5): a promoted member's class id travels
+// with it so the battle screen can draw the class's art; before promotion the
+// key is absent.
+func TestCompanyMemberClass(t *testing.T) {
+	s := sampleCompany()
+	s.Leader.Class = "paladin"
+	s.Companions[0].Class = "hag"
+	got := companyJSON(t, s)
+	assert.Equal(t, "paladin", got["leader"].(map[string]any)["class"])
+	members := got["members"].([]any)
+	assert.Equal(t, "Paladin", got["leader"].(map[string]any)["class_name"], "the display name travels with the id")
+	assert.Equal(t, "hag", members[0].(map[string]any)["class"])
+	assert.Equal(t, "Hag", members[0].(map[string]any)["class_name"])
+	_, has := members[1].(map[string]any)["class"]
+	assert.False(t, has, "an unpromoted member carries no class key")
+	_, has = members[1].(map[string]any)["class_name"]
+	assert.False(t, has, "nor a class name")
 }

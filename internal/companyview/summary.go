@@ -214,6 +214,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 			s.Leader.Row, s.Leader.Col = 0, 0
 		}
 	}
+	s.Leader.Class = classes.PlayerClass(uid).Class
 	s.Leader.Strategy = src.strategy(uid, company.LeaderMemberKey)
 	s.Leader.Abilities = strategy.PlayerAbilities(c.GetSkillLevel)
 	s.Tactics = strategy.Tactics{}.Resolve()
@@ -251,7 +252,7 @@ func (src sources) summary(user *users.UserRecord) Summary {
 		s.CompanyKnown = true
 		for _, v := range views {
 			m := Member{Key: company.CompanionMemberKey(v.ID), ID: v.ID, Name: v.Name, Status: v.Status, Level: v.Level,
-				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Placed: v.Placed, Row: v.Row, Col: v.Col,
+				ExpInto: v.ExpInto, ExpTNL: v.ExpTNL, ExpKnown: v.ExpKnown, Archetype: src.archetypeName(v.Archetype), Class: v.Class, Placed: v.Placed, Row: v.Row, Col: v.Col,
 				Skills: v.Skills, TrainingPoints: v.TrainingPoints}
 			m.SetClass(v.Archetype, v.Class, v.Level, v.Alignment)
 			m.Strategy = src.strategy(uid, m.Key)

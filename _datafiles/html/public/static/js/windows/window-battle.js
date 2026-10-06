@@ -290,6 +290,8 @@
             u.label = m.name || m.key;
             u.klass = String(m.archetype || '').toLowerCase();
             u.sprite = u.klass || 'adventurer';
+            u.promoted = String(m.class || '').toLowerCase();   // Phase 40s5: an advanced or elite class has its own art
+            u.className = m.class_name || '';
             u.cell = cell;
             u.leader = m.key === 'leader';
             u.role = (m.strategy && m.strategy.role) || '';
@@ -782,6 +784,7 @@
         const u = hover ? units.get(hover) : null;
         if (!u) { captionNode.textContent = battle && !outcomeText ? HINT : ''; return; }
         let text = u.label;
+        if (u.side === 'company' && u.className) { text += ', ' + u.className; }
         if (u.side === 'enemy' && u.band) { text += ', ' + u.band; }
         if (u.side === 'company' && u.fallen) { text += ', fallen'; }
         if (u.yielded) { text += ', surrendered'; }
@@ -999,9 +1002,12 @@
             return;
         }
         // Art: the pose's own sheet when there is one (S4), else the idle
-        // loop, anchored bottom-centre, enemies mirrored.
-        const posed = pose.anim ? art('battle/units/' + u.sprite + '/' + pose.anim + '.png') : null;
-        const sheet = posed || art('battle/units/' + u.sprite + '/idle.png');
+        // loop, anchored bottom-centre, enemies mirrored. A promoted member
+        // (40s5) keeps to its class's sheets once its idle exists, so it never
+        // flickers into the base class's poses.
+        const key = u.promoted && art('battle/units/' + u.promoted + '/idle.png') ? u.promoted : u.sprite;
+        const posed = pose.anim ? art('battle/units/' + key + '/' + pose.anim + '.png') : null;
+        const sheet = posed || art('battle/units/' + key + '/idle.png');
         if (sheet) {
             const fw = (sheet.info.frame || [64, 64])[0], fh = (sheet.info.frame || [64, 64])[1];
             const frames = sheet.info.frames || 1;
@@ -1451,7 +1457,7 @@
                 shaking: shakeUntil > Date.now(),
                 badge: !!badge && badge.classList.contains('show'),
                 units: Array.from(units.values()).map(u => ({
-                    id: u.id, side: u.side, label: u.label, sprite: u.sprite, cell: u.cell, frac: u.frac, band: u.band,
+                    id: u.id, side: u.side, label: u.label, sprite: u.sprite, promoted: u.promoted || "", cell: u.cell, frac: u.frac, band: u.band,
                     role: u.role, leader: u.leader, fallen: u.fallen, yielded: u.yielded, unseen: !!u.unseen,
                     statuses: Array.from(u.statuses), casting: u.casting, flashing: u.flash > Date.now(),
                     pose: u.cell ? poseOf(u, slot(u.side, u.cell.row, u.cell.col), Date.now()) : null,

@@ -3,8 +3,7 @@
 # blood breaks the chant. Only the Dark Forest's goblin-mending-band carries
 # one (about one group in six).
 mobid: 97
-# Shares the hexer's art until a shaman sprite is drawn.
-sprite: goblin-hexer
+sprite: goblin-shaman
 zone: Dark Forest
 itemdropchance: 5
 hostile: true

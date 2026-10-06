@@ -216,6 +216,30 @@ func SpendCompanyItem(leaderUserID, itemID int) bool {
 	return ok && sp.SpendCompanyItem(leaderUserID, itemID)
 }
 
+// SurgeryProvider is optionally implemented by the registered
+// FormationProvider (Phase 40a3): the field surgeon's kit at a finished
+// camp rest. Game loop only.
+type SurgeryProvider interface {
+	// FieldSurgery has a healer with mana tend the most wounded member's
+	// worst lasting wound, wearing one use off the kit (kitItemID) the
+	// company carries. It returns the lines to show and whether a wound was
+	// treated; nothing is worn when none was.
+	FieldSurgery(leaderUserID, kitItemID int) (lines []string, treated bool)
+}
+
+// FieldSurgery treats one lasting wound with the company's surgeon's kit;
+// false with no provider, no kit, no healer with mana, or no wound.
+func FieldSurgery(leaderUserID, kitItemID int) ([]string, bool) {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	sp, ok := p.(SurgeryProvider)
+	if !ok {
+		return nil, false
+	}
+	return sp.FieldSurgery(leaderUserID, kitItemID)
+}
+
 // ChemistryProvider is optionally implemented by the registered
 // FormationProvider (Phase 24). modules/company runs on the game loop, so
 // call these from the game loop only.

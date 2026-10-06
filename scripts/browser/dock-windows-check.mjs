@@ -22,7 +22,7 @@ function check(ok, what) {
 const xss = '<img src=x onerror="window.__xss=1">';
 const need = (value, label, warn) => ({ value, label, warn });
 const company = {
-  leader: { key: 'leader', id: 0, name: 'Wren', status: 'present', level: 5, archetype: 'Ranger', cell: { row: 0, col: 0 }, chemistry: null, strategy: { role: 'fighter', target: 'weakest' } },
+  leader: { key: 'leader', id: 0, name: 'Wren', status: 'present', level: 5, archetype: 'Ranger', class: 'warden', class_name: 'Warden', cell: { row: 0, col: 0 }, chemistry: null, strategy: { role: 'fighter', target: 'weakest' } },
   members: [
     { key: 'companion:1', id: 1, name: 'Oswin', status: 'present', level: 3, archetype: 'Cleric', cell: { row: 1, col: 1 }, chemistry: 'Trusted', strategy: { role: 'healer', target: 'weakest' } },
     { key: 'companion:2', id: 2, name: xss, status: 'present', level: 2, archetype: 'Warrior', cell: { row: 0, col: 1 }, chemistry: null, strategy: { role: 'fighter', target: 'leader' } },
@@ -48,6 +48,9 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 page.on('pageerror', e => { failures++; console.log('FAIL page error: ' + e.message); });
 await page.goto(process.env.DOCK_HARNESS_URL || 'file://' + path.join(here, 'dock-windows-harness.html'));
 await page.evaluate(() => localStorage.clear());
+// The battle screen (40f) opens over the dock on every battle and would
+// cover the Combat tab checked here; battle-check.mjs covers the screen.
+await page.evaluate(() => localStorage.setItem('ashveil-battle-screen', 'manual'));
 await page.reload();
 
 // --- Task 8: the vitals strip ---
@@ -157,6 +160,8 @@ const status = () => page.evaluate(() => document.getElementById('party-panel').
 check((await status()).includes('4 alive, 1 fallen') && (await status()).includes('Fallen: 1h 30m to raise'), 'Status: the 26b summary and cards');
 check(await page.getByRole('table', { name: /Formation/ }).count() === 1, 'Status: the formation table');
 check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, Health 12 of 25/ }).count() === 1, 'a member card has a spoken summary');
+check(await page.getByRole('listitem', { name: /Wren, level 5, Warden/ }).count() === 1
+  && await page.evaluate(() => document.querySelector('#party-panel [data-key=leader] .party-member-rank').title) === 'Ranger line', 'a promoted member card names its class, its lineage on hover (40s5)');
 check(!(await status()).includes('Travelling with'), 'no human party: no Travelling with');
 await page.evaluate(() => window.gmcp('Party', { Leader: 'Wren', Members: [{ Name: 'Wren', Position: 'leader', owner_user_id: 7, online: true, follow: false, support: true, autoattack: false }, { Name: '<b>Tamsin</b>', Position: 'member', owner_user_id: 8, online: false, follow: false, support: false, autoattack: false }], Invited: [], Vitals: { Wren: { health: 80, level: 5, location: 'Dunmar' }, '<b>Tamsin</b>': { health: 40, level: 4, location: 'Dunmar' } } }));
 check((await status()).includes('Travelling with') && (await status()).includes('<b>Tamsin</b>') && await page.locator('#party-panel b').count() === 0, 'a human party under Travelling with, names as text');
@@ -166,10 +171,10 @@ await page.evaluate(() => window.gmcp('Company.Vitals', { vitals: { 'companion:1
 check((await status()).includes('5/25') && await page.evaluate(() => document.activeElement && document.activeElement.getAttribute('data-key')) === 'companion:1', 'a vitals update applies, keeping focus on the card');
 // Phase 38c1: a promoted member shows its class with an elite badge and rank,
 // and a promotion that is ready or waiting on a gate.
-await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].class = 'Paladin'; g.members[0].tier = 'elite'; g.members[0].rank = 45; g.members[1].class = 'Knight'; g.members[1].tier = 'advanced'; g.members[1].rank = 25; g.members[1].promotion = 'waiting-gate'; g.leader.promotion = 'ready'; window.gmcp('Company', g); }, company);
-check((await status()).includes('Paladin \u2605 elite, rank 45') && (await status()).includes('Knight, rank 25'), 'a card shows the class, the elite badge and the rank');
+await page.evaluate(c => { const g = JSON.parse(JSON.stringify(c)); g.members[0].class = 'paladin'; g.members[0].class_name = 'Paladin'; g.members[0].tier = 'elite'; g.members[0].rank = 45; g.members[1].class = 'knight'; g.members[1].class_name = 'Knight'; g.members[1].tier = 'advanced'; g.members[1].rank = 25; g.members[1].promotion = 'waiting-gate'; g.leader.promotion = 'ready'; window.gmcp('Company', g); }, company);
+check((await status()).includes('\u2605 elite, rank 45') && (await status()).includes('advanced, rank 25'), 'a card shows the class, the elite badge and the rank');
 check((await status()).includes('Promotion ready') && (await status()).includes('Promotion waiting on alignment'), 'a card marks a promotion ready or waiting on alignment');
-check(await page.getByRole('listitem', { name: /Oswin, level 3, Cleric, Paladin elite rank 45, Health 12 of 25/ }).count() === 1, 'the spoken summary names the class');
+check(await page.getByRole('listitem', { name: /Oswin, level 3, Paladin, elite rank 45, Health 12 of 25/ }).count() === 1, 'the spoken summary names the class');
 await page.evaluate(c => window.gmcp('Company', c), company);
 await page.evaluate(c => window.gmcp('Company', c), company);
 
@@ -305,8 +310,12 @@ check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: true, rest_percent: 25, rest_seconds: 45, can_camp: false, inn: false }));
 check(JSON.stringify(await campButtons()) === '["Meal"]' && await page.getByRole('progressbar', { name: 'Rest' }).count() === 1, 'resting: the progress bar, no Rest or Break');
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Resting: 45s left.'), 'the time left');
-await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
-check(JSON.stringify(await campButtons()) === '["Break camp","Meal"]' && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('has rested at this camp'), 'after a rest: no Rest (review finding 7)');
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: false, embers: true, tent: true, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check(JSON.stringify(await campButtons()) === '["Feed fire","Break camp","Meal"]' && (await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('burned to embers'), 'after a rest: embers, Feed fire, no Rest until fed (40a3)');
+check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('oiled canvas tent'), 'a pitched tent shows (40a3)');
+if (outdir) { await page.locator('#company-camp').screenshot({ path: path.join(outdir, '40a3-camp-embers.png') }); }
+await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: true, room: '', fire_lit: true, embers: false, tent: false, resting: false, rested: true, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: false }));
+check(JSON.stringify(await campButtons()) === '["Rest","Break camp","Meal"]', 'a refed fire: Rest again (40a3)');
 await page.evaluate(() => window.gmcp('Company.Camp', { has_camp: true, here: false, room: 'A Clearing', fire_lit: true, resting: false, rest_percent: 0, rest_seconds: 0, can_camp: false, inn: true }));
 check((await page.evaluate(() => document.getElementById('company-camp').textContent)).includes('Your camp is at A Clearing.') && JSON.stringify(await campButtons()) === '["Meal","Inn"]', 'a camp elsewhere; an inn here');
 got = await sentNow(async () => { await page.locator('#company-camp').getByRole('button', { name: 'Inn' }).click(); });
@@ -572,7 +581,7 @@ const focused = JSON.parse(JSON.stringify(next));
 Object.assign(focused, { focus: 'none', saved_focus: 'none', focus_ready: true });
 await page.evaluate(b => window.gmcp('Company.Battle', b), focused);
 const bar = page.getByRole('group', { name: 'Company focus' });
-check(await bar.getByRole('button').count() === 7, 'seven focus buttons');
+check(await bar.getByRole('button').count() === 8, 'eight focus buttons');
 check((await page.locator('.cbt-focus [aria-pressed="true"]').allTextContents()).join() === 'none', 'the current focus is pressed');
 got = await sentNow(async () => { await page.locator('.cbt-focus [data-focus="leader"]').click(); });
 check(JSON.stringify(got) === '["company tactics focus leader"]', 'a focus button sends the order');
