@@ -1,5 +1,43 @@
 # Ashveil Project Status
 
+**Phase 45 reviewed and merged via [PR #53](https://github.com/Robinsond76/ashveil-gomud/pull/53) (2026-10-06, Opus review thread):** checked that watching an ally full size draws only what the feed already carries for allies (health bands, chant mark; no numbers, statuses or role letters, since the server never sends them), that the tap only swaps the view (inputs stay retreat and company focus), and that the prompt's progress text rides the existing `{activity}` token (refreshed per round like travel, no extra lines). Accepted and fixed: (1) typing `status` cancelled the gather, though the help and tutorial pointed players at `status` to watch it; the bare sheet and its aliases now keep the work (`status train` still stops it), help and the start message updated (`TestTypedCommandsCancelTheWork`); (2) `Room.Gather` result lines carried terminal colour tags (`<ansi fg="itemname">`) that the Room Info panel would print raw; the GMCP handler strips them (`TestRoomGatherCarriesTheWorksProgress`); (3) companion rows on the status sheet did not line up with `Members:`; labels are padded. Merged master (38c1 elites): 38c1 added its own promoted-class display (a `Class` row on the sheet and `route`/`tier`/`rank` in `Char.Info`, drawn in the Character window), so 45's duplicate (Path row as "Knight (Warrior)", `Char.Info.class` renamed with `lineage_name` and a hover) was dropped in favour of 38c1's; the Path row is the lineage again and the companion roster rows stay. Follow-ups: a client that reconnects mid-gather gets no bar until the next start (no resend of `Room.Gather` on login).
+
+**Phase 45 built: UI follow-ups (2026-10-06):** closes three gaps the 40s5, 40a2
+and 40g2 reviews listed. (1) **Class everywhere.** `status` (the sheet `score`
+aliases) names the leader's promoted class with its lineage ("Knight
+(Warrior)") on the Path row and lists each companion on the Company panel
+("Oswin: Priest (Cleric), Lv 6", fallen marked); `Member.RankName` in
+`companyview` is the one formatter. `Char.Info.class` is now the promoted
+class's name once promoted, with the lineage in `lineage_name`, which the web
+Character window shows on hover. The company roster and Company window
+already named classes (38b, 40s5). (2) **Gather progress.** The gathering
+module queues `events.GatherProgress` on start, finish and stop; the GMCP
+room module sends it as `Room.Gather` (phase, kind, label, seconds, lines)
+and the Room Info window shows a strip: a bar filled over the work's length
+with the seconds left, then the result lines (15 s) or "Work stopped".
+In text, `gathering.ProgressOf` (a provider seam like camping's) feeds
+`companyview.Activity` kind Gathering, so the prompt and the status
+Doing row read "Gathering herbs 40%, 12s left". (3) **Battle screen.** Tap an
+allied formation or its pennant to watch it full size (it swaps with the
+player's company, which shrinks into the ally's place as "your band"); tap the
+small band to return; the view returns itself when that company leaves.
+View only: inputs are still retreat and company focus. An ally's blow on a
+foe the player is not fighting (or by an undrawn third company) is dropped
+from the picture and the last-blow line rather than landing on nothing.
+Help: `gathering`, `status`, `battlescreen` updated; the gather and party
+tutorial hints point at the new displays. Tests: `modules/gathering`
+(announcements and provider), `companyview`, `usercommands` status sheet and
+help, `modules/gmcp` (Char.Info, Room.Gather), `scripts/browser/room-check.mjs`
+(Character and Room windows) and new sections of `battle-check.mjs`.
+Screenshots `screens/45-*.png`. Decisions (delegated): (a) the gather strip
+lives in the Room Info window, since the work is tied to the room and Room
+Info is always docked, not in the Camp tab or map (both off limits here); (b)
+the Doing row and prompt use a new activity kind rather than a new row, so
+every surface shows it; (c) watching is a pure view swap with no new server
+state; (d) dropping unseen-ally blows beats inventing a figure, because the
+feed already hides ally numbers; (e) the Path row keeps its label and shows
+the class with lineage in brackets rather than adding a Class row.
+
 **Phase 39a complete, merged via [PR #44](https://github.com/Robinsond76/ashveil-gomud/pull/44) (2026-10-06): the Halberdier.** the first neutral class,
 a polearm fighter that wins by crowding. Sweep (a whole-turn blow at 90% on
 the foe and its row neighbour, the whole row from level 8), Brace (answers
@@ -123,44 +161,6 @@ Samurai elites as still to come.
 Follow-ups: the Druid itself trails the Priest and even an unpromoted cleric
 in the boss mirror (10-40% vs 37-47%), and Barkskin takes most idle turns;
 a "Druid tuning" pass belongs with 39i or a small phase.
-
-**Phase 45 reviewed and merged via [PR #53](https://github.com/Robinsond76/ashveil-gomud/pull/53) (2026-10-06, Opus review thread):** checked that watching an ally full size draws only what the feed already carries for allies (health bands, chant mark; no numbers, statuses or role letters, since the server never sends them), that the tap only swaps the view (inputs stay retreat and company focus), and that the prompt's progress text rides the existing `{activity}` token (refreshed per round like travel, no extra lines). Accepted and fixed: (1) typing `status` cancelled the gather, though the help and tutorial pointed players at `status` to watch it; the bare sheet and its aliases now keep the work (`status train` still stops it), help and the start message updated (`TestTypedCommandsCancelTheWork`); (2) `Room.Gather` result lines carried terminal colour tags (`<ansi fg="itemname">`) that the Room Info panel would print raw; the GMCP handler strips them (`TestRoomGatherCarriesTheWorksProgress`); (3) companion rows on the status sheet did not line up with `Members:`; labels are padded. Merged master (38c1 elites): 38c1 added its own promoted-class display (a `Class` row on the sheet and `route`/`tier`/`rank` in `Char.Info`, drawn in the Character window), so 45's duplicate (Path row as "Knight (Warrior)", `Char.Info.class` renamed with `lineage_name` and a hover) was dropped in favour of 38c1's; the Path row is the lineage again and the companion roster rows stay. Follow-ups: a client that reconnects mid-gather gets no bar until the next start (no resend of `Room.Gather` on login).
-
-**Phase 45 built: UI follow-ups (2026-10-06):** closes three gaps the 40s5, 40a2
-and 40g2 reviews listed. (1) **Class everywhere.** `status` (the sheet `score`
-aliases) names the leader's promoted class with its lineage ("Knight
-(Warrior)") on the Path row and lists each companion on the Company panel
-("Oswin: Priest (Cleric), Lv 6", fallen marked); `Member.RankName` in
-`companyview` is the one formatter. `Char.Info.class` is now the promoted
-class's name once promoted, with the lineage in `lineage_name`, which the web
-Character window shows on hover. The company roster and Company window
-already named classes (38b, 40s5). (2) **Gather progress.** The gathering
-module queues `events.GatherProgress` on start, finish and stop; the GMCP
-room module sends it as `Room.Gather` (phase, kind, label, seconds, lines)
-and the Room Info window shows a strip: a bar filled over the work's length
-with the seconds left, then the result lines (15 s) or "Work stopped".
-In text, `gathering.ProgressOf` (a provider seam like camping's) feeds
-`companyview.Activity` kind Gathering, so the prompt and the status
-Doing row read "Gathering herbs 40%, 12s left". (3) **Battle screen.** Tap an
-allied formation or its pennant to watch it full size (it swaps with the
-player's company, which shrinks into the ally's place as "your band"); tap the
-small band to return; the view returns itself when that company leaves.
-View only: inputs are still retreat and company focus. An ally's blow on a
-foe the player is not fighting (or by an undrawn third company) is dropped
-from the picture and the last-blow line rather than landing on nothing.
-Help: `gathering`, `status`, `battlescreen` updated; the gather and party
-tutorial hints point at the new displays. Tests: `modules/gathering`
-(announcements and provider), `companyview`, `usercommands` status sheet and
-help, `modules/gmcp` (Char.Info, Room.Gather), `scripts/browser/room-check.mjs`
-(Character and Room windows) and new sections of `battle-check.mjs`.
-Screenshots `screens/45-*.png`. Decisions (delegated): (a) the gather strip
-lives in the Room Info window, since the work is tied to the room and Room
-Info is always docked, not in the Camp tab or map (both off limits here); (b)
-the Doing row and prompt use a new activity kind rather than a new row, so
-every surface shows it; (c) watching is a pure view swap with no new server
-state; (d) dropping unseen-ally blows beats inventing a figure, because the
-feed already hides ally numbers; (e) the Path row keeps its label and shows
-the class with lineage in brackets rather than adding a Class row.
 
 **Phase 40c reviewed and merged via [PR #49](https://github.com/Robinsond76/ashveil-gomud/pull/49) (2026-10-06, Opus review thread): terrain and landmark tiles.** Review: regrow watcher cost is bounded by rooms currently picked clean (entries dropped on full regrowth), `Ledger.Charges` is read-only, no game time touched; allied camp `embers`/`tent` add nothing beyond what party members already see. Accepted and fixed: (1) `World.Resources` went to every online player, telling them of rooms they had never visited; it now goes only to players who have visited the room (`TestWorldResourcesGoToVisitorsOnline`); (2) a regrow watch that found nothing clean stayed in the per-round scan forever; it is now dropped (`TestPickedCleanShowsOnLookAndQueuesARedraw`). Agreed with the builder: tiles ignore the size and spacing sliders (scaling 32 px art off-grid would smear it; zoom covers size). Built: the web map draws each room as its biome's S2 terrain tile (variant = room id mod 3), tiles touch, and a dark edge marks two touching rooms with no exit between them. Exits to unvisited rooms end in a fog tile, up and down exits show the S1 chevrons, and a room whose `maplegend` (or `mapsymbol`) maps in `sprites/map/landmarks.json` shows its landmark overlay; an unmapped symbol keeps its letter, outlined, and `Shore` is an intentional no-glyph legend. A biome with no art draws the `unknown` tile; art still loading or missing falls back to the classic colour square per room. Map settings gain `Style` (`tiles` default, `classic` unchanged; size, spacing and shape apply to classic only). Zoom moves on crisp steps (16 to 128 px tiles); animated biomes cycle at 250 ms and stop with reduced motion. Layer order: terrain, walls, fog, connections, landmark, resources, camps, units. Two follow-ups folded in: (1) regrowth now redraws the map: the gathering module watches rooms it picked clean and queues `RoomResourcesChanged` when a pool regrows (real time only), and the gmcp module sends every online player a small `World.Resources` update (room, shown, depleted) that the map patches into its room info; (2) companions are drawn beside you as their class at 75 percent (up to four, present only, class from the new `lineage`/`classid` fields on `Company` members: `lineage` plus the `class` key 40s5 added), with the badge still counting everyone. (3) camps use the 40a3 fields: `embers` draws the low-glowing embers sprite when the fire is not lit and `tent: false` draws the rough camp (bedrolls, no tent) instead of the tent, for your camp and, with the same two fields added to allied camps, your party's. Help: `help worldmap` (terrain, landmarks, companions, regrowth, Style) and `help webclient` updated, camp tutorial hint mentions the tiles. Tests: `TestMapLegendsHaveLandmarks` (every shipped `maplegend` maps or is an intentional glyph; landmark ids have art), gathering regrowth redraw, `World.Resources` payload, `Company` class ids, and the Chromium `scripts/browser/map-check.mjs` (tiles, walls, fog, landmarks, classic restore, missing-image fallback, reduced motion, crisp zoom, companions, regrowth redraw). Screenshots: `screens/40c-tiles.png`, `screens/40c-companions.png`. Decisions (owner delegation): tiles are the default (S2 covers every biome; classic kept); tiles ignore the room size and spacing sliders (32 px art, spacing equals size) rather than scaling art off-grid; the static-layer offscreen cache from the design is skipped (a few hundred `drawImage` calls per frame is cheap and the units already redraw continuously; revisit if a large zone measures slow); `Entrance` and `Exit` both use the cave mouth (the catacomb entrance shares it); regrow watching is in memory (a restart forgets it, and the client refreshes on the next World.Map). Follow-ups: S1 resource icons still draw as dots over tiles; the shared landmark table has no entry for shop, smithy or herbalist because no shipped room carries those legends yet (41/42 add rows).
 
