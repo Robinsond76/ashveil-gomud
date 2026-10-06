@@ -1,0 +1,46 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">quickmenu</ansi>
+
+In the web client you can play with the arrow keys and Enter, and never
+type. Everything the menu does is an ordinary command it types for you.
+
+<ansi fg="yellow-bold">Walking</ansi>
+
+  With the command box empty, the arrow keys walk: Up is <ansi fg="command">north</ansi>, Down is
+  <ansi fg="command">south</ansi>, Left is <ansi fg="command">west</ansi>, Right is <ansi fg="command">east</ansi> (the numpad does the same, with
+  the diagonals). As soon as you type something, the keys go back to
+  editing it. Alt+Up and Alt+Down recall earlier commands.
+
+<ansi fg="yellow-bold">The quick menu</ansi>
+
+  Press <ansi fg="yellow">Enter</ansi> on an empty command box. A menu opens over the game with
+  what you can do in this room:
+
+  <ansi fg="yellow">Battle</ansi>     only during a battle: Retreat, and the company focus
+               (<ansi fg="command">help battlescreen</ansi>)
+  <ansi fg="yellow">Look</ansi>       look around, or at anyone, anything or any exit here
+  <ansi fg="yellow">Attack</ansi>     the foes in the room, when there are any
+  <ansi fg="yellow">Move</ansi>       the exits (locked ones are marked), the places the map
+               knows (<ansi fg="command">walkto</ansi>), and a scout ahead
+  <ansi fg="yellow">Services</ansi>   a shop's wares, a trainer, a bank, an inn
+  <ansi fg="yellow">Get</ansi>        everything on the ground, or one thing, and loot after a battle
+  <ansi fg="yellow">Gather</ansi>     herbs, firewood, fishing, game and drinking water, for
+               whatever this room offers and has not picked clean
+               (<ansi fg="command">help gathering</ansi>)
+  <ansi fg="yellow">Company</ansi>    status, inventory, a meal, patching wounds, camp
+               (make camp, light the fire, rest, break camp) and tactics
+  <ansi fg="yellow">Me</ansi>         inventory, status, experience, quests, skills, effects, who
+  <ansi fg="yellow">Help</ansi>       this page and the main help topics
+
+  Up and Down move the highlight, and Enter chooses. An entry with an
+  arrow opens a smaller menu of choices (Attack lists the foes, Get lists
+  the things on the ground); choosing a command closes the menu and sends
+  it. Every menu ends with <ansi fg="yellow">Back</ansi> (<ansi fg="yellow">Close</ansi> at the first level), so you can
+  step back without leaving the arrow keys. Escape, Backspace and Left
+  also go back, Right opens an entry, and the keys 1 to 9 choose that
+  entry. Clicking an entry works too, and clicking away closes the menu.
+
+  The menu is built when it opens, from the room as it is now, so what it
+  lists is what would work. On a phone, the touch bar's <ansi fg="yellow">Menu</ansi> button opens
+  it (<ansi fg="command">help mobile</ansi>).
+
+See also: <ansi fg="command">help webclient</ansi>, <ansi fg="command">help walkto</ansi>, <ansi fg="command">help macros</ansi>

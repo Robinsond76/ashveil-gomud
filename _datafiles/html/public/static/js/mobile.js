@@ -33,7 +33,6 @@
     var QUICK = [
         { label: 'Look',      cmd: 'look',      title: 'Look around' },
         { label: 'Inventory', cmd: 'inventory', title: 'What you carry' },
-        { label: 'Status',    cmd: 'status',    title: 'Your status' },
         { label: 'Camp',      cmd: 'camp',      title: 'The camp: supplies, gear and rest' },
     ];
     var BAR_KEY = 'ashveil-touch-bar';
@@ -158,6 +157,9 @@
         stopBtn = button('Stop', 'Stop walking (walkto stop)', function () { send('walkto stop'); }, 'mb-btn mb-stop');
         stopBtn.hidden = true;
         row.appendChild(stopBtn);
+        row.appendChild(button('Menu', 'Quick commands for this room (help quickmenu)', function () {
+            if (window.QuickMenu) { QuickMenu.open(); }
+        }, 'mb-btn mb-menu'));
         QUICK.forEach(function (c) {
             // These answer in the game text, so bring it to the front.
             row.appendChild(button(c.label, c.title, function () { send(c.cmd); show('game'); }));

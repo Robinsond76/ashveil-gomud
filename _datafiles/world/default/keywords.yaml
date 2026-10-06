@@ -11,6 +11,7 @@ help:
       - password
       - delete
       - webclient
+      - quickmenu
       - mobile
     character:
       - actionpoints
@@ -324,6 +325,7 @@ help-aliases:
   retreat: [flee, withdrawal, company-withdrawal, escape]
   mercy: [surrender, surrendered, yield, yielding, execution]
   delete:           [deletion, delete-character, reroll]
+  quickmenu:        [quick menu, quick-menu, arrow keys, arrows, menu, enter menu, keyboard]
   webclient:        [web client, web-client, dock, panels, tabs, layout]
   mobile:           [phone, touch, touchscreen, touch bar, touch-bar, install, install app, add to home screen, pwa, web app]
   adventure:        [ashveil, basics]

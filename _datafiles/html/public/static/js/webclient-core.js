@@ -2633,8 +2633,12 @@ const Client = (() => {
                 return false;
             }
 
-            // Command history
-            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+            // Command history. With the box empty the arrows walk instead
+            // (the numpad shortcuts below), so Alt+Up and Alt+Down start
+            // the history; once it is showing, plain arrows keep going.
+            const arrowsWalk = textInput.value.length === 0 && historyPosition === 0 &&
+                !event.altKey && textInput.type !== 'password';
+            if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && !arrowsWalk) {
                 event.preventDefault();
                 historyPosition += (event.key === 'ArrowUp') ? 1 : -1;
                 if (historyPosition < 0) { historyPosition = 0; }
