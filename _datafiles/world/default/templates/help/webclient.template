@@ -8,6 +8,8 @@ button in them just types a command for you.
 
   <ansi fg="yellow">Time and Date</ansi>, then the <ansi fg="yellow">Map</ansi>, then the <ansi fg="yellow">Room</ansi> you stand in (its exits
   and who's here), and the <ansi fg="yellow">Tutorial</ansi> while you're taking the course.
+  The Time and Date sky also shows the weather where you are
+  (<ansi fg="command">help weather</ansi>).
 
   On the map, a small icon in a room's corner marks what it provides:
   fresh water, forage, shelter, and what you can gather. Hover for names;
