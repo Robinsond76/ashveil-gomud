@@ -37,6 +37,1705 @@
     512
    ]
   },
+  "battle/backgrounds/catacombs.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "dungeon"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/cave.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "cave"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/city.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "city",
+    "fort"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/deep-web.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "spiderweb"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/desert.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "desert"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/forest.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "forest"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/highlands.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "mountains",
+    "cliffs"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/ice-keep.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/interior.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "house"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/plains.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "land",
+    "farmland",
+    "default"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/road.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "road"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/shore.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "shore",
+    "water"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/slums.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "slums"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/snowfield.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "snow"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/swamp.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [
+    "swamp"
+   ],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/backgrounds/training-yard.png": {
+   "kind": "battle-background",
+   "set": "S3",
+   "frame": [
+    320,
+    180
+   ],
+   "frames": 1,
+   "biomes": [],
+   "ground_band": [
+    16,
+    100,
+    304,
+    176
+   ],
+   "size": [
+    320,
+    180
+   ]
+  },
+  "battle/mapping.json": {
+   "kind": "mapping",
+   "set": "S3"
+  },
+  "battle/ui/acting-arrow.png": {
+   "kind": "battle-ui",
+   "set": "S3",
+   "frame": [
+    8,
+    8
+   ],
+   "frames": 2,
+   "anchor": "center",
+   "frame_ms": 250,
+   "size": [
+    16,
+    8
+   ]
+  },
+  "battle/ui/cell-acting.png": {
+   "kind": "battle-ui",
+   "set": "S3",
+   "frame": [
+    32,
+    16
+   ],
+   "frames": 4,
+   "anchor": "center",
+   "frame_ms": 180,
+   "size": [
+    128,
+    16
+   ]
+  },
+  "battle/ui/cell-targeted.png": {
+   "kind": "battle-ui",
+   "set": "S3",
+   "frame": [
+    32,
+    16
+   ],
+   "frames": 2,
+   "anchor": "center",
+   "frame_ms": 250,
+   "size": [
+    64,
+    16
+   ]
+  },
+  "battle/ui/cell.png": {
+   "frame": [
+    32,
+    16
+   ],
+   "anchor": "center",
+   "kind": "battle-ui",
+   "set": "S3",
+   "frames": 1,
+   "size": [
+    32,
+    16
+   ]
+  },
+  "battle/ui/fallen.png": {
+   "frame": [
+    16,
+    16
+   ],
+   "anchor": "center",
+   "kind": "battle-ui",
+   "set": "S3",
+   "frames": 1,
+   "size": [
+    16,
+    16
+   ]
+  },
+  "battle/ui/hp-frame.png": {
+   "frame": [
+    32,
+    6
+   ],
+   "anchor": "top-left",
+   "kind": "battle-ui",
+   "set": "S3",
+   "frames": 1,
+   "size": [
+    32,
+    6
+   ]
+  },
+  "battle/ui/surrendered.png": {
+   "frame": [
+    16,
+    16
+   ],
+   "anchor": "center",
+   "kind": "battle-ui",
+   "set": "S3",
+   "frames": 1,
+   "size": [
+    16,
+    16
+   ]
+  },
+  "battle/units/acolyte-dark/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "cultist",
+   "names": [
+    "dark acolyte",
+    "dark acolyte trainer"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/adventurer/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/bats-echo/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    48,
+    48
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "center",
+   "facing": "right",
+   "size_class": "S",
+   "family": "cave",
+   "names": [
+    "echo bats"
+   ],
+   "note": "a flying swarm; no ground baseline",
+   "floating": true,
+   "size": [
+    192,
+    48
+   ]
+  },
+  "battle/units/bone-warden/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "undead",
+   "names": [
+    "bone warden"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/bonecrafter/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "undead",
+   "names": [
+    "bonecrafter"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/bonesetter/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "bandit",
+   "names": [
+    "poacher bonesetter",
+    "back-alley bonesetter"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/brigand/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "bandit",
+   "names": [
+    "road brigand"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/cleric/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit cleric"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/creeper-abyssal/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "cave",
+   "names": [
+    "abyssal creeper"
+   ],
+   "variant_of": "creeper-cave",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/creeper-cave/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "cave",
+   "names": [
+    "cave creeper"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/crocodile/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    72,
+    72
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 70,
+   "facing": "right",
+   "size_class": "L",
+   "family": "reptile",
+   "names": [
+    "crocodile"
+   ],
+   "size": [
+    288,
+    72
+   ]
+  },
+  "battle/units/dog-junkyard/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "canine",
+   "names": [
+    "junkyard dog"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/dummy-training/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "training",
+   "names": [
+    "training dummy"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/ent/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    72,
+    72
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 70,
+   "facing": "right",
+   "size_class": "L",
+   "family": "plant",
+   "names": [
+    "ent"
+   ],
+   "size": [
+    288,
+    72
+   ]
+  },
+  "battle/units/faerie/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    48,
+    48
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 46,
+   "facing": "right",
+   "size_class": "S",
+   "family": "fey",
+   "names": [
+    "faerie folk"
+   ],
+   "size": [
+    192,
+    48
+   ]
+  },
+  "battle/units/fungus/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "plant",
+   "names": [
+    "sentient fungus"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/goblin-hexer/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "goblin",
+   "names": [
+    "goblin hexer"
+   ],
+   "variant_of": "goblin",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/goblin-loot/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "goblin",
+   "names": [
+    "loot goblin"
+   ],
+   "variant_of": "goblin",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/goblin/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "goblin",
+   "names": [
+    "goblin"
+   ],
+   "note": "base for the variants and random encounters",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/grave-chanter/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "cultist",
+   "names": [
+    "grave chanter"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/guard-captain/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "town guard",
+   "names": [
+    "captain of the guard"
+   ],
+   "variant_of": "guard",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/guard-royal/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "town guard",
+   "names": [
+    "king's guard"
+   ],
+   "variant_of": "guard",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/guard/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "town guard",
+   "names": [
+    "guard"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/ice-guardian/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    72,
+    72
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 70,
+   "facing": "right",
+   "size_class": "L",
+   "family": "ice",
+   "names": [
+    "ice guardian"
+   ],
+   "size": [
+    288,
+    72
+   ]
+  },
+  "battle/units/ice-warrior/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "ice",
+   "names": [
+    "ice warrior"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/imp-forest/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    48,
+    48
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 46,
+   "facing": "right",
+   "size_class": "S",
+   "family": "fey",
+   "names": [
+    "forest imp"
+   ],
+   "size": [
+    192,
+    48
+   ]
+  },
+  "battle/units/lich/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    72,
+    72
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 70,
+   "facing": "right",
+   "size_class": "L",
+   "family": "undead",
+   "names": [
+    "lich"
+   ],
+   "note": "boss",
+   "size": [
+    288,
+    72
+   ]
+  },
+  "battle/units/ogre-forest/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    72,
+    72
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 70,
+   "facing": "right",
+   "size_class": "L",
+   "family": "ogre",
+   "names": [
+    "forest ogre"
+   ],
+   "size": [
+    288,
+    72
+   ]
+  },
+  "battle/units/poacher-shieldman/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "bandit",
+   "names": [
+    "poacher shieldman"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/poacher/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "bandit",
+   "names": [
+    "lake poacher"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/ranger/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit ranger"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/rat-big/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    48,
+    48
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 46,
+   "facing": "right",
+   "size_class": "S",
+   "family": "rodent",
+   "names": [
+    "big rat"
+   ],
+   "variant_of": "rat",
+   "size": [
+    192,
+    48
+   ]
+  },
+  "battle/units/rat/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    48,
+    48
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 46,
+   "facing": "right",
+   "size_class": "S",
+   "family": "rodent",
+   "names": [
+    "rat"
+   ],
+   "size": [
+    192,
+    48
+   ]
+  },
+  "battle/units/rogue/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit rogue"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/ruffian-dangerous/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "bandit",
+   "names": [
+    "dangerous ruffian"
+   ],
+   "variant_of": "ruffian",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/ruffian-enforcer/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "bandit",
+   "names": [
+    "ruffian enforcer"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/ruffian/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "bandit",
+   "names": [
+    "ruffian"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/shadow-master/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "shadow guild",
+   "names": [
+    "shadow master"
+   ],
+   "variant_of": "shadow-trainee",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/shadow-trainee/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "shadow guild",
+   "names": [
+    "shadow trainee"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/skeleton/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "undead",
+   "names": [
+    "skeleton"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/snow-floof/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    48,
+    48
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 46,
+   "facing": "right",
+   "size_class": "S",
+   "family": "snow",
+   "names": [
+    "snow floof"
+   ],
+   "size": [
+    192,
+    48
+   ]
+  },
+  "battle/units/spider-hatchling/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    48,
+    48
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 46,
+   "facing": "right",
+   "size_class": "S",
+   "family": "spider",
+   "names": [
+    "spider hatchling",
+    "baby spider"
+   ],
+   "size": [
+    192,
+    48
+   ]
+  },
+  "battle/units/spider-large/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "spider",
+   "names": [
+    "large spider"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/spider-queen/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    96,
+    96
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 94,
+   "facing": "right",
+   "size_class": "XL",
+   "family": "spider",
+   "names": [
+    "spider queen"
+   ],
+   "note": "boss",
+   "size": [
+    384,
+    96
+   ]
+  },
+  "battle/units/spider-warrior/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "spider",
+   "names": [
+    "spider warrior"
+   ],
+   "variant_of": "spider-large",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/stalker-cave/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "cave",
+   "names": [
+    "cave stalker"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/straw-archer/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "training",
+   "names": [
+    "straw archer"
+   ],
+   "variant_of": "straw-footman",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/straw-footman/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "training",
+   "names": [
+    "straw footman"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/unknown-beast/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "fallback",
+   "note": "fallback silhouette",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/unknown-humanoid/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "fallback",
+   "note": "fallback silhouette",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/unknown-large/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    72,
+    72
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 70,
+   "facing": "right",
+   "size_class": "L",
+   "family": "fallback",
+   "note": "fallback silhouette",
+   "size": [
+    288,
+    72
+   ]
+  },
+  "battle/units/warrior/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit warrior"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/witch/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit witch"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/wizard/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "class",
+   "names": [
+    "recruit wizard"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/wolf-snow/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "canine",
+   "names": [
+    "snow wolf"
+   ],
+   "variant_of": "wolf-timber",
+   "size": [
+    256,
+    64
+   ]
+  },
+  "battle/units/wolf-timber/idle.png": {
+   "kind": "battle-unit",
+   "set": "S3",
+   "frame": [
+    64,
+    64
+   ],
+   "frames": 4,
+   "frame_ms": 180,
+   "anchor": "bottom-center",
+   "feet_baseline": 62,
+   "facing": "right",
+   "size_class": "M",
+   "family": "canine",
+   "names": [
+    "timber wolf"
+   ],
+   "size": [
+    256,
+    64
+   ]
+  },
   "map/camp/camp-rough-ally.png": {
    "frame": [
     32,
@@ -174,6 +1873,384 @@
    ],
    "kind": "camp",
    "set": "S1",
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/alts.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/bank.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/boss-lair.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/bridge.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/caravan.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/cave-mouth.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/desert-ruin.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/dungeon-stair.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/gate.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/herbalist.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/hermit.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/inn.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/keep.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/lake-house.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/landmark.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/obelisk.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/pond.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/rocks.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/shaman.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/shop.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/smithy.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/temple.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/throne.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/townsquare.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/trainer.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/village.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/landmarks/wall.png": {
+   "kind": "landmark",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
    "frames": 1,
    "anchor": "center",
    "size": [
@@ -406,6 +2483,413 @@
    "size": [
     16,
     16
+   ]
+  },
+  "map/terrain/cave.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/city.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/cliffs.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/default.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/desert-anim.png": {
+   "kind": "terrain-anim",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frame_ms": 250,
+   "overlay": true,
+   "over": "desert.png",
+   "size": [
+    128,
+    32
+   ]
+  },
+  "map/terrain/desert.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": "desert-anim.png",
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/dungeon.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/farmland.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/fog.png": {
+   "kind": "terrain-state",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "overlay": true,
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/terrain/forest.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/fort.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/house.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/land.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/mountains.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/night-mask.png": {
+   "kind": "terrain-state",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "overlay": true,
+   "note": "dithered vignette; hard alpha, palette colors",
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/terrain/road.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/shore-anim.png": {
+   "kind": "terrain-anim",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frame_ms": 250,
+   "overlay": true,
+   "over": "shore.png",
+   "size": [
+    128,
+    32
+   ]
+  },
+  "map/terrain/shore.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": "shore-anim.png",
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/slums.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/snow-anim.png": {
+   "kind": "terrain-anim",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frame_ms": 250,
+   "overlay": true,
+   "over": "snow.png",
+   "size": [
+    128,
+    32
+   ]
+  },
+  "map/terrain/snow.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": "snow-anim.png",
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/spiderweb.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": null,
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/swamp-anim.png": {
+   "kind": "terrain-anim",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frame_ms": 250,
+   "overlay": true,
+   "over": "swamp.png",
+   "size": [
+    128,
+    32
+   ]
+  },
+  "map/terrain/swamp.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": "swamp-anim.png",
+   "size": [
+    96,
+    32
+   ]
+  },
+  "map/terrain/unknown.png": {
+   "kind": "terrain-state",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 1,
+   "size": [
+    32,
+    32
+   ]
+  },
+  "map/terrain/water-anim.png": {
+   "kind": "terrain-anim",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 4,
+   "frame_ms": 250,
+   "overlay": true,
+   "over": "water.png",
+   "size": [
+    128,
+    32
+   ]
+  },
+  "map/terrain/water.png": {
+   "kind": "terrain",
+   "set": "S2",
+   "frame": [
+    32,
+    32
+   ],
+   "frames": 3,
+   "variants": 3,
+   "animated_overlay": "water-anim.png",
+   "size": [
+    96,
+    32
    ]
   },
   "map/units/adventurer/idle.png": {
@@ -795,6 +3279,681 @@
    "size": [
     320,
     180
+   ]
+  },
+  "ui/conditions/ambush.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "conditions",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/conditions/cluster.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "conditions",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/conditions/cold.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "conditions",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/conditions/dark.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "conditions",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/conditions/fatigue.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "conditions",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/conditions/flanked.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "conditions",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/conditions/narrow.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "conditions",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/morale/flee.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "morale",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/morale/hold.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "morale",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/morale/nerve.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "morale",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/morale/shaken.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "morale",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/morale/yield.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "morale",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/roles/caster.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "roles",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/roles/controller.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "roles",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/roles/fighter.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "roles",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/roles/guardian.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "roles",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/roles/healer.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "roles",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/armor-broken.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/asleep.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/bleeding.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/blighted.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/burning.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/chanting.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/cold.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/dread.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/exposed.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/hamstrung.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/hidden.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/hobbled.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/knocked-down.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/lit.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/overloaded.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/paralyzed.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/poisoned.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/regenerating.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/staggered.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/stunned.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/tackled.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/tracked.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/warded.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/weakened.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/winded.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/winding-up.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/wounded-lasting.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
+   ]
+  },
+  "ui/status/wounded-light.png": {
+   "kind": "ui-icon",
+   "set": "S3",
+   "frame": [
+    16,
+    16
+   ],
+   "frames": 1,
+   "anchor": "center",
+   "group": "status",
+   "size": [
+    16,
+    16
    ]
   }
  }

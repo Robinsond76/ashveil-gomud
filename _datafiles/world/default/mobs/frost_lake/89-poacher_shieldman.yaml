@@ -2,6 +2,7 @@
 # has no guards to spend, so he only fights; the same role in a band or
 # better steps in front of the hurt.
 mobid: 89
+sprite: poacher-shieldman
 zone: Frost Lake
 itemdropchance: 3
 lootcategory: humanoid

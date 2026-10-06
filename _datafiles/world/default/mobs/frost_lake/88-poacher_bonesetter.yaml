@@ -1,6 +1,7 @@
 # Ashveil Phase 33i2: a rabble's healer (help coordination). She heals a
 # poacher below 30% of his health, and the gang starts one heal a round.
 mobid: 88
+sprite: bonesetter
 zone: Frost Lake
 itemdropchance: 3
 lootcategory: humanoid

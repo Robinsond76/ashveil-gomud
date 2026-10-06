@@ -1,4 +1,5 @@
 mobid: 80
+sprite: warrior
 zone: Dunmar
 # Phase 32a2 generated recruit base (warrior). Every player's generated
 # warriors spawn from this template under their own name, level, and

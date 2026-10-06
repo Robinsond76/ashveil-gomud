@@ -1,6 +1,7 @@
 # Ashveil Phase 33i2: a drilled company's guardian (help coordination).
 # Bone takes no wounds, and it steps in for the hurt twice a battle.
 mobid: 92
+sprite: bone-warden
 zone: Catacombs
 itemdropchance: 2
 hostile: true

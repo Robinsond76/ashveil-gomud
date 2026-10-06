@@ -1,4 +1,5 @@
 mobid:  12
+sprite: rat-big
 zone: Frostfang
 itemdropchance: 3
 hostile: false

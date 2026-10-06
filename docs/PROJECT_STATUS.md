@@ -1,5 +1,56 @@
 # Ashveil Project Status
 
+**Phase 40s2 + 40s3 reviewed (2026-10-06):** Art paths match what the 40f
+battle screen loads (`battle/units/<key>/idle.png` with `frame`, `frames` and
+`frame_ms` from the manifest, `battle/backgrounds/<id>.png` for all 11 scene
+ids, and the `unknown-humanoid/-beast/-large` race fallbacks). Accepted and
+fixed: (1) L and XL units covered three formation cells at 1x and hid whole
+units behind them; they are now drawn at 96/128 and shrunk 3/4 to 72/96 with
+the outline re-closed (`roster.shrink`), so they stand about 1.5x a person and
+the test checks each size class's frame; (2) the `lit` status was a white star
+read as `cold`, now a warm brass lantern; `staggered` is a plum spiral (was a
+white one like `hidden`); `hobbled` gained a chain and iron ball so it reads
+apart from `hamstrung`; (3) the forest backdrop's light shafts were bright
+grey dither crossing the units, now sparse green. Rejected: redrawing large
+units natively at 72 (timeboxed; the shrink keeps their silhouettes). UI
+follow-ups for 40f/40g: when a large unit stands in front, the client should
+still mark units it hides (draw their status and health pips above it, or
+ghost it); the crocodile is 71 px long and fills its lane. Gates after
+merging master (40a, 40f) pass; one full race run failed
+`TestSpellEventsThroughTheRealRound` ("mm never went off", modules/company)
+and it passed 5 of 5 reruns and the next full run, so it is a flaky 40e test
+to harden. Battle screen with the real art: `/mnt/project-files/screens/40f-battle-art.png`
+(the browser check needs HTTP, since `file://` skips the sprite manifest).
+
+**Phase 40s2 + 40s3 built: art sets S2 (terrain) and S3 (battle) (2026-10-06):**
+`make sprites` now also writes 179 files: S3 battle art (16 backgrounds
+320x180, 56 battle units with 4-frame idles, 7 formation markers, 47 status,
+role, morale and condition icons) and S2 (19 terrain biomes x 3 variants, 5
+animated overlays, fog, unknown and night-mask tiles, 27 landmark overlays).
+`battle/mapping.json` is the client key table (mob name -> unit id, biome ->
+background, zone overrides, race fallbacks); the manifest lists each unit's
+size class, family, names and baseline. 55 shipped mobs gained `sprite:` keys
+(the field is read by 40f; unknown to master until #35 merges, which ignores
+it). Review the art in [the contact sheet](verification/40s-s2-s3-contact-sheet.png).
+Tests (`go test ./scripts`): spec coverage, unit anchors (feet on row
+frame-2, 4 distinct frames), opaque backgrounds with a quiet ground band,
+quiet terrain tiles with a flat margin and no outline color, mob `sprite:`
+keys name real units. Class battle sprites now have 4-frame idles (ranger
+arrow nocked low, cleric shield, wizard staff glow, witch grave-mist) and the
+S0 style-battle frame uses the real ogre and goblins. Nothing is wired into the
+client yet (40f, 40c, 40g do that), so no help or tutorial change is due.
+Decisions (owner delegated): (1) the palette is already 64 colors, so snow and
+ice use steel/slate/bone ramps and no color was added; (2) terrain animations
+are 4-frame transparent overlays (`overlay: true`, `over:` names the tile) drawn
+on the roomId-chosen variant, so variants survive; fog and the night mask use
+hard-alpha dither, since the tests forbid partial alpha; (3) Winded has no sweat
+drops (art direction bans them); (4) `shadow-master`, `guard-royal` and
+`ruffian-dangerous` differ from their base in gear as well as color; (5) `bats-echo`
+is a floating swarm with no ground baseline; (6) tile and unit feet are aligned in
+`roster.py` so every grounded unit rests on row frame-2. Known soft spots for
+review: L and XL units overlap neighbours in the 3x3 at 1x (the 40f client can
+scale them); several status icons (hobbled, lit, staggered) are plain at 16 px.
+
 **Phase 40f built: battle screen in the web client (2026-10-06):** a battle
 opens as a picture (`window-battle.js`): the company left, the enemy right,
 each in its 3x3 formation on a 320x180 canvas scaled by whole numbers, over

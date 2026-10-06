@@ -1,4 +1,5 @@
 mobid: 21
+sprite: bonecrafter
 zone: Catacombs
 itemdropchance: 2
 hostile: false
