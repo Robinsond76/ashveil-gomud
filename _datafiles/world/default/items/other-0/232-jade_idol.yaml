@@ -1,0 +1,9 @@
+itemid: 232
+name: jade idol
+namesimple: idol
+description: 'A palm-sized idol of green jade. Heavy for its size, and worth the weight.'
+type: commodity
+subtype: mundane
+goods: valuable
+value: 150
+weight: 900

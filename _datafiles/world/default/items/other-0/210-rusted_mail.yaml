@@ -1,0 +1,9 @@
+itemid: 210
+name: rusted mail
+namesimple: mail
+description: 'A heap of rusted mail, good only for a smith''s scrap bin. It weighs a great deal.'
+type: commodity
+subtype: mundane
+goods: salvage
+value: 9
+weight: 6000

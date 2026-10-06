@@ -1,0 +1,14 @@
+itemid: 10153
+name: tempered war glaive
+namesimple: glaive
+description: 'A tempered war glaive with a heavy hooked blade, the weapon of veteran line-breakers.'
+type: weapon
+hands: 2
+subtype: slashing
+weaponclass: glaive
+tier: 3
+family: glaive
+reach: true
+damage:
+  diceroll: 1d12+2
+weight: 3400

@@ -1,4 +1,5 @@
 itemid: 20002
+tier: 1
 name: cape
 description: A plain cape that protects (poorly) from the elements.
 type: neck

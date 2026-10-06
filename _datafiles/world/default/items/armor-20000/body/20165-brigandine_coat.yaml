@@ -1,0 +1,11 @@
+itemid: 20165
+name: brigandine coat
+namesimple: coat
+description: 'Steel plates riveted inside a fabric coat, protection without the full weight of plate. It is body armor of the medium path.'
+type: body
+subtype: wearable
+bulk: medium
+tier: 3
+family: medium
+damagereduction: 14
+weight: 4000

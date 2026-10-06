@@ -1,0 +1,11 @@
+itemid: 20133
+name: hide jerkin
+namesimple: jerkin
+description: 'Rough hide cut and laced, the cheapest armor that still stops a blow. It is body armor of the leather path.'
+type: body
+subtype: wearable
+bulk: light
+tier: 1
+family: leather
+damagereduction: 5
+weight: 2000

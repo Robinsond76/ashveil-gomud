@@ -1,0 +1,9 @@
+itemid: 203
+name: troll tusk
+namesimple: tusk
+description: 'A great stained tusk from a troll, heavy as a club.'
+type: commodity
+subtype: mundane
+goods: trophy
+value: 36
+weight: 2500

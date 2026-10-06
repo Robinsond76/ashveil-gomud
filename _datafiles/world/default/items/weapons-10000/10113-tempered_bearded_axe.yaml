@@ -1,0 +1,13 @@
+itemid: 10113
+name: tempered bearded axe
+namesimple: axe
+description: 'A tempered steel axe whose long beard hooks shields and wrists alike.'
+type: weapon
+hands: 1
+subtype: cleaving
+weaponclass: axe
+tier: 3
+family: axe
+damage:
+  diceroll: 1d10
+weight: 1700

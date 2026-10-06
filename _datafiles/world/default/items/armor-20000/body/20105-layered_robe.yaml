@@ -1,0 +1,11 @@
+itemid: 20105
+name: layered robe
+namesimple: robe
+description: 'Many layers of fine cloth stitched together, light and surprisingly hard to cut. It is body armor of the cloth path.'
+type: body
+subtype: wearable
+bulk: light
+tier: 3
+family: cloth
+damagereduction: 4
+weight: 700

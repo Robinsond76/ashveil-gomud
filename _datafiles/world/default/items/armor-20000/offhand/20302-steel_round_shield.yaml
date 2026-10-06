@@ -1,0 +1,12 @@
+itemid: 20302
+name: steel round shield
+namesimple: shield
+description: 'A round shield faced with steel over seasoned boards.'
+type: offhand
+subtype: wearable
+shieldsize: shield
+bulk: medium
+tier: 2
+family: round shield
+damagereduction: 7
+weight: 3500

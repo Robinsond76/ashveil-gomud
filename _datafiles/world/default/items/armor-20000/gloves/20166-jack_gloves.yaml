@@ -1,0 +1,11 @@
+itemid: 20166
+name: jack gloves
+namesimple: gloves
+description: 'Padded canvas with iron rivets, a middle weight between leather and mail. It is hand protection of the medium path.'
+type: gloves
+subtype: wearable
+bulk: medium
+tier: 1
+family: medium
+damagereduction: 2
+weight: 600

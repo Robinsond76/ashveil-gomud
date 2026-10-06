@@ -1,0 +1,13 @@
+itemid: 10131
+name: iron short spear
+namesimple: spear
+description: 'A short iron-headed spear for one hand, so the other can hold a shield.'
+type: weapon
+hands: 1
+subtype: stabbing
+weaponclass: spear
+tier: 1
+family: spear
+damage:
+  diceroll: 1d6
+weight: 1300

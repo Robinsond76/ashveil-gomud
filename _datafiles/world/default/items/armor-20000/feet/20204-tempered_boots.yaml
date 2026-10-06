@@ -1,0 +1,11 @@
+itemid: 20204
+name: tempered boots
+namesimple: boots
+description: 'Tempered steel plate, fitted and padded, the best a town smith can make. It is footwear of the heavy path.'
+type: feet
+subtype: wearable
+bulk: heavy
+tier: 3
+family: heavy
+damagereduction: 6
+weight: 1800

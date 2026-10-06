@@ -1,0 +1,9 @@
+itemid: 242
+name: relic fragment
+namesimple: fragment
+description: 'A scrap of ancient metalwork worked with faded runes.'
+type: commodity
+subtype: mundane
+goods: curio
+value: 70
+weight: 300

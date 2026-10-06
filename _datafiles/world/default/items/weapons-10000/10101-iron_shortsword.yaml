@@ -1,0 +1,13 @@
+itemid: 10101
+name: iron shortsword
+namesimple: sword
+description: 'A plain iron shortsword with a leather-wrapped grip. It is the blade a militia drills with.'
+type: weapon
+hands: 1
+subtype: slashing
+weaponclass: sword
+tier: 1
+family: sword
+damage:
+  diceroll: 1d4+1
+weight: 1200

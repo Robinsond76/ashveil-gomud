@@ -1,0 +1,11 @@
+itemid: 20130
+name: hide cap
+namesimple: cap
+description: 'Rough hide cut and laced, the cheapest armor that still stops a blow. It is headgear of the leather path.'
+type: head
+subtype: wearable
+bulk: light
+tier: 1
+family: leather
+damagereduction: 2
+weight: 500

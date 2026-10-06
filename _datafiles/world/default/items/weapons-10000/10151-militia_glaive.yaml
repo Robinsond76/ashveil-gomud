@@ -1,0 +1,14 @@
+itemid: 10151
+name: militia glaive
+namesimple: glaive
+description: 'A broad curved blade on a long ash pole, issued to town militias. Two hands, and the reach to strike past the front rank.'
+type: weapon
+hands: 2
+subtype: slashing
+weaponclass: glaive
+tier: 1
+family: glaive
+reach: true
+damage:
+  diceroll: 1d10
+weight: 3000

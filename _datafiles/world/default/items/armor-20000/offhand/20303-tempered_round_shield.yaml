@@ -1,0 +1,12 @@
+itemid: 20303
+name: tempered round shield
+namesimple: shield
+description: 'A round shield with a tempered steel face and a padded grip.'
+type: offhand
+subtype: wearable
+shieldsize: shield
+bulk: medium
+tier: 3
+family: round shield
+damagereduction: 9
+weight: 3600

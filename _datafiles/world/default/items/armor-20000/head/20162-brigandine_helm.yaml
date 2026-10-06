@@ -1,0 +1,11 @@
+itemid: 20162
+name: brigandine helm
+namesimple: helm
+description: 'Steel plates riveted inside a fabric coat, protection without the full weight of plate. It is headgear of the medium path.'
+type: head
+subtype: wearable
+bulk: medium
+tier: 3
+family: medium
+damagereduction: 6
+weight: 1200

@@ -6,3 +6,4 @@ type: commodity
 subtype: mundane
 value: 12
 weight: 700
+goods: trophy

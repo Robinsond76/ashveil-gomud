@@ -1,0 +1,9 @@
+itemid: 213
+name: bent arrows
+namesimple: arrows
+description: 'A bundle of bent and broken arrows, worth only their heads.'
+type: commodity
+subtype: mundane
+goods: salvage
+value: 2
+weight: 800

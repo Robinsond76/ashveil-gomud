@@ -1,0 +1,11 @@
+itemid: 20171
+name: brigandine chausses
+namesimple: chausses
+description: 'Steel plates riveted inside a fabric coat, protection without the full weight of plate. It is leg armor of the medium path.'
+type: legs
+subtype: wearable
+bulk: medium
+tier: 3
+family: medium
+damagereduction: 8
+weight: 2200

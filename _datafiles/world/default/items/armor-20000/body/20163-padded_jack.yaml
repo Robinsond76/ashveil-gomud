@@ -1,0 +1,11 @@
+itemid: 20163
+name: padded jack
+namesimple: jack
+description: 'Padded canvas with iron rivets, a middle weight between leather and mail. It is body armor of the medium path.'
+type: body
+subtype: wearable
+bulk: medium
+tier: 1
+family: medium
+damagereduction: 8
+weight: 4000

@@ -1,0 +1,11 @@
+itemid: 20201
+name: tempered greaves
+namesimple: greaves
+description: 'Tempered steel plate, fitted and padded, the best a town smith can make. It is leg armor of the heavy path.'
+type: legs
+subtype: wearable
+bulk: heavy
+tier: 3
+family: heavy
+damagereduction: 10
+weight: 3500

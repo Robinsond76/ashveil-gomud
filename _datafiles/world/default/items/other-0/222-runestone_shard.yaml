@@ -1,0 +1,9 @@
+itemid: 222
+name: runestone shard
+namesimple: shard
+description: 'A shard of grey stone that hums faintly where the runes cross it. Smiths and sages will pay for it.'
+type: commodity
+subtype: mundane
+goods: material
+value: 60
+weight: 300
