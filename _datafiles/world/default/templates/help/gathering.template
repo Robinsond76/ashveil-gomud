@@ -1,0 +1,79 @@
+<ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">gathering</ansi>
+
+Out in the wild your company can work for its supplies instead of only
+buying them. A room that offers herbs, firewood, fishing or game says so on
+the "Here:" line when you <ansi fg="command">look</ansi> (<ansi fg="command">help resources</ansi>); the commands below do the work.
+Gathering takes real time and effort, can draw trouble, and strips a room
+for a while. It never advances the game clock.
+
+<ansi fg="yellow-bold">The commands</ansi>
+
+  <ansi fg="command">gather</ansi>
+  Lists what the room offers, how much is left, and what you can do.
+
+  <ansi fg="command">gather herbs</ansi>      20 s   herbs                             needs: nothing
+  <ansi fg="command">gather firewood</ansi>   20 s   2 firewood bundles                needs: nothing
+  <ansi fg="command">fish</ansi>              30 s   0 to 2 fish                       needs: a fishing line
+  <ansi fg="command">hunt</ansi>              30 s   raw game meat, now and then a hide   needs: nothing
+
+Only the leader of the company gives the order. The whole company takes
+part, so companions standing with you add to the haul. Any other command
+than <ansi fg="command">look</ansi> or <ansi fg="command">conditions</ansi>, moving, an attack, or a fight cancels the work with
+nothing gained. You can't start in battle, while resting or while travelling.
+
+<ansi fg="yellow-bold">What you find</ansi>
+
+  <ansi fg="yellow">Herbs</ansi>  1 to 2, such as wild thyme and mushrooms. A ranger (Forage,
+  <ansi fg="command">help forage</ansi>) adds one for every 2 levels, a bladed weapon in the company
+  adds one, and a Scribe may find one rarer herb. In darkness the haul is
+  halved. With no ranger present, 15 gathers in 100 return a worthless
+  bitter weed instead: telling good leaves from bad is a skill.
+
+  <ansi fg="yellow">Firewood</ansi>  2 bundles. A hatchet or axe (a cleaving weapon in the
+  company) doubles that, and a warrior's Field Smith skill adds one. In rain
+  or a storm half the bundles come back damp.
+
+  <ansi fg="yellow">Fish</ansi>  Two chances at 40 in 100 each, better with a ranger. The line
+  breaks now and then (5 in 100) and is lost. Fishing needs a room marked
+  fishing, or fresh water on a shore. Buy a fishing line at a market or
+  from the old fisherman at Frost Lake.
+
+  <ansi fg="yellow">Game</ansi>  Half the hunts bring something down; a ranger adds 5 points
+  for each level, up to 90. A bow, crossbow or sling in the company is the
+  way to hunt. Without one the company sets snares instead and keeps only
+  half the chance. A kill brings 2 raw game meat (3 with a ranger) and,
+  about one time in three, a hide or a pelt. Hunting is noisy: it adds 10
+  to the chance that a random encounter finds you (<ansi fg="command">help encounters</ansi>).
+
+<ansi fg="yellow-bold">Effort and danger</ansi>
+
+Every attempt costs the whole company the Fatigue of one step on that
+ground (half for fishing; <ansi fg="command">help strain</ansi>). Each attempt also rolls the
+zone's random encounter chance once, so a long stay in dangerous country
+draws a fight.
+
+<ansi fg="yellow-bold">Picked clean</ansi>
+
+Each room holds only so much: 3 herb gathers, 4 firewood gathers, 4 fishing
+attempts and 2 hunts. Every attempt that finishes spends one, even a fishing
+cast that catches nothing. One comes back every 20 minutes of real time
+(40 for game), and a restart never refills them early. The stock belongs to
+the room, so every company shares it: whoever arrives first takes the
+bounty. <ansi fg="command">look</ansi> adds "(picked clean)" after what is gone, and the web
+client's map draws that marker hollow with a slash.
+
+<ansi fg="yellow-bold">Firewood and the camp fire</ansi>
+
+<ansi fg="command">camp fire</ansi> needs fuel. In a room that offers firewood the deadfall feeds the
+fire for nothing. Anywhere else it burns one firewood bundle from your pack,
+a companion's pack or the cargo. A damp bundle lights only on a second try
+and the smoky fire it makes gives no warmth. With no firewood you cannot
+light the fire, so you cannot rest at camp (an inn is not affected). Markets
+sell bundles but never buy them back: prepare before you set out, and
+<ansi fg="command">camp status</ansi> shows the fuel your company carries (<ansi fg="command">help camp</ansi>).
+
+Gathered fish is cooked into grilled fish (<ansi fg="command">help cooking</ansi>); herbs, meat and
+hides feed cooks, markets and the trades.
+
+See also: <ansi fg="command">help resources</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help forage</ansi>, <ansi fg="command">help cooking</ansi>,
+<ansi fg="command">help survival</ansi>, <ansi fg="command">help cargo</ansi>.

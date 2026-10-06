@@ -16,7 +16,9 @@ with its own stock, not a fixed shop price.
   changes hands (<ansi fg="command">help cargo</ansi>).
 
   <ansi fg="command">market sell [good]</ansi>
-  Sells one unit of a good you carry.
+  Sells one unit of a good you carry. A few supplies, such as firewood
+  bundles and fishing lines, are sold but never bought back: their
+  You sell price reads <ansi fg="yellow">never</ansi>.
 
 Trading only works in the settlement's market room, not everywhere in
 its zone; asking elsewhere tells you where it is.

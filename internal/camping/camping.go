@@ -120,10 +120,13 @@ func (s RestSession) RemainingFor(now time.Time, duration time.Duration) time.Du
 
 // Camp is the durable leader-owned campsite record.
 type Camp struct {
-	LeaderUserID int          `yaml:"leader_user_id"`
-	RoomID       int          `yaml:"room_id"`
-	FireLit      bool         `yaml:"fire_lit"`
-	Rest         *RestSession `yaml:"rest,omitempty"`
+	LeaderUserID int  `yaml:"leader_user_id"`
+	RoomID       int  `yaml:"room_id"`
+	FireLit      bool `yaml:"fire_lit"`
+	// Damp is a fire lit with damp wood (Phase 40a2): it burns and gives
+	// light but no warmth.
+	Damp bool         `yaml:"damp,omitempty"`
+	Rest *RestSession `yaml:"rest,omitempty"`
 }
 
 func (c Camp) Validate() error {

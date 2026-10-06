@@ -20,6 +20,7 @@ containers:
       30019: [29, 29, 30018]
       30020: [29, 30018]
       30021: [29]
+      30024: [43]
     reciperequirements:
       30019:
         skillid: cooking
@@ -28,6 +29,9 @@ containers:
         skillid: cooking
         minlevel: 2
       30021:
+        skillid: cooking
+        minlevel: 1
+      30024:
         skillid: cooking
         minlevel: 1
 skilltraining:
