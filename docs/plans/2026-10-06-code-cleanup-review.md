@@ -63,6 +63,9 @@ Ranked by value. Each entry names the decision and its reason.
    (`onSettingsChanged`, `rawPosToX`), the WinBox-era `.vw-max/.vw-full/
    .vw-min` rules, `.cw-tt-*` tooltip CSS nothing renders, and 13 theme
    tokens defined in all 20 themes and read nowhere (260 lines).
+   Two Ashveil entries remain for their owners: `survival.AilmentKinds`
+   (phase 55, nothing calls it yet) and the `world.command` helper in
+   `modules/gathering/gathering_test.go`.
    `deadcode` also lists about 90 unreachable upstream GoMud functions
    (`internal/term`, `internal/markdown`, `internal/users/storage.go`,
    and so on); they were left alone so upstream merges stay clean.
