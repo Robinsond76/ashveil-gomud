@@ -108,6 +108,8 @@ func choose(rule Rule, pool []Foe, assistID int) (int, bool) {
 		}
 		return 0, false
 	case Casters:
+		// Casters first (Phase 35d): a chanting caster, else any caster,
+		// else the weakest foe.
 		for _, f := range pool {
 			if f.Chanting {
 				return f.ID, true
@@ -118,7 +120,7 @@ func choose(rule Rule, pool []Foe, assistID int) (int, bool) {
 				return f.ID, true
 			}
 		}
-		return 0, false
+		return best(func(a, b Foe) bool { return a.HP < b.HP })
 	case Assist:
 		for _, f := range pool {
 			if assistID > 0 && f.ID == assistID {

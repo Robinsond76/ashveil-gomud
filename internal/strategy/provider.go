@@ -51,3 +51,12 @@ func AutoSpells() []Spell {
 	}
 	return DefaultAutoSpells()
 }
+
+// StoredFor is what the player has set for a member, with blank fields left
+// blank (Phase 35d: the company's level defaults apply only to a blank).
+func StoredFor(userID int, key string) Strategy {
+	if p := current(); p != nil {
+		return p.Stored(userID, key)
+	}
+	return Strategy{}
+}

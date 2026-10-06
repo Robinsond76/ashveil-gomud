@@ -577,3 +577,24 @@ func ManageEquipment(id int, verb, rest string) (bool, string) {
 	}
 	return false, ""
 }
+
+// RosterProvider is optionally implemented by the registered
+// FormationProvider (Phase 35d): the ids of a leader's living companions in
+// roster order, placed in the formation or not.
+type RosterProvider interface {
+	LivingCompanionIDs(leaderUserID int) []int
+}
+
+// LivingCompanionIDs is the ids of the leader's living companions, in roster
+// order. It is empty when no provider is registered or the provider does not
+// track a roster.
+func LivingCompanionIDs(leaderUserID int) []int {
+	formationProviderMu.RLock()
+	p := formationProvider
+	formationProviderMu.RUnlock()
+	rp, ok := p.(RosterProvider)
+	if !ok {
+		return nil
+	}
+	return rp.LivingCompanionIDs(leaderUserID)
+}

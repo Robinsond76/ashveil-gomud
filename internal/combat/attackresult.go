@@ -34,6 +34,9 @@ type AttackResult struct {
 	// stopped (Phase 30g2), in order: DefenseBlocked, DefenseParried, or
 	// DefenseDodged.
 	Defenses []string
+	// Qualities is the quality (QualityGlancing, QualitySolid or
+	// QualityTelling) of each strike that landed, in order (Phase 35d).
+	Qualities []string
 }
 
 // Active defense outcomes (Phase 30g2).

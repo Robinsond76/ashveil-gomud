@@ -20,6 +20,11 @@ const NoFocus Rule = "none"
 // DefaultHealing is the healing threshold, in percent, until it is set.
 const DefaultHealing = 50
 
+// DefaultPatch is the patch threshold, in percent: the share of their wound
+// limit the company's healers patch everyone up to after a battle and on
+// `company patch` (Phase 35d), until it is set.
+const DefaultPatch = 80
+
 // FocusRules are the values a focus takes, in the order they are listed.
 // Assist and defend follow a person, so they are no company focus.
 var FocusRules = []Rule{NoFocus, Leader, Casters, Nearest, Weakest, Strongest, Wounded}
@@ -28,11 +33,54 @@ var FocusRules = []Rule{NoFocus, Leader, Casters, Nearest, Weakest, Strongest, W
 type Tactics struct {
 	Focus   Rule `yaml:"focus,omitempty"`
 	Healing int  `yaml:"healing,omitempty"`
+	// Patch is the threshold after-battle patching heals to (Phase 35d).
+	Patch int `yaml:"patch,omitempty"`
+}
+
+// The company's level ladder (Phase 35d): until the player sets a focus, the
+// company aims by a default that rises with its leader's level, as the
+// enemy's coordination does. An explicit focus, "none" included, always wins.
+const (
+	// WeakestFocusLevel is the leader level from which the company's
+	// default focus is the weakest foe.
+	WeakestFocusLevel = 10
+	// CastersFocusLevel is the leader level from which the default focus is
+	// casters first: casters while any stand, then the weakest.
+	CastersFocusLevel = 25
+)
+
+// DefaultFocusAt is the focus a company aims by at a leader level when the
+// player has set none: NoFocus (each member by its own rule) below level 10,
+// the weakest foe from 10, casters first from 25.
+func DefaultFocusAt(level int) Rule {
+	switch {
+	case level >= CastersFocusLevel:
+		return Casters
+	case level >= WeakestFocusLevel:
+		return Weakest
+	}
+	return NoFocus
+}
+
+// FocusFor is the focus the player's company aims by at the leader's level:
+// the focus they set, else the default for the level. defaulted is true when
+// the level's default is in force. NoFocus means each member goes by its own
+// rule.
+func FocusFor(userID, level int) (focus Rule, defaulted bool) {
+	var t Tactics
+	if p := currentTactics(); p != nil {
+		t = p.StoredTactics(userID)
+	}
+	if t.Focus == "" {
+		return DefaultFocusAt(level), true
+	}
+	return t.Focus, false
 }
 
 // IsZero reports whether nothing is set.
 func (t Tactics) IsZero() bool {
-	return (t.Focus == "" || t.Focus == NoFocus) && (t.Healing == 0 || t.Healing == DefaultHealing)
+	return t.Focus == "" && (t.Healing == 0 || t.Healing == DefaultHealing) &&
+		(t.Patch == 0 || t.Patch == DefaultPatch)
 }
 
 // Resolve fills blank fields with the defaults.
@@ -42,6 +90,9 @@ func (t Tactics) Resolve() Tactics {
 	}
 	if t.Healing == 0 {
 		t.Healing = DefaultHealing
+	}
+	if t.Patch == 0 {
+		t.Patch = DefaultPatch
 	}
 	return t
 }
@@ -78,6 +129,17 @@ func ParseHealing(s string) (int, bool) {
 	s = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(s), "%"))
 	n, err := strconv.Atoi(s)
 	if err != nil || n < 10 || n > 90 || n%10 != 0 {
+		return 0, false
+	}
+	return n, true
+}
+
+// ParsePatch reads a patch threshold: 50 to 100 percent, with or without a
+// percent sign.
+func ParsePatch(s string) (int, bool) {
+	s = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(s), "%"))
+	n, err := strconv.Atoi(s)
+	if err != nil || n < 50 || n > 100 {
 		return 0, false
 	}
 	return n, true

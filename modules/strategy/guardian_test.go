@@ -52,8 +52,16 @@ func TestGuardianForms(t *testing.T) {
 	assert.Equal(t, domain.Strategy{Role: domain.Guardian, Rule: domain.Leader, Ward: "companion:2"}, m.Stored(4401, "companion:1"))
 
 	// Another role, or the default, clears the ward.
+	// Phase 35d: a warrior's fighter role is kept, since a blank warrior
+	// guards the healer by default; the default itself clears it.
 	run(m, u, "dain fighter")
-	assert.Equal(t, domain.Strategy{Rule: domain.Leader}, m.Stored(4401, "companion:1"))
+	assert.Equal(t, domain.Strategy{Role: domain.Fighter, Rule: domain.Leader}, m.Stored(4401, "companion:1"))
+	run(m, u, "dain default")
+	assert.True(t, m.Stored(4401, "companion:1").IsZero())
+	run(m, u, "oswin fighter")
+	assert.Equal(t, domain.Strategy{Role: domain.Fighter}, m.Stored(4401, "companion:2"), "a cleric's fighter role is a real change")
+	run(m, u, "oswin default")
+	run(m, u, "dain guard")
 	run(m, u, "me guard dain")
 	run(m, u, "me default")
 	assert.True(t, m.Stored(4401, "leader").IsZero())

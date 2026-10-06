@@ -112,7 +112,7 @@ func decodeRegistry(data []byte, registry *Registry) error {
 	for id, t := range wire.Tactics {
 		clean, ok := cleanTactics(t)
 		if id <= 0 || !ok {
-			mudlog.Warn("strategy: dropped stored tactics", "user", id, "focus", t.Focus, "healing", t.Healing)
+			mudlog.Warn("strategy: dropped stored tactics", "user", id, "focus", t.Focus, "healing", t.Healing, "patch", t.Patch)
 			continue
 		}
 		if !clean.IsZero() {
@@ -138,6 +138,13 @@ func cleanTactics(t domain.Tactics) (domain.Tactics, bool) {
 			return out, false
 		}
 		out.Healing = h
+	}
+	if t.Patch != 0 {
+		n, ok := domain.ParsePatch(fmt.Sprint(t.Patch))
+		if !ok {
+			return out, false
+		}
+		out.Patch = n
 	}
 	return out, true
 }

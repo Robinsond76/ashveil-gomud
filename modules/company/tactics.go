@@ -23,7 +23,7 @@ import (
 // focus may change, for that battle only, one order a round
 // (internal/battle); the next round's upkeep turns everyone at once.
 
-const tacticsUsage = `Usage: company tactics | company tactics focus <none|leader|casters|nearest|weakest|strongest|wounded|default> | company tactics healing <10-90> | company tactics default`
+const tacticsUsage = `Usage: company tactics | company tactics focus <none|leader|casters|nearest|weakest|strongest|wounded|default> | company tactics healing <10-90> | company tactics patch <50-100> | company tactics default`
 
 // tacticsStillTurning answers a second order before the first is carried
 // out, or one given before the battle has begun.
@@ -57,7 +57,9 @@ func (m *CompanyModule) tactics(user *users.UserRecord, room *rooms.Room, args [
 		if inBattle {
 			return m.orderFocus(user, room, args[1])
 		}
-		focus := strategy.NoFocus
+		// "default" clears the focus, so the company's level default applies
+		// (Phase 35d); "none" is a choice that keeps every member's own rule.
+		var focus strategy.Rule
 		if args[1] != "default" {
 			f, ok := strategy.ParseFocus(args[1])
 			if !ok {
@@ -68,6 +70,10 @@ func (m *CompanyModule) tactics(user *users.UserRecord, room *rooms.Room, args [
 		saved.Focus = focus
 		if err := strategy.SaveTactics(user.UserId, saved); err != nil {
 			return err.Error()
+		}
+		if focus == "" {
+			def, _ := strategy.FocusFor(user.UserId, user.Character.Level)
+			return fmt.Sprintf("Your company's focus is back to the default for your level: %s (%s).", def, strategy.DescribeFocus(def))
 		}
 		return fmt.Sprintf("Your company's focus is now %s: %s.", focus, strategy.DescribeFocus(focus))
 	case "healing", "heal":
@@ -86,6 +92,22 @@ func (m *CompanyModule) tactics(user *users.UserRecord, room *rooms.Room, args [
 			return err.Error()
 		}
 		return fmt.Sprintf("Your healers now heal anyone below %d%% of their health.", h)
+	case "patch":
+		if inBattle {
+			return tacticsOnlyFocus
+		}
+		if len(args) != 2 {
+			return tacticsUsage
+		}
+		n, ok := strategy.ParsePatch(args[1])
+		if !ok {
+			return "The patch threshold is a percentage from 50 to 100: e.g. company tactics patch 80."
+		}
+		saved.Patch = n
+		if err := strategy.SaveTactics(user.UserId, saved); err != nil {
+			return err.Error()
+		}
+		return fmt.Sprintf("After a battle your healers now patch everyone up to %d%% of their wound limit.", n)
 	case "default", "reset":
 		if inBattle {
 			return tacticsOnlyFocus
@@ -93,7 +115,8 @@ func (m *CompanyModule) tactics(user *users.UserRecord, room *rooms.Room, args [
 		if err := strategy.SaveTactics(user.UserId, strategy.Tactics{}); err != nil {
 			return err.Error()
 		}
-		return fmt.Sprintf("Your company's tactics are back to the defaults: focus none, healing below %d%%.", strategy.DefaultHealing)
+		def, _ := strategy.FocusFor(user.UserId, user.Character.Level)
+		return fmt.Sprintf("Your company's tactics are back to the defaults: focus %s, healing below %d%%, patching up to %d%%.", def, strategy.DefaultHealing, strategy.DefaultPatch)
 	}
 	return tacticsUsage
 }
@@ -184,10 +207,16 @@ func focusWords(rule strategy.Rule) string {
 // own strategy.
 func (m *CompanyModule) tacticsView(user *users.UserRecord) string {
 	t := strategy.TacticsFor(user.UserId)
+	focus, defaulted := strategy.FocusFor(user.UserId, user.Character.Level)
 	var b strings.Builder
 	b.WriteString("Company tactics:\n")
-	fmt.Fprintf(&b, "  Focus:   %s (%s)\n", t.Focus, strategy.DescribeFocus(t.Focus))
+	note := ""
+	if defaulted && focus != strategy.NoFocus {
+		note = " [default at your level]"
+	}
+	fmt.Fprintf(&b, "  Focus:   %s (%s)%s\n", focus, strategy.DescribeFocus(focus), note)
 	fmt.Fprintf(&b, "  Healing: your healers heal anyone below %d%% of their health\n", t.Healing)
+	fmt.Fprintf(&b, "  Patch:   after a battle your healers patch everyone up to %d%% of their wound limit\n", t.Patch)
 	if _, inBattle := battle.Current(user.UserId); inBattle {
 		if r, set := battle.Focus(user.UserId); set {
 			fmt.Fprintf(&b, "  In this battle: focus %s, until it ends", r)
@@ -206,11 +235,21 @@ func (m *CompanyModule) tacticsView(user *users.UserRecord) string {
 		b.WriteString(" (the focus overrides whom they go for; roles stay)")
 	}
 	b.WriteString(":\n")
-	for _, mb := range m.tacticsMembers(user) {
+	members := m.tacticsMembers(user)
+	for _, mb := range members {
 		s := enemyparty.MemberStrategy(user.UserId, mb.key)
-		fmt.Fprintf(&b, "  %-16s %s, %s\n", mb.name, s.Role, s.Rule)
+		line := fmt.Sprintf("  %-16s %s, %s", mb.name, s.Role, s.Rule)
+		// Phase 35d: a warrior with no role of its own guards the healer.
+		if stored := strategy.StoredFor(user.UserId, string(mb.key)); stored.Role == "" && s.Role == strategy.Guardian {
+			for _, w := range members {
+				if string(w.key) == s.Ward {
+					line += fmt.Sprintf(" [default: guards %s]", w.name)
+				}
+			}
+		}
+		b.WriteString(line + "\n")
 	}
-	b.WriteString(`Change them with <ansi fg="command">company tactics focus [rule]</ansi>, <ansi fg="command">company tactics healing [percent]</ansi>, or <ansi fg="command">company tactics default</ansi>. See <ansi fg="command">help tactics</ansi>.`)
+	b.WriteString(`Change them with <ansi fg="command">company tactics focus [rule]</ansi>, <ansi fg="command">company tactics healing [percent]</ansi>, <ansi fg="command">company tactics patch [percent]</ansi>, or <ansi fg="command">company tactics default</ansi>. See <ansi fg="command">help tactics</ansi>.`)
 	return b.String()
 }
 

@@ -26,8 +26,15 @@ func guardBrawl(t *testing.T, strategies ...string) *brawl {
 	b := newBrawl(t)
 	b.withArchetypes("")
 	b.unplaced()
+	// Phase 35d: a warrior guards the healer by default; these fixtures
+	// start with Tamsin as a plain fighter unless a test sets her up.
+	setUp := false
 	for _, s := range strategies {
 		b.cmd("strategy", s)
+		setUp = setUp || strings.HasPrefix(s, "tamsin")
+	}
+	if !setUp {
+		b.cmd("strategy", "tamsin fighter")
 	}
 	b.cmd("attack", fmt.Sprintf("#%d", b.bandits["bandit captain"][0]))
 	// The battle begins at the next round's battle pass. The bandits hold

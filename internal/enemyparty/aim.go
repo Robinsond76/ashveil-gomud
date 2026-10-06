@@ -66,7 +66,19 @@ func Focus(leaderId int) (strategy.Rule, bool) {
 		}
 		return rule, true
 	}
-	return strategy.TacticsFor(leaderId).FocusRule()
+	return SavedFocus(leaderId)
+}
+
+// SavedFocus is the focus the player's saved tactics give their company at
+// their level (Phase 35d): the focus they set, else the default for their
+// level. ok is false for none.
+func SavedFocus(leaderId int) (strategy.Rule, bool) {
+	level := 0
+	if u := users.GetByUserId(leaderId); u != nil && u.Character != nil {
+		level = u.Character.Level
+	}
+	rule, _ := strategy.FocusFor(leaderId, level)
+	return strategy.Tactics{Focus: rule}.FocusRule()
 }
 
 // AimRule is the target rule a company member aims by: the company's
@@ -88,7 +100,45 @@ func MemberStrategy(leaderId int, key company.MemberKey) strategy.Strategy {
 	} else if id, ok := company.CompanionIDFromMemberKey(key); ok {
 		arch, _ = company.CompanionArchetype(leaderId, id)
 	}
-	return strategy.For(leaderId, string(key), arch)
+	s := strategy.For(leaderId, string(key), arch)
+	if arch == "warrior" && strategy.StoredFor(leaderId, string(key)).Ward == "" && strategy.StoredFor(leaderId, string(key)).Role == "" {
+		if ward, ok := DefaultWard(leaderId, key); ok {
+			s.Role, s.Ward = strategy.Guardian, string(ward)
+		}
+	}
+	return s
+}
+
+// DefaultWard is whom a warrior guards by default (Phase 35d): the
+// company's first companion warrior guards the company's first healer,
+// unless the player gave that warrior a role or ward (MemberStrategy). Members are counted leader first, then living
+// companions in roster order, whether placed in the formation or not. ok is
+// false when key is not that warrior, or the company has no healer.
+func DefaultWard(leaderId int, key company.MemberKey) (company.MemberKey, bool) {
+	members := []company.MemberKey{company.LeaderMemberKey}
+	for _, id := range company.LivingCompanionIDs(leaderId) {
+		members = append(members, company.CompanionMemberKey(id))
+	}
+	var warrior, healer company.MemberKey
+	for _, k := range members {
+		arch := ""
+		if k == company.LeaderMemberKey {
+			arch, _ = archetypes.PlayerArchetype(leaderId)
+		} else if id, ok := company.CompanionIDFromMemberKey(k); ok {
+			arch, _ = company.CompanionArchetype(leaderId, id)
+		}
+		stored := strategy.StoredFor(leaderId, string(k))
+		if warrior == "" && k != company.LeaderMemberKey && arch == "warrior" {
+			warrior = k
+		}
+		if healer == "" && stored.Resolve(arch).Role == strategy.Healer {
+			healer = k
+		}
+	}
+	if warrior == "" || healer == "" || warrior != key {
+		return "", false
+	}
+	return healer, true
 }
 
 // Foes are g's living, visible members as the attacker sees them: where

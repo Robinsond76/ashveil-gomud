@@ -178,3 +178,35 @@ func TestBreaksWindUp(t *testing.T) {
 		}
 	}
 }
+
+// Phase 35d: a one-round heal is broken only by heavy force.
+func TestResolvesHealOnlyForOneRoundRestorativeHelp(t *testing.T) {
+	cases := []struct {
+		name                       string
+		wait                       int
+		helpful, restoration, want bool
+	}{
+		{"Minor Heal", 1, true, true, true},
+		{"Minor Heal All, two rounds", 2, true, true, false},
+		{"Magic Missile", 1, false, false, false},
+		{"a one-round help spell that is not restoration", 1, true, false, false},
+		{"a harmful restoration-school spell", 1, false, true, false},
+	}
+	for _, c := range cases {
+		if got := ResolvesHeal(c.wait, c.helpful, c.restoration); got != c.want {
+			t.Errorf("%s: ResolvesHeal = %v, want %v", c.name, got, c.want)
+		}
+	}
+}
+
+func TestBreakChanceForResolvingChant(t *testing.T) {
+	if got := BreakChanceFor(30, 100, false, 0, true); got != 0 {
+		t.Errorf("an ordinary blow on a resolving chant breaks it %d%%, want 0", got)
+	}
+	if got := BreakChanceFor(1, 100, true, 0, true); got != 100 {
+		t.Errorf("heavy force on a resolving chant = %d, want 100", got)
+	}
+	if got, want := BreakChanceFor(10, 100, false, 0, false), BreakChance(10, 100, false, 0); got != want {
+		t.Errorf("a chant that does not resolve keeps today's chance: %d, want %d", got, want)
+	}
+}

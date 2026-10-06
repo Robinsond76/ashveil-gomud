@@ -34,7 +34,8 @@ type narrationMechanic struct {
 func TestNarrationPreservesCombatOutcome(t *testing.T) {
 	t.Setenv("GODEBUG", "randseednop=0")
 	b := newBrawl(t)
-	// Recaptured for Phase 30g4: stepped stats change hit and damage rolls.
+	// Recaptured for Phase 35d: the blow-quality roll draws a die per landed
+	// blow, so every later roll moves. Recaptured for Phase 30g4: stepped stats change hit and damage rolls.
 	// 30g6a updated one target-change event (the next foe is selected on
 	// the kill round). Recaptured for 30g6: stat edges, Strength damage and
 	// the HP shape change every roll and the fight's length; the same kinds

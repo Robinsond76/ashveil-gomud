@@ -256,7 +256,7 @@ func gatherBattle(user *users.UserRecord) battleFacts {
 	if room == nil {
 		return battleFacts{}
 	}
-	f := battleFacts{Narrow: enemyparty.Narrow(room), InBattle: true, SavedFocus: string(strategy.TacticsFor(user.UserId).Focus), FocusReady: battle.FocusReady(user.UserId)}
+	f := battleFacts{Narrow: enemyparty.Narrow(room), InBattle: true, SavedFocus: savedFocus(user.UserId), FocusReady: battle.FocusReady(user.UserId)}
 	if a := user.Character.Aggro; a != nil && a.Type == characters.Retreat && a.RetreatInfo != nil {
 		f.Retreat = &retreatFact{Exit: a.RetreatInfo.ExitName, Rounds: a.RoundsWaiting + 1}
 	}
@@ -496,4 +496,13 @@ func gatherGuards(user *users.UserRecord, room *rooms.Room) []guardFact {
 		}
 	}
 	return out
+}
+
+// savedFocus is the focus the player's saved tactics give their company at
+// their level (Phase 35d): "none" when each member goes by its own rule.
+func savedFocus(userID int) string {
+	if rule, ok := enemyparty.SavedFocus(userID); ok {
+		return string(rule)
+	}
+	return string(strategy.NoFocus)
 }

@@ -383,12 +383,12 @@ func TestCompanyVitalsWoundLimit(t *testing.T) {
 func TestCompanyPayloadTactics(t *testing.T) {
 	s := sampleCompany()
 	p, _ := buildCompanyPayload(7, s, noChemistry)
-	assert.Equal(t, companyTactics{Focus: "none", Healing: 50}, p.Tactics)
+	assert.Equal(t, companyTactics{Focus: "none", Healing: 50, Patch: 80}, p.Tactics)
 	s.Tactics = strategy.Tactics{Focus: strategy.Wounded, Healing: 70}
 	p, _ = buildCompanyPayload(7, s, noChemistry)
 	raw, err := json.Marshal(p)
 	require.NoError(t, err)
-	assert.Contains(t, string(raw), `"tactics":{"focus":"wounded","healing":70}`)
+	assert.Contains(t, string(raw), `"tactics":{"focus":"wounded","healing":70,"patch":80}`)
 }
 
 // TestCompanyGuardianWard (Phase 30c2): a guardian's ward travels in its

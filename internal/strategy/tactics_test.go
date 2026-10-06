@@ -35,11 +35,35 @@ func TestCastersRule(t *testing.T) {
 		t.Errorf("then a caster, front first: got %d", got)
 	}
 	fs[1].Caster, fs[2].Caster = false, false
-	if _, ok := Choose(Casters, fs, 0); ok {
-		t.Error("no caster: the rule has no choice")
+	// Phase 35d, casters first: with no caster standing the rule falls back
+	// to the weakest foe.
+	fs[2].HP = 4
+	if got, ok := Choose(Casters, fs, 0); !ok || got != 3 {
+		t.Errorf("no caster: the weakest, got %d, %v", got, ok)
 	}
-	if got, _ := Pick(Casters, fs, 0, false); got != 1 {
-		t.Errorf("no caster: the nearest, got %d", got)
+	if got, _ := Pick(Casters, fs, 0, false); got != 3 {
+		t.Errorf("no caster: the weakest, got %d", got)
+	}
+}
+
+func TestDefaultFocusAtLeaderLevel(t *testing.T) {
+	for level, want := range map[int]Rule{1: NoFocus, 9: NoFocus, 10: Weakest, 24: Weakest, 25: Casters, 60: Casters} {
+		if got := DefaultFocusAt(level); got != want {
+			t.Errorf("DefaultFocusAt(%d) = %q, want %q", level, got, want)
+		}
+	}
+}
+
+func TestParsePatch(t *testing.T) {
+	for in, want := range map[string]int{"50": 50, "80": 80, "100%": 100, " 65 ": 65} {
+		if got, ok := ParsePatch(in); !ok || got != want {
+			t.Errorf("ParsePatch(%q) = %d, %v", in, got, ok)
+		}
+	}
+	for _, in := range []string{"", "49", "101", "-1", "many", "80.5"} {
+		if _, ok := ParsePatch(in); ok {
+			t.Errorf("ParsePatch(%q) accepted", in)
+		}
 	}
 }
 

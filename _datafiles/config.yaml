@@ -344,7 +344,18 @@ GamePlay:
     # Chance to hit (percent): ToHitEven when even, moved by the skill and Speed edge
     ToHitMin: 10
     ToHitMax: 95
-    ToHitEven: 75
+    ToHitEven: 88
+    # Blow quality (35d): a blow that lands is glancing (x GlanceFactor),
+    # solid (x1) or telling (x TellingFactor). Percent shares at an even
+    # edge, and at a full edge for and against the attacker.
+    GlanceEven: 25
+    GlanceFull: 50
+    GlanceLeast: 5
+    TellingEven: 20
+    TellingFull: 50
+    TellingLeast: 5
+    GlanceFactor: 0.5
+    TellingFactor: 1.4
     # Extra attacks for weaponless/claws combat driven by Speed delta
     # Legacy keys, unused by the action meter.
     ExtraAttacksMin: 0
@@ -455,8 +466,9 @@ GamePlay:
     # HPStart), so a landed blow stays a large share of health.
     DefaultHPPerLevel: 0.8
     HPFullLevels: 20
-    # A quarter of each archetype rate after level 20 (0.2 / 0.8).
-    HPAfterFull: 0.2
+    # Raised from 0.2 in 35d so a solid blow stays closer to a fifth of HP at
+    # levels 30 and 60. 0.4 passes the 1.6x level-60 HP cap; 0.3 holds it.
+    HPAfterFull: 0.3
     XPKneeLevel: 60
     XPKneeGrowth: 1.10
     # --- Stat gain formula ---

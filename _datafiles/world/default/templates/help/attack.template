@@ -48,4 +48,21 @@ Speed against theirs (<ansi fg="command">help speed</ansi>). Your chance of a cr
 hit comes from your Smarts against theirs (<ansi fg="command">help smarts</ansi>). Your company's
 chemistry adds to your chance to hit, and darkness takes from it.
 
-See also: <ansi fg="command">help evasion</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.
+<ansi fg="yellow-bold">How hard a blow lands</ansi>
+
+A blow that gets past the target's block, parry, or dodge is one of three
+qualities, and your skill edge over the target decides which is likely:
+
+  <ansi fg="yellow">Quality</ansi>    <ansi fg="yellow">damage</ansi>   <ansi fg="yellow">even match</ansi>   <ansi fg="yellow">full edge for you</ansi>   <ansi fg="yellow">full edge against</ansi>
+  glancing    half     {{ config "GamePlay.Combat.GlanceEven" }}%         {{ config "GamePlay.Combat.GlanceLeast" }}%                  {{ config "GamePlay.Combat.GlanceFull" }}%
+  solid       normal   55%         45%                  45%
+  telling     {{ config "GamePlay.Combat.TellingFactor" }}x      {{ config "GamePlay.Combat.TellingEven" }}%         {{ config "GamePlay.Combat.TellingFull" }}%                  {{ config "GamePlay.Combat.TellingLeast" }}%
+
+A glancing blow is a graze, about a tenth of a fighter's health. A telling
+blow finds a gap and does the most. The quality is named at the end of the
+line: <ansi fg="command">(glancing, 3 damage)</ansi>, <ansi fg="command">(telling, 12 damage)</ansi>; a solid blow says nothing.
+A critical hit comes on top of the quality. A wind-up's heavy blow is
+always solid (<ansi fg="command">help interrupts</ansi>). Spells scale by the skill edge in their
+own way (<ansi fg="command">help spells</ansi>).
+
+See also: <ansi fg="command">help evasion</ansi>, <ansi fg="command">help narration</ansi>, <ansi fg="command">help scout</ansi>, <ansi fg="command">help targeting</ansi>, <ansi fg="command">help formation</ansi>, <ansi fg="command">help combat</ansi>.

@@ -10,9 +10,10 @@ When a battle ends, your company's healers patch everyone up on their own:
 
 - Every member with you who knows <ansi fg="yellow">Minor Heal</ansi> heals, the one with the most
   mana to spare first, the most hurt member first.
-- Each member is healed up to your company's <ansi fg="yellow">healing threshold</ansi> (50% of
-  their wound limit unless you change it; <ansi fg="command">help tactics</ansi>), and no
-  further. If you were knocked down in a battle your company won, they heal
+- Each member is healed up to your company's <ansi fg="yellow">patch threshold</ansi> (80% of
+  their wound limit unless you change it with <ansi fg="command">company tactics patch [percent]</ansi>,
+  50 to 100; <ansi fg="command">help tactics</ansi>), and no further. That is not the
+  healing threshold, which only governs healing during a battle (50%). If you were knocked down in a battle your company won, they heal
   you back to your feet. A fallen companion needs a resurrection instead.
 - Each heal costs the usual mana (3) and heals the usual amount: 10 to 16
   health, plus 1 for every 6 levels of the healer, 5% more with a holy

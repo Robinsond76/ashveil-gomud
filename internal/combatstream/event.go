@@ -129,6 +129,7 @@ type Event struct {
 	Defenses   []string // Attack: what stopped each defended strike (Phase 30g2)
 	Damage     int
 	Crit       bool
+	Quality    string // Attack: "glancing" or "telling" for a landed blow that was (Phase 35d); "" when solid
 	WeaponType string
 	SpellId    string
 	Amount     int // Heal: health restored

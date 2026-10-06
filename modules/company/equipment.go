@@ -5,17 +5,16 @@ import (
 	"strings"
 
 	"github.com/GoMudEngine/GoMud/internal/actionpolicy"
-	"github.com/GoMudEngine/GoMud/internal/archetypes"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	domain "github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/configs"
 	"github.com/GoMudEngine/GoMud/internal/encumbrance"
+	"github.com/GoMudEngine/GoMud/internal/enemyparty"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/items"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
-	"github.com/GoMudEngine/GoMud/internal/strategy"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/uuid"
 	"gopkg.in/yaml.v2"
@@ -330,22 +329,8 @@ func (m *CompanyModule) equipmentCommand(u *users.UserRecord, args []string) str
 
 // strategyForEquipment keeps the comparison's role tied to the saved strategy.
 func (m *CompanyModule) strategyForEquipment(id int, key domain.MemberKey) (string, bool) {
-	archetype := ""
-	if key == domain.LeaderMemberKey {
-		if u := users.GetByUserId(id); u != nil {
-			archetype, _ = archetypes.PlayerArchetype(id)
-		}
-	} else {
-		rec, _ := m.registry.Get(id)
-		cid, _ := domain.CompanionIDFromMemberKey(key)
-		for _, c := range rec.Companions {
-			if c.ID == cid {
-				archetype = c.Archetype
-			}
-		}
-	}
-	s := strategy.For(id, string(key), archetype)
-	return string(s.Role), true
+	// Phase 35d: the role in force, default guard included.
+	return string(enemyparty.MemberStrategy(id, key).Role), true
 }
 
 func (m *CompanyModule) ManageEquipment(id int, verb, rest string) (bool, string) {

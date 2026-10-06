@@ -105,6 +105,7 @@ type companyRest struct {
 type companyTactics struct {
 	Focus   string `json:"focus"`
 	Healing int    `json:"healing"`
+	Patch   int    `json:"patch"`
 }
 
 // companyStructure is what changes only with the roster, formation, load,
@@ -255,7 +256,7 @@ func buildCompanyPayload(leaderUserID int, s companyview.Summary, chemistry chem
 		p.Checkpoint = strPtr(s.Checkpoint)
 	}
 	t := s.Tactics.Resolve()
-	p.Tactics = companyTactics{Focus: string(t.Focus), Healing: t.Healing}
+	p.Tactics = companyTactics{Focus: string(t.Focus), Healing: t.Healing, Patch: t.Patch}
 	return p, true
 }
 

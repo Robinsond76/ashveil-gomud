@@ -137,6 +137,7 @@ func key(m *mobs.Mob) string { return fmt.Sprintf("m:%d", m.InstanceId) }
 func TestCompanionHealBrokenByBlow(t *testing.T) {
 	b := guardBrawl(t)
 	forceBlows(t, true)
+	forceCrits(t) // Phase 35d: only heavy force breaks a one-round heal
 	noCounters(t)
 	breakDice(t, 0) // Phase 30d1b: the blow breaks the chant
 	stream := b.listen()
@@ -604,6 +605,7 @@ func TestPlayerVsPlayerChantAndCounter(t *testing.T) {
 	stream := b.listen()
 
 	forceBlows(t, true)
+	forceCrits(t) // Phase 35d: only heavy force breaks a one-round heal
 	breakDice(t, 0)
 	for try := 0; try < 8 && len(interruptsOf(*stream, "u:8")) == 0; try++ {
 		brom.Character.HealthMax.Value, brom.Character.Health = 1000, 1000
@@ -822,4 +824,64 @@ func TestSummaryCountsHeldEnemyChant(t *testing.T) {
 		}
 	}
 	assert.True(t, found, "an Interrupts line: %s", out)
+}
+
+// Phase 35d: a one-round heal is broken by heavy force only. Even a roll
+// that breaks any other chant (0) leaves Minor Heal whole against an
+// ordinary blow, for the company's healer and an enemy's alike.
+func TestOneRoundHealResolvesAgainstOrdinaryBlows(t *testing.T) {
+	b := guardBrawl(t)
+	forceBlows(t, true) // no crits
+	noCounters(t)
+	breakDice(t, 0) // would break any chant the rules let it
+	stream := b.listen()
+	oswin := b.companion(2)
+
+	held := func() []combatstream.Event {
+		var got []combatstream.Event
+		for _, e := range interruptsOf(*stream, key(oswin)) {
+			if e.Outcome == combatstream.OutcomeFailed {
+				got = append(got, e)
+			}
+		}
+		return got
+	}
+	for try := 0; try < 8 && len(held()) == 0; try++ {
+		b.toughen()
+		b.hold(nil)
+		if oswin.Character.Aggro == nil || oswin.Character.Aggro.Type != characters.SpellCast {
+			b.mobCasts(oswin, "heal aria")
+		}
+		b.strike(2, false) // the captain on Oswin
+		out := b.fight()
+		assert.NotContains(t, out, "breaks off under the blow")
+	}
+	require.NotEmpty(t, held(), "an ordinary blow struck the chanting healer and the chant held")
+	for _, e := range interruptsOf(*stream, key(oswin)) {
+		assert.Equal(t, combatstream.OutcomeFailed, e.Outcome, "no ordinary blow broke it")
+	}
+}
+
+// A two-round chant (Minor Heal All) keeps today's break chance against an
+// ordinary blow.
+func TestTwoRoundHealStillBreaksOnABlow(t *testing.T) {
+	b := guardBrawl(t)
+	forceBlows(t, true)
+	noCounters(t)
+	breakDice(t, 0)
+	stream := b.listen()
+	oswin := b.companion(2)
+
+	for try := 0; try < 8 && len(interruptsOf(*stream, key(oswin))) == 0; try++ {
+		b.toughen()
+		b.hold(nil)
+		if oswin.Character.Aggro == nil || oswin.Character.Aggro.Type != characters.SpellCast {
+			b.mobCasts(oswin, "healall")
+		}
+		b.strike(2, false)
+		b.fight()
+	}
+	broken := interruptsOf(*stream, key(oswin))
+	require.NotEmpty(t, broken, "an ordinary blow broke the two-round chant")
+	assert.Equal(t, combatstream.OutcomeSucceeded, broken[0].Outcome)
 }

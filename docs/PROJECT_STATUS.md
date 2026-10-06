@@ -19,9 +19,9 @@ accepted: `help equipmenttiers` said reach lets the second rank strike
 text) and the hunting crossbow called itself slow before 39h's reload.
 Upheld the rejection above: the tier 3-4 uniques carry large stat mods.
 Glaive and crossbow data match the neutral classes design; note for 39a,
-its kit's "padded jerkin" is the catalog padded jack (20163). Known flake,
-not 36b's: 35b's `TestBattleEndPatchesTheCompany` fails about 1 run in 10
-on master too (the battle-end patch is sometimes skipped). Verification:
+its kit's "padded jerkin" is the catalog padded jack (20163). 35b's flaky
+`TestBattleEndPatchesTheCompany` was fixed in the 35d merge review.
+Verification:
 `make generate`, `make validate`, `go test -race ./...`, `make js-lint`.
 
 **Phase 38a complete: the Witch (2026-10-06):** a sixth starting class that
@@ -157,6 +157,37 @@ milestone starts after the current phase sequence. Other companies' camps
 stay hidden; PvP camp visibility is deferred. Documentation only.
 Verification: relative Markdown links and the diff checked; no Go tests
 required.
+
+**Phase 35d complete: combat feel (2026-10-06, merged via PR #26):** every landed
+blow is glancing (x0.5), solid or telling (x1.4) by a roll the skill edge
+shifts; `ToHitEven` is 88; one-round heals (Minor Heal, Tend Wounds) break
+only on heavy force, for both sides; the patch threshold is 80% and settable
+(`company tactics patch`); level defaults (weakest from 10, casters first
+from 25, first companion warrior guards the first healer) apply until the
+player sets their own, and a stored focus of `none` stays a choice. Shipped
+help (attack, evasion, interrupts, tactics, patch, heal, combat, guardian,
+health), keyword aliases and tutorial hints. `HPAfterFull` is **0.3**, not
+the design's 0.4: 0.4 breaks the 1.6x level-60 cap. Measurements and the
+settled misses (dead swings 35 to 39%, six-fight mana run, boss wins above
+target, rounds are 8 s not 4 s) are in the
+[measurements](plans/2026-10-06-phase-35d-measurements.md). A pre-35d player
+who stored only `focus none` now gets the level default (accepted).
+Independent review accepted: GMCP/summary tactics ignored the level default
+and patch (fixed, tests); an armor-absorbed blow reported a quality (fixed,
+test); equipment role advice ignored the default guard (fixed). Rejected: a
+battle-view quality field (the combat lines carry the word), partial
+blow-quality config (zero shares are a documented "off" used by tests), and
+glancing rounding on tiny dice (negligible).
+Merge review (Opus): found the cause of the known battle-end patch flake,
+a real bug: an archer still taking aim when the last foe fell kept a stale
+aggro until the next round, so the battle-end patch (and `company patch`)
+saw the company as still fighting and skipped. Aggro at a fallen or absent
+foe no longer counts as fighting (`hasLiveFoe`, regression
+`TestPatchIgnoresAimAtAFallenFoe`; the old test passed 150 of 150 runs).
+Fixed a tutorial hint that promised the weakest focus below level 10. The
+settled misses were judged sound and not blocking: the mana run now holds
+four fights at 86% or better (35b held three), and the rest is left to 37's
+encounter pacing and rest placement.
 
 **35d combat feel designed (2026-10-06):** at the owner's request, a second
 opinion on the 35b balance misses traced them to rules, not tuning: about 45%
