@@ -3,10 +3,15 @@ package company
 import (
 	"testing"
 
+	"github.com/GoMudEngine/GoMud/internal/battle"
 	"github.com/GoMudEngine/GoMud/internal/characters"
 	"github.com/GoMudEngine/GoMud/internal/classes"
+	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/events"
 	"github.com/GoMudEngine/GoMud/internal/hooks"
+	"github.com/GoMudEngine/GoMud/internal/mobcommands"
+	"github.com/GoMudEngine/GoMud/internal/mobs"
+	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -209,4 +214,89 @@ func TestBlackguardsOathHealsTheMostHurtAllyAndCowsTheFoe(t *testing.T) {
 	}
 	assert.Positive(t, cowed, "a wounded foe is intimidated")
 	assert.LessOrEqual(t, b.aria.Character.RT.OathUsed, 3, "three blows a battle at level 10")
+}
+
+// summonRounds runs rounds until a summon stands (or max rounds pass).
+func (b *brawl) summonRounds(max int) *mobs.Mob {
+	b.t.Helper()
+	for i := 0; i < max; i++ {
+		b.toughen()
+		b.hold(nil)
+		b.fight()
+		if ids := company.SummonInstances(); len(ids) > 0 {
+			return mobs.GetInstance(ids[0])
+		}
+	}
+	return nil
+}
+
+func TestHierarchCallsAnAngelThatHealsGuardsAndFades(t *testing.T) {
+	t.Cleanup(company.ResetSummonsForTest)
+	b := classCaster(t, "hierarch", 35, "callhost")
+	b.startWitchFight()
+	angel := b.summonRounds(6)
+	require.NotNil(t, angel, "the Hierarch calls the Host as the battle opens")
+	sm := angel.Character.RT.Summon
+	require.NotNil(t, sm)
+	assert.Equal(t, "angel", sm.Kind)
+	assert.Equal(t, 40, angel.Character.RT.Bark, "Armor of the Host")
+	leader, key, ok := company.LeaderAndKeyForInstance(angel.InstanceId)
+	assert.True(t, ok)
+	assert.Equal(t, 7, leader)
+	assert.True(t, company.IsSummonKey(key))
+	assert.True(t, b.aria.Character.RT.Summoned, "only one a battle")
+
+	// Mercy heals the most hurt ally every few rounds.
+	tamsin := &b.companion(1).Character
+	b.toughen()
+	tamsin.Health = 100
+	for i := 0; i < 4 && tamsin.Health <= 100; i++ {
+		b.hold(nil)
+		b.fight()
+	}
+	assert.Greater(t, tamsin.Health, 100, "Mercy healed her")
+
+	// The fight's end dismisses the Angel.
+	battle.End(7)
+	for _, m := range b.livingBandits() {
+		_, err := mobcommands.Suicide("vanish", m, rooms.LoadRoom(m.Character.RoomId))
+		require.NoError(t, err)
+	}
+	b.fight()
+	assert.Empty(t, company.SummonInstances())
+	assert.Nil(t, mobs.GetInstance(angel.InstanceId))
+}
+
+func TestDemonologistBindsADemonThatBurnsFoesAndBreaksFreeWhenSheFalls(t *testing.T) {
+	t.Cleanup(company.ResetSummonsForTest)
+	b := classCaster(t, "demonologist", 45, "bindfiend")
+	b.startWitchFight()
+	demon := b.summonRounds(6)
+	require.NotNil(t, demon, "the Demonologist binds a Demon")
+	assert.Equal(t, "demon", demon.Character.RT.Summon.Kind)
+	foe := b.livingBandits()[0]
+	b.hold(nil)
+	before := foe.Character.Health
+	b.fight()
+	assert.Less(t, foe.Character.Health, before, "Hellfire burns the foe")
+
+	// She falls: the Demon claws the nearest ally once and vanishes.
+	b.aria.Character.Health = 0
+	b.hold(nil)
+	b.fight()
+	assert.Empty(t, company.SummonInstances(), "the broken binding frees it, and it is gone")
+}
+
+func TestASummonThatFallsFadesWithoutALoot(t *testing.T) {
+	t.Cleanup(company.ResetSummonsForTest)
+	b := classCaster(t, "hierarch", 30, "callhost")
+	b.startWitchFight()
+	angel := b.summonRounds(6)
+	require.NotNil(t, angel)
+	room := rooms.LoadRoom(angel.Character.RoomId)
+	angel.Character.Health = 0
+	_, err := mobcommands.Suicide("", angel, room)
+	require.NoError(t, err)
+	assert.Empty(t, company.SummonInstances())
+	assert.Nil(t, mobs.GetInstance(angel.InstanceId))
 }

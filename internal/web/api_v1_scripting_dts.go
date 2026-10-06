@@ -54,6 +54,7 @@ declare interface ActorObject {
     CastHex(spellId: string, target: ActorObject): { landed: boolean; reason: string; rounds: number };
     ClassEffect(key: string): number;
     RowAllies(rows: number): ActorObject[];
+    Summon(): boolean;
     GrantWard(cap: number, blows: number): boolean;
     GrantBark(armor: number, thorns: number): boolean;
     StartRejuv(rounds: number, total: number): boolean;

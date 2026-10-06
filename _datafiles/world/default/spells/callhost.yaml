@@ -1,0 +1,10 @@
+# Phase 38b: the Hierarch's summon. Costs 10% of the caster's mana (Character.SpellCost); once a battle.
+spellid: callhost
+name: Call the Host
+description: Calls an Angel to fight beside the company for one battle
+type: helpsingle
+school: restoration
+cost: 10
+waitrounds: 2
+difficulty: 0
+scope: member

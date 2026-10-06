@@ -4,10 +4,12 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/GoMudEngine/GoMud/internal/classes"
 	"github.com/GoMudEngine/GoMud/internal/company"
 	"github.com/GoMudEngine/GoMud/internal/mobs"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/status"
+	"github.com/GoMudEngine/GoMud/internal/summons"
 	"github.com/GoMudEngine/GoMud/internal/users"
 )
 
@@ -243,4 +245,23 @@ func (a ScriptActor) RowAllies(rows int) []*ScriptActor {
 		}
 	}
 	return out
+}
+
+// Summon calls the actor's summon (its class's Summon effect: 1 an Angel,
+// 2 a Demon) into the room. False when it has none, already called it this
+// battle, or has no company to call it for.
+func (a ScriptActor) Summon() bool {
+	if a.characterRecord == nil {
+		return false
+	}
+	kind := summons.Angel
+	switch a.characterRecord.ClassEffects().Int(classes.Summon) {
+	case 1:
+	case 2:
+		kind = summons.Demon
+	default:
+		return false
+	}
+	_, err := summons.Call(summons.Caller{UserID: a.userId, MobID: a.mobInstanceId}, kind)
+	return err == nil
 }

@@ -37,7 +37,11 @@ func hexed(c *characters.Character) bool {
 // percent. Only a blow that has damage to raise is changed.
 func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	fx := src.ClassEffects()
-	if fx == nil || dmg <= 0 || tgt.HealthMax.Value <= 0 {
+	var summon *characters.SummonInfo
+	if src.RT != nil {
+		summon = src.RT.Summon
+	}
+	if (fx == nil && summon == nil) || dmg <= 0 || tgt.HealthMax.Value <= 0 {
 		return dmg
 	}
 	hpPct := tgt.Health * 100 / tgt.HealthMax.Value
@@ -56,6 +60,14 @@ func classBlowDamage(src, tgt *characters.Character, dmg int) int {
 	}
 	if holyRaces[race] {
 		pct += fx.Int(classes.RendHoly)
+	}
+	if summon != nil {
+		if unholyRaces[race] {
+			pct += summon.Smite
+		}
+		if holyRaces[race] {
+			pct += summon.Rend
+		}
 	}
 	if p := fx.Int(classes.HexedDamage); p > 0 && hexed(tgt) {
 		pct += p

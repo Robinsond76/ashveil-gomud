@@ -419,6 +419,11 @@ func (c *Character) GetDefaultDiceRoll() (attacks int, dCount int, dSides int, b
 	bonus = raceInfo.Damage.BonusDamage
 	buffOnCrit = raceInfo.Damage.CritBuffIds
 
+	if c.RT != nil && c.RT.Summon != nil && c.RT.Summon.Sides > 0 {
+		s := c.RT.Summon // Phase 38b: a summon's own blade or claws
+		return 1, s.Dice, s.Sides, 0, nil
+	}
+
 	dCount += int(math.Floor((float64(c.Stats.Speed.ValueAdj) / 50)))
 	dSides += int(math.Floor((float64(c.Stats.Strength.ValueAdj) / 12)))
 	bonus += int(math.Floor((float64(c.Stats.Perception.ValueAdj) / 25)))
@@ -2591,10 +2596,14 @@ func (c *Character) HealthGainPerLevel() float64 {
 		id, _ = archetypes.PlayerArchetype(c.userId)
 	}
 	if id != "" {
-		if hp, ok := archetypes.HealthPerLevel(id); ok {
-			return hp
+		hp := float64(cfg.DefaultHPPerLevel)
+		if per, ok := archetypes.HealthPerLevel(id); ok {
+			hp = per
 		}
-		return float64(cfg.DefaultHPPerLevel)
+		if c.RT != nil && c.RT.Summon != nil && c.RT.Summon.HPPct > 0 {
+			hp = hp * float64(c.RT.Summon.HPPct) / 100 // Phase 38b: a summon's own share
+		}
+		return hp
 	}
 	if c.userId == 0 {
 		if c.HPPerLevel > 0 {

@@ -63,6 +63,9 @@ func (c *Character) SpellCost(sp *spells.SpellData) int {
 		return 0
 	}
 	cost := sp.Cost
+	if sp.SpellId == "callhost" || sp.SpellId == "bindfiend" {
+		return max(1, c.ManaMax.Value/10) // a summon costs a tenth of the mana
+	}
 	fx := c.ClassEffects()
 	if cost <= 0 || fx == nil {
 		return cost
@@ -108,10 +111,11 @@ type ClassRT struct {
 	Intim         int  // Attack this foe loses against anyone but IntimOwner
 	IntimOwner    *ClassRT
 	Cleansed      map[string]bool
-	Guards        int // an Angel's Guard uses spent
-	Hands         int // Lay on Hands uses since the last rest
-	Summoned      bool
-	Bless         int // rounds of Bless left
+	Guards        int         // an Angel's Guard uses spent
+	Hands         int         // Lay on Hands uses since the last rest
+	Summoned      bool        // this character has called its summon this battle
+	Summon        *SummonInfo // set on a summoned creature
+	Bless         int         // rounds of Bless left
 }
 
 // RTState is the character's class battle state, made on first use.
@@ -165,4 +169,25 @@ func (c *Character) RestClass() {
 	if c.RT != nil {
 		c.RT.Hands = 0
 	}
+}
+
+// SummonInfo is what a summoned creature (a Hierarch's Angel, a
+// Demonologist's Demon) is: its owner, and the gifts the owner's route had
+// reached when it was called. It lives only for the battle.
+type SummonInfo struct {
+	Kind                  string // "angel" or "demon"
+	OwnerUser, OwnerMob   int    // who called it
+	OwnerKey              string // the owner's company member key
+	HPPct                 int    // percent of a warrior's health at its level
+	Dice, Sides           int    // its natural weapon's dice
+	Smite, Rend           int    // percent more damage against the unholy, the holy
+	Guards, GuardsUsed    int    // Guard uses a battle and spent
+	MercyEvery, MercyNext int    // rounds between Mercy heals, and the next one's round
+	MercyFull, MercyTwo   bool
+	Wings                 int // Evasion given to allies in the owner's row
+	Hellfire              int
+	Feast, Mastered       bool
+	Cleanse               bool // removes a harmful status from every ally on arrival
+	Dread                 int  // the Demon's Dread on arrival: 1 its target's group, 2 every group
+	Arrived               bool // the arrival gifts are given
 }

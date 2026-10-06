@@ -124,6 +124,8 @@ func strategyPass() {
 				Spells: classCosted(a.char, autoSpells),
 				Allies: allies,
 				Foes:   len(foes),
+				// Phase 38b: a summoner calls its summon once a battle.
+				Summoned: a.char.ClassEffects().Int(classes.Summon) == 0 || (a.char.RT != nil && a.char.RT.Summoned),
 				// Phase 30c: the company's healing threshold.
 				HealBelow: healBelow,
 				// Phase 33e: the member's mana reserve.
@@ -278,6 +280,8 @@ func autoSpellTargets(action strategy.Action, a actor, side []actor, g enemypart
 			return info, false
 		}
 		add(side[action.Ally])
+	case strategy.Summon:
+		add(a) // the call has no target; the caster stands for it
 	case strategy.Row:
 		if action.Ally < 0 || action.Ally >= len(side) {
 			return info, false
@@ -344,6 +348,9 @@ func startCast(a actor, spellId string, info characters.SpellAggroInfo, roomId i
 	}
 	a.char.Mana -= a.char.SpellCost(sp)
 	wait := sp.WaitRounds
+	if sp.SpellId == "callhost" || sp.SpellId == "bindfiend" {
+		wait = max(0, wait-a.char.ClassEffects().Int(classes.SummonSooner)) // Swift Host, Mastered binding
+	}
 	if _, isHex := hexes.For(spellId); isHex {
 		wait = max(0, wait-a.char.ClassEffects().Int(classes.HexChant)) // Phase 38b: a Witch's quicker chant
 	}

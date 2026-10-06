@@ -119,7 +119,7 @@ func TestDefaultAutoSpells(t *testing.T) {
 		"binding": UseHex, "slumber": UseHex, "earthbind": UseHex, "frailty": UseHex,
 		"leaden": UseHex, "miasma": UseHex, "dread": UseHex, "blight": UseHex, "hex": UseAttack,
 		"greaterheal": UseBigHeal, "rejuvenation": UseRejuv, "grove": UseGrove, "siphon": UseSiphon,
-		"ward": UseWard, "arcaneward": UseWard, "barkskin": UseBark, "bless": UseBless, "entangle": UseHex}
+		"ward": UseWard, "arcaneward": UseWard, "barkskin": UseBark, "bless": UseBless, "entangle": UseHex, "callhost": UseSummon, "bindfiend": UseSummon}
 	got := DefaultAutoSpells()
 	if len(got) != len(want) {
 		t.Fatalf("DefaultAutoSpells = %+v", got)
@@ -131,5 +131,24 @@ func TestDefaultAutoSpells(t *testing.T) {
 	}
 	if u, ok := ParseUse("attack-all"); !ok || u != UseAttackAll {
 		t.Error("ParseUse")
+	}
+}
+
+func TestSummonerCallsItsSummonFirstOnceABattle(t *testing.T) {
+	list := []Spell{{ID: "callhost", Use: UseSummon, Cost: 30}, {ID: "heal", Use: UseHeal, Cost: 6}}
+	knows := func(id string) bool { return true }
+	sit := Situation{Role: Healer, Mana: 100, MaxMana: 100, Knows: knows, Spells: list, Foes: 2,
+		Allies: []Ally{{HP: 100, MaxHP: 100}}}
+	act := Decide(sit)
+	if act.Kind != Summon || act.Spell != "callhost" {
+		t.Fatalf("Decide = %+v, want the summon", act)
+	}
+	sit.Summoned = true
+	if act := Decide(sit); act.Kind == Summon {
+		t.Fatalf("a summon already called is called again: %+v", act)
+	}
+	sit.Summoned, sit.Foes = false, 0
+	if act := Decide(sit); act.Kind == Summon {
+		t.Fatal("no foes, no summon")
 	}
 }

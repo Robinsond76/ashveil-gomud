@@ -82,7 +82,7 @@ func init() {
 	register(Class{ID: "hierarch", Name: "Hierarch", Lineage: "cleric", Tier: TierElite, Parent: "priest", Gate: GateGood,
 		Role: "calls an Angel that grows every five levels",
 		Ranks: []Rank{
-			rank(30, "Call the Host", "an Angel arrives with a warrior's health of the Hierarch's level, a radiant blade, Guard once a battle and Mercy; the Hierarch's heals also remove one harmful status, once per patient per battle", Summon, 1, AngelGuards, 1, AngelMercy, 3, AngelBlade, 8, CleanseHeal, 1),
+			teaches(rank(30, "Call the Host", "an Angel arrives with a warrior's health of the Hierarch's level, a radiant blade, Guard once a battle and Mercy; the Hierarch's heals also remove one harmful status, once per patient per battle", Summon, 1, AngelGuards, 1, AngelMercy, 3, AngelBlade, 8, CleanseHeal, 1), "callhost"),
 			rank(35, "Armor of the Host", "the Angel gains armor like heavy kit (defense 40) without its slowness", SummonArmor, 40),
 			rank(40, "Mercy", "Mercy becomes a full Minor Heal every 2 rounds", AngelMercyFull, 1, AngelMercy, 2),
 			rank(45, "Wings of the Host", "allies in the Angel's row gain +5 Evasion while it stands", AngelWings, 5),
@@ -120,12 +120,12 @@ func init() {
 	register(Class{ID: "demonologist", Name: "Demonologist", Lineage: "cleric", Tier: TierElite, Parent: "blood-priest", Gate: GateEvil,
 		Role: "binds a Demon that grows every five levels",
 		Ranks: []Rank{
-			rank(30, "Bind the Fiend", "a Demon arrives with 80% of a warrior's health of the Demonologist's level, claws (2d6) and Dread; if the Demonologist falls, the Demon breaks free and attacks the nearest creature, then vanishes", Summon, 2, DemonDread, 1, DemonClaws, 6),
+			teaches(rank(30, "Bind the Fiend", "a Demon arrives with 80% of a warrior's health of the Demonologist's level, claws (2d6) and Dread; if the Demonologist falls, the Demon breaks free and attacks the nearest creature, then vanishes", Summon, 2, DemonDread, 1, DemonClaws, 6), "bindfiend"),
 			rank(35, "Infernal hide", "the Demon gains armor (defense 30)", SummonArmor, 30),
 			rank(40, "Terror", "Dread checks every enemy group, not only its target's", DemonDread, 2),
-			rank(45, "Hellfire", "foes within the Demon's reach take 2 damage each round", DemonHellfire, 2),
+			rank(45, "Hellfire", "every foe takes 2 damage each round while the Demon stands", DemonHellfire, 2),
 			rank(50, "Rending claws", "claws 2d8, +50% against holy creatures", DemonClaws, 8, RendHoly, 50),
-			rank(55, "Soul feast", "when the Demon kills, the most hurt ally heals half a Minor Heal and the Demonologist regains 5% of its mana", DemonFeast, 1),
+			rank(55, "Soul feast", "when a foe falls while the Demon fights, the most hurt ally heals half a Minor Heal and the Demonologist regains 5% of its mana", DemonFeast, 1),
 			rank(60, "Mastered binding", "the Demon arrives one chant round sooner, and a falling Demonologist's Demon simply vanishes", SummonSooner, 1, DemonMastered, 1),
 		}})
 

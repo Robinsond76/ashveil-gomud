@@ -65,6 +65,12 @@ func applyAuras(uid int, side []actor, f company.Formation) {
 	resolve := map[int]int{}
 	rally := 0
 	for _, a := range side {
+		// An Angel's wings cover the owner's row.
+		if sm := summonInfo(a.char); sm != nil && sm.Wings > 0 && a.char.Health >= 1 {
+			if r := ownerRow(sm, f); r >= 0 {
+				evade[r] = max(evade[r], sm.Wings)
+			}
+		}
 		fx := a.char.ClassEffects()
 		if fx == nil || a.char.Health < 1 {
 			continue
@@ -226,14 +232,7 @@ func layHands(a actor, side []actor, u *users.UserRecord, f company.Formation) b
 		return false
 	}
 	patient := side[best]
-	amount := 1
-	if sp := spells.GetSpell("heal"); sp != nil && sp.Power != nil {
-		amount = int(sp.Power.Raw(a.char.Level, a.char.Stats.Mysticism.ValueAdj, util.Rand))
-	}
-	if !fx.Has(classes.LayFull) {
-		amount /= 2
-	}
-	amount = max(1, amount*(100+a.char.HealingBonusPct())/100)
+	amount := minorHealRoll(a.char, fx.Has(classes.LayFull))
 	healed := patient.char.ApplyHealthChange(amount)
 	rt.Hands++
 	abilityTurns[a.who] = true
@@ -265,4 +264,17 @@ func abs(n int) int {
 		return -n
 	}
 	return n
+}
+
+// minorHealRoll is one Minor Heal's worth for a healer of the character's
+// level and Mysticism (half of it unless full), with its healing bonus.
+func minorHealRoll(c *characters.Character, full bool) int {
+	amount := 1
+	if sp := spells.GetSpell("heal"); sp != nil && sp.Power != nil {
+		amount = int(sp.Power.Raw(c.Level, c.Stats.Mysticism.ValueAdj, util.Rand))
+	}
+	if !full {
+		amount /= 2
+	}
+	return max(1, amount*(100+c.HealingBonusPct())/100)
 }

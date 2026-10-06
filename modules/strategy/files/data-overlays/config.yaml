@@ -19,6 +19,7 @@
 #   bark        armor for an ally, cast while no one needs healing
 #   bless       Attack and Evasion for an ally, cast while no one needs healing
 #   siphon      drains a foe and heals the most hurt ally
+#   summon      calls the class summon (Angel, Demon) as the battle opens
 # A character casts the first listed spell of a use that it knows and can
 # pay for. Unknown spells are dropped at load with a warning.
 AutoSpells:
@@ -50,3 +51,5 @@ AutoSpells:
   - { Spell: barkskin, Use: bark }
   - { Spell: bless, Use: bless }
   - { Spell: entangle, Use: hex }
+  - { Spell: callhost, Use: summon }
+  - { Spell: bindfiend, Use: summon }

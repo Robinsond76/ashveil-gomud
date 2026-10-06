@@ -74,6 +74,9 @@ func InstanceFor(leaderUserID, companionID int) (int, bool) {
 // FormationProvider. See FormationFor for the no-provider-registered
 // contract.
 func LeaderAndKeyForInstance(instanceId int) (int, MemberKey, bool) {
+	if leader, key, ok := SummonOf(instanceId); ok { // Phase 38b
+		return leader, key, true
+	}
 	formationProviderMu.RLock()
 	p := formationProvider
 	formationProviderMu.RUnlock()

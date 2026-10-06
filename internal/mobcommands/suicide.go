@@ -14,6 +14,7 @@ import (
 	"github.com/GoMudEngine/GoMud/internal/mudlog"
 	"github.com/GoMudEngine/GoMud/internal/rooms"
 	"github.com/GoMudEngine/GoMud/internal/scripting"
+	"github.com/GoMudEngine/GoMud/internal/summons"
 	"github.com/GoMudEngine/GoMud/internal/users"
 	"github.com/GoMudEngine/GoMud/internal/util"
 )
@@ -43,6 +44,13 @@ func Suicide(rest string, mob *mobs.Mob, room *rooms.Room) (bool, error) {
 		return true, nil
 	}
 	if mob.Character.CombatWithdrawn && rest != "mercy" && rest != "vanish" {
+		return true, nil
+	}
+
+	// Phase 38b: a summon that falls simply fades: no body, no reward.
+	if summons.IsSummon(mob) {
+		mob.DeathProcessed = true
+		summons.Dismiss(mob.InstanceId)
 		return true, nil
 	}
 

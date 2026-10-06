@@ -104,6 +104,7 @@ func actorObjectType() ObjectTypeDef {
 			m("CastHex", "object", "Lands a hex of the spell on the target and returns {landed, reason, rounds}; reason is landed, already, immune, resisted or invalid (Phase 38a).", p("spellId", "string"), p("target", "ActorObject")),
 			m("ClassEffect", "number", "Returns the value of a class effect (a route rank or talent) for the actor at its level, 0 for none (Phase 38b).", p("key", "string")),
 			m("RowAllies", "ActorObject[]", "Returns the living company members in the actor's formation row, plus the most hurt other rows up to rows rows in all (Phase 38b).", p("rows", "number")),
+			m("Summon", "boolean", "Calls the actor's class summon (an Angel or a Demon) into the room for the battle; false if it has none or already called it (Phase 38b)."),
 			m("GrantWard", "boolean", "Puts a ward on the actor that absorbs up to cap of each of its next blows blows; false if it has one (Phase 38b).", p("cap", "number"), p("blows", "number")),
 			m("GrantBark", "boolean", "Gives the actor Barkskin armor and thorns for the battle; false if it has it (Phase 38b).", p("armor", "number"), p("thorns", "number")),
 			m("StartRejuv", "boolean", "Starts the actor healing total points over rounds combat rounds; false if it already is (Phase 38b).", p("rounds", "number"), p("total", "number")),

@@ -20,12 +20,13 @@ const (
 	UseBark    Use = "bark"     // armor for an ally (or a row)
 	UseBless   Use = "bless"    // Attack and Evasion for an ally
 	UseSiphon  Use = "siphon"   // drains a foe and heals the most hurt ally
+	UseSummon  Use = "summon"   // calls the class summon at the start of a battle
 )
 
 // ParseUse reads a use from config.
 func ParseUse(s string) (Use, bool) {
 	switch u := Use(strings.ToLower(strings.TrimSpace(s))); u {
-	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon:
+	case UseHeal, UseHealAll, UseAttack, UseAttackAll, UseHex, UseBigHeal, UseRejuv, UseGrove, UseWard, UseBark, UseBless, UseSiphon, UseSummon:
 		return u, true
 	}
 	return "", false
@@ -68,6 +69,8 @@ func DefaultAutoSpells() []Spell {
 		{ID: "barkskin", Use: UseBark},
 		{ID: "bless", Use: UseBless},
 		{ID: "entangle", Use: UseHex},
+		{ID: "callhost", Use: UseSummon},
+		{ID: "bindfiend", Use: UseSummon},
 	}
 }
 
@@ -105,6 +108,9 @@ type Situation struct {
 	Spells []Spell // the automatic spells, in order, with costs
 	Allies []Ally  // the side's members here, the character included
 	Foes   int     // the battle's foes standing
+	// Summoned (Phase 38b) is whether the character has called its summon
+	// this battle (or has none to call).
+	Summoned bool
 	// HealBelow is the healing threshold, a percent of each ally's wound
 	// limit (Phase 30c tactics); 0 means DefaultHealing.
 	HealBelow int
@@ -130,6 +136,7 @@ const (
 	Buff                        // a class buff on Allies[Ally] (Phase 38b)
 	Row                         // a spell on the formation row of Allies[Ally]
 	Drain                       // Siphon at the foes it reaches
+	Summon                      // call the class summon (the caster is its own target)
 )
 
 // Action is a role's decision. Spell is the spell to cast (for all but
@@ -165,6 +172,12 @@ func Decide(s Situation) Action {
 			return Spell{}, false
 		}
 		return sp, true
+	}
+	// Phase 38b: a summoner calls its summon first, as the battle opens.
+	if !s.Summoned && s.Foes >= 1 && (s.Role == Healer || s.Role == Caster || s.Role == Controller) {
+		if sp, ok := affordable(UseSummon); ok {
+			return Action{Kind: Summon, Spell: sp.ID}
+		}
 	}
 	switch s.Role {
 	case Healer:
