@@ -270,6 +270,37 @@ check(JSON.stringify(got) === '["company equip #1 !8:glaive"]', 'equipment assig
 got = await sentNow(async () => { await page.locator('#company-inventory').getByRole('button', { name: 'Autoloot on', exact: true }).click(); });
 check(JSON.stringify(got) === '["autoloot on"]', 'autoloot is an explicit opt-in');
 
+// Phase 48: every member's equipment slots, tap-to-pick and drag-and-drop.
+sharedInventory.slots = [{ slot: 'weapon', label: 'Weapon' }, { slot: 'offhand', label: 'Offhand' }, { slot: 'body', label: 'Body' }, { slot: 'pack', label: 'Pack' }];
+sharedInventory.cargo.push({ ref: '!9:coat', name: 'quilted coat', grams: 900, count: 1, type: 'body', subtype: 'wearable' });
+sharedInventory.members[1].worn = [{ ref: '!5:club', name: 'oak club', label: 'oak club', grams: 1200, count: 1, uses: 0, uses_max: 0, type: 'weapon', subtype: 'blunt', slot: 'weapon' }];
+await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
+const equipBox = page.locator('#company-inventory [aria-label="Brother Oswin equipment"]');
+check((await equipBox.textContent()).includes('Weapon') && (await equipBox.textContent()).includes('oak club') && (await equipBox.textContent()).includes('Body') && (await equipBox.textContent()).includes('empty'), 'shared inventory lists a companion\'s slots, filled and empty');
+check((await page.locator('#company-inventory [aria-label="Wren (you) equipment"]').textContent()).includes('iron sword'), 'your own slots are listed too');
+got = await sentNow(async () => { await equipBox.locator('button', { hasText: 'Body' }).click(); await page.getByText('Equip quilted coat', { exact: true }).click(); });
+check(JSON.stringify(got) === '["company equip #1 !9:coat body"]', 'tap an empty slot, pick a cargo item: equips the companion with an exact reference and slot');
+got = await sentNow(async () => { await equipBox.locator('button', { hasText: 'oak club' }).click(); await page.getByText('Remove to cargo', { exact: true }).click(); });
+check(JSON.stringify(got) === '["company remove #1 weapon"]', 'tap a worn slot: remove to cargo');
+// Drag and drop: a cargo item onto a member's slot, and worn gear onto the cargo.
+const dropData = async (from, to, payload) => page.evaluate(([f, t, p]) => {
+  const src = document.querySelector(f), dst = document.querySelector(t);
+  const dt = new DataTransfer();
+  dt.setData('application/x-ashveil-gear', JSON.stringify(p));
+  window.sent = [];
+  dst.dispatchEvent(new DragEvent('dragover', { dataTransfer: dt, bubbles: true, cancelable: true }));
+  dst.dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+  return window.sent;
+}, [from, to, payload]);
+const slotSel = '#company-inventory [aria-label="Brother Oswin equipment"] .cmp-slot:nth-child(1)';
+check(JSON.stringify(await dropData('x', '#company-inventory [aria-label="Brother Oswin equipment"] li:nth-child(3) .cmp-slot', { from: 'cargo', ref: '!9:coat', type: 'body' })) === '["company equip #1 !9:coat body"]', 'dropping a cargo item on a fitting slot equips it');
+check((await dropData('x', '#company-inventory [aria-label="Brother Oswin equipment"] li:nth-child(1) .cmp-slot', { from: 'cargo', ref: '!9:coat', type: 'body' })).length === 0, 'dropping a cargo item on a slot it does not fit does nothing');
+check(JSON.stringify(await dropData('x', '#company-inventory [aria-label="Brother Oswin equipment"]', { from: 'cargo', ref: '!9:coat', type: 'body' })) === '["company equip #1 !9:coat"]', 'dropping a cargo item on a member equips it where it fits');
+check(JSON.stringify(await dropData('x', '#company-inventory section[aria-label="Cargo"]', { from: 'worn', member: '#1', slot: 'weapon', ref: '!5:club' })) === '["company remove #1 weapon"]', 'dropping worn gear on the cargo takes it off');
+check(await page.locator('#company-inventory [aria-label="Brother Oswin equipment"] .cmp-slot[draggable=true]').count() === 1 && await page.locator('#company-inventory section[aria-label="Cargo"] .cmp-item[draggable=true]').count() > 0, 'worn gear and cargo items are draggable');
+if (outdir) { await page.locator('#company-inventory').screenshot({ path: path.join(outdir, 'companion-gear-company-panel.png') }); }
+await page.evaluate(i => window.gmcp('Company.Inventory', i), sharedInventory);
+
 // Phase 34a: inherited black text is visible even under a dark theme.
 // Check primary load text and secondary labels in every shipped theme.
 for (const theme of readdirSync(path.join(here, '../../_datafiles/html/public/static/css')).filter(n => /^theme-.*\.css$/.test(n))) {
@@ -657,7 +688,7 @@ await page.waitForTimeout(1200);
 check(!String(await gearSaid() || '').startsWith('open'), 'a hidden Gear editor is not announced as open');
 await page.getByRole('tab', { name: 'Gear', exact: true }).click();
 await page.waitForTimeout(300);
-check(await gearSaid() === 'open weapon', 'opening Gear asks the server for the editor and its selected slot');
+check(await gearSaid() === 'open weapon me', 'opening Gear asks the server for the editor and its selected slot');
 await page.getByRole('tab', { name: 'Skills', exact: true }).click();
 await page.waitForTimeout(300);
 check(await gearSaid() === 'closed', 'leaving Gear tells the server to stop building it');
@@ -665,14 +696,14 @@ await page.getByRole('tab', { name: 'Gear', exact: true }).click();
 await page.waitForTimeout(300);
 const saidBefore = await page.evaluate(() => window.gearRequests.length);
 await page.evaluate(c => window.gmcp('Company', c), company);
-check(await page.evaluate(n => window.gearRequests.length > n && window.gearRequests.slice(-1)[0] === 'open weapon', saidBefore), 'a Company snapshot (login, reconnect) re-announces the open editor');
+check(await page.evaluate(n => window.gearRequests.length > n && window.gearRequests.slice(-1)[0] === 'open weapon me', saidBefore), 'a Company snapshot (login, reconnect) re-announces the open editor');
 const pendingView = { available: true, current: {}, slots: [
   { slot: 'weapon', label: 'Weapon', choices: [] },
   { slot: 'body', label: 'Body', choices: [], pending: true, equipped: { ref: '!3:coat', label: 'quilted coat' } }] };
 await page.evaluate(view => window.gmcp('Company.Equipment', view), pendingView);
 await page.locator('#gw-worn').getByRole('button', { name: /^Body:/ }).click();
 await page.waitForTimeout(100);
-check(await gearSaid() === 'open body' && (await page.locator('#gw-worn').textContent()).includes('Loading choices'), 'selecting a slot asks for its choices and says they are loading');
+check(await gearSaid() === 'open body me' && (await page.locator('#gw-worn').textContent()).includes('Loading choices'), 'selecting a slot asks for its choices and says they are loading');
 await page.locator('#gw-worn').getByRole('button', { name: /^Weapon:/ }).click();
 await page.evaluate(() => { Client.GMCPRequest = function() {}; });
 
@@ -736,6 +767,26 @@ check((await gearText()).includes('No compatible items in shared cargo'), 'an em
 await page.locator('#gw-worn').getByRole('button', { name: 'Pack: cloth knapsack', exact: true }).click();
 await page.locator('#gw-worn').getByRole('button', { name: 'frame pack', exact: true }).click();
 check(await page.locator('.gw-editor-stats tr', { hasText: 'Company capacity (g)' }).textContent() === 'Company capacity (g)5000055000', 'Pack preview shows the final server capacity');
+// Phase 48: the editor shows any member's gear.
+const memberView = JSON.parse(JSON.stringify(gearView));
+memberView.members = [{ ref: 'me', name: 'Wren', ready: true }, { ref: '#1', name: 'Brother Oswin', ready: true }];
+memberView.member = 'me';
+await page.evaluate(view => window.gmcp('Company.Equipment', view), memberView);
+check(await page.locator('#gw-worn').getByRole('button', { name: 'Brother Oswin', exact: true }).count() === 1, 'Gear lists the company\'s members to pick from');
+await page.evaluate(() => { window.gearRequests = []; Client.GMCPRequest = (...args) => { if (args[0] === 'Company.Equipment') { window.gearRequests.push(args[1]); } }; });
+await page.locator('#gw-worn').getByRole('button', { name: 'Brother Oswin', exact: true }).click();
+await page.waitForTimeout(100);
+check(await page.evaluate(() => window.gearRequests.slice(-1)[0]) === 'open pack #1' && (await gearText()).includes('Loading gear'), 'choosing a member asks the server for that member\'s gear');
+const oswinView = JSON.parse(JSON.stringify(memberView));
+oswinView.member = '#1';
+oswinView.slots[0].choices[0].command = 'company equip #1 !8:first weapon';
+await page.evaluate(view => window.gmcp('Company.Equipment', view), oswinView);
+await page.locator('#gw-worn').getByRole('button', { name: /^Weapon:/ }).click();
+await page.locator('#gw-worn').getByRole('button', { name: 'same blade', exact: true }).first().click();
+if (outdir) { await page.locator('#gear-window').screenshot({ path: path.join(outdir, 'companion-gear-editor.png') }); }
+editorSent = await sentNow(async () => { await page.locator('#gw-worn').getByRole('button', { name: 'same blade', exact: true }).first().click(); await page.locator('#gw-worn').getByRole('button', { name: 'Equip item', exact: true }).click(); });
+check(JSON.stringify(editorSent) === '["company equip #1 !8:first weapon"]', 'Gear equips the chosen companion');
+await page.evaluate(() => window.GearEditor.show('me', 'weapon'));
 await page.setViewportSize({ width: 360, height: 760 });
 check(await page.evaluate(() => { const p = document.getElementById('gw-worn'); return p.scrollWidth <= p.clientWidth + 1; }), 'Gear editor fits a narrow viewport');
 if (outdir) { await page.screenshot({ path: path.join(outdir, 'gear-editor-narrow.png') }); }
