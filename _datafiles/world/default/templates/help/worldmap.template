@@ -1,7 +1,32 @@
 <ansi fg="black-bold">.:</ansi> <ansi fg="magenta">Help for </ansi><ansi fg="command">worldmap</ansi>
 
-In the web client, the Map window draws the rooms you have seen as tiles
-and shows you on them. The text clients have <ansi fg="command">map</ansi> (<ansi fg="command">help map</ansi>) instead.
+In the web client, the Map window draws the rooms you have seen as terrain
+tiles and shows you on them. The text clients have <ansi fg="command">map</ansi> (<ansi fg="command">help map</ansi>) instead.
+
+<ansi fg="yellow-bold">Terrain</ansi>
+
+  Each room is a small picture of its ground: grass, forest, road, water,
+  shore, swamp, snow, desert, cave, dungeon, city and the rest. Rooms that
+  touch share an edge, so a region reads as one stretch of country. Water,
+  shore, swamp, snow and desert move gently; a setting for reduced motion
+  in your browser keeps them still.
+
+  Where two rooms touch but have <ansi fg="yellow">no exit between them</ansi>, a dark edge marks the wall,
+  so the map never suggests a way through. An exit between rooms that do
+  not touch is a line. A locked door shows a key and a secret passage you
+  have found shows a question mark. Stairs up and down show a small
+  chevron in the tile's corner.
+
+  An exit you have not been through ends in a patch of <ansi fg="yellow">fog</ansi>: the edge of what
+  you know. A room whose ground has no picture shows plain stone.
+
+<ansi fg="yellow-bold">Landmarks</ansi>
+
+  An inn, bank, trainer, temple, gate, wall, bridge, keep and other
+  places drawn from the room's type show a small building or sign over the
+  terrain instead of a letter. A room with a symbol of its own but no
+  picture keeps its letter, outlined so you can read it. Hover over any
+  room for its name and type.
 
 <ansi fg="yellow-bold">You</ansi>
 
@@ -15,11 +40,19 @@ and shows you on them. The text clients have <ansi fg="command">map</ansi> (<ans
   recall or a teleport jumps without walking. Moving up or down a level
   fades you in on the new level.
 
+  Zooming moves between sizes that keep the pixels sharp, so the picture
+  never smears.
+
 <ansi fg="yellow-bold">Your company</ansi>
 
   A small shield with a number sits over you: how many of your company are
   with you (you, and each companion who is present and not separated or
   fallen). It is hidden when you travel alone (<ansi fg="command">help company</ansi>).
+
+  Companions who are with you stand beside you, drawn as their class
+  (small, at three quarters of your size) and walking with you. Up to four
+  are drawn; the shield still counts everyone. One whose class is not
+  known is counted but not drawn.
 
 <ansi fg="yellow-bold">Your party</ansi>
 
@@ -32,20 +65,25 @@ and shows you on them. The text clients have <ansi fg="command">map</ansi> (<ans
   Your camp shows as a tent on its tile (<ansi fg="command">help camp</ansi>). A lit fire flickers beside
   it with smoke rising; an unlit one sits dark. While your company rests,
   a small sleeping mark floats over the tent; resting at an inn shows the
-  inn's bed instead. The camps of your own party show as blue tents, with
+  inn's bed instead. A fire that has burned down to embers glows low with
+  no smoke, and a camp made without a tent shows two bedrolls round a ring
+  of stones instead of the tent (<ansi fg="command">help camp gear</ansi>). The camps of your own party show as blue tents, with
   their own fires. You never see the camp of a company that is not in
   your party, even one a step away.
 
 <ansi fg="yellow-bold">Resources</ansi>
 
   A small coloured dot in a tile's corner marks what it provides, such as
-  fresh water or forage (<ansi fg="command">help resources</ansi>).
+  fresh water or forage (<ansi fg="command">help resources</ansi>). A resource that has been picked
+  clean is drawn hollow with a slash, and the slash clears on its own
+  when the resource regrows, even in a room you are not standing in.
 
 <ansi fg="yellow-bold">Settings</ansi>
 
-  The settings button on the map has <ansi fg="yellow">Sprites</ansi> (on, or off for the classic red
-  square and hearts) and <ansi fg="yellow">Camps</ansi> (on, or off to hide every camp marker). Both
-  are kept per browser. The map shows only what the game already tells
+  The settings button on the map has <ansi fg="yellow">Style</ansi> (Tiles, or Classic for the plain
+  coloured squares and letters, where shape, size and spacing apply),
+  <ansi fg="yellow">Sprites</ansi> (on, or off for the classic red square and hearts) and
+  <ansi fg="yellow">Camps</ansi> (on, or off to hide every camp marker). All are kept per browser. The map shows only what the game already tells
   you: nothing about anyone outside your party.
 
 See also: <ansi fg="command">help webclient</ansi>, <ansi fg="command">help camp</ansi>, <ansi fg="command">help resources</ansi>, <ansi fg="command">help company</ansi>, <ansi fg="command">help party</ansi>.

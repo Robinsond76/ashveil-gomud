@@ -20,7 +20,9 @@ button in them just types a command for you.
   gold ring under you. A small shield with a number shows how many of
   your company travel with you, your party's members show as their
   classes, and your camp (and your party's) shows as a tent with its
-  fire. The settings button has Sprites and Camps switches (<ansi fg="command">help worldmap</ansi>).
+  fire. Rooms are terrain tiles with landmarks, walls where there is no
+  exit, and fog at the edge of what you know. The settings button has
+  Style (Tiles or Classic), Sprites and Camps switches (<ansi fg="command">help worldmap</ansi>).
 
 <ansi fg="yellow-bold">The right column: the dock</ansi>
 

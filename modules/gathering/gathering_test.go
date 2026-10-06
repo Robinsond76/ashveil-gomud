@@ -686,6 +686,21 @@ func TestPickedCleanShowsOnLookAndQueuesARedraw(t *testing.T) {
 
 	w.now = w.now.Add(20 * time.Minute)
 	assert.Equal(t, "Here: fresh water, herbs.", w.room.ResourceLine(), "and the marker clears when it regrows")
+
+	// Phase 40c: nobody gathers or looks, yet the round check tells clients
+	// to redraw the room that regrew, once.
+	w.m.checkRegrowth()
+	events.ProcessEvents()
+	assert.Equal(t, []int{5001, 5001}, redraws, "the regrowth redraws the map")
+	w.m.checkRegrowth()
+	events.ProcessEvents()
+	assert.Len(t, redraws, 2, "and only once")
+	assert.Empty(t, w.m.pickedClean, "a regrown room is no longer watched")
+
+	// A watch that finds nothing clean is dropped, so the per-round check
+	// never keeps a room it can no longer report on.
+	w.m.watchRegrowth(5001)
+	assert.Empty(t, w.m.pickedClean)
 }
 
 func TestPoolsPersistAcrossASaveAndLoad(t *testing.T) {
