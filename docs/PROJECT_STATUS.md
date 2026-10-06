@@ -1,5 +1,34 @@
 # Ashveil Project Status
 
+**Phase 40s2 + 40s3 built: art sets S2 (terrain) and S3 (battle) (2026-10-06):**
+`make sprites` now also writes 175 files: S3 battle art (16 backgrounds
+320x180, 56 battle units with 4-frame idles, 7 formation markers, 47 status,
+role, morale and condition icons) and S2 (19 terrain biomes x 3 variants, 5
+animated overlays, fog, unknown and night-mask tiles, 27 landmark overlays).
+`battle/mapping.json` is the client key table (mob name -> unit id, biome ->
+background, zone overrides, race fallbacks); the manifest lists each unit's
+size class, family, names and baseline. 55 shipped mobs gained `sprite:` keys
+(the field is read by 40f; unknown to master until #35 merges, which ignores
+it). Review the art in [the contact sheet](verification/40s-s2-s3-contact-sheet.png).
+Tests (`go test ./scripts`): spec coverage, unit anchors (feet on row
+frame-2, 4 distinct frames), opaque backgrounds with a quiet ground band,
+quiet terrain tiles with a flat margin and no outline color, mob `sprite:`
+keys name real units. Class battle sprites now have 4-frame idles (ranger
+arrow nocked low, cleric shield, wizard staff glow, witch grave-mist) and the
+S0 style-battle frame uses the real ogre and goblins. Nothing is wired into the
+client yet (40f, 40c, 40g do that), so no help or tutorial change is due.
+Decisions (owner delegated): (1) the palette is already 64 colors, so snow and
+ice use steel/slate/bone ramps and no color was added; (2) terrain animations
+are 4-frame transparent overlays (`overlay: true`, `over:` names the tile) drawn
+on the roomId-chosen variant, so variants survive; fog and the night mask use
+hard-alpha dither, since the tests forbid partial alpha; (3) Winded has no sweat
+drops (art direction bans them); (4) `shadow-master`, `guard-royal` and
+`ruffian-dangerous` differ from their base in gear as well as color; (5) `bats-echo`
+is a floating swarm with no ground baseline; (6) tile and unit feet are aligned in
+`roster.py` so every grounded unit rests on row frame-2. Known soft spots for
+review: L and XL units overlap neighbours in the 3x3 at 1x (the 40f client can
+scale them); several status icons (hobbled, lit, staggered) are plain at 16 px.
+
 **Phase 40s1 built: art sets S0 and S1 (2026-10-06):** `make sprites` runs
 `scripts/sprites/generate.py` (Pillow) and writes 51 PNG/GPL files under
 `_datafiles/html/public/static/sprites/` plus `manifest.json` (frame size,

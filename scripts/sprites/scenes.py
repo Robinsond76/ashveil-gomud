@@ -147,73 +147,6 @@ def mock_map_scene(W=320, H=180):
     return cv
 
 
-# -- mock battle pieces ----------------------------------------------------------
-
-def mock_ogre():
-    """A forest ogre, 96x96, facing left."""
-    cv = Canvas(96, 96)
-    # legs
-    cv.part(rect(36, 62, 47, 91), "ashmoss")
-    cv.part(rect(52, 62, 63, 91), "ashmoss")
-    cv.part(rect(33, 88, 47, 92), "leather")
-    cv.part(rect(52, 88, 66, 92), "leather")
-    # hunched torso, belly and loincloth
-    cv.part(ellipse(48, 46, 21, 21), "ashmoss")
-    cv.part(ellipse(44, 54, 13, 12), "ashmoss", flat="m")
-    cv.part(rect(34, 62, 62, 74), "leather")
-    cv.fill({(x, 62) for x in range(34, 63)}, "leather.l")
-    for x in range(35, 62, 4):
-        cv.put(x, 75, "leather.d")
-        cv.put(x, 76, "leather.d")
-    # far arm and club, near arm with a stone-headed club held across the body
-    cv.part(thick(line(66, 38, 80, 62), 8), "ashmoss")
-    cv.part(ellipse(80, 64, 5, 5), "ashmoss")
-    cv.part(thick(line(80, 66, 60, 16), 6), "wood")
-    cv.part(ellipse(58, 18, 8, 10), "wood")
-    for x, y in ((54, 14), (60, 12), (58, 22), (53, 20), (62, 18)):
-        cv.put(x, y, "iron.l")
-    # near arm
-    cv.part(thick(line(30, 34, 22, 62), 9), "ashmoss")
-    cv.part(ellipse(20, 64, 6, 6), "ashmoss")
-    # head: low and forward, heavy brow, tusks
-    cv.part(ellipse(30, 28, 12, 10), "ashmoss")
-    cv.fill({(x, 25) for x in range(22, 31)}, "ashmoss.d")
-    cv.put(24, 26, "outline")
-    cv.put(25, 26, "outline")
-    cv.put(24, 27, "ember.d")
-    cv.part({(21, 34), (21, 35), (21, 36), (22, 33), (22, 34)}, "bone")
-    cv.part({(28, 36), (28, 37), (28, 35)}, "bone")
-    cv.fill({(x, 33) for x in range(22, 30)}, "oxblood.d")
-    cv.outline()
-    return cv
-
-
-def mock_goblin():
-    """A gaunt goblin, 48x48 frame, figure about 28 px, facing left."""
-    cv = Canvas(48, 48)
-    cv.part(rect(20, 32, 23, 42), "ashmoss")
-    cv.part(rect(26, 32, 29, 42), "ashmoss")
-    cv.part(rect(18, 41, 23, 43), "leather")
-    cv.part(rect(26, 41, 31, 43), "leather")
-    cv.part(rect(19, 22, 30, 33), "leather")  # ragged tunic
-    cv.fill({(x, 33) for x in range(19, 31, 2)}, "leather.d")
-    cv.part(rect(15, 24, 18, 31), "moss")
-    cv.part(rect(31, 23, 34, 30), "moss")
-    cv.fill({(14, 30), (15, 30), (31, 29), (32, 29)}, "moss.l")
-    # hooked blade
-    cv.part(thick(line(14, 29, 8, 22), 1), "steel", flat="m")
-    cv.fill({(7, 21), (8, 21)}, "steel.l")
-    # head, big ears, hooked nose
-    cv.part(round_rect(18, 14, 27, 22), "moss")
-    cv.part({(17, 16), (16, 15), (15, 14), (17, 15), (28, 16), (29, 15), (30, 14), (28, 15)}, "moss")
-    cv.put(20, 17, "ember.m")
-    cv.put(24, 17, "ember.m")
-    cv.part({(17, 19), (16, 20), (17, 20)}, "moss", flat="d")
-    cv.fill({(x, 21) for x in range(20, 26)}, "bone.m")
-    cv.outline()
-    return cv
-
-
 # -- mock battle scene ------------------------------------------------------------
 
 def _bg_forest(cv, W, H):
@@ -253,27 +186,35 @@ def _bg_forest(cv, W, H):
                 cv.put(x, y, "leather.d")
 
 
-def mock_battle_scene(W=320, H=180):
+def formation_scene(bg, company, enemies, W=320, H=180):
+    """A 320x180 battle: `company` and `enemies` map (row, col) -> a 4-frame idle
+    canvas (frame 0 is used).  The layout is the 40f one: row 1 stands 40 px from
+    the centre line and each row steps 32 px outward; columns 1-3 stand on lanes
+    y 120, 140, 160.  Enemies are mirrored to face left."""
     cv = Canvas(W, H)
-    _bg_forest(cv, W, H)
-
-    def shadow(cx, cy, rx):
-        cv.fill(ellipse(cx, cy, rx, max(2, rx // 4)), "grass.d")
-
-    # Company on the left, in formation.
-    placements = (("wizard", 54, 126), ("cleric", 90, 142), ("warrior", 128, 160))
-    for cls, fx, fy in placements:
-        shadow(fx, fy, 13)
-        cv.blit(figures.battle_idle(cls), fx - 32, fy - 61)
-    # Enemies on the right (mirrored to face left).
-    ogre = mock_ogre()
-    shadow(244, 158, 30)
-    cv.blit(ogre, 244 - 48, 158 - 92)
-    for fx, fy in ((190, 128), (302, 136)):
-        g = mock_goblin()
-        shadow(fx, fy, 11)
-        cv.blit(g, fx - 24, fy - 44)
+    cv.blit(bg)
+    lanes = {1: 120, 2: 140, 3: 160}
+    items = []
+    for side, group in ((-1, company), (1, enemies)):
+        for (row, col), frame in group.items():
+            fx = W // 2 + side * (40 + 32 * (row - 1)) + (col - 2) * 5 * side * -1
+            items.append((lanes[col], side, fx, frame))
+    for fy, side, fx, frame in sorted(items, key=lambda i: i[0]):
+        cv.fill(ellipse(fx, fy, max(8, frame.w // 6), 2), "charcoal.d")
+        img = frame if side < 0 else frame.mirror()
+        cv.blit(img, fx - img.w // 2, fy - (img.h - 2))
     return cv
+
+
+def mock_battle_scene(W=320, H=180):
+    """The S0 style frame, with the real S3 art: a company against a forest ogre and goblins."""
+    import backgrounds
+    import roster
+    bg = backgrounds.forest()
+    f = lambda uid: roster.BY_ID[uid].draw(0)
+    company = {(1, 3): f("warrior"), (2, 2): f("cleric"), (3, 1): f("wizard")}
+    enemies = {(1, 2): f("ogre-forest"), (2, 1): f("goblin"), (2, 3): f("goblin")}
+    return formation_scene(bg, company, enemies, W, H)
 
 
 # -- app emblem: an ember-lit campfire before a dark ridge -----------------------

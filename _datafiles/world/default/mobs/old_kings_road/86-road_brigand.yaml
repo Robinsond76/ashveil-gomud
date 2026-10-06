@@ -1,4 +1,5 @@
 mobid: 86
+sprite: brigand
 zone: Old Kings Road
 # Phase 33f3: camp raiders. They never spawn on their own; a camp rest at
 # the Fork at the Black Oak may draw a pair of them (camping CampRaids).

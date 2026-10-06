@@ -1,4 +1,5 @@
 mobid:  60
+sprite: crocodile
 zone: Frost Lake
 itemdropchance: 2
 hostile: true

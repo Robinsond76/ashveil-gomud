@@ -1,4 +1,5 @@
 mobid: 19
+sprite: spider-large
 zone: Catacombs
 itemdropchance: 5
 hostile: true

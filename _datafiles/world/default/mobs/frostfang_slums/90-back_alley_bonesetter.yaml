@@ -1,6 +1,7 @@
 # Ashveil Phase 33i2: a band's healer (help coordination). She heals a
 # ruffian below half his health.
 mobid: 90
+sprite: bonesetter
 zone: Frostfang Slums
 itemdropchance: 2
 lootcategory: humanoid
