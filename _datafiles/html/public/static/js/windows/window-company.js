@@ -626,6 +626,13 @@
             });
             card.appendChild(line);
         }
+        // Phase 50: what those needs and a meal buff do in the next battle (help survival).
+        if (m.status !== 'dead' && v.fare) {
+            const fare = el('div', 'company-needs company-fare', 'In battle: ' + v.fare);
+            fare.title = 'Set as each battle begins: hunger cuts damage, thirst raises damage taken, fatigue cuts hit chance; a cooked meal adds its buff (help survival, help cooking)';
+            card.appendChild(fare);
+            spoken.push('in battle ' + v.fare);
+        }
         if (m.status !== 'dead' && v.warmth) {
             card.appendChild(el('div', 'company-warmth need-warn', v.warmth));
             spoken.push(v.warmth);

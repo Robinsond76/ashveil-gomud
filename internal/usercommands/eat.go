@@ -89,11 +89,12 @@ func Eat(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 			result, err := survival.Provision(user.UserId, selector, survival.Benefit{
 				Nutrition: itemSpec.Nutrition,
 				Hydration: itemSpec.Hydration,
+				Meal:      itemSpec.Meal,
 			})
 			if err != nil {
 				return true, err
 			}
-			suffix = provisionSuffix(result, selector != "")
+			suffix = provisionSuffix(result, selector != "") + mealSuffix(itemSpec.Meal)
 		}
 
 		user.Character.CancelBuffsWithFlag("hidden")
@@ -119,4 +120,13 @@ func Eat(rest string, user *users.UserRecord, room *rooms.Room, flags events.Eve
 	}
 
 	return true, nil
+}
+
+// mealSuffix names a cooked meal's battle buff (Phase 50).
+func mealSuffix(kind string) string {
+	m, ok := survival.MealFor(kind)
+	if !ok {
+		return ""
+	}
+	return fmt.Sprintf(" (%s for %s: %s)", m.Name, survival.BattlesLeft(m.Battles), m.Effect())
 }

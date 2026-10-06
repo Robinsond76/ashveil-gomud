@@ -97,3 +97,14 @@ func TestAutoJunkIsPlainJunkTypeOnly(t *testing.T) {
 	sword := New(testSwordID)
 	assert.False(t, sword.IsAutoJunk())
 }
+
+// TestCookedMealsAreNeverBoughtBack (Phase 50 review): market meat and
+// thyme at their lowest prices cost less than a merchant paid for the stew
+// they cook, so a cooked meal is never bought back.
+func TestCookedMealsAreNeverBoughtBack(t *testing.T) {
+	const stewID = 990019
+	SetTestItemSpec(&ItemSpec{ItemId: stewID, Name: "hunter's stew", Type: Food, Subtype: Edible, Uses: 3, Value: 30, Meal: "stew"})
+	t.Cleanup(func() { RemoveTestItemSpec(stewID) })
+	stew := New(stewID)
+	assert.True(t, stew.IsSpecialForSale(), "a cooked meal is never bought")
+}

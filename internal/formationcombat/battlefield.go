@@ -1,6 +1,9 @@
 package formationcombat
 
-import "github.com/GoMudEngine/GoMud/internal/company"
+import (
+	"github.com/GoMudEngine/GoMud/internal/company"
+	"github.com/GoMudEngine/GoMud/internal/survival"
+)
 
 // Fold derives narrow-ground positions without changing saved placements.
 // A member keeps its row if possible, then spills rearward, then forward.
@@ -135,18 +138,9 @@ func Detection(perception, stealth, visibility, concealment, roll int, watch boo
 	return chance, 0
 }
 
-func FatiguePenalty(rest int) int {
-	switch {
-	case rest <= 0:
-		return 20
-	case rest <= 25:
-		return 10
-	case rest <= 50:
-		return 5
-	default:
-		return 0
-	}
-}
+// FatiguePenalty is the hit-chance points fatigue costs (survival owns the
+// numbers, Phase 50, so the battle condition shows the same ones).
+func FatiguePenalty(rest int) int { return survival.FatigueHitPenalty(rest) }
 
 func GuardGround(f company.Formation, guardian, ward company.MemberKey, narrow bool) bool {
 	if narrow {
