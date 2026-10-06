@@ -1,6 +1,57 @@
 # Ashveil Project Status
 
-**Phase 40c built: terrain and landmark tiles (2026-10-06, PR open for review):** the web map draws each room as its biome's S2 terrain tile (variant = room id mod 3), tiles touch, and a dark edge marks two touching rooms with no exit between them. Exits to unvisited rooms end in a fog tile, up and down exits show the S1 chevrons, and a room whose `maplegend` (or `mapsymbol`) maps in `sprites/map/landmarks.json` shows its landmark overlay; an unmapped symbol keeps its letter, outlined, and `Shore` is an intentional no-glyph legend. A biome with no art draws the `unknown` tile; art still loading or missing falls back to the classic colour square per room. Map settings gain `Style` (`tiles` default, `classic` unchanged; size, spacing and shape apply to classic only). Zoom moves on crisp steps (16 to 128 px tiles); animated biomes cycle at 250 ms and stop with reduced motion. Layer order: terrain, walls, fog, connections, landmark, resources, camps, units. Two follow-ups folded in: (1) regrowth now redraws the map: the gathering module watches rooms it picked clean and queues `RoomResourcesChanged` when a pool regrows (real time only), and the gmcp module sends every online player a small `World.Resources` update (room, shown, depleted) that the map patches into its room info; (2) companions are drawn beside you as their class at 75 percent (up to four, present only, class from the new `lineage`/`classid` fields on `Company` members), with the badge still counting everyone. Help: `help worldmap` (terrain, landmarks, companions, regrowth, Style) and `help webclient` updated, camp tutorial hint mentions the tiles. Tests: `TestMapLegendsHaveLandmarks` (every shipped `maplegend` maps or is an intentional glyph; landmark ids have art), gathering regrowth redraw, `World.Resources` payload, `Company` class ids, and the Chromium `scripts/browser/map-check.mjs` (tiles, walls, fog, landmarks, classic restore, missing-image fallback, reduced motion, crisp zoom, companions, regrowth redraw). Screenshots: `screens/40c-tiles.png`, `screens/40c-companions.png`. Decisions (owner delegation): tiles are the default (S2 covers every biome; classic kept); tiles ignore the room size and spacing sliders (32 px art, spacing equals size) rather than scaling art off-grid; the static-layer offscreen cache from the design is skipped (a few hundred `drawImage` calls per frame is cheap and the units already redraw continuously; revisit if a large zone measures slow); `Entrance` and `Exit` both use the cave mouth (the catacomb entrance shares it); regrow watching is in memory (a restart forgets it, and the client refreshes on the next World.Map). Follow-ups: S1 resource icons still draw as dots over tiles; the shared landmark table has no entry for shop, smithy or herbalist because no shipped room carries those legends yet (41/42 add rows).
+**Phase 40c built: terrain and landmark tiles (2026-10-06, PR open for review):** the web map draws each room as its biome's S2 terrain tile (variant = room id mod 3), tiles touch, and a dark edge marks two touching rooms with no exit between them. Exits to unvisited rooms end in a fog tile, up and down exits show the S1 chevrons, and a room whose `maplegend` (or `mapsymbol`) maps in `sprites/map/landmarks.json` shows its landmark overlay; an unmapped symbol keeps its letter, outlined, and `Shore` is an intentional no-glyph legend. A biome with no art draws the `unknown` tile; art still loading or missing falls back to the classic colour square per room. Map settings gain `Style` (`tiles` default, `classic` unchanged; size, spacing and shape apply to classic only). Zoom moves on crisp steps (16 to 128 px tiles); animated biomes cycle at 250 ms and stop with reduced motion. Layer order: terrain, walls, fog, connections, landmark, resources, camps, units. Two follow-ups folded in: (1) regrowth now redraws the map: the gathering module watches rooms it picked clean and queues `RoomResourcesChanged` when a pool regrows (real time only), and the gmcp module sends every online player a small `World.Resources` update (room, shown, depleted) that the map patches into its room info; (2) companions are drawn beside you as their class at 75 percent (up to four, present only, class from the new `lineage`/`classid` fields on `Company` members: `lineage` plus the `class` key 40s5 added), with the badge still counting everyone. Help: `help worldmap` (terrain, landmarks, companions, regrowth, Style) and `help webclient` updated, camp tutorial hint mentions the tiles. Tests: `TestMapLegendsHaveLandmarks` (every shipped `maplegend` maps or is an intentional glyph; landmark ids have art), gathering regrowth redraw, `World.Resources` payload, `Company` class ids, and the Chromium `scripts/browser/map-check.mjs` (tiles, walls, fog, landmarks, classic restore, missing-image fallback, reduced motion, crisp zoom, companions, regrowth redraw). Screenshots: `screens/40c-tiles.png`, `screens/40c-companions.png`. Decisions (owner delegation): tiles are the default (S2 covers every biome; classic kept); tiles ignore the room size and spacing sliders (32 px art, spacing equals size) rather than scaling art off-grid; the static-layer offscreen cache from the design is skipped (a few hundred `drawImage` calls per frame is cheap and the units already redraw continuously; revisit if a large zone measures slow); `Entrance` and `Exit` both use the cave mouth (the catacomb entrance shares it); regrow watching is in memory (a restart forgets it, and the client refreshes on the next World.Map). Follow-ups: S1 resource icons still draw as dots over tiles; the shared landmark table has no entry for shop, smithy or herbalist because no shipped room carries those legends yet (41/42 add rows).
+
+**Phase 40s5 reviewed and merged (2026-10-06, Opus review thread):** the
+class art, GMCP `class` key and battle-window fallback are sound; promoted
+classes read apart from their base at 1x in the contact sheet and the battle
+screen (UI check screenshot kept outside the repo as
+`screens/40s5-battle.png` in the project files).
+Decision (delegated): `TestEveryBuiltClassHasArt` no longer fails when a
+built class has no art, because elite (38c) and neutral (39) classes are
+built in parallel and the battle screen already falls back to the base
+class (or a silhouette for a lineage with no art). It logs each pending
+class and its fallback instead; the later art pass runs it with
+`ASHVEIL_ART_STRICT=1`, which fails until every built class has art. It
+still fails when `promotedClasses` names a class that does not exist.
+UI check, fixed in review: the company list showed a promoted member only
+by its base archetype ("Warrior" for a Paladin) and the battle caption only
+by name, so Company GMCP members now also carry `class_name`; the company
+card shows the class (its line on hover) and the battle caption reads
+"Wren, Paladin, striking …"; `help battlescreen` says so (tests: GMCP
+payload, `TestBattleScreenHelp`, and assertions in
+`scripts/browser/battle-check.mjs` and `dock-windows-check.mjs`).
+Follow-ups: `score` and the Character window still show no class (38b
+follow-up); `dock-windows-check.mjs` stalls at its Combat-tab hover since
+40f because the battle screen opens over the tab (pre-existing; the 40s5
+assertions run before that point); three members in one row overlap
+heavily on the battle screen. Merged master (44 smoke, 40a2 shaman
+renumber: same mob 97, kept the shaman's own sprite) and 40g (battle
+animation): a promoted member uses its own class's pose sheets once its
+idle exists, never the base class's, so it does not flicker between looks.
+
+**Phase 40s5 built: class art, art set S5 (2026-10-06):** map sprites
+(down/up/side, idle and walk) and battle idles for the 23 promoted classes on
+master (the 18 level-10 classes plus Paladin, Hierarch, Elder Druid, Blood
+ Priest, Demonologist and Dread Knight), the Angel and Demon summons (large
+units) and a goblin shaman of its own (was the hexer's art); `scripts/sprites/promoted.py`,
+`summoned.py`, `make sprites` now also writes
+[`docs/verification/40s5-contact-sheet.png`](verification/40s5-contact-sheet.png).
+Forks, with reasons: (1) each promoted class is its lineage's base figure with
+ramps swapped and a few accessories, not a new rig, so a promotion reads as a
+step up and the S0 proportions and anchors hold for free; (2) good routes go
+lighter with brass, neutral earth-toned, evil darker with ember touches, using
+the existing 64-color palette only; (3) the Company GMCP member now carries
+`class` (promoted class id, omitted before promotion) and the battle window
+draws `battle/units/<class>/idle.png` when the manifest lists it, falling back
+to the base class, so the art shows today; (4) mobs `95-angel`, `96-demon` and
+the shaman use `sprite:` keys; (5) the goblin shaman is mob 97 (master made the same fix in 40a2, since 38b's Angel holds id 95). Elite (38c) and neutral (39) classes still
+`Planned` are left to a later art pass: warlord, pathfinder, swordmaster,
+nightblade, sentinel, marksman, ravager, archon, archmage, necromancer,
+wise-one, coven-mother, crone-of-ash; `TestEveryBuiltClassHasArt` lists built classes
+with no art (see the review below), and `TestMobSpriteKeysHaveArt` checks every mob
+`sprite:` key. The 40b map window (merged alongside) draws a promoted
+player's class map sprite first, so the S5 map art shows there too. No new player command, so no help page. Gates: `make generate`, `make validate`, `make js-lint`, `go test ./scripts` and `go test -race ./...` green; `TestAimedShotGrowsWithLevel` failed once in the full run (a random-roll comparison, 14 vs 15) and passed on three reruns, unrelated to this change.
 
 **Phase 40b complete, merged via [PR #43](https://github.com/Robinsond76/ashveil-gomud/pull/43) (2026-10-06): map sprites in the web client.** The Map
 window draws you as your class sprite (chain: current class, lineage,

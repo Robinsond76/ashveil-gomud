@@ -326,7 +326,7 @@ const w2 = await page.evaluate(() => document.getElementById('map-2d-canvas').to
 check(w1 !== w2, 'the animated tiles change over time');
 
 // Companions stand beside you, by class; the badge still counts everyone.
-const cmember = (key, status, lineage, classid) => ({ key, id: 1, name: key, status, level: 5, archetype: 'x', lineage, classid, cell: null, chemistry: null, strategy: null });
+const cmember = (key, status, lineage, classid) => ({ key, id: 1, name: key, status, level: 5, archetype: 'x', lineage, class: classid, cell: null, chemistry: null, strategy: null });
 await gmcp(page, 'Company', { leader: member('leader', 'Wren', 'present'), members: [
   cmember('companion:1', 'present', 'cleric', 'cleric'), cmember('companion:2', 'present', 'ranger', ''),
   cmember('companion:3', 'dead', 'rogue', ''), cmember('companion:4', 'present', '', '') ] });

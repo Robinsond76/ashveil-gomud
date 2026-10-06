@@ -1935,8 +1935,8 @@
         var present = [];
         if (co && Array.isArray(co.members)) {
             co.members.forEach(function (m) {
-                if (m && m.status === 'present' && (m.classid || m.lineage)) {
-                    present.push({ key: m.key, lineage: m.lineage || '', classid: m.classid || '' });
+                if (m && m.status === 'present' && (m.class || m.lineage)) {
+                    present.push({ key: m.key, lineage: m.lineage || '', classid: m.class || '' });
                 }
             });
         }

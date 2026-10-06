@@ -5,6 +5,8 @@ import beasts
 import figures
 import giants
 import humanoids
+import promoted
+import summoned
 from kit import BREATH, shift
 from pixels import Canvas, rect, line, thick, ellipse
 
@@ -81,6 +83,12 @@ H = humanoids.H
 for cls in CLASS_IDS:
     add(cls, "M", "class", (lambda c: lambda t: figures.battle_idle(c, t))(cls),
         [] if cls == "adventurer" else [f"recruit {cls}"])
+# S5: the promoted classes (level 10 and the elite classes built so far), keyed by class id.
+for cls in promoted.CLASS_IDS:
+    add(cls, "M", "promoted class", (lambda c: lambda t: promoted.battle_idle(c, t))(cls),
+        variant_of=promoted.LINEAGE[cls], note=f"{promoted.LINEAGE[cls]} line")
+add("angel", "L", "summon", summoned.angel, ["angel"], note="a Hierarch's summon")
+add("demon", "L", "summon", summoned.demon, ["demon"], note="a Demonologist's summon")
 add("unknown-humanoid", "M", "fallback", H["unknown-humanoid"], note="fallback silhouette")
 add("unknown-beast", "M", "fallback", beasts.unknown_beast, note="fallback silhouette")
 add("unknown-large", "L", "fallback", giants.unknown_large, note="fallback silhouette")
@@ -112,6 +120,7 @@ add("shadow-master", "M", "shadow guild", H["shadow-master"], ["shadow master"],
 add("goblin", "M", "goblin", H["goblin"], ["goblin"], note="base for the variants and random encounters")
 add("goblin-hexer", "M", "goblin", H["goblin-hexer"], ["goblin hexer"], "goblin")
 add("goblin-loot", "M", "goblin", H["goblin-loot"], ["loot goblin"], "goblin")
+add("goblin-shaman", "M", "goblin", H["goblin-shaman"], ["goblin shaman"], "goblin")
 add("faerie", "S", "fey", giants.faerie, ["faerie folk"])
 add("imp-forest", "S", "fey", giants.imp_forest, ["forest imp"])
 add("fungus", "M", "plant", giants.fungus, ["sentient fungus"])

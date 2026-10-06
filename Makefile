@@ -160,7 +160,7 @@ run: generate ## Start the server with `go run .`.
 run-new: clean-instances generate run ## Delete room instance data and start a fresh world.
 
 sprites: ## Regenerate the code-drawn sprite sets and the review contact sheet (needs Pillow).
-	python3 scripts/sprites/generate.py --preview docs/verification/40s1-contact-sheet.png --preview-s23 docs/verification/40s-s2-s3-contact-sheet.png
+	python3 scripts/sprites/generate.py --preview docs/verification/40s1-contact-sheet.png --preview-s23 docs/verification/40s-s2-s3-contact-sheet.png --preview-s5 docs/verification/40s5-contact-sheet.png
 
 clean-instances: ## Delete generated room instance data for bundled worlds.
 	rm -Rf _datafiles/world/default/rooms.instances
